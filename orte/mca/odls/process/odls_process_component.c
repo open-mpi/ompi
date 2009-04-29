@@ -21,8 +21,6 @@
 #include <unistd.h>
 #endif
 
-#include "opal/util/argv.h"
-#include "opal/util/path.h"
 #include "opal/mca/base/mca_base_param.h"
 
 

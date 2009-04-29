@@ -20,8 +20,6 @@
 #include "ompi_config.h"
 
 #include "ompi/mca/mtl/mtl.h"
-#include "ompi/communicator/communicator.h"
-#include "opal/class/opal_list.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/mca/mtl/base/mtl_base_datatype.h"
 #include "ompi/proc/proc.h"

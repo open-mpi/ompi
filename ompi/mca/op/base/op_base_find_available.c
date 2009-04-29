@@ -33,7 +33,6 @@
 
 
 #include "ompi/constants.h"
-#include "ompi/op/op.h"
 #include "ompi/mca/op/op.h"
 #include "ompi/mca/op/base/base.h"
 

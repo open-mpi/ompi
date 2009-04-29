@@ -24,7 +24,6 @@
 #include <stdlib.h>
 
 #include "mpi.h"
-#include "ompi/file/file.h"
 #include "opal/class/opal_list.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"

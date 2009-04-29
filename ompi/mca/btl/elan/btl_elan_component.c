@@ -13,15 +13,12 @@
 #include "ompi_config.h"
 #include "ompi/constants.h"
 #include "opal/event/event.h"
-#include "opal/util/if.h"
 #include "opal/util/output.h"
-#include "opal/util/argv.h"
 #include "ompi/mca/btl/btl.h"
 
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 
-#include "orte/runtime/orte_globals.h"
 #include "ompi/mca/mpool/base/base.h" 
 
 #include "btl_elan.h"
@@ -30,13 +27,10 @@
 
 #include "ompi/mca/btl/base/base.h" 
 #include "ompi/mca/btl/base/btl_base_error.h" 
-#include "ompi/datatype/convertor.h" 
 
 #include "elan/elan.h"
 
-#include "opal/util/os_path.h"
 #include "opal/util/opal_environ.h"
-#include "ompi/communicator/communicator.h"
 
 #define ELAN_MAX_BTL  10
 

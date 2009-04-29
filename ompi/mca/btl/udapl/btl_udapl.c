@@ -34,7 +34,6 @@
 #include "btl_udapl_mca.h"
 #include "btl_udapl_proc.h"
 #include "ompi/datatype/convertor.h" 
-#include "ompi/datatype/datatype.h" 
 #include "ompi/mca/mpool/base/base.h" 
 #include "ompi/mca/mpool/rdma/mpool_rdma.h"
 #include "ompi/mca/btl/base/btl_base_error.h"

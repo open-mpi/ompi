@@ -21,13 +21,11 @@
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
 
-#include "orte/util/name_fns.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
 #include "opal/mca/base/mca_base_param.h"
 
-#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
 

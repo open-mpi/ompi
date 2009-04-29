@@ -23,8 +23,6 @@
 #include "ompi/mca/mtl/base/base.h"
 #include "ompi/constants.h"
 #include "ompi/datatype/convertor.h"
-#include "ompi/datatype/datatype.h"
-#include "ompi/datatype/datatype_internal.h"
 
 static inline int
 ompi_mtl_datatype_pack(struct ompi_convertor_t *convertor,

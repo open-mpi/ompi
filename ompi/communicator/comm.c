@@ -33,7 +33,6 @@
 #include "opal/threads/mutex.h"
 #include "opal/util/bit_ops.h"
 #include "opal/util/output.h"
-#include "opal/util/convert.h"
 #include "ompi/mca/topo/topo.h"
 #include "ompi/mca/topo/base/base.h"
 #include "ompi/mca/dpm/dpm.h"

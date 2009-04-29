@@ -23,11 +23,7 @@
 
 #include "ompi_config.h"
 
-#include "opal/class/opal_list.h"
-#include "ompi/class/ompi_rb_tree.h"
 #include "opal/mca/mca.h"
-#include "ompi/mca/mpool/mpool.h"
-#include "opal/threads/mutex.h" 
 #include "opal/memoryhooks/memory.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)

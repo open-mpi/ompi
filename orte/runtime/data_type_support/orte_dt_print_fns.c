@@ -22,7 +22,6 @@
 #include <sys/types.h>
 
 #include "opal/util/argv.h"
-#include "opal/class/opal_list.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "opal/dss/dss.h"

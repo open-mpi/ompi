@@ -23,7 +23,6 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/request/request.h"
 #include "ompi/runtime/mpiruntime.h"
-#include "ompi/mca/dpm/dpm.h"
 
 int
 ompi_init_preconnect_mpi(void)

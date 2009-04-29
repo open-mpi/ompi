@@ -19,7 +19,6 @@
 
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "opal/util/basename.h"
 #include "orte/constants.h"
 #include "orte/util/proc_info.h"
 #include "ras_ccp.h"

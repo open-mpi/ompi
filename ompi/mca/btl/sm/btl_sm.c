@@ -26,10 +26,8 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#include "opal/threads/mutex.h"
 #include "opal/sys/atomic.h"
 #include "opal/class/opal_bitmap.h"
-#include "opal/util/if.h"
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
 #include "opal/mca/carto/carto.h"

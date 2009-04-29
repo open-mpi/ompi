@@ -21,7 +21,6 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#include "orte/runtime/orte_globals.h"
 #include "orte/mca/ras/ras_types.h"
 
 #include "opal/mca/base/base.h"

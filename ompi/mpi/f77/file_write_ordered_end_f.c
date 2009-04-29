@@ -20,8 +20,6 @@
 
 #include "ompi/mpi/f77/bindings.h"
 #include "ompi/mpi/f77/constants.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/communicator/communicator.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_FILE_WRITE_ORDERED_END = mpi_file_write_ordered_end_f

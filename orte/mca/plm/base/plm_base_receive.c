@@ -32,7 +32,6 @@
 #include <sys/time.h>
 #endif
 
-#include "opal/class/opal_list.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_param.h"
 
@@ -43,8 +42,6 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
-#include "orte/mca/rml/base/rml_contact.h"
-#include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"

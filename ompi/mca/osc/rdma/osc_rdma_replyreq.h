@@ -23,12 +23,10 @@
 #include "osc_rdma_longreq.h"
 
 #include "opal/class/opal_list.h"
-#include "opal/threads/mutex.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/datatype/convertor.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/proc/proc.h"
-#include "ompi/op/op.h"
 #include "ompi/memchecker.h"
 
 

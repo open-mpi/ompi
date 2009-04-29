@@ -23,7 +23,6 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
 
-#include "ompi/mca/bml/bml.h"
 #include "ompi/mca/bml/base/base.h"
 
 int mca_pml_base_ft_event(int state)

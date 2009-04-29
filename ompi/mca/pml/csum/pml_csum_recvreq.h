@@ -29,7 +29,6 @@
 #include "ompi/mca/pml/csum/pml_csum_comm.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/pml/base/pml_base_recvreq.h"
-#include "ompi/datatype/datatype.h"
 
 BEGIN_C_DECLS
 

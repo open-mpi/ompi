@@ -16,7 +16,6 @@
 #include "ompi/request/request.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/datatype/convertor.h"
 
 #include "pml_cm.h"
 #include "pml_cm_recvreq.h"

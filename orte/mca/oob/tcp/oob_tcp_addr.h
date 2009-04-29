@@ -35,7 +35,6 @@
 
 #include "opal/class/opal_object.h"
 
-#include "opal/dss/dss.h"
 
 BEGIN_C_DECLS
 

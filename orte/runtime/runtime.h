@@ -26,13 +26,11 @@
 #define ORTE_RUNTIME_H
 
 #include "orte_config.h"
-#include "orte/types.h"
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
 
-#include "opal/util/cmd_line.h"
 
 BEGIN_C_DECLS
 

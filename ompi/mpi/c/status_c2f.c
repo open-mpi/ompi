@@ -19,6 +19,9 @@
 #include <stdio.h>
 
 #include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/errhandler/errhandler.h"
 #include "ompi/mpi/f77/fint_2_int.h"
 #include "ompi/mpi/f77/constants.h"
 #include "ompi/memchecker.h"

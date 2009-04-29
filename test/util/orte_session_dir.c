@@ -34,10 +34,8 @@
 #include "orte/mca/ns/ns_types.h"
 #include "orte/util/proc_info.h"
 #include "opal/util/os_path.h"
-#include "opal/util/os_dirpath.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/proc_info.h"
-#include "orte/runtime/runtime.h"
 
 
 static bool test1(void);   /* given prefix, both one that works and one that fails */

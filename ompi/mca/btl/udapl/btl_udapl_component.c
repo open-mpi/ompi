@@ -26,10 +26,8 @@
 #include "ompi_config.h"
 #include "ompi/constants.h"
 #include "opal/event/event.h"
-#include "opal/util/if.h"
 #include "opal/util/argv.h"
 #include "ompi/mca/btl/btl.h"
-#include "ompi/runtime/params.h"
 
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/mpool/base/base.h" 
@@ -41,7 +39,6 @@
 #include "btl_udapl_proc.h" 
 #include "ompi/mca/btl/base/base.h" 
 #include "ompi/mca/btl/base/btl_base_error.h"
-#include "ompi/datatype/convertor.h" 
 #include "btl_udapl_endpoint.h"
 #include "orte/util/proc_info.h"
 #include "ompi/runtime/ompi_module_exchange.h"

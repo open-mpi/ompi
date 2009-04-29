@@ -34,8 +34,6 @@
 #include <sys/time.h>
 #endif
 
-#include "opal/threads/mutex.h"
-#include "opal/threads/condition.h"
 #include "opal/class/opal_pointer_array.h"
 
 #include "orte/mca/plm/plm_types.h"

@@ -22,6 +22,9 @@
 #include "ompi_config.h"
 
 #include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/memchecker.h"
 

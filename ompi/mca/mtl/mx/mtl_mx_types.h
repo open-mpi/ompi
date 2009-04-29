@@ -22,11 +22,8 @@
 #include "ompi_config.h"
 #include "mtl_mx.h"
 
-#include "ompi/request/request.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/mca/mtl/base/base.h"
-#include "ompi/datatype/datatype.h"
-#include "ompi/datatype/convertor.h"
 #include "mtl_mx_endpoint.h" 
 
 #include "myriexpress.h"

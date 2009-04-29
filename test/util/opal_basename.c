@@ -23,7 +23,6 @@
 #include <stdlib.h>
 
 #include "support.h"
-#include "opal/constants.h"
 #include "opal/util/basename.h"
 
 

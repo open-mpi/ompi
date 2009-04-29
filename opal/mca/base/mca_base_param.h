@@ -58,9 +58,7 @@
 
 #include "opal_config.h"
 
-#include "opal/class/opal_value_array.h"
 #include "opal/class/opal_list.h"
-#include "opal/class/opal_hash_table.h"
 #include "opal/mca/mca.h"
 
 

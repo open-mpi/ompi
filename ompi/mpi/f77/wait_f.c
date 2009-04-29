@@ -19,7 +19,6 @@
 #include "ompi_config.h"
 
 #include "ompi/mpi/f77/bindings.h"
-#include "ompi/request/request.h"
 #include "ompi/mpi/f77/constants.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER

@@ -45,10 +45,8 @@
 #include "ompi/constants.h"
 #include "ompi/proc/proc.h"
 #include "common_sm_mmap.h"
-#include "opal/util/basename.h"
 #include "opal/util/output.h"
 #include "opal/align.h"
-#include "orte/mca/rml/rml_types.h"
 #include "orte/mca/rml/rml.h"
 
 #include "ompi/mca/dpm/dpm.h"

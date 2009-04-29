@@ -47,7 +47,6 @@ const char *ibv_get_sysfs_path(void);
 #include "ompi/constants.h"
 #include "opal/event/event.h"
 #include "opal/align.h"
-#include "opal/util/if.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/sys/timer.h"
@@ -63,7 +62,6 @@ const char *ibv_get_sysfs_path(void);
 
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
-#include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/notifier/notifier.h"
 
@@ -72,7 +70,6 @@ const char *ibv_get_sysfs_path(void);
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/mpool/rdma/mpool_rdma.h"
 #include "ompi/mca/btl/base/base.h"
-#include "ompi/datatype/convertor.h"
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/runtime/mpiruntime.h"

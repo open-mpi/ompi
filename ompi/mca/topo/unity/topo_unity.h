@@ -20,8 +20,6 @@
 #define MCA_TOPO_UNTIY_H
 
 #include "ompi_config.h"
-#include "opal/util/cmd_line.h"
-#include "ompi/request/request.h"
 #include "ompi/mca/topo/topo.h"
 
 /*

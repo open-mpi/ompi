@@ -16,8 +16,6 @@
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_bitmap.h"
 
-#include "orte/util/name_fns.h"
-#include "orte/runtime/orte_globals.h"
 #include "orte/runtime/runtime.h"
 
 typedef struct {

@@ -27,7 +27,6 @@
 
 #include "opal_config.h"
 
-#include "opal/types.h"
 
 #include "opal/dss/dss_types.h"
 

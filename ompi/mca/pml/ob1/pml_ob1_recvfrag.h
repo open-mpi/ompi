@@ -24,7 +24,6 @@
 #define MCA_PML_OB1_RECVFRAG_H
 
 #include "ompi/mca/btl/btl.h"
-#include "ompi/mca/bml/bml.h" 
 #include "pml_ob1_hdr.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)

@@ -63,7 +63,6 @@
 #include "btl_tcp_frag.h"
 #include "btl_tcp_endpoint.h" 
 #include "ompi/mca/btl/base/base.h" 
-#include "ompi/datatype/convertor.h" 
 
 
 mca_btl_tcp_component_t mca_btl_tcp_component = {

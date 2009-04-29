@@ -56,7 +56,6 @@
 
 #include "opal/mca/mca.h"
 
-#include "orte/types.h"
 
 struct ompi_proc_t;
 

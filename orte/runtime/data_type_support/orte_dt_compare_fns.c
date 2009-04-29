@@ -22,7 +22,6 @@
 
 #include <sys/types.h>
 
-#include "opal/dss/dss.h"
 #include "orte/runtime/data_type_support/orte_dt_support.h"
 
 int orte_dt_compare_std_cntr(orte_std_cntr_t *value1, orte_std_cntr_t *value2, opal_data_type_t type)

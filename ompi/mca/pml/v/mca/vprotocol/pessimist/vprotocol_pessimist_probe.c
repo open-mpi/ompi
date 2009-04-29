@@ -9,7 +9,6 @@
  */
 
 #include "ompi_config.h"
-#include "ompi/request/request.h"
 #include "vprotocol_pessimist.h"
 
 static inline int replay_iprobe(int src, int tag,

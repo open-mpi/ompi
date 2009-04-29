@@ -58,18 +58,15 @@
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "orte/util/show_help.h"
-#include "opal/util/trace.h"
 #include "opal/util/basename.h"
 #include "opal/util/opal_environ.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/util/univ_info.h"
-#include "orte/util/session_dir.h"
 
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/params.h"
-#include "opal/dss/dss.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ras/ras_types.h"

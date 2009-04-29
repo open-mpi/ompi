@@ -12,7 +12,6 @@
 #define MCA_ROUTED_BINOMIAL_H
 
 #include "orte_config.h"
-#include "orte/types.h"
 
 #include "orte/mca/routed/routed.h"
 

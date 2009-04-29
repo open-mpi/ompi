@@ -23,7 +23,6 @@
 #include "orte_config.h"
 #include "orte/types.h"
 
-#include "opal/dss/dss.h"
 
 #include "orte/mca/snapc/snapc.h"
 

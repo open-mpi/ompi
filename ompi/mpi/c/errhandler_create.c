@@ -19,6 +19,8 @@
 #include "ompi_config.h"
 
 #include "ompi/mpi/c/bindings.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/errhandler/errhandler.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Errhandler_create = PMPI_Errhandler_create

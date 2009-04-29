@@ -24,10 +24,8 @@
 #include "ompi_config.h"
 
 #include "opal/class/opal_list.h"
-#include "ompi/class/ompi_rb_tree.h"
 #include "opal/mca/mca.h"
 #include "ompi/mca/rcache/rcache.h"
-#include "opal/threads/mutex.h" 
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

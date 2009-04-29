@@ -22,7 +22,6 @@
 #include <string.h>
 
 #include "ompi/mca/pml/pml.h"
-#include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/pml/crcpw/pml_crcpw.h"
 #include "ompi/mca/bml/base/base.h"

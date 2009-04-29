@@ -62,7 +62,6 @@
 #include "evsignal.h"
 #include "evutil.h"
 #include "log.h"
-#include "opal/util/output.h"
 
 struct event_base *evsignal_base = NULL;
 

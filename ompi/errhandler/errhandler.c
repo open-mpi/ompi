@@ -27,7 +27,6 @@
 
 #include "ompi/communicator/communicator.h"
 #include "ompi/win/win.h"
-#include "ompi/file/file.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/errhandler/errhandler_predefined.h"
 #include "opal/class/opal_pointer_array.h"

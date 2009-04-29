@@ -30,7 +30,6 @@
 #include "mpi.h"
 #include "ompi/constants.h"
 
-#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_object.h"

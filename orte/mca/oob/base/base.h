@@ -24,7 +24,6 @@
 #define _MCA_OOB_BASE_H_
 
 #include "orte_config.h"
-#include "orte/types.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>

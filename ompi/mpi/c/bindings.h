@@ -21,9 +21,7 @@
 
 #include "ompi_config.h"
 #include "mpi.h"
-#include "ompi/communicator/communicator.h"
 #include "ompi/datatype/datatype.h"
-#include "ompi/runtime/params.h"
 
 /* This library needs to be here so that we can define
  * the OPAL_CR_* checks

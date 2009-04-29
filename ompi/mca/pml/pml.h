@@ -62,7 +62,6 @@
 #define MCA_PML_H
 
 #include "ompi_config.h"
-#include "opal/class/opal_list.h"
 #include "opal/mca/mca.h"
 #include "mpi.h" /* needed for MPI_ANY_TAG */
 

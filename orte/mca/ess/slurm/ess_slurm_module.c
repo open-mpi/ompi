@@ -51,8 +51,6 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/argv.h"
 #include "opal/class/opal_pointer_array.h"
-#include "opal/util/if.h"
-#include "opal/util/net.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/paffinity/paffinity.h"
 

@@ -20,7 +20,6 @@
 #include <errno.h>
 
 #include "orte/util/show_help.h"
-#include "ompi/mca/btl/btl.h"
 
 #include "ompi/mca/btl/base/base.h"
 #include "btl_openib.h"

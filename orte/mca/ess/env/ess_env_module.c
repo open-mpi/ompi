@@ -30,25 +30,18 @@
 #endif
 
 #include "opal/event/event.h"
-#include "opal/threads/mutex.h"
 #include "opal/runtime/opal.h"
-#include "opal/runtime/opal_cr.h"
-#include "opal/class/opal_pointer_array.h"
 #include "opal/mca/paffinity/paffinity.h"
 
 #include "orte/util/show_help.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "opal/util/os_path.h"
 #include "opal/util/output.h"
-#include "opal/util/cmd_line.h"
 #include "opal/util/malloc.h"
-#include "opal/util/argv.h"
 
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/rml/rml_types.h"
-#include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/errmgr/base/base.h"
@@ -58,7 +51,6 @@
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ras/base/base.h"
 #include "orte/mca/plm/base/base.h"
-#include "orte/mca/odls/base/base.h"
 
 #include "orte/mca/rmaps/base/base.h"
 #if OPAL_ENABLE_FT == 1
@@ -67,7 +59,6 @@
 #include "orte/mca/filem/base/base.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
-#include "orte/util/hnp_contact.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/nidmap.h"
 

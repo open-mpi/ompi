@@ -31,9 +31,7 @@
 
 #include <lsf/lsbatch.h>
 
-#include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
-#include "opal/class/opal_pointer_array.h"
 #include "opal/mca/paffinity/paffinity.h"
 
 #include "orte/util/show_help.h"

@@ -33,7 +33,6 @@
 #include "opal/util/path.h"
 #include "opal/util/os_path.h"
 #include "opal/util/argv.h"
-#include "opal/util/output.h"
 
 static void path_env_load(char *path, int *pargc, char ***pargv);
 static char *list_env_get(char *var, char **list);

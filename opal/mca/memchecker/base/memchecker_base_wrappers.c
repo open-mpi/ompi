@@ -14,7 +14,6 @@
 
 #if OMPI_WANT_MEMCHECKER
 
-#include "opal/constants.h"
 #include "opal/mca/memchecker/memchecker.h"
 #include "opal/mca/memchecker/base/base.h"
 

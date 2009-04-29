@@ -19,8 +19,6 @@
 #ifndef MCA_BTL_PORTALS_ENDPOINT_H
 #define MCA_BTL_PORTALS_ENDPOINT_H
 
-#include "opal/class/opal_list.h"
-#include "ompi/mca/btl/btl.h"
 #include "btl_portals.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)

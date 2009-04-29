@@ -27,7 +27,6 @@
 #define OPAL_DSS_TYPES_H_
 
 #include "opal_config.h"
-#include "opal/types.h"
 
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_list.h"

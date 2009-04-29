@@ -14,7 +14,6 @@
 #include <sys/time.h>
 #include <time.h>
 #include "ompi/types.h"
-#include "opal/dss/dss.h"
 #include "btl_elan.h"
 #include "btl_elan_endpoint.h" 
 #include "btl_elan_proc.h"

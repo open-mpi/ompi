@@ -31,8 +31,6 @@
 
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/output.h"
-#include "opal/threads/mutex.h"
-#include "opal/threads/condition.h"
 #include "opal/class/opal_pointer_array.h"
 
 #include "opal/dss/dss.h"

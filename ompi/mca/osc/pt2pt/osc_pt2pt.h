@@ -26,7 +26,6 @@
 
 #include "ompi/win/win.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/request/request.h"
 #include "ompi/mca/osc/osc.h"
 
 BEGIN_C_DECLS

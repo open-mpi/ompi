@@ -28,15 +28,11 @@
 #include "orte/types.h"
 
 #include "opal/class/opal_list.h"
-#include "opal/class/opal_pointer_array.h"
-#include "opal/class/opal_value_array.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 #include "opal/dss/dss_types.h"
 
 #include "orte/mca/grpcomm/grpcomm_types.h"
-#include "orte/mca/plm/plm_types.h"
-#include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/runtime/orte_globals.h"
 

@@ -51,7 +51,6 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
-#include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/proc/proc.h"
 #include "coll_sm.h"

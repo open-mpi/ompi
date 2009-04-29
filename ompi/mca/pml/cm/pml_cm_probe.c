@@ -11,7 +11,6 @@
 #include "ompi_config.h"
 
 #include "opal/runtime/opal_progress.h"
-#include "ompi/request/request.h"
 #include "ompi/mca/mtl/mtl.h"
 
 #include "pml_cm.h"

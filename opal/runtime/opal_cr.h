@@ -26,7 +26,6 @@
 #include "opal_config.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/event/event.h"
-#include "opal/runtime/opal_progress.h"
 #include "opal/util/output.h"
 #include "opal/prefetch.h"
 

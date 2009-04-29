@@ -29,7 +29,6 @@
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
 #include "opal/class/opal_bitmap.h"
-#include "opal/util/if.h"
 #include "opal/util/output.h"
 #include "opal/util/arch.h"
 
@@ -46,7 +45,6 @@
 #include "btl_openib_endpoint.h"
 #include "btl_openib_xrc.h"
 #include "ompi/datatype/convertor.h"
-#include "ompi/datatype/datatype.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/mpool/rdma/mpool_rdma.h"

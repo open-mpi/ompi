@@ -21,12 +21,7 @@
 #define ORTERUN_ORTERUN_H
 
 #include "orte_config.h"
-
-#include "opal/threads/condition.h"
 #include "opal/threads/mutex.h"
-#include "opal/util/cmd_line.h"
-
-#include "orte/runtime/orte_globals.h"
 
 BEGIN_C_DECLS
 

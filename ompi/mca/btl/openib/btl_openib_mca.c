@@ -27,7 +27,6 @@
 
 #include "opal/mca/installdirs/installdirs.h"
 #include "orte/util/show_help.h"
-#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "btl_openib.h"

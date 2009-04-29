@@ -43,7 +43,6 @@
 #include "orte/util/show_help.h"
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/rml/rml_types.h"
-#include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/errmgr/base/base.h"

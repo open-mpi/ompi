@@ -17,7 +17,6 @@
 #include "ompi_config.h"
 
 #include "ompi/communicator/communicator.h"
-#include "opal/class/opal_list.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "ompi/mca/pml/base/base.h"

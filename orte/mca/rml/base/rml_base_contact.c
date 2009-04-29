@@ -29,7 +29,6 @@
 #include "orte/mca/routed/routed.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/mca/grpcomm/grpcomm.h"
 
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/rml_contact.h"

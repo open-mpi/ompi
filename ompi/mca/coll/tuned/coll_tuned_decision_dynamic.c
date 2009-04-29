@@ -28,7 +28,6 @@
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 #include "coll_tuned.h"
-#include "opal/util/bit_ops.h"
 
 #include "coll_tuned.h"
 

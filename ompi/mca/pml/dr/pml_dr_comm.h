@@ -23,7 +23,6 @@
 #define MCA_PML_DR_COMM_H
 
 #include "opal/class/opal_list.h"
-#include "ompi/class/ompi_seq_tracker.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/proc/proc.h"
 #include "pml_dr_endpoint.h"

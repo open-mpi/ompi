@@ -22,8 +22,6 @@
 #include "ompi_config.h"
 #include "opal/prefetch.h"
 #include "opal/util/opal_environ.h"
-#include "opal/util/if.h"
-#include "opal/util/argv.h"
 #include "ompi/constants.h"
 
 #include "opal/mca/base/mca_base_param.h"

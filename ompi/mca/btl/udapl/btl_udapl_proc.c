@@ -21,7 +21,6 @@
 
 #include "ompi_config.h"
 
-#include "opal/class/opal_hash_table.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 #include "opal/util/net.h"
 #include "btl_udapl.h"

@@ -21,7 +21,6 @@
 #include <unistd.h>
 
 #include "opal/runtime/opal.h"
-#include "opal/constants.h"
 #include "opal/mca/timer/base/base.h"
 
 int

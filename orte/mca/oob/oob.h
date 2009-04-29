@@ -30,7 +30,6 @@
 #include <unistd.h>
 #endif
 
-#include "opal/types.h"
 #include "opal/mca/mca.h"
 
 #include "orte/mca/rml/rml.h"

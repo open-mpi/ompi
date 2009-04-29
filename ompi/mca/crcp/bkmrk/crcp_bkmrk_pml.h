@@ -29,10 +29,6 @@
 #include "opal/mca/mca.h"
 #include "ompi/mca/crcp/crcp.h"
 #include "ompi/communicator/communicator.h"
-#include "opal/runtime/opal_cr.h"
-#include "opal/threads/mutex.h"
-#include "opal/threads/condition.h"
-#include "ompi/class/ompi_free_list.h"
 
 #include "ompi/mca/crcp/bkmrk/crcp_bkmrk.h"
 

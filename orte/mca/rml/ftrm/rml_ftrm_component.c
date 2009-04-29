@@ -18,7 +18,6 @@
 
 #include "orte_config.h"
 
-#include "orte/util/name_fns.h"
 
 #include "opal/mca/base/base.h"
 #include "opal/util/output.h"
@@ -26,7 +25,6 @@
 
 
 #include "orte/mca/rml/base/base.h"
-#include "orte/mca/rml/rml_types.h"
 
 #include "rml_ftrm.h"
 

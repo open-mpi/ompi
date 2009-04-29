@@ -26,7 +26,6 @@
 #include "ompi_config.h"
 
 #include "ompi/constants.h"
-#include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
 #include "orte/util/show_help.h"
 #include "coll_sm.h"

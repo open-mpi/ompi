@@ -28,7 +28,6 @@
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 
-#include "orte/mca/oob/oob.h"
 #include "rml_oob.h"
 
 static void

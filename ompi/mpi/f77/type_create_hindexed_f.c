@@ -19,8 +19,6 @@
 #include "ompi_config.h"
 
 #include "ompi/mpi/f77/bindings.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/communicator/communicator.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_TYPE_CREATE_HINDEXED = mpi_type_create_hindexed_f

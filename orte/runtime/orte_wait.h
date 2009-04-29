@@ -38,11 +38,11 @@
 
 #include "opal/dss/dss.h"
 #include "opal/util/output.h"
-#include "opal/class/opal_list.h"
 #include "opal/sys/atomic.h"
 #include "opal/event/event.h"
 #include "opal/runtime/opal_progress.h"
 
+#include "orte/types.h"
 #include "orte/mca/rml/rml_types.h"
 
 BEGIN_C_DECLS

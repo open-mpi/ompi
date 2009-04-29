@@ -28,7 +28,6 @@
 
 #include <errno.h>
 
-#include "opal/class/opal_list.h"
 
 #include "orte/mca/oob/oob.h"
 #include "oob_tcp_hdr.h"

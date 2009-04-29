@@ -27,7 +27,6 @@
 #endif  /* HAVE_STRING_H */
 
 #include "opal/util/argv.h"
-#include "opal/util/strncpy.h"
 #include "opal/constants.h"
 
 #define ARGSIZE 128

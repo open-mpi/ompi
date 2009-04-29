@@ -12,7 +12,6 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "ompi/communicator/communicator.h"
 #include "vprotocol_pessimist.h"
 
 static inline int mca_param_register_int( const char* param_name, int default_value);

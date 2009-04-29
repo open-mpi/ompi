@@ -71,7 +71,6 @@
 #include "opal/class/opal_list.h"
 #include "opal/util/if.h"
 #include "opal/util/output.h"
-#include "opal/util/strncpy.h"
 #include "opal/constants.h"
 #include "opal/mca/base/mca_base_param.h"
 

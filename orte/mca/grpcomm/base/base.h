@@ -28,8 +28,6 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/mca/mca.h"
-#include "opal/threads/mutex.h"
-#include "opal/threads/condition.h"
 
 #include "orte/mca/grpcomm/grpcomm.h"
 

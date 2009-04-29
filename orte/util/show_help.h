@@ -31,7 +31,6 @@
 #include "orte_config.h"
 #include "orte/types.h"
 
-#include "opal/util/output.h"
 
 #include "orte/mca/rml/rml_types.h"
 

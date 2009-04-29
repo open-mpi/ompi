@@ -17,7 +17,6 @@
  */
 
 #include "opal_config.h"
-#include "opal/constants.h"
 
 
 #include <stdio.h>

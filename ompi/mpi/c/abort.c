@@ -20,6 +20,8 @@
 
 #include "orte/util/show_help.h"
 #include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
+#include "ompi/errhandler/errhandler.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/memchecker.h"
 #include "ompi/communicator/communicator.h"

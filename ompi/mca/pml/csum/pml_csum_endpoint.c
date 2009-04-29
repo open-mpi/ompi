@@ -20,7 +20,6 @@
 
 #include <string.h>
 
-#include "ompi/mca/pml/pml.h"
 #include "pml_csum_endpoint.h"
 
 

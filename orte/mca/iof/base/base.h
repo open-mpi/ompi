@@ -42,8 +42,6 @@
 #include <signal.h>
 #endif
 
-#include "opal/class/opal_free_list.h"
-#include "opal/threads/condition.h"
 #include "opal/mca/mca.h"
 
 #include "orte/mca/iof/iof.h"

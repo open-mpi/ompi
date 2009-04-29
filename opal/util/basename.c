@@ -29,7 +29,6 @@
 
 #include "opal/util/basename.h"
 #include "opal/util/os_path.h"
-#include "opal/constants.h"
 
 /**
  * Return a pointer into the original string where the last PATH delimiter

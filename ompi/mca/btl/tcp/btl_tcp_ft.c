@@ -22,7 +22,6 @@
 
 #include <string.h>
 
-#include "ompi/mca/btl/btl.h"
 
 #include "btl_tcp.h"
 #include "btl_tcp_frag.h" 

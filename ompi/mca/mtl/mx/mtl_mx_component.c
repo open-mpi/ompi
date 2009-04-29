@@ -20,7 +20,6 @@
 
 #include "opal/event/event.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "ompi/datatype/convertor.h"
 #include "ompi/mca/mtl/base/base.h"
 #include "ompi/mca/common/mx/common_mx.h"
 

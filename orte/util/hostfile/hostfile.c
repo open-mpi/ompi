@@ -33,8 +33,6 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/util/if.h"
-#include "opal/util/os_path.h"
-#include "opal/util/path.h"
 #include "opal/mca/installdirs/installdirs.h"
 
 #include "orte/util/show_help.h"

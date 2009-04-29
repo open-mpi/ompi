@@ -35,8 +35,9 @@
 #include "opal/util/argv.h"
 
 #include "orte/constants.h"
-#include "orte/runtime/orte_globals.h"
+#include "orte/runtime/orte_wait.h"
 #include "orte/util/show_help.h"
+#include "orte/util/proc_info.h"
 
 #include "notifier_command.h"
 

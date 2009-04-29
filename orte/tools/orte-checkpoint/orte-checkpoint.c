@@ -56,8 +56,6 @@
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
-#include "opal/util/os_path.h"
-#include "opal/util/os_dirpath.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/crs/crs.h"

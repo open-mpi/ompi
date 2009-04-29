@@ -43,20 +43,10 @@
 #endif
 
 
-#include "opal/class/opal_pointer_array.h"
 #include "opal/event/event.h"
 #include "opal/mca/base/base.h"
-#include "opal/threads/mutex.h"
-#include "opal/threads/condition.h"
-#include "opal/util/bit_ops.h"
 #include "opal/util/output.h"
-#include "opal/util/cmd_line.h"
-#include "opal/util/daemon_init.h"
 #include "opal/util/opal_environ.h"
-#include "opal/util/os_path.h"
-#include "opal/util/printf.h"
-#include "opal/util/trace.h"
-#include "opal/util/argv.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -67,10 +57,8 @@
 #include "orte/util/name_fns.h"
 
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
-#include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/plm/plm.h"

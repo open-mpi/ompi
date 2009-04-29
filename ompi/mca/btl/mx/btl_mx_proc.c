@@ -18,7 +18,6 @@
 
 #include "ompi_config.h"
 
-#include "opal/class/opal_hash_table.h"
 #include "orte/util/name_fns.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 

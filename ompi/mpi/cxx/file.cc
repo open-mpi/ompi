@@ -16,7 +16,6 @@
 
 #include "ompi/constants.h"
 #include "ompi/mpi/cxx/mpicxx.h"
-#include "opal/threads/mutex.h"
 #include "opal/class/opal_list.h"
 #include "ompi/file/file.h"
 #include "ompi/errhandler/errhandler.h"

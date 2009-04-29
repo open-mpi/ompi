@@ -27,7 +27,6 @@
 #define MCA_PML_CSUM_RECVFRAG_H
 
 #include "ompi/mca/btl/btl.h"
-#include "ompi/mca/bml/bml.h" 
 #include "pml_csum_hdr.h"
 
 BEGIN_C_DECLS

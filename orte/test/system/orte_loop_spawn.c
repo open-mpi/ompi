@@ -8,7 +8,6 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/util/name_fns.h"
 
 int main(int argc, char* argv[])
 {

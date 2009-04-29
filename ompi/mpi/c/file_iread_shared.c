@@ -20,6 +20,8 @@
 #include "ompi_config.h"
 
 #include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
+#include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/file/file.h"
 #include "ompi/mca/io/io.h"

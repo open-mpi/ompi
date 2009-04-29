@@ -37,7 +37,6 @@
 
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_list.h"
-#include "opal/class/opal_hash_table.h"
 #include "opal/mca/base/mca_base_param.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)

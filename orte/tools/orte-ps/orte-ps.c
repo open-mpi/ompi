@@ -55,9 +55,7 @@
 
 #include "opal/util/cmd_line.h"
 #include "opal/util/output.h"
-#include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
-#include "opal/util/os_path.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/runtime/opal.h"
@@ -65,10 +63,7 @@
 #include "opal/runtime/opal_cr.h"
 #endif
 
-#include "opal/dss/dss.h"
 #include "orte/runtime/runtime.h"
-#include "opal/util/os_path.h"
-#include "orte/util/session_dir.h"
 #include "orte/util/hnp_contact.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"

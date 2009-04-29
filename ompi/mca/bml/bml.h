@@ -30,7 +30,6 @@
 #include "opal/mca/mca.h"
 
 #include "ompi/mca/btl/btl.h"
-#include "ompi/class/ompi_free_list.h"
 
 #include "ompi/mca/bml/base/bml_base_btl.h"
 #include "ompi/types.h"

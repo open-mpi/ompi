@@ -31,7 +31,6 @@
 #include "osc_pt2pt_buffer.h"
 
 #include "opal/threads/mutex.h"
-#include "opal/util/arch.h"
 
 #include "ompi/info/info.h"
 #include "ompi/communicator/communicator.h"

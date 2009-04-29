@@ -23,11 +23,9 @@
 #define ORTE_UTIL_DASH_HOST_H
 
 #include "orte_config.h"
-#include "orte/types.h"
 
 #include "opal/class/opal_list.h"
 
-#include "orte/mca/plm/plm_types.h"
 
 BEGIN_C_DECLS
 

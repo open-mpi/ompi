@@ -21,7 +21,6 @@
 #include "ompi_config.h"
 
 #include "ompi/constants.h"
-#include "opal/dss/dss.h"
 
 #include "ompi/mca/crcp/crcp.h"
 

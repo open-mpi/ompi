@@ -39,7 +39,6 @@
 #include "orte/util/name_fns.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/proc/proc.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/params.h"
 #include "ompi/debuggers/debuggers.h"

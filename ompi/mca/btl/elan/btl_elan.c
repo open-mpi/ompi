@@ -11,10 +11,8 @@
 
 #include "ompi_config.h"
 #include "opal/class/opal_bitmap.h"
-#include "opal/util/if.h"
 #include "opal/util/output.h"
 #include "ompi/mca/btl/btl.h"
-#include "ompi/communicator/communicator.h"
 #include "btl_elan.h"
 #include "btl_elan_frag.h" 
 #include "btl_elan_proc.h"
@@ -22,8 +20,6 @@
 
 #include "ompi/datatype/convertor.h" 
 #include "ompi/mca/btl/base/base.h" 
-#include "ompi/runtime/ompi_module_exchange.h"
-#include "opal/class/opal_hash_table.h"   
 
 #include <stdio.h>
 #include "elan/elan.h"

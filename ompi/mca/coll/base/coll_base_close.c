@@ -23,7 +23,6 @@
 #include "ompi/constants.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
 
 

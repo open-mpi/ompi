@@ -31,7 +31,6 @@
  */
 #include "orte_config.h"
 #include "orte/constants.h"
-#include "orte/types.h"
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_param.h"

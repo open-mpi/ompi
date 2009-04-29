@@ -32,7 +32,6 @@
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/attribute/attribute.h"
-#include "ompi/mca/topo/topo.h"
 #include "ompi/mca/dpm/dpm.h"
 #include "ompi/memchecker.h"
 

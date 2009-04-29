@@ -50,7 +50,6 @@
 
 #include "ompi/types.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
-#include "opal/util/if.h"
 #include "opal/util/net.h"
 
 #include "btl_tcp.h"

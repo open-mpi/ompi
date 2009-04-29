@@ -21,7 +21,6 @@
 #include "ompi_config.h"
 #include "ompi/group/group.h"
 #include "ompi/constants.h"
-#include "ompi/proc/proc.h"
 #include "mpi.h"
 
 static int check_stride(int[],int);

@@ -25,7 +25,6 @@
 #include <float.h>
 #include <assert.h>
 
-#include "opal/constants.h"
 
 /***************************************************
 ** This file tries to classify the most relevant

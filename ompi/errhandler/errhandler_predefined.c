@@ -31,13 +31,11 @@
 
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
-#include "ompi/errhandler/errhandler.h"
 #include "ompi/errhandler/errhandler_predefined.h"
 #include "ompi/errhandler/errcode.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/file/file.h"
 #include "ompi/win/win.h"
-#include "orte/runtime/runtime.h"
 #include "opal/util/printf.h"
 #include "opal/util/output.h"
 

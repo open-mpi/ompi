@@ -28,13 +28,9 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "opal/util/trace.h"
 #include "opal/util/output.h"
 #include "opal/util/path.h"
 #include "opal/util/argv.h"
-#include "opal/class/opal_value_array.h"
-#include "opal/class/opal_pointer_array.h"
-#include "opal/dss/dss.h"
 
 #include "orte/mca/plm/plm_types.h"
 #include "orte/util/name_fns.h"

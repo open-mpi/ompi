@@ -24,7 +24,6 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "opal/util/argv.h"
 #include "orte/util/show_help.h"
 #include "opal/util/os_path.h"
 

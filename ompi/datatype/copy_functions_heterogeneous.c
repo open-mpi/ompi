@@ -14,7 +14,6 @@
 
 #include "opal/util/arch.h"
 
-#include "opal/types.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/datatype/convertor.h"
 #include "ompi/datatype/datatype_internal.h"

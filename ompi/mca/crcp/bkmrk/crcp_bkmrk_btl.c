@@ -22,9 +22,7 @@
 #endif  /* HAVE_UNIST_H */
 
 #include "opal/class/opal_bitmap.h"
-#include "opal/runtime/opal_cr.h"
 #include "opal/event/event.h"
-#include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/mca.h"

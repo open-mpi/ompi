@@ -22,7 +22,6 @@
 #include "opal_config.h"
 
 #include "opal/class/opal_list.h"
-#include "opal/threads/threads.h"
 #include "opal/threads/condition.h"
 #include "opal/constants.h"
 #include "opal/prefetch.h"

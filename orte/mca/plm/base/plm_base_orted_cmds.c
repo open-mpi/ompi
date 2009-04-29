@@ -27,8 +27,6 @@
 #include <sys/time.h>
 #endif
 
-#include "opal/util/argv.h"
-#include "opal/util/trace.h"
 
 #include "opal/dss/dss.h"
 #include "orte/mca/odls/odls_types.h"

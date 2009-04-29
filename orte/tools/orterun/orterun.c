@@ -50,7 +50,6 @@
 #include "opal/event/event.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/base/base.h"
-#include "opal/threads/condition.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/basename.h"
@@ -58,7 +57,6 @@
 #include "opal/util/opal_environ.h"
 #include "opal/util/opal_getcwd.h"
 #include "orte/util/show_help.h"
-#include "opal/util/trace.h"
 #include "opal/sys/atomic.h"
 #if OPAL_ENABLE_FT == 1
 #include "opal/runtime/opal_cr.h"
@@ -66,7 +64,6 @@
 
 #include "opal/version.h"
 #include "opal/runtime/opal.h"
-#include "opal/util/os_dirpath.h"
 #include "opal/util/os_path.h"
 #include "opal/util/path.h"
 #include "opal/class/opal_pointer_array.h"
@@ -75,13 +72,10 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/pre_condition_transports.h"
 #include "orte/util/session_dir.h"
-#include "orte/util/name_fns.h"
 #include "orte/util/hnp_contact.h"
-#include "orte/util/parse_options.h"
 
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/plm/plm.h"
-#include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/rml/base/rml_contact.h"

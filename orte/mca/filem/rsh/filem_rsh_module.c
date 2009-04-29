@@ -44,7 +44,6 @@
 #include "opal/util/opal_environ.h"
 
 #include "opal/threads/mutex.h"
-#include "opal/threads/threads.h"
 #include "opal/threads/condition.h"
 
 #include "orte/util/name_fns.h"

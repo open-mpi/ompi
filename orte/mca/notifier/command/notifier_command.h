@@ -27,7 +27,6 @@
 #include <unistd.h>
 #endif
 
-#include "orte/types.h"
 #include "orte/mca/notifier/notifier.h"
 
 BEGIN_C_DECLS

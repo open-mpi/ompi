@@ -26,7 +26,6 @@
 #endif  /* HAVE_SYS_MMAN_H */
 
 #include "opal/constants.h"
-#include "opal/util/output.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/memoryhooks/memory_internal.h"
 #include "opal/class/opal_list.h"

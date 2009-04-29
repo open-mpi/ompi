@@ -21,7 +21,6 @@
 
 #include "ompi_config.h"
 
-#include "orte/types.h"
 
 #include "ompi/mca/dpm/dpm.h"
 

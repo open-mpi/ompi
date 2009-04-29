@@ -19,7 +19,6 @@
 #include "ompi_config.h"
 
 #include "ompi/mca/mtl/mtl.h"
-#include "ompi/communicator/communicator.h"
 #include "opal/class/opal_list.h"
 
 #include "mtl_portals.h"

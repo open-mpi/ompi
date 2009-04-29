@@ -21,7 +21,6 @@
 #include "opal/event/event.h"
 #include "mpi.h"
 #include "ompi/mca/bml/bml.h"
-#include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "bml_r2.h"

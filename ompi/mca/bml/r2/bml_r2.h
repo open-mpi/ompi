@@ -30,7 +30,6 @@
 #define MCA_BML_R2_H
 
 #include "ompi/types.h"
-#include "ompi/class/ompi_free_list.h"
 #include "ompi/mca/bml/bml.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)

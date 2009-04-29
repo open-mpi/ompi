@@ -18,7 +18,6 @@
 
 #include "opal_config.h"
 
-#include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 
 

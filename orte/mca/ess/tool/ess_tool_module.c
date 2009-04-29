@@ -29,7 +29,6 @@
 #include <unistd.h>
 #endif
 
-#include "opal/runtime/opal_cr.h"
 
 #include "orte/util/show_help.h"
 #include "orte/mca/plm/base/base.h"

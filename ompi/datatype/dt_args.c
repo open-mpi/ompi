@@ -22,7 +22,6 @@
 #include "opal/align.h"
 #include "ompi/constants.h"
 
-#include "orte/types.h"
 
 #include "mpi.h"
 #include "ompi/datatype/datatype.h"

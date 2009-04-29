@@ -32,14 +32,10 @@
 #include <sys/time.h>
 #endif  /* HAVE_SYS_TIME_H */
 
-#include "opal/threads/condition.h"
-#include "opal/util/bit_ops.h"
 #include "opal/util/output.h"
 
-#include "opal/class/opal_hash_table.h"
 #include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/odls/odls_types.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/runtime/orte_globals.h"

@@ -33,7 +33,6 @@
 #include <unistd.h>
 
 #include "opal/util/show_help.h"
-#include "opal/util/output.h"
 
 #include "orte/version.h"
 #include "orte/constants.h"

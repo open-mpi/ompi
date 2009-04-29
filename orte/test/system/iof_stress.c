@@ -2,7 +2,6 @@
 #include <signal.h>
 #include <math.h>
 
-#include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 
 #include "orte/runtime/runtime.h"

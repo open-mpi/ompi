@@ -41,9 +41,6 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/argv.h"
 #include "opal/class/opal_pointer_array.h"
-#include "opal/util/if.h"
-#include "opal/util/net.h"
-#include "opal/dss/dss.h"
 #include "opal/mca/paffinity/paffinity.h"
 
 #include "orte/util/proc_info.h"
@@ -53,7 +50,6 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/nidmap.h"
 #include "orte/util/regex.h"
-#include "orte/mca/rml/base/rml_contact.h"
 #include "orte/runtime/orte_wait.h"
 
 #include "orte/mca/ess/ess.h"

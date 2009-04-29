@@ -22,7 +22,9 @@
 #include <string.h>
 
 #include "ompi/mpi/c/bindings.h"
-#include "opal/util/strncpy.h"
+#include "ompi/runtime/params.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/errhandler/errhandler.h"
 #include "ompi/totalview.h"
 #include "opal/threads/mutex.h"
 #include "ompi/memchecker.h"

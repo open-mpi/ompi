@@ -49,26 +49,18 @@
 #include "opal/runtime/opal_cr.h"
 
 #include "orte/runtime/orte_cr.h"
-#include "orte/runtime/runtime.h"
 #include "orte/util/proc_info.h"
-#include "orte/util/session_dir.h"
-#include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 
-#include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/base/base.h"
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/rml/base/base.h"
-#include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"
-#include "orte/mca/odls/odls.h"
-#include "orte/mca/odls/base/base.h"
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
-#include "orte/mca/filem/filem.h"
 #include "orte/mca/filem/base/base.h"
 
 /*************

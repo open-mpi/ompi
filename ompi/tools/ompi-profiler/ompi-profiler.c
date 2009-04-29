@@ -21,7 +21,6 @@
 
 #include "opal_config.h"
 #include "opal/constants.h"
-#include "opal/types.h"
 #include "opal/version.h"
 
 #ifdef HAVE_STRING_H
@@ -46,8 +45,6 @@
 #include "opal/runtime/opal.h"
 #include "opal/util/cmd_line.h"
 #include "opal/mca/base/base.h"
-#include "opal/util/os_path.h"
-#include "opal/util/path.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/show_help.h"
 

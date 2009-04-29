@@ -18,7 +18,6 @@
 
 #include "ompi_config.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/request/request.h"
 #include "mtl_portals.h"
 #include "mtl_portals_request.h"
 #include "mtl_portals_recv.h"

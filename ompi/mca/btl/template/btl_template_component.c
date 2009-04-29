@@ -20,18 +20,14 @@
 #include "ompi_config.h"
 #include "ompi/constants.h"
 #include "opal/event/event.h"
-#include "opal/util/if.h"
-#include "opal/util/argv.h"
 #include "ompi/mca/btl/btl.h"
 
 #include "opal/mca/base/mca_base_param.h"
-#include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/mca/mpool/base/base.h" 
 #include "btl_template.h"
 #include "btl_template_frag.h"
 #include "btl_template_endpoint.h" 
 #include "ompi/mca/btl/base/base.h" 
-#include "ompi/datatype/convertor.h" 
 mca_btl_template_component_t mca_btl_template_component = {
     {
         /* First, the mca_base_component_t struct containing meta information

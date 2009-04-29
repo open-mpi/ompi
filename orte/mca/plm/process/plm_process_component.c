@@ -35,7 +35,6 @@
 
 #include "opal/util/argv.h"
 #include "opal/util/path.h"
-#include "opal/util/basename.h"
 #include "opal/util/opal_environ.h"
 #include "opal/mca/base/mca_base_param.h"
 

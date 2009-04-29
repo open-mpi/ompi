@@ -28,11 +28,9 @@
 
 #include "opal/dss/dss.h"
 #include "opal/class/opal_list.h"
-#include "opal/class/opal_value_array.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml_types.h"
-#include "orte/mca/rmaps/rmaps_types.h"
 
 #include "grpcomm_cnos.h"
 

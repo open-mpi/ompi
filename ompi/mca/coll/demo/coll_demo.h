@@ -25,7 +25,6 @@
 #include "mpi.h"
 #include "opal/mca/mca.h"
 #include "ompi/mca/coll/coll.h"
-#include "ompi/request/request.h"
 
 BEGIN_C_DECLS
 

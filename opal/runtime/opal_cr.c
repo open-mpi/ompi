@@ -48,7 +48,6 @@
 
 #include "opal/class/opal_object.h"
 #include "opal/util/opal_environ.h"
-#include "opal/util/trace.h"
 #include "opal/util/output.h"
 #include "opal/util/malloc.h"
 #include "opal/util/if.h"
@@ -71,7 +70,6 @@
 #include "opal/threads/mutex.h"
 #include "opal/threads/threads.h"
 #include "opal/mca/crs/base/base.h"
-#include "opal/threads/condition.h"
 
 /******************
  * Global Var Decls
