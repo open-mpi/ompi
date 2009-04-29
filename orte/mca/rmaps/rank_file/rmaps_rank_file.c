@@ -215,7 +215,7 @@ static int map_app_by_slot(orte_app_context_t* app,
             num_slots_to_take = jdata->map->npernode;
         }
         
-        for( i = 0; i < num_slots_to_take; ++i) {
+        for( i = 0; num_alloc < app->num_procs && i < num_slots_to_take; ++i) {
             if (NULL != opal_pointer_array_get_item(&rankmap, vpid_start+num_alloc)) {
                 /* this rank was already mapped */
                 ++num_alloc;
@@ -482,7 +482,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
                 /* if no bookmark, then just start at the beginning of the list */
                 cur_node_item = opal_list_get_first(&node_list);
             }
-            if (map->policy == ORTE_RMAPS_BYNODE) {
+            if (map->policy & ORTE_RMAPS_BYNODE) {
                 rc = map_app_by_node(app, jdata, vpid_start, &node_list);
             } else {
                 rc = map_app_by_slot(app, jdata, vpid_start, &node_list);
