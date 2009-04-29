@@ -24,6 +24,9 @@
 
 
 #include "mpi.h"
+
+#include "opal/types.h"
+
 #include "ompi/datatype/datatype.h"
 #include "ompi/datatype/datatype_internal.h"
 #include "ompi/proc/proc.h"
