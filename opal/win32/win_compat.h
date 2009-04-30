@@ -209,6 +209,15 @@ typedef unsigned int uint;
 #define in_addr_t uint32_t
 
 /*
+ * No syslog.h on Windows, but these have to be defined somehow.
+ * There could also be a notifier component later for Windows.
+ */
+
+#define LOG_CRIT    2
+#define LOG_WARNING 4
+#define LOG_NOTICE  5
+
+/*
  * Mask these to Windows equivalents
  */
 #define bzero(p, l) memset(p, 0, l)
