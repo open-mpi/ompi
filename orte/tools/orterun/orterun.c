@@ -369,6 +369,7 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line);
 static int parse_locals(int argc, char* argv[]);
 static int parse_appfile(char *filename, char ***env);
 static void dump_aborted_procs(void);
+static void just_quit(int fd, short ign, void *arg);
 
 
 int orterun(int argc, char *argv[])
@@ -754,29 +755,8 @@ int orterun(int argc, char *argv[])
      * to an error - so just cleanup and leave
      */
 DONE:
-    if (signals_set) {
-        /* Remove the TERM and INT signal handlers */
-        opal_signal_del(&term_handler);
-        opal_signal_del(&int_handler);
-#ifndef __WINDOWS__
-        /** Remove the USR signal handlers */
-        opal_signal_del(&sigusr1_handler);
-        opal_signal_del(&sigusr2_handler);
-        if (orte_forward_job_control) {
-            opal_signal_del(&sigtstp_handler);
-            opal_signal_del(&sigcont_handler);
-        }
-#endif  /* __WINDOWS__ */
-    }
-
-    /* whack any lingering session directory files from our jobs */
-    orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
-    
-    /* cleanup our data server */
-    orte_data_server_finalize();
-    
-    orte_finalize();
-    free(orterun_basename);
+    ORTE_UPDATE_EXIT_STATUS(orte_exit_status);
+    just_quit(0,0,NULL);
     return orte_exit_status;
 }
 
@@ -851,31 +831,8 @@ static void job_completed(int trigpipe, short event, void *arg)
      * all we can do is cleanly exit ourselves
      */
 DONE:
-    if (signals_set) {
-        /* Remove the TERM and INT signal handlers */
-        opal_signal_del(&term_handler);
-        opal_signal_del(&int_handler);
-#ifndef __WINDOWS__
-        /** Remove the USR signal handlers */
-        opal_signal_del(&sigusr1_handler);
-        opal_signal_del(&sigusr2_handler);
-        if (orte_forward_job_control) {
-            opal_signal_del(&sigtstp_handler);
-            opal_signal_del(&sigcont_handler);
-        }
-#endif  /* __WINDOWS__ */
-    }
-    
-    /* whack any lingering session directory files from our jobs */
-    orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
-    
-    /* cleanup our data server */
-    orte_data_server_finalize();
-    
-    orte_finalize();
-    free(orterun_basename);
-    exit(rc);
-    
+    ORTE_UPDATE_EXIT_STATUS(rc);
+    just_quit(0, 0, NULL);
 }
 
 static void terminated(int trigpipe, short event, void *arg)
@@ -903,6 +860,7 @@ static void terminated(int trigpipe, short event, void *arg)
             opal_signal_del(&sigcont_handler);
         }
 #endif  /* __WINDOWS__ */
+        signals_set = false;
     }
     
     /* get the daemon job object */
@@ -949,13 +907,34 @@ static void terminated(int trigpipe, short event, void *arg)
     
 finish:
     /* now clean ourselves up and exit */
-    
+    just_quit(0, 0, NULL);
+}
+
+static void just_quit(int fd, short ign, void *arg)
+{
+    if (signals_set) {
+        /* Remove the TERM and INT signal handlers */
+        opal_signal_del(&term_handler);
+        opal_signal_del(&int_handler);
+#ifndef __WINDOWS__
+        /** Remove the USR signal handlers */
+        opal_signal_del(&sigusr1_handler);
+        opal_signal_del(&sigusr2_handler);
+        if (orte_forward_job_control) {
+            opal_signal_del(&sigtstp_handler);
+            opal_signal_del(&sigcont_handler);
+        }
+#endif  /* __WINDOWS__ */
+        signals_set = false;
+    }
+
     /* whack any lingering session directory files from our jobs */
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
-
+    
     /* cleanup our data server */
     orte_data_server_finalize();
     
+    /* cleanup and leave */
     orte_finalize();
     free(orterun_basename);
     if (orte_debug_flag) {
@@ -963,6 +942,7 @@ finish:
     }
     exit(orte_exit_status);
 }
+
 
 /*
  * On abnormal termination - dump the
@@ -1138,23 +1118,21 @@ static void abort_exit_callback(int fd, short ign, void *arg)
      * hit ctrl-c before we had a chance to setup the
      * job in the system - in which case there is nothing
      * to terminate!
-     *
-     * NOTE: we don't have to worry about jdata being NULL
-     * because we don't setup to trap the signals until
-     * after jdata has been OBJ_NEW'd
      */
-    if (jdata->jobid != ORTE_JOBID_INVALID) {
-        /* terminate the job - this will wake us up and
-         * call the "terminated" function so we clean up
-         * and exit
+    if (NULL != jdata &&
+        jdata->jobid != ORTE_JOBID_INVALID &&
+        !orte_never_launched) {
+        /* if the debuggers were run, clean up */
+        orte_debugger_finalize();
+        /* terminate the orteds - they will automatically kill
+         * their local procs
          */
-        ret = orte_plm.terminate_job(ORTE_JOBID_WILDCARD);
+        ret = orte_plm.terminate_orteds();
         if (ORTE_SUCCESS != ret) {
-            /* If we failed the terminate_job() above, then we
-             * need to explicitly wake ourselves up to exit
+            /* If we failed the terminate_orteds() above, then we
+             * need to just die
              */
-            ORTE_UPDATE_EXIT_STATUS(ret);
-            orte_trigger_event(&orte_exit);
+            just_quit(fd, ign, arg);
         }
         /* give ourselves a time limit on how long to wait
          * for the job to die, just in case we can't make it go
@@ -1165,39 +1143,14 @@ static void abort_exit_callback(int fd, short ign, void *arg)
         ORTE_DETECT_TIMEOUT(&abort_exit_event, jdata->num_procs,
                             orte_timeout_usec_per_proc,
                             orte_max_timeout, 
-                            timeout_callback);
+                            just_quit);
         
     } else {
-        /* if the jobid is invalid, then we didn't get to
-         * the point of setting the job up, so there is nothing
-         * to do but just clean ourselves up and exit
+        /* if the jobid is invalid or we never launched,
+         * there is nothing to do but just clean ourselves
+         * up and exit
          */
-        if (signals_set) {
-            /* Remove the TERM and INT signal handlers */
-            opal_signal_del(&term_handler);
-            opal_signal_del(&int_handler);
-#ifndef __WINDOWS__
-            /** Remove the USR signal handlers */
-            opal_signal_del(&sigusr1_handler);
-            opal_signal_del(&sigusr2_handler);
-            if (orte_forward_job_control) {
-                opal_signal_del(&sigtstp_handler);
-                opal_signal_del(&sigcont_handler);
-            }
-#endif  /* __WINDOWS__ */
-        }
-        orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
-        
-        /* need to release jdata separately as it won't be
-         * in the global array, and so won't be released
-         * during finalize
-         */
-        OBJ_RELEASE(jdata);
-
-        orte_finalize();
-        free(orterun_basename);
-        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-        exit(orte_exit_status);
+        just_quit(fd, ign, arg);
     }
 }
 
