@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -19,6 +20,7 @@
 #include "ompi_config.h"
 
 #include <string.h>
+#include <stdio.h>
 
 #include "ompi/constants.h"
 #include "opal/mca/mca.h"
