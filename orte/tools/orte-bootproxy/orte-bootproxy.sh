@@ -50,7 +50,7 @@ if [ "${var}" == "CLEANUP" ]; then
     # remove any session directories from this user
 #    sdir="${TMPDIR}""openmpi-sessions-""${USER}""@"`hostname`"_0"
 #    echo "rm" "${sdir}"
-    sdir="/tmp/openmpi-sessions-""${USER}""@"`hostname`"_0
+    sdir="/tmp/openmpi-sessions-""${USER}""@"`hostname`"_0"
     rm -rf "${sdir}"
     exit 0
 fi

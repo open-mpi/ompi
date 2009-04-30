@@ -157,7 +157,7 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
     char **files;
     bool flag;
     orte_app_context_t **apps, *app;
-    int i;
+    int i, j;
     int rc;
     pid_t pid;
     long fd, fdmax = sysconf(_SC_OPEN_MAX);
@@ -472,8 +472,8 @@ PRELOAD_FILES:
             /* define the destination */
             dest = opal_os_path(false, dest_dir, files[i], NULL);
             /* has this file already been positioned? */
-            for (i=0; i < slave_node->files.size; i++) {
-                if (NULL != (filenm = opal_pointer_array_get_item(&slave_node->files, i)) &&
+            for (j=0; j < slave_node->files.size; j++) {
+                if (NULL != (filenm = opal_pointer_array_get_item(&slave_node->files, j)) &&
                     0 == strcmp(filenm, dest)) {
                     /* this app already has been positioned on the node - skip it */
                     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
