@@ -183,6 +183,13 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
     if (NULL == pml_comm) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
+
+    /* should never happen, but it was, so check */
+    if (comm->c_contextid > mca_pml_ob1.super.pml_max_contextid) {
+        OBJ_RELEASE(pml_comm);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
     mca_pml_ob1_comm_init_size(pml_comm, comm->c_remote_group->grp_proc_count);
     comm->c_pml_comm = pml_comm;
 
