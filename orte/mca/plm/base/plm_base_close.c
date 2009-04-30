@@ -61,8 +61,10 @@ int orte_plm_base_close(void)
     OBJ_DESTRUCT(&orte_plm_globals.orted_cmd_lock);
     OBJ_DESTRUCT(&orte_plm_globals.orted_cmd_cond);
     
+#ifndef __WINDOWS__
     /* clearout the rsh support */
     orte_plm_base_local_slave_finalize();
+#endif
     
     /* remove the rsh agent info */
     if (NULL != orte_plm_globals.rsh_agent_argv) {
