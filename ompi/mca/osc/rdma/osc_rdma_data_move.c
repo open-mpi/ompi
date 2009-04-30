@@ -437,11 +437,15 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
         needed_len += sendreq->req_origin_bytes_packed;
     }
 
-    /* see if we already have a buffer */
-    if ((module->m_pending_buffers[sendreq->req_target_rank].remain_len >=
-         sizeof(ompi_osc_rdma_send_header_t) + sendreq->req_origin_bytes_packed) ||
-        (0 < module->m_pending_buffers[sendreq->req_target_rank].remain_len && 
-         sendreq->req_origin_bytes_packed > 2048)) {
+    /* Reuse the buffer if:
+     *   - The whole message will fit
+     *   - The header and datatype will fit AND the payload would be long anyway
+     * Note that if the datatype is too big for an eager, we'll fall
+     * through and return an error out of the new buffer case */
+    if ((module->m_pending_buffers[sendreq->req_target_rank].remain_len >= needed_len) ||
+        ((sizeof(ompi_osc_rdma_send_header_t) + packed_ddt_len <
+          module->m_pending_buffers[sendreq->req_target_rank].remain_len) && 
+         (needed_len > module->m_pending_buffers[sendreq->req_target_rank].bml_btl->btl->btl_eager_limit))) {
         bml_btl = module->m_pending_buffers[sendreq->req_target_rank].bml_btl;
         descriptor = module->m_pending_buffers[sendreq->req_target_rank].descriptor;
         remain = module->m_pending_buffers[sendreq->req_target_rank].remain_len;
@@ -450,7 +454,6 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
         if (module->m_pending_buffers[sendreq->req_target_rank].descriptor) {
             send_multi_buffer(module, sendreq->req_target_rank);
         }
-        assert(OMPI_SUCCESS == ret);
 
         /* get a buffer... */
         endpoint = (mca_bml_base_endpoint_t*) sendreq->req_target_proc->proc_bml;
@@ -466,8 +469,8 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
         }
 
         /* verify at least enough space for header */
-        if (descriptor->des_src[0].seg_len < sizeof(ompi_osc_rdma_send_header_t)) {
-            ret = OMPI_ERR_OUT_OF_RESOURCE;
+        if (descriptor->des_src[0].seg_len < sizeof(ompi_osc_rdma_send_header_t) + packed_ddt_len) {
+            ret = MPI_ERR_TRUNCATE;
             goto cleanup;
         }
 

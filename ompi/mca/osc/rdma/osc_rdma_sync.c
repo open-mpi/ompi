@@ -139,8 +139,10 @@ ompi_osc_rdma_module_fence(int assert, ompi_win_t *win)
                     opal_list_remove_first(&(module->m_copy_pending_sendreqs));
 
                 ret = ompi_osc_rdma_sendreq_send(module, req);
-                if (OMPI_SUCCESS != ret) {
+                if (OMPI_ERR_TEMP_OUT_OF_RESOURCE == ret) {
                     opal_list_append(&(module->m_copy_pending_sendreqs), (opal_list_item_t*)req);
+                } else if (OMPI_SUCCESS != ret) {
+                    return ret;
                 } else {
                     started_send = 1;
                 }
@@ -168,8 +170,7 @@ ompi_osc_rdma_module_fence(int assert, ompi_win_t *win)
                         if (OPAL_LIKELY(OMPI_SUCCESS == ret)) {
                             module->m_peer_info[i].peer_btls[j].num_sent = 0;
                         } else {
-                            /* BWB - fix me */
-                            abort();
+                            return ret;
                         }
                     }
                 }
@@ -331,8 +332,7 @@ ompi_osc_rdma_module_complete(ompi_win_t *win)
                     if (OPAL_LIKELY(OMPI_SUCCESS == ret)) {
                         module->m_peer_info[comm_rank].peer_btls[j].num_sent = 0;
                     } else {
-                        /* BWB - fix me */
-                        abort();
+                        return ret;
                     }
                 }
             }
@@ -354,9 +354,11 @@ ompi_osc_rdma_module_complete(ompi_win_t *win)
             (ompi_osc_rdma_sendreq_t*) item;
 
         ret = ompi_osc_rdma_sendreq_send(module, req);
-        if (OMPI_SUCCESS != ret) {
+        if (OMPI_ERR_TEMP_OUT_OF_RESOURCE == ret) {
             opal_list_append(&(module->m_copy_pending_sendreqs), item);
             break;
+        } else if (OMPI_SUCCESS != ret) {
+            return ret;
         }
     }
 
@@ -576,9 +578,11 @@ ompi_osc_rdma_module_unlock(int target,
             (ompi_osc_rdma_sendreq_t*) item;
 
         ret = ompi_osc_rdma_sendreq_send(module, req);
-        if (OMPI_SUCCESS != ret) {
+        if (OMPI_ERR_TEMP_OUT_OF_RESOURCE == ret) {
             opal_list_append(&(module->m_copy_pending_sendreqs), item);
             break;
+        } else if (OMPI_SUCCESS != ret) {
+            return ret;
         }
     }
 

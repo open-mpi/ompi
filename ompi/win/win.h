@@ -118,10 +118,10 @@ int ompi_win_create(void *base, size_t size, int disp_unit,
 
 int ompi_win_free(ompi_win_t *win);
 
-int ompi_win_set_name(ompi_win_t *win, char *win_name);
-int ompi_win_get_name(ompi_win_t *win, char *win_name, int *length);
+OMPI_DECLSPEC int ompi_win_set_name(ompi_win_t *win, char *win_name);
+OMPI_DECLSPEC int ompi_win_get_name(ompi_win_t *win, char *win_name, int *length);
 
-int ompi_win_group(ompi_win_t *win, ompi_group_t **group);
+OMPI_DECLSPEC int ompi_win_group(ompi_win_t *win, ompi_group_t **group);
 
 /* Note that the defintion of an "invalid" window is closely related
    to the defintion of an "invalid" communicator.  See a big comment

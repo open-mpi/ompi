@@ -159,7 +159,7 @@ ompi_osc_pt2pt_sendreq_send(ompi_osc_pt2pt_module_t *module,
                             ompi_osc_pt2pt_sendreq_t *sendreq)
 {
     int ret = OMPI_SUCCESS;
-    opal_free_list_item_t *item;
+    opal_free_list_item_t *item = NULL;
     ompi_osc_pt2pt_send_header_t *header = NULL;
     ompi_osc_pt2pt_buffer_t *buffer = NULL;
     size_t written_data = 0;
@@ -173,6 +173,13 @@ ompi_osc_pt2pt_sendreq_send(ompi_osc_pt2pt_module_t *module,
         needed_len += sendreq->req_origin_bytes_packed;
     }
 
+    /* verify at least enough space for header */
+    if (mca_osc_pt2pt_component.p2p_c_eager_size
+        < sizeof(ompi_osc_pt2pt_send_header_t) + packed_ddt_len) {
+        ret = MPI_ERR_TRUNCATE;
+        goto cleanup;
+    }
+
     /* Get a buffer */
     OPAL_FREE_LIST_GET(&mca_osc_pt2pt_component.p2p_c_buffers,
                        item, ret);
@@ -181,12 +188,6 @@ ompi_osc_pt2pt_sendreq_send(ompi_osc_pt2pt_module_t *module,
         goto cleanup;
     }
     buffer = (ompi_osc_pt2pt_buffer_t*) item;
-
-    /* verify at least enough space for header */
-    if (mca_osc_pt2pt_component.p2p_c_eager_size < sizeof(ompi_osc_pt2pt_send_header_t)) {
-        ret = OMPI_ERR_OUT_OF_RESOURCE;
-        goto cleanup;
-    }
 
     /* setup buffer */
     buffer->mpireq.cbfunc = ompi_osc_pt2pt_sendreq_send_cb;
@@ -229,7 +230,7 @@ ompi_osc_pt2pt_sendreq_send(ompi_osc_pt2pt_module_t *module,
     memcpy((unsigned char*) buffer->payload + written_data,
            packed_ddt, packed_ddt_len);
     written_data += packed_ddt_len;
-
+ 
     if (OMPI_OSC_PT2PT_GET != sendreq->req_type) {
         /* if sending data and it fits, pack payload */
         if (mca_osc_pt2pt_component.p2p_c_eager_size >=

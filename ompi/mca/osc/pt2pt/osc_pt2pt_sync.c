@@ -122,13 +122,14 @@ ompi_osc_pt2pt_module_fence(int assert, ompi_win_t *win)
 
             ret = ompi_osc_pt2pt_sendreq_send(module, req);
 
-            if (OMPI_SUCCESS != ret) {
+            if (OMPI_ERR_TEMP_OUT_OF_RESOURCE == ret ) {
                 opal_output_verbose(5, ompi_osc_base_output,
-                                    "fence: failure in starting sendreq (%d).  "
-                                    "Will try later.",
+                                    "complete: failure in starting sendreq (%d).  Will try later.",
                                     ret);
                 opal_list_append(&(module->p2p_copy_pending_sendreqs), item);
-            }
+            } else if (OMPI_SUCCESS != ret) {
+                return ret;
+            } 
         }
 
         OPAL_THREAD_LOCK(&module->p2p_lock);
@@ -266,12 +267,14 @@ ompi_osc_pt2pt_module_complete(ompi_win_t *win)
 
         ret = ompi_osc_pt2pt_sendreq_send(module, req);
 
-        if (OMPI_SUCCESS != ret) {
+        if (OMPI_ERR_TEMP_OUT_OF_RESOURCE == ret ) {
             opal_output_verbose(5, ompi_osc_base_output,
                                 "complete: failure in starting sendreq (%d).  Will try later.",
                                 ret);
             opal_list_append(&(module->p2p_copy_pending_sendreqs), item);
-        }
+        } else if (OMPI_SUCCESS != ret) {
+            return ret;
+        } 
     }
 
     /* wait for all the requests */
@@ -477,12 +480,14 @@ ompi_osc_pt2pt_module_unlock(int target,
 
         ret = ompi_osc_pt2pt_sendreq_send(module, req);
 
-        if (OMPI_SUCCESS != ret) {
+        if (OMPI_ERR_TEMP_OUT_OF_RESOURCE == ret ) {
             opal_output_verbose(5, ompi_osc_base_output,
-                                "unlock: failure in starting sendreq (%d).  Will try later.",
+                                "complete: failure in starting sendreq (%d).  Will try later.",
                                 ret);
             opal_list_append(&(module->p2p_copy_pending_sendreqs), item);
-        }
+        } else if (OMPI_SUCCESS != ret) {
+            return ret;
+        } 
     }
 
     /* wait for all the requests */
