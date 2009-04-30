@@ -152,7 +152,7 @@ component_open(void)
                             "Coalesce messages during an epoch to reduce "
                             "network utilization.  Info key of same name "
                             "overrides this value.",
-                            false, false, 0, NULL);
+                            false, false, 1, NULL);
 
     mca_base_param_reg_int(&mca_osc_rdma_component.super.osc_version,
                            "use_rdma",
@@ -282,10 +282,7 @@ ompi_osc_rdma_component_query(ompi_win_t *win,
     /* if we inited, then the BMLs are available and we have a path to
        each peer.  Return slightly higher priority than the
        point-to-point code */
-    
-    /* lower priority below that of the pt2pt component until the btl
-       redesign */
-    return 0;
+    return 10;
 }
 
 
@@ -296,6 +293,7 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
 {
     ompi_osc_rdma_module_t *module = NULL;
     int ret, i;
+    char *tmp;
 
     /* create module structure */
     module = (ompi_osc_rdma_module_t*)
@@ -328,6 +326,10 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
     opal_output_verbose(1, ompi_osc_base_output,
                         "rdma component creating window with id %d",
                         ompi_comm_get_cid(module->m_comm));
+
+    asprintf(&tmp, "%d", ompi_comm_get_cid(module->m_comm));
+    ompi_win_set_name(win, tmp);
+    free(tmp);
 
     module->m_num_pending_sendreqs = (unsigned int*)
         malloc(sizeof(unsigned int) * ompi_comm_size(module->m_comm));
