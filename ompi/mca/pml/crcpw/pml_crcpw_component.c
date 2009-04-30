@@ -63,6 +63,7 @@ mca_pml_crcpw_component_t mca_pml_crcpw_component = {
 };
 
 ompi_free_list_t pml_state_list;
+bool pml_crcpw_is_finalized = false;
 
 int mca_pml_crcpw_component_open(void)
 {
@@ -158,6 +159,8 @@ mca_pml_base_module_t* mca_pml_crcpw_component_init(int* priority,
 
     *priority = mca_pml_crcpw_component.priority;
 
+    pml_crcpw_is_finalized = false;
+
     return &mca_pml_crcpw_module.super;
 }
 
@@ -167,6 +170,8 @@ int mca_pml_crcpw_component_finalize(void)
                          "pml:crcpw: component_finalize: Finalize");
 
     OBJ_DESTRUCT(&pml_state_list);
+
+    pml_crcpw_is_finalized = true;
 
     if(mca_pml_crcpw_component.pml_crcp_wrapped) {
         return mca_pml_crcpw_module.wrapped_pml_component.pmlm_finalize();

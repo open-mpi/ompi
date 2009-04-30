@@ -62,6 +62,7 @@ extern "C" {
 
     /* Free list of PML states */
     OMPI_MODULE_DECLSPEC extern ompi_free_list_t pml_state_list;
+    OMPI_MODULE_DECLSPEC extern bool pml_crcpw_is_finalized;
 
     /*
      * PML module functions.

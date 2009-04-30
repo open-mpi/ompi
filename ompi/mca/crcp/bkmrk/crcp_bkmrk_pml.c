@@ -1228,6 +1228,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_enable(
                                   bool enable,
                                   ompi_crcp_base_pml_state_t* pml_state )
 {
+    /* Note: This function is not used. Set to NULL in crcp_bkmrk_module.c */
     OPAL_OUTPUT_VERBOSE((30, mca_crcp_bkmrk_component.super.output_handle,
                         "crcp:bkmrk: pml_enable()"));
 
@@ -1239,6 +1240,8 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_enable(
 ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_progress(
                                   ompi_crcp_base_pml_state_t* pml_state)
 {
+    /* Note: This function is not used. Set to NULL in crcp_bkmrk_module.c */
+
     OPAL_OUTPUT_VERBOSE((35, mca_crcp_bkmrk_component.super.output_handle,
                         "crcp:bkmrk: pml_progress()"));
 
@@ -1395,6 +1398,8 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_add_comm(
                                   struct ompi_communicator_t* comm, 
                                   ompi_crcp_base_pml_state_t* pml_state )
 {
+    /* Note: This function is not used. Set to NULL in crcp_bkmrk_module.c */
+
     OPAL_OUTPUT_VERBOSE((30, mca_crcp_bkmrk_component.super.output_handle,
                         "crcp:bkmrk: pml_add_comm()"));
 
@@ -1406,6 +1411,8 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_del_comm(
                                   struct ompi_communicator_t* comm, 
                                   ompi_crcp_base_pml_state_t* pml_state )
 {
+    /* Note: This function is not used. Set to NULL in crcp_bkmrk_module.c */
+
     OPAL_OUTPUT_VERBOSE((30, mca_crcp_bkmrk_component.super.output_handle,
                         "crcp:bkmrk: pml_del_comm()"));
 
@@ -4407,11 +4414,10 @@ static int ft_event_exchange_bookmarks(void)
                 send_bookmarks(peer_idx);
             }
         }
-    
+
     /* Wait for all bookmarks to arrive */
     START_TIMER(CRCP_TIMER_CKPT_EX_WAIT);
     while( total_recv_bookmarks > 0 ) {
-        opal_progress();
         opal_event_loop(OPAL_EVLOOP_NONBLOCK);
     }
     total_recv_bookmarks = 0;
@@ -5207,7 +5213,6 @@ static int wait_quiesce_drain_ack(void)
             }
         }
 
-        opal_progress();
         opal_event_loop(OPAL_EVLOOP_NONBLOCK);
     }
         
@@ -5312,9 +5317,8 @@ static int recv_bookmarks(int peer_idx)
 
  cleanup:
     END_TIMER(CRCP_TIMER_CKPT_EX_PEER_R);
-    /* JJH Doesn't make much sense to print this. The real bottleneck is always the send_bookmarks()
-     * DISPLAY_INDV_TIMER(CRCP_TIMER_CKPT_EX_PEER_R, peer_idx, 1);
-     */
+    /* JJH Doesn't make much sense to print this. The real bottleneck is always the send_bookmarks() */
+    /*DISPLAY_INDV_TIMER(CRCP_TIMER_CKPT_EX_PEER_R, peer_idx, 1);*/
 
     return exit_status;
 }

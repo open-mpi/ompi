@@ -45,15 +45,15 @@ static ompi_crcp_base_module_t loc_module = {
     ompi_crcp_bkmrk_module_finalize,
 
     /** PML Wrapper */
-    ompi_crcp_bkmrk_pml_enable,
+    NULL, /* ompi_crcp_bkmrk_pml_enable, */
 
-    ompi_crcp_bkmrk_pml_add_comm,
-    ompi_crcp_bkmrk_pml_del_comm,
+    NULL, /* ompi_crcp_bkmrk_pml_add_comm, */
+    NULL, /* ompi_crcp_bkmrk_pml_del_comm, */
 
     ompi_crcp_bkmrk_pml_add_procs,
     ompi_crcp_bkmrk_pml_del_procs,
 
-    ompi_crcp_bkmrk_pml_progress,
+    NULL, /* ompi_crcp_bkmrk_pml_progress, */
 
     ompi_crcp_bkmrk_pml_iprobe,
     ompi_crcp_bkmrk_pml_probe,
