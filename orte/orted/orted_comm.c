@@ -81,8 +81,6 @@ static int process_commands(orte_process_name_t* sender,
                             opal_buffer_t *buffer,
                             orte_rml_tag_t tag);
 
-static bool exit_reqd;
-
 /* instantiate this - it is shared via orted.h */
 struct timeval orte_daemon_msg_recvd;
 
@@ -123,7 +121,6 @@ static void send_relay(opal_buffer_t *buf)
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_VPID_PRINT(nm->vpid)));
         
-        /* retain buffer so callback function can release it */
         target.vpid = nm->vpid;
         if (0 > (ret = orte_rml.send_buffer(&target, buf, ORTE_RML_TAG_DAEMON, 0))) {
             ORTE_ERROR_LOG(ret);
@@ -175,6 +172,7 @@ void orte_daemon_cmd_processor(int fd, short event, void *data)
     orte_message_event_t *mev = (orte_message_event_t*)data;
     orte_process_name_t *sender = &(mev->sender);
     opal_buffer_t *buffer = mev->buffer;
+    opal_buffer_t relay_buf;
     orte_rml_tag_t tag = mev->tag, target_tag;
     orte_jobid_t job;
     int ret;
@@ -273,41 +271,39 @@ void orte_daemon_cmd_processor(int fd, short event, void *data)
         }
         /* is this an add-procs cmd? */
         if (ORTE_DAEMON_ADD_LOCAL_PROCS == command) {
-            /* yes - then it contains daemon update info - process it */
+            /* store the time the cmd was recvd */
+            if (orte_timing) {
+                orte_daemon_msg_recvd.tv_sec = mesg_recvd.tv_sec;
+                orte_daemon_msg_recvd.tv_usec = mesg_recvd.tv_usec;
+            }
+            /* cmd contains daemon update info - process it */
             if (ORTE_SUCCESS != (ret = orte_odls_base_default_update_daemon_info(buffer))) {
                 ORTE_ERROR_LOG(ret);
                 goto CLEANUP;
             }
             /* flag this location */
             save_rel = buffer->unpack_ptr - buffer->base_ptr;
-            /* store the time the cmd was recvd */
-            if (orte_timing) {
-                orte_daemon_msg_recvd.tv_sec = mesg_recvd.tv_sec;
-                orte_daemon_msg_recvd.tv_usec = mesg_recvd.tv_usec;
-            }
         }
         
+        /* setup the relay buffer */
+        OBJ_CONSTRUCT(&relay_buf, opal_buffer_t);
+        /* rewind the buffer to the beginning */
+        buffer->unpack_ptr = buffer->base_ptr + unpack_rel;
+        /* copy everything to the relay buffer */
+        opal_dss.copy_payload(&relay_buf, buffer);
+        /* do the relay */
+        send_relay(&relay_buf);
+        /* cleanup */
+        OBJ_DESTRUCT(&relay_buf);
+
         /* rewind the buffer to the right place for processing the cmd */
         buffer->unpack_ptr = buffer->base_ptr + save_rel;
-        
-        /* init flag */
-        exit_reqd = false;
         
         /* process the command */
         if (ORTE_SUCCESS != (ret = process_commands(sender, buffer, tag))) {
             OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                                  "%s orte:daemon:cmd:processor failed on error %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(ret)));
-        }
-        
-        /* rewind the buffer to the beginning */
-        buffer->unpack_ptr = buffer->base_ptr + unpack_rel;
-        /* do the relay */
-        send_relay(buffer);
-        
-        /* if we need to exit, do so now */
-        if (exit_reqd) {
-            orte_trigger_event(&orte_exit);
         }
         
         /* done */
@@ -633,7 +629,7 @@ static int process_commands(orte_process_name_t* sender,
                 orte_rml.send_buffer(ORTE_PROC_MY_HNP, &ack, ORTE_RML_TAG_PLM, 0);
                 OBJ_DESTRUCT(&ack);
             }
-            exit_reqd = true;
+            orte_trigger_event(&orte_exit);
             return ORTE_SUCCESS;
             break;
 
@@ -671,7 +667,7 @@ static int process_commands(orte_process_name_t* sender,
                  */
                 return ORTE_SUCCESS;
             }
-            exit_reqd = true;
+            orte_trigger_event(&orte_exit);
             return ORTE_SUCCESS;
             break;
             
