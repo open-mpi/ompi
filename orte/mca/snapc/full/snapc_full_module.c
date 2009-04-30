@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2008 The Trustees of Indiana University.
+ * Copyright (c) 2004-2009 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -50,24 +50,24 @@ static orte_snapc_base_module_t loc_module = {
 /*
  * Global Snapshot structure
  */
-void orte_snapc_full_global_construct(orte_snapc_full_global_snapshot_t *obj);
-void orte_snapc_full_global_destruct( orte_snapc_full_global_snapshot_t *obj);
+void orte_snapc_full_orted_construct(orte_snapc_full_orted_snapshot_t *obj);
+void orte_snapc_full_orted_destruct( orte_snapc_full_orted_snapshot_t *obj);
 
-OBJ_CLASS_INSTANCE(orte_snapc_full_global_snapshot_t,
-                   orte_snapc_base_snapshot_t,
-                   orte_snapc_full_global_construct,
-                   orte_snapc_full_global_destruct);
+OBJ_CLASS_INSTANCE(orte_snapc_full_orted_snapshot_t,
+                   orte_snapc_base_global_snapshot_t,
+                   orte_snapc_full_orted_construct,
+                   orte_snapc_full_orted_destruct);
 
 /*
  * Local Snapshot structure
  */
-void orte_snapc_full_local_construct(orte_snapc_full_local_snapshot_t *obj);
-void orte_snapc_full_local_destruct( orte_snapc_full_local_snapshot_t *obj);
+void orte_snapc_full_app_construct(orte_snapc_full_app_snapshot_t *obj);
+void orte_snapc_full_app_destruct( orte_snapc_full_app_snapshot_t *obj);
 
-OBJ_CLASS_INSTANCE(orte_snapc_full_local_snapshot_t,
-                   orte_snapc_base_snapshot_t,
-                   orte_snapc_full_local_construct,
-                   orte_snapc_full_local_destruct);
+OBJ_CLASS_INSTANCE(orte_snapc_full_app_snapshot_t,
+                   orte_snapc_base_local_snapshot_t,
+                   orte_snapc_full_app_construct,
+                   orte_snapc_full_app_destruct);
 
 /************************************
  * Locally Global vars & functions :)
@@ -77,29 +77,53 @@ OBJ_CLASS_INSTANCE(orte_snapc_full_local_snapshot_t,
 /************************
  * Function Definitions
  ************************/
-void orte_snapc_full_global_construct(orte_snapc_full_global_snapshot_t *snapshot) {
-    snapshot->local_coord.vpid  = 0;
-    snapshot->local_coord.jobid = 0;
+void orte_snapc_full_orted_construct(orte_snapc_full_orted_snapshot_t *snapshot) {
+    snapshot->process_name.jobid  = 0;
+    snapshot->process_name.vpid   = 0;
+
+    snapshot->state = ORTE_SNAPC_CKPT_STATE_NONE;
+
+    snapshot->opal_crs = NULL;
+
+    snapshot->term = false;
+
+    snapshot->filem_request = NULL;
 }
 
-void orte_snapc_full_global_destruct( orte_snapc_full_global_snapshot_t *snapshot) {
-    snapshot->local_coord.vpid  = 0;
-    snapshot->local_coord.jobid = 0;
+void orte_snapc_full_orted_destruct( orte_snapc_full_orted_snapshot_t *snapshot) {
+    snapshot->process_name.jobid  = 0;
+    snapshot->process_name.vpid   = 0;
+
+    snapshot->state = ORTE_SNAPC_CKPT_STATE_NONE;
+
+    if( NULL != snapshot->opal_crs ) {
+        free( snapshot->opal_crs );
+        snapshot->opal_crs = NULL;
+    }
+
+    snapshot->term = false;
+
+    if( NULL != snapshot->filem_request ) {
+        OBJ_RELEASE(snapshot->filem_request);
+        snapshot->filem_request = NULL;
+    }
 }
 
-void orte_snapc_full_local_construct(orte_snapc_full_local_snapshot_t *obj) {
+void orte_snapc_full_app_construct(orte_snapc_full_app_snapshot_t *obj) {
     obj->comm_pipe_r = NULL;
     obj->comm_pipe_w = NULL;
 
     obj->comm_pipe_r_fd = -1;
     obj->comm_pipe_w_fd = -1;
 
-    obj->ckpt_state = ORTE_SNAPC_CKPT_STATE_NONE;
-
     obj->is_eh_active = false;
+
+    obj->process_pid  = 0;
+
+    obj->term = false;
 }
 
-void orte_snapc_full_local_destruct( orte_snapc_full_local_snapshot_t *obj) {
+void orte_snapc_full_app_destruct( orte_snapc_full_app_snapshot_t *obj) {
     if( NULL != obj->comm_pipe_r ) {
         free(obj->comm_pipe_r);
         obj->comm_pipe_r = NULL;
@@ -113,9 +137,11 @@ void orte_snapc_full_local_destruct( orte_snapc_full_local_snapshot_t *obj) {
     obj->comm_pipe_r_fd = -1;
     obj->comm_pipe_w_fd = -1;
 
-    obj->ckpt_state = ORTE_SNAPC_CKPT_STATE_NONE;
-
     obj->is_eh_active = false;
+
+    obj->process_pid  = 0;
+
+    obj->term = false;
 }
 
 /*

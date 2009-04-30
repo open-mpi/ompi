@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2008 The Trustees of Indiana University.
+ * Copyright (c) 2004-2009 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -71,7 +71,11 @@ ORTE_DECLSPEC OBJ_CLASS_INSTANCE(orte_filem_base_file_set_t,
 
 ORTE_DECLSPEC void orte_filem_base_file_set_construct(orte_filem_base_file_set_t *req) {
     req->local_target  = NULL;
+    req->local_hint    = ORTE_FILEM_HINT_NONE;
+
     req->remote_target = NULL;
+    req->remote_hint   = ORTE_FILEM_HINT_NONE;
+
     req->target_flag   = ORTE_FILEM_TYPE_UNKNOWN;
 
 }
@@ -81,11 +85,13 @@ ORTE_DECLSPEC void orte_filem_base_file_set_destruct( orte_filem_base_file_set_t
         free(req->local_target);
         req->local_target = NULL;
     }
+    req->local_hint    = ORTE_FILEM_HINT_NONE;
 
     if( NULL != req->remote_target ) {
         free(req->remote_target);
         req->remote_target = NULL;
     }
+    req->remote_hint   = ORTE_FILEM_HINT_NONE;
 
     req->target_flag   = ORTE_FILEM_TYPE_UNKNOWN;
 }

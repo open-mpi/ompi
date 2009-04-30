@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -76,6 +76,8 @@
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
 
+#include MCA_timer_IMPLEMENTATION_HEADER
+
 /******************
  * Local Functions
  ******************/
@@ -108,11 +110,16 @@ static int    global_sequence_num    = 0;
  *****************************************/
 static bool listener_started = false;
 
+static double timer_start = 0;
+static double timer_last  = 0;
+static double get_time(void);
+
 typedef struct {
     bool help;
     int  pid;
     bool term;
     bool verbose;
+    int  verbose_level;
     orte_jobid_t req_hnp; /**< User Requested HNP */
     bool nowait;  /* Do not wait for checkpoint to complete before returning */
     bool status;  /* Display status messages while checkpoint is progressing */
@@ -134,6 +141,12 @@ opal_cmd_line_init_t cmd_line_opts[] = {
       0,
       &orte_checkpoint_globals.verbose, OPAL_CMD_LINE_TYPE_BOOL,
       "Be Verbose" },
+
+    { NULL, NULL, NULL, 
+      'V', NULL, NULL, 
+      1,
+      &orte_checkpoint_globals.verbose_level, OPAL_CMD_LINE_TYPE_INT,
+      "Set the verbosity level (For additional debugging information)" },
 
     { NULL, NULL, NULL, 
       '\0', NULL, "term", 
@@ -279,6 +292,7 @@ static int parse_args(int argc, char *argv[]) {
     orte_checkpoint_globals.pid      = -1;
     orte_checkpoint_globals.term     = false;
     orte_checkpoint_globals.verbose  = false;
+    orte_checkpoint_globals.verbose_level  = 0;
     orte_checkpoint_globals.req_hnp  = ORTE_JOBID_INVALID;
     orte_checkpoint_globals.nowait   = false;
     orte_checkpoint_globals.status   = false;
@@ -342,6 +356,14 @@ static int parse_args(int argc, char *argv[]) {
         free(args);
         exit_status = ORTE_ERROR;
         goto cleanup;
+    }
+
+    if(orte_checkpoint_globals.verbose_level < 0 ) {
+        orte_checkpoint_globals.verbose_level = 0;
+    }
+
+    if(orte_checkpoint_globals.verbose_level > 0) {
+        orte_checkpoint_globals.verbose = true;
     }
 
     /*
@@ -474,7 +496,7 @@ static int ckpt_init(int argc, char *argv[]) {
      */
     if( orte_checkpoint_globals.verbose ) {
         orte_checkpoint_globals.output = opal_output_open(NULL);
-        opal_output_set_verbosity(orte_checkpoint_globals.output, 10);
+        opal_output_set_verbosity(orte_checkpoint_globals.output, orte_checkpoint_globals.verbose_level);
     } else {
         orte_checkpoint_globals.output = 0; /* Default=STDERR */
     }
@@ -661,6 +683,8 @@ notify_process_for_checkpoint(int term)
                         "orte_checkpoint: notify_hnp: Contact Head Node Process PID %d\n",
                         orte_checkpoint_globals.pid);
 
+    timer_start = get_time();
+
     /***********************************
      * Notify HNP of checkpoint request
      * Send:
@@ -709,18 +733,51 @@ notify_process_for_checkpoint(int term)
 /***************
  * Pretty Print
  ***************/
+static double get_time(void) {
+    double wtime;
+
+#if OPAL_TIMER_USEC_NATIVE
+    wtime = (double)opal_timer_base_get_usec() / 1000000.0;
+#else
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    wtime = tv.tv_sec;
+    wtime += (double)tv.tv_usec / 1000000.0;
+#endif
+
+    return wtime;
+}
+
 static int pretty_print_status(void) {
     char * state_str = NULL;
+    double cur_time;
 
-    state_str = orte_snapc_ckpt_state_str(orte_checkpoint_globals.ckpt_status);
+    cur_time = get_time();
 
-    opal_output(0,
-                "%*s - Global Snapshot Reference: %s\n", 
-                25, state_str, global_snapshot_handle);
+    if( timer_last == 0 ) {
+        timer_last = cur_time;
+    }
+
+    orte_snapc_ckpt_state_str(&state_str, orte_checkpoint_globals.ckpt_status);
+
+    if( NULL != global_snapshot_handle ) {
+        opal_output(0,
+                    "[%6.2f / %6.2f] %*s - %s\n", 
+                    (cur_time - timer_last), (cur_time - timer_start),
+                    25, state_str, global_snapshot_handle);
+    } else {
+        opal_output(0,
+                    "[%6.2f / %6.2f] %*s - ...\n", 
+                    (cur_time - timer_last), (cur_time - timer_start),
+                    25, state_str);
+    }
+
     if( NULL != state_str) {
         free(state_str);
     }
-    
+
+    timer_last = cur_time;
+
     return ORTE_SUCCESS;
 }
 

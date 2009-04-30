@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University.
+ * Copyright (c) 2004-2009 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -219,7 +219,12 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
     opal_cr_currently_stalled = false;
 
     app_pid = getpid();
-    ret = opal_cr_inc_core(app_pid, local_snapshot, app_term, &cr_state);
+    if( orte_snapc_full_skip_app ) {
+        ret = ORTE_SUCCESS;
+        cr_state = OPAL_CRS_CONTINUE;
+    } else {
+        ret = opal_cr_inc_core(app_pid, local_snapshot, app_term, &cr_state);
+    }
     if( OPAL_EXISTS == ret ) {
         OPAL_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
                              "App) notify_response: Stalling the checkpoint progress until state is stable again (PID = %d)\n",

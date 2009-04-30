@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2008 The Trustees of Indiana University.
+ * Copyright (c) 2004-2009 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -30,6 +30,7 @@
 #include "opal/mca/mca.h"
 #include "opal/event/event.h"
 
+#include "orte/mca/filem/filem.h"
 #include "orte/mca/snapc/snapc.h"
 
 BEGIN_C_DECLS
@@ -39,35 +40,54 @@ BEGIN_C_DECLS
  */
 typedef uint8_t orte_snapc_full_cmd_flag_t;
 #define ORTE_SNAPC_FULL_CMD  OPAL_UINT8
-#define ORTE_SNAPC_FULL_UPDATE_JOB_STATE_CMD   1
-#define ORTE_SNAPC_FULL_UPDATE_PROC_STATE_CMD  2
-#define ORTE_SNAPC_FULL_VPID_ASSOC_CMD         3
-#define ORTE_SNAPC_FULL_ESTABLISH_DIR_CMD      4
+#define ORTE_SNAPC_FULL_UPDATE_JOB_STATE_CMD         1
+#define ORTE_SNAPC_FULL_UPDATE_JOB_STATE_QUICK_CMD   2
+#define ORTE_SNAPC_FULL_UPDATE_ORTED_STATE_CMD       3
+#define ORTE_SNAPC_FULL_UPDATE_ORTED_STATE_QUICK_CMD 4
+#define ORTE_SNAPC_FULL_VPID_ASSOC_CMD               5
+#define ORTE_SNAPC_FULL_ESTABLISH_DIR_CMD            6
+#define ORTE_SNAPC_FULL_MAX                          7
 
     /*
      * Local Component structures
      */
     struct orte_snapc_full_component_t {
         orte_snapc_base_component_t super;  /** Base SNAPC component */
-
     };
     typedef struct orte_snapc_full_component_t orte_snapc_full_component_t;
     OPAL_MODULE_DECLSPEC extern orte_snapc_full_component_t mca_snapc_full_component;
 
-    struct orte_snapc_full_global_snapshot_t {
+    /*
+     * Global Coordinator per orted metadata
+     */
+    struct orte_snapc_full_orted_snapshot_t {
         /** Base SNAPC Global snapshot type */
-        orte_snapc_base_snapshot_t super;
+        orte_snapc_base_global_snapshot_t super;
 
-        /** Local coordinator associated with this vpid */
-        orte_process_name_t local_coord;
+        /** ORTE Process name */
+        orte_process_name_t process_name;
+
+        /** State of the checkpoint */
+        int state;
+
+        /** OPAL CRS Component */
+        char * opal_crs;
+
+        /** Term flag */
+        bool term;
+
+        /** FileM request */
+        orte_filem_base_request_t *filem_request;
     };
-    typedef struct orte_snapc_full_global_snapshot_t orte_snapc_full_global_snapshot_t;
+    typedef struct orte_snapc_full_orted_snapshot_t orte_snapc_full_orted_snapshot_t;
+    OBJ_CLASS_DECLARATION(orte_snapc_full_orted_snapshot_t);
 
-    OBJ_CLASS_DECLARATION(orte_snapc_full_global_snapshot_t);
-
-    struct orte_snapc_full_local_snapshot_t {
+    /*
+     * Local Coordinator per app metadata
+     */
+    struct orte_snapc_full_app_snapshot_t {
         /** Base SNAPC Global snapshot type */
-        orte_snapc_base_snapshot_t super;
+        orte_snapc_base_local_snapshot_t super;
 
         /** Named Pipe Read and Write */
         char * comm_pipe_r;
@@ -79,14 +99,18 @@ typedef uint8_t orte_snapc_full_cmd_flag_t;
         struct opal_event comm_pipe_r_eh;
         bool is_eh_active;
 
-        /** State of the process wrt checkpointing */
-        int ckpt_state;
-    };
-    typedef struct orte_snapc_full_local_snapshot_t orte_snapc_full_local_snapshot_t;
+        /** Process pid */
+        pid_t process_pid;
 
-    OBJ_CLASS_DECLARATION(orte_snapc_full_local_snapshot_t);
+        /** Term */
+        bool term;
+    };
+    typedef struct orte_snapc_full_app_snapshot_t orte_snapc_full_app_snapshot_t;
+    OBJ_CLASS_DECLARATION(orte_snapc_full_app_snapshot_t);
 
     extern bool orte_snapc_full_skip_filem;
+    extern bool orte_snapc_full_skip_app;
+    extern bool orte_snapc_full_timing_enabled;
 
     int orte_snapc_full_component_query(mca_base_module_t **module, int *priority);
 
@@ -108,12 +132,11 @@ typedef uint8_t orte_snapc_full_cmd_flag_t;
     int global_coord_finalize(void);
     int global_coord_setup_job(orte_jobid_t jobid);
     int global_coord_release_job(orte_jobid_t jobid);
-    int global_coord_vpid_assoc_update(orte_process_name_t local_coord,
-                                       orte_process_name_t proc_name);
-    int global_coord_vpid_state_update(orte_process_name_t proc_name,
-                                       size_t proc_ckpt_state,
-                                       char **proc_ckpt_ref,
-                                       char **proc_ckpt_loc);
+    int global_coord_orted_state_update(orte_process_name_t proc_name,
+                                        int    proc_ckpt_state,
+                                        char **proc_ckpt_ref,
+                                        char **proc_ckpt_loc,
+                                        char **agent_ckpt);
     /*
      * Local Coordinator Functionality
      */
@@ -122,7 +145,7 @@ typedef uint8_t orte_snapc_full_cmd_flag_t;
     int local_coord_setup_job(orte_jobid_t jobid);
     int local_coord_release_job(orte_jobid_t jobid);
     int local_coord_job_state_update(orte_jobid_t jobid,
-                                     size_t job_ckpt_state,
+                                     int    job_ckpt_state,
                                      char **job_ckpt_ref,
                                      char **job_ckpt_loc);
 

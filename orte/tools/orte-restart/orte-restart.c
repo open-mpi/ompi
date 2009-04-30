@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -151,9 +151,10 @@ int
 main(int argc, char *argv[])
 {
     int ret, exit_status = ORTE_SUCCESS;
-    pid_t child_pid;
+    pid_t child_pid = 0;
     orte_snapc_base_global_snapshot_t *snapshot = NULL;
-    
+    char *tmp_str = NULL;
+
     /***************
      * Initialize
      ***************/
@@ -164,7 +165,10 @@ main(int argc, char *argv[])
 
     snapshot = OBJ_NEW(orte_snapc_base_global_snapshot_t);
     snapshot->reference_name  = strdup(orte_restart_globals.filename);
-    snapshot->local_location  = opal_dirname(orte_snapc_base_get_global_snapshot_directory(snapshot->reference_name));
+    orte_snapc_base_get_global_snapshot_directory(&tmp_str, snapshot->reference_name);
+    snapshot->local_location  = opal_dirname(tmp_str);
+    free(tmp_str);
+    tmp_str = NULL;
 
     /* 
      * Check for existence of the file
@@ -453,11 +457,11 @@ static int create_appfile(orte_snapc_base_global_snapshot_t *snapshot)
         goto cleanup;
     }
 
-    for(item  = opal_list_get_first(&snapshot->snapshots);
-        item != opal_list_get_end(&snapshot->snapshots);
+    for(item  = opal_list_get_first(&snapshot->local_snapshots);
+        item != opal_list_get_end(&snapshot->local_snapshots);
         item  = opal_list_get_next(item) ) {
-        orte_snapc_base_snapshot_t *vpid_snapshot;
-        vpid_snapshot = (orte_snapc_base_snapshot_t*)item;
+        orte_snapc_base_local_snapshot_t *vpid_snapshot;
+        vpid_snapshot = (orte_snapc_base_local_snapshot_t*)item;
         
         fprintf(appfile, "#\n");
         fprintf(appfile, "# Old Process Name: %u.%u\n", 
@@ -467,13 +471,15 @@ static int create_appfile(orte_snapc_base_global_snapshot_t *snapshot)
         fprintf(appfile, "-np 1 ");
         if(orte_restart_globals.preload) {
             fprintf(appfile, "--preload-files %s/%s ", 
-                    vpid_snapshot->crs_snapshot_super.local_location, 
-                    vpid_snapshot->crs_snapshot_super.reference_name);
+                    vpid_snapshot->local_location, 
+                    vpid_snapshot->reference_name);
             fprintf(appfile, "--preload-files-dest-dir . ");
         }
         /* JJH: Make this match what the user originally specified on the command line */
         fprintf(appfile, "-am ft-enable-cr ");
+
         fprintf(appfile, " opal-restart ");
+
         /* JJH: Make sure this changes if ever the default location of the local file is changed,
          * currently it is safe to assume that it is in the current working directory.
          *
@@ -486,9 +492,9 @@ static int create_appfile(orte_snapc_base_global_snapshot_t *snapshot)
         else {
             /* If we are *not* preloading the files, the point to the original checkpoint
              * directory to access the checkpoint files. */
-            fprintf(appfile, "-mca crs_base_snapshot_dir %s ", vpid_snapshot->crs_snapshot_super.local_location);
+            fprintf(appfile, "-mca crs_base_snapshot_dir %s ", vpid_snapshot->local_location);
         }
-        fprintf(appfile, "%s\n", vpid_snapshot->crs_snapshot_super.reference_name);
+        fprintf(appfile, "%s\n", vpid_snapshot->reference_name);
     }
 
  cleanup:
