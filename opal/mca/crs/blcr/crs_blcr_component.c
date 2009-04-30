@@ -29,6 +29,8 @@
 static int crs_blcr_open(void);
 static int crs_blcr_close(void);
 
+bool opal_crs_blcr_dev_null = false;
+
 /*
  * Instantiate the public struct with all of our public information
  * and pointer to our public functions in it
@@ -69,7 +71,8 @@ opal_crs_blcr_component_t mca_crs_blcr_component = {
 
 static int crs_blcr_open(void) 
 {
-    
+    int value;
+
     mca_base_param_reg_int(&mca_crs_blcr_component.super.base_version,
                            "priority",
                            "Priority of the CRS blcr component",
@@ -94,6 +97,14 @@ static int crs_blcr_open(void)
         mca_crs_blcr_component.super.output_handle = opal_crs_base_output;
     }
 
+    mca_base_param_reg_int(&mca_crs_blcr_component.super.base_version,
+                           "dev_null",
+                           "Not for general use! For debugging only! Save checkpoint to /dev/null. [Default = disabled]",
+                           false, false,
+                           0,
+                           &value);
+    opal_crs_blcr_dev_null = OPAL_INT_TO_BOOL(value);
+
     /*
      * Debug output
      */
@@ -105,6 +116,9 @@ static int crs_blcr_open(void)
     opal_output_verbose(20, mca_crs_blcr_component.super.output_handle,
                         "crs:blcr: open: verbosity = %d", 
                         mca_crs_blcr_component.super.verbose);
+    opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
+                        "crs:blcr: open: dev_null = %s",
+                        (opal_crs_blcr_dev_null == true ? "True" : "False"));
 
     return OPAL_SUCCESS;
 }

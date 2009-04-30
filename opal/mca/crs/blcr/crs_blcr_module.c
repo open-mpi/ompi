@@ -314,7 +314,11 @@ int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
         char *loc_fname = NULL;
 
         blcr_get_checkpoint_filename(&(snapshot->context_filename), pid);
-        asprintf(&loc_fname, "%s/%s", snapshot->super.local_location, snapshot->context_filename);
+        if( opal_crs_blcr_dev_null ) {
+            loc_fname = strdup("/dev/null");
+        } else {
+            asprintf(&loc_fname, "%s/%s", snapshot->super.local_location, snapshot->context_filename);
+        }
 
         opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
                             "crs:blcr: checkpoint SELF <%s>",

@@ -49,6 +49,8 @@ extern "C" {
 
     int opal_crs_blcr_component_query(mca_base_module_t **module, int *priority);
 
+    extern bool opal_crs_blcr_dev_null;
+
     /*
      * Module functions
      */
