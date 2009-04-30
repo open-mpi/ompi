@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -491,6 +491,7 @@ static int pretty_print_jobs(orte_job_t **jobs, orte_std_cntr_t num_jobs) {
     orte_std_cntr_t i;
     char *jobstr;
     orte_jobid_t mask=0x0000ffff;
+    char * state_str = NULL;
 
     for(i=0; i < num_jobs; i++) {
         job = jobs[i];
@@ -513,9 +514,10 @@ static int pretty_print_jobs(orte_job_t **jobs, orte_std_cntr_t num_jobs) {
         len_slots  = 6;
         len_vpid_r = (int) strlen("Num Procs");
 #if OPAL_ENABLE_FT == 1
-        len_ckpt_s = (int) (strlen(orte_snapc_ckpt_state_str(job->ckpt_state)) < strlen("Ckpt State") ?
+        orte_snapc_ckpt_state_str(&state_str, job->ckpt_state);
+        len_ckpt_s = (int) (strlen(state_str) < strlen("Ckpt State") ?
                             strlen("Ckpt State") :
-                            strlen(orte_snapc_ckpt_state_str(job->ckpt_state)) );
+                            strlen(state_str) );
         len_ckpt_r = (int) (NULL == job->ckpt_snapshot_ref ? strlen("Ckpt Ref") :
                             (strlen(job->ckpt_snapshot_ref) < strlen("Ckpt Ref") ?
                              strlen("Ckpt Ref") :
@@ -525,6 +527,7 @@ static int pretty_print_jobs(orte_job_t **jobs, orte_std_cntr_t num_jobs) {
                              strlen("Ckpt Loc") :
                              strlen(job->ckpt_snapshot_loc) ) );
 #else
+        state_str = NULL;
         len_ckpt_s = -3;
         len_ckpt_r = -3;
         len_ckpt_l = -3;
@@ -564,7 +567,7 @@ static int pretty_print_jobs(orte_job_t **jobs, orte_std_cntr_t num_jobs) {
         printf("%*d | ",  len_slots ,  (uint)job->total_slots_alloc);
         printf("%*d | ",  len_vpid_r,  job->num_procs);
 #if OPAL_ENABLE_FT == 1
-        printf("%*s | ",  len_ckpt_s,  orte_snapc_ckpt_state_str(job->ckpt_state));
+        printf("%*s | ",  len_ckpt_s,  state_str);
         printf("%*s | ",  len_ckpt_r,  (NULL == job->ckpt_snapshot_ref ? 
                                         "" :
                                         job->ckpt_snapshot_ref) );
@@ -597,6 +600,7 @@ static int pretty_print_vpids(orte_job_t *job) {
     orte_proc_t *vpid;
     orte_app_context_t *app;
     char *o_proc_name;
+    char *state_str = NULL;
 
     /*
      * Caculate segment lengths
@@ -663,8 +667,9 @@ static int pretty_print_vpids(orte_job_t *job) {
             len_state = strlen(pretty_vpid_state(vpid->state));
         
 #if OPAL_ENABLE_FT == 1
-        if( (int)strlen(orte_snapc_ckpt_state_str(vpid->ckpt_state)) > len_ckpt_s)
-            len_ckpt_s = strlen(orte_snapc_ckpt_state_str(vpid->ckpt_state));
+        orte_snapc_ckpt_state_str(&state_str, vpid->ckpt_state);
+        if( (int)strlen(state_str) > len_ckpt_s)
+            len_ckpt_s = strlen(state_str);
         
         if( NULL != vpid->ckpt_snapshot_ref &&
             (int)strlen(vpid->ckpt_snapshot_ref) > len_ckpt_r) 
@@ -673,6 +678,8 @@ static int pretty_print_vpids(orte_job_t *job) {
         if( NULL != vpid->ckpt_snapshot_loc &&
             (int)strlen(vpid->ckpt_snapshot_loc) > len_ckpt_l) 
             len_ckpt_l = strlen(vpid->ckpt_snapshot_loc);
+#else
+        state_str = NULL;
 #endif
     }
 
@@ -739,7 +746,7 @@ static int pretty_print_vpids(orte_job_t *job) {
         printf("%*s | ",  len_state      , pretty_vpid_state(vpid->state));
         
 #if OPAL_ENABLE_FT == 1
-        printf("%*s | ",  len_ckpt_s, orte_snapc_ckpt_state_str(vpid->ckpt_state));
+        printf("%*s | ",  len_ckpt_s, state_str);
         printf("%*s | ",  len_ckpt_r, (NULL == vpid->ckpt_snapshot_ref ? 
                                        "" : 
                                        vpid->ckpt_snapshot_ref));

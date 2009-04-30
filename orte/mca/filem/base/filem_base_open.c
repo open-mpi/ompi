@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University.
+ * Copyright (c) 2004-2009 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -77,6 +77,7 @@ int orte_filem_base_open(void)
                                    NULL, &str_value);
     if( NULL != str_value ) {
         free(str_value);
+        str_value = NULL;
     }
 
     /* Open up all available components */

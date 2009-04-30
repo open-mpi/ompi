@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -55,6 +55,13 @@ extern "C" {
 #define ORTE_FILEM_MOVE_TYPE_UNKNOWN   3
 
 /**
+ * Hints that describe the local or remote file target for
+ * optimization purposes.
+ */
+#define ORTE_FILEM_HINT_NONE   0
+#define ORTE_FILEM_HINT_SHARED 1
+
+/**
  * Define a Process Set
  *
  * Source: A single source of the operation.
@@ -92,8 +99,14 @@ struct orte_filem_base_file_set_1_0_0_t {
     /* Local file reference */
     char * local_target;
 
+    /* Local file reference hints */
+    int local_hint;
+
     /* Remove file reference */
     char * remote_target;
+
+    /* Remote file reference hints */
+    int remote_hint;
 
     /* Type of file to move */
     int target_flag;

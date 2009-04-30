@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2008 The Trustees of Indiana University.
+ * Copyright (c) 2004-2009 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -42,6 +42,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/basename.h"
 
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
@@ -632,41 +633,51 @@ static int orte_filem_rsh_start_copy(orte_filem_base_request_t *request) {
             }
             /* Do not check a local get() operation, to help supress the warnings from the HNP */
             else if (OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &p_set->source, &p_set->sink) ) {
+                char *base = NULL;
+                asprintf(&base, "%s/%s", f_set->local_target, opal_basename(f_set->remote_target));
                 /*
                  * The file should not exist if we are getting a file with the
                  * same name since we do not want to overwrite the filename
                  * without the users consent.
                  */
-                if( 0 == access(f_set->local_target, R_OK) ) {
+                if( 0 == access(base, R_OK) ) {
                     OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
-                                         "filem:rsh: copy(): %s -> %s: Error: Cannot move file %s to %s. Already exists at destination\n",
+                                         "filem:rsh: copy(): %s -> %s: Error: Cannot move file %s to %s. Already exists at destination (%s)\n",
                                          ORTE_NAME_PRINT(&p_set->source),
                                          ORTE_NAME_PRINT(&p_set->sink),
                                          f_set->remote_target,
-                                         f_set->local_target));
+                                         f_set->local_target, base));
                     orte_show_help("help-orte-filem-rsh.txt",
                                    "orte-filem-rsh:get-file-exists",
                                    true, f_set->local_target, orte_process_info.nodename);
+                    free(base);
+                    base = NULL;
                     request->is_done[cur_index]     = true;
                     request->is_active[cur_index]   = true;
                     request->exit_status[cur_index] = -1;
                     goto continue_set;
                 }
+                free(base);
+                base = NULL;
             }
 
             if( request->movement_type == ORTE_FILEM_MOVE_TYPE_PUT ) {
                 OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
-                                     "filem:rsh: copy(): %s -> %s: Moving file %s to %s\n",
+                                     "filem:rsh: copy(): %s -> %s: Moving file %s %s to %s %s\n",
                                      ORTE_NAME_PRINT(&p_set->source),
                                      ORTE_NAME_PRINT(&p_set->sink),
+                                     (f_set->local_hint == ORTE_FILEM_HINT_SHARED ? "(S)" : ""),
                                      f_set->local_target,
+                                     (f_set->remote_hint == ORTE_FILEM_HINT_SHARED ? "(S)" : ""),
                                      f_set->remote_target));
             } else {
                 OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
-                                     "filem:rsh: copy(): %s -> %s: Moving file %s to %s\n",
+                                     "filem:rsh: copy(): %s -> %s: Moving file %s %s to %s %s\n",
                                      ORTE_NAME_PRINT(&p_set->source),
                                      ORTE_NAME_PRINT(&p_set->sink),
+                                     (f_set->remote_hint == ORTE_FILEM_HINT_SHARED ? "(S)" : ""),
                                      f_set->remote_target,
+                                     (f_set->local_hint == ORTE_FILEM_HINT_SHARED ? "(S)" : ""),
                                      f_set->local_target));
             }
 
@@ -736,12 +747,20 @@ static int orte_filem_rsh_start_copy(orte_filem_base_request_t *request) {
              * If this is the put() routine
              */
             if( request->movement_type == ORTE_FILEM_MOVE_TYPE_PUT ) {
-                asprintf(&command, "%s %s %s %s:%s ",
-                         mca_filem_rsh_component.cp_command, 
-                         dir_arg, 
-                         f_set->local_target,
-                         remote_machine, 
-                         remote_file);
+                /* Use a local 'cp' when able */
+                if(f_set->remote_hint == ORTE_FILEM_HINT_SHARED ) {
+                    asprintf(&command, "cp %s %s %s ",
+                             dir_arg, 
+                             f_set->local_target,
+                             remote_file);
+                } else {
+                    asprintf(&command, "%s %s %s %s:%s ",
+                             mca_filem_rsh_component.cp_command, 
+                             dir_arg, 
+                             f_set->local_target,
+                             remote_machine, 
+                             remote_file);
+                }
                 OPAL_OUTPUT_VERBOSE((17, mca_filem_rsh_component.super.output_handle,
                                      "filem:rsh:put about to execute [%s]", command));
 
@@ -758,13 +777,23 @@ static int orte_filem_rsh_start_copy(orte_filem_base_request_t *request) {
              * ow it is the get() routine
              */
             else {
-                asprintf(&command, "%s %s %s:%s %s ",
-                         mca_filem_rsh_component.cp_command, 
-                         dir_arg, 
-                         remote_machine, 
-                         remote_file,
-                         f_set->local_target);
-                
+                /* Use a local 'cp' when able */
+                if(f_set->local_hint == ORTE_FILEM_HINT_SHARED ) {
+                    asprintf(&command, "%s %s cp %s %s %s ",
+                             mca_filem_rsh_component.remote_sh_command, 
+                             remote_machine, 
+                             dir_arg, 
+                             remote_file,
+                             f_set->local_target);
+                } else {
+                    asprintf(&command, "%s %s %s:%s %s ",
+                             mca_filem_rsh_component.cp_command, 
+                             dir_arg, 
+                             remote_machine, 
+                             remote_file,
+                             f_set->local_target);
+                }
+
                 OPAL_OUTPUT_VERBOSE((17, mca_filem_rsh_component.super.output_handle,
                                      "filem:rsh:get about to execute [%s]", command));
                 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2008 The Trustees of Indiana University.
+ * Copyright (c) 2004-2009 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -35,6 +35,8 @@ static int snapc_full_open(void);
 static int snapc_full_close(void);
 
 bool orte_snapc_full_skip_filem = false;
+bool orte_snapc_full_skip_app   = false;
+bool orte_snapc_full_timing_enabled = false;
 
 /*
  * Instantiate the public struct with all of our public information
@@ -112,6 +114,22 @@ static int snapc_full_open(void)
                            0,
                            &value);
     orte_snapc_full_skip_filem = OPAL_INT_TO_BOOL(value);
+
+    mca_base_param_reg_int(&mca_snapc_full_component.super.base_version,
+                           "skip_app",
+                           "Not for general use! For debugging only! Shortcut app level coord. [Default = disabled]",
+                           false, false,
+                           0,
+                           &value);
+    orte_snapc_full_skip_app = OPAL_INT_TO_BOOL(value);
+
+    mca_base_param_reg_int(&mca_snapc_full_component.super.base_version,
+                           "enable_timing",
+                           "Enable timing information. [Default = disabled]",
+                           false, false,
+                           0,
+                           &value);
+    orte_snapc_full_timing_enabled = OPAL_INT_TO_BOOL(value);
 
     /*
      * Debug Output
