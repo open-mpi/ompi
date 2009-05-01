@@ -26,6 +26,7 @@
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
+#include <string.h>
 
 #include "opal/runtime/opal.h"
 #include "opal/dss/dss.h"

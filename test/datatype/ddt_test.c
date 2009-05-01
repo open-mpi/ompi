@@ -27,6 +27,7 @@
 #include <sys/time.h>
 #endif
 #include <stdio.h>
+#include <string.h>
 
 /* Compile with:
 mpicc -DHAVE_CONFIG_H -I. -I../../include -I../../../ompi-trunk/include  -I../.. -I../../include -I../../../ompi-trunk/opal -I../../../ompi-trunk/orte -I../../../ompi-trunk/ompi -g ddt_test.c -o ddt_test

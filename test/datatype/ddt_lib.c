@@ -27,6 +27,7 @@
 #include <sys/time.h>
 #endif
 #include <stdio.h>
+#include <string.h>
 
 #define TIMER_DATA_TYPE struct timeval
 #define GET_TIME(TV)   gettimeofday( &(TV), NULL )
