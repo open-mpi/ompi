@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/bash
 #
 # Copyright (c) 2009 Los Alamos National Security, LLC. All rights reserved
 #
@@ -19,9 +19,15 @@ if [ "${var}" == "CLEANUP" ]; then
         # kill specified apps
         shift 1
         var=$1
+        # get the process table
+        psout=`ps`
+        # cycle through and look for the specified apps
         while [ -n "${var}" ] && [ "${var}" != "FILES" ]; do
-            killall -TERM "${var}"
-#            echo "killall" "${var}"
+            testvar=`echo "${psout}" | grep "${var}"`
+            if [ -n "${testvar}" ]; then
+#                echo "killall" "${var}"
+                killall -TERM "${var}"
+            fi
             shift 1
             var=$1
         done
@@ -30,8 +36,10 @@ if [ "${var}" == "CLEANUP" ]; then
             var=$1
             # remove specified files
             while [ -n "${var}" ]; do
-            rm -f "${var}"
-#                echo "rm" "${var}"
+                if [ -e "${var}" ]; then
+#                    echo "rm" "${var}"
+                    rm -f "${var}"
+                fi
                 shift 1
                 var=$1
             done
@@ -41,17 +49,21 @@ if [ "${var}" == "CLEANUP" ]; then
         shift 1
         var=$1
         while [ -n "${var}" ]; do
-            rm -f "${var}"
-#            echo "rm" "${var}"
+            if [ -e "${var}" ]; then
+#                echo "rm" "${var}"
+                rm -f "${var}"
+            fi
             shift 1
             var=$1
         done
     fi
     # remove any session directories from this user
 #    sdir="${TMPDIR}""openmpi-sessions-""${USER}""@"`hostname`"_0"
-#    echo "rm" "${sdir}"
     sdir="/tmp/openmpi-sessions-""${USER}""@"`hostname`"_0"
-    rm -rf "${sdir}"
+    if [ -e "${sdir}" ]; then
+#        echo "rm" "${sdir}"
+        rm -rf "${sdir}"
+    fi
     exit 0
 fi
 
