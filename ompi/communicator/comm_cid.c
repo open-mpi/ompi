@@ -156,7 +156,7 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
         int done=0;
         int response, glresponse=0;
         int start;
-        int i;
+        unsigned int i;
         
         do {
             /* Only one communicator function allowed in same time on the
