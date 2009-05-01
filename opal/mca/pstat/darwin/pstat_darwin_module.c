@@ -33,6 +33,7 @@
 #include <sys/sysctl.h>
 #include <assert.h>
 #include <time.h>
+#include <string.h>
 
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/pstat/pstat.h"
