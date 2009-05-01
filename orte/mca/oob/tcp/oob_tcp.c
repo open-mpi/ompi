@@ -707,6 +707,11 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
     }
 #endif  /* OPAL_WANT_IPV6 */
 
+    /* bozo check - this should be impossible, but... */
+    if (NULL == ports) {
+        return ORTE_ERROR;
+    }
+    
     /* Enable/disable reusing ports */
     if (orte_static_ports) {
         flags = 1;
@@ -718,9 +723,7 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
                     "SO_REUSEADDR option (%s:%d)\n",
                     strerror(opal_socket_errno), opal_socket_errno);
         CLOSE_THE_SOCKET(*target_sd);
-        if (NULL != ports) {
-            opal_argv_free(ports);
-        }
+        opal_argv_free(ports);
         return ORTE_ERROR;
     }
     
@@ -735,9 +738,7 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
         } else if (AF_INET6 == af_family) {
             ((struct sockaddr_in6*) &inaddr)->sin6_port = port;
         } else {
-            if (NULL != ports) {
-                opal_argv_free(ports);
-            }
+            opal_argv_free(ports);
             return ORTE_ERROR;
         }
         
@@ -751,9 +752,7 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
                         strerror(opal_socket_errno),
                         opal_socket_errno );
             CLOSE_THE_SOCKET(*target_sd);
-            if (NULL != ports) {
-                opal_argv_free(ports);
-            }
+            opal_argv_free(ports);
             return ORTE_ERROR;
         }
         goto socket_binded;
@@ -770,17 +769,13 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
     
     /* cleanup and return the error */
     CLOSE_THE_SOCKET(*target_sd);
-    if (NULL != ports) {
-        opal_argv_free(ports);
-    }
+    opal_argv_free(ports);
     return ORTE_ERROR;
 
 
 socket_binded:
     /* done with this, so release it */
-    if (NULL != ports) {
-        opal_argv_free(ports);
-    }
+    opal_argv_free(ports);
     
     /* resolve assigned port */
     if (getsockname(*target_sd, (struct sockaddr*)&inaddr, &addrlen) < 0) {
