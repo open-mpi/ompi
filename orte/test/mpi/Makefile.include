@@ -30,18 +30,26 @@
 
 EXTRA_DIST += \
         test/mpi/Makefile \
+        test/mpi/abort.c \
         test/mpi/accept.c \
+        test/mpi/bad_exit.c \
         test/mpi/cell_spawn.c \
         test/mpi/concurrent_spawn.c \
         test/mpi/connect.c \
         test/mpi/crisscross.c \
         test/mpi/delayed_abort.c \
+        test/mpi/hello_barrier.c \
+        test/mpi/hello.c \
         test/mpi/loop_child.c \
         test/mpi/loop_spawn.c \
+        test/mpi/mpi_barrier.c \
+        test/mpi/mpi_no_op.c \
         test/mpi/mpi_spin.c \
         test/mpi/multi_abort.c \
         test/mpi/pubsub.c \
         test/mpi/simple_spawn.c \
         test/mpi/slave_spawn.c \
         test/mpi/slave.c \
-        test/mpi/spawn_multiple.c
+        test/mpi/spawn_multiple.c \
+        test/mpi/ziatest.c \
+        test/mpi/ziaprobe.c
