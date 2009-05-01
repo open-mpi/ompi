@@ -203,12 +203,14 @@ struct mca_oob_tcp_component_t {
     int                tcp_listen_sd;        /**< listen socket for incoming IPv4 connection requests */
     unsigned short     tcp_listen_port;      /**< IPv4 listen port */
     char**             tcp4_static_ports;    /**< Static ports - IPV4 */
+    char**             tcp4_dyn_ports;       /**< Dynamic ports - IPV4 */
     int                disable_family;       /**< disable AF: 0-nothing, 4-IPv4, 6-IPv6 */
 #if OPAL_WANT_IPV6
     opal_event_t       tcp6_recv_event;      /**< event structure for IPv6 recvs */
     int                tcp6_listen_sd;       /**< listen socket for incoming IPv6 connection requests */
     unsigned short     tcp6_listen_port;     /**< IPv6 listen port */
-    char**             tcp6_static_ports;    /**< Static port - IPV6 */
+    char**             tcp6_static_ports;    /**< Static ports - IPV6 */
+    char**             tcp6_dyn_ports;       /**< Dynamic ports - IPV6 */
 #endif  /* OPAL_WANT_IPV6 */
     opal_mutex_t       tcp_lock;             /**< lock for accessing module state */
     opal_list_t        tcp_events;           /**< list of pending events (accepts) */
