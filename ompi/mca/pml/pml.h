@@ -507,7 +507,7 @@ struct mca_pml_base_module_1_0_0_t {
     mca_pml_base_module_ft_event_fn_t     pml_ft_event;
 
     /* maximum constant sizes */
-    int                                   pml_max_contextid;
+    uint32_t                              pml_max_contextid;
     int                                   pml_max_tag;
 };
 typedef struct mca_pml_base_module_1_0_0_t mca_pml_base_module_1_0_0_t;
