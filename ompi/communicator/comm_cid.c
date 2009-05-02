@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Voltaire All rights reserved.
- * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
+ * Copyright (c) 2006-2009 University of Houston.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -48,6 +48,9 @@ BEGIN_C_DECLS
  */
 
 static int cid_block_start = 28;
+
+static int ompi_comm_cid_checkforreuse ( int c_id_start_index, int block );
+
 
 typedef int ompi_comm_cid_allredfct (int *inbuf, int* outbuf, 
                                      int count, struct ompi_op_t *op, 
@@ -264,9 +267,9 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
             /**
              * If the communicator has IDs available then allocate one for the child
              */
-            if(MPI_UNDEFINED != comm->c_id_available && 
-               MPI_UNDEFINED != comm->c_id_start_index &&  
-               block > comm->c_id_available - comm->c_id_start_index) {
+            if ( MPI_UNDEFINED != comm->c_id_available && 
+                 MPI_UNDEFINED != comm->c_id_start_index &&  
+                 block > comm->c_id_available - comm->c_id_start_index) {
                 nextcid = comm->c_id_available;
                 flag=opal_pointer_array_test_and_set_item (&ompi_mpi_communicators,
                                                            nextcid, comm);
@@ -275,13 +278,38 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
              * Otherwise the communicator needs to negotiate a new block of IDs
              */
             else {
-                (allredfnct)(&cid_block_start, &global_block_start, 1, 
-                             MPI_MAX, comm, bridgecomm,
+		int start[3], gstart[3];
+		/* the next function either returns exactly the same start_id as 
+                   the communicator had, or the cid_block_start*/
+		start[0] = ompi_comm_cid_checkforreuse ( comm->c_id_start_index, block );
+
+		/* this is now a little tricky. By multiplying the start[0] values with -1
+		   and executing the MAX operation on those as well, we will be able to
+		   determine the minimum value across the provided input */ 
+		start[1] = (-1) * start[0]; 
+		start[2] = cid_block_start;
+
+		(allredfnct)(start, gstart, 3, MPI_MAX, comm, bridgecomm,
                              local_leader, remote_leader, send_first );
-                cid_block_start = global_block_start;
-                comm->c_id_available = cid_block_start;
-                comm->c_id_start_index = cid_block_start;
-                cid_block_start = cid_block_start + block;
+
+		/* revert the minimum value back to a positive number */
+		gstart[1] = (-1) * gstart[1];
+		
+		if  ( gstart[0] == start[0] && 
+		      gstart[1] == start[0] && 
+		      gstart[0] != cid_block_start ) {
+		    comm->c_id_available   = gstart[0];
+		    comm->c_id_start_index = gstart[0];
+
+		    /* note: cid_block_start not modified in this section */
+		}
+		else {
+		    /* no, one process did not agree on the reuse of the block
+		       so we have to go with the higher number */
+		    comm->c_id_available   = gstart[2];
+		    comm->c_id_start_index = gstart[2];
+		    cid_block_start = gstart[2] + block;
+		}
             }
         }
         
@@ -454,6 +482,36 @@ int ompi_comm_activate ( ompi_communicator_t** newcomm )
     return ret;
 }                         
 
+/**************************************************************************/
+/**************************************************************************/
+/**************************************************************************/
+/* check whether all communicators registered from c_id_start_index to 
+** c_id_start_index + block have been freed. For this, we rely on 
+** the communicators having been properly removed from the fortran array, 
+** i.e. the according request should return a NULL pointer. 
+*/
+static int ompi_comm_cid_checkforreuse ( int c_id_start_index, int block )
+{
+    int ret=cid_block_start;
+    int i, count=0;
+    ompi_communicator_t * tempcomm;
+
+
+    if ( MPI_UNDEFINED != c_id_start_index ) {
+	for ( i= c_id_start_index; i < c_id_start_index + block; i++ ) {
+	    tempcomm = opal_pointer_array_get_item ( &ompi_mpi_communicators, i );
+	    if ( NULL == tempcomm ) {
+		count++;
+	    }
+	}
+	
+	if ( count == block ) {
+	    ret = c_id_start_index;
+	}
+    }
+
+    return ret;
+}
 /**************************************************************************/
 /**************************************************************************/
 /**************************************************************************/
