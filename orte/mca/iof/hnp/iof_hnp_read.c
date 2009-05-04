@@ -316,7 +316,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
         }
     } else {
         /* output this to our local output */
-        if (ORTE_IOF_STDOUT & rev->tag) {
+        if (ORTE_IOF_STDOUT & rev->tag || orte_xml_output) {
             orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, orte_iof_base.iof_write_stdout->wev);
         } else {
             orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, orte_iof_base.iof_write_stderr->wev);
