@@ -19,6 +19,7 @@
 #include "opal/constants.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
+#include "opal/util/output.h"
 #include "crs_self.h"
 
 /*
