@@ -414,7 +414,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
                 orte_show_help("help-rmaps_rank_file.txt","bad-host", true, rfmap->node_name);
                 return ORTE_ERR_SILENT;
             }
-            if (NULL == rfmap->slot_list) {
+            if (0 == strlen(rfmap->slot_list)) {
                 /* rank was specified but no slot list given - that's an error */
                 orte_show_help("help-rmaps_rank_file.txt","no-slot-list", true, rank, rfmap->node_name);
                 return ORTE_ERR_SILENT;
