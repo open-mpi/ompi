@@ -86,7 +86,7 @@ static int init(void)
     /* if we are a daemon or the hnp, we need to post a
      * recv to catch any collective operations
      */
-    if (orte_process_info.daemon || orte_process_info.hnp) {
+    if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
         if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                                           ORTE_RML_TAG_DAEMON_COLLECTIVE,
                                                           ORTE_RML_NON_PERSISTENT,
@@ -109,7 +109,7 @@ static void finalize(void)
     /* if we are a daemon or the hnp, we need to cancel the
      * recv we posted
      */
-    if (orte_process_info.daemon || orte_process_info.hnp) {
+    if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
         orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON_COLLECTIVE);
     }
 }
@@ -201,7 +201,7 @@ static int xcast(orte_jobid_t job,
      * fire right away, but that's okay
      * The macro makes a copy of the buffer, so it's okay to release it here
      */
-    if (orte_process_info.hnp) {
+    if (ORTE_PROC_IS_HNP) {
         ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &buf, ORTE_RML_TAG_DAEMON, orte_daemon_cmd_processor);
     } else {
         /* otherwise, send it to the HNP for relay */
@@ -540,7 +540,7 @@ static int daemon_collective(orte_process_name_t *sender, opal_buffer_t *data)
     
     if (jobdat->num_collected == jobdat->num_participating) {
         /* if I am the HNP, go process the results */
-        if (orte_process_info.hnp) {
+        if (ORTE_PROC_IS_HNP) {
             goto hnp_process;
         }
         

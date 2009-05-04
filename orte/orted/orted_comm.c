@@ -181,7 +181,7 @@ void orte_daemon_cmd_processor(int fd, short event, void *data)
     orte_daemon_cmd_flag_t command;
 
     /* check to see if we are in a progress recursion */
-    if (orte_process_info.daemon && 1 < (ret = opal_progress_recursion_depth())) {
+    if (ORTE_PROC_IS_DAEMON && 1 < (ret = opal_progress_recursion_depth())) {
         /* if we are in a recursion, we want to repost the message event
          * so the progress engine can work its way back up to the top
          * of the stack. Given that this could happen multiple times,
@@ -221,7 +221,7 @@ void orte_daemon_cmd_processor(int fd, short event, void *data)
     wait_time = 1;
     num_recursions = 0;
     
-    if (orte_timing && orte_process_info.hnp) {
+    if (orte_timing && ORTE_PROC_IS_HNP) {
         /* if we are doing timing, and we are the HNP, then the message doesn't come
          * through the RML recv, so we have to pickup the recv time here
          */
@@ -590,7 +590,7 @@ static int process_commands(orte_process_name_t* sender,
             /* if we are the HNP, kill our local procs and
              * flag we are exited - but don't yet exit
              */
-            if (orte_process_info.hnp) {
+            if (ORTE_PROC_IS_HNP) {
                 orte_job_t *daemons;
                 orte_proc_t **procs;
                 /* if we are the HNP, ensure our local procs are terminated */
@@ -648,7 +648,7 @@ static int process_commands(orte_process_name_t* sender,
             /* if we are the HNP, kill our local procs and
              * flag we are exited - but don't yet exit
              */
-            if (orte_process_info.hnp) {
+            if (ORTE_PROC_IS_HNP) {
                 orte_job_t *daemons;
                 orte_proc_t **procs;
                 /* if we are the HNP, ensure our local procs are terminated */
@@ -694,7 +694,7 @@ static int process_commands(orte_process_name_t* sender,
             answer = OBJ_NEW(opal_buffer_t);
             job = ORTE_JOBID_INVALID;
             /* can only process this if we are the HNP */
-            if (orte_process_info.hnp) {
+            if (ORTE_PROC_IS_HNP) {
                 /* unpack the job data */
                 n = 1;
                 if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &jdata, &n, ORTE_JOB))) {
@@ -763,7 +763,7 @@ static int process_commands(orte_process_name_t* sender,
             /* if we are not the HNP, we can do nothing - report
              * back 0 procs so the tool won't hang
              */
-            if (!orte_process_info.hnp) {
+            if (!ORTE_PROC_IS_HNP) {
                 orte_std_cntr_t zero=0;
                 
                 answer = OBJ_NEW(opal_buffer_t);
@@ -846,7 +846,7 @@ static int process_commands(orte_process_name_t* sender,
             /* if we are not the HNP, we can do nothing - report
              * back 0 nodes so the tool won't hang
              */
-            if (!orte_process_info.hnp) {
+            if (!ORTE_PROC_IS_HNP) {
                 orte_std_cntr_t zero=0;
                 
                 answer = OBJ_NEW(opal_buffer_t);
@@ -927,7 +927,7 @@ static int process_commands(orte_process_name_t* sender,
             /* if we are not the HNP, we can do nothing - report
              * back 0 procs so the tool won't hang
              */
-            if (!orte_process_info.hnp) {
+            if (!ORTE_PROC_IS_HNP) {
                 orte_std_cntr_t zero=0;
                 
                 answer = OBJ_NEW(opal_buffer_t);
@@ -1062,7 +1062,7 @@ SEND_ANSWER:
                  * the requestor. We need to convert that to our own job family
                  */
                 proc.jobid = ORTE_CONSTRUCT_LOCAL_JOBID(ORTE_PROC_MY_NAME->jobid, proc.jobid);
-                if (orte_process_info.hnp) {
+                if (ORTE_PROC_IS_HNP) {
                     return_addr = sender;
                     /* if the request is for a wildcard vpid, then it goes to every
                      * daemon. For scalability, we should probably xcast this some
@@ -1185,7 +1185,7 @@ SEND_ANSWER:
             /* send the answer back to requester - callback
              * function will release buffer
              */
-            if (orte_process_info.hnp) {
+            if (ORTE_PROC_IS_HNP) {
                 /* if I am the HNP, I need to also provide the number of
                  * replies the caller should recv and the sample time
                  */

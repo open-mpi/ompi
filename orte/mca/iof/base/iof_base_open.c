@@ -195,7 +195,7 @@ int orte_iof_base_open(void)
     }
     
     /* daemons do not need to do this as they do not write out stdout/err */
-    if (!orte_process_info.daemon) {
+    if (!ORTE_PROC_IS_DAEMON) {
         /* setup the stdout event */
         ORTE_IOF_SINK_DEFINE(&orte_iof_base.iof_write_stdout, ORTE_PROC_MY_NAME,
                              1, ORTE_IOF_STDOUT, orte_iof_base_write_handler, NULL);        

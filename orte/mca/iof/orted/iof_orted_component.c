@@ -114,7 +114,7 @@ static int orte_iof_orted_query(mca_base_module_t **module, int *priority)
     *priority = -1;
 
     /* if we are not a daemon, then don't use this module */
-    if (!orte_process_info.daemon) {
+    if (!ORTE_PROC_IS_DAEMON) {
         return ORTE_ERROR;
     }
 

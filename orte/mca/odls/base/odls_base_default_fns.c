@@ -659,7 +659,7 @@ REPORT_ERROR:
     /* if we are the HNP, then we would rather not send this to ourselves -
      * instead, we queue it up for local processing
      */
-    if (orte_process_info.hnp) {
+    if (ORTE_PROC_IS_HNP) {
         ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &alert,
                            ORTE_RML_TAG_APP_LAUNCH_CALLBACK,
                            orte_plm_base_app_report_launch);
@@ -1416,7 +1416,7 @@ CLEANUP:
     /* if we are the HNP, then we would rather not send this to ourselves -
      * instead, we queue it up for local processing
      */
-    if (orte_process_info.hnp) {
+    if (ORTE_PROC_IS_HNP) {
         ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &alert,
                            ORTE_RML_TAG_APP_LAUNCH_CALLBACK,
                            orte_plm_base_app_report_launch);
@@ -1814,7 +1814,7 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
         /* if we are the HNP, then we would rather not send this to ourselves -
          * instead, we queue it up for local processing
          */
-        if (orte_process_info.hnp) {
+        if (ORTE_PROC_IS_HNP) {
             ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &buffer,
                                ORTE_RML_TAG_INIT_ROUTES,
                                orte_routed_base_process_msg);
@@ -1920,7 +1920,7 @@ static void check_proc_complete(orte_odls_child_t *child)
         /* if we are the HNP, then we would rather not send this to ourselves -
          * instead, we queue it up for local processing
          */
-        if (orte_process_info.hnp) {
+        if (ORTE_PROC_IS_HNP) {
             ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &alert,
                                ORTE_RML_TAG_PLM,
                                orte_plm_base_receive_process_msg);
@@ -1989,7 +1989,7 @@ static void check_proc_complete(orte_odls_child_t *child)
             /* if we are the HNP, then we would rather not send this to ourselves -
              * instead, we queue it up for local processing
              */
-            if (orte_process_info.hnp) {
+            if (ORTE_PROC_IS_HNP) {
                 ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &alert,
                                    ORTE_RML_TAG_PLM,
                                    orte_plm_base_receive_process_msg);
@@ -2483,7 +2483,7 @@ RECORD:
         /* if we are the HNP, then we would rather not send this to ourselves -
          * instead, we queue it up for local processing
          */
-        if (orte_process_info.hnp) {
+        if (ORTE_PROC_IS_HNP) {
             ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &alert,
                                ORTE_RML_TAG_PLM,
                                orte_plm_base_receive_process_msg);

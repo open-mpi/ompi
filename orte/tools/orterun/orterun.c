@@ -440,8 +440,10 @@ int orterun(int argc, char *argv[])
     OBJ_CONSTRUCT(&orte_exit, orte_trigger_event_t);
     OBJ_CONSTRUCT(&orteds_exit, orte_trigger_event_t);
     
-    /* flag that I am the HNP */
-    orte_process_info.hnp = true;
+    /* flag that I am the HNP - needs to be done prior to
+     * registering params
+     */
+    orte_process_info.proc_type = ORTE_PROC_HNP;
 
     /* Setup MCA params */
     orte_register_params();
@@ -504,7 +506,7 @@ int orterun(int argc, char *argv[])
      * up incorrect infrastructure that only a singleton would
      * require
      */
-    if (ORTE_SUCCESS != (rc = orte_init(ORTE_NON_TOOL))) {
+    if (ORTE_SUCCESS != (rc = orte_init(ORTE_PROC_HNP))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }    

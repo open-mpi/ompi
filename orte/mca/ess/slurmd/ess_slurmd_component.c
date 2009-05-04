@@ -74,7 +74,7 @@ int orte_ess_slurmd_component_query(mca_base_module_t **module, int *priority)
      * by mpirun but are in a slurm world
      */
     
-    if (orte_process_info.mpi_proc &&
+    if (ORTE_PROC_IS_MPI &&
         NULL != getenv("SLURM_JOBID") &&
         NULL != getenv("SLURM_STEPID") &&
         NULL == orte_process_info.my_hnp_uri) {

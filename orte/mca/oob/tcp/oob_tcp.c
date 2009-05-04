@@ -596,7 +596,7 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
        port in the range.  Otherwise, tcp_port_min will be 0, which
        means "pick any port" */
     if (AF_INET == af_family) {
-        if (orte_process_info.daemon) {
+        if (ORTE_PROC_IS_DAEMON) {
             if (NULL != mca_oob_tcp_component.tcp4_static_ports) {
                 /* if static ports were provided, the daemon takes the
                  * first entry in the list
@@ -613,7 +613,7 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
                 opal_argv_append_nosize(&ports, "0");
                 orte_static_ports = false;
             }
-        } else if (orte_process_info.mpi_proc) {
+        } else if (ORTE_PROC_IS_MPI) {
             if (NULL != mca_oob_tcp_component.tcp4_static_ports) {
                 /* if static ports were provided, an mpi proc takes its
                  * node_local_rank entry in the list IF it has that info
@@ -652,7 +652,7 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
 
 #if OPAL_WANT_IPV6
     if (AF_INET6 == af_family) {
-        if (orte_process_info.daemon) {
+        if (ORTE_PROC_IS_DAEMON) {
             if (NULL != mca_oob_tcp_component.tcp6_static_ports) {
                 /* if static ports were provided, the daemon takes the
                  * first entry in the list
@@ -669,7 +669,7 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
                 opal_argv_append_nosize(&ports, "0");
                 orte_static_ports = false;
             }
-        } else if (orte_process_info.mpi_proc) {
+        } else if (ORTE_PROC_IS_MPI) {
             if (NULL != mca_oob_tcp_component.tcp6_static_ports) {
                 /* if static ports were provided, an mpi proc takes its
                  * node_local_rank entry in the list IF it has that info
@@ -1480,10 +1480,10 @@ int mca_oob_tcp_init(void)
     jobid = ORTE_PROC_MY_NAME->jobid;
 
     /* Fix up the listen type.  This is the first call into the OOB in
-       which the orte_process_info.hnp field is reliably set.  The
+       which the ORTE_PROC_IS_HNP field is reliably set.  The
        listen_mode should only be listen_thread for the HNP -- all
        others should use the traditional event library. */
-    if (!orte_process_info.hnp) {
+    if (!ORTE_PROC_IS_HNP) {
         mca_oob_tcp_component.tcp_listen_type = OOB_TCP_EVENT;
     }
 

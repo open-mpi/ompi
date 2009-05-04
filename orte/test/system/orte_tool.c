@@ -14,6 +14,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/comm/comm.h"
 #include "orte/util/hnp_contact.h"
+#include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/runtime.h"
 
@@ -27,7 +28,7 @@ int main(int argc, char* argv[])
     orte_app_context_t *app;
     char cwd[OMPI_PATH_MAX];
     
-    if (0 > (rc = orte_init(ORTE_TOOL))) {
+    if (0 > (rc = orte_init(ORTE_PROC_TOOL))) {
         fprintf(stderr, "orte_tool: couldn't init orte\n");
         return rc;
     }

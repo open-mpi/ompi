@@ -73,7 +73,7 @@
 
 static int slave_set_name(void);
 
-static int rte_init(char flags);
+static int rte_init(void);
 static int rte_finalize(void);
 static uint8_t proc_get_locality(orte_process_name_t *proc);
 static orte_vpid_t proc_get_daemon(orte_process_name_t *proc);
@@ -110,7 +110,7 @@ orte_ess_base_module_t orte_ess_slave_module = {
 #endif
 };
 
-static int rte_init(char flags)
+static int rte_init(void)
 {
     int ret;
     char *error = NULL;
@@ -309,6 +309,7 @@ static int slave_set_name(void)
 static int rte_ft_event(int state)
 {
     int ret, exit_status = ORTE_SUCCESS;
+    orte_proc_type_t svtype;
 
     /******** Checkpoint Prep ********/
     if(OPAL_CRS_CHECKPOINT == state) {
@@ -392,12 +393,13 @@ static int rte_ft_event(int state)
          * Restart the routed framework
          * JJH: Lie to the finalize function so it does not try to contact the daemon.
          */
-        orte_process_info.tool = true;
+        svtype = orte_process_info.proc_type;
+        orte_process_info.proc_type = ORTE_PROC_TOOL;
         if (ORTE_SUCCESS != (ret = orte_routed.finalize()) ) {
             exit_status = ret;
             goto cleanup;
         }
-        orte_process_info.tool = false;
+        orte_process_info.proc_type = svtype;
         if (ORTE_SUCCESS != (ret = orte_routed.initialize()) ) {
             exit_status = ret;
             goto cleanup;

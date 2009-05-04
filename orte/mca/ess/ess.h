@@ -29,6 +29,8 @@
 
 #include "opal/mca/mca.h"
 
+#include "orte/util/proc_info.h"
+
 BEGIN_C_DECLS
 
 /*
@@ -38,7 +40,7 @@ BEGIN_C_DECLS
 /*
  * Initialize the RTE for this environment
  */
-typedef int (*orte_ess_base_module_init_fn_t)(char flags);
+typedef int (*orte_ess_base_module_init_fn_t)(void);
 
 /*
  * Finalize the RTE for this environment

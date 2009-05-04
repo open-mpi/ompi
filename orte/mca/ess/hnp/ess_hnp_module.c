@@ -73,7 +73,7 @@
 #include "orte/mca/ess/base/base.h"
 #include "orte/mca/ess/hnp/ess_hnp.h"
 
-static int rte_init(char flags);
+static int rte_init(void);
 static int rte_finalize(void);
 static void rte_abort(int status, bool report) __opal_attribute_noreturn__;
 static uint8_t proc_get_locality(orte_process_name_t *proc);
@@ -104,7 +104,7 @@ orte_ess_base_module_t orte_ess_hnp_module = {
 };
 
 
-static int rte_init(char flags)
+static int rte_init(void)
 {
     int ret;
     char *error = NULL;
@@ -430,7 +430,7 @@ static int rte_init(char flags)
         goto error;
     }
 
-    if (ORTE_SUCCESS != (ret = orte_snapc_base_select(orte_process_info.hnp, !orte_process_info.daemon))) {
+    if (ORTE_SUCCESS != (ret = orte_snapc_base_select(ORTE_PROC_IS_HNP, !ORTE_PROC_IS_DAEMON))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_snapc_base_select";
         goto error;

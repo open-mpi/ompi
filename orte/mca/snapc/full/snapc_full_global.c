@@ -32,6 +32,7 @@
 #include "opal/mca/crs/base/base.h"
 
 #include "orte/util/name_fns.h"
+#include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"
 #include "opal/dss/dss.h"
 #include "orte/mca/rml/rml.h"
@@ -342,7 +343,7 @@ static int snapc_full_global_start_listener(void)
 {
     int ret, exit_status = ORTE_SUCCESS;
 
-    if (snapc_orted_recv_issued && orte_process_info.hnp) {
+    if (snapc_orted_recv_issued && ORTE_PROC_IS_HNP) {
         return ORTE_SUCCESS;
     }
     
@@ -372,7 +373,7 @@ static int snapc_full_global_stop_listener(void)
 {
     int ret, exit_status = ORTE_SUCCESS;
     
-    if (!snapc_orted_recv_issued && orte_process_info.hnp) {
+    if (!snapc_orted_recv_issued && ORTE_PROC_IS_HNP) {
         return ORTE_SUCCESS;
     }
     
@@ -396,7 +397,7 @@ static int snapc_full_global_start_cmdline_listener(void)
 {
     int ret, exit_status = ORTE_SUCCESS;
 
-    if (snapc_cmdline_recv_issued && orte_process_info.hnp) {
+    if (snapc_cmdline_recv_issued && ORTE_PROC_IS_HNP) {
         return ORTE_SUCCESS;
     }
 
@@ -426,7 +427,7 @@ static int snapc_full_global_stop_cmdline_listener(void)
 {
     int ret, exit_status = ORTE_SUCCESS;
     
-    if (!snapc_cmdline_recv_issued && orte_process_info.hnp) {
+    if (!snapc_cmdline_recv_issued && ORTE_PROC_IS_HNP) {
         return ORTE_SUCCESS;
     }
     

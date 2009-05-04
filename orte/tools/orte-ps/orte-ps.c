@@ -67,6 +67,7 @@
 #include "orte/util/hnp_contact.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
+#include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/comm/comm.h"
 #include "orte/mca/ras/ras_types.h"
@@ -375,7 +376,7 @@ static int orte_ps_init(int argc, char *argv[]) {
     /***************************
      * We need all of OPAL and the TOOL portion of ORTE
      ***************************/
-    ret = orte_init(ORTE_TOOL);
+    ret = orte_init(ORTE_PROC_TOOL);
 
     return ret;
 }

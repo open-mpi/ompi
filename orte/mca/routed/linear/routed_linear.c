@@ -100,9 +100,9 @@ static int finalize(void)
     /* if I am an application process, indicate that I am
         * truly finalizing prior to departure
         */
-    if (!orte_process_info.hnp &&
-        !orte_process_info.daemon &&
-        !orte_process_info.tool) {
+    if (!ORTE_PROC_IS_HNP &&
+        !ORTE_PROC_IS_DAEMON &&
+        !ORTE_PROC_IS_TOOL) {
         if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync(false))) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -110,7 +110,7 @@ static int finalize(void)
     }
     
     /* if I am the HNP, I need to stop the comm recv */
-    if (orte_process_info.hnp) {
+    if (ORTE_PROC_IS_HNP) {
         orte_routed_base_comm_stop();
     }
     
@@ -137,8 +137,8 @@ static int delete_route(orte_process_name_t *proc)
     /* if I am an application process, I don't have any routes
      * so there is nothing for me to do
      */
-    if (!orte_process_info.hnp && !orte_process_info.daemon &&
-        !orte_process_info.tool) {
+    if (!ORTE_PROC_IS_HNP && !ORTE_PROC_IS_DAEMON &&
+        !ORTE_PROC_IS_TOOL) {
         return ORTE_SUCCESS;
     }
     
@@ -158,7 +158,7 @@ static int delete_route(orte_process_name_t *proc)
          * in my routing table and thus have nothing to do
          * here, just return
          */
-        if (orte_process_info.daemon) {
+        if (ORTE_PROC_IS_DAEMON) {
             return ORTE_SUCCESS;
         }
         
@@ -205,8 +205,8 @@ static int update_route(orte_process_name_t *target,
     /* if I am an application process, we don't update the route since
      * we automatically route everything through the local daemon
      */
-    if (!orte_process_info.hnp && !orte_process_info.daemon &&
-        !orte_process_info.tool) {
+    if (!ORTE_PROC_IS_HNP && !ORTE_PROC_IS_DAEMON &&
+        !ORTE_PROC_IS_TOOL) {
         return ORTE_SUCCESS;
     }
     
@@ -233,7 +233,7 @@ static int update_route(orte_process_name_t *target,
          * anything to this job family via my HNP - so nothing to do
          * here, just return
          */
-        if (orte_process_info.daemon) {
+        if (ORTE_PROC_IS_DAEMON) {
             return ORTE_SUCCESS;
         }
         
@@ -293,8 +293,8 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     }
     
     /* if I am an application process, always route via my local daemon */
-    if (!orte_process_info.hnp && !orte_process_info.daemon &&
-        !orte_process_info.tool) {
+    if (!ORTE_PROC_IS_HNP && !ORTE_PROC_IS_DAEMON &&
+        !ORTE_PROC_IS_TOOL) {
         ret = ORTE_PROC_MY_DAEMON;
         goto found;
     }
@@ -312,7 +312,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     /* IF THIS IS FOR A DIFFERENT JOB FAMILY... */
     if (ORTE_JOB_FAMILY(target->jobid) != ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
         /* if I am a daemon, route this via the HNP */
-        if (orte_process_info.daemon) {
+        if (ORTE_PROC_IS_DAEMON) {
             ret = ORTE_PROC_MY_HNP;
             goto found;
         }
@@ -490,7 +490,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
     int rc;
 
     /* if I am a tool, then I stand alone - there is nothing to do */
-    if (orte_process_info.tool) {
+    if (ORTE_PROC_IS_TOOL) {
         return ORTE_SUCCESS;
     }
     
@@ -498,7 +498,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
      * from the data sent to me for launch and update the routing tables to
      * point at the daemon for each proc
      */
-    if (orte_process_info.daemon) {
+    if (ORTE_PROC_IS_DAEMON) {
         
         OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                              "%s routed_linear: init routes for daemon job %s\n\thnp_uri %s",
@@ -553,7 +553,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
     }
     
 
-    if (orte_process_info.hnp) {
+    if (ORTE_PROC_IS_HNP) {
         
         OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                              "%s routed_linear: init routes for HNP job %s",
@@ -781,7 +781,7 @@ static int update_routing_tree(void)
     /* if I am anything other than a daemon or the HNP, this
      * is a meaningless command as I am not allowed to route
      */
-    if (!orte_process_info.daemon && !orte_process_info.hnp) {
+    if (!ORTE_PROC_IS_DAEMON && !ORTE_PROC_IS_HNP) {
         return ORTE_ERR_NOT_SUPPORTED;
     }
     
@@ -797,7 +797,7 @@ static orte_vpid_t get_routing_tree(opal_list_t *children)
     /* if I am anything other than a daemon or the HNP, this
      * is a meaningless command as I am not allowed to route
      */
-    if (!orte_process_info.daemon && !orte_process_info.hnp) {
+    if (!ORTE_PROC_IS_DAEMON && !ORTE_PROC_IS_HNP) {
         return ORTE_VPID_INVALID;
     }
     
@@ -818,7 +818,7 @@ static orte_vpid_t get_routing_tree(opal_list_t *children)
         opal_list_append(children, &nm->super);
     }
     
-    if (orte_process_info.hnp) {
+    if (ORTE_PROC_IS_HNP) {
         /* the parent of the HNP is invalid */
         return ORTE_VPID_INVALID;
     }
@@ -836,7 +836,7 @@ static int get_wireup_info(opal_buffer_t *buf)
      * is a meaningless command as I cannot get
      * the requested info
      */
-    if (!orte_process_info.hnp) {
+    if (!ORTE_PROC_IS_HNP) {
         return ORTE_ERR_NOT_SUPPORTED;
     }
     

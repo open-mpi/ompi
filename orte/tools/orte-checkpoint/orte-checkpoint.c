@@ -69,6 +69,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
+#include "orte/util/proc_info.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -486,7 +487,7 @@ static int ckpt_init(int argc, char *argv[]) {
      * We need all of OPAL and the TOOLS portion of ORTE - this
      * sets us up so we can talk to any HNP over the wire
      ***************************/
-    if (ORTE_SUCCESS != (ret = orte_init(ORTE_TOOL))) {
+    if (ORTE_SUCCESS != (ret = orte_init(ORTE_PROC_TOOL))) {
         exit_status = ret;
         goto cleanup;
     }

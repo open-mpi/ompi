@@ -52,6 +52,7 @@
 #include "orte/util/hnp_contact.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
+#include "orte/util/proc_info.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/mca/rml/base/rml_contact.h"
 
@@ -256,7 +257,7 @@ main(int argc, char *argv[])
     /***************************
      * We need all of OPAL and the TOOL portion of ORTE
      ***************************/
-    if (ORTE_SUCCESS != orte_init(ORTE_TOOL)) {
+    if (ORTE_SUCCESS != orte_init(ORTE_PROC_TOOL)) {
         orte_finalize();
         return 1;
     }

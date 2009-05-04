@@ -689,7 +689,7 @@ process_daemons:
     free(vpids);
     
     /* if we are a daemon or the HNP, update our num_procs */
-    if (orte_process_info.hnp || orte_process_info.daemon) {
+    if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
         orte_process_info.num_procs = num_daemons;
     }
     
@@ -1106,7 +1106,7 @@ orte_nid_t* orte_util_lookup_nid(orte_process_name_t *proc)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc)));
     
-    if (ORTE_PROC_IS_DAEMON(proc->jobid)) {
+    if (ORTE_PROC_NAME_IS_DAEMON(proc->jobid)) {
         /* looking for a daemon */
         return find_daemon_node(proc);
     }

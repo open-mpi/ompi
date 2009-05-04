@@ -36,7 +36,7 @@
 #include "orte/mca/ess/base/base.h"
 #include "orte/mca/ess/cnos/ess_cnos.h"
 
-static int rte_init(char flags);
+static int rte_init(void);
 static int rte_finalize(void);
 static void rte_abort(int status, bool report) __opal_attribute_noreturn__;
 static uint8_t proc_get_locality(orte_process_name_t *proc);
@@ -64,7 +64,7 @@ orte_ess_base_module_t orte_ess_cnos_module = {
 
 static cnos_nidpid_map_t *map;
 
-static int rte_init(char flags)
+static int rte_init(void)
 {
     int rc;
     int nprocs;

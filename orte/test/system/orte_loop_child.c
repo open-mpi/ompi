@@ -2,13 +2,14 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include "orte/util/proc_info.h"
 #include "orte/runtime/runtime.h"
 
 int main( int argc, char **argv ) 
 {
     int rc;
     
-    if (ORTE_SUCCESS != (rc = orte_init(ORTE_TOOL))) {
+    if (ORTE_SUCCESS != (rc = orte_init(ORTE_PROC_TOOL))) {
         fprintf(stderr, "couldn't init orte - error code %d\n", rc);
         return rc;
     }

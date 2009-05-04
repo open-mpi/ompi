@@ -70,6 +70,7 @@
 #include "orte/util/hnp_contact.h"
 #include "orte/util/show_help.h"
 #include "orte/util/parse_options.h"
+#include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/iof/iof.h"
 #if OPAL_ENABLE_FT == 1
@@ -211,7 +212,7 @@ main(int argc, char *argv[])
     /***************************
      * We need all of OPAL and the TOOL portion of ORTE
      ***************************/
-    if (ORTE_SUCCESS != orte_init(ORTE_TOOL)) {
+    if (ORTE_SUCCESS != orte_init(ORTE_PROC_TOOL)) {
         orte_finalize();
         return 1;
     }

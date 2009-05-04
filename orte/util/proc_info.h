@@ -43,6 +43,25 @@ BEGIN_C_DECLS
 
 #define ORTE_MAX_HOSTNAME_SIZE  512
 
+typedef uint32_t orte_proc_type_t;
+#define ORTE_PROC_TYPE_NONE     0x0000
+#define ORTE_PROC_SINGLETON     0x0001
+#define ORTE_PROC_DAEMON        0x0002
+#define ORTE_PROC_HNP           0x0004
+#define ORTE_PROC_TOOL          0x0008
+#define ORTE_PROC_TOOL_WNAME    0x0010
+#define ORTE_PROC_MPI           0x0020
+#define ORTE_PROC_CM            0x0040
+
+#define ORTE_PROC_IS_SINGLETON      (ORTE_PROC_SINGLETON & orte_process_info.proc_type)
+#define ORTE_PROC_IS_DAEMON         (ORTE_PROC_DAEMON & orte_process_info.proc_type)
+#define ORTE_PROC_IS_HNP            (ORTE_PROC_HNP & orte_process_info.proc_type)
+#define ORTE_PROC_IS_TOOL           (ORTE_PROC_TOOL & orte_process_info.proc_type)
+#define ORTE_PROC_IS_TOOL_WNAME     (ORTE_PROC_TOOL_WNAME & orte_process_info.proc_type)
+#define ORTE_PROC_IS_MPI            (ORTE_PROC_MPI & orte_process_info.proc_type)
+#define ORTE_PROC_IS_CM             (ORTE_PROC_CM & orte_process_info.proc_type)
+
+
 /**
  * Process information structure
  *
@@ -65,11 +84,7 @@ struct orte_proc_info_t {
     char *nodename;                     /**< string name for this node */
     uint32_t arch;                      /**< arch for this node */
     pid_t pid;                          /**< Local process ID for this process */
-    bool singleton;                     /**< I am a singleton */
-    bool daemon;                        /**< Indicate whether or not I am a daemon */
-    bool hnp;                           /**< Indicate whether or not I am the HNP (orterun) */
-    bool tool;                          /**< I am a tool or not */
-    bool mpi_proc;                      /**< I am an MPI process */
+    orte_proc_type_t proc_type;         /**< Type of process */
     opal_buffer_t *sync_buf;            /**< buffer to store sync response */
     uint16_t my_port;                   /**< TCP port for out-of-band comm */
     /* The session directory has the form

@@ -89,6 +89,7 @@
 #include "orte/mca/notifier/notifier.h"
 #include "orte/mca/notifier/base/base.h"
 #include "orte/util/show_help.h"
+#include "orte/util/proc_info.h"
 #if !ORTE_DISABLE_FULL_SUPPORT
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"
@@ -269,9 +270,9 @@ void ompi_info::open_components()
   component_map["installdirs"] = &opal_installdirs_components;
 
   // ORTE frameworks
-  // Set orte_process_info.hnp to true to force all frameworks to
+  // Set orte_process_info.proc_type to HNP to force all frameworks to
   // open components
-  orte_process_info.hnp = true;
+  orte_process_info.proc_type = ORTE_PROC_HNP;
 
   if (ORTE_SUCCESS != orte_errmgr_base_open()) {
       goto error;

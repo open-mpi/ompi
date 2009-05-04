@@ -36,6 +36,7 @@
 #include "orte/mca/rml/rml_types.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/proc_info.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/orted/orted.h"
 
@@ -279,7 +280,7 @@ int orte_plm_base_orted_kill_local_procs(orte_jobid_t job)
          * fire right away, but that's okay
          * The macro makes a copy of the buffer, so it's okay to release it here
          */
-        if (orte_process_info.hnp) {
+        if (ORTE_PROC_IS_HNP) {
             ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &cmd, ORTE_RML_TAG_DAEMON, orte_daemon_cmd_processor);
         }
         

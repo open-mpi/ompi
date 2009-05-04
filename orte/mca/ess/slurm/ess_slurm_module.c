@@ -70,7 +70,7 @@ static char *get_slurm_nodename(int nodeid);
 static int slurm_set_name(void);
 static int build_daemon_nidmap(void);
 
-static int rte_init(char flags);
+static int rte_init(void);
 static int rte_finalize(void);
 static uint8_t proc_get_locality(orte_process_name_t *proc);
 static orte_vpid_t proc_get_daemon(orte_process_name_t *proc);
@@ -99,7 +99,7 @@ orte_ess_base_module_t orte_ess_slurm_module = {
 };
 
 
-static int rte_init(char flags)
+static int rte_init(void)
 {
     int ret;
     char *error = NULL;
@@ -116,7 +116,7 @@ static int rte_init(char flags)
     /* if I am a daemon, complete my setup using the
      * default procedure
      */
-    if (orte_process_info.daemon) {
+    if (ORTE_PROC_IS_DAEMON) {
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup())) {
             ORTE_ERROR_LOG(ret);
             error = "orte_ess_base_orted_setup";
@@ -148,7 +148,7 @@ static int rte_init(char flags)
             }
             return ORTE_SUCCESS;
         }
-    } else if (orte_process_info.tool) {
+    } else if (ORTE_PROC_IS_TOOL) {
         /* otherwise, if I am a tool proc, use that procedure */
         if (ORTE_SUCCESS != (ret = orte_ess_base_tool_setup())) {
             ORTE_ERROR_LOG(ret);
@@ -191,11 +191,11 @@ static int rte_finalize(void)
     int ret;
    
     /* if I am a daemon, finalize using the default procedure */
-    if (orte_process_info.daemon) {
+    if (ORTE_PROC_IS_DAEMON) {
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_finalize())) {
             ORTE_ERROR_LOG(ret);
         }
-    } else if (orte_process_info.tool) {
+    } else if (ORTE_PROC_IS_TOOL) {
         /* otherwise, if I am a tool proc, use that procedure */
         if (ORTE_SUCCESS != (ret = orte_ess_base_tool_finalize())) {
             ORTE_ERROR_LOG(ret);

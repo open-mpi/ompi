@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #endif
 
+#include "orte/util/proc_info.h"
 
 BEGIN_C_DECLS
 
@@ -45,11 +46,6 @@ ORTE_DECLSPEC extern bool orte_finalizing;
 ORTE_DECLSPEC extern int orte_debug_output;
 ORTE_DECLSPEC extern bool orte_debug_flag;
 
-/* some convenience definitions for code clarity */
-#define ORTE_NON_TOOL           0x00
-#define ORTE_TOOL               0x01
-#define ORTE_TOOL_WITH_NAME     0x02
-
     /**
      * Initialize the Open Run Time Environment
      *
@@ -61,7 +57,7 @@ ORTE_DECLSPEC extern bool orte_debug_flag;
      *
      * @param tool Whether we are ORTE tool or not
      */
-ORTE_DECLSPEC    int orte_init(char flags);
+ORTE_DECLSPEC    int orte_init(orte_proc_type_t flags);
 
     /**
      * Initialize parameters for ORTE.

@@ -308,18 +308,6 @@ int orte_daemon(int argc, char *argv[])
         if (1000 < i) i=0;        
     }
 
-    /* Okay, now on to serious business! */
-    
-    if (orted_globals.hnp) {
-        /* we are to be the hnp, so set that flag */
-        orte_process_info.hnp = true;
-        orte_process_info.daemon = false;
-    } else {
-        /* set ourselves to be just a daemon */
-        orte_process_info.hnp = false;
-        orte_process_info.daemon = true;
-    }
-
 #if OPAL_ENABLE_FT == 1
     /* Mark as a tool program */
     tmp_env_var = mca_base_param_env_var("opal_cr_is_tool");
@@ -335,9 +323,16 @@ int orte_daemon(int argc, char *argv[])
      * up incorrect infrastructure that only a singleton would
      * require.
      */
-    if (ORTE_SUCCESS != (ret = orte_init(ORTE_NON_TOOL))) {
-        ORTE_ERROR_LOG(ret);
-        return ret;
+    if (orted_globals.hnp) {
+        if (ORTE_SUCCESS != (ret = orte_init(ORTE_PROC_HNP))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+    } else {
+        if (ORTE_SUCCESS != (ret = orte_init(ORTE_PROC_DAEMON))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
     }
     
     if ((int)ORTE_VPID_INVALID != orted_globals.fail) {
@@ -397,7 +392,7 @@ int orte_daemon(int argc, char *argv[])
     ORTE_PROC_MY_DAEMON->vpid = ORTE_PROC_MY_NAME->vpid;
     
     /* if I am also the hnp, then update that contact info field too */
-    if (orte_process_info.hnp) {
+    if (ORTE_PROC_IS_HNP) {
         orte_process_info.my_hnp_uri = orte_rml.get_contact_info();
         ORTE_PROC_MY_HNP->jobid = ORTE_PROC_MY_NAME->jobid;
         ORTE_PROC_MY_HNP->vpid = ORTE_PROC_MY_NAME->vpid;
@@ -595,7 +590,7 @@ int orte_daemon(int argc, char *argv[])
      * is if we are launched by a singleton to provide support
      * for it
      */
-    if (!orte_process_info.hnp) {
+    if (!ORTE_PROC_IS_HNP) {
         /* send the information to the orted report-back point - this function
          * will process the data, but also counts the number of
          * orteds that reported back so the launch procedure can continue.

@@ -157,7 +157,7 @@ main(int argc, char *argv[])
 #endif
     tmp_env_var = NULL; /* Silence compiler warning */
 
-    if (ORTE_SUCCESS != (ret = orte_init(ORTE_TOOL_WITH_NAME))) {
+    if (ORTE_SUCCESS != (ret = orte_init(ORTE_PROC_TOOL_WNAME))) {
         return ret;
     }
 
@@ -403,7 +403,7 @@ void kill_procs(void) {
                     
                 }
                 /* if we are a singleton, check the hnp_pid as well */
-                if (orte_process_info.singleton) {
+                if (ORTE_PROC_IS_SINGLETON) {
                     if (procpid != orte_process_info.hnp_pid) {
                         (void)kill(procpid, SIGKILL);
                     }

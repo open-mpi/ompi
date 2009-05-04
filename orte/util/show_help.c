@@ -32,6 +32,7 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"
 
 #include "orte/util/show_help.h"
@@ -378,7 +379,7 @@ void orte_show_help_finalize(void)
     ready = false;
     
     /* Shutdown show_help, showing final messages */
-    if (orte_process_info.hnp) {
+    if (ORTE_PROC_IS_HNP) {
         show_accumulated_duplicates(0, 0, NULL);
         OBJ_DESTRUCT(&abd_tuples);
         if (show_help_timer_set) {
@@ -427,7 +428,7 @@ int orte_show_help(const char *filename, const char *topic,
      * or we don't yet know our HNP, then all we can do
      * is process this locally
      */
-    if (orte_process_info.hnp ||
+    if (ORTE_PROC_IS_HNP ||
         NULL == orte_rml.send_buffer ||
         ORTE_PROC_MY_HNP->vpid == ORTE_VPID_INVALID) {
         rc = show_help(filename, topic, output, ORTE_PROC_MY_NAME);
