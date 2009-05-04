@@ -336,9 +336,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         gettimeofday(&ompistart, NULL);
     }
     
-    /* Setup ORTE - note that we are not a tool  */
-    orte_process_info.mpi_proc = true;
-    if (ORTE_SUCCESS != (ret = orte_init(ORTE_NON_TOOL))) {
+    /* Setup ORTE - note that we are an MPI process  */
+    if (ORTE_SUCCESS != (ret = orte_init(ORTE_PROC_MPI))) {
         error = "ompi_mpi_init: orte_init failed";
         goto error;
     }

@@ -33,6 +33,7 @@
 #include "opal/dss/dss.h"
 
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/util/proc_info.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/runtime_internals.h"
@@ -142,7 +143,7 @@ int orte_dt_init(void)
     
     /* open up the verbose output for ORTE debugging */
     if (orte_debug_flag || 0 < orte_debug_verbosity ||
-        (orte_debug_daemons_flag && (orte_process_info.daemon || orte_process_info.hnp))) {
+        (orte_debug_daemons_flag && (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP))) {
         if (0 < orte_debug_verbosity) {
             opal_output_set_verbosity(orte_debug_output, orte_debug_verbosity);
         } else {
@@ -410,7 +411,7 @@ orte_job_t* orte_get_job_data_object(orte_jobid_t job)
     int32_t ljob;
     
     /* if I am not an HNP, I cannot provide this object */
-    if (!orte_process_info.hnp) {
+    if (!ORTE_PROC_IS_HNP) {
         return NULL;
     }
     

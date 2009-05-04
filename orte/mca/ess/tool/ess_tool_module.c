@@ -41,7 +41,7 @@
 #include "orte/mca/ess/base/base.h"
 #include "orte/mca/ess/tool/ess_tool.h"
 
-static int rte_init(char flags);
+static int rte_init(void);
 static void rte_abort(int status, bool report) __opal_attribute_noreturn__;
 static orte_vpid_t proc_get_daemon(orte_process_name_t *proc);
 
@@ -63,7 +63,7 @@ orte_ess_base_module_t orte_ess_tool_module = {
 };
 
 
-static int rte_init(char flags)
+static int rte_init(void)
 {
     int ret;
     char *error = NULL;

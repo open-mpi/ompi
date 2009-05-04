@@ -35,7 +35,7 @@
 #include "orte/mca/ess/base/base.h"
 #include "orte/mca/ess/portals_utcp/ess_portals_utcp.h"
 
-static int rte_init(char flags);
+static int rte_init(void);
 static int rte_finalize(void);
 static void rte_abort(int status, bool report) __opal_attribute_noreturn__;
 static uint8_t proc_get_locality(orte_process_name_t *proc);
@@ -63,7 +63,7 @@ orte_ess_base_module_t orte_ess_portals_utcp_module = {
 
 static char **nidmap=NULL;
 
-static int rte_init(char flags)
+static int rte_init(void)
 {
     int rc;
     orte_vpid_t vpid;

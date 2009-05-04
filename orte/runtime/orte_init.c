@@ -65,7 +65,7 @@ orte_process_name_t orte_name_invalid = {ORTE_JOBID_INVALID, ORTE_VPID_INVALID};
 #endif
 const char orte_version_string[] = ORTE_IDENT_STRING;
 
-int orte_init(char flags)
+int orte_init(orte_proc_type_t flags)
 {
     int ret;
     char *error = NULL;
@@ -80,19 +80,13 @@ int orte_init(char flags)
         return ret;
     }
     
-    /* ensure we know the tool setting for when we finalize */
-    if ((flags & ORTE_TOOL) || (flags & ORTE_TOOL_WITH_NAME)) {
-        orte_process_info.tool = true;
-    }
+    /* ensure we know the type of proc for when we finalize */
+    orte_process_info.proc_type = flags;
 
     /* setup the locks */
     if (ORTE_SUCCESS != (ret = orte_locks_init())) {
         error = "orte_locks_init";
         goto error;
-    }
-    
-    if (orte_process_info.hnp) {
-        orte_process_info.daemon = false;
     }
     
     /* Register all MCA Params */
@@ -130,7 +124,7 @@ int orte_init(char flags)
     }
     
     /* initialize the RTE for this environment */
-    if (ORTE_SUCCESS != (ret = orte_ess.init(flags))) {
+    if (ORTE_SUCCESS != (ret = orte_ess.init())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_ess_set_name";
         goto error;

@@ -105,7 +105,7 @@ static int orte_iof_tool_query(mca_base_module_t **module, int *priority)
     *priority = -1;
 
     /* if we are not a tool, then don't use this module */
-    if (!orte_process_info.tool) {
+    if (!ORTE_PROC_IS_TOOL) {
         return ORTE_ERROR;
     }
 

@@ -65,7 +65,7 @@ static void set_handler_default(int sig)
 #endif /* !defined(__WINDOWS__) */
 }
 
-static int rte_init(char flags);
+static int rte_init(void);
 static int rte_finalize(void);
 static uint8_t proc_get_locality(orte_process_name_t *proc);
 static orte_vpid_t proc_get_daemon(orte_process_name_t *proc);
@@ -93,7 +93,7 @@ orte_ess_base_module_t orte_ess_singleton_module = {
     NULL /* ft_event */
 };
 
-static int rte_init(char flags)
+static int rte_init(void)
 {
     int rc;
     
@@ -373,7 +373,7 @@ static int fork_hnp(void)
         orte_process_info.my_hnp_uri = strdup(orted_uri);
         
        /* indicate we are a singleton so orte_init knows what to do */
-        orte_process_info.singleton = true;
+        orte_process_info.proc_type = ORTE_PROC_SINGLETON;
         /* all done - report success */
         free(orted_uri);
         return ORTE_SUCCESS;

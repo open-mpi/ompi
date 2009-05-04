@@ -38,6 +38,7 @@
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/util/proc_info.h"
 
 #include "orte/mca/filem/filem.h"
 #include "orte/mca/filem/base/base.h"
@@ -231,7 +232,7 @@ int orte_filem_base_get_proc_node_name(orte_process_name_t *proc, char **machine
     /* set default answer */
     *machine_name = NULL;
 
-    if (orte_process_info.hnp) {
+    if (ORTE_PROC_IS_HNP) {
         /* if I am the HNP, then all the data structures are local to me - no
          * need to send messages around to get the info
          */

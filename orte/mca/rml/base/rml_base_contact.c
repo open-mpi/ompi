@@ -28,6 +28,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/rml/rml.h"
@@ -131,7 +132,7 @@ int orte_rml_base_update_contact_info(opal_buffer_t* data)
      * in our process_info struct so we can correctly route any messages
      */
     if (ORTE_PROC_MY_NAME->jobid == name.jobid &&
-        orte_process_info.daemon &&
+        ORTE_PROC_IS_DAEMON &&
         orte_process_info.num_procs < num_procs) {
         orte_process_info.num_procs = num_procs;
         /* if we changed it, then we better update the routed

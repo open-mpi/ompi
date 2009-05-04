@@ -56,7 +56,7 @@
 #include "orte/mca/ess/base/base.h"
 #include "orte/mca/ess/slurmd/ess_slurmd.h"
 
-static int rte_init(char flags);
+static int rte_init(void);
 static int rte_finalize(void);
 static uint8_t proc_get_locality(orte_process_name_t *proc);
 static orte_vpid_t proc_get_daemon(orte_process_name_t *proc);
@@ -89,7 +89,7 @@ static bool app_init_complete;
 
 /****    MODULE FUNCTIONS    ****/
 
-static int rte_init(char flags)
+static int rte_init(void)
 {
     int ret;
     char *error = NULL;

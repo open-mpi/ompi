@@ -73,6 +73,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/nidmap.h"
+#include "orte/util/proc_info.h"
 
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
@@ -294,7 +295,7 @@ static void orte_plm_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
         /* if we are not the HNP, send a message to the HNP alerting it
          * to the failure
          */
-        if (!orte_process_info.hnp) {
+        if (!ORTE_PROC_IS_HNP) {
             opal_buffer_t buf;
             orte_vpid_t *vpid=(orte_vpid_t*)cbdata;
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
@@ -664,7 +665,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
      * by enclosing them in quotes. Check for any multi-word
      * mca params passed to mpirun and include them
      */
-    if (orte_process_info.hnp) {
+    if (ORTE_PROC_IS_HNP) {
         int cnt, i;
         cnt = opal_argv_count(orted_cmd_line);    
         for (i=0; i < cnt; i+=3) {

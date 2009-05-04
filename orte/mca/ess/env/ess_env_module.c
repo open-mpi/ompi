@@ -73,7 +73,7 @@
 
 static int env_set_name(void);
 
-static int rte_init(char flags);
+static int rte_init(void);
 static int rte_finalize(void);
 static uint8_t proc_get_locality(orte_process_name_t *proc);
 static orte_vpid_t proc_get_daemon(orte_process_name_t *proc);
@@ -110,7 +110,7 @@ orte_ess_base_module_t orte_ess_env_module = {
 #endif
 };
 
-static int rte_init(char flags)
+static int rte_init(void)
 {
     int ret;
     char *error = NULL;
@@ -127,14 +127,14 @@ static int rte_init(char flags)
     /* if I am a daemon, complete my setup using the
      * default procedure
      */
-    if (orte_process_info.daemon) {
+    if (ORTE_PROC_IS_DAEMON) {
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup())) {
             ORTE_ERROR_LOG(ret);
             error = "orte_ess_base_orted_setup";
             goto error;
         }
         
-    } else if (orte_process_info.tool) {
+    } else if (ORTE_PROC_IS_TOOL) {
         /* otherwise, if I am a tool proc, use that procedure */
         if (ORTE_SUCCESS != (ret = orte_ess_base_tool_setup())) {
             ORTE_ERROR_LOG(ret);
@@ -177,11 +177,11 @@ static int rte_finalize(void)
     int ret;
     
     /* if I am a daemon, finalize using the default procedure */
-    if (orte_process_info.daemon) {
+    if (ORTE_PROC_IS_DAEMON) {
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_finalize())) {
             ORTE_ERROR_LOG(ret);
         }
-    } else if (orte_process_info.tool) {
+    } else if (ORTE_PROC_IS_TOOL) {
         /* otherwise, if I am a tool proc, use that procedure */
         if (ORTE_SUCCESS != (ret = orte_ess_base_tool_finalize())) {
             ORTE_ERROR_LOG(ret);
@@ -413,6 +413,7 @@ static int env_set_name(void)
 static int rte_ft_event(int state)
 {
     int ret, exit_status = ORTE_SUCCESS;
+    orte_proc_type_t svtype;
 
     /******** Checkpoint Prep ********/
     if(OPAL_CRS_CHECKPOINT == state) {
@@ -496,12 +497,13 @@ static int rte_ft_event(int state)
          * Restart the routed framework
          * JJH: Lie to the finalize function so it does not try to contact the daemon.
          */
-        orte_process_info.tool = true;
+        svtype = orte_process_info.proc_type;
+        orte_process_info.proc_type = ORTE_PROC_TOOL;
         if (ORTE_SUCCESS != (ret = orte_routed.finalize()) ) {
             exit_status = ret;
             goto cleanup;
         }
-        orte_process_info.tool = false;
+        orte_process_info.proc_type = svtype;
         if (ORTE_SUCCESS != (ret = orte_routed.initialize()) ) {
             exit_status = ret;
             goto cleanup;

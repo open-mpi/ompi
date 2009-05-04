@@ -10,6 +10,7 @@
 #include <signal.h>
 
 #include "orte/util/name_fns.h"
+#include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/runtime.h"
 
@@ -45,7 +46,7 @@ int main(int argc, char* argv[])
     int i;
     double pi;
 
-    orte_init(ORTE_TOOL_WITH_NAME);
+    orte_init(ORTE_PROC_TOOL_WNAME);
     
     if (signal(SIGUSR1, sigusr_handler) == SIG_IGN) {
         fprintf(stderr, "Could not setup signal trap for SIGUSR1\n");

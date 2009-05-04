@@ -52,6 +52,7 @@
 
 #include "orte/util/name_fns.h"
 #include "orte/util/nidmap.h"
+#include "orte/util/proc_info.h"
 
 #include "orte/mca/plm/base/plm_private.h"
 #include "orte/mca/plm/base/base.h"
@@ -1014,7 +1015,7 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     }
     
     /* pass the total number of daemons that will be in the system */
-    if (orte_process_info.hnp) {
+    if (ORTE_PROC_IS_HNP) {
         jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
         num_procs = jdata->num_procs;
     } else {
@@ -1027,7 +1028,7 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     free(param);
     
     /* pass the uri of the hnp */
-    if (orte_process_info.hnp) {
+    if (ORTE_PROC_IS_HNP) {
         rml_uri = orte_rml.get_contact_info();
     } else {
         rml_uri = orte_process_info.my_hnp_uri;
@@ -1041,7 +1042,7 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
      * being sure to "purge" any that would cause problems
      * on backend nodes
      */
-    if (orte_process_info.hnp) {
+    if (ORTE_PROC_IS_HNP) {
         cnt = opal_argv_count(orted_cmd_line);    
         for (i=0; i < cnt; i+=3) {
             /* if the specified option is more than one word, we don't

@@ -206,7 +206,7 @@ static int xcast(orte_jobid_t job,
      * fire right away, but that's okay
      * The macro makes a copy of the buffer, so it's okay to release it here
      */
-    if (orte_process_info.hnp) {
+    if (ORTE_PROC_IS_HNP) {
         ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &buf, ORTE_RML_TAG_DAEMON, orte_daemon_cmd_processor);
     } else {
         /* otherwise, send it to the HNP for relay */

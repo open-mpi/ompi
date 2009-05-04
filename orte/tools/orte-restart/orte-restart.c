@@ -66,6 +66,7 @@
 #include "orte/mca/snapc/base/base.h"
 #include "orte/mca/filem/base/base.h"
 #include "orte/util/show_help.h"
+#include "orte/util/proc_info.h"
 
 /******************
  * Local Functions
@@ -277,7 +278,7 @@ static int initialize(int argc, char *argv[]) {
     /*
      * Setup any ORTE stuff we might need
      */
-    if (OPAL_SUCCESS != (ret = orte_init(ORTE_TOOL))) {
+    if (OPAL_SUCCESS != (ret = orte_init(ORTE_PROC_TOOL))) {
         exit_status = ret;
         goto cleanup;
     }

@@ -50,11 +50,7 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .nodename =             */   NULL,
     /*  .arch =                 */   0,
     /*  .pid =                  */   0,
-    /*  .singleton =            */   false,
-    /*  .daemon =               */   false,
-    /*  .hnp =                  */   false,
-    /*  .tool =                 */   false,
-    /*  .mpi_proc =             */   false,
+    /*  .proc_type =            */   ORTE_PROC_TYPE_NONE,
     /*  .sync_buf =             */   NULL,
     /*  .my_port =              */   0,
     /*  .tmpdir_base =          */   NULL,
@@ -207,9 +203,7 @@ int orte_proc_info_finalize(void)
         orte_process_info.my_daemon_uri = NULL;
     }
 
-    orte_process_info.hnp = false;
-    orte_process_info.singleton = false;
-    orte_process_info.daemon = false;
+    orte_process_info.proc_type = ORTE_PROC_TYPE_NONE;
     
     OBJ_RELEASE(orte_process_info.sync_buf);
     orte_process_info.sync_buf = NULL;

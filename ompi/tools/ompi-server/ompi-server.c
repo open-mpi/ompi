@@ -54,6 +54,7 @@
 
 
 #include "orte/util/name_fns.h"
+#include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
 
@@ -187,7 +188,7 @@ int main(int argc, char *argv[])
      * so that we only open up the communications infrastructure. No
      * session directories will be created.
      */
-    if (ORTE_SUCCESS != (ret = orte_init(ORTE_TOOL))) {
+    if (ORTE_SUCCESS != (ret = orte_init(ORTE_PROC_TOOL))) {
         fprintf(stderr, "ompi-server: failed to initialize -- aborting\n");
         exit(1);
     }

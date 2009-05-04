@@ -16,6 +16,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_bitmap.h"
 
+#include "orte/util/proc_info.h"
 #include "orte/runtime/runtime.h"
 
 typedef struct {
@@ -111,7 +112,7 @@ int main(int argc, char* argv[])
         exit(1);
     }
     
-    orte_init(ORTE_TOOL);
+    orte_init(ORTE_PROC_TOOL);
         
     num_procs = atoi(argv[1]);
     

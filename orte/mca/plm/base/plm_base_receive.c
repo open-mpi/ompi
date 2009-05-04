@@ -316,7 +316,7 @@ CLEANUP:
     OBJ_DESTRUCT(&answer);
 
     /* see if an error occurred - if so, wakeup the HNP so we can exit */
-    if (orte_process_info.hnp && ORTE_SUCCESS != rc) {
+    if (ORTE_PROC_IS_HNP && ORTE_SUCCESS != rc) {
         orte_trigger_event(&orte_exit);
     }
 }

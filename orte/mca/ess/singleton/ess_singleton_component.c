@@ -73,9 +73,9 @@ int orte_ess_singleton_component_query(mca_base_module_t **module, int *priority
     /* if we are an HNP, daemon, or tool, then we
      * are definitely not a singleton!
      */
-    if (orte_process_info.hnp ||
-        orte_process_info.daemon ||
-        orte_process_info.tool) {
+    if (ORTE_PROC_IS_HNP ||
+        ORTE_PROC_IS_DAEMON ||
+        ORTE_PROC_IS_TOOL) {
         *module = NULL;
         return ORTE_ERROR;
     }

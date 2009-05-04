@@ -156,7 +156,7 @@ int orte_register_params(void)
         orte_timing = true;
     }
     
-    if (orte_process_info.hnp) {
+    if (ORTE_PROC_IS_HNP) {
         char *tmp;
         mca_base_param_reg_string_name("orte", "timing_file",
                                        "Name of the file where timing data is to be written (relative or absolute path)",
