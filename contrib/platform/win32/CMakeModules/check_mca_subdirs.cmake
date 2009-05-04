@@ -141,7 +141,7 @@ FOREACH (MCA_FRAMEWORK ${MCA_FRAMEWORK_LIST})
             LIST(REMOVE_ITEM COMPONENT_FILES "${CURRENT_PATH}/${FILE}")
           ENDFOREACH(FILE)
 
-          IF(NOT BUILD_SHARED_LIBS OR NOT_SINGLE_SHARED_LIB STREQUAL "1")
+          IF(NOT OMPI_WANT_LIBLTDL OR NOT_SINGLE_SHARED_LIB STREQUAL "1")
             SET(NOT_SINGLE_SHARED_LIB "")
             # add sources for static build or for the shared build when this is not a stand along library.
             SET(MCA_FILES ${MCA_FILES} ${COMPONENT_FILES})
@@ -172,7 +172,7 @@ FOREACH (MCA_FRAMEWORK ${MCA_FRAMEWORK_LIST})
               SET(FRAMEWORK_STRUCT_DEF ${FRAMEWORK_STRUCT_DEF}
                 "&mca_${MCA_FRAMEWORK}_${MCA_COMPONENT}_component,\n")
             ENDIF(CURRENT_COMPONENT_PRIORITY GREATER BEST_COMPONENT_PRIORITY)
-          ELSE(NOT BUILD_SHARED_LIBS OR NOT_SINGLE_SHARED_LIB STREQUAL "1")
+          ELSE(NOT OMPI_WANT_LIBLTDL OR NOT_SINGLE_SHARED_LIB STREQUAL "1")
  
             # get the dependencies for this component.
             SET(MCA_DEPENDENCIES "")
@@ -209,7 +209,7 @@ FOREACH (MCA_FRAMEWORK ${MCA_FRAMEWORK_LIST})
             ENDIF("${MCA_FRAMEWORK}" STREQUAL "common")
             
 
-            # generate CMakeLists.txt for each component for shared build.
+            # generate CMakeLists.txt for each component for DSO build.
             FILE (WRITE "${PROJECT_BINARY_DIR}/mca/${MCA_FRAMEWORK}/${MCA_COMPONENT}/CMakeLists.txt"
               "
 #
@@ -243,7 +243,7 @@ INSTALL(TARGETS ${LIB_NAME_PREFIX}mca_${MCA_FRAMEWORK}_${MCA_COMPONENT} ${INSTAL
           ")
           
             ADD_SUBDIRECTORY (${PROJECT_BINARY_DIR}/mca/${MCA_FRAMEWORK}/${MCA_COMPONENT} mca/${MCA_FRAMEWORK}/${MCA_COMPONENT})
-          ENDIF(NOT BUILD_SHARED_LIBS OR NOT_SINGLE_SHARED_LIB STREQUAL "1")
+          ENDIF(NOT OMPI_WANT_LIBLTDL OR NOT_SINGLE_SHARED_LIB STREQUAL "1")
 
           # Install help files if they are here.
           INSTALL(DIRECTORY ${CURRENT_PATH}/ DESTINATION share/openmpi/
