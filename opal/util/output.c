@@ -629,15 +629,18 @@ static int open_file(int i)
             return OPAL_ERR_IN_ERRNO;
         }
 
+        free(filename);
+
         /* Make the file be close-on-exec to prevent child inheritance
          * problems */
 
 #ifndef __WINDOWS__
         /* TODO: Need to find out the equivalent in windows */
-        fcntl(info[i].ldi_fd, F_SETFD, 1);
+        if (-1 == fcntl(info[i].ldi_fd, F_SETFD, 1)) {
+           return OPAL_ERR_IN_ERRNO;
+        }
 #endif
 
-        free(filename);
     }
 
     /* Return successfully even if the session dir did not exist yet;
