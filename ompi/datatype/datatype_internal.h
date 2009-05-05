@@ -57,7 +57,7 @@ static inline void DUMP( char* fmt, ... )
 #    if defined(__GNUC__) && !defined(__STDC__)
 #      define DUMP(ARGS...)
 #    else
-       static inline void DUMP( char* fmt, ...) { 
+       static inline void DUMP( char* fmt __opal_attribute_unused__, ...) { 
 #if defined(__PGI)
            /* Some compilers complain if we have ... and no
               corresponding va_start() */
