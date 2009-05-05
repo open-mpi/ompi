@@ -194,6 +194,9 @@ OPAL_DECLSPEC extern int opal_carto_base_output;
 
 OPAL_DECLSPEC extern opal_carto_graph_t *opal_carto_base_common_host_graph;
 
+OPAL_DECLSPEC extern opal_carto_base_module_1_0_0_t opal_carto_default_module;
+
+
 END_C_DECLS
 
 #endif /* OPAL_BASE_CARTO_H */

@@ -26,6 +26,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/carto/carto.h"
+#include "opal/mca/carto/base/carto_base_graph.h"
 #include "opal/mca/carto/base/base.h"
 
 
@@ -45,6 +46,35 @@ bool opal_carto_base_components_opened_valid = false;
 opal_list_t opal_carto_base_components_opened;
 opal_carto_graph_t *opal_carto_base_common_host_graph=NULL;
 
+/*
+ * default carto module when no components are found
+ */
+static int opal_carto_default_init(void)
+{
+    /* create an empty graph */
+    if (NULL == opal_carto_base_common_host_graph) {
+        opal_carto_base_graph_create_fn(&opal_carto_base_common_host_graph);
+    }
+    return OPAL_SUCCESS;
+}
+static int opal_carto_default_finalize(void)
+{
+    /* free the host cartography graph. */
+    if (NULL != opal_carto_base_common_host_graph) {
+        opal_carto_base_free_graph_fn(opal_carto_base_common_host_graph);
+    }
+    return OPAL_SUCCESS;
+}
+
+opal_carto_base_module_1_0_0_t opal_carto_default_module = {
+    opal_carto_default_init,
+    opal_carto_base_graph_get_host_graph_fn,
+    opal_carto_base_free_graph_fn,
+    opal_carto_base_get_nodes_distance_fn,
+    opal_carto_base_graph_spf_fn,
+    opal_carto_base_graph_find_node_fn,
+    opal_carto_default_finalize,
+};
 
 /*
  * Function for finding and opening either all MCA components, or the one
