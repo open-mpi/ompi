@@ -490,7 +490,7 @@ static int spawn(int count, char **array_of_commands,
 {
     int rc, i, j, counter;
     int have_wdir=0;
-    int valuelen=OMPI_PATH_MAX, flag=0;
+    int flag=0;
     char cwd[OMPI_PATH_MAX];
     char host[OMPI_PATH_MAX];  /*** should define OMPI_HOST_MAX ***/
     char prefix[OMPI_PATH_MAX];
