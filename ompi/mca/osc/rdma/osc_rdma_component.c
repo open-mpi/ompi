@@ -112,7 +112,7 @@ check_config_value_bool(char *key, ompi_info_t *info)
     if (flag == 0) goto info_not_found;
     value_len++;
 
-    value_string = (char*)malloc(sizeof(char) * value_len);
+    value_string = (char*)malloc(sizeof(char) * value_len + 1); /* Should malloc 1 char for NUL-termination */
     if (NULL == value_string) goto info_not_found;
 
     ret = ompi_info_get(info, key, value_len, value_string, &flag);
