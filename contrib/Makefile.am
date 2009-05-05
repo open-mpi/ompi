@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -73,8 +74,6 @@ EXTRA_DIST = \
         platform/lanl/tlcc/optimized-panasas.conf \
         platform/win32/bin/flex.exe \
         platform/win32/bin/COPYING.flex \
-        platform/win32/opal/libltdl/ltdl.c \
-        platform/win32/opal/libltdl/ltdl.h \
         platform/win32/CMakeModules/c_check_bool.cmake \
         platform/win32/CMakeModules/check_c_inline.cmake \
         platform/win32/CMakeModules/check_c_type_exists.cmake \
