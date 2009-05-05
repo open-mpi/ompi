@@ -499,7 +499,7 @@ static int ompi_comm_cid_checkforreuse ( int c_id_start_index, int block )
 
     if ( MPI_UNDEFINED != c_id_start_index ) {
 	for ( i= c_id_start_index; i < c_id_start_index + block; i++ ) {
-	    tempcomm = opal_pointer_array_get_item ( &ompi_mpi_communicators, i );
+	    tempcomm = (ompi_communicator_t *) opal_pointer_array_get_item ( &ompi_mpi_communicators, i );
 	    if ( NULL == tempcomm ) {
 		count++;
 	    }
