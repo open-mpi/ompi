@@ -59,7 +59,7 @@ ompi_coll_tuned_allreduce_intra_nonoverlapping(void *sbuf, void *rbuf, int count
     /* Reduce to 0 and broadcast. */
 
     if (MPI_IN_PLACE == sbuf) {
-        if (0 == ompi_comm_rank(comm)) {
+        if (0 == rank) {
             err = comm->c_coll.coll_reduce (MPI_IN_PLACE, rbuf, count, dtype, 
                                             op, 0, comm, comm->c_coll.coll_reduce_module);
         } else {
@@ -897,7 +897,7 @@ ompi_coll_tuned_allreduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
     /* Reduce to 0 and broadcast. */
 
     if (MPI_IN_PLACE == sbuf) {
-        if (0 == ompi_comm_rank(comm)) {
+        if (0 == rank) {
             err = ompi_coll_tuned_reduce_intra_basic_linear (MPI_IN_PLACE, rbuf, count, dtype,
 							     op, 0, comm, module);
         } else {

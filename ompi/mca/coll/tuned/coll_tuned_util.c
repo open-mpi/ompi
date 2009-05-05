@@ -52,7 +52,7 @@ int ompi_coll_tuned_sendrecv_actual( void* sendbuf, int scount,
     if (err != MPI_SUCCESS) { line = __LINE__; goto error_handler; }
 
     err = ompi_request_wait_all( 2, reqs, statuses );
-    if (err != MPI_SUCCESS) { line = __LINE__; goto error_handler; }
+    if (err != MPI_SUCCESS) { line = __LINE__; goto error_handler_waitall; }
 
     if (MPI_STATUS_IGNORE != status) {
         *status = statuses[0];
@@ -60,7 +60,7 @@ int ompi_coll_tuned_sendrecv_actual( void* sendbuf, int scount,
     
     return (MPI_SUCCESS);
 
- error_handler:
+ error_handler_waitall:
     /* As we use wait_all we will get MPI_ERR_IN_STATUS which is not an error
      * code that we can propagate up the stack. Instead, look for the real
      * error code from the MPI_ERROR in the status.
@@ -78,6 +78,7 @@ int ompi_coll_tuned_sendrecv_actual( void* sendbuf, int scount,
         OPAL_OUTPUT ((ompi_coll_tuned_stream, "%s:%d: Error %d occurred (req index %d)\n",
                       __FILE__, line, err, err_index));
     } else {
+ error_handler:
         /* Error discovered during the posting of the irecv or isend,
          * and no status is available.
          */
