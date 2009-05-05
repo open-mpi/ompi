@@ -335,7 +335,7 @@ int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
                 opal_output(mca_crs_blcr_component.super.output_handle,
                             "crs:blcr: checkpoint(): Error: Unable to open checkpoint file (%s) for pid (%d)",
                             loc_fname, pid);
-                exit_status = ret;
+                exit_status = OPAL_ERROR;
                 goto cleanup;
             }
 

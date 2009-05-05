@@ -37,7 +37,7 @@ static int filem_rsh_open(void);
 static int filem_rsh_close(void);
 
 int orte_filem_rsh_max_incomming = 10;
-int orte_filem_rsh_max_outgoing  = 10;
+int orte_filem_rsh_max_outgoing = 10;
 
 /*
  * Instantiate the public struct with all of our public information
@@ -78,6 +78,9 @@ orte_filem_rsh_component_t mca_filem_rsh_component = {
     /* cp_command */
     NULL,
 
+    /* cp_local_command */
+    NULL,
+
     /* remote_sh_command */
     NULL
 };
@@ -115,6 +118,12 @@ static int filem_rsh_open(void)
                               "scp",
                               &mca_filem_rsh_component.cp_command);
     mca_base_param_reg_string(&mca_filem_rsh_component.super.base_version,
+                              "cp",
+                              "The Unix cp command for the FILEM rsh component",
+                              false, false,
+                              "cp",
+                              &mca_filem_rsh_component.cp_local_command);
+    mca_base_param_reg_string(&mca_filem_rsh_component.super.base_version,
                               "rsh",
                               "The remote shell command for the FILEM rsh component",
                               false, false,
@@ -123,23 +132,23 @@ static int filem_rsh_open(void)
 
     mca_base_param_reg_int(&mca_filem_rsh_component.super.base_version,
                            "max_incomming",
-                           "Maximum number of incomming connections",
+                           "Maximum number of incomming connections (0 = any)",
                            false, false,
                            orte_filem_rsh_max_incomming,
                            &orte_filem_rsh_max_incomming);
 
-    if( orte_filem_rsh_max_incomming <= 0 ) {
+    if( orte_filem_rsh_max_incomming < 0 ) {
         orte_filem_rsh_max_incomming = 1;
     }
 
     mca_base_param_reg_int(&mca_filem_rsh_component.super.base_version,
                            "max_outgoing",
-                           "Maximum number of out going connections (Currently not used)",
+                           "Maximum number of out going connections (0 = any)",
                            false, false,
                            orte_filem_rsh_max_outgoing,
                            &orte_filem_rsh_max_outgoing);
 
-    if( orte_filem_rsh_max_outgoing <= 0 ) {
+    if( orte_filem_rsh_max_outgoing < 0 ) {
         orte_filem_rsh_max_outgoing = 1;
     }
 
@@ -157,6 +166,9 @@ static int filem_rsh_open(void)
     opal_output_verbose(20, mca_filem_rsh_component.super.output_handle,
                         "filem:rsh: open: cp command  = %s", 
                         mca_filem_rsh_component.cp_command);
+    opal_output_verbose(20, mca_filem_rsh_component.super.output_handle,
+                        "filem:rsh: open: cp local command  = %s", 
+                        mca_filem_rsh_component.cp_local_command);
     opal_output_verbose(20, mca_filem_rsh_component.super.output_handle,
                         "filem:rsh: open: rsh command  = %s", 
                         mca_filem_rsh_component.remote_sh_command);

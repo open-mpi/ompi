@@ -111,6 +111,7 @@ typedef uint8_t orte_snapc_full_cmd_flag_t;
     extern bool orte_snapc_full_skip_filem;
     extern bool orte_snapc_full_skip_app;
     extern bool orte_snapc_full_timing_enabled;
+    extern int orte_snapc_full_max_wait_time;
 
     int orte_snapc_full_component_query(mca_base_module_t **module, int *priority);
 

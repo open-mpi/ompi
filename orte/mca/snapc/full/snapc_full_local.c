@@ -1114,7 +1114,8 @@ static int snapc_full_local_start_ckpt_open_comm(orte_snapc_full_app_snapshot_t 
     int usleep_time = 1000;
     int s_time = 0, max_wait_time;
 
-    max_wait_time = 20 * (1000000/usleep_time); /* wait time before giving up on the checkpoint */
+    /* wait time before giving up on the checkpoint */
+    max_wait_time = orte_snapc_full_max_wait_time * (1000000/usleep_time);
 
     /*
      * Wait for the named pipes to be created
@@ -1124,16 +1125,17 @@ static int snapc_full_local_start_ckpt_open_comm(orte_snapc_full_app_snapshot_t 
                          ORTE_NAME_PRINT(&vpid_snapshot->super.process_name),
                          vpid_snapshot->comm_pipe_w,
                          vpid_snapshot->comm_pipe_r));
-    for( s_time = 0; s_time < max_wait_time; ++s_time) {
+    for( s_time = 0; s_time < max_wait_time || max_wait_time <= 0; ++s_time) {
         /*
          * See if the named pipe exists yet for the PID in question
          */
         if( 0 > (ret = access(vpid_snapshot->comm_pipe_r, F_OK) )) {
             /* File doesn't exist yet, keep waiting */
-            if( s_time >= max_wait_time - 5 ) {
+            if( s_time >= max_wait_time - 5 && max_wait_time > 0 ) {
                 OPAL_OUTPUT_VERBOSE((15, mca_snapc_full_component.super.output_handle,
-                                     "Local) File does not exist yet: <%s> rtn = %d (waited %d/%d usec)\n",
-                                     vpid_snapshot->comm_pipe_r, ret, s_time, max_wait_time));
+                                     "Local) WARNING: Read file does not exist yet: <%s> rtn = %d (waited %d/%d sec)\n",
+                                     vpid_snapshot->comm_pipe_r, ret,
+                                     s_time/usleep_time, max_wait_time/usleep_time));
             }
             usleep(usleep_time);
             opal_event_loop(OPAL_EVLOOP_NONBLOCK);
@@ -1141,10 +1143,11 @@ static int snapc_full_local_start_ckpt_open_comm(orte_snapc_full_app_snapshot_t 
         }
         else if( 0 > (ret = access(vpid_snapshot->comm_pipe_w, F_OK) )) {
             /* File doesn't exist yet, keep waiting */
-            if( s_time >= max_wait_time - 5 ) {
+            if( s_time >= max_wait_time - 5 && max_wait_time > 0 ) {
                 OPAL_OUTPUT_VERBOSE((15, mca_snapc_full_component.super.output_handle,
-                                     "Local) File does not exist yet: <%s> rtn = %d (waited %d/%d usec)\n",
-                                     vpid_snapshot->comm_pipe_w, ret, s_time, max_wait_time));
+                                     "Local) WARNING: Write file does not exist yet: <%s> rtn = %d (waited %d/%d sec)\n",
+                                     vpid_snapshot->comm_pipe_w, ret,
+                                     s_time/usleep_time, max_wait_time/usleep_time));
             }
             usleep(usleep_time);
             opal_event_loop(OPAL_EVLOOP_NONBLOCK);
@@ -1153,8 +1156,18 @@ static int snapc_full_local_start_ckpt_open_comm(orte_snapc_full_app_snapshot_t 
         else {
             break;
         }
+
+        if( max_wait_time > 0 &&
+            (s_time == (max_wait_time/2) ||
+             s_time == (max_wait_time/4) ||
+             s_time == (3*max_wait_time/4) ) ) { 
+            OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+                                 "WARNING: Pid (%d) not responding [%d / %d]",
+                                 vpid_snapshot->process_pid, s_time, max_wait_time));
+        }
     }
-    if( s_time == max_wait_time ) { 
+
+    if( max_wait_time > 0 && s_time == max_wait_time ) { 
         /* The file doesn't exist, 
          * This means that the process didn't open up a named pipe for us
          * to access their checkpoint notification routine. Therefore,
@@ -1190,7 +1203,7 @@ static int snapc_full_local_start_ckpt_open_comm(orte_snapc_full_app_snapshot_t 
         goto cleanup;
     }
 
-    vpid_snapshot->comm_pipe_r_fd = open(vpid_snapshot->comm_pipe_r, O_RDWR);
+    vpid_snapshot->comm_pipe_r_fd = open(vpid_snapshot->comm_pipe_r, O_RDONLY);
     if(vpid_snapshot->comm_pipe_r_fd < 0) {
         opal_output(mca_snapc_full_component.super.output_handle,
                     "local) Error: Unable to open name pipe (%s). %d\n", 

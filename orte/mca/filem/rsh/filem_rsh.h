@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2008 The Trustees of Indiana University.
+ * Copyright (c) 2004-2009 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -46,6 +46,9 @@ extern "C" {
 
         /** RSH cp command: rsh = rcp, ssh = scp */
         char * cp_command;
+
+        /** Unix cp command */
+        char * cp_local_command;
 
         /** SSH remote login command */	
         char * remote_sh_command;

@@ -220,6 +220,9 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
 
     app_pid = getpid();
     if( orte_snapc_full_skip_app ) {
+        OPAL_OUTPUT_VERBOSE((2, mca_snapc_full_component.super.output_handle,
+                             "App) notify_response: Skipping App. (%d)\n",
+                             getpid()));
         ret = ORTE_SUCCESS;
         cr_state = OPAL_CRS_CONTINUE;
     } else {

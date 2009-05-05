@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -19,7 +19,6 @@
 #define ORTE_FILEM_BASE_H
 
 #include "orte_config.h"
-
 
 #if !ORTE_DISABLE_FULL_SUPPORT
 #include "orte/mca/rml/rml.h"
@@ -92,6 +91,7 @@ typedef uint8_t orte_filem_cmd_flag_t;
     ORTE_DECLSPEC extern opal_list_t orte_filem_base_components_available;
     ORTE_DECLSPEC extern orte_filem_base_component_t orte_filem_base_selected_component;
     ORTE_DECLSPEC extern orte_filem_base_module_t orte_filem;
+    ORTE_DECLSPEC extern bool orte_filem_base_is_active;
 
     /**
      * 'None' component functions

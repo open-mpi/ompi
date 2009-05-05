@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -160,7 +160,7 @@ static const uint32_t ProcInc    = 0x2;
           break;                                                                   \
       }                                                                            \
       sched_yield();                                                               \
-      usleep(opal_cr_thread_sleep_wait);                                           \
+      usleep(opal_cr_thread_sleep_check);                                          \
     }                                                                              \
  }
 #define OPAL_CR_THREAD_UNLOCK()                                     \
@@ -840,7 +840,6 @@ static void* opal_cr_thread_fn(opal_object_t *obj)
         OPAL_CR_THREAD_UNLOCK();
 
         while ( opal_cr_thread_in_library && opal_cr_thread_is_active ) {
-            sched_yield();
             usleep(opal_cr_thread_sleep_wait);
         }
     }
