@@ -124,27 +124,25 @@ mca_coll_basic_allgatherv_inter(void *sbuf, int scount,
                                 mca_coll_base_module_t *module)
 {
     int rsize, err, i;
-    int *scounts = NULL, *sdisps = NULL;
+    int *scounts, *sdisps;
 
     rsize = ompi_comm_remote_size(comm);
 
-    scounts = (int *) malloc(rsize * sizeof(int));
-    sdisps = (int *) calloc(rsize, sizeof(int));
-    if (NULL == scounts || NULL == sdisps) {
+    scounts = (int *) malloc(2 * rsize * sizeof(int));
+    sdisps = scounts + rsize;
+    if (NULL == scounts) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     for (i = 0; i < rsize; i++) {
         scounts[i] = scount;
+        sdisps[i] = 0;
     }
 
     err = comm->c_coll.coll_alltoallv(sbuf, scounts, sdisps, sdtype,
                                       rbuf, rcounts, disps, rdtype, comm,
                                       comm->c_coll.coll_alltoallv_module);
 
-    if (NULL != sdisps) {
-        free(sdisps);
-    }
     if (NULL != scounts) {
         free(scounts);
     }
