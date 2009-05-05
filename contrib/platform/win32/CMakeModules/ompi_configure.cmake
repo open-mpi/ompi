@@ -133,13 +133,6 @@ SET(OMPI_F90_ABSOLUTE "\"none\"")
 
 SET(OMPI_F90_BUILD_SIZE "\"small\"")
 
-# set the im/export decleration here. 
-# Don't bother with OMPI_IMPORTS
-IF(BUILD_SHARED_LIBS)
-  SET(OMPI_DECLSPEC "__declspec(dllimport)")
-ELSE(BUILD_SHARED_LIBS)
-  SET(OMPI_DECLSPEC "")
-ENDIF(BUILD_SHARED_LIBS)
 
 ###################################################################
 #                              Options                            #
@@ -355,6 +348,30 @@ IF(NOT ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT)
 ELSE(NOT ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT)
   SET (ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT 1)
 ENDIF(NOT ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT)
+
+OPTION(OMPI_ENABLE_DLOPEN_SUPPORT "Whether to include support for libltdl or not" OFF)
+MARK_AS_ADVANCED(OMPI_ENABLE_DLOPEN_SUPPORT)
+IF(OMPI_ENABLE_DLOPEN_SUPPORT)
+  SET(BUILD_SHARED_LIBS TRUE)
+  INCLUDE(FIND_LIBLTDL)
+  FIND_LIBLTDL()
+  IF(LIBLTDL_FOUND)
+    SET(OMPI_WANT_LIBLTDL 1)
+  ELSE(LIBLTDL_FOUND)
+    SET(OMPI_WANT_LIBLTDL 0)    
+  ENDIF(LIBLTDL_FOUND)
+ELSE(OMPI_ENABLE_DLOPEN_SUPPORT)
+  SET(OMPI_WANT_LIBLTDL 0)
+ENDIF(OMPI_ENABLE_DLOPEN_SUPPORT)
+
+# set the im/export decleration here. 
+# Don't bother with OMPI_IMPORTS
+IF(BUILD_SHARED_LIBS)
+  SET(OMPI_DECLSPEC "__declspec(dllimport)")
+ELSE(BUILD_SHARED_LIBS)
+  SET(OMPI_DECLSPEC "")
+ENDIF(BUILD_SHARED_LIBS)
+
 
 ###################################################################
 #                           Check headers                         #
@@ -1583,22 +1600,6 @@ ENDIF(HAVE_PTRDIFF_T)
 #/* Complete release number of Open MPI */
 #/* #undef OMPI_VERSION */
 ##
-#/* Whether to include support for libltdl or not */
-#/* #undef OMPI_WANT_LIBLTDL */
-OPTION(OMPI_ENABLE_DLOPEN_SUPPORT "Whether to include support for libltdl or not" OFF)
-MARK_AS_ADVANCED(OMPI_ENABLE_DLOPEN_SUPPORT)
-IF(OMPI_ENABLE_DLOPEN_SUPPORT)
-  SET(BUILD_SHARED_LIBS TRUE)
-  INCLUDE(FIND_LIBLTDL)
-  FIND_LIBLTDL()
-  IF(LIBLTDL_FOUND)
-    SET(OMPI_WANT_LIBLTDL 1)
-  ELSE(LIBLTDL_FOUND)
-    SET(OMPI_WANT_LIBLTDL 0)    
-  ENDIF(LIBLTDL_FOUND)
-ELSE(OMPI_ENABLE_DLOPEN_SUPPORT)
-  SET(OMPI_WANT_LIBLTDL 0)
-ENDIF(OMPI_ENABLE_DLOPEN_SUPPORT)
 
 
 #/* Greek - alpha, beta, etc - release number of Open Portable Access Layer */
