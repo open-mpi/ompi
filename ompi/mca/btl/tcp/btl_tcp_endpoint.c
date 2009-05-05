@@ -337,7 +337,6 @@ static int mca_btl_tcp_endpoint_send_connect_ack(mca_btl_base_endpoint_t* btl_en
 bool mca_btl_tcp_endpoint_accept(mca_btl_base_endpoint_t* btl_endpoint,
                                  struct sockaddr* addr, int sd)
 {
-    mca_btl_tcp_addr_t* btl_addr;
     mca_btl_tcp_proc_t* this_proc = mca_btl_tcp_proc_local();
     mca_btl_tcp_proc_t *endpoint_proc = btl_endpoint->endpoint_proc;
     int cmpval;
@@ -345,7 +344,7 @@ bool mca_btl_tcp_endpoint_accept(mca_btl_base_endpoint_t* btl_endpoint,
     OPAL_THREAD_LOCK(&btl_endpoint->endpoint_recv_lock);
     OPAL_THREAD_LOCK(&btl_endpoint->endpoint_send_lock);
 
-    if(NULL == (btl_addr = btl_endpoint->endpoint_addr)) {
+    if(NULL == btl_endpoint->endpoint_addr) {
         OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
         OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
         return false;
