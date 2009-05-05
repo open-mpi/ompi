@@ -239,31 +239,31 @@ int ompi_group_incl(ompi_group_t* group, int n, int *ranks, ompi_group_t **new_g
 
 int ompi_group_excl(ompi_group_t* group, int n, int *ranks, ompi_group_t **new_group) 
 {
-
     int i, j, k, result;
     int *ranks_included=NULL;
 
-     /* determine the list of included processes for the excl-method */
+    /* determine the list of included processes for the excl-method */
     k = 0;
-    if (0 != (group->grp_proc_count - n)) {
+    if (0 < (group->grp_proc_count - n)) {
         ranks_included = (int *)malloc( (group->grp_proc_count-n)*(sizeof(int)));
-    }
-    for (i=0 ; i<group->grp_proc_count ; i++) { 
-        for(j=0 ; j<n ; j++) { 
-	    if(ranks[j] == i) break;
-	}
-	if (j==n) { 
-	  ranks_included[k] = i;
-	  k++;
-	}
+
+        for (i=0 ; i<group->grp_proc_count ; i++) { 
+            for(j=0 ; j<n ; j++) { 
+                if(ranks[j] == i) break;
+            }
+            if (j==n) { 
+                ranks_included[k] = i;
+                k++;
+            }
+        }
     }
     
     result = ompi_group_incl(group, k, ranks_included, new_group);
 
-    if (NULL != ranks_included)
-    {
+    if (NULL != ranks_included) {
         free(ranks_included);
     }
+
     return result;
 }
 
