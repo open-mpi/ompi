@@ -347,8 +347,6 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
     vrank = ompi_op_is_commute(op) ? (rank - root + size) % size : rank;
     dim = comm->c_cube_dim;
 
-	
-
     /* Allocate the incoming and resulting message buffers.  See lengthy
      * rationale above. */
 
@@ -373,7 +371,8 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
     if (MPI_IN_PLACE == sbuf) {
         inplace_temp = (char*)malloc(true_extent + (count - 1) * extent);
         if (NULL == inplace_temp) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
+            err = OMPI_ERR_OUT_OF_RESOURCE;
+            goto cleanup_and_return;
         }
         sbuf = inplace_temp - lb;
         err = ompi_ddt_copy_content_same_ddt(dtype, count, (char*)sbuf, (char*)rbuf);
@@ -386,8 +385,8 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
          * here to be valid on all non-leaf ranks */
         free_rbuf = (char*)malloc(true_extent + (count - 1) * extent);
         if (NULL == free_rbuf) {
-            free(free_buffer);
-            return OMPI_ERR_OUT_OF_RESOURCE;
+            err = OMPI_ERR_OUT_OF_RESOURCE;
+            goto cleanup_and_return;
         }
         rbuf = free_rbuf - lb;
     }
@@ -408,13 +407,7 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
                                     dtype, peer, MCA_COLL_BASE_TAG_REDUCE,
                                     MCA_PML_BASE_SEND_STANDARD, comm));
             if (MPI_SUCCESS != err) {
-                if (NULL != free_buffer) {
-                    free(free_buffer);
-                }
-                if (NULL != free_rbuf) {
-                    free(free_rbuf);
-                }
-                return err;
+                goto cleanup_and_return;
             }
             snd_buffer = (char*)rbuf;
             break;
@@ -445,13 +438,7 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
                                     MCA_COLL_BASE_TAG_REDUCE, comm,
                                     MPI_STATUS_IGNORE));
             if (MPI_SUCCESS != err) {
-                if (NULL != free_buffer) {
-                    free(free_buffer);
-                }
-                if (NULL != free_rbuf) {
-                    free(free_rbuf);
-                }
-                return err;
+                goto cleanup_and_return;
             }
             /* Perform the operation. The target is always the user
              * provided buffer We do the operation only if we receive it
@@ -500,6 +487,7 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
         }
     }
 
+  cleanup_and_return:
     if (NULL != inplace_temp) {
         free(inplace_temp);
     }
