@@ -91,25 +91,6 @@ IF(EXISTS ${PROJECT_SOURCE_DIR}/util/keyval/show_help_lex.c)
   LIST(REMOVE_ITEM OPAL_SOURCE_FILES "${PROJECT_SOURCE_DIR}/util/keyval/show_help_lex.c")
 ENDIF(EXISTS ${PROJECT_SOURCE_DIR}/util/keyval/show_help_lex.c)
 
-# Add Libtool support
-IF(OMPI_WANT_LIBLTDL)
-  # if we want libltdl, that means ltdl.h and ltdl.c has been found,
-  # just copy them into the source tree for compiling.
-  CONFIGURE_FILE("${LIBLTDL_PATH}/ltdl.c" ${CMAKE_CURRENT_BINARY_DIR}/libltdl/ltdl.c COPYONLY)
-  CONFIGURE_FILE("${LIBLTDL_PATH}/ltdl.h" ${CMAKE_CURRENT_BINARY_DIR}/libltdl/ltdl.h COPYONLY)
-
-  # insert "#include opal_config.h" into ltdl.c, otherwise, it won't compile.
-  FILE(READ ${CMAKE_CURRENT_BINARY_DIR}/libltdl/ltdl.c LTDL_C_PART1 LIMIT 1183)
-  FILE(READ ${CMAKE_CURRENT_BINARY_DIR}/libltdl/ltdl.c LTDL_C_PART2 OFFSET 1183)
-  FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/libltdl/ltdl.c
-    "${LTDL_C_PART1}" "\n#include \"opal_config.h\"\n" "${LTDL_C_PART2}")
-
-  SET (LIBLTDL_FILES libltdl/ltdl.c libltdl/ltdl.h)
-  SET_SOURCE_FILES_PROPERTIES(${LIBLTDL_FILES} PROPERTIES COMPILE_DEFINITIONS 
-                              "error_t=int;HAVE_ERRNO_H;LTDL_OBJDIR=\".\";LTDL_SHLIB_EXT=\".dll\"")
-  SET (OPAL_SOURCE_FILES ${OPAL_SOURCE_FILES} ${LIBLTDL_FILES})
-  SOURCE_GROUP(libltdl FILES ${LIBLTDL_FILES})
-ENDIF(OMPI_WANT_LIBLTDL)
 
 # Add source files from mca subdirectories.
 INCLUDE (check_mca_subdirs)

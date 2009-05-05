@@ -9,7 +9,3 @@
 #
 
 # Specific to this module
-
-mca_dependencies=libmpi libopen-rte
-mca_link_libraries=Ws2_32.lib
-

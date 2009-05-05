@@ -308,11 +308,6 @@ static void find_dyn_components(const char *path, const char *type_name,
         file->filename[OMPI_PATH_MAX] = '\0';
         file->status = UNVISITED;
 
-#if defined(__WINDOWS__) && defined(_DEBUG)
-        /* remove the debug suffix 'd', otherwise we will fail to 
-           load the module in later phase. */
-        file->name[strlen(file->name)-1]='\0';
-#endif
         opal_list_append(&found_files, (opal_list_item_t *) 
                          file);
     }
