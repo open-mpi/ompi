@@ -151,36 +151,6 @@ OBJ_CLASS_INSTANCE( mca_pml_ob1_send_request_t,
  */
 
 static inline void
-mca_pml_ob1_match_fast_completion_free( struct mca_btl_base_module_t* btl,  
-                                        struct mca_btl_base_endpoint_t* ep,
-                                        struct mca_btl_base_descriptor_t* des )
-{
-    mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)des->des_cbdata;
-    mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) des->des_context; 
-    
-    if( sendreq->req_send.req_bytes_packed > 0 ) {
-        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
-                                 &(sendreq->req_send.req_base), PERUSE_SEND );
-    }
-
-    if( sendreq->req_send.req_bytes_packed > 0 ) {
-        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,
-                                 &(sendreq->req_send.req_base), PERUSE_SEND);
-    }
-
-    /*
-     * We are on the fast path, so there is no need to lock the request, as at
-     * this point there is only one reference to it. Moreover, there is no
-     * need to signal anything, as nobody is waiting on it.
-     */
-    MCA_PML_OB1_SEND_REQUEST_MPI_COMPLETE(sendreq, false);
-    sendreq->req_send.req_base.req_pml_complete = true;
-
-    /* check for pending requests */
-    MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
-}
-
-static inline void
 mca_pml_ob1_match_completion_free_request( mca_bml_base_btl_t* bml_btl,  
                                            mca_pml_ob1_send_request_t* sendreq )
 {
