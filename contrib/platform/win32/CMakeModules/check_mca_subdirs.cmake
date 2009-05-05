@@ -121,13 +121,6 @@ FOREACH (MCA_FRAMEWORK ${MCA_FRAMEWORK_LIST})
 
         IF(BUILD_COMPONENT)
 
-          # check the library build type
-          FILE(STRINGS ${CURRENT_PATH}/.windows
-                VALUE REGEX "^not_single_shared_lib=")
-          IF(NOT VALUE STREQUAL "")
-            STRING(REPLACE "not_single_shared_lib=" "" NOT_SINGLE_SHARED_LIB ${VALUE})
-          ENDIF(NOT VALUE STREQUAL "")
-        
           # check out if we have to exlude some source files.
           SET(EXCLUDE_LIST "")
           FILE(STRINGS ${CURRENT_PATH}/.windows EXCLUDE_LIST REGEX "^exclude_list=")
@@ -141,109 +134,35 @@ FOREACH (MCA_FRAMEWORK ${MCA_FRAMEWORK_LIST})
             LIST(REMOVE_ITEM COMPONENT_FILES "${CURRENT_PATH}/${FILE}")
           ENDFOREACH(FILE)
 
-          IF(NOT OMPI_WANT_LIBLTDL OR NOT_SINGLE_SHARED_LIB STREQUAL "1")
-            SET(NOT_SINGLE_SHARED_LIB "")
-            # add sources for static build or for the shared build when this is not a stand along library.
-            SET(MCA_FILES ${MCA_FILES} ${COMPONENT_FILES})
-            SOURCE_GROUP(mca\\${MCA_FRAMEWORK}\\${MCA_COMPONENT} FILES ${COMPONENT_FILES})
+          # add sources for static build or for the shared build when this is not a stand along library.
+          SET(MCA_FILES ${MCA_FILES} ${COMPONENT_FILES})
+          SOURCE_GROUP(mca\\${MCA_FRAMEWORK}\\${MCA_COMPONENT} FILES ${COMPONENT_FILES})
 
-            INCLUDE_DIRECTORIES(${EXTRA_INCLUDE_PATH})
+          INCLUDE_DIRECTORIES(${EXTRA_INCLUDE_PATH})
 
-            IF(EXISTS "${CURRENT_PATH}/configure.params")
-              FILE(STRINGS "${CURRENT_PATH}/configure.params" 
-                CURRENT_COMPONENT_PRIORITY REGEX "PRIORITY")
-              IF(NOT CURRENT_COMPONENT_PRIORITY STREQUAL "")
-                STRING(REGEX REPLACE "[A-Z_]+=" "" CURRENT_COMPONENT_PRIORITY ${CURRENT_COMPONENT_PRIORITY})
-              ENDIF(NOT CURRENT_COMPONENT_PRIORITY STREQUAL "")
-            ENDIF(EXISTS "${CURRENT_PATH}/configure.params")
+          IF(EXISTS "${CURRENT_PATH}/configure.params")
+            FILE(STRINGS "${CURRENT_PATH}/configure.params" 
+              CURRENT_COMPONENT_PRIORITY REGEX "PRIORITY")
+            IF(NOT CURRENT_COMPONENT_PRIORITY STREQUAL "")
+              STRING(REGEX REPLACE "[A-Z_]+=" "" CURRENT_COMPONENT_PRIORITY ${CURRENT_COMPONENT_PRIORITY})
+            ENDIF(NOT CURRENT_COMPONENT_PRIORITY STREQUAL "")
+          ENDIF(EXISTS "${CURRENT_PATH}/configure.params")
           
-            IF(CURRENT_COMPONENT_PRIORITY GREATER BEST_COMPONENT_PRIORITY)
-              # I have a higher priority for this mca, put me at the very beginning.
-              SET (OUTFILE_EXTERN
-                "extern const mca_base_component_t mca_${MCA_FRAMEWORK}_${MCA_COMPONENT}_component"  
-                "\n${OUTFILE_EXTERN}")
-              SET(FRAMEWORK_STRUCT_DEF
-                "&mca_${MCA_FRAMEWORK}_${MCA_COMPONENT}_component,\n"  
-                ${FRAMEWORK_STRUCT_DEF})
-              SET(BEST_COMPONENT_PRIORITY ${CURRENT_COMPONENT_PRIORITY})
-            ELSE(CURRENT_COMPONENT_PRIORITY GREATER BEST_COMPONENT_PRIORITY)
-              SET (OUTFILE_EXTERN ${OUTFILE_EXTERN}
-                "\nextern const mca_base_component_t mca_${MCA_FRAMEWORK}_${MCA_COMPONENT}_component;")
-              SET(FRAMEWORK_STRUCT_DEF ${FRAMEWORK_STRUCT_DEF}
-                "&mca_${MCA_FRAMEWORK}_${MCA_COMPONENT}_component,\n")
-            ENDIF(CURRENT_COMPONENT_PRIORITY GREATER BEST_COMPONENT_PRIORITY)
-          ELSE(NOT OMPI_WANT_LIBLTDL OR NOT_SINGLE_SHARED_LIB STREQUAL "1")
- 
-            # get the dependencies for this component.
-            SET(MCA_DEPENDENCIES "")
-            FILE(STRINGS ${CURRENT_PATH}/.windows VALUE REGEX "^mca_dependencies=")
-            IF(NOT VALUE STREQUAL "")
-              STRING(REPLACE "mca_dependencies=" "" MCA_DEPENDENCIES ${VALUE})
-            ENDIF(NOT VALUE STREQUAL "")
-
-            # get the libraries required for this component.
-            SET(MCA_LINK_LIBRARIES "")
-            FILE(STRINGS ${CURRENT_PATH}/.windows VALUE REGEX "^mca_link_libraries=")
-            IF(NOT VALUE STREQUAL "")
-              STRING(REPLACE "mca_link_libraries=" "" MCA_LINK_LIBRARIES ${VALUE})
-            ENDIF(NOT VALUE STREQUAL "")
-
-            # the mca_common_* libraries should be installed into bin,
-            # this will avoid the runtime open module failure.
-            IF("${MCA_FRAMEWORK}" STREQUAL "common")
-              SET(LIB_NAME_PREFIX "lib")
-              SET(INSTALL_DEST "RUNTIME DESTINATION bin
-                                LIBRARY DESTINATION lib
-                                ARCHIVE DESTINATION lib")
-            ELSE("${MCA_FRAMEWORK}" STREQUAL "common")
-              SET(LIB_NAME_PREFIX "")
-              IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
-                SET(INSTALL_DEST "RUNTIME DESTINATION lib/openmpi/debug
-                                  LIBRARY DESTINATION lib/openmpi/debug
-                                  ARCHIVE DESTINATION lib/openmpi/debug")
-              ELSE(CMAKE_BUILD_TYPE STREQUAL "Debug")
-                SET(INSTALL_DEST "RUNTIME DESTINATION lib/openmpi
-                                  LIBRARY DESTINATION lib/openmpi
-                                  ARCHIVE DESTINATION lib/openmpi")
-              ENDIF(CMAKE_BUILD_TYPE STREQUAL "Debug")
-            ENDIF("${MCA_FRAMEWORK}" STREQUAL "common")
-            
-
-            # generate CMakeLists.txt for each component for DSO build.
-            FILE (WRITE "${PROJECT_BINARY_DIR}/mca/${MCA_FRAMEWORK}/${MCA_COMPONENT}/CMakeLists.txt"
-              "
-#
-# Copyright (c) 2007-2008 High Performance Computing Center Stuttgart, 
-#                         University of Stuttgart.  All rights reserved.
-# $COPYRIGHT$
-# 
-# Additional copyrights may follow
-# 
-# $HEADER$
-#
-
-# make new project for shared build
-
-SET_SOURCE_FILES_PROPERTIES(\${COMPONENT_FILES}
-                            PROPERTIES LANGUAGE CXX)
-
-INCLUDE_DIRECTORIES(\${EXTRA_INCLUDE_PATH})
-
-ADD_LIBRARY(${LIB_NAME_PREFIX}mca_${MCA_FRAMEWORK}_${MCA_COMPONENT} SHARED 
-            \${COMPONENT_FILES})
-
-SET_TARGET_PROPERTIES(${LIB_NAME_PREFIX}mca_${MCA_FRAMEWORK}_${MCA_COMPONENT}
-                      PROPERTIES COMPILE_FLAGS \"-D_USRDLL -DOPAL_IMPORTS -DOMPI_IMPORTS -DORTE_IMPORTS\")
-
-TARGET_LINK_LIBRARIES (${LIB_NAME_PREFIX}mca_${MCA_FRAMEWORK}_${MCA_COMPONENT} ${MCA_LINK_LIBRARIES})
-
-ADD_DEPENDENCIES(${LIB_NAME_PREFIX}mca_${MCA_FRAMEWORK}_${MCA_COMPONENT} libopen-pal ${MCA_DEPENDENCIES})
-
-INSTALL(TARGETS ${LIB_NAME_PREFIX}mca_${MCA_FRAMEWORK}_${MCA_COMPONENT} ${INSTALL_DEST})
-          ")
-          
-            ADD_SUBDIRECTORY (${PROJECT_BINARY_DIR}/mca/${MCA_FRAMEWORK}/${MCA_COMPONENT} mca/${MCA_FRAMEWORK}/${MCA_COMPONENT})
-          ENDIF(NOT OMPI_WANT_LIBLTDL OR NOT_SINGLE_SHARED_LIB STREQUAL "1")
+          IF(CURRENT_COMPONENT_PRIORITY GREATER BEST_COMPONENT_PRIORITY)
+            # I have a higher priority for this mca, put me at the very beginning.
+            SET (OUTFILE_EXTERN
+              "extern const mca_base_component_t mca_${MCA_FRAMEWORK}_${MCA_COMPONENT}_component"  
+              "\n${OUTFILE_EXTERN}")
+            SET(FRAMEWORK_STRUCT_DEF
+              "&mca_${MCA_FRAMEWORK}_${MCA_COMPONENT}_component,\n"  
+              ${FRAMEWORK_STRUCT_DEF})
+            SET(BEST_COMPONENT_PRIORITY ${CURRENT_COMPONENT_PRIORITY})
+          ELSE(CURRENT_COMPONENT_PRIORITY GREATER BEST_COMPONENT_PRIORITY)
+            SET (OUTFILE_EXTERN ${OUTFILE_EXTERN}
+              "\nextern const mca_base_component_t mca_${MCA_FRAMEWORK}_${MCA_COMPONENT}_component;")
+            SET(FRAMEWORK_STRUCT_DEF ${FRAMEWORK_STRUCT_DEF}
+              "&mca_${MCA_FRAMEWORK}_${MCA_COMPONENT}_component,\n")
+          ENDIF(CURRENT_COMPONENT_PRIORITY GREATER BEST_COMPONENT_PRIORITY)
 
           # Install help files if they are here.
           INSTALL(DIRECTORY ${CURRENT_PATH}/ DESTINATION share/openmpi/

@@ -70,7 +70,7 @@ SET (CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${OpenMPI_BINARY_DIR})
 SET (CMAKE_SUPPRESS_REGENERATION true) 
 
 # Dynamic/shared build, the default is set to static(OFF)
-OPTION(BUILD_SHARED_LIBS "Wether we want to build shared libraries." OFF)
+OPTION(BUILD_SHARED_LIBS "Wether we want to build shared libraries." ON)
 
 INCLUDE(ompi_configure)
 
