@@ -610,19 +610,19 @@ static int spawn(int count, char **array_of_commands,
         if ( array_of_info != NULL && array_of_info[i] != MPI_INFO_NULL ) {
 
             /* check for 'host' */
-            ompi_info_get (array_of_info[i], "host", sizeof(host), host, &flag);
+            ompi_info_get (array_of_info[i], "host", sizeof(host) - 1, host, &flag);
             if ( flag ) {
                 opal_argv_append_nosize(&app->dash_host, host);
             }
  
             /* check for 'hostfile' */
-            ompi_info_get (array_of_info[i], "hostfile", sizeof(host), host, &flag);
+            ompi_info_get (array_of_info[i], "hostfile", sizeof(host) - 1, host, &flag);
             if ( flag ) {
                 app->hostfile = strdup(host);
             }
             
             /* check for 'add-hostfile' */
-            ompi_info_get (array_of_info[i], "add-hostfile", sizeof(host), host, &flag);
+            ompi_info_get (array_of_info[i], "add-hostfile", sizeof(host) - 1, host, &flag);
             if ( flag ) {
                 app->add_hostfile = strdup(host);
             }
@@ -632,13 +632,13 @@ static int spawn(int count, char **array_of_commands,
             /* check for 'ompi_prefix' (OMPI-specific -- to effect the same
              * behavior as --prefix option to orterun)
              */
-            ompi_info_get (array_of_info[i], "ompi_prefix", sizeof(prefix), prefix, &flag);
+            ompi_info_get (array_of_info[i], "ompi_prefix", sizeof(prefix) - 1, prefix, &flag);
             if ( flag ) {
                 app->prefix_dir = strdup(prefix);
             }
 
             /* check for 'wdir' */ 
-            ompi_info_get (array_of_info[i], "wdir", valuelen, cwd, &flag);
+            ompi_info_get (array_of_info[i], "wdir", sizeof(cwd) - 1, cwd, &flag);
             if ( flag ) {
                 app->cwd = strdup(cwd);
                 have_wdir = 1;
@@ -660,19 +660,19 @@ static int spawn(int count, char **array_of_commands,
             }
             
             /* check for 'preload_files' */ 
-            ompi_info_get (array_of_info[i], "ompi_preload_files", valuelen, cwd, &flag);
+            ompi_info_get (array_of_info[i], "ompi_preload_files", sizeof(cwd) - 1, cwd, &flag);
             if ( flag ) {
                 app->preload_files = strdup(cwd);
             }
             
             /* check for 'preload_files_dest_dir' */ 
-            ompi_info_get (array_of_info[i], "ompi_preload_files_dest_dir", valuelen, cwd, &flag);
+            ompi_info_get (array_of_info[i], "ompi_preload_files_dest_dir", sizeof(cwd) - 1, cwd, &flag);
             if ( flag ) {
                 app->preload_files_dest_dir = strdup(cwd);
             }
             
             /* check for 'preload_files_src_dir' */ 
-            ompi_info_get (array_of_info[i], "ompi_preload_files_src_dir", valuelen, cwd, &flag);
+            ompi_info_get (array_of_info[i], "ompi_preload_files_src_dir", sizeof(cwd) - 1, cwd, &flag);
             if ( flag ) {
                 app->preload_files_src_dir = strdup(cwd);
             }
@@ -686,7 +686,7 @@ static int spawn(int count, char **array_of_commands,
             }
             
             /* see if this is an MCA param that the user wants applied to the child job */
-            ompi_info_get (array_of_info[i], "ompi_param", valuelen, params, &flag);
+            ompi_info_get (array_of_info[i], "ompi_param", sizeof(params) - 1, params, &flag);
             if ( flag ) {
                 opal_argv_append_unique_nosize(&app->env, params, true);
             }
@@ -694,7 +694,7 @@ static int spawn(int count, char **array_of_commands,
             /* see if user specified what to do with stdin - defaults to
              * not forwarding stdin to child processes
              */
-            ompi_info_get (array_of_info[i], "ompi_stdin_target", valuelen, stdin_target, &flag);
+            ompi_info_get (array_of_info[i], "ompi_stdin_target", sizeof(stdin_target) - 1, stdin_target, &flag);
             if ( flag ) {
                 if (0 == strcmp(stdin_target, "all")) {
                     jdata->stdin_target = ORTE_VPID_WILDCARD;
