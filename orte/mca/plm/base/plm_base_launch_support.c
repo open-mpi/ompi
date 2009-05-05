@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2008 The University of Tennessee and The University
@@ -29,6 +29,7 @@
 #endif  /* HAVE_SYS_TIME_H */
 
 #include "opal/util/argv.h"
+#include "opal/runtime/opal_progress.h"
 #include "opal/class/opal_pointer_array.h"
 
 #include "opal/dss/dss.h"
@@ -45,6 +46,8 @@
 #if OPAL_ENABLE_FT == 1
 #include "orte/mca/snapc/snapc.h"
 #endif
+#include "orte/mca/filem/filem.h"
+#include "orte/mca/filem/base/base.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_locks.h"
@@ -56,6 +59,8 @@
 
 #include "orte/mca/plm/base/plm_private.h"
 #include "orte/mca/plm/base/base.h"
+
+static bool active_job_completed_callback = false;
 
 static int orte_plm_base_report_launched(orte_jobid_t job);
 
@@ -1137,6 +1142,16 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     return ORTE_SUCCESS;
 }
 
+static void process_check_job_completed(int fd, short event, void *data)
+{
+    orte_job_t *jdata = (orte_job_t*)data;
+
+    active_job_completed_callback = false;
+    orte_plm_base_check_job_completed(jdata);
+
+    return;
+}
+
 void orte_plm_base_check_job_completed(orte_job_t *jdata)
 {
     orte_proc_t **procs;
@@ -1162,7 +1177,27 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
     if (ORTE_JOB_CONTROL_DO_NOT_MONITOR & jdata->controls) {
         return;
     }
-    
+
+    /* Check if FileM is active. If so then keep processing. */
+    if( orte_filem_base_is_active ) {
+        opal_event_t *ev = NULL;
+        struct timeval delay;
+
+        if( active_job_completed_callback ) {
+            return;
+        }
+        active_job_completed_callback = true;
+
+        ev = (opal_event_t*)malloc(sizeof(opal_event_t));
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                             "WARNING: FileM Still Active! Waiting for it to finish..."));
+        opal_evtimer_set(ev, process_check_job_completed, jdata);
+        delay.tv_sec  = 5;
+        delay.tv_usec = 0;
+        opal_evtimer_add(ev, &delay);
+        return;
+    }
+
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:check_job_completed for job %s - num_terminated %lu  num_procs %lu",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

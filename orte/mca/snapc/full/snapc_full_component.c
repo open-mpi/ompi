@@ -17,7 +17,6 @@
 #include "orte_config.h"
 #include "opal/util/output.h"
 
-
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
 #include "snapc_full.h"
@@ -37,6 +36,7 @@ static int snapc_full_close(void);
 bool orte_snapc_full_skip_filem = false;
 bool orte_snapc_full_skip_app   = false;
 bool orte_snapc_full_timing_enabled = false;
+int orte_snapc_full_max_wait_time = 20;
 
 /*
  * Instantiate the public struct with all of our public information
@@ -131,6 +131,13 @@ static int snapc_full_open(void)
                            &value);
     orte_snapc_full_timing_enabled = OPAL_INT_TO_BOOL(value);
 
+    mca_base_param_reg_int(&mca_snapc_full_component.super.base_version,
+                           "max_wait_time",
+                           "Wait time before orted gives up on checkpoint (seconds)",
+                           false, false,
+                           20,
+                           &orte_snapc_full_max_wait_time);
+
     /*
      * Debug Output
      */
@@ -142,6 +149,9 @@ static int snapc_full_open(void)
     opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
                         "snapc:full: open: verbosity   = %d", 
                         mca_snapc_full_component.super.verbose);
+    opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
+                        "snapc:full: open: max_wait_time = %d", 
+                        orte_snapc_full_max_wait_time);
     opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
                         "snapc:full: open: skip_filem  = %s", 
                         (orte_snapc_full_skip_filem == true ? "True" : "False"));
