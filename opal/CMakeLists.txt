@@ -102,7 +102,7 @@ IF(OMPI_WANT_LIBLTDL)
   FILE(READ ${CMAKE_CURRENT_SOURCE_DIR}/libltdl/ltdl.c LTDL_C_PART1 LIMIT 1183)
   FILE(READ ${CMAKE_CURRENT_SOURCE_DIR}/libltdl/ltdl.c LTDL_C_PART2 OFFSET 1183)
   FILE(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/libltdl/ltdl.c
-    ${LTDL_C_PART1} "\n#include \"opal_config.h\"\n" ${LTDL_C_PART2})
+    "${LTDL_C_PART1}" "\n#include \"opal_config.h\"\n" "${LTDL_C_PART2}")
 
   SET (LIBLTDL_FILES libltdl/ltdl.c libltdl/ltdl.h)
   SET_SOURCE_FILES_PROPERTIES(${LIBLTDL_FILES} PROPERTIES COMPILE_DEFINITIONS 
