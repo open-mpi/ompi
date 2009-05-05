@@ -95,13 +95,13 @@ ENDIF(EXISTS ${PROJECT_SOURCE_DIR}/util/keyval/show_help_lex.c)
 IF(OMPI_WANT_LIBLTDL)
   # if we want libltdl, that means ltdl.h and ltdl.c has been found,
   # just copy them into the source tree for compiling.
-  CONFIGURE_FILE("${LIBLTDL_PATH}/ltdl.c" ${CMAKE_CURRENT_SOURCE_DIR}/libltdl/ltdl.c COPYONLY)
-  CONFIGURE_FILE("${LIBLTDL_PATH}/ltdl.h" ${CMAKE_CURRENT_SOURCE_DIR}/libltdl/ltdl.h COPYONLY)
+  CONFIGURE_FILE("${LIBLTDL_PATH}/ltdl.c" ${CMAKE_CURRENT_BINARY_DIR}/libltdl/ltdl.c COPYONLY)
+  CONFIGURE_FILE("${LIBLTDL_PATH}/ltdl.h" ${CMAKE_CURRENT_BINARY_DIR}/libltdl/ltdl.h COPYONLY)
 
   # insert "#include opal_config.h" into ltdl.c, otherwise, it won't compile.
-  FILE(READ ${CMAKE_CURRENT_SOURCE_DIR}/libltdl/ltdl.c LTDL_C_PART1 LIMIT 1183)
-  FILE(READ ${CMAKE_CURRENT_SOURCE_DIR}/libltdl/ltdl.c LTDL_C_PART2 OFFSET 1183)
-  FILE(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/libltdl/ltdl.c
+  FILE(READ ${CMAKE_CURRENT_BINARY_DIR}/libltdl/ltdl.c LTDL_C_PART1 LIMIT 1183)
+  FILE(READ ${CMAKE_CURRENT_BINARY_DIR}/libltdl/ltdl.c LTDL_C_PART2 OFFSET 1183)
+  FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/libltdl/ltdl.c
     "${LTDL_C_PART1}" "\n#include \"opal_config.h\"\n" "${LTDL_C_PART2}")
 
   SET (LIBLTDL_FILES libltdl/ltdl.c libltdl/ltdl.h)
