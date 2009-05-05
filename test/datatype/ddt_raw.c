@@ -115,7 +115,7 @@ static int local_copy_ddt_raw( ompi_datatype_t* pdt, int count, int iov_num )
     GET_TIME( start );
     while( 0 == ompi_convertor_raw(convertor, iov, &iov_count, &max_data) ) {
 #if 0
-	printf( "New raw extraction (iov_count = %d, max_data = %lu)\n",
+	printf( "New raw extraction (iov_count = %d, max_data = %zu)\n",
 		iov_count, max_data );
 	for( i = 0; i < iov_count; i++ ) {
 	    printf( "\t{%p, %d}\n", iov[i].iov_base, iov[i].iov_len );
@@ -130,7 +130,7 @@ static int local_copy_ddt_raw( ompi_datatype_t* pdt, int count, int iov_num )
     printf( "raw extraction in %ld microsec\n", total_time );
     OBJ_RELEASE( convertor );
     if( remaining_length != 0 ) {
-	printf( "Not all raw description was been extracted (%ld bytes missing)\n",
+	printf( "Not all raw description was been extracted (%zd bytes missing)\n",
 		remaining_length );
     }
     return OMPI_SUCCESS;
