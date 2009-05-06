@@ -193,7 +193,7 @@ int mca_base_param_recache_files(bool rel_path_search)
         }
     }
 
-#if OMPI_WANT_HOME_CONFIG_FILES
+#if OPAL_WANT_HOME_CONFIG_FILES
     asprintf(&files,
              "%s"OPAL_PATH_SEP".openmpi"OPAL_PATH_SEP"mca-params.conf%c%s"OPAL_PATH_SEP"openmpi-mca-params.conf",
              home, OPAL_ENV_SEP, opal_install_dirs.sysconfdir);
@@ -1221,7 +1221,7 @@ static int param_register(const char *type_name,
   mca_base_param_t param, *array;
 
   /* There are data holes in the param struct */
-  OMPI_DEBUG_ZERO(param);
+  OPAL_DEBUG_ZERO(param);
 
   /* Initialize the array if it has never been initialized */
 
@@ -2104,7 +2104,7 @@ static void param_destructor(mca_base_param_t *p)
         OBJ_RELEASE(p->mbp_synonyms);
     }
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     /* Cheap trick to reset everything to NULL */
     param_constructor(p);
 #endif

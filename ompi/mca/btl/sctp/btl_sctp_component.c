@@ -371,7 +371,7 @@ static int mca_btl_sctp_create(int if_index, const char* if_name)
         sprintf(param, "latency_%s", if_name);
         btl->super.btl_latency = mca_btl_sctp_param_register_int(param, 0);
 
-#if 0 && OMPI_ENABLE_DEBUG
+#if 0 && OPAL_ENABLE_DEBUG
         BTL_OUTPUT(("interface: %s bandwidth %d latency %d",
                     if_name, btl->super.btl_bandwidth, btl->super.btl_latency));
 #endif
@@ -417,7 +417,7 @@ static int mca_btl_sctp_create(int if_index, const char* if_name)
             sprintf(param, "latency_%s", if_name);
             btl->super.btl_latency = mca_btl_sctp_param_register_int(param, 0);
 
-#if 0 && OMPI_ENABLE_DEBUG
+#if 0 && OPAL_ENABLE_DEBUG
             BTL_OUTPUT(("interface: %s bandwidth %d latency %d",
                         if_name, btl->super.btl_bandwidth, btl->super.btl_latency));
 #endif

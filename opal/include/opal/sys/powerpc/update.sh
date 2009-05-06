@@ -29,12 +29,12 @@ cat > $CFILE<<EOF
 #define static
 #define inline
 #define OMPI_GCC_INLINE_ASSEMBLY 1
-#define OMPI_WANT_SMP_LOCKS 1
+#define OPAL_WANT_SMP_LOCKS 1
 #include "../architecture.h"
 #include "atomic.h"
 #include "timer.h"
 EOF
 
-gcc -O1 -mpowerpc64 -mcpu=970 -DOMPI_ASSEMBLY_ARCH=POWERPC32 -DOMPI_ASM_SUPPORT_64BIT=1 -I. -S $CFILE -o asm-32-64.s
-gcc -O1 -DOMPI_ASSEMBLY_ARCH=OMPI_POWERPC32 -DOMPI_ASM_SUPPORT_64BIT=0 -I. -S $CFILE -o asm-32.s
-gcc -m64 -O1 -finline-functions -DOMPI_ASSEMBLY_ARCH=OMPI_POWERPC64 -DOMPI_ASM_SUPPORT64BIT=1 -I. -S $CFILE -o asm-64.s
+gcc -O1 -mpowerpc64 -mcpu=970 -DOPAL_ASSEMBLY_ARCH=POWERPC32 -DOPAL_ASM_SUPPORT_64BIT=1 -I. -S $CFILE -o asm-32-64.s
+gcc -O1 -DOPAL_ASSEMBLY_ARCH=OMPI_POWERPC32 -DOPAL_ASM_SUPPORT_64BIT=0 -I. -S $CFILE -o asm-32.s
+gcc -m64 -O1 -finline-functions -DOPAL_ASSEMBLY_ARCH=OMPI_POWERPC64 -DOMPI_ASM_SUPPORT64BIT=1 -I. -S $CFILE -o asm-64.s

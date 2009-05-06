@@ -57,7 +57,7 @@ static void opal_list_item_construct(opal_list_item_t *item)
 {
     item->opal_list_next = item->opal_list_prev = NULL;
     item->item_free = 1;
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     item->opal_list_item_refcount = 0;
     item->opal_list_item_belong_to = NULL;
 #endif
@@ -65,10 +65,10 @@ static void opal_list_item_construct(opal_list_item_t *item)
 
 static void opal_list_item_destruct(opal_list_item_t *item)
 {
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     assert( 0 == item->opal_list_item_refcount );
     assert( NULL == item->opal_list_item_belong_to );
-#endif  /* OMPI_ENABLE_DEBUG */
+#endif  /* OPAL_ENABLE_DEBUG */
 }
 
 
@@ -80,7 +80,7 @@ static void opal_list_item_destruct(opal_list_item_t *item)
 
 static void opal_list_construct(opal_list_t *list)
 {
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     /* These refcounts should never be used in assertions because they
        should never be removed from this list, added to another list,
        etc.  So set them to sentinel values. */
@@ -123,7 +123,7 @@ bool opal_list_insert(opal_list_t *list, opal_list_item_t *item, long long idx)
     {
         opal_list_prepend(list, item);
     } else {
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
         /* Spot check: ensure that this item is previously on no
            lists */
 
@@ -140,7 +140,7 @@ bool opal_list_insert(opal_list_t *list, opal_list_item_t *item, long long idx)
         next->opal_list_prev = item;
         ptr->opal_list_next = item;
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
         /* Spot check: ensure this item is only on the list that we
            just insertted it into */
 
@@ -173,7 +173,7 @@ opal_list_transfer(opal_list_item_t *pos, opal_list_item_t *begin,
         pos->opal_list_prev = end->opal_list_prev;
         end->opal_list_prev = begin->opal_list_prev;
         begin->opal_list_prev = tmp;
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
         {
             volatile opal_list_item_t* item = begin;
             while( pos != item ) {
@@ -182,7 +182,7 @@ opal_list_transfer(opal_list_item_t *pos, opal_list_item_t *begin,
                 assert(NULL != item);
             }
         }
-#endif  /* OMPI_ENABLE_DEBUG */
+#endif  /* OPAL_ENABLE_DEBUG */
     }
 }
 

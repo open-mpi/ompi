@@ -22,7 +22,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/communicator/communicator.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_TYPE_GET_CONTENTS = mpi_type_get_contents_f
 #pragma weak pmpi_type_get_contents = mpi_type_get_contents_f
 #pragma weak pmpi_type_get_contents_ = mpi_type_get_contents_f
@@ -37,14 +37,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_GET_CONTENTS,
                            (mtype, max_integers, max_addresses, max_datatypes, array_of_integers, array_of_addresses, array_of_datatypes, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_TYPE_GET_CONTENTS = mpi_type_get_contents_f
 #pragma weak mpi_type_get_contents = mpi_type_get_contents_f
 #pragma weak mpi_type_get_contents_ = mpi_type_get_contents_f
 #pragma weak mpi_type_get_contents__ = mpi_type_get_contents_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_CONTENTS,
                            mpi_type_get_contents,
                            mpi_type_get_contents_,
@@ -55,7 +55,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_CONTENTS,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

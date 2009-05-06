@@ -21,7 +21,7 @@
 #include "ompi/mpi/f77/bindings.h"
 #include "ompi/mpi/f77/constants.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_SSEND = mpi_ssend_f
 #pragma weak pmpi_ssend = mpi_ssend_f
 #pragma weak pmpi_ssend_ = mpi_ssend_f
@@ -36,14 +36,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SSEND,
                            (buf, count, datatype, dest, tag, comm, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_SSEND = mpi_ssend_f
 #pragma weak mpi_ssend = mpi_ssend_f
 #pragma weak mpi_ssend_ = mpi_ssend_f
 #pragma weak mpi_ssend__ = mpi_ssend_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_SSEND,
                            mpi_ssend,
                            mpi_ssend_,
@@ -54,7 +54,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_SSEND,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

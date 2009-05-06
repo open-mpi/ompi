@@ -111,7 +111,7 @@ mca_pml_cm_add_procs(struct ompi_proc_t** procs, size_t nprocs)
     size_t i;
     struct mca_mtl_base_endpoint_t **endpoints;
 
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     for (i = 0 ; i < nprocs ; ++i) {
         if (procs[i]->proc_arch != ompi_proc_local()->proc_arch) {
             return OMPI_ERR_NOT_SUPPORTED;
@@ -129,7 +129,7 @@ mca_pml_cm_add_procs(struct ompi_proc_t** procs, size_t nprocs)
     endpoints = (struct mca_mtl_base_endpoint_t**)malloc(nprocs * sizeof(struct mca_mtl_base_endpoint_t*));
     if (NULL == endpoints) return OMPI_ERROR;
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     for (i = 0 ; i < nprocs ; ++i) {
         endpoints[i] = NULL;
     }

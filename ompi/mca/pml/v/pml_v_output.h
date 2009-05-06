@@ -51,7 +51,7 @@ static inline void V_OUTPUT_ERR(const char *fmt, ... )
 #   define V_OUTPUT_VERBOSE(V, ARGS...)                                        \
         OPAL_OUTPUT_VERBOSE((V, mca_pml_v.output, ARGS))
             
-#elif OMPI_ENABLE_DEBUG
+#elif OPAL_ENABLE_DEBUG
     /* No variadic macros available... So sad */
 static inline void V_OUTPUT(const char* fmt, ... ) __opal_attribute_format__(__printf__, 1, 2);
 static inline void V_OUTPUT(const char* fmt, ... )

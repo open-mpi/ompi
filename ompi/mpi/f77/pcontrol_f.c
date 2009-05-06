@@ -20,7 +20,7 @@
 
 #include "ompi/mpi/f77/bindings.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_PCONTROL = mpi_pcontrol_f
 #pragma weak pmpi_pcontrol = mpi_pcontrol_f
 #pragma weak pmpi_pcontrol_ = mpi_pcontrol_f
@@ -35,14 +35,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_PCONTROL,
                            (level) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_PCONTROL = mpi_pcontrol_f
 #pragma weak mpi_pcontrol = mpi_pcontrol_f
 #pragma weak mpi_pcontrol_ = mpi_pcontrol_f
 #pragma weak mpi_pcontrol__ = mpi_pcontrol_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_PCONTROL,
                            mpi_pcontrol,
                            mpi_pcontrol_,
@@ -53,7 +53,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PCONTROL,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

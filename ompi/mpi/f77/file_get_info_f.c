@@ -20,7 +20,7 @@
 
 #include "ompi/mpi/f77/bindings.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_FILE_GET_INFO = mpi_file_get_info_f
 #pragma weak pmpi_file_get_info = mpi_file_get_info_f
 #pragma weak pmpi_file_get_info_ = mpi_file_get_info_f
@@ -35,14 +35,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_GET_INFO,
                            (fh, info_used, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_FILE_GET_INFO = mpi_file_get_info_f
 #pragma weak mpi_file_get_info = mpi_file_get_info_f
 #pragma weak mpi_file_get_info_ = mpi_file_get_info_f
 #pragma weak mpi_file_get_info__ = mpi_file_get_info_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_INFO,
                            mpi_file_get_info,
                            mpi_file_get_info_,
@@ -53,7 +53,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_INFO,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

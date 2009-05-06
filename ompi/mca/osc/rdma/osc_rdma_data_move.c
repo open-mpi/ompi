@@ -41,7 +41,7 @@
 static inline int32_t
 create_send_tag(ompi_osc_rdma_module_t *module)
 {
-#if OMPI_HAVE_THREAD_SUPPORT && OPAL_HAVE_ATOMIC_CMPSET_32
+#if OPAL_HAVE_THREAD_SUPPORT && OPAL_HAVE_ATOMIC_CMPSET_32
     int32_t newval, oldval;
     do {
         oldval = module->m_tag_counter;
@@ -312,7 +312,7 @@ ompi_osc_rdma_sendreq_send_cb(struct mca_btl_base_module_t* btl,
            don't care when it completes - only when the data
            arrives. */
         if (OMPI_OSC_RDMA_HDR_GET != header->hdr_base.hdr_type) {
-#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if !defined(WORDS_BIGENDIAN) && OPAL_ENABLE_HETEROGENEOUS_SUPPORT
             if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
                 OMPI_OSC_RDMA_SEND_HDR_NTOH(*header);
             }
@@ -499,7 +499,7 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
     switch (sendreq->req_type) {
     case OMPI_OSC_RDMA_PUT:
         header->hdr_base.hdr_type = OMPI_OSC_RDMA_HDR_PUT;
-#if OMPI_ENABLE_MEM_DEBUG
+#if OPAL_ENABLE_MEM_DEBUG
         header->hdr_target_op = 0;
 #endif
         break;
@@ -511,7 +511,7 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
 
     case OMPI_OSC_RDMA_GET:
         header->hdr_base.hdr_type = OMPI_OSC_RDMA_HDR_GET;
-#if OMPI_ENABLE_MEM_DEBUG
+#if OPAL_ENABLE_MEM_DEBUG
         header->hdr_target_op = 0;
 #endif
         sendreq->req_refcount++;
@@ -563,7 +563,7 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
 
 #ifdef WORDS_BIGENDIAN
         header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_NBO;
-#elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#elif OPAL_ENABLE_HETEROGENEOUS_SUPPORT
         if (sendreq->req_target_proc->proc_arch & OPAL_ARCH_ISBIGENDIAN) {
             header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_NBO;
             OMPI_OSC_RDMA_SEND_HDR_HTON(*header);
@@ -582,7 +582,7 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
     } else {
 #ifdef WORDS_BIGENDIAN
         header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_NBO;
-#elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#elif OPAL_ENABLE_HETEROGENEOUS_SUPPORT
         if (sendreq->req_target_proc->proc_arch & OPAL_ARCH_ISBIGENDIAN) {
             header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_NBO;
             OMPI_OSC_RDMA_SEND_HDR_HTON(*header);
@@ -650,7 +650,7 @@ ompi_osc_rdma_replyreq_send_cb(struct mca_btl_base_module_t* btl,
         return;
     }
 
-#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if !defined(WORDS_BIGENDIAN) && OPAL_ENABLE_HETEROGENEOUS_SUPPORT
         if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
             OMPI_OSC_RDMA_REPLY_HDR_NTOH(*header);
         }
@@ -766,7 +766,7 @@ ompi_osc_rdma_replyreq_send(ompi_osc_rdma_module_t *module,
 
 #ifdef WORDS_BIGENDIAN
     header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_NBO;
-#elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#elif OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     if (replyreq->rep_origin_proc->proc_arch & OPAL_ARCH_ISBIGENDIAN) {
         header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_NBO;
         OMPI_OSC_RDMA_REPLY_HDR_HTON(*header);
@@ -1048,7 +1048,7 @@ ompi_osc_rdma_sendreq_recv_accum(ompi_osc_rdma_module_t *module,
         } else {
             void *buffer = NULL;
 
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
             if (proc->proc_arch != ompi_proc_local()->proc_arch) {
                 ompi_convertor_t convertor;
                 struct iovec iov;
@@ -1106,7 +1106,7 @@ ompi_osc_rdma_sendreq_recv_accum(ompi_osc_rdma_module_t *module,
                                            header->hdr_target_count,
                                            op);
 
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
             if (proc->proc_arch != ompi_proc_local()->proc_arch) {
                 if (NULL == buffer) free(buffer);
             }
@@ -1336,7 +1336,7 @@ ompi_osc_rdma_control_send(ompi_osc_rdma_module_t *module,
 
 #ifdef WORDS_BIGENDIAN
     header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_NBO;
-#elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#elif OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     if (proc->proc_arch & OPAL_ARCH_ISBIGENDIAN) {
         header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_NBO;
         OMPI_OSC_RDMA_CONTROL_HDR_HTON(*header);
@@ -1398,7 +1398,7 @@ ompi_osc_rdma_rdma_ack_send(ompi_osc_rdma_module_t *module,
 
 #ifdef WORDS_BIGENDIAN
     header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_NBO;
-#elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#elif OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     if (proc->proc_arch & OPAL_ARCH_ISBIGENDIAN) {
         header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_NBO;
         OMPI_OSC_RDMA_CONTROL_HDR_HTON(*header);

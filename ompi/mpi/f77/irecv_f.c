@@ -21,7 +21,7 @@
 #include "ompi/mpi/f77/bindings.h"
 #include "ompi/mpi/f77/constants.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_IRECV = mpi_irecv_f
 #pragma weak pmpi_irecv = mpi_irecv_f
 #pragma weak pmpi_irecv_ = mpi_irecv_f
@@ -36,14 +36,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IRECV,
                            (buf, count, datatype, source, tag, comm, request, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_IRECV = mpi_irecv_f
 #pragma weak mpi_irecv = mpi_irecv_f
 #pragma weak mpi_irecv_ = mpi_irecv_f
 #pragma weak mpi_irecv__ = mpi_irecv_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_IRECV,
                            mpi_irecv,
                            mpi_irecv_,
@@ -54,7 +54,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_IRECV,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

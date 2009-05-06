@@ -21,7 +21,7 @@
 #include "ompi/mpi/f77/bindings.h"
 #include "ompi/mpi/f77/constants.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_SENDRECV_REPLACE = mpi_sendrecv_replace_f
 #pragma weak pmpi_sendrecv_replace = mpi_sendrecv_replace_f
 #pragma weak pmpi_sendrecv_replace_ = mpi_sendrecv_replace_f
@@ -36,14 +36,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SENDRECV_REPLACE,
                            (buf, count, datatype, dest, sendtag, source, recvtag, comm, status, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_SENDRECV_REPLACE = mpi_sendrecv_replace_f
 #pragma weak mpi_sendrecv_replace = mpi_sendrecv_replace_f
 #pragma weak mpi_sendrecv_replace_ = mpi_sendrecv_replace_f
 #pragma weak mpi_sendrecv_replace__ = mpi_sendrecv_replace_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_SENDRECV_REPLACE,
                            mpi_sendrecv_replace,
                            mpi_sendrecv_replace_,
@@ -54,7 +54,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_SENDRECV_REPLACE,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

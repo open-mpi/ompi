@@ -491,11 +491,11 @@ static int spawn(int count, char **array_of_commands,
     int rc, i, j, counter;
     int have_wdir=0;
     int flag=0;
-    char cwd[OMPI_PATH_MAX];
-    char host[OMPI_PATH_MAX];  /*** should define OMPI_HOST_MAX ***/
-    char prefix[OMPI_PATH_MAX];
-    char stdin_target[OMPI_PATH_MAX];
-    char params[OMPI_PATH_MAX];
+    char cwd[OPAL_PATH_MAX];
+    char host[OPAL_PATH_MAX];  /*** should define OMPI_HOST_MAX ***/
+    char prefix[OPAL_PATH_MAX];
+    char stdin_target[OPAL_PATH_MAX];
+    char params[OPAL_PATH_MAX];
 
     orte_job_t *jdata;
     orte_app_context_t *app;
@@ -714,7 +714,7 @@ static int spawn(int count, char **array_of_commands,
             if (NULL != app->preload_files_dest_dir) {
                 app->cwd = strdup(app->preload_files_dest_dir);
             } else {
-                if (OMPI_SUCCESS != (rc = opal_getcwd(cwd, OMPI_PATH_MAX))) {
+                if (OMPI_SUCCESS != (rc = opal_getcwd(cwd, OPAL_PATH_MAX))) {
                     ORTE_ERROR_LOG(rc);
                     OBJ_RELEASE(jdata);
                     opal_progress_event_users_decrement();

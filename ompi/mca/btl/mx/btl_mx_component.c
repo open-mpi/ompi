@@ -522,7 +522,7 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
         }
         mx_addrs[count].unique_network_id = mx_btl->mx_unique_network_id;
 
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
         BTL_MX_ADDR_HTON(mx_addrs[count]);
 #endif
         mca_btl_mx_component.mx_btls[count] = mx_btl;

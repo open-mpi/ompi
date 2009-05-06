@@ -120,7 +120,7 @@ check_gnu_version libtool $LT_TARGET_VERSION
 # Verify that we're in a top Open MPI dir
 #
 echo "*** Checking to ensure in top-level Open MPI directory..."
-if test -f VERSION -a -f configure.ac -a -f config/ompi_setup_cc.m4; then
+if test -f VERSION -a -f configure.ac -a -f config/opal_setup_cc.m4; then
     happy=1
 else
     echo "Do not appear to be in an Open MPI top directory.  Abort!"

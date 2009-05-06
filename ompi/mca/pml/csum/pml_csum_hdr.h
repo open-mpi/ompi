@@ -135,7 +135,7 @@ typedef struct mca_pml_csum_rendezvous_hdr_t mca_pml_csum_rendezvous_hdr_t;
 struct mca_pml_csum_rget_hdr_t {
     mca_pml_csum_rendezvous_hdr_t hdr_rndv;
     uint32_t hdr_seg_cnt;                     /**< number of segments for rdma */
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     uint8_t hdr_padding[4];
 #endif
     ompi_ptr_t hdr_des;                       /**< source descriptor */
@@ -143,7 +143,7 @@ struct mca_pml_csum_rget_hdr_t {
 };
 typedef struct mca_pml_csum_rget_hdr_t mca_pml_csum_rget_hdr_t;
 
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
 #define MCA_PML_CSUM_RGET_HDR_FILL(h)         \
 do {                                         \
     (h).hdr_padding[0] = 0;                  \
@@ -153,7 +153,7 @@ do {                                         \
 } while(0)
 #else
 #define MCA_PML_CSUM_RGET_HDR_FILL(h)
-#endif  /* OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG */
+#endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG */
 
 #define MCA_PML_CSUM_RGET_HDR_NTOH(h) \
     do { \
@@ -200,7 +200,7 @@ typedef struct mca_pml_csum_frag_hdr_t mca_pml_csum_frag_hdr_t;
 
 struct mca_pml_csum_ack_hdr_t {
     mca_pml_csum_common_hdr_t hdr_common;      /**< common attributes */
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     uint8_t hdr_padding[4];
 #endif
     ompi_ptr_t hdr_src_req;                   /**< source request */
@@ -209,7 +209,7 @@ struct mca_pml_csum_ack_hdr_t {
 };
 typedef struct mca_pml_csum_ack_hdr_t mca_pml_csum_ack_hdr_t;
 
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
 #define MCA_PML_CSUM_ACK_HDR_FILL(h) \
 do {                                \
     (h).hdr_padding[0] = 0;         \
@@ -219,7 +219,7 @@ do {                                \
 } while (0)
 #else
 #define MCA_PML_CSUM_ACK_HDR_FILL(h)
-#endif  /* OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG */
+#endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG */
 
 /* Note that the request headers are not put in NBO because the
    src_req is already in receiver's byte order and the dst_req is not
@@ -307,7 +307,7 @@ union mca_pml_csum_hdr_t {
 };
 typedef union mca_pml_csum_hdr_t mca_pml_csum_hdr_t;
 
-#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if !defined(WORDS_BIGENDIAN) && OPAL_ENABLE_HETEROGENEOUS_SUPPORT
 static inline __opal_attribute_always_inline__ void
 csum_hdr_ntoh(mca_pml_csum_hdr_t *hdr, const uint8_t hdr_type)
 {
@@ -345,7 +345,7 @@ csum_hdr_ntoh(mca_pml_csum_hdr_t *hdr, const uint8_t hdr_type)
 #define csum_hdr_ntoh(h, t) do{}while(0)
 #endif
 
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
 #define csum_hdr_hton(h, t, p) \
     csum_hdr_hton_intr((mca_pml_csum_hdr_t*)h, t, p)
 static inline __opal_attribute_always_inline__ void

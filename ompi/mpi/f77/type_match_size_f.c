@@ -26,7 +26,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/runtime/params.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_TYPE_MATCH_SIZE = mpi_type_match_size_f
 #pragma weak pmpi_type_match_size = mpi_type_match_size_f
 #pragma weak pmpi_type_match_size_ = mpi_type_match_size_f
@@ -41,14 +41,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_MATCH_SIZE,
                            (typeclass, size, type, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_TYPE_MATCH_SIZE = mpi_type_match_size_f
 #pragma weak mpi_type_match_size = mpi_type_match_size_f
 #pragma weak mpi_type_match_size_ = mpi_type_match_size_f
 #pragma weak mpi_type_match_size__ = mpi_type_match_size_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_MATCH_SIZE,
                            mpi_type_match_size,
                            mpi_type_match_size_,
@@ -59,7 +59,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_MATCH_SIZE,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

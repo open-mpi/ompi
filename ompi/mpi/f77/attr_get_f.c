@@ -22,7 +22,7 @@
 #include "ompi/attribute/attribute.h"
 #include "ompi/communicator/communicator.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_ATTR_GET = mpi_attr_get_f
 #pragma weak pmpi_attr_get = mpi_attr_get_f
 #pragma weak pmpi_attr_get_ = mpi_attr_get_f
@@ -37,14 +37,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ATTR_GET,
                            (comm, keyval, attribute_val, flag, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_ATTR_GET = mpi_attr_get_f
 #pragma weak mpi_attr_get = mpi_attr_get_f
 #pragma weak mpi_attr_get_ = mpi_attr_get_f
 #pragma weak mpi_attr_get__ = mpi_attr_get_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_ATTR_GET,
                            mpi_attr_get,
                            mpi_attr_get_,
@@ -55,7 +55,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ATTR_GET,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

@@ -26,7 +26,7 @@
 #include "ompi/mpi/f77/fint_2_int.h"
 #include "ompi/memchecker.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Comm_c2f = PMPI_Comm_c2f
 #endif
 

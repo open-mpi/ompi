@@ -20,7 +20,7 @@
 
 #include "ompi/mpi/f77/bindings.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_INIT_THREAD = mpi_init_thread_f
 #pragma weak pmpi_init_thread = mpi_init_thread_f
 #pragma weak pmpi_init_thread_ = mpi_init_thread_f
@@ -35,14 +35,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INIT_THREAD,
                            (required, provided, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_INIT_THREAD = mpi_init_thread_f
 #pragma weak mpi_init_thread = mpi_init_thread_f
 #pragma weak mpi_init_thread_ = mpi_init_thread_f
 #pragma weak mpi_init_thread__ = mpi_init_thread_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_INIT_THREAD,
                            mpi_init_thread,
                            mpi_init_thread_,
@@ -53,7 +53,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INIT_THREAD,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

@@ -96,7 +96,7 @@ AC_SUBST(CLEANFILES)
 #
 
 AC_CANONICAL_HOST
-AC_DEFINE_UNQUOTED(OMPI_ARCH, "$host", [OMPI architecture string])
+AC_DEFINE_UNQUOTED(OPAL_ARCH, "$host", [OMPI architecture string])
 
 #
 # See if we can find an old installation of OMPI to overwrite

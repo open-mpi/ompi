@@ -84,7 +84,7 @@ OMPI_DATAREP_FORTRAN_DECLARE(mpi_conversion_fn_null, MPI_CONVERSION_FN_NULL, (ch
  * convenient way to check whether an argument is the sentinel value
  * MPI_CONVERSION_FN_NULL.
  */
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #define OMPI_IS_FORTRAN_CONVERSION_FN_NULL(addr) \
   (MPI_CONVERSION_FN_NULL == addr || \
    mpi_conversion_fn_null == addr || \

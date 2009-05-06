@@ -9,7 +9,7 @@
  */
 
 /**
- * Note: this file is a little fast-n-loose with OMPI_HAVE_THREADS --
+ * Note: this file is a little fast-n-loose with OPAL_HAVE_THREADS --
  * it uses this value in run-time "if" conditionals (vs. compile-time
  * #if conditionals).  We also don't protect including <pthread.h>.
  * That's because this component currently only compiles on Linux and
@@ -513,7 +513,7 @@ int ompi_btl_openib_fd_init(void)
         /* Calculate the real size of the cmd struct */
         cmd_size = (int) (&(bogus.end) - ((char*) &bogus));
 
-        if (OMPI_HAVE_THREADS) {
+        if (OPAL_HAVE_THREADS) {
             OBJ_CONSTRUCT(&pending_to_main_thread, opal_list_t);
 
             /* Create pipes to communicate between the two threads */
@@ -572,7 +572,7 @@ int ompi_btl_openib_fd_monitor(int fd, int flags,
     cmd.pc_flags = flags;
     cmd.pc_fn.event = callback;
     cmd.pc_context = context;
-    if (OMPI_HAVE_THREADS) {
+    if (OPAL_HAVE_THREADS) {
         /* For the threaded version, write a command down the pipe */
         OPAL_OUTPUT((-1, "main thread sending monitor fd %d", fd));
         write_fd(pipe_to_service_thread[1], cmd_size, &cmd);
@@ -605,7 +605,7 @@ int ompi_btl_openib_fd_unmonitor(int fd,
     cmd.pc_flags = 0;
     cmd.pc_fn.event = callback;
     cmd.pc_context = context;
-    if (OMPI_HAVE_THREADS) {
+    if (OPAL_HAVE_THREADS) {
         /* For the threaded version, write a command down the pipe */
         OPAL_OUTPUT((-1, "main thread sending unmonitor fd %d", fd));
         write_fd(pipe_to_service_thread[1], cmd_size, &cmd);
@@ -631,7 +631,7 @@ int ompi_btl_openib_fd_run_in_service(ompi_btl_openib_fd_main_callback_fn_t *cal
     cmd.pc_flags = 0;
     cmd.pc_fn.main = callback;
     cmd.pc_context = context;
-    if (OMPI_HAVE_THREADS) {
+    if (OPAL_HAVE_THREADS) {
         /* For the threaded version, write a command down the pipe */
         OPAL_OUTPUT((-1, "main thread sending 'run in service'"));
         write_fd(pipe_to_service_thread[1], cmd_size, &cmd);
@@ -650,7 +650,7 @@ int ompi_btl_openib_fd_run_in_service(ompi_btl_openib_fd_main_callback_fn_t *cal
 int ompi_btl_openib_fd_run_in_main(ompi_btl_openib_fd_main_callback_fn_t *callback,
                                    void *context)
 {
-    if (OMPI_HAVE_THREADS) {
+    if (OPAL_HAVE_THREADS) {
         cmd_t cmd;
 
         OPAL_OUTPUT((-1, "run in main -- sending command"));
@@ -677,7 +677,7 @@ int ompi_btl_openib_fd_run_in_main(ompi_btl_openib_fd_main_callback_fn_t *callba
 int ompi_btl_openib_fd_finalize(void)
 {
     if (initialized) {
-        if (OMPI_HAVE_THREADS) {
+        if (OPAL_HAVE_THREADS) {
             /* For the threaded version, send a command down the pipe */
             cmd_t cmd;
             OPAL_OUTPUT((-1, "shutting down openib fd"));

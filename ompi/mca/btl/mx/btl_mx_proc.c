@@ -144,7 +144,7 @@ mca_btl_mx_proc_t* mca_btl_mx_proc_create(ompi_proc_t* ompi_proc)
 
     for( i = 0; i < mx_peers_count; i++ ) {
         mca_btl_mx_module_t* mx_btl;
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
         BTL_MX_ADDR_NTOH(mx_peers[rc]);
 #endif
 	for( j = 0; j < mca_btl_mx_component.mx_num_btls; j++ ) {

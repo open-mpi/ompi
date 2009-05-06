@@ -25,7 +25,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/pubsub/pubsub.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Lookup_name = PMPI_Lookup_name
 #endif
 

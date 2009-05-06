@@ -22,7 +22,7 @@
 #include "ompi/mpi/f77/constants.h"
 
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_PUT = mpi_put_f
 #pragma weak pmpi_put = mpi_put_f
 #pragma weak pmpi_put_ = mpi_put_f
@@ -37,14 +37,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_PUT,
                            (origin_addr, origin_count, origin_datatype, target_rank, target_disp, target_count, target_datatype, win, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_PUT = mpi_put_f
 #pragma weak mpi_put = mpi_put_f
 #pragma weak mpi_put_ = mpi_put_f
 #pragma weak mpi_put__ = mpi_put_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_PUT,
                            mpi_put,
                            mpi_put_,
@@ -55,7 +55,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PUT,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

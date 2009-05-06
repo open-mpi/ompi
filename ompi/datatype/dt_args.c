@@ -58,7 +58,7 @@ typedef struct __dt_args {
  * alignment (but not long alignment).  On those architectures,
  * copy the buffer into an aligned buffer first.
  */
-#if OMPI_ALIGN_WORD_SIZE_INTEGERS
+#if OPAL_ALIGN_WORD_SIZE_INTEGERS
 #define OMPI_DDT_ALIGN_INT(VALUE,  TYPE) \
     (VALUE) = OPAL_ALIGN((VALUE), sizeof(MPI_Aint), TYPE)
 #define OMPI_DDT_ALIGN_PTR(PTR, TYPE) \
@@ -66,7 +66,7 @@ typedef struct __dt_args {
 #else
 #define OMPI_DDT_ALIGN_INT(VALUE, TYPE)
 #define OMPI_DDT_ALIGN_PTR(PTR, TYPE)
-#endif  /* OMPI_ALIGN_WORD_SIZE_INTEGERS */
+#endif  /* OPAL_ALIGN_WORD_SIZE_INTEGERS */
 
 /**
  * Some architecture require that 64 bits pointers (to pointers) has to
@@ -232,13 +232,13 @@ int32_t ompi_ddt_set_args( ompi_datatype_t* pData,
              */
             OBJ_RETAIN( d[pos] );
             pArgs->total_pack_size += ((ompi_ddt_args_t*)d[pos]->args)->total_pack_size;
-#if OMPI_ALIGN_WORD_SIZE_INTEGERS
+#if OPAL_ALIGN_WORD_SIZE_INTEGERS
             /* as total_pack_size is always aligned to MPI_Aint size their sum
              * will be aligned to ...
              */
             assert( pArgs->total_pack_size ==
                     OPAL_ALIGN(pArgs->total_pack_size, sizeof(MPI_Aint), int) );
-#endif  /* OMPI_ALIGN_WORD_SIZE_INTEGERS */
+#endif  /* OPAL_ALIGN_WORD_SIZE_INTEGERS */
         }
     }
     return MPI_SUCCESS;
@@ -508,7 +508,7 @@ __ompi_ddt_create_from_packed_description( void** packed_buffer,
     int create_type, i;
     char* next_buffer;
 
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     bool need_swap = false;
 
     if( (remote_processor->proc_arch ^ ompi_proc_local()->proc_arch) &
@@ -523,7 +523,7 @@ __ompi_ddt_create_from_packed_description( void** packed_buffer,
     position = (int*)next_buffer;
 
     create_type = position[0];
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     if (need_swap) {
         create_type = opal_swap_bytes4(create_type);
     }
@@ -531,7 +531,7 @@ __ompi_ddt_create_from_packed_description( void** packed_buffer,
     if( MPI_COMBINER_DUP == create_type ) {
         /* there we have a simple predefined datatype */
         data_id = position[1];
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
         if (need_swap) {
             data_id = opal_swap_bytes4(data_id);
         }
@@ -544,7 +544,7 @@ __ompi_ddt_create_from_packed_description( void** packed_buffer,
     number_of_length   = position[1];
     number_of_disp     = position[2];
     number_of_datatype = position[3];
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     if (need_swap) {
         number_of_length   = opal_swap_bytes4(number_of_length);
         number_of_disp     = opal_swap_bytes4(number_of_disp);
@@ -566,7 +566,7 @@ __ompi_ddt_create_from_packed_description( void** packed_buffer,
 
     for( i = 0; i < number_of_datatype; i++ ) {
         data_id = position[i];
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
         if (need_swap) {
             data_id = opal_swap_bytes4(data_id);
         }
@@ -589,7 +589,7 @@ __ompi_ddt_create_from_packed_description( void** packed_buffer,
         }
     }
 
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     if (need_swap) {
         for (i = 0 ; i < number_of_length ; ++i) {
             array_of_length[i] = opal_swap_bytes4(array_of_length[i]); 

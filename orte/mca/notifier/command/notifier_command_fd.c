@@ -9,7 +9,7 @@
  */
 
 /**
- * Note: this file is a little fast-n-loose with OMPI_HAVE_THREADS --
+ * Note: this file is a little fast-n-loose with OPAL_HAVE_THREADS --
  * it uses this value in run-time "if" conditionals (vs. compile-time
  * #if conditionals).  We also don't protect including <pthread.h>.
  * That's because this component currently only compiles on Linux and

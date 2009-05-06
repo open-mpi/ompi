@@ -160,7 +160,7 @@ Trunk (not on release branches yet)
   set the MCA parameter orte_forward_job_control to 1.
 - Allow the sm BTL to allocate larger amounts of shared memory if
   desired (helpful for very large multi-core boxen).
-- Fix a few places where we used PATH_MAX instead of OMPI_PATH_MAX,
+- Fix a few places where we used PATH_MAX instead of OPAL_PATH_MAX,
   leading to compile problems on some platforms.  Thanks to Andrea Iob
   for the bug report.
 - Fix mca_btl_openib_warn_no_device_params_found MCA parameter; it

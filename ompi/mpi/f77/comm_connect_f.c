@@ -21,7 +21,7 @@
 #include "ompi/mpi/f77/bindings.h"
 #include "ompi/mpi/f77/f77_strings.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_COMM_CONNECT = mpi_comm_connect_f
 #pragma weak pmpi_comm_connect = mpi_comm_connect_f
 #pragma weak pmpi_comm_connect_ = mpi_comm_connect_f
@@ -36,14 +36,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_CONNECT,
                            (port_name, info, root, comm, newcomm, ierr, port_name_len) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_COMM_CONNECT = mpi_comm_connect_f
 #pragma weak mpi_comm_connect = mpi_comm_connect_f
 #pragma weak mpi_comm_connect_ = mpi_comm_connect_f
 #pragma weak mpi_comm_connect__ = mpi_comm_connect_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_COMM_CONNECT,
                            mpi_comm_connect,
                            mpi_comm_connect_,
@@ -54,7 +54,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_CONNECT,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

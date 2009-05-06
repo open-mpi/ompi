@@ -24,7 +24,7 @@
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_ERROR_STRING = mpi_error_string_f
 #pragma weak pmpi_error_string = mpi_error_string_f
 #pragma weak pmpi_error_string_ = mpi_error_string_f
@@ -39,14 +39,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ERROR_STRING,
                             (errorcode, string, resultlen, ierr, string_len) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_ERROR_STRING = mpi_error_string_f
 #pragma weak mpi_error_string = mpi_error_string_f
 #pragma weak mpi_error_string_ = mpi_error_string_f
 #pragma weak mpi_error_string__ = mpi_error_string_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_ERROR_STRING,
                             mpi_error_string,
                             mpi_error_string_,
@@ -57,7 +57,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ERROR_STRING,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

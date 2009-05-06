@@ -683,7 +683,7 @@ static int extract_env_vars(int prev_pid)
     int exit_status = OPAL_SUCCESS;
     char *file_name = NULL;
     FILE *env_data = NULL;
-    int len = OMPI_PATH_MAX;
+    int len = OPAL_PATH_MAX;
     char * tmp_str = NULL;
 
     if( 0 > prev_pid ) {
@@ -708,7 +708,7 @@ static int extract_env_vars(int prev_pid)
     /* Extract an env var */
     while(!feof(env_data) ) {
         char **t_set = NULL;
-        len = OMPI_PATH_MAX;
+        len = OPAL_PATH_MAX;
 
         tmp_str = (char *) malloc(sizeof(char) * len);
         if( NULL == fgets(tmp_str, len, env_data) ) {

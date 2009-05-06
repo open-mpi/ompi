@@ -238,7 +238,7 @@ static void filem_base_process_get_remote_path_cmd(orte_process_name_t* sender,
     orte_std_cntr_t count;
     char *filename = NULL;
     char *tmp_name = NULL;
-    char cwd[OMPI_PATH_MAX];
+    char cwd[OPAL_PATH_MAX];
     int file_type = ORTE_FILEM_TYPE_UNKNOWN;
     struct stat file_status;
     int rc;

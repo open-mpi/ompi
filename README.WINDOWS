@@ -70,7 +70,7 @@ Step 3: Add the following to ompi/tools/ompi_info/ompi_info.h and
 #define OMPI_BUILD_FCFLAGS ""
 #define OMPI_BUILD_LDFLAGS " "
 #define OMPI_BUILD_LIBS " "
-#define OMPI_CC_ABSOLUTE "cl"
+#define OPAL_CC_ABSOLUTE "cl"
 #define OMPI_CXX_ABSOLUTE "cl"
 #define OMPI_F77_ABSOLUTE "none"
 #define OMPI_F90_ABSOLUTE "none"

@@ -325,7 +325,7 @@ int ompi_group_minloc (int list[], int length);
  */
 static inline struct ompi_proc_t* ompi_group_peer_lookup(ompi_group_t *group, int peer_id)
 {
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     if (peer_id >= group->grp_proc_count) {
         opal_output(0, "ompi_group_lookup_peer: invalid peer index (%d)", peer_id);
         return (struct ompi_proc_t *) NULL;

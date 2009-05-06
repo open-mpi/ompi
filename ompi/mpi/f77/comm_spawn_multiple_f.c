@@ -24,7 +24,7 @@
 #include "opal/util/argv.h"
 
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_COMM_SPAWN_MULTIPLE = mpi_comm_spawn_multiple_f
 #pragma weak pmpi_comm_spawn_multiple = mpi_comm_spawn_multiple_f
 #pragma weak pmpi_comm_spawn_multiple_ = mpi_comm_spawn_multiple_f
@@ -39,14 +39,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SPAWN_MULTIPLE,
                            (count, array_of_commands, array_of_argv, array_of_maxprocs, array_of_info, root, comm, intercomm, array_of_errcodes, ierr, cmd_len, argv_len) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_COMM_SPAWN_MULTIPLE = mpi_comm_spawn_multiple_f
 #pragma weak mpi_comm_spawn_multiple = mpi_comm_spawn_multiple_f
 #pragma weak mpi_comm_spawn_multiple_ = mpi_comm_spawn_multiple_f
 #pragma weak mpi_comm_spawn_multiple__ = mpi_comm_spawn_multiple_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SPAWN_MULTIPLE,
                            mpi_comm_spawn_multiple,
                            mpi_comm_spawn_multiple_,
@@ -57,7 +57,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SPAWN_MULTIPLE,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

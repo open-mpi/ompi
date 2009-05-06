@@ -27,7 +27,7 @@
 #include "ompi/request/grequest.h"
 #include "ompi/memchecker.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Request_get_status = PMPI_Request_get_status
 #endif
 
@@ -82,7 +82,7 @@ int MPI_Request_get_status(MPI_Request request, int *flag,
         return MPI_SUCCESS;
     }
     *flag = false;
-#if OMPI_ENABLE_PROGRESS_THREADS == 0
+#if OPAL_ENABLE_PROGRESS_THREADS == 0
     opal_progress();
 #endif
     return MPI_SUCCESS;

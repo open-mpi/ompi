@@ -61,7 +61,7 @@ static void ompi_free_list_destruct(ompi_free_list_t* fl)
     opal_list_item_t *item;
     ompi_free_list_memory_t *fl_mem;
 
-#if 0 && OMPI_ENABLE_DEBUG
+#if 0 && OPAL_ENABLE_DEBUG
     if(opal_list_get_size(&fl->super) != fl->fl_num_allocated) {
         opal_output(0, "ompi_free_list: %d allocated %d returned: %s:%d\n",
             fl->fl_num_allocated, opal_list_get_size(&fl->super),

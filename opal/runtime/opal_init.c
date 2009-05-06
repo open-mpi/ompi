@@ -52,9 +52,9 @@
 #include "opal/util/keyval_parse.h"
 #include "opal/util/sys_limits.h"
 
-#if OMPI_CC_USE_PRAGMA_IDENT
+#if OPAL_CC_USE_PRAGMA_IDENT
 #pragma ident OPAL_IDENT_STRING
-#elif OMPI_CC_USE_IDENT
+#elif OPAL_CC_USE_IDENT
 #ident OPAL_IDENT_STRING
 #endif
 const char opal_version_string[] = OPAL_IDENT_STRING;

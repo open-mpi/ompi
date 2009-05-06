@@ -24,7 +24,7 @@ typedef uint64_t opal_timer_t;
 #if OMPI_GCC_INLINE_ASSEMBLY
 
 
-#if OMPI_ASSEMBLY_ARCH == OMPI_SPARCV9_64
+#if OPAL_ASSEMBLY_ARCH == OMPI_SPARCV9_64
 
 static inline opal_timer_t
 opal_sys_timer_get_cycles(void)

@@ -158,7 +158,7 @@ static int adjust_cq(mca_btl_openib_device_t *device, const int cq)
 
     if(NULL == device->ib_cq[cq]) {
         device->ib_cq[cq] = ibv_create_cq_compat(device->ib_dev_context, cq_size,
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
+#if OPAL_ENABLE_PROGRESS_THREADS == 1
                 device, device->ib_channel,
 #else
                 NULL, NULL,
@@ -171,7 +171,7 @@ static int adjust_cq(mca_btl_openib_device_t *device, const int cq)
             return OMPI_ERROR;
         }
 
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
+#if OPAL_ENABLE_PROGRESS_THREADS == 1
         if(ibv_req_notify_cq(device->ib_cq[cq], 0)) {
             show_init_error(__FILE__, __LINE__, "ibv_req_notify_cq",
                             ibv_get_device_name(device->ib_dev));
@@ -1292,7 +1292,7 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
         return OMPI_SUCCESS;
     }
     /* post descriptor */
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     if((ep->endpoint_proc->proc_ompi->proc_arch & OPAL_ARCH_ISBIGENDIAN)
             != (ompi_proc_local()->proc_arch & OPAL_ARCH_ISBIGENDIAN)) {
         rem_addr = opal_swap_bytes8(rem_addr);
@@ -1373,7 +1373,7 @@ int mca_btl_openib_get(mca_btl_base_module_t* btl,
         return OMPI_SUCCESS;
     }
 
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     if((ep->endpoint_proc->proc_ompi->proc_arch & OPAL_ARCH_ISBIGENDIAN)
             != (ompi_proc_local()->proc_arch & OPAL_ARCH_ISBIGENDIAN)) {
         rem_addr = opal_swap_bytes8(rem_addr);

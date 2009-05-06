@@ -25,7 +25,7 @@
 #include "ompi/mpi/f77/fint_2_int.h"
 #include "ompi/info/info.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Info_c2f = PMPI_Info_c2f
 #endif
 

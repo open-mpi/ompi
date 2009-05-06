@@ -48,6 +48,6 @@ AC_DEFUN([OMPI_CHECK_BROKEN_QSORT],[
     define_result=0
   fi
   AC_MSG_RESULT([$result])
-  AC_DEFINE_UNQUOTED([OMPI_HAVE_BROKEN_QSORT], [$define_result],
+  AC_DEFINE_UNQUOTED([OPAL_HAVE_BROKEN_QSORT], [$define_result],
                      [whether qsort is broken or not])
 ])

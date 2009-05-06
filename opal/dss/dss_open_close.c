@@ -172,7 +172,7 @@ int opal_dss_open(void)
      * to fully described buffers. Otherwise, we default to non-described for brevity
      * and performance
      */
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     def_type = OPAL_DSS_BUFFER_FULLY_DESC;
 #else
     def_type = OPAL_DSS_BUFFER_NON_DESC;

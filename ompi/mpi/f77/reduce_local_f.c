@@ -22,7 +22,7 @@
 #include "ompi/mpi/f77/bindings.h"
 #include "ompi/mpi/f77/constants.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_REDUCE_LOCAL = mpi_reduce_local_f
 #pragma weak pmpi_reduce_local = mpi_reduce_local_f
 #pragma weak pmpi_reduce_local_ = mpi_reduce_local_f
@@ -37,14 +37,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_REDUCE_LOCAL,
                            (sendbuf, recvbuf, count, datatype, op, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_REDUCE_LOCAL = mpi_reduce_local_f
 #pragma weak mpi_reduce_local = mpi_reduce_local_f
 #pragma weak mpi_reduce_local_ = mpi_reduce_local_f
 #pragma weak mpi_reduce_local__ = mpi_reduce_local_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_REDUCE_LOCAL,
                            mpi_reduce_local,
                            mpi_reduce_local_,
@@ -55,7 +55,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_REDUCE_LOCAL,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

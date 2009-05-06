@@ -71,7 +71,7 @@ orte_iof_base_setup_prefork(orte_iof_base_io_conf_t *opts)
     fflush(stdout);
 
     /* first check to make sure we can do ptys */
-#if OMPI_ENABLE_PTY_SUPPORT
+#if OPAL_ENABLE_PTY_SUPPORT
     if (opts->usepty) {
         /**
          * It has been reported that on MAC OS X 10.4 and prior one cannot

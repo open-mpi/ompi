@@ -255,7 +255,7 @@ do { \
    (PSTACK) = pTempStack; \
 } while(0)
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
 OMPI_DECLSPEC int ompi_ddt_safeguard_pointer_debug_breakpoint( const void* actual_ptr, int length,
                                                                const void* initial_ptr,
                                                                const ompi_datatype_t* pData,
@@ -278,7 +278,7 @@ OMPI_DECLSPEC int ompi_ddt_safeguard_pointer_debug_breakpoint( const void* actua
 
 #else
 #define OMPI_DDT_SAFEGUARD_POINTER( ACTPTR, LENGTH, INITPTR, PDATA, COUNT )
-#endif  /* OMPI_ENABLE_DEBUG */
+#endif  /* OPAL_ENABLE_DEBUG */
 
 static inline int GET_FIRST_NON_LOOP( const dt_elem_desc_t* _pElem )
 {

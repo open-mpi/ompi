@@ -20,7 +20,7 @@
 
 #include "ompi/mpi/f77/bindings.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_ADD_ERROR_CODE = mpi_add_error_code_f
 #pragma weak pmpi_add_error_code = mpi_add_error_code_f
 #pragma weak pmpi_add_error_code_ = mpi_add_error_code_f
@@ -35,14 +35,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ADD_ERROR_CODE,
                            (errorclass, errorcode, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_ADD_ERROR_CODE = mpi_add_error_code_f
 #pragma weak mpi_add_error_code = mpi_add_error_code_f
 #pragma weak mpi_add_error_code_ = mpi_add_error_code_f
 #pragma weak mpi_add_error_code__ = mpi_add_error_code_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_ADD_ERROR_CODE,
                            mpi_add_error_code,
                            mpi_add_error_code_,
@@ -53,7 +53,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ADD_ERROR_CODE,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

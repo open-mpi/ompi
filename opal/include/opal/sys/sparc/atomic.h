@@ -20,7 +20,7 @@
 #define OMPI_SYS_ARCH_ATOMIC_H 1
 
 
-#if OMPI_WANT_SMP_LOCKS
+#if OPAL_WANT_SMP_LOCKS
 #define MB() __asm__  __volatile__ ("" : : : "memory")
 #else
 #define MB()

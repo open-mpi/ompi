@@ -20,7 +20,7 @@
 
 #include "ompi/mpi/f77/bindings.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_GRAPHDIMS_GET = mpi_graphdims_get_f
 #pragma weak pmpi_graphdims_get = mpi_graphdims_get_f
 #pragma weak pmpi_graphdims_get_ = mpi_graphdims_get_f
@@ -35,14 +35,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GRAPHDIMS_GET,
                            (comm, nnodes, nedges, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_GRAPHDIMS_GET = mpi_graphdims_get_f
 #pragma weak mpi_graphdims_get = mpi_graphdims_get_f
 #pragma weak mpi_graphdims_get_ = mpi_graphdims_get_f
 #pragma weak mpi_graphdims_get__ = mpi_graphdims_get_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_GRAPHDIMS_GET,
                            mpi_graphdims_get,
                            mpi_graphdims_get_,
@@ -53,7 +53,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GRAPHDIMS_GET,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

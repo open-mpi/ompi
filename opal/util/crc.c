@@ -36,9 +36,9 @@
 #include "opal/util/crc.h"
 
 
-#if (OMPI_ALIGNMENT_LONG == 8)
+#if (OPAL_ALIGNMENT_LONG == 8)
 #define _WORD_MASK_ 0x7
-#elif (OMPI_ALIGNMENT_LONG == 4)
+#elif (OPAL_ALIGNMENT_LONG == 4)
 #define _WORD_MASK_ 0x3
 #else
 #define _WORD_MASK 0xFFFF

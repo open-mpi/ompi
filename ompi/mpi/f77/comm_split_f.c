@@ -20,7 +20,7 @@
 
 #include "ompi/mpi/f77/bindings.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_COMM_SPLIT = mpi_comm_split_f
 #pragma weak pmpi_comm_split = mpi_comm_split_f
 #pragma weak pmpi_comm_split_ = mpi_comm_split_f
@@ -35,14 +35,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SPLIT,
                            (comm, color, key, newcomm, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_COMM_SPLIT = mpi_comm_split_f
 #pragma weak mpi_comm_split = mpi_comm_split_f
 #pragma weak mpi_comm_split_ = mpi_comm_split_f
 #pragma weak mpi_comm_split__ = mpi_comm_split_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SPLIT,
                            mpi_comm_split,
                            mpi_comm_split_,
@@ -53,7 +53,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SPLIT,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

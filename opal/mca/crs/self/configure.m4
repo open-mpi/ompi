@@ -24,7 +24,7 @@ AC_DEFUN([MCA_crs_self_CONFIG],[
         [$2])
 
     # We need to be able to dlopen the executable for this component to work.
-    AS_IF([test "$OMPI_ENABLE_DLOPEN_SUPPORT" = "1" -a "$crs_self_good" = "yes"],
+    AS_IF([test "$OPAL_ENABLE_DLOPEN_SUPPORT" = "1" -a "$crs_self_good" = "yes"],
         [$1],
         [$2])
 ])dnl

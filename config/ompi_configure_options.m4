@@ -95,7 +95,7 @@ if test "$WANT_MEM_DEBUG" = "0" -a -z "$enable_mem_debug" -a "$OMPI_DEVEL" = 1; 
     echo "--> developer override: enable mem profiling by default"
 fi
 #################### Early development override ####################
-AC_DEFINE_UNQUOTED(OMPI_ENABLE_MEM_DEBUG, $WANT_MEM_DEBUG,
+AC_DEFINE_UNQUOTED(OPAL_ENABLE_MEM_DEBUG, $WANT_MEM_DEBUG,
     [Whether we want the memory profiling or not])
 
 #
@@ -119,7 +119,7 @@ if test "$WANT_MEM_PROFILE" = "0" -a -z "$enable_mem_profile" -a "$OMPI_DEVEL" =
     echo "--> developer override: enable mem profiling by default"
 fi
 #################### Early development override ####################
-AC_DEFINE_UNQUOTED(OMPI_ENABLE_MEM_PROFILE, $WANT_MEM_PROFILE,
+AC_DEFINE_UNQUOTED(OPAL_ENABLE_MEM_PROFILE, $WANT_MEM_PROFILE,
     [Whether we want the memory profiling or not])
 
 #
@@ -169,7 +169,7 @@ if test "$WANT_DEBUG" = "0"; then
     CFLAGS="-DNDEBUG $CFLAGS"
     CXXFLAGS="-DNDEBUG $CXXFLAGS"
 fi
-AC_DEFINE_UNQUOTED(OMPI_ENABLE_DEBUG, $WANT_DEBUG,
+AC_DEFINE_UNQUOTED(OPAL_ENABLE_DEBUG, $WANT_DEBUG,
     [Whether we want developer-level debugging code or not])
 
 AC_ARG_ENABLE(debug-symbols,
@@ -399,7 +399,7 @@ else
     AC_MSG_RESULT([yes])
     WANT_PRETTY_PRINT_STACKTRACE=1
 fi
-AC_DEFINE_UNQUOTED([OMPI_WANT_PRETTY_PRINT_STACKTRACE],
+AC_DEFINE_UNQUOTED([OPAL_WANT_PRETTY_PRINT_STACKTRACE],
                    [$WANT_PRETTY_PRINT_STACKTRACE],
                    [if want pretty-print stack trace feature])
 
@@ -457,12 +457,12 @@ AC_ARG_ENABLE(pty-support,
                    [Enable/disable PTY support for STDIO forwarding.  (default: enabled)]))
 if test "$enable_pty_support" = "no" ; then
     AC_MSG_RESULT([no])
-    OMPI_ENABLE_PTY_SUPPORT=0
+    OPAL_ENABLE_PTY_SUPPORT=0
 else
     AC_MSG_RESULT([yes])
-    OMPI_ENABLE_PTY_SUPPORT=1
+    OPAL_ENABLE_PTY_SUPPORT=1
 fi
-AC_DEFINE_UNQUOTED([OMPI_ENABLE_PTY_SUPPORT], [$OMPI_ENABLE_PTY_SUPPORT],
+AC_DEFINE_UNQUOTED([OPAL_ENABLE_PTY_SUPPORT], [$OPAL_ENABLE_PTY_SUPPORT],
                    [Whether user wants PTY support or not])
 
 #
@@ -478,10 +478,10 @@ AC_ARG_ENABLE([dlopen],
 if test "$enable_dlopen" = "no" ; then
     enable_mca_dso="no"
     enable_mca_static="yes"
-    OMPI_ENABLE_DLOPEN_SUPPORT=0
+    OPAL_ENABLE_DLOPEN_SUPPORT=0
     AC_MSG_RESULT([no])
 else
-    OMPI_ENABLE_DLOPEN_SUPPORT=1
+    OPAL_ENABLE_DLOPEN_SUPPORT=1
     AC_MSG_RESULT([yes])
 fi
 
@@ -501,7 +501,7 @@ else
      AC_MSG_RESULT([no])
      ompi_want_heterogeneous=0
 fi
-AC_DEFINE_UNQUOTED([OMPI_ENABLE_HETEROGENEOUS_SUPPORT], 
+AC_DEFINE_UNQUOTED([OPAL_ENABLE_HETEROGENEOUS_SUPPORT], 
                    [$ompi_want_heterogeneous], 
                    [Enable features required for heterogeneous support])
 
@@ -655,7 +655,7 @@ if test "$enable_per_user_config_files" = "no" ; then
 else
   result=1
 fi
-AC_DEFINE_UNQUOTED([OMPI_WANT_HOME_CONFIG_FILES], [$result],
+AC_DEFINE_UNQUOTED([OPAL_WANT_HOME_CONFIG_FILES], [$result],
      [Enable per-user config files])
 
 #

@@ -97,7 +97,7 @@ typedef mca_btl_base_recv_reg_t mca_btl_ud_recv_reg_t;
  * Profiling variables
  */
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
 #define MCA_BTL_UD_ENABLE_PROFILE 0
 #else
 #define MCA_BTL_UD_ENABLE_PROFILE 0

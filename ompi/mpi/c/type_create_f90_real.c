@@ -27,7 +27,7 @@
 
 #include <float.h>
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Type_create_f90_real = PMPI_Type_create_f90_real
 #endif
 

@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
     pid_t pid, ret;
     int status = -1;
 
-#if OMPI_ENABLE_PROGRESS_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS
+#if OPAL_ENABLE_PROGRESS_THREADS && OPAL_THREADS_HAVE_DIFFERENT_PIDS
     printf("test not properly configured when threads have different pids\n");
     return 77;
 #endif

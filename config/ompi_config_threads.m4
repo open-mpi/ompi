@@ -30,9 +30,9 @@ AC_DEFUN([OMPI_CONFIG_THREADS],[
 #
 
 # create templates
-AH_TEMPLATE([OMPI_HAVE_SOLARIS_THREADS], 
+AH_TEMPLATE([OPAL_HAVE_SOLARIS_THREADS], 
     [Do we have native Solaris threads])
-AH_TEMPLATE([OMPI_HAVE_POSIX_THREADS], 
+AH_TEMPLATE([OPAL_HAVE_POSIX_THREADS], 
     [Do we have POSIX threads])
 
 #
@@ -117,13 +117,13 @@ AC_MSG_RESULT($THREAD_TYPE)
 #
 # Blah - this should be made better, but I don't know how...
 #
-AH_TEMPLATE([OMPI_THREADS_HAVE_DIFFERENT_PIDS],
+AH_TEMPLATE([OPAL_THREADS_HAVE_DIFFERENT_PIDS],
     [Do threads have different pids (pthreads on linux)])
 
 if test "$THREAD_TYPE" = "solaris"; then
-    AC_DEFINE(OMPI_HAVE_SOLARIS_THREADS, 1)
-    AC_DEFINE(OMPI_HAVE_POSIX_THREADS, 0)
-    AC_DEFINE(OMPI_THREADS_HAVE_DIFFERENT_PIDS, 0)
+    AC_DEFINE(OPAL_HAVE_SOLARIS_THREADS, 1)
+    AC_DEFINE(OPAL_HAVE_POSIX_THREADS, 0)
+    AC_DEFINE(OPAL_THREADS_HAVE_DIFFERENT_PIDS, 0)
 
     THREAD_CFLAGS="$STHREAD_CFLAGS"
     THREAD_FFLAGS="$STHREAD_FFLAGS"
@@ -133,8 +133,8 @@ if test "$THREAD_TYPE" = "solaris"; then
     THREAD_LDFLAGS="$STHREAD_LDFLAGS"
     THREAD_LIBS="$STHREAD_LIBS"
 elif test "$THREAD_TYPE" = "posix"; then
-    AC_DEFINE(OMPI_HAVE_SOLARIS_THREADS, 0)
-    AC_DEFINE(OMPI_HAVE_POSIX_THREADS, 1)
+    AC_DEFINE(OPAL_HAVE_SOLARIS_THREADS, 0)
+    AC_DEFINE(OPAL_HAVE_POSIX_THREADS, 1)
 
     THREAD_CFLAGS="$PTHREAD_CFLAGS"
     THREAD_FFLAGS="$PTHREAD_FFLAGS"
@@ -146,9 +146,9 @@ elif test "$THREAD_TYPE" = "posix"; then
 
     OMPI_CHECK_PTHREAD_PIDS
 else
-    AC_DEFINE(OMPI_HAVE_SOLARIS_THREADS, 0)
-    AC_DEFINE(OMPI_HAVE_POSIX_THREADS, 0)
-    AC_DEFINE(OMPI_THREADS_HAVE_DIFFERENT_PIDS, 0)
+    AC_DEFINE(OPAL_HAVE_SOLARIS_THREADS, 0)
+    AC_DEFINE(OPAL_HAVE_POSIX_THREADS, 0)
+    AC_DEFINE(OPAL_THREADS_HAVE_DIFFERENT_PIDS, 0)
 
     TRHEAD_CFLAGS=
     THREAD_FFLAGS=
@@ -175,8 +175,8 @@ EOF
     fi
 fi
 
-AM_CONDITIONAL(OMPI_HAVE_POSIX_THREADS, test "$THREAD_TYPE" = "posix")
-AM_CONDITIONAL(OMPI_HAVE_SOLARIS_THREADS, test "$THREAD_TYPE" = "solaris")
+AM_CONDITIONAL(OPAL_HAVE_POSIX_THREADS, test "$THREAD_TYPE" = "posix")
+AM_CONDITIONAL(OPAL_HAVE_SOLARIS_THREADS, test "$THREAD_TYPE" = "solaris")
 
 #
 # Now configure the whole MPI and progress thread gorp
@@ -191,27 +191,27 @@ if test "$enable_mpi_threads" = "" ; then
 dnl    # no argument given either way.  Default to whether
 dnl    # we have threads or not
 dnl    if test "$THREAD_TYPE" != "none" ; then
-dnl        OMPI_ENABLE_MPI_THREADS=1
+dnl        OPAL_ENABLE_MPI_THREADS=1
 dnl        enable_mpi_threads="yes"
 dnl    else
-dnl        OMPI_ENABLE_MPI_THREADS=0
+dnl        OPAL_ENABLE_MPI_THREADS=0
 dnl        enable_mpi_threads="no"
 dnl    fi
     # no argument - default to no
-    OMPI_ENABLE_MPI_THREADS=0
+    OPAL_ENABLE_MPI_THREADS=0
     enable_mpi_threads="no"
 elif test "$enable_mpi_threads" = "no" ; then
-    OMPI_ENABLE_MPI_THREADS=0
+    OPAL_ENABLE_MPI_THREADS=0
 else
     # they want MPI threads.  Make sure we have threads
     if test "$THREAD_TYPE" != "none" ; then
-        OMPI_ENABLE_MPI_THREADS=1
+        OPAL_ENABLE_MPI_THREADS=1
         enable_mpi_threads="yes"
     else
         AC_MSG_ERROR([User requested MPI threads, but no threading model supported])
     fi
 fi
-AC_DEFINE_UNQUOTED([OMPI_ENABLE_MPI_THREADS], [$OMPI_ENABLE_MPI_THREADS],
+AC_DEFINE_UNQUOTED([OPAL_ENABLE_MPI_THREADS], [$OPAL_ENABLE_MPI_THREADS],
                    [Whether we should enable support for multiple user threads])
 AC_MSG_RESULT([$enable_mpi_threads])
 
@@ -224,21 +224,21 @@ AC_ARG_ENABLE([progress-threads],
 
 if test "$enable_progress_threads" = "" ; then
     # no argument given either way.  Default to no.
-    OMPI_ENABLE_PROGRESS_THREADS=0
+    OPAL_ENABLE_PROGRESS_THREADS=0
     enable_progress_threads="no"
 elif test "$enable_progress_threads" = "no" ; then
-    OMPI_ENABLE_PROGRESS_THREADS=0
+    OPAL_ENABLE_PROGRESS_THREADS=0
     enable_progress_threads="no"
 else
     # they want threaded progress
     if test "$THREAD_TYPE" != "none" ; then
-        OMPI_ENABLE_PROGRESS_THREADS=1
+        OPAL_ENABLE_PROGRESS_THREADS=1
         enable_progress_threads="yes"
     else
         AC_MSG_ERROR([User requested progress threads, but no threading model supported])
     fi
 fi
-AC_DEFINE_UNQUOTED([OMPI_ENABLE_PROGRESS_THREADS], [$OMPI_ENABLE_PROGRESS_THREADS],
+AC_DEFINE_UNQUOTED([OPAL_ENABLE_PROGRESS_THREADS], [$OPAL_ENABLE_PROGRESS_THREADS],
                    [Whether we should use progress threads rather than polling])
 AC_MSG_RESULT([$enable_progress_threads])
 

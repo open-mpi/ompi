@@ -24,7 +24,7 @@
  * one that does not return any value. There are 2 exceptions MPI_Wtick and MPI_Wtime.
  * For these 2 we can insert the bindings manually.
  */
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_WTIME = mpi_wtime_f
 #pragma weak pmpi_wtime = mpi_wtime_f
 #pragma weak pmpi_wtime_ = mpi_wtime_f
@@ -36,14 +36,14 @@ double pmpi_wtime_(void) { return pmpi_wtime_f(); }
 double pmpi_wtime__(void) { return pmpi_wtime_f(); }
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_WTIME = mpi_wtime_f
 #pragma weak mpi_wtime = mpi_wtime_f
 #pragma weak mpi_wtime_ = mpi_wtime_f
 #pragma weak mpi_wtime__ = mpi_wtime_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 double MPI_WTIME(void) { return mpi_wtime_f(); }
 double mpi_wtime(void) { return mpi_wtime_f(); }
 double mpi_wtime_(void) { return mpi_wtime_f(); }
@@ -51,7 +51,7 @@ double mpi_wtime__(void) { return mpi_wtime_f(); }
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

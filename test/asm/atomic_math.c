@@ -56,7 +56,7 @@ static int
 atomic_math_test_th(int count, int thr_count)
 {
     int value;
-#if OMPI_HAVE_POSIX_THREADS
+#if OPAL_HAVE_POSIX_THREADS
     pthread_t *th;
     int tid, ret = 0;
 

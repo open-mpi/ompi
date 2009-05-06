@@ -21,7 +21,7 @@
 #ifndef MCA_BTL_SELF_ENDPOINT_H
 #define MCA_BTL_SELF_ENDPOINT_H
 
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
+#if OPAL_ENABLE_PROGRESS_THREADS == 1
 #include "opal/event/event.h"
 #endif
 

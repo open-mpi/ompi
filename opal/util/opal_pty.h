@@ -39,7 +39,7 @@
 extern "C" {
 #endif
 
-#if OMPI_ENABLE_PTY_SUPPORT 
+#if OPAL_ENABLE_PTY_SUPPORT 
 
 OPAL_DECLSPEC int opal_openpty(int *amaster, int *aslave, char *name, 
                                struct termios *termp, struct winsize *winp);

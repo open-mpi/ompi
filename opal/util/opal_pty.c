@@ -100,7 +100,7 @@
 /* The only public interface is openpty - all others are to support
    openpty() */
 
-#if OMPI_ENABLE_PTY_SUPPORT == 0
+#if OPAL_ENABLE_PTY_SUPPORT == 0
 
 int opal_openpty(int *amaster, int *aslave, char *name,
                  void *termp, void *winpp)

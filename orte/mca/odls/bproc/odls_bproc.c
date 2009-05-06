@@ -248,7 +248,7 @@ odls_bproc_setup_stdio(orte_process_name_t *proc_name, int proc_rank,
 {
     char *path_prefix, *fd_link_path = NULL;
     int rc = ORTE_SUCCESS, fd;
-#if defined(HAVE_OPENPTY) && (OMPI_ENABLE_PTY_SUPPORT != 0)
+#if defined(HAVE_OPENPTY) && (OPAL_ENABLE_PTY_SUPPORT != 0)
     int amaster, aslave;
     char pty_name[256];
     struct termios term_attrs;
@@ -315,7 +315,7 @@ odls_bproc_setup_stdio(orte_process_name_t *proc_name, int proc_rank,
         goto cleanup;
     }
 
-#if defined(HAVE_OPENPTY) && (OMPI_ENABLE_PTY_SUPPORT != 0)
+#if defined(HAVE_OPENPTY) && (OPAL_ENABLE_PTY_SUPPORT != 0)
     if (0 != openpty(&amaster, &aslave, pty_name, NULL, NULL)) {
          opal_output(0, "odls_bproc: openpty failed, using pipes instead");
          goto stdout_fifo_setup;
@@ -366,7 +366,7 @@ stdout_fifo_setup:
     orte_iof.iof_publish(proc_name, ORTE_IOF_SOURCE,
                          ORTE_IOF_STDOUT, fd);
 
-#if defined(HAVE_OPENPTY) && (OMPI_ENABLE_PTY_SUPPORT != 0)
+#if defined(HAVE_OPENPTY) && (OPAL_ENABLE_PTY_SUPPORT != 0)
 stderr_fifo_setup:
 #endif
 

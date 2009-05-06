@@ -174,7 +174,7 @@ typedef struct {
     orte_process_name_t sender;
     opal_buffer_t *buffer;
     orte_rml_tag_t tag;
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     char *file;
     int line;
 #endif
@@ -192,7 +192,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_message_event_t);
         opal_evtimer_add(mev->ev, &now);                            \
     } while(0);
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
 
 #define ORTE_MESSAGE_EVENT(sndr, buf, tg, cbfunc)               \
     do {                                                        \

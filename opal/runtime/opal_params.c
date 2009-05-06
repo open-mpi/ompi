@@ -84,7 +84,7 @@ int opal_register_params(void)
                                        false, false, NULL, &opal_profile_file);
     }
     
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
 
 
     mca_base_param_reg_int_name("opal", "progress_debug", 

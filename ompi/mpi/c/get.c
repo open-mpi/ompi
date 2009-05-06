@@ -26,7 +26,7 @@
 #include "ompi/mca/osc/osc.h"
 #include "ompi/datatype/datatype.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Get = PMPI_Get
 #endif
 

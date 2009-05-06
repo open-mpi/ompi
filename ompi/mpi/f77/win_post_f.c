@@ -20,7 +20,7 @@
 
 #include "ompi/mpi/f77/bindings.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_WIN_POST = mpi_win_post_f
 #pragma weak pmpi_win_post = mpi_win_post_f
 #pragma weak pmpi_win_post_ = mpi_win_post_f
@@ -35,14 +35,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_POST,
                            (group, assert, win, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_WIN_POST = mpi_win_post_f
 #pragma weak mpi_win_post = mpi_win_post_f
 #pragma weak mpi_win_post_ = mpi_win_post_f
 #pragma weak mpi_win_post__ = mpi_win_post_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_WIN_POST,
                            mpi_win_post,
                            mpi_win_post_,
@@ -53,7 +53,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_POST,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

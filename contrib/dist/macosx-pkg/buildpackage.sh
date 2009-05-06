@@ -35,7 +35,7 @@ OMPI_OSX_README="ReadMe.rtf"
 # note - if want XGrid support, make sure that a cocoa-supported 
 # architecture appears first on the list.  Otherwise, we won't
 # lipo that component and it will be dropped
-OMPI_ARCH_LIST="ppc ppc64 i386 x86_64"
+OPAL_ARCH_LIST="ppc ppc64 i386 x86_64"
 OMPI_SDK="/Developer/SDKs/MacOSX10.4u.sdk"
 
 #
@@ -52,7 +52,7 @@ echo "--> Configuration options:"
 echo "    Package Name:   $OMPI_PACKAGE"
 echo "    Prefix:         $OMPI_PREFIX"
 echo "    Config Options: $OMPI_OPTIONS"
-echo "    Architectures:  $OMPI_ARCH_LIST"
+echo "    Architectures:  $OPAL_ARCH_LIST"
 echo "    Target SDK:     $OMPI_SDK"
 echo ""
 
@@ -160,7 +160,7 @@ fi
 build_arch=`uname -p`"-apple-darwin"`uname -r`
 
 real_install=1
-for arch in $OMPI_ARCH_LIST ; do
+for arch in $OPAL_ARCH_LIST ; do
     builddir="$BUILD_TMP/build-$arch"
     mkdir "$builddir"
 
@@ -279,7 +279,7 @@ print_arch_if() {
 # Set arch to the first arch in the list.  Go through the for loop,
 # although we'll break out at the end of the first time through.  Look
 # at the other arches that were built by using ls.
-for arch in $OMPI_ARCH_LIST ; do
+for arch in $OPAL_ARCH_LIST ; do
     cd $BUILD_TMP
     other_archs=`ls -d dist-*`
     fulldistdir="$BUILD_TMP/dist"

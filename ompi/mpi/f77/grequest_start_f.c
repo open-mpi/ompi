@@ -21,7 +21,7 @@
 
 #include "ompi/mpi/f77/bindings.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_GREQUEST_START = mpi_grequest_start_f
 #pragma weak pmpi_grequest_start = mpi_grequest_start_f
 #pragma weak pmpi_grequest_start_ = mpi_grequest_start_f
@@ -36,14 +36,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GREQUEST_START,
                            (query_fn, free_fn, cancel_fn, extra_state, request, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_GREQUEST_START = mpi_grequest_start_f
 #pragma weak mpi_grequest_start = mpi_grequest_start_f
 #pragma weak mpi_grequest_start_ = mpi_grequest_start_f
 #pragma weak mpi_grequest_start__ = mpi_grequest_start_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_GREQUEST_START,
                            mpi_grequest_start,
                            mpi_grequest_start_,
@@ -54,7 +54,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GREQUEST_START,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

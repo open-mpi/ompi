@@ -20,7 +20,7 @@
 
 #include "ompi/mpi/f77/bindings.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_CARTDIM_GET = mpi_cartdim_get_f
 #pragma weak pmpi_cartdim_get = mpi_cartdim_get_f
 #pragma weak pmpi_cartdim_get_ = mpi_cartdim_get_f
@@ -35,14 +35,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_CARTDIM_GET,
                            (comm, ndims, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_CARTDIM_GET = mpi_cartdim_get_f
 #pragma weak mpi_cartdim_get = mpi_cartdim_get_f
 #pragma weak mpi_cartdim_get_ = mpi_cartdim_get_f
 #pragma weak mpi_cartdim_get__ = mpi_cartdim_get_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_CARTDIM_GET,
                            mpi_cartdim_get,
                            mpi_cartdim_get_,
@@ -53,7 +53,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CARTDIM_GET,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

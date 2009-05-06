@@ -98,7 +98,7 @@ int vprotocol_pessimist_event_logger_disconnect(ompi_communicator_t *el_comm)
 }
 
 void vprotocol_pessimist_matching_replay(int *src) {
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     vprotocol_pessimist_clock_t max = 0;
 #endif
     mca_vprotocol_pessimist_event_t *event;
@@ -121,7 +121,7 @@ void vprotocol_pessimist_matching_replay(int *src) {
                                   (opal_list_item_t *) event);
             VPESSIMIST_EVENT_RETURN(event);
         }   
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
         else if(mevent->reqid > max) 
             max = mevent->reqid;                         
     }

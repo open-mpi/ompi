@@ -31,7 +31,7 @@
 int mca_bml_base_already_opened = 0;
 opal_list_t mca_bml_base_components_available;
 
-#if OMPI_ENABLE_DEBUG_RELIABILITY
+#if OPAL_ENABLE_DEBUG_RELIABILITY
 double mca_bml_base_error_rate_floor;
 double mca_bml_base_error_rate_ceiling;
 int    mca_bml_base_error_count;
@@ -51,7 +51,7 @@ int mca_bml_base_open(void)
         return OMPI_ERROR; 
     }
 
-#if OMPI_ENABLE_DEBUG_RELIABILITY
+#if OPAL_ENABLE_DEBUG_RELIABILITY
     do {
         int param, value;
         

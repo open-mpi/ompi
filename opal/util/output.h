@@ -488,7 +488,7 @@ struct opal_output_stream_t {
                                                         char **olddir,
                                                         char **oldprefix);
     
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     /**
      * Main macro for use in sending debugging output to output streams;
      * will be "compiled out" when OPAL is configured without

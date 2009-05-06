@@ -26,12 +26,12 @@
 
 #include <stdio.h>
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
 extern int ompi_unpack_debug;
 #define DO_DEBUG(INST)  if( ompi_unpack_debug ) { INST }
 #else
 #define DO_DEBUG(INST)
-#endif  /* OMPI_ENABLE_DEBUG */
+#endif  /* OPAL_ENABLE_DEBUG */
 
 #include "ompi/datatype/datatype_checksum.h"
 #include "ompi/datatype/datatype_unpack.h"

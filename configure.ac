@@ -266,18 +266,18 @@ fi
 # Check for type alignments
 #
 
-OMPI_C_GET_ALIGNMENT(char, OMPI_ALIGNMENT_CHAR)
-OMPI_C_GET_ALIGNMENT(short, OMPI_ALIGNMENT_SHORT)
+OMPI_C_GET_ALIGNMENT(char, OPAL_ALIGNMENT_CHAR)
+OMPI_C_GET_ALIGNMENT(short, OPAL_ALIGNMENT_SHORT)
 OMPI_C_GET_ALIGNMENT(wchar_t, OMPI_ALIGNMENT_WCHAR)
-OMPI_C_GET_ALIGNMENT(int, OMPI_ALIGNMENT_INT)
-OMPI_C_GET_ALIGNMENT(long, OMPI_ALIGNMENT_LONG)
+OMPI_C_GET_ALIGNMENT(int, OPAL_ALIGNMENT_INT)
+OMPI_C_GET_ALIGNMENT(long, OPAL_ALIGNMENT_LONG)
 if test $ac_cv_type_long_long = yes; then
-    OMPI_C_GET_ALIGNMENT(long long, OMPI_ALIGNMENT_LONG_LONG)
+    OMPI_C_GET_ALIGNMENT(long long, OPAL_ALIGNMENT_LONG_LONG)
 fi
 OMPI_C_GET_ALIGNMENT(float, OMPI_ALIGNMENT_FLOAT)
 OMPI_C_GET_ALIGNMENT(double, OMPI_ALIGNMENT_DOUBLE)
 if test $ac_cv_type_long_double = yes; then
-    OMPI_C_GET_ALIGNMENT(long double, OMPI_ALIGNMENT_LONG_DOUBLE)
+    OMPI_C_GET_ALIGNMENT(long double, OPAL_ALIGNMENT_LONG_DOUBLE)
 fi
 OMPI_C_GET_ALIGNMENT(void *, OMPI_ALIGNMENT_VOID_P)
 
@@ -290,8 +290,8 @@ AC_MSG_CHECKING(for C bool type)
 AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[
 AC_INCLUDES_DEFAULT]],
 [[bool bar, foo = true; bar = foo;]]),
-[OMPI_NEED_C_BOOL=0 MSG=yes],[OMPI_NEED_C_BOOL=1 MSG=no])
-AC_DEFINE_UNQUOTED(OMPI_NEED_C_BOOL, $OMPI_NEED_C_BOOL,
+[OPAL_NEED_C_BOOL=0 MSG=yes],[OPAL_NEED_C_BOOL=1 MSG=no])
+AC_DEFINE_UNQUOTED(OPAL_NEED_C_BOOL, $OPAL_NEED_C_BOOL,
     [Whether the C compiler supports "bool" without any other help (such as <stdbool.h>)])
 AC_MSG_RESULT([$MSG])
 
@@ -344,10 +344,10 @@ fi
 #   separate directory.
 
 if test "$WANT_WEAK_SYMBOLS" = "0"; then
-    OMPI_C_HAVE_WEAK_SYMBOLS=0
+    OPAL_C_HAVE_WEAK_SYMBOLS=0
 fi
 if test "$WANT_MPI_PROFILING" = "1"; then
-    if test "$OMPI_C_HAVE_WEAK_SYMBOLS" = "1"; then
+    if test "$OPAL_C_HAVE_WEAK_SYMBOLS" = "1"; then
         OMPI_PROFILING_COMPILE_SEPARATELY=0
     else
         OMPI_PROFILING_COMPILE_SEPARATELY=1
@@ -379,7 +379,7 @@ AM_CONDITIONAL(COMPILE_PROFILING_SEPARATELY,
     test "$OMPI_PROFILING_COMPILE_SEPARATELY" = 1)
 AC_DEFINE_UNQUOTED(OMPI_ENABLE_MPI_PROFILING, $WANT_MPI_PROFILING,
     [Whether we want MPI profiling or not])
-AC_DEFINE_UNQUOTED(OMPI_HAVE_WEAK_SYMBOLS, $OMPI_C_HAVE_WEAK_SYMBOLS,
+AC_DEFINE_UNQUOTED(OPAL_HAVE_WEAK_SYMBOLS, $OPAL_C_HAVE_WEAK_SYMBOLS,
     [Whether we have weak symbols or not])
 
 
@@ -676,7 +676,7 @@ AC_CHECK_HEADERS([net/if.h], [], [],
 # So first figure out if we have <stdbool.h> (i.e., check the value of
 # the macro HAVE_STDBOOL_H from the result of AC_CHECK_HEADERS,
 # above).  If we do have it, then check to see if it actually works.
-# Define OMPI_USE_STDBOOL_H as approrpaite.
+# Define OPAL_USE_STDBOOL_H as approrpaite.
 AC_CHECK_HEADERS([stdbool.h], [have_stdbool_h=1], [have_stdbool_h=0])
 AC_MSG_CHECKING([if <stdbool.h> works])
 if test "$have_stdbool_h" = "1"; then
@@ -686,12 +686,12 @@ AC_INCLUDES_DEFAULT
 #include <stdbool.h>
 #endif]],
 [[bool bar, foo = true; bar = foo;]]),
-[OMPI_USE_STDBOOL_H=1 MSG=yes],[OMPI_USE_STDBOOL_H=0 MSG=no])
+[OPAL_USE_STDBOOL_H=1 MSG=yes],[OPAL_USE_STDBOOL_H=0 MSG=no])
 else
-    OMPI_USE_STDBOOL_H=0
+    OPAL_USE_STDBOOL_H=0
     MSG="no (don't have <stdbool.h>)"
 fi
-AC_DEFINE_UNQUOTED(OMPI_USE_STDBOOL_H, $OMPI_USE_STDBOOL_H,
+AC_DEFINE_UNQUOTED(OPAL_USE_STDBOOL_H, $OPAL_USE_STDBOOL_H,
     [Whether to use <stdbool.h> or not])
 AC_MSG_RESULT([$MSG])
 
@@ -734,7 +734,7 @@ AC_EGREP_CPP(yes, [
 #ifdef SA_RESTART
     yes
 #endif ], [MSG=yes VALUE=1], [MSG=no VALUE=0])
-AC_DEFINE_UNQUOTED(OMPI_HAVE_SA_RESTART, $VALUE,
+AC_DEFINE_UNQUOTED(OPAL_HAVE_SA_RESTART, $VALUE,
     [Whether we have SA_RESTART in <signal.h> or not])
 AC_MSG_RESULT([$MSG])
 
@@ -809,14 +809,14 @@ AS_IF([test "$ompi_cv_htonl_define" = "yes" -o "$ompi_have_htonl" = "yes"],
 # Make sure we can copy va_lists (need check declared, not linkable)
 #
 
-AC_CHECK_DECL(va_copy, OMPI_HAVE_VA_COPY=1, OMPI_HAVE_VA_COPY=0,
+AC_CHECK_DECL(va_copy, OPAL_HAVE_VA_COPY=1, OPAL_HAVE_VA_COPY=0,
     [#include <stdarg.h>])
-AC_DEFINE_UNQUOTED(OMPI_HAVE_VA_COPY, $OMPI_HAVE_VA_COPY,
+AC_DEFINE_UNQUOTED(OPAL_HAVE_VA_COPY, $OPAL_HAVE_VA_COPY,
     [Whether we have va_copy or not])
 
-AC_CHECK_DECL(__va_copy, OMPI_HAVE_UNDERSCORE_VA_COPY=1,
-    OMPI_HAVE_UNDERSCORE_VA_COPY=0, [#include <stdarg.h>])
-AC_DEFINE_UNQUOTED(OMPI_HAVE_UNDERSCORE_VA_COPY, $OMPI_HAVE_UNDERSCORE_VA_COPY,
+AC_CHECK_DECL(__va_copy, OPAL_HAVE_UNDERSCORE_VA_COPY=1,
+    OPAL_HAVE_UNDERSCORE_VA_COPY=0, [#include <stdarg.h>])
+AC_DEFINE_UNQUOTED(OPAL_HAVE_UNDERSCORE_VA_COPY, $OPAL_HAVE_UNDERSCORE_VA_COPY,
     [Whether we have __va_copy or not])
 
 AC_CHECK_DECLS(__func__)
@@ -876,15 +876,15 @@ AC_DEFINE_UNQUOTED(OMPI_MPI_OFFSET_TYPE, $MPI_OFFSET_TYPE, [Type of MPI_Offset -
 # sizeof(void*) != sizeof(long) (64 bit Windows, apparently).
 #
 if test $ac_cv_type_ptrdiff_t = yes ; then
-    ompi_ptrdiff_t="ptrdiff_t"
+    opal_ptrdiff_t="ptrdiff_t"
 elif test $ac_cv_sizeof_void_p -eq $ac_cv_sizeof_long ; then
-    ompi_ptrdiff_t="long"
+    opal_ptrdiff_t="long"
 elif test $ac_cv_type_long_long = yes -a $ac_cv_sizeof_void_p -eq $ac_cv_sizeof_long_long ; then
-    ompi_ptrdiff_t="long long"
+    opal_ptrdiff_t="long long"
 else
     AC_MSG_ERROR([Could not find datatype to emulate ptrdiff_t.  Cannot continue])
 fi
-AC_DEFINE_UNQUOTED([OMPI_PTRDIFF_TYPE], [$ompi_ptrdiff_t],
+AC_DEFINE_UNQUOTED([OPAL_PTRDIFF_TYPE], [$opal_ptrdiff_t],
     [type to use for ptrdiff_t])
 
 #
@@ -938,7 +938,7 @@ AC_CACHE_CHECK([if word-sized integers must be word-size aligned],
         [ompi_cv_c_word_size_align=yes],
         [ompi_cv_c_word_size_align=yes])])
 AS_IF([test $ompi_cv_c_word_size_align = yes], [results=1], [results=0])
-AC_DEFINE_UNQUOTED([OMPI_ALIGN_WORD_SIZE_INTEGERS], [$results],
+AC_DEFINE_UNQUOTED([OPAL_ALIGN_WORD_SIZE_INTEGERS], [$results],
     [set to 1 if word-size integers must be aligned to word-size padding to prevent bus errors])
 
 # all: SYSV semaphores
@@ -1148,7 +1148,7 @@ ompi_show_subtitle "GNU libltdl setup"
 # $enable_shared and $enable_static and pass down the corresponding
 # flags.
 
-if test "$OMPI_ENABLE_DLOPEN_SUPPORT" = "1" ; then
+if test "$OPAL_ENABLE_DLOPEN_SUPPORT" = "1" ; then
     ompi_subdir_args="$ompi_subdir_args --enable-ltdl-convenience --disable-ltdl-install"
     if test "$enable_shared" = "yes"; then
         ompi_subdir_args="$ompi_subdir_args --enable-shared"
@@ -1209,7 +1209,7 @@ AC_SUBST(LTDLINCL)
 AC_SUBST(LIBLTDL)
 AC_SUBST(LIBLTDL_SUBDIR)
 
-AC_DEFINE_UNQUOTED(OMPI_WANT_LIBLTDL, $OMPI_ENABLE_DLOPEN_SUPPORT,
+AC_DEFINE_UNQUOTED(OPAL_WANT_LIBLTDL, $OPAL_ENABLE_DLOPEN_SUPPORT,
     [Whether to include support for libltdl or not])
 
 AC_DEFINE_UNQUOTED(OPAL_HAVE_LTDL_ADVISE, $OPAL_HAVE_LTDL_ADVISE,
@@ -1300,25 +1300,25 @@ OMPI_SETUP_WRAPPER_FINAL
 # things are defined as null tokens or an integer result, two projects
 # with different versions of AC can cause problems.
 if test $ac_cv_header_stdc = yes; then
-    AC_DEFINE(OMPI_STDC_HEADERS, 1,
+    AC_DEFINE(OPAL_STDC_HEADERS, 1,
               [Do not use outside of mpi.h.  Define to 1 if you have the ANSI C header files.])
 fi
 if test $ac_cv_header_sys_time_h = yes ; then
-    AC_DEFINE(OMPI_HAVE_SYS_TIME_H, 1,
+    AC_DEFINE(OPAL_HAVE_SYS_TIME_H, 1,
               [Do not use outside of mpi.h.  Define to 1 if you have the <sys/time.h> header file.])
 fi
 if test $ac_cv_type_long_long = yes ; then
-    AC_DEFINE(OMPI_HAVE_LONG_LONG, 1,
+    AC_DEFINE(OPAL_HAVE_LONG_LONG, 1,
               [Do not use outside of mpi.h.  Define to 1 if the system has the type `long long'.]) dnl `
 fi
 if test $ac_cv_header_sys_synch_h = yes ; then
-    AC_DEFINE(OMPI_HAVE_SYS_SYNCH_H, 1,
+    AC_DEFINE(OPAL_HAVE_SYS_SYNCH_H, 1,
               [Do not use outside of mpi.h.  Define to 1 if you have the <sys/synch.h> header file.])
 fi
 
-AC_DEFINE_UNQUOTED(OMPI_SIZEOF_BOOL, $ac_cv_sizeof_bool,
+AC_DEFINE_UNQUOTED(OPAL_SIZEOF_BOOL, $ac_cv_sizeof_bool,
           [Do not use outside of mpi.h.  The size of a `bool', as computed by sizeof.]) dnl `
-AC_DEFINE_UNQUOTED(OMPI_SIZEOF_INT, $ac_cv_sizeof_int,
+AC_DEFINE_UNQUOTED(OPAL_SIZEOF_INT, $ac_cv_sizeof_int,
           [Do not use outside of mpi.h.  The size of a `int', as computed by sizeof.]) dnl `
 
 ############################################################################

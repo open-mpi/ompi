@@ -228,7 +228,7 @@ AC_DEFUN([OMPI_SETUP_CC],[
     else
         have_builtin_expect=0
     fi
-    AC_DEFINE_UNQUOTED([OMPI_C_HAVE_BUILTIN_EXPECT], [$have_builtin_expect],
+    AC_DEFINE_UNQUOTED([OPAL_C_HAVE_BUILTIN_EXPECT], [$have_builtin_expect],
           [Whether C compiler supports __builtin_expect])
 
     # see if the C compiler supports __builtin_prefetch
@@ -244,7 +244,7 @@ AC_DEFUN([OMPI_SETUP_CC],[
     else
         have_builtin_prefetch=0
     fi
-    AC_DEFINE_UNQUOTED([OMPI_C_HAVE_BUILTIN_PREFETCH], [$have_builtin_prefetch],
+    AC_DEFINE_UNQUOTED([OPAL_C_HAVE_BUILTIN_PREFETCH], [$have_builtin_prefetch],
           [Whether C compiler supports __builtin_prefetch])
 
     # Preload the optflags for the case where the user didn't specify
@@ -320,9 +320,9 @@ AC_DEFUN([_OMPI_PROG_CC],[
     AC_PROG_CC
     BASECC="`basename $CC`"
     CFLAGS="$ompi_cflags_save"
-    AC_DEFINE_UNQUOTED(OMPI_CC, "$CC", [OMPI underlying C compiler])
+    AC_DEFINE_UNQUOTED(OPAL_CC, "$CC", [OMPI underlying C compiler])
     set dummy $CC
     ompi_cc_argv0=[$]2
-    OMPI_WHICH([$ompi_cc_argv0], [OMPI_CC_ABSOLUTE])
-    AC_SUBST(OMPI_CC_ABSOLUTE)
+    OMPI_WHICH([$ompi_cc_argv0], [OPAL_CC_ABSOLUTE])
+    AC_SUBST(OPAL_CC_ABSOLUTE)
 ])

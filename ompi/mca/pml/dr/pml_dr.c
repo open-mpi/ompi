@@ -165,7 +165,7 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
     if(nprocs == 0)
         return OMPI_SUCCESS;
 
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     for (i = 0 ; i < nprocs ; ++i) {
         if (procs[i]->proc_arch != ompi_proc_local()->proc_arch) {
             return OMPI_ERR_NOT_SUPPORTED;

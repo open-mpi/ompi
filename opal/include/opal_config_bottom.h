@@ -66,9 +66,9 @@
  **********************************************************************/
 
 /* Do we have posix or solaris thread lib */
-#define OMPI_HAVE_THREADS (OMPI_HAVE_POSIX_THREADS || OMPI_HAVE_SOLARIS_THREADS)
+#define OPAL_HAVE_THREADS (OPAL_HAVE_POSIX_THREADS || OPAL_HAVE_SOLARIS_THREADS)
 /* Do we have thread support? */
-#define OMPI_HAVE_THREAD_SUPPORT (OMPI_ENABLE_MPI_THREADS || OMPI_ENABLE_PROGRESS_THREADS)
+#define OPAL_HAVE_THREAD_SUPPORT (OPAL_ENABLE_MPI_THREADS || OPAL_ENABLE_PROGRESS_THREADS)
 
 /*
  * BEGIN_C_DECLS should be used at the beginning of your declarations,
@@ -89,7 +89,7 @@
  * The attribute definition should be included before any potential
  * usage.
  */
-#if OMPI_HAVE_ATTRIBUTE_ALIGNED
+#if OPAL_HAVE_ATTRIBUTE_ALIGNED
 #    define __opal_attribute_aligned__(a)    __attribute__((__aligned__(a)))
 #    define __opal_attribute_aligned_max__   __attribute__((__aligned__))
 #else
@@ -97,61 +97,61 @@
 #    define __opal_attribute_aligned_max__
 #endif
 
-#if OMPI_HAVE_ATTRIBUTE_ALWAYS_INLINE
+#if OPAL_HAVE_ATTRIBUTE_ALWAYS_INLINE
 #    define __opal_attribute_always_inline__ __attribute__((__always_inline__))
 #else
 #    define __opal_attribute_always_inline__
 #endif
 
-#if OMPI_HAVE_ATTRIBUTE_COLD
+#if OPAL_HAVE_ATTRIBUTE_COLD
 #    define __opal_attribute_cold__          __attribute__((__cold__))
 #else
 #    define __opal_attribute_cold__
 #endif
 
-#if OMPI_HAVE_ATTRIBUTE_CONST
+#if OPAL_HAVE_ATTRIBUTE_CONST
 #    define __opal_attribute_const__         __attribute__((__const__))
 #else
 #    define __opal_attribute_const__
 #endif
 
-#if OMPI_HAVE_ATTRIBUTE_DEPRECATED
+#if OPAL_HAVE_ATTRIBUTE_DEPRECATED
 #    define __opal_attribute_deprecated__    __attribute__((__deprecated__))
 #else
 #    define __opal_attribute_deprecated__
 #endif
 
-#if OMPI_HAVE_ATTRIBUTE_FORMAT
+#if OPAL_HAVE_ATTRIBUTE_FORMAT
 #    define __opal_attribute_format__(a,b,c) __attribute__((__format__(a, b, c)))
 #else
 #    define __opal_attribute_format__(a,b,c)
 #endif
 
-#if OMPI_HAVE_ATTRIBUTE_HOT
+#if OPAL_HAVE_ATTRIBUTE_HOT
 #    define __opal_attribute_hot__           __attribute__((__hot__))
 #else
 #    define __opal_attribute_hot__
 #endif
 
-#if OMPI_HAVE_ATTRIBUTE_MALLOC
+#if OPAL_HAVE_ATTRIBUTE_MALLOC
 #    define __opal_attribute_malloc__        __attribute__((__malloc__))
 #else
 #    define __opal_attribute_malloc__
 #endif
 
-#if OMPI_HAVE_ATTRIBUTE_MAY_ALIAS
+#if OPAL_HAVE_ATTRIBUTE_MAY_ALIAS
 #    define __opal_attribute_may_alias__     __attribute__((__may_alias__))
 #else
 #    define __opal_attribute_may_alias__
 #endif
 
-#if OMPI_HAVE_ATTRIBUTE_NO_INSTRUMENT_FUNCTION
+#if OPAL_HAVE_ATTRIBUTE_NO_INSTRUMENT_FUNCTION
 #    define __opal_attribute_no_instrument_function__  __attribute__((__no_instrument_function__))
 #else
 #    define __opal_attribute_no_instrument_function__
 #endif
 
-#if OMPI_HAVE_ATTRIBUTE_NONNULL
+#if OPAL_HAVE_ATTRIBUTE_NONNULL
 #    define __opal_attribute_nonnull__(a)    __attribute__((__nonnull__(a)))
 #    define __opal_attribute_nonnull_all__   __attribute__((__nonnull__))
 #else
@@ -159,49 +159,49 @@
 #    define __opal_attribute_nonnull_all__
 #endif
 
-#if OMPI_HAVE_ATTRIBUTE_NORETURN
+#if OPAL_HAVE_ATTRIBUTE_NORETURN
 #    define __opal_attribute_noreturn__      __attribute__((__noreturn__))
 #else
 #    define __opal_attribute_noreturn__
 #endif
 
-#if OMPI_HAVE_ATTRIBUTE_PACKED
+#if OPAL_HAVE_ATTRIBUTE_PACKED
 #    define __opal_attribute_packed__        __attribute__((__packed__))
 #else
 #    define __opal_attribute_packed__
 #endif
 
-#if OMPI_HAVE_ATTRIBUTE_PURE
+#if OPAL_HAVE_ATTRIBUTE_PURE
 #    define __opal_attribute_pure__          __attribute__((__pure__))
 #else
 #    define __opal_attribute_pure__
 #endif
 
-#if OMPI_HAVE_ATTRIBUTE_SENTINEL
+#if OPAL_HAVE_ATTRIBUTE_SENTINEL
 #    define __opal_attribute_sentinel__      __attribute__((__sentinel__))
 #else
 #    define __opal_attribute_sentinel__
 #endif
 
-#if OMPI_HAVE_ATTRIBUTE_UNUSED
+#if OPAL_HAVE_ATTRIBUTE_UNUSED
 #    define __opal_attribute_unused__        __attribute__((__unused__))
 #else
 #    define __opal_attribute_unused__
 #endif
 
-#if OMPI_HAVE_ATTRIBUTE_VISIBILITY
+#if OPAL_HAVE_ATTRIBUTE_VISIBILITY
 #    define __opal_attribute_visibility__(a) __attribute__((__visibility__(a)))
 #else
 #    define __opal_attribute_visibility__(a)
 #endif
 
-#if OMPI_HAVE_ATTRIBUTE_WARN_UNUSED_RESULT
+#if OPAL_HAVE_ATTRIBUTE_WARN_UNUSED_RESULT
 #    define __opal_attribute_warn_unused_result__ __attribute__((__warn_unused_result__))
 #else
 #    define __opal_attribute_warn_unused_result__
 #endif
 
-#if OMPI_HAVE_ATTRIBUTE_WEAK_ALIAS
+#if OPAL_HAVE_ATTRIBUTE_WEAK_ALIAS
 #    define __opal_attribute_weak_alias__(a) __attribute__((__weak__, __alias__(a)))
 #else
 #    define __opal_attribute_weak_alias__(a)
@@ -242,7 +242,7 @@
 #  endif  /* defined(_USRDLL) */
 #  include "opal/win32/win_compat.h"
 #else
-#  if OMPI_C_HAVE_VISIBILITY
+#  if OPAL_C_HAVE_VISIBILITY
 #    define OPAL_DECLSPEC           __opal_attribute_visibility__("default")
 #    define OPAL_MODULE_DECLSPEC    __opal_attribute_visibility__("default")
 #  else
@@ -277,17 +277,17 @@
 #if OMPI_BUILDING
 
 #ifndef HAVE_PTRDIFF_T
-typedef OMPI_PTRDIFF_TYPE ptrdiff_t;
+typedef OPAL_PTRDIFF_TYPE ptrdiff_t;
 #endif
 
 /*
  * If we're in C, we may need to bring in the bool type and true/false
- * constants.  OMPI_NEED_C_BOOL will be true if the compiler either
+ * constants.  OPAL_NEED_C_BOOL will be true if the compiler either
  * needs <stdbool.h> or doesn't define the bool type at all.
  */
 #if !(defined(c_plusplus) || defined(__cplusplus))
-#    if OMPI_NEED_C_BOOL
-#        if OMPI_USE_STDBOOL_H
+#    if OPAL_NEED_C_BOOL
+#        if OPAL_USE_STDBOOL_H
              /* If we're using <stdbool.h>, there is an implicit
                 assumption that the C++ bool is the same size and has
                 the same alignment. */
@@ -298,21 +298,21 @@ typedef OMPI_PTRDIFF_TYPE ptrdiff_t;
                 alignment */
 #            define false 0
 #            define true 1
-#            if SIZEOF_BOOL == SIZEOF_CHAR && OMPI_ALIGNMENT_CXX_BOOL == OMPI_ALIGNMENT_CHAR
+#            if SIZEOF_BOOL == SIZEOF_CHAR && OMPI_ALIGNMENT_CXX_BOOL == OPAL_ALIGNMENT_CHAR
 typedef unsigned char bool;
-#            elif SIZEOF_BOOL == SIZEOF_SHORT && OMPI_ALIGNMENT_CXX_BOOL == OMPI_ALIGNMENT_SHORT
+#            elif SIZEOF_BOOL == SIZEOF_SHORT && OMPI_ALIGNMENT_CXX_BOOL == OPAL_ALIGNMENT_SHORT
 typedef short bool;
-#            elif SIZEOF_BOOL == SIZEOF_INT && OMPI_ALIGNMENT_CXX_BOOL == OMPI_ALIGNMENT_INT
+#            elif SIZEOF_BOOL == SIZEOF_INT && OMPI_ALIGNMENT_CXX_BOOL == OPAL_ALIGNMENT_INT
 typedef int bool;
-#            elif SIZEOF_BOOL == SIZEOF_LONG && OMPI_ALIGNMENT_CXX_BOOL == OMPI_ALIGNMENT_LONG
+#            elif SIZEOF_BOOL == SIZEOF_LONG && OMPI_ALIGNMENT_CXX_BOOL == OPAL_ALIGNMENT_LONG
 typedef long bool;
-#            elif defined(SIZEOF_LONG_LONG) && defined(OMPI_ALIGNMENT_LONG) && SIZEOF_BOOL == SIZEOF_LONG && OMPI_ALIGNMENT_CXX_BOOL == OMPI_ALIGNMENT_LONG
+#            elif defined(SIZEOF_LONG_LONG) && defined(OPAL_ALIGNMENT_LONG) && SIZEOF_BOOL == SIZEOF_LONG && OMPI_ALIGNMENT_CXX_BOOL == OPAL_ALIGNMENT_LONG
 typedef long long bool;
 #            else
 #                error Cannot find a C type that corresponds to the size and alignment of C++ bool!
 #            endif
-#        endif  /* OMPI_USE_STDBOOL_H */
-#    endif  /* OMPI_NEED_C_BOOL */
+#        endif  /* OPAL_USE_STDBOOL_H */
+#    endif  /* OPAL_NEED_C_BOOL */
 #endif
 
 /*
@@ -323,11 +323,11 @@ typedef long long bool;
 #include <sys/param.h>
 #endif
 #if defined(PATH_MAX)
-#define OMPI_PATH_MAX	(PATH_MAX + 1)
+#define OPAL_PATH_MAX	(PATH_MAX + 1)
 #elif defined(_POSIX_PATH_MAX)
-#define OMPI_PATH_MAX	(_POSIX_PATH_MAX + 1)
+#define OPAL_PATH_MAX	(_POSIX_PATH_MAX + 1)
 #else
-#define OMPI_PATH_MAX	256
+#define OPAL_PATH_MAX	256
 #endif
 
 /*
@@ -361,7 +361,7 @@ typedef long long bool;
  * this stuff enabled (like the memory manager code) a way to turn us
  * off
  */
-#if OMPI_ENABLE_MEM_DEBUG && !defined(OMPI_DISABLE_ENABLE_MEM_DEBUG)
+#if OPAL_ENABLE_MEM_DEBUG && !defined(OPAL_DISABLE_ENABLE_MEM_DEBUG)
 
 /* It is safe to include opal/util/malloc.h here because a) it will only
    happen when we are building OMPI and therefore have a full OMPI
@@ -387,12 +387,12 @@ typedef long long bool;
 #    define free(ptr) opal_free((ptr), __FILE__, __LINE__)
 
 /*
- * If we're mem debugging, make the OMPI_DEBUG_ZERO resolve to memset
+ * If we're mem debugging, make the OPAL_DEBUG_ZERO resolve to memset
  */
 #    include <string.h>
-#    define OMPI_DEBUG_ZERO(obj) memset(&(obj), 0, sizeof(obj))
+#    define OPAL_DEBUG_ZERO(obj) memset(&(obj), 0, sizeof(obj))
 #else
-#    define OMPI_DEBUG_ZERO(obj)
+#    define OPAL_DEBUG_ZERO(obj)
 #endif
 
 /*
@@ -427,7 +427,7 @@ typedef long long bool;
  * Some platforms (Solaris) have a broken qsort implementation.  Work
  * around by using our own.
  */
-#if OMPI_HAVE_BROKEN_QSORT
+#if OPAL_HAVE_BROKEN_QSORT
 #ifdef qsort
 #undef qsort
 #endif

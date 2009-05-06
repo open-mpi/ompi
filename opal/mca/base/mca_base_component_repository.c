@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#if OMPI_WANT_LIBLTDL
+#if OPAL_WANT_LIBLTDL
 #include "opal/libltdl/ltdl.h"
 #endif
 
@@ -36,7 +36,7 @@
 #include "opal/mca/base/mca_base_component_repository.h"
 #include "opal/constants.h"
 
-#if OMPI_WANT_LIBLTDL
+#if OPAL_WANT_LIBLTDL
 
 /*
  * Private types
@@ -66,7 +66,7 @@ static void di_destructor(opal_object_t *obj);
 static OBJ_CLASS_INSTANCE(dependency_item_t, opal_list_item_t, 
                           di_constructor, di_destructor);
 
-#endif /* OMPI_WANT_LIBLTDL */
+#endif /* OPAL_WANT_LIBLTDL */
 
 
 /*
@@ -75,7 +75,7 @@ static OBJ_CLASS_INSTANCE(dependency_item_t, opal_list_item_t,
 static bool initialized = false;
 
 
-#if OMPI_WANT_LIBLTDL
+#if OPAL_WANT_LIBLTDL
 
 static opal_list_t repository;
 
@@ -90,7 +90,7 @@ static int link_items(repository_item_t *src, repository_item_t *depend);
 lt_dladvise opal_mca_dladvise;
 #endif
 
-#endif /* OMPI_WANT_LIBLTDL */
+#endif /* OPAL_WANT_LIBLTDL */
 
 
 /*
@@ -101,7 +101,7 @@ int mca_base_component_repository_init(void)
   /* Setup internal structures */
 
   if (!initialized) {
-#if OMPI_WANT_LIBLTDL
+#if OPAL_WANT_LIBLTDL
     /* Initialize libltdl */
 
     if (lt_dlinit() != 0) {
@@ -142,7 +142,7 @@ int mca_base_component_repository_retain(char *type,
                                          lt_dlhandle component_handle, 
                                          const mca_base_component_t *component_struct)
 {
-#if OMPI_WANT_LIBLTDL
+#if OPAL_WANT_LIBLTDL
   repository_item_t *ri;
 
   /* Allocate a new repository item */
@@ -178,7 +178,7 @@ int mca_base_component_repository_retain(char *type,
 int mca_base_component_repository_retain_component(const char *type, 
                                                    const char *name)
 {
-#if OMPI_WANT_LIBLTDL
+#if OPAL_WANT_LIBLTDL
     repository_item_t *ri = find_component(type, name);
     if (NULL != ri) {
         OBJ_RETAIN(ri);
@@ -199,7 +199,7 @@ int mca_base_component_repository_link(const char *src_type,
                                        const char *depend_type,
                                        const char *depend_name)
 {
-#if OMPI_WANT_LIBLTDL
+#if OPAL_WANT_LIBLTDL
   repository_item_t *src, *depend;
 
   /* Look up the two components */
@@ -228,7 +228,7 @@ int mca_base_component_repository_link(const char *src_type,
  */
 void mca_base_component_repository_release(const mca_base_component_t *component)
 {
-#if OMPI_WANT_LIBLTDL
+#if OPAL_WANT_LIBLTDL
   if (initialized) {
     repository_item_t *ri = find_component(component->mca_type_name, 
                                            component->mca_component_name);
@@ -245,13 +245,13 @@ void mca_base_component_repository_release(const mca_base_component_t *component
  */
 void mca_base_component_repository_finalize(void)
 {
-#if OMPI_WANT_LIBLTDL
+#if OPAL_WANT_LIBLTDL
   opal_list_item_t *item;
   repository_item_t *ri;
 #endif
 
   if (initialized) {
-#if OMPI_WANT_LIBLTDL
+#if OPAL_WANT_LIBLTDL
 
     /* Have to be slightly careful about this because of dependencies,
        particularly on OS's where it matters (i.e., closing a
@@ -290,7 +290,7 @@ void mca_base_component_repository_finalize(void)
   }
 }
 
-#if OMPI_WANT_LIBLTDL
+#if OPAL_WANT_LIBLTDL
 
 static repository_item_t *find_component(const char *type, const char *name)
 {
@@ -416,4 +416,4 @@ static void di_destructor(opal_object_t *obj)
   OBJ_RELEASE(di->di_repository_entry);
 }
 
-#endif /* OMPI_WANT_LIBLTDL */
+#endif /* OPAL_WANT_LIBLTDL */

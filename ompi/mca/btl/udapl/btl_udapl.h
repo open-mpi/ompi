@@ -243,7 +243,7 @@ do {                                                                \
  * Report a uDAPL error - for debugging
  */
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
 extern void mca_btl_udapl_error(DAT_RETURN ret, char* str);
 
 #define MCA_BTL_UDAPL_ERROR(ret, str) \

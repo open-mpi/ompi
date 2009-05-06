@@ -21,7 +21,7 @@
 #include "ompi/mpi/f77/bindings.h"
 #include "ompi/mpi/f77/constants.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_GATHER = mpi_gather_f
 #pragma weak pmpi_gather = mpi_gather_f
 #pragma weak pmpi_gather_ = mpi_gather_f
@@ -36,14 +36,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GATHER,
                            (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_GATHER = mpi_gather_f
 #pragma weak mpi_gather = mpi_gather_f
 #pragma weak mpi_gather_ = mpi_gather_f
 #pragma weak mpi_gather__ = mpi_gather_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_GATHER,
                            mpi_gather,
                            mpi_gather_,
@@ -54,7 +54,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GATHER,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

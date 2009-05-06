@@ -29,12 +29,12 @@
 #endif
 #include <stdlib.h>
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
 extern int ompi_copy_debug;
 #define DO_DEBUG(INST)  if( ompi_copy_debug ) { INST }
 #else
 #define DO_DEBUG(INST)
-#endif  /* OMPI_ENABLE_DEBUG */
+#endif  /* OPAL_ENABLE_DEBUG */
 
 size_t ompi_datatype_memcpy_block_size = 128 * 1024;
 

@@ -129,7 +129,7 @@ void mca_pml_csum_recv_frag_callback_match(mca_btl_base_module_t* btl,
 
     csum_received = hdr->hdr_common.hdr_csum;
     hdr->hdr_common.hdr_csum = 0;
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     hdr->hdr_common.hdr_flags &= ~MCA_PML_CSUM_HDR_FLAGS_NBO;
 #endif
     csum = opal_csum16(hdr, OMPI_PML_CSUM_MATCH_HDR_LEN);
@@ -306,7 +306,7 @@ void mca_pml_csum_recv_frag_callback_rndv(mca_btl_base_module_t* btl,
     
     csum_received = hdr->hdr_common.hdr_csum;
     hdr->hdr_common.hdr_csum = 0;
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     hdr->hdr_common.hdr_flags &= ~MCA_PML_CSUM_HDR_FLAGS_NBO;
 #endif
     csum = opal_csum16(hdr, sizeof(mca_pml_csum_rendezvous_hdr_t));
@@ -357,7 +357,7 @@ void mca_pml_csum_recv_frag_callback_ack(mca_btl_base_module_t* btl,
 
     csum_received = hdr->hdr_common.hdr_csum;
     hdr->hdr_common.hdr_csum = 0;
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     hdr->hdr_common.hdr_flags &= ~MCA_PML_CSUM_HDR_FLAGS_NBO;
 #endif
     csum = opal_csum16(hdr, sizeof(mca_pml_csum_ack_hdr_t)); 
@@ -407,7 +407,7 @@ void mca_pml_csum_recv_frag_callback_frag(mca_btl_base_module_t* btl,
 
     csum_received = hdr->hdr_common.hdr_csum;
     hdr->hdr_common.hdr_csum = 0;
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     hdr->hdr_common.hdr_flags &= ~MCA_PML_CSUM_HDR_FLAGS_NBO;
 #endif
     csum = opal_csum16(hdr, sizeof(mca_pml_csum_frag_hdr_t)); 
@@ -442,7 +442,7 @@ void mca_pml_csum_recv_frag_callback_put(mca_btl_base_module_t* btl,
     
     csum_received = hdr->hdr_common.hdr_csum;
     hdr->hdr_common.hdr_csum = 0;
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     hdr->hdr_common.hdr_flags &= ~MCA_PML_CSUM_HDR_FLAGS_NBO;
 #endif
     csum = opal_csum16(hdr, sizeof(mca_pml_csum_rdma_hdr_t)); 
@@ -479,7 +479,7 @@ void mca_pml_csum_recv_frag_callback_fin(mca_btl_base_module_t* btl,
 
     csum_received = hdr->hdr_common.hdr_csum;
     hdr->hdr_common.hdr_csum = 0;
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     hdr->hdr_common.hdr_flags &= ~MCA_PML_CSUM_HDR_FLAGS_NBO;
 #endif
     csum = opal_csum16(hdr, sizeof(mca_pml_csum_fin_hdr_t)); 

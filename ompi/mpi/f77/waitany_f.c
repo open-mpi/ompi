@@ -23,7 +23,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/communicator/communicator.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_WAITANY = mpi_waitany_f
 #pragma weak pmpi_waitany = mpi_waitany_f
 #pragma weak pmpi_waitany_ = mpi_waitany_f
@@ -38,14 +38,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WAITANY,
                            (count, array_of_requests, index, status, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_WAITANY = mpi_waitany_f
 #pragma weak mpi_waitany = mpi_waitany_f
 #pragma weak mpi_waitany_ = mpi_waitany_f
 #pragma weak mpi_waitany__ = mpi_waitany_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_WAITANY,
                            mpi_waitany,
                            mpi_waitany_,
@@ -56,7 +56,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WAITANY,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

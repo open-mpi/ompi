@@ -23,7 +23,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/communicator/communicator.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_COMM_CREATE_ERRHANDLER = mpi_comm_create_errhandler_f
 #pragma weak pmpi_comm_create_errhandler = mpi_comm_create_errhandler_f
 #pragma weak pmpi_comm_create_errhandler_ = mpi_comm_create_errhandler_f
@@ -38,14 +38,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_CREATE_ERRHANDLER,
                            (function, errhandler, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_COMM_CREATE_ERRHANDLER = mpi_comm_create_errhandler_f
 #pragma weak mpi_comm_create_errhandler = mpi_comm_create_errhandler_f
 #pragma weak mpi_comm_create_errhandler_ = mpi_comm_create_errhandler_f
 #pragma weak mpi_comm_create_errhandler__ = mpi_comm_create_errhandler_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_COMM_CREATE_ERRHANDLER,
                            mpi_comm_create_errhandler,
                            mpi_comm_create_errhandler_,
@@ -56,7 +56,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_CREATE_ERRHANDLER,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

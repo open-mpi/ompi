@@ -596,7 +596,7 @@ bool mca_btl_sctp_endpoint_accept(mca_btl_base_endpoint_t* btl_endpoint, struct 
                 mca_btl_sctp_endpoint_event_init(btl_endpoint, sd);
                 opal_event_add(&btl_endpoint->endpoint_recv_event, 0);
                 mca_btl_sctp_endpoint_connected(btl_endpoint);
-#if OMPI_ENABLE_DEBUG && WANT_PEER_DUMP
+#if OPAL_ENABLE_DEBUG && WANT_PEER_DUMP
                 mca_btl_sctp_endpoint_dump(btl_endpoint, "accepted");
 #endif
                 OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
@@ -620,7 +620,7 @@ bool mca_btl_sctp_endpoint_accept(mca_btl_base_endpoint_t* btl_endpoint, struct 
             /* conflicts can't happen with one-to-many socket */
             mca_btl_sctp_endpoint_event_init(btl_endpoint, sd);            
             opal_event_add(&btl_endpoint->endpoint_recv_event, 0);
-#if OMPI_ENABLE_DEBUG && WANT_PEER_DUMP
+#if OPAL_ENABLE_DEBUG && WANT_PEER_DUMP
             mca_btl_sctp_endpoint_dump(btl_endpoint, "accepted");
 #endif
             OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
@@ -846,7 +846,7 @@ static int mca_btl_sctp_endpoint_recv_connect_ack(mca_btl_base_endpoint_t* btl_e
 
     /* connected */
     mca_btl_sctp_endpoint_connected(btl_endpoint);
-#if OMPI_ENABLE_DEBUG && WANT_PEER_DUMP
+#if OPAL_ENABLE_DEBUG && WANT_PEER_DUMP
     mca_btl_sctp_endpoint_dump(btl_endpoint, "connected");
 #endif
     return OMPI_SUCCESS;

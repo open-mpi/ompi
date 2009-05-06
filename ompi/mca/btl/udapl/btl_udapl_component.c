@@ -158,7 +158,7 @@ mca_btl_udapl_dat_event_to_string(DAT_EVENT_NUMBER event_number)
   * Report a uDAPL error - for debugging
   */
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
 void
 mca_btl_udapl_error(DAT_RETURN ret, char* str)
 {

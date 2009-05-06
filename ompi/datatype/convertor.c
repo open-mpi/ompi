@@ -534,7 +534,7 @@ ompi_convertor_prepare_for_recv( ompi_convertor_t* convertor,
     OMPI_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf );
 
     if( convertor->flags & CONVERTOR_WITH_CHECKSUM ) {
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
         if( !(convertor->flags & CONVERTOR_HOMOGENEOUS) ) {
             convertor->fAdvance = ompi_unpack_general_checksum;
         } else
@@ -545,7 +545,7 @@ ompi_convertor_prepare_for_recv( ompi_convertor_t* convertor,
             convertor->fAdvance = ompi_generic_simple_unpack_checksum;
         }
     } else {
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
         if( !(convertor->flags & CONVERTOR_HOMOGENEOUS) ) {
             convertor->fAdvance = ompi_unpack_general;
         } else

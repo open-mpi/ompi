@@ -241,10 +241,10 @@ $boiler_plate =
 #include \"mpi.h\"
 #include \"mpi/f77/bindings.h\"\n\n";
 
-$have_weak_and_want_profile = "#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER";
+$have_weak_and_want_profile = "#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER";
 $no_weak_and_want_profile = "#elif OMPI_PROFILE_LAYER";
-$have_weak = "#if OMPI_HAVE_WEAK_SYMBOLS";
-$no_weak_and_no_profile = "#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER";
+$have_weak = "#if OPAL_HAVE_WEAK_SYMBOLS";
+$no_weak_and_no_profile = "#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER";
 
 #
 # Now lets get down to the actual dirty job 

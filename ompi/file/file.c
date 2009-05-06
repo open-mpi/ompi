@@ -290,28 +290,28 @@ static void file_destructor(ompi_file_t *file)
 
     if (NULL != file->f_comm) {
         OBJ_RELEASE(file->f_comm);
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
         file->f_comm = NULL;
 #endif
     }
 
     if (NULL != file->f_filename) {
         free(file->f_filename);
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
         file->f_filename = NULL;
 #endif
     }
 
     if (NULL != file->error_handler) {
         OBJ_RELEASE(file->error_handler);
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
         file->error_handler = NULL;
 #endif
     }
 
     if (NULL != file->f_info) {
         OBJ_RELEASE(file->f_info);
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
         file->f_info = NULL;
 #endif
     }

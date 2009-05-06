@@ -26,7 +26,7 @@
 #include "ompi/memchecker.h"
 #include "ompi/request/request.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Recv = PMPI_Recv
 #endif
 

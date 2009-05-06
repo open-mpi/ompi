@@ -364,7 +364,7 @@ mca_btl_portals_component_progress(void)
                                      "PTL_EVENT_PUT_START for 0x%lx, %d",
                                      (unsigned long) frag, (int) tag));
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
                 if (ev.ni_fail_type != PTL_NI_OK) {
                     opal_output(mca_btl_portals_component.portals_output,
                                 "Failure to start event\n");
@@ -386,7 +386,7 @@ mca_btl_portals_component_progress(void)
                                      "PTL_EVENT_PUT_END for 0x%lx, %d",
                                      (unsigned long) frag, (int) tag));
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
                 if (ev.ni_fail_type != PTL_NI_OK) {
                     opal_output(mca_btl_portals_component.portals_output,
                                 "Failure to end event\n");
@@ -498,7 +498,7 @@ mca_btl_portals_component_progress(void)
             case PTL_EVENT_SEND_START:
                 /* generated on source (origin) when put starts sending */
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
                 OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                                      "PTL_EVENT_SEND_START for 0x%lx, %d",
                                      (unsigned long) frag, (int) ev.hdr_data));
@@ -520,7 +520,7 @@ mca_btl_portals_component_progress(void)
 
             case PTL_EVENT_SEND_END:
                 /* generated on source (origin) when put stops sending */
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
                 OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                                      "PTL_EVENT_SEND_END for 0x%lx, %d",
                                      (unsigned long) frag, (int) ev.hdr_data));
@@ -571,7 +571,7 @@ mca_btl_portals_component_progress(void)
                                      "PTL_EVENT_ACK for 0x%lx",
                                      (unsigned long) frag));
                 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
                 if(!mca_btl_portals_component.portals_need_ack) { 
                     opal_output(mca_btl_portals_component.portals_output, 
                                 "Received PTL_EVENT_ACK but ACK's are disabled!\n");

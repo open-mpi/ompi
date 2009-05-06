@@ -8,9 +8,9 @@ dnl
 dnl $HEADER$
 dnl
 dnl defines:
-dnl   OMPI_$1_USE_PRAGMA_IDENT
-dnl   OMPI_$1_USE_IDENT
-dnl   OMPI_$1_USE_CONST_CHAR_IDENT
+dnl   OPAL_$1_USE_PRAGMA_IDENT
+dnl   OPAL_$1_USE_IDENT
+dnl   OPAL_$1_USE_CONST_CHAR_IDENT
 dnl
 
 # OMPI_CHECK_IDENT(compiler-env, compiler-flags,
@@ -21,39 +21,39 @@ dnl
 AC_DEFUN([OMPI_CHECK_IDENT], [
     AC_MSG_CHECKING([for $4 ident string support])
 
-    ompi_pragma_ident_happy=0
-    ompi_ident_happy=0
-    ompi_static_const_char_happy=0
+    opal_pragma_ident_happy=0
+    opal_ident_happy=0
+    opal_static_const_char_happy=0
     _OMPI_CHECK_IDENT(
         [$1], [$2], [$3],
         [[#]pragma ident], [],
-        [ompi_pragma_ident_happy=1
+        [opal_pragma_ident_happy=1
          ompi_message="[#]pragma ident"],
         _OMPI_CHECK_IDENT(
             [$1], [$2], [$3],
             [[#]ident], [],
-            [ompi_ident_happy=1
+            [opal_ident_happy=1
              ompi_message="[#]ident"],
             _OMPI_CHECK_IDENT(
                 [$1], [$2], [$3],
                 [[#]pragma comment(exestr, ], [)],
-                [ompi_pragma_comment_happy=1
+                [opal_pragma_comment_happy=1
                  ompi_message="[#]pragma comment"],
-                [ompi_static_const_char_happy=1
+                [opal_static_const_char_happy=1
                  ompi_message="static const char[[]]"])))
 
-    AC_DEFINE_UNQUOTED([OMPI_$1_USE_PRAGMA_IDENT],
-        [$ompi_pragma_ident_happy], [Use #pragma ident strings for $4 files])
-    AC_DEFINE_UNQUOTED([OMPI_$1_USE_IDENT],
-        [$ompi_ident_happy], [Use #ident strings for $4 files])
-    AC_DEFINE_UNQUOTED([OMPI_$1_USE_PRAGMA_COMMENT],
-        [$ompi_pragma_comment_happy], [Use #pragma comment for $4 files])
-    AC_DEFINE_UNQUOTED([OMPI_$1_USE_CONST_CHAR_IDENT],
-        [$ompi_static_const_char_happy], [Use static const char[] strings for $4 files])
+    AC_DEFINE_UNQUOTED([OPAL_$1_USE_PRAGMA_IDENT],
+        [$opal_pragma_ident_happy], [Use #pragma ident strings for $4 files])
+    AC_DEFINE_UNQUOTED([OPAL_$1_USE_IDENT],
+        [$opal_ident_happy], [Use #ident strings for $4 files])
+    AC_DEFINE_UNQUOTED([OPAL_$1_USE_PRAGMA_COMMENT],
+        [$opal_pragma_comment_happy], [Use #pragma comment for $4 files])
+    AC_DEFINE_UNQUOTED([OPAL_$1_USE_CONST_CHAR_IDENT],
+        [$opal_static_const_char_happy], [Use static const char[] strings for $4 files])
 
     AC_MSG_RESULT([$ompi_message])
 
-    unset ompi_pragma_ident_happy ompi_ident_happy ompi_static_const_char_happy ompi_message
+    unset opal_pragma_ident_happy opal_ident_happy opal_static_const_char_happy ompi_message
 ])
 
 # _OMPI_CHECK_IDENT(compiler-env, compiler-flags,

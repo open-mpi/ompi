@@ -20,7 +20,7 @@
 
 #include "ompi/mpi/f77/bindings.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_CART_MAP = mpi_cart_map_f
 #pragma weak pmpi_cart_map = mpi_cart_map_f
 #pragma weak pmpi_cart_map_ = mpi_cart_map_f
@@ -35,14 +35,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_CART_MAP,
                            (comm, ndims, dims, periods, newrank, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_CART_MAP = mpi_cart_map_f
 #pragma weak mpi_cart_map = mpi_cart_map_f
 #pragma weak mpi_cart_map_ = mpi_cart_map_f
 #pragma weak mpi_cart_map__ = mpi_cart_map_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_CART_MAP,
                            mpi_cart_map,
                            mpi_cart_map_,
@@ -53,7 +53,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CART_MAP,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

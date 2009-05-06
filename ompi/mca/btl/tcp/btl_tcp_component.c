@@ -367,7 +367,7 @@ static int mca_btl_tcp_create(int if_kindex, const char* if_name)
         /* allow user to override/specify latency ranking */
         sprintf(param, "latency_%s:%d", if_name, i);
         btl->super.btl_latency = mca_btl_tcp_param_register_int(param, NULL, btl->super.btl_latency);
-#if 0 && OMPI_ENABLE_DEBUG
+#if 0 && OPAL_ENABLE_DEBUG
         BTL_OUTPUT(("interface %s instance %i: bandwidth %d latency %d\n", if_name, i,
                     btl->super.btl_bandwidth, btl->super.btl_latency));
 #endif

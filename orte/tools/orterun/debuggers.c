@@ -193,7 +193,7 @@ static int process(char *orig_line, char *basename, opal_cmd_line_t *cmd_line,
     int i;
     char *line, *full_line = strdup(orig_line);
     char *user_argv, *tmp, *tmp2, **tmp_argv, **executable;
-    char cwd[OMPI_PATH_MAX];
+    char cwd[OPAL_PATH_MAX];
     bool used_num_procs = false;
     bool single_app = false;
     bool fail_needed_executable = false;
@@ -322,7 +322,7 @@ static int process(char *orig_line, char *basename, opal_cmd_line_t *cmd_line,
 
     /* Can we find argv[0] in the path? */
 
-    getcwd(cwd, OMPI_PATH_MAX);
+    getcwd(cwd, OPAL_PATH_MAX);
     tmp = opal_path_findv((*new_argv)[0], X_OK, environ, cwd);
     if (NULL != tmp) {
         free(tmp);
@@ -478,7 +478,7 @@ static void check_debugger(int fd, short event, void *arg)
     opal_event_t *tmp = (opal_event_t*)arg;
     orte_job_t *jdata;
     orte_app_context_t *app;
-    char cwd[OMPI_PATH_MAX];
+    char cwd[OPAL_PATH_MAX];
     int rc;
     
     if (MPIR_being_debugged) {

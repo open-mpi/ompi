@@ -25,7 +25,7 @@
 #include "ompi/info/info.h"
 #include "ompi/mca/pubsub/pubsub.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Unpublish_name = PMPI_Unpublish_name
 #endif
 

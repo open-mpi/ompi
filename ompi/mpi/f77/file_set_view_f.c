@@ -22,7 +22,7 @@
 #include "ompi/mpi/f77/f77_strings.h"
 #include "ompi/file/file.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_FILE_SET_VIEW = mpi_file_set_view_f
 #pragma weak pmpi_file_set_view = mpi_file_set_view_f
 #pragma weak pmpi_file_set_view_ = mpi_file_set_view_f
@@ -37,14 +37,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_SET_VIEW,
                            (fh, disp, etype, filetype, datarep, info, ierr, datarep_len) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_FILE_SET_VIEW = mpi_file_set_view_f
 #pragma weak mpi_file_set_view = mpi_file_set_view_f
 #pragma weak mpi_file_set_view_ = mpi_file_set_view_f
 #pragma weak mpi_file_set_view__ = mpi_file_set_view_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_FILE_SET_VIEW,
                            mpi_file_set_view,
                            mpi_file_set_view_,
@@ -55,7 +55,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_SET_VIEW,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

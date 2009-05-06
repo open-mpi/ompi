@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Info_get_valuelen = PMPI_Info_get_valuelen
 #endif
 

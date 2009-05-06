@@ -20,7 +20,7 @@
 
 #include "ompi/mpi/f77/bindings.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_INFO_GET_NKEYS = mpi_info_get_nkeys_f
 #pragma weak pmpi_info_get_nkeys = mpi_info_get_nkeys_f
 #pragma weak pmpi_info_get_nkeys_ = mpi_info_get_nkeys_f
@@ -35,14 +35,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INFO_GET_NKEYS,
                            (info, nkeys, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_INFO_GET_NKEYS = mpi_info_get_nkeys_f
 #pragma weak mpi_info_get_nkeys = mpi_info_get_nkeys_f
 #pragma weak mpi_info_get_nkeys_ = mpi_info_get_nkeys_f
 #pragma weak mpi_info_get_nkeys__ = mpi_info_get_nkeys_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_INFO_GET_NKEYS,
                            mpi_info_get_nkeys,
                            mpi_info_get_nkeys_,
@@ -53,7 +53,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INFO_GET_NKEYS,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

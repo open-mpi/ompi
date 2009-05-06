@@ -29,7 +29,7 @@ static void mca_btl_udapl_frag_common_constructor(mca_btl_udapl_frag_t* frag)
     mca_btl_udapl_reg_t* reg =
         (mca_btl_udapl_reg_t*)frag->base.super.registration;
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;
     frag->base.des_dst = NULL;
@@ -88,7 +88,7 @@ static void mca_btl_udapl_frag_eager_rdma_constructor(mca_btl_udapl_frag_t* frag
 
 static void mca_btl_udapl_frag_common_destructor(mca_btl_udapl_frag_t* frag)
 {
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     frag->ftr = NULL;
     frag->size = 0; 
     frag->registration = NULL; 

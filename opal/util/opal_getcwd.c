@@ -35,7 +35,7 @@
  */
 int opal_getcwd(char *buf, size_t size)
 {
-    char cwd[OMPI_PATH_MAX];
+    char cwd[OPAL_PATH_MAX];
     char *pwd = getenv("PWD");
     struct stat a, b;
 

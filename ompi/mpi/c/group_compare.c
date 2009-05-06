@@ -26,7 +26,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/proc/proc.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Group_compare = PMPI_Group_compare
 #endif
 

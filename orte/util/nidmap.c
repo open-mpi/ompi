@@ -393,7 +393,7 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
     }
     free(vpids);
     
-    if (OMPI_ENABLE_HETEROGENEOUS_SUPPORT) {
+    if (OPAL_ENABLE_HETEROGENEOUS_SUPPORT) {
         /* check to see if all reported archs are the same */
         orte_homogeneous_nodes = true;
         for (i=1; i < num_nodes; i++) {

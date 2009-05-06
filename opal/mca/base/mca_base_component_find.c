@@ -34,7 +34,7 @@
 #include <netdb.h>
 #endif
 
-#if OMPI_WANT_LIBLTDL
+#if OPAL_WANT_LIBLTDL
 #include "opal/libltdl/ltdl.h"
 #endif
 
@@ -48,7 +48,7 @@
 #include "opal/constants.h"
 
 
-#if OMPI_WANT_LIBLTDL
+#if OPAL_WANT_LIBLTDL
 /*
  * Private types; only necessary when we're dlopening components.
  */
@@ -66,8 +66,8 @@ struct component_file_item_t {
 
   char type[MCA_BASE_MAX_TYPE_NAME_LEN + 1];
   char name[MCA_BASE_MAX_COMPONENT_NAME_LEN + 1];
-  char basename[OMPI_PATH_MAX + 1];
-  char filename[OMPI_PATH_MAX + 1];
+  char basename[OPAL_PATH_MAX + 1];
+  char filename[OPAL_PATH_MAX + 1];
   component_status_t status;
 };
 typedef struct component_file_item_t component_file_item_t;
@@ -86,10 +86,10 @@ static OBJ_CLASS_INSTANCE(dependency_item_t, opal_list_item_t, NULL, NULL);
 #if OPAL_HAVE_LTDL_ADVISE
 extern lt_dladvise opal_mca_dladvise;
 #endif
-#endif /* OMPI_WANT_LIBLTDL */
+#endif /* OPAL_WANT_LIBLTDL */
 
 
-#if OMPI_WANT_LIBLTDL
+#if OPAL_WANT_LIBLTDL
 /*
  * Private functions
  */
@@ -115,7 +115,7 @@ static const char *key_dependency = "dependency=";
 static const char component_template[] = "mca_%s_";
 static opal_list_t found_files;
 static char **found_filenames = NULL;
-#endif /* OMPI_WANT_LIBLTDL */
+#endif /* OPAL_WANT_LIBLTDL */
 
 static bool use_component(const bool include_mode,
                           const char **requested_component_names,
@@ -157,7 +157,7 @@ int mca_base_component_find(const char *directory, const char *type,
         }
     }
 
-#if OMPI_WANT_LIBLTDL
+#if OPAL_WANT_LIBLTDL
     /* Find any available dynamic components in the specified directory */
     if (open_dso_components) {
         int param, param_disable_dlopen;
@@ -207,7 +207,7 @@ int mca_base_component_find(const char *directory, const char *type,
 
 int mca_base_component_find_finalize(void)
 {
-#if OMPI_WANT_LIBLTDL
+#if OPAL_WANT_LIBLTDL
     if (NULL != found_filenames) {
         opal_argv_free(found_filenames);
         found_filenames = NULL;
@@ -216,7 +216,7 @@ int mca_base_component_find_finalize(void)
     return OPAL_SUCCESS;
 }
 
-#if OMPI_WANT_LIBLTDL
+#if OPAL_WANT_LIBLTDL
 
 /*
  * Open up all directories in a given path and search for components of
@@ -302,10 +302,10 @@ static void find_dyn_components(const char *path, const char *type_name,
         file->type[MCA_BASE_MAX_TYPE_NAME_LEN] = '\0';
         strncpy(file->name, basename + len, MCA_BASE_MAX_COMPONENT_NAME_LEN);
         file->name[MCA_BASE_MAX_COMPONENT_NAME_LEN] = '\0';
-        strncpy(file->basename, basename, OMPI_PATH_MAX);
-        file->basename[OMPI_PATH_MAX] = '\0';
-        strncpy(file->filename, found_filenames[i], OMPI_PATH_MAX);
-        file->filename[OMPI_PATH_MAX] = '\0';
+        strncpy(file->basename, basename, OPAL_PATH_MAX);
+        file->basename[OPAL_PATH_MAX] = '\0';
+        strncpy(file->filename, found_filenames[i], OPAL_PATH_MAX);
+        file->filename[OPAL_PATH_MAX] = '\0';
         file->status = UNVISITED;
 
         opal_list_append(&found_files, (opal_list_item_t *) 
@@ -779,7 +779,7 @@ static void free_dependency_list(opal_list_t *dependencies)
   OBJ_DESTRUCT(dependencies);
 }
 
-#endif /* OMPI_WANT_LIBLTDL */
+#endif /* OPAL_WANT_LIBLTDL */
 
 static bool use_component(const bool include_mode,
                           const char **requested_component_names,

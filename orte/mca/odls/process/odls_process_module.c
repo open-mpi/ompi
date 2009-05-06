@@ -120,7 +120,7 @@ static int odls_process_fork_local_proc(orte_app_context_t* context,
 
     /* should pull this information from MPIRUN instead of going with
        default */
-    opts.usepty = OMPI_ENABLE_PTY_SUPPORT;
+    opts.usepty = OPAL_ENABLE_PTY_SUPPORT;
 
     /* do we want to setup stdin? */
     if (stdin_target == ORTE_VPID_WILDCARD || child->name->vpid == stdin_target) {

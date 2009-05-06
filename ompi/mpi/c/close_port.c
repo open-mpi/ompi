@@ -25,7 +25,7 @@
 #include "ompi/mca/dpm/dpm.h"
 
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Close_port = PMPI_Close_port
 #endif
 

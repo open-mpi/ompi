@@ -27,7 +27,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/mca/mpool/mpool.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Free_mem = PMPI_Free_mem
 #endif
 

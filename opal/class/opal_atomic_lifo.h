@@ -23,9 +23,9 @@
 #include "opal_config.h"
 #include "opal/class/opal_list.h"
 
-#if OMPI_HAVE_THREAD_SUPPORT
+#if OPAL_HAVE_THREAD_SUPPORT
 #include "opal/sys/atomic.h"
-#endif  /* OMPI_HAVE_THREAD_SUPPORT */
+#endif  /* OPAL_HAVE_THREAD_SUPPORT */
 
 BEGIN_C_DECLS
 
@@ -67,7 +67,7 @@ static inline bool opal_atomic_lifo_is_empty( opal_atomic_lifo_t* lifo )
 static inline opal_list_item_t* opal_atomic_lifo_push( opal_atomic_lifo_t* lifo,
                                                        opal_list_item_t* item )
 {
-#if OMPI_HAVE_THREAD_SUPPORT
+#if OPAL_HAVE_THREAD_SUPPORT
     do {
         item->opal_list_next = lifo->opal_lifo_head;
         if( opal_atomic_cmpset_ptr( &(lifo->opal_lifo_head),
@@ -82,7 +82,7 @@ static inline opal_list_item_t* opal_atomic_lifo_push( opal_atomic_lifo_t* lifo,
     item->opal_list_next = lifo->opal_lifo_head;
     lifo->opal_lifo_head = item;
     return (opal_list_item_t*)item->opal_list_next;
-#endif  /* OMPI_HAVE_THREAD_SUPPORT */
+#endif  /* OPAL_HAVE_THREAD_SUPPORT */
 }
 
 /* Retrieve one element from the LIFO. If we reach the ghost element then the LIFO
@@ -91,7 +91,7 @@ static inline opal_list_item_t* opal_atomic_lifo_push( opal_atomic_lifo_t* lifo,
 static inline opal_list_item_t* opal_atomic_lifo_pop( opal_atomic_lifo_t* lifo )
 {
     opal_list_item_t* item;
-#if OMPI_HAVE_THREAD_SUPPORT
+#if OPAL_HAVE_THREAD_SUPPORT
     while((item = lifo->opal_lifo_head) != &(lifo->opal_lifo_ghost))
     {
         if(!opal_atomic_cmpset_32((volatile int32_t*)&item->item_free, 0, 1))
@@ -106,7 +106,7 @@ static inline opal_list_item_t* opal_atomic_lifo_pop( opal_atomic_lifo_t* lifo )
 #else
     item = lifo->opal_lifo_head;
     lifo->opal_lifo_head = (opal_list_item_t*)item->opal_list_next;
-#endif  /* OMPI_HAVE_THREAD_SUPPORT */
+#endif  /* OPAL_HAVE_THREAD_SUPPORT */
     if( item == &(lifo->opal_lifo_ghost) ) return NULL;
     item->opal_list_next = NULL;
     return item;
