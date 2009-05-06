@@ -20,12 +20,12 @@ int RFG_Filter_setDefaultCallLimit( RFG_Filter* filter, int32_t limit );
 /* reads filter definition file */
 int RFG_Filter_readDefFile( RFG_Filter* filter );
 
-/* adds call limit assignment */
-int RFG_Filter_addCLimit( RFG_Filter* filter, int32_t climit,
-			  const char* pattern );
+/* adds filter assignment */
+int RFG_Filter_add( RFG_Filter* filter, const char* pattern,
+                    int32_t climit );
 
 /* gets call limit by region name */
 int RFG_Filter_get( RFG_Filter* filter, const char* rname,
-		    int32_t* r_climit );
+                    int32_t* r_climit );
 
 #endif

@@ -245,4 +245,5 @@
 5.4.9
 	- install header files to 'PREFIX/include/vampirtrace' by default to
 	  avoid conflicts with the OpenMPI integrated version of VT
+	- fixed faulty searching for matching filter directive
 
