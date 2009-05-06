@@ -24,9 +24,9 @@
    SEEK_SET and friends right */
 #include "ompi_config.h"
 
-#if OMPI_CXX_USE_PRAGMA_IDENT
+#if OPAL_CXX_USE_PRAGMA_IDENT
 #pragma ident OMPI_IDENT_STRING
-#elif OMPI_CXX_USE_IDENT
+#elif OPAL_CXX_USE_IDENT
 #ident OMPI_IDENT_STRING
 #endif
 namespace MPI {
