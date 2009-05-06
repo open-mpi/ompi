@@ -119,7 +119,7 @@ OBJ_CLASS_INSTANCE(mca_btl_ud_endpoint_t,
 
 static void mca_btl_ud_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
 {
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     memset(&endpoint->rem_addr, 0, sizeof(struct mca_btl_ud_addr_t));
 #endif
 }

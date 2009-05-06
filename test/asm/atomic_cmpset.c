@@ -61,7 +61,7 @@ void *oldptr;
 void *newptr;
 
 
-#if OMPI_HAVE_POSIX_THREADS
+#if OPAL_HAVE_POSIX_THREADS
 static void *thread_main(void *arg)
 {
     int rank = (int) (unsigned long) arg;
@@ -84,7 +84,7 @@ static void *thread_main(void *arg)
 
 int main(int argc, char *argv[])
 {
-#if OMPI_HAVE_POSIX_THREADS
+#if OPAL_HAVE_POSIX_THREADS
     int tid;
     pthread_t *th;
 #endif
@@ -251,7 +251,7 @@ int main(int argc, char *argv[])
     valint = 0;
 
     /* -- create the thread set -- */
-#if OMPI_HAVE_POSIX_THREADS
+#if OPAL_HAVE_POSIX_THREADS
     th = (pthread_t *) malloc(nthreads * sizeof(pthread_t));
     if (!th) {
         perror("malloc");

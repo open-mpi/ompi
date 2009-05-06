@@ -654,7 +654,7 @@ MPI::Comm::DUP_FN(const MPI::Comm& oldcomm, int comm_keyval,
 			 void* extra_state, void* attribute_val_in,
 			 void* attribute_val_out, bool& flag)
 {
-#if OMPI_SIZEOF_BOOL != OMPI_SIZEOF_INT
+#if OPAL_SIZEOF_BOOL != OPAL_SIZEOF_INT
   int f = (int)flag;
   int ret;
   ret = MPI_DUP_FN(oldcomm, comm_keyval, extra_state, attribute_val_in,

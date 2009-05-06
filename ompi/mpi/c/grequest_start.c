@@ -25,7 +25,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/request/grequest.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Grequest_start = PMPI_Grequest_start
 #endif
 

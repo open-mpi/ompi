@@ -17,7 +17,7 @@
  * $HEADER$
  */
 
-#define OMPI_DISABLE_ENABLE_MEM_DEBUG 1
+#define OPAL_DISABLE_ENABLE_MEM_DEBUG 1
 #include "ompi_config.h"
 
 #include <stdio.h>

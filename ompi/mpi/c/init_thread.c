@@ -25,7 +25,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/constants.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Init_thread = PMPI_Init_thread
 #endif
 
@@ -52,7 +52,7 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
      *   = MPI_THREAD_MULTIPLE. Such an implementation may always return provided
      *   = MPI_THREAD_MULTIPLE, irrespective of the value of required.
      */
-#if OMPI_ENABLE_MPI_THREADS
+#if OPAL_ENABLE_MPI_THREADS
     *provided = MPI_THREAD_MULTIPLE;
 #else
     *provided = MPI_THREAD_SINGLE;

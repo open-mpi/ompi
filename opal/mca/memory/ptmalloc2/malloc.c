@@ -1,5 +1,5 @@
 /********************** BEGIN OMPI CHANGES *****************************/
-#define OMPI_DISABLE_ENABLE_MEM_DEBUG 1
+#define OPAL_DISABLE_ENABLE_MEM_DEBUG 1
 #include "opal_config.h"
 
 #include <unistd.h>

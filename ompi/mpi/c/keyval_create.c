@@ -25,7 +25,7 @@
 #include "ompi/attribute/attribute.h"
 #include "ompi/communicator/communicator.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Keyval_create = PMPI_Keyval_create
 #endif
 

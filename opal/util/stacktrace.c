@@ -65,7 +65,7 @@ static char *unable_to_print_msg = "Unable to print stack trace!\n";
  *
  * FIXME: Should distinguish for systems, which don't have siginfo...
  */
-#if OMPI_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__)
+#if OPAL_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__)
 static void show_stackframe (int signo, siginfo_t * info, void * p)
 {   
     char print_buffer[1024];
@@ -373,10 +373,10 @@ static void show_stackframe (int signo, siginfo_t * info, void * p)
     fflush(stderr);
 }
 
-#endif /* OMPI_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__) */
+#endif /* OPAL_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__) */
 
 
-#if OMPI_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__)
+#if OPAL_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__)
 void opal_stackframe_output(int stream)
 {   
     int traces_size;
@@ -396,7 +396,7 @@ void opal_stackframe_output(int stream)
     }
 }
 
-#endif /* OMPI_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__) */
+#endif /* OPAL_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__) */
 
 /**
  * Here we register the show_stackframe function for signals
@@ -410,7 +410,7 @@ void opal_stackframe_output(int stream)
  */
 int opal_util_register_stackhandlers (void)
 {
-#if OMPI_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__)
+#if OPAL_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__)
     struct sigaction act, old;
     char * string_value;
     char * tmp;
@@ -494,7 +494,7 @@ int opal_util_register_stackhandlers (void)
       }
     }
     free(string_value);
-#endif /* OMPI_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__) */
+#endif /* OPAL_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__) */
 
     return OPAL_SUCCESS;
 }

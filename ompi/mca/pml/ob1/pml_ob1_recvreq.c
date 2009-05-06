@@ -502,7 +502,7 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
     /* allocate/initialize a fragment */
     for(i = 0; i < hdr->hdr_seg_cnt; i++) {
         frag->rdma_segs[i] = hdr->hdr_segs[i];
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
         if ((recvreq->req_recv.req_base.req_proc->proc_arch & OPAL_ARCH_ISBIGENDIAN) !=
             (ompi_proc_local()->proc_arch & OPAL_ARCH_ISBIGENDIAN)) {
             size += opal_swap_bytes4(hdr->hdr_segs[i].seg_len);
@@ -956,7 +956,7 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
     if(req->req_recv.req_base.req_peer == OMPI_ANY_SOURCE) {
         frag = recv_req_match_wild(req, &proc);
         queue = &comm->wild_receives;
-#if !OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if !OPAL_ENABLE_HETEROGENEOUS_SUPPORT
         /* As we are in a homogeneous environment we know that all remote
          * architectures are exactly the same as the local one. Therefore,
          * we can safely construct the convertor based on the proc
@@ -966,7 +966,7 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
             req->req_recv.req_base.req_proc = ompi_proc_local_proc;
             prepare_recv_req_converter(req);
         }
-#endif  /* !OMPI_ENABLE_HETEROGENEOUS_SUPPORT */
+#endif  /* !OPAL_ENABLE_HETEROGENEOUS_SUPPORT */
     } else {
         proc = &comm->procs[req->req_recv.req_base.req_peer];
         req->req_recv.req_base.req_proc = proc->ompi_proc;

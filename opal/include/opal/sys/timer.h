@@ -36,16 +36,16 @@
 /* do some quick #define cleanup in cases where we are doing
    testing... */
 #ifdef OMPI_DISABLE_INLINE_ASM
-#undef OMPI_C_GCC_INLINE_ASSEMBLY
-#define OMPI_C_GCC_INLINE_ASSEMBLY 0
+#undef OPAL_C_GCC_INLINE_ASSEMBLY
+#define OPAL_C_GCC_INLINE_ASSEMBLY 0
 #undef OMPI_CXX_GCC_INLINE_ASSEMBLY
 #define OMPI_CXX_GCC_INLINE_ASSEMBLY 0
-#undef OMPI_C_DEC_INLINE_ASSEMBLY
-#define OMPI_C_DEC_INLINE_ASSEMBLY 0
+#undef OPAL_C_DEC_INLINE_ASSEMBLY
+#define OPAL_C_DEC_INLINE_ASSEMBLY 0
 #undef OMPI_CXX_DEC_INLINE_ASSEMBLY
 #define OMPI_CXX_DEC_INLINE_ASSEMBLY 0
-#undef OMPI_C_XLC_INLINE_ASSEMBLY
-#define OMPI_C_XLC_INLINE_ASSEMBLY 0
+#undef OPAL_C_XLC_INLINE_ASSEMBLY
+#define OPAL_C_XLC_INLINE_ASSEMBLY 0
 #undef OMPI_CXX_XLC_INLINE_ASSEMBLY
 #define OMPI_CXX_XLC_INLINE_ASSEMBLY 0
 #endif
@@ -58,9 +58,9 @@
 #define OMPI_DEC_INLINE_ASSEMBLY OMPI_CXX_DEC_INLINE_ASSEMBLY
 #define OMPI_XLC_INLINE_ASSEMBLY OMPI_CXX_XLC_INLINE_ASSEMBLY
 #else
-#define OMPI_GCC_INLINE_ASSEMBLY OMPI_C_GCC_INLINE_ASSEMBLY
-#define OMPI_DEC_INLINE_ASSEMBLY OMPI_C_DEC_INLINE_ASSEMBLY
-#define OMPI_XLC_INLINE_ASSEMBLY OMPI_C_XLC_INLINE_ASSEMBLY
+#define OMPI_GCC_INLINE_ASSEMBLY OPAL_C_GCC_INLINE_ASSEMBLY
+#define OMPI_DEC_INLINE_ASSEMBLY OPAL_C_DEC_INLINE_ASSEMBLY
+#define OMPI_XLC_INLINE_ASSEMBLY OPAL_C_XLC_INLINE_ASSEMBLY
 #endif
 
 /**********************************************************************
@@ -79,23 +79,23 @@ extern "C" {
 
 #if defined(DOXYGEN)
 /* don't include system-level gorp when generating doxygen files */ 
-#elif OMPI_ASSEMBLY_ARCH == OMPI_AMD64
+#elif OPAL_ASSEMBLY_ARCH == OMPI_AMD64
 #include "opal/sys/amd64/timer.h"
-#elif OMPI_ASSEMBLY_ARCH == OMPI_IA32
+#elif OPAL_ASSEMBLY_ARCH == OMPI_IA32
 #include "opal/sys/ia32/timer.h"
-#elif OMPI_ASSEMBLY_ARCH == OMPI_IA64
+#elif OPAL_ASSEMBLY_ARCH == OMPI_IA64
 #include "opal/sys/ia64/timer.h"
-#elif OMPI_ASSEMBLY_ARCH == OMPI_POWERPC32
+#elif OPAL_ASSEMBLY_ARCH == OMPI_POWERPC32
 #include "opal/sys/powerpc/timer.h"
-#elif OMPI_ASSEMBLY_ARCH == OMPI_POWERPC64
+#elif OPAL_ASSEMBLY_ARCH == OMPI_POWERPC64
 #include "opal/sys/powerpc/timer.h"
-#elif OMPI_ASSEMBLY_ARCH == OMPI_SPARCV9_32
+#elif OPAL_ASSEMBLY_ARCH == OMPI_SPARCV9_32
 #include "opal/sys/sparcv9/timer.h"
-#elif OMPI_ASSEMBLY_ARCH == OMPI_SPARCV9_64
+#elif OPAL_ASSEMBLY_ARCH == OMPI_SPARCV9_64
 #include "opal/sys/sparcv9/timer.h"
-#elif OMPI_ASSEMBLY_ARCH == OMPI_WINDOWS
+#elif OPAL_ASSEMBLY_ARCH == OMPI_WINDOWS
 #include "opal/sys/win32/timer.h"
-#elif OMPI_ASSEMBLY_ARCH == OMPI_MIPS
+#elif OPAL_ASSEMBLY_ARCH == OMPI_MIPS
 #include "opal/sys/mips/timer.h"
 #endif
 

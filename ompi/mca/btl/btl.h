@@ -225,7 +225,7 @@ struct mca_btl_base_segment_t {
     ompi_ptr_t seg_addr;        
      /** Length in bytes */
     uint32_t   seg_len;           
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     /** Heterogeneous padding */
     uint8_t    seg_padding[4];     
 #endif

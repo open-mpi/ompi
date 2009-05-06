@@ -21,7 +21,7 @@
 #include "ompi/mpi/f77/bindings.h"
 #include "ompi/mpi/f77/constants.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_ALLGATHER = mpi_allgather_f
 #pragma weak pmpi_allgather = mpi_allgather_f
 #pragma weak pmpi_allgather_ = mpi_allgather_f
@@ -36,14 +36,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ALLGATHER,
                            (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_ALLGATHER = mpi_allgather_f
 #pragma weak mpi_allgather = mpi_allgather_f
 #pragma weak mpi_allgather_ = mpi_allgather_f
 #pragma weak mpi_allgather__ = mpi_allgather_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_ALLGATHER,
                            mpi_allgather,
                            mpi_allgather_,
@@ -54,7 +54,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ALLGATHER,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

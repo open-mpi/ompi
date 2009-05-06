@@ -25,7 +25,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/group/group.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Group_free = PMPI_Group_free
 #endif
 

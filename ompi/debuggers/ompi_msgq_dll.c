@@ -150,7 +150,7 @@ opal_condition_t ompi_request_cond;
 size_t ompi_request_waiting;
 opal_mutex_t ompi_request_lock;
 opal_mutex_t opal_event_lock;
-#if OMPI_HAVE_THREAD_SUPPORT
+#if OPAL_HAVE_THREAD_SUPPORT
 volatile
 #endif
 uint32_t opal_progress_recursion_depth_counter;

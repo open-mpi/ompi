@@ -27,26 +27,26 @@ dnl
 dnl #################################################################
 AC_DEFUN([OMPI_CHECK_ASM_TEXT],[
     AC_MSG_CHECKING([directive for setting text section])
-    ompi_cv_asm_text=""
+    opal_cv_asm_text=""
     if test "$ompi_cv_c_compiler_vendor" = "microsoft" ; then
         # text section will be brought in with the rest of
         # header for MS - leave blank for now
-        ompi_cv_asm_text=""
+        opal_cv_asm_text=""
     else
         case $host in
             *-aix*)
-                ompi_cv_asm_text=[".csect .text[PR]"]
+                opal_cv_asm_text=[".csect .text[PR]"]
             ;;
             *)
-                ompi_cv_asm_text=".text"
+                opal_cv_asm_text=".text"
             ;;
         esac
     fi
-    AC_MSG_RESULT([$ompi_cv_asm_text])
-    AC_DEFINE_UNQUOTED([OMPI_ASM_TEXT], ["$ompi_cv_asm_text"],
+    AC_MSG_RESULT([$opal_cv_asm_text])
+    AC_DEFINE_UNQUOTED([OPAL_ASM_TEXT], ["$opal_cv_asm_text"],
                        [Assembly directive for setting text section])
-    OMPI_ASM_TEXT="$ompi_cv_asm_text"
-    AC_SUBST(OMPI_ASM_TEXT)
+    OPAL_ASM_TEXT="$opal_cv_asm_text"
+    AC_SUBST(OPAL_ASM_TEXT)
 ])dnl
 
 
@@ -54,7 +54,7 @@ dnl #################################################################
 dnl
 dnl OMPI_CHECK_ASM_GLOBAL
 dnl
-dnl Sets OMPI_ASM_GLOBAL to the value to prefix global values
+dnl Sets OPAL_ASM_GLOBAL to the value to prefix global values
 dnl
 dnl I'm sure if I don't have a test for this, there will be some
 dnl dumb platform that uses something else
@@ -62,20 +62,20 @@ dnl
 dnl #################################################################
 AC_DEFUN([OMPI_CHECK_ASM_GLOBAL],[
     AC_MSG_CHECKING([directive for exporting symbols])
-    ompi_cv_asm_global=""
+    opal_cv_asm_global=""
     if test "$ompi_cv_c_compiler_vendor" = "microsoft" ; then
-        ompi_cv_asm_global="PUBLIC"
+        opal_cv_asm_global="PUBLIC"
     else
         case $host in
             *)
-                ompi_cv_asm_global=".globl"
+                opal_cv_asm_global=".globl"
             ;;
         esac
     fi
-    AC_MSG_RESULT([$ompi_cv_asm_global])
-    AC_DEFINE_UNQUOTED([OMPI_ASM_GLOBAL], ["$ompi_cv_asm_global"],
+    AC_MSG_RESULT([$opal_cv_asm_global])
+    AC_DEFINE_UNQUOTED([OPAL_ASM_GLOBAL], ["$opal_cv_asm_global"],
                        [Assembly directive for exporting symbols])
-    OMPI_ASM_GLOBAL="$ompi_cv_asm_global"
+    OPAL_ASM_GLOBAL="$opal_cv_asm_global"
     AC_SUBST(OMPI_AS_GLOBAL)
 ])dnl
 
@@ -84,7 +84,7 @@ dnl #################################################################
 dnl
 dnl OMPI_CHECK_ASM_LSYM
 dnl
-dnl Sets OMPI_ASM_LSYM to the prefix value on a symbol to make it
+dnl Sets OPAL_ASM_LSYM to the prefix value on a symbol to make it
 dnl an internal label (jump target and whatnot)
 dnl
 dnl We look for L .L $ L$ (in that order) for something that both
@@ -103,8 +103,8 @@ AC_DEFUN([_OMPI_CHECK_ASM_LSYM],[
     for sym in L .L $ L$ ; do
         asm_result=0
         echo "configure: trying $sym" >&AC_FD_CC
-        OMPI_TRY_ASSEMBLE([foobar$ompi_cv_asm_label_suffix
-${sym}mytestlabel$ompi_cv_asm_label_suffix],
+        OMPI_TRY_ASSEMBLE([foobar$opal_cv_asm_label_suffix
+${sym}mytestlabel$opal_cv_asm_label_suffix],
             [# ok, we succeeded at assembling.  see if we can nm, 
              # throwing the results in a file
             if $NM conftest.$OBJEXT > conftest.out 2>&AC_FD_CC ; then
@@ -138,12 +138,12 @@ AC_DEFUN([OMPI_CHECK_ASM_LSYM],[
     AC_REQUIRE([AC_PROG_NM])
 
     AC_CACHE_CHECK([prefix for lsym labels],
-                   [ompi_cv_asm_lsym],
-                   [_OMPI_CHECK_ASM_LSYM([ompi_cv_asm_lsym])])
-    AC_DEFINE_UNQUOTED([OMPI_ASM_LSYM], ["$ompi_cv_asm_lsym"],
+                   [opal_cv_asm_lsym],
+                   [_OMPI_CHECK_ASM_LSYM([opal_cv_asm_lsym])])
+    AC_DEFINE_UNQUOTED([OPAL_ASM_LSYM], ["$opal_cv_asm_lsym"],
                        [Assembly prefix for lsym labels])
-    OMPI_ASM_LSYM="$ompi_cv_asm_lsym"
-    AC_SUBST(OMPI_ASM_LSYM)
+    OPAL_ASM_LSYM="$opal_cv_asm_lsym"
+    AC_SUBST(OPAL_ASM_LSYM)
 ])dnl
 
 dnl #################################################################
@@ -179,28 +179,28 @@ dnl #################################################################
 dnl
 dnl OMPI_CHECK_ASM_GSYM
 dnl
-dnl Sets OMPI_ASM_GSYM to the prefix value on a symbol to make it
+dnl Sets OPAL_ASM_GSYM to the prefix value on a symbol to make it
 dnl a global linkable from C.  Basically, an _ or not.
 dnl
 dnl #################################################################
 AC_DEFUN([OMPI_CHECK_ASM_GSYM],[
     AC_CACHE_CHECK([prefix for global symbol labels],
-                   [ompi_cv_asm_gsym],
+                   [opal_cv_asm_gsym],
                    [_OMPI_CHECK_ASM_GSYM])
 
-    if test "$ompi_cv_asm_gsym" = "none" ; then
+    if test "$opal_cv_asm_gsym" = "none" ; then
        AC_MSG_ERROR([Could not determine global symbol label prefix])
     fi
 
-    AC_DEFINE_UNQUOTED([OMPI_ASM_GSYM], ["$ompi_cv_asm_gsym"],
+    AC_DEFINE_UNQUOTED([OPAL_ASM_GSYM], ["$opal_cv_asm_gsym"],
                        [Assembly prefix for gsym labels])
-    OMPI_ASM_GSYM="$ompi_cv_asm_gsym"
-    AC_SUBST(OMPI_ASM_GSYM)
+    OPAL_ASM_GSYM="$opal_cv_asm_gsym"
+    AC_SUBST(OPAL_ASM_GSYM)
 
 ])
 
 AC_DEFUN([_OMPI_CHECK_ASM_GSYM],[
-    ompi_cv_asm_gsym="none"
+    opal_cv_asm_gsym="none"
 
     for sym in "_" "" "." ; do
         asm_result=0
@@ -221,10 +221,10 @@ main()
 }
 EOF
         OMPI_TRY_ASSEMBLE([
-$ompi_cv_asm_text
+$opal_cv_asm_text
 $ompi_cv_asm_proc ${sym}gsym_test_func
-$ompi_cv_asm_global ${sym}gsym_test_func
-${sym}gsym_test_func${ompi_cv_asm_label_suffix}
+$opal_cv_asm_global ${sym}gsym_test_func
+${sym}gsym_test_func${opal_cv_asm_label_suffix}
 $ompi_cv_asm_endproc ${sym}gsym_test_func
             ],
             [ompi_compile="$CC $CFLAGS -I. conftest_c.c -c > conftest.cmpl 2>&1"
@@ -253,7 +253,7 @@ $ompi_cv_asm_endproc ${sym}gsym_test_func
              fi], 
             [asm_result=0])
         if test "$asm_result" = "1" ; then
-            ompi_cv_asm_gsym="$sym"
+            opal_cv_asm_gsym="$sym"
             break
         fi
     done
@@ -265,7 +265,7 @@ dnl #################################################################
 dnl
 dnl OMPI_CHECK_ASM_LABEL_SUFFIX
 dnl
-dnl Sets OMPI_ASM_LABEL_SUFFIX to the value to suffix for labels
+dnl Sets OPAL_ASM_LABEL_SUFFIX to the value to suffix for labels
 dnl
 dnl I'm sure if I don't have a test for this, there will be some
 dnl dumb platform that uses something else
@@ -273,16 +273,16 @@ dnl
 dnl #################################################################
 AC_DEFUN([OMPI_CHECK_ASM_LABEL_SUFFIX],[
     AC_MSG_CHECKING([suffix for labels])
-    ompi_cv_asm_label_suffix=""
+    opal_cv_asm_label_suffix=""
     case $host in
         *)
-                ompi_cv_asm_label_suffix=":"
+                opal_cv_asm_label_suffix=":"
         ;;
     esac
-    AC_MSG_RESULT([$ompi_cv_asm_label_suffix])
-    AC_DEFINE_UNQUOTED([OMPI_ASM_LABEL_SUFFIX], ["$ompi_cv_asm_label_suffix"],
+    AC_MSG_RESULT([$opal_cv_asm_label_suffix])
+    AC_DEFINE_UNQUOTED([OPAL_ASM_LABEL_SUFFIX], ["$opal_cv_asm_label_suffix"],
                        [Assembly suffix for labels])
-    OMPI_ASM_LABEL_SUFFIX="$ompi_cv_asm_label_suffix"
+    OPAL_ASM_LABEL_SUFFIX="$opal_cv_asm_label_suffix"
     AC_SUBST(OMPI_AS_LABEL_SUFFIX)
 ])dnl
 
@@ -291,7 +291,7 @@ dnl #################################################################
 dnl
 dnl OMPI_CHECK_ASM_ALIGN_LOG
 dnl
-dnl Sets OMPI_ASM_ALIGN_LOG to 1 if align is specified 
+dnl Sets OPAL_ASM_ALIGN_LOG to 1 if align is specified 
 dnl logarithmically, 0 otherwise
 dnl
 dnl #################################################################
@@ -301,12 +301,12 @@ AC_DEFUN([OMPI_CHECK_ASM_ALIGN_LOG],[
 
     AC_CACHE_CHECK([if .align directive takes logarithmic value],
                    [ompi_cv_asm_align_log],
-                   [ OMPI_TRY_ASSEMBLE([        $ompi_cv_asm_text
+                   [ OMPI_TRY_ASSEMBLE([        $opal_cv_asm_text
         .align 4
-        $ompi_cv_asm_global foo
+        $opal_cv_asm_global foo
         .byte 1
         .align 4
-foo$ompi_cv_asm_label_suffix
+foo$opal_cv_asm_label_suffix
         .byte 2], 
         [ompi_asm_addr=[`$NM conftest.$OBJEXT | $GREP foo | sed -e 's/.*\([0-9a-fA-F][0-9a-fA-F]\).*foo.*/\1/'`]],
         [ompi_asm_addr=""])
@@ -324,7 +324,7 @@ foo$ompi_cv_asm_label_suffix
         ompi_asm_align_log_result=0
     fi
 
-    AC_DEFINE_UNQUOTED([OMPI_ASM_ALIGN_LOG],
+    AC_DEFINE_UNQUOTED([OPAL_ASM_ALIGN_LOG],
                        [$asm_align_log_result],
                        [Assembly align directive expects logarithmic value])
 
@@ -336,9 +336,9 @@ dnl #################################################################
 dnl
 dnl OMPI_CHECK_ASM_TYPE
 dnl
-dnl Sets OMPI_ASM_TYPE to the prefix for the function type to 
+dnl Sets OPAL_ASM_TYPE to the prefix for the function type to 
 dnl set a symbol's type as function (needed on ELF for shared
-dnl libaries).  If no .type directive is needed, sets OMPI_ASM_TYPE
+dnl libaries).  If no .type directive is needed, sets OPAL_ASM_TYPE
 dnl to an empty string
 dnl
 dnl We look for @ \# %
@@ -346,24 +346,24 @@ dnl
 dnl #################################################################
 AC_DEFUN([OMPI_CHECK_ASM_TYPE],[
         AC_CACHE_CHECK([prefix for function in .type],
-                       [ompi_cv_asm_type],
+                       [opal_cv_asm_type],
                        [_OMPI_CHECK_ASM_TYPE])
 
-    AC_DEFINE_UNQUOTED([OMPI_ASM_TYPE], ["$ompi_cv_asm_type"],
+    AC_DEFINE_UNQUOTED([OPAL_ASM_TYPE], ["$opal_cv_asm_type"],
                        [How to set function type in .type directive])
-    OMPI_ASM_TYPE="$ompi_cv_asm_type"
-    AC_SUBST(OMPI_ASM_TYPE)
+    OPAL_ASM_TYPE="$opal_cv_asm_type"
+    AC_SUBST(OPAL_ASM_TYPE)
 ])
 
 AC_DEFUN([_OMPI_CHECK_ASM_TYPE],[
-    ompi_cv_asm_type=""
+    opal_cv_asm_type=""
 
     case "${host}" in
     *-sun-solaris*)
         # GCC on solaris seems to accept just about anything, not
         # that what it defines actually works...  So just hardwire
         # to the right answer
-        ompi_cv_asm_type="#"
+        opal_cv_asm_type="#"
     ;;
     *)
         for type  in @ \# % ; do
@@ -371,7 +371,7 @@ AC_DEFUN([_OMPI_CHECK_ASM_TYPE],[
             echo "configure: trying $type" >&AC_FD_CC
             OMPI_TRY_ASSEMBLE([     .type mysym, ${type}function
 mysym:],
-                 [ompi_cv_asm_type="${type}"
+                 [opal_cv_asm_type="${type}"
                     asm_result=1])
             if test "$asm_result" = "1" ; then
                 break
@@ -389,7 +389,7 @@ dnl #################################################################
 dnl
 dnl OMPI_CHECK_ASM_SIZE
 dnl
-dnl Sets OMPI_ASM_SIZE to 1 if we should set .size directives for
+dnl Sets OPAL_ASM_SIZE to 1 if we should set .size directives for
 dnl each function, 0 otherwise.
 dnl
 dnl #################################################################
@@ -402,15 +402,15 @@ AC_DEFUN([OMPI_CHECK_ASM_SIZE],[
                     rm -f conftest.out])
 
     if test "$ompi_cv_asm_need_size" = "yes" ; then
-       ompi_asm_size=1
+       opal_asm_size=1
     else
-       ompi_asm_size=0
+       opal_asm_size=0
     fi
 
-    AC_DEFINE_UNQUOTED([OMPI_ASM_SIZE], ["$ompi_asm_size"],
+    AC_DEFINE_UNQUOTED([OPAL_ASM_SIZE], ["$opal_asm_size"],
                        [Do we need to give a .size directive])
-    OMPI_ASM_SIZE="$ompi_asm_size"
-    AC_SUBST(OMPI_ASM_TYPE)
+    OPAL_ASM_SIZE="$opal_asm_size"
+    AC_SUBST(OPAL_ASM_TYPE)
     unset asm_result
 ])dnl
 
@@ -458,21 +458,21 @@ dnl
 dnl #################################################################
 AC_DEFUN([OMPI_CHECK_POWERPC_REG],[
     AC_MSG_CHECKING([if PowerPC registers have r prefix])
-    OMPI_TRY_ASSEMBLE([$ompi_cv_asm_text
+    OMPI_TRY_ASSEMBLE([$opal_cv_asm_text
         addi 1,1,0],
-        [ompi_cv_asm_powerpc_r_reg=0],
-        [OMPI_TRY_ASSEMBLE([$ompi_cv_asm_text
+        [opal_cv_asm_powerpc_r_reg=0],
+        [OMPI_TRY_ASSEMBLE([$opal_cv_asm_text
         addi r1,r1,0],
-            [ompi_cv_asm_powerpc_r_reg=1],
+            [opal_cv_asm_powerpc_r_reg=1],
             [AC_MSG_ERROR([Can not determine how to use PPC registers])])])
-    if test "$ompi_cv_asm_powerpc_r_reg" = "1" ; then
+    if test "$opal_cv_asm_powerpc_r_reg" = "1" ; then
         AC_MSG_RESULT([yes])
     else
         AC_MSG_RESULT([no])
     fi
 
-    AC_DEFINE_UNQUOTED([OMPI_POWERPC_R_REGISTERS],
-                       [$ompi_cv_asm_powerpc_r_reg],
+    AC_DEFINE_UNQUOTED([OPAL_POWERPC_R_REGISTERS],
+                       [$opal_cv_asm_powerpc_r_reg],
                        [Whether r notation is used for ppc registers])
 ])dnl
 
@@ -496,12 +496,12 @@ AC_DEFUN([OMPI_CHECK_POWERPC_64BIT],[
         case $host in
             *-darwin*)
                 ppc64_result=0
-                if test "$ompi_cv_asm_powerpc_r_reg" = "1" ; then
+                if test "$opal_cv_asm_powerpc_r_reg" = "1" ; then
                    ldarx_asm="        ldarx r1,r1,r1";
                 else
                    ldarx_asm="        ldarx 1,1,1";
                 fi
-                OMPI_TRY_ASSEMBLE([$ompi_cv_asm_text
+                OMPI_TRY_ASSEMBLE([$opal_cv_asm_text
         $ldarx_asm],
                     [ppc64_result=1],
                     [ppc64_result=0])
@@ -531,7 +531,7 @@ dnl #################################################################
 AC_DEFUN([OMPI_CHECK_SPARCV8PLUS],[
     AC_MSG_CHECKING([if have Sparc v8+/v9 support])
     sparc_result=0
-    OMPI_TRY_ASSEMBLE([$ompi_cv_asm_text
+    OMPI_TRY_ASSEMBLE([$opal_cv_asm_text
 	casa [%o0] 0x80, %o1, %o2],
                 [sparc_result=1],
                 [sparc_result=0])
@@ -612,16 +612,16 @@ return ret;]]),
     AC_MSG_RESULT([$asm_result])
 
     if test "$asm_result" = "yes" ; then
-        OMPI_C_GCC_INLINE_ASSEMBLY=1
+        OPAL_C_GCC_INLINE_ASSEMBLY=1
     else
-        OMPI_C_GCC_INLINE_ASSEMBLY=0
+        OPAL_C_GCC_INLINE_ASSEMBLY=0
     fi
 
-    AC_DEFINE_UNQUOTED([OMPI_C_GCC_INLINE_ASSEMBLY],
-                       [$OMPI_C_GCC_INLINE_ASSEMBLY],
+    AC_DEFINE_UNQUOTED([OPAL_C_GCC_INLINE_ASSEMBLY],
+                       [$OPAL_C_GCC_INLINE_ASSEMBLY],
                        [Whether C compiler supports GCC style inline assembly])
 
-    unset OMPI_C_GCC_INLINE_ASSEMBLY assembly asm_result
+    unset OPAL_C_GCC_INLINE_ASSEMBLY assembly asm_result
 ])dnl
 
 AC_DEFUN([OMPI_CHECK_INLINE_CXX_GCC],[
@@ -700,16 +700,16 @@ return 0;]]),
     AC_MSG_RESULT([$asm_result])
 
     if test "$asm_result" = "yes" ; then
-        OMPI_C_DEC_INLINE_ASSEMBLY=1
+        OPAL_C_DEC_INLINE_ASSEMBLY=1
     else
-        OMPI_C_DEC_INLINE_ASSEMBLY=0
+        OPAL_C_DEC_INLINE_ASSEMBLY=0
     fi
 
-    AC_DEFINE_UNQUOTED([OMPI_C_DEC_INLINE_ASSEMBLY],
-                       [$OMPI_C_DEC_INLINE_ASSEMBLY],
+    AC_DEFINE_UNQUOTED([OPAL_C_DEC_INLINE_ASSEMBLY],
+                       [$OPAL_C_DEC_INLINE_ASSEMBLY],
                        [Whether C compiler supports DEC style inline assembly])
 
-    unset OMPI_C_DEC_INLINE_ASSEMBLY asm_result
+    unset OPAL_C_DEC_INLINE_ASSEMBLY asm_result
 ])dnl
 
 AC_DEFUN([OMPI_CHECK_INLINE_CXX_DEC],[
@@ -753,7 +753,7 @@ AC_DEFUN([OMPI_CHECK_INLINE_C_XLC],[
 
     AC_MSG_CHECKING([if $CC supports XLC inline assembly])
 
-    OMPI_C_XLC_INLINE_ASSEMBLY=0
+    OPAL_C_XLC_INLINE_ASSEMBLY=0
     asm_result="no"
     if test "$CC" = "xlc" ; then
         OMPI_XLC_INLINE_ASSEMBLY=1
@@ -761,11 +761,11 @@ AC_DEFUN([OMPI_CHECK_INLINE_C_XLC],[
     fi
 
     AC_MSG_RESULT([$asm_result])
-    AC_DEFINE_UNQUOTED([OMPI_C_XLC_INLINE_ASSEMBLY],
-                       [$OMPI_C_XLC_INLINE_ASSEMBLY],
+    AC_DEFINE_UNQUOTED([OPAL_C_XLC_INLINE_ASSEMBLY],
+                       [$OPAL_C_XLC_INLINE_ASSEMBLY],
                        [Whether C compiler supports XLC style inline assembly])
 
-    unset OMPI_C_XLC_INLINE_ASSEMBLY
+    unset OPAL_C_XLC_INLINE_ASSEMBLY
 ])dnl
 
 AC_DEFUN([OMPI_CHECK_INLINE_CXX_XLC],[
@@ -792,10 +792,10 @@ dnl #################################################################
 dnl
 dnl OMPI_CONFIG_ASM
 dnl
-dnl DEFINE OMPI_ASSEMBLY_ARCH to something in sys/architecture.h
-dnl DEFINE OMPI_ASSEMBLY_FORMAT to string containing correct
+dnl DEFINE OPAL_ASSEMBLY_ARCH to something in sys/architecture.h
+dnl DEFINE OPAL_ASSEMBLY_FORMAT to string containing correct
 dnl                             format for assembly (not user friendly)
-dnl SUBST OMPI_ASSEMBLY_FORMAT to string containing correct
+dnl SUBST OPAL_ASSEMBLY_FORMAT to string containing correct
 dnl                             format for assembly (not user friendly)
 dnl
 dnl #################################################################
@@ -843,7 +843,7 @@ AC_DEFUN([OMPI_CONFIG_ASM],[
         AC_MSG_RESULT([no])
         want_smp_locks=0
     fi
-    AC_DEFINE_UNQUOTED([OMPI_WANT_SMP_LOCKS], [$want_smp_locks],
+    AC_DEFINE_UNQUOTED([OPAL_WANT_SMP_LOCKS], [$want_smp_locks],
                        [whether we want to have smp locks in atomic ops or not])
 
     if test "$ompi_cv_c_compiler_vendor" = "microsoft" ; then
@@ -863,7 +863,7 @@ AC_DEFUN([OMPI_CONFIG_ASM],[
         # find our architecture for purposes of assembly stuff
         ompi_cv_asm_arch="UNSUPPORTED"
         OMPI_GCC_INLINE_ASSIGN=""
-        OMPI_ASM_SUPPORT_64BIT=0
+        OPAL_ASM_SUPPORT_64BIT=0
         case "${host}" in
         i?86-*|x86_64*)
             if test "$ac_cv_sizeof_long" = "4" ; then
@@ -871,19 +871,19 @@ AC_DEFUN([OMPI_CONFIG_ASM],[
             else
                 ompi_cv_asm_arch="AMD64"
             fi
-            OMPI_ASM_SUPPORT_64BIT=1
+            OPAL_ASM_SUPPORT_64BIT=1
             OMPI_GCC_INLINE_ASSIGN='"movl [$]0, %0" : "=&r"(ret)'
             ;;
 
         ia64-*)
             ompi_cv_asm_arch="IA64"
-            OMPI_ASM_SUPPORT_64BIT=1
+            OPAL_ASM_SUPPORT_64BIT=1
             OMPI_GCC_INLINE_ASSIGN='"mov %0=r0\n;;\n" : "=&r"(ret)'
             ;;
 
         alpha-*|alphaev[[4-8]]-*|alphaev56-*|alphaev6[[78]]-*)
             ompi_cv_asm_arch="ALPHA"
-            OMPI_ASM_SUPPORT_64BIT=1
+            OPAL_ASM_SUPPORT_64BIT=1
             OMPI_GCC_INLINE_ASSIGN='"bis [$]31,[$]31,%0" : "=&r"(ret)'
             ;;
 
@@ -891,7 +891,7 @@ AC_DEFUN([OMPI_CONFIG_ASM],[
             # Should really find some way to make sure that we are on
             # a MIPS III machine (r4000 and later)
             ompi_cv_asm_arch="MIPS"
-            OMPI_ASM_SUPPORT_64BIT=1
+            OPAL_ASM_SUPPORT_64BIT=1
             OMPI_GCC_INLINE_ASSIGN='"or %0,[$]0,[$]0" : "=&r"(ret)'
             ;;
 
@@ -904,9 +904,9 @@ AC_DEFUN([OMPI_CONFIG_ASM],[
                 # compiling in 32 bit mode (and therefore should assume
                 # sizeof(long) == 4), we can use the 64 bit test and set
                 # operations.
-                OMPI_CHECK_POWERPC_64BIT(OMPI_ASM_SUPPORT_64BIT=1)
+                OMPI_CHECK_POWERPC_64BIT(OPAL_ASM_SUPPORT_64BIT=1)
             elif test "$ac_cv_sizeof_long" = "8" ; then
-                OMPI_ASM_SUPPORT_64BIT=1
+                OPAL_ASM_SUPPORT_64BIT=1
                 ompi_cv_asm_arch="POWERPC64"
             else
                 AC_MSG_ERROR([Could not determine PowerPC word size: $ac_cv_sizeof_long])
@@ -922,7 +922,7 @@ AC_DEFUN([OMPI_CONFIG_ASM],[
                 have_v8plus=0
                 OMPI_CHECK_SPARCV8PLUS([have_v8plus=1])
                 if test "$have_v8plus" = "0" ; then
-                    OMPI_ASM_SUPPORT_64BIT=0
+                    OPAL_ASM_SUPPORT_64BIT=0
                     ompi_cv_asm_arch="SPARC"
 AC_MSG_WARN([Sparc v8 target is not supported in this release of Open MPI.])
 AC_MSG_WARN([You must specify the target architecture v8plus])
@@ -931,12 +931,12 @@ AC_MSG_WARN([FFLAGS, and FCFLAGS to compile Open MPI in 32 bit mode on])
 AC_MSG_WARN([Sparc processors])
 AC_MSG_ERROR([Can not continue.])
                 else
-                    OMPI_ASM_SUPPORT_64BIT=1
+                    OPAL_ASM_SUPPORT_64BIT=1
                     ompi_cv_asm_arch="SPARCV9_32"
                 fi
 
             elif test "$ac_cv_sizeof_long" = "8" ; then
-                OMPI_ASM_SUPPORT_64BIT=1
+                OPAL_ASM_SUPPORT_64BIT=1
                 ompi_cv_asm_arch="SPARCV9_64"
             else
                 AC_MSG_ERROR([Could not determine Sparc word size: $ac_cv_sizeof_long])
@@ -949,10 +949,10 @@ AC_MSG_ERROR([Can not continue.])
             ;;
         esac
 
-        AC_DEFINE_UNQUOTED([OMPI_ASM_SUPPORT_64BIT],
-            [$OMPI_ASM_SUPPORT_64BIT],
+        AC_DEFINE_UNQUOTED([OPAL_ASM_SUPPORT_64BIT],
+            [$OPAL_ASM_SUPPORT_64BIT],
             [Whether we can do 64bit assembly operations or not.  Should not be used outside of the assembly header files])
-        AC_SUBST([OMPI_ASM_SUPPORT_64BIT])
+        AC_SUBST([OPAL_ASM_SUPPORT_64BIT])
 
         #
         # figure out if we need any special function start / stop code
@@ -977,37 +977,37 @@ AC_MSG_ERROR([Can not continue.])
          # format:
          #   config_file-text-global-label_suffix-gsym-lsym-type-size-align_log-ppc_r_reg-64_bit-gnu_stack
          asm_format="${ompi_asm_arch_config}"
-         asm_format="${asm_format}-${ompi_cv_asm_text}-${ompi_cv_asm_global}"
-         asm_format="${asm_format}-${ompi_cv_asm_label_suffix}-${ompi_cv_asm_gsym}"
-         asm_format="${asm_format}-${ompi_cv_asm_lsym}"
-         asm_format="${asm_format}-${ompi_cv_asm_type}-${ompi_asm_size}"
+         asm_format="${asm_format}-${opal_cv_asm_text}-${opal_cv_asm_global}"
+         asm_format="${asm_format}-${opal_cv_asm_label_suffix}-${opal_cv_asm_gsym}"
+         asm_format="${asm_format}-${opal_cv_asm_lsym}"
+         asm_format="${asm_format}-${opal_cv_asm_type}-${opal_asm_size}"
          asm_format="${asm_format}-${ompi_asm_align_log_result}"
          if test "$ompi_cv_asm_arch" = "POWERPC32" -o "$ompi_cv_asm_arch" = "POWERPC64" ; then
-             asm_format="${asm_format}-${ompi_cv_asm_powerpc_r_reg}"
+             asm_format="${asm_format}-${opal_cv_asm_powerpc_r_reg}"
          else
              asm_format="${asm_format}-1"
          fi
-         asm_format="${asm_format}-${OMPI_ASM_SUPPORT_64BIT}"
+         asm_format="${asm_format}-${OPAL_ASM_SUPPORT_64BIT}"
          ompi_cv_asm_format="${asm_format}-${ompi_cv_asm_gnu_stack}"
          # For the Makefile, need to escape the $ as $$.  Don't display
          # this version, but make sure the Makefile gives the right thing
          # when regenerating the files because the base has been touched.
-         OMPI_ASSEMBLY_FORMAT=`echo "$ompi_cv_asm_format" | sed -e 's/\\\$/\\\$\\\$/'`
+         OPAL_ASSEMBLY_FORMAT=`echo "$ompi_cv_asm_format" | sed -e 's/\\\$/\\\$\\\$/'`
 
         AC_MSG_CHECKING([for assembly format])
         AC_MSG_RESULT([$ompi_cv_asm_format])
-        AC_DEFINE_UNQUOTED([OMPI_ASSEMBLY_FORMAT], ["$OMPI_ASSEMBLY_FORMAT"],
+        AC_DEFINE_UNQUOTED([OPAL_ASSEMBLY_FORMAT], ["$OPAL_ASSEMBLY_FORMAT"],
                            [Format of assembly file])
-        AC_SUBST([OMPI_ASSEMBLY_FORMAT])
+        AC_SUBST([OPAL_ASSEMBLY_FORMAT])
     fi # if cv_c_compiler_vendor = microsoft
 
     result="OMPI_$ompi_cv_asm_arch"
-    OMPI_ASSEMBLY_ARCH="$ompi_cv_asm_arch"
+    OPAL_ASSEMBLY_ARCH="$ompi_cv_asm_arch"
     AC_MSG_CHECKING([for asssembly architecture])
     AC_MSG_RESULT([$ompi_cv_asm_arch])
-    AC_DEFINE_UNQUOTED([OMPI_ASSEMBLY_ARCH], [$result],
+    AC_DEFINE_UNQUOTED([OPAL_ASSEMBLY_ARCH], [$result],
         [Architecture type of assembly to use for atomic operations])
-    AC_SUBST([OMPI_ASSEMBLY_ARCH])
+    AC_SUBST([OPAL_ASSEMBLY_ARCH])
 
     OMPI_ASM_FIND_FILE
 
@@ -1089,9 +1089,9 @@ fi
         result=1
     fi
 
-    AC_DEFINE_UNQUOTED([OMPI_HAVE_ASM_FILE], [$result],
+    AC_DEFINE_UNQUOTED([OPAL_HAVE_ASM_FILE], [$result],
                        [Whether there is an atomic assembly file available])
-    AM_CONDITIONAL([OMPI_HAVE_ASM_FILE], [test "$result" = "1"])
+    AM_CONDITIONAL([OPAL_HAVE_ASM_FILE], [test "$result" = "1"])
 
     OMPI_ASM_FILE=$ompi_cv_asm_file
     AC_SUBST(OMPI_ASM_FILE)

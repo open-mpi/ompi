@@ -38,7 +38,7 @@
 #include "opal/mca/crs/base/base.h"
 #include "ompi/constants.h"
 
-#define OMPI_ENABLE_DEBUG_RELIABILITY 0
+#define OPAL_ENABLE_DEBUG_RELIABILITY 0
 
 /*
  * BML types
@@ -111,7 +111,7 @@ static inline void mca_bml_base_btl_array_set_size(mca_bml_base_btl_array_t* arr
  */
 static inline mca_bml_base_btl_t* mca_bml_base_btl_array_insert(mca_bml_base_btl_array_t* array)
 {
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     if(array->arr_size >= array->arr_reserve) {
         opal_output(0, "mca_bml_base_btl_array_insert: invalid array index %lu >= %lu", 
                     (unsigned long)array->arr_size, (unsigned long)array->arr_reserve);
@@ -157,7 +157,7 @@ static inline bool mca_bml_base_btl_array_remove( mca_bml_base_btl_array_t* arra
  */
 static inline mca_bml_base_btl_t* mca_bml_base_btl_array_get_index(mca_bml_base_btl_array_t* array, size_t item_index)
 {
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     if(item_index >= array->arr_size) {
         opal_output(0, "mca_bml_base_btl_array_get_index: invalid array index %lu >= %lu",
                     (unsigned long)item_index, (unsigned long)array->arr_size);
@@ -176,7 +176,7 @@ static inline mca_bml_base_btl_t* mca_bml_base_btl_array_get_index(mca_bml_base_
  */
 static inline mca_bml_base_btl_t* mca_bml_base_btl_array_get_next(mca_bml_base_btl_array_t* array)
 {
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     if(array->arr_size == 0) {
         opal_output(0, "mca_bml_base_btl_array_get_next: invalid array size");
         return 0;
@@ -253,7 +253,7 @@ static inline void mca_bml_base_free( mca_bml_base_btl_t* bml_btl,
      */
 }
 
-#if OMPI_ENABLE_DEBUG_RELIABILITY
+#if OPAL_ENABLE_DEBUG_RELIABILITY
 
 int mca_bml_base_send( mca_bml_base_btl_t* bml_btl, 
                        mca_btl_base_descriptor_t* des, 

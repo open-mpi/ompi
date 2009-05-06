@@ -20,7 +20,7 @@
 
 #include "ompi/mpi/c/bindings.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Type_struct = PMPI_Type_struct
 #endif
 

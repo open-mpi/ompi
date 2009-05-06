@@ -20,7 +20,7 @@
 
 #include "ompi/mpi/f77/bindings.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_GET_ADDRESS = mpi_get_address_f
 #pragma weak pmpi_get_address = mpi_get_address_f
 #pragma weak pmpi_get_address_ = mpi_get_address_f
@@ -35,14 +35,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GET_ADDRESS,
                            (location, address, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_GET_ADDRESS = mpi_get_address_f
 #pragma weak mpi_get_address = mpi_get_address_f
 #pragma weak mpi_get_address_ = mpi_get_address_f
 #pragma weak mpi_get_address__ = mpi_get_address_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_GET_ADDRESS,
                            mpi_get_address,
                            mpi_get_address_,
@@ -53,7 +53,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GET_ADDRESS,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

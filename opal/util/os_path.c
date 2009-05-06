@@ -73,7 +73,7 @@ char *opal_os_path(bool relative, ...)
         total_length++;
     }
         
-    if (total_length > OMPI_PATH_MAX) {  /* path length is too long - reject it */
+    if (total_length > OPAL_PATH_MAX) {  /* path length is too long - reject it */
     	return(NULL);
     }
 

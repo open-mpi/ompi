@@ -248,7 +248,7 @@ void mca_io_base_request_return(ompi_file_t *file)
     OPAL_THREAD_UNLOCK(&file->f_io_requests_lock);
 }
 
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
 static volatile bool thread_running = false;
 static volatile bool thread_done = false;
 static opal_thread_t progress_thread;
@@ -275,14 +275,14 @@ request_progress_thread(opal_object_t *arg)
 
     return NULL;
 }
-#endif /* OMPI_ENABLE_PROGRESS_THREADS */
+#endif /* OPAL_ENABLE_PROGRESS_THREADS */
 
 void
 mca_io_base_request_progress_init(void)
 {
     mca_io_base_request_num_pending = 0;
 
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
     thread_running = false;
     thread_done = false;
 
@@ -292,14 +292,14 @@ mca_io_base_request_progress_init(void)
 
     progress_thread.t_run = request_progress_thread;
     progress_thread.t_arg = NULL;
-#endif /* OMPI_ENABLE_PROGRESS_THREADS */
+#endif /* OPAL_ENABLE_PROGRESS_THREADS */
 }
 
 
 OMPI_DECLSPEC void
 mca_io_base_request_progress_add(void)
 {
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
     /* if we don't have a progress thread, make us have a progress
        thread */
     if (! thread_running) {
@@ -310,13 +310,13 @@ mca_io_base_request_progress_add(void)
         }
         OPAL_THREAD_UNLOCK(&progress_mutex);
     }
-#endif /* OMPI_ENABLE_PROGRESS_THREADS */
+#endif /* OPAL_ENABLE_PROGRESS_THREADS */
 
     OPAL_THREAD_ADD32(&mca_io_base_request_num_pending, 1);
 
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
     opal_condition_signal(&progress_cond);
-#endif /* OMPI_ENABLE_PROGRESS_THREADS */
+#endif /* OPAL_ENABLE_PROGRESS_THREADS */
 }
 
 
@@ -330,7 +330,7 @@ mca_io_base_request_progress_del(void)
 void
 mca_io_base_request_progress_fini(void)
 {
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
     void *ret;
 
     /* make the helper thread die */
@@ -344,5 +344,5 @@ mca_io_base_request_progress_fini(void)
     OBJ_DESTRUCT(&progress_thread);
     OBJ_DESTRUCT(&progress_cond);
     OBJ_DESTRUCT(&progress_mutex);
-#endif /* OMPI_ENABLE_PROGRESS_THREADS */
+#endif /* OPAL_ENABLE_PROGRESS_THREADS */
 }

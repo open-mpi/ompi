@@ -58,7 +58,7 @@ struct mca_common_sm_mmap_t {
     /* base address of data segment */
     unsigned char  *data_addr;
     size_t map_size;
-    char map_path[OMPI_PATH_MAX];
+    char map_path[OPAL_PATH_MAX];
 #if defined(__WINDOWS__)
     HANDLE hMappedObject;
 #endif  /* defined(__WINDOWS__) */

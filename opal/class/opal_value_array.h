@@ -24,7 +24,7 @@
 #include <string.h>
 
 #include "opal/class/opal_object.h"
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
 #include "opal/util/output.h"
 #endif
 #include "opal/constants.h"
@@ -239,7 +239,7 @@ static inline int opal_value_array_append_item(opal_value_array_t *array, const 
 
 static inline int opal_value_array_remove_item(opal_value_array_t *array, size_t item_index)
 {
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     if (item_index >= array->array_size) {
         opal_output(0, "opal_value_array_remove_item: invalid index %lu\n", (unsigned long)item_index);
         return OPAL_ERR_BAD_PARAM;

@@ -79,7 +79,7 @@ static void message_event_destructor(orte_message_event_t *ev)
     if (NULL != ev->buffer) {
         OBJ_RELEASE(ev->buffer);
     }
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     if (NULL != ev->file) {
         free(ev->file);
     }
@@ -90,7 +90,7 @@ static void message_event_constructor(orte_message_event_t *ev)
 {
     ev->ev = (opal_event_t*)malloc(sizeof(opal_event_t));
     ev->buffer = OBJ_NEW(opal_buffer_t);
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     ev->file = NULL;
 #endif
 }
@@ -241,7 +241,7 @@ static int register_callback(pid_t pid, orte_wait_fn_t callback,
 static int unregister_callback(pid_t pid);
 void orte_wait_signal_callback(int fd, short event, void *arg);
 static pid_t internal_waitpid(pid_t pid, int *status, int options);
-#if  OMPI_THREADS_HAVE_DIFFERENT_PIDS
+#if  OPAL_THREADS_HAVE_DIFFERENT_PIDS
 static void internal_waitpid_callback(int fd, short event, void *arg);
 #endif
 
@@ -378,7 +378,7 @@ orte_waitpid(pid_t wpid, int *status, int options)
             /* if we have pthreads and progress threads and we are the
                event thread, opal_condition_timedwait won't progress
                anything, so we need to do it. */
-#if OMPI_HAVE_POSIX_THREADS && OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_HAVE_POSIX_THREADS && OPAL_ENABLE_PROGRESS_THREADS
             if (opal_using_threads()) {
                 opal_mutex_unlock(&mutex);
                 opal_event_loop(OPAL_EVLOOP_NONBLOCK);
@@ -405,7 +405,7 @@ orte_waitpid(pid_t wpid, int *status, int options)
                from under it. Yes, it's spinning.  No, we won't spin
                for long. */
 
-            if (!OMPI_HAVE_THREAD_SUPPORT || opal_event_progress_thread()) {
+            if (!OPAL_HAVE_THREAD_SUPPORT || opal_event_progress_thread()) {
                 opal_event_loop(OPAL_EVLOOP_NONBLOCK);
             }
         }
@@ -719,7 +719,7 @@ unregister_callback(pid_t pid)
 static pid_t
 internal_waitpid(pid_t pid, int *status, int options)
 {
-#if  OMPI_THREADS_HAVE_DIFFERENT_PIDS
+#if  OPAL_THREADS_HAVE_DIFFERENT_PIDS
     waitpid_callback_data_t data;
     struct timeval tv;
     struct opal_event ev;
@@ -761,7 +761,7 @@ internal_waitpid(pid_t pid, int *status, int options)
 }
 
 
-#if  OMPI_THREADS_HAVE_DIFFERENT_PIDS
+#if  OPAL_THREADS_HAVE_DIFFERENT_PIDS
 static void
 internal_waitpid_callback(int fd, short event, void *arg)
 {

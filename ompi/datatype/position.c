@@ -28,12 +28,12 @@
 #endif
 #include <stdlib.h>
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
 extern int ompi_position_debug;
 #define DO_DEBUG(INST)  if( ompi_position_debug ) { INST }
 #else
 #define DO_DEBUG(INST)
-#endif  /* OMPI_ENABLE_DEBUG */
+#endif  /* OPAL_ENABLE_DEBUG */
 
 /* The pack/unpack functions need a cleanup. I have to create a proper interface to access
  * all basic functionalities, hence using them as basic blocks for all conversion functions.

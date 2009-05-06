@@ -331,7 +331,7 @@ opal_net_get_hostname(const struct sockaddr *addr)
         opal_output(0, "opal_sockaddr2str: malloc() failed\n");
         return NULL;
     }
-    OMPI_DEBUG_ZERO(*name);
+    OPAL_DEBUG_ZERO(*name);
 
     switch (addr->sa_family) {
     case AF_INET:

@@ -21,7 +21,7 @@
 
 #include "ompi/mpi/f77/bindings.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_PACK_EXTERNAL_SIZE = mpi_pack_external_size_f
 #pragma weak pmpi_pack_external_size = mpi_pack_external_size_f
 #pragma weak pmpi_pack_external_size_ = mpi_pack_external_size_f
@@ -36,14 +36,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_PACK_EXTERNAL_SIZE,
                            (datarep, incount, datatype, size, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_PACK_EXTERNAL_SIZE = mpi_pack_external_size_f
 #pragma weak mpi_pack_external_size = mpi_pack_external_size_f
 #pragma weak mpi_pack_external_size_ = mpi_pack_external_size_f
 #pragma weak mpi_pack_external_size__ = mpi_pack_external_size_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_PACK_EXTERNAL_SIZE,
                            mpi_pack_external_size,
                            mpi_pack_external_size_,
@@ -54,7 +54,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PACK_EXTERNAL_SIZE,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

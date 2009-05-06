@@ -21,7 +21,7 @@
 #include "ompi/mpi/f77/bindings.h"
 #include "ompi/group/group.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_GROUP_RANGE_INCL = mpi_group_range_incl_f
 #pragma weak pmpi_group_range_incl = mpi_group_range_incl_f
 #pragma weak pmpi_group_range_incl_ = mpi_group_range_incl_f
@@ -36,14 +36,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_RANGE_INCL,
                            (group, n, ranges, newgroup, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_GROUP_RANGE_INCL = mpi_group_range_incl_f
 #pragma weak mpi_group_range_incl = mpi_group_range_incl_f
 #pragma weak mpi_group_range_incl_ = mpi_group_range_incl_f
 #pragma weak mpi_group_range_incl__ = mpi_group_range_incl_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_RANGE_INCL,
                            mpi_group_range_incl,
                            mpi_group_range_incl_,
@@ -54,7 +54,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_RANGE_INCL,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

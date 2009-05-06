@@ -24,7 +24,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/win/win.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Win_get_group = PMPI_Win_get_group
 #endif
 

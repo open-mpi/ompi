@@ -34,13 +34,13 @@
 
 #include "opal_config.h"
 
-#if OMPI_HAVE_POSIX_THREADS
+#if OPAL_HAVE_POSIX_THREADS
 #ifdef HAVE_PTHREAD_H
 #include <pthread.h>
 #endif
 #include <errno.h>
 #include <stdio.h>
-#elif OMPI_HAVE_SOLARIS_THREADS
+#elif OPAL_HAVE_SOLARIS_THREADS
 #include <thread.h>
 #include <synch.h>
 #endif
@@ -53,13 +53,13 @@ BEGIN_C_DECLS
 struct opal_mutex_t {
     opal_object_t super;
 
-#if OMPI_HAVE_POSIX_THREADS
+#if OPAL_HAVE_POSIX_THREADS
     pthread_mutex_t m_lock_pthread;
-#elif OMPI_HAVE_SOLARIS_THREADS
+#elif OPAL_HAVE_SOLARIS_THREADS
     mutex_t m_lock_solaris;
 #endif
 
-#if !OMPI_HAVE_THREAD_SUPPORT && OMPI_ENABLE_DEBUG
+#if !OPAL_HAVE_THREAD_SUPPORT && OPAL_ENABLE_DEBUG
     int m_lock_debug;
     const char *m_lock_file;
     int m_lock_line;
@@ -75,7 +75,7 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_mutex_t);
  *
  ************************************************************************/
 
-#if OMPI_HAVE_POSIX_THREADS
+#if OPAL_HAVE_POSIX_THREADS
 
 /************************************************************************
  * POSIX threads
@@ -83,7 +83,7 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_mutex_t);
 
 static inline int opal_mutex_trylock(opal_mutex_t *m)
 {
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     int ret = pthread_mutex_trylock(&m->m_lock_pthread);
     if (ret == EDEADLK) {
         errno = ret;
@@ -98,7 +98,7 @@ static inline int opal_mutex_trylock(opal_mutex_t *m)
 
 static inline void opal_mutex_lock(opal_mutex_t *m)
 {
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     int ret = pthread_mutex_lock(&m->m_lock_pthread);
     if (ret == EDEADLK) {
         errno = ret;
@@ -112,7 +112,7 @@ static inline void opal_mutex_lock(opal_mutex_t *m)
 
 static inline void opal_mutex_unlock(opal_mutex_t *m)
 {
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     int ret = pthread_mutex_unlock(&m->m_lock_pthread);
     if (ret == EPERM) {
         errno = ret;
@@ -124,7 +124,7 @@ static inline void opal_mutex_unlock(opal_mutex_t *m)
 #endif
 }
 
-#elif OMPI_HAVE_SOLARIS_THREADS
+#elif OPAL_HAVE_SOLARIS_THREADS
 
 /************************************************************************
  * Solaris threads

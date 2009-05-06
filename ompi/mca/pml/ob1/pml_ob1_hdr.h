@@ -73,11 +73,11 @@ struct mca_pml_ob1_match_hdr_t {
     int32_t  hdr_src;                      /**< source rank */
     int32_t  hdr_tag;                      /**< user tag */
     uint16_t hdr_seq;                      /**< message sequence number */
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     uint8_t  hdr_padding[2];               /**< explicitly pad to 16 bytes.  Compilers seem to already prefer to do this, but make it explicit just in case */
 #endif
 };
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
 #define OMPI_PML_OB1_MATCH_HDR_LEN  16
 #else
 #define OMPI_PML_OB1_MATCH_HDR_LEN  14
@@ -85,7 +85,7 @@ struct mca_pml_ob1_match_hdr_t {
 
 typedef struct mca_pml_ob1_match_hdr_t mca_pml_ob1_match_hdr_t;
 
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
 #define MCA_PML_OB1_MATCH_HDR_FILL(h) \
 do {                                  \
     (h).hdr_padding[0] = 0;           \
@@ -93,7 +93,7 @@ do {                                  \
 } while(0)
 #else
 #define MCA_PML_OB1_MATCH_HDR_FILL(h)
-#endif  /* OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG */
+#endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG */
 
 #define MCA_PML_OB1_MATCH_HDR_NTOH(h) \
 do { \
@@ -126,12 +126,12 @@ struct mca_pml_ob1_rendezvous_hdr_t {
 };
 typedef struct mca_pml_ob1_rendezvous_hdr_t mca_pml_ob1_rendezvous_hdr_t;
 
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
 #define MCA_PML_OB1_RNDV_HDR_FILL(h) \
     MCA_PML_OB1_MATCH_HDR_FILL((h).hdr_match)
 #else
 #define MCA_PML_OB1_RNDV_HDR_FILL(h)
-#endif  /* OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG */
+#endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG */
 
 /* Note that hdr_src_req is not put in network byte order because it
    is never processed by the receiver, other than being copied into
@@ -155,7 +155,7 @@ typedef struct mca_pml_ob1_rendezvous_hdr_t mca_pml_ob1_rendezvous_hdr_t;
 struct mca_pml_ob1_rget_hdr_t {
     mca_pml_ob1_rendezvous_hdr_t hdr_rndv;
     uint32_t hdr_seg_cnt;                     /**< number of segments for rdma */
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     uint8_t hdr_padding[4];
 #endif
     ompi_ptr_t hdr_des;                       /**< source descriptor */
@@ -163,7 +163,7 @@ struct mca_pml_ob1_rget_hdr_t {
 };
 typedef struct mca_pml_ob1_rget_hdr_t mca_pml_ob1_rget_hdr_t;
 
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
 #define MCA_PML_OB1_RGET_HDR_FILL(h)         \
 do {                                         \
     MCA_PML_OB1_RNDV_HDR_FILL((h).hdr_rndv); \
@@ -174,7 +174,7 @@ do {                                         \
 } while(0)
 #else
 #define MCA_PML_OB1_RGET_HDR_FILL(h)
-#endif  /* OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG */
+#endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG */
 
 #define MCA_PML_OB1_RGET_HDR_NTOH(h) \
     do { \
@@ -194,7 +194,7 @@ do {                                         \
  */
 struct mca_pml_ob1_frag_hdr_t {
     mca_pml_ob1_common_hdr_t hdr_common;     /**< common attributes */
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     uint8_t hdr_padding[6];
 #endif
     uint64_t hdr_frag_offset;                /**< offset into message */
@@ -203,7 +203,7 @@ struct mca_pml_ob1_frag_hdr_t {
 };
 typedef struct mca_pml_ob1_frag_hdr_t mca_pml_ob1_frag_hdr_t;
 
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
 #define MCA_PML_OB1_FRAG_HDR_FILL(h) \
 do {                                 \
   (h).hdr_padding[0] = 0;            \
@@ -215,7 +215,7 @@ do {                                 \
 } while(0)
 #else
 #define MCA_PML_OB1_FRAG_HDR_FILL(h)
-#endif  /* OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG */
+#endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG */
 
 #define MCA_PML_OB1_FRAG_HDR_NTOH(h) \
     do { \
@@ -236,7 +236,7 @@ do {                                 \
 
 struct mca_pml_ob1_ack_hdr_t {
     mca_pml_ob1_common_hdr_t hdr_common;      /**< common attributes */
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     uint8_t hdr_padding[6];
 #endif
     ompi_ptr_t hdr_src_req;                   /**< source request */
@@ -245,7 +245,7 @@ struct mca_pml_ob1_ack_hdr_t {
 };
 typedef struct mca_pml_ob1_ack_hdr_t mca_pml_ob1_ack_hdr_t;
 
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
 #define MCA_PML_OB1_ACK_HDR_FILL(h) \
 do {                                \
     (h).hdr_padding[0] = 0;         \
@@ -257,7 +257,7 @@ do {                                \
 } while (0)
 #else
 #define MCA_PML_OB1_ACK_HDR_FILL(h)
-#endif  /* OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG */
+#endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG */
 
 /* Note that the request headers are not put in NBO because the
    src_req is already in receiver's byte order and the dst_req is not
@@ -282,7 +282,7 @@ do {                                \
 
 struct mca_pml_ob1_rdma_hdr_t {
     mca_pml_ob1_common_hdr_t hdr_common;      /**< common attributes */
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     uint8_t hdr_padding[2];                   /** two to pad out the hdr to a 4 byte alignment.  hdr_req will then be 8 byte aligned after 4 for hdr_seg_cnt */
 #endif
     uint32_t hdr_seg_cnt;                     /**< number of segments for rdma */
@@ -293,7 +293,7 @@ struct mca_pml_ob1_rdma_hdr_t {
 };
 typedef struct mca_pml_ob1_rdma_hdr_t mca_pml_ob1_rdma_hdr_t;
 
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
 #define MCA_PML_OB1_RDMA_HDR_FILL(h) \
 do {                                 \
     (h).hdr_padding[0] = 0;          \
@@ -301,7 +301,7 @@ do {                                 \
 } while(0)
 #else
 #define MCA_PML_OB1_RDMA_HDR_FILL(h)
-#endif  /* OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG */
+#endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG */
 
 #define MCA_PML_OB1_RDMA_HDR_NTOH(h) \
     do { \
@@ -324,7 +324,7 @@ do {                                 \
 
 struct mca_pml_ob1_fin_hdr_t {
     mca_pml_ob1_common_hdr_t hdr_common;      /**< common attributes */
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     uint8_t hdr_padding[2];
 #endif
     uint32_t hdr_fail;                        /**< RDMA operation failed */
@@ -332,7 +332,7 @@ struct mca_pml_ob1_fin_hdr_t {
 };
 typedef struct mca_pml_ob1_fin_hdr_t mca_pml_ob1_fin_hdr_t;
 
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
 #define MCA_PML_OB1_FIN_HDR_FILL(h) \
 do {                                \
     (h).hdr_padding[0] = 0;         \
@@ -340,7 +340,7 @@ do {                                \
 } while (0)
 #else
 #define MCA_PML_OB1_FIN_HDR_FILL(h)
-#endif  /* OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG */
+#endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG */
 
 #define MCA_PML_OB1_FIN_HDR_NTOH(h) \
     do { \
@@ -368,7 +368,7 @@ union mca_pml_ob1_hdr_t {
 };
 typedef union mca_pml_ob1_hdr_t mca_pml_ob1_hdr_t;
 
-#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if !defined(WORDS_BIGENDIAN) && OPAL_ENABLE_HETEROGENEOUS_SUPPORT
 static inline __opal_attribute_always_inline__ void
 ob1_hdr_ntoh(mca_pml_ob1_hdr_t *hdr, const uint8_t hdr_type)
 {
@@ -406,7 +406,7 @@ ob1_hdr_ntoh(mca_pml_ob1_hdr_t *hdr, const uint8_t hdr_type)
 #define ob1_hdr_ntoh(h, t) do{}while(0)
 #endif
 
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
 #define ob1_hdr_hton(h, t, p) \
     ob1_hdr_hton_intr((mca_pml_ob1_hdr_t*)h, t, p)
 static inline __opal_attribute_always_inline__ void

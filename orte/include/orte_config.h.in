@@ -53,7 +53,7 @@
 
 #else
 
-#  if OMPI_C_HAVE_VISIBILITY
+#  if OPAL_C_HAVE_VISIBILITY
 #    define ORTE_DECLSPEC           __opal_attribute_visibility__("default")
 #    define ORTE_MODULE_DECLSPEC    __opal_attribute_visibility__("default")
 #  else

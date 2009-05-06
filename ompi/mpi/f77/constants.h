@@ -113,7 +113,7 @@ DECL(double, MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
  * Create macros to do the checking.  Only check for all 4 if we have
  * weak symbols.  Otherwise, just check for the one relevant symbol.
  */
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #define OMPI_IS_FORTRAN_BOTTOM(addr) \
   (addr == (void*) &MPI_FORTRAN_BOTTOM || \
    addr == (void*) &mpi_fortran_bottom || \

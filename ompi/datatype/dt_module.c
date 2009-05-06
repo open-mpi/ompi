@@ -28,13 +28,13 @@
 #include "ompi/datatype/convertor_internal.h"
 #include <stdio.h>
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
 #include "opal/mca/base/mca_base_param.h"
 int ompi_unpack_debug   = 0;
 int ompi_pack_debug     = 0;
 int ompi_copy_debug     = 0;
 int ompi_position_debug = 0;
-#endif  /* OMPI_ENABLE_DEBUG */
+#endif  /* OPAL_ENABLE_DEBUG */
 
 extern size_t ompi_datatype_memcpy_block_size;
 
@@ -100,20 +100,20 @@ OMPI_DECLSPEC ompi_datatype_t ompi_mpi_loop = INIT_BASIC_TYPE( DT_LOOP, LOOP );
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_end_loop = INIT_BASIC_TYPE( DT_END_LOOP, END_LOOP );
 OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_ub = { INIT_BASIC_TYPE( DT_UB, UB) };
 OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_lb = { INIT_BASIC_TYPE( DT_LB, LB) };
-OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_char = { INIT_BASIC_DATA( char, OMPI_ALIGNMENT_CHAR, CHAR, DT_FLAG_DATA_C ) };
-OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_character = { INIT_BASIC_DATA( char, OMPI_ALIGNMENT_CHAR, CHARACTER, DT_FLAG_DATA_FORTRAN) };
-OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_unsigned_char = { INIT_BASIC_DATA( unsigned char, OMPI_ALIGNMENT_CHAR, UNSIGNED_CHAR, DT_FLAG_DATA_C) };
-OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_signed_char = { INIT_BASIC_DATA( signed char, OMPI_ALIGNMENT_CHAR, SIGNED_CHAR, DT_FLAG_DATA_C | DT_FLAG_DATA_INT) };
-OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_byte = { INIT_BASIC_DATA( unsigned char, OMPI_ALIGNMENT_CHAR, BYTE, DT_FLAG_DATA_C | DT_FLAG_DATA_INT ) };
-OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_short = { INIT_BASIC_DATA( short, OMPI_ALIGNMENT_SHORT, SHORT, DT_FLAG_DATA_C | DT_FLAG_DATA_INT) };
-OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_unsigned_short = { INIT_BASIC_DATA( unsigned short, OMPI_ALIGNMENT_SHORT, UNSIGNED_SHORT, DT_FLAG_DATA_C | DT_FLAG_DATA_INT) };
-OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_int = { INIT_BASIC_DATA( int, OMPI_ALIGNMENT_INT, INT, DT_FLAG_DATA_C | DT_FLAG_DATA_INT) };
-OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_unsigned = { INIT_BASIC_DATA_WITH_NAME( unsigned int, OMPI_ALIGNMENT_INT, UNSIGNED_INT, UNSIGNED, DT_FLAG_DATA_C | DT_FLAG_DATA_INT) };
-OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_long = { INIT_BASIC_DATA( long, OMPI_ALIGNMENT_LONG, LONG, DT_FLAG_DATA_C | DT_FLAG_DATA_INT) };
-OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_unsigned_long = { INIT_BASIC_DATA( unsigned long, OMPI_ALIGNMENT_LONG, UNSIGNED_LONG, DT_FLAG_DATA_C | DT_FLAG_DATA_INT) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_char = { INIT_BASIC_DATA( char, OPAL_ALIGNMENT_CHAR, CHAR, DT_FLAG_DATA_C ) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_character = { INIT_BASIC_DATA( char, OPAL_ALIGNMENT_CHAR, CHARACTER, DT_FLAG_DATA_FORTRAN) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_unsigned_char = { INIT_BASIC_DATA( unsigned char, OPAL_ALIGNMENT_CHAR, UNSIGNED_CHAR, DT_FLAG_DATA_C) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_signed_char = { INIT_BASIC_DATA( signed char, OPAL_ALIGNMENT_CHAR, SIGNED_CHAR, DT_FLAG_DATA_C | DT_FLAG_DATA_INT) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_byte = { INIT_BASIC_DATA( unsigned char, OPAL_ALIGNMENT_CHAR, BYTE, DT_FLAG_DATA_C | DT_FLAG_DATA_INT ) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_short = { INIT_BASIC_DATA( short, OPAL_ALIGNMENT_SHORT, SHORT, DT_FLAG_DATA_C | DT_FLAG_DATA_INT) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_unsigned_short = { INIT_BASIC_DATA( unsigned short, OPAL_ALIGNMENT_SHORT, UNSIGNED_SHORT, DT_FLAG_DATA_C | DT_FLAG_DATA_INT) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_int = { INIT_BASIC_DATA( int, OPAL_ALIGNMENT_INT, INT, DT_FLAG_DATA_C | DT_FLAG_DATA_INT) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_unsigned = { INIT_BASIC_DATA_WITH_NAME( unsigned int, OPAL_ALIGNMENT_INT, UNSIGNED_INT, UNSIGNED, DT_FLAG_DATA_C | DT_FLAG_DATA_INT) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_long = { INIT_BASIC_DATA( long, OPAL_ALIGNMENT_LONG, LONG, DT_FLAG_DATA_C | DT_FLAG_DATA_INT) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_unsigned_long = { INIT_BASIC_DATA( unsigned long, OPAL_ALIGNMENT_LONG, UNSIGNED_LONG, DT_FLAG_DATA_C | DT_FLAG_DATA_INT) };
 #if HAVE_LONG_LONG
-OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_long_long_int = { INIT_BASIC_DATA_WITH_NAME( long long, OMPI_ALIGNMENT_LONG_LONG, LONG_LONG_INT, LONG_LONG, DT_FLAG_DATA_C | DT_FLAG_DATA_INT) };
-OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_unsigned_long_long = { INIT_BASIC_DATA( unsigned long long, OMPI_ALIGNMENT_LONG_LONG, UNSIGNED_LONG_LONG, DT_FLAG_DATA_C | DT_FLAG_DATA_INT) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_long_long_int = { INIT_BASIC_DATA_WITH_NAME( long long, OPAL_ALIGNMENT_LONG_LONG, LONG_LONG_INT, LONG_LONG, DT_FLAG_DATA_C | DT_FLAG_DATA_INT) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_unsigned_long_long = { INIT_BASIC_DATA( unsigned long long, OPAL_ALIGNMENT_LONG_LONG, UNSIGNED_LONG_LONG, DT_FLAG_DATA_C | DT_FLAG_DATA_INT) };
 #else
 OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_long_long_int = { INIT_UNAVAILABLE_DATA( LONG_LONG_INT) };
 OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_unsigned_long_long = { INIT_UNAVAILABLE_DATA( UNIGNED_LONG_LONG) };
@@ -121,11 +121,11 @@ OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_unsigned_long_long = { INIT_UN
 OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_float = { INIT_BASIC_DATA( float, OMPI_ALIGNMENT_FLOAT, FLOAT, DT_FLAG_DATA_C | DT_FLAG_DATA_FLOAT) };
 OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_double = { INIT_BASIC_DATA( double, OMPI_ALIGNMENT_DOUBLE, DOUBLE, DT_FLAG_DATA_C | DT_FLAG_DATA_FLOAT) };
 #if HAVE_LONG_DOUBLE
-OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_long_double = { INIT_BASIC_DATA( long double, OMPI_ALIGNMENT_LONG_DOUBLE, LONG_DOUBLE, DT_FLAG_DATA_C | DT_FLAG_DATA_FLOAT) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_long_double = { INIT_BASIC_DATA( long double, OPAL_ALIGNMENT_LONG_DOUBLE, LONG_DOUBLE, DT_FLAG_DATA_C | DT_FLAG_DATA_FLOAT) };
 #else
 OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_long_double = { INIT_UNAVAILABLE_DATA( LONG_DOUBLE) };
 #endif  /* HAVE_LONG_DOUBLE */
-OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_packed = { INIT_BASIC_DATA( char, OMPI_ALIGNMENT_CHAR, PACKED, 0) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_packed = { INIT_BASIC_DATA( char, OPAL_ALIGNMENT_CHAR, PACKED, 0) };
 #if OMPI_ALIGNMENT_WCHAR != 0
 OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_wchar = { INIT_BASIC_DATA( wchar_t, OMPI_ALIGNMENT_WCHAR, WCHAR, DT_FLAG_DATA_C) };
 #else
@@ -139,7 +139,7 @@ OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_real = { INIT_BASIC_FORTRAN_TY
 OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_dblprec = { INIT_BASIC_FORTRAN_TYPE( DT_DBLPREC, DOUBLE_PRECISION, OMPI_SIZEOF_FORTRAN_DOUBLE_PRECISION, OMPI_ALIGNMENT_FORTRAN_DOUBLE_PRECISION, DT_FLAG_DATA_FLOAT) };
 
 #if HAVE_LONG_DOUBLE
-OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_ldblcplex = { INIT_BASIC_DATA( ompi_complex_long_double_t, OMPI_ALIGNMENT_LONG_DOUBLE, COMPLEX_LONG_DOUBLE, DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_COMPLEX) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_ldblcplex = { INIT_BASIC_DATA( ompi_complex_long_double_t, OPAL_ALIGNMENT_LONG_DOUBLE, COMPLEX_LONG_DOUBLE, DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_COMPLEX) };
 #else
 OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_ldblcplex = { INIT_UNAVAILABLE_DATA( COMPLEX_LONG_DOUBLE) };
 #endif  /* HAVE_LONG_DOUBLE */
@@ -164,7 +164,7 @@ OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_2integer = { INIT_BASIC_TYPE( 
 OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_cxx_cplex = { INIT_BASIC_DATA( ompi_complex_float_t, OMPI_ALIGNMENT_FLOAT, COMPLEX_FLOAT, DT_FLAG_DATA_CPP | DT_FLAG_DATA_COMPLEX) };
 OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_cxx_dblcplex = { INIT_BASIC_DATA( ompi_complex_double_t, OMPI_ALIGNMENT_DOUBLE, COMPLEX_DOUBLE, DT_FLAG_DATA_CPP | DT_FLAG_DATA_COMPLEX) };
 #if HAVE_LONG_DOUBLE
-OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_cxx_ldblcplex = { INIT_BASIC_DATA( ompi_complex_long_double_t, OMPI_ALIGNMENT_LONG_DOUBLE, COMPLEX_LONG_DOUBLE, DT_FLAG_DATA_CPP | DT_FLAG_DATA_COMPLEX) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_cxx_ldblcplex = { INIT_BASIC_DATA( ompi_complex_long_double_t, OPAL_ALIGNMENT_LONG_DOUBLE, COMPLEX_LONG_DOUBLE, DT_FLAG_DATA_CPP | DT_FLAG_DATA_COMPLEX) };
 #else
 OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_cxx_ldblcplex = { INIT_UNAVAILABLE_DATA( COMPLEX_LONG_DOUBLE) };
 #endif  /* HAVE_LONG_DOUBLE */
@@ -397,7 +397,7 @@ size_t ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
 
 int ompi_ddt_register_params(void)
 {
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     mca_base_param_reg_int_name( "mpi", "ddt_unpack_debug",
                                  "Whether to output debugging information in the ddt unpack functions (nonzero = enabled)",
                                  false, false,
@@ -414,7 +414,7 @@ int ompi_ddt_register_params(void)
                                  "Whether to output debugging information in the ddt copy functions (nonzero = enabled)",
                                  false, false, 
                                  ompi_copy_debug, &ompi_copy_debug );
-#endif  /* OMPI_ENABLE_DEBUG */
+#endif  /* OPAL_ENABLE_DEBUG */
     return OMPI_SUCCESS;
 }
 
@@ -848,7 +848,7 @@ int32_t ompi_ddt_finalize( void )
     return OMPI_SUCCESS;
 }
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
 /*
  * Set a breakpoint to this function in your favorite debugger
  * to make it stop on all pack and unpack errors.
@@ -860,7 +860,7 @@ int ompi_ddt_safeguard_pointer_debug_breakpoint( const void* actual_ptr, int len
 {
     return 0;
 }
-#endif  /* OMPI_ENABLE_DEBUG */
+#endif  /* OPAL_ENABLE_DEBUG */
 
 /********************************************************
  * Data dumping functions

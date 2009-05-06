@@ -33,7 +33,7 @@
 
 #include "opal_config.h"
 
-#if OMPI_HAVE_BROKEN_QSORT
+#if OPAL_HAVE_BROKEN_QSORT
 
 #include <stdlib.h>
 
@@ -175,4 +175,4 @@ loop:	SWAPINIT(a, es);
 /*		qsort(pn - r, r / es, es, cmp);*/
 }
 
-#endif /* OMPI_HAVE_BROKEN_QSORT */
+#endif /* OPAL_HAVE_BROKEN_QSORT */

@@ -44,7 +44,7 @@ struct mca_pml_dr_send_request_t {
     mca_pml_base_send_request_t req_send;
     mca_pml_dr_comm_proc_t* req_proc;
     mca_pml_dr_endpoint_t* req_endpoint;
-#if OMPI_HAVE_THREAD_SUPPORT
+#if OPAL_HAVE_THREAD_SUPPORT
     volatile int32_t req_state;
     volatile int32_t req_lock;
 #else

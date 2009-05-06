@@ -26,7 +26,7 @@
  * If we have progress threads, always default to using threads.
  * Otherwise, wait and see if some upper layer wants to use threads.
  */
-bool opal_uses_threads = (bool) OMPI_ENABLE_PROGRESS_THREADS;
+bool opal_uses_threads = (bool) OPAL_ENABLE_PROGRESS_THREADS;
 bool opal_mutex_check_locks = false;
 
 
@@ -35,11 +35,11 @@ bool opal_mutex_check_locks = false;
 static void opal_mutex_construct(opal_mutex_t *m)
 {
     InterlockedExchange(&m->m_lock, 0);
-#if !OMPI_HAVE_THREAD_SUPPORT && OMPI_ENABLE_DEBUG
+#if !OPAL_HAVE_THREAD_SUPPORT && OPAL_ENABLE_DEBUG
     m->m_lock_debug = 0;
     m->m_lock_file = NULL;
     m->m_lock_line = 0;
-#endif  /* !OMPI_HAVE_THREAD_SUPPORT && OMPI_ENABLE_DEBUG */
+#endif  /* !OPAL_HAVE_THREAD_SUPPORT && OPAL_ENABLE_DEBUG */
 }
 
 static void opal_mutex_destruct(opal_mutex_t *m)
@@ -50,9 +50,9 @@ static void opal_mutex_destruct(opal_mutex_t *m)
 
 static void opal_mutex_construct(opal_mutex_t *m)
 {
-#if OMPI_HAVE_POSIX_THREADS
+#if OPAL_HAVE_POSIX_THREADS
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     pthread_mutexattr_t attr;
     pthread_mutexattr_init(&attr);
 
@@ -71,13 +71,13 @@ static void opal_mutex_construct(opal_mutex_t *m)
     /* Without debugging, choose the fastest available mutexes */
     pthread_mutex_init(&m->m_lock_pthread, NULL);
 
-#endif /* OMPI_ENABLE_DEBUG */
+#endif /* OPAL_ENABLE_DEBUG */
 
-#elif OMPI_HAVE_SOLARIS_THREADS
+#elif OPAL_HAVE_SOLARIS_THREADS
     mutex_init(&m->m_lock_solaris, USYNC_THREAD, NULL);
 #endif
 
-#if OMPI_ENABLE_DEBUG && !OMPI_HAVE_THREAD_SUPPORT
+#if OPAL_ENABLE_DEBUG && !OPAL_HAVE_THREAD_SUPPORT
     m->m_lock_debug = 0;
     m->m_lock_file = NULL;
     m->m_lock_line = 0;
@@ -90,9 +90,9 @@ static void opal_mutex_construct(opal_mutex_t *m)
 
 static void opal_mutex_destruct(opal_mutex_t *m)
 {
-#if OMPI_HAVE_POSIX_THREADS
+#if OPAL_HAVE_POSIX_THREADS
     pthread_mutex_destroy(&m->m_lock_pthread);
-#elif OMPI_HAVE_SOLARIS_THREADS
+#elif OPAL_HAVE_SOLARIS_THREADS
     mutex_destroy(&m->m_lock_solaris);
 #endif
 }

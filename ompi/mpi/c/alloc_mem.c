@@ -29,7 +29,7 @@
 #include "ompi/info/info.h"
 #include "ompi/mca/mpool/mpool.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Alloc_mem = PMPI_Alloc_mem
 #endif
 

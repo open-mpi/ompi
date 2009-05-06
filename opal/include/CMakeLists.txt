@@ -15,7 +15,7 @@
 CONFIGURE_FILE(${OpenMPI_SOURCE_DIR}/contrib/platform/win32/ConfigFiles/opal_config.h.cmake  ${OpenMPI_BINARY_DIR}/opal/include/opal_config.h)
 
 IF(HAVE_LONG_LONG)
-  SET(OMPI_HAVE_LONG_LONG 1)
+  SET(OPAL_HAVE_LONG_LONG 1)
 ENDIF(HAVE_LONG_LONG)
 
 # generate mpi.h and mpif.h

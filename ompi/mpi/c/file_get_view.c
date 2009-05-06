@@ -24,7 +24,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/file/file.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_File_get_view = PMPI_File_get_view
 #endif
 

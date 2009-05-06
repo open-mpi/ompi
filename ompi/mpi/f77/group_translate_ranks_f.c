@@ -21,7 +21,7 @@
 #include "ompi/mpi/f77/bindings.h"
 #include "ompi/group/group.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_GROUP_TRANSLATE_RANKS = mpi_group_translate_ranks_f
 #pragma weak pmpi_group_translate_ranks = mpi_group_translate_ranks_f
 #pragma weak pmpi_group_translate_ranks_ = mpi_group_translate_ranks_f
@@ -36,14 +36,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_TRANSLATE_RANKS,
                            (group1, n, ranks1, group2, ranks2, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_GROUP_TRANSLATE_RANKS = mpi_group_translate_ranks_f
 #pragma weak mpi_group_translate_ranks = mpi_group_translate_ranks_f
 #pragma weak mpi_group_translate_ranks_ = mpi_group_translate_ranks_f
 #pragma weak mpi_group_translate_ranks__ = mpi_group_translate_ranks_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_TRANSLATE_RANKS,
                            mpi_group_translate_ranks,
                            mpi_group_translate_ranks_,
@@ -54,7 +54,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_TRANSLATE_RANKS,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

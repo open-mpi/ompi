@@ -26,7 +26,7 @@
 #include "ompi/mca/topo/base/base.h"
 #include "ompi/memchecker.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Graph_create = PMPI_Graph_create
 #endif
 
@@ -96,8 +96,8 @@ int MPI_Graph_create(MPI_Comm old_comm, int nnodes, int *index,
             return OMPI_ERRHANDLER_INVOKE(old_comm, err, FUNC_NAME);
         }
         if (OMPI_SUCCESS != 
-            (err = mca_topo_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
-                                                OMPI_ENABLE_MPI_THREADS))) {
+            (err = mca_topo_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
+                                                OPAL_ENABLE_MPI_THREADS))) {
             return OMPI_ERRHANDLER_INVOKE(old_comm, err, FUNC_NAME);
         }
     }

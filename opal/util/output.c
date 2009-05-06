@@ -530,7 +530,7 @@ static int do_open(int output_id, opal_output_stream_t * lds)
         OPAL_THREAD_UNLOCK(&mutex);
     }
     info[i].ldi_enabled = lds->lds_is_debugging ?
-        (bool) OMPI_ENABLE_DEBUG : true;
+        (bool) OPAL_ENABLE_DEBUG : true;
     info[i].ldi_verbose_level = lds->lds_verbose_level;
 
 #if USE_SYSLOG
@@ -601,11 +601,11 @@ static int open_file(int i)
     /* Setup the filename and open flags */
 
     if (NULL != output_dir) {
-        filename = (char *) malloc(OMPI_PATH_MAX);
+        filename = (char *) malloc(OPAL_PATH_MAX);
         if (NULL == filename) {
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
-        strncpy(filename, output_dir, OMPI_PATH_MAX);
+        strncpy(filename, output_dir, OPAL_PATH_MAX);
         strcat(filename, "/");
         if (NULL != output_prefix) {
             strcat(filename, output_prefix);

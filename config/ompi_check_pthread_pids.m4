@@ -24,7 +24,7 @@ AC_DEFUN([OMPI_CHECK_PTHREAD_PIDS],[
 # Dependencies: None
 #
 # Sets:
-#  OMPI_THREADS_HAVE_DIFFERENT_PIDS (variable)
+#  OPAL_THREADS_HAVE_DIFFERENT_PIDS (variable)
 #
 # Test for Linux-like threads in the system. We will need to handle things like
 # getpid() differently in the case of a Linux-like threads model.
@@ -61,16 +61,16 @@ void *checkpid(void *arg) {
      ret = 1;
    pthread_exit((void *) &ret);
 }], 
-[MSG=no OMPI_THREADS_HAVE_DIFFERENT_PIDS=0], 
-[MSG=yes OMPI_THREADS_HAVE_DIFFERENT_PIDS=1],
+[MSG=no OPAL_THREADS_HAVE_DIFFERENT_PIDS=0], 
+[MSG=yes OPAL_THREADS_HAVE_DIFFERENT_PIDS=1],
 [case $host in
      *-linux*)
          MSG="cross compiling - assuming yes"
-         OMPI_THREADS_HAVE_DIFFERENT_PIDS=1
+         OPAL_THREADS_HAVE_DIFFERENT_PIDS=1
          ;;
      *)
          MSG="cross compiling - assuming no"
-         OMPI_THREADS_HAVE_DIFFERENT_PIDS=0
+         OPAL_THREADS_HAVE_DIFFERENT_PIDS=0
          ;;
  esac
 ])
@@ -81,7 +81,7 @@ LDFLAGS="$LDFLAGS_save"
 LIBS="$LIBS_save"
 
 AC_MSG_RESULT([$MSG])
-AC_DEFINE_UNQUOTED(OMPI_THREADS_HAVE_DIFFERENT_PIDS, $OMPI_THREADS_HAVE_DIFFERENT_PIDS)
+AC_DEFINE_UNQUOTED(OPAL_THREADS_HAVE_DIFFERENT_PIDS, $OPAL_THREADS_HAVE_DIFFERENT_PIDS)
 
 #
 # if pthreads is not available, then the system does not have an insane threads

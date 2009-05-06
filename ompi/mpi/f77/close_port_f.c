@@ -21,7 +21,7 @@
 #include "ompi/mpi/f77/bindings.h"
 #include "ompi/mpi/f77/f77_strings.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_CLOSE_PORT = mpi_close_port_f
 #pragma weak pmpi_close_port = mpi_close_port_f
 #pragma weak pmpi_close_port_ = mpi_close_port_f
@@ -36,14 +36,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_CLOSE_PORT,
                            (port_name, ierr, port_name_len) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_CLOSE_PORT = mpi_close_port_f
 #pragma weak mpi_close_port = mpi_close_port_f
 #pragma weak mpi_close_port_ = mpi_close_port_f
 #pragma weak mpi_close_port__ = mpi_close_port_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_CLOSE_PORT,
                            mpi_close_port,
                            mpi_close_port_,
@@ -54,7 +54,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CLOSE_PORT,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

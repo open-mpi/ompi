@@ -22,7 +22,7 @@
 #include "ompi/mpi/f77/f77_strings.h"
 #include "ompi/file/file.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_FILE_OPEN = mpi_file_open_f
 #pragma weak pmpi_file_open = mpi_file_open_f
 #pragma weak pmpi_file_open_ = mpi_file_open_f
@@ -37,14 +37,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_OPEN,
                            (comm, filename, amode, info, fh, ierr, name_len) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_FILE_OPEN = mpi_file_open_f
 #pragma weak mpi_file_open = mpi_file_open_f
 #pragma weak mpi_file_open_ = mpi_file_open_f
 #pragma weak mpi_file_open__ = mpi_file_open_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_FILE_OPEN,
                            mpi_file_open,
                            mpi_file_open_,
@@ -55,7 +55,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_OPEN,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

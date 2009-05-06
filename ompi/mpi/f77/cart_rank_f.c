@@ -20,7 +20,7 @@
 
 #include "ompi/mpi/f77/bindings.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_CART_RANK = mpi_cart_rank_f
 #pragma weak pmpi_cart_rank = mpi_cart_rank_f
 #pragma weak pmpi_cart_rank_ = mpi_cart_rank_f
@@ -35,14 +35,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_CART_RANK,
                            (comm, coords, rank, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_CART_RANK = mpi_cart_rank_f
 #pragma weak mpi_cart_rank = mpi_cart_rank_f
 #pragma weak mpi_cart_rank_ = mpi_cart_rank_f
 #pragma weak mpi_cart_rank__ = mpi_cart_rank_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_CART_RANK,
 			    mpi_cart_rank,
 			    mpi_cart_rank_,
@@ -53,7 +53,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CART_RANK,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

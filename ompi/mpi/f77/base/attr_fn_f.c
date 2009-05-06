@@ -22,7 +22,7 @@
 #include "ompi/mpi/f77/bindings.h"
 #include "ompi/mpi/f77/fint_2_int.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_TYPE_NULL_COPY_FN   = mpi_type_null_copy_fn_f
 #pragma weak mpi_type_null_copy_fn   = mpi_type_null_copy_fn_f
 #pragma weak mpi_type_null_copy_fn_  = mpi_type_null_copy_fn_f

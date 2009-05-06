@@ -39,7 +39,7 @@ struct start_info {
 
 static int atomic_spinlock_test(opal_atomic_lock_t *lock, int count, int id);
 
-#if OMPI_HAVE_POSIX_THREADS
+#if OPAL_HAVE_POSIX_THREADS
 static void* atomic_spinlock_start(void* arg)
 {
     struct start_info *data = (struct start_info*) arg;
@@ -53,7 +53,7 @@ static void* atomic_spinlock_start(void* arg)
 static int
 atomic_spinlock_test_th(opal_atomic_lock_t *lock, int count, int id, int thr_count)
 {
-#if OMPI_HAVE_POSIX_THREADS
+#if OPAL_HAVE_POSIX_THREADS
     pthread_t *th;
     int tid, ret = 0;
     struct start_info *data;

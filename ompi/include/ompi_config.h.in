@@ -107,7 +107,7 @@ typedef struct {
 
 #else
 
-#  if OMPI_C_HAVE_VISIBILITY
+#  if OPAL_C_HAVE_VISIBILITY
 #    ifndef OMPI_DECLSPEC
 #      define OMPI_DECLSPEC            __opal_attribute_visibility__("default")
 #    endif

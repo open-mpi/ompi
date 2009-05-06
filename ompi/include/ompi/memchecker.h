@@ -163,7 +163,7 @@ static inline int memchecker_comm(MPI_Comm comm)
     /* c_base */
     opal_memchecker_base_isdefined (&comm->c_base.obj_class, sizeof(opal_class_t *));
     opal_memchecker_base_isdefined ((void*)&comm->c_base.obj_reference_count, sizeof(volatile int32_t));
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     opal_memchecker_base_isdefined (&comm->c_base.obj_magic_id, sizeof(opal_object_t));
     opal_memchecker_base_isdefined (&comm->c_base.cls_init_file_name, sizeof(const char *));
     opal_memchecker_base_isdefined (&comm->c_base.cls_init_lineno, sizeof(int));
@@ -171,12 +171,12 @@ static inline int memchecker_comm(MPI_Comm comm)
     /* c_lock */
     opal_memchecker_base_isdefined (&comm->c_lock.super.obj_class, sizeof(opal_class_t *));
     opal_memchecker_base_isdefined ((void*)&comm->c_lock.super.obj_reference_count, sizeof(volatile int32_t));
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     opal_memchecker_base_isdefined (&comm->c_lock.super.obj_magic_id, sizeof(uint64_t));
     opal_memchecker_base_isdefined (&comm->c_lock.super.cls_init_file_name, sizeof(const char *));
     opal_memchecker_base_isdefined (&comm->c_lock.super.cls_init_lineno, sizeof(int));
 #endif
-#if OMPI_HAVE_POSIX_THREADS
+#if OPAL_HAVE_POSIX_THREADS
 /*
   opal_memchecker_base_isdefined (&comm->c_lock.m_lock_pthread.__m_reserved, sizeof(int));
   opal_memchecker_base_isdefined (&comm->c_lock.m_lock_pthread.__m_count, sizeof(int));
@@ -186,7 +186,7 @@ static inline int memchecker_comm(MPI_Comm comm)
   opal_memchecker_base_isdefined (&comm->c_lock.m_lock_pthread.__m_lock.__spinlock, sizeof(int));
 */
 #endif
-#if OMPI_HAVE_SOLARIS_THREADS
+#if OPAL_HAVE_SOLARIS_THREADS
     opal_memchecker_base_isdefined (&comm->c_lock.m_lock_solaris, sizeof(mutex_t));
 #endif
     /*
@@ -262,7 +262,7 @@ static inline int memchecker_request(MPI_Request *request)
 #if 0
     opal_memchecker_base_isdefined (&(*request)->super.super.super.obj_class, sizeof(opal_class_t *));
     opal_memchecker_base_isdefined ((void*)&(*request)->super.super.super.obj_reference_count, sizeof(volatile int32_t));
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     opal_memchecker_base_isdefined (&(*request)->super.super.super.obj_magic_id, sizeof(uint64_t));
     opal_memchecker_base_isdefined (&(*request)->super.super.super.cls_init_file_name, sizeof(const char *));
     opal_memchecker_base_isdefined (&(*request)->super.super.super.cls_init_lineno, sizeof(int));
@@ -270,7 +270,7 @@ static inline int memchecker_request(MPI_Request *request)
 
     opal_memchecker_base_isdefined ((void*)&(*request)->super.super.opal_list_next, sizeof(volatile struct opal_list_item_t *));
     opal_memchecker_base_isdefined ((void*)&(*request)->super.super.opal_list_prev, sizeof(volatile struct opal_list_item_t *));
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     opal_memchecker_base_isdefined ((void*)&(*request)->super.super.opal_list_item_refcount, sizeof(volatile int32_t));
     opal_memchecker_base_isdefined ((void*)&(*request)->super.super.opal_list_item_belong_to, sizeof(volatile struct opal_list_t *));
 #endif

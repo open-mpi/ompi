@@ -73,7 +73,7 @@ typedef struct mca_btl_openib_header_coalesced_t {
      } while(0)
 
 struct mca_btl_openib_footer_t {
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     uint32_t seq;
 #endif
     union {
@@ -94,7 +94,7 @@ typedef struct mca_btl_openib_footer_t mca_btl_openib_footer_t;
     } while (0)
 #endif
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
 #define BTL_OPENIB_FOOTER_SEQ_HTON(h)  ((h).seq = htonl((h).seq))
 #define BTL_OPENIB_FOOTER_SEQ_NTOH(h)  ((h).seq = ntohl((h).seq))
 #else

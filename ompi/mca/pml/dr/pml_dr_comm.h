@@ -34,7 +34,7 @@ extern "C" {
 struct mca_pml_dr_comm_proc_t {
     opal_object_t super;
     uint16_t expected_sequence;    /**< send message sequence number - receiver side */
-#if OMPI_HAVE_THREAD_SUPPORT
+#if OPAL_HAVE_THREAD_SUPPORT
     volatile int32_t send_sequence; /**< send side sequence number */
 #else
     int32_t send_sequence; /**< send side sequence number */
@@ -56,7 +56,7 @@ typedef struct mca_pml_dr_comm_proc_t mca_pml_dr_comm_proc_t;
  */
 struct mca_pml_comm_t {
     opal_object_t super;
-#if OMPI_HAVE_THREAD_SUPPORT
+#if OPAL_HAVE_THREAD_SUPPORT
     volatile uint32_t recv_sequence;  /**< recv request sequence number - receiver side */
 #else
     uint32_t recv_sequence;  /**< recv request sequence number - receiver side */

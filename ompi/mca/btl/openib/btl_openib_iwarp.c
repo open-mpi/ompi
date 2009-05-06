@@ -46,7 +46,7 @@ static OBJ_CLASS_INSTANCE(rdma_addr_list_t, opal_list_item_t,
                           NULL, NULL);
 static opal_list_t *myaddrs = NULL;
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
 static char *stringify(uint32_t addr)
 {
     static char line[64];

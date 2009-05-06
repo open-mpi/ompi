@@ -541,7 +541,7 @@ ompi_btl_openib_connect_base_component_t ompi_btl_openib_connect_ibcm = {
 
 /*--------------------------------------------------------------------*/
 
-#define ENABLE_TIMERS (OMPI_ENABLE_DEBUG && 0)
+#define ENABLE_TIMERS (OPAL_ENABLE_DEBUG && 0)
 
 #if ENABLE_TIMERS 
 #include MCA_timer_IMPLEMENTATION_HEADER

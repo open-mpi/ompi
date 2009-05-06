@@ -41,7 +41,7 @@ struct opal_mutex_t {
     opal_object_t super;
     volatile LONG m_lock;
 
-#if !OMPI_HAVE_THREAD_SUPPORT && OMPI_ENABLE_DEBUG
+#if !OPAL_HAVE_THREAD_SUPPORT && OPAL_ENABLE_DEBUG
     int m_lock_debug;
     const char *m_lock_file;
     int m_lock_line;

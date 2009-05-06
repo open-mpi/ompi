@@ -1015,7 +1015,7 @@ int orte_plm_bproc_launch(orte_jobid_t jobid) {
     int num_slots;
     int context;
     int i;
-    char cwd_save[OMPI_PATH_MAX + 1];
+    char cwd_save[OPAL_PATH_MAX + 1];
     orte_ras_node_t *ras_node;
     char **daemon_env;
     opal_list_t nodelist;
@@ -1341,7 +1341,7 @@ int orte_plm_bproc_finalize(void)
  * Handle threading issues.
  */
 
-#if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS
+#if OPAL_HAVE_POSIX_THREADS && OPAL_THREADS_HAVE_DIFFERENT_PIDS
 
 struct orte_plm_bproc_stack_t {
     opal_condition_t cond;

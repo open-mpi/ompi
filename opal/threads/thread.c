@@ -37,9 +37,9 @@ static void opal_thread_construct(opal_thread_t *t)
     t->t_run = 0;
 #ifdef __WINDOWS__
     t->t_handle = (HANDLE)NULL;
-#elif OMPI_HAVE_POSIX_THREADS
+#elif OPAL_HAVE_POSIX_THREADS
     t->t_handle = (pthread_t) -1;
-#elif OMPI_HAVE_SOLARIS_THREADS
+#elif OPAL_HAVE_SOLARIS_THREADS
     t->t_handle = (thread_t) -1;
 #endif
 }
@@ -55,7 +55,7 @@ int opal_thread_start(opal_thread_t *t)
 {
     DWORD tid;
 
-    if (OMPI_ENABLE_DEBUG) {
+    if (OPAL_ENABLE_DEBUG) {
         if (NULL == t->t_run || t->t_handle != (HANDLE) -1L) {
             return OPAL_ERR_BAD_PARAM;
         }
@@ -112,7 +112,7 @@ opal_thread_t *opal_thread_get_self(void)
 
 
 
-#elif OMPI_HAVE_POSIX_THREADS
+#elif OPAL_HAVE_POSIX_THREADS
 
 /************************************************************************
  * POSIX threads
@@ -122,7 +122,7 @@ int opal_thread_start(opal_thread_t *t)
 {
     int rc;
 
-    if (OMPI_ENABLE_DEBUG) {
+    if (OPAL_ENABLE_DEBUG) {
         if (NULL == t->t_run || t->t_handle != (pthread_t) -1) {
             return OPAL_ERR_BAD_PARAM;
         }
@@ -156,7 +156,7 @@ opal_thread_t *opal_thread_get_self(void)
 }
 
 
-#elif OMPI_HAVE_SOLARIS_THREADS
+#elif OPAL_HAVE_SOLARIS_THREADS
 
 /************************************************************************
  * Solaris threads
@@ -166,7 +166,7 @@ int opal_thread_start(opal_thread_t *t)
 {
     int rc;
 
-    if (OMPI_ENABLE_DEBUG) {
+    if (OPAL_ENABLE_DEBUG) {
         if (NULL == t->t_run || t->t_handle != (thread_t) -1) {
             return OPAL_ERR_BAD_PARAM;
         }

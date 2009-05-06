@@ -64,7 +64,7 @@ mca_btl_portals_send(struct mca_btl_base_module_t* btl_base,
         mca_btl_portals_module.md_send.start = frag->segments[0].seg_addr.pval;
         mca_btl_portals_module.md_send.length = 
             0 == frag->size ? frag->segments[0].seg_len : frag->size;
-#if OMPI_ENABLE_DEBUG 
+#if OPAL_ENABLE_DEBUG 
         mca_btl_portals_module.md_send.options = 
             PTL_MD_EVENT_START_DISABLE;
 #else 
@@ -204,7 +204,7 @@ int mca_btl_portals_sendi(struct mca_btl_base_module_t* btl_base,
         mca_btl_portals_module.md_send.start = frag->segments[0].seg_addr.pval;
         mca_btl_portals_module.md_send.length = 
             0 == frag->size ? frag->segments[0].seg_len : frag->size;
-#if OMPI_ENABLE_DEBUG 
+#if OPAL_ENABLE_DEBUG 
         mca_btl_portals_module.md_send.options = 
             PTL_MD_EVENT_START_DISABLE;
 #else 

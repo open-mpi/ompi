@@ -21,7 +21,7 @@
 #include "ompi/mpi/f77/bindings.h"
 #include "ompi/mpi/f77/constants.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_STATUS_SET_ELEMENTS = mpi_status_set_elements_f
 #pragma weak pmpi_status_set_elements = mpi_status_set_elements_f
 #pragma weak pmpi_status_set_elements_ = mpi_status_set_elements_f
@@ -36,14 +36,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_STATUS_SET_ELEMENTS,
                            (status, datatype, count, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_STATUS_SET_ELEMENTS = mpi_status_set_elements_f
 #pragma weak mpi_status_set_elements = mpi_status_set_elements_f
 #pragma weak mpi_status_set_elements_ = mpi_status_set_elements_f
 #pragma weak mpi_status_set_elements__ = mpi_status_set_elements_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_STATUS_SET_ELEMENTS,
                            mpi_status_set_elements,
                            mpi_status_set_elements_,
@@ -54,7 +54,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_STATUS_SET_ELEMENTS,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

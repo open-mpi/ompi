@@ -1212,7 +1212,7 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
 
     /* Some mem checkers don't realize that hdr will guarantee to be
        fully filled in during the read(), below :-( */
-    OMPI_DEBUG_ZERO(hdr);
+    OPAL_DEBUG_ZERO(hdr);
 
     /* recv the process identifier */
     while((rc = recv(sd, (char *)&hdr, sizeof(hdr), 0)) != sizeof(hdr)) {

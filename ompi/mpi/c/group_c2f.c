@@ -25,7 +25,7 @@
 #include "ompi/mpi/f77/fint_2_int.h"
 #include "ompi/group/group.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Group_c2f = PMPI_Group_c2f
 #endif
 

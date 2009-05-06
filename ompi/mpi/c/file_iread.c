@@ -28,7 +28,7 @@
 #include "ompi/mca/io/base/io_base_request.h"
 #include "ompi/memchecker.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_File_iread = PMPI_File_iread
 #endif
 

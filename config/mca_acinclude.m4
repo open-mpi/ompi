@@ -22,14 +22,14 @@ dnl Tests provided by OMPI
 dnl General tests
 dnl
 
-sinclude(@M4DIR@/ompi_functions.m4)
+sinclude(@M4DIR@/opal_functions.m4)
 sinclude(@M4DIR@/ompi_get_version.m4)
 
 dnl
 dnl C compiler tests
 dnl
 
-sinclude(@M4DIR@/ompi_setup_cc.m4)
+sinclude(@M4DIR@/opal_setup_cc.m4)
 sinclude(@M4DIR@/ompi_check_optflags.m4)
 sinclude(@M4DIR@/ompi_check_vendor.m4)
 

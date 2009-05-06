@@ -26,7 +26,7 @@
 
 #define ASI_P "0x80"
 
-#if OMPI_WANT_SMP_LOCKS
+#if OPAL_WANT_SMP_LOCKS
 #define MEMBAR(type) __asm__  __volatile__ ("membar " type : : : "memory")
 #else
 #define MEMBAR(type)
@@ -119,7 +119,7 @@ static inline int opal_atomic_cmpset_rel_32( volatile int32_t *addr,
 }
 
 
-#if OMPI_ASSEMBLY_ARCH == OMPI_SPARCV9_64
+#if OPAL_ASSEMBLY_ARCH == OMPI_SPARCV9_64
 
 static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
                                          int64_t oldval, int64_t newval)
@@ -139,7 +139,7 @@ static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
    return (ret == oldval);
 }
 
-#else /* OMPI_ASSEMBLY_ARCH == OMPI_SPARCV9_64 */
+#else /* OPAL_ASSEMBLY_ARCH == OMPI_SPARCV9_64 */
 
 static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
                                          int64_t oldval, int64_t newval)
@@ -167,7 +167,7 @@ static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
    return (ret == oldval);
 }
 
-#endif /* OMPI_ASSEMBLY_ARCH == OMPI_SPARCV9_64 */
+#endif /* OPAL_ASSEMBLY_ARCH == OMPI_SPARCV9_64 */
 
 static inline int opal_atomic_cmpset_acq_64( volatile int64_t *addr,
                                              int64_t oldval, int64_t newval)

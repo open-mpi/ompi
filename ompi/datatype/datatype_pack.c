@@ -21,12 +21,12 @@
 #include "ompi/datatype/convertor_internal.h"
 #include "ompi/datatype/datatype_internal.h"
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
 extern int ompi_pack_debug;
 #define DO_DEBUG(INST)  if( ompi_pack_debug ) { INST }
 #else
 #define DO_DEBUG(INST)
-#endif  /* OMPI_ENABLE_DEBUG */
+#endif  /* OPAL_ENABLE_DEBUG */
 
 #include "ompi/datatype/datatype_checksum.h"
 #include "ompi/datatype/datatype_pack.h"

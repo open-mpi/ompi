@@ -20,7 +20,7 @@
 
 #include "ompi/mpi/f77/bindings.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_ALLOC_MEM = mpi_alloc_mem_f
 #pragma weak pmpi_alloc_mem = mpi_alloc_mem_f
 #pragma weak pmpi_alloc_mem_ = mpi_alloc_mem_f
@@ -35,14 +35,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ALLOC_MEM,
                            (size, info, baseptr, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_ALLOC_MEM = mpi_alloc_mem_f
 #pragma weak mpi_alloc_mem = mpi_alloc_mem_f
 #pragma weak mpi_alloc_mem_ = mpi_alloc_mem_f
 #pragma weak mpi_alloc_mem__ = mpi_alloc_mem_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_ALLOC_MEM,
                            mpi_alloc_mem,
                            mpi_alloc_mem_,
@@ -53,7 +53,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ALLOC_MEM,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

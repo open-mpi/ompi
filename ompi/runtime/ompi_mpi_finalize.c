@@ -135,7 +135,7 @@ int ompi_mpi_finalize(void)
 
     ompi_mpi_finalized = true;
 
-#if OMPI_ENABLE_PROGRESS_THREADS == 0
+#if OPAL_ENABLE_PROGRESS_THREADS == 0
     opal_progress_set_event_flag(OPAL_EVLOOP_ONELOOP);
 #endif
 

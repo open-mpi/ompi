@@ -25,7 +25,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Buffer_attach = PMPI_Buffer_attach
 #endif
 

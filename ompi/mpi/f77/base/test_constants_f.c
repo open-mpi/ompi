@@ -27,14 +27,14 @@
 
 PN(void, ompi_test_fortran_constants, OMPI_TEST_FORTRAN_CONSTANTS, (char *bottom, char *in_place, char *argv, char *argvs, char *status, char *statuses, MPI_Fint *flag));
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak OMPI_TEST_FORTRAN_CONSTANTS = ompi_test_fortran_constants_f
 #pragma weak ompi_test_fortran_constants = ompi_test_fortran_constants_f
 #pragma weak ompi_test_fortran_constants_ = ompi_test_fortran_constants_f
 #pragma weak ompi_test_fortran_constants__ = ompi_test_fortran_constants_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS
+#if ! OPAL_HAVE_WEAK_SYMBOLS
 OMPI_GENERATE_F77_BINDINGS (OMPI_TEST_FORTRAN_CONSTANTS,
                             ompi_test_fortran_constants,
                             ompi_test_fortran_constants_,

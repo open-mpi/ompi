@@ -15,9 +15,9 @@
 
 #include "opal_config.h"
 
-#if OMPI_HAVE_POSIX_THREADS
+#if OPAL_HAVE_POSIX_THREADS
 #include <pthread.h>
-#elif OMPI_HAVE_SOLARIS_THREADS
+#elif OPAL_HAVE_SOLARIS_THREADS
 #include <thread.h>
 #endif
 
@@ -136,7 +136,7 @@ OPAL_DECLSPEC int opal_tsd_setspecific(opal_tsd_key_t key, void *value);
  */
 OPAL_DECLSPEC int opal_tsd_getspecific(opal_tsd_key_t key, void **valuep);
 
-#elif OMPI_HAVE_POSIX_THREADS
+#elif OPAL_HAVE_POSIX_THREADS
 
 typedef pthread_key_t opal_tsd_key_t;
 
@@ -166,7 +166,7 @@ opal_tsd_getspecific(opal_tsd_key_t key, void **valuep)
     return OPAL_SUCCESS;
 }
 
-#elif OMPI_HAVE_SOLARIS_THREADS
+#elif OPAL_HAVE_SOLARIS_THREADS
 
 typedef thread_key_t opal_tsd_key_t;
 

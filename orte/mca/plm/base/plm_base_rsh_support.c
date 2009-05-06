@@ -162,7 +162,7 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
     pid_t pid;
     long fd, fdmax = sysconf(_SC_OPEN_MAX);
     sigset_t sigs;
-    char cwd[OMPI_PATH_MAX];
+    char cwd[OPAL_PATH_MAX];
     opal_list_item_t *item;
     orte_slave_files_t *slave_node, *tst_node;
     
@@ -341,7 +341,7 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
                 }
             } else {
                 /* look for it in the cwd */
-                getcwd(cwd, OMPI_PATH_MAX);
+                getcwd(cwd, OPAL_PATH_MAX);
                 src = opal_path_access(app->app, cwd, X_OK);
                 if (NULL == src) {
                     orte_show_help("help-plm-base.txt", "exec-not-found", true, cwd);
@@ -457,14 +457,14 @@ PRELOAD_FILES:
                     exefile = opal_path_access(files[i], app->preload_files_src_dir, R_OK);
                 } else {
                     /* look for it in the cwd */
-                    getcwd(cwd, OMPI_PATH_MAX);
+                    getcwd(cwd, OPAL_PATH_MAX);
                     exefile = opal_path_access(files[i], cwd, R_OK);
                 }
             } else {
                 exefile = opal_path_access(files[i], NULL, R_OK);
             }
             if (NULL == exefile) {
-                getcwd(cwd, OMPI_PATH_MAX);
+                getcwd(cwd, OPAL_PATH_MAX);
                 orte_show_help("help-plm-base.txt", "file-not-found", true, files[i],
                                (NULL == app->preload_files_src_dir) ? cwd : app->preload_files_src_dir);
                 return ORTE_ERROR;
@@ -714,9 +714,9 @@ static char **search(const char* agent_list)
     int i, j;
     char *line, **lines = opal_argv_split(agent_list, ':');
     char **tokens, *tmp;
-    char cwd[OMPI_PATH_MAX];
+    char cwd[OPAL_PATH_MAX];
     
-    getcwd(cwd, OMPI_PATH_MAX);
+    getcwd(cwd, OPAL_PATH_MAX);
     for (i = 0; NULL != lines[i]; ++i) {
         line = lines[i];
         

@@ -26,7 +26,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/communicator/communicator.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Group_intersection = PMPI_Group_intersection
 #endif
 

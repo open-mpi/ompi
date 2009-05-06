@@ -81,7 +81,7 @@ int ompi_request_default_wait_any(
     int *index,
     ompi_status_public_t * status)
 {
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
     int c;
 #endif
     size_t i=0, num_requests_null_inactive=0;
@@ -90,7 +90,7 @@ int ompi_request_default_wait_any(
     ompi_request_t **rptr=NULL;
     ompi_request_t *request=NULL;
 
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
     /* poll for completion */
     OPAL_THREAD_ADD32(&opal_progress_thread_count,1);
     for (c = 0; completed < 0 && c < opal_progress_spin_count; c++) {
@@ -157,9 +157,9 @@ int ompi_request_default_wait_any(
     ompi_request_waiting--;
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
 finished:
-#endif  /* OMPI_ENABLE_PROGRESS_THREADS */
+#endif  /* OPAL_ENABLE_PROGRESS_THREADS */
 
     if(num_requests_null_inactive == count) {
         *index = MPI_UNDEFINED;
@@ -237,7 +237,7 @@ int ompi_request_default_wait_all( size_t count,
          */
         OPAL_THREAD_LOCK(&ompi_request_lock);
         ompi_request_waiting++;
-#if OMPI_HAVE_THREAD_SUPPORT
+#if OPAL_HAVE_THREAD_SUPPORT
         /*
          * confirm the status of the pending requests. We have to do it before
          * taking the condition or otherwise we can miss some requests completion (the
@@ -250,7 +250,7 @@ int ompi_request_default_wait_all( size_t count,
                 completed++;
             }
         }
-#endif  /* OMPI_HAVE_THREAD_SUPPORT */
+#endif  /* OPAL_HAVE_THREAD_SUPPORT */
         while( completed != count ) {
             /* check number of pending requests */
             size_t start = ompi_request_completed;
@@ -360,7 +360,7 @@ int ompi_request_default_wait_some(
     int * indices,
     ompi_status_public_t * statuses)
 {
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
     int c;
 #endif
     size_t i, num_requests_null_inactive=0, num_requests_done=0;
@@ -373,7 +373,7 @@ int ompi_request_default_wait_some(
         indices[i] = 0;
     }
 
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
     /* poll for completion */
     OPAL_THREAD_ADD32(&opal_progress_thread_count,1);
     for (c = 0; c < opal_progress_spin_count; c++) {
@@ -438,9 +438,9 @@ int ompi_request_default_wait_some(
     ompi_request_waiting--;
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
 finished:
-#endif  /* OMPI_ENABLE_PROGRESS_THREADS */
+#endif  /* OPAL_ENABLE_PROGRESS_THREADS */
 
 #if OPAL_ENABLE_FT == 1
     if( opal_cr_is_enabled) {

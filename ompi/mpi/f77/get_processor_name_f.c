@@ -24,7 +24,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/mpi/f77/f77_strings.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_GET_PROCESSOR_NAME = mpi_get_processor_name_f
 #pragma weak pmpi_get_processor_name = mpi_get_processor_name_f
 #pragma weak pmpi_get_processor_name_ = mpi_get_processor_name_f
@@ -39,14 +39,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GET_PROCESSOR_NAME,
                             (name, resultlen, ierr, name_len) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_GET_PROCESSOR_NAME = mpi_get_processor_name_f
 #pragma weak mpi_get_processor_name = mpi_get_processor_name_f
 #pragma weak mpi_get_processor_name_ = mpi_get_processor_name_f
 #pragma weak mpi_get_processor_name__ = mpi_get_processor_name_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_GET_PROCESSOR_NAME,
                             mpi_get_processor_name,
                             mpi_get_processor_name_,
@@ -57,7 +57,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GET_PROCESSOR_NAME,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

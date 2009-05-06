@@ -54,8 +54,8 @@ mca_pml_base_component_2_0_0_t mca_pml_v_component =
   mca_pml_v_component_finalize   /* component finalize */
 };
 
-static bool pml_v_enable_progress_treads = OMPI_ENABLE_PROGRESS_THREADS;
-static bool pml_v_enable_mpi_threads = OMPI_ENABLE_MPI_THREADS;
+static bool pml_v_enable_progress_treads = OPAL_ENABLE_PROGRESS_THREADS;
+static bool pml_v_enable_mpi_threads = OPAL_ENABLE_MPI_THREADS;
 
 /*******************************************************************************
  * MCA level functions - parasite setup

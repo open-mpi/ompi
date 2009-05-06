@@ -367,7 +367,7 @@ bool mca_btl_tcp_endpoint_accept(mca_btl_base_endpoint_t* btl_endpoint,
         mca_btl_tcp_endpoint_event_init(btl_endpoint);
         opal_event_add(&btl_endpoint->endpoint_recv_event, 0);
         mca_btl_tcp_endpoint_connected(btl_endpoint);
-#if OMPI_ENABLE_DEBUG && WANT_PEER_DUMP
+#if OPAL_ENABLE_DEBUG && WANT_PEER_DUMP
         mca_btl_tcp_endpoint_dump(btl_endpoint, "accepted");
 #endif
         OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
@@ -666,7 +666,7 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void* user)
                 OPAL_THREAD_LOCK(&btl_endpoint->endpoint_send_lock);
                 mca_btl_tcp_endpoint_connected(btl_endpoint);
                 OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
-#if OMPI_ENABLE_DEBUG && WANT_PEER_DUMP
+#if OPAL_ENABLE_DEBUG && WANT_PEER_DUMP
                 mca_btl_tcp_endpoint_dump(btl_endpoint, "connected");
 #endif
             }

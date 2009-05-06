@@ -460,7 +460,7 @@ ompi_osc_rdma_module_test(ompi_win_t *win,
     ompi_group_t *group;
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
 
-#if !OMPI_ENABLE_PROGRESS_THREADS
+#if !OPAL_ENABLE_PROGRESS_THREADS
     opal_progress();
 #endif
 

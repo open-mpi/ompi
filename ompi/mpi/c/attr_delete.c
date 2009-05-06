@@ -27,7 +27,7 @@
 #include "ompi/attribute/attribute.h"
 #include "ompi/memchecker.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Attr_delete = PMPI_Attr_delete
 #endif
 

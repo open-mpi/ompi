@@ -45,7 +45,7 @@ OBJ_CLASS_INSTANCE(
 
 int opal_value_array_set_size(opal_value_array_t* array, size_t size)
 {
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     if(array->array_item_sizeof == 0) {
         opal_output(0, "opal_value_array_set_size: item size must be initialized");
         return OPAL_ERR_BAD_PARAM;

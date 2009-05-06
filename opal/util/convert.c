@@ -93,7 +93,7 @@ static void opal_size2int_init(void)
 
 static void warn(void)
 {
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     /* Developer builds */
     fprintf(stderr, "WARNING: A size_t value was attempted to be cast to an int (sizeof(size_t) == %ld, sizeof(int) == %ld), but data was lost in the conversion.  This should never happen (i.e., we should never try to convert a value that will be 'too big').  Since this is a developer build, I'm going to abort, and you can check the corefile.  Enjoy.\n", (long) sizeof(size_t), (long) sizeof(int));
     abort();

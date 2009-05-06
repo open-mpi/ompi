@@ -66,5 +66,5 @@ AC_DEFUN([OMPI_C_WEAK_SYMBOLS],[
                                          [ompi_cv_c_weak_symbols="no"])])
 
     AS_IF([test "$ompi_cv_c_weak_symbols" = "yes"],
-          [OMPI_C_HAVE_WEAK_SYMBOLS=1], [OMPI_C_HAVE_WEAK_SYMBOLS=0])
+          [OPAL_C_HAVE_WEAK_SYMBOLS=1], [OPAL_C_HAVE_WEAK_SYMBOLS=0])
 ]) dnl

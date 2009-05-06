@@ -67,7 +67,7 @@ int mca_bml_base_btl_array_reserve(mca_bml_base_btl_array_t* array, size_t size)
 }
 
 
-#if OMPI_ENABLE_DEBUG_RELIABILITY
+#if OPAL_ENABLE_DEBUG_RELIABILITY
 
 extern double mca_bml_base_error_rate_floor;
 extern double mca_bml_base_error_rate_ceiling;

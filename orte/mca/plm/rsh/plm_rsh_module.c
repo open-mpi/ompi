@@ -88,7 +88,7 @@
 #include "orte/mca/plm/base/plm_private.h"
 #include "orte/mca/plm/rsh/plm_rsh.h"
 
-#if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS && OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_HAVE_POSIX_THREADS && OPAL_THREADS_HAVE_DIFFERENT_PIDS && OPAL_ENABLE_PROGRESS_THREADS
 static int orte_plm_rsh_launch_threaded(orte_job_t *jdata);
 #endif
 
@@ -97,7 +97,7 @@ static int remote_spawn(opal_buffer_t *launch);
 orte_plm_base_module_t orte_plm_rsh_module = {
     orte_plm_rsh_init,
     orte_plm_base_set_hnp_name,
-#if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS && OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_HAVE_POSIX_THREADS && OPAL_THREADS_HAVE_DIFFERENT_PIDS && OPAL_ENABLE_PROGRESS_THREADS
     orte_plm_rsh_launch_threaded,
 #else
     orte_plm_rsh_launch,
@@ -1393,7 +1393,7 @@ int orte_plm_rsh_finalize(void)
  * Handle threading issues.
  */
 
-#if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS && OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_HAVE_POSIX_THREADS && OPAL_THREADS_HAVE_DIFFERENT_PIDS && OPAL_ENABLE_PROGRESS_THREADS
 
 struct orte_plm_rsh_stack_t {
     opal_condition_t cond;

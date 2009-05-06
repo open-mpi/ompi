@@ -99,7 +99,7 @@ struct mca_btl_gm_module_t {
     opal_list_t gm_pending; /**< list of pending send descriptors */
     opal_list_t gm_repost; /**< list of pending fragments */
 
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
     opal_thread_t gm_thread;
     bool gm_progress;
 #endif

@@ -221,12 +221,12 @@ static inline void recv_req_matched(mca_pml_ob1_recv_request_t *req,
     opal_atomic_wmb();
 
     if(req->req_recv.req_bytes_packed > 0) {
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
         if(MPI_ANY_SOURCE == req->req_recv.req_base.req_peer) {
             /* non wildcard prepared during post recv */
             prepare_recv_req_converter(req);
         }
-#endif  /* OMPI_ENABLE_HETEROGENEOUS_SUPPORT */
+#endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT */
         PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_XFER_BEGIN,
                 &req->req_recv.req_base, PERUSE_RECV);
     }

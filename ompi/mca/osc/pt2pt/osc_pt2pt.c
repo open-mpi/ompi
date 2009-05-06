@@ -55,7 +55,7 @@ ompi_osc_pt2pt_module_free(ompi_win_t *win)
     ret = (ret != OMPI_SUCCESS) ? ret : tmp;
 
     if (0 == opal_hash_table_get_size(&mca_osc_pt2pt_component.p2p_c_modules)) {
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
         void *foo;
 
         mca_osc_pt2pt_component.p2p_c_thread_run = false;
@@ -94,7 +94,7 @@ ompi_osc_pt2pt_module_free(ompi_win_t *win)
     }
     if (NULL != module->p2p_comm) ompi_comm_free(&module->p2p_comm);
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     memset(module, 0, sizeof(ompi_osc_base_module_t));
 #endif
     if (NULL != module) free(module);

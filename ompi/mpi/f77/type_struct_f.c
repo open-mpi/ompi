@@ -22,7 +22,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/communicator/communicator.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_TYPE_STRUCT = mpi_type_struct_f
 #pragma weak pmpi_type_struct = mpi_type_struct_f
 #pragma weak pmpi_type_struct_ = mpi_type_struct_f
@@ -37,14 +37,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_STRUCT,
                            (count, array_of_blocklengths, array_of_displacements, array_of_types, newtype, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_TYPE_STRUCT = mpi_type_struct_f
 #pragma weak mpi_type_struct = mpi_type_struct_f
 #pragma weak mpi_type_struct_ = mpi_type_struct_f
 #pragma weak mpi_type_struct__ = mpi_type_struct_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_STRUCT,
                            mpi_type_struct,
                            mpi_type_struct_,
@@ -55,7 +55,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_STRUCT,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

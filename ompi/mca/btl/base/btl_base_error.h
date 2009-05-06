@@ -70,7 +70,7 @@ do {                                                             \
 } while(0);
 
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
 #define BTL_VERBOSE(args)                                    \
 do {                                                         \
    if(mca_btl_base_verbose > 0) {                            \

@@ -25,7 +25,7 @@
 #include "ompi/mca/io/base/base.h"
 #include "ompi/file/file.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Register_datarep = PMPI_Register_datarep
 #endif
 
@@ -64,8 +64,8 @@ int MPI_Register_datarep(char *datarep,
             return OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, rc, FUNC_NAME);
         }
         if (OMPI_SUCCESS != 
-            (rc = mca_io_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
-                                             OMPI_ENABLE_MPI_THREADS))) {
+            (rc = mca_io_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
+                                             OPAL_ENABLE_MPI_THREADS))) {
             return OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, rc, FUNC_NAME);
         }
     }

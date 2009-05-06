@@ -182,7 +182,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
     if (NULL != child) {
         /* should pull this information from MPIRUN instead of going with
          default */
-        opts.usepty = OMPI_ENABLE_PTY_SUPPORT;
+        opts.usepty = OPAL_ENABLE_PTY_SUPPORT;
         
         /* do we want to setup stdin? */
         if (NULL != child &&

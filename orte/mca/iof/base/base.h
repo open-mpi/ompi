@@ -76,7 +76,7 @@ typedef struct {
     orte_process_name_t daemon;
     orte_iof_tag_t tag;
     orte_iof_write_event_t *wev;
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     char *file;
     int line;
 #endif
@@ -89,7 +89,7 @@ typedef struct {
     opal_event_t ev;
     orte_iof_tag_t tag;
     bool active;
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     char *file;
     int line;
 #endif
@@ -123,7 +123,7 @@ struct orte_iof_base_t {
 typedef struct orte_iof_base_t orte_iof_base_t;
 
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
 
 #define ORTE_IOF_SINK_DEFINE(snk, nm, fid, tg, wrthndlr, eplist)    \
     do {                                                            \

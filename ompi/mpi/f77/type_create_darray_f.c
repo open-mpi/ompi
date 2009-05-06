@@ -20,7 +20,7 @@
 
 #include "ompi/mpi/f77/bindings.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_TYPE_CREATE_DARRAY = mpi_type_create_darray_f
 #pragma weak pmpi_type_create_darray = mpi_type_create_darray_f
 #pragma weak pmpi_type_create_darray_ = mpi_type_create_darray_f
@@ -35,14 +35,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_CREATE_DARRAY,
                            (size, rank, ndims, gsize_array, distrib_array, darg_array, psize_array, order, oldtype, newtype, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_TYPE_CREATE_DARRAY = mpi_type_create_darray_f
 #pragma weak mpi_type_create_darray = mpi_type_create_darray_f
 #pragma weak mpi_type_create_darray_ = mpi_type_create_darray_f
 #pragma weak mpi_type_create_darray__ = mpi_type_create_darray_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_DARRAY,
                            mpi_type_create_darray,
                            mpi_type_create_darray_,
@@ -53,7 +53,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_DARRAY,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

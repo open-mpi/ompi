@@ -21,7 +21,7 @@
 #include "ompi/mpi/f77/bindings.h"
 #include "ompi/mpi/f77/f77_strings.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_UNPUBLISH_NAME = mpi_unpublish_name_f
 #pragma weak pmpi_unpublish_name = mpi_unpublish_name_f
 #pragma weak pmpi_unpublish_name_ = mpi_unpublish_name_f
@@ -36,14 +36,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_UNPUBLISH_NAME,
                            (service_name, info, port_name, ierr, service_name_len, port_name_len) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_UNPUBLISH_NAME = mpi_unpublish_name_f
 #pragma weak mpi_unpublish_name = mpi_unpublish_name_f
 #pragma weak mpi_unpublish_name_ = mpi_unpublish_name_f
 #pragma weak mpi_unpublish_name__ = mpi_unpublish_name_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_UNPUBLISH_NAME,
                            mpi_unpublish_name,
                            mpi_unpublish_name_,
@@ -54,7 +54,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_UNPUBLISH_NAME,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

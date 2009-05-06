@@ -555,7 +555,7 @@ char * timer_label[CRCP_TIMER_MAX];
 /************************************
  * Additional Debuging dumps
  ************************************/
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
 static void traffic_message_dump_peer(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref, char * msg, bool root_only);
 static void traffic_message_dump_msg_list(opal_list_t *msg_list, bool is_drain);
 static void traffic_message_dump_msg_indv(ompi_crcp_bkmrk_pml_traffic_message_ref_t * msg_ref, char * msg, bool vshort);
@@ -3687,7 +3687,7 @@ static int traffic_message_find(opal_list_t * search_list,
 
     *found_msg_ref = NULL;
 
-#if OMPI_ENABLE_DEBUG == 1
+#if OPAL_ENABLE_DEBUG == 1
     /*
      * Dummy checks:
      */
@@ -6314,7 +6314,7 @@ static void display_indv_timer_core(int idx, int proc, int msgs, bool direct) {
 }
 
 /**************** Message Dump functionality ********************/
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
 static void traffic_message_dump_msg_content_indv(ompi_crcp_bkmrk_pml_message_content_ref_t * content_ref)
 {
     OPAL_OUTPUT_VERBOSE((10, mca_crcp_bkmrk_component.super.output_handle,

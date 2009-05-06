@@ -29,7 +29,7 @@
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/file/file.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_REGISTER_DATAREP = mpi_register_datarep_f
 #pragma weak pmpi_register_datarep = mpi_register_datarep_f
 #pragma weak pmpi_register_datarep_ = mpi_register_datarep_f
@@ -44,14 +44,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_REGISTER_DATAREP,
                            (datarep, read_conversion_fn, write_conversion_fn, dtype_file_extent_fn, extra_state, ierr, datarep_len) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_REGISTER_DATAREP = mpi_register_datarep_f
 #pragma weak mpi_register_datarep = mpi_register_datarep_f
 #pragma weak mpi_register_datarep_ = mpi_register_datarep_f
 #pragma weak mpi_register_datarep__ = mpi_register_datarep_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_REGISTER_DATAREP,
                            mpi_register_datarep,
                            mpi_register_datarep_,
@@ -62,7 +62,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_REGISTER_DATAREP,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 
@@ -92,7 +92,7 @@ typedef struct intercept_extra_state {
 
 OBJ_CLASS_DECLARATION(intercept_extra_state_t);
 
-#if !OMPI_PROFILE_LAYER || OMPI_HAVE_WEAK_SYMBOLS
+#if !OMPI_PROFILE_LAYER || OPAL_HAVE_WEAK_SYMBOLS
 static void intercept_extra_state_constructor(intercept_extra_state_t *obj)
 {
     obj->read_fn_f77 = NULL;

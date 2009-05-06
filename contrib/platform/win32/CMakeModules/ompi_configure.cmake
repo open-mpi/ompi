@@ -134,7 +134,7 @@ SET(OMPI_F90_ABSOLUTE "\"none\"")
 SET(OMPI_F90_BUILD_SIZE "\"small\"")
 
 # we don't support libtool on Windows.
-SET(OMPI_WANT_LIBLTDL 0)
+SET(OPAL_WANT_LIBLTDL 0)
 
 # set the im/export decleration here. 
 # Don't bother with OMPI_IMPORTS
@@ -172,40 +172,40 @@ IF(NOT MPI_PARAM_CHECK)
   SET (MPI_PARAM_CHECK "ompi_mpi_param_check")
 ENDIF(NOT MPI_PARAM_CHECK)
 
-OPTION(OMPI_ENABLE_DEBUG 
+OPTION(OPAL_ENABLE_DEBUG 
   "Whether we want developer-level debugging code or not." OFF)
-IF(OMPI_ENABLE_DEBUG)
-  SET(OMPI_ENABLE_DEBUG 1)
-ELSE(OMPI_ENABLE_DEBUG)
-  SET(OMPI_ENABLE_DEBUG 0)
-ENDIF(OMPI_ENABLE_DEBUG)
+IF(OPAL_ENABLE_DEBUG)
+  SET(OPAL_ENABLE_DEBUG 1)
+ELSE(OPAL_ENABLE_DEBUG)
+  SET(OPAL_ENABLE_DEBUG 0)
+ENDIF(OPAL_ENABLE_DEBUG)
 
-OPTION(OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+OPTION(OPAL_ENABLE_HETEROGENEOUS_SUPPORT
   "Enable features required for heterogeneous support." OFF)
-MARK_AS_ADVANCED(OMPI_ENABLE_HETEROGENEOUS_SUPPORT)
-IF(OMPI_ENABLE_HETEROGENEOUS_SUPPORT)
-  SET(OMPI_ENABLE_HETEROGENEOUS_SUPPORT 1)
-ELSE(OMPI_ENABLE_HETEROGENEOUS_SUPPORT)
-  SET(OMPI_ENABLE_HETEROGENEOUS_SUPPORT 0)
-ENDIF(OMPI_ENABLE_HETEROGENEOUS_SUPPORT)
+MARK_AS_ADVANCED(OPAL_ENABLE_HETEROGENEOUS_SUPPORT)
+IF(OPAL_ENABLE_HETEROGENEOUS_SUPPORT)
+  SET(OPAL_ENABLE_HETEROGENEOUS_SUPPORT 1)
+ELSE(OPAL_ENABLE_HETEROGENEOUS_SUPPORT)
+  SET(OPAL_ENABLE_HETEROGENEOUS_SUPPORT 0)
+ENDIF(OPAL_ENABLE_HETEROGENEOUS_SUPPORT)
 
-OPTION(OMPI_ENABLE_MEM_DEBUG
+OPTION(OPAL_ENABLE_MEM_DEBUG
   "Whether we want the memory debug or not." OFF)
-MARK_AS_ADVANCED(OMPI_ENABLE_MEM_DEBUG)
-IF(OMPI_ENABLE_MEM_DEBUG)
-  SET(OMPI_ENABLE_MEM_DEBUG 1)
-ELSE(OMPI_ENABLE_MEM_DEBUG)
-  SET(OMPI_ENABLE_MEM_DEBUG 0)
-ENDIF(OMPI_ENABLE_MEM_DEBUG)
+MARK_AS_ADVANCED(OPAL_ENABLE_MEM_DEBUG)
+IF(OPAL_ENABLE_MEM_DEBUG)
+  SET(OPAL_ENABLE_MEM_DEBUG 1)
+ELSE(OPAL_ENABLE_MEM_DEBUG)
+  SET(OPAL_ENABLE_MEM_DEBUG 0)
+ENDIF(OPAL_ENABLE_MEM_DEBUG)
 
-OPTION(OMPI_ENABLE_MEM_PROFILE
+OPTION(OPAL_ENABLE_MEM_PROFILE
   "Whether we want the memory profiling or not." OFF)
-MARK_AS_ADVANCED(OMPI_ENABLE_MEM_PROFILE)
-IF(OMPI_ENABLE_MEM_PROFILE)
-  SET(OMPI_ENABLE_MEM_PROFILE 1)
-ELSE(OMPI_ENABLE_MEM_PROFILE)
-  SET(OMPI_ENABLE_MEM_PROFILE 0)
-ENDIF(OMPI_ENABLE_MEM_PROFILE)
+MARK_AS_ADVANCED(OPAL_ENABLE_MEM_PROFILE)
+IF(OPAL_ENABLE_MEM_PROFILE)
+  SET(OPAL_ENABLE_MEM_PROFILE 1)
+ELSE(OPAL_ENABLE_MEM_PROFILE)
+  SET(OPAL_ENABLE_MEM_PROFILE 0)
+ENDIF(OPAL_ENABLE_MEM_PROFILE)
 
 OPTION(OMPI_ENABLE_MPI_PROFILING
   "Whether we want MPI profiling or not." ON)
@@ -218,32 +218,32 @@ ELSE(OMPI_ENABLE_MPI_PROFILING)
   SET(MPIF_H_PMPI_W_FUNCS "")
 ENDIF(OMPI_ENABLE_MPI_PROFILING)
 
-OPTION(OMPI_ENABLE_MPI_THREADS
+OPTION(OPAL_ENABLE_MPI_THREADS
   "Whether we should enable support for multiple user threads." OFF)
-MARK_AS_ADVANCED(OMPI_ENABLE_MPI_THREADS)
-IF(OMPI_ENABLE_MPI_THREADS)
-  SET(OMPI_ENABLE_MPI_THREADS 1)
-ELSE(OMPI_ENABLE_MPI_THREADS)
-  SET(OMPI_ENABLE_MPI_THREADS 0)
-ENDIF(OMPI_ENABLE_MPI_THREADS)
+MARK_AS_ADVANCED(OPAL_ENABLE_MPI_THREADS)
+IF(OPAL_ENABLE_MPI_THREADS)
+  SET(OPAL_ENABLE_MPI_THREADS 1)
+ELSE(OPAL_ENABLE_MPI_THREADS)
+  SET(OPAL_ENABLE_MPI_THREADS 0)
+ENDIF(OPAL_ENABLE_MPI_THREADS)
 
-OPTION(OMPI_ENABLE_PROGRESS_THREADS
+OPTION(OPAL_ENABLE_PROGRESS_THREADS
   "Whether we should use progress threads rather than polling." OFF)
-MARK_AS_ADVANCED(OMPI_ENABLE_PROGRESS_THREADS)
-IF(OMPI_ENABLE_PROGRESS_THREADS)
-  SET(OMPI_ENABLE_PROGRESS_THREADS 1)
-ELSE(OMPI_ENABLE_PROGRESS_THREADS)
-  SET(OMPI_ENABLE_PROGRESS_THREADS 0)
-ENDIF(OMPI_ENABLE_PROGRESS_THREADS)
+MARK_AS_ADVANCED(OPAL_ENABLE_PROGRESS_THREADS)
+IF(OPAL_ENABLE_PROGRESS_THREADS)
+  SET(OPAL_ENABLE_PROGRESS_THREADS 1)
+ELSE(OPAL_ENABLE_PROGRESS_THREADS)
+  SET(OPAL_ENABLE_PROGRESS_THREADS 0)
+ENDIF(OPAL_ENABLE_PROGRESS_THREADS)
 
-OPTION(OMPI_ENABLE_PTY_SUPPORT
+OPTION(OPAL_ENABLE_PTY_SUPPORT
   "Whether we should use progress threads rather than polling." OFF)
-MARK_AS_ADVANCED(OMPI_ENABLE_PTY_SUPPORT)
-IF(OMPI_ENABLE_PTY_SUPPORT)
-  SET(OMPI_ENABLE_PTY_SUPPORT 1)
-ELSE(OMPI_ENABLE_PTY_SUPPORT)
-  SET(OMPI_ENABLE_PTY_SUPPORT 0)
-ENDIF(OMPI_ENABLE_PTY_SUPPORT)
+MARK_AS_ADVANCED(OPAL_ENABLE_PTY_SUPPORT)
+IF(OPAL_ENABLE_PTY_SUPPORT)
+  SET(OPAL_ENABLE_PTY_SUPPORT 1)
+ELSE(OPAL_ENABLE_PTY_SUPPORT)
+  SET(OPAL_ENABLE_PTY_SUPPORT 0)
+ENDIF(OPAL_ENABLE_PTY_SUPPORT)
 
 OPTION ( OMPI_GROUP_SPARSE
   "Wether we want sparse process groups." OFF)
@@ -304,13 +304,13 @@ ELSE(NOT OMPI_WANT_PERUSE)
   SET(OMPI_WANT_PERUSE 1)
 ENDIF(NOT OMPI_WANT_PERUSE)
 
-OPTION( OMPI_WANT_PRETTY_PRINT_STACKTRACE
+OPTION( OPAL_WANT_PRETTY_PRINT_STACKTRACE
   "Whether we want pretty-print stack trace feature." ON)
-MARK_AS_ADVANCED(OMPI_WANT_PRETTY_PRINT_STACKTRACE)
+MARK_AS_ADVANCED(OPAL_WANT_PRETTY_PRINT_STACKTRACE)
 
-OPTION( OMPI_WANT_SMP_LOCKS
+OPTION( OPAL_WANT_SMP_LOCKS
   "Whether we want to have smp locks in atomic ops or not." ON)
-MARK_AS_ADVANCED(OMPI_WANT_SMP_LOCKS)
+MARK_AS_ADVANCED(OPAL_WANT_SMP_LOCKS)
 
 OPTION( OPAL_ENABLE_FT 
   "Enable fault tolerance general components and logic." ON)
@@ -587,7 +587,7 @@ CHECK_INCLUDE_FILE (mx_extension.h MX_HAVE_EXTENSIONS_H)
 #/* Define to 1 if you have the ANSI C header files. */
 CHECK_INCLUDE_FILE(stddef.h STDC_HEADERS)
 IF(STDC_HEADERS)
-SET(OMPI_STDC_HEADERS 1)
+SET(OPAL_STDC_HEADERS 1)
 ENDIF(STDC_HEADERS)
 
 ###################################################################
@@ -1042,9 +1042,9 @@ C_GET_ALIGNMENT (wchar_t c WCHAR_T)
 #   <stdbool.h>) */
 INCLUDE(c_check_bool)
 IF (COMPILER_SUPPORT_BOOL)
-  SET (OMPI_NEED_C_BOOL 0)
+  SET (OPAL_NEED_C_BOOL 0)
 ELSE (COMPILER_SUPPORT_BOOL)
-  SET (OMPI_NEED_C_BOOL 1)  
+  SET (OPAL_NEED_C_BOOL 1)  
 ENDIF (COMPILER_SUPPORT_BOOL)
 
 #/* Define to `__inline__' or `__inline' if that's what the C compiler
@@ -1078,23 +1078,23 @@ ENDIF(HAVE_INLINE)
 #/* #undef OMPI_CXX_XLC_INLINE_ASSEMBLY */
 #
 #/* Whether C compiler supports DEC style inline assembly */
-#/* #undef OMPI_C_DEC_INLINE_ASSEMBLY */
+#/* #undef OPAL_C_DEC_INLINE_ASSEMBLY */
 #
 #/* Whether C compiler supports GCC style inline assembly */
-#/* #undef OMPI_C_GCC_INLINE_ASSEMBLY */
+#/* #undef OPAL_C_GCC_INLINE_ASSEMBLY */
 #
 #/* Whether C compiler supports __builtin_expect */
-#/* #undef OMPI_C_HAVE_BUILTIN_EXPECT */
+#/* #undef OPAL_C_HAVE_BUILTIN_EXPECT */
 #
 #/* Whether C compiler supports __builtin_prefetch */
-#/* #undef OMPI_C_HAVE_BUILTIN_PREFETCH */
+#/* #undef OPAL_C_HAVE_BUILTIN_PREFETCH */
 #
 #/* Whether C compiler supports -fvisibility */
-#/* #undef OMPI_C_HAVE_VISIBILITY */
-SET(OMPI_C_HAVE_VISIBILITY 1)
+#/* #undef OPAL_C_HAVE_VISIBILITY */
+SET(OPAL_C_HAVE_VISIBILITY 1)
 #
 #/* Whether C compiler supports XLC style inline assembly */
-#/* #undef OMPI_C_XLC_INLINE_ASSEMBLY */
+#/* #undef OPAL_C_XLC_INLINE_ASSEMBLY */
 #
 
 SET(OMPI_HAVE_CXX_EXCEPTION_SUPPORT 0)
@@ -1339,50 +1339,50 @@ ENDIF(WIN32)
 
 #
 #/* OMPI architecture string */
-#/* #undef OMPI_ARCH */
+#/* #undef OPAL_ARCH */
 #
 #/* Assembly align directive expects logarithmic value */
-#/* #undef OMPI_ASM_ALIGN_LOG */
+#/* #undef OPAL_ASM_ALIGN_LOG */
 #
 #/* Assembly directive for exporting symbols */
-#/* #undef OMPI_ASM_GLOBAL */
+#/* #undef OPAL_ASM_GLOBAL */
 #
 #/* Assembly prefix for gsym labels */
-#/* #undef OMPI_ASM_GSYM */
+#/* #undef OPAL_ASM_GSYM */
 #
 #/* Assembly suffix for labels */
-#/* #undef OMPI_ASM_LABEL_SUFFIX */
+#/* #undef OPAL_ASM_LABEL_SUFFIX */
 #
 #/* Assembly prefix for lsym labels */
-#/* #undef OMPI_ASM_LSYM */
+#/* #undef OPAL_ASM_LSYM */
 #
 #/* Do we need to give a .size directive */
-#/* #undef OMPI_ASM_SIZE */
+#/* #undef OPAL_ASM_SIZE */
 #
 #/* Whether we can do 64bit assembly operations or not. Should not be used
 #   outside of the assembly header files */
-#/* #undef OMPI_ASM_SUPPORT_64BIT */
+#/* #undef OPAL_ASM_SUPPORT_64BIT */
 #
 #/* Assembly directive for setting text section */
-#/* #undef OMPI_ASM_TEXT */
+#/* #undef OPAL_ASM_TEXT */
 #
 #/* How to set function type in .type directive */
-#/* #undef OMPI_ASM_TYPE */
+#/* #undef OPAL_ASM_TYPE */
 #
 #/* Architecture type of assembly to use for atomic operations */
-#/* #undef OMPI_ASSEMBLY_ARCH */
+#/* #undef OPAL_ASSEMBLY_ARCH */
 IF(WIN32)
-  SET (OMPI_ASSEMBLY_ARCH "OMPI_WINDOWS")
+  SET (OPAL_ASSEMBLY_ARCH "OMPI_WINDOWS")
 ENDIF(WIN32)
 
 #
 #/* Format of assembly file */
-#/* #undef OMPI_ASSEMBLY_FORMAT */
+#/* #undef OPAL_ASSEMBLY_FORMAT */
 #
 #/* OMPI underlying C compiler */
-#/* #undef OMPI_CC */
+#/* #undef OPAL_CC */
 IF (CMAKE_C_COMPILER)
-  SET (OMPI_CC ${CMAKE_C_COMPILER})
+  SET (OPAL_CC ${CMAKE_C_COMPILER})
 ENDIF (CMAKE_C_COMPILER)
 
 #
@@ -1407,74 +1407,74 @@ ENDIF (CMAKE_CXX_COMPILER)
 
 #
 #/* Whether there is an atomic assembly file available */
-#/* #undef OMPI_HAVE_ASM_FILE */
+#/* #undef OPAL_HAVE_ASM_FILE */
 #
 #/* Whether your compiler has __attribute__ or not */
-#/* #undef OMPI_HAVE_ATTRIBUTE */
+#/* #undef OPAL_HAVE_ATTRIBUTE */
 #
 #/* Whether your compiler has __attribute__ aligned or not */
-#/* #undef OMPI_HAVE_ATTRIBUTE_ALIGNED */
+#/* #undef OPAL_HAVE_ATTRIBUTE_ALIGNED */
 #
 #/* Whether your compiler has __attribute__ always_inline or not */
-#/* #undef OMPI_HAVE_ATTRIBUTE_ALWAYS_INLINE */
+#/* #undef OPAL_HAVE_ATTRIBUTE_ALWAYS_INLINE */
 #
 #/* Whether your compiler has __attribute__ const or not */
-#/* #undef OMPI_HAVE_ATTRIBUTE_CONST */
+#/* #undef OPAL_HAVE_ATTRIBUTE_CONST */
 #
 #/* Whether your compiler has __attribute__ deprecated or not */
-#/* #undef OMPI_HAVE_ATTRIBUTE_DEPRECATED */
+#/* #undef OPAL_HAVE_ATTRIBUTE_DEPRECATED */
 #
 #/* Whether your compiler has __attribute__ format or not */
-#/* #undef OMPI_HAVE_ATTRIBUTE_FORMAT */
+#/* #undef OPAL_HAVE_ATTRIBUTE_FORMAT */
 #
 #/* Whether your compiler has __attribute__ malloc or not */
-#/* #undef OMPI_HAVE_ATTRIBUTE_MALLOC */
+#/* #undef OPAL_HAVE_ATTRIBUTE_MALLOC */
 #
 #/* Whether your compiler has __attribute__ may_alias or not */
-#/* #undef OMPI_HAVE_ATTRIBUTE_MAY_ALIAS */
+#/* #undef OPAL_HAVE_ATTRIBUTE_MAY_ALIAS */
 #
 #/* Whether your compiler has __attribute__ nonnull or not */
-#/* #undef OMPI_HAVE_ATTRIBUTE_NONNULL */
+#/* #undef OPAL_HAVE_ATTRIBUTE_NONNULL */
 #
 #/* Whether your compiler has __attribute__ noreturn or not */
-#/* #undef OMPI_HAVE_ATTRIBUTE_NORETURN */
+#/* #undef OPAL_HAVE_ATTRIBUTE_NORETURN */
 #
 #/* Whether your compiler has __attribute__ no_instrument_function or not */
-#/* #undef OMPI_HAVE_ATTRIBUTE_NO_INSTRUMENT_FUNCTION */
+#/* #undef OPAL_HAVE_ATTRIBUTE_NO_INSTRUMENT_FUNCTION */
 #
 #/* Whether your compiler has __attribute__ packed or not */
-#/* #undef OMPI_HAVE_ATTRIBUTE_PACKED */
+#/* #undef OPAL_HAVE_ATTRIBUTE_PACKED */
 #
 #/* Whether your compiler has __attribute__ pure or not */
-#/* #undef OMPI_HAVE_ATTRIBUTE_PURE */
+#/* #undef OPAL_HAVE_ATTRIBUTE_PURE */
 #
 #/* Whether your compiler has __attribute__ sentinel or not */
-#/* #undef OMPI_HAVE_ATTRIBUTE_SENTINEL */
+#/* #undef OPAL_HAVE_ATTRIBUTE_SENTINEL */
 #
 #/* Whether your compiler has __attribute__ unused or not */
-#/* #undef OMPI_HAVE_ATTRIBUTE_UNUSED */
+#/* #undef OPAL_HAVE_ATTRIBUTE_UNUSED */
 #
 #/* Whether your compiler has __attribute__ visibility or not */
-#/* #undef OMPI_HAVE_ATTRIBUTE_VISIBILITY */
+#/* #undef OPAL_HAVE_ATTRIBUTE_VISIBILITY */
 #
 #/* Whether your compiler has __attribute__ warn unused result or not */
-#/* #undef OMPI_HAVE_ATTRIBUTE_WARN_UNUSED_RESULT */
+#/* #undef OPAL_HAVE_ATTRIBUTE_WARN_UNUSED_RESULT */
 #
 #/* Whether your compiler has __attribute__ weak alias or not */
-#/* #undef OMPI_HAVE_ATTRIBUTE_WEAK_ALIAS */
+#/* #undef OPAL_HAVE_ATTRIBUTE_WEAK_ALIAS */
 #
 #/* whether qsort is broken or not */
-#/* #undef OMPI_HAVE_BROKEN_QSORT */
+#/* #undef OPAL_HAVE_BROKEN_QSORT */
 #
 
 #/* Do we have POSIX threads */
-#/* #undef OMPI_HAVE_POSIX_THREADS */
-SET(OMPI_HAVE_POSIX_THREADS 0)
+#/* #undef OPAL_HAVE_POSIX_THREADS */
+SET(OPAL_HAVE_POSIX_THREADS 0)
 #
 #/* Do not use outside of mpi.h. Define to 1 if the system has the type 'long
 #   long'. */
 IF(HAVE_LONG_LONG)
-  SET(OMPI_HAVE_LONG_LONG 1)
+  SET(OPAL_HAVE_LONG_LONG 1)
 ENDIF(HAVE_LONG_LONG)
 
 #
@@ -1488,23 +1488,23 @@ ENDIF(HAVE_LONG_LONG)
 #/* #undef OMPI_HAVE_SA_LEN */
 #
 #/* Whether we have SA_RESTART in <signal.h> or not */
-#/* #undef OMPI_HAVE_SA_RESTART */
+#/* #undef OPAL_HAVE_SA_RESTART */
 #
 #/* Do we have native Solaris threads */
-#/* #undef OMPI_HAVE_SOLARIS_THREADS */
-SET(OMPI_HAVE_SOLARIS_THREADS 0)
+#/* #undef OPAL_HAVE_SOLARIS_THREADS */
+SET(OPAL_HAVE_SOLARIS_THREADS 0)
 #
 #/* Whether we have __va_copy or not */
-#/* #undef OMPI_HAVE_UNDERSCORE_VA_COPY */
+#/* #undef OPAL_HAVE_UNDERSCORE_VA_COPY */
 #
 #/* Whether we have va_copy or not */
-#/* #undef OMPI_HAVE_VA_COPY */
+#/* #undef OPAL_HAVE_VA_COPY */
 #
 #/* Wehther we have weak symbols or not */
-#/* #undef OMPI_HAVE_WEAK_SYMBOLS */
+#/* #undef OPAL_HAVE_WEAK_SYMBOLS */
 
 # We don't support weak symbols on windows
-SET(OMPI_HAVE_WEAK_SYMBOLS 0)
+SET(OPAL_HAVE_WEAK_SYMBOLS 0)
 
 #
 #/* Number of arguments to ibv_create_cq */
@@ -1560,14 +1560,14 @@ SET (OMPI_MPI_OFFSET_TYPE_STRING "long long")
 #/* #undef OMPI_PORTALS_UTCP */
 #
 #/* Whether r notation is used for ppc registers */
-#/* #undef OMPI_POWERPC_R_REGISTERS */
+#/* #undef OPAL_POWERPC_R_REGISTERS */
 #
 
 
 #/* type to use for ptrdiff_t */
-#/* #undef OMPI_PTRDIFF_TYPE */
+#/* #undef OPAL_PTRDIFF_TYPE */
 IF(HAVE_PTRDIFF_T)
-  SET(OMPI_PTRDIFF_TYPE "ptrdiff_t")
+  SET(OPAL_PTRDIFF_TYPE "ptrdiff_t")
 ENDIF(HAVE_PTRDIFF_T)
   
 
@@ -1580,10 +1580,10 @@ ENDIF(HAVE_PTRDIFF_T)
 #
 #
 #/* Do threads have different pids (pthreads on linux) */
-#/* #undef OMPI_THREADS_HAVE_DIFFERENT_PIDS */
+#/* #undef OPAL_THREADS_HAVE_DIFFERENT_PIDS */
 #
 #/* Whether to use <stdbool.h> or not */
-#/* #undef OMPI_USE_STDBOOL_H */
+#/* #undef OPAL_USE_STDBOOL_H */
 #
 #/* Complete release number of Open MPI */
 #/* #undef OMPI_VERSION */

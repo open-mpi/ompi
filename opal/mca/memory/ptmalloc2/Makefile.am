@@ -18,14 +18,14 @@
 
 AM_CPPFLAGS = -DMALLOC_DEBUG=0
 
-if OMPI_HAVE_POSIX_THREADS
+if OPAL_HAVE_POSIX_THREADS
 AM_CPPFLAGS +=  \
     -D_GNU_SOURCE=1 \
     -DUSE_TSD_DATA_HACK=1 \
     -DMALLOC_HOOKS=1 \
     -I$(srcdir)/sysdeps/pthread
 endif
-if OMPI_HAVE_SOLARIS_THREADS
+if OPAL_HAVE_SOLARIS_THREADS
 AM_CPPFLAGS += -I$(srcdir)/sysdeps/solaris
 endif
 # this must come *after* the threads -Is

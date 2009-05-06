@@ -21,9 +21,9 @@
 
 #include "opal_config.h"
 
-#if OMPI_HAVE_POSIX_THREADS
+#if OPAL_HAVE_POSIX_THREADS
 #include <pthread.h>
-#elif OMPI_HAVE_SOLARIS_THREADS
+#elif OPAL_HAVE_SOLARIS_THREADS
 #include <thread.h>
 #endif
 
@@ -42,9 +42,9 @@ struct opal_thread_t {
     void* t_arg;
 #ifdef __WINDOWS__
     HANDLE t_handle;
-#elif OMPI_HAVE_POSIX_THREADS
+#elif OPAL_HAVE_POSIX_THREADS
     pthread_t t_handle;
-#elif OMPI_HAVE_SOLARIS_THREADS
+#elif OPAL_HAVE_SOLARIS_THREADS
     thread_t t_handle;
 #endif
 };

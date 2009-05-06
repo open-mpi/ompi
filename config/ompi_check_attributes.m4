@@ -29,7 +29,7 @@ AC_DEFUN([_OMPI_ATTRIBUTE_FAIL_SEARCH],[
         for i in ignore skip ; do
             $GREP -iq $i conftest.err
             if test "$?" = "0" ; then
-                ompi_cv___attribute__[$1]=0
+                opal_cv___attribute__[$1]=0
                 break;
             fi
         done
@@ -51,7 +51,7 @@ AC_DEFUN([_OMPI_ATTRIBUTE_FAIL_SEARCH],[
 #
 AC_DEFUN([_OMPI_CHECK_SPECIFIC_ATTRIBUTE], [
     AC_MSG_CHECKING([for __attribute__([$1])])
-    AC_CACHE_VAL(ompi_cv___attribute__[$1], [
+    AC_CACHE_VAL(opal_cv___attribute__[$1], [
         #
         # Try to compile using the C compiler, then C++
         #
@@ -62,20 +62,20 @@ AC_DEFUN([_OMPI_CHECK_SPECIFIC_ATTRIBUTE], [
                         # attribute being ignored/skipped? Grep for IgNoRe/skip in conftest.err
                         # and if found, reset the ompi_cv__attribute__var=0
                         #
-                        ompi_cv___attribute__[$1]=1
+                        opal_cv___attribute__[$1]=1
                         _OMPI_ATTRIBUTE_FAIL_SEARCH([$1])
                        ],
-                       [ompi_cv___attribute__[$1]=0])
-        if test "$ompi_cv___attribute__[$1]" = "1" ; then
+                       [opal_cv___attribute__[$1]=0])
+        if test "$opal_cv___attribute__[$1]" = "1" ; then
             AC_LANG_PUSH(C++)
             AC_TRY_COMPILE([
                            extern "C" {
                            $2
                            }],[],
                            [
-                            ompi_cv___attribute__[$1]=1
+                            opal_cv___attribute__[$1]=1
                             _OMPI_ATTRIBUTE_FAIL_SEARCH([$1])
-                           ],[ompi_cv___attribute__[$1]=0])
+                           ],[opal_cv___attribute__[$1]=0])
             AC_LANG_POP(C++)
         fi
         
@@ -83,7 +83,7 @@ AC_DEFUN([_OMPI_CHECK_SPECIFIC_ATTRIBUTE], [
         # If the attribute is supported by both compilers,
         # try to recompile a *cross-check*, IFF defined.
         #
-        if test '(' "$ompi_cv___attribute__[$1]" = "1" -a "[$3]" != "" ')' ; then
+        if test '(' "$opal_cv___attribute__[$1]" = "1" -a "[$3]" != "" ')' ; then
             ac_c_werror_flag_safe=$ac_c_werror_flag
             ac_c_werror_flag="yes"
             CFLAGS_safe=$CFLAGS
@@ -94,14 +94,14 @@ AC_DEFUN([_OMPI_CHECK_SPECIFIC_ATTRIBUTE], [
                  int i=4711;
                  i=usage(&i);
                 ],
-                [ompi_cv___attribute__[$1]=0],
+                [opal_cv___attribute__[$1]=0],
                 [
                  #
                  # In case we did NOT succeed: Fine, but was this due to the
                  # attribute being ignored? Grep for IgNoRe in conftest.err
                  # and if found, reset the ompi_cv__attribute__var=0
                  #
-                 ompi_cv___attribute__[$1]=1
+                 opal_cv___attribute__[$1]=1
                  _OMPI_ATTRIBUTE_FAIL_SEARCH([$1])
                 ])
 
@@ -110,7 +110,7 @@ AC_DEFUN([_OMPI_CHECK_SPECIFIC_ATTRIBUTE], [
         fi
     ])
 
-    if test "$ompi_cv___attribute__[$1]" = "1" ; then
+    if test "$opal_cv___attribute__[$1]" = "1" ; then
         AC_MSG_RESULT([yes])
     else
         AC_MSG_RESULT([no])
@@ -127,11 +127,11 @@ AC_DEFUN([_OMPI_CHECK_SPECIFIC_ATTRIBUTE], [
 # The compilers output is parsed in _OMPI_ATTRIBUTE_FAIL_SEARCH
 # 
 # To add a new attributes __NAME__ add the
-#   ompi_cv___attribute__NAME
+#   opal_cv___attribute__NAME
 # add a new check with _OMPI_CHECK_SPECIFIC_ATTRIBUTE (possibly with a cross-check)
 #   _OMPI_CHECK_SPECIFIC_ATTRIBUTE([name], [int foo (int arg) __attribute__ ((__name__));], [], [])
 # and define the corresponding
-#   AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_NAME, [$ompi_cv___attribute__NAME],
+#   AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_NAME, [$opal_cv___attribute__NAME],
 #                      [Whether your compiler has __attribute__ NAME or not])
 # and decide on a correct macro (in opal/include/opal_config_bottom.h):
 #  #  define __opal_attribute_NAME(x)  __attribute__(__NAME__)
@@ -145,7 +145,7 @@ AC_DEFUN([_OMPI_CHECK_SPECIFIC_ATTRIBUTE], [
 AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
   AC_MSG_CHECKING(for __attribute__)
 
-  AC_CACHE_VAL(ompi_cv___attribute__, [
+  AC_CACHE_VAL(opal_cv___attribute__, [
     AC_TRY_COMPILE(
       [#include <stdlib.h>
        /* Check for the longest available __attribute__ (since gcc-2.3) */
@@ -155,11 +155,11 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
         };
       ],
       [],
-      [ompi_cv___attribute__=1],
-      [ompi_cv___attribute__=0],
+      [opal_cv___attribute__=1],
+      [opal_cv___attribute__=0],
     )
 
-    if test "$ompi_cv___attribute__" = "1" ; then
+    if test "$opal_cv___attribute__" = "1" ; then
         AC_TRY_COMPILE(
           [#include <stdlib.h>
            /* Check for the longest available __attribute__ (since gcc-2.3) */
@@ -169,39 +169,39 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
             };
           ],
           [],
-          [ompi_cv___attribute__=1],
-          [ompi_cv___attribute__=0],
+          [opal_cv___attribute__=1],
+          [opal_cv___attribute__=0],
         )
     fi
     ])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE, [$ompi_cv___attribute__],
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE, [$opal_cv___attribute__],
                      [Whether your compiler has __attribute__ or not])
 
 #
 # Now that we know the compiler support __attribute__ let's check which kind of
 # attributed are supported.
 #
-  if test "$ompi_cv___attribute__" = "0" ; then
+  if test "$opal_cv___attribute__" = "0" ; then
     AC_MSG_RESULT([no])
-    ompi_cv___attribute__aligned=0
-    ompi_cv___attribute__always_inline=0
-    ompi_cv___attribute__cold=0
-    ompi_cv___attribute__const=0
-    ompi_cv___attribute__deprecated=0
-    ompi_cv___attribute__format=0
-    ompi_cv___attribute__hot=0
-    ompi_cv___attribute__malloc=0
-    ompi_cv___attribute__may_alias=0
-    ompi_cv___attribute__no_instrument_function=0
-    ompi_cv___attribute__nonnull=0
-    ompi_cv___attribute__noreturn=0
-    ompi_cv___attribute__packed=0
-    ompi_cv___attribute__pure=0
-    ompi_cv___attribute__sentinel=0
-    ompi_cv___attribute__unused=0
-    ompi_cv___attribute__visibility=0
-    ompi_cv___attribute__warn_unused_result=0
-    ompi_cv___attribute__weak_alias=0
+    opal_cv___attribute__aligned=0
+    opal_cv___attribute__always_inline=0
+    opal_cv___attribute__cold=0
+    opal_cv___attribute__const=0
+    opal_cv___attribute__deprecated=0
+    opal_cv___attribute__format=0
+    opal_cv___attribute__hot=0
+    opal_cv___attribute__malloc=0
+    opal_cv___attribute__may_alias=0
+    opal_cv___attribute__no_instrument_function=0
+    opal_cv___attribute__nonnull=0
+    opal_cv___attribute__noreturn=0
+    opal_cv___attribute__packed=0
+    opal_cv___attribute__pure=0
+    opal_cv___attribute__sentinel=0
+    opal_cv___attribute__unused=0
+    opal_cv___attribute__visibility=0
+    opal_cv___attribute__warn_unused_result=0
+    opal_cv___attribute__weak_alias=0
   else
     AC_MSG_RESULT([yes])
 
@@ -476,42 +476,42 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
 
   # Now that all the values are set, define them
 
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_ALIGNED, [$ompi_cv___attribute__aligned],
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_ALIGNED, [$opal_cv___attribute__aligned],
                      [Whether your compiler has __attribute__ aligned or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_ALWAYS_INLINE, [$ompi_cv___attribute__always_inline],
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_ALWAYS_INLINE, [$opal_cv___attribute__always_inline],
                      [Whether your compiler has __attribute__ always_inline or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_COLD, [$ompi_cv___attribute__cold],
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_COLD, [$opal_cv___attribute__cold],
                      [Whether your compiler has __attribute__ cold or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_CONST, [$ompi_cv___attribute__const],
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_CONST, [$opal_cv___attribute__const],
                      [Whether your compiler has __attribute__ const or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_DEPRECATED, [$ompi_cv___attribute__deprecated],
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_DEPRECATED, [$opal_cv___attribute__deprecated],
                      [Whether your compiler has __attribute__ deprecated or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_FORMAT, [$ompi_cv___attribute__format],
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_FORMAT, [$opal_cv___attribute__format],
                      [Whether your compiler has __attribute__ format or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_HOT, [$ompi_cv___attribute__hot],
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_HOT, [$opal_cv___attribute__hot],
                      [Whether your compiler has __attribute__ hot or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_MALLOC, [$ompi_cv___attribute__malloc],
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_MALLOC, [$opal_cv___attribute__malloc],
                      [Whether your compiler has __attribute__ malloc or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_MAY_ALIAS, [$ompi_cv___attribute__may_alias],
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_MAY_ALIAS, [$opal_cv___attribute__may_alias],
                      [Whether your compiler has __attribute__ may_alias or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_NO_INSTRUMENT_FUNCTION, [$ompi_cv___attribute__no_instrument_function],
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_NO_INSTRUMENT_FUNCTION, [$opal_cv___attribute__no_instrument_function],
                      [Whether your compiler has __attribute__ no_instrument_function or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_NONNULL, [$ompi_cv___attribute__nonnull],
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_NONNULL, [$opal_cv___attribute__nonnull],
                      [Whether your compiler has __attribute__ nonnull or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_NORETURN, [$ompi_cv___attribute__noreturn],
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_NORETURN, [$opal_cv___attribute__noreturn],
                      [Whether your compiler has __attribute__ noreturn or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_PACKED, [$ompi_cv___attribute__packed],
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_PACKED, [$opal_cv___attribute__packed],
                      [Whether your compiler has __attribute__ packed or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_PURE, [$ompi_cv___attribute__pure],
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_PURE, [$opal_cv___attribute__pure],
                      [Whether your compiler has __attribute__ pure or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_SENTINEL, [$ompi_cv___attribute__sentinel],
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_SENTINEL, [$opal_cv___attribute__sentinel],
                      [Whether your compiler has __attribute__ sentinel or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_UNUSED, [$ompi_cv___attribute__unused],
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_UNUSED, [$opal_cv___attribute__unused],
                      [Whether your compiler has __attribute__ unused or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_VISIBILITY, [$ompi_cv___attribute__visibility],
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_VISIBILITY, [$opal_cv___attribute__visibility],
                      [Whether your compiler has __attribute__ visibility or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_WARN_UNUSED_RESULT, [$ompi_cv___attribute__warn_unused_result],
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_WARN_UNUSED_RESULT, [$opal_cv___attribute__warn_unused_result],
                      [Whether your compiler has __attribute__ warn unused result or not])
-  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_WEAK_ALIAS, [$ompi_cv___attribute__weak_alias],
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_WEAK_ALIAS, [$opal_cv___attribute__weak_alias],
                      [Whether your compiler has __attribute__ weak alias or not])
 ])

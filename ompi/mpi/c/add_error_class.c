@@ -26,7 +26,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/attribute/attribute.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Add_error_class = PMPI_Add_error_class
 #endif
 

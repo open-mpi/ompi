@@ -487,7 +487,7 @@ static int modex(opal_list_t *procs)
         return rc;
     }
     
-    if (OMPI_ENABLE_HETEROGENEOUS_SUPPORT) {
+    if (OPAL_ENABLE_HETEROGENEOUS_SUPPORT) {
         /* decide if we need to do a modex. Check
          * first to see if hetero is enabled - if yes, then we
          * may need to exchange arch's as they may be different

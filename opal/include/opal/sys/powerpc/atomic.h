@@ -23,7 +23,7 @@
  * On powerpc ...
  */
 
-#if OMPI_WANT_SMP_LOCKS
+#if OPAL_WANT_SMP_LOCKS
 
 #define MB()  __asm__ __volatile__ ("sync" : : : "memory")
 #define RMB() __asm__ __volatile__ ("lwsync" : : : "memory")
@@ -56,7 +56,7 @@
 #define OPAL_HAVE_ATOMIC_SUB_32 1
 
 
-#if (OMPI_ASSEMBLY_ARCH == OMPI_POWERPC64) || OMPI_ASM_SUPPORT_64BIT
+#if (OPAL_ASSEMBLY_ARCH == OMPI_POWERPC64) || OPAL_ASM_SUPPORT_64BIT
 #define OPAL_HAVE_ATOMIC_CMPSET_64 1
 #endif
 
@@ -163,7 +163,7 @@ static inline int opal_atomic_cmpset_rel_32(volatile int32_t *addr,
 #endif /* OMPI_GCC_INLINE_ASSEMBLY */
 
 
-#if (OMPI_ASSEMBLY_ARCH == OMPI_POWERPC64)
+#if (OPAL_ASSEMBLY_ARCH == OMPI_POWERPC64)
 
 #if  OMPI_GCC_INLINE_ASSEMBLY
 static inline int opal_atomic_cmpset_64(volatile int64_t *addr,
@@ -211,7 +211,7 @@ static inline int opal_atomic_cmpset_rel_64(volatile int64_t *addr,
 
 #endif /* OMPI_GCC_INLINE_ASSEMBLY */
 
-#elif (OMPI_ASSEMBLY_ARCH == OMPI_POWERPC32) && OMPI_ASM_SUPPORT_64BIT
+#elif (OPAL_ASSEMBLY_ARCH == OMPI_POWERPC32) && OPAL_ASM_SUPPORT_64BIT
 
 #ifndef ll_low /* GLIBC provides these somewhere, so protect */
 #define ll_low(x)       *(((unsigned int*)&(x))+0)
@@ -282,7 +282,7 @@ static inline int opal_atomic_cmpset_rel_64(volatile int64_t *addr,
 
 #endif /* OMPI_GCC_INLINE_ASSEMBLY */
 
-#endif /* OMPI_ASM_SUPPORT_64BIT */
+#endif /* OPAL_ASM_SUPPORT_64BIT */
 
 
 #if OMPI_GCC_INLINE_ASSEMBLY

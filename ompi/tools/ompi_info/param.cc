@@ -457,7 +457,7 @@ void ompi_info::show_path(const string& type, const string& value)
 
 void ompi_info::do_arch()
 {
-    out("Configured architecture", "config:arch", OMPI_ARCH);
+    out("Configured architecture", "config:arch", OPAL_ARCH);
 }
 
 
@@ -483,17 +483,17 @@ void ompi_info::do_config(bool want_all)
 {
   const string cxx(OMPI_WANT_CXX_BINDINGS ? "yes" : "no");
   const string f77(OMPI_WANT_F77_BINDINGS ? string("yes (") +
-                   (OMPI_HAVE_WEAK_SYMBOLS ? "all" :
+                   (OPAL_HAVE_WEAK_SYMBOLS ? "all" :
                     (OMPI_F77_CAPS ? "caps" :
                      (OMPI_F77_PLAIN ? "lower case" :
                       (OMPI_F77_SINGLE_UNDERSCORE ? "single underscore" : 
                        "double underscore")))) + string(")"): "no");
   const string f90(OMPI_WANT_F90_BINDINGS ? "yes" : "no");
   const string f90_size(OMPI_F90_BUILD_SIZE);
-  const string heterogeneous(OMPI_ENABLE_HETEROGENEOUS_SUPPORT ? "yes" : "no");
-  const string memprofile(OMPI_ENABLE_MEM_PROFILE ? "yes" : "no");
-  const string memdebug(OMPI_ENABLE_MEM_DEBUG ? "yes" : "no");
-  const string debug(OMPI_ENABLE_DEBUG ? "yes" : "no");
+  const string heterogeneous(OPAL_ENABLE_HETEROGENEOUS_SUPPORT ? "yes" : "no");
+  const string memprofile(OPAL_ENABLE_MEM_PROFILE ? "yes" : "no");
+  const string memdebug(OPAL_ENABLE_MEM_DEBUG ? "yes" : "no");
+  const string debug(OPAL_ENABLE_DEBUG ? "yes" : "no");
   const string cprofiling(OMPI_ENABLE_MPI_PROFILING ? "yes" : "no");
   const string cxxprofiling(OMPI_ENABLE_MPI_PROFILING ? "yes" : "no");
   const string f77profiling((OMPI_ENABLE_MPI_PROFILING && 
@@ -523,22 +523,22 @@ void ompi_info::do_config(bool want_all)
   paramcheck = "runtime";
 #endif
   string threads;
-  const string want_libltdl(OMPI_WANT_LIBLTDL ? "yes" : "no");
+  const string want_libltdl(OPAL_WANT_LIBLTDL ? "yes" : "no");
   const string mpirun_prefix_by_default(ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT ?
                                         "yes" : "no");
   const string sparse_groups(OMPI_GROUP_SPARSE ? "yes" : "no");
   const string have_mpi_io(OMPI_PROVIDE_MPI_FILE_INTERFACE ? "yes" : "no");
   const string wtime_support(OPAL_TIMER_USEC_NATIVE ? "native" : "gettimeofday");
-  const string symbol_visibility(OMPI_C_HAVE_VISIBILITY ? "yes" : "no");
+  const string symbol_visibility(OPAL_C_HAVE_VISIBILITY ? "yes" : "no");
 
-  if (OMPI_HAVE_SOLARIS_THREADS || OMPI_HAVE_POSIX_THREADS) {
-      threads = OMPI_HAVE_SOLARIS_THREADS ? "solaris" :
-          OMPI_HAVE_POSIX_THREADS ? "posix" : "type unknown";
+  if (OPAL_HAVE_SOLARIS_THREADS || OPAL_HAVE_POSIX_THREADS) {
+      threads = OPAL_HAVE_SOLARIS_THREADS ? "solaris" :
+          OPAL_HAVE_POSIX_THREADS ? "posix" : "type unknown";
           threads += " (";
           threads += "mpi: ";
-          threads += OMPI_ENABLE_MPI_THREADS ? "yes" : "no";
+          threads += OPAL_ENABLE_MPI_THREADS ? "yes" : "no";
           threads += ", progress: ";
-          threads += OMPI_ENABLE_PROGRESS_THREADS ? "yes" : "no";
+          threads += OPAL_ENABLE_PROGRESS_THREADS ? "yes" : "no";
           threads += ")";
   } else {
       threads = "no";
@@ -565,8 +565,8 @@ void ompi_info::do_config(bool want_all)
   out("Fortran90 bindings size", "bindings:f90:size", 
       OMPI_WANT_F90_BINDINGS ? f90_size : "na");
 
-  out("C compiler", "compiler:c:command", OMPI_CC);
-  out("C compiler absolute", "compiler:c:absolute", OMPI_CC_ABSOLUTE);
+  out("C compiler", "compiler:c:command", OPAL_CC);
+  out("C compiler absolute", "compiler:c:absolute", OPAL_CC_ABSOLUTE);
 
   if (want_all) {
     out("C char size", "compiler:c:sizeof:char", sizeof(char));
@@ -577,9 +577,9 @@ void ompi_info::do_config(bool want_all)
     out("C float size", "compiler:c:sizeof:float", sizeof(float));
     out("C double size", "compiler:c:sizeof:double", sizeof(double));
     out("C pointer size", "compiler:c:sizeof:pointer", sizeof(void *));
-    out("C char align", "compiler:c:align:char", OMPI_ALIGNMENT_CHAR);
+    out("C char align", "compiler:c:align:char", OPAL_ALIGNMENT_CHAR);
     out("C bool align", "compiler:c:align:bool", OMPI_ALIGNMENT_CXX_BOOL);
-    out("C int align", "compiler:c:align:int", OMPI_ALIGNMENT_INT);
+    out("C int align", "compiler:c:align:int", OPAL_ALIGNMENT_INT);
     out("C float align", "compiler:c:align:float", OMPI_ALIGNMENT_FLOAT);
     out("C double align", "compiler:c:align:double", OMPI_ALIGNMENT_DOUBLE);
   }

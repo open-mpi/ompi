@@ -105,7 +105,7 @@ typedef struct sm_fifo_t sm_fifo_t;
  * Shared Memory resource managment
  */
 
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
+#if OPAL_ENABLE_PROGRESS_THREADS == 1
 #define DATA (char)0
 #define DONE (char)1
 #endif
@@ -162,7 +162,7 @@ struct mca_btl_sm_component_t {
     int mem_node;
     int num_mem_nodes;
     
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
+#if OPAL_ENABLE_PROGRESS_THREADS == 1
     char sm_fifo_path[PATH_MAX];   /**< path to fifo used to signal this process */
     int  sm_fifo_fd;               /**< file descriptor corresponding to opened fifo */
     opal_thread_t sm_fifo_thread;
@@ -472,11 +472,11 @@ extern int mca_btl_sm_send(
  */
 int mca_btl_sm_ft_event(int state);
 
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
+#if OPAL_ENABLE_PROGRESS_THREADS == 1
 void mca_btl_sm_component_event_thread(opal_object_t*);
 #endif
 
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
+#if OPAL_ENABLE_PROGRESS_THREADS == 1
 #define MCA_BTL_SM_SIGNAL_PEER(peer) \
 { \
     unsigned char cmd = DATA; \

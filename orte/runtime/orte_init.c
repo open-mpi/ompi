@@ -58,9 +58,9 @@ orte_process_name_t orte_name_wildcard = {ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCAR
 orte_process_name_t orte_name_invalid = {ORTE_JOBID_INVALID, ORTE_VPID_INVALID}; 
 
 
-#if OMPI_CC_USE_PRAGMA_IDENT
+#if OPAL_CC_USE_PRAGMA_IDENT
 #pragma ident ORTE_IDENT_STRING
-#elif OMPI_CC_USE_IDENT
+#elif OPAL_CC_USE_IDENT
 #ident ORTE_IDENT_STRING
 #endif
 const char orte_version_string[] = ORTE_IDENT_STRING;

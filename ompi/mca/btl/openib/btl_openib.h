@@ -58,7 +58,7 @@ BEGIN_C_DECLS
 
 /*--------------------------------------------------------------------*/
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
 #define ATTACH() do { \
   int i = 0; \
   opal_output(0, "WAITING TO DEBUG ATTACH"); \
@@ -198,7 +198,7 @@ struct mca_btl_openib_component_t {
     int32_t apm_lmc;
     int32_t apm_ports;
     uint32_t buffer_alignment;    /**< Preferred communication buffer alignment in Bytes (must be power of two) */
-#if OMPI_HAVE_THREADS
+#if OPAL_HAVE_THREADS
     int32_t fatal_counter;           /**< Counts number on fatal events that we got on all devices */
     int async_pipe[2];               /**< Pipe for comunication with async event thread */
     int async_comp_pipe[2];          /**< Pipe for async thread comunication with main thread */
@@ -297,7 +297,7 @@ struct mca_btl_base_endpoint_t;
 typedef struct mca_btl_openib_device_t {
     opal_object_t super;
     struct ibv_device *ib_dev;  /* the ib device */
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
+#if OPAL_ENABLE_PROGRESS_THREADS == 1
     struct ibv_comp_channel *ib_channel; /* Channel event for the device */
     opal_thread_t thread;                /* Progress thread */
     volatile bool progress;              /* Progress status */
@@ -319,7 +319,7 @@ typedef struct mca_btl_openib_device_t {
     uint16_t hp_cq_polls;
     uint16_t eager_rdma_polls;
     bool pollme;
-#if OMPI_HAVE_THREADS
+#if OPAL_HAVE_THREADS
     volatile bool got_fatal_event;
 #endif
 #if HAVE_XRC
@@ -404,7 +404,7 @@ struct mca_btl_openib_reg_t {
 };
 typedef struct mca_btl_openib_reg_t mca_btl_openib_reg_t;
 
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
+#if OPAL_ENABLE_PROGRESS_THREADS == 1
 extern void* mca_btl_openib_progress_thread(opal_object_t*);
 #endif
 

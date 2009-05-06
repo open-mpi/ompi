@@ -12,7 +12,7 @@
 
 #include "ompi_config.h"
 
-#if OMPI_HAVE_THREADS
+#if OPAL_HAVE_THREADS
 #include <infiniband/verbs.h>
 #include <fcntl.h>
 #include <sys/poll.h>

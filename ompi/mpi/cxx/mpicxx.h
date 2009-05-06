@@ -67,7 +67,7 @@ static const int SEEK_CUR = ompi_stdio_seek_cur;
 static const int SEEK_END = ompi_stdio_seek_end;
 #endif
 
-#ifdef OMPI_HAVE_SYS_SYNCH_H
+#ifdef OPAL_HAVE_SYS_SYNCH_H
 // Solaris threads.h pulls in sys/synch.h which in certain versions 
 // defines LOCK_SHARED.  
 

@@ -43,7 +43,7 @@
 
 #define OMPI_BUILD_LIBS ${OMPI_BUILD_LIBS}
 
-#define OMPI_CC_ABSOLUTE "${OMPI_CC}"
+#define OPAL_CC_ABSOLUTE "${OPAL_CC}"
 
 #define OMPI_CXX_ABSOLUTE  "${OMPI_CXX}"
 
@@ -634,7 +634,7 @@
 #cmakedefine NO_MINUS_C_MINUS_O 1
 
 /* Alignment of type char */
-#define OMPI_ALIGNMENT_CHAR ${CHAR_ALIGNMENT}
+#define OPAL_ALIGNMENT_CHAR ${CHAR_ALIGNMENT}
 
 /* Alignment of type bool */
 #define OMPI_ALIGNMENT_CXX_BOOL ${BOOL_ALIGNMENT}
@@ -709,19 +709,19 @@
 #define OMPI_ALIGNMENT_FORTRAN_REAL8 ${OMPI_ALIGNMENT_FORTRAN_REAL8}
 
 /* Alignment of type int */
-#define OMPI_ALIGNMENT_INT ${INT_ALIGNMENT}
+#define OPAL_ALIGNMENT_INT ${INT_ALIGNMENT}
 
 /* Alignment of type long */
-#define OMPI_ALIGNMENT_LONG ${LONG_ALIGNMENT}
+#define OPAL_ALIGNMENT_LONG ${LONG_ALIGNMENT}
 
 /* Alignment of type long double */
-#define OMPI_ALIGNMENT_LONG_DOUBLE ${LONG_DOUBLE_ALIGNMENT}
+#define OPAL_ALIGNMENT_LONG_DOUBLE ${LONG_DOUBLE_ALIGNMENT}
 
 /* Alignment of type long long */
-#define OMPI_ALIGNMENT_LONG_LONG ${LONG_LONG_ALIGNMENT}
+#define OPAL_ALIGNMENT_LONG_LONG ${LONG_LONG_ALIGNMENT}
 
 /* Alignment of type short */
-#define OMPI_ALIGNMENT_SHORT ${SHORT_ALIGNMENT}
+#define OPAL_ALIGNMENT_SHORT ${SHORT_ALIGNMENT}
 
 /* Alignment of type void * */
 #define OMPI_ALIGNMENT_VOID_P ${VOID_P_ALIGNMENT}
@@ -730,44 +730,44 @@
 #define OMPI_ALIGNMENT_WCHAR ${WCHAR_T_ALIGNMENT}
 
 /* OMPI architecture string */
-#define OMPI_ARCH "${CMAKE_SYSTEM_PROCESSOR} ${CMAKE_SYSTEM}"
+#define OPAL_ARCH "${CMAKE_SYSTEM_PROCESSOR} ${CMAKE_SYSTEM}"
 
 /* Assembly align directive expects logarithmic value */
-#cmakedefine OMPI_ASM_ALIGN_LOG
+#cmakedefine OPAL_ASM_ALIGN_LOG
 
 /* Assembly directive for exporting symbols */
-#cmakedefine OMPI_ASM_GLOBAL
+#cmakedefine OPAL_ASM_GLOBAL
 
 /* Assembly prefix for gsym labels */
-#cmakedefine OMPI_ASM_GSYM
+#cmakedefine OPAL_ASM_GSYM
 
 /* Assembly suffix for labels */
-#cmakedefine OMPI_ASM_LABEL_SUFFIX
+#cmakedefine OPAL_ASM_LABEL_SUFFIX
 
 /* Assembly prefix for lsym labels */
-#cmakedefine OMPI_ASM_LSYM
+#cmakedefine OPAL_ASM_LSYM
 
 /* Do we need to give a .size directive */
-#cmakedefine OMPI_ASM_SIZE
+#cmakedefine OPAL_ASM_SIZE
 
 /* Whether we can do 64bit assembly operations or not. Should not be used
    outside of the assembly header files */
-#cmakedefine OMPI_ASM_SUPPORT_64BIT
+#cmakedefine OPAL_ASM_SUPPORT_64BIT
 
 /* Assembly directive for setting text section */
-#cmakedefine OMPI_ASM_TEXT
+#cmakedefine OPAL_ASM_TEXT
 
 /* How to set function type in .type directive */
-#cmakedefine OMPI_ASM_TYPE
+#cmakedefine OPAL_ASM_TYPE
 
 /* Architecture type of assembly to use for atomic operations */
-#cmakedefine OMPI_ASSEMBLY_ARCH ${OMPI_ASSEMBLY_ARCH}
+#cmakedefine OPAL_ASSEMBLY_ARCH ${OPAL_ASSEMBLY_ARCH}
 
 /* Format of assembly file */
-#cmakedefine OMPI_ASSEMBLY_FORMAT
+#cmakedefine OPAL_ASSEMBLY_FORMAT
 
 /* OMPI underlying C compiler */
-#cmakedefine OMPI_CC "${OMPI_CC}"
+#cmakedefine OPAL_CC "${OPAL_CC}"
 
 /* OMPI underlying C++ compiler */
 #cmakedefine OMPI_CXX "${OMPI_CXX}"
@@ -791,46 +791,46 @@
 #cmakedefine OMPI_CXX_XLC_INLINE_ASSEMBLY
 
 /* Whether C compiler supports DEC style inline assembly */
-#cmakedefine OMPI_C_DEC_INLINE_ASSEMBLY
+#cmakedefine OPAL_C_DEC_INLINE_ASSEMBLY
 
 /* Whether C compiler supports GCC style inline assembly */
-#cmakedefine OMPI_C_GCC_INLINE_ASSEMBLY
+#cmakedefine OPAL_C_GCC_INLINE_ASSEMBLY
 
 /* Whether C compiler supports __builtin_expect */
-#cmakedefine OMPI_C_HAVE_BUILTIN_EXPECT
+#cmakedefine OPAL_C_HAVE_BUILTIN_EXPECT
 
 /* Whether C compiler supports __builtin_prefetch */
-#cmakedefine OMPI_C_HAVE_BUILTIN_PREFETCH
+#cmakedefine OPAL_C_HAVE_BUILTIN_PREFETCH
 
 /* Whether C compiler supports -fvisibility */
-#define OMPI_C_HAVE_VISIBILITY ${OMPI_C_HAVE_VISIBILITY}
+#define OPAL_C_HAVE_VISIBILITY ${OPAL_C_HAVE_VISIBILITY}
 
 /* Whether C compiler supports XLC style inline assembly */
-#cmakedefine OMPI_C_XLC_INLINE_ASSEMBLY
+#cmakedefine OPAL_C_XLC_INLINE_ASSEMBLY
 
 /* Whether we want developer-level debugging code or not */
-#define OMPI_ENABLE_DEBUG ${OMPI_ENABLE_DEBUG}
+#define OPAL_ENABLE_DEBUG ${OPAL_ENABLE_DEBUG}
 
 /* Enable features required for heterogeneous support */
-#define OMPI_ENABLE_HETEROGENEOUS_SUPPORT ${OMPI_ENABLE_HETEROGENEOUS_SUPPORT}
+#define OPAL_ENABLE_HETEROGENEOUS_SUPPORT ${OPAL_ENABLE_HETEROGENEOUS_SUPPORT}
 
 /* Whether we want the memory profiling or not */
-#define OMPI_ENABLE_MEM_DEBUG ${OMPI_ENABLE_MEM_DEBUG}
+#define OPAL_ENABLE_MEM_DEBUG ${OPAL_ENABLE_MEM_DEBUG}
 
 /* Whether we want the memory profiling or not */
-#define OMPI_ENABLE_MEM_PROFILE ${OMPI_ENABLE_MEM_PROFILE}
+#define OPAL_ENABLE_MEM_PROFILE ${OPAL_ENABLE_MEM_PROFILE}
 
 /* Whether we want MPI profiling or not */
 #define OMPI_ENABLE_MPI_PROFILING ${OMPI_ENABLE_MPI_PROFILING}
 
 /* Whether we should enable support for multiple user threads */
-#define OMPI_ENABLE_MPI_THREADS ${OMPI_ENABLE_MPI_THREADS}
+#define OPAL_ENABLE_MPI_THREADS ${OPAL_ENABLE_MPI_THREADS}
 
 /* Whether we should use progress threads rather than polling */
-#define OMPI_ENABLE_PROGRESS_THREADS ${OMPI_ENABLE_PROGRESS_THREADS}
+#define OPAL_ENABLE_PROGRESS_THREADS ${OPAL_ENABLE_PROGRESS_THREADS}
 
 /* Whether user wants PTY support or not */
-#define OMPI_ENABLE_PTY_SUPPORT ${OMPI_ENABLE_PTY_SUPPORT}
+#define OPAL_ENABLE_PTY_SUPPORT ${OPAL_ENABLE_PTY_SUPPORT}
 
 /* OMPI underlying F77 compiler */
 #define OMPI_F77 "${CMAKE_Fortran_COMPILER}"
@@ -864,64 +864,64 @@
 #define OMPI_GROUP_SPARSE ${OMPI_GROUP_SPARSE}
 
 /* Whether there is an atomic assembly file available */
-#cmakedefine OMPI_HAVE_ASM_FILE
+#cmakedefine OPAL_HAVE_ASM_FILE
 
 /* Whether your compiler has __attribute__ or not */
-#cmakedefine OMPI_HAVE_ATTRIBUTE
+#cmakedefine OPAL_HAVE_ATTRIBUTE
 
 /* Whether your compiler has __attribute__ aligned or not */
-#cmakedefine OMPI_HAVE_ATTRIBUTE_ALIGNED
+#cmakedefine OPAL_HAVE_ATTRIBUTE_ALIGNED
 
 /* Whether your compiler has __attribute__ always_inline or not */
-#cmakedefine OMPI_HAVE_ATTRIBUTE_ALWAYS_INLINE
+#cmakedefine OPAL_HAVE_ATTRIBUTE_ALWAYS_INLINE
 
 /* Whether your compiler has __attribute__ const or not */
-#cmakedefine OMPI_HAVE_ATTRIBUTE_CONST
+#cmakedefine OPAL_HAVE_ATTRIBUTE_CONST
 
 /* Whether your compiler has __attribute__ deprecated or not */
-#cmakedefine OMPI_HAVE_ATTRIBUTE_DEPRECATED
+#cmakedefine OPAL_HAVE_ATTRIBUTE_DEPRECATED
 
 /* Whether your compiler has __attribute__ format or not */
-#cmakedefine OMPI_HAVE_ATTRIBUTE_FORMAT
+#cmakedefine OPAL_HAVE_ATTRIBUTE_FORMAT
 
 /* Whether your compiler has __attribute__ malloc or not */
-#cmakedefine OMPI_HAVE_ATTRIBUTE_MALLOC
+#cmakedefine OPAL_HAVE_ATTRIBUTE_MALLOC
 
 /* Whether your compiler has __attribute__ may_alias or not */
-#cmakedefine OMPI_HAVE_ATTRIBUTE_MAY_ALIAS
+#cmakedefine OPAL_HAVE_ATTRIBUTE_MAY_ALIAS
 
 /* Whether your compiler has __attribute__ nonnull or not */
-#cmakedefine OMPI_HAVE_ATTRIBUTE_NONNULL
+#cmakedefine OPAL_HAVE_ATTRIBUTE_NONNULL
 
 /* Whether your compiler has __attribute__ noreturn or not */
-#cmakedefine OMPI_HAVE_ATTRIBUTE_NORETURN
+#cmakedefine OPAL_HAVE_ATTRIBUTE_NORETURN
 
 /* Whether your compiler has __attribute__ no_instrument_function or not */
-#cmakedefine OMPI_HAVE_ATTRIBUTE_NO_INSTRUMENT_FUNCTION
+#cmakedefine OPAL_HAVE_ATTRIBUTE_NO_INSTRUMENT_FUNCTION
 
 /* Whether your compiler has __attribute__ packed or not */
-#cmakedefine OMPI_HAVE_ATTRIBUTE_PACKED
+#cmakedefine OPAL_HAVE_ATTRIBUTE_PACKED
 
 /* Whether your compiler has __attribute__ pure or not */
-#cmakedefine OMPI_HAVE_ATTRIBUTE_PURE
+#cmakedefine OPAL_HAVE_ATTRIBUTE_PURE
 
 /* Whether your compiler has __attribute__ sentinel or not */
-#cmakedefine OMPI_HAVE_ATTRIBUTE_SENTINEL
+#cmakedefine OPAL_HAVE_ATTRIBUTE_SENTINEL
 
 /* Whether your compiler has __attribute__ unused or not */
-#cmakedefine OMPI_HAVE_ATTRIBUTE_UNUSED
+#cmakedefine OPAL_HAVE_ATTRIBUTE_UNUSED
 
 /* Whether your compiler has __attribute__ visibility or not */
-#cmakedefine OMPI_HAVE_ATTRIBUTE_VISIBILITY
+#cmakedefine OPAL_HAVE_ATTRIBUTE_VISIBILITY
 
 /* Whether your compiler has __attribute__ warn unused result or not */
-#cmakedefine OMPI_HAVE_ATTRIBUTE_WARN_UNUSED_RESULT
+#cmakedefine OPAL_HAVE_ATTRIBUTE_WARN_UNUSED_RESULT
 
 /* Whether your compiler has __attribute__ weak alias or not */
-#cmakedefine OMPI_HAVE_ATTRIBUTE_WEAK_ALIAS
+#cmakedefine OPAL_HAVE_ATTRIBUTE_WEAK_ALIAS
 
 /* whether qsort is broken or not */
-#cmakedefine OMPI_HAVE_BROKEN_QSORT
+#cmakedefine OPAL_HAVE_BROKEN_QSORT
 
 /* Whether or not we have compiled with C++ exceptions support */
 #define OMPI_HAVE_CXX_EXCEPTION_SUPPORT ${OMPI_HAVE_CXX_EXCEPTION_SUPPORT}
@@ -1047,10 +1047,10 @@
 
 /* Do not use outside of mpi.h. Define to 1 if the system has the type 'long
    long'. */
-#cmakedefine OMPI_HAVE_LONG_LONG 1
+#cmakedefine OPAL_HAVE_LONG_LONG 1
 
 /* Do we have POSIX threads */
-#define OMPI_HAVE_POSIX_THREADS ${OMPI_HAVE_POSIX_THREADS}
+#define OPAL_HAVE_POSIX_THREADS ${OPAL_HAVE_POSIX_THREADS}
 
 /* If PTHREADS implementation supports PTHREAD_MUTEX_ERRORCHECK */
 #cmakedefine OMPI_HAVE_PTHREAD_MUTEX_ERRORCHECK
@@ -1062,19 +1062,19 @@
 #cmakedefine OMPI_HAVE_SA_LEN
 
 /* Whether we have SA_RESTART in <signal.h> or not */
-#cmakedefine OMPI_HAVE_SA_RESTART
+#cmakedefine OPAL_HAVE_SA_RESTART
 
 /* Do we have native Solaris threads */
-#define OMPI_HAVE_SOLARIS_THREADS ${OMPI_HAVE_SOLARIS_THREADS}
+#define OPAL_HAVE_SOLARIS_THREADS ${OPAL_HAVE_SOLARIS_THREADS}
 
 /* Whether we have __va_copy or not */
-#cmakedefine OMPI_HAVE_UNDERSCORE_VA_COPY
+#cmakedefine OPAL_HAVE_UNDERSCORE_VA_COPY
 
 /* Whether we have va_copy or not */
-#cmakedefine OMPI_HAVE_VA_COPY
+#cmakedefine OPAL_HAVE_VA_COPY
 
 /* Wehther we have weak symbols or not */
-#define OMPI_HAVE_WEAK_SYMBOLS ${OMPI_HAVE_WEAK_SYMBOLS}
+#define OPAL_HAVE_WEAK_SYMBOLS ${OPAL_HAVE_WEAK_SYMBOLS}
 
 /* Number of arguments to ibv_create_cq */
 #cmakedefine OMPI_IBV_CREATE_CQ_ARGS
@@ -1115,7 +1115,7 @@
 
 /* Whether the C compiler supports "bool" without any other help (such as
    <stdbool.h>) */
-#cmakedefine OMPI_NEED_C_BOOL 1
+#cmakedefine OPAL_NEED_C_BOOL 1
 
 /* MPI datatype corresponding to MPI_Offset */
 #cmakedefine OMPI_OFFSET_DATATYPE
@@ -1130,13 +1130,13 @@
 #cmakedefine OMPI_PORTALS_UTCP
 
 /* Whether r notation is used for ppc registers */
-#cmakedefine OMPI_POWERPC_R_REGISTERS
+#cmakedefine OPAL_POWERPC_R_REGISTERS
 
 /* Whether OMPI should provide MPI File interface */
 #define OMPI_PROVIDE_MPI_FILE_INTERFACE ${OMPI_PROVIDE_MPI_FILE_INTERFACE}
 
 /* type to use for ptrdiff_t */
-#cmakedefine OMPI_PTRDIFF_TYPE ${OMPI_PTRDIFF_TYPE}
+#cmakedefine OPAL_PTRDIFF_TYPE ${OPAL_PTRDIFF_TYPE}
 
 /* Release release number of Open MPI */
 #cmakedefine OMPI_RELEASE_VERSION ${OMPI_RELEASE_VERSION_STRING}
@@ -1208,10 +1208,10 @@
 #define OMPI_SIZEOF_FORTRAN_REAL8 ${OMPI_SIZEOF_FORTRAN_REAL8}
 
 /* Do threads have different pids (pthreads on linux) */
-#cmakedefine OMPI_THREADS_HAVE_DIFFERENT_PIDS
+#cmakedefine OPAL_THREADS_HAVE_DIFFERENT_PIDS
 
 /* Whether to use <stdbool.h> or not */
-#cmakedefine OMPI_USE_STDBOOL_H
+#cmakedefine OPAL_USE_STDBOOL_H
 
 /* Complete release number of Open MPI */
 #cmakedefine OMPI_VERSION "${OMPI_VERSION_STRING}"
@@ -1226,7 +1226,7 @@
 #define OMPI_WANT_F90_BINDINGS ${OMPI_WANT_F90_BINDINGS}
 
 /* Whether to include support for libltdl or not */
-#define OMPI_WANT_LIBLTDL ${OMPI_WANT_LIBLTDL}
+#define OPAL_WANT_LIBLTDL ${OPAL_WANT_LIBLTDL}
 
 /* do we want to try to work around C++ bindings SEEK_* issue? */
 #cmakedefine OMPI_WANT_MPI_CXX_SEEK 1
@@ -1235,10 +1235,10 @@
 #define OMPI_WANT_PERUSE ${OMPI_WANT_PERUSE}
 
 /* if want pretty-print stack trace feature */
-#cmakedefine OMPI_WANT_PRETTY_PRINT_STACKTRACE 1
+#cmakedefine OPAL_WANT_PRETTY_PRINT_STACKTRACE 1
 
 /* whether we want to have smp locks in atomic ops or not */
-#cmakedefine OMPI_WANT_SMP_LOCKS 1
+#cmakedefine OPAL_WANT_SMP_LOCKS 1
 
 /* Enable fault tolerance general components and logic */
 #define OPAL_ENABLE_FT ${OPAL_ENABLE_FT}

@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
     orte_hnp_contact_t *hnp;
     orte_std_cntr_t num_jobs, i;
     orte_app_context_t *app;
-    char cwd[OMPI_PATH_MAX];
+    char cwd[OPAL_PATH_MAX];
     
     if (0 > (rc = orte_init(ORTE_PROC_TOOL))) {
         fprintf(stderr, "orte_tool: couldn't init orte\n");
@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
     /* record the number of procs to be generated */
     app->num_procs = 1;
     /* setup the wd */
-    opal_getcwd(cwd, OMPI_PATH_MAX);
+    opal_getcwd(cwd, OPAL_PATH_MAX);
     app->cwd = strdup(cwd);
     
     /* spawn it */

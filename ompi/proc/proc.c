@@ -144,7 +144,7 @@ int ompi_proc_set_arch(void)
             proc->proc_arch = orte_ess.proc_get_arch(&proc->proc_name);
             /* if arch is different than mine, create a new convertor for this proc */
             if (proc->proc_arch != orte_process_info.arch) {
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
                 OBJ_RELEASE(proc->proc_convertor);
                 proc->proc_convertor = ompi_convertor_create(proc->proc_arch, 0);
 #else
@@ -358,7 +358,7 @@ int ompi_proc_refresh(void) {
             proc->proc_arch = orte_ess.proc_get_arch(&proc->proc_name);
             /* if arch is different than mine, create a new convertor for this proc */
             if (proc->proc_arch != orte_process_info.arch) {
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
                 OBJ_RELEASE(proc->proc_convertor);
                 proc->proc_convertor = ompi_convertor_create(proc->proc_arch, 0);
 #else
@@ -530,7 +530,7 @@ ompi_proc_unpack(opal_buffer_t* buf,
             
             /* if arch is different than mine, create a new convertor for this proc */
             if (plist[i]->proc_arch != ompi_mpi_local_arch) {
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
                 OBJ_RELEASE(plist[i]->proc_convertor);
                 plist[i]->proc_convertor = ompi_convertor_create(plist[i]->proc_arch, 0);
 #else

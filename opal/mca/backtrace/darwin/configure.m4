@@ -40,7 +40,7 @@ AC_DEFUN([MCA_backtrace_darwin_CONFIG],[
     esac
 
     if test "$backtrace_darwin_happy" = "yes" ; then 
-       if test "$OMPI_C_GCC_INLINE_ASSEMBLY" = "0" ; then
+       if test "$OPAL_C_GCC_INLINE_ASSEMBLY" = "0" ; then
            backtrace_darwin_happy="no"
        fi
     fi

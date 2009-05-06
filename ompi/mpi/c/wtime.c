@@ -27,7 +27,7 @@
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/mpiruntime.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Wtime = PMPI_Wtime
 #endif
 

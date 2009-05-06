@@ -40,7 +40,7 @@
 struct ompi_osc_pt2pt_base_header_t {
     uint8_t hdr_type;
     uint8_t hdr_flags;
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     uint8_t padding[2];
 #endif
 };

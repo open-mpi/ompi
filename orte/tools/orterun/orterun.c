@@ -1734,7 +1734,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
                       bool *made_app, char ***app_env)
 {
     opal_cmd_line_t cmd_line;
-    char cwd[OMPI_PATH_MAX];
+    char cwd[OPAL_PATH_MAX];
     int i, j, count, rc;
     char *param, *value, *value2;
     orte_app_context_t *app = NULL;

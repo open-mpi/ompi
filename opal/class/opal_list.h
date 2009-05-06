@@ -38,7 +38,7 @@
  * first list), you will effectively be hosing the first list.  You
  * have been warned.
  *
- * If OMPI_ENABLE_DEBUG is true, a bunch of checks occur, including
+ * If OPAL_ENABLE_DEBUG is true, a bunch of checks occur, including
  * some spot checks for a debugging reference count in an attempt to
  * ensure that an opal_list_item_t is only one *one* list at a time.
  * Given the highly concurrent nature of this class, these spot checks
@@ -68,7 +68,7 @@
 #include <stdlib.h>
 #include "opal/class/opal_object.h"
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
 /* Need atomics for debugging (reference counting) */
 #include "opal/sys/atomic.h"
 #include "opal/threads/mutex.h"
@@ -105,7 +105,7 @@ struct opal_list_item_t
     /**< Pointer to previous list item */
     int32_t item_free;
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     /** Atomic reference count for debugging */
     volatile int32_t opal_list_item_refcount;
     /** The list this item belong to */
@@ -195,7 +195,7 @@ static inline bool opal_list_is_empty(opal_list_t* list)
 static inline opal_list_item_t* opal_list_get_first(opal_list_t* list)
 {
     opal_list_item_t* item = (opal_list_item_t*)list->opal_list_sentinel.opal_list_next;
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     /* Spot check: ensure that the first item is only on one list */
 
     assert(1 == item->opal_list_item_refcount);
@@ -222,7 +222,7 @@ static inline opal_list_item_t* opal_list_get_first(opal_list_t* list)
 static inline opal_list_item_t* opal_list_get_last(opal_list_t* list)
 {
     opal_list_item_t* item = (opal_list_item_t *)list->opal_list_sentinel.opal_list_prev;
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     /* Spot check: ensure that the last item is only on one list */
 
     assert( 1 == item->opal_list_item_refcount );
@@ -298,7 +298,7 @@ static inline opal_list_item_t* opal_list_get_end(opal_list_t* list)
  */
 static inline size_t opal_list_get_size(opal_list_t* list)
 {
-#if OMPI_ENABLE_DEBUG && 0
+#if OPAL_ENABLE_DEBUG && 0
     /* not sure if we really want this running in devel, as it does
      * slow things down.  Wanted for development of splice / join to
      * make sure length was reset properly 
@@ -347,7 +347,7 @@ static inline size_t opal_list_get_size(opal_list_t* list)
 static inline opal_list_item_t *opal_list_remove_item
   (opal_list_t *list, opal_list_item_t *item)
 {
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     opal_list_item_t *item_ptr;
     bool found = false;
 
@@ -377,7 +377,7 @@ static inline opal_list_item_t *opal_list_remove_item
 
     list->opal_list_length--;
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     /* Spot check: ensure that this item is still only on one list */
 
     OPAL_THREAD_ADD32( &(item->opal_list_item_refcount), -1 );
@@ -403,22 +403,22 @@ static inline opal_list_item_t *opal_list_remove_item
  * it's usually a cheap operation.
  */
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
 #define opal_list_append(l,i) \
 _opal_list_append(l,i,__FILE__,__LINE__)
 #else
 #define opal_list_append(l,i) \
 _opal_list_append(l,i)
-#endif  /* OMPI_ENABLE_DEBUG */
+#endif  /* OPAL_ENABLE_DEBUG */
 
 static inline void _opal_list_append(opal_list_t *list, opal_list_item_t *item
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
                                      , const char* FILE_NAME, int LINENO
-#endif  /* OMPI_ENABLE_DEBUG */
+#endif  /* OPAL_ENABLE_DEBUG */
                                      )
 {
     opal_list_item_t* sentinel = &(list->opal_list_sentinel);
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
   /* Spot check: ensure that this item is previously on no lists */
 
   assert(0 == item->opal_list_item_refcount);
@@ -442,7 +442,7 @@ static inline void _opal_list_append(opal_list_t *list, opal_list_item_t *item
   /* increment list element counter */
   list->opal_list_length++;
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
   /* Spot check: ensure this item is only on the list that we just
      appended it to */
 
@@ -470,7 +470,7 @@ static inline void opal_list_prepend(opal_list_t *list,
                                      opal_list_item_t *item) 
 {
     opal_list_item_t* sentinel = &(list->opal_list_sentinel);
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
   /* Spot check: ensure that this item is previously on no lists */
 
   assert(0 == item->opal_list_item_refcount);
@@ -492,7 +492,7 @@ static inline void opal_list_prepend(opal_list_t *list,
   /* increment list element counter */
   list->opal_list_length++;
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
   /* Spot check: ensure this item is only on the list that we just
      prepended it to */
 
@@ -530,7 +530,7 @@ static inline opal_list_item_t *opal_list_remove_first(opal_list_t *list)
     return (opal_list_item_t *)NULL;
   }
   
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
   /* Spot check: ensure that the first item is only on this list */
 
   assert(1 == list->opal_list_sentinel.opal_list_next->opal_list_item_refcount);
@@ -548,7 +548,7 @@ static inline opal_list_item_t *opal_list_remove_first(opal_list_t *list)
   /* reset the head next pointer */
   list->opal_list_sentinel.opal_list_next = item->opal_list_next;
   
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
   assert( list == item->opal_list_item_belong_to );
   item->opal_list_item_belong_to = NULL;
   item->opal_list_prev=(opal_list_item_t *)NULL;
@@ -592,7 +592,7 @@ static inline opal_list_item_t *opal_list_remove_last(opal_list_t *list)
       return (opal_list_item_t *)NULL;
   }
   
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
   /* Spot check: ensure that the first item is only on this list */
 
   assert(1 == list->opal_list_sentinel.opal_list_prev->opal_list_item_refcount);
@@ -610,7 +610,7 @@ static inline opal_list_item_t *opal_list_remove_last(opal_list_t *list)
   /* reset tail's previous pointer */
   list->opal_list_sentinel.opal_list_prev = item->opal_list_prev;
   
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
   assert( list == item->opal_list_item_belong_to );
   item->opal_list_next = item->opal_list_prev = (opal_list_item_t *)NULL;
 
@@ -637,7 +637,7 @@ static inline opal_list_item_t *opal_list_remove_last(opal_list_t *list)
 static inline void opal_list_insert_pos(opal_list_t *list, opal_list_item_t *pos,
                                         opal_list_item_t *item)
 {
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     /* Spot check: ensure that the item we're insertting is currently
        not on any list */
 
@@ -656,7 +656,7 @@ static inline void opal_list_insert_pos(opal_list_t *list, opal_list_item_t *pos
     /* reset list length counter */
     list->opal_list_length++;
 
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     /* Spot check: double check that this item is only on the list
        that we just added it to */
 

@@ -18,10 +18,10 @@
 #if HAVE_XRC
 #include "connect/btl_openib_connect_xoob.h"
 #endif
-#if OMPI_HAVE_RDMACM && OMPI_HAVE_THREADS
+#if OMPI_HAVE_RDMACM && OPAL_HAVE_THREADS
 #include "connect/btl_openib_connect_rdmacm.h"
 #endif
-#if OMPI_HAVE_IBCM && OMPI_HAVE_THREADS
+#if OMPI_HAVE_IBCM && OPAL_HAVE_THREADS
 #include "connect/btl_openib_connect_ibcm.h"
 #endif
 
@@ -45,7 +45,7 @@ static ompi_btl_openib_connect_base_component_t *all[] = {
 
     /* Always have an entry here so that the CP indexes will always be
        the same: if RDMA CM is not available, use the "empty" CPC */
-#if OMPI_HAVE_RDMACM && OMPI_HAVE_THREADS
+#if OMPI_HAVE_RDMACM && OPAL_HAVE_THREADS
     &ompi_btl_openib_connect_rdmacm,
 #else
     &ompi_btl_openib_connect_empty,
@@ -53,7 +53,7 @@ static ompi_btl_openib_connect_base_component_t *all[] = {
 
     /* Always have an entry here so that the CP indexes will always be
        the same: if IB CM is not available, use the "empty" CPC */
-#if OMPI_HAVE_IBCM && OMPI_HAVE_THREADS
+#if OMPI_HAVE_IBCM && OPAL_HAVE_THREADS
     &ompi_btl_openib_connect_ibcm,
 #else
     &ompi_btl_openib_connect_empty,

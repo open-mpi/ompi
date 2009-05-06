@@ -29,7 +29,7 @@ cat > $CFILE<<EOF
 #define static
 #define inline
 #define OMPI_GCC_INLINE_ASSEMBLY 1
-#define OMPI_WANT_SMP_LOCKS 1
+#define OPAL_WANT_SMP_LOCKS 1
 #include "atomic.h"
 #include "timer.h"
 EOF

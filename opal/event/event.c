@@ -184,7 +184,7 @@ gettime(struct timeval *tp)
 OPAL_DECLSPEC opal_mutex_t opal_event_lock;
 static int  opal_event_inited = 0;
 static bool opal_event_enabled = false;
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
 static opal_thread_t opal_event_thread;
 static opal_event_t opal_event_pipe_event;
 static int opal_event_pipe[2];
@@ -193,13 +193,13 @@ static int opal_event_pipe_signalled;
 
 bool opal_event_progress_thread(void)
 {
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
 	return opal_using_threads() ? opal_thread_self_compare(&opal_event_thread) : true;
 #else
 	return true;
 #endif
 }
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
 /* run loop for dispatch thread */
 static void* opal_event_run(opal_object_t* arg)
 {
@@ -221,10 +221,10 @@ static void* opal_event_run(opal_object_t* arg)
 
 	return NULL;
 }
-#endif /* OMPI_ENABLE_PROGRESS_THREADS */
+#endif /* OPAL_ENABLE_PROGRESS_THREADS */
 
 
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
 static void opal_event_pipe_handler(int sd, short flags, void* user)
 {
 	unsigned char byte;
@@ -233,7 +233,7 @@ static void opal_event_pipe_handler(int sd, short flags, void* user)
 		opal_event_del(&opal_event_pipe_event);
 	}
 }
-#endif /* OMPI_ENABLE_PROGRESS_THREADS */
+#endif /* OPAL_ENABLE_PROGRESS_THREADS */
 
 static char** opal_event_module_include = NULL;
 
@@ -399,7 +399,7 @@ int opal_event_fini(void)
 
 int opal_event_enable(void)
 {
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
 	if(opal_using_threads()) {
 		int rc;
 
@@ -449,7 +449,7 @@ int opal_event_enable(void)
 
 int opal_event_disable(void)
 {
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
 	if(opal_using_threads()) {
 		opal_mutex_lock(&opal_event_lock);
 		if(opal_event_inited > 0 && opal_event_enabled == false) {
@@ -478,7 +478,7 @@ int opal_event_disable(void)
 int opal_event_restart(void)
 {
 #if OPAL_HAVE_WORKING_EVENTOPS && !defined(__WINDOWS__)
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
 	opal_mutex_lock(&opal_event_lock);
 	if(opal_event_pipe[0] >= 0) {
 		event_del(&opal_event_pipe_event); 
@@ -816,13 +816,13 @@ event_base_loop(struct event_base *base, int flags)
                     return (1);
 		}
 
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
 		opal_event_pipe_signalled = 0;
 #endif
 
 		res = evsel->dispatch(base, evbase, tv_p);
 
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
 		opal_event_pipe_signalled = 1;
 #endif
 
@@ -1081,7 +1081,7 @@ event_add(struct event *ev, struct timeval *tv)
 
         }
 
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
 	if(opal_using_threads() && opal_event_pipe_signalled == 0) {
             unsigned char byte = 0;
             if(write(opal_event_pipe[1], &byte, 1) != 1)
@@ -1132,7 +1132,7 @@ event_del(struct event *ev)
 		event_queue_remove(base, ev, EVLIST_SIGNAL);
 		rc = (evsel->del(evbase, ev));
 	}
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
         if(opal_using_threads() && opal_event_pipe_signalled == 0) {
             unsigned char byte = 0;
             if(write(opal_event_pipe[1], &byte, 1) != 1)

@@ -21,7 +21,7 @@
 #include "ompi/mpi/f77/bindings.h"
 #include "ompi/mpi/f77/constants.h"
 
-#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_FILE_IWRITE_SHARED = mpi_file_iwrite_shared_f
 #pragma weak pmpi_file_iwrite_shared = mpi_file_iwrite_shared_f
 #pragma weak pmpi_file_iwrite_shared_ = mpi_file_iwrite_shared_f
@@ -36,14 +36,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_IWRITE_SHARED,
                            (fh, buf, count, datatype, request, ierr) )
 #endif
 
-#if OMPI_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_FILE_IWRITE_SHARED = mpi_file_iwrite_shared_f
 #pragma weak mpi_file_iwrite_shared = mpi_file_iwrite_shared_f
 #pragma weak mpi_file_iwrite_shared_ = mpi_file_iwrite_shared_f
 #pragma weak mpi_file_iwrite_shared__ = mpi_file_iwrite_shared_f
 #endif
 
-#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_FILE_IWRITE_SHARED,
                            mpi_file_iwrite_shared,
                            mpi_file_iwrite_shared_,
@@ -54,7 +54,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_IWRITE_SHARED,
 #endif
 
 
-#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 

@@ -83,7 +83,7 @@ const char *ibv_get_sysfs_path(void);
 #include "btl_openib_mca.h"
 #include "btl_openib_xrc.h"
 #include "btl_openib_fd.h"
-#if OMPI_HAVE_THREADS
+#if OPAL_HAVE_THREADS
 #include "btl_openib_async.h"
 #endif
 #include "connect/base.h"
@@ -166,7 +166,7 @@ static int btl_openib_component_close(void)
 {
     int rc = OMPI_SUCCESS;
 
-#if OMPI_HAVE_THREADS
+#if OPAL_HAVE_THREADS
     /* Tell the async thread to shutdown */
     if (mca_btl_openib_component.use_async_event_thread &&
         0 != mca_btl_openib_component.async_thread) {
@@ -312,7 +312,7 @@ static int btl_openib_modex_send(void)
                     mca_btl_openib_component.openib_btls[i]->port_info.lid,
                     (int) size);
                     
-#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if !defined(WORDS_BIGENDIAN) && OPAL_ENABLE_HETEROGENEOUS_SUPPORT
         MCA_BTL_OPENIB_MODEX_MSG_HTON(*(mca_btl_openib_modex_message_t *)offset);
 #endif
         offset += size;
@@ -518,7 +518,7 @@ static inline int param_register_int(const char* param_name, int default_value)
     return param_value;
 }
 
-#if OMPI_HAVE_THREADS
+#if OPAL_HAVE_THREADS
 static int start_async_event_thread(void)
 {
     /* Set the fatal counter to zero */
@@ -602,7 +602,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
         lmc = mca_btl_openib_component.max_lmc;
     }
 
-#if OMPI_HAVE_THREADS
+#if OPAL_HAVE_THREADS
     /* APM support -- only meaningful if async event support is
        enabled.  If async events are not enabled, then there's nothing
        to listen for the APM event to load the new path, so it's not
@@ -768,7 +768,7 @@ static void device_construct(mca_btl_openib_device_t *device)
     device->ib_dev_context = NULL;
     device->ib_pd = NULL;
     device->mpool = NULL;
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
     device->ib_channel = NULL;
 #endif
     device->btls = 0;
@@ -786,7 +786,7 @@ static void device_construct(mca_btl_openib_device_t *device)
     device->xrc_fd = -1;
 #endif
     device->qps = NULL;
-#if OMPI_HAVE_THREADS
+#if OPAL_HAVE_THREADS
     mca_btl_openib_component.async_pipe[0] = 
         mca_btl_openib_component.async_pipe[1] = -1;
     mca_btl_openib_component.async_comp_pipe[0] = 
@@ -801,8 +801,8 @@ static void device_destruct(mca_btl_openib_device_t *device)
 {
     int i;
 
-#if OMPI_HAVE_THREADS
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_HAVE_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
     if(device->progress) {
         device->progress = false;
         if (pthread_cancel(device->thread.t_handle)) {
@@ -910,7 +910,7 @@ static int prepare_device_for_use(mca_btl_openib_device_t *device)
     mca_btl_openib_frag_init_data_t *init_data;
     int qp, length;
 
-#if OMPI_HAVE_THREADS
+#if OPAL_HAVE_THREADS
     if(mca_btl_openib_component.use_async_event_thread) {
         if(0 == mca_btl_openib_component.async_thread) {
             /* async thread is not yet started, so start it here */
@@ -929,7 +929,7 @@ static int prepare_device_for_use(mca_btl_openib_device_t *device)
             return OMPI_ERROR;
         } 
     }
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
+#if OPAL_ENABLE_PROGRESS_THREADS == 1
     /* Prepare data for thread, but not starting it */
     OBJ_CONSTRUCT(&device->thread, opal_thread_t);
     device->thread.t_run = mca_btl_openib_progress_thread;
@@ -1682,7 +1682,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
         device->use_eager_rdma = values.use_eager_rdma;
     }
     /* Eager RDMA is not currently supported with progress threads */
-    if (device->use_eager_rdma && OMPI_ENABLE_PROGRESS_THREADS) {
+    if (device->use_eager_rdma && OPAL_ENABLE_PROGRESS_THREADS) {
         device->use_eager_rdma = 0;
         orte_show_help("help-mpi-btl-openib.txt", 
                        "eager RDMA and progress threads", true);
@@ -1725,7 +1725,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
          goto error;
     }
 
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
     device->ib_channel = ibv_create_comp_channel(device->ib_dev_context);
     if (NULL == device->ib_channel) {
         BTL_ERROR(("error creating channel for %s errno says %s",
@@ -1801,7 +1801,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
     }
 
 error:
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
     if (device->ib_channel) {
         ibv_destroy_comp_channel(device->ib_channel);
     }
@@ -2082,7 +2082,7 @@ btl_openib_component_init(int *num_btl_modules,
        OS's that support OpenFabrics that provide both FREE and MUNMAP
        support, so the following test is [currently] good enough... */
     value = opal_mem_hooks_support_level();
-#if !OMPI_HAVE_THREADS
+#if !OPAL_HAVE_THREADS
     if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) == 
         ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) & value)) {
         orte_show_help("help-mpi-btl-openib.txt",
@@ -2259,7 +2259,7 @@ btl_openib_component_init(int *num_btl_modules,
 
     OBJ_CONSTRUCT(&btl_list, opal_list_t);
     OBJ_CONSTRUCT(&mca_btl_openib_component.ib_lock, opal_mutex_t);
-#if OMPI_HAVE_THREADS
+#if OPAL_HAVE_THREADS
     mca_btl_openib_component.async_thread = 0;
 #endif
     distance = dev_sorted[0].distance;
@@ -2882,7 +2882,7 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
             OPAL_OUTPUT((-1, "Got WC: RDMA_RECV, qp %d, src qp %d, WR ID %p",
                          wc->qp_num, wc->src_qp, (void*) wc->wr_id));
 
-#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#if !defined(WORDS_BIGENDIAN) && OPAL_ENABLE_HETEROGENEOUS_SUPPORT
             wc->imm_data = ntohl(wc->imm_data);
 #endif
             if(wc->wc_flags & IBV_WC_WITH_IMM) {
@@ -3032,7 +3032,7 @@ error:
     return count;
 }
 
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
 void* mca_btl_openib_progress_thread(opal_object_t* arg)
 {
     opal_thread_t* thread = (opal_thread_t*)arg;
@@ -3100,7 +3100,7 @@ static int progress_one_device(mca_btl_openib_device_t *device)
                 BTL_OPENIB_FOOTER_NTOH(*frag->ftr);
             }
             size = MCA_BTL_OPENIB_RDMA_FRAG_GET_SIZE(frag->ftr);
-#if OMPI_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
             if (frag->ftr->seq != endpoint->eager_rdma_local.seq)
                 BTL_ERROR(("Eager RDMA wrong SEQ: received %d expected %d",
                            frag->ftr->seq,
@@ -3145,7 +3145,7 @@ static int btl_openib_component_progress(void)
     int i;
     int count = 0;
 
-#if OMPI_HAVE_THREADS
+#if OPAL_HAVE_THREADS
     if(OPAL_UNLIKELY(mca_btl_openib_component.use_async_event_thread &&
             mca_btl_openib_component.fatal_counter)) {
         goto error;
@@ -3160,7 +3160,7 @@ static int btl_openib_component_progress(void)
 
     return count;
 
-#if OMPI_HAVE_THREADS
+#if OPAL_HAVE_THREADS
 error:
     /* Set the fatal counter to zero */
     mca_btl_openib_component.fatal_counter = 0;

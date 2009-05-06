@@ -35,22 +35,22 @@
    should be good enough */
 
 /* Define to 1 if you have the ANSI C header files. */
-#cmakedefine OMPI_STDC_HEADERS 1
+#cmakedefine OPAL_STDC_HEADERS 1
 
 /* Define to 1 if you have the <sys/time.h> header file. */
-#cmakedefine OMPI_HAVE_SYS_TIME_H 1
+#cmakedefine OPAL_HAVE_SYS_TIME_H 1
 
 /* Define to 1 if you have the <sys/synch.h> header file. */
-#cmakedefine OMPI_HAVE_SYS_SYNCH_H 1
+#cmakedefine OPAL_HAVE_SYS_SYNCH_H 1
 
 /* Define to 1 if the system has the type `long long'. */
-#cmakedefine OMPI_HAVE_LONG_LONG 1
+#cmakedefine OPAL_HAVE_LONG_LONG 1
 
 /* The size of a `bool', as computed by sizeof. */
-#cmakedefine OMPI_SIZEOF_BOOL ${SIZEOF_BOOL}
+#cmakedefine OPAL_SIZEOF_BOOL ${SIZEOF_BOOL}
 
 /* The size of a `int', as computed by sizeof. */
-#cmakedefine OMPI_SIZEOF_INT ${SIZEOF_INT}
+#cmakedefine OPAL_SIZEOF_INT ${SIZEOF_INT}
 
 /* Whether we have FORTRAN LOGICAL*1 or not */
 #define OMPI_HAVE_FORTRAN_LOGICAL1 ${OMPI_HAVE_FORTRAN_LOGICAL1}
@@ -95,7 +95,7 @@
 #cmakedefine OMPI_MPI_OFFSET_TYPE ${OMPI_MPI_OFFSET_TYPE_STRING}
 
 /* type to use for ptrdiff_t, if it does not exist, set to ptrdiff_t if it does exist */
-#cmakedefine OMPI_PTRDIFF_TYPE ${OMPI_PTRDIFF_TYPE}
+#cmakedefine OPAL_PTRDIFF_TYPE ${OPAL_PTRDIFF_TYPE}
 
 /* Whether we want MPI cxx support or not */
 #cmakedefine OMPI_WANT_CXX_BINDINGS ${OMPI_WANT_CXX_BINDINGS}
@@ -131,7 +131,7 @@
 #cmakedefine ompi_fortran_integer_t ${ompi_fortran_integer_t}
 
 /* Whether C compiler supports -fvisibility */
-#cmakedefine OMPI_C_HAVE_VISIBILITY ${OMPI_C_HAVE_VISIBILITY}
+#cmakedefine OPAL_C_HAVE_VISIBILITY ${OPAL_C_HAVE_VISIBILITY}
 
 /* Whether OMPI should provide MPI File interface */
 #cmakedefine OMPI_PROVIDE_MPI_FILE_INTERFACE ${OMPI_PROVIDE_MPI_FILE_INTERFACE}
@@ -147,7 +147,7 @@
 #      define OMPI_DECLSPEC
 #    endif  /* defined(OMPI_IMPORTS) */
 #  else
-#    if OMPI_C_HAVE_VISIBILITY == 1
+#    if OPAL_C_HAVE_VISIBILITY == 1
 #       define OMPI_DECLSPEC __attribute__((visibility("default")))
 #    else
 #       define OMPI_DECLSPEC
@@ -165,7 +165,7 @@
 /* @OMPI_END_CONFIGURE_SECTION@ */
 
 /* include for ptrdiff_t */
-#ifdef OMPI_STDC_HEADERS
+#ifdef OPAL_STDC_HEADERS
 #include <stddef.h>
 #endif
 
@@ -202,7 +202,7 @@ extern "C" {
  * Typedefs
  */
 
-typedef OMPI_PTRDIFF_TYPE MPI_Aint;
+typedef OPAL_PTRDIFF_TYPE MPI_Aint;
 typedef OMPI_MPI_OFFSET_TYPE MPI_Offset;
 typedef struct ompi_communicator_t *MPI_Comm;
 typedef struct ompi_datatype_t *MPI_Datatype;
@@ -763,11 +763,11 @@ OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 #define MPI_UB (((MPI_Datatype)&(ompi_mpi_ub)))
 #define MPI_LB (((MPI_Datatype)&(ompi_mpi_lb)))
 #define MPI_WCHAR (((MPI_Datatype)&(ompi_mpi_wchar)))
-#if OMPI_HAVE_LONG_LONG
+#if OPAL_HAVE_LONG_LONG
 #define MPI_LONG_LONG_INT (((MPI_Datatype)&(ompi_mpi_long_long_int)))
 #define MPI_LONG_LONG (((MPI_Datatype)&(ompi_mpi_long_long_int)))
 #define MPI_UNSIGNED_LONG_LONG (((MPI_Datatype)&(ompi_mpi_unsigned_long_long)))
-#endif  /* OMPI_HAVE_LONG_LONG */
+#endif  /* OPAL_HAVE_LONG_LONG */
 #define MPI_2COMPLEX (((MPI_Datatype)&(ompi_mpi_2cplex)))
 #define MPI_2DOUBLE_COMPLEX (((MPI_Datatype)&(ompi_mpi_2dblcplex)))
 
