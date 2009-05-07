@@ -1,0 +1,18 @@
+# -*- text -*-
+#
+# Copyright (c) 2009 Cisco Systems, Inc.  All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+# This is the US/English help file for Open MPI's TCP support
+# (the openib BTL).
+#
+[invalid if_include]
+WARNING: An invalid value was given for btl_tcp_if_%s.  This
+value will be ignored.
+
+  Value:   %s
+  Message: %s
