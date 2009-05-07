@@ -395,10 +395,13 @@ static char **split_and_resolve(char **orig_str, char *name)
 
     /* Sanity check */
     if (NULL == orig_str || NULL == *orig_str) {
-        return orig_str;
+        return NULL;
     }
 
     argv = opal_argv_split(*orig_str, ',');
+    if (NULL == argv) {
+        return NULL;
+    }
     for (save = i = 0; NULL != argv[i]; ++i) {
         if (isalpha(argv[i][0])) {
             argv[save++] = argv[i];
