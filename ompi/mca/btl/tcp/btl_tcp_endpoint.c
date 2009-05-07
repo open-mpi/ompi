@@ -611,13 +611,18 @@ static void mca_btl_tcp_endpoint_complete_connect(mca_btl_base_endpoint_t* btl_e
 {
     int so_error = 0;
     opal_socklen_t so_length = sizeof(so_error);
+    struct sockaddr_storage endpoint_addr;
+
+    mca_btl_tcp_proc_tosocks(btl_endpoint->endpoint_addr, &endpoint_addr);
 
     /* unregister from receiving event notifications */
     opal_event_del(&btl_endpoint->endpoint_send_event);
 
     /* check connect completion status */
     if(getsockopt(btl_endpoint->endpoint_sd, SOL_SOCKET, SO_ERROR, (char *)&so_error, &so_length) < 0) {
-        BTL_ERROR(("getsockopt() failed: %s (%d)", strerror(opal_socket_errno), opal_socket_errno));
+        BTL_ERROR(("getsockopt() to %s failed: %s (%d)", 
+                   opal_net_get_hostname((struct sockaddr*) &endpoint_addr),
+                   strerror(opal_socket_errno), opal_socket_errno));
         mca_btl_tcp_endpoint_close(btl_endpoint);
         return;
     }
@@ -626,7 +631,9 @@ static void mca_btl_tcp_endpoint_complete_connect(mca_btl_base_endpoint_t* btl_e
         return;
     }
     if(so_error != 0) {
-        BTL_ERROR(("connect() failed: %s (%d)", strerror(so_error), so_error));
+        BTL_ERROR(("connect() to %s failed: %s (%d)", 
+                   opal_net_get_hostname((struct sockaddr*) &endpoint_addr),
+                   strerror(so_error), so_error));
         mca_btl_tcp_endpoint_close(btl_endpoint);
         return;
     }
