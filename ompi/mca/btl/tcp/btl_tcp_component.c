@@ -387,7 +387,7 @@ static int mca_btl_tcp_create(int if_kindex, const char* if_name)
 static char **split_and_resolve(char **orig_str, char *name)
 {
     int i, ret, save, if_index;
-    char **argv, *str;
+    char **argv, *str, *tmp;
     char if_name[IF_NAMESIZE];
     struct sockaddr_storage argv_inaddr, if_inaddr;
     uint32_t argv_prefix;
@@ -408,14 +408,17 @@ static char **split_and_resolve(char **orig_str, char *name)
         /* Found a subnet notation.  Convert it to an IP
            address/netmask.  Get the prefix first. */
         argv_prefix = 0;
+        tmp = strdup(argv[i]);
         str = strchr(argv[i], '/');
         if (NULL == str) {
             if (!warning_shown) {
                 orte_show_help("help-mpi-btl-tcp.txt", "invalid if_include",
-                               true, name, argv[i], "Missing \"/\"");
+                               true, name, orte_process_info.nodename, 
+                               tmp, "Missing \"/\"");
                 warning_shown = true;
             }
             free(argv[i]);
+            free(tmp);
             continue;
         }
         *str = '\0';
@@ -430,9 +433,11 @@ static char **split_and_resolve(char **orig_str, char *name)
         if (1 != ret) {
             if (!warning_shown) {
                 orte_show_help("help-mpi-btl-tcp.txt", "invalid if_include",
-                               true, name, argv[i], "inet_pton() failed");
+                               true, name, orte_process_info.nodename, tmp,
+                               "inet_pton() failed");
                 warning_shown = true;
             }
+            free(tmp);
             continue;
         }
         opal_output_verbose(20, mca_btl_base_output, 
@@ -458,9 +463,11 @@ static char **split_and_resolve(char **orig_str, char *name)
         if (if_index < 0) {
             if (!warning_shown) {
                 orte_show_help("help-mpi-btl-tcp.txt", "invalid if_include",
-                               true, name, argv[i], "Did not find interface matching this subnet");
+                               true, name, orte_process_info.nodename, tmp,
+                               "Did not find interface matching this subnet");
                 warning_shown = true;
             }
+            free(tmp);
             continue;
         }
 
@@ -472,6 +479,7 @@ static char **split_and_resolve(char **orig_str, char *name)
                             opal_net_get_hostname((struct sockaddr*) &if_inaddr),
                             if_name);
         argv[save++] = strdup(if_name);
+        free(tmp);
     }
 
     /* The list may have been compressed if there were invalid
