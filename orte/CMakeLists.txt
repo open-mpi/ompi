@@ -8,10 +8,6 @@
 #
 
 
-
-# The source code is compiled as C++ for dynamic build 
-# and compiled as C for static build
-
 PROJECT (ORTE)
 
 
@@ -61,7 +57,6 @@ ENDIF(EXISTS ${PROJECT_SOURCE_DIR}/util/hostfile/hostfile_lex.c)
 
 INCLUDE (check_mca_subdirs)
 SET (ORTE_SOURCE_FILES ${ORTE_SOURCE_FILES} ${MCA_FILES})
-SET_SOURCE_FILES_PROPERTIES(${ORTE_SOURCE_FILES} PROPERTIES LANGUAGE CXX)
 
 ADD_LIBRARY (libopen-rte ${ORTE_SOURCE_FILES})
 
@@ -69,10 +64,11 @@ ADD_DEPENDENCIES (libopen-rte libopen-pal)
 
 # Set compile flags for this target
 IF (BUILD_SHARED_LIBS)
-  SET_TARGET_PROPERTIES(libopen-rte PROPERTIES COMPILE_FLAGS "-D_USRDLL -DORTE_EXPORTS -DOPAL_IMPORTS")
+  SET_TARGET_PROPERTIES(libopen-rte PROPERTIES
+    COMPILE_FLAGS "-D_USRDLL -DORTE_EXPORTS -DOPAL_IMPORTS /TP")
   TARGET_LINK_LIBRARIES (libopen-rte Ws2_32.lib shlwapi.lib)
 ELSE (BUILD_SHARED_LIBS)
-  SET_TARGET_PROPERTIES(libopen-rte PROPERTIES COMPILE_FLAGS "-D_LIB")
+  SET_TARGET_PROPERTIES(libopen-rte PROPERTIES COMPILE_FLAGS "-D_LIB /TP")
 ENDIF(BUILD_SHARED_LIBS)
 
 # generate orte_config.h
