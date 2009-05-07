@@ -44,15 +44,19 @@
 #  include <netdb.h>
 #  endif
 #endif
+#include <ctype.h>
 
 #include "ompi/constants.h"
 #include "opal/event/event.h"
 #include "opal/util/if.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
-#include "orte/types.h"
-#include "ompi/mca/btl/btl.h"
+#include "opal/util/net.h"
 
+#include "orte/types.h"
+#include "orte/util/show_help.h"
+
+#include "ompi/mca/btl/btl.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/mca/mpool/base/base.h" 
@@ -376,6 +380,110 @@ static int mca_btl_tcp_create(int if_kindex, const char* if_name)
 }
 
 /*
+ * Go through a list of argv; if there are any subnet specifications
+ * (a.b.c.d/e), resolve them to an interface name (Currently only
+ * supporting IPv4).  If unresolvable, warn and remove.
+ */
+static char **split_and_resolve(char **orig_str, char *name)
+{
+    int i, ret, save, if_index;
+    char **argv, *str;
+    char if_name[IF_NAMESIZE];
+    struct sockaddr_storage argv_inaddr, if_inaddr;
+    uint32_t argv_prefix;
+    bool warning_shown = false;
+
+    /* Sanity check */
+    if (NULL == orig_str || NULL == *orig_str) {
+        return orig_str;
+    }
+
+    argv = opal_argv_split(*orig_str, ',');
+    for (save = i = 0; NULL != argv[i]; ++i) {
+        if (isalpha(argv[i][0])) {
+            argv[save++] = argv[i];
+            continue;
+        }
+
+        /* Found a subnet notation.  Convert it to an IP
+           address/netmask.  Get the prefix first. */
+        argv_prefix = 0;
+        str = strchr(argv[i], '/');
+        if (NULL == str) {
+            if (!warning_shown) {
+                orte_show_help("help-mpi-btl-tcp.txt", "invalid if_include",
+                               true, name, argv[i], "Missing \"/\"");
+                warning_shown = true;
+            }
+            free(argv[i]);
+            continue;
+        }
+        *str = '\0';
+        argv_prefix = atoi(str + 1);
+
+        /* Now convert the IPv4 address */
+        ((struct sockaddr*) &argv_inaddr)->sa_family = AF_INET;
+        ret = inet_pton(AF_INET, argv[i], 
+                        &((struct sockaddr_in*) &argv_inaddr)->sin_addr);
+        free(argv[i]);
+
+        if (1 != ret) {
+            if (!warning_shown) {
+                orte_show_help("help-mpi-btl-tcp.txt", "invalid if_include",
+                               true, name, argv[i], "inet_pton() failed");
+                warning_shown = true;
+            }
+            continue;
+        }
+        opal_output_verbose(20, mca_btl_base_output, 
+                            "btl: tcp: Searching for %s address+prefix: %s / %u",
+                            name,
+                            opal_net_get_hostname((struct sockaddr*) &argv_inaddr),
+                            argv_prefix);
+            
+        /* Go through all interfaces and see if we can find a match */
+        for (if_index = opal_ifbegin(); if_index >= 0; 
+             if_index = opal_ifnext(if_index)) {
+            opal_ifindextoaddr(if_index, 
+                               (struct sockaddr*) &if_inaddr,
+                               sizeof(if_inaddr));
+            if (opal_net_samenetwork((struct sockaddr*) &argv_inaddr,
+                                     (struct sockaddr*) &if_inaddr,
+                                     argv_prefix)) {
+                break;
+            }
+        }
+        
+        /* If we didn't find a match, keep trying */
+        if (if_index < 0) {
+            if (!warning_shown) {
+                orte_show_help("help-mpi-btl-tcp.txt", "invalid if_include",
+                               true, name, argv[i], "Did not find interface matching this subnet");
+                warning_shown = true;
+            }
+            continue;
+        }
+
+        /* We found a match; get the name and replace it in the
+           argv */
+        opal_ifindextoname(if_index, if_name, sizeof(if_name));
+        opal_output_verbose(20, mca_btl_base_output, 
+                            "btl: tcp: Found match: %s (%s)",
+                            opal_net_get_hostname((struct sockaddr*) &if_inaddr),
+                            if_name);
+        argv[save++] = strdup(if_name);
+    }
+
+    /* The list may have been compressed if there were invalid
+       entries, so ensure we end it with a NULL entry */
+    argv[save] = NULL;
+    free(*orig_str);
+    *orig_str = opal_argv_join(argv, ',');
+    return argv;
+}
+
+
+/*
  * Create a TCP BTL instance for either:
  * (1) all interfaces specified by the user
  * (2) all available interfaces 
@@ -441,19 +549,25 @@ static int mca_btl_tcp_component_create_instances(void)
     mca_btl_tcp_component.tcp_addr_count = if_count;
 
     /* if the user specified an interface list - use these exclusively */
-    argv = include = opal_argv_split(mca_btl_tcp_component.tcp_if_include,',');
+    argv = include = split_and_resolve(&mca_btl_tcp_component.tcp_if_include,
+                                       "include");
     while(argv && *argv) {
         char* if_name = *argv;
         int if_index = opal_ifnametokindex(if_name);
         if(if_index < 0) {
             BTL_ERROR(("invalid interface \"%s\"", if_name));
+            ret = OMPI_ERR_NOT_FOUND;
+            goto cleanup;
         } else {
             mca_btl_tcp_create(if_index, if_name);
         }
         argv++;
     }
     opal_argv_free(include);
-    if(mca_btl_tcp_component.tcp_num_btls) {
+
+    /* If we made any modules, then the "include" list was non-empty,
+       and therefore we're done. */
+    if (mca_btl_tcp_component.tcp_num_btls > 0) {
         ret = OMPI_SUCCESS;
         goto cleanup;
     }
@@ -461,7 +575,8 @@ static int mca_btl_tcp_component_create_instances(void)
     /* if the interface list was not specified by the user, create 
      * a BTL for each interface that was not excluded.
     */
-    exclude = opal_argv_split(mca_btl_tcp_component.tcp_if_exclude,',');
+    exclude = split_and_resolve(&mca_btl_tcp_component.tcp_if_exclude,
+                                "exclude");
     {
         int i;
         for(i = 0; i < kif_count; i++) {
