@@ -8,10 +8,6 @@
 #
 
 
-
-# The source code is compiled as C++ for dynamic build 
-# and compiled as C for static build
-
 PROJECT (OPAL)
 
 
@@ -101,14 +97,6 @@ ADD_LIBRARY (libopen-pal ${OPAL_SOURCE_FILES})
 
 # Set compile flags for this target
 IF (BUILD_SHARED_LIBS)
-  SET_SOURCE_FILES_PROPERTIES(${OPAL_SOURCE_FILES} 
-                              PROPERTIES LANGUAGE C)
-
-# Flex is trying to include the unistd.h file. As there is no configure
-# option on this, the flex generated files will try to include the file
-# even on platforms without unistd.h (such as Windows). Therefore, if we
-# know this file is not available, we can prevent flex from including it.
-# Thus, define "YY_NO_UNISTD_H" as the target property (the same for ORTE).
   SET_TARGET_PROPERTIES(libopen-pal PROPERTIES COMPILE_FLAGS "-D_USRDLL -DOPAL_EXPORTS")
   TARGET_LINK_LIBRARIES (libopen-pal Ws2_32.lib shlwapi.lib)
 ELSE (BUILD_SHARED_LIBS)
