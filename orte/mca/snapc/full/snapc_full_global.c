@@ -21,6 +21,9 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
 
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
