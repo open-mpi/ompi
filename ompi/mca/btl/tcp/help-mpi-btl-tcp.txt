@@ -14,5 +14,6 @@
 WARNING: An invalid value was given for btl_tcp_if_%s.  This
 value will be ignored.
 
-  Value:   %s
-  Message: %s
+  Local host: %s
+  Value:      %s
+  Message:    %s
