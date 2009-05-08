@@ -165,6 +165,12 @@ struct orte_snapc_base_global_snapshot_1_0_0_t {
     
     /** Sequence Number */
     int seq_num;
+
+    /** Start Timestamp */
+    char * start_time;
+
+    /** End Timestamp */
+    char * end_time;
 };
 typedef struct orte_snapc_base_global_snapshot_1_0_0_t orte_snapc_base_global_snapshot_1_0_0_t;
 typedef struct orte_snapc_base_global_snapshot_1_0_0_t orte_snapc_base_global_snapshot_t;

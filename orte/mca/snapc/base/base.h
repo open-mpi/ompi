@@ -155,6 +155,9 @@ ORTE_DECLSPEC extern orte_snapc_coord_type_t orte_snapc_coord_type;
     ORTE_DECLSPEC int orte_snapc_base_finalize_metadata(char * global_snapshot_ref);
     ORTE_DECLSPEC int orte_snapc_base_extract_metadata(orte_snapc_base_global_snapshot_t *snapshot);
 
+    ORTE_DECLSPEC int orte_snapc_base_get_all_snapshot_refs(char *base_dir, int *num_refs, char ***snapshot_refs);
+    ORTE_DECLSPEC int orte_snapc_base_get_all_snapshot_ref_seqs(char *base_dir, char *snapshot_name, int *num_seqs, int **snapshot_ref_seqs);
+
     /*******************************
      * Global Coordinator functions
      *******************************/

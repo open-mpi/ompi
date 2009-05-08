@@ -27,6 +27,15 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
+#if HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif /* HAVE_SYS_TYPES_H */
+#if HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif /* HAVE_SYS_STAT_H */
+#ifdef HAVE_DIRENT_H
+#include <dirent.h>
+#endif /* HAVE_DIRENT_H */
 #include <time.h>
 
 #include "opal/mca/mca.h"
@@ -36,6 +45,7 @@
 #include "opal/util/os_dirpath.h"
 #include "opal/util/output.h"
 #include "opal/util/basename.h"
+#include "opal/util/argv.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 
@@ -135,6 +145,9 @@ void orte_snapc_base_global_snapshot_construct(orte_snapc_base_global_snapshot_t
     free(tmp_dir);
     
     snapshot->seq_num    = 0;
+
+    snapshot->start_time = NULL;
+    snapshot->end_time   = NULL;
 }
 
 void orte_snapc_base_global_snapshot_destruct( orte_snapc_base_global_snapshot_t *snapshot)
@@ -154,6 +167,16 @@ void orte_snapc_base_global_snapshot_destruct( orte_snapc_base_global_snapshot_t
     if(NULL != snapshot->local_location) {
         free(snapshot->local_location);
         snapshot->local_location = NULL;
+    }
+
+    if(NULL != snapshot->start_time) {
+        free(snapshot->start_time);
+        snapshot->start_time = NULL;
+    }
+
+    if(NULL != snapshot->end_time) {
+        free(snapshot->end_time);
+        snapshot->end_time = NULL;
     }
 
     snapshot->seq_num = 0;
@@ -456,6 +479,142 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
 /*****************************
  * Snapshot metadata functions
  *****************************/
+int orte_snapc_base_get_all_snapshot_refs(char *base_dir, int *num_refs, char ***snapshot_refs)
+{
+#ifndef HAVE_DIRENT_H
+    return OMPI_ERR_NOT_SUPPORTED;
+#else
+    int ret, exit_status = ORTE_SUCCESS;
+    char * tmp_str = NULL, * metadata_file = NULL;
+    DIR *dirp = NULL;
+    struct dirent *dir_entp = NULL;
+    struct stat file_status;
+
+    if( NULL == base_dir ) {
+        if( NULL == orte_snapc_base_global_snapshot_dir ) {
+            exit_status = ORTE_ERROR;
+            goto cleanup;
+        }
+        base_dir = strdup(orte_snapc_base_global_snapshot_dir);
+    }
+
+    /*
+     * Get all subdirectories under the base directory
+     */
+    dirp = opendir(base_dir);
+    while( NULL != (dir_entp = readdir(dirp))) {
+        /* Skip "." and ".." if they are in the list */
+        if( 0 == strncmp("..", dir_entp->d_name, strlen("..") ) ||
+            0 == strncmp(".",  dir_entp->d_name, strlen(".")  ) ) {
+            continue;
+        }
+
+        /* Add the full path */
+        asprintf(&tmp_str, "%s/%s", base_dir, dir_entp->d_name);
+        if(0 != (ret = stat(tmp_str, &file_status) ) ){
+            free( tmp_str);
+            tmp_str = NULL;
+            continue;
+        } else {
+            /* Is it a directory? */
+            if(S_ISDIR(file_status.st_mode) ) {
+                asprintf(&metadata_file, "%s/%s",
+                         tmp_str,
+                         orte_snapc_base_metadata_filename);
+                if(0 != (ret = stat(metadata_file, &file_status) ) ){
+                    free( tmp_str);
+                    tmp_str = NULL;
+                    free( metadata_file);
+                    metadata_file = NULL;
+                    continue;
+                } else {
+                    if(S_ISREG(file_status.st_mode) ) {
+                        opal_argv_append(num_refs, snapshot_refs, dir_entp->d_name);
+                    }
+                }
+                free( metadata_file);
+                metadata_file = NULL;
+            }
+        }
+
+        free( tmp_str);
+        tmp_str = NULL;
+    }
+    
+    closedir(dirp);
+
+ cleanup:
+    if( NULL != tmp_str) {
+        free( tmp_str);
+        tmp_str = NULL;
+    }
+
+    return exit_status;
+#endif /* HAVE_DIRENT_H */
+}
+
+int orte_snapc_base_get_all_snapshot_ref_seqs(char *base_dir, char *snapshot_name, int *num_seqs, int **snapshot_ref_seqs)
+{
+    int exit_status = ORTE_SUCCESS;
+    char * metadata_file = NULL;
+    FILE * meta_data = NULL;
+    int s, next_seq_int;
+
+    if( NULL == base_dir ) {
+        if( NULL == orte_snapc_base_global_snapshot_dir ) {
+            exit_status = ORTE_ERROR;
+            goto cleanup;
+        }
+        base_dir = strdup(orte_snapc_base_global_snapshot_dir);
+    }
+
+    asprintf(&metadata_file, "%s/%s/%s",
+             base_dir,
+             snapshot_name,
+             orte_snapc_base_metadata_filename);
+
+
+    if (NULL == (meta_data = fopen(metadata_file, "r")) ) {
+        opal_output(0, "Error: Unable to open the file <%s>\n", metadata_file);
+        exit_status = ORTE_ERROR;
+        goto cleanup;
+    }
+
+    /* First pass to count the number of sequence numbers */
+    *num_seqs = 0;
+    while(0 <= (next_seq_int = get_next_valid_seq_number(meta_data)) ){
+        *num_seqs += 1;
+    }
+
+    /* If there are no valid seq numbers then just return here */
+    if( 0 == *num_seqs ) {
+        exit_status = ORTE_SUCCESS;
+        goto cleanup;
+    }
+
+    rewind(meta_data);
+
+    /* Second pass to add them to the list */
+    (*snapshot_ref_seqs) = (int *) malloc(sizeof(int) * (*num_seqs));
+    s = 0;
+    while(0 <= (next_seq_int = get_next_valid_seq_number(meta_data)) ){
+        (*snapshot_ref_seqs)[s] = next_seq_int;
+        ++s;
+    }
+
+ cleanup:
+    if(NULL != meta_data) {
+        fclose(meta_data);
+        meta_data = NULL;
+    }
+    if(NULL != metadata_file) {
+        free(metadata_file);
+        metadata_file = NULL;
+    }
+
+    return exit_status;
+}
+
 int orte_snapc_base_unique_global_snapshot_name(char **name_str, pid_t pid)
 {
     if( NULL == orte_snapc_base_global_snapshot_ref ) {
@@ -767,7 +926,12 @@ int orte_snapc_base_extract_metadata(orte_snapc_base_global_snapshot_t *global_s
             break;
         }
         else if(0 == strncmp(SNAPC_METADATA_TIME, token, strlen(SNAPC_METADATA_TIME)) ) {
-            ;
+            if( NULL == global_snapshot->start_time) {
+                global_snapshot->start_time = strdup(value);
+            }
+            else {
+                global_snapshot->end_time = strdup(value);
+            }
         }
         else if(0 == strncmp(SNAPC_METADATA_PROCESS, token, strlen(SNAPC_METADATA_PROCESS)) ) {
             orte_process_name_t proc;

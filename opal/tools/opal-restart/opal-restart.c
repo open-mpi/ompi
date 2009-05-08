@@ -480,6 +480,8 @@ static int check_file(char *given_filename)
     char **argv = NULL;
 
     if(NULL == given_filename) {
+        opal_output(opal_restart_globals.output,
+                    "Error: No filename provided!");
         exit_status = OPAL_ERROR;
         goto cleanup;
     }
@@ -509,6 +511,9 @@ static int check_file(char *given_filename)
                         path_to_check);
 
     if (0 >  (ret = access(path_to_check, F_OK)) ) {
+        opal_output(opal_restart_globals.output,
+                    "Error: Unable to access the path [%s]!",
+                    path_to_check);
         exit_status = OPAL_ERROR;
         goto cleanup;
     }

@@ -68,7 +68,7 @@
 #include "orte/util/hnp_contact.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
-#include "orte/util/show_help.h"
+#include "opal/util/show_help.h"
 #include "orte/util/proc_info.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
@@ -102,6 +102,8 @@ static int notify_process_for_checkpoint(int term);
 static int pretty_print_status(void);
 static int pretty_print_reference(void);
 
+static int list_all_snapshots(void);
+
 static orte_hnp_contact_t *orterun_hnp = NULL;
 static char * global_snapshot_handle = NULL;
 static int    global_sequence_num    = 0;
@@ -126,6 +128,7 @@ typedef struct {
     bool status;  /* Display status messages while checkpoint is progressing */
     int output;
     int ckpt_status;
+    bool list_only; /* List available checkpoints only */
 } orte_checkpoint_globals_t;
 
 orte_checkpoint_globals_t orte_checkpoint_globals;
@@ -180,7 +183,13 @@ opal_cmd_line_init_t cmd_line_opts[] = {
       &orte_checkpoint_globals.pid, OPAL_CMD_LINE_TYPE_INT,
       "This should be the pid of the mpirun whose applications you wish "
       "to checkpoint." },
-    
+
+    { NULL, NULL, NULL, 
+      'l', NULL, "list", 
+      0,
+      &orte_checkpoint_globals.list_only, OPAL_CMD_LINE_TYPE_BOOL,
+      "Display a list of checkpoint files available on this machine" },
+
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL,
@@ -197,6 +206,18 @@ main(int argc, char *argv[])
      ***************/
     if (ORTE_SUCCESS != (ret = ckpt_init(argc, argv))) {
         exit_status = ret;
+        goto cleanup;
+    }
+
+    /*************************************
+     * Listing only Checkpoint References
+     *************************************/
+    if( orte_checkpoint_globals.list_only ) {
+        if (ORTE_SUCCESS != (ret = list_all_snapshots())) {
+            exit_status = ret;
+            goto cleanup;
+        }
+        exit_status = ORTE_SUCCESS;
         goto cleanup;
     }
 
@@ -238,7 +259,7 @@ main(int argc, char *argv[])
     }
 
     if(ORTE_SUCCESS != (ret = notify_process_for_checkpoint( orte_checkpoint_globals.term)) ) {
-        orte_show_help("help-orte-checkpoint.txt", "ckpt_failure", true,
+        opal_show_help("help-orte-checkpoint.txt", "ckpt_failure", true,
                        orte_checkpoint_globals.pid, ret);
         exit_status = ret;
         goto cleanup;
@@ -255,7 +276,7 @@ main(int argc, char *argv[])
     }
 
     if( ORTE_SNAPC_CKPT_STATE_ERROR == orte_checkpoint_globals.ckpt_status ) {
-        orte_show_help("help-orte-checkpoint.txt", "ckpt_failure", true,
+        opal_show_help("help-orte-checkpoint.txt", "ckpt_failure", true,
                        orte_checkpoint_globals.pid, ORTE_ERROR);
         exit_status = ORTE_ERROR;
         goto cleanup;
@@ -299,6 +320,7 @@ static int parse_args(int argc, char *argv[]) {
     orte_checkpoint_globals.status   = false;
     orte_checkpoint_globals.output   = -1;
     orte_checkpoint_globals.ckpt_status = ORTE_SNAPC_CKPT_STATE_NONE;
+    orte_checkpoint_globals.list_only  = false;
 
     /* Parse the command line options */
     opal_cmd_line_create(&cmd_line, cmd_line_opts);
@@ -334,12 +356,17 @@ static int parse_args(int argc, char *argv[]) {
     /* get the remaining bits */
     opal_cmd_line_get_tail(&cmd_line, &argc, &argv);
 
+    if(orte_checkpoint_globals.list_only ) {
+        exit_status = ORTE_SUCCESS;
+        goto cleanup;
+    }
+
 #if OPAL_ENABLE_FT == 0
     /* Warn and exit if not configured with Checkpoint/Restart */
     {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(&cmd_line);
-        orte_show_help("help-orte-checkpoint.txt", "usage-no-cr",
+        opal_show_help("help-orte-checkpoint.txt", "usage-no-cr",
                        true, args);
         free(args);
         exit_status = ORTE_ERROR;
@@ -352,7 +379,7 @@ static int parse_args(int argc, char *argv[]) {
         (0 >= argc && ORTE_JOBID_INVALID == orte_checkpoint_globals.req_hnp)) {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(&cmd_line);
-        orte_show_help("help-orte-checkpoint.txt", "usage", true,
+        opal_show_help("help-orte-checkpoint.txt", "usage", true,
                        args);
         free(args);
         exit_status = ORTE_ERROR;
@@ -379,7 +406,7 @@ static int parse_args(int argc, char *argv[]) {
 
     orte_checkpoint_globals.pid = atoi(argv[0]);
     if ( 0 >= orte_checkpoint_globals.pid ) {
-        orte_show_help("help-orte-checkpoint.txt", "invalid_pid", true,
+        opal_show_help("help-orte-checkpoint.txt", "invalid_pid", true,
                        orte_checkpoint_globals.pid);
         exit_status = ORTE_ERROR;
         goto cleanup;
@@ -390,7 +417,7 @@ static int parse_args(int argc, char *argv[]) {
      */
     if(orte_checkpoint_globals.nowait) {
         orte_checkpoint_globals.nowait = false;
-        orte_show_help("help-orte-checkpoint.txt", "not_impl",
+        opal_show_help("help-orte-checkpoint.txt", "not_impl",
                        true,
                        "Disconnected checkpoint");
     }
@@ -648,7 +675,7 @@ static void process_ckpt_update_cmd(orte_process_name_t* sender,
      * If the job is not able to be checkpointed, then return
      */
     if( ORTE_SNAPC_CKPT_STATE_NO_CKPT == orte_checkpoint_globals.ckpt_status) {
-        orte_show_help("help-orte-checkpoint.txt", "non-ckptable", 
+        opal_show_help("help-orte-checkpoint.txt", "non-ckptable", 
                        true,
                        orte_checkpoint_globals.pid);
         exit_status = ORTE_ERROR;
@@ -724,7 +751,7 @@ notify_process_for_checkpoint(int term)
     }
 
     if( ORTE_SUCCESS != exit_status ) {
-        orte_show_help("help-orte-checkpoint.txt", "unable_to_connect", true,
+        opal_show_help("help-orte-checkpoint.txt", "unable_to_connect", true,
                        orte_checkpoint_globals.pid);
     }
 
@@ -789,4 +816,63 @@ static int pretty_print_reference(void) {
            global_snapshot_handle);
     
     return ORTE_SUCCESS;
+}
+
+static int list_all_snapshots(void) {
+    int ret, exit_status = ORTE_SUCCESS;
+    char **snapshot_refs = NULL;
+    int i, num_snapshot_refs = 0;
+    int *snapshot_ref_seqs = NULL;
+    int s, num_snapshot_ref_seqs = 0;
+
+    /* Get all of the snapshot references */
+    if( ORTE_SUCCESS != (ret = orte_snapc_base_get_all_snapshot_refs(NULL, &num_snapshot_refs, &snapshot_refs) ) ) {
+        opal_output(0, "Error: Unable to list the checkpoints in the directory <%s>\n",
+                    orte_snapc_base_global_snapshot_dir);
+        exit_status = ret;
+        goto cleanup;
+    }
+
+    /* For each snapshot reference, get a list of the valid seq numbers */
+    for(i = 0; i < num_snapshot_refs; ++i) {
+        if( ORTE_SUCCESS != (ret = orte_snapc_base_get_all_snapshot_ref_seqs(NULL, snapshot_refs[i],
+                                                                             &num_snapshot_ref_seqs,
+                                                                             &snapshot_ref_seqs) ) ) {
+            opal_output(0, "Error: Unable to list the sequence numbers for the checkpoint <%s> in directory <%s>\n",
+                        snapshot_refs[i],
+                        orte_snapc_base_global_snapshot_dir);
+            exit_status = ret;
+            goto cleanup;
+        }
+
+        /* Pretty print the result */
+        printf("Snapshot Ref.: %s\t[", snapshot_refs[i]);
+        if( 0 >= num_snapshot_ref_seqs ) {
+            printf("No Valid Checkpoints");
+        }
+        for(s = 0; s < num_snapshot_ref_seqs; ++s) {
+            if( s != 0 ) {
+                printf(",");
+            }
+            printf("%d", snapshot_ref_seqs[s]);
+        }
+        printf("]\n");
+
+        if( NULL != snapshot_ref_seqs ) {
+            free(snapshot_ref_seqs);
+            snapshot_ref_seqs = NULL;
+        }
+    }
+
+ cleanup:
+    if( NULL != snapshot_ref_seqs ) {
+        free(snapshot_ref_seqs);
+        snapshot_ref_seqs = NULL;
+    }
+    if( NULL != snapshot_refs ) {
+        free(snapshot_refs);
+        snapshot_refs = NULL;
+    }
+
+    return exit_status;
 }
