@@ -93,6 +93,7 @@ typedef struct {
     char *hostfile;
     int  output;
     bool info_only;
+    bool app_only;
 } orte_restart_globals_t;
 
 orte_restart_globals_t orte_restart_globals;
@@ -147,6 +148,12 @@ opal_cmd_line_init_t cmd_line_opts[] = {
       0,
       &orte_restart_globals.info_only, OPAL_CMD_LINE_TYPE_BOOL,
       "Display information about the checkpoint" },
+
+    { NULL, NULL, NULL, 
+      'a', NULL, "apponly", 
+      0,
+      &orte_restart_globals.app_only, OPAL_CMD_LINE_TYPE_BOOL,
+      "Only create the app context file, do not restart from it" },
 
     /* End of list */
     { NULL, NULL, NULL, 
@@ -203,6 +210,12 @@ main(int argc, char *argv[])
      ******************************/
     if( ORTE_SUCCESS != (ret = create_appfile(snapshot) ) ) {
         exit_status = ret;
+        goto cleanup;
+    }
+
+    if( orte_restart_globals.app_only ) {
+        printf("Created Appfile:\n\t%s\n", orte_restart_globals.appfile);
+        exit_status = ORTE_SUCCESS;
         goto cleanup;
     }
 
@@ -343,7 +356,8 @@ static int parse_args(int argc, char *argv[])
                                    -1,    /* seq_number */
                                    NULL,  /* hostfile */
                                    -1,    /* output*/
-                                   false };/* info only */
+                                   false, /* info only */
+                                   false };/* app only */
 
     orte_restart_globals = tmp;
 
@@ -462,6 +476,9 @@ static int create_appfile(orte_snapc_base_global_snapshot_t *snapshot)
      */
     snapshot->seq_num = orte_restart_globals.seq_number;
     if( ORTE_SUCCESS != (ret = orte_snapc_base_extract_metadata( snapshot ) ) ) {
+        opal_show_help("help-orte-restart.txt", "invalid_seq_num", true,
+                       orte_restart_globals.filename,
+                       (int)orte_restart_globals.seq_number);
         exit_status = ret;
         goto cleanup;
     }

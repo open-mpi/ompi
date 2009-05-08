@@ -59,6 +59,7 @@ extern "C" {
  * States of the module
  */
 enum opal_crs_state_type_t {
+    OPAL_CRS_NONE,
     OPAL_CRS_CHECKPOINT,
     OPAL_CRS_RESTART_PRE,
     OPAL_CRS_RESTART, /* RESTART_POST */

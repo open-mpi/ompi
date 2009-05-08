@@ -387,6 +387,15 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
     orte_snapc_cmd_flag_t command = ORTE_SNAPC_GLOBAL_UPDATE_CMD;
 
     /*
+     * Noop if invalid peer, or peer not specified (JJH Double check this)
+     */
+    if( NULL == peer ||
+        OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_NAME_INVALID, peer) ) {
+        /*return OMPI_ERR_BAD_PARAM;*/
+        return ORTE_SUCCESS;
+    }
+
+    /*
      * Do not send to self, as that is silly.
      */
     if (peer->jobid == ORTE_PROC_MY_HNP->jobid &&

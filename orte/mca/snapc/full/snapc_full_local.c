@@ -572,6 +572,7 @@ static void snapc_full_local_process_job_update_cmd(orte_process_name_t* sender,
      * - ckpt_state
      * - ckpt_reference
      * - ckpt_location
+     * - ckpt_seq_number
      */
     count = 1;
     if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &jobid, &count, ORTE_JOBID))) {
@@ -597,6 +598,13 @@ static void snapc_full_local_process_job_update_cmd(orte_process_name_t* sender,
 
         count = 1;
         if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &job_ckpt_loc, &count, OPAL_STRING))) {
+            ORTE_ERROR_LOG(ret);
+            exit_status = ret;
+            goto cleanup;
+        }
+
+        count = 1;
+        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &orte_snapc_base_snapshot_seq_number, &count, OPAL_SIZE))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;

@@ -55,3 +55,9 @@ Error: The restart command:
           shell$ %s
        returned an error code %d, and was unable to restart properly.
 
+[invalid_seq_num]
+Error: The filename (%s) and sequence number (%d) could not be used.
+       This may be caused by an invalid sequence number. Try using the
+       '-i' option to determine a correct value.
+
+

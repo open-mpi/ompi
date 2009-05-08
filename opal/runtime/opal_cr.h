@@ -247,6 +247,10 @@ typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
                                        opal_crs_base_snapshot_t *snapshot, 
                                        bool term, int *state);
     
+    OPAL_DECLSPEC int opal_cr_inc_core_prep(void);
+    OPAL_DECLSPEC int opal_cr_inc_core_ckpt(pid_t pid, opal_crs_base_snapshot_t *snapshot, bool term, int *state);
+    OPAL_DECLSPEC int opal_cr_inc_core_recover(int state);
+
     /*******************************
      * Coordination Routines
      *******************************/
