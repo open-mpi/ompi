@@ -587,7 +587,7 @@ static int blcr_checkpoint_peer(pid_t pid, char * local_dir, char ** fname)
     int ret;
     pid_t child_pid;
     int exit_status = OPAL_SUCCESS;
-    int status, child_status;        
+    int status, child_status;
 
     opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
                         "crs:blcr: checkpoint_peer(%d, --)", pid);
