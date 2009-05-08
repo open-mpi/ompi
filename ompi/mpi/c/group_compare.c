@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009      University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -40,7 +41,8 @@ static const char FUNC_NAME[] = "MPI_Group_compare";
 int MPI_Group_compare(MPI_Group group1, MPI_Group group2, int *result) {
 
     /* local variables */
-    int return_value, proc1, proc2, similar, identical, match ;
+    int return_value, proc1, proc2, match;
+    bool similar, identical;
     ompi_group_t *group1_pointer, *group2_pointer;
     ompi_proc_t *proc1_pointer, *proc2_pointer;
 
@@ -88,8 +90,8 @@ int MPI_Group_compare(MPI_Group group1, MPI_Group group2, int *result) {
 
     /* check for similarity */
     /* loop over group1 processes */
-    similar=1;
-    identical=1;
+    similar=true;
+    identical=true;
     for(proc1=0 ; proc1 < group1_pointer->grp_proc_count ; proc1++ ) {
         proc1_pointer= ompi_group_peer_lookup(group1_pointer,proc1);
         /* loop over group2 processes to find "match" */
@@ -98,7 +100,7 @@ int MPI_Group_compare(MPI_Group group1, MPI_Group group2, int *result) {
             proc2_pointer=ompi_group_peer_lookup(group2_pointer,proc2);
             if( proc1_pointer == proc2_pointer ) {
                 if(proc1 != proc2 ) {
-                    identical=0;
+                    identical=false;
                 }
                 match=proc2;
                 break;
@@ -106,6 +108,7 @@ int MPI_Group_compare(MPI_Group group1, MPI_Group group2, int *result) {
         } /* end proc2 loop */
         if( match== -1 ) {
             similar=false;
+            identical=false;
             break;
         }
     } /* end proc1 loop */
