@@ -92,7 +92,7 @@ static void snapc_full_global_orted_recv(int status,
 static void snapc_full_process_orted_request_cmd(int fd, short event, void *cbdata);
 
 /*** Command Line Interactions */
-static orte_process_name_t orte_checkpoint_sender = {0,0};
+static orte_process_name_t orte_checkpoint_sender = {ORTE_JOBID_INVALID, ORTE_VPID_INVALID};
 static bool snapc_cmdline_recv_issued = false;
 static int snapc_full_global_start_cmdline_listener(void);
 static int snapc_full_global_stop_cmdline_listener(void);
@@ -969,6 +969,7 @@ static void snapc_full_process_job_update_cmd(orte_process_name_t* sender,
     int   job_ckpt_state = ORTE_SNAPC_CKPT_STATE_NONE;
     char *job_ckpt_snapshot_ref = NULL;
     char *job_ckpt_snapshot_loc = NULL;
+    size_t loc_seq_num = 0;
 
     /*
      * Unpack the data
@@ -999,6 +1000,13 @@ static void snapc_full_process_job_update_cmd(orte_process_name_t* sender,
 
         count = 1;
         if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &job_ckpt_snapshot_loc, &count, OPAL_STRING))) {
+            ORTE_ERROR_LOG(ret);
+            exit_status = ret;
+            goto cleanup;
+        }
+
+        count = 1;
+        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &loc_seq_num, &count, OPAL_SIZE))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
@@ -1211,6 +1219,12 @@ static int orte_snapc_full_global_set_job_ckpt_info( orte_jobid_t jobid,
     }
 
     if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &ckpt_snapshot_loc, 1, OPAL_STRING))) {
+        ORTE_ERROR_LOG(ret);
+        exit_status = ret;
+        goto cleanup;
+    }
+
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &orte_snapc_base_snapshot_seq_number, 1, OPAL_SIZE))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;

@@ -96,6 +96,8 @@ static void opal_cr_sigpipe_debug_signal_handler (int signo);
 static opal_cr_coord_callback_fn_t  cur_coord_callback = NULL;
 static opal_cr_notify_callback_fn_t cur_notify_callback = NULL;
 
+static int core_prev_pid = 0;
+
 /******************
  * Interface Functions & Vars
  ******************/
@@ -517,12 +519,9 @@ void opal_cr_test_if_checkpoint_ready(void)
 /*******************************
  * Notification Routines
  *******************************/
-int opal_cr_inc_core(pid_t pid, opal_crs_base_snapshot_t *snapshot, bool term, int *state)
+int opal_cr_inc_core_prep(void)
 {
-    int ret, exit_status = OPAL_SUCCESS;
-    int prev_pid = 0;
-
-    prev_pid = getpid();
+    int ret;
 
     /*
      * Use the registered coordination routine
@@ -533,19 +532,23 @@ int opal_cr_inc_core(pid_t pid, opal_crs_base_snapshot_t *snapshot, bool term, i
                         "opal_cr: inc_core: Error: cur_coord_callback(%d) failed! %d\n",
                         OPAL_CRS_CHECKPOINT, ret);
         }
-        exit_status = ret;
-        goto cleanup;
+        return ret;
     }
-    
-    /*
-     * Take the checkpoint
-     */
+
+    core_prev_pid = getpid();
+
+    return OPAL_SUCCESS;
+}
+
+int opal_cr_inc_core_ckpt(pid_t pid, opal_crs_base_snapshot_t *snapshot, bool term, int *state)
+{
+    int ret, exit_status = OPAL_SUCCESS;
+
     OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CORE0);
     if(OPAL_SUCCESS != (ret = opal_crs.crs_checkpoint(pid, snapshot, (opal_crs_state_type_t *)state))) {
         opal_output(opal_cr_output,
                     "opal_cr: inc_core: Error: The checkpoint failed. %d\n", ret);
         exit_status = ret;
-        /* Don't return here since we want to restart the OPAL level stuff */
     }
 
     if(*state == OPAL_CRS_CONTINUE) {
@@ -566,27 +569,78 @@ int opal_cr_inc_core(pid_t pid, opal_crs_base_snapshot_t *snapshot, bool term, i
      * If restarting read environment stuff that opal-restart left us.
      */
     if(*state == OPAL_CRS_RESTART) {
-        extract_env_vars(prev_pid);
+        extract_env_vars(core_prev_pid);
         opal_cr_checkpointing_state  = OPAL_CR_STATUS_RESTART_PRE;
+    }
+
+    return exit_status;
+}
+
+int opal_cr_inc_core_recover(int state)
+{
+    int ret;
+
+    if( opal_cr_checkpointing_state != OPAL_CR_STATUS_TERM && 
+        opal_cr_checkpointing_state != OPAL_CR_STATUS_CONTINUE && 
+        opal_cr_checkpointing_state != OPAL_CR_STATUS_RESTART_PRE && 
+        opal_cr_checkpointing_state != OPAL_CR_STATUS_RESTART_POST ) {
+
+        if(state == OPAL_CRS_CONTINUE) {
+            OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CORE1);
+            opal_cr_checkpointing_state  = OPAL_CR_STATUS_CONTINUE;
+        }
+        /*
+         * If restarting read environment stuff that opal-restart left us.
+         */
+        else if(state == OPAL_CRS_RESTART) {
+            extract_env_vars(core_prev_pid);
+            opal_cr_checkpointing_state  = OPAL_CR_STATUS_RESTART_PRE;
+        }
     }
 
     /*
      * Use the registered coordination routine
      */
-    if(OPAL_SUCCESS != (ret = cur_coord_callback(*state)) ) {
+    if(OPAL_SUCCESS != (ret = cur_coord_callback(state)) ) {
         if ( OPAL_EXISTS != ret ) {
             opal_output(opal_cr_output,
                         "opal_cr: inc_core: Error: cur_coord_callback(%d) failed! %d\n",
-                        *state, ret);
+                        state, ret);
         }
-        exit_status = ret;
-        goto cleanup;
+        return ret;
     }
-    
- cleanup:
-    return exit_status;
+
+    return OPAL_SUCCESS;
 }
 
+int opal_cr_inc_core(pid_t pid, opal_crs_base_snapshot_t *snapshot, bool term, int *state)
+{
+    int ret, exit_status = OPAL_SUCCESS;
+
+    /*
+     * INC: Prepare stack using the registered coordination routine
+     */
+    if(OPAL_SUCCESS != (ret = opal_cr_inc_core_prep() ) ) {
+        return ret;
+    }
+     
+    /*
+     * INC: Take the checkpoint
+     */
+    if(OPAL_SUCCESS != (ret = opal_cr_inc_core_ckpt(pid, snapshot, term, state) ) ) {
+        exit_status = ret;
+        /* Don't return here since we want to restart the OPAL level stuff */
+    }
+
+    /*
+     * INC: Recover stack using the registered coordination routine
+     */
+    if(OPAL_SUCCESS != (ret = opal_cr_inc_core_recover(*state) ) ) {
+        return ret;
+    }
+
+    return exit_status;
+}
 
 /*******************************
  * Coordination Routines
@@ -686,7 +740,7 @@ static int extract_env_vars(int prev_pid)
     int len = OPAL_PATH_MAX;
     char * tmp_str = NULL;
 
-    if( 0 > prev_pid ) {
+    if( 0 >= prev_pid ) {
         opal_output(opal_cr_output,
                     "opal_cr: extract_env_vars: Invalid PID (%d)\n",
                     prev_pid);
