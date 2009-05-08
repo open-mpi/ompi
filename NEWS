@@ -47,6 +47,8 @@ Trunk (not on release branches yet)
 1.3.3 (expected)
 ----------------
 
+- Fix MPI_GROUP_COMPARE behavior with regards to MPI_IDENT.  Thanks to
+  Geoffrey Irving for identifying the problem and supplying the fix.
 - Silence gcc 4.1 compiler warnings about type punning.  Thanks to
   Number Cruncher for the fix.
 - Added more Valgrind and other memory-cleanup fixes.  Thanks to
