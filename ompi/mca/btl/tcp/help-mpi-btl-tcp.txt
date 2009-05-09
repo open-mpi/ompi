@@ -10,7 +10,7 @@
 # This is the US/English help file for Open MPI's TCP support
 # (the openib BTL).
 #
-[invalid if_include]
+[invalid if_inexclude]
 WARNING: An invalid value was given for btl_tcp_if_%s.  This
 value will be ignored.
 

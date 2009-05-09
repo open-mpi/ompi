@@ -391,7 +391,6 @@ static char **split_and_resolve(char **orig_str, char *name)
     char if_name[IF_NAMESIZE];
     struct sockaddr_storage argv_inaddr, if_inaddr;
     uint32_t argv_prefix;
-    bool warning_shown = false;
 
     /* Sanity check */
     if (NULL == orig_str || NULL == *orig_str) {
@@ -414,12 +413,9 @@ static char **split_and_resolve(char **orig_str, char *name)
         tmp = strdup(argv[i]);
         str = strchr(argv[i], '/');
         if (NULL == str) {
-            if (!warning_shown) {
-                orte_show_help("help-mpi-btl-tcp.txt", "invalid if_include",
-                               true, name, orte_process_info.nodename, 
-                               tmp, "Missing \"/\"");
-                warning_shown = true;
-            }
+            orte_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude",
+                           true, name, orte_process_info.nodename, 
+                           tmp, "Invalid specification (missing \"/\")");
             free(argv[i]);
             free(tmp);
             continue;
@@ -434,12 +430,9 @@ static char **split_and_resolve(char **orig_str, char *name)
         free(argv[i]);
 
         if (1 != ret) {
-            if (!warning_shown) {
-                orte_show_help("help-mpi-btl-tcp.txt", "invalid if_include",
-                               true, name, orte_process_info.nodename, tmp,
-                               "inet_pton() failed");
-                warning_shown = true;
-            }
+            orte_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude",
+                           true, name, orte_process_info.nodename, tmp,
+                           "Invalid specification (inet_pton() failed)");
             free(tmp);
             continue;
         }
@@ -464,12 +457,9 @@ static char **split_and_resolve(char **orig_str, char *name)
         
         /* If we didn't find a match, keep trying */
         if (if_index < 0) {
-            if (!warning_shown) {
-                orte_show_help("help-mpi-btl-tcp.txt", "invalid if_include",
-                               true, name, orte_process_info.nodename, tmp,
-                               "Did not find interface matching this subnet");
-                warning_shown = true;
-            }
+            orte_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude",
+                           true, name, orte_process_info.nodename, tmp,
+                           "Did not find interface matching this subnet");
             free(tmp);
             continue;
         }
