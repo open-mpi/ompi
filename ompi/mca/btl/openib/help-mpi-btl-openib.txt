@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2006 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2007-2008 Mellanox Technologies. All rights reserved.
 # $COPYRIGHT$
 # 
@@ -581,3 +581,11 @@ MPI to support iWARP devices.
 
 (This message is being displayed because you told Open MPI to use
 iWARP devices via the btl_openib_device_type MCA parameter)
+#
+[invalid ipaddr_inexclude]
+WARNING: An invalid value was given for btl_openib_ipaddr_%s.  This
+value will be ignored.
+
+  Local host: %s
+  Value:      %s
+  Message:    %s
