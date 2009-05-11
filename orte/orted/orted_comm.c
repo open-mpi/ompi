@@ -576,97 +576,20 @@ static int process_commands(orte_process_name_t* sender,
             break;
 
             /****    EXIT COMMAND    ****/
-        case ORTE_DAEMON_EXIT_WITH_REPLY_CMD:
+        case ORTE_DAEMON_EXIT_CMD:
             if (orte_debug_daemons_flag) {
-                opal_output(0, "%s orted_cmd: received exit",
+                opal_output(0, "%s orted_cmd: received exit cmd",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             }
-            /* disable routing - we need to do this
-             * because daemons exit in an uncoordinated fashion.
-             * Thus, our routes are being dismantled, so we can't
-             * trust that any given route still exists
-             */
-            orte_routing_is_enabled = false;
-            /* if we are the HNP, kill our local procs and
-             * flag we are exited - but don't yet exit
-             */
+            /* if we are the HNP, just kill our local procs */
             if (ORTE_PROC_IS_HNP) {
-                orte_job_t *daemons;
-                orte_proc_t **procs;
-                /* if we are the HNP, ensure our local procs are terminated */
                 orte_odls.kill_local_procs(ORTE_JOBID_WILDCARD, false);
-                /* now lookup the daemon job object */
-                if (NULL == (daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
-                    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                    return ORTE_ERR_NOT_FOUND;
-                }
-                procs = (orte_proc_t**)daemons->procs->addr;
-                /* declare us terminated so things can exit cleanly */
-                procs[0]->state = ORTE_PROC_STATE_TERMINATED;
-                daemons->num_terminated++;
-                /* need to check for job complete as otherwise this doesn't
-                 * get triggered in single-daemon systems
-                 */
-                orte_plm_base_check_job_completed(daemons);
-                /* all done! */
                 return ORTE_SUCCESS;
             }
-            /* if we are not the HNP, send a message to the HNP telling
-             * it we are leaving - and then trigger our exit
+            
+            /* else we are a daemon, trigger our exit - we will kill our
+             * local procs on our way out
              */
-            {
-                opal_buffer_t ack;
-                orte_proc_state_t state=ORTE_PROC_STATE_TERMINATED;
-                orte_exit_code_t exit_code=0;
-                orte_plm_cmd_flag_t cmd = ORTE_PLM_UPDATE_PROC_STATE;
-                
-                OBJ_CONSTRUCT(&ack, opal_buffer_t);
-                opal_dss.pack(&ack, &cmd, 1, ORTE_PLM_CMD);
-                opal_dss.pack(&ack, &(ORTE_PROC_MY_NAME->jobid), 1, ORTE_JOBID);        
-                opal_dss.pack(&ack, &(ORTE_PROC_MY_NAME->vpid), 1, ORTE_VPID);        
-                opal_dss.pack(&ack, &state, 1, ORTE_PROC_STATE);        
-                opal_dss.pack(&ack, &exit_code, 1, ORTE_EXIT_CODE);
-                orte_rml.send_buffer(ORTE_PROC_MY_HNP, &ack, ORTE_RML_TAG_PLM, 0);
-                OBJ_DESTRUCT(&ack);
-            }
-            orte_trigger_event(&orte_exit);
-            return ORTE_SUCCESS;
-            break;
-
-            /****    EXIT_NO_REPLY COMMAND    ****/
-        case ORTE_DAEMON_EXIT_NO_REPLY_CMD:
-            if (orte_debug_daemons_flag) {
-                opal_output(0, "%s orted_cmd: received exit_no_reply",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-            }
-            /* disable routing - we need to do this
-             * because daemons exit in an uncoordinated fashion.
-             * Thus, our routes are being dismantled, so we can't
-             * trust that any given route still exists
-             */
-            orte_routing_is_enabled = false;
-            /* if we are the HNP, kill our local procs and
-             * flag we are exited - but don't yet exit
-             */
-            if (ORTE_PROC_IS_HNP) {
-                orte_job_t *daemons;
-                orte_proc_t **procs;
-                /* if we are the HNP, ensure our local procs are terminated */
-                orte_odls.kill_local_procs(ORTE_JOBID_WILDCARD, false);
-                /* now lookup the daemon job object */
-                if (NULL == (daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
-                    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                    return ORTE_ERR_NOT_FOUND;
-                }
-                procs = (orte_proc_t**)daemons->procs->addr;
-                /* declare us terminated so things can exit cleanly */
-                procs[0]->state = ORTE_PROC_STATE_TERMINATED;
-                daemons->num_terminated++;
-                /* There is nothing more to do here - actual exit will be
-                 * accomplished by the plm
-                 */
-                return ORTE_SUCCESS;
-            }
             orte_trigger_event(&orte_exit);
             return ORTE_SUCCESS;
             break;

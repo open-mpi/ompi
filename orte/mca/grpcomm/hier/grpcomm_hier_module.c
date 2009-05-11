@@ -67,6 +67,7 @@ orte_grpcomm_base_module_t orte_grpcomm_hier_module = {
     allgather,
     orte_grpcomm_base_allgather_list,
     barrier,
+    NULL,  /* onesided barrier only used by daemons */
     set_proc_attr,
     get_proc_attr,
     modex,

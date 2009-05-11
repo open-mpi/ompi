@@ -71,7 +71,12 @@ typedef int (*orte_grpcomm_base_module_allgather_list_fn_t)(opal_list_t *names,
 /* barrier function */
 typedef int (*orte_grpcomm_base_module_barrier_fn_t)(void);
 
-
+/* one-sided barrier function - process releases once its
+ * contribution is complete
+ */
+typedef int (*orte_grpcomm_base_module_onesided_barrier_fn_t)(void);
+    
+    
 /** DATA EXCHANGE FUNCTIONS - SEE ompi/runtime/ompi_module_exchange.h FOR A DESCRIPTION
  *  OF HOW THIS ALL WORKS
  */
@@ -103,6 +108,7 @@ struct orte_grpcomm_base_module_2_0_0_t {
     orte_grpcomm_base_module_allgather_fn_t             allgather;
     orte_grpcomm_base_module_allgather_list_fn_t        allgather_list;
     orte_grpcomm_base_module_barrier_fn_t               barrier;
+    orte_grpcomm_base_module_onesided_barrier_fn_t      onesided_barrier;
     /* modex functions */
     orte_grpcomm_base_module_modex_set_proc_attr_fn_t   set_proc_attr;
     orte_grpcomm_base_module_modex_get_proc_attr_fn_t   get_proc_attr;

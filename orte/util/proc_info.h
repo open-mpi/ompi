@@ -49,16 +49,18 @@ typedef uint32_t orte_proc_type_t;
 #define ORTE_PROC_DAEMON        0x0002
 #define ORTE_PROC_HNP           0x0004
 #define ORTE_PROC_TOOL          0x0008
-#define ORTE_PROC_TOOL_WNAME    0x0010
+#define ORTE_PROC_NON_MPI       0x0010
 #define ORTE_PROC_MPI           0x0020
+#define ORTE_PROC_APP           0x0030
 #define ORTE_PROC_CM            0x0040
 
 #define ORTE_PROC_IS_SINGLETON      (ORTE_PROC_SINGLETON & orte_process_info.proc_type)
 #define ORTE_PROC_IS_DAEMON         (ORTE_PROC_DAEMON & orte_process_info.proc_type)
 #define ORTE_PROC_IS_HNP            (ORTE_PROC_HNP & orte_process_info.proc_type)
 #define ORTE_PROC_IS_TOOL           (ORTE_PROC_TOOL & orte_process_info.proc_type)
-#define ORTE_PROC_IS_TOOL_WNAME     (ORTE_PROC_TOOL_WNAME & orte_process_info.proc_type)
+#define ORTE_PROC_IS_NON_MPI        (ORTE_PROC_NON_MPI & orte_process_info.proc_type)
 #define ORTE_PROC_IS_MPI            (ORTE_PROC_MPI & orte_process_info.proc_type)
+#define ORTE_PROC_IS_APP            (ORTE_PROC_APP & orte_process_info.proc_type)
 #define ORTE_PROC_IS_CM             (ORTE_PROC_CM & orte_process_info.proc_type)
 
 

@@ -1358,7 +1358,7 @@ int orte_plm_rsh_terminate_orteds(void)
     /* now tell them to die - we need them to "phone home", though,
      * so we can know that they have exited
      */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_EXIT_WITH_REPLY_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_EXIT_CMD))) {
         ORTE_ERROR_LOG(rc);
     }
     

@@ -205,8 +205,7 @@ static int update_route(orte_process_name_t *target,
     /* if I am an application process, we don't update the route since
      * we automatically route everything through the local daemon
      */
-    if (!ORTE_PROC_IS_HNP && !ORTE_PROC_IS_DAEMON &&
-        !ORTE_PROC_IS_TOOL) {
+    if (ORTE_PROC_IS_APP) {
         return ORTE_SUCCESS;
     }
     
@@ -293,8 +292,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     }
     
     /* if I am an application process, always route via my local daemon */
-    if (!ORTE_PROC_IS_HNP && !ORTE_PROC_IS_DAEMON &&
-        !ORTE_PROC_IS_TOOL) {
+    if (ORTE_PROC_IS_APP) {
         ret = ORTE_PROC_MY_DAEMON;
         goto found;
     }
@@ -376,7 +374,6 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     }
 
  found:
-
     OPAL_OUTPUT_VERBOSE((0, orte_routed_base_output,
                          "%s routed_linear_get(%s) --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

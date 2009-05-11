@@ -57,6 +57,7 @@ ORTE_DECLSPEC extern int orte_ess_base_output;
 
 ORTE_DECLSPEC extern opal_list_t orte_ess_base_components_available;
 
+
 #if !ORTE_DISABLE_FULL_SUPPORT
 
 /*

@@ -221,8 +221,7 @@ static int update_route(orte_process_name_t *target,
     /* if I am an application process, we don't update the route since
      * we automatically route everything through the local daemon
      */
-    if (!ORTE_PROC_IS_HNP && !ORTE_PROC_IS_DAEMON &&
-        !ORTE_PROC_IS_TOOL) {
+    if (ORTE_PROC_IS_APP) {
         return ORTE_SUCCESS;
     }
 
@@ -317,8 +316,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     }
     
     /* if I am an application process, always route via my local daemon */
-    if (!ORTE_PROC_IS_HNP && !ORTE_PROC_IS_DAEMON &&
-        !ORTE_PROC_IS_TOOL) {
+    if (ORTE_PROC_IS_APP) {
         ret = ORTE_PROC_MY_DAEMON;
         goto found;
     }
@@ -357,8 +355,9 @@ static orte_process_name_t get_route(orte_process_name_t *target)
      
     /* THIS CAME FROM OUR OWN JOB FAMILY... */
 
-    /* if this is going to the HNP, send direct */
-    if (ORTE_PROC_MY_HNP->jobid == target->jobid &&
+    /* if we are not using static ports and this is going to the HNP, send direct */
+    if (!orte_static_ports &&
+        ORTE_PROC_MY_HNP->jobid == target->jobid &&
         ORTE_PROC_MY_HNP->vpid == target->vpid) {
         OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
                              "%s routing not enabled - going direct",
@@ -368,7 +367,6 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     }
     
     daemon.jobid = ORTE_PROC_MY_NAME->jobid;
-    /* find out what daemon hosts this proc */
     /* find out what daemon hosts this proc */
     if (ORTE_VPID_INVALID == (daemon.vpid = orte_ess.proc_get_daemon(target))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
