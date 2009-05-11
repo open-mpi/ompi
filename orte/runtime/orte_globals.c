@@ -34,6 +34,7 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/proc_info.h"
+#include "orte/util/name_fns.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/runtime_internals.h"
@@ -411,7 +412,7 @@ orte_job_t* orte_get_job_data_object(orte_jobid_t job)
     int32_t ljob;
     
     /* if I am not an HNP, I cannot provide this object */
-    if (!ORTE_PROC_IS_HNP) {
+    if (!ORTE_PROC_IS_HNP && !ORTE_PROC_IS_CM) {
         return NULL;
     }
     
@@ -536,7 +537,11 @@ static void orte_job_construct(orte_job_t* job)
     job->num_terminated = 0;
     job->abort = false;
     job->aborted_proc = NULL;
-
+    
+    job->err_cbfunc = NULL;
+    job->err_cbstates = ORTE_JOB_STATE_UNDEF;
+    job->err_cbdata = NULL;
+    
 #if OPAL_ENABLE_FT == 1
     job->ckpt_state = 0;
     job->ckpt_snapshot_ref = NULL;
@@ -546,22 +551,34 @@ static void orte_job_construct(orte_job_t* job)
 
 static void orte_job_destruct(orte_job_t* job)
 {
-    orte_std_cntr_t i;
+    orte_proc_t *proc;
+    orte_app_context_t *app;
+    orte_job_t *jdata;
     int n;
     
-    for (i=0; i < job->num_apps; i++) {
-        if (NULL != job->apps->addr[i]) OBJ_RELEASE(job->apps->addr[i]);
+    opal_output(0, "Releasing job data for %s", ORTE_JOBID_PRINT(job->jobid));
+    
+    for (n=0; n < job->apps->size; n++) {
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(job->apps, n))) {
+            continue;
+        }
+        OBJ_RELEASE(app);
     }
     OBJ_RELEASE(job->apps);
     
     if (NULL != job->map) OBJ_RELEASE(job->map);
     
     for (n=0; n < job->procs->size; n++) {
-        if (NULL != job->procs->addr[n]) {
-            OBJ_RELEASE(job->procs->addr[n]);
+        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(job->procs, n))) {
+            continue;
         }
+        OBJ_RELEASE(proc);
     }
     OBJ_RELEASE(job->procs);
+    
+    if (NULL != job->aborted_proc) {
+        OBJ_RELEASE(job->aborted_proc);
+    }
     
 #if OPAL_ENABLE_FT == 1
     if (NULL != job->ckpt_snapshot_ref) {
@@ -571,6 +588,18 @@ static void orte_job_destruct(orte_job_t* job)
         free(job->ckpt_snapshot_loc);
     }
 #endif
+    
+    /* find the job in the global array */
+    for (n=0; n < orte_job_data->size; n++) {
+        if (NULL == (jdata = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, n))) {
+            continue;
+        }
+        if (jdata->jobid == job->jobid) {
+            /* set the entry to NULL */
+            opal_pointer_array_set_item(orte_job_data, n, NULL);
+            break;
+        }
+    }
 }
 
 OBJ_CLASS_INSTANCE(orte_job_t,

@@ -84,7 +84,7 @@ void orte_errmgr_base_error_abort(int error_code, char *fmt, ...)
 
 int orte_errmgr_base_register_cb_not_avail(orte_jobid_t job,
                                            orte_job_state_t state,
-                                           orte_errmgr_cb_fn_t cbfunc,
+                                           orte_err_cb_fn_t cbfunc,
                                            void *cbdata)
 {
     return ORTE_ERR_NOT_AVAILABLE;

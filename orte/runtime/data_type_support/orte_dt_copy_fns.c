@@ -141,9 +141,6 @@ int orte_dt_copy_proc(orte_proc_t **dest, orte_proc_t *src, opal_data_type_t typ
  */
 int orte_dt_copy_app_context(orte_app_context_t **dest, orte_app_context_t *src, opal_data_type_t type)
 {
-    (*dest) = src;
-    OBJ_RETAIN(src);
-#if 0
     /* create the new object */
     *dest = OBJ_NEW(orte_app_context_t);
     if (NULL == *dest) {
@@ -172,23 +169,26 @@ int orte_dt_copy_app_context(orte_app_context_t **dest, orte_app_context_t *src,
         (*dest)->add_hostfile = strdup(src->add_hostfile);
     }
     
-    (*dest)->preload_binary = src->preload_binary;
-    
-    if( NULL != src->preload_files)
-        (*dest)->preload_files  = strdup(src->preload_files);
-    else 
-        (*dest)->preload_files = NULL;
-    
-    if( NULL != src->preload_files_dest_dir)
-        (*dest)->preload_files_dest_dir  = strdup(src->preload_files_dest_dir);
-    else 
-        (*dest)->preload_files_dest_dir = NULL;
-   
     (*dest)->dash_host = opal_argv_copy(src->dash_host);
+    
     if (NULL != src->prefix_dir) {
         (*dest)->prefix_dir = strdup(src->prefix_dir);
     }
-#endif    
+    
+    (*dest)->preload_binary = src->preload_binary;
+    
+    if( NULL != src->preload_files) {
+        (*dest)->preload_files  = strdup(src->preload_files);
+    }
+    
+    if( NULL != src->preload_files_dest_dir) {
+        (*dest)->preload_files_dest_dir  = strdup(src->preload_files_dest_dir);
+    }
+   
+    if( NULL != src->preload_files_src_dir) {
+        (*dest)->preload_files_src_dir  = strdup(src->preload_files_src_dir);
+    }
+    
     return ORTE_SUCCESS;
 }
 
