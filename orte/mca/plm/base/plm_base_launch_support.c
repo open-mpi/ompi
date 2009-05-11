@@ -1361,7 +1361,10 @@ CHECK_ALL_JOBS:
                     }
                     node->slots_inuse--;
                     node->num_procs--;
-                    opal_output(0, "releasing proc %s", ORTE_NAME_PRINT(&proc->name));
+                    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                         "%s releasing proc %s",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         ORTE_NAME_PRINT(&proc->name)));
                     /* set the entry in the node array to NULL */
                     opal_pointer_array_set_item(node->procs, i, NULL);
                     /* set the entry in the job data object to NULL */
