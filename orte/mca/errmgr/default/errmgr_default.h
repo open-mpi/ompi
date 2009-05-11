@@ -25,7 +25,7 @@
 #include "orte/types.h"
 
 #include "orte/mca/plm/plm_types.h"
-
+#include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
 
 BEGIN_C_DECLS
@@ -47,7 +47,7 @@ void orte_errmgr_default_incomplete_start(orte_jobid_t job, int exit_code);
 
 int orte_errmgr_default_register_callback(orte_jobid_t job,
                                       orte_job_state_t state,
-                                      orte_errmgr_cb_fn_t cbfunc,
+                                      orte_err_cb_fn_t cbfunc,
                                       void *cbdata);
 
 ORTE_MODULE_DECLSPEC extern mca_errmgr_base_component_t mca_errmgr_default_component;

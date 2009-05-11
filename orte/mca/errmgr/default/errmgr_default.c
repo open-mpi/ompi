@@ -150,7 +150,7 @@ void orte_errmgr_default_incomplete_start(orte_jobid_t job, int exit_code)
  */
 int orte_errmgr_default_register_callback(orte_jobid_t job,
                                       orte_job_state_t state,
-                                      orte_errmgr_cb_fn_t cbfunc,
+                                      orte_err_cb_fn_t cbfunc,
                                       void *cbdata)
 {
    return ORTE_ERR_NOT_IMPLEMENTED;

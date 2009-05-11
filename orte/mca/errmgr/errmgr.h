@@ -35,6 +35,7 @@
 #include "opal/mca/mca.h"
 #include "opal/util/error.h"
 
+#include "orte/runtime/orte_globals.h"
 #include "orte/mca/plm/plm_types.h"
 
 BEGIN_C_DECLS
@@ -101,9 +102,6 @@ typedef void (*orte_errmgr_base_module_proc_aborted_fn_t)(orte_process_name_t *n
  */
 typedef void (*orte_errmgr_base_module_incomplete_start_fn_t)(orte_jobid_t job, int exit_code);
 
-/* error manager callback function */
-typedef void (*orte_errmgr_cb_fn_t)(orte_jobid_t job, orte_job_state_t state, void *cbdata);
-
 /*
  * Register a job with the error manager
  * When a job is launched, this function is called so the error manager can register
@@ -122,7 +120,7 @@ typedef void (*orte_errmgr_cb_fn_t)(orte_jobid_t job, orte_job_state_t state, vo
  */
 typedef int (*orte_errmgr_base_module_register_cb_fn_t)(orte_jobid_t job,
                                                         orte_job_state_t state,
-                                                        orte_errmgr_cb_fn_t cbfunc,
+                                                        orte_err_cb_fn_t cbfunc,
                                                         void *cbdata);
 
 /**

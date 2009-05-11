@@ -256,6 +256,9 @@ typedef uint8_t orte_job_controls_t;
 #define ORTE_JOB_CONTROL_DO_NOT_MONITOR     0x10
 #define ORTE_JOB_CONTROL_FORWARD_COMM       0x20
 
+/* error manager callback function */
+typedef void (*orte_err_cb_fn_t)(orte_jobid_t job, orte_job_state_t state, void *cbdata);
+
 typedef struct {
     /** Base object so this can be put on a list */
     opal_list_item_t super;
@@ -302,6 +305,12 @@ typedef struct {
     bool abort;
     /* proc that caused that to happen */
     struct orte_proc_t *aborted_proc;
+    /* errmgr callback function for this job, if any */
+    orte_err_cb_fn_t err_cbfunc;
+    /* states that will trigger callback */
+    orte_job_state_t err_cbstates;
+    /* errmgr callback data */
+    void *err_cbdata;
 #if OPAL_ENABLE_FT == 1
     /* ckpt state */
     size_t ckpt_state;
