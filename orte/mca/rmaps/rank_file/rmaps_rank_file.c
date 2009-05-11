@@ -420,9 +420,14 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
                 return ORTE_ERR_SILENT;
             }
             if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, rank, rfmap->slot_list,
-                                                                 app->idx, &node_list, jdata->map->oversubscribe, false))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
+                                                                 app->idx, &node_list, jdata->map->oversubscribe, true))) {
+                if (ORTE_ERR_NODE_FULLY_USED != rc) {
+                    /* if this is a true error and not the node just being
+                     * full, then report the error and abort
+                     */
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
             }
             jdata->num_procs++;
         }
