@@ -123,6 +123,9 @@ bool orte_forward_job_control;
 /* rsh support */
 char *orte_rsh_agent = NULL;
 
+/* orted exit with barrier */
+bool orte_orted_exit_with_barrier = true;
+
 #endif /* !ORTE_DISABLE_FULL_RTE */
 
 int orte_debug_output = -1;
@@ -556,7 +559,15 @@ static void orte_job_destruct(orte_job_t* job)
     orte_job_t *jdata;
     int n;
     
-    opal_output(0, "Releasing job data for %s", ORTE_JOBID_PRINT(job->jobid));
+    if (NULL == job) {
+        /* probably just a race condition - just return */
+        return;
+    }
+    
+    if (orte_debug_flag) {
+        opal_output(0, "%s Releasing job data for %s",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(job->jobid));
+    }
     
     for (n=0; n < job->apps->size; n++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(job->apps, n))) {
@@ -590,14 +601,16 @@ static void orte_job_destruct(orte_job_t* job)
 #endif
     
     /* find the job in the global array */
-    for (n=0; n < orte_job_data->size; n++) {
-        if (NULL == (jdata = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, n))) {
-            continue;
-        }
-        if (jdata->jobid == job->jobid) {
-            /* set the entry to NULL */
-            opal_pointer_array_set_item(orte_job_data, n, NULL);
-            break;
+    if (NULL != orte_job_data) {
+        for (n=0; n < orte_job_data->size; n++) {
+            if (NULL == (jdata = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, n))) {
+                continue;
+            }
+            if (jdata->jobid == job->jobid) {
+                /* set the entry to NULL */
+                opal_pointer_array_set_item(orte_job_data, n, NULL);
+                break;
+            }
         }
     }
 }

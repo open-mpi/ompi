@@ -485,6 +485,8 @@ static int rte_finalize(void)
 {
     char *contact_path;
     opal_list_item_t *item;
+    orte_node_t *node;
+    orte_job_t *job;
     int i;
 
     /* remove my contact info file */
@@ -541,16 +543,16 @@ static int rte_finalize(void)
     /* cleanup the job and node info arrays */
     if (NULL != orte_node_pool) {
         for (i=0; i < orte_node_pool->size; i++) {
-            if (NULL != orte_node_pool->addr[i]) {
-                OBJ_RELEASE(orte_node_pool->addr[i]);
+            if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool,i))) {
+                OBJ_RELEASE(node);
             }
         }
         OBJ_RELEASE(orte_node_pool);
     }
     if (NULL != orte_job_data) {
         for (i=0; i < orte_job_data->size; i++) {
-            if (NULL != orte_job_data->addr[i]) {
-                OBJ_RELEASE(orte_job_data->addr[i]);
+            if (NULL != (job = (orte_job_t*)opal_pointer_array_get_item(orte_job_data,i))) {
+                OBJ_RELEASE(job);
             }
         }
         OBJ_RELEASE(orte_job_data);
