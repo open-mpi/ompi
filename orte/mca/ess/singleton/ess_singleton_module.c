@@ -373,7 +373,7 @@ static int fork_hnp(void)
         orte_process_info.my_hnp_uri = strdup(orted_uri);
         
        /* indicate we are a singleton so orte_init knows what to do */
-        orte_process_info.proc_type = ORTE_PROC_SINGLETON;
+        orte_process_info.proc_type |= ORTE_PROC_SINGLETON;
         /* all done - report success */
         free(orted_uri);
         return ORTE_SUCCESS;
