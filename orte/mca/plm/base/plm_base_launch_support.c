@@ -1154,11 +1154,11 @@ static void process_check_job_completed(int fd, short event, void *data)
 
 void orte_plm_base_check_job_completed(orte_job_t *jdata)
 {
-    orte_proc_t **procs;
+    orte_proc_t *proc;
     int i;
     orte_std_cntr_t j;
-    orte_job_t **jobs;
-    orte_node_t **nodes;
+    orte_job_t *job;
+    orte_node_t *node;
     orte_job_map_t *map;
     orte_std_cntr_t index;
     bool one_still_alive;
@@ -1204,60 +1204,66 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
                          ORTE_JOBID_PRINT(jdata->jobid),
                          (unsigned long)jdata->num_terminated,
                          (unsigned long)jdata->num_procs));
-
-    procs = (orte_proc_t**)jdata->procs->addr;
     
     /* if this job was ordered to abort, or if its state was already recorded
      * as abnormally terminated, then do not update its state
      */
     if (jdata->state < ORTE_JOB_STATE_TERMINATED) {
         for (i=0; i < jdata->procs->size; i++) {
-            /* the proc array may no longer be left justified, so
-             * we need to check everything
-             */
-            if (NULL == procs[i]) {
+            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
+                /* the proc array may no longer be left justified, so
+                 * we need to check everything
+                 */
                 continue;
             }
-            if (ORTE_PROC_STATE_FAILED_TO_START == procs[i]->state) {
+            if (ORTE_PROC_STATE_FAILED_TO_START == proc->state) {
                 jdata->state = ORTE_JOB_STATE_FAILED_TO_START;
                 if (!jdata->abort) {
                     /* point to the lowest rank to cause the problem */
-                    jdata->aborted_proc = procs[i];
+                    jdata->aborted_proc = proc;
+                    /* retain the object so it doesn't get free'd */
+                    OBJ_RETAIN(proc);
                     jdata->abort = true;
-                    ORTE_UPDATE_EXIT_STATUS(procs[i]->exit_code);
+                    ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
                 }
                 break;
-            } else if (ORTE_PROC_STATE_ABORTED == procs[i]->state) {
+            } else if (ORTE_PROC_STATE_ABORTED == proc->state) {
                 jdata->state = ORTE_JOB_STATE_ABORTED;
                 if (!jdata->abort) {
                     /* point to the lowest rank to cause the problem */
-                    jdata->aborted_proc = procs[i];
+                    jdata->aborted_proc = proc;
+                    /* retain the object so it doesn't get free'd */
+                    OBJ_RETAIN(proc);
                     jdata->abort = true;
-                    ORTE_UPDATE_EXIT_STATUS(procs[i]->exit_code);
+                    ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
                 }
                 break;
-            } else if (ORTE_PROC_STATE_ABORTED_BY_SIG == procs[i]->state) {
+            } else if (ORTE_PROC_STATE_ABORTED_BY_SIG == proc->state) {
                 jdata->state = ORTE_JOB_STATE_ABORTED_BY_SIG;
                 if (!jdata->abort) {
                     /* point to the lowest rank to cause the problem */
-                    jdata->aborted_proc = procs[i];
+                    jdata->aborted_proc = proc;
+                    /* retain the object so it doesn't get free'd */
+                    OBJ_RETAIN(proc);
                     jdata->abort = true;
-                    ORTE_UPDATE_EXIT_STATUS(procs[i]->exit_code);
+                    ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
                 }
                 break;
-            } else if (ORTE_PROC_STATE_TERM_WO_SYNC == procs[i]->state) {
+            } else if (ORTE_PROC_STATE_TERM_WO_SYNC == proc->state) {
                 jdata->state = ORTE_JOB_STATE_ABORTED_WO_SYNC;
                 if (!jdata->abort) {
                     /* point to the lowest rank to cause the problem */
-                    jdata->aborted_proc = procs[i];
+                    jdata->aborted_proc = proc;
+                    /* retain the object so it doesn't get free'd */
+                    OBJ_RETAIN(proc);
                     jdata->abort = true;
-                    ORTE_UPDATE_EXIT_STATUS(procs[i]->exit_code);
+                    ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
                     /* now treat a special case - if the proc exit'd without a required
                      * sync, it may have done so with a zero exit code. We want to ensure
                      * that the user realizes there was an error, so in this -one- case,
                      * we overwrite the process' exit code with the default error code
                      */
-                    if (ORTE_PROC_STATE_TERM_WO_SYNC == procs[i]->state) {
+                    if (ORTE_PROC_STATE_TERM_WO_SYNC == proc->state) {
                         ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
                     }
                 }
@@ -1330,74 +1336,74 @@ CHECK_ALL_JOBS:
                 return;
             }
         }
-        /* Release the resources used by this job. Since some errmgr's may want
+
+        /* Release the resources used by this job. Since some errmgrs may want
          * to continue using resources allocated to the job as part of their
          * fault recovery procedure, we only do this once the job is "complete".
          * Note that an aborted/killed job -is- flagged as complete and will
-         * therefore have its resources released.
+         * therefore have its resources released. We need to do this after
+         * we call the errmgr so that any attempt to restart the job will
+         * avoid doing so in the exact same place as the current job
          */
         if( NULL != jdata->map ) {
             map = jdata->map;
-            nodes = (orte_node_t**)map->nodes->addr;
             for( index = 0; index < map->nodes->size; index++ ) {
-                if (NULL == nodes[index]) {
-                    /* the nodes in a map are left-justfied and
-                     * there are no holes in the array
-                     */
-                    break;
+                if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, index))) {
+                    continue;
                 }
-                procs = (orte_proc_t**)nodes[index]->procs->addr;
-                for( i = 0; i < nodes[index]->procs->size; i++ ) {
-                    if (NULL == procs[i]) {
-                        /* there can be holes in the proc array since
-                         * we are cleaning up as we go
-                         */
+                for( i = 0; i < node->procs->size; i++ ) {
+                    if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, i))) {
                         continue;
                     }
-                    if(procs[i]->name.jobid == jdata->jobid) {
-                        nodes[index]->slots_inuse--;
-                        nodes[index]->num_procs--;
-                        /* release this object, ensuring that the
-                         * pointer array internal accounting
-                         * is maintained!
-                         */
-                        OBJ_RELEASE(procs[i]);
-                        opal_pointer_array_set_item(nodes[index]->procs, i, NULL);
+                    if (proc->name.jobid != jdata->jobid) {
+                        /* skip procs from another job */
+                        continue;
                     }
+                    node->slots_inuse--;
+                    node->num_procs--;
+                    opal_output(0, "releasing proc %s", ORTE_NAME_PRINT(&proc->name));
+                    /* set the entry in the node array to NULL */
+                    opal_pointer_array_set_item(node->procs, i, NULL);
+                    /* set the entry in the job data object to NULL */
+                    opal_pointer_array_set_item(jdata->procs, (int)proc->name.vpid, NULL);
+                    /* release the proc once for the map entry */
+                    OBJ_RELEASE(proc);
+                    /* now release it again from the job data object */
+                    OBJ_RELEASE(proc);
                 }
             }
+            OBJ_RELEASE(map);
+            jdata->map = NULL;
         }
         
         /* now check to see if all jobs are done - release this jdata
          * object when we find it
          */
-        jobs = (orte_job_t**)orte_job_data->addr;
         one_still_alive = false;
         for (j=1; j < orte_job_data->size; j++) {
-            if (NULL == jobs[j]) {
+            if (NULL == (job = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, j))) {
                 /* since we are releasing jdata objects as we
                  * go, we can no longer assume that the job_data
                  * array is left justified
                  */
                 continue;
             }
-            if (NULL != jdata && jobs[j]->jobid == jdata->jobid) {
+            if (NULL != jdata && job->jobid == jdata->jobid) {
                 /* release this object, ensuring that the
                  * pointer array internal accounting
                  * is maintained!
                  */
                 OBJ_RELEASE(jdata);
-                opal_pointer_array_set_item(orte_job_data, j, NULL);
                 continue;
             }
             /* if the job is flagged to not be monitored, skip it */
-            if (ORTE_JOB_CONTROL_DO_NOT_MONITOR & jobs[j]->controls) {
+            if (ORTE_JOB_CONTROL_DO_NOT_MONITOR & job->controls) {
                 continue;
             }
             /* when checking for job termination, we must be sure to NOT check
              * our own job as it - rather obviously - has NOT terminated!
              */
-            if (jobs[j]->num_terminated < jobs[j]->num_procs) {
+            if (job->num_terminated < job->num_procs) {
                 /* we have at least one job that is not done yet - we cannot
                  * just return, though, as we need to ensure we cleanout the
                  * job data for the job that just completed
@@ -1405,7 +1411,7 @@ CHECK_ALL_JOBS:
                 OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                      "%s plm:base:check_job_completed job %s is not terminated",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_JOBID_PRINT(jobs[j]->jobid)));
+                                     ORTE_JOBID_PRINT(job->jobid)));
                 one_still_alive = true;
             }
         }
