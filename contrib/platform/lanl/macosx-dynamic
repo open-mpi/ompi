@@ -18,4 +18,4 @@ enable_mpi_f90=no
 enable_mpi_cxx=yes
 enable_mpi_cxx_seek=yes
 enable_memchecker=no
-enable_mca_no_build=pml-dr,pml-crcp2,pml-cm,crcp,pml-v
+enable_mca_no_build=carto,pml-dr,pml-crcp2,pml-cm,crcp,pml-v
