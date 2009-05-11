@@ -814,7 +814,7 @@ process_daemons:
 int orte_util_encode_pidmap(opal_byte_object_t *boptr)
 {
     int32_t *nodes;
-    orte_proc_t **procs;
+    orte_proc_t *proc;
     orte_vpid_t i;
     opal_buffer_t buf;
     orte_local_rank_t *lrank;
@@ -849,9 +849,12 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr)
         nodes = (int32_t*)malloc(jdata->num_procs * 4);
         
         /* transfer and pack the node info in one pack */
-        procs = (orte_proc_t**)jdata->procs->addr;
         for (i=0; i < jdata->num_procs; i++) {
-            nodes[i] = procs[i]->node->index;
+            if (NULL == (proc = opal_pointer_array_get_item(jdata->procs, i))) {
+                nodes[i] = ORTE_STD_CNTR_INVALID;
+                continue;
+            }
+            nodes[i] = proc->node->index;
         }
         if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, nodes, jdata->num_procs, OPAL_INT32))) {
             ORTE_ERROR_LOG(rc);
@@ -863,7 +866,11 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr)
         /* transfer and pack the local_ranks in one pack */
         lrank = (orte_local_rank_t*)malloc(jdata->num_procs*sizeof(orte_local_rank_t));
         for (i=0; i < jdata->num_procs; i++) {
-            lrank[i] = procs[i]->local_rank;
+            if (NULL == (proc = opal_pointer_array_get_item(jdata->procs, i))) {
+                lrank[i] = ORTE_LOCAL_RANK_INVALID;
+                continue;
+            }
+            lrank[i] = proc->local_rank;
         }
         if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, lrank, jdata->num_procs, ORTE_LOCAL_RANK))) {
             ORTE_ERROR_LOG(rc);
@@ -874,7 +881,11 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr)
         /* transfer and pack the node ranks in one pack */
         nrank = (orte_node_rank_t*)malloc(jdata->num_procs*sizeof(orte_node_rank_t));
         for (i=0; i < jdata->num_procs; i++) {
-            nrank[i] = procs[i]->node_rank;
+            if (NULL == (proc = opal_pointer_array_get_item(jdata->procs, i))) {
+                nrank[i] = ORTE_NODE_RANK_INVALID;
+                continue;
+            }
+            nrank[i] = proc->node_rank;
         }
         if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, nrank, jdata->num_procs, ORTE_NODE_RANK))) {
             ORTE_ERROR_LOG(rc);
