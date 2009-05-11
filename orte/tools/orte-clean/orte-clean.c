@@ -157,7 +157,7 @@ main(int argc, char *argv[])
 #endif
     tmp_env_var = NULL; /* Silence compiler warning */
 
-    if (ORTE_SUCCESS != (ret = orte_init(ORTE_PROC_TOOL_WNAME))) {
+    if (ORTE_SUCCESS != (ret = orte_init(ORTE_PROC_TOOL))) {
         return ret;
     }
 

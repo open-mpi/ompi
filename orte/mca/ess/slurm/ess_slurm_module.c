@@ -192,6 +192,8 @@ static int rte_finalize(void)
    
     /* if I am a daemon, finalize using the default procedure */
     if (ORTE_PROC_IS_DAEMON) {
+        /* don't need to do the barrier */
+        orte_orted_exit_with_barrier = false;
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_finalize())) {
             ORTE_ERROR_LOG(ret);
         }

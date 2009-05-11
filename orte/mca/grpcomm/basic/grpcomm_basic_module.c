@@ -54,6 +54,7 @@ static int xcast(orte_jobid_t job,
                  orte_rml_tag_t tag);
 static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf);
 static int barrier(void);
+static int onesided_barrier(void);
 static int modex(opal_list_t *procs);
 static int set_proc_attr(const char *attr_name, const void *data, size_t size);
 static int get_proc_attr(const orte_process_name_t proc,
@@ -68,6 +69,7 @@ orte_grpcomm_base_module_t orte_grpcomm_basic_module = {
     allgather,
     orte_grpcomm_base_allgather_list,
     barrier,
+    onesided_barrier,
     set_proc_attr,
     get_proc_attr,
     modex,
@@ -356,6 +358,142 @@ static int barrier(void)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     return ORTE_SUCCESS;
 }
+
+static int num_onesided_barrier_recvd;
+
+static void process_onesided_barrier(int fd, short event, void *data)
+{
+    orte_message_event_t *mev = (orte_message_event_t*)data;
+    /* release the message */
+    OBJ_RELEASE(mev);
+    /* flag as recvd */
+    num_onesided_barrier_recvd++;
+}
+
+static void onesided_barrier_recv(int status, orte_process_name_t* sender,
+                                  opal_buffer_t* buffer, orte_rml_tag_t tag,
+                                  void* cbdata)
+{
+    int rc;
+    
+    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
+                         "%s grpcomm:bad:receive got message from %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(sender)));
+    
+    /* don't process this right away - we need to get out of the recv before
+     * we process the message as it may ask us to do something that involves
+     * more messaging! Instead, setup an event so that the message gets processed
+     * as soon as we leave the recv.
+     *
+     * The macro makes a copy of the buffer, which we release above - the incoming
+     * buffer, however, is NOT released here, although its payload IS transferred
+     * to the message buffer for later processing
+     */
+    ORTE_MESSAGE_EVENT(sender, buffer, tag, process_onesided_barrier);
+    
+    /* reissue the recv */
+    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                                                      ORTE_RML_TAG_ONESIDED_BARRIER,
+                                                      ORTE_RML_NON_PERSISTENT,
+                                                      onesided_barrier_recv,
+                                                      NULL))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    return;
+}
+/* quick timeout loop */
+static bool timer_fired;
+
+static void quicktime_cb(int fd, short event, void *cbdata)
+{
+    /* declare it fired */
+    timer_fired = true;
+}
+
+static int onesided_barrier(void)
+{
+    int num_participating;
+    opal_list_t daemon_tree;
+    opal_buffer_t buf;
+    orte_process_name_t my_parent;
+    opal_event_t *quicktime=NULL;
+    struct timeval quicktimeval;
+    int rc;
+    
+    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
+                         "%s grpcomm:basic: onesided barrier called",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
+    /* if we are not to use the barrier, then just return */
+    if (!orte_orted_exit_with_barrier) {
+        if (ORTE_PROC_IS_HNP) {
+            /* if we are the HNP, we need to do a little delay to give
+             * the orteds a chance to exit before we leave
+             */
+            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
+                                 "%s grpcomm:basic: onesided barrier adding delay timer",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            quicktimeval.tv_sec = 0;
+            quicktimeval.tv_usec = 100;
+            timer_fired = false;
+            ORTE_DETECT_TIMEOUT(&quicktime, orte_process_info.num_procs, 1000, 10000, quicktime_cb);
+            ORTE_PROGRESSED_WAIT(timer_fired, 0, 1);
+        }
+        return ORTE_SUCCESS;
+    }
+    
+    /* initialize things */
+    num_onesided_barrier_recvd = 0;
+    num_participating = 0;
+    
+    /* figure out how many participants we should be expecting */
+    OBJ_CONSTRUCT(&daemon_tree, opal_list_t);
+    my_parent.jobid = ORTE_PROC_MY_NAME->jobid;
+    my_parent.vpid = orte_routed.get_routing_tree(&daemon_tree);
+    num_participating = opal_list_get_size(&daemon_tree);
+    
+    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
+                         "%s grpcomm:basic: onesided barrier num_participating %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), num_participating));
+    
+    /* set the recv */
+    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                                                      ORTE_RML_TAG_ONESIDED_BARRIER,
+                                                      ORTE_RML_NON_PERSISTENT,
+                                                      onesided_barrier_recv,
+                                                      NULL))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
+    /* wait to recv them */
+    ORTE_PROGRESSED_WAIT(false, num_onesided_barrier_recvd, num_participating);
+    
+    /* cancel the recv */
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ONESIDED_BARRIER);
+    
+    /* if I am the HNP, then we are done */
+    if (ORTE_PROC_IS_HNP) {
+        return ORTE_SUCCESS;
+    }
+    
+    /* send a zero-byte msg to my parent */
+    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+    /* send it */
+    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
+                         "%s grpcomm:basic:onsided:barrier not the HNP - sending to parent %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(&my_parent)));
+    if (0 > (rc = orte_rml.send_buffer(&my_parent, &buf, ORTE_RML_TAG_ONESIDED_BARRIER, 0))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&buf);
+        return rc;
+    }
+    OBJ_DESTRUCT(&buf);
+    
+    return ORTE_SUCCESS;
+}
+
 
 static opal_buffer_t *allgather_buf;
 static orte_std_cntr_t allgather_complete;

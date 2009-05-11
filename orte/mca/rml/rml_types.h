@@ -109,6 +109,10 @@ BEGIN_C_DECLS
 /* profile data */
 #define ORTE_RML_TAG_GRPCOMM_PROFILE        33
 
+/* onesided barrier */
+#define ORTE_RML_TAG_ONESIDED_BARRIER       34
+
+
 #define ORTE_RML_TAG_MAX                   100
 
 

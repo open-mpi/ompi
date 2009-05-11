@@ -221,8 +221,7 @@ static int update_route(orte_process_name_t *target,
     /* if I am an application process, we don't update the route since
      * we automatically route everything through the local daemon
      */
-    if (!ORTE_PROC_IS_HNP && !ORTE_PROC_IS_DAEMON &&
-        !ORTE_PROC_IS_TOOL) {
+    if (ORTE_PROC_IS_APP) {
         return ORTE_SUCCESS;
     }
 
@@ -300,6 +299,8 @@ static int update_route(orte_process_name_t *target,
 static orte_process_name_t get_route(orte_process_name_t *target)
 {
     orte_process_name_t *ret, daemon;
+    opal_list_item_t *item;
+    orte_routed_tree_t *child;
     int rc;
 
     if (target->jobid == ORTE_JOBID_INVALID ||
@@ -315,12 +316,17 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     }
     
     /* if I am an application process, always route via my local daemon */
-    if (!ORTE_PROC_IS_HNP && !ORTE_PROC_IS_DAEMON &&
-        !ORTE_PROC_IS_TOOL) {
+    if (ORTE_PROC_IS_APP) {
         ret = ORTE_PROC_MY_DAEMON;
         goto found;
     }
 
+    /* if I am a tool, the route is direct */
+    if (ORTE_PROC_IS_TOOL) {
+        ret = target;
+        goto found;
+    }
+    
     /******     HNP AND DAEMONS ONLY     ******/
     
     /* if the job family is zero, then this is going to a local slave,
@@ -355,8 +361,9 @@ static orte_process_name_t get_route(orte_process_name_t *target)
      
     /* THIS CAME FROM OUR OWN JOB FAMILY... */
 
-    /* if this is going to the HNP, send direct */
-    if (ORTE_PROC_MY_HNP->jobid == target->jobid &&
+    /* if we are not using static ports and this is going to the HNP, send direct */
+    if (!orte_static_ports &&
+        ORTE_PROC_MY_HNP->jobid == target->jobid &&
         ORTE_PROC_MY_HNP->vpid == target->vpid) {
         OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
                              "%s routing not enabled - going direct",
@@ -372,14 +379,37 @@ static orte_process_name_t get_route(orte_process_name_t *target)
         ret = ORTE_NAME_INVALID;
         goto found;
     }
-    
+  
     /* if the daemon is me, then send direct to the target! */
     if (ORTE_PROC_MY_NAME->vpid == daemon.vpid) {
         ret = target;
+        goto found;
     } else {
-        /* otherwise, we send it directly to that daemon */
-        ret = &daemon;
+        /* search routing tree for next step to that daemon */
+        for (item = opal_list_get_first(&my_children);
+             item != opal_list_get_end(&my_children);
+             item = opal_list_get_next(item)) {
+            child = (orte_routed_tree_t*)item;
+            if (child->vpid == daemon.vpid) {
+                /* the child is hosting the proc - just send it there */
+                ret = &daemon;
+                goto found;
+            }
+            /* otherwise, see if the daemon we need is below the child */
+            if (opal_bitmap_is_set_bit(&child->relatives, daemon.vpid)) {
+                /* yep - we need to step through this child */
+                daemon.vpid = child->vpid;
+                ret = &daemon;
+                goto found;
+            }
+        }
     }
+
+    /* if we get here, then the target daemon is not beneath
+     * any of our children, so we have to step up through our parent
+     */
+    daemon.vpid = my_parent.vpid;
+    ret = &daemon;
 
  found:
     OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,

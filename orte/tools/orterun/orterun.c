@@ -80,6 +80,7 @@
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/grpcomm/grpcomm.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
@@ -357,8 +358,6 @@ static opal_cmd_line_init_t cmd_line_init[] = {
  * Local functions
  */
 static void job_completed(int trigpipe, short event, void *arg);
-static void terminated(int trigpipe, short event, void *arg);
-static void timeout_callback(int fd, short ign, void *arg);
 static void abort_signal_callback(int fd, short flags, void *arg);
 static void abort_exit_callback(int fd, short event, void *arg);
 static void signal_forward_callback(int fd, short event, void *arg);
@@ -568,7 +567,7 @@ int orterun(int argc, char *argv[])
      * and before we define signal handlers since they will call the
      * exit event trigger!
      */
-    if (ORTE_SUCCESS != (rc = orte_wait_event(&orteds_exit_event, &orteds_exit, "orted_exit", terminated))) {
+    if (ORTE_SUCCESS != (rc = orte_wait_event(&orteds_exit_event, &orteds_exit, "orted_exit", just_quit))) {
         orte_show_help("help-orterun.txt", "orterun:event-def-failed", true,
                        orterun_basename, ORTE_ERROR_NAME(rc));
         goto DONE;
@@ -805,7 +804,7 @@ static void job_completed(int trigpipe, short event, void *arg)
 
     if (ORTE_SUCCESS != (rc = orte_plm.terminate_orteds())) {        
         /* since we know that the sends didn't completely go out,
-         * we know that the prior event will never fire. Add a timeout so
+         * we know that the barrier will never complete. Add a timeout so
          * that those daemons that can respond have a chance to do
          * so
          */
@@ -816,104 +815,25 @@ static void job_completed(int trigpipe, short event, void *arg)
         }
         ORTE_DETECT_TIMEOUT(&timeout_ev, daemons->num_procs,
                             orte_timeout_usec_per_proc,
-                            orte_max_timeout, timeout_callback);
+                            orte_max_timeout, just_quit);
     }
     
-#ifndef __WINDOWS__
-    /* now wait to hear it has been done */
-    opal_event_dispatch();
-#else
-    /* We are using WT_EXECUTEINWAITTHREAD mode of threading pool,
-       the other callbacks won't be triggerred until this thread finishes,
-       so just return to main thread and process the rest events there.  */
-    return;
-#endif
-    
-    /* if we cannot order the daemons to terminate, then
-     * all we can do is cleanly exit ourselves
-     */
+    /* ensure all the orteds depart together */
+    orte_grpcomm.onesided_barrier();
+
 DONE:
     ORTE_UPDATE_EXIT_STATUS(rc);
     just_quit(0, 0, NULL);
 }
 
-static void terminated(int trigpipe, short event, void *arg)
-{
-    orte_job_t *daemons;
-    orte_proc_t **procs;
-    orte_vpid_t i;
-    
-    /* clear the event timer */
-    if (NULL != timeout_ev) {
-        opal_evtimer_del(timeout_ev);
-        free(timeout_ev);
-    }
-    
-    if (signals_set) {
-        /* Remove the TERM and INT signal handlers */
-        opal_signal_del(&term_handler);
-        opal_signal_del(&int_handler);
-#ifndef __WINDOWS__
-        /** Remove the USR signal handlers */
-        opal_signal_del(&sigusr1_handler);
-        opal_signal_del(&sigusr2_handler);
-        if (orte_forward_job_control) {
-            opal_signal_del(&sigtstp_handler);
-            opal_signal_del(&sigcont_handler);
-        }
-#endif  /* __WINDOWS__ */
-        signals_set = false;
-    }
-    
-    /* get the daemon job object */
-    if (NULL == (daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
-        /* nothing more we can do - tell user something really messed
-         * up and exit
-         */
-        orte_show_help("help-orterun.txt", "orterun:no-orted-object-exit",
-                       true, orterun_basename);
-        goto finish;
-    }
-    
-    /* did any daemons fail to respond? Remember we already
-     * set ourselves to terminated
-     */
-    if (daemons->num_terminated != daemons->num_procs) {
-        /* alert user to that fact and which nodes didn't respond and
-         * print a warning that the user may still have some manual
-         * cleanup to do.
-         */
-        orte_show_help("help-orterun.txt", "orterun:unclean-exit",
-                       true, orterun_basename);
-        procs = (orte_proc_t**)daemons->procs->addr;
-        for (i=1; i < daemons->num_procs; i++)
-        {
-            if (ORTE_PROC_STATE_TERMINATED != procs[i]->state) {
-                /* print out node name */
-                orte_node_t *node = procs[i]->node;
-                if (NULL != node && NULL != node->name) {
-                    if (NULL != procs[i]->rml_uri) {
-                        fprintf(stderr, "\t%s\n", node->name);
-                    } else {
-                        fprintf(stderr, "\t%s - daemon did not report back when launched\n", node->name);
-                    }
-                }
-            }
-        }
-    } else {
-        /* we cleaned up! let the user know */
-        if (!orterun_globals.quiet && orte_abnormal_term_ordered){
-            fprintf(stderr, "%s: clean termination accomplished\n\n", orterun_basename);
-        }
-    }
-    
-finish:
-    /* now clean ourselves up and exit */
-    just_quit(0, 0, NULL);
-}
-
 static void just_quit(int fd, short ign, void *arg)
 {
+    /* if the orted exit event is set, delete it */
+    if (NULL != orteds_exit_event) {
+        opal_evtimer_del(orteds_exit_event);
+        free(orteds_exit_event);
+    }
+    
     if (signals_set) {
         /* Remove the TERM and INT signal handlers */
         opal_signal_del(&term_handler);
@@ -1088,14 +1008,6 @@ static void dump_aborted_procs(void)
      * report that fact and give up
      */
     orte_show_help("help-orterun.txt", "orterun:proc-aborted-unknown", true, orterun_basename);
-}
-
-static void timeout_callback(int fd, short ign, void *arg)
-{
-    /* fire the trigger that takes us to terminated so we don't
-     * loop back into trying to kill things
-     */
-    orte_trigger_event(&orteds_exit);
 }
 
 static void abort_exit_callback(int fd, short ign, void *arg)
