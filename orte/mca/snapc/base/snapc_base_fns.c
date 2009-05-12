@@ -491,7 +491,7 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
 int orte_snapc_base_get_all_snapshot_refs(char *base_dir, int *num_refs, char ***snapshot_refs)
 {
 #ifndef HAVE_DIRENT_H
-    return OMPI_ERR_NOT_SUPPORTED;
+    return ORTE_ERR_NOT_SUPPORTED;
 #else
     int ret, exit_status = ORTE_SUCCESS;
     char * tmp_str = NULL, * metadata_file = NULL;
