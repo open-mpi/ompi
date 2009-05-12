@@ -292,6 +292,7 @@ static int orte_cr_coord_post_ckpt(void) {
 
 static int orte_cr_coord_post_restart(void) {
     int ret, exit_status = ORTE_SUCCESS;
+    orte_proc_type_t prev_type = ORTE_PROC_TYPE_NONE;
 
     opal_output_verbose(10, orte_cr_output,
                         "orte_cr: coord_post_restart: orte_cr_coord_post_restart()");
@@ -299,6 +300,7 @@ static int orte_cr_coord_post_restart(void) {
     /*
      * Refresh System information
      */
+    prev_type = orte_process_info.proc_type;
     if( ORTE_SUCCESS != (ret = orte_proc_info_finalize()) ) {
         exit_status = ret;
     }
@@ -316,6 +318,8 @@ static int orte_cr_coord_post_restart(void) {
     if( ORTE_SUCCESS != (ret = orte_proc_info()) ) {
         exit_status = ret;
     }
+
+    orte_process_info.proc_type = prev_type;
     orte_process_info.my_name = *ORTE_NAME_INVALID;
 
     /*
