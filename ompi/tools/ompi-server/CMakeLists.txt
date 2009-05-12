@@ -1,4 +1,4 @@
-# Copyright (c) 2007-2008 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2009 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2008      The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
@@ -15,8 +15,8 @@ FILE(GLOB_RECURSE OMPI_SERVER_SOURCE_FILES "*.h" "*.c" "*.cc" "*.cpp")
 ADD_EXECUTABLE (ompi-server ${OMPI_SERVER_SOURCE_FILES})
 
 IF(BUILD_SHARED_LIBS)
-  SET_TARGET_PROPERTIES(ompi-server PROPERTIES COMPILE_FLAGS "-D_USRDLL -DOPAL_IMPORTS -DOMPI_IMPORTS -DORTE_IMPORTS")
-  SET_SOURCE_FILES_PROPERTIES(${OMPI_SERVER_SOURCE_FILES} PROPERTIES LANGUAGE CXX)
+  SET_TARGET_PROPERTIES(ompi-server PROPERTIES
+    COMPILE_FLAGS "-D_USRDLL -DOPAL_IMPORTS -DOMPI_IMPORTS -DORTE_IMPORTS /TP")
 ENDIF(BUILD_SHARED_LIBS)
 
 TARGET_LINK_LIBRARIES (ompi-server Ws2_32.lib shlwapi.lib)

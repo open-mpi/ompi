@@ -133,6 +133,9 @@ SET(OMPI_F90_ABSOLUTE "\"none\"")
 
 SET(OMPI_F90_BUILD_SIZE "\"small\"")
 
+# we don't support libtool on Windows.
+SET(OMPI_WANT_LIBLTDL 0)
+
 # set the im/export decleration here. 
 # Don't bother with OMPI_IMPORTS
 IF(BUILD_SHARED_LIBS)
@@ -1583,16 +1586,8 @@ ENDIF(HAVE_PTRDIFF_T)
 #/* Complete release number of Open MPI */
 #/* #undef OMPI_VERSION */
 ##
-#/* Whether to include support for libltdl or not */
-#/* #undef OMPI_WANT_LIBLTDL */
-# No need on Windows.
-IF(BUILD_SHARED_LIBS)
-  SET(OMPI_WANT_LIBLTDL 1)
-ELSE(BUILD_SHARED_LIBS)
-  SET(OMPI_WANT_LIBLTDL 0)
-ENDIF(BUILD_SHARED_LIBS)
-#
-#
+
+
 #/* Greek - alpha, beta, etc - release number of Open Portable Access Layer */
 #/* #undef OPAL_GREEK_VERSION */
 # Defined in upper level.

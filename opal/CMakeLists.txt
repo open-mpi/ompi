@@ -8,12 +8,7 @@
 #
 
 
-
-# The source code is compiled as C++ for dynamic build 
-# and compiled as C for static build
-
 PROJECT (OPAL)
-
 
 
 # Add include sub directory to gernerate opal_config.h
@@ -95,45 +90,16 @@ IF(EXISTS ${PROJECT_SOURCE_DIR}/util/keyval/show_help_lex.c)
   LIST(REMOVE_ITEM OPAL_SOURCE_FILES "${PROJECT_SOURCE_DIR}/util/keyval/show_help_lex.c")
 ENDIF(EXISTS ${PROJECT_SOURCE_DIR}/util/keyval/show_help_lex.c)
 
-# Add Libtool support
-IF(BUILD_SHARED_LIBS)
-  SET (LIBLTDL_FILES
-       ${CMAKE_SOURCE_DIR}/contrib/platform/win32/opal/libltdl/ltdl.c
-       ${CMAKE_SOURCE_DIR}/contrib/platform/win32/opal/libltdl/ltdl.h)
-  SET_SOURCE_FILES_PROPERTIES(${LIBLTDL_FILES} PROPERTIES COMPILE_DEFINITIONS 
-                              "error_t=int;HAVE_ERRNO_H;LTDL_OBJDIR=\".\";LTDL_SHLIB_EXT=\".dll\"")
-  SET (OPAL_SOURCE_FILES ${OPAL_SOURCE_FILES} ${LIBLTDL_FILES})
-  SOURCE_GROUP(libltdl FILES ${LIBLTDL_FILES})
-ENDIF(BUILD_SHARED_LIBS)
 
 # Add source files from mca subdirectories.
 INCLUDE (check_mca_subdirs)
 SET (OPAL_SOURCE_FILES ${OPAL_SOURCE_FILES} ${MCA_FILES})
 
 
-# This has to be added for opal explicitly, as it's required for
-# shared build and the .windows file is removed (so that for static build). 
-FILE(GLOB_RECURSE OPAL_TIMER_WINDOWS 
-     "mca/timer/windows/*.h" "mca/timer/windows/*.c" "mca/timer/windows/*.cc" "mca/timer/windows/*.cpp")
-SOURCE_GROUP(mca\\timer\\windows FILES ${OPAL_TIMER_WINDOWS})
-SET (OPAL_SOURCE_FILES
-  ${OPAL_SOURCE_FILES}
-  ${OPAL_TIMER_WINDOWS}
-)
-
-
 ADD_LIBRARY (libopen-pal ${OPAL_SOURCE_FILES})
 
 # Set compile flags for this target
 IF (BUILD_SHARED_LIBS)
-  SET_SOURCE_FILES_PROPERTIES(${OPAL_SOURCE_FILES} 
-                              PROPERTIES LANGUAGE C)
-
-# Flex is trying to include the unistd.h file. As there is no configure
-# option on this, the flex generated files will try to include the file
-# even on platforms without unistd.h (such as Windows). Therefore, if we
-# know this file is not available, we can prevent flex from including it.
-# Thus, define "YY_NO_UNISTD_H" as the target property (the same for ORTE).
   SET_TARGET_PROPERTIES(libopen-pal PROPERTIES COMPILE_FLAGS "-D_USRDLL -DOPAL_EXPORTS")
   TARGET_LINK_LIBRARIES (libopen-pal Ws2_32.lib shlwapi.lib)
 ELSE (BUILD_SHARED_LIBS)

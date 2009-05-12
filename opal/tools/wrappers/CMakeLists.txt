@@ -1,4 +1,4 @@
-# Copyright (c) 2007-2008 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2009 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -14,8 +14,8 @@ ADD_EXECUTABLE (opal-wrapper ${OPAL_WRAPPER_SOURCE_FILES})
 TARGET_LINK_LIBRARIES (opal-wrapper Ws2_32.lib shlwapi.lib)
 
 IF(BUILD_SHARED_LIBS)
-  SET_TARGET_PROPERTIES(opal-wrapper PROPERTIES COMPILE_FLAGS "-D_USRDLL -DOPAL_IMPORTS -DOMPI_IMPORTS -DORTE_IMPORTS")
-  SET_SOURCE_FILES_PROPERTIES(${OPAL_WRAPPER_SOURCE_FILES} PROPERTIES LANGUAGE CXX)
+  SET_TARGET_PROPERTIES(opal-wrapper PROPERTIES
+    COMPILE_FLAGS "-D_USRDLL -DOPAL_IMPORTS -DOMPI_IMPORTS -DORTE_IMPORTS /TP")
 ENDIF(BUILD_SHARED_LIBS)
 
 ADD_CUSTOM_COMMAND (TARGET opal-wrapper
