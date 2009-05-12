@@ -59,7 +59,10 @@ static void opal_pointer_array_destruct(opal_pointer_array_t *array)
     /* free table */
     if( NULL != array->addr) {
         free(array->addr);
+        array->addr = NULL;
     }
+
+    array->size = 0;
 
     OBJ_DESTRUCT(&array->lock);
 }
