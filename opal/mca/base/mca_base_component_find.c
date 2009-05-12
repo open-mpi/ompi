@@ -24,6 +24,12 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -359,6 +365,26 @@ static int save_filename(const char *filename, lt_ptr data)
 }
 
 
+static int file_exists(const char *filename, const char *ext)
+{
+    char *final;
+    struct stat buf;
+    int ret;
+
+    if (NULL != ext) {
+        asprintf(&final, "%s.%s", filename, ext);
+    } else {
+        final = strdup(filename);
+    }
+    if (NULL == final) {
+        return 0;
+    }
+    ret = stat(final, &buf);
+    free(final);
+    return (0 == ret ? 1 : 0);
+}
+
+
 /*
  * Open a component, chasing down its dependencies first, if possible.
  */
@@ -428,6 +454,20 @@ static int open_component(component_file_item_t *target_file,
 #endif
   if (NULL == component_handle) {
     err = strdup(lt_dlerror());
+    /* Because libltdl erroneously says "file not found" for any type
+       of error -- which is especially misleading when the file is
+       actually there but cannot be opened for some other reason
+       (e.g., missing symbol) -- do some simple huersitics and if the
+       file [probably] does exist, print a slightly better error
+       message. */
+    if (0 == strcmp("file not found", err) &&
+        (file_exists(target_file->filename, "lo") ||
+         file_exists(target_file->filename, "so") ||
+         file_exists(target_file->filename, "dylib") ||
+         file_exists(target_file->filename, "dll"))) {
+        free(err);
+        err = strdup("perhaps a missing symbol, or compiled for a different version of Open MPI?");
+    }
     opal_output_verbose(vl, 0, "mca: base: component_find: unable to open %s: %s (ignored)", 
                         target_file->filename, err);
     free(err);
