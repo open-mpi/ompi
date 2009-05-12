@@ -28,36 +28,32 @@
 
 #include <sys/types.h>
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
-    /**
-     * Struct used with opal_maffinity_base_module_set_fn_t.  It
-     * describes a section of memory (starting address and length).
-     * This is really the same thing as an iovec, but we include a
-     * separate type for it for at least 2 reasons:
-     *
-     * 1. Some OS's iovec definitions are exceedingly lame (e.g.,
-     * Solaris 9 has the length argument as an int, instead of a
-     * size_t).
-     *
-     * 2. We reserve the right to expand/change this struct in the
-     * future.
-     */
-    struct opal_maffinity_base_segment_t {
-        /** Starting address of segment */
-        void *mbs_start_addr;
-        /** Length of segment */
-        size_t mbs_len;
-    };
-    /**
-     * Convenience typedef
-     */
-    typedef struct opal_maffinity_base_segment_t opal_maffinity_base_segment_t;
+/**
+ * Struct used with opal_maffinity_base_module_set_fn_t.  It
+ * describes a section of memory (starting address and length).
+ * This is really the same thing as an iovec, but we include a
+ * separate type for it for at least 2 reasons:
+ *
+ * 1. Some OS's iovec definitions are exceedingly lame (e.g.,
+ * Solaris 9 has the length argument as an int, instead of a
+ * size_t).
+ *
+ * 2. We reserve the right to expand/change this struct in the
+ * future.
+ */
+struct opal_maffinity_base_segment_t {
+    /** Starting address of segment */
+    void *mbs_start_addr;
+    /** Length of segment */
+    size_t mbs_len;
+};
+/**
+ * Convenience typedef
+ */
+typedef struct opal_maffinity_base_segment_t opal_maffinity_base_segment_t;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* OPAL_MAFFINITY_TYPES_H */
