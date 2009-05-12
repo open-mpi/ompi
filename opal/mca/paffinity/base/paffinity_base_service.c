@@ -512,29 +512,22 @@ static int opal_paffinity_base_socket_core_to_cpu_set(char **socket_core_list, i
     return OPAL_SUCCESS;
 }
 
-int opal_paffinity_base_slot_list_set(long rank)
+int opal_paffinity_base_slot_list_set(long rank, char *slot_str)
 {
-    char *slot_str = NULL;
     char **item;
     char **socket_core;
     int item_cnt, socket_core_cnt, rc;
     bool logical_map;
     
-    rc = mca_base_param_find("opal", NULL, "paffinity_base_slot_list");
-    /* If there was not slot list specified, return a specific error
-     code indicating that */
-    if (rc <= 0) {
-        return OPAL_ERR_NOT_FOUND;
-    }
-    
-    if (OPAL_SUCCESS == mca_base_param_lookup_string(rc, &slot_str)) {
-        if (NULL == slot_str) {
-            return OPAL_ERR_NOT_FOUND;
-        }
-    }
-    if (0 == strcmp("", slot_str)){
+    if (NULL == slot_str){
         return OPAL_ERR_BAD_PARAM;
     }
+    
+    /* if the slot string is empty, that is an error */
+    if (0 == strlen(slot_str)) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+    
     /* check for diag request to avoid repeatedly doing so */
     if (4 < opal_output_get_verbosity(opal_paffinity_base_output)) {
         diag_requested = true;

@@ -237,12 +237,19 @@ OPAL_DECLSPEC extern opal_list_t opal_paffinity_base_components_opened;
 /**
  * Assigning slot_list to process 
  */
-OPAL_DECLSPEC int opal_paffinity_base_slot_list_set(long rank);
+OPAL_DECLSPEC int opal_paffinity_base_slot_list_set(long rank, char *slot_str);
 
 /**
  * Debugging output stream
  */
 OPAL_DECLSPEC extern int opal_paffinity_base_output;
+
+/**
+ * Flag indicating whether or not processor affinity is to be enabled
+ */
+OPAL_DECLSPEC extern bool opal_paffinity_alone;
+
+OPAL_DECLSPEC extern char *opal_paffinity_base_slot_list;
 
 END_C_DECLS
 

@@ -280,6 +280,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     int param, value;
     struct timeval ompistart, ompistop;
     char *event_val = NULL;
+    opal_paffinity_base_cpu_set_t mask;
 #if 0
     /* see comment below about sched_yield */
     int num_processors;
@@ -395,56 +396,60 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                           orte_process_info.pid);
     }
 
-    /* Setup process affinity.  First check to see if a slot list was
-       specified.  If so, use it.  If no slot list was specified,
-       that's not an error -- just fall through and try the next
-       paffinity scheme. */
-    ret = opal_paffinity_base_slot_list_set((long)ORTE_PROC_MY_NAME->vpid);
-    if (OPAL_SUCCESS == ret) {
-        paffinity_enabled = true;
-    } 
-    /* If an error occurred in the slot list setup (other than "there
-       was not slot list specified"), bail. */
-    else if (OPAL_ERR_NOT_FOUND != ret) {
-        error = "opal_paffinity_base_slot_list_set() returned an error";
-        goto error;
-    }
-    /* It's an error if multiple paffinity schemes were specified */
-    if (paffinity_enabled && ompi_mpi_paffinity_alone) {
-        ret = OMPI_ERR_BAD_PARAM;
-        error = "Multiple processor affinity schemes specified (can only specify one)";
-        goto error;
-    } 
-    /* Otherwise, if mpi_paffinity_alone was set, use that scheme */
-    else if (ompi_mpi_paffinity_alone) {
-        opal_paffinity_base_cpu_set_t mask;
-        int phys_cpu;
-        orte_node_rank_t nrank;
-        if (ORTE_NODE_RANK_INVALID == (nrank = orte_ess.get_node_rank(ORTE_PROC_MY_NAME))) {
-            error = "Could not get node rank - cannot set processor affinity";
-            goto error;
+    /* if it hasn't already been done, setup process affinity. 
+     * First check to see if a slot list was
+     * specified.  If so, use it.  If no slot list was specified,
+     * that's not an error -- just fall through and try the next
+     * paffinity scheme.
+     */
+    ret = opal_paffinity_base_get(&mask);
+    if (OPAL_ERR_NOT_FOUND == ret) {
+        /* the system is capable of doing processor affinity, but it
+         * has not yet been set - see if a slot_list was given
+         */
+        if (NULL != opal_paffinity_base_slot_list) {
+            /* It's an error if multiple paffinity schemes were specified */
+            if (opal_paffinity_alone) {
+                ret = OMPI_ERR_BAD_PARAM;
+                error = "Multiple processor affinity schemes specified (can only specify one)";
+                goto error;
+            }
+            ret = opal_paffinity_base_slot_list_set((long)ORTE_PROC_MY_NAME->vpid, opal_paffinity_base_slot_list);
+            if (OPAL_ERR_NOT_FOUND != ret) {
+                error = "opal_paffinity_base_slot_list_set() returned an error";
+                goto error;
+            }
+            paffinity_enabled = true;
+        } else if (opal_paffinity_alone) {
+            /* no slot_list, but they asked for paffinity */
+            int phys_cpu;
+            orte_node_rank_t nrank;
+            if (ORTE_NODE_RANK_INVALID == (nrank = orte_ess.get_node_rank(ORTE_PROC_MY_NAME))) {
+                error = "Could not get node rank - cannot set processor affinity";
+                goto error;
+            }
+            OPAL_PAFFINITY_CPU_ZERO(mask);
+            phys_cpu = opal_paffinity_base_get_physical_processor_id(nrank);
+            if (0 > phys_cpu) {
+                error = "Could not get physical processor id - cannot set processor affinity";
+                goto error;
+            }
+            OPAL_PAFFINITY_CPU_SET(phys_cpu, mask);
+            ret = opal_paffinity_base_set(mask);
+            if (OPAL_SUCCESS != ret) {
+                error = "Setting processor affinity failed";
+                goto error;
+            }
+            paffinity_enabled = true;
         }
-        OPAL_PAFFINITY_CPU_ZERO(mask);
-        phys_cpu = opal_paffinity_base_get_physical_processor_id(nrank);
-        if (0 > phys_cpu) {
-            error = "Could not get physical processor id - cannot set processor affinity";
-            goto error;
-        }
-        OPAL_PAFFINITY_CPU_SET(phys_cpu, mask);
-        ret = opal_paffinity_base_set(mask);
-        if (OPAL_SUCCESS != ret) {
-            error = "Setting processor affinity failed";
-            goto error;
-        }
-        paffinity_enabled = true;
     }
 
     /* If we were able to set processor affinity, try setting up
        memory affinity */
-    if (paffinity_enabled) {
+    if (!opal_maffinity_setup && paffinity_enabled) {
         if (OPAL_SUCCESS == opal_maffinity_base_open() &&
             OPAL_SUCCESS == opal_maffinity_base_select()) {
-            ompi_mpi_maffinity_setup = true;
+            opal_maffinity_setup = true;
         }
     }
     

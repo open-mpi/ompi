@@ -144,7 +144,7 @@ int ompi_mpi_finalize(void)
     opal_progress_event_users_increment();
 
     /* If maffinity was setup, tear it down */
-    if (ompi_mpi_maffinity_setup) {
+    if (opal_maffinity_setup) {
         opal_maffinity_base_close();
     }
 

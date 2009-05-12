@@ -43,7 +43,8 @@
 OPAL_DECLSPEC int opal_paffinity_base_output = -1;
 bool opal_paffinity_base_components_opened_valid = false;
 opal_list_t opal_paffinity_base_components_opened;
-
+bool opal_paffinity_alone = false;
+char *opal_paffinity_base_slot_list;
 
 /*
  * Function for finding and opening either all MCA components, or the one
@@ -51,7 +52,7 @@ opal_list_t opal_paffinity_base_components_opened;
  */
 int opal_paffinity_base_open(void)
 {
-    int value;
+    int value, id;
 
     /* Debugging / verbose output */
 
@@ -65,11 +66,19 @@ int opal_paffinity_base_open(void)
         opal_paffinity_base_output = -1;
     }
 
+    id = mca_base_param_reg_int_name("opal", "paffinity_alone", 
+                                "If nonzero, assume that this job is the only (set of) process(es) running on each node and bind processes to processors, starting with processor ID 0",
+                                false, false,
+                                0, NULL);
+    mca_base_param_reg_syn_name(id, "mpi", "paffinity_alone", true);
+    mca_base_param_lookup_int(id, &value);
+    opal_paffinity_alone = OPAL_INT_TO_BOOL(value);
+
     opal_paffinity_base_components_opened_valid = false;
         
     mca_base_param_reg_string_name("opal", "paffinity_base_slot_list",
                                    "Used to set list of processor IDs to bind MPI processes to (e.g., used in conjunction with rank files)",
-                                   true, false, NULL, NULL);
+                                   true, false, NULL, &opal_paffinity_base_slot_list);
 
     /* Open up all available components */
 

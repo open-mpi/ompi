@@ -154,7 +154,12 @@ OPAL_DECLSPEC extern opal_list_t opal_maffinity_base_components_opened;
  * Debugging output stream
  */
 extern int opal_maffinity_base_output;
-    
+
+/**
+ * Flag to indicate whether or not maffinity was setup
+ */
+OPAL_DECLSPEC extern bool opal_maffinity_setup;
+
 END_C_DECLS
     
 #endif /* OPAL_BASE_MAFFINITY_H */

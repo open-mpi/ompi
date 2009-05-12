@@ -57,10 +57,6 @@ OMPI_DECLSPEC extern int ompi_mpi_thread_provided;
 /** Identifier of the main thread */
 OMPI_DECLSPEC extern struct opal_thread_t *ompi_mpi_main_thread;
 
-/** Did we setup maffinity in MPI_INIT (and therefore need to shut
-    it down during MPI_FINALIZE)? */
-OMPI_DECLSPEC extern bool ompi_mpi_maffinity_setup;
-
 /** Do we want to be warned on fork or not? */
 OMPI_DECLSPEC extern bool ompi_warn_on_fork;
 

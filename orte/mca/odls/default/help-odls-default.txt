@@ -55,3 +55,36 @@ Max value allowed: %ld
 This may be resolved by increasing the number of available node id's by
 re-configuring Open MPI with the --enable-jumbo-clusters option, and then
 re-running the application
+#
+[odls-default:multiple-paffinity-schemes]
+Multiple processor affinity schemes were specified (can only specify one):
+
+Slot list: %s
+opal_paffinity_alone:  true
+
+Please specify only the one desired method.
+#
+[odls-default:slot-list-failed]
+We were unable to successfully process/set the requested processor
+affinity settings:
+
+Specified slot list: %s
+Error: %s
+
+This could mean that a non-existent processor was specified, or
+that the specification had improper syntax.
+#
+[odls-default:invalid-node-rank]
+An invalid node rank was obtained - this is probably something
+that should be reported to the OMPI developers.
+#
+[odls-default:invalid-phys-cpu]
+An invalid physical processor id was returned when attempting to
+set processor affinity. This is probably something that should be
+reported to the OMPI developers - your system may not support
+this functionality.
+#
+[odls-default:failed-set-paff]
+An attempt to set processor affinity has failed - please check to
+ensure that your system supports such functionality. If so, then
+this is probably something that should be reported to the OMPI developers.

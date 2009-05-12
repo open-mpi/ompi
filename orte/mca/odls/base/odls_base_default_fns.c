@@ -1285,16 +1285,6 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
             opal_setenv("OMPI_COMM_WORLD_LOCAL_RANK", value, true, &app->env);
             free(value);
             
-           param = mca_base_param_environ_variable("opal", NULL, "paffinity_base_slot_list");
-            if ( NULL != child->slot_list ) {
-                asprintf(&value, "%s", child->slot_list);
-                opal_setenv(param, value, true, &app->env);
-                free(value);
-            } else {
-                opal_unsetenv(param,  &app->env);
-            }
-            free(param);
-            
            /* if we are timing things, record when we are going to launch this proc */
             if (orte_timing) {
                 gettimeofday(&child->starttime, NULL);

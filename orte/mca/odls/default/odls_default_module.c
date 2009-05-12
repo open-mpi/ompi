@@ -67,10 +67,14 @@
 #endif
 #endif /* HAVE_SCHED_YIELD */
 
+#include "opal/mca/maffinity/base/base.h"
+#include "opal/mca/paffinity/base/base.h"
+
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ess/ess.h"
 #include "orte/mca/iof/base/iof_base_setup.h"
 #include "orte/util/name_fns.h"
 
@@ -178,6 +182,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
     sigset_t sigs;
     int i, p[2];
     pid_t pid;
+    bool paffinity_enabled = false;
 
     if (NULL != child) {
         /* should pull this information from MPIRUN instead of going with
@@ -259,7 +264,75 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                 exit(1);
             }
             
-            
+           /* Setup process affinity.  First check to see if a slot list was
+            * specified.  If so, use it.  If no slot list was specified,
+            * that's not an error -- just fall through and try the next
+            * paffinity scheme.
+            */
+           if (NULL != child->slot_list) {
+               OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+                                    "%s odls:default:fork got slot_list %s for child %s",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    child->slot_list, ORTE_NAME_PRINT(child->name)));
+               if (opal_paffinity_alone) {
+                   /* It's an error if multiple paffinity schemes were specified */
+                   orte_show_help("help-odls-default.txt",
+                                  "odls-default:multiple-paffinity-schemes", true, child->slot_list);
+                   rc = ORTE_ERR_FATAL;
+                   write(p[1], &rc, sizeof(int));
+                   exit(1);
+               }
+               if (OPAL_SUCCESS != (rc = opal_paffinity_base_slot_list_set((long)child->name->vpid, child->slot_list))) {
+                   orte_show_help("help-odls-default.txt",
+                                  "odls-default:slot-list-failed", true, child->slot_list, ORTE_ERROR_NAME(rc));
+                   write(p[1], &rc, sizeof(int));
+                   exit(1);
+               }
+           }
+           /* Otherwise, if opal_paffinity_alone was set, use that scheme */
+           else if (opal_paffinity_alone) {
+               opal_paffinity_base_cpu_set_t mask;
+               int phys_cpu;
+               orte_node_rank_t nrank;
+               OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+                                    "%s odls:default:fork setting paffinity for child %s",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    ORTE_NAME_PRINT(child->name)));
+               if (ORTE_NODE_RANK_INVALID == (nrank = orte_ess.get_node_rank(child->name))) {
+                   orte_show_help("help-odls-default.txt",
+                                  "odls-default:invalid-node-rank", true);
+                   rc = ORTE_ERR_FATAL;
+                   write(p[1], &rc, sizeof(int));
+                   exit(1);
+               }
+               OPAL_PAFFINITY_CPU_ZERO(mask);
+               phys_cpu = opal_paffinity_base_get_physical_processor_id(nrank);
+               if (0 > phys_cpu) {
+                   orte_show_help("help-odls-default.txt",
+                                  "odls-default:invalid-phys-cpu", true);
+                   rc = ORTE_ERR_FATAL;
+                   write(p[1], &rc, sizeof(int));
+                   exit(1);
+               }
+               OPAL_PAFFINITY_CPU_SET(phys_cpu, mask);
+               if (OPAL_SUCCESS != (rc = opal_paffinity_base_set(mask))) {
+                   orte_show_help("help-odls-default.txt",
+                                  "odls-default:failed-set-paff", true);
+                   write(p[1], &rc, sizeof(int));
+                   exit(1);
+               }
+               paffinity_enabled = true;
+           }
+           /* If we were able to set processor affinity, try setting up
+            * memory affinity
+            */
+           if (paffinity_enabled) {
+               if (OPAL_SUCCESS == opal_maffinity_base_open() &&
+                   OPAL_SUCCESS == opal_maffinity_base_select()) {
+                   opal_maffinity_setup = true;
+               }
+           }
+           
         } else if (!(ORTE_JOB_CONTROL_FORWARD_OUTPUT & controls)) {
             /* tie stdin/out/err/internal to /dev/null */
             int fdnull;
