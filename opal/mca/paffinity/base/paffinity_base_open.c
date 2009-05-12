@@ -70,7 +70,13 @@ int opal_paffinity_base_open(void)
                                 "If nonzero, assume that this job is the only (set of) process(es) running on each node and bind processes to processors, starting with processor ID 0",
                                 false, false,
                                 0, NULL);
-    mca_base_param_reg_syn_name(id, "mpi", "paffinity_alone", true);
+    /* register the historical mpi_paffinity_alone synonym, but don't
+     * declare it deprecated so we don't scare the users
+     *
+     * Yes, this breaks the abstraction barrier, but as indicated
+     * on the developer list....live with it. :-)
+     */
+    mca_base_param_reg_syn_name(id, "mpi", "paffinity_alone", false);
     mca_base_param_lookup_int(id, &value);
     opal_paffinity_alone = OPAL_INT_TO_BOOL(value);
 
