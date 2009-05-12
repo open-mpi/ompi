@@ -850,7 +850,7 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr)
         
         /* transfer and pack the node info in one pack */
         for (i=0; i < jdata->num_procs; i++) {
-            if (NULL == (proc = opal_pointer_array_get_item(jdata->procs, i))) {
+            if (NULL == (proc = (orte_proc_t *) opal_pointer_array_get_item(jdata->procs, i))) {
                 nodes[i] = ORTE_STD_CNTR_INVALID;
                 continue;
             }
@@ -866,7 +866,7 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr)
         /* transfer and pack the local_ranks in one pack */
         lrank = (orte_local_rank_t*)malloc(jdata->num_procs*sizeof(orte_local_rank_t));
         for (i=0; i < jdata->num_procs; i++) {
-            if (NULL == (proc = opal_pointer_array_get_item(jdata->procs, i))) {
+            if (NULL == (proc = (orte_proc_t *) opal_pointer_array_get_item(jdata->procs, i))) {
                 lrank[i] = ORTE_LOCAL_RANK_INVALID;
                 continue;
             }
@@ -881,7 +881,7 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr)
         /* transfer and pack the node ranks in one pack */
         nrank = (orte_node_rank_t*)malloc(jdata->num_procs*sizeof(orte_node_rank_t));
         for (i=0; i < jdata->num_procs; i++) {
-            if (NULL == (proc = opal_pointer_array_get_item(jdata->procs, i))) {
+            if (NULL == (proc = (orte_proc_t *) opal_pointer_array_get_item(jdata->procs, i))) {
                 nrank[i] = ORTE_NODE_RANK_INVALID;
                 continue;
             }
