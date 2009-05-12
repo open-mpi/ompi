@@ -215,7 +215,8 @@ static int map_app_by_slot(orte_app_context_t* app,
             num_slots_to_take = jdata->map->npernode;
         }
         
-        for( i = 0; num_alloc < app->num_procs && i < num_slots_to_take; ++i) {
+        i = 0;
+        while (num_alloc < app->num_procs && i < num_slots_to_take) {
             if (NULL != opal_pointer_array_get_item(&rankmap, vpid_start+num_alloc)) {
                 /* this rank was already mapped */
                 ++num_alloc;
@@ -236,6 +237,8 @@ static int map_app_by_slot(orte_app_context_t* app,
             }
             /* Update the rank */
             ++num_alloc;
+            /* track #slots taken */
+            i++;
             
             /** if all the procs have been mapped OR we have fully used up this node, then
              * break from the loop
@@ -393,7 +396,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
         for (k=0; k < app->num_procs; k++) {
             rank = vpid_start + k;
             /* get the rankfile entry for this rank */
-            if (NULL == (rfmap = opal_pointer_array_get_item(&rankmap, rank))) {
+            if (NULL == (rfmap = (orte_rmaps_rank_file_map_t*)opal_pointer_array_get_item(&rankmap, rank))) {
                 /* no entry for this rank */
                 continue;
             }
