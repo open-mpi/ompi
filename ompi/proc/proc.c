@@ -58,7 +58,6 @@ void ompi_proc_construct(ompi_proc_t* proc)
 {
     proc->proc_bml = NULL;
     proc->proc_pml = NULL;
-    OBJ_CONSTRUCT(&proc->proc_lock, opal_mutex_t);
 
     /* By default all processors are supposedly having the same architecture as me. Thus,
      * by default we run in a homogeneous environment. Later, when the RTE can tell us
@@ -90,7 +89,6 @@ void ompi_proc_destruct(ompi_proc_t* proc)
     OPAL_THREAD_LOCK(&ompi_proc_lock);
     opal_list_remove_item(&ompi_proc_list, (opal_list_item_t*)proc);
     OPAL_THREAD_UNLOCK(&ompi_proc_lock);
-    OBJ_DESTRUCT(&proc->proc_lock);
 }
 
 

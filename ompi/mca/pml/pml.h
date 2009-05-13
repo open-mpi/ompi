@@ -76,22 +76,6 @@ extern "C" {
 
 typedef uint64_t mca_pml_sequence_t;
 
-/**
- * Base PML proc structure
- *
- * Base PML structure for storing proc information.
- * Note that the mca_pml_proc_t structure can not be instantiated
- * directly, so each PML *must* provide a class that inherits from
- * this class and provides the necessary integration logic.
- */
-struct mca_pml_proc_t {
-    opal_list_item_t super;
-    struct ompi_proc_t *proc_ompi;    /**< back-pointer to ompi_proc_t */
-    opal_mutex_t proc_lock;           /**< lock to protect against concurrent access */
-};
-typedef struct mca_pml_proc_t mca_pml_proc_t; 
-
-
 /** 
  * Base PML endpoint structure
  *
@@ -105,7 +89,7 @@ typedef struct mca_pml_proc_t mca_pml_proc_t;
  * endpoint data during pml_add_procs and pml_del_procs.
  */
 struct mca_pml_endpoint_t;
-
+struct ompi_proc_t;
 
 typedef enum {
     MCA_PML_BASE_SEND_SYNCHRONOUS,
