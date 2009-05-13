@@ -75,7 +75,10 @@ installdirs_windows_open(void)
      * All others can be composed starting from OPAL_PREFIX.
      */
     if( ERROR_SUCCESS != RegOpenKeyEx( HKEY_LOCAL_MACHINE, "Software\\Open MPI", 0, KEY_READ, &ompi_key) )
-        return 0;
+        /* Windows Vista and Server 2008 handles its registry differently,
+           also need to check Wow6432Node. */
+        if( ERROR_SUCCESS != RegOpenKeyEx( HKEY_LOCAL_MACHINE, "Software\\Wow6432Node\\Open MPI", 0, KEY_READ, &ompi_key) )
+            return 0;
 
     SET_FIELD(ompi_key, prefix, "OPAL_PREFIX");
     SET_FIELD(ompi_key, exec_prefix, "OPAL_EXEC_PREFIX");
