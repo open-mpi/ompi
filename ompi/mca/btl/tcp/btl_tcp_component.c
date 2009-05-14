@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009      Oak Ridge National Laboratory
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -679,9 +680,9 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
     {  /* Don't reuse ports */
         int flg = 0;
         if (setsockopt (sd, SOL_SOCKET, SO_REUSEADDR, (const char *)&flg, sizeof (flg)) < 0) {
-            BTL_ERROR((0, "mca_btl_tcp_create_listen: unable to unset the "
-                           "SO_REUSEADDR option (%s:%d)\n",
-                           strerror(opal_socket_errno), opal_socket_errno));
+            BTL_ERROR(("mca_btl_tcp_create_listen: unable to unset the "
+                       "SO_REUSEADDR option (%s:%d)\n",
+                       strerror(opal_socket_errno), opal_socket_errno));
             CLOSE_THE_SOCKET(sd);
             return OMPI_ERROR;
         }
