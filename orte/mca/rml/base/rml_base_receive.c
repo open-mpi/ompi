@@ -109,7 +109,10 @@ static void process_message(int fd, short event, void *data)
     
     switch (command) {
         case ORTE_RML_UPDATE_CMD:
-            orte_rml_base_update_contact_info(mev->buffer);
+            if (ORTE_SUCCESS != (rc = orte_rml_base_update_contact_info(mev->buffer))) {
+                ORTE_ERROR_LOG(rc);
+                return;
+            }
             break;
             
         default:
