@@ -153,7 +153,7 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
     char *nodename, *bootproxy, *cmd, *scp=NULL;
     char *exefile=NULL, *basename, *param, *path=NULL;
     char *exec_path=NULL;
-    char *tmp, *src, *dest, *dest_dir, *filenm;
+    char *tmp, *dest, *dest_dir, *filenm;
     char **files;
     bool flag;
     orte_app_context_t **apps, *app;
@@ -325,7 +325,8 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
     
     /* do we need to preload the binary? */
     if (app->preload_binary) {
-       /* if the binary is not given in absolute path form,
+        char * src;
+        /* if the binary is not given in absolute path form,
          * then convert it to one
          */
         if (!opal_path_is_absolute(app->app)) {
@@ -361,6 +362,15 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
         /* define the destination */
         dest = opal_os_path(false, dest_dir, basename, NULL);
 
+        /*
+         * We do not test for error after opal_basename -- this is fine, as opal_os_path
+         * is taking a NULL terminated list -- in case of error, well dest_dir is the final dir.
+         * However, we need to free basename here, before overwriting the pointer later.
+         */
+        if (basename != NULL) {
+            free(basename);
+        }
+
         /* has this binary already been positioned? */
         for (i=0; i < slave_node->apps.size; i++) {
             if (NULL != (filenm = opal_pointer_array_get_item(&slave_node->apps, i)) &&
@@ -383,6 +393,7 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
         if (slave_node->local) {
             scp = opal_find_absolute_path("cp");
             if (NULL == scp) {
+                free (src);
                 orte_show_help("help-plm-base.txt", "cp-not-found", true, "cp", "cp");
                 return ORTE_ERROR;
             }
@@ -394,6 +405,7 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
             /* find the scp command */
             scp = opal_find_absolute_path("scp");
             if (NULL == scp) {
+                free (src);
                 orte_show_help("help-plm-base.txt", "cp-not-found", true, "scp", "scp");
                 return ORTE_ERROR;
             }
