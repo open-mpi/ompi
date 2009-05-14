@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,6 +27,7 @@
 #include <errno.h>
 #include <infiniband/verbs.h>
 
+#include "opal_stdint.h"
 #include "ompi/constants.h"
 #include "opal/prefetch.h"
 #include "orte/util/show_help.h"
@@ -226,7 +227,7 @@ static int mca_btl_ud_modex_send(void)
             mca_btl_ud_module_t* btl = &mca_btl_ofud_component.ud_btls[i];
             addrs[i] = btl->addr;
     
-            BTL_VERBOSE((0, "modex_send QP num %x, LID = %x",
+            BTL_VERBOSE(("modex_send QP num %x, LID = %x",
               addrs[i].qp_num, addrs[i].lid));
         }
     }
@@ -624,7 +625,7 @@ int mca_btl_ud_component_progress(void)
         for(j = 0; j < ne; j++) {
             cwc = &wc[j];
             if(OPAL_UNLIKELY(cwc->status != IBV_WC_SUCCESS)) {
-                BTL_ERROR(("error polling CQ with status %d for wr_id %llu opcode %d\n",
+                BTL_ERROR(("error polling CQ with status %d for wr_id %" PRIx64 " opcode %d\n",
                            cwc->status, cwc->wr_id, cwc->opcode));
                 return OMPI_ERROR;
             }

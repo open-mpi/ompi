@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -483,7 +484,7 @@ static int mca_btl_ud_init_qp(mca_btl_ud_module_t* ud_btl,
         BTL_ERROR(("ibv_create_qp: returned 0 byte(s) for max inline data"));
     }
 
-    BTL_VERBOSE((0, "ib_inline_max %d\n", ud_btl->ib_inline_max));
+    BTL_VERBOSE(("ib_inline_max %lu\n", (unsigned long) ud_btl->ib_inline_max));
 
     qp_attr.qp_state = IBV_QPS_INIT;
     qp_attr.pkey_index = mca_btl_ofud_component.ib_pkey_ix;
