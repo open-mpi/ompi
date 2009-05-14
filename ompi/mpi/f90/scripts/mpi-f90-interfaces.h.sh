@@ -4713,7 +4713,7 @@ subroutine ${procedure}(comm_old, nnodes, index, edges, reorder, &
   integer, intent(in) :: nnodes
   integer, dimension(*), intent(in) :: index
   integer, dimension(*), intent(in) :: edges
-  integer, intent(in) :: reorder
+  logical, intent(in) :: reorder
   integer, intent(out) :: comm_graph
   integer, intent(out) :: ierr
 end subroutine ${procedure}
