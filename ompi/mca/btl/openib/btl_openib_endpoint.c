@@ -857,31 +857,32 @@ static int mca_btl_openib_endpoint_send_eager_rdma(
     rdma_hdr->control.type = MCA_BTL_OPENIB_CONTROL_RDMA;
     rdma_hdr->rkey = endpoint->eager_rdma_local.reg->mr->rkey;
     rdma_hdr->rdma_start.lval = ompi_ptr_ptol(endpoint->eager_rdma_local.base.pval);
-    BTL_VERBOSE(("sending rkey %lu, rdma_start.lval %llu, pval %p, ival %u type %d and sizeof(rdma_hdr) %d\n",
-               rdma_hdr->rkey,
-               rdma_hdr->rdma_start.lval,
-               rdma_hdr->rdma_start.pval,
-               rdma_hdr->rdma_start.ival,
-               rdma_hdr->control.type,
-               sizeof(mca_btl_openib_eager_rdma_header_t)
-               ));
+    BTL_VERBOSE(("sending rkey %" PRIu32 ", rdma_start.lval %" PRIx64 
+                 ", pval %p, ival %" PRIu32 " type %d and sizeof(rdma_hdr) %d\n",
+                 rdma_hdr->rkey,
+                 rdma_hdr->rdma_start.lval,
+                 rdma_hdr->rdma_start.pval,
+                 rdma_hdr->rdma_start.ival,
+                 rdma_hdr->control.type,
+                 (int) sizeof(mca_btl_openib_eager_rdma_header_t)
+                 ));
 
     if(endpoint->nbo) {
         BTL_OPENIB_EAGER_RDMA_CONTROL_HEADER_HTON((*rdma_hdr));
 
-        BTL_VERBOSE(("after HTON: sending rkey %lu, rdma_start.lval %llu, pval %p, ival %u\n",
-                   rdma_hdr->rkey,
-                   rdma_hdr->rdma_start.lval,
-                   rdma_hdr->rdma_start.pval,
-                   rdma_hdr->rdma_start.ival
-                   ));
+        BTL_VERBOSE(("after HTON: sending rkey %" PRIu32 ", rdma_start.lval %" PRIx64 ", pval %p, ival %" PRIu32 "\n",
+                     rdma_hdr->rkey,
+                     rdma_hdr->rdma_start.lval,
+                     rdma_hdr->rdma_start.pval,
+                     rdma_hdr->rdma_start.ival
+                     ));
     }
     rc = mca_btl_openib_endpoint_send(endpoint, frag);
     if (OMPI_SUCCESS == rc ||OMPI_ERR_RESOURCE_BUSY == rc)
         return OMPI_SUCCESS;
 
     MCA_BTL_IB_FRAG_RETURN(frag);
-    BTL_ERROR(("Error sending RDMA buffer", strerror(errno)));
+    BTL_ERROR(("Error sending RDMA buffer: %s", strerror(errno)));
     return rc;
 }
 

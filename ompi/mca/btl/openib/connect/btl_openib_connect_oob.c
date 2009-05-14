@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2008      Mellanox Technologies.  All rights reserved.
@@ -24,6 +24,7 @@
 #include "ompi_config.h"
 
 #include "opal/dss/dss.h"
+#include "opal_stdint.h"
 #include "orte/util/show_help.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
@@ -591,7 +592,7 @@ static int send_connect_data(mca_btl_base_endpoint_t* endpoint,
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    BTL_VERBOSE(("Sent QP Info, LID = %d, SUBNET = %016x\n",
+    BTL_VERBOSE(("Sent QP Info, LID = %d, SUBNET = %" PRIx64 "\n",
                  endpoint->endpoint_btl->lid, 
                  endpoint->subnet_id));
 
@@ -715,7 +716,7 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
         }
     }
     
-    BTL_VERBOSE(("Received QP Info,  LID = %d, SUBNET = %016x\n",
+    BTL_VERBOSE(("Received QP Info,  LID = %d, SUBNET = %" PRIx64 "\n",
                  rem_info.rem_lid, 
                  rem_info.rem_subnet_id));
     

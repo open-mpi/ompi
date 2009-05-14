@@ -400,21 +400,23 @@ static void btl_openib_control(mca_btl_base_module_t* btl,
     case MCA_BTL_OPENIB_CONTROL_RDMA:
        rdma_hdr = (mca_btl_openib_eager_rdma_header_t*)ctl_hdr;
 
-       BTL_VERBOSE(("prior to NTOH received  rkey %lu, rdma_start.lval %llu, pval %p, ival %u",
-                  rdma_hdr->rkey,
-                  (unsigned long) rdma_hdr->rdma_start.lval,
-                  rdma_hdr->rdma_start.pval,
-                  rdma_hdr->rdma_start.ival
+       BTL_VERBOSE(("prior to NTOH received  rkey %" PRIu32 
+                    ", rdma_start.lval %" PRIx64 ", pval %p, ival %" PRIu32,
+                    rdma_hdr->rkey,
+                    rdma_hdr->rdma_start.lval,
+                    rdma_hdr->rdma_start.pval,
+                    rdma_hdr->rdma_start.ival
                   ));
 
        if(ep->nbo) {
            BTL_OPENIB_EAGER_RDMA_CONTROL_HEADER_NTOH(*rdma_hdr);
        }
 
-       BTL_VERBOSE(("received  rkey %lu, rdma_start.lval %llu, pval %p,"
-                   " ival %u", rdma_hdr->rkey,
-                   (unsigned long) rdma_hdr->rdma_start.lval,
-                  rdma_hdr->rdma_start.pval, rdma_hdr->rdma_start.ival));
+       BTL_VERBOSE(("received  rkey %" PRIu32 
+                    ", rdma_start.lval %" PRIx64 ", pval %p,"
+                    " ival %" PRIu32, rdma_hdr->rkey,
+                    rdma_hdr->rdma_start.lval,
+                    rdma_hdr->rdma_start.pval, rdma_hdr->rdma_start.ival));
 
        if (ep->eager_rdma_remote.base.pval) {
            BTL_ERROR(("Got RDMA connect twice!"));
@@ -2849,8 +2851,8 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
             mca_btl_openib_frag_progress_pending_put_get(endpoint, qp);
             break;
         case IBV_WC_RECV:
-            OPAL_OUTPUT((-1, "Got WC: RDMA_RECV, qp %d, src qp %d, WR ID %p",
-                         wc->qp_num, wc->src_qp, (void*) wc->wr_id));
+            OPAL_OUTPUT((-1, "Got WC: RDMA_RECV, qp %d, src qp %d, WR ID %" PRIx64,
+                         wc->qp_num, wc->src_qp, wc->wr_id));
 
 #if !defined(WORDS_BIGENDIAN) && OPAL_ENABLE_HETEROGENEOUS_SUPPORT
             wc->imm_data = ntohl(wc->imm_data);
@@ -2910,15 +2912,18 @@ error:
 
     if(IBV_WC_WR_FLUSH_ERR != wc->status || !flush_err_printed[cq]++) {
         BTL_PEER_ERROR(remote_proc, ("error polling %s with status %s "
-                    "status number %d for wr_id %llu opcode %d  vendor error %d qp_idx %d",
+                    "status number %d for wr_id %" PRIx64 " opcode %d  vendor error %d qp_idx %d",
                     cq_name[cq], btl_openib_component_status_to_string(wc->status),
-                    wc->status, wc->wr_id, wc->opcode, wc->vendor_err, qp));
+                    wc->status, wc->wr_id, 
+                    wc->opcode, wc->vendor_err, qp));
         orte_notifier.peer(ORTE_NOTIFIER_INFRA, ORTE_ERR_COMM_FAILURE,
                            remote_proc ? &remote_proc->proc_name : NULL,
                            "\n\tIB polling %s with status %s "
-                           "status number %d for wr_id %llu opcode %d vendor error %d qp_idx %d",
-                           cq_name[cq], btl_openib_component_status_to_string(wc->status),
-                           wc->status, wc->wr_id, wc->opcode, wc->vendor_err, qp);
+                           "status number %d for wr_id %" PRIx64 " opcode %d vendor error %d qp_idx %d",
+                           cq_name[cq], 
+                           btl_openib_component_status_to_string(wc->status),
+                           wc->status, wc->wr_id, 
+                           wc->opcode, wc->vendor_err, qp);
     }
 
     if (IBV_WC_RNR_RETRY_EXC_ERR == wc->status ||

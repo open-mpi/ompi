@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007-2009 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -11,6 +11,7 @@
 
 #include "ompi_config.h"
 
+#include "opal_stdint.h"
 #include "opal/dss/dss.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
@@ -104,7 +105,7 @@ static int xoob_receive_connect_data(mca_btl_openib_rem_info_t *info, uint16_t *
         ORTE_ERROR_LOG(rc);
         return OMPI_ERROR;
     }
-    BTL_VERBOSE(("Recv unpack Message type  = %d", *message_type));
+    BTL_VERBOSE(("Recv unpack Message type  = %d\n", *message_type));
 
     BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT64));
     rc = opal_dss.unpack(buffer, &info->rem_subnet_id, &cnt, OPAL_UINT64);
@@ -112,7 +113,7 @@ static int xoob_receive_connect_data(mca_btl_openib_rem_info_t *info, uint16_t *
         ORTE_ERROR_LOG(rc);
         return OMPI_ERROR;
     }
-    BTL_VERBOSE(("Recv unpack sid  = %d", info->rem_subnet_id));
+    BTL_VERBOSE(("Recv unpack sid  = %" PRIx64 "\n", info->rem_subnet_id));
 
     BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT16));
     rc = opal_dss.unpack(buffer, &info->rem_lid, &cnt, OPAL_UINT16);
@@ -230,7 +231,7 @@ static int xoob_send_connect_data(mca_btl_base_endpoint_t* endpoint,
         return rc;
     }
 
-    BTL_VERBOSE(("Send pack sid = %d", endpoint->subnet_id));
+    BTL_VERBOSE(("Send pack sid = %" PRIx64 "\n", endpoint->subnet_id));
     BTL_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT64));
     rc = opal_dss.pack(buffer, &endpoint->subnet_id, 1, OPAL_UINT64);
     if (ORTE_SUCCESS != rc) {
@@ -356,7 +357,7 @@ static int xoob_send_connect_data(mca_btl_base_endpoint_t* endpoint,
         return rc;
     }
 
-    BTL_VERBOSE(("Send QP Info, LID = %d, SUBNET = %016x\n, Message type = %d",
+    BTL_VERBOSE(("Send QP Info, LID = %d, SUBNET = %" PRIx64 ", Message type = %d",
                 endpoint->endpoint_btl->lid,
                 endpoint->subnet_id,
                 message_type));
@@ -653,7 +654,7 @@ static mca_btl_openib_endpoint_t* xoob_find_endpoint(orte_process_name_t* proces
     bool found = false;
 
     BTL_VERBOSE(("Searching for ep and proc with follow parameters:"
-                "jobid %d, vpid %d, sid %d, lid %d",
+                "jobid %d, vpid %d, sid %" PRIx64 ", lid %d",
                 process_name->jobid, process_name->vpid, subnet_id, lid));
     /* find ibproc */
     for (ib_proc = (mca_btl_openib_proc_t*)
@@ -709,10 +710,10 @@ static void xoob_restart_connect(mca_btl_base_endpoint_t *endpoint)
         case MCA_BTL_IB_ADDR_CONNECTED:
             /* so we have the send qp, we just need the recive site.
              * Send request for SRQ numbers */
-            BTL_VERBOSE(("Restart The IB addr: sid %d lid %d"
-                        "in MCA_BTL_IB_ADDR_CONNECTED status,"
-                        " Changing to MCA_BTL_IB_ADDR_CLOSED and starting from scratch\n",
-                        endpoint->ib_addr->subnet_id,endpoint->ib_addr->lid));
+            BTL_VERBOSE(("Restart The IB addr: sid %" PRIx64 " lid %d"
+                         "in MCA_BTL_IB_ADDR_CONNECTED status,"
+                         " Changing to MCA_BTL_IB_ADDR_CLOSED and starting from scratch\n",
+                         endpoint->ib_addr->subnet_id,endpoint->ib_addr->lid));
             /* Switching back to closed and starting from scratch */
             endpoint->ib_addr->status = MCA_BTL_IB_ADDR_CLOSED;
             /* destroy the qp */
@@ -723,10 +724,10 @@ static void xoob_restart_connect(mca_btl_base_endpoint_t *endpoint)
                 BTL_ERROR(("Failed to destroy QP"));
         case MCA_BTL_IB_ADDR_CLOSED:
         case MCA_BTL_IB_ADDR_CONNECTING:
-            BTL_VERBOSE(("Restart The IB addr: sid %d lid %d"
-                        "in MCA_BTL_IB_ADDR_CONNECTING or MCA_BTL_IB_ADDR_CLOSED status,"
-                        " starting from scratch\n",
-                        endpoint->ib_addr->subnet_id,endpoint->ib_addr->lid));
+            BTL_VERBOSE(("Restart The IB addr: sid %" PRIx64 " lid %d"
+                         "in MCA_BTL_IB_ADDR_CONNECTING or MCA_BTL_IB_ADDR_CLOSED status,"
+                         " starting from scratch\n",
+                         endpoint->ib_addr->subnet_id,endpoint->ib_addr->lid));
             OPAL_THREAD_UNLOCK(&endpoint->ib_addr->addr_lock);
             /* xoob_module_start_connect() should automaticly handle all other cases */
             if (OMPI_SUCCESS != xoob_module_start_connect(NULL, endpoint))
@@ -795,7 +796,7 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
     /* Processing message */
     switch (message_type) {
         case ENDPOINT_XOOB_CONNECT_REQUEST:
-            BTL_VERBOSE(("Received ENDPOINT_XOOB_CONNECT_REQUEST: lid %d, sid %d, rlid %d\n",
+            BTL_VERBOSE(("Received ENDPOINT_XOOB_CONNECT_REQUEST: lid %d, sid %" PRIx64 ", rlid %d\n",
                         rem_info.rem_lid,
                         rem_info.rem_subnet_id,
                         requested_lid));
@@ -803,8 +804,9 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
                     requested_lid, message_type);
             if ( NULL == ib_endpoint) {
                 BTL_ERROR(("Got ENDPOINT_XOOB_CONNECT_REQUEST."
-                            " Failed to find endpoint with subnet %d and LID %d",
-                            rem_info.rem_subnet_id,requested_lid));
+                           " Failed to find endpoint with subnet %" PRIx64 
+                           " and LID %d",
+                           rem_info.rem_subnet_id,requested_lid));
                 mca_btl_openib_endpoint_invoke_error(NULL);
                 return;
             }
@@ -827,14 +829,14 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
             break;
         case ENDPOINT_XOOB_CONNECT_XRC_REQUEST:
             /* pasha we don't need the remote lid here ??*/
-            BTL_VERBOSE(("Received ENDPOINT_XOOB_CONNECT_XRC_REQUEST: lid %d, sid %d\n",
+            BTL_VERBOSE(("Received ENDPOINT_XOOB_CONNECT_XRC_REQUEST: lid %d, sid %" PRIx64 "\n",
                         rem_info.rem_lid,
                         rem_info.rem_subnet_id));
             ib_endpoint = xoob_find_endpoint(process_name,rem_info.rem_subnet_id,
                     requested_lid, message_type);
             if ( NULL == ib_endpoint) {
                 BTL_ERROR(("Got ENDPOINT_XOOB_CONNECT_XRC_REQUEST."
-                            " Failed to find endpoint with subnet %d and LID %d",
+                            " Failed to find endpoint with subnet %" PRIx64 " and LID %d",
                             rem_info.rem_subnet_id,requested_lid));
                 mca_btl_openib_endpoint_invoke_error(NULL);
                 return;
@@ -867,14 +869,14 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
             /* enable pooling for this btl */
             break;
         case ENDPOINT_XOOB_CONNECT_RESPONSE:
-            BTL_VERBOSE(("Received ENDPOINT_XOOB_CONNECT_RESPONSE: lid %d, sid %d\n",
+            BTL_VERBOSE(("Received ENDPOINT_XOOB_CONNECT_RESPONSE: lid %d, sid %" PRIx64 "\n",
                         rem_info.rem_lid,
                         rem_info.rem_subnet_id));
             ib_endpoint = xoob_find_endpoint(process_name, rem_info.rem_subnet_id,
                     rem_info.rem_lid, message_type);
             if ( NULL == ib_endpoint) {
                 BTL_ERROR(("Got ENDPOINT_XOOB_CONNECT_RESPONSE."
-                            " Failed to find endpoint with subnet %d and LID %d",
+                            " Failed to find endpoint with subnet %" PRIx64 " and LID %d",
                             rem_info.rem_subnet_id,rem_info.rem_lid));
                 mca_btl_openib_endpoint_invoke_error(NULL);
                 return;
@@ -885,10 +887,12 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
             /* update ib_addr with remote qp number */
             ib_endpoint->ib_addr->remote_xrc_rcv_qp_num =
                 ib_endpoint->rem_info.rem_qps->rem_qp_num;
-            BTL_VERBOSE(("rem_info: lid %d, sid %d ep %d %d",
-                        rem_info.rem_lid,
-                        rem_info.rem_subnet_id,
-                        ib_endpoint->rem_info.rem_lid,ib_endpoint->rem_info.rem_subnet_id));
+            BTL_VERBOSE(("rem_info: lid %d, sid %" PRIx64 
+                         " ep %d %" PRIx64 "\n",
+                         rem_info.rem_lid,
+                         rem_info.rem_subnet_id,
+                         ib_endpoint->rem_info.rem_lid,
+                         ib_endpoint->rem_info.rem_subnet_id));
             if (OMPI_SUCCESS != xoob_send_qp_connect(ib_endpoint, &rem_info)) {
                 BTL_ERROR(("Failed to connect  endpoint\n"));
                 mca_btl_openib_endpoint_invoke_error(NULL);
@@ -898,14 +902,14 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
             OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
             break;
         case ENDPOINT_XOOB_CONNECT_XRC_RESPONSE:
-            BTL_VERBOSE(("Received ENDPOINT_XOOB_CONNECT_XRC_RESPONSE: lid %d, sid %d\n",
+            BTL_VERBOSE(("Received ENDPOINT_XOOB_CONNECT_XRC_RESPONSE: lid %d, sid %" PRIx64 "\n",
                         rem_info.rem_lid,
                         rem_info.rem_subnet_id));
             ib_endpoint = xoob_find_endpoint(process_name, rem_info.rem_subnet_id,
                     rem_info.rem_lid, message_type);
             if ( NULL == ib_endpoint) {
                 BTL_ERROR(("Got ENDPOINT_XOOB_CONNECT_XRC_RESPONSE."
-                            " Failed to find endpoint with subnet %d and LID %d",
+                            " Failed to find endpoint with subnet %" PRIx64 " and LID %d",
                             rem_info.rem_subnet_id,rem_info.rem_lid));
                 mca_btl_openib_endpoint_invoke_error(NULL);
                 return;
@@ -919,14 +923,14 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
         case ENDPOINT_XOOB_CONNECT_XRC_NR_RESPONSE:
             /* The XRC recv site already was destroyed so we need
              * start to bringup the connection from scratch  */
-            BTL_VERBOSE(("Received ENDPOINT_XOOB_CONNECT_XRC_NR_RESPONSE: lid %d, sid %d\n",
+            BTL_VERBOSE(("Received ENDPOINT_XOOB_CONNECT_XRC_NR_RESPONSE: lid %d, sid %" PRIx64 "\n",
                         rem_info.rem_lid,
                         rem_info.rem_subnet_id));
             ib_endpoint = xoob_find_endpoint(process_name, rem_info.rem_subnet_id,
                     rem_info.rem_lid, message_type);
             if ( NULL == ib_endpoint) {
                 BTL_ERROR(("Got ENDPOINT_XOOB_CONNECT_XRC_NR_RESPONSE."
-                            " Failed to find endpoint with subnet %d and LID %d",
+                            " Failed to find endpoint with subnet %" PRIx64 " and LID %d",
                             rem_info.rem_subnet_id,rem_info.rem_lid));
                 mca_btl_openib_endpoint_invoke_error(NULL);
                 return;
@@ -1028,7 +1032,7 @@ static int xoob_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
     OPAL_THREAD_LOCK(&endpoint->ib_addr->addr_lock);
     switch (endpoint->ib_addr->status) {
         case MCA_BTL_IB_ADDR_CLOSED:
-            BTL_VERBOSE(("The IB addr: sid %d lid %d"
+            BTL_VERBOSE(("The IB addr: sid %" PRIx64 " lid %d"
                         "in MCA_BTL_IB_ADDR_CLOSED status,"
                         " sending ENDPOINT_XOOB_CONNECT_REQUEST\n",
                         endpoint->ib_addr->subnet_id,endpoint->ib_addr->lid));
@@ -1045,7 +1049,7 @@ static int xoob_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
             }
             break;
         case MCA_BTL_IB_ADDR_CONNECTING:
-            BTL_VERBOSE(("The IB addr: sid %d lid %d"
+            BTL_VERBOSE(("The IB addr: sid %" PRIx64 " lid %d"
                         "in MCA_BTL_IB_ADDR_CONNECTING status,"
                         " Subscribing to this address\n",
                         endpoint->ib_addr->subnet_id,endpoint->ib_addr->lid));
@@ -1056,7 +1060,7 @@ static int xoob_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
         case MCA_BTL_IB_ADDR_CONNECTED:
             /* so we have the send qp, we just need the recive site.
              * Send request for SRQ numbers */
-            BTL_VERBOSE(("The IB addr: sid %d lid %d"
+            BTL_VERBOSE(("The IB addr: sid %" PRIx64 " lid %d"
                         "in MCA_BTL_IB_ADDR_CONNECTED status,"
                         " sending ENDPOINT_XOOB_CONNECT_XRC_REQUEST\n",
                         endpoint->ib_addr->subnet_id,endpoint->ib_addr->lid));
