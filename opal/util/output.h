@@ -399,7 +399,7 @@ struct opal_output_stream_t {
     * Same as opal_output_verbose(), but takes a va_list form of varargs.
     */
     OPAL_DECLSPEC void opal_output_vverbose(int verbose_level, int output_id, 
-                                            const char *format, va_list ap);
+                                            const char *format, va_list ap) __opal_attribute_format__(__printf__, 3, 0);
 
     /**    
      * Send output to a string if the verbosity level is high enough.
@@ -422,7 +422,7 @@ struct opal_output_stream_t {
     * Same as opal_output_string, but accepts a va_list form of varargs.
     */
     OPAL_DECLSPEC char *opal_output_vstring(int verbose_level, int output_id, 
-                                            const char *format, va_list ap);
+                                            const char *format, va_list ap) __opal_attribute_format__(__printf__, 3, 0);
 
     /**
      * Set the verbosity level for a stream.

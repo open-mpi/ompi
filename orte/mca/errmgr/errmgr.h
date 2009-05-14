@@ -130,7 +130,7 @@ typedef int (*orte_errmgr_base_module_register_cb_fn_t)(orte_jobid_t job,
  * itself, and then exit - it takes no other actions. The intent here is to provide
  * a last-ditch exit procedure that attempts to clean up a little.
  */
-typedef void (*orte_errmgr_base_module_abort_fn_t)(int error_code, char *fmt, ...) __opal_attribute_noreturn__;
+typedef void (*orte_errmgr_base_module_abort_fn_t)(int error_code, char *fmt, ...) __opal_attribute_noreturn__ __opal_attribute_format__(__printf__, 2, 3);
 
 /*
  * 

@@ -70,13 +70,13 @@ typedef int (*orte_notifier_base_module_init_fn_t)(void);
 typedef void (*orte_notifier_base_module_finalize_fn_t)(void);
 
 /* Log a failure message */
-typedef void (*orte_notifier_base_module_log_fn_t)(int severity, int errcode, const char *msg, ...);
+typedef void (*orte_notifier_base_module_log_fn_t)(int severity, int errcode, const char *msg, ...) __opal_attribute_format__(__printf__, 3, 4);
 
 /* Log a failure that is based upon a show_help message */
 typedef void (*orte_notifier_base_module_log_show_help_fn_t)(int severity, int errcode, const char *file, const char *topic, ...);
 
 /* Log a failure related to a peer */
-typedef void (*orte_notifier_base_module_log_peer_fn_t)(int severity, int errcode, orte_process_name_t *peer_proc, const char *msg, ...);
+typedef void (*orte_notifier_base_module_log_peer_fn_t)(int severity, int errcode, orte_process_name_t *peer_proc, const char *msg, ...) __opal_attribute_format__(__printf__, 4, 5);
 
 /*
  * Ver 1.0
