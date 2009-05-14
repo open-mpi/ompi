@@ -714,7 +714,11 @@ int orterun(int argc, char *argv[])
         /* setup our route to the server */
         OBJ_CONSTRUCT(&buf, opal_buffer_t);
         opal_dss.pack(&buf, &ompi_server, 1, OPAL_STRING);
-        orte_rml_base_update_contact_info(&buf);
+        if (ORTE_SUCCESS != (rc = orte_rml_base_update_contact_info(&buf))) {
+            ORTE_ERROR_LOG(rc);
+            ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            goto DONE;
+        }
         OBJ_DESTRUCT(&buf);        
         /* check if we are to wait for the server to start - resolves
          * a race condition that can occur when the server is run
