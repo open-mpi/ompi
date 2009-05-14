@@ -130,8 +130,8 @@ static int local_copy_ddt_raw( ompi_datatype_t* pdt, int count, int iov_num )
     printf( "raw extraction in %ld microsec\n", total_time );
     OBJ_RELEASE( convertor );
     if( remaining_length != 0 ) {
-	printf( "Not all raw description was been extracted (%zd bytes missing)\n",
-		remaining_length );
+	printf( "Not all raw description was been extracted (%lu bytes missing)\n",
+		(unsigned long) remaining_length );
     }
     return OMPI_SUCCESS;
 }
