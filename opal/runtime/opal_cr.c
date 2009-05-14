@@ -765,6 +765,10 @@ static int extract_env_vars(int prev_pid)
         len = OPAL_PATH_MAX;
 
         tmp_str = (char *) malloc(sizeof(char) * len);
+        if( NULL == tmp_str) {
+            exit_status = OPAL_ERR_OUT_OF_RESOURCE;
+            goto cleanup;
+        }
         if( NULL == fgets(tmp_str, len, env_data) ) {
             exit_status = OPAL_ERROR;
             goto cleanup;
@@ -777,6 +781,7 @@ static int extract_env_vars(int prev_pid)
                         "opal_cr: extract_env_vars: Error: Parameter too long (%s)\n",
                         tmp_str);
             free(tmp_str);
+            tmp_str = NULL;
             continue;
         }
 
