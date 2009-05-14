@@ -52,7 +52,8 @@ ORTE_DECLSPEC int orte_rml_base_get_contact_info(orte_jobid_t job,
  *
  * @param[in] data      Contact information in a packed buffer,
  *                      obtained by call to orte_rml_base_get_contact_info()
- * @prarm[in] cbdata    Unused
+ *
+ * @retval ORTE_SUCCESS Successfully updated contact information
  */
 ORTE_DECLSPEC int orte_rml_base_update_contact_info(opal_buffer_t* data);
 
