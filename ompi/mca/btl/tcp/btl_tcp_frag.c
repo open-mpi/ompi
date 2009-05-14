@@ -112,7 +112,7 @@ bool mca_btl_tcp_frag_send(mca_btl_tcp_frag_t* frag, int sd)
             case EWOULDBLOCK:
                 return false;
             case EFAULT:
-                BTL_ERROR(("mca_btl_tcp_frag_send: writev error (%p, %d)\n\t%s(%d)\n",
+                BTL_ERROR(("mca_btl_tcp_frag_send: writev error (%p, %zd)\n\t%s(%zd)\n",
                     frag->iov_ptr[0].iov_base, frag->iov_ptr[0].iov_len,
                     strerror(opal_socket_errno), frag->iov_cnt));
                 mca_btl_tcp_endpoint_close(frag->endpoint);
@@ -204,7 +204,7 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
 	case EWOULDBLOCK:
 	    return false;
 	case EFAULT:
-            BTL_ERROR(("mca_btl_tcp_frag_recv: readv error (%p, %d)\n\t%s(%d)\n",
+            BTL_ERROR(("mca_btl_tcp_frag_recv: readv error (%p, %zd)\n\t%s(%zd)\n",
                        frag->iov_ptr[0].iov_base, frag->iov_ptr[0].iov_len,
                        strerror(opal_socket_errno), frag->iov_cnt));
 	    mca_btl_tcp_endpoint_close(btl_endpoint);
