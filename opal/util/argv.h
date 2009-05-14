@@ -132,7 +132,7 @@ OPAL_DECLSPEC  void opal_argv_free(char **argv);
    * argument (i.e., it can be freed after calling this function
    * without invalidating the output argv).
    */
-OPAL_DECLSPEC  char **opal_argv_split(const char *src_string, int delimiter) __opal_attribute_warn_unused_result__;
+OPAL_DECLSPEC  char **opal_argv_split(const char *src_string, int delimiter) __opal_attribute_malloc__ __opal_attribute_warn_unused_result__;
 
   /**
    * Split a string into a NULL-terminated argv array. Include empty 
@@ -149,7 +149,7 @@ OPAL_DECLSPEC  char **opal_argv_split(const char *src_string, int delimiter) __o
    * argument (i.e., it can be freed after calling this function
    * without invalidating the output argv).
    */
-OPAL_DECLSPEC  char **opal_argv_split_with_empty(const char *src_string, int delimiter) __opal_attribute_warn_unused_result__;
+OPAL_DECLSPEC  char **opal_argv_split_with_empty(const char *src_string, int delimiter) __opal_attribute_malloc__ __opal_attribute_warn_unused_result__;
 
   /**
    * Return the length of a NULL-terminated argv array.
@@ -181,7 +181,7 @@ OPAL_DECLSPEC  int opal_argv_count(char **argv);
    */
 OPAL_DECLSPEC  char *opal_argv_join(char **argv, int delimiter) __opal_attribute_malloc__ __opal_attribute_warn_unused_result__;
 
-OPAL_DECLSPEC char *opal_argv_join_range(char **argv, size_t start, size_t end, int delimiter) __opal_attribute_malloc__ __opal_attribute_warn_unused_result__;
+OPAL_DECLSPEC  char *opal_argv_join_range(char **argv, size_t start, size_t end, int delimiter) __opal_attribute_malloc__ __opal_attribute_warn_unused_result__;
 
   /**
    * Return the number of bytes consumed by an argv array.
