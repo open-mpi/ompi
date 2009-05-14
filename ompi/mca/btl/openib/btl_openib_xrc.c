@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007-2008 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,8 +44,8 @@ int mca_btl_openib_open_xrc_domain(struct mca_btl_openib_device_t *device)
             "%s"OPAL_PATH_SEP"openib_xrc_domain_%s",
             orte_process_info.job_session_dir, dev_name);
     if (0 > len) {
-        BTL_ERROR(("Failed to allocate memomry for XRC file name\n",
-                strerror(errno)));
+        BTL_ERROR(("Failed to allocate memomry for XRC file name: %s\n",
+                   strerror(errno)));
         return OMPI_ERROR;
     }
 
@@ -75,13 +76,13 @@ int mca_btl_openib_close_xrc_domain(struct mca_btl_openib_device_t *device)
         return OMPI_SUCCESS;
     }
     if (ibv_close_xrc_domain(device->xrc_domain)) {
-        BTL_ERROR(("Failed to close XRC domain, errno says %s\n",
+        BTL_ERROR(("Failed to close XRC domain, errno %d says %s\n",
                     device->xrc_fd, strerror(errno)));
         return OMPI_ERROR;
     }
     /* do we need to check exit status */
     if (close(device->xrc_fd)) {
-        BTL_ERROR(("Failed to close XRC file descriptor %s, errno says %s\n",
+        BTL_ERROR(("Failed to close XRC file descriptor, errno %d says %s\n",
                 device->xrc_fd, strerror(errno)));
         return OMPI_ERROR;
     }

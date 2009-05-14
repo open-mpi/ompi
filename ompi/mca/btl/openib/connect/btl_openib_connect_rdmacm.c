@@ -1265,7 +1265,7 @@ static int create_dummy_qp(rdmacm_contents_t *contents,
         }
         id->verbs = temp;
     }
-    BTL_VERBOSE(("dummy qp created %p", qpnum));
+    BTL_VERBOSE(("dummy qp created %d", qpnum));
 
     return OMPI_SUCCESS;
 

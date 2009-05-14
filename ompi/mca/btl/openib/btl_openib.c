@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -837,10 +837,11 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
 
             assert(MCA_BTL_NO_ORDER == order);
 
-            BTL_VERBOSE(("frag->sg_entry.lkey = %lu .addr = %llu "
-                        "frag->segment.seg_key.key32[0] = %lu",
-                        frag->sg_entry.lkey, frag->sg_entry.addr,
-                        frag->sg_entry.lkey));
+            BTL_VERBOSE(("frag->sg_entry.lkey = %" PRIu32 " .addr = %" PRIx64
+                         " frag->segment.seg_key.key32[0] = %" PRIu32,
+                         frag->sg_entry.lkey, 
+                         frag->sg_entry.addr,
+                         frag->sg_entry.lkey));
 
             return &to_base_frag(frag)->base;
         }
@@ -937,10 +938,11 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     to_base_frag(frag)->base.order = order;
     to_base_frag(frag)->base.des_flags = flags;
 
-    BTL_VERBOSE(("frag->sg_entry.lkey = %lu .addr = %llu "
-                "frag->segment.seg_key.key32[0] = %lu",
-                frag->sg_entry.lkey, frag->sg_entry.addr,
-                openib_reg->mr->rkey));
+    BTL_VERBOSE(("frag->sg_entry.lkey = %" PRIu32 " .addr = %" PRIx64 " "
+                 "frag->segment.seg_key.key32[0] = %" PRIu32,
+                 frag->sg_entry.lkey, 
+                 frag->sg_entry.addr,
+                 openib_reg->mr->rkey));
 
     return &to_base_frag(frag)->base;
 }

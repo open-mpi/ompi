@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2008 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * $COPYRIGHT$
  *
@@ -497,8 +497,8 @@ void mca_btl_openib_load_apm(struct ibv_qp *qp, mca_btl_openib_endpoint_t *ep)
     }
 
     if (ibv_modify_qp(qp, &attr, mask))
-        BTL_ERROR(("Failed to ibv_query_qp, qp num: %p, errno says: %s (%d)"
-                    ,qp->qp_num ,strerror(errno), errno));
+        BTL_ERROR(("Failed to ibv_query_qp, qp num: %d, errno says: %s (%d)",
+                   qp->qp_num, strerror(errno), errno));
 }
 
 #if HAVE_XRC
