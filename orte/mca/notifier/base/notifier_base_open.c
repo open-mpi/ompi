@@ -38,9 +38,9 @@
 
 #include "orte/mca/notifier/base/static-components.h"
 
-static void orte_base_log(int severity, int errcode, const char *msg, ...);
+static void orte_base_log(int severity, int errcode, const char *msg, ...) __opal_attribute_format__(__printf__, 3, 4);
 static void orte_log_show_help(int severity, int errcode, const char *file, const char *topic, ...);
-static void orte_log_peer(int severity, int errcode, orte_process_name_t *peer_proc, const char *msg, ...);
+static void orte_log_peer(int severity, int errcode, orte_process_name_t *peer_proc, const char *msg, ...) __opal_attribute_format__(__printf__, 4, 5);
 
 /*
  * Global variables
