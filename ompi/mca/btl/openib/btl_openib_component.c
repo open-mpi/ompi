@@ -1688,30 +1688,6 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                        "eager RDMA and progress threads", true);
     }
 
-#if HAVE_XRC
-    /* if user configured to run with XRC qp and the device doesn't
-     * support it - we should ignore this device. Maybe we have another
-     * one that has XRC support
-     */
-    if (!(device->ib_dev_attr.device_cap_flags & IBV_DEVICE_XRC) &&
-            mca_btl_openib_component.num_xrc_qps > 0) {
-        orte_show_help("help-mpi-btl-openib.txt",
-                "XRC on device without XRC support", true,
-                mca_btl_openib_component.num_xrc_qps,
-                ibv_get_device_name(device->ib_dev),
-                orte_process_info.nodename);
-        ret = OMPI_SUCCESS;
-        goto error;
-    }
-
-    if (MCA_BTL_XRC_ENABLED) {
-        if (OMPI_SUCCESS != mca_btl_openib_open_xrc_domain(device)) {
-            BTL_ERROR(("XRC Internal error. Failed to open xrc domain"));
-            goto error;
-        }
-    }
-#endif
-
     mpool_resources.reg_data = (void*)device;
     mpool_resources.sizeof_reg = sizeof(mca_btl_openib_reg_t);
     mpool_resources.register_mem = openib_reg_mr;
@@ -1809,13 +1785,7 @@ error:
     if (device->mpool) {
         mca_mpool_base_module_destroy(device->mpool);
     }
-#if HAVE_XRC
-    if (MCA_BTL_XRC_ENABLED) {
-        if(OMPI_SUCCESS != mca_btl_openib_close_xrc_domain(device)) {
-            BTL_ERROR(("XRC Internal error. Failed to close xrc domain"));
-        }
-    }
-#endif
+
     if (device->ib_pd) {
         ibv_dealloc_pd(device->ib_pd);
     }
