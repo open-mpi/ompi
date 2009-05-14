@@ -454,8 +454,8 @@ int orte_daemon(int argc, char *argv[])
         }
 
         /* define a log file name in the session directory */
-        sprintf(log_file, "output-orted-%s-%s.log",
-                jobidstring, orte_process_info.nodename);
+        snprintf(log_file, PATH_MAX, "output-orted-%s-%s.log",
+                 jobidstring, orte_process_info.nodename);
         log_path = opal_os_path(false,
                                 orte_process_info.tmpdir_base,
                                 orte_process_info.top_session_dir,
