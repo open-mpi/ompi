@@ -148,6 +148,7 @@ int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
     int rc;
     int32_t i, j;
     orte_job_t **jobs;
+    orte_proc_t *proc;
 
     /* array of pointers to orte_job_t objects - need to pack the objects a set of fields at a time */
     jobs = (orte_job_t**) src;
@@ -200,7 +201,25 @@ int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
             return rc;
         }
         
-        /* do not pack the proc data */
+        /* pack the number of procs */
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
+                         (void*)(&(jobs[i]->num_procs)), 1, ORTE_VPID))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        if (0 < jobs[i]->num_procs) {
+            for (j=0; j < jobs[i]->procs->size; j++) {
+                if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jobs[i]->procs, j))) {
+                    continue;
+                }
+                if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
+                                                               (void*)&proc, 1, ORTE_PROC))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+            }
+        }
         
         /* if the map is NULL, then we cannot pack it as there is
          * nothing to pack. However, we have to flag whether or not
