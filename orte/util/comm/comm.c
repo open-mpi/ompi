@@ -32,18 +32,56 @@
 #include "orte/mca/rml/rml_types.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/runtime/orte_wait.h"
 
 #include "orte/util/comm/comm.h"
+
+/* quick timeout loop */
+static bool timer_fired;
+static opal_buffer_t answer;
+static opal_event_t *quicktime=NULL;
+static int error_exit;
+
+static void quicktime_cb(int fd, short event, void *cbdata)
+{
+    if (NULL != quicktime) {
+        free(quicktime);
+        quicktime = NULL;
+    }
+    error_exit = ORTE_ERR_SILENT;
+    /* declare it fired */
+    timer_fired = true;
+}
+
+static void recv_info(int status, orte_process_name_t* sender,
+                          opal_buffer_t* buffer, orte_rml_tag_t tag,
+                          void* cbdata)
+{
+    int rc;
+    
+    /* cancel the timer */
+    if (NULL != quicktime) {
+        opal_evtimer_del(quicktime);
+        free(quicktime);
+        quicktime = NULL;
+    }
+    /* xfer the answer */
+    if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(&answer, buffer))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    /* declare the work done */
+    timer_fired = true;
+}
 
 int orte_util_comm_query_job_info(const orte_process_name_t *hnp, orte_jobid_t job,
                                   int *num_jobs, orte_job_t ***job_info_array)
 {
     int ret;
-    orte_std_cntr_t cnt, cnt_jobs, n;
-    opal_buffer_t cmd, answer;
+    int32_t cnt, cnt_jobs, n;
+    opal_buffer_t cmd;
     orte_daemon_cmd_flag_t command = ORTE_DAEMON_REPORT_JOB_INFO_CMD;
     orte_job_t **job_info;
-    
+
     /* set default response */
     *num_jobs = 0;
     *job_info_array = NULL;
@@ -65,15 +103,40 @@ int orte_util_comm_query_job_info(const orte_process_name_t *hnp, orte_jobid_t j
     }
     OBJ_DESTRUCT(&cmd);
     
-    /* get the answer */
+    /* setup for answer */
     OBJ_CONSTRUCT(&answer, opal_buffer_t);
-    if (ORTE_SUCCESS != (ret = orte_rml.recv_buffer(ORTE_NAME_WILDCARD, &answer, ORTE_RML_TAG_TOOL, 0))) {
+
+    /* define a max time to wait for an answer */
+    timer_fired = false;
+    error_exit = ORTE_SUCCESS;
+    ORTE_DETECT_TIMEOUT(&quicktime, 10, 1000, 10000, quicktime_cb);
+    
+    /* get the answer */
+    if (ORTE_SUCCESS != (ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                                                      ORTE_RML_TAG_TOOL,
+                                                      ORTE_RML_NON_PERSISTENT,
+                                                      recv_info,
+                                                      NULL))) {
+        /* cancel the timer */
+        if (NULL != quicktime) {
+            opal_evtimer_del(quicktime);
+            free(quicktime);
+            quicktime = NULL;
+        }
         ORTE_ERROR_LOG(ret);
         OBJ_DESTRUCT(&answer);
         return ret;
     }
+    
+    ORTE_PROGRESSED_WAIT(timer_fired, 0, 1);
+
+    if (ORTE_SUCCESS != error_exit) {
+        OBJ_DESTRUCT(&answer);
+        return error_exit;
+    }
+    
     cnt = 1;
-    if (ORTE_SUCCESS != (ret = opal_dss.unpack(&answer, &cnt_jobs, &cnt, ORTE_STD_CNTR))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.unpack(&answer, &cnt_jobs, &cnt, OPAL_INT32))) {
         ORTE_ERROR_LOG(ret);
         OBJ_DESTRUCT(&answer);
         return ret;
@@ -104,8 +167,8 @@ int orte_util_comm_query_node_info(const orte_process_name_t *hnp, char *node,
                                    int *num_nodes, orte_node_t ***node_info_array)
 {
     int ret;
-    orte_std_cntr_t cnt, cnt_nodes;
-    opal_buffer_t cmd, answer;
+    int32_t cnt, cnt_nodes, n;
+    opal_buffer_t cmd;
     orte_daemon_cmd_flag_t command = ORTE_DAEMON_REPORT_NODE_INFO_CMD;
     orte_node_t **node_info;
     
@@ -132,15 +195,38 @@ int orte_util_comm_query_node_info(const orte_process_name_t *hnp, char *node,
     }
     OBJ_DESTRUCT(&cmd);
     
+    /* define a max time to wait for an answer */
+    timer_fired = false;
+    error_exit = ORTE_SUCCESS;
+    ORTE_DETECT_TIMEOUT(&quicktime, 10, 1000, 10000, quicktime_cb);
+    
     /* get the answer */
     OBJ_CONSTRUCT(&answer, opal_buffer_t);
-    if (ORTE_SUCCESS != (ret = orte_rml.recv_buffer(ORTE_NAME_WILDCARD, &answer, ORTE_RML_TAG_TOOL, 0))) {
+    if (ORTE_SUCCESS != (ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                                                      ORTE_RML_TAG_TOOL,
+                                                      ORTE_RML_NON_PERSISTENT,
+                                                      recv_info,
+                                                      NULL))) {
+        /* cancel the timer */
+        if (NULL != quicktime) {
+            opal_evtimer_del(quicktime);
+            free(quicktime);
+            quicktime = NULL;
+        }
         ORTE_ERROR_LOG(ret);
-        OBJ_DESTRUCT(&answer);
+        OBJ_DESTRUCT(ret);
         return ret;
     }
+    
+    ORTE_PROGRESSED_WAIT(timer_fired, 0, 1);
+    
+    if (ORTE_SUCCESS != error_exit) {
+        OBJ_DESTRUCT(&answer);
+        return error_exit;
+    }
+    
     cnt = 1;
-    if (ORTE_SUCCESS != (ret = opal_dss.unpack(&answer, &cnt_nodes, &cnt, ORTE_STD_CNTR))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.unpack(&answer, &cnt_nodes, &cnt, OPAL_INT32))) {
         ORTE_ERROR_LOG(ret);
         OBJ_DESTRUCT(&answer);
         return ret;
@@ -150,11 +236,14 @@ int orte_util_comm_query_node_info(const orte_process_name_t *hnp, char *node,
     if (0 < cnt_nodes) {
         node_info = (orte_node_t**)malloc(cnt_nodes * sizeof(orte_node_t*));
         /* unpack the node data */
-        if (ORTE_SUCCESS != (ret = opal_dss.unpack(&answer, node_info, &cnt_nodes, ORTE_NODE))) {
-            ORTE_ERROR_LOG(ret);
-            OBJ_DESTRUCT(&answer);
-            free(node_info);
-            return ret;
+        for (n=0; n < cnt_nodes; n++) {
+            cnt = 1;
+            if (ORTE_SUCCESS != (ret = opal_dss.unpack(&answer, &node_info[n], &cnt, ORTE_NODE))) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_DESTRUCT(&answer);
+                free(node_info);
+                return ret;
+            }
         }
         *node_info_array = node_info;
         *num_nodes = cnt_nodes;
@@ -168,9 +257,8 @@ int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t 
                                    int *num_procs, orte_proc_t ***proc_info_array)
 {
     int ret;
-    orte_std_cntr_t cnt;
-    orte_vpid_t cnt_procs;
-    opal_buffer_t cmd, answer;
+    int32_t cnt, cnt_procs, n;
+    opal_buffer_t cmd;
     orte_daemon_cmd_flag_t command = ORTE_DAEMON_REPORT_PROC_INFO_CMD;
     orte_proc_t **proc_info;
 
@@ -202,15 +290,38 @@ int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t 
     }
     OBJ_DESTRUCT(&cmd);
     
-    /* get the response */
+    /* define a max time to wait for an answer */
+    timer_fired = false;
+    error_exit = ORTE_SUCCESS;
+    ORTE_DETECT_TIMEOUT(&quicktime, 10, 1000, 10000, quicktime_cb);
+    
+    /* get the answer */
     OBJ_CONSTRUCT(&answer, opal_buffer_t);
-    if (ORTE_SUCCESS != (ret = orte_rml.recv_buffer(ORTE_NAME_WILDCARD, &answer, ORTE_RML_TAG_TOOL, 0))) {
+    if (ORTE_SUCCESS != (ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                                                      ORTE_RML_TAG_TOOL,
+                                                      ORTE_RML_NON_PERSISTENT,
+                                                      recv_info,
+                                                      NULL))) {
+        /* cancel the timer */
+        if (NULL != quicktime) {
+            opal_evtimer_del(quicktime);
+            free(quicktime);
+            quicktime = NULL;
+        }
         ORTE_ERROR_LOG(ret);
-        OBJ_DESTRUCT(&answer);
+        OBJ_DESTRUCT(ret);
         return ret;
     }
+    
+    ORTE_PROGRESSED_WAIT(timer_fired, 0, 1);
+    
+    if (ORTE_SUCCESS != error_exit) {
+        OBJ_DESTRUCT(&answer);
+        return error_exit;
+    }
+    
     cnt = 1;
-    if (ORTE_SUCCESS != (ret = opal_dss.unpack(&answer, &cnt_procs, &cnt, ORTE_VPID))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.unpack(&answer, &cnt_procs, &cnt, OPAL_INT32))) {
         ORTE_ERROR_LOG(ret);
         OBJ_DESTRUCT(&answer);
         return ret;
@@ -220,12 +331,14 @@ int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t 
     if (0 < cnt_procs) {
         proc_info = (orte_proc_t**)malloc(cnt_procs * sizeof(orte_proc_t*));
         /* unpack the procs */
-        cnt = cnt_procs;
-        if (ORTE_SUCCESS != (ret = opal_dss.unpack(&answer, proc_info, &cnt, ORTE_PROC))) {
-            ORTE_ERROR_LOG(ret);
-            OBJ_DESTRUCT(&answer);
-            free(proc_info);
-            return ret;
+        for (n=0; n < cnt_procs; n++) {
+            cnt = 1;
+            if (ORTE_SUCCESS != (ret = opal_dss.unpack(&answer, &proc_info[n], &cnt, ORTE_PROC))) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_DESTRUCT(&answer);
+                free(proc_info);
+                return ret;
+            }
         }
         *proc_info_array = proc_info;
         *num_procs = (int)cnt_procs;

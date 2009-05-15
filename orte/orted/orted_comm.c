@@ -687,10 +687,10 @@ static int process_commands(orte_process_name_t* sender,
              * back 0 procs so the tool won't hang
              */
             if (!ORTE_PROC_IS_HNP) {
-                orte_std_cntr_t zero=0;
+                int32_t zero=0;
                 
                 answer = OBJ_NEW(opal_buffer_t);
-                if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &zero, 1, ORTE_STD_CNTR))) {
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &zero, 1, OPAL_INT32))) {
                     ORTE_ERROR_LOG(ret);
                     OBJ_RELEASE(answer);
                     goto CLEANUP;
@@ -702,8 +702,8 @@ static int process_commands(orte_process_name_t* sender,
                 }
             } else {
                 /* if we are the HNP, process the request */
-                orte_std_cntr_t i, num_jobs=0;
-                orte_job_t **jobs=NULL, *jobdat;
+                int32_t i, num_jobs;
+                orte_job_t *jobdat;
                 
                 /* unpack the jobid */
                 n = 1;
@@ -717,14 +717,23 @@ static int process_commands(orte_process_name_t* sender,
                 
                 /* if they asked for a specific job, then just get that info */
                 if (ORTE_JOBID_WILDCARD != job) {
+                    job = ORTE_CONSTRUCT_LOCAL_JOBID(ORTE_PROC_MY_NAME->jobid, job);
                     if (NULL != (jobdat = orte_get_job_data_object(job))) {
                         num_jobs = 1;
-                        if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &num_jobs, 1, ORTE_STD_CNTR))) {
+                        if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &num_jobs, 1, OPAL_INT32))) {
                             ORTE_ERROR_LOG(ret);
                             OBJ_RELEASE(answer);
                             goto CLEANUP;
                         }
                         if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &jobdat, 1, ORTE_JOB))) {
+                            ORTE_ERROR_LOG(ret);
+                            OBJ_RELEASE(answer);
+                            goto CLEANUP;
+                        }
+                    } else {
+                        /* if we get here, then send a zero answer */
+                        num_jobs = 0;
+                        if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &num_jobs, 1, OPAL_INT32))) {
                             ORTE_ERROR_LOG(ret);
                             OBJ_RELEASE(answer);
                             goto CLEANUP;
@@ -735,16 +744,22 @@ static int process_commands(orte_process_name_t* sender,
                      * left-justified and may have holes, we have
                      * to cnt the number of jobs
                      */
-                    jobs = (orte_job_t**)orte_job_data->addr;
-                    for (i=0; i < orte_job_data->size; i++) {
-                        if (NULL != orte_job_data->addr[i]) {
+                    num_jobs = 0;
+                    for (i=1; i < orte_job_data->size; i++) {
+                        if (NULL != opal_pointer_array_get_item(orte_job_data, i)) {
                             num_jobs++;
                         }
                     }
-                    /* now pack the, one at a time */
-                    for (i=0; i < orte_job_data->size; i++) {
-                        if (NULL != orte_job_data->addr[i]) {
-                            if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &jobs[i], 1, ORTE_JOB))) {
+                    /* pack the number of jobs */
+                    if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &num_jobs, 1, OPAL_INT32))) {
+                        ORTE_ERROR_LOG(ret);
+                        OBJ_RELEASE(answer);
+                        goto CLEANUP;
+                    }
+                    /* now pack the data, one at a time */
+                    for (i=1; i < orte_job_data->size; i++) {
+                        if (NULL != (jobdat = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, i))) {
+                            if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &jobdat, 1, ORTE_JOB))) {
                                 ORTE_ERROR_LOG(ret);
                                 OBJ_RELEASE(answer);
                                 goto CLEANUP;
@@ -770,10 +785,10 @@ static int process_commands(orte_process_name_t* sender,
              * back 0 nodes so the tool won't hang
              */
             if (!ORTE_PROC_IS_HNP) {
-                orte_std_cntr_t zero=0;
+                int32_t zero=0;
                 
                 answer = OBJ_NEW(opal_buffer_t);
-                if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &zero, 1, ORTE_STD_CNTR))) {
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &zero, 1, OPAL_INT32))) {
                     ORTE_ERROR_LOG(ret);
                     OBJ_RELEASE(answer);
                     goto CLEANUP;
@@ -785,8 +800,8 @@ static int process_commands(orte_process_name_t* sender,
                 OBJ_RELEASE(answer);
             } else {
                 /* if we are the HNP, process the request */
-                orte_std_cntr_t i, num_nodes=0;
-                orte_node_t **nodes;
+                int32_t i, num_nodes;
+                orte_node_t *node;
                 char *nid;
                 
                 /* unpack the nodename */
@@ -802,37 +817,50 @@ static int process_commands(orte_process_name_t* sender,
                 /* if they asked for a specific node, then just get that info */
                 if (NULL != nid) {
                     /* find this node */
-                    nodes = (orte_node_t**)orte_node_pool->addr;
                     for (i=0; i < orte_node_pool->size; i++) {
-                        if (NULL == nodes[i]) break; /* stop when we get past the end of data */
-                        if (0 == strcmp(nid, nodes[i]->name)) {
-                            nodes = &nodes[i];
+                        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                            continue;
+                        }
+                        if (0 == strcmp(nid, node->name)) {
                             num_nodes = 1;
                             break;
                         }
                     }
-                } else {
-                    /* count number of nodes */
-                    for (i=0; i < orte_node_pool->size; i++) {
-                        if (NULL == orte_node_pool->addr[i]) break;
-                        num_nodes++;
-                    }
-                    nodes = (orte_node_t**)orte_node_pool->addr;
-                }
-                
-                /* pack the answer */
-                if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &num_nodes, 1, ORTE_STD_CNTR))) {
-                    ORTE_ERROR_LOG(ret);
-                    OBJ_RELEASE(answer);
-                    goto CLEANUP;
-                }
-                if (0 < num_nodes) {
-                    if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, nodes, num_nodes, ORTE_NODE))) {
+                    if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &num_nodes, 1, OPAL_INT32))) {
                         ORTE_ERROR_LOG(ret);
                         OBJ_RELEASE(answer);
                         goto CLEANUP;
                     }
+                    if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &node, 1, ORTE_NODE))) {
+                        ORTE_ERROR_LOG(ret);
+                        OBJ_RELEASE(answer);
+                        goto CLEANUP;
+                    }
+                } else {
+                    /* count number of nodes */
+                    for (i=0; i < orte_node_pool->size; i++) {
+                        if (NULL != opal_pointer_array_get_item(orte_node_pool, i)) {
+                            num_nodes++;
+                        }
+                    }
+                    /* pack the answer */
+                    if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &num_nodes, 1, OPAL_INT32))) {
+                        ORTE_ERROR_LOG(ret);
+                        OBJ_RELEASE(answer);
+                        goto CLEANUP;
+                    }
+                    /* pack each node separately */
+                    for (i=0; i < orte_node_pool->size; i++) {
+                        if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                            if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &node, 1, ORTE_NODE))) {
+                                ORTE_ERROR_LOG(ret);
+                                OBJ_RELEASE(answer);
+                                goto CLEANUP;
+                            }
+                        }
+                    }
                 }
+                /* send the info */
                 if (0 > orte_rml.send_buffer(sender, answer, ORTE_RML_TAG_TOOL, 0)) {
                     ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                     ret = ORTE_ERR_COMM_FAILURE;
@@ -851,19 +879,14 @@ static int process_commands(orte_process_name_t* sender,
              * back 0 procs so the tool won't hang
              */
             if (!ORTE_PROC_IS_HNP) {
-                orte_std_cntr_t zero=0;
+                int32_t zero=0;
                 
                 answer = OBJ_NEW(opal_buffer_t);
-                if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &zero, 1, ORTE_STD_CNTR))) {
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &zero, 1, OPAL_INT32))) {
                     ORTE_ERROR_LOG(ret);
                     OBJ_RELEASE(answer);
                     goto CLEANUP;
                 }
-                /* callback function will release buffer */
-#if 0
-                if (0 > orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL, 0,
-                                                send_callback, NULL)) {
-#endif
                 if (0 > orte_rml.send_buffer(sender, answer, ORTE_RML_TAG_TOOL, 0)) {
                         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                     ret = ORTE_ERR_COMM_FAILURE;
@@ -871,9 +894,9 @@ static int process_commands(orte_process_name_t* sender,
             } else {
                 /* if we are the HNP, process the request */
                 orte_job_t *jdata;
-                orte_proc_t **procs=NULL;
-                orte_vpid_t num_procs=0, vpid;
-                orte_std_cntr_t i;
+                orte_proc_t *proc;
+                orte_vpid_t vpid;
+                int32_t i, num_procs;
                 
                 /* setup the answer */
                 answer = OBJ_NEW(opal_buffer_t);
@@ -886,57 +909,70 @@ static int process_commands(orte_process_name_t* sender,
                 }
                 
                 /* look up job data object */
+                job = ORTE_CONSTRUCT_LOCAL_JOBID(ORTE_PROC_MY_NAME->jobid, job);
                 if (NULL == (jdata = orte_get_job_data_object(job))) {
                     ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                    goto PACK_ANSWER;
+                    goto CLEANUP;
                 }
                 
                 /* unpack the vpid */
                 n = 1;
                 if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &vpid, &n, ORTE_VPID))) {
                     ORTE_ERROR_LOG(ret);
-                    goto PACK_ANSWER;
+                    goto CLEANUP;
                 }
 
                 /* if they asked for a specific proc, then just get that info */
                 if (ORTE_VPID_WILDCARD != vpid) {
                     /* find this proc */
-                    procs = (orte_proc_t**)jdata->procs->addr;
                     for (i=0; i < jdata->procs->size; i++) {
-                        if (NULL == procs[i]) break; /* stop when we get past the end of data */
-                        if (vpid == procs[i]->name.vpid) {
-                            procs = &procs[i];
+                        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
+                            continue;
+                        }
+                        if (vpid == proc->name.vpid) {
                             num_procs = 1;
+                            if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &num_procs, 1, OPAL_INT32))) {
+                                ORTE_ERROR_LOG(ret);
+                                goto CLEANUP;
+                            }
+                            if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &proc, 1, ORTE_PROC))) {
+                                ORTE_ERROR_LOG(ret);
+                                goto CLEANUP;
+                            }
                             break;
                         }
                     }
                 } else {
-                    procs = (orte_proc_t**)jdata->procs->addr;
-                    num_procs = jdata->num_procs;
-                }
-                
-PACK_ANSWER:
-                /* pack number of procs */
-                if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &num_procs, 1, ORTE_VPID))) {
-                    ORTE_ERROR_LOG(ret);
-                    goto SEND_ANSWER;
-                }
-                if (0 < num_procs) {
-                    if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, procs, jdata->num_procs, ORTE_PROC))) {
+                    /* count number of procs */
+                    num_procs = 0;
+                    for (i=0; i < jdata->procs->size; i++) {
+                        if (NULL != opal_pointer_array_get_item(jdata->procs, i)) {
+                            num_procs++;
+                        }
+                    }
+                    /* pack the answer */
+                    if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &num_procs, 1, OPAL_INT32))) {
                         ORTE_ERROR_LOG(ret);
-                        goto SEND_ANSWER;
+                        OBJ_RELEASE(answer);
+                        goto CLEANUP;
+                    }
+                    /* pack each proc separately */
+                    for (i=0; i < jdata->procs->size; i++) {
+                        if (NULL != (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
+                            if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &proc, 1, ORTE_PROC))) {
+                                ORTE_ERROR_LOG(ret);
+                                OBJ_RELEASE(answer);
+                                goto CLEANUP;
+                            }
+                        }
                     }
                 }
-SEND_ANSWER:
-                /* callback function will release buffer */
-#if 0
-                if (0 > orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL, 0,
-                                                send_callback, NULL)) {
-#endif
+                /* send the info */
                 if (0 > orte_rml.send_buffer(sender, answer, ORTE_RML_TAG_TOOL, 0)) {
-                        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+                    ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                     ret = ORTE_ERR_COMM_FAILURE;
                 }
+                OBJ_RELEASE(answer);
             }
             break;
             

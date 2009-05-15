@@ -185,13 +185,13 @@ opal_cmd_line_init_t cmd_line_opts[] = {
       1,
       &orte_ps_globals.jobid, OPAL_CMD_LINE_TYPE_INT,
       "Specify a specific jobid" },
-
+#if 0
     { NULL, NULL, NULL, 
       'p', NULL, "vpid", 
       1,
       &orte_ps_globals.vpid, OPAL_CMD_LINE_TYPE_INT,
       "Specify a specific vpid. Must specify a --jobid as well" },
-
+#endif
     { NULL, NULL, NULL, 
       'n', NULL, "nodes", 
       0,
@@ -251,7 +251,14 @@ main(int argc, char *argv[])
                             hnpinfo.hnp->pid);
         
         if( ORTE_SUCCESS != (ret = gather_information(&hnpinfo)) ) {
-            exit_status = ret;
+            /* this could be due to a stale session directory - if so,
+             * just skip this entry, but don't abort
+             */
+            if (ORTE_ERR_SILENT == ret) {
+                orte_show_help("help-orte-ps.txt", "stale-hnp", true,
+                               ORTE_NAME_PRINT(&(hnpinfo.hnp->name)));
+                continue;
+            }
             goto cleanup;
         }
 
@@ -276,13 +283,13 @@ main(int argc, char *argv[])
 static int parse_args(int argc, char *argv[]) {
     int ret;
     opal_cmd_line_t cmd_line;
-    orte_ps_globals_t tmp = { false, 
-                              false, 
-                              -1, 
-                              -1, 
-                              false,
-                              false,
-                              -1};
+    orte_ps_globals_t tmp = { false,                    /* help */
+                              false,                    /* verbose */
+                              ORTE_JOBID_WILDCARD,      /* jobid */
+                              ORTE_VPID_WILDCARD,       /* vpid */
+                              false,                    /* nodes */
+                              false,                    /* daemons */
+                              -1};                      /* output */
 
     orte_ps_globals = tmp;
 
@@ -309,14 +316,15 @@ static int parse_args(int argc, char *argv[]) {
     /*
      * If they specify a vpid, they must specify a jobid
      */
-    if( 0 <= orte_ps_globals.vpid) {
-        if( 0 > orte_ps_globals.jobid) {
+#if 0
+    if( ORTE_VPID_WILDCARD != orte_ps_globals.vpid) {
+        if( ORTE_JOBID_WILDCARD == orte_ps_globals.jobid) {
             orte_show_help("help-orte-ps.txt", "vpid-usage", true,
                            orte_ps_globals.vpid);
             return ORTE_ERROR;
         }
     }
-
+#endif
     return ORTE_SUCCESS;
 }
 
@@ -794,7 +802,7 @@ static int gather_information(orte_ps_mpirun_info_t *hnpinfo) {
 static int gather_active_jobs(orte_ps_mpirun_info_t *hnpinfo) {
     int ret;
     
-    if (ORTE_SUCCESS != (ret = orte_util_comm_query_job_info(&(hnpinfo->hnp->name), ORTE_JOBID_WILDCARD,
+    if (ORTE_SUCCESS != (ret = orte_util_comm_query_job_info(&(hnpinfo->hnp->name), orte_ps_globals.jobid,
                                                              &hnpinfo->num_jobs, &hnpinfo->jobs))) {
         ORTE_ERROR_LOG(ret);
     }
@@ -836,7 +844,7 @@ static int gather_vpid_info(orte_ps_mpirun_info_t *hnpinfo) {
 
         /* query the HNP for info on the procs in this job */
         if (ORTE_SUCCESS != (ret = orte_util_comm_query_proc_info(&(hnpinfo->hnp->name), job->jobid,
-                                                                  ORTE_VPID_WILDCARD, &cnt, &procs))) {
+                                                                  orte_ps_globals.vpid, &cnt, &procs))) {
             ORTE_ERROR_LOG(ret);
         }
         job->procs->addr = (void**)procs;

@@ -31,3 +31,11 @@ Error: You specified a vpid (%d) without also specifying a jobid.
 [invalid-vpid]
 Error: The specified vpid (%d) is not valid for job %d.
 
+[stale-hnp]
+An attempt was made to obtain ps information from a non-responsive
+HNP:
+
+HNP name: %s
+
+You may want to cleanup stale session directories in your temporary
+directory (e.g., $TMPDIR).
