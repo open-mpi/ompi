@@ -167,8 +167,6 @@ int orte_ess_base_tool_finalize(void)
     orte_iof_base_close();
     orte_routed_base_close();
     orte_rml_base_close();
-    
-    orte_session_dir_finalize(ORTE_PROC_MY_NAME);
-    
+
     return ORTE_SUCCESS;    
 }

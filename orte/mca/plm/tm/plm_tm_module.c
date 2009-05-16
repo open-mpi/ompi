@@ -144,6 +144,7 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     char **env = NULL;
     char *var;
     char **argv = NULL;
+    char **nodeargv;
     int argc = 0;
     int rc;
     bool connected = false;
@@ -156,6 +157,7 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     bool failed_launch = true;
     mode_t current_umask;
     orte_jobid_t failed_job;
+    char *nodelist;
     
     if (jdata->controls & ORTE_JOB_CONTROL_LOCAL_SLAVE) {
         /* if this is a request to launch a local slave,
@@ -229,11 +231,28 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     /* add the daemon command (as specified by user) */
     orte_plm_base_setup_orted_cmd(&argc, &argv);
 
+    /* create a list of nodes in this launch */
+    nodeargv = NULL;
+    for (i = 0; i < map->num_nodes; i++) {
+        orte_node_t* node = nodes[i];
+        
+        /* if this daemon already exists, don't launch it! */
+        if (node->daemon_launched) {
+            continue;
+        }
+        
+        /* add to list */
+        opal_argv_append_nosize(&nodeargv, node->name);
+    }
+    nodelist = opal_argv_join(nodeargv, ',');
+    opal_argv_free(nodeargv);
+    
     /* Add basic orted command line options */
-    orte_plm_base_orted_append_basic_args(&argc, &argv, "env",
+    orte_plm_base_orted_append_basic_args(&argc, &argv, "tm",
                                           &proc_vpid_index,
-                                          true);
-
+                                          true, nodelist);
+    free(nodelist);
+    
     if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
         param = opal_argv_join(argv, ' ');
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,

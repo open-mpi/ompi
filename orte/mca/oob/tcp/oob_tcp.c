@@ -796,6 +796,9 @@ socket_binded:
      * remembering to convert it back from network byte order first
      */
     orte_process_info.my_port = ntohs(*target_port);
+    if (mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT) {
+        opal_output(0, "%s assigned port %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), orte_process_info.my_port);
+    }
     
     /* setup listen backlog to maximum allowed by kernel */
     if(listen(*target_sd, SOMAXCONN) < 0) {
@@ -1406,32 +1409,46 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
              * just look to see which static port family was provided
              */
             if (NULL != mca_oob_tcp_component.tcp4_static_ports) {
-                /* lookup the node rank of the proc */
-                if (ORTE_NODE_RANK_INVALID == (nrank = orte_ess.get_node_rank(&peer->peer_name)) ||
-                    (nrank+1) > opal_argv_count(mca_oob_tcp_component.tcp4_static_ports)) {
-                    /* this isn't an error - it just means we don't know
-                     * how to compute a contact info for this proc
+                if (ORTE_JOBID_IS_DAEMON(peer->peer_name.jobid)) {
+                    /* we are trying to talk to a daemon, which will always
+                     * be listening on the first port in the range
                      */
-                    rc = ORTE_ERR_ADDRESSEE_UNKNOWN;
-                    goto unlock;
+                    port = strtol(mca_oob_tcp_component.tcp4_static_ports[0], NULL, 10);
+                } else {
+                    /* lookup the node rank of the proc */
+                    if (ORTE_NODE_RANK_INVALID == (nrank = orte_ess.get_node_rank(&peer->peer_name)) ||
+                        (nrank+1) > opal_argv_count(mca_oob_tcp_component.tcp4_static_ports)) {
+                        /* this isn't an error - it just means we don't know
+                         * how to compute a contact info for this proc
+                         */
+                        rc = ORTE_ERR_ADDRESSEE_UNKNOWN;
+                        goto unlock;
+                    }
+                    /* any daemon takes the first entry, so we start with the second */
+                    port = strtol(mca_oob_tcp_component.tcp4_static_ports[nrank+1], NULL, 10);
                 }
-                /* any daemon takes the first entry, so we start with the second */
-                port = strtol(mca_oob_tcp_component.tcp4_static_ports[nrank+1], NULL, 10);
                 /* create the uri */
                 asprintf(&uri, "tcp://%s:%d", haddr, port);
 #if OPAL_WANT_IPV6
             } else if (NULL != mca_oob_tcp_component.tcp6_static_ports) {
-                /* lookup the node rank of the proc */
-                if (ORTE_NODE_RANK_INVALID == (nrank = orte_ess.get_node_rank(&peer->peer_name)) ||
-                    (nrank+1) > opal_argv_count(mca_oob_tcp_component.tcp6_static_ports)) {
-                    /* this isn't an error - it just means we don't know
-                     * how to compute a contact info for this proc
+                if (ORTE_JOBID_IS_DAEMON(peer->peer_name.jobid)) {
+                    /* we are trying to talk to a daemon, which will always
+                     * be listening on the first port in the range
                      */
-                    rc = ORTE_ERR_ADDRESSEE_UNKNOWN;
-                    goto unlock;
+                    port = strtol(mca_oob_tcp_component.tcp6_static_ports[0], NULL, 10);
+                } else {
+                    /* lookup the node rank of the proc */
+                    if (ORTE_NODE_RANK_INVALID == (nrank = orte_ess.get_node_rank(&peer->peer_name)) ||
+                        (nrank+1) > opal_argv_count(mca_oob_tcp_component.tcp6_static_ports)) {
+                        /* this isn't an error - it just means we don't know
+                         * how to compute a contact info for this proc
+                         */
+                        rc = ORTE_ERR_ADDRESSEE_UNKNOWN;
+                        goto unlock;
+                    }
+                    /* any daemon takes the first entry, so we start with the second */
+                    port = strtol(mca_oob_tcp_component.tcp6_static_ports[nrank+1], NULL, 10);
                 }
-                /* any daemon takes the first entry, so we start with the second */
-                port = strtol(mca_oob_tcp_component.tcp6_static_ports[nrank+1], NULL, 10);
                 /* create the uri */
                 asprintf(&uri, "tcp6://%s:%d", haddr, port);
 #endif  /* OPAL_WANT_IPV6 */

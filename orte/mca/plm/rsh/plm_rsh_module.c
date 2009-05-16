@@ -659,7 +659,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
     orte_plm_base_orted_append_basic_args(&argc, &argv,
                                           "env",
                                           proc_vpid_index,
-                                          true);
+                                          true, NULL);
     
     /* in the rsh environment, we can append multi-word arguments
      * by enclosing them in quotes. Check for any multi-word

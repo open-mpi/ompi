@@ -921,6 +921,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     orte_std_cntr_t proc_rank;
     orte_odls_job_t *jobdat;
     orte_local_rank_t local_rank;
+    orte_node_rank_t node_rank;
     char *pathenv = NULL, *mpiexec_pathenv = NULL;
     char basedir[MAXPATHLEN];
     char dir[MAXPATHLEN];
@@ -1285,7 +1286,31 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
             opal_setenv("OMPI_COMM_WORLD_LOCAL_RANK", value, true, &app->env);
             free(value);
             
-           /* if we are timing things, record when we are going to launch this proc */
+            /* users would appreciate being given a public environmental variable
+             * that also represents the node rank value - something MPI specific - so
+             * do that here.
+             *
+             * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
+             * We know - just live with it
+             */
+            if (ORTE_NODE_RANK_INVALID == (node_rank = orte_ess.get_node_rank(child->name))) {
+                ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
+                rc = ORTE_ERR_VALUE_OUT_OF_BOUNDS;
+                goto CLEANUP;
+            }
+            asprintf(&value, "%lu", (unsigned long) node_rank);
+            opal_setenv("OMPI_COMM_WORLD_NODE_RANK", value, true, &app->env);
+            /* set an mca param for it too */
+            if(NULL == (param = mca_base_param_environ_variable("orte","ess","node_rank"))) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                rc = ORTE_ERR_OUT_OF_RESOURCE;
+                goto CLEANUP;
+            }
+            opal_setenv(param, value, true, &app->env);
+            free(param);
+            free(value);
+            
+            /* if we are timing things, record when we are going to launch this proc */
             if (orte_timing) {
                 gettimeofday(&child->starttime, NULL);
             }

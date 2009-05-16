@@ -150,10 +150,9 @@ int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
                        int32_t *num_vals, opal_data_type_t type)
 {
     int rc;
-    int32_t i, j, n;
+    int32_t i, j, n, np, nprocs;
     orte_job_t **jobs;
     orte_proc_t *proc;
-    orte_vpid_t np;
     
     /* unpack into array of orte_job_t objects */
     jobs = (orte_job_t**) dest;
@@ -228,14 +227,22 @@ int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
             return rc;
         }
         
-        for (np=0; np < jobs[i]->num_procs; np++) {
-            n = 1;
-            if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
-                             (void**)&proc, &n, ORTE_PROC))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
+        /* unpack the actual number of proc entries in the message */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, (void*)&nprocs, &n, OPAL_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        if (0 < nprocs) {
+            for (np=0; np < nprocs; np++) {
+                n = 1;
+                if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
+                                 (void**)&proc, &n, ORTE_PROC))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+                opal_pointer_array_set_item(jobs[i]->procs, proc->name.vpid, proc);
             }
-            opal_pointer_array_set_item(jobs[i]->procs, proc->name.vpid, proc);
         }
         
         /* if the map is NULL, then we din't pack it as there was

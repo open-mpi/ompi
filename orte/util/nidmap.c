@@ -27,17 +27,34 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
+#ifdef HAVE_NETDB_H
+#include <netdb.h>
+#endif
+#ifdef HAVE_IFADDRS_H
+#include <ifaddrs.h>
+#endif
 
 #include "opal/dss/dss.h"
 #include "opal/runtime/opal.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/util/output.h"
+#include "opal/util/argv.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/mca/rml/base/rml_contact.h"
 
 #include "orte/util/nidmap.h"
 
@@ -153,6 +170,93 @@ int orte_util_setup_local_nidmap_entries(void)
     
     /* all done */
     return ORTE_SUCCESS;
+}
+
+int orte_util_build_daemon_nidmap(char **nodes)
+{
+    orte_nid_t *node;
+    int i, num_nodes;
+    int rc;
+    struct hostent *h;
+    opal_buffer_t buf;
+    orte_process_name_t proc;
+    char *uri, *addr;
+    char *proc_name;
+    
+    num_nodes = opal_argv_count(nodes);
+    
+    OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
+                         "orte:util:build:daemon:nidmap found %d nodes", num_nodes));
+    
+    if (0 == num_nodes) {
+        /* nothing to do */
+        return ORTE_SUCCESS;
+    }
+    
+    /* set the size of the nidmap storage so we minimize realloc's */
+    if (ORTE_SUCCESS != (rc = opal_pointer_array_set_size(&orte_nidmap, num_nodes+1))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* install the entry for the HNP */
+    node = OBJ_NEW(orte_nid_t);
+    node->name = strdup("HNP");
+    node->daemon = 0;
+    /* the arch defaults to our arch so that non-hetero
+     * case will yield correct behavior
+     */
+    opal_pointer_array_set_item(&orte_nidmap, 0, node);        
+    
+    /* the daemon vpids will be assigned in order,
+     * starting with vpid=1 for the first node in
+     * the list
+     */
+    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+    proc.jobid = ORTE_PROC_MY_NAME->jobid;
+    for (i=0; i < num_nodes; i++) {
+        node = OBJ_NEW(orte_nid_t);
+        node->name = strdup(nodes[i]);
+        node->daemon = i+1;
+        /* the arch defaults to our arch so that non-hetero
+         * case will yield correct behavior
+         */
+        opal_pointer_array_set_item(&orte_nidmap, node->daemon, node);        
+        
+        /* lookup the address of this node */
+        if (NULL == (h = gethostbyname(node->name))) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return ORTE_ERR_NOT_FOUND;
+        }
+        addr = inet_ntoa(*(struct in_addr*)h->h_addr_list[0]);
+        
+        OPAL_OUTPUT_VERBOSE((3, orte_debug_output,
+                             "%s orte:util:build:daemon:nidmap node %s daemon %d addr %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             node->name, (int)node->daemon, addr));
+        
+        /* since we are using static ports, all my fellow daemons will be on my
+         * port. Setup the contact info for each daemon in my hash tables. Note
+         * that this will -not- open a port to those daemons, but will only
+         * define the info necessary for opening such a port if/when I communicate
+         * to them
+         */
+        /* construct the URI */
+        proc.vpid = node->daemon;
+        orte_util_convert_process_name_to_string(&proc_name, &proc);
+        asprintf(&uri, "%s;tcp://%s:%d", proc_name, addr, (int)orte_process_info.my_port);
+        opal_dss.pack(&buf, &uri, 1, OPAL_STRING);
+        free(proc_name);
+        free(uri);
+    }
+    
+    /* load the hash tables */
+    if (ORTE_SUCCESS != (rc = orte_rml_base_update_contact_info(&buf))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    OBJ_DESTRUCT(&buf);
+
+    return rc;
 }
 
 int orte_util_encode_nodemap(opal_byte_object_t *boptr)
@@ -1117,7 +1221,7 @@ orte_nid_t* orte_util_lookup_nid(orte_process_name_t *proc)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc)));
     
-    if (ORTE_PROC_NAME_IS_DAEMON(proc->jobid)) {
+    if (ORTE_JOBID_IS_DAEMON(proc->jobid)) {
         /* looking for a daemon */
         return find_daemon_node(proc);
     }

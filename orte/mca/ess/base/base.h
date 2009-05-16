@@ -74,7 +74,7 @@ ORTE_DECLSPEC void orte_ess_base_app_abort(int status, bool report) __opal_attri
 ORTE_DECLSPEC int orte_ess_base_tool_setup(void);
 ORTE_DECLSPEC int orte_ess_base_tool_finalize(void);
 
-ORTE_DECLSPEC int orte_ess_base_orted_setup(void);
+ORTE_DECLSPEC int orte_ess_base_orted_setup(char **hosts);
 ORTE_DECLSPEC int orte_ess_base_orted_finalize(void);
 
 /*
