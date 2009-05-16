@@ -1134,17 +1134,8 @@ ompi_show_subtitle "GNU libltdl setup"
 # AC_CONFIG_SUBDIRS appears to be broken for non-gcc compilers (i.e.,
 # passing precious variables down to the sub-configure).
 #
-# Note that we also did some magic scripty-foo in autogen.sh to rename
-# the output libtool library "libompi_ltdl", so add -lompi_ltdl here.
-# This is because so many systems have older versions of libltdl
-# installed very early in ld.so's search path; if we installed our own
-# libltdl in some non-standard path (e.g., $HOME/local or even
-# /usr/local), the libltdl in /usr/lib might get found first.  And if
-# it's older -- or just not matching the version that we need, Bad
-# Things happen.  [sigh]
-#
-# Finally, make libompi_ltdl follow the same shared/static convention
-# that was user for the main OMPI libraries.  So manually examine
+# Finally, make ltdl follow the same shared/static convention that was
+# user for the main OMPI libraries.  So manually examine
 # $enable_shared and $enable_static and pass down the corresponding
 # flags.
 
