@@ -130,6 +130,7 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
     int rc;
     char** env = NULL;
     char **nodelist_argv;
+    char *nodelist;
     int nodelist_argc;
     char *vpid_string;
     int i;
@@ -207,7 +208,7 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
          */
         opal_argv_append(&nodelist_argc, &nodelist_argv, nodes[nnode]->name);
     }
-
+    nodelist = opal_argv_join(nodelist_argv, ',');
 
     /*
      * start building argv array
@@ -226,7 +227,8 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
     orte_plm_base_orted_append_basic_args(&argc, &argv,
                                           "lsf",
                                           &proc_vpid_index,
-                                          false);
+                                          false, nodelist);
+    free(nodelist);
 
     /* tell the new daemons the base of the name list so they can compute
      * their own name on the other end

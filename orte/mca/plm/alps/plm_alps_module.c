@@ -275,7 +275,8 @@ static int plm_alps_launch_job(orte_job_t *jdata)
     orte_plm_base_orted_append_basic_args(&argc, &argv,
                                           "alps",
                                           &proc_vpid_index,
-                                          false);
+                                          false, nodelist_flat);
+    free(nodelist_flat);
 
     /* tell the new daemons the base of the name list so they can compute
      * their own name on the other end
@@ -333,12 +334,6 @@ static int plm_alps_launch_job(orte_job_t *jdata)
     /* setup environment */
     env = opal_argv_copy(orte_launch_environ);
     
-    /* add the nodelist */
-    var = mca_base_param_environ_variable("orte", "alps", "nodelist");
-    opal_setenv(var, nodelist_flat, true, &env);
-    free(nodelist_flat);
-    free(var);
-
     if (mca_plm_alps_component.timing) {
         if (0 != gettimeofday(&launchstart, NULL)) {
             opal_output(0, "plm_alps: could not obtain start time");

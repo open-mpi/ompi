@@ -47,10 +47,9 @@
 
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/base/base.h"
-#include "orte/mca/ess/slurm/ess_slurm.h"
+#include "orte/mca/ess/tm/ess_tm.h"
 
-static char *get_slurm_nodename(int nodeid);
-static int slurm_set_name(void);
+static int tm_set_name(void);
 
 static int rte_init(void);
 static int rte_finalize(void);
@@ -64,7 +63,7 @@ static int update_arch(orte_process_name_t *proc, uint32_t arch);
 static int update_pidmap(opal_byte_object_t *bo);
 static int update_nidmap(opal_byte_object_t *bo);
 
-orte_ess_base_module_t orte_ess_slurm_module = {
+orte_ess_base_module_t orte_ess_tm_module = {
     rte_init,
     rte_finalize,
     orte_ess_base_app_abort,
@@ -91,7 +90,7 @@ static int rte_init(void)
     int ret;
     char *error = NULL;
     char **hosts = NULL;
-    char *slurm_nodelist;
+    char *nodelist;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -100,19 +99,18 @@ static int rte_init(void)
     }
     
     /* Start by getting a unique name */
-    slurm_set_name();
+    tm_set_name();
     
     /* if I am a daemon, complete my setup using the
      * default procedure
      */
     if (ORTE_PROC_IS_DAEMON) {
         /* get the list of nodes used for this job */
-        mca_base_param_reg_string_name("orte", "nodelist", "List of nodes in job",
-                                       true, false, NULL, &slurm_nodelist);
+        nodelist = getenv("OMPI_MCA_orte_nodelist");
         
-        if (NULL != slurm_nodelist) {
+        if (NULL != nodelist) {
             /* split the node list into an argv array */
-            hosts = opal_argv_split(slurm_nodelist, ',');
+            hosts = opal_argv_split(nodelist, ',');
         }
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup(hosts))) {
             ORTE_ERROR_LOG(ret);
@@ -143,13 +141,14 @@ static int rte_init(void)
         error = "orte_ess_base_app_setup";
         goto error;
     }
+    
     /* setup the nidmap arrays */
     if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(orte_process_info.sync_buf))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_util_nidmap_init";
         goto error;
     }
-
+    
     return ORTE_SUCCESS;
     
 error:
@@ -166,8 +165,6 @@ static int rte_finalize(void)
    
     /* if I am a daemon, finalize using the default procedure */
     if (ORTE_PROC_IS_DAEMON) {
-        /* don't need to do the barrier */
-        orte_orted_exit_with_barrier = false;
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_finalize())) {
             ORTE_ERROR_LOG(ret);
         }
@@ -204,14 +201,14 @@ static uint8_t proc_get_locality(orte_process_name_t *proc)
     
     if (nid->daemon == ORTE_PROC_MY_DAEMON->vpid) {
         OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                             "%s ess:slurm: proc %s is LOCAL",
+                             "%s ess:tm: proc %s is LOCAL",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(proc)));
         return (OPAL_PROC_ON_NODE | OPAL_PROC_ON_CU | OPAL_PROC_ON_CLUSTER);
     }
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                         "%s ess:slurm: proc %s is REMOTE",
+                         "%s ess:tm: proc %s is REMOTE",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc)));
     
@@ -232,7 +229,7 @@ static orte_vpid_t proc_get_daemon(orte_process_name_t *proc)
     }
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                         "%s ess:slurm: proc %s is hosted by daemon %s",
+                         "%s ess:tm: proc %s is hosted by daemon %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc),
                          ORTE_VPID_PRINT(nid->daemon)));
@@ -250,7 +247,7 @@ static char* proc_get_hostname(orte_process_name_t *proc)
     }
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                         "%s ess:slurm: proc %s is on host %s",
+                         "%s ess:tm: proc %s is on host %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc),
                          nid->name));
@@ -268,7 +265,7 @@ static uint32_t proc_get_arch(orte_process_name_t *proc)
     }
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                         "%s ess:slurm: proc %s has arch %d",
+                         "%s ess:tm: proc %s has arch %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc),
                          nid->arch));
@@ -286,7 +283,7 @@ static int update_arch(orte_process_name_t *proc, uint32_t arch)
     }
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                         "%s ess:slurm: updating proc %s to arch %0x",
+                         "%s ess:tm: updating proc %s to arch %0x",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc),
                          arch));
@@ -306,7 +303,7 @@ static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc)
     }    
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                         "%s ess:slurm: proc %s has local rank %d",
+                         "%s ess:tm: proc %s has local rank %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc),
                          (int)pmap->local_rank));
@@ -334,7 +331,7 @@ static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc)
     }    
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                         "%s ess:slurm: proc %s has node rank %d",
+                         "%s ess:tm: proc %s has node rank %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc),
                          (int)pmap->node_rank));
@@ -347,7 +344,7 @@ static int update_pidmap(opal_byte_object_t *bo)
     int ret;
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                         "%s ess:slurm: updating pidmap",
+                         "%s ess:tm: updating pidmap",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* build the pmap */
@@ -368,9 +365,8 @@ static int update_nidmap(opal_byte_object_t *bo)
     return rc;
 }
 
-static int slurm_set_name(void)
+static int tm_set_name(void)
 {
-    int slurm_nodeid;
     int rc;
     orte_jobid_t jobid;
     orte_vpid_t vpid;
@@ -378,7 +374,7 @@ static int slurm_set_name(void)
     
     
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
-                         "ess:slurm setting name"));
+                         "ess:tm setting name"));
     
     mca_base_param_reg_string_name("orte", "ess_jobid", "Process jobid",
                                    true, false, NULL, &tmp);
@@ -405,14 +401,10 @@ static int slurm_set_name(void)
     free(tmp);
     
     ORTE_PROC_MY_NAME->jobid = jobid;
-    
-    /* fix up the vpid and make it the "real" vpid */
-    slurm_nodeid = atoi(getenv("SLURM_NODEID"));
-    ORTE_PROC_MY_NAME->vpid = vpid + slurm_nodeid;
+    ORTE_PROC_MY_NAME->vpid = vpid;
 
-    
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
-                         "ess:slurm set name to %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         "ess:tm set name to %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* get my node rank in case we are using static ports - this won't
      * be present for daemons, so don't error out if we don't have it
@@ -422,17 +414,6 @@ static int slurm_set_name(void)
     if (NULL != tmp) {
         my_node_rank = strtol(tmp, NULL, 10);
     }
-
-    /* fix up the system info nodename to match exactly what slurm returned */
-    if (NULL != orte_process_info.nodename) {
-        free(orte_process_info.nodename);
-    }
-    orte_process_info.nodename = get_slurm_nodename(slurm_nodeid);
-
-    
-    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
-                         "ess:slurm set nodename to %s",
-                         orte_process_info.nodename));
     
     /* get the non-name common environmental variables */
     if (ORTE_SUCCESS != (rc = orte_ess_env_get())) {
@@ -443,34 +424,3 @@ static int slurm_set_name(void)
     return ORTE_SUCCESS;
 }
 
-static char *
-get_slurm_nodename(int nodeid)
-{
-    char **names = NULL;
-    char *slurm_nodelist;
-    char *ret;
-
-    mca_base_param_reg_string_name("orte", "nodelist", "List of nodes in job",
-                                   true, false, NULL, &slurm_nodelist);
-    if (NULL == slurm_nodelist) {
-        return NULL;
-    }
-    
-    /* split the node list into an argv array */
-    names = opal_argv_split(slurm_nodelist, ',');
-    if (NULL == names) {  /* got an error */
-        return NULL;
-    }
-
-    /* check to see if there are enough entries */
-    if (nodeid > opal_argv_count(names)) {
-        return NULL;
-    }
-
-    ret = strdup(names[nodeid]);
-
-    opal_argv_free(names);
-
-    /* All done */
-    return ret;
-}

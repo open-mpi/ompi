@@ -138,9 +138,9 @@ ORTE_DECLSPEC void orte_plm_base_recv(int status, orte_process_name_t* sender,
  * Construct basic ORTE Daemon command line arguments
  */
 ORTE_DECLSPEC int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
-                                                        char *sds,
+                                                        char *ess_module,
                                                         int *proc_vpid_index,
-                                                        bool heartbeat);
+                                                        bool heartbeat, char *nodes);
 
 /*
  * Proxy functions for use by daemons and application procs

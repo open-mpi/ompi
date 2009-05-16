@@ -88,6 +88,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
     
     /* start at the beginning... */
     vpid = 0;
+    jdata->num_procs = 0;
     
     /* cycle through the app_contexts, mapping them sequentially */
     for(i=0; i < jdata->num_apps; i++) {

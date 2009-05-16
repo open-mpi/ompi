@@ -50,6 +50,7 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/nidmap.h"
 #include "orte/util/show_help.h"
 #include "orte/mca/notifier/base/base.h"
 
@@ -61,7 +62,7 @@
 
 static bool plm_in_use;
 
-int orte_ess_base_orted_setup(void)
+int orte_ess_base_orted_setup(char **hosts)
 {
     int ret;
     char *error = NULL;
@@ -114,7 +115,7 @@ int orte_ess_base_orted_setup(void)
 
     /* Setup the communication infrastructure */
     
-    /* Runtime Messaging Layer */
+    /* Runtime Messaging Layer - this opens/selects the OOB as well */
     if (ORTE_SUCCESS != (ret = orte_rml_base_open())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_rml_base_open";
@@ -125,6 +126,7 @@ int orte_ess_base_orted_setup(void)
         error = "orte_rml_base_select";
         goto error;
     }
+
     /* Routed system */
     if (ORTE_SUCCESS != (ret = orte_routed_base_open())) {
         ORTE_ERROR_LOG(ret);
@@ -167,6 +169,49 @@ int orte_ess_base_orted_setup(void)
         ORTE_ERROR_LOG(ret);
         error = "orte_rml.enable_comm";
         goto error;
+    }
+    
+    /* if we are using static ports, then we need to setup
+     * the daemon info so the RML can function properly
+     * without requiring a wireup stage. This must be done
+     * after we enable_comm as that function determines our
+     * own port, which we need in order to construct the nidmap
+     */
+    if (orte_static_ports) {
+        /* construct the nidmap arrays */
+        if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(NULL))) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_util_nidmap_init";
+            goto error;
+        }
+        if (ORTE_SUCCESS != (ret = orte_util_setup_local_nidmap_entries())) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_util_nidmap_init";
+            goto error;
+        }
+        /* extract the node info from the environment and
+         * build a nidmap from it
+         */
+        if (ORTE_SUCCESS != (ret = orte_util_build_daemon_nidmap(hosts))) {
+            ORTE_ERROR_LOG(ret);
+            error = "construct daemon map from static ports";
+            goto error;
+        }
+        /* be sure to update the routing tree so the initial "phone home"
+         * to mpirun goes through the tree!
+         */
+        if (ORTE_SUCCESS != (ret = orte_routed.update_routing_tree())) {
+            ORTE_ERROR_LOG(ret);
+            error = "failed to update routing tree";
+            goto error;
+        }
+    } else {
+        /* initialize the nidmaps */
+        if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(NULL))) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_util_nidmap_init";
+            goto error;
+        }
     }
     
     /* Now provide a chance for the PLM

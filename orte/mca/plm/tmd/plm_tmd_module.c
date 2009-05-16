@@ -314,7 +314,7 @@ static int plm_tmd_launch_job(orte_job_t *jdata)
     /* Add basic orted command line options */
     orte_plm_base_orted_append_basic_args(&argc, &argv, "env",
                                           &proc_vpid_index,
-                                          true);
+                                          true, NULL);
 
     if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
         param = opal_argv_join(argv, ' ');

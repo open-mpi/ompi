@@ -291,7 +291,8 @@ static int topo_map(orte_job_t *jdata)
     
     /* start at the beginning... */
     vpid_start = 0;
-
+    jdata->num_procs = 0;
+    
     /* get the graph of nodes */
     if (ORTE_SUCCESS != (rc = opal_carto_base_get_host_graph(&graph, "SLOT"))) {
         ORTE_ERROR_LOG(rc);

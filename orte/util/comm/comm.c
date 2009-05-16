@@ -214,7 +214,7 @@ int orte_util_comm_query_node_info(const orte_process_name_t *hnp, char *node,
             quicktime = NULL;
         }
         ORTE_ERROR_LOG(ret);
-        OBJ_DESTRUCT(ret);
+        OBJ_DESTRUCT(&answer);
         return ret;
     }
     
@@ -309,7 +309,7 @@ int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t 
             quicktime = NULL;
         }
         ORTE_ERROR_LOG(ret);
-        OBJ_DESTRUCT(ret);
+        OBJ_DESTRUCT(&answer);
         return ret;
     }
     

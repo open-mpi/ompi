@@ -146,7 +146,7 @@ int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
                      int32_t num_vals, opal_data_type_t type)
 {
     int rc;
-    int32_t i, j;
+    int32_t i, j, np;
     orte_job_t **jobs;
     orte_proc_t *proc;
 
@@ -201,20 +201,35 @@ int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
             return rc;
         }
         
-        /* pack the number of procs */
+        /* pack the number of procs for the job */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
                          (void*)(&(jobs[i]->num_procs)), 1, ORTE_VPID))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         
-        if (0 < jobs[i]->num_procs) {
+        /* there might actually not be any procs in the array, so we
+         * need to count them first
+         */
+        np = 0;
+        for (j=0; j < jobs[i]->procs->size; j++) {
+            if (NULL != opal_pointer_array_get_item(jobs[i]->procs, j)) {
+                np++;
+            }
+        }
+        /* now pack that number */
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, (void*)&np, 1, OPAL_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        if (0 < np) {
             for (j=0; j < jobs[i]->procs->size; j++) {
                 if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jobs[i]->procs, j))) {
                     continue;
                 }
                 if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                                                               (void*)&proc, 1, ORTE_PROC))) {
+                                    (void*)&proc, 1, ORTE_PROC))) {
                     ORTE_ERROR_LOG(rc);
                     return rc;
                 }

@@ -412,7 +412,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     ret = &daemon;
 
  found:
-    OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                          "%s routed_binomial_get(%s) --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(target), 
@@ -563,8 +563,13 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                 return rc;
             }
 
-            /* set our lifeline to the HNP - we will abort if that connection is lost */
-            lifeline = ORTE_PROC_MY_HNP;
+            /* if we are using static ports, set my lifeline to point at my parent */
+            if (orte_static_ports) {
+                lifeline = &my_parent;
+            } else {
+                /* set our lifeline to the HNP - we will abort if that connection is lost */
+                lifeline = ORTE_PROC_MY_HNP;
+            }
             
             /* daemons will send their contact info back to the HNP as
              * part of the message confirming they are read to go. HNP's

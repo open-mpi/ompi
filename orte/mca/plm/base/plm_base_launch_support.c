@@ -951,7 +951,7 @@ int orte_plm_base_setup_orted_cmd(int *argc, char ***argv)
 int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
                                           char *ess,
                                           int *proc_vpid_index,
-                                          bool heartbeat)
+                                          bool heartbeat, char *nodes)
 {
     char *param = NULL;
     int loc_id;
@@ -996,7 +996,7 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         free(param);
     }
     
-    /* tell the orted what SDS component to use */
+    /* tell the orted what ESS component to use */
     opal_argv_append(argc, argv, "-mca");
     opal_argv_append(argc, argv, "ess");
     opal_argv_append(argc, argv, ess);
@@ -1042,6 +1042,13 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     opal_argv_append(argc, argv, "--hnp-uri");
     opal_argv_append(argc, argv, param);
     free(param);
+    
+    /* if given, pass the node list */
+    if (NULL != nodes) {
+        opal_argv_append(argc, argv, "-mca");
+        opal_argv_append(argc, argv, "orte_nodelist");
+        opal_argv_append(argc, argv, nodes);
+    }
     
     /* pass along any cmd line MCA params provided to mpirun,
      * being sure to "purge" any that would cause problems
@@ -1367,11 +1374,7 @@ CHECK_ALL_JOBS:
                                          ORTE_NAME_PRINT(&proc->name)));
                     /* set the entry in the node array to NULL */
                     opal_pointer_array_set_item(node->procs, i, NULL);
-                    /* set the entry in the job data object to NULL */
-                    opal_pointer_array_set_item(jdata->procs, (int)proc->name.vpid, NULL);
                     /* release the proc once for the map entry */
-                    OBJ_RELEASE(proc);
-                    /* now release it again from the job data object */
                     OBJ_RELEASE(proc);
                 }
             }
@@ -1391,7 +1394,13 @@ CHECK_ALL_JOBS:
                  */
                 continue;
             }
-            if (NULL != jdata && job->jobid == jdata->jobid) {
+            /* if this is the job we are checking AND it normally terminated,
+             * then go ahead and release it. We cannot release it if it
+             * abnormally terminated as mpirun needs the info so it can
+             * report appropriately to the user
+             */
+            if (NULL != jdata && job->jobid == jdata->jobid &&
+                jdata->state == ORTE_JOB_STATE_TERMINATED) {
                 /* release this object, ensuring that the
                  * pointer array internal accounting
                  * is maintained!

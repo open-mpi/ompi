@@ -151,7 +151,6 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     char* var;
     char *nodelist_flat;
     char **nodelist_argv;
-    int nodelist_argc;
     char *name_string;
     char **custom_strings;
     int num_args, i;
@@ -272,7 +271,6 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
 
     /* create nodelist */
     nodelist_argv = NULL;
-    nodelist_argc = 0;
 
     for (n=0; n < map->num_nodes; n++ ) {
         /* if the daemon already exists on this node, then
@@ -285,7 +283,7 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
         /* otherwise, add it to the list of nodes upon which
          * we need to launch a daemon
          */
-        opal_argv_append(&nodelist_argc, &nodelist_argv, nodes[n]->name);
+        opal_argv_append_nosize(&nodelist_argv, nodes[n]->name);
     }
     if (0 == opal_argv_count(nodelist_argv)) {
         orte_show_help("help-plm-slurm.txt", "no-hosts-in-list", true);
@@ -311,9 +309,9 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     
    /* Add basic orted command line options, including debug flags */
     orte_plm_base_orted_append_basic_args(&argc, &argv,
-                                          "slurm", 
-                                          &proc_vpid_index,
-                                          false);
+                                          "slurm", &proc_vpid_index,
+                                          false, nodelist_flat);
+    free(nodelist_flat);
 
     /* tell the new daemons the base of the name list so they can compute
      * their own name on the other end
@@ -371,12 +369,6 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
 
     /* setup environment */
     env = opal_argv_copy(orte_launch_environ);
-
-    /* add the nodelist */
-    var = mca_base_param_environ_variable("orte", "slurm", "nodelist");
-    opal_setenv(var, nodelist_flat, true, &env);
-    free(nodelist_flat);
-    free(var);
 
     /* enable local launch by the orteds */
     var = mca_base_param_environ_variable("plm", NULL, NULL);

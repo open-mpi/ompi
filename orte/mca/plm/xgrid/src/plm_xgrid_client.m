@@ -438,7 +438,7 @@ cleanup:
     orte_plm_base_orted_append_basic_args(&argc, &argv,
                                           "env",
                                           NULL,
-                                          true);
+                                          true, NULL);
 
     /* Note that capacity is a starting capacity, not max */
     NSMutableArray *ret = [NSMutableArray arrayWithCapacity: argc];

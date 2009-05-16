@@ -28,6 +28,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#include <stdlib.h>
 
 #include "opal/event/event.h"
 #include "opal/runtime/opal.h"
@@ -39,6 +40,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/output.h"
 #include "opal/util/malloc.h"
+#include "opal/util/argv.h"
 
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/rml/rml_types.h"
@@ -110,10 +112,17 @@ orte_ess_base_module_t orte_ess_env_module = {
 #endif
 };
 
+/*
+ * Local variables
+ */
+static orte_node_rank_t my_node_rank=ORTE_NODE_RANK_INVALID;
+
 static int rte_init(void)
 {
     int ret;
     char *error = NULL;
+    char **hosts = NULL;
+    char *nodelist;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -128,13 +137,23 @@ static int rte_init(void)
      * default procedure
      */
     if (ORTE_PROC_IS_DAEMON) {
-        if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup())) {
+        /* get the list of nodes used for this job */
+        nodelist = getenv("OMPI_MCA_orte_nodelist");
+        
+        if (NULL != nodelist) {
+            /* split the node list into an argv array */
+            hosts = opal_argv_split(nodelist, ',');
+        }
+        if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup(hosts))) {
             ORTE_ERROR_LOG(ret);
             error = "orte_ess_base_orted_setup";
             goto error;
         }
-        
-    } else if (ORTE_PROC_IS_TOOL) {
+        opal_argv_free(hosts);
+        return ORTE_SUCCESS;
+    }
+    
+    if (ORTE_PROC_IS_TOOL) {
         /* otherwise, if I am a tool proc, use that procedure */
         if (ORTE_SUCCESS != (ret = orte_ess_base_tool_setup())) {
             ORTE_ERROR_LOG(ret);
@@ -144,17 +163,17 @@ static int rte_init(void)
         /* as a tool, I don't need a nidmap - so just return now */
         return ORTE_SUCCESS;
         
-    } else {
-        /* otherwise, I must be an application process - use
-         * the default procedure to finish my setup
-         */
-        if (ORTE_SUCCESS != (ret = orte_ess_base_app_setup())) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_ess_base_app_setup";
-            goto error;
-        }
     }
-
+    
+    /* otherwise, I must be an application process - use
+     * the default procedure to finish my setup
+     */
+    if (ORTE_SUCCESS != (ret = orte_ess_base_app_setup())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_ess_base_app_setup";
+        goto error;
+    }
+    
     /* if one was provided, build my nidmap */
     if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(orte_process_info.sync_buf))) {
         ORTE_ERROR_LOG(ret);
@@ -324,6 +343,17 @@ static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc)
 {
     orte_pmap_t *pmap;
     
+    /* is this me? */
+    if (proc->jobid == ORTE_PROC_MY_NAME->jobid &&
+        proc->vpid == ORTE_PROC_MY_NAME->vpid) {
+        /* yes it is - reply with my rank. This is necessary
+         * because the pidmap will not have arrived when I
+         * am starting up, and if we use static ports, then
+         * I need to know my node rank during init
+         */
+        return my_node_rank;
+    }
+    
     if (NULL == (pmap = orte_util_lookup_pmap(proc))) {
         return ORTE_NODE_RANK_INVALID;
     }    
@@ -365,40 +395,49 @@ static int update_nidmap(opal_byte_object_t *bo)
 
 static int env_set_name(void)
 {
-    char *jobid_str, *procid_str;
-    int id, rc;
+    char *tmp;
+    int rc;
     orte_jobid_t jobid;
     orte_vpid_t vpid;
     
-    id = mca_base_param_register_string("orte", "ess", "jobid", NULL, NULL);
-    mca_base_param_lookup_string(id, &jobid_str);
-    if (NULL == jobid_str) {
+    mca_base_param_reg_string_name("orte", "ess_jobid", "Process jobid",
+                                   true, false, NULL, &tmp);
+    if (NULL == tmp) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
-    if (ORTE_SUCCESS != (rc = orte_util_convert_string_to_jobid(&jobid, jobid_str))) {
+    if (ORTE_SUCCESS != (rc = orte_util_convert_string_to_jobid(&jobid, tmp))) {
         ORTE_ERROR_LOG(rc);
         return(rc);
     }
-    free(jobid_str);
+    free(tmp);
     
-    id = mca_base_param_register_string("orte", "ess", "vpid", NULL, NULL);
-    mca_base_param_lookup_string(id, &procid_str);
-    if (NULL == procid_str) {
+    mca_base_param_reg_string_name("orte", "ess_vpid", "Process vpid",
+                                   true, false, NULL, &tmp);
+    if (NULL == tmp) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
-    if (ORTE_SUCCESS != (rc = orte_util_convert_string_to_vpid(&vpid, procid_str))) {
+    if (ORTE_SUCCESS != (rc = orte_util_convert_string_to_vpid(&vpid, tmp))) {
         ORTE_ERROR_LOG(rc);
         return(rc);
     }
-    free(procid_str);
+    free(tmp);
     
     ORTE_PROC_MY_NAME->jobid = jobid;
     ORTE_PROC_MY_NAME->vpid = vpid;
     
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                          "ess:env set name to %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
+    /* get my node rank in case we are using static ports - this won't
+     * be present for daemons, so don't error out if we don't have it
+     */
+    mca_base_param_reg_string_name("orte", "ess_node_rank", "Process node rank",
+                                   true, false, NULL, &tmp);
+    if (NULL != tmp) {
+        my_node_rank = strtol(tmp, NULL, 10);
+    }
     
     /* get the non-name common environmental variables */
     if (ORTE_SUCCESS != (rc = orte_ess_env_get())) {

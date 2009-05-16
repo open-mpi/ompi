@@ -90,7 +90,7 @@ ORTE_DECLSPEC char* orte_util_print_local_jobid(const orte_jobid_t job);
     ( ((local) & 0xffff0000) | ((job) & 0x0000ffff) )
 
 /* a macro for identifying that a proc is a daemon */
-#define ORTE_PROC_NAME_IS_DAEMON(n)  \
+#define ORTE_JOBID_IS_DAEMON(n)  \
     !((n) & 0x0000ffff)
 
 /* List of names for general use */

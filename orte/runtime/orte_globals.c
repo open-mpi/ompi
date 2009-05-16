@@ -587,10 +587,6 @@ static void orte_job_destruct(orte_job_t* job)
     }
     OBJ_RELEASE(job->procs);
     
-    if (NULL != job->aborted_proc) {
-        OBJ_RELEASE(job->aborted_proc);
-    }
-    
 #if OPAL_ENABLE_FT == 1
     if (NULL != job->ckpt_snapshot_ref) {
         free(job->ckpt_snapshot_ref);

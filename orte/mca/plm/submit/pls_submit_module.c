@@ -542,7 +542,7 @@ int orte_plm_submit_launch(orte_job_t *jdata)
      */
     orte_plm_base_orted_append_basic_args(&argc, &argv,
                                           "env",
-                                          &proc_vpid_index);
+                                          &proc_vpid_index, NULL);
     
     local_exec_index_end = argc;
     if (mca_plm_submit_component.debug) {

@@ -289,7 +289,8 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
     
     /* start at the beginning... */
     vpid_start = 0;
-
+    jdata->num_procs = 0;
+    
     /* if loadbalancing is requested, then we need to compute
      * the #procs/node - note that this cannot be done
      * if we are doing pernode or if #procs was not given
