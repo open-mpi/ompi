@@ -838,8 +838,8 @@ static int mca_btl_sctp_endpoint_recv_connect_ack(mca_btl_base_endpoint_t* btl_e
 
     /* compare this to the expected values */
     if(memcmp(&btl_proc->proc_name, &guid, sizeof(orte_process_name_t)) != 0) {
-        BTL_ERROR(("received unexpected process identifier [%lu,%lu,%lu]", 
-            ORTE_NAME_ARGS(&guid)));
+        BTL_ERROR(("received unexpected process identifier %s", 
+                   ORTE_NAME_PRINT(&guid)));
         mca_btl_sctp_endpoint_close(btl_endpoint);
         return OMPI_ERR_UNREACH;
     }
