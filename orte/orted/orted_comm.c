@@ -813,6 +813,7 @@ static int process_commands(orte_process_name_t* sender,
                 
                 /* setup return */
                 answer = OBJ_NEW(opal_buffer_t);
+                num_nodes = 0;
                 
                 /* if they asked for a specific node, then just get that info */
                 if (NULL != nid) {
