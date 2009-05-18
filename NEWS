@@ -47,6 +47,10 @@ Trunk (not on release branches yet)
 1.3.3 (expected)
 ----------------
 
+- Change the behavior of the EXTRA_STATE parameter that is passed to
+  Fortran attribute callback functions: this value is now stored
+  internally in MPI -- it no longer references the original value
+  passed by MPI_*_CREATE_KEYVAL.
 - Fix MPI_GROUP_COMPARE behavior with regards to MPI_IDENT.  Thanks to
   Geoffrey Irving for identifying the problem and supplying the fix.
 - Silence gcc 4.1 compiler warnings about type punning.  Thanks to
