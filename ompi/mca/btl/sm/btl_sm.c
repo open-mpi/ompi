@@ -227,11 +227,6 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     mca_btl_sm_component.sm_mpool_base =
         mca_btl_sm_component.sm_mpools[0]->mpool_base(mca_btl_sm_component.sm_mpools[0]);
 
-    /* set the shared memory offset */
-    mca_btl_sm_component.sm_offset = (ptrdiff_t*)calloc(n, sizeof(ptrdiff_t));
-    if(NULL == mca_btl_sm_component.sm_offset)
-        return OMPI_ERR_OUT_OF_RESOURCE;
-
     /* create a list of peers */
     mca_btl_sm_component.sm_peers = (struct mca_btl_base_endpoint_t**)
         calloc(n, sizeof(struct mca_btl_base_endpoint_t*));
@@ -277,7 +272,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
         return OMPI_ERROR;
     }
 
-    mca_btl_sm_component.shm_fifo = (sm_fifo_t **)mca_btl_sm_component.mmap_file->data_addr;
+    mca_btl_sm_component.shm_fifo = (volatile sm_fifo_t **)mca_btl_sm_component.mmap_file->data_addr;
     mca_btl_sm_component.shm_bases = (char**)(mca_btl_sm_component.shm_fifo + n);
     mca_btl_sm_component.shm_mem_nodes = (uint16_t*)(mca_btl_sm_component.shm_bases + n);
 
@@ -292,8 +287,6 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
         return OMPI_ERR_OUT_OF_RESOURCE;
 
     mca_btl_sm_component.shm_fifo[mca_btl_sm_component.my_smp_rank] = my_fifos;
-
-    opal_atomic_wmb();
 
     /* cache the pointer to the 2d fifo array.  These addresses
      * are valid in the current process space */
@@ -499,14 +492,16 @@ int mca_btl_sm_add_procs(
             goto CLEANUP;
     }
 
+    opal_atomic_wmb();
+
     /* Sync with other local procs. Force the FIFO initialization to always
      * happens before the readers access it.
      */
     opal_atomic_add_32( &mca_btl_sm_component.mmap_file->map_seg->seg_inited, 1);
     while( n_local_procs >
            mca_btl_sm_component.mmap_file->map_seg->seg_inited) {
-        opal_atomic_rmb();
         opal_progress();
+        opal_atomic_rmb();
     }
 
     /* coordinate with other processes */
@@ -516,14 +511,14 @@ int mca_btl_sm_add_procs(
 
         /* spin until this element is allocated */
         /* doesn't really wait for that process... FIFO might be allocated, but not initialized */
+        opal_atomic_rmb();
         while(NULL == mca_btl_sm_component.shm_fifo[j]) {
-            opal_atomic_rmb();
             opal_progress();
+            opal_atomic_rmb();
         }
 
         /* Calculate the difference as (my_base - their_base) */
         diff = ADDR2OFFSET(bases[my_smp_rank], bases[j]);
-        mca_btl_sm_component.sm_offset[j] = diff;
 
         /* store local address of remote fifos */
         mca_btl_sm_component.fifo[j] =
