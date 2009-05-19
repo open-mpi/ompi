@@ -134,7 +134,7 @@ struct mca_btl_sm_component_t {
     mca_common_sm_mmap_t *mmap_file;   /**< description of mmap'ed file */
     mca_common_sm_file_header_t *sm_ctl_header;  /* control header in
                                                     shared memory */
-    sm_fifo_t **shm_fifo;              /**< pointer to fifo 2D array in shared memory */
+    volatile sm_fifo_t **shm_fifo;     /**< pointer to fifo 2D array in shared memory */
     char **shm_bases;                  /**< pointer to base pointers in shared memory */
     uint16_t *shm_mem_nodes;           /**< pointer to mem noded in shared memory */
     sm_fifo_t **fifo;                  /**< cached copy of the pointer to the 2D
@@ -146,8 +146,6 @@ struct mca_btl_sm_component_t {
     size_t fifo_size;                  /**< number of FIFO queue entries */
     size_t fifo_lazy_free;             /**< number of reads before lazy fifo free is triggered */
     int nfifos;                        /**< number of FIFOs per receiver */
-    ptrdiff_t *sm_offset;              /**< offset to be applied to shared memory
-                                          addresses, per local process value */
     int32_t num_smp_procs;             /**< current number of smp procs on this host */
     int32_t my_smp_rank;               /**< My SMP process rank.  Used for accessing
                                         *   SMP specfic data structures. */
