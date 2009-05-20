@@ -26,7 +26,8 @@
 AC_DEFUN([_OMPI_ATTRIBUTE_FAIL_SEARCH],[
     AC_REQUIRE([AC_PROG_GREP])
     if test -s conftest.err ; then
-        for i in ignore skip ; do
+        # icc uses 'invalid attribute' and 'attribute "__XXX__"  ignored'
+        for i in invalid ignore skip ; do
             $GREP -iq $i conftest.err
             if test "$?" = "0" ; then
                 opal_cv___attribute__[$1]=0
@@ -78,7 +79,7 @@ AC_DEFUN([_OMPI_CHECK_SPECIFIC_ATTRIBUTE], [
                            ],[opal_cv___attribute__[$1]=0])
             AC_LANG_POP(C++)
         fi
-        
+
         #
         # If the attribute is supported by both compilers,
         # try to recompile a *cross-check*, IFF defined.
@@ -189,6 +190,7 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
     opal_cv___attribute__const=0
     opal_cv___attribute__deprecated=0
     opal_cv___attribute__format=0
+    opal_cv___attribute__format_funcptr=0
     opal_cv___attribute__hot=0
     opal_cv___attribute__malloc=0
     opal_cv___attribute__may_alias=0
@@ -264,6 +266,32 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
 
          static int usage (int * argument) {
              return this_printf (*argument, "%d", argument); /* This should produce a format warning */
+         }
+         /* The autoconf-generated main-function is int main(), which produces a warning by itself */
+         int main(void);
+        ],
+        [$ATTRIBUTE_CFLAGS])
+
+    ATTRIBUTE_CFLAGS=
+    case "$ompi_c_vendor" in
+        gnu)
+            ATTRIBUTE_CFLAGS="-Wall"
+            ;;
+        intel)
+            # we want specifically the warning on format string conversion
+            ATTRIBUTE_CFLAGS="-we181"
+            ;;
+    esac
+    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([format_funcptr],
+        [
+         int (*this_printf)(void *my_object, const char *my_format, ...) __attribute__ ((__format__ (__printf__, 2, 3)));
+        ],
+        [
+         static int usage (int * argument);
+         extern int (*this_printf) (int arg1, const char *my_format, ...) __attribute__ ((__format__ (__printf__, 2, 3)));
+
+         static int usage (int * argument) {
+             return (*this_printf) (*argument, "%d", argument); /* This should produce a format warning */
          }
          /* The autoconf-generated main-function is int main(), which produces a warning by itself */
          int main(void);
@@ -488,6 +516,8 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
                      [Whether your compiler has __attribute__ deprecated or not])
   AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_FORMAT, [$opal_cv___attribute__format],
                      [Whether your compiler has __attribute__ format or not])
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_FORMAT_FUNCPTR, [$opal_cv___attribute__format_funcptr],
+                     [Whether your compiler has __attribute__ format and it works on function pointers])
   AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_HOT, [$opal_cv___attribute__hot],
                      [Whether your compiler has __attribute__ hot or not])
   AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_MALLOC, [$opal_cv___attribute__malloc],
