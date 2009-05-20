@@ -397,8 +397,7 @@ int mca_btl_sm_add_procs(
     opal_bitmap_t* reachability)
 {
     int return_code = OMPI_SUCCESS;
-    int32_t n_local_procs = 0, proc, j,
-        my_smp_rank = mca_btl_sm_component.my_smp_rank;
+    int32_t n_local_procs = 0, proc, j, my_smp_rank = -1;
     ompi_proc_t* my_proc; /* pointer to caller's proc structure */
     mca_btl_sm_t *sm_btl;
     bool have_connected_peer = false;
@@ -465,7 +464,7 @@ int mca_btl_sm_add_procs(
     }
 
     /* set local proc's smp rank in the peers structure for
-     * rapid access and calculate reachebility */
+     * rapid access and calculate reachability */
     for(proc = 0; proc < (int32_t)nprocs; proc++) {
         if(NULL == peers[proc])
             continue;
