@@ -425,12 +425,12 @@ int orte_show_help(const char *filename, const char *topic,
     }
     
     /* if we are the HNP, or the RML has not yet been setup,
-     * or we don't yet know our HNP, then all we can do
+     * or we weren't given an HNP, then all we can do
      * is process this locally
      */
     if (ORTE_PROC_IS_HNP ||
         NULL == orte_rml.send_buffer ||
-        ORTE_PROC_MY_HNP->vpid == ORTE_VPID_INVALID) {
+        NULL == orte_process_info.my_hnp_uri) {
         rc = show_help(filename, topic, output, ORTE_PROC_MY_NAME);
     }
     
