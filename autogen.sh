@@ -1214,14 +1214,14 @@ echo "[Checking] command line parameters"
 
 want_local=no
 ompidir=
-no_ompi=0
-no_orte=0
+want_ompi=1
+want_orte=1
 for arg in $*; do
     case $arg in
     -l) want_local=yes ;;
     -ompidir|--ompidir|-ompi|--ompi) ompidir="$2" ;;
-    -no-ompi) no_ompi=1 ;;
-    -no-orte) no_orte=1 ;;
+    -no-ompi) want_ompi=0 ;;
+    -no-orte) want_orte=0 ;;
     *) ;;
     esac
     shift
@@ -1247,12 +1247,12 @@ fi
 # top-level directory, or somewhere else.
 if test -f VERSION -a -f configure.ac -a -f $topdir_file ; then
     # locations to look for mca modules
-    config_project_list="opal orte ompi"
-    if test "$no_ompi" = "1" ; then
-        config_project_list="opal orte"
+    config_project_list="opal"
+    if test "$want_orte" = "1" ; then
+        config_project_list="$config_project_list orte"
     fi
-    if test "$no_orte" = "1" ; then
-        config_project_list="opal"
+    if test "$want_ompi" = "1" ; then
+        config_project_list="$config_project_list ompi"
     fi
     echo "Configuring projects: $config_project_list"
 
