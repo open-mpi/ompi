@@ -54,6 +54,16 @@ int orte_ess_base_tool_setup(void)
     int ret;
     char *error = NULL;
 
+    if (NULL != orte_process_info.my_hnp_uri) {
+        /* if we were given an HNP, then we were launched
+         * by mpirun in some fashion - in this case, we want
+         * to look like an application as well as being a tool.
+         * Need to do this before opening the routed framework
+         * so it will do the right things.
+         */
+        orte_process_info.proc_type |= ORTE_PROC_NON_MPI;
+    }
+    
     /* Setup the communication infrastructure */
     
     /* Runtime Messaging Layer */
@@ -116,15 +126,20 @@ int orte_ess_base_tool_setup(void)
     }
     
     /* setup I/O forwarding system - must come after we init routes */
-    if (ORTE_SUCCESS != (ret = orte_iof_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_iof_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_iof_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_iof_base_select";
-        goto error;
+    if (NULL != orte_process_info.my_hnp_uri) {
+        /* only do this if we were NOT given an HNP - i.e., if we
+         * are a standalone tool
+         */
+        if (ORTE_SUCCESS != (ret = orte_iof_base_open())) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_iof_base_open";
+            goto error;
+        }
+        if (ORTE_SUCCESS != (ret = orte_iof_base_select())) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_iof_base_select";
+            goto error;
+        }
     }
     
 #if OPAL_ENABLE_FT == 1
@@ -164,7 +179,9 @@ int orte_ess_base_tool_finalize(void)
      * a very small subset of orte_init - ensure that
      * I only back those elements out
      */
-    orte_iof_base_close();
+    if (NULL != orte_process_info.my_hnp_uri) {
+        orte_iof_base_close();
+    }
     orte_routed_base_close();
     orte_rml_base_close();
 

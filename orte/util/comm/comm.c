@@ -73,12 +73,27 @@ static void recv_info(int status, orte_process_name_t* sender,
     timer_fired = true;
 }
 
+static void send_cbfunc(int status, orte_process_name_t* sender,
+                      opal_buffer_t* buffer, orte_rml_tag_t tag,
+                      void* cbdata)
+{
+    /* cancel the timer */
+    if (NULL != quicktime) {
+        opal_evtimer_del(quicktime);
+        free(quicktime);
+        quicktime = NULL;
+    }
+    OBJ_RELEASE(buffer);
+    /* declare the work done */
+    timer_fired = true;
+}
+
 int orte_util_comm_query_job_info(const orte_process_name_t *hnp, orte_jobid_t job,
                                   int *num_jobs, orte_job_t ***job_info_array)
 {
     int ret;
     int32_t cnt, cnt_jobs, n;
-    opal_buffer_t cmd;
+    opal_buffer_t *cmd;
     orte_daemon_cmd_flag_t command = ORTE_DAEMON_REPORT_JOB_INFO_CMD;
     orte_job_t **job_info;
 
@@ -87,21 +102,37 @@ int orte_util_comm_query_job_info(const orte_process_name_t *hnp, orte_jobid_t j
     *job_info_array = NULL;
     
     /* send query to HNP */
-    OBJ_CONSTRUCT(&cmd, opal_buffer_t);
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&cmd, &command, 1, ORTE_DAEMON_CMD))) {
+    cmd = OBJ_NEW(opal_buffer_t);
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(cmd, &command, 1, ORTE_DAEMON_CMD))) {
         ORTE_ERROR_LOG(ret);
+        OBJ_RELEASE(cmd);
         return ret;
     }
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&cmd, &job, 1, ORTE_JOBID))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(cmd, &job, 1, ORTE_JOBID))) {
         ORTE_ERROR_LOG(ret);
+        OBJ_RELEASE(cmd);
         return ret;
     }
-    if (0 > (ret = orte_rml.send_buffer((orte_process_name_t*)hnp, &cmd, ORTE_RML_TAG_DAEMON, 0))) {
+    /* define a max time to wait for send to complete */
+    timer_fired = false;
+    error_exit = ORTE_SUCCESS;
+    ORTE_DETECT_TIMEOUT(&quicktime, 100, 1000, 100000, quicktime_cb);
+    
+    /* do the send */
+    if (0 > (ret = orte_rml.send_buffer_nb((orte_process_name_t*)hnp, cmd, ORTE_RML_TAG_DAEMON, 0,
+                                           send_cbfunc, NULL))) {
         ORTE_ERROR_LOG(ret);
-        OBJ_DESTRUCT(&cmd);
+        OBJ_RELEASE(cmd);
         return ret;
     }
-    OBJ_DESTRUCT(&cmd);
+    
+    /* wait for send to complete */
+    ORTE_PROGRESSED_WAIT(timer_fired, 0, 1);
+
+    /* did it succeed? */
+    if (ORTE_SUCCESS != error_exit) {
+        return error_exit;
+    }
     
     /* setup for answer */
     OBJ_CONSTRUCT(&answer, opal_buffer_t);
@@ -109,7 +140,7 @@ int orte_util_comm_query_job_info(const orte_process_name_t *hnp, orte_jobid_t j
     /* define a max time to wait for an answer */
     timer_fired = false;
     error_exit = ORTE_SUCCESS;
-    ORTE_DETECT_TIMEOUT(&quicktime, 10, 1000, 10000, quicktime_cb);
+    ORTE_DETECT_TIMEOUT(&quicktime, 100, 1000, 100000, quicktime_cb);
     
     /* get the answer */
     if (ORTE_SUCCESS != (ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
@@ -168,7 +199,7 @@ int orte_util_comm_query_node_info(const orte_process_name_t *hnp, char *node,
 {
     int ret;
     int32_t cnt, cnt_nodes, n;
-    opal_buffer_t cmd;
+    opal_buffer_t *cmd;
     orte_daemon_cmd_flag_t command = ORTE_DAEMON_REPORT_NODE_INFO_CMD;
     orte_node_t **node_info;
     
@@ -177,24 +208,38 @@ int orte_util_comm_query_node_info(const orte_process_name_t *hnp, char *node,
     *node_info_array = NULL;
     
     /* query the HNP for node info */
-    OBJ_CONSTRUCT(&cmd, opal_buffer_t);
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&cmd, &command, 1, ORTE_DAEMON_CMD))) {
+    cmd = OBJ_NEW(opal_buffer_t);
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(cmd, &command, 1, ORTE_DAEMON_CMD))) {
         ORTE_ERROR_LOG(ret);
-        OBJ_DESTRUCT(&cmd);
+        OBJ_RELEASE(cmd);
         return ret;
     }
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&cmd, &node, 1, OPAL_STRING))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(cmd, &node, 1, OPAL_STRING))) {
         ORTE_ERROR_LOG(ret);
-        OBJ_DESTRUCT(&cmd);
+        OBJ_RELEASE(cmd);
         return ret;
     }
-    if (0 > (ret = orte_rml.send_buffer((orte_process_name_t*)hnp, &cmd, ORTE_RML_TAG_DAEMON, 0))) {
-        ORTE_ERROR_LOG(ret);
-        OBJ_DESTRUCT(&cmd);
-        return ret;
-    }
-    OBJ_DESTRUCT(&cmd);
+    /* define a max time to wait for send to complete */
+    timer_fired = false;
+    error_exit = ORTE_SUCCESS;
+    ORTE_DETECT_TIMEOUT(&quicktime, 100, 1000, 100000, quicktime_cb);
     
+    /* do the send */
+    if (0 > (ret = orte_rml.send_buffer_nb((orte_process_name_t*)hnp, cmd, ORTE_RML_TAG_DAEMON, 0,
+                                           send_cbfunc, NULL))) {
+        ORTE_ERROR_LOG(ret);
+        OBJ_RELEASE(cmd);
+        return ret;
+    }
+    
+    /* wait for send to complete */
+    ORTE_PROGRESSED_WAIT(timer_fired, 0, 1);
+    
+    /* did it succeed? */
+    if (ORTE_SUCCESS != error_exit) {
+        return error_exit;
+    }
+
     /* define a max time to wait for an answer */
     timer_fired = false;
     error_exit = ORTE_SUCCESS;
@@ -258,7 +303,7 @@ int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t 
 {
     int ret;
     int32_t cnt, cnt_procs, n;
-    opal_buffer_t cmd;
+    opal_buffer_t *cmd;
     orte_daemon_cmd_flag_t command = ORTE_DAEMON_REPORT_PROC_INFO_CMD;
     orte_proc_t **proc_info;
 
@@ -267,29 +312,43 @@ int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t 
     *proc_info_array = NULL;
     
     /* query the HNP for info on the procs in this job */
-    OBJ_CONSTRUCT(&cmd, opal_buffer_t);
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&cmd, &command, 1, ORTE_DAEMON_CMD))) {
+    cmd = OBJ_NEW(opal_buffer_t);
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(cmd, &command, 1, ORTE_DAEMON_CMD))) {
         ORTE_ERROR_LOG(ret);
-        OBJ_DESTRUCT(&cmd);
+        OBJ_RELEASE(cmd);
         return ret;
     }
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&cmd, &job, 1, ORTE_JOBID))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(cmd, &job, 1, ORTE_JOBID))) {
         ORTE_ERROR_LOG(ret);
-        OBJ_DESTRUCT(&cmd);
+        OBJ_RELEASE(cmd);
         return ret;
     }
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&cmd, &vpid, 1, ORTE_VPID))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(cmd, &vpid, 1, ORTE_VPID))) {
         ORTE_ERROR_LOG(ret);
-        OBJ_DESTRUCT(&cmd);
+        OBJ_RELEASE(cmd);
         return ret;
     }
-    if (0 > (ret = orte_rml.send_buffer((orte_process_name_t*)hnp, &cmd, ORTE_RML_TAG_DAEMON, 0))) {
-        ORTE_ERROR_LOG(ret);
-        OBJ_DESTRUCT(&cmd);
-        return ret;
-    }
-    OBJ_DESTRUCT(&cmd);
+    /* define a max time to wait for send to complete */
+    timer_fired = false;
+    error_exit = ORTE_SUCCESS;
+    ORTE_DETECT_TIMEOUT(&quicktime, 100, 1000, 100000, quicktime_cb);
     
+    /* do the send */
+    if (0 > (ret = orte_rml.send_buffer_nb((orte_process_name_t*)hnp, cmd, ORTE_RML_TAG_DAEMON, 0,
+                                           send_cbfunc, NULL))) {
+        ORTE_ERROR_LOG(ret);
+        OBJ_RELEASE(cmd);
+        return ret;
+    }
+    
+    /* wait for send to complete */
+    ORTE_PROGRESSED_WAIT(timer_fired, 0, 1);
+    
+    /* did it succeed? */
+    if (ORTE_SUCCESS != error_exit) {
+        return error_exit;
+    }
+
     /* define a max time to wait for an answer */
     timer_fired = false;
     error_exit = ORTE_SUCCESS;
