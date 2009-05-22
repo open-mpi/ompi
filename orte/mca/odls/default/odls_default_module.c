@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  *
@@ -503,6 +503,10 @@ static void set_handler_default(int sig)
     sigaction(sig, &act, (struct sigaction *)0);
 }
 
+/**
+ * Send a sigal to a pid.  Note that if we get an error, we set the
+ * return value and let the upper layer print out the message.  
+ */
 static int send_signal(pid_t pid, int signal)
 {
     int rc = ORTE_SUCCESS;
@@ -515,19 +519,19 @@ static int send_signal(pid_t pid, int signal)
     if (kill(pid, signal) != 0) {
         switch(errno) {
             case EINVAL:
-                ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
                 rc = ORTE_ERR_BAD_PARAM;
                 break;
             case ESRCH:
-                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                rc = ORTE_ERR_NOT_FOUND;
+                /* This case can occur when we deliver a signal to a
+                   process that is no longer there.  This can happen if
+                   we deliver a signal while the job is shutting down. 
+                   This does not indicate a real problem, so just 
+                   ignore the error.  */
                 break;
             case EPERM:
-                ORTE_ERROR_LOG(ORTE_ERR_PERM);
                 rc = ORTE_ERR_PERM;
                 break;
             default:
-                ORTE_ERROR_LOG(ORTE_ERROR);
                 rc = ORTE_ERROR;
         }
     }
