@@ -19,6 +19,10 @@
 
 #include "ompi_config.h"
 
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/datatype/convertor.h"
