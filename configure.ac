@@ -10,10 +10,11 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 #                         reserved. 
+# Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -73,7 +74,7 @@ OMPI_SAVE_VERSION([ORTE], [Open Run-Time Environment], [$srcdir/VERSION],
 OMPI_SAVE_VERSION([OPAL], [Open Portable Access Layer], [$srcdir/VERSION],
                   [opal/include/opal/version.h])
 
-AM_CONFIG_HEADER([opal/include/opal_config.h orte/include/orte_config.h ompi/include/ompi_config.h ompi/include/mpi.h])
+AM_CONFIG_HEADER([opal/include/opal_config.h orte/include/orte_config.h ompi/include/ompi_config.h ompi/include/mpi.h ompi/include/mpi_portable_platform.h])
 
 # override/fixup the version numbers set by AC_INIT, since on
 # developer builds, there's no good way to know what the version is
@@ -417,6 +418,7 @@ AC_DEFINE_UNQUOTED(OMPI_WANT_CXX_BINDINGS, $WANT_MPI_CXX_SUPPORT,
 ##################################
 OMPI_CHECK_ATTRIBUTES
 
+OPAL_CHECK_COMPILER_VERSION_ID
 
 ##################################
 # Assembler Configuration

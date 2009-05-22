@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -189,6 +190,7 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
     opal_cv___attribute__cold=0
     opal_cv___attribute__const=0
     opal_cv___attribute__deprecated=0
+    opal_cv___attribute__deprecated_argument=0
     opal_cv___attribute__format=0
     opal_cv___attribute__format_funcptr=0
     opal_cv___attribute__hot=0
@@ -236,7 +238,6 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
         [],
         [])
 
-
     _OMPI_CHECK_SPECIFIC_ATTRIBUTE([deprecated],
         [
          int foo(int arg1, int arg2) __attribute__ ((__deprecated__));
@@ -245,6 +246,13 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
         [],
         [])
 
+    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([deprecated_argument],
+        [
+         int foo(int arg1, int arg2) __attribute__ ((__deprecated__("compiler allows argument")));
+         int foo(int arg1, int arg2) { return arg1 * arg2 + arg1; }
+        ],
+        [],
+        [])
 
     ATTRIBUTE_CFLAGS=
     case "$ompi_c_vendor" in
@@ -514,6 +522,8 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
                      [Whether your compiler has __attribute__ const or not])
   AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_DEPRECATED, [$opal_cv___attribute__deprecated],
                      [Whether your compiler has __attribute__ deprecated or not])
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_DEPRECATED_ARGUMENT, [$opal_cv___attribute__deprecated_argument],
+                     [Whether your compiler has __attribute__ deprecated with optional argument])
   AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_FORMAT, [$opal_cv___attribute__format],
                      [Whether your compiler has __attribute__ format or not])
   AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_FORMAT_FUNCPTR, [$opal_cv___attribute__format_funcptr],
