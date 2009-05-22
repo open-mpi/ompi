@@ -15,6 +15,7 @@ dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
+dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -366,6 +367,28 @@ else
 fi
 AC_DEFINE_UNQUOTED(MPI_PARAM_CHECK, $mpi_param_check,
     [Whether we want to check MPI parameters always, never, or decide at run-time])
+
+
+#
+# Do we want to enable MPI interface warnings (e.g. deprecated functionality and others)?
+#
+# XXX This __disabled__ by default for 1.5, but will be __enabled__ for 1.7 by default
+# Users should be notified about this proposed change.
+#
+
+AC_MSG_CHECKING([if want compile-time warnings inside of mpi.h])
+AC_ARG_ENABLE(mpi-interface-warning,
+    AC_HELP_STRING([--enable-mpi-interface-warning],
+                   [enable warnings in wrong (e.g. deprecated) usage in user-level code (default: disabled)]))
+if test "$enable_mpi_interface_warning" = "yes"; then
+    AC_MSG_RESULT([yes])
+    OMPI_WANT_MPI_INTERFACE_WARNING=1
+else
+    AC_MSG_RESULT([no])
+    OMPI_WANT_MPI_INTERFACE_WARNING=0
+fi
+AC_DEFINE_UNQUOTED([OMPI_WANT_MPI_INTERFACE_WARNING], [$OMPI_WANT_MPI_INTERFACE_WARNING],
+    [Enable warnings in wrong usage (e.g. deprecated) in user-level code])
 
 
 #

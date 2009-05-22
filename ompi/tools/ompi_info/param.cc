@@ -10,6 +10,7 @@
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -41,6 +42,7 @@
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/tools/ompi_info/ompi_info.h"
+#include "ompi/include/mpi_portable_platform.h"
 
 using namespace std;
 using namespace ompi_info;
@@ -494,6 +496,7 @@ void ompi_info::do_config(bool want_all)
   const string memprofile(OPAL_ENABLE_MEM_PROFILE ? "yes" : "no");
   const string memdebug(OPAL_ENABLE_MEM_DEBUG ? "yes" : "no");
   const string debug(OPAL_ENABLE_DEBUG ? "yes" : "no");
+  const string mpi_interface_warning(OMPI_WANT_MPI_INTERFACE_WARNING ? "yes" : "no");
   const string cprofiling(OMPI_ENABLE_MPI_PROFILING ? "yes" : "no");
   const string cxxprofiling(OMPI_ENABLE_MPI_PROFILING ? "yes" : "no");
   const string f77profiling((OMPI_ENABLE_MPI_PROFILING && 
@@ -567,6 +570,8 @@ void ompi_info::do_config(bool want_all)
 
   out("C compiler", "compiler:c:command", OPAL_CC);
   out("C compiler absolute", "compiler:c:absolute", OPAL_CC_ABSOLUTE);
+  out("C compiler family name", "compiler:c:familyname", _STRINGIFY(OPAL_BUILD_PLATFORM_COMPILER_FAMILYNAME));
+  out("C compiler version", "compiler:c:version", _STRINGIFY(OPAL_BUILD_PLATFORM_COMPILER_VERSION_STR));
 
   if (want_all) {
     out("C char size", "compiler:c:sizeof:char", sizeof(char));
@@ -764,6 +769,7 @@ void ompi_info::do_config(bool want_all)
   }
 
   out("Internal debug support", "option:debug", debug);
+  out("MPI interface warnings", "option:mpi-interface-warning", mpi_interface_warning);
   out("MPI parameter check", "option:mpi-param-check", paramcheck);
   out("Memory profiling support", "option:mem-profile", memprofile);
   out("Memory debugging support", "option:mem-debug", memdebug);
