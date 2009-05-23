@@ -1234,6 +1234,9 @@
 /* if the peruse interface should be enabled */
 #define OMPI_WANT_PERUSE ${OMPI_WANT_PERUSE}
 
+/* if want compile-time warnings inside of mpi.h */
+#define OMPI_WANT_MPI_INTERFACE_WARNING ${OMPI_WANT_MPI_INTERFACE_WARNING}
+
 /* if want pretty-print stack trace feature */
 #cmakedefine OPAL_WANT_PRETTY_PRINT_STACKTRACE 1
 
