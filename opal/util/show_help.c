@@ -37,10 +37,6 @@
 /*
  * Private variables
  */
-#if 0
-/* not attempting i18n-like support right now */
-static const char *default_language = "C";
-#endif
 static const char *default_filename = "help-messages";
 static const char *dash_line = "--------------------------------------------------------------------------\n";
 static int output_stream = -1;
@@ -119,12 +115,8 @@ static int array2string(char **outstring,
  */
 static int open_file(const char *base, const char *topic)
 {
-#if 0
-    /* not attempting i18n-like support right now */
-    const char *lang;
-#endif
     char *filename;
-    char *err_msg = 0;
+    char *err_msg = NULL;
     size_t base_len;
 
     /* If no filename was supplied, use the default */
@@ -133,8 +125,6 @@ static int open_file(const char *base, const char *topic)
         base = default_filename;
     }
 
-    /* Don't try any i18n-like support right now */
-#if 1
     /* Try to open the file.  If we can't find it, try it with a .txt
        extension. */
 
@@ -151,37 +141,6 @@ static int open_file(const char *base, const char *topic)
         }
     }
     free(filename);
-#else
-    /* What's our locale? */
-
-    lang = setlocale(LC_MESSAGES, "");
-    if (NULL == lang) {
-        lang = default_language;
-    }
-
-    /* Do we have a file matching that locale?  If not, open the
-       default language (because we know that we have that one) */
-
-    asprintf(&filename, "%s%s%s.%s", opal_install_dirs.pkgdatadir,
-             OPAL_PATH_SEP, base, lang);
-    opal_show_help_yyin = fopen(filename, "r");
-    if (NULL == opal_show_help_yyin) {
-        asprintf(&err_msg, "%s: %s", filename, strerror(errno));
-        free(filename);
-        asprintf(&filename, "%s%s%s.%s", opal_install_dirs.pkgdatadir, 
-                 OPAL_PATH_SEP, base, default_language);
-        opal_show_help_yyin = fopen(filename, "r");
-    }
-    free(filename);
-
-    /* If we still couldn't find it, try with no extension */
-
-    if (NULL == opal_show_help_yyin) {
-        filename = opal_os_path( false, opal_install_dirs.pkgdatadir, base, NULL );
-        opal_show_help_yyin = fopen(filename, "r");
-        free(filename);
-    }
-#endif
 
     /* If we still couldn't open it, then something is wrong */
 
