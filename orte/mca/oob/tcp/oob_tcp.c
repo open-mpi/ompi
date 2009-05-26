@@ -500,12 +500,24 @@ static void mca_oob_tcp_accept(int incoming_sd)
 
         sd = accept(incoming_sd, (struct sockaddr*)&addr, &addrlen);
         if(sd < 0) {
-            if(opal_socket_errno == EINTR) {
+            if(EINTR == opal_socket_errno) {
                 continue;
             }
             if(opal_socket_errno != EAGAIN && opal_socket_errno != EWOULDBLOCK) {
-                opal_output(0, "mca_oob_tcp_accept: accept() failed: %s (%d).", 
-                            strerror(opal_socket_errno), opal_socket_errno);
+                if(EMFILE == opal_socket_errno) {
+                    /*
+                     * Close incoming_sd so that orte_show_help will have a file
+                     * descriptor with which to open the help file.  We will be
+                     * exiting anyway, so we don't need to keep it open.
+                     */
+                    CLOSE_THE_SOCKET(incoming_sd);
+                    ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_SOCKETS);
+                    orte_show_help("help-orterun.txt", "orterun:sys-limit-sockets", true);
+                } else {
+                    opal_output(0, "mca_oob_tcp_accept: accept() failed: %s (%d).", 
+                                strerror(opal_socket_errno), opal_socket_errno);
+                }
+                orte_errmgr.abort(ORTE_ERROR_DEFAULT_EXIT_CODE, "");
             }
             return;
         }
@@ -910,9 +922,14 @@ mca_oob_tcp_listen_thread(opal_object_t *obj)
 
                     if (opal_socket_errno != EAGAIN || 
                         opal_socket_errno != EWOULDBLOCK) {
-                        opal_output(0, "mca_oob_tcp_accept: accept() failed: %s (%d).",
-                                    strerror(opal_socket_errno), opal_socket_errno);
                         CLOSE_THE_SOCKET(pending_connection->fd);
+                        if(EMFILE == opal_socket_errno) {
+                            ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_SOCKETS);
+                            orte_show_help("help-orterun.txt", "orterun:sys-limit-sockets", true);
+                        } else {
+                            opal_output(0, "mca_oob_tcp_accept: accept() failed: %s (%d).",
+                                        strerror(opal_socket_errno), opal_socket_errno);
+                        }
                         goto done;
                     }
 

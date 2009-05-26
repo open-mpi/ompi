@@ -115,6 +115,9 @@ orte_err2str(int errnum)
     case ORTE_ERR_HNP_COULD_NOT_START:
         retval = "Unable to start a daemon on the local node";
         break;
+    case ORTE_ERR_SYS_LIMITS_SOCKETS:
+        retval = "The system limit on number of network connections a process can open was reached";
+        break;
     default:
         retval = NULL;
     }
