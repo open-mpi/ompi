@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+// Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
 //                         University Research and Technology
 //                         Corporation.  All rights reserved.
 // Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -9,7 +9,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -110,7 +110,9 @@ namespace ompi_info {
            int value);
   void out(const std::string& pretty_message, 
            const std::string &plain_message,
-           const std::string& value);
+           const std::string& value,
+           bool strip_leading_whitespace = true,
+           bool strip_trailing_whitespace = true);
 
   //
   // Component-related functions

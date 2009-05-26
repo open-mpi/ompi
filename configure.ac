@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -1066,13 +1066,27 @@ OMPI_MCA
 AC_CACHE_SAVE
 
 ##################################
+# MPI Extended Interfaces
+##################################
+
+ompi_show_title "Extended MPI interfaces setup" 
+
+OMPI_EXT
+
+AC_DEFINE_UNQUOTED(OMPI_EXT_COMPONENTS, "$EXT_mpiext_ALL_COMPONENTS",
+    [MPI Extended Interface Components])
+
+# checkpoint results
+AC_CACHE_SAVE
+
+##################################
 # Visibility
 ##################################
 
 # Check the visibility declspec at the end to avoid problem with
 # the previous tests that are not necessarily prepared for
 # the visibility feature.
-ompi_show_title "Symbol Visibility Feature"
+ompi_show_title "Symbol visibility feature"
 
 OMPI_CHECK_VISIBILITY
 

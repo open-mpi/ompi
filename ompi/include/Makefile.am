@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -30,6 +30,9 @@ nodist_headers = \
 # Install these in $(includedir)
 include_HEADERS =
 
+# Always install these in $(pkgincludedir)
+pkginclude_HEADERS =
+
 if OMPI_WANT_F77_BINDINGS
 include_HEADERS += \
 	mpif-common.h \
@@ -41,6 +44,7 @@ endif
 # counterparts (which AM automatically ships).
 nodist_include_HEADERS = \
         mpi.h \
+        mpi-ext.h \
         mpi_portable_platform.h
 
 if OMPI_WANT_F77_BINDINGS
