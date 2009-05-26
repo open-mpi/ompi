@@ -13,22 +13,21 @@
 #define STRBUF_SIZE  0x400   /* buffer size for strings */
 #define MAX_LINE_LEN 0x20000 /* max file line length */
 
-/* data structure for region call limits */
+/* data structure for fitler assignments */
 
-typedef struct RFG_FilterCLimits_struct
+typedef struct RFG_FilterAssigns_struct
 {
-  int32_t  climit;             /* call limit */
-  uint32_t npattern;           /* number of assigned pattern */
-  char**   pattern;            /* array of assigned pattern */
-} RFG_FilterCLimits;
+  int32_t climit;              /* call limit */
+  char*   pattern;             /* pattern */
+} RFG_FilterAssigns;
 
 struct RFG_Filter_struct
 {
   char*   deffile;             /* name of filter definition file */
   int32_t default_call_limit;  /* default call limit */
 
-  uint32_t           nclimits; /* number of call limit assignments */
-  RFG_FilterCLimits* climits;  /* array of call limit assignments */
+  uint32_t           nassigns; /* number of filter assignments */
+  RFG_FilterAssigns* assigns;  /* array of filter assignments */
 };
 
 RFG_Filter* RFG_Filter_init()
@@ -46,8 +45,8 @@ RFG_Filter* RFG_Filter_init()
   ret->deffile = NULL;
   ret->default_call_limit = -1;
 
-  ret->nclimits = 0;
-  ret->climits = NULL;
+  ret->nassigns = 0;
+  ret->assigns = NULL;
 
   return ret;
 }
@@ -55,7 +54,6 @@ RFG_Filter* RFG_Filter_init()
 int RFG_Filter_free( RFG_Filter* filter )
 {
   uint32_t i;
-  uint32_t j;
 
   if( !filter ) return 0;
 
@@ -66,15 +64,10 @@ int RFG_Filter_free( RFG_Filter* filter )
 
   /* free array of call limit assignments */
 
-  for( i = 0; i < filter->nclimits; i++ )
-  {
-    for( j = 0; j < filter->climits[i].npattern; j++ )
-      free( filter->climits[i].pattern[j] );
+  for( i = 0; i < filter->nassigns; i++ )
+    free( filter->assigns[i].pattern );
 
-    free( filter->climits[i].pattern );
-  }
-
-  free( filter->climits );
+  free( filter->assigns );
 
   /* free self */
 
@@ -228,7 +221,7 @@ int RFG_Filter_readDefFile( RFG_Filter* filter )
       /* add call limit assignment */
 
       if( strlen( pattern ) > 0 )
-	RFG_Filter_addCLimit( filter, climit, pattern );
+	RFG_Filter_add( filter, pattern, climit );
 
     } while( ( p = strtok( 0, ";" ) ) );
 
@@ -248,96 +241,52 @@ int RFG_Filter_readDefFile( RFG_Filter* filter )
   return 1;
 }
 
-int RFG_Filter_addCLimit( RFG_Filter* filter, int32_t climit,
-			  const char* pattern )
+int RFG_Filter_add( RFG_Filter* filter, const char* pattern,
+                    int32_t climit )
 {
-  uint32_t i;
-  RFG_FilterCLimits* entry = NULL;
-
   if( !filter || !pattern ) return 0;
 
-  /* search call limit assignment by call limit */
+  /* enlarge array of filter assignments */
 
-  for( i = 0; i < filter->nclimits; i++ )
-  {
-    if( filter->climits[i].climit == climit )
-    {
-      entry = &(filter->climits[i]);
-      break;
-    }
-  }
+  filter->assigns =
+    (RFG_FilterAssigns*)realloc( filter->assigns,
+                                 ( filter->nassigns + 1 )
+                                 * sizeof( RFG_FilterAssigns ) );
 
-  /* if no entry found, then allocate new call limit assignment entry */
-
-  if( !entry )
-  {
-    if( !filter->climits )
-    {
-      filter->climits =
-	( RFG_FilterCLimits* )malloc( sizeof( RFG_FilterCLimits ) );
-    }
-    else
-    {
-      filter->climits =
-	(RFG_FilterCLimits* )realloc( filter->climits,
-				      ( filter->nclimits + 1 )
-				      * sizeof( RFG_FilterCLimits ) );
-    }
-
-    if( filter->climits == NULL )
-      return 0;
-
-    entry = &(filter->climits[filter->nclimits++]);
-    entry->climit = climit;
-    entry->npattern = 0;
-    entry->pattern = NULL;
-  }
-
-  /* add pattern to call limit */
-
-  if( !entry->pattern )
-  {
-    entry->pattern = ( char** )malloc( sizeof( char * ) );
-  }
-  else
-  {
-    entry->pattern = ( char** )realloc( entry->pattern,
-					( entry->npattern + 1 )
-					* sizeof( char * ) );
-  }
-  if( entry->pattern == NULL )
+  if( filter->assigns == NULL )
     return 0;
 
-  entry->pattern[entry->npattern++] = strdup( pattern );
+  /* add new filter assignment */
+
+  filter->assigns[filter->nassigns].climit = climit;
+  filter->assigns[filter->nassigns].pattern = strdup( pattern );
+  filter->nassigns++;
 
   return 1;
 }
 
 int RFG_Filter_get( RFG_Filter* filter, const char* rname,
-		    int32_t* r_climit )
+                    int32_t* r_climit )
 {
   uint32_t i;
-  uint32_t j;
 
   if( !filter || !rname ) return 0;
-  
+
   /* search for matching pattern by region name */
 
-  for( i = 0; i < filter->nclimits; i++ )
+  for( i = 0; i < filter->nassigns; i++ )
   {
-    for( j = 0; j < filter->climits[i].npattern; j++ )
+    if( fnmatch( filter->assigns[i].pattern, rname, 0 ) == 0 )
     {
-      if( fnmatch( filter->climits[i].pattern[j], rname, 0 ) == 0 )
-      {
-	*r_climit = filter->climits[i].climit;
-	return 1;
-      }
+      *r_climit = filter->assigns[i].climit;
+      break;
     }
   }
 
   /* return default call limit, if no matching pattern found */
 
-  *r_climit = filter->default_call_limit;
+  if( i == filter->nassigns )
+    *r_climit = filter->default_call_limit;
 
   return 1;
 }
