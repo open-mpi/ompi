@@ -183,6 +183,9 @@ AC_DEFUN([EXT_CONFIGURE_FRAMEWORK],[
 
     outdir=$1/include
 
+    # first create the output include directory
+    mkdir -p $outdir
+
     # remove any previously generated #include files
     mpi_ext_h=$outdir/mpi-ext.h
     rm -f $mpi_ext_h
