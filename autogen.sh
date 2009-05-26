@@ -488,14 +488,26 @@ EOF
             chmod a+x configure
         fi
 
-        # See http://lists.gnu.org/archive/html/bug-libtool/2008-05/msg00045.html
-        if check_version "2.1.9999" $ompi_libtoolize_found_version ; then
-            echo "   ++ patching for ifort (LT 2.2.0-4)"
-            cd opal/libltdl/m4
-            patch -N -p0 < ../../../config/lt224-icc.diff > /dev/null 2>&1
-            rm -f libtool.m4.orig
-            rm -f libtool.m4.rej
-            cd ../../..
+        # See
+        # http://lists.gnu.org/archive/html/bug-libtool/2008-05/msg00045.html.
+        # Note that this issue was fixed in LT 2.6, so don't patch if
+        # you have a version after that (because this patch changes
+        # the timestamp on opal/libltdl/m4/libtool.m4, which should be
+        # avoided if possible...).
+        echo "   ++ patching for ifort (LT 2.2.0-4)"
+        patched=0
+        if check_version "2.1.9999" $ompi_libtoolize_found_version; then
+            if ! check_version "2.2.6" $ompi_libtoolize_found_version; then
+                cd opal/libltdl/m4
+                patch -N -p0 < ../../../config/lt224-icc.diff > /dev/null 2>&1
+                rm -f libtool.m4.orig
+                rm -f libtool.m4.rej
+                cd ../../..
+                patched=1
+            fi
+        fi
+        if test "$patched" != "1"; then
+            echo "     -- your libltdl doesn't need this! yay!"
         fi
     else
 	run_and_check $ompi_libtoolize --automake --copy
@@ -527,16 +539,23 @@ EOF
         fi
         rm -f aclocal.m4.orig
         rm -f aclocal.m4.rej
-        # See http://lists.gnu.org/archive/html/bug-libtool/2008-05/msg00045.html
-        if check_version "2.1.9999" $ompi_libtoolize_found_version ; then
-            echo "   ++ patching for ifort (LT 2.2.0-4)"
-            cd config
-            patch -N -p0 < lt224-icc.diff > /dev/null 2>&1
-            rm -f libtool.m4.orig
-            rm -f libtool.m4.rej
-            cd ..
-        fi
 
+        # See note above about lt224-icc.diff
+        echo "   ++ patching for ifort (LT 2.2.0-4)"
+        patched=0
+        if check_version "2.1.9999" $ompi_libtoolize_found_version; then
+            if ! check_version "2.2.6" $ompi_libtoolize_found_version; then
+                cd config
+                patch -N -p0 < lt224-icc.diff > /dev/null 2>&1
+                rm -f libtool.m4.orig
+                rm -f libtool.m4.rej
+                cd ..
+                patched=1
+            fi
+        fi
+        if test "$patched" != "1"; then
+            echo "     -- your libltdl doesn't need this! yay!"
+        fi
 
         # Libtool 1.5.2x and 2.1x automatically link in the "Cstd" STL library
         # when using the Sun compilers on Linux or Solaris, even if the
