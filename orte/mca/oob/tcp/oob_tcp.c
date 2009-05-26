@@ -58,6 +58,7 @@
 #include "orte/mca/ess/ess.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/parse_options.h"
+#include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/oob/tcp/oob_tcp.h"
