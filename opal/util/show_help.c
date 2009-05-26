@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <locale.h>
+#include <errno.h>
 
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/show_help.h"
@@ -123,6 +124,8 @@ static int open_file(const char *base, const char *topic)
     const char *lang;
 #endif
     char *filename;
+    char *err_msg = 0;
+    size_t base_len;
 
     /* If no filename was supplied, use the default */
 
@@ -137,12 +140,17 @@ static int open_file(const char *base, const char *topic)
 
     filename = opal_os_path( false, opal_install_dirs.pkgdatadir, base, NULL );
     opal_show_help_yyin = fopen(filename, "r");
-    free(filename);
     if (NULL == opal_show_help_yyin) {
-        asprintf(&filename, "%s/%s.txt", opal_install_dirs.pkgdatadir, base);
-        opal_show_help_yyin = fopen(filename, "r");
-        free(filename);
+        asprintf(&err_msg, "%s: %s", filename, strerror(errno));
+        base_len = strlen(base);
+        if (4 > base_len || 0 != strcmp(base + base_len - 4, ".txt")) {
+            free(filename);
+            asprintf(&filename, "%s%s%s.txt", opal_install_dirs.pkgdatadir,
+                     OPAL_PATH_SEP, base);
+            opal_show_help_yyin = fopen(filename, "r");
+        }
     }
+    free(filename);
 #else
     /* What's our locale? */
 
@@ -154,15 +162,17 @@ static int open_file(const char *base, const char *topic)
     /* Do we have a file matching that locale?  If not, open the
        default language (because we know that we have that one) */
 
-    asprintf(&filename, "%s/%s.%s", opal_install_dirs.pkgdatadir, base, lang);
+    asprintf(&filename, "%s%s%s.%s", opal_install_dirs.pkgdatadir,
+             OPAL_PATH_SEP, base, lang);
     opal_show_help_yyin = fopen(filename, "r");
-    free(filename);
     if (NULL == opal_show_help_yyin) {
-        asprintf(&filename, "%s/%s.%s", opal_install_dirs.pkgdatadir, 
-                 base, default_language);
-        opal_show_help_yyin = fopen(filename, "r");
+        asprintf(&err_msg, "%s: %s", filename, strerror(errno));
         free(filename);
+        asprintf(&filename, "%s%s%s.%s", opal_install_dirs.pkgdatadir, 
+                 OPAL_PATH_SEP, base, default_language);
+        opal_show_help_yyin = fopen(filename, "r");
     }
+    free(filename);
 
     /* If we still couldn't find it, try with no extension */
 
@@ -176,8 +186,13 @@ static int open_file(const char *base, const char *topic)
     /* If we still couldn't open it, then something is wrong */
 
     if (NULL == opal_show_help_yyin) {
-        opal_output(output_stream, "%sSorry!  You were supposed to get help about:\n    %s\nfrom the file:\n    %s\nBut I couldn't find any file matching that name.  Sorry!\n%s", dash_line, topic, base, dash_line);
+        opal_output(output_stream, "%sSorry!  You were supposed to get help about:\n    %s\nBut I couldn't open the help file:\n    %s.  Sorry!\n%s", dash_line, topic, err_msg, dash_line);
+        free(err_msg);
         return OPAL_ERR_NOT_FOUND;
+    }
+
+    if (NULL != err_msg) {
+        free(err_msg);
     }
 
     /* Set the buffer */
