@@ -1,6 +1,6 @@
 #! /usr/bin/env bash 
 #
-# Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -87,6 +87,13 @@ mca_no_config_list_file="mca_no_config_list"
 mca_no_config_env_file="mca_no_config_env"
 mca_m4_include_file="config/mca_m4_config_include.m4"
 mca_m4_config_env_file="mca_m4_config_env"
+
+ext_no_configure_components_file="config/ext_no_configure_components.m4"
+ext_no_config_list_file="ext_no_config_list"
+ext_no_config_env_file="ext_no_config_env"
+ext_m4_include_file="config/ext_m4_config_include.m4"
+ext_m4_config_env_file="ext_m4_config_env"
+
 autogen_subdir_file="autogen.subdirs"
 topdir_file="opal/include/opal_config_bottom.h"
 
@@ -587,8 +594,13 @@ run_no_configure_component() {
     noconf_component="$5"
 
     # Write out to two files (they're merged at the end)
-    noconf_list_file="$noconf_ompi_topdir/$mca_no_config_list_file"
-    noconf_env_file="$noconf_ompi_topdir/$mca_no_config_env_file"
+    if test $6 = "mca" ; then
+        noconf_list_file="$noconf_ompi_topdir/$mca_no_config_list_file"
+        noconf_env_file="$noconf_ompi_topdir/$mca_no_config_env_file"
+    else
+        noconf_list_file="$noconf_ompi_topdir/$ext_no_config_list_file"
+        noconf_env_file="$noconf_ompi_topdir/$ext_no_config_env_file"
+    fi
 
     cat >> "$noconf_list_file" <<EOF
 dnl ----------------------------------------------------------------
@@ -637,8 +649,13 @@ run_m4_configure_component() {
     m4conf_component="$5"
 
     # Write out to two files (they're merged at the end)
-    m4conf_list_file="$m4conf_ompi_topdir/$mca_no_config_list_file"
-    m4conf_env_file="$m4conf_ompi_topdir/$mca_m4_config_env_file"
+    if test $6 = "mca" ; then
+        m4conf_list_file="$m4conf_ompi_topdir/$mca_no_config_list_file"
+        m4conf_env_file="$m4conf_ompi_topdir/$mca_m4_config_env_file"
+    else
+        m4conf_list_file="$m4conf_ompi_topdir/$ext_no_config_list_file"
+        m4conf_env_file="$m4conf_ompi_topdir/$ext_m4_config_env_file"
+    fi
 
     cat >> "$m4conf_list_file" <<EOF
 dnl ----------------------------------------------------------------
@@ -659,7 +676,11 @@ EOF
     # do.  By this point, there should already be a header and all
     # that.  m4_includes are relative to the currently included file,
     # so need the .. to get us from config/ to the topsrcdir again.
-    echo "m4_include(${m4conf_project}/mca/${m4conf_framework}/${m4conf_component}/configure.m4)" >> "$m4conf_ompi_topdir/$mca_m4_include_file"
+    if test $6 = "mca" ; then
+        echo "m4_include(${m4conf_project}/mca/${m4conf_framework}/${m4conf_component}/configure.m4)" >> "$m4conf_ompi_topdir/$mca_m4_include_file"
+    else
+        echo "m4_include(${m4conf_project}/${m4conf_framework}/${m4conf_component}/configure.m4)" >> "$m4conf_ompi_topdir/$ext_m4_include_file"
+    fi
 
     cat <<EOF
 --> Adding to top-level configure m4-configure subdirs:
@@ -878,7 +899,7 @@ EOF
                 rm -f "configure" "configure.ac*" "acinclude*" "aclocal.m4"
 
                 run_m4_configure_component "$pd_dir" "$pd_ompi_topdir" \
-                    "$pd_project" "$pd_framework" "$pd_component"
+                    "$pd_project" "$pd_framework" "$pd_component" "mca"
             fi
 
         elif test -f configure.ac -o -f configure.in; then
@@ -917,7 +938,198 @@ EOF
 EOF
             else
                 run_no_configure_component "$pd_dir" "$pd_ompi_topdir" \
-                    "$pd_project" "$pd_framework" "$pd_component"
+                    "$pd_project" "$pd_framework" "$pd_component" "mca"
+            fi
+        else
+	    cat <<EOF
+
+*** Nothing found; directory skipped
+***   `pwd`
+
+EOF
+        fi
+
+        # See if there's a file containing additional directories to
+        # traverse.  Shell scripts aren't too good at recursion (no
+        # local state!), so just have a child autogen.sh do the work.
+
+        if test -f $autogen_subdir_file; then
+            pd_subdir_start_dir="`pwd`"
+            echo ""
+            echo "==> Found $autogen_subdir_file -- sub-traversing..."
+            echo ""
+            for dir in `cat $autogen_subdir_file`; do
+                if test -d "$dir"; then
+                    echo "*** Running autogen.sh in $dir"
+                    echo "***   (started in $pd_subdir_start_dir)"
+                    cd "$dir"
+                    $pd_ompi_topdir/autogen.sh -l
+                    if test ! $? -eq 0 ; then
+                        echo "Error running autogen.sh -l in $dir.  Aborting."
+                        exit 1
+                    fi
+                    cd "$pd_subdir_start_dir"
+                    echo ""
+                fi
+            done
+            echo "<== Back in $pd_subdir_start_dir"
+            echo "<== autogen.sh continuing..."
+        fi
+
+        # Go back to the topdir
+
+        cd "$pd_cur_dir"
+    fi
+    unset PARAM_CONFIG_FILES PARAM_VERSION_FILE
+    unset pd_dir pd_ompi_topdir pd_cur_dir pd_component_type
+}
+
+process_ext_dir() {
+    pd_dir="$1"
+    pd_ompi_topdir="$2"
+    pd_project="$3"
+    pd_framework="$4"
+    pd_component="$5"
+
+    pd_cur_dir="`pwd`"
+
+    # Convert to absolutes
+
+    if test -d "$pd_dir"; then
+        cd "$pd_dir"
+        pd_abs_dir="`pwd`"
+        cd "$pd_cur_dir"
+    fi
+
+    if test -d "$pd_ompi_topdir"; then
+        cd "$pd_ompi_topdir"
+        pd_ompi_topdir="`pwd`"
+        cd "$pd_cur_dir"
+    fi
+
+    # clean our environment a bit, since we might evaluate a configure.params
+    unset PARAM_CONFIG_FILES
+    PARAM_CONFIG_PRIORITY="0"
+
+    if test -d "$pd_dir"; then
+	cd "$pd_dir"
+
+	# See if the package doesn't want us to set it up
+
+	if test -f .ompi_no_gnu; then
+	    cat <<EOF
+
+*** Found .ompi_no_gnu file -- skipping GNU setup in:
+***   `pwd`
+
+EOF
+	elif test -f .ompi_ignore -a ! -f .ompi_unignore; then
+
+            # Note that if we have an empty (but existant)
+            # .ompi_unignore, then we ignore the .ompi_ignore file
+            # (and therefore build the component)
+
+	    cat <<EOF
+
+*** Found .ompi_ignore file -- skipping entire tree:
+***   `pwd`
+
+EOF
+
+        # Use && instead of -a here for the test conditions because if
+        # you use -a, then "test" will execute *all* condition clauses
+        # (even if the first one is false), meaning that grep will
+        # fail if there is no .ompi_unignore file.  If you use &&,
+        # then the latter tests will not be executed if a prior one
+        # fails (i.e., grep won't run if .ompi_unignore does not
+        # exist).
+
+        elif test -f .ompi_ignore && \
+             test -s .ompi_unignore && \
+             test -z "`$egrep $USER\$\|$USER@$HOST .ompi_unignore`" ; then
+
+            # If we have a non-empty .ompi_unignore and our username
+            # is in there somewhere, we ignore the .ompi_ignore (and
+            # therefore build the component).  Otherwise, this
+            # condition is true and we don't configure.
+
+	    cat <<EOF
+
+*** Found .ompi_ignore file and .ompi_unignore didn't invalidate -- 
+*** skipping entire tree:
+***   `pwd`
+
+EOF
+	elif test "$pd_abs_dir" != "$pd_ompi_topdir" -a -x autogen.sh; then
+	    cat <<EOF
+
+*** Found custom autogen.sh file in:
+***   `pwd`
+
+EOF
+	    ./autogen.sh
+            if test ! $? -eq 0 ; then
+                echo "Error running autogen.sh -l in `pwd`.  Aborting."
+                exit 1
+            fi
+        elif test -f configure.params -a -f configure.m4 ; then
+            cat <<EOF
+
+*** Found configure.params and configure.m4
+***   `pwd`
+
+EOF
+            . ./configure.params
+            if test -z "$PARAM_CONFIG_FILES"; then
+                cat <<EOF
+*** No PARAM_CONFIG_FILES!
+*** Nothing to do -- skipping this directory
+EOF
+            else
+                # temporary workaround - remove possibly there configure code
+                rm -f "configure" "configure.ac*" "acinclude*" "aclocal.m4"
+
+                run_m4_configure_component "$pd_dir" "$pd_ompi_topdir" \
+                    "$pd_project" "$pd_framework" "$pd_component" "ext"
+            fi
+
+        elif test -f configure.ac -o -f configure.in; then
+            # If we have configure.ac or configure.in, run the GNU
+            # tools here
+
+	    cat <<EOF
+
+*** Found configure.(in|ac)
+***   `pwd`
+
+EOF
+            run_gnu_tools "$pd_ompi_topdir"
+
+        elif test -f configure.params -a -f configure.stub; then
+	    cat <<EOF
+
+*** Found configure.params and configure.stub
+***   `pwd`
+
+EOF
+            run_gnu_tools "$pd_ompi_topdir"
+
+        elif test -f configure.params; then
+	    cat <<EOF
+
+*** Found configure.params
+***   `pwd`
+
+EOF
+            . ./configure.params
+            if test -z "$PARAM_CONFIG_FILES"; then
+                cat <<EOF
+*** No PARAM_CONFIG_FILES!
+*** Nothing to do -- skipping this directory
+EOF
+            else
+                run_no_configure_component "$pd_dir" "$pd_ompi_topdir" \
+                    "$pd_project" "$pd_framework" "$pd_component" "ext"
             fi
         else
 	    cat <<EOF
@@ -1037,6 +1249,76 @@ process_framework() {
     fi
 }
 
+process_ext_framework() {
+    framework_path="$1"
+    rg_cwd="$2"
+    project="$3"
+    framework="$4"
+
+    if test -d "$framework_path" ; then
+        framework_ext_list="$framework_ext_list $framework"
+
+        # Add the framework's configure file into configure,
+        # if there is one
+        if test -r "${framework_path}/configure.m4" ; then
+            echo "m4_include(${framework_path}/configure.m4)" >> "$ext_m4_include_file"
+        fi
+        echo "AC_CONFIG_FILES(${framework_path}/Makefile)" >> "$ext_no_config_list_file"
+
+        rm -f "$ext_no_config_env_file" "$ext_m4_config_env_file"
+        touch "$ext_no_config_env_file" "$ext_m4_config_env_file"
+
+        for component_path in "$framework_path"/*; do
+            if test -d "$component_path"; then
+                if test -f "$component_path/configure.in" -o \
+                    -f "$component_path/configure.params" -o \
+                    -f "$component_path/configure.ac"; then
+
+                    component=`basename "$component_path"`
+
+                    process_ext_dir "$component_path" "$rg_cwd" \
+                        "$project" "$framework" "$component"
+                fi
+            fi
+        done
+
+        # make list of components that are "no configure".
+        # Sort the list by priority (stable, so things stay in
+        # alphabetical order at the same priority), then munge
+        # it into form we like
+        component_list=
+        component_list_sort $ext_no_config_env_file
+        component_list_define="m4_define([ext_${framework}_no_config_component_list], ["
+        component_list_define_first="1"
+        for component in $component_list ; do
+            if test "$component_list_define_first" = "1"; then
+                component_list_define="${component_list_define}${component}"
+                component_list_define_first="0"
+            else
+                component_list_define="${component_list_define}, ${component}"
+            fi
+        done
+        component_list_define="${component_list_define}])"
+        echo "$component_list_define" >> "$ext_no_configure_components_file"
+
+        # make list of components that are "m4 configure"
+        component_list=
+        component_list_sort $ext_m4_config_env_file
+        component_list_define="m4_define([ext_${framework}_m4_config_component_list], ["
+        component_list_define_first="1"
+        for component in $component_list ; do
+            if test "$component_list_define_first" = "1"; then
+                component_list_define="${component_list_define}${component}"
+                component_list_define_first="0"
+            else
+                component_list_define="${component_list_define}, ${component}"
+            fi
+        done
+        component_list_define="${component_list_define}])"
+        echo "$component_list_define" >> "$ext_no_configure_components_file"
+    fi
+}
+
 process_project() {
     project_path="$1"
     rg_cwd="$2"
@@ -1068,6 +1350,27 @@ process_project() {
         for contrib_path in $project_path/contrib/*; do
             process_dir $contrib_path $rg_cwd
         done
+    fi
+
+    # Extensions interface only applicable to ompi project
+    if test $project = "ompi" ; then
+        # Process interface extensions
+        framework_ext_list=""
+        process_ext_framework $project_path/mpiext $rg_cwd $project "mpiext"
+
+        # make list of frameworks for this project
+        framework_ext_list_define="m4_define([ext_${project}_framework_list], ["
+        framework_ext_list_define_first="1"
+        for framework in $framework_ext_list ; do
+            if test "$framework_ext_list_define_first" = "1"; then
+                framework_ext_list_define="${framework_ext_list_define}${framework}"
+                framework_ext_list_define_first="0"
+            else
+                framework_ext_list_define="${framework_ext_list_define}, ${framework}"
+            fi
+        done
+        framework_ext_list_define="${framework_ext_list_define}])"
+        echo "$framework_ext_list_define" >> "$ext_no_configure_components_file"
     fi
 }
 
@@ -1115,6 +1418,34 @@ dnl be edited by hand!!
 
 EOF
 
+    # [Re-]Create the ext_component_list file
+    rm -f "$ext_no_configure_components_file" "$ext_no_config_list_file" \
+        "$ext_no_config_env_file" "$ext_m4_config_env_file" "$ext_m4_include_file"
+    touch "$ext_no_configure_components_file" "$ext_no_config_list_file" \
+        "$ext_m4_config_env_file" "$ext_m4_include_file"
+
+    # create header for the component m4 include file
+    cat > "$ext_m4_include_file" <<EOF
+dnl
+dnl \$HEADER
+dnl
+
+dnl This file is automatically created by autogen.sh; it should not
+dnl be edited by hand!!
+
+EOF
+
+    #create header for the component config file
+    cat > "$ext_no_configure_components_file" <<EOF
+dnl
+dnl \$HEADER
+dnl
+
+dnl This file is automatically created by autogen.sh; it should not
+dnl be edited by hand!!
+
+EOF
+
     # Now run the config in every directory in <location>/mca/*/*
     # that has a configure.in or configure.ac script
     #
@@ -1150,6 +1481,11 @@ EOF
     project_list_define="${project_list_define}])"
     echo "$project_list_define" >> "$mca_no_configure_components_file"
 
+    # create the m4 defines for the list of projects where MPI Extensions
+    # apply, which is only 'ompi'
+    project_list_define="m4_define([ext_project_list], [ompi])"
+    echo "$project_list_define" >> "$ext_no_configure_components_file"
+
 
     cat >> "$mca_no_configure_components_file" <<EOF
 
@@ -1162,8 +1498,20 @@ AC_DEFUN([MCA_NO_CONFIG_CONFIG_FILES],[
 ])dnl
 EOF
 
+    cat >> "$ext_no_configure_components_file" <<EOF
+
+dnl List all the no-configure components that we found, and AC_DEFINE
+dnl their versions
+
+AC_DEFUN([EXT_NO_CONFIG_CONFIG_FILES],[
+
+`cat $ext_no_config_list_file`
+])dnl
+EOF
+
     # Remove temp files
     rm -f $mca_no_config_list_file $mca_no_config_env_file $mca_m4_config_env_file
+    rm -f $ext_no_config_list_file $ext_no_config_env_file $ext_m4_config_env_file
 
     # Finally, after we found all the no-configure MCA components, run
     # the config in the top-level directory

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+// Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
 //                         University Research and Technology
 //                         Corporation.  All rights reserved.
 // Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -9,6 +9,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -57,8 +58,11 @@ static int screen_width = 78;
 // Prints the passed strings in a pretty or parsable format.
 //
 void ompi_info::out(const string& pretty_message, const string &plain_message,
-                    const string& value)
+                    const string& value, bool strip_leading_whitespace,
+                    bool strip_trailing_whitespace)
 {
+  string local_value = value;
+
 #ifdef HAVE_ISATTY
   // If we have isatty(), if this is not a tty, then disable
   // wrapping for grep-friendly behavior
@@ -76,10 +80,33 @@ void ompi_info::out(const string& pretty_message, const string &plain_message,
   }
 #endif
 
+  if (strip_leading_whitespace) {
+      string::size_type i = 0;
+      while (i < local_value.length() && isspace(local_value[i])) {
+          ++i;
+      }
+      if (i > local_value.length()) {
+          local_value = "";
+      } else if (i > 0) {
+          local_value = local_value.substr(i);
+      }
+  }
+  if (strip_trailing_whitespace) {
+      string::size_type i = local_value.length();
+      while (i >= 0 && isspace(local_value[i])) {
+          --i;
+      }
+      if (i < 0) {
+          local_value = "";
+      } else if (i >= 0) {
+          local_value = local_value.substr(0, i);
+      }
+  }
+
   if (pretty) {
     string::size_type pos, max_value_width;
     string spaces;
-    string v = value;
+    string v = local_value;
     string filler;
 
     int num_spaces = (int)(centerpoint - pretty_message.length());
@@ -135,9 +162,9 @@ void ompi_info::out(const string& pretty_message, const string &plain_message,
     }
   } else {
       if (!plain_message.empty()) {
-          cout << plain_message << ":" << value << endl;
+          cout << plain_message << ":" << local_value << endl;
       } else {
-          cout << value << endl;
+          cout << local_value << endl;
       }
   }
 }

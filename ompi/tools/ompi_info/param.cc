@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+// Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
 //                         University Research and Technology
 //                         Corporation.  All rights reserved.
 // Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -9,7 +9,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
 // Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 // $COPYRIGHT$
 // 
@@ -549,7 +549,7 @@ void ompi_info::do_config(bool want_all)
 
   string ft_support;
   ft_support  = OPAL_ENABLE_FT ? "yes" : "no";
-  ft_support += "  (checkpoint thread: ";
+  ft_support += " (checkpoint thread: ";
   ft_support += OPAL_ENABLE_FT_THREAD ? "yes" : "no";
   ft_support += ")";
 
@@ -780,6 +780,8 @@ void ompi_info::do_config(bool want_all)
   out("MPI I/O support", "options:mpi-io", have_mpi_io);
   out("MPI_WTIME support", "options:mpi-wtime", wtime_support);
   out("Symbol visibility support", "options:visibility", symbol_visibility);
+
+  out("MPI extensions", "options:mpi_ext", OMPI_EXT_COMPONENTS);
 
   out("FT Checkpoint support", "options:ft_support", ft_support);
 }
