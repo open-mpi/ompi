@@ -68,7 +68,6 @@
       integer MPI_MODE_DELETE_ON_CLOSE, MPI_MODE_UNIQUE_OPEN
       integer MPI_MODE_EXCL, MPI_MODE_APPEND, MPI_MODE_SEQUENTIAL
       integer MPI_DISPLACEMENT_CURRENT
-      integer MPI_MAX_DATAREP_STRING
 
       parameter (MPI_FILE_NULL=0)
       parameter (MPI_SEEK_SET=600)
@@ -84,4 +83,3 @@
       parameter (MPI_MODE_APPEND=128)
       parameter (MPI_MODE_SEQUENTIAL=256)
       parameter (MPI_DISPLACEMENT_CURRENT=-54278278)
-      parameter (MPI_MAX_DATAREP_STRING=127)

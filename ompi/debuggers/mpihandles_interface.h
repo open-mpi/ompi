@@ -20,6 +20,8 @@
 #ifndef __MPIDBG_INTERFACE_H__
 #define __MPIDBG_INTERFACE_H__ 1
 
+#include "ompi_config.h"
+
 /*
  * This file provides interface functions for a debugger to gather
  * additional information about MPI handles.
@@ -37,7 +39,7 @@
  **************************************************************************/
 
 enum {
-    MPIDBG_MAX_OBJECT_NAME = 64
+    MPIDBG_MAX_OBJECT_NAME = MPI_MAX_OBJECT_NAME
 };
 enum {
     MPIDBG_MAX_FILENAME = 1024

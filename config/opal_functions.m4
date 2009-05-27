@@ -11,6 +11,8 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+dnl
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -355,4 +357,40 @@ AC_DEFUN([OMPI_VAR_SCOPE_POP],[
     for ompi_var in $ompi_str; do
         unset $ompi_var
     done
+])dnl
+
+
+dnl #######################################################################
+dnl #######################################################################
+dnl #######################################################################
+
+#
+# _OPAL_WITH_OPTION_MIN_MAX_VALUE(NAME,DEFAULT_VALUE,LOWER_BOUND,UPPER_BOUND)
+# Defines a variable OPAL_MAX_xxx, with "xxx" being specified as parameter $1 as "variable_name".
+# If not set at configure-time using --with-max-xxx, the default-value ($2) is assumed.
+# If set, value is checked against lower (value >= $3) and upper bound (value <= $4)
+#
+AC_DEFUN([_OPAL_WITH_OPTION_MIN_MAX_VALUE], [
+    max_value=[$2]
+    AC_MSG_CHECKING([maximum length of ]m4_translit($1, [_], [ ]))
+    AC_ARG_WITH([max-]m4_translit($1, [_], [-]),
+        AC_HELP_STRING([--with-max-]m4_translit($1, [_], [-])[=VALUE],
+                       [maximum length of ]m4_translit($1, [_], [ ])[s.  VALUE argument has to be specified (default: [$2]).]))
+    if test ! -z "$with_max_[$1]" -a "$with_max_[$1]" != "no" ; then
+        # Ensure it's a number (hopefully an integer!), and >0
+        expr $with_max_[$1] + 1 > /dev/null 2> /dev/null
+        AS_IF([test "$?" != "0"], [happy=0],
+              [AS_IF([test $with_max_[$1] -ge $3 -a $with_max_[$1] -le $4],
+                     [happy=1], [happy=0])])
+
+        # If badness in the above tests, bail
+        AS_IF([test "$happy" = "0"],
+              [AC_MSG_RESULT([bad value ($with_max_[$1])])
+               AC_MSG_WARN([--with-max-]m4_translit($1, [_], [-])[s value must be >= $3 and <= $4])
+               AC_MSG_ERROR([Cannot continue])])
+        max_value=$with_max_[$1]
+    fi
+    AC_MSG_RESULT([$max_value])
+    AC_DEFINE_UNQUOTED([OPAL_MAX_]m4_toupper($1), $max_value,
+                       [Maximum length of ]m4_translit($1, [_], [ ])[s (default is $2)])
 ])dnl
