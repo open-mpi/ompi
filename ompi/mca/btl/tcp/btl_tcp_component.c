@@ -53,6 +53,9 @@
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/util/net.h"
+#if defined(__WINDOWS__)
+#include "opal/win32/ompi_inet.h"
+#endif
 
 #include "orte/types.h"
 #include "orte/util/show_help.h"
