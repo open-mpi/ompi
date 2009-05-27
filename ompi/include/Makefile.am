@@ -63,4 +63,9 @@ nobase_dist_noinst_HEADERS = $(headers)
 nobase_nodist_noinst_HEADERS = $(nodist_headers)
 endif
 
+# Remove the auto-generated mpi-ext.h file
+# Since there is no mpi-ext.h.in, autogen does not know to cleanup this file.
+distclean-local:
+	rm -f mpi-ext.h
+
 include ompi/Makefile.am
