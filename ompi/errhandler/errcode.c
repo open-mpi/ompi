@@ -21,7 +21,10 @@
 #include "ompi_config.h"
 
 #include <stdio.h>
+#ifdef HAVE_STRING_H
 #include <string.h>
+#endif
+
 #include "mpi.h"
 
 #include "ompi/errhandler/errcode.h"
@@ -141,7 +144,7 @@ int ompi_mpi_errcode_init (void)
     CONSTRUCT_ERRCODE( ompi_err_base, MPI_ERR_BASE, "MPI_ERR_BASE: invalid base" );
     CONSTRUCT_ERRCODE( ompi_err_conversion, MPI_ERR_CONVERSION, "MPI_ERR_CONVERSION: error in data conversion" );
     CONSTRUCT_ERRCODE( ompi_err_disp, MPI_ERR_DISP, "MPI_ERR_DISP: invalid displacement" );
-    CONSTRUCT_ERRCODE( ompi_err_dup_datarep, MPI_ERR_DUP_DATAREP, "MPI_ERR_DUP_DATAREP: error while duplicating data representation" );
+    CONSTRUCT_ERRCODE( ompi_err_dup_datarep, MPI_ERR_DUP_DATAREP, "MPI_ERR_DUP_DATAREP: error duplicating data representation" );
     CONSTRUCT_ERRCODE( ompi_err_file_exists, MPI_ERR_FILE_EXISTS, "MPI_ERR_FILE_EXISTS: file exists alreay" );
     CONSTRUCT_ERRCODE( ompi_err_file_in_use, MPI_ERR_FILE_IN_USE, "MPI_ERR_FILE_IN_USE: file already in use" );
     CONSTRUCT_ERRCODE( ompi_err_file, MPI_ERR_FILE, "MPI_ERR_FILE: invalid file" );
@@ -157,17 +160,17 @@ int ompi_mpi_errcode_init (void)
     CONSTRUCT_ERRCODE( ompi_err_not_same, MPI_ERR_NOT_SAME, "MPI_ERR_NOT_SAME: objects are not identical");
     CONSTRUCT_ERRCODE( ompi_err_no_space, MPI_ERR_NO_SPACE, "MPI_ERR_NO_SPACE: no space left on device" );
     CONSTRUCT_ERRCODE( ompi_err_no_such_file, MPI_ERR_NO_SUCH_FILE, "MPI_ERR_NO_SUCH_FILE: no such file or directory" );
-    CONSTRUCT_ERRCODE( ompi_err_port, MPI_ERR_PORT, "MPI_ERR_PORT: MPI_ERR_PORT: invalid port" );
+    CONSTRUCT_ERRCODE( ompi_err_port, MPI_ERR_PORT, "MPI_ERR_PORT: invalid port" );
     CONSTRUCT_ERRCODE( ompi_err_quota, MPI_ERR_QUOTA, "MPI_ERR_QUOTA: out of quota" );
     CONSTRUCT_ERRCODE( ompi_err_read_only, MPI_ERR_READ_ONLY, "MPI_ERR_READ_ONLY: file is read only" );
     CONSTRUCT_ERRCODE( ompi_err_rma_conflict, MPI_ERR_RMA_CONFLICT, "MPI_ERR_RMA_CONFLICT: rma conflict during operation" );
-    CONSTRUCT_ERRCODE( ompi_err_rma_sync, MPI_ERR_RMA_SYNC, "MPI_ERR_RMA_SYNC: error while executing rma sync" );
+    CONSTRUCT_ERRCODE( ompi_err_rma_sync, MPI_ERR_RMA_SYNC, "MPI_ERR_RMA_SYNC: error executing rma sync" );
     CONSTRUCT_ERRCODE( ompi_err_service, MPI_ERR_SERVICE, "MPI_ERR_SERVICE: unknown service name" );
     CONSTRUCT_ERRCODE( ompi_err_size, MPI_ERR_SIZE, "MPI_ERR_SIZE: invalid size" );
     CONSTRUCT_ERRCODE( ompi_err_spawn, MPI_ERR_SPAWN, "MPI_ERR_SPAWN: could not spawn processes" );
-    CONSTRUCT_ERRCODE( ompi_err_unsupported_datarep, MPI_ERR_UNSUPPORTED_DATAREP, "MPI_ERR_UNSUPPORTED_DATAREP: requested data representation not supported" );
-    CONSTRUCT_ERRCODE( ompi_err_unsupported_operation, MPI_ERR_UNSUPPORTED_OPERATION, "MPI_ERR_UNSUPPORTED_OPERATION: requested operation not suppported" );
-    CONSTRUCT_ERRCODE( ompi_err_win, MPI_ERR_WIN, "MPI_ERR_WIN:invalid window" );
+    CONSTRUCT_ERRCODE( ompi_err_unsupported_datarep, MPI_ERR_UNSUPPORTED_DATAREP, "MPI_ERR_UNSUPPORTED_DATAREP: data representation not supported" );
+    CONSTRUCT_ERRCODE( ompi_err_unsupported_operation, MPI_ERR_UNSUPPORTED_OPERATION, "MPI_ERR_UNSUPPORTED_OPERATION: operation not supported" );
+    CONSTRUCT_ERRCODE( ompi_err_win, MPI_ERR_WIN, "MPI_ERR_WIN: invalid window" );
 
     ompi_mpi_errcode_lastused = MPI_ERR_WIN;
     ompi_mpi_errcode_lastpredefined = MPI_ERR_WIN;
