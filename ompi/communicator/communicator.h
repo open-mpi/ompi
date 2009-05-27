@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
+ * Copyright (c) 2006-2009 University of Houston.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
@@ -482,7 +482,7 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm,
                                 int high );
 
 
-OMPI_DECLSPEC int ompi_comm_activate ( ompi_communicator_t** newcomm );
+OMPI_DECLSPEC int ompi_comm_activate ( ompi_communicator_t** newcomm, int do_coll_select );
 
 /**
  * a simple function to dump the structure
@@ -502,6 +502,12 @@ void ompi_comm_reg_finalize(void);
 
 /* global variable to save the number od dynamic communicators */
 extern int ompi_comm_num_dyncomm;
+
+
+/* check in the communicator destructor whether a block if cid's 
+   can be reused.
+*/
+OMPI_DECLSPEC void  ompi_comm_checkfor_blockreset ( ompi_communicator_t *comm );
 
 
 END_C_DECLS

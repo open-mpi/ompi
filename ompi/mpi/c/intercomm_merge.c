@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
+ * Copyright (c) 2006-2009 University of Houston.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -132,7 +132,7 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
     }
 
     /* activate communicator and init coll-module */
-    rc = ompi_comm_activate( &newcomp );           /* new comm */ 
+    rc = ompi_comm_activate( &newcomp, 1 );           /* new comm */ 
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }

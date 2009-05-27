@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2008 University of Houston. All rights reserved.
+ * Copyright (c) 2007-2009 University of Houston. All rights reserved.
  * Copyright (c) 2007-2008 Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -350,7 +350,7 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
              newcomp->c_contextid, comm->c_contextid );
 
     /* Activate the communicator and init coll-component */
-    rc = ompi_comm_activate( &newcomp );  /* new communicator */ 
+    rc = ompi_comm_activate( &newcomp, 1 );  /* new communicator */ 
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -573,7 +573,17 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
              newcomp->c_contextid, comm->c_contextid );
 
     /* Activate the communicator and init coll-component */
-    rc = ompi_comm_activate( &newcomp );  /* new communicator */ 
+    if ( MPI_UNDEFINED != color ) {
+	rc = ompi_comm_activate( &newcomp, 1 );  /* new communicator */ 
+    }
+    else {
+	/* 
+        ** this should prevent creating the subcommunicators
+        ** of the hierarch module for the cases where we
+        ** know that they will be freed anyway (e.g. color = MPI_UNDEFINED
+	*/
+	rc = ompi_comm_activate( &newcomp, 0 );  /* new communicator */ 
+    }
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -664,7 +674,7 @@ int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm )
              newcomp->c_contextid, comm->c_contextid );
 
     /* activate communicator and init coll-module */
-    rc = ompi_comm_activate( &newcomp );  /* new communicator */ 
+    rc = ompi_comm_activate( &newcomp, 1 );  /* new communicator */ 
     if ( OMPI_SUCCESS != rc ) {
         return rc;
     }
@@ -1501,13 +1511,17 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
         return ret;
     }
 
-    ret = ompi_comm_activate( &new_comm );  /* new communicator */
-    if (OMPI_SUCCESS != ret) {
-        /* something wrong happened during setting the communicator */
-        *comm_topo = new_comm;
-        return ret;
+    if ( MPI_UNDEFINED != new_rank ) {
+	ret = ompi_comm_activate( &new_comm, 1 );  /* new communicator */
     }
-
+    else {
+	ret = ompi_comm_activate( &new_comm, 0 );  /* new communicator */
+    }
+    if (OMPI_SUCCESS != ret) {
+	/* something wrong happened during setting the communicator */
+	*comm_topo = new_comm;
+	return ret;
+    }
     
     /* if the returned rank is -1, then this process is not in the 
      * new topology, so free everything we have allocated and return */

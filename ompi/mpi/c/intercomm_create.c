@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
+ * Copyright (c) 2006-2009 University of Houston.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -212,7 +212,7 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
     }
 
     /* activate comm and init coll-module */
-    rc = ompi_comm_activate ( &newcomp );
+    rc = ompi_comm_activate ( &newcomp, 1 );
     if ( MPI_SUCCESS != rc ) {
         goto err_exit;
     }
