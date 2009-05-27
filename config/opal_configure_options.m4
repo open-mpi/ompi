@@ -487,7 +487,7 @@ AC_ARG_WITH([dst-checksum],
                      [Use an alternative checksum algorithm for messages])])
 if test "$with_dst_checksum" = "yes"; then
     AC_MSG_RESULT([yes])
-    CFLAGS="-DOPAL_CSUM_DST $CFLAGS"
+    CFLAGS="-DOMPI_CSUM_DST $CFLAGS"
 else
     AC_MSG_RESULT([no])
 fi
