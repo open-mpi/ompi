@@ -490,7 +490,7 @@ EOF
 
         # See
         # http://lists.gnu.org/archive/html/bug-libtool/2008-05/msg00045.html.
-        # Note that this issue was fixed in LT 2.6, so don't patch if
+        # Note that this issue was fixed in LT 2.2.6, so don't patch if
         # you have a version after that (because this patch changes
         # the timestamp on opal/libltdl/m4/libtool.m4, which should be
         # avoided if possible...).
