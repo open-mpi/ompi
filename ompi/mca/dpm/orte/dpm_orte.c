@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
+ * Copyright (c) 2006-2009 University of Houston.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -441,7 +441,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
     }
 
     /* activate comm and init coll-component */
-    rc = ompi_comm_activate ( &newcomp );             /* new communicator */
+    rc = ompi_comm_activate ( &newcomp, 1 );             /* new communicator */
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }

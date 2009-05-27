@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 University of Houston. All rights reserved.
+ * Copyright (c) 2006-2009 University of Houston. All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -420,6 +420,10 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
                                              comm->c_f_to_c_index )) {
         opal_pointer_array_set_item ( &ompi_mpi_communicators,
                                       comm->c_f_to_c_index, NULL);
+
+	if ( MPI_UNDEFINED != comm->c_id_start_index ) {
+	    ompi_comm_checkfor_blockreset ( comm );
+	}
     }
 
 

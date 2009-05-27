@@ -50,6 +50,7 @@ BEGIN_C_DECLS
 static int cid_block_start = 28;
 
 static int ompi_comm_cid_checkforreuse ( int c_id_start_index, int block );
+static int ompi_comm_get_blocksize ( ompi_communicator_t* comm  );
 
 
 typedef int ompi_comm_cid_allredfct (int *inbuf, int* outbuf, 
@@ -131,6 +132,7 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
      * Determine which implementation of allreduce we have to use
      * for the current scenario 
      */
+
     switch (mode) 
     {
         case OMPI_COMM_CID_INTRA: 
@@ -245,7 +247,7 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
       * In case the communication mode is INTRA_OOB or INTAR_BRIDGE, we use the 
       * highest-free algorithm
       */
-    if ( OMPI_COMM_CID_INTRA_OOB == mode || OMPI_COMM_CID_INTRA_BRIDGE == mode) {
+    if ( OMPI_COMM_CID_INTRA_OOB == mode || OMPI_COMM_CID_INTRA_BRIDGE == mode) {       
         (allredfnct)(&cid_block_start, &global_block_start, 1, 
                      MPI_MAX, comm, bridgecomm,
                      local_leader, remote_leader, send_first );
@@ -254,66 +256,59 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
         cid_block_start = cid_block_start + 1;
     }
     else {
-        flag=false;
-        block = 0;
-        if( 0 == comm->c_contextid ) {
-            block = OMPI_COMM_BLOCK_WORLD;
-        }
-        else {
-            block = OMPI_COMM_BLOCK_OTHERS;
-        }
+    
+        block = ompi_comm_get_blocksize ( comm  ); 
 
-        while(!flag) {
-            /**
-             * If the communicator has IDs available then allocate one for the child
-             */
-            if ( MPI_UNDEFINED != comm->c_id_available && 
-                 MPI_UNDEFINED != comm->c_id_start_index &&  
-                 block > comm->c_id_available - comm->c_id_start_index) {
-                nextcid = comm->c_id_available;
-                flag=opal_pointer_array_test_and_set_item (&ompi_mpi_communicators,
-                                                           nextcid, comm);
-            }
-            /**
-             * Otherwise the communicator needs to negotiate a new block of IDs
-             */
-            else {
-		int start[3], gstart[3];
-		/* the next function either returns exactly the same start_id as 
-                   the communicator had, or the cid_block_start*/
-		start[0] = ompi_comm_cid_checkforreuse ( comm->c_id_start_index, block );
-
-		/* this is now a little tricky. By multiplying the start[0] values with -1
-		   and executing the MAX operation on those as well, we will be able to
-		   determine the minimum value across the provided input */ 
-		start[1] = (-1) * start[0]; 
-		start[2] = cid_block_start;
-
-		(allredfnct)(start, gstart, 3, MPI_MAX, comm, bridgecomm,
-                             local_leader, remote_leader, send_first );
-
-		/* revert the minimum value back to a positive number */
-		gstart[1] = (-1) * gstart[1];
-		
-		if  ( gstart[0] == start[0] && 
-		      gstart[1] == start[0] && 
-		      gstart[0] != cid_block_start ) {
-		    comm->c_id_available   = gstart[0];
-		    comm->c_id_start_index = gstart[0];
-
-		    /* note: cid_block_start not modified in this section */
-		}
-		else {
-		    /* no, one process did not agree on the reuse of the block
-		       so we have to go with the higher number */
-		    comm->c_id_available   = gstart[2];
-		    comm->c_id_start_index = gstart[2];
-		    cid_block_start = gstart[2] + block;
-		}
-            }
-        }
-        
-        comm->c_id_available++;
+	/**
+	 * If the communicator has IDs available then allocate one for the child
+	 */
+	if ( MPI_UNDEFINED != comm->c_id_available && 
+	     MPI_UNDEFINED != comm->c_id_start_index &&  
+	     block > comm->c_id_available - comm->c_id_start_index) {
+	    nextcid = comm->c_id_available;
+	    flag=opal_pointer_array_test_and_set_item (&ompi_mpi_communicators,
+						       nextcid, comm);
+	}
+	/**
+	 * Otherwise the communicator needs to negotiate a new block of IDs
+	 */
+	else {
+	    int start[3], gstart[3];
+	    /* the next function either returns exactly the same start_id as 
+	       the communicator had, or the cid_block_start*/
+	    start[0] = ompi_comm_cid_checkforreuse ( comm->c_id_start_index, block );
+	    
+	    /* this is now a little tricky. By multiplying the start[0] values with -1
+	       and executing the MAX operation on those as well, we will be able to
+	       determine the minimum value across the provided input */ 
+	    start[1] = (-1) * start[0]; 
+	    start[2] = cid_block_start;
+	    
+	    (allredfnct)(start, gstart, 3, MPI_MAX, comm, bridgecomm,
+			 local_leader, remote_leader, send_first );
+	    
+	    /* revert the minimum value back to a positive number */
+	    gstart[1] = (-1) * gstart[1];
+	    
+	    if  ( gstart[0] == start[0] && 
+		  gstart[1] == start[0] && 
+		  gstart[0] != cid_block_start ) {
+		comm->c_id_available   = gstart[0];
+		comm->c_id_start_index = gstart[0];
+		nextcid                = comm->c_id_available;
+		/* note: cid_block_start not modified in this section */
+	    }
+	    else {
+		/* no, one process did not agree on the reuse of the block
+		   so we have to go with the higher number */
+		comm->c_id_available   = gstart[2];
+		comm->c_id_start_index = gstart[2];
+		cid_block_start        = gstart[2] + block;
+		nextcid                = comm->c_id_available;
+	    }
+	}
+	
+	comm->c_id_available++;
     }
     /* set the according values to the newcomm */
     newcomm->c_contextid = nextcid;
@@ -432,7 +427,7 @@ static uint32_t ompi_comm_lowest_cid (void)
  * comm.c is, that this file contains the allreduce implementations
  * which are required, and thus we avoid having duplicate code...
  */
-int ompi_comm_activate ( ompi_communicator_t** newcomm )
+int ompi_comm_activate ( ompi_communicator_t** newcomm, int do_coll_select )
 {
     int ret = 0;
 
@@ -471,8 +466,10 @@ int ompi_comm_activate ( ompi_communicator_t** newcomm )
 
     /* Let the collectives components fight over who will do
        collective on this new comm.  */
-    if (OMPI_SUCCESS != (ret = mca_coll_base_comm_select(*newcomm))) {
-        goto bail_on_error;
+    if ( do_coll_select ) {
+	if (OMPI_SUCCESS != (ret = mca_coll_base_comm_select(*newcomm))) {
+	    goto bail_on_error;
+	}
     }
     return OMPI_SUCCESS;
 
@@ -496,7 +493,6 @@ static int ompi_comm_cid_checkforreuse ( int c_id_start_index, int block )
     int i, count=0;
     ompi_communicator_t * tempcomm;
 
-
     if ( MPI_UNDEFINED != c_id_start_index ) {
 	for ( i= c_id_start_index; i < c_id_start_index + block; i++ ) {
 	    tempcomm = (ompi_communicator_t *) opal_pointer_array_get_item ( &ompi_mpi_communicators, i );
@@ -512,6 +508,51 @@ static int ompi_comm_cid_checkforreuse ( int c_id_start_index, int block )
 
     return ret;
 }
+
+/* this function is called from the communicator destructor. It is a
+   generic interface which verifies whether the cid block assigned to 
+   that communicator can be reused. 
+   In the current implementation it checks whether all communicators 
+   have been freed. If that's the case *and* the current leading fron
+   of cid's (i.e. cid_block-start) is right after the block following
+   the block assigned to that communicator, we reset the leading block.
+*/
+void  ompi_comm_checkfor_blockreset ( ompi_communicator_t *comm )
+{
+    int block=ompi_comm_get_blocksize ( comm );
+    int next=0;
+
+    if (MPI_THREAD_MULTIPLE == ompi_mpi_thread_provided) {
+	return;
+    }
+
+    if ( MPI_UNDEFINED == comm->c_id_start_index ) {
+	return;
+    }
+
+    next = ompi_comm_cid_checkforreuse ( comm->c_id_start_index, block );
+    if ( next            == comm->c_id_start_index && 
+	 cid_block_start == (comm->c_id_start_index + block ) ) {
+ 	cid_block_start = comm->c_id_start_index;
+    }
+
+    return;
+}
+
+static int ompi_comm_get_blocksize ( ompi_communicator_t* comm  ) 
+{
+    int block=0;
+
+    if( 0 == comm->c_contextid ) {
+	block = OMPI_COMM_BLOCK_WORLD;
+    }
+    else {
+	block = OMPI_COMM_BLOCK_OTHERS;
+    }
+
+    return block;
+}
+
 /**************************************************************************/
 /**************************************************************************/
 /**************************************************************************/
