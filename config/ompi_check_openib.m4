@@ -43,6 +43,23 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
     OMPI_CHECK_WITHDIR([openib-libdir], [$with_openib_libdir], [libibverbs.*])
 
     #
+    # Add padding to OpenIB header
+    #
+    AC_ARG_ENABLE([openib-control-hdr-padding],
+        [AC_HELP_STRING([--enable-openib-control-hdr-padding],
+            [Add padding bytes to the openib control header (default:disabled)])])
+    AC_MSG_CHECKING([if want to add padding to the openib control header])
+    if test "$enable_openib_control_hdr_padding" = "yes"; then
+        AC_MSG_RESULT([yes])
+        ompi_openib_pad_hdr=1
+    else
+        AC_MSG_RESULT([no])
+        ompi_openib_pad_hdr=0
+    fi
+    AC_DEFINE_UNQUOTED([OMPI_OPENIB_PAD_HDR], [$ompi_openib_pad_hdr],
+                       [Add padding bytes to the openib control header])
+
+    #
     # ConnectX XRC support
     #
     AC_ARG_ENABLE([openib-connectx-xrc],

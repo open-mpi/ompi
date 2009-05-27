@@ -148,6 +148,8 @@ AC_SUBST(top_ompi_builddir)
 # Configuration options
 ############################################################################
 
+OPAL_CONFIGURE_OPTIONS
+ORTE_CONFIGURE_OPTIONS
 OMPI_CONFIGURE_OPTIONS
 
 if test "$enable_binaries" = "no" -a "$enable_dist" = "yes"; then

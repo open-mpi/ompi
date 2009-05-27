@@ -14,8 +14,9 @@ dnl Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
-dnl                         reserved. 
+dnl                         reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+dnl
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -23,22 +24,26 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN([OMPI_CONFIGURE_OPTIONS],[
-ompi_show_subtitle "Configuration options"
+AC_DEFUN([OPAL_CONFIGURE_OPTIONS],[
+ompi_show_subtitle "OPAL Configuration options"
+
 
 #
 # Is this a developer copy?
 #
+
 if test -d .svn -o -d .hg; then
     OMPI_DEVEL=1
 else
     OMPI_DEVEL=0
 fi
 
+
 #
 # Code coverage options
 #
-AC_MSG_CHECKING([whether to run code coverage])
+
+AC_MSG_CHECKING([if want to run code coverage])
 AC_ARG_ENABLE(coverage,
               AC_HELP_STRING([--enable-coverage],
                              [enable code coverage files to be generated]))
@@ -62,7 +67,8 @@ fi
 #
 # Branch Probabilities options
 #
-AC_MSG_CHECKING([whether to compile with branch probabilities])
+
+AC_MSG_CHECKING([if want to compile with branch probabilities])
 AC_ARG_ENABLE(branch-probabilities,
               AC_HELP_STRING([--enable-branch-probabilities],
                              [enable profile arcs and branch probability optimization]))
@@ -79,7 +85,7 @@ fi
 # Memory debugging
 #
 
-AC_MSG_CHECKING([whether to debug memory usage])
+AC_MSG_CHECKING([if want to debug memory usage])
 AC_ARG_ENABLE(mem-debug, 
     AC_HELP_STRING([--enable-mem-debug],
                    [enable memory debugging (debugging only) (default: disabled)]))
@@ -103,7 +109,7 @@ AC_DEFINE_UNQUOTED(OPAL_ENABLE_MEM_DEBUG, $WANT_MEM_DEBUG,
 # Memory profiling
 #
 
-AC_MSG_CHECKING([whether to profile memory usage])
+AC_MSG_CHECKING([if want to profile memory usage])
 AC_ARG_ENABLE(mem-profile, 
     AC_HELP_STRING([--enable-mem-profile],
                    [enable memory profiling (debugging only) (default: disabled)]))
@@ -178,224 +184,10 @@ AC_ARG_ENABLE(debug-symbols,
         [Disable adding compiler flags to enable debugging symbols if --enable-debug is specified.  For non-debugging builds, this flag has no effect.]))
 
 #
-# Sparse Groups
+# Do we want to install all of OPAL/ORTE and OMPI's header files?
 #
 
-AC_MSG_CHECKING([if want sparse process groups])
-AC_ARG_ENABLE(sparse-groups, 
-    AC_HELP_STRING([--enable-sparse-groups],
-                   [enable sparse process groups (default: not enabled)]))
-if test "$enable_sparse_groups" = "yes"; then
-    AC_MSG_RESULT([yes])
-    GROUP_SPARSE=1
-else
-    AC_MSG_RESULT([no])
-    GROUP_SPARSE=0
-fi
-AC_DEFINE_UNQUOTED([OMPI_GROUP_SPARSE],$GROUP_SPARSE,
-    [Wether we want sparse process groups])
-
-#
-# Fortran 77
-#
-
-AC_MSG_CHECKING([if want Fortran 77 bindings])
-AC_ARG_ENABLE(mpi-f77, 
-    AC_HELP_STRING([--enable-mpi-f77],
-                   [enable f77 MPI bindings (default: enabled)]))
-if test "$enable_mpi_f77" != "no"; then
-    AC_MSG_RESULT([yes])
-    OMPI_WANT_F77_BINDINGS=1
-else
-    AC_MSG_RESULT([no])
-    OMPI_WANT_F77_BINDINGS=0
-fi
-
-
-#
-# Fortran 90
-#
-
-AC_MSG_CHECKING([if want Fortran 90 bindings])
-AC_ARG_ENABLE(mpi-f90, 
-    AC_HELP_STRING([--enable-mpi-f90],
-                   [enable f90 MPI bindings (default: enabled)]))
-if test "$enable_mpi_f90" != "no"; then
-    AC_MSG_RESULT([yes])
-    OMPI_WANT_F90_BINDINGS=1
-else
-    AC_MSG_RESULT([no])
-    OMPI_WANT_F90_BINDINGS=0
-fi
-
-AC_MSG_CHECKING([desired Fortran 90 bindings "size"])
-AC_ARG_WITH(mpi-f90-size,
-    AC_HELP_STRING([--with-mpi-f90-size=SIZE],
-                   [specify the types of functions in the Fortran 90 MPI module, where SIZE is one of: trivial (MPI-2 F90-specific functions only), small (trivial + all MPI functions without choice buffers), medium (small + all MPI functions with one choice buffer), large (medium + all MPI functions with 2 choice buffers, but only when both buffers are the same type).  Default SIZE is "small".]))
-
-if test "$OMPI_WANT_F90_BINDINGS" = "0"; then
-    AC_MSG_RESULT([disabled (Fortran 90 bindings disabled)])
-elif test "$with_mpi_f90_size" = "no"; then
-    OMPI_WANT_F90_BINDINGS=0
-    AC_MSG_RESULT([disabling F90 MPI module (used specified)])
-else
-    # Default value
-    if test "$with_mpi_f90_size" = ""; then
-        with_mpi_f90_size=small
-    fi
-
-    # Check for each of the sizes
-    if test "$with_mpi_f90_size" = "trivial"; then
-        OMPI_F90_BUILD_SIZE=trivial
-    elif test "$with_mpi_f90_size" = "small"; then
-        OMPI_F90_BUILD_SIZE=small
-    elif test "$with_mpi_f90_size" = "medium"; then
-        OMPI_F90_BUILD_SIZE=medium
-    elif test "$with_mpi_f90_size" = "large"; then
-        OMPI_F90_BUILD_SIZE=large
-    else
-        AC_MSG_RESULT([Unrecognized size: $with_mpi_f90_size])
-        AC_MSG_ERROR([Cannot continue])
-    fi
-fi
-
-AM_CONDITIONAL([OMPI_WANT_BUILD_F90_TRIVIAL], 
-               [test "$OMPI_F90_BUILD_SIZE" = "trivial"])
-AM_CONDITIONAL([OMPI_WANT_BUILD_F90_SMALL], 
-               [test "$OMPI_F90_BUILD_SIZE" = "small"])
-AM_CONDITIONAL([OMPI_WANT_BUILD_F90_MEDIUM], 
-               [test "$OMPI_F90_BUILD_SIZE" = "medium"])
-AM_CONDITIONAL([OMPI_WANT_BUILD_F90_LARGE], 
-               [test "$OMPI_F90_BUILD_SIZE" = "large"])
-
-AC_SUBST(OMPI_F90_BUILD_SIZE)
-if test "$OMPI_WANT_F90_BINDINGS" != "0"; then
-    AC_MSG_RESULT([$OMPI_F90_BUILD_SIZE])
-fi
-
-#
-# MPI profiling
-#
-
-AC_MSG_CHECKING([whether to enable PMPI])
-AC_ARG_ENABLE(mpi-profile, 
-    AC_HELP_STRING([--enable-mpi-profile],
-                   [enable MPI profiling (default: enabled)]))
-if test "$enable_mpi_profile" != "no"; then
-    AC_MSG_RESULT([yes])
-    WANT_MPI_PROFILING=1
-    MPIF_H_PMPI_W_FUNCS=", PMPI_WTICK, PMPI_WTIME"
-else
-    AC_MSG_RESULT([no])
-    WANT_MPI_PROFILING=0
-    MPIF_H_PMPI_W_FUNCS=
-fi
-AC_SUBST(MPIF_H_PMPI_W_FUNCS)
-
-
-#                                                                              
-# C++                                                                          
-#                                                                              
-
-AC_MSG_CHECKING([if want C++ bindings])
-AC_ARG_ENABLE(mpi-cxx,
-    AC_HELP_STRING([--enable-mpi-cxx],
-                   [enable C++ MPI bindings (default: enabled)]))
-if test "$enable_mpi_cxx" != "no"; then
-    AC_MSG_RESULT([yes])
-    WANT_MPI_CXX_SUPPORT=1
-else
-    AC_MSG_RESULT([no])
-    WANT_MPI_CXX_SUPPORT=0
-fi
-
-AC_MSG_CHECKING([if want MPI::SEEK_SET support])
-AC_ARG_ENABLE([mpi-cxx-seek],
-    [AC_HELP_STRING([--enable-mpi-cxx-seek],
-                   [enable support for MPI::SEEK_SET, MPI::SEEK_END, and MPI::SEEK_POS in C++ bindings (default: enabled)])])
-if test "$enable_mpi_cxx_seek" != "no" ; then
-  AC_MSG_RESULT([yes])
-  OMPI_WANT_MPI_CXX_SEEK=1
-else
-  AC_MSG_RESULT([no])
-  OMPI_WANT_MPI_CXX_SEEK=0
-fi
-AC_DEFINE_UNQUOTED([OMPI_WANT_MPI_CXX_SEEK], [$OMPI_WANT_MPI_CXX_SEEK],
-    [do we want to try to work around C++ bindings SEEK_* issue?])
-
-#
-# Do we want to disable weak symbols for some reason?
-#
-
-AC_MSG_CHECKING([if want to enable weak symbol support])
-AC_ARG_ENABLE(weak-symbols,
-    AC_HELP_STRING([--enable-weak-symbols],
-                   [use weak symbols, if available (default: enabled)]))
-if test "$enable_weak_symbols" != "no"; then
-    AC_MSG_RESULT([yes])
-    WANT_WEAK_SYMBOLS=1
-else
-    AC_MSG_RESULT([no])
-    WANT_WEAK_SYMBOLS=0
-fi
-
-#
-# Do we want to disable MPI parameter checking at run-time?
-#
-
-AC_MSG_CHECKING([if want run-time MPI parameter checking])
-AC_ARG_WITH(mpi-param-check,
-    AC_HELP_STRING([--with-mpi-param-check(=VALUE)],
-                   [behavior of MPI function parameter checking.  Valid values are: always, never, runtime.  If --with-mpi-param-check is specified with no VALUE argument, it is equivalent to a VALUE of "always"; --without-mpi-param-check is equivalent to "never" (default: runtime).]))
-mpi_param_check=ompi_mpi_param_check
-if test "$with_mpi_param_check" = "no" -o \
-    "$with_mpi_param_check" = "never"; then
-    mpi_param_check=0
-    AC_MSG_RESULT([never])
-elif test "$with_mpi_param_check" = "yes" -o \
-    "$with_mpi_param_check" = "always"; then
-    mpi_param_check=1
-    AC_MSG_RESULT([always])
-elif test "$with_mpi_param_check" = "runtime" -o \
-    -z "$with_mpi_params_check"; then
-    AC_MSG_RESULT([runtime])
-else
-    AC_MSG_RESULT([unknown])
-    AC_MSG_WARN([*** Unrecognized --with-mpi-param-check value])
-    AC_MSG_WARN([*** See "configure --help" output])
-    AC_MSG_WARN([*** Defaulting to "runtime"])
-fi
-AC_DEFINE_UNQUOTED(MPI_PARAM_CHECK, $mpi_param_check,
-    [Whether we want to check MPI parameters always, never, or decide at run-time])
-
-
-#
-# Do we want to enable MPI interface warnings (e.g. deprecated functionality and others)?
-#
-# XXX This __disabled__ by default for 1.5, but will be __enabled__ for 1.7 by default
-# Users should be notified about this proposed change.
-#
-
-AC_MSG_CHECKING([if want compile-time warnings inside of mpi.h])
-AC_ARG_ENABLE(mpi-interface-warning,
-    AC_HELP_STRING([--enable-mpi-interface-warning],
-                   [enable warnings in wrong (e.g. deprecated) usage in user-level code (default: disabled)]))
-if test "$enable_mpi_interface_warning" = "yes"; then
-    AC_MSG_RESULT([yes])
-    OMPI_WANT_MPI_INTERFACE_WARNING=1
-else
-    AC_MSG_RESULT([no])
-    OMPI_WANT_MPI_INTERFACE_WARNING=0
-fi
-AC_DEFINE_UNQUOTED([OMPI_WANT_MPI_INTERFACE_WARNING], [$OMPI_WANT_MPI_INTERFACE_WARNING],
-    [Enable warnings in wrong usage (e.g. deprecated) in user-level code])
-
-
-#
-# Do we want to install all of OMPI's header files?
-#
-
-AC_MSG_CHECKING([if want to install OMPI header files])
+AC_MSG_CHECKING([if want to install project-internal header files])
 AC_ARG_WITH(devel-headers,
     AC_HELP_STRING([--with-devel-headers],
                    [normal MPI users/applications do not need this (mpi.h and mpif.h are ALWAYS installed).  Developer headers are only necessary for MCA module authors (default: disabled).]))
@@ -408,9 +200,11 @@ else
 fi
 AM_CONDITIONAL(WANT_INSTALL_HEADERS, test "$WANT_INSTALL_HEADERS" = 1)
 
+
 #
 # Do we want the pretty-print stack trace feature?
 #
+
 AC_MSG_CHECKING([if want pretty-print stacktrace])
 AC_ARG_ENABLE([pretty-print-stacktrace],
     [AC_HELP_STRING([--enable-pretty-print-stacktrace],
@@ -426,55 +220,12 @@ AC_DEFINE_UNQUOTED([OPAL_WANT_PRETTY_PRINT_STACKTRACE],
                    [$WANT_PRETTY_PRINT_STACKTRACE],
                    [if want pretty-print stack trace feature])
 
-#
-# Do we want to enable peruse interface?
-#
- 
-AC_MSG_CHECKING([if peruse support is required])
-AC_ARG_ENABLE(peruse,
-    AC_HELP_STRING([--enable-peruse],
-                   [Support PERUSE interface (default: disabled)]))
-if test "$enable_peruse" = "yes"; then
-    AC_MSG_RESULT([yes])
-    WANT_PERUSE=1
-else
-    AC_MSG_RESULT([no])
-    WANT_PERUSE=0
-fi
-AC_DEFINE_UNQUOTED([OMPI_WANT_PERUSE],
-                   [$WANT_PERUSE],
-                   [if the peruse interface should be enabled])
-AM_CONDITIONAL(WANT_PERUSE, test "$WANT_PERUSE" = "1")
 
 #
-# What is the max array rank that we want to support in the f90 bindings?
+# Do we want PTY support?
 #
 
-OMPI_FORTRAN_MAX_ARRAY_RANK=4
-AC_MSG_CHECKING([max supported array dimension in F90 MPI bindings])
-AC_ARG_WITH(f90-max-array-dim,
-    AC_HELP_STRING([--with-f90-max-array-dim=<DIM>],
-                   [The maximum array dimension supported in the F90 MPI bindings (default: $OMPI_FORTRAN_MAX_ARRAY_RANK).]))
-if test ! -z "$with_f90_max_array_dim" -a "$with_f90_max_array_dim" != "no"; then
-    # Ensure it's a number (hopefully an integer!), and >=1 and <=7
-    expr $with_f90_max_array_dim + 1 > /dev/null 2> /dev/null
-    happy=1
-    AS_IF([test "$?" != "0"], [happy=0],
-          [expr $with_f90_max_array_dim \>= 1 \& $with_f90_max_array_dim \<= 7 > /dev/null 2>/dev/null
-           AS_IF([test "$?" != "0"], [happy=0])])
-
-    # If badness in the above tests, bail
-    AS_IF([test "$happy" = "0"],
-          [AC_MSG_RESULT([bad value ($with_f90_max_array_dim)])
-           AC_MSG_WARN([--with-f90-max-array-dim value must be >=1 and <=7])
-           AC_MSG_ERROR([Cannot continue])])
-    OMPI_FORTRAN_MAX_ARRAY_RANK="$with_f90_max_array_dim"
-fi
-AC_MSG_RESULT([$OMPI_FORTRAN_MAX_ARRAY_RANK])
-AC_SUBST(OMPI_FORTRAN_MAX_ARRAY_RANK)
-
-# do we want PTY support?
-AC_MSG_CHECKING([if pty support should be enabled])
+AC_MSG_CHECKING([if want pty support])
 AC_ARG_ENABLE(pty-support,
     AC_HELP_STRING([--enable-pty-support],
                    [Enable/disable PTY support for STDIO forwarding.  (default: enabled)]))
@@ -488,10 +239,29 @@ fi
 AC_DEFINE_UNQUOTED([OPAL_ENABLE_PTY_SUPPORT], [$OPAL_ENABLE_PTY_SUPPORT],
                    [Whether user wants PTY support or not])
 
+
+#
+# Do we want to disable weak symbols for some reason?
+#
+
+AC_MSG_CHECKING([if want weak symbol support])
+AC_ARG_ENABLE(weak-symbols,
+    AC_HELP_STRING([--enable-weak-symbols],
+                   [use weak symbols, if available (default: enabled)]))
+if test "$enable_weak_symbols" != "no"; then
+    AC_MSG_RESULT([yes])
+    WANT_WEAK_SYMBOLS=1
+else
+    AC_MSG_RESULT([no])
+    WANT_WEAK_SYMBOLS=0
+fi
+
+
 #
 # Do we want to allow DLOPEN?
 #
-AC_MSG_CHECKING([if user wants dlopen support])
+
+AC_MSG_CHECKING([if want dlopen support])
 AC_ARG_ENABLE([dlopen],
     [AC_HELP_STRING([--enable-dlopen],
                     [Whether build should attempt to use dlopen (or
@@ -508,11 +278,12 @@ else
     AC_MSG_RESULT([yes])
 fi
 
+
 #
 # Heterogeneous support
 #
 
-AC_MSG_CHECKING([if heterogeneous support should be enabled])
+AC_MSG_CHECKING([if want heterogeneous support])
 AC_ARG_ENABLE([heterogeneous],
     [AC_HELP_STRING([--enable-heterogeneous],
                     [Enable features required for heterogeneous
@@ -527,6 +298,7 @@ fi
 AC_DEFINE_UNQUOTED([OPAL_ENABLE_HETEROGENEOUS_SUPPORT], 
                    [$ompi_want_heterogeneous], 
                    [Enable features required for heterogeneous support])
+
 
 #
 # Internal trace file logging (debugging)
@@ -547,29 +319,6 @@ AC_DEFINE_UNQUOTED([OPAL_ENABLE_TRACE], [$opal_want_trace],
                    [Enable run-time tracing of internal functions])
 
 
-#
-# Minimal RTE support
-#
-AC_MSG_CHECKING([if want full RTE support])
-AC_ARG_WITH([rte-support],
-    [AC_HELP_STRING([--without-rte-support],
-                    [Build without RTE support for systems that do not require it (default: full RTE support built)])])
-if test "$with_rte_support" = "no"; then
-    AC_MSG_RESULT([no])
-    orte_without_full_support=1
-    list_of_frameworks="errmgr,ess-singleton,ess-hnp,ess-tool,ess-env,filem,grpcomm-basic,grpcomm-bad,iof,odls,oob,plm,ras,rmaps,rml,routed,snapc,btl-sm,coll-sm,common-sm,mpool-sm,dpm-orte,pubsub-orte"
-    if test -z $enable_mca_no_build ; then
-      enable_mca_no_build="$list_of_frameworks"
-    else
-      enable_mca_no_build="$enable_mca_no_build,$list_of_frameworks"
-    fi
-else
-    AC_MSG_RESULT([yes])
-    orte_without_full_support=0
-fi
-AC_DEFINE_UNQUOTED([ORTE_DISABLE_FULL_SUPPORT], [$orte_without_full_support],
-                   [Build full RTE support])
-AM_CONDITIONAL(ORTE_DISABLE_FULL_SUPPORT, test "$with_rte_support" = "no")
 
 #
 # Cross-compile data
@@ -698,34 +447,11 @@ fi
 AC_DEFINE_UNQUOTED([OPAL_ENABLE_IPV6], [$opal_want_ipv6],
                    [Enable IPv6 support, but only if the underlying system supports it])
 
-#
-# Do we want orterun's --prefix behavior to be enabled by default?
-#
-AC_MSG_CHECKING([if want orterun "--prefix" behavior to be enabled by default])
-AC_ARG_ENABLE([orterun-prefix-by-default],
-    [AC_HELP_STRING([--enable-orterun-prefix-by-default],
-        [Make "orterun ..." behave exactly the same as "orterun --prefix \$prefix" (where \$prefix is the value given to --prefix in configure)])])
-AC_ARG_ENABLE([mpirun-prefix-by-default],
-    [AC_HELP_STRING([--enable-mpirun-prefix-by-default],
-        [Synonym for --enable-orterun-prefix-by-default])])
-if test "$enable_orterun_prefix_by_default" = ""; then
-    enable_orterun_prefix_by_default=$enable_mpirun_prefix_by_default
-fi
-if test "$enable_orterun_prefix_by_default" = "yes"; then
-    AC_MSG_RESULT([yes])
-    orte_want_orterun_prefix_by_default=1
-else
-    AC_MSG_RESULT([no])
-    orte_want_orterun_prefix_by_default=0
-fi
-AC_DEFINE_UNQUOTED([ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT],
-                   [$orte_want_orterun_prefix_by_default],
-                   [Whether we want orterun to effect "--prefix $prefix" by default])
 
 #
 # Package/brand string
 #
-AC_MSG_CHECKING([for package/brand string])
+AC_MSG_CHECKING([if want package/brand string])
 AC_ARG_WITH([package-string],
      [AC_HELP_STRING([--with-package-string=STRING],
                      [Use a branding string throughout Open MPI])])
@@ -739,7 +465,7 @@ AC_MSG_RESULT([$with_package_string])
 #
 # Ident string
 #
-AC_MSG_CHECKING([for ident string])
+AC_MSG_CHECKING([if want ident string])
 AC_ARG_WITH([ident-string],
      [AC_HELP_STRING([--with-ident-string=STRING],
                      [Embed an ident string into Open MPI object files])])
@@ -751,37 +477,19 @@ AC_DEFINE_UNQUOTED([OPAL_IDENT_STRING], ["$with_ident_string"],
      [ident string for Open MPI])
 AC_MSG_RESULT([$with_ident_string])
 
-#
-# Add padding to OpenIB header
-#
-AC_MSG_CHECKING([whether to add padding to the openib control header])
-AC_ARG_WITH([openib-control-hdr-padding],
-     [AC_HELP_STRING([--with-openib-control-hdr-padding],
-                     [Add padding bytes to the openib control header])])
-if test "$with_openib_control_hdr_padding" = "yes"; then
-    AC_MSG_RESULT([yes])
-    ompi_openib_pad_hdr=1
-else
-    AC_MSG_RESULT([no])
-    ompi_openib_pad_hdr=0
-fi
-AC_DEFINE_UNQUOTED([OMPI_OPENIB_PAD_HDR],
-                   [$ompi_openib_pad_hdr],
-                   [Add padding bytes to the openib control header])
-
 
 #
 # Use alternative checksum algorithm
 #
-AC_MSG_CHECKING([whether to use an alternative checksum algo for messages])
+AC_MSG_CHECKING([if want to use an alternative checksum algo for messages])
 AC_ARG_WITH([dst-checksum],
      [AC_HELP_STRING([--with-dst-checksum],
                      [Use an alternative checksum algorithm for messages])])
 if test "$with_dst_checksum" = "yes"; then
     AC_MSG_RESULT([yes])
-    CFLAGS="-DOMPI_CSUM_DST $CFLAGS"
+    CFLAGS="-DOPAL_CSUM_DST $CFLAGS"
 else
     AC_MSG_RESULT([no])
 fi
 
-])
+])dnl
