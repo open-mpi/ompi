@@ -6,22 +6,22 @@
 ! Copyright (c) 2004-2005 The University of Tennessee and The University
 !                         of Tennessee Research Foundation.  All rights
 !                         reserved.
-! Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
+! Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
 !                         University of Stuttgart.  All rights reserved.
 ! Copyright (c) 2004-2005 The Regents of the University of California.
 !                         All rights reserved.
 ! Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 ! $COPYRIGHT$
-! 
+!
 ! Additional copyrights may follow
-! 
+!
 ! $HEADER$
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING 
+! WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
-! Do ***not*** copy this file to the directory where your Fortran 
+! Do ***not*** copy this file to the directory where your Fortran
 ! fortran application is compiled unless it is absolutely necessary!  Most
 ! modern Fortran compilers now support the -I command line flag, which
 ! tells the compiler where to find .h files (specifically, this one).  For
@@ -29,7 +29,7 @@
 !
 !      shell$ mpif77 foo.f -o foo -I$OMPI_HOME/include
 !
-! will probably do the trick (assuming that you have set OMPI_HOME 
+! will probably do the trick (assuming that you have set OMPI_HOME
 ! properly).
 !
 ! That being said, OMPI's "mpif77" wrapper compiler should
@@ -40,15 +40,15 @@
 !
 ! You should not copy this file to your local directory because it is
 ! possible that this file will be changed between versions of Open MPI.
-! Indeed, this mpif.h is incompatible with the mpif.f of other 
-! implementations of MPI.  Using this mpif.h with other implementations 
+! Indeed, this mpif.h is incompatible with the mpif.f of other
+! implementations of MPI.  Using this mpif.h with other implementations
 ! of MPI, or with other versions of Open MPI will result in undefined
-! behavior (to include incorrect results, segmentation faults, 
+! behavior (to include incorrect results, segmentation faults,
 ! unexplainable "hanging" in your application, etc.).  Always use the
 ! -I command line option instead (or let mpif77 do it for you).
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING 
+! WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 !
@@ -101,7 +101,7 @@
       integer MPI_MODE_NOSTORE, MPI_MODE_NOSUCCEED
       integer MPI_LOCK_EXCLUSIVE, MPI_LOCK_SHARED
       integer MPI_WIN_BASE, MPI_WIN_SIZE, MPI_WIN_DISP_UNIT
-      
+
       parameter (MPI_ANY_SOURCE=-1)
       parameter (MPI_ANY_TAG=-1)
       parameter (MPI_PROC_NULL=-2)
@@ -129,7 +129,7 @@
       parameter (IMPI_CLIENT_COLOR=11)
       parameter (IMPI_HOST_SIZE=12)
       parameter (IMPI_HOST_COLOR=13)
-      
+
       parameter (MPI_BSEND_OVERHEAD=128)
       parameter (MPI_MAX_INFO_KEY=35)
       parameter (MPI_MAX_INFO_VAL=255)
@@ -152,7 +152,7 @@
       parameter (MPI_LOCK_EXCLUSIVE=1)
       parameter (MPI_LOCK_SHARED=2)
 
-!     
+!
 !     MPI sentinel values
 !
 !     Several of these types were chosen with care to match specific
@@ -191,7 +191,7 @@
       integer MPI_STATUS_IGNORE(MPI_STATUS_SIZE)
 !     MPI_STATUSES_IGNORE has similar rationale to MPI_ARGVS_NULL.
       double precision MPI_STATUSES_IGNORE
-      
+
       common/mpi_fortran_bottom/MPI_BOTTOM
       common/mpi_fortran_in_place/MPI_IN_PLACE
       common/mpi_fortran_argv_null/MPI_ARGV_NULL
@@ -199,13 +199,13 @@
       common/mpi_fortran_errcodes_ignore/MPI_ERRCODES_IGNORE
       common/mpi_fortran_status_ignore/MPI_STATUS_IGNORE
       common/mpi_fortran_statuses_ignore/MPI_STATUSES_IGNORE
-!     
+!
 !     NULL "handles" (indices)
-!     
+!
       integer MPI_GROUP_NULL, MPI_COMM_NULL, MPI_DATATYPE_NULL
       integer MPI_REQUEST_NULL, MPI_OP_NULL, MPI_ERRHANDLER_NULL
       integer MPI_INFO_NULL, MPI_WIN_NULL
-      
+
       parameter (MPI_GROUP_NULL=0)
       parameter (MPI_COMM_NULL=2)
       parameter (MPI_DATATYPE_NULL=0)
@@ -214,77 +214,77 @@
       parameter (MPI_ERRHANDLER_NULL=0)
       parameter (MPI_INFO_NULL=0)
       parameter (MPI_WIN_NULL=0)
-!     
+!
 !     MPI_Init_thread constants
-!     
+!
       integer MPI_THREAD_SINGLE, MPI_THREAD_FUNNELED
       integer MPI_THREAD_SERIALIZED, MPI_THREAD_MULTIPLE
-      
+
       parameter (MPI_THREAD_SINGLE=0)
       parameter (MPI_THREAD_FUNNELED=1)
       parameter (MPI_THREAD_SERIALIZED=2)
       parameter (MPI_THREAD_MULTIPLE=3)
-!     
+!
 !     error classes
-!     
-      integer MPI_SUCCESS                    
-      integer MPI_ERR_BUFFER                
-      integer MPI_ERR_COUNT                 
-      integer MPI_ERR_TYPE                  
-      integer MPI_ERR_TAG                   
-      integer MPI_ERR_COMM                  
-      integer MPI_ERR_RANK                  
-      integer MPI_ERR_REQUEST               
-      integer MPI_ERR_ROOT                  
-      integer MPI_ERR_GROUP                 
-      integer MPI_ERR_OP                    
-      integer MPI_ERR_TOPOLOGY              
-      integer MPI_ERR_DIMS                  
-      integer MPI_ERR_ARG                   
-      integer MPI_ERR_UNKNOWN               
-      integer MPI_ERR_TRUNCATE              
-      integer MPI_ERR_OTHER                 
-      integer MPI_ERR_INTERN                
-      integer MPI_ERR_IN_STATUS             
-      integer MPI_ERR_PENDING               
-      integer MPI_ERR_ACCESS                
-      integer MPI_ERR_AMODE                 
-      integer MPI_ERR_ASSERT                
-      integer MPI_ERR_BAD_FILE              
-      integer MPI_ERR_BASE                  
-      integer MPI_ERR_CONVERSION            
-      integer MPI_ERR_DISP                  
-      integer MPI_ERR_DUP_DATAREP           
-      integer MPI_ERR_FILE_EXISTS           
-      integer MPI_ERR_FILE_IN_USE           
-      integer MPI_ERR_FILE                  
-      integer MPI_ERR_INFO_KEY              
-      integer MPI_ERR_INFO_NOKEY            
-      integer MPI_ERR_INFO_VALUE            
-      integer MPI_ERR_INFO                  
-      integer MPI_ERR_IO                    
-      integer MPI_ERR_KEYVAL                
-      integer MPI_ERR_LOCKTYPE              
-      integer MPI_ERR_NAME                  
-      integer MPI_ERR_NO_MEM                
-      integer MPI_ERR_NOT_SAME              
-      integer MPI_ERR_NO_SPACE              
-      integer MPI_ERR_NO_SUCH_FILE          
-      integer MPI_ERR_PORT                  
-      integer MPI_ERR_QUOTA                 
-      integer MPI_ERR_READ_ONLY             
-      integer MPI_ERR_RMA_CONFLICT          
-      integer MPI_ERR_RMA_SYNC              
-      integer MPI_ERR_SERVICE               
-      integer MPI_ERR_SIZE                  
-      integer MPI_ERR_SPAWN                 
-      integer MPI_ERR_UNSUPPORTED_DATAREP   
-      integer MPI_ERR_UNSUPPORTED_OPERATION 
-      integer MPI_ERR_WIN                   
-       
-      integer MPI_ERR_SYSRESOURCE          
-      integer MPI_ERR_LASTCODE              
-       
+!
+      integer MPI_SUCCESS
+      integer MPI_ERR_BUFFER
+      integer MPI_ERR_COUNT
+      integer MPI_ERR_TYPE
+      integer MPI_ERR_TAG
+      integer MPI_ERR_COMM
+      integer MPI_ERR_RANK
+      integer MPI_ERR_REQUEST
+      integer MPI_ERR_ROOT
+      integer MPI_ERR_GROUP
+      integer MPI_ERR_OP
+      integer MPI_ERR_TOPOLOGY
+      integer MPI_ERR_DIMS
+      integer MPI_ERR_ARG
+      integer MPI_ERR_UNKNOWN
+      integer MPI_ERR_TRUNCATE
+      integer MPI_ERR_OTHER
+      integer MPI_ERR_INTERN
+      integer MPI_ERR_IN_STATUS
+      integer MPI_ERR_PENDING
+      integer MPI_ERR_ACCESS
+      integer MPI_ERR_AMODE
+      integer MPI_ERR_ASSERT
+      integer MPI_ERR_BAD_FILE
+      integer MPI_ERR_BASE
+      integer MPI_ERR_CONVERSION
+      integer MPI_ERR_DISP
+      integer MPI_ERR_DUP_DATAREP
+      integer MPI_ERR_FILE_EXISTS
+      integer MPI_ERR_FILE_IN_USE
+      integer MPI_ERR_FILE
+      integer MPI_ERR_INFO_KEY
+      integer MPI_ERR_INFO_NOKEY
+      integer MPI_ERR_INFO_VALUE
+      integer MPI_ERR_INFO
+      integer MPI_ERR_IO
+      integer MPI_ERR_KEYVAL
+      integer MPI_ERR_LOCKTYPE
+      integer MPI_ERR_NAME
+      integer MPI_ERR_NO_MEM
+      integer MPI_ERR_NOT_SAME
+      integer MPI_ERR_NO_SPACE
+      integer MPI_ERR_NO_SUCH_FILE
+      integer MPI_ERR_PORT
+      integer MPI_ERR_QUOTA
+      integer MPI_ERR_READ_ONLY
+      integer MPI_ERR_RMA_CONFLICT
+      integer MPI_ERR_RMA_SYNC
+      integer MPI_ERR_SERVICE
+      integer MPI_ERR_SIZE
+      integer MPI_ERR_SPAWN
+      integer MPI_ERR_UNSUPPORTED_DATAREP
+      integer MPI_ERR_UNSUPPORTED_OPERATION
+      integer MPI_ERR_WIN
+
+      integer MPI_ERR_SYSRESOURCE
+      integer MPI_ERR_LASTCODE
+
       parameter( MPI_SUCCESS                  = 0)
       parameter( MPI_ERR_BUFFER               = 1)
       parameter( MPI_ERR_COUNT                = 2)
@@ -339,22 +339,22 @@
       parameter( MPI_ERR_UNSUPPORTED_DATAREP  = 51)
       parameter( MPI_ERR_UNSUPPORTED_OPERATION= 52)
       parameter( MPI_ERR_WIN                  = 53)
-      
+
       parameter( MPI_ERR_SYSRESOURCE          = -2)
       parameter( MPI_ERR_LASTCODE             = 54)
-      
-!     
+
+!
 !     comparison results
-!     
+!
       integer MPI_IDENT, MPI_CONGRUENT, MPI_SIMILAR, MPI_UNEQUAL
-      
+
       parameter (MPI_IDENT=0)
       parameter (MPI_CONGRUENT=1)
       parameter (MPI_SIMILAR=2)
       parameter (MPI_UNEQUAL=3)
-!     
+!
 !     datatype combiners
-!     
+!
       integer MPI_COMBINER_NAMED
       integer MPI_COMBINER_DUP
       integer MPI_COMBINER_CONTIGUOUS
@@ -373,7 +373,7 @@
       integer MPI_COMBINER_F90_COMPLEX
       integer MPI_COMBINER_F90_INTEGER
       integer MPI_COMBINER_RESIZED
-      
+
       parameter (MPI_COMBINER_NAMED=0)
       parameter (MPI_COMBINER_DUP=1)
       parameter (MPI_COMBINER_CONTIGUOUS=2)
@@ -392,19 +392,19 @@
       parameter (MPI_COMBINER_F90_COMPLEX=15)
       parameter (MPI_COMBINER_F90_INTEGER=16)
       parameter (MPI_COMBINER_RESIZED=17)
-!     
+!
 !     lookup table indices
-!     
+!
       integer MPI_COMM_WORLD, MPI_COMM_SELF
       integer MPI_GROUP_EMPTY
       integer MPI_ERRORS_ARE_FATAL, MPI_ERRORS_RETURN
-      
+
       parameter (MPI_COMM_WORLD=0)
       parameter (MPI_COMM_SELF=1)
       parameter (MPI_GROUP_EMPTY=1)
       parameter (MPI_ERRORS_ARE_FATAL=1)
       parameter (MPI_ERRORS_RETURN=2)
-      
+
       integer MPI_BYTE, MPI_PACKED, MPI_UB, MPI_LB
       integer MPI_CHARACTER, MPI_LOGICAL
       integer MPI_INTEGER, MPI_INTEGER1, MPI_INTEGER2, MPI_INTEGER4
@@ -429,8 +429,8 @@
       parameter (MPI_INTEGER=7)
       parameter (MPI_INTEGER1=8)
       parameter (MPI_INTEGER2=9)
-      parameter (MPI_INTEGER4=10) 
-      parameter (MPI_INTEGER8=11)  
+      parameter (MPI_INTEGER4=10)
+      parameter (MPI_INTEGER8=11)
       parameter (MPI_INTEGER16=12)
       parameter (MPI_REAL=13)
       parameter (MPI_REAL4=14)
@@ -452,11 +452,11 @@
       parameter (MPI_LOGICAL2=30)
       parameter (MPI_LOGICAL4=31)
       parameter (MPI_LOGICAL8=32)
-      
+
       integer MPI_MAX, MPI_MIN, MPI_SUM, MPI_PROD, MPI_LAND
       integer MPI_BAND, MPI_LOR, MPI_BOR, MPI_LXOR, MPI_BXOR
       integer MPI_MAXLOC, MPI_MINLOC, MPI_REPLACE
-      
+
       parameter (MPI_MAX=1)
       parameter (MPI_MIN=2)
       parameter (MPI_SUM=3)
