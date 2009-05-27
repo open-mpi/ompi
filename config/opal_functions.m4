@@ -393,4 +393,5 @@ AC_DEFUN([_OPAL_WITH_OPTION_MIN_MAX_VALUE], [
     AC_MSG_RESULT([$max_value])
     AC_DEFINE_UNQUOTED([OPAL_MAX_]m4_toupper($1), $max_value,
                        [Maximum length of ]m4_translit($1, [_], [ ])[s (default is $2)])
+    AC_SUBST([OPAL_MAX_]m4_toupper($1))
 ])dnl
