@@ -89,3 +89,20 @@
 !
       integer MPI_STATUS_SIZE
       parameter (MPI_STATUS_SIZE=5)
+!
+!     Configurable length constants
+!
+      integer MPI_MAX_PROCESSOR_NAME
+      integer MPI_MAX_ERROR_STRING
+      integer MPI_MAX_OBJECT_NAME
+      integer MPI_MAX_INFO_KEY
+      integer MPI_MAX_INFO_VAL
+      integer MPI_MAX_PORT_NAME
+      integer MPI_MAX_DATAREP_STRING
+      parameter (MPI_MAX_PROCESSOR_NAME=@OPAL_MAX_PROCESSOR_NAME@-1)
+      parameter (MPI_MAX_ERROR_STRING=@OPAL_MAX_ERROR_STRING@-1)
+      parameter (MPI_MAX_OBJECT_NAME=@OPAL_MAX_OBJECT_NAME@-1)
+      parameter (MPI_MAX_INFO_KEY=@OPAL_MAX_INFO_KEY@-1)
+      parameter (MPI_MAX_INFO_VAL=@OPAL_MAX_INFO_VAL@-1)
+      parameter (MPI_MAX_PORT_NAME=@OPAL_MAX_PORT_NAME@-1)
+      parameter (MPI_MAX_DATAREP_STRING=@OPAL_MAX_DATAREP_STRING@-1)

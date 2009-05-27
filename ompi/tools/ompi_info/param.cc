@@ -784,4 +784,13 @@ void ompi_info::do_config(bool want_all)
   out("MPI extensions", "options:mpi_ext", OMPI_EXT_COMPONENTS);
 
   out("FT Checkpoint support", "options:ft_support", ft_support);
+
+  out("Parameter OPAL_MAX_PROCESSOR_NAME", "options:max-processor-name", OPAL_MAX_PROCESSOR_NAME);
+  out("Parameter OPAL_MAX_ERROR_STRING",   "options:max-error-string",   OPAL_MAX_ERROR_STRING);
+  out("Parameter OPAL_MAX_OBJECT_NAME",    "options:max-object-name",    OPAL_MAX_OBJECT_NAME);
+  out("Parameter OPAL_MAX_INFO_KEY",       "options:max-info-key",       OPAL_MAX_INFO_KEY);
+  out("Parameter OPAL_MAX_INFO_VAL",       "options:max-info-val",       OPAL_MAX_INFO_VAL);
+  out("Parameter OPAL_MAX_PORT_NAME",      "options:max-port-name",      OPAL_MAX_PORT_NAME);
+  out("Parameter OPAL_MAX_DATAREP_STRING", "options:max-datarep-string", OPAL_MAX_DATAREP_STRING);
+
 }

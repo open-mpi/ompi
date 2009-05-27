@@ -80,9 +80,9 @@
 !     Miscellaneous constants
 !
       integer MPI_ANY_SOURCE, MPI_ANY_TAG
-      integer MPI_PROC_NULL, MPI_MAX_PROCESSOR_NAME
+      integer MPI_PROC_NULL
       integer MPI_ROOT
-      integer MPI_MAX_ERROR_STRING, MPI_UNDEFINED
+      integer MPI_UNDEFINED
       integer MPI_CART, MPI_GRAPH, MPI_KEYVAL_INVALID
       integer MPI_SOURCE, MPI_TAG, MPI_ERROR
       integer MPI_TAG_UB, MPI_HOST, MPI_IO, MPI_WTIME_IS_GLOBAL
@@ -90,8 +90,6 @@
       integer IMPI_CLIENT_SIZE, IMPI_CLIENT_COLOR
       integer IMPI_HOST_SIZE, IMPI_HOST_COLOR
       integer MPI_BSEND_OVERHEAD
-      integer MPI_MAX_INFO_KEY, MPI_MAX_INFO_VAL
-      integer MPI_MAX_PORT_NAME, MPI_MAX_OBJECT_NAME
       integer MPI_ORDER_C, MPI_ORDER_FORTRAN
       integer MPI_DISTRIBUTE_BLOCK, MPI_DISTRIBUTE_CYCLIC
       integer MPI_DISTRIBUTE_NONE, MPI_DISTRIBUTE_DFLT_DARG
@@ -106,8 +104,6 @@
       parameter (MPI_ANY_TAG=-1)
       parameter (MPI_PROC_NULL=-2)
       parameter (MPI_ROOT=-4)
-      parameter (MPI_MAX_PROCESSOR_NAME=255)
-      parameter (MPI_MAX_ERROR_STRING=255)
       parameter (MPI_UNDEFINED=-32766)
       parameter (MPI_CART=1)
       parameter (MPI_GRAPH=2)
@@ -131,10 +127,6 @@
       parameter (IMPI_HOST_COLOR=13)
 
       parameter (MPI_BSEND_OVERHEAD=128)
-      parameter (MPI_MAX_INFO_KEY=35)
-      parameter (MPI_MAX_INFO_VAL=255)
-      parameter (MPI_MAX_PORT_NAME=255)
-      parameter (MPI_MAX_OBJECT_NAME=63)
       parameter (MPI_ORDER_C=0)
       parameter (MPI_ORDER_FORTRAN=1)
       parameter (MPI_DISTRIBUTE_BLOCK=0)
