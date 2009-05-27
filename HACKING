@@ -195,8 +195,20 @@ NOTE: On MacOS/X, the default "libtool" program is different than the
    will invoke the GNU Autoconf, Automake, and Libtool commands in the
    proper order and setup to run OMPI's top-level "configure" script.
 
-   Running autogen.sh may take several minutes.  It's not very
-   exciting to watch.  :-)
+   Running autogen.sh may take several minutes, depending on your
+   system.  It's not very exciting to watch.  :-)
+
+   If you have a multi-processor system, enabling the multi-threaded
+   behavior in Automake 1.11 (or newer) can result in autogen.sh
+   running faster.  Do this by setting the AUTOMAKE_JOBS environment
+   variable to the number of processors (threads) that you want it to
+   use.  For example (you can again put this in your shell startup
+   files):
+
+       # For bash/sh:
+       export AUTOMAKE_JOBS=4
+       # For csh/tcsh:
+       set AUTOMAKE_JOBS 4
 
    5a. You generally need to run autogen.sh whenever the top-level
        file "configure.ac" changes, or any files in the config/
