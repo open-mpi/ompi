@@ -179,8 +179,9 @@ recv_request_pml_complete(mca_pml_ob1_recv_request_t *recvreq)
 static inline bool
 recv_request_pml_complete_check(mca_pml_ob1_recv_request_t *recvreq)
 {
+#if OPAL_HAVE_THREAD_SUPPORT
     opal_atomic_rmb();
-
+#endif
     if(recvreq->req_match_received &&
             recvreq->req_bytes_received >= recvreq->req_recv.req_bytes_packed &&
             lock_recv_request(recvreq)) {
@@ -218,8 +219,9 @@ static inline void recv_req_matched(mca_pml_ob1_recv_request_t *req,
     req->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = hdr->hdr_src;
     req->req_recv.req_base.req_ompi.req_status.MPI_TAG = hdr->hdr_tag;
     req->req_match_received = true;
+#if OPAL_HAVE_THREAD_SUPPORT
     opal_atomic_wmb();
-
+#endif
     if(req->req_recv.req_bytes_packed > 0) {
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
         if(MPI_ANY_SOURCE == req->req_recv.req_base.req_peer) {
@@ -262,6 +264,7 @@ do {                                                                            
                 iov[iov_count].iov_base = (IOVBASE_TYPE*)                         \
                     ((unsigned char*)segment->seg_addr.pval + offset);            \
                 iov_count++;                                                      \
+                offset = 0;                                                       \
             }                                                                     \
         }                                                                         \
         PERUSE_TRACE_COMM_OMPI_EVENT (PERUSE_COMM_REQ_XFER_CONTINUE,              \
