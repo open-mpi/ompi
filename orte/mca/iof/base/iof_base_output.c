@@ -170,6 +170,19 @@ construct:
                     output->data[k++] = starttag[j];
                 }
             }
+        } else if (orte_xml_output && '&' == data[i]) {
+            output->data[k++] = '&';
+            output->data[k++] = 'a';
+            output->data[k++] = 'm';
+            output->data[k++] = 'p';
+        } else if (orte_xml_output && '<' == data[i]) {
+            output->data[k++] = '&';
+            output->data[k++] = 'l';
+            output->data[k++] = 't';
+        } else if (orte_xml_output && '>' == data[i]) {
+            output->data[k++] = '&';
+            output->data[k++] = 'g';
+            output->data[k++] = 't';
         } else {
             output->data[k++] = data[i];
         }
