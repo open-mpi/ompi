@@ -518,7 +518,7 @@ static void mca_oob_tcp_accept(int incoming_sd)
                     opal_output(0, "mca_oob_tcp_accept: accept() failed: %s (%d).", 
                                 strerror(opal_socket_errno), opal_socket_errno);
                 }
-                orte_errmgr.abort(ORTE_ERROR_DEFAULT_EXIT_CODE, "");
+                orte_errmgr.abort(ORTE_ERROR_DEFAULT_EXIT_CODE, NULL);
             }
             return;
         }
