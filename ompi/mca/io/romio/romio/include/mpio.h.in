@@ -104,7 +104,7 @@ typedef int MPI_Fint;
 
 /* Open MPI: don't define MPI_MAX_DATAREP_STRING here; it's defined in          
    OMPI's mpi.h. */
-#ifndef OPEN_MPI
+#if 0
 #define MPI_MAX_DATAREP_STRING  128
 #endif
 
