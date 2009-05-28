@@ -41,6 +41,8 @@
 
 #include "ompi/tools/ompi_info/ompi_info.h"
 
+#include "opal/util/show_help.h"
+
 using namespace std;
 using namespace ompi_info;
 
@@ -187,12 +189,22 @@ void ompi_info::out(const string& pretty_message, const string &plain_message,
                     int value)
 {
   if (ompi_info::pretty) {
-    string spaces(OMPI_max(centerpoint - pretty_message.length(), 0), ' ');
-    if (!pretty_message.empty()) {
-        cout << spaces << pretty_message << ": " << value << endl;
-    } else {
-        cout << spaces << "  " << value << endl;
-    }
+      if (centerpoint > pretty_message.length()) {
+          string spaces(centerpoint - pretty_message.length(), ' ');
+          cout << spaces;
+      }
+#if OPAL_ENABLE_DEBUG
+      else {
+          opal_show_help("help-ompi_info.txt", 
+                         "developer warning: field too long", false,
+                         pretty_message.c_str(), centerpoint);
+      }
+#endif
+      if (!pretty_message.empty()) {
+          cout << pretty_message << ": " << value << endl;
+      } else {
+          cout << "  " << value << endl;
+      }
   } else {
       if (!plain_message.empty()) {
           cout << plain_message << ":" << value << endl;
