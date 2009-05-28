@@ -19,6 +19,7 @@
 //
 
 #include "ompi_config.h"
+#include "mpi.h"
 
 #include <iostream>
 #include <string>
@@ -785,12 +786,19 @@ void ompi_info::do_config(bool want_all)
 
   out("FT Checkpoint support", "options:ft_support", ft_support);
 
-  out("Parameter OPAL_MAX_PROCESSOR_NAME", "options:max-processor-name", OPAL_MAX_PROCESSOR_NAME);
-  out("Parameter OPAL_MAX_ERROR_STRING",   "options:max-error-string",   OPAL_MAX_ERROR_STRING);
-  out("Parameter OPAL_MAX_OBJECT_NAME",    "options:max-object-name",    OPAL_MAX_OBJECT_NAME);
-  out("Parameter OPAL_MAX_INFO_KEY",       "options:max-info-key",       OPAL_MAX_INFO_KEY);
-  out("Parameter OPAL_MAX_INFO_VAL",       "options:max-info-val",       OPAL_MAX_INFO_VAL);
-  out("Parameter OPAL_MAX_PORT_NAME",      "options:max-port-name",      OPAL_MAX_PORT_NAME);
-  out("Parameter OPAL_MAX_DATAREP_STRING", "options:max-datarep-string", OPAL_MAX_DATAREP_STRING);
+  out("MPI_MAX_PROCESSOR_NAME", "options:mpi-max-processor-name", 
+      MPI_MAX_PROCESSOR_NAME);
+  out("MPI_MAX_ERROR_STRING",   "options:mpi-max-error-string",   
+      MPI_MAX_ERROR_STRING);
+  out("MPI_MAX_OBJECT_NAME",    "options:mpi-max-object-name",    
+      MPI_MAX_OBJECT_NAME);
+  out("MPI_MAX_INFO_KEY",       "options:mpi-max-info-key",       
+      MPI_MAX_INFO_KEY);
+  out("MPI_MAX_INFO_VAL",       "options:mpi-max-info-val",       
+      MPI_MAX_INFO_VAL);
+  out("MPI_MAX_PORT_NAME",      "options:mpi-max-port-name",      
+      MPI_MAX_PORT_NAME);
+  out("MPI_MAX_DATAREP_STRING", "options:mpi-max-datarep-string", 
+      MPI_MAX_DATAREP_STRING);
 
 }
