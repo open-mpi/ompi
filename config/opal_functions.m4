@@ -365,12 +365,12 @@ dnl #######################################################################
 dnl #######################################################################
 
 #
-# _OPAL_WITH_OPTION_MIN_MAX_VALUE(NAME,DEFAULT_VALUE,LOWER_BOUND,UPPER_BOUND)
+# OPAL_WITH_OPTION_MIN_MAX_VALUE(NAME,DEFAULT_VALUE,LOWER_BOUND,UPPER_BOUND)
 # Defines a variable OPAL_MAX_xxx, with "xxx" being specified as parameter $1 as "variable_name".
 # If not set at configure-time using --with-max-xxx, the default-value ($2) is assumed.
 # If set, value is checked against lower (value >= $3) and upper bound (value <= $4)
 #
-AC_DEFUN([_OPAL_WITH_OPTION_MIN_MAX_VALUE], [
+AC_DEFUN([OPAL_WITH_OPTION_MIN_MAX_VALUE], [
     max_value=[$2]
     AC_MSG_CHECKING([maximum length of ]m4_translit($1, [_], [ ]))
     AC_ARG_WITH([max-]m4_translit($1, [_], [-]),
@@ -393,5 +393,6 @@ AC_DEFUN([_OPAL_WITH_OPTION_MIN_MAX_VALUE], [
     AC_MSG_RESULT([$max_value])
     AC_DEFINE_UNQUOTED([OPAL_MAX_]m4_toupper($1), $max_value,
                        [Maximum length of ]m4_translit($1, [_], [ ])[s (default is $2)])
+    [OPAL_MAX_]m4_toupper($1)=$max_value
     AC_SUBST([OPAL_MAX_]m4_toupper($1))
 ])dnl
