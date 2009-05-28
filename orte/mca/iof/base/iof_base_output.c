@@ -170,19 +170,38 @@ construct:
                     output->data[k++] = starttag[j];
                 }
             }
-        } else if (orte_xml_output && '&' == data[i]) {
-            output->data[k++] = '&';
-            output->data[k++] = 'a';
-            output->data[k++] = 'm';
-            output->data[k++] = 'p';
-        } else if (orte_xml_output && '<' == data[i]) {
-            output->data[k++] = '&';
-            output->data[k++] = 'l';
-            output->data[k++] = 't';
-        } else if (orte_xml_output && '>' == data[i]) {
-            output->data[k++] = '&';
-            output->data[k++] = 'g';
-            output->data[k++] = 't';
+        } else if (orte_xml_output) {
+            if ('&' == data[i]) {
+                if (k+5 >= ORTE_IOF_BASE_TAGGED_OUT_MAX) {
+                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                   goto process;
+                }
+                output->data[k++] = '&';
+                output->data[k++] = 'a';
+                output->data[k++] = 'm';
+                output->data[k++] = 'p';
+                output->data[k++] = ';';
+            } else if ('<' == data[i]) {
+                if (k+4 >= ORTE_IOF_BASE_TAGGED_OUT_MAX) {
+                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                    goto process;
+                }
+                output->data[k++] = '&';
+                output->data[k++] = 'l';
+                output->data[k++] = 't';
+                output->data[k++] = ';';
+            } else if ('>' == data[i]) {
+                if (k+4 >= ORTE_IOF_BASE_TAGGED_OUT_MAX) {
+                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                    goto process;
+                }
+                output->data[k++] = '&';
+                output->data[k++] = 'g';
+                output->data[k++] = 't';
+                output->data[k++] = ';';
+            } else {
+                output->data[k++] = data[i];
+            }
         } else {
             output->data[k++] = data[i];
         }
