@@ -18,5 +18,7 @@ Local modifications:
   versions of the GNU auto tools -- see comments in file.
 - Added a full set of Makefile.am files; removed all prior Makefile's;
   replaced most Makefile.in's.  Ignore mpi2-other and man directories.
+- We define MPI_MAX_DATAREP_STRING, therefore
+  protect the redefinition in include/mpio.h
 - Not all systems have snprintf(); include "opal/util/printf.h" in
   test/noncontig_coll.c

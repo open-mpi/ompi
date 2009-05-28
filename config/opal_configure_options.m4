@@ -502,24 +502,24 @@ fi
 #
 
 # No lower and upper bound required or enforced
-_OPAL_WITH_OPTION_MIN_MAX_VALUE(processor_name,  256,  16, 1024)
+OPAL_WITH_OPTION_MIN_MAX_VALUE(processor_name,  256,  16, 1024)
 
 # Min length according to information passed in ompi/errhandler/errcode.c
-_OPAL_WITH_OPTION_MIN_MAX_VALUE(error_string,    256,  64, 1024)
+OPAL_WITH_OPTION_MIN_MAX_VALUE(error_string,    256,  64, 1024)
 
 # Min length according to MPI-2.1, p. 236 (information passed in ompi/communicator/comm.c: min only 48)
-_OPAL_WITH_OPTION_MIN_MAX_VALUE(object_name,      64,  64,  256)
+OPAL_WITH_OPTION_MIN_MAX_VALUE(object_name,      64,  64,  256)
 
 # Min and Max length according to MPI-2.1, p. 287 is 32; longest key in ROMIO however 33
-_OPAL_WITH_OPTION_MIN_MAX_VALUE(info_key,         36,  33,  255)
+OPAL_WITH_OPTION_MIN_MAX_VALUE(info_key,         36,  34,  255)
 
 # No lower and upper bound required or enforced!
-_OPAL_WITH_OPTION_MIN_MAX_VALUE(info_val,        256,  32, 1024)
+OPAL_WITH_OPTION_MIN_MAX_VALUE(info_val,        256,  32, 1024)
 
 # Min length according to _POSIX_HOST_NAME_MAX=255 (4*HOST_NAME_MAX)
-_OPAL_WITH_OPTION_MIN_MAX_VALUE(port_name,      1024, 255, 2048)
+OPAL_WITH_OPTION_MIN_MAX_VALUE(port_name,      1024, 255, 2048)
 
 # Min length accroding to MPI-2.1, p. 418
-_OPAL_WITH_OPTION_MIN_MAX_VALUE(datarep_string,  128,  64,  256)
+OPAL_WITH_OPTION_MIN_MAX_VALUE(datarep_string,  128,  64,  256)
 
 ])dnl
