@@ -93,13 +93,23 @@ void ompi_info::out(const string& pretty_message, const string &plain_message,
   }
   if (strip_trailing_whitespace) {
       string::size_type i = local_value.length();
-      while (i >= 0 && isspace(local_value[i])) {
-          --i;
-      }
-      if (i < 0) {
-          local_value = "";
-      } else if (i >= 0) {
-          local_value = local_value.substr(0, i);
+      if (i > 0) {
+          // Note that string::size_type is unsigned, so we can't
+          // check for i<0
+          while (i > 0 && isspace(local_value[i])) {
+              --i;
+          }
+          // Instead, just check to see if we got down to 0 and the
+          // last character is also a space
+          if (i > 0) {
+              local_value = local_value.substr(0, i);
+          } else {
+              if (isspace(local_value[0])) {
+                  local_value = "";
+              } else {
+                  local_value = local_value[0];
+              }
+          }
       }
   }
 
