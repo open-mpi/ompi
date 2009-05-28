@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -45,7 +46,6 @@ libopen_rte_la_SOURCES += \
 if !ORTE_DISABLE_FULL_SUPPORT
 
 headers += \
-        runtime/runtime_internals.h \
 	runtime/orte_wait.h \
         runtime/orte_cr.h \
         runtime/orte_data_server.h

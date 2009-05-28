@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -23,7 +23,6 @@ dist_pkgdata_DATA += runtime/help-mpi-runtime.txt
 
 headers += \
         runtime/mpiruntime.h \
-	runtime/params.h \
 	runtime/ompi_cr.h \
         runtime/params.h \
 	runtime/ompi_module_exchange.h
