@@ -201,7 +201,7 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
     /* add the bootproxy cmd line options */
     if (ORTE_SUCCESS != (rc = orte_plm_base_append_bootproxy_args(app, &argv,
                                                                   jdata->jobid, 0,
-                                                                  1, 1, 0, 1, 1))) {
+                                                                  1, 1, 0, 1, 1, true))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -1100,7 +1100,7 @@ PRELOAD_FILES:
 int orte_plm_base_append_bootproxy_args(orte_app_context_t *app, char ***argv,
                                         orte_jobid_t jobid, orte_vpid_t vpid,
                                         int num_nodes, orte_vpid_t num_procs, orte_local_rank_t lrank,
-                                        orte_vpid_t nlocal, int nslots)
+                                        orte_vpid_t nlocal, int nslots, bool overwrite)
 {
     char *param, *path, *tmp, *cmd, *basename, *dest_dir;
     int i;
@@ -1135,21 +1135,29 @@ int orte_plm_base_append_bootproxy_args(orte_app_context_t *app, char ***argv,
     
     /* add MCA params required for launch */
     
+    /***  OVERRIDE WHAT THE APP PROVIDED ONLY IF DIRECTED TO DO SO ***/
     /* tell ESS to select the "slave" component */
     param = mca_base_param_environ_variable("ess",NULL,NULL);
-    opal_setenv(param, "slave", true, argv);
+    opal_setenv(param, "slave", overwrite, argv);
     free(param);
     
     /* tell ROUTED to select the "slave" component */
     param = mca_base_param_environ_variable("routed",NULL,NULL);
-    opal_setenv(param, "slave", true, argv);
+    opal_setenv(param, "slave", overwrite, argv);
     free(param);
     
     /* tell GRPCOMM to select the "hier" component */
     param = mca_base_param_environ_variable("grpcomm",NULL,NULL);
-    opal_setenv(param, "hier", true, argv);
+    opal_setenv(param, "hier", overwrite, argv);
+    free(param);
+
+    /* setup yield schedule to be aggressive */
+    param = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
+    opal_setenv(param, "0", overwrite, argv);
     free(param);
     
+    
+    /***  OVERWRITE ANY PRE-EXISTING VALUES ***/
     /* must pass the number of nodes */
     param = mca_base_param_environ_variable("orte","num","nodes");
     asprintf(&cmd, "%d", num_nodes);
@@ -1172,11 +1180,6 @@ int orte_plm_base_append_bootproxy_args(orte_app_context_t *app, char ***argv,
     opal_setenv(param, path, true, argv);
     free(param);
     free(path);
-    
-    /* setup yield schedule to be aggressive */
-    param = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
-    opal_setenv(param, "0", true, argv);
-    free(param);
     
     /* set the app_context number */
     param = mca_base_param_environ_variable("orte","app","num");

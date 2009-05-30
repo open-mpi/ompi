@@ -311,7 +311,7 @@ int orte_plm_rshd_launch(orte_job_t *jdata)
                                                                       proc->name.jobid, proc->name.vpid,
                                                                       jdata->map->num_nodes,
                                                                       jdata->num_procs, proc->local_rank,
-                                                                      node->num_procs, jdata->total_slots_alloc))) {
+                                                                      node->num_procs, jdata->total_slots_alloc, false))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
