@@ -38,16 +38,32 @@
  * This function gets called by the PLM when an orted notifies us
  * that a process has aborted
  * Various components will follow their own strategy for dealing with
- * this situation. For this component, we simply kill the job.
+ * this situation. For this component, we call the provided
+ * err_cbfunc if they requested notification on proc aborted.
+ * Otherwise, we simply kill the job.
  */
 void orte_errmgr_default_proc_aborted(orte_process_name_t *name, int exit_code)
 {
     int rc;
-    orte_job_t **jobs;
-    orte_std_cntr_t i;
+    orte_job_t *jdata;
+    int i;
     
-    OPAL_TRACE(1);
+    /* get the job data object for this process */
+    if (NULL == (jdata = orte_get_job_data_object(name->jobid))) {
+        /* nothing we can do - abort things */
+        goto PROCESS;
+    }
     
+    if (NULL != jdata->err_cbfunc && (ORTE_JOB_STATE_ABORTED & jdata->err_cbstates)) {
+        OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_output,
+                             "%s errmgr:default: proc %s aborted with status %d - calling cbfunc",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(name), exit_code));
+        jdata->err_cbfunc(name->jobid, ORTE_JOB_STATE_ABORTED, jdata->err_cbdata);
+        return;
+    }
+    
+PROCESS:
     /* if we are already in progress, then ignore this call */
     if (!opal_atomic_trylock(&orte_abort_inprogress_lock)) { /* returns 1 if already locked */
         OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_output,
@@ -72,21 +88,20 @@ void orte_errmgr_default_proc_aborted(orte_process_name_t *name, int exit_code)
      * NOTE: be sure to not include the 0 job data location as this
      * contains the daemons!
      */
-    jobs = (orte_job_t**)orte_job_data->addr;
     for (i=1; i < orte_job_data->size; i++) {
         /* the array may have holes in it as we are recovering
          * jobids as they complete, so check everything
          */
-        if (NULL == jobs[i]) {
+        if (NULL == (jdata = orte_get_job_data_object(name->jobid))) {
             continue;
         }
-        if (ORTE_JOB_STATE_ABORTED != jobs[i]->state &&
-            ORTE_JOB_STATE_ABORTED_BY_SIG != jobs[i]->state &&
-            ORTE_JOB_STATE_ABORTED_WO_SYNC != jobs[i]->state) {
-            jobs[i]->state = ORTE_JOB_STATE_ABORT_ORDERED;
+        if (ORTE_JOB_STATE_ABORTED != jdata->state &&
+            ORTE_JOB_STATE_ABORTED_BY_SIG != jdata->state &&
+            ORTE_JOB_STATE_ABORTED_WO_SYNC != jdata->state) {
+            jdata->state = ORTE_JOB_STATE_ABORT_ORDERED;
         }
     }
-    
+
     /* tell the plm to terminate all jobs */
     if (ORTE_SUCCESS != (rc = orte_plm.terminate_job(ORTE_JOBID_WILDCARD))) {
         ORTE_ERROR_LOG(rc);
@@ -111,9 +126,24 @@ void orte_errmgr_default_proc_aborted(orte_process_name_t *name, int exit_code)
 void orte_errmgr_default_incomplete_start(orte_jobid_t job, int exit_code)
 {
     int rc;
+    orte_job_t *jdata;
     
-    OPAL_TRACE(1);
+    /* get the job data object for this process */
+    if (NULL == (jdata = orte_get_job_data_object(job))) {
+        /* nothing we can do - abort things */
+        goto PROCESS;
+    }
     
+    if (NULL != jdata->err_cbfunc && (ORTE_JOB_STATE_FAILED_TO_START & jdata->err_cbstates)) {
+        OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_output,
+                             "%s errmgr:cm: job %s reported incomplete start with status %d - calling cbfunc",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_JOBID_PRINT(job), exit_code));
+        jdata->err_cbfunc(job, ORTE_JOB_STATE_FAILED_TO_START, jdata->err_cbdata);
+        return;
+    }
+    
+PROCESS:
     /* if we are already in progress, then ignore this call */
     if (!opal_atomic_trylock(&orte_abort_inprogress_lock)) { /* returns 1 if already locked */
         OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_output,
