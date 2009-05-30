@@ -298,15 +298,15 @@ typedef OPAL_PTRDIFF_TYPE ptrdiff_t;
                 alignment */
 #            define false 0
 #            define true 1
-#            if SIZEOF_BOOL == SIZEOF_CHAR && OMPI_ALIGNMENT_CXX_BOOL == OPAL_ALIGNMENT_CHAR
+#            if SIZEOF_BOOL == SIZEOF_CHAR && OPAL_ALIGNMENT_CXX_BOOL == OPAL_ALIGNMENT_CHAR
 typedef unsigned char bool;
-#            elif SIZEOF_BOOL == SIZEOF_SHORT && OMPI_ALIGNMENT_CXX_BOOL == OPAL_ALIGNMENT_SHORT
+#            elif SIZEOF_BOOL == SIZEOF_SHORT && OPAL_ALIGNMENT_CXX_BOOL == OPAL_ALIGNMENT_SHORT
 typedef short bool;
-#            elif SIZEOF_BOOL == SIZEOF_INT && OMPI_ALIGNMENT_CXX_BOOL == OPAL_ALIGNMENT_INT
+#            elif SIZEOF_BOOL == SIZEOF_INT && OPAL_ALIGNMENT_CXX_BOOL == OPAL_ALIGNMENT_INT
 typedef int bool;
-#            elif SIZEOF_BOOL == SIZEOF_LONG && OMPI_ALIGNMENT_CXX_BOOL == OPAL_ALIGNMENT_LONG
+#            elif SIZEOF_BOOL == SIZEOF_LONG && OPAL_ALIGNMENT_CXX_BOOL == OPAL_ALIGNMENT_LONG
 typedef long bool;
-#            elif defined(SIZEOF_LONG_LONG) && defined(OPAL_ALIGNMENT_LONG) && SIZEOF_BOOL == SIZEOF_LONG && OMPI_ALIGNMENT_CXX_BOOL == OPAL_ALIGNMENT_LONG
+#            elif defined(SIZEOF_LONG_LONG) && defined(OPAL_ALIGNMENT_LONG) && SIZEOF_BOOL == SIZEOF_LONG && OPAL_ALIGNMENT_CXX_BOOL == OPAL_ALIGNMENT_LONG
 typedef long long bool;
 #            else
 #                error Cannot find a C type that corresponds to the size and alignment of C++ bool!

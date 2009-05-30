@@ -64,7 +64,7 @@ void mpi_iprobe_f(MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm,
 {
     MPI_Status *c_status;
     MPI_Comm c_comm;
-#if OMPI_SIZEOF_FORTRAN_INTEGER != SIZEOF_INT
+#if OPAL_SIZEOF_FORTRAN_INTEGER != SIZEOF_INT
     MPI_Status c_status2;
 #endif
     OMPI_LOGICAL_NAME_DECL(flag);
@@ -80,7 +80,7 @@ void mpi_iprobe_f(MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm,
            translation necessary -- let the underlying functions write
            directly into the Fortran status */
 
-#if OMPI_SIZEOF_FORTRAN_INTEGER == SIZEOF_INT
+#if OPAL_SIZEOF_FORTRAN_INTEGER == SIZEOF_INT
         c_status = (MPI_Status *) status;
 #else
         c_status = &c_status2;
@@ -93,7 +93,7 @@ void mpi_iprobe_f(MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm,
                                        c_status));
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
         OMPI_SINGLE_INT_2_LOGICAL(flag);
-#if OMPI_SIZEOF_FORTRAN_INTEGER != SIZEOF_INT
+#if OPAL_SIZEOF_FORTRAN_INTEGER != SIZEOF_INT
         if (MPI_STATUS_IGNORE != c_status) {
             MPI_Status_c2f(c_status, status);
         }

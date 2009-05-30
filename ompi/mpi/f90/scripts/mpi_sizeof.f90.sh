@@ -32,7 +32,7 @@ do
     echo "  logical*${kind}, intent(in) :: x"
     echo "  integer, intent(out) :: size"
     echo "  integer, intent(out) :: ierr"
-    echo "  size = OMPI_SIZEOF_F90_LOGICAL${kind}"
+    echo "  size = OPAL_SIZEOF_F90_LOGICAL${kind}"
     echo "  ierr = 0"
     echo "end subroutine ${proc}"
     echo
@@ -47,7 +47,7 @@ do
     echo "  integer*${kind}, intent(in) :: x"
     echo "  integer, intent(out) :: size"
     echo "  integer, intent(out) :: ierr"
-    echo "  size = OMPI_SIZEOF_F90_INT${kind}"
+    echo "  size = OPAL_SIZEOF_F90_INT${kind}"
     echo "  ierr = 0"
     echo "end subroutine ${proc}"
     echo
@@ -62,7 +62,7 @@ do
     echo "  real*${kind}, intent(in) :: x"
     echo "  integer, intent(out) :: size"
     echo "  integer, intent(out) :: ierr"
-    echo "  size = OMPI_SIZEOF_F90_REAL${kind}"
+    echo "  size = OPAL_SIZEOF_F90_REAL${kind}"
     echo "  ierr = 0"
     echo "end subroutine ${proc}"
     echo
@@ -77,7 +77,7 @@ do
     echo "  complex*${kind}, intent(in) :: x"
     echo "  integer, intent(out) :: size"
     echo "  integer, intent(out) :: ierr"
-    echo "  size = OMPI_SIZEOF_F90_COMPLEX${kind}"
+    echo "  size = OPAL_SIZEOF_F90_COMPLEX${kind}"
     echo "  ierr = 0"
     echo "end subroutine ${proc}"
     echo
@@ -103,7 +103,7 @@ do
     echo "  logical*${kind}, dimension(${dim}), intent(in) :: x"
     echo "  integer, intent(out) :: size"
     echo "  integer, intent(out) :: ierr"
-    echo "  size = OMPI_SIZEOF_F90_LOGICAL${kind}"
+    echo "  size = OPAL_SIZEOF_F90_LOGICAL${kind}"
     echo "  ierr = 0"
     echo "end subroutine ${proc}"
     echo
@@ -118,7 +118,7 @@ do
     echo "  integer*${kind}, dimension(${dim}), intent(in) :: x"
     echo "  integer, intent(out) :: size"
     echo "  integer, intent(out) :: ierr"
-    echo "  size = OMPI_SIZEOF_F90_INT${kind}"
+    echo "  size = OPAL_SIZEOF_F90_INT${kind}"
     echo "  ierr = 0"
     echo "end subroutine ${proc}"
     echo
@@ -133,7 +133,7 @@ do
     echo "  real*${kind}, dimension(${dim}), intent(in) :: x"
     echo "  integer, intent(out) :: size"
     echo "  integer, intent(out) :: ierr"
-    echo "  size = OMPI_SIZEOF_F90_REAL${kind}"
+    echo "  size = OPAL_SIZEOF_F90_REAL${kind}"
     echo "  ierr = 0"
     echo "end subroutine ${proc}"
     echo
@@ -148,7 +148,7 @@ do
     echo "  complex*${kind}, dimension(${dim}), intent(in) :: x"
     echo "  integer, intent(out) :: size"
     echo "  integer, intent(out) :: ierr"
-    echo "  size = OMPI_SIZEOF_F90_COMPLEX${kind}"
+    echo "  size = OPAL_SIZEOF_F90_COMPLEX${kind}"
     echo "  ierr = 0"
     echo "end subroutine ${proc}"
     echo

@@ -294,7 +294,7 @@
     if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77)) { \
         MPI_Fint f_key = OMPI_INT_2_FINT(key); \
         MPI_Fint f_err; \
-        ompi_fortran_logical_t f_flag; \
+        opal_fortran_logical_t f_flag; \
         /* MPI-1 Fortran-style */ \
         if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77_MPI1)) { \
             MPI_Fint in, out;                                      \
@@ -486,9 +486,9 @@ int ompi_attr_init(void)
     }
     key_bitmap = OBJ_NEW(opal_bitmap_t);
     /*
-     * Set the max size to OMPI_FORTRAN_HANDLE_MAX to enforce bound
+     * Set the max size to OPAL_FORTRAN_HANDLE_MAX to enforce bound
      */
-    opal_bitmap_set_max_size (key_bitmap, OMPI_FORTRAN_HANDLE_MAX);
+    opal_bitmap_set_max_size (key_bitmap, OPAL_FORTRAN_HANDLE_MAX);
     if (0 != opal_bitmap_init(key_bitmap, 32)) {
         return MPI_ERR_SYSRESOURCE;
     }

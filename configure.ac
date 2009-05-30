@@ -271,18 +271,18 @@ fi
 
 OMPI_C_GET_ALIGNMENT(char, OPAL_ALIGNMENT_CHAR)
 OMPI_C_GET_ALIGNMENT(short, OPAL_ALIGNMENT_SHORT)
-OMPI_C_GET_ALIGNMENT(wchar_t, OMPI_ALIGNMENT_WCHAR)
+OMPI_C_GET_ALIGNMENT(wchar_t, OPAL_ALIGNMENT_WCHAR)
 OMPI_C_GET_ALIGNMENT(int, OPAL_ALIGNMENT_INT)
 OMPI_C_GET_ALIGNMENT(long, OPAL_ALIGNMENT_LONG)
 if test $ac_cv_type_long_long = yes; then
     OMPI_C_GET_ALIGNMENT(long long, OPAL_ALIGNMENT_LONG_LONG)
 fi
-OMPI_C_GET_ALIGNMENT(float, OMPI_ALIGNMENT_FLOAT)
-OMPI_C_GET_ALIGNMENT(double, OMPI_ALIGNMENT_DOUBLE)
+OMPI_C_GET_ALIGNMENT(float, OPAL_ALIGNMENT_FLOAT)
+OMPI_C_GET_ALIGNMENT(double, OPAL_ALIGNMENT_DOUBLE)
 if test $ac_cv_type_long_double = yes; then
     OMPI_C_GET_ALIGNMENT(long double, OPAL_ALIGNMENT_LONG_DOUBLE)
 fi
-OMPI_C_GET_ALIGNMENT(void *, OMPI_ALIGNMENT_VOID_P)
+OMPI_C_GET_ALIGNMENT(void *, OPAL_ALIGNMENT_VOID_P)
 
 #
 # Does the C compiler native support "bool"? (i.e., without
@@ -403,7 +403,7 @@ AC_CHECK_SIZEOF(bool)
 
 # check for type alignments
 
-OMPI_C_GET_ALIGNMENT(bool, OMPI_ALIGNMENT_CXX_BOOL)
+OMPI_C_GET_ALIGNMENT(bool, OPAL_ALIGNMENT_CXX_BOOL)
 AC_LANG_POP(C++)
 
 # check if we want C++ support
@@ -445,7 +445,7 @@ OMPI_SETUP_F77
 # This allows us to mark bogus types, but still have them be a valid
 # [sentinel] value
 
-AC_DEFINE([ompi_fortran_bogus_type_t], [int],
+AC_DEFINE([opal_fortran_bogus_type_t], [int],
           [A bogus type that allows us to have sentinel type values that are still valid])
 
 # We want to set the #define's for all of these, so invoke the macros
@@ -600,13 +600,13 @@ AC_SUBST(OMPI_F90_CKINDS)
 # whatever is the same size as a F77 INTEGER -- for the
 # most-likely-will-never-occur case where F77 INTEGER is smaller than
 # an F90 INTEGER; see MPI-2 4.12.6.5
-if test "$OMPI_SIZEOF_FORTRAN_INTEGER" = "2"; then
+if test "$OPAL_SIZEOF_FORTRAN_INTEGER" = "2"; then
     OMPI_F90_GET_INT_KIND(MPI_INTEGER_KIND, 4, OMPI_MPI_INTEGER_KIND)
-elif test "$OMPI_SIZEOF_FORTRAN_INTEGER" = "4"; then
+elif test "$OPAL_SIZEOF_FORTRAN_INTEGER" = "4"; then
     OMPI_F90_GET_INT_KIND(MPI_INTEGER_KIND, 9, OMPI_MPI_INTEGER_KIND)
-elif test "$OMPI_SIZEOF_FORTRAN_INTEGER" = "8"; then
+elif test "$OPAL_SIZEOF_FORTRAN_INTEGER" = "8"; then
     OMPI_F90_GET_INT_KIND(MPI_INTEGER_KIND, 18, OMPI_MPI_INTEGER_KIND)
-elif test "$OMPI_SIZEOF_FORTRAN_INTEGER" = "16"; then
+elif test "$OPAL_SIZEOF_FORTRAN_INTEGER" = "16"; then
     OMPI_F90_GET_INT_KIND(MPI_INTEGER_KIND, 19, OMPI_MPI_INTEGER_KIND)
     AC_MSG_ERROR([Cannot support Fortran MPI_INTEGER_KIND!])
 fi

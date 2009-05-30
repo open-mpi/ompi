@@ -76,7 +76,7 @@ int ompi_errhandler_init(void)
 
   OBJ_CONSTRUCT( &ompi_errhandler_f_to_c_table, opal_pointer_array_t);
   if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_errhandler_f_to_c_table, 0,
-                                              OMPI_FORTRAN_HANDLE_MAX, 64) ) {
+                                              OPAL_FORTRAN_HANDLE_MAX, 64) ) {
     return OMPI_ERROR;
   }
 

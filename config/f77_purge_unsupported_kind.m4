@@ -24,10 +24,10 @@ AC_MSG_CHECKING([whether Fortran $1 has expected size])
 
   val=`echo $1 | cut -f2 -d'*'` 
   type=`echo $1 | cut -f1 -d'*'`
-  if test "x$((OMPI_SIZEOF_FORTRAN_$type$val))" != "x$val" ; then
-    eval "OMPI_SIZEOF_FORTRAN_$type$val=0"
-    # eval "OMPI_ALIGNMENT_FORTRAN_$type$val=0"
-    eval "OMPI_HAVE_FORTRAN_$type$val=0"
+  if test "x$((OPAL_SIZEOF_FORTRAN_$type$val))" != "x$val" ; then
+    eval "OPAL_SIZEOF_FORTRAN_$type$val=0"
+    # eval "OPAL_ALIGNMENT_FORTRAN_$type$val=0"
+    eval "OPAL_HAVE_FORTRAN_$type$val=0"
     AC_MSG_RESULT([no])
   else
     AC_MSG_RESULT([yes])

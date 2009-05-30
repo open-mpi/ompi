@@ -35,7 +35,7 @@ AC_DEFUN([OMPI_F77_GET_VALUE_TRUE],[
              #
              # C module
              # We really need the confdefs.h Header file for
-             # the ompi_fortran_logical_t definition
+             # the opal_fortran_logical_t definition
              #
              if test \! -f confdefs.h ; then
                  AC_MSG_WARN([*** Problem running configure test!])
@@ -53,19 +53,19 @@ AC_DEFUN([OMPI_F77_GET_VALUE_TRUE],[
 extern "C" {
 #endif
 
-void $ompi_print_logical_fn(ompi_fortran_logical_t * logical);
+void $ompi_print_logical_fn(opal_fortran_logical_t * logical);
 
-void $ompi_print_logical_fn(ompi_fortran_logical_t * logical)
+void $ompi_print_logical_fn(opal_fortran_logical_t * logical)
 {
     FILE *f=fopen("conftestval", "w");
     if (!f) exit(1);
 
-    if( SIZEOF_INT >= sizeof(ompi_fortran_logical_t) ) {
+    if( SIZEOF_INT >= sizeof(opal_fortran_logical_t) ) {
         fprintf(f, "%d\n", (int)*logical);
-    } else if (SIZEOF_LONG >= sizeof(ompi_fortran_logical_t) ) {
+    } else if (SIZEOF_LONG >= sizeof(opal_fortran_logical_t) ) {
 	fprintf(f, "%ld\n", (long) *logical);
 #ifdef HAVE_LONG_LONG
-    } else if (SIZEOF_LONG_LONG >= sizeof(ompi_fortran_logical_t) ) {
+    } else if (SIZEOF_LONG_LONG >= sizeof(opal_fortran_logical_t) ) {
         fprintf(f, "%lld\n", (long long) *logical);
 #endif
     } else {
@@ -105,7 +105,7 @@ EOF
                      [AC_MSG_ERROR([Could not determine value of Fotran .TRUE..  Aborting.])])])
          fi])
 
-    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_VALUE_TRUE], 
+    AC_DEFINE_UNQUOTED([OPAL_FORTRAN_VALUE_TRUE], 
         [$ompi_cv_f77_true_value],
         [Fortran value for LOGICAL .TRUE. value])
 

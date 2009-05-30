@@ -67,7 +67,7 @@ void mpi_file_read_at_all_f(MPI_Fint *fh, MPI_Offset *offset,
    MPI_File c_fh = MPI_File_f2c(*fh);
    MPI_Datatype c_type = MPI_Type_f2c(*datatype);
    MPI_Status *c_status;
-#if OMPI_SIZEOF_FORTRAN_INTEGER != SIZEOF_INT
+#if OPAL_SIZEOF_FORTRAN_INTEGER != SIZEOF_INT
    MPI_Status c_status2;
 #endif
 
@@ -79,7 +79,7 @@ void mpi_file_read_at_all_f(MPI_Fint *fh, MPI_Offset *offset,
          translation necessary -- let the underlying functions write
          directly into the Fortran status */
       
-#if OMPI_SIZEOF_FORTRAN_INTEGER == SIZEOF_INT
+#if OPAL_SIZEOF_FORTRAN_INTEGER == SIZEOF_INT
       c_status = (MPI_Status *) status;
 #else
       c_status = &c_status2;
@@ -93,7 +93,7 @@ void mpi_file_read_at_all_f(MPI_Fint *fh, MPI_Offset *offset,
                                                 c_type,
                                                 c_status));
 
-#if OMPI_SIZEOF_FORTRAN_INTEGER != SIZEOF_INT
+#if OPAL_SIZEOF_FORTRAN_INTEGER != SIZEOF_INT
    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr) &&
        MPI_STATUS_IGNORE != c_status) {
       MPI_Status_c2f(c_status, status);

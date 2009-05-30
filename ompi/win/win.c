@@ -51,7 +51,7 @@ ompi_win_init(void)
     /* setup window Fortran array */
     OBJ_CONSTRUCT(&ompi_mpi_windows, opal_pointer_array_t);
     if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_mpi_windows, 0,
-                                                OMPI_FORTRAN_HANDLE_MAX, 64) ) {
+                                                OPAL_FORTRAN_HANDLE_MAX, 64) ) {
         return OMPI_ERROR;
     }
 

@@ -116,7 +116,7 @@ int opal_pointer_array_add(opal_pointer_array_t *table, void *ptr)
         /* need to grow table */
         if (!grow_table(table, 
                         (NULL == table->addr ? TABLE_INIT : table->size * TABLE_GROW), 
-                        OMPI_FORTRAN_HANDLE_MAX)) {
+                        OPAL_FORTRAN_HANDLE_MAX)) {
             OPAL_THREAD_UNLOCK(&(table->lock));
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
@@ -330,7 +330,7 @@ static bool grow_table(opal_pointer_array_t *table, int soft, int hard)
     }
     
     /* We've already established (above) that the arithmetic
-       below will be less than OMPI_FORTRAN_HANDLE_MAX */
+       below will be less than OPAL_FORTRAN_HANDLE_MAX */
     
     new_size_int = (int) new_size;
     table->number_free += new_size_int - table->size;

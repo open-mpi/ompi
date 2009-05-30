@@ -139,19 +139,19 @@ COPY_TYPE( 2double, double, 2 )
 COPY_TYPE( 2complex_float, ompi_complex_float_t, 2 )
 COPY_TYPE( 2complex_double, ompi_complex_double_t, 2 )
 
-#if OMPI_SIZEOF_FORTRAN_LOGICAL == 1 || SIZEOF_BOOL == 1
+#if OPAL_SIZEOF_FORTRAN_LOGICAL == 1 || SIZEOF_BOOL == 1
 #define REQUIRE_COPY_BYTES_1 1
 #else
 #define REQUIRE_COPY_BYTES_1 0
 #endif
 
-#if OMPI_SIZEOF_FORTRAN_LOGICAL == 2 || SIZEOF_BOOL == 2
+#if OPAL_SIZEOF_FORTRAN_LOGICAL == 2 || SIZEOF_BOOL == 2
 #define REQUIRE_COPY_BYTES_2 1
 #else
 #define REQUIRE_COPY_BYTES_2 0
 #endif
 
-#if OMPI_SIZEOF_FORTRAN_LOGICAL == 4 || SIZEOF_BOOL == 4
+#if OPAL_SIZEOF_FORTRAN_LOGICAL == 4 || SIZEOF_BOOL == 4
 #define REQUIRE_COPY_BYTES_4 1
 #else
 #define REQUIRE_COPY_BYTES_4 0
@@ -236,9 +236,9 @@ conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED] = {
 #else
 #error Complete me please
 #endif
-#if OMPI_SIZEOF_FORTRAN_LOGICAL == 1
+#if OPAL_SIZEOF_FORTRAN_LOGICAL == 1
    (conversion_fct_t)copy_bytes_1,              /* DT_LOGIC               */
-#elif OMPI_SIZEOF_FORTRAN_LOGICAL == 4
+#elif OPAL_SIZEOF_FORTRAN_LOGICAL == 4
    (conversion_fct_t)copy_bytes_4,              /* DT_LOGIC               */
 #elif 1 /* always, some compiler complain if there is not value */
    NULL,                                        /* DT_LOGIC               */

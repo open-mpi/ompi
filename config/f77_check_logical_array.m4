@@ -36,7 +36,7 @@ EOF
 
              # C module
              # We really need the confdefs.h Header file for 
-             # the ompi_fortran_logical_t definition
+             # the opal_fortran_logical_t definition
              if test \! -f confdefs.h ; then
                  AC_MSG_WARN([*** Problem running configure test!])
                  AC_MSG_WARN([*** Cannot find confdefs.h file for config test])
@@ -52,9 +52,9 @@ EOF
 #ifdef __cplusplus
   extern "C" {
 #endif
-void $ompi_check_logical_fn(ompi_fortran_logical_t * logical);
+void $ompi_check_logical_fn(opal_fortran_logical_t * logical);
 
-void $ompi_check_logical_fn(ompi_fortran_logical_t * logical)
+void $ompi_check_logical_fn(opal_fortran_logical_t * logical)
 {
     int result = 0;
     FILE *f=fopen("conftestval", "w");
