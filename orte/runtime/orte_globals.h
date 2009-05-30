@@ -509,6 +509,7 @@ ORTE_DECLSPEC extern char *orte_xterm;
 
 /* rsh support */
 ORTE_DECLSPEC extern char *orte_rsh_agent;
+ORTE_DECLSPEC extern bool orte_assume_same_shell;
 
 /* whether or not to barrier the orteds upon exit */
 ORTE_DECLSPEC extern bool orte_orted_exit_with_barrier;
