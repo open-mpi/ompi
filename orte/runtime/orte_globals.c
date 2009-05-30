@@ -122,6 +122,7 @@ bool orte_forward_job_control;
 
 /* rsh support */
 char *orte_rsh_agent = NULL;
+bool orte_assume_same_shell = true;
 
 /* orted exit with barrier */
 bool orte_orted_exit_with_barrier = true;

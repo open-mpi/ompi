@@ -391,7 +391,7 @@ static int setup_shell(orte_plm_rsh_shell_t *rshell,
                          local_shell, orte_plm_rsh_shell_name[local_shell]));
     
     /* What is our remote shell? */
-    if (mca_plm_rsh_component.assume_same_shell) {
+    if (orte_assume_same_shell) {
         remote_shell = local_shell;
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:rsh: assuming same remote shell as local shell",

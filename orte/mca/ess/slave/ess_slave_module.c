@@ -209,14 +209,14 @@ static char* proc_get_hostname(orte_process_name_t *proc)
 
 static uint32_t proc_get_arch(orte_process_name_t *proc)
 {
-    /* if it is me, the answer is my arch */
-    if (proc->jobid == ORTE_PROC_MY_NAME->jobid &&
-        proc->vpid == ORTE_PROC_MY_NAME->vpid) {
-        return orte_process_info.arch;
-    }
-    
-    /* otherwise, no idea */
+    /* can only work in homogeneous environments */
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+    /* not supported */
     return 0;
+#else
+    /* just return my arch */
+    return orte_process_info.arch;
+#endif
 }
 
 static int update_arch(orte_process_name_t *proc, uint32_t arch)

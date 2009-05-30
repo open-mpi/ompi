@@ -276,6 +276,13 @@ int orte_register_params(void)
     mca_base_param_reg_syn_name(tmp, "pls", "rsh_agent", true);
     mca_base_param_reg_syn_name(tmp, "plm", "rsh_agent", true);
     mca_base_param_lookup_string(tmp, &orte_rsh_agent);
+
+    tmp = mca_base_param_reg_int_name("orte", "assume_same_shell",
+                                      "If set to 1, assume that the shell on the remote node is the same as the shell on the local node.  Otherwise, probe for what the remote shell [default: 1]",
+                                      false, false, 1, NULL);
+    mca_base_param_reg_syn_name(tmp, "plm", "rsh_assume_same_shell", true);
+    mca_base_param_lookup_int(tmp, &value);
+    orte_assume_same_shell = OPAL_INT_TO_BOOL(value);
     
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
     

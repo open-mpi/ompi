@@ -31,7 +31,11 @@
 #include <errno.h>
 #include <signal.h>
 #include <ctype.h>
+#ifdef HAVE_PWD_H
+#include <pwd.h>
+#endif
 
+#include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/os_path.h"
 #include "opal/util/output.h"
 #include "opal/util/os_dirpath.h"
@@ -150,29 +154,24 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
     char **argv;
     opal_list_t hosts;
     orte_node_t *node;
-    char *nodename, *bootproxy, *cmd, *scp=NULL;
-    char *exefile=NULL, *basename, *param, *path=NULL;
-    char *exec_path=NULL;
-    char *tmp, *dest, *dest_dir, *filenm;
-    char **files;
+    char *nodename;
+    char *exec_path;
     bool flag;
-    orte_app_context_t **apps, *app;
-    int i, j;
+    orte_app_context_t *app;
     int rc;
     pid_t pid;
     long fd, fdmax = sysconf(_SC_OPEN_MAX);
     sigset_t sigs;
-    char cwd[OPAL_PATH_MAX];
-    opal_list_item_t *item;
-    orte_slave_files_t *slave_node, *tst_node;
-    
-    /* increment the local slave jobid */
-    orte_plm_globals.local_slaves++;
     
     /* point to the apps array */
-    apps = (orte_app_context_t**)jdata->apps->addr;
-    app = apps[0];
-    
+    if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, 0))) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return ORTE_ERR_NOT_FOUND;
+    }
+
+    /* increment the local slave jobid */
+    orte_plm_globals.local_slaves++;
+
     /* identify the target host - can only be one! */
     OBJ_CONSTRUCT(&hosts, opal_list_t);
     if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&hosts, &flag, app->dash_host))) {
@@ -189,475 +188,22 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
     OBJ_RELEASE(node);
     OBJ_DESTRUCT(&hosts);
     
-    /* have we launched anything on this node before? */
-    slave_node = NULL;
-    for (item = opal_list_get_first(&orte_plm_globals.slave_files);
-         item != opal_list_get_end(&orte_plm_globals.slave_files);
-         item = opal_list_get_next(item)) {
-        tst_node = (orte_slave_files_t*)item;
-        if (0 == strcmp(tst_node->node, nodename)) {
-            slave_node = tst_node;
-            break;
-        }
-    }
-    if (NULL == slave_node) {
-        slave_node = OBJ_NEW(orte_slave_files_t);
-        slave_node->node = strdup(nodename);
-        opal_list_append(&orte_plm_globals.slave_files, &slave_node->super);
-    }
-    
-    /* is this a local operation? */
-    if (0 == strcmp(orte_process_info.nodename, nodename)) {
-        slave_node->local = true;
-    }
-    
-    /* if we are going to position the binary or files, did they give us a dest? */
-    if (NULL != app->preload_files_dest_dir) {
-        /* the target location -must- be an absolute path */
-        if (!opal_path_is_absolute(app->preload_files_dest_dir)) {
-            orte_show_help("help-plm-base.txt", "abs-path-reqd", true, app->preload_files_dest_dir);
-            return ORTE_ERROR;
-        }
-        dest_dir = app->preload_files_dest_dir;
-        /* if this is a local op, make sure this location exists. we can't
-         * do this for remote ops as there is no way to create a remote
-         * directory
-         */
-        if (slave_node->local) {
-            if (ORTE_SUCCESS != (rc = opal_os_dirpath_create(dest_dir, S_IRWXU))) {
-                orte_show_help("help-plm-base.txt", "path-not-created", true, dest_dir);
-                return rc;
-            }
-        }
-    } else {
-        /* put everything in /tmp */
-        dest_dir = "/tmp";
-    }
-    
-    /* have we preloaded the bootproxy on this node? */
-    if (NULL == slave_node->bootproxy) {
-        /* find the local bootproxy */
-        bootproxy = opal_find_absolute_path("orte-bootproxy.sh");
-        if (NULL == bootproxy) {
-            orte_show_help("help-plm-base.txt", "bootproxy-not-found", true);
-            return ORTE_ERR_NOT_FOUND;
-        }
-        if (slave_node->local) {
-            /* if this is a local operation, then just set
-             * the exec_path to be the bootproxy
-             */
-            argv = NULL;
-            opal_argv_append_nosize(&argv, bootproxy);
-            exec_path = strdup(argv[0]);
-            slave_node->bootproxy = strdup(exec_path);
-            /* don't remove upon completion */
-            slave_node->positioned = false;
-        } else {
-            /* set the exec path to the rsh agent path */
-            exec_path = strdup(orte_plm_globals.rsh_agent_path);
-            /* Start the argv with the rsh/ssh command */
-            argv = opal_argv_copy(orte_plm_globals.rsh_agent_argv);
-            /* add the hostname */
-            opal_argv_append_nosize(&argv, nodename);
-            /* add the bootproxy cmd */
-            if (NULL != app->prefix_dir) {
-                /* the caller gave us a prefix directory, indicating
-                 * that OMPI has been installed on the remote node, so
-                 * just use that prefix
-                 */
-                asprintf(&cmd, "%s/bin/%s", app->prefix_dir, "orte-bootproxy.sh");
-                opal_argv_append_nosize(&argv, cmd);
-                slave_node->bootproxy = strdup(cmd);
-                free(cmd);
-                /* don't remove upon completion */
-                slave_node->positioned = false;
-            } else {
-                /* since there is no prefix installation, we need to
-                 * position the bootproxy on the remote node.
-                 * even though we may not be preloading binaries, the
-                 * caller can use this to specify where to put the
-                 * bootproxy itself
-                 */
-                path = opal_os_path(false, dest_dir, "orte-bootproxy.sh", NULL);
-                /* find the scp command */
-                scp = opal_find_absolute_path("scp");
-                if (NULL == scp) {
-                    orte_show_help("help-plm-base.txt", "cp-not-found", true, "scp", "scp");
-                    return ORTE_ERROR;
-                }
-                /* form and execute the scp command */
-                asprintf(&cmd, "%s %s %s:%s", scp, bootproxy, nodename, path);
-                system(cmd);
-                free(cmd);
-                /* setup the remote executable cmd */
-                opal_argv_append_nosize(&argv, path);
-                slave_node->bootproxy = strdup(path);
-                free(path);
-                /* remove upon completion */
-                slave_node->positioned = true;
-            }
-        }
-        free(bootproxy);
-    } else {
-        /* the bootproxy has been positioned - setup to use it */
-        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                             "%s plm:base:local:slave: bootproxy %s already positioned",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), slave_node->bootproxy));
-        if (slave_node->local) {
-            /* if this is a local operation, then just set
-             * the exec_path to be the bootproxy
-             */
-            argv = NULL;
-            opal_argv_append_nosize(&argv, slave_node->bootproxy);
-            exec_path = strdup(argv[0]);
-        } else {
-            /* set the exec path to the rsh agent path */
-            exec_path = strdup(orte_plm_globals.rsh_agent_path);
-            /* Start the argv with the rsh/ssh command */
-            argv = opal_argv_copy(orte_plm_globals.rsh_agent_argv);
-            /* add the hostname */
-            opal_argv_append_nosize(&argv, nodename);
-            /* add the bootproxy cmd */
-            opal_argv_append_nosize(&argv, slave_node->bootproxy);
-        }
-    }
-        
-    
-    /* do we need to preload the binary? */
-    if (app->preload_binary) {
-        char * src;
-        /* if the binary is not given in absolute path form,
-         * then convert it to one
-         */
-        if (!opal_path_is_absolute(app->app)) {
-            /* see if a source directory was given */
-            if (NULL!= app->preload_files_src_dir) {
-                /* prepend the src dir to the executable name */
-                path = opal_os_path(false, app->preload_files_src_dir, app->app, NULL);
-                /* now check for the existence of the app */
-                src = opal_find_absolute_path(path);
-                if (NULL == src) {
-                    orte_show_help("help-plm-base.txt", "exec-not-found", true, path);
-                    return ORTE_ERROR;
-                }
-            } else {
-                /* look for it in the cwd */
-                getcwd(cwd, OPAL_PATH_MAX);
-                src = opal_path_access(app->app, cwd, X_OK);
-                if (NULL == src) {
-                    orte_show_help("help-plm-base.txt", "exec-not-found", true, cwd);
-                    return ORTE_ERROR;
-                }
-            }
-        } else {
-            src = opal_path_access(app->app, NULL, X_OK);
-            if (NULL == src) {
-                orte_show_help("help-plm-base.txt", "exec-not-found", true, app->app);
-                return ORTE_ERROR;
-            }
-        }
-        /* get the basename */
-        basename = opal_basename(app->app);
-        
-        /* define the destination */
-        dest = opal_os_path(false, dest_dir, basename, NULL);
-
-        /*
-         * We do not test for error after opal_basename -- this is fine, as opal_os_path
-         * is taking a NULL terminated list -- in case of error, well dest_dir is the final dir.
-         * However, we need to free basename here, before overwriting the pointer later.
-         */
-        if (basename != NULL) {
-            free(basename);
-        }
-
-        /* has this binary already been positioned? */
-        for (i=0; i < slave_node->apps.size; i++) {
-            if (NULL != (filenm = opal_pointer_array_get_item(&slave_node->apps, i)) &&
-                0 == strcmp(filenm, dest)) {
-                /* this app already has been positioned on the node - skip it */
-                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                                     "%s plm:base:local:slave: app %s already positioned",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), filenm));
-                goto PRELOAD_FILES;
-            }
-        }
-        /* add the app to the slave_node list */
-        opal_pointer_array_add(&slave_node->apps, strdup(dest));
-        /* since we are positioning the binary, add it to the list
-         * of files to be cleaned up when done
-         */
-        opal_pointer_array_add(&slave_node->files, strdup(dest));
-
-        /* if this is a local node, then we just use the cp command */
-        if (slave_node->local) {
-            scp = opal_find_absolute_path("cp");
-            if (NULL == scp) {
-                free (src);
-                orte_show_help("help-plm-base.txt", "cp-not-found", true, "cp", "cp");
-                return ORTE_ERROR;
-            }
-            /* form and execute the cp commands */
-            asprintf(&cmd, "%s %s %s", scp, src, dest);
-            system(cmd);
-            free(cmd);
-        } else {
-            /* find the scp command */
-            scp = opal_find_absolute_path("scp");
-            if (NULL == scp) {
-                free (src);
-                orte_show_help("help-plm-base.txt", "cp-not-found", true, "scp", "scp");
-                return ORTE_ERROR;
-            }
-            /* form and execute the scp commands */
-            asprintf(&cmd, "%s %s %s:%s", scp, src, nodename, dest);
-            system(cmd);
-            free(cmd);
-        }
-        free(src);
-        free(dest);
-        free(scp);
-    } else {
-        /* we don't need to pre-position the binary, but we do need
-         * to check if we should record it
-         */
-        for (i=0; i < slave_node->apps.size; i++) {
-            if (NULL != (filenm = opal_pointer_array_get_item(&slave_node->apps, i)) &&
-                0 == strcmp(filenm, app->app)) {
-                /* this app already has been positioned on the node - skip it */
-                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                                     "%s plm:base:local:slave: app %s already positioned",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), filenm));
-                goto PRELOAD_FILES;
-            }
-        }
-        /* add the app to the slave_node list */
-        opal_pointer_array_add(&slave_node->apps, strdup(app->app));
-        /* do not add it to the files to be cleaned up when done as
-         * we are not positioning it!
-         */
-    }
-    
-PRELOAD_FILES:
-    /* do we need to pre-position supporting files? */
-    if (NULL != app->preload_files) {
-        if (slave_node->local) {
-            scp = opal_find_absolute_path("cp");
-            if (NULL == scp) {
-                orte_show_help("help-plm-base.txt", "cp-not-found", true, "cp", "cp");
-                return ORTE_ERROR;
-            }
-        } else {
-            /* find the scp command */
-            scp = opal_find_absolute_path("scp");
-            if (NULL == scp) {
-                orte_show_help("help-plm-base.txt", "cp-not-found", true, "scp", "scp");
-                return ORTE_ERROR;
-            }
-        }
-        /* break apart the comma-separated list of files */
-        files = opal_argv_split(app->preload_files, ',');
-        /* copy each file across */
-        for (i=0; i < opal_argv_count(files); i++) {
-            /* if the file is not given in absolute path form,
-             * then convert it to one
-             */
-            if (!opal_path_is_absolute(files[i])) {
-                /* see if a source directory was given */
-                if (NULL!= app->preload_files_src_dir) {
-                    /* look for the file there */
-                    exefile = opal_path_access(files[i], app->preload_files_src_dir, R_OK);
-                } else {
-                    /* look for it in the cwd */
-                    getcwd(cwd, OPAL_PATH_MAX);
-                    exefile = opal_path_access(files[i], cwd, R_OK);
-                }
-            } else {
-                exefile = opal_path_access(files[i], NULL, R_OK);
-            }
-            if (NULL == exefile) {
-                getcwd(cwd, OPAL_PATH_MAX);
-                orte_show_help("help-plm-base.txt", "file-not-found", true, files[i],
-                               (NULL == app->preload_files_src_dir) ? cwd : app->preload_files_src_dir);
-                return ORTE_ERROR;
-            }
-            /* define the destination */
-            dest = opal_os_path(false, dest_dir, files[i], NULL);
-            /* has this file already been positioned? */
-            for (j=0; j < slave_node->files.size; j++) {
-                if (NULL != (filenm = opal_pointer_array_get_item(&slave_node->files, j)) &&
-                    0 == strcmp(filenm, dest)) {
-                    /* this app already has been positioned on the node - skip it */
-                    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                                         "%s plm:base:local:slave: file %s already positioned",
-                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), filenm));
-                    goto SKIP;
-                }
-            }
-            /* add the file to the slave_node list */
-            opal_pointer_array_add(&slave_node->files, strdup(dest));
-            if (slave_node->local) {
-                /* form and execute the cp command */
-                asprintf(&cmd, "%s %s %s", scp, exefile, dest);
-                system(cmd);
-                free(cmd);
-            } else {
-                /* form and execute the scp commands */
-                asprintf(&cmd, "%s -q %s %s:%s", scp, exefile, nodename, dest);
-                system(cmd);
-                free(cmd);
-            }
-        SKIP:
-            free(exefile);
-            free(dest);
-        }
-        opal_argv_free(files);
-        free(scp);
-    }
-    
-    /* done with nodename */
-    free(nodename);
-
-    /* if there is a prefix, add it in a special way so the bootproxy
-     * can deal with it
-     */
-    if (NULL != app->prefix_dir) {
-        asprintf(&param, "OMPI_PREFIX=%s", app->prefix_dir);
-        opal_argv_append_nosize(&argv, param);
-        free(param);
-    }
-    
-    /* if there is a working directory specified, add it in a special
-     * way so the bootproxy can deal with it
-     */
-    if (NULL != app->cwd) {
-        asprintf(&param, "OMPI_WDIR=%s", app->cwd);
-        opal_argv_append_nosize(&argv, param);
-        free(param);
-    }
-    
-    /* add all OMPI params from the app */
-    if (NULL != app->env) {
-        for (i=0; NULL != app->env[i]; i++) {
-            if (0 == strncmp(app->env[i], "OMPI_", 5)) {
-                if (NULL == strchr(app->env[i], ';') &&
-                    NULL == strchr(app->env[i], ':')) {
-                    opal_argv_append_nosize(&argv, app->env[i]);
-                } else {
-                    tmp = strchr(app->env[i], '=');
-                    *tmp = '\0';
-                    tmp++;
-                    asprintf(&param, "%s=\"%s\"", app->env[i], tmp);
-                    opal_argv_append_nosize(&argv, param);
-                    free(param);
-                }
-            }
-        }
-    }
-    
-    /* add MCA params required for launch */
-    
-    /* tell ESS to select the "slave" component */
-    param = mca_base_param_environ_variable("ess",NULL,NULL);
-    opal_setenv(param, "slave", true, &argv);
-    free(param);
-    
-    /* tell ROUTED to select the "slave" component */
-    param = mca_base_param_environ_variable("routed",NULL,NULL);
-    opal_setenv(param, "slave", true, &argv);
-    free(param);
-    
-    /* tell GRPCOMM to select the "hier" component */
-    param = mca_base_param_environ_variable("grpcomm",NULL,NULL);
-    opal_setenv(param, "hier", true, &argv);
-    free(param);
-    
-    /* must pass the number of nodes */
-    param = mca_base_param_environ_variable("orte","num","nodes");
-    opal_setenv(param, "1", true, &argv);
-    free(param);
-    
-    /* set the daemon uri to point to me */
-    param = mca_base_param_environ_variable("orte","local_daemon","uri");
-    asprintf(&path, "\"%s\"", orte_rml.get_contact_info());
-    opal_setenv(param, path, true, &argv);
-    free(param);
-    free(path);
-    
-    /* set a value for the HNP uri - it won't be needed, but is
-     * required to pass existence tests
-     */
-    param = mca_base_param_environ_variable("orte","hnp","uri");
-    asprintf(&path, "\"%s\"", orte_process_info.my_hnp_uri);
-    opal_setenv(param, path, true, &argv);
-    free(param);
-    free(path);
-    
-    /* setup yield schedule to be aggressive */
-    param = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
-    opal_setenv(param, "0", true, &argv);
-    free(param);
-    
-    /* set the app_context number */
-    param = mca_base_param_environ_variable("orte","app","num");
-    opal_setenv(param, "1", true, &argv);
-    free(param);
-    
-    /* ensure that any "name" envar is cleared */
-    param = mca_base_param_environ_variable("orte","ess","name");
-    opal_unsetenv(param, &argv);
-    free(param);
-    
-    /* set the jobid */
-    orte_util_convert_jobid_to_string(&cmd, orte_plm_globals.local_slaves);
-    param = mca_base_param_environ_variable("orte","ess","jobid");
-    opal_setenv(param, cmd, true, &argv);
-    free(param);
-    free(cmd);
     /* set the jobid in jdata so the caller knows what it is */
     jdata->jobid = orte_plm_globals.local_slaves;
-    
-    /* set the vpid to 0 */
-    param = mca_base_param_environ_variable("orte","ess","vpid");
-    opal_setenv(param, "0", true, &argv);
-    free(param);
-    
-    /* set the number of procs */
-    param = mca_base_param_environ_variable("orte","ess","num_procs");
-    opal_setenv(param, "1", true, &argv);
-    free(param);
-    
-    /* some user-requested public environmental variables */
-    opal_setenv("OMPI_COMM_WORLD_RANK", "0", true, &argv);
-    opal_setenv("OMPI_COMM_WORLD_LOCAL_RANK", "0", true, &argv);
-    opal_setenv("OMPI_UNIVERSE_SIZE", "1", true, &argv);
-    opal_setenv("OMPI_COMM_WORLD_SIZE", "1", true, &argv);
-    opal_setenv("OMPI_COMM_WORLD_LOCAL_SIZE", "1", true, &argv);
-    
-    if (app->preload_binary) {
-        /* construct the target path */
-        basename = opal_basename(app->app);
-        path = opal_os_path(false, dest_dir, basename, NULL);
-        free(basename);
-        /* add this to the cmd */
-        opal_argv_append_nosize(&argv, path);
-        free(path);
-    } else {
-        /* it must already have been put there, so use the given path */
-        opal_argv_append_nosize(&argv, app->app);
-    }
 
-    /* add any provided argv */
-    for (i=1; NULL != app->argv[i]; i++) {
-        opal_argv_append_nosize(&argv, app->argv[i]);
+    /* setup the launch */
+    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_rsh_launch(nodename, app,
+                                                             "orte-bootproxy.sh",
+                                                             &argv, &exec_path))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
     }
-    
-    if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
-        param = opal_argv_join(argv, ' ');
-        opal_output(0, "%s plm:rsh: final bootproxy cmd:\n\t%s",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                    (NULL == param) ? "NULL" : param);
-        if (NULL != param) free(param);
+    /* add the bootproxy cmd line options */
+    if (ORTE_SUCCESS != (rc = orte_plm_base_append_bootproxy_args(app, &argv,
+                                                                  jdata->jobid, 0,
+                                                                  1, 1, 0, 1, 1))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
     }
     
     /* fork a child to exec the rsh/ssh session */
@@ -857,4 +403,858 @@ void orte_plm_base_local_slave_finalize(void)
         }
         OBJ_RELEASE(item);
     }
+}
+
+typedef enum {
+    ORTE_PLM_SHELL_BASH = 0,
+    ORTE_PLM_SHELL_ZSH,
+    ORTE_PLM_SHELL_TCSH,
+    ORTE_PLM_SHELL_CSH,
+    ORTE_PLM_SHELL_KSH,
+    ORTE_PLM_SHELL_SH,
+    ORTE_PLM_SHELL_UNKNOWN
+} orte_plm_shell_t;
+
+/* These strings *must* follow the same order as the enum ORTE_PLM_SHELL_* */
+static const char * orte_plm_shell_name[] = {
+    "bash",
+    "zsh",
+    "tcsh",       /* tcsh has to be first otherwise strstr finds csh */
+    "csh",
+    "ksh",
+    "sh",
+    "unknown"
+};
+
+static orte_plm_shell_t find_shell(char *shell) 
+{
+    int i         = 0;
+    char *sh_name = NULL;
+    
+    if( (NULL == shell) || (strlen(shell) == 1) ) {
+        /* Malformed shell */
+        return ORTE_PLM_SHELL_UNKNOWN;
+    }
+    
+    sh_name = rindex(shell, '/');
+    if( NULL == sh_name ) {
+        /* Malformed shell */
+        return ORTE_PLM_SHELL_UNKNOWN;
+    }
+    
+    /* skip the '/' */
+    ++sh_name;
+    for (i = 0; i < (int)(sizeof (orte_plm_shell_name) /
+                          sizeof(orte_plm_shell_name[0])); ++i) {
+        if (0 == strcmp(sh_name, orte_plm_shell_name[i])) {
+            return (orte_plm_shell_t)i;
+        }
+    }
+    
+    /* We didn't find it */
+    return ORTE_PLM_SHELL_UNKNOWN;
+}
+
+/**
+ * Check the Shell variable on the specified node
+ */
+
+static int shell_probe(char *nodename, orte_plm_shell_t *shell)
+{
+    char ** argv;
+    int argc, rc = ORTE_SUCCESS, i;
+    int fd[2];
+    pid_t pid;
+    char outbuf[4096];
+    
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                         "%s plm:base: going to check SHELL variable on node %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         nodename));
+    
+    *shell = ORTE_PLM_SHELL_UNKNOWN;
+    if (pipe(fd)) {
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                             "%s plm:rsh: pipe failed with errno=%d",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             errno));
+        return ORTE_ERR_IN_ERRNO;
+    }
+    if ((pid = fork()) < 0) {
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                             "%s plm:base: fork failed with errno=%d",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             errno));
+        return ORTE_ERR_IN_ERRNO;
+    }
+    else if (pid == 0) {          /* child */
+        if (dup2(fd[1], 1) < 0) {
+            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                                 "%s plm:base: dup2 failed with errno=%d",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 errno));
+            exit(01);
+        }
+        /* Build argv array */
+        argv = opal_argv_copy(orte_plm_globals.rsh_agent_argv);
+        argc = opal_argv_count(orte_plm_globals.rsh_agent_argv);
+        opal_argv_append(&argc, &argv, nodename);
+        opal_argv_append(&argc, &argv, "echo $SHELL");
+        
+        execvp(argv[0], argv);
+        exit(errno);
+    }
+    if (close(fd[1])) {
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                             "%s plm:base: close failed with errno=%d",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             errno));
+        return ORTE_ERR_IN_ERRNO;
+    }
+    
+    {
+        ssize_t ret = 1;
+        char* ptr = outbuf;
+        size_t outbufsize = sizeof(outbuf);
+        
+        do {
+            ret = read (fd[0], ptr, outbufsize-1);
+            if (ret < 0) {
+                if (errno == EINTR)
+                    continue;
+                OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                                     "%s plm:base: Unable to detect the remote shell (error %s)",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     strerror(errno)));
+                rc = ORTE_ERR_IN_ERRNO;
+                break;
+            }
+            if( outbufsize > 1 ) {
+                outbufsize -= ret;
+                ptr += ret;
+            }
+        } while( 0 != ret );
+        *ptr = '\0';
+    }
+    close(fd[0]);
+    
+    if( outbuf[0] != '\0' ) {
+        char *sh_name = rindex(outbuf, '/');
+        if( NULL != sh_name ) {
+            sh_name++; /* skip '/' */
+            /* We cannot use "echo -n $SHELL" because -n is not portable. Therefore
+             * we have to remove the "\n" */
+            if ( sh_name[strlen(sh_name)-1] == '\n' ) {
+                sh_name[strlen(sh_name)-1] = '\0';
+            }
+            /* Search for the substring of known shell-names */
+            for (i = 0; i < (int)(sizeof (orte_plm_shell_name)/
+                                  sizeof(orte_plm_shell_name[0])); i++) {
+                if ( 0 == strcmp(sh_name, orte_plm_shell_name[i]) ) {
+                    *shell = (orte_plm_shell_t)i;
+                    break;
+                }
+            }
+        }
+    }
+    
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                         "%s plm:base: node %s has SHELL: %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         nodename,
+                         (ORTE_PLM_SHELL_UNKNOWN == *shell) ? "UNHANDLED" : (char*)orte_plm_shell_name[*shell]));
+    
+    return rc;
+}
+
+static int setup_shell(orte_plm_shell_t *rshell,
+                       orte_plm_shell_t *lshell,
+                       char *nodename, char ***argv)
+{
+    orte_plm_shell_t remote_shell, local_shell;
+    struct passwd *p;
+    char *param;
+    int rc;
+    
+    /* What is our local shell? */
+    local_shell = ORTE_PLM_SHELL_UNKNOWN;
+    p = getpwuid(getuid());
+    if( NULL == p ) {
+        /* This user is unknown to the system. Therefore, there is no reason we
+         * spawn whatsoever in his name. Give up with a HUGE error message.
+         */
+        orte_show_help( "help-plm-rshd.txt", "unknown-user", true, (int)getuid() );
+        return ORTE_ERR_FATAL;
+    }
+    param = p->pw_shell;
+    local_shell = find_shell(p->pw_shell);
+    
+    /* If we didn't find it in getpwuid(), try looking at the $SHELL
+     environment variable (see https://svn.open-mpi.org/trac/ompi/ticket/1060)
+     */
+    if (ORTE_PLM_SHELL_UNKNOWN == local_shell && 
+        NULL != (param = getenv("SHELL"))) {
+        local_shell = find_shell(param);
+    }
+    
+    if (ORTE_PLM_SHELL_UNKNOWN == local_shell) {
+        opal_output(0, "WARNING: local probe returned unhandled shell:%s assuming bash\n",
+                    (NULL != param) ? param : "unknown");
+        local_shell = ORTE_PLM_SHELL_BASH;
+    }
+    
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                         "%s plm:base: local shell: %d (%s)",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         local_shell, orte_plm_shell_name[local_shell]));
+    
+    /* What is our remote shell? */
+    if (orte_assume_same_shell) {
+        remote_shell = local_shell;
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                             "%s plm:base: assuming same remote shell as local shell",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    } else {
+        rc = shell_probe(nodename, &remote_shell);
+        
+        if (ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        if (ORTE_PLM_SHELL_UNKNOWN == remote_shell) {
+            opal_output(0, "WARNING: shell probe returned unhandled shell; assuming bash\n");
+            remote_shell = ORTE_PLM_SHELL_BASH;
+        }
+    }
+    
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                         "%s plm:base: remote shell: %d (%s)",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         remote_shell, orte_plm_shell_name[remote_shell]));
+    
+    /* Do we need to source .profile on the remote side?
+     - sh: yes (see bash(1))
+     - ksh: yes (see ksh(1))
+     - bash: no (see bash(1))
+     - [t]csh: no (see csh(1) and tcsh(1))
+     - zsh: no (see http://zsh.sourceforge.net/FAQ/zshfaq03.html#l19)
+     */
+    
+    if (ORTE_PLM_SHELL_SH == remote_shell ||
+        ORTE_PLM_SHELL_KSH == remote_shell) {
+        int i;
+        char **tmp;
+        tmp = opal_argv_split("( test ! -r ./.profile || . ./.profile;", ' ');
+        if (NULL == tmp) {
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        for (i = 0; NULL != tmp[i]; ++i) {
+            opal_argv_append_nosize(argv, tmp[i]);
+        }
+        opal_argv_free(tmp);
+    }
+    
+    /* pass results back */
+    *rshell = remote_shell;
+    *lshell = local_shell;
+    
+    return ORTE_SUCCESS;
+}
+
+int orte_plm_base_setup_rsh_launch(char *nodename, orte_app_context_t *app,
+                                   char *rcmd, char ***argv, char **exec_path)
+{
+    orte_slave_files_t *slave_node, *tst_node;
+    opal_list_item_t *item;
+    char *bootproxy, *cmd, *scp=NULL;
+    char *exefile=NULL, *basename, *path=NULL;
+    char *tmp, *dest, *dest_dir, *filenm;
+    char **files;
+    char cwd[OPAL_PATH_MAX];
+    int rc, i, j;
+    char *lib_base, *bin_base;
+    orte_plm_shell_t rshell, lshell;
+    char **tmpargv=NULL;
+    char *opal_prefix;
+    
+    /* set default */
+    *exec_path = NULL;
+    *argv = NULL;
+    
+    /* Figure out the basenames for the libdir and bindir.  This
+     requires some explanation:
+     
+     - Use opal_install_dirs.libdir and opal_install_dirs.bindir.
+     
+     - After a discussion on the devel-core mailing list, the
+     developers decided that we should use the local directory
+     basenames as the basis for the prefix on the remote note.
+     This does not handle a few notable cases (e.g., if the
+     libdir/bindir is not simply a subdir under the prefix, if the
+     libdir/bindir basename is not the same on the remote node as
+     it is here on the local node, etc.), but we decided that
+     --prefix was meant to handle "the common case".  If you need
+     something more complex than this, a) edit your shell startup
+     files to set PATH/LD_LIBRARY_PATH properly on the remove
+     node, or b) use some new/to-be-defined options that
+     explicitly allow setting the bindir/libdir on the remote
+     node.  We decided to implement these options (e.g.,
+     --remote-bindir and --remote-libdir) to orterun when it
+     actually becomes a problem for someone (vs. a hypothetical
+     situation).
+     
+     Hence, for now, we simply take the basename of this install's
+     libdir and bindir and use it to append this install's prefix
+     and use that on the remote node.
+     */
+    
+    lib_base = opal_basename(opal_install_dirs.libdir);
+    bin_base = opal_basename(opal_install_dirs.bindir);
+    opal_prefix = getenv("OPAL_PREFIX");
+
+    /* have we launched anything on this node before? */
+    slave_node = NULL;
+    for (item = opal_list_get_first(&orte_plm_globals.slave_files);
+         item != opal_list_get_end(&orte_plm_globals.slave_files);
+         item = opal_list_get_next(item)) {
+        tst_node = (orte_slave_files_t*)item;
+        if (0 == strcmp(tst_node->node, nodename)) {
+            slave_node = tst_node;
+            break;
+        }
+    }
+    if (NULL == slave_node) {
+        slave_node = OBJ_NEW(orte_slave_files_t);
+        slave_node->node = strdup(nodename);
+        /* save the bootproxy cmd */
+        slave_node->bootproxy = strdup(rcmd);
+        /* is this a local operation? */
+        if (0 == strcmp(orte_process_info.nodename, nodename)) {
+            slave_node->local = true;
+            /* use the prefix, if given */
+            if (NULL != app->prefix_dir) {
+                asprintf(&slave_node->prefix, "%s/%s", app->prefix_dir, bin_base);
+            } else {
+                /* use our install dirs */
+                slave_node->prefix = strdup(opal_install_dirs.bindir);
+            }
+            /* no need to preposition the remote cmd, and no need to remove it */
+            slave_node->positioned = false;
+        } else {
+            /* setup the correct shell info */
+            if (ORTE_SUCCESS != (rc = setup_shell(&rshell, &lshell,
+                                                  nodename, &tmpargv))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(slave_node);
+                return rc;
+            }
+            /* we now need to assemble the actual cmd that will be executed - this depends
+             * upon whether or not a prefix directory is being used
+             */
+            if (NULL != app->prefix_dir) {
+                /* if we have a prefix directory, we need to set the PATH and
+                 * LD_LIBRARY_PATH on the remote node, and prepend the eventual cmd
+                 * with the prefix directory
+                 */
+                if (ORTE_PLM_SHELL_SH == rshell ||
+                    ORTE_PLM_SHELL_KSH == rshell ||
+                    ORTE_PLM_SHELL_ZSH == rshell ||
+                    ORTE_PLM_SHELL_BASH == rshell) {
+                    asprintf (&slave_node->prefix,
+                              "%s%s%s PATH=%s/%s:$PATH ; export PATH ; "
+                              "LD_LIBRARY_PATH=%s/%s:$LD_LIBRARY_PATH ; export LD_LIBRARY_PATH ; "
+                              "%s/%s",
+                              (opal_prefix != NULL ? "OPAL_PREFIX=" : ""),
+                              (opal_prefix != NULL ? opal_prefix : ""),
+                              (opal_prefix != NULL ? " ; export OPAL_PREFIX;" : ""),
+                              app->prefix_dir, bin_base,
+                              app->prefix_dir, lib_base,
+                              app->prefix_dir, bin_base);
+                } else if (ORTE_PLM_SHELL_TCSH == rshell ||
+                           ORTE_PLM_SHELL_CSH == rshell) {
+                    /* [t]csh is a bit more challenging -- we
+                     have to check whether LD_LIBRARY_PATH
+                     is already set before we try to set it.
+                     Must be very careful about obeying
+                     [t]csh's order of evaluation and not
+                     using a variable before it is defined.
+                     See this thread for more details:
+                     http://www.open-mpi.org/community/lists/users/2006/01/0517.php. */
+                    asprintf (&slave_node->prefix,
+                              "%s%s%s set path = ( %s/%s $path ) ; "
+                              "if ( $?LD_LIBRARY_PATH == 1 ) "
+                              "set OMPI_have_llp ; "
+                              "if ( $?LD_LIBRARY_PATH == 0 ) "
+                              "setenv LD_LIBRARY_PATH %s/%s ; "
+                              "if ( $?OMPI_have_llp == 1 ) "
+                              "setenv LD_LIBRARY_PATH %s/%s:$LD_LIBRARY_PATH ; "
+                              "%s/%s",
+                              (opal_prefix != NULL ? "setenv OPAL_PREFIX " : ""),
+                              (opal_prefix != NULL ? opal_prefix : ""),
+                              (opal_prefix != NULL ? " ;" : ""),
+                              app->prefix_dir, bin_base,
+                              app->prefix_dir, lib_base,
+                              app->prefix_dir, lib_base,
+                              app->prefix_dir, bin_base);
+                } else {
+                    orte_show_help("help-plm-rshd.txt", "cannot-resolve-shell-with-prefix", true,
+                                   (NULL == opal_prefix) ? "NULL" : opal_prefix,
+                                   app->prefix_dir);
+                    return ORTE_ERR_SILENT;
+                }
+                /* since we have a prefix, we don't need to preposition the bootproxy
+                 * or remove it later
+                 */
+                slave_node->positioned = false;
+            } else if (NULL != app->preload_files_dest_dir) {
+                /* the prefix will be the same as the preload destination */
+                slave_node->prefix = strdup(app->preload_files_dest_dir);
+                /* flag to preload it, and remove it later */
+                slave_node->positioned = true;
+            } else if (NULL != orte_process_info.tmpdir_base) {
+                /* use the tmpdir base */
+                slave_node->prefix = strdup(orte_process_info.tmpdir_base);
+                /* flag to preload it, and remove it later */
+                slave_node->positioned = true;
+            } else {
+                /* we have to preposition somewhere - default to /tmp */
+                slave_node->prefix = strdup("/tmp");
+                /* flag to preload it, and remove it later */
+                slave_node->positioned = true;
+            }
+            
+            /* do we need to preload the bootproxy on this node? */
+            if (slave_node->positioned) {
+                /* find the local bootproxy */
+                bootproxy = opal_find_absolute_path(rcmd);
+                if (NULL == bootproxy) {
+                    orte_show_help("help-plm-base.txt", "bootproxy-not-found", true, rcmd);
+                    return ORTE_ERR_NOT_FOUND;
+                }
+                path = opal_os_path(false, slave_node->prefix, rcmd, NULL);
+                /* find the scp command */
+                scp = opal_find_absolute_path("scp");
+                if (NULL == scp) {
+                    orte_show_help("help-plm-base.txt", "cp-not-found", true, "scp", "scp");
+                    return ORTE_ERROR;
+                }
+                /* form and execute the scp command */
+                asprintf(&cmd, "%s %s %s:%s", scp, bootproxy, nodename, path);
+                system(cmd);
+                free(cmd);
+                free(path);
+                free(bootproxy);
+            }
+        }
+        /* add this node to our list */
+        opal_list_append(&orte_plm_globals.slave_files, &slave_node->super);
+    }
+    
+    /* if we are going to position the binary or files, did they give us a dest? */
+    if (NULL != app->preload_files_dest_dir) {
+        /* the target location -must- be an absolute path */
+        if (!opal_path_is_absolute(app->preload_files_dest_dir)) {
+            orte_show_help("help-plm-base.txt", "abs-path-reqd", true, app->preload_files_dest_dir);
+            return ORTE_ERROR;
+        }
+        dest_dir = app->preload_files_dest_dir;
+        /* if this is a local op, make sure this location exists. we can't
+         * do this for remote ops as there is no way to create a remote
+         * directory
+         */
+        if (slave_node->local) {
+            if (ORTE_SUCCESS != (rc = opal_os_dirpath_create(dest_dir, S_IRWXU))) {
+                orte_show_help("help-plm-base.txt", "path-not-created", true, dest_dir);
+                return rc;
+            }
+        }
+    } else if (NULL != orte_process_info.tmpdir_base) {
+        /* put everything in the tmpdir base */
+        dest_dir = orte_process_info.tmpdir_base;
+    } else {
+        /* put everything in /tmp */
+        dest_dir = "/tmp";
+    }
+    
+    /* setup the exec_path to the bootproxy */
+    if (slave_node->local) {
+        /* if this is a local operation, then just set
+         * the exec_path to be the bootproxy
+         */
+        *argv = NULL;
+        asprintf(exec_path, "%s/%s", slave_node->prefix, rcmd);
+        opal_argv_append_nosize(argv, *exec_path);
+    } else {
+        /* set the exec path to the rsh agent path */
+        *exec_path = strdup(orte_plm_globals.rsh_agent_path);
+        /* Start the argv with the rsh/ssh command */
+        *argv = opal_argv_copy(orte_plm_globals.rsh_agent_argv);
+        /* add the hostname */
+        opal_argv_append_nosize(argv, nodename);
+        /* add the bootproxy cmd */
+        if (NULL != slave_node->prefix) {
+            asprintf(&tmp, "%s/%s", slave_node->prefix, rcmd);
+        } else {
+            tmp = strdup(rcmd);
+        }
+        opal_argv_append_nosize(argv, tmp);
+        free(tmp);
+    }
+    
+    /* do we need to preload the binary? */
+    if (app->preload_binary) {
+        char * src;
+        /* if the binary is not given in absolute path form,
+         * then convert it to one
+         */
+        if (!opal_path_is_absolute(app->app)) {
+            /* see if a source directory was given */
+            if (NULL!= app->preload_files_src_dir) {
+                /* prepend the src dir to the executable name */
+                path = opal_os_path(false, app->preload_files_src_dir, app->app, NULL);
+                /* now check for the existence of the app */
+                src = opal_find_absolute_path(path);
+                if (NULL == src) {
+                    orte_show_help("help-plm-base.txt", "exec-not-found", true, path);
+                    return ORTE_ERROR;
+                }
+            } else {
+                /* look for it in the cwd */
+                getcwd(cwd, OPAL_PATH_MAX);
+                src = opal_path_access(app->app, cwd, X_OK);
+                if (NULL == src) {
+                    orte_show_help("help-plm-base.txt", "exec-not-found", true, cwd);
+                    return ORTE_ERROR;
+                }
+            }
+        } else {
+            src = opal_path_access(app->app, NULL, X_OK);
+            if (NULL == src) {
+                orte_show_help("help-plm-base.txt", "exec-not-found", true, app->app);
+                return ORTE_ERROR;
+            }
+        }
+        /* get the basename */
+        basename = opal_basename(app->app);
+        
+        /* define the destination */
+        dest = opal_os_path(false, dest_dir, basename, NULL);
+        
+        /*
+         * We do not test for error after opal_basename -- this is fine, as opal_os_path
+         * is taking a NULL terminated list -- in case of error, well dest_dir is the final dir.
+         * However, we need to free basename here, before overwriting the pointer later.
+         */
+        if (basename != NULL) {
+            free(basename);
+        }
+        
+        /* has this binary already been positioned? */
+        for (i=0; i < slave_node->apps.size; i++) {
+            if (NULL != (filenm = opal_pointer_array_get_item(&slave_node->apps, i)) &&
+                0 == strcmp(filenm, dest)) {
+                /* this app already has been positioned on the node - skip it */
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                     "%s plm:base:local:slave: app %s already positioned",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), filenm));
+                goto PRELOAD_FILES;
+            }
+        }
+        /* add the app to the slave_node list */
+        opal_pointer_array_add(&slave_node->apps, strdup(dest));
+        /* since we are positioning the binary, add it to the list
+         * of files to be cleaned up when done
+         */
+        opal_pointer_array_add(&slave_node->files, strdup(dest));
+        
+        /* if this is a local node, then we just use the cp command */
+        if (slave_node->local) {
+            scp = opal_find_absolute_path("cp");
+            if (NULL == scp) {
+                free (src);
+                orte_show_help("help-plm-base.txt", "cp-not-found", true, "cp", "cp");
+                return ORTE_ERROR;
+            }
+            /* form and execute the cp commands */
+            asprintf(&cmd, "%s %s %s", scp, src, dest);
+            system(cmd);
+            free(cmd);
+        } else {
+            /* find the scp command */
+            scp = opal_find_absolute_path("scp");
+            if (NULL == scp) {
+                free (src);
+                orte_show_help("help-plm-base.txt", "cp-not-found", true, "scp", "scp");
+                return ORTE_ERROR;
+            }
+            /* form and execute the scp commands */
+            asprintf(&cmd, "%s %s %s:%s", scp, src, nodename, dest);
+            system(cmd);
+            free(cmd);
+        }
+        free(src);
+        free(dest);
+        free(scp);
+    } else {
+        /* we don't need to pre-position the binary, but we do need
+         * to check if we should record it
+         */
+        for (i=0; i < slave_node->apps.size; i++) {
+            if (NULL != (filenm = opal_pointer_array_get_item(&slave_node->apps, i)) &&
+                0 == strcmp(filenm, app->app)) {
+                /* this app already has been positioned on the node - skip it */
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                     "%s plm:base:local:slave: app %s already positioned",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), filenm));
+                goto PRELOAD_FILES;
+            }
+        }
+        /* add the app to the slave_node list */
+        opal_pointer_array_add(&slave_node->apps, strdup(app->app));
+        /* do not add it to the files to be cleaned up when done as
+         * we are not positioning it!
+         */
+    }
+    
+PRELOAD_FILES:
+    /* do we need to pre-position supporting files? */
+    if (NULL != app->preload_files) {
+        if (slave_node->local) {
+            scp = opal_find_absolute_path("cp");
+            if (NULL == scp) {
+                orte_show_help("help-plm-base.txt", "cp-not-found", true, "cp", "cp");
+                return ORTE_ERROR;
+            }
+        } else {
+            /* find the scp command */
+            scp = opal_find_absolute_path("scp");
+            if (NULL == scp) {
+                orte_show_help("help-plm-base.txt", "cp-not-found", true, "scp", "scp");
+                return ORTE_ERROR;
+            }
+        }
+        /* break apart the comma-separated list of files */
+        files = opal_argv_split(app->preload_files, ',');
+        /* copy each file across */
+        for (i=0; i < opal_argv_count(files); i++) {
+            /* if the file is not given in absolute path form,
+             * then convert it to one
+             */
+            if (!opal_path_is_absolute(files[i])) {
+                /* see if a source directory was given */
+                if (NULL!= app->preload_files_src_dir) {
+                    /* look for the file there */
+                    exefile = opal_path_access(files[i], app->preload_files_src_dir, R_OK);
+                } else {
+                    /* look for it in the cwd */
+                    getcwd(cwd, OPAL_PATH_MAX);
+                    exefile = opal_path_access(files[i], cwd, R_OK);
+                }
+            } else {
+                exefile = opal_path_access(files[i], NULL, R_OK);
+            }
+            if (NULL == exefile) {
+                getcwd(cwd, OPAL_PATH_MAX);
+                orte_show_help("help-plm-base.txt", "file-not-found", true, files[i],
+                               (NULL == app->preload_files_src_dir) ? cwd : app->preload_files_src_dir);
+                return ORTE_ERROR;
+            }
+            /* define the destination */
+            dest = opal_os_path(false, dest_dir, files[i], NULL);
+            /* has this file already been positioned? */
+            for (j=0; j < slave_node->files.size; j++) {
+                if (NULL != (filenm = opal_pointer_array_get_item(&slave_node->files, j)) &&
+                    0 == strcmp(filenm, dest)) {
+                    /* this app already has been positioned on the node - skip it */
+                    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                         "%s plm:base:local:slave: file %s already positioned",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), filenm));
+                    goto SKIP;
+                }
+            }
+            /* add the file to the slave_node list */
+            opal_pointer_array_add(&slave_node->files, strdup(dest));
+            if (slave_node->local) {
+                /* form and execute the cp command */
+                asprintf(&cmd, "%s %s %s", scp, exefile, dest);
+                system(cmd);
+                free(cmd);
+            } else {
+                /* form and execute the scp commands */
+                asprintf(&cmd, "%s -q %s %s:%s", scp, exefile, nodename, dest);
+                system(cmd);
+                free(cmd);
+            }
+        SKIP:
+            free(exefile);
+            free(dest);
+        }
+        opal_argv_free(files);
+        free(scp);
+    }
+    
+    return ORTE_SUCCESS;    
+}
+
+int orte_plm_base_append_bootproxy_args(orte_app_context_t *app, char ***argv,
+                                        orte_jobid_t jobid, orte_vpid_t vpid,
+                                        int num_nodes, orte_vpid_t num_procs, orte_local_rank_t lrank,
+                                        orte_vpid_t nlocal, int nslots)
+{
+    char *param, *path, *tmp, *cmd, *basename, *dest_dir;
+    int i;
+    
+    /* if there is a working directory specified, add it in a special
+     * way so the bootproxy can deal with it
+     */
+    if (NULL != app->cwd) {
+        asprintf(&param, "OMPI_WDIR=%s", app->cwd);
+        opal_argv_append_nosize(argv, param);
+        free(param);
+    }
+    
+    /* add all OMPI params from the app */
+    if (NULL != app->env) {
+        for (i=0; NULL != app->env[i]; i++) {
+            if (0 == strncmp(app->env[i], "OMPI_", 5)) {
+                if (NULL == strchr(app->env[i], ';') &&
+                    NULL == strchr(app->env[i], ':')) {
+                    opal_argv_append_nosize(argv, app->env[i]);
+                } else {
+                    tmp = strchr(app->env[i], '=');
+                    *tmp = '\0';
+                    tmp++;
+                    asprintf(&param, "%s=\"%s\"", app->env[i], tmp);
+                    opal_argv_append_nosize(argv, param);
+                    free(param);
+                }
+            }
+        }
+    }
+    
+    /* add MCA params required for launch */
+    
+    /* tell ESS to select the "slave" component */
+    param = mca_base_param_environ_variable("ess",NULL,NULL);
+    opal_setenv(param, "slave", true, argv);
+    free(param);
+    
+    /* tell ROUTED to select the "slave" component */
+    param = mca_base_param_environ_variable("routed",NULL,NULL);
+    opal_setenv(param, "slave", true, argv);
+    free(param);
+    
+    /* tell GRPCOMM to select the "hier" component */
+    param = mca_base_param_environ_variable("grpcomm",NULL,NULL);
+    opal_setenv(param, "hier", true, argv);
+    free(param);
+    
+    /* must pass the number of nodes */
+    param = mca_base_param_environ_variable("orte","num","nodes");
+    asprintf(&cmd, "%d", num_nodes);
+    opal_setenv(param, cmd, true, argv);
+    free(param);
+    free(cmd);
+    
+    /* set the daemon uri to point to me */
+    param = mca_base_param_environ_variable("orte","local_daemon","uri");
+    asprintf(&path, "\"%s\"", orte_rml.get_contact_info());
+    opal_setenv(param, path, true, argv);
+    free(param);
+    free(path);
+    
+    /* set a value for the HNP uri - it won't be needed, but is
+     * required to pass existence tests
+     */
+    param = mca_base_param_environ_variable("orte","hnp","uri");
+    asprintf(&path, "\"%s\"", orte_process_info.my_hnp_uri);
+    opal_setenv(param, path, true, argv);
+    free(param);
+    free(path);
+    
+    /* setup yield schedule to be aggressive */
+    param = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
+    opal_setenv(param, "0", true, argv);
+    free(param);
+    
+    /* set the app_context number */
+    param = mca_base_param_environ_variable("orte","app","num");
+    opal_setenv(param, "1", true, argv);
+    free(param);
+    
+    /* ensure that any "name" envar is cleared */
+    param = mca_base_param_environ_variable("orte","ess","name");
+    opal_unsetenv(param, argv);
+    free(param);
+    
+    /* set the jobid */
+    orte_util_convert_jobid_to_string(&cmd, jobid);
+    param = mca_base_param_environ_variable("orte","ess","jobid");
+    opal_setenv(param, cmd, true, argv);
+    free(param);
+    free(cmd);
+    
+    /* set the vpid  */
+    orte_util_convert_vpid_to_string(&cmd, vpid);
+    param = mca_base_param_environ_variable("orte","ess","vpid");
+    opal_setenv(param, cmd, true, argv);
+    free(param);
+    opal_setenv("OMPI_COMM_WORLD_RANK", cmd, true, argv);
+    free(cmd);
+    
+    /* set the number of procs */
+    asprintf(&cmd, "%d", (int)num_procs);
+    param = mca_base_param_environ_variable("orte","ess","num_procs");
+    opal_setenv(param, cmd, true, argv);
+    free(param);
+    opal_setenv("OMPI_COMM_WORLD_SIZE", cmd, true, argv);
+    free(cmd);
+    
+    /* some user-requested public environmental variables */
+    asprintf(&cmd, "%d", (int)nslots);
+    opal_setenv("OMPI_UNIVERSE_SIZE", cmd, true, argv);
+    free(cmd);
+    asprintf(&cmd, "%d", (int)lrank);
+    opal_setenv("OMPI_COMM_WORLD_LOCAL_RANK", cmd, true, argv);
+    free(cmd);
+    asprintf(&cmd, "%d", (int)nlocal);
+    opal_setenv("OMPI_COMM_WORLD_LOCAL_SIZE", cmd, true, argv);
+    free(cmd);
+    
+    /* if we are going to position the binary or files, did they give us a dest? */
+    if (NULL != app->preload_files_dest_dir) {
+        /* the target location -must- be an absolute path */
+        if (!opal_path_is_absolute(app->preload_files_dest_dir)) {
+            orte_show_help("help-plm-base.txt", "abs-path-reqd", true, app->preload_files_dest_dir);
+            return ORTE_ERROR;
+        }
+        dest_dir = app->preload_files_dest_dir;
+    } else if (NULL != orte_process_info.tmpdir_base) {
+        /* put everything in the tmpdir base */
+        dest_dir = orte_process_info.tmpdir_base;
+    } else {
+        /* put everything in /tmp */
+        dest_dir = "/tmp";
+    }
+    
+    if (app->preload_binary) {
+        /* construct the target path */
+        basename = opal_basename(app->app);
+        path = opal_os_path(false, dest_dir, basename, NULL);
+        free(basename);
+        /* add this to the cmd */
+        opal_argv_append_nosize(argv, path);
+        free(path);
+    } else {
+        /* it must already have been put there, so use the given path */
+        opal_argv_append_nosize(argv, app->app);
+    }
+    
+    /* add any provided argv */
+    for (i=1; NULL != app->argv[i]; i++) {
+        opal_argv_append_nosize(argv, app->argv[i]);
+    }
+    
+    return ORTE_SUCCESS;
 }

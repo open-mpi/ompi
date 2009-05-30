@@ -59,6 +59,7 @@ static void slave_file_construct(orte_slave_files_t *ptr)
 {
     ptr->node = NULL;
     ptr->local = false;
+    ptr->prefix = NULL;
     ptr->bootproxy = NULL;
     ptr->positioned = false;
     OBJ_CONSTRUCT(&ptr->apps, opal_pointer_array_t);
@@ -72,6 +73,7 @@ static void slave_file_destruct(orte_slave_files_t *ptr)
     char *cptr;
     
     if (NULL != ptr->node) free(ptr->node);
+    if (NULL != ptr->prefix) free(ptr->prefix);
     if (NULL != ptr->bootproxy) free(ptr->bootproxy);
     for (i=0; i < ptr->apps.size; i++) {
         if (NULL != (cptr = (char*)opal_pointer_array_get_item(&ptr->apps, i))) {
