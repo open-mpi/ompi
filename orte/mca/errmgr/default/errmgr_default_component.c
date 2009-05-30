@@ -91,17 +91,18 @@ int orte_errmgr_default_component_close(void)
 
 int orte_errmgr_default_component_query(mca_base_module_t **module, int *priority)
 {
-    /* If we are not an HNP, then don't pick us! */
-    if (!ORTE_PROC_IS_HNP) {
-        /* don't take me! */
-        *module = NULL;
-        return ORTE_ERROR;
+    /* If we are an HNP or a CM, then pick us! */
+    if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_CM) {
+        /* Return a module (choose an arbitrary, positive priority --
+         it's only relevant compared to other components). */
+        
+        *priority = 100;
+        *module = (mca_base_module_t *)&orte_errmgr_default;
+        return ORTE_SUCCESS;
     }
     
-    /* Return a module (choose an arbitrary, positive priority --
-       it's only relevant compared to other components). */
-
-    *priority = 10;
-    *module = (mca_base_module_t *)&orte_errmgr_default;
-    return ORTE_SUCCESS;
+    /* otherwise, don't take me! */
+    *module = NULL;
+    return ORTE_ERROR;
+    
 }
