@@ -308,7 +308,7 @@ int ompi_group_init(void)
     /* initialize ompi_group_f_to_c_table */
     OBJ_CONSTRUCT( &ompi_group_f_to_c_table, opal_pointer_array_t);
     if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_group_f_to_c_table, 0,
-                                                OMPI_FORTRAN_HANDLE_MAX, 64) ) {
+                                                OPAL_FORTRAN_HANDLE_MAX, 64) ) {
         return OMPI_ERROR;
     }
     

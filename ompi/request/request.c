@@ -103,7 +103,7 @@ int ompi_request_init(void)
     OBJ_CONSTRUCT(&ompi_request_null, ompi_request_t);
     OBJ_CONSTRUCT(&ompi_request_f_to_c_table, opal_pointer_array_t);
     if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_request_f_to_c_table,
-                                                0, OMPI_FORTRAN_HANDLE_MAX, 64) ) {
+                                                0, OPAL_FORTRAN_HANDLE_MAX, 64) ) {
         return OMPI_ERROR;
     }
     ompi_request_null.request.req_type = OMPI_REQUEST_NULL;

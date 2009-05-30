@@ -637,76 +637,76 @@
 #define OPAL_ALIGNMENT_CHAR ${CHAR_ALIGNMENT}
 
 /* Alignment of type bool */
-#define OMPI_ALIGNMENT_CXX_BOOL ${BOOL_ALIGNMENT}
+#define OPAL_ALIGNMENT_CXX_BOOL ${BOOL_ALIGNMENT}
 
 /* Alignment of type double */
-#define OMPI_ALIGNMENT_DOUBLE ${DOUBLE_ALIGNMENT}
+#define OPAL_ALIGNMENT_DOUBLE ${DOUBLE_ALIGNMENT}
 
 /* Alignment of type float */
-#define OMPI_ALIGNMENT_FLOAT ${FLOAT_ALIGNMENT}
+#define OPAL_ALIGNMENT_FLOAT ${FLOAT_ALIGNMENT}
 
 /* Alignment of Fortran 77 COMPLEX */
-#define OMPI_ALIGNMENT_FORTRAN_COMPLEX ${OMPI_ALIGNMENT_FORTRAN_COMPLEX}
+#define OPAL_ALIGNMENT_FORTRAN_COMPLEX ${OPAL_ALIGNMENT_FORTRAN_COMPLEX}
 
 /* Alignment of Fortran 77 COMPLEX*16 */
-#define OMPI_ALIGNMENT_FORTRAN_COMPLEX16 ${OMPI_ALIGNMENT_FORTRAN_COMPLEX16}
+#define OPAL_ALIGNMENT_FORTRAN_COMPLEX16 ${OPAL_ALIGNMENT_FORTRAN_COMPLEX16}
 
 /* Alignment of Fortran 77 COMPLEX*32 */
-#define OMPI_ALIGNMENT_FORTRAN_COMPLEX32 ${OMPI_ALIGNMENT_FORTRAN_COMPLEX32}
+#define OPAL_ALIGNMENT_FORTRAN_COMPLEX32 ${OPAL_ALIGNMENT_FORTRAN_COMPLEX32}
 
 /* Alignment of Fortran 77 COMPLEX*8 */
-#define OMPI_ALIGNMENT_FORTRAN_COMPLEX8 ${OMPI_ALIGNMENT_FORTRAN_COMPLEX8}
+#define OPAL_ALIGNMENT_FORTRAN_COMPLEX8 ${OPAL_ALIGNMENT_FORTRAN_COMPLEX8}
 
 /* Alignment of Fortran 77 DOUBLE PRECISION */
-#define OMPI_ALIGNMENT_FORTRAN_DOUBLE_PRECISION ${OMPI_ALIGNMENT_FORTRAN_DOUBLE_PRECISION}
+#define OPAL_ALIGNMENT_FORTRAN_DOUBLE_PRECISION ${OPAL_ALIGNMENT_FORTRAN_DOUBLE_PRECISION}
 
 /* Alignment of Fortran 77 INTEGER */
-#define OMPI_ALIGNMENT_FORTRAN_INTEGER ${OMPI_ALIGNMENT_FORTRAN_INTEGER}
+#define OPAL_ALIGNMENT_FORTRAN_INTEGER ${OPAL_ALIGNMENT_FORTRAN_INTEGER}
 
 /* Alignment of Fortran 77 INTEGER*1 */
-#define OMPI_ALIGNMENT_FORTRAN_INTEGER1 ${OMPI_ALIGNMENT_FORTRAN_INTEGER1}
+#define OPAL_ALIGNMENT_FORTRAN_INTEGER1 ${OPAL_ALIGNMENT_FORTRAN_INTEGER1}
 
 /* Alignment of Fortran 77 INTEGER*16 */
-#define OMPI_ALIGNMENT_FORTRAN_INTEGER16 ${OMPI_ALIGNMENT_FORTRAN_INTEGER16}
+#define OPAL_ALIGNMENT_FORTRAN_INTEGER16 ${OPAL_ALIGNMENT_FORTRAN_INTEGER16}
 
 /* Alignment of Fortran 77 INTEGER*2 */
-#define OMPI_ALIGNMENT_FORTRAN_INTEGER2 ${OMPI_ALIGNMENT_FORTRAN_INTEGER2}
+#define OPAL_ALIGNMENT_FORTRAN_INTEGER2 ${OPAL_ALIGNMENT_FORTRAN_INTEGER2}
 
 /* Alignment of Fortran 77 INTEGER*4 */
-#define OMPI_ALIGNMENT_FORTRAN_INTEGER4 ${OMPI_ALIGNMENT_FORTRAN_INTEGER4}
+#define OPAL_ALIGNMENT_FORTRAN_INTEGER4 ${OPAL_ALIGNMENT_FORTRAN_INTEGER4}
 
 /* Alignment of Fortran 77 INTEGER*8 */
-#define OMPI_ALIGNMENT_FORTRAN_INTEGER8 ${OMPI_ALIGNMENT_FORTRAN_INTEGER8}
+#define OPAL_ALIGNMENT_FORTRAN_INTEGER8 ${OPAL_ALIGNMENT_FORTRAN_INTEGER8}
 
 /* Alignment of Fortran 77 LOGICAL */
-#define OMPI_ALIGNMENT_FORTRAN_LOGICAL ${OMPI_ALIGNMENT_FORTRAN_LOGICAL}
+#define OPAL_ALIGNMENT_FORTRAN_LOGICAL ${OPAL_ALIGNMENT_FORTRAN_LOGICAL}
 
 /* Alignment of Fortran 77 LOGICAL*1 */
-#define OMPI_ALIGNMENT_FORTRAN_LOGICAL1 ${OMPI_ALIGNMENT_FORTRAN_LOGICAL1}
+#define OPAL_ALIGNMENT_FORTRAN_LOGICAL1 ${OPAL_ALIGNMENT_FORTRAN_LOGICAL1}
 
 /* Alignment of Fortran 77 LOGICAL*2 */
-#define OMPI_ALIGNMENT_FORTRAN_LOGICAL2 ${OMPI_ALIGNMENT_FORTRAN_LOGICAL2}
+#define OPAL_ALIGNMENT_FORTRAN_LOGICAL2 ${OPAL_ALIGNMENT_FORTRAN_LOGICAL2}
 
 /* Alignment of Fortran 77 LOGICAL*4 */
-#define OMPI_ALIGNMENT_FORTRAN_LOGICAL4 ${OMPI_ALIGNMENT_FORTRAN_LOGICAL4}
+#define OPAL_ALIGNMENT_FORTRAN_LOGICAL4 ${OPAL_ALIGNMENT_FORTRAN_LOGICAL4}
 
 /* Alignment of Fortran 77 LOGICAL*8 */
-#define OMPI_ALIGNMENT_FORTRAN_LOGICAL8 ${OMPI_ALIGNMENT_FORTRAN_LOGICAL8}
+#define OPAL_ALIGNMENT_FORTRAN_LOGICAL8 ${OPAL_ALIGNMENT_FORTRAN_LOGICAL8}
 
 /* Alignment of Fortran 77 REAL */
-#define OMPI_ALIGNMENT_FORTRAN_REAL ${OMPI_ALIGNMENT_FORTRAN_REAL}
+#define OPAL_ALIGNMENT_FORTRAN_REAL ${OPAL_ALIGNMENT_FORTRAN_REAL}
 
 /* Alignment of Fortran 77 REAL*16 */
-#define OMPI_ALIGNMENT_FORTRAN_REAL16 ${OMPI_ALIGNMENT_FORTRAN_REAL16}
+#define OPAL_ALIGNMENT_FORTRAN_REAL16 ${OPAL_ALIGNMENT_FORTRAN_REAL16}
 
 /* Alignment of Fortran 77 REAL*2 */
-#define OMPI_ALIGNMENT_FORTRAN_REAL2 ${OMPI_ALIGNMENT_FORTRAN_REAL2}
+#define OPAL_ALIGNMENT_FORTRAN_REAL2 ${OPAL_ALIGNMENT_FORTRAN_REAL2}
 
 /* Alignment of Fortran 77 REAL*4 */
-#define OMPI_ALIGNMENT_FORTRAN_REAL4 ${OMPI_ALIGNMENT_FORTRAN_REAL4}
+#define OPAL_ALIGNMENT_FORTRAN_REAL4 ${OPAL_ALIGNMENT_FORTRAN_REAL4}
 
 /* Alignment of Fortran 77 REAL*8 */
-#define OMPI_ALIGNMENT_FORTRAN_REAL8 ${OMPI_ALIGNMENT_FORTRAN_REAL8}
+#define OPAL_ALIGNMENT_FORTRAN_REAL8 ${OPAL_ALIGNMENT_FORTRAN_REAL8}
 
 /* Alignment of type int */
 #define OPAL_ALIGNMENT_INT ${INT_ALIGNMENT}
@@ -724,10 +724,10 @@
 #define OPAL_ALIGNMENT_SHORT ${SHORT_ALIGNMENT}
 
 /* Alignment of type void * */
-#define OMPI_ALIGNMENT_VOID_P ${VOID_P_ALIGNMENT}
+#define OPAL_ALIGNMENT_VOID_P ${VOID_P_ALIGNMENT}
 
 /* Alignment of type wchar_t */
-#define OMPI_ALIGNMENT_WCHAR ${WCHAR_T_ALIGNMENT}
+#define OPAL_ALIGNMENT_WCHAR ${WCHAR_T_ALIGNMENT}
 
 /* OMPI architecture string */
 #define OPAL_ARCH "${CMAKE_SYSTEM_PROCESSOR} ${CMAKE_SYSTEM}"
@@ -852,10 +852,10 @@
 
 /* Max handle value for fortran MPI handles, effectively min(INT_MAX, max
    fortran INTEGER value) */
-#cmakedefine OMPI_FORTRAN_HANDLE_MAX ${OMPI_FORTRAN_HANDLE_MAX}
+#cmakedefine OPAL_FORTRAN_HANDLE_MAX ${OPAL_FORTRAN_HANDLE_MAX}
 
 /* Fortran value for LOGICAL .TRUE. value */
-#define OMPI_FORTRAN_VALUE_TRUE ${OMPI_FORTRAN_VALUE_TRUE}
+#define OPAL_FORTRAN_VALUE_TRUE ${OPAL_FORTRAN_VALUE_TRUE}
 
 /* Greek - alpha, beta, etc - release number of Open MPI */
 #cmakedefine OMPI_GREEK_VERSION "${OMPI_GREEK_VERSION_STRING}"
@@ -927,123 +927,123 @@
 #define OMPI_HAVE_CXX_EXCEPTION_SUPPORT ${OMPI_HAVE_CXX_EXCEPTION_SUPPORT}
 
 /* Whether we have Fortran 90 $ofc_fortran_type or not */
-#cmakedefine OMPI_HAVE_F90_COMPLEX
+#cmakedefine OPAL_HAVE_F90_COMPLEX
 
 /* Whether we have Fortran 90 $ofc_fortran_type or not */
-#cmakedefine OMPI_HAVE_F90_COMPLEX16
+#cmakedefine OPAL_HAVE_F90_COMPLEX16
 
 /* Whether we have Fortran 90 $ofc_fortran_type or not */
-#cmakedefine OMPI_HAVE_F90_COMPLEX32
+#cmakedefine OPAL_HAVE_F90_COMPLEX32
 
 /* Whether we have Fortran 90 $ofc_fortran_type or not */
-#cmakedefine OMPI_HAVE_F90_COMPLEX8
+#cmakedefine OPAL_HAVE_F90_COMPLEX8
 
 /* Whether we have Fortran 90 $ofc_fortran_type or not */
-#cmakedefine OMPI_HAVE_F90_DOUBLE_COMPLEX
+#cmakedefine OPAL_HAVE_F90_DOUBLE_COMPLEX
 
 /* Whether we have Fortran 90 $ofc_fortran_type or not */
-#cmakedefine OMPI_HAVE_F90_DOUBLE_PRECISION
+#cmakedefine OPAL_HAVE_F90_DOUBLE_PRECISION
 
 /* Whether we have Fortran 90 $ofc_fortran_type or not */
-#cmakedefine OMPI_HAVE_F90_INTEGER
+#cmakedefine OPAL_HAVE_F90_INTEGER
 
 /* Whether we have Fortran 90 $ofc_fortran_type or not */
-#cmakedefine OMPI_HAVE_F90_INTEGER1
+#cmakedefine OPAL_HAVE_F90_INTEGER1
 
 /* Whether we have Fortran 90 $ofc_fortran_type or not */
-#cmakedefine OMPI_HAVE_F90_INTEGER16
+#cmakedefine OPAL_HAVE_F90_INTEGER16
 
 /* Whether we have Fortran 90 $ofc_fortran_type or not */
-#cmakedefine OMPI_HAVE_F90_INTEGER2
+#cmakedefine OPAL_HAVE_F90_INTEGER2
 
 /* Whether we have Fortran 90 $ofc_fortran_type or not */
-#cmakedefine OMPI_HAVE_F90_INTEGER4
+#cmakedefine OPAL_HAVE_F90_INTEGER4
 
 /* Whether we have Fortran 90 $ofc_fortran_type or not */
-#cmakedefine OMPI_HAVE_F90_INTEGER8
+#cmakedefine OPAL_HAVE_F90_INTEGER8
 
 /* Whether we have Fortran 90 $ofc_fortran_type or not */
-#cmakedefine OMPI_HAVE_F90_LOGICAL
+#cmakedefine OPAL_HAVE_F90_LOGICAL
 
 /* Whether we have Fortran 90 $ofc_fortran_type or not */
-#cmakedefine OMPI_HAVE_F90_REAL
+#cmakedefine OPAL_HAVE_F90_REAL
 
 /* Whether we have Fortran 90 $ofc_fortran_type or not */
-#cmakedefine OMPI_HAVE_F90_REAL16
+#cmakedefine OPAL_HAVE_F90_REAL16
 
 /* Whether we have Fortran 90 $ofc_fortran_type or not */
-#cmakedefine OMPI_HAVE_F90_REAL2
+#cmakedefine OPAL_HAVE_F90_REAL2
 
 /* Whether we have Fortran 90 $ofc_fortran_type or not */
-#cmakedefine OMPI_HAVE_F90_REAL4
+#cmakedefine OPAL_HAVE_F90_REAL4
 
 /* Whether we have Fortran 90 $ofc_fortran_type or not */
-#cmakedefine OMPI_HAVE_F90_REAL8
+#cmakedefine OPAL_HAVE_F90_REAL8
 
 /* Whether we have Fortran 77 COMPLEX or not */
-#define OMPI_HAVE_FORTRAN_COMPLEX ${OMPI_HAVE_FORTRAN_COMPLEX}
+#define OPAL_HAVE_FORTRAN_COMPLEX ${OPAL_HAVE_FORTRAN_COMPLEX}
 
 /* Whether we have Fortran 77 COMPLEX*16 or not */
-#define OMPI_HAVE_FORTRAN_COMPLEX16 ${OMPI_HAVE_FORTRAN_COMPLEX16}
+#define OPAL_HAVE_FORTRAN_COMPLEX16 ${OPAL_HAVE_FORTRAN_COMPLEX16}
 
 /* Whether we have Fortran 77 COMPLEX*32 or not */
-#define OMPI_HAVE_FORTRAN_COMPLEX32 ${OMPI_HAVE_FORTRAN_COMPLEX32}
+#define OPAL_HAVE_FORTRAN_COMPLEX32 ${OPAL_HAVE_FORTRAN_COMPLEX32}
 
 /* Whether we have Fortran 77 COMPLEX*8 or not */
-#define OMPI_HAVE_FORTRAN_COMPLEX8 ${OMPI_HAVE_FORTRAN_COMPLEX8}
+#define OPAL_HAVE_FORTRAN_COMPLEX8 ${OPAL_HAVE_FORTRAN_COMPLEX8}
 
 /* Whether we have Fortran 77 DOUBLE PRECISION or not */
-#define OMPI_HAVE_FORTRAN_DOUBLE_PRECISION ${OMPI_HAVE_FORTRAN_DOUBLE_PRECISION}
+#define OPAL_HAVE_FORTRAN_DOUBLE_PRECISION ${OPAL_HAVE_FORTRAN_DOUBLE_PRECISION}
 
 /* Whether we have Fortran 77 INTEGER or not */
-#define OMPI_HAVE_FORTRAN_INTEGER ${OMPI_HAVE_FORTRAN_INTEGER}
+#define OPAL_HAVE_FORTRAN_INTEGER ${OPAL_HAVE_FORTRAN_INTEGER}
 
 /* Whether we have Fortran 77 INTEGER*1 or not */
-#define OMPI_HAVE_FORTRAN_INTEGER1 ${OMPI_HAVE_FORTRAN_INTEGER1}
+#define OPAL_HAVE_FORTRAN_INTEGER1 ${OPAL_HAVE_FORTRAN_INTEGER1}
 
 /* Whether we have Fortran 77 INTEGER*16 or not */
-#define OMPI_HAVE_FORTRAN_INTEGER16 ${OMPI_HAVE_FORTRAN_INTEGER16}
+#define OPAL_HAVE_FORTRAN_INTEGER16 ${OPAL_HAVE_FORTRAN_INTEGER16}
 
 /* Whether we have Fortran 77 INTEGER*2 or not */
-#define OMPI_HAVE_FORTRAN_INTEGER2 ${OMPI_HAVE_FORTRAN_INTEGER2}
+#define OPAL_HAVE_FORTRAN_INTEGER2 ${OPAL_HAVE_FORTRAN_INTEGER2}
 
 /* Whether we have Fortran 77 INTEGER*4 or not */
-#define OMPI_HAVE_FORTRAN_INTEGER4 ${OMPI_HAVE_FORTRAN_INTEGER4}
+#define OPAL_HAVE_FORTRAN_INTEGER4 ${OPAL_HAVE_FORTRAN_INTEGER4}
 
 /* Whether we have Fortran 77 INTEGER*8 or not */
-#define OMPI_HAVE_FORTRAN_INTEGER8 ${OMPI_HAVE_FORTRAN_INTEGER8}
+#define OPAL_HAVE_FORTRAN_INTEGER8 ${OPAL_HAVE_FORTRAN_INTEGER8}
 
 /* Whether we have Fortran 77 LOGICAL or not */
-#define OMPI_HAVE_FORTRAN_LOGICAL ${OMPI_HAVE_FORTRAN_LOGICAL}
+#define OPAL_HAVE_FORTRAN_LOGICAL ${OPAL_HAVE_FORTRAN_LOGICAL}
 
 /* Whether we have Fortran 77 LOGICAL1 or not */
-#define OMPI_HAVE_FORTRAN_LOGICAL1 ${OMPI_HAVE_FORTRAN_LOGICAL1}
+#define OPAL_HAVE_FORTRAN_LOGICAL1 ${OPAL_HAVE_FORTRAN_LOGICAL1}
 
 /* Whether we have Fortran 77 LOGICAL2 or not */
-#define OMPI_HAVE_FORTRAN_LOGICAL2 ${OMPI_HAVE_FORTRAN_LOGICAL2}
+#define OPAL_HAVE_FORTRAN_LOGICAL2 ${OPAL_HAVE_FORTRAN_LOGICAL2}
 
 /* Whether we have Fortran 77 LOGICAL4 or not */
-#define OMPI_HAVE_FORTRAN_LOGICAL4 ${OMPI_HAVE_FORTRAN_LOGICAL4}
+#define OPAL_HAVE_FORTRAN_LOGICAL4 ${OPAL_HAVE_FORTRAN_LOGICAL4}
 
 /* Whether we have Fortran 77 LOGICAL8 or not */
-#define OMPI_HAVE_FORTRAN_LOGICAL8 ${OMPI_HAVE_FORTRAN_LOGICAL8}
+#define OPAL_HAVE_FORTRAN_LOGICAL8 ${OPAL_HAVE_FORTRAN_LOGICAL8}
 
 /* Whether we have Fortran 77 REAL or not */
-#define OMPI_HAVE_FORTRAN_REAL ${OMPI_HAVE_FORTRAN_REAL}
+#define OPAL_HAVE_FORTRAN_REAL ${OPAL_HAVE_FORTRAN_REAL}
 
 /* Whether we have Fortran 77 REAL*16 or not */
-#define OMPI_HAVE_FORTRAN_REAL16 ${OMPI_HAVE_FORTRAN_REAL16}
+#define OPAL_HAVE_FORTRAN_REAL16 ${OPAL_HAVE_FORTRAN_REAL16}
 
 /* Whether we have Fortran 77 REAL*2 or not */
-#define OMPI_HAVE_FORTRAN_REAL2 ${OMPI_HAVE_FORTRAN_REAL2}
+#define OPAL_HAVE_FORTRAN_REAL2 ${OPAL_HAVE_FORTRAN_REAL2}
 
 /* Whether we have Fortran 77 REAL*4 or not */
-#define OMPI_HAVE_FORTRAN_REAL4 ${OMPI_HAVE_FORTRAN_REAL4}
+#define OPAL_HAVE_FORTRAN_REAL4 ${OPAL_HAVE_FORTRAN_REAL4}
 
 /* Whether we have Fortran 77 REAL*8 or not */
-#define OMPI_HAVE_FORTRAN_REAL8 ${OMPI_HAVE_FORTRAN_REAL8}
+#define OPAL_HAVE_FORTRAN_REAL8 ${OPAL_HAVE_FORTRAN_REAL8}
 
-#define OMPI_REAL16_MATCHES_C ${OMPI_REAL16_MATCHES_C}
+#define OPAL_REAL16_MATCHES_C ${OPAL_REAL16_MATCHES_C}
 
 /* Do not use outside of mpi.h. Define to 1 if the system has the type 'long
    long'. */
@@ -1145,67 +1145,67 @@
 #cmakedefine OMPI_RML_CNOS_HAVE_BARRIER
 
 /* Size of Fortran 77 COMPLEX */
-#define OMPI_SIZEOF_FORTRAN_COMPLEX ${OMPI_SIZEOF_FORTRAN_COMPLEX}
+#define OPAL_SIZEOF_FORTRAN_COMPLEX ${OPAL_SIZEOF_FORTRAN_COMPLEX}
 
 /* Size of Fortran 77 COMPLEX*16 */
-#define OMPI_SIZEOF_FORTRAN_COMPLEX16 ${OMPI_SIZEOF_FORTRAN_COMPLEX16}
+#define OPAL_SIZEOF_FORTRAN_COMPLEX16 ${OPAL_SIZEOF_FORTRAN_COMPLEX16}
 
 /* Size of Fortran 77 COMPLEX*32 */
-#define OMPI_SIZEOF_FORTRAN_COMPLEX32 ${OMPI_SIZEOF_FORTRAN_COMPLEX32}
+#define OPAL_SIZEOF_FORTRAN_COMPLEX32 ${OPAL_SIZEOF_FORTRAN_COMPLEX32}
 
 /* Size of Fortran 77 COMPLEX*8 */
-#define OMPI_SIZEOF_FORTRAN_COMPLEX8 ${OMPI_SIZEOF_FORTRAN_COMPLEX8}
+#define OPAL_SIZEOF_FORTRAN_COMPLEX8 ${OPAL_SIZEOF_FORTRAN_COMPLEX8}
 
 /* Size of Fortran 77 DOUBLE PRECISION */
-#define OMPI_SIZEOF_FORTRAN_DOUBLE_PRECISION ${OMPI_SIZEOF_FORTRAN_DOUBLE_PRECISION}
+#define OPAL_SIZEOF_FORTRAN_DOUBLE_PRECISION ${OPAL_SIZEOF_FORTRAN_DOUBLE_PRECISION}
 
 /* Size of Fortran 77 INTEGER */
-#define OMPI_SIZEOF_FORTRAN_INTEGER ${OMPI_SIZEOF_FORTRAN_INTEGER}
+#define OPAL_SIZEOF_FORTRAN_INTEGER ${OPAL_SIZEOF_FORTRAN_INTEGER}
 
 /* Size of Fortran 77 INTEGER*1 */
-#define OMPI_SIZEOF_FORTRAN_INTEGER1 ${OMPI_SIZEOF_FORTRAN_INTEGER1}
+#define OPAL_SIZEOF_FORTRAN_INTEGER1 ${OPAL_SIZEOF_FORTRAN_INTEGER1}
 
 /* Size of Fortran 77 INTEGER*16 */
-#define OMPI_SIZEOF_FORTRAN_INTEGER16 ${OMPI_SIZEOF_FORTRAN_INTEGER16}
+#define OPAL_SIZEOF_FORTRAN_INTEGER16 ${OPAL_SIZEOF_FORTRAN_INTEGER16}
 
 /* Size of Fortran 77 INTEGER*2 */
-#define OMPI_SIZEOF_FORTRAN_INTEGER2 ${OMPI_SIZEOF_FORTRAN_INTEGER2}
+#define OPAL_SIZEOF_FORTRAN_INTEGER2 ${OPAL_SIZEOF_FORTRAN_INTEGER2}
 
 /* Size of Fortran 77 INTEGER*4 */
-#define OMPI_SIZEOF_FORTRAN_INTEGER4 ${OMPI_SIZEOF_FORTRAN_INTEGER4}
+#define OPAL_SIZEOF_FORTRAN_INTEGER4 ${OPAL_SIZEOF_FORTRAN_INTEGER4}
 
 /* Size of Fortran 77 INTEGER*8 */
-#define OMPI_SIZEOF_FORTRAN_INTEGER8 ${OMPI_SIZEOF_FORTRAN_INTEGER8}
+#define OPAL_SIZEOF_FORTRAN_INTEGER8 ${OPAL_SIZEOF_FORTRAN_INTEGER8}
 
 /* Size of Fortran 77 LOGICAL */
-#define OMPI_SIZEOF_FORTRAN_LOGICAL ${OMPI_SIZEOF_FORTRAN_LOGICAL}
+#define OPAL_SIZEOF_FORTRAN_LOGICAL ${OPAL_SIZEOF_FORTRAN_LOGICAL}
 
 /* Size of Fortran 77 LOGICAL1 */
-#define OMPI_SIZEOF_FORTRAN_LOGICAL1 ${OMPI_SIZEOF_FORTRAN_LOGICAL1}
+#define OPAL_SIZEOF_FORTRAN_LOGICAL1 ${OPAL_SIZEOF_FORTRAN_LOGICAL1}
 
 /* Size of Fortran 77 LOGICAL2 */
-#define OMPI_SIZEOF_FORTRAN_LOGICAL2 ${OMPI_SIZEOF_FORTRAN_LOGICAL2}
+#define OPAL_SIZEOF_FORTRAN_LOGICAL2 ${OPAL_SIZEOF_FORTRAN_LOGICAL2}
 
 /* Size of Fortran 77 LOGICAL4 */
-#define OMPI_SIZEOF_FORTRAN_LOGICAL4 ${OMPI_SIZEOF_FORTRAN_LOGICAL4}
+#define OPAL_SIZEOF_FORTRAN_LOGICAL4 ${OPAL_SIZEOF_FORTRAN_LOGICAL4}
 
 /* Size of Fortran 77 LOGICAL8 */
-#define OMPI_SIZEOF_FORTRAN_LOGICAL8 ${OMPI_SIZEOF_FORTRAN_LOGICAL8}
+#define OPAL_SIZEOF_FORTRAN_LOGICAL8 ${OPAL_SIZEOF_FORTRAN_LOGICAL8}
 
 /* Size of Fortran 77 REAL */
-#define OMPI_SIZEOF_FORTRAN_REAL ${OMPI_SIZEOF_FORTRAN_REAL}
+#define OPAL_SIZEOF_FORTRAN_REAL ${OPAL_SIZEOF_FORTRAN_REAL}
 
 /* Size of Fortran 77 REAL*16 */
-#define OMPI_SIZEOF_FORTRAN_REAL16 ${OMPI_SIZEOF_FORTRAN_REAL16}
+#define OPAL_SIZEOF_FORTRAN_REAL16 ${OPAL_SIZEOF_FORTRAN_REAL16}
 
 /* Size of Fortran 77 REAL*2 */
-#define OMPI_SIZEOF_FORTRAN_REAL2 ${OMPI_SIZEOF_FORTRAN_REAL2}
+#define OPAL_SIZEOF_FORTRAN_REAL2 ${OPAL_SIZEOF_FORTRAN_REAL2}
 
 /* Size of Fortran 77 REAL*4 */
-#define OMPI_SIZEOF_FORTRAN_REAL4 ${OMPI_SIZEOF_FORTRAN_REAL4}
+#define OPAL_SIZEOF_FORTRAN_REAL4 ${OPAL_SIZEOF_FORTRAN_REAL4}
 
 /* Size of Fortran 77 REAL*8 */
-#define OMPI_SIZEOF_FORTRAN_REAL8 ${OMPI_SIZEOF_FORTRAN_REAL8}
+#define OPAL_SIZEOF_FORTRAN_REAL8 ${OPAL_SIZEOF_FORTRAN_REAL8}
 
 /* Do threads have different pids (pthreads on linux) */
 #cmakedefine OPAL_THREADS_HAVE_DIFFERENT_PIDS
@@ -1420,70 +1420,70 @@
 
 /* A bogus type that allows us to have sentinel type values that are still
    valid */
-#cmakedefine ompi_fortran_bogus_type_t ${ompi_fortran_bogus_type_t}
+#cmakedefine opal_fortran_bogus_type_t ${opal_fortran_bogus_type_t}
 
 /* C type corresponding to Fortran 77 COMPLEX*16 */
-#cmakedefine ompi_fortran_complex16_t ${ompi_fortran_complex16_t}
+#cmakedefine opal_fortran_complex16_t ${opal_fortran_complex16_t}
 
 /* C type corresponding to Fortran 77 COMPLEX*32 */
-#cmakedefine ompi_fortran_complex32_t ${ompi_fortran_complex32_t}
+#cmakedefine opal_fortran_complex32_t ${opal_fortran_complex32_t}
 
 /* C type corresponding to Fortran 77 COMPLEX*8 */
-#cmakedefine ompi_fortran_complex8_t ${ompi_fortran_complex8_t}
+#cmakedefine opal_fortran_complex8_t ${opal_fortran_complex8_t}
 
 /* C type corresponding to Fortran 77 COMPLEX */
-#cmakedefine ompi_fortran_complex_t ${ompi_fortran_complex_t}
+#cmakedefine opal_fortran_complex_t ${opal_fortran_complex_t}
 
 /* C type corresponding to Fortran 77 DOUBLE PRECISION */
-#cmakedefine ompi_fortran_double_precision_t ${ompi_fortran_double_precision_t}
+#cmakedefine opal_fortran_double_precision_t ${opal_fortran_double_precision_t}
 
 /* C type corresponding to Fortran 77 INTEGER*16 */
-#cmakedefine ompi_fortran_integer16_t ${ompi_fortran_integer16_t}
+#cmakedefine opal_fortran_integer16_t ${opal_fortran_integer16_t}
 
 /* C type corresponding to Fortran 77 INTEGER*1 */
-#cmakedefine ompi_fortran_integer1_t ${ompi_fortran_integer1_t}
+#cmakedefine opal_fortran_integer1_t ${opal_fortran_integer1_t}
 
 /* C type corresponding to Fortran 77 INTEGER*2 */
-#cmakedefine ompi_fortran_integer2_t ${ompi_fortran_integer2_t}
+#cmakedefine opal_fortran_integer2_t ${opal_fortran_integer2_t}
 
 /* C type corresponding to Fortran 77 INTEGER*4 */
-#cmakedefine ompi_fortran_integer4_t ${ompi_fortran_integer4_t}
+#cmakedefine opal_fortran_integer4_t ${opal_fortran_integer4_t}
 
 /* C type corresponding to Fortran 77 INTEGER*8 */
-#cmakedefine ompi_fortran_integer8_t ${ompi_fortran_integer8_t}
+#cmakedefine opal_fortran_integer8_t ${opal_fortran_integer8_t}
 
 /* C type corresponding to Fortran 77 INTEGER */
-#cmakedefine ompi_fortran_integer_t ${ompi_fortran_integer_t}
+#cmakedefine opal_fortran_integer_t ${opal_fortran_integer_t}
 
 /* C type corresponding to Fortran 77 LOGICAL */
-#cmakedefine ompi_fortran_logical_t ${ompi_fortran_logical_t}
+#cmakedefine opal_fortran_logical_t ${opal_fortran_logical_t}
 
 /* C type corresponding to Fortran 77 LOGICAL*1 */
-#cmakedefine ompi_fortran_logical1_t ${ompi_fortran_logical1_t}
+#cmakedefine opal_fortran_logical1_t ${opal_fortran_logical1_t}
 
 /* C type corresponding to Fortran 77 LOGICAL*2 */
-#cmakedefine ompi_fortran_logical2_t ${ompi_fortran_logical2_t}
+#cmakedefine opal_fortran_logical2_t ${opal_fortran_logical2_t}
 
 /* C type corresponding to Fortran 77 LOGICAL*4 */
-#cmakedefine ompi_fortran_logical4_t ${ompi_fortran_logical4_t}
+#cmakedefine opal_fortran_logical4_t ${opal_fortran_logical4_t}
 
 /* C type corresponding to Fortran 77 LOGICAL*8 */
-#cmakedefine ompi_fortran_logical8_t ${ompi_fortran_logical8_t}
+#cmakedefine opal_fortran_logical8_t ${opal_fortran_logical8_t}
 
 /* C type corresponding to Fortran 77 REAL*16 */
-#cmakedefine ompi_fortran_real16_t ${ompi_fortran_real16_t}
+#cmakedefine opal_fortran_real16_t ${opal_fortran_real16_t}
 
 /* C type corresponding to Fortran 77 REAL*2 */
-#cmakedefine ompi_fortran_real2_t ${ompi_fortran_real2_t}
+#cmakedefine opal_fortran_real2_t ${opal_fortran_real2_t}
 
 /* C type corresponding to Fortran 77 REAL*4 */
-#cmakedefine ompi_fortran_real4_t ${ompi_fortran_real4_t}
+#cmakedefine opal_fortran_real4_t ${opal_fortran_real4_t}
 
 /* C type corresponding to Fortran 77 REAL*8 */
-#cmakedefine ompi_fortran_real8_t ${ompi_fortran_real8_t}
+#cmakedefine opal_fortran_real8_t ${opal_fortran_real8_t}
 
 /* C type corresponding to Fortran 77 REAL */
-#cmakedefine ompi_fortran_real_t ${ompi_fortran_real_t}
+#cmakedefine opal_fortran_real_t ${opal_fortran_real_t}
 
 /* Define to `int' if <sys/types.h> does not define. */
 #define pid_t ${PID_T}

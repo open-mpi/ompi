@@ -133,7 +133,7 @@ opal_bitmap_set_bit(opal_bitmap_t *bm, int bit)
         new_size = (int) new_size_large;
 
         /*
-         * No further tests against max_size (or OMPI_FORTRAN_HANDLE_MAX) are
+         * No further tests against max_size (or OPAL_FORTRAN_HANDLE_MAX) are
          * necessary, since we validated above, that the bit already is contained!
          */
         

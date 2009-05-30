@@ -61,7 +61,7 @@ int ompi_errcode_intern_init (void)
        the error objects */
     OBJ_CONSTRUCT(&ompi_errcodes_intern, opal_pointer_array_t);
     if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_errcodes_intern,
-                                                0, OMPI_FORTRAN_HANDLE_MAX, 64) ) {
+                                                0, OPAL_FORTRAN_HANDLE_MAX, 64) ) {
         return OMPI_ERROR;
     }
 

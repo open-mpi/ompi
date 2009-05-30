@@ -33,7 +33,7 @@
  *  To allow these bitmaps to track fortran handles (which MPI defines
  *  to be Fortran INTEGER), we offer a opal_bitmap_set_max_size, so that
  *  the upper layer can ask to never have more than
- *  OMPI_FORTRAN_HANDLE_MAX, which is min(INT_MAX, fortran INTEGER max).
+ *  OPAL_FORTRAN_HANDLE_MAX, which is min(INT_MAX, fortran INTEGER max).
  *  Currently the only user of this is ompi/attribute/attribute.c
  *
  */

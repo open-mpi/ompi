@@ -151,23 +151,23 @@ FUNC_FUNC(max, long_long_int, long long int)
 FUNC_FUNC(max, unsigned_long_long, unsigned long long)
 #endif
 /* Fortran integer */
-#if OMPI_HAVE_FORTRAN_INTEGER
-FUNC_FUNC(max, fortran_integer, ompi_fortran_integer_t)
+#if OPAL_HAVE_FORTRAN_INTEGER
+FUNC_FUNC(max, fortran_integer, opal_fortran_integer_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER1
-FUNC_FUNC(max, fortran_integer1, ompi_fortran_integer1_t)
+#if OPAL_HAVE_FORTRAN_INTEGER1
+FUNC_FUNC(max, fortran_integer1, opal_fortran_integer1_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER2
-FUNC_FUNC(max, fortran_integer2, ompi_fortran_integer2_t)
+#if OPAL_HAVE_FORTRAN_INTEGER2
+FUNC_FUNC(max, fortran_integer2, opal_fortran_integer2_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER4
-FUNC_FUNC(max, fortran_integer4, ompi_fortran_integer4_t)
+#if OPAL_HAVE_FORTRAN_INTEGER4
+FUNC_FUNC(max, fortran_integer4, opal_fortran_integer4_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER8
-FUNC_FUNC(max, fortran_integer8, ompi_fortran_integer8_t)
+#if OPAL_HAVE_FORTRAN_INTEGER8
+FUNC_FUNC(max, fortran_integer8, opal_fortran_integer8_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER16
-FUNC_FUNC(max, fortran_integer16, ompi_fortran_integer16_t)
+#if OPAL_HAVE_FORTRAN_INTEGER16
+FUNC_FUNC(max, fortran_integer16, opal_fortran_integer16_t)
 #endif
 /* Floating point */
 FUNC_FUNC(max, float, float)
@@ -175,23 +175,23 @@ FUNC_FUNC(max, double, double)
 #if HAVE_LONG_DOUBLE
 FUNC_FUNC(max, long_double, long double)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL
-FUNC_FUNC(max, fortran_real, ompi_fortran_real_t)
+#if OPAL_HAVE_FORTRAN_REAL
+FUNC_FUNC(max, fortran_real, opal_fortran_real_t)
 #endif
-#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
-FUNC_FUNC(max, fortran_double_precision, ompi_fortran_double_precision_t)
+#if OPAL_HAVE_FORTRAN_DOUBLE_PRECISION
+FUNC_FUNC(max, fortran_double_precision, opal_fortran_double_precision_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL2
-FUNC_FUNC(max, fortran_real2, ompi_fortran_real2_t)
+#if OPAL_HAVE_FORTRAN_REAL2
+FUNC_FUNC(max, fortran_real2, opal_fortran_real2_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL4
-FUNC_FUNC(max, fortran_real4, ompi_fortran_real4_t)
+#if OPAL_HAVE_FORTRAN_REAL4
+FUNC_FUNC(max, fortran_real4, opal_fortran_real4_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL8
-FUNC_FUNC(max, fortran_real8, ompi_fortran_real8_t)
+#if OPAL_HAVE_FORTRAN_REAL8
+FUNC_FUNC(max, fortran_real8, opal_fortran_real8_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL16
-FUNC_FUNC(max, fortran_real16, ompi_fortran_real16_t)
+#if OPAL_HAVE_FORTRAN_REAL16
+FUNC_FUNC(max, fortran_real16, opal_fortran_real16_t)
 #endif
 
 
@@ -215,23 +215,23 @@ FUNC_FUNC(min, long_long_int, long long int)
 FUNC_FUNC(min, unsigned_long_long, unsigned long long)
 #endif
 /* Fortran integer */
-#if OMPI_HAVE_FORTRAN_INTEGER
-FUNC_FUNC(min, fortran_integer, ompi_fortran_integer_t)
+#if OPAL_HAVE_FORTRAN_INTEGER
+FUNC_FUNC(min, fortran_integer, opal_fortran_integer_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER1
-FUNC_FUNC(min, fortran_integer1, ompi_fortran_integer1_t)
+#if OPAL_HAVE_FORTRAN_INTEGER1
+FUNC_FUNC(min, fortran_integer1, opal_fortran_integer1_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER2
-FUNC_FUNC(min, fortran_integer2, ompi_fortran_integer2_t)
+#if OPAL_HAVE_FORTRAN_INTEGER2
+FUNC_FUNC(min, fortran_integer2, opal_fortran_integer2_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER4
-FUNC_FUNC(min, fortran_integer4, ompi_fortran_integer4_t)
+#if OPAL_HAVE_FORTRAN_INTEGER4
+FUNC_FUNC(min, fortran_integer4, opal_fortran_integer4_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER8
-FUNC_FUNC(min, fortran_integer8, ompi_fortran_integer8_t)
+#if OPAL_HAVE_FORTRAN_INTEGER8
+FUNC_FUNC(min, fortran_integer8, opal_fortran_integer8_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER16
-FUNC_FUNC(min, fortran_integer16, ompi_fortran_integer16_t)
+#if OPAL_HAVE_FORTRAN_INTEGER16
+FUNC_FUNC(min, fortran_integer16, opal_fortran_integer16_t)
 #endif
 /* Floating point */
 FUNC_FUNC(min, float, float)
@@ -239,23 +239,23 @@ FUNC_FUNC(min, double, double)
 #if HAVE_LONG_DOUBLE
 FUNC_FUNC(min, long_double, long double)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL
-FUNC_FUNC(min, fortran_real, ompi_fortran_real_t)
+#if OPAL_HAVE_FORTRAN_REAL
+FUNC_FUNC(min, fortran_real, opal_fortran_real_t)
 #endif
-#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
-FUNC_FUNC(min, fortran_double_precision, ompi_fortran_double_precision_t)
+#if OPAL_HAVE_FORTRAN_DOUBLE_PRECISION
+FUNC_FUNC(min, fortran_double_precision, opal_fortran_double_precision_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL2
-FUNC_FUNC(min, fortran_real2, ompi_fortran_real2_t)
+#if OPAL_HAVE_FORTRAN_REAL2
+FUNC_FUNC(min, fortran_real2, opal_fortran_real2_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL4
-FUNC_FUNC(min, fortran_real4, ompi_fortran_real4_t)
+#if OPAL_HAVE_FORTRAN_REAL4
+FUNC_FUNC(min, fortran_real4, opal_fortran_real4_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL8
-FUNC_FUNC(min, fortran_real8, ompi_fortran_real8_t)
+#if OPAL_HAVE_FORTRAN_REAL8
+FUNC_FUNC(min, fortran_real8, opal_fortran_real8_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL16
-FUNC_FUNC(min, fortran_real16, ompi_fortran_real16_t)
+#if OPAL_HAVE_FORTRAN_REAL16
+FUNC_FUNC(min, fortran_real16, opal_fortran_real16_t)
 #endif
 
 /*************************************************************************
@@ -276,23 +276,23 @@ OP_FUNC(sum, long_long_int, long long int, +=)
 OP_FUNC(sum, unsigned_long_long, unsigned long long, +=)
 #endif
 /* Fortran integer */
-#if OMPI_HAVE_FORTRAN_INTEGER
-OP_FUNC(sum, fortran_integer, ompi_fortran_integer_t, +=)
+#if OPAL_HAVE_FORTRAN_INTEGER
+OP_FUNC(sum, fortran_integer, opal_fortran_integer_t, +=)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER1
-OP_FUNC(sum, fortran_integer1, ompi_fortran_integer1_t, +=)
+#if OPAL_HAVE_FORTRAN_INTEGER1
+OP_FUNC(sum, fortran_integer1, opal_fortran_integer1_t, +=)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER2
-OP_FUNC(sum, fortran_integer2, ompi_fortran_integer2_t, +=)
+#if OPAL_HAVE_FORTRAN_INTEGER2
+OP_FUNC(sum, fortran_integer2, opal_fortran_integer2_t, +=)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER4
-OP_FUNC(sum, fortran_integer4, ompi_fortran_integer4_t, +=)
+#if OPAL_HAVE_FORTRAN_INTEGER4
+OP_FUNC(sum, fortran_integer4, opal_fortran_integer4_t, +=)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER8
-OP_FUNC(sum, fortran_integer8, ompi_fortran_integer8_t, +=)
+#if OPAL_HAVE_FORTRAN_INTEGER8
+OP_FUNC(sum, fortran_integer8, opal_fortran_integer8_t, +=)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER16
-OP_FUNC(sum, fortran_integer16, ompi_fortran_integer16_t, +=)
+#if OPAL_HAVE_FORTRAN_INTEGER16
+OP_FUNC(sum, fortran_integer16, opal_fortran_integer16_t, +=)
 #endif
 /* Floating point */
 OP_FUNC(sum, float, float, +=)
@@ -300,39 +300,39 @@ OP_FUNC(sum, double, double, +=)
 #if HAVE_LONG_DOUBLE
 OP_FUNC(sum, long_double, long double, +=)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL
-OP_FUNC(sum, fortran_real, ompi_fortran_real_t, +=)
+#if OPAL_HAVE_FORTRAN_REAL
+OP_FUNC(sum, fortran_real, opal_fortran_real_t, +=)
 #endif
-#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
-OP_FUNC(sum, fortran_double_precision, ompi_fortran_double_precision_t, +=)
+#if OPAL_HAVE_FORTRAN_DOUBLE_PRECISION
+OP_FUNC(sum, fortran_double_precision, opal_fortran_double_precision_t, +=)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL2
-OP_FUNC(sum, fortran_real2, ompi_fortran_real2_t, +=)
+#if OPAL_HAVE_FORTRAN_REAL2
+OP_FUNC(sum, fortran_real2, opal_fortran_real2_t, +=)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL4
-OP_FUNC(sum, fortran_real4, ompi_fortran_real4_t, +=)
+#if OPAL_HAVE_FORTRAN_REAL4
+OP_FUNC(sum, fortran_real4, opal_fortran_real4_t, +=)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL8
-OP_FUNC(sum, fortran_real8, ompi_fortran_real8_t, +=)
+#if OPAL_HAVE_FORTRAN_REAL8
+OP_FUNC(sum, fortran_real8, opal_fortran_real8_t, +=)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL16
-OP_FUNC(sum, fortran_real16, ompi_fortran_real16_t, +=)
+#if OPAL_HAVE_FORTRAN_REAL16
+OP_FUNC(sum, fortran_real16, opal_fortran_real16_t, +=)
 #endif
 /* Complex */
-#if OMPI_HAVE_FORTRAN_REAL && OMPI_HAVE_FORTRAN_COMPLEX
-COMPLEX_OP_FUNC_SUM(fortran_complex, ompi_fortran_complex_t)
+#if OPAL_HAVE_FORTRAN_REAL && OPAL_HAVE_FORTRAN_COMPLEX
+COMPLEX_OP_FUNC_SUM(fortran_complex, opal_fortran_complex_t)
 #endif
-#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION && OMPI_HAVE_FORTRAN_COMPLEX
-COMPLEX_OP_FUNC_SUM(fortran_double_complex, ompi_fortran_double_complex_t)
+#if OPAL_HAVE_FORTRAN_DOUBLE_PRECISION && OPAL_HAVE_FORTRAN_COMPLEX
+COMPLEX_OP_FUNC_SUM(fortran_double_complex, opal_fortran_double_complex_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL4 && OMPI_HAVE_FORTRAN_COMPLEX8
-COMPLEX_OP_FUNC_SUM(fortran_complex8, ompi_fortran_complex8_t)
+#if OPAL_HAVE_FORTRAN_REAL4 && OPAL_HAVE_FORTRAN_COMPLEX8
+COMPLEX_OP_FUNC_SUM(fortran_complex8, opal_fortran_complex8_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL8 && OMPI_HAVE_FORTRAN_COMPLEX16
-COMPLEX_OP_FUNC_SUM(fortran_complex16, ompi_fortran_complex16_t)
+#if OPAL_HAVE_FORTRAN_REAL8 && OPAL_HAVE_FORTRAN_COMPLEX16
+COMPLEX_OP_FUNC_SUM(fortran_complex16, opal_fortran_complex16_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL16 && OMPI_HAVE_FORTRAN_COMPLEX32
-COMPLEX_OP_FUNC_SUM(fortran_complex32, ompi_fortran_complex32_t)
+#if OPAL_HAVE_FORTRAN_REAL16 && OPAL_HAVE_FORTRAN_COMPLEX32
+COMPLEX_OP_FUNC_SUM(fortran_complex32, opal_fortran_complex32_t)
 #endif
 
 /*************************************************************************
@@ -353,23 +353,23 @@ OP_FUNC(prod, long_long_int, long long int, *=)
 OP_FUNC(prod, unsigned_long_long, unsigned long long, *=)
 #endif
 /* Fortran integer */
-#if OMPI_HAVE_FORTRAN_INTEGER
-OP_FUNC(prod, fortran_integer, ompi_fortran_integer_t, *=)
+#if OPAL_HAVE_FORTRAN_INTEGER
+OP_FUNC(prod, fortran_integer, opal_fortran_integer_t, *=)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER1
-OP_FUNC(prod, fortran_integer1, ompi_fortran_integer1_t, *=)
+#if OPAL_HAVE_FORTRAN_INTEGER1
+OP_FUNC(prod, fortran_integer1, opal_fortran_integer1_t, *=)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER2
-OP_FUNC(prod, fortran_integer2, ompi_fortran_integer2_t, *=)
+#if OPAL_HAVE_FORTRAN_INTEGER2
+OP_FUNC(prod, fortran_integer2, opal_fortran_integer2_t, *=)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER4
-OP_FUNC(prod, fortran_integer4, ompi_fortran_integer4_t, *=)
+#if OPAL_HAVE_FORTRAN_INTEGER4
+OP_FUNC(prod, fortran_integer4, opal_fortran_integer4_t, *=)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER8
-OP_FUNC(prod, fortran_integer8, ompi_fortran_integer8_t, *=)
+#if OPAL_HAVE_FORTRAN_INTEGER8
+OP_FUNC(prod, fortran_integer8, opal_fortran_integer8_t, *=)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER16
-OP_FUNC(prod, fortran_integer16, ompi_fortran_integer16_t, *=)
+#if OPAL_HAVE_FORTRAN_INTEGER16
+OP_FUNC(prod, fortran_integer16, opal_fortran_integer16_t, *=)
 #endif
 /* Floating point */
 OP_FUNC(prod, float, float, *=)
@@ -377,39 +377,39 @@ OP_FUNC(prod, double, double, *=)
 #if HAVE_LONG_DOUBLE
 OP_FUNC(prod, long_double, long double, *=)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL
-OP_FUNC(prod, fortran_real, ompi_fortran_real_t, *=)
+#if OPAL_HAVE_FORTRAN_REAL
+OP_FUNC(prod, fortran_real, opal_fortran_real_t, *=)
 #endif
-#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
-OP_FUNC(prod, fortran_double_precision, ompi_fortran_double_precision_t, *=)
+#if OPAL_HAVE_FORTRAN_DOUBLE_PRECISION
+OP_FUNC(prod, fortran_double_precision, opal_fortran_double_precision_t, *=)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL2
-OP_FUNC(prod, fortran_real2, ompi_fortran_real2_t, *=)
+#if OPAL_HAVE_FORTRAN_REAL2
+OP_FUNC(prod, fortran_real2, opal_fortran_real2_t, *=)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL4
-OP_FUNC(prod, fortran_real4, ompi_fortran_real4_t, *=)
+#if OPAL_HAVE_FORTRAN_REAL4
+OP_FUNC(prod, fortran_real4, opal_fortran_real4_t, *=)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL8
-OP_FUNC(prod, fortran_real8, ompi_fortran_real8_t, *=)
+#if OPAL_HAVE_FORTRAN_REAL8
+OP_FUNC(prod, fortran_real8, opal_fortran_real8_t, *=)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL16
-OP_FUNC(prod, fortran_real16, ompi_fortran_real16_t, *=)
+#if OPAL_HAVE_FORTRAN_REAL16
+OP_FUNC(prod, fortran_real16, opal_fortran_real16_t, *=)
 #endif
 /* Complex */
-#if OMPI_HAVE_FORTRAN_REAL && OMPI_HAVE_FORTRAN_COMPLEX
-COMPLEX_OP_FUNC_PROD(fortran_complex, ompi_fortran_complex_t)
+#if OPAL_HAVE_FORTRAN_REAL && OPAL_HAVE_FORTRAN_COMPLEX
+COMPLEX_OP_FUNC_PROD(fortran_complex, opal_fortran_complex_t)
 #endif
-#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION && OMPI_HAVE_FORTRAN_COMPLEX
-COMPLEX_OP_FUNC_PROD(fortran_double_complex, ompi_fortran_double_complex_t)
+#if OPAL_HAVE_FORTRAN_DOUBLE_PRECISION && OPAL_HAVE_FORTRAN_COMPLEX
+COMPLEX_OP_FUNC_PROD(fortran_double_complex, opal_fortran_double_complex_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL4 && OMPI_HAVE_FORTRAN_COMPLEX8
-COMPLEX_OP_FUNC_PROD(fortran_complex8, ompi_fortran_complex8_t)
+#if OPAL_HAVE_FORTRAN_REAL4 && OPAL_HAVE_FORTRAN_COMPLEX8
+COMPLEX_OP_FUNC_PROD(fortran_complex8, opal_fortran_complex8_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL8 && OMPI_HAVE_FORTRAN_COMPLEX16
-COMPLEX_OP_FUNC_PROD(fortran_complex16, ompi_fortran_complex16_t)
+#if OPAL_HAVE_FORTRAN_REAL8 && OPAL_HAVE_FORTRAN_COMPLEX16
+COMPLEX_OP_FUNC_PROD(fortran_complex16, opal_fortran_complex16_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL16 && OMPI_HAVE_FORTRAN_COMPLEX32
-COMPLEX_OP_FUNC_PROD(fortran_complex32, ompi_fortran_complex32_t)
+#if OPAL_HAVE_FORTRAN_REAL16 && OPAL_HAVE_FORTRAN_COMPLEX32
+COMPLEX_OP_FUNC_PROD(fortran_complex32, opal_fortran_complex32_t)
 #endif
 
 /*************************************************************************
@@ -432,8 +432,8 @@ FUNC_FUNC(land, long_long_int, long long int)
 FUNC_FUNC(land, unsigned_long_long, unsigned long long)
 #endif
 /* Logical */
-#if OMPI_HAVE_FORTRAN_LOGICAL
-FUNC_FUNC(land, fortran_logical, ompi_fortran_logical_t)
+#if OPAL_HAVE_FORTRAN_LOGICAL
+FUNC_FUNC(land, fortran_logical, opal_fortran_logical_t)
 #endif
 /* C++ bool */
 FUNC_FUNC(land, bool, bool)
@@ -458,8 +458,8 @@ FUNC_FUNC(lor, long_long_int, long long int)
 FUNC_FUNC(lor, unsigned_long_long, unsigned long long)
 #endif
 /* Logical */
-#if OMPI_HAVE_FORTRAN_LOGICAL
-FUNC_FUNC(lor, fortran_logical, ompi_fortran_logical_t)
+#if OPAL_HAVE_FORTRAN_LOGICAL
+FUNC_FUNC(lor, fortran_logical, opal_fortran_logical_t)
 #endif
 /* C++ bool */
 FUNC_FUNC(lor, bool, bool)
@@ -484,8 +484,8 @@ FUNC_FUNC(lxor, long_long_int, long long int)
 FUNC_FUNC(lxor, unsigned_long_long, unsigned long long)
 #endif
 /* Logical */
-#if OMPI_HAVE_FORTRAN_LOGICAL
-FUNC_FUNC(lxor, fortran_logical, ompi_fortran_logical_t)
+#if OPAL_HAVE_FORTRAN_LOGICAL
+FUNC_FUNC(lxor, fortran_logical, opal_fortran_logical_t)
 #endif
 /* C++ bool */
 FUNC_FUNC(lxor, bool, bool)
@@ -510,23 +510,23 @@ FUNC_FUNC(band, long_long_int, long long int)
 FUNC_FUNC(band, unsigned_long_long, unsigned long long)
 #endif
 /* Fortran integer */
-#if OMPI_HAVE_FORTRAN_INTEGER
-FUNC_FUNC(band, fortran_integer, ompi_fortran_integer_t)
+#if OPAL_HAVE_FORTRAN_INTEGER
+FUNC_FUNC(band, fortran_integer, opal_fortran_integer_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER1
-FUNC_FUNC(band, fortran_integer1, ompi_fortran_integer1_t)
+#if OPAL_HAVE_FORTRAN_INTEGER1
+FUNC_FUNC(band, fortran_integer1, opal_fortran_integer1_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER2
-FUNC_FUNC(band, fortran_integer2, ompi_fortran_integer2_t)
+#if OPAL_HAVE_FORTRAN_INTEGER2
+FUNC_FUNC(band, fortran_integer2, opal_fortran_integer2_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER4
-FUNC_FUNC(band, fortran_integer4, ompi_fortran_integer4_t)
+#if OPAL_HAVE_FORTRAN_INTEGER4
+FUNC_FUNC(band, fortran_integer4, opal_fortran_integer4_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER8
-FUNC_FUNC(band, fortran_integer8, ompi_fortran_integer8_t)
+#if OPAL_HAVE_FORTRAN_INTEGER8
+FUNC_FUNC(band, fortran_integer8, opal_fortran_integer8_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER16
-FUNC_FUNC(band, fortran_integer16, ompi_fortran_integer16_t)
+#if OPAL_HAVE_FORTRAN_INTEGER16
+FUNC_FUNC(band, fortran_integer16, opal_fortran_integer16_t)
 #endif
 /* Byte */
 FUNC_FUNC(band, byte, char)
@@ -551,23 +551,23 @@ FUNC_FUNC(bor, long_long_int, long long int)
 FUNC_FUNC(bor, unsigned_long_long, unsigned long long)
 #endif
 /* Fortran integer */
-#if OMPI_HAVE_FORTRAN_INTEGER
-FUNC_FUNC(bor, fortran_integer, ompi_fortran_integer_t)
+#if OPAL_HAVE_FORTRAN_INTEGER
+FUNC_FUNC(bor, fortran_integer, opal_fortran_integer_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER1
-FUNC_FUNC(bor, fortran_integer1, ompi_fortran_integer1_t)
+#if OPAL_HAVE_FORTRAN_INTEGER1
+FUNC_FUNC(bor, fortran_integer1, opal_fortran_integer1_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER2
-FUNC_FUNC(bor, fortran_integer2, ompi_fortran_integer2_t)
+#if OPAL_HAVE_FORTRAN_INTEGER2
+FUNC_FUNC(bor, fortran_integer2, opal_fortran_integer2_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER4
-FUNC_FUNC(bor, fortran_integer4, ompi_fortran_integer4_t)
+#if OPAL_HAVE_FORTRAN_INTEGER4
+FUNC_FUNC(bor, fortran_integer4, opal_fortran_integer4_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER8
-FUNC_FUNC(bor, fortran_integer8, ompi_fortran_integer8_t)
+#if OPAL_HAVE_FORTRAN_INTEGER8
+FUNC_FUNC(bor, fortran_integer8, opal_fortran_integer8_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER16
-FUNC_FUNC(bor, fortran_integer16, ompi_fortran_integer16_t)
+#if OPAL_HAVE_FORTRAN_INTEGER16
+FUNC_FUNC(bor, fortran_integer16, opal_fortran_integer16_t)
 #endif
 /* Byte */
 FUNC_FUNC(bor, byte, char)
@@ -592,23 +592,23 @@ FUNC_FUNC(bxor, long_long_int, long long int)
 FUNC_FUNC(bxor, unsigned_long_long, unsigned long long)
 #endif
 /* Fortran integer */
-#if OMPI_HAVE_FORTRAN_INTEGER
-FUNC_FUNC(bxor, fortran_integer, ompi_fortran_integer_t)
+#if OPAL_HAVE_FORTRAN_INTEGER
+FUNC_FUNC(bxor, fortran_integer, opal_fortran_integer_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER1
-FUNC_FUNC(bxor, fortran_integer1, ompi_fortran_integer1_t)
+#if OPAL_HAVE_FORTRAN_INTEGER1
+FUNC_FUNC(bxor, fortran_integer1, opal_fortran_integer1_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER2
-FUNC_FUNC(bxor, fortran_integer2, ompi_fortran_integer2_t)
+#if OPAL_HAVE_FORTRAN_INTEGER2
+FUNC_FUNC(bxor, fortran_integer2, opal_fortran_integer2_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER4
-FUNC_FUNC(bxor, fortran_integer4, ompi_fortran_integer4_t)
+#if OPAL_HAVE_FORTRAN_INTEGER4
+FUNC_FUNC(bxor, fortran_integer4, opal_fortran_integer4_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER8
-FUNC_FUNC(bxor, fortran_integer8, ompi_fortran_integer8_t)
+#if OPAL_HAVE_FORTRAN_INTEGER8
+FUNC_FUNC(bxor, fortran_integer8, opal_fortran_integer8_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER16
-FUNC_FUNC(bxor, fortran_integer16, ompi_fortran_integer16_t)
+#if OPAL_HAVE_FORTRAN_INTEGER16
+FUNC_FUNC(bxor, fortran_integer16, opal_fortran_integer16_t)
 #endif
 /* Byte */
 FUNC_FUNC(bxor, byte, char)
@@ -617,14 +617,14 @@ FUNC_FUNC(bxor, byte, char)
  * Min and max location "pair" datatypes
  *************************************************************************/
 
-#if OMPI_HAVE_FORTRAN_REAL
-LOC_STRUCT(2real, ompi_fortran_real_t, ompi_fortran_real_t)
+#if OPAL_HAVE_FORTRAN_REAL
+LOC_STRUCT(2real, opal_fortran_real_t, opal_fortran_real_t)
 #endif
-#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
-LOC_STRUCT(2double_precision, ompi_fortran_double_precision_t, ompi_fortran_double_precision_t)
+#if OPAL_HAVE_FORTRAN_DOUBLE_PRECISION
+LOC_STRUCT(2double_precision, opal_fortran_double_precision_t, opal_fortran_double_precision_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER
-LOC_STRUCT(2integer, ompi_fortran_integer_t, ompi_fortran_integer_t)
+#if OPAL_HAVE_FORTRAN_INTEGER
+LOC_STRUCT(2integer, opal_fortran_integer_t, opal_fortran_integer_t)
 #endif
 LOC_STRUCT(float_int, float, int)
 LOC_STRUCT(double_int, double, int)
@@ -639,13 +639,13 @@ LOC_STRUCT(long_double_int, long double, int)
  * Max location
  *************************************************************************/
 
-#if OMPI_HAVE_FORTRAN_REAL
+#if OPAL_HAVE_FORTRAN_REAL
 LOC_FUNC(maxloc, 2real, >)
 #endif
-#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
+#if OPAL_HAVE_FORTRAN_DOUBLE_PRECISION
 LOC_FUNC(maxloc, 2double_precision, >)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER
+#if OPAL_HAVE_FORTRAN_INTEGER
 LOC_FUNC(maxloc, 2integer, >)
 #endif
 LOC_FUNC(maxloc, float_int, >)
@@ -661,13 +661,13 @@ LOC_FUNC(maxloc, long_double_int, >)
  * Min location
  *************************************************************************/
 
-#if OMPI_HAVE_FORTRAN_REAL
+#if OPAL_HAVE_FORTRAN_REAL
 LOC_FUNC(minloc, 2real, <)
 #endif
-#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
+#if OPAL_HAVE_FORTRAN_DOUBLE_PRECISION
 LOC_FUNC(minloc, 2double_precision, <)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER
+#if OPAL_HAVE_FORTRAN_INTEGER
 LOC_FUNC(minloc, 2integer, <)
 #endif
 LOC_FUNC(minloc, float_int, <)
@@ -816,23 +816,23 @@ FUNC_FUNC_3BUF(max, long_long_int, long long int)
 FUNC_FUNC_3BUF(max, unsigned_long_long, unsigned long long)
 #endif
 /* Fortran integer */
-#if OMPI_HAVE_FORTRAN_INTEGER
-FUNC_FUNC_3BUF(max, fortran_integer, ompi_fortran_integer_t)
+#if OPAL_HAVE_FORTRAN_INTEGER
+FUNC_FUNC_3BUF(max, fortran_integer, opal_fortran_integer_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER1
-FUNC_FUNC_3BUF(max, fortran_integer1, ompi_fortran_integer1_t)
+#if OPAL_HAVE_FORTRAN_INTEGER1
+FUNC_FUNC_3BUF(max, fortran_integer1, opal_fortran_integer1_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER2
-FUNC_FUNC_3BUF(max, fortran_integer2, ompi_fortran_integer2_t)
+#if OPAL_HAVE_FORTRAN_INTEGER2
+FUNC_FUNC_3BUF(max, fortran_integer2, opal_fortran_integer2_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER4
-FUNC_FUNC_3BUF(max, fortran_integer4, ompi_fortran_integer4_t)
+#if OPAL_HAVE_FORTRAN_INTEGER4
+FUNC_FUNC_3BUF(max, fortran_integer4, opal_fortran_integer4_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER8
-FUNC_FUNC_3BUF(max, fortran_integer8, ompi_fortran_integer8_t)
+#if OPAL_HAVE_FORTRAN_INTEGER8
+FUNC_FUNC_3BUF(max, fortran_integer8, opal_fortran_integer8_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER16
-FUNC_FUNC_3BUF(max, fortran_integer16, ompi_fortran_integer16_t)
+#if OPAL_HAVE_FORTRAN_INTEGER16
+FUNC_FUNC_3BUF(max, fortran_integer16, opal_fortran_integer16_t)
 #endif
 /* Floating point */
 FUNC_FUNC_3BUF(max, float, float)
@@ -840,23 +840,23 @@ FUNC_FUNC_3BUF(max, double, double)
 #if HAVE_LONG_DOUBLE
 FUNC_FUNC_3BUF(max, long_double, long double)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL
-FUNC_FUNC_3BUF(max, fortran_real, ompi_fortran_real_t)
+#if OPAL_HAVE_FORTRAN_REAL
+FUNC_FUNC_3BUF(max, fortran_real, opal_fortran_real_t)
 #endif
-#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
-FUNC_FUNC_3BUF(max, fortran_double_precision, ompi_fortran_double_precision_t)
+#if OPAL_HAVE_FORTRAN_DOUBLE_PRECISION
+FUNC_FUNC_3BUF(max, fortran_double_precision, opal_fortran_double_precision_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL2
-FUNC_FUNC_3BUF(max, fortran_real2, ompi_fortran_real2_t)
+#if OPAL_HAVE_FORTRAN_REAL2
+FUNC_FUNC_3BUF(max, fortran_real2, opal_fortran_real2_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL4
-FUNC_FUNC_3BUF(max, fortran_real4, ompi_fortran_real4_t)
+#if OPAL_HAVE_FORTRAN_REAL4
+FUNC_FUNC_3BUF(max, fortran_real4, opal_fortran_real4_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL8
-FUNC_FUNC_3BUF(max, fortran_real8, ompi_fortran_real8_t)
+#if OPAL_HAVE_FORTRAN_REAL8
+FUNC_FUNC_3BUF(max, fortran_real8, opal_fortran_real8_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL16
-FUNC_FUNC_3BUF(max, fortran_real16, ompi_fortran_real16_t)
+#if OPAL_HAVE_FORTRAN_REAL16
+FUNC_FUNC_3BUF(max, fortran_real16, opal_fortran_real16_t)
 #endif
 
 
@@ -880,23 +880,23 @@ FUNC_FUNC_3BUF(min, long_long_int, long long int)
 FUNC_FUNC_3BUF(min, unsigned_long_long, unsigned long long)
 #endif
 /* Fortran integer */
-#if OMPI_HAVE_FORTRAN_INTEGER
-FUNC_FUNC_3BUF(min, fortran_integer, ompi_fortran_integer_t)
+#if OPAL_HAVE_FORTRAN_INTEGER
+FUNC_FUNC_3BUF(min, fortran_integer, opal_fortran_integer_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER1
-FUNC_FUNC_3BUF(min, fortran_integer1, ompi_fortran_integer1_t)
+#if OPAL_HAVE_FORTRAN_INTEGER1
+FUNC_FUNC_3BUF(min, fortran_integer1, opal_fortran_integer1_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER2
-FUNC_FUNC_3BUF(min, fortran_integer2, ompi_fortran_integer2_t)
+#if OPAL_HAVE_FORTRAN_INTEGER2
+FUNC_FUNC_3BUF(min, fortran_integer2, opal_fortran_integer2_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER4
-FUNC_FUNC_3BUF(min, fortran_integer4, ompi_fortran_integer4_t)
+#if OPAL_HAVE_FORTRAN_INTEGER4
+FUNC_FUNC_3BUF(min, fortran_integer4, opal_fortran_integer4_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER8
-FUNC_FUNC_3BUF(min, fortran_integer8, ompi_fortran_integer8_t)
+#if OPAL_HAVE_FORTRAN_INTEGER8
+FUNC_FUNC_3BUF(min, fortran_integer8, opal_fortran_integer8_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER16
-FUNC_FUNC_3BUF(min, fortran_integer16, ompi_fortran_integer16_t)
+#if OPAL_HAVE_FORTRAN_INTEGER16
+FUNC_FUNC_3BUF(min, fortran_integer16, opal_fortran_integer16_t)
 #endif
 /* Floating point */
 FUNC_FUNC_3BUF(min, float, float)
@@ -904,23 +904,23 @@ FUNC_FUNC_3BUF(min, double, double)
 #if HAVE_LONG_DOUBLE
 FUNC_FUNC_3BUF(min, long_double, long double)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL
-FUNC_FUNC_3BUF(min, fortran_real, ompi_fortran_real_t)
+#if OPAL_HAVE_FORTRAN_REAL
+FUNC_FUNC_3BUF(min, fortran_real, opal_fortran_real_t)
 #endif
-#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
-FUNC_FUNC_3BUF(min, fortran_double_precision, ompi_fortran_double_precision_t)
+#if OPAL_HAVE_FORTRAN_DOUBLE_PRECISION
+FUNC_FUNC_3BUF(min, fortran_double_precision, opal_fortran_double_precision_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL2
-FUNC_FUNC_3BUF(min, fortran_real2, ompi_fortran_real2_t)
+#if OPAL_HAVE_FORTRAN_REAL2
+FUNC_FUNC_3BUF(min, fortran_real2, opal_fortran_real2_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL4
-FUNC_FUNC_3BUF(min, fortran_real4, ompi_fortran_real4_t)
+#if OPAL_HAVE_FORTRAN_REAL4
+FUNC_FUNC_3BUF(min, fortran_real4, opal_fortran_real4_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL8
-FUNC_FUNC_3BUF(min, fortran_real8, ompi_fortran_real8_t)
+#if OPAL_HAVE_FORTRAN_REAL8
+FUNC_FUNC_3BUF(min, fortran_real8, opal_fortran_real8_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL16
-FUNC_FUNC_3BUF(min, fortran_real16, ompi_fortran_real16_t)
+#if OPAL_HAVE_FORTRAN_REAL16
+FUNC_FUNC_3BUF(min, fortran_real16, opal_fortran_real16_t)
 #endif
 
 /*************************************************************************
@@ -941,23 +941,23 @@ OP_FUNC_3BUF(sum, long_long_int, long long int, +)
 OP_FUNC_3BUF(sum, unsigned_long_long, unsigned long long, +)
 #endif
 /* Fortran integer */
-#if OMPI_HAVE_FORTRAN_INTEGER
-OP_FUNC_3BUF(sum, fortran_integer, ompi_fortran_integer_t, +)
+#if OPAL_HAVE_FORTRAN_INTEGER
+OP_FUNC_3BUF(sum, fortran_integer, opal_fortran_integer_t, +)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER1
-OP_FUNC_3BUF(sum, fortran_integer1, ompi_fortran_integer1_t, +)
+#if OPAL_HAVE_FORTRAN_INTEGER1
+OP_FUNC_3BUF(sum, fortran_integer1, opal_fortran_integer1_t, +)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER2
-OP_FUNC_3BUF(sum, fortran_integer2, ompi_fortran_integer2_t, +)
+#if OPAL_HAVE_FORTRAN_INTEGER2
+OP_FUNC_3BUF(sum, fortran_integer2, opal_fortran_integer2_t, +)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER4
-OP_FUNC_3BUF(sum, fortran_integer4, ompi_fortran_integer4_t, +)
+#if OPAL_HAVE_FORTRAN_INTEGER4
+OP_FUNC_3BUF(sum, fortran_integer4, opal_fortran_integer4_t, +)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER8
-OP_FUNC_3BUF(sum, fortran_integer8, ompi_fortran_integer8_t, +)
+#if OPAL_HAVE_FORTRAN_INTEGER8
+OP_FUNC_3BUF(sum, fortran_integer8, opal_fortran_integer8_t, +)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER16
-OP_FUNC_3BUF(sum, fortran_integer16, ompi_fortran_integer16_t, +)
+#if OPAL_HAVE_FORTRAN_INTEGER16
+OP_FUNC_3BUF(sum, fortran_integer16, opal_fortran_integer16_t, +)
 #endif
 /* Floating point */
 OP_FUNC_3BUF(sum, float, float, +)
@@ -965,39 +965,39 @@ OP_FUNC_3BUF(sum, double, double, +)
 #if HAVE_LONG_DOUBLE
 OP_FUNC_3BUF(sum, long_double, long double, +)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL
-OP_FUNC_3BUF(sum, fortran_real, ompi_fortran_real_t, +)
+#if OPAL_HAVE_FORTRAN_REAL
+OP_FUNC_3BUF(sum, fortran_real, opal_fortran_real_t, +)
 #endif
-#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
-OP_FUNC_3BUF(sum, fortran_double_precision, ompi_fortran_double_precision_t, +)
+#if OPAL_HAVE_FORTRAN_DOUBLE_PRECISION
+OP_FUNC_3BUF(sum, fortran_double_precision, opal_fortran_double_precision_t, +)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL2
-OP_FUNC_3BUF(sum, fortran_real2, ompi_fortran_real2_t, +)
+#if OPAL_HAVE_FORTRAN_REAL2
+OP_FUNC_3BUF(sum, fortran_real2, opal_fortran_real2_t, +)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL4
-OP_FUNC_3BUF(sum, fortran_real4, ompi_fortran_real4_t, +)
+#if OPAL_HAVE_FORTRAN_REAL4
+OP_FUNC_3BUF(sum, fortran_real4, opal_fortran_real4_t, +)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL8
-OP_FUNC_3BUF(sum, fortran_real8, ompi_fortran_real8_t, +)
+#if OPAL_HAVE_FORTRAN_REAL8
+OP_FUNC_3BUF(sum, fortran_real8, opal_fortran_real8_t, +)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL16
-OP_FUNC_3BUF(sum, fortran_real16, ompi_fortran_real16_t, +)
+#if OPAL_HAVE_FORTRAN_REAL16
+OP_FUNC_3BUF(sum, fortran_real16, opal_fortran_real16_t, +)
 #endif
 /* Complex */
-#if OMPI_HAVE_FORTRAN_REAL && OMPI_HAVE_FORTRAN_COMPLEX
-COMPLEX_OP_FUNC_SUM_3BUF(fortran_complex, ompi_fortran_complex_t)
+#if OPAL_HAVE_FORTRAN_REAL && OPAL_HAVE_FORTRAN_COMPLEX
+COMPLEX_OP_FUNC_SUM_3BUF(fortran_complex, opal_fortran_complex_t)
 #endif
-#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION && OMPI_HAVE_FORTRAN_COMPLEX
-COMPLEX_OP_FUNC_SUM_3BUF(fortran_double_complex, ompi_fortran_double_complex_t)
+#if OPAL_HAVE_FORTRAN_DOUBLE_PRECISION && OPAL_HAVE_FORTRAN_COMPLEX
+COMPLEX_OP_FUNC_SUM_3BUF(fortran_double_complex, opal_fortran_double_complex_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL4 && OMPI_HAVE_FORTRAN_COMPLEX8
-COMPLEX_OP_FUNC_SUM_3BUF(fortran_complex8, ompi_fortran_complex8_t)
+#if OPAL_HAVE_FORTRAN_REAL4 && OPAL_HAVE_FORTRAN_COMPLEX8
+COMPLEX_OP_FUNC_SUM_3BUF(fortran_complex8, opal_fortran_complex8_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL8 && OMPI_HAVE_FORTRAN_COMPLEX16
-COMPLEX_OP_FUNC_SUM_3BUF(fortran_complex16, ompi_fortran_complex16_t)
+#if OPAL_HAVE_FORTRAN_REAL8 && OPAL_HAVE_FORTRAN_COMPLEX16
+COMPLEX_OP_FUNC_SUM_3BUF(fortran_complex16, opal_fortran_complex16_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL16 && OMPI_HAVE_FORTRAN_COMPLEX32
-COMPLEX_OP_FUNC_SUM_3BUF(fortran_complex32, ompi_fortran_complex32_t)
+#if OPAL_HAVE_FORTRAN_REAL16 && OPAL_HAVE_FORTRAN_COMPLEX32
+COMPLEX_OP_FUNC_SUM_3BUF(fortran_complex32, opal_fortran_complex32_t)
 #endif
 
 /*************************************************************************
@@ -1018,23 +1018,23 @@ OP_FUNC_3BUF(prod, long_long_int, long long int, *)
 OP_FUNC_3BUF(prod, unsigned_long_long, unsigned long long, *)
 #endif
 /* Fortran integer */
-#if OMPI_HAVE_FORTRAN_INTEGER
-OP_FUNC_3BUF(prod, fortran_integer, ompi_fortran_integer_t, *)
+#if OPAL_HAVE_FORTRAN_INTEGER
+OP_FUNC_3BUF(prod, fortran_integer, opal_fortran_integer_t, *)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER1
-OP_FUNC_3BUF(prod, fortran_integer1, ompi_fortran_integer1_t, *)
+#if OPAL_HAVE_FORTRAN_INTEGER1
+OP_FUNC_3BUF(prod, fortran_integer1, opal_fortran_integer1_t, *)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER2
-OP_FUNC_3BUF(prod, fortran_integer2, ompi_fortran_integer2_t, *)
+#if OPAL_HAVE_FORTRAN_INTEGER2
+OP_FUNC_3BUF(prod, fortran_integer2, opal_fortran_integer2_t, *)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER4
-OP_FUNC_3BUF(prod, fortran_integer4, ompi_fortran_integer4_t, *)
+#if OPAL_HAVE_FORTRAN_INTEGER4
+OP_FUNC_3BUF(prod, fortran_integer4, opal_fortran_integer4_t, *)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER8
-OP_FUNC_3BUF(prod, fortran_integer8, ompi_fortran_integer8_t, *)
+#if OPAL_HAVE_FORTRAN_INTEGER8
+OP_FUNC_3BUF(prod, fortran_integer8, opal_fortran_integer8_t, *)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER16
-OP_FUNC_3BUF(prod, fortran_integer16, ompi_fortran_integer16_t, *)
+#if OPAL_HAVE_FORTRAN_INTEGER16
+OP_FUNC_3BUF(prod, fortran_integer16, opal_fortran_integer16_t, *)
 #endif
 /* Floating point */
 OP_FUNC_3BUF(prod, float, float, *)
@@ -1042,39 +1042,39 @@ OP_FUNC_3BUF(prod, double, double, *)
 #if HAVE_LONG_DOUBLE
 OP_FUNC_3BUF(prod, long_double, long double, *)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL
-OP_FUNC_3BUF(prod, fortran_real, ompi_fortran_real_t, *)
+#if OPAL_HAVE_FORTRAN_REAL
+OP_FUNC_3BUF(prod, fortran_real, opal_fortran_real_t, *)
 #endif
-#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
-OP_FUNC_3BUF(prod, fortran_double_precision, ompi_fortran_double_precision_t, *)
+#if OPAL_HAVE_FORTRAN_DOUBLE_PRECISION
+OP_FUNC_3BUF(prod, fortran_double_precision, opal_fortran_double_precision_t, *)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL2
-OP_FUNC_3BUF(prod, fortran_real2, ompi_fortran_real2_t, *)
+#if OPAL_HAVE_FORTRAN_REAL2
+OP_FUNC_3BUF(prod, fortran_real2, opal_fortran_real2_t, *)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL4
-OP_FUNC_3BUF(prod, fortran_real4, ompi_fortran_real4_t, *)
+#if OPAL_HAVE_FORTRAN_REAL4
+OP_FUNC_3BUF(prod, fortran_real4, opal_fortran_real4_t, *)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL8
-OP_FUNC_3BUF(prod, fortran_real8, ompi_fortran_real8_t, *)
+#if OPAL_HAVE_FORTRAN_REAL8
+OP_FUNC_3BUF(prod, fortran_real8, opal_fortran_real8_t, *)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL16
-OP_FUNC_3BUF(prod, fortran_real16, ompi_fortran_real16_t, *)
+#if OPAL_HAVE_FORTRAN_REAL16
+OP_FUNC_3BUF(prod, fortran_real16, opal_fortran_real16_t, *)
 #endif
 /* Complex */
-#if OMPI_HAVE_FORTRAN_REAL && OMPI_HAVE_FORTRAN_COMPLEX
-COMPLEX_OP_FUNC_PROD_3BUF(fortran_complex, ompi_fortran_complex_t)
+#if OPAL_HAVE_FORTRAN_REAL && OPAL_HAVE_FORTRAN_COMPLEX
+COMPLEX_OP_FUNC_PROD_3BUF(fortran_complex, opal_fortran_complex_t)
 #endif
-#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION && OMPI_HAVE_FORTRAN_COMPLEX
-COMPLEX_OP_FUNC_PROD_3BUF(fortran_double_complex, ompi_fortran_double_complex_t)
+#if OPAL_HAVE_FORTRAN_DOUBLE_PRECISION && OPAL_HAVE_FORTRAN_COMPLEX
+COMPLEX_OP_FUNC_PROD_3BUF(fortran_double_complex, opal_fortran_double_complex_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL4 && OMPI_HAVE_FORTRAN_COMPLEX8
-COMPLEX_OP_FUNC_PROD_3BUF(fortran_complex8, ompi_fortran_complex8_t)
+#if OPAL_HAVE_FORTRAN_REAL4 && OPAL_HAVE_FORTRAN_COMPLEX8
+COMPLEX_OP_FUNC_PROD_3BUF(fortran_complex8, opal_fortran_complex8_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL8 && OMPI_HAVE_FORTRAN_COMPLEX16
-COMPLEX_OP_FUNC_PROD_3BUF(fortran_complex16, ompi_fortran_complex16_t)
+#if OPAL_HAVE_FORTRAN_REAL8 && OPAL_HAVE_FORTRAN_COMPLEX16
+COMPLEX_OP_FUNC_PROD_3BUF(fortran_complex16, opal_fortran_complex16_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL16 && OMPI_HAVE_FORTRAN_COMPLEX32
-COMPLEX_OP_FUNC_PROD_3BUF(fortran_complex32, ompi_fortran_complex32_t)
+#if OPAL_HAVE_FORTRAN_REAL16 && OPAL_HAVE_FORTRAN_COMPLEX32
+COMPLEX_OP_FUNC_PROD_3BUF(fortran_complex32, opal_fortran_complex32_t)
 #endif
 
 /*************************************************************************
@@ -1097,8 +1097,8 @@ FUNC_FUNC_3BUF(land, long_long_int, long long int)
 FUNC_FUNC_3BUF(land, unsigned_long_long, unsigned long long)
 #endif
 /* Logical */
-#if OMPI_HAVE_FORTRAN_LOGICAL
-FUNC_FUNC_3BUF(land, fortran_logical, ompi_fortran_logical_t)
+#if OPAL_HAVE_FORTRAN_LOGICAL
+FUNC_FUNC_3BUF(land, fortran_logical, opal_fortran_logical_t)
 #endif
 /* C++ bool */
 FUNC_FUNC_3BUF(land, bool, bool)
@@ -1123,8 +1123,8 @@ FUNC_FUNC_3BUF(lor, long_long_int, long long int)
 FUNC_FUNC_3BUF(lor, unsigned_long_long, unsigned long long)
 #endif
 /* Logical */
-#if OMPI_HAVE_FORTRAN_LOGICAL
-FUNC_FUNC_3BUF(lor, fortran_logical, ompi_fortran_logical_t)
+#if OPAL_HAVE_FORTRAN_LOGICAL
+FUNC_FUNC_3BUF(lor, fortran_logical, opal_fortran_logical_t)
 #endif
 /* C++ bool */
 FUNC_FUNC_3BUF(lor, bool, bool)
@@ -1149,8 +1149,8 @@ FUNC_FUNC_3BUF(lxor, long_long_int, long long int)
 FUNC_FUNC_3BUF(lxor, unsigned_long_long, unsigned long long)
 #endif
 /* Logical */
-#if OMPI_HAVE_FORTRAN_LOGICAL
-FUNC_FUNC_3BUF(lxor, fortran_logical, ompi_fortran_logical_t)
+#if OPAL_HAVE_FORTRAN_LOGICAL
+FUNC_FUNC_3BUF(lxor, fortran_logical, opal_fortran_logical_t)
 #endif
 /* C++ bool */
 FUNC_FUNC_3BUF(lxor, bool, bool)
@@ -1175,23 +1175,23 @@ FUNC_FUNC_3BUF(band, long_long_int, long long int)
 FUNC_FUNC_3BUF(band, unsigned_long_long, unsigned long long)
 #endif
 /* Fortran integer */
-#if OMPI_HAVE_FORTRAN_INTEGER
-FUNC_FUNC_3BUF(band, fortran_integer, ompi_fortran_integer_t)
+#if OPAL_HAVE_FORTRAN_INTEGER
+FUNC_FUNC_3BUF(band, fortran_integer, opal_fortran_integer_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER1
-FUNC_FUNC_3BUF(band, fortran_integer1, ompi_fortran_integer1_t)
+#if OPAL_HAVE_FORTRAN_INTEGER1
+FUNC_FUNC_3BUF(band, fortran_integer1, opal_fortran_integer1_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER2
-FUNC_FUNC_3BUF(band, fortran_integer2, ompi_fortran_integer2_t)
+#if OPAL_HAVE_FORTRAN_INTEGER2
+FUNC_FUNC_3BUF(band, fortran_integer2, opal_fortran_integer2_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER4
-FUNC_FUNC_3BUF(band, fortran_integer4, ompi_fortran_integer4_t)
+#if OPAL_HAVE_FORTRAN_INTEGER4
+FUNC_FUNC_3BUF(band, fortran_integer4, opal_fortran_integer4_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER8
-FUNC_FUNC_3BUF(band, fortran_integer8, ompi_fortran_integer8_t)
+#if OPAL_HAVE_FORTRAN_INTEGER8
+FUNC_FUNC_3BUF(band, fortran_integer8, opal_fortran_integer8_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER16
-FUNC_FUNC_3BUF(band, fortran_integer16, ompi_fortran_integer16_t)
+#if OPAL_HAVE_FORTRAN_INTEGER16
+FUNC_FUNC_3BUF(band, fortran_integer16, opal_fortran_integer16_t)
 #endif
 /* Byte */
 FUNC_FUNC_3BUF(band, byte, char)
@@ -1216,23 +1216,23 @@ FUNC_FUNC_3BUF(bor, long_long_int, long long int)
 FUNC_FUNC_3BUF(bor, unsigned_long_long, unsigned long long)
 #endif
 /* Fortran integer */
-#if OMPI_HAVE_FORTRAN_INTEGER
-FUNC_FUNC_3BUF(bor, fortran_integer, ompi_fortran_integer_t)
+#if OPAL_HAVE_FORTRAN_INTEGER
+FUNC_FUNC_3BUF(bor, fortran_integer, opal_fortran_integer_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER1
-FUNC_FUNC_3BUF(bor, fortran_integer1, ompi_fortran_integer1_t)
+#if OPAL_HAVE_FORTRAN_INTEGER1
+FUNC_FUNC_3BUF(bor, fortran_integer1, opal_fortran_integer1_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER2
-FUNC_FUNC_3BUF(bor, fortran_integer2, ompi_fortran_integer2_t)
+#if OPAL_HAVE_FORTRAN_INTEGER2
+FUNC_FUNC_3BUF(bor, fortran_integer2, opal_fortran_integer2_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER4
-FUNC_FUNC_3BUF(bor, fortran_integer4, ompi_fortran_integer4_t)
+#if OPAL_HAVE_FORTRAN_INTEGER4
+FUNC_FUNC_3BUF(bor, fortran_integer4, opal_fortran_integer4_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER8
-FUNC_FUNC_3BUF(bor, fortran_integer8, ompi_fortran_integer8_t)
+#if OPAL_HAVE_FORTRAN_INTEGER8
+FUNC_FUNC_3BUF(bor, fortran_integer8, opal_fortran_integer8_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER16
-FUNC_FUNC_3BUF(bor, fortran_integer16, ompi_fortran_integer16_t)
+#if OPAL_HAVE_FORTRAN_INTEGER16
+FUNC_FUNC_3BUF(bor, fortran_integer16, opal_fortran_integer16_t)
 #endif
 /* Byte */
 FUNC_FUNC_3BUF(bor, byte, char)
@@ -1257,23 +1257,23 @@ FUNC_FUNC_3BUF(bxor, long_long_int, long long int)
 FUNC_FUNC_3BUF(bxor, unsigned_long_long, unsigned long long)
 #endif
 /* Fortran integer */
-#if OMPI_HAVE_FORTRAN_INTEGER
-FUNC_FUNC_3BUF(bxor, fortran_integer, ompi_fortran_integer_t)
+#if OPAL_HAVE_FORTRAN_INTEGER
+FUNC_FUNC_3BUF(bxor, fortran_integer, opal_fortran_integer_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER1
-FUNC_FUNC_3BUF(bxor, fortran_integer1, ompi_fortran_integer1_t)
+#if OPAL_HAVE_FORTRAN_INTEGER1
+FUNC_FUNC_3BUF(bxor, fortran_integer1, opal_fortran_integer1_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER2
-FUNC_FUNC_3BUF(bxor, fortran_integer2, ompi_fortran_integer2_t)
+#if OPAL_HAVE_FORTRAN_INTEGER2
+FUNC_FUNC_3BUF(bxor, fortran_integer2, opal_fortran_integer2_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER4
-FUNC_FUNC_3BUF(bxor, fortran_integer4, ompi_fortran_integer4_t)
+#if OPAL_HAVE_FORTRAN_INTEGER4
+FUNC_FUNC_3BUF(bxor, fortran_integer4, opal_fortran_integer4_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER8
-FUNC_FUNC_3BUF(bxor, fortran_integer8, ompi_fortran_integer8_t)
+#if OPAL_HAVE_FORTRAN_INTEGER8
+FUNC_FUNC_3BUF(bxor, fortran_integer8, opal_fortran_integer8_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER16
-FUNC_FUNC_3BUF(bxor, fortran_integer16, ompi_fortran_integer16_t)
+#if OPAL_HAVE_FORTRAN_INTEGER16
+FUNC_FUNC_3BUF(bxor, fortran_integer16, opal_fortran_integer16_t)
 #endif
 /* Byte */
 FUNC_FUNC_3BUF(bxor, byte, char)
@@ -1283,14 +1283,14 @@ FUNC_FUNC_3BUF(bxor, byte, char)
  *************************************************************************/
 
 /*
-#if OMPI_HAVE_FORTRAN_REAL
-LOC_STRUCT_3BUF(2real, ompi_fortran_real_t, ompi_fortran_real_t)
+#if OPAL_HAVE_FORTRAN_REAL
+LOC_STRUCT_3BUF(2real, opal_fortran_real_t, opal_fortran_real_t)
 #endif
-#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
-LOC_STRUCT_3BUF(2double_precision, ompi_fortran_double_precision_t, ompi_fortran_double_precision_t)
+#if OPAL_HAVE_FORTRAN_DOUBLE_PRECISION
+LOC_STRUCT_3BUF(2double_precision, opal_fortran_double_precision_t, opal_fortran_double_precision_t)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER
-LOC_STRUCT_3BUF(2integer, ompi_fortran_integer_t, ompi_fortran_integer_t)
+#if OPAL_HAVE_FORTRAN_INTEGER
+LOC_STRUCT_3BUF(2integer, opal_fortran_integer_t, opal_fortran_integer_t)
 #endif
 LOC_STRUCT_3BUF(float_int, float, int)
 LOC_STRUCT_3BUF(double_int, double, int)
@@ -1306,13 +1306,13 @@ LOC_STRUCT_3BUF(long_double_int, long double, int)
  * Max location
  *************************************************************************/
 
-#if OMPI_HAVE_FORTRAN_REAL
+#if OPAL_HAVE_FORTRAN_REAL
 LOC_FUNC_3BUF(maxloc, 2real, >)
 #endif
-#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
+#if OPAL_HAVE_FORTRAN_DOUBLE_PRECISION
 LOC_FUNC_3BUF(maxloc, 2double_precision, >)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER
+#if OPAL_HAVE_FORTRAN_INTEGER
 LOC_FUNC_3BUF(maxloc, 2integer, >)
 #endif
 LOC_FUNC_3BUF(maxloc, float_int, >)
@@ -1328,13 +1328,13 @@ LOC_FUNC_3BUF(maxloc, long_double_int, >)
  * Min location
  *************************************************************************/
 
-#if OMPI_HAVE_FORTRAN_REAL
+#if OPAL_HAVE_FORTRAN_REAL
 LOC_FUNC_3BUF(minloc, 2real, <)
 #endif
-#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
+#if OPAL_HAVE_FORTRAN_DOUBLE_PRECISION
 LOC_FUNC_3BUF(minloc, 2double_precision, <)
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER
+#if OPAL_HAVE_FORTRAN_INTEGER
 LOC_FUNC_3BUF(minloc, 2integer, <)
 #endif
 LOC_FUNC_3BUF(minloc, float_int, <)
@@ -1422,42 +1422,42 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
 
 /** All the Fortran integers ********************************************/
 
-#if OMPI_HAVE_FORTRAN_INTEGER
+#if OPAL_HAVE_FORTRAN_INTEGER
 #define FORTRAN_INTEGER_PLAIN(name) ompi_op_base_##name##_fortran_integer
 #define FORTRAN_INTEGER_PLAIN_3BUFF(name) ompi_op_base_3buff_##name##_fortran_integer
 #else
 #define FORTRAN_INTEGER_PLAIN(name) NULL
 #define FORTRAN_INTEGER_PLAIN_3BUFF(name) NULL
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER1
+#if OPAL_HAVE_FORTRAN_INTEGER1
 #define FORTRAN_INTEGER1(name) ompi_op_base_##name##_fortran_integer1
 #define FORTRAN_INTEGER1_3BUFF(name) ompi_op_base_3buff_##name##_fortran_integer1
 #else
 #define FORTRAN_INTEGER1(name) NULL
 #define FORTRAN_INTEGER1_3BUFF(name) NULL
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER2
+#if OPAL_HAVE_FORTRAN_INTEGER2
 #define FORTRAN_INTEGER2(name) ompi_op_base_##name##_fortran_integer2
 #define FORTRAN_INTEGER2_3BUFF(name) ompi_op_base_3buff_##name##_fortran_integer2
 #else
 #define FORTRAN_INTEGER2(name) NULL
 #define FORTRAN_INTEGER2_3BUFF(name) NULL
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER4
+#if OPAL_HAVE_FORTRAN_INTEGER4
 #define FORTRAN_INTEGER4(name) ompi_op_base_##name##_fortran_integer4
 #define FORTRAN_INTEGER4_3BUFF(name) ompi_op_base_3buff_##name##_fortran_integer4
 #else
 #define FORTRAN_INTEGER4(name) NULL
 #define FORTRAN_INTEGER4_3BUFF(name) NULL
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER8
+#if OPAL_HAVE_FORTRAN_INTEGER8
 #define FORTRAN_INTEGER8(name) ompi_op_base_##name##_fortran_integer8
 #define FORTRAN_INTEGER8_3BUFF(name) ompi_op_base_3buff_##name##_fortran_integer8
 #else
 #define FORTRAN_INTEGER8(name) NULL
 #define FORTRAN_INTEGER8_3BUFF(name) NULL
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER16
+#if OPAL_HAVE_FORTRAN_INTEGER16
 #define FORTRAN_INTEGER16(name) ompi_op_base_##name##_fortran_integer16
 #define FORTRAN_INTEGER16_3BUFF(name) ompi_op_base_3buff_##name##_fortran_integer16
 #else
@@ -1498,28 +1498,28 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
 
 /** All the Fortran reals ***********************************************/
 
-#if OMPI_HAVE_FORTRAN_REAL
+#if OPAL_HAVE_FORTRAN_REAL
 #define FLOATING_POINT_FORTRAN_REAL_PLAIN(name) ompi_op_base_##name##_fortran_real
 #define FLOATING_POINT_FORTRAN_REAL_PLAIN_3BUFF(name) ompi_op_base_3buff_##name##_fortran_real
 #else
 #define FLOATING_POINT_FORTRAN_REAL_PLAIN(name) NULL
 #define FLOATING_POINT_FORTRAN_REAL_PLAIN_3BUFF(name) NULL
 #endif
-#if OMPI_HAVE_FORTRAN_REAL2
+#if OPAL_HAVE_FORTRAN_REAL2
 #define FLOATING_POINT_FORTRAN_REAL2(name) ompi_op_base_##name##_fortran_real2
 #define FLOATING_POINT_FORTRAN_REAL2_3BUFF(name) ompi_op_base_3buff_##name##_fortran_real2
 #else
 #define FLOATING_POINT_FORTRAN_REAL2(name) NULL
 #define FLOATING_POINT_FORTRAN_REAL2_3BUFF(name) NULL
 #endif
-#if OMPI_HAVE_FORTRAN_REAL4
+#if OPAL_HAVE_FORTRAN_REAL4
 #define FLOATING_POINT_FORTRAN_REAL4(name) ompi_op_base_##name##_fortran_real4
 #define FLOATING_POINT_FORTRAN_REAL4_3BUFF(name) ompi_op_base_3buff_##name##_fortran_real4
 #else
 #define FLOATING_POINT_FORTRAN_REAL4(name) NULL
 #define FLOATING_POINT_FORTRAN_REAL4_3BUFF(name) NULL
 #endif
-#if OMPI_HAVE_FORTRAN_REAL8
+#if OPAL_HAVE_FORTRAN_REAL8
 #define FLOATING_POINT_FORTRAN_REAL8(name) ompi_op_base_##name##_fortran_real8
 #define FLOATING_POINT_FORTRAN_REAL8_3BUFF(name) ompi_op_base_3buff_##name##_fortran_real8
 #else
@@ -1532,7 +1532,7 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
      corresponding C type
    Only then do we put in function pointers for REAL*16 reductions.
    Otherwise, just put in NULL. */
-#if OMPI_HAVE_FORTRAN_REAL16 && OMPI_REAL16_MATCHES_C
+#if OPAL_HAVE_FORTRAN_REAL16 && OPAL_REAL16_MATCHES_C
 #define FLOATING_POINT_FORTRAN_REAL16(name) ompi_op_base_##name##_fortran_real16
 #define FLOATING_POINT_FORTRAN_REAL16_3BUFF(name) ompi_op_base_3buff_##name##_fortran_real16
 #else
@@ -1556,7 +1556,7 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
 
 /** Fortran double precision ********************************************/
 
-#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
+#if OPAL_HAVE_FORTRAN_DOUBLE_PRECISION
 #define FLOATING_POINT_FORTRAN_DOUBLE_PRECISION(name) \
     ompi_op_base_##name##_fortran_double_precision
 #define FLOATING_POINT_FORTRAN_DOUBLE_PRECISION_3BUFF(name) \
@@ -1606,7 +1606,7 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
 
 /** Fortran logical *****************************************************/
 
-#if OMPI_HAVE_FORTRAN_LOGICAL
+#if OPAL_HAVE_FORTRAN_LOGICAL
 #define FORTRAN_LOGICAL(name) \
   ompi_op_base_##name##_fortran_logical  /* OMPI_OP_BASE_TYPE_LOGICAL */
 #define FORTRAN_LOGICAL_3BUFF(name) \
@@ -1632,28 +1632,28 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
 
 /** Fortran complex *****************************************************/
 
-#if OMPI_HAVE_FORTRAN_REAL && OMPI_HAVE_FORTRAN_COMPLEX
+#if OPAL_HAVE_FORTRAN_REAL && OPAL_HAVE_FORTRAN_COMPLEX
 #define COMPLEX_PLAIN(name) ompi_op_base_##name##_fortran_complex
 #define COMPLEX_PLAIN_3BUFF(name) ompi_op_base_3buff_##name##_fortran_complex
 #else
 #define COMPLEX_PLAIN(name) NULL
 #define COMPLEX_PLAIN_3BUFF(name) NULL
 #endif
-#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION && OMPI_HAVE_FORTRAN_COMPLEX
+#if OPAL_HAVE_FORTRAN_DOUBLE_PRECISION && OPAL_HAVE_FORTRAN_COMPLEX
 #define COMPLEX_DOUBLE(name) ompi_op_base_##name##_fortran_double_complex
 #define COMPLEX_DOUBLE_3BUFF(name) ompi_op_base_3buff_##name##_fortran_double_complex
 #else
 #define COMPLEX_DOUBLE(name) NULL
 #define COMPLEX_DOUBLE_3BUFF(name) NULL
 #endif
-#if OMPI_HAVE_FORTRAN_REAL4 && OMPI_HAVE_FORTRAN_COMPLEX8
+#if OPAL_HAVE_FORTRAN_REAL4 && OPAL_HAVE_FORTRAN_COMPLEX8
 #define COMPLEX8(name) ompi_op_base_##name##_fortran_complex8
 #define COMPLEX8_3BUFF(name) ompi_op_base_3buff_##name##_fortran_complex8
 #else
 #define COMPLEX8(name) NULL
 #define COMPLEX8_3BUFF(name) NULL
 #endif
-#if OMPI_HAVE_FORTRAN_REAL8 && OMPI_HAVE_FORTRAN_COMPLEX16
+#if OPAL_HAVE_FORTRAN_REAL8 && OPAL_HAVE_FORTRAN_COMPLEX16
 #define COMPLEX16(name) ompi_op_base_##name##_fortran_complex16
 #define COMPLEX16_3BUFF(name) ompi_op_base_3buff_##name##_fortran_complex16
 #else
@@ -1667,7 +1667,7 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
    - we have fortran COMPILEX*32
    Only then do we put in function pointers for COMPLEX*32 reductions.
    Otherwise, just put in NULL. */
-#if OMPI_HAVE_FORTRAN_REAL16 && OMPI_REAL16_MATCHES_C && OMPI_HAVE_FORTRAN_COMPLEX32
+#if OPAL_HAVE_FORTRAN_REAL16 && OPAL_REAL16_MATCHES_C && OPAL_HAVE_FORTRAN_COMPLEX32
 #define COMPLEX32(name) ompi_op_base_##name##_fortran_complex32
 #define COMPLEX32_3BUFF(name) ompi_op_base_3buff_##name##_fortran_complex32
 #else
@@ -1719,21 +1719,21 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
 /** Fortran complex *****************************************************/
 /** Fortran "2" types ***************************************************/
 
-#if OMPI_HAVE_FORTRAN_REAL
+#if OPAL_HAVE_FORTRAN_REAL
 #define TWOLOC_FORTRAN_2REAL(name) ompi_op_base_##name##_2real
 #define TWOLOC_FORTRAN_2REAL_3BUFF(name) ompi_op_base_3buff_##name##_2real
 #else
 #define TWOLOC_FORTRAN_2REAL(name) NULL
 #define TWOLOC_FORTRAN_2REAL_3BUFF(name) NULL
 #endif
-#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
+#if OPAL_HAVE_FORTRAN_DOUBLE_PRECISION
 #define TWOLOC_FORTRAN_2DOUBLE_PRECISION(name) ompi_op_base_##name##_2double_precision
 #define TWOLOC_FORTRAN_2DOUBLE_PRECISION_3BUFF(name) ompi_op_base_3buff_##name##_2double_precision
 #else
 #define TWOLOC_FORTRAN_2DOUBLE_PRECISION(name) NULL
 #define TWOLOC_FORTRAN_2DOUBLE_PRECISION_3BUFF(name) NULL
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER
+#if OPAL_HAVE_FORTRAN_INTEGER
 #define TWOLOC_FORTRAN_2INTEGER(name) ompi_op_base_##name##_2integer
 #define TWOLOC_FORTRAN_2INTEGER_3BUFF(name) ompi_op_base_3buff_##name##_2integer
 #else
