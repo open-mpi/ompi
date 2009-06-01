@@ -28,13 +28,13 @@ MACRO(OMPI_F77_CHECK FORTRAN_TYPE C_TYPE TYPE_LIST EXPECTED_SIZE)
   SET(NEED_RECHECK TRUE)
 
   # do we need to check all the features?
-  IF(DEFINED OPAL_HAVE_FORTRAN_${TYPE_NAME})
+  IF(DEFINED OMPI_HAVE_FORTRAN_${TYPE_NAME})
     IF(${F77_SETUP_${TYPE_NAME}} STREQUAL ${OMPI_WANT_F77_BINDINGS})
       SET(NEED_RECHECK FALSE)
     ELSE(${F77_SETUP_${TYPE_NAME}} STREQUAL ${OMPI_WANT_F77_BINDINGS})
       SET(NEED_RECHECK TRUE)
     ENDIF(${F77_SETUP_${TYPE_NAME}} STREQUAL ${OMPI_WANT_F77_BINDINGS})
-  ENDIF(DEFINED OPAL_HAVE_FORTRAN_${TYPE_NAME})
+  ENDIF(DEFINED OMPI_HAVE_FORTRAN_${TYPE_NAME})
   
   # use this variable to check whether user changed F77 option.
   # every time OMPI_WANT_F77_BINDINGS got changed, we need to re-check everything.
@@ -51,7 +51,7 @@ MACRO(OMPI_F77_CHECK FORTRAN_TYPE C_TYPE TYPE_LIST EXPECTED_SIZE)
     SET(ofc_have_type 0)
     SET(ofc_type_size ${SIZEOF_INT})
     SET(ofc_type_alignment ${SIZEOF_INT})
-    SET(ofc_c_type ${opal_fortran_bogus_type_t})
+    SET(ofc_c_type ${ompi_fortran_bogus_type_t})
 
     # Only check if we actually want the F77 bindings / have a F77
     # compiler.  This allows us to call this macro, even if there is
@@ -105,18 +105,18 @@ MACRO(OMPI_F77_CHECK FORTRAN_TYPE C_TYPE TYPE_LIST EXPECTED_SIZE)
 
     # We always need these defines -- even if we don't have a given type,
     # there are some places in the code where we have to have *something*.
-    SET(OPAL_HAVE_FORTRAN_${TYPE_NAME} ${ofc_have_type} CACHE INTERNAL "OPAL_HAVE_FORTRAN_${TYPE_NAME}")
-    SET(OPAL_SIZEOF_FORTRAN_${TYPE_NAME} ${ofc_type_size} CACHE INTERNAL "OPAL_SIZEOF_FORTRAN_${TYPE_NAME}")
-    SET(OPAL_ALIGNMENT_FORTRAN_${TYPE_NAME} ${ofc_type_alignment} CACHE INTERNAL "OPAL_ALIGNMENT_FORTRAN_${TYPE_NAME}")
+    SET(OMPI_HAVE_FORTRAN_${TYPE_NAME} ${ofc_have_type} CACHE INTERNAL "OMPI_HAVE_FORTRAN_${TYPE_NAME}")
+    SET(OMPI_SIZEOF_FORTRAN_${TYPE_NAME} ${ofc_type_size} CACHE INTERNAL "OMPI_SIZEOF_FORTRAN_${TYPE_NAME}")
+    SET(OMPI_ALIGNMENT_FORTRAN_${TYPE_NAME} ${ofc_type_alignment} CACHE INTERNAL "OMPI_ALIGNMENT_FORTRAN_${TYPE_NAME}")
     IF(NOT "${TYPE_LIST}" STREQUAL "")
       STRING(TOLOWER ${TYPE_NAME} TYPE_NAME_L)
-      SET(opal_fortran_${TYPE_NAME_L}_t ${ofc_c_type} CACHE INTERNAL "opal_fortran_${TYPE_NAME_L}_t")
+      SET(ompi_fortran_${TYPE_NAME_L}_t ${ofc_c_type} CACHE INTERNAL "ompi_fortran_${TYPE_NAME_L}_t")
     ENDIF(NOT "${TYPE_LIST}" STREQUAL "")
 
-    #MESSAGE("OPAL_HAVE_FORTRAN_${TYPE_NAME}:${OPAL_HAVE_FORTRAN_${TYPE_NAME}}")
-    #MESSAGE("OPAL_SIZEOF_FORTRAN_${TYPE_NAME}:${OPAL_SIZEOF_FORTRAN_${TYPE_NAME}}")
-    #MESSAGE("OPAL_ALIGNMENT_FORTRAN_${TYPE_NAME}:${OPAL_ALIGNMENT_FORTRAN_${TYPE_NAME}}")
-    #MESSAGE("opal_fortran_${TYPE_NAME_L}_t:${opal_fortran_${TYPE_NAME_L}_t}")
+    #MESSAGE("OMPI_HAVE_FORTRAN_${TYPE_NAME}:${OMPI_HAVE_FORTRAN_${TYPE_NAME}}")
+    #MESSAGE("OMPI_SIZEOF_FORTRAN_${TYPE_NAME}:${OMPI_SIZEOF_FORTRAN_${TYPE_NAME}}")
+    #MESSAGE("OMPI_ALIGNMENT_FORTRAN_${TYPE_NAME}:${OMPI_ALIGNMENT_FORTRAN_${TYPE_NAME}}")
+    #MESSAGE("ompi_fortran_${TYPE_NAME_L}_t:${ompi_fortran_${TYPE_NAME_L}_t}")
 
   ENDIF(NEED_RECHECK)
 

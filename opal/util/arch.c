@@ -49,11 +49,11 @@ int32_t opal_arch_compute_local_id( uint32_t *me )
      * placed here to explain the abstraction break and
      * indicate that it will eventually be fixed
      */
-    if (1 == sizeof(opal_fortran_logical_t) ) {
+    if (1 == sizeof(ompi_fortran_logical_t) ) {
         opal_arch_setmask( me, OPAL_ARCH_LOGICALIS8);
-    } else if (2 == sizeof(opal_fortran_logical_t)) {
+    } else if (2 == sizeof(ompi_fortran_logical_t)) {
         opal_arch_setmask( me, OPAL_ARCH_LOGICALIS16);
-    } else if (4 == sizeof(opal_fortran_logical_t)) {
+    } else if (4 == sizeof(ompi_fortran_logical_t)) {
         opal_arch_setmask( me, OPAL_ARCH_LOGICALIS32);
     }
 

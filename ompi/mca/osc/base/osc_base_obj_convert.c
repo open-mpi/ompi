@@ -149,13 +149,13 @@ static conversion_fct_t ompi_osc_base_copy_functions[DT_MAX_PREDEFINED] = {
 #else
    (conversion_fct_t)NULL,                      /* DT_CXX_BOOL            */
 #endif
-#if OPAL_SIZEOF_FORTRAN_LOGICAL == SIZEOF_CHAR
+#if OMPI_SIZEOF_FORTRAN_LOGICAL == SIZEOF_CHAR
    (conversion_fct_t)copy_char,                 /* DT_LOGIC               */
-#elif OPAL_SIZEOF_FORTRAN_LOGICAL == SIZEOF_SHORT
+#elif OMPI_SIZEOF_FORTRAN_LOGICAL == SIZEOF_SHORT
    (conversion_fct_t)copy_short,                /* DT_LOGIC               */
-#elif OPAL_SIZEOF_FORTRAN_LOGICAL == SIZEOF_INT
+#elif OMPI_SIZEOF_FORTRAN_LOGICAL == SIZEOF_INT
    (conversion_fct_t)copy_int,                  /* DT_LOGIC               */
-#elif OPAL_SIZEOF_FORTRAN_LOGICAL == SIZEOF_LONG
+#elif OMPI_SIZEOF_FORTRAN_LOGICAL == SIZEOF_LONG
    (conversion_fct_t)copy_long,                 /* DT_LOGIC               */
 #else
    (conversion_fct_t)NULL,                      /* DT_LOGIC               */

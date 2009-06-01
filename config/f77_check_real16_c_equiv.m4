@@ -29,13 +29,13 @@ AC_DEFUN([OMPI_F77_CHECK_REAL16_C_EQUIV],[
     # We have to do this as a cache check for cross-compilation platforms
     AC_CACHE_CHECK([for C type matching bit representation of REAL*16], 
         [real16_matches_c_var],
-        [AS_IF([test "$OMPI_WANT_F77_BINDINGS" = "1" -a "$OPAL_HAVE_FORTRAN_REAL16" = "1"],[
+        [AS_IF([test "$OMPI_WANT_F77_BINDINGS" = "1" -a "$OMPI_HAVE_FORTRAN_REAL16" = "1"],[
             # AC_CACHE_CHECK automatically does its own AC_MSG_CHECKING, so close it out
             AC_MSG_RESULT([pending])
 
             # First check the type that we found was the same length in C
-            AC_MSG_CHECKING([if $OPAL_FORTRAN_REAL16_C_TYPE == REAL*16])
-            OMPI_F77_CHECK_REAL16_EQUIV_TYPE([$OPAL_FORTRAN_REAL16_C_TYPE], [L])
+            AC_MSG_CHECKING([if $OMPI_FORTRAN_REAL16_C_TYPE == REAL*16])
+            OMPI_F77_CHECK_REAL16_EQUIV_TYPE([$OMPI_FORTRAN_REAL16_C_TYPE], [L])
             # If that didn't work, see if we have a compiler-specific
             # time that might work
             AS_IF([test "$happy" = "no"],
@@ -48,7 +48,7 @@ AC_DEFUN([OMPI_F77_CHECK_REAL16_C_EQUIV],[
                           OMPI_UNIQ([CFLAGS])
                           OMPI_F77_CHECK_REAL16_EQUIV_TYPE([_Quad], [q])
                           AS_IF([test "$happy" = "yes"],
-                                [OPAL_FORTRAN_REAL16_C_TYPE="_Quad"
+                                [OMPI_FORTRAN_REAL16_C_TYPE="_Quad"
                                  AC_MSG_RESULT([works!])],
                                 [CFLAGS="$CFLAGS_save"
                                  AC_MSG_RESULT([does not work])])
@@ -67,14 +67,14 @@ AC_DEFUN([OMPI_F77_CHECK_REAL16_C_EQUIV],[
         ])
     ])
 
-    opal_real16_matches_c=AS_VAR_GET([real16_matches_c_var])
+    ompi_real16_matches_c=AS_VAR_GET([real16_matches_c_var])
     AS_VAR_POPDEF([real16_matches_c_var])
 
-    AS_IF([test "$opal_real16_matches_c" = "yes"],
+    AS_IF([test "$ompi_real16_matches_c" = "yes"],
           [define_value=1], 
           [define_value=0
            AC_MSG_WARN([MPI_REAL16 and MPI_COMPLEX32 support have been disabled])])
-    AC_DEFINE_UNQUOTED([OPAL_REAL16_MATCHES_C], [$define_value],
+    AC_DEFINE_UNQUOTED([OMPI_REAL16_MATCHES_C], [$define_value],
                        [Whether Fortran REAL*16 matches the bit format of the equivalent C type])
     OMPI_VAR_SCOPE_POP
 ])

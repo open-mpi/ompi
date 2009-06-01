@@ -1115,7 +1115,7 @@ INCLUDE(f77_check)
 
 # This allows us to mark bogus types, but still have them be a valid
 # [sentinel] value
-SET(opal_fortran_bogus_type_t "int")
+SET(ompi_fortran_bogus_type_t "int")
 
 # We want to set the #define's for all of these, so invoke the macros
 # regardless of whether we have F77 support or not.
@@ -1205,17 +1205,17 @@ ENDIF(WANT_MPI_PROFILINGAND AND OMPI_WANT_F77_BINDINGS)
 
 #/* Max handle value for fortran MPI handles, effectively min(INT_MAX, max
 #   fortran INTEGER value) */
-#/* #undef OPAL_FORTRAN_HANDLE_MAX */
+#/* #undef OMPI_FORTRAN_HANDLE_MAX */
 # Need to be fixed.
 IF(WIN32)
-  SET (OPAL_FORTRAN_HANDLE_MAX "2147483647")
+  SET (OMPI_FORTRAN_HANDLE_MAX "2147483647")
 ENDIF(WIN32)
 #
 #/* Fortran value for LOGICAL .TRUE. value */
-#/* #undef OPAL_FORTRAN_VALUE_TRUE */
+#/* #undef OMPI_FORTRAN_VALUE_TRUE */
 # Need to be fixed.
 IF(WIN32)
-  SET (OPAL_FORTRAN_VALUE_TRUE 0)
+  SET (OMPI_FORTRAN_VALUE_TRUE 0)
 ENDIF(WIN32)
 
 
@@ -1227,58 +1227,58 @@ ENDIF(WIN32)
 #/* #undef OMPI_F90 */
   
 #/* Whether we have Fortran 90 $ofc_fortran_type or not */
-#/* #undef OPAL_HAVE_F90_COMPLEX */
+#/* #undef OMPI_HAVE_F90_COMPLEX */
 #
 #/* Whether we have Fortran 90 $ofc_fortran_type or not */
-#/* #undef OPAL_HAVE_F90_COMPLEX16 */
+#/* #undef OMPI_HAVE_F90_COMPLEX16 */
 #
 #/* Whether we have Fortran 90 $ofc_fortran_type or not */
-#/* #undef OPAL_HAVE_F90_COMPLEX32 */
+#/* #undef OMPI_HAVE_F90_COMPLEX32 */
 #
 #/* Whether we have Fortran 90 $ofc_fortran_type or not */
-#/* #undef OPAL_HAVE_F90_COMPLEX8 */
+#/* #undef OMPI_HAVE_F90_COMPLEX8 */
 #
 #/* Whether we have Fortran 90 $ofc_fortran_type or not */
-#/* #undef OPAL_HAVE_F90_DOUBLE_COMPLEX */
+#/* #undef OMPI_HAVE_F90_DOUBLE_COMPLEX */
 #
 #/* Whether we have Fortran 90 $ofc_fortran_type or not */
-#/* #undef OPAL_HAVE_F90_DOUBLE_PRECISION */
+#/* #undef OMPI_HAVE_F90_DOUBLE_PRECISION */
 #
 #/* Whether we have Fortran 90 $ofc_fortran_type or not */
-#/* #undef OPAL_HAVE_F90_INTEGER */
+#/* #undef OMPI_HAVE_F90_INTEGER */
 #
 #/* Whether we have Fortran 90 $ofc_fortran_type or not */
-#/* #undef OPAL_HAVE_F90_INTEGER1 */
+#/* #undef OMPI_HAVE_F90_INTEGER1 */
 #
 #/* Whether we have Fortran 90 $ofc_fortran_type or not */
-#/* #undef OPAL_HAVE_F90_INTEGER16 */
+#/* #undef OMPI_HAVE_F90_INTEGER16 */
 #
 #/* Whether we have Fortran 90 $ofc_fortran_type or not */
-#/* #undef OPAL_HAVE_F90_INTEGER2 */
+#/* #undef OMPI_HAVE_F90_INTEGER2 */
 #
 #/* Whether we have Fortran 90 $ofc_fortran_type or not */
-#/* #undef OPAL_HAVE_F90_INTEGER4 */
+#/* #undef OMPI_HAVE_F90_INTEGER4 */
 #
 #/* Whether we have Fortran 90 $ofc_fortran_type or not */
-#/* #undef OPAL_HAVE_F90_INTEGER8 */
+#/* #undef OMPI_HAVE_F90_INTEGER8 */
 #
 #/* Whether we have Fortran 90 $ofc_fortran_type or not */
-#/* #undef OPAL_HAVE_F90_LOGICAL */
+#/* #undef OMPI_HAVE_F90_LOGICAL */
 #
 #/* Whether we have Fortran 90 $ofc_fortran_type or not */
-#/* #undef OPAL_HAVE_F90_REAL */
+#/* #undef OMPI_HAVE_F90_REAL */
 #
 #/* Whether we have Fortran 90 $ofc_fortran_type or not */
-#/* #undef OPAL_HAVE_F90_REAL16 */
+#/* #undef OMPI_HAVE_F90_REAL16 */
 #
 #/* Whether we have Fortran 90 $ofc_fortran_type or not */
-#/* #undef OPAL_HAVE_F90_REAL2 */
+#/* #undef OMPI_HAVE_F90_REAL2 */
 #
 #/* Whether we have Fortran 90 $ofc_fortran_type or not */
-#/* #undef OPAL_HAVE_F90_REAL4 */
+#/* #undef OMPI_HAVE_F90_REAL4 */
 #
 #/* Whether we have Fortran 90 $ofc_fortran_type or not */
-#/* #undef OPAL_HAVE_F90_REAL8 */
+#/* #undef OMPI_HAVE_F90_REAL8 */
 #
 
 ###########################################################################################
@@ -1729,127 +1729,127 @@ SET (PACKAGE_VERSION ${VERSION_STRING})
 #
 #/* A bogus type that allows us to have sentinel type values that are still
 #   valid */
-#/* #undef opal_fortran_bogus_type_t */
+#/* #undef ompi_fortran_bogus_type_t */
 #IF(WIN32)
-#  SET(opal_fortran_bogus_type_t 1)
-#  SET(opal_fortran_bogus_type_t_STRING "int")
+#  SET(ompi_fortran_bogus_type_t 1)
+#  SET(ompi_fortran_bogus_type_t_STRING "int")
 #ENDIF(WIN32)
 #
 #/* C type corresponding to Fortran 77 COMPLEX*16 */
-#/* #undef opal_fortran_complex16_t */
+#/* #undef ompi_fortran_complex16_t */
 #IF(WIN32)
-#  SET(opal_fortran_complex16_t 1)
-#  SET(opal_fortran_complex16_t_STRING "opal_fortran_bogus_type_t")
+#  SET(ompi_fortran_complex16_t 1)
+#  SET(ompi_fortran_complex16_t_STRING "ompi_fortran_bogus_type_t")
 #ENDIF(WIN32)
 ##
 ##/* C type corresponding to Fortran 77 COMPLEX*32 */
-##/* #undef opal_fortran_complex32_t */
+##/* #undef ompi_fortran_complex32_t */
 #IF(WIN32)
-#  SET(opal_fortran_complex32_t 1)
-#  SET(opal_fortran_complex32_t_STRING "opal_fortran_bogus_type_t")
+#  SET(ompi_fortran_complex32_t 1)
+#  SET(ompi_fortran_complex32_t_STRING "ompi_fortran_bogus_type_t")
 #ENDIF(WIN32)
 ##
 ##/* C type corresponding to Fortran 77 COMPLEX*8 */
-##/* #undef opal_fortran_complex8_t */
+##/* #undef ompi_fortran_complex8_t */
 #IF(WIN32)
-#  SET(opal_fortran_complex8_t 1)
-#  SET(opal_fortran_complex8_t_STRING "opal_fortran_bogus_type_t")
+#  SET(ompi_fortran_complex8_t 1)
+#  SET(ompi_fortran_complex8_t_STRING "ompi_fortran_bogus_type_t")
 #ENDIF(WIN32)
 ##
 ##/* C type corresponding to Fortran 77 COMPLEX */
-##/* #undef opal_fortran_complex_t */
+##/* #undef ompi_fortran_complex_t */
 #IF(WIN32)
-#  SET(opal_fortran_complex_t 1)
-#  SET(opal_fortran_complex_t_STRING "opal_fortran_bogus_type_t")
+#  SET(ompi_fortran_complex_t 1)
+#  SET(ompi_fortran_complex_t_STRING "ompi_fortran_bogus_type_t")
 #ENDIF(WIN32)
 ##
 ##/* C type corresponding to Fortran 77 DOUBLE PRECISION */
-##/* #undef opal_fortran_double_precision_t */
+##/* #undef ompi_fortran_double_precision_t */
 #IF(WIN32)
-#  SET(opal_fortran_double_precision_t 1)
-#  SET(opal_fortran_double_precision_t_STRING "opal_fortran_bogus_type_t")
+#  SET(ompi_fortran_double_precision_t 1)
+#  SET(ompi_fortran_double_precision_t_STRING "ompi_fortran_bogus_type_t")
 #ENDIF(WIN32)
 ##
 ##/* C type corresponding to Fortran 77 INTEGER*16 */
-##/* #undef opal_fortran_integer16_t */
+##/* #undef ompi_fortran_integer16_t */
 #IF(WIN32)
-#  SET(opal_fortran_integer16_t 1)
-#  SET(opal_fortran_integer16_t_STRING "opal_fortran_bogus_type_t")
+#  SET(ompi_fortran_integer16_t 1)
+#  SET(ompi_fortran_integer16_t_STRING "ompi_fortran_bogus_type_t")
 #ENDIF(WIN32)
 ##
 ##/* C type corresponding to Fortran 77 INTEGER*1 */
-##/* #undef opal_fortran_integer1_t */
+##/* #undef ompi_fortran_integer1_t */
 #IF(WIN32)
-#  SET(opal_fortran_integer1_t 1)
-#  SET(opal_fortran_integer1_t_STRING "opal_fortran_bogus_type_t")
+#  SET(ompi_fortran_integer1_t 1)
+#  SET(ompi_fortran_integer1_t_STRING "ompi_fortran_bogus_type_t")
 #ENDIF(WIN32)
 ##
 ##/* C type corresponding to Fortran 77 INTEGER*2 */
-##/* #undef opal_fortran_integer2_t */
+##/* #undef ompi_fortran_integer2_t */
 #IF(WIN32)
-#  SET(opal_fortran_integer2_t 1)
-#  SET(opal_fortran_integer2_t_STRING "opal_fortran_bogus_type_t")
+#  SET(ompi_fortran_integer2_t 1)
+#  SET(ompi_fortran_integer2_t_STRING "ompi_fortran_bogus_type_t")
 #ENDIF(WIN32)
 ##
 ##/* C type corresponding to Fortran 77 INTEGER*4 */
-##/* #undef opal_fortran_integer4_t */
+##/* #undef ompi_fortran_integer4_t */
 #IF(WIN32)
-#  SET(opal_fortran_integer4_t 1)
-#  SET(opal_fortran_integer4_t_STRING "opal_fortran_bogus_type_t")
+#  SET(ompi_fortran_integer4_t 1)
+#  SET(ompi_fortran_integer4_t_STRING "ompi_fortran_bogus_type_t")
 #ENDIF(WIN32)
 ##
 ##/* C type corresponding to Fortran 77 INTEGER*8 */
-##/* #undef opal_fortran_integer8_t */
+##/* #undef ompi_fortran_integer8_t */
 #IF(WIN32)
-#  SET(opal_fortran_integer8_t 1)
-#  SET(opal_fortran_integer8_t_STRING "opal_fortran_bogus_type_t")
+#  SET(ompi_fortran_integer8_t 1)
+#  SET(ompi_fortran_integer8_t_STRING "ompi_fortran_bogus_type_t")
 #ENDIF(WIN32)
 ##
 ##/* C type corresponding to Fortran 77 INTEGER */
-##/* #undef opal_fortran_integer_t */
+##/* #undef ompi_fortran_integer_t */
 #IF(WIN32)
-#  SET(opal_fortran_integer_t 1)
-#  SET(opal_fortran_integer_t_STRING "opal_fortran_bogus_type_t")
+#  SET(ompi_fortran_integer_t 1)
+#  SET(ompi_fortran_integer_t_STRING "ompi_fortran_bogus_type_t")
 #ENDIF(WIN32)
 ##
 ##/* C type corresponding to Fortran 77 LOGICAL */
-##/* #undef opal_fortran_logical_t */
+##/* #undef ompi_fortran_logical_t */
 #IF(WIN32)
-#  SET(opal_fortran_logical_t 1)
-#  SET(opal_fortran_logical_t_STRING "opal_fortran_bogus_type_t")
+#  SET(ompi_fortran_logical_t 1)
+#  SET(ompi_fortran_logical_t_STRING "ompi_fortran_bogus_type_t")
 #ENDIF(WIN32)
 ##
 ##/* C type corresponding to Fortran 77 REAL*16 */
-##/* #undef opal_fortran_real16_t */
+##/* #undef ompi_fortran_real16_t */
 #IF(WIN32)
-#  SET(opal_fortran_real16_t 1)
-#  SET(opal_fortran_real16_t_STRING "opal_fortran_bogus_type_t")
+#  SET(ompi_fortran_real16_t 1)
+#  SET(ompi_fortran_real16_t_STRING "ompi_fortran_bogus_type_t")
 #ENDIF(WIN32)
 ##
 ##/* C type corresponding to Fortran 77 REAL*2 */
-##/* #undef opal_fortran_real2_t */
+##/* #undef ompi_fortran_real2_t */
 #IF(WIN32)
-#  SET(opal_fortran_real2_t 1)
-#  SET(opal_fortran_real2_t_STRING "opal_fortran_bogus_type_t")
+#  SET(ompi_fortran_real2_t 1)
+#  SET(ompi_fortran_real2_t_STRING "ompi_fortran_bogus_type_t")
 #ENDIF(WIN32)
 ##
 ##/* C type corresponding to Fortran 77 REAL*4 */
-##/* #undef opal_fortran_real4_t */
+##/* #undef ompi_fortran_real4_t */
 #IF(WIN32)
-#  SET(opal_fortran_real4_t 1)
-#  SET(opal_fortran_real4_t_STRING "opal_fortran_bogus_type_t")
+#  SET(ompi_fortran_real4_t 1)
+#  SET(ompi_fortran_real4_t_STRING "ompi_fortran_bogus_type_t")
 #ENDIF(WIN32)
 ##
 ##/* C type corresponding to Fortran 77 REAL*8 */
-##/* #undef opal_fortran_real8_t */
+##/* #undef ompi_fortran_real8_t */
 #IF(WIN32)
-#  SET(opal_fortran_real8_t 1)
-#  SET(opal_fortran_real8_t_STRING "opal_fortran_bogus_type_t")
+#  SET(ompi_fortran_real8_t 1)
+#  SET(ompi_fortran_real8_t_STRING "ompi_fortran_bogus_type_t")
 #ENDIF(WIN32)
 ##
 ##/* C type corresponding to Fortran 77 REAL */
-##/* #undef opal_fortran_real_t */
+##/* #undef ompi_fortran_real_t */
 #IF(WIN32)
-#  SET(opal_fortran_real_t 1)
-#  SET(opal_fortran_real_t_STRING "opal_fortran_bogus_type_t")
+#  SET(ompi_fortran_real_t 1)
+#  SET(ompi_fortran_real_t_STRING "ompi_fortran_bogus_type_t")
 #ENDIF(WIN32)
