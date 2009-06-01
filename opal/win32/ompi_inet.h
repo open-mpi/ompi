@@ -19,12 +19,18 @@
 #ifndef OMPI_INET_H
 #define OMPI_INET_H
 
+#include "opal_config.h"
+
+#ifndef OMPI_WIN_COMPAT_H
+#error This file is supposed to be included only from win_compat.h
+#endif  /* OMPI_WIN_COMPAT_H */
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
 OPAL_DECLSPEC int inet_pton(int af, const char *src, void *dst);
+
 OPAL_DECLSPEC const char *inet_ntop(int af, const void *src, char *dst, size_t size);
 
 #if defined(c_plusplus) || defined(__cplusplus)
