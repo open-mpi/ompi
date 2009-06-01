@@ -832,6 +832,9 @@
 /* Whether user wants PTY support or not */
 #define OPAL_ENABLE_PTY_SUPPORT ${OPAL_ENABLE_PTY_SUPPORT}
 
+/* MPI Extended Interface Components */
+#define OMPI_EXT_COMPONENTS "${OMPI_EXT_COMPONENTS}"
+
 /* OMPI underlying F77 compiler */
 #define OMPI_F77 "${CMAKE_Fortran_COMPILER}"
 
