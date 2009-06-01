@@ -431,9 +431,10 @@ typedef int (MPI_Grequest_cancel_function)(void *, int);
 #define MPI_SEEK_CUR               602
 #define MPI_SEEK_END               604
 
-#endif /* #if OMPI_PROVIDE_MPI_FILE_INTERFACE */
+/* Max data representation length */
+#define MPI_MAX_DATAREP_STRING OPAL_MAX_DATAREP_STRING 
 
-#define MPI_MAX_DATAREP_STRING OPAL_MAX_DATAREP_STRING /* max data representation length */
+#endif /* #if OMPI_PROVIDE_MPI_FILE_INTERFACE */
 
 /*
  * MPI-2 One-Sided Communications asserts
