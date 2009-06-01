@@ -7,8 +7,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 sources = \
 	routed_cm.h \
 	routed_cm.c \
