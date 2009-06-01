@@ -19,8 +19,8 @@
 
 #include "opal_config.h"
 
+#include "opal/win32/ompi_inet.h"
 #include "opal/util/output.h"
-#include "ompi_inet.h"
 
 /* 
  * convert from presentation format (which usually means ASCII printable)
@@ -31,8 +31,7 @@
  *    0 if the address wasn't valid (`dst' is untouched in this case)
  *    -1 if some other error occurred (`dst' is untouched in this case, too)
  */
-static int
-inet_pton(int af, const char *src, void *dst)
+int inet_pton(int af, const char *src, void *dst)
 {
     int addr_len;
     struct sockaddr sa;
@@ -78,8 +77,7 @@ inet_pton(int af, const char *src, void *dst)
  * return:
  *    pointer to presentation format address (`dst'), or NULL.
  */
-static const char *
-inet_ntop(int af, const void *src, char *dst, size_t size)
+const char *inet_ntop(int af, const void *src, char *dst, size_t size)
 {
     int addr_len;
     struct sockaddr sa;
