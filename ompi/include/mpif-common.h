@@ -75,7 +75,7 @@
       integer MPI_VERSION, MPI_SUBVERSION
 
       parameter (MPI_VERSION=2)
-      parameter (MPI_SUBVERSION=0)
+      parameter (MPI_SUBVERSION=1)
 !
 !     Miscellaneous constants
 !
