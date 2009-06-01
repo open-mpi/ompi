@@ -53,8 +53,8 @@ using namespace ompi_info;
 // Private variables - set some reasonable screen size defaults
 //
 
-static int centerpoint = 24;
-static int screen_width = 78;
+static unsigned int centerpoint = 24;
+static unsigned int screen_width = 78;
 
 // 
 // Prints the passed strings in a pretty or parsable format.
@@ -121,9 +121,8 @@ void ompi_info::out(const string& pretty_message, const string &plain_message,
     string v = local_value;
     string filler;
 
-    int num_spaces = (int)(centerpoint - pretty_message.length());
-    if (num_spaces > 0) {
-      spaces = string(num_spaces, ' ');
+    if (centerpoint > pretty_message.length()) {
+      spaces = string(centerpoint - pretty_message.length(), ' ');
     }
 
     max_value_width = screen_width - spaces.length() -
