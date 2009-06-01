@@ -27,7 +27,7 @@
  * Define MACROS to take account of different size of MPI_Fint from int
  */
 
-#if OPAL_SIZEOF_FORTRAN_INTEGER == SIZEOF_INT
+#if OMPI_SIZEOF_FORTRAN_INTEGER == SIZEOF_INT
   #define OMPI_ARRAY_NAME_DECL(a)
   #define OMPI_2_DIM_ARRAY_NAME_DECL(a, dim2)
   #define OMPI_SINGLE_NAME_DECL(a)
@@ -43,7 +43,7 @@
   #define OMPI_SINGLE_INT_2_FINT(in)
   #define OMPI_ARRAY_INT_2_FINT(in, n)
 
-#elif OPAL_SIZEOF_FORTRAN_INTEGER > SIZEOF_INT
+#elif OMPI_SIZEOF_FORTRAN_INTEGER > SIZEOF_INT
   #define OMPI_ARRAY_NAME_DECL(a) int *c_##a
   #define OMPI_2_DIM_ARRAY_NAME_DECL(a, dim2) int (*c_##a)[dim2], dim2_index
   #define OMPI_SINGLE_NAME_DECL(a) int c_##a
@@ -156,7 +156,7 @@
  * Define MACROS to take account of different size of logical from int
  */
 
-#if OPAL_SIZEOF_FORTRAN_LOGICAL == SIZEOF_INT
+#if OMPI_SIZEOF_FORTRAN_LOGICAL == SIZEOF_INT
 #  define OMPI_LOGICAL_NAME_DECL(in)               /* Not needed for int==logical */
 #  define OMPI_LOGICAL_NAME_CONVERT(in)        in  /* Not needed for int==logical */
 #  define OMPI_LOGICAL_SINGLE_NAME_CONVERT(in) in /* Not needed for int==logical */
@@ -165,7 +165,7 @@
 #  define OMPI_ARRAY_LOGICAL_2_INT_ALLOC(in,n)     /* Not needed for int==logical */
 #  define OMPI_ARRAY_LOGICAL_2_INT_CLEANUP(in)     /* Not needed for int==logical */
 
-#  if OPAL_FORTRAN_VALUE_TRUE == 1
+#  if OMPI_FORTRAN_VALUE_TRUE == 1
 #    define OMPI_FORTRAN_MUST_CONVERT_LOGICAL_2_INT    0
 #    define OMPI_LOGICAL_2_INT(a) a
 #    define OMPI_INT_2_LOGICAL(a) a
@@ -175,7 +175,7 @@
 #  else
 #    define OMPI_FORTRAN_MUST_CONVERT_LOGICAL_2_INT    1
 #    define OMPI_LOGICAL_2_INT(a) ((a)==0? 0 : 1)
-#    define OMPI_INT_2_LOGICAL(a) ((a)==0? 0 : OPAL_FORTRAN_VALUE_TRUE)
+#    define OMPI_INT_2_LOGICAL(a) ((a)==0? 0 : OMPI_FORTRAN_VALUE_TRUE)
 #    define OMPI_SINGLE_INT_2_LOGICAL(a) *a=OMPI_INT_2_LOGICAL(OMPI_LOGICAL_NAME_CONVERT(*a))
 #    define OMPI_ARRAY_LOGICAL_2_INT(in, n) do { \
        int converted_n = (int)(n); \
@@ -208,13 +208,13 @@
 #  define OMPI_ARRAY_LOGICAL_2_INT_CLEANUP(in) \
       free(OMPI_LOGICAL_ARRAY_NAME_CONVERT(in))
 
-#  if OPAL_FORTRAN_VALUE_TRUE == 1
+#  if OMPI_FORTRAN_VALUE_TRUE == 1
 #    define OMPI_LOGICAL_2_INT(a) (int)a
 #    define OMPI_INT_2_LOGICAL(a) (MPI_Flogical)a
 #    define OMPI_SINGLE_INT_2_LOGICAL(a) *a=(OMPI_INT_2_LOGICAL(OMPI_LOGICAL_NAME_CONVERT(a)))
 #  else
 #    define OMPI_LOGICAL_2_INT(a) ((a)==0? 0 : 1)
-#    define OMPI_INT_2_LOGICAL(a) ((a)==0? 0 : OPAL_FORTRAN_VALUE_TRUE)
+#    define OMPI_INT_2_LOGICAL(a) ((a)==0? 0 : OMPI_FORTRAN_VALUE_TRUE)
 #    define OMPI_SINGLE_INT_2_LOGICAL(a) *a=(OMPI_INT_2_LOGICAL(OMPI_LOGICAL_NAME_CONVERT(a)))
 #  endif
 #  define OMPI_ARRAY_LOGICAL_2_INT(in, n) do { \
@@ -231,7 +231,7 @@
        } \
      }  while (0) \
      /* free(OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)) * No Need to free, here */
-#endif /* OPAL_SIZEOF_FORTRAN_LOGICAL */
+#endif /* OMPI_SIZEOF_FORTRAN_LOGICAL */
 
 
 #endif /* OMPI_FINT_2_INT_H */

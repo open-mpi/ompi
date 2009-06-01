@@ -56,31 +56,31 @@
 
 #define OMPI_OP_HANDLER_FORTRAN_INTEGER_INTRINSIC(name) \
   void ompi_op_base_##name##_fortran_integer OMPI_OP_PROTO;
-#if OPAL_HAVE_FORTRAN_INTEGER1
+#if OMPI_HAVE_FORTRAN_INTEGER1
 #define OMPI_OP_HANDLER_FORTRAN_INTEGER1(name) \
   void ompi_op_base_##name##_fortran_integer1 OMPI_OP_PROTO;
 #else
 #define OMPI_OP_HANDLER_FORTRAN_INTEGER1(name)
 #endif
-#if OPAL_HAVE_FORTRAN_INTEGER2
+#if OMPI_HAVE_FORTRAN_INTEGER2
 #define OMPI_OP_HANDLER_FORTRAN_INTEGER2(name) \
   void ompi_op_base_##name##_fortran_integer2 OMPI_OP_PROTO;
 #else
 #define OMPI_OP_HANDLER_FORTRAN_INTEGER2(name)
 #endif
-#if OPAL_HAVE_FORTRAN_INTEGER4
+#if OMPI_HAVE_FORTRAN_INTEGER4
 #define OMPI_OP_HANDLER_FORTRAN_INTEGER4(name) \
   void ompi_op_base_##name##_fortran_integer4 OMPI_OP_PROTO;
 #else
 #define OMPI_OP_HANDLER_FORTRAN_INTEGER4(name)
 #endif
-#if OPAL_HAVE_FORTRAN_INTEGER8
+#if OMPI_HAVE_FORTRAN_INTEGER8
 #define OMPI_OP_HANDLER_FORTRAN_INTEGER8(name) \
   void ompi_op_base_##name##_fortran_integer8 OMPI_OP_PROTO;
 #else
 #define OMPI_OP_HANDLER_FORTRAN_INTEGER8(name)
 #endif
-#if OPAL_HAVE_FORTRAN_INTEGER16
+#if OMPI_HAVE_FORTRAN_INTEGER16
 #define OMPI_OP_HANDLER_FORTRAN_INTEGER16(name) \
   void ompi_op_base_##name##_fortran_integer16 OMPI_OP_PROTO;
 #else
@@ -102,25 +102,25 @@
   void ompi_op_base_##name##_fortran_real OMPI_OP_PROTO; \
   void ompi_op_base_##name##_fortran_double_precision OMPI_OP_PROTO; \
   void ompi_op_base_##name##_long_double OMPI_OP_PROTO;
-#if OPAL_HAVE_FORTRAN_REAL2
+#if OMPI_HAVE_FORTRAN_REAL2
 #define OMPI_OP_HANDLER_FLOATING_POINT_REAL2(name) \
   void ompi_op_base_##name##_fortran_real2 OMPI_OP_PROTO;
 #else
 #define OMPI_OP_HANDLER_FLOATING_POINT_REAL2(name)
 #endif
-#if OPAL_HAVE_FORTRAN_REAL4
+#if OMPI_HAVE_FORTRAN_REAL4
 #define OMPI_OP_HANDLER_FLOATING_POINT_REAL4(name) \
   void ompi_op_base_##name##_fortran_real4 OMPI_OP_PROTO;
 #else
 #define OMPI_OP_HANDLER_FLOATING_POINT_REAL4(name)
 #endif
-#if OPAL_HAVE_FORTRAN_REAL8
+#if OMPI_HAVE_FORTRAN_REAL8
 #define OMPI_OP_HANDLER_FLOATING_POINT_REAL8(name) \
   void ompi_op_base_##name##_fortran_real8 OMPI_OP_PROTO;
 #else
 #define OMPI_OP_HANDLER_FLOATING_POINT_REAL8(name)
 #endif
-#if OPAL_HAVE_FORTRAN_REAL16
+#if OMPI_HAVE_FORTRAN_REAL16
 #define OMPI_OP_HANDLER_FLOATING_POINT_REAL16(name) \
   void ompi_op_base_##name##_fortran_real16 OMPI_OP_PROTO;
 #else
@@ -140,31 +140,31 @@
 
 /* Complex */
 
-#if OPAL_HAVE_FORTRAN_REAL
+#if OMPI_HAVE_FORTRAN_REAL
 #define OMPI_OP_HANDLER_COMPLEX_INTRINSIC(name) \
   void ompi_op_base_##name##_fortran_complex OMPI_OP_PROTO;
 #else
 #define OMPI_OP_HANDLER_COMPLEX_INTRINSIC(name)
 #endif
-#if OPAL_HAVE_FORTRAN_DOUBLE_PRECISION
+#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
 #define OMPI_OP_HANDLER_DOUBLE_COMPLEX_INTRINSIC(name) \
   void ompi_op_base_##name##_fortran_double_complex OMPI_OP_PROTO;
 #else
 #define OMPI_OP_HANDLER_DOUBLE_COMPLEX_INTRINSIC(name)
 #endif
-#if OPAL_HAVE_FORTRAN_REAL4
+#if OMPI_HAVE_FORTRAN_REAL4
 #define OMPI_OP_HANDLER_COMPLEX8(name) \
   void ompi_op_base_##name##_fortran_complex8 OMPI_OP_PROTO;
 #else
 #define OMPI_OP_HANDLER_COMPLEX8(name)
 #endif
-#if OPAL_HAVE_FORTRAN_REAL8
+#if OMPI_HAVE_FORTRAN_REAL8
 #define OMPI_OP_HANDLER_COMPLEX16(name) \
   void ompi_op_base_##name##_fortran_complex16 OMPI_OP_PROTO;
 #else
 #define OMPI_OP_HANDLER_COMPLEX16(name)
 #endif
-#if OPAL_HAVE_FORTRAN_REAL16
+#if OMPI_HAVE_FORTRAN_REAL16
 #define OMPI_OP_HANDLER_COMPLEX32(name) \
   void ompi_op_base_##name##_fortran_complex32 OMPI_OP_PROTO;
 #else
@@ -311,31 +311,31 @@ BEGIN_C_DECLS
 
 #define OMPI_OP_3BUFF_HANDLER_FORTRAN_INTEGER_INTRINSIC(name) \
   void ompi_op_base_3buff_##name##_fortran_integer OMPI_OP_PROTO_3BUF;
-#if OPAL_HAVE_FORTRAN_INTEGER1
+#if OMPI_HAVE_FORTRAN_INTEGER1
 #define OMPI_OP_3BUFF_HANDLER_FORTRAN_INTEGER1(name) \
   void ompi_op_base_3buff_##name##_fortran_integer1 OMPI_OP_PROTO_3BUF;
 #else
 #define OMPI_OP_3BUFF_HANDLER_FORTRAN_INTEGER1(name)
 #endif
-#if OPAL_HAVE_FORTRAN_INTEGER2
+#if OMPI_HAVE_FORTRAN_INTEGER2
 #define OMPI_OP_3BUFF_HANDLER_FORTRAN_INTEGER2(name) \
   void ompi_op_base_3buff_##name##_fortran_integer2 OMPI_OP_PROTO_3BUF;
 #else
 #define OMPI_OP_3BUFF_HANDLER_FORTRAN_INTEGER2(name)
 #endif
-#if OPAL_HAVE_FORTRAN_INTEGER4
+#if OMPI_HAVE_FORTRAN_INTEGER4
 #define OMPI_OP_3BUFF_HANDLER_FORTRAN_INTEGER4(name) \
   void ompi_op_base_3buff_##name##_fortran_integer4 OMPI_OP_PROTO_3BUF;
 #else
 #define OMPI_OP_3BUFF_HANDLER_FORTRAN_INTEGER4(name)
 #endif
-#if OPAL_HAVE_FORTRAN_INTEGER8
+#if OMPI_HAVE_FORTRAN_INTEGER8
 #define OMPI_OP_3BUFF_HANDLER_FORTRAN_INTEGER8(name) \
   void ompi_op_base_3buff_##name##_fortran_integer8 OMPI_OP_PROTO_3BUF;
 #else
 #define OMPI_OP_3BUFF_HANDLER_FORTRAN_INTEGER8(name)
 #endif
-#if OPAL_HAVE_FORTRAN_INTEGER16
+#if OMPI_HAVE_FORTRAN_INTEGER16
 #define OMPI_OP_3BUFF_HANDLER_FORTRAN_INTEGER16(name) \
   void ompi_op_base_3buff_##name##_fortran_integer16 OMPI_OP_PROTO_3BUF;
 #else
@@ -357,25 +357,25 @@ BEGIN_C_DECLS
   void ompi_op_base_3buff_##name##_fortran_real OMPI_OP_PROTO_3BUF; \
   void ompi_op_base_3buff_##name##_fortran_double_precision OMPI_OP_PROTO_3BUF; \
   void ompi_op_base_3buff_##name##_long_double OMPI_OP_PROTO_3BUF;
-#if OPAL_HAVE_FORTRAN_REAL2
+#if OMPI_HAVE_FORTRAN_REAL2
 #define OMPI_OP_3BUFF_HANDLER_FLOATING_POINT_REAL2(name) \
   void ompi_op_base_3buff_##name##_fortran_real2 OMPI_OP_PROTO_3BUF;
 #else
 #define OMPI_OP_3BUFF_HANDLER_FLOATING_POINT_REAL2(name)
 #endif
-#if OPAL_HAVE_FORTRAN_REAL4
+#if OMPI_HAVE_FORTRAN_REAL4
 #define OMPI_OP_3BUFF_HANDLER_FLOATING_POINT_REAL4(name) \
   void ompi_op_base_3buff_##name##_fortran_real4 OMPI_OP_PROTO_3BUF;
 #else
 #define OMPI_OP_3BUFF_HANDLER_FLOATING_POINT_REAL4(name)
 #endif
-#if OPAL_HAVE_FORTRAN_REAL8
+#if OMPI_HAVE_FORTRAN_REAL8
 #define OMPI_OP_3BUFF_HANDLER_FLOATING_POINT_REAL8(name) \
   void ompi_op_base_3buff_##name##_fortran_real8 OMPI_OP_PROTO_3BUF;
 #else
 #define OMPI_OP_3BUFF_HANDLER_FLOATING_POINT_REAL8(name)
 #endif
-#if OPAL_HAVE_FORTRAN_REAL16
+#if OMPI_HAVE_FORTRAN_REAL16
 #define OMPI_OP_3BUFF_HANDLER_FLOATING_POINT_REAL16(name) \
   void ompi_op_base_3buff_##name##_fortran_real16 OMPI_OP_PROTO_3BUF;
 #else
@@ -395,31 +395,31 @@ BEGIN_C_DECLS
 
 /* Complex */
 
-#if OPAL_HAVE_FORTRAN_REAL
+#if OMPI_HAVE_FORTRAN_REAL
 #define OMPI_OP_3BUFF_HANDLER_COMPLEX_INTRINSIC(name) \
   void ompi_op_base_3buff_##name##_fortran_complex OMPI_OP_PROTO_3BUF;
 #else
 #define OMPI_OP_3BUFF_HANDLER_COMPLEX_INTRINSIC(name)
 #endif
-#if OPAL_HAVE_FORTRAN_DOUBLE_PRECISION
+#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
 #define OMPI_OP_3BUFF_HANDLER_DOUBLE_COMPLEX_INTRINSIC(name) \
   void ompi_op_base_3buff_##name##_fortran_double_complex OMPI_OP_PROTO_3BUF;
 #else
 #define OMPI_OP_3BUFF_HANDLER_DOUBLE_COMPLEX_INTRINSIC(name)
 #endif
-#if OPAL_HAVE_FORTRAN_REAL4
+#if OMPI_HAVE_FORTRAN_REAL4
 #define OMPI_OP_3BUFF_HANDLER_COMPLEX8(name) \
   void ompi_op_base_3buff_##name##_fortran_complex8 OMPI_OP_PROTO_3BUF;
 #else
 #define OMPI_OP_3BUFF_HANDLER_COMPLEX8(name)
 #endif
-#if OPAL_HAVE_FORTRAN_REAL8
+#if OMPI_HAVE_FORTRAN_REAL8
 #define OMPI_OP_3BUFF_HANDLER_COMPLEX16(name) \
   void ompi_op_base_3buff_##name##_fortran_complex16 OMPI_OP_PROTO_3BUF;
 #else
 #define OMPI_OP_3BUFF_HANDLER_COMPLEX16(name)
 #endif
-#if OPAL_HAVE_FORTRAN_REAL16
+#if OMPI_HAVE_FORTRAN_REAL16
 #define OMPI_OP_3BUFF_HANDLER_COMPLEX32(name) \
   void ompi_op_base_3buff_##name##_fortran_complex32 OMPI_OP_PROTO_3BUF;
 #else

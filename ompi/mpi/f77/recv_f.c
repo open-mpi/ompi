@@ -64,7 +64,7 @@ void mpi_recv_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
                 MPI_Fint *status, MPI_Fint *ierr)
 {
    MPI_Status *c_status;
-#if OPAL_SIZEOF_FORTRAN_INTEGER != SIZEOF_INT
+#if OMPI_SIZEOF_FORTRAN_INTEGER != SIZEOF_INT
    MPI_Status c_status2;
 #endif
    MPI_Comm c_comm = MPI_Comm_f2c(*comm);
@@ -78,7 +78,7 @@ void mpi_recv_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
          translation necessary -- let the underlying functions write
          directly into the Fortran status */
 
-#if OPAL_SIZEOF_FORTRAN_INTEGER == SIZEOF_INT
+#if OMPI_SIZEOF_FORTRAN_INTEGER == SIZEOF_INT
       c_status = (MPI_Status *) status;
 #else
       c_status = &c_status2;
@@ -90,7 +90,7 @@ void mpi_recv_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
                                     c_type, OMPI_FINT_2_INT(*source), 
                                     OMPI_FINT_2_INT(*tag), c_comm,
                                     c_status));
-#if OPAL_SIZEOF_FORTRAN_INTEGER != SIZEOF_INT
+#if OMPI_SIZEOF_FORTRAN_INTEGER != SIZEOF_INT
    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr) &&
        MPI_STATUS_IGNORE != c_status) {
        MPI_Status_c2f(c_status, status);

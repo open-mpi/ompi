@@ -269,8 +269,8 @@ copy_cxx_bool_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count,
 
 #define FORTRAN_LOGICAL_COPY_LOOP(TYPE)                                \
     for( i = 0; i < count; i++ ) {                                     \
-        opal_fortran_logical_t *to_real = (opal_fortran_logical_t*) to; \
-        *to_real = *((TYPE*) from) == 0 ? 0 : OPAL_FORTRAN_VALUE_TRUE; \
+        ompi_fortran_logical_t *to_real = (ompi_fortran_logical_t*) to; \
+        *to_real = *((TYPE*) from) == 0 ? 0 : OMPI_FORTRAN_VALUE_TRUE; \
         to += to_extent;                                               \
         from += from_extent;                                           \
     }
@@ -298,13 +298,13 @@ copy_fortran_logical_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count,
         }
     }
 
-    datatype_check( "logical", sizeof(opal_fortran_logical_t), 
-                    sizeof(opal_fortran_logical_t), &count,
+    datatype_check( "logical", sizeof(ompi_fortran_logical_t), 
+                    sizeof(ompi_fortran_logical_t), &count,
                     from, from_len, from_extent,
                     to, to_length, to_extent);
 
-    if ((to_extent != sizeof(opal_fortran_logical_t) || 
-         from_extent != sizeof(opal_fortran_logical_t)) ||
+    if ((to_extent != sizeof(ompi_fortran_logical_t) || 
+         from_extent != sizeof(ompi_fortran_logical_t)) ||
         ((pConvertor->remoteArch & OPAL_ARCH_LOGICALISxx) != 
          (ompi_mpi_local_arch & OPAL_ARCH_LOGICALISxx))) {
         switch (pConvertor->remoteArch & OPAL_ARCH_LOGICALISxx) {
@@ -319,7 +319,7 @@ copy_fortran_logical_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count,
             break;
         }
     } else {
-        MEMCPY( to, from, count * sizeof(opal_fortran_logical_t) );                    
+        MEMCPY( to, from, count * sizeof(ompi_fortran_logical_t) );                    
     }
 
     *advance = count * from_extent;

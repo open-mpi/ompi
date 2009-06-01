@@ -87,43 +87,43 @@
 #undef OPAL_MAX_PROCESSOR_NAME
 
 /* Whether we have FORTRAN LOGICAL*1 or not */
-#undef OPAL_HAVE_FORTRAN_LOGICAL1
+#undef OMPI_HAVE_FORTRAN_LOGICAL1
 
 /* Whether we have FORTRAN LOGICAL*2 or not */
-#undef OPAL_HAVE_FORTRAN_LOGICAL2
+#undef OMPI_HAVE_FORTRAN_LOGICAL2
 
 /* Whether we have FORTRAN LOGICAL*4 or not */
-#undef OPAL_HAVE_FORTRAN_LOGICAL4
+#undef OMPI_HAVE_FORTRAN_LOGICAL4
 
 /* Whether we have FORTRAN LOGICAL*8 or not */
-#undef OPAL_HAVE_FORTRAN_LOGICAL8
+#undef OMPI_HAVE_FORTRAN_LOGICAL8
 
 /* Whether we have FORTRAN INTEGER*1 or not */
-#undef OPAL_HAVE_FORTRAN_INTEGER1
+#undef OMPI_HAVE_FORTRAN_INTEGER1
 
 /* Whether we have FORTRAN INTEGER*16 or not */
-#undef OPAL_HAVE_FORTRAN_INTEGER16
+#undef OMPI_HAVE_FORTRAN_INTEGER16
 
 /* Whether we have FORTRAN INTEGER*2 or not */
-#undef OPAL_HAVE_FORTRAN_INTEGER2
+#undef OMPI_HAVE_FORTRAN_INTEGER2
 
 /* Whether we have FORTRAN INTEGER*4 or not */
-#undef OPAL_HAVE_FORTRAN_INTEGER4
+#undef OMPI_HAVE_FORTRAN_INTEGER4
 
 /* Whether we have FORTRAN INTEGER*8 or not */
-#undef OPAL_HAVE_FORTRAN_INTEGER8
+#undef OMPI_HAVE_FORTRAN_INTEGER8
 
 /* Whether we have FORTRAN REAL*16 or not */
-#undef OPAL_HAVE_FORTRAN_REAL16
+#undef OMPI_HAVE_FORTRAN_REAL16
 
 /* Whether we have FORTRAN REAL*2 or not */
-#undef OPAL_HAVE_FORTRAN_REAL2
+#undef OMPI_HAVE_FORTRAN_REAL2
 
 /* Whether we have FORTRAN REAL*4 or not */
-#undef OPAL_HAVE_FORTRAN_REAL4
+#undef OMPI_HAVE_FORTRAN_REAL4
 
 /* Whether we have FORTRAN REAL*8 or not */
-#undef OPAL_HAVE_FORTRAN_REAL8
+#undef OMPI_HAVE_FORTRAN_REAL8
 
 /* Type of MPI_Offset -- has to be defined here and typedef'ed later because mpi.h does not get AC SUBST's */
 #undef OMPI_MPI_OFFSET_TYPE
@@ -166,10 +166,10 @@
 
 /* A  type that allows us to have sentinel type values that are still
    valid */
-#undef opal_fortran_bogus_type_t
+#undef ompi_fortran_bogus_type_t
 
 /* C type corresponding to FORTRAN INTEGER */
-#undef opal_fortran_integer_t
+#undef ompi_fortran_integer_t
 
 /* Whether C compiler supports -fvisibility */
 #undef OPAL_C_HAVE_VISIBILITY
@@ -194,8 +194,8 @@
 #endif
 
 #ifndef MPI_Fint
-/* MPI_Fint is the same as opal_fortran_integer_t */
-#define MPI_Fint opal_fortran_integer_t
+/* MPI_Fint is the same as ompi_fortran_INTEGER_t */
+#define MPI_Fint ompi_fortran_integer_t
 #endif
 
 #endif /* #ifndef OMPI_CONFIG_H */
@@ -768,52 +768,52 @@ OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_cxx_ldblcplex;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_cxx_bool;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_2cplex, ompi_mpi_2dblcplex;
 /* other MPI2 datatypes */
-#if OPAL_HAVE_FORTRAN_LOGICAL1
+#if OMPI_HAVE_FORTRAN_LOGICAL1
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_logical1;
 #endif
-#if OPAL_HAVE_FORTRAN_LOGICAL2
+#if OMPI_HAVE_FORTRAN_LOGICAL2
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_logical2;
 #endif
-#if OPAL_HAVE_FORTRAN_LOGICAL4
+#if OMPI_HAVE_FORTRAN_LOGICAL4
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_logical4;
 #endif
-#if OPAL_HAVE_FORTRAN_LOGICAL8
+#if OMPI_HAVE_FORTRAN_LOGICAL8
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_logical8;
 #endif
-#if OPAL_HAVE_FORTRAN_INTEGER1
+#if OMPI_HAVE_FORTRAN_INTEGER1
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_integer1;
 #endif
-#if OPAL_HAVE_FORTRAN_INTEGER2
+#if OMPI_HAVE_FORTRAN_INTEGER2
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_integer2;
 #endif
-#if OPAL_HAVE_FORTRAN_INTEGER4
+#if OMPI_HAVE_FORTRAN_INTEGER4
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_integer4;
 #endif
-#if OPAL_HAVE_FORTRAN_INTEGER8
+#if OMPI_HAVE_FORTRAN_INTEGER8
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_integer8;
 #endif
-#if OPAL_HAVE_FORTRAN_INTEGER16
+#if OMPI_HAVE_FORTRAN_INTEGER16
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_integer16;
 #endif
-#if OPAL_HAVE_FORTRAN_REAL2
+#if OMPI_HAVE_FORTRAN_REAL2
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_real2;
 #endif
-#if OPAL_HAVE_FORTRAN_REAL4
+#if OMPI_HAVE_FORTRAN_REAL4
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_real4;
 #endif
-#if OPAL_HAVE_FORTRAN_REAL8
+#if OMPI_HAVE_FORTRAN_REAL8
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_real8;
 #endif
-#if OPAL_HAVE_FORTRAN_REAL16
+#if OMPI_HAVE_FORTRAN_REAL16
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_real16;
 #endif
-#if OPAL_HAVE_FORTRAN_REAL4
+#if OMPI_HAVE_FORTRAN_REAL4
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_complex8;
 #endif
-#if OPAL_HAVE_FORTRAN_REAL8
+#if OMPI_HAVE_FORTRAN_REAL8
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_complex16;
 #endif
-#if OPAL_HAVE_FORTRAN_REAL16
+#if OMPI_HAVE_FORTRAN_REAL16
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_complex32;
 #endif
 
@@ -887,53 +887,53 @@ OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 /* Fortran datatype bindings */
 #define MPI_CHARACTER OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_character)
 #define MPI_LOGICAL OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_logic)
-#if OPAL_HAVE_FORTRAN_LOGICAL1
+#if OMPI_HAVE_FORTRAN_LOGICAL1
 #define MPI_LOGICAL1 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_logical1)
 #endif
-#if OPAL_HAVE_FORTRAN_LOGICAL2
+#if OMPI_HAVE_FORTRAN_LOGICAL2
 #define MPI_LOGICAL2 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_logical2)
 #endif
-#if OPAL_HAVE_FORTRAN_LOGICAL4
+#if OMPI_HAVE_FORTRAN_LOGICAL4
 #define MPI_LOGICAL4 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_logical4)
 #endif
-#if OPAL_HAVE_FORTRAN_LOGICAL8
+#if OMPI_HAVE_FORTRAN_LOGICAL8
 #define MPI_LOGICAL8 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_logical8)
 #endif
 #define MPI_INTEGER OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_integer)
-#if OPAL_HAVE_FORTRAN_INTEGER1
+#if OMPI_HAVE_FORTRAN_INTEGER1
 #define MPI_INTEGER1 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_integer1)
 #endif
-#if OPAL_HAVE_FORTRAN_INTEGER2
+#if OMPI_HAVE_FORTRAN_INTEGER2
 #define MPI_INTEGER2 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_integer2)
 #endif
-#if OPAL_HAVE_FORTRAN_INTEGER4
+#if OMPI_HAVE_FORTRAN_INTEGER4
 #define MPI_INTEGER4 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_integer4)
 #endif
-#if OPAL_HAVE_FORTRAN_INTEGER8
+#if OMPI_HAVE_FORTRAN_INTEGER8
 #define MPI_INTEGER8 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_integer8)
 #endif
-#if OPAL_HAVE_FORTRAN_INTEGER16
+#if OMPI_HAVE_FORTRAN_INTEGER16
 #define MPI_INTEGER16 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_integer16)
 #endif
 #define MPI_REAL OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_real)
-#if OPAL_HAVE_FORTRAN_REAL4
+#if OMPI_HAVE_FORTRAN_REAL4
 #define MPI_REAL4 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_real4)
 #endif
-#if OPAL_HAVE_FORTRAN_REAL8
+#if OMPI_HAVE_FORTRAN_REAL8
 #define MPI_REAL8 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_real8)
 #endif
-#if OPAL_HAVE_FORTRAN_REAL16
+#if OMPI_HAVE_FORTRAN_REAL16
 #define MPI_REAL16 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_real16)
 #endif
 #define MPI_DOUBLE_PRECISION OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_dblprec)
 #define MPI_COMPLEX OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_cplex)
-#if OPAL_HAVE_FORTRAN_REAL4
+#if OMPI_HAVE_FORTRAN_REAL4
 #define MPI_COMPLEX8 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_complex8)
 #endif
-#if OPAL_HAVE_FORTRAN_REAL8
+#if OMPI_HAVE_FORTRAN_REAL8
 #define MPI_COMPLEX16 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_complex16)
 #endif
-#if OPAL_HAVE_FORTRAN_REAL16
+#if OMPI_HAVE_FORTRAN_REAL16
 #define MPI_COMPLEX32 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_complex32)
 #endif
 #define MPI_DOUBLE_COMPLEX OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_dblcplex)

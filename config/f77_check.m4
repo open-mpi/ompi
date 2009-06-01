@@ -36,7 +36,7 @@ AC_DEFUN([OMPI_F77_CHECK], [
     ofc_have_type=0
     ofc_type_size=$ac_cv_sizeof_int
     ofc_type_alignment=$ac_cv_sizeof_int
-    ofc_c_type=opal_fortran_bogus_type_t
+    ofc_c_type=ompi_fortran_bogus_type_t
 
     # Only check if we actually want the F77 bindings / have a F77
     # compiler.  This allows us to call this macro, even if there is
@@ -87,27 +87,27 @@ AC_DEFUN([OMPI_F77_CHECK], [
 
     # We always need these defines -- even if we don't have a given type,
     # there are some places in the code where we have to have *something*.
-    AC_DEFINE_UNQUOTED([OPAL_HAVE_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]),
+    AC_DEFINE_UNQUOTED([OMPI_HAVE_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]),
                        [$ofc_have_type], 
                        [Whether we have Fortran 77 $1 or not])
-    AC_DEFINE_UNQUOTED([OPAL_SIZEOF_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]),
+    AC_DEFINE_UNQUOTED([OMPI_SIZEOF_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]),
                        [$ofc_type_size], 
                        [Size of Fortran 77 $1])
-    AC_DEFINE_UNQUOTED([OPAL_ALIGNMENT_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]),
+    AC_DEFINE_UNQUOTED([OMPI_ALIGNMENT_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]),
                        [$ofc_type_alignment], 
                        [Alignment of Fortran 77 $1])
     if test "$3" != ""; then
-        AC_DEFINE_UNQUOTED([opal_fortran_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [A-Z], [a-z])[_t],
+        AC_DEFINE_UNQUOTED([ompi_fortran_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [A-Z], [a-z])[_t],
                            [$ofc_c_type], 
                            [C type corresponding to Fortran 77 $1])
     fi
 
     # Save some in shell variables for later use (e.g., need
-    # OPAL_SIZEOF_FORTRAN_INTEGER in OMPI_F77_GET_FORTRAN_HANDLE_MAX)
-    [OPAL_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_])[_C_TYPE=$ofc_c_type]
-    [OPAL_HAVE_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_])[=$ofc_have_type]
-    [OPAL_SIZEOF_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_])[=$ofc_type_size]
-    [OPAL_ALIGNMENT_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_])[=$ofc_type_alignment]
+    # OMPI_SIZEOF_FORTRAN_INTEGER in OMPI_F77_GET_FORTRAN_HANDLE_MAX)
+    [OMPI_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_])[_C_TYPE=$ofc_c_type]
+    [OMPI_HAVE_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_])[=$ofc_have_type]
+    [OMPI_SIZEOF_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_])[=$ofc_type_size]
+    [OMPI_ALIGNMENT_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_])[=$ofc_type_alignment]
 
     # Clean up
     OMPI_VAR_SCOPE_POP

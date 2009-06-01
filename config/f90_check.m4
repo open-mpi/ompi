@@ -106,14 +106,14 @@ AC_DEFUN([OMPI_F90_CHECK], [
         else
             # If this type has an F77 counterpart, see if it's
             # supported.
-            [ofc_f77_have_type=$OPAL_HAVE_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_])
+            [ofc_f77_have_type=$OMPI_HAVE_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_])
             if test "$ofc_f77_have_type" = "0"; then
                 AC_MSG_WARN([*** Corresponding Fortran 77 type ($1) not supported])
                 AC_MSG_WARN([*** Skipping Fortran 90 type ($1)])
             else
 
                 # Check the size of this type against its F77 counterpart
-                [ofc_f77_sizeof=$OPAL_SIZEOF_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_])
+                [ofc_f77_sizeof=$OMPI_SIZEOF_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_])
                 if test "$ofc_f77_sizeof" != ""; then
                     AC_MSG_CHECKING([if Fortran 77 and 90 type sizes match])
                     if test "$ofc_f77_sizeof" != "$ofc_type_size"; then
@@ -158,15 +158,15 @@ AC_DEFUN([OMPI_F90_CHECK], [
     # AC_DEFINE_UNQUOTED), autoheader won't put them in the
     # AC_CONFIG_HEADER (or AM_CONFIG_HEADER, in our case).
 
-    AC_DEFINE_UNQUOTED([OPAL_HAVE_F90_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]),
+    AC_DEFINE_UNQUOTED([OMPI_HAVE_F90_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]),
                        [$ofc_have_type], 
                        [Whether we have Fortran 90 $ofc_fortran_type or not])
 
     # Save some in shell variables for later use.  Have to use m4
     # functions here (vs. $ompi_upper_var_name, defined above) because
     # these need to be set at autoconf time, not configure time.
-    [OPAL_SIZEOF_F90_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z])[=$ofc_type_size]
-    AC_SUBST([OPAL_SIZEOF_F90_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]))
+    [OMPI_SIZEOF_F90_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z])[=$ofc_type_size]
+    AC_SUBST([OMPI_SIZEOF_F90_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]))
 
     # Clean up
     unset ofc_fortran_type ofc_expected_size ofc_want_range ofc_pretty_name

@@ -60,11 +60,11 @@ int MPI_Type_create_f90_integer(int r, MPI_Datatype *newtype)
      */
 
     if      (r > 38) *newtype = &ompi_mpi_datatype_null.dt;
-#if OPAL_HAVE_F90_INTEGER16
+#if OMPI_HAVE_F90_INTEGER16
     else if (r > 18) *newtype = &ompi_mpi_long_long_int.dt;
 #else
     else if (r > 18) *newtype = &ompi_mpi_datatype_null.dt;
-#endif  /* OPAL_HAVE_F90_INTEGER16 */
+#endif  /* OMPI_HAVE_F90_INTEGER16 */
 #if SIZEOF_LONG > SIZEOF_INT
     else if (r >  9) *newtype = &ompi_mpi_long.dt;
 #else

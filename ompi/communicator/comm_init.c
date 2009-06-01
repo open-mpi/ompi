@@ -70,7 +70,7 @@ int ompi_comm_init(void)
     /* Setup communicator array */
     OBJ_CONSTRUCT(&ompi_mpi_communicators, opal_pointer_array_t); 
     if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_mpi_communicators, 0,
-                                                OPAL_FORTRAN_HANDLE_MAX, 64) ) {
+                                                OMPI_FORTRAN_HANDLE_MAX, 64) ) {
         return OMPI_ERROR;
     }
 

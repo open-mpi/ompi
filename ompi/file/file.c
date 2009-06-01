@@ -64,7 +64,7 @@ int ompi_file_init(void)
 
     OBJ_CONSTRUCT(&ompi_file_f_to_c_table, opal_pointer_array_t); 
     if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_file_f_to_c_table, 0,
-                                                OPAL_FORTRAN_HANDLE_MAX, 64) ) {
+                                                OMPI_FORTRAN_HANDLE_MAX, 64) ) {
         return OMPI_ERROR;
     }
 

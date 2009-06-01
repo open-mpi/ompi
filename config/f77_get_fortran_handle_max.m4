@@ -33,7 +33,7 @@ AC_DEFUN([OMPI_F77_GET_FORTRAN_HANDLE_MAX],[
              # Calculate the number of f's that we need to append to the hex
              # value.  Do one less than we really need becaue we assume the
              # top nybble is 0x7 to avoid sign issues.
-             ompi_numf=`expr $OPAL_SIZEOF_FORTRAN_INTEGER \* 2 - 1`
+             ompi_numf=`expr $OMPI_SIZEOF_FORTRAN_INTEGER \* 2 - 1`
              ompi_fint_max=0x7
              while test "$ompi_numf" -gt "0"; do
                  ompi_fint_max=${ompi_fint_max}f
@@ -76,7 +76,7 @@ fclose(fp);]]),
           fi
           rm -f conftest.out > /dev/null 2>&1 ])
 
-    AC_DEFINE_UNQUOTED([OPAL_FORTRAN_HANDLE_MAX],
+    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HANDLE_MAX],
         [$ompi_cv_f77_fortran_handle_max],
         [Max handle value for fortran MPI handles, effectively min(INT_MAX, max fortran INTEGER value)])
 ])dnl

@@ -35,50 +35,50 @@
  *
  **********************************************************************/
 
-/* MPI_Fint is the same as opal_fortran_integer_t */
-#define MPI_Fint opal_fortran_integer_t
+/* MPI_Fint is the same as ompi_fortran_INTEGER_t */
+#define MPI_Fint ompi_fortran_integer_t
 
-/* MPI_Flogical is the same as the opal_fortran_logical_t */
-#define MPI_Flogical opal_fortran_logical_t
+/* MPI_Flogical is the same as the ompi_fortran_logical_t */
+#define MPI_Flogical ompi_fortran_logical_t
 
-#if OPAL_HAVE_FORTRAN_REAL && OPAL_HAVE_FORTRAN_COMPLEX
+#if OMPI_HAVE_FORTRAN_REAL && OMPI_HAVE_FORTRAN_COMPLEX
 /* * C type for Fortran COMPLEX */
 typedef struct {
-  opal_fortran_real_t real;
-  opal_fortran_real_t imag;
-} opal_fortran_complex_t;
+  ompi_fortran_real_t real;
+  ompi_fortran_real_t imag;
+} ompi_fortran_complex_t;
 #endif
 
-#if OPAL_HAVE_FORTRAN_REAL4 && OPAL_HAVE_FORTRAN_COMPLEX8
+#if OMPI_HAVE_FORTRAN_REAL4 && OMPI_HAVE_FORTRAN_COMPLEX8
 /* * C type for Fortran COMPLEX*8 */
 typedef struct {
-  opal_fortran_real4_t real;
-  opal_fortran_real4_t imag;
-} opal_fortran_complex8_t;
+  ompi_fortran_real4_t real;
+  ompi_fortran_real4_t imag;
+} ompi_fortran_complex8_t;
 #endif
 
-#if OPAL_HAVE_FORTRAN_REAL8 && OPAL_HAVE_FORTRAN_COMPLEX16
+#if OMPI_HAVE_FORTRAN_REAL8 && OMPI_HAVE_FORTRAN_COMPLEX16
 /* * C type for Fortran COMPLEX*16 */
 typedef struct {
-  opal_fortran_real8_t real;
-  opal_fortran_real8_t imag;
-} opal_fortran_complex16_t;
+  ompi_fortran_real8_t real;
+  ompi_fortran_real8_t imag;
+} ompi_fortran_complex16_t;
 #endif
 
-#if OPAL_HAVE_FORTRAN_REAL16 && OPAL_HAVE_FORTRAN_COMPLEX32
+#if OMPI_HAVE_FORTRAN_REAL16 && OMPI_HAVE_FORTRAN_COMPLEX32
 /* * C type for Fortran COMPLEX*32 */
 typedef struct {
-  opal_fortran_real16_t real;
-  opal_fortran_real16_t imag;
-} opal_fortran_complex32_t;
+  ompi_fortran_real16_t real;
+  ompi_fortran_real16_t imag;
+} ompi_fortran_complex32_t;
 #endif
 
-#if OPAL_HAVE_FORTRAN_DOUBLE_PRECISION
+#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
 /* * C type for Fortran DOUBLE COMPLEX */
 typedef struct {
-  opal_fortran_double_precision_t real;
-  opal_fortran_double_precision_t imag;
-} opal_fortran_double_complex_t;
+  ompi_fortran_double_precision_t real;
+  ompi_fortran_double_precision_t imag;
+} ompi_fortran_double_complex_t;
 #endif
 
 
