@@ -369,6 +369,9 @@ ELSE(NOT OMPI_WANT_MPI_INTERFACE_WARNING)
 ENDIF(NOT OMPI_WANT_MPI_INTERFACE_WARNING)
 
 
+SET (OMPI_EXT_COMPONENTS Example CACHE STRING 
+  "Specify user defined MPI Extended Interface Components." FORCE)
+
 ###################################################################
 #                           Check headers                         #
 ###################################################################
