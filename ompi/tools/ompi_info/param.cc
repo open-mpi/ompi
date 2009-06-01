@@ -799,6 +799,11 @@ void ompi_info::do_config(bool want_all)
   out("MPI_MAX_PORT_NAME",      "options:mpi-max-port-name",      
       MPI_MAX_PORT_NAME);
   out("MPI_MAX_DATAREP_STRING", "options:mpi-max-datarep-string", 
-      MPI_MAX_DATAREP_STRING);
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE
+      MPI_MAX_DATAREP_STRING
+#else
+      "IO interface not provided"
+#endif
+      );
 
 }
