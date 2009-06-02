@@ -715,6 +715,7 @@ static void shutdown_signal(int fd, short flags, void *arg)
      * against race conditions - the trigger event will
      * check the one-time lock
      */
+    ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
     orte_trigger_event(&orte_exit);
 }
 
@@ -775,7 +776,7 @@ static void shutdown_callback(int fd, short flags, void *arg)
 
     /* Finalize and clean up ourselves */
     ret = orte_finalize();
-    exit(ret);
+    exit(orte_exit_status);
 }
 
 static void signal_callback(int fd, short event, void *arg)
