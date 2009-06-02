@@ -31,7 +31,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_SET_ATOMICITY,
                            pmpi_file_set_atomicity_,
                            pmpi_file_set_atomicity__,
                            pmpi_file_set_atomicity_f,
-                           (MPI_Fint *fh, MPI_Flogical *flag, MPI_Fint *ierr),
+                           (MPI_Fint *fh, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (fh, flag, ierr) )
 #endif
 
@@ -48,7 +48,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_SET_ATOMICITY,
                            mpi_file_set_atomicity_,
                            mpi_file_set_atomicity__,
                            mpi_file_set_atomicity_f,
-                           (MPI_Fint *fh, MPI_Flogical *flag, MPI_Fint *ierr),
+                           (MPI_Fint *fh, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (fh, flag, ierr) )
 #endif
 
@@ -57,7 +57,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_SET_ATOMICITY,
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 
-void mpi_file_set_atomicity_f(MPI_Fint *fh, MPI_Flogical *flag, MPI_Fint *ierr)
+void mpi_file_set_atomicity_f(MPI_Fint *fh, ompi_fortran_logical_t *flag, MPI_Fint *ierr)
 {
     MPI_File c_fh = MPI_File_f2c(*fh);
 

@@ -31,7 +31,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FINALIZED,
                            pmpi_finalized_,
                            pmpi_finalized__,
                            pmpi_finalized_f,
-                           (MPI_Flogical *flag, MPI_Fint *ierr),
+                           (ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (flag, ierr) )
 #endif
 
@@ -48,7 +48,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FINALIZED,
                            mpi_finalized_,
                            mpi_finalized__,
                            mpi_finalized_f,
-                           (MPI_Flogical *flag, MPI_Fint *ierr),
+                           (ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (flag, ierr) )
 #endif
 
@@ -57,7 +57,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FINALIZED,
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 
-void mpi_finalized_f(MPI_Flogical *flag, MPI_Fint *ierr)
+void mpi_finalized_f(ompi_fortran_logical_t *flag, MPI_Fint *ierr)
 {
     OMPI_LOGICAL_NAME_DECL(flag);
 

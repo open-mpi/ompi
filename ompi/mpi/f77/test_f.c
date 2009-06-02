@@ -32,7 +32,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TEST,
                            pmpi_test_,
                            pmpi_test__,
                            pmpi_test_f,
-                           (MPI_Fint *request, MPI_Flogical *flag, MPI_Fint *status, MPI_Fint *ierr),
+                           (MPI_Fint *request, ompi_fortran_logical_t *flag, MPI_Fint *status, MPI_Fint *ierr),
                            (request, flag, status, ierr) )
 #endif
 
@@ -49,7 +49,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TEST,
                            mpi_test_,
                            mpi_test__,
                            mpi_test_f,
-                           (MPI_Fint *request, MPI_Flogical *flag, MPI_Fint *status, MPI_Fint *ierr),
+                           (MPI_Fint *request, ompi_fortran_logical_t *flag, MPI_Fint *status, MPI_Fint *ierr),
                            (request, flag, status, ierr) )
 #endif
 
@@ -58,7 +58,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TEST,
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 
-void mpi_test_f(MPI_Fint *request, MPI_Flogical *flag,
+void mpi_test_f(MPI_Fint *request, ompi_fortran_logical_t *flag,
                 MPI_Fint *status, MPI_Fint *ierr)
 {
     MPI_Request c_req = MPI_Request_f2c(*request);

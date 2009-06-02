@@ -33,7 +33,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_GET_ATTR,
                            pmpi_comm_get_attr_,
                            pmpi_comm_get_attr__,
                            pmpi_comm_get_attr_f,
-                           (MPI_Fint *comm, MPI_Fint *comm_keyval, MPI_Aint *attribute_val, MPI_Flogical *flag, MPI_Fint *ierr),
+                           (MPI_Fint *comm, MPI_Fint *comm_keyval, MPI_Aint *attribute_val, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (comm, comm_keyval, attribute_val, flag, ierr) )
 #endif
 
@@ -50,7 +50,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_GET_ATTR,
                            mpi_comm_get_attr_,
                            mpi_comm_get_attr__,
                            mpi_comm_get_attr_f,
-                           (MPI_Fint *comm, MPI_Fint *comm_keyval, MPI_Aint *attribute_val, MPI_Flogical *flag, MPI_Fint *ierr),
+                           (MPI_Fint *comm, MPI_Fint *comm_keyval, MPI_Aint *attribute_val, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (comm, comm_keyval, attribute_val, flag, ierr) )
 #endif
 
@@ -60,7 +60,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_GET_ATTR,
 #endif
 
 void mpi_comm_get_attr_f(MPI_Fint *comm, MPI_Fint *comm_keyval,
-                         MPI_Aint *attribute_val, MPI_Flogical *flag,
+                         MPI_Aint *attribute_val, ompi_fortran_logical_t *flag,
                          MPI_Fint *ierr)
 {
     int c_err;

@@ -35,7 +35,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INFO_GET_VALUELEN,
                             pmpi_info_get_valuelen_,
                             pmpi_info_get_valuelen__,
                             pmpi_info_get_valuelen_f,
-                            (MPI_Fint *info, char *key, MPI_Fint *valuelen, MPI_Flogical *flag, MPI_Fint *ierr, int key_len),
+                            (MPI_Fint *info, char *key, MPI_Fint *valuelen, ompi_fortran_logical_t *flag, MPI_Fint *ierr, int key_len),
                             (info, key, valuelen, flag, ierr, key_len) )
 #endif
 
@@ -52,7 +52,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INFO_GET_VALUELEN,
                             mpi_info_get_valuelen_,
                             mpi_info_get_valuelen__,
                             mpi_info_get_valuelen_f,
-                            (MPI_Fint *info, char *key, MPI_Fint *valuelen, MPI_Flogical *flag, MPI_Fint *ierr, int key_len),
+                            (MPI_Fint *info, char *key, MPI_Fint *valuelen, ompi_fortran_logical_t *flag, MPI_Fint *ierr, int key_len),
                             (info, key, valuelen, flag, ierr, key_len) )
 #endif
 
@@ -69,7 +69,7 @@ static const char FUNC_NAME[] = "MPI_INFO_GET_VALUELEN";
    string that we can use. */
 
 void mpi_info_get_valuelen_f(MPI_Fint *info, char *key,
-                             MPI_Fint *valuelen, MPI_Flogical *flag,
+                             MPI_Fint *valuelen, ompi_fortran_logical_t *flag,
                              MPI_Fint *ierr, int key_len)
 {
     int c_err, ret;

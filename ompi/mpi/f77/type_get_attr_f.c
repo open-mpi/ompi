@@ -34,7 +34,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_GET_ATTR,
                            pmpi_type_get_attr_,
                            pmpi_type_get_attr__,
                            pmpi_type_get_attr_f,
-                           (MPI_Fint *type, MPI_Fint *type_keyval, MPI_Aint *attribute_val, MPI_Flogical *flag, MPI_Fint *ierr),
+                           (MPI_Fint *type, MPI_Fint *type_keyval, MPI_Aint *attribute_val, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (type, type_keyval, attribute_val, flag, ierr) )
 #endif
 
@@ -51,7 +51,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_ATTR,
                            mpi_type_get_attr_,
                            mpi_type_get_attr__,
                            mpi_type_get_attr_f,
-                           (MPI_Fint *type, MPI_Fint *type_keyval, MPI_Aint *attribute_val, MPI_Flogical *flag, MPI_Fint *ierr),
+                           (MPI_Fint *type, MPI_Fint *type_keyval, MPI_Aint *attribute_val, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (type, type_keyval, attribute_val, flag, ierr) )
 #endif
 
@@ -61,7 +61,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_ATTR,
 #endif
 
 void mpi_type_get_attr_f(MPI_Fint *type, MPI_Fint *type_keyval,
-                         MPI_Aint *attribute_val, MPI_Flogical *flag,
+                         MPI_Aint *attribute_val, ompi_fortran_logical_t *flag,
                          MPI_Fint *ierr)
 {
     int c_err;

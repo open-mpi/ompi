@@ -210,7 +210,7 @@
 
 #  if OMPI_FORTRAN_VALUE_TRUE == 1
 #    define OMPI_LOGICAL_2_INT(a) (int)a
-#    define OMPI_INT_2_LOGICAL(a) (MPI_Flogical)a
+#    define OMPI_INT_2_LOGICAL(a) (ompi_fortran_logical_t)a
 #    define OMPI_SINGLE_INT_2_LOGICAL(a) *a=(OMPI_INT_2_LOGICAL(OMPI_LOGICAL_NAME_CONVERT(a)))
 #  else
 #    define OMPI_LOGICAL_2_INT(a) ((a)==0? 0 : 1)

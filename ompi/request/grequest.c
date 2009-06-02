@@ -45,7 +45,7 @@ static int ompi_grequest_cancel(ompi_request_t* req, int flag)
 {
     int rc = OMPI_SUCCESS;
     MPI_Fint ierr;
-    MPI_Flogical fflag;
+    ompi_fortran_logical_t fflag;
     ompi_grequest_t* greq = (ompi_grequest_t*)req;
 
     if (greq->greq_cancel.c_cancel != NULL) {
@@ -53,7 +53,7 @@ static int ompi_grequest_cancel(ompi_request_t* req, int flag)
             rc = greq->greq_cancel.c_cancel(greq->greq_state, 
                                             greq->greq_base.req_complete);
         } else {
-            fflag = (MPI_Flogical) greq->greq_base.req_complete;
+            fflag = (ompi_fortran_logical_t) greq->greq_base.req_complete;
             greq->greq_cancel.f_cancel((MPI_Aint*)greq->greq_state, &fflag, &ierr);
             rc = OMPI_FINT_2_INT(ierr);
         }

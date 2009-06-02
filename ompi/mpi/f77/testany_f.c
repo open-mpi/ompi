@@ -34,7 +34,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TESTANY,
                            pmpi_testany_,
                            pmpi_testany__,
                            pmpi_testany_f,
-                           (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index, MPI_Flogical *flag, MPI_Fint *status, MPI_Fint *ierr),
+                           (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index, ompi_fortran_logical_t *flag, MPI_Fint *status, MPI_Fint *ierr),
                            (count, array_of_requests, index, flag, status, ierr) )
 #endif
 
@@ -51,7 +51,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TESTANY,
                            mpi_testany_,
                            mpi_testany__,
                            mpi_testany_f,
-                           (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index, MPI_Flogical *flag, MPI_Fint *status, MPI_Fint *ierr),
+                           (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index, ompi_fortran_logical_t *flag, MPI_Fint *status, MPI_Fint *ierr),
                            (count, array_of_requests, index, flag, status, ierr) )
 #endif
 
@@ -63,7 +63,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TESTANY,
 static const char FUNC_NAME[] = "MPI_TESTANY";
 
 
-void mpi_testany_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index, MPI_Flogical *flag, MPI_Fint *status, MPI_Fint *ierr)
+void mpi_testany_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index, ompi_fortran_logical_t *flag, MPI_Fint *status, MPI_Fint *ierr)
 {
     MPI_Request *c_req;
     MPI_Status c_status;

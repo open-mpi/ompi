@@ -32,7 +32,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TEST_CANCELLED,
                            pmpi_test_cancelled_,
                            pmpi_test_cancelled__,
                            pmpi_test_cancelled_f,
-                           (MPI_Fint *status, MPI_Flogical *flag, MPI_Fint *ierr),
+                           (MPI_Fint *status, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (status, flag, ierr) )
 #endif
 
@@ -49,7 +49,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TEST_CANCELLED,
                            mpi_test_cancelled_,
                            mpi_test_cancelled__,
                            mpi_test_cancelled_f,
-                           (MPI_Fint *status, MPI_Flogical *flag, MPI_Fint *ierr),
+                           (MPI_Fint *status, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (status, flag, ierr) )
 #endif
 
@@ -58,7 +58,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TEST_CANCELLED,
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 
-void mpi_test_cancelled_f(MPI_Fint *status, MPI_Flogical *flag, MPI_Fint *ierr)
+void mpi_test_cancelled_f(MPI_Fint *status, ompi_fortran_logical_t *flag, MPI_Fint *ierr)
 {
     MPI_Status c_status;
     OMPI_LOGICAL_NAME_DECL(flag);
