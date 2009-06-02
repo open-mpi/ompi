@@ -127,6 +127,9 @@ bool orte_assume_same_shell = true;
 /* orted exit with barrier */
 bool orte_orted_exit_with_barrier = true;
 
+/* report launch progress */
+bool orte_report_launch_progress = false;
+
 #endif /* !ORTE_DISABLE_FULL_RTE */
 
 int orte_debug_output = -1;

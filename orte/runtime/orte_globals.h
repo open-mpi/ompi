@@ -514,6 +514,9 @@ ORTE_DECLSPEC extern bool orte_assume_same_shell;
 /* whether or not to barrier the orteds upon exit */
 ORTE_DECLSPEC extern bool orte_orted_exit_with_barrier;
 
+/* whether or not to report launch progress */
+ORTE_DECLSPEC extern bool orte_report_launch_progress;
+
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
