@@ -31,7 +31,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GRAPH_CREATE,
                            pmpi_graph_create_,
                            pmpi_graph_create__,
                            pmpi_graph_create_f,
-                           (MPI_Fint *comm_old, MPI_Fint *nnodes, MPI_Fint *index, MPI_Fint *edges, MPI_Flogical *reorder, MPI_Fint *comm_graph, MPI_Fint *ierr),
+                           (MPI_Fint *comm_old, MPI_Fint *nnodes, MPI_Fint *index, MPI_Fint *edges, ompi_fortran_logical_t *reorder, MPI_Fint *comm_graph, MPI_Fint *ierr),
                            (comm_old, nnodes, index, edges, reorder, comm_graph, ierr) )
 #endif
 
@@ -48,7 +48,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GRAPH_CREATE,
                            mpi_graph_create_,
                            mpi_graph_create__,
                            mpi_graph_create_f,
-                           (MPI_Fint *comm_old, MPI_Fint *nnodes, MPI_Fint *index, MPI_Fint *edges, MPI_Flogical *reorder, MPI_Fint *comm_graph, MPI_Fint *ierr),
+                           (MPI_Fint *comm_old, MPI_Fint *nnodes, MPI_Fint *index, MPI_Fint *edges, ompi_fortran_logical_t *reorder, MPI_Fint *comm_graph, MPI_Fint *ierr),
                            (comm_old, nnodes, index, edges, reorder, comm_graph, ierr) )
 #endif
 
@@ -59,7 +59,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GRAPH_CREATE,
 
 void mpi_graph_create_f(MPI_Fint *comm_old, MPI_Fint *nnodes,
                         MPI_Fint *index, MPI_Fint *edges,
-                        MPI_Flogical *reorder, MPI_Fint *comm_graph,
+                        ompi_fortran_logical_t *reorder, MPI_Fint *comm_graph,
                         MPI_Fint *ierr)
 {
     MPI_Comm c_comm_old, c_comm_graph;

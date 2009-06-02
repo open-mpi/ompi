@@ -31,7 +31,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INTERCOMM_MERGE,
                            pmpi_intercomm_merge_,
                            pmpi_intercomm_merge__,
                            pmpi_intercomm_merge_f,
-                           (MPI_Fint *intercomm, MPI_Flogical *high, MPI_Fint *newintercomm, MPI_Fint *ierr),
+                           (MPI_Fint *intercomm, ompi_fortran_logical_t *high, MPI_Fint *newintercomm, MPI_Fint *ierr),
                            (intercomm, high, newintercomm, ierr) )
 #endif
 
@@ -48,7 +48,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INTERCOMM_MERGE,
                            mpi_intercomm_merge_,
                            mpi_intercomm_merge__,
                            mpi_intercomm_merge_f,
-                           (MPI_Fint *intercomm, MPI_Flogical *high, MPI_Fint *newintercomm, MPI_Fint *ierr),
+                           (MPI_Fint *intercomm, ompi_fortran_logical_t *high, MPI_Fint *newintercomm, MPI_Fint *ierr),
                            (intercomm, high, newintercomm, ierr) )
 #endif
 
@@ -57,7 +57,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INTERCOMM_MERGE,
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 
-void mpi_intercomm_merge_f(MPI_Fint *intercomm, MPI_Flogical *high,
+void mpi_intercomm_merge_f(MPI_Fint *intercomm, ompi_fortran_logical_t *high,
                            MPI_Fint *newintracomm, 
                            MPI_Fint *ierr)
 {

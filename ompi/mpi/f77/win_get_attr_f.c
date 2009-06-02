@@ -33,7 +33,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_GET_ATTR,
                            pmpi_win_get_attr_,
                            pmpi_win_get_attr__,
                            pmpi_win_get_attr_f,
-                           (MPI_Fint *win, MPI_Fint *win_keyval, MPI_Aint *attribute_val, MPI_Flogical *flag, MPI_Fint *ierr),
+                           (MPI_Fint *win, MPI_Fint *win_keyval, MPI_Aint *attribute_val, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (win, win_keyval, attribute_val, flag, ierr) )
 #endif
 
@@ -50,7 +50,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_GET_ATTR,
                            mpi_win_get_attr_,
                            mpi_win_get_attr__,
                            mpi_win_get_attr_f,
-                           (MPI_Fint *win, MPI_Fint *win_keyval, MPI_Aint *attribute_val, MPI_Flogical *flag, MPI_Fint *ierr),
+                           (MPI_Fint *win, MPI_Fint *win_keyval, MPI_Aint *attribute_val, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (win, win_keyval, attribute_val, flag, ierr) )
 #endif
 
@@ -60,7 +60,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_GET_ATTR,
 #endif
 
 void mpi_win_get_attr_f(MPI_Fint *win, MPI_Fint *win_keyval,
-                        MPI_Aint *attribute_val, MPI_Flogical *flag, MPI_Fint *ierr)
+                        MPI_Aint *attribute_val, ompi_fortran_logical_t *flag, MPI_Fint *ierr)
 {
     int c_err;
     MPI_Win c_win = MPI_Win_f2c(*win);

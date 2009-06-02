@@ -33,7 +33,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ATTR_GET,
                            pmpi_attr_get_,
                            pmpi_attr_get__,
                            pmpi_attr_get_f,
-                           (MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *attribute_val, MPI_Flogical *flag, MPI_Fint *ierr),
+                           (MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *attribute_val, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (comm, keyval, attribute_val, flag, ierr) )
 #endif
 
@@ -50,7 +50,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ATTR_GET,
                            mpi_attr_get_,
                            mpi_attr_get__,
                            mpi_attr_get_f,
-                           (MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *attribute_val, MPI_Flogical *flag, MPI_Fint *ierr),
+                           (MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *attribute_val, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (comm, keyval, attribute_val, flag, ierr) )
 #endif
 
@@ -60,7 +60,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ATTR_GET,
 #endif
 
 void mpi_attr_get_f(MPI_Fint *comm, MPI_Fint *keyval,
-                    MPI_Fint *attribute_val, MPI_Flogical *flag, MPI_Fint *ierr)
+                    MPI_Fint *attribute_val, ompi_fortran_logical_t *flag, MPI_Fint *ierr)
 {
     MPI_Comm c_comm = MPI_Comm_f2c(*comm);
     OMPI_LOGICAL_NAME_DECL(flag);

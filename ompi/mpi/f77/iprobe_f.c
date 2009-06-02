@@ -33,7 +33,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IPROBE,
                            pmpi_iprobe_,
                            pmpi_iprobe__,
                            pmpi_iprobe_f,
-                           (MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, MPI_Flogical *flag, MPI_Fint *status, MPI_Fint *ierr),
+                           (MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, ompi_fortran_logical_t *flag, MPI_Fint *status, MPI_Fint *ierr),
                            (source, tag, comm, flag, status, ierr) )
 #endif
 
@@ -50,7 +50,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_IPROBE,
                            mpi_iprobe_,
                            mpi_iprobe__,
                            mpi_iprobe_f,
-                           (MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, MPI_Flogical *flag, MPI_Fint *status, MPI_Fint *ierr),
+                           (MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, ompi_fortran_logical_t *flag, MPI_Fint *status, MPI_Fint *ierr),
                            (source, tag, comm, flag, status, ierr) )
 #endif
 
@@ -60,7 +60,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_IPROBE,
 #endif
 
 void mpi_iprobe_f(MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm,
-                  MPI_Flogical *flag, MPI_Fint *status, MPI_Fint *ierr)
+                  ompi_fortran_logical_t *flag, MPI_Fint *status, MPI_Fint *ierr)
 {
     MPI_Status *c_status;
     MPI_Comm c_comm;

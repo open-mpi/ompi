@@ -31,7 +31,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IS_THREAD_MAIN,
                            pmpi_is_thread_main_,
                            pmpi_is_thread_main__,
                            pmpi_is_thread_main_f,
-                           (MPI_Flogical *flag, MPI_Fint *ierr),
+                           (ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (flag, ierr) )
 #endif
 
@@ -48,7 +48,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_IS_THREAD_MAIN,
                            mpi_is_thread_main_,
                            mpi_is_thread_main__,
                            mpi_is_thread_main_f,
-                           (MPI_Flogical *flag, MPI_Fint *ierr),
+                           (ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (flag, ierr) )
 #endif
 
@@ -57,7 +57,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_IS_THREAD_MAIN,
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 
-void mpi_is_thread_main_f(MPI_Flogical *flag, MPI_Fint *ierr)
+void mpi_is_thread_main_f(ompi_fortran_logical_t *flag, MPI_Fint *ierr)
 {
     OMPI_LOGICAL_NAME_DECL(flag);
 

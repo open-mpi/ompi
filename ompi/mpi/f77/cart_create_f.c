@@ -31,7 +31,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_CART_CREATE,
                            pmpi_cart_create_,
                            pmpi_cart_create__,
                            pmpi_cart_create_f,
-                           (MPI_Fint *old_comm, MPI_Fint *ndims, MPI_Fint *dims, MPI_Flogical *periods, MPI_Flogical *reorder, MPI_Fint *comm_cart, MPI_Fint *ierr),
+                           (MPI_Fint *old_comm, MPI_Fint *ndims, MPI_Fint *dims, ompi_fortran_logical_t *periods, ompi_fortran_logical_t *reorder, MPI_Fint *comm_cart, MPI_Fint *ierr),
                            (old_comm, ndims, dims, periods, reorder, comm_cart, ierr) )
 #endif
 
@@ -48,7 +48,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CART_CREATE,
                            mpi_cart_create_,
                            mpi_cart_create__,
                            mpi_cart_create_f,
-                           (MPI_Fint *old_comm, MPI_Fint *ndims, MPI_Fint *dims, MPI_Flogical *periods, MPI_Flogical *reorder, MPI_Fint *comm_cart, MPI_Fint *ierr),
+                           (MPI_Fint *old_comm, MPI_Fint *ndims, MPI_Fint *dims, ompi_fortran_logical_t *periods, ompi_fortran_logical_t *reorder, MPI_Fint *comm_cart, MPI_Fint *ierr),
                            (old_comm, ndims, dims, periods, reorder, comm_cart, ierr) )
 #endif
 
@@ -58,7 +58,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CART_CREATE,
 #endif
 
 void mpi_cart_create_f(MPI_Fint *old_comm, MPI_Fint *ndims, MPI_Fint *dims,
-                       MPI_Flogical *periods, MPI_Flogical *reorder,
+                       ompi_fortran_logical_t *periods, ompi_fortran_logical_t *reorder,
                        MPI_Fint *comm_cart, MPI_Fint *ierr)
 {
     MPI_Comm c_comm1, c_comm2;

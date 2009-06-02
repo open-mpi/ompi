@@ -31,7 +31,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_CART_SUB,
                            pmpi_cart_sub_,
                            pmpi_cart_sub__,
                            pmpi_cart_sub_f,
-                           (MPI_Fint *comm, MPI_Flogical *remain_dims, MPI_Fint *new_comm, MPI_Fint *ierr),
+                           (MPI_Fint *comm, ompi_fortran_logical_t *remain_dims, MPI_Fint *new_comm, MPI_Fint *ierr),
                            (comm, remain_dims, new_comm, ierr) )
 #endif
 
@@ -48,7 +48,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CART_SUB,
                            mpi_cart_sub_,
                            mpi_cart_sub__,
                            mpi_cart_sub_f,
-                           (MPI_Fint *comm, MPI_Flogical *remain_dims, MPI_Fint *new_comm, MPI_Fint *ierr),
+                           (MPI_Fint *comm, ompi_fortran_logical_t *remain_dims, MPI_Fint *new_comm, MPI_Fint *ierr),
                            (comm, remain_dims, new_comm, ierr) )
 #endif
 
@@ -57,7 +57,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CART_SUB,
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 
-void mpi_cart_sub_f(MPI_Fint *comm, MPI_Flogical *remain_dims,
+void mpi_cart_sub_f(MPI_Fint *comm, ompi_fortran_logical_t *remain_dims,
                     MPI_Fint *new_comm, MPI_Fint *ierr)
 {
     MPI_Comm c_comm, c_new_comm;

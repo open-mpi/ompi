@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -37,9 +37,6 @@
 
 /* MPI_Fint is the same as ompi_fortran_INTEGER_t */
 #define MPI_Fint ompi_fortran_integer_t
-
-/* MPI_Flogical is the same as the ompi_fortran_logical_t */
-#define MPI_Flogical ompi_fortran_logical_t
 
 #if OMPI_HAVE_FORTRAN_REAL && OMPI_HAVE_FORTRAN_COMPLEX
 /* * C type for Fortran COMPLEX */

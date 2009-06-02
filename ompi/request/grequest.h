@@ -43,7 +43,7 @@ typedef void (MPI_F_Grequest_free_function)(MPI_Aint *extra_state,
  * Fortran type for generalized request cancel function
  */
 typedef void (MPI_F_Grequest_cancel_function)(MPI_Aint *extra_state, 
-                                              MPI_Flogical *complete, 
+                                              ompi_fortran_logical_t *complete, 
                                               MPI_Fint *ierr);
 
 /**

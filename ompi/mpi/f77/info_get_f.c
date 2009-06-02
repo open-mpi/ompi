@@ -35,7 +35,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INFO_GET,
                             pmpi_info_get_,
                             pmpi_info_get__,
                             pmpi_info_get_f,
-                            (MPI_Fint *info, char *key, MPI_Fint *valuelen, char *value, MPI_Flogical *flag, MPI_Fint *ierr, int key_len, int value_len),
+                            (MPI_Fint *info, char *key, MPI_Fint *valuelen, char *value, ompi_fortran_logical_t *flag, MPI_Fint *ierr, int key_len, int value_len),
                             (info, key, valuelen, value, flag, ierr, key_len, value_len) )
 #endif
 
@@ -52,7 +52,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INFO_GET,
                             mpi_info_get_,
                             mpi_info_get__,
                             mpi_info_get_f,
-                            (MPI_Fint *info, char *key, MPI_Fint *valuelen, char *value, MPI_Flogical *flag, MPI_Fint *ierr, int key_len, int value_len),
+                            (MPI_Fint *info, char *key, MPI_Fint *valuelen, char *value, ompi_fortran_logical_t *flag, MPI_Fint *ierr, int key_len, int value_len),
                             (info, key, valuelen, value, flag, ierr, key_len, value_len) )
 #endif
 
@@ -69,7 +69,7 @@ static const char FUNC_NAME[] = "MPI_INFO_GET";
    length of the string that we can use. */
 
 void mpi_info_get_f(MPI_Fint *info, char *key, MPI_Fint *valuelen,
-                    char *value, MPI_Flogical *flag, MPI_Fint *ierr,
+                    char *value, ompi_fortran_logical_t *flag, MPI_Fint *ierr,
                     int key_len, int value_len)
 {
     int c_err, ret;
