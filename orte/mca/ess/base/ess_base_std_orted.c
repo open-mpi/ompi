@@ -343,7 +343,13 @@ int orte_ess_base_orted_finalize(void)
     opal_list_item_t *item;
     
     /* ensure all the orteds depart together */
-    orte_grpcomm.onesided_barrier();
+    if (!orte_abnormal_term_ordered) {
+        /* if we are abnormally terminating, don't attempt
+         * to do a barrier as nobody else will be entering
+         * that call
+         */
+        orte_grpcomm.onesided_barrier();
+    }
     
     orte_notifier_base_close();
     

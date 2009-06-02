@@ -55,12 +55,14 @@
 #include "opal/util/output.h"
 #include "opal/util/net.h"
 #include "opal/util/error.h"
-
 #include "opal/class/opal_hash_table.h"
+
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/routed/routed.h"
+#include "orte/mca/ess/ess.h"
+#include "orte/runtime/orte_wait.h"
 
 #include "oob_tcp.h"
 #include "oob_tcp_peer.h"
@@ -612,10 +614,13 @@ void mca_oob_tcp_peer_shutdown(mca_oob_tcp_peer_t* peer)
     /* giving up and cleanup any pending messages */
     if(peer->peer_retries++ > mca_oob_tcp_component.tcp_peer_retries) {
         mca_oob_tcp_msg_t *msg;
+        char *host;
 
-        opal_output(0, "%s-%s oob-tcp: Communication retries exceeded.  Can not communicate with peer",
+        host = orte_ess.proc_get_hostname(&(peer->peer_name));
+        opal_output(0, "%s -> %s (node: %s) oob-tcp: Communication retries exceeded.  Can not communicate with peer",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                    ORTE_NAME_PRINT(&(peer->peer_name)));
+                    ORTE_NAME_PRINT(&(peer->peer_name)),
+                    (NULL == host) ? "NULL" : host);
 
         /* There are cases during the initial connection setup where
            the peer_send_msg is NULL but there are things in the queue
@@ -637,6 +642,18 @@ void mca_oob_tcp_peer_shutdown(mca_oob_tcp_peer_t* peer)
            not likely to suddenly become successful, so abort the
            whole thing */
         peer->peer_state = MCA_OOB_TCP_FAILED;
+        
+        /* since we cannot communicate, and the system obviously needed
+         * to do so, let's abort so we don't just hang here
+         */
+        if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
+            /* just wake us up */
+            ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            orte_abnormal_term_ordered = true;
+            orte_trigger_event(&orte_exit);
+        } else {
+            orte_errmgr.abort(1, NULL);
+        }
     }
 
     if (peer->peer_sd >= 0) {
