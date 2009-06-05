@@ -10,6 +10,8 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+dnl Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -21,6 +23,7 @@ dnl
 AC_DEFUN([OMPI_F77_FIND_EXT_SYMBOL_CONVENTION], [
     AC_REQUIRE([AC_PROG_NM])
     AC_REQUIRE([AC_PROG_GREP])
+    OMPI_VAR_SCOPE_PUSH([FFLAGS_NEW LDFLAGS_NEW FLAG])
 
     # invalidate cache if result came from a run where F77 was disabled
     if test "$ompi_cv_f77_external_symbol" = "skipped" ; then
@@ -39,8 +42,37 @@ AC_DEFUN([OMPI_F77_FIND_EXT_SYMBOL_CONVENTION], [
        return
        end
 EOF
+             # Try without certain optimization flags, which produce object
+             # files without the required external symbols;
+             # e.g. option -fast turns on -ipo on Intel Compilers 11.0
+             FFLAGS_NEW=""
+             LDFLAGS_NEW=""
+             case $F77 in
+                 ifort)
+                     for FLAG in $FFLAGS ; do
+                         case $FLAG in
+                             -fast) ;;
+                             -ipo*) ;;
+                             *)     FFLAGS_NEW="$FFLAGS_NEW $FLAG" ;;
+                         esac
+                     done
+                     for FLAG in $LDFLAGS ; do
+                         case $FLAG in
+                             -fast) ;;
+                             -ipo*) ;;
+                             *)     LDFLAGS_NEW="$LDFLAGS_NEW $FLAG" ;;
+                         esac
+                     done
+                     OMPI_LOG_MSG([Try with new FFLAGS: $FFLAGS_NEW   and new LDFLAGS:$LDFLAGS_NEW])
+                 ;;
+                 *)
+                     FFLAGS_NEW="$FFLAGS"
+                     LDFLAGS_NEW="$LDFLAGS"
+                 ;;
+             esac
+
              happy=1
-             OMPI_LOG_COMMAND([$F77 $FFLAGS -c conftest.f $LDFLAGS $LIBS],
+             OMPI_LOG_COMMAND([$F77 $FFLAGS_NEW -c conftest.f $LDFLAGS_NEW $LIBS],
                  [if $NM conftest.o | $GREP foo_bar__ >/dev/null 2>&1 ; then
                       ompi_cv_f77_external_symbol="double underscore"
                   elif $NM conftest.o | $GREP foo_bar_ >/dev/null 2>&1 ; then
@@ -57,61 +89,7 @@ EOF
                       OMPI_LOG_FILE([conftest.out])
                       happy=0
                   fi],
-                 [happy=0])
-
-              if test "$happy" = "0" ; then
-                  dnl Retry without certain optimization flags,
-                  dnl which produce object files without the required external symbols
-                  dnl E.g. Option -fast turns on -ipo on Intel Compilers 11.0
-                  FFLAGS_NEW=""
-                  LDFLAGS_NEW=""
-                  case $F77 in
-                     ifort)
-                          for FLAG in "$FFLAGS" ; do
-                              case $FLAG in
-                                  -fast) ;;
-                                  -ipo*) ;;
-                                  *)     FFLAGS_NEW="$FFLAGS_NEW $FLAG" ;;
-                              esac
-                          done
-                          for FLAG in "$LDFLAGS" ; do
-                              case $FLAG in
-                                  -fast) ;;
-                                  -ipo*) ;;
-                                  *)     LDFLAGS_NEW="$LDFLAGS_NEW $FLAG" ;;
-                              esac
-                          done
-                      ;;
-                      *)
-                          FFLAGS_NEW="$FFLAGS"
-                          LDFLAGS_NEW="$LDFLAGS"
-                  esac
-                  OMPI_LOG_MSG([Retry with new FFLAGS: $FFLAGS_NEW   and new LDFLAGS:$LDFLAGS_NEW])
-
-                  happy=1 
-                  OMPI_LOG_COMMAND([$F77 $FFLAGS_NEW -c conftest.f $LDFLAGS_NEW $LIBS],
-                      [if $NM conftest.o | $GREP foo_bar__ >/dev/null 2>&1 ; then
-                          ompi_cv_f77_external_symbol="double underscore"
-                      elif $NM conftest.o | $GREP foo_bar_ >/dev/null 2>&1 ; then
-                          ompi_cv_f77_external_symbol="single underscore"
-                      elif $NM conftest.o | $GREP FOO_bar >/dev/null 2>&1 ; then
-                          ompi_cv_f77_external_symbol="mixed case"
-                      elif $NM conftest.o | $GREP foo_bar >/dev/null 2>&1 ; then
-                          ompi_cv_f77_external_symbol="no underscore"
-                      elif $NM conftest.o | $GREP FOO_BAR >/dev/null 2>&1 ; then
-                          ompi_cv_f77_external_symbol="upper case"
-                      else
-                          $NM conftest.o >conftest.out 2>&1
-                          OMPI_LOG_MSG([Could not determine Fortran naming convention. Output from $NM:])
-                          OMPI_LOG_FILE([conftest.out])
-                          happy=0
-                      fi],
-                     [happy=0])
-              fi
-
-              if test "$happy" = "0" ; then
-                  AC_MSG_ERROR([Fortran compiler did not produce object file])
-              fi
+                 [AC_MSG_ERROR([Fortran compiler did not produce object file])])
          fi])
 
     ompi_fortran_double_underscore=0
@@ -146,6 +124,7 @@ EOF
         [$ompi_fortran_plain],
         [Whether fortran symbols have no trailing underscore or not])
 
+    OMPI_VAR_SCOPE_POP
     rm -rf conftest.*
 ])dnl
 
