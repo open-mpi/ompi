@@ -365,8 +365,8 @@ int orte_plm_submit_launch(orte_job_t *jdata)
         }        
     }
     
-    /* create a jobid for this job */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_create_jobid(&jdata->jobid))) {
+    /* setup the job */
+    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_job(jdata))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
@@ -375,12 +375,6 @@ int orte_plm_submit_launch(orte_job_t *jdata)
                          "%s plm:submit: launching job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
-    
-    /* setup the job */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_job(jdata))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
     
     /* set the active jobid */
     active_job = jobid;

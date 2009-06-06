@@ -42,20 +42,22 @@ typedef uint16_t orte_proc_state_t;
 
 #define ORTE_PROC_STATE_UNDEF               0x0000  /* undefined process state */
 #define ORTE_PROC_STATE_INIT                0x0001  /* process entry has been created by rmaps */
-#define ORTE_PROC_STATE_LAUNCHED            0x0002  /* process has been launched */
-#define ORTE_PROC_STATE_RUNNING             0x0004  /* daemon has locally fork'd process */
+#define ORTE_PROC_STATE_RESTART             0x0002  /* the proc is ready for restart */
+#define ORTE_PROC_STATE_LAUNCHED            0x0004  /* process has been launched */
+#define ORTE_PROC_STATE_RUNNING             0x0010  /* daemon has locally fork'd process */
 /*
  * Define a "boundary" so we can easily and quickly determine
  * if a proc is still running or not - any value less than
  * this one means that we are not terminated
  */
-#define ORTE_PROC_STATE_UNTERMINATED        0x0010
+#define ORTE_PROC_STATE_UNTERMINATED        0x0020
 
 #define ORTE_PROC_STATE_TERMINATED          0x0080  /* process has terminated and is no longer running */
 #define ORTE_PROC_STATE_ABORTED             0x0100  /* process aborted */
 #define ORTE_PROC_STATE_FAILED_TO_START     0x0200  /* process failed to start */
 #define ORTE_PROC_STATE_ABORTED_BY_SIG      0x0400  /* process aborted by signal */
 #define ORTE_PROC_STATE_TERM_WO_SYNC        0x0800  /* process exit'd w/o required sync */
+
 
 /*
  * Job state codes
@@ -66,14 +68,15 @@ typedef uint16_t orte_job_state_t;
 
 #define ORTE_JOB_STATE_UNDEF                0x0000
 #define ORTE_JOB_STATE_INIT                 0x0001  /* job entry has been created by rmaps */
-#define ORTE_JOB_STATE_LAUNCHED             0x0002  /* job has been launched by plm */
-#define ORTE_JOB_STATE_RUNNING              0x0004  /* all process have been fork'd */
+#define ORTE_JOB_STATE_RESTART              0x0002  /* the job is ready for restart after one or more procs failed */
+#define ORTE_JOB_STATE_LAUNCHED             0x0004  /* job has been launched by plm */
+#define ORTE_JOB_STATE_RUNNING              0x0010  /* all process have been fork'd */
 /*
  * Define a "boundary" so we can easily and quickly determine
  * if a job is still running or not - any value less than
  * this one means that we are not terminated
  */
-#define ORTE_JOB_STATE_UNTERMINATED         0x0010
+#define ORTE_JOB_STATE_UNTERMINATED         0x0020
 
 #define ORTE_JOB_STATE_TERMINATED           0x0080  /* all processes have terminated and is no longer running */
 #define ORTE_JOB_STATE_ABORTED              0x0100  /* at least one process aborted, causing job to abort */

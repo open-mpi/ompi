@@ -77,15 +77,25 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
 
-    /* insert the job object into the global pool */
-    ljob = ORTE_LOCAL_JOBID(jdata->jobid);
-    opal_pointer_array_set_item(orte_job_data, ljob, jdata);
-    
-    if (ORTE_SUCCESS != (rc = orte_ras.allocate(jdata))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }         
+    /* if the job is not being restarted, prep it */
+    if (ORTE_JOB_STATE_RESTART != jdata->state) {
+        /* get a jobid for it */
+        if (ORTE_SUCCESS != (rc = orte_plm_base_create_jobid(jdata))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
 
+        /* store it on the global job data pool */
+        ljob = ORTE_LOCAL_JOBID(jdata->jobid);
+        opal_pointer_array_set_item(orte_job_data, ljob, jdata);
+        
+        /* get its allocation */
+        if (ORTE_SUCCESS != (rc = orte_ras.allocate(jdata))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
+    
     if (ORTE_SUCCESS != (rc = orte_rmaps.map_job(jdata))) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -1394,7 +1404,7 @@ CHECK_ALL_JOBS:
          * we call the errmgr so that any attempt to restart the job will
          * avoid doing so in the exact same place as the current job
          */
-        if( NULL != jdata->map ) {
+        if( NULL != jdata->map  && jdata->state == ORTE_JOB_STATE_TERMINATED) {
             map = jdata->map;
             for( index = 0; index < map->nodes->size; index++ ) {
                 if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, index))) {
@@ -1447,6 +1457,7 @@ CHECK_ALL_JOBS:
                  * pointer array internal accounting
                  * is maintained!
                  */
+                opal_pointer_array_set_item(orte_job_data, j, NULL);  /* ensure the array has a NULL */
                 OBJ_RELEASE(jdata);
                 continue;
             }

@@ -76,10 +76,9 @@ int orte_plm_base_set_hnp_name(void)
 /*
  * Create a jobid
  */
-int orte_plm_base_create_jobid(orte_jobid_t *jobid)
+int orte_plm_base_create_jobid(orte_job_t *jdata)
 {
 #if 0
-    orte_job_t **jobs;
     int32_t j;
     
     /* RHC: WHILE ORTE CAN NOW HANDLE RECYCLING OF JOBID'S,
@@ -91,25 +90,31 @@ int orte_plm_base_create_jobid(orte_jobid_t *jobid)
      * jobid that has completed and can be re-used. It can
      * never be 0 as that belongs to the HNP and its daemons
      */
-    jobs = (orte_job_t**)orte_job_data->addr;
     for (j=1; j < orte_job_data->size; j++) {
-        if (NULL == jobs[j]) {
+        if (NULL == opal_pointer_array_get_item(orte_job_data, j)) {
             /* this local jobid is available - reuse it */
-            *jobid = ORTE_CONSTRUCT_LOCAL_JOBID(ORTE_PROC_MY_NAME->jobid, j);
+            jdata->jobid = ORTE_CONSTRUCT_LOCAL_JOBID(ORTE_PROC_MY_NAME->jobid, j);
             return ORTE_SUCCESS;
         }
     }
 #endif
 
+    if (ORTE_JOB_STATE_RESTART == jdata->state) {
+        /* this job is being restarted - do not assign it
+         * a new jobid
+         */
+        return ORTE_SUCCESS;
+    }
+    
     if (UINT16_MAX == orte_plm_globals.next_jobid) {
         /* if we get here, then no local jobids are available */
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        *jobid = ORTE_JOBID_INVALID;
+        jdata->jobid = ORTE_JOBID_INVALID;
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
     /* take the next jobid */
-    *jobid =  ORTE_CONSTRUCT_LOCAL_JOBID(ORTE_PROC_MY_NAME->jobid, orte_plm_globals.next_jobid);
+    jdata->jobid =  ORTE_CONSTRUCT_LOCAL_JOBID(ORTE_PROC_MY_NAME->jobid, orte_plm_globals.next_jobid);
     orte_plm_globals.next_jobid++;
     return ORTE_SUCCESS;
 }

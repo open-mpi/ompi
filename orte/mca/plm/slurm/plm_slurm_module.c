@@ -195,24 +195,18 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     /* indicate the state of the launch */
     launching_daemons = true;
     
-    /* create a jobid for this job */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_create_jobid(&jdata->jobid))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-        
-    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                         "%s plm:slurm: launching job %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_JOBID_PRINT(jdata->jobid)));
-    
     /* setup the job */
     if (ORTE_SUCCESS != (rc = orte_plm_base_setup_job(jdata))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
 
-     /* set the active jobid */
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                         "%s plm:slurm: launching job %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_JOBID_PRINT(jdata->jobid)));
+    
+    /* set the active jobid */
      active_job = jdata->jobid;
     
     /* Get the map for this job */

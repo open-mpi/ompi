@@ -265,23 +265,17 @@ int orte_plm_rshd_launch(orte_job_t *jdata)
         return orte_plm_base_local_slave_launch(jdata);
     }
     
-    /* create a jobid for this job */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_create_jobid(&jdata->jobid))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
-    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                         "%s plm:rshd: setting up job %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_JOBID_PRINT(jdata->jobid)));
-    
     /* setup the job */
     if (ORTE_SUCCESS != (rc = orte_plm_base_setup_job(jdata))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
 
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                         "%s plm:rshd: launching job %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_JOBID_PRINT(jdata->jobid)));
+    
     /* default to declaring the job launch as having failed */
     failed_job = jdata->jobid;
     
@@ -290,6 +284,11 @@ int orte_plm_rshd_launch(orte_job_t *jdata)
         if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
             continue;
         }
+        /* only launch this proc if it isn't already running */
+        if (ORTE_PROC_STATE_LAUNCHED <= proc->state) {
+            continue;
+        }
+        
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:rshd: launching proc %s on node %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -309,9 +308,10 @@ int orte_plm_rshd_launch(orte_job_t *jdata)
         /* add the bootproxy cmd line options */
         if (ORTE_SUCCESS != (rc = orte_plm_base_append_bootproxy_args(app, &argv,
                                                                       proc->name.jobid, proc->name.vpid,
-                                                                      jdata->map->num_nodes,
-                                                                      jdata->num_procs, proc->local_rank,
-                                                                      node->num_procs, jdata->total_slots_alloc, false))) {
+                                                                      jdata->map->num_nodes, jdata->num_procs,
+                                                                      proc->node_rank, proc->local_rank,
+                                                                      node->num_procs, jdata->total_slots_alloc,
+                                                                      false))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
@@ -339,6 +339,9 @@ int orte_plm_rshd_launch(orte_job_t *jdata)
             ssh_child(cmd, argv);
         }
         /* father */
+        /* declare the child launched */
+        proc->state = ORTE_PROC_STATE_LAUNCHED;
+        /* track number launched */
         OPAL_THREAD_LOCK(&mca_plm_rshd_component.lock);
         if (mca_plm_rshd_component.num_children++ >=
             mca_plm_rshd_component.num_concurrent) {
@@ -360,6 +363,9 @@ int orte_plm_rshd_launch(orte_job_t *jdata)
 
     /* flag the launch as successful */
     failed_launch = false;
+    if (jdata->state < ORTE_JOB_STATE_UNTERMINATED) {
+        jdata->state = ORTE_JOB_STATE_LAUNCHED;
+    }
     
 cleanup:
     if (NULL != argv) {

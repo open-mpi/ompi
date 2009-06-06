@@ -480,7 +480,8 @@ static void check_debugger(int fd, short event, void *arg)
     orte_app_context_t *app;
     char cwd[OPAL_PATH_MAX];
     int rc;
-    
+    int32_t ljob;
+
     if (MPIR_being_debugged) {
         if (orte_debug_flag) {
             opal_output(0, "%s Launching debugger %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -500,7 +501,7 @@ static void check_debugger(int fd, short event, void *arg)
             /* create a jobid for these daemons - this is done solely
              * to avoid confusing the rest of the system's bookkeeping
              */
-            orte_plm_base_create_jobid(&jdata->jobid);
+            orte_plm_base_create_jobid(jdata);
             /* flag the job as being debugger daemons */
             jdata->controls |= ORTE_JOB_CONTROL_DEBUGGER_DAEMON;
             /* unless directed, we do not forward output */
@@ -514,7 +515,8 @@ static void check_debugger(int fd, short event, void *arg)
             jdata->map->pernode = true;
             jdata->map->npernode = 1;
             /* add it to the global job pool */
-            opal_pointer_array_add(orte_job_data, &jdata->super);
+            ljob = ORTE_LOCAL_JOBID(jdata->jobid);
+            opal_pointer_array_set_item(orte_job_data, ljob, jdata);
             /* create an app_context for the debugger daemon */
             app = OBJ_NEW(orte_app_context_t);
             app->app = strdup((char*)MPIR_executable_path);
@@ -560,7 +562,8 @@ void orte_debugger_init_before_spawn(orte_job_t *jdata)
     char *env_name;
     orte_app_context_t **apps, *app;
     orte_std_cntr_t i;
-    
+    int32_t ljob;
+
     if (!MPIR_being_debugged && !orte_in_parallel_debugger) {
         /* not being debugged - check if we want to enable
          * later attachment by debugger
@@ -595,7 +598,7 @@ void orte_debugger_init_before_spawn(orte_job_t *jdata)
         /* create a jobid for these daemons - this is done solely
          * to avoid confusing the rest of the system's bookkeeping
          */
-        orte_plm_base_create_jobid(&orte_debugger_daemon->jobid);
+        orte_plm_base_create_jobid(orte_debugger_daemon);
         /* flag the job as being debugger daemons */
         orte_debugger_daemon->controls |= ORTE_JOB_CONTROL_DEBUGGER_DAEMON;
         /* unless directed, we do not forward output */
@@ -603,7 +606,8 @@ void orte_debugger_init_before_spawn(orte_job_t *jdata)
             orte_debugger_daemon->controls &= ~ORTE_JOB_CONTROL_FORWARD_OUTPUT;
         }
         /* add it to the global job pool */
-        opal_pointer_array_add(orte_job_data, &orte_debugger_daemon->super);
+        ljob = ORTE_LOCAL_JOBID(orte_debugger_daemon->jobid);
+        opal_pointer_array_set_item(orte_job_data, ljob, orte_debugger_daemon);
         /* create an app_context for the debugger daemon */
         app = OBJ_NEW(orte_app_context_t);
         app->app = strdup((char*)MPIR_executable_path);
