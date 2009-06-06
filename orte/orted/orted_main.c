@@ -524,11 +524,13 @@ int orte_daemon(int argc, char *argv[])
         orte_app_context_t *app;
         char *tmp, *nptr;
         int rc;
+        int32_t ljob;
 
         /* setup the singleton's job */
         jdata = OBJ_NEW(orte_job_t);
-        orte_plm_base_create_jobid(&jdata->jobid);
-        opal_pointer_array_add(orte_job_data, jdata);
+        orte_plm_base_create_jobid(jdata);
+        ljob = ORTE_LOCAL_JOBID(jdata->jobid);
+        opal_pointer_array_set_item(orte_job_data, ljob, jdata);
         
         /* setup an app_context for the singleton */
         app = OBJ_NEW(orte_app_context_t);

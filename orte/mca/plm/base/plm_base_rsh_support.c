@@ -200,8 +200,11 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
     }
     /* add the bootproxy cmd line options */
     if (ORTE_SUCCESS != (rc = orte_plm_base_append_bootproxy_args(app, &argv,
-                                                                  jdata->jobid, 0,
-                                                                  1, 1, 0, 1, 1, true))) {
+                                                                  jdata->jobid, 0,  /* jobid, vpid */
+                                                                  1, 1,  /* #nodes, #procs */
+                                                                  0, 0,  /* nrank, lrank */
+                                                                  1, 1,  /* #local, #slots */
+                                                                  true))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -1099,7 +1102,8 @@ PRELOAD_FILES:
 
 int orte_plm_base_append_bootproxy_args(orte_app_context_t *app, char ***argv,
                                         orte_jobid_t jobid, orte_vpid_t vpid,
-                                        int num_nodes, orte_vpid_t num_procs, orte_local_rank_t lrank,
+                                        int num_nodes, orte_vpid_t num_procs,
+                                        orte_node_rank_t nrank, orte_local_rank_t lrank,
                                         orte_vpid_t nlocal, int nslots, bool overwrite)
 {
     char *param, *path, *tmp, *cmd, *basename, *dest_dir;
@@ -1214,6 +1218,14 @@ int orte_plm_base_append_bootproxy_args(orte_app_context_t *app, char ***argv,
     opal_setenv("OMPI_COMM_WORLD_SIZE", cmd, true, argv);
     free(cmd);
     
+    asprintf(&cmd, "%lu", (unsigned long) nrank);
+    opal_setenv("OMPI_COMM_WORLD_NODE_RANK", cmd, true, argv);
+    /* set an mca param for it too */
+    param = mca_base_param_environ_variable("orte","ess","node_rank");
+    opal_setenv(param, cmd, true, argv);
+    free(param);
+    free(cmd);
+
     /* some user-requested public environmental variables */
     asprintf(&cmd, "%d", (int)nslots);
     opal_setenv("OMPI_UNIVERSE_SIZE", cmd, true, argv);
@@ -1260,4 +1272,34 @@ int orte_plm_base_append_bootproxy_args(orte_app_context_t *app, char ***argv,
     }
     
     return ORTE_SUCCESS;
+}
+
+void orte_plm_base_reset_job(orte_job_t *jdata)
+{
+    int n;
+    orte_proc_t *proc;
+    
+    /* set the state to restart */
+    jdata->state = ORTE_JOB_STATE_RESTART;
+    /* cycle through the procs */
+    for (n=0; n < jdata->procs->size; n++) {
+        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, n))) {
+            continue;
+        }
+        if (ORTE_PROC_STATE_TERMINATED < proc->state) {
+            /* this proc abnormally terminated */
+            proc->state = ORTE_PROC_STATE_RESTART;
+            proc->pid = 0;
+            /* adjust job accounting */
+            jdata->num_terminated--;
+            jdata->num_launched--;
+            jdata->num_reported--;
+        }
+    }
+    /* clear the info on who aborted */
+    jdata->abort = false;
+    if (NULL != jdata->aborted_proc) {
+        OBJ_RELEASE(jdata->aborted_proc);  /* maintain reference count */
+        jdata->aborted_proc = NULL;
+    }
 }

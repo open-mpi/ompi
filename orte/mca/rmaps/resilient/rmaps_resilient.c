@@ -284,14 +284,15 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
     orte_std_cntr_t num_slots;
     int rc;
     float avgload, minload;
-    orte_node_t *node, *nd;
+    orte_node_t *node, *nd, *oldnode;
     orte_rmaps_res_ftgrp_t *ftgrp, *target;
-    orte_vpid_t totprocs;
+    orte_vpid_t totprocs, lowprocs;
     FILE *fp;
     char *ftinput;
     int grp;
     char **nodes;
     bool found;
+    orte_proc_t *proc, *pc;
     
     /* have we already constructed the fault group list? */
     if (0 == opal_list_get_size(&mca_rmaps_resilient_component.fault_grps) &&
@@ -337,11 +338,142 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
      * needs to be re-mapped
      */
     if (0 < jdata->map->num_nodes) {
-        /* this map tells us how a job that failed was mapped - we need
-         * to save this map and create a new one where we can put the
-         * new mapping
-         */
-        return ORTE_ERR_NOT_IMPLEMENTED;
+        /* cycle through all the procs in this job to find the one(s) that failed */
+        for (i=0; i < jdata->procs->size; i++) {
+            /* get the proc object */
+            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
+                continue;
+            }
+            /* is this proc to be restarted? */
+            if (proc->state != ORTE_PROC_STATE_RESTART) {
+                continue;
+            }
+            
+            /* it is to be restarted - remove the proc from its current node */
+            oldnode = proc->node;
+            oldnode->num_procs--;
+            /* find this proc on node's pointer array */
+            for (k=0; k < oldnode->procs->size; k++) {
+                if (NULL == (pc = (orte_proc_t*)opal_pointer_array_get_item(oldnode->procs, k))) {
+                    continue;
+                }
+                if (pc->name.jobid == proc->name.jobid &&
+                    pc->name.vpid == proc->name.vpid) {
+                    /* NULL that item */
+                    opal_pointer_array_set_item(oldnode->procs, k, NULL);
+                    break;
+                }
+            }
+            /* if we have fault groups, flag all the fault groups that
+             * include this node so we don't reuse them
+             */
+            target = NULL;
+            minload = 1000000.0;
+            for (item = opal_list_get_first(&mca_rmaps_resilient_component.fault_grps);
+                 item != opal_list_get_end(&mca_rmaps_resilient_component.fault_grps);
+                 item = opal_list_get_next(item)) {
+                ftgrp = (orte_rmaps_res_ftgrp_t*)item;
+                /* see if the node is in this fault group */
+                ftgrp->included = true;
+                ftgrp->used = false;
+                for (k=0; k < ftgrp->nodes.size; k++) {
+                    if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(&ftgrp->nodes, k))) {
+                        continue;
+                    }
+                    if (0 == strcmp(node->name, proc->node->name)) {
+                        /* yes - mark it to not be included */
+                        ftgrp->included = false;
+                    }
+                }
+                /* if this ftgrp is not included, then skip it */
+                if (!ftgrp->included) {
+                    continue;
+                }
+                /* compute the load average on this fault group */
+                totprocs = 0;
+                totnodes = 0;
+                for (k=0; k < ftgrp->nodes.size; k++) {
+                    if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(&ftgrp->nodes, k))) {
+                        continue;
+                    }
+                    totnodes++;
+                    totprocs += node->num_procs;
+                    if (node->num_procs < lowprocs) {
+                        lowprocs = node->num_procs;
+                        nd = node;
+                    }
+                }
+                avgload = (float)totprocs / (float)totnodes;
+                /* now find the lightest loaded of the included fault groups */
+                if (avgload < minload) {
+                    minload = avgload;
+                    target = ftgrp;
+                }
+            }
+            /* if no ftgrps are available, then just map it on the lightest loaded
+             * node in the current map
+             */
+            if (NULL == target) {
+                nd = NULL;
+                totprocs = 1000000;
+                map = jdata->map;
+                for (k=0; k < map->nodes->size; k++) {
+                    if (NULL == (node = opal_pointer_array_get_item(map->nodes, k))) {
+                        continue;
+                    }
+                    if (node->num_procs < totprocs) {
+                        nd = node;
+                        totprocs = node->num_procs;
+                    }
+                }
+                if (NULL == nd) {
+                    /* we are hosed - abort */
+                    orte_show_help("help-orte-rmaps-resilient.txt", "orte-rmaps-resilient:could-not-remap-proc",
+                                   true, ORTE_NAME_PRINT(&proc->name));
+                    return ORTE_ERROR;
+                }
+                /* put proc on the found node */
+                OBJ_RETAIN(nd);  /* required to maintain bookeeping */
+                proc->node = nd;
+                opal_pointer_array_add(nd->procs, (void*)proc);
+                nd->num_procs++;
+                /* flag the proc state as non-launched so we'll know to launch it */
+                proc->state = ORTE_PROC_STATE_INIT;
+                /* update the node and local ranks so static ports can
+                 * be properly selected if active
+                 */
+                orte_rmaps_base_update_usage(jdata, oldnode, nd, proc);
+                OBJ_RELEASE(oldnode);  /* required to maintain bookeeping */
+                continue;
+            }
+            /* if we did find a target, re-map the proc to the lightest loaded
+             * node in that group
+             */
+            lowprocs = 1000000;
+            nd = NULL;
+            for (k=0; k < target->nodes.size; k++) {
+                if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(&target->nodes, k))) {
+                    continue;
+                }
+                if (node->num_procs < lowprocs) {
+                    lowprocs = node->num_procs;
+                    nd = node;
+                }
+            }
+            /* put proc on the found node */
+            OBJ_RETAIN(nd);  /* required to maintain bookeeping */
+            proc->node = nd;
+            opal_pointer_array_add(nd->procs, (void*)proc);
+            nd->num_procs++;
+            /* flag the proc state as non-launched so we'll know to launch it */
+            proc->state = ORTE_PROC_STATE_INIT;
+            /* update the node and local ranks so static ports can
+             * be properly selected if active
+             */
+            orte_rmaps_base_update_usage(jdata, oldnode, nd, proc);
+            OBJ_RELEASE(oldnode);  /* required to maintain bookeeping */
+        }
+        return ORTE_SUCCESS;
     }
     
     

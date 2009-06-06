@@ -81,6 +81,9 @@ ORTE_DECLSPEC int orte_rmaps_base_claim_slot(orte_job_t *jdata,
 
 ORTE_DECLSPEC int orte_rmaps_base_compute_usage(orte_job_t *jdata);
 
+ORTE_DECLSPEC void orte_rmaps_base_update_usage(orte_job_t *jdata, orte_node_t *oldnode,
+                                                orte_node_t *newnode, orte_proc_t *newproc);
+
 ORTE_DECLSPEC int orte_rmaps_base_rearrange_map(orte_app_context_t *app, orte_job_map_t *map, opal_list_t *procs);
 
 ORTE_DECLSPEC int orte_rmaps_base_define_daemons(orte_job_map_t *map);

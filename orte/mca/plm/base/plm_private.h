@@ -101,7 +101,9 @@ ORTE_DECLSPEC void orte_plm_base_check_job_completed(orte_job_t *jdata);
 
 ORTE_DECLSPEC int orte_plm_base_set_hnp_name(void);
 
-ORTE_DECLSPEC int orte_plm_base_create_jobid(orte_jobid_t *jobid);
+ORTE_DECLSPEC int orte_plm_base_create_jobid(orte_job_t *jdata);
+
+ORTE_DECLSPEC void orte_plm_base_reset_job(orte_job_t *jdata);
 
 ORTE_DECLSPEC int orte_plm_base_setup_orted_cmd(int *argc, char ***argv);
 
@@ -115,7 +117,8 @@ ORTE_DECLSPEC int orte_plm_base_setup_rsh_launch(char *nodename, orte_app_contex
                                                  char *rcmd, char ***argv, char **exec_path);
 ORTE_DECLSPEC int orte_plm_base_append_bootproxy_args(orte_app_context_t *app, char ***argv,
                                                       orte_jobid_t jobid, orte_vpid_t vpid,
-                                                      int num_nodes, orte_vpid_t num_procs, orte_local_rank_t lrank,
+                                                      int num_nodes, orte_vpid_t num_procs,
+                                                      orte_node_rank_t nrank, orte_local_rank_t lrank,
                                                       orte_vpid_t nlocal, int nslots, bool overwrite);
 
 /**

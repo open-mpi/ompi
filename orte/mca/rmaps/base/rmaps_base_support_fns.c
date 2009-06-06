@@ -352,8 +352,8 @@ int orte_rmaps_base_compute_usage(orte_job_t *jdata)
 {
     orte_std_cntr_t i;
     int j, k;
-    orte_node_t **nodes;
-    orte_proc_t **procs, *psave, *psave2;
+    orte_node_t *node;
+    orte_proc_t *proc, *psave, *psave2;
     orte_vpid_t minv, minv2;
     orte_local_rank_t local_rank;
     orte_job_map_t *map;
@@ -366,23 +366,24 @@ int orte_rmaps_base_compute_usage(orte_job_t *jdata)
     map = jdata->map;
     
     /* for each node in the map... */
-    nodes = (orte_node_t**)map->nodes->addr;
-    for (i=0; i < map->num_nodes; i++) {
+    for (i=0; i < map->nodes->size; i++) {
         /* cycle through the array of procs on this node, setting
          * local and node ranks, until we
          * have done so for all procs on nodes in this map
          */
+        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
+            continue;
+        }
         
         /* init search values */
-        procs = (orte_proc_t**)nodes[i]->procs->addr;
         local_rank = 0;
         
-        /* the node map may have holes in it, so cycle
+        /* the proc map may have holes in it, so cycle
          * all the way through and avoid the holes
          */
-        for (k=0; k < nodes[i]->procs->size; k++) {
+        for (k=0; k < node->procs->size; k++) {
             /* if this proc is NULL, skip it */
-            if (NULL == procs[k]) {
+            if (NULL == opal_pointer_array_get_item(node->procs, k)) {
                 continue;
             }
             minv = ORTE_VPID_MAX;
@@ -390,22 +391,22 @@ int orte_rmaps_base_compute_usage(orte_job_t *jdata)
             psave = NULL;
             psave2 = NULL;
             /* find the minimum vpid proc */
-            for (j=0; j < nodes[i]->procs->size; j++) {
+            for (j=0; j < node->procs->size; j++) {
                 /* if this proc is NULL, skip it */
-                if (NULL == procs[j]) {
+                if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
                     continue;
                 }
-                if (procs[j]->name.jobid == jdata->jobid &&
-                    ORTE_LOCAL_RANK_MAX == procs[j]->local_rank &&
-                    procs[j]->name.vpid < minv) {
-                    minv = procs[j]->name.vpid;
-                    psave = procs[j];
+                if (proc->name.jobid == jdata->jobid &&
+                    ORTE_LOCAL_RANK_INVALID == proc->local_rank &&
+                    proc->name.vpid < minv) {
+                    minv = proc->name.vpid;
+                    psave = proc;
                 }
                 /* no matter what job...still have to handle node_rank */
-                if (ORTE_NODE_RANK_MAX == procs[j]->node_rank &&
-                    procs[j]->name.vpid < minv2) {
-                    minv2 = procs[j]->name.vpid;
-                    psave2 = procs[j];
+                if (ORTE_NODE_RANK_INVALID == proc->node_rank &&
+                    proc->name.vpid < minv2) {
+                    minv2 = proc->name.vpid;
+                    psave2 = proc;
                 }
             }
             if (NULL == psave && NULL == psave2) {
@@ -417,14 +418,68 @@ int orte_rmaps_base_compute_usage(orte_job_t *jdata)
                 ++local_rank;
             }
             if (NULL != psave2) {
-                psave2->node_rank = nodes[i]->next_node_rank;
-                nodes[i]->next_node_rank++;
+                psave2->node_rank = node->next_node_rank;
+                node->next_node_rank++;
             }
         }
     }
 
     return ORTE_SUCCESS;
 }
+
+/* when we restart a process on a different node, we have to
+ * ensure that the node and local ranks assigned to the proc
+ * don't overlap with any pre-existing proc on that node. If
+ * we don't, then it would be possible for procs to conflict
+ * when opening static ports, should that be enabled.
+ */
+void orte_rmaps_base_update_usage(orte_job_t *jdata, orte_node_t *oldnode,
+                                  orte_node_t *newnode, orte_proc_t *newproc)
+{
+    int k;
+    orte_node_rank_t node_rank;
+    orte_local_rank_t local_rank;
+    orte_proc_t *proc;
+    
+    /* if the node hasn't changed, then we can just use the
+     * pre-defined values
+     */
+    if (oldnode == newnode) {
+        return;
+    }
+    
+    /* if the node has changed, then search the new node for the
+     * lowest unused local and node rank
+     */
+    node_rank = 0;
+retry_nr:
+    for (k=0; k < newnode->procs->size; k++) {
+        /* if this proc is NULL, skip it */
+        if (NULL == (proc = opal_pointer_array_get_item(newnode->procs, k))) {
+            continue;
+        }
+        if (node_rank == proc->node_rank) {
+            node_rank++;
+            goto retry_nr;
+        }
+    }
+    newproc->node_rank = node_rank;
+    
+    local_rank = 0;
+retry_lr:
+    for (k=0; k < newnode->procs->size; k++) {
+        /* if this proc is NULL, skip it */
+        if (NULL == (proc = opal_pointer_array_get_item(newnode->procs, k))) {
+            continue;
+        }
+        if (local_rank == proc->local_rank) {
+            local_rank++;
+            goto retry_lr;
+        }
+    }
+    newproc->local_rank = local_rank;
+}
+
 
 int orte_rmaps_base_define_daemons(orte_job_map_t *map)
 {

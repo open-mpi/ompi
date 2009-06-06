@@ -176,8 +176,8 @@ static int plm_tmd_launch_job(orte_job_t *jdata)
     failed_job = ORTE_PROC_MY_NAME->jobid;
     connected = false;
 
-    /* create a jobid for this job */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_create_jobid(&jdata->jobid))) {
+    /* setup the job */
+    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_job(jdata))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
@@ -186,12 +186,6 @@ static int plm_tmd_launch_job(orte_job_t *jdata)
                          "%s plm:tm: launching job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
-    
-    /* setup the job */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_job(jdata))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
     
     /* Get the map for this job */
     if (NULL == (map = orte_rmaps.get_job_map(jdata->jobid))) {
