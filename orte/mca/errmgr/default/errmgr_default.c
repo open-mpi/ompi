@@ -179,9 +179,21 @@ PROCESS:
  * Register a callback function upon a change to a specified job state.
  */
 int orte_errmgr_default_register_callback(orte_jobid_t job,
-                                      orte_job_state_t state,
-                                      orte_err_cb_fn_t cbfunc,
-                                      void *cbdata)
+                                          orte_job_state_t state,
+                                          orte_err_cb_fn_t cbfunc,
+                                          void *cbdata)
 {
-   return ORTE_ERR_NOT_IMPLEMENTED;
+    orte_job_t *jdata;
+    
+    /* get the job data object for this process */
+    if (NULL == (jdata = orte_get_job_data_object(job))) {
+        /* nothing we can do - abort things */
+        return ORTE_ERR_NOT_FOUND;
+    }
+    
+    /* update the error callback data */
+    jdata->err_cbfunc = cbfunc;
+    jdata->err_cbstates = state;
+    jdata->err_cbdata = cbdata;
+    return ORTE_SUCCESS;
 }
