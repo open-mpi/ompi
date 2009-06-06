@@ -374,18 +374,6 @@ static int rte_init(void)
         goto error;
     }
     
-    /* setup I/O forwarding system - must come after we init routes */
-    if (ORTE_SUCCESS != (ret = orte_iof_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_iof_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_iof_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_iof_base_select";
-        goto error;
-    }
-    
     /* setup the notifier system */
     if (ORTE_SUCCESS != (ret = orte_notifier_base_open())) {
         ORTE_ERROR_LOG(ret);
@@ -424,6 +412,7 @@ static int rte_finalize(void)
     /* finalize selected modules so they can de-register
      * any receives
      */
+    orte_ras_base_close();
     orte_rmaps_base_close();
     orte_plm_base_close();
     orte_errmgr_base_close();

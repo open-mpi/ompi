@@ -411,26 +411,21 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                 }
             }
             /* if no ftgrps are available, then just map it on the lightest loaded
-             * node in the current map
+             * node in the current map, avoiding the current node if possible
              */
             if (NULL == target) {
-                nd = NULL;
+                nd = oldnode;  /* put it back where it was if nothing else is found */
                 totprocs = 1000000;
                 map = jdata->map;
                 for (k=0; k < map->nodes->size; k++) {
-                    if (NULL == (node = opal_pointer_array_get_item(map->nodes, k))) {
+                    if (NULL == (node = opal_pointer_array_get_item(map->nodes, k)) ||
+                        node == oldnode) {
                         continue;
                     }
                     if (node->num_procs < totprocs) {
                         nd = node;
                         totprocs = node->num_procs;
                     }
-                }
-                if (NULL == nd) {
-                    /* we are hosed - abort */
-                    orte_show_help("help-orte-rmaps-resilient.txt", "orte-rmaps-resilient:could-not-remap-proc",
-                                   true, ORTE_NAME_PRINT(&proc->name));
-                    return ORTE_ERROR;
                 }
                 /* put proc on the found node */
                 OBJ_RETAIN(nd);  /* required to maintain bookeeping */
