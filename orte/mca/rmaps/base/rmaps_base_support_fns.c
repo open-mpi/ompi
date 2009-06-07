@@ -455,7 +455,7 @@ void orte_rmaps_base_update_usage(orte_job_t *jdata, orte_node_t *oldnode,
 retry_nr:
     for (k=0; k < newnode->procs->size; k++) {
         /* if this proc is NULL, skip it */
-        if (NULL == (proc = opal_pointer_array_get_item(newnode->procs, k))) {
+        if (NULL == (proc = (orte_proc_t *) opal_pointer_array_get_item(newnode->procs, k))) {
             continue;
         }
         if (node_rank == proc->node_rank) {
@@ -469,7 +469,7 @@ retry_nr:
 retry_lr:
     for (k=0; k < newnode->procs->size; k++) {
         /* if this proc is NULL, skip it */
-        if (NULL == (proc = opal_pointer_array_get_item(newnode->procs, k))) {
+        if (NULL == (proc = (orte_proc_t *) opal_pointer_array_get_item(newnode->procs, k))) {
             continue;
         }
         if (local_rank == proc->local_rank) {
