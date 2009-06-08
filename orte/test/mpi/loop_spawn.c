@@ -33,7 +33,6 @@ int main(int argc, char **argv)
         printf("parent: MPI_Comm_spawn #%d rank %d, size %d\n", 
                iter, rank, size);
         MPI_Comm_free(&merged);
-        sleep(1);
     }
 
     MPI_Finalize();
