@@ -28,6 +28,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/show_help.h"
+#include "orte/util/name_fns.h"
 
 #include "orte/mca/plm/base/plm_private.h"
 
