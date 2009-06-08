@@ -253,7 +253,9 @@ send_request_pml_complete(mca_pml_ob1_send_request_t *sendreq)
 static inline bool
 send_request_pml_complete_check(mca_pml_ob1_send_request_t *sendreq)
 {
+#if OPAL_HAVE_THREAD_SUPPORT
     opal_atomic_rmb();
+#endif
     /* if no more events are expected for the request and the whole message is
      * already sent and send fragment scheduling isn't running in another
      * thread then complete the request on PML level. From now on, if user
