@@ -195,7 +195,7 @@ typedef struct vertex_distance_from_t vertex_distance_from_t;
  * @param graph The graph that the vertex will be added to.
  * @param vertex The vertex we want to add.
  */
-void opal_graph_add_vertex(opal_graph_t *graph, opal_graph_vertex_t *vertex);
+OPAL_DECLSPEC void opal_graph_add_vertex(opal_graph_t *graph, opal_graph_vertex_t *vertex);
 
 /**
  * This graph API remove a vertex from graph. The most common
@@ -205,7 +205,7 @@ void opal_graph_add_vertex(opal_graph_t *graph, opal_graph_vertex_t *vertex);
  * @param graph The graph that the vertex will be remove from.
  * @param vertex The vertex we want to remove.
  */
-void opal_graph_remove_vertex(opal_graph_t *graph, opal_graph_vertex_t *vertex);
+OPAL_DECLSPEC void opal_graph_remove_vertex(opal_graph_t *graph, opal_graph_vertex_t *vertex);
 
 /**
  * This graph API adds an edge (connection between two
@@ -218,7 +218,7 @@ void opal_graph_remove_vertex(opal_graph_t *graph, opal_graph_vertex_t *vertex);
  * @return int Success or error. this API can return an error if
  *         one of the vertices is not in the graph.
  */
-int opal_graph_add_edge(opal_graph_t *graph, opal_graph_edge_t *edge); 
+OPAL_DECLSPEC int opal_graph_add_edge(opal_graph_t *graph, opal_graph_edge_t *edge); 
 
 /**
  * This graph API removes an edge (a connection between two
@@ -231,7 +231,7 @@ int opal_graph_add_edge(opal_graph_t *graph, opal_graph_edge_t *edge);
  * @param graph The graph that this edge will be remove from.
  * @param edge the edge that we want to remove.
  */
-void opal_graph_remove_edge (opal_graph_t *graph, opal_graph_edge_t *edge);
+OPAL_DECLSPEC void opal_graph_remove_edge (opal_graph_t *graph, opal_graph_edge_t *edge);
 
 /**
  * This graph API tell us if two vertices are adjacent
@@ -244,7 +244,7 @@ void opal_graph_remove_edge (opal_graph_t *graph, opal_graph_edge_t *edge);
  *         vertices or infinity if the vertices are not
  *         connected.
  */
-uint32_t opal_graph_adjacent(opal_graph_t *graph, opal_graph_vertex_t *vertex1, opal_graph_vertex_t *vertex2);
+OPAL_DECLSPEC uint32_t opal_graph_adjacent(opal_graph_t *graph, opal_graph_vertex_t *vertex1, opal_graph_vertex_t *vertex2);
 
 /**
  * This Graph API returns the order of the graph (number of
@@ -254,7 +254,7 @@ uint32_t opal_graph_adjacent(opal_graph_t *graph, opal_graph_vertex_t *vertex1, 
  * 
  * @return int
  */
-int opal_graph_get_order(opal_graph_t *graph);
+OPAL_DECLSPEC int opal_graph_get_order(opal_graph_t *graph);
 
 /**
  * This Graph API returns the size of the graph (number of
@@ -264,7 +264,7 @@ int opal_graph_get_order(opal_graph_t *graph);
  * 
  * @return int
  */
-int opal_graph_get_size(opal_graph_t *graph);
+OPAL_DECLSPEC int opal_graph_get_size(opal_graph_t *graph);
 
 /**
  * This graph API finds a vertex in the graph according the
@@ -275,7 +275,7 @@ int opal_graph_get_size(opal_graph_t *graph);
  * 
  * @return opal_graph_vertex_t* The vertex founded or NULL.
  */
-opal_graph_vertex_t *opal_graph_find_vertex(opal_graph_t *graph, void *vertex_data);
+OPAL_DECLSPEC opal_graph_vertex_t *opal_graph_find_vertex(opal_graph_t *graph, void *vertex_data);
 
 
 /**
@@ -290,7 +290,7 @@ opal_graph_vertex_t *opal_graph_find_vertex(opal_graph_t *graph, void *vertex_da
  * @return int returning the graph order (the
  *                    number of vertices in the returned array)
  */
-int opal_graph_get_graph_vertices(opal_graph_t *graph, opal_pointer_array_t *vertices_list);
+OPAL_DECLSPEC int opal_graph_get_graph_vertices(opal_graph_t *graph, opal_pointer_array_t *vertices_list);
 
 /**
  * This graph API returns all the adjacent of a vertex and the
@@ -305,7 +305,7 @@ int opal_graph_get_graph_vertices(opal_graph_t *graph, opal_pointer_array_t *ver
  * 
  * @return int the number of adjacent in the list.
  */
-int opal_graph_get_adjacent_vertices(opal_graph_t *graph, opal_graph_vertex_t *vertex, opal_value_array_t *adjacent);
+OPAL_DECLSPEC int opal_graph_get_adjacent_vertices(opal_graph_t *graph, opal_graph_vertex_t *vertex, opal_value_array_t *adjacent);
 
 /**
  * This graph API duplicates a graph. Note that this API does
@@ -315,7 +315,7 @@ int opal_graph_get_adjacent_vertices(opal_graph_t *graph, opal_graph_vertex_t *v
  * @param dest The new created graph.
  * @param src The graph we want to duplicate.
  */
-void opal_graph_duplicate(opal_graph_t **dest, opal_graph_t *src);
+OPAL_DECLSPEC void opal_graph_duplicate(opal_graph_t **dest, opal_graph_t *src);
 
 /**
  * This graph API finds the shortest path between two vertices.
@@ -326,7 +326,7 @@ void opal_graph_duplicate(opal_graph_t **dest, opal_graph_t *src);
  * 
  * @return uint32_t the distance between the two vertices.
  */
-uint32_t opal_graph_spf(opal_graph_t *graph, opal_graph_vertex_t *vertex1, opal_graph_vertex_t *vertex2);
+OPAL_DECLSPEC uint32_t opal_graph_spf(opal_graph_t *graph, opal_graph_vertex_t *vertex1, opal_graph_vertex_t *vertex2);
 
 /**
  * This graph API returns the distance (weight) from a reference
@@ -340,13 +340,13 @@ uint32_t opal_graph_spf(opal_graph_t *graph, opal_graph_vertex_t *vertex1, opal_
  * 
  * @return uint32_t the size of the distance array
  */
-uint32_t opal_graph_dijkstra(opal_graph_t *graph, opal_graph_vertex_t *vertex, opal_value_array_t *distance_array);
+OPAL_DECLSPEC uint32_t opal_graph_dijkstra(opal_graph_t *graph, opal_graph_vertex_t *vertex, opal_value_array_t *distance_array);
 
 /**
  * This graph API prints a graph - mostly for debug uses.
  * @param graph
  */
-void opal_graph_print(opal_graph_t *graph);
+OPAL_DECLSPEC void opal_graph_print(opal_graph_t *graph);
 
 END_C_DECLS
 
