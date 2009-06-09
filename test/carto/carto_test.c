@@ -29,6 +29,7 @@
 #include "../../opal/mca/carto/carto.h"
 #include "../../opal/mca/carto/base/base.h"
 #include "../../opal/util/output.h"
+#include "../../opal/class/opal_graph.h"
 
 int
 main(int argc, char* argv[])
