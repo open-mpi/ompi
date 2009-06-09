@@ -42,10 +42,14 @@ int opal_paffinity_base_set(opal_paffinity_base_cpu_set_t cpumask)
 
 int opal_paffinity_base_get(opal_paffinity_base_cpu_set_t *cpumask)
 {
+    /* zero the cpumask so we start with a clean slate - do
+     * it here so that any error returns no info
+     */
+    if (NULL != cpumask) {
+        OPAL_PAFFINITY_CPU_ZERO(*cpumask);
+    }
+    
     if (!opal_paffinity_base_selected) {
-        if(NULL != cpumask) {
-            OPAL_PAFFINITY_CPU_ZERO(*cpumask);
-        }
         return OPAL_ERR_NOT_FOUND;
     }
     if(NULL == cpumask) {

@@ -185,6 +185,24 @@ typedef struct opal_paffinity_base_cpu_set_t {
 #define OPAL_PAFFINITY_CPU_ISSET(num, cpuset) \
     (0 != (((cpuset).bitmask[OPAL_PAFFINITY_CPU_BYTE(num)]) & ((opal_paffinity_base_bitmask_t) 1 << OPAL_PAFFINITY_CPU_BIT(num))))
 
+/**
+ * Public macro to test if a process is bound anywhere
+ */
+#define OPAL_PAFFINITY_PROCESS_IS_BOUND(cpuset, bound)              \
+    do {                                                            \
+        int i, num_processors, num_bound;                           \
+        opal_paffinity_base_get_processor_info(&num_processors);    \
+        *(bound) = false;                                           \
+        for (i=0; i < num_processors; i++) {                        \
+            if (OPAL_PAFFINITY_CPU_ISSET(i, (cpuset))) {            \
+                num_bound++;                                        \
+            }                                                       \
+        }                                                           \
+        if (num_bound < num_processors) {                           \
+            *(bound) = true;                                        \
+        }                                                           \
+    } while(0);
+
 /***************************************************************************/
 
 /**
@@ -201,9 +219,10 @@ typedef int (*opal_paffinity_base_module_set_fn_t)(opal_paffinity_base_cpu_set_t
 
 /**
  * Module function to get this process' affinity to a specific set of
- * PHYSICAL CPUs.  Returns OPAL_ERR_NOT_FOUND if
- * opal_paffinity_base_module_set_fn_t() was not previously invoked in
- * this process.
+ * PHYSICAL CPUs.  Returns any binding in the cpumask. This function -only-
+ * returns something other than OPAL_SUCCESS if an actual error is encountered.
+ * You will need to check the mask to find out if this process is actually
+ * bound somewhere specific - a macro for that purpose is provided above
  */
 typedef int (*opal_paffinity_base_module_get_fn_t)(opal_paffinity_base_cpu_set_t *cpumask);
 
