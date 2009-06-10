@@ -1,6 +1,7 @@
 #!/bin/bash
 #
-# Copyright (c) 2009 Los Alamos National Security, LLC. All rights reserved
+# Copyright (c) 2009      Los Alamos National Security, LLC. All rights reserved
+# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 #
 
 if (( $# < 1 )) ; then
@@ -86,4 +87,5 @@ app=$1
 shift 1
 
 #exec the app with the remaining args
+#echo "executing" "$app"
 exec "$app" "$@"
