@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -75,8 +75,52 @@
 #include <stdlib.h>
 #endif  /* defined(HAVE_STDLIB_H) */
 
-#include "ompi/mca/pml/base/pml_base_request.h"
-#include "ompi/group/group.h"
+/* Notice to developers!!!!
+ * The following include files with _dbg.h suffixes contains definitions 
+ * that are shared between the debuggger plugins and the OMPI code base.
+ * This is done instead of including the non-_dbg suffixed files because
+ * of the different way compilers may handle extern definitions. The 
+ * particular case that is causing problems is when there is an extern 
+ * variable or function that is accessed in a static inline function. 
+ * For example, here is the code we often see in a header file.
+ *
+ * extern int request_complete;
+ * static inline check_request(void) {
+ *    request_complete = 1;
+ * }
+ *
+ * If this code exists in a header file and gets included in a source
+ * file, then some compilers expect to have request_complete defined
+ * somewhere even if request_complete is never referenced and
+ * check_request is never called. Other compilers do not need them defined
+ * if they are never referenced in the source file.
+ *
+ * In the case of extern functions we something like the following:
+ *
+ * extern int foo();
+ * static inline bar(void) {
+ *     foo();
+ * }
+ *
+ * If this code exists it actually compiles fine however an undefined symbol
+ * is kept for foo() and in the case of some tools that load in plugins with
+ * RTLD_NOW this undefined symbol causes the dlopen to fail since we do not 
+ * have (nor really need) the supporting library containing foo().
+ *
+ * Therefore, to handle cases like the above with compilers that require the 
+ * symbols (like Sun Studio) instead of  pulling in all of OMPI into the 
+ * plugins or defining dummy symbols here we separate the definitions used by 
+ * both sets of code into the _dbg.h files.
+ *
+ * This means if one needs to add another definition that the plugins must see
+ * one should either move the definition into one of the existing _dbg.h file or
+ * create a new _dbg.h file.
+ */
+#include "ompi/group/group_dbg.h"
+#include "ompi/request/request_dbg.h"
+#include "ompi/mca/pml/base/pml_base_request_dbg.h"
+#include "mpi.h" /* needed for MPI_ANY_TAG */
+
 #include "msgq_interface.h"
 #include "ompi_msgq_dll_defs.h"
 
@@ -123,43 +167,6 @@
 #else
 #define DEBUG(LEVEL,WHAT)
 #endif  /* VERBOSE */
-
-#if defined(__SUNPRO_C)
-/*
- * These symbols are defined here because of the different way compilers
- * may handle extern definitions. The particular case that is causing 
- * problems is when there is an extern variable that is accessed in a 
- * static inline function. For example, here is the code we often see in 
- * a header file.
- * 
- * extern int request_complete;
- * static inline check_request(void) {
- *    request_complete = 1;
- * }
- *
- * If this code exists in a header file and gets included in a source 
- * file, then some compilers expect to have request_complete defined 
- * somewhere even if request_complete is never referenced and 
- * check_request is never called. Other compilers do not need them defined 
- * if they are never referenced in the source file. Therefore, to handle 
- * cases like the above with compilers that require the symbol (like 
- * Sun Studio) we add in these definitions here.
- */
-size_t ompi_request_completed;
-opal_condition_t ompi_request_cond;
-size_t ompi_request_waiting;
-opal_mutex_t ompi_request_lock;
-opal_mutex_t opal_event_lock;
-#if OPAL_HAVE_THREAD_SUPPORT
-volatile
-#endif
-uint32_t opal_progress_recursion_depth_counter;
-int opal_progress_spin_count;
-volatile int32_t opal_progress_thread_count;
-bool opal_mutex_check_locks;
-bool opal_uses_threads;
-ompi_proc_t* ompi_proc_local_proc;
-#endif /* defined(__SUNPRO_C) */
 
 /**********************************************************************/
 /* Set up the basic callbacks into the debugger */
