@@ -1217,6 +1217,21 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                 continue;
             }
             
+            /* do we have a child from the specified job. Because the
+             * job could be given as a WILDCARD value, we must use
+             * the dss.compare function to check for equality.
+             */
+            if (OPAL_EQUAL != opal_dss.compare(&job, &(child->name->jobid), ORTE_JOBID)) {
+                
+                OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                     "%s odls:launch child %s is not in job %s being launched",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(child->name),
+                                     ORTE_JOBID_PRINT(job)));
+                
+                continue;
+            }
+            
             /* check to see if we have enough available file descriptors
              * to launch another child - if not, then let's wait a little
              * while to see if some come free. This can happen if we are
@@ -1258,21 +1273,6 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                         goto CLEANUP;
                     }
                 }
-            }
-             
-            /* do we have a child from the specified job. Because the
-             * job could be given as a WILDCARD value, we must use
-             * the dss.compare function to check for equality.
-             */
-            if (OPAL_EQUAL != opal_dss.compare(&job, &(child->name->jobid), ORTE_JOBID)) {
-                
-                OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                     "%s odls:launch child %s is not in job %s being launched",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(child->name),
-                                     ORTE_JOBID_PRINT(job)));
-                
-                continue;
             }
             
             /* did the user request we display output in xterms? */
