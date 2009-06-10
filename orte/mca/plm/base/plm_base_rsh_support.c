@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -43,6 +43,9 @@
 #include "opal/util/argv.h"
 #include "opal/util/basename.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/if.h"
+
+#include "opal/dss/dss.h"
 
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
@@ -251,12 +254,22 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
                     exec_path, strerror(errno), errno);
         exit(-1);    
     } else {
-        /* parent waits to hear that slave is running */
-        ack_recvd = false;
-        rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_REPORT_REMOTE_LAUNCH,
-                                     ORTE_RML_NON_PERSISTENT, recv_ack, NULL);
+        /* if it is an orte-job, then parent waits to hear that slave is running. if
+         * it isn't an orte-job, then we can't wait because we would never hear
+         * anything!
+         */
+        if (!(jdata->controls & ORTE_JOB_CONTROL_NON_ORTE_JOB)) {
+            ack_recvd = false;
+            rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_REPORT_REMOTE_LAUNCH,
+                                         ORTE_RML_NON_PERSISTENT, recv_ack, NULL);
+            
+            ORTE_PROGRESSED_WAIT(ack_recvd, 0, 1);
+            /* to release this job from the wait in plm_base_receive, we have to
+             * flag it as having reported
+             */
+            jdata->num_reported = jdata->num_procs;
+        }
         
-        ORTE_PROGRESSED_WAIT(ack_recvd, 0, 1);
         /* cleanup */
         free(exec_path);
         opal_argv_free(argv);
@@ -380,6 +393,9 @@ void orte_plm_base_local_slave_finalize(void)
         cmd = opal_argv_join(argv, ' ');
         opal_argv_free(argv);
         argv = NULL;
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                             "%s plm:base:local:slave:finalize - removing files with cmd:\n\t%s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), cmd));
         system(cmd);
         free(cmd);
         /* now remove the bootproxy itself, if needed */
@@ -401,6 +417,9 @@ void orte_plm_base_local_slave_finalize(void)
                 argv = NULL;
             }
             /* execute it */
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                 "%s plm:base:local:slave:finalize - removing bootproxy with cmd:\n\t%s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), cmd));
             system(cmd);
             free(cmd);
         }
@@ -733,7 +752,12 @@ int orte_plm_base_setup_rsh_launch(char *nodename, orte_app_context_t *app,
         /* save the bootproxy cmd */
         slave_node->bootproxy = strdup(rcmd);
         /* is this a local operation? */
-        if (0 == strcmp(orte_process_info.nodename, nodename)) {
+        if (0 == strcmp(orte_process_info.nodename, nodename) ||
+            0 == strcmp(nodename, "localhost") ||
+            opal_ifislocal(nodename)) {
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                 "%s plm:base:local:slave: node %s is local",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), nodename));
             slave_node->local = true;
             /* use the prefix, if given */
             if (NULL != app->prefix_dir) {
@@ -744,7 +768,13 @@ int orte_plm_base_setup_rsh_launch(char *nodename, orte_app_context_t *app,
             }
             /* no need to preposition the remote cmd, and no need to remove it */
             slave_node->positioned = false;
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                 "%s plm:base:local:slave: setting prefix to %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), slave_node->prefix));
         } else {
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                 "%s plm:base:local:slave: node %s is remote",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), nodename));
             /* setup the correct shell info */
             if (ORTE_SUCCESS != (rc = setup_shell(&rshell, &lshell,
                                                   nodename, &tmpargv))) {
@@ -879,6 +909,9 @@ int orte_plm_base_setup_rsh_launch(char *nodename, orte_app_context_t *app,
         /* put everything in /tmp */
         dest_dir = "/tmp";
     }
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                         "%s plm:base:local:slave: destination dir set to %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), dest_dir));
     
     /* setup the exec_path to the bootproxy */
     if (slave_node->local) {
@@ -904,6 +937,9 @@ int orte_plm_base_setup_rsh_launch(char *nodename, orte_app_context_t *app,
         opal_argv_append_nosize(argv, tmp);
         free(tmp);
     }
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                         "%s plm:base:local:slave: exec_path set to %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), *exec_path));
     
     /* do we need to preload the binary? */
     if (app->preload_binary) {
@@ -1109,6 +1145,13 @@ int orte_plm_base_append_bootproxy_args(orte_app_context_t *app, char ***argv,
     char *param, *path, *tmp, *cmd, *basename, *dest_dir;
     int i;
     
+    /* if a prefix is set, pass it to the bootproxy in a special way */
+    if (NULL != app->prefix_dir) {
+        asprintf(&param, "OMPI_PREFIX=%s", app->prefix_dir);
+        opal_argv_append_nosize(argv, param);
+        free(param);
+    }
+    
     /* if there is a working directory specified, add it in a special
      * way so the bootproxy can deal with it
      */
@@ -1262,13 +1305,33 @@ int orte_plm_base_append_bootproxy_args(orte_app_context_t *app, char ***argv,
         opal_argv_append_nosize(argv, path);
         free(path);
     } else {
-        /* it must already have been put there, so use the given path */
-        opal_argv_append_nosize(argv, app->app);
+        /* it must already have been put there - if the given
+         * path was absolute, just use it
+         */
+        if (opal_path_is_absolute(app->app)) {
+            opal_argv_append_nosize(argv, app->app);
+        } else if (NULL != app->cwd) {
+            /* prepend the cwd, if provided */
+            param = opal_os_path(false, app->cwd, app->app, NULL);
+            opal_argv_append_nosize(argv, param);
+            free(param);
+        } else {
+            /* just do your best, i guess */
+            opal_argv_append_nosize(argv, app->app);
+        }
     }
     
     /* add any provided argv */
     for (i=1; NULL != app->argv[i]; i++) {
         opal_argv_append_nosize(argv, app->argv[i]);
+    }
+    
+    if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
+        param = opal_argv_join(*argv, ' ');
+        opal_output(0, "%s plm:base:append_bootproxy_args: final argv:\n\t%s",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                    (NULL == param) ? "NULL" : param);
+        if (NULL != param) free(param);
     }
     
     return ORTE_SUCCESS;
