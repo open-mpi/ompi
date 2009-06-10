@@ -113,14 +113,12 @@ struct ompi_predefined_group_t {
 
 typedef struct ompi_predefined_group_t ompi_predefined_group_t;
 
-/* Some definitions for the flags */
-#define OMPI_GROUP_ISFREED       0x00000001
-#define OMPI_GROUP_INTRINSIC     0x00000002
-
-#define OMPI_GROUP_DENSE     0x00000004
-#define OMPI_GROUP_SPORADIC  0x00000008
-#define OMPI_GROUP_STRIDED   0x00000010
-#define OMPI_GROUP_BITMAP    0x00000020
+/*
+ * The following include pulls in shared typedefs with debugger plugins.
+ * For more information on why we do this see the Notice to developers 
+ * comment at the top of the ompi_msgq_dll.c file.
+ */
+#include "group_dbg.h"
 
 #define OMPI_GROUP_IS_INTRINSIC(_group) ((_group)->grp_flags&OMPI_GROUP_INTRINSIC)
 #define OMPI_GROUP_IS_DENSE(_group) ((_group)->grp_flags & OMPI_GROUP_DENSE)

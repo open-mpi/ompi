@@ -10,6 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -42,13 +43,12 @@ OMPI_DECLSPEC extern ompi_free_list_t mca_pml_base_recv_requests;
 /**
  * Type of request.
  */
-typedef enum {
-    MCA_PML_REQUEST_NULL,
-    MCA_PML_REQUEST_SEND,
-    MCA_PML_REQUEST_RECV,
-    MCA_PML_REQUEST_IPROBE,
-    MCA_PML_REQUEST_PROBE
-} mca_pml_base_request_type_t;
+/*
+ * The following include pulls in shared typedefs with debugger plugins.
+ * For more information on why we do this see the Notice to developers 
+ * comment at the top of the ompi_msgq_dll.c file.
+ */
+#include "pml_base_request_dbg.h"
 
 
 /**

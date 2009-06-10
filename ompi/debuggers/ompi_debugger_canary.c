@@ -14,6 +14,7 @@
  * Include all header files for the datatypes that we care about / use
  * in the DLL code 
  */
+#include "ompi/mca/topo/topo.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
 #include "ompi/mca/pml/base/pml_base_recvreq.h"

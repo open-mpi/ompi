@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2008      Sun Microsystmes, Inc.  All rights reserved.
+ * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -36,7 +36,6 @@
 #include "ompi_config.h"
 
 #include "ompi_common_dll_defs.h"
-#include "ompi/mca/topo/topo.h"
 
 /* Basic callbacks into the debugger */
 const mqs_basic_callbacks *mqs_basic_entrypoints;
