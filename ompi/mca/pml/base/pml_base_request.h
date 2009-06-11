@@ -48,7 +48,7 @@ OMPI_DECLSPEC extern ompi_free_list_t mca_pml_base_recv_requests;
  * For more information on why we do this see the Notice to developers 
  * comment at the top of the ompi_msgq_dll.c file.
  */
-#include "ompi/mca/pml/base/pml_base_request_dbg.h"
+#include "pml_base_request_dbg.h"
 
 
 /**

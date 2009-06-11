@@ -21,7 +21,8 @@
 # This makefile.am does not stand on its own - it is included from ompi/Makefile.am
 
 headers += \
-        group/group.h
+        group/group.h \
+	group/group_dbg.h
 
 libmpi_la_SOURCES += \
         group/group.c \

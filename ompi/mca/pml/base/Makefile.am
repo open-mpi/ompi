@@ -21,7 +21,8 @@ headers += \
         base/pml_base_bsend.h \
         base/pml_base_request.h \
         base/pml_base_recvreq.h \
-        base/pml_base_sendreq.h
+        base/pml_base_sendreq.h \
+	base/pml_base_request_dbg.h
 
 libmca_pml_la_SOURCES += \
         base/pml_base_bsend.c \

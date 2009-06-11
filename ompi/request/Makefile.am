@@ -22,7 +22,8 @@
 headers += \
         request/grequest.h \
         request/request_default.h \
-        request/request.h
+        request/request.h \
+	request/request_dbg.h
 
 libmpi_la_SOURCES += \
         request/grequest.c \
