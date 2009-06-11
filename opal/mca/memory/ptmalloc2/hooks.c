@@ -746,7 +746,8 @@ static void opal_memory_ptmalloc2_malloc_init_hook(void)
         0 == stat("/dev/myri6", &st) ||
         0 == stat("/dev/myri7", &st) ||
         0 == stat("/dev/myri8", &st) ||
-        0 == stat("/dev/myri9", &st)) {
+        0 == stat("/dev/myri9", &st) ||
+        0 == stat("/dev/ipath", &st)) {
         found_driver = true;
     }
     
