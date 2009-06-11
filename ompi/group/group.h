@@ -118,7 +118,7 @@ typedef struct ompi_predefined_group_t ompi_predefined_group_t;
  * For more information on why we do this see the Notice to developers 
  * comment at the top of the ompi_msgq_dll.c file.
  */
-#include "group_dbg.h"
+#include "ompi/group/group_dbg.h"
 
 #define OMPI_GROUP_IS_INTRINSIC(_group) ((_group)->grp_flags&OMPI_GROUP_INTRINSIC)
 #define OMPI_GROUP_IS_DENSE(_group) ((_group)->grp_flags & OMPI_GROUP_DENSE)
