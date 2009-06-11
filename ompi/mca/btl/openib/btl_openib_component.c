@@ -2380,17 +2380,21 @@ btl_openib_component_init(int *num_btl_modules,
 
     /* Copy the btl module structs into a contiguous array and fully
        initialize them */
-    for(i = 0; i < mca_btl_openib_component.ib_num_btls; i++){
-        item = opal_list_remove_first(&btl_list);
+    i = 0;
+    while (NULL != (item = opal_list_remove_first(&btl_list))) {
         ib_selected = (mca_btl_base_selected_module_t*)item;
         openib_btl = (mca_btl_openib_module_t*)ib_selected->btl_module;
 
-        /* Do we have at least one CPC that can handle this
-           port? */
-        ret = 
-            ompi_btl_openib_connect_base_select_for_local_port(openib_btl);
-        if (OMPI_SUCCESS != ret) {
-            /* We already did a show_help in the lower layer */
+        /* Search for a CPC that can handle this port */
+        ret = ompi_btl_openib_connect_base_select_for_local_port(openib_btl);
+        /* If we get NOT_SUPPORTED, then no CPC was found for this
+           port.  But that's not a fatal error -- just keep going;
+           let's see if we find any usable openib modules or not. */
+        if (OMPI_ERR_NOT_SUPPORTED == ret) {
+            continue;
+        } else if (OMPI_SUCCESS != ret) {
+            /* All others *are* fatal.  Note that we already did a
+               show_help in the lower layer */
             goto no_btls;
         }
 
@@ -2400,7 +2404,15 @@ btl_openib_component_init(int *num_btl_modules,
         if (finish_btl_init(openib_btl) != OMPI_SUCCESS) {
             goto no_btls;
         }
-     }
+        ++i;
+    }
+    /* If we got nothing, then error out */
+    if (0 == i) {
+        goto no_btls;
+    }
+    /* Otherwise reset to the number of openib modules that we
+       actually got */
+    mca_btl_openib_component.ib_num_btls = i;
 
     btl_openib_modex_send();
 

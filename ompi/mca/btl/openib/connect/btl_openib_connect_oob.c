@@ -122,15 +122,18 @@ static int oob_component_query(mca_btl_openib_module_t *btl,
 #if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
     if (IBV_TRANSPORT_IB != btl->device->ib_dev->transport_type) {
         opal_output_verbose(5, mca_btl_base_output,
-                            "openib BTL: oob CPC only supported on InfiniBand; skipped on device %s",
-                            ibv_get_device_name(btl->device->ib_dev));
+                            "openib BTL: oob CPC only supported on InfiniBand; skipped on  %s:%d",
+                            ibv_get_device_name(btl->device->ib_dev),
+                            btl->port_num);
         return OMPI_ERR_NOT_SUPPORTED;
     }
 #endif
 
     if (mca_btl_openib_component.num_xrc_qps > 0) {
         opal_output_verbose(5, mca_btl_base_output,
-                            "openib BTL: oob CPC not supported with XRC receive queues, please try xoob CPC; skipped");
+                            "openib BTL: oob CPC not supported with XRC receive queues, please try xoob CPC; skipped on %s:%d",
+                            ibv_get_device_name(btl->device->ib_dev),
+                            btl->port_num);
         return OMPI_ERR_NOT_SUPPORTED;
     }
     /* If this btl supports OOB, then post the RML message.  But
@@ -171,8 +174,9 @@ static int oob_component_query(mca_btl_openib_module_t *btl,
     (*cpc)->cbm_uses_cts = false;
 
     opal_output_verbose(5, mca_btl_base_output,
-                        "openib BTL: oob CPC available for use on %s",
-                        ibv_get_device_name(btl->device->ib_dev));
+                        "openib BTL: oob CPC available for use on %s:%d",
+                        ibv_get_device_name(btl->device->ib_dev),
+                        btl->port_num);
     return OMPI_SUCCESS;
 }
 
@@ -468,6 +472,7 @@ static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int qp,
         orte_show_help("help-mpi-btl-openib-cpc-base.txt",
                        "inline truncated", true, orte_process_info.nodename,
                        ibv_get_device_name(openib_btl->device->ib_dev),
+                       openib_btl->port_num,
                        req_inline, init_attr.cap.max_inline_data);
     } else {
         endpoint->qps[qp].ib_inline_max = req_inline;
