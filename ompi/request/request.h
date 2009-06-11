@@ -47,7 +47,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_request_t);
  * comment at the top of the ompi_msgq_dll.c file.
  */
 
-#include "ompi/request/request_dbg.h"
+#include "request_dbg.h"
 
 struct ompi_request_t;
 
