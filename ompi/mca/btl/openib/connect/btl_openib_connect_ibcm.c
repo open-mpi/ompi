@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Mellanox Technologies. All rights reserved.
  *
  * $COPYRIGHT$
@@ -654,7 +654,9 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
        iWarp), so we can safely assume that we can use this CPC. */
 #if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
     if (IBV_TRANSPORT_IB != btl->device->ib_dev->transport_type) {
-        BTL_VERBOSE(("ibcm CPC only supported on InfiniBand"));
+        BTL_VERBOSE(("ibcm CPC only supported on InfiniBand; skipped on %s:%d",
+                     ibv_get_device_name(btl->device->ib_dev),
+                     openib_btl->port_num));
         rc = OMPI_ERR_NOT_SUPPORTED;
         goto error;
     }
@@ -662,7 +664,9 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
 
     /* IBCM is not supported if we have any XRC QPs */
     if (mca_btl_openib_component.num_xrc_qps > 0) {
-        BTL_VERBOSE(("ibcm CPC not supported with XRC receive queues, please try xoob CPC; skipped"));
+        BTL_VERBOSE(("ibcm CPC not supported with XRC receive queues, please try xoob CPC; skipped on %s:%d",
+                     ibv_get_device_name(btl->device->ib_dev),
+                     openib_btl->port_num));
         rc = OMPI_ERR_NOT_SUPPORTED;
         goto error;
     }
@@ -754,9 +758,10 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
             rc = OMPI_ERR_NOT_SUPPORTED;
             goto error;
         }
-        OPAL_OUTPUT((-1, "opened ibcm device 0x%" PRIx64 " (%s)",
+        OPAL_OUTPUT((-1, "opened ibcm device 0x%" PRIx64 " (%s:%d)",
                      (uint64_t) cmh->cm_device, 
-                     ibv_get_device_name(cmh->ib_context->device)));
+                     ibv_get_device_name(cmh->ib_context->device),
+                     openib_btl->port_num));
 
         if (0 != (rc = ib_cm_create_id(cmh->cm_device, 
                                        &cmh->listen_cm_id, NULL))) {
@@ -808,10 +813,11 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
        different formula).  Query for the Nth GID (N = MCA param) on
        the port. */
     if (ibcm_gid_table_index > btl->ib_port_attr.gid_tbl_len) {
-        BTL_ERROR(("desired GID table index (%d) is larger than the actual table size (%d) on device %s",
+        BTL_ERROR(("desired GID table index (%d) is larger than the actual table size (%d) on %s:%d",
                      ibcm_gid_table_index,
                      btl->ib_port_attr.gid_tbl_len,
-                     ibv_get_device_name(btl->device->ib_dev)));
+                     ibv_get_device_name(btl->device->ib_dev),
+                     btl->port_num));
         rc = OMPI_ERR_UNREACH;
         goto error;
     }
@@ -842,19 +848,22 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
 
     /* All done */
     *cpc = (ompi_btl_openib_connect_base_module_t *) m;
-    BTL_VERBOSE(("available for use on %s",
-                 ibv_get_device_name(btl->device->ib_dev)));
+    BTL_VERBOSE(("available for use on %s:%d",
+                 ibv_get_device_name(btl->device->ib_dev),
+                 btl->port_num));
     TIMER_STOP(QUERY);
     return OMPI_SUCCESS;
 
  error:
     ibcm_module_finalize(btl, (ompi_btl_openib_connect_base_module_t *) m);
     if (OMPI_ERR_NOT_SUPPORTED == rc) {
-        BTL_VERBOSE(("unavailable for use on %s; skipped",
-                     ibv_get_device_name(btl->device->ib_dev)));
+        BTL_VERBOSE(("unavailable for use on %s:%d; skipped",
+                     ibv_get_device_name(btl->device->ib_dev),
+                     btl->port_num));
     } else {
-        BTL_VERBOSE(("unavailable for use on %s; fatal error %d (%s)",
-                     ibv_get_device_name(btl->device->ib_dev), rc, 
+        BTL_VERBOSE(("unavailable for use on %s:%d; fatal error %d (%s)",
+                     ibv_get_device_name(btl->device->ib_dev), 
+                     btl->port_num, rc, 
                      opal_strerror(rc)));
     }
     return rc;
@@ -923,6 +932,7 @@ static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int qp,
         orte_show_help("help-mpi-btl-openib-cpc-base.txt",
                        "inline truncated", orte_process_info.nodename,
                        ibv_get_device_name(openib_btl->device->ib_dev),
+                       openib_btl->port_num,
                        req_inline, init_attr.cap.max_inline_data);
     } else {
         endpoint->qps[qp].ib_inline_max = req_inline;

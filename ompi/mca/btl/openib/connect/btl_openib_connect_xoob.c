@@ -414,6 +414,7 @@ static int xoob_send_qp_create (mca_btl_base_endpoint_t* endpoint)
         orte_show_help("help-mpi-btl-openib-cpc-base.txt",
                        "inline truncated", orte_process_info.nodename,
                        ibv_get_device_name(openib_btl->device->ib_dev),
+                       openib_btl->port_num,
                        req_inline, qp_init_attr.cap.max_inline_data);
     } else {
         endpoint->qps[0].ib_inline_max = req_inline;
@@ -956,8 +957,9 @@ static int xoob_component_query(mca_btl_openib_module_t *openib_btl,
 
     if (mca_btl_openib_component.num_xrc_qps <= 0) {
         opal_output_verbose(5, mca_btl_base_output,
-                            "openib BTL: xoob CPC only supported with XRC receive queues; skipped on device %s",
-                            ibv_get_device_name(openib_btl->device->ib_dev));
+                            "openib BTL: xoob CPC only supported with XRC receive queues; skipped on %s:%d",
+                            ibv_get_device_name(openib_btl->device->ib_dev),
+                            openib_btl->port_num);
         return OMPI_ERR_NOT_SUPPORTED;
     }
 
@@ -998,8 +1000,9 @@ static int xoob_component_query(mca_btl_openib_module_t *openib_btl,
     (*cpc)->cbm_uses_cts = false;
 
     opal_output_verbose(5, mca_btl_base_output,
-                        "openib BTL: xoob CPC available for use on %s",
-                        ibv_get_device_name(openib_btl->device->ib_dev));
+                        "openib BTL: xoob CPC available for use on %s:%d",
+                        ibv_get_device_name(openib_btl->device->ib_dev),
+                        openib_btl->port_num);
     return OMPI_SUCCESS;
 }
 

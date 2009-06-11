@@ -210,8 +210,8 @@ static int ipaddr_specified(struct sockaddr_in *ipaddr, uint32_t netmask)
                 opal_argv_free(temp);
                 continue;
             }
-            list_subnet = ipae.s_addr & ~(~0 << atoi(temp[1]));
-            subnet = ipaddr->sin_addr.s_addr & ~(~0 << netmask);
+            list_subnet = ntohl(ipae.s_addr) & ~(~0 >> atoi(temp[1]));
+            subnet = ntohl(ipaddr->sin_addr.s_addr) & ~(~0 >> netmask);
             opal_argv_free(temp);
 
             if (subnet == list_subnet) { 
@@ -252,8 +252,8 @@ static int ipaddr_specified(struct sockaddr_in *ipaddr, uint32_t netmask)
                 opal_argv_free(temp);
                 continue;
             }
-            list_subnet = ipae.s_addr & ~(~0 << atoi(temp[1]));
-            subnet = ipaddr->sin_addr.s_addr & ~(~0 << netmask);
+            list_subnet = ntohl(ipae.s_addr) & ~(~0 >> atoi(temp[1]));
+            subnet = ntohl(ipaddr->sin_addr.s_addr) & ~(~0 >> netmask);
             opal_argv_free(temp);
 
             if (subnet == list_subnet) { 
@@ -318,7 +318,7 @@ static int add_rdma_addr(struct sockaddr *ipaddr, uint32_t netmask)
 
     sinp = (struct sockaddr_in *)ipaddr;
     myaddr->addr = sinp->sin_addr.s_addr;
-    myaddr->subnet = myaddr->addr & ~(~0 << netmask);
+    myaddr->subnet = ntohl(myaddr->addr) & ~(~0 >> netmask);
     inet_ntop(sinp->sin_family, &sinp->sin_addr, 
               myaddr->addr_str, sizeof(myaddr->addr_str));
     memcpy(myaddr->dev_name, cm_id->verbs->device->name, IBV_SYSFS_NAME_MAX);

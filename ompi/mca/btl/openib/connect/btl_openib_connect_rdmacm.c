@@ -427,6 +427,7 @@ static int rdmacm_setup_qp(rdmacm_contents_t *contents,
                        "inline truncated", true,
                        orte_process_info.nodename,
                        ibv_get_device_name(contents->openib_btl->device->ib_dev),
+                       contents->openib_btl->port_num,
                        req_inline, attr.cap.max_inline_data);
     } else {
         endpoint->qps[qpnum].ib_inline_max = req_inline;
@@ -1752,7 +1753,9 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, ompi_btl_
 
     /* RDMACM is not supported if we have any XRC QPs */
     if (mca_btl_openib_component.num_xrc_qps > 0) {
-        BTL_VERBOSE(("rdmacm CPC not supported with XRC receive queues, please try xoob CPC; skipped"));
+        BTL_VERBOSE(("rdmacm CPC not supported with XRC receive queues, please try xoob CPC; skipped on %s:%d",
+                     ibv_get_device_name(openib_btl->device->ib_dev),
+                     openib_btl->port_num));
         rc = OMPI_ERR_NOT_SUPPORTED;
         goto out;
     }
@@ -1853,8 +1856,9 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, ompi_btl_
     opal_list_append(&server_listener_list, &(server->super));
 
     opal_output_verbose(5, mca_btl_base_output,
-                        "openib BTL: rdmacm CPC available for use on %s",
-                        ibv_get_device_name(openib_btl->device->ib_dev));
+                        "openib BTL: rdmacm CPC available for use on %s:%d",
+                        ibv_get_device_name(openib_btl->device->ib_dev),
+                        openib_btl->port_num);
     return OMPI_SUCCESS;
 
 out5:
@@ -1869,12 +1873,14 @@ out1:
 out:
     if (OMPI_ERR_NOT_SUPPORTED == rc) {
         opal_output_verbose(5, mca_btl_base_output,
-                            "openib BTL: rdmacm CPC unavailable for use on %s; skipped",
-                            ibv_get_device_name(openib_btl->device->ib_dev));
+                            "openib BTL: rdmacm CPC unavailable for use on %s:%d; skipped",
+                            ibv_get_device_name(openib_btl->device->ib_dev),
+                            openib_btl->port_num);
     } else {
         opal_output_verbose(5, mca_btl_base_output,
-                            "openib BTL: rmacm CPC unavailable for use on %s; fatal error %d (%s)",
-                            ibv_get_device_name(openib_btl->device->ib_dev), rc,
+                            "openib BTL: rmacm CPC unavailable for use on %s:%d; fatal error %d (%s)",
+                            ibv_get_device_name(openib_btl->device->ib_dev), 
+                            openib_btl->port_num, rc,
                             opal_strerror(rc));
     }
     return rc;
