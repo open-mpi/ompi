@@ -717,6 +717,14 @@ int orte_dt_unpack_app_context(opal_buffer_t *buffer, void *dest,
             return rc;
         }
 
+        /* Unpack the preload_libs flag */
+        max_n=1;
+        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &(app_context[i]->preload_libs),
+                                                         &max_n, OPAL_BOOL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
         /* Unpack the preload_files set */
         max_n=1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &have_preload_files,

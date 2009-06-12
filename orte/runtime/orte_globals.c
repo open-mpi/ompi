@@ -496,7 +496,8 @@ static void orte_app_context_destructor(orte_app_context_t* app_context)
     }
     
     app_context->preload_binary = false;
-    
+    app_context->preload_libs = false;
+
     if(NULL != app_context->preload_files) {
         free(app_context->preload_files);
     }

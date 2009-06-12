@@ -171,6 +171,8 @@ typedef struct {
     char *prefix_dir;
     /** Preload the binary on the remote machine (in PLM via FileM) */
     bool preload_binary;
+    /** Preload the libraries on the remote machine (in PLM via FileM) */
+    bool preload_libs;
     /** Preload the comma separated list of files to the remote machines cwd */
     char * preload_files;
     /** Destination directory for the preloaded files 

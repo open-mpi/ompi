@@ -176,6 +176,7 @@ int orte_dt_copy_app_context(orte_app_context_t **dest, orte_app_context_t *src,
     }
     
     (*dest)->preload_binary = src->preload_binary;
+    (*dest)->preload_libs = src->preload_libs;
     
     if( NULL != src->preload_files) {
         (*dest)->preload_files  = strdup(src->preload_files);
