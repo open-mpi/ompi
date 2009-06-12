@@ -1,7 +1,7 @@
 enable_dlopen=no
 enable_mem_debug=yes
 enable_mem_profile=yes
-enable_memchecker=yes
+enable_memchecker=no
 enable_debug_symbols=yes
 enable_binaries=yes
 enable_heterogeneous=no
