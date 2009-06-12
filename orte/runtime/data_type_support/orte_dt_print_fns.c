@@ -554,8 +554,9 @@ int orte_dt_print_app_context(char **output, char *prefix, orte_app_context_t *s
         tmp = tmp2;
     }
     
-    asprintf(&tmp2, "%s\n%s\tPreload binary: %s\tUsed on node: %s\n%s\tPreload files dest: %s\n%s\tPreload files src dir: %s", tmp,
-             pfx2, (src->preload_binary) ? "TRUE" : "FALSE", (src->used_on_node) ? "TRUE" : "FALSE",
+    asprintf(&tmp2, "%s\n%s\tPreload binary: %s\tPreload libs: %s\tUsed on node: %s\n%s\tPreload files dest: %s\n%s\tPreload files src dir: %s", tmp,
+             pfx2, (src->preload_binary) ? "TRUE" : "FALSE", (src->preload_libs) ? "TRUE" : "FALSE",
+             (src->used_on_node) ? "TRUE" : "FALSE",
              pfx2, (NULL == src->preload_files_dest_dir) ? "NULL" : src->preload_files_dest_dir,
              pfx2, (NULL == src->preload_files_src_dir) ? "NULL" : src->preload_files_src_dir);
     free(tmp);

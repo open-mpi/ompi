@@ -659,6 +659,12 @@ static int spawn(int count, char **array_of_commands,
                 app->preload_binary = true;
             }
             
+            /* check for 'preload_libraries' */
+            ompi_info_get_bool(array_of_info[i], "ompi_preload_libraries", &local_spawn, &flag);
+            if ( flag ) {
+                app->preload_libs = true;
+            }
+            
             /* check for 'preload_files' */ 
             ompi_info_get (array_of_info[i], "ompi_preload_files", sizeof(cwd) - 1, cwd, &flag);
             if ( flag ) {

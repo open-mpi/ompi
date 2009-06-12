@@ -631,14 +631,14 @@ int orte_dt_pack_app_context(opal_buffer_t *buffer, const void *src,
         }
 
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                                                       (void*)(&have_prefix), 1, OPAL_INT8))) {
+                                     (void*)(&have_prefix), 1, OPAL_INT8))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         if (have_prefix) {
             if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                                                           (void*)(&(app_context[i]->prefix_dir)), 1, OPAL_STRING))) {
+                                     (void*)(&(app_context[i]->prefix_dir)), 1, OPAL_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
@@ -650,6 +650,12 @@ int orte_dt_pack_app_context(opal_buffer_t *buffer, const void *src,
             return rc;
         }
 
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
+                                    (void*)(&(app_context[i]->preload_libs)), 1, OPAL_BOOL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
         /* Pack the preload_files if we have one */
         if (NULL != app_context[i]->preload_files) {
             have_preload_files = 1;
