@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved. 
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -34,5 +35,6 @@ libmca_rmaps_la_SOURCES += \
         base/rmaps_base_select.c \
         base/rmaps_base_map_job.c \
         base/rmaps_base_get_job_map.c \
-        base/rmaps_base_support_fns.c
+        base/rmaps_base_support_fns.c \
+	base/rmaps_base_common_mappers.c
 endif

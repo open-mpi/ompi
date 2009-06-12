@@ -88,6 +88,19 @@ ORTE_DECLSPEC int orte_rmaps_base_rearrange_map(orte_app_context_t *app, orte_jo
 
 ORTE_DECLSPEC int orte_rmaps_base_define_daemons(orte_job_map_t *map);
 
+
+ORTE_DECLSPEC opal_list_item_t* orte_rmaps_base_get_starting_point(opal_list_t *node_list, orte_job_t *jdata);
+
+ORTE_DECLSPEC int orte_rmaps_base_map_byslot(orte_job_t *jdata, orte_app_context_t *app,
+                                             opal_list_t *node_list, orte_vpid_t num_procs,
+                                             orte_vpid_t vpid_start, opal_list_item_t *cur_node_item,
+                                             orte_vpid_t ppn);
+
+ORTE_DECLSPEC int orte_rmaps_base_map_bynode(orte_job_t *jdata, orte_app_context_t *app,
+                                             opal_list_t *node_list, orte_vpid_t num_procs,
+                                             orte_vpid_t vpid_start, opal_list_item_t *cur_node_item);
+
+
 END_C_DECLS
 
 #endif

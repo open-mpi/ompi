@@ -57,10 +57,10 @@ orte_rmaps_base_module_t orte_rmaps_seq_module = {
 static int orte_rmaps_seq_map(orte_job_t *jdata)
 {
     orte_job_map_t *map;
-    orte_app_context_t *app, **apps;
+    orte_app_context_t *app;
     orte_std_cntr_t i, j;
     opal_list_item_t *item, *next, *cur_node_item;
-    orte_node_t *node, *nd, **nodes;
+    orte_node_t *node, *nd;
     orte_vpid_t vpid;
     orte_std_cntr_t num_nodes;
     int rc;
@@ -74,8 +74,6 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
 
     /* conveniece def */
     map = jdata->map;
-    apps = (orte_app_context_t**)jdata->apps->addr;
-    nodes = (orte_node_t**)orte_node_pool->addr;
       
     /* if there is a default hostfile, go and get its ordered list of nodes */
     if (NULL != orte_default_hostfile) {
@@ -92,8 +90,10 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
     
     /* cycle through the app_contexts, mapping them sequentially */
     for(i=0; i < jdata->num_apps; i++) {
-        app = apps[i];
-
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+            continue;
+        }
+        
        /* for each app_context, if a hostfile was specified, then we let it
          * override what we may have obtained from the default hostfile
          */
@@ -133,27 +133,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
         }
 
         /* if a bookmark exists from some prior mapping, set us to start there */
-        if (NULL != jdata->bookmark) {
-            cur_node_item = NULL;
-            /* find this node on the list */
-            for (item = opal_list_get_first(node_list);
-                 item != opal_list_get_end(node_list);
-                 item = opal_list_get_next(item)) {
-                node = (orte_node_t*)item;
-                
-                if (node->index == jdata->bookmark->index) {
-                    cur_node_item = item;
-                    break;
-                }
-            }
-            /* see if we found it - if not, just start at the beginning */
-            if (NULL == cur_node_item) {
-                cur_node_item = opal_list_get_first(node_list); 
-            }
-        } else {
-            /* if no bookmark, then just start at the beginning of the list */
-            cur_node_item = opal_list_get_first(node_list);
-        }
+        cur_node_item = orte_rmaps_base_get_starting_point(node_list, jdata);
 
         /* if num_procs wasn't specified, set it now */
         if (0 == app->num_procs) {
@@ -190,11 +170,10 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
             node = NULL;
             nd = (orte_node_t*)cur_node_item;
             for (j=0; j < orte_node_pool->size; j++) {
-                if (NULL == nodes[j]) {
-                    break;  /* nodes are left aligned, so stop when we hit a null */
+                if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, j))) {
+                    continue;
                 } 
-                if (0 == strcmp(nd->name, nodes[j]->name)) {
-                    node = nodes[j];
+                if (0 == strcmp(nd->name, node->name)) {
                     break;
                 }
             }
