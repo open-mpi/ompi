@@ -30,7 +30,6 @@
 #endif  /* HAVE_STRING_H */
 
 #include "opal/mca/base/mca_base_param.h"
-#include "opal/util/trace.h"
 
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -41,251 +40,20 @@
 
 
 /*
- * Local variable
- */
-static opal_list_item_t *cur_node_item = NULL;
-static int ppn = 0;
-
-/*
- * Create a default mapping for the application, scheduling round
- * robin by node.
- */
-static int map_app_by_node(
-    orte_app_context_t* app,
-    orte_job_t* jdata,
-    orte_vpid_t vpid_start,
-    opal_list_t* nodes)
-{
-    int rc = ORTE_SUCCESS;
-    opal_list_item_t *next;
-    orte_node_t *node;
-    orte_std_cntr_t num_alloc=0;
-
-    OPAL_TRACE(2);
-    
-    /* This loop continues until all procs have been mapped or we run
-       out of resources. We determine that we have "run out of
-       resources" when all nodes have slots_max processes mapped to them,
-       thus there are no free slots for a process to be mapped, or we have
-       hit the soft limit on all nodes and are in a "no oversubscribe" state.
-       If we still have processes that haven't been mapped yet, then it's an 
-       "out of resources" error.
-
-       In this scenario, we rely on the claim_slot function to handle the
-       oversubscribed case. The claim_slot function will leave a node on the
-       list until it either reaches slots_max OR reaches the
-       soft limit and the "no_oversubscribe" flag has been set - at which point,
-       the node will be removed to prevent any more processes from being mapped to
-       it. Since we are taking one slot from each node as we cycle through, the
-       list, oversubscription is automatically taken care of via this logic.
-        */
-    
-    while (num_alloc < app->num_procs) {
-        
-        /** see if any nodes remain unused and available. We need to do this check
-         * each time since we may remove nodes from the list (as they become fully
-         * used) as we cycle through the loop */
-        if(0 >= opal_list_get_size(nodes) ) {
-            /* No more nodes to allocate :( */
-            orte_show_help("help-orte-rmaps-rr.txt", "orte-rmaps-rr:alloc-error",
-                           true, app->num_procs, app->app);
-            return ORTE_ERR_SILENT;
-        }
-        
-        /* Save the next node we can use before claiming slots, since
-         * we may need to prune the nodes list removing overused nodes.
-         * Wrap around to beginning if we are at the end of the list */
-        if (opal_list_get_end(nodes) == opal_list_get_next(cur_node_item)) {
-            next = opal_list_get_first(nodes);
-        }
-        else {
-            next = opal_list_get_next(cur_node_item);
-        }
-        
-        /* Allocate a slot on this node */
-        node = (orte_node_t*) cur_node_item;
-        if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, vpid_start + num_alloc, NULL, app->idx,
-                                             nodes, jdata->map->oversubscribe, true))) {
-            /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
-             * really isn't an error - we just need to break from the loop
-             * since the node is fully used up. For now, just don't report
-             * an error
-             */
-            if (ORTE_ERR_NODE_FULLY_USED != rc) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-        }
-
-        ++num_alloc;
-
-        cur_node_item = next;
-    }
-
-    return ORTE_SUCCESS;
-}
-   
-
-/*
- * Create a default mapping for the application, scheduling one round
- * robin by slot.
- */
-static int map_app_by_slot(
-    orte_app_context_t* app,
-    orte_job_t* jdata,
-    orte_vpid_t vpid_start,
-    opal_list_t* nodes)
-{
-    int rc = ORTE_SUCCESS;
-    orte_std_cntr_t i, num_slots_to_take;
-    orte_node_t *node;
-    opal_list_item_t *next;
-    orte_std_cntr_t num_alloc=0;
-
-    OPAL_TRACE(2);
-    
-    /* This loop continues until all procs have been mapped or we run
-       out of resources. We determine that we have "run out of
-       resources" when either all nodes have slots_max processes mapped to them,
-       (thus there are no free slots for a process to be mapped), OR all nodes
-       have reached their soft limit and the user directed us to "no oversubscribe".
-       If we still have processes that haven't been mapped yet, then it's an
-       "out of resources" error. */
-    
-    while ( num_alloc < app->num_procs) {
-
-        /** see if any nodes remain unused and available. We need to do this check
-        * each time since we may remove nodes from the list (as they become fully
-        * used) as we cycle through the loop */
-        if(0 >= opal_list_get_size(nodes) ) {
-            /* Everything is at max usage! :( */
-            orte_show_help("help-orte-rmaps-rr.txt", "orte-rmaps-rr:alloc-error",
-                           true, app->num_procs, app->app);
-            return ORTE_ERR_SILENT;
-        }
-        
-        /* Save the next node we can use before claiming slots, since
-        * we may need to prune the nodes list removing overused nodes.
-        * Wrap around to beginning if we are at the end of the list */
-        if (opal_list_get_end(nodes) == opal_list_get_next(cur_node_item)) {
-            next = opal_list_get_first(nodes);
-        }
-        else {
-            next = opal_list_get_next(cur_node_item);
-        }
-        
-        /** declare a shorter name for convenience in the code below */
-        node = (orte_node_t*) cur_node_item;
-        
-        /* If we have available slots on this node, claim all of them 
-         * If node_slots == 0, assume 1 slot for that node. 
-         * JJH - is this assumption fully justified?
-         *
-         * If we are now oversubscribing the nodes, then we still take:
-         * (a) if the node has not been used yet, we take a full node_slots
-         * (b) if some of the slots are in-use, then we take the number of
-         *     remaining slots before hitting the soft limit (node_slots)
-         * (c) if we are at or above the soft limit, we take a full node_slots
-         *     unless we are loadbalancing, in which case we only take one
-         *
-         * Note: if node_slots is zero, then we always just take 1 slot
-         *
-         * We continue this process until either everything is done,
-         * or all nodes have hit their hard limit. This algorithm ensures we
-         * fully utilize each node before oversubscribing, and preserves the ratio
-         * of processes between the nodes thereafter (e.g., if one node has twice as
-         * many processes as another before oversubscribing, it will continue
-         * to do so after oversubscribing).
-         */
-        if (node->slots_inuse >= node->slots_alloc) {
-            if (orte_rmaps_base.loadbalance) {
-                num_slots_to_take = 1;
-            } else {
-                num_slots_to_take = (node->slots_alloc == 0) ? 1 : node->slots_alloc;
-            }
-        } else if (0 == node->slots_inuse) {
-            num_slots_to_take = (node->slots_alloc == 0) ? 1 : node->slots_alloc;
-        } else {
-            num_slots_to_take = node->slots_alloc - node->slots_inuse;
-        }
-        
-        /* check if we are in npernode mode - if so, then set the num_slots_to_take
-         * to the num_per_node
-         */
-        if (jdata->map->pernode) {
-            num_slots_to_take = jdata->map->npernode;
-        }
-        
-        for( i = 0; i < num_slots_to_take; ++i) {
-            if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, vpid_start + num_alloc, NULL, app->idx,
-                                                 nodes, jdata->map->oversubscribe, true))) {
-                /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
-                 * really isn't an error - we just need to break from the loop
-                 * since the node is fully used up. For now, just don't report
-                 * an error
-                 */
-                if (ORTE_ERR_NODE_FULLY_USED != rc) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-                }
-            }
-            
-            /* Update the number of procs allocated */
-            ++num_alloc;
-
-            /** if all the procs have been mapped, we return */
-            if (num_alloc == app->num_procs) {
-                return ORTE_SUCCESS;
-            }
-
-            /* if we have fully used up this node
-             * OR we are at our ppn and loadbalancing, then break from the loop 
-             */
-            if (ORTE_ERR_NODE_FULLY_USED == rc ||
-                (orte_rmaps_base.loadbalance && (int)node->num_procs >= ppn)) {
-                break;
-            }
-        }
-
-        /* we move on to the next node in all cases EXCEPT if we came
-         * out of the loop without having taken a full bite AND the
-         * node is NOT max'd out
-         *
-         */
-        if (i < (num_slots_to_take-1) &&
-            ORTE_ERR_NODE_FULLY_USED != rc &&
-            (orte_rmaps_base.loadbalance && (int)node->num_procs < ppn)) {
-            continue;
-        }
-        cur_node_item = next;
-    }
-
-    return ORTE_SUCCESS;
-}
-   
-
-/*
  * Create a round-robin mapping for the job.
  */
 static int orte_rmaps_rr_map(orte_job_t *jdata)
 {
-    orte_job_map_t *map;
-    orte_app_context_t *app, **apps;
-    orte_std_cntr_t i;
+    orte_app_context_t *app;
+    int i;
     opal_list_t node_list;
     opal_list_item_t *item;
-    orte_node_t *node, **nodes, *nd1, *ndmin;
     orte_vpid_t vpid_start;
     orte_std_cntr_t num_nodes, num_slots;
     int rc;
     orte_std_cntr_t slots_per_node;
-    int overload;
-
-    OPAL_TRACE(1);
-    
-    /* conveniece def */
-    map = jdata->map;
-    apps = (orte_app_context_t**)jdata->apps->addr;
+    int ppn = 0;
+    opal_list_item_t *cur_node_item;
     
     /* start at the beginning... */
     vpid_start = 0;
@@ -295,11 +63,13 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
      * the #procs/node - note that this cannot be done
      * if we are doing pernode or if #procs was not given
      */
-    if (orte_rmaps_base.loadbalance && !map->pernode) {
+    if (orte_rmaps_base.loadbalance && !jdata->map->pernode) {
         float res;
         /* compute total #procs we are going to add */
-        for(i=0; i < jdata->num_apps; i++) {
-            app = apps[i];
+        for(i=0; i < jdata->apps->size; i++) {
+            if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+                continue;
+            }
             if (0 == app->num_procs) {
                 /* can't do it - tell user and quit */
                 orte_show_help("help-orte-rmaps-rr.txt",
@@ -313,11 +83,10 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
         /* get the total avail nodes and the number
          * of procs already using them
          */
-        nodes = (orte_node_t**)orte_node_pool->addr;
         num_nodes=0;
         for (i=0; i < orte_node_pool->size; i++) {
-            if (NULL == nodes[i]) {
-                break;  /* nodes are left aligned, so stop when we hit a null */
+            if (NULL == opal_pointer_array_get_item(orte_node_pool, i)) {
+                continue;
             } 
             num_nodes++;
         }
@@ -330,9 +99,11 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
     }
 
     /* cycle through the app_contexts, mapping them sequentially */
-    for(i=0; i < jdata->num_apps; i++) {
-        app = apps[i];
-
+    for(i=0; i < jdata->apps->size; i++) {
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+            continue;
+        }
+        
         /* if the number of processes wasn't specified, then we know there can be only
          * one app_context allowed in the launch, and that we are to launch it across
          * all available slots. We'll double-check the single app_context rule first
@@ -350,82 +121,16 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
          */
         OBJ_CONSTRUCT(&node_list, opal_list_t);
         if(ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&node_list, &num_slots, app,
-                                                                  map->policy))) {
+                                                                  jdata->map->policy))) {
             ORTE_ERROR_LOG(rc);
             goto error;
         }
         num_nodes = (orte_std_cntr_t)opal_list_get_size(&node_list);
 
         /* if a bookmark exists from some prior mapping, set us to start there */
-        if (NULL != jdata->bookmark) {
-            cur_node_item = NULL;
-            /* find this node on the list */
-            for (item = opal_list_get_first(&node_list);
-                 item != opal_list_get_end(&node_list);
-                 item = opal_list_get_next(item)) {
-                node = (orte_node_t*)item;
-                
-                if (node->index == jdata->bookmark->index) {
-                    cur_node_item = item;
-                    break;
-                }
-            }
-            /* see if we found it - if not, just start at the beginning */
-            if (NULL == cur_node_item) {
-                cur_node_item = opal_list_get_first(&node_list); 
-            }
-        } else {
-            /* if no bookmark, then just start at the beginning of the list */
-            cur_node_item = opal_list_get_first(&node_list);
-        }
-
-        /* is this node fully subscribed? If so, then the first
-         * proc we assign will oversubscribe it, so let's look
-         * for another candidate
-         */
-        node = (orte_node_t*)cur_node_item;
-        ndmin = node;
-        overload = ndmin->slots_inuse - ndmin->slots_alloc;
-        if (node->slots_inuse >= node->slots_alloc) {
-            /* work down the list - is there another node that
-             * would not be oversubscribed?
-             */
-            if (cur_node_item != opal_list_get_last(&node_list)) {
-                item = opal_list_get_next(cur_node_item);
-            } else {
-                item = opal_list_get_first(&node_list);
-            }
-            while (item != cur_node_item) {
-                nd1 = (orte_node_t*)item;
-                if (nd1->slots_inuse < nd1->slots_alloc) {
-                    /* this node is not oversubscribed! use it! */
-                    cur_node_item = item;
-                    goto proceed;
-                }
-                /* this one was also oversubscribed, keep track of the
-                 * node that has the least usage - if we can't
-                 * find anyone who isn't fully utilized, we will
-                 * start with the least used node
-                 */
-                if (overload >= (nd1->slots_inuse - nd1->slots_alloc)) {
-                    ndmin = nd1;
-                    overload = ndmin->slots_inuse - ndmin->slots_alloc;
-                }
-                if (item == opal_list_get_last(&node_list)) {
-                    item = opal_list_get_first(&node_list);
-                } else {
-                    item= opal_list_get_next(item);
-                }
-            }
-            /* if we get here, then we cycled all the way around the
-             * list without finding a better answer - just use the node
-             * that is minimally overloaded
-             */
-            cur_node_item = (opal_list_item_t*)ndmin;
-        }
+        cur_node_item = orte_rmaps_base_get_starting_point(&node_list, jdata);
         
-    proceed:
-        if (map->pernode && map->npernode == 1) {
+        if (jdata->map->pernode && jdata->map->npernode == 1) {
             /* there are three use-cases that we need to deal with:
             * (a) if -np was not provided, then we just use the number of nodes
             * (b) if -np was provided AND #procs > #nodes, then error out
@@ -441,14 +146,14 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
                 rc = ORTE_ERR_SILENT;
                 goto error;
             }
-        } else if (map->pernode && map->npernode > 1) {
+        } else if (jdata->map->pernode && jdata->map->npernode > 1) {
             /* first, let's check to see if there are enough slots/node to
              * meet the request - error out if not
              */
             slots_per_node = num_slots / num_nodes;
-            if (map->npernode > slots_per_node) {
+            if (jdata->map->npernode > slots_per_node) {
                 orte_show_help("help-orte-rmaps-rr.txt", "orte-rmaps-rr:n-per-node-and-not-enough-slots",
-                               true, map->npernode, slots_per_node, NULL);
+                               true, jdata->map->npernode, slots_per_node, NULL);
                 rc = ORTE_ERR_SILENT;
                 goto error;
             }
@@ -461,20 +166,20 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
             */
             if (0 == app->num_procs) {
                 /* set the num_procs to equal the specified num/node * the number of nodes */
-                app->num_procs = map->npernode * num_nodes;
-            } else if (app->num_procs > (map->npernode * num_nodes)) {
+                app->num_procs = jdata->map->npernode * num_nodes;
+            } else if (app->num_procs > (jdata->map->npernode * num_nodes)) {
                 orte_show_help("help-orte-rmaps-rr.txt", "orte-rmaps-rr:n-per-node-and-too-many-procs",
-                               true, app->num_procs, map->npernode, num_nodes, num_slots, NULL);
+                               true, app->num_procs, jdata->map->npernode, num_nodes, num_slots, NULL);
                 rc = ORTE_ERR_SILENT;
                 goto error;
             }
         } else if (0 == app->num_procs) {
-            if (map->policy & ORTE_RMAPS_BYUSER) {
+            if (jdata->map->policy & ORTE_RMAPS_BYUSER) {
                 /* we can't handle this - it should have been set when we got
                  * the map info. If it wasn't, then we can only error out
                  */
                 orte_show_help("help-orte-rmaps-rr.txt", "orte-rmaps-rr:no-np-and-user-map",
-                               true, app->num_procs, map->npernode, num_nodes, num_slots, NULL);
+                               true, app->num_procs, jdata->map->npernode, num_nodes, num_slots, NULL);
                 rc = ORTE_ERR_SILENT;
                 goto error;
             }
@@ -486,13 +191,17 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
         jdata->num_procs += app->num_procs;
 
         /* Make assignments */
-        if (map->policy & ORTE_RMAPS_BYUSER) {
+        if (jdata->map->policy & ORTE_RMAPS_BYUSER) {
             rc = ORTE_ERR_NOT_IMPLEMENTED;
             goto error;
-        } else if (map->policy & ORTE_RMAPS_BYNODE) {
-            rc = map_app_by_node(app, jdata, vpid_start, &node_list);
+        } else if (jdata->map->policy & ORTE_RMAPS_BYNODE) {
+            rc = orte_rmaps_base_map_bynode(jdata, app, &node_list,
+                                            app->num_procs, vpid_start,
+                                            cur_node_item);
         } else {
-            rc = map_app_by_slot(app, jdata, vpid_start, &node_list);
+            rc = orte_rmaps_base_map_byslot(jdata, app, &node_list,
+                                            app->num_procs, vpid_start,
+                                            cur_node_item, ppn);
         }
 
         /* update the starting vpid for the next app_context */
@@ -503,9 +212,6 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
             goto error;
         }
 
-        /* save the bookmark */
-        jdata->bookmark = (orte_node_t*)cur_node_item;
-        
         /* cleanup the node list - it can differ from one app_context
          * to another, so we have to get it every time
          */
@@ -522,7 +228,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
     }
 
     /* define the daemons that we will use for this job */
-    if (ORTE_SUCCESS != (rc = orte_rmaps_base_define_daemons(map))) {
+    if (ORTE_SUCCESS != (rc = orte_rmaps_base_define_daemons(jdata->map))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
