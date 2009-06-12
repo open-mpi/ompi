@@ -83,7 +83,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
 {
     int rc;
     orte_job_t *jdata;
-    orte_proc_t **procs;
+    orte_proc_t *proc;
     orte_job_map_t *map;
     opal_buffer_t *wireup;
     opal_byte_object_t bo, *boptr;
@@ -91,6 +91,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     int8_t flag;
     int8_t *tmp;
     orte_vpid_t i;
+    int j;
     orte_daemon_cmd_flag_t command;
 
     /* get the job data pointer */
@@ -98,7 +99,6 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
-    procs = (orte_proc_t**)jdata->procs->addr;
     
     /* get a pointer to the job map */
     map = jdata->map;
@@ -266,8 +266,11 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     
     /* transfer and pack the app_idx array for this job in one pack */
     tmp = (int8_t*)malloc(jdata->num_procs);
-    for (i=0; i < jdata->num_procs; i++) {
-        tmp[i] = procs[i]->app_idx;
+    for (j=0, i=0; i < jdata->num_procs && j < jdata->procs->size; j++) {
+        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, j))) {
+            continue;
+        }
+        tmp[i++] = proc->app_idx;
     }
     if (ORTE_SUCCESS != (rc = opal_dss.pack(data, tmp, jdata->num_procs, OPAL_INT8))) {
         ORTE_ERROR_LOG(rc);
@@ -282,11 +285,15 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        for (i=0; i < jdata->num_procs; i++) {
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &procs[i]->slot_list, 1, OPAL_STRING))) {
+        for (j=0, i=0; i < jdata->num_procs && j < jdata->procs->size; j++) {
+            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, j))) {
+                continue;
+            }
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &proc->slot_list, 1, OPAL_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 return rc; 
             }
+            i++;
         }
     } else {
         flag = (int8_t)false;
