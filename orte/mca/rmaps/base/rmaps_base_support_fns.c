@@ -483,11 +483,10 @@ retry_lr:
 
 int orte_rmaps_base_define_daemons(orte_job_map_t *map)
 {
-    orte_node_t *node, **nodes;
+    orte_node_t *node;
     orte_proc_t *proc;
     orte_job_t *daemons;
-    orte_std_cntr_t i;
-    orte_vpid_t numdaemons;
+    int i;
     int rc;
     
     OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
@@ -500,13 +499,16 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
         ORTE_ERROR_LOG(ORTE_ERR_FATAL);
         return ORTE_ERR_FATAL;
     }
-    numdaemons=0;
+    
+    /* initialize the #new daemons */
+    map->num_new_daemons = 0;
     
     /* go through the nodes in the map, checking each one's daemon name
      */
-    nodes = (orte_node_t**)map->nodes->addr;
-    for (i=0; i < map->num_nodes; i++) {
-        node = nodes[i];
+    for (i=0; i < map->nodes->size; i++) {
+        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
+            continue;
+        }
         if (NULL == node->daemon) {
             /* we haven't defined one for it
              * yet, so do so now and indicate it is to be launched
@@ -536,8 +538,6 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
                 return rc;
             }
             ++daemons->num_procs;
-            /* count number of daemons being used */
-            ++numdaemons;
             /* point the node to the daemon */
             node->daemon = proc;
             OBJ_RETAIN(proc);  /* maintain accounting */
@@ -554,8 +554,6 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
                                  "%s rmaps:base:define_daemons existing daemon %s already launched",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&node->daemon->name)));
-            /* count number of daemons being used */
-            ++numdaemons;
         }
     }
 
