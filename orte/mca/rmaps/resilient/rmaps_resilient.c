@@ -305,6 +305,11 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
             orte_rmaps_base_update_usage(jdata, oldnode, nd, proc);
             OBJ_RELEASE(oldnode);  /* required to maintain bookeeping */
         }
+        /* define the daemons that we will use for this job */
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_define_daemons(jdata->map))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
         return ORTE_SUCCESS;
     }
     
