@@ -246,8 +246,4 @@
 	- install header files to 'PREFIX/include/vampirtrace' by default to
 	  avoid conflicts with the OpenMPI integrated version of VT
 	- fixed faulty searching for matching filter directive
-	- fixed potential BFD incompatibilities when using the automatic
-	  compiler instumentation of VT from an OpenMPI RPM package:
-	  added configure option '--with-bfd-objects' to include the object
-	  files from the static BFD library into the VT libraries
 

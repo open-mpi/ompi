@@ -2,9 +2,6 @@ AC_DEFUN([ACVT_BFD],
 [
 	bfd_error="no"
 	have_bfd="no"
-	have_bfd_objects="no"
-
-	bfd_obj_dir="$top_vt_builddir/vtlib/extobj/libbfd"
 
 	BFDDIR=
 	BFDINCDIR=
@@ -31,9 +28,6 @@ AC_DEFUN([ACVT_BFD],
 		AC_HELP_STRING([--with-bfd-lib=BFDLIB], [use given bfd lib, default: -lbfd]),
 	[BFDLIB="$withval"])
 
-	AC_ARG_WITH(bfd-objects,
-		AC_HELP_STRING([--with-bfd-objects], [include bfd lib object files into VT libraries, default: no]))
-
 	sav_CPPFLAGS=$CPPFLAGS
 	CPPFLAGS="$CPPFLAGS $BFDINCDIR"
 	AC_CHECK_HEADER([bfd.h], [],
@@ -43,21 +37,7 @@ AC_DEFUN([ACVT_BFD],
 	])
 	CPPFLAGS=$sav_CPPFLAGS
 
-	AS_IF([test x"$with_bfd_objects" = "xyes" -a x"$BFDLIB" = x -a "$bfd_error" = "no"],
-	[
-		AS_IF([test x"$BFDLIBDIR" != x],
-		[bfdlib_static=`echo $BFDLIBDIR | sed s/\-L//`"libbfd.a"],
-		[bfdlib_static="/usr/lib/libbfd.a"])
-
-		sav_LIBS=$LIBS
-		LIBS="$LIBS $bfdlib_static"
-		AC_MSG_CHECKING([whether linking with $bfdlib_static works])
-		AC_TRY_LINK([],[],
-		[AC_MSG_RESULT([yes]); BFDLIB=$bfdlib_static],[AC_MSG_RESULT([no])])
-		LIBS=$sav_LIBS
-	])
-
-	AS_IF([test x"$with_bfd_objects" != "xyes" -a x"$BFDLIB" = x -a "$bfd_error" = "no"],
+	AS_IF([test x"$BFDLIB" = x -a "$bfd_error" = "no"],
 	[
 		sav_LIBS=$LIBS
 		LIBS="$LIBS $BFDLIBDIR -lbfd"
@@ -73,26 +53,7 @@ AC_DEFUN([ACVT_BFD],
 		bfd_error="yes"
 	])
 
-	AS_IF([test x"$with_bfd_objects" = "xyes" -a "$bfd_error" = "no"],
-	[
-		parent_dir=`pwd`
-		mkdir -p "$bfd_obj_dir"
-		cd "$bfd_obj_dir"
-		AC_MSG_NOTICE([extracting $BFDLIB])
-		$AR x $BFDLIB
-		AS_IF([test $? != "0"], [bfd_error="yes"])
-		cd "$parent_dir"
-
-		BFDLIBDIR=
-		BFDLIB=
-	])
-
-	AS_IF([test "$bfd_error" = "no"],
-	[
-		have_bfd="yes"
-		AS_IF([test x"$with_bfd_objects" = "xyes"],
-		[have_bfd_objects="yes"])
-	])
+	AS_IF([test x"$BFDLIB" != x -a "$bfd_error" = "no"], [have_bfd="yes"])
 
 	AC_SUBST(BFDINCDIR)
 	AC_SUBST(BFDLIBDIR)

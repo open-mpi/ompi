@@ -128,7 +128,6 @@ AM_CONDITIONAL(AMBUILDCOMPINST_PHAT, test x"$build_compinst_phat" = "xyes")
 AM_CONDITIONAL(AMBUILDCOMPINST_XL, test x"$build_compinst_xl" = "xyes")
 AM_CONDITIONAL(AMBUILDCOMPINST_FTRACE, test x"$build_compinst_ftrace" = "xyes")
 AM_CONDITIONAL(AMHAVEBFD, test x"$have_bfd" = "xyes")
-AM_CONDITIONAL(AMHAVEBFDOBJS, test x"$have_bfd" = "xyes" -a x"$have_bfd_objects" = "xyes")
 
 # Check for binary instrumentation by Dyninst
 ACVT_CONF_TITLE([Binary instrumentation by Dyninst])
