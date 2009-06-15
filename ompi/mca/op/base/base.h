@@ -21,7 +21,7 @@
  * @file
  *
  * This framework is for the selection and assignment of "op" modules
- * to intrinsict MPI_Op objects.  This framework is not used for
+ * to intrinsic MPI_Op objects.  This framework is not used for
  * user-defined MPI_Op objects.
  *
  * The main idea is to let intrinsic MPI_Ops be able to utilize
@@ -63,8 +63,6 @@ OMPI_DECLSPEC int ompi_op_base_find_available(bool enable_progress_threads,
  * function is *not* used for user-defined MPI_Ops!).
  *
  * @param op MPI_Op that the component will be selected for.
- * @param int fortran_handle Enum corresponding to the Fortran handle
- * for the op that is being configured.
  *
  * @return OMPI_SUCCESS Upon success.
  * @return OMPI_ERROR Upon failure.
@@ -78,12 +76,12 @@ OMPI_DECLSPEC int ompi_op_base_find_available(bool enable_progress_threads,
  * This function is invoked when a new MPI_Op is created and
  * op components need to be selected for it.
  */
-int ompi_op_base_op_select(struct ompi_op_t *op);
+OMPI_DECLSPEC int ompi_op_base_op_select(struct ompi_op_t *op);
 
 /**
  * Finalize all op modules on a specific (intrinsic) MPI_Op.
  *
- * @param comm The op that is being destroyed.
+ * @param op The op that is being destroyed.
  *
  * @retval OMPI_SUCCESS Always.
  *
@@ -117,13 +115,13 @@ OMPI_DECLSPEC extern int ompi_op_base_output;
  * initialized and destroyed when we reduce the list to all available
  * op components.
  */
-OPAL_DECLSPEC extern opal_list_t ompi_op_base_components_opened;
+OMPI_DECLSPEC extern opal_list_t ompi_op_base_components_opened;
 
 /**
  * Indicator as to whether the list of opened op components is valid
  * or not.
  */
-OPAL_DECLSPEC extern bool ompi_op_base_components_opened_valid;
+OMPI_DECLSPEC extern bool ompi_op_base_components_opened_valid;
 
 /**
  * List of all available components.
