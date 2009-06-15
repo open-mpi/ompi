@@ -108,15 +108,9 @@ endif
 if AMHAVEBFD
 BFDINCLUDE = $(BFDINCDIR)
 BFDCFLAGS = -DVT_BFD
-if AMHAVEBFDOBJS
-BFDOBJS = extobj/libbfd/*.$(OBJEXT)
-else
-BFDOBJS =
-endif
 else
 BFDINCLUDE =
 BFDCFLAGS =
-BFDOBJS =
 endif
 
 if AMHAVELIBERTY
@@ -212,25 +206,25 @@ VT_HYB_SOURCES = \
 CC = $(MPICC)
 AM_CFLAGS = -DBINDIR=\"$(bindir)\" -DDATADIR=\"$(datadir)\" $(RFGCFLAGS) $(BFDCFLAGS) $(MEMHOOKCFLAGS) $(IOWRAPCFLAGS) $(METRCFLAGS)
 
-libvt_a_LIBADD = $(top_builddir)/util/util.$(OBJEXT) $(BFDOBJS)
+libvt_a_LIBADD = $(top_builddir)/util/util.$(OBJEXT)
 libvt_a_SOURCES = \
 	$(VT_COMMON_SOURCES) \
 	$(OPARILIBDIR)/pomp_fwrapper_base.c
 
 libvt_mpi_a_CFLAGS = -DVT_MPI $(AM_CFLAGS) $(MPICFLAGS) $(MPIINCDIR)
-libvt_mpi_a_LIBADD = pomp_fwrapper_base.$(OBJEXT) $(top_builddir)/util/util.$(OBJEXT) $(BFDOBJS)
+libvt_mpi_a_LIBADD = pomp_fwrapper_base.$(OBJEXT) $(top_builddir)/util/util.$(OBJEXT)
 libvt_mpi_a_SOURCES = \
 	$(VT_COMMON_SOURCES) \
 	$(VT_MPI_SOURCES)
 
 libvt_omp_a_CFLAGS = $(OMPFLAG) -DVT_OMP $(AM_CFLAGS)
-libvt_omp_a_LIBADD = pomp_fwrapper_base.$(OBJEXT) $(top_builddir)/util/util.$(OBJEXT) $(BFDOBJS)
+libvt_omp_a_LIBADD = pomp_fwrapper_base.$(OBJEXT) $(top_builddir)/util/util.$(OBJEXT)
 libvt_omp_a_SOURCES = \
 	$(VT_COMMON_SOURCES) \
 	$(VT_OMP_SOURCES)
 
 libvt_ompi_a_CFLAGS = $(OMPFLAG) -DVT_OMPI $(AM_CFLAGS) $(MPICFLAGS) $(MPIINCDIR)
-libvt_ompi_a_LIBADD = pomp_fwrapper_base.$(OBJEXT) $(top_builddir)/util/util.$(OBJEXT) $(BFDOBJS)
+libvt_ompi_a_LIBADD = pomp_fwrapper_base.$(OBJEXT) $(top_builddir)/util/util.$(OBJEXT)
 libvt_ompi_a_SOURCES = \
 	$(VT_COMMON_SOURCES) \
 	$(VT_HYB_SOURCES)
@@ -251,7 +245,4 @@ EXTRA_DIST = \
 	vt_pform_necsx.c \
 	vt_pform_origin.c \
 	vt_pform_sun.c
-
-DISTCLEANFILES = \
-	$(BFDOBJS)
 
