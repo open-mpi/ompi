@@ -114,13 +114,11 @@
 #include "orte_config.h"
 #include "orte/types.h"
 
-#include "opal/class/opal_list.h"
 #include "opal/mca/mca.h"
 
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 
-#include "orte/util/name_fns.h"
 
 #include "iof_types.h"
 

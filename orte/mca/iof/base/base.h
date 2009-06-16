@@ -42,11 +42,10 @@
 #include <signal.h>
 #endif
 
-#include "opal/class/opal_free_list.h"
-#include "opal/threads/condition.h"
 #include "opal/mca/mca.h"
 
 #include "orte/mca/iof/iof.h"
+#include "orte/runtime/orte_globals.h"
 
 BEGIN_C_DECLS
 
@@ -165,10 +164,10 @@ typedef struct orte_iof_base_t orte_iof_base_t;
                             ORTE_NAME_PRINT((nm)),                  \
                             __FILE__, __LINE__));                   \
         rev = OBJ_NEW(orte_iof_read_event_t);                       \
-        *(rv) = rev;                                                \
         rev->name.jobid = (nm)->jobid;                              \
         rev->name.vpid = (nm)->vpid;                                \
         rev->tag = (tg);                                            \
+        *(rv) = rev;                                                \
         rev->file = strdup(__FILE__);                               \
         rev->line = __LINE__;                                       \
         opal_event_set(&rev->ev, (fid),                             \
@@ -208,8 +207,8 @@ typedef struct orte_iof_base_t orte_iof_base_t;
         rev = OBJ_NEW(orte_iof_read_event_t);                       \
         rev->name.jobid = (nm)->jobid;                              \
         rev->name.vpid = (nm)->vpid;                                \
-        *(rv) = rev;                                                \
         rev->tag = (tg);                                            \
+        *(rv) = rev;                                                \
         opal_event_set(&rev->ev, (fid),                             \
                        OPAL_EV_READ,                                \
                        (cbfunc), rev);                              \

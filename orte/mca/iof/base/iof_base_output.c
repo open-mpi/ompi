@@ -26,6 +26,9 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
+#if HAVE_STRING_H
+#include <string.h>
+#endif
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -34,6 +37,8 @@
 #include <time.h>
 #endif
 #include <errno.h>
+
+#include "opal/util/output.h"
 
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
@@ -164,6 +169,38 @@ construct:
                 for (j=0; j < starttaglen && k < ORTE_IOF_BASE_TAGGED_OUT_MAX; j++) {
                     output->data[k++] = starttag[j];
                 }
+            }
+        } else if (orte_xml_output) {
+            if ('&' == data[i]) {
+                if (k+5 >= ORTE_IOF_BASE_TAGGED_OUT_MAX) {
+                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                   goto process;
+                }
+                output->data[k++] = '&';
+                output->data[k++] = 'a';
+                output->data[k++] = 'm';
+                output->data[k++] = 'p';
+                output->data[k++] = ';';
+            } else if ('<' == data[i]) {
+                if (k+4 >= ORTE_IOF_BASE_TAGGED_OUT_MAX) {
+                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                    goto process;
+                }
+                output->data[k++] = '&';
+                output->data[k++] = 'l';
+                output->data[k++] = 't';
+                output->data[k++] = ';';
+            } else if ('>' == data[i]) {
+                if (k+4 >= ORTE_IOF_BASE_TAGGED_OUT_MAX) {
+                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                    goto process;
+                }
+                output->data[k++] = '&';
+                output->data[k++] = 'g';
+                output->data[k++] = 't';
+                output->data[k++] = ';';
+            } else {
+                output->data[k++] = data[i];
             }
         } else {
             output->data[k++] = data[i];

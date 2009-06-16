@@ -30,13 +30,11 @@
 
 #include "opal/dss/dss.h"
 
-#include "orte/util/show_help.h"
-#include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/rml_types.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/odls/odls_types.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/mca/ess/ess.h"
 #include "orte/orted/orted.h"
 
 #include "orte/mca/iof/iof.h"
@@ -318,7 +316,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
         }
     } else {
         /* output this to our local output */
-        if (ORTE_IOF_STDOUT & rev->tag) {
+        if (ORTE_IOF_STDOUT & rev->tag || orte_xml_output) {
             orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, orte_iof_base.iof_write_stdout->wev);
         } else {
             orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, orte_iof_base.iof_write_stderr->wev);

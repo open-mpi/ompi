@@ -35,9 +35,9 @@
 #endif
 #endif
 
-#include "orte/util/show_help.h"
 
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/rml_types.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
@@ -173,7 +173,7 @@ static void process_msg(int fd, short event, void *cbdata)
                          ORTE_NAME_PRINT(&origin)));
     
     /* output this to our local output */
-    if (ORTE_IOF_STDOUT & stream) {
+    if (ORTE_IOF_STDOUT & stream || orte_xml_output) {
         orte_iof_base_write_output(&origin, stream, data, numbytes, orte_iof_base.iof_write_stdout->wev);
     } else {
         orte_iof_base_write_output(&origin, stream, data, numbytes, orte_iof_base.iof_write_stderr->wev);
