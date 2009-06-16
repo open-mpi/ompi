@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc. All rights reserved.
  * $COPYRIGHT$
  *
@@ -34,6 +34,9 @@
 #endif
 #ifdef HAVE_SIGNAL_H
 #include <signal.h>
+#endif
+#ifdef HAVE_SYS_WAIT_H
+#include <sys/wait.h>
 #endif
 
 #include "opal/util/show_help.h"
