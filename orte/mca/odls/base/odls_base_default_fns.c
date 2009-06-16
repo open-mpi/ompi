@@ -990,8 +990,8 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
      * app context basis
      */
     for (i=0; i < num_apps; i++) {
-        if(apps[i]->preload_binary ||
-           NULL != apps[i]->preload_files) {
+        if(apps[i]->used_on_node &&
+           (apps[i]->preload_binary || NULL != apps[i]->preload_files)) {
             if( ORTE_SUCCESS != (rc = orte_odls_base_preload_files_app_context(apps[i])) ) {
                 ORTE_ERROR_LOG(rc);
                 /* JJH: Do not fail here, instead try to execute without the preloaded options*/
