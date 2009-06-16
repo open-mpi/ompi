@@ -164,10 +164,10 @@ typedef struct orte_iof_base_t orte_iof_base_t;
                             ORTE_NAME_PRINT((nm)),                  \
                             __FILE__, __LINE__));                   \
         rev = OBJ_NEW(orte_iof_read_event_t);                       \
-        *(rv) = rev;                                                \
         rev->name.jobid = (nm)->jobid;                              \
         rev->name.vpid = (nm)->vpid;                                \
         rev->tag = (tg);                                            \
+        *(rv) = rev;                                                \
         rev->file = strdup(__FILE__);                               \
         rev->line = __LINE__;                                       \
         opal_event_set(&rev->ev, (fid),                             \
@@ -207,12 +207,13 @@ typedef struct orte_iof_base_t orte_iof_base_t;
         rev = OBJ_NEW(orte_iof_read_event_t);                       \
         rev->name.jobid = (nm)->jobid;                              \
         rev->name.vpid = (nm)->vpid;                                \
-        *(rv) = rev;                                                \
         rev->tag = (tg);                                            \
+        *(rv) = rev;                                                \
         opal_event_set(&rev->ev, (fid),                             \
                        OPAL_EV_READ,                                \
                        (cbfunc), rev);                              \
         if ((actv)) {                                               \
+            rev->active = true;                                     \
             opal_event_add(&rev->ev, 0);                            \
         }                                                           \
     } while(0);
