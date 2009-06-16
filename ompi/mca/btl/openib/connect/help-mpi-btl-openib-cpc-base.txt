@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2008 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -17,6 +17,7 @@ support) will be disabled for this port.
 
   Local host:           %s
   Local device:         %s
+  Local port:           %d
   CPCs attempted:       %s
 #
 [cpc name not found]
@@ -36,5 +37,6 @@ a smaller inline data value than was requested.
 
   Local host:           %s
   Local device:         %s
+  Local port:           %d
   Requested value:      %d
   Value used by device: %d
