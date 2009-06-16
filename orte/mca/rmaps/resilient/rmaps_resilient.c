@@ -121,7 +121,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
     orte_std_cntr_t num_slots;
     int rc;
     float avgload, minload;
-    orte_node_t *node, *nd, *oldnode;
+    orte_node_t *node, *nd=NULL, *oldnode;
     orte_rmaps_res_ftgrp_t *ftgrp, *target;
     orte_vpid_t totprocs, lowprocs;
     FILE *fp;
@@ -235,10 +235,6 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                     }
                     totnodes++;
                     totprocs += node->num_procs;
-                    if (node->num_procs < lowprocs) {
-                        lowprocs = node->num_procs;
-                        nd = node;
-                    }
                 }
                 avgload = (float)totprocs / (float)totnodes;
                 /* now find the lightest loaded of the included fault groups */

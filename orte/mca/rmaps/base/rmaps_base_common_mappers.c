@@ -126,7 +126,7 @@ int orte_rmaps_base_map_byslot(orte_job_t *jdata, orte_app_context_t *app,
                                orte_vpid_t vpid_start, opal_list_item_t *cur_node_item,
                                orte_vpid_t ppn)
 {
-    int rc;
+    int rc=ORTE_SUCCESS;
     int i;
     orte_node_t *node;
     opal_list_item_t *next;
