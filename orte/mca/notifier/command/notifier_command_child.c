@@ -339,7 +339,7 @@ void orte_notifier_command_child_main(void)
 
     while (1) {
         /* Block waiting for a command */
-        cmd = -3;
+        cmd = CMD_MAX;
         if (ORTE_SUCCESS != 
             orte_notifier_command_read_fd(c->to_child[0], sizeof(cmd), &cmd)) {
             diediedie(4);
