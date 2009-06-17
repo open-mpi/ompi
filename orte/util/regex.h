@@ -25,11 +25,15 @@
 
 #include "orte_config.h"
 
+#include "orte/runtime/orte_globals.h"
+
 BEGIN_C_DECLS
 
 ORTE_DECLSPEC int orte_regex_extract_node_names(char *regexp, char ***names);
 
 ORTE_DECLSPEC int orte_regex_extract_ppn(int num_nodes, char *regexp, int **ppn);
+
+ORTE_DECLSPEC char* orte_regex_encode_maps(orte_job_t *jdata);
 
 END_C_DECLS
 #endif
