@@ -36,6 +36,8 @@
 
 #include "orte/util/regex.h"
 
+#define ORTE_MAX_NODE_PREFIX        50
+
 static int regex_parse_node_ranges(char *base, char *ranges, char ***names);
 static int regex_parse_node_range(char *base, char *range, char ***names);
 
@@ -47,6 +49,11 @@ int orte_regex_extract_node_names(char *regexp, char ***names)
     char *orig;
     bool found_range = false;
     bool more_to_come = false;
+    
+    if (NULL == regexp) {
+        *names = NULL;
+        return ORTE_SUCCESS;
+    }
     
     orig = base = strdup(regexp);
     if (NULL == base) {
@@ -302,7 +309,7 @@ static int regex_parse_node_range(char *base, char *range, char ***names)
 /* Compute the #procs on each node given a regex of form
  * "#procs(x#nodes),#procs(x#nodes). In other words, an
  * expression of "4(x30) will be interpreted to mean four
- * procs on the next 30 nodes.
+ * procs on each of the next 30 nodes.
  */
 int orte_regex_extract_ppn(int num_nodes, char *regexp, int **ppn)
 {
@@ -362,4 +369,290 @@ int orte_regex_extract_ppn(int num_nodes, char *regexp, int **ppn)
     *ppn = tmp;
     
     return ORTE_SUCCESS;
+}
+
+static void compute_vpids(orte_node_t *node, orte_jobid_t jobid,
+                          orte_vpid_t *start_vpid, orte_vpid_t *end_vpid,
+                          int32_t *ppn, orte_node_rank_t *nrank)
+{
+    int32_t nppn, k;
+    orte_proc_t *proc, *start_proc, *end_proc;
+    
+    nppn = 0;
+    start_proc = NULL;
+    end_proc = NULL;
+    for (k=0; k < node->procs->size; k++) {
+        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, k)) ||
+            proc->name.jobid != jobid) {
+            continue;
+        }
+        nppn++;
+        if (NULL == start_proc) {
+            start_proc = proc;
+        } else if (NULL == end_proc) {
+            end_proc = proc;
+        }
+    }
+    
+    *ppn = nppn;
+    if (NULL == start_proc) {
+        /* nobody was mapped to this node */
+        *start_vpid = ORTE_VPID_INVALID;
+        *nrank = ORTE_NODE_RANK_INVALID;
+    } else {
+        *start_vpid = start_proc->name.vpid;
+        *nrank = start_proc->node_rank;
+    }
+    if (NULL == end_proc) {
+        /* could have been only one proc mapped, or none */
+        *end_vpid = ORTE_VPID_INVALID;
+    } else {
+        *end_vpid = end_proc->name.vpid;
+    }
+}
+
+static void start_sequence(orte_jobid_t jobid, orte_node_t *node,
+                           orte_regex_node_t *ndreg, int32_t nodenum)
+{
+    int32_t j, ppn;
+    orte_vpid_t start_vpid, end_vpid;
+    orte_node_rank_t nrank;
+    
+    opal_value_array_append_item(&ndreg->nodes, &nodenum);
+    j = 0;
+    opal_value_array_append_item(&ndreg->cnt, &j);
+    compute_vpids(node, jobid, &start_vpid, &end_vpid, &ppn, &nrank);
+    opal_value_array_append_item(&ndreg->starting_vpid, &start_vpid);
+    opal_value_array_append_item(&ndreg->ppn, &ppn);
+    opal_value_array_append_item(&ndreg->nrank, &nrank);
+}
+
+char* orte_regex_encode_maps(orte_job_t *jdata)
+{
+    orte_node_t *node;
+    orte_regex_node_t *ndreg;
+    int32_t nodenum, i, n;
+    bool found, fullname;
+    opal_list_t nodelist;
+    int len;
+    char prefix[ORTE_MAX_NODE_PREFIX];
+    int startnum;
+    opal_list_item_t *item;
+    char **regexargs = NULL, *tmp;
+    int32_t num_nodes, start, cnt, ppn, nppn;
+    orte_vpid_t vpid_start, start_vpid, end_vpid, base;
+    char *regexp = NULL;
+    bool byslot;
+    orte_node_rank_t node_rank, nrank;
+    
+    /* this is only supported with regular maps - i.e., when
+     * the mapping is byslot or bynode. Irregular maps cannot
+     * be expressed in a regular expression
+     */
+    if (jdata->map->policy & ORTE_RMAPS_BYUSER) {
+        return NULL;
+    }
+    
+    /* determine the mapping policy */
+    byslot = true;
+    if (jdata->map->policy & ORTE_RMAPS_BYNODE) {
+        byslot = false;
+    }
+    
+    /* setup the list of nodes with same prefixes */
+    OBJ_CONSTRUCT(&nodelist, opal_list_t);
+    
+    /* cycle through the node pool */
+    for (n=0; n < orte_node_pool->size; n++) {
+        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, n))) {
+            continue;
+        }
+        /* determine this node's prefix by looking for first non-alpha char */
+        fullname = false;
+        len = strlen(node->name);
+        startnum = -1;
+        memset(prefix, 0, ORTE_MAX_NODE_PREFIX);
+        for (i=0; i < len; i++) {
+            if (!isalpha(node->name[i])) {
+                /* found a non-alpha char */
+                if (!isdigit(node->name[i])) {
+                    /* if it is anything but a digit, we just use
+                     * the entire name, which by definition is unique
+                     * by the way we created the node pool
+                     */
+                    fullname = true;
+                    break;
+                }
+                /* okay, this defines end of the prefix */
+                startnum = i;
+                break;
+            }
+            prefix[i] = node->name[i];
+        }
+        if (fullname || startnum < 0) {
+            ndreg = OBJ_NEW(orte_regex_node_t);
+            ndreg->prefix = strdup(node->name);
+            start_sequence(jdata->jobid, node, ndreg, -1);
+            opal_list_append(&nodelist, &ndreg->super);
+            continue;
+        }
+        nodenum = strtol(&node->name[startnum], NULL, 10);
+        /* is this prefix already on our list? */
+        found = false;
+        for (item = opal_list_get_first(&nodelist);
+             !found && item != opal_list_get_end(&nodelist);
+             item = opal_list_get_next(item)) {
+            ndreg = (orte_regex_node_t*)item;
+            if (0 == strcmp(prefix, ndreg->prefix)) {
+                /* yes - flag it */
+                found = true;
+                /* see if we have a range or a break in the list - we
+                 * break the list if one of the following conditions occurs:
+                 *
+                 * 1. the node number is out of sequence
+                 *
+                 * 2. the vpid of the first proc on the node is out
+                 *    of sequence - i.e., does not equal the vpid of
+                 *    the first proc on the first node + step if bynode,
+                 *    or the last proc on the prior node + 1 if byslot
+                 *
+                 * 3. the starting node rank on the node is out of sequence
+                 */
+                num_nodes = opal_value_array_get_size(&ndreg->nodes)-1;
+                start = OPAL_VALUE_ARRAY_GET_ITEM(&ndreg->nodes, int32_t, num_nodes);
+                cnt = OPAL_VALUE_ARRAY_GET_ITEM(&ndreg->cnt, int32_t, num_nodes);
+                if (nodenum != cnt+start+1) {
+                    /* have a break in the node sequence - start new range */
+                    start_sequence(jdata->jobid, node, ndreg, nodenum);
+                } else {
+                    /* cycle through the procs on this node and see if the vpids
+                     * for this jobid break the sequencing
+                     */
+                    vpid_start = OPAL_VALUE_ARRAY_GET_ITEM(&ndreg->starting_vpid, orte_vpid_t, num_nodes);
+                    ppn = OPAL_VALUE_ARRAY_GET_ITEM(&ndreg->ppn, int32_t, num_nodes);
+                    nrank = OPAL_VALUE_ARRAY_GET_ITEM(&ndreg->nrank, orte_node_rank_t, num_nodes);
+                    compute_vpids(node, jdata->jobid, &start_vpid, &end_vpid, &nppn, &node_rank);
+                    /* if the ppn doesn't match, then that breaks the sequence */
+                    if (nppn != ppn) {
+                        start_sequence(jdata->jobid, node, ndreg, nodenum);
+                        break;
+                    }
+                    /* if the starting node rank doesn't match, then that breaks the sequence */
+                    if (nrank != node_rank) {
+                        start_sequence(jdata->jobid, node, ndreg, nodenum);
+                        break;
+                    }
+                    /* if the vpids don't align correctly, then that breaks the sequence */
+                    if (byslot) {
+                        base = vpid_start + (ppn * cnt);
+                        if (start_vpid != (base+1)) {
+                            /* break sequence */
+                            start_sequence(jdata->jobid, node, ndreg, nodenum);
+                            break;
+                        }
+                    } else {
+                        base = vpid_start + (num_nodes*jdata->map->num_nodes);
+                        if (start_vpid != (base + jdata->map->num_nodes)) {
+                            /* break sequence */
+                            start_sequence(jdata->jobid, node, ndreg, nodenum);
+                            break;
+                        }
+                    }
+                    /* otherwise, if everything matches, just increment the cnt */
+                    OPAL_VALUE_ARRAY_SET_ITEM(&ndreg->cnt, int32_t, num_nodes, cnt+1);
+                }
+            }
+        }
+        if (!found) {
+            /* need to add it */
+            ndreg = OBJ_NEW(orte_regex_node_t);
+            ndreg->prefix = strdup(prefix);
+            start_sequence(jdata->jobid, node, ndreg, nodenum);
+            opal_list_append(&nodelist, &ndreg->super);
+        }
+    }
+    
+    /* the regular expression begins with the jobid */
+    asprintf(&tmp, "LJID=%s", ORTE_LOCAL_JOBID_PRINT(jdata->jobid));
+    opal_argv_append_nosize(&regexargs, tmp);
+    free(tmp);
+    
+    /* next comes the starting daemon vpid */
+    asprintf(&tmp, "DVPID=%s", ORTE_VPID_PRINT(jdata->map->daemon_vpid_start));
+    opal_argv_append_nosize(&regexargs, tmp);
+    free(tmp);
+    
+    /* begin constructing the regular expression for each prefix */
+    for (item = opal_list_get_first(&nodelist);
+         item != opal_list_get_end(&nodelist);
+         item = opal_list_get_next(item)) {
+        ndreg = (orte_regex_node_t*)item;
+        
+        /* how many values are in the array? */
+        num_nodes = opal_value_array_get_size(&ndreg->nodes);
+        if (0 == num_nodes) {
+            /* solitary node */
+            asprintf(&tmp, "%s", ndreg->prefix);
+            opal_argv_append_nosize(&regexargs, tmp);
+            free(tmp);
+            continue;
+        }
+        /* build the regexargs array */
+        for (i=0; i < num_nodes; i++) {
+            /* get the index and the cnt */
+            start = OPAL_VALUE_ARRAY_GET_ITEM(&ndreg->nodes, int32_t, i);
+            cnt = OPAL_VALUE_ARRAY_GET_ITEM(&ndreg->cnt, int32_t, i);
+            vpid_start = OPAL_VALUE_ARRAY_GET_ITEM(&ndreg->starting_vpid, orte_vpid_t, i);
+            ppn = OPAL_VALUE_ARRAY_GET_ITEM(&ndreg->ppn, int32_t, i);
+            nrank = OPAL_VALUE_ARRAY_GET_ITEM(&ndreg->nrank, orte_node_rank_t, i);
+            /* if we have a range, construct it that way */
+            if (0 < cnt) {
+                if (ORTE_VPID_INVALID == vpid_start) {
+                    /* no procs from this job on these nodes */
+                    asprintf(&tmp, "%s[%d-%d]", ndreg->prefix, start, start+cnt);
+                } else {
+                    asprintf(&tmp, "%s[%d-%d](%sx%d:%d:%d)", ndreg->prefix, start, start+cnt,
+                             ORTE_VPID_PRINT(vpid_start), ppn,
+                             (byslot) ? 1 : (int)jdata->map->num_nodes, (int)nrank);
+                }
+            } else {
+                /* single node - could be due to a break in the numbering and/or vpids,
+                 * or because it was a fullname node with no numbering in it
+                 */
+                if (ORTE_VPID_INVALID == vpid_start) {
+                    /* no procs from this job on this node */
+                    if (start < 0) {
+                        /* fullname node */
+                        asprintf(&tmp, "%s", ndreg->prefix);
+                    } else {
+                        asprintf(&tmp, "%s%d", ndreg->prefix, start);
+                    }
+                } else {
+                    if (start < 0) {
+                        asprintf(&tmp, "%s(%sx%d:%d:%d)", ndreg->prefix,
+                                 ORTE_VPID_PRINT(vpid_start), ppn,
+                                 (byslot) ? 1 : (int)jdata->map->num_nodes, (int)nrank);
+                    } else {
+                        asprintf(&tmp, "%s%d(%sx%d:%d:%d)", ndreg->prefix, start,
+                                 ORTE_VPID_PRINT(vpid_start), ppn,
+                                 (byslot) ? 1 : (int)jdata->map->num_nodes, (int)nrank);
+                    }
+                }
+            }
+            opal_argv_append_nosize(&regexargs, tmp);
+            free(tmp);
+        }
+    }
+    
+    /* assemble final result */
+    regexp = opal_argv_join(regexargs, ',');
+    /* cleanup */
+    opal_argv_free(regexargs);
+
+    while (NULL != (item = opal_list_remove_first(&nodelist))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&nodelist);
+    
+    return regexp;
 }

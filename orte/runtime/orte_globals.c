@@ -30,6 +30,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/class/opal_pointer_array.h"
+#include "opal/class/opal_value_array.h"
 #include "opal/dss/dss.h"
 
 #include "orte/mca/errmgr/errmgr.h"
@@ -862,4 +863,35 @@ OBJ_CLASS_INSTANCE(orte_job_map_t,
                    opal_object_t,
                    orte_job_map_construct,
                    orte_job_map_destruct);
+
+static void orte_regex_node_construct(orte_regex_node_t *ptr)
+{
+    ptr->prefix = NULL;
+    OBJ_CONSTRUCT(&ptr->nodes, opal_value_array_t);
+    opal_value_array_init(&ptr->nodes, sizeof(int32_t));
+    OBJ_CONSTRUCT(&ptr->cnt, opal_value_array_t);
+    opal_value_array_init(&ptr->cnt, sizeof(int32_t));
+    OBJ_CONSTRUCT(&ptr->starting_vpid, opal_value_array_t);
+    opal_value_array_init(&ptr->starting_vpid, sizeof(orte_vpid_t));
+    OBJ_CONSTRUCT(&ptr->ppn, opal_value_array_t);
+    opal_value_array_init(&ptr->ppn, sizeof(int32_t));
+    OBJ_CONSTRUCT(&ptr->nrank, opal_value_array_t);
+    opal_value_array_init(&ptr->nrank, sizeof(orte_node_rank_t));
+}
+static void orte_regex_node_destruct(orte_regex_node_t *ptr)
+{
+    if (NULL != ptr->prefix) {
+        free(ptr->prefix);
+    }
+    OBJ_DESTRUCT(&ptr->nodes);
+    OBJ_DESTRUCT(&ptr->cnt);
+    OBJ_DESTRUCT(&ptr->starting_vpid);
+    OBJ_DESTRUCT(&ptr->ppn);
+    OBJ_DESTRUCT(&ptr->nrank);
+}
+OBJ_CLASS_INSTANCE(orte_regex_node_t,
+                   opal_list_item_t,
+                   orte_regex_node_construct,
+                   orte_regex_node_destruct);
+
 #endif

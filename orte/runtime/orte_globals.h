@@ -35,6 +35,7 @@
 #endif
 
 #include "opal/class/opal_pointer_array.h"
+#include "opal/class/opal_value_array.h"
 
 #include "orte/mca/plm/plm_types.h"
 #include "orte/mca/rmaps/rmaps_types.h"
@@ -422,6 +423,18 @@ typedef struct {
     opal_pointer_array_t pmap;
 } orte_jmap_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_jmap_t);
+
+typedef struct {
+    /* list object */
+    opal_list_item_t super;
+    char *prefix;
+    opal_value_array_t nodes;
+    opal_value_array_t cnt;
+    opal_value_array_t starting_vpid;
+    opal_value_array_t ppn;
+    opal_value_array_t nrank;
+} orte_regex_node_t;
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_regex_node_t);
 
 /**
 * Get a job data object
