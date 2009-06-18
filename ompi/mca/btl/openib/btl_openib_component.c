@@ -910,7 +910,7 @@ OBJ_CLASS_INSTANCE(mca_btl_openib_device_t, opal_object_t, device_construct,
 static int prepare_device_for_use(mca_btl_openib_device_t *device)
 {
     mca_btl_openib_frag_init_data_t *init_data;
-    int qp, length;
+    int rc, qp, length;
 
 #if OPAL_HAVE_THREADS
     if(mca_btl_openib_component.use_async_event_thread) {
@@ -985,16 +985,25 @@ static int prepare_device_for_use(mca_btl_openib_device_t *device)
     init_data->order = MCA_BTL_NO_ORDER;
     init_data->list = &device->send_free_control;
 
-    if(OMPI_SUCCESS != ompi_free_list_init_ex_new(
-                &device->send_free_control,
+    rc = ompi_free_list_init_ex_new(&device->send_free_control,
                 sizeof(mca_btl_openib_send_control_frag_t), CACHE_LINE_SIZE,
                 OBJ_CLASS(mca_btl_openib_send_control_frag_t), length,
                 mca_btl_openib_component.buffer_alignment,
                 mca_btl_openib_component.ib_free_list_num, -1,
                 mca_btl_openib_component.ib_free_list_inc,
                 device->mpool, mca_btl_openib_frag_init,
-                init_data)) {
-        return OMPI_ERROR;
+                init_data);
+    if (OMPI_SUCCESS != rc) {
+        /* If we're "out of memory", this usually means that we ran
+           out of registered memory, so show that error message */
+        if (OMPI_ERR_OUT_OF_RESOURCE == rc ||
+            OMPI_ERR_TEMP_OUT_OF_RESOURCE == rc) {
+            errno = ENOMEM;
+            mca_btl_openib_show_init_error(__FILE__, __LINE__,
+                                           "ompi_free_list_init_ex_new",
+                                           ibv_get_device_name(device->ib_dev));
+        }
+        return rc;
     }
 
     /* setup all the qps */
@@ -1010,7 +1019,7 @@ static int prepare_device_for_use(mca_btl_openib_device_t *device)
         init_data->order = qp;
         init_data->list = &device->qps[qp].send_free;
 
-        if(OMPI_SUCCESS != ompi_free_list_init_ex_new(init_data->list,
+        rc = ompi_free_list_init_ex_new(init_data->list,
                     sizeof(mca_btl_openib_send_frag_t), CACHE_LINE_SIZE,
                     OBJ_CLASS(mca_btl_openib_send_frag_t), length,
                     mca_btl_openib_component.buffer_alignment,
@@ -1018,7 +1027,18 @@ static int prepare_device_for_use(mca_btl_openib_device_t *device)
                     mca_btl_openib_component.ib_free_list_max,
                     mca_btl_openib_component.ib_free_list_inc,
                     device->mpool, mca_btl_openib_frag_init,
-                    init_data)) {
+                                        init_data);
+        if (OMPI_SUCCESS != rc) {
+            /* If we're "out of memory", this usually means that we
+               ran out of registered memory, so show that error
+               message */
+            if (OMPI_ERR_OUT_OF_RESOURCE == rc ||
+                OMPI_ERR_TEMP_OUT_OF_RESOURCE == rc) {
+                errno = ENOMEM;
+                mca_btl_openib_show_init_error(__FILE__, __LINE__,
+                                               "ompi_free_list_init_ex_new",
+                                               ibv_get_device_name(device->ib_dev));
+            }
             return OMPI_ERROR;
         }
 

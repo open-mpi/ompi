@@ -611,6 +611,13 @@ extern void mca_btl_openib_frag_progress_pending_put_get(
 extern int mca_btl_openib_ft_event(int state);
 
 
+/**
+ * Show an error during init, particularly when running out of
+ * registered memory.
+ */
+void mca_btl_openib_show_init_error(const char *file, int line,
+                                    const char *func, const char *dev);
+
 #define BTL_OPENIB_HP_CQ 0
 #define BTL_OPENIB_LP_CQ 1
 

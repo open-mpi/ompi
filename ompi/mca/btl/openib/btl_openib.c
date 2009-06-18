@@ -99,8 +99,8 @@ mca_btl_openib_module_t mca_btl_openib_module = {
 
 static int mca_btl_openib_finalize_resources(struct mca_btl_base_module_t* btl);
 
-static void show_init_error(const char *file, int line,
-                            const char *func, const char *dev)
+void mca_btl_openib_show_init_error(const char *file, int line,
+                                    const char *func, const char *dev)
 {
     if (ENOMEM == errno) {
         int ret;
@@ -166,15 +166,16 @@ static int adjust_cq(mca_btl_openib_device_t *device, const int cq)
                 0);
 
         if (NULL == device->ib_cq[cq]) {
-            show_init_error(__FILE__, __LINE__, "ibv_create_cq",
-                        ibv_get_device_name(device->ib_dev));
+            mca_btl_openib_show_init_error(__FILE__, __LINE__, "ibv_create_cq",
+                                           ibv_get_device_name(device->ib_dev));
             return OMPI_ERROR;
         }
 
 #if OPAL_ENABLE_PROGRESS_THREADS == 1
         if(ibv_req_notify_cq(device->ib_cq[cq], 0)) {
-            show_init_error(__FILE__, __LINE__, "ibv_req_notify_cq",
-                            ibv_get_device_name(device->ib_dev));
+            mca_btl_openib_show_init_error(__FILE__, __LINE__,
+                                           "ibv_req_notify_cq",
+                                           ibv_get_device_name(device->ib_dev));
             return OMPI_ERROR;
         }
 
@@ -236,8 +237,9 @@ static int create_srq(mca_btl_openib_module_t *openib_btl)
                    ibv_create_srq(openib_btl->device->ib_pd, &attr);
             }
             if (NULL == openib_btl->qps[qp].u.srq_qp.srq) {
-                show_init_error(__FILE__, __LINE__, "ibv_create_srq",
-                                ibv_get_device_name(openib_btl->device->ib_dev));
+                mca_btl_openib_show_init_error(__FILE__, __LINE__,
+                                               "ibv_create_srq",
+                                               ibv_get_device_name(openib_btl->device->ib_dev));
                 return OMPI_ERROR;
             }
         }
