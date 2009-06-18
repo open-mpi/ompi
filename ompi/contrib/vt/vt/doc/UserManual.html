@@ -1,6 +1,6 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 
-<!--Converted with LaTeX2HTML 2002-2-1 (1.70)
+<!--Converted with LaTeX2HTML 2002-2-1 (1.71)
 original version by:  Nikos Drakos, CBLU, University of Leeds
 * revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
 * with significant contributions from:
@@ -16,8 +16,7 @@ original version by:  Nikos Drakos, CBLU, University of Leeds
 <META NAME="Generator" CONTENT="LaTeX2HTML v2002-2-1">
 <META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
 
-<style>
-body {font-family: sans-serif;}
+<STYLE>
 /* Century Schoolbook font is very similar to Computer Modern Math: cmmi */
 .MATH    { font-family: "Century Schoolbook", serif; }
 .MATH I  { font-family: "Century Schoolbook", serif; font-style: italic }
@@ -48,9 +47,15 @@ TD.eqno			{ }	/* equation-number cells */
 
 
 /* document-specific styles come next */
+DIV.navigation		{   }
+PRE.preform		{   }
+SPAN.textit		{ font-style: italic  }
+SPAN.arabic		{   }
+SPAN.textbf		{ font-weight: bold  }
 
-</style>
+BODY {font-family: sans-serif;}
 
+</STYLE>
 </HEAD>
 
 <BODY >
@@ -58,7 +63,7 @@ TD.eqno			{ }	/* equation-number cells */
 <P>
 
 <P>
-<B><FONT SIZE="+4">VampirTrace 5.4.9 User Manual</FONT></B>
+<B><BIG CLASS="XHUGE">VampirTrace 5.4.9 User Manual</BIG></B>
 <BR>
 <BR>
 <BR>
@@ -76,6 +81,10 @@ Germany
   HREF="http://www.tu-dresden.de/zih/">http://www.tu-dresden.de/zih/</A></TT>
 <BR><TT><A NAME="tex2html2"
   HREF="http://www.tu-dresden.de/zih/vampirtrace/">http://www.tu-dresden.de/zih/vampirtrace/</A></TT>
+<BR>
+<BR>
+E-Mail: <TT><A NAME="tex2html3"
+  HREF="vampirsupport@zih.tu-dresden.de">vampirsupport@zih.tu-dresden.de</A></TT>
 <P>
 <BR>
 
@@ -84,94 +93,102 @@ Contents</A>
 </H2>
 <!--Table of Contents-->
 
-<UL>
-<LI><A NAME="tex2html50"
+<UL CLASS="TofC">
+<LI><A NAME="tex2html54"
   HREF="UserManual.html#SECTION00200000000000000000">Introduction</A>
-<LI><A NAME="tex2html51"
+<LI><A NAME="tex2html55"
   HREF="UserManual.html#SECTION00300000000000000000">Instrumentation</A>
 <UL>
-<LI><A NAME="tex2html52"
-  HREF="UserManual.html#SECTION00310000000000000000">The Compiler Wrappers</A>
-<LI><A NAME="tex2html53"
-  HREF="UserManual.html#SECTION00320000000000000000">Instrumentation Types</A>
-<LI><A NAME="tex2html54"
-  HREF="UserManual.html#SECTION00330000000000000000">Automatic Instrumentation</A>
-<LI><A NAME="tex2html55"
-  HREF="UserManual.html#SECTION00340000000000000000">Manual Instrumentation using the VampirTrace API</A>
 <LI><A NAME="tex2html56"
-  HREF="UserManual.html#SECTION00350000000000000000">Manual Instrumentation using POMP</A>
+  HREF="UserManual.html#SECTION00310000000000000000">The Compiler Wrappers</A>
 <LI><A NAME="tex2html57"
+  HREF="UserManual.html#SECTION00320000000000000000">Instrumentation Types</A>
+<LI><A NAME="tex2html58"
+  HREF="UserManual.html#SECTION00330000000000000000">Automatic Instrumentation</A>
+<UL>
+<LI><A NAME="tex2html59"
+  HREF="UserManual.html#SECTION00331000000000000000">Notes for Using the GNU, Intel, or Pathscale Compiler</A>
+<LI><A NAME="tex2html60"
+  HREF="UserManual.html#SECTION00332000000000000000">Known License Issues with BFD</A>
+<LI><A NAME="tex2html61"
+  HREF="UserManual.html#SECTION00333000000000000000">Notes on Instrumentation of Inline Functions</A>
+</UL>
+<LI><A NAME="tex2html62"
+  HREF="UserManual.html#SECTION00340000000000000000">Manual Instrumentation using the VampirTrace API</A>
+<LI><A NAME="tex2html63"
+  HREF="UserManual.html#SECTION00350000000000000000">Manual Instrumentation using POMP</A>
+<LI><A NAME="tex2html64"
   HREF="UserManual.html#SECTION00360000000000000000">Binary instrumentation using Dyninst</A>
 </UL>
 <BR>
-<LI><A NAME="tex2html58"
+<LI><A NAME="tex2html65"
   HREF="UserManual.html#SECTION00400000000000000000">Runtime Measurement</A>
 <UL>
-<LI><A NAME="tex2html59"
+<LI><A NAME="tex2html66"
   HREF="UserManual.html#SECTION00410000000000000000">Environment Variables</A>
-<LI><A NAME="tex2html60"
+<LI><A NAME="tex2html67"
   HREF="UserManual.html#SECTION00420000000000000000">Influencing Trace File Size</A>
-<LI><A NAME="tex2html61"
+<LI><A NAME="tex2html68"
   HREF="UserManual.html#SECTION00430000000000000000">Unification of local Traces</A>
 </UL>
 <BR>
-<LI><A NAME="tex2html62"
+<LI><A NAME="tex2html69"
   HREF="UserManual.html#SECTION00500000000000000000">Recording additional Events and Counters</A>
 <UL>
-<LI><A NAME="tex2html63"
+<LI><A NAME="tex2html70"
   HREF="UserManual.html#SECTION00510000000000000000">PAPI Hardware Performance Counters</A>
-<LI><A NAME="tex2html64"
+<LI><A NAME="tex2html71"
   HREF="UserManual.html#SECTION00520000000000000000">Memory Allocation Counters</A>
-<LI><A NAME="tex2html65"
+<LI><A NAME="tex2html72"
   HREF="UserManual.html#SECTION00530000000000000000">Application I/O Calls</A>
-<LI><A NAME="tex2html66"
+<LI><A NAME="tex2html73"
   HREF="UserManual.html#SECTION00540000000000000000">User Defined Counters</A>
 </UL>
 <BR>
-<LI><A NAME="tex2html67"
+<LI><A NAME="tex2html74"
   HREF="UserManual.html#SECTION00600000000000000000">Filtering &amp; Grouping</A>
 <UL>
-<LI><A NAME="tex2html68"
+<LI><A NAME="tex2html75"
   HREF="UserManual.html#SECTION00610000000000000000">Function Filtering</A>
-<LI><A NAME="tex2html69"
+<LI><A NAME="tex2html76"
   HREF="UserManual.html#SECTION00620000000000000000">Function Grouping</A>
 </UL>
 <BR>
-<LI><A NAME="tex2html70"
+<LI><A NAME="tex2html77"
   HREF="UserManual.html#SECTION00700000000000000000">Command Reference</A>
 <UL>
-<LI><A NAME="tex2html71"
+<LI><A NAME="tex2html78"
   HREF="UserManual.html#SECTION00710000000000000000">Compiler Wrappers (vtcc,vtcxx,vtf77,vtf90)</A>
-<LI><A NAME="tex2html72"
+<LI><A NAME="tex2html79"
   HREF="UserManual.html#SECTION00720000000000000000">Local Trace Unifier (vtunify)</A>
-<LI><A NAME="tex2html73"
+<LI><A NAME="tex2html80"
   HREF="UserManual.html#SECTION00730000000000000000">Dyninst Mutator (vtdyn)</A>
-<LI><A NAME="tex2html74"
+<LI><A NAME="tex2html81"
   HREF="UserManual.html#SECTION00740000000000000000">Trace Filter Tool (vtfilter)</A>
 </UL>
 <BR>
-<LI><A NAME="tex2html75"
+<LI><A NAME="tex2html82"
   HREF="UserManual.html#SECTION00800000000000000000">PAPI Counter Specifications</A>
-<LI><A NAME="tex2html76"
+<LI><A NAME="tex2html83"
   HREF="UserManual.html#SECTION00900000000000000000">VampirTrace Installation</A>
 <UL>
-<LI><A NAME="tex2html77"
+<LI><A NAME="tex2html84"
   HREF="UserManual.html#SECTION00910000000000000000">Basics</A>
-<LI><A NAME="tex2html78"
+<LI><A NAME="tex2html85"
   HREF="UserManual.html#SECTION00920000000000000000">Configure Options</A>
-<LI><A NAME="tex2html79"
+<LI><A NAME="tex2html86"
   HREF="UserManual.html#SECTION00930000000000000000">Cross Compilation</A>
-<LI><A NAME="tex2html80"
+<LI><A NAME="tex2html87"
   HREF="UserManual.html#SECTION00940000000000000000">Environment Set-Up</A>
-<LI><A NAME="tex2html81"
+<LI><A NAME="tex2html88"
   HREF="UserManual.html#SECTION00950000000000000000">Notes for Developers</A>
 </UL></UL>
 <!--End of Table of Contents-->
 <P>
 This documentation describes how to prepare application programs in order 
-to have traces generated, when executed. This step is called <I>instrumentation</I>.
+to have traces generated, when executed. This step is called <SPAN  CLASS="textit">instrumentation</SPAN>.
 Furthermore, it explains how to control the run-time measurement system 
-during execution (<I>tracing</I>). 
+during execution (<SPAN  CLASS="textit">tracing</SPAN>). 
 This also includes hardware performance counter sampling,
 as well as selective filtering and grouping of functions.
 
@@ -213,20 +230,20 @@ This includes
 
 <P>
 After a successful trace run, VampirTrace writes all collected data to a  
-trace in the Open Trace Format (OTF), see <TT><A NAME="tex2html3"
+trace in the Open Trace Format (OTF), see <TT><A NAME="tex2html4"
   HREF="http://www.tu-dresden.de/zih/otf">http://www.tu-dresden.de/zih/otf</A></TT>.
 
 <P>
 As a result the information is available for post-mortem analysis and 
 visualization by various tools. 
 Most notably, VampirTrace provides the input data for the Vampir analysis  
-and visualization tool, see <TT><A NAME="tex2html4"
+and visualization tool, see <TT><A NAME="tex2html5"
   HREF="http://www.vampir.eu">http://www.vampir.eu</A></TT>. 
 
 <P>
 VampirTrace is included in OpenMPI&nbsp;1.3 and later.
 If not disabled explicitly, VampirTrace is built automatically when installing OpenMPI.
-Refer to <TT><A NAME="tex2html5"
+Refer to <TT><A NAME="tex2html6"
   HREF="http://www.open-mpi.org/faq/?category=vampirtrace">http://www.open-mpi.org/faq/?category=vampirtrace</A></TT> for more information.
 
 <P>
@@ -291,7 +308,7 @@ type of the program:
 <P>
 
 <UL>
-<LI><B>Serial programs</B>:
+<LI><SPAN  CLASS="textbf">Serial programs</SPAN>:
 Compiling serial code is the default behavior of the wrappers.
 Simply replace the compiler by VampirTrace's wrapper:
 
@@ -313,7 +330,7 @@ link the VampirTrace library.
 
 <P>
 </LI>
-<LI><B>MPI parallel programs</B>:
+<LI><SPAN  CLASS="textbf">MPI parallel programs</SPAN>:
 MPI instrumentation is always handled by means of the PMPI interface 
 which is part of the MPI standard.
 This requires the compiler wrapper to link with an MPI-aware version of
@@ -358,7 +375,7 @@ of user functions (see also Section <A HREF="#A1">2.4</A>).
 
 <P>
 </LI>
-<LI><B>OpenMP parallel programs</B>:
+<LI><SPAN  CLASS="textbf">OpenMP parallel programs</SPAN>:
 When VampirTrace detects OpenMP flags on the command line,
 OPARI is invoked for automatic source code instrumentation of OpenMP events:
 
@@ -380,7 +397,7 @@ VampirTrace's installation directory.
 
 <P>
 </LI>
-<LI><B>Hybrid MPI/OpenMP parallel programs</B>:
+<LI><SPAN  CLASS="textbf">Hybrid MPI/OpenMP parallel programs</SPAN>:
 With a combination of the above mentioned approaches, hybrid applications can be instrumented:
 
 <P>
@@ -446,8 +463,8 @@ instrumentation type to use. Following values for <TT>&lt;insttype&gt;</TT> are 
 
 <P>
 <TABLE CELLPADDING=3>
-<TR><TH ALIGN="LEFT"><B>insttype</B></TH>
-<TH ALIGN="LEFT"><B>Compilers</B></TH>
+<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">insttype</SPAN></TH>
+<TH ALIGN="LEFT"><SPAN  CLASS="textbf">Compilers</SPAN></TH>
 </TR>
 <TR><TD ALIGN="LEFT">gnu</TD>
 <TD ALIGN="LEFT">GNU (e.g., gcc, g++, gfortran, g95)</TD>
@@ -475,8 +492,8 @@ instrumentation type to use. Following values for <TT>&lt;insttype&gt;</TT> are 
 
 <P>
 <TABLE CELLPADDING=3>
-<TR><TH ALIGN="LEFT"><B>insttype</B></TH>
-<TH ALIGN="LEFT"><B>&nbsp;</B></TH>
+<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">insttype</SPAN></TH>
+<TH ALIGN="LEFT"><SPAN  CLASS="textbf">&nbsp;</SPAN></TH>
 </TR>
 <TR><TD ALIGN="LEFT">manual</TD>
 <TD ALIGN="LEFT">VampirTrace's API (see Section <A HREF="#A1">2.4</A>)</TD>
@@ -492,8 +509,8 @@ instrumentation type to use. Following values for <TT>&lt;insttype&gt;</TT> are 
 
 <P>
 <TABLE CELLPADDING=3>
-<TR><TH ALIGN="LEFT"><B>insttype</B></TH>
-<TH ALIGN="LEFT"><B>&nbsp;</B></TH>
+<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">insttype</SPAN></TH>
+<TH ALIGN="LEFT"><SPAN  CLASS="textbf">&nbsp;</SPAN></TH>
 </TR>
 <TR><TD ALIGN="LEFT">dyninst</TD>
 <TD ALIGN="LEFT">binary-instrumentation with Dyninst (Section <A HREF="#A3">2.6</A>)</TD>
@@ -530,24 +547,30 @@ Simply use the compiler wrappers without any parameters, e.g.:
 <BR>
 <BR>
 <code>   % vtf90 myprog1.f90 myprog2.f90 -o myprog</code>
-
-<P>
 <BR>
 
-<H4><A NAME="SECTION00330010000000000000">
-Important notes for using the GNU or Intel &ge;10.0 compiler:</A>
-</H4>
-Both need the library <I>BFD</I> for getting symbol information of the running application
-executable. This library is part of the <I>GNU Binutils</I>, which are downloadable from
-<TT><A NAME="tex2html6"
+<P>
+
+<H2><A NAME="SECTION00331000000000000000">&#160;</A>
+<A NAME="bfdnotes">&#160;</A>
+<BR>
+Notes for Using the GNU, Intel, or Pathscale Compiler
+</H2>
+For these compilers the library <SPAN  CLASS="textit">BFD</SPAN> is required to get symbol information
+of the running application executable. This library is part of the <SPAN  CLASS="textit">GNU Binutils</SPAN>,
+which is downloadable from <TT><A NAME="tex2html7"
   HREF="http://www.gnu.org/software/binutils">http://www.gnu.org/software/binutils</A></TT>.
 
 <P>
-To get the application executable for BFD during run-time, VampirTrace uses the <TT>/proc</TT> 
-file system which is available on Linux. On non-Linux operating systems (e.g. MacOS) it is 
-necessary to set the environment variable <TT>VT_APPPATH</TT> to the application executable.
-If there are any problems to get symbol information by using BFD, then the environment
-variable <TT>VT_NMFILE</TT> can be set to a symbol list file which is created with the
+To get the application executable for BFD during runtime, VampirTrace uses the <TT>/proc</TT> 
+file system. As <TT>/proc</TT> is not present on all operating systems, automatic symbol
+information might not be available. In this case, it is necessary to set the environment
+variable <TT>VT_APPPATH</TT> to the pathname of the application executable to get symbols
+resolved via BFD.
+
+<P>
+Should any problems emerge to get symbol information by using BFD, then the environment
+variable <TT>VT_GNU_NMFILE</TT> can be set to a symbol list file, which is created with the
 command <TT>nm</TT>, like:
 
 <P>
@@ -561,19 +584,28 @@ Note that the output format of <TT>nm</TT> must be written in BSD-style. See the
 of nm for getting help about the output format setting.
 
 <P>
-<BR>
 
-<H4><A NAME="SECTION00330020000000000000">
-Notes on instrumentation of inline functions:</A>
-</H4>
-Compilers have different behaviors when automatically instrumenting inlined
-functions.
-By default, the GNU and Intel &ge;10.0 compilers instrument all functions when used with
-VampirTrace. Thus they switch off inlining completely, regardless of the optimization
-level chosen.
-By appending the following attribute to function
-declarations, one can prevent these particular functions from being instrumented,
-making them able to be inlined:
+<H2><A NAME="SECTION00332000000000000000">
+Known License Issues with BFD</A>
+</H2>
+Please consider that BFD is deliviered under the GNU General Public License
+(GPL). So if you want to build binary packages including VampirTrace make sure
+to use the option <TT>-without-bfd</TT> to get a version without BFD. In this
+case you have to use <TT>nm</TT> to get symbol information from the running
+application executable (see Section&nbsp;<A HREF="#bfdnotes">2.3.1</A>).
+
+<P>
+
+<H2><A NAME="SECTION00333000000000000000">
+Notes on Instrumentation of Inline Functions</A>
+</H2>
+Compilers behave differently when they automatically instrument inlined functions.
+The GNU and Intel &ge;10.0 compilers instrument all functions by default when they
+are used with VampirTrace. They therefore switch off inlining completely, disregarding
+the optimization level chosen.
+One can prevent these particular functions from being instrumented by appending the
+following attribute to function declarations, hence
+making them able to be inlined (this works only for C/C++):
 
 <P>
 <BR>
@@ -740,7 +772,7 @@ Binary instrumentation using Dyninst
 <P>
 The option <TT>-vt:inst dyninst</TT> selects the compiler wrapper to 
 instrument the application during run-time (binary instrumentation) by using 
-Dyninst (<TT><A NAME="tex2html7"
+Dyninst (<TT><A NAME="tex2html8"
   HREF="http://www.dyninst.org">http://www.dyninst.org</A></TT>).
 Recompiling is not necessary for this way of instrumenting, 
 but relinking, as shown:
@@ -753,7 +785,7 @@ but relinking, as shown:
 <BR>
 <BR>
 The compiler wrapper dynamically links the library <TT>libvt.dynatt.so</TT>
-  to the  application. This library attaches the <I>Mutator</I>-program
+  to the  application. This library attaches the <SPAN  CLASS="textit">Mutator</SPAN>-program
   <TT>vtdyn</TT> during run-time which invokes the instrumenting by using 
   the Dyninst-API.
   Note that the application should have been compiled with the <TT>-g</TT>
@@ -815,9 +847,9 @@ of a VampirTrace instrumented executable:
 
 <P>
 <TABLE CELLPADDING=3>
-<TR><TH ALIGN="LEFT"><B>Variable</B></TH>
-<TH ALIGN="LEFT"><B>Purpose</B></TH>
-<TH ALIGN="LEFT"><B>Default</B></TH>
+<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">Variable</SPAN></TH>
+<TH ALIGN="LEFT"><SPAN  CLASS="textbf">Purpose</SPAN></TH>
+<TH ALIGN="LEFT"><SPAN  CLASS="textbf">Default</SPAN></TH>
 </TR>
 <TR><TD ALIGN="LEFT"><TT>VT_PFORM_GDIR</TT></TD>
 <TD ALIGN="LEFT">Name of global directory to store final trace file in</TD>
@@ -900,7 +932,7 @@ Evaluation of the environment variable is done at measurement run-time.
 
 <P>
 When you use these environment variables, make sure that they have the same
-value for all processes of your application on <B>all</B> nodes of your cluster.
+value for all processes of your application on <SPAN  CLASS="textbf">all</SPAN> nodes of your cluster.
 Some cluster environments do not automatically transfer your environment
 when executing parts of your job on remote nodes of the cluster, and you
 may need to explicitly set and export them in batch job submission scripts.
@@ -918,8 +950,8 @@ The default values of the environment variables <TT>VT_BUFFER_SIZE</TT> and <BR>
 32 MB and the number of times that the buffer is flushed to 1. Events that
 should be recorded after the limit has been reached are no longer written into
 the trace file. The environment variables apply to every process of a
-parallel application, meaning that applications with <I>n</I> processes
-will typically create trace files <I>n</I> times the size of a serial
+parallel application, meaning that applications with <SPAN  CLASS="textit">n</SPAN> processes
+will typically create trace files <SPAN  CLASS="textit">n</SPAN> times the size of a serial
 application.
 
 <P>
@@ -946,7 +978,7 @@ Unification of local Traces
 
 <P>
 After a run of an instrumented application the traces of the single
-processes need to be <I>unified</I> in terms of timestamps and event IDs.
+processes need to be <SPAN  CLASS="textit">unified</SPAN> in terms of timestamps and event IDs.
 In most cases, this happens automatically.
 But under certain circumstances it is necessary to perform unification of local
 traces manually. To do this, use the command:
@@ -1162,13 +1194,13 @@ The third parameter <TT>type</TT> of <TT>VT_COUNT_DEF</TT> specifies the data
 
 <P>
 <TABLE CELLPADDING=3>
-<TR><TH ALIGN="LEFT"><B>Fortran:</B></TH>
+<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">Fortran:</SPAN></TH>
 <TD ALIGN="LEFT">&nbsp;</TD>
 <TD ALIGN="LEFT">&nbsp;</TD>
 </TR>
-<TR><TH ALIGN="LEFT"><B>Type</B></TH>
-<TD ALIGN="LEFT"><B>Count call</B></TD>
-<TD ALIGN="LEFT"><B>Data type</B></TD>
+<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">Type</SPAN></TH>
+<TD ALIGN="LEFT"><SPAN  CLASS="textbf">Count call</SPAN></TD>
+<TD ALIGN="LEFT"><SPAN  CLASS="textbf">Data type</SPAN></TD>
 </TR>
 <TR><TD ALIGN="LEFT"><TT>VT_COUNT_TYPE_INTEGER</TT></TD>
 <TD ALIGN="LEFT"><TT>VT_COUNT_INTEGER_VAL</TT></TD>
@@ -1190,13 +1222,13 @@ The third parameter <TT>type</TT> of <TT>VT_COUNT_DEF</TT> specifies the data
 
 <P>
 <TABLE CELLPADDING=3>
-<TR><TH ALIGN="LEFT"><B>C/C++:</B></TH>
+<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">C/C++:</SPAN></TH>
 <TD ALIGN="LEFT">&nbsp;</TD>
 <TD ALIGN="LEFT">&nbsp;</TD>
 </TR>
-<TR><TH ALIGN="LEFT"><B>Type</B></TH>
-<TD ALIGN="LEFT"><B>Count call</B></TD>
-<TD ALIGN="LEFT"><B>Data type</B></TD>
+<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">Type</SPAN></TH>
+<TD ALIGN="LEFT"><SPAN  CLASS="textbf">Count call</SPAN></TD>
+<TD ALIGN="LEFT"><SPAN  CLASS="textbf">Data type</SPAN></TD>
 </TR>
 <TR><TD ALIGN="LEFT"><TT>VT_COUNT_TYPE_SIGNED</TT></TD>
 <TD ALIGN="LEFT"><TT>VT_COUNT_SIGNED_VAL</TT></TD>
@@ -1338,8 +1370,8 @@ VampirTrace allows assigning functions/regions to a group.
 
 <P>
 <TABLE CELLPADDING=3>
-<TR><TH ALIGN="LEFT"><B>Group name</B></TH>
-<TH ALIGN="LEFT"><B>Contained functions/regions</B></TH>
+<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">Group name</SPAN></TH>
+<TH ALIGN="LEFT"><SPAN  CLASS="textbf">Contained functions/regions</SPAN></TH>
 </TR>
 <TR><TD ALIGN="LEFT"><TT>MPI</TT></TD>
 <TD ALIGN="LEFT">MPI functions</TD>
@@ -1882,8 +1914,8 @@ enable libc's I/O tracing support, default: enable
 enable support for Dyninst instrumentation, 
 <BR>
 default: enable if found by configure 
-<BR>                              <B>Note:</B> Requires Dyninst version 5.0.1 or higher!
-<BR>                              (<TT><A NAME="tex2html8"
+<BR>                              <SPAN  CLASS="textbf">Note:</SPAN> Requires Dyninst version 5.0.1 or higher!
+<BR>                              (<TT><A NAME="tex2html9"
   HREF="http://www.dyninst.org">http://www.dyninst.org</A></TT>)
 
 <P>
@@ -2117,7 +2149,7 @@ Build from CVS</A>
 </H2>
 
 <P>
-If you have checked out a <I>developer's copy</I> of VampirTrace (i.e.
+If you have checked out a <SPAN  CLASS="textit">developer's copy</SPAN> of VampirTrace (i.e.
       checked out from CVS), you should first run:
 
 <P>
@@ -2125,9 +2157,9 @@ If you have checked out a <I>developer's copy</I> of VampirTrace (i.e.
 % ./bootstrap
 </PRE>
 Note that GNU Autoconf &ge;2.60 and GNU Automake &ge;1.9.6 is required.
-You can download them from <TT><A NAME="tex2html9"
+You can download them from <TT><A NAME="tex2html10"
   HREF="http://www.gnu.org/software/autoconf">http://www.gnu.org/software/autoconf</A></TT> 
-and <TT><A NAME="tex2html10"
+and <TT><A NAME="tex2html11"
   HREF="http://www.gnu.org/software/automake">http://www.gnu.org/software/automake</A></TT>.
 
 <P>
