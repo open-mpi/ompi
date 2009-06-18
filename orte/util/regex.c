@@ -39,7 +39,7 @@
 #define ORTE_MAX_NODE_PREFIX        50
 
 static int regex_parse_node_ranges(char *base, char *ranges, char ***names);
-static int regex_parse_node_range(char *base, char *range, char ***names);
+static int regex_parse_node_range(char *base, char *range, char suffix, char ***names);
 
 
 int orte_regex_extract_node_names(char *regexp, char ***names)
@@ -167,7 +167,7 @@ static int regex_parse_node_ranges(char *base, char *ranges, char ***names)
     for (orig = start = ranges, i = 0; i < len; ++i) {
         if (',' == ranges[i]) {
             ranges[i] = '\0';
-            ret = regex_parse_node_range(base, start, names);
+            ret = regex_parse_node_range(base, start, '\0', names);
             if (ORTE_SUCCESS != ret) {
                 ORTE_ERROR_LOG(ret);
                 return ret;
@@ -184,7 +184,7 @@ static int regex_parse_node_ranges(char *base, char *ranges, char ***names)
                              "%s regex:parse:ranges: parse range %s (2)",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), start));
         
-        ret = regex_parse_node_range(base, start, names);
+        ret = regex_parse_node_range(base, start, '\0', names);
         if (ORTE_SUCCESS != ret) {
             ORTE_ERROR_LOG(ret);
             return ret;
@@ -204,7 +204,7 @@ static int regex_parse_node_ranges(char *base, char *ranges, char ***names)
  * @param *ranges  A pointer to a single range. (i.e. "1-3" or "5") 
  * @param ***names An argv array to add the newly discovered nodes to
  */
-static int regex_parse_node_range(char *base, char *range, char ***names)
+static int regex_parse_node_range(char *base, char *range, char suffix, char ***names)
 {
     char *str, temp1[BUFSIZ];
     size_t i, j, start, end;
@@ -293,6 +293,12 @@ static int regex_parse_node_range(char *base, char *range, char ***names)
             str[j] = '\0';
         }
         strcat(str, temp1);
+        /* if there is a suffix, add it */
+        if ('\0' != suffix) {
+            num_len = strlen(str);
+            str[num_len] = suffix;
+            str[num_len+1] = '\0';
+        }
         ret = opal_argv_append_nosize(names, str);
         if(ORTE_SUCCESS != ret) {
             ORTE_ERROR_LOG(ret);
@@ -412,12 +418,13 @@ static void compute_vpids(orte_node_t *node, orte_jobid_t jobid,
 }
 
 static void start_sequence(orte_jobid_t jobid, orte_node_t *node,
-                           orte_regex_node_t *ndreg, int32_t nodenum)
+                           orte_regex_node_t *ndreg, char suffix, int32_t nodenum)
 {
     int32_t j, ppn;
     orte_vpid_t start_vpid, end_vpid;
     orte_node_rank_t nrank;
     
+    opal_value_array_append_item(&ndreg->suffix, &suffix);
     opal_value_array_append_item(&ndreg->nodes, &nodenum);
     j = 0;
     opal_value_array_append_item(&ndreg->cnt, &j);
@@ -444,6 +451,7 @@ char* orte_regex_encode_maps(orte_job_t *jdata)
     char *regexp = NULL;
     bool byslot;
     orte_node_rank_t node_rank, nrank;
+    char suffix, sfx;
     
     /* this is only supported with regular maps - i.e., when
      * the mapping is byslot or bynode. Irregular maps cannot
@@ -472,6 +480,7 @@ char* orte_regex_encode_maps(orte_job_t *jdata)
         len = strlen(node->name);
         startnum = -1;
         memset(prefix, 0, ORTE_MAX_NODE_PREFIX);
+        suffix = '\0';
         for (i=0; i < len; i++) {
             if (!isalpha(node->name[i])) {
                 /* found a non-alpha char */
@@ -483,6 +492,11 @@ char* orte_regex_encode_maps(orte_job_t *jdata)
                     fullname = true;
                     break;
                 }
+                if ('0' == node->name[i]) {
+                    /* if the digit is 0, then add it to the prefix */
+                    prefix[i] = node->name[i];
+                    continue;
+                }
                 /* okay, this defines end of the prefix */
                 startnum = i;
                 break;
@@ -492,9 +506,13 @@ char* orte_regex_encode_maps(orte_job_t *jdata)
         if (fullname || startnum < 0) {
             ndreg = OBJ_NEW(orte_regex_node_t);
             ndreg->prefix = strdup(node->name);
-            start_sequence(jdata->jobid, node, ndreg, -1);
+            start_sequence(jdata->jobid, node, ndreg, suffix, -1);
             opal_list_append(&nodelist, &ndreg->super);
             continue;
+        }
+        /* search for a suffix */
+        if (isalpha(node->name[len-1])) {
+            suffix = node->name[len-1];
         }
         nodenum = strtol(&node->name[startnum], NULL, 10);
         /* is this prefix already on our list? */
@@ -521,9 +539,13 @@ char* orte_regex_encode_maps(orte_job_t *jdata)
                 num_nodes = opal_value_array_get_size(&ndreg->nodes)-1;
                 start = OPAL_VALUE_ARRAY_GET_ITEM(&ndreg->nodes, int32_t, num_nodes);
                 cnt = OPAL_VALUE_ARRAY_GET_ITEM(&ndreg->cnt, int32_t, num_nodes);
-                if (nodenum != cnt+start+1) {
+                sfx = OPAL_VALUE_ARRAY_GET_ITEM(&ndreg->suffix, char, num_nodes);
+                if (suffix != sfx) {
+                    /* break in suffix - start new range */
+                    start_sequence(jdata->jobid, node, ndreg, suffix, nodenum);
+                } else if (nodenum != cnt+start+1) {
                     /* have a break in the node sequence - start new range */
-                    start_sequence(jdata->jobid, node, ndreg, nodenum);
+                    start_sequence(jdata->jobid, node, ndreg, suffix, nodenum);
                 } else {
                     /* cycle through the procs on this node and see if the vpids
                      * for this jobid break the sequencing
@@ -534,27 +556,26 @@ char* orte_regex_encode_maps(orte_job_t *jdata)
                     compute_vpids(node, jdata->jobid, &start_vpid, &end_vpid, &nppn, &node_rank);
                     /* if the ppn doesn't match, then that breaks the sequence */
                     if (nppn != ppn) {
-                        start_sequence(jdata->jobid, node, ndreg, nodenum);
+                        start_sequence(jdata->jobid, node, ndreg, suffix, nodenum);
                         break;
                     }
                     /* if the starting node rank doesn't match, then that breaks the sequence */
                     if (nrank != node_rank) {
-                        start_sequence(jdata->jobid, node, ndreg, nodenum);
+                        start_sequence(jdata->jobid, node, ndreg, suffix, nodenum);
                         break;
                     }
                     /* if the vpids don't align correctly, then that breaks the sequence */
                     if (byslot) {
-                        base = vpid_start + (ppn * cnt);
-                        if (start_vpid != (base+1)) {
+                        base = vpid_start + (ppn * (cnt+1));
+                        if (start_vpid != base) {
                             /* break sequence */
-                            start_sequence(jdata->jobid, node, ndreg, nodenum);
+                            start_sequence(jdata->jobid, node, ndreg, suffix, nodenum);
                             break;
                         }
                     } else {
-                        base = vpid_start + (num_nodes*jdata->map->num_nodes);
-                        if (start_vpid != (base + jdata->map->num_nodes)) {
+                        if (start_vpid != (vpid_start + 1)) {
                             /* break sequence */
-                            start_sequence(jdata->jobid, node, ndreg, nodenum);
+                            start_sequence(jdata->jobid, node, ndreg, suffix, nodenum);
                             break;
                         }
                     }
@@ -567,7 +588,7 @@ char* orte_regex_encode_maps(orte_job_t *jdata)
             /* need to add it */
             ndreg = OBJ_NEW(orte_regex_node_t);
             ndreg->prefix = strdup(prefix);
-            start_sequence(jdata->jobid, node, ndreg, nodenum);
+            start_sequence(jdata->jobid, node, ndreg, suffix, nodenum);
             opal_list_append(&nodelist, &ndreg->super);
         }
     }
@@ -600,6 +621,7 @@ char* orte_regex_encode_maps(orte_job_t *jdata)
         /* build the regexargs array */
         for (i=0; i < num_nodes; i++) {
             /* get the index and the cnt */
+            sfx = OPAL_VALUE_ARRAY_GET_ITEM(&ndreg->suffix, char, i);
             start = OPAL_VALUE_ARRAY_GET_ITEM(&ndreg->nodes, int32_t, i);
             cnt = OPAL_VALUE_ARRAY_GET_ITEM(&ndreg->cnt, int32_t, i);
             vpid_start = OPAL_VALUE_ARRAY_GET_ITEM(&ndreg->starting_vpid, orte_vpid_t, i);
@@ -609,33 +631,63 @@ char* orte_regex_encode_maps(orte_job_t *jdata)
             if (0 < cnt) {
                 if (ORTE_VPID_INVALID == vpid_start) {
                     /* no procs from this job on these nodes */
-                    asprintf(&tmp, "%s[%d-%d]", ndreg->prefix, start, start+cnt);
+                    if ('\0' == sfx) {
+                        asprintf(&tmp, "%s[%d-%d]", ndreg->prefix, start, start+cnt);
+                    } else {
+                        asprintf(&tmp, "%s[%d-%d]%c", ndreg->prefix, start, start+cnt, sfx);
+                    }
                 } else {
-                    asprintf(&tmp, "%s[%d-%d](%sx%d:%d:%d)", ndreg->prefix, start, start+cnt,
-                             ORTE_VPID_PRINT(vpid_start), ppn,
-                             (byslot) ? 1 : (int)jdata->map->num_nodes, (int)nrank);
+                    if ('\0' == sfx) {
+                        asprintf(&tmp, "%s[%d-%d](%sx%d:%d:%d)", ndreg->prefix, start, start+cnt,
+                                 ORTE_VPID_PRINT(vpid_start), ppn,
+                                 (byslot) ? 1 : (int)jdata->map->num_nodes, (int)nrank);
+                    } else {
+                        asprintf(&tmp, "%s[%d-%d]%c(%sx%d:%d:%d)", ndreg->prefix, start, start+cnt,
+                                 sfx, ORTE_VPID_PRINT(vpid_start), ppn,
+                                 (byslot) ? 1 : (int)jdata->map->num_nodes, (int)nrank);
+                    }
                 }
             } else {
-                /* single node - could be due to a break in the numbering and/or vpids,
+                /* single node - could be due to a break in the numbering, suffix, and/or vpids,
                  * or because it was a fullname node with no numbering in it
                  */
                 if (ORTE_VPID_INVALID == vpid_start) {
                     /* no procs from this job on this node */
                     if (start < 0) {
                         /* fullname node */
-                        asprintf(&tmp, "%s", ndreg->prefix);
+                        if ('\0' == sfx) {
+                            asprintf(&tmp, "%s", ndreg->prefix);
+                        } else {
+                            asprintf(&tmp, "%s%c", ndreg->prefix, sfx);
+                        }
                     } else {
-                        asprintf(&tmp, "%s%d", ndreg->prefix, start);
+                        if ('\0' == sfx) {
+                            asprintf(&tmp, "%s%d", ndreg->prefix, start);
+                        } else {
+                            asprintf(&tmp, "%s%d%c", ndreg->prefix, start, sfx);
+                        }
                     }
                 } else {
                     if (start < 0) {
-                        asprintf(&tmp, "%s(%sx%d:%d:%d)", ndreg->prefix,
-                                 ORTE_VPID_PRINT(vpid_start), ppn,
-                                 (byslot) ? 1 : (int)jdata->map->num_nodes, (int)nrank);
+                        if ('\0' == sfx) {
+                            asprintf(&tmp, "%s(%sx%d:%d:%d)", ndreg->prefix,
+                                     ORTE_VPID_PRINT(vpid_start), ppn,
+                                     (byslot) ? 1 : (int)jdata->map->num_nodes, (int)nrank);
+                        } else {
+                            asprintf(&tmp, "%s%c(%sx%d:%d:%d)", ndreg->prefix, sfx,
+                                     ORTE_VPID_PRINT(vpid_start), ppn,
+                                     (byslot) ? 1 : (int)jdata->map->num_nodes, (int)nrank);
+                        }
                     } else {
+                        if ('\0' == sfx) {
                         asprintf(&tmp, "%s%d(%sx%d:%d:%d)", ndreg->prefix, start,
                                  ORTE_VPID_PRINT(vpid_start), ppn,
                                  (byslot) ? 1 : (int)jdata->map->num_nodes, (int)nrank);
+                        } else {
+                            asprintf(&tmp, "%s%d%c(%sx%d:%d:%d)", ndreg->prefix, start, sfx,
+                                     ORTE_VPID_PRINT(vpid_start), ppn,
+                                     (byslot) ? 1 : (int)jdata->map->num_nodes, (int)nrank);
+                        }
                     }
                 }
             }
@@ -655,4 +707,291 @@ char* orte_regex_encode_maps(orte_job_t *jdata)
     OBJ_DESTRUCT(&nodelist);
     
     return regexp;
+}
+
+static int parse_node_range(char *orig, char ***names, orte_vpid_t *vpid_start,
+                            int *ppn, int *step, int *nrank)
+{
+    char *base, *ptr, *ptr2, *next, suffix;
+    int i, j, len, rc=ORTE_SUCCESS;
+    bool found_range;
+
+    /* protect input */
+    base = strdup(orig);
+    
+    /* default to no procs */
+    *vpid_start = ORTE_VPID_INVALID;
+    
+    /* start by searching for ranges and proc specifications */
+    len = strlen(base);
+    ptr = NULL;
+    for (i = 0; i <= len; ++i) {
+        if (base[i] == '[') {
+            /* we found a range. this gets dealt with below */
+            base[i] = '\0';
+            found_range = true;
+            break;
+        }
+        if (base[i] == '\0') {
+            /* we found a singleton node - no procs on it */
+            base[i] = '\0';
+            found_range = false;
+            break;
+        }
+        if (base[i] == '(') {
+            /* we found a singleton node that has procs on it */
+            base[i] = '\0';
+            found_range = false;
+            ptr = &base[i+1];
+            break;
+        }
+    }
+    if (i == 0) {
+        /* we found a special character at the beginning of the string */
+        orte_show_help("help-regex.txt", "regex:special-char", true, orig);
+        rc = ORTE_ERR_BAD_PARAM;
+        goto cleanup;
+    }
+    
+    if (found_range) {
+        /* If we found a range, now find the end of the range */
+        for (j = i; j < len; ++j) {
+            if (base[j] == ']') {
+                base[j] = '\0';
+                if (j < len-2) {
+                    if (base[j+1] == '(') {
+                        /* procs are in this range and there is no suffix */
+                        ptr = &base[j+2];
+                    } else {
+                        /* we must have a suffix */
+                        suffix = base[j+1];
+                        if (j < len-3 && base[j+2] == '(') {
+                            /* we also have procs in this range */
+                            ptr = &base[j+3];
+                        }
+                    }
+                }
+                break;
+            }
+        }
+        if (j >= len) {
+            /* we didn't find the end of the range */
+            orte_show_help("help-regex.txt", "regex:end-range-missing", true, orig);
+            rc = ORTE_ERR_BAD_PARAM;
+            goto cleanup;
+        }
+        
+        rc = regex_parse_node_range(base, base + i + 1, suffix, names);
+        if(ORTE_SUCCESS != rc) {
+            orte_show_help("help-regex.txt", "regex:bad-value", true, orig);
+            rc = ORTE_ERR_BAD_PARAM;
+            goto cleanup;
+        }    
+    } else {
+        /* If we didn't find a range, just add the node */
+        
+        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                             "%s regex:extract:nodenames: found node: %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), base));
+        
+        if(ORTE_SUCCESS != (rc = opal_argv_append_nosize(names, base))) {
+            ORTE_ERROR_LOG(rc);
+            rc = ORTE_ERR_BAD_PARAM;
+            goto cleanup;
+        }
+    }
+    
+    if (NULL != ptr) {  /* we have procs on these nodes */
+        /* find the end of the description */
+        ptr2 = strchr(ptr, ')');
+        if (NULL == ptr2) {
+            /* malformed */
+            orte_show_help("help-regex.txt", "regex:bad-value", true, ptr);
+            return ORTE_ERROR;
+        }
+        *ptr2 = '\0';
+        
+        /* the proc description is in the format:
+         * starting-vpidxppn:step:starting-node-rank
+         * where step=step between vpids
+         */
+        
+        /* start by extracting the starting vpid */
+        if (NULL == (ptr2 = strchr(ptr, 'x'))) {
+            /* malformed */
+            orte_show_help("help-regex.txt", "regex:bad-value", true, ptr);
+            return ORTE_ERROR;
+        }
+        *ptr2 = '\0';
+        orte_util_convert_string_to_vpid(vpid_start, ptr);
+        
+        /* get ppn */
+        next = ptr2 + 1;
+        if (NULL == (ptr2 = strchr(next, ':'))) {
+            /* malformed */
+            orte_show_help("help-regex.txt", "regex:bad-value", true, next);
+            return ORTE_ERROR;
+        }
+        *ptr2 = '\0';
+        *ppn = strtol(next, NULL, 10);
+        
+        /* get step */
+        next = ptr2 + 1;
+        if (NULL == (ptr2 = strchr(next, ':'))) {
+            /* malformed */
+            orte_show_help("help-regex.txt", "regex:bad-value", true, next);
+            return ORTE_ERROR;
+        }
+        *ptr2 = '\0';
+        *step = strtol(next, NULL, 10);
+        
+        /* get the starting node rank */
+        next = ptr2 + 1;
+        *nrank = strtol(next, NULL, 10);
+    }
+    
+cleanup:
+    free(base);
+    return rc;
+}
+
+int orte_regex_decode_maps(char *regexp)
+{
+    char **seqs, *ptr, **names;
+    int i, j, k, n, rc;
+    int ppn, step, start_nrank, nrank;
+    int32_t tmp32;
+    orte_vpid_t daemon_vpid, vpid;
+    orte_jobid_t jobid;
+    orte_nid_t *nid;
+    orte_jmap_t *jmap;
+    orte_pmap_t *pmap;
+    bool found;
+    
+    /* if regexp is NULL, then nothing to parse */
+    if (NULL == regexp) {
+        return ORTE_ERR_SILENT;
+    }
+    
+    /* break the regexp into its component parts - this is trivial
+     * because they are all separated by commas!
+     */
+    seqs = opal_argv_split(regexp, ',');
+    
+    /* we need to have at least three elements or something is wrong */
+    if (opal_argv_count(seqs) < 3) {
+        opal_argv_free(seqs);
+        return ORTE_ERROR;
+    }
+    
+    /* the first entry is the local jobid, so we extract that and
+     * convert it into a global jobid
+     */
+    ptr = strchr(seqs[0], '=');
+    if (NULL == ptr) {
+        opal_argv_free(seqs);
+        return ORTE_ERROR;
+    }
+    ptr++;
+    tmp32 = strtol(ptr, NULL, 10);
+    jobid = ORTE_CONSTRUCT_LOCAL_JOBID(ORTE_PROC_MY_NAME->jobid, tmp32);
+    
+    /* do we already have a jmap entry for this job? */
+    found = false;
+    for (i=0; i < orte_jobmap.size; i++) {
+        if (NULL == (jmap = (orte_jmap_t*)opal_pointer_array_get_item(&orte_jobmap, i))) {
+            continue;
+        }
+        if (jmap->job == jobid) {
+            /* got it */
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        /* don't already have it - add it */
+        jmap = OBJ_NEW(orte_jmap_t);
+        jmap->job = jobid;
+        opal_pointer_array_add(&orte_jobmap, jmap);
+    }
+    
+    /* the second entry is the starting daemon vpid for the job being launched */
+    ptr = strchr(seqs[0], '=');
+    if (NULL == ptr) {
+        opal_argv_free(seqs);
+        return ORTE_ERROR;
+    }
+    ptr++;
+    /* use the standard vpid conversion routine to get the value - don't attempt
+     * to directly convert it with strtol as the value could be INVALID
+     */
+    if (ORTE_SUCCESS != (rc = orte_util_convert_string_to_vpid(&daemon_vpid, ptr))) {
+        ORTE_ERROR_LOG(rc);
+        opal_argv_free(seqs);
+        return rc;
+    }
+    
+    /* the remaining entries contain the name of the nodes in the system, how
+     * many procs (if any) on each of those nodes, the starting vpid of the
+     * procs on those nodes, and the starting node rank for the procs on
+     * each node
+     */
+    names = NULL;
+    for (n=2; n < opal_argv_count(seqs); n++) {
+        /* parse the node entry to get a list of all node names in it */
+        if (ORTE_SUCCESS != (rc = parse_node_range(seqs[n], &names, &vpid, &ppn, &step, &start_nrank))) {
+            ORTE_ERROR_LOG(rc);
+            opal_argv_free(seqs);
+            return rc;
+        }
+        for (i=0; i < opal_argv_count(names); i++) {
+            /* is this name already in our nidmap? */
+            found = false;
+            for (j=0; j < orte_nidmap.size; j++) {
+                if (NULL == (nid = (orte_nid_t*)opal_pointer_array_get_item(&orte_nidmap, j))) {
+                    continue;
+                }
+                if (0 == strcmp(nid->name, names[i])) {
+                    /* yep - we have it */
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                /* must not already have it - create one */
+                nid = OBJ_NEW(orte_nid_t);
+                nid->name = strdup(names[i]);
+                nid->index = opal_pointer_array_add(&orte_nidmap, nid);
+            }
+            /* are there any procs on this node? */
+            if (ORTE_VPID_INVALID != vpid) {
+                /* yep - add a daemon if we don't already one, otherwise
+                 * this is just adding procs to an existing daemon
+                 */
+                if (ORTE_VPID_INVALID != daemon_vpid &&
+                    ORTE_VPID_INVALID == nid->daemon) {
+                    /* no daemon assigned yet - add it */
+                    nid->daemon = daemon_vpid;
+                    daemon_vpid++;
+                }
+                /* cycle through the ppn, adding a pmap
+                 * for each new rank
+                 */
+                nrank = start_nrank;
+                for (k=0; k < ppn; k++) {
+                    pmap = OBJ_NEW(orte_pmap_t);
+                    pmap->node = nid->index;
+                    pmap->local_rank = k;
+                    pmap->node_rank = nrank++;
+                    jmap->num_procs++;
+                    opal_pointer_array_set_item(&jmap->pmap, vpid, pmap);
+                    vpid += step;
+                }
+            }
+        }
+        opal_argv_free(names);
+        names = NULL;
+    }
+    opal_argv_free(seqs);
+    return ORTE_SUCCESS;
 }

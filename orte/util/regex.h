@@ -35,5 +35,7 @@ ORTE_DECLSPEC int orte_regex_extract_ppn(int num_nodes, char *regexp, int **ppn)
 
 ORTE_DECLSPEC char* orte_regex_encode_maps(orte_job_t *jdata);
 
+ORTE_DECLSPEC int orte_regex_decode_maps(char *regexp);
+
 END_C_DECLS
 #endif

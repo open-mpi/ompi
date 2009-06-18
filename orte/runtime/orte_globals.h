@@ -428,6 +428,7 @@ typedef struct {
     /* list object */
     opal_list_item_t super;
     char *prefix;
+    opal_value_array_t suffix;
     opal_value_array_t nodes;
     opal_value_array_t cnt;
     opal_value_array_t starting_vpid;

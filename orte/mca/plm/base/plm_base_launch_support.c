@@ -31,8 +31,8 @@
 #include "opal/util/argv.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/class/opal_pointer_array.h"
-
 #include "opal/dss/dss.h"
+
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/iof/iof.h"
@@ -56,6 +56,7 @@
 #include "orte/util/name_fns.h"
 #include "orte/util/nidmap.h"
 #include "orte/util/proc_info.h"
+#include "orte/util/regex.h"
 
 #include "orte/mca/plm/base/plm_private.h"
 #include "orte/mca/plm/base/base.h"
@@ -107,11 +108,30 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
      * but is a pain to have to replicate when needed
      */
     {
+        char *crud;
+        crud = orte_regex_encode_maps(jdata);
+        opal_output(0, "maps regex: %s", (NULL == crud) ? "NULL" : crud);
+        if (NULL == crud) {
+            orte_never_launched = true;
+            ORTE_UPDATE_EXIT_STATUS(0);
+            orte_trigger_event(&orte_exit);
+            return ORTE_ERROR;
+        }
+        orte_util_nidmap_init(NULL);
+        orte_regex_decode_maps(crud);
+        free(crud);
+        /* print-out the map */
+        orte_nidmap_dump();
+        orte_jobmap_dump();
+        orte_never_launched = true;
+        ORTE_UPDATE_EXIT_STATUS(0);
+        orte_trigger_event(&orte_exit);
+        return ORTE_ERROR;
+    }
+    
+    
+    {
         opal_byte_object_t bo;
-        int i;
-        orte_nid_t **nd;
-        opal_list_item_t *item;
-        orte_attr_t *attr;
 
         /* construct a nodemap */
         if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(&bo))) {
@@ -123,20 +143,7 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
             return rc;
         }
         /* print-out the map */
-        nd = (orte_nid_t**)orte_nidmap.addr;
-        for (i=0; i < orte_nidmap.size && NULL != nd[i]; i++) {
-            fprintf(stderr, "%s node[%d].name %s daemon %s arch %0x\n",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), i,
-                    (NULL == nd[i]) ? "NULL" : nd[i]->name,
-                    ORTE_VPID_PRINT(nd[i]->daemon),
-                    (NULL == nd[i]) ? 0 : nd[i]->arch);
-            for (item = opal_list_get_first(&nd[i]->attrs);
-                 item != opal_list_get_end(&nd[i]->attrs);
-                 item = opal_list_get_next(item)) {
-                attr = (orte_attr_t*)item;
-                fprintf(stderr, "\tAttribute: %s #bytes: %d\n", attr->name, attr->size);
-            }
-        }
+        orte_nidmap_dump();
     }
 #endif
     

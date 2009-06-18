@@ -803,6 +803,7 @@ OBJ_CLASS_INSTANCE(orte_pmap_t,
 static void orte_jmap_construct(orte_jmap_t *ptr)
 {
     ptr->job = ORTE_JOBID_INVALID;
+    ptr->num_procs = 0;
     OBJ_CONSTRUCT(&ptr->pmap, opal_pointer_array_t);
     opal_pointer_array_init(&ptr->pmap,
                             ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
@@ -867,6 +868,8 @@ OBJ_CLASS_INSTANCE(orte_job_map_t,
 static void orte_regex_node_construct(orte_regex_node_t *ptr)
 {
     ptr->prefix = NULL;
+    OBJ_CONSTRUCT(&ptr->suffix, opal_value_array_t);
+    opal_value_array_init(&ptr->suffix, sizeof(char));
     OBJ_CONSTRUCT(&ptr->nodes, opal_value_array_t);
     opal_value_array_init(&ptr->nodes, sizeof(int32_t));
     OBJ_CONSTRUCT(&ptr->cnt, opal_value_array_t);
@@ -883,6 +886,7 @@ static void orte_regex_node_destruct(orte_regex_node_t *ptr)
     if (NULL != ptr->prefix) {
         free(ptr->prefix);
     }
+    OBJ_DESTRUCT(&ptr->suffix);
     OBJ_DESTRUCT(&ptr->nodes);
     OBJ_DESTRUCT(&ptr->cnt);
     OBJ_DESTRUCT(&ptr->starting_vpid);
