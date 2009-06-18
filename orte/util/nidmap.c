@@ -1237,3 +1237,61 @@ orte_nid_t* orte_util_lookup_nid(orte_process_name_t *proc)
     return (orte_nid_t *) opal_pointer_array_get_item(&orte_nidmap, pmap->node);
 }
 
+void orte_nidmap_dump(void)
+{
+    int i;
+    orte_nid_t *nid;
+    opal_list_item_t *item;
+    orte_attr_t *attr;
+
+    opal_output(orte_clean_output, "***   DUMP OF NIDMAP   ***");
+    for (i=0; i < orte_nidmap.size; i++) {
+        if (NULL == (nid = (orte_nid_t*)opal_pointer_array_get_item(&orte_nidmap, i))) {
+            continue;
+        }
+        opal_output(orte_clean_output, "%s node[%d].name %s daemon %s arch %0x",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), i,
+                    (NULL == nid->name) ? "NULL" : nid->name,
+                    ORTE_VPID_PRINT(nid->daemon), nid->arch);
+        for (item = opal_list_get_first(&nid->attrs);
+             item != opal_list_get_end(&nid->attrs);
+             item = opal_list_get_next(item)) {
+            attr = (orte_attr_t*)item;
+            opal_output(orte_clean_output, "\tAttribute: %s #bytes: %d", attr->name, attr->size);
+        }
+    }
+    opal_output(orte_clean_output, "\n\n");
+}
+
+void orte_jmap_dump(orte_jmap_t *jmap)
+{
+    int i;
+    orte_pmap_t *pmap;
+    
+    opal_output(orte_clean_output, "****   DUMP OF JOB %s (%s procs)   ***",
+                ORTE_JOBID_PRINT(jmap->job), ORTE_VPID_PRINT(jmap->num_procs));
+    
+    for (i=0; i < jmap->pmap.size; i++) {
+        if (NULL == (pmap = (orte_pmap_t*)opal_pointer_array_get_item(&jmap->pmap, i))) {
+            continue;
+        }
+        opal_output(orte_clean_output, "\tnode %d local_rank %d node_rank %d",
+                    pmap->node, (int)pmap->local_rank, (int)pmap->node_rank);
+    }
+    opal_output(orte_clean_output, "\n");
+}
+
+void orte_jobmap_dump(void)
+{
+    int i;
+    orte_jmap_t *jmap;
+    
+    opal_output(orte_clean_output, "***   DUMP OF JOBMAP   ***");
+    for (i=0; i < orte_jobmap.size; i++) {
+        if (NULL == (jmap = (orte_jmap_t*)opal_pointer_array_get_item(&orte_jobmap, i))) {
+            continue;
+        }
+        orte_jmap_dump(jmap);
+    }
+    opal_output(orte_clean_output, "\n\n");
+}
