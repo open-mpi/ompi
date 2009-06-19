@@ -171,8 +171,7 @@ int ompi_mpi_register_params(void)
                     show_default_mca_params = true;
                 } else if (0 == strcasecmp(args[i], "file")) {
                     show_file_mca_params = true;
-                } else if (0 == strcasecmp(args[i], "enviro") || 
-                           0 == strcasecmp(args[i], "env")) {
+                } else if (0 == strncasecmp(args[i], "env", 3)) {
                     show_enviro_mca_params = true;
                 } else if (0 == strcasecmp(args[i], "api")) {
                     show_override_mca_params = true;
