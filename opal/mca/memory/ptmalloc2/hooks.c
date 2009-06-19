@@ -725,6 +725,14 @@ static void opal_memory_ptmalloc2_malloc_init_hook(void)
     check_result_t lpp = check("OMPI_MCA_mpi_leave_pinned_pipeline");
     bool want_rcache = false, found_driver = false;
 
+    /* See if we want to disable this component.  This check is
+       necessary for some environments; Debian's "fakeroot" build
+       environment allocates memory during stat(), causing Badness.
+       See http://bugs.debian.org/531522. */
+    if (RESULT_NO != check("OMPI_MCA_memory_ptmalloc2_disable")) {
+        return;
+    }
+
     /* Look for sentinel files (directories) to see if various network
        drivers are loaded (yes, I know, further abstraction
        violations...).
