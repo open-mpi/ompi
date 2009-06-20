@@ -150,20 +150,6 @@ static int rte_init(void)
             goto error;
         }
         opal_argv_free(hosts);
-
-        /* in case we are asked to spawn remote daemons... */
-        if (ORTE_SUCCESS != (ret = orte_plm_base_open())) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_plm_base_open";
-            goto error;
-        }
-        
-        if (ORTE_SUCCESS != (ret = orte_plm_base_select())) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_plm_base_select";
-            goto error;
-        }
-
         return ORTE_SUCCESS;
     }
     
