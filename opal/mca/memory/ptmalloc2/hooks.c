@@ -721,15 +721,21 @@ static void opal_memory_ptmalloc2_malloc_init_hook(void)
        (unfortunately, there's really no good way to do this other
        than this abstraction violation :-( ) */
     struct stat st;
+    check_result_t r1, r2;
     check_result_t lp = check("OMPI_MCA_mpi_leave_pinned");
     check_result_t lpp = check("OMPI_MCA_mpi_leave_pinned_pipeline");
     bool want_rcache = false, found_driver = false;
 
     /* See if we want to disable this component.  This check is
-       necessary for some environments; Debian's "fakeroot" build
-       environment allocates memory during stat(), causing Badness.
-       See http://bugs.debian.org/531522. */
-    if (RESULT_NO != check("OMPI_MCA_memory_ptmalloc2_disable")) {
+       necessary for some environments -- for example, Debian's
+       "fakeroot" build environment allocates memory during stat(),
+       causing Badness (see http://bugs.debian.org/531522).
+       $FAKEROOTKEY is set by Debian's "fakeroot" build environment;
+       check for that explicitly. */
+    r1 = check("OMPI_MCA_memory_ptmalloc2_disable");
+    r2 = check("FAKEROOTKEY");
+    if ((RESULT_NOT_FOUND != r1 && RESULT_NO != r1) ||
+        (RESULT_NOT_FOUND != r2 && RESULT_NO != r2)) {
         return;
     }
 
