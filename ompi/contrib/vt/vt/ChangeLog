@@ -245,5 +245,8 @@
 5.4.9
 	- install header files to 'PREFIX/include/vampirtrace' by default to
 	  avoid conflicts with the OpenMPI integrated version of VT
+	- added configure option '--with[out]-bfd' to control usage of BFD
+	  library to get symbol information for GNU, Intel, and Pathscale
+	  compiler instrumentation
 	- fixed faulty searching for matching filter directive
 

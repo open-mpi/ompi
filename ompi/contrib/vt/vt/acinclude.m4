@@ -1,12 +1,18 @@
 AC_DEFUN([ACVT_BFD],
 [
 	bfd_error="no"
+	check_bfd="yes"
+        force_bfd="no"
 	have_bfd="no"
 
 	BFDDIR=
 	BFDINCDIR=
 	BFDLIBDIR=
 	BFDLIB=
+
+	AC_ARG_WITH(bfd,
+		AC_HELP_STRING([--with-bfd], [use BFD to get symbol information of an executable instrumented with GNU, Intel, or Pathscale compiler, default: yes]),
+	[AS_IF([test x"$withval" = "xyes"], [force_bfd="yes"], [check_bfd="no"])])
 
 	AC_ARG_WITH(bfd-dir,
 		AC_HELP_STRING([--with-bfd-dir=BFDDIR], [give the path for BFD, default: /usr]),
@@ -28,32 +34,35 @@ AC_DEFUN([ACVT_BFD],
 		AC_HELP_STRING([--with-bfd-lib=BFDLIB], [use given bfd lib, default: -lbfd]),
 	[BFDLIB="$withval"])
 
-	sav_CPPFLAGS=$CPPFLAGS
-	CPPFLAGS="$CPPFLAGS $BFDINCDIR"
-	AC_CHECK_HEADER([bfd.h], [],
+	AS_IF([test x"$check_bfd" = "xyes"],
 	[
-		AC_MSG_NOTICE([error: no bfd.h found; check path for BFD package first...])
-		bfd_error="yes"
-	])
-	CPPFLAGS=$sav_CPPFLAGS
+		sav_CPPFLAGS=$CPPFLAGS
+		CPPFLAGS="$CPPFLAGS $BFDINCDIR"
+		AC_CHECK_HEADER([bfd.h], [],
+		[
+			AC_MSG_NOTICE([error: no bfd.h found; check path for BFD package first...])
+			bfd_error="yes"
+		])
+		CPPFLAGS=$sav_CPPFLAGS
 
-	AS_IF([test x"$BFDLIB" = x -a "$bfd_error" = "no"],
-	[
-		sav_LIBS=$LIBS
-		LIBS="$LIBS $BFDLIBDIR -lbfd"
-		AC_MSG_CHECKING([whether linking with -lbfd works])
-		AC_TRY_LINK([],[],
-		[AC_MSG_RESULT([yes]); BFDLIB=-lbfd],[AC_MSG_RESULT([no])])
-		LIBS=$sav_LIBS
-	])
+		AS_IF([test x"$BFDLIB" = x -a "$bfd_error" = "no"],
+		[
+			sav_LIBS=$LIBS
+			LIBS="$LIBS $BFDLIBDIR -lbfd"
+			AC_MSG_CHECKING([whether linking with -lbfd works])
+			AC_TRY_LINK([],[],
+			[AC_MSG_RESULT([yes]); BFDLIB=-lbfd],[AC_MSG_RESULT([no])])
+			LIBS=$sav_LIBS
+		])
 
-	AS_IF([test x"$BFDLIB" = x -a "$bfd_error" = "no"],
-	[
-		AC_MSG_NOTICE([error: no libbfd found; check path for BFD package first...])
-		bfd_error="yes"
-	])
+		AS_IF([test x"$BFDLIB" = x -a "$bfd_error" = "no"],
+		[
+			AC_MSG_NOTICE([error: no libbfd found; check path for BFD package first...])
+			bfd_error="yes"
+		])
 
-	AS_IF([test x"$BFDLIB" != x -a "$bfd_error" = "no"], [have_bfd="yes"])
+		AS_IF([test "$bfd_error" = "no"], [have_bfd="yes"])
+	])
 
 	AC_SUBST(BFDINCDIR)
 	AC_SUBST(BFDLIBDIR)
@@ -213,9 +222,15 @@ AC_DEFUN([ACVT_COMPINST],
 		AS_IF([test x"$build_compinst_gnu" = "xyes" -o x"$build_compinst_intel" = "xyes" -o x"$build_compinst_pathscale" = "xyes"],
 		[
 			ACVT_BFD
-			AS_IF([test x"$bfd_error" = "xno"],
-			[ACVT_GNUDMGL],
-			[AC_MSG_WARN([no usable BFD found; using nm-output file for addr./symbol mapping])])
+			AS_IF([test x"$bfd_error" = "xyes"],
+			[
+				AS_IF([test x"$force_bfd" = "xyes"], [exit 1])
+				AC_MSG_WARN([no usable BFD found; using nm-output file for addr./symbol mapping])
+			],
+			[
+				AS_IF([test x"$have_bfd" = "xyes"],
+				[ACVT_GNUDMGL])
+			])
 		])
 	])
 ])
