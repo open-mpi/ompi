@@ -76,7 +76,7 @@ OMPI_DECLSPEC int ompi_op_base_find_available(bool enable_progress_threads,
  * This function is invoked when a new MPI_Op is created and
  * op components need to be selected for it.
  */
-OMPI_DECLSPEC int ompi_op_base_op_select(struct ompi_op_t *op);
+int ompi_op_base_op_select(struct ompi_op_t *op);
 
 /**
  * Finalize all op modules on a specific (intrinsic) MPI_Op.
