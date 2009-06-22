@@ -661,6 +661,11 @@ static int setup_launch(int *argcptr, char ***argvptr,
                                           proc_vpid_index,
                                           true, NULL);
     
+    /* ensure that only the ssh plm is selected on the remote daemon */
+    opal_argv_append_nosize(&argv, "-mca");
+    opal_argv_append_nosize(&argv, "plm");
+    opal_argv_append_nosize(&argv, "rsh");
+    
     /* in the rsh environment, we can append multi-word arguments
      * by enclosing them in quotes. Check for any multi-word
      * mca params passed to mpirun and include them
@@ -719,11 +724,6 @@ static void ssh_child(int argc, char **argv,
 
     /* setup environment */
     env = opal_argv_copy(orte_launch_environ);
-    
-    /* ensure that only the ssh plm is selected on the remote daemon */
-    var = mca_base_param_environ_variable("plm", NULL, NULL);
-    opal_setenv(var, "rsh", true, &env);
-    free(var);
     
     /* We don't need to sense an oversubscribed condition and set the sched_yield
      * for the node as we are only launching the daemons at this time. The daemons
