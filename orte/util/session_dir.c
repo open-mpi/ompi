@@ -70,6 +70,10 @@ static int orte_create_dir(char *directory);
 static bool orte_dir_check_file(const char *root, const char *path);
 static bool orte_dir_check_file_output(const char *root, const char *path);
 
+static char *orte_build_job_session_dir(char *top_dir,
+                                        orte_process_name_t *proc,
+                                        orte_jobid_t jobid);
+
 #define OMPI_PRINTF_FIX_STRING(a) ((NULL == a) ? "(null)" : a)
 
 /****************************
@@ -541,9 +545,9 @@ int orte_session_dir(bool create,
 int
 orte_session_dir_cleanup(orte_jobid_t jobid)
 {
-    int rc;
+    int rc = ORTE_SUCCESS;
     char *tmp;
-    char *jobfam=NULL, *job=NULL, *job_session_dir=NULL;
+    char *job_session_dir=NULL;
 
     /* need to setup the top_session_dir with the prefix */
     tmp = opal_os_path(false,
@@ -551,35 +555,19 @@ orte_session_dir_cleanup(orte_jobid_t jobid)
                        orte_process_info.top_session_dir, NULL);
 
     /* we can only blow away session directories for our job family */
-    if (0 > asprintf(&jobfam, "%d", ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid))) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+    job_session_dir = orte_build_job_session_dir(tmp, ORTE_PROC_MY_NAME, jobid);
+    if (NULL == job_session_dir) {
         rc = ORTE_ERR_OUT_OF_RESOURCE;
         goto CLEANUP;
     }
     
     if (ORTE_JOBID_WILDCARD != jobid) {
-        
-        if (0 > asprintf(&job, "%d", jobid)) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            rc = ORTE_ERR_OUT_OF_RESOURCE;
-            goto CLEANUP;
-        }
-        
-        job_session_dir = opal_os_path(false, tmp, jobfam, job, NULL );
-        if( NULL == job_session_dir ) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            rc = ORTE_ERR_OUT_OF_RESOURCE;
-            goto CLEANUP;
-        }
-        
-        opal_os_dirpath_destroy(job_session_dir,
-                                true, orte_dir_check_file);
+        opal_os_dirpath_destroy(job_session_dir, true, orte_dir_check_file);
     } else {
         /* if we want the session_dir removed for ALL jobids, then
          * just recursively blow the whole session away for our job family,
          * saving only output files
          */
-        job_session_dir = opal_os_path(false, tmp, jobfam, NULL);
         opal_os_dirpath_destroy(job_session_dir, true, orte_dir_check_file_output);
     }
     
@@ -614,10 +602,8 @@ orte_session_dir_cleanup(orte_jobid_t jobid)
 
 CLEANUP:
     free(tmp);
-    if (NULL != job) free(job);
-    if (NULL != jobfam) free(jobfam);
     if (NULL != job_session_dir) free(job_session_dir);
-    return ORTE_SUCCESS;
+    return rc;
 }
 
 
@@ -626,7 +612,7 @@ orte_session_dir_finalize(orte_process_name_t *proc)
 {
     int rc;
     char *tmp;
-    char *job, *job_session_dir, *vpid, *proc_session_dir;
+    char *job_session_dir, *vpid, *proc_session_dir;
 
     /* need to setup the top_session_dir with the prefix */
     tmp = opal_os_path(false,
@@ -634,23 +620,14 @@ orte_session_dir_finalize(orte_process_name_t *proc)
                        orte_process_info.top_session_dir, NULL);
     
     /* define the proc and job session directories for this process */
-    if (ORTE_SUCCESS != (rc = orte_util_convert_jobid_to_string(&job, proc->jobid))) {
-        ORTE_ERROR_LOG(rc);
-        free(tmp);
-        return rc;
-    }
     if (ORTE_SUCCESS != (rc = orte_util_convert_vpid_to_string(&vpid, proc->vpid))) {
         ORTE_ERROR_LOG(rc);
         free(tmp);
-        free(job);
         return rc;
     }
-    job_session_dir = opal_os_path( false, orte_process_info.top_session_dir,
-                                    job, NULL );
-    if( NULL == job_session_dir ) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+    job_session_dir = orte_build_job_session_dir(tmp, proc, proc->jobid);
+    if( NULL == job_session_dir) {
         free(tmp);
-        free(job);
         free(vpid);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
@@ -658,7 +635,6 @@ orte_session_dir_finalize(orte_process_name_t *proc)
     if( NULL == proc_session_dir ) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         free(tmp);
-        free(job);
         free(vpid);
         free(job_session_dir);
         return ORTE_ERR_OUT_OF_RESOURCE;
@@ -667,8 +643,6 @@ orte_session_dir_finalize(orte_process_name_t *proc)
     opal_os_dirpath_destroy(proc_session_dir,
                             false, orte_dir_check_file);
     opal_os_dirpath_destroy(job_session_dir,
-                            false, orte_dir_check_file);
-    opal_os_dirpath_destroy(orte_process_info.top_session_dir,
                             false, orte_dir_check_file);
     opal_os_dirpath_destroy(tmp,
                             false, orte_dir_check_file);
@@ -697,18 +671,6 @@ orte_session_dir_finalize(orte_process_name_t *proc)
         goto CLEANUP;
     }
 
-    if (opal_os_dirpath_is_empty(orte_process_info.top_session_dir)) {
-    	if (orte_debug_flag) {
-    	    opal_output(0, "sess_dir_finalize: found top session dir empty - deleting");
-    	}
-    	rmdir(orte_process_info.top_session_dir);
-    } else {
-    	if (orte_debug_flag) {
-    	    opal_output(0, "sess_dir_finalize: top session dir not empty - leaving");
-    	}
-    	goto CLEANUP;
-    }
-
     if (opal_os_dirpath_is_empty(tmp)) {
     	if (orte_debug_flag) {
     	    opal_output(0, "sess_dir_finalize: found top session dir empty - deleting");
@@ -722,7 +684,6 @@ orte_session_dir_finalize(orte_process_name_t *proc)
 
 CLEANUP:
     free(tmp);
-    free(job);
     free(vpid);
     free(job_session_dir);
     free(proc_session_dir);
@@ -759,3 +720,39 @@ orte_dir_check_file_output(const char *root, const char *path)
     return true;
 }
 
+static char *orte_build_job_session_dir(char *top_dir,
+                                        orte_process_name_t *proc,
+                                        orte_jobid_t jobid)
+{
+    char *jobfam = NULL;
+    char *job_session_dir;
+
+    if (0 > asprintf(&jobfam, "%d", ORTE_JOB_FAMILY(proc->jobid))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return NULL;
+    }
+
+    if (ORTE_JOBID_WILDCARD != jobid) {
+        char *job = NULL;
+
+        if (0 > asprintf(&job, "%d", ORTE_LOCAL_JOBID(jobid))) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            job_session_dir = NULL;
+            goto out;
+        }
+        job_session_dir = opal_os_path(false, top_dir, jobfam, job, NULL);
+        free(job);
+        if (NULL == job_session_dir) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        }
+    } else {
+        job_session_dir = opal_os_path(false, top_dir, jobfam, NULL);
+        if( NULL == job_session_dir) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        }
+    }
+
+out:
+    free(jobfam);
+    return job_session_dir;
+}
