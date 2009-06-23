@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -661,6 +661,10 @@ static orte_vpid_t proc_get_daemon(orte_process_name_t *proc)
 {
     orte_proc_t *pdata;
     
+    if( ORTE_JOBID_IS_DAEMON(proc->jobid) ) {
+        return proc->vpid;
+    }
+
     /* get the job data */
      if (NULL == (pdata = find_proc(proc))) {
          return ORTE_VPID_INVALID;
