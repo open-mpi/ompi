@@ -27,6 +27,7 @@
 #include <ctype.h>
 #include <dirent.h>
 #include <malloc.h>
+#include <stddef.h>
 
 #include "opal/util/output.h"
 #include "opal/util/error.h"
@@ -157,8 +158,7 @@ static bool rdmacm_component_initialized = false;
 
 /* Calculate the *real* length of the message (not aligned/rounded
    up) */
-static modex_message_t dummy_message;
-static int message_len = ((char*) &(dummy_message.end)) - ((char*) &dummy_message);
+static int message_len = offsetof(modex_message_t, end);
 
 /* Rejection reasons */
 typedef enum {
