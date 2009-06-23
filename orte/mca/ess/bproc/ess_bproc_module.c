@@ -39,6 +39,7 @@ static int bproc_set_name(void);
 static int rte_init(void);
 static int rte_finalize(void);
 static bool proc_is_local(orte_process_name_t *proc);
+static orte_vpid_t proc_get_daemon(orte_process_name_t *proc);
 static char* proc_get_hostname(orte_process_name_t *proc);
 static uint32_t proc_get_arch(orte_process_name_t *proc);
 static uint8_t proc_get_local_rank(orte_process_name_t *proc);
@@ -50,11 +51,14 @@ orte_ess_base_module_t orte_ess_bproc_module = {
     rte_finalize,
     orte_ess_base_app_abort,
     proc_is_local,
+    proc_get_daemon,
     proc_get_hostname,
     proc_get_arch,
     proc_get_local_rank,
     proc_get_node_rank,
     update_arch,
+    NULL,  /* update_pidmap */
+    NULL,  /* update_nidmap */
     NULL  /* no FT support for Bproc */
 };
 
@@ -211,6 +215,26 @@ static int32_t find_daemon_node(orte_vpid_t vpid)
     }
     
     return -1;
+}
+
+static orte_vpid_t proc_get_daemon(orte_process_name_t *proc)
+{
+    orte_nid_t *nid;
+
+    if( ORTE_JOBID_IS_DAEMON(proc->jobid) ) {
+        return proc->vpid;
+    }
+    if (NULL == (nid = orte_util_lookup_nid(proc))) {
+        return ORTE_VPID_INVALID;
+    }
+
+    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
+                         "%s ess:env: proc %s is hosted by daemon %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc),
+                         ORTE_VPID_PRINT(nid->daemon)));
+
+    return nid->daemon;
 }
 
 static char* proc_get_hostname(orte_process_name_t *proc)
