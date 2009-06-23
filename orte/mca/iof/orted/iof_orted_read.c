@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -183,11 +183,17 @@ CLEAN_RETURN:
              * the read event and closes the file descriptor
              */
             if (rev->tag & ORTE_IOF_STDOUT) {
-                OBJ_RELEASE(proct->revstdout);
+                if( NULL != proct->revstdout ) {
+                    OBJ_RELEASE(proct->revstdout);
+                }
             } else if (rev->tag & ORTE_IOF_STDERR) {
-                OBJ_RELEASE(proct->revstderr);
+                if( NULL != proct->revstderr ) {
+                    OBJ_RELEASE(proct->revstderr);
+                }
             } else if (rev->tag & ORTE_IOF_STDDIAG) {
-                OBJ_RELEASE(proct->revstddiag);
+                if( NULL != proct->revstddiag ) {
+                    OBJ_RELEASE(proct->revstddiag);
+                }
             }
             /* check to see if they are all done */
             if (NULL == proct->revstdout &&
