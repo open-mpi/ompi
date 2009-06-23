@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009      Institut National de Recherche en Informatique
+ *                         et Automatique. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1108,13 +1110,18 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     if (ORTE_PROC_IS_HNP) {
         rml_uri = orte_rml.get_contact_info();
     } else {
+        asprintf(&param, "\"%s\"", orte_rml.get_contact_info() );
+        opal_argv_append(argc, argv, "--parent-uri");
+        opal_argv_append(argc, argv, param);
+        free(param);
+    
         rml_uri = orte_process_info.my_hnp_uri;
     }
     asprintf(&param, "\"%s\"", rml_uri);
     opal_argv_append(argc, argv, "--hnp-uri");
     opal_argv_append(argc, argv, param);
     free(param);
-    
+
     /* if given, pass the node list */
     if (NULL != nodes) {
         opal_argv_append(argc, argv, "-mca");

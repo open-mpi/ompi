@@ -2,13 +2,15 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Institut National de Recherche en Informatique
+ *                         et Automatique. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -172,6 +174,12 @@ int orte_ess_base_orted_setup(char **hosts)
         goto error;
     }
     
+    /* initialize the nidmaps */
+    if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(NULL))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_util_nidmap_init";
+        goto error;
+    }
     /* if we are using static ports, then we need to setup
      * the daemon info so the RML can function properly
      * without requiring a wireup stage. This must be done
@@ -179,12 +187,6 @@ int orte_ess_base_orted_setup(char **hosts)
      * own port, which we need in order to construct the nidmap
      */
     if (orte_static_ports) {
-        /* construct the nidmap arrays */
-        if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(NULL))) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_util_nidmap_init";
-            goto error;
-        }
         if (NULL != orted_launch_cmd) {
             /* the launch cmd was given via regexp on the cmd line - parse
              * it to get the contact info
@@ -209,23 +211,16 @@ int orte_ess_base_orted_setup(char **hosts)
                 goto error;
             }
         }
-        /* be sure to update the routing tree so the initial "phone home"
-         * to mpirun goes through the tree!
-         */
-        if (ORTE_SUCCESS != (ret = orte_routed.update_routing_tree())) {
-            ORTE_ERROR_LOG(ret);
-            error = "failed to update routing tree";
-            goto error;
-        }
-    } else {
-        /* initialize the nidmaps */
-        if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(NULL))) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_util_nidmap_init";
-            goto error;
-        }
     }
-    
+    /* be sure to update the routing tree so the initial "phone home"
+     * to mpirun goes through the tree!
+     */
+    if (ORTE_SUCCESS != (ret = orte_routed.update_routing_tree())) {
+        ORTE_ERROR_LOG(ret);
+        error = "failed to update routing tree";
+        goto error;
+    }
+
     /* Now provide a chance for the PLM
      * to perform any module-specific init functions. This
      * needs to occur AFTER the communications are setup
