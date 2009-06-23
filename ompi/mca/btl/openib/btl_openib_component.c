@@ -43,6 +43,7 @@ const char *ibv_get_sysfs_path(void);
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <malloc.h>
+#include <stddef.h>
 
 #include "ompi/constants.h"
 #include "opal/event/event.h"
@@ -237,7 +238,6 @@ static int btl_openib_modex_send(void)
 {
     int rc, i, j;
     int modex_message_size;
-    mca_btl_openib_modex_message_t dummy;
     char *message, *offset;
     size_t size, msg_size;
     ompi_btl_openib_connect_base_module_t *cpc;
@@ -246,7 +246,7 @@ static int btl_openib_modex_send(void)
     if (0 == mca_btl_openib_component.ib_num_btls) {
         return 0;
     }
-    modex_message_size = ((char *) &(dummy.end)) - ((char*) &dummy);
+    modex_message_size = offsetof(mca_btl_openib_modex_message_t, end);
 
     /* The message is packed into multiple parts:
      * 1. a uint8_t indicating the number of modules (ports) in the message
