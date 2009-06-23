@@ -64,7 +64,6 @@ bool orte_hetero_apps = false;
 bool orte_never_launched = false;
 bool orte_devel_level_output = false;
 
-int32_t orte_contiguous_nodes;
 char **orte_launch_environ;
 
 bool orte_hnp_is_allocated = false;
@@ -105,6 +104,8 @@ bool orte_send_profile;
 /* Nidmap and job maps */
 opal_pointer_array_t orte_nidmap;
 opal_pointer_array_t orte_jobmap;
+bool orte_use_regexp;
+char *orted_launch_cmd = NULL;
 
 /* list of local children on a daemon */
 opal_list_t orte_local_children;

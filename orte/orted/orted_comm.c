@@ -276,7 +276,7 @@ void orte_daemon_cmd_processor(int fd, short event, void *data)
                 orte_daemon_msg_recvd.tv_sec = mesg_recvd.tv_sec;
                 orte_daemon_msg_recvd.tv_usec = mesg_recvd.tv_usec;
             }
-            /* cmd contains daemon update info - process it */
+            /*  the cmd contains daemon update info - process it */
             if (ORTE_SUCCESS != (ret = orte_odls_base_default_update_daemon_info(buffer))) {
                 ORTE_ERROR_LOG(ret);
                 goto CLEANUP;

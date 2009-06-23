@@ -456,7 +456,6 @@ ORTE_DECLSPEC extern bool orte_leave_session_attached;
 ORTE_DECLSPEC extern bool orte_do_not_launch;
 ORTE_DECLSPEC extern bool orted_spin_flag;
 ORTE_DECLSPEC extern bool orte_static_ports;
-ORTE_DECLSPEC extern int32_t orte_contiguous_nodes;
 ORTE_DECLSPEC extern bool orte_keep_fqdn_hostnames;
 ORTE_DECLSPEC extern bool orte_show_resolved_nodenames;
 ORTE_DECLSPEC extern int orted_debug_failure;
@@ -508,6 +507,8 @@ ORTE_DECLSPEC extern bool orte_send_profile;
 /* Nidmap and job maps */
 ORTE_DECLSPEC extern opal_pointer_array_t orte_nidmap;
 ORTE_DECLSPEC extern opal_pointer_array_t orte_jobmap;
+ORTE_DECLSPEC extern bool orte_use_regexp;
+ORTE_DECLSPEC extern char *orted_launch_cmd;
 
 /* list of local children on a daemon */
 ORTE_DECLSPEC extern opal_list_t orte_local_children;

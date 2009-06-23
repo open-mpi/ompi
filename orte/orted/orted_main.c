@@ -193,6 +193,10 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Create a new xterm window and display output from the specified ranks there" },
 
+    { NULL, NULL, NULL, '\0', "launch", "launch", 1,
+      &orted_launch_cmd, OPAL_CMD_LINE_TYPE_STRING,
+      "A regular expression describing the job to be launched at startup" },
+
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
@@ -683,6 +687,20 @@ int orte_daemon(int argc, char *argv[])
     /* if we were told to do a heartbeat, then setup to do so */
     if (0 < orted_globals.heartbeat) {
         ORTE_TIMER_EVENT(orted_globals.heartbeat, 0, orte_plm_base_heartbeat);
+    }
+    
+    /* if we were given a launch string, then process it */
+    if (NULL != orted_launch_cmd) {
+        opal_buffer_t launch;
+        int8_t flag;
+        orte_daemon_cmd_flag_t command = ORTE_DAEMON_ADD_LOCAL_PROCS;
+        OBJ_CONSTRUCT(&launch, opal_buffer_t);
+        opal_dss.pack(&launch, &command, 1, ORTE_DAEMON_CMD);
+        flag = 1;
+        opal_dss.pack(&launch, &flag, 1, OPAL_INT8);
+        opal_dss.pack(&launch, &orted_launch_cmd, 1, OPAL_STRING);
+        ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &launch, ORTE_RML_TAG_DAEMON, orte_daemon_cmd_processor);
+        OBJ_DESTRUCT(&launch);
     }
 
     /* wait to hear we are done */
