@@ -26,12 +26,30 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
+#ifdef HAVE_NETDB_H
+#include <netdb.h>
+#endif
+#ifdef HAVE_IFADDRS_H
+#include <ifaddrs.h>
+#endif
 
 #include "opal/util/argv.h"
 
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/odls/odls_types.h"
+#include "orte/mca/rml/base/rml_contact.h"
 #include "orte/util/show_help.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/nidmap.h"
 #include "orte/runtime/orte_globals.h"
 
 #include "orte/util/regex.h"
@@ -445,19 +463,23 @@ char* orte_regex_encode_maps(orte_job_t *jdata)
     char prefix[ORTE_MAX_NODE_PREFIX];
     int startnum;
     opal_list_item_t *item;
-    char **regexargs = NULL, *tmp;
+    char **regexargs = NULL, *tmp, *tmp2;
     int32_t num_nodes, start, cnt, ppn, nppn;
     orte_vpid_t vpid_start, start_vpid, end_vpid, base;
     char *regexp = NULL;
     bool byslot;
     orte_node_rank_t node_rank, nrank;
     char suffix, sfx;
+    orte_app_context_t *app;
     
     /* this is only supported with regular maps - i.e., when
      * the mapping is byslot or bynode. Irregular maps cannot
      * be expressed in a regular expression
+     *
+     * Also only supported for one app_context
      */
-    if (jdata->map->policy & ORTE_RMAPS_BYUSER) {
+    if (jdata->map->policy & ORTE_RMAPS_BYUSER ||
+        jdata->num_apps > 1) {
         return NULL;
     }
     
@@ -595,6 +617,39 @@ char* orte_regex_encode_maps(orte_job_t *jdata)
     
     /* the regular expression begins with the jobid */
     asprintf(&tmp, "LJID=%s", ORTE_LOCAL_JOBID_PRINT(jdata->jobid));
+    opal_argv_append_nosize(&regexargs, tmp);
+    free(tmp);
+    
+    /* next comes the total slots allocated to us */
+    asprintf(&tmp, "SLOTS=%d", (int)jdata->total_slots_alloc);
+    opal_argv_append_nosize(&regexargs, tmp);
+    free(tmp);
+
+    /* the control flags for this job */
+    asprintf(&tmp, "CTRLS=%d", (int)jdata->controls);
+    opal_argv_append_nosize(&regexargs, tmp);
+    free(tmp);
+    
+    /* the stdin target for the job */
+    asprintf(&tmp, "STDIN=%d", (int)jdata->stdin_target);
+    opal_argv_append_nosize(&regexargs, tmp);
+    free(tmp);
+    
+    /* the app_context for the job - can only be one! Just include
+     * the required portions
+     */
+    app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, 0);
+    asprintf(&tmp, "APP=\"%s:%s\"", app->app, app->cwd);
+    opal_argv_append_nosize(&regexargs, tmp);
+    free(tmp);
+    tmp2 = opal_argv_join(app->argv, '#');
+    asprintf(&tmp, "ARGV=\"%s\"", (NULL == tmp2) ? "NULL" : tmp2);
+    free(tmp2);
+    opal_argv_append_nosize(&regexargs, tmp);
+    free(tmp);
+    tmp2 = opal_argv_join(app->env, '#');
+    asprintf(&tmp, "ENV=\"%s\"", (NULL == tmp2) ? "NULL" : tmp2);
+    free(tmp2);
     opal_argv_append_nosize(&regexargs, tmp);
     free(tmp);
     
@@ -855,10 +910,10 @@ cleanup:
     return rc;
 }
 
-int orte_regex_decode_maps(char *regexp)
+int orte_regex_decode_maps(char *regexp, orte_odls_job_t **jobdat)
 {
-    char **seqs, *ptr, **names;
-    int i, j, k, n, rc;
+    char **seqs, *ptr, **names, *ptr2, check[5];
+    int i, j, k, n, entry, rc;
     int ppn, step, start_nrank, nrank;
     int32_t tmp32;
     orte_vpid_t daemon_vpid, vpid;
@@ -867,10 +922,26 @@ int orte_regex_decode_maps(char *regexp)
     orte_jmap_t *jmap;
     orte_pmap_t *pmap;
     bool found;
-    
+    orte_odls_job_t *jdat;
+    orte_app_context_t *app;
+    opal_list_item_t *item;
+    int num_procs, num_nodes;
+    struct hostent *h;
+    opal_buffer_t buf;
+    char *uri, *addr;
+    orte_process_name_t proc;
+    char *proc_name;
+    bool hnp_entry;
+
     /* if regexp is NULL, then nothing to parse */
     if (NULL == regexp) {
         return ORTE_ERR_SILENT;
+    }
+    
+    /* ensure the global nidmap/pidmap arrays are initialized */
+    if (ORTE_SUCCESS != (rc = orte_util_nidmap_init(NULL))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
     }
     
     /* break the regexp into its component parts - this is trivial
@@ -878,16 +949,19 @@ int orte_regex_decode_maps(char *regexp)
      */
     seqs = opal_argv_split(regexp, ',');
     
-    /* we need to have at least three elements or something is wrong */
-    if (opal_argv_count(seqs) < 3) {
+    /* we need to have at least six elements or something is wrong */
+    if (opal_argv_count(seqs) < 6) {
         opal_argv_free(seqs);
         return ORTE_ERROR;
     }
     
+    /* start parsing with the first entry */
+    entry=0;
+    
     /* the first entry is the local jobid, so we extract that and
      * convert it into a global jobid
      */
-    ptr = strchr(seqs[0], '=');
+    ptr = strchr(seqs[entry++], '=');
     if (NULL == ptr) {
         opal_argv_free(seqs);
         return ORTE_ERROR;
@@ -915,8 +989,146 @@ int orte_regex_decode_maps(char *regexp)
         opal_pointer_array_add(&orte_jobmap, jmap);
     }
     
-    /* the second entry is the starting daemon vpid for the job being launched */
-    ptr = strchr(seqs[0], '=');
+    jdat = NULL;
+    if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
+        /* even though we are unpacking an add_local_procs cmd, we cannot assume
+         * that no job record for this jobid exists. A race condition exists that
+         * could allow another daemon's procs to call us with a collective prior
+         * to our unpacking add_local_procs. So lookup the job record for this jobid
+         * and see if it already exists
+         */
+        for (item = opal_list_get_first(&orte_local_jobdata);
+             item != opal_list_get_end(&orte_local_jobdata);
+             item = opal_list_get_next(item)) {
+            orte_odls_job_t *jdt = (orte_odls_job_t*)item;
+            
+            /* is this the specified job? */
+            if (jdt->jobid == jobid) {
+                jdat = jdt;
+                break;
+            }
+        }
+        if (NULL == jdat) {
+            /* setup jobdat object for this job */
+            jdat = OBJ_NEW(orte_odls_job_t);
+            jdat->jobid = jobid;
+            opal_list_append(&orte_local_jobdata, &jdat->super);
+        }
+        if (NULL != jobdat) {
+            *jobdat = jdat;
+        }
+        /* see if this was previously decoded */
+        if (NULL != jdat->regexp) {
+            /* yep - don't decode it again */
+            opal_argv_free(seqs);
+            return ORTE_SUCCESS;
+        }
+        
+        /* next entry is the total slots allocated to this job */
+        ptr = strchr(seqs[entry++], '=');
+        if (NULL == ptr) {
+            opal_argv_free(seqs);
+            return ORTE_ERROR;
+        }
+        ptr++;
+        jdat->total_slots_alloc = strtol(ptr, NULL, 10);
+        
+        /* next entry is the control flags for the job */
+        ptr = strchr(seqs[entry++], '=');
+        if (NULL == ptr) {
+            opal_argv_free(seqs);
+            return ORTE_ERROR;
+        }
+        ptr++;
+        jdat->controls = strtol(ptr, NULL, 10);
+        
+        /* next entry - stdin target */
+        ptr = strchr(seqs[entry++], '=');
+        if (NULL == ptr) {
+            opal_argv_free(seqs);
+            return ORTE_ERROR;
+        }
+        ptr++;
+        jdat->stdin_target = strtol(ptr, NULL, 10);
+        
+        /* next entry - the app_context itself */
+        ptr = strchr(seqs[entry++], '=');
+        if (NULL == ptr) {
+            opal_argv_free(seqs);
+            return ORTE_ERROR;
+        }
+        ptr++;
+        /* some shells will strip the starting and ending quotes, and some won't -
+         * so check for them here
+         */
+        if ('\"' == *ptr) ptr++;
+        if ('\"' == ptr[strlen(ptr)-1]) ptr[strlen(ptr)-1] = '\0';
+        /* create the app_context object */
+        app = OBJ_NEW(orte_app_context_t);
+        jdat->apps = (orte_app_context_t**)malloc(sizeof(orte_app_context_t*));
+        jdat->apps[0] = app;
+        jdat->num_apps = 1;
+        /* get the app and the cwd by hand */
+        ptr2 = strchr(ptr, ':');
+        *ptr2 = '\0';
+        app->app = strdup(ptr);
+        ptr = ++ptr2;
+        app->cwd = strdup(ptr);
+        
+        /* the next entry is the argv for the app_context, separated by '#'. We
+         * assume we can use argv_split for this purpose. First check, though, for
+         * NULL, indicating there were no argvs
+         */
+        ptr = strchr(seqs[entry++], '=');
+        if (NULL == ptr) {
+            opal_argv_free(seqs);
+            return ORTE_ERROR;
+        }
+        ptr++;
+        /* some shells will strip the starting and ending quotes, and some won't -
+         * so check for them here
+         */
+        if ('\"' == *ptr) ptr++;
+        if ('\"' == ptr[strlen(ptr)-1]) ptr[strlen(ptr)-1] = '\0';
+        for (i=0; i < 4; i++) {
+            check[i] = ptr[i];
+        }
+        check[4] = '\0';
+        if (0 != strcmp("NULL", check)) {
+            /* there are argvs */
+            app->argv = opal_argv_split(ptr, '#');
+            
+        }
+        
+        /* the next entry is the env for the app_context, also separated by '#'.
+         * Again, start by checking for NULL
+         */
+        ptr = strchr(seqs[entry++], '=');
+        if (NULL == ptr) {
+            opal_argv_free(seqs);
+            return ORTE_ERROR;
+        }
+        ptr++;
+        /* some shells will strip the starting and ending quotes, and some won't -
+         * so check for them here
+         */
+        if ('\"' == *ptr) ptr++;
+        if ('\"' == ptr[strlen(ptr)-1]) ptr[strlen(ptr)-1] = '\0';
+        for (i=0; i < 4; i++) {
+            check[i] = ptr[i];
+        }
+        check[4] = '\0';
+        if (0 != strcmp("NULL", check)) {
+            /* there are argvs */
+            app->env = opal_argv_split(ptr, '#');
+        }
+        
+    } else {
+        entry += 6;
+    }
+    
+    /* next entry is the starting daemon vpid for the job being launched */
+    ptr = strchr(seqs[entry++], '=');
     if (NULL == ptr) {
         opal_argv_free(seqs);
         return ORTE_ERROR;
@@ -930,14 +1142,18 @@ int orte_regex_decode_maps(char *regexp)
         opal_argv_free(seqs);
         return rc;
     }
-    
+
     /* the remaining entries contain the name of the nodes in the system, how
      * many procs (if any) on each of those nodes, the starting vpid of the
      * procs on those nodes, and the starting node rank for the procs on
      * each node
      */
     names = NULL;
-    for (n=2; n < opal_argv_count(seqs); n++) {
+    num_procs = 0;
+    num_nodes = 0;
+    hnp_entry = true;
+    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+    for (n=entry; n < opal_argv_count(seqs); n++) {
         /* parse the node entry to get a list of all node names in it */
         if (ORTE_SUCCESS != (rc = parse_node_range(seqs[n], &names, &vpid, &ppn, &step, &start_nrank))) {
             ORTE_ERROR_LOG(rc);
@@ -963,22 +1179,64 @@ int orte_regex_decode_maps(char *regexp)
                 nid->name = strdup(names[i]);
                 nid->index = opal_pointer_array_add(&orte_nidmap, nid);
             }
-            /* are there any procs on this node? */
-            if (ORTE_VPID_INVALID != vpid) {
+            /* is this the hnp entry (very first one), or are there any procs on this node? */
+            if (hnp_entry || ORTE_VPID_INVALID != vpid) {
                 /* yep - add a daemon if we don't already one, otherwise
                  * this is just adding procs to an existing daemon
                  */
                 if (ORTE_VPID_INVALID != daemon_vpid &&
                     ORTE_VPID_INVALID == nid->daemon) {
                     /* no daemon assigned yet - add it */
-                    nid->daemon = daemon_vpid;
-                    daemon_vpid++;
+                    if (hnp_entry) {
+                        /* the hnp is always daemon=0 */
+                        nid->daemon = 0;
+                        hnp_entry = false;  /* only do this once */
+                    } else {
+                        nid->daemon = daemon_vpid++;
+                    }
+                    /* if we are using static ports, create the contact info
+                     * for the daemon on this node
+                     */
+                    if (orte_static_ports) {
+                        /* lookup the address of this node */
+                        if (NULL == (h = gethostbyname(nid->name))) {
+                            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                            return ORTE_ERR_NOT_FOUND;
+                        }
+                        addr = inet_ntoa(*(struct in_addr*)h->h_addr_list[0]);
+                        
+                        OPAL_OUTPUT_VERBOSE((0, orte_debug_output,
+                                             "%s orte:regex: constructing static path to node %s daemon %d addr %s",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                             nid->name, (int)nid->daemon, addr));
+                        
+                        /* since we are using static ports, all my fellow daemons will be on my
+                         * port. Setup the contact info for each daemon in my hash tables. Note
+                         * that this will -not- open a port to those daemons, but will only
+                         * define the info necessary for opening such a port if/when I communicate
+                         * to them
+                         */
+                        /* construct the URI */
+                        proc.jobid = ORTE_PROC_MY_NAME->jobid;
+                        proc.vpid = nid->daemon;
+                        orte_util_convert_process_name_to_string(&proc_name, &proc);
+                        asprintf(&uri, "%s;tcp://%s:%d", proc_name, addr, (int)orte_process_info.my_port);
+                        opal_dss.pack(&buf, &uri, 1, OPAL_STRING);
+                        free(proc_name);
+                        free(uri);
+                    }
                 }
+                
                 /* cycle through the ppn, adding a pmap
                  * for each new rank
                  */
                 nrank = start_nrank;
                 for (k=0; k < ppn; k++) {
+                    if (NULL != opal_pointer_array_get_item(&jmap->pmap, vpid)) {
+                        /* this proc was already entered via some earlier step */
+                        vpid += step;
+                        continue;
+                    }
                     pmap = OBJ_NEW(orte_pmap_t);
                     pmap->node = nid->index;
                     pmap->local_rank = k;
@@ -986,12 +1244,35 @@ int orte_regex_decode_maps(char *regexp)
                     jmap->num_procs++;
                     opal_pointer_array_set_item(&jmap->pmap, vpid, pmap);
                     vpid += step;
+                    /* increment #procs in the job */
+                    num_procs++;
                 }
+                /* increment #nodes in the job */
+                num_nodes++;
             }
         }
         opal_argv_free(names);
         names = NULL;
     }
+    
+    /* if we are using static ports, load the hash tables */
+    if (orte_static_ports) {
+        if (ORTE_SUCCESS != (rc = orte_rml_base_update_contact_info(&buf))) {
+            ORTE_ERROR_LOG(rc);
+        }
+    }
+    OBJ_DESTRUCT(&buf);
+    
+    
     opal_argv_free(seqs);
+    
+    if (NULL != jdat) {
+        /* record the regexp so it can be sent to the local procs */
+        jdat->regexp = strdup(regexp);
+        /* save the job data */
+        jdat->num_procs += num_procs;
+        jdat->num_nodes += num_nodes;
+    }
+    
     return ORTE_SUCCESS;
 }

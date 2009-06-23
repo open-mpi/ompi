@@ -659,7 +659,14 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
              * system pick any port
              */
             opal_argv_append_nosize(&ports, "0");
-            orte_static_ports = false;
+            /* if static ports were specified, flag it
+             * so the HNP does the right thing
+             */
+            if (NULL != mca_oob_tcp_component.tcp4_static_ports) {
+                orte_static_ports = true;
+            } else {
+                orte_static_ports = false;
+            }
         }
     }
 
@@ -715,7 +722,14 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
              * system pick any port
              */
             opal_argv_append_nosize(&ports, "0");
-            orte_static_ports = false;
+            /* if static ports were specified, flag it
+             * so the HNP does the right thing
+             */
+            if (NULL != mca_oob_tcp_component.tcp6_static_ports) {
+                orte_static_ports = true;
+            } else {
+                orte_static_ports = false;
+            }
         }
     }
 #endif  /* OPAL_WANT_IPV6 */

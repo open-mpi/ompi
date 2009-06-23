@@ -63,6 +63,7 @@
 #include "orte/types.h"
 #include "orte/util/show_help.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/regex.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -159,6 +160,7 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     int proc_vpid_index;
     orte_jobid_t failed_job;
     bool failed_launch=true;
+    bool using_regexp=false;
 
     if (jdata->controls & ORTE_JOB_CONTROL_LOCAL_SLAVE) {
         /* if this is a request to launch a local slave,
@@ -320,15 +322,6 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     argv[proc_vpid_index] = strdup(name_string);
     free(name_string);
 
-    if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
-        param = opal_argv_join(argv, ' ');
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                             "%s plm:slurm: final top-level argv:\n\t%s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             (NULL == param) ? "NULL" : param));
-        if (NULL != param) free(param);
-    }
-
     /* Copy the prefix-directory specified in the
        corresponding app_context.  If there are multiple,
        different prefix's in the app context, complain (i.e., only
@@ -369,6 +362,29 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     opal_setenv(var, "rsh", true, &env);
     free(var);
     
+    /* if we can do it, use the regexp to launch the apps - this
+     * requires that the user requested this mode, that we were
+     * provided with static ports, and that we only have one
+     * app_context
+     */
+    if (orte_use_regexp && orte_static_ports && jdata->num_apps < 2) {
+        char *regexp;
+        regexp = orte_regex_encode_maps(jdata);
+        opal_argv_append(&argc, &argv, "--launch");
+        opal_argv_append(&argc, &argv, regexp);
+        free(regexp);
+        using_regexp = true;
+    }
+    
+    if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
+        param = opal_argv_join(argv, ' ');
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                             "%s plm:slurm: final top-level argv:\n\t%s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             (NULL == param) ? "NULL" : param));
+        if (NULL != param) free(param);
+    }
+    
     /* exec the daemon(s) */
     if (ORTE_SUCCESS != (rc = plm_slurm_start_proc(argc, argv, env, cur_prefix))) {
         ORTE_ERROR_LOG(rc);
@@ -393,12 +409,25 @@ launch_apps:
     /* get here if daemons launch okay - any failures now by apps */
     launching_daemons = false;
     failed_job = active_job;
-    if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(active_job))) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                             "%s plm:slurm: launch of apps failed for job %s on error %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(active_job), ORTE_ERROR_NAME(rc)));
-        goto cleanup;
+    if (using_regexp) {
+        /* daemons already have launch cmd - just wait for them to
+         * report back
+         */
+        if (ORTE_SUCCESS != (rc = orte_plm_base_report_launched(jdata->jobid))) {
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                 "%s plm:slurm:launch failed for job %s on error %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_JOBID_PRINT(jdata->jobid), ORTE_ERROR_NAME(rc)));
+            goto cleanup;
+        }
+    } else {
+        if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(active_job))) {
+            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                                 "%s plm:slurm: launch of apps failed for job %s on error %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_JOBID_PRINT(active_job), ORTE_ERROR_NAME(rc)));
+            goto cleanup;
+        }
     }
 
     /* declare the launch a success */

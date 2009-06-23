@@ -25,6 +25,7 @@
 
 #include "orte_config.h"
 
+#include "orte/mca/odls/odls_types.h"
 #include "orte/runtime/orte_globals.h"
 
 BEGIN_C_DECLS
@@ -35,7 +36,7 @@ ORTE_DECLSPEC int orte_regex_extract_ppn(int num_nodes, char *regexp, int **ppn)
 
 ORTE_DECLSPEC char* orte_regex_encode_maps(orte_job_t *jdata);
 
-ORTE_DECLSPEC int orte_regex_decode_maps(char *regexp);
+ORTE_DECLSPEC int orte_regex_decode_maps(char *regexp, orte_odls_job_t **jobdat);
 
 END_C_DECLS
 #endif

@@ -58,12 +58,12 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/regex.h"
 
+#include "orte/mca/odls/odls_types.h"
+
 #include "orte/mca/plm/base/plm_private.h"
 #include "orte/mca/plm/base/base.h"
 
 static bool active_job_completed_callback = false;
-
-static int orte_plm_base_report_launched(orte_jobid_t job);
 
 static char *pretty_print_timing(int64_t secs, int64_t usecs);
 
@@ -109,6 +109,7 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
      */
     {
         char *crud;
+        orte_odls_job_t *jobdat;
         crud = orte_regex_encode_maps(jdata);
         opal_output(0, "maps regex: %s", (NULL == crud) ? "NULL" : crud);
         if (NULL == crud) {
@@ -118,18 +119,30 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
             return ORTE_ERROR;
         }
         orte_util_nidmap_init(NULL);
-        orte_regex_decode_maps(crud);
+        orte_regex_decode_maps(crud, &jobdat);
         free(crud);
         /* print-out the map */
         orte_nidmap_dump();
         orte_jobmap_dump();
+        /* printout the jobdat */
+        opal_output(orte_clean_output, "****   DUMP OF JOBDAT %s (%d nodes %d procs)   ***",
+                    ORTE_JOBID_PRINT(jobdat->jobid), (int)jobdat->num_nodes, (int)(jobdat->num_procs));
+        opal_output(orte_clean_output, "\tNum slots: %d\tControl: %x\tStdin: %d",
+                    (int)jobdat->total_slots_alloc, jobdat->controls, (int)jobdat->stdin_target);
+        opal_output(orte_clean_output, "\tApp: %s", jobdat->apps[0]->app);
+        opal_output(orte_clean_output, "\tCwd: %s", jobdat->apps[0]->cwd);
+        crud = opal_argv_join(jobdat->apps[0]->argv, ',');
+        opal_output(orte_clean_output, "\tArgv: %s", crud);
+        free(crud);
+        crud = opal_argv_join(jobdat->apps[0]->env, ',');
+        opal_output(orte_clean_output, "\tEnv: %s", crud);
+        free(crud);
         orte_never_launched = true;
         ORTE_UPDATE_EXIT_STATUS(0);
         orte_trigger_event(&orte_exit);
         return ORTE_ERROR;
     }
-    
-    
+
     {
         opal_byte_object_t bo;
 
@@ -928,7 +941,7 @@ static void app_report_launch(int status, orte_process_name_t* sender,
 
 }
 
-static int orte_plm_base_report_launched(orte_jobid_t job)
+int orte_plm_base_report_launched(orte_jobid_t job)
 {
     int rc;
     orte_job_t *jdata;

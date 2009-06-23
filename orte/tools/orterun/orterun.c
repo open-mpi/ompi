@@ -353,6 +353,10 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Output a brief periodic report on launch progress" },
 
+    { "orte", "use", "regexp", '\0', "use-regexp", "use-regexp", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Use regular expressions for launch" },
+
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }

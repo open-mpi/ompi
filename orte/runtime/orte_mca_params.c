@@ -205,11 +205,12 @@ int orte_register_params(void)
                                 false, false, (int)false, &value);
     orte_keep_fqdn_hostnames = OPAL_INT_TO_BOOL(value);
     
-    /* whether or not contiguous nodenames are in use */
-    mca_base_param_reg_int_name("orte", "contiguous_nodes",
-                                "Number of nodes after which contiguous nodename encoding will automatically be used [default: INT_MAX]",
-                                false, false, INT32_MAX, &orte_contiguous_nodes);
-    
+    /* whether or not to use regular expressions for launch */
+    mca_base_param_reg_int_name("orte", "use_regexp",
+                                "Whether or not to use regular expressions for launch [default: no]",
+                                false, false, (int)false, &value);
+    orte_use_regexp = OPAL_INT_TO_BOOL(value);
+
     /* whether to tag output */
     mca_base_param_reg_int_name("orte", "tag_output",
                                 "Tag all output with [job,rank] (default: false)",
