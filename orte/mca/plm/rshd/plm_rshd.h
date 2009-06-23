@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -53,7 +53,6 @@ int orte_plm_rshd_finalize(void);
  * Interface
  */
 int orte_plm_rshd_init(void);
-int orte_plm_rshd_set_hnp_name(void);
 int orte_plm_rshd_launch(orte_job_t *jdata);
 int orte_plm_rshd_terminate_job(orte_jobid_t);
 int orte_plm_rshd_terminate_orteds(void);
