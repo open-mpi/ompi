@@ -12,6 +12,8 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2009      Institut National de Recherche en Informatique
+ *                         et Automatique. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -63,6 +65,7 @@
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_locks.h"
+#include "orte/mca/rml/base/rml_contact.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
@@ -168,6 +171,10 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
     { "orte", "hnp", "uri", '\0', NULL, "hnp-uri", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "URI for the HNP"},
+    
+    { "orte", "parent", "uri", '\0', NULL, "parent-uri", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "URI for the parent if tree launch is enabled."},
     
     { NULL, NULL, NULL, '\0', NULL, "set-sid", 0,
       &orted_globals.set_sid, OPAL_CMD_LINE_TYPE_BOOL,
@@ -677,6 +684,37 @@ int orte_daemon(int argc, char *argv[])
             OBJ_RELEASE(buffer);
             goto DONE;
         }
+
+        mca_base_param_reg_string_name("orte", "parent_uri",
+                                       "URI for the parent if tree launch is enabled.",
+                                       true, false, NULL,  &rml_uri);
+        if (NULL != rml_uri) {
+            orte_process_name_t parent;
+
+            /* set the contact info into the hash table */
+            if (ORTE_SUCCESS != (ret = orte_rml.set_contact_info(rml_uri))) {
+                ORTE_ERROR_LOG(ret);
+                free(rml_uri);
+                OBJ_RELEASE(buffer);
+                goto DONE;
+            }
+            ret = orte_rml_base_parse_uris(rml_uri, &parent, NULL );
+            if( ORTE_SUCCESS != ret ) {
+                ORTE_ERROR_LOG(ret);
+                free(rml_uri);
+                OBJ_RELEASE(buffer);
+                goto DONE;
+            }
+            free(rml_uri);
+
+            if( 0 > (ret = orte_rml.send_buffer(&parent, buffer,
+                                                ORTE_RML_TAG_ORTED_CALLBACK, 0)) ) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_RELEASE(buffer);
+                goto DONE;
+            }
+        }
+ 
         OBJ_RELEASE(buffer);  /* done with this */
     }
 
