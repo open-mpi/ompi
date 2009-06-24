@@ -69,6 +69,8 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmaps/rmaps.h"
 
+#include "orte/orted/orted.h"
+
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/plm_private.h"
 #include "plm_slurm.h"
@@ -413,6 +415,17 @@ launch_apps:
         /* daemons already have launch cmd - just wait for them to
          * report back
          */
+        opal_buffer_t launch;
+        int8_t flag;
+        orte_daemon_cmd_flag_t command = ORTE_DAEMON_ADD_LOCAL_PROCS;
+        OBJ_CONSTRUCT(&launch, opal_buffer_t);
+        opal_dss.pack(&launch, &command, 1, ORTE_DAEMON_CMD);
+        flag = 1;
+        opal_dss.pack(&launch, &flag, 1, OPAL_INT8);
+        opal_dss.pack(&launch, &orted_launch_cmd, 1, OPAL_STRING);
+        ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &launch, ORTE_RML_TAG_DAEMON, orte_daemon_cmd_processor);
+        OBJ_DESTRUCT(&launch);
+
         if (ORTE_SUCCESS != (rc = orte_plm_base_report_launched(jdata->jobid))) {
             OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                  "%s plm:slurm:launch failed for job %s on error %s",
