@@ -819,7 +819,7 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
     orte_node_rank_t *node_rank;
     orte_std_cntr_t n;
     opal_buffer_t buf;
-    orte_jmap_t *job, *jmap;
+    orte_jmap_t *jmap;
     bool already_present;
     int j;
     int rc;
@@ -843,10 +843,10 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
          */
         already_present = false;
         for (j=0; j < orte_jobmap.size; j++) {
-            if (NULL == (job = (orte_jmap_t*)opal_pointer_array_get_item(&orte_jobmap, j))) {
+            if (NULL == (jmap = (orte_jmap_t*)opal_pointer_array_get_item(&orte_jobmap, j))) {
                 continue;
             }
-            if (jobid == job->job) {
+            if (jobid == jmap->job) {
                 already_present = true;
                 break;
             }
@@ -886,9 +886,36 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
             goto cleanup;
         }
         
-        /* if we don't already have this data, store it */
-        if (!already_present) {
-            /* unfortunately, job objects cannot be stored
+        /* if we already know about this job, we need to check the data to see
+         * if something has changed - e.g., a proc that is being restarted somewhere
+         * other than where it previously was
+         */
+        if (already_present) {
+            /* we already have the jmap object, so let's cycle through
+             * its pidmap and see if anything is different
+             */
+            for (i=0; i < num_procs; i++) {
+                if (NULL == (pmap = (orte_pmap_t*)opal_pointer_array_get_item(&jmap->pmap, i))) {
+                    /* this proc is new! better add it */
+                    pmap = OBJ_NEW(orte_pmap_t);
+                    /* add the pidmap entry at the specific site corresponding
+                     * to the proc's vpid
+                     */
+                    if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(&jmap->pmap, i, pmap))) {
+                        ORTE_ERROR_LOG(rc);
+                        goto cleanup;
+                    }
+                }
+                /* add/update the data */
+                pmap->node = nodes[i];
+                pmap->local_rank = local_rank[i];
+                pmap->node_rank = node_rank[i];
+            }
+            /* update the #procs */
+            jmap->num_procs = num_procs;
+        } else {
+            /* if we don't already have this data, store it
+             * unfortunately, job objects cannot be stored
              * by index number as the jobid is a constructed
              * value. So we have to just add it to the end
              * of the array
