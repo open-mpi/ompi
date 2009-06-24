@@ -666,6 +666,29 @@ static int setup_launch(int *argcptr, char ***argvptr,
     opal_argv_append_nosize(&argv, "plm");
     opal_argv_append_nosize(&argv, "rsh");
     
+    /* in the rsh environment, we can append multi-word arguments
+     * by enclosing them in quotes. Check for any multi-word
+     * mca params passed to mpirun and include them
+     */
+    if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
+        int cnt, i;
+        cnt = opal_argv_count(orted_cmd_line);    
+        for (i=0; i < cnt; i+=3) {
+            /* check if the specified option is more than one word - all
+             * others have already been passed
+             */
+            if (NULL != strchr(orted_cmd_line[i+2], ' ')) {
+                /* must add quotes around it */
+                asprintf(&param, "\"%s\"", orted_cmd_line[i+2]);
+                /* now pass it along */
+                opal_argv_append(&argc, &argv, orted_cmd_line[i]);
+                opal_argv_append(&argc, &argv, orted_cmd_line[i+1]);
+                opal_argv_append(&argc, &argv, param);
+                free(param);
+            }
+        }
+    }
+
     if (ORTE_PLM_RSH_SHELL_SH == remote_shell ||
         ORTE_PLM_RSH_SHELL_KSH == remote_shell) {
         opal_argv_append(&argc, &argv, ")");
