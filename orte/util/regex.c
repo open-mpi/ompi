@@ -933,6 +933,7 @@ int orte_regex_decode_maps(char *regexp, orte_odls_job_t **jobdat)
     char *proc_name;
     bool hnp_entry;
 
+opal_output(0, "%s regex: %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), regexp);
     /* if regexp is NULL, then nothing to parse */
     if (NULL == regexp) {
         return ORTE_ERR_SILENT;
@@ -1151,8 +1152,8 @@ int orte_regex_decode_maps(char *regexp, orte_odls_job_t **jobdat)
     names = NULL;
     num_procs = 0;
     num_nodes = 0;
-    hnp_entry = true;
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
+    hnp_entry = true;
     for (n=entry; n < opal_argv_count(seqs); n++) {
         /* parse the node entry to get a list of all node names in it */
         if (ORTE_SUCCESS != (rc = parse_node_range(seqs[n], &names, &vpid, &ppn, &step, &start_nrank))) {
@@ -1179,57 +1180,62 @@ int orte_regex_decode_maps(char *regexp, orte_odls_job_t **jobdat)
                 nid->name = strdup(names[i]);
                 nid->index = opal_pointer_array_add(&orte_nidmap, nid);
             }
-            /* is this the hnp entry (very first one), or are there any procs on this node? */
-            if (hnp_entry || ORTE_VPID_INVALID != vpid) {
-                /* yep - add a daemon if we don't already one, otherwise
-                 * this is just adding procs to an existing daemon
+            /* the hnp entry is always first in line. Since the hnp may not
+             * have any procs on it, the starting daemon vpid may be > 0. Thus,
+             * we ensure that the HNP always gets the correct daemon vpid for
+             * its node
+             */
+            if (hnp_entry) {
+                /* this is the name of the HNP's node */
+                nid->daemon = 0;
+                hnp_entry = false;
+                /* do NOT increment the daemon_vpid as that refers to the
+                 * starting point for -new- daemons. Since the HNP is
+                 * always already present, the daemon vpid will only reflect
+                 * the starting vpid for anyone else that had to be launched
                  */
+            } else {
                 if (ORTE_VPID_INVALID != daemon_vpid &&
                     ORTE_VPID_INVALID == nid->daemon) {
-                    /* no daemon assigned yet - add it */
-                    if (hnp_entry) {
-                        /* the hnp is always daemon=0 */
-                        nid->daemon = 0;
-                        hnp_entry = false;  /* only do this once */
-                    } else {
-                        nid->daemon = daemon_vpid++;
-                    }
-                    /* if we are using static ports, create the contact info
-                     * for the daemon on this node
-                     */
-                    if (orte_static_ports) {
-                        /* lookup the address of this node */
-                        if (NULL == (h = gethostbyname(nid->name))) {
-                            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                            return ORTE_ERR_NOT_FOUND;
-                        }
-                        addr = inet_ntoa(*(struct in_addr*)h->h_addr_list[0]);
-                        
-                        OPAL_OUTPUT_VERBOSE((0, orte_debug_output,
-                                             "%s orte:regex: constructing static path to node %s daemon %d addr %s",
-                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                             nid->name, (int)nid->daemon, addr));
-                        
-                        /* since we are using static ports, all my fellow daemons will be on my
-                         * port. Setup the contact info for each daemon in my hash tables. Note
-                         * that this will -not- open a port to those daemons, but will only
-                         * define the info necessary for opening such a port if/when I communicate
-                         * to them
-                         */
-                        /* construct the URI */
-                        proc.jobid = ORTE_PROC_MY_NAME->jobid;
-                        proc.vpid = nid->daemon;
-                        orte_util_convert_process_name_to_string(&proc_name, &proc);
-                        asprintf(&uri, "%s;tcp://%s:%d", proc_name, addr, (int)orte_process_info.my_port);
-                        opal_dss.pack(&buf, &uri, 1, OPAL_STRING);
-                        free(proc_name);
-                        free(uri);
-                    }
+                    nid->daemon = daemon_vpid++;
                 }
+            }
+            /* if we are a daemon and  using static ports, create the contact info
+             * for the daemon on this node
+             */
+            if (ORTE_PROC_IS_DAEMON && orte_static_ports) {
+                /* lookup the address of this node */
+                if (NULL == (h = gethostbyname(nid->name))) {
+                    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                    return ORTE_ERR_NOT_FOUND;
+                }
+                addr = inet_ntoa(*(struct in_addr*)h->h_addr_list[0]);
                 
-                /* cycle through the ppn, adding a pmap
-                 * for each new rank
+                OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                                     "%s orte:regex: constructing static path to node %s daemon %d addr %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     nid->name, (int)nid->daemon, addr));
+                
+                /* since we are using static ports, all my fellow daemons will be on my
+                 * port. Setup the contact info for each daemon in my hash tables. Note
+                 * that this will -not- open a port to those daemons, but will only
+                 * define the info necessary for opening such a port if/when I communicate
+                 * to them
                  */
+                /* construct the URI */
+                proc.jobid = ORTE_PROC_MY_NAME->jobid;
+                proc.vpid = nid->daemon;
+                orte_util_convert_process_name_to_string(&proc_name, &proc);
+                asprintf(&uri, "%s;tcp://%s:%d", proc_name, addr, (int)orte_process_info.my_port);
+                opal_dss.pack(&buf, &uri, 1, OPAL_STRING);
+                free(proc_name);
+                free(uri);
+            }
+        
+            /* if this node has procs on it, cycle through the ppn, adding a pmap
+             * for each new rank
+             */
+            if (ORTE_VPID_INVALID != vpid) {
                 nrank = start_nrank;
                 for (k=0; k < ppn; k++) {
                     if (NULL != opal_pointer_array_get_item(&jmap->pmap, vpid)) {
@@ -1247,16 +1253,16 @@ int orte_regex_decode_maps(char *regexp, orte_odls_job_t **jobdat)
                     /* increment #procs in the job */
                     num_procs++;
                 }
-                /* increment #nodes in the job */
-                num_nodes++;
             }
+            /* increment #nodes in the job */
+            num_nodes++;
         }
         opal_argv_free(names);
         names = NULL;
     }
     
-    /* if we are using static ports, load the hash tables */
-    if (orte_static_ports) {
+    /* if we are a daemon and using static ports, load the hash tables */
+    if (ORTE_PROC_IS_DAEMON && orte_static_ports) {
         if (ORTE_SUCCESS != (rc = orte_rml_base_update_contact_info(&buf))) {
             ORTE_ERROR_LOG(rc);
         }
