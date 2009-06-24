@@ -145,6 +145,7 @@ typedef unsigned int uint;
 #define strncasecmp               _strnicmp
 #define strcasecmp                _stricmp
 #define umask                     _umask
+#define getch                     _getch
 
 #ifndef UINT32_MAX
 #define UINT32_MAX            _UI32_MAX
