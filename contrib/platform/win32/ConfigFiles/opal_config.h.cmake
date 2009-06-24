@@ -59,6 +59,10 @@
 
 #define ORTE_RELEASE_DATE ${RELEASE_DATE}
 
+#define OPAL_BUILD_PLATFORM_COMPILER_FAMILYNAME ${COMPILER_FAMILYNAME}
+
+#define OPAL_BUILD_PLATFORM_COMPILER_VERSION_STR ${COMPILER_VERSION}
+
 /* Define to 1 if you have the <winsock2.h> header file. */
 #cmakedefine HAVE_WINSOCK2_H 1
 

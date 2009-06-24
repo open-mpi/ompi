@@ -144,6 +144,12 @@ ELSE(BUILD_SHARED_LIBS)
   SET(OMPI_DECLSPEC "")
 ENDIF(BUILD_SHARED_LIBS)
 
+IF(WIN32 AND MSVC)
+  SET(COMPILER_FAMILYNAME MICROSOFT)
+  SET(COMPILER_VERSION ${MSVC_VERSION})
+ENDIF(WIN32 AND MSVC)
+
+
 ###################################################################
 #                              Options                            #
 ###################################################################
