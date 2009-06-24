@@ -132,7 +132,7 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       &orted_globals.help, OPAL_CMD_LINE_TYPE_BOOL,
       "This help message" },
 
-    { NULL, NULL, NULL, 's', NULL, "spin", 0,
+    { "orte", "daemon_spin", NULL, 's', NULL, "spin", 0,
       &orted_spin_flag, OPAL_CMD_LINE_TYPE_BOOL,
       "Have the orted spin until we can connect a debugger to it" },
 
@@ -678,13 +678,10 @@ int orte_daemon(int argc, char *argv[])
                 goto DONE;
             }
         }
-        if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_HNP, buffer,
-                                            ORTE_RML_TAG_ORTED_CALLBACK, 0))) {
-            ORTE_ERROR_LOG(ret);
-            OBJ_RELEASE(buffer);
-            goto DONE;
-        }
 
+        /* If I have a parent, then first let him know my URI, and only
+         * after report back to the HNP.
+         */
         mca_base_param_reg_string_name("orte", "parent_uri",
                                        "URI for the parent if tree launch is enabled.",
                                        true, false, NULL,  &rml_uri);
@@ -715,6 +712,13 @@ int orte_daemon(int argc, char *argv[])
             }
         }
  
+        if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_HNP, buffer,
+                                            ORTE_RML_TAG_ORTED_CALLBACK, 0))) {
+            ORTE_ERROR_LOG(ret);
+            OBJ_RELEASE(buffer);
+            goto DONE;
+        }
+
         OBJ_RELEASE(buffer);  /* done with this */
     }
 
