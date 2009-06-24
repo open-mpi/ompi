@@ -25,6 +25,21 @@
  * entire components just to query their version and parameters.
  */
 
+
+#define _WIN32_DCOM
+
+#include <winsock2.h>
+#include <comutil.h>
+#include <Wbemidl.h>
+#include <wincred.h>
+#include <stdio.h>
+#include <conio.h>
+#include <wincred.h> 
+
+#pragma comment(lib, "wbemuuid.lib")
+#pragma comment(lib, "comsuppw.lib")
+#pragma comment(lib, "Credui.lib")
+
 #include "orte_config.h"
 #include "orte/constants.h"
 
@@ -84,7 +99,7 @@
 #include "orte/mca/plm/process/plm_process.h"
 
 
-#define rindex(a,b) strrchr((a),(b)) //daniel
+#define rindex(a,b) strrchr((a),(b))
 
 #if OPAL_HAVE_POSIX_THREADS && OPAL_THREADS_HAVE_DIFFERENT_PIDS && OPAL_ENABLE_PROGRESS_THREADS
 static int orte_plm_process_launch_threaded(orte_jobid_t jobid);
@@ -138,9 +153,20 @@ static const char * orte_plm_process_shell_name[] = {
     "unknown"
 }; 
 
+/*
+ * local functions
+ */
+static char *generate_commandline(char *, int, char **);
+static int wmi_launch_child(char *, char *, int, char **);
+static int get_credential(char *, char *, char *);
+
 
 /* local global storage of timing variables */
 static struct timeval joblaunchstart, joblaunchstop;
+
+/* local global storage of user credential */
+static char user_name[CREDUI_MAX_USERNAME_LENGTH+1];
+static char user_password[CREDUI_MAX_PASSWORD_LENGTH+1];
 
 /* global storage of active jobid being launched */
 static orte_jobid_t active_job = ORTE_JOBID_INVALID;
@@ -151,12 +177,476 @@ static orte_jobid_t active_job = ORTE_JOBID_INVALID;
 int orte_plm_process_init(void)
 {
     int rc;
+    HRESULT hres;
     
     if (ORTE_SUCCESS != (rc = orte_plm_base_comm_start())) {
         ORTE_ERROR_LOG(rc);
     }
+
+    /* Initialize COM for WMI */
+    hres =  CoInitializeEx(0, COINIT_APARTMENTTHREADED); 
+    if (FAILED(hres)) {
+        opal_output(0, "Failed to initialize COM library. Error code = %d \n", hres);
+        return ORTE_ERROR;
+    }
+
+    /* Set general COM security levels. */
+    hres =  CoInitializeSecurity(NULL, 
+                                 -1,                          /* COM authentication */ 
+                                 NULL,                        /* Authentication services */ 
+                                 NULL,                        /* Reserved */ 
+                                 RPC_C_AUTHN_LEVEL_DEFAULT,   /* Default authentication */  
+                                 RPC_C_IMP_LEVEL_IMPERSONATE, /* Default Impersonation */  
+                                 NULL,                        /* Authentication info */ 
+                                 EOAC_NONE,                   /* Additional capabilities */  
+                                 NULL                         /* Reserved */ 
+                                );
+
+    if (FAILED(hres)) {     
+        opal_output(0, "Failed to initialize security. Error code = %d \n",hres);
+        CoUninitialize();
+        return ORTE_ERROR;
+    }
+    
+    SecureZeroMemory(user_name, sizeof(user_name));
+    SecureZeroMemory(user_password, sizeof(user_password));
+    
+    /* we don't need a barrier to exit */ 
+    orte_orted_exit_with_barrier = false;
+
     return rc;
 }
+
+
+static char *generate_commandline(char *prefix, int argc, char **argv)
+{
+    int i, len = 0;
+    char *commandline;
+
+    /* Generate remote launch command line. */
+    for( i = 0; i < argc; i++ ) {
+        if(argv[i] != NULL) {
+            len += strlen(argv[i]) + 1;
+        }
+    }
+
+    commandline = (char*)malloc( len + strlen(prefix) + 3);
+    memset(commandline, '\0', strlen(commandline));
+
+    strcat(commandline, "\"");
+    strcat(commandline, prefix);
+    strcat(commandline, "\" ");
+
+    for(i=1;i<argc;i++) {
+       if(argv[i]!= NULL) {                        
+           /* Append command args, and separate them with spaces. */
+           strcat(commandline, argv[i]);
+           commandline[strlen(commandline)]=' ';
+       }
+    }
+
+    return commandline;
+}
+
+
+static int get_credential(char *node_name)
+{
+    if(mca_plm_process_component.use_gui_prompt) {
+        
+        CREDUI_INFO cui;
+        BOOL fSave = true;
+        DWORD dwErr;
+
+        char gui_message[255];
+        cui.cbSize = sizeof(CREDUI_INFO);
+        cui.hwndParent = NULL;
+        cui.pszMessageText = TEXT(gui_message);
+        cui.pszCaptionText = TEXT("CredUITest");
+        cui.hbmBanner = NULL;
+
+        /* message to show on the prompt GUI. */
+        SecureZeroMemory(gui_message, sizeof(gui_message));
+        strcat(gui_message, "account for ");
+        strcat(gui_message, node_name);
+
+        /* uncheck the checkbox by default. */
+        fSave = false;
+
+        dwErr = CredUIPromptForCredentials(&cui,                              /* CREDUI_INFO structure */
+                                           node_name,                         /* Target for credentials */
+                                           NULL,                              /* Reserved */
+                                           0,                                 /* Reason */
+                                           user_name,                         /* User name */
+                                           CREDUI_MAX_USERNAME_LENGTH+1,      /* Max number of char for user name */
+                                           user_password,                     /* Password */
+                                           CREDUI_MAX_PASSWORD_LENGTH+1,      /* Max number of char for password */
+                                           &fSave,                            /* State of save check box */
+                                           CREDUI_FLAGS_GENERIC_CREDENTIALS | /* flags */
+                                           CREDUI_FLAGS_DO_NOT_PERSIST);
+
+        if(!dwErr) {
+            return ORTE_SUCCESS;
+        } else {
+            opal_output(0, "%s plm:process: failed to get user credential for node %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node_name);
+            return ORTE_ERROR;
+        }
+
+    } else {
+        char ch;
+        int pos = 0;
+
+        /* Get the user name for computer */
+        printf("connecting to %s\n", node_name);
+        printf("username:");
+        scanf("%s",user_name);
+
+        /* Get the password for the remote computer,
+           and display '*'s on the screen. */
+        printf("password:");
+        while((ch=getch())!='\r') {
+            if ( ch == '\03') {
+                /* user could abort with ctrl-c here. */
+                opal_output(0, "Remote job aborted.");
+                return ORTE_ERROR;
+            }
+
+            if(ch =='\b') {
+                pos--;
+                if(pos<0) {
+                    pos=0;
+                    continue;
+                }
+                printf("\b \b");
+            }
+            else {
+                if(pos<CREDUI_MAX_PASSWORD_LENGTH+1) {
+                     user_password[pos] = ch;
+                    printf("*");
+                    pos++;
+                } else {
+                    opal_output(0, "plm:process: password length exceeds limit(%d) for account %s",
+                                CREDUI_MAX_PASSWORD_LENGTH+1, user_name);
+                    return ORTE_ERROR;
+                }
+            }
+        }
+        user_password[pos]='\0';
+        printf("\nSave Credential(Y/N)? ");
+
+        while(ch = getch()) {
+            if ( ch == '\03') {
+                /* user could abort with ctrl-c here. */
+                opal_output(0, "Remote job aborted.");
+                return ORTE_ERROR;
+            }
+
+            if(ch == 'y' || ch == 'Y') {
+                /* something more to be done here. */
+                OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                                    "%s plm:process: credential saved for %s on %s",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), user, remote_node));
+                printf("%c\n", ch);
+                opal_output(0, "This feature hasn't been implemented yet.");
+                break;
+            } else if(ch == 'n' || ch == 'N') {
+                    printf("%c\n", ch);
+                    break;
+            }
+        }
+        return ORTE_SUCCESS;
+    }
+}
+
+/**
+ * Remote spawn process using WMI.
+ */
+static int wmi_launch_child(char *prefix, char *remote_node, int argc, char **argv)
+{
+    char *command_line;
+    int i, len = 0, pid = -1;
+    
+    HRESULT hres;
+
+
+    /* Obtain the initial locator to WMI. */ 
+    IWbemLocator *pLoc = NULL;
+    hres = CoCreateInstance(CLSID_WbemLocator,
+                            0,
+                            CLSCTX_INPROC_SERVER, 
+                            IID_IWbemLocator, (LPVOID *) &pLoc);
+ 
+    if (FAILED(hres)) {   
+        opal_output(0,"Failed to create IWbemLocator object. Err code = %d \n", hres);
+        CoUninitialize();
+        return ORTE_ERROR;
+    }
+
+    /*Connect to WMI through the IWbemLocator::ConnectServer method*/ 
+    IWbemServices *pSvc_cimv2 = NULL;
+    IWbemServices *pSvc_registry = NULL;  
+    char namespace_cimv2[100];
+    char namespace_default[100];
+
+    if( 0 != get_credential(remote_node)) {
+        CoUninitialize();
+        return ORTE_ERROR;
+    }
+
+    /* set up remote namespace path */
+    char *sign = "\\\\";
+    char *rt_namespace_cimv2 = "\\root\\cimv2";
+    char *rt_namespace_default = "\\root\\default";
+
+    /* cimv2 namespace */
+    strcpy(namespace_cimv2, sign);  
+    strcat(namespace_cimv2, remote_node );  
+    strcat(namespace_cimv2, rt_namespace_cimv2); 
+
+    /* connect to default namespace */ 
+    strcpy(namespace_default, sign);  
+    strcat(namespace_default, remote_node );  
+    strcat(namespace_default, rt_namespace_default); 
+
+    hres = pLoc->ConnectServer(_com_util::ConvertStringToBSTR(namespace_default),      /* namespace */
+                               _com_util::ConvertStringToBSTR(user_name),              /* User name */ 
+                               _com_util::ConvertStringToBSTR(user_password),          /* User password */ 
+                               (L"MS_409"),                                            /* Locale */              
+                               NULL,                                                   /* Security flags */ 
+                               (L"ntlmdomain:domain"),                                 /* Authority */         
+                               0,                                                      /* Context object */  
+                               &pSvc_registry                                          /* IWbemServices proxy */ 
+                              );
+
+    if (FAILED(hres)) {
+        opal_output(0,"Could not connect to namespace DEFAULT on node %s. Error code = %d \n",
+                    remote_node, hres);
+        pLoc->Release();
+        CoUninitialize();
+        return ORTE_ERROR;
+    }
+
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                         "%s plm:process: Connected to \\\\%s\\\\ROOT\\\\DEFAULT",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         remote_node));
+    
+    /* connect to cinv2 namespace */  
+    hres = pLoc->ConnectServer(_com_util::ConvertStringToBSTR(namespace_cimv2),      /* namespace */ 
+                               _com_util::ConvertStringToBSTR(user_name),            /*  User name */
+                               _com_util::ConvertStringToBSTR(user_password),        /* User password */ 
+                               (L"MS_409"),                                          /* Locale */              
+                               NULL,                                                 /* Security flags */ 
+                               (L"ntlmdomain:domain"),                               /* Authority */         
+                               0,                                                    /* Context object */  
+                               &pSvc_cimv2                                           /* IWbemServices proxy */ 
+                              );
+
+    if (FAILED(hres)) {
+        opal_output(0,"Could not connect to namespace cimv2 on node %s. Error code =%d \n",
+                     remote_node, hres);
+        pLoc->Release();
+        pSvc_registry->Release();
+        CoUninitialize();
+        return ORTE_ERROR;
+    }
+
+    BSTR ClassName_registry = SysAllocString(L"StdRegProv");
+    BSTR MethodName_registry = SysAllocString(L"GetStringValue");
+    BSTR MethodName_cimv2 = SysAllocString(L"Create");
+    BSTR ClassName_cimv2 = SysAllocString(L"Win32_Process");
+
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                         "%s plm:process: Connected to \\\\%s\\\\ROOT\\\\CIMV2",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         remote_node));
+
+    /* Set security levels on a WMI connection */
+    SEC_WINNT_AUTH_IDENTITY cID; 
+    cID.User           = (unsigned char *) user_name;
+    cID.UserLength     = lstrlen(user_name);
+    cID.Password       = (unsigned char *) user_password;
+    cID.PasswordLength = lstrlen(user_password);
+    cID.Domain         = (unsigned char *) remote_node;
+    cID.DomainLength   = lstrlen(remote_node);
+    cID.Flags          = SEC_WINNT_AUTH_IDENTITY_ANSI;
+
+    /* default namespace */
+    hres = CoSetProxyBlanket(pSvc_registry,                  /* Indicates the proxy to set */ 
+                             RPC_C_AUTHN_WINNT,              /* RPC_C_AUTHN_xxx */ 
+                             RPC_C_AUTHZ_NONE,               /* RPC_C_AUTHZ_xxx */ 
+                             NULL,                           /* Server principal name */  
+                             RPC_C_AUTHN_LEVEL_CALL,         /* RPC_C_AUTHN_LEVEL_xxx */  
+                             RPC_C_IMP_LEVEL_IMPERSONATE,    /* RPC_C_IMP_LEVEL_xxx */ 
+                             &cID,                           /* client identity */ 
+                             EOAC_NONE                       /* proxy capabilities */  
+                            );
+
+    if (FAILED(hres)) {
+        opal_output(0,"Could not set proxy blanket. Error code = %d \n", hres);
+        goto cleanup;
+    }
+
+     /* cimv2 namespace */
+    hres = CoSetProxyBlanket(pSvc_cimv2,                  /* Indicates the proxy to set */ 
+                             RPC_C_AUTHN_WINNT,           /* RPC_C_AUTHN_xxx */ 
+                             RPC_C_AUTHZ_NONE,            /* RPC_C_AUTHZ_xxx */ 
+                             NULL,                        /* Server principal name */  
+                             RPC_C_AUTHN_LEVEL_CALL,      /* RPC_C_AUTHN_LEVEL_xxx */  
+                             RPC_C_IMP_LEVEL_IMPERSONATE, /* RPC_C_IMP_LEVEL_xxx */ 
+                             &cID,                        /* client identity */ 
+                             EOAC_NONE                    /* proxy capabilities */  
+                            );
+
+    if (FAILED(hres)) {
+        opal_output(0,"Could not set proxy blanket. Error code = %d \n", hres );
+        goto cleanup;
+    }
+   
+    IWbemClassObject* pClass_registry = NULL;
+    hres = pSvc_registry->GetObject(ClassName_registry, 0, NULL, &pClass_registry, NULL);
+    if (FAILED(hres)) {
+        opal_output(0,"Could not get Wbem class object. Error code = %d \n", hres);
+        goto cleanup;
+    }
+
+    IWbemClassObject* pInParamsDefinition_registry = NULL;
+    hres = pClass_registry->GetMethod(MethodName_registry, 0, 
+                                      &pInParamsDefinition_registry, NULL);
+
+    IWbemClassObject* pClassInstance_registry = NULL;
+    hres = pInParamsDefinition_registry->SpawnInstance(0, &pClassInstance_registry);
+
+    /* set registry path, HKEY_LOCAL_MACHINE is default */
+    VARIANT varSubKeyName;
+    varSubKeyName.vt = VT_BSTR;
+    varSubKeyName.bstrVal = L"Software\\Open MPI\\";
+
+    hres = pClassInstance_registry->Put(L"sSubKeyName", 0,
+                                        &varSubKeyName, 0);
+    
+    if(FAILED(hres)) {
+        opal_output(0,"Could not Store the value for the in parameters. Error code = %d \n",hres);
+        pClass_registry->Release();
+        pInParamsDefinition_registry->Release();
+        goto cleanup;
+    }
+
+    VARIANT varsValueName;
+    varsValueName.vt = VT_BSTR;
+    varsValueName.bstrVal = L"OPAL_PREFIX";
+
+    hres = pClassInstance_registry->Put(L"sValueName", 0,
+                                        &varsValueName, 0);
+    if(FAILED(hres)) {
+        opal_output(0,"Could not Store the value for the in parameters. Error code = %d \n",hres);
+        pClass_registry->Release();
+        pInParamsDefinition_registry->Release();
+        goto cleanup;
+    }
+    
+    /* Execute Method to read OPAL_PREFIX in the registry */
+    IWbemClassObject* pOutParams_registry = NULL;
+    hres = pSvc_registry->ExecMethod(ClassName_registry, MethodName_registry, 0,
+                                     NULL, pClassInstance_registry, &pOutParams_registry, NULL);
+
+    /* clean up variables*/
+    pClass_registry->Release();
+    pInParamsDefinition_registry->Release();
+
+    if (FAILED(hres)) {
+        pOutParams_registry->Release();
+        opal_output(0,"Could not execute method. Error code = %d \n",hres);
+        goto cleanup;
+    }
+
+    /* To see what the method returned */
+    /* The return value will be in &varReturnValue */
+    VARIANT varReturnValue_registry;
+    hres = pOutParams_registry->Get(L"ReturnValue", 0, 
+                                    &varReturnValue_registry, NULL, 0);
+    
+    VARIANT varsValue_registry;
+    hres = pOutParams_registry->Get(L"sValue", 0, 
+                                    &varsValue_registry, NULL, 0);
+    pOutParams_registry->Release();
+
+    if( VT_NULL == varsValue_registry.vt) {
+        command_line = generate_commandline(prefix, argc, argv);
+    } else {
+        char *reg_prefix = (char *) malloc(sizeof(char)*(strlen(_com_util::ConvertBSTRToString(varsValue_registry.bstrVal))+10));
+        strcpy(reg_prefix, _com_util::ConvertBSTRToString(varsValue_registry.bstrVal));
+        strcat(reg_prefix, "\\bin\\orted");
+        command_line = generate_commandline(reg_prefix, argc, argv);
+    }
+
+    /* Use the IWbemServices pointer to make requests of WMI */
+    /* set up to call the Win32_Process::Create method */ 
+    IWbemClassObject* pClass_cimv2 = NULL;
+    hres = pSvc_cimv2->GetObject(ClassName_cimv2, 0, NULL, &pClass_cimv2, NULL);
+
+    if (FAILED(hres)) {
+        opal_output(0,"Could not get Wbem class object. Error code = %d \n", hres);
+        goto cleanup;
+    }
+
+    IWbemClassObject* pInParamsDefinition_cimv2 = NULL;
+    hres = pClass_cimv2->GetMethod(MethodName_cimv2, 0, 
+                                   &pInParamsDefinition_cimv2, NULL);
+
+    IWbemClassObject* pClassInstance_cimv2 = NULL;
+    hres = pInParamsDefinition_cimv2->SpawnInstance(0, &pClassInstance_cimv2);
+
+    /* Create the values for the in parameters */
+    VARIANT varCommand;
+    varCommand.vt = VT_BSTR;
+    varCommand.bstrVal = _com_util::ConvertStringToBSTR(command_line);
+
+    /* Store the value for the in parameters */
+    hres = pClassInstance_cimv2->Put(L"CommandLine", 0,
+                                     &varCommand, 0);
+
+    IWbemClassObject* pOutParams_cimv2 = NULL;
+    /* Execute Method to launch orted on remote node*/
+    hres = pSvc_cimv2->ExecMethod(ClassName_cimv2, MethodName_cimv2, 0,
+                                  NULL, pClassInstance_cimv2, &pOutParams_cimv2, NULL);
+
+    /* clean up variables */
+    VariantClear(&varCommand);
+    pClass_cimv2->Release();
+    pInParamsDefinition_cimv2->Release();
+
+    if (FAILED(hres)) {   
+        opal_output(0,"Could not execute method. Error code = %d \n",hres);
+        pOutParams_cimv2->Release();
+        goto cleanup;
+    }
+    VARIANT varProcessId;
+    VariantInit(&varProcessId);
+
+    /* get remote process ID */
+    hres = pOutParams_cimv2->Get((L"ProcessId"), 0, 
+                                 &varProcessId, NULL, 0);
+    
+    pid = varProcessId.intVal;
+
+    VariantClear(&varProcessId);
+    pOutParams_cimv2->Release();
+
+cleanup:
+    pLoc->Release();
+    pSvc_registry->Release();
+    pSvc_cimv2->Release();
+    SysFreeString(ClassName_registry);
+    SysFreeString(MethodName_registry);
+    SysFreeString(ClassName_cimv2);
+    SysFreeString(MethodName_cimv2);
+    CoUninitialize();
+
+    return pid;
+}
+
+
 
 /**
  * Check the Shell variable on the specified node
@@ -188,7 +678,7 @@ static int orte_plm_process_probe(orte_node_t * node, orte_plm_process_shell * s
      * Build argv array
      */
      
-    pid = _spawnve( _P_DETACH, argv[0], argv, NULL); //daniel     
+    pid = _spawnve( _P_DETACH, argv[0], argv, NULL);
      
 #if 0
     securityAttr.nLength = sizeof(SECURITY_ATTRIBUTES);     // Size of struct
@@ -459,7 +949,7 @@ int orte_plm_process_launch(orte_job_t *jdata)
     orte_std_cntr_t nnode;
     orte_job_state_t job_state = ORTE_JOB_NEVER_LAUNCHED;
 
-    if (mca_plm_process_component.timing) {
+    if (orte_timing) {
         if (0 != gettimeofday(&joblaunchstart, NULL)) {
             opal_output(0, "plm_process: could not obtain start time");
             joblaunchstart.tv_sec = 0;
@@ -490,7 +980,7 @@ int orte_plm_process_launch(orte_job_t *jdata)
     apps = (orte_app_context_t**)jdata->apps->addr;
     nodes = (orte_node_t**)map->nodes->addr;
     
- 	if (0 == map->num_new_daemons) {
+     if (0 == map->num_new_daemons) {
         /* have all the daemons we need - launch app */
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:process: no new daemons to launch",
@@ -606,7 +1096,7 @@ int orte_plm_process_launch(orte_job_t *jdata)
      */
     
     for(nnode=0; nnode < map->num_nodes; nnode++) {
-        pid_t pid;
+        pid_t pid = -1;
         char *exec_path = NULL;
         char **exec_argv;
         
@@ -762,8 +1252,6 @@ int orte_plm_process_launch(orte_job_t *jdata)
             
             set_handler_default(SIGTERM);
             set_handler_default(SIGINT);
-            //set_handler_default(SIGHUP);
-            //set_handler_default(SIGPIPE);
             set_handler_default(SIGCHLD);
             
             /* setup environment */
@@ -779,15 +1267,20 @@ int orte_plm_process_launch(orte_job_t *jdata)
                 if (NULL != param) free(param);
             }
             
-            pid = _spawnve( _P_NOWAIT, exec_path, exec_argv, env);
-            if (pid == -1) {
+            /* launch remote process */
+            pid = wmi_launch_child(exec_path, nodes[nnode]->name, argc, exec_argv);
+
+            if (pid < 0) {
                 failed_launch = true;
                 rc = ORTE_ERROR;
                 goto cleanup;
             }
             /* indicate this daemon has been launched in case anyone is sitting on that trigger */
             nodes[nnode]->daemon->state = ORTE_PROC_STATE_LAUNCHED;
-            opal_output(0, "plm:process: execv %s hopefully started (pid %d)\n", exec_path, pid);
+            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                                 "%s plm:process: daemon launched (pid %d on %s)\n",
+                                 RTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 pid, nodes[nnode]->name));
         
             OPAL_THREAD_LOCK(&mca_plm_process_component.lock);
             /* This situation can lead to a deadlock if '--debug-daemons' is set.
