@@ -58,6 +58,7 @@ struct orte_plm_process_component_t {
     bool reap;
     bool assume_same_shell;
     bool force_process;
+    bool use_gui_prompt;
     int delay;
     int priority;
     char* orted;
