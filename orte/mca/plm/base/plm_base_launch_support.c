@@ -433,7 +433,8 @@ static void process_orted_launch_report(int fd, short event, void *data)
 {
     orte_message_event_t *mev = (orte_message_event_t*)data;
     opal_buffer_t *buffer = mev->buffer;
-    char *rml_uri;
+    orte_process_name_t peer;
+    char *rml_uri = NULL;
     int rc, idx;
     int32_t arch;
     orte_node_t **nodes;
@@ -442,19 +443,11 @@ static void process_orted_launch_report(int fd, short event, void *data)
     int64_t setupsec, setupusec;
     int64_t startsec, startusec;
     
-    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                         "%s plm:base:orted_report_launch from daemon %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&mev->sender)));
-    
     /* see if we need to timestamp this receipt */
     if (orte_timing) {
         gettimeofday(&recvtime, NULL);
     }
     
-    /* update state */
-    pdatorted[mev->sender.vpid]->state = ORTE_PROC_STATE_RUNNING;
-
     /* unpack its contact info */
     idx = 1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &rml_uri, &idx, OPAL_STRING))) {
@@ -466,13 +459,26 @@ static void process_orted_launch_report(int fd, short event, void *data)
     /* set the contact info into the hash table */
     if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(rml_uri))) {
         ORTE_ERROR_LOG(rc);
-        free(rml_uri);
         orted_failed_launch = true;
         goto CLEANUP;
     }
-    /* lookup and record this daemon's contact info */
-    pdatorted[mev->sender.vpid]->rml_uri = strdup(rml_uri);
-    free(rml_uri);
+
+    rc = orte_rml_base_parse_uris(rml_uri, &peer, NULL );
+    if( ORTE_SUCCESS != rc ) {
+        ORTE_ERROR_LOG(rc);
+        orted_failed_launch = true;
+        goto CLEANUP;
+    }
+
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                         "%s plm:base:orted_report_launch from daemon %s via %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(&peer),
+                         ORTE_NAME_PRINT(&mev->sender)));
+    
+    /* update state and record for this daemon contact info */
+    pdatorted[peer.vpid]->state = ORTE_PROC_STATE_RUNNING;
+    pdatorted[peer.vpid]->rml_uri = rml_uri;
 
     /* get the remote arch */
     idx = 1;
@@ -555,31 +561,33 @@ static void process_orted_launch_report(int fd, short event, void *data)
     
     /* lookup the node */
     nodes = (orte_node_t**)orte_node_pool->addr;
-    if (NULL == nodes[mev->sender.vpid]) {
+    if (NULL == nodes[peer.vpid]) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         orted_failed_launch = true;
         goto CLEANUP;
     }
     /* store the arch */
-    nodes[mev->sender.vpid]->arch = arch;
+    nodes[peer.vpid]->arch = arch;
     
     /* if a tree-launch is underway, send the cmd back */
     if (NULL != orte_tree_launch_cmd) {
-        orte_rml.send_buffer(&mev->sender, orte_tree_launch_cmd, ORTE_RML_TAG_DAEMON, 0);
+        orte_rml.send_buffer(&peer, orte_tree_launch_cmd, ORTE_RML_TAG_DAEMON, 0);
     }
     
 CLEANUP:
 
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                         "%s plm:base:orted_report_launch %s for daemon %s at contact %s",
+                         "%s plm:base:orted_report_launch %s for daemon %s (via %s) at contact %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          orted_failed_launch ? "failed" : "completed",
-                         ORTE_NAME_PRINT(&mev->sender), pdatorted[mev->sender.vpid]->rml_uri));
+                         ORTE_NAME_PRINT(&peer),
+                         ORTE_NAME_PRINT(&mev->sender), pdatorted[peer.vpid]->rml_uri));
 
     /* release the message */
     OBJ_RELEASE(mev);
 
     if (orted_failed_launch) {
+        if( NULL != rml_uri ) free(rml_uri);
         orte_errmgr.incomplete_start(ORTE_PROC_MY_NAME->jobid, ORTE_ERROR_DEFAULT_EXIT_CODE);
     } else {
         orted_num_callback++;
@@ -1133,18 +1141,23 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
      * being sure to "purge" any that would cause problems
      * on backend nodes
      */
-    if (ORTE_PROC_IS_HNP) {
+    if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
         cnt = opal_argv_count(orted_cmd_line);    
         for (i=0; i < cnt; i+=3) {
-            /* if the specified option is more than one word, we don't
-             * have a generic way of passing it as some environments ignore
-             * any quotes we add, while others don't - so we ignore any
-             * such options. In most cases, this won't be a problem as
-             * they typically only apply to things of interest to the HNP.
-             * Individual environments can add these back into the cmd line
-             * as they know if it can be supported
-             */
-            if (NULL != strchr(orted_cmd_line[i+2], ' ')) {
+             /* in the rsh environment, we can append multi-word arguments
+              * by enclosing them in quotes. Check for any multi-word
+              * mca params passed to mpirun and include them
+              */
+             if (NULL != strchr(orted_cmd_line[i+2], ' ')) {
+                char* param;
+
+                /* must add quotes around it */
+                asprintf(&param, "\"%s\"", orted_cmd_line[i+2]);
+                /* now pass it along */
+                opal_argv_append(argc, argv, orted_cmd_line[i]);
+                opal_argv_append(argc, argv, orted_cmd_line[i+1]);
+                opal_argv_append(argc, argv, param);
+                free(param);
                 continue;
             }
             /* The daemon will attempt to open the PLM on the remote
