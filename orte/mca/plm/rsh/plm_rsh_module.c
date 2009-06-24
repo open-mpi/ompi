@@ -666,29 +666,6 @@ static int setup_launch(int *argcptr, char ***argvptr,
     opal_argv_append_nosize(&argv, "plm");
     opal_argv_append_nosize(&argv, "rsh");
     
-    /* in the rsh environment, we can append multi-word arguments
-     * by enclosing them in quotes. Check for any multi-word
-     * mca params passed to mpirun and include them
-     */
-    if (ORTE_PROC_IS_HNP) {
-        int cnt, i;
-        cnt = opal_argv_count(orted_cmd_line);    
-        for (i=0; i < cnt; i+=3) {
-            /* check if the specified option is more than one word - all
-             * others have already been passed
-             */
-            if (NULL != strchr(orted_cmd_line[i+2], ' ')) {
-                /* must add quotes around it */
-                asprintf(&param, "\"%s\"", orted_cmd_line[i+2]);
-                /* now pass it along */
-                opal_argv_append(&argc, &argv, orted_cmd_line[i]);
-                opal_argv_append(&argc, &argv, orted_cmd_line[i+1]);
-                opal_argv_append(&argc, &argv, param);
-                free(param);
-            }
-        }
-    }
-    
     if (ORTE_PLM_RSH_SHELL_SH == remote_shell ||
         ORTE_PLM_RSH_SHELL_KSH == remote_shell) {
         opal_argv_append(&argc, &argv, ")");
@@ -1281,49 +1258,33 @@ launch_apps:
 
 static int find_children(int rank, int parent, int me, int num_procs)
 {
-    int i, bitmap, peer, hibit, mask, found;
     orte_namelist_t *child;
-    
-    /* is this me? */
-    if (me == rank) {
-        bitmap = opal_cube_dim(num_procs);
-        
-        hibit = opal_hibit(rank, bitmap);
-        --bitmap;
-        
-        for (i = hibit + 1, mask = 1 << i; i <= bitmap; ++i, mask <<= 1) {
-            peer = rank | mask;
-            if (peer < num_procs) {
-                    child = OBJ_NEW(orte_namelist_t);
-                    child->name.jobid = ORTE_PROC_MY_NAME->jobid;
-                    child->name.vpid = peer;
-                    OPAL_OUTPUT_VERBOSE((3, orte_plm_globals.output,
-                                         "%s plm:rsh find-children found child %s",
-                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                         ORTE_NAME_PRINT(&child->name)));
+    opal_list_t my_children;
+    orte_routed_tree_t* routed_child;
+    opal_list_item_t* item;
+
+    OBJ_CONSTRUCT( &my_children, opal_list_t );
+    (void)orte_routed.get_routing_tree( &my_children );
+
+    while( NULL != (item = opal_list_remove_first(&my_children)) ) {
+
+        routed_child = (orte_routed_tree_t*)item;
+
+        child = OBJ_NEW(orte_namelist_t);
+        child->name.jobid = ORTE_PROC_MY_NAME->jobid;
+        child->name.vpid = routed_child->vpid;
+
+        OPAL_OUTPUT_VERBOSE((3, orte_plm_globals.output,
+                             "%s plm:rsh find-children found child %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&child->name)));
                     
-                    opal_list_append(&mca_plm_rsh_component.children, &child->item);
-            }
-        }
-        return parent;
+        opal_list_append(&mca_plm_rsh_component.children, &child->item);
+        OBJ_RELEASE(item);
     }
-    
-    /* find the children of this rank */
-    bitmap = opal_cube_dim(num_procs);
-    
-    hibit = opal_hibit(rank, bitmap);
-    --bitmap;
-    
-    for (i = hibit + 1, mask = 1 << i; i <= bitmap; ++i, mask <<= 1) {
-        peer = rank | mask;
-        if (peer < num_procs) {
-            /* execute compute on this child */
-            if (0 <= (found = find_children(peer, rank, me, num_procs))) {
-                return found;
-            }
-        }
-    }
-    return -1;
+    OBJ_DESTRUCT( &my_children );
+
+    return parent;
 }
 
 
