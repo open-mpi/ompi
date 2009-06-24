@@ -1144,20 +1144,15 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
         cnt = opal_argv_count(orted_cmd_line);    
         for (i=0; i < cnt; i+=3) {
-             /* in the rsh environment, we can append multi-word arguments
-              * by enclosing them in quotes. Check for any multi-word
-              * mca params passed to mpirun and include them
-              */
-             if (NULL != strchr(orted_cmd_line[i+2], ' ')) {
-                char* param;
-
-                /* must add quotes around it */
-                asprintf(&param, "\"%s\"", orted_cmd_line[i+2]);
-                /* now pass it along */
-                opal_argv_append(argc, argv, orted_cmd_line[i]);
-                opal_argv_append(argc, argv, orted_cmd_line[i+1]);
-                opal_argv_append(argc, argv, param);
-                free(param);
+            /* if the specified option is more than one word, we don't
+             * have a generic way of passing it as some environments ignore
+             * any quotes we add, while others don't - so we ignore any
+             * such options. In most cases, this won't be a problem as
+             * they typically only apply to things of interest to the HNP.
+             * Individual environments can add these back into the cmd line
+             * as they know if it can be supported
+             */
+            if (NULL != strchr(orted_cmd_line[i+2], ' ')) {
                 continue;
             }
             /* The daemon will attempt to open the PLM on the remote
