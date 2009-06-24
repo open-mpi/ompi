@@ -226,7 +226,7 @@ static int discover(opal_list_t* nodelist, ICluster* pCluster)
         /* Do we have enough processors on the available nodes? 
          * Question: How do we get the required number of processors?
          */
-        if ( (Status != NodeStatus_Unreachable) && (idle_processors > 0) ) {
+        if ( (Status == NodeStatus_Ready) && (idle_processors > 0) ) {
 
             /* Get node name. */
             hr = pNode->get_Name(&node_name);
