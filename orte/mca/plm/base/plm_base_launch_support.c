@@ -50,11 +50,11 @@
 #endif
 #include "orte/mca/filem/filem.h"
 #include "orte/mca/filem/base/base.h"
+#include "orte/mca/rml/base/rml_contact.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_locks.h"
 #include "orte/runtime/orte_wait.h"
-
 #include "orte/util/name_fns.h"
 #include "orte/util/nidmap.h"
 #include "orte/util/proc_info.h"
