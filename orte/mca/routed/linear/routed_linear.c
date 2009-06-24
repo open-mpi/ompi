@@ -374,7 +374,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     }
 
  found:
-    OPAL_OUTPUT_VERBOSE((0, orte_routed_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                          "%s routed_linear_get(%s) --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(target), 
