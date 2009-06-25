@@ -30,6 +30,8 @@ struct orte_plm_ccp_component_t {
     int verbose;
     bool want_path_check;
     char **checked_paths;
+    char *stdout_file;
+    char *stderr_file;
     bool timing;
 };
 typedef struct orte_plm_ccp_component_t orte_plm_ccp_component_t;
