@@ -286,7 +286,6 @@ static int orte_plm_rsh_probe(char *nodename,
 
 static void orte_plm_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
 {
-    unsigned long deltat;
     orte_std_cntr_t cnt=1;
     uint8_t flag;
     orte_job_t *jdata;
@@ -335,16 +334,6 @@ static void orte_plm_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
         opal_condition_signal(&mca_plm_rsh_component.cond);
     }
 
-    if (orte_timing && mca_plm_rsh_component.num_children == 0) {
-        if (0 != gettimeofday(&joblaunchstop, NULL)) {
-            opal_output(0, "plm_rsh: could not obtain job launch stop time");
-        } else {
-            deltat = ( (joblaunchstop.tv_sec - joblaunchstart.tv_sec)*1000000 +
-                       (joblaunchstop.tv_usec - joblaunchstart.tv_usec) );
-            opal_output(0, "plm_rsh: total job launch time is %ld usec", deltat);
-        }
-    }
-    
     OPAL_THREAD_UNLOCK(&mca_plm_rsh_component.lock);
 
 }
@@ -1269,6 +1258,16 @@ launch_apps:
     /* get here if launch went okay */
     failed_launch = false;
     
+    if (orte_timing ) {
+        if (0 != gettimeofday(&joblaunchstop, NULL)) {
+            opal_output(0, "plm_rsh: could not obtain job launch stop time");
+        } else {
+            opal_output(0, "plm_rsh: total job launch time is %ld usec",
+                        (joblaunchstop.tv_sec - joblaunchstart.tv_sec)*1000000 + 
+                        (joblaunchstop.tv_usec - joblaunchstart.tv_usec));
+        }
+    }
+
  cleanup:
     if (NULL != argv) {
         opal_argv_free(argv);
