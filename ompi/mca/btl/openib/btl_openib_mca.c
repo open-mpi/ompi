@@ -172,7 +172,7 @@ int btl_openib_register_mca_params(void)
                   "Whether fork support is desired or not "
                   "(negative = try to enable fork support, but continue even if it is not available, 0 = do not enable fork support, positive = try to enable fork support and fail if it is not available)",
                   ival2, &ival, 0));
-#ifdef HAVE_IBV_FORT_INIT
+#ifdef HAVE_IBV_FORK_INIT
     mca_btl_openib_component.want_fork_support = ival;
 #else
     if (0 != ival) {
