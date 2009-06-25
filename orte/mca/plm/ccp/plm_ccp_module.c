@@ -134,12 +134,12 @@ static int plm_ccp_launch_job(orte_job_t *jdata)
     orte_std_cntr_t launched = 0, i; 
 
     orte_job_map_t *map = NULL;
-    int argc, rc, proc_vpid_index, proc_name_index;
+    int argc, rc, proc_vpid_index;
     char *param, **env = NULL, *var, **argv = NULL;
     bool connected = false;
     char *bin_base = NULL, *lib_base = NULL, *command_line;
     
-    struct timeval completionstart, completionstop, launchstart, launchstop;
+    struct timeval completionstop, launchstart, launchstop;
     struct timeval jobstart, jobstop;
     int maxtime=0, mintime=99999999, maxiter = 0, miniter = 0, deltat;
     float avgtime=0.0;
@@ -457,18 +457,22 @@ GETMAP:
             goto cleanup;
         }
 
-        hr = pTask->put_Stdout(_bstr_t(L"ompi_ccp_output.txt"));
-        if (FAILED(hr)) {
-            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                                "plm:ccp:failed to set stdout!"));
-            goto cleanup;
+        if( NULL != mca_plm_ccp_component.stdout_file ) {
+            hr = pTask->put_Stdout(_bstr_t(mca_plm_ccp_component.stdout_file));
+            if (FAILED(hr)) {
+                OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                                    "plm:ccp:failed to set stdout!"));
+                goto cleanup;
+            }
         }
 
-        hr = pTask->put_Stderr(_bstr_t(L"ompi_ccp_error.txt"));
-        if (FAILED(hr)) {
-            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                                "plm:ccp:failed to set stderr!"));
-            goto cleanup;
+        if( NULL != mca_plm_ccp_component.stderr_file) {
+            hr = pTask->put_Stderr(_bstr_t(mca_plm_ccp_component.stderr_file));
+            if (FAILED(hr)) {
+                OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                                    "plm:ccp:failed to set stderr!"));
+                goto cleanup;
+            }
         }
 
         hr = pJob->AddTask(pTask);

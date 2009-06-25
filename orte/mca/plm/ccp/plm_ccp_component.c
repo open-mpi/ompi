@@ -100,10 +100,20 @@ static int plm_ccp_open(void)
                            "Whether the launching process should check for the plm_ccp_orted executable in the PATH before launching (the CCP API does not give an indication of failure; this is a somewhat-lame workaround; non-zero values enable this check)",
                            false, false, (int) true, &tmp);
     mca_plm_ccp_component.want_path_check = OPAL_INT_TO_BOOL(tmp);
+
+    mca_base_param_reg_string(comp, "stdout_file",
+                              "Path and file name for stdout on cluster nodes. By default, stdout will be sent to Job Scheduler. If no path specified, the user home path will be used. UNC path will not work for this param. ",
+                              false, false, "",
+                              &mca_plm_ccp_component.stdout_file);
     
+    mca_base_param_reg_string(comp, "stderr_file",
+                              "Path and file name for stderr on cluster nodes. By default, stderr will be sent to Job Scheduler. If no path specified, the user home path will be used. UNC path will not work for this param. ",
+                              false, false, "",
+                              &mca_plm_ccp_component.stderr_file);
+
     tmp = mca_base_param_reg_int_name("orte", "timing",
-                                        "Request that critical timing loops be measured",
-                                        false, false, 0, &value);
+                                      "Request that critical timing loops be measured",
+                                      false, false, 0, &value);
     if (value != 0) {
         mca_plm_ccp_component.timing = true;
     } else {
