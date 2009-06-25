@@ -482,11 +482,10 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
 {
     opal_list_t newnodes, exclude;
     opal_list_item_t *item1, *item2, *next, *item3;
-    orte_node_t *node_from_list, *node_from_file, *node3;
+    orte_node_t *node_from_list, *node_from_file, *node_from_pool, *node3;
     int rc = ORTE_SUCCESS;
     char *cptr;
     int num_empty, nodeidx;
-    orte_node_t **nodepool;
     bool want_all_empty = false;
     opal_list_t keep;
     
@@ -520,9 +519,6 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
         }
         OBJ_RELEASE(item1);
     }
-    
-    /* setup for relative node syntax */
-    nodepool = (orte_node_t**)orte_node_pool->addr;
     
     /* now check our nodes and keep those that match. We can
      * destruct our hostfile list as we go since this won't be needed
@@ -592,16 +588,7 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
                  * look it up on global pool
                  */
                 nodeidx = strtol(&node_from_file->name[2], NULL, 10);
-                if (nodeidx < 0 ||
-                    nodeidx > (int)orte_node_pool->size) {
-                    /* this is an error */
-                    orte_show_help("help-hostfile.txt", "hostfile:relative-node-out-of-bounds",
-                                   true, nodeidx, node_from_file->name);
-                    rc = ORTE_ERR_SILENT;
-                    goto cleanup;
-                }
-                /* see if that location is filled */
-                if (NULL == nodepool[nodeidx]) {
+                if (NULL == (node_from_pool = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, nodeidx))) {
                     /* this is an error */
                     orte_show_help("help-hostfile.txt", "hostfile:relative-node-not-found",
                                    true, nodeidx, node_from_file->name);
@@ -613,7 +600,7 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
                      item1 != opal_list_get_end(nodes);
                      item1 = opal_list_get_next(nodes)) {
                     node_from_list = (orte_node_t*)item1;
-                    if (0 == strcmp(node_from_list->name, nodepool[nodeidx]->name)) {
+                    if (0 == strcmp(node_from_list->name, node_from_pool->name)) {
                         /* match - remove item from list */
                         opal_list_remove_item(nodes, item1);
                         /* xfer to keep list */
@@ -702,7 +689,7 @@ int orte_util_get_ordered_host_list(opal_list_t *nodes,
     char *cptr;
     int num_empty, i, nodeidx, startempty=0;
     bool want_all_empty=false;
-    orte_node_t **nodepool, *newnode;
+    orte_node_t *node_from_pool, *newnode;
     int rc;
     
     OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
@@ -715,9 +702,6 @@ int orte_util_get_ordered_host_list(opal_list_t *nodes,
     if (ORTE_SUCCESS != (rc = hostfile_parse(hostfile, nodes, &exclude, true))) {
         goto cleanup;
     }
-    
-    /* setup to parse relative syntax */
-    nodepool = (orte_node_t**)orte_node_pool->addr;
     
     /* parse the nodes to process any relative node directives */
     item2 = opal_list_get_first(nodes);
@@ -753,19 +737,22 @@ int orte_util_get_ordered_host_list(opal_list_t *nodes,
             if (!orte_hnp_is_allocated && 0 == startempty) {
                startempty = 1;
             }
-            for (i=startempty; 0 < num_empty && i < orte_node_pool->size && NULL != nodepool[i]; i++) {
-                if (0 == nodepool[i]->slots_inuse) {
+            for (i=startempty; 0 < num_empty && i < orte_node_pool->size; i++) {
+                if (NULL == (node_from_pool = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                    continue;
+                }
+                if (0 == node_from_pool->slots_inuse) {
                     newnode = OBJ_NEW(orte_node_t);
-                    newnode->name = strdup(nodepool[i]->name);
+                    newnode->name = strdup(node_from_pool->name);
                     /* if the slot count here is less than the
                      * total slots avail on this node, set it
                      * to the specified count - this allows people
                      * to subdivide an allocation
                      */
-                    if (node->slots < nodepool[i]->slots) {
+                    if (node->slots < node_from_pool->slots) {
                         newnode->slots_alloc = node->slots;
                     } else {
-                        newnode->slots_alloc = nodepool[i]->slots;
+                        newnode->slots_alloc = node_from_pool->slots;
                     }
                     opal_list_insert_pos(nodes, item1, &newnode->super);
                     /* track number added */
@@ -792,14 +779,6 @@ int orte_util_get_ordered_host_list(opal_list_t *nodes,
              * look it up on global pool
              */
             nodeidx = strtol(&node->name[2], NULL, 10);
-            if (nodeidx < 0 ||
-                nodeidx > (int)orte_node_pool->size) {
-                /* this is an error */
-                orte_show_help("help-hostfile.txt", "hostfile:relative-node-out-of-bounds",
-                               true, nodeidx, node->name);
-                rc = ORTE_ERR_SILENT;
-                goto cleanup;
-            }
             /* if the HNP is not allocated, then we need to
              * adjust the index as the node pool is offset
              * by one
@@ -808,8 +787,7 @@ int orte_util_get_ordered_host_list(opal_list_t *nodes,
                 nodeidx++;
             }
             /* see if that location is filled */
-            
-            if (NULL == nodepool[nodeidx]) {
+            if (NULL == (node_from_pool = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, nodeidx))) {
                 /* this is an error */
                 orte_show_help("help-hostfile.txt", "hostfile:relative-node-not-found",
                                true, nodeidx, node->name);
@@ -818,16 +796,16 @@ int orte_util_get_ordered_host_list(opal_list_t *nodes,
             }
             /* create the node object */
             newnode = OBJ_NEW(orte_node_t);
-            newnode->name = strdup(nodepool[nodeidx]->name);
+            newnode->name = strdup(node_from_pool->name);
             /* if the slot count here is less than the
              * total slots avail on this node, set it
              * to the specified count - this allows people
              * to subdivide an allocation
              */
-            if (node->slots < nodepool[nodeidx]->slots) {
+            if (node->slots < node_from_pool->slots) {
                 newnode->slots_alloc = node->slots;
             } else {
-                newnode->slots_alloc = nodepool[nodeidx]->slots;
+                newnode->slots_alloc = node_from_pool->slots;
             }
             /* insert it before item1 */
             opal_list_insert_pos(nodes, item1, &newnode->super);

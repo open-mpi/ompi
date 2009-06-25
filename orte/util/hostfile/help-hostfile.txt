@@ -71,21 +71,13 @@ Please see the orte_hosts man page for further information.
 #
 [hostfile:relative-node-not-found]
 A relative host was specified, but was not found. The requested host was
-specified with as:
+specified as:
 
 Index: %d
 Syntax given: %s
 
-Please see the orte_hosts man page for further information.
-#
-[hostfile:relative-node-out-of-bounds]
-A relative host was specified, but the index given is beyond the number
-of hosts in the current allocation:
-
-Index: %d
-#hosts: %d
-
-You could obtain a larger allocation or reduce the relative host index.
+This is most likely due to the relative index being out of bounds. You
+could obtain a larger allocation or reduce the relative host index.
 Please see the orte_hosts man page for further information.
 #
 [hostfile:invalid-relative-node-syntax]
