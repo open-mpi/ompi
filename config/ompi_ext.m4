@@ -127,9 +127,22 @@ AC_DEFUN([EXT_CONFIGURE_PROJECT],[
     #  EXT_project_FRAMEWORK_LIBS - list of libraries (or variables pointing
     #                               to more libraries) that must be included
     #                               in the project's main library
-    m4_ifdef([ext_$1_framework_list], [], 
-             [m4_fatal([Could not find ext_$1_framework_list - rerun autogen.sh without -l])])
+    m4_ifdef([ext_$1_framework_list],
+             [_EXT_CONFIGURE_PROJECT($1)],
+             [echo No EXT frameworks for $1 - skipped])
+])dnl
 
+######################################################################
+#
+# _EXT_CONFIGURE_PROJECT
+#
+# Back end for EXT_CONFIGURE_PROJECT
+#
+# USAGE:
+#   _EXT_CONFIGURE_PROJECT(project_name)
+#
+######################################################################
+AC_DEFUN([_EXT_CONFIGURE_PROJECT],[
     EXT_$1_FRAMEWORKS=
     EXT_$1_FRAMEWORKS_SUBDIRS=
     EXT_$1_FRAMEWORK_COMPONENT_ALL_SUBDIRS=
