@@ -339,9 +339,9 @@ static void orte_plm_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
         if (0 != gettimeofday(&joblaunchstop, NULL)) {
             opal_output(0, "plm_rsh: could not obtain job launch stop time");
         } else {
-            deltat = (joblaunchstop.tv_sec - joblaunchstart.tv_sec)*1000000 +
-            (joblaunchstop.tv_usec - joblaunchstart.tv_usec);
-            opal_output(0, "plm_rsh: total time to launch job is %lu usec", deltat);
+            deltat = ( (joblaunchstop.tv_sec - joblaunchstart.tv_sec)*1000000 +
+                       (joblaunchstop.tv_usec - joblaunchstart.tv_usec) );
+            opal_output(0, "plm_rsh: total job launch time is %ld usec", deltat);
         }
     }
     
@@ -988,7 +988,12 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
          */
         return orte_plm_base_local_slave_launch(jdata);
     }
-    
+
+    /* if we are timing, record the start time */
+    if (orte_timing) {
+        gettimeofday(&orte_plm_globals.daemonlaunchstart, NULL);
+    }
+
     /* default to declaring the daemon launch as having failed */
     failed_job = ORTE_PROC_MY_NAME->jobid;
     
