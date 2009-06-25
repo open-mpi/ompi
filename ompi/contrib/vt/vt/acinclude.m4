@@ -78,7 +78,7 @@ AC_DEFUN([ACVT_COMPINST],
 	build_compinst_intel="no"
 	build_compinst_pathscale="no"
 	build_compinst_pgi="no"
-	build_compinst_sun="no"
+	build_compinst_phat="no"
 	build_compinst_xl="no"
 	build_compinst_ftrace="no"
 	compinst_list=
@@ -126,7 +126,7 @@ AC_DEFUN([ACVT_COMPINST],
 						[compinst_default="pgi"])
 						;;
 					sun)
-						build_compinst_sun="yes"
+						build_compinst_phat="yes"
 						AS_IF([test x"$first" = "xyes"],
 						[compinst_default="sun"])
 						;;
@@ -187,22 +187,17 @@ AC_DEFUN([ACVT_COMPINST],
 					AC_MSG_RESULT([xl])
 					;;
 				suncc*)
-					build_compinst_sun="yes"
+					build_compinst_phat="yes"
 					compinst_default="sun"
 					AC_MSG_RESULT([sun])
 					;;
 				cc*)
-					AS_IF([test x"$PLATFORM" = "xsun"],
+					compver=`$CC -V 2>&1 | grep "Sun C"`
+					AS_IF([test "$?" = "0"],
 					[
-						build_compinst_sun="yes"
+						build_compinst_phat="yes"
 						compinst_default="sun"
 						AC_MSG_RESULT([sun])
-					])
-					AS_IF([test x"$PLATFORM" = "xnecsx"],
-					[
-						build_compinst_ftrace="yes"
-						compinst_default="ftrace"
-						AC_MSG_RESULT([ftrace])
 					])
 					;;
 				sxcc*)
