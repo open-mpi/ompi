@@ -612,12 +612,6 @@ int orterun(int argc, char *argv[])
     
     signals_set = true;
     
-    /* we are an hnp, so update the contact info field for later use */
-    orte_process_info.my_hnp_uri = orte_rml.get_contact_info();
-    
-    /* we are also officially a daemon, so better update that field too */
-    orte_process_info.my_daemon_uri = orte_rml.get_contact_info();
-    
     /* If we have a prefix, then modify the PATH and
         LD_LIBRARY_PATH environment variables in our copy. This
         will ensure that any locally-spawned children will
@@ -667,26 +661,6 @@ int orterun(int argc, char *argv[])
         free(lib_base);
     }
     
-    /* We actually do *not* want orterun to voluntarily yield() the
-        processor more than necessary.  Orterun already blocks when
-        it is doing nothing, so it doesn't use any more CPU cycles than
-        it should; but when it *is* doing something, we do not want it
-        to be unnecessarily delayed because it voluntarily yielded the
-        processor in the middle of its work.
-        
-        For example: when a message arrives at orterun, we want the
-        OS to wake us up in a timely fashion (which most OS's
-        seem good about doing) and then we want orterun to process
-        the message as fast as possible.  If orterun yields and lets
-        aggressive MPI applications get the processor back, it may be a
-        long time before the OS schedules orterun to run again
-        (particularly if there is no IO event to wake it up).  Hence,
-        routed OOB messages (for example) may be significantly delayed
-        before being delivered to MPI processes, which can be
-        problematic in some scenarios (e.g., COMM_SPAWN, BTL's that
-        require OOB messages for wireup, etc.). */
-    opal_progress_set_yield_when_idle(false);
-
     /* pre-condition any network transports that require it */
     if (ORTE_SUCCESS != (rc = orte_pre_condition_transports(jdata))) {
         ORTE_ERROR_LOG(rc);
