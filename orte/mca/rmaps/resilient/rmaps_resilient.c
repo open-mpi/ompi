@@ -185,7 +185,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
             if (proc->state != ORTE_PROC_STATE_RESTART) {
                 continue;
             }
-            
+            opal_output(0, "proc %s is to be restarted", ORTE_NAME_PRINT(&proc->name));
             /* it is to be restarted - remove the proc from its current node */
             oldnode = proc->node;
             oldnode->num_procs--;
@@ -261,9 +261,10 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                     }
                 }
                 /* put proc on the found node */
-                OBJ_RETAIN(nd);  /* required to maintain bookeeping */
+                OBJ_RETAIN(nd);  /* required to maintain bookkeeping */
                 proc->node = nd;
                 opal_pointer_array_add(nd->procs, (void*)proc);
+                OBJ_RETAIN(proc);  /* required to maintain bookkeeping */
                 nd->num_procs++;
                 /* flag the proc state as non-launched so we'll know to launch it */
                 proc->state = ORTE_PROC_STATE_INIT;

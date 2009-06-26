@@ -302,6 +302,12 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
         return rc;
     }
     
+    /* pack the job state so it can be extracted later */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->state, 1, ORTE_JOB_STATE))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
     /* pack the number of nodes involved in this job */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &map->num_nodes, 1, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
@@ -551,6 +557,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     int8_t *app_idx=NULL;
     char **slot_str=NULL;
     orte_jobid_t debugger;
+    bool add_child;
     
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:constructing child list",
@@ -712,6 +719,14 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     
     
     /* UNPACK JOB-SPECIFIC DATA */
+    /* unpack the job state so we can know if this is a restart vs initial launch */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->state, &cnt, ORTE_JOB_STATE))) {
+        *job = ORTE_JOBID_INVALID;
+        ORTE_ERROR_LOG(rc);
+        goto REPORT_ERROR;
+    }
+    
     /* unpack the number of nodes involved in this job */
     cnt=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->num_nodes, &cnt, ORTE_STD_CNTR))) {
@@ -755,6 +770,9 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     /* allocate space and unpack the app_contexts for this job - the HNP checked
      * that there must be at least one, so don't bother checking here again
      */
+    if (NULL != jobdat->apps) {
+        free(jobdat->apps);
+    }
     jobdat->apps = (orte_app_context_t**)malloc(jobdat->num_apps * sizeof(orte_app_context_t*));
     if (NULL == jobdat->apps) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -772,6 +790,10 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         goto REPORT_ERROR;
     }
     /* retain a copy for downloading to child processes */
+    if (NULL != jobdat->pmap && NULL != jobdat->pmap->bytes) {
+        free(jobdat->pmap->bytes);
+        free(jobdat->pmap);
+    }
     opal_dss.copy((void**)&jobdat->pmap, bo, OPAL_BYTE_OBJECT);
     /* decode the pidmap  - this will also free the bytes in bo */
     if (ORTE_SUCCESS != (rc = orte_ess.update_pidmap(bo))) {
@@ -831,26 +853,56 @@ find_my_procs:
                                  "%s odls:constructing child list - found proc %s for me!",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_VPID_PRINT(j)));
             
-            /* keep tabs of the number of local procs */
-            jobdat->num_local_procs++;
-            /* add this proc to our child list */
-            child = OBJ_NEW(orte_odls_child_t);
-            /* copy the name to preserve it */
-            if (ORTE_SUCCESS != (rc = opal_dss.copy((void**)&child->name, &proc, ORTE_NAME))) {
-                ORTE_ERROR_LOG(rc);
-                goto REPORT_ERROR;
+            add_child = true;
+            /* if this job is restarting procs, then we need to treat things
+             * a little differently. We may be adding a proc to our local
+             * children (if the proc moved here from somewhere else), or we
+             * may simply be restarting someone already here.
+             */
+            if (ORTE_JOB_STATE_RESTART == jobdat->state) {
+                /* look for this job on our current list of children */
+                for (item = opal_list_get_first(&orte_local_children);
+                     item != opal_list_get_end(&orte_local_children);
+                     item = opal_list_get_next(item)) {
+                    child = (orte_odls_child_t*)item;
+                    if (child->name->jobid == proc.jobid &&
+                        child->name->vpid == proc.vpid) {
+                        /* do not duplicate this child on the list! */
+                        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                             "proc %s is on list and is %s",
+                                             ORTE_NAME_PRINT(&proc),
+                                             (child->alive) ? "ALIVE" : "DEAD"));
+                        add_child = false;
+                        /* mark that this app_context is being used on this node */
+                        jobdat->apps[app_idx[j]]->used_on_node = true;
+                        break;
+                    }
+                }
             }
-            child->app_idx = app_idx[j];  /* save the index into the app_context objects */
-            if (NULL != slot_str && NULL != slot_str[j]) {
-                child->slot_list = strdup(slot_str[j]);
+            
+            /* if we need to add the child, do so */
+            if (add_child) {
+                /* keep tabs of the number of local procs */
+                jobdat->num_local_procs++;
+                /* add this proc to our child list */
+                child = OBJ_NEW(orte_odls_child_t);
+                /* copy the name to preserve it */
+                if (ORTE_SUCCESS != (rc = opal_dss.copy((void**)&child->name, &proc, ORTE_NAME))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto REPORT_ERROR;
+                }
+                child->app_idx = app_idx[j];  /* save the index into the app_context objects */
+                if (NULL != slot_str && NULL != slot_str[j]) {
+                    child->slot_list = strdup(slot_str[j]);
+                }
+                /* mark that this app_context is being used on this node */
+                jobdat->apps[app_idx[j]]->used_on_node = true;
+                /* protect operation on the global list of children */
+                OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
+                opal_list_append(&orte_local_children, &child->super);
+                opal_condition_signal(&orte_odls_globals.cond);
+                OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
             }
-            /* mark that this app_context is being used on this node */
-            jobdat->apps[app_idx[j]]->used_on_node = true;
-            /* protect operation on the global list of children */
-            OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
-            opal_list_append(&orte_local_children, &child->super);
-            opal_condition_signal(&orte_odls_globals.cond);
-            OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
         }
     }
     
@@ -1217,7 +1269,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
         }
     }
     
-    if (ORTE_SUCCESS != opal_paffinity_base_get_processor_info(&num_processors)) {
+    if (ORTE_SUCCESS != (rc = opal_paffinity_base_get_processor_info(&num_processors))) {
         /* if we cannot find the number of local processors, we have no choice
          * but to default to conservative settings
          */
@@ -1238,7 +1290,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:launch found %d processors for %d children and set oversubscribed to %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         num_processors, (int)opal_list_get_size(&orte_local_children),
+                         (ORTE_SUCCESS == rc) ? num_processors: -1, (int)opal_list_get_size(&orte_local_children),
                          oversubscribed ? "true" : "false"));
     
     /* setup to report the proc state to the HNP */
@@ -1457,6 +1509,20 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                 continue;
             }
             
+            /* ensure we clear any prior info regarding state or exit status in
+             * case this is a restart
+             */
+            child->state = ORTE_PROC_STATE_FAILED_TO_START;
+            child->exit_code = 0;
+            child->waitpid_recvd = false;
+            child->iof_complete = false;
+            child->coll_recvd = false;
+            child->pid = 0;
+            if (NULL != child->rml_uri) {
+                free(child->rml_uri);
+                child->rml_uri = NULL;
+            }
+            
             /* check to see if we have enough available file descriptors
              * to launch another child - if not, then let's wait a little
              * while to see if some come free. This can happen if we are
@@ -1627,6 +1693,13 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
             opal_setenv(param, value, true, &app->env);
             free(param);
             free(value);
+            
+            /* if the proc isn't going to forward IO, then we need to flag that
+             * it has "completed" iof termination as otherwise it will never fire
+             */
+            if (!(ORTE_JOB_CONTROL_FORWARD_OUTPUT & jobdat->controls)) {
+                child->iof_complete = true;
+            }
             
             /* if we are timing things, record when we are going to launch this proc */
             if (orte_timing) {

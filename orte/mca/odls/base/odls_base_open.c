@@ -103,6 +103,7 @@ OBJ_CLASS_INSTANCE(orte_odls_child_t,
 static void orte_odls_job_constructor(orte_odls_job_t *ptr)
 {
     ptr->jobid = ORTE_JOBID_INVALID;
+    ptr->state = ORTE_JOB_STATE_UNDEF;
     ptr->launch_msg_processed = false;
     ptr->apps = NULL;
     ptr->num_apps = 0;

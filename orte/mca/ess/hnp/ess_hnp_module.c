@@ -636,18 +636,20 @@ static void rte_abort(int status, bool report)
 
 static uint8_t proc_get_locality(orte_process_name_t *proc)
 {
-    orte_node_t **nodes;
-    orte_proc_t **procs;
-    orte_vpid_t i;
+    orte_node_t *node;
+    orte_proc_t *myproc;
+    int i;
     
     /* the HNP is always on node=0 of the node array */
-    nodes = (orte_node_t**)orte_node_pool->addr;
-    procs = (orte_proc_t**)nodes[0]->procs->addr;
+    node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i);
     
     /* cycle through the array of local procs */
-    for (i=0; i < nodes[0]->num_procs; i++) {
-        if (procs[i]->name.jobid == proc->jobid &&
-            procs[i]->name.vpid == proc->vpid) {
+    for (i=0; i < node->procs->size; i++) {
+        if (NULL == (myproc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, i))) {
+            continue;
+        }
+        if (myproc->name.jobid == proc->jobid &&
+            myproc->name.vpid == proc->vpid) {
             OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                                  "%s ess:hnp: proc %s is LOCAL",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -668,18 +670,12 @@ static uint8_t proc_get_locality(orte_process_name_t *proc)
 static orte_proc_t* find_proc(orte_process_name_t *proc)
 {
     orte_job_t *jdata;
-    orte_proc_t **procs;
     
     if (NULL == (jdata = orte_get_job_data_object(proc->jobid))) {
         return NULL;
     }
-    procs = (orte_proc_t**)jdata->procs->addr;
-    
-    if (jdata->num_procs < proc->vpid) {
-        return NULL;
-    }
-    
-    return procs[proc->vpid];
+
+    return (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, proc->vpid);
 }
 
 
