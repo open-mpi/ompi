@@ -112,9 +112,10 @@ PROCESS:
      * from overwriting it
      */
     ORTE_UPDATE_EXIT_STATUS(exit_code);
-
-    /* wakeup orterun so we can exit */
-    orte_trigger_event(&orte_exit);    
+    
+    /* just return - let the daemons report back so we can properly
+     * know when to actually exit
+     */
 }
 
 /*
@@ -171,8 +172,9 @@ PROCESS:
      */
     ORTE_UPDATE_EXIT_STATUS(exit_code);
     
-    /* wakeup orterun so we can exit */
-    orte_trigger_event(&orte_exit);   
+    /* just return - let the daemons report back so we can properly
+     * know when to actually exit
+     */
 }
 
 /*
