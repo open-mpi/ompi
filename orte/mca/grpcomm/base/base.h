@@ -69,6 +69,7 @@ ORTE_DECLSPEC   int orte_grpcomm_base_get_proc_attr(const orte_process_name_t pr
                                                     const char * attribute_name, void **val, 
                                                     size_t *size);
 ORTE_DECLSPEC   int orte_grpcomm_base_peer_modex(bool modex_db);
+ORTE_DECLSPEC   int orte_grpcomm_base_modex_unpack( opal_buffer_t* rbuf, bool modex_db);
 ORTE_DECLSPEC   int orte_grpcomm_base_full_modex(opal_list_t *procs, bool modex_db);
 ORTE_DECLSPEC   int orte_grpcomm_base_purge_proc_attrs(void);
 ORTE_DECLSPEC   int orte_grpcomm_base_modex_init(void);

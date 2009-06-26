@@ -333,16 +333,144 @@ cleanup:
     return rc;
 }
 
-int orte_grpcomm_base_peer_modex(bool modex_db)
+int orte_grpcomm_base_modex_unpack( opal_buffer_t* rbuf, bool modex_db)
 {
-    opal_buffer_t buf, rbuf;
     int32_t i, num_procs;
     orte_std_cntr_t cnt, j, num_recvd_entries;
     orte_process_name_t proc_name;
     int rc=ORTE_SUCCESS;
     int32_t arch;
-    bool modex_reqd;
     orte_nid_t *nid;
+
+    /* process the results */
+    /* extract the number of procs that put data in the buffer */
+    cnt = 1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &num_procs, &cnt, OPAL_INT32))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    
+    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
+                         "%s grpcomm:base:peer:modex: received %ld data bytes from %d procs",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (long)(rbuf->pack_ptr - rbuf->unpack_ptr), num_procs));
+    
+    /* if the buffer doesn't have any more data, ignore it */
+    if (0 >= (rbuf->pack_ptr - rbuf->unpack_ptr)) {
+        goto cleanup;
+    }
+    
+    /* otherwise, process it */
+    for (i = 0; i < num_procs; i++) {
+        /* unpack the process name */
+        cnt=1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &proc_name, &cnt, ORTE_NAME))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        
+        /* unpack its architecture */
+        cnt=1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &arch, &cnt, OPAL_UINT32))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        
+        /* SINCE THIS IS AMONGST PEERS, THERE IS NO NEED TO UPDATE THE NIDMAP/PIDMAP */
+        
+        /* update the arch in the ESS */
+        if (ORTE_SUCCESS != (rc = orte_ess.update_arch(&proc_name, arch))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        
+        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
+                             "%s grpcomm:base:peer:modex: adding modex entry for proc %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&proc_name)));
+        
+        if (modex_db) {
+            /* if we are using the modex db, pass the rest of the buffer
+             * to that system to update the modex database
+             */
+            if (ORTE_SUCCESS != (rc = orte_grpcomm_base_update_modex_entries(&proc_name, rbuf))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
+        } else {  /* process it locally and store data on nidmap */
+            /* unpack the number of entries for this proc */
+            cnt=1;
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &num_recvd_entries, &cnt, ORTE_STD_CNTR))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
+            
+            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
+                                 "%s grpcomm:base:peer:modex adding %d entries for proc %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), num_recvd_entries,
+                                 ORTE_NAME_PRINT(&proc_name)));
+            
+            /* find this proc's node in the nidmap */
+            if (NULL == (nid = orte_util_lookup_nid(&proc_name))) {
+                /* proc wasn't found - return error */
+                OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
+                                     "%s grpcomm:base:peer:modex no nidmap entry for proc %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&proc_name)));
+                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                rc = ORTE_ERR_NOT_FOUND;
+                goto cleanup;
+            }
+            
+            /*
+             * Extract the attribute names and values
+             */
+            for (j = 0; j < num_recvd_entries; j++) {
+                size_t num_bytes;
+                orte_attr_t *attr;
+                
+                attr = OBJ_NEW(orte_attr_t);
+                cnt = 1;
+                if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &(attr->name), &cnt, OPAL_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
+                }
+                
+                cnt = 1;
+                if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &num_bytes, &cnt, OPAL_SIZE))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
+                }
+                attr->size = num_bytes;
+                
+                if (num_bytes != 0) {
+                    if (NULL == (attr->bytes = (uint8_t *) malloc(num_bytes))) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        rc = ORTE_ERR_OUT_OF_RESOURCE;
+                        goto cleanup;
+                    }
+                    cnt = (orte_std_cntr_t) num_bytes;
+                    if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, attr->bytes, &cnt, OPAL_BYTE))) {
+                        ORTE_ERROR_LOG(rc);
+                        goto cleanup;
+                    }
+                }
+                
+                /* add this to the node's attribute list */
+                opal_list_append(&nid->attrs, &attr->super);
+            }
+        }
+    }
+
+ cleanup:
+    return rc;
+}
+
+int orte_grpcomm_base_peer_modex(bool modex_db)
+{
+    opal_buffer_t buf, rbuf;
+    int rc = ORTE_SUCCESS;
+    bool modex_reqd;
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:base:peer:modex: performing modex",
@@ -383,124 +511,9 @@ int orte_grpcomm_base_peer_modex(bool modex_db)
                          "%s grpcomm:base:peer:modex: processing modex info",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    /* process the results */
-    /* extract the number of procs that put data in the buffer */
-    cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &num_procs, &cnt, OPAL_INT32))) {
+    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_modex_unpack( &rbuf, modex_db )) ) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
-    }
-    
-    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
-                         "%s grpcomm:base:peer:modex: received %ld data bytes from %d procs",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (long)(rbuf.pack_ptr - rbuf.unpack_ptr), num_procs));
-    
-    /* if the buffer doesn't have any more data, ignore it */
-    if (0 >= (rbuf.pack_ptr - rbuf.unpack_ptr)) {
-        goto cleanup;
-    }
-    
-    /* otherwise, process it */
-    for (i=0; i < num_procs; i++) {
-        /* unpack the process name */
-        cnt=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &proc_name, &cnt, ORTE_NAME))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        
-        /* unpack its architecture */
-        cnt=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &arch, &cnt, OPAL_UINT32))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        
-        /* SINCE THIS IS AMONGST PEERS, THERE IS NO NEED TO UPDATE THE NIDMAP/PIDMAP */
-        
-        /* update the arch in the ESS */
-        if (ORTE_SUCCESS != (rc = orte_ess.update_arch(&proc_name, arch))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        
-        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
-                             "%s grpcomm:base:peer:modex: adding modex entry for proc %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&proc_name)));
-        
-        if (modex_db) {
-            /* if we are using the modex db, pass the rest of the buffer
-             * to that system to update the modex database
-             */
-            if (ORTE_SUCCESS != (rc = orte_grpcomm_base_update_modex_entries(&proc_name, &rbuf))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-        } else {  /* process it locally and store data on nidmap */
-            /* unpack the number of entries for this proc */
-            cnt=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &num_recvd_entries, &cnt, ORTE_STD_CNTR))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            
-            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
-                                 "%s grpcomm:base:peer:modex adding %d entries for proc %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), num_recvd_entries,
-                                 ORTE_NAME_PRINT(&proc_name)));
-            
-            /* find this proc's node in the nidmap */
-            if (NULL == (nid = orte_util_lookup_nid(&proc_name))) {
-                /* proc wasn't found - return error */
-                OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
-                                     "%s grpcomm:base:peer:modex no nidmap entry for proc %s",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(&proc_name)));
-                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                rc = ORTE_ERR_NOT_FOUND;
-                goto cleanup;
-            }
-            
-            /*
-             * Extract the attribute names and values
-             */
-            for (j = 0; j < num_recvd_entries; j++) {
-                size_t num_bytes;
-                orte_attr_t *attr;
-                
-                attr = OBJ_NEW(orte_attr_t);
-                cnt = 1;
-                if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &(attr->name), &cnt, OPAL_STRING))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto cleanup;
-                }
-                
-                cnt = 1;
-                if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &num_bytes, &cnt, OPAL_SIZE))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto cleanup;
-                }
-                attr->size = num_bytes;
-                
-                if (num_bytes != 0) {
-                    if (NULL == (attr->bytes = (uint8_t *) malloc(num_bytes))) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        rc = ORTE_ERR_OUT_OF_RESOURCE;
-                        goto cleanup;
-                    }
-                    cnt = (orte_std_cntr_t) num_bytes;
-                    if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, attr->bytes, &cnt, OPAL_BYTE))) {
-                        ORTE_ERROR_LOG(rc);
-                        goto cleanup;
-                    }
-                }
-                
-                /* add this to the node's attribute list */
-                opal_list_append(&nid->attrs, &attr->super);
-            }
-        }
     }
     
 cleanup:
