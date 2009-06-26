@@ -44,7 +44,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                                      orte_app_context_t *app, uint8_t policy)
 {
     opal_list_item_t *item, *next;
-    orte_node_t *node, **nodes;
+    orte_node_t *node;
     orte_std_cntr_t num_slots;
     orte_std_cntr_t i;
     int rc;
@@ -52,24 +52,22 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     /** set default answer */
     *total_num_slots = 0;
     
-    /* create a working list of nodes */
-    nodes = (orte_node_t**)orte_node_pool->addr;
-    
     /* if the hnp was allocated, include it */
     if (orte_hnp_is_allocated) {
-        OBJ_RETAIN(nodes[0]);
-        opal_list_append(allocated_nodes, &nodes[0]->super);
+        node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
+        OBJ_RETAIN(node);
+        opal_list_append(allocated_nodes, &node->super);
     }
     
+    /* add everything in the node pool */
     for (i=1; i < orte_node_pool->size; i++) {
-        if (NULL == nodes[i]) {
-            break;  /* nodes are left aligned, so stop when we hit a null */
+        if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+            /* retain a copy for our use in case the item gets
+             * destructed along the way
+             */
+            OBJ_RETAIN(node);
+            opal_list_append(allocated_nodes, &node->super);
         } 
-        /* retain a copy for our use in case the item gets
-         * destructed along the way
-         */
-        OBJ_RETAIN(nodes[i]);
-        opal_list_append(allocated_nodes, &nodes[i]->super);
     }
 
     /** check that anything is here */
@@ -201,15 +199,17 @@ int orte_rmaps_base_add_proc_to_map(orte_job_map_t *map, orte_node_t *node,
                                     bool oversubscribed, orte_proc_t *proc)
 {
     orte_std_cntr_t i;
-    orte_node_t **nodes;
+    orte_node_t *node_from_map;
     int rc;
     
     /* see if this node has already been assigned to the map - if
      * not, then add the pointer to the pointer array
      */
-    nodes = (orte_node_t**)map->nodes->addr;
-    for (i=0; i < map->num_nodes; i++) {
-        if (nodes[i]->index == node->index) {
+    for (i=0; i < map->nodes->size; i++) {
+        if (NULL == (node_from_map = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
+            continue;
+        }
+        if (node_from_map->index == node->index) {
             /* we have this node in the array */
             goto PROCESS;
         }
@@ -262,21 +262,51 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
                                bool oversubscribe,
                                bool remove_from_list)
 {
-    orte_proc_t *proc;
+    orte_proc_t *proc, *proc_from_job;
     bool oversub;
     int rc;
+    int n;
     
-    /* create mapped_proc object */
-    proc = OBJ_NEW(orte_proc_t);
+    /* does this proc already exist within the job? */
+    proc = NULL;
+    for (n=0; n < jdata->procs->size; n++) {
+        if (NULL == (proc_from_job = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, n))) {
+            continue;
+        }
+        if (proc_from_job->name.vpid == vpid) {
+            /* already have it! */
+            proc = proc_from_job;
+            if (NULL != proc->slot_list) {
+                /* cleanout stale info */
+                free(proc->slot_list);
+            }
+            break;
+        }
+    }
     if (NULL == proc) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
+        /* need to create mapped_proc object */
+        proc = OBJ_NEW(orte_proc_t);
+        if (NULL == proc) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        /* create the process name */
+        proc->name.jobid = jdata->jobid;
+        proc->name.vpid = vpid;
+        proc->app_idx = app_idx;
+        /* add this proc to the job's data - we don't have to worry here
+         * about keeping the array left-justified as all vpids
+         * from 0 to num_procs will be filled
+         */
+        if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs,
+                                                              (int)vpid,
+                                                              (void*)proc))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(proc);
+            return rc;
+        }
     }
     
-    /* create the process name */
-    proc->name.jobid = jdata->jobid;
-    proc->name.vpid = vpid;
-    proc->app_idx = app_idx;
     OBJ_RETAIN(current_node);  /* maintain accounting on object */
     
     if ( NULL != slot_list) {
@@ -285,21 +315,10 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
     proc->node = current_node;
     proc->nodename = current_node->name;
     
-    /* add this proc to the job's data - we don't have to worry here
-     * about keeping the array left-justified as all vpids
-     * from 0 to num_procs will be filled
-     */
     OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
-                         "%s rmaps:base:claim_slot mapping rank %d to job %s",
+                         "%s rmaps:base:claim_slot mapping rank %d in job %s to node %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         vpid, ORTE_JOBID_PRINT(jdata->jobid)));
-    if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs,
-                                                          (int)vpid,
-                                                          (void*)proc))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(proc);
-        return rc;
-    }
+                         vpid, ORTE_JOBID_PRINT(jdata->jobid), current_node->name));
     
     /* Be sure to demarcate this slot as claimed for the node */
     current_node->slots_inuse++;

@@ -1411,6 +1411,13 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
                              ORTE_JOBID_PRINT(jdata->jobid)));
 
 CHECK_ALL_JOBS:
+        /* if this job is a continuously operating one, then don't do
+         * anything further - just return here
+         */
+        if (NULL != jdata && ORTE_JOB_CONTROL_CONTINUOUS_OP & jdata->controls) {
+            return;
+        }
+
         /* if the job that is being checked is the HNP, then we are
          * trying to terminate the orteds. In that situation, we
          * do -not- check all jobs - we simply notify the HNP
@@ -1445,6 +1452,10 @@ CHECK_ALL_JOBS:
                 if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, index))) {
                     continue;
                 }
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                     "%s releasing procs from node %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     node->name));
                 for( i = 0; i < node->procs->size; i++ ) {
                     if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, i))) {
                         continue;
@@ -1456,9 +1467,9 @@ CHECK_ALL_JOBS:
                     node->slots_inuse--;
                     node->num_procs--;
                     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                                         "%s releasing proc %s",
+                                         "%s releasing proc %s from node %s",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                         ORTE_NAME_PRINT(&proc->name)));
+                                         ORTE_NAME_PRINT(&proc->name), node->name));
                     /* set the entry in the node array to NULL */
                     opal_pointer_array_set_item(node->procs, i, NULL);
                     /* release the proc once for the map entry */

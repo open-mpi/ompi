@@ -1339,8 +1339,9 @@ int orte_plm_base_append_bootproxy_args(orte_app_context_t *app, char ***argv,
 
 void orte_plm_base_reset_job(orte_job_t *jdata)
 {
-    int n;
-    orte_proc_t *proc;
+    int n, i, j;
+    orte_proc_t *proc, *proc_from_node;
+    orte_node_t *node_from_map, *node;
     
     /* set the state to restart */
     jdata->state = ORTE_JOB_STATE_RESTART;
@@ -1353,6 +1354,39 @@ void orte_plm_base_reset_job(orte_job_t *jdata)
             /* this proc abnormally terminated */
             proc->state = ORTE_PROC_STATE_RESTART;
             proc->pid = 0;
+            /* remove the proc from the node upon which it was mapped */
+            node = proc->node;
+            for (i=0; i < node->procs->size; i++) {
+                if (NULL == (proc_from_node = (orte_proc_t*)opal_pointer_array_get_item(node->procs, i))) {
+                    continue;
+                }
+                if (proc_from_node->name.jobid == proc->name.jobid &&
+                    proc_from_node->name.vpid == proc->name.vpid) {
+                    /* got it! */
+                    OBJ_RELEASE(proc);  /* keep accounting straight */
+                    opal_pointer_array_set_item(node->procs, i, NULL);
+                    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                         "removing proc %s from node %s at index %d",
+                                         ORTE_NAME_PRINT(&proc->name), node->name, i));
+                    node->num_procs--;
+                    node->slots_inuse--;
+                    if (0 == node->num_procs) {
+                        /* this node has been emptied - remove it from map */
+                        for (j=0; j < jdata->map->nodes->size; j++) {
+                            if (NULL == (node_from_map = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, i))) {
+                                continue;
+                            }
+                            if (node_from_map->index == node->index) {
+                                /* got it! */
+                                OBJ_RELEASE(node);  /* keep accounting straight*/
+                                opal_pointer_array_set_item(jdata->map->nodes, i, NULL);
+                                break;
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
             /* adjust job accounting */
             jdata->num_terminated--;
             jdata->num_launched--;

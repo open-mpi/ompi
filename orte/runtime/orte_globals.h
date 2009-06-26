@@ -258,6 +258,7 @@ typedef uint8_t orte_job_controls_t;
 #define ORTE_JOB_CONTROL_FORWARD_OUTPUT     0x08
 #define ORTE_JOB_CONTROL_DO_NOT_MONITOR     0x10
 #define ORTE_JOB_CONTROL_FORWARD_COMM       0x20
+#define ORTE_JOB_CONTROL_CONTINUOUS_OP      0x40
 
 /* error manager callback function */
 typedef void (*orte_err_cb_fn_t)(orte_jobid_t job, orte_job_state_t state, void *cbdata);

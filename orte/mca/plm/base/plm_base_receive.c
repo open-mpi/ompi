@@ -106,12 +106,12 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
     orte_job_t *jdata, *parent;
     opal_buffer_t answer;
     orte_vpid_t vpid;
-    orte_proc_t **procs;
+    orte_proc_t *proc;
     orte_proc_state_t state;
     orte_exit_code_t exit_code;
     int rc, ret;
     struct timeval beat;
-    orte_app_context_t **apps, **child_apps;
+    orte_app_context_t *app, *child_app;
     
     /* setup a default response */
     OBJ_CONSTRUCT(&answer, opal_buffer_t);
@@ -166,21 +166,22 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
                  * need to check that here. However, be sure not to overwrite
                  * the prefix if the user already provide it!
                  */
-                apps = (orte_app_context_t**)parent->apps->addr;
-                child_apps = (orte_app_context_t**)jdata->apps->addr;
-                if (NULL != apps[0]->prefix_dir &&
-                    NULL == child_apps[0]->prefix_dir) {
-                    child_apps[0]->prefix_dir = strdup(apps[0]->prefix_dir);
+                app = (orte_app_context_t*)opal_pointer_array_get_item(parent->apps, 0);
+                child_app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, 0);
+                if (NULL != app->prefix_dir &&
+                    NULL == child_app->prefix_dir) {
+                    child_app->prefix_dir = strdup(app->prefix_dir);
                 }
                 
                 /* find the sender's node in the job map */
-                procs = (orte_proc_t**)parent->procs->addr;
-                /* set the bookmark so the child starts from that place - this means
-                 * that the first child process could be co-located with the proc
-                 * that called comm_spawn, assuming slots remain on that node. Otherwise,
-                 * the procs will start on the next available node
-                 */
-                jdata->bookmark = procs[mev->sender.vpid]->node;
+                if (NULL != (proc = (orte_proc_t*)opal_pointer_array_get_item(parent->procs, mev->sender.vpid))) {
+                    /* set the bookmark so the child starts from that place - this means
+                     * that the first child process could be co-located with the proc
+                     * that called comm_spawn, assuming slots remain on that node. Otherwise,
+                     * the procs will start on the next available node
+                     */
+                    jdata->bookmark = proc->node;
+                }
                 
                 /* launch it */
                 if (ORTE_SUCCESS != (rc = orte_plm.spawn(jdata))) {
@@ -232,7 +233,6 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
                      */
                     goto CLEANUP;
                 }
-                procs = (orte_proc_t**)jdata->procs->addr;
                 count = 1;
                 while (ORTE_SUCCESS == (rc = opal_dss.unpack(mev->buffer, &vpid, &count, ORTE_VPID))) {
                     if (ORTE_VPID_INVALID == vpid) {
@@ -257,16 +257,25 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                          (unsigned long)vpid, (unsigned int)state, (int)exit_code));
                     
+                    /* retrieve the proc object */
+                    if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, vpid))) {
+                        /* this proc is no longer in table - skip it */
+                        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                             "%s plm:base:receive proc %s is not in proc table",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                             ORTE_VPID_PRINT(vpid)));
+                        continue;
+                    }
                     /* update the termination counter IFF the state is changing to something
                      * indicating terminated
                      */
                     if (ORTE_PROC_STATE_UNTERMINATED < state &&
-                        ORTE_PROC_STATE_UNTERMINATED > procs[vpid]->state) {
+                        ORTE_PROC_STATE_UNTERMINATED > proc->state) {
                         ++jdata->num_terminated;
                     }
                     /* update the data */
-                    procs[vpid]->state = state;
-                    procs[vpid]->exit_code = exit_code;
+                    proc->state = state;
+                    proc->exit_code = exit_code;
                     
                     /* update orte's exit status if it is non-zero */
                     ORTE_UPDATE_EXIT_STATUS(exit_code);
@@ -300,9 +309,16 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
                 ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                 goto CLEANUP;
             }
-            procs = (orte_proc_t**)jdata->procs->addr;
             gettimeofday(&beat, NULL);
-            procs[mev->sender.vpid]->beat = beat.tv_sec; 
+            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, mev->sender.vpid))) {
+                /* this proc is no longer in table - skip it */
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                     "%s plm:base:receive daemon %s is not in proc table",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_VPID_PRINT(mev->sender.vpid)));
+                break;
+            }
+            proc->beat = beat.tv_sec; 
             break;
             
         default:

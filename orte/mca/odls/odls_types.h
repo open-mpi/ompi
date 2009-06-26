@@ -29,6 +29,8 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/dss/dss_types.h"
+
+#include "orte/mca/plm/plm_types.h"
 #include "orte/mca/grpcomm/grpcomm_types.h"
 #include "orte/runtime/orte_globals.h"
 
@@ -100,6 +102,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_odls_child_t);
  */
 typedef struct orte_odls_job_t {
     opal_list_item_t    super;                  /* required to place this on a list */
+    orte_job_state_t    state;                  /* state of the job */
     orte_jobid_t        jobid;                  /* jobid for this data */
     bool                launch_msg_processed;   /* launch msg has been fully processed */
     orte_app_context_t  **apps;                 /* app_contexts for this job */

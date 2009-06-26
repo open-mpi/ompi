@@ -722,12 +722,11 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr)
 {
     int32_t *nodes;
     orte_proc_t *proc;
-    orte_vpid_t i;
+    int i, j;
     opal_buffer_t buf;
     orte_local_rank_t *lrank;
     orte_node_rank_t *nrank;
     orte_job_t *jdata;
-    int j;
     int rc;
 
     /* setup the working buffer */
@@ -756,12 +755,11 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr)
         nodes = (int32_t*)malloc(jdata->num_procs * 4);
         
         /* transfer and pack the node info in one pack */
-        for (i=0; i < jdata->num_procs; i++) {
+        for (i=0, j=0; i < jdata->procs->size; i++) {
             if (NULL == (proc = (orte_proc_t *) opal_pointer_array_get_item(jdata->procs, i))) {
-                nodes[i] = ORTE_STD_CNTR_INVALID;
                 continue;
             }
-            nodes[i] = proc->node->index;
+            nodes[j++] = proc->node->index;
         }
         if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, nodes, jdata->num_procs, OPAL_INT32))) {
             ORTE_ERROR_LOG(rc);
@@ -772,12 +770,11 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr)
         
         /* transfer and pack the local_ranks in one pack */
         lrank = (orte_local_rank_t*)malloc(jdata->num_procs*sizeof(orte_local_rank_t));
-        for (i=0; i < jdata->num_procs; i++) {
+        for (i=0, j=0; i < jdata->procs->size; i++) {
             if (NULL == (proc = (orte_proc_t *) opal_pointer_array_get_item(jdata->procs, i))) {
-                lrank[i] = ORTE_LOCAL_RANK_INVALID;
                 continue;
             }
-            lrank[i] = proc->local_rank;
+            lrank[j++] = proc->local_rank;
         }
         if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, lrank, jdata->num_procs, ORTE_LOCAL_RANK))) {
             ORTE_ERROR_LOG(rc);
@@ -787,12 +784,11 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr)
         
         /* transfer and pack the node ranks in one pack */
         nrank = (orte_node_rank_t*)malloc(jdata->num_procs*sizeof(orte_node_rank_t));
-        for (i=0; i < jdata->num_procs; i++) {
+        for (i=0, j=0; i < jdata->procs->size; i++) {
             if (NULL == (proc = (orte_proc_t *) opal_pointer_array_get_item(jdata->procs, i))) {
-                nrank[i] = ORTE_NODE_RANK_INVALID;
                 continue;
             }
-            nrank[i] = proc->node_rank;
+            nrank[j++] = proc->node_rank;
         }
         if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, nrank, jdata->num_procs, ORTE_NODE_RANK))) {
             ORTE_ERROR_LOG(rc);
@@ -891,20 +887,24 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
          * other than where it previously was
          */
         if (already_present) {
-            /* we already have the jmap object, so let's cycle through
-             * its pidmap and see if anything is different
+            /* we already have the jmap object, so let's refresh its pidmap
+             * using the new data - start by cleaning out the old array
              */
+            for (j=0; j < jmap->pmap.size; j++) {
+                if (NULL == (pmap = (orte_pmap_t*)opal_pointer_array_get_item(&jmap->pmap, j))) {
+                    continue;
+                }
+                OBJ_RELEASE(pmap);
+            }
+            /* add in the updated array */
             for (i=0; i < num_procs; i++) {
-                if (NULL == (pmap = (orte_pmap_t*)opal_pointer_array_get_item(&jmap->pmap, i))) {
-                    /* this proc is new! better add it */
-                    pmap = OBJ_NEW(orte_pmap_t);
-                    /* add the pidmap entry at the specific site corresponding
-                     * to the proc's vpid
-                     */
-                    if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(&jmap->pmap, i, pmap))) {
-                        ORTE_ERROR_LOG(rc);
-                        goto cleanup;
-                    }
+                pmap = OBJ_NEW(orte_pmap_t);
+                /* add the pidmap entry at the specific site corresponding
+                 * to the proc's vpid
+                 */
+                if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(&jmap->pmap, i, pmap))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
                 }
                 /* add/update the data */
                 pmap->node = nodes[i];
