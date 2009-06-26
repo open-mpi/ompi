@@ -429,7 +429,6 @@ int mca_btl_sm_component_progress(void)
                 MCA_BTL_SM_FIFO_WRITE(
                         mca_btl_sm_component.sm_peers[peer_smp_rank],
                         my_smp_rank, peer_smp_rank, hdr->frag, false, rc);
-		goto recheck_peer;
                 break;
             }
             case MCA_BTL_SM_FRAG_ACK:
