@@ -29,3 +29,5 @@ with_memory_manager=ptmalloc2
 with_valgrind=no
 CC=/nobackup/dbarach/rcastain/ebuild/open-repo/build-root/tools/bin/ppc-q-linux-gcc-4.3.3
 CXX=/nobackup/dbarach/rcastain/ebuild/open-repo/build-root/tools/bin/ppc-q-linux-gcc-4.3.3
+
+ac_cv_c_bigendian=yes
