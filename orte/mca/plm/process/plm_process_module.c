@@ -382,6 +382,16 @@ static char *read_remote_registry(uint32_t root, char *sub_key, char *key, char 
     HRESULT hres;
     char namespace_default[100];
     char *rt_namespace_default = "\\root\\default";
+
+    IWbemClassObject* pClass_registry = NULL;
+    IWbemClassObject* pInParamsDefinition_registry = NULL;
+    IWbemClassObject* pClassInstance_registry = NULL;
+    IWbemClassObject* pOutParams_registry = NULL;
+    VARIANT varsValue_registry;
+    VariantInit(&varsValue_registry);
+
+    BSTR ClassName_registry = SysAllocString(L"StdRegProv");
+    BSTR MethodName_registry = SysAllocString(L"GetStringValue");
     
     strcpy(namespace_default, "\\\\");  
     strcat(namespace_default, remote_node );  
@@ -402,7 +412,7 @@ static char *read_remote_registry(uint32_t root, char *sub_key, char *key, char 
         if (FAILED(hres)) {
             opal_output(0,"Could not connect to namespace DEFAULT on node %s. Error code = %d \n",
                         remote_node, hres);
-            return NULL;
+            goto cleanup;
         }
 
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
@@ -423,34 +433,26 @@ static char *read_remote_registry(uint32_t root, char *sub_key, char *key, char 
 
         if (FAILED(hres)) {
             opal_output(0,"Could not set proxy blanket. Error code = %d \n", hres);
-            return NULL;
+            goto cleanup;
         }
     }
 
-    BSTR ClassName_registry = SysAllocString(L"StdRegProv");
-    BSTR MethodName_registry = SysAllocString(L"GetStringValue");
-
-    IWbemClassObject* pClass_registry = NULL;
     hres = pSvc_registry->GetObject(ClassName_registry, 0, NULL, &pClass_registry, NULL);
     if (FAILED(hres)) {
         opal_output(0,"Could not get Wbem class object. Error code = %d \n", hres);
-        return NULL;
+        goto cleanup;
     }
 
-    IWbemClassObject* pInParamsDefinition_registry = NULL;
     hres = pClass_registry->GetMethod(MethodName_registry, 0, 
                                       &pInParamsDefinition_registry, NULL);
 
-    IWbemClassObject* pClassInstance_registry = NULL;
     hres = pInParamsDefinition_registry->SpawnInstance(0, &pClassInstance_registry);
-
 
     VARIANT hkey_root;
     hkey_root.vt = VT_I4;
     hkey_root.intVal = root;
 
     hres = pClassInstance_registry->Put(L"hDefKey", 0, &hkey_root, 0);
-
 
     VARIANT varSubKeyName;
     varSubKeyName.vt = VT_BSTR;
@@ -460,9 +462,7 @@ static char *read_remote_registry(uint32_t root, char *sub_key, char *key, char 
     
     if(FAILED(hres)) {
         opal_output(0,"Could not Store the value for the in parameters. Error code = %d \n",hres);
-        pClass_registry->Release();
-        pInParamsDefinition_registry->Release();
-        return NULL;
+        goto cleanup;
     }
 
     VARIANT varsValueName;
@@ -472,24 +472,16 @@ static char *read_remote_registry(uint32_t root, char *sub_key, char *key, char 
     hres = pClassInstance_registry->Put(L"sValueName", 0, &varsValueName, 0);
     if(FAILED(hres)) {
         opal_output(0,"Could not Store the value for the in parameters. Error code = %d \n",hres);
-        pClass_registry->Release();
-        pInParamsDefinition_registry->Release();
-        return NULL;
+        goto cleanup;
     }
     
     /* Execute Method to read OPAL_PREFIX in the registry */
-    IWbemClassObject* pOutParams_registry = NULL;
     hres = pSvc_registry->ExecMethod(ClassName_registry, MethodName_registry, 0,
                                      NULL, pClassInstance_registry, &pOutParams_registry, NULL);
 
-    /* clean up variables*/
-    pClass_registry->Release();
-    pInParamsDefinition_registry->Release();
-
     if (FAILED(hres)) {
-        pOutParams_registry->Release();
         opal_output(0,"Could not execute method. Error code = %d \n",hres);
-        return NULL;
+        goto cleanup;
     }
 
     /* To see what the method returned */
@@ -498,12 +490,35 @@ static char *read_remote_registry(uint32_t root, char *sub_key, char *key, char 
     hres = pOutParams_registry->Get(L"ReturnValue", 0, 
                                     &varReturnValue_registry, NULL, 0);
     
-    VARIANT varsValue_registry;
     hres = pOutParams_registry->Get(L"sValue", 0, 
                                     &varsValue_registry, NULL, 0);
-    pOutParams_registry->Release();
 
-    if( VT_NULL != varsValue_registry.vt) {
+cleanup:
+    if(NULL!=pClass_registry){
+        pClass_registry->Release();
+    }
+
+    if(NULL!=pOutParams_registry){
+        pOutParams_registry->Release();
+    }
+
+    if(NULL!=pInParamsDefinition_registry){
+        pInParamsDefinition_registry->Release();
+    }
+
+    if(NULL!=pClassInstance_registry) {
+        pClassInstance_registry->Release();
+    }
+
+    if(NULL!=ClassName_registry){
+        SysFreeString(ClassName_registry);
+    }
+
+    if(NULL!=MethodName_registry){
+        SysFreeString(MethodName_registry);
+    }
+
+    if( VT_NULL != varsValue_registry.vt && VT_EMPTY != varsValue_registry.vt) {
         char *value = strdup(_com_util::ConvertBSTRToString(varsValue_registry.bstrVal));
         return value;
     } else {
@@ -522,6 +537,17 @@ static int wmi_launch_child(char *prefix, char *remote_node, int argc, char **ar
     int len = 0, pid = -1;
     
     HRESULT hres;
+    IWbemClassObject* pClass_cimv2 = NULL;
+    IWbemClassObject* pInParamsDefinition_cimv2 = NULL;
+    IWbemClassObject* pClassInstance_cimv2 = NULL;
+    IWbemClassObject* pOutParams_cimv2 = NULL;
+    VARIANT varCommand;
+    VARIANT varProcessId;
+    VariantInit(&varCommand);
+    VariantInit(&varProcessId);
+    BSTR MethodName_cimv2 = SysAllocString(L"Create");
+    BSTR ClassName_cimv2 = SysAllocString(L"Win32_Process");
+
 
     /*Connect to WMI through the IWbemLocator::ConnectServer method*/
     char namespace_cimv2[100];
@@ -532,7 +558,7 @@ static int wmi_launch_child(char *prefix, char *remote_node, int argc, char **ar
     strcat(ntlm_auth, remote_node);
 
     if( 0 != get_credential(remote_node)) {
-        return ORTE_ERROR;
+        goto cleanup;
     }
 
     /* set up remote namespace path */
@@ -555,16 +581,13 @@ static int wmi_launch_child(char *prefix, char *remote_node, int argc, char **ar
     if (FAILED(hres)) {
         opal_output(0,"Could not connect to namespace cimv2 on node %s. Error code =%d \n",
                      remote_node, hres);
-        return ORTE_ERROR;
+        goto cleanup;
     }
 
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:process: Connected to \\\\%s\\\\ROOT\\\\CIMV2",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          remote_node));
-
-    BSTR MethodName_cimv2 = SysAllocString(L"Create");
-    BSTR ClassName_cimv2 = SysAllocString(L"Win32_Process");
 
     /* Set security levels on a WMI connection */
     cID.User           = (unsigned char *) user_name;
@@ -588,7 +611,7 @@ static int wmi_launch_child(char *prefix, char *remote_node, int argc, char **ar
 
     if (FAILED(hres)) {
         opal_output(0,"Could not set proxy blanket. Error code = %d \n", hres );
-        return pid;
+        goto cleanup;
     }
 
     /* if there isn't a prefix ( e.g., '--noprefix' specfied,
@@ -622,12 +645,11 @@ static int wmi_launch_child(char *prefix, char *remote_node, int argc, char **ar
     if ( NULL == command_line ) {
         /* we couldn't find the execute path, abort. */
         opal_output(0, "couldn't find executable path for orted on node %s. aborted.", remote_node);
-        return ORTE_ERR_NOT_FOUND;
+        goto cleanup;
     }
 
     /* Use the IWbemServices pointer to make requests of WMI */
-    /* set up to call the Win32_Process::Create method */ 
-    IWbemClassObject* pClass_cimv2 = NULL;
+    /* set up to call the Win32_Process::Create method */
     hres = pSvc_cimv2->GetObject(ClassName_cimv2, 0, NULL, &pClass_cimv2, NULL);
 
     if (FAILED(hres)) {
@@ -635,15 +657,12 @@ static int wmi_launch_child(char *prefix, char *remote_node, int argc, char **ar
         goto cleanup;
     }
 
-    IWbemClassObject* pInParamsDefinition_cimv2 = NULL;
     hres = pClass_cimv2->GetMethod(MethodName_cimv2, 0, 
                                    &pInParamsDefinition_cimv2, NULL);
 
-    IWbemClassObject* pClassInstance_cimv2 = NULL;
     hres = pInParamsDefinition_cimv2->SpawnInstance(0, &pClassInstance_cimv2);
 
     /* Create the values for the in parameters */
-    VARIANT varCommand;
     varCommand.vt = VT_BSTR;
     varCommand.bstrVal = _com_util::ConvertStringToBSTR(command_line);
 
@@ -651,36 +670,50 @@ static int wmi_launch_child(char *prefix, char *remote_node, int argc, char **ar
     hres = pClassInstance_cimv2->Put(L"CommandLine", 0,
                                      &varCommand, 0);
 
-    IWbemClassObject* pOutParams_cimv2 = NULL;
     /* Execute Method to launch orted on remote node*/
     hres = pSvc_cimv2->ExecMethod(ClassName_cimv2, MethodName_cimv2, 0,
                                   NULL, pClassInstance_cimv2, &pOutParams_cimv2, NULL);
 
-    /* clean up variables */
-    VariantClear(&varCommand);
-    pClass_cimv2->Release();
-    pInParamsDefinition_cimv2->Release();
-
-    if (FAILED(hres)) {   
+    if (FAILED(hres)) {
         opal_output(0,"Could not execute method. Error code = %d \n",hres);
-        pOutParams_cimv2->Release();
         goto cleanup;
     }
-    VARIANT varProcessId;
-    VariantInit(&varProcessId);
 
     /* get remote process ID */
     hres = pOutParams_cimv2->Get((L"ProcessId"), 0, 
                                  &varProcessId, NULL, 0);
-    
+
     pid = varProcessId.intVal;
 
-    VariantClear(&varProcessId);
-    pOutParams_cimv2->Release();
-
 cleanup:
-    SysFreeString(ClassName_cimv2);
-    SysFreeString(MethodName_cimv2);
+
+    if(NULL!=pClass_cimv2) {
+        pClass_cimv2->Release();
+    }
+
+    if(NULL!=pInParamsDefinition_cimv2) {
+        pInParamsDefinition_cimv2->Release();
+    }
+
+    if(NULL!=pOutParams_cimv2){
+        pOutParams_cimv2->Release();
+    }
+
+    if(NULL!=ClassName_cimv2){
+        SysFreeString(ClassName_cimv2);
+    }
+
+    if(NULL!=MethodName_cimv2){
+        SysFreeString(MethodName_cimv2);
+    }
+
+    if(VT_NULL!=varCommand.vt) {
+        VariantClear(&varCommand);
+    }
+
+    if(VT_NULL!=varProcessId.vt){
+        VariantClear(&varProcessId);
+    }
 
     return pid;
 }
@@ -1434,9 +1467,17 @@ int orte_plm_process_finalize(void)
     int rc;
 
     /* release the locator and service objects*/
-    pLoc->Release();
-    pSvc_registry->Release();
-    pSvc_cimv2->Release();
+    if(NULL!=pLoc) {
+        pLoc->Release();
+    }
+
+    if(NULL!=pSvc_cimv2){
+        pSvc_cimv2->Release();
+    }
+    
+    if( NULL!=pSvc_registry ) {
+        pSvc_registry->Release();
+    }
 
     CoUninitialize();
     
