@@ -69,6 +69,7 @@
 #include <ws2tcpip.h>
 #include <process.h>
 #include <signal.h>
+#include <conio.h>
 /**
  * For all file io operations
  */
