@@ -28,18 +28,6 @@
 
 #define _WIN32_DCOM
 
-#include <winsock2.h>
-#include <comutil.h>
-#include <Wbemidl.h>
-#include <wincred.h>
-#include <stdio.h>
-#include <conio.h>
-#include <wincred.h> 
-
-#pragma comment(lib, "wbemuuid.lib")
-#pragma comment(lib, "comsuppw.lib")
-#pragma comment(lib, "Credui.lib")
-
 #include "orte_config.h"
 #include "orte/constants.h"
 
@@ -70,6 +58,18 @@
 #ifdef HAVE_PWD_H
 #include <pwd.h>
 #endif
+
+#include <winsock2.h>
+#include <comutil.h>
+#include <Wbemidl.h>
+#include <wincred.h>
+#include <stdio.h>
+#include <conio.h>
+#include <wincred.h> 
+
+#pragma comment(lib, "wbemuuid.lib")
+#pragma comment(lib, "comsuppw.lib")
+#pragma comment(lib, "Credui.lib")
 
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/base/mca_base_param.h"

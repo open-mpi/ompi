@@ -84,7 +84,6 @@ static int ras_ccp_open(void)
 
 static int orte_ras_ccp_component_query(mca_base_module_t **module, int *priority)
 {
-    int rc;
     ICluster* pCluster = NULL;
     HRESULT hr = S_OK;
 
