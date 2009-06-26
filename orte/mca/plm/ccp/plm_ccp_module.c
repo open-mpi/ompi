@@ -698,7 +698,7 @@ static int plm_ccp_disconnect(void)
 static char *plm_ccp_commandline(char *prefix, char *node_name, int argc, char **argv)
 {
     char *commandline;
-    size_t i, len = 0;
+    int i, len = 0;
 
     for( i = 0; i < argc; i++ ) {
         len += strlen(argv[i]) + 1;
