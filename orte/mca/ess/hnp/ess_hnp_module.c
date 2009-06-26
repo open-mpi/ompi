@@ -641,7 +641,7 @@ static uint8_t proc_get_locality(orte_process_name_t *proc)
     int i;
     
     /* the HNP is always on node=0 of the node array */
-    node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i);
+    node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
     
     /* cycle through the array of local procs */
     for (i=0; i < node->procs->size; i++) {
