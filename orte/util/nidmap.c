@@ -341,10 +341,10 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
     
     /* pack every nodename individually */
     for (i=1; i < orte_node_pool->size; i++) {
+        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+            continue;
+        }
         if (!orte_keep_fqdn_hostnames) {
-            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
-                continue;
-            }
             nodename = strdup(node->name);
             if (NULL != (ptr = strchr(nodename, '.'))) {
                 *ptr = '\0';
@@ -553,6 +553,8 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+    /* set the daemon to 0 */
+    node->daemon = 0;
     
     /* loop over nodes and unpack the raw nodename */
     for (i=1; i < num_nodes; i++) {
@@ -570,7 +572,7 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo)
         }
     }
     
-    /* unpack the daemon names */
+    /* unpack the daemon vpids */
     vpids = (orte_vpid_t*)malloc(num_nodes * sizeof(orte_vpid_t));
     n=num_nodes;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, vpids, &n, ORTE_VPID))) {
@@ -581,7 +583,7 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo)
      * daemons in the system
      */
     num_daemons = 0;
-    for (i=0; i < num_nodes; i++) {
+    for (i=1; i < num_nodes; i++) {
         if (NULL != (ndptr = (orte_nid_t*)opal_pointer_array_get_item(&orte_nidmap, i))) {
             ndptr->daemon = vpids[i];
             if (ORTE_VPID_INVALID != vpids[i]) {
