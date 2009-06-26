@@ -416,13 +416,13 @@ static int onesided_barrier(void)
 }
 
 
-static opal_buffer_t *allgather_buf;
 static orte_std_cntr_t allgather_complete;
 
 static void allgather_recv(int status, orte_process_name_t* sender,
                             opal_buffer_t *buffer,
                             orte_rml_tag_t tag, void *cbdata)
 {
+    opal_buffer_t *allgather_buf = (opal_buffer_t*)cbdata;
     int rc;
     
     /* xfer the data */
@@ -468,15 +468,12 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
                          "%s grpcomm:bad allgather buffer sent",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    /* setup the buffer that will recv the results */
-    allgather_buf = OBJ_NEW(opal_buffer_t);
-    
     /* now receive the final result. Be sure to do this in
      * a manner that allows us to return without being in a recv!
      */
     allgather_complete = false;
     rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ALLGATHER,
-                                 ORTE_RML_NON_PERSISTENT, allgather_recv, NULL);
+                                 ORTE_RML_NON_PERSISTENT, allgather_recv, rbuf);
     if (rc != ORTE_SUCCESS) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -484,14 +481,6 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
     
     ORTE_PROGRESSED_WAIT(allgather_complete, 0, 1);
     
-    /* copy payload to the caller's buffer */
-    if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(rbuf, allgather_buf))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(allgather_buf);
-        return rc;
-    }
-    OBJ_RELEASE(allgather_buf);
-
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:bad allgather completed",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
