@@ -100,6 +100,17 @@ EXTRA_DIST = \
         platform/win32/ConfigFiles/mpicc-wrapper-data.txt.cmake \
         platform/win32/ConfigFiles/mpif77-wrapper-data.txt.cmake \
         platform/win32/ConfigFiles/opal_config.h.cmake \
-        platform/win32/ConfigFiles/revision.in
-
+        platform/win32/ConfigFiles/revision.in \
+	platform/cisco/macosx-dynamic \
+	platform/cisco/macosx-dynamic.conf \
+	platform/cisco/macosx-dynamic-optimized \
+	platform/cisco/macosx-dynamic-optimized.conf \
+	platform/cisco/hlfr/debug \
+	platform/cisco/hlfr/debug.conf \
+	platform/cisco/hlfr/optimized \
+	platform/cisco/hlfr/optimized.conf \
+	platform/cisco/suder/debug \
+	platform/cisco/suder/debug.conf \
+	platform/cisco/suder/optimized \
+	platform/cisco/suder/optimized.conf
 
