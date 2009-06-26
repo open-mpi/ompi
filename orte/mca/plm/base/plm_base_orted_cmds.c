@@ -94,7 +94,7 @@ int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command)
     int rc;
     opal_buffer_t cmd;
     orte_job_t *daemons;
-    orte_proc_t **procs;
+    orte_proc_t *proc;
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:orted_cmd sending orted_exit commands",
@@ -117,7 +117,6 @@ int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command)
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
-    procs = (orte_proc_t**)daemons->procs->addr;
     
    /* pack the command */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(&cmd, &command, 1, ORTE_DAEMON_CMD))) {
@@ -155,16 +154,19 @@ int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command)
         num_being_sent = daemons->num_procs-1;
         peer.jobid = ORTE_PROC_MY_NAME->jobid;
         for(v=1; v < daemons->num_procs; v++) {
+            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, v))) {
+                continue;
+            }
             /* if we don't have contact info for this daemon,
              * then we know we can't reach it - so don't try
              */
-            if (NULL == procs[v]->rml_uri) {
+            if (NULL == proc->rml_uri) {
                 --num_being_sent;
                 continue;
             }
             peer.vpid = v;
             /* check to see if this daemon is known to be "dead" */
-            if (procs[v]->state > ORTE_PROC_STATE_UNTERMINATED) {
+            if (proc->state > ORTE_PROC_STATE_UNTERMINATED) {
                 /* don't try to send this */
                 --num_being_sent;
                 continue;
@@ -228,6 +230,10 @@ int orte_plm_base_orted_kill_local_procs(orte_jobid_t job)
     int rc;
     opal_buffer_t cmd;
     orte_daemon_cmd_flag_t command=ORTE_DAEMON_KILL_LOCAL_PROCS;
+    int v;
+    orte_process_name_t peer;
+    orte_job_t *daemons;
+    orte_proc_t *proc;
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:orted_cmd sending kill_local_procs cmds",
@@ -256,10 +262,6 @@ int orte_plm_base_orted_kill_local_procs(orte_jobid_t job)
      * command - use an alternative approach
      */
     if (orte_abnormal_term_ordered) {
-        orte_vpid_t v;
-        orte_process_name_t peer;
-        orte_job_t *daemons;
-        orte_proc_t **procs;
         
         OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                              "%s plm:base:orted_cmd:kill_local_procs abnormal term ordered",
@@ -270,7 +272,6 @@ int orte_plm_base_orted_kill_local_procs(orte_jobid_t job)
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return ORTE_ERR_NOT_FOUND;
         }
-        procs = (orte_proc_t**)daemons->procs->addr;
 
         /* if I am the HNP, I need to get this message too, but just set things
          * up so the cmd processor gets called.
@@ -293,17 +294,20 @@ int orte_plm_base_orted_kill_local_procs(orte_jobid_t job)
         num_reported = 0;
         num_being_sent = daemons->num_procs-1;
         peer.jobid = ORTE_PROC_MY_NAME->jobid;
-        for(v=1; v < daemons->num_procs; v++) {
+        for(v=1; v < daemons->procs->size; v++) {
+            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, v))) {
+                continue;
+            }
             /* if we don't have contact info for this daemon,
              * then we know we can't reach it - so don't try
              */
-            if (NULL == procs[v]->rml_uri) {
+            if (NULL == proc->rml_uri) {
                 --num_being_sent;
                 continue;
             }
             peer.vpid = v;
             /* check to see if this daemon is known to be "dead" */
-            if (procs[v]->state > ORTE_PROC_STATE_UNTERMINATED) {
+            if (proc->state > ORTE_PROC_STATE_UNTERMINATED) {
                 /* don't try to send this */
                 continue;
                 --num_being_sent;
