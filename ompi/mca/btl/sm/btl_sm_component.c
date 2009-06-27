@@ -428,11 +428,10 @@ int mca_btl_sm_component_progress(void)
                 /* return the fragment */
                 MCA_BTL_SM_FIFO_WRITE(
                         mca_btl_sm_component.sm_peers[peer_smp_rank],
-<<<<<<< .mine
                         my_smp_rank, peer_smp_rank, hdr->frag, false, true, rc);
-=======
+#if 0
                         my_smp_rank, peer_smp_rank, hdr->frag, false, rc);
->>>>>>> .r21550
+#endif
                 break;
             }
             case MCA_BTL_SM_FRAG_ACK:
