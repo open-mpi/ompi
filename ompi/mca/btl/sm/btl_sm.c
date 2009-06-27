@@ -731,7 +731,7 @@ int mca_btl_sm_sendi( struct mca_btl_base_module_t* btl,
     mca_btl_sm_frag_t* frag;
     int rc;
 
-    if ( mca_btl_sm_component.num_outstanding_frags * 2 > mca_btl_sm_component.fifo_size ) {
+    if ( mca_btl_sm_component.num_outstanding_frags * 2 > (int) mca_btl_sm_component.fifo_size ) {
         mca_btl_sm_component_progress();
     }
 
@@ -809,7 +809,7 @@ int mca_btl_sm_send( struct mca_btl_base_module_t* btl,
     mca_btl_sm_frag_t* frag = (mca_btl_sm_frag_t*)descriptor;
     int rc;
 
-    if ( mca_btl_sm_component.num_outstanding_frags * 2 > mca_btl_sm_component.fifo_size ) {
+    if ( mca_btl_sm_component.num_outstanding_frags * 2 > (int) mca_btl_sm_component.fifo_size ) {
         mca_btl_sm_component_progress();
     }
 
