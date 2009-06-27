@@ -157,6 +157,8 @@ struct mca_btl_sm_component_t {
     struct mca_btl_base_endpoint_t **sm_peers;
 
     opal_free_list_t pending_send_fl;
+    int num_outstanding_frags;         /**< number of fragments sent but not yet returned to free list */
+    int num_pending_sends;             /**< total number on all of my pending-send queues */
     int mem_node;
     int num_mem_nodes;
     

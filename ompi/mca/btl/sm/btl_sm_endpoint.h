@@ -43,6 +43,5 @@ struct mca_btl_base_endpoint_t {
     opal_list_t pending_sends; /**< pending data to send */
 };
 
-void
-btl_sm_add_pending(struct mca_btl_base_endpoint_t *ep, void *data, bool resend);
+void btl_sm_process_pending_sends(struct mca_btl_base_endpoint_t *ep);
 #endif

@@ -330,6 +330,9 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     if ( OMPI_SUCCESS != i )
         return i;
 
+    mca_btl_sm_component.num_outstanding_frags = 0;
+
+    mca_btl_sm_component.num_pending_sends = 0;
     i = opal_free_list_init(&mca_btl_sm_component.pending_send_fl,
                             sizeof(btl_sm_pending_send_item_t),
                             OBJ_CLASS(opal_free_list_item_t),
@@ -728,6 +731,10 @@ int mca_btl_sm_sendi( struct mca_btl_base_module_t* btl,
     mca_btl_sm_frag_t* frag;
     int rc;
 
+    if ( mca_btl_sm_component.num_outstanding_frags * 2 > mca_btl_sm_component.fifo_size ) {
+        mca_btl_sm_component_progress();
+    }
+
     /* this check should be unnecessary... turn into an assertion? */
     if( length < mca_btl_sm_component.eager_limit ) {
 
@@ -776,8 +783,9 @@ int mca_btl_sm_sendi( struct mca_btl_base_module_t* btl,
          * the return code indicates failure, the write has still "completed" from
          * our point of view:  it has been posted to a "pending send" queue.
          */
+        OPAL_THREAD_ADD32(&mca_btl_sm_component.num_outstanding_frags, +1);
         MCA_BTL_SM_FIFO_WRITE(endpoint, endpoint->my_smp_rank,
-                              endpoint->peer_smp_rank, (void *) VIRTUAL2RELATIVE(frag->hdr), false, rc);
+                              endpoint->peer_smp_rank, (void *) VIRTUAL2RELATIVE(frag->hdr), false, true, rc);
         return OMPI_SUCCESS;
     }
 
@@ -801,6 +809,10 @@ int mca_btl_sm_send( struct mca_btl_base_module_t* btl,
     mca_btl_sm_frag_t* frag = (mca_btl_sm_frag_t*)descriptor;
     int rc;
 
+    if ( mca_btl_sm_component.num_outstanding_frags * 2 > mca_btl_sm_component.fifo_size ) {
+        mca_btl_sm_component_progress();
+    }
+
     /* available header space */
     frag->hdr->len = frag->segment.seg_len;
     /* type of message, pt-2-pt, one-sided, etc */
@@ -814,8 +826,9 @@ int mca_btl_sm_send( struct mca_btl_base_module_t* btl,
      * post the descriptor in the queue - post with the relative
      * address
      */
+    OPAL_THREAD_ADD32(&mca_btl_sm_component.num_outstanding_frags, +1);
     MCA_BTL_SM_FIFO_WRITE(endpoint, endpoint->my_smp_rank,
-                          endpoint->peer_smp_rank, (void *) VIRTUAL2RELATIVE(frag->hdr), false, rc);
+                          endpoint->peer_smp_rank, (void *) VIRTUAL2RELATIVE(frag->hdr), false, true, rc);
     if( OPAL_LIKELY(0 == rc) ) {
         return 1;  /* the data is completely gone */
     }
