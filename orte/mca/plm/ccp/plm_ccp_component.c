@@ -14,8 +14,6 @@
  *
  */
 
-#define _WIN32_DCOM
-
 #include "orte_config.h"
 
 #include "opal/mca/base/mca_base_param.h"
