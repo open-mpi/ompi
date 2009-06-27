@@ -331,42 +331,26 @@ void mca_btl_sm_component_event_thread(opal_object_t* thread)
 }
 #endif
 
-void
-btl_sm_add_pending(struct mca_btl_base_endpoint_t *ep, void *data, bool resend)
-{
-    int rc;
-    btl_sm_pending_send_item_t *si;
-    opal_free_list_item_t *i;
-    OPAL_FREE_LIST_GET(&mca_btl_sm_component.pending_send_fl, i, rc);
-
-    /* don't handle error for now */
-    assert(i != NULL && rc == OMPI_SUCCESS);
-
-    si = (btl_sm_pending_send_item_t*)i;
-    si->data = data;
-
-    /* if data was on pending send list then prepend it to the list to
-     * minimize reordering */
-    if(resend)
-        opal_list_prepend(&ep->pending_sends, (opal_list_item_t*)si);
-    else
-        opal_list_append(&ep->pending_sends, (opal_list_item_t*)si);
-}
-
-static int process_pending_send(struct mca_btl_base_endpoint_t *ep) 
+void btl_sm_process_pending_sends(struct mca_btl_base_endpoint_t *ep) 
 { 
     btl_sm_pending_send_item_t *si; 
     int rc; 
 
-    si = (btl_sm_pending_send_item_t*)opal_list_remove_first(&ep->pending_sends); 
-    if(NULL == si) return OMPI_ERROR; 
+    while ( 0 < opal_list_get_size(&ep->pending_sends) ) {
+
+        si = (btl_sm_pending_send_item_t*)opal_list_remove_first(&ep->pending_sends); 
+        if(NULL == si) return;  /* ??? WHAT DOES THIS CONDITION MEAN? */
     
-    OPAL_FREE_LIST_RETURN(&mca_btl_sm_component.pending_send_fl, (opal_list_item_t*)si);
+        OPAL_FREE_LIST_RETURN(&mca_btl_sm_component.pending_send_fl, (opal_list_item_t*)si);
 
-    MCA_BTL_SM_FIFO_WRITE(ep, ep->my_smp_rank, ep->peer_smp_rank, si->data,
-                          true, rc);
+        OPAL_THREAD_ADD32(&mca_btl_sm_component.num_pending_sends, -1);
 
-    return rc; 
+        MCA_BTL_SM_FIFO_WRITE(ep, ep->my_smp_rank, ep->peer_smp_rank, si->data,
+                          true, false, rc);
+
+        if ( OMPI_SUCCESS != rc )
+            return;
+    }
 } 
 
 int mca_btl_sm_component_progress(void)
@@ -378,6 +362,22 @@ int mca_btl_sm_component_progress(void)
     mca_btl_sm_hdr_t *hdr;
     int my_smp_rank = mca_btl_sm_component.my_smp_rank;
     int peer_smp_rank, j, rc = 0;
+
+    /* first, deal with any pending sends */
+    /* This check should be fast since we only need to check one variable. */
+    if ( 0 < mca_btl_sm_component.num_pending_sends ) {
+
+        /* perform a loop to find the endpoints that have pending sends */
+        /* This can take a while longer if there are many endpoints to check. */
+        for ( peer_smp_rank = 0; peer_smp_rank < mca_btl_sm_component.num_smp_procs; peer_smp_rank++) {
+            struct mca_btl_base_endpoint_t* endpoint;
+            if ( peer_smp_rank == my_smp_rank )
+                continue;
+            endpoint = mca_btl_sm_component.sm_peers[peer_smp_rank];
+            if ( 0 < opal_list_get_size(&endpoint->pending_sends) )
+                btl_sm_process_pending_sends(endpoint);
+        }
+    }
 
     /* poll each fifo */
     for(j = 0; j < FIFO_MAP_NUM(mca_btl_sm_component.num_smp_procs); j++) {
@@ -428,7 +428,11 @@ int mca_btl_sm_component_progress(void)
                 /* return the fragment */
                 MCA_BTL_SM_FIFO_WRITE(
                         mca_btl_sm_component.sm_peers[peer_smp_rank],
+<<<<<<< .mine
+                        my_smp_rank, peer_smp_rank, hdr->frag, false, true, rc);
+=======
                         my_smp_rank, peer_smp_rank, hdr->frag, false, rc);
+>>>>>>> .r21550
                 break;
             }
             case MCA_BTL_SM_FRAG_ACK:
@@ -451,9 +455,9 @@ int mca_btl_sm_component_progress(void)
                 if( btl_ownership ) {
                     MCA_BTL_SM_FRAG_RETURN(frag);
                 }
-                if(opal_list_get_size(&endpoint->pending_sends)) {
-                   if( OMPI_ERR_RESOURCE_BUSY == process_pending_send(endpoint) )
-                       break;
+                OPAL_THREAD_ADD32(&mca_btl_sm_component.num_outstanding_frags, -1);
+                if ( 0 < opal_list_get_size(&endpoint->pending_sends) ) {
+                    btl_sm_process_pending_sends(endpoint);
                 }
                 goto recheck_peer;
             }
@@ -476,7 +480,7 @@ int mca_btl_sm_component_progress(void)
                         MCA_BTL_SM_FRAG_STATUS_MASK);
                 MCA_BTL_SM_FIFO_WRITE(
                         mca_btl_sm_component.sm_peers[peer_smp_rank],
-                        my_smp_rank, peer_smp_rank, hdr, false, rc);
+                        my_smp_rank, peer_smp_rank, hdr, false, true, rc);
                 break;
         }
     }
