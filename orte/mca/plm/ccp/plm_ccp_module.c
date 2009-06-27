@@ -12,8 +12,6 @@
  *
  */
 
-#define _WIN32_DCOM
-
 #include "orte_config.h"
 #include "orte/constants.h"
 #include "orte/types.h"

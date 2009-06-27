@@ -359,6 +359,10 @@ else
     OMPI_PROFILING_COMPILE_SEPARATELY=0
 fi
 
+# Check if we support the offsetof compiler directive
+
+OPAL_CHECK_OFFSETOF
+
 #
 # There are 2 layers to the MPI Language binidings One layer generates
 # MPI_* bindings. The other layer generates PMPI_* bindings. The
