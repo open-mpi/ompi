@@ -111,6 +111,9 @@ username           { orte_rmaps_rank_file_value.sval = yytext;
                      orte_rmaps_rank_file_value.sval = yytext; 
                      return ORTE_RANKFILE_HOSTNAME; }
 
+\+n[0-9]+           { orte_rmaps_rank_file_value.sval = yytext;
+					 return ORTE_RANKFILE_RELATIVE; }
+
 .                  { orte_rmaps_rank_file_value.sval = yytext; 
                      return ORTE_RANKFILE_ERROR; }
 
