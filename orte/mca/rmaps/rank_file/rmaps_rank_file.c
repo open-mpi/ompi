@@ -273,11 +273,11 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
     orte_vpid_t total_procs;
     opal_list_t node_list;
     opal_list_item_t *item;
-    orte_node_t *node, *nd;
+    orte_node_t *node, *nd, *root_node;
     orte_vpid_t rank, vpid_start;
     orte_std_cntr_t num_nodes, num_slots;
     orte_rmaps_rank_file_map_t *rfmap;
-    orte_std_cntr_t slots_per_node;
+    orte_std_cntr_t slots_per_node, relative_index, tmp_cnt;
     int rc;
     
     /* convenience def */
@@ -411,7 +411,25 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
                     0 == strcmp(nd->name, rfmap->node_name)) {
                     node = nd;
                     break;
-                }
+				} else if (NULL != rfmap->node_name &&
+						(('+' == rfmap->node_name[0]) && 
+						(('n' == rfmap->node_name[1]) ||
+						 ('N' == rfmap->node_name[1])))) {
+
+						relative_index=atoi(strtok(rfmap->node_name,"+n"));
+						if ( relative_index >= opal_list_get_size (&node_list) || ( 0 > relative_index)){
+							orte_show_help("help-rmaps_rank_file.txt","bad-index", true,rfmap->node_name);
+							ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+							return ORTE_ERR_BAD_PARAM;
+						}
+						root_node = (orte_node_t*) opal_list_get_first(&node_list);
+                    	for(tmp_cnt=0; tmp_cnt<relative_index; tmp_cnt++) {
+                        	root_node = (orte_node_t*) opal_list_get_next(root_node);
+                    	}
+                    	node = root_node;
+						break;
+				}  
+					                
             }
             if (NULL == node) {
                 orte_show_help("help-rmaps_rank_file.txt","bad-host", true, rfmap->node_name);
@@ -631,6 +649,7 @@ static int orte_rmaps_rank_file_parse(const char *rankfile)
                     case ORTE_RANKFILE_IPV6:
                     case ORTE_RANKFILE_STRING:
                     case ORTE_RANKFILE_INT:
+                    case ORTE_RANKFILE_RELATIVE:
                         if(ORTE_RANKFILE_INT == token) {
                             sprintf(buff,"%d", orte_rmaps_rank_file_value.ival);
                             value = buff;

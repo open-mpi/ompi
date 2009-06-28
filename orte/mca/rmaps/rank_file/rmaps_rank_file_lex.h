@@ -75,6 +75,7 @@ int orte_rmaps_rank_file_wrap(void);
 #define ORTE_RANKFILE_NEWLINE        13
 #define ORTE_RANKFILE_IPV6           14
 #define ORTE_RANKFILE_SLOT           15
+#define ORTE_RANKFILE_RELATIVE       16
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

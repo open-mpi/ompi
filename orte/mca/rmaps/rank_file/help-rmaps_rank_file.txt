@@ -56,6 +56,9 @@ Rankfile claimed host %s that was not allocated or oversubscribed it's slots.
 Please review your rank-slot assignments and your host allocation to ensure
 a proper match.
 
+[bad-index]
+Rankfile claimed host %s by index that is bigger than number of allocated hosts.
+
 [orte-rmaps-rf:alloc-error]
 There are not enough slots available in the system to satisfy the %d slots
 that were requested by the application:
