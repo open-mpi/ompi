@@ -25,7 +25,7 @@
  * Public string for version number
  */
 const char *orte_snapc_full_component_version_string = 
-"ORTE SNAPC full MCA component version " OMPI_VERSION;
+"ORTE SNAPC full MCA component version " ORTE_VERSION;
 
 /*
  * Local functionality
@@ -52,9 +52,9 @@ orte_snapc_full_component_t mca_snapc_full_component = {
             ORTE_SNAPC_BASE_VERSION_2_0_0,
             /* Component name and version */
             "full",
-            OMPI_MAJOR_VERSION,
-            OMPI_MINOR_VERSION,
-            OMPI_RELEASE_VERSION,
+            ORTE_MAJOR_VERSION,
+            ORTE_MINOR_VERSION,
+            ORTE_RELEASE_VERSION,
             
             /* Component open and close functions */
             snapc_full_open,

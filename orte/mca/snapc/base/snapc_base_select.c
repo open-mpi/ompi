@@ -40,9 +40,9 @@ static orte_snapc_base_component_t none_component = {
         ORTE_SNAPC_BASE_VERSION_2_0_0,
         /* Component name and version */
         "none",
-        OMPI_MAJOR_VERSION,
-        OMPI_MINOR_VERSION,
-        OMPI_RELEASE_VERSION,
+        ORTE_MAJOR_VERSION,
+        ORTE_MINOR_VERSION,
+        ORTE_RELEASE_VERSION,
         
         /* Component open and close functions */
         orte_snapc_base_none_open,
