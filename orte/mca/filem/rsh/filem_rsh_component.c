@@ -28,7 +28,7 @@
  * Public string for version number
  */
 const char *orte_filem_rsh_component_version_string = 
-"ORTE FILEM rsh MCA component version " OMPI_VERSION;
+"ORTE FILEM rsh MCA component version " ORTE_VERSION;
 
 /*
  * Local functionality
@@ -53,9 +53,9 @@ orte_filem_rsh_component_t mca_filem_rsh_component = {
             ORTE_FILEM_BASE_VERSION_2_0_0,
             /* Component name and version */
             "rsh",
-            OMPI_MAJOR_VERSION,
-            OMPI_MINOR_VERSION,
-            OMPI_RELEASE_VERSION,
+            ORTE_MAJOR_VERSION,
+            ORTE_MINOR_VERSION,
+            ORTE_RELEASE_VERSION,
             
             /* Component open and close functions */
             filem_rsh_open,
