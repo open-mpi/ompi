@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2009 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -148,6 +148,18 @@ int orte_plm_process_component_open(void)
                            "If set to 1, assume that the shell on the remote node is the same as the shell on the local node.  Otherwise, probe for what the remote shell.",
                            false, false, 1, &tmp);
     mca_plm_process_component.assume_same_shell = OPAL_INT_TO_BOOL(tmp);
+    mca_base_param_reg_int(c, "use_gui_prompt",
+                           "If set to 1, use Windows standard GUI to input user name and password for connecting to remote node. Otherwise, use command line prompt.",
+                           false, false, 0, &tmp);
+    mca_plm_process_component.use_gui_prompt = OPAL_INT_TO_BOOL(tmp);
+    mca_base_param_reg_int(c, "remote_reg_prefix",
+                           "If set to 1, the process module will first try to read OPAL_PREFIX registry entry on remote computer to get the orte daemon execute path. If the read failed, it will use the default prefix.",
+                           false, false, 1, &tmp);
+    mca_plm_process_component.remote_reg_prefix = OPAL_INT_TO_BOOL(tmp);
+    mca_base_param_reg_int(c, "remote_env_prefix",
+                           "If set to 1, the process module will first try to read OPENMPI_HOME user env on remote computer to get the orte daemon execute path. If the read failed, it will try to read remote registry, and then default prefix.",
+                           false, false, 1, &tmp);
+    mca_plm_process_component.remote_env_prefix = OPAL_INT_TO_BOOL(tmp);
 
     return ORTE_SUCCESS;
 }

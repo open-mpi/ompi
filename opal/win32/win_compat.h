@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2009 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -29,7 +29,7 @@
  *  0x0400 - for SwitchToThread
  *  0x0500 - for using Event Objects
  */
-#define _WIN32_WINNT 0x0600
+#define _WIN32_WINNT 0x0502
 
 /**
  * Windows does not define the exact same names in stat.h
@@ -69,6 +69,7 @@
 #include <ws2tcpip.h>
 #include <process.h>
 #include <signal.h>
+#include <conio.h>
 /**
  * For all file io operations
  */
@@ -144,6 +145,7 @@ typedef unsigned int uint;
 #define strncasecmp               _strnicmp
 #define strcasecmp                _stricmp
 #define umask                     _umask
+#define getch                     _getch 
 
 #ifndef UINT32_MAX
 #define UINT32_MAX            _UI32_MAX

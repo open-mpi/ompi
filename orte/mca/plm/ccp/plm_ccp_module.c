@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2009 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -12,7 +12,6 @@
  *
  */
 
-#define _WIN32_DCOM
 
 #include "orte_config.h"
 #include "orte/constants.h"
@@ -133,12 +132,12 @@ static int plm_ccp_launch_job(orte_job_t *jdata)
     orte_std_cntr_t launched = 0, i; 
 
     orte_job_map_t *map = NULL;
-    int argc, rc, proc_vpid_index, proc_name_index;
+    int argc, rc, proc_vpid_index;
     char *param, **env = NULL, *var, **argv = NULL;
     bool connected = false;
     char *bin_base = NULL, *lib_base = NULL, *command_line;
     
-    struct timeval completionstart, completionstop, launchstart, launchstop;
+    struct timeval completionstop, launchstart, launchstop;
     struct timeval jobstart, jobstop;
     int maxtime=0, mintime=99999999, maxiter = 0, miniter = 0, deltat;
     float avgtime=0.0;
@@ -219,8 +218,6 @@ GETMAP:
     argc = 0;
     argv = NULL;
     orte_plm_base_setup_orted_cmd(&argc, &argv);
-
-    opal_argv_append(&argc, &argv, "--no-daemonize");
 
     /* Add basic orted command line options */
     orte_plm_base_orted_append_basic_args(&argc, &argv, "env",
@@ -323,11 +320,13 @@ GETMAP:
     /* Get the collection of nodes. */
     hr = pCluster->get_ComputeNodes(&pNodesCollection);
 
-
     /* Get the enumerator used to iterate through the collection. */
     hr = pNodesCollection->GetEnumerator(&pNodes);
 
     VariantInit(&v);
+
+    int *num_procs;
+    num_procs = (int *) malloc(sizeof(int)*map->num_nodes);
 
     /* Loop through the collection. */
     while (hr = pNodes->Next(1, &v, NULL) == S_OK) {
@@ -343,6 +342,7 @@ GETMAP:
             if( 0 == strcmp(_com_util::ConvertBSTRToString(node_name), node->name)) {
                 /* Get available number of processors on required node. */
                 hr = pNode->get_NumberOfIdleProcessors(&idle_processors);
+                num_procs[i] = idle_processors;
                 num_processors += idle_processors;
             }
         }
@@ -430,14 +430,14 @@ GETMAP:
             goto cleanup;
         }
         
-        pTask->put_MinimumNumberOfProcessors(node->num_procs);
+        pTask->put_MinimumNumberOfProcessors(num_procs[i]);
         if (FAILED(hr)) {
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                 "plm:ccp:failed to create task object!"));
             goto cleanup;
         }
 
-        pTask->put_MaximumNumberOfProcessors(node->num_procs);
+        pTask->put_MaximumNumberOfProcessors(num_procs[i]);
         if (FAILED(hr)) {
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                 "plm:ccp:failed to create task object!"));
@@ -461,18 +461,22 @@ GETMAP:
             goto cleanup;
         }
 
-        hr = pTask->put_Stdout(_bstr_t(L"ompi_ccp_output.txt"));
-        if (FAILED(hr)) {
-            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                                "plm:ccp:failed to set stdout!"));
-            goto cleanup;
+        if( NULL != mca_plm_ccp_component.stdout_file ) {
+            hr = pTask->put_Stdout(_bstr_t(mca_plm_ccp_component.stdout_file));
+            if (FAILED(hr)) {
+                OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                                    "plm:ccp:failed to set stdout!"));
+                goto cleanup;
+            }
         }
 
-        hr = pTask->put_Stderr(_bstr_t(L"ompi_ccp_error.txt"));
-        if (FAILED(hr)) {
-            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                                "plm:ccp:failed to set stderr!"));
-            goto cleanup;
+        if( NULL != mca_plm_ccp_component.stderr_file) {
+            hr = pTask->put_Stderr(_bstr_t(mca_plm_ccp_component.stderr_file));
+            if (FAILED(hr)) {
+                OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                                    "plm:ccp:failed to set stderr!"));
+                goto cleanup;
+            }
         }
 
         hr = pJob->AddTask(pTask);
@@ -698,35 +702,21 @@ static int plm_ccp_disconnect(void)
 static char *plm_ccp_commandline(char *prefix, char *node_name, int argc, char **argv)
 {
     char *commandline;
-    int i, len = 0;
+    size_t i, len = 0;
 
     for( i = 0; i < argc; i++ ) {
         len += strlen(argv[i]) + 1;
     }
 
-    commandline = (char*)malloc( len + strlen(prefix) + 3);
-    memset(commandline, '\0', len+strlen(prefix)+3);
+    commandline = (char*)malloc( len + strlen(prefix) + 8);
+    memset(commandline, '\0', len+strlen(prefix)+8);
 
     commandline[0] = '"';
     strcat(commandline, prefix);
-    strcat(commandline, "\"\\");
+    strcat(commandline, "\\bin\"\\");
 
     for(i=0;i<argc;i++) {
 
-        /* Don't know why we use these -mca args, I have to ignore them
-         * otherwise the command line will be too long for CCP. */
-        if( 0 == strcmp("-mca", argv[i]) && 
-            (0 == strcmp("mca_base_param_file_path", argv[i+1]) ||
-             0 == strcmp("mca_base_param_file_path_force", argv[i+1])) ) {
-            i += 2;
-            continue;
-        }
-        
-        /* Unknown option "--no-daemonize" for Windows? */
-        if ( 0 == strcmp("--no-daemonize", argv[i]) ) {
-            continue;
-        }
-        
         /* Append command args, and separate them with spaces. */
         strcat(commandline, argv[i]);
 

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2009 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -230,7 +230,7 @@ static int discover(opal_list_t* nodelist, ICluster* pCluster)
         /* Do we have enough processors on the available nodes? 
          * Question: How do we get the required number of processors?
          */
-        if ( (Status != NodeStatus_Unreachable) && (idle_processors > 0) ) {
+        if ( (Status == NodeStatus_Ready) && (idle_processors > 0) ) {
 
             /* Get node name. */
             hr = pNode->get_Name(&node_name);
@@ -331,12 +331,12 @@ void ras_get_cluster_message(ICluster* pCluster)
 
     hr = pCluster->get_ErrorMessage(&message);
     if (SUCCEEDED(hr)) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                             _com_util::ConvertBSTRToString(message)));
         SysFreeString(message);
     }
     else {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                             "pCluster->get_ErrorMessage failed.\n"));
     }
 }

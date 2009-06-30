@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2009 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -30,6 +30,8 @@ struct orte_plm_ccp_component_t {
     int verbose;
     bool want_path_check;
     char **checked_paths;
+    char *stdout_file;
+    char *stderr_file;
     bool timing;
 };
 typedef struct orte_plm_ccp_component_t orte_plm_ccp_component_t;
