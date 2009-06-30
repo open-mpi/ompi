@@ -19,6 +19,8 @@
 
 EXTRA_DIST = .windows
 
+dist_pkgdata_DATA = help-coll-sync.txt
+
 sources = \
         coll_sync.h \
         coll_sync_component.c \
