@@ -17,8 +17,8 @@
  * $HEADER$
  */
 
-#ifndef OMPI_INFO_C_H
-#define OMPI_INFO_C_H
+#ifndef OMPI_INFO_TOOL_H
+#define OMPI_INFO_TOOL_H
 #include "ompi_config.h"
 
 #include "opal/class/opal_list.h"
