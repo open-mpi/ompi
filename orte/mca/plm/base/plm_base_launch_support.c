@@ -875,6 +875,8 @@ void orte_plm_base_app_report_launch(int fd, short event, void *data)
                 jdata->aborted_proc = procs[vpid];  /* only store this once */
                 jdata->state = ORTE_JOB_STATE_FAILED_TO_START; /* update the job state */
             }
+            /* increment the terminated counter */
+            jdata->num_terminated++;
             /* ensure we have a non-zero exit code */
             if (0 == jdata->aborted_proc->exit_code) {
                 jdata->aborted_proc->exit_code = ORTE_ERROR_DEFAULT_EXIT_CODE;
