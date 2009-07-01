@@ -266,6 +266,7 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
                                              ORTE_VPID_PRINT(vpid)));
                         continue;
                     }
+
                     /* update the termination counter IFF the state is changing to something
                      * indicating terminated
                      */
