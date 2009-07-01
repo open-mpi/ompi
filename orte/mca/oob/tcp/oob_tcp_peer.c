@@ -618,13 +618,13 @@ void mca_oob_tcp_peer_shutdown(mca_oob_tcp_peer_t* peer)
         char *host;
 
         host = orte_ess.proc_get_hostname(&(peer->peer_name));
-        opal_output(0, "%s -> %s (node: %s) oob-tcp: Communication retries exceeded.  Can not communicate with peer",
+        opal_output(0, "%s -> %s (node: %s) oob-tcp: Number of attempts to create TCP connection has been exceeded.  Can not communicate with peer",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     ORTE_NAME_PRINT(&(peer->peer_name)),
                     (NULL == host) ? "NULL" : host);
         /* provide a notifier message */
         orte_notifier.peer(ORTE_NOTIFIER_INFRA, ORTE_ERR_COMM_FAILURE, &(peer->peer_name),
-                           "OOB Communication retries exceeded.  Can not communicate with peer");
+                           "OOB Connection retries exceeded.  Can not communicate with peer");
         
         /* There are cases during the initial connection setup where
            the peer_send_msg is NULL but there are things in the queue
