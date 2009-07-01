@@ -21,6 +21,7 @@
 #include "ompi_config.h"
 
 #include <stdio.h>
+#include <string.h>
 
 #include "opal/version.h"
 #include "orte/version.h"
