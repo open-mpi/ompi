@@ -933,7 +933,6 @@ int orte_regex_decode_maps(char *regexp, orte_odls_job_t **jobdat)
     char *proc_name;
     bool hnp_entry;
 
-opal_output(0, "%s regex: %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), regexp);
     /* if regexp is NULL, then nothing to parse */
     if (NULL == regexp) {
         return ORTE_ERR_SILENT;
@@ -1152,6 +1151,9 @@ opal_output(0, "%s regex: %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), regexp);
     names = NULL;
     num_procs = 0;
     num_nodes = 0;
+    ppn = 0;
+    step = 0;
+    start_nrank = 0;
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
     hnp_entry = true;
     for (n=entry; n < opal_argv_count(seqs); n++) {

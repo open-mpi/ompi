@@ -839,6 +839,7 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
          * jobs are cleaned up as they complete, check the
          * entire array
          */
+        jmap = NULL;
         already_present = false;
         for (j=0; j < orte_jobmap.size; j++) {
             if (NULL == (jmap = (orte_jmap_t*)opal_pointer_array_get_item(&orte_jobmap, j))) {

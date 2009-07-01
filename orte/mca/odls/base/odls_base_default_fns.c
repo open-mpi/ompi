@@ -361,7 +361,6 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     boptr = &bo;
     if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &boptr, 1, OPAL_BYTE_OBJECT))) {
         ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(wireup);
         return rc;
     }
     /* release the data since it has now been copied into our buffer */
