@@ -1,0 +1,21 @@
+To run the Zia launch/wireup timing test:
+
+1. make ziatest ziaprobe
+
+2. ./ziatest x
+
+where x=ppn to be tested. The output of the program will be the time required to complete the test, plus the rank of the slowest process.
+
+The ziatest consists of the following steps:
+
+1. launches the specified ppn on each node in the allocation. If you want to restrict the nodes, then create a hostfile and add OMPI_MCA_hostfile=your-hostfile-name to your environment
+
+2. each process executes MPI_Init
+
+3. each process computes the rank of its "partner" on another node. The partner consists of the process whose local rank on the next nearest node is the same as the current process. In other words, the test identifies pairs of nodes, and then the processes with the same local rank on each pair of nodes exchange a zero-byte message.
+
+4. each process reports back a timestamp indicating when the send/recv exchange with its partner completed
+
+5. the ziatest program searches for the latest timestamp, subtracts that from its starting timestamp, and outputs the results
+
+
