@@ -115,7 +115,7 @@ void ompi_info_do_params(bool want_all_in, bool want_internal)
     
     if (want_all) {
         for (i = 0; i < mca_types.size; ++i) {
-            if (NULL == (type = opal_pointer_array_get_item(&mca_types, i))) {
+            if (NULL == (type = (char *) opal_pointer_array_get_item(&mca_types, i))) {
                 continue;
             }
             ompi_info_show_mca_params(info, type, ompi_info_component_all, want_internal);
@@ -126,7 +126,7 @@ void ompi_info_do_params(bool want_all_in, bool want_internal)
             component = opal_cmd_line_get_param(ompi_info_cmd_line, "param", (int)i, 1);
             
             for (found = false, i = 0; i < mca_types.size; ++i) {
-                if (NULL == (str = opal_pointer_array_get_item(&mca_types, i))) {
+                if (NULL == (str = (char *) opal_pointer_array_get_item(&mca_types, i))) {
                     continue;
                 }
                 if (0 == strcmp(str, type)) {
