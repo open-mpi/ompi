@@ -120,13 +120,17 @@ MACRO(OMPI_MICROSOFT_COMPILER)
       ENDFOREACH(${FUNCTION})
 
       INCLUDE(check_c_type_exists)
-      CHECK_C_TYPE_EXISTS(socklen_t SOCKLEN_T 
-        "#include <winsock2.h>\n"
-        "#include <ws2tcpip.h>\n")
+      CHECK_C_TYPE_EXISTS(socklen_t SOCKLEN_T
+        "winsock2.h;ws2tcpip.h")
       
-      CHECK_C_TYPE_EXISTS("struct sockaddr_in" STRUCT_SOCKADDR_IN 
-        "#include <winsock2.h>\n"
-        "#include <ws2tcpip.h>\n")
+      CHECK_C_TYPE_EXISTS("struct sockaddr_in" STRUCT_SOCKADDR_IN
+        "winsock2.h")
+
+      CHECK_C_TYPE_EXISTS("struct sockaddr_in6" STRUCT_SOCKADDR_IN6
+        "ws2tcpip.h")
+
+      CHECK_C_TYPE_EXISTS("struct sockaddr_storage" STRUCT_SOCKADDR_STORAGE
+        "winsock2.h;ws2tcpip.h")
 
     ELSE(CL_EXE_OK)
       MESSAGE(FATAL_ERROR "No working Microsoft compiler found. Please check if Visual Studio VC is correctly installed.")

@@ -9,8 +9,10 @@
 #
 
 #
-# Try to compile and run a test program.
-# If the type is defined, then return the size of the type.
+# Some data types are defined in SDK headers, but the SDK include path
+# is only reachable from Visual Studio ENV. So try to compile and run a test
+# program to check if the data types is defined in SDK headers.
+# If the type is defined, also return the size of the type.
 # 
 # TYPE:             the type to check
 # TYPE_NAME:        the uppercase of the type, with underlines if necessary.
@@ -23,8 +25,15 @@ MACRO(CHECK_C_TYPE_EXISTS TYPE TYPE_NAME INCLUDE_HEADERS)
 
   MESSAGE( STATUS "Checking for ${TYPE}...")
 
+  SET(INCLUDE "")
+  FOREACH(HEADER ${INCLUDE_HEADERS})
+    SET(INCLUDE ${INCLUDE} "#include <${HEADER}>\n")
+  ENDFOREACH(HEADER ${INCLUDE_HEADERS})
+
+  STRING(REPLACE ";" "" INCLUDE ${INCLUDE})
+
   FILE(WRITE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/check_${TYPE_NAME}.c"
-    "${INCLUDE_HEADERS}
+    "${INCLUDE}
      int main(){ ${TYPE} test; return sizeof(${TYPE});}")
 
   TRY_RUN(SIZEOF_${TYPE_NAME} COMPILE_RESULT "${CMAKE_BINARY_DIR}"
