@@ -417,7 +417,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
 						 ('N' == rfmap->node_name[1])))) {
 
 						relative_index=atoi(strtok(rfmap->node_name,"+n"));
-						if ( relative_index >= opal_list_get_size (&node_list) || ( 0 > relative_index)){
+						if ( relative_index >= (int)opal_list_get_size (&node_list) || ( 0 > relative_index)){
 							orte_show_help("help-rmaps_rank_file.txt","bad-index", true,rfmap->node_name);
 							ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
 							return ORTE_ERR_BAD_PARAM;
