@@ -78,7 +78,7 @@ mca_coll_sync_component_t mca_coll_sync_component = {
     50,
 
     /* Do a sync *before* each Nth collective */
-    0,
+    1000,
 
     /* Do a sync *after* each Nth collective */
     0,
