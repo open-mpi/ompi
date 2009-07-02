@@ -589,7 +589,7 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
         if (AF_INET6 == af_family) {
             int flg = 0;
             if (setsockopt (*target_sd, IPPROTO_IPV6, IPV6_V6ONLY,
-                            &flg, sizeof (flg)) < 0) {
+                            (char *) &flg, sizeof (flg)) < 0) {
                 opal_output(0,
                             "mca_oob_tcp_create_listen: unable to disable v4-mapped addresses\n");
             }

@@ -341,7 +341,7 @@ ELSE(NOT OPAL_ENABLE_FT_THREAD)
 ENDIF(NOT OPAL_ENABLE_FT_THREAD)
 
 OPTION( OPAL_ENABLE_IPV6 
-  "Enable IPv6 support, but only if the underlying system supports it." OFF)
+  "Enable IPv6 support, but only if the underlying system supports it." ON)
 MARK_AS_ADVANCED(OPAL_ENABLE_IPV6)
 
 OPTION( OPAL_ENABLE_TRACE 
