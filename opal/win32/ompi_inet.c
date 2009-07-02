@@ -60,7 +60,7 @@ int inet_pton(int af, const char *src, void *dst)
             break;
 
         case AF_INET6:
-            memcpy (dst, &sin6->sin_addr, sizeof(struct in6_addr));
+            memcpy (dst, &sin6->sin6_addr, sizeof(struct in6_addr));
             break;
         }
         return 1;
@@ -97,7 +97,7 @@ const char *inet_ntop(int af, const void *src, char *dst, size_t size)
     case AF_INET6:
         addr_len = sizeof(struct sockaddr_in6);
 		sin6->sin6_family = af;
-		memcpy (&sin6->sin_addr, src, sizeof (struct in6_addr));
+		memcpy (&sin6->sin6_addr, src, sizeof (struct in6_addr));
         break;
 
     default:
