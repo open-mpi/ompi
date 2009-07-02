@@ -541,14 +541,6 @@ static int rdmacm_client_connect_one(rdmacm_contents_t *contents,
     free(a);
     free(b);
 #endif
-    rc = rdma_resolve_addr(context->id,
-                           (struct sockaddr *) &src_in,
-                           (struct sockaddr *) &dest_in,
-                           rdmacm_resolve_timeout);
-    if (0 != rc) {
-        BTL_ERROR(("Failed to resolve the remote address with %d", rc));
-        goto out1;
-    }
 
     /* This is odd an worth explaining: when we place the context on
        the ids list, we need to add an extra RETAIN to the context.
@@ -587,6 +579,16 @@ static int rdmacm_client_connect_one(rdmacm_contents_t *contents,
      */
     OBJ_RETAIN(context);
     opal_list_append(&(contents->ids), &(context->super));
+
+    rc = rdma_resolve_addr(context->id,
+                           (struct sockaddr *) &src_in,
+                           (struct sockaddr *) &dest_in,
+                           rdmacm_resolve_timeout);
+    if (0 != rc) {
+        BTL_ERROR(("Failed to resolve the remote address with %d", rc));
+        goto out1;
+    }
+
     return OMPI_SUCCESS;
 
 out1:
