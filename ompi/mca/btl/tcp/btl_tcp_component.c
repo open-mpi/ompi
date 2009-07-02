@@ -664,7 +664,7 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
         if (AF_INET6 == af_family) {
             int flg = 0;
             if (setsockopt (sd, IPPROTO_IPV6, IPV6_V6ONLY,
-                            &flg, sizeof (flg)) < 0) {
+                            (char *) &flg, sizeof (flg)) < 0) {
                 opal_output(0,
                     "mca_btl_tcp_create_listen: unable to disable v4-mapped addresses\n");
             }
