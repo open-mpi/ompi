@@ -193,6 +193,7 @@ typedef struct opal_paffinity_base_cpu_set_t {
         int i, num_processors, num_bound;                           \
         opal_paffinity_base_get_processor_info(&num_processors);    \
         *(bound) = false;                                           \
+        num_bound = 0;                                              \
         for (i=0; i < num_processors; i++) {                        \
             if (OPAL_PAFFINITY_CPU_ISSET(i, (cpuset))) {            \
                 num_bound++;                                        \
