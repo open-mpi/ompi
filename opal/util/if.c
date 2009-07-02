@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2009 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -763,10 +763,13 @@ static int opal_ifinit(void)
                 /* fill in the index in the table */
                 intf.if_index = opal_list_get_size(&opal_if_list)+1;
 
+                /* fill in the kernel index */
+                intf.if_kernel_index = intf.if_index;
+
                 /* generate the interface name, e.g. eth0, eth1, ..... */
                 sprintf (intf.if_name, "eth%u", interface_counter++);
 
-				 /* copy all this into a persistent form and store it in the list */
+                /* copy all this into a persistent form and store it in the list */
                 intf_ptr = (opal_if_t *) malloc(sizeof(opal_if_t));
                 if (NULL == intf_ptr) {
                     opal_output (0,"opal_ifinit: Unable to malloc %d bytes",sizeof(opal_list_t));
