@@ -514,6 +514,7 @@ static inline uint16_t ntohs(uint16_t netvar) { return netvar; }
 #define sin6_len sin_len
 #define sin6_family sin_family
 #define sin6_port sin_port
+#define sin6_addr sin_addr
 #endif
 
 #if !HAVE_DECL_AF_UNSPEC
