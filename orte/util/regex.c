@@ -773,6 +773,7 @@ static int parse_node_range(char *orig, char ***names, orte_vpid_t *vpid_start,
 
     /* protect input */
     base = strdup(orig);
+    suffix = '\0';
     
     /* default to no procs */
     *vpid_start = ORTE_VPID_INVALID;
@@ -780,6 +781,7 @@ static int parse_node_range(char *orig, char ***names, orte_vpid_t *vpid_start,
     /* start by searching for ranges and proc specifications */
     len = strlen(base);
     ptr = NULL;
+    found_range = false;
     for (i = 0; i <= len; ++i) {
         if (base[i] == '[') {
             /* we found a range. this gets dealt with below */
