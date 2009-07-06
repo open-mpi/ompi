@@ -1,164 +1,53 @@
-1.0
-	- initial version
-	
-1.1.1
-	- OTF_Reader now considers the return values of the handlers
-	- added OTF_VERBOSE, OTF_DEBUG macro for error treatment
-	- introduced 'UnknownRecord' handler which allows to catch
-	  unknown record types
+1.3.12
+	- added tool 'otfinfo' which can be used to get basic information of
+	  a trace
+	- removed python bindings
+	  (a working version of the OTF python bindings are available in the
+	  latest stand-alone release; see http://www.tu-dresden.de/zih/otf/)
 
-1.1.2
-	- inverted return value of call-back handlers: 
-	  '0' is non-error, '!= 0' is regarded as an error, now!
-	  (this makes OTF conform with the VTF3 scheme.)
+1.3.11
+	- build/install tool 'otfdump' by default
+	- install documentation
+	- bugfix: removed included system headers inside 'extern "C" {}'
+	- bugfix: added configure check for functions 'fseeko()' and 'ftello()'
+	  (these functions are not available on NEC SX platforms)
 
-1.1.3
-	- fixed a minor bug in otfaux
+1.3.10
+	- added configure option '--[enable|disable]-binaries' to control
+	  building of binaries (useful for multi-lib installations)
 
-1.1.4
-	- fixed a bug in OTF_Reader which might have caused the very first 
-	  time stamp of a trace to be not properly sorted
-	- introduced '--snapshots' and '--statistics' switches to do only 
-	  snapshots or statistics. for statistics a selective mode is allowed
-	  which regards only some streams. By this means statistics can be created
-	  in parallel by calling otfaux multiple times.
+1.3.9
+	- fixed a portability bug: use own implementation of function
+	  'strdup()'
+	- install a symbolic link 'otfdecompress' which is a synonym for
+	  'otfcompress -d'
 
-1.1.5
-	- have UnknownRecord report handle incomplete records or additional bytes at 
-	the end of a file.
+1.3.8
+	- generate OTF_inttypes.h during configuring which provides
+	  the integer types like int64_t, int8_t,...
+	- shared OTF library will be linked with zlib, thus additionally
+	  linking with zlib is not necessary
+	- bugfix in otf2vtf: correctly handle function leave records with id 0
 
-1.2
-	- introduce transparent zlib compression
+1.3.7
+	- added example for using OTF_MasterControl to the doxygen documentation
+	- general improvement of the documentation
+	- improved autoconf's m4 scripts for cross buildings
 
-1.2.1
-	- added progress functions using read bytes instead of timestamps
+1.3.6
+	- OTF_{Keywords.h,Parse.h,Platform.h} will no longer be installed
+	- added a compile time assert making sure the correct sizes of the
+	  integer types ([u]int*_T)
+	- OTF is now Windows Visual Studio compatible
 
-1.2.2
-	- important bugfix: definitionstream 0 was ignored since version 1.2
+1.3.5
+	- added doxygen html documentation (docu/doxygen/html/index.html)
+	- fixed issue, where newlines were forbidden in def, stats and snaps
+	- added missing const to OTF_WStream_writeDefProcessGroup()
 
-1.2.3
-	- bugfix: provided copy handlers returned wrong value
-
-1.2.4
-	- bugfix: zlib compression bug, wrong sanity check fixed
-
-1.2.5
-	- bugfix: correctly handle process groups with more than 1000 entries
-
-1.2.6
-	- support shared libraries
-1.2.7
-	- added progress functions to OTF_RStream
-	- added a progress counter to otfmerge
-1.2.8
-	- allow suffix '.dylib' for zlib library file (from Mac OS X)
-	- removed configure warning
-
-1.2.9
-	- changeable zlevel
-	- changeable zbuffersize
-
-1.2.10
-	- bugfix: otfmerge does no longer accept traces with local streams
-
-1.2.11
-	- changed OTF_RETURN*( 0=success, !0 = error )
-	- added these macros to all internal functions and tools for better
-	  consistency
-	- fixed various memoryleaks in otf and otfmerge
-	- added otfconfig to tools. otfconfig shows installationparameters
-	  important for developers
-	- updated documentation
-	
-1.2.12
-	- removed intel compiler warnings in otfmerge
-	- removed debug output
-	- fixed 64bit issue
-
-1.2.13
-	- removed intel compiler warnings
-	- changed OTF_FILETYPE_*-macros
-	- fixed issues with OTF_getFilename()
-
-1.2.14
-	- do not linke with '-lz' if '--with-zlibsymbols' was specified
-	- added zlib include line to otflib/Makefile.am
-
-1.2.15
-	- 3 new records introduced (NOTE: these are experimental):
-	- DefFile
-	  - DefFileGroup
-	  - FileOperation
-1.2.16
-	- fixed a problem with comments in otfmerge
-	- 2 new records introduced (NOTE: these are experimental):
-	  - OpenFileSnapshot
-	  - FileOperationSummary
-1.2.17
-	- bugfixed parser (wrong treatment of unknown records)
-	- added FileGroupOperationSummary record
-	- changed FileOperation-, OpenFileSnapshot- and FileOperationSummary- record
-	  NOTE: these records are still experimental
-	- included file operation records into all tools
-	  NOTE: some parameters were added/changed
-	- the byte-parameter in the FileOperation record does now contain the
-	  new position in the file file after the seek operation
-	- bugfixed otfmerge
-
-1.2.18
-	- added fwrite check for writting less bytes than expected
-	- re-write of otfdump. Now, it uses OTF read lib instead of plain scanf. 
-	  It produces nicer output and numbers records in read order.
-
-1.2.19
-	- finished otfdump
-	- removed debug output in OTF_Reader.c
-	- re-introduced DefVersion record as read only
-
-1.2.20
-	- added own inttypes definitions in case there is no on the platform 
-	  (necessary on NEC SX6)
-
-1.2.21
-	- fixed "--with-zlib-symbols"-bug
-
-1.2.22
-	- fixed inttypes/stdint bug
-
-1.2.23
-	- removed libtool from autoconf to make configure much faster, 
-	  libtool was not used by automake anyhow
-	- removed some autoconf-generated files from CVS, 
-	  you might need to re-run 'sh bootstrap' yourself
-
-1.2.24
-	- minor change in otf[de|un]compress
-	- strictly avoid writing of unsorted time stamps. Now, there will be an
-	  error message and the corresponding buffer/stream will be disabled for
-	  further writing. The write routines provide an invlaid return code but
-	  currently there is no way to "repair" the buffer/stream after an unsorted
-	  time stamp has been issued.
-
-1.3
-	- integrated libtool for shared and static linkage to otf
-	- removed the possibility to include zlib symbols into otf
-	- fixed warning which appeared when not using zlib
-	- added python bindings to the otf library
-
-1.3.1
-	- if an fopen() call fails an error is now printed out every time
-	- OTF_READ_ERROR was introduced as an error return value for all
-	  OTF_Reader_readXXX and OTF_RStream_readXXX functions. So (uint64_t)-1 is
-	  now a reserved value, thus cannot be used as record limit.
-	  The record limit always has to be smaller than or equal to
-	  OTF_READ_MAXRECORDS.
-	- fixed issue in otfmerge, when using many streams
-
-1.3.2
-	- added small functions to convert various variable types to common 
-	  counter type uint64_t. By this means, other types can be transported 
-	  as uint64_t and re-casted during reading.
-	  This requires type information as additional counter property flags!
+1.3.4
+	- bug fix in otfmerge: missing handling of DefCollectiveOperation
+	- bugfix in the documentation: overview.eps was broken
 
 1.3.3
 	- fixed configure bug when searching for zlib on mac
@@ -171,46 +60,168 @@
 	- fixed configure bug, when using python bindings
 	- updated python bindings to support user defined counters
 
-1.3.4
-	- bug fix in otfmerge: missing handling of DefCollectiveOperation
-	- bugfix in the documentation: overview.eps was broken
+1.3.2
+	- added small functions to convert various variable types to common 
+	  counter type uint64_t. By this means, other types can be transported 
+	  as uint64_t and re-casted during reading.
+	  This requires type information as additional counter property flags!
 
-1.3.5
-	- added doxygen html documentation (docu/doxygen/html/index.html)
-	- fixed issue, where newlines were forbidden in def, stats and snaps
-	- added missing const to OTF_WStream_writeDefProcessGroup()
+1.3.1
+	- if an fopen() call fails an error is now printed out every time
+	- OTF_READ_ERROR was introduced as an error return value for all
+	  OTF_Reader_readXXX and OTF_RStream_readXXX functions. So (uint64_t)-1 is
+	  now a reserved value, thus cannot be used as record limit.
+	  The record limit always has to be smaller than or equal to
+	  OTF_READ_MAXRECORDS.
+	- fixed issue in otfmerge, when using many streams
 
-1.3.6
-	- OTF_{Keywords.h,Parse.h,Platform.h} will no longer be installed
-	- added a compile time assert making sure the correct sizes of the
-	  integer types ([u]int*_T)
-	- OTF is now Windows Visual Studio compatible
+1.3
+	- integrated libtool for shared and static linkage to otf
+	- removed the possibility to include zlib symbols into otf
+	- fixed warning which appeared when not using zlib
+	- added python bindings to the otf library
 
-1.3.7
-	- added example for using OTF_MasterControl to the doxygen documentation
-	- general improvement of the documentation
-	- improved autoconf's m4 scripts for cross buildings
+1.2.24
+	- minor change in otf[de|un]compress
+	- strictly avoid writing of unsorted time stamps. Now, there will be an
+	  error message and the corresponding buffer/stream will be disabled for
+	  further writing. The write routines provide an invlaid return code but
+	  currently there is no way to "repair" the buffer/stream after an unsorted
+	  time stamp has been issued.
 
-1.3.8
-	- generate OTF_inttypes.h during configuring which provides
-	  the integer types like int64_t, int8_t,...
-	- shared OTF library will be linked with zlib, thus additionally
-	  linking with zlib is not necessary
-	- bugfix in otf2vtf: correctly handle function leave records with id 0
+1.2.23
+	- removed libtool from autoconf to make configure much faster, 
+	  libtool was not used by automake anyhow
+	- removed some autoconf-generated files from CVS, 
+	  you might need to re-run 'sh bootstrap' yourself
 
-1.3.9
-	- fixed a portability bug: use own implementation of function
-	  'strdup()'
-	- install a symbolic link 'otfdecompress' which is a synonym for
-	  'otfcompress -d'
+1.2.22
+	- fixed inttypes/stdint bug
 
-1.3.10
-	- added configure option '--[enable|disable]-binaries' to control
-	  building of binaries (useful for multi-lib installations)
+1.2.21
+	- fixed "--with-zlib-symbols"-bug
 
-1.3.11
-	- build/install tool 'otfdump' by default
-	- install documentation
-	- bugfix: removed included system headers inside 'extern "C" {}'
-	- bugfix: added configure check for functions 'fseeko()' and 'ftello()'
-	  (these functions are not available on NEC SX platforms)
+1.2.20
+	- added own inttypes definitions in case there is no on the platform 
+	  (necessary on NEC SX6)
+
+1.2.19
+	- finished otfdump
+	- removed debug output in OTF_Reader.c
+	- re-introduced DefVersion record as read only
+
+1.2.18
+	- added fwrite check for writting less bytes than expected
+	- re-write of otfdump. Now, it uses OTF read lib instead of plain scanf. 
+	  It produces nicer output and numbers records in read order.
+
+1.2.17
+	- bugfixed parser (wrong treatment of unknown records)
+	- added FileGroupOperationSummary record
+	- changed FileOperation-, OpenFileSnapshot- and FileOperationSummary- record
+	  NOTE: these records are still experimental
+	- included file operation records into all tools
+	  NOTE: some parameters were added/changed
+	- the byte-parameter in the FileOperation record does now contain the
+	  new position in the file file after the seek operation
+	- bugfixed otfmerge
+
+1.2.16
+	- fixed a problem with comments in otfmerge
+	- 2 new records introduced (NOTE: these are experimental):
+	  - OpenFileSnapshot
+	  - FileOperationSummary
+
+1.2.15
+	- 3 new records introduced (NOTE: these are experimental):
+	- DefFile
+	  - DefFileGroup
+	  - FileOperation
+
+1.2.14
+	- do not linke with '-lz' if '--with-zlibsymbols' was specified
+	- added zlib include line to otflib/Makefile.am
+
+1.2.13
+	- removed intel compiler warnings
+	- changed OTF_FILETYPE_*-macros
+	- fixed issues with OTF_getFilename()
+
+1.2.12
+	- removed intel compiler warnings in otfmerge
+	- removed debug output
+	- fixed 64bit issue
+
+1.2.11
+	- changed OTF_RETURN*( 0=success, !0 = error )
+	- added these macros to all internal functions and tools for better
+	  consistency
+	- fixed various memoryleaks in otf and otfmerge
+	- added otfconfig to tools. otfconfig shows installationparameters
+	  important for developers
+	- updated documentation
+
+1.2.10
+	- bugfix: otfmerge does no longer accept traces with local streams
+
+1.2.9
+	- changeable zlevel
+	- changeable zbuffersize
+
+1.2.8
+	- allow suffix '.dylib' for zlib library file (from Mac OS X)
+	- removed configure warning
+
+1.2.7
+	- added progress functions to OTF_RStream
+	- added a progress counter to otfmerge
+
+1.2.6
+	- support shared libraries
+
+1.2.5
+	- bugfix: correctly handle process groups with more than 1000 entries
+
+1.2.4
+	- bugfix: zlib compression bug, wrong sanity check fixed
+
+1.2.3
+	- bugfix: provided copy handlers returned wrong value
+
+1.2.2
+	- important bugfix: definitionstream 0 was ignored since version 1.2
+
+1.2.1
+	- added progress functions using read bytes instead of timestamps
+
+1.2
+	- introduce transparent zlib compression
+
+1.1.5
+	- have UnknownRecord report handle incomplete records or additional bytes at 
+	  the end of a file.
+
+1.1.4
+	- fixed a bug in OTF_Reader which might have caused the very first 
+	  time stamp of a trace to be not properly sorted
+	- introduced '--snapshots' and '--statistics' switches to do only 
+	  snapshots or statistics. for statistics a selective mode is allowed
+	  which regards only some streams. By this means statistics can be created
+	  in parallel by calling otfaux multiple times.
+
+1.1.3
+	- fixed a minor bug in otfaux
+
+1.1.2
+	- inverted return value of call-back handlers: 
+	  '0' is non-error, '!= 0' is regarded as an error, now!
+	  (this makes OTF conform with the VTF3 scheme.)
+
+1.1.1
+	- OTF_Reader now considers the return values of the handlers
+	- added OTF_VERBOSE, OTF_DEBUG macro for error treatment
+	- introduced 'UnknownRecord' handler which allows to catch
+	  unknown record types
+
+1.0
+	- initial version

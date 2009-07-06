@@ -20,7 +20,7 @@
 
 #define OTF_VERSION_MAYOR	1
 #define OTF_VERSION_MINOR	3
-#define OTF_VERSION_SUB 	11
+#define OTF_VERSION_SUB 	12
 #define OTF_VERSION_STRING	"jellyfish"
 
 /* version history:

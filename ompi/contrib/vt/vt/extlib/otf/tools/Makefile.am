@@ -1,4 +1,4 @@
-TMP1 = otfaux otfconfig otfdump otfmerge
+TMP1 = otfaux otfconfig otfdump otfinfo otfmerge
 
 if AMHAVEVTF3
 TMP2 = otf2vtf vtf2otf
