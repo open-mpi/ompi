@@ -1,4 +1,5 @@
 5.4.9
+	- updated version of internal OTF to 1.3.12 (see extlib/otf/ChangeLog)
 	- install header files to 'PREFIX/include/vampirtrace' by default to
 	  avoid conflicts with the OpenMPI integrated version of VT
 	- added configure option '--with[out]-bfd' to control usage of BFD
