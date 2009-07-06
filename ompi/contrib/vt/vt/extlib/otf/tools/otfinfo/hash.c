@@ -36,9 +36,13 @@ static mapInfoProcessT *search_inner( mapInfoProcessT *current, uint32_t process
 mapInfoProcessT *hash_new( )
 {
   mapInfoProcessT *ret;
+  int i;
 
   ret = (mapInfoProcessT*)calloc( HASH_SIZE, sizeof(mapInfoProcessT) );
-  ret->process = (uint32_t)-1;
+  for( i = 0; i < HASH_SIZE; i++)
+  {
+    ret[i].process = (uint32_t)-1;
+  }
 
   return ret;
 }
