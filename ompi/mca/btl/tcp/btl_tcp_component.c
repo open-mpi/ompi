@@ -702,9 +702,9 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
 
         for( index = 0;  index < range; index++ ) {
 #if OPAL_WANT_IPV6
-            ((struct sockaddr_in6*) &inaddr)->sin6_port = port + index;
+            ((struct sockaddr_in6*) &inaddr)->sin6_port = htons(port + index);
 #else
-            ((struct sockaddr_in*) &inaddr)->sin_port = port + index;
+            ((struct sockaddr_in*) &inaddr)->sin_port = htons(port + index);
 #endif  /* OPAL_WANT_IPV6 */
             if(bind(sd, (struct sockaddr*)&inaddr, addrlen) < 0) {
                 if( (EADDRINUSE == opal_socket_errno) || (EADDRNOTAVAIL == opal_socket_errno) ) {
