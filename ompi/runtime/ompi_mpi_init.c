@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2006      University of Houston. All rights reserved.
+ * Copyright (c) 2006-2009 University of Houston. All rights reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -64,6 +64,7 @@
 #include "ompi/mpi/f77/constants.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/params.h"
+#include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/info/info.h"
 #include "ompi/errhandler/errcode.h"
@@ -292,6 +293,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     bool orte_setup = false;
     bool paffinity_enabled = false;
 
+    /* bitflag of the thread level support provided. To be used
+     * for the modex in order to work in heterogeneous environments. */
+    uint8_t threadlevel_bf; 
+
     /* Setup enough to check get/set MCA params */
 
     if (ORTE_SUCCESS != (ret = opal_init_util())) {
@@ -382,6 +387,17 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     ompi_mpi_thread_multiple = (ompi_mpi_thread_provided == 
                                 MPI_THREAD_MULTIPLE);
+
+
+    /* determine the bitflag belonging to the threadlevel_support provided */
+    memset ( &threadlevel_bf, 0, sizeof(uint8_t));
+    OMPI_THREADLEVEL_SET_BITFLAG ( ompi_mpi_thread_provided, threadlevel_bf );
+
+    /* add this bitflag to the modex */
+    if ( OMPI_SUCCESS != (ret = ompi_modex_send_string("MPI_THREAD_LEVEL", &threadlevel_bf, sizeof(uint8_t)))) {
+	error = "ompi_mpi_init: modex send thread level";
+	goto error;
+    }
 
     /* Once we've joined the RTE, see if any MCA parameters were
        passed to the MPI level */
@@ -793,6 +809,19 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     if (OMPI_SUCCESS != (ret = ompi_dpm_base_select())) {
         error = "ompi_dpm_base_select() failed";
         goto error;
+    }
+
+
+    /* Determine the overall threadlevel support of all processes 
+       in MPI_COMM_WORLD. This has to be done before calling 
+       coll_base_comm_select, since some of the collective components
+       e.g. hierarch, might create subcommunicators. The threadlevel
+       requested by all processes is required in order to know
+       which cid allocation algorithm can be used. */
+    if ( OMPI_SUCCESS != 
+	 ( ret = ompi_comm_cid_init ())) {
+	error = "ompi_mpi_init: ompi_comm_cid_init failed";
+	goto error;
     }
 
     /* Init coll for the comms. This has to be after dpm_base_select, 

@@ -510,6 +510,13 @@ extern int ompi_comm_num_dyncomm;
 OMPI_DECLSPEC void  ompi_comm_checkfor_blockreset ( ompi_communicator_t *comm );
 
 
+/* check whether any of the processes has requested support for 
+   MPI_THREAD_MULTIPLE. If yes, we can not use any of the
+   advanced cid allocation algorithms
+*/
+OMPI_DECLSPEC int ompi_comm_cid_init ( void );
+
+
 END_C_DECLS
 
 #endif /* OMPI_COMMUNICATOR_H */

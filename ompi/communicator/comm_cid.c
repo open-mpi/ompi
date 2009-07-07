@@ -25,6 +25,7 @@
 
 #include "opal/dss/dss.h"
 #include "orte/types.h"
+#include "ompi/proc/proc.h" 
 #include "ompi/communicator/communicator.h"
 #include "ompi/op/op.h"
 #include "ompi/constants.h"
@@ -33,6 +34,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/request/request.h"
+#include "ompi/runtime/ompi_module_exchange.h" 
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/mca/dpm/dpm.h"
 
@@ -114,6 +116,43 @@ OBJ_CLASS_INSTANCE (ompi_comm_reg_t,
 static opal_mutex_t ompi_cid_lock;
 static opal_list_t ompi_registered_comms;
 
+/* This variable is zero (false) if all processes in MPI_COMM_WORLD
+ * did not require MPI_THREAD_MULTIPLE support, and is 1 (true) as
+ * soon as at least one process requested support for THREAD_MULTIPLE */
+static int ompi_comm_world_thread_level_mult=0;
+
+
+int ompi_comm_cid_init (void)
+{
+    ompi_proc_t **procs, *thisproc;
+    uint8_t thread_level;
+    void *tlpointer;
+    int ret, i;
+    size_t size, numprocs;
+    
+    /** Note that the following call only returns processes
+     * with the same jobid. This is on purpose, since 
+     * we switch for the dynamic communicators anyway 
+     * to the original (slower) cid allocation algorithm.
+     */ 
+    procs = ompi_proc_world ( &numprocs );
+
+    for ( i=0; i<numprocs; i++ ) {
+        thisproc = procs[i];
+       
+        if (OMPI_SUCCESS != (ret = ompi_modex_recv_string("MPI_THREAD_LEVEL", thisproc, &tlpointer, &size))) {
+            return OMPI_ERROR;
+        }
+        thread_level = *((uint8_t *) tlpointer);
+        if ( OMPI_THREADLEVEL_IS_MULTIPLE (thread_level) ) {
+            ompi_comm_world_thread_level_mult = 1;
+            break;
+        }
+    }
+
+    return OMPI_SUCCESS;
+}
+
 
 int ompi_comm_nextcid ( ompi_communicator_t* newcomm, 
                         ompi_communicator_t* comm, 
@@ -153,16 +192,17 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
     }
 
     /**
-     * In case multi-threading is enabled, we revert to the old algorithm
+     * In case multi-threading is enabled by at least one process, or in 
+     * case of dynamic communicators, we revert to the old algorithm
      * starting from cid_block_start
      */
-    if (MPI_THREAD_MULTIPLE == ompi_mpi_thread_provided) {
+    if ( ompi_comm_world_thread_level_mult || OMPI_COMM_IS_DYNAMIC (newcomm) ) {
         int nextlocal_cid;
         int done=0;
         int response, glresponse=0;
         int start;
         unsigned int i;
-        
+ 
         do {
             /* Only one communicator function allowed in same time on the
              * same communicator.
