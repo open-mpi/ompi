@@ -46,6 +46,7 @@
 #  endif
 #endif
 #include <ctype.h>
+#include <limits.h>
 
 #include "ompi/constants.h"
 #include "opal/event/event.h"
@@ -169,6 +170,7 @@ static void mca_btl_tcp_component_accept_handler(int, short, void*);
 
 int mca_btl_tcp_component_open(void)
 {
+    char* message;
 #ifdef __WINDOWS__
     WSADATA win_sock_data;
     if( WSAStartup(MAKEWORD(2,2), &win_sock_data) != 0 ) {
@@ -222,23 +224,41 @@ int mca_btl_tcp_component_open(void)
         !mca_btl_tcp_param_register_int ("use_nagle", "Whether to use Nagle's algorithm or not (using Nagle's algorithm may increase short message latency)", 0);
     mca_btl_tcp_component.tcp_port_min =
         mca_btl_tcp_param_register_int( "port_min_v4",
-            "The minimum port where the TCP BTL will try to bind (default 0)", 0 );
+            "The minimum port where the TCP BTL will try to bind (default 1024)", 1024 );
+    if( mca_btl_tcp_component.tcp_port_min > USHRT_MAX ) {
+        orte_show_help("help-mpi-btl-tcp.txt", "invalid minimum port",
+                       true, "v4", orte_process_info.nodename,
+                       mca_btl_tcp_component.tcp_port_min );
+        mca_btl_tcp_component.tcp_port_min = 1024;
+    }
+    asprintf( &message, 
+              "The number of ports where the TCP BTL will try to bind (default %d)."
+              " This parameter together with the port min, define a range of ports"
+              " where Open MPI will open sockets.",
+              (0x1 << 16) - mca_btl_tcp_component.tcp_port_min - 1 );
     mca_btl_tcp_component.tcp_port_range =
-        mca_btl_tcp_param_register_int( "port_range_v4",
-            "The number of ports where the TCP BTL will try to bind (default 64K)."
-            " This parameter together with the port min, define a range of ports"
-            " where Open MPI will open sockets.",
-            64*1024 - mca_btl_tcp_component.tcp_port_min - 1);
+        mca_btl_tcp_param_register_int( "port_range_v4", message,
+                                        (0x1 << 16) - mca_btl_tcp_component.tcp_port_min - 1);
+    free(message);
 #if OPAL_WANT_IPV6
     mca_btl_tcp_component.tcp6_port_min =
         mca_btl_tcp_param_register_int( "port_min_v6",
-            "The minimum port where the TCP BTL will try to bind (default 0)", 0 );
+            "The minimum port where the TCP BTL will try to bind (default 1024)", 1024 );
+    if( mca_btl_tcp_component.tcp6_port_min > USHRT_MAX ) {
+        orte_show_help("help-mpi-btl-tcp.txt", "invalid minimum port",
+                       true, "v6", orte_process_info.nodename,
+                       mca_btl_tcp_component.tcp6_port_min );
+        mca_btl_tcp_component.tcp6_port_min = 1024;
+    }
+    asprintf( &message, 
+              "The number of ports where the TCP BTL will try to bind (default %d)."
+              " This parameter together with the port min, define a range of ports"
+              " where Open MPI will open sockets.",
+              (0x1 << 16) - mca_btl_tcp_component.tcp6_port_min - 1 );
     mca_btl_tcp_component.tcp6_port_range =
-        mca_btl_tcp_param_register_int( "port_range_v6",
-            "The number of ports where the TCP BTL will try to bind (default 64K)."
-            " This parameter together with the port min, define a range of ports"
-            " where Open MPI will open sockets.",
-            64*1024 - mca_btl_tcp_component.tcp6_port_min - 1);
+        mca_btl_tcp_param_register_int( "port_range_v6", message,
+                                        (0x1 << 16) - mca_btl_tcp_component.tcp6_port_min - 1);
+    free(message);
 #endif
     mca_btl_tcp_module.super.btl_exclusivity =  MCA_BTL_EXCLUSIVITY_LOW + 100;
     mca_btl_tcp_module.super.btl_eager_limit = 64*1024;
