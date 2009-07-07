@@ -830,12 +830,12 @@ void ompi_info_do_config(bool want_all)
                   MPI_MAX_INFO_VAL);
     ompi_info_out_int("MPI_MAX_PORT_NAME",      "options:mpi-max-port-name",      
                   MPI_MAX_PORT_NAME);
-    ompi_info_out_int("MPI_MAX_DATAREP_STRING", "options:mpi-max-datarep-string", 
 #if OMPI_PROVIDE_MPI_FILE_INTERFACE
-                  MPI_MAX_DATAREP_STRING
+    ompi_info_out_int("MPI_MAX_DATAREP_STRING", "options:mpi-max-datarep-string", 
+                  MPI_MAX_DATAREP_STRING);
 #else
-                  "IO interface not provided"
+    ompi_info_out("MPI_MAX_DATAREP_STRING", "options:mpi-max-datarep-string", 
+                  "IO interface not provided");
 #endif
-                  );
     
 }
