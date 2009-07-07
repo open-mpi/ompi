@@ -58,7 +58,6 @@ OBJ_CLASS_INSTANCE(ompi_communicator_t,opal_object_t,ompi_comm_construct,ompi_co
    shortcut for finalize and abort. */
 int ompi_comm_num_dyncomm=0;
 
-
 /*
  * Initialize comm world/self/null/parent.
  */

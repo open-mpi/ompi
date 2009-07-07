@@ -13,6 +13,7 @@
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009      University of Houston.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -56,6 +57,28 @@ OMPI_DECLSPEC extern int ompi_mpi_thread_requested;
 OMPI_DECLSPEC extern int ompi_mpi_thread_provided;
 /** Identifier of the main thread */
 OMPI_DECLSPEC extern struct opal_thread_t *ompi_mpi_main_thread;
+
+
+/** Bitflags to be used for the modex exchange for the various thread
+ *  levels. Required to support heterogeneous environments */
+#define OMPI_THREADLEVEL_SINGLE_BF     0x00000001
+#define OMPI_THREADLEVEL_FUNNELED_BF   0x00000002
+#define OMPI_THREADLEVEL_SERIALIZED_BF 0x00000004
+#define OMPI_THREADLEVEL_MULTIPLE_BF   0x00000008
+
+#define OMPI_THREADLEVEL_SET_BITFLAG(threadlevelin,threadlevelout) { \
+    if ( MPI_THREAD_SINGLE == threadlevelin ) {                 \
+        threadlevelout |= OMPI_THREADLEVEL_SINGLE_BF;           \
+    } else if ( MPI_THREAD_FUNNELED == threadlevelin ) {        \
+        threadlevelout |= OMPI_THREADLEVEL_FUNNELED_BF;         \
+    } else if ( MPI_THREAD_SERIALIZED == threadlevelin ) {      \
+        threadlevelout |= OMPI_THREADLEVEL_SERIALIZED_BF;       \
+    } else if ( MPI_THREAD_MULTIPLE == threadlevelin ) {       \
+        threadlevelout |= OMPI_THREADLEVEL_MULTIPLE_BF;         \
+    }}
+
+
+#define OMPI_THREADLEVEL_IS_MULTIPLE(threadlevel) (threadlevel & OMPI_THREADLEVEL_MULTIPLE_BF)
 
 /** Do we want to be warned on fork or not? */
 OMPI_DECLSPEC extern bool ompi_warn_on_fork;
