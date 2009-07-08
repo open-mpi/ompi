@@ -374,6 +374,8 @@ ELSE(NOT OMPI_WANT_MPI_INTERFACE_WARNING)
   SET (OMPI_WANT_MPI_INTERFACE_WARNING 1)
 ENDIF(NOT OMPI_WANT_MPI_INTERFACE_WARNING)
 
+OPTION(OMPI_WANT_CCP
+  "Whether we want to have the CCP remote process launch support." ON)
 
 SET (OMPI_EXT_COMPONENTS Example CACHE STRING 
   "Specify user defined MPI Extended Interface Components." FORCE)
