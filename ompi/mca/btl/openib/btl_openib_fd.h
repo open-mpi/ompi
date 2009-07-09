@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sandia National Laboratories. All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -61,6 +62,13 @@ int ompi_btl_openib_fd_run_in_service(ompi_btl_openib_fd_main_callback_fn_t call
  */
 int ompi_btl_openib_fd_run_in_main(ompi_btl_openib_fd_main_callback_fn_t callback,
                                    void *context);
+
+/**
+ * Drain all pending messages from the main thread's pipe.
+ * Likely only useful during finalize, when the event library
+ * won't fire callbacks.
+ */
+int ompi_btl_openib_fd_main_thread_drain(void);
 
 /**
  * Finalize fd monitoring.

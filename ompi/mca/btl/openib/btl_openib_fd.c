@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sandia National Laboratories. All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -669,6 +670,33 @@ int ompi_btl_openib_fd_run_in_main(ompi_btl_openib_fd_main_callback_fn_t *callba
 
     return OMPI_SUCCESS;
 }
+
+
+int
+ompi_btl_openib_fd_main_thread_drain(void)
+{
+    int nfds, ret;
+    fd_set rfds;
+    struct timeval tv;
+  
+    while (1) {
+        FD_ZERO(&rfds);
+        FD_SET(pipe_to_main_thread[0], &rfds);
+        nfds = pipe_to_main_thread[0] + 1;
+
+        tv.tv_sec = 0;
+        tv.tv_usec = 0;
+
+        ret = select(nfds, &rfds, NULL, NULL, &tv);
+        if (ret > 0) {
+            main_thread_event_callback(pipe_to_main_thread[0], 0, NULL);
+            return 0;
+        } else {
+            return ret;
+        }
+    }
+}
+
 
 /*
  * Finalize
