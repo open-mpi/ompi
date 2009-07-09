@@ -173,7 +173,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
 {
     size_t size, length, length_payload;
     char *sm_ctl_file;
-    sm_fifo_t *my_fifos;
+    mca_btl_sm_fifo_t *my_fifos;
     int my_mem_node=-1, num_mem_nodes=-1, i;
 
     init_maffinity(&my_mem_node, &num_mem_nodes);
@@ -196,7 +196,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
         /*
          * This heuristic formula mostly says that we request memory for:
          * - nfifos FIFOs, each comprising:
-         *   . a sm_fifo_t structure
+         *   . an mca_btl_sm_fifo_t structure
          *   . many pointers (fifo_size of them per FIFO)
          * - eager fragments (2*n of them, allocated in sm_free_list_inc chunks)
          * - max fragments (sm_free_list_num of them)
@@ -205,7 +205,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
          * additions to account for some padding and edge effects that may lie
          * in the allocator.
          */
-        res.size = m->nfifos * ( sizeof(sm_fifo_t) + sizeof(void *) * m->fifo_size + 4 * CACHE_LINE_SIZE )
+        res.size = m->nfifos * ( sizeof(mca_btl_sm_fifo_t) + sizeof(void *) * m->fifo_size + 4 * CACHE_LINE_SIZE )
             + ( 2 * n + m->sm_free_list_inc ) * ( m->eager_limit   + 2 * CACHE_LINE_SIZE )
             +           m->sm_free_list_num   * ( m->max_frag_size + 2 * CACHE_LINE_SIZE );
         if ( ((double) res.size) * n > LONG_MAX )
@@ -252,7 +252,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     /* Pass in a data segment alignment of 0 to get no data
        segment (only the shared control structure) */
     size = sizeof(mca_common_sm_file_header_t) +
-        n * (sizeof(sm_fifo_t*) + sizeof(char *) + sizeof(uint16_t)) + CACHE_LINE_SIZE;
+        n * (sizeof(mca_btl_sm_fifo_t*) + sizeof(char *) + sizeof(uint16_t)) + CACHE_LINE_SIZE;
     if(!(mca_btl_sm_component.mmap_file =
          mca_common_sm_mmap_init(size, sm_ctl_file,
                                  sizeof(mca_common_sm_file_header_t),
@@ -279,7 +279,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
         return OMPI_ERROR;
     }
 
-    mca_btl_sm_component.shm_fifo = (sm_fifo_t **)mca_btl_sm_component.mmap_file->data_addr;
+    mca_btl_sm_component.shm_fifo = (mca_btl_sm_fifo_t **)mca_btl_sm_component.mmap_file->data_addr;
     mca_btl_sm_component.shm_bases = (char**)(mca_btl_sm_component.shm_fifo + n);
     mca_btl_sm_component.shm_mem_nodes = (uint16_t*)(mca_btl_sm_component.shm_bases + n);
 
@@ -304,7 +304,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
         (uint16_t)my_mem_node;
 
     /* initialize the array of fifo's "owned" by this process */
-    if(NULL == (my_fifos = (sm_fifo_t*)mpool_calloc(FIFO_MAP_NUM(n), sizeof(sm_fifo_t))))
+    if(NULL == (my_fifos = (mca_btl_sm_fifo_t*)mpool_calloc(FIFO_MAP_NUM(n), sizeof(mca_btl_sm_fifo_t))))
         return OMPI_ERR_OUT_OF_RESOURCE;
 
     mca_btl_sm_component.shm_fifo[mca_btl_sm_component.my_smp_rank] = my_fifos;
@@ -313,7 +313,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
 
     /* cache the pointer to the 2d fifo array.  These addresses
      * are valid in the current process space */
-    mca_btl_sm_component.fifo = (sm_fifo_t**)malloc(sizeof(sm_fifo_t*) * n);
+    mca_btl_sm_component.fifo = (mca_btl_sm_fifo_t**)malloc(sizeof(mca_btl_sm_fifo_t*) * n);
 
     if(NULL == mca_btl_sm_component.fifo)
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -353,8 +353,11 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     if ( OMPI_SUCCESS != i )
         return i;
 
+    mca_btl_sm_component.num_outstanding_frags = 0;
+
+    mca_btl_sm_component.num_pending_sends = 0;
     i = opal_free_list_init(&mca_btl_sm_component.pending_send_fl,
-                            sizeof(btl_sm_pending_send_item_t),
+                            sizeof(mca_btl_sm_pending_send_item_t),
                             OBJ_CLASS(opal_free_list_item_t),
                             16, -1, 32);
     if ( OMPI_SUCCESS != i )
@@ -533,7 +536,7 @@ int mca_btl_sm_add_procs(
 
         /* store local address of remote fifos */
         mca_btl_sm_component.fifo[j] =
-            (sm_fifo_t*)OFFSET2ADDR(diff, mca_btl_sm_component.shm_fifo[j]);
+            (mca_btl_sm_fifo_t*)OFFSET2ADDR(diff, mca_btl_sm_component.shm_fifo[j]);
 
         /* cache local copy of peer memory node number */
         mca_btl_sm_component.mem_nodes[j] = mca_btl_sm_component.shm_mem_nodes[j];
@@ -740,6 +743,11 @@ int mca_btl_sm_sendi( struct mca_btl_base_module_t* btl,
     mca_btl_sm_frag_t* frag;
     int rc;
 
+    if ( mca_btl_sm_component.num_outstanding_frags * 2 > (int) mca_btl_sm_component.fifo_size ) {
+        mca_btl_sm_component_progress();
+    }
+
+    /* this check should be unnecessary... turn into an assertion? */
     if( length < mca_btl_sm_component.eager_limit ) {
         MCA_BTL_SM_FRAG_ALLOC_EAGER(frag, rc);
         if( OPAL_UNLIKELY(NULL == frag) ) {
@@ -772,8 +780,9 @@ int mca_btl_sm_sendi( struct mca_btl_base_module_t* btl,
          * post the descriptor in the queue - post with the relative
          * address
          */
+        OPAL_THREAD_ADD32(&mca_btl_sm_component.num_outstanding_frags, +1);
         MCA_BTL_SM_FIFO_WRITE(endpoint, endpoint->my_smp_rank,
-                              endpoint->peer_smp_rank, (void *) VIRTUAL2RELATIVE(frag->hdr), false, rc);
+                              endpoint->peer_smp_rank, (void *) VIRTUAL2RELATIVE(frag->hdr), false, true, rc);
         return rc;
     }
     *descriptor = mca_btl_sm_alloc( btl, endpoint, order,
@@ -795,6 +804,10 @@ int mca_btl_sm_send( struct mca_btl_base_module_t* btl,
     mca_btl_sm_frag_t* frag = (mca_btl_sm_frag_t*)descriptor;
     int rc;
 
+    if ( mca_btl_sm_component.num_outstanding_frags * 2 > (int) mca_btl_sm_component.fifo_size ) {
+        mca_btl_sm_component_progress();
+    }
+
     /* available header space */
     frag->hdr->len = frag->segment.seg_len;
     /* type of message, pt-2-pt, one-sided, etc */
@@ -808,8 +821,9 @@ int mca_btl_sm_send( struct mca_btl_base_module_t* btl,
      * post the descriptor in the queue - post with the relative
      * address
      */
+    OPAL_THREAD_ADD32(&mca_btl_sm_component.num_outstanding_frags, +1);
     MCA_BTL_SM_FIFO_WRITE(endpoint, endpoint->my_smp_rank,
-                          endpoint->peer_smp_rank, (void *) VIRTUAL2RELATIVE(frag->hdr), false, rc);
+                          endpoint->peer_smp_rank, (void *) VIRTUAL2RELATIVE(frag->hdr), false, true, rc);
     if( OPAL_LIKELY(0 == rc) ) {
         return 1;  /* the data is completely gone */
     }

@@ -83,7 +83,7 @@ extern "C" {
 
 #define SM_FIFO_FREE  (void *) (-2)
 
-struct sm_fifo_t {
+struct mca_btl_sm_fifo_t {
     /* This queue pointer is used only by the heads. */
     volatile void **queue;           char pad0[CACHE_LINE_SIZE - sizeof(void **)           ];
     /* This lock is used by the heads. */
@@ -101,7 +101,7 @@ struct sm_fifo_t {
                                                                - sizeof(opal_atomic_lock_t)
                                                                - sizeof(int) * 3           ];
 };
-typedef struct sm_fifo_t sm_fifo_t;
+typedef struct mca_btl_sm_fifo_t mca_btl_sm_fifo_t;
 
 /*
  * Shared Memory resource managment
@@ -136,10 +136,10 @@ struct mca_btl_sm_component_t {
     mca_common_sm_mmap_t *mmap_file;   /**< description of mmap'ed file */
     mca_common_sm_file_header_t *sm_ctl_header;  /* control header in
                                                     shared memory */
-    sm_fifo_t **shm_fifo;              /**< pointer to fifo 2D array in shared memory */
+    mca_btl_sm_fifo_t **shm_fifo;      /**< pointer to fifo 2D array in shared memory */
     char **shm_bases;                  /**< pointer to base pointers in shared memory */
     uint16_t *shm_mem_nodes;           /**< pointer to mem noded in shared memory */
-    sm_fifo_t **fifo;                  /**< cached copy of the pointer to the 2D
+    mca_btl_sm_fifo_t **fifo;          /**< cached copy of the pointer to the 2D
                                           fifo array.  The address in the shared
                                           memory segment sm_ctl_header is a relative,
                                           but this one, in process private memory, is
@@ -161,6 +161,8 @@ struct mca_btl_sm_component_t {
     struct mca_btl_base_endpoint_t **sm_peers;
 
     opal_free_list_t pending_send_fl;
+    int num_outstanding_frags;         /**< number of fragments sent but not yet returned to free list */
+    int num_pending_sends;             /**< total number on all of my pending-send queues */
     int mem_node;
     int num_mem_nodes;
     
@@ -173,12 +175,12 @@ struct mca_btl_sm_component_t {
 typedef struct mca_btl_sm_component_t mca_btl_sm_component_t;
 OMPI_MODULE_DECLSPEC extern mca_btl_sm_component_t mca_btl_sm_component;
 
-struct btl_sm_pending_send_item_t
+struct mca_btl_sm_pending_send_item_t
 {
     opal_free_list_item_t super;
     void *data;
 };
-typedef struct btl_sm_pending_send_item_t btl_sm_pending_send_item_t;
+typedef struct mca_btl_sm_pending_send_item_t mca_btl_sm_pending_send_item_t;
 
 /***
  * FIFO support for sm BTL.
@@ -200,7 +202,7 @@ typedef struct btl_sm_pending_send_item_t btl_sm_pending_send_item_t;
 /* ================================================== */
 
 static inline int sm_fifo_init(int fifo_size, mca_mpool_base_module_t *mpool,
-                               sm_fifo_t *fifo, int lazy_free)
+                               mca_btl_sm_fifo_t *fifo, int lazy_free)
 {
     int i, qsize;
 
@@ -240,7 +242,7 @@ static inline int sm_fifo_init(int fifo_size, mca_mpool_base_module_t *mpool,
 }
 
 
-static inline int sm_fifo_write(void *value, sm_fifo_t *fifo)
+static inline int sm_fifo_write(void *value, mca_btl_sm_fifo_t *fifo)
 {
     volatile void **q = (volatile void **) RELATIVE2VIRTUAL(fifo->queue);
 
@@ -257,7 +259,7 @@ static inline int sm_fifo_write(void *value, sm_fifo_t *fifo)
 }
 
 
-static inline void *sm_fifo_read(sm_fifo_t *fifo)
+static inline void *sm_fifo_read(mca_btl_sm_fifo_t *fifo)
 {
     void *value;
 
