@@ -2,6 +2,7 @@
  * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2008 Chelsio, Inc. All rights reserved.
  * Copyright (c) 2008      Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2009      Sandia National Laboratories. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -977,7 +978,7 @@ static void *call_disconnect_callback(void *v)
     OBJ_RELEASE(context);
 
     /* Tell the main thread that we're done */
-    ++disconnect_callbacks;
+    opal_atomic_add(&disconnect_callbacks, 1);
     OPAL_OUTPUT((-1, "SERVICE Service thread disconnect on ID %p done; count=%d",
                  (void*) tmp, disconnect_callbacks));
     return NULL;
@@ -1020,9 +1021,8 @@ static int rdmacm_endpoint_finalize(struct mca_btl_base_endpoint_t *endpoint)
         rdmacm_contents_t *contents = (rdmacm_contents_t *) item;
 
         if (endpoint == contents->endpoint) {
-            for (item2 = opal_list_remove_first(&(contents->ids));
-                 NULL != item2;
-                 item2 = opal_list_remove_first(&(contents->ids))) {
+            while (NULL != 
+                   (item2 = opal_list_remove_first(&(contents->ids)))) {
                 /* Fun race condition: we cannot call
                    rdma_disconnect() here in the main thread, because
                    if we do, there is a nonzero chance that the
@@ -1039,7 +1039,9 @@ static int rdmacm_endpoint_finalize(struct mca_btl_base_endpoint_t *endpoint)
                 ompi_btl_openib_fd_run_in_service(call_disconnect_callback,
                                                   item2);
             }
-            opal_list_remove_item(&client_list, item);
+	    /* remove_item returns the item before the item removed,
+	       meaning that the for list is still safe */
+            item = opal_list_remove_item(&client_list, item);
             contents->on_client_list = false;
             break;
         }
@@ -1051,6 +1053,7 @@ static int rdmacm_endpoint_finalize(struct mca_btl_base_endpoint_t *endpoint)
 
     /* Now wait for all the disconnect callbacks to occur */
     while (num_to_wait_for != disconnect_callbacks) {
+        ompi_btl_openib_fd_main_thread_drain();
         sched_yield();
     }
 
