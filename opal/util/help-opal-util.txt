@@ -23,3 +23,15 @@ install its own signal handler for this signal by setting the
 
   Signal: %d
   Current opal_signal value: %s
+*
+[malformed IP address or netmask]
+Open MPI has detected at least one malformed IP address or netmask in
+the value of the opal_net_private_ipv4 MCA parameter.  The
+opal_net_private_ipv4 MCA parameter accepts a semicolon-delimited list
+of Classless Inter-Domain Routing (CIDR) notation specifications, each
+of the form <ipaddress>/<mask>.  For example:
+
+     10.0.0.0/8;172.16.0.0/12;192.168.0.0/16;169.254.0.0/16
+
+All malformed entries will be ignored; Open MPI will attempt to continue
+your job.  The first detected malformed entry was %s.

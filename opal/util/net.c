@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -72,6 +73,7 @@
 #include "opal/util/net.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
+#include "opal/util/show_help.h"
 #include "opal/constants.h"
 #include "opal/threads/tsd.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -119,7 +121,7 @@ opal_net_init()
 {
     char *string_value, **args, *arg;
     uint32_t a, b, c, d, bits, addr;
-    int i, count;
+    int i, count, found_bad = 0;
 
     /* RFC1918 defines
        - 10.0.0./8
@@ -130,7 +132,7 @@ opal_net_init()
        - 169.254.0.0/16 for DHCP onlink iff there's no DHCP server
     */
     mca_base_param_reg_string_name( "opal", "net_private_ipv4",
-                                    "Default values for private networks (based on RFC1918 and RFC3330)",
+                                    "Semicolon-delimited list of CIDR notation entries specifying what networks are considered \"private\" (default value based on RFC1918 and RFC3330)",
                                     false, false, "10.0.0.0/8;172.16.0.0/12;192.168.0.0/16;169.254.0.0/16",
                                     &string_value );
 
@@ -151,8 +153,13 @@ opal_net_init()
                 /* TODO: A reminder to change this to OPAL SOS once this framework
                  * get added to the trunk.
                  */
-                opal_output( 0, "Malformed IP address or netmask. The correct format "
-                             "is a list of [0-255].[0-255].[0-255].[0-255]/[0-32] separated by ; " );
+                if (0 == found_bad) {
+                    opal_output(0, "FOUND BAD!\n");
+                    opal_show_help("help-opal-util.txt", 
+                                   "malformed IP address or netmask",
+                                   true, args[i]);
+                    found_bad = 1;
+                }
                 continue;
             }
             addr = (a << 24) | (b << 16) | (c << 8) | d;
