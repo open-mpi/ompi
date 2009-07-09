@@ -120,6 +120,7 @@ typedef struct {
     mca_btl_openib_endpoint_t *endpoint;
     uint8_t qpnum;
     bool already_disconnected;
+    uint16_t route_retry_count;
     struct rdma_cm_id *id;
 } id_context_t;
 
@@ -151,7 +152,8 @@ static struct rdma_event_channel *event_channel = NULL;
 static int rdmacm_priority = 30;
 static uint16_t rdmacm_port = 0;
 static uint32_t rdmacm_addr = 0;
-static int rdmacm_resolve_timeout = 2000;
+static int rdmacm_resolve_timeout = 1000;
+static int rdmacm_resolve_max_retry_count = 20;
 static bool rdmacm_reject_causes_connect_error = false;
 static volatile int disconnect_callbacks = 0;
 static bool rdmacm_component_initialized = false;
@@ -173,6 +175,7 @@ static void id_context_constructor(id_context_t *context)
     context->contents = NULL;
     context->endpoint = NULL;
     context->qpnum = 255;
+    context->route_retry_count = 0;
 }
 
 static void id_context_destructor(id_context_t *context)
@@ -243,6 +246,17 @@ static void rdmacm_component_register(void)
     } else {
         orte_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
                        "illegal timeout", true, value);
+    }
+
+    mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version,
+                           "connect_rdmacm_retry_count",
+                           "Maximum number of times rdmacm will retry route resolution",
+                           false, false, rdmacm_resolve_max_retry_count, &value);
+    if (value > 0) {
+        rdmacm_resolve_max_retry_count = value;
+    } else {
+        orte_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
+                       "illegal retry count", true, value);
     }
 
     mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version,
@@ -1542,8 +1556,22 @@ static int event_handler(struct rdma_cm_event *event)
     case RDMA_CM_EVENT_UNREACHABLE:
     case RDMA_CM_EVENT_CONNECT_RESPONSE:
     case RDMA_CM_EVENT_ADDR_ERROR:
-    case RDMA_CM_EVENT_ROUTE_ERROR:
     case RDMA_CM_EVENT_DEVICE_REMOVAL:
+        ompi_btl_openib_fd_run_in_main(show_help_rdmacm_event_error, event);
+        rc = OMPI_ERROR;
+        break;
+
+    case RDMA_CM_EVENT_ROUTE_ERROR:
+        /* Route lookup does not necessarily handle retries, and there
+           appear to be cases where the subnet manager node can no
+           longer handle incoming requests.  The rdma connection
+           manager and lower level code doesn't handle retries, so we
+           have to. */
+	if (context->route_retry_count < rdmacm_resolve_max_retry_count) {
+		context->route_retry_count++;
+		rc = resolve_route(context);
+		break;
+	}
         ompi_btl_openib_fd_run_in_main(show_help_rdmacm_event_error, event);
         rc = OMPI_ERROR;
         break;
