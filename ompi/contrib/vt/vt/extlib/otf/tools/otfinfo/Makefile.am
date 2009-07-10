@@ -1,0 +1,21 @@
+INCLUDES = -I$(top_builddir)/otflib -I$(top_srcdir)/otflib
+
+if AMBUILDBINARIES
+bin_PROGRAMS = \
+	otfinfo
+endif
+
+otfinfo_LDADD = $(top_builddir)/otflib/libotf.la
+if ! AMDEPZLIB
+otfinfo_LDADD += $(ZLIB_LIB_LINE)
+endif
+
+otfinfo_SOURCES = \
+	handler.h \
+	hash.h \
+	otfinfo_error.h \
+	handler.c \
+	hash.c \
+	otfinfo.c \
+	otfinfo_error.c
+

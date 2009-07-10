@@ -3,9 +3,9 @@
 
 
 AC_PREREQ(2.57)
-AC_INIT(OTF, 1.3.11, andreas.knuepfer@tu-dresden.de )
+AC_INIT(OTF, 1.3.12, andreas.knuepfer@tu-dresden.de )
 AC_CANONICAL_SYSTEM
-AM_INIT_AUTOMAKE(OTF, 1.3.11)
+AM_INIT_AUTOMAKE(OTF, 1.3.12)
 AC_CONFIG_SRCDIR([config.h.in])
 AM_CONFIG_HEADER(config.h)
 
@@ -34,10 +34,6 @@ CHECK_ZLIB
 if test x"$force_zlib" = "xyes" -a x"$zlib_error" = "xyes"; then exit 1; fi
 AM_CONDITIONAL(AMHAVEZLIB, test x"$have_zlib" = xyes)
 AM_CONDITIONAL(AMDEPZLIB, test x"$have_zlib" = xyes -a x"$enable_shared" = xyes)
-
-# Checks for swig and python-dev.
-SWIG_PYTHON
-AM_CONDITIONAL(AMHAVEPYTHONSWIG, [test "$pythonexists" = yes -a "$swigexists" = yes] )
 
 WITH_DEBUG
 WITH_VERBOSE
@@ -82,12 +78,12 @@ AC_SUBST([sizeof_long])
 AC_CONFIG_FILES([Makefile
 	otflib/Makefile
 	otflib/OTF_inttypes_unix.h
-	otflib_py/Makefile
 	tools/Makefile
 	tools/otfaux/Makefile
 	tools/otfcompress/Makefile
 	tools/otfconfig/Makefile
 	tools/otfdump/Makefile
+	tools/otfinfo/Makefile
 	tools/otfmerge/Makefile
 	tools/otf2vtf/Makefile
 	tools/vtf2otf/Makefile
