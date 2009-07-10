@@ -1,9 +1,12 @@
-2 December 2008
+10 July 2009
 ---------------
 
-This version of Open MPI compiles and runs under Microsoft Windows.
-It has received limited testing compared to other POSIX-like
-environments, but it does seem to work.
+This version of Open MPI compiles and runs under Microsoft Windows
+platforms, including Windows XP, Windows HPC Server 2003/2008 and also
+Windows 7 RC. It provides two remote process launch components, one is
+using WMI, and the other is using Windows CCP API for Windows HPC
+Servers. But it has received limited testing compared to other POSIX-like
+environments, so feedbacks are important and helpful for us. 
 
 You can download an Open MPI tarball from the main web site
 (http://www.open-mpi.org) or check out a developer copy via Subversion
