@@ -154,7 +154,7 @@ Known issues
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (14 April 2009):
+base as of this writing (10 July 2009):
 
 General notes
 -------------
@@ -212,7 +212,7 @@ General notes
   - Other 64 bit platforms (e.g., Linux on PPC64)
   - Microsoft Windows CCP (Microsoft Windows server 2003 and 2008);
     more testing and support is expected later in the Open MPI v1.3.x
-    series.
+    series.  See the README.WINDOWS file.
 
 Compiler Notes
 --------------
@@ -503,7 +503,7 @@ Network Support
   current MX MTL does not support message pipelining resulting in
   lower performances in case of non-contiguous data-types.
 
-The "ob1" PML and BTL components use Open MPI's internal on-node
+  The "ob1" PML and BTL components use Open MPI's internal on-node
   shared memory and process loopback devices for high performance.
   The BTL interface allows multiple devices to be used simultaneously.
   For the MX BTL it is recommended that the first segment (which is as
