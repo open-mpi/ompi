@@ -127,8 +127,8 @@ int ompi_comm_cid_init (void)
     ompi_proc_t **procs, *thisproc;
     uint8_t thread_level;
     void *tlpointer;
-    int ret, i;
-    size_t size, numprocs;
+    int ret;
+    size_t i, size, numprocs;
     
     /** Note that the following call only returns processes
      * with the same jobid. This is on purpose, since 
