@@ -31,6 +31,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
+#include "orte/mca/routed/routed.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"
@@ -425,11 +426,13 @@ int orte_show_help(const char *filename, const char *topic,
     }
     
     /* if we are the HNP, or the RML has not yet been setup,
+     * or ROUTED has not been setup,
      * or we weren't given an HNP, then all we can do
      * is process this locally
      */
     if (ORTE_PROC_IS_HNP ||
         NULL == orte_rml.send_buffer ||
+        NULL == orte_routed.get_route ||
         NULL == orte_process_info.my_hnp_uri) {
         rc = show_help(filename, topic, output, ORTE_PROC_MY_NAME);
     }
