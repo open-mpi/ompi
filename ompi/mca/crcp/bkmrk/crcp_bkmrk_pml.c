@@ -1591,7 +1591,7 @@ static int ompi_crcp_bkmrk_pml_start_isend_init(ompi_request_t **request)
     size_t tmp_ddt_size  = 0;
 
     breq = (mca_pml_base_request_t *)(*request);
-    tmp_ddt_size = (breq->req_datatype)->size;
+    ompi_datatype_type_size(breq->req_datatype, &tmp_ddt_size);
 
     /*
      * Find the peer reference
@@ -2071,7 +2071,7 @@ static int ompi_crcp_bkmrk_pml_start_drain_irecv_init(ompi_request_t **request, 
     *found_drain = false;
 
     breq = (mca_pml_base_request_t *)(*request);
-    tmp_ddt_size = (breq->req_datatype)->size;
+    ompi_datatype_type_size(breq->req_datatype, &tmp_ddt_size);
 
     /*
      * If peer rank is given then find the peer reference
@@ -2189,7 +2189,7 @@ static int ompi_crcp_bkmrk_pml_start_irecv_init(ompi_request_t **request)
     size_t tmp_ddt_size  = 0;
 
     breq = (mca_pml_base_request_t *)(*request);
-    tmp_ddt_size = (breq->req_datatype)->size;
+    ompi_datatype_type_size(breq->req_datatype, &tmp_ddt_size);
 
     /*
      * If peer rank is given then find the peer reference
@@ -2819,7 +2819,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_start(
 
         for(iter_req = 0; iter_req < count; iter_req++) {
             breq = (mca_pml_base_request_t *)requests[iter_req];
-            tmp_ddt_size = (breq->req_datatype)->size;
+            ompi_datatype_type_size(breq->req_datatype, &tmp_ddt_size);
 
             if( breq->req_type == MCA_PML_REQUEST_RECV ) {
                 found_drain = false;
@@ -2840,7 +2840,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_start(
     else if( OMPI_CRCP_PML_POST == pml_state->state) {
         for(iter_req = 0; iter_req < count; iter_req++) {
             breq = (mca_pml_base_request_t *)requests[iter_req];
-            tmp_ddt_size = (breq->req_datatype)->size;
+            ompi_datatype_type_size(breq->req_datatype, &tmp_ddt_size);
 
             if (breq->req_type == MCA_PML_REQUEST_RECV) {
                 /*
@@ -2905,7 +2905,7 @@ int ompi_crcp_bkmrk_request_complete(struct ompi_request_t *request)
     /* Extract source/tag/ddt_size */
     src = breq->req_peer;
     tag = breq->req_tag;
-    tmp_ddt_size = (breq->req_datatype)->size;
+    ompi_datatype_type_size(breq->req_datatype, &tmp_ddt_size);
 
     /*
      * Find the peer reference
@@ -3820,14 +3820,17 @@ static int drain_message_check_recv(void **buf, size_t count,
     ompi_crcp_bkmrk_pml_peer_ref_t    *peer_ref      = NULL;
     ompi_crcp_bkmrk_pml_drain_message_ref_t   *drain_msg_ref = NULL;
     ompi_crcp_bkmrk_pml_message_content_ref_t *content_ref = NULL;
+    size_t tmp_ddt_size  = 0;
 
     *found_drain = false;
+
+    ompi_datatype_type_size(datatype, &tmp_ddt_size);
 
     /*
      * Check to see if this message is in the drained message list
      */
     if( OMPI_SUCCESS != (ret = drain_message_find_any(count, *tag, *src,
-                                                      comm, datatype->size,
+                                                      comm, tmp_ddt_size,
                                                       &drain_msg_ref,
                                                       &content_ref,
                                                       &peer_ref) ) ) {
