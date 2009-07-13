@@ -100,7 +100,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_datatype_t);
 
 struct ompi_predefined_datatype_t {
     struct ompi_datatype_t dt;
-    char padding[PREDEFINED_DATATYPE_PAD - sizeof(opal_datatype_t)];
+    char padding[PREDEFINED_DATATYPE_PAD - sizeof(ompi_datatype_t)];
 };
 
 typedef struct ompi_predefined_datatype_t ompi_predefined_datatype_t;
