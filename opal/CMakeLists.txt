@@ -15,6 +15,19 @@ PROJECT (OPAL)
 # Add include sub directory to gernerate opal_config.h
 ADD_SUBDIRECTORY (include)
 
+# These two files need to be compiled twice, one time with preprocessor CHECKSUM.
+# Make one copy of them with another file name and add them into the project.
+CONFIGURE_FILE(datatype/opal_datatype_pack.c ${PROJECT_BINARY_DIR}/datatype/opal_datatype_pack_checksum.c [COPYONLY])
+CONFIGURE_FILE(datatype/opal_datatype_unpack.c ${PROJECT_BINARY_DIR}/datatype/opal_datatype_unpack_checksum.c [COPYONLY])
+
+SET(DATATYPE_CHECKSUM_FILES ${PROJECT_BINARY_DIR}/datatype/opal_datatype_pack_checksum.c
+                            ${PROJECT_BINARY_DIR}/datatype/opal_datatype_unpack_checksum.c )
+
+SET_SOURCE_FILES_PROPERTIES(${DATATYPE_CHECKSUM_FILES}
+                            PROPERTIES COMPILE_DEFINITIONS CHECKSUM)
+SET(OPAL_SOURCE_FILES ${OPAL_SOURCE_FILES} ${DATATYPE_CHECKSUM_FILES})
+SOURCE_GROUP(datatype FILES  ${DATATYPE_CHECKSUM_FILES})
+
 
 # Add source files
 

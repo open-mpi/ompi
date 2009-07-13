@@ -210,6 +210,7 @@ typedef unsigned int uint;
 
 #define sigset_t int
 #define in_addr_t uint32_t
+#define _Bool BOOL
 
 /*
  * No syslog.h on Windows, but these have to be defined somehow.

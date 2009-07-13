@@ -15,6 +15,7 @@
 INCLUDE (get_c_alignment)
 INCLUDE (check_c_inline)
 INCLUDE (Check_c_type_exists)
+INCLUDE (opal_functions)
 
 INCLUDE (CheckIncludeFileCXX)
 INCLUDE (CheckIncludeFile)
@@ -154,6 +155,26 @@ ENDIF(WIN32 AND MSVC)
 #                              Options                            #
 ###################################################################
 
+# No lower and upper bound required or enforced
+OPAL_WITH_OPTION_MIN_MAX_VALUE(processor_name 256 16 1024)
+
+# Min length according to information passed in ompi/errhandler/errcode.c
+OPAL_WITH_OPTION_MIN_MAX_VALUE(error_string 256 64 1024)
+
+# Min length according to MPI-2.1, p. 236 (information passed in ompi/communicator/comm.c: min only 48)
+OPAL_WITH_OPTION_MIN_MAX_VALUE(object_name 64 64 256)
+
+# Min and Max length according to MPI-2.1, p. 287 is 32; longest key in ROMIO however 33
+OPAL_WITH_OPTION_MIN_MAX_VALUE(info_key 36 34 255)
+
+# No lower and upper bound required or enforced!
+OPAL_WITH_OPTION_MIN_MAX_VALUE(info_val 256 32 1024)
+
+# Min length according to _POSIX_HOST_NAME_MAX=255 (4*HOST_NAME_MAX)
+OPAL_WITH_OPTION_MIN_MAX_VALUE(port_name 1024 255 2048)
+
+# Min length accroding to MPI-2.1, p. 418
+OPAL_WITH_OPTION_MIN_MAX_VALUE(datarep_string 128 64 256)
 
 OPTION(MCA_mtl_DIRECT_CALL "Whether mtl should use direct calls instead of components." OFF)
 MARK_AS_ADVANCED(MCA_mtl_DIRECT_CALL)
@@ -887,6 +908,10 @@ SET(SIZEOF_UNSIGNED_SHORT ${UNSIGNED_SHORT} CACHE INTERNAL "sizeof 'unsigned sho
 CHECK_TYPE_SIZE ("unsigned long long" UNSIGNED_LONG_LONG)
 SET(SIZEOF_UNSIGNED_LONG_LONG ${UNSIGNED_LONG_LONG} CACHE INTERNAL "sizeof 'unsigned long long'")
 
+#/* The size of `unsigned long double', as computed by sizeof. */
+CHECK_TYPE_SIZE("unsigned long double" UNSIGNED_LONG_DOUBLE)
+SET(SIZEOF_UNSIGNED_LONG_DOUBLE ${UNSIGNED_LONG_DOUBLE} CACHE INTERNAL "sizeof 'unsigned long double'")
+
 #/* The size of `unsigned char', as computed by sizeof. */
 CHECK_TYPE_SIZE ("unsigned char" UNSIGNED_CHAR)
 SET(SIZEOF_UNSIGNED_CHAR ${UNSIGNED_CHAR} CACHE INTERNAL "sizeof 'unsigned char'")
@@ -894,6 +919,18 @@ SET(SIZEOF_UNSIGNED_CHAR ${UNSIGNED_CHAR} CACHE INTERNAL "sizeof 'unsigned char'
 #/* The size of `short', as computed by sizeof. */
 CHECK_TYPE_SIZE(short SHORT)
 SET(SIZEOF_SHORT ${SHORT} CACHE INTERNAL "sizeof 'short'")
+
+#/* The size of `float _Complex', as computed by sizeof. */
+CHECK_TYPE_SIZE("float _Complex" FLOAT_COMPLEX)
+SET(SIZEOF_FLOAT_COMPLEX ${SHORT} CACHE INTERNAL "sizeof 'float _Complex'")
+
+#/* The size of `double _Complex', as computed by sizeof. */
+CHECK_TYPE_SIZE("double _Complex" DOUBLE_COMPLEX)
+SET(SIZEOF_DOUBLE_COMPLEX ${SHORT} CACHE INTERNAL "sizeof 'double _Complex'")
+
+#/* The size of `long double _Complex', as computed by sizeof. */
+CHECK_TYPE_SIZE("long double _Complex" LONG_DOUBLE_COMPLEX)
+SET(SIZEOF_LONG_DOUBLE_COMPLEX ${SHORT} CACHE INTERNAL "sizeof 'long double _Complex'")
 
 #/* The size of `size_t', as computed by sizeof. */
 CHECK_TYPE_SIZE(size_t SIZE_T)
@@ -931,14 +968,28 @@ SET(SIZEOF_PTRDIFF_T ${PTRDIFF_T} CACHE INTERNAL "sizeof 'ptrdiff_t'")
 #/* Define to 1 if the system has the type `mode_t'. */
 CHECK_TYPE_SIZE (mode_t MODE_T)
 
+#/* Define to 1 if the system has the type `int8_t'. */
+CHECK_TYPE_SIZE (int8_t INT8_T)
+IF (NOT SIZEOF_INT8_T)
+  MESSAGE(STATUS "Define it as 'char'.")
+  C_GET_ALIGNMENT(char c INT8)
+  #SET (int8_t "char" CACHE INTERNAL "define 'int8_t'")
+  SET (SIZEOF_INT8_T ${SIZEOF_UNSIGNED_CHAR} CACHE INTERNAL "sizeof 'int8_t'")
+ELSEIF (HAVE_INT8_T)
+  C_GET_ALIGNMENT(int8_t c INT8)
+  SET (SIZEOF_INT8_T ${INT8_T} CACHE INTERNAL "sizeof 'int8_t'")
+ENDIF (NOT SIZEOF_INT8_T)
+
 #/* Define to 1 if the system has the type `int16_t'. */
 CHECK_TYPE_SIZE (int16_t INT16_T)
 IF (NOT SIZEOF_INT16_T)
   # int16_t is not defind, define it as short.
   MESSAGE(STATUS "Define it as 'short'.")
+  C_GET_ALIGNMENT(short c INT16)
   #SET (int16_t "short" CACHE INTERNAL "define 'int16_t'")
   SET (SIZEOF_INT16_T ${SIZEOF_SHORT} CACHE INTERNAL "sizeof 'int16_t'")
 ELSEIF (HAVE_INT16_T)
+  C_GET_ALIGNMENT(int16_t c INT16)
   SET (SIZEOF_INT16_T ${INT16_T} CACHE INTERNAL "sizeof 'int16_t'")
 ENDIF (NOT SIZEOF_INT16_T)
 
@@ -946,9 +997,11 @@ ENDIF (NOT SIZEOF_INT16_T)
 CHECK_TYPE_SIZE (int32_t INT32_T)
 IF (NOT SIZEOF_INT32_T)
   MESSAGE(STATUS "Define it as 'int'.")
+  C_GET_ALIGNMENT(int c INT32)
   #SET (int32_t "int" CACHE INTERNAL "define 'int32_t'")
   SET (SIZEOF_INT32_T ${SIZEOF_INT} CACHE INTERNAL "sizeof 'int32_t'")
 ELSEIF (HAVE_INT32_T)
+  C_GET_ALIGNMENT(int32_t c INT32)
   SET (SIZEOF_INT32_T ${INT32_T} CACHE INTERNAL "sizeof 'int32_t'")
 ENDIF (NOT SIZEOF_INT32_T)
 
@@ -956,21 +1009,35 @@ ENDIF (NOT SIZEOF_INT32_T)
 CHECK_TYPE_SIZE (int64_t INT64_T)
 IF (NOT SIZEOF_INT64_T)
   MESSAGE(STATUS "Define it as 'long long'.")
+  C_GET_ALIGNMENT("long long" c INT64)
   #SET (int64_t "long long" CACHE INTERNAL "define 'int64_t'")
   SET (SIZEOF_INT64_T ${SIZEOF_LONG_LONG} CACHE INTERNAL "sizeof 'int64_t'")
 ELSEIF (HAVE_INT64_T)
+  C_GET_ALIGNMENT(int64_t c INT64)
   SET (SIZEOF_INT64_T ${INT64_T} CACHE INTERNAL "sizeof 'int64_t'")
 ENDIF (NOT SIZEOF_INT64_T)
 
-#/* Define to 1 if the system has the type `int8_t'. */
-CHECK_TYPE_SIZE (int8_t INT8_T)
-IF (NOT SIZEOF_INT8_T)
-  MESSAGE(STATUS "Define it as 'char'.")
-  #SET (int8_t "char" CACHE INTERNAL "define 'int8_t'")
-  SET (SIZEOF_INT8_T ${SIZEOF_UNSIGNED_CHAR} CACHE INTERNAL "sizeof 'int8_t'")
+#/* Define to 1 if the system has the type `int128_t'. */
+CHECK_TYPE_SIZE (int128_t INT128_T)
+IF (NOT SIZEOF_INT128_T)
+  MESSAGE(STATUS "Define it as 'long double'.")
+  C_GET_ALIGNMENT("long double" c INT128)
+  #SET (u_int8_t "unsigned char" CACHE INTERNAL "define 'uint8_t'")
+  SET (SIZEOF_INT128_T ${SIZEOF_LONG_DOUBLE} CACHE INTERNAL "sizeof 'int128_t'")
 ELSEIF (HAVE_INT8_T)
-  SET (SIZEOF_INT8_T ${INT8_T} CACHE INTERNAL "sizeof 'int8_t'")
-ENDIF (NOT SIZEOF_INT8_T)
+  C_GET_ALIGNMENT(int128_t c INT128)
+  SET (SIZEOF_INT128_T ${INT128_T} CACHE INTERNAL "sizeof 'int128_t'")
+ENDIF (NOT SIZEOF_INT128_T)
+
+#/* Define to 1 if the system has the type `uint8_t'. */
+CHECK_TYPE_SIZE (uint8_t UINT8_T)
+IF (NOT SIZEOF_UINT8_T)
+  MESSAGE(STATUS "Define it as 'unsigned char'.")
+  #SET (u_int8_t "unsigned char" CACHE INTERNAL "define 'uint8_t'")
+  SET (SIZEOF_UINT8_T ${SIZEOF_UNSIGNED_CHAR} CACHE INTERNAL "sizeof 'uint8_t'")
+ELSEIF (HAVE_UINT8_T)
+  SET (SIZEOF_UINT8_T ${UINT8_T} CACHE INTERNAL "sizeof 'uint8_t'")
+ENDIF (NOT SIZEOF_UINT8_T)
 
 #/* Define to 1 if the system has the type `uint16_t'. */
 CHECK_TYPE_SIZE (uint16_t UINT16_T)
@@ -983,34 +1050,34 @@ ELSEIF (HAVE_UINT16_T)
 ENDIF (NOT SIZEOF_UINT16_T)
 
 #/* Define to 1 if the system has the type `uint32_t'. */
-CHECK_TYPE_SIZE (uint32_t UNIT32_T)
+CHECK_TYPE_SIZE (uint32_t UINT32_T)
 IF (NOT SIZEOF_UINT32_T)
   MESSAGE(STATUS "Define it as 'unsigned int'.")
   #SET (u_int32_t "unsigned int" CACHE INTERNAL "define 'uint32_t'")
   SET (SIZEOF_UINT32_T ${SIZEOF_UNSIGNED_INT} CACHE INTERNAL "sizeof 'uint32_t'")
 ELSEIF (HAVE_UINT32_T)
-  SET (SIZEOF_UINT32_T ${UNIT32_T} CACHE INTERNAL "sizeof 'uint32_t'")
+  SET (SIZEOF_UINT32_T ${UINT32_T} CACHE INTERNAL "sizeof 'uint32_t'")
 ENDIF (NOT SIZEOF_UINT32_T)
 
 #/* Define to 1 if the system has the type `uint64_t'. */
-CHECK_TYPE_SIZE (unit64_t UNIT64_T)
+CHECK_TYPE_SIZE (uint64_t UINT64_T)
 IF (NOT SIZEOF_UINT64_T)
   MESSAGE(STATUS "Define it as 'unsigned long long'.")
   #SET (u_int64_t "unsigned long long" CACHE INTERNAL "define 'uint64_t'")
   SET (SIZEOF_UINT64_T ${SIZEOF_UNSIGNED_LONG_LONG} CACHE INTERNAL "sizeof 'uint64_t'")
 ELSEIF (HAVE_UINT64_T)
-  SET (SIZEOF_UINT64_T ${UNIT64_T} CACHE INTERNAL "sizeof 'uint64_t'")
+  SET (SIZEOF_UINT64_T ${UINT64_T} CACHE INTERNAL "sizeof 'uint64_t'")
 ENDIF (NOT SIZEOF_UINT64_T)
 
-#/* Define to 1 if the system has the type `uint8_t'. */
-CHECK_TYPE_SIZE (unit8_t UNIT8_T)
-IF (NOT SIZEOF_UINT8_T)
-  MESSAGE(STATUS "Define it as 'unsigned char'.")
+#/* Define to 1 if the system has the type `uint128_t'. */
+CHECK_TYPE_SIZE (uint128_t UINT128_T)
+IF (NOT SIZEOF_UINT128_T)
+  MESSAGE(STATUS "Define it as 'unsigned long double'.")
   #SET (u_int8_t "unsigned char" CACHE INTERNAL "define 'uint8_t'")
-  SET (SIZEOF_UINT8_T ${SIZEOF_UNSIGNED_CHAR} CACHE INTERNAL "sizeof 'uint8_t'")
+  SET (SIZEOF_UINT128_T ${SIZEOF_UNSIGNED_LONG_DOUBLE} CACHE INTERNAL "sizeof 'uint128_t'")
 ELSEIF (HAVE_UINT8_T)
-  SET (SIZEOF_UINT8_T ${UNIT8_T} CACHE INTERNAL "sizeof 'uint8_t'")
-ENDIF (NOT SIZEOF_UINT8_T)
+  SET (SIZEOF_UINT128_T ${UINT128_T} CACHE INTERNAL "sizeof 'uint128_t'")
+ENDIF (NOT SIZEOF_UINT128_T)
 
 #/* Define to 1 if the system has the type `struct sockaddr_in'. */
 CHECK_TYPE_SIZE ("struct sockaddr_in" STRUCT_SOCKADDR_IN)
@@ -1051,11 +1118,26 @@ C_GET_ALIGNMENT ("long long" c LONG_LONG)
 #/* Alignment of type short */
 C_GET_ALIGNMENT (short c SHORT)
 
+IF(HAVE_FLOAT_COMPLEX)
+  C_GET_ALIGNMENT("float _Complex" c FLOAT_COMPLEX) 
+ENDIF(HAVE_FLOAT_COMPLEX)
+
+IF(HAVE_DOUBLE_COMPLEX)
+  C_GET_ALIGNMENT("double _Complex" c DOUBLE_COMPLEX) 
+ENDIF(HAVE_DOUBLE_COMPLEX)
+
+IF(HAVE_LONG_DOUBLE_COMPLEX)
+  C_GET_ALIGNMENT("long double _Complex" c LONG_DOUBLE_COMPLEX) 
+ENDIF(HAVE_LONG_DOUBLE_COMPLEX)
+
 #/* Alignment of type void * */
 C_GET_ALIGNMENT ("void *" c VOID_P)
 
 #/* Alignment of type wchar_t */
 C_GET_ALIGNMENT (wchar_t c WCHAR_T)
+
+#/* Alignment of type _Bool */
+C_GET_ALIGNMENT(_Bool, c BOOL)
 
 #/* Whether the C compiler supports "bool" without any other help (such as
 #   <stdbool.h>) */
@@ -1864,3 +1946,13 @@ SET (PACKAGE_VERSION ${VERSION_STRING})
 #  SET(ompi_fortran_real_t 1)
 #  SET(ompi_fortran_real_t_STRING "ompi_fortran_bogus_type_t")
 #ENDIF(WIN32)
+
+#
+# User level (mpi.h.in) visible maximum lengths of strings.
+# These may be required in lower-level libraries to set up matching
+# data-structures (e.g. OPAL_MAX_OBJECT_NAME).
+#
+# Default values (as of OMPI-1.3), and some sane minimum and maximum values
+#
+
+

@@ -6,7 +6,7 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2009 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -62,6 +62,27 @@
 #define OPAL_BUILD_PLATFORM_COMPILER_FAMILYNAME ${COMPILER_FAMILYNAME}
 
 #define OPAL_BUILD_PLATFORM_COMPILER_VERSION_STR ${COMPILER_VERSION}
+
+/* Maximum length of datarep strings (default is 128) */
+#define OPAL_MAX_DATAREP_STRING ${OPAL_MAX_DATAREP_STRING}
+
+/* Maximum length of error strings (default is 256) */
+#define OPAL_MAX_ERROR_STRING ${OPAL_MAX_ERROR_STRING}
+
+/* Maximum length of info keys (default is 36) */
+#define OPAL_MAX_INFO_KEY ${OPAL_MAX_INFO_KEY}
+
+/* Maximum length of info vals (default is 256) */
+#define OPAL_MAX_INFO_VAL ${OPAL_MAX_INFO_VAL}
+
+/* Maximum length of object names (default is 64) */
+#define OPAL_MAX_OBJECT_NAME ${OPAL_MAX_OBJECT_NAME}
+
+/* Maximum length of port names (default is 1024) */
+#define OPAL_MAX_PORT_NAME ${OPAL_MAX_PORT_NAME}
+
+/* Maximum length of processor names (default is 256) */
+#define OPAL_MAX_PROCESSOR_NAME ${OPAL_MAX_PROCESSOR_NAME}
 
 /* Define to 1 if you have the <winsock2.h> header file. */
 #cmakedefine HAVE_WINSOCK2_H 1
@@ -641,13 +662,13 @@
 #define OPAL_ALIGNMENT_CHAR ${CHAR_ALIGNMENT}
 
 /* Alignment of type bool */
-#define OMPI_ALIGNMENT_CXX_BOOL ${BOOL_ALIGNMENT}
+#define OPAL_ALIGNMENT_CXX_BOOL ${BOOL_ALIGNMENT}
 
 /* Alignment of type double */
-#define OMPI_ALIGNMENT_DOUBLE ${DOUBLE_ALIGNMENT}
+#define OPAL_ALIGNMENT_DOUBLE ${DOUBLE_ALIGNMENT}
 
 /* Alignment of type float */
-#define OMPI_ALIGNMENT_FLOAT ${FLOAT_ALIGNMENT}
+#define OPAL_ALIGNMENT_FLOAT ${FLOAT_ALIGNMENT}
 
 /* Alignment of Fortran 77 COMPLEX */
 #define OMPI_ALIGNMENT_FORTRAN_COMPLEX ${OMPI_ALIGNMENT_FORTRAN_COMPLEX}
@@ -727,11 +748,38 @@
 /* Alignment of type short */
 #define OPAL_ALIGNMENT_SHORT ${SHORT_ALIGNMENT}
 
+/* Alignment of type float _Complex */
+#cmakedefine OPAL_ALIGNMENT_FLOAT_COMPLEX ${FLOAT_COMPLEX_ALIGNMENT}
+
+/* Alignment of type double _Complex */
+#cmakedefine OPAL_ALIGNMENT_DOUBLE_COMPLEX ${DOUBLE_COMPLEX_ALIGNMENT}
+
+/* Alignment of type long double _Complex */
+#cmakedefine OPAL_ALIGNMENT_LONG_DOUBLE_COMPLEX ${LONG_DOUBLE_COMPLEX_ALIGNMENT}
+
 /* Alignment of type void * */
-#define OMPI_ALIGNMENT_VOID_P ${VOID_P_ALIGNMENT}
+#define OPAL_ALIGNMENT_VOID_P ${VOID_P_ALIGNMENT}
 
 /* Alignment of type wchar_t */
-#define OMPI_ALIGNMENT_WCHAR ${WCHAR_T_ALIGNMENT}
+#define OPAL_ALIGNMENT_WCHAR ${WCHAR_T_ALIGNMENT}
+
+/* Alignment of type _Bool */
+#define OPAL_ALIGNMENT_BOOL ${BOOL_ALIGNMENT}
+
+/* Alignment of type wchar_t */
+#define OPAL_ALIGNMENT_INT8 ${INT8_ALIGNMENT}
+
+/* Alignment of type wchar_t */
+#define OPAL_ALIGNMENT_INT16 ${INT16_ALIGNMENT}
+
+/* Alignment of type wchar_t */
+#define OPAL_ALIGNMENT_INT32 ${INT32_ALIGNMENT}
+
+/* Alignment of type wchar_t */
+#define OPAL_ALIGNMENT_INT64 ${INT64_ALIGNMENT}
+
+/* Alignment of type wchar_t */
+#define OPAL_ALIGNMENT_INT128 ${INT128_ALIGNMENT}
 
 /* OMPI architecture string */
 #define OPAL_ARCH "${CMAKE_SYSTEM_PROCESSOR} ${CMAKE_SYSTEM}"
