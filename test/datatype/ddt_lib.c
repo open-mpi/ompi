@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Sun Microsystems Inc. All rights reserved.
+ * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -59,9 +60,9 @@ ompi_datatype_t* create_inversed_vector( ompi_datatype_t* type, int length )
 {
    ompi_datatype_t* type1;
 
-   ompi_ddt_create_vector( length, 1, 2, type, &type1 );
+   ompi_datatype_create_vector( length, 1, 2, type, &type1 );
 
-   ompi_ddt_commit( &type1 );
+   ompi_datatype_commit( &type1 );
    return type1;
 }
 
@@ -73,9 +74,9 @@ int mpich_typeub( void )
    int blens[2];
    ompi_datatype_t *type1, *type2, *type3, *types[2];
 
-   ompi_ddt_create_vector( 2, 1, 4, &ompi_mpi_int, &type1 );
-   ompi_ddt_commit( &type1 );
-   ompi_ddt_get_extent( type1, &lb, &extent );
+   ompi_datatype_create_vector( 2, 1, 4, &ompi_mpi_int.dt, &type1 );
+   ompi_datatype_commit( &type1 );
+   ompi_datatype_get_extent( type1, &lb, &extent );
    extent1 = 5 * sizeof(int);
    if (extent != extent1) {
       printf("EXTENT 1 %ld != %ld\n", (long)extent, (long)extent1);
@@ -88,14 +89,14 @@ int mpich_typeub( void )
    displ[0] = 0;
    displ[1] = sizeof(int)*4;
    types[0] = type1;
-   types[1] = &ompi_mpi_ub;  /*ompi_ddt_basicDatatypes[DT_UB];*/
+   types[1] = &ompi_mpi_ub.dt;  /*ompi_datatype_basicDatatypes[DT_UB];*/
    extent2  = displ[1];
 
    /*    using MPI_UB and Type_struct, monkey with the extent, making it 16
     */
-   ompi_ddt_create_struct( 2, blens, displ, types, &type2 );
-   ompi_ddt_commit( &type2 );
-   ompi_ddt_get_extent( type2, &lb, &extent );
+   ompi_datatype_create_struct( 2, blens, displ, types, &type2 );
+   ompi_datatype_commit( &type2 );
+   ompi_datatype_get_extent( type2, &lb, &extent );
    if (extent != extent2) {
       printf("EXTENT 2 %ld != %ld\n", (long)extent, (long)extent2);
       errs++;
@@ -108,13 +109,13 @@ int mpich_typeub( void )
     */
    displ[1] = sizeof(int);
    types[0] = type2;
-   types[1] = &ompi_mpi_ub;  /*ompi_ddt_basicDatatypes[DT_UB];*/
+   types[1] = &ompi_mpi_ub.dt;  /*ompi_datatype_basicDatatypes[DT_UB];*/
    extent3  = extent2;
 
-   ompi_ddt_create_struct( 2, blens, displ, types, &type3 );
-   ompi_ddt_commit( &type3 );
+   ompi_datatype_create_struct( 2, blens, displ, types, &type3 );
+   ompi_datatype_commit( &type3 );
 
-   ompi_ddt_get_extent( type3, &lb, &extent );
+   ompi_datatype_get_extent( type3, &lb, &extent );
    if (extent != extent3) {
       printf("EXTENT 3 %ld != %ld\n", (long)extent, (long)extent3);
       errs++;
@@ -140,15 +141,15 @@ int mpich_typeub2( void )
    disp[0] = -3;
    disp[1] = 0;
    disp[2] = 6;
-   types[0] = &ompi_mpi_lb;  /* ompi_ddt_basicDatatypes[DT_LB]; */
-   types[1] = &ompi_mpi_int;  /* ompi_ddt_basicDatatypes[DT_INT]; */
-   types[2] = &ompi_mpi_ub;  /* ompi_ddt_basicDatatypes[DT_UB]; */
+   types[0] = &ompi_mpi_lb.dt;  /* ompi_datatype_basicDatatypes[DT_LB]; */
+   types[1] = &ompi_mpi_int.dt;  /* ompi_datatype_basicDatatypes[DT_INT]; */
+   types[2] = &ompi_mpi_ub.dt;  /* ompi_datatype_basicDatatypes[DT_UB]; */
 
-   ompi_ddt_create_struct(3,blocklen,disp, types,&dt1);
-   ompi_ddt_commit(&dt1);
+   ompi_datatype_create_struct(3,blocklen,disp, types,&dt1);
+   ompi_datatype_commit(&dt1);
 
-   ompi_ddt_type_lb(dt1, &lb);          ompi_ddt_type_ub(dt1, &ub);
-   ompi_ddt_type_extent(dt1,&ex1);      ompi_ddt_type_size(dt1,&sz1);
+   ompi_datatype_type_lb(dt1, &lb);          ompi_datatype_type_ub(dt1, &ub);
+   ompi_datatype_type_extent(dt1,&ex1);      ompi_datatype_type_size(dt1,&sz1);
 
    /* Values should be lb = -3, ub = 6 extent 9; size depends on implementation */
    if (lb != -3 || ub != 6 || ex1 != 9) {
@@ -158,9 +159,9 @@ int mpich_typeub2( void )
    else
       printf("Example 3.26 type1 correct\n" );
 
-   ompi_ddt_create_contiguous(2,dt1,&dt2);
-   ompi_ddt_type_lb(dt2, &lb);          ompi_ddt_type_ub(dt2, &ub);
-   ompi_ddt_type_extent(dt2,&ex2);      ompi_ddt_type_size(dt2,&sz2);
+   ompi_datatype_create_contiguous(2,dt1,&dt2);
+   ompi_datatype_type_lb(dt2, &lb);          ompi_datatype_type_ub(dt2, &ub);
+   ompi_datatype_type_extent(dt2,&ex2);      ompi_datatype_type_size(dt2,&sz2);
    /* Values should be lb = -3, ub = 15, extent = 18, size depends on implementation */
    if (lb != -3 || ub != 15 || ex2 != 18) {
       printf("Example 3.26 type2 lb %d ub %d extent %d size %d\n", (int)-3, (int)15, (int)18, 8);
@@ -170,9 +171,9 @@ int mpich_typeub2( void )
    else
       printf("Example 3.26 type1 correct\n" );
    OBJ_RELEASE( dt2 ); assert( dt2 == NULL );
-   ompi_ddt_create_contiguous(2,dt1,&dt2);
-   ompi_ddt_type_lb(dt2, &lb);          ompi_ddt_type_ub(dt2, &ub);
-   ompi_ddt_type_extent(dt2,&ex2);      ompi_ddt_type_size(dt2,&sz2);
+   ompi_datatype_create_contiguous(2,dt1,&dt2);
+   ompi_datatype_type_lb(dt2, &lb);          ompi_datatype_type_ub(dt2, &ub);
+   ompi_datatype_type_extent(dt2,&ex2);      ompi_datatype_type_size(dt2,&sz2);
    /* Values should be lb = -3, ub = 15, extent = 18, size depends on implementation */
    if (lb != -3 || ub != 15 || ex2 != 18) {
       printf("Example 3.26 type2 lb %d ub %d extent %d size %d\n", (int)-3, (int)15, (int)18, 8);
@@ -186,11 +187,11 @@ int mpich_typeub2( void )
    blocklen[0]=1;              blocklen[1]=1;
    disp[0]=0;                  disp[1]=ex1;
 
-   ompi_ddt_create_struct(2, blocklen, disp, types, &dt3);
-   ompi_ddt_commit(&dt3);
+   ompi_datatype_create_struct(2, blocklen, disp, types, &dt3);
+   ompi_datatype_commit(&dt3);
 
-   ompi_ddt_type_lb(dt3, &lb);          ompi_ddt_type_ub(dt3, &ub);
-   ompi_ddt_type_extent(dt3,&ex3);      ompi_ddt_type_size(dt3,&sz3);
+   ompi_datatype_type_lb(dt3, &lb);          ompi_datatype_type_ub(dt3, &ub);
+   ompi_datatype_type_extent(dt3,&ex3);      ompi_datatype_type_size(dt3,&sz3);
    /* Another way to express type2 */
    if (lb != -3 || ub != 15 || ex3 != 18) {
       printf("type3 lb %d ub %d extent %d size %d\n", (int)-3, (int)15, (int)18, 8);
@@ -220,13 +221,13 @@ int mpich_typeub3( void )
    disp[0] = -3;
    disp[1] = 0; 
    disp[2] = 6;
-   types[0] = &ompi_mpi_lb;  /* ompi_ddt_basicDatatypes[DT_LB]; */
-   types[1] = &ompi_mpi_int;  /* ompi_ddt_basicDatatypes[DT_INT]; */
-   types[2] = &ompi_mpi_ub;  /* ompi_ddt_basicDatatypes[DT_UB]; */
+   types[0] = &ompi_mpi_lb.dt;  /* ompi_datatype_basicDatatypes[DT_LB]; */
+   types[1] = &ompi_mpi_int.dt;  /* ompi_datatype_basicDatatypes[DT_INT]; */
+   types[2] = &ompi_mpi_ub.dt;  /* ompi_datatype_basicDatatypes[DT_UB]; */
    
    /* Generate samples for contiguous, hindexed, hvector, indexed, and vector (struct and contiguous tested in typeub2) */                                                                                                                         
-   ompi_ddt_create_struct(3,blocklen,disp, types,&dt1);
-   ompi_ddt_commit(&dt1);
+   ompi_datatype_create_struct(3,blocklen,disp, types,&dt1);
+   ompi_datatype_commit(&dt1);
 
    /* This type is the same as in typeub2, and is tested there */
    types[0]=dt1;               types[1]=dt1;
@@ -234,11 +235,11 @@ int mpich_typeub3( void )
    disp[0]=-4;                 disp[1]=7;
    idisp[0]=-4;                idisp[1]=7;
 
-   ompi_ddt_create_hindexed( 2, blocklen, disp, dt1, &dt2 );
-   ompi_ddt_commit( &dt2 );
+   ompi_datatype_create_hindexed( 2, blocklen, disp, dt1, &dt2 );
+   ompi_datatype_commit( &dt2 );
 
-   ompi_ddt_type_lb( dt2, &lb );       ompi_ddt_type_ub( dt2, &ub );
-   ompi_ddt_type_extent( dt2, &ex );   ompi_ddt_type_size( dt2, &sz );
+   ompi_datatype_type_lb( dt2, &lb );       ompi_datatype_type_ub( dt2, &ub );
+   ompi_datatype_type_extent( dt2, &ex );   ompi_datatype_type_size( dt2, &sz );
 
    if (lb != -7 || ub != 13 || ex != 20) {
       printf("hindexed lb %d ub %d extent %d size %d\n", (int)-7, (int)13, (int)20, (int)sz);
@@ -248,11 +249,11 @@ int mpich_typeub3( void )
    else
       printf( "hindexed ok\n" );
 
-   ompi_ddt_create_indexed( 2, blocklen, idisp, dt1, &dt3 );
-   ompi_ddt_commit( &dt3 );
+   ompi_datatype_create_indexed( 2, blocklen, idisp, dt1, &dt3 );
+   ompi_datatype_commit( &dt3 );
 
-   ompi_ddt_type_lb( dt3, &lb );       ompi_ddt_type_ub( dt3, &ub );
-   ompi_ddt_type_extent( dt3, &ex );   ompi_ddt_type_size( dt3, &sz );
+   ompi_datatype_type_lb( dt3, &lb );       ompi_datatype_type_ub( dt3, &ub );
+   ompi_datatype_type_extent( dt3, &ex );   ompi_datatype_type_size( dt3, &sz );
 
    if (lb != -39 || ub != 69 || ex != 108) {
       printf("indexed lb %d ub %d extent %d size %d\n", (int)-39, (int)69, (int)108, (int)sz);
@@ -262,11 +263,11 @@ int mpich_typeub3( void )
    else
       printf( "indexed ok\n" );
 
-   ompi_ddt_create_hvector( 2, 1, 14, dt1, &dt4 );
-   ompi_ddt_commit( &dt4 );
+   ompi_datatype_create_hvector( 2, 1, 14, dt1, &dt4 );
+   ompi_datatype_commit( &dt4 );
 
-   ompi_ddt_type_lb( dt4, &lb );       ompi_ddt_type_ub( dt4, &ub );
-   ompi_ddt_type_extent( dt4, &ex );   ompi_ddt_type_size( dt4, &sz );
+   ompi_datatype_type_lb( dt4, &lb );       ompi_datatype_type_ub( dt4, &ub );
+   ompi_datatype_type_extent( dt4, &ex );   ompi_datatype_type_size( dt4, &sz );
 
    if (lb != -3 || ub != 20 || ex != 23) {
       printf("hvector lb %d ub %d extent %d size %d\n", (int)-3, (int)20, (int)23, (int)sz);
@@ -276,11 +277,11 @@ int mpich_typeub3( void )
    else
       printf( "hvector ok\n" );
 
-   ompi_ddt_create_vector( 2, 1, 14, dt1, &dt5 );
-   ompi_ddt_commit( &dt5 );
+   ompi_datatype_create_vector( 2, 1, 14, dt1, &dt5 );
+   ompi_datatype_commit( &dt5 );
 
-   ompi_ddt_type_lb( dt5, &lb );       ompi_ddt_type_ub( dt5, &ub );
-   ompi_ddt_type_extent( dt5, &ex );   ompi_ddt_type_size( dt5, &sz );
+   ompi_datatype_type_lb( dt5, &lb );       ompi_datatype_type_ub( dt5, &ub );
+   ompi_datatype_type_extent( dt5, &ex );   ompi_datatype_type_size( dt5, &sz );
 
    if (lb != -3 || ub != 132 || ex != 135) {
       printf("vector lb %d ub %d extent %d size %d\n", (int)-3, (int)132, (int)135, (int)sz);
@@ -363,11 +364,11 @@ ompi_datatype_t* upper_matrix( unsigned int mat_size )
         blocklen[i] = mat_size - i;
     }
 
-    ompi_ddt_create_indexed( mat_size, blocklen, disp, &ompi_mpi_double,
+    ompi_datatype_create_indexed( mat_size, blocklen, disp, &ompi_mpi_double.dt,
                              &upper );
-    ompi_ddt_commit( &upper );
+    ompi_datatype_commit( &upper );
     if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
-        ompi_ddt_dump( upper );
+        ompi_datatype_dump( upper );
     }
     free( disp );
     free( blocklen );
@@ -388,7 +389,7 @@ ompi_datatype_t* lower_matrix( unsigned int mat_size )
         blocklen[i] = i;
     }
 
-    ompi_ddt_create_indexed( mat_size, blocklen, disp, &ompi_mpi_double,
+    ompi_datatype_create_indexed( mat_size, blocklen, disp, &ompi_mpi_double.dt,
                              &upper );
     free( disp );
     free( blocklen );
@@ -406,9 +407,9 @@ ompi_datatype_t* test_matrix_borders( unsigned int size, unsigned int width )
    disp[1] = (size - width) * sizeof(double);
    blocklen[1] = width;
 
-   ompi_ddt_create_indexed( 2, blocklen, disp, &ompi_mpi_double,
+   ompi_datatype_create_indexed( 2, blocklen, disp, &ompi_mpi_double.dt,
                             &pdt_line );
-   ompi_ddt_create_contiguous( size, pdt_line, &pdt );
+   ompi_datatype_create_contiguous( size, pdt_line, &pdt );
    OBJ_RELEASE( pdt_line ); /*assert( pdt_line == NULL );*/
    return pdt;
 }
@@ -418,24 +419,24 @@ ompi_datatype_t* test_contiguous( void )
     ompi_datatype_t *pdt, *pdt1, *pdt2;
 
     printf( "test contiguous (alignement)\n" );
-    ompi_ddt_create_contiguous(0, &ompi_mpi_datatype_null, &pdt1);
-    ompi_ddt_add( pdt1, &ompi_mpi_double, 1, 0, -1 );
+    ompi_datatype_create_contiguous(0, &ompi_mpi_datatype_null.dt, &pdt1);
+    ompi_datatype_add( pdt1, &ompi_mpi_double.dt, 1, 0, -1 );
     if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
-        ompi_ddt_dump( pdt1 );
+        ompi_datatype_dump( pdt1 );
     }
-    ompi_ddt_add( pdt1, &ompi_mpi_char, 1, 8, -1 );
+    ompi_datatype_add( pdt1, &ompi_mpi_char.dt, 1, 8, -1 );
     if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
-        ompi_ddt_dump( pdt1 );
+        ompi_datatype_dump( pdt1 );
     }
-    ompi_ddt_create_contiguous( 4, pdt1, &pdt2 );
+    ompi_datatype_create_contiguous( 4, pdt1, &pdt2 );
     OBJ_RELEASE( pdt1 ); /*assert( pdt1 == NULL );*/
     if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
-        ompi_ddt_dump( pdt2 );
+        ompi_datatype_dump( pdt2 );
     }
-    ompi_ddt_create_contiguous( 2, pdt2, &pdt );
+    ompi_datatype_create_contiguous( 2, pdt2, &pdt );
     OBJ_RELEASE( pdt2 ); /*assert( pdt2 == NULL );*/
     if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
-        ompi_ddt_dump( pdt );
+        ompi_datatype_dump( pdt );
     }
     return pdt;
 }
@@ -451,15 +452,15 @@ ompi_datatype_t* test_struct_char_double( void )
     int lengths[] = {1, 1};
     MPI_Aint displ[] = {0, 0};
     ompi_datatype_t *pdt;
-    ompi_datatype_t* types[] = { &ompi_mpi_char, &ompi_mpi_double };
+    ompi_datatype_t* types[] = { &ompi_mpi_char.dt, &ompi_mpi_double.dt};
 
     displ[0] = (char*)&(data.c) - (char*)&(data);
     displ[1] = (char*)&(data.d) - (char*)&(data);
 
-    ompi_ddt_create_struct( 2, lengths, displ, types, &pdt );
-    ompi_ddt_commit( &pdt );
+    ompi_datatype_create_struct( 2, lengths, displ, types, &pdt );
+    ompi_datatype_commit( &pdt );
     if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
-        ompi_ddt_dump( pdt );
+        ompi_datatype_dump( pdt );
     }
     return pdt;
 }
@@ -468,10 +469,10 @@ ompi_datatype_t* test_create_twice_two_doubles( void )
 {
     ompi_datatype_t* pdt;
 
-    ompi_ddt_create_vector( 2, 2, 5, &ompi_mpi_double, &pdt );
-    ompi_ddt_commit( &pdt );
+    ompi_datatype_create_vector( 2, 2, 5, &ompi_mpi_double.dt, &pdt );
+    ompi_datatype_commit( &pdt );
     if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
-        ompi_ddt_dump( pdt );
+        ompi_datatype_dump( pdt );
     }
     return pdt;
 }
@@ -508,10 +509,10 @@ ompi_datatype_t* test_create_blacs_type( void )
 {
     ompi_datatype_t *pdt;
 
-    ompi_ddt_create_indexed( 18, blacs_length, blacs_indices, &ompi_mpi_int, &pdt );
-    ompi_ddt_commit( &pdt );
+    ompi_datatype_create_indexed( 18, blacs_length, blacs_indices, &ompi_mpi_int.dt, &pdt );
+    ompi_datatype_commit( &pdt );
     if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
-        ompi_ddt_dump( pdt );
+        ompi_datatype_dump( pdt );
     }
     return pdt;
 }
@@ -520,10 +521,10 @@ ompi_datatype_t* test_create_blacs_type1( ompi_datatype_t* base_type )
 {
     ompi_datatype_t *pdt;
 
-    ompi_ddt_create_vector( 7, 1, 3, base_type, &pdt );
-    ompi_ddt_commit( &pdt );
+    ompi_datatype_create_vector( 7, 1, 3, base_type, &pdt );
+    ompi_datatype_commit( &pdt );
     if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
-        ompi_ddt_dump( pdt );
+        ompi_datatype_dump( pdt );
     }
     return pdt;
 }
@@ -532,37 +533,37 @@ ompi_datatype_t* test_create_blacs_type2( ompi_datatype_t* base_type )
 {
     ompi_datatype_t *pdt;
 
-    ompi_ddt_create_vector( 7, 1, 2, base_type, &pdt );
-    ompi_ddt_commit( &pdt );
+    ompi_datatype_create_vector( 7, 1, 2, base_type, &pdt );
+    ompi_datatype_commit( &pdt );
     if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
-        ompi_ddt_dump( pdt );
+        ompi_datatype_dump( pdt );
     }
     return pdt;
 }
 
 ompi_datatype_t* test_struct( void )
 {
-    ompi_datatype_t* types[] = { &ompi_mpi_float  /* ompi_ddt_basicDatatypes[DT_FLOAT] */,
+    ompi_datatype_t* types[] = { &ompi_mpi_float.dt  /* ompi_datatype_basicDatatypes[DT_FLOAT] */,
                                  NULL, 
-                                 &ompi_mpi_char  /* ompi_ddt_basicDatatypes[DT_CHAR] */ };
+                                 &ompi_mpi_char.dt  /* ompi_datatype_basicDatatypes[DT_CHAR] */ };
     int lengths[] = { 2, 1, 3 };
     MPI_Aint disp[] = { 0, 16, 26 };
     ompi_datatype_t* pdt, *pdt1;
    
     printf( "test struct\n" );
-    ompi_ddt_create_contiguous(0, &ompi_mpi_datatype_null, &pdt1);
-    ompi_ddt_add( pdt1, &ompi_mpi_double, 1, 0, -1 );
-    ompi_ddt_add( pdt1, &ompi_mpi_char, 1, 8, -1 );
+    ompi_datatype_create_contiguous(0, &ompi_mpi_datatype_null.dt, &pdt1);
+    ompi_datatype_add( pdt1, &ompi_mpi_double.dt, 1, 0, -1 );
+    ompi_datatype_add( pdt1, &ompi_mpi_char.dt, 1, 8, -1 );
     if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
-        ompi_ddt_dump( pdt1 );
+        ompi_datatype_dump( pdt1 );
     }
 
     types[1] = pdt1;
 
-    ompi_ddt_create_struct( 3, lengths, disp, types, &pdt );
+    ompi_datatype_create_struct( 3, lengths, disp, types, &pdt );
     OBJ_RELEASE( pdt1 ); /*assert( pdt1 == NULL );*/
     if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
-        ompi_ddt_dump( pdt );
+        ompi_datatype_dump( pdt );
     }
     return pdt;
 }
@@ -586,51 +587,51 @@ ompi_datatype_t* create_strange_dt( void )
 {
     sdata_intern v[2];
     MPI_Aint displ[3];
-    ompi_datatype_t* types[3] = { &ompi_mpi_int };
+    ompi_datatype_t* types[3] = { &ompi_mpi_int.dt };
     sstrange t[2];
     int pBlock[3] = {1, 10, 1}, dispi[3];
     ompi_datatype_t *pdt, *pdt1, *pdt2, *pdtTemp;
 
     dispi[0] = (int)((char*)&(v[0].i1) - (char*)&(v[0]));  /* 0 */
     dispi[1] = (int)(((char*)(&(v[0].i2)) - (char*)&(v[0])) / sizeof(int));  /* 2 */
-    ompi_ddt_create_indexed_block( 2, 1, dispi, &ompi_mpi_int, &pdtTemp );
+    ompi_datatype_create_indexed_block( 2, 1, dispi, &ompi_mpi_int.dt, &pdtTemp );
 #ifdef USE_RESIZED
     /* optional */
     displ[0] = 0;
     displ[1] = (char*)&(v[1]) - (char*)&(v[0]);
-    ompi_ddt_create_resized( pdtTemp, displ[0], displ[1], &pdt1 );
+    ompi_datatype_create_resized( pdtTemp, displ[0], displ[1], &pdt1 );
     OBJ_RELEASE( pdtTemp ); assert( pdtTemp == NULL );
 #else
     pdt1 = pdtTemp;
 #endif  /* USE_RESIZED */
 
     types[1] = pdt1;
-    types[2] = &ompi_mpi_int;
+    types[2] = &ompi_mpi_int.dt;
     displ[0] = 0;
     displ[1] = (long)((char*)&(t[0].v[0]) - (char*)&(t[0]));
     displ[2] = (long)((char*)&(t[0].last) - (char*)&(t[0]));
-    ompi_ddt_create_struct( 3, pBlock, displ, types, &pdtTemp );
+    ompi_datatype_create_struct( 3, pBlock, displ, types, &pdtTemp );
 #ifdef USE_RESIZED
     /* optional */
     displ[1] = (char*)&(t[1]) - (char*)&(t[0]);
-    ompi_ddt_create_resized( pdtTemp, displ[0], displ[1], &pdt2 );
+    ompi_datatype_create_resized( pdtTemp, displ[0], displ[1], &pdt2 );
     OBJ_RELEASE( pdtTemp ); assert( pdtTemp == NULL );
 #else
     pdt2 = pdtTemp;
 #endif  /* USE_RESIZED */
 
-    ompi_ddt_create_contiguous( SSTRANGE_CNT, pdt2, &pdt );
+    ompi_datatype_create_contiguous( SSTRANGE_CNT, pdt2, &pdt );
 
     OBJ_RELEASE( pdt1 );
     OBJ_RELEASE( pdt2 );
     printf( "\nStrange datatype BEFORE COMMIT\n" );
     if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
-        ompi_ddt_dump( pdt );
+        ompi_datatype_dump( pdt );
     }
-    ompi_ddt_commit( &pdt );
+    ompi_datatype_commit( &pdt );
     printf( "\nStrange datatype AFTER COMMIT\n" );
     if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
-        ompi_ddt_dump( pdt );
+        ompi_datatype_dump( pdt );
     }
     return pdt;
 }
@@ -639,8 +640,8 @@ ompi_datatype_t* create_contiguous_type( const ompi_datatype_t* data, int count 
 {
     ompi_datatype_t* contiguous;
 
-    ompi_ddt_create_contiguous( count, data, &contiguous );
-    ompi_ddt_commit( &contiguous );
+    ompi_datatype_create_contiguous( count, data, &contiguous );
+    ompi_datatype_commit( &contiguous );
     return contiguous;
 }
 
@@ -648,8 +649,8 @@ ompi_datatype_t* create_vector_type( const ompi_datatype_t* data, int count, int
 {
     ompi_datatype_t* vector;
 
-    ompi_ddt_create_vector( count, length, stride, data, &vector );
-    ompi_ddt_commit( &vector );
+    ompi_datatype_create_vector( count, length, stride, data, &vector );
+    ompi_datatype_commit( &vector );
     return vector;
 }
 

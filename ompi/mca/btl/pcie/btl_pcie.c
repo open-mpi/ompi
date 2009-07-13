@@ -360,7 +360,7 @@ mca_btl_base_descriptor_t* mca_btl_pcie_prepare_dst(
     if(NULL == frag) { 
         return NULL;
     }
-    ompi_ddt_type_lb(convertor->pDesc, &lb);
+    ompi_datatype_type_lb(convertor->pDesc, &lb);
     frag->segment.seg_addr.pval = convertor->pBaseBuf + lb +
         convertor->bConverted;
     if(NULL == registration) { 

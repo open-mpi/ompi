@@ -21,8 +21,8 @@
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/datatype.h"
-#include "ompi/datatype/convertor.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "opal/datatype/opal_convertor.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/proc/proc.h"
 #include "ompi/memchecker.h"
@@ -80,7 +80,7 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
         return rc;
     } else {
 
-        ompi_convertor_t convertor;
+        opal_convertor_t convertor;
         struct iovec iov;
         unsigned char recv_data[2048];
         size_t packed_size, max_data;
@@ -93,12 +93,12 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
         }
 
         /* initialize convertor to unpack recv buffer */
-        OBJ_CONSTRUCT(&convertor, ompi_convertor_t);
-        ompi_convertor_copy_and_prepare_for_recv( proc->proc_convertor, datatype,
+        OBJ_CONSTRUCT(&convertor, opal_convertor_t);
+        opal_convertor_copy_and_prepare_for_recv( proc->proc_convertor, &(datatype->super),
                                                   count, buf, 0, &convertor );
 
         /* setup a buffer for recv */
-        ompi_convertor_get_packed_size( &convertor, &packed_size );
+        opal_convertor_get_packed_size( &convertor, &packed_size );
         if( packed_size > sizeof(recv_data) ) {
             rc = MPI_Alloc_mem(packed_size, MPI_INFO_NULL, &iov.iov_base);
             if(OMPI_SUCCESS != rc) {
@@ -122,7 +122,7 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
         iov.iov_len = recv_status._count;
         iov_count = 1;
         max_data = recv_status._count;
-        ompi_convertor_unpack(&convertor, &iov, &iov_count, &max_data );
+        opal_convertor_unpack(&convertor, &iov, &iov_count, &max_data );
 
         /* return status to user */
         if(status != MPI_STATUS_IGNORE) {

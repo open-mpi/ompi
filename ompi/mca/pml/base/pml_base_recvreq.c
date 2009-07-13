@@ -39,7 +39,7 @@ static void mca_pml_base_recv_request_construct(mca_pml_base_recv_request_t* req
 {
     /* no need to reinit for every recv -- never changes */
     request->req_base.req_type = MCA_PML_REQUEST_RECV;
-    OBJ_CONSTRUCT(&request->req_base.req_convertor, ompi_convertor_t);
+    OBJ_CONSTRUCT(&request->req_base.req_convertor, opal_convertor_t);
 }
 
 

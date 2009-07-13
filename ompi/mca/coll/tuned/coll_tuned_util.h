@@ -23,7 +23,7 @@
 
 #include "mpi.h"
 #include "opal/mca/mca.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/request/request.h"
 #include "ompi/mca/pml/pml.h"
 
@@ -53,7 +53,7 @@ ompi_coll_tuned_sendrecv( void* sendbuf, int scount, ompi_datatype_t* sdatatype,
                           ompi_status_public_t* status, int myid )
 {
     if ((dest == myid) && (source == myid)) {
-        return (int) ompi_ddt_sndrcv(sendbuf, (int32_t) scount, sdatatype, 
+        return (int) ompi_datatype_sndrcv(sendbuf, (int32_t) scount, sdatatype, 
                                      recvbuf, (int32_t) rcount, rdatatype);
     }
     return ompi_coll_tuned_sendrecv_actual (sendbuf, scount, sdatatype, 
@@ -86,7 +86,7 @@ ompi_coll_tuned_sendrecv_localcompleted( void* sendbuf, int scount,
                                          ompi_status_public_t* status, int myid )
 {
     if ((dest == myid) && (source == myid)) {
-        return (int) ompi_ddt_sndrcv(sendbuf, (int32_t) scount, sdatatype, 
+        return (int) ompi_datatype_sndrcv(sendbuf, (int32_t) scount, sdatatype, 
                                      recvbuf, (int32_t) rcount, rdatatype);
     }
     return ompi_coll_tuned_sendrecv_actual_localcompleted (sendbuf, scount, 

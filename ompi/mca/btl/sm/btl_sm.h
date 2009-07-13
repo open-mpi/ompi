@@ -427,7 +427,7 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
     mca_mpool_base_registration_t* registration,
-    struct ompi_convertor_t* convertor,
+    struct opal_convertor_t* convertor,
     uint8_t order,
     size_t reserve,
     size_t* size,
@@ -443,7 +443,7 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
  */
 extern int mca_btl_sm_sendi( struct mca_btl_base_module_t* btl,
                              struct mca_btl_base_endpoint_t* endpoint,
-                             struct ompi_convertor_t* convertor,
+                             struct opal_convertor_t* convertor,
                              void* header,
                              size_t header_size,
                              size_t payload_size,

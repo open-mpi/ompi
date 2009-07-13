@@ -22,7 +22,7 @@
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -56,6 +56,6 @@ int MPI_Type_extent(MPI_Datatype type, MPI_Aint *extent)
 
   OPAL_CR_ENTER_LIBRARY();
 
-  rc = ompi_ddt_get_extent( type, &lb, extent );
+  rc = ompi_datatype_get_extent( type, &lb, extent );
   OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME );
 }

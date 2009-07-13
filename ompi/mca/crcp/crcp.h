@@ -34,7 +34,7 @@
 
 #include "opal/class/opal_object.h"
 
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/request/request.h"
 
 #include "ompi/class/ompi_free_list.h"
@@ -221,7 +221,7 @@ typedef ompi_crcp_base_btl_state_t* (*mca_crcp_base_btl_module_prepare_fn_t)
      ( struct mca_btl_base_module_t* btl,
        struct mca_btl_base_endpoint_t* endpoint,
        mca_mpool_base_registration_t* registration,
-       struct ompi_convertor_t* convertor,
+       struct opal_convertor_t* convertor,
        size_t reserve,
        size_t* size,
        ompi_crcp_base_btl_state_t*);

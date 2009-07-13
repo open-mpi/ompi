@@ -23,8 +23,8 @@
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/datatype.h"
-#include "ompi/datatype/convertor.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "opal/datatype/opal_convertor.h"
 #include "ompi/memchecker.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -40,7 +40,7 @@ static const char FUNC_NAME[] = "MPI_Pack_size";
 int MPI_Pack_size(int incount, MPI_Datatype datatype, MPI_Comm comm,
                   int *size) 
 {
-    ompi_convertor_t local_convertor;
+    opal_convertor_t local_convertor;
     size_t length;
 
     MEMCHECKER(
@@ -62,11 +62,12 @@ int MPI_Pack_size(int incount, MPI_Datatype datatype, MPI_Comm comm,
 
     OPAL_CR_ENTER_LIBRARY();
 
-    OBJ_CONSTRUCT( &local_convertor, ompi_convertor_t );
+    OBJ_CONSTRUCT( &local_convertor, opal_convertor_t );
     /* the resulting convertor will be set to the position ZERO */
-    ompi_convertor_copy_and_prepare_for_send( ompi_mpi_local_convertor, datatype, incount, NULL, 0, &local_convertor );
+    opal_convertor_copy_and_prepare_for_send( ompi_mpi_local_convertor, &(datatype->super),
+                                              incount, NULL, 0, &local_convertor );
 
-    ompi_convertor_get_packed_size( &local_convertor, &length );
+    opal_convertor_get_packed_size( &local_convertor, &length );
     *size = (int)length;
     OBJ_DESTRUCT( &local_convertor );
 

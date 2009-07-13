@@ -28,14 +28,15 @@
 
 #include "ompi_config.h"
 #include "opal/mca/mca.h"
+#include "opal/datatype/opal_convertor.h"
+#include "opal/mca/crs/crs.h"
+#include "opal/mca/crs/base/base.h"
 
 #include "ompi/mca/btl/btl.h"
 
 #include "ompi/mca/bml/base/bml_base_btl.h"
 #include "ompi/types.h"
 
-#include "opal/mca/crs/crs.h"
-#include "opal/mca/crs/base/base.h"
 #include "ompi/constants.h"
 
 #define OPAL_ENABLE_DEBUG_RELIABILITY 0
@@ -290,7 +291,7 @@ static inline int mca_bml_base_send_status( mca_bml_base_btl_t* bml_btl,
 }
 
 static inline int  mca_bml_base_sendi( mca_bml_base_btl_t* bml_btl,
-                                       struct ompi_convertor_t* convertor,
+                                       struct opal_convertor_t* convertor,
                                        void* header,
                                        size_t header_size,
                                        size_t payload_size,
@@ -326,7 +327,7 @@ static inline int mca_bml_base_get( mca_bml_base_btl_t* bml_btl,
 
 static inline void mca_bml_base_prepare_src(mca_bml_base_btl_t* bml_btl, 
                                             mca_mpool_base_registration_t* reg, 
-                                            struct ompi_convertor_t* conv, 
+                                            struct opal_convertor_t* conv, 
                                             uint8_t order,
                                             size_t reserve, 
                                             size_t *size,
@@ -344,7 +345,7 @@ static inline void mca_bml_base_prepare_src(mca_bml_base_btl_t* bml_btl,
 
 static inline void mca_bml_base_prepare_dst(mca_bml_base_btl_t* bml_btl, 
                                             mca_mpool_base_registration_t* reg, 
-                                            struct ompi_convertor_t* conv, 
+                                            struct opal_convertor_t* conv, 
                                             uint8_t order,
                                             size_t reserve, 
                                             size_t *size,

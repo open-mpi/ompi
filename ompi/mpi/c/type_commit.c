@@ -23,7 +23,7 @@
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -54,6 +54,6 @@ int MPI_Type_commit(MPI_Datatype *type)
 
   OPAL_CR_ENTER_LIBRARY();
 
-  rc = ompi_ddt_commit( type );
+  rc = ompi_datatype_commit( type );
   OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME );
 }

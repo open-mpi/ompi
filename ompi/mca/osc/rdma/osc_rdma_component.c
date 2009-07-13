@@ -1169,7 +1169,7 @@ setup_rdma(ompi_osc_rdma_module_t *module)
         int num_avail =
             mca_bml_base_btl_array_get_size(&endpoint->btl_rdma);
         size_t j, size;
-        ompi_convertor_t convertor;
+        opal_convertor_t convertor;
         
         /* skip peer if heterogeneous */
         if (ompi_proc_local()->proc_arch != proc->proc_arch) {
@@ -1214,7 +1214,7 @@ setup_rdma(ompi_osc_rdma_module_t *module)
         memset(peer_info->local_descriptors, 0,
                sizeof(mca_btl_base_descriptor_t*) * num_avail);
 
-        OBJ_CONSTRUCT(&convertor, ompi_convertor_t);
+        OBJ_CONSTRUCT(&convertor, opal_convertor_t);
 
         /* Find all useable btls, try to do the descriptor thing for
            them, and store all that information */
@@ -1239,8 +1239,8 @@ setup_rdma(ompi_osc_rdma_module_t *module)
 
             size = module->m_win->w_size;
 
-            ompi_convertor_copy_and_prepare_for_send(proc->proc_convertor,
-                                                     MPI_BYTE,
+            opal_convertor_copy_and_prepare_for_send(proc->proc_convertor,
+                                                     &(ompi_mpi_byte.dt.super),
                                                      module->m_win->w_size,
                                                      module->m_win->w_baseptr,
                                                      0,
@@ -1256,13 +1256,13 @@ setup_rdma(ompi_osc_rdma_module_t *module)
                     btl_mpool->mpool_deregister(btl_mpool,
                                                 peer_info->local_registrations[index]);
                 }
-                ompi_convertor_cleanup(&convertor);
+                opal_convertor_cleanup(&convertor);
                 continue;
             }
 
             peer_info->local_btls[index] = bml_btl;
 
-            ompi_convertor_cleanup(&convertor);
+            opal_convertor_cleanup(&convertor);
 
             peer_info->local_num_btls++;
             module->m_setup_info->num_btls_outgoing++;

@@ -25,7 +25,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/win/win.h"
 #include "ompi/mca/osc/osc.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Put = PMPI_Put

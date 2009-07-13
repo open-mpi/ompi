@@ -3165,7 +3165,7 @@ static int traffic_message_append(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
     size_t ddt_size = 0;
 
     if( NULL != datatype ) {
-        ompi_ddt_type_size(datatype,
+        ompi_datatype_type_size(datatype,
                            &ddt_size);
     } else {
         ddt_size = in_ddt_size;
@@ -3558,7 +3558,7 @@ static int traffic_message_create_drain_message(bool post_drain,
              * The post_drained() will properly handle the packed datatype
              * by changing the count to (count * ddt_size).
              */
-            ompi_ddt_duplicate(&(ompi_mpi_packed.dt), &(drain_msg_ref->datatype));
+            ompi_datatype_duplicate(&(ompi_mpi_packed.dt), &(drain_msg_ref->datatype));
 
             /* Create a buffer of the necessary type/size */
             if(drain_msg_ref->count > 0 ) {
@@ -4042,7 +4042,7 @@ static int drain_message_copy_remove_persistent(ompi_crcp_bkmrk_pml_drain_messag
 
     memcpy(&(content_ref->status), &drain_content_ref->status, sizeof(ompi_status_public_t)); 
 
-    if( 0 != (ret = ompi_ddt_copy_content_same_ddt(drain_msg_ref->datatype,
+    if( 0 != (ret = ompi_datatype_copy_content_same_ddt(drain_msg_ref->datatype,
                                                    drain_msg_ref->count,
                                                    content_ref->buffer,
                                                    drain_content_ref->buffer) ) ) {
@@ -4088,7 +4088,7 @@ static int drain_message_copy_remove(ompi_crcp_bkmrk_pml_drain_message_ref_t *dr
 
     /* The buffer could be NULL - More likely when doing a count=0 type of message (e.g., Barrier) */
     if( OPAL_LIKELY(NULL != buf) ) {
-        if( 0 != (ret = ompi_ddt_copy_content_same_ddt(datatype, count,
+        if( 0 != (ret = ompi_datatype_copy_content_same_ddt(datatype, count,
                                                        (void*)buf, drain_content_ref->buffer) ) ) {
             opal_output( mca_crcp_bkmrk_component.super.output_handle,
                          "crcp:bkmrk: drain_message_copy_remove(): Datatype copy failed (%d)",

@@ -36,7 +36,7 @@
 
 #include "opal/class/opal_object.h"
 
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mpi/f77/fint_2_int.h"
 #include "ompi/mca/op/op.h"
 
@@ -189,7 +189,7 @@ typedef struct ompi_predefined_op_t ompi_predefined_op_t;
  * extra lookup, and that lookup is way cheaper than the function call
  * to invoke the reduction operation, it seemed like the best idea.
  */
-OMPI_DECLSPEC extern int ompi_op_ddt_map[DT_MAX_PREDEFINED];
+OMPI_DECLSPEC extern int ompi_op_ddt_map[OMPI_DATATYPE_MAX_PREDEFINED];
 
 /**
  * Global variable for MPI_OP_NULL
@@ -405,10 +405,10 @@ static inline bool ompi_op_is_valid(ompi_op_t * op, ompi_datatype_t * ddt,
      */
 
     if (ompi_op_is_intrinsic(op)) {
-        if (ompi_ddt_is_predefined(ddt)) {
+        if (ompi_datatype_is_predefined(ddt)) {
             /* Intrinsic ddt on intrinsic op */
-            if (-1 == ompi_op_ddt_map[ddt->id] ||
-                NULL == op->o_func.intrinsic.fns[ompi_op_ddt_map[ddt->id]]) {
+            if (-1 == ompi_op_ddt_map[ddt->super.id] ||
+                NULL == op->o_func.intrinsic.fns[ompi_op_ddt_map[ddt->super.id]]) {
                 asprintf(msg,
                          "%s: the reduction operation %s is not defined on the %s datatype",
                          func, op->o_name, ddt->name);
@@ -495,9 +495,9 @@ static inline void ompi_op_reduce(ompi_op_t * op, void *source,
 
     /* For intrinsics, we also pass the corresponding op module */
     if (0 != (op->o_flags & OMPI_OP_FLAGS_INTRINSIC)) {
-        op->o_func.intrinsic.fns[ompi_op_ddt_map[dtype->id]](source, target,
-                                                             &count, &dtype,
-                                                             op->o_func.intrinsic.modules[ompi_op_ddt_map[dtype->id]]);
+        op->o_func.intrinsic.fns[ompi_op_ddt_map[dtype->super.id]](source, target,
+                                                                   &count, &dtype,
+                                                                   op->o_func.intrinsic.modules[ompi_op_ddt_map[dtype->super.id]]);
     }
 
     /* User-defined function */
@@ -548,10 +548,10 @@ static inline void ompi_3buff_op_reduce(ompi_op_t * op, void *source1,
     src2 = source2;
     tgt = target;
 
-    op->o_3buff_intrinsic.fns[ompi_op_ddt_map[dtype->id]](src1, src2,
-                                                          tgt, &count,
-                                                          &dtype,
-                                                          op->o_3buff_intrinsic.modules[ompi_op_ddt_map[dtype->id]]);
+    op->o_3buff_intrinsic.fns[ompi_op_ddt_map[dtype->super.id]](src1, src2,
+                                                                tgt, &count,
+                                                                &dtype,
+                                                                op->o_3buff_intrinsic.modules[ompi_op_ddt_map[dtype->super.id]]);
 }
 
 END_C_DECLS

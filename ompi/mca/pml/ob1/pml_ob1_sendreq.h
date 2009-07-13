@@ -26,7 +26,7 @@
 #include "pml_ob1_hdr.h"
 #include "pml_ob1_rdma.h"
 #include "pml_ob1_rdmafrag.h"
-#include "ompi/datatype/convertor.h"
+#include "opal/datatype/opal_convertor.h"
 #include "ompi/mca/bml/bml.h" 
 
 BEGIN_C_DECLS
@@ -374,9 +374,9 @@ mca_pml_ob1_send_request_start_btl( mca_pml_ob1_send_request_t* sendreq,
         if(sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {
             rc = mca_pml_ob1_send_request_start_buffered(sendreq, bml_btl, size);
         } else if
-                (ompi_convertor_need_buffers(&sendreq->req_send.req_base.req_convertor) == false) {
+                (opal_convertor_need_buffers(&sendreq->req_send.req_base.req_convertor) == false) {
             unsigned char *base;
-            ompi_convertor_get_current_pointer( &sendreq->req_send.req_base.req_convertor, (void**)&base );
+            opal_convertor_get_current_pointer( &sendreq->req_send.req_base.req_convertor, (void**)&base );
             
             if( 0 != (sendreq->req_rdma_cnt = (uint32_t)mca_pml_ob1_rdma_btls(
                                                                               sendreq->req_endpoint,

@@ -13,7 +13,7 @@
 #include "ompi/constants.h"
 #include "coll_sm2.h"
 #include "ompi/op/op.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/communicator/communicator.h"
 /* debug 
 #include "opal/sys/timer.h"
@@ -55,7 +55,7 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
     /* get size of data needed - same layout as user data, so that
      *   we can apply the reudction routines directly on these buffers
      */
-    rc=ompi_ddt_type_extent(dtype, &dt_extent);
+    rc=ompi_datatype_type_extent(dtype, &dt_extent);
     if( OMPI_SUCCESS != rc ) {
         goto Error;
     }
@@ -115,7 +115,7 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
              *   provids only 2 buffers, so can't add from two
              *   into a third buffer.
              */
-            rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+            rc=ompi_datatype_copy_content_same_ddt(dtype, count_this_stripe,
                     (char *)my_data_pointer, 
                     (char *)((char *)sbuf+dt_extent*count_processed));
             if( 0 != rc ) {
@@ -173,7 +173,7 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
             /* copy segment into shared buffer - later on will optimize to
              *   eliminate extra copies.
              */
-            rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+            rc=ompi_datatype_copy_content_same_ddt(dtype, count_this_stripe,
                     (char *)my_data_pointer, 
                     (char *)((char *)sbuf+dt_extent*count_processed));
             if( 0 != rc ) {
@@ -207,7 +207,7 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
             my_ctl_pointer->flag=-tag;
 
             /* copy data to user supplied buffer */
-            rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+            rc=ompi_datatype_copy_content_same_ddt(dtype, count_this_stripe,
                     (char *)((char *)rbuf+dt_extent*count_processed),
                     (char *)my_data_pointer);
             if( 0 != rc ) {
@@ -232,7 +232,7 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
             }
 
             /* copy data to user supplied buffer */
-            rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+            rc=ompi_datatype_copy_content_same_ddt(dtype, count_this_stripe,
                     (char *)rbuf+dt_extent*count_processed,
                     (char *)parent_data_pointer);
             if( 0 != rc ) {
@@ -258,7 +258,7 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
             }
 
             /* copy the data to my shared buffer, for access by children */
-            rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+            rc=ompi_datatype_copy_content_same_ddt(dtype, count_this_stripe,
                     (char *)my_data_pointer,(char *)parent_data_pointer);
             if( 0 != rc ) {
                 return OMPI_ERROR;
@@ -273,7 +273,7 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
             my_ctl_pointer->flag=-tag;
 
             /* copy data to user supplied buffer */
-            rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+            rc=ompi_datatype_copy_content_same_ddt(dtype, count_this_stripe,
                     (char *)rbuf+dt_extent*count_processed,
                     (char *)my_data_pointer);
             if( 0 != rc ) {
@@ -356,8 +356,8 @@ int progress_fanin_fanout( void *sbuf, void *rbuf,
             count_processed=reduction_desc->count_processed;
             count_this_stripe=reduction_desc->count_this_stripe;
             /* error conditions already checed */
-            ompi_ddt_type_extent(dtype, &dt_extent);
-            rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+            ompi_datatype_type_extent(dtype, &dt_extent);
+            rc=ompi_datatype_copy_content_same_ddt(dtype, count_this_stripe,
                     (char *)my_data_pointer, 
                     (char *)((char *)sbuf+dt_extent*count_processed));
             if( 0 != rc ) {
@@ -387,8 +387,8 @@ int progress_fanin_fanout( void *sbuf, void *rbuf,
                 /* copy-in only the first time through */
                 count_processed=reduction_desc->count_processed;
                 /* error conditions already checed */
-                ompi_ddt_type_extent(dtype, &dt_extent);
-                rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+                ompi_datatype_type_extent(dtype, &dt_extent);
+                rc=ompi_datatype_copy_content_same_ddt(dtype, count_this_stripe,
                         (char *)my_data_pointer, 
                         (char *)((char *)sbuf+dt_extent*count_processed));
                 if( 0 != rc ) {
@@ -469,8 +469,8 @@ REDUCTION_FANOUT:
             count_processed=reduction_desc->count_processed;
             count_this_stripe=reduction_desc->count_this_stripe;
             /* error conditions already checed */
-            ompi_ddt_type_extent(dtype, &dt_extent);
-            rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+            ompi_datatype_type_extent(dtype, &dt_extent);
+            rc=ompi_datatype_copy_content_same_ddt(dtype, count_this_stripe,
                     (char *)rbuf+dt_extent*count_processed,
                     (char *)parent_data_pointer);
             if( 0 != rc ) {
@@ -504,7 +504,7 @@ REDUCTION_FANOUT:
 
             /* copy the data to my shared buffer, for access by children */
             count_this_stripe=reduction_desc->count_this_stripe;
-            rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+            rc=ompi_datatype_copy_content_same_ddt(dtype, count_this_stripe,
                     (char *)my_data_pointer,(char *)parent_data_pointer);
             if( 0 != rc ) {
                 return OMPI_ERROR;
@@ -522,8 +522,8 @@ REDUCTION_FANOUT:
             count_processed=reduction_desc->count_processed;
             count_this_stripe=reduction_desc->count_this_stripe;
             /* error conditions already checed */
-            ompi_ddt_type_extent(dtype, &dt_extent);
-            rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+            ompi_datatype_type_extent(dtype, &dt_extent);
+            rc=ompi_datatype_copy_content_same_ddt(dtype, count_this_stripe,
                     (char *)rbuf+dt_extent*count_processed,
                     (char *)my_data_pointer);
             if( 0 != rc ) {
@@ -544,8 +544,8 @@ REDUCTION_FANOUT:
             count_processed=reduction_desc->count_processed;
             count_this_stripe=reduction_desc->count_this_stripe;
             /* error conditions already checed */
-            ompi_ddt_type_extent(dtype, &dt_extent);
-            rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+            ompi_datatype_type_extent(dtype, &dt_extent);
+            rc=ompi_datatype_copy_content_same_ddt(dtype, count_this_stripe,
                     (char *)((char *)rbuf+dt_extent*count_processed),
                     (char *)my_data_pointer);
             if( 0 != rc ) {
@@ -595,7 +595,7 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout_pipeline
     /* get size of data needed - same layout as user data, so that
      *   we can apply the reudction routines directly on these buffers
      */
-    rc=ompi_ddt_type_extent(dtype, &dt_extent);
+    rc=ompi_datatype_type_extent(dtype, &dt_extent);
     if( OMPI_SUCCESS != rc ) {
         goto Error;
     }
@@ -803,7 +803,7 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
     /* get size of data needed - same layout as user data, so that
      *   we can apply the reudction routines directly on these buffers
      */
-    rc=ompi_ddt_type_extent(dtype, &dt_extent);
+    rc=ompi_datatype_type_extent(dtype, &dt_extent);
     if( OMPI_SUCCESS != rc ) {
         goto Error;
     }
@@ -868,7 +868,7 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
             my_tmp_data_buffer[1]=my_read_pointer;
 
             /* copy data into the write buffer */
-            rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+            rc=ompi_datatype_copy_content_same_ddt(dtype, count_this_stripe,
                     (char *)my_write_pointer,
                     (char *)((char *)sbuf+dt_extent*count_processed));
             if( 0 != rc ) {
@@ -927,7 +927,7 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
                     extra_rank_write_data_pointer+=(n_my_count*dt_extent);
 
                     if( 0 < (count_this_stripe-n_my_count) ) {
-                        rc=ompi_ddt_copy_content_same_ddt(dtype, 
+                        rc=ompi_datatype_copy_content_same_ddt(dtype, 
                                 count_this_stripe-n_my_count,
                                 (char *)(my_write_pointer+n_my_count*dt_extent),
                                 (char *)extra_rank_write_data_pointer);
@@ -1079,7 +1079,7 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
     
             
                 /* write the data into my read buffer */
-                rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+                rc=ompi_datatype_copy_content_same_ddt(dtype, count_this_stripe,
                         (char *)my_write_pointer,
                         (char *)extra_rank_read_data_pointer);
                 if( 0 != rc ) {
@@ -1122,7 +1122,7 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
             t8=opal_sys_timer_get_cycles();
              end debug */
         /* copy data into the destination buffer */
-        rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+        rc=ompi_datatype_copy_content_same_ddt(dtype, count_this_stripe,
                 (char *)((char *)rbuf+dt_extent*count_processed),
                 (char *)my_write_pointer);
         if( 0 != rc ) {
@@ -1203,7 +1203,7 @@ int mca_coll_sm2_allreduce_intra_reducescatter_allgather(void *sbuf, void *rbuf,
     /* get size of data needed - same layout as user data, so that
      *   we can apply the reudction routines directly on these buffers
      */
-    rc=ompi_ddt_type_extent(dtype, &dt_extent);
+    rc=ompi_datatype_type_extent(dtype, &dt_extent);
     if( OMPI_SUCCESS != rc ) {
         goto Error;
     }
@@ -1267,7 +1267,7 @@ int mca_coll_sm2_allreduce_intra_reducescatter_allgather(void *sbuf, void *rbuf,
 
 
         /* copy data into the write buffer */
-        rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+        rc=ompi_datatype_copy_content_same_ddt(dtype, count_this_stripe,
                 (char *)my_base_pointer,
                 (char *)((char *)sbuf+dt_extent*count_processed));
         if( 0 != rc ) {
@@ -1327,7 +1327,7 @@ int mca_coll_sm2_allreduce_intra_reducescatter_allgather(void *sbuf, void *rbuf,
                     extra_rank_write_data_pointer+=(n_my_count*dt_extent);
 
                     if( 0 < (count_this_stripe-n_my_count) ) {
-                        rc=ompi_ddt_copy_content_same_ddt(dtype, 
+                        rc=ompi_datatype_copy_content_same_ddt(dtype, 
                                 count_this_stripe-n_my_count,
                                 (char *)(my_base_pointer+n_my_count*dt_extent),
                                 (char *)extra_rank_write_data_pointer);
@@ -1502,7 +1502,7 @@ int mca_coll_sm2_allreduce_intra_reducescatter_allgather(void *sbuf, void *rbuf,
                 opal_progress();
             }
             /* copy data into the destination buffer */
-            rc=ompi_ddt_copy_content_same_ddt(dtype, 
+            rc=ompi_datatype_copy_content_same_ddt(dtype, 
                     sm_module->scratch_space[n_copy],
                     (char *)((char *)rbuf+
                              dt_extent*(count_processed+cnt_offset)),
@@ -1579,7 +1579,7 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
     /* get size of data needed - same layout as user data, so that
      *   we can apply the reudction routines directly on these buffers
      */
-    rc=ompi_ddt_type_size(dtype, &dt_extent);
+    rc=ompi_datatype_type_size(dtype, &dt_extent);
     if( OMPI_SUCCESS != rc ) {
         goto Error;
     }
@@ -1649,7 +1649,7 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
          end debug */
 
         /* copy data into the write buffer */
-        rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+        rc=ompi_datatype_copy_content_same_ddt(dtype, count_this_stripe,
                 (char *)my_write_pointer,
                 (char *)((char *)sbuf+dt_extent*count_processed));
         if( 0 != rc ) {
@@ -1801,7 +1801,7 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
     
             
                 /* write the data into my read buffer */
-                rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+                rc=ompi_datatype_copy_content_same_ddt(dtype, count_this_stripe,
                         (char *)my_write_pointer,
                         (char *)extra_rank_read_data_pointer);
                 if( 0 != rc ) {
@@ -1845,7 +1845,7 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
             t8=opal_sys_timer_get_cycles();
              end debug */
         /* copy data into the destination buffer */
-        rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+        rc=ompi_datatype_copy_content_same_ddt(dtype, count_this_stripe,
                 (char *)((char *)rbuf+dt_extent*count_processed),
                 (char *)my_write_pointer);
         if( 0 != rc ) {
@@ -1888,7 +1888,7 @@ int mca_coll_sm2_allreduce_intra(void *sbuf, void *rbuf, int count,
     /* get size of data needed - same layout as user data, so that
      *   we can apply the reudction routines directly on these buffers
      */
-    rc=ompi_ddt_type_extent(dtype, &dt_extent);
+    rc=ompi_datatype_type_extent(dtype, &dt_extent);
     if( OMPI_SUCCESS != rc ) {
         goto Error;
     }

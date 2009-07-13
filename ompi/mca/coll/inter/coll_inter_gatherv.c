@@ -22,7 +22,7 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/mca/pml/pml.h"
@@ -83,7 +83,7 @@ mca_coll_inter_gatherv_inter(void *sbuf, int scount,
 		displace[i] = displace[i-1] + count[i-1];
 	    }
 	    /* Perform the gatherv locally with the first process as root */
-	    err = ompi_ddt_get_extent(sdtype, &lb, &extent);
+	    err = ompi_datatype_get_extent(sdtype, &lb, &extent);
 	    if (OMPI_SUCCESS != err) {
 		return OMPI_ERROR;
 	    }
@@ -127,8 +127,8 @@ mca_coll_inter_gatherv_inter(void *sbuf, int scount,
 	}
     } else {
         /* I am the root, loop receiving the data. */
-	ompi_ddt_create_indexed(size,rcounts,disps,rdtype,&ndtype);
-	ompi_ddt_commit(&ndtype);
+	ompi_datatype_create_indexed(size,rcounts,disps,rdtype,&ndtype);
+	ompi_datatype_commit(&ndtype);
 	
 	err = MCA_PML_CALL(recv(rbuf, 1, ndtype, 0,
 				MCA_COLL_BASE_TAG_GATHERV,
@@ -136,7 +136,7 @@ mca_coll_inter_gatherv_inter(void *sbuf, int scount,
 	if (OMPI_SUCCESS != err) {
 	    return err;
 	}
-	ompi_ddt_destroy(&ndtype);
+	ompi_datatype_destroy(&ndtype);
     }
 
     /* All done */

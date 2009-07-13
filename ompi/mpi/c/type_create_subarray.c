@@ -23,7 +23,7 @@
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -76,7 +76,7 @@ int MPI_Type_create_subarray(int ndims,
 
     OPAL_CR_ENTER_LIBRARY();
 
-    ompi_ddt_type_extent( oldtype, &extent );
+    ompi_datatype_type_extent( oldtype, &extent );
 
     /* If the ndims is zero then return the NULL datatype */
     if( ndims < 2 ) {
@@ -85,7 +85,7 @@ int MPI_Type_create_subarray(int ndims,
             OPAL_CR_EXIT_LIBRARY();
             return MPI_SUCCESS;
         }
-        ompi_ddt_create_contiguous( subsize_array[0], oldtype, &last_type );
+        ompi_datatype_create_contiguous( subsize_array[0], oldtype, &last_type );
         size = size_array[0];
         displ = start_array[0];
         goto replace_subarray_type;
@@ -105,16 +105,16 @@ int MPI_Type_create_subarray(int ndims,
      * first dimension data outside the loop, such that we dont have to create
      * a duplicate of the oldtype just to be able to free it.
      */
-    ompi_ddt_create_vector( subsize_array[i+step], subsize_array[i], size_array[i],
+    ompi_datatype_create_vector( subsize_array[i+step], subsize_array[i], size_array[i],
                             oldtype, newtype );
 
     last_type = *newtype;
     size = size_array[i] * size_array[i+step];
     displ = start_array[i] + start_array[i+step] * size_array[i];
     for( i += 2 * step; i != end_loop; i += step ) {
-        ompi_ddt_create_hvector( subsize_array[i], 1, size * extent,
+        ompi_datatype_create_hvector( subsize_array[i], 1, size * extent,
                                  last_type, newtype );
-        ompi_ddt_destroy( &last_type );
+        ompi_datatype_destroy( &last_type );
         displ += size * start_array[i];
         size *= size_array[i];
         last_type = *newtype;
@@ -134,9 +134,9 @@ int MPI_Type_create_subarray(int ndims,
 
         displs[0] = 0; displs[1] = displ * extent; displs[2] = size * extent;
         types[0] = MPI_LB; types[1] = last_type; types[2] = MPI_UB;
-        ompi_ddt_create_struct( 3, blength, displs, types, newtype );
+        ompi_datatype_create_struct( 3, blength, displs, types, newtype );
     }
-    ompi_ddt_destroy( &last_type );
+    ompi_datatype_destroy( &last_type );
     
     {
         int* a_i[5];
@@ -147,7 +147,7 @@ int MPI_Type_create_subarray(int ndims,
         a_i[3] = start_array;
         a_i[4] = &order;
 
-        ompi_ddt_set_args( *newtype, 3 * ndims + 2, a_i, 0, NULL, 1, &oldtype,
+        ompi_datatype_set_args( *newtype, 3 * ndims + 2, a_i, 0, NULL, 1, &oldtype,
                            MPI_COMBINER_SUBARRAY );
     }
 

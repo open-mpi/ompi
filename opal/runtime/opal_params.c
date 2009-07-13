@@ -12,6 +12,7 @@
  * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -28,6 +29,7 @@
 
 #include "opal/constants.h"
 #include "opal/runtime/opal.h"
+#include "opal/datatype/opal_datatype.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/threads/mutex.h"
 
@@ -101,6 +103,6 @@ int opal_register_params(void)
         if (value) opal_mutex_check_locks = true;
     }
 #endif
-
-    return OPAL_SUCCESS;
+    /* The ddt engine has a few parameters */
+    return opal_datatype_register_params();
 }

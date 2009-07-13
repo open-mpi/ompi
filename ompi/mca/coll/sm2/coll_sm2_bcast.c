@@ -12,7 +12,7 @@
 
 #include "ompi/constants.h"
 #include "coll_sm2.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/communicator/communicator.h"
 /* debug 
 #include "opal/sys/timer.h"
@@ -63,7 +63,7 @@ int mca_coll_sm2_fanout(void *buf, int count,
     /* get size of data needed - same layout as user data, so that
      *   we can apply the reudction routines directly on these buffers
      */
-    rc=ompi_ddt_type_extent(dtype, &dt_extent);
+    rc=ompi_datatype_type_extent(dtype, &dt_extent);
     if( OMPI_SUCCESS != rc ) {
         goto Error;
     }
@@ -120,7 +120,7 @@ int mca_coll_sm2_fanout(void *buf, int count,
         if( ROOT_NODE == my_fanout_read_tree->my_node_type ) {
 
             /* copy data to user supplied buffer */
-            rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+            rc=ompi_datatype_copy_content_same_ddt(dtype, count_this_stripe,
                     (char *)my_data_pointer,
                     (char *)((char *)buf+dt_extent*count_processed));
             if( 0 != rc ) {
@@ -148,7 +148,7 @@ int mca_coll_sm2_fanout(void *buf, int count,
             }
 
             /* copy data to user supplied buffer */
-            rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+            rc=ompi_datatype_copy_content_same_ddt(dtype, count_this_stripe,
                     (char *)buf+dt_extent*count_processed,
                     (char *)parent_data_pointer);
             if( 0 != rc ) {
@@ -171,7 +171,7 @@ int mca_coll_sm2_fanout(void *buf, int count,
             }
 
             /* copy the data to my shared buffer, for access by children */
-            rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+            rc=ompi_datatype_copy_content_same_ddt(dtype, count_this_stripe,
                     (char *)my_data_pointer,(char *)parent_data_pointer);
             if( 0 != rc ) {
                 return OMPI_ERROR;
@@ -186,7 +186,7 @@ int mca_coll_sm2_fanout(void *buf, int count,
             my_ctl_pointer->flag=tag;
 
             /* copy data to user supplied buffer */
-            rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+            rc=ompi_datatype_copy_content_same_ddt(dtype, count_this_stripe,
                     (char *)buf+dt_extent*count_processed,
                     (char *)my_data_pointer);
             if( 0 != rc ) {

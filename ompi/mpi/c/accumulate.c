@@ -25,8 +25,8 @@
 #include "ompi/win/win.h"
 #include "ompi/mca/osc/osc.h"
 #include "ompi/op/op.h"
-#include "ompi/datatype/datatype.h"
-#include "ompi/datatype/datatype_internal.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/datatype/ompi_datatype_internal.h"
 #include "ompi/memchecker.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -38,7 +38,6 @@
 #endif
 
 static const char FUNC_NAME[] = "MPI_Accumlate";
-
 
 int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
                    int target_rank, MPI_Aint target_disp, int target_count,
@@ -88,14 +87,14 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
                     ompi_datatype_t *op_check_dt, *origin_check_dt;
                     char *msg;
 
-                    if (ompi_ddt_is_predefined(origin_datatype)) {
+                    if (opal_datatype_is_predefined(&(origin_datatype->super))) {
                         origin_check_dt = origin_datatype;
                     } else {
                         int i, found_index = -1, num_found = 0;
-                        uint64_t mask = 1;
+                        uint32_t mask = 1;
 
-                        for (i = 0 ; i < DT_MAX_PREDEFINED ; ++i) {
-                            if (origin_datatype->bdt_used & mask) {
+                        for (i = 0 ; i < OMPI_DATATYPE_MAX_PREDEFINED ; ++i) {
+                            if (origin_datatype->super.bdt_used & mask) {
                                 num_found++;
                                 found_index = i;
                             }
@@ -107,7 +106,8 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
                             OMPI_ERRHANDLER_RETURN(MPI_ERR_TYPE, win, MPI_ERR_TYPE, FUNC_NAME);
                         } else {
                             origin_check_dt = (ompi_datatype_t*)
-                                ompi_ddt_basicDatatypes[found_index];
+/* XXX TODO This is not needed, I hope... */
+                                ompi_datatype_basicDatatypes[found_index];
                         }
                     }
 
@@ -121,14 +121,14 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
                        predefined, then make sure it's composed of only one
                        datatype, and check that datatype against
                        ompi_op_is_valid(). */
-                    if (ompi_ddt_is_predefined(target_datatype)) {
+                    if (opal_datatype_is_predefined(&(target_datatype->super))) {
                         op_check_dt = target_datatype;
                     } else {
                         int i, found_index = -1, num_found = 0;
-                        uint64_t mask = 1;
+                        uint32_t mask = 1;
 
-                        for (i = 0 ; i < DT_MAX_PREDEFINED ; ++i) {
-                            if (target_datatype->bdt_used & mask) {
+                        for (i = 0 ; i < OMPI_DATATYPE_MAX_PREDEFINED ; ++i) {
+                            if (target_datatype->super.bdt_used & mask) {
                                 num_found++;
                                 found_index = i;
                             }
@@ -144,7 +144,7 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
                                op?  Unfortunately have to cast away
                                constness... */
                             op_check_dt = (ompi_datatype_t*)
-                                ompi_ddt_basicDatatypes[found_index];
+                                ompi_datatype_basicDatatypes[found_index];
                         }
                     }
 
@@ -186,14 +186,14 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
                predefined, then make sure it's composed of only one
                datatype, and check that datatype against
                ompi_op_is_valid(). */
-            if (ompi_ddt_is_predefined(target_datatype)) {
+            if (opal_datatype_is_predefined(&(target_datatype->super))) {
                 op_check_dt = target_datatype;
             } else {
                 int i, found_index = -1, num_found = 0;
-                uint64_t mask = 1;
+                uint32_t mask = 1;
 
-                for (i = 0 ; i < DT_MAX_PREDEFINED ; ++i) {
-                    if (target_datatype->bdt_used & mask) {
+                for (i = 0 ; i < OMPI_DATATYPE_MAX_PREDEFINED ; ++i) {
+                    if (target_datatype->super.bdt_used & mask) {
                         num_found++;
                         found_index = i;
                     }
@@ -209,7 +209,7 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
                        op?  Unfortunately have to cast away
                        constness... */
                     op_check_dt = (ompi_datatype_t*)
-                        ompi_ddt_basicDatatypes[found_index];
+                        ompi_datatype_basicDatatypes[found_index];
                 }
             }
             if (!ompi_op_is_valid(op, op_check_dt, &msg, FUNC_NAME)) {

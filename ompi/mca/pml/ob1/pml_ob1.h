@@ -29,7 +29,7 @@
 #include "ompi/mca/pml/base/pml_base_request.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "pml_ob1_hdr.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/proc/proc.h"

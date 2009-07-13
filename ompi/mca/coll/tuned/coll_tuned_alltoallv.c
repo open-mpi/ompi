@@ -21,7 +21,7 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
@@ -50,14 +50,14 @@ ompi_coll_tuned_alltoallv_intra_pairwise(void *sbuf, int *scounts, int *sdisps,
     OPAL_OUTPUT((ompi_coll_tuned_stream,
                  "coll:tuned:alltoallv_intra_pairwise rank %d", rank));
 
-    ompi_ddt_type_extent(sdtype, &sext);
-    ompi_ddt_type_extent(rdtype, &rext);
+    ompi_datatype_type_extent(sdtype, &sext);
+    ompi_datatype_type_extent(rdtype, &rext);
 
     psnd = ((char *) sbuf) + (sdisps[rank] * sext);
     prcv = ((char *) rbuf) + (rdisps[rank] * rext);
 
     if (0 != scounts[rank]) {
-        err = ompi_ddt_sndrcv(psnd, scounts[rank], sdtype,
+        err = ompi_datatype_sndrcv(psnd, scounts[rank], sdtype,
                               prcv, rcounts[rank], rdtype);
         if (MPI_SUCCESS != err) {
             return err;
@@ -129,14 +129,14 @@ ompi_coll_tuned_alltoallv_intra_basic_linear(void *sbuf, int *scounts, int *sdis
     OPAL_OUTPUT((ompi_coll_tuned_stream,
                  "coll:tuned:alltoallv_intra_basic_linear rank %d", rank));
 
-    ompi_ddt_type_extent(sdtype, &sext);
-    ompi_ddt_type_extent(rdtype, &rext);
+    ompi_datatype_type_extent(sdtype, &sext);
+    ompi_datatype_type_extent(rdtype, &rext);
 
     /* Simple optimization - handle send to self first */
     psnd = ((char *) sbuf) + (sdisps[rank] * sext);
     prcv = ((char *) rbuf) + (rdisps[rank] * rext);
     if (0 != scounts[rank]) {
-        err = ompi_ddt_sndrcv(psnd, scounts[rank], sdtype,
+        err = ompi_datatype_sndrcv(psnd, scounts[rank], sdtype,
                               prcv, rcounts[rank], rdtype);
         if (MPI_SUCCESS != err) {
             return err;

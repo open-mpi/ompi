@@ -21,7 +21,7 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/mca/pml/pml.h"
@@ -66,7 +66,7 @@ mca_coll_basic_scatterv_intra(void *sbuf, int *scounts,
 
     /* I am the root, loop sending data. */
 
-    err = ompi_ddt_get_extent(sdtype, &lb, &extent);
+    err = ompi_datatype_get_extent(sdtype, &lb, &extent);
     if (OMPI_SUCCESS != err) {
         return OMPI_ERROR;
     }
@@ -79,7 +79,7 @@ mca_coll_basic_scatterv_intra(void *sbuf, int *scounts,
         if (i == rank) {
             /* simple optimization or a local operation */
             if (scounts[i] > 0 && MPI_IN_PLACE != rbuf) {
-                err = ompi_ddt_sndrcv(ptmp, scounts[i], sdtype, rbuf, rcount,
+                err = ompi_datatype_sndrcv(ptmp, scounts[i], sdtype, rbuf, rcount,
                                       rdtype);
             }
         } else {
@@ -138,7 +138,7 @@ mca_coll_basic_scatterv_inter(void *sbuf, int *scounts,
                                 comm, MPI_STATUS_IGNORE));
     } else {
         /* I am the root, loop sending data. */
-        err = ompi_ddt_get_extent(sdtype, &lb, &extent);
+        err = ompi_datatype_get_extent(sdtype, &lb, &extent);
         if (OMPI_SUCCESS != err) {
             return OMPI_ERROR;
         }

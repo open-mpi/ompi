@@ -23,8 +23,8 @@
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/datatype.h"
-#include "ompi/datatype/convertor.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "opal/datatype/opal_convertor.h"
 #include "ompi/memchecker.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -43,7 +43,7 @@ int MPI_Unpack(void *inbuf, int insize, int *position,
                MPI_Comm comm) 
 {
     int rc = 1;
-    ompi_convertor_t local_convertor;
+    opal_convertor_t local_convertor;
     struct iovec outvec;
     unsigned int iov_count;
     size_t size;
@@ -77,13 +77,13 @@ int MPI_Unpack(void *inbuf, int insize, int *position,
     OPAL_CR_ENTER_LIBRARY();
 
     if( insize > 0 ) { 
-        OBJ_CONSTRUCT( &local_convertor, ompi_convertor_t );
+        OBJ_CONSTRUCT( &local_convertor, opal_convertor_t );
         /* the resulting convertor will be set the the position ZERO */
-        ompi_convertor_copy_and_prepare_for_recv( ompi_mpi_local_convertor, datatype,
+        opal_convertor_copy_and_prepare_for_recv( ompi_mpi_local_convertor, &(datatype->super),
                                                   outcount, outbuf, 0, &local_convertor );
         
         /* Check for truncation */
-        ompi_convertor_get_packed_size( &local_convertor, &size );
+        opal_convertor_get_packed_size( &local_convertor, &size );
         if( (*position + size) > (unsigned int)insize ) {
             OBJ_DESTRUCT( &local_convertor );
             OPAL_CR_EXIT_LIBRARY();
@@ -96,7 +96,7 @@ int MPI_Unpack(void *inbuf, int insize, int *position,
         
         /* Do the actual unpacking */
         iov_count = 1;
-        rc = ompi_convertor_unpack( &local_convertor, &outvec, &iov_count, &size );
+        rc = opal_convertor_unpack( &local_convertor, &outvec, &iov_count, &size );
         *position += size;
         OBJ_DESTRUCT( &local_convertor );
         

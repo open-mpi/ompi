@@ -23,7 +23,7 @@
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -59,14 +59,14 @@ int MPI_Type_contiguous(int count,
 
    OPAL_CR_ENTER_LIBRARY();
 
-   rc = ompi_ddt_create_contiguous( count, oldtype, newtype );
+   rc = ompi_datatype_create_contiguous( count, oldtype, newtype );
    OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME );
 
    /* data description */
    {
       int* a_i[1];
       a_i[0] = &count;
-      ompi_ddt_set_args( *newtype, 1, a_i, 0, NULL, 1, &oldtype, MPI_COMBINER_CONTIGUOUS );
+      ompi_datatype_set_args( *newtype, 1, a_i, 0, NULL, 1, &oldtype, MPI_COMBINER_CONTIGUOUS );
    }
 
    OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME );

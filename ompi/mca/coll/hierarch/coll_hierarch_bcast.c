@@ -25,7 +25,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mca/pml/pml.h"
 
 /*
@@ -167,8 +167,8 @@ static int mca_coll_hierarch_bcast_intra_seg (void *buff,
     llcomm = mca_coll_hierarch_get_llcomm ( root, hierarch_module, &llroot, &lroot);
 
 
-    ompi_ddt_type_size  ( datatype, &typesize);
-    ompi_ddt_get_extent ( datatype, &ub, &typeext);
+    ompi_datatype_type_size  ( datatype, &typesize);
+    ompi_datatype_get_extent ( datatype, &ub, &typeext);
 
 
     /* Determine number of segments and number of elements per segment */
@@ -267,8 +267,8 @@ static int mca_coll_hierarch_bcast_intra_seg1 (void *buff,
      */
     llcomm = mca_coll_hierarch_get_llcomm ( root, hierarch_module, &llroot, &lroot);
 
-    ompi_ddt_type_size ( datatype, &typesize);
-    ompi_ddt_get_extent ( datatype, &ub, &typeext);
+    ompi_datatype_type_size ( datatype, &typesize);
+    ompi_datatype_get_extent ( datatype, &ub, &typeext);
     
     /* Determine number of segments and number of elements per segment */
     if ((typesize > 0) && (segsize % typesize != 0)) {
@@ -431,8 +431,8 @@ static int mca_coll_hierarch_bcast_intra_seg2 (void *buff,
      */
     llcomm = mca_coll_hierarch_get_llcomm ( root, hierarch_module, &llroot, &lroot);
 
-    ompi_ddt_type_size ( datatype, &typesize);
-    ompi_ddt_get_extent ( datatype, &ub, &typeext);
+    ompi_datatype_type_size ( datatype, &typesize);
+    ompi_datatype_get_extent ( datatype, &ub, &typeext);
     
     /* Determine number of segments and number of elements per segment */
     if ((typesize > 0) && (segsize % typesize != 0)) {
@@ -589,8 +589,8 @@ static int mca_coll_hierarch_bcast_intra_seg3 (void *buff,
      */
     llcomm = mca_coll_hierarch_get_llcomm ( root, hierarch_module, &llroot, &lroot);
 
-    ompi_ddt_type_size ( datatype, &typesize);
-    ompi_ddt_get_extent ( datatype, &ub, &typeext);
+    ompi_datatype_type_size ( datatype, &typesize);
+    ompi_datatype_get_extent ( datatype, &ub, &typeext);
 
     /* Determine number of segments and number of elements per segment */
     if ((typesize > 0) && (segsize % typesize != 0)) {

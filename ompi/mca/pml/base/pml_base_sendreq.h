@@ -25,7 +25,7 @@
 #include "ompi_config.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
-#include "ompi/datatype/convertor.h"
+#include "opal/datatype/opal_convertor.h"
 #include "ompi/peruse/peruse-internal.h"
 
 BEGIN_C_DECLS
@@ -96,14 +96,14 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION( mca_pml_base_send_request_t );
           OBJ_RETAIN(datatype);                                           \
          /* We will create a convertor specialized for the        */      \
          /* remote architecture and prepared with the datatype.   */      \
-         ompi_convertor_copy_and_prepare_for_send(                        \
+         opal_convertor_copy_and_prepare_for_send(                        \
                             (request)->req_base.req_proc->proc_convertor, \
-                            (request)->req_base.req_datatype,             \
+                            &((request)->req_base.req_datatype->super),   \
                             (request)->req_base.req_count,                \
                             (request)->req_base.req_addr,                 \
                             convertor_flags,                              \
                             &(request)->req_base.req_convertor );         \
-         ompi_convertor_get_packed_size( &(request)->req_base.req_convertor, \
+         opal_convertor_get_packed_size( &(request)->req_base.req_convertor, \
                                          &((request)->req_bytes_packed) );\
       }                                                                   \
    }
@@ -134,7 +134,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION( mca_pml_base_send_request_t );
         OBJ_RELEASE((request)->req_base.req_comm);                        \
         if( 0 != (request)->req_base.req_count )                          \
             OBJ_RELEASE((request)->req_base.req_datatype);                \
-        ompi_convertor_cleanup( &((request)->req_base.req_convertor) );   \
+        opal_convertor_cleanup( &((request)->req_base.req_convertor) );   \
     } while (0)
 
 

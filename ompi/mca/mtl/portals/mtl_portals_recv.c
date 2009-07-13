@@ -21,8 +21,8 @@
 
 #include "opal/class/opal_list.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/datatype/datatype.h"
-#include "ompi/datatype/convertor.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "opal/datatype/opal_convertor.h"
 #include "ompi/mca/mtl/base/base.h"
 #include "ompi/mca/mtl/base/mtl_base_datatype.h"
 
@@ -149,7 +149,7 @@ ompi_mtl_portals_recv_progress(ptl_event_t *ev,
 
 static int
 ompi_mtl_portals_get_data(ompi_mtl_portals_event_t *recv_event, 
-                          struct ompi_convertor_t *convertor,
+                          struct opal_convertor_t *convertor,
                           ompi_mtl_portals_request_t  *ptl_request)
 {
     int ret;
@@ -180,7 +180,7 @@ ompi_mtl_portals_get_data(ompi_mtl_portals_event_t *recv_event,
 
         /* pull out the data */
         if (iov.iov_len > 0) {
-            ret = ompi_convertor_unpack(convertor, &iov, &iov_count,
+            ret = opal_convertor_unpack(convertor, &iov, &iov_count,
                                         &max_data );
             if (0 > ret) return ret;
         }
@@ -222,7 +222,7 @@ ompi_mtl_portals_get_data(ompi_mtl_portals_event_t *recv_event,
         /* finished with our buffer space */
         ompi_mtl_portals_return_block_part(&ompi_mtl_portals, block);
 
-        ompi_convertor_get_packed_size(convertor, &buflen);
+        opal_convertor_get_packed_size(convertor, &buflen);
 
         ptl_request->super.ompi_req->req_status.MPI_SOURCE =
             PTL_GET_SOURCE(recv_event->ev.match_bits);
@@ -458,7 +458,7 @@ ompi_mtl_portals_irecv(struct mca_mtl_base_module_t* mtl,
                        struct ompi_communicator_t *comm,
                        int src,
                        int tag,
-                       struct ompi_convertor_t *convertor,
+                       struct opal_convertor_t *convertor,
                        mca_mtl_request_t *mtl_request)
 {
     ptl_match_bits_t match_bits, ignore_bits;

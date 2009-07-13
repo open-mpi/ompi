@@ -19,7 +19,7 @@
 #include "ompi_config.h"
 
 #include "ompi/constants.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "coll_self.h"
 
 
@@ -42,11 +42,11 @@ int mca_coll_self_gatherv_intra(void *sbuf, int scount,
     } else { 
         int err;        
         ptrdiff_t lb, extent;
-        err = ompi_ddt_get_extent(rdtype, &lb, &extent);
+        err = ompi_datatype_get_extent(rdtype, &lb, &extent);
         if (OMPI_SUCCESS != err) {
             return OMPI_ERROR;
         }
-        return ompi_ddt_sndrcv(sbuf, scount, sdtype,
+        return ompi_datatype_sndrcv(sbuf, scount, sdtype,
                                ((char *) rbuf) + disps[0]*extent, 
                                rcounts[0], rdtype);
     }

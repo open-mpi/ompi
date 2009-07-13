@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,6 +31,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
 #include "opal/util/net.h"
+#include "opal/datatype/opal_datatype.h"
 #include "opal/mca/installdirs/base/base.h"
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/memcpy/base/base.h"
@@ -292,6 +294,12 @@ opal_init(void)
     /* open the processor affinity base */
     opal_paffinity_base_open();
     opal_paffinity_base_select();
+
+    /* initialize the datatype engine */
+    if (OPAL_SUCCESS != (ret = opal_datatype_init ())) {
+        error = "opal_datatype_init";
+        goto return_error;
+    }
 
     /* the memcpy component should be one of the first who get
      * loaded in order to make sure we ddo have all the available

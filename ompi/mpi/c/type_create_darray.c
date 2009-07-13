@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -13,9 +13,9 @@
  *                         reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -25,7 +25,7 @@
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -68,7 +68,7 @@ int MPI_Type_create_darray(int size,
     MEMCHECKER(
         memchecker_datatype(oldtype);
     );
-    
+
     if (MPI_PARAM_CHECK) {
         int prod_psize = 1;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -80,13 +80,13 @@ int MPI_Type_create_darray(int size,
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
         } else if (NULL == newtype) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE, FUNC_NAME);
-        } else if( !(DT_FLAG_DATA & oldtype ->flags) ) {
+        } else if( !(OPAL_DATATYPE_FLAG_DATA & oldtype->super.flags) ) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE, FUNC_NAME);
         } else if( (MPI_ORDER_C != order) && (MPI_ORDER_FORTRAN != order) ) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
         }
         for( i = 0; i < ndims; i++ ) {
-            if( (MPI_DISTRIBUTE_BLOCK != distrib_array[i]) && 
+            if( (MPI_DISTRIBUTE_BLOCK != distrib_array[i]) &&
                 (MPI_DISTRIBUTE_CYCLIC != distrib_array[i]) &&
                 (MPI_DISTRIBUTE_NONE != distrib_array[i]) ) {
                 return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
@@ -111,13 +111,13 @@ int MPI_Type_create_darray(int size,
     if (ndims < 1) {
         /* Don't just return MPI_DATATYPE_NULL as that can't be
            MPI_TYPE_FREE()ed, and that seems bad */
-        *newtype = ompi_ddt_create(0);
-        ompi_ddt_add(*newtype, &ompi_mpi_datatype_null.dt, 0, 0, 0);
+        *newtype = ompi_datatype_create(0);
+        ompi_datatype_add(*newtype, &ompi_mpi_datatype_null.dt, 0, 0, 0);
         OPAL_CR_EXIT_LIBRARY();
         return MPI_SUCCESS;
     }
 
-    rc = ompi_ddt_type_extent(oldtype, &orig_extent);
+    rc = ompi_datatype_type_extent(oldtype, &orig_extent);
     if (MPI_SUCCESS != rc) goto cleanup;
 
     /* calculate position in grid using row-major ordering */
@@ -137,7 +137,7 @@ int MPI_Type_create_darray(int size,
     /* duplicate type to here to 1) deal with constness without
        casting and 2) eliminate need to for conditional destroy below.
        Lame, yes.  But cleaner code all around. */
-    rc = ompi_ddt_duplicate(oldtype, &lastType);
+    rc = ompi_datatype_duplicate(oldtype, &lastType);
     if (OMPI_SUCCESS != rc) goto cleanup;
 
     /* figure out ordering issues */
@@ -153,13 +153,13 @@ int MPI_Type_create_darray(int size,
 
         switch(distrib_array[i]) {
         case MPI_DISTRIBUTE_BLOCK:
-            rc = block(gsize_array, i, ndims, psize_array[i], coords[i], 
-                       darg_array[i], order, orig_extent, 
-                       lastType, newtype, st_offsets+i); 
+            rc = block(gsize_array, i, ndims, psize_array[i], coords[i],
+                       darg_array[i], order, orig_extent,
+                       lastType, newtype, st_offsets+i);
             break;
         case MPI_DISTRIBUTE_CYCLIC:
-            rc = cyclic(gsize_array, i, ndims, psize_array[i], coords[i], 
-                        darg_array[i], order, orig_extent, 
+            rc = cyclic(gsize_array, i, ndims, psize_array[i], coords[i],
+                        darg_array[i], order, orig_extent,
                         lastType, newtype, st_offsets+i);
             break;
         case MPI_DISTRIBUTE_NONE:
@@ -171,13 +171,13 @@ int MPI_Type_create_darray(int size,
             }
 
             rc = block(gsize_array, i, ndims, nprocs, tmp_rank,
-                       MPI_DISTRIBUTE_DFLT_DARG, order, orig_extent, 
-                       lastType, newtype, st_offsets+i); 
+                       MPI_DISTRIBUTE_DFLT_DARG, order, orig_extent,
+                       lastType, newtype, st_offsets+i);
             break;
         default:
             rc = MPI_ERR_ARG;
         }
-        ompi_ddt_destroy(&lastType);
+        ompi_datatype_destroy(&lastType);
         /* need to destroy the old type even in error condition, so
            don't check return code from above until after cleanup. */
         if (MPI_SUCCESS != rc) goto cleanup;
@@ -187,7 +187,7 @@ int MPI_Type_create_darray(int size,
 
     /* set displacement and UB correctly.  Use struct instead of
        resized for same reason as subarray */
-    { 
+    {
         ptrdiff_t displs[3];
         ompi_datatype_t *types[3];
         int tmp_size, blength[3] = { 1, 1, 1};
@@ -199,7 +199,7 @@ int MPI_Type_create_darray(int size,
             displs[1] += tmp_size * st_offsets[i];
         }
 
-        displs[0] = 0; 
+        displs[0] = 0;
         displs[1] *= orig_extent;
         displs[2] = orig_extent;
         for (i = 0 ; i < ndims ; i++) {
@@ -207,8 +207,8 @@ int MPI_Type_create_darray(int size,
         }
         types[0] = MPI_LB; types[1] = lastType; types[2] = MPI_UB;
 
-        rc = ompi_ddt_create_struct(3, blength, displs, types, newtype);
-        ompi_ddt_destroy(&lastType);
+        rc = ompi_datatype_create_struct(3, blength, displs, types, newtype);
+        ompi_datatype_destroy(&lastType);
         /* need to destroy the old type even in error condition, so
            don't check return code from above until after cleanup. */
         if (MPI_SUCCESS != rc) goto cleanup;
@@ -226,7 +226,7 @@ int MPI_Type_create_darray(int size,
         a_i[6] = psize_array;
         a_i[7] = &order;
 
-        ompi_ddt_set_args( *newtype, 4 * ndims + 4, a_i, 0, NULL, 1, &oldtype,
+        ompi_datatype_set_args( *newtype, 4 * ndims + 4, a_i, 0, NULL, 1, &oldtype,
                            MPI_COMBINER_DARRAY );
     }
 
@@ -244,7 +244,7 @@ static int
 block(const int *gsize_array, int dim, int ndims, int nprocs,
       int rank, int darg, int order, ptrdiff_t orig_extent,
       ompi_datatype_t *type_old, ompi_datatype_t **type_new,
-      ptrdiff_t *st_offset) 
+      ptrdiff_t *st_offset)
 {
     int blksize, global_size, mysize, i, j, rc, start_loop, step;
     ptrdiff_t stride;
@@ -252,9 +252,9 @@ block(const int *gsize_array, int dim, int ndims, int nprocs,
     global_size = gsize_array[dim];
 
     if (darg == MPI_DISTRIBUTE_DFLT_DARG)
-	blksize = (global_size + nprocs - 1) / nprocs;
+        blksize = (global_size + nprocs - 1) / nprocs;
     else {
-	blksize = darg;
+        blksize = darg;
     }
 
     j = global_size - blksize*rank;
@@ -269,13 +269,13 @@ block(const int *gsize_array, int dim, int ndims, int nprocs,
 
     stride = orig_extent;
     if (dim == start_loop) {
-        rc = ompi_ddt_create_contiguous(mysize, type_old, type_new);
+        rc = ompi_datatype_create_contiguous(mysize, type_old, type_new);
         if (OMPI_SUCCESS != rc) return rc;
     } else {
         for (i = start_loop ; i != dim ; i += step) {
             stride *= gsize_array[i];
         }
-        rc = ompi_ddt_create_hvector(mysize, 1, stride, type_old, type_new);
+        rc = ompi_datatype_create_hvector(mysize, 1, stride, type_old, type_new);
         if (OMPI_SUCCESS != rc) return rc;
     }
 
@@ -291,7 +291,7 @@ static int
 cyclic(const int *gsize_array, int dim, int ndims, int nprocs,
        int rank, int darg, int order, ptrdiff_t orig_extent,
        ompi_datatype_t* type_old, ompi_datatype_t **type_new,
-       ptrdiff_t *st_offset) 
+       ptrdiff_t *st_offset)
 {
     int blksize, i, blklens[2], st_index, end_index, local_size, rem, count, rc;
     ptrdiff_t stride, disps[2];
@@ -316,7 +316,7 @@ cyclic(const int *gsize_array, int dim, int ndims, int nprocs,
 
     count = local_size / blksize;
     rem = local_size % blksize;
-    
+
     stride = nprocs*blksize*orig_extent;
     if (order == MPI_ORDER_FORTRAN) {
 	for (i=0; i<dim; i++) {
@@ -328,7 +328,7 @@ cyclic(const int *gsize_array, int dim, int ndims, int nprocs,
         }
     }
 
-    rc = ompi_ddt_create_hvector(count, blksize, stride, type_old, type_new);
+    rc = ompi_datatype_create_hvector(count, blksize, stride, type_old, type_new);
     if (OMPI_SUCCESS != rc) return rc;
 
     if (rem) {
@@ -342,8 +342,8 @@ cyclic(const int *gsize_array, int dim, int ndims, int nprocs,
 	blklens[0] = 1;
 	blklens[1] = rem;
 
-        rc = ompi_ddt_create_struct(2, blklens, disps, types, &type_tmp);
-        ompi_ddt_destroy(type_new);
+        rc = ompi_datatype_create_struct(2, blklens, disps, types, &type_tmp);
+        ompi_datatype_destroy(type_new);
         /* even in error condition, need to destroy type_new, so check
            for error after destroy. */
         if (OMPI_SUCCESS != rc) return rc;
@@ -365,14 +365,14 @@ cyclic(const int *gsize_array, int dim, int ndims, int nprocs,
         }
     }
     blklens[0] = blklens[1] = 1;
-    rc = ompi_ddt_create_struct(2, blklens, disps, types, &type_tmp);
-    ompi_ddt_destroy(type_new);
+    rc = ompi_datatype_create_struct(2, blklens, disps, types, &type_tmp);
+    ompi_datatype_destroy(type_new);
         /* even in error condition, need to destroy type_new, so check
            for error after destroy. */
     if (OMPI_SUCCESS != rc) return rc;
     *type_new = type_tmp;
 
-    *st_offset = rank * blksize; 
+    *st_offset = rank * blksize;
      /* in terms of no. of elements of type oldtype in this dimension */
     if (local_size == 0) *st_offset = 0;
 

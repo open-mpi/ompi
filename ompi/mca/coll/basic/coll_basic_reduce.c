@@ -188,8 +188,8 @@ mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
      * 
      */
 
-    ompi_ddt_get_extent(dtype, &lb, &extent);
-    ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
+    ompi_datatype_get_extent(dtype, &lb, &extent);
+    ompi_datatype_get_true_extent(dtype, &true_lb, &true_extent);
 
     if (MPI_IN_PLACE == sbuf) {
         sbuf = rbuf;
@@ -211,7 +211,7 @@ mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
     /* Initialize the receive buffer. */
 
     if (rank == (size - 1)) {
-        err = ompi_ddt_copy_content_same_ddt(dtype, count, (char*)rbuf, (char*)sbuf);
+        err = ompi_datatype_copy_content_same_ddt(dtype, count, (char*)rbuf, (char*)sbuf);
     } else {
         err = MCA_PML_CALL(recv(rbuf, count, dtype, size - 1,
                                 MCA_COLL_BASE_TAG_REDUCE, comm,
@@ -249,7 +249,7 @@ mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
     }
 
     if (NULL != inplace_temp) {
-        err = ompi_ddt_copy_content_same_ddt(dtype, count, (char*)sbuf, inplace_temp);
+        err = ompi_datatype_copy_content_same_ddt(dtype, count, (char*)sbuf, inplace_temp);
         free(inplace_temp);
     }
     if (NULL != free_buffer) {
@@ -350,8 +350,8 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
     /* Allocate the incoming and resulting message buffers.  See lengthy
      * rationale above. */
 
-    ompi_ddt_get_extent(dtype, &lb, &extent);
-    ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
+    ompi_datatype_get_extent(dtype, &lb, &extent);
+    ompi_datatype_get_true_extent(dtype, &true_lb, &true_extent);
     
     free_buffer = (char*)malloc(true_extent + (count - 1) * extent);
     if (NULL == free_buffer) {
@@ -375,7 +375,7 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
             goto cleanup_and_return;
         }
         sbuf = inplace_temp - lb;
-        err = ompi_ddt_copy_content_same_ddt(dtype, count, (char*)sbuf, (char*)rbuf);
+        err = ompi_datatype_copy_content_same_ddt(dtype, count, (char*)sbuf, (char*)rbuf);
     }
     snd_buffer = (char*)sbuf;
 
@@ -453,7 +453,7 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
                  * buffer into a temp buffer (pml_buffer) and then reduce
                  * what we just received against it. */
                 if (!ompi_op_is_commute(op)) {
-                    ompi_ddt_copy_content_same_ddt(dtype, count, pml_buffer,
+                    ompi_datatype_copy_content_same_ddt(dtype, count, pml_buffer,
                                                    (char*)sbuf);
                     ompi_op_reduce(op, rbuf, pml_buffer, count, dtype);
                 } else {
@@ -472,7 +472,7 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
     err = MPI_SUCCESS;
     if (0 == vrank) {
         if (root == rank) {
-            ompi_ddt_copy_content_same_ddt(dtype, count, (char*)rbuf, snd_buffer);
+            ompi_datatype_copy_content_same_ddt(dtype, count, (char*)rbuf, snd_buffer);
         } else {
             err = MCA_PML_CALL(send(snd_buffer, count,
                                     dtype, root, MCA_COLL_BASE_TAG_REDUCE,
@@ -536,8 +536,8 @@ mca_coll_basic_reduce_lin_inter(void *sbuf, void *rbuf, int count,
                                 MCA_PML_BASE_SEND_STANDARD, comm));
     } else {
         /* Root receives and reduces messages  */
-        ompi_ddt_get_extent(dtype, &lb, &extent);
-        ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
+        ompi_datatype_get_extent(dtype, &lb, &extent);
+        ompi_datatype_get_true_extent(dtype, &true_lb, &true_extent);
 
         free_buffer = (char*)malloc(true_extent + (count - 1) * extent);
         if (NULL == free_buffer) {

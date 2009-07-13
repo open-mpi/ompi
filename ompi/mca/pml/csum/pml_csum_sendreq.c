@@ -364,7 +364,7 @@ int mca_pml_csum_send_request_start_buffered(
     iov.iov_len = size;
     iov_count = 1;
     max_data = size;
-    if((rc = ompi_convertor_pack( &sendreq->req_send.req_base.req_convertor,
+    if((rc = opal_convertor_pack( &sendreq->req_send.req_base.req_convertor,
                                   &iov,
                                   &iov_count,
                                   &max_data)) < 0) {
@@ -412,7 +412,7 @@ int mca_pml_csum_send_request_start_buffered(
     iov.iov_base = (IOVBASE_TYPE*)(((unsigned char*)sendreq->req_send.req_addr) + max_data);
     iov.iov_len = max_data = sendreq->req_send.req_bytes_packed - max_data;
 
-    if((rc = ompi_convertor_pack( &sendreq->req_send.req_base.req_convertor,
+    if((rc = opal_convertor_pack( &sendreq->req_send.req_base.req_convertor,
                                   &iov,
                                   &iov_count,
                                   &max_data)) < 0) {
@@ -421,8 +421,8 @@ int mca_pml_csum_send_request_start_buffered(
     }
 
     /* re-init convertor for packed data */
-    ompi_convertor_prepare_for_send( &sendreq->req_send.req_base.req_convertor,
-                                     MPI_BYTE,
+    opal_convertor_prepare_for_send( &sendreq->req_send.req_base.req_convertor,
+                                     &(ompi_mpi_byte.dt.super),
                                      sendreq->req_send.req_bytes_packed,
                                      sendreq->req_send.req_addr );
    
@@ -530,7 +530,7 @@ int mca_pml_csum_send_request_start_copy( mca_pml_csum_send_request_t* sendreq,
                             sendreq->req_send.req_base.req_count,
                             sendreq->req_send.req_base.req_datatype);
         );
-        (void)ompi_convertor_pack( &sendreq->req_send.req_base.req_convertor,
+        (void)opal_convertor_pack( &sendreq->req_send.req_base.req_convertor,
                                    &iov, &iov_count, &max_data );
          /*
           *  Packing finished, make the user buffer unaccessable.
@@ -718,7 +718,7 @@ int mca_pml_csum_send_request_start_rdma( mca_pml_csum_send_request_t* sendreq,
                             sendreq->req_send.req_base.req_datatype);
         );
         if( OPAL_UNLIKELY(NULL == src) ) {
-            ompi_convertor_set_position(&sendreq->req_send.req_base.req_convertor,
+            opal_convertor_set_position(&sendreq->req_send.req_base.req_convertor,
                                         &old_position);
             return OMPI_ERR_OUT_OF_RESOURCE;
         } 
@@ -731,7 +731,7 @@ int mca_pml_csum_send_request_start_rdma( mca_pml_csum_send_request_t* sendreq,
                            (sizeof(mca_btl_base_segment_t) * (src->des_src_cnt-1)),
                            MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
         if( OPAL_UNLIKELY(NULL == des) ) {
-            ompi_convertor_set_position( &sendreq->req_send.req_base.req_convertor,
+            opal_convertor_set_position( &sendreq->req_send.req_base.req_convertor,
                                          &old_position );
             mca_bml_base_free(bml_btl, src);
             return OMPI_ERR_OUT_OF_RESOURCE;
@@ -1074,7 +1074,7 @@ cannot_pack:
             
         /* pack into a descriptor */
         offset = (size_t)range->range_send_offset;
-        ompi_convertor_set_position(&sendreq->req_send.req_base.req_convertor, 
+        opal_convertor_set_position(&sendreq->req_send.req_base.req_convertor, 
                                     &offset);
         range->range_send_offset = (uint64_t)offset;
 
@@ -1215,7 +1215,7 @@ int mca_pml_csum_send_request_put_frag( mca_pml_csum_rdma_frag_t* frag )
         if(frag->retries < mca_pml_csum.rdma_put_retries_limit) {
             size_t offset = (size_t)frag->rdma_hdr.hdr_rdma.hdr_rdma_offset;
             frag->rdma_length = save_size; 
-            ompi_convertor_set_position(&frag->convertor, &offset);
+            opal_convertor_set_position(&frag->convertor, &offset);
             OPAL_THREAD_LOCK(&mca_pml_csum.lock);
             opal_list_append(&mca_pml_csum.rdma_pending, (opal_list_item_t*)frag);
             OPAL_THREAD_UNLOCK(&mca_pml_csum.lock);
@@ -1331,7 +1331,7 @@ void mca_pml_csum_send_request_put( mca_pml_csum_send_request_t* sendreq,
      *  create clone of the convertor for each RDMA fragment
      */
     size = hdr->hdr_rdma_offset;
-    ompi_convertor_clone_with_position(&sendreq->req_send.req_base.req_convertor,
+    opal_convertor_clone_with_position(&sendreq->req_send.req_base.req_convertor,
             &frag->convertor, 0, &size);
 
     mca_pml_csum_send_request_put_frag(frag);

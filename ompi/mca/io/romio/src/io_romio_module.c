@@ -20,7 +20,7 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mca/io/io.h"
 #include "io_romio.h"
 
@@ -143,5 +143,5 @@ void ADIOI_Datatype_iscontig(MPI_Datatype datatype, int *flag)
      * gaps in the beginning and at the end. We have to provide
      * a count of 2 in order to get these gaps taken into acount.
      */
-    *flag = ompi_ddt_is_contiguous_memory_layout(datatype, 2);
+    *flag = ompi_datatype_is_contiguous_memory_layout(datatype, 2);
 }

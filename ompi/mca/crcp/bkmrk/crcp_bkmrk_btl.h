@@ -78,7 +78,7 @@ extern "C" {
     ( struct mca_btl_base_module_t* btl,
       struct mca_btl_base_endpoint_t* endpoint,
       mca_mpool_base_registration_t* registration,
-      struct ompi_convertor_t* convertor,
+      struct opal_convertor_t* convertor,
       size_t reserve,
       size_t* size,
       ompi_crcp_base_btl_state_t*);
@@ -87,7 +87,7 @@ extern "C" {
     ( struct mca_btl_base_module_t* btl,
       struct mca_btl_base_endpoint_t* endpoint,
       mca_mpool_base_registration_t* registration,
-      struct ompi_convertor_t* convertor,
+      struct opal_convertor_t* convertor,
       size_t reserve,
       size_t* size,
       ompi_crcp_base_btl_state_t*);

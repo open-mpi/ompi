@@ -47,7 +47,7 @@ struct mca_pml_cm_request_t {
     struct ompi_communicator_t *req_comm; /**< communicator pointer */
     struct ompi_datatype_t *req_datatype; /**< pointer to data type */
     volatile bool req_free_called;        /**< flag indicating if the user has freed this request */
-    ompi_convertor_t req_convertor;       /**< convertor that describes the memory layout */
+    opal_convertor_t req_convertor;       /**< convertor that describes the memory layout */
 /* END: These fields have to match the definition of the mca_pml_base_request_t */
 };
 typedef struct mca_pml_cm_request_t mca_pml_cm_request_t;

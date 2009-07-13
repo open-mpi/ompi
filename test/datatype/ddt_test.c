@@ -20,7 +20,7 @@
 
 #include "ompi_config.h"
 #include "ddt_lib.h"
-#include "ompi/datatype/convertor.h"
+#include "opal/datatype/opal_convertor.h"
 #include <time.h>
 #include <stdlib.h>
 #ifdef HAVE_SYS_TIME_H
@@ -46,7 +46,7 @@ static int test_upper( unsigned int length )
 {
     double *mat1, *mat2, *inbuf;
     ompi_datatype_t *pdt;
-    ompi_convertor_t * pConv;
+    opal_convertor_t * pConv;
     char *ptr;
     int rc;
     unsigned int i, j, iov_count, split_chunk, total_length;
@@ -75,8 +75,8 @@ static int test_upper( unsigned int length )
         }
     }
     inbuf = (double*)ptr;
-    pConv = ompi_convertor_create( remote_arch, 0 );
-    if( OMPI_SUCCESS != ompi_convertor_prepare_for_recv( pConv, pdt, 1, mat2 ) ) {
+    pConv = opal_convertor_create( remote_arch, 0 );
+    if( OPAL_SUCCESS != opal_convertor_prepare_for_recv( pConv, &(pdt->super), 1, mat2 ) ) {
         printf( "Cannot attach the datatype to a convertor\n" );
         return OMPI_ERROR;
     }
@@ -92,7 +92,7 @@ static int test_upper( unsigned int length )
         a.iov_len = split_chunk;
         iov_count = 1;
         max_data = split_chunk;
-        ompi_convertor_unpack( pConv, &a, &iov_count, &max_data );
+        opal_convertor_unpack( pConv, &a, &iov_count, &max_data );
         ptr += max_data;
         i -= max_data;
         if( mat2[0] != inbuf[0] ) assert(0);
@@ -106,7 +106,7 @@ static int test_upper( unsigned int length )
     free( mat2 );
 
     /* test the automatic destruction pf the data */
-    ompi_ddt_destroy( &pdt ); assert( pdt == NULL );
+    ompi_datatype_destroy( &pdt ); assert( pdt == NULL );
 
     OBJ_RELEASE( pConv );
     return rc;
@@ -128,7 +128,7 @@ static int local_copy_ddt_count( ompi_datatype_t* pdt, int count )
     TIMER_DATA_TYPE start, end;
     long total_time;
 
-    ompi_ddt_type_extent( pdt, &extent );
+    ompi_datatype_type_extent( pdt, &extent );
 
     pdst = malloc( extent * count );
     psrc = malloc( extent * count );
@@ -143,7 +143,7 @@ static int local_copy_ddt_count( ompi_datatype_t* pdt, int count )
     cache_trash();  /* make sure the cache is useless */
 
     GET_TIME( start );
-    if( OMPI_SUCCESS != ompi_ddt_copy_content_same_ddt( pdt, count, pdst, psrc ) ) {
+    if( OMPI_SUCCESS != ompi_datatype_copy_content_same_ddt( pdt, count, pdst, psrc ) ) {
         printf( "Unable to copy the datatype in the function local_copy_ddt_count."
                 " Is the datatype committed ?\n" );
     }
@@ -163,7 +163,7 @@ local_copy_with_convertor_2datatypes( ompi_datatype_t* send_type, int send_count
 {
     MPI_Aint send_extent, recv_extent;
     void *pdst = NULL, *psrc = NULL, *ptemp = NULL;
-    ompi_convertor_t *send_convertor = NULL, *recv_convertor = NULL;
+    opal_convertor_t *send_convertor = NULL, *recv_convertor = NULL;
     struct iovec iov;
     uint32_t iov_count;
     size_t max_data;
@@ -171,8 +171,8 @@ local_copy_with_convertor_2datatypes( ompi_datatype_t* send_type, int send_count
     TIMER_DATA_TYPE start, end, unpack_start, unpack_end;
     long total_time, unpack_time = 0;
 
-    ompi_ddt_type_extent( send_type, &send_extent );
-    ompi_ddt_type_extent( recv_type, &recv_extent );
+    ompi_datatype_type_extent( send_type, &send_extent );
+    ompi_datatype_type_extent( recv_type, &recv_extent );
 
     pdst  = malloc( recv_extent * recv_count );
     psrc  = malloc( send_extent * send_count );
@@ -186,13 +186,13 @@ local_copy_with_convertor_2datatypes( ompi_datatype_t* send_type, int send_count
     }
     memset( pdst, 0, recv_count * recv_extent );
 
-    send_convertor = ompi_convertor_create( remote_arch, 0 );
-    if( OMPI_SUCCESS != ompi_convertor_prepare_for_send( send_convertor, send_type, send_count, psrc ) ) {
+    send_convertor = opal_convertor_create( remote_arch, 0 );
+    if( OPAL_SUCCESS != opal_convertor_prepare_for_send( send_convertor, &(send_type->super), send_count, psrc ) ) {
         printf( "Unable to create the send convertor. Is the datatype committed ?\n" );
         goto clean_and_return;
     }
-    recv_convertor = ompi_convertor_create( remote_arch, 0 );
-    if( OMPI_SUCCESS != ompi_convertor_prepare_for_recv( recv_convertor, recv_type, recv_count, pdst ) ) {
+    recv_convertor = opal_convertor_create( remote_arch, 0 );
+    if( OPAL_SUCCESS != opal_convertor_prepare_for_recv( recv_convertor, &(recv_type->super), recv_count, pdst ) ) {
         printf( "Unable to create the recv convertor. Is the datatype committed ?\n" );
         goto clean_and_return;
     }
@@ -214,12 +214,12 @@ local_copy_with_convertor_2datatypes( ompi_datatype_t* send_type, int send_count
         iov.iov_len = chunk;
 
         if( done1 == 0 ) {
-            done1 = ompi_convertor_pack( send_convertor, &iov, &iov_count, &max_data );
+            done1 = opal_convertor_pack( send_convertor, &iov, &iov_count, &max_data );
         }
 
         if( done2 == 0 ) {
             GET_TIME( unpack_start );
-            done2 = ompi_convertor_unpack( recv_convertor, &iov, &iov_count, &max_data );
+            done2 = opal_convertor_unpack( recv_convertor, &iov, &iov_count, &max_data );
             GET_TIME( unpack_end );
             unpack_time += ELAPSED_TIME( unpack_start, unpack_end );
         }
@@ -248,7 +248,7 @@ static int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk
 {
     MPI_Aint extent;
     void *pdst = NULL, *psrc = NULL, *ptemp = NULL;
-    ompi_convertor_t *send_convertor = NULL, *recv_convertor = NULL;
+    opal_convertor_t *send_convertor = NULL, *recv_convertor = NULL;
     struct iovec iov;
     uint32_t iov_count;
     size_t max_data;
@@ -256,7 +256,7 @@ static int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk
     TIMER_DATA_TYPE start, end, unpack_start, unpack_end;
     long total_time, unpack_time = 0;
 
-    ompi_ddt_type_extent( pdt, &extent );
+    ompi_datatype_type_extent( pdt, &extent );
 
     pdst  = malloc( extent * count );
     psrc  = malloc( extent * count );
@@ -268,14 +268,14 @@ static int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk
     }
     memset( pdst, 0, count * extent );
 
-    send_convertor = ompi_convertor_create( remote_arch, 0 );
-    if( OMPI_SUCCESS != ompi_convertor_prepare_for_send( send_convertor, pdt, count, psrc ) ) {
+    send_convertor = opal_convertor_create( remote_arch, 0 );
+    if( OPAL_SUCCESS != opal_convertor_prepare_for_send( send_convertor, &(pdt->super), count, psrc ) ) {
         printf( "Unable to create the send convertor. Is the datatype committed ?\n" );
         goto clean_and_return;
     }
 
-    recv_convertor = ompi_convertor_create( remote_arch, 0 );
-    if( OMPI_SUCCESS != ompi_convertor_prepare_for_recv( recv_convertor, pdt, count, pdst ) ) {
+    recv_convertor = opal_convertor_create( remote_arch, 0 );
+    if( OPAL_SUCCESS != opal_convertor_prepare_for_recv( recv_convertor, &(pdt->super), count, pdst ) ) {
         printf( "Unable to create the recv convertor. Is the datatype committed ?\n" );
         goto clean_and_return;
     }
@@ -297,12 +297,12 @@ static int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk
         iov.iov_len = chunk;
 
         if( done1 == 0 ) {
-            done1 = ompi_convertor_pack( send_convertor, &iov, &iov_count, &max_data );
+            done1 = opal_convertor_pack( send_convertor, &iov, &iov_count, &max_data );
         }
 
         if( done2 == 0 ) {
             GET_TIME( unpack_start );
-            done2 = ompi_convertor_unpack( recv_convertor, &iov, &iov_count, &max_data );
+            done2 = opal_convertor_unpack( recv_convertor, &iov, &iov_count, &max_data );
             GET_TIME( unpack_end );
             unpack_time += ELAPSED_TIME( unpack_start, unpack_end );
         }
@@ -336,14 +336,14 @@ int main( int argc, char* argv[] )
     ompi_datatype_t *pdt, *pdt1, *pdt2, *pdt3;
     int rc, length = 500;
 
-    ompi_ddt_init();
+    ompi_datatype_init();
 
     /**
      * By default simulate homogeneous architectures.
      */
-    remote_arch = ompi_mpi_local_arch;
+    remote_arch = opal_local_arch;
     printf( "\n\n#\n * TEST INVERSED VECTOR\n #\n\n" );
-    pdt = create_inversed_vector( &ompi_mpi_int, 10 );
+    pdt = create_inversed_vector( &ompi_mpi_int.dt, 10 );
     if( outputFlags & CHECK_PACK_UNPACK ) {
         local_copy_ddt_count(pdt, 100);
         local_copy_with_convertor(pdt, 100, 956);
@@ -379,7 +379,7 @@ int main( int argc, char* argv[] )
     printf( "\n\n#\n * TEST MATRIX BORDERS\n #\n\n" );
     pdt = test_matrix_borders( length, 100 );
     if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
-        ompi_ddt_dump( pdt );
+        ompi_datatype_dump( pdt );
     }
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
     
@@ -390,30 +390,30 @@ int main( int argc, char* argv[] )
     pdt = test_struct();
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
     
-    ompi_ddt_create_contiguous(0, &ompi_mpi_datatype_null, &pdt1);
-    ompi_ddt_create_contiguous(0, &ompi_mpi_datatype_null, &pdt2);
-    ompi_ddt_create_contiguous(0, &ompi_mpi_datatype_null, &pdt3);
+    ompi_datatype_create_contiguous(0, &ompi_mpi_datatype_null.dt, &pdt1);
+    ompi_datatype_create_contiguous(0, &ompi_mpi_datatype_null.dt, &pdt2);
+    ompi_datatype_create_contiguous(0, &ompi_mpi_datatype_null.dt, &pdt3);
 
-    ompi_ddt_add( pdt3, &ompi_mpi_int, 10, 0, -1 );
-    ompi_ddt_add( pdt3, &ompi_mpi_float, 5, 10 * sizeof(int), -1 );
+    ompi_datatype_add( pdt3, &ompi_mpi_int.dt, 10, 0, -1 );
+    ompi_datatype_add( pdt3, &ompi_mpi_float.dt, 5, 10 * sizeof(int), -1 );
     
-    ompi_ddt_add( pdt2, &ompi_mpi_float, 1, 0, -1 );
-    ompi_ddt_add( pdt2, pdt3, 3, sizeof(int) * 1, -1 );
+    ompi_datatype_add( pdt2, &ompi_mpi_float.dt, 1, 0, -1 );
+    ompi_datatype_add( pdt2, pdt3, 3, sizeof(int) * 1, -1 );
     
-    ompi_ddt_add( pdt1, &ompi_mpi_long_long_int, 5, 0, -1 );
-    ompi_ddt_add( pdt1, &ompi_mpi_long_double, 2, sizeof(long long) * 5, -1 );
+    ompi_datatype_add( pdt1, &ompi_mpi_long_long_int.dt, 5, 0, -1 );
+    ompi_datatype_add( pdt1, &ompi_mpi_long_double.dt, 2, sizeof(long long) * 5, -1 );
     
     printf( ">>--------------------------------------------<<\n" );
     if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
-        ompi_ddt_dump( pdt1 );
+        ompi_datatype_dump( pdt1 );
     }
     printf( ">>--------------------------------------------<<\n" );
     if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
-        ompi_ddt_dump( pdt2 );
+        ompi_datatype_dump( pdt2 );
     }
     printf( ">>--------------------------------------------<<\n" );
     if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
-        ompi_ddt_dump( pdt3 );
+        ompi_datatype_dump( pdt3 );
     }
     
     OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL );
@@ -473,7 +473,7 @@ int main( int argc, char* argv[] )
     printf( ">>--------------------------------------------<<\n" );
     printf( "Vector data-type (450 times 10 double stride 11)\n" );
     pdt = create_vector_type( MPI_DOUBLE, 450, 10, 11 );
-    ompi_ddt_dump( pdt );
+    ompi_datatype_dump( pdt );
     if( outputFlags & CHECK_PACK_UNPACK ) {
         local_copy_ddt_count(pdt, 1);
         local_copy_with_convertor( pdt, 1, 12 );
@@ -511,7 +511,7 @@ int main( int argc, char* argv[] )
     printf( ">>--------------------------------------------<<\n" );
     pdt = test_create_blacs_type();
     if( outputFlags & CHECK_PACK_UNPACK ) {
-        ompi_ddt_dump( pdt );
+        ompi_datatype_dump( pdt );
         local_copy_ddt_count(pdt, 4500);
         local_copy_with_convertor( pdt, 4500, 956 );
         local_copy_with_convertor_2datatypes( pdt, 4500, pdt, 4500, 956 );
@@ -524,8 +524,8 @@ int main( int argc, char* argv[] )
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
 
     printf( ">>--------------------------------------------<<\n" );
-    pdt1 = test_create_blacs_type1( &ompi_mpi_int );
-    pdt2 = test_create_blacs_type2( &ompi_mpi_int );
+    pdt1 = test_create_blacs_type1( &ompi_mpi_int.dt );
+    pdt2 = test_create_blacs_type2( &ompi_mpi_int.dt );
     if( outputFlags & CHECK_PACK_UNPACK ) {
         local_copy_with_convertor_2datatypes( pdt1, 1, pdt2, 1, 100 );
     }
@@ -534,7 +534,7 @@ int main( int argc, char* argv[] )
     OBJ_RELEASE( pdt2 ); assert( pdt2 == NULL );
 
     /* clean-ups all data allocations */
-    ompi_ddt_finalize();
+    ompi_datatype_finalize();
 
     return OMPI_SUCCESS;
 }

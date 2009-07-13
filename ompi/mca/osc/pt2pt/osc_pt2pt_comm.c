@@ -25,7 +25,7 @@
 #include "osc_pt2pt_sendreq.h"
 #include "osc_pt2pt_header.h"
 #include "osc_pt2pt_data_move.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/op/op.h"
 #include "ompi/win/win.h"
 #include "ompi/memchecker.h"

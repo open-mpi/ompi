@@ -93,9 +93,9 @@ ompi_osc_rdma_module_accumulate(void *origin_addr, int origin_count,
            expensive with the extra copies.  Put a shortcut in for the
            common case. */
         if (target == ompi_comm_rank(sendreq->req_module->m_comm) &&
-            ompi_ddt_is_contiguous_memory_layout(sendreq->req_target_datatype,
+            ompi_datatype_is_contiguous_memory_layout(sendreq->req_target_datatype,
                                                  sendreq->req_target_count) &&
-            !ompi_convertor_need_buffers(&sendreq->req_origin_convertor) &&
+            !opal_convertor_need_buffers(&sendreq->req_origin_convertor) &&
             0 == OPAL_THREAD_TRYLOCK(&module->m_acc_lock)) {
             void *target_buffer = (unsigned char*) module->m_win->w_baseptr + 
                 ((unsigned long) target_disp * 
@@ -107,7 +107,7 @@ ompi_osc_rdma_module_accumulate(void *origin_addr, int origin_count,
 
             iov.iov_len = max_data;
             iov.iov_base = NULL;
-            ret = ompi_convertor_pack(&sendreq->req_origin_convertor,
+            ret = opal_convertor_pack(&sendreq->req_origin_convertor,
                                       &iov, &iov_count,
                                       &max_data);
             if (ret < 0) {

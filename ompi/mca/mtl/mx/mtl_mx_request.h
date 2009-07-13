@@ -19,7 +19,7 @@
 #ifndef OMPI_MTL_MX_REQUEST_H
 #define OMPI_MTL_MX_REQUEST_H
 
-#include "ompi/datatype/convertor.h"
+#include "opal/datatype/opal_convertor.h"
 
 
 typedef enum {
@@ -31,7 +31,7 @@ struct mca_mtl_mx_request_t {
     struct mca_mtl_request_t super;
     mx_request_t mx_request;
     mx_segment_t mx_segment[1];
-    struct ompi_convertor_t *convertor;
+    struct opal_convertor_t *convertor;
     bool free_after;
     mca_mtl_mx_request_type_t type;
 }; 

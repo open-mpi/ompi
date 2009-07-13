@@ -21,7 +21,7 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/op/op.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
@@ -98,7 +98,7 @@ mca_coll_basic_allreduce_inter(void *sbuf, void *rbuf, int count,
      * simultaniously. */
     /*****************************************************************/
     if (rank == root) {
-        err = ompi_ddt_get_extent(dtype, &lb, &extent);
+        err = ompi_datatype_get_extent(dtype, &lb, &extent);
         if (OMPI_SUCCESS != err) {
             return OMPI_ERROR;
         }

@@ -21,7 +21,7 @@
 #include "opal/prefetch.h"
 
 #include "ompi/communicator/communicator.h"
-#include "ompi/datatype/convertor.h"
+#include "opal/datatype/opal_convertor.h"
 
 #include "mtl_mx.h"
 #include "mtl_mx_types.h"
@@ -33,7 +33,7 @@ ompi_mtl_mx_send(struct mca_mtl_base_module_t* mtl,
                  struct ompi_communicator_t* comm,
                  int dest,
                  int tag,
-                 struct ompi_convertor_t *convertor,
+                 struct opal_convertor_t *convertor,
                  mca_pml_base_send_mode_t mode)
 {
     mx_return_t mx_return;
@@ -129,7 +129,7 @@ ompi_mtl_mx_isend(struct mca_mtl_base_module_t* mtl,
                   struct ompi_communicator_t* comm,
                   int dest,
                   int tag,
-                  struct ompi_convertor_t *convertor,
+                  struct opal_convertor_t *convertor,
                   mca_pml_base_send_mode_t mode,
                   bool blocking,
                   mca_mtl_request_t * mtl_request)

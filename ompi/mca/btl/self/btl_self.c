@@ -26,7 +26,7 @@
 #include <errno.h>
 
 #include "opal/class/opal_bitmap.h"
-#include "ompi/datatype/convertor.h"
+#include "opal/datatype/opal_convertor.h"
 #include "opal/sys/atomic.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/mpool/base/base.h"
@@ -178,7 +178,7 @@ struct mca_btl_base_descriptor_t*
 mca_btl_self_prepare_src( struct mca_btl_base_module_t* btl,
                           struct mca_btl_base_endpoint_t* endpoint,
                           mca_mpool_base_registration_t* registration,
-                          struct ompi_convertor_t* convertor,
+                          struct opal_convertor_t* convertor,
                           uint8_t order,
                           size_t reserve,
                           size_t* size,
@@ -191,7 +191,7 @@ mca_btl_self_prepare_src( struct mca_btl_base_module_t* btl,
     int rc;
 
     /* non-contigous data */
-    if( ompi_convertor_need_buffers(convertor) ||
+    if( opal_convertor_need_buffers(convertor) ||
         max_data < mca_btl_self.btl_max_send_size ||
         reserve != 0 ) {
 
@@ -206,7 +206,7 @@ mca_btl_self_prepare_src( struct mca_btl_base_module_t* btl,
         iov.iov_len = max_data;
         iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)(frag+1) + reserve);
 
-        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
+        rc = opal_convertor_pack(convertor, &iov, &iov_count, &max_data );
         if(rc < 0) {
             MCA_BTL_SELF_FRAG_RETURN_SEND(frag);
             return NULL;
@@ -223,7 +223,7 @@ mca_btl_self_prepare_src( struct mca_btl_base_module_t* btl,
         iov.iov_base = NULL;
 
         /* convertor should return offset into users buffer */
-        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
+        rc = opal_convertor_pack(convertor, &iov, &iov_count, &max_data );
         if(rc < 0) {
             MCA_BTL_SELF_FRAG_RETURN_RDMA(frag);
             return NULL;
@@ -246,7 +246,7 @@ struct mca_btl_base_descriptor_t*
 mca_btl_self_prepare_dst( struct mca_btl_base_module_t* btl,
                           struct mca_btl_base_endpoint_t* endpoint,
                           mca_mpool_base_registration_t* registration,
-                          struct ompi_convertor_t* convertor,
+                          struct opal_convertor_t* convertor,
                           uint8_t order,
                           size_t reserve,
                           size_t* size,
@@ -262,7 +262,7 @@ mca_btl_self_prepare_dst( struct mca_btl_base_module_t* btl,
     }
 
     /* setup descriptor to point directly to user buffer */
-    ompi_convertor_get_current_pointer( convertor, (void**)&(frag->segment.seg_addr.pval) );
+    opal_convertor_get_current_pointer( convertor, (void**)&(frag->segment.seg_addr.pval) );
     frag->segment.seg_len = reserve + max_data;
     frag->segment.seg_key.key64 = (uint64_t)(intptr_t)convertor;
     frag->base.des_dst = &frag->segment;

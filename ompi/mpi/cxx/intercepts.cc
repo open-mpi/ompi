@@ -26,7 +26,7 @@
 #include "ompi_config.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 
 extern "C"
 void ompi_mpi_cxx_throw_exception(int *errcode)

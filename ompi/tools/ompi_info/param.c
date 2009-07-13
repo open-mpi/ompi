@@ -613,10 +613,10 @@ void ompi_info_do_config(bool want_all)
         ompi_info_out_int("C double size", "compiler:c:sizeof:double", sizeof(double));
         ompi_info_out_int("C pointer size", "compiler:c:sizeof:pointer", sizeof(void *));
         ompi_info_out_int("C char align", "compiler:c:align:char", OPAL_ALIGNMENT_CHAR);
-        ompi_info_out_int("C bool align", "compiler:c:align:bool", OMPI_ALIGNMENT_CXX_BOOL);
+        ompi_info_out_int("C bool align", "compiler:c:align:bool", OPAL_ALIGNMENT_CXX_BOOL);
         ompi_info_out_int("C int align", "compiler:c:align:int", OPAL_ALIGNMENT_INT);
-        ompi_info_out_int("C float align", "compiler:c:align:float", OMPI_ALIGNMENT_FLOAT);
-        ompi_info_out_int("C double align", "compiler:c:align:double", OMPI_ALIGNMENT_DOUBLE);
+        ompi_info_out_int("C float align", "compiler:c:align:float", OPAL_ALIGNMENT_FLOAT);
+        ompi_info_out_int("C double align", "compiler:c:align:double", OPAL_ALIGNMENT_DOUBLE);
     }
     
     ompi_info_out("C++ compiler", "compiler:cxx:command", OMPI_CXX);

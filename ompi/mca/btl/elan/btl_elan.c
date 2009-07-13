@@ -18,7 +18,7 @@
 #include "btl_elan_proc.h"
 #include "btl_elan_endpoint.h"
 
-#include "ompi/datatype/convertor.h" 
+#include "opal/datatype/opal_convertor.h" 
 #include "ompi/mca/btl/base/base.h" 
 
 #include <stdio.h>
@@ -306,7 +306,7 @@ static mca_btl_base_descriptor_t*
 mca_btl_elan_prepare_src( struct mca_btl_base_module_t* btl,
                           struct mca_btl_base_endpoint_t* endpoint,
                           struct mca_mpool_base_registration_t* registration,
-                          struct ompi_convertor_t* convertor,
+                          struct opal_convertor_t* convertor,
                           uint8_t order,
                           size_t reserve,
                           size_t* size,
@@ -342,7 +342,7 @@ mca_btl_elan_prepare_src( struct mca_btl_base_module_t* btl,
         iov.iov_len = max_data;
         iov.iov_base = (unsigned char*)frag->segment.seg_addr.pval + reserve;
         
-        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
+        rc = opal_convertor_pack(convertor, &iov, &iov_count, &max_data );
         *size  = max_data;
         if( rc < 0 ) {
             MCA_BTL_ELAN_FRAG_RETURN(frag);
@@ -357,7 +357,7 @@ mca_btl_elan_prepare_src( struct mca_btl_base_module_t* btl,
         frag->type = MCA_BTL_ELAN_HDR_TYPE_PUT;
         iov.iov_len = max_data;
         iov.iov_base = NULL;
-        ompi_convertor_pack(convertor, &iov, &iov_count, &max_data);
+        opal_convertor_pack(convertor, &iov, &iov_count, &max_data);
         *size = max_data;
         frag->segment.seg_addr.pval = iov.iov_base;
         frag->segment.seg_len = max_data;
@@ -391,7 +391,7 @@ static mca_btl_base_descriptor_t*
 mca_btl_elan_prepare_dst( struct mca_btl_base_module_t* btl,
                           struct mca_btl_base_endpoint_t* endpoint,
                           struct mca_mpool_base_registration_t* registration,
-                          struct ompi_convertor_t* convertor,
+                          struct opal_convertor_t* convertor,
                           uint8_t order,
                           size_t reserve,
                           size_t* size,
@@ -409,10 +409,10 @@ mca_btl_elan_prepare_dst( struct mca_btl_base_module_t* btl,
         return NULL;
     }
 
-    ompi_convertor_get_current_pointer( convertor, (void**)&(frag->segment.seg_addr.pval) );
+    opal_convertor_get_current_pointer( convertor, (void**)&(frag->segment.seg_addr.pval) );
     origin = convertor->bConverted;
     position += origin;
-    ompi_convertor_set_position( convertor, &position );
+    opal_convertor_set_position( convertor, &position );
     *size = position - origin;
 
     frag->segment.seg_len = *size;

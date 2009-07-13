@@ -110,9 +110,9 @@ do {                                                                    \
     OBJ_RETAIN(datatype);                                               \
     (req_send)->req_base.req_comm = comm;                               \
     (req_send)->req_base.req_datatype = datatype;                       \
-    ompi_convertor_copy_and_prepare_for_send(                           \
+    opal_convertor_copy_and_prepare_for_send(                           \
                                              ompi_proc->proc_convertor, \
-                                             datatype,                  \
+                                             &(datatype->super),        \
                                              count,                     \
                                              buf,                       \
                                              0,                         \
@@ -152,7 +152,7 @@ do {                                                                    \
                                              sendmode,                  \
                                              buf,                       \
                                              count);                    \
-        ompi_convertor_get_packed_size(                                 \
+        opal_convertor_get_packed_size(                                 \
                                        &sendreq->req_send.req_base.req_convertor, \
                                        &sendreq->req_count );           \
                                                                         \
@@ -230,11 +230,12 @@ do {                                                                    \
             iov.iov_base = (IOVBASE_TYPE*)sendreq->req_buff;            \
             max_data = iov.iov_len = sendreq->req_count;                \
             iov_count = 1;                                              \
-            ompi_convertor_pack( &sendreq->req_send.req_base.req_convertor, \
+            opal_convertor_pack( &sendreq->req_send.req_base.req_convertor, \
                                  &iov,                                  \
                                  &iov_count,                            \
                                  &max_data );                           \
-            ompi_convertor_prepare_for_send( &sendreq->req_send.req_base.req_convertor, MPI_PACKED, \
+            opal_convertor_prepare_for_send( &sendreq->req_send.req_base.req_convertor, \
+                                             &(ompi_mpi_packed.dt.super),  \
                                              max_data, sendreq->req_buff ); \
         }                                                               \
     }                                                                   \
@@ -294,7 +295,7 @@ do {                                                                            
         if(sendreq->req_send.req_base.req_ompi.req_persistent) {                   \
             /* rewind convertor */                                                 \
             size_t offset = 0;                                                     \
-            ompi_convertor_set_position(&sendreq->req_send.req_base.req_convertor, \
+            opal_convertor_set_position(&sendreq->req_send.req_base.req_convertor, \
                                         &offset);                                  \
         }                                                                          \
     }                                                                              \
@@ -311,7 +312,7 @@ do {                                                                            
         OBJ_RELEASE(sendreq->req_send.req_base.req_datatype);           \
         OBJ_RELEASE(sendreq->req_send.req_base.req_comm);               \
         OMPI_REQUEST_FINI(&sendreq->req_send.req_base.req_ompi);        \
-        ompi_convertor_cleanup( &(sendreq->req_send.req_base.req_convertor) ); \
+        opal_convertor_cleanup( &(sendreq->req_send.req_base.req_convertor) ); \
         OMPI_FREE_LIST_RETURN( &mca_pml_base_send_requests,             \
                                (ompi_free_list_item_t*)sendreq);        \
     }
@@ -350,7 +351,7 @@ do {                                                                         \
         OBJ_RELEASE(sendreq->req_send.req_base.req_datatype);           \
         OBJ_RELEASE(sendreq->req_send.req_base.req_comm);               \
         OMPI_REQUEST_FINI(&sendreq->req_send.req_base.req_ompi);        \
-        ompi_convertor_cleanup( &(sendreq->req_send.req_base.req_convertor) ); \
+        opal_convertor_cleanup( &(sendreq->req_send.req_base.req_convertor) ); \
         OMPI_FREE_LIST_RETURN( &mca_pml_base_send_requests,             \
                                (ompi_free_list_item_t*)sendreq);        \
     }

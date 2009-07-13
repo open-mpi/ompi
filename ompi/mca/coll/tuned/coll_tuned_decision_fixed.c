@@ -20,7 +20,7 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
@@ -54,7 +54,7 @@ ompi_coll_tuned_allreduce_intra_dec_fixed (void *sbuf, void *rbuf, int count,
      * can handle both commutative and non-commutative operations.
      * Ring algorithm does not support non-commutative operations.
      */
-    ompi_ddt_type_size(dtype, &dsize);
+    ompi_datatype_type_size(dtype, &dsize);
     block_dsize = dsize * count;
 
     if (block_dsize < intermediate_message) {
@@ -114,7 +114,7 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
        the University of Tennessee (2GB MX) up to 64 nodes.
        Has better performance for messages of intermediate sizes than the old one */
     /* determine block size */
-    ompi_ddt_type_size(sdtype, &dsize);
+    ompi_datatype_type_size(sdtype, &dsize);
     block_dsize = dsize * scount;
 
     if ((block_dsize < 200) && (communicator_size > 12)) {
@@ -136,7 +136,7 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
     /* previous decision */
 
     /* else we need data size for decision function */
-    ompi_ddt_type_size(sdtype, &dsize);
+    ompi_datatype_type_size(sdtype, &dsize);
     total_dsize = dsize * scount * communicator_size;   /* needed for decision */
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_alltoall_intra_dec_fixed rank %d com_size %d msg_length %ld",
@@ -239,7 +239,7 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
     communicator_size = ompi_comm_size(comm);
 
     /* else we need data size for decision function */
-    ompi_ddt_type_size(datatype, &dsize);
+    ompi_datatype_type_size(datatype, &dsize);
     message_size = dsize * (unsigned long)count;   /* needed for decision */
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_bcast_intra_dec_fixed"
@@ -358,7 +358,7 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
     communicator_size = ompi_comm_size(comm);
 
     /* need data size for decision function */
-    ompi_ddt_type_size(datatype, &dsize);
+    ompi_datatype_type_size(datatype, &dsize);
     message_size = dsize * count;   /* needed for decision */
 
     /**
@@ -471,7 +471,7 @@ int ompi_coll_tuned_reduce_scatter_intra_dec_fixed( void *sbuf, void *rbuf,
 
    comm_size = ompi_comm_size(comm);
    /* We need data size for decision function */
-   ompi_ddt_type_size(dtype, &dsize);
+   ompi_datatype_type_size(dtype, &dsize);
    total_message_size = 0;
    for (i = 0; i < comm_size; i++) { 
      total_message_size += rcounts[i];
@@ -533,7 +533,7 @@ int ompi_coll_tuned_allgather_intra_dec_fixed(void *sbuf, int scount,
     }
 
    /* Determine complete data size */
-   ompi_ddt_type_size(sdtype, &dsize);
+   ompi_datatype_type_size(sdtype, &dsize);
    total_dsize = dsize * scount * communicator_size;   
    
    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_allgather_intra_dec_fixed"
@@ -628,7 +628,7 @@ int ompi_coll_tuned_allgatherv_intra_dec_fixed(void *sbuf, int scount,
     }
     
     /* Determine complete data size */
-    ompi_ddt_type_size(sdtype, &dsize);
+    ompi_datatype_type_size(sdtype, &dsize);
     total_dsize = 0;
     for (i = 0; i < communicator_size; i++) {
         total_dsize += dsize * rcounts[i];
@@ -695,10 +695,10 @@ int ompi_coll_tuned_gather_intra_dec_fixed(void *sbuf, int scount,
 
     /* Determine block size */
     if (rank == root) {
-        ompi_ddt_type_size(rdtype, &dsize);
+        ompi_datatype_type_size(rdtype, &dsize);
         block_size = dsize * rcount;
     } else {
-        ompi_ddt_type_size(sdtype, &dsize);
+        ompi_datatype_type_size(sdtype, &dsize);
         block_size = dsize * scount;
     }
 
@@ -756,10 +756,10 @@ int ompi_coll_tuned_scatter_intra_dec_fixed(void *sbuf, int scount,
     rank = ompi_comm_rank(comm);
     /* Determine block size */
     if (root == rank) {
-        ompi_ddt_type_size(sdtype, &dsize);
+        ompi_datatype_type_size(sdtype, &dsize);
         block_size = dsize * scount;
     } else {
-        ompi_ddt_type_size(rdtype, &dsize);
+        ompi_datatype_type_size(rdtype, &dsize);
         block_size = dsize * rcount;
     } 
 

@@ -312,7 +312,7 @@ mca_btl_base_descriptor_t* mca_btl_ud_prepare_src(
                                     struct mca_btl_base_module_t* btl,
                                     struct mca_btl_base_endpoint_t* peer,
                                     mca_mpool_base_registration_t* registration,
-                                    struct ompi_convertor_t* convertor,
+                                    struct opal_convertor_t* convertor,
                                     uint8_t order,
                                     size_t reserve,
                                     size_t* size,

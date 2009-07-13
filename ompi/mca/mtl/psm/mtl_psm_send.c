@@ -20,7 +20,7 @@
 #include "ompi_config.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/datatype/convertor.h"
+#include "opal/datatype/opal_convertor.h"
 
 #include "mtl_psm.h"
 #include "mtl_psm_types.h"
@@ -32,7 +32,7 @@ ompi_mtl_psm_send(struct mca_mtl_base_module_t* mtl,
                  struct ompi_communicator_t* comm,
                  int dest,
                  int tag,
-                 struct ompi_convertor_t *convertor,
+                 struct opal_convertor_t *convertor,
                  mca_pml_base_send_mode_t mode)
 {
     psm_error_t err;
@@ -84,7 +84,7 @@ ompi_mtl_psm_isend(struct mca_mtl_base_module_t* mtl,
                   struct ompi_communicator_t* comm,
                   int dest,
                   int tag,
-                  struct ompi_convertor_t *convertor,
+                  struct opal_convertor_t *convertor,
                   mca_pml_base_send_mode_t mode,
                   bool blocking,
                   mca_mtl_request_t * mtl_request)

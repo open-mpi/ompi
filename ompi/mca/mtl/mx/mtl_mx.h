@@ -21,7 +21,7 @@
 
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/mca/mtl/base/base.h"
-#include "ompi/datatype/convertor.h"
+#include "opal/datatype/opal_convertor.h"
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -33,14 +33,14 @@ ompi_mtl_mx_send(struct mca_mtl_base_module_t* mtl,
                  struct ompi_communicator_t* comm,
                  int dest,
                  int tag,
-                 struct ompi_convertor_t *convertor,
+                 struct opal_convertor_t *convertor,
                  mca_pml_base_send_mode_t mode);
 
 extern int ompi_mtl_mx_isend(struct mca_mtl_base_module_t* mtl, 
                              struct ompi_communicator_t* comm,
                              int dest,
                              int tag,
-                             struct ompi_convertor_t *convertor,
+                             struct opal_convertor_t *convertor,
                              mca_pml_base_send_mode_t mode,
                              bool blocking,
                              mca_mtl_request_t * mtl_request);
@@ -49,7 +49,7 @@ extern int ompi_mtl_mx_irecv(struct mca_mtl_base_module_t* mtl,
                              struct ompi_communicator_t *comm,
                              int src,
                              int tag,
-                             struct ompi_convertor_t *convertor,
+                             struct opal_convertor_t *convertor,
                              struct mca_mtl_request_t *mtl_request);
     
     

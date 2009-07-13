@@ -13,8 +13,8 @@
 #include "ompi_config.h"
 #include <stdio.h>
 #include <string.h>
-#include "ompi/datatype/convertor.h"
-#include "ompi/datatype/datatype.h"
+#include "opal/datatype/opal_convertor.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "opal/util/output.h"
 
 /**
@@ -39,11 +39,11 @@ create_segments( ompi_datatype_t* datatype, int count,
                  ddt_segment_t** segments, int* seg_count )
 {
     size_t data_size, total_length, position;
-    ompi_convertor_t* convertor;
+    opal_convertor_t* convertor;
     int i;
     ddt_segment_t* segment;
 
-    ompi_ddt_type_size( datatype, &data_size );
+    ompi_datatype_type_size( datatype, &data_size );
     data_size *= count;
     *seg_count = data_size / segment_length;
     if( ((*seg_count) * segment_length) != data_size )
@@ -51,8 +51,8 @@ create_segments( ompi_datatype_t* datatype, int count,
  allocate_segments:
     *segments = (ddt_segment_t*)malloc( (*seg_count) * sizeof(ddt_segment_t) );
 
-    convertor = ompi_convertor_create( 0, 0 );
-    ompi_convertor_prepare_for_send( convertor, datatype, count, NULL );
+    convertor = opal_convertor_create( 0, 0 );
+    opal_convertor_prepare_for_send( convertor, &(datatype->super), count, NULL );
 
     position = 0;
     total_length = 0;
@@ -63,7 +63,7 @@ create_segments( ompi_datatype_t* datatype, int count,
 
         /* Find the end of the segment */
         position += segment_length;
-        ompi_convertor_set_position( convertor, &position );
+        opal_convertor_set_position( convertor, &position );
         segment->size = position - segment->position;
         total_length += segment->size;
     }
@@ -101,20 +101,20 @@ pack_segments( ompi_datatype_t* datatype, int count,
                void* buffer )
 {
     size_t max_size, position;
-    ompi_convertor_t* convertor;
+    opal_convertor_t* convertor;
     struct iovec iov;
     int i;
     uint32_t iov_count;
 
-    convertor = ompi_convertor_create( ompi_mpi_local_arch, 0 );
-    ompi_convertor_prepare_for_send( convertor, datatype, count, buffer );
+    convertor = opal_convertor_create( opal_local_arch, 0 );
+    opal_convertor_prepare_for_send( convertor, &(datatype->super), count, buffer );
 
     for( i = 0; i < seg_count; i++ ) {
         iov.iov_len  = segments[i].size;
         iov.iov_base = segments[i].buffer;
         max_size = iov.iov_len;
         position = segments[i].position;
-        ompi_convertor_set_position( convertor, &position );
+        opal_convertor_set_position( convertor, &position );
         if( position != segments[i].position ) {
             opal_output( 0, "Setting position failed (%lu != %lu)\n",
                          (unsigned long)segments[i].position, (unsigned long)position );
@@ -122,7 +122,7 @@ pack_segments( ompi_datatype_t* datatype, int count,
         }
 
         iov_count = 1;
-        ompi_convertor_pack( convertor, &iov, &iov_count, &max_size );
+        opal_convertor_pack( convertor, &iov, &iov_count, &max_size );
         if( max_size != segments[i].size ) {
             opal_output( 0, "Amount of packed data do not match (%lu != %lu)\n",
                          (unsigned long)max_size, (unsigned long)segments[i].size );
@@ -140,14 +140,14 @@ unpack_segments( ompi_datatype_t* datatype, int count,
                  ddt_segment_t* segments, int seg_count,
                  void* buffer )
 {
-    ompi_convertor_t* convertor;
+    opal_convertor_t* convertor;
     size_t max_size, position;
     int i;
     uint32_t iov_count;
     struct iovec iov;
 
-    convertor = ompi_convertor_create( ompi_mpi_local_arch, 0 );
-    ompi_convertor_prepare_for_recv( convertor, datatype, count, buffer );
+    convertor = opal_convertor_create( opal_local_arch, 0 );
+    opal_convertor_prepare_for_recv( convertor, &(datatype->super), count, buffer );
 
     for( i = 0; i < seg_count; i++ ) {
         iov.iov_len = segments[i].size;
@@ -155,7 +155,7 @@ unpack_segments( ompi_datatype_t* datatype, int count,
         max_size = iov.iov_len;
 
         position = segments[i].position;
-        ompi_convertor_set_position( convertor, &position );
+        opal_convertor_set_position( convertor, &position );
         if( position != segments[i].position ) {
             opal_output( 0, "Setting position failed (%lu != %lu)\n",
                          (unsigned long)segments[i].position, (unsigned long)position );
@@ -163,7 +163,7 @@ unpack_segments( ompi_datatype_t* datatype, int count,
         }
 
         iov_count = 1;
-        ompi_convertor_unpack( convertor, &iov, &iov_count, &max_size );
+        opal_convertor_unpack( convertor, &iov, &iov_count, &max_size );
         if( max_size != segments[i].size ) {
             opal_output( 0, "Amount of unpacked data do not match (%lu != %lu)\n",
                          (unsigned long)max_size, (unsigned long)segments[i].size );
@@ -225,7 +225,7 @@ int main( int argc, char* argv[] )
     }
     memcpy(recv_buffer, send_buffer, sizeof(ddt_ldi_t) * data_count );
 
-    ompi_ddt_init();
+    ompi_datatype_init();
 
 #if (OPAL_ENABLE_DEBUG == 1) && (OPAL_C_HAVE_VISIBILITY == 0)
     ompi_unpack_debug   = 0;
@@ -270,7 +270,7 @@ int main( int argc, char* argv[] )
     }
     free(segments);
 
-    ompi_ddt_finalize();
+    ompi_datatype_finalize();
 
     return (0 == errors ? 0 : -1);
 }

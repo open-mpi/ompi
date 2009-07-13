@@ -20,6 +20,7 @@
 #include "ompi_config.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mca/allocator/base/base.h"
 #include "ompi/mca/allocator/allocator.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -252,7 +253,7 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
         iov.iov_len = sendreq->req_bytes_packed;
         iov_count = 1;
         max_data = iov.iov_len;
-        if((rc = ompi_convertor_pack( &sendreq->req_base.req_convertor, 
+        if((rc = opal_convertor_pack( &sendreq->req_base.req_convertor, 
                                       &iov, 
                                       &iov_count, 
                                       &max_data )) < 0) {
@@ -260,7 +261,7 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
         }
  
         /* setup convertor to point to packed buffer (at position zero) */
-        ompi_convertor_prepare_for_send( &sendreq->req_base.req_convertor, MPI_PACKED,
+        opal_convertor_prepare_for_send( &sendreq->req_base.req_convertor, &(ompi_mpi_packed.dt.super),
                                          max_data, sendreq->req_addr );
         /* increment count of pending requests */
         mca_pml_bsend_count++;

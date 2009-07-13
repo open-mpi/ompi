@@ -22,11 +22,11 @@
 #include <string.h>
 #endif
 
+#include "opal/datatype/opal_convertor.h"
+#include "opal/sys/atomic.h"
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/datatype/convertor.h"
 #include "ompi/mca/coll/coll.h"
-#include "opal/sys/atomic.h"
 #include "ompi/op/op.h"
 #include "coll_sm.h"
 
@@ -84,7 +84,7 @@ int mca_coll_sm_reduce_intra(void *sbuf, void* rbuf, int count,
      *       ii. if the data is not floating point, use the unordered
      */
 
-    ompi_ddt_type_size(dtype, &size);
+    ompi_datatype_type_size(dtype, &size);
     if ((int)size > mca_coll_sm_component.sm_control_size) {
         return sm_module->previous_reduce(sbuf, rbuf, count,
                                           dtype, op, root, comm,
@@ -93,7 +93,7 @@ int mca_coll_sm_reduce_intra(void *sbuf, void* rbuf, int count,
 #if WANT_REDUCE_NO_ORDER
     else if (!ompi_op_is_intrinsic(op) ||
         (ompi_op_is_intrinsic(op) && !ompi_op_is_float_assoc(op) &&
-         0 != (dtype->flags & DT_FLAG_DATA_FLOAT))) {
+         0 != (dtype->flags & OMPI_DATATYPE_FLAG_DATA_FLOAT))) {
         return reduce_inorder(sbuf, rbuf, count, dtype, op, root, comm, module);
     } else {
         return reduce_no_order(sbuf, rbuf, count, dtype, op, root, comm, module);
@@ -159,7 +159,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
     int flag_num, segment_num, max_segment_num;
     size_t total_size, max_data, bytes;
     mca_coll_sm_in_use_flag_t *flag;
-    ompi_convertor_t convertor;
+    opal_convertor_t convertor;
     mca_coll_base_mpool_index_t *index;
     size_t ddt_size;
     size_t segment_ddt_count, segment_ddt_bytes, zero = 0;
@@ -175,7 +175,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
        already guaranteed above that the datatype is not larger than a
        segment, so we'll at least get 1). */
 
-    ompi_ddt_type_size(dtype, &ddt_size);
+    ompi_datatype_type_size(dtype, &ddt_size);
     segment_ddt_count = mca_coll_sm_component.sm_fragment_size / ddt_size;
     iov.iov_len = segment_ddt_bytes = segment_ddt_count * ddt_size;
     total_size = ddt_size * count;
@@ -207,12 +207,12 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
            receive convertor and a temporary buffer to receive
            into. */
         
-        ompi_ddt_get_extent(dtype, &lb, &extent);
-        ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
-        if (ompi_ddt_is_contiguous_memory_layout(dtype, count)) {
+        ompi_datatype_get_extent(dtype, &lb, &extent);
+        ompi_datatype_get_true_extent(dtype, &true_lb, &true_extent);
+        if (ompi_datatype_is_contiguous_memory_layout(dtype, count)) {
             reduce_temp_buffer = free_buffer = NULL;
         } else {
-            OBJ_CONSTRUCT(&convertor, ompi_convertor_t);
+            OBJ_CONSTRUCT(&convertor, opal_convertor_t);
 
             /* See lengthy comment in coll basic reduce about
                explanation for how to malloc the extra buffer.  Note
@@ -234,8 +234,8 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
                user's count that will fit within a single segment. */
             
             if (OMPI_SUCCESS != 
-                (ret = ompi_convertor_copy_and_prepare_for_recv(ompi_mpi_local_convertor,
-                                                                dtype,
+                (ret = opal_convertor_copy_and_prepare_for_recv(ompi_mpi_local_convertor,
+                                                                &(dtype->super),
                                                                 segment_ddt_count, 
                                                                 reduce_temp_buffer,
                                                                 0,
@@ -297,7 +297,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
                     if (first_operation) {
                         first_operation = false;
                         if (MPI_IN_PLACE != sbuf) {
-                            ompi_ddt_copy_content_same_ddt(dtype,
+                            ompi_datatype_copy_content_same_ddt(dtype,
                                                            count,
                                                            reduce_target, (char*)sbuf);
                             D(("root copied entire buffer to rbuf (contig ddt, count %d) FIRST OPERATION\n", count));
@@ -324,9 +324,9 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
                         D(("root: special case -- unpack and copy from rank 0 to reduce_target\n"));
                         COPY_FRAGMENT_OUT(convertor, 0, index, 
                                           iov, max_data);
-                        ompi_convertor_set_position(&convertor, &zero);
+                        opal_convertor_set_position(&convertor, &zero);
                         
-                        ompi_ddt_copy_content_same_ddt(dtype, 
+                        ompi_datatype_copy_content_same_ddt(dtype, 
                                                        max_data / ddt_size,
                                                        reduce_target,
                                                        iov.iov_base);
@@ -386,7 +386,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
                                buffer */
                             COPY_FRAGMENT_OUT(convertor, peer, index, 
                                               iov, max_data);
-                            ompi_convertor_set_position(&convertor, &zero);
+                            opal_convertor_set_position(&convertor, &zero);
                             
                             /* Do the reduction on this fragment */
                             ompi_op_reduce(op, reduce_temp_buffer,
@@ -431,11 +431,11 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
         /* Here we get a convertor for the full count that the user
            provided (as opposed to the convertor that the root got) */
 
-        OBJ_CONSTRUCT(&convertor, ompi_convertor_t);
+        OBJ_CONSTRUCT(&convertor, opal_convertor_t);
         if (OMPI_SUCCESS != 
             (ret = 
-             ompi_convertor_copy_and_prepare_for_send(ompi_mpi_local_convertor,
-                                                      dtype,
+             opal_convertor_copy_and_prepare_for_send(ompi_mpi_local_convertor,
+                                                      &(dtype->super),
                                                       count, 
                                                       sbuf,
                                                       0,

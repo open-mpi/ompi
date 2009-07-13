@@ -24,7 +24,7 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/request/request.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
@@ -56,7 +56,7 @@ mca_coll_inter_allgather_inter(void *sbuf, int scount,
     rsize = ompi_comm_remote_size(comm);
 
     /* Perform the gather locally at the root */
-    err = ompi_ddt_get_extent(sdtype, &slb, &sextent);
+    err = ompi_datatype_get_extent(sdtype, &slb, &sextent);
     if (OMPI_SUCCESS != err) {
 	return OMPI_ERROR;
     }

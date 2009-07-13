@@ -44,7 +44,7 @@
 #include "btl_openib_proc.h"
 #include "btl_openib_endpoint.h"
 #include "btl_openib_xrc.h"
-#include "ompi/datatype/convertor.h"
+#include "opal/datatype/opal_convertor.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/mpool/rdma/mpool_rdma.h"
@@ -782,7 +782,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
     mca_mpool_base_registration_t* registration,
-    struct ompi_convertor_t* convertor,
+    struct opal_convertor_t* convertor,
     uint8_t order,
     size_t reserve,
     size_t* size,
@@ -798,7 +798,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
 
     openib_btl = (mca_btl_openib_module_t*)btl;
 
-    if(ompi_convertor_need_buffers(convertor) == false && 0 == reserve) {
+    if(opal_convertor_need_buffers(convertor) == false && 0 == reserve) {
         /* GMS  bloody HACK! */
         if(registration != NULL || max_data > btl->btl_max_send_size) {
             frag = alloc_send_user_frag();
@@ -809,7 +809,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
             iov.iov_len = max_data;
             iov.iov_base = NULL;
 
-            ompi_convertor_pack(convertor, &iov, &iov_count, &max_data);
+            opal_convertor_pack(convertor, &iov, &iov_count, &max_data);
 
             *size = max_data;
 
@@ -866,7 +866,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     iov.iov_len = max_data;
     iov.iov_base = (unsigned char*)to_base_frag(frag)->segment.seg_addr.pval +
         reserve;
-    rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data);
+    rc = opal_convertor_pack(convertor, &iov, &iov_count, &max_data);
 
     *size = max_data;
 
@@ -894,7 +894,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
     mca_mpool_base_registration_t* registration,
-    struct ompi_convertor_t* convertor,
+    struct opal_convertor_t* convertor,
     uint8_t order,
     size_t reserve,
     size_t* size,
@@ -913,7 +913,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
         return NULL;
     }
 
-    ompi_convertor_get_current_pointer(convertor, &buffer);
+    opal_convertor_get_current_pointer(convertor, &buffer);
 
     if(NULL == registration){
         /* we didn't get a memory registration passed in, so we have to
@@ -1063,7 +1063,7 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
  */
 int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
         struct mca_btl_base_endpoint_t* ep,
-        struct ompi_convertor_t* convertor,
+        struct opal_convertor_t* convertor,
         void* header,
         size_t header_size,
         size_t payload_size,
@@ -1156,7 +1156,7 @@ int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
         iov.iov_len  = max_data = payload_size;
         iov_count    = 1;
 
-        (void)ompi_convertor_pack( convertor, &iov, &iov_count, &max_data);
+        (void)opal_convertor_pack( convertor, &iov, &iov_count, &max_data);
 
         assert(max_data == payload_size);
     }

@@ -28,7 +28,7 @@
 #include "opal/class/opal_bitmap.h"
 #include "ompi/constants.h"
 #include "ompi/mca/btl/btl.h"
-#include "ompi/datatype/convertor.h"
+#include "opal/datatype/opal_convertor.h"
 
 #include "btl_portals.h"
 #include "btl_portals_endpoint.h"
@@ -295,7 +295,7 @@ mca_btl_base_descriptor_t*
 mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
                             struct mca_btl_base_endpoint_t* peer,
                             mca_mpool_base_registration_t* registration, 
-                            struct ompi_convertor_t* convertor,
+                            struct opal_convertor_t* convertor,
                             uint8_t order,
                             size_t reserve,
                             size_t* size,
@@ -309,7 +309,7 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
 
     assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
 
-    if (0 != reserve || 0 != ompi_convertor_need_buffers(convertor)) {
+    if (0 != reserve || 0 != opal_convertor_need_buffers(convertor)) {
         frag = (mca_btl_portals_frag_t*) 
             mca_btl_portals_alloc(btl_base, peer, MCA_BTL_NO_ORDER, max_data + reserve, flags);
         if (NULL == frag)  {
@@ -322,7 +322,7 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
         
         iov.iov_len = max_data;
         iov.iov_base = (unsigned char*) frag->segments[0].seg_addr.pval + reserve;
-        ret = ompi_convertor_pack(convertor, &iov, &iov_count, 
+        ret = opal_convertor_pack(convertor, &iov, &iov_count, 
                                   &max_data );
         *size  = max_data;
         if ( ret < 0 ) {
@@ -352,7 +352,7 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
         iov.iov_len = max_data;
         iov.iov_base = NULL;
 
-        ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
+        opal_convertor_pack(convertor, &iov, &iov_count, &max_data );
 
         frag->segments[0].seg_len = max_data;
         frag->segments[0].seg_addr.pval = iov.iov_base;
@@ -420,7 +420,7 @@ mca_btl_base_descriptor_t*
 mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base, 
                             struct mca_btl_base_endpoint_t* peer,
                             mca_mpool_base_registration_t* registration, 
-                            struct ompi_convertor_t* convertor,
+                            struct opal_convertor_t* convertor,
                             uint8_t order,
                             size_t reserve,
                             size_t* size,
@@ -447,7 +447,7 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
     }
 
     frag->segments[0].seg_len = *size;
-    ompi_convertor_get_current_pointer( convertor, (void**)&(frag->segments[0].seg_addr.pval) );
+    opal_convertor_get_current_pointer( convertor, (void**)&(frag->segments[0].seg_addr.pval) );
     frag->segments[0].seg_key.key64 = 
         OPAL_THREAD_ADD64(&(mca_btl_portals_module.portals_rdma_key), 1);
     frag->base.des_src = NULL;

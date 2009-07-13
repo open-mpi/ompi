@@ -27,7 +27,7 @@
 #include "btl_mx_frag.h" 
 #include "btl_mx_proc.h"
 #include "btl_mx_endpoint.h"
-#include "ompi/datatype/convertor.h" 
+#include "opal/datatype/opal_convertor.h" 
 #include "opal/prefetch.h"
 
 /**
@@ -219,7 +219,7 @@ mca_btl_base_descriptor_t*
 mca_btl_mx_prepare_src( struct mca_btl_base_module_t* btl,
                         struct mca_btl_base_endpoint_t* endpoint,
                         struct mca_mpool_base_registration_t* registration,
-                        struct ompi_convertor_t* convertor,
+                        struct opal_convertor_t* convertor,
                         uint8_t order,
                         size_t reserve,
                         size_t* size,
@@ -238,7 +238,7 @@ mca_btl_mx_prepare_src( struct mca_btl_base_module_t* btl,
     /* If the data is contiguous we can use directly the pointer
      * to the user memory.
      */
-    if( 0 == ompi_convertor_need_buffers(convertor) ) {
+    if( 0 == opal_convertor_need_buffers(convertor) ) {
         /**
          * let the convertor figure out the correct pointer depending
          * on the data layout
@@ -268,7 +268,7 @@ mca_btl_mx_prepare_src( struct mca_btl_base_module_t* btl,
     }
 
     iov.iov_len = max_data;
-    (void)ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
+    (void)opal_convertor_pack(convertor, &iov, &iov_count, &max_data );
     *size = max_data;
 
     if( 1 == frag->base.des_src_cnt ) {
@@ -304,7 +304,7 @@ mca_btl_mx_prepare_src( struct mca_btl_base_module_t* btl,
 mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst( struct mca_btl_base_module_t* btl,
                                                    struct mca_btl_base_endpoint_t* endpoint,
                                                    struct mca_mpool_base_registration_t* registration,
-                                                   struct ompi_convertor_t* convertor,
+                                                   struct opal_convertor_t* convertor,
                                                    uint8_t order,
                                                    size_t reserve,
                                                    size_t* size,
@@ -322,7 +322,7 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst( struct mca_btl_base_module_t*
     }
 
     frag->segment[0].seg_len       = *size;
-    ompi_convertor_get_current_pointer( convertor, (void**)&(frag->segment[0].seg_addr.pval) );
+    opal_convertor_get_current_pointer( convertor, (void**)&(frag->segment[0].seg_addr.pval) );
     frag->segment[0].seg_key.key64 = (uint64_t)(intptr_t)frag;
 
     mx_segment.segment_ptr    = frag->segment[0].seg_addr.pval;
@@ -414,7 +414,7 @@ static int mca_btl_mx_put( struct mca_btl_base_module_t* btl,
  */
 static int mca_btl_mx_sendi( struct mca_btl_base_module_t* btl,
                              struct mca_btl_base_endpoint_t* endpoint,
-                             struct ompi_convertor_t* convertor,
+                             struct opal_convertor_t* convertor,
                              void* header,
                              size_t header_size,
                              size_t payload_size,
@@ -435,7 +435,7 @@ static int mca_btl_mx_sendi( struct mca_btl_base_module_t* btl,
             return OMPI_ERROR;
     }
     
-    if( !ompi_convertor_need_buffers(convertor) ) {
+    if( !opal_convertor_need_buffers(convertor) ) {
         uint32_t mx_segment_count = 0;
         uint64_t tag64 = 0x01ULL | (((uint64_t)tag) << 8);
         mx_return_t mx_return;
@@ -455,7 +455,7 @@ static int mca_btl_mx_sendi( struct mca_btl_base_module_t* btl,
             iov.iov_base = NULL;
             iov.iov_len = payload_size;
             
-            (void)ompi_convertor_pack( convertor, &iov, &iov_count, &max_data );
+            (void)opal_convertor_pack( convertor, &iov, &iov_count, &max_data );
             assert( max_data == payload_size );
             
             mx_segment->segment_ptr    = iov.iov_base;

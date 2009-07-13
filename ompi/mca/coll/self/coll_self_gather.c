@@ -19,7 +19,7 @@
 #include "ompi_config.h"
 
 #include "ompi/constants.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "coll_self.h"
 
 
@@ -40,7 +40,7 @@ int mca_coll_self_gather_intra(void *sbuf, int scount,
     if (MPI_IN_PLACE == sbuf) {
         return MPI_SUCCESS;
     } else {
-        return ompi_ddt_sndrcv(sbuf, scount, sdtype,
+        return ompi_datatype_sndrcv(sbuf, scount, sdtype,
                                rbuf, rcount, rdtype);
     }
 }

@@ -23,7 +23,7 @@
 
 #include "opal/util/crc.h"
 #include "ompi_config.h"
-#include "ompi/datatype/convertor.h"
+#include "opal/datatype/opal_convertor.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
 #include "ompi/mca/mpool/base/base.h"
@@ -116,7 +116,7 @@ do {                                                                            
     (sendreq)->req_send.req_base.req_peer = (int32_t)peer;                          \
     (sendreq)->req_send.req_base.req_tag = (int32_t)tag;                            \
     (sendreq)->req_send.req_base.req_comm = comm;                                   \
-    (sendreq)->req_send.req_base.req_pml_complete = OPAL_INT_TO_BOOL(persistent);    \
+    (sendreq)->req_send.req_base.req_pml_complete = OPAL_INT_TO_BOOL(persistent);   \
     (sendreq)->req_send.req_base.req_free_called = false;                           \
     (sendreq)->req_send.req_base.req_ompi.req_status._cancelled = 0;                \
                                                                                     \
@@ -124,14 +124,14 @@ do {                                                                            
 /*     if(count > 0) {      */                                                      \
         /* We will create a convertor specialized for the        */                 \
         /* remote architecture and prepared with the datatype.   */                 \
-        ompi_convertor_copy_and_prepare_for_send(                                   \
+        opal_convertor_copy_and_prepare_for_send(                                   \
                             (sendreq)->req_send.req_base.req_proc->proc_convertor,  \
-                            (sendreq)->req_send.req_base.req_datatype,              \
+                            &((sendreq)->req_send.req_base.req_datatype->super),    \
                             (sendreq)->req_send.req_base.req_count,                 \
                             (sendreq)->req_send.req_base.req_addr,                  \
                             (do_csum ? CONVERTOR_WITH_CHECKSUM: 0),                 \
                             &(sendreq)->req_send.req_base.req_convertor );          \
-        ompi_convertor_get_packed_size(&(sendreq)->req_send.req_base.req_convertor, \
+        opal_convertor_get_packed_size(&(sendreq)->req_send.req_base.req_convertor, \
                                        &((sendreq)->req_send.req_bytes_packed) );   \
    /*  } else {   */                                                                \
    /*       (sendreq)->req_send.req_bytes_packed = 0;   */                          \
@@ -254,7 +254,7 @@ do {                                                                            
            (0 != sendreq->req_send.req_bytes_packed) ) {                            \
             /* rewind convertor */                                                  \
             size_t offset = 0;                                                      \
-            ompi_convertor_set_position(&sendreq->req_send.req_base.req_convertor,  \
+            opal_convertor_set_position(&sendreq->req_send.req_base.req_convertor,  \
                                         &offset);                                   \
         }                                                                           \
     }                                                                               \

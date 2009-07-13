@@ -21,7 +21,7 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
@@ -107,10 +107,10 @@ int ompi_coll_tuned_allgatherv_intra_bruck(void *sbuf, int scount,
    OPAL_OUTPUT((ompi_coll_tuned_stream,
                 "coll:tuned:allgather_intra_bruck rank %d", rank));
    
-   err = ompi_ddt_get_extent (sdtype, &slb, &sext);
+   err = ompi_datatype_get_extent (sdtype, &slb, &sext);
    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
-   err = ompi_ddt_get_extent (rdtype, &rlb, &rext);
+   err = ompi_datatype_get_extent (rdtype, &rlb, &rext);
    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
    /* Initialization step:
@@ -120,7 +120,7 @@ int ompi_coll_tuned_allgatherv_intra_bruck(void *sbuf, int scount,
    tmprecv = (char*) rbuf + rdispls[rank] * rext;
    if (MPI_IN_PLACE != sbuf) {
       tmpsend = (char*) sbuf;
-      err = ompi_ddt_sndrcv(tmpsend, scount, sdtype, 
+      err = ompi_datatype_sndrcv(tmpsend, scount, sdtype, 
                             tmprecv, rcounts[rank], rdtype);
       if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl;  }
 
@@ -166,15 +166,15 @@ int ompi_coll_tuned_allgatherv_intra_bruck(void *sbuf, int scount,
           new_rcounts[i] = rcounts[tmp_rrank];
           new_rdispls[i] = rdispls[tmp_rrank];
       }
-      err = ompi_ddt_create_indexed(blockcount, new_scounts, new_sdispls, 
+      err = ompi_datatype_create_indexed(blockcount, new_scounts, new_sdispls, 
                                     rdtype, &new_sdtype);
       if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-      err = ompi_ddt_create_indexed(blockcount, new_rcounts, new_rdispls,
+      err = ompi_datatype_create_indexed(blockcount, new_rcounts, new_rdispls,
                                     rdtype, &new_rdtype);
 
-      err = ompi_ddt_commit(&new_sdtype);
+      err = ompi_datatype_commit(&new_sdtype);
       if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-      err = ompi_ddt_commit(&new_rdtype);
+      err = ompi_datatype_commit(&new_rdtype);
       if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
       /* Sendreceive */
@@ -183,8 +183,8 @@ int ompi_coll_tuned_allgatherv_intra_bruck(void *sbuf, int scount,
                                      rbuf, 1, new_rdtype, recvfrom,
                                      MCA_COLL_BASE_TAG_ALLGATHERV,
                                      comm, MPI_STATUS_IGNORE, rank);
-      ompi_ddt_destroy(&new_sdtype);
-      ompi_ddt_destroy(&new_rdtype);
+      ompi_datatype_destroy(&new_sdtype);
+      ompi_datatype_destroy(&new_rdtype);
 
    }
 
@@ -236,10 +236,10 @@ int ompi_coll_tuned_allgatherv_intra_ring(void *sbuf, int scount,
     OPAL_OUTPUT((ompi_coll_tuned_stream,
                  "coll:tuned:allgatherv_intra_ring rank %d", rank));
 
-    err = ompi_ddt_get_extent (sdtype, &slb, &sext);
+    err = ompi_datatype_get_extent (sdtype, &slb, &sext);
     if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
-    err = ompi_ddt_get_extent (rdtype, &rlb, &rext);
+    err = ompi_datatype_get_extent (rdtype, &rlb, &rext);
     if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
     /* Initialization step:
@@ -249,7 +249,7 @@ int ompi_coll_tuned_allgatherv_intra_ring(void *sbuf, int scount,
     tmprecv = (char*) rbuf + rdisps[rank] * rext;
     if (MPI_IN_PLACE != sbuf) {
         tmpsend = (char*) sbuf;
-        err = ompi_ddt_sndrcv(tmpsend, scount, sdtype, 
+        err = ompi_datatype_sndrcv(tmpsend, scount, sdtype, 
                               tmprecv, rcounts[rank], rdtype);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl;  }
     } 
@@ -382,10 +382,10 @@ ompi_coll_tuned_allgatherv_intra_neighborexchange(void *sbuf, int scount,
     OPAL_OUTPUT((ompi_coll_tuned_stream,
                  "coll:tuned:allgatherv_intra_neighborexchange rank %d", rank));
 
-    err = ompi_ddt_get_extent (sdtype, &slb, &sext);
+    err = ompi_datatype_get_extent (sdtype, &slb, &sext);
     if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
-    err = ompi_ddt_get_extent (rdtype, &rlb, &rext);
+    err = ompi_datatype_get_extent (rdtype, &rlb, &rext);
     if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
     /* Initialization step:
@@ -395,7 +395,7 @@ ompi_coll_tuned_allgatherv_intra_neighborexchange(void *sbuf, int scount,
     tmprecv = (char*) rbuf + rdispls[rank] * rext;
     if (MPI_IN_PLACE != sbuf) {
         tmpsend = (char*) sbuf;
-        err = ompi_ddt_sndrcv(tmpsend, scount, sdtype, 
+        err = ompi_datatype_sndrcv(tmpsend, scount, sdtype, 
                               tmprecv, rcounts[rank], rdtype);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl;  }
     } 
@@ -457,20 +457,20 @@ ompi_coll_tuned_allgatherv_intra_neighborexchange(void *sbuf, int scount,
         new_scounts[1] = rcounts[(send_data_from + 1)];
         new_sdispls[0] = rdispls[send_data_from];
         new_sdispls[1] = rdispls[(send_data_from + 1)];
-        err = ompi_ddt_create_indexed(2, new_scounts, new_sdispls, rdtype, 
+        err = ompi_datatype_create_indexed(2, new_scounts, new_sdispls, rdtype, 
                                       &new_sdtype);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-        err = ompi_ddt_commit(&new_sdtype);
+        err = ompi_datatype_commit(&new_sdtype);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
         new_rcounts[0] = rcounts[recv_data_from[i_parity]];
         new_rcounts[1] = rcounts[(recv_data_from[i_parity] + 1)];
         new_rdispls[0] = rdispls[recv_data_from[i_parity]];
         new_rdispls[1] = rdispls[(recv_data_from[i_parity] + 1)];
-        err = ompi_ddt_create_indexed(2, new_rcounts, new_rdispls, rdtype, 
+        err = ompi_datatype_create_indexed(2, new_rcounts, new_rdispls, rdtype, 
                                       &new_rdtype);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-        err = ompi_ddt_commit(&new_rdtype);
+        err = ompi_datatype_commit(&new_rdtype);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
       
         tmprecv = (char*)rbuf;
@@ -486,8 +486,8 @@ ompi_coll_tuned_allgatherv_intra_neighborexchange(void *sbuf, int scount,
 
         send_data_from = recv_data_from[i_parity];
       
-        ompi_ddt_destroy(&new_sdtype);
-        ompi_ddt_destroy(&new_rdtype);
+        ompi_datatype_destroy(&new_sdtype);
+        ompi_datatype_destroy(&new_rdtype);
     }
 
     return OMPI_SUCCESS;
@@ -518,10 +518,10 @@ int ompi_coll_tuned_allgatherv_intra_two_procs(void *sbuf, int scount,
     OPAL_OUTPUT((ompi_coll_tuned_stream,
                  "ompi_coll_tuned_allgatherv_intra_two_procs rank %d", rank));
 
-    err = ompi_ddt_get_extent (sdtype, &lb, &sext);
+    err = ompi_datatype_get_extent (sdtype, &lb, &sext);
     if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
-    err = ompi_ddt_get_extent (rdtype, &lb, &rext);
+    err = ompi_datatype_get_extent (rdtype, &lb, &rext);
     if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
     /* Exchange data:
@@ -547,7 +547,7 @@ int ompi_coll_tuned_allgatherv_intra_two_procs(void *sbuf, int scount,
 
     /* Place your data in correct location if necessary */
     if (MPI_IN_PLACE != sbuf) {
-        err = ompi_ddt_sndrcv((char*)sbuf, scount, sdtype, 
+        err = ompi_datatype_sndrcv((char*)sbuf, scount, sdtype, 
                               (char*)rbuf + rdispls[rank] * rext, 
                               rcounts[rank], rdtype); 
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl;  }
@@ -612,7 +612,7 @@ ompi_coll_tuned_allgatherv_intra_basic_default(void *sbuf, int scount,
                  rank));
 
     if (MPI_IN_PLACE == sbuf) {
-        ompi_ddt_get_extent(rdtype, &lb, &extent);
+        ompi_datatype_get_extent(rdtype, &lb, &extent);
         send_type = rdtype;
         send_buf = (char*)rbuf;
         for (i = 0; i < rank; ++i) {
@@ -644,12 +644,12 @@ ompi_coll_tuned_allgatherv_intra_basic_default(void *sbuf, int scount,
      * datatype.
      */
 
-    err = ompi_ddt_create_indexed(size,rcounts,disps,rdtype,&newtype);
+    err = ompi_datatype_create_indexed(size,rcounts,disps,rdtype,&newtype);
     if (MPI_SUCCESS != err) {
         return err;
     }
     
-    err = ompi_ddt_commit(&newtype);
+    err = ompi_datatype_commit(&newtype);
     if(MPI_SUCCESS != err) {
         return err;
     }
@@ -657,7 +657,7 @@ ompi_coll_tuned_allgatherv_intra_basic_default(void *sbuf, int scount,
     comm->c_coll.coll_bcast(rbuf, 1, newtype, 0, comm,
 			    comm->c_coll.coll_bcast_module);
 
-    ompi_ddt_destroy (&newtype);
+    ompi_datatype_destroy (&newtype);
 
     return MPI_SUCCESS;
 }

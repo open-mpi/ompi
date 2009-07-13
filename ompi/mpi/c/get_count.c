@@ -22,7 +22,7 @@
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -62,7 +62,7 @@ int MPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count)
       OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
    }
 
-   if( ompi_ddt_type_size( datatype, &size ) == MPI_SUCCESS ) {
+   if( ompi_datatype_type_size( datatype, &size ) == MPI_SUCCESS ) {
       if( size == 0 ) {
          *count = 0;
       } else {

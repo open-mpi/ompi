@@ -197,15 +197,15 @@ extern void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req);
 
 static inline void prepare_recv_req_converter(mca_pml_ob1_recv_request_t *req)
 {
-    if( req->req_recv.req_base.req_datatype->size | req->req_recv.req_base.req_count ) {
-        ompi_convertor_copy_and_prepare_for_recv(
+    if( req->req_recv.req_base.req_datatype->super.size | req->req_recv.req_base.req_count ) {
+        opal_convertor_copy_and_prepare_for_recv(
                 req->req_recv.req_base.req_proc->proc_convertor,
-                req->req_recv.req_base.req_datatype,
+                &(req->req_recv.req_base.req_datatype->super),
                 req->req_recv.req_base.req_count,
                 req->req_recv.req_base.req_addr,
                 0,
                 &req->req_recv.req_base.req_convertor);
-        ompi_convertor_get_unpacked_size(&req->req_recv.req_base.req_convertor,
+        opal_convertor_get_unpacked_size(&req->req_recv.req_base.req_convertor,
                                          &req->req_bytes_expected);
     }
 }
@@ -270,9 +270,9 @@ do {                                                                            
         PERUSE_TRACE_COMM_OMPI_EVENT (PERUSE_COMM_REQ_XFER_CONTINUE,              \
                                       &(recvreq->req_recv.req_base), max_data,    \
                                       PERUSE_RECV);                               \
-        ompi_convertor_set_position( &(request->req_recv.req_base.req_convertor), \
+        opal_convertor_set_position( &(request->req_recv.req_base.req_convertor), \
                                      &data_offset );                              \
-        ompi_convertor_unpack( &(request)->req_recv.req_base.req_convertor,       \
+        opal_convertor_unpack( &(request)->req_recv.req_base.req_convertor,       \
                                iov,                                               \
                                &iov_count,                                        \
                                &max_data );                                       \

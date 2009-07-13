@@ -277,11 +277,11 @@ static int mca_pml_csum_recv_request_ack(
          * registered. 
          */
 
-        if(ompi_convertor_need_buffers(&recvreq->req_recv.req_base.req_convertor) == 0 &&
+        if(opal_convertor_need_buffers(&recvreq->req_recv.req_base.req_convertor) == 0 &&
            hdr->hdr_match.hdr_common.hdr_flags & MCA_PML_CSUM_HDR_FLAGS_CONTIG &&
            rdma_num != 0) {
             unsigned char *base;
-            ompi_convertor_get_current_pointer( &recvreq->req_recv.req_base.req_convertor, (void**)&(base) );
+            opal_convertor_get_current_pointer( &recvreq->req_recv.req_base.req_convertor, (void**)&(base) );
            
             if(hdr->hdr_match.hdr_common.hdr_flags & MCA_PML_CSUM_HDR_FLAGS_PIN)
                 recvreq->req_rdma_cnt = mca_pml_csum_rdma_btls(bml_endpoint,
@@ -304,7 +304,7 @@ static int mca_pml_csum_recv_request_ack(
 
                 /* use converter to figure out the rdma offset for this
                  * request */
-                ompi_convertor_set_position(&recvreq->req_recv.req_base.req_convertor,
+                opal_convertor_set_position(&recvreq->req_recv.req_base.req_convertor,
                         &recvreq->req_send_offset);
 
                 recvreq->req_rdma_cnt =
@@ -512,7 +512,7 @@ void mca_pml_csum_recv_request_progress_rget( mca_pml_csum_recv_request_t* recvr
      * fall back to copy in/out protocol. It is a pity because buffer on the
      * sender side is already registered. We need to be smarter here, perhaps
      * do couple of RDMA reads */
-    if(ompi_convertor_need_buffers(&recvreq->req_recv.req_base.req_convertor) == true) {
+    if(opal_convertor_need_buffers(&recvreq->req_recv.req_base.req_convertor) == true) {
         mca_pml_csum_recv_request_ack(recvreq, &hdr->hdr_rndv, 0);
         return;
     }
@@ -803,7 +803,7 @@ int mca_pml_csum_recv_request_schedule_once( mca_pml_csum_recv_request_t* recvre
         /* take lock to protect converter against concurrent access
          * from unpack */
         OPAL_THREAD_LOCK(&recvreq->lock);
-        ompi_convertor_set_position( &recvreq->req_recv.req_base.req_convertor,
+        opal_convertor_set_position( &recvreq->req_recv.req_base.req_convertor,
                                      &recvreq->req_rdma_offset );
 
         /* prepare a descriptor for RDMA */

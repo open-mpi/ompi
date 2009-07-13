@@ -22,7 +22,7 @@
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/info/info.h"
 #include "ompi/file/file.h"
 #include "ompi/memchecker.h"

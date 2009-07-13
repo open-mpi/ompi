@@ -24,7 +24,7 @@
  */
 
 #include "ompi_config.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/proc/proc.h"
 #include "ompi/op/op.h"
 
@@ -50,9 +50,9 @@ struct ompi_datatype_t*
 ompi_osc_base_datatype_create(ompi_proc_t *remote_proc,  void **payload)
 {
     struct ompi_datatype_t *datatype =
-        ompi_ddt_create_from_packed_description(payload, remote_proc);
+        ompi_datatype_create_from_packed_description(payload, remote_proc);
     if (NULL == datatype) return NULL;
-    if (ompi_ddt_is_predefined(datatype)) OBJ_RETAIN(datatype);
+    if (ompi_datatype_is_predefined(datatype)) OBJ_RETAIN(datatype);
     return datatype;
 }
 

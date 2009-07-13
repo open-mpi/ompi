@@ -24,7 +24,7 @@
 
 #include "ompi_config.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
-#include "ompi/datatype/convertor.h"
+#include "opal/datatype/opal_convertor.h"
 #include "ompi/peruse/peruse-internal.h"
 
 BEGIN_C_DECLS
@@ -114,7 +114,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_base_recv_request_t);
         OMPI_REQUEST_FINI(&(request)->req_base.req_ompi);               \
         OBJ_RELEASE( (request)->req_base.req_comm);                     \
         OBJ_RELEASE( (request)->req_base.req_datatype );                \
-        ompi_convertor_cleanup( &((request)->req_base.req_convertor) ); \
+        opal_convertor_cleanup( &((request)->req_base.req_convertor) ); \
     } while (0)
 
 END_C_DECLS

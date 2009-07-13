@@ -21,11 +21,12 @@
 
 #include "ompi_config.h"
 
+#include "opal/class/opal_pointer_array.h"
+
 #include "ompi/constants.h"
 #include "ompi/op/op.h"
 #include "ompi/mca/op/base/base.h"
-#include "opal/class/opal_pointer_array.h"
-#include "ompi/datatype/datatype_internal.h"
+#include "ompi/datatype/ompi_datatype_internal.h"
 
 
 /*
@@ -76,7 +77,7 @@ ompi_predefined_op_t ompi_mpi_op_replace;
 /*
  * Map from ddt->id to position in op function pointer array
  */
-int ompi_op_ddt_map[DT_MAX_PREDEFINED];
+int ompi_op_ddt_map[OMPI_DATATYPE_MAX_PREDEFINED];
 
 
 #define FLAGS_NO_FLOAT \
@@ -101,41 +102,42 @@ int ompi_op_init(void)
 
     /* Fill in the ddt.id->op_position map */
 
-    for (i = 0; i < DT_MAX_PREDEFINED; ++i) {
+    for (i = 0; i < OMPI_DATATYPE_MAX_PREDEFINED; ++i) {
         ompi_op_ddt_map[i] = -1;
     }
 
-    ompi_op_ddt_map[DT_UNSIGNED_CHAR] = OMPI_OP_BASE_TYPE_UNSIGNED_CHAR;
-    ompi_op_ddt_map[DT_SIGNED_CHAR] = OMPI_OP_BASE_TYPE_SIGNED_CHAR;
-    ompi_op_ddt_map[DT_BYTE] = OMPI_OP_BASE_TYPE_BYTE;
-    ompi_op_ddt_map[DT_SHORT] = OMPI_OP_BASE_TYPE_SHORT;
-    ompi_op_ddt_map[DT_UNSIGNED_SHORT] = OMPI_OP_BASE_TYPE_UNSIGNED_SHORT;
-    ompi_op_ddt_map[DT_INT] = OMPI_OP_BASE_TYPE_INT;
-    ompi_op_ddt_map[DT_UNSIGNED_INT] = OMPI_OP_BASE_TYPE_UNSIGNED;
-    ompi_op_ddt_map[DT_LONG] = OMPI_OP_BASE_TYPE_LONG;
-    ompi_op_ddt_map[DT_UNSIGNED_LONG] = OMPI_OP_BASE_TYPE_UNSIGNED_LONG;
-    ompi_op_ddt_map[DT_LONG_LONG_INT] = OMPI_OP_BASE_TYPE_LONG_LONG_INT;
-    ompi_op_ddt_map[DT_UNSIGNED_LONG_LONG] = OMPI_OP_BASE_TYPE_UNSIGNED_LONG_LONG;
-    ompi_op_ddt_map[DT_FLOAT] = OMPI_OP_BASE_TYPE_FLOAT;
-    ompi_op_ddt_map[DT_DOUBLE] = OMPI_OP_BASE_TYPE_DOUBLE;
-    ompi_op_ddt_map[DT_LONG_DOUBLE] = OMPI_OP_BASE_TYPE_LONG_DOUBLE;
-    ompi_op_ddt_map[DT_COMPLEX_FLOAT] = OMPI_OP_BASE_TYPE_COMPLEX;
-    ompi_op_ddt_map[DT_COMPLEX_DOUBLE] = OMPI_OP_BASE_TYPE_DOUBLE_COMPLEX;
-    ompi_op_ddt_map[DT_LOGIC] = OMPI_OP_BASE_TYPE_LOGICAL;
-    ompi_op_ddt_map[DT_CXX_BOOL] = OMPI_OP_BASE_TYPE_BOOL;
-    ompi_op_ddt_map[DT_FLOAT_INT] = OMPI_OP_BASE_TYPE_FLOAT_INT;
-    ompi_op_ddt_map[DT_DOUBLE_INT] = OMPI_OP_BASE_TYPE_DOUBLE_INT;
-    ompi_op_ddt_map[DT_LONG_INT] = OMPI_OP_BASE_TYPE_LONG_INT;
-    ompi_op_ddt_map[DT_2INT] = OMPI_OP_BASE_TYPE_2INT;
-    ompi_op_ddt_map[DT_SHORT_INT] = OMPI_OP_BASE_TYPE_SHORT_INT;
-    ompi_op_ddt_map[DT_INTEGER] = OMPI_OP_BASE_TYPE_INTEGER;
-    ompi_op_ddt_map[DT_REAL] = OMPI_OP_BASE_TYPE_REAL;
-    ompi_op_ddt_map[DT_DBLPREC] = OMPI_OP_BASE_TYPE_DOUBLE_PRECISION;
-    ompi_op_ddt_map[DT_2REAL] = OMPI_OP_BASE_TYPE_2REAL;
-    ompi_op_ddt_map[DT_2DBLPREC] = OMPI_OP_BASE_TYPE_2DOUBLE_PRECISION;
-    ompi_op_ddt_map[DT_2INTEGER] = OMPI_OP_BASE_TYPE_2INTEGER;
-    ompi_op_ddt_map[DT_LONG_DOUBLE_INT] = OMPI_OP_BASE_TYPE_LONG_DOUBLE_INT;
-    ompi_op_ddt_map[DT_WCHAR] = OMPI_OP_BASE_TYPE_WCHAR;
+    /* XXX TODO */
+    ompi_op_ddt_map[OMPI_DATATYPE_UNSIGNED_CHAR] = OMPI_OP_BASE_TYPE_UNSIGNED_CHAR;
+    ompi_op_ddt_map[OMPI_DATATYPE_SIGNED_CHAR] = OMPI_OP_BASE_TYPE_SIGNED_CHAR;
+    ompi_op_ddt_map[OMPI_DATATYPE_BYTE] = OMPI_OP_BASE_TYPE_BYTE;
+    ompi_op_ddt_map[OMPI_DATATYPE_SHORT] = OMPI_OP_BASE_TYPE_SHORT;
+    ompi_op_ddt_map[OMPI_DATATYPE_UNSIGNED_SHORT] = OMPI_OP_BASE_TYPE_UNSIGNED_SHORT;
+    ompi_op_ddt_map[OMPI_DATATYPE_INT] = OMPI_OP_BASE_TYPE_INT;
+    ompi_op_ddt_map[OMPI_DATATYPE_UNSIGNED_INT] = OMPI_OP_BASE_TYPE_UNSIGNED;
+    ompi_op_ddt_map[OMPI_DATATYPE_LONG] = OMPI_OP_BASE_TYPE_LONG;
+    ompi_op_ddt_map[OMPI_DATATYPE_UNSIGNED_LONG] = OMPI_OP_BASE_TYPE_UNSIGNED_LONG;
+    ompi_op_ddt_map[OMPI_DATATYPE_LONG_LONG] = OMPI_OP_BASE_TYPE_LONG_LONG_INT;
+    ompi_op_ddt_map[OMPI_DATATYPE_UNSIGNED_LONG_LONG] = OMPI_OP_BASE_TYPE_UNSIGNED_LONG_LONG;
+    ompi_op_ddt_map[OMPI_DATATYPE_FLOAT] = OMPI_OP_BASE_TYPE_FLOAT;
+    ompi_op_ddt_map[OMPI_DATATYPE_DOUBLE] = OMPI_OP_BASE_TYPE_DOUBLE;
+    ompi_op_ddt_map[OMPI_DATATYPE_LONG_DOUBLE] = OMPI_OP_BASE_TYPE_LONG_DOUBLE;
+    ompi_op_ddt_map[OMPI_DATATYPE_COMPLEX] = OMPI_OP_BASE_TYPE_COMPLEX;
+    ompi_op_ddt_map[OMPI_DATATYPE_DOUBLE_COMPLEX] = OMPI_OP_BASE_TYPE_DOUBLE_COMPLEX;
+    ompi_op_ddt_map[OMPI_DATATYPE_LOGICAL] = OMPI_OP_BASE_TYPE_LOGICAL;
+    ompi_op_ddt_map[OMPI_DATATYPE_BOOL] = OMPI_OP_BASE_TYPE_BOOL;
+    ompi_op_ddt_map[OMPI_DATATYPE_FLOAT_INT] = OMPI_OP_BASE_TYPE_FLOAT_INT;
+    ompi_op_ddt_map[OMPI_DATATYPE_DOUBLE_INT] = OMPI_OP_BASE_TYPE_DOUBLE_INT;
+    ompi_op_ddt_map[OMPI_DATATYPE_LONG_INT] = OMPI_OP_BASE_TYPE_LONG_INT;
+    ompi_op_ddt_map[OMPI_DATATYPE_2INT] = OMPI_OP_BASE_TYPE_2INT;
+    ompi_op_ddt_map[OMPI_DATATYPE_SHORT_INT] = OMPI_OP_BASE_TYPE_SHORT_INT;
+    ompi_op_ddt_map[OMPI_DATATYPE_INTEGER] = OMPI_OP_BASE_TYPE_INTEGER;
+    ompi_op_ddt_map[OMPI_DATATYPE_REAL] = OMPI_OP_BASE_TYPE_REAL;
+    ompi_op_ddt_map[OMPI_DATATYPE_DOUBLE_PRECISION] = OMPI_OP_BASE_TYPE_DOUBLE_PRECISION;
+    ompi_op_ddt_map[OMPI_DATATYPE_2REAL] = OMPI_OP_BASE_TYPE_2REAL;
+    ompi_op_ddt_map[OMPI_DATATYPE_2DBLPREC] = OMPI_OP_BASE_TYPE_2DOUBLE_PRECISION;
+    ompi_op_ddt_map[OMPI_DATATYPE_2INTEGER] = OMPI_OP_BASE_TYPE_2INTEGER;
+    ompi_op_ddt_map[OMPI_DATATYPE_LONG_DOUBLE_INT] = OMPI_OP_BASE_TYPE_LONG_DOUBLE_INT;
+    ompi_op_ddt_map[OMPI_DATATYPE_WCHAR] = OMPI_OP_BASE_TYPE_WCHAR;
 
     /* Create the intrinsic ops */
 

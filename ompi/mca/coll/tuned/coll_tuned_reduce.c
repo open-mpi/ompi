@@ -20,7 +20,7 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
@@ -60,8 +60,8 @@ int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_c
      * Determine number of segments and number of elements
      * sent per operation
      */
-    ompi_ddt_get_extent( datatype, &lower_bound, &extent );
-    ompi_ddt_type_size( datatype, &typelng );
+    ompi_datatype_get_extent( datatype, &lower_bound, &extent );
+    ompi_datatype_type_size( datatype, &typelng );
     num_segments = (original_count + count_by_segment - 1) / count_by_segment;
     segment_increment = count_by_segment * extent;
 
@@ -78,7 +78,7 @@ int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_c
        (if needed) */
     if( tree->tree_nextsize > 0 ) {
         ptrdiff_t true_lower_bound, true_extent, real_segment_size;
-        ompi_ddt_get_true_extent( datatype, &true_lower_bound, 
+        ompi_datatype_get_true_extent( datatype, &true_lower_bound, 
                                       &true_extent );
 
         /* handle non existant recv buffer (i.e. its NULL) and 
@@ -97,7 +97,7 @@ int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_c
         /* If this is a non-commutative operation we must copy
            sendbuf to the accumbuf, in order to simplfy the loops */
         if (!ompi_op_is_commute(op)) {
-           ompi_ddt_copy_content_same_ddt(datatype, original_count, 
+           ompi_datatype_copy_content_same_ddt(datatype, original_count, 
                                           (char*)accumbuf,
                                           (char*)sendtmpbuf);
         }
@@ -362,7 +362,7 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
      * Determine number of segments and number of elements
      * sent per operation
      */
-    ompi_ddt_type_size( datatype, &typelng );
+    ompi_datatype_type_size( datatype, &typelng );
     COLL_TUNED_COMPUTED_SEGCOUNT( segsize, typelng, segcount );
 
     return ompi_coll_tuned_reduce_generic( sendbuf, recvbuf, count, datatype, 
@@ -394,7 +394,7 @@ int ompi_coll_tuned_reduce_intra_pipeline( void *sendbuf, void *recvbuf,
      * Determine number of segments and number of elements
      * sent per operation
      */
-    ompi_ddt_type_size( datatype, &typelng );
+    ompi_datatype_type_size( datatype, &typelng );
     COLL_TUNED_COMPUTED_SEGCOUNT( segsize, typelng, segcount );
 
     return ompi_coll_tuned_reduce_generic( sendbuf, recvbuf, count, datatype, 
@@ -425,7 +425,7 @@ int ompi_coll_tuned_reduce_intra_binary( void *sendbuf, void *recvbuf,
      * Determine number of segments and number of elements
      * sent per operation
      */
-    ompi_ddt_type_size( datatype, &typelng );
+    ompi_datatype_type_size( datatype, &typelng );
     COLL_TUNED_COMPUTED_SEGCOUNT( segsize, typelng, segcount );
 
     return ompi_coll_tuned_reduce_generic( sendbuf, recvbuf, count, datatype, 
@@ -456,7 +456,7 @@ int ompi_coll_tuned_reduce_intra_binomial( void *sendbuf, void *recvbuf,
      * Determine number of segments and number of elements
      * sent per operation
      */
-    ompi_ddt_type_size( datatype, &typelng );
+    ompi_datatype_type_size( datatype, &typelng );
     COLL_TUNED_COMPUTED_SEGCOUNT( segsize, typelng, segcount );
 
     return ompi_coll_tuned_reduce_generic( sendbuf, recvbuf, count, datatype, 
@@ -500,7 +500,7 @@ int ompi_coll_tuned_reduce_intra_in_order_binary( void *sendbuf, void *recvbuf,
      * Determine number of segments and number of elements
      * sent per operation
      */
-    ompi_ddt_type_size( datatype, &typelng );
+    ompi_datatype_type_size( datatype, &typelng );
     COLL_TUNED_COMPUTED_SEGCOUNT( segsize, typelng, segcount );
 
     /* An in-order binary tree must use root (size-1) to preserve the order of
@@ -517,15 +517,15 @@ int ompi_coll_tuned_reduce_intra_in_order_binary( void *sendbuf, void *recvbuf,
        ptrdiff_t tlb, text, lb, ext;
        char *tmpbuf = NULL;
     
-       ompi_ddt_get_extent(datatype, &lb, &ext);
-       ompi_ddt_get_true_extent(datatype, &tlb, &text);
+       ompi_datatype_get_extent(datatype, &lb, &ext);
+       ompi_datatype_get_true_extent(datatype, &tlb, &text);
 
        if ((root == rank) && (MPI_IN_PLACE == sendbuf)) {
           tmpbuf = (char *) malloc(text + (count - 1) * ext);
           if (NULL == tmpbuf) {
              return MPI_ERR_INTERN;
           }
-          ompi_ddt_copy_content_same_ddt(datatype, count, 
+          ompi_datatype_copy_content_same_ddt(datatype, count, 
                                          (char*)tmpbuf,
                                          (char*)recvbuf);
           use_this_sendbuf = tmpbuf;
@@ -626,8 +626,8 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
        extent and true extent */
     /* for reducing buffer allocation lengths.... */
 
-    ompi_ddt_get_extent(dtype, &lb, &extent);
-    ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
+    ompi_datatype_get_extent(dtype, &lb, &extent);
+    ompi_datatype_get_true_extent(dtype, &true_lb, &true_extent);
 
     if (MPI_IN_PLACE == sbuf) {
         sbuf = rbuf;
@@ -649,7 +649,7 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
     /* Initialize the receive buffer. */
 
     if (rank == (size - 1)) {
-        err = ompi_ddt_copy_content_same_ddt(dtype, count, (char*)rbuf, 
+        err = ompi_datatype_copy_content_same_ddt(dtype, count, (char*)rbuf, 
                                              (char*)sbuf);
     } else {
         err = MCA_PML_CALL(recv(rbuf, count, dtype, size - 1,
@@ -687,7 +687,7 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
     }
 
     if (NULL != inplace_temp) {
-        err = ompi_ddt_copy_content_same_ddt(dtype, count, (char*)sbuf, 
+        err = ompi_datatype_copy_content_same_ddt(dtype, count, (char*)sbuf, 
                                              inplace_temp);
         free(inplace_temp);
     }

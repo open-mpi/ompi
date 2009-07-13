@@ -19,7 +19,7 @@
 #include "ompi_config.h"
 
 #include "ompi/constants.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "coll_self.h"
 
 
@@ -39,16 +39,16 @@ int mca_coll_self_alltoallw_intra(void *sbuf, int *scounts, int *sdisps,
 {
     int err;        
     ptrdiff_t lb, rextent, sextent;
-    err = ompi_ddt_get_extent(sdtypes[0], &lb, &sextent);
+    err = ompi_datatype_get_extent(sdtypes[0], &lb, &sextent);
     if (OMPI_SUCCESS != err) {
         return OMPI_ERROR;
     }
-    err = ompi_ddt_get_extent(rdtypes[0], &lb, &rextent);
+    err = ompi_datatype_get_extent(rdtypes[0], &lb, &rextent);
     if (OMPI_SUCCESS != err) {
         return OMPI_ERROR;
     }
 
-    return ompi_ddt_sndrcv(((char *) sbuf) + sdisps[0] * sextent, 
+    return ompi_datatype_sndrcv(((char *) sbuf) + sdisps[0] * sextent, 
                            scounts[0], sdtypes[0],
                            ((char *) rbuf) + rdisps[0] * rextent, 
                            rcounts[0], rdtypes[0]);

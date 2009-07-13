@@ -23,8 +23,8 @@
 #include "osc_rdma_longreq.h"
 
 #include "opal/class/opal_list.h"
-#include "ompi/datatype/datatype.h"
-#include "ompi/datatype/convertor.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "opal/datatype/opal_convertor.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/proc/proc.h"
 #include "ompi/memchecker.h"
@@ -39,7 +39,7 @@ struct ompi_osc_rdma_replyreq_t {
     /** Datatype for the target side of the operation */
     struct ompi_datatype_t *rep_target_datatype;
     /** Convertor for the target.  Always setup for send. */
-    ompi_convertor_t rep_target_convertor;
+    opal_convertor_t rep_target_convertor;
     /** packed size of message on the target side */
     size_t rep_target_bytes_packed;
 
@@ -100,13 +100,13 @@ ompi_osc_rdma_replyreq_init_target(ompi_osc_rdma_replyreq_t *replyreq,
     OBJ_RETAIN(target_dt);
     replyreq->rep_target_datatype = target_dt;
 
-    ompi_convertor_copy_and_prepare_for_send(replyreq->rep_origin_proc->proc_convertor,
-                                             target_dt,
+    opal_convertor_copy_and_prepare_for_send(replyreq->rep_origin_proc->proc_convertor,
+                                             &(target_dt->super),
                                              target_count,
                                              target_addr,
                                              0,
                                              &(replyreq->rep_target_convertor));
-    ompi_convertor_get_packed_size(&replyreq->rep_target_convertor,
+    opal_convertor_get_packed_size(&replyreq->rep_target_convertor,
                                    &replyreq->rep_target_bytes_packed);
 
     return OMPI_SUCCESS;
@@ -130,7 +130,7 @@ ompi_osc_rdma_replyreq_free(ompi_osc_rdma_replyreq_t *replyreq)
         memchecker_convertor_call(&opal_memchecker_base_mem_defined,
                                   &replyreq->rep_target_convertor);
     );
-    ompi_convertor_cleanup(&replyreq->rep_target_convertor);
+    opal_convertor_cleanup(&replyreq->rep_target_convertor);
 
     OBJ_RELEASE(replyreq->rep_target_datatype);
 

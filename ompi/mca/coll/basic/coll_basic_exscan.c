@@ -24,7 +24,7 @@
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/op/op.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
@@ -88,8 +88,8 @@ mca_coll_basic_exscan_intra(void *sbuf, void *rbuf, int count,
     /* Get a temporary buffer to perform the reduction into.  Rationale
      * for malloc'ing this size is provided in coll_basic_reduce.c. */
 
-    ompi_ddt_get_extent(dtype, &lb, &extent);
-    ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
+    ompi_datatype_get_extent(dtype, &lb, &extent);
+    ompi_datatype_get_true_extent(dtype, &true_lb, &true_extent);
 
     free_buffer = (char*)malloc(true_extent + (count - 1) * extent);
     if (NULL == free_buffer) {
@@ -102,7 +102,7 @@ mca_coll_basic_exscan_intra(void *sbuf, void *rbuf, int count,
         /* If we're commutative, we can copy my sbuf into the reduction
          * buffer before the receive completes */
 
-        err = ompi_ddt_copy_content_same_ddt(dtype, count, 
+        err = ompi_datatype_copy_content_same_ddt(dtype, count, 
                                              reduce_buffer, (char*)sbuf);
         if (MPI_SUCCESS != err) {
             goto error;
@@ -133,7 +133,7 @@ mca_coll_basic_exscan_intra(void *sbuf, void *rbuf, int count,
             goto error;
         }
 
-        err = ompi_ddt_copy_content_same_ddt(dtype, count, 
+        err = ompi_datatype_copy_content_same_ddt(dtype, count, 
                                              reduce_buffer, (char*)rbuf);
         if (MPI_SUCCESS != err) {
             goto error;

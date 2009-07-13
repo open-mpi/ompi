@@ -21,7 +21,7 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/mca/pml/pml.h"
@@ -60,8 +60,8 @@ mca_coll_basic_alltoallv_intra(void *sbuf, int *scounts, int *sdisps,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    ompi_ddt_type_extent(sdtype, &sndextent);
-    ompi_ddt_type_extent(rdtype, &rcvextent);
+    ompi_datatype_type_extent(sdtype, &sndextent);
+    ompi_datatype_type_extent(rdtype, &rcvextent);
 
     /* simple optimization */
 
@@ -69,7 +69,7 @@ mca_coll_basic_alltoallv_intra(void *sbuf, int *scounts, int *sdisps,
     prcv = ((char *) rbuf) + (rdisps[rank] * rcvextent);
 
     if (0 != scounts[rank]) {
-        err = ompi_ddt_sndrcv(psnd, scounts[rank], sdtype,
+        err = ompi_datatype_sndrcv(psnd, scounts[rank], sdtype,
                               prcv, rcounts[rank], rdtype);
         if (MPI_SUCCESS != err) {
             return err;
@@ -179,8 +179,8 @@ mca_coll_basic_alltoallv_inter(void *sbuf, int *scounts, int *sdisps,
 
     rsize = ompi_comm_remote_size(comm);
 
-    ompi_ddt_type_extent(sdtype, &sndextent);
-    ompi_ddt_type_extent(rdtype, &rcvextent);
+    ompi_datatype_type_extent(sdtype, &sndextent);
+    ompi_datatype_type_extent(rdtype, &rcvextent);
 
     /* Initiate all send/recv to/from others. */
     nreqs = rsize * 2;
