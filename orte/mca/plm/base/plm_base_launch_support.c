@@ -716,7 +716,7 @@ void orte_plm_base_app_report_launch(int fd, short event, void *data)
     orte_exit_code_t exit_code;
     pid_t pid;
     orte_job_t *jdata;
-    orte_proc_t **procs;
+    orte_proc_t *proc;
     int rc;
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
@@ -758,7 +758,6 @@ void orte_plm_base_app_report_launch(int fd, short event, void *data)
         app_launch_failed = true;
         goto CLEANUP;
     }
-    procs = (orte_proc_t**)(jdata->procs->addr);
     
     /* if we are timing, the daemon will have included the time it
      * recvd the launch msg - the maximum time between when we sent
@@ -854,25 +853,31 @@ void orte_plm_base_app_report_launch(int fd, short event, void *data)
             goto CLEANUP;
         }
         
+        /* lookup the proc and update values */
+        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, vpid))) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            app_launch_failed = true;
+            goto CLEANUP;
+        }
+
         OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                              "%s plm:base:app_report_launched for proc %s from daemon %s: pid %lu state %0x exit %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&(procs[vpid]->name)),
+                             ORTE_NAME_PRINT(&(proc->name)),
                              ORTE_NAME_PRINT(&mev->sender), (unsigned long)pid,
                              (int)state, (int)exit_code));
         
-        /* lookup the proc and update values */
-        procs[vpid]->pid = pid;
-        procs[vpid]->state = state;
-        procs[vpid]->exit_code = exit_code;
+        proc->pid = pid;
+        proc->state = state;
+        proc->exit_code = exit_code;
         if (ORTE_PROC_STATE_FAILED_TO_START == state) {
             OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                  "%s plm:base:app_report_launched daemon %s reports proc %s failed to start",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&mev->sender),
-                                 ORTE_NAME_PRINT(&(procs[vpid]->name))));
+                                 ORTE_NAME_PRINT(&(proc->name))));
             if (NULL == jdata->aborted_proc) {
-                jdata->aborted_proc = procs[vpid];  /* only store this once */
+                jdata->aborted_proc = proc;  /* only store this once */
                 jdata->state = ORTE_JOB_STATE_FAILED_TO_START; /* update the job state */
             }
             /* increment the terminated counter */
@@ -913,11 +918,11 @@ CLEANUP:
         } else {
             orte_errmgr.incomplete_start(jdata->jobid, jdata->aborted_proc->exit_code);
         }
-    }
-
-    /* restart the timer, if necessary */
-    if (jdata->num_launched < jdata->num_procs && 0 < orte_startup_timeout) {
-        ORTE_DETECT_TIMEOUT(&dmn_report_ev, orte_startup_timeout, 1000, 10000000, timer_cb);
+    } else {
+        /* restart the timer, if necessary */
+        if (NULL != jdata && jdata->num_launched < jdata->num_procs && 0 < orte_startup_timeout) {
+            ORTE_DETECT_TIMEOUT(&dmn_report_ev, orte_startup_timeout, 1000, 10000000, timer_cb);
+        }
     }
 }
 
