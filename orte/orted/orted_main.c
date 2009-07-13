@@ -628,12 +628,6 @@ int orte_daemon(int argc, char *argv[])
             OBJ_RELEASE(buffer);
             goto DONE;
         }
-        /* send our architecture */
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &orte_process_info.arch, 1, OPAL_INT32))) {
-            ORTE_ERROR_LOG(ret);
-            OBJ_RELEASE(buffer);
-            goto DONE;
-        }
         if (orte_timing) {
             int64_t secs, usecs;
             /* add our start time */

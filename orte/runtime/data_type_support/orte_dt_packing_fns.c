@@ -372,13 +372,6 @@ int orte_dt_pack_node(opal_buffer_t *buffer, const void *src,
             return rc;
         }
                 
-        /* pack the arch */
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                          (void*)(&(nodes[i]->arch)), 1, OPAL_INT32))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
         /* pack the state */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
                          (void*)(&(nodes[i]->state)), 1, ORTE_NODE_STATE))) {

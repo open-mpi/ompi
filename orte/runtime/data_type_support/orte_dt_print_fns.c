@@ -349,10 +349,10 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
         goto PRINT_PROCS;
     }
     
-    asprintf(&tmp, "\n%sData for node: Name: %s\t%s\tLaunch id: %ld\tArch: %0x\tState: %0x",
+    asprintf(&tmp, "\n%sData for node: Name: %s\t%s\tLaunch id: %ld\tState: %0x",
              pfx2, (NULL == src->name) ? "UNKNOWN" : src->name,
              pfx2, (long)src->launch_id,
-             src->arch, src->state);
+              src->state);
     /* does this node have any aliases? */
     if (NULL != src->alias) {
         for (i=0; NULL != src->alias[i]; i++) {

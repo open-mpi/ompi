@@ -41,10 +41,8 @@ static int rte_finalize(void);
 static bool proc_is_local(orte_process_name_t *proc);
 static orte_vpid_t proc_get_daemon(orte_process_name_t *proc);
 static char* proc_get_hostname(orte_process_name_t *proc);
-static uint32_t proc_get_arch(orte_process_name_t *proc);
 static uint8_t proc_get_local_rank(orte_process_name_t *proc);
 static uint8_t proc_get_node_rank(orte_process_name_t *proc);
-static int update_arch(orte_process_name_t *proc, uint32_t arch);
 
 orte_ess_base_module_t orte_ess_bproc_module = {
     rte_init,
@@ -53,10 +51,8 @@ orte_ess_base_module_t orte_ess_bproc_module = {
     proc_is_local,
     proc_get_daemon,
     proc_get_hostname,
-    proc_get_arch,
     proc_get_local_rank,
     proc_get_node_rank,
-    update_arch,
     NULL,  /* update_pidmap */
     NULL,  /* update_nidmap */
     NULL  /* no FT support for Bproc */
@@ -260,50 +256,6 @@ static char* proc_get_hostname(orte_process_name_t *proc)
                          nids[node]->name));
     
     return nids[node]->name;
-}
-
-static uint32_t proc_get_arch(orte_process_name_t *proc)
-{
-    int32_t node;
-    orte_nid_t **nids;
-    
-    if (ORTE_PROC_MY_DAEMON->jobid == proc->jobid) {
-        /* looking for the daemon's arch */
-        node = find_daemon_node(proc->vpid);
-        if (0 > node) {
-            return 0;
-        }
-    } else {
-        node = pmap[proc->vpid].node;
-    }
-    nids = (orte_nid_t**)nidmap.addr;
-    
-    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                         "%s ess:bproc: proc %s has arch %0x",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc),
-                         nids[node]->arch));
-    
-    return nids[node]->arch;
-}
-
-static int update_arch(orte_process_name_t *proc, uint32_t arch)
-{
-    
-    int32_t node;
-    orte_nid_t **nids;
-    
-    node = pmap[proc->vpid].node;
-    nids = (orte_nid_t**)nidmap.addr;
-    
-    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                         "%s ess:bproc: updating proc %s to arch %0x",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc),
-                         arch));
-    
-    nids[node]->arch = arch;
-    return ORTE_SUCCESS;
 }
 
 static uint8_t proc_get_local_rank(orte_process_name_t *proc)

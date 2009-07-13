@@ -32,7 +32,6 @@
 
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "opal/util/arch.h"
 #include "opal/util/output.h"
 
 #include "orte/util/proc_info.h"
@@ -48,7 +47,6 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .num_procs =            */   1,
     /*  .num_nodes =            */   1,
     /*  .nodename =             */   NULL,
-    /*  .arch =                 */   0,
     /*  .pid =                  */   0,
     /*  .proc_type =            */   ORTE_PROC_TYPE_NONE,
     /*  .sync_buf =             */   NULL,
@@ -126,12 +124,6 @@ int orte_proc_info(void)
     /* get the nodename */
     gethostname(hostname, ORTE_MAX_HOSTNAME_SIZE);
     orte_process_info.nodename = strdup(hostname);
-    
-    /* get the arch */
-    if (ORTE_SUCCESS != opal_arch_compute_local_id(&orte_process_info.arch)) {
-        opal_output(0, "Process on node %s could not obtain local architecture - aborting", orte_process_info.nodename);
-        return ORTE_ERROR;
-    }
     
     /* get the number of nodes in the job */
     mca_base_param_reg_int_name("orte", "num_nodes",

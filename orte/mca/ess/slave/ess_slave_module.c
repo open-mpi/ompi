@@ -78,10 +78,8 @@ static int rte_finalize(void);
 static uint8_t proc_get_locality(orte_process_name_t *proc);
 static orte_vpid_t proc_get_daemon(orte_process_name_t *proc);
 static char* proc_get_hostname(orte_process_name_t *proc);
-static uint32_t proc_get_arch(orte_process_name_t *proc);
 static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc);
 static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc);
-static int update_arch(orte_process_name_t *proc, uint32_t arch);
 static int update_pidmap(opal_byte_object_t *bo);
 static int update_nidmap(opal_byte_object_t *bo);
 
@@ -97,10 +95,8 @@ orte_ess_base_module_t orte_ess_slave_module = {
     proc_get_locality,
     proc_get_daemon,
     proc_get_hostname,
-    proc_get_arch,
     proc_get_local_rank,
     proc_get_node_rank,
-    update_arch,
     update_pidmap,
     update_nidmap,
 #if OPAL_ENABLE_FT == 1
@@ -205,24 +201,6 @@ static char* proc_get_hostname(orte_process_name_t *proc)
     
     /* otherwise, no idea */
     return NULL;
-}
-
-static uint32_t proc_get_arch(orte_process_name_t *proc)
-{
-    /* can only work in homogeneous environments */
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-    /* not supported */
-    return 0;
-#else
-    /* just return my arch */
-    return orte_process_info.arch;
-#endif
-}
-
-static int update_arch(orte_process_name_t *proc, uint32_t arch)
-{
-    /* nothing to do */
-    return ORTE_SUCCESS;
 }
 
 static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc)

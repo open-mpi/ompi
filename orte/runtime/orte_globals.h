@@ -212,11 +212,6 @@ typedef struct {
     orte_node_rank_t next_node_rank;
     /* whether or not we are oversubscribed */
     bool oversubscribed;
-    /** The node architecture, as reported by the remote node. This
-        * value is a bit-map that identifies whether or not the node
-        * is big/little endian, etc.
-        */
-    int32_t arch;
     /** State of this node */
     orte_node_state_t state;
     /** A "soft" limit on the number of slots available on the node.
@@ -394,8 +389,6 @@ typedef struct {
     char *name;
     /* vpid of this job family's daemon on this node */
     orte_vpid_t daemon;
-    /* arch of node */
-    uint32_t arch;
     /* list of attributes */
     opal_list_t attrs;
 } orte_nid_t;

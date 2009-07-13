@@ -57,10 +57,8 @@ static int rte_finalize(void);
 static uint8_t proc_get_locality(orte_process_name_t *proc);
 static orte_vpid_t proc_get_daemon(orte_process_name_t *proc);
 static char* proc_get_hostname(orte_process_name_t *proc);
-static uint32_t proc_get_arch(orte_process_name_t *proc);
 static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc);
 static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc);
-static int update_arch(orte_process_name_t *proc, uint32_t arch);
 static int update_pidmap(opal_byte_object_t *bo);
 static int update_nidmap(opal_byte_object_t *bo);
 
@@ -71,10 +69,8 @@ orte_ess_base_module_t orte_ess_slurm_module = {
     proc_get_locality,
     proc_get_daemon,
     proc_get_hostname,
-    proc_get_arch,
     proc_get_local_rank,
     proc_get_node_rank,
-    update_arch,
     update_pidmap,
     update_nidmap,
     NULL /* ft_event */
@@ -256,44 +252,6 @@ static char* proc_get_hostname(orte_process_name_t *proc)
                          nid->name));
     
     return nid->name;
-}
-
-static uint32_t proc_get_arch(orte_process_name_t *proc)
-{
-    orte_nid_t *nid;
-    
-    if (NULL == (nid = orte_util_lookup_nid(proc))) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return 0;
-    }
-    
-    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                         "%s ess:slurm: proc %s has arch %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc),
-                         nid->arch));
-    
-    return nid->arch;
-}
-
-static int update_arch(orte_process_name_t *proc, uint32_t arch)
-{
-    orte_nid_t *nid;
-    
-    if (NULL == (nid = orte_util_lookup_nid(proc))) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return ORTE_ERR_NOT_FOUND;
-    }
-    
-    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                         "%s ess:slurm: updating proc %s to arch %0x",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc),
-                         arch));
-    
-    nid->arch = arch;
-    
-    return ORTE_SUCCESS;
 }
 
 static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc)

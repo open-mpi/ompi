@@ -330,7 +330,6 @@ int orte_plm_base_launch_apps(orte_jobid_t job)
 static int orted_num_callback;
 static bool orted_failed_launch;
 static orte_job_t *jdatorted;
-static orte_proc_t **pdatorted;
 static struct timeval daemonlaunchtime = {0,0}, daemonsetuptime = {0,0}, daemoncbtime = {0,0};
 
 void orte_plm_base_launch_failed(orte_jobid_t job, pid_t pid,
@@ -436,12 +435,11 @@ static void process_orted_launch_report(int fd, short event, void *data)
     orte_process_name_t peer;
     char *rml_uri = NULL;
     int rc, idx;
-    int32_t arch;
-    orte_node_t **nodes;
     struct timeval recvtime;
     long secs, usecs;
     int64_t setupsec, setupusec;
     int64_t startsec, startusec;
+    orte_proc_t *daemon;
     
     /* see if we need to timestamp this receipt */
     if (orte_timing) {
@@ -477,17 +475,14 @@ static void process_orted_launch_report(int fd, short event, void *data)
                          ORTE_NAME_PRINT(&mev->sender)));
     
     /* update state and record for this daemon contact info */
-    pdatorted[peer.vpid]->state = ORTE_PROC_STATE_RUNNING;
-    pdatorted[peer.vpid]->rml_uri = rml_uri;
-
-    /* get the remote arch */
-    idx = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &arch, &idx, OPAL_INT32))) {
-        ORTE_ERROR_LOG(rc);
+    if (NULL == (daemon = (orte_proc_t*)opal_pointer_array_get_item(jdatorted->procs, peer.vpid))) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         orted_failed_launch = true;
         goto CLEANUP;
     }
-    
+    daemon->state = ORTE_PROC_STATE_RUNNING;
+    daemon->rml_uri = rml_uri;
+
     /* if we are doing a timing test, unload the start and setup times of the daemon */
     if (orte_timing) {
         /* get the time stamp when the daemon first started */
@@ -559,16 +554,6 @@ static void process_orted_launch_report(int fd, short event, void *data)
         }
     }
     
-    /* lookup the node */
-    nodes = (orte_node_t**)orte_node_pool->addr;
-    if (NULL == nodes[peer.vpid]) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        orted_failed_launch = true;
-        goto CLEANUP;
-    }
-    /* store the arch */
-    nodes[peer.vpid]->arch = arch;
-    
     /* if a tree-launch is underway, send the cmd back */
     if (NULL != orte_tree_launch_cmd) {
         orte_rml.send_buffer(&peer, orte_tree_launch_cmd, ORTE_RML_TAG_DAEMON, 0);
@@ -581,7 +566,7 @@ CLEANUP:
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          orted_failed_launch ? "failed" : "completed",
                          ORTE_NAME_PRINT(&peer),
-                         ORTE_NAME_PRINT(&mev->sender), pdatorted[peer.vpid]->rml_uri));
+                         ORTE_NAME_PRINT(&mev->sender), daemon->rml_uri));
 
     /* release the message */
     OBJ_RELEASE(mev);
@@ -637,7 +622,6 @@ int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons)
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
-    pdatorted = (orte_proc_t**)(jdatorted->procs->addr);
 
     rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ORTED_CALLBACK,
                                  ORTE_RML_NON_PERSISTENT, orted_report_launch, NULL);
