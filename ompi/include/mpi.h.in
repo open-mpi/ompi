@@ -741,81 +741,81 @@ OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_maxloc;
 OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_minloc;
 OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_replace;
 
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_char, ompi_mpi_byte;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_int, ompi_mpi_logic;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_short, ompi_mpi_long;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_float, ompi_mpi_double;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_long_double;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_cplex, ompi_mpi_packed;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_signed_char;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_unsigned_char;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_unsigned_short;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_unsigned, ompi_mpi_datatype_null;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_unsigned_long, ompi_mpi_ldblcplex;
+
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_datatype_null;
+
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_lb __mpi_interface_deprecated__("MPI_LB is deprecated in MPI-2.0");
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_ub __mpi_interface_deprecated__("MPI_UB is deprecated in MPI-2.0");
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_float_int, ompi_mpi_double_int;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_long_int, ompi_mpi_2int;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_short_int, ompi_mpi_dblcplex;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_integer, ompi_mpi_real;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_dblprec, ompi_mpi_character;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_2real, ompi_mpi_2dblprec;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_2integer, ompi_mpi_longdbl_int;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_wchar, ompi_mpi_long_long_int;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_char;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_signed_char;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_unsigned_char;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_byte;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_short;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_unsigned_short;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_int;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_unsigned;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_long;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_unsigned_long;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_long_long_int;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_unsigned_long_long;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_cxx_cplex, ompi_mpi_cxx_dblcplex;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_cxx_ldblcplex;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_float;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_double;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_long_double;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_wchar;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_packed;
+
+/*
+ * Following are the C++/C99 datatypes
+ */
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_cxx_bool;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_2cplex, ompi_mpi_2dblcplex;
-/* other MPI2 datatypes */
-#if OMPI_HAVE_FORTRAN_LOGICAL1
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_cxx_cplex;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_cxx_dblcplex;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_cxx_ldblcplex;
+
+/*
+ * Following are the Fortran datatypes
+ */
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_logical;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_character;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_integer;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_real;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_dblprec;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_cplex;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_dblcplex;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_ldblcplex;
+
+/* Aggregate struct datatypes are not const */
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_2int;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_2integer;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_2real;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_2dblprec;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_2cplex;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_2dblcplex;
+
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_float_int;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_double_int;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_longdbl_int;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_short_int;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_long_int;
+
+/* Optional MPI2 datatypes, always declared and defined, but not "exported" as MPI_LOGICAL1 */
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_logical1;
-#endif
-#if OMPI_HAVE_FORTRAN_LOGICAL2
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_logical2;
-#endif
-#if OMPI_HAVE_FORTRAN_LOGICAL4
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_logical4;
-#endif
-#if OMPI_HAVE_FORTRAN_LOGICAL8
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_logical8;
-#endif
-#if OMPI_HAVE_FORTRAN_INTEGER1
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_integer1;
-#endif
-#if OMPI_HAVE_FORTRAN_INTEGER2
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_integer2;
-#endif
-#if OMPI_HAVE_FORTRAN_INTEGER4
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_integer4;
-#endif
-#if OMPI_HAVE_FORTRAN_INTEGER8
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_integer8;
-#endif
-#if OMPI_HAVE_FORTRAN_INTEGER16
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_integer16;
-#endif
-#if OMPI_HAVE_FORTRAN_REAL2
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_real2;
-#endif
-#if OMPI_HAVE_FORTRAN_REAL4
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_real4;
-#endif
-#if OMPI_HAVE_FORTRAN_REAL8
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_real8;
-#endif
-#if OMPI_HAVE_FORTRAN_REAL16
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_real16;
-#endif
-#if OMPI_HAVE_FORTRAN_REAL4
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_complex8;
-#endif
-#if OMPI_HAVE_FORTRAN_REAL8
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_complex16;
-#endif
-#if OMPI_HAVE_FORTRAN_REAL16
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_complex32;
-#endif
+
 
 OMPI_DECLSPEC extern struct ompi_predefined_errhandler_t ompi_mpi_errhandler_null;
 OMPI_DECLSPEC extern struct ompi_predefined_errhandler_t ompi_mpi_errors_are_fatal;
@@ -886,7 +886,7 @@ OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 
 /* Fortran datatype bindings */
 #define MPI_CHARACTER OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_character)
-#define MPI_LOGICAL OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_logic)
+#define MPI_LOGICAL OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_logical)
 #if OMPI_HAVE_FORTRAN_LOGICAL1
 #define MPI_LOGICAL1 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_logical1)
 #endif
