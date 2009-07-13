@@ -580,9 +580,8 @@ static int mca_btl_tcp_component_create_instances(void)
             BTL_ERROR(("invalid interface \"%s\"", if_name));
             ret = OMPI_ERR_NOT_FOUND;
             goto cleanup;
-        } else {
-            mca_btl_tcp_create(if_index, if_name);
         }
+        mca_btl_tcp_create(if_index, if_name);
         argv++;
     }
     opal_argv_free(include);
@@ -609,18 +608,14 @@ static int mca_btl_tcp_component_create_instances(void)
             opal_ifkindextoname(if_index, if_name, sizeof(if_name));
 
             /* check to see if this interface exists in the exclude list */
-            if(opal_ifcount() > 1) {
-                argv = exclude;
-                while(argv && *argv) {
-                    if(strncmp(*argv,if_name,strlen(*argv)) == 0)
-                        break;
-                    argv++;
-                }
-                /* if this interface was not found in the excluded list, create a BTL */
-                if(argv == 0 || *argv == 0) {
-                    mca_btl_tcp_create(if_index, if_name);
-                }
-            } else {
+            argv = exclude;
+            while(argv && *argv) {
+                if(strcmp(*argv,if_name) == 0)
+                    break;
+                argv++;
+            }
+            /* if this interface was not found in the excluded list, create a BTL */
+            if(argv == 0 || *argv == 0) {
                 mca_btl_tcp_create(if_index, if_name);
             }
         }
