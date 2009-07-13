@@ -603,8 +603,14 @@ int orte_daemon(int argc, char *argv[])
     /* if we are not the HNP...the only time we will be an HNP
      * is if we are launched by a singleton to provide support
      * for it
+     *
+     * only do this if we were not given a regexp to launch - if
+     * we were given one, we won't report back our existence
+     * to the HNP, but instead will report when procs are launched
+     * to avoid establishing an unnecessary direct connection back
+     * to the HNP
      */
-    if (!ORTE_PROC_IS_HNP) {
+    if (!ORTE_PROC_IS_HNP && NULL == orted_launch_cmd) {
         /* send the information to the orted report-back point - this function
          * will process the data, but also counts the number of
          * orteds that reported back so the launch procedure can continue.
