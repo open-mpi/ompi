@@ -22,6 +22,7 @@
 #include <sys/types.h>
 
 #include "opal/util/argv.h"
+#include "opal/class/opal_pointer_array.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "opal/dss/dss.h"
@@ -149,7 +150,8 @@ int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
     int32_t i, j, np;
     orte_job_t **jobs;
     orte_proc_t *proc;
-
+    orte_app_context_t *app;
+    
     /* array of pointers to orte_job_t objects - need to pack the objects a set of fields at a time */
     jobs = (orte_job_t**) src;
 
@@ -170,10 +172,11 @@ int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
         
         /* if there are apps, pack the app_contexts */
         if (0 < jobs[i]->num_apps) {
-            orte_app_context_t **apps = (orte_app_context_t**)jobs[i]->apps->addr;
-            for (j=0; j < jobs[i]->num_apps; j++) {
-                if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                          (void*)&apps[j], 1, ORTE_APP_CONTEXT))) {
+            for (j=0; j < jobs[i]->apps->size; j++) {
+                if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jobs[i]->apps, j))) {
+                    continue;
+                }
+                if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, (void*)&app, 1, ORTE_APP_CONTEXT))) {
                     ORTE_ERROR_LOG(rc);
                     return rc;
                 }
