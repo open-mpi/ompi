@@ -28,6 +28,7 @@
 #include "ompi/constants.h"
 #include "opal/datatype/opal_convertor_internal.h"
 #include "opal/datatype/opal_datatype_internal.h"
+#include "opal/util/output.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/datatype/ompi_datatype_internal.h"
 
