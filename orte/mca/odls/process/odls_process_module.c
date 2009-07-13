@@ -35,6 +35,7 @@
 
 #include "orte/util/show_help.h"
 #include "opal/util/sys_limits.h"
+#include "opal/class/opal_pointer_array.h"
 
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_globals.h"
@@ -73,11 +74,11 @@ static int odls_process_kill_local( pid_t pid, int sig_num )
     return 0;
 }
 
-static int odls_process_kill_local_procs(orte_jobid_t job, bool set_state)
+static int odls_process_kill_local_procs(opal_pointer_array_t *procs, bool set_state)
 {
     int rc;
     
-    if (ORTE_SUCCESS != (rc = orte_odls_base_default_kill_local_procs(job, set_state,
+    if (ORTE_SUCCESS != (rc = orte_odls_base_default_kill_local_procs(procs, set_state,
                                     odls_process_kill_local, odls_process_child_died))) {
         ORTE_ERROR_LOG(rc);
         return rc;

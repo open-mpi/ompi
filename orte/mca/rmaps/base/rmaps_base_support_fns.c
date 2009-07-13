@@ -267,6 +267,11 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
     int rc;
     int n;
     
+    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                         "%s rmaps:base:claim_slot: checking for existence of vpid %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_VPID_PRINT(vpid)));
+
     /* does this proc already exist within the job? */
     proc = NULL;
     for (n=0; n < jdata->procs->size; n++) {
@@ -276,6 +281,12 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
         if (proc_from_job->name.vpid == vpid) {
             /* already have it! */
             proc = proc_from_job;
+            
+            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                                 "%s rmaps:base:claim_slot: found existing proc %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&proc->name)));
+            
             if (NULL != proc->slot_list) {
                 /* cleanout stale info */
                 free(proc->slot_list);
@@ -294,6 +305,10 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
         proc->name.jobid = jdata->jobid;
         proc->name.vpid = vpid;
         proc->app_idx = app_idx;
+        OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                             "%s rmaps:base:claim_slot: created new proc %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&proc->name)));
         /* add this proc to the job's data - we don't have to worry here
          * about keeping the array left-justified as all vpids
          * from 0 to num_procs will be filled
@@ -350,7 +365,7 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
          * mappers want us to do so to avoid any chance of continuing to
          * add procs to it
          */
-        if (remove_from_list) {
+        if (NULL != nodes && remove_from_list) {
             opal_list_remove_item(nodes, (opal_list_item_t*)current_node);
             /* release it - it was retained when we started, so this
              * just ensures the instance counter is correctly updated
@@ -460,6 +475,10 @@ void orte_rmaps_base_update_usage(orte_job_t *jdata, orte_node_t *oldnode,
     orte_local_rank_t local_rank;
     orte_proc_t *proc;
     
+    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                         "%s rmaps:base:update_usage",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
     /* if the node hasn't changed, then we can just use the
      * pre-defined values
      */

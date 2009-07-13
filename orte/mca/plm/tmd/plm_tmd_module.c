@@ -110,6 +110,7 @@ orte_plm_base_module_t orte_plm_tmd_module = {
     NULL,
     plm_tmd_terminate_job,
     plm_tmd_terminate_orteds,
+    NULL,
     plm_tmd_signal_job,
     plm_tmd_finalize
 };
@@ -567,14 +568,7 @@ launch_apps:
 
 static int plm_tmd_terminate_job(orte_jobid_t jobid)
 {
-    int rc;
-    
-   /* order all of the daemons to kill their local procs for this job */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_orted_kill_local_procs(jobid))) {
-        ORTE_ERROR_LOG(rc);
-    }
-
-    return rc;
+    return ORTE_ERR_NOT_IMPLEMENTED;
 }
 
 /* quick timeout loop */

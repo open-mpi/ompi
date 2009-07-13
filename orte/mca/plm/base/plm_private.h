@@ -32,6 +32,7 @@
 #endif  /* HAVE_SYS_TIME_H */
 
 #include "opal/class/opal_list.h"
+#include "opal/class/opal_pointer_array.h"
 #include "opal/threads/condition.h"
 
 #include "opal/dss/dss_types.h"
@@ -132,7 +133,8 @@ ORTE_DECLSPEC void orte_plm_base_start_heart(void);
  * Utilities for plm components that use proxy daemons
  */
 ORTE_DECLSPEC int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command);
-ORTE_DECLSPEC int orte_plm_base_orted_kill_local_procs(orte_jobid_t job);
+ORTE_DECLSPEC int orte_plm_base_orted_terminate_job(orte_jobid_t jobid);
+ORTE_DECLSPEC int orte_plm_base_orted_kill_local_procs(opal_pointer_array_t *procs);
 ORTE_DECLSPEC int orte_plm_base_orted_signal_local_procs(orte_jobid_t job, int32_t signal);
 
 /*

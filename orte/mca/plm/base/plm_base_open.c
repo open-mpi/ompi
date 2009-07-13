@@ -113,6 +113,7 @@ orte_plm_base_module_t orte_plm = {
     NULL,   /* cannot remotely spawn by default */
     NULL,   /* cannot terminate job from a proxy */
     NULL,   /* cannot terminate orteds from a proxy */
+    NULL,   /* cannot terminate procs from a proxy */
     NULL,   /* cannot signal job from a proxy */
     orte_plm_proxy_finalize
 };

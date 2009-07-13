@@ -46,13 +46,8 @@ orte_routed_component_t mca_routed_cm_component = {
 
 static int orte_routed_cm_component_query(mca_base_module_t **module, int *priority)
 {
-    if (ORTE_PROC_IS_CM || ORTE_PROC_IS_CM_APP) {
-        *priority = 100;
-        *module = (mca_base_module_t *) &orte_routed_cm_module;
-        return ORTE_SUCCESS;
-    }
-    
+    /* only pick us if we were specifically directed to be used */
     *priority = 0;
-    *module = NULL;
-    return ORTE_ERROR;
+    *module = (mca_base_module_t *) &orte_routed_cm_module;
+    return ORTE_SUCCESS;
 }

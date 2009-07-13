@@ -203,7 +203,7 @@ void orte_daemon_cmd_processor(int fd, short event, void *data)
             /* make sure our local procs are dead - but don't update their state
              * on the HNP as this may be redundant
              */
-            orte_odls.kill_local_procs(ORTE_JOBID_WILDCARD, false);
+            orte_odls.kill_local_procs(NULL, false);
             
             /* do -not- call finalize as this will send a message to the HNP
              * indicating clean termination! Instead, just forcibly cleanup
@@ -355,8 +355,10 @@ static int process_commands(orte_process_name_t* sender,
     orte_process_name_t proc, proc2;
     int32_t status;
     orte_process_name_t *return_addr;
-    int32_t num_replies;
+    int32_t i, num_replies;
     bool hnp_accounted_for;
+    opal_pointer_array_t procarray;
+    orte_proc_t *proct;
     
     /* unpack the command */
     n = 1;
@@ -375,19 +377,46 @@ static int process_commands(orte_process_name_t* sender,
             
         /****    KILL_LOCAL_PROCS   ****/
         case ORTE_DAEMON_KILL_LOCAL_PROCS:
-            /* unpack the jobid */
+            /* unpack the number of procs */
             n = 1;
-            if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &job, &n, ORTE_JOBID))) {
+            if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &num_replies, &n, OPAL_INT32))) {
                 ORTE_ERROR_LOG(ret);
                 goto CLEANUP;
             }
-
-            if (ORTE_SUCCESS != (ret = orte_odls.kill_local_procs(job, true))) {
+            
+            /* construct the pointer array */
+            OBJ_CONSTRUCT(&procarray, opal_pointer_array_t);
+            opal_pointer_array_init(&procarray, num_replies, ORTE_GLOBAL_ARRAY_MAX_SIZE, 16);
+            
+            /* unpack the proc names into the array */
+            for (i=0; i < num_replies; i++) {
+                n = 1;
+                if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &proc, &n, ORTE_NAME))) {
+                    ORTE_ERROR_LOG(ret);
+                    goto KILL_PROC_CLEANUP;
+                }
+                proct = OBJ_NEW(orte_proc_t);
+                proct->name.jobid = proc.jobid;
+                proct->name.vpid = proc.vpid;
+                opal_pointer_array_add(&procarray, proct);
+            }
+            
+            /* kill the procs */
+            if (ORTE_SUCCESS != (ret = orte_odls.kill_local_procs(&procarray, true))) {
                 ORTE_ERROR_LOG(ret);
             }
+            
+            /* cleanup */
+        KILL_PROC_CLEANUP:
+            for (i=0; i < procarray.size; i++) {
+                if (NULL != (proct = (orte_proc_t*)opal_pointer_array_get_item(&procarray, i))) {
+                    free(proct);
+                }
+            }
+            OBJ_DESTRUCT(&procarray);
             break;
             
-        /****    SIGNAL_LOCAL_PROCS   ****/
+            /****    SIGNAL_LOCAL_PROCS   ****/
         case ORTE_DAEMON_SIGNAL_LOCAL_PROCS:
             /* unpack the jobid */
             n = 1;
@@ -583,7 +612,7 @@ static int process_commands(orte_process_name_t* sender,
             }
             /* if we are the HNP, just kill our local procs */
             if (ORTE_PROC_IS_HNP) {
-                orte_odls.kill_local_procs(ORTE_JOBID_WILDCARD, false);
+                orte_odls.kill_local_procs(NULL, false);
                 return ORTE_SUCCESS;
             }
             

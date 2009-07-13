@@ -54,7 +54,6 @@ int orte_plm_rsh_finalize(void);
  */
 int orte_plm_rsh_init(void);
 int orte_plm_rsh_launch(orte_job_t *jdata);
-int orte_plm_rsh_terminate_job(orte_jobid_t);
 int orte_plm_rsh_terminate_orteds(void);
 int orte_plm_rsh_signal_job(orte_jobid_t, int32_t);
 

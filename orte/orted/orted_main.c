@@ -802,7 +802,7 @@ static void shutdown_callback(int fd, short flags, void *arg)
     /* make sure our local procs are dead - but don't update their state
      * on the HNP as this may be redundant
      */
-    orte_odls.kill_local_procs(ORTE_JOBID_WILDCARD, false);
+    orte_odls.kill_local_procs(NULL, false);
     
     /* cleanup the triggers */
     OBJ_DESTRUCT(&orte_exit);

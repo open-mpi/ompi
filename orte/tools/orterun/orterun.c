@@ -1066,7 +1066,7 @@ static void abort_signal_callback(int fd, short flags, void *arg)
     if (!opal_atomic_trylock(&orte_abort_inprogress_lock)) { /* returns 1 if already locked */
         if (forcibly_die) {
             /* kill any local procs */
-            orte_odls.kill_local_procs(ORTE_JOBID_WILDCARD, false);
+            orte_odls.kill_local_procs(NULL, false);
             
             /* whack any lingering session directory files from our jobs */
             orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);

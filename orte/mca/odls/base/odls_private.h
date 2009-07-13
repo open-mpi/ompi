@@ -28,6 +28,7 @@
 #include "orte/types.h"
 
 #include "opal/class/opal_list.h"
+#include "opal/class/opal_pointer_array.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 #include "opal/dss/dss_types.h"
@@ -114,7 +115,7 @@ typedef int (*orte_odls_base_kill_local_fn_t)(pid_t pid, int signum);
 typedef bool (*orte_odls_base_child_died_fn_t)(pid_t pid, unsigned int timeout, int *exit_status);
 
 ORTE_DECLSPEC int
-orte_odls_base_default_kill_local_procs(orte_jobid_t job, bool set_state,
+orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs, bool set_state,
                                         orte_odls_base_kill_local_fn_t kill_local,
                                         orte_odls_base_child_died_fn_t child_died);
 

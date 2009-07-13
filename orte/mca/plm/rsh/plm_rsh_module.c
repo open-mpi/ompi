@@ -67,6 +67,7 @@
 #include "opal/util/opal_environ.h"
 #include "opal/util/basename.h"
 #include "opal/util/bit_ops.h"
+#include "opal/class/opal_pointer_array.h"
 
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_wait.h"
@@ -103,8 +104,9 @@ orte_plm_base_module_t orte_plm_rsh_module = {
     orte_plm_rsh_launch,
 #endif
     remote_spawn,
-    orte_plm_rsh_terminate_job,
+    orte_plm_base_orted_terminate_job,
     orte_plm_rsh_terminate_orteds,
+    orte_plm_base_orted_kill_local_procs,
     orte_plm_rsh_signal_job,
     orte_plm_rsh_finalize
 };
@@ -1321,21 +1323,6 @@ static int find_children(int rank, int parent, int me, int num_procs)
     return parent;
 }
 
-
-/**
- * Terminate all processes for a given job
- */
-int orte_plm_rsh_terminate_job(orte_jobid_t jobid)
-{
-    int rc;
-    
-    /* order them to kill their local procs for this job */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_orted_kill_local_procs(jobid))) {
-        ORTE_ERROR_LOG(rc);
-    }
-    
-    return rc;
-}
 
 /**
  * Terminate the orteds for a given job
