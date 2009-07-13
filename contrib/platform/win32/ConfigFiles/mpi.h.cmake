@@ -64,6 +64,27 @@
 /* The size of a `int', as computed by sizeof. */
 #cmakedefine OPAL_SIZEOF_INT ${SIZEOF_INT}
 
+/* Maximum length of datarep string (default is 128) */
+#define OPAL_MAX_DATAREP_STRING ${OPAL_MAX_DATAREP_STRING}
+
+/* Maximum length of error strings (default is 256) */
+#define OPAL_MAX_ERROR_STRING ${OPAL_MAX_ERROR_STRING}
+
+/* Maximum length of info keys (default is 36) */
+#define OPAL_MAX_INFO_KEY ${OPAL_MAX_INFO_KEY}
+
+/* Maximum length of info vals (default is 256) */
+#define OPAL_MAX_INFO_VAL ${OPAL_MAX_INFO_VAL}
+
+/* Maximum length of object names (default is 64) */
+#define OPAL_MAX_OBJECT_NAME ${OPAL_MAX_OBJECT_NAME}
+
+/* Maximum length of port names (default is 1024) */
+#define OPAL_MAX_PORT_NAME ${OPAL_MAX_PORT_NAME}
+
+/* Maximum length of processor names (default is 256) */
+#define OPAL_MAX_PROCESSOR_NAME ${OPAL_MAX_PROCESSOR_NAME}
+
 /* Whether we have FORTRAN LOGICAL*1 or not */
 #define OMPI_HAVE_FORTRAN_LOGICAL1 ${OMPI_HAVE_FORTRAN_LOGICAL1}
 
@@ -358,37 +379,37 @@ typedef int (MPI_Grequest_cancel_function)(void *, int);
 /*
  * Miscellaneous constants
  */
-#define MPI_ANY_SOURCE         -1      /* match any source rank */
-#define MPI_PROC_NULL          -2      /* rank of null process */
+#define MPI_ANY_SOURCE         -1                             /* match any source rank */
+#define MPI_PROC_NULL          -2                             /* rank of null process */
 #define MPI_ROOT               -4
-#define MPI_ANY_TAG            -1      /* match any message tag */
-#define MPI_MAX_PROCESSOR_NAME 256     /* max proc. name length */
-#define MPI_MAX_ERROR_STRING   256     /* max error message length */
-#define MPI_MAX_OBJECT_NAME    64      /* max object name length */
-#define MPI_UNDEFINED          -32766  /* undefined stuff */
-#define MPI_CART               1       /* cartesian topology */
-#define MPI_GRAPH              2       /* graph topology */
-#define MPI_KEYVAL_INVALID     -1      /* invalid key value */
+#define MPI_ANY_TAG            -1                             /* match any message tag */
+#define MPI_MAX_PROCESSOR_NAME OPAL_MAX_PROCESSOR_NAME        /* max proc. name length */
+#define MPI_MAX_ERROR_STRING   OPAL_MAX_ERROR_STRING          /* max error message length */
+#define MPI_MAX_OBJECT_NAME    OPAL_MAX_OBJECT_NAME           /* max object name length */
+#define MPI_UNDEFINED          -32766                         /* undefined stuff */
+#define MPI_CART               1                              /* cartesian topology */
+#define MPI_GRAPH              2                              /* graph topology */
+#define MPI_KEYVAL_INVALID     -1                             /* invalid key value */
 
 /*
  * More constants
  */
-#define MPI_BOTTOM               ((void *) 0)    /* base reference address */
-#define MPI_IN_PLACE             ((void *) 1)    /* in place buffer */
-#define MPI_BSEND_OVERHEAD       128     /* size of bsend header + ptr */
-#define MPI_MAX_INFO_KEY         36      /* max info key length */
-#define MPI_MAX_INFO_VAL         256     /* max info value length */
-#define MPI_ARGV_NULL            ((char **) 0)   /* NULL argument vector */
-#define MPI_ARGVS_NULL           ((char ***) 0)  /* NULL argument vectors */
-#define MPI_ERRCODES_IGNORE      ((int *) 0)    /* don't return error codes */
-#define MPI_MAX_PORT_NAME        1024    /* max port name length */
-#define MPI_MAX_NAME_LEN         MPI_MAX_PORT_NAME /* max port name length */
-#define MPI_ORDER_C              0       /* C row major order */
-#define MPI_ORDER_FORTRAN        1       /* Fortran column major order */
-#define MPI_DISTRIBUTE_BLOCK     0       /* block distribution */
-#define MPI_DISTRIBUTE_CYCLIC    1       /* cyclic distribution */
-#define MPI_DISTRIBUTE_NONE      2       /* not distributed */
-#define MPI_DISTRIBUTE_DFLT_DARG (-1)    /* default distribution arg */
+#define MPI_BOTTOM               ((void *) 0)             /* base reference address */
+#define MPI_IN_PLACE             ((void *) 1)             /* in place buffer */
+#define MPI_BSEND_OVERHEAD       128                      /* size of bsend header + ptr */
+#define MPI_MAX_INFO_KEY         OPAL_MAX_INFO_KEY        /* max info key length */
+#define MPI_MAX_INFO_VAL         OPAL_MAX_INFO_VAL        /* max info value length */
+#define MPI_ARGV_NULL            ((char **) 0)            /* NULL argument vector */
+#define MPI_ARGVS_NULL           ((char ***) 0)           /* NULL argument vectors */
+#define MPI_ERRCODES_IGNORE      ((int *) 0)              /* don't return error codes */
+#define MPI_MAX_PORT_NAME        OPAL_MAX_PORT_NAME       /* max port name length */
+#define MPI_MAX_NAME_LEN         MPI_MAX_PORT_NAME        /* max port name length */
+#define MPI_ORDER_C              0                        /* C row major order */
+#define MPI_ORDER_FORTRAN        1                        /* Fortran column major order */
+#define MPI_DISTRIBUTE_BLOCK     0                        /* block distribution */
+#define MPI_DISTRIBUTE_CYCLIC    1                        /* cyclic distribution */
+#define MPI_DISTRIBUTE_NONE      2                        /* not distributed */
+#define MPI_DISTRIBUTE_DFLT_DARG (-1)                     /* default distribution arg */
 
 #if OMPI_PROVIDE_MPI_FILE_INTERFACE
 /*
@@ -412,7 +433,9 @@ typedef int (MPI_Grequest_cancel_function)(void *, int);
 #define MPI_SEEK_CUR            602
 #define MPI_SEEK_END            604
 
-#define MPI_MAX_DATAREP_STRING  128
+/* Max data representation length */ 
+#define MPI_MAX_DATAREP_STRING OPAL_MAX_DATAREP_STRING
+
 #endif /* #if OMPI_PROVIDE_MPI_FILE_INTERFACE */
 
 /*
@@ -720,81 +743,78 @@ OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_maxloc;
 OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_minloc;
 OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_replace;
 
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_char, ompi_mpi_byte;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_int, ompi_mpi_logic;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_short, ompi_mpi_long;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_float, ompi_mpi_double;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_long_double;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_cplex, ompi_mpi_packed;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_signed_char;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_unsigned_char;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_unsigned_short;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_unsigned, ompi_mpi_datatype_null;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_unsigned_long, ompi_mpi_ldblcplex;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_datatype_null; 
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_lb __mpi_interface_deprecated__("MPI_LB is deprecated in MPI-2.0");
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_ub __mpi_interface_deprecated__("MPI_UB is deprecated in MPI-2.0");
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_float_int, ompi_mpi_double_int;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_long_int, ompi_mpi_2int;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_short_int, ompi_mpi_dblcplex;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_integer, ompi_mpi_real;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_dblprec, ompi_mpi_character;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_2real, ompi_mpi_2dblprec;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_2integer, ompi_mpi_longdbl_int;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_wchar, ompi_mpi_long_long_int;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_char; 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_signed_char;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_byte; 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_short; 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_unsigned_char;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_unsigned_short;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_int; 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_unsigned; 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_long; 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_unsigned_long; 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_long_long_int; 
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_unsigned_long_long;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_cxx_cplex, ompi_mpi_cxx_dblcplex;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_float; 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_double; 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_long_double; 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_wchar; 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_packed; 
+ 
+/* 
+ * Following are the C++/C99 datatypes 
+ */ 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_cxx_bool; 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_cxx_cplex; 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_cxx_dblcplex; 
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_cxx_ldblcplex;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_cxx_bool;
-OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_2cplex, ompi_mpi_2dblcplex;
-/* other MPI2 datatypes */
-#if OMPI_HAVE_FORTRAN_LOGICAL1
+ 
+/* 
+ * Following are the Fortran datatypes 
+ */ 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_logical; 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_character; 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_integer; 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_real; 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_dblprec; 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_cplex; 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_dblcplex; 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_ldblcplex; 
+ 
+/* Aggregate struct datatypes are not const */ 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_2int; 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_2integer; 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_2real; 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_2dblprec; 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_2cplex; 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_2dblcplex; 
+ 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_float_int; 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_double_int; 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_longdbl_int; 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_short_int; 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_long_int; 
+
+/* Optional MPI2 datatypes, always declared and defined, but not "exported" as MPI_LOGICAL1 */ 
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_logical1;
-#endif
-#if OMPI_HAVE_FORTRAN_LOGICAL2
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_logical2;
-#endif
-#if OMPI_HAVE_FORTRAN_LOGICAL4
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_logical4;
-#endif
-#if OMPI_HAVE_FORTRAN_LOGICAL8
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_logical8;
-#endif
-#if OMPI_HAVE_FORTRAN_INTEGER1
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_integer1;
-#endif
-#if OMPI_HAVE_FORTRAN_INTEGER2
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_integer2;
-#endif
-#if OMPI_HAVE_FORTRAN_INTEGER4
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_integer4;
-#endif
-#if OMPI_HAVE_FORTRAN_INTEGER8
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_integer8;
-#endif
-#if OMPI_HAVE_FORTRAN_INTEGER16
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_integer16;
-#endif
-#if OMPI_HAVE_FORTRAN_REAL2
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_real2;
-#endif
-#if OMPI_HAVE_FORTRAN_REAL4
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_real4; 
-#endif
-#if OMPI_HAVE_FORTRAN_REAL8
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_real8;
-#endif
-#if OMPI_HAVE_FORTRAN_REAL16
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_real16;
-#endif
-#if OMPI_HAVE_FORTRAN_REAL4
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_complex8;
-#endif
-#if OMPI_HAVE_FORTRAN_REAL8
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_complex16;
-#endif
-#if OMPI_HAVE_FORTRAN_REAL16
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_complex32;
-#endif
 
 OMPI_DECLSPEC extern struct ompi_predefined_errhandler_t ompi_mpi_errhandler_null;
 OMPI_DECLSPEC extern struct ompi_predefined_errhandler_t ompi_mpi_errors_are_fatal;
@@ -865,7 +885,7 @@ OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 
 /* Fortran datatype bindings */
 #define MPI_CHARACTER OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_character)
-#define MPI_LOGICAL OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_logic)
+#define MPI_LOGICAL OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_logical)
 #if OMPI_HAVE_FORTRAN_LOGICAL1
 #define MPI_LOGICAL1 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_logical1)
 #endif
