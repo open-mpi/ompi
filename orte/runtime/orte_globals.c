@@ -642,7 +642,6 @@ static void orte_node_construct(orte_node_t* node)
     node->next_node_rank = 0;
     
     node->oversubscribed = false;
-    node->arch = 0;
     node->state = ORTE_NODE_STATE_UNKNOWN;
     node->slots = 0;
     node->slots_inuse = 0;
@@ -766,7 +765,6 @@ static void orte_nid_construct(orte_nid_t *ptr)
 {
     ptr->name = NULL;
     ptr->daemon = ORTE_VPID_INVALID;
-    ptr->arch = orte_process_info.arch;
     OBJ_CONSTRUCT(&ptr->attrs, opal_list_t);
 }
 

@@ -25,6 +25,7 @@
 #include "opal/datatype/opal_convertor.h"
 #include "opal/threads/mutex.h"
 #include "opal/dss/dss.h"
+#include "opal/util/arch.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
@@ -36,6 +37,7 @@
 #include "ompi/proc/proc.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/runtime/mpiruntime.h"
+#include "ompi/runtime/ompi_module_exchange.h"
 
 static opal_list_t  ompi_proc_list;
 static opal_mutex_t ompi_proc_lock;
@@ -62,7 +64,7 @@ void ompi_proc_construct(ompi_proc_t* proc)
      * the arch of the remote nodes, we will have to set the convertors to the correct
      * architecture.
      */
-    proc->proc_arch = orte_process_info.arch;
+    proc->proc_arch = opal_local_arch;
     proc->proc_convertor = ompi_mpi_local_convertor;
     OBJ_RETAIN( ompi_mpi_local_convertor );
 
@@ -93,6 +95,7 @@ void ompi_proc_destruct(ompi_proc_t* proc)
 int ompi_proc_init(void)
 {
     orte_vpid_t i;
+    int ret;
 
     OBJ_CONSTRUCT(&ompi_proc_list, opal_list_t);
     OBJ_CONSTRUCT(&ompi_proc_lock, opal_mutex_t);
@@ -108,7 +111,11 @@ int ompi_proc_init(void)
             ompi_proc_local_proc = proc;
             proc->proc_flags = OPAL_PROC_ALL_LOCAL;
             proc->proc_hostname = orte_process_info.nodename;
-            proc->proc_arch = orte_process_info.arch;
+            proc->proc_arch = opal_local_arch;
+            /* add our arch to the modex */
+            if (OMPI_SUCCESS != (ret = ompi_modex_send_string("OMPI_ARCH", &proc->proc_arch, sizeof(proc->proc_arch)))) {
+                return ret;
+            }
         } else {
             /* get the locality information */
             proc->proc_flags = orte_ess.proc_get_locality(&proc->proc_name);
@@ -134,6 +141,9 @@ int ompi_proc_set_arch(void)
 {
     ompi_proc_t *proc = NULL;
     opal_list_item_t *item = NULL;
+    uint32_t *arch;
+    size_t sizearch;
+    int ret;
     
     OPAL_THREAD_LOCK(&ompi_proc_lock);
     
@@ -143,9 +153,14 @@ int ompi_proc_set_arch(void)
         proc = (ompi_proc_t*)item;
         
         if (proc->proc_name.vpid != ORTE_PROC_MY_NAME->vpid) {
-            proc->proc_arch = orte_ess.proc_get_arch(&proc->proc_name);
+            if (OMPI_SUCCESS != (ret = ompi_modex_recv_string("OMPI_ARCH", proc, (void**)&arch, &sizearch))) {
+                OPAL_THREAD_UNLOCK(&ompi_proc_lock);
+                return ret;
+            }
+            proc->proc_arch = *arch;
+            free(arch);
             /* if arch is different than mine, create a new convertor for this proc */
-            if (proc->proc_arch != orte_process_info.arch) {
+            if (proc->proc_arch != opal_local_arch) {
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
                 OBJ_RELEASE(proc->proc_convertor);
                 proc->proc_convertor = opal_convertor_create(proc->proc_arch, 0);
@@ -353,13 +368,12 @@ int ompi_proc_refresh(void) {
             ompi_proc_local_proc = proc;
             proc->proc_flags = OPAL_PROC_ALL_LOCAL;
             proc->proc_hostname = orte_process_info.nodename;
-            proc->proc_arch = orte_process_info.arch;
+            proc->proc_arch = opal_local_arch;
         } else {
             proc->proc_flags = orte_ess.proc_get_locality(&proc->proc_name);
             proc->proc_hostname = orte_ess.proc_get_hostname(&proc->proc_name);
-            proc->proc_arch = orte_ess.proc_get_arch(&proc->proc_name);
             /* if arch is different than mine, create a new convertor for this proc */
-            if (proc->proc_arch != orte_process_info.arch) {
+            if (proc->proc_arch != opal_local_arch) {
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
                 OBJ_RELEASE(proc->proc_convertor);
                 proc->proc_convertor = opal_convertor_create(proc->proc_arch, 0);

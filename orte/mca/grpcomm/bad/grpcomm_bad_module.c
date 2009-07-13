@@ -559,11 +559,6 @@ static int modex(opal_list_t *procs)
             goto cleanup;
         }
     
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &orte_process_info.arch, 1, OPAL_UINT32))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }        
-    
         /* pack the entries we have received */
         if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(buf, &modex_reqd))) {
             ORTE_ERROR_LOG(rc);

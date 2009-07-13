@@ -64,10 +64,8 @@ orte_ess_base_module_t orte_ess_cm_module = {
     NULL, /* don't need a local procs fn */
     proc_get_daemon,
     NULL, /* don't need a proc_get_hostname fn */
-    NULL, /* don't need a proc_get_arch fn */
     proc_get_local_rank,
     proc_get_node_rank,
-    NULL, /* don't need to update_arch */
     update_pidmap,
     update_nidmap,
     NULL /* ft_event */
@@ -338,7 +336,6 @@ static int rte_init(void)
     /* create and store a node object where we are */
     node = OBJ_NEW(orte_node_t);
     node->name = strdup(orte_process_info.nodename);
-    node->arch = orte_process_info.arch;
     node->index = opal_pointer_array_add(orte_node_pool, node);
     
     /* create and store a proc object for us */

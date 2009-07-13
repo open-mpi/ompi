@@ -86,7 +86,6 @@ struct orte_proc_info_t {
     orte_vpid_t num_procs;              /**< number of processes in this job */
     int num_nodes;                      /**< number of nodes in the job */
     char *nodename;                     /**< string name for this node */
-    uint32_t arch;                      /**< arch for this node */
     pid_t pid;                          /**< Local process ID for this process */
     orte_proc_type_t proc_type;         /**< Type of process */
     opal_buffer_t *sync_buf;            /**< buffer to store sync response */

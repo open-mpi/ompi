@@ -94,17 +94,6 @@ typedef orte_vpid_t (*orte_ess_base_module_proc_get_daemon_fn_t)(orte_process_na
 typedef char* (*orte_ess_base_module_proc_get_hostname_fn_t)(orte_process_name_t *proc);
 
 /**
- * Determine the arch of the node where a specified proc resides
- *
- * MPI procs need to know the arch being used by a specified proc.
- * Different environments provide that info in different ways - e.g., they may
- * provide a callable utility to return the answer, or download
- * a map of information into each process. This API provides a
- * means for each environment to do the "right thing".
- */
-typedef uint32_t (*orte_ess_base_module_proc_get_arch_fn_t)(orte_process_name_t *proc);
-
-/**
  * Get the local rank of a remote process
  */
 typedef orte_local_rank_t (*orte_ess_base_module_proc_get_local_rank_fn_t)(orte_process_name_t *proc);
@@ -113,11 +102,6 @@ typedef orte_local_rank_t (*orte_ess_base_module_proc_get_local_rank_fn_t)(orte_
  * Get the node rank of a remote process
  */
 typedef orte_node_rank_t (*orte_ess_base_module_proc_get_node_rank_fn_t)(orte_process_name_t *proc);
-
-/**
- * Update the arch of a remote process
- */
-typedef int (*orte_ess_base_module_update_arch_fn_t)(orte_process_name_t *proc, uint32_t arch);
 
 /**
  * Update thr pidmap
@@ -160,10 +144,8 @@ struct orte_ess_base_module_1_0_0_t {
     orte_ess_base_module_get_proc_locality_fn_t     proc_get_locality;
     orte_ess_base_module_proc_get_daemon_fn_t       proc_get_daemon;
     orte_ess_base_module_proc_get_hostname_fn_t     proc_get_hostname;
-    orte_ess_base_module_proc_get_arch_fn_t         proc_get_arch;
     orte_ess_base_module_proc_get_local_rank_fn_t   get_local_rank;
     orte_ess_base_module_proc_get_node_rank_fn_t    get_node_rank;
-    orte_ess_base_module_update_arch_fn_t           update_arch;
     orte_ess_base_module_update_pidmap_fn_t         update_pidmap;
     orte_ess_base_module_update_nidmap_fn_t         update_nidmap;
     orte_ess_base_module_ft_event_fn_t              ft_event;

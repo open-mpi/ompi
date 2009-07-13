@@ -385,14 +385,6 @@ int orte_dt_unpack_node(opal_buffer_t *buffer, void *dest,
             return rc;
         }
         
-        /* unpack the arch */
-        n = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
-                         (&(nodes[i]->arch)), &n, OPAL_INT32))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
         /* unpack the state */
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,

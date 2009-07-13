@@ -419,7 +419,6 @@ static int pretty_print(orte_ps_mpirun_info_t *hnpinfo) {
 static int pretty_print_nodes(orte_node_t **nodes, orte_std_cntr_t num_nodes) {
     int line_len;
     int len_name    = 0,
-        len_arch    = 0,
         len_state   = 0,
         len_slots   = 0,
         len_slots_i = 0,
@@ -431,7 +430,6 @@ static int pretty_print_nodes(orte_node_t **nodes, orte_std_cntr_t num_nodes) {
      * Caculate segment lengths
      */
     len_name    = (int) strlen("Node Name");
-    len_arch    = (int) strlen("Arch");
     len_state   = (int) strlen("State");
     len_slots   = (int) strlen("Slots");
     len_slots_i = (int) strlen("Slots In Use");
@@ -449,7 +447,6 @@ static int pretty_print_nodes(orte_node_t **nodes, orte_std_cntr_t num_nodes) {
     }
     
     line_len = (len_name    + 3 +
-                len_arch    + 3 +
                 len_state   + 3 +
                 len_slots   + 3 +
                 len_slots_i + 3 +
@@ -459,7 +456,6 @@ static int pretty_print_nodes(orte_node_t **nodes, orte_std_cntr_t num_nodes) {
      * Print the header
      */
     printf("%*s | ", len_name,    "Node Name");
-    printf("%*s | ", len_arch,    "Arch");
     printf("%*s | ", len_state,   "State");
     printf("%*s | ", len_slots,   "Slots");
     printf("%*s | ", len_slots_m, "Slots Max");
@@ -475,7 +471,6 @@ static int pretty_print_nodes(orte_node_t **nodes, orte_std_cntr_t num_nodes) {
         node = nodes[i];
         
         printf("%*s | ", len_name,    node->name);
-        printf("%*x | ", len_arch,    node->arch);
         printf("%*s | ", len_state,   pretty_node_state(node->state));
         printf("%*d | ", len_slots,   (uint)node->slots);
         printf("%*d | ", len_slots_m, (uint)node->slots_max);
