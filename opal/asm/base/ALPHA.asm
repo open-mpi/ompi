@@ -197,3 +197,29 @@ opal_atomic_cmpset_rel_64:
 	addl $31,$0,$0
 	ret $31,($26),1
 	.end opal_atomic_cmpset_rel_64
+ 	.align 2
+ 	.align 4
+ 	.globl opal_sys_timer_get_cycles
+ 	.ent opal_sys_timer_get_cycles
+ $opal_sys_timer_get_cycles..ng:
+ opal_sys_timer_get_cycles:
+ 	.eflag 48
+ 	.frame $30,0,$26,0
+ 	.prologue 0
+ 	.set	macro
+ 	wmb
+ 	1:  ldq_l $0, 0($16)     
+ 	cmpeq $0, $17, $0     
+ 	beq $0, 2f           
+ 	mov $18, $0           
+ 	stq_c $0, 0($16)         
+ 	beq $0, 1b           
+ 	jmp 3f               
+ 2:  mov $31, $0      
+ 3:                   
+ 
+ 	.set	nomacro
+ 	rpcc $0
+ 	ret
+ 	.end opal_sys_timer_get_cycles
+
