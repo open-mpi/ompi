@@ -23,6 +23,10 @@
 
 #include "opal_config.h"
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 BEGIN_C_DECLS
 
 /**
