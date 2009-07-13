@@ -16,6 +16,9 @@
 
 #include "opal_config.h"
 
+
+BEGIN_C_DECLS
+
 /*
  * First the public ones
  */
@@ -72,5 +75,7 @@ int32_t
 opal_generic_simple_unpack_checksum( opal_convertor_t* pConvertor,
                                      struct iovec* iov, uint32_t* out_size,
                                      size_t* max_data );
+
+END_C_DECLS
 
 #endif  /* OPAL_DATATYPE_PROTOTYPES_H_HAS_BEEN_INCLUDED */
