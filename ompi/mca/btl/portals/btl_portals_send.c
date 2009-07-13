@@ -23,7 +23,7 @@
 #include <assert.h>
 
 #include "ompi/constants.h"
-#include "ompi/datatype/convertor.h"
+#include "opal/datatype/opal_convertor.h"
 
 #include "btl_portals.h"
 #include "btl_portals_send.h"
@@ -118,7 +118,7 @@ mca_btl_portals_send(struct mca_btl_base_module_t* btl_base,
 
 int mca_btl_portals_sendi(struct mca_btl_base_module_t* btl_base,
                           struct mca_btl_base_endpoint_t* endpoint,
-                          struct ompi_convertor_t* convertor,
+                          struct opal_convertor_t* convertor,
                           void* header,
                           size_t header_size,
                           size_t payload_size,
@@ -177,7 +177,7 @@ int mca_btl_portals_sendi(struct mca_btl_base_module_t* btl_base,
         iov.iov_len  = max_data = payload_size;
         iov_count    = 1;
         
-        (void)ompi_convertor_pack( convertor,
+        (void)opal_convertor_pack( convertor,
                                    &iov, &iov_count, &max_data);
         
         assert(max_data == payload_size);

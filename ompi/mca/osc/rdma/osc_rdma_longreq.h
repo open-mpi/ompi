@@ -22,7 +22,7 @@
 #include "osc_rdma.h"
 
 #include "opal/class/opal_free_list.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/request/request.h"
 #include "ompi/op/op.h"
 

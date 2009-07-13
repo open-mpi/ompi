@@ -27,7 +27,7 @@
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/request/request.h"
-#include "ompi/datatype/convertor.h"
+#include "opal/datatype/opal_convertor.h"
 
 BEGIN_C_DECLS
 
@@ -63,7 +63,7 @@ struct mca_pml_base_request_t {
     struct ompi_communicator_t *req_comm; /**< communicator pointer */
     struct ompi_datatype_t *req_datatype; /**< pointer to data type */
     volatile bool req_free_called;        /**< flag indicating if the user has freed this request */
-    ompi_convertor_t req_convertor;       /**< always need the convertor */
+    opal_convertor_t req_convertor;       /**< always need the convertor */
 /* END: These field have to match the definition of the mca_pml_cm_request_t */
 
     void *req_addr;                       /**< pointer to application buffer */

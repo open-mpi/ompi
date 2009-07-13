@@ -81,7 +81,7 @@ const Datatype REAL((MPI_Datatype)&(ompi_mpi_real));
 const Datatype INTEGER((MPI_Datatype)&(ompi_mpi_integer));
 const Datatype DOUBLE_PRECISION((MPI_Datatype)&(ompi_mpi_dblprec));
 const Datatype F_COMPLEX((MPI_Datatype)&(ompi_mpi_cplex));
-const Datatype LOGICAL((MPI_Datatype)&(ompi_mpi_logic));
+const Datatype LOGICAL((MPI_Datatype)&(ompi_mpi_logical));
 const Datatype CHARACTER((MPI_Datatype)&(ompi_mpi_character));
 
 // datatype for reduction functions (Fortran)

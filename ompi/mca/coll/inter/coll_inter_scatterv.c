@@ -22,7 +22,7 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/mca/pml/pml.h"
@@ -71,7 +71,7 @@ mca_coll_inter_scatterv_inter(void *sbuf, int *scounts,
 		return err;
 	    }
 	    /* calculate the whole buffer size and recieve it from root */
-	    err = ompi_ddt_get_extent(rdtype, &lb, &extent);
+	    err = ompi_datatype_get_extent(rdtype, &lb, &extent);
 	    if (OMPI_SUCCESS != err) {
 		return OMPI_ERROR;
 	    }
@@ -127,8 +127,8 @@ mca_coll_inter_scatterv_inter(void *sbuf, int *scounts,
 	    return err;
 	}
 
-	ompi_ddt_create_indexed(size,scounts,disps,sdtype,&ndtype);
-	ompi_ddt_commit(&ndtype);
+	ompi_datatype_create_indexed(size,scounts,disps,sdtype,&ndtype);
+	ompi_datatype_commit(&ndtype);
 	
 	err = MCA_PML_CALL(send(sbuf, 1, ndtype, 0,
 				MCA_COLL_BASE_TAG_SCATTERV,
@@ -136,7 +136,7 @@ mca_coll_inter_scatterv_inter(void *sbuf, int *scounts,
 	if (OMPI_SUCCESS != err) {
 	    return err;
 	}
-	ompi_ddt_destroy(&ndtype);
+	ompi_datatype_destroy(&ndtype);
 
     }
 

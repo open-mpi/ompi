@@ -11,9 +11,9 @@
  */
 
 #include "ompi_config.h"
-#include "ompi/datatype/convertor.h"
-#include "ompi/datatype/datatype.h"
-#include "ompi/datatype/datatype_checksum.h"
+#include "opal/datatype/opal_convertor.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "opal/datatype/opal_datatype_checksum.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,14 +36,14 @@ int main( int argc, char* argv[] )
     size_t max_data;
     uint32_t pack_checksum, contiguous_checksum, sparse_checksum, manual_checksum;
     struct iovec iov[2];
-    ompi_convertor_t* convertor;
+    opal_convertor_t* convertor;
 
-    ompi_ddt_init();
+    ompi_datatype_init();
     srandom( (int)time(NULL) );
     /*srandomdev();*/
 
-    ompi_ddt_create_vector( SIZE, 1, 2, MPI_INT, &sparse );
-    ompi_ddt_commit( &sparse );
+    ompi_datatype_create_vector( SIZE, 1, 2, MPI_INT, &sparse );
+    ompi_datatype_commit( &sparse );
 
     sparse_array = (my_data_t*)malloc( sizeof(my_data_t) * SIZE );
     array = (int*)malloc( sizeof(int) * SIZE );
@@ -61,16 +61,16 @@ int main( int argc, char* argv[] )
      * Pack the sparse data into the packed array. This simulate the first step
      * of the buffered operation.
      */
-    convertor = ompi_convertor_create( ompi_mpi_local_arch, 0 );
-    ompi_convertor_personalize( convertor, CONVERTOR_WITH_CHECKSUM, NULL );
-    ompi_convertor_prepare_for_send( convertor, sparse, SIZE, sparse_array );
+    convertor = opal_convertor_create( opal_local_arch, 0 );
+    opal_convertor_personalize( convertor, CONVERTOR_WITH_CHECKSUM, NULL );
+    opal_convertor_prepare_for_send( convertor, &(sparse->super), SIZE, sparse_array );
 
     iov[0].iov_base = packed;
     iov[0].iov_len = sizeof(int) * SIZE;
     max_data = iov[0].iov_len;
 
     iov_count = 1;
-    ompi_convertor_pack( convertor, iov, &iov_count, &max_data );
+    opal_convertor_pack( convertor, iov, &iov_count, &max_data );
     pack_checksum = convertor->checksum;
 
     OBJ_RELEASE(convertor);
@@ -79,16 +79,16 @@ int main( int argc, char* argv[] )
      * Now move the data from the packed array into the fragment to
      * be sent over the network (still simulation).
      */
-    convertor = ompi_convertor_create( ompi_mpi_local_arch, 0 );
-    ompi_convertor_personalize( convertor, CONVERTOR_WITH_CHECKSUM, NULL );
-    ompi_convertor_prepare_for_send( convertor, MPI_INT, SIZE, packed );
+    convertor = opal_convertor_create( opal_local_arch, 0 );
+    opal_convertor_personalize( convertor, CONVERTOR_WITH_CHECKSUM, NULL );
+    opal_convertor_prepare_for_send( convertor, &(ompi_mpi_int.dt.super), SIZE, packed );
 
     iov[0].iov_base = array;
     iov[0].iov_len = sizeof(int) * SIZE;
     max_data = iov[0].iov_len;
 
     iov_count = 1;
-    ompi_convertor_pack( convertor, iov, &iov_count, &max_data );
+    opal_convertor_pack( convertor, iov, &iov_count, &max_data );
     contiguous_checksum = convertor->checksum;
 
     OBJ_RELEASE(convertor);
@@ -98,9 +98,9 @@ int main( int argc, char* argv[] )
      * the network and now we unpack it in the user memory using 2
      * separate iovec.
      */
-    convertor = ompi_convertor_create( ompi_mpi_local_arch, 0 );
-    ompi_convertor_personalize( convertor, CONVERTOR_WITH_CHECKSUM, NULL );
-    ompi_convertor_prepare_for_recv( convertor, sparse, SIZE, sparse_array );
+    convertor = opal_convertor_create( opal_local_arch, 0 );
+    opal_convertor_personalize( convertor, CONVERTOR_WITH_CHECKSUM, NULL );
+    opal_convertor_prepare_for_recv( convertor, &(sparse->super), SIZE, sparse_array );
 
     max_data = sizeof(int) * SIZE;
     iov[0].iov_base = array;
@@ -109,7 +109,7 @@ int main( int argc, char* argv[] )
     iov[1].iov_len = max_data - iov[0].iov_len;
 
     iov_count = 2;
-    ompi_convertor_unpack( convertor, iov, &iov_count, &max_data );
+    opal_convertor_unpack( convertor, iov, &iov_count, &max_data );
     sparse_checksum = convertor->checksum;
 
     OBJ_RELEASE(convertor);

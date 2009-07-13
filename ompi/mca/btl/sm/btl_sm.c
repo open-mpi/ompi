@@ -35,7 +35,7 @@
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/mca/maffinity/base/base.h"
 #include "orte/util/proc_info.h"
-#include "ompi/datatype/convertor.h"
+#include "opal/datatype/opal_convertor.h"
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/mpool/base/base.h"
@@ -638,7 +638,7 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
     mca_mpool_base_registration_t* registration,
-    struct ompi_convertor_t* convertor,
+    struct opal_convertor_t* convertor,
     uint8_t order,
     size_t reserve,
     size_t* size,
@@ -667,7 +667,7 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
         (IOVBASE_TYPE*)(((unsigned char*)(frag->segment.seg_addr.pval)) +
                 reserve);
 
-    rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
+    rc = opal_convertor_pack(convertor, &iov, &iov_count, &max_data );
     if(rc < 0) {
         MCA_BTL_SM_FRAG_RETURN(frag);
         return NULL;
@@ -718,7 +718,7 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
  */
 int mca_btl_sm_sendi( struct mca_btl_base_module_t* btl,
                       struct mca_btl_base_endpoint_t* endpoint,
-                      struct ompi_convertor_t* convertor,
+                      struct opal_convertor_t* convertor,
                       void* header,
                       size_t header_size,
                       size_t payload_size,
@@ -770,7 +770,7 @@ int mca_btl_sm_sendi( struct mca_btl_base_module_t* btl,
             iov.iov_len  = max_data = payload_size;
             iov_count    = 1;
 
-            (void)ompi_convertor_pack( convertor, &iov, &iov_count, &max_data);
+            (void)opal_convertor_pack( convertor, &iov, &iov_count, &max_data);
 
             assert(max_data == payload_size);
         }

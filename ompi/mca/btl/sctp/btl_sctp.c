@@ -25,7 +25,7 @@
 #include "btl_sctp_frag.h" 
 #include "btl_sctp_proc.h"
 #include "btl_sctp_endpoint.h"
-#include "ompi/datatype/convertor.h" 
+#include "opal/datatype/opal_convertor.h" 
 #include "ompi/mca/mpool/base/base.h" 
 #include "ompi/mca/mpool/mpool.h" 
 #include "ompi/proc/proc.h"
@@ -220,7 +220,7 @@ mca_btl_base_descriptor_t* mca_btl_sctp_prepare_src(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
     struct mca_mpool_base_registration_t* registration,
-    struct ompi_convertor_t* convertor,
+    struct opal_convertor_t* convertor,
     uint8_t order,
     size_t reserve,
     size_t* size,
@@ -258,7 +258,7 @@ mca_btl_base_descriptor_t* mca_btl_sctp_prepare_src(
         frag->segments[0].seg_len = reserve;
         frag->base.des_src_cnt = 1;
 
-    } else if(ompi_convertor_need_buffers(convertor)) {
+    } else if(opal_convertor_need_buffers(convertor)) {
 
         if (max_data + reserve > frag->size) {
             max_data = frag->size - reserve;
@@ -266,7 +266,7 @@ mca_btl_base_descriptor_t* mca_btl_sctp_prepare_src(
         iov.iov_len = max_data;
         iov.iov_base = (IOVBASE_TYPE*)(((unsigned char*)(frag+1)) + reserve);
 
-        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
+        rc = opal_convertor_pack(convertor, &iov, &iov_count, &max_data );
         if( rc < 0 ) {
             mca_btl_sctp_free(btl, &frag->base);
             return NULL;
@@ -281,7 +281,7 @@ mca_btl_base_descriptor_t* mca_btl_sctp_prepare_src(
         iov.iov_len = max_data;
         iov.iov_base = NULL;
 
-        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
+        rc = opal_convertor_pack(convertor, &iov, &iov_count, &max_data );
         if( rc < 0 ) {
             mca_btl_sctp_free(btl, &frag->base);
             return NULL;
@@ -321,7 +321,7 @@ mca_btl_base_descriptor_t* mca_btl_sctp_prepare_dst(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
     struct mca_mpool_base_registration_t* registration,
-    struct ompi_convertor_t* convertor,
+    struct opal_convertor_t* convertor,
     uint8_t order,
     size_t reserve,
     size_t* size,
@@ -336,7 +336,7 @@ mca_btl_base_descriptor_t* mca_btl_sctp_prepare_dst(
         return NULL;
     }
 
-    ompi_ddt_type_lb(convertor->pDesc, &lb);
+    ompi_datatype_type_lb(convertor->pDesc, &lb);
     frag->segments->seg_len = *size;
     frag->segments->seg_addr.pval = convertor->pBaseBuf + lb + convertor->bConverted;
 

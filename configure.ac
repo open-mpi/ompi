@@ -224,8 +224,6 @@ OMPI_CHECK_IDENT([CC], [CFLAGS], [c], [C])
 # Check for some types
 #
 
-AC_CHECK_TYPES(long long)
-AC_CHECK_TYPES(long double)
 AC_CHECK_TYPES(int8_t)
 AC_CHECK_TYPES(uint8_t)
 AC_CHECK_TYPES(int16_t)
@@ -234,6 +232,15 @@ AC_CHECK_TYPES(int32_t)
 AC_CHECK_TYPES(uint32_t)
 AC_CHECK_TYPES(int64_t)
 AC_CHECK_TYPES(uint64_t)
+AC_CHECK_TYPES(int128_t)
+AC_CHECK_TYPES(uint128_t)
+AC_CHECK_TYPES(long long)
+
+AC_CHECK_TYPES(long double)
+AC_CHECK_TYPES(float _Complex)
+AC_CHECK_TYPES(double _Complex)
+AC_CHECK_TYPES(long double _Complex)
+
 AC_CHECK_TYPES(intptr_t)
 AC_CHECK_TYPES(uintptr_t)
 AC_CHECK_TYPES(mode_t)
@@ -251,11 +258,22 @@ AC_CHECK_SIZEOF(long)
 if test $ac_cv_type_long_long = yes; then
     AC_CHECK_SIZEOF(long long)
 fi
+AC_CHECK_SIZEOF(float)
+AC_CHECK_SIZEOF(double)
 if test $ac_cv_type_long_double = yes; then
     AC_CHECK_SIZEOF(long double)
 fi
-AC_CHECK_SIZEOF(float)
-AC_CHECK_SIZEOF(double)
+
+if test "$ac_cv_type_float__Complex" = yes; then
+    AC_CHECK_SIZEOF(float _Complex)
+fi
+if test "$ac_cv_type_double__Complex" = yes; then
+    AC_CHECK_SIZEOF(double _Complex)
+fi
+if test "$ac_cv_type_long_double__Complex" = yes; then
+    AC_CHECK_SIZEOF(long double _Complex)
+fi
+
 AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(size_t)
 if test $ac_cv_type_ssize_t = yes ; then
@@ -264,25 +282,46 @@ fi
 if test $ac_cv_type_ptrdiff_t = yes; then
     AC_CHECK_SIZEOF(ptrdiff_t)
 fi
+AC_CHECK_SIZEOF(wchar_t)
+
 
 #
 # Check for type alignments
 #
 
+OMPI_C_GET_ALIGNMENT(_Bool, OPAL_ALIGNMENT_BOOL)
+OMPI_C_GET_ALIGNMENT(int8_t, OPAL_ALIGNMENT_INT8)
+OMPI_C_GET_ALIGNMENT(int16_t, OPAL_ALIGNMENT_INT16)
+OMPI_C_GET_ALIGNMENT(int32_t, OPAL_ALIGNMENT_INT32)
+OMPI_C_GET_ALIGNMENT(int64_t, OPAL_ALIGNMENT_INT64)
+if test "$ac_cv_type_int128_t" = yes ; then
+  OMPI_C_GET_ALIGNMENT(int128_t, OPAL_ALIGNMENT_INT128)
+fi
 OMPI_C_GET_ALIGNMENT(char, OPAL_ALIGNMENT_CHAR)
 OMPI_C_GET_ALIGNMENT(short, OPAL_ALIGNMENT_SHORT)
-OMPI_C_GET_ALIGNMENT(wchar_t, OMPI_ALIGNMENT_WCHAR)
+OMPI_C_GET_ALIGNMENT(wchar_t, OPAL_ALIGNMENT_WCHAR)
 OMPI_C_GET_ALIGNMENT(int, OPAL_ALIGNMENT_INT)
 OMPI_C_GET_ALIGNMENT(long, OPAL_ALIGNMENT_LONG)
-if test $ac_cv_type_long_long = yes; then
+if test "$ac_cv_type_long_long" = yes; then
     OMPI_C_GET_ALIGNMENT(long long, OPAL_ALIGNMENT_LONG_LONG)
 fi
-OMPI_C_GET_ALIGNMENT(float, OMPI_ALIGNMENT_FLOAT)
-OMPI_C_GET_ALIGNMENT(double, OMPI_ALIGNMENT_DOUBLE)
-if test $ac_cv_type_long_double = yes; then
+OMPI_C_GET_ALIGNMENT(float, OPAL_ALIGNMENT_FLOAT)
+OMPI_C_GET_ALIGNMENT(double, OPAL_ALIGNMENT_DOUBLE)
+if test "$ac_cv_type_long_double" = yes; then
     OMPI_C_GET_ALIGNMENT(long double, OPAL_ALIGNMENT_LONG_DOUBLE)
 fi
-OMPI_C_GET_ALIGNMENT(void *, OMPI_ALIGNMENT_VOID_P)
+
+if test "$ac_cv_type_float__Complex" = yes; then
+    OMPI_C_GET_ALIGNMENT(float _Complex, OPAL_ALIGNMENT_FLOAT_COMPLEX)
+fi
+if test "$ac_cv_type_double__Complex" = yes; then
+    OMPI_C_GET_ALIGNMENT(double _Complex, OPAL_ALIGNMENT_DOUBLE_COMPLEX)
+fi
+if test "$ac_cv_type_long_double__Complex" = yes; then
+    OMPI_C_GET_ALIGNMENT(long double _Complex, OPAL_ALIGNMENT_LONG_DOUBLE_COMPLEX)
+fi
+
+OMPI_C_GET_ALIGNMENT(void *, OPAL_ALIGNMENT_VOID_P)
 
 #
 # Does the C compiler native support "bool"? (i.e., without
@@ -407,7 +446,7 @@ AC_CHECK_SIZEOF(bool)
 
 # check for type alignments
 
-OMPI_C_GET_ALIGNMENT(bool, OMPI_ALIGNMENT_CXX_BOOL)
+OMPI_C_GET_ALIGNMENT(bool, OPAL_ALIGNMENT_CXX_BOOL)
 AC_LANG_POP(C++)
 
 # check if we want C++ support
@@ -454,6 +493,8 @@ AC_DEFINE([ompi_fortran_bogus_type_t], [int],
 
 # We want to set the #define's for all of these, so invoke the macros
 # regardless of whether we have F77 support or not.
+OMPI_F77_CHECK([CHARACTER], [yes],
+               [char, int32_t, int, int64_t, long long, long], [-1])
 
 OMPI_F77_CHECK([LOGICAL], [yes],
                [char, int32_t, int, int64_t, long long, long], [-1])
@@ -465,6 +506,7 @@ OMPI_F77_CHECK([LOGICAL*4], [yes],
                [int32_t, int, int64_t, long long, long], [4])
 OMPI_F77_CHECK([LOGICAL*8], [yes],
                [int, int64_t, long long, long], [8])
+
 OMPI_F77_CHECK([INTEGER], [yes],
                [int32_t, int, int64_t, long long, long], [-1])
 OMPI_F77_CHECK([INTEGER*1], [no],
@@ -565,6 +607,8 @@ OMPI_F90_FIND_MODULE_INCLUDE_FLAG
 OMPI_F90_IKINDS=""
 OMPI_F90_RKINDS=""
 OMPI_F90_CKINDS=""
+
+OMPI_F90_CHECK([CHARACTER])
 
 # LOGICAL and friends
 OMPI_F90_CHECK([LOGICAL])
@@ -1351,6 +1395,7 @@ AC_CONFIG_FILES([
     opal/etc/Makefile
     opal/include/Makefile
     opal/asm/Makefile
+    opal/datatype/Makefile
     opal/event/Makefile
     opal/event/compat/Makefile
     opal/event/compat/sys/Makefile

@@ -34,7 +34,7 @@
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/op/op.h"
 #include "ompi/memchecker.h"
 
@@ -364,7 +364,7 @@ ompi_osc_rdma_sendreq_send_cb(struct mca_btl_base_module_t* btl,
             header = (ompi_osc_rdma_send_header_t*)
                 (((char*) header) + 
                  sizeof(ompi_osc_rdma_send_header_t) + 
-                 ompi_ddt_pack_description_length(sendreq->req_target_datatype) +
+                 ompi_datatype_pack_description_length(sendreq->req_target_datatype) +
                  header->hdr_msg_length);
             if (header->hdr_base.hdr_type == OMPI_OSC_RDMA_HDR_MULTI_END) {
                 done = true;
@@ -422,16 +422,16 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
 
     if ((module->m_eager_send_active) && 
         (module->m_use_rdma) &&
-        (ompi_ddt_is_contiguous_memory_layout(sendreq->req_target_datatype,
+        (ompi_datatype_is_contiguous_memory_layout(sendreq->req_target_datatype,
                                               sendreq->req_target_count)) &&
-        (!ompi_convertor_need_buffers(&sendreq->req_origin_convertor)) &&
+        (!opal_convertor_need_buffers(&sendreq->req_origin_convertor)) &&
         (sendreq->req_type != OMPI_OSC_RDMA_ACC)) {
         ret = ompi_osc_rdma_sendreq_rdma(module, sendreq);
         if (OPAL_LIKELY(OMPI_SUCCESS == ret)) return ret;
     }
 
     /* we always need to send the ddt */
-    packed_ddt_len = ompi_ddt_pack_description_length(sendreq->req_target_datatype);
+    packed_ddt_len = ompi_datatype_pack_description_length(sendreq->req_target_datatype);
     needed_len += packed_ddt_len;
     if (OMPI_OSC_RDMA_GET != sendreq->req_type) {
         needed_len += sendreq->req_origin_bytes_packed;
@@ -519,7 +519,7 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
     }
 
     /* Set datatype id and / or pack datatype */
-    ret = ompi_ddt_get_pack_description(sendreq->req_target_datatype, &packed_ddt);
+    ret = ompi_datatype_get_pack_description(sendreq->req_target_datatype, &packed_ddt);
     if (OMPI_SUCCESS != ret) goto cleanup;
     memcpy((unsigned char*) descriptor->des_src[0].seg_addr.pval + descriptor->des_src[0].seg_len + written_data,
            packed_ddt, packed_ddt_len);
@@ -535,7 +535,7 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
             iov.iov_len = max_data;
             iov.iov_base = (IOVBASE_TYPE*)((unsigned char*) descriptor->des_src[0].seg_addr.pval + descriptor->des_src[0].seg_len + written_data);
 
-            ret = ompi_convertor_pack(&sendreq->req_origin_convertor, &iov, &iov_count,
+            ret = opal_convertor_pack(&sendreq->req_origin_convertor, &iov, &iov_count,
                                       &max_data );
             if (ret < 0) {
                 ret = OMPI_ERR_FATAL;
@@ -742,7 +742,7 @@ ompi_osc_rdma_replyreq_send(ompi_osc_rdma_module_t *module,
             memchecker_convertor_call(&opal_memchecker_base_mem_defined,
                                       &replyreq->rep_target_convertor);
         );
-        ret = ompi_convertor_pack(&replyreq->rep_target_convertor, &iov, &iov_count,
+        ret = opal_convertor_pack(&replyreq->rep_target_convertor, &iov, &iov_count,
                                   &max_data );
         MEMCHECKER(
             memchecker_convertor_call(&opal_memchecker_base_mem_noaccess,
@@ -826,19 +826,19 @@ ompi_osc_rdma_sendreq_recv_put(ompi_osc_rdma_module_t *module,
     }
 
     if (header->hdr_msg_length > 0) {
-        ompi_convertor_t convertor;
+        opal_convertor_t convertor;
         struct iovec iov;
         uint32_t iov_count = 1;
         size_t max_data;
         ompi_proc_t *proc;
 
         /* create convertor */
-        OBJ_CONSTRUCT(&convertor, ompi_convertor_t);
+        OBJ_CONSTRUCT(&convertor, opal_convertor_t);
 
         /* initialize convertor */
         proc         = ompi_comm_peer_lookup(module->m_comm, header->hdr_origin);
-        ompi_convertor_copy_and_prepare_for_recv(proc->proc_convertor,
-                                                 datatype,
+        opal_convertor_copy_and_prepare_for_recv(proc->proc_convertor,
+                                                 &(datatype->super),
                                                  header->hdr_target_count,
                                                  target,
                                                  0,
@@ -849,7 +849,7 @@ ompi_osc_rdma_sendreq_recv_put(ompi_osc_rdma_module_t *module,
         MEMCHECKER(
             memchecker_convertor_call(&opal_memchecker_base_mem_defined, &convertor);
         );
-        ompi_convertor_unpack(&convertor, 
+        opal_convertor_unpack(&convertor, 
                               &iov,
                               &iov_count,
                               &max_data );
@@ -925,17 +925,17 @@ ompi_osc_rdma_sendreq_recv_accum_long_cb(ompi_osc_rdma_longreq_t *longreq)
     OPAL_THREAD_LOCK(&longreq->req_module->m_acc_lock);
 
     if (longreq->req_op == &ompi_mpi_op_replace.op) {
-        ompi_convertor_t convertor;
+        opal_convertor_t convertor;
         struct iovec iov;
         uint32_t iov_count = 1;
         size_t max_data;
 
         /* create convertor */
-        OBJ_CONSTRUCT(&convertor, ompi_convertor_t);
+        OBJ_CONSTRUCT(&convertor, opal_convertor_t);
 
         /* initialize convertor */
-        ompi_convertor_copy_and_prepare_for_recv(ompi_proc_local()->proc_convertor,
-                                                 longreq->req_datatype,
+        opal_convertor_copy_and_prepare_for_recv(ompi_proc_local()->proc_convertor,
+                                                 &(longreq->req_datatype->super),
                                                  header->hdr_target_count,
                                                  target_buffer,
                                                  0,
@@ -948,7 +948,7 @@ ompi_osc_rdma_sendreq_recv_accum_long_cb(ompi_osc_rdma_longreq_t *longreq)
             memchecker_convertor_call(&opal_memchecker_base_mem_defined,
                                       &convertor);
         );
-        ompi_convertor_unpack(&convertor, 
+        opal_convertor_unpack(&convertor, 
                               &iov,
                               &iov_count,
                               &max_data);
@@ -1015,17 +1015,17 @@ ompi_osc_rdma_sendreq_recv_accum(ompi_osc_rdma_module_t *module,
         OPAL_THREAD_LOCK(&module->m_acc_lock);
 
         if (op == &ompi_mpi_op_replace.op) {
-            ompi_convertor_t convertor;
+            opal_convertor_t convertor;
             struct iovec iov;
             uint32_t iov_count = 1;
             size_t max_data;
 
             /* create convertor */
-            OBJ_CONSTRUCT(&convertor, ompi_convertor_t);
+            OBJ_CONSTRUCT(&convertor, opal_convertor_t);
 
             /* initialize convertor */
-            ompi_convertor_copy_and_prepare_for_recv(proc->proc_convertor,
-                                                     datatype,
+            opal_convertor_copy_and_prepare_for_recv(proc->proc_convertor,
+                                                     &(datatype->super),
                                                      header->hdr_target_count,
                                                      target_buffer,
                                                      0,
@@ -1037,7 +1037,7 @@ ompi_osc_rdma_sendreq_recv_accum(ompi_osc_rdma_module_t *module,
             MEMCHECKER(
                 memchecker_convertor_call(&opal_memchecker_base_mem_defined, &convertor);
             );
-            ompi_convertor_unpack(&convertor, 
+            opal_convertor_unpack(&convertor, 
                                   &iov,
                                   &iov_count,
                                   &max_data);
@@ -1050,11 +1050,11 @@ ompi_osc_rdma_sendreq_recv_accum(ompi_osc_rdma_module_t *module,
 
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
             if (proc->proc_arch != ompi_proc_local()->proc_arch) {
-                ompi_convertor_t convertor;
+                opal_convertor_t convertor;
                 struct iovec iov;
                 uint32_t iov_count = 1;
                 size_t max_data;
-                struct ompi_datatype_t *primitive_datatype = NULL;
+                ompi_datatype_t *primitive_datatype = NULL;
                 uint32_t primitive_count;
                 size_t buflen;
 
@@ -1062,17 +1062,17 @@ ompi_osc_rdma_sendreq_recv_accum(ompi_osc_rdma_module_t *module,
                 primitive_count *= header->hdr_target_count;
 
                 /* figure out how big a buffer we need */
-                ompi_ddt_type_size(primitive_datatype, &buflen);
+                ompi_datatype_type_size(primitive_datatype, &buflen);
                 buflen *= primitive_count;
 
                 /* create convertor */
-                OBJ_CONSTRUCT(&convertor, ompi_convertor_t);
+                OBJ_CONSTRUCT(&convertor, opal_convertor_t);
 
                 payload = (void*) malloc(buflen);
 
                 /* initialize convertor */
-                ompi_convertor_copy_and_prepare_for_recv(proc->proc_convertor,
-                                                         primitive_datatype,
+                opal_convertor_copy_and_prepare_for_recv(proc->proc_convertor,
+                                                         &(primitive_datatype->super),
                                                          primitive_count,
                                                          buffer,
                                                          0,
@@ -1084,7 +1084,7 @@ ompi_osc_rdma_sendreq_recv_accum(ompi_osc_rdma_module_t *module,
                 MEMCHECKER(
                     memchecker_convertor_call(&opal_memchecker_base_mem_defined, &convertor);
                 );
-                ompi_convertor_unpack(&convertor, 
+                opal_convertor_unpack(&convertor, 
                                       &iov,
                                       &iov_count,
                                       &max_data);
@@ -1139,7 +1139,7 @@ ompi_osc_rdma_sendreq_recv_accum(ompi_osc_rdma_module_t *module,
         primitive_count *= header->hdr_target_count;
 
         /* figure out how big a buffer we need */
-        ompi_ddt_type_size(primitive_datatype, &buflen);
+        ompi_datatype_type_size(primitive_datatype, &buflen);
         buflen *= primitive_count;
 
         /* get a longreq and fill it in */
@@ -1231,7 +1231,7 @@ ompi_osc_rdma_replyreq_recv(ompi_osc_rdma_module_t *module,
             memchecker_convertor_call(&opal_memchecker_base_mem_defined,
                                       &sendreq->req_origin_convertor);
         );
-        ompi_convertor_unpack(&sendreq->req_origin_convertor,
+        opal_convertor_unpack(&sendreq->req_origin_convertor,
                               &iov,
                               &iov_count,
                               &max_data );

@@ -21,18 +21,20 @@
 
 #include <string.h>
 
+#include "ompi/constants.h"
+#include "opal/datatype/opal_convertor.h"
 #include "opal/threads/mutex.h"
-#include "orte/util/show_help.h"
-
 #include "opal/dss/dss.h"
+
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
 
 #include "ompi/proc/proc.h"
-#include "ompi/datatype/convertor.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/runtime/mpiruntime.h"
 
 static opal_list_t  ompi_proc_list;
@@ -76,7 +78,7 @@ void ompi_proc_destruct(ompi_proc_t* proc)
     /* As all the convertors are created with OBJ_NEW we can just call OBJ_RELEASE. All, except
      * the local convertor, will get destroyed at some point here. If the reference count is correct
      * the local convertor (who has the reference count increased in the datatype) will not get
-     * destroyed here. It will be destroyed later when the ompi_ddt_finalize is called.
+     * destroyed here. It will be destroyed later when the ompi_datatype_finalize is called.
      */
     OBJ_RELEASE( proc->proc_convertor );
     /* DO NOT FREE THE HOSTNAME FIELD AS THIS POINTS
@@ -146,7 +148,7 @@ int ompi_proc_set_arch(void)
             if (proc->proc_arch != orte_process_info.arch) {
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
                 OBJ_RELEASE(proc->proc_convertor);
-                proc->proc_convertor = ompi_convertor_create(proc->proc_arch, 0);
+                proc->proc_convertor = opal_convertor_create(proc->proc_arch, 0);
 #else
                 orte_show_help("help-mpi-runtime",
                                "heterogeneous-support-unavailable",
@@ -360,7 +362,7 @@ int ompi_proc_refresh(void) {
             if (proc->proc_arch != orte_process_info.arch) {
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
                 OBJ_RELEASE(proc->proc_convertor);
-                proc->proc_convertor = ompi_convertor_create(proc->proc_arch, 0);
+                proc->proc_convertor = opal_convertor_create(proc->proc_arch, 0);
 #else
                 orte_show_help("help-mpi-runtime",
                                "heterogeneous-support-unavailable",
@@ -529,10 +531,10 @@ ompi_proc_unpack(opal_buffer_t* buf,
             plist[i]->proc_arch = new_arch;
             
             /* if arch is different than mine, create a new convertor for this proc */
-            if (plist[i]->proc_arch != ompi_mpi_local_arch) {
+            if (plist[i]->proc_arch != opal_local_arch) {
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
                 OBJ_RELEASE(plist[i]->proc_convertor);
-                plist[i]->proc_convertor = ompi_convertor_create(plist[i]->proc_arch, 0);
+                plist[i]->proc_convertor = opal_convertor_create(plist[i]->proc_arch, 0);
 #else
                 orte_show_help("help-mpi-runtime",
                                "heterogeneous-support-unavailable",

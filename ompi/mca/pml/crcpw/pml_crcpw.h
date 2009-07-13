@@ -31,7 +31,7 @@
 #include "ompi/mca/pml/base/pml_base_request.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mca/crcp/crcp.h"
 #include "ompi/mca/crcp/base/base.h"
 

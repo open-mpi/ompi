@@ -20,7 +20,7 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
@@ -65,10 +65,10 @@ ompi_coll_tuned_scatter_intra_binomial(void *sbuf, int scount,
     COLL_TUNED_UPDATE_IN_ORDER_BMTREE( comm, tuned_module, root );
     bmtree = data->cached_in_order_bmtree;
 
-    ompi_ddt_get_extent(sdtype, &slb, &sextent);
-    ompi_ddt_get_true_extent(sdtype, &strue_lb, &strue_extent);
-    ompi_ddt_get_extent(rdtype, &rlb, &rextent);
-    ompi_ddt_get_true_extent(rdtype, &rtrue_lb, &rtrue_extent);
+    ompi_datatype_get_extent(sdtype, &slb, &sextent);
+    ompi_datatype_get_true_extent(sdtype, &strue_lb, &strue_extent);
+    ompi_datatype_get_extent(rdtype, &rlb, &rextent);
+    ompi_datatype_get_true_extent(rdtype, &rtrue_lb, &rtrue_extent);
 
     vrank = (rank - root + size) % size;
 
@@ -78,7 +78,7 @@ ompi_coll_tuned_scatter_intra_binomial(void *sbuf, int scount,
 	    ptmp = (char *) sbuf;
 	    if (rbuf != MPI_IN_PLACE) {
 		/* local copy to rbuf */
-		err = ompi_ddt_sndrcv(sbuf, scount, sdtype,
+		err = ompi_datatype_sndrcv(sbuf, scount, sdtype,
 				      rbuf, rcount, rdtype);
 		if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 	    }
@@ -92,18 +92,18 @@ ompi_coll_tuned_scatter_intra_binomial(void *sbuf, int scount,
 	    ptmp = tempbuf - slb;
 
 	    /* and rotate data so they will eventually in the right place */
-	    err = ompi_ddt_copy_content_same_ddt(sdtype, scount*(size - root),
+	    err = ompi_datatype_copy_content_same_ddt(sdtype, scount*(size - root),
 						 ptmp, (char *) sbuf + sextent*root*scount);
 	    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
 
-	    err = ompi_ddt_copy_content_same_ddt(sdtype, scount*root,
+	    err = ompi_datatype_copy_content_same_ddt(sdtype, scount*root,
 						 ptmp + sextent*scount*(size - root), (char *) sbuf);
 	    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
 	    if (rbuf != MPI_IN_PLACE) {
 		/* local copy to rbuf */
-		err = ompi_ddt_sndrcv(ptmp, scount, sdtype,
+		err = ompi_datatype_sndrcv(ptmp, scount, sdtype,
 				      rbuf, rcount, rdtype);
 		if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 	    }
@@ -135,7 +135,7 @@ ompi_coll_tuned_scatter_intra_binomial(void *sbuf, int scount,
 				    MCA_COLL_BASE_TAG_SCATTER, comm, &status));
 	    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 	    /* local copy to rbuf */
-	    err = ompi_ddt_sndrcv(ptmp, scount, sdtype,
+	    err = ompi_datatype_sndrcv(ptmp, scount, sdtype,
 				  rbuf, rcount, rdtype);
 	    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 	}
@@ -227,7 +227,7 @@ ompi_coll_tuned_scatter_intra_basic_linear(void *sbuf, int scount,
 
     /* I am the root, loop sending data. */
 
-    err = ompi_ddt_get_extent(sdtype, &lb, &incr);
+    err = ompi_datatype_get_extent(sdtype, &lb, &incr);
     if (OMPI_SUCCESS != err) {
         return OMPI_ERROR;
     }
@@ -240,7 +240,7 @@ ompi_coll_tuned_scatter_intra_basic_linear(void *sbuf, int scount,
         if (i == rank) {
             if (MPI_IN_PLACE != rbuf) {
                 err =
-                    ompi_ddt_sndrcv(ptmp, scount, sdtype, rbuf, rcount,
+                    ompi_datatype_sndrcv(ptmp, scount, sdtype, rbuf, rcount,
                                     rdtype);
             }
         } else {

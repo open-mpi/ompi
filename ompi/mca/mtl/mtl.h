@@ -43,7 +43,7 @@ extern "C" {
 #endif
 
 struct ompi_request_t;
-struct ompi_convertor_t;
+struct opal_convertor_t;
 
 struct mca_mtl_base_module_t;
     
@@ -212,7 +212,7 @@ typedef int (*mca_mtl_base_module_send_fn_t)(
                           struct ompi_communicator_t *comm,
                           int dest,
                           int tag,
-                          struct ompi_convertor_t *convertor,
+                          struct opal_convertor_t *convertor,
                           mca_pml_base_send_mode_t mode);
 
 
@@ -261,7 +261,7 @@ typedef int (*mca_mtl_base_module_isend_fn_t)(
                           struct ompi_communicator_t *comm,
                           int dest,
                           int tag,
-                          struct ompi_convertor_t *convertor,
+                          struct opal_convertor_t *convertor,
                           mca_pml_base_send_mode_t mode,
                           bool blocking,
                           mca_mtl_request_t *mtl_request);
@@ -303,7 +303,7 @@ typedef int (*mca_mtl_base_module_irecv_fn_t)(
                           struct ompi_communicator_t *comm,
                           int src,
                           int tag,
-                          struct ompi_convertor_t *convertor,
+                          struct opal_convertor_t *convertor,
                           struct mca_mtl_request_t *mtl_request);
 
 

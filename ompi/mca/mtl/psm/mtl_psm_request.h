@@ -20,7 +20,7 @@
 #ifndef OMPI_MTL_PSM_REQUEST_H
 #define OMPI_MTL_PSM_REQUEST_H
 
-#include "ompi/datatype/convertor.h"
+#include "opal/datatype/opal_convertor.h"
 
 
 typedef enum {
@@ -35,7 +35,7 @@ struct mca_mtl_psm_request_t {
     /* psm_segment_t psm_segment[1]; */
     void *buf;
     size_t length;
-    struct ompi_convertor_t *convertor;
+    struct opal_convertor_t *convertor;
     bool free_after;
 }; 
 typedef struct mca_mtl_psm_request_t mca_mtl_psm_request_t;

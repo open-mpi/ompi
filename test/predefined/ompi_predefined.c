@@ -13,7 +13,7 @@
 #include "ompi/group/group.h"
 #include "ompi/request/request.h"
 #include "ompi/op/op.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/win/win.h"
 #include "ompi/info/info.h"
 #include "ompi/file/file.h"

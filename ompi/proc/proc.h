@@ -65,7 +65,7 @@ struct ompi_proc_t {
     /** flags for this proc */
     uint8_t                         proc_flags;
     /** Base convertor for the proc described by this process */
-    struct ompi_convertor_t*        proc_convertor;
+    struct opal_convertor_t*        proc_convertor;
     /** A pointer to the name of this host - data is
      * actually stored in the RTE
      */

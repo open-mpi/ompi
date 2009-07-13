@@ -32,7 +32,7 @@
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
 #include "opal/class/opal_pointer_array.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

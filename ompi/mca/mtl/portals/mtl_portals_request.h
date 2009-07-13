@@ -19,13 +19,13 @@
 #ifndef OMPI_MTL_PORTALS_REQUEST_H
 #define OMPI_MTL_PORTALS_REQUEST_H
 
-#include "ompi/datatype/convertor.h"
+#include "opal/datatype/opal_convertor.h"
 #include "ompi/mca/mtl/mtl.h"
 
 struct ompi_mtl_portals_request_t {
     struct mca_mtl_request_t super;
     bool free_after;
-    struct ompi_convertor_t *convertor;
+    struct opal_convertor_t *convertor;
     volatile bool is_complete;
     int event_count;
 

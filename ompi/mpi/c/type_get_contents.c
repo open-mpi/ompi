@@ -22,7 +22,7 @@
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -66,7 +66,7 @@ int MPI_Type_get_contents(MPI_Datatype mtype,
 
     OPAL_CR_ENTER_LIBRARY();
 
-    rc = ompi_ddt_get_args( mtype, 1, &max_integers, array_of_integers,
+    rc = ompi_datatype_get_args( mtype, 1, &max_integers, array_of_integers,
                             &max_addresses, array_of_addresses,
                             &max_datatypes, array_of_datatypes, NULL );
     if( rc != MPI_SUCCESS ) {
@@ -78,13 +78,13 @@ int MPI_Type_get_contents(MPI_Datatype mtype,
         /* if we have a predefined datatype then we return directly a pointer to
          * the datatype, otherwise we should create a copy and give back the copy.
          */
-        if( !(ompi_ddt_is_predefined(array_of_datatypes[i])) ) {
-            if( (rc = ompi_ddt_duplicate( array_of_datatypes[i], &newtype )) != MPI_SUCCESS ) {
-                ompi_ddt_destroy( &newtype );
+        if( !(ompi_datatype_is_predefined(array_of_datatypes[i])) ) {
+            if( (rc = ompi_datatype_duplicate( array_of_datatypes[i], &newtype )) != MPI_SUCCESS ) {
+                ompi_datatype_destroy( &newtype );
                 OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, MPI_COMM_WORLD,
                                         MPI_ERR_INTERN, FUNC_NAME );
             }
-            ompi_ddt_copy_args( array_of_datatypes[i], newtype );
+            ompi_datatype_copy_args( array_of_datatypes[i], newtype );
             array_of_datatypes[i] = newtype;
         }
     }

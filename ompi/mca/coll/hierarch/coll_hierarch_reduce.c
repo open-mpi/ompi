@@ -25,7 +25,7 @@
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mca/coll/coll.h"
 
 
@@ -62,8 +62,8 @@ int mca_coll_hierarch_reduce_intra(void *sbuf, void *rbuf, int count,
     llcomm = mca_coll_hierarch_get_llcomm ( root, hierarch_module, &llroot, &lroot);
 
     if ( MPI_COMM_NULL != lcomm ) {
-      ompi_ddt_get_extent(dtype, &lb, &extent);
-      ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
+      ompi_datatype_get_extent(dtype, &lb, &extent);
+      ompi_datatype_get_true_extent(dtype, &true_lb, &true_extent);
       
       tbuf = (char*)malloc(true_extent + (count - 1) * extent);
       if (NULL == tbuf) {

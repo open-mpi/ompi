@@ -57,8 +57,8 @@ mca_coll_inter_reduce_inter(void *sbuf, void *rbuf, int count,
         err = OMPI_SUCCESS;
     } else if (MPI_ROOT != root) {
 	/* Perform the reduce locally with the first process as root */
-	ompi_ddt_get_extent(dtype, &lb, &extent);
-	ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
+	ompi_datatype_get_extent(dtype, &lb, &extent);
+	ompi_datatype_get_true_extent(dtype, &true_lb, &true_extent);
 
 	free_buffer = (char*)malloc(true_extent + (count - 1) * extent);
 	if (NULL == free_buffer) {

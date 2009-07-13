@@ -42,7 +42,7 @@ static inline void __SENDER_BASED_METHOD_COPY(mca_pml_base_send_request_t *pmlre
 {
     if(0 != pmlreq->req_bytes_packed)
     {
-        ompi_convertor_t conv;
+        opal_convertor_t conv;
         size_t max_data;
         size_t zero = 0;
         unsigned int iov_count = 1;
@@ -50,9 +50,9 @@ static inline void __SENDER_BASED_METHOD_COPY(mca_pml_base_send_request_t *pmlre
 
         max_data = iov.iov_len = pmlreq->req_bytes_packed;
         iov.iov_base = (IOVBASE_TYPE *) VPESSIMIST_SEND_FTREQ(pmlreq)->sb.cursor;
-        ompi_convertor_clone_with_position( &pmlreq->req_base.req_convertor,
+        opal_convertor_clone_with_position( &pmlreq->req_base.req_convertor,
                                             &conv, 0, &zero );
-        ompi_convertor_pack(&conv, &iov, &iov_count, &max_data);
+        opal_convertor_pack(&conv, &iov, &iov_count, &max_data);
     }
 }
 
@@ -63,13 +63,13 @@ static inline void __SENDER_BASED_METHOD_COPY(mca_pml_base_send_request_t *pmlre
  * Convertor replacement (non blocking) method (under testing)
  */
 #elif defined(SB_USE_CONVERTOR_METHOD)
-int32_t vprotocol_pessimist_sender_based_convertor_advance(ompi_convertor_t*,
+int32_t vprotocol_pessimist_sender_based_convertor_advance(opal_convertor_t*,
                                                             struct iovec*,
                                                             uint32_t*,
                                                             size_t*);
 
 #define __SENDER_BASED_METHOD_COPY(REQ) do {                                  \
-    ompi_convertor_t *pConv;                                                  \
+    opal_convertor_t *pConv;                                                  \
     mca_vprotocol_pessimist_send_request_t *ftreq;                            \
                                                                               \
     pConv = & (REQ)->req_base.req_convertor;                                  \
@@ -110,7 +110,7 @@ static inline int vprotocol_pessimist_sb_progress_req(mca_pml_base_send_request_
     
     if(ftreq->sb.bytes_progressed < req->req_bytes_packed) 
     {
-        ompi_convertor_t conv;
+        opal_convertor_t conv;
         unsigned int iov_count = 1;
         struct iovec iov;
         uintptr_t position = ftreq->sb.bytes_progressed;
@@ -119,9 +119,9 @@ static inline int vprotocol_pessimist_sb_progress_req(mca_pml_base_send_request_
         iov.iov_base = (IOVBASE_TYPE *) (ftreq->sb.cursor + position);
         
         V_OUTPUT_VERBOSE(80, "pessimist:\tsb\tprgress\t%"PRIpclock"\tsize %lu from position %lu", ftreq->reqid, max_data, position);
-        ompi_convertor_clone_with_position(&req->req_base.req_convertor,
+        opal_convertor_clone_with_position(&req->req_base.req_convertor,
                                            &conv, 0, &position );
-        ompi_convertor_pack(&conv, &iov, &iov_count, &max_data); 
+        opal_convertor_pack(&conv, &iov, &iov_count, &max_data); 
         ftreq->sb.bytes_progressed += max_data;
     }
     return max_data;

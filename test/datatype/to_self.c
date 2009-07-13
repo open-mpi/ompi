@@ -17,8 +17,8 @@
 #include <unistd.h>
 
 #if OPEN_MPI && 0
-extern void ompi_ddt_dump( MPI_Datatype ddt );
-#define MPI_DDT_DUMP(ddt) ompi_ddt_dump( (ddt) )
+extern void ompi_datatype_dump( MPI_Datatype ddt );
+#define MPI_DDT_DUMP(ddt) ompi_datatype_dump( (ddt) )
 #else
 #define MPI_DDT_DUMP(ddt)
 #endif  /* OPEN_MPI */

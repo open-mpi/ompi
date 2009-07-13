@@ -22,7 +22,7 @@
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -65,7 +65,7 @@ int MPI_Type_create_hvector(int count,
 
    OPAL_CR_ENTER_LIBRARY();
 
-   rc = ompi_ddt_create_hvector ( count, blocklength, stride, oldtype, 
+   rc = ompi_datatype_create_hvector ( count, blocklength, stride, oldtype, 
                                   newtype );
    OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME );
 
@@ -77,7 +77,7 @@ int MPI_Type_create_hvector(int count,
       a_i[1] = &blocklength;
       a_a[0] = stride;
 
-      ompi_ddt_set_args( *newtype, 2, a_i, 1, a_a, 1, &oldtype, MPI_COMBINER_HVECTOR );
+      ompi_datatype_set_args( *newtype, 2, a_i, 1, a_a, 1, &oldtype, MPI_COMBINER_HVECTOR );
    }
 
    OPAL_CR_EXIT_LIBRARY();

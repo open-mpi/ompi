@@ -20,7 +20,7 @@
 
 #include "ompi_config.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/datatype/convertor.h"
+#include "opal/datatype/opal_convertor.h"
 #include "ompi/mca/mtl/base/mtl_base_datatype.h"
 
 #include "mtl_psm.h"
@@ -32,7 +32,7 @@ ompi_mtl_psm_irecv(struct mca_mtl_base_module_t* mtl,
                   struct ompi_communicator_t *comm,
                   int src,
                   int tag,
-                  struct ompi_convertor_t *convertor,
+                  struct opal_convertor_t *convertor,
                   struct mca_mtl_request_t *mtl_request)
 {
     int ret;    

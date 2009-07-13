@@ -28,7 +28,7 @@
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/mca/pml/pml.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "coll_basic.h"
 #include "ompi/op/op.h"
 
@@ -101,8 +101,8 @@ mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
     }
 
     /* get datatype information */
-    ompi_ddt_get_extent(dtype, &lb, &extent);
-    ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
+    ompi_datatype_get_extent(dtype, &lb, &extent);
+    ompi_datatype_get_true_extent(dtype, &true_lb, &true_extent);
     buf_size = true_extent + (count - 1) * extent;
 
     /* Handle MPI_IN_PLACE */
@@ -127,7 +127,7 @@ mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
         result_buf = result_buf_free - lb;
 
         /* copy local buffer into the temporary results */
-        err = ompi_ddt_sndrcv(sbuf, count, dtype, result_buf, count, dtype);
+        err = ompi_datatype_sndrcv(sbuf, count, dtype, result_buf, count, dtype);
         if (OMPI_SUCCESS != err) goto cleanup;
 
         /* figure out power of two mapping: grow until larger than
@@ -287,7 +287,7 @@ mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
 
             /* copy local results from results buffer into real receive buffer */
             if (0 != rcounts[rank]) {
-                err = ompi_ddt_sndrcv(result_buf + disps[rank] * extent,
+                err = ompi_datatype_sndrcv(result_buf + disps[rank] * extent,
                                       rcounts[rank], dtype, 
                                       rbuf, rcounts[rank], dtype);
                 if (OMPI_SUCCESS != err) {
@@ -405,7 +405,7 @@ mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
      * its size is the same as the local communicator size.
      */
     if (rank == root) {
-        err = ompi_ddt_get_extent(dtype, &lb, &extent);
+        err = ompi_datatype_get_extent(dtype, &lb, &extent);
         if (OMPI_SUCCESS != err) {
             return OMPI_ERROR;
         }

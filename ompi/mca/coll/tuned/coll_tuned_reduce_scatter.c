@@ -22,7 +22,7 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
@@ -77,8 +77,8 @@ int ompi_coll_tuned_reduce_scatter_intra_nonoverlapping(void *sbuf, void *rbuf,
 	       rbuf is big enough */
 	    ptrdiff_t lb, extent, tlb, textent;
          
-	    ompi_ddt_get_extent(dtype, &lb, &extent);
-	    ompi_ddt_get_true_extent(dtype, &tlb, &textent);
+	    ompi_datatype_get_extent(dtype, &lb, &extent);
+	    ompi_datatype_get_true_extent(dtype, &tlb, &textent);
 
 	    tmprbuf_free = (char*) malloc(textent + (total_count - 1)*extent);
 	    tmprbuf = tmprbuf_free - lb;
@@ -161,8 +161,8 @@ ompi_coll_tuned_reduce_scatter_intra_basic_recursivehalving(void *sbuf,
     }
 
     /* get datatype information */
-    ompi_ddt_get_extent(dtype, &lb, &extent);
-    ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
+    ompi_datatype_get_extent(dtype, &lb, &extent);
+    ompi_datatype_get_true_extent(dtype, &true_lb, &true_extent);
     buf_size = true_extent + (count - 1) * extent;
 
     /* Handle MPI_IN_PLACE */
@@ -183,7 +183,7 @@ ompi_coll_tuned_reduce_scatter_intra_basic_recursivehalving(void *sbuf,
     result_buf = result_buf_free - lb;
    
     /* copy local buffer into the temporary results */
-    err = ompi_ddt_sndrcv(sbuf, count, dtype, result_buf, count, dtype);
+    err = ompi_datatype_sndrcv(sbuf, count, dtype, result_buf, count, dtype);
     if (OMPI_SUCCESS != err) goto cleanup;
    
     /* figure out power of two mapping: grow until larger than
@@ -343,7 +343,7 @@ ompi_coll_tuned_reduce_scatter_intra_basic_recursivehalving(void *sbuf,
 
 	/* copy local results from results buffer into real receive buffer */
 	if (0 != rcounts[rank]) {
-	    err = ompi_ddt_sndrcv(result_buf + disps[rank] * extent,
+	    err = ompi_datatype_sndrcv(result_buf + disps[rank] * extent,
 				  rcounts[rank], dtype, 
 				  rbuf, rcounts[rank], dtype);
 	    if (OMPI_SUCCESS != err) {
@@ -493,7 +493,7 @@ ompi_coll_tuned_reduce_scatter_intra_ring(void *sbuf, void *rbuf, int *rcounts,
     /* Special case for size == 1 */
     if (1 == size) {
 	if (MPI_IN_PLACE != sbuf) {
-	    ret = ompi_ddt_copy_content_same_ddt(dtype, total_count, 
+	    ret = ompi_datatype_copy_content_same_ddt(dtype, total_count, 
 						 (char*)rbuf, (char*)sbuf);
 	    if (ret < 0) { line = __LINE__; goto error_hndl; }
 	}
@@ -506,11 +506,11 @@ ompi_coll_tuned_reduce_scatter_intra_ring(void *sbuf, void *rbuf, int *rcounts,
        rbuf can be of rcounts[rank] size.
        - up to two temporary buffers used for communication/computation overlap.
     */
-    ret = ompi_ddt_get_extent(dtype, &lb, &extent);
+    ret = ompi_datatype_get_extent(dtype, &lb, &extent);
     if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
-    ret = ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
+    ret = ompi_datatype_get_true_extent(dtype, &true_lb, &true_extent);
     if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
-    ret = ompi_ddt_type_size( dtype, &typelng);
+    ret = ompi_datatype_type_size( dtype, &typelng);
     if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
 
     max_real_segsize = true_extent + (max_block_count - 1) * extent;
@@ -533,7 +533,7 @@ ompi_coll_tuned_reduce_scatter_intra_ring(void *sbuf, void *rbuf, int *rcounts,
         sbuf = rbuf;
     }
 
-    ret = ompi_ddt_copy_content_same_ddt(dtype, total_count, 
+    ret = ompi_datatype_copy_content_same_ddt(dtype, total_count, 
                                          accumbuf, (char*)sbuf);
     if (ret < 0) { line = __LINE__; goto error_hndl; }
 
@@ -607,7 +607,7 @@ ompi_coll_tuned_reduce_scatter_intra_ring(void *sbuf, void *rbuf, int *rcounts,
     ompi_op_reduce(op, inbuf[inbi], tmprecv, rcounts[rank], dtype);
    
     /* Copy result from tmprecv to rbuf */
-    ret = ompi_ddt_copy_content_same_ddt(dtype, rcounts[rank], (char *) rbuf, tmprecv);
+    ret = ompi_datatype_copy_content_same_ddt(dtype, rcounts[rank], (char *) rbuf, tmprecv);
     if (ret < 0) { line = __LINE__; goto error_hndl; }
 
     if (NULL != displs) free(displs);

@@ -22,7 +22,7 @@
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -70,7 +70,7 @@ int MPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, int *count)
    }
 
    *count = 0;
-   if( ompi_ddt_type_size( datatype, &size ) == MPI_SUCCESS ) {
+   if( ompi_datatype_type_size( datatype, &size ) == MPI_SUCCESS ) {
       if( size == 0 ) {
           /* If the size of the datatype is zero let's return a count of zero */
          return MPI_SUCCESS;
@@ -78,7 +78,7 @@ int MPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, int *count)
       *count = (int)(status->_count / size);
       size = status->_count - (*count) * size;
       /* if basic type we should return the same result as MPI_Get_count */
-      if( ompi_ddt_is_predefined(datatype) ) {
+      if( ompi_datatype_is_predefined(datatype) ) {
          if( size != 0 ) {
             *count = MPI_UNDEFINED;
          }
@@ -86,12 +86,12 @@ int MPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, int *count)
       }
       if( (*count) != 0 ) {
          int total;  /* count the basic elements in the datatype */
-         for( i = 4, total = 0; i < DT_MAX_PREDEFINED; i++ )
-            total += datatype->btypes[i];
+         for( i = 4, total = 0; i < OMPI_DATATYPE_MAX_PREDEFINED; i++ )
+            total += datatype->super.btypes[i];
          *count = total * (*count);
       }
       if( size > 0 ) {
-         if( (i = ompi_ddt_get_element_count( datatype, size )) != -1 )
+         if( (i = ompi_datatype_get_element_count( datatype, size )) != -1 )
             *count += i;
          else
             *count = MPI_UNDEFINED;

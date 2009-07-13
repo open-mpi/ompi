@@ -23,12 +23,13 @@
 
 #include "ompi_config.h"
 
+#include "opal/datatype/opal_convertor.h"
+#include "opal/datatype/opal_convertor_internal.h"
+#include "opal/datatype/opal_datatype_prototypes.h"
+
 #include "ompi/op/op.h"
-#include "ompi/datatype/datatype.h"
-#include "ompi/datatype/datatype_internal.h"
-#include "ompi/datatype/convertor.h"
-#include "ompi/datatype/convertor_internal.h"
-#include "ompi/datatype/datatype_prototypes.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/datatype/ompi_datatype_internal.h"
 
 #include "osc_base_obj_convert.h"
 #include "ompi/memchecker.h"
@@ -42,22 +43,22 @@ ompi_osc_base_get_primitive_type_info(ompi_datatype_t *datatype,
     uint32_t primitive_count;
 
     /* get underlying type... */
-    if (ompi_ddt_is_predefined(datatype)) {
+    if (ompi_datatype_is_predefined(datatype)) {
         primitive_datatype = datatype;
         primitive_count = 1;
     } else {
         int i, found_index = -1;
-        uint64_t mask = 1;
-        for (i = 0 ; i < DT_MAX_PREDEFINED ; ++i) {
-            if (datatype->bdt_used & mask) {
+        uint32_t mask = 1;
+        for (i = 0 ; i < OMPI_DATATYPE_MAX_PREDEFINED ; ++i) {
+            if (datatype->super.bdt_used & mask) {
                 found_index = i;
                 break;
             }
             mask *= 2;
         }
         primitive_datatype = (ompi_datatype_t*)
-            ompi_ddt_basicDatatypes[found_index];
-        primitive_count = datatype->nbElems;
+            ompi_datatype_basicDatatypes[found_index];
+        primitive_count = datatype->super.nbElems;
     }
 
     *prim_datatype = primitive_datatype;
@@ -68,15 +69,15 @@ ompi_osc_base_get_primitive_type_info(ompi_datatype_t *datatype,
 
 
 struct ompi_osc_base_convertor_t {
-    ompi_convertor_t convertor;
+    opal_convertor_t convertor;
     ompi_op_t *op;
     ompi_datatype_t *datatype;
 };
 typedef struct ompi_osc_base_convertor_t ompi_osc_base_convertor_t;
-static OBJ_CLASS_INSTANCE(ompi_osc_base_convertor_t, ompi_convertor_t, NULL, NULL);
+static OBJ_CLASS_INSTANCE(ompi_osc_base_convertor_t, opal_convertor_t, NULL, NULL);
 
 #define COPY_TYPE( TYPENAME, TYPE, COUNT )                              \
-static int copy_##TYPENAME( ompi_convertor_t *pConvertor, uint32_t count, \
+static int copy_##TYPENAME( opal_convertor_t *pConvertor, uint32_t count, \
                             char* from, size_t from_len, ptrdiff_t from_extent, \
                             char* to, size_t to_len, ptrdiff_t to_extent, \
                             ptrdiff_t *advance)                         \
@@ -110,12 +111,13 @@ COPY_TYPE( long_long, long long, 1 )
 COPY_TYPE( float, float, 1 )
 COPY_TYPE( double, double, 1 )
 COPY_TYPE( long_double, long double, 1 )
-COPY_TYPE( complex_float, ompi_complex_float_t, 1 )
-COPY_TYPE( complex_double, ompi_complex_double_t, 1 )
-COPY_TYPE( complex_long_double, ompi_complex_long_double_t, 1 )
+COPY_TYPE( complex_float, ompi_mpi_cxx_cplex, 1 )
+COPY_TYPE( complex_double, ompi_mpi_cxx_dblcplex, 1 )
+COPY_TYPE( complex_long_double, ompi_mpi_cxx_ldblcplex, 1 )
 
 /* table of predefined copy functions - one for each MPI type */
-static conversion_fct_t ompi_osc_base_copy_functions[DT_MAX_PREDEFINED] = {
+/* XXX TODO Adapt to new layout */
+static conversion_fct_t ompi_osc_base_copy_functions[OMPI_DATATYPE_MAX_PREDEFINED] = {
    (conversion_fct_t)NULL,                      /* DT_LOOP                */
    (conversion_fct_t)NULL,                      /* DT_END_LOOP            */
    (conversion_fct_t)NULL,                      /* DT_LB                  */
@@ -128,10 +130,10 @@ static conversion_fct_t ompi_osc_base_copy_functions[DT_MAX_PREDEFINED] = {
    (conversion_fct_t)copy_short,                /* DT_SHORT               */
    (conversion_fct_t)copy_short,                /* DT_UNSIGNED_SHORT      */
    (conversion_fct_t)copy_int,                  /* DT_INT                 */
-   (conversion_fct_t)copy_int,                  /* DT_UNSIGNED_INT        */
+   (conversion_fct_t)copy_int,                  /* DT_UNSIGNED            */
    (conversion_fct_t)copy_long,                 /* DT_LONG                */
    (conversion_fct_t)copy_long,                 /* DT_UNSIGNED_LONG       */
-   (conversion_fct_t)copy_long_long,            /* DT_LONG_LONG_INT       */
+   (conversion_fct_t)copy_long_long,            /* DT_LONG_LONG           */
    (conversion_fct_t)copy_long_long,            /* DT_UNSIGNED_LONG_LONG  */
    (conversion_fct_t)copy_float,                /* DT_FLOAT               */
    (conversion_fct_t)copy_double,               /* DT_DOUBLE              */
@@ -192,7 +194,7 @@ ompi_osc_base_process_op(void *outbuf,
         return OMPI_ERR_NOT_SUPPORTED;
     }
 
-    if (ompi_ddt_is_predefined(datatype)) {
+    if (ompi_datatype_is_predefined(datatype)) {
         ompi_op_reduce(op, inbuf, outbuf, count, datatype);
     } else {
         struct ompi_datatype_t *primitive_datatype = NULL;
@@ -201,20 +203,11 @@ ompi_osc_base_process_op(void *outbuf,
         struct iovec iov;
         uint32_t iov_count = 1;
         size_t max_data;
-        struct ompi_convertor_master_t master = {NULL, 0, 0, 0, {0, }, NULL};
-        int i, found_index = -1;
-        uint64_t mask = 1;
+        struct opal_convertor_master_t master = {NULL, 0, 0, 0, {0, }, NULL};
 
-        for (i = 0 ; i < DT_MAX_PREDEFINED ; ++i) {
-            if (datatype->bdt_used & mask) {
-                found_index = i;
-                break;
-            }
-            mask *= 2;
-        }
-        primitive_datatype = (ompi_datatype_t*)
-            ompi_ddt_basicDatatypes[found_index];
-        primitive_count = datatype->nbElems;
+        ompi_osc_base_get_primitive_type_info( datatype,
+                                               &primitive_datatype,
+                                               &primitive_count );
 
         /* create convertor */
         OBJ_CONSTRUCT(&convertor, ompi_osc_base_convertor_t);
@@ -222,18 +215,18 @@ ompi_osc_base_process_op(void *outbuf,
         convertor.datatype = primitive_datatype;
 
         /* initialize convertor */
-        ompi_convertor_copy_and_prepare_for_recv(ompi_proc_local()->proc_convertor,
-                                                 datatype,
+        opal_convertor_copy_and_prepare_for_recv(ompi_proc_local()->proc_convertor,
+                                                 &(datatype->super),
                                                  count,
                                                  outbuf,
                                                  0,
                                                  &convertor.convertor);
 
-        memcpy(&master, convertor.convertor.master, sizeof(struct ompi_convertor_master_t));
+        memcpy(&master, convertor.convertor.master, sizeof(struct opal_convertor_master_t));
         master.next = convertor.convertor.master;
         master.pFunctions = (conversion_fct_t*) &ompi_osc_base_copy_functions;
         convertor.convertor.master = &master;
-        convertor.convertor.fAdvance = ompi_unpack_general;
+        convertor.convertor.fAdvance = opal_unpack_general;
 
         iov.iov_len  = inbuflen;
         iov.iov_base = (IOVBASE_TYPE*) inbuf;
@@ -242,7 +235,7 @@ ompi_osc_base_process_op(void *outbuf,
             memchecker_convertor_call(&opal_memchecker_base_mem_defined,
                                       &convertor.convertor);
         );
-        ompi_convertor_unpack(&convertor.convertor, 
+        opal_convertor_unpack(&convertor.convertor, 
                               &iov,
                               &iov_count,
                               &max_data);

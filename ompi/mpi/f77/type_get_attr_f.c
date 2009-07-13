@@ -21,7 +21,7 @@
 
 #include "ompi/mpi/f77/bindings.h"
 #include "ompi/attribute/attribute.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_TYPE_GET_ATTR = mpi_type_get_attr_f

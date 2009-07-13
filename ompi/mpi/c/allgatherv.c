@@ -23,7 +23,7 @@
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -49,7 +49,7 @@ int MPI_Allgatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
         rank = ompi_comm_rank(comm);
         size = ompi_comm_size(comm);
-        ompi_ddt_type_extent(recvtype, &ext);
+        ompi_datatype_type_extent(recvtype, &ext);
 
         memchecker_datatype(recvtype);
         memchecker_comm (comm);

@@ -19,7 +19,7 @@
 #include "ompi_config.h"
 
 #include "ompi/constants.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "coll_self.h"
 
 
@@ -39,6 +39,6 @@ int mca_coll_self_scan_intra(void *sbuf, void *rbuf, int count,
     if (MPI_IN_PLACE == sbuf) {
         return MPI_SUCCESS;
     } else {
-        return ompi_ddt_copy_content_same_ddt(dtype, count, (char*)rbuf, (char*)sbuf);
+        return ompi_datatype_copy_content_same_ddt(dtype, count, (char*)rbuf, (char*)sbuf);
     }
 }

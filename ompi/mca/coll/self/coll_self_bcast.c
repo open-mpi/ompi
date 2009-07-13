@@ -19,7 +19,7 @@
 #include "ompi_config.h"
 
 #include "ompi/constants.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "coll_self.h"
 
 

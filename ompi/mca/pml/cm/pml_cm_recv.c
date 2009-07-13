@@ -14,7 +14,7 @@
 #include "opal/prefetch.h"
 
 #include "ompi/request/request.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/communicator/communicator.h"
 
 #include "pml_cm.h"

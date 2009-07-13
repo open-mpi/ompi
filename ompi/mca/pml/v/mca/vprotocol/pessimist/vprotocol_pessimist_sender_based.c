@@ -19,7 +19,7 @@
 #endif
 #include <string.h>
 #include <errno.h>
-#include "ompi/datatype/datatype_memcpy.h"
+#include "opal/datatype/opal_datatype_memcpy.h"
 #include <fcntl.h>
 
 #include "orte/util/proc_info.h"
@@ -190,7 +190,7 @@ void vprotocol_pessimist_sender_based_alloc(size_t len)
 #undef sb
 
 #ifdef SB_USE_CONVERTOR_METHOD
-int32_t vprotocol_pessimist_sender_based_convertor_advance(ompi_convertor_t* pConvertor,
+int32_t vprotocol_pessimist_sender_based_convertor_advance(opal_convertor_t* pConvertor,
                                                             struct iovec* iov,
                                                             uint32_t* out_size,
                                                             size_t* max_data) {
@@ -202,7 +202,7 @@ int32_t vprotocol_pessimist_sender_based_convertor_advance(ompi_convertor_t* pCo
     ftreq = VPESSIMIST_CONV_REQ(pConvertor);
     pConvertor->flags = ftreq->sb.conv_flags;
     pConvertor->fAdvance = ftreq->sb.conv_advance;
-    ret = ompi_convertor_pack(pConvertor, iov, out_size, max_data);
+    ret = opal_convertor_pack(pConvertor, iov, out_size, max_data);
     V_OUTPUT_VERBOSE(39, "pessimist:\tsb\tpack\t%"PRIsize_t, *max_data);
 
     for(i = 0, pending_length = *max_data; pending_length > 0; i++) {

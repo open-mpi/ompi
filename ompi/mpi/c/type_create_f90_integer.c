@@ -90,17 +90,17 @@ int MPI_Type_create_f90_integer(int r, MPI_Datatype *newtype)
         /* Create the duplicate type corresponding to selected type, then
          * set the argument to be a COMBINER with the correct value of r
          * and add it to the hash table. */
-        if (OMPI_SUCCESS != ompi_ddt_duplicate( *newtype, &datatype)) {
+        if (OMPI_SUCCESS != ompi_datatype_duplicate( *newtype, &datatype)) {
             OMPI_ERRHANDLER_RETURN (MPI_ERR_INTERN, MPI_COMM_WORLD,
                                     MPI_ERR_INTERN, FUNC_NAME );
         }
         /* Make sure the user is not allowed to free this datatype as specified
          * in the MPI standard.
          */
-        datatype->flags |= DT_FLAG_PREDEFINED;
+        datatype->super.flags |= OPAL_DATATYPE_FLAG_PREDEFINED;
 
         a_i[0] = &r;
-        ompi_ddt_set_args( datatype, 1, a_i, 0, NULL, 0, NULL, MPI_COMBINER_F90_INTEGER );
+        ompi_datatype_set_args( datatype, 1, a_i, 0, NULL, 0, NULL, MPI_COMBINER_F90_INTEGER );
 
         rc = opal_hash_table_set_value_uint32( &ompi_mpi_f90_integer_hashtable, r, datatype );
         if (OMPI_SUCCESS != rc) {

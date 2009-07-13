@@ -22,7 +22,7 @@
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/attribute/attribute.h"
 #include "ompi/memchecker.h"
 
@@ -55,16 +55,16 @@ int MPI_Type_dup (MPI_Datatype type,
 
    OPAL_CR_ENTER_LIBRARY();
 
-   if (OMPI_SUCCESS != ompi_ddt_duplicate( type, newtype)) {
-       ompi_ddt_destroy( newtype );
+   if (OMPI_SUCCESS != ompi_datatype_duplicate( type, newtype)) {
+       ompi_datatype_destroy( newtype );
        OMPI_ERRHANDLER_RETURN (MPI_ERR_INTERN, MPI_COMM_WORLD,
                                MPI_ERR_INTERN, FUNC_NAME );
    }
 
-   ompi_ddt_set_args( *newtype, 0, NULL, 0, NULL, 1, &type, MPI_COMBINER_DUP );
+   ompi_datatype_set_args( *newtype, 0, NULL, 0, NULL, 1, &type, MPI_COMBINER_DUP );
 
    /* Copy all the old attributes, if there were any.  This is done
-      here (vs. ompi_ddt_duplicate()) because MPI_TYPE_DUP is the
+      here (vs. ompi_datatype_duplicate()) because MPI_TYPE_DUP is the
       only MPI function that copies attributes.  All other MPI
       functions that take an old type and generate a newtype do not
       copy attributes.  Really. */
@@ -74,7 +74,7 @@ int MPI_Type_dup (MPI_Datatype type,
                                               type, *newtype,
                                               type->d_keyhash,
                                               (*newtype)->d_keyhash)) {
-           ompi_ddt_destroy(newtype);
+           ompi_datatype_destroy(newtype);
            OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, MPI_COMM_WORLD,
                                    MPI_ERR_INTERN, FUNC_NAME );
        }                                    

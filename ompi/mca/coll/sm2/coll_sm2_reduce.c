@@ -13,7 +13,7 @@
 #include "ompi/constants.h"
 #include "coll_sm2.h"
 #include "ompi/op/op.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/communicator/communicator.h"
 /* debug 
 #include "opal/sys/timer.h"
@@ -64,7 +64,7 @@ int mca_coll_sm2_reduce_intra_fanin(void *sbuf, void *rbuf, int count,
     /* get size of data needed - same layout as user data, so that
      *   we can apply the reudction routines directly on these buffers
      */
-    rc=ompi_ddt_type_extent(dtype, &dt_extent);
+    rc=ompi_datatype_type_extent(dtype, &dt_extent);
     if( OMPI_SUCCESS != rc ) {
         goto Error;
     }
@@ -124,7 +124,7 @@ int mca_coll_sm2_reduce_intra_fanin(void *sbuf, void *rbuf, int count,
                 /* 
                  * copy local data from source buffer to result buffer
                  */
-                rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+                rc=ompi_datatype_copy_content_same_ddt(dtype, count_this_stripe,
                         (char *)rbuf, 
                         (char *)sbuf);
                 if( 0 != rc ) {
@@ -171,7 +171,7 @@ int mca_coll_sm2_reduce_intra_fanin(void *sbuf, void *rbuf, int count,
                  *   provids only 2 buffers, so can't add from two
                  *   into a third buffer.
                  */
-                rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+                rc=ompi_datatype_copy_content_same_ddt(dtype, count_this_stripe,
                         (char *)my_data_pointer, 
                         (char *)sbuf);
                 if( 0 != rc ) {
@@ -228,7 +228,7 @@ int mca_coll_sm2_reduce_intra_fanin(void *sbuf, void *rbuf, int count,
                 /* copy segment into shared buffer - later on will optimize to
                  *   eliminate extra copies.
                  */
-                rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+                rc=ompi_datatype_copy_content_same_ddt(dtype, count_this_stripe,
                         (char *)my_data_pointer, 
                         (char *)sbuf);
                 if( 0 != rc ) {
@@ -283,7 +283,7 @@ int mca_coll_sm2_reduce_intra_fanin(void *sbuf, void *rbuf, int count,
                  *   provids only 2 buffers, so can't add from two
                  *   into a third buffer.
                  */
-                rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+                rc=ompi_datatype_copy_content_same_ddt(dtype, count_this_stripe,
                         (char *)my_data_pointer, 
                         (char *)((char *)sbuf+dt_extent*count_processed));
                 if( 0 != rc ) {
@@ -337,7 +337,7 @@ int mca_coll_sm2_reduce_intra_fanin(void *sbuf, void *rbuf, int count,
                 /* copy data to destination */
                 if( ROOT_NODE == my_reduction_node->my_node_type ) {
                     /* copy data to user supplied buffer */
-                    rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+                    rc=ompi_datatype_copy_content_same_ddt(dtype, count_this_stripe,
                             (char *)rbuf+dt_extent*count_processed,
                             (char *)my_data_pointer);
                     if( 0 != rc ) {
@@ -350,7 +350,7 @@ int mca_coll_sm2_reduce_intra_fanin(void *sbuf, void *rbuf, int count,
                 /* copy segment into shared buffer - later on will optimize to
                  *   eliminate extra copies.
                  */
-                rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+                rc=ompi_datatype_copy_content_same_ddt(dtype, count_this_stripe,
                         (char *)my_data_pointer, 
                         (char *)((char *)sbuf+dt_extent*count_processed));
                 if( 0 != rc ) {
@@ -430,7 +430,7 @@ int mca_coll_sm2_reduce_intra_reducescatter_gather(void *sbuf, void *rbuf,
     /* get size of data needed - same layout as user data, so that
      *   we can apply the reudction routines directly on these buffers
      */
-    rc=ompi_ddt_type_extent(dtype, &dt_extent);
+    rc=ompi_datatype_type_extent(dtype, &dt_extent);
     if( OMPI_SUCCESS != rc ) {
         goto Error;
     }
@@ -494,7 +494,7 @@ int mca_coll_sm2_reduce_intra_reducescatter_gather(void *sbuf, void *rbuf,
 
 
         /* copy data into the write buffer */
-        rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+        rc=ompi_datatype_copy_content_same_ddt(dtype, count_this_stripe,
                 (char *)my_base_pointer,
                 (char *)((char *)sbuf+dt_extent*count_processed));
         if( 0 != rc ) {
@@ -565,7 +565,7 @@ int mca_coll_sm2_reduce_intra_reducescatter_gather(void *sbuf, void *rbuf,
                     extra_rank_write_data_pointer+=(n_my_count*dt_extent);
 
                     if( 0 < (count_this_stripe-n_my_count) ) {
-                        rc=ompi_ddt_copy_content_same_ddt(dtype, 
+                        rc=ompi_datatype_copy_content_same_ddt(dtype, 
                                 count_this_stripe-n_my_count,
                                 (char *)(my_base_pointer+n_my_count*dt_extent),
                                 (char *)extra_rank_write_data_pointer);
@@ -753,7 +753,7 @@ int mca_coll_sm2_reduce_intra_reducescatter_gather(void *sbuf, void *rbuf,
                     opal_progress();
                 }
                 /* copy data into the destination buffer */
-                rc=ompi_ddt_copy_content_same_ddt(dtype, 
+                rc=ompi_datatype_copy_content_same_ddt(dtype, 
                         sm_module->scratch_space[n_copy],
                         (char *)((char *)rbuf+
                                  dt_extent*(count_processed+cnt_offset)),
@@ -808,7 +808,7 @@ int mca_coll_sm2_reduce_intra(void *sbuf, void *rbuf, int count,
     /* get size of data needed - same layout as user data, so that
      *   we can apply the reudction routines directly on these buffers
      */
-    rc=ompi_ddt_type_extent(dtype, &dt_extent);
+    rc=ompi_datatype_type_extent(dtype, &dt_extent);
     if( OMPI_SUCCESS != rc ) {
         goto Error;
     }

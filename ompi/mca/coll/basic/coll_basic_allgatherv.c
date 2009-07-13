@@ -20,7 +20,7 @@
 #include "coll_basic.h"
 
 #include "mpi.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/constants.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
@@ -57,7 +57,7 @@ mca_coll_basic_allgatherv_intra(void *sbuf, int scount,
      */
 
     if (MPI_IN_PLACE == sbuf) {
-        ompi_ddt_get_extent(rdtype, &lb, &extent);
+        ompi_datatype_get_extent(rdtype, &lb, &extent);
         send_type = rdtype;
         send_buf = (char*)rbuf;
         for (i = 0; i < rank; ++i) {
@@ -89,12 +89,12 @@ mca_coll_basic_allgatherv_intra(void *sbuf, int scount,
      * datatype.
      */
 
-    err = ompi_ddt_create_indexed(size,rcounts,disps,rdtype,&newtype);
+    err = ompi_datatype_create_indexed(size,rcounts,disps,rdtype,&newtype);
     if (MPI_SUCCESS != err) {
         return err;
     }
     
-    err = ompi_ddt_commit(&newtype);
+    err = ompi_datatype_commit(&newtype);
     if(MPI_SUCCESS != err) {
        return err;
     }
@@ -102,7 +102,7 @@ mca_coll_basic_allgatherv_intra(void *sbuf, int scount,
     comm->c_coll.coll_bcast( rbuf, 1 ,newtype,0,comm,
             comm->c_coll.coll_bcast_module);
 
-    ompi_ddt_destroy (&newtype);
+    ompi_datatype_destroy (&newtype);
 
     return MPI_SUCCESS;
 }

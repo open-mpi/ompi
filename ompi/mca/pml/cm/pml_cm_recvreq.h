@@ -107,9 +107,9 @@ do {                                                                    \
     } else {                                                            \
         ompi_proc = ompi_comm_peer_lookup( comm, src );                 \
     }                                                                   \
-    ompi_convertor_copy_and_prepare_for_recv(                           \
+    opal_convertor_copy_and_prepare_for_recv(                           \
                                   ompi_proc->proc_convertor,            \
-                                  datatype,                             \
+                                  &(datatype->super),                   \
                                   count,                                \
                                   addr,                                 \
                                   0,                                    \
@@ -144,9 +144,9 @@ do {                                                                    \
     } else {                                                            \
         ompi_proc = ompi_comm_peer_lookup( comm, src );                 \
     }                                                                   \
-    ompi_convertor_copy_and_prepare_for_recv(                           \
+    opal_convertor_copy_and_prepare_for_recv(                           \
                                   ompi_proc->proc_convertor,            \
-                                  datatype,                             \
+                                  &(datatype->super),                   \
                                   count,                                \
                                   addr,                                 \
                                   0,                                    \
@@ -259,7 +259,7 @@ do {                                                                    \
         if(recvreq->req_base.req_ompi.req_persistent) {                 \
             /* rewind convertor */                                      \
             size_t offset = 0;                                          \
-            ompi_convertor_set_position(&recvreq->req_base.req_convertor, &offset); \
+            opal_convertor_set_position(&recvreq->req_base.req_convertor, &offset); \
         }                                                               \
         recvreq->req_base.req_pml_complete = true;                      \
         ompi_request_complete(  &(recvreq->req_base.req_ompi), true );  \
@@ -276,7 +276,7 @@ do {                                                                    \
     OBJ_RELEASE((recvreq)->req_base.req_comm);                          \
     OBJ_RELEASE((recvreq)->req_base.req_datatype);                      \
     OMPI_REQUEST_FINI(&(recvreq)->req_base.req_ompi);                   \
-    ompi_convertor_cleanup( &((recvreq)->req_base.req_convertor) );     \
+    opal_convertor_cleanup( &((recvreq)->req_base.req_convertor) );     \
     OMPI_FREE_LIST_RETURN( &mca_pml_base_recv_requests,                 \
                            (ompi_free_list_item_t*)(recvreq));          \
 }
@@ -289,7 +289,7 @@ do {                                                                    \
     OBJ_RELEASE((recvreq)->req_base.req_comm);                          \
     OBJ_RELEASE((recvreq)->req_base.req_datatype);                      \
     OMPI_REQUEST_FINI(&(recvreq)->req_base.req_ompi);                   \
-    ompi_convertor_cleanup( &((recvreq)->req_base.req_convertor) );     \
+    opal_convertor_cleanup( &((recvreq)->req_base.req_convertor) );     \
     OMPI_FREE_LIST_RETURN( &mca_pml_base_recv_requests,                 \
                            (ompi_free_list_item_t*)(recvreq));          \
 }

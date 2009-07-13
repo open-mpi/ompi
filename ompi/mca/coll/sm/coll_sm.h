@@ -25,6 +25,7 @@
 
 #include "mpi.h"
 #include "opal/mca/mca.h"
+#include "opal/datatype/opal_convertor.h"
 #include "orte/types.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/mpool/mpool.h"
@@ -508,7 +509,7 @@ extern uint32_t mca_coll_sm_iov_size;
         (index)->mcbmi_data + \
         ((rank) * mca_coll_sm_component.sm_fragment_size); \
     (max_data) = (iov).iov_len = mca_coll_sm_component.sm_fragment_size; \
-    ompi_convertor_pack(&(convertor), &(iov), &mca_coll_sm_iov_size, \
+    opal_convertor_pack(&(convertor), &(iov), &mca_coll_sm_iov_size, \
                         &(max_data) )
 
 /**
@@ -518,7 +519,7 @@ extern uint32_t mca_coll_sm_iov_size;
 #define COPY_FRAGMENT_OUT(convertor, src_rank, index, iov, max_data) \
     (iov).iov_base = (((char*) (index)->mcbmi_data) + \
                       ((src_rank) * mca_coll_sm_component.sm_fragment_size)); \
-    ompi_convertor_unpack(&(convertor), &(iov), &mca_coll_sm_iov_size, \
+    opal_convertor_unpack(&(convertor), &(iov), &mca_coll_sm_iov_size, \
                           &(max_data) )
 
 /**

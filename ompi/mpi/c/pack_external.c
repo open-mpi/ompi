@@ -23,8 +23,8 @@
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/datatype.h"
-#include "ompi/datatype/convertor.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "opal/datatype/opal_convertor.h"
 #include "ompi/memchecker.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -43,7 +43,7 @@ int MPI_Pack_external(char *datarep, void *inbuf, int incount,
                       MPI_Aint outsize, MPI_Aint *position) 
 {
     int rc;
-    ompi_convertor_t local_convertor;
+    opal_convertor_t local_convertor;
     struct iovec invec;
     unsigned int iov_count;
     size_t size;
@@ -68,19 +68,19 @@ int MPI_Pack_external(char *datarep, void *inbuf, int incount,
 
     OPAL_CR_ENTER_LIBRARY();
 
-    OBJ_CONSTRUCT(&local_convertor, ompi_convertor_t);
+    OBJ_CONSTRUCT(&local_convertor, opal_convertor_t);
 
     /* The resulting convertor will be set to the position zero. We have to use
      * CONVERTOR_SEND_CONVERSION in order to force the convertor to do anything
      * more than just packing the data.
      */
-    ompi_convertor_copy_and_prepare_for_send( ompi_mpi_external32_convertor,
-                                              datatype, incount, inbuf,
+    opal_convertor_copy_and_prepare_for_send( ompi_mpi_external32_convertor,
+                                              &(datatype->super), incount, inbuf,
                                               CONVERTOR_SEND_CONVERSION,
                                               &local_convertor );
 
     /* Check for truncation */
-    ompi_convertor_get_packed_size( &local_convertor, &size );
+    opal_convertor_get_packed_size( &local_convertor, &size );
     if( (*position + size) > (size_t)outsize ) {  /* we can cast as we already checked for < 0 */
         OBJ_DESTRUCT( &local_convertor );
         OPAL_CR_EXIT_LIBRARY();
@@ -93,7 +93,7 @@ int MPI_Pack_external(char *datarep, void *inbuf, int incount,
 
     /* Do the actual packing */
     iov_count = 1;
-    rc = ompi_convertor_pack( &local_convertor, &invec, &iov_count, &size );
+    rc = opal_convertor_pack( &local_convertor, &invec, &iov_count, &size );
     *position += size;
     OBJ_DESTRUCT( &local_convertor );
 

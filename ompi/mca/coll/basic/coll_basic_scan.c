@@ -58,7 +58,7 @@ mca_coll_basic_scan_intra(void *sbuf, void *rbuf, int count,
 
     if (0 == rank) {
         if (MPI_IN_PLACE != sbuf) {
-            err = ompi_ddt_copy_content_same_ddt(dtype, count, (char*)rbuf, (char*)sbuf);
+            err = ompi_datatype_copy_content_same_ddt(dtype, count, (char*)rbuf, (char*)sbuf);
             if (MPI_SUCCESS != err) {
                 return err;
             }
@@ -72,8 +72,8 @@ mca_coll_basic_scan_intra(void *sbuf, void *rbuf, int count,
          * listed in coll_basic_reduce.c.  Use this temporary buffer to
          * receive into, later. */
 
-        ompi_ddt_get_extent(dtype, &lb, &extent);
-        ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
+        ompi_datatype_get_extent(dtype, &lb, &extent);
+        ompi_datatype_get_true_extent(dtype, &true_lb, &true_extent);
 
         free_buffer = (char*)malloc(true_extent + (count - 1) * extent);
         if (NULL == free_buffer) {
@@ -84,7 +84,7 @@ mca_coll_basic_scan_intra(void *sbuf, void *rbuf, int count,
         /* Copy the send buffer into the receive buffer. */
 
         if (MPI_IN_PLACE != sbuf) {
-            err = ompi_ddt_copy_content_same_ddt(dtype, count, (char*)rbuf, (char*)sbuf);
+            err = ompi_datatype_copy_content_same_ddt(dtype, count, (char*)rbuf, (char*)sbuf);
             if (MPI_SUCCESS != err) {
                 if (NULL != free_buffer) {
                     free(free_buffer);

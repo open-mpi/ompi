@@ -21,7 +21,7 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/mca/pml/pml.h"
@@ -66,7 +66,7 @@ mca_coll_basic_gatherv_intra(void *sbuf, int scount,
 
     /* I am the root, loop receiving data. */
 
-    err = ompi_ddt_get_extent(rdtype, &lb, &extent);
+    err = ompi_datatype_get_extent(rdtype, &lb, &extent);
     if (OMPI_SUCCESS != err) {
         return OMPI_ERROR;
     }
@@ -77,7 +77,7 @@ mca_coll_basic_gatherv_intra(void *sbuf, int scount,
         if (i == rank) {
             /* simple optimization */
             if (MPI_IN_PLACE != sbuf && (0 < scount) && (0 < rcounts[i])) {
-                err = ompi_ddt_sndrcv(sbuf, scount, sdtype,
+                err = ompi_datatype_sndrcv(sbuf, scount, sdtype,
                                       ptmp, rcounts[i], rdtype);
             }
         } else {
@@ -136,7 +136,7 @@ mca_coll_basic_gatherv_inter(void *sbuf, int scount,
                                 MCA_PML_BASE_SEND_STANDARD, comm));
     } else {
         /* I am the root, loop receiving data. */
-        err = ompi_ddt_get_extent(rdtype, &lb, &extent);
+        err = ompi_datatype_get_extent(rdtype, &lb, &extent);
         if (OMPI_SUCCESS != err) {
             return OMPI_ERROR;
         }

@@ -20,7 +20,7 @@
 
 #include "ompi_config.h"
 #include "ddt_lib.h"
-#include "ompi/datatype/convertor.h"
+#include "opal/datatype/opal_convertor.h"
 #include <time.h>
 #include <stdlib.h>
 #ifdef HAVE_SYS_TIME_H
@@ -44,9 +44,9 @@ uint32_t remote_arch;
 static int test_upper( unsigned int length )
 {
     ompi_datatype_t *pdt;
-    ompi_convertor_t * pConv;
+    opal_convertor_t * pConv;
     int rc;
-    unsigned int i, j, iov_count, split_chunk, total_length;
+    unsigned int i, iov_count, split_chunk, total_length;
     size_t max_data;
     struct iovec iov[5];
     TIMER_DATA_TYPE start, end;
@@ -58,8 +58,8 @@ static int test_upper( unsigned int length )
 
     total_length = length * (length + 1) * ( sizeof(double) / 2);
 
-    pConv = ompi_convertor_create( remote_arch, 0 );
-    if( OMPI_SUCCESS != ompi_convertor_prepare_for_send( pConv, pdt, 1, NULL ) ) {
+    pConv = opal_convertor_create( remote_arch, 0 );
+    if( OMPI_SUCCESS != opal_convertor_prepare_for_send( pConv, &(pdt->super), 1, NULL ) ) {
         printf( "Cannot attach the datatype to a convertor\n" );
         return OMPI_ERROR;
     }
@@ -70,7 +70,7 @@ static int test_upper( unsigned int length )
     for( i = total_length; i > 0; ) {
         iov_count = 5;
         max_data = 0;
-        ompi_convertor_raw( pConv, iov, &iov_count, &max_data );
+        opal_convertor_raw( pConv, iov, &iov_count, &max_data );
 	i -= max_data;
     }
     GET_TIME( end );
@@ -78,7 +78,7 @@ static int test_upper( unsigned int length )
     printf( "complete raw in %ld microsec\n", total_time );
 
     /* test the automatic destruction pf the data */
-    ompi_ddt_destroy( &pdt ); assert( pdt == NULL );
+    ompi_datatype_destroy( &pdt ); assert( pdt == NULL );
 
     OBJ_RELEASE( pConv );
     return rc;
@@ -96,7 +96,7 @@ static int test_upper( unsigned int length )
 static int local_copy_ddt_raw( ompi_datatype_t* pdt, int count, int iov_num )
 {
     struct iovec* iov;
-    ompi_convertor_t* convertor;
+    opal_convertor_t* convertor;
     TIMER_DATA_TYPE start, end;
     long total_time;
     int i;
@@ -105,15 +105,15 @@ static int local_copy_ddt_raw( ompi_datatype_t* pdt, int count, int iov_num )
 
     iov = (struct iovec*)malloc(iov_num * sizeof(struct iovec));
 
-    convertor = ompi_convertor_create( remote_arch, 0 );
-    if( OMPI_SUCCESS != ompi_convertor_prepare_for_send( convertor, pdt, count, NULL ) ) {
+    convertor = opal_convertor_create( remote_arch, 0 );
+    if( OMPI_SUCCESS != opal_convertor_prepare_for_send( convertor, &(pdt->super), count, NULL ) ) {
         printf( "Cannot attach the datatype to a convertor\n" );
         return OMPI_ERROR;
     }
 
-    remaining_length = count * pdt->size;
+    remaining_length = count * pdt->super.size;
     GET_TIME( start );
-    while( 0 == ompi_convertor_raw(convertor, iov, &iov_count, &max_data) ) {
+    while( 0 == opal_convertor_raw(convertor, iov, &iov_count, &max_data) ) {
 #if 0
 	printf( "New raw extraction (iov_count = %d, max_data = %zu)\n",
 		iov_count, max_data );
@@ -148,14 +148,14 @@ int main( int argc, char* argv[] )
     ompi_datatype_t *pdt, *pdt1, *pdt2, *pdt3;
     int rc, length = 500, iov_num = 5;
 
-    ompi_ddt_init();
+    ompi_datatype_init();
 
     /**
      * By default simulate homogeneous architectures.
      */
-    remote_arch = ompi_mpi_local_arch;
+    remote_arch = opal_local_arch;
     printf( "\n\n#\n * TEST INVERSED VECTOR\n #\n\n" );
-    pdt = create_inversed_vector( &ompi_mpi_int, 10 );
+    pdt = create_inversed_vector( &ompi_mpi_int.dt, 10 );
     if( outputFlags & CHECK_PACK_UNPACK ) {
         local_copy_ddt_raw(pdt, 100, iov_num);
     }
@@ -188,7 +188,7 @@ int main( int argc, char* argv[] )
     printf( "\n\n#\n * TEST MATRIX BORDERS\n #\n\n" );
     pdt = test_matrix_borders( length, 100 );
     if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
-        ompi_ddt_dump( pdt );
+        ompi_datatype_dump( pdt );
     }
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
     
@@ -199,30 +199,30 @@ int main( int argc, char* argv[] )
     pdt = test_struct();
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
     
-    ompi_ddt_create_contiguous(0, &ompi_mpi_datatype_null, &pdt1);
-    ompi_ddt_create_contiguous(0, &ompi_mpi_datatype_null, &pdt2);
-    ompi_ddt_create_contiguous(0, &ompi_mpi_datatype_null, &pdt3);
+    ompi_datatype_create_contiguous(0, &ompi_mpi_datatype_null.dt, &pdt1);
+    ompi_datatype_create_contiguous(0, &ompi_mpi_datatype_null.dt, &pdt2);
+    ompi_datatype_create_contiguous(0, &ompi_mpi_datatype_null.dt, &pdt3);
 
-    ompi_ddt_add( pdt3, &ompi_mpi_int, 10, 0, -1 );
-    ompi_ddt_add( pdt3, &ompi_mpi_float, 5, 10 * sizeof(int), -1 );
+    ompi_datatype_add( pdt3, &ompi_mpi_int.dt, 10, 0, -1 );
+    ompi_datatype_add( pdt3, &ompi_mpi_float.dt, 5, 10 * sizeof(int), -1 );
     
-    ompi_ddt_add( pdt2, &ompi_mpi_float, 1, 0, -1 );
-    ompi_ddt_add( pdt2, pdt3, 3, sizeof(int) * 1, -1 );
+    ompi_datatype_add( pdt2, &ompi_mpi_float.dt, 1, 0, -1 );
+    ompi_datatype_add( pdt2, pdt3, 3, sizeof(int) * 1, -1 );
     
-    ompi_ddt_add( pdt1, &ompi_mpi_long_long_int, 5, 0, -1 );
-    ompi_ddt_add( pdt1, &ompi_mpi_long_double, 2, sizeof(long long) * 5, -1 );
+    ompi_datatype_add( pdt1, &ompi_mpi_long_long_int.dt, 5, 0, -1 );
+    ompi_datatype_add( pdt1, &ompi_mpi_long_double.dt, 2, sizeof(long long) * 5, -1 );
     
     printf( ">>--------------------------------------------<<\n" );
     if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
-        ompi_ddt_dump( pdt1 );
+        ompi_datatype_dump( pdt1 );
     }
     printf( ">>--------------------------------------------<<\n" );
     if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
-        ompi_ddt_dump( pdt2 );
+        ompi_datatype_dump( pdt2 );
     }
     printf( ">>--------------------------------------------<<\n" );
     if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
-        ompi_ddt_dump( pdt3 );
+        ompi_datatype_dump( pdt3 );
     }
     
     OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL );
@@ -269,7 +269,7 @@ int main( int argc, char* argv[] )
     printf( "Vector data-type (450 times 10 double stride 11)\n" );
     pdt = create_vector_type( MPI_DOUBLE, 450, 10, 11 );
     if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
-	ompi_ddt_dump( pdt );
+	ompi_datatype_dump( pdt );
     }
     if( outputFlags & CHECK_PACK_UNPACK ) {
         local_copy_ddt_raw(pdt, 1, iov_num);
@@ -297,7 +297,7 @@ int main( int argc, char* argv[] )
     pdt = test_create_blacs_type();
     if( outputFlags & CHECK_PACK_UNPACK ) {
 	if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
-	    ompi_ddt_dump( pdt );
+	    ompi_datatype_dump( pdt );
 	}
         local_copy_ddt_raw(pdt, 4500, iov_num);
     }
@@ -305,7 +305,7 @@ int main( int argc, char* argv[] )
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
 
     printf( ">>--------------------------------------------<<\n" );
-    pdt1 = test_create_blacs_type1( &ompi_mpi_int );
+    pdt1 = test_create_blacs_type1( &ompi_mpi_int.dt );
     if( outputFlags & CHECK_PACK_UNPACK ) {
         local_copy_ddt_raw( pdt1, 1, iov_num );
     }
@@ -313,7 +313,7 @@ int main( int argc, char* argv[] )
     OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL );
 
     /* clean-ups all data allocations */
-    ompi_ddt_finalize();
+    ompi_datatype_finalize();
 
     return OMPI_SUCCESS;
 }

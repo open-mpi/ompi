@@ -22,7 +22,7 @@
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -71,11 +71,11 @@ int MPI_Type_indexed(int count,
 
    OPAL_CR_ENTER_LIBRARY();
 
-   rc = ompi_ddt_create_indexed ( count, array_of_blocklengths, 
+   rc = ompi_datatype_create_indexed ( count, array_of_blocklengths, 
                                  array_of_displacements,
                                  oldtype, newtype );
    if( rc != MPI_SUCCESS ) {
-      ompi_ddt_destroy( newtype );
+      ompi_datatype_destroy( newtype );
       OMPI_ERRHANDLER_RETURN( rc, MPI_COMM_WORLD,
                              rc, FUNC_NAME );
    }
@@ -87,7 +87,7 @@ int MPI_Type_indexed(int count,
       a_i[1] = array_of_blocklengths;
       a_i[2] = array_of_displacements;
 
-      ompi_ddt_set_args( *newtype, 2 * count + 1, a_i, 0, NULL, 1, &oldtype,
+      ompi_datatype_set_args( *newtype, 2 * count + 1, a_i, 0, NULL, 1, &oldtype,
                          MPI_COMBINER_INDEXED );
    }
 

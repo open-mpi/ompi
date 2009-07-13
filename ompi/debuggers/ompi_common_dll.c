@@ -36,6 +36,7 @@
 #include "ompi_config.h"
 
 #include "ompi_common_dll_defs.h"
+#include "ompi/datatype/ompi_datatype.h"
 
 /* Basic callbacks into the debugger */
 const mqs_basic_callbacks *mqs_basic_entrypoints;
@@ -391,8 +392,9 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
         }
         i_info->ompi_datatype_t.type = qh_type;
         i_info->ompi_datatype_t.size = mqs_sizeof(qh_type);
+        /* XXX TODO need to check whether super.size is OK here */
         ompi_field_offset(i_info->ompi_datatype_t.offset.size,
-                          qh_type, ompi_datatype_t, size);
+                          qh_type, ompi_datatype_t, super.size);
         ompi_field_offset(i_info->ompi_datatype_t.offset.name,
                           qh_type, ompi_datatype_t, name);
     }

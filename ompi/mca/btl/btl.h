@@ -112,6 +112,7 @@
 #include "ompi_config.h"
 #include "opal/mca/mca.h"
 #include "opal/class/opal_bitmap.h"
+#include "opal/datatype/opal_convertor.h"
 #include "opal/prefetch.h" /* For OPAL_LIKELY */
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/types.h"
@@ -601,7 +602,7 @@ typedef struct mca_btl_base_descriptor_t* (*mca_btl_base_module_prepare_fn_t)(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
     mca_mpool_base_registration_t* registration,
-    struct ompi_convertor_t* convertor,
+    struct opal_convertor_t* convertor,
     uint8_t order,
     size_t reserve,
     size_t* size,
@@ -663,7 +664,7 @@ typedef int (*mca_btl_base_module_send_fn_t)(
 typedef int (*mca_btl_base_module_sendi_fn_t)(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
-    struct ompi_convertor_t* convertor,
+    struct opal_convertor_t* convertor,
     void* header,
     size_t header_size,
     size_t payload_size,

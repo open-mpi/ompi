@@ -22,7 +22,7 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/mca/pml/pml.h"
@@ -59,7 +59,7 @@ mca_coll_inter_gather_inter(void *sbuf, int scount,
         err = OMPI_SUCCESS;
     } else if (MPI_ROOT != root) {
 	/* Perform the gather locally with the first process as root */
-	err = ompi_ddt_get_extent(sdtype, &lb, &extent);
+	err = ompi_datatype_get_extent(sdtype, &lb, &extent);
 	if (OMPI_SUCCESS != err) {
 	    return OMPI_ERROR;
 	}

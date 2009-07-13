@@ -67,7 +67,7 @@
 #include "opal/class/opal_pointer_array.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/group/group.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/include/mpi.h"
 
 #include "orte/mca/errmgr/errmgr.h"

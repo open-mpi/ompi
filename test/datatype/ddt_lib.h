@@ -19,7 +19,7 @@
  */
 
 #include "ompi_config.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include <time.h>
 #include <stdlib.h>
 #ifdef HAVE_SYS_TIME_H

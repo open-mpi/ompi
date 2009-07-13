@@ -23,7 +23,7 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/coll/base/coll_tags.h"
@@ -53,7 +53,7 @@ mca_coll_basic_allgather_intra(void *sbuf, int scount,
        as sbuf and avoid using a temporary buffer if gather is
        implemented correctly */
     if (MPI_IN_PLACE == sbuf && 0 != ompi_comm_rank(comm)) {
-       ompi_ddt_get_extent(rdtype, &lb, &extent);
+       ompi_datatype_get_extent(rdtype, &lb, &extent);
        sbuf = ((char*) rbuf) + (ompi_comm_rank(comm) * extent * rcount);
        sdtype = rdtype;
        scount = rcount;
@@ -118,11 +118,11 @@ mca_coll_basic_allgather_inter(void *sbuf, int scount,
         }
     } else {
         /* receive a msg. from all other procs. */
-        err = ompi_ddt_get_extent(rdtype, &rlb, &rextent);
+        err = ompi_datatype_get_extent(rdtype, &rlb, &rextent);
         if (OMPI_SUCCESS != err) {
             return err;
         }
-        err = ompi_ddt_get_extent(sdtype, &slb, &sextent);
+        err = ompi_datatype_get_extent(sdtype, &slb, &sextent);
         if (OMPI_SUCCESS != err) {
             return err;
         }

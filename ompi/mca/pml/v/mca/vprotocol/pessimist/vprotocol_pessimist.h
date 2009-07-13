@@ -14,6 +14,7 @@
 #include "ompi_config.h"
 #include "../vprotocol.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/datatype/ompi_datatype.h"
 
 #include "vprotocol_pessimist_event.h"
 #include "vprotocol_pessimist_sender_based_types.h"

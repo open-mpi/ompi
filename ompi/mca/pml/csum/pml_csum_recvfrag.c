@@ -245,7 +245,7 @@ void mca_pml_csum_recv_frag_callback_match(mca_btl_base_module_t* btl,
                 iov[iov_count].iov_base = (IOVBASE_TYPE*)((unsigned char*)segments[iov_count].seg_addr.pval);
                 iov_count++;
             }
-            ompi_convertor_unpack( &match->req_recv.req_base.req_convertor,
+            opal_convertor_unpack( &match->req_recv.req_base.req_convertor,
                                    iov,
                                    &iov_count,
                                    &bytes_received );

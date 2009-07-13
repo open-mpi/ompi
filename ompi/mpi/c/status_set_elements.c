@@ -23,7 +23,7 @@
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -73,11 +73,11 @@ int MPI_Status_set_elements(MPI_Status *status, MPI_Datatype datatype,
         return MPI_SUCCESS;
     }
 
-    if( ompi_ddt_is_predefined(datatype) ) {
-        ompi_ddt_type_size( datatype, &size );
+    if( ompi_datatype_is_predefined(datatype) ) {
+        ompi_datatype_type_size( datatype, &size );
         status->_count = (int)(count * size);
     } else {
-        ompi_ddt_set_element_count( datatype, count, &size );
+        ompi_datatype_set_element_count( datatype, count, &size );
         status->_count = (int)size;
     }
     return MPI_SUCCESS;

@@ -21,7 +21,7 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/mca/pml/pml.h"
@@ -63,7 +63,7 @@ mca_coll_basic_scatter_intra(void *sbuf, int scount,
 
     /* I am the root, loop sending data. */
 
-    err = ompi_ddt_get_extent(sdtype, &lb, &incr);
+    err = ompi_datatype_get_extent(sdtype, &lb, &incr);
     if (OMPI_SUCCESS != err) {
         return OMPI_ERROR;
     }
@@ -76,7 +76,7 @@ mca_coll_basic_scatter_intra(void *sbuf, int scount,
         if (i == rank) {
             if (MPI_IN_PLACE != rbuf) {
                 err =
-                    ompi_ddt_sndrcv(ptmp, scount, sdtype, rbuf, rcount,
+                    ompi_datatype_sndrcv(ptmp, scount, sdtype, rbuf, rcount,
                                     rdtype);
             }
         } else {
@@ -129,7 +129,7 @@ mca_coll_basic_scatter_inter(void *sbuf, int scount,
                                 comm, MPI_STATUS_IGNORE));
     } else {
         /* I am the root, loop sending data. */
-        err = ompi_ddt_get_extent(sdtype, &lb, &incr);
+        err = ompi_datatype_get_extent(sdtype, &lb, &incr);
         if (OMPI_SUCCESS != err) {
             return OMPI_ERROR;
         }

@@ -19,8 +19,8 @@
  */
 
 #include "ompi_config.h"
-#include "ompi/datatype/datatype.h"
-#include "ompi/datatype/convertor.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "opal/datatype/opal_convertor.h"
 #include "ompi/proc/proc.h"
 
 #ifdef HAVE_STDLIB_H
@@ -48,12 +48,12 @@ main(int argc, char* argv[])
     /* Basic test... */
     printf("---> Basic test with MPI_INT\n");
 
-    packed_ddt_len = ompi_ddt_pack_description_length(MPI_INT);
+    packed_ddt_len = ompi_datatype_pack_description_length(MPI_INT);
     ptr = payload = malloc(packed_ddt_len);
-    ret = ompi_ddt_get_pack_description(MPI_INT, &packed_ddt);
+    ret = ompi_datatype_get_pack_description(MPI_INT, &packed_ddt);
     if (ret != 0) goto cleanup;
     memcpy(payload, packed_ddt, packed_ddt_len);
-    unpacked_dt = ompi_ddt_create_from_packed_description(&payload,
+    unpacked_dt = ompi_datatype_create_from_packed_description(&payload,
                                                           ompi_proc_local());
     free(ptr);
     if (unpacked_dt == MPI_INT) {
@@ -78,12 +78,12 @@ main(int argc, char* argv[])
     ret = MPI_Type_commit(&newType);
     if (ret != 0) goto cleanup;
 
-    packed_ddt_len = ompi_ddt_pack_description_length(newType);
+    packed_ddt_len = ompi_datatype_pack_description_length(newType);
     ptr = payload = malloc(packed_ddt_len);
-    ret = ompi_ddt_get_pack_description(newType, &packed_ddt);
+    ret = ompi_datatype_get_pack_description(newType, &packed_ddt);
     if (ret != 0) goto cleanup;
     memcpy(payload, packed_ddt, packed_ddt_len);
-    unpacked_dt = ompi_ddt_create_from_packed_description(&payload,
+    unpacked_dt = ompi_datatype_create_from_packed_description(&payload,
                                                           ompi_proc_local());
     free(ptr);
     if (unpacked_dt != NULL) {
@@ -107,12 +107,12 @@ main(int argc, char* argv[])
     ret = MPI_Type_commit(&struct_type);
     if (ret != 0) goto cleanup;
 
-    packed_ddt_len = ompi_ddt_pack_description_length(struct_type);
+    packed_ddt_len = ompi_datatype_pack_description_length(struct_type);
     ptr = payload = malloc(packed_ddt_len);
-    ret = ompi_ddt_get_pack_description(struct_type, &packed_ddt);
+    ret = ompi_datatype_get_pack_description(struct_type, &packed_ddt);
     if (ret != 0) goto cleanup;
     memcpy(payload, packed_ddt, packed_ddt_len);
-    unpacked_dt = ompi_ddt_create_from_packed_description(&payload,
+    unpacked_dt = ompi_datatype_create_from_packed_description(&payload,
                                                           ompi_proc_local());
     free(ptr);
     if (unpacked_dt != NULL) {

@@ -23,8 +23,8 @@
 #include "osc_rdma_longreq.h"
 
 #include "opal/class/opal_list.h"
-#include "ompi/datatype/datatype.h"
-#include "ompi/datatype/convertor.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "opal/datatype/opal_convertor.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/proc/proc.h"
 #include "ompi/memchecker.h"
@@ -50,7 +50,7 @@ struct ompi_osc_rdma_sendreq_t {
     struct ompi_datatype_t *req_origin_datatype;
     /** Convertor for the origin side of the operation.  Setup for
         either send (Put / Accumulate) or receive (Get) */
-    ompi_convertor_t req_origin_convertor;
+    opal_convertor_t req_origin_convertor;
     /** packed size of message on the origin side */
     size_t req_origin_bytes_packed;
 
@@ -124,22 +124,22 @@ ompi_osc_rdma_sendreq_init_origin(ompi_osc_rdma_sendreq_t *sendreq,
     sendreq->req_type = req_type;
 
     if (req_type != OMPI_OSC_RDMA_GET) {
-        ompi_convertor_copy_and_prepare_for_send(sendreq->req_target_proc->proc_convertor,
-                                                 origin_dt,
+        opal_convertor_copy_and_prepare_for_send(sendreq->req_target_proc->proc_convertor,
+                                                 &(origin_dt->super),
                                                  origin_count,
                                                  origin_addr,
                                                  0,
                                                  &(sendreq->req_origin_convertor));
-        ompi_convertor_get_packed_size(&sendreq->req_origin_convertor,
+        opal_convertor_get_packed_size(&sendreq->req_origin_convertor,
                                        &sendreq->req_origin_bytes_packed);
     } else {
-        ompi_convertor_copy_and_prepare_for_recv(sendreq->req_target_proc->proc_convertor,
-                                                 origin_dt,
+        opal_convertor_copy_and_prepare_for_recv(sendreq->req_target_proc->proc_convertor,
+                                                 &(origin_dt->super),
                                                  origin_count,
                                                  origin_addr,
                                                  0,
                                                  &(sendreq->req_origin_convertor));
-        ompi_convertor_get_packed_size(&sendreq->req_origin_convertor,
+        opal_convertor_get_packed_size(&sendreq->req_origin_convertor,
                                        &sendreq->req_origin_bytes_packed);        
     }
 
@@ -171,7 +171,7 @@ ompi_osc_rdma_sendreq_free(ompi_osc_rdma_sendreq_t *sendreq)
             memchecker_convertor_call(&opal_memchecker_base_mem_defined,
                                       &sendreq->req_origin_convertor);
         );
-        ompi_convertor_cleanup(&sendreq->req_origin_convertor);
+        opal_convertor_cleanup(&sendreq->req_origin_convertor);
 
         OBJ_RELEASE(sendreq->req_target_datatype);
         OBJ_RELEASE(sendreq->req_origin_datatype);

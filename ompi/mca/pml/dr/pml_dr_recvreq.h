@@ -250,12 +250,12 @@ do {                                                                            
     (request)->req_recv.req_bytes_packed = bytes_packed;                             \
     if((request)->req_recv.req_bytes_packed != 0) {                                  \
         ompi_proc_t *proc = (request)->req_proc->ompi_proc;                          \
-        ompi_convertor_copy_and_prepare_for_recv( proc->proc_convertor,              \
-                                         (request)->req_recv.req_base.req_datatype,  \
-                                         (request)->req_recv.req_base.req_count,     \
-                                         (request)->req_recv.req_base.req_addr,      \
-                                         (do_csum ? CONVERTOR_WITH_CHECKSUM: 0),     \
-                                         &(request)->req_recv.req_base.req_convertor ); \
+        opal_convertor_copy_and_prepare_for_recv( proc->proc_convertor,              \
+                                   &((request)->req_recv.req_base.req_datatype->super), \
+                                   (request)->req_recv.req_base.req_count,           \
+                                   (request)->req_recv.req_base.req_addr,            \
+                                   (do_csum ? CONVERTOR_WITH_CHECKSUM: 0),           \
+                                   &(request)->req_recv.req_base.req_convertor );    \
     }                                                                                \
 } while (0)
 
@@ -293,10 +293,10 @@ do {                                                                            
                 iov_count++;                                                      \
             }                                                                     \
         }                                                                         \
-        ompi_convertor_set_position( &(request->req_recv.req_base.req_convertor), \
+        opal_convertor_set_position( &(request->req_recv.req_base.req_convertor), \
                                      &data_offset);                               \
         assert((request->req_recv.req_base.req_convertor.flags & CONVERTOR_COMPLETED) == 0); \
-        ompi_convertor_unpack( &(request)->req_recv.req_base.req_convertor,       \
+        opal_convertor_unpack( &(request)->req_recv.req_base.req_convertor,       \
                                iov,                                               \
                                &iov_count,                                        \
                                &max_data);                                        \

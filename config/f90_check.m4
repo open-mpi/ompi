@@ -166,6 +166,9 @@ AC_DEFUN([OMPI_F90_CHECK], [
     # functions here (vs. $ompi_upper_var_name, defined above) because
     # these need to be set at autoconf time, not configure time.
     [OMPI_SIZEOF_F90_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z])[=$ofc_type_size]
+    AC_DEFINE_UNQUOTED([OMPI_SIZEOF_F90_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]),
+                       [$ofc_type_size],
+                       [Size of Fortran 77 $ofc_fortran_type])
     AC_SUBST([OMPI_SIZEOF_F90_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]))
 
     # Clean up

@@ -24,7 +24,7 @@
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -56,8 +56,8 @@ int MPI_Alltoallw(void *sendbuf, int *sendcounts, int *sdispls,
             memchecker_datatype(sendtypes[i]);
             memchecker_datatype(recvtypes[i]);
             
-            ompi_ddt_type_extent(sendtypes[i], &send_ext);
-            ompi_ddt_type_extent(recvtypes[i], &recv_ext);
+            ompi_datatype_type_extent(sendtypes[i], &send_ext);
+            ompi_datatype_type_extent(recvtypes[i], &recv_ext);
 
             memchecker_call(&opal_memchecker_base_isdefined,
                             (char *)(sendbuf)+sdispls[i]*send_ext,

@@ -24,7 +24,7 @@
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/mca/mtl/base/base.h"
-#include "ompi/datatype/convertor.h"
+#include "opal/datatype/opal_convertor.h"
 
 #include "ompi/mca/common/portals/common_portals.h"
 
@@ -194,14 +194,14 @@ extern int ompi_mtl_portals_send(struct mca_mtl_base_module_t* mtl,
                           struct ompi_communicator_t* comm,
                           int dest,
                           int tag,
-                          struct ompi_convertor_t *convertor,
+                          struct opal_convertor_t *convertor,
                           mca_pml_base_send_mode_t mode);
 
 extern int ompi_mtl_portals_isend(struct mca_mtl_base_module_t* mtl,
                           struct ompi_communicator_t* comm,
                           int dest,
                           int tag,
-                          struct ompi_convertor_t *convertor,
+                          struct opal_convertor_t *convertor,
                           mca_pml_base_send_mode_t mode,
                           bool blocking,
                           mca_mtl_request_t *mtl_request);
@@ -210,7 +210,7 @@ extern int ompi_mtl_portals_irecv(struct mca_mtl_base_module_t* mtl,
                           struct ompi_communicator_t *comm,
                           int src,
                           int tag,
-                          struct ompi_convertor_t *convertor,
+                          struct opal_convertor_t *convertor,
                           mca_mtl_request_t *mtl_request);
 
 extern int ompi_mtl_portals_iprobe(struct mca_mtl_base_module_t* mtl,

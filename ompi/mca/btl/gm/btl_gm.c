@@ -27,7 +27,7 @@
 #include "btl_gm_frag.h" 
 #include "btl_gm_proc.h"
 #include "btl_gm_endpoint.h"
-#include "ompi/datatype/convertor.h" 
+#include "opal/datatype/opal_convertor.h" 
 #include "ompi/mca/mpool/base/base.h" 
 #include "ompi/mca/mpool/mpool.h" 
 #include "ompi/proc/proc.h"
@@ -251,7 +251,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
     struct mca_mpool_base_registration_t* registration,
-    struct ompi_convertor_t* convertor,
+    struct opal_convertor_t* convertor,
     uint8_t order,
     size_t reserve,
     size_t* size,
@@ -265,7 +265,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
     int rc;
 
 #if (OMPI_MCA_BTL_GM_HAVE_RDMA_GET || OMPI_MCA_BTL_GM_HAVE_RDMA_PUT)
-    if(ompi_convertor_need_buffers(convertor) == false && 0 == reserve) {
+    if(opal_convertor_need_buffers(convertor) == false && 0 == reserve) {
         if(registration != NULL || max_data > btl->btl_max_send_size) {
             MCA_BTL_GM_FRAG_ALLOC_USER(btl, frag, rc);
             if(NULL == frag) {
@@ -281,7 +281,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
             iov.iov_base = NULL;
 
 
-            ompi_convertor_pack(convertor, &iov, &iov_count, &max_data);
+            opal_convertor_pack(convertor, &iov, &iov_count, &max_data);
 
             *size = max_data;
 
@@ -335,7 +335,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
 
     iov.iov_len = max_data;
     iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve;
-    rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data);
+    rc = opal_convertor_pack(convertor, &iov, &iov_count, &max_data);
     if(rc < 0) {
         MCA_BTL_GM_FRAG_RETURN(btl, frag);
         return NULL;
@@ -371,7 +371,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_dst(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
     struct mca_mpool_base_registration_t* registration,
-    struct ompi_convertor_t* convertor,
+    struct opal_convertor_t* convertor,
     uint8_t order,
     size_t reserve,
     size_t* size,
@@ -395,7 +395,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_dst(
     frag->type = MCA_BTL_GM_PUT; 
     
     frag->segment.seg_len = *size;
-    ompi_convertor_get_current_pointer( convertor, (void**)&(frag->segment.seg_addr.pval) );
+    opal_convertor_get_current_pointer( convertor, (void**)&(frag->segment.seg_addr.pval) );
 
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;

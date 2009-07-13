@@ -196,7 +196,7 @@
 #include "opal/class/opal_bitmap.h"
 #include "opal/threads/mutex.h"
 #include "ompi/constants.h"
-#include "ompi/datatype/datatype.h"          /* ompi_datatype_t generated in [COPY|DELETE]_ATTR_CALLBACKS */
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/communicator/communicator.h"  /* ompi_communicator_t generated in [COPY|DELETE]_ATTR_CALLBACKS */
 #include "ompi/win/win.h"                    /* ompi_win_t generated in [COPY|DELETE]_ATTR_CALLBACKS */
 #include "ompi/mpi/f77/fint_2_int.h"

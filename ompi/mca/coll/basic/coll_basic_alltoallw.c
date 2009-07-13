@@ -21,7 +21,7 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/mca/pml/pml.h"
@@ -63,7 +63,7 @@ mca_coll_basic_alltoallw_intra(void *sbuf, int *scounts, int *sdisps,
     prcv = ((char *) rbuf) + rdisps[rank];
 
     if (0 != scounts[rank]) {
-        err = ompi_ddt_sndrcv(psnd, scounts[rank], sdtypes[rank],
+        err = ompi_datatype_sndrcv(psnd, scounts[rank], sdtypes[rank],
                               prcv, rcounts[rank], rdtypes[rank]);
         if (MPI_SUCCESS != err) {
             return err;

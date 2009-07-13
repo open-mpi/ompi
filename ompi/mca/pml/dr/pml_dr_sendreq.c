@@ -397,7 +397,7 @@ int mca_pml_dr_send_request_start_buffered(
     iov.iov_len = size;
     iov_count = 1;
     max_data = size;
-    if((rc = ompi_convertor_pack( &sendreq->req_send.req_base.req_convertor,
+    if((rc = opal_convertor_pack( &sendreq->req_send.req_base.req_convertor,
                                   &iov,
                                   &iov_count,
                                   &max_data)) < 0) {
@@ -428,7 +428,7 @@ int mca_pml_dr_send_request_start_buffered(
     iov.iov_len = sendreq->req_send.req_bytes_packed - max_data;
 
     max_data = iov.iov_len;
-    if((rc = ompi_convertor_pack( &sendreq->req_send.req_base.req_convertor,
+    if((rc = opal_convertor_pack( &sendreq->req_send.req_base.req_convertor,
                                   &iov,
                                   &iov_count,
                                   &max_data)) < 0) {
@@ -455,8 +455,8 @@ int mca_pml_dr_send_request_start_buffered(
                                 OPAL_CSUM_ZERO);
     
     /* re-init convertor for packed data (it keep the flags) */
-    ompi_convertor_prepare_for_send( &sendreq->req_send.req_base.req_convertor,
-                                     MPI_BYTE,
+    opal_convertor_prepare_for_send( &sendreq->req_send.req_base.req_convertor,
+                                     &(ompi_mpi_byte.dt.super),
                                      sendreq->req_send.req_bytes_packed,
                                      sendreq->req_send.req_addr );
 
@@ -512,7 +512,7 @@ int mca_pml_dr_send_request_start_copy(
     iov_count = 1;
     max_data = size;
     if(size > 0) { 
-        if((rc = ompi_convertor_pack( &sendreq->req_send.req_base.req_convertor,
+        if((rc = opal_convertor_pack( &sendreq->req_send.req_base.req_convertor,
                                       &iov,
                                       &iov_count,
                                       &max_data)) < 0) {
@@ -772,7 +772,7 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                         }
 
                         /* pack into a descriptor */
-                        ompi_convertor_set_position(&sendreq->req_send.req_base.req_convertor, &offset_in_msg);
+                        opal_convertor_set_position(&sendreq->req_send.req_base.req_convertor, &offset_in_msg);
                         mca_bml_base_prepare_src( bml_btl, 
                                                  NULL, 
                                                  &sendreq->req_send.req_base.req_convertor,
@@ -896,7 +896,7 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                 }
 
                 /* pack into a descriptor */
-                ompi_convertor_set_position(&sendreq->req_send.req_base.req_convertor, &sendreq->req_send_offset);
+                opal_convertor_set_position(&sendreq->req_send.req_base.req_convertor, &sendreq->req_send_offset);
                 mca_bml_base_prepare_src( bml_btl, 
                                           NULL, 
                                           &sendreq->req_send.req_base.req_convertor,

@@ -22,7 +22,7 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/request/request.h"
 #include "ompi/op/op.h"
@@ -53,7 +53,7 @@ mca_coll_inter_allreduce_inter(void *sbuf, void *rbuf, int count,
     rsize = ompi_comm_remote_size(comm);
     
     /* Perform the reduction locally */
-    err = ompi_ddt_get_extent(dtype, &lb, &extent);
+    err = ompi_datatype_get_extent(dtype, &lb, &extent);
     if (OMPI_SUCCESS != err) {
 	return OMPI_ERROR;
     }

@@ -23,7 +23,7 @@
 
 
 static void mca_pml_cm_request_construct( mca_pml_cm_request_t* req) { 
-    OBJ_CONSTRUCT(&req->req_convertor, ompi_convertor_t);
+    OBJ_CONSTRUCT(&req->req_convertor, opal_convertor_t);
     req->req_ompi.req_type = OMPI_REQUEST_PML;
 }
 

@@ -19,7 +19,7 @@
 #include "ompi_config.h"
 
 #include "ompi/constants.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "coll_self.h"
 
 
@@ -37,6 +37,6 @@ int mca_coll_self_alltoall_intra(void *sbuf, int scount,
                                  struct ompi_communicator_t *comm,
                                  mca_coll_base_module_t *module)
 {
-    return ompi_ddt_sndrcv(sbuf, scount, sdtype,
+    return ompi_datatype_sndrcv(sbuf, scount, sdtype,
                            rbuf, rcount, rdtype);
 }

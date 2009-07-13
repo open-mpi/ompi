@@ -21,7 +21,7 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/mca/pml/pml.h"
@@ -63,13 +63,13 @@ mca_coll_basic_alltoall_intra(void *sbuf, int scount,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    err = ompi_ddt_get_extent(sdtype, &lb, &sndinc);
+    err = ompi_datatype_get_extent(sdtype, &lb, &sndinc);
     if (OMPI_SUCCESS != err) {
         return err;
     }
     sndinc *= scount;
 
-    err = ompi_ddt_get_extent(rdtype, &lb, &rcvinc);
+    err = ompi_datatype_get_extent(rdtype, &lb, &rcvinc);
     if (OMPI_SUCCESS != err) {
         return err;
     }
@@ -80,7 +80,7 @@ mca_coll_basic_alltoall_intra(void *sbuf, int scount,
     psnd = ((char *) sbuf) + (rank * sndinc);
     prcv = ((char *) rbuf) + (rank * rcvinc);
 
-    err = ompi_ddt_sndrcv(psnd, scount, sdtype, prcv, rcount, rdtype);
+    err = ompi_datatype_sndrcv(psnd, scount, sdtype, prcv, rcount, rdtype);
     if (MPI_SUCCESS != err) {
         return err;
     }
@@ -185,13 +185,13 @@ mca_coll_basic_alltoall_inter(void *sbuf, int scount,
 
     size = ompi_comm_remote_size(comm);
 
-    err = ompi_ddt_get_extent(sdtype, &lb, &sndinc);
+    err = ompi_datatype_get_extent(sdtype, &lb, &sndinc);
     if (OMPI_SUCCESS != err) {
         return err;
     }
     sndinc *= scount;
 
-    err = ompi_ddt_get_extent(rdtype, &lb, &rcvinc);
+    err = ompi_datatype_get_extent(rdtype, &lb, &rcvinc);
     if (OMPI_SUCCESS != err) {
         return err;
     }

@@ -20,7 +20,7 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
@@ -58,8 +58,8 @@ ompi_coll_tuned_bcast_intra_generic( void* buffer,
     rank = ompi_comm_rank(comm);
     assert( size > 1 );
 
-    ompi_ddt_get_extent (datatype, &lb, &extent);
-    ompi_ddt_type_size( datatype, &type_size );
+    ompi_datatype_get_extent (datatype, &lb, &extent);
+    ompi_datatype_type_size( datatype, &type_size );
     num_segments = (original_count + count_by_segment - 1) / count_by_segment;
     realsegsize = count_by_segment * extent;
     
@@ -272,7 +272,7 @@ ompi_coll_tuned_bcast_intra_bintree ( void* buffer,
     /**
      * Determine number of elements sent per operation.
      */
-    ompi_ddt_type_size( datatype, &typelng );
+    ompi_datatype_type_size( datatype, &typelng );
     COLL_TUNED_COMPUTED_SEGCOUNT( segsize, typelng, segcount );
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:bcast_intra_binary rank %d ss %5d typelng %lu segcount %d",
@@ -301,7 +301,7 @@ ompi_coll_tuned_bcast_intra_pipeline( void* buffer,
     /**
      * Determine number of elements sent per operation.
      */
-    ompi_ddt_type_size( datatype, &typelng );
+    ompi_datatype_type_size( datatype, &typelng );
     COLL_TUNED_COMPUTED_SEGCOUNT( segsize, typelng, segcount );
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:bcast_intra_pipeline rank %d ss %5d typelng %lu segcount %d",
@@ -330,7 +330,7 @@ ompi_coll_tuned_bcast_intra_chain( void* buffer,
     /**
      * Determine number of elements sent per operation.
      */
-    ompi_ddt_type_size( datatype, &typelng );
+    ompi_datatype_type_size( datatype, &typelng );
     COLL_TUNED_COMPUTED_SEGCOUNT( segsize, typelng, segcount );
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:bcast_intra_chain rank %d fo %d ss %5d typelng %lu segcount %d",
@@ -359,7 +359,7 @@ ompi_coll_tuned_bcast_intra_binomial( void* buffer,
     /**
      * Determine number of elements sent per operation.
      */
-    ompi_ddt_type_size( datatype, &typelng );
+    ompi_datatype_type_size( datatype, &typelng );
     COLL_TUNED_COMPUTED_SEGCOUNT( segsize, typelng, segcount );
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:bcast_intra_binomial rank %d ss %5d typelng %lu segcount %d",
@@ -407,14 +407,14 @@ ompi_coll_tuned_bcast_intra_split_bintree ( void* buffer,
     COLL_TUNED_UPDATE_BINTREE( comm, tuned_module, root );
     tree = data->cached_bintree;
 
-    err = ompi_ddt_type_size( datatype, &type_size );
+    err = ompi_datatype_type_size( datatype, &type_size );
 
     /* Determine number of segments and number of elements per segment */
     counts[0] = count/2;
     if (count % 2 != 0) counts[0]++;
     counts[1] = count - counts[0];
     if ( segsize > 0 ) {
-        /* Note that ompi_ddt_type_size() will never return a negative
+        /* Note that ompi_datatype_type_size() will never return a negative
            value in typelng; it returns an int [vs. an unsigned type]
            because of the MPI spec. */
     	if (segsize < ((uint32_t) type_size)) {
@@ -441,7 +441,7 @@ ompi_coll_tuned_bcast_intra_split_bintree ( void* buffer,
 						    segsize, 1 ));
     }
 
-    err = ompi_ddt_get_extent (datatype, &lb, &type_extent);
+    err = ompi_datatype_get_extent (datatype, &lb, &type_extent);
     
     /* Determine real segment size */
     realsegsize[0] = segcount[0] * type_extent;
