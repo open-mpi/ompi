@@ -17,19 +17,6 @@
 
 PROJECT (OMPI)
 
-# These two files need to be compiled twice, one time with preprocessor CHECKSUM.
-# Make one copy of them with another file name and add them into the project.
-CONFIGURE_FILE(datatype/datatype_pack.c ${PROJECT_BINARY_DIR}/datatype/datatype_pack_checksum.c [COPYONLY])
-CONFIGURE_FILE(datatype/datatype_unpack.c ${PROJECT_BINARY_DIR}/datatype/datatype_unpack_checksum.c [COPYONLY])
-
-SET(DATATYPE_CHECKSUM_FILES ${PROJECT_BINARY_DIR}/datatype/datatype_pack_checksum.c
-                            ${PROJECT_BINARY_DIR}/datatype/datatype_unpack_checksum.c )
-
-SET_SOURCE_FILES_PROPERTIES(${DATATYPE_CHECKSUM_FILES} 
-                            PROPERTIES COMPILE_DEFINITIONS CHECKSUM)
-SET(OMPI_SOURCE_FILES ${OMPI_SOURCE_FILES} ${DATATYPE_CHECKSUM_FILES})
-SOURCE_GROUP(datatype FILES  ${DATATYPE_CHECKSUM_FILES})
-
 # Recuresive search sub directories excluding mca, mpi and tools. 
 # Add sources in different source groups.
 EXECUTE_PROCESS (COMMAND cmd /C dir /AD /B
