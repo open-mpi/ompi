@@ -57,7 +57,7 @@
 #include "ompi/constants.h"
 #include "ompi/errhandler/errcode.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/op/op.h"
 #include "ompi/file/file.h"
 #include "ompi/info/info.h"
@@ -365,7 +365,7 @@ int ompi_mpi_finalize(void)
     }
 
     /* free ddt resources */
-    if (OMPI_SUCCESS != (ret = ompi_ddt_finalize())) {
+    if (OMPI_SUCCESS != (ret = ompi_datatype_finalize())) {
         return ret;
     }
 

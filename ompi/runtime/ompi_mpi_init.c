@@ -486,8 +486,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
      * create the local convertor and local arch used in the proc
      * init.
      */
-    if (OMPI_SUCCESS != (ret = ompi_ddt_init())) {
-        error = "ompi_ddt_init() failed";
+    if (OMPI_SUCCESS != (ret = ompi_datatype_init())) {
+        error = "ompi_datatype_init() failed";
         goto error;
     }
 

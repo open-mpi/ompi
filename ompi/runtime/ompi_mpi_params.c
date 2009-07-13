@@ -29,7 +29,7 @@
 #endif  /* HAVE_TIME_H */
 
 #include "ompi/constants.h"
-#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/params.h"
 #include "orte/util/show_help.h"
@@ -295,8 +295,7 @@ int ompi_mpi_register_params(void)
                                 (int) ompi_notify_init_finalize, &value);
     ompi_notify_init_finalize = OPAL_INT_TO_BOOL(value);
 
-    /* The ddt engine has a few parameters */
-    return ompi_ddt_register_params();
+    return OMPI_SUCCESS;
 }
 
 int ompi_show_all_mca_params(int32_t rank, int requested, char *nodename) {

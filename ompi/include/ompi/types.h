@@ -31,7 +31,6 @@ typedef char* ompi_job_handle_t;
  */
 struct ompi_communicator_t;
 struct ompi_datatype_t;
-struct ompi_convertor_t;
 struct ompi_op_t;
 
 #endif
