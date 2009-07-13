@@ -78,7 +78,6 @@
  */
 static int plm_lsf_init(void);
 static int plm_lsf_launch_job(orte_job_t *jdata);
-static int plm_lsf_terminate_job(orte_jobid_t jobid);
 static int plm_lsf_terminate_orteds(void);
 static int plm_lsf_signal_job(orte_jobid_t jobid, int32_t signal);
 static int plm_lsf_finalize(void);
@@ -92,8 +91,9 @@ orte_plm_base_module_t orte_plm_lsf_module = {
     orte_plm_base_set_hnp_name,
     plm_lsf_launch_job,
     NULL,
-    plm_lsf_terminate_job,
+    orte_plm_base_orted_terminate_job,
     plm_lsf_terminate_orteds,
+    orte_plm_base_orted_kill_local_procs,
     plm_lsf_signal_job,
     plm_lsf_finalize
 };
@@ -365,20 +365,6 @@ cleanup:
         orte_plm_base_launch_failed(failed_job, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, job_state);
     }
 
-    return rc;
-}
-
-
-static int plm_lsf_terminate_job(orte_jobid_t jobid)
-{
-    int rc;
-    
-    /* order them to kill their local procs for this job */
-    if (ORTE_SUCCESS !=
-        (rc = orte_plm_base_orted_kill_local_procs(jobid))) {
-        ORTE_ERROR_LOG(rc);
-    }
-    
     return rc;
 }
 

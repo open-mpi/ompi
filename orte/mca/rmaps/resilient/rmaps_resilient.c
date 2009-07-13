@@ -129,12 +129,15 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
     int grp;
     char **nodes;
     bool found;
-    orte_proc_t *proc, *pc;
+    orte_proc_t *proc;
     
     /* have we already constructed the fault group list? */
     if (0 == opal_list_get_size(&mca_rmaps_resilient_component.fault_grps) &&
         NULL != mca_rmaps_resilient_component.fault_group_file) {
         /* construct it */
+        OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
+                             "%s rmaps:resilient: constructing fault groups",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         fp = fopen(mca_rmaps_resilient_component.fault_group_file, "r");
         if (NULL == fp) { /* not found */
             orte_show_help("help-orte-rmaps-resilient.txt", "orte-rmaps-resilient:file-not-found",
@@ -156,6 +159,10 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                     }
                     if (0 == strcmp(node->name, nodes[k])) {
                         OBJ_RETAIN(node);
+                        OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
+                                             "%s rmaps:resilient: adding node %s to fault group %d",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                             node->name, ftgrp->ftgrp));
                         opal_pointer_array_add(&ftgrp->nodes, node);
                         found = true;
                         break;
@@ -175,6 +182,10 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
      * needs to be re-mapped
      */
     if (0 < jdata->map->num_nodes) {
+        OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
+                             "%s rmaps:resilient: remapping job %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_JOBID_PRINT(jdata->jobid)));
         /* cycle through all the procs in this job to find the one(s) that failed */
         for (i=0; i < jdata->procs->size; i++) {
             /* get the proc object */
@@ -185,23 +196,11 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
             if (proc->state != ORTE_PROC_STATE_RESTART) {
                 continue;
             }
-            opal_output(0, "proc %s is to be restarted", ORTE_NAME_PRINT(&proc->name));
-            /* it is to be restarted - remove the proc from its current node */
-            oldnode = proc->node;
-            oldnode->num_procs--;
-            /* find this proc on node's pointer array */
-            for (k=0; k < oldnode->procs->size; k++) {
-                if (NULL == (pc = (orte_proc_t*)opal_pointer_array_get_item(oldnode->procs, k))) {
-                    continue;
-                }
-                if (pc->name.jobid == proc->name.jobid &&
-                    pc->name.vpid == proc->name.vpid) {
-                    /* NULL that item */
-                    opal_pointer_array_set_item(oldnode->procs, k, NULL);
-                    break;
-                }
-            }
-            /* if we have fault groups, flag all the fault groups that
+            OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
+                                 "%s rmaps:resilient: proc %s from node %s is to be restarted",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&proc->name), proc->node->name));
+             /* if we have fault groups, flag all the fault groups that
              * include this node so we don't reuse them
              */
             target = NULL;
@@ -219,7 +218,12 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                     }
                     if (0 == strcmp(node->name, proc->node->name)) {
                         /* yes - mark it to not be included */
+                        OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
+                                             "%s rmaps:resilient: node %s is in fault group %d, which will be excluded",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                             proc->node->name, ftgrp->ftgrp));
                         ftgrp->included = false;
+                        break;
                     }
                 }
                 /* if this ftgrp is not included, then skip it */
@@ -241,6 +245,10 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                 if (avgload < minload) {
                     minload = avgload;
                     target = ftgrp;
+                    OPAL_OUTPUT_VERBOSE((2, orte_rmaps_base.rmaps_output,
+                                         "%s rmaps:resilient: found new min load ftgrp %d",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         ftgrp->ftgrp));
                 }
             }
             /* if no ftgrps are available, then just map it on the lightest loaded
@@ -260,6 +268,10 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                         totprocs = node->num_procs;
                     }
                 }
+                OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
+                                     "%s rmaps:resilient: no avail fault groups found - placing proc on node %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     nd->name));
                 /* put proc on the found node */
                 OBJ_RETAIN(nd);  /* required to maintain bookkeeping */
                 proc->node = nd;
@@ -272,7 +284,6 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                  * be properly selected if active
                  */
                 orte_rmaps_base_update_usage(jdata, oldnode, nd, proc);
-                OBJ_RELEASE(oldnode);  /* required to maintain bookeeping */
                 continue;
             }
             /* if we did find a target, re-map the proc to the lightest loaded
@@ -289,18 +300,28 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                     nd = node;
                 }
             }
+            OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
+                                 "%s rmaps:resilient: placing proc %s into fault group %d node %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&proc->name), target->ftgrp, nd->name));
+            OBJ_RELEASE(proc->node);  /* required to maintain bookkeeping */
             /* put proc on the found node */
-            OBJ_RETAIN(nd);  /* required to maintain bookeeping */
-            proc->node = nd;
-            opal_pointer_array_add(nd->procs, (void*)proc);
-            nd->num_procs++;
+            if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, nd, proc->name.vpid, NULL, proc->app_idx,
+                                                                 NULL, jdata->map->oversubscribe, false))) {
+                /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
+                 * really isn't an error
+                 */
+                if (ORTE_ERR_NODE_FULLY_USED != rc) {
+                    ORTE_ERROR_LOG(rc);
+                    goto error;
+                }
+            }
             /* flag the proc state as non-launched so we'll know to launch it */
             proc->state = ORTE_PROC_STATE_INIT;
             /* update the node and local ranks so static ports can
              * be properly selected if active
              */
             orte_rmaps_base_update_usage(jdata, oldnode, nd, proc);
-            OBJ_RELEASE(oldnode);  /* required to maintain bookeeping */
         }
         /* define the daemons that we will use for this job */
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_define_daemons(jdata->map))) {
@@ -320,6 +341,11 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
      * a load-balanced way
      */
     
+    OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
+                         "%s rmaps:resilient: creating initial map for job %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_JOBID_PRINT(jdata->jobid)));
+
     /* start at the beginning... */
     vpid_start = 0;
     jdata->num_procs = 0;
@@ -342,6 +368,9 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
         }
         /* were we given a fault group definition? */
         if (0 < opal_list_get_size(&mca_rmaps_resilient_component.fault_grps)) {
+            OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
+                                 "%s rmaps:resilient: using fault groups",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             /* flag the fault groups included by these nodes */
             flag_nodes(&node_list);
             /* map each copy to a different fault group - if more copies are
@@ -357,6 +386,12 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                      item != opal_list_get_end(&mca_rmaps_resilient_component.fault_grps);
                      item = opal_list_get_next(item)) {
                     ftgrp = (orte_rmaps_res_ftgrp_t*)item;
+                    OPAL_OUTPUT_VERBOSE((2, orte_rmaps_base.rmaps_output,
+                                         "%s rmaps:resilient: fault group %d used: %s included %s",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         ftgrp->ftgrp,
+                                         ftgrp->used ? "YES" : "NO",
+                                         ftgrp->included ? "YES" : "NO" ));
                     /* if this ftgrp has already been used or is not included, then
                      * skip it
                      */
@@ -377,6 +412,10 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                     if (avgload < minload) {
                         minload = avgload;
                         target = ftgrp;
+                        OPAL_OUTPUT_VERBOSE((2, orte_rmaps_base.rmaps_output,
+                                             "%s rmaps:resilient: found new min load ftgrp %d",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                             ftgrp->ftgrp));
                     }
                 }
                 /* if we have more procs than fault groups, then we simply
@@ -385,6 +424,9 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                  * be contributing to fault tolerance by definition
                  */
                 if (NULL == target) {
+                    OPAL_OUTPUT_VERBOSE((2, orte_rmaps_base.rmaps_output,
+                                         "%s rmaps:resilient: no available fault group - mapping rr",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                     if (ORTE_SUCCESS != (rc = rr_map_default(jdata, app, &node_list, app->num_procs-vpid_start))) {
                         goto error;
                     }
@@ -401,6 +443,10 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                         nd = node;
                     }
                 }
+                OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
+                                     "%s rmaps:resilient: placing proc into fault group %d node %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     target->ftgrp, nd->name));
                 /* put proc on that node */
                 if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, nd, vpid_start, NULL, app->idx,
                                                                      &node_list, jdata->map->oversubscribe, false))) {
@@ -422,6 +468,9 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
             /* if we don't have a fault group definition, then just map the
              * procs in a round-robin manner
              */
+            OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
+                                 "%s rmaps:resilient: no fault groups provided - mapping rr",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             if (ORTE_SUCCESS != (rc = rr_map_default(jdata, app, &node_list, app->num_procs))) {
                 goto error;
             }

@@ -42,7 +42,6 @@ int orte_plm_submit_finalize(void);
  * Interface
  */
 int orte_plm_submit_launch(orte_job_t*);
-int orte_plm_submit_terminate_job(orte_jobid_t);
 int orte_plm_submit_terminate_orteds(void);
 int orte_plm_submit_signal_job(orte_jobid_t, int32_t);
 

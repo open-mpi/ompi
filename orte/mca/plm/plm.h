@@ -35,6 +35,7 @@
 
 #include "opal/mca/mca.h"
 #include "opal/dss/dss_types.h"
+#include "opal/class/opal_pointer_array.h"
 
 #include "orte/runtime/orte_globals.h"
 
@@ -84,6 +85,11 @@ typedef int (*orte_plm_base_module_terminate_job_fn_t)(orte_jobid_t);
 typedef int (*orte_plm_base_module_terminate_orteds_fn_t)(void);
 
 /**
+ * Terminate an array of specific procs
+ */
+typedef int (*orte_plm_base_module_terminate_procs_fn_t)(opal_pointer_array_t *procs);
+    
+    /**
  * Signal any processes launched for the respective jobid by
  * this component.
  */
@@ -99,6 +105,7 @@ struct orte_plm_base_module_1_0_0_t {
     orte_plm_base_module_remote_spawn_fn_t       remote_spawn;
     orte_plm_base_module_terminate_job_fn_t      terminate_job;
     orte_plm_base_module_terminate_orteds_fn_t   terminate_orteds;
+    orte_plm_base_module_terminate_procs_fn_t    terminate_procs;
     orte_plm_base_module_signal_job_fn_t         signal_job;
     orte_plm_base_module_finalize_fn_t           finalize;
 };

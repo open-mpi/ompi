@@ -50,7 +50,6 @@
 
 int orte_plm_xgrid_init(void);
 int orte_plm_xgrid_spawn(orte_job_t *jdata);
-int orte_plm_xgrid_terminate_job(orte_jobid_t jobid);
 int orte_plm_xgrid_terminate_orteds(void);
 int orte_plm_xgrid_signal_job(orte_jobid_t job, int32_t signal);
 int orte_plm_xgrid_finalize(void);
@@ -60,8 +59,9 @@ orte_plm_base_module_1_0_0_t orte_plm_xgrid_module = {
     orte_plm_base_set_hnp_name,
     orte_plm_xgrid_spawn,
     NULL,
-    orte_plm_xgrid_terminate_job,
+    orte_plm_base_orted_terminate_job,
     orte_plm_xgrid_terminate_orteds,
+    orte_plm_base_orted_kill_local_procs,
     orte_plm_xgrid_signal_job,
     orte_plm_xgrid_finalize
 };
@@ -192,19 +192,6 @@ orte_plm_xgrid_spawn(orte_job_t *jdata)
 				    ORTE_JOB_STATE_FAILED_TO_START);
     }
 
-    return rc;
-}
-
-
-int
-orte_plm_xgrid_terminate_job(orte_jobid_t jobid)
-{
-    int rc;
-    
-    if (ORTE_SUCCESS != (rc = orte_plm_base_orted_kill_local_procs(jobid))) {
-        ORTE_ERROR_LOG(rc);
-    }
-    
     return rc;
 }
 

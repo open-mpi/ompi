@@ -1354,7 +1354,12 @@ void orte_plm_base_reset_job(orte_job_t *jdata)
             /* this proc abnormally terminated */
             proc->state = ORTE_PROC_STATE_RESTART;
             proc->pid = 0;
-            /* remove the proc from the node upon which it was mapped */
+            /* remove the proc from the node upon which it was mapped
+             *
+             * NOTE: IT IS IMPORTANT THAT WE LEAVE THE proc->node CONNECTION
+             * ALONE SO THAT ANY RESILIENT MAPPING CAN KNOW WHERE THE PROC
+             * WAS PREVIOUSLY LOCATED
+             */
             node = proc->node;
             for (i=0; i < node->procs->size; i++) {
                 if (NULL == (proc_from_node = (orte_proc_t*)opal_pointer_array_get_item(node->procs, i))) {

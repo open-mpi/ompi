@@ -71,7 +71,6 @@
  */
 static int plm_ccp_init(void);
 static int plm_ccp_launch_job(orte_job_t *jdata);
-static int plm_ccp_terminate_job(orte_jobid_t jobid);
 static int plm_ccp_terminate_orteds();
 static int plm_ccp_signal_job(orte_jobid_t jobid, int32_t signal);
 static int plm_ccp_finalize(void);
@@ -90,8 +89,9 @@ orte_plm_base_module_t orte_plm_ccp_module = {
     orte_plm_base_set_hnp_name,
     plm_ccp_launch_job,
     NULL,
-    plm_ccp_terminate_job,
+    orte_plm_base_orted_terminate_job,
     plm_ccp_terminate_orteds,
+    orte_plm_base_orted_kill_local_procs,
     plm_ccp_signal_job,
     plm_ccp_finalize
 };
@@ -589,19 +589,6 @@ launch_apps:
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:ccp:launch: finished",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-
-    return rc;
-}
-
-
-static int plm_ccp_terminate_job(orte_jobid_t jobid)
-{
-    int rc;
-    
-   /* order all of the daemons to kill their local procs for this job */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_orted_kill_local_procs(jobid))) {
-        ORTE_ERROR_LOG(rc);
-    }
 
     return rc;
 }

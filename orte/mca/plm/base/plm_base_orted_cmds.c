@@ -225,7 +225,27 @@ int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command)
 }
 
 
-int orte_plm_base_orted_kill_local_procs(orte_jobid_t job)
+int orte_plm_base_orted_terminate_job(orte_jobid_t jobid)
+{
+    opal_pointer_array_t procs;
+    orte_proc_t proc;
+    int rc;
+    
+    OBJ_CONSTRUCT(&procs, opal_pointer_array_t);
+    opal_pointer_array_init(&procs, 1, 1, 1);
+    OBJ_CONSTRUCT(&proc, orte_proc_t);
+    proc.name.jobid = jobid;
+    proc.name.vpid = ORTE_VPID_WILDCARD;
+    opal_pointer_array_add(&procs, &proc);
+    if (ORTE_SUCCESS != (rc = orte_plm_base_orted_kill_local_procs(&procs))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    OBJ_DESTRUCT(&procs);
+    OBJ_DESTRUCT(&proc);
+    return rc;
+}
+
+int orte_plm_base_orted_kill_local_procs(opal_pointer_array_t *procs)
 {
     int rc;
     opal_buffer_t cmd;
@@ -234,13 +254,28 @@ int orte_plm_base_orted_kill_local_procs(orte_jobid_t job)
     orte_process_name_t peer;
     orte_job_t *daemons;
     orte_proc_t *proc;
+    int32_t num_procs;
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:orted_cmd sending kill_local_procs cmds",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
+    /* count the number of procs */
+    num_procs = 0;
+    for (v=0; v < procs->size; v++) {
+        if (NULL == opal_pointer_array_get_item(procs, v)) {
+            continue;
+        }
+        num_procs++;
+    }
+    
+    /* bozo check */
+    if (0 == num_procs) {
+        return ORTE_SUCCESS;
+    }
+    
     OBJ_CONSTRUCT(&cmd, opal_buffer_t);
-
+    
     /* pack the command */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(&cmd, &command, 1, ORTE_DAEMON_CMD))) {
         ORTE_ERROR_LOG(rc);
@@ -248,11 +283,23 @@ int orte_plm_base_orted_kill_local_procs(orte_jobid_t job)
         return rc;
     }
     
-    /* pack the jobid */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&cmd, &job, 1, ORTE_JOBID))) {
+    /* pack the number of procs */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&cmd, &num_procs, 1, OPAL_INT32))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&cmd);
         return rc;
+    }
+    
+    /* pack the proc names */
+    for (v=0; v < procs->size; v++) {
+        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(procs, v))) {
+            continue;
+        }
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&cmd, &(proc->name), 1, ORTE_NAME))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&cmd);
+            return rc;
+        }
     }
     
     /* if we are abnormally ordering the termination, then
@@ -272,7 +319,7 @@ int orte_plm_base_orted_kill_local_procs(orte_jobid_t job)
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return ORTE_ERR_NOT_FOUND;
         }
-
+        
         /* if I am the HNP, I need to get this message too, but just set things
          * up so the cmd processor gets called.
          * We don't want to message ourselves as this can create circular logic
@@ -320,7 +367,7 @@ int orte_plm_base_orted_kill_local_procs(orte_jobid_t job)
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&peer)));
             orte_rml.send_buffer_nb(&peer, &cmd, ORTE_RML_TAG_DAEMON, 0,
-                                send_callback, 0);
+                                    send_callback, 0);
         }
         OBJ_DESTRUCT(&cmd); /* done with this */
         
@@ -361,7 +408,6 @@ int orte_plm_base_orted_kill_local_procs(orte_jobid_t job)
     /* we're done! */
     return rc;
 }
-
 
 
 int orte_plm_base_orted_signal_local_procs(orte_jobid_t job, int32_t signal)
