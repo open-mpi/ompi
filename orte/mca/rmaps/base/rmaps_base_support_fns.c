@@ -117,10 +117,44 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     }
     
     
+    /* did the app_context contain an add-hostfile? */
+    if (NULL != app->add_hostfile) {
+        /* yes - filter the node list through the file, removing
+         * any nodes not found in the file
+         */
+        if (ORTE_SUCCESS != (rc = orte_util_filter_hostfile_nodes(allocated_nodes,
+                                                                  app->add_hostfile))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        /** check that anything is here */
+        if (0 == opal_list_get_size(allocated_nodes)) {
+            orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-mapped-node",
+                           true, app->app, app->hostfile);
+            return ORTE_ERR_SILENT;
+        }
+    }
+    
+    
     /* now filter the list through any -host specification */
     if (NULL != app->dash_host) {
         if (ORTE_SUCCESS != (rc = orte_util_filter_dash_host_nodes(allocated_nodes,
                                                                    app->dash_host))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        /** check that anything is left! */
+        if (0 == opal_list_get_size(allocated_nodes)) {
+            orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-mapped-node",
+                           true, app->app, "");
+            return ORTE_ERR_SILENT;
+        }
+    }
+    
+    /* now filter the list through any add-host specification */
+    if (NULL != app->add_host) {
+        if (ORTE_SUCCESS != (rc = orte_util_filter_dash_host_nodes(allocated_nodes,
+                                                                   app->add_host))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

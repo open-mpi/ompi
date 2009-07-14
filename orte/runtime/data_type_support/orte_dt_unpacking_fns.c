@@ -660,6 +660,30 @@ int orte_dt_unpack_app_context(opal_buffer_t *buffer, void *dest,
             return rc;
         }
         
+        /* get the number of add_host strings that were packed */
+        max_n = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &count, &max_n, ORTE_STD_CNTR))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /* if there are dash_host strings, allocate the required space for the char * pointers */
+        if (0 < count) {
+            app_context[i]->add_host = (char **)malloc((count+1) * sizeof(char*));
+            if (NULL == app_context[i]->add_host) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                return ORTE_ERR_OUT_OF_RESOURCE;
+            }
+            app_context[i]->add_host[count] = NULL;
+            
+            /* and unpack them */
+            max_n = count;
+            if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, app_context[i]->add_host, &max_n, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        }
+        
         /* get the number of dash_host strings that were packed */
         max_n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &count, &max_n, ORTE_STD_CNTR))) {

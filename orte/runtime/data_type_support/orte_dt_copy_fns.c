@@ -169,6 +169,8 @@ int orte_dt_copy_app_context(orte_app_context_t **dest, orte_app_context_t *src,
         (*dest)->add_hostfile = strdup(src->add_hostfile);
     }
     
+    (*dest)->add_host = opal_argv_copy(src->add_host);
+    
     (*dest)->dash_host = opal_argv_copy(src->dash_host);
     
     if (NULL != src->prefix_dir) {

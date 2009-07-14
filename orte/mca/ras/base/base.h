@@ -57,6 +57,8 @@ ORTE_DECLSPEC int orte_ras_base_select(void);
 ORTE_DECLSPEC int orte_ras_base_finalize(void);
 ORTE_DECLSPEC int orte_ras_base_close(void);
 
+ORTE_DECLSPEC int orte_ras_base_add_hosts(orte_job_t *jdata);
+
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS

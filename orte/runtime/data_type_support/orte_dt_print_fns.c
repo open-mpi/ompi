@@ -320,7 +320,7 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
         /* just provide a simple output for users */
         if (0 == src->num_procs) {
             /* no procs mapped yet, so just show allocation */
-            asprintf(&tmp, "\n%sData for node: Name: %s\tNum slots: %ld\tMax slots: %ld",
+            asprintf(&tmp, "\n%sData for node: %s\tNum slots: %ld\tMax slots: %ld",
                      pfx2, (NULL == src->name) ? "UNKNOWN" : src->name,
                      (long)src->slots, (long)src->slots_max);
             /* does this node have any aliases? */
@@ -335,7 +335,7 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
             *output = tmp;
             return ORTE_SUCCESS;
         }
-        asprintf(&tmp, "\n%sData for node: Name: %s\tNum procs: %ld",
+        asprintf(&tmp, "\n%sData for node: %s\tNum procs: %ld",
                  pfx2, (NULL == src->name) ? "UNKNOWN" : src->name,
                  (long)src->num_procs);
         /* does this node have any aliases? */
@@ -349,7 +349,7 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
         goto PRINT_PROCS;
     }
     
-    asprintf(&tmp, "\n%sData for node: Name: %s\t%s\tLaunch id: %ld\tState: %0x",
+    asprintf(&tmp, "\n%sData for node: %s\t%s\tLaunch id: %ld\tState: %0x",
              pfx2, (NULL == src->name) ? "UNKNOWN" : src->name,
              pfx2, (long)src->launch_id,
               src->state);
@@ -554,6 +554,13 @@ int orte_dt_print_app_context(char **output, char *prefix, orte_app_context_t *s
              (NULL == src->add_hostfile) ? "NULL" : src->add_hostfile);
     free(tmp);
     tmp = tmp2;
+    
+    count = opal_argv_count(src->add_host);
+    for (i=0; i < count; i++) {
+        asprintf(&tmp2, "%s\n%s\tAdd_host[%lu]: %s", tmp, pfx2, (unsigned long)i, src->add_host[i]);
+        free(tmp);
+        tmp = tmp2;
+    }
     
     count = opal_argv_count(src->dash_host);
     for (i=0; i < count; i++) {

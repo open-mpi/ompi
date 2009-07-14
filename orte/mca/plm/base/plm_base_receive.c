@@ -43,6 +43,7 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/routed/routed.h"
+#include "orte/mca/ras/base/base.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
@@ -164,13 +165,19 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
                  * orteds can find the correct binary. There always has to be at
                  * least one app_context in both parent and child, so we don't
                  * need to check that here. However, be sure not to overwrite
-                 * the prefix if the user already provide it!
+                 * the prefix if the user already provided it!
                  */
                 app = (orte_app_context_t*)opal_pointer_array_get_item(parent->apps, 0);
                 child_app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, 0);
                 if (NULL != app->prefix_dir &&
                     NULL == child_app->prefix_dir) {
                     child_app->prefix_dir = strdup(app->prefix_dir);
+                }
+                
+                /* process any add-hostfile and add-host options that were provided */
+                if (ORTE_SUCCESS != (rc = orte_ras_base_add_hosts(jdata))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto ANSWER_LAUNCH;
                 }
                 
                 /* find the sender's node in the job map */

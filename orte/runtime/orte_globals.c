@@ -453,6 +453,7 @@ static void orte_app_context_construct(orte_app_context_t* app_context)
     app_context->user_specified_cwd=false;
     app_context->hostfile=NULL;
     app_context->add_hostfile=NULL;
+    app_context->add_host = NULL;
     app_context->dash_host = NULL;
     app_context->prefix_dir = NULL;
     app_context->preload_binary = false;
@@ -487,6 +488,10 @@ static void orte_app_context_destructor(orte_app_context_t* app_context)
     
     if (NULL != app_context->add_hostfile) {
         free(app_context->add_hostfile);
+    }
+    
+    if (NULL != app_context->add_host) {
+        opal_argv_free(app_context->add_host);
     }
     
     if (NULL != app_context->dash_host) {

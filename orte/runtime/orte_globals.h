@@ -166,6 +166,8 @@ typedef struct {
     char *hostfile;
     /* Hostfile for adding hosts to an existing allocation */
     char *add_hostfile;
+    /* Hosts to be added to an existing allocation - analagous to -host */
+    char **add_host;
     /** argv of hosts passed in to -host */
     char ** dash_host;
     /** Prefix directory for this app (or NULL if no override necessary) */

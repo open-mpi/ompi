@@ -627,7 +627,13 @@ static int spawn(int count, char **array_of_commands,
                 app->add_hostfile = strdup(host);
             }
             
-            /* 'path', 'arch', 'file', 'soft', 'add-host'  -- to be implemented */ 
+            /* check for 'add-host' */
+            ompi_info_get (array_of_info[i], "add-host", sizeof(host) - 1, host, &flag);
+            if ( flag ) {
+                opal_argv_append_nosize(&app->add_host, host);
+            }
+            
+            /* 'path', 'arch', 'file', 'soft'  -- to be implemented */ 
             
             /* check for 'ompi_prefix' (OMPI-specific -- to effect the same
              * behavior as --prefix option to orterun)

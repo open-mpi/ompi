@@ -232,6 +232,8 @@ int orte_dt_size_app_context(size_t *size, orte_app_context_t *src, opal_data_ty
         *size += strlen(src->add_hostfile);  /* add_hostfile name */
     }
     
+    *size += opal_argv_len(src->add_host);
+
     *size += opal_argv_len(src->dash_host);
     
     if (NULL != src->prefix_dir) {
