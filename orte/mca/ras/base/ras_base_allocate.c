@@ -42,6 +42,41 @@
 
 #include "orte/mca/ras/base/ras_private.h"
 
+/* static function to display allocation */
+static void display_alloc(void)
+{
+    char *tmp=NULL, *tmp2, *tmp3, *pfx=NULL;
+    int i;
+    orte_node_t *alloc;
+    
+    if (orte_xml_output) {
+        asprintf(&tmp, "<allocation>\n");
+        pfx = "\t";
+    } else {
+        asprintf(&tmp, "\n======================   ALLOCATED NODES   ======================\n");
+    }
+    for (i=0; i < orte_node_pool->size; i++) {
+        if (NULL == (alloc = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+            continue;
+        }
+        opal_dss.print(&tmp2, pfx, alloc, ORTE_NODE);
+        if (NULL == tmp) {
+            tmp = tmp2;
+        } else {
+            asprintf(&tmp3, "%s%s", tmp, tmp2);
+            free(tmp);
+            free(tmp2);
+            tmp = tmp3;
+        }
+    }
+    if (orte_xml_output) {
+        opal_output(orte_clean_output, "%s</allocation>\n", tmp);
+    } else {
+        opal_output(orte_clean_output, "%s\n\n=================================================================\n", tmp);
+    }
+    free(tmp);    
+}
+
 /*
  * Function for selecting one component from all those that are
  * available.
@@ -50,10 +85,10 @@ int orte_ras_base_allocate(orte_job_t *jdata)
 {
     int rc;
     opal_list_t nodes;
-    orte_node_t *node, **alloc;
+    orte_node_t *node;
     orte_std_cntr_t i;
     bool override_oversubscribed;
-    orte_app_context_t **apps;
+    orte_app_context_t *app;
 
     OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
                          "%s ras:base:allocate",
@@ -188,21 +223,20 @@ int orte_ras_base_allocate(orte_job_t *jdata)
      * can be present
      */
     
-    /* convenience def */
-    apps = (orte_app_context_t**)jdata->apps->addr;
-    
-    for (i=0; i < jdata->num_apps; i++) {
-        if (NULL != apps[i]->hostfile) {
-            
+    for (i=0; i < jdata->apps->size; i++) {
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+            continue;
+        }
+        if (NULL != app->hostfile) {
             OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
                                  "%s ras:base:allocate checking hostfile %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 apps[i]->hostfile));
+                                 app->hostfile));
             
             /* hostfile was specified - parse it and add it to the list */
             if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes,
                                                 &override_oversubscribed,
-                                                apps[i]->hostfile))) {
+                                                app->hostfile))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_DESTRUCT(&nodes);
                 return rc;
@@ -249,11 +283,14 @@ int orte_ras_base_allocate(orte_job_t *jdata)
      * generate an error in this scenario, so only non-relative syntax
      * can be present
      */
-    for (i=0; i < jdata->num_apps; i++) {
-        if (NULL != apps[i]->dash_host) {
+    for (i=0; i < jdata->apps->size; i++) {
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+            continue;
+        }
+        if (NULL != app->dash_host) {
             if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&nodes,
                                                     &override_oversubscribed,
-                                                    apps[i]->dash_host))) {
+                                                    app->dash_host))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_DESTRUCT(&nodes);
                 return rc;
@@ -318,35 +355,99 @@ int orte_ras_base_allocate(orte_job_t *jdata)
 DISPLAY:
     /* shall we display the results? */
     if (orte_ras_base.display_alloc) {
-        char *tmp=NULL, *tmp2, *tmp3, *pfx=NULL;
-        if (orte_xml_output) {
-            asprintf(&tmp, "<allocation>\n");
-            pfx = "\t";
-        } else {
-            asprintf(&tmp, "\n======================   ALLOCATED NODES   ======================\n");
-        }
-        alloc = (orte_node_t**)orte_node_pool->addr;
-        for (i=0; i < orte_node_pool->size; i++) {
-            if (NULL == alloc[i]) {
-                break;
-            }
-            opal_dss.print(&tmp2, pfx, alloc[i], ORTE_NODE);
-            if (NULL == tmp) {
-                tmp = tmp2;
-            } else {
-                asprintf(&tmp3, "%s%s", tmp, tmp2);
-                free(tmp);
-                free(tmp2);
-                tmp = tmp3;
-            }
-        }
-        if (orte_xml_output) {
-            opal_output(orte_clean_output, "%s</allocation>\n", tmp);
-        } else {
-            opal_output(orte_clean_output, "%s\n\n=================================================================\n", tmp);
-        }
-        free(tmp);
+        display_alloc();
     }
     
     return rc;
+}
+
+int orte_ras_base_add_hosts(orte_job_t *jdata)
+{
+    int rc;
+    opal_list_t nodes;
+    bool override_oversubscribed;
+    int i;
+    orte_app_context_t *app;
+
+    /* construct a list to hold the results */
+    OBJ_CONSTRUCT(&nodes, opal_list_t);
+    
+    /* Individual add-hostfile names, if given, are included
+     * in the app_contexts for this job. We therefore need to
+     * retrieve the app_contexts for the job, and then cycle
+     * through them to see if anything is there. The parser will
+     * add the nodes found in each add-hostfile to our list - i.e.,
+     * the resulting list contains the UNION of all nodes specified
+     * in add-hostfiles from across all app_contexts
+     *
+     * Note that any relative node syntax found in the add-hostfiles will
+     * generate an error in this scenario, so only non-relative syntax
+     * can be present
+     */
+    
+    for (i=0; i < jdata->apps->size; i++) {
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+            continue;
+        }
+        if (NULL != app->add_hostfile) {
+            OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
+                                 "%s ras:base:add_hosts checking add-hostfile %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 app->add_hostfile));
+            
+            /* hostfile was specified - parse it and add it to the list */
+            if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes,
+                                                                   &override_oversubscribed,
+                                                                   app->add_hostfile))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_DESTRUCT(&nodes);
+                return rc;
+            }
+        }
+    }
+
+    /* We next check for and add any add-host options. Note this is
+     * a -little- different than dash-host in that (a) we add these
+     * nodes to the global pool regardless of what may already be there,
+     * and (b) as a result, any job and/or app_context can access them.
+     *
+     * Note that any relative node syntax found in the add-host lists will
+     * generate an error in this scenario, so only non-relative syntax
+     * can be present
+     */
+    for (i=0; i < jdata->apps->size; i++) {
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+            continue;
+        }
+        if (NULL != app->add_host) {
+            if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&nodes,
+                                                                    &override_oversubscribed,
+                                                                    app->add_host))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_DESTRUCT(&nodes);
+                return rc;
+            }
+        }
+    }
+    
+    /* if something was found, we add that to our global pool */
+    if (!opal_list_is_empty(&nodes)) {
+        /* store the results in the global resource pool - this removes the
+         * list items
+         */
+        if (ORTE_SUCCESS != (rc = orte_ras_base_node_insert(&nodes, jdata))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        /* update the jdata object with override_oversubscribed flag */
+        jdata->oversubscribe_override = override_oversubscribed;
+        /* cleanup */
+        OBJ_DESTRUCT(&nodes);
+    }
+    
+    /* shall we display the results? */
+    if (orte_ras_base.display_alloc) {
+        display_alloc();
+    }
+    
+    return ORTE_SUCCESS;
 }

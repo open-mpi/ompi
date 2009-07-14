@@ -108,6 +108,14 @@ hostfile                        char *    Hostfile containing the hosts on which
                                           the processes are to be spawned. See
                                           the \fIorte_hostfile\fP man page for an
                                           explanation of how this will be used.
+add-host                        char *    Add the specified host to the list of
+                                          hosts known to this job and use it
+                                          for the associated process. This will
+                                          be used similarly to the -host option.
+add-hostfile                    char *    Hostfile containing hosts to be added
+                                          to the list of hosts known to this job and
+                                          use it for the associated process. This will
+                                          be used similarly to the -hostfile option.
 wdir                            char *    Directory where the executable is located. If
                                           files are to be pre-positioned, then this
                                           location is the desired working directory

@@ -603,6 +603,22 @@ int orte_dt_pack_app_context(opal_buffer_t *buffer, const void *src,
             return rc;
         }
         
+        /* pack the add host argv array */
+        count = opal_argv_count(app_context[i]->add_host);
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, (void*)(&count), 1, ORTE_STD_CNTR))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /* if there are entries, pack the argv entries */
+        if (0 < count) {
+            if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
+                             (void*)(app_context[i]->add_host), count, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        }
+        
         /* pack the dash host argv array */
         count = opal_argv_count(app_context[i]->dash_host);
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, (void*)(&count), 1, ORTE_STD_CNTR))) {
