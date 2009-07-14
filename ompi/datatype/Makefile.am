@@ -20,7 +20,9 @@
 #
 
 headers = \
-        ompi_datatype.h
+        ompi_convertor.h \
+        ompi_datatype.h \
+        ompi_datatype_internal.h
 
 noinst_LTLIBRARIES = \
         libdatatype.la
