@@ -637,7 +637,6 @@ static void orte_job_destruct(orte_job_t* job)
                 break;
             }
         }
-        orte_job_data = NULL;
     }
 }
 
