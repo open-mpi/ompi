@@ -119,7 +119,7 @@ typedef struct {
 } ompi_complex_long_double_t;
 
 
-extern union dt_elem_desc ompi_datatype_predefined_elem_desc[2 * OMPI_DATATYPE_MPI_MAX_PREDEFINED];
+OMPI_DECLSPEC extern union dt_elem_desc ompi_datatype_predefined_elem_desc[2 * OMPI_DATATYPE_MPI_MAX_PREDEFINED];
 extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX_PREDEFINED];
 
 /* There 3 types of predefined data types.

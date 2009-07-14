@@ -208,9 +208,9 @@ union dt_elem_desc {
 /*
  * This array holds the descriptions desc.desc[2] of the predefined basic datatypes.
  */
-extern union dt_elem_desc opal_datatype_predefined_elem_desc[2 * OPAL_DATATYPE_MAX_PREDEFINED];
+OPAL_DECLSPEC extern union dt_elem_desc opal_datatype_predefined_elem_desc[2 * OPAL_DATATYPE_MAX_PREDEFINED];
 struct opal_datatype_t;
-extern const struct opal_datatype_t* opal_datatype_basicDatatypes[OPAL_DATATYPE_MAX_PREDEFINED];
+OPAL_DECLSPEC extern const struct opal_datatype_t* opal_datatype_basicDatatypes[OPAL_DATATYPE_MAX_PREDEFINED];
 
 /* Other fields starting after bdt_used (index of OPAL_DATATYPE_LOOP should be ONE) */
 /*
