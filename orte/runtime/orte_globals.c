@@ -467,39 +467,48 @@ static void orte_app_context_destructor(orte_app_context_t* app_context)
 {
     if (NULL != app_context->app) {
         free (app_context->app);
+        app_context->app = NULL;
     }
     
     /* argv and env lists created by util/argv copy functions */
     if (NULL != app_context->argv) {
         opal_argv_free(app_context->argv);
+        app_context->argv = NULL;
     }
     
     if (NULL != app_context->env) {
         opal_argv_free(app_context->env);
+        app_context->env = NULL;
     }
     
     if (NULL != app_context->cwd) {
         free (app_context->cwd);
+        app_context->cwd = NULL;
     }
     
     if (NULL != app_context->hostfile) {
         free(app_context->hostfile);
+        app_context->hostfile = NULL;
     }
     
     if (NULL != app_context->add_hostfile) {
         free(app_context->add_hostfile);
+        app_context->add_hostfile = NULL;
     }
     
     if (NULL != app_context->add_host) {
         opal_argv_free(app_context->add_host);
+        app_context->add_host = NULL;
     }
     
     if (NULL != app_context->dash_host) {
-        opal_argv_free(app_context->dash_host); 
+        opal_argv_free(app_context->dash_host);
+        app_context->dash_host = NULL;
     }
     
     if (NULL != app_context->prefix_dir) {
         free(app_context->prefix_dir);
+        app_context->prefix_dir = NULL;
     }
     
     app_context->preload_binary = false;
@@ -507,14 +516,17 @@ static void orte_app_context_destructor(orte_app_context_t* app_context)
 
     if(NULL != app_context->preload_files) {
         free(app_context->preload_files);
+        app_context->preload_files = NULL;
     }
     
     if(NULL != app_context->preload_files_dest_dir) {
         free(app_context->preload_files_dest_dir);
+        app_context->preload_files_dest_dir = NULL;
     }
 
     if(NULL != app_context->preload_files_src_dir) {
         free(app_context->preload_files_src_dir);
+        app_context->preload_files_src_dir = NULL;
     }
 }
 
@@ -589,7 +601,10 @@ static void orte_job_destruct(orte_job_t* job)
     }
     OBJ_RELEASE(job->apps);
     
-    if (NULL != job->map) OBJ_RELEASE(job->map);
+    if (NULL != job->map) {
+        OBJ_RELEASE(job->map);
+        job->map = NULL;
+    }
     
     for (n=0; n < job->procs->size; n++) {
         if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(job->procs, n))) {
@@ -602,9 +617,11 @@ static void orte_job_destruct(orte_job_t* job)
 #if OPAL_ENABLE_FT == 1
     if (NULL != job->ckpt_snapshot_ref) {
         free(job->ckpt_snapshot_ref);
+        job->ckpt_snapshot_ref = NULL;
     }
     if (NULL != job->ckpt_snapshot_loc) {
         free(job->ckpt_snapshot_loc);
+        job->ckpt_snapshot_loc = NULL;
     }
 #endif
     
@@ -620,6 +637,7 @@ static void orte_job_destruct(orte_job_t* job)
                 break;
             }
         }
+        orte_job_data = NULL;
     }
 }
 
@@ -661,27 +679,32 @@ static void orte_node_destruct(orte_node_t* node)
     
     if (NULL != node->name) {
         free(node->name);
+        node->name = NULL;
     }
 
     if (NULL != node->alias) {
         opal_argv_free(node->alias);
+        node->alias = NULL;
     }
     
     if (NULL != node->daemon) {
         node->daemon->node = NULL;
         OBJ_RELEASE(node->daemon);
+        node->daemon = NULL;
     }
     
     for (i=0; i < node->procs->size; i++) {
         if (NULL != node->procs->addr[i]) {
             ((orte_proc_t*)(node->procs->addr[i]))->node = NULL;
             OBJ_RELEASE(node->procs->addr[i]);
+            node->procs->addr[i] = NULL;
         }
     }
     OBJ_RELEASE(node->procs);
     
     if (NULL != node->username) {
         free(node->username);
+        node->username = NULL;
     }
 }
 
@@ -723,18 +746,27 @@ static void orte_proc_destruct(orte_proc_t* proc)
     
     if (NULL != proc->slot_list) {
         free(proc->slot_list);
+        proc->slot_list = NULL;
     }
 
-    if (NULL != proc->node) OBJ_RELEASE(proc->node);
+    if (NULL != proc->node) {
+        OBJ_RELEASE(proc->node);
+        proc->node = NULL;
+    }
     
-    if (NULL != proc->rml_uri) free(proc->rml_uri);
+    if (NULL != proc->rml_uri) {
+        free(proc->rml_uri);
+        proc->rml_uri = NULL;
+    }
     
 #if OPAL_ENABLE_FT == 1
     if (NULL != proc->ckpt_snapshot_ref) {
         free(proc->ckpt_snapshot_ref);
+        proc->ckpt_snapshot_ref = NULL;
     }
     if (NULL != proc->ckpt_snapshot_loc) {
         free(proc->ckpt_snapshot_loc);
+        proc->ckpt_snapshot_loc = NULL;
     }
 #endif
 }
@@ -755,9 +787,11 @@ static void orte_attr_destruct(orte_attr_t *ptr)
 {
     if (NULL != ptr->name) {
         free(ptr->name);
+        ptr->name = NULL;
     }
     if (NULL != ptr->bytes) {
         free(ptr->bytes);
+        ptr->bytes = NULL;
     }
 }
 
@@ -779,6 +813,7 @@ static void orte_nid_destruct(orte_nid_t *ptr)
     
     if (NULL != ptr->name) {
         free(ptr->name);
+        ptr->name = NULL;
     }
     while (NULL != (item = opal_list_remove_first(&ptr->attrs))) {
         OBJ_RELEASE(item);
@@ -859,6 +894,7 @@ static void orte_job_map_destruct(orte_job_map_t* map)
     for (i=0; i < map->nodes->size; i++) {
         if (NULL != map->nodes->addr[i]) {
             OBJ_RELEASE(map->nodes->addr[i]);
+            map->nodes->addr[i] = NULL;
         }
     }
     OBJ_RELEASE(map->nodes);
@@ -889,6 +925,7 @@ static void orte_regex_node_destruct(orte_regex_node_t *ptr)
 {
     if (NULL != ptr->prefix) {
         free(ptr->prefix);
+        ptr->prefix = NULL;
     }
     OBJ_DESTRUCT(&ptr->suffix);
     OBJ_DESTRUCT(&ptr->nodes);
