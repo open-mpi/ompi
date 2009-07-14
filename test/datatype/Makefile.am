@@ -40,7 +40,7 @@ to_self_SOURCES = to_self.c
 to_self_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
 to_self_LDADD = $(top_builddir)/ompi/libmpi.la
 
-opal_datatype_test_SOURCES = opal_datatype_test.c
+opal_datatype_test_SOURCES = opal_datatype_test.c opal_ddt_lib.c opal_ddt_lib.h
 opal_datatype_test_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
-opal_datatype_test_LDADD = opal_ddt_lib.o $(top_builddir)/opal/libopen-pal.la
+opal_datatype_test_LDADD = $(top_builddir)/opal/libopen-pal.la
 
