@@ -407,8 +407,8 @@ static inline bool ompi_op_is_valid(ompi_op_t * op, ompi_datatype_t * ddt,
     if (ompi_op_is_intrinsic(op)) {
         if (ompi_datatype_is_predefined(ddt)) {
             /* Intrinsic ddt on intrinsic op */
-            if (-1 == ompi_op_ddt_map[ddt->super.id] ||
-                NULL == op->o_func.intrinsic.fns[ompi_op_ddt_map[ddt->super.id]]) {
+            if (-1 == ompi_op_ddt_map[ddt->id] ||
+                NULL == op->o_func.intrinsic.fns[ompi_op_ddt_map[ddt->id]]) {
                 asprintf(msg,
                          "%s: the reduction operation %s is not defined on the %s datatype",
                          func, op->o_name, ddt->name);
@@ -495,9 +495,9 @@ static inline void ompi_op_reduce(ompi_op_t * op, void *source,
 
     /* For intrinsics, we also pass the corresponding op module */
     if (0 != (op->o_flags & OMPI_OP_FLAGS_INTRINSIC)) {
-        op->o_func.intrinsic.fns[ompi_op_ddt_map[dtype->super.id]](source, target,
-                                                                   &count, &dtype,
-                                                                   op->o_func.intrinsic.modules[ompi_op_ddt_map[dtype->super.id]]);
+        op->o_func.intrinsic.fns[ompi_op_ddt_map[dtype->id]](source, target,
+                                                             &count, &dtype,
+                                                             op->o_func.intrinsic.modules[ompi_op_ddt_map[dtype->id]]);
     }
 
     /* User-defined function */
@@ -548,10 +548,10 @@ static inline void ompi_3buff_op_reduce(ompi_op_t * op, void *source1,
     src2 = source2;
     tgt = target;
 
-    op->o_3buff_intrinsic.fns[ompi_op_ddt_map[dtype->super.id]](src1, src2,
-                                                                tgt, &count,
-                                                                &dtype,
-                                                                op->o_3buff_intrinsic.modules[ompi_op_ddt_map[dtype->super.id]]);
+    op->o_3buff_intrinsic.fns[ompi_op_ddt_map[dtype->id]](src1, src2,
+                                                          tgt, &count,
+                                                          &dtype,
+                                                          op->o_3buff_intrinsic.modules[ompi_op_ddt_map[dtype->id]]);
 }
 
 END_C_DECLS
