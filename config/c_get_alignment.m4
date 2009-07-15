@@ -29,7 +29,7 @@ AC_DEFUN([OMPI_C_GET_ALIGNMENT],[
 #include <stdio.h>
 #include <stdlib.h>
 struct foo { char c; $1 x; };
-int main()
+int main(int argc, char * argv[])
 {
     struct foo *p = (struct foo *) malloc(sizeof(struct foo));
     int diff;
