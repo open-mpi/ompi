@@ -2870,6 +2870,11 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs, bool se
                 goto RECORD;
             }
             
+            /* ensure the stdin IOF channel for this child is closed. The other
+             * channels will automatically close when the proc is killed
+             */
+            orte_iof.close(child->name, ORTE_IOF_STDIN);
+
             /* de-register the SIGCHILD callback for this pid so we don't get
              * multiple alerts sent back to the HNP
              */
