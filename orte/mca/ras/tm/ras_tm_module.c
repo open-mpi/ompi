@@ -73,6 +73,11 @@ static int allocate(opal_list_t *nodes)
         return ORTE_ERR_NOT_FOUND;
     }
     
+    /* save that value in the global job ident string for
+     * later use in any error reporting
+     */
+    orte_job_ident = strdup(pbs_jobid);
+    
     if (ORTE_SUCCESS != (ret = discover(nodes, pbs_jobid))) {
         ORTE_ERROR_LOG(ret);
         return ret;

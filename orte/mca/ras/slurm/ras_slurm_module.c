@@ -67,7 +67,17 @@ static int orte_ras_slurm_allocate(opal_list_t *nodes)
     char *slurm_node_str, *regexp;
     char *tasks_per_node, *node_tasks;
     char * tmp;
-  
+    char *slurm_jobid;
+    
+    slurm_jobid - getenv("SLURM_JOBID");
+    /* don't need to check this for NULL as we wouldn't
+     * have been selected if it wasn't already found
+     *
+     * save that value in the global job ident string for
+     * later use in any error reporting
+     */
+    orte_job_ident = strdup(slurm_jobid);
+    
     slurm_node_str = getenv("SLURM_NODELIST");
     if (NULL == slurm_node_str) {
         orte_show_help("help-ras-slurm.txt", "slurm-env-var-not-found", 1,
