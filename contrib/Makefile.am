@@ -93,6 +93,7 @@ EXTRA_DIST = \
         platform/win32/CMakeModules/ompi_configure.cmake \
         platform/win32/CMakeModules/ompi_find_type.cmake \
         platform/win32/CMakeModules/ompi_get_version.cmake \
+        platform/win32/CMakeModules/opal_functions.cmake \
         platform/win32/CMakeModules/setup_f77.cmake \
         platform/win32/ConfigFiles/install_dirs.h.cmake \
         platform/win32/ConfigFiles/mpi.h.cmake \
