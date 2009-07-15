@@ -58,7 +58,7 @@ How to install and configure VampirTrace
                               instrumentation type for the compiler-wrapper
 
       --enable-mpi            enable MPI support, default: enable if
-                              MPI-installation found by configure
+                              Open MPI found by configure
 
       --enable-omp            enable OpenMP support, default: enable if given
                               compiler supports OpenMP
@@ -78,11 +78,6 @@ How to install and configure VampirTrace
 
       --enable-papi           enable PAPI hardware counter support, default:
                               enable if found by configure
-
-      If your system does not have a MPI Fortran library, set
-
-      --enable-fmpi-lib       build MPI Fortran support library, default: enable
-                              if no MPI Fortran library found by configure
 
 
     * Important Optional Packages
@@ -128,14 +123,9 @@ How to install and configure VampirTrace
                               give the path for MPI-libraries, default:
                               MPIDIR/lib
 
-      --with-mpi-lib          use given mpi lib
+      --with-mpi-lib=MPILIB   use given mpi lib
 
-      --with-pmpi-lib         use given pmpi lib
-
-      If your system does not have a MPI Fortran library,
-      set '--enable-fmpi-lib' (see above), otherwise set
-
-      --with-fmpi-lib         use given fmpi lib
+      --with-pmpi-lib=PMPILIB use given pmpi lib, default MPILIB
 
 
   Set up the Environment

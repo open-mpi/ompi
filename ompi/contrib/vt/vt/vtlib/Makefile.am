@@ -1,5 +1,5 @@
 if AMBUILDMPI
-VTMPILIB = libvt.mpi.a
+VTMPILIB = libvt.mpi.a libvt.fmpi.a
 else
 VTMPILIB =
 endif
@@ -16,13 +16,7 @@ else
 VTHYBLIB =
 endif
 
-if AMBUILDFMPI
-VTFMPILIB = libvt.fmpi.a
-else
-VTFMPILIB =
-endif
-
-lib_LIBRARIES = libvt.a $(VTMPILIB) $(VTOMPLIB) $(VTHYBLIB) $(VTFMPILIB)
+lib_LIBRARIES = libvt.a $(VTMPILIB) $(VTOMPLIB) $(VTHYBLIB)
 
 OPARILIBDIR = $(top_builddir)/tools/opari/lib
 OPARIINCLUDE = -I$(top_srcdir)/tools/opari/lib
