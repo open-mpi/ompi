@@ -54,6 +54,7 @@
 #include <sys/types.h>
 #endif
 
+#include "opal/dss/dss_types.h"
 #include "opal/mca/mca.h"
 
 
