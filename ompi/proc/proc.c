@@ -113,7 +113,7 @@ int ompi_proc_init(void)
             proc->proc_hostname = orte_process_info.nodename;
             proc->proc_arch = opal_local_arch;
             /* add our arch to the modex */
-            if (OMPI_SUCCESS != (ret = ompi_modex_send_string("OMPI_ARCH", &proc->proc_arch, sizeof(proc->proc_arch)))) {
+            if (OMPI_SUCCESS != (ret = ompi_modex_send_key_value("OMPI_ARCH", &proc->proc_arch, OPAL_UINT32))) {
                 return ret;
             }
         } else {
@@ -141,8 +141,6 @@ int ompi_proc_set_arch(void)
 {
     ompi_proc_t *proc = NULL;
     opal_list_item_t *item = NULL;
-    uint32_t *arch;
-    size_t sizearch;
     int ret;
     
     OPAL_THREAD_LOCK(&ompi_proc_lock);
@@ -153,12 +151,10 @@ int ompi_proc_set_arch(void)
         proc = (ompi_proc_t*)item;
         
         if (proc->proc_name.vpid != ORTE_PROC_MY_NAME->vpid) {
-            if (OMPI_SUCCESS != (ret = ompi_modex_recv_string("OMPI_ARCH", proc, (void**)&arch, &sizearch))) {
+            if (OMPI_SUCCESS != (ret = ompi_modex_recv_key_value("OMPI_ARCH", proc, (void*)&(proc->proc_arch), OPAL_UINT32))) {
                 OPAL_THREAD_UNLOCK(&ompi_proc_lock);
                 return ret;
             }
-            proc->proc_arch = *arch;
-            free(arch);
             /* if arch is different than mine, create a new convertor for this proc */
             if (proc->proc_arch != opal_local_arch) {
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
@@ -543,7 +539,6 @@ ompi_proc_unpack(opal_buffer_t* buf,
             
             /* update all the values */
             plist[i]->proc_arch = new_arch;
-            
             /* if arch is different than mine, create a new convertor for this proc */
             if (plist[i]->proc_arch != opal_local_arch) {
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
