@@ -273,11 +273,16 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      nd->name));
                 /* put proc on the found node */
-                OBJ_RETAIN(nd);  /* required to maintain bookkeeping */
-                proc->node = nd;
-                opal_pointer_array_add(nd->procs, (void*)proc);
-                OBJ_RETAIN(proc);  /* required to maintain bookkeeping */
-                nd->num_procs++;
+                if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, nd, proc->name.vpid, NULL, proc->app_idx,
+                                                                     NULL, jdata->map->oversubscribe, false))) {
+                    /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
+                     * really isn't an error
+                     */
+                    if (ORTE_ERR_NODE_FULLY_USED != rc) {
+                        ORTE_ERROR_LOG(rc);
+                        goto error;
+                    }
+                }
                 /* flag the proc state as non-launched so we'll know to launch it */
                 proc->state = ORTE_PROC_STATE_INIT;
                 /* update the node and local ranks so static ports can
