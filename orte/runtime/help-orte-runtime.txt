@@ -58,3 +58,8 @@ The file we were reading was:
 FILE: %s
 
 Please check that this file was correctly generated.
+#
+[orte_nidmap:too_many_nodes]
+An error occurred while trying to pack the information about the job. More nodes
+have been found than the %d expected. Please check your configuration files such
+as the mapping.
