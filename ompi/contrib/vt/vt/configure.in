@@ -2,8 +2,8 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.60)
-AC_INIT(VampirTrace, 5.4.9, vampirsupport@zih.tu-dresden.de)
-AM_INIT_AUTOMAKE(VampirTrace, 5.4.9)
+AC_INIT(VampirTrace, 5.4.10, vampirsupport@zih.tu-dresden.de)
+AM_INIT_AUTOMAKE(VampirTrace, 5.4.10)
 AM_CONFIG_HEADER(config.h)
 
 ACVT_CONF_INIT
@@ -142,7 +142,7 @@ AM_CONDITIONAL(AMHAVELIBERTY, test x"$have_liberty" = "xyes")
 
 # Check for MPI and OpenMP
 check_omp="yes"; build_omp="yes"; force_omp="no"
-check_mpi="yes"; build_mpi="yes"; build_fmpi="no"; force_mpi="no"
+check_mpi="yes"; build_mpi="yes"; force_mpi="no"
 build_hyb="yes"
 AC_ARG_ENABLE(mpi,
 	AC_HELP_STRING([--enable-mpi], [enable MPI support, default: enable if MPI-installation found by configure]),
@@ -175,7 +175,7 @@ AS_IF([test x"$check_mpi" = "xyes"],
 	AS_IF([test x"$mpi_error" = "xyes"],
 	[
 		AS_IF([test x"$force_mpi" = "xyes"], [exit 1])
-		build_mpi="no"; build_fmpi="no"; build_hyb="no"
+		build_mpi="no"; build_hyb="no"
         ])
 ],
 [
@@ -201,7 +201,6 @@ AS_IF([test x"$check_omp" = "xyes"],
 ])
 
 AM_CONDITIONAL(AMBUILDMPI, test x"$build_mpi" = "xyes")
-AM_CONDITIONAL(AMBUILDFMPI, test x"$build_fmpi" = "xyes")
 AM_CONDITIONAL(AMHAVEOMP, test x"$have_omp" = "xyes")
 AM_CONDITIONAL(AMBUILDOMP, test x"$build_omp" = "xyes")
 AM_CONDITIONAL(AMBUILDHYB, test x"$build_hyb" = "xyes")

@@ -53,9 +53,9 @@ SPAN.textit		{ font-style: italic  }
 SPAN.arabic		{   }
 SPAN.textbf		{ font-weight: bold  }
 
-BODY {font-family: sans-serif;}
-
+BODY { font-family: sans-serif }
 </STYLE>
+
 </HEAD>
 
 <BODY >
@@ -63,7 +63,7 @@ BODY {font-family: sans-serif;}
 <P>
 
 <P>
-<B><BIG CLASS="XHUGE">VampirTrace 5.4.9 User Manual</BIG></B>
+<B><BIG CLASS="XHUGE">VampirTrace 5.4.10 User Manual</BIG></B>
 <BR>
 <BR>
 <BR>
@@ -1872,7 +1872,7 @@ default: automatically by configure
 <DD>&nbsp;
 <BR>
 enable MPI support, default: enable if
-                              MPI found by configure
+                              Open MPI found by configure
 
 <P>
 </DD>
@@ -1937,17 +1937,6 @@ default: enable if dyninst found
 enable PAPI hardware counter support, 
 <BR>
 default: enable if found by configure
-
-<P>
-</DD>
-<DT><STRONG><TT>-enable-fmpi-lib</TT></STRONG></DT>
-<DD>&nbsp;
-<BR>
-build the MPI Fortran support library, in case your 
-                              system does not have a MPI Fortran library. 
-<BR>
-default: enable if no MPI Fortran library 
-                              found by configure
 </DD>
 </DL>
 
@@ -2049,32 +2038,17 @@ give the path for MPI-libraries, default: <TT>$MPIDIR/lib/</TT>
 
 <P>
 </DD>
-<DT><STRONG><TT>-with-mpi-lib</TT></STRONG></DT>
+<DT><STRONG><TT>-with-mpi-lib=MPILIB</TT></STRONG></DT>
 <DD>&nbsp;
 <BR>
 use given mpi lib
 
 <P>
 </DD>
-<DT><STRONG><TT>-with-pmpi-lib</TT></STRONG></DT>
+<DT><STRONG><TT>-with-pmpi-lib=PMPILIB</TT></STRONG></DT>
 <DD>&nbsp;
 <BR>
-use given pmpi lib
-</DD>
-</DL>
-
-<P>
-If your system does not have an MPI Fortran library,
-set <TT>-enable-fmpi-lib</TT> (see above), otherwise set:
-
-<P>
-<DL>
-<DT><STRONG><TT>-with-fmpi-lib</TT></STRONG></DT>
-<DD>&nbsp;
-<BR>
-use given fmpi lib
-
-<P>
+use given pmpi lib, default: MPILIB
 </DD>
 </DL>
 
@@ -2105,7 +2079,7 @@ For example, this <TT>configure</TT> command line works for an NEC SX6 system wi
 
 <P>
 <PRE>
-% ./configure CC=sxcc CXX=sxc++ F77=sxf90 FC=sxf90 MPICC=sxmpicc
+% ./configure CC=sxcc CXX=sxc++ F77=sxf90 FC=sxf90
               AR=sxar RANLIB="sxar st" CXX_FOR_BUILD=c++
               --host=sx6-nec-superux14.1
               --with-otf-lib=-lotf

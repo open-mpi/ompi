@@ -405,10 +405,6 @@ AC_DEFUN([ACVT_CONF_SUMMARY],
 		[answer="yes"], [answer="no"])
 		echo "  Build MPI support:                         $answer"
 
-		AS_IF([test x"$build_fmpi" = "xyes"],
-		[answer="yes"], [answer="no"])
-		echo "   Build Fortran MPI wrapper library:        $answer"
-
 		AS_IF([test x"$build_omp" = "xyes"],
 		[answer="yes"], [answer="no"])
 		echo "  Build OpenMP support:                      $answer"
@@ -967,8 +963,7 @@ AC_DEFUN([ACVT_MEMHOOKS],
 AC_DEFUN([ACVT_MPI],
 [
 	mpi_error="no"
-	mpi_status_size=
-	have_mpithrd=
+	openmpi="no"
 	have_mpio=
 
 	MPIDIR=
@@ -998,404 +993,125 @@ AC_DEFUN([ACVT_MPI],
 	[AS_IF([test x"$MPIDIR" != x], [MPILIBDIR="-L$MPIDIR"lib/])])
 
 	AC_ARG_WITH(mpi-lib,
-		AC_HELP_STRING([--with-mpi-lib], [use given mpi lib]),
+		AC_HELP_STRING([--with-mpi-lib=MPILIB], [use given mpi lib]),
 	[MPILIB="$withval"])
 
 	AC_ARG_WITH(pmpi-lib,
-		AC_HELP_STRING([--with-pmpi-lib], [use given pmpi lib]),
+		AC_HELP_STRING([--with-pmpi-lib=PMPILIB], [use given pmpi lib, default: MPILIB]),
 	[PMPILIB="$withval"])
 
-	AC_ARG_WITH(fmpi-lib,
-		AC_HELP_STRING([--with-fmpi-lib], [use given fmpi lib]),
-	[FMPILIB="$withval"])
-
-	AC_ARG_WITH(mpi-status-size,
-		AC_HELP_STRING([--with-mpi-status-size],
-		[give the value of MPI_STATUS_SIZE, default: automatically by configure]),
-	[
-		AS_IF([test x"$withval" = "x" -o x"$withval" = "xyes" -o x"$withval" = "xno"],
-		[AC_MSG_ERROR([value of '--with-mpi-status-size' not properly set])],
-		[mpi_status_size=$withval])
-	])
-
-	AC_ARG_ENABLE(mpi-thread,
-		AC_HELP_STRING(--enable-mpi-thread,
-		[MPI supports threads, default: yes if found by configure]),
-	[AS_IF([test x"$enableval" = "xyes"], [have_mpithrd=yes], [have_mpithrd=no])])
+	AC_ARG_WITH(openmpi,
+		AC_HELP_STRING([--with-openmpi], [configure for building in Open MPI]),
+	[AS_IF([test x"$withval" = "xyes"], [openmpi="yes"])])
 
 	AC_ARG_ENABLE(mpi-io,
 		AC_HELP_STRING(--enable-mpi-io,
 		[MPI supports file access, default: yes if found by configure]),
-	[AS_IF([test x"$enableval" = "xyes"], [have_mpio=yes], [have_mpio=no])])
+	[AS_IF([test x"$enableval" = "xyes"], [have_mpio="yes"], [have_mpio="no"])])
 
-	AC_ARG_ENABLE(fmpi-lib,
-		AC_HELP_STRING([--enable-fmpi-lib],
-		[build MPI Fortran support library, default: enable if no MPI Fortran library found by configure]), 
-	[AS_IF([test x"$enableval" = "xyes"], [FMPILIB="-lvt.fmpi"; build_fmpi="yes"])])
-
-	AC_ARG_WITH(mpi-native,
-		AC_HELP_STRING([--with-mpi-native], [configure for computer manufacturer MPI]),
-		[
-			AS_IF([test x"$MPILIB" = x], [MPILIB="-lmpi"])
-			AS_IF([test x"$PMPILIB" = x], [PMPILIB="$MPILIB"])
-			AS_IF([test x"$FMPILIB" = x], [FMPILIB="-lvt.fmpi"])
-			build_fmpi="yes"
-		])
-	AC_ARG_WITH(mpich,
-		AC_HELP_STRING([--with-mpich], [configure for MPICH]),
-		[
-			AS_IF([test x"$MPILIB" = x], [MPILIB="-lmpich"])
-			AS_IF([test x"$PMPILIB" = x], [PMPILIB="-lpmpich $MPILIB"])
-			AS_IF([test x"$FMPILIB" = x], [FMPILIB="-lfmpich"])
-			MPICFLAGS="$MPICFLAGS -DMPICH_IGNORE_CXX_SEEK"
-		])
-	AC_ARG_WITH(mpich2,
-		AC_HELP_STRING([--with-mpich2], [configure for MPICH2]),
-		[
-			AS_IF([test x"$MPILIB" = x], [MPILIB="-lmpich"])
-			AS_IF([test x"$PMPILIB" = x], [PMPILIB="$MPILIB"])
-			AS_IF([test x"$FMPILIB" = x], [FMPILIB="-lfmpich"])
-			MPICFLAGS="$MPICFLAGS -DMPICH_IGNORE_CXX_SEEK"
-		])
-	AC_ARG_WITH(lam,
-		AC_HELP_STRING([--with-lam], [configure for LAM/MPI]),
-		[
-			AS_IF([test x"$MPILIB" = x], [MPILIB="-lmpi -llam"])
-			AS_IF([test x"$PMPILIB" = x], [PMPILIB="$MPILIB"])
-			AS_IF([test x"$FMPILIB" = x], [FMPILIB="-llamf77mpi"])
-		])
-	AC_ARG_WITH(openmpi,
-		AC_HELP_STRING([--with-openmpi], [configure for Open MPI]),
-		[
-			AS_IF([test x"$MPILIB" = x], [MPILIB="-lmpi"])
-			AS_IF([test x"$PMPILIB" = x], [PMPILIB="$MPILIB"])
-			AS_IF([test x"$FMPILIB" = x], [FMPILIB="-lvt.fmpi"])
-			have_mpithrd="yes"
-			build_fmpi="yes"
-		])
-	AC_ARG_WITH(hpmpi,
-		AC_HELP_STRING([--with-hpmpi], [configure for HP MPI]),
-		[
-			AS_IF([test x"$MPILIB" = x], [MPILIB="-lmtmpi"])
-			AS_IF([test x"$PMPILIB" = x], [PMPILIB="-lmtpmpi"])
-			AS_IF([test x"$FMPILIB" = x], [FMPILIB="-lvt.fmpi"])
-			build_fmpi="yes"
-		])
-	AC_ARG_WITH(intelmpi,
-		AC_HELP_STRING([--with-intelmpi], [configure for Intel MPI]),
-		[
-			AS_IF([test x"$MPILIB" = x], [MPILIB="-lmpi"])
-			AS_IF([test x"$PMPILIB" = x], [PMPILIB="$MPILIB"])
-			AS_IF([test x"$FMPILIB" = x], [FMPILIB="-lmpiif"])
-		])
-	AC_ARG_WITH(intelmpi2,
-		AC_HELP_STRING([--with-intelmpi2], [configure for Intel MPI2]),
-		[
-			AS_IF([test x"$MPILIB" = x], [MPILIB="-lmpi"])
-			AS_IF([test x"$PMPILIB" = x], [PMPILIB="$MPILIB"])
-			AS_IF([test x"$FMPILIB" = x], [FMPILIB="-lmpiif"])
-		])
-
-	AC_CHECK_PROGS(MPICC, mpicc hcc mpcc mpcc_r mpxlc mpixlc cmpicc mpiicc)
-
-	AS_IF([test x"$MPICC" != x],
+	AS_IF([test "$openmpi" = "yes"],
 	[
-		mpicc=`echo $MPICC | cut -d ' ' -f 1`
-		which_mpicc=`which $mpicc 2>/dev/null`
-		AS_IF([test x"$which_mpicc" = x], [AC_MSG_ERROR([$mpicc not found!])])
-
-		mpi_bin_dir=`dirname $which_mpicc`
-		AS_IF([test "$mpi_bin_dir" != "/usr/bin"],
-		[
-			AS_IF([test x"$MPIDIR" = x],
-			[MPIDIR=`echo $mpi_bin_dir | sed -e 's/bin//'`])
-			AS_IF([test x"$MPIINCDIR" = x],
-			[MPIINCDIR=-I`echo $mpi_bin_dir | sed -e 's/bin/include/'`])
-			AS_IF([test x"$MPILIBDIR" = x],
-			[MPILIBDIR=-L`echo $mpi_bin_dir | sed -e 's/bin/lib/'`])
-		])
+		MPICC="$CC"
+		MPIINCDIR="-I$top_vt_builddir/../../../include"
+		MPILIB="-lmpi"
+		AS_IF([test x"$have_mpio" = x], [have_mpio="yes"])
+		AC_MSG_NOTICE([skipped further tests for MPI])
 	],
 	[
-		sav_CPPFLAGS=$CPPFLAGS
-		CPPFLAGS="$CPPFLAGS $MPIINCDIR"
-		AC_CHECK_HEADER([mpi.h], [MPICC="$CC"],
+		AC_CHECK_PROGS(MPICC, mpicc hcc mpcc mpcc_r mpxlc mpixlc cmpicc mpiicc)
+
+		AS_IF([test x"$MPICC" != x],
 		[
-			AC_MSG_NOTICE([error: no mpi.h found; check path for MPI package first...])
-			mpi_error="yes"
-		])
-		CPPFLAGS=$sav_CPPFLAGS
-	])
+			mpicc=`echo $MPICC | cut -d ' ' -f 1`
+			which_mpicc=`which $mpicc 2>/dev/null`
+			AS_IF([test x"$which_mpicc" = x], [AC_MSG_ERROR([$mpicc not found!])])
 
-dnl	check for MPILIB
-
-	AS_IF([test x"$MPILIB" = x -a "$mpi_error" = "no"],
-	[
-		sav_LIBS=$LIBS
-		LIBS="$LIBS $MPILIBDIR -lmpich"
-		AC_MSG_CHECKING([whether linking with -lmpich works])
-		AC_TRY_LINK([],[],
-		[AC_MSG_RESULT([yes]); MPILIB=-lmpich],[AC_MSG_RESULT([no])])
-		LIBS=$sav_LIBS
-		AS_IF([test x"$MPILIB" != x],
-		[MPICFLAGS="$MPICFLAGS -DMPICH_IGNORE_CXX_SEEK"])
-	])
-
-	AS_IF([test x"$MPILIB" = x -a "$mpi_error" = "no"],
-	[
-		sav_LIBS=$LIBS
-		LIBS="$LIBS $MPILIBDIR -lmpichg2"
-		AC_MSG_CHECKING([whether linking with -lmpichg2 works])
-		AC_TRY_LINK([],[],
-		[AC_MSG_RESULT([yes]); MPILIB=-lmpichg2],[AC_MSG_RESULT([no])])
-		LIBS=$sav_LIBS
-		AS_IF([test x"$MPILIB" != x],
-		[MPICFLAGS="$MPICFLAGS -DMPICH_IGNORE_CXX_SEEK"])
-	])
-
-	AS_IF([test x"$MPILIB" = x -a "$mpi_error" = "no"],
-	[
-		sav_LIBS=$LIBS
-		LIBS="$LIBS $MPILIBDIR -lhpmpi"
-		AC_MSG_CHECKING([whether linking with -lhpmpi works])
-		AC_TRY_LINK([],[],
-		[AC_MSG_RESULT([yes]); MPILIB=-lhpmpi],[AC_MSG_RESULT([no])])
-		LIBS=$sav_LIBS
-		AS_IF([test x"$MPILIB" != x],
-		[
-			sav_LIBS=$LIBS
-			LIBS="$LIBS $MPILIBDIR -lmtmpi"
-			AC_MSG_CHECKING([whether linking with -lmtmpi works])
-			AC_TRY_LINK([],[],
-			[AC_MSG_RESULT([yes]); MPILIB=-lmtmpi],[AC_MSG_RESULT([no])])
-			LIBS=$sav_LIBS
-		])
-	])
-
-	AS_IF([test x"$MPILIB" = x -a "$mpi_error" = "no"],
-	[
-		sav_LIBS=$LIBS
-		LIBS="$LIBS $MPILIBDIR -lmpi"
-		AC_MSG_CHECKING([whether linking with -lmpi works])
-		AC_TRY_LINK([],[],
-		[AC_MSG_RESULT([yes]); MPILIB=-lmpi],[AC_MSG_RESULT([no])])
-		LIBS=$sav_LIBS
-		AS_IF([test x"$MPILIB" != x],
-		[
-			sav_LIBS=$LIBS
-			LIBS="$LIBS $MPILIBDIR -llam"
-			AC_MSG_CHECKING([whether linking with -llam works])
-			AC_TRY_LINK([],[],
-			[AC_MSG_RESULT([yes]); MPILIB="-lmpi -llam"],[AC_MSG_RESULT([no])])
-			LIBS=$sav_LIBS
-		])
-	])
-
-	AS_IF([test x"$MPILIB" = x -a "$mpi_error" = "no"],
-	[
-		AC_MSG_NOTICE([error: no libhpmpi, libmpich, libmpi, or liblam found; check path for MPI package first...])
-		mpi_error="yes"
-	])
-
-dnl	check for PMPILIB
-
-	AS_IF([test x"$PMPILIB" = x -a "$mpi_error" = "no"],
-	[
-		sav_LIBS=$LIBS
-		LIBS="$LIBS $MPILIBDIR -lpmpich"
-		AC_MSG_CHECKING([whether linking with -lpmpich works])
-		AC_TRY_LINK([],[],
-		[AC_MSG_RESULT([yes]); PMPILIB=-lpmpich],[AC_MSG_RESULT([no])])
-		LIBS=$sav_LIBS
-	])
-
-	AS_IF([test x"$PMPILIB" = x -a "$mpi_error" = "no"],
-	[
-		sav_LIBS=$LIBS
-		LIBS="$LIBS $MPILIBDIR -lpmpichg2"
-		AC_MSG_CHECKING([whether linking with -lpmpichg2 works])
-		AC_TRY_LINK([],[],
-		[AC_MSG_RESULT([yes]); PMPILIB=-lpmpichg2],[AC_MSG_RESULT([no])])
-		LIBS=$sav_LIBS
-	])
-
-	AS_IF([test x"$PMPILIB" = x -a "$mpi_error" = "no"],
-	[
-		sav_LIBS=$LIBS
-		LIBS="$LIBS $MPILIBDIR -lpmpi"
-		AC_MSG_CHECKING([whether linking with -lpmpi works])
-		AC_TRY_LINK([],[],
-		[AC_MSG_RESULT([yes]); PMPILIB=-lpmpi],[AC_MSG_RESULT([no])])
-		LIBS=$sav_LIBS
-		AS_IF([test x"$PMPILIB" != x],
-		[
-			sav_LIBS=$LIBS
-			LIBS="$LIBS $MPILIBDIR -lmtpmpi"
-			AC_MSG_CHECKING([whether linking with -lmtpmpi works])
-			AC_TRY_LINK([],[],
-			[AC_MSG_RESULT([yes]); PMPILIB=-lmtpmpi],[AC_MSG_RESULT([no])])
-			LIBS=$sav_LIBS
-		])
-	])
-
-	AS_IF([test x"$PMPILIB" = x -a "$mpi_error" = "no"],
-	[
-		PMPILIB="$MPILIB"
-		AC_MSG_WARN([no libpmpich, or libpmpi found; assuming $MPILIB])
-	])
-
-dnl	check for FMPILIB
-
-	AS_IF([test x"$FMPILIB" = x -a "$mpi_error" = "no"],
-	[
-		sav_LIBS=$LIBS
-		LIBS="$LIBS $MPILIBDIR -lfmpich"
-		AC_MSG_CHECKING([whether linking with -lfmpich works])
-		AC_TRY_LINK([],[],
-		[AC_MSG_RESULT([yes]); FMPILIB=-lfmpich],[AC_MSG_RESULT([no])])
-		LIBS=$sav_LIBS
-	])
-
-	AS_IF([test x"$FMPILIB" = x -a "$mpi_error" = "no"],
-	[
-		sav_LIBS=$LIBS
-		LIBS="$LIBS $MPILIBDIR -llamf77mpi"
-		AC_MSG_CHECKING([whether linking with -llamf77mpi works])
-		AC_TRY_LINK([],[],
-		[AC_MSG_RESULT([yes]); FMPILIB=-llamf77mpi],[AC_MSG_RESULT([no])])
-		LIBS=$sav_LIBS
-	])
-
-	AS_IF([test x"$FMPILIB" = x -a "$mpi_error" = "no"],
-	[
-		sav_LIBS=$LIBS
-		LIBS="$LIBS $MPILIBDIR -lmpiif"
-		AC_MSG_CHECKING([whether linking with -lmpiif works])
-		AC_TRY_LINK([],[],
-		[AC_MSG_RESULT([yes]); FMPILIB=-lmpiif],[AC_MSG_RESULT([no])])
-		LIBS=$sav_LIBS
-	])
-
-	AS_IF([test x"$FMPILIB" = x -a "$mpi_error" = "no"],
-	[
-		sav_LIBS=$LIBS
-		LIBS="$LIBS $MPILIBDIR -lfmpi"
-		AC_MSG_CHECKING([whether linking with -lfmpi works])
-		AC_TRY_LINK([],[],
-		[AC_MSG_RESULT([yes]); FMPILIB=-lfmpi],[AC_MSG_RESULT([no])])
-		LIBS=$sav_LIBS
-	])
-
-	AS_IF([test x"$FMPILIB" = x -a "$mpi_error" = "no"],
-	[
-		FMPILIB="-lvt.fmpi"
-		build_fmpi="yes"
-		AC_MSG_WARN([no libfmpich, liblamf77mpi, libfmpi, or libmpiif found; build libvt.fmpi.a])
-	])
-
-dnl	check for MPI_STATUS_SIZE
-
-	AS_IF([test x"$build_fmpi" = "xyes" -a "$mpi_error" = "no"],
-	[
-		AC_MSG_CHECKING([for the value of MPI_STATUS_SIZE])
-		AS_IF([test x"$mpi_status_size" != x],
-		[
-			AC_MSG_RESULT([skipped (--with-mpi-status-size=$mpi_status_size)])
-			AC_DEFINE_UNQUOTED(MPI_STATUS_SIZE, [$mpi_status_size], [Define as the size of MPI_STATUS_SIZE])
+			mpi_bin_dir=`dirname $which_mpicc`
+			AS_IF([test "$mpi_bin_dir" != "/usr/bin"],
+			[
+				AS_IF([test x"$MPIDIR" = x],
+				[MPIDIR=`echo $mpi_bin_dir | sed -e 's/bin//'`])
+				AS_IF([test x"$MPIINCDIR" = x],
+				[MPIINCDIR=-I`echo $mpi_bin_dir | sed -e 's/bin/include/'`])
+				AS_IF([test x"$MPILIBDIR" = x],
+				[MPILIBDIR=-L`echo $mpi_bin_dir | sed -e 's/bin/lib/'`])
+			])
 		],
+		[
+			sav_CPPFLAGS=$CPPFLAGS
+			CPPFLAGS="$CPPFLAGS $MPIINCDIR"
+			AC_CHECK_HEADER([mpi.h], [MPICC="$CC"],
+			[
+				AC_MSG_NOTICE([error: no mpi.h found; check path for MPI package first...])
+				mpi_error="yes"
+			])
+			CPPFLAGS=$sav_CPPFLAGS
+		])
+
+dnl		check for Open MPI
+
+		AS_IF([test "$mpi_error" = "no"],
 		[
 			sav_CC=$CC
 			sav_CFLAGS=$CFLAGS
 			CC=$MPICC
 			CFLAGS="$CFLAGS $MPIINCDIR"
-			AC_TRY_RUN(
-[
-#include <stdio.h>
-#include <mpi.h>
-int main () {
-  FILE * f = fopen( "conftest.val", "w" );
-  if( !f ) return 1;
-  fprintf( f, "%d", MPI_STATUS_SIZE );
-  fclose( f );
-  return 0;
-}], [mpi_status_size=`cat ./conftest.val`], [], [mpi_status_size=])
-
-			AS_IF([test x"$mpi_status_size" != x],
+			AC_CHECK_DECL([OPEN_MPI], [],
 			[
-				AC_MSG_RESULT([$mpi_status_size])],
-			[
-				AC_TRY_RUN(
-[
-#include <stdio.h>
-#include <mpi.h>
-int main () {
-  FILE * f;
-  int sizeof_mpistatus = sizeof( MPI_Status );
-  int sizeof_int = sizeof( int );
-  if( sizeof_mpistatus == 0 || sizeof_int == 0 ) return 1;
-  f = fopen( "conftest.val", "w" );
-  if( !f ) return 1;
-  fprintf( f, "%d", sizeof_mpistatus / sizeof_int );
-  fclose( f );
-  return 0;
-}], [mpi_status_size=`cat ./conftest.val`], [], [mpi_status_size=])
-
-				AS_IF([test x"$mpi_status_size" != x],
-				[
-					AC_MSG_RESULT([$mpi_status_size])
-				],
-				[
-					mpi_status_size=5
-					AC_MSG_RESULT([unknown])
-					AC_MSG_WARN([could not determine the value of MPI_STATUS_SIZE; assuming $mpi_status_size])
-				])
-				AC_DEFINE_UNQUOTED(MPI_STATUS_SIZE, [$mpi_status_size], [Define as the size of MPI_STATUS_SIZE])
-			])
-
-			rm -f conftest.val
+				AC_MSG_NOTICE([error: unsupported MPI implementation; This version of VampirTrace does only support Open MPI.])
+				mpi_error="yes"
+			], [#include "mpi.h"])
 			CC=$sav_CC
 			CFLAGS=$sav_CFLAGS
+		])
+
+dnl		check for MPILIB
+
+		AS_IF([test x"$MPILIB" = x -a "$mpi_error" = "no"],
+		[
+			sav_LIBS=$LIBS
+			LIBS="$LIBS $MPILIBDIR -lmpi"
+			AC_MSG_CHECKING([whether linking with -lmpi works])
+			AC_TRY_LINK([],[],
+			[AC_MSG_RESULT([yes]); MPILIB=-lmpi],[AC_MSG_RESULT([no])])
+			LIBS=$sav_LIBS
+		])
+
+		AS_IF([test x"$MPILIB" = x -a "$mpi_error" = "no"],
+		[
+			AC_MSG_NOTICE([error: no libmpi found; check path for MPI package first...])
+			mpi_error="yes"
+		])
+
+dnl		check for MPI I/O
+
+		AS_IF([test x"$have_mpio" = x -a "$mpi_error" = "no"],
+		[
+			sav_CC=$CC
+			sav_CFLAGS=$CFLAGS
+			sav_LIBS=$LIBS
+			CC=$MPICC
+			CFLAGS="$CFLAGS $MPIINCDIR"
+			LIBS="$LIBS $MPILIBDIR $MPILIB"
+			AC_CHECK_FUNC([MPI_File_open], [have_mpio="yes"], [have_mpio="no"])
+			CC=$sav_CC
+			CFLAGS=$sav_CFLAGS
+			LIBS=$sav_LIBS
 		])
 	])
 
 	AS_IF([test "$mpi_error" = "no"],
 	[
-		sav_CC=$CC
-		sav_CFLAGS=$CFLAGS
-		sav_LIBS=$LIBS
-		CC=$MPICC
-		CFLAGS="$CFLAGS $MPIINCDIR"
-		LIBS="$LIBS $MPILIBDIR $MPILIB"
+		AS_IF([test x"$PMPILIB" = x"$MPILIB"], [PMPILIB=])
+		FMPILIB="-lvt.fmpi"
 
-dnl		check for MPI Thread support
-
-		AS_IF([test x"$have_mpithrd" = x],
-		[
-			AC_CHECK_FUNC([MPI_Init_thread],
-				[have_mpithrd="yes"], [have_mpithrd="no"])
-		])
-		AS_IF([test "$have_mpithrd" = "yes"],
-		[AC_DEFINE([HAVE_MPITHRD], [1], [Define to 1 if MPI supports threads.])])
-
-dnl		check for MPI I/O
-
-		AS_IF([test x"$have_mpio" = x],
-		[
-			AC_CHECK_FUNC([MPI_File_open],
-				[have_mpio="yes"], [have_mpio="no"])
-		])
 		AS_IF([test "$have_mpio" = "yes"],
 		[AC_DEFINE([HAVE_MPIO], [1], [Define to 1 if MPI supports file access.])])
-
-		CC=$sav_CC
-		CFLAGS=$sav_CFLAGS
-		LIBS=$sav_LIBS
+	],
+	[
+		MPICC="$CC"
 	])
 
-
-	AS_IF([test "$mpi_error" = "yes"], [MPICC=$CC])
-
-	AS_IF([test x"$PMPILIB" = x"$MPILIB"], [PMPILIB=])
-	
 	AC_SUBST(MPIDIR)
 	AC_SUBST(MPIINCDIR)
 	AC_SUBST(MPILIBDIR)
