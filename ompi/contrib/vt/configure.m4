@@ -22,7 +22,7 @@
 #                        [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([OMPI_contrib_vt_CONFIG],[
-    contrib_vt_args="--disable-option-checking 'MPICC=$CC' --with-openmpi '--with-mpi-inc-dir=$top_ompi_builddir/ompi/include' --with-mpi-status-size=5 --disable-config-titles --disable-config-summary"
+    contrib_vt_args="--disable-option-checking --with-openmpi --disable-config-titles --disable-config-summary"
 
     contrib_vt_skip=no
     eval "set x $ac_configure_args"; shift
