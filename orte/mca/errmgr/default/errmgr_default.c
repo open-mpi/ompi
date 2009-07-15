@@ -54,12 +54,12 @@ void orte_errmgr_default_proc_aborted(orte_process_name_t *name, int exit_code)
         goto PROCESS;
     }
     
-    if (NULL != jdata->err_cbfunc && (ORTE_JOB_STATE_ABORTED & jdata->err_cbstates)) {
+    if (NULL != jdata->err_cbfunc && (ORTE_PROC_STATE_ABORTED & jdata->err_cbstates)) {
         OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_output,
                              "%s errmgr:default: proc %s aborted with status %d - calling cbfunc",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(name), exit_code));
-        jdata->err_cbfunc(name->jobid, ORTE_JOB_STATE_ABORTED, jdata->err_cbdata);
+        jdata->err_cbfunc(name, ORTE_PROC_STATE_ABORTED, jdata->err_cbdata);
         return;
     }
     
@@ -75,14 +75,19 @@ PROCESS:
     }
     
     OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_output,
-                         "%s errmgr:default: proc %s aborting with status %d",
+                         "%s errmgr:default: proc %s aborted with status %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(name), exit_code));
     
     orte_job_term_ordered = true;
     
+    /* if the proc is a daemon, then we are abnormally terminating */
+    if (ORTE_PROC_MY_NAME->jobid == name->jobid) {
+        orte_abnormal_term_ordered = true;
+    }
+    
     /* indicate that all jobs other than the one containing this
-     * proc have been orted to abort - this is necessary to avoid
+     * proc have been ordered to abort - this is necessary to avoid
      * duplicate ordering of "abort".
      *
      * NOTE: be sure to not include the 0 job data location as this
@@ -128,6 +133,7 @@ void orte_errmgr_default_incomplete_start(orte_jobid_t job, int exit_code)
 {
     int rc;
     orte_job_t *jdata;
+    orte_process_name_t name;
     
     /* get the job data object for this process */
     if (NULL == (jdata = orte_get_job_data_object(job))) {
@@ -135,12 +141,14 @@ void orte_errmgr_default_incomplete_start(orte_jobid_t job, int exit_code)
         goto PROCESS;
     }
     
-    if (NULL != jdata->err_cbfunc && (ORTE_JOB_STATE_FAILED_TO_START & jdata->err_cbstates)) {
+    if (NULL != jdata->err_cbfunc && (ORTE_PROC_STATE_FAILED_TO_START & jdata->err_cbstates)) {
         OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_output,
                              "%s errmgr:cm: job %s reported incomplete start with status %d - calling cbfunc",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(job), exit_code));
-        jdata->err_cbfunc(job, ORTE_JOB_STATE_FAILED_TO_START, jdata->err_cbdata);
+        name.jobid = job;
+        name.vpid = ORTE_VPID_WILDCARD;
+        jdata->err_cbfunc(&name, ORTE_PROC_STATE_FAILED_TO_START, jdata->err_cbdata);
         return;
     }
     
@@ -181,7 +189,7 @@ PROCESS:
  * Register a callback function upon a change to a specified job state.
  */
 int orte_errmgr_default_register_callback(orte_jobid_t job,
-                                          orte_job_state_t state,
+                                          orte_proc_state_t state,
                                           orte_err_cb_fn_t cbfunc,
                                           void *cbdata)
 {

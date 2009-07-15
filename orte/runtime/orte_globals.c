@@ -566,7 +566,7 @@ static void orte_job_construct(orte_job_t* job)
     job->aborted_proc = NULL;
     
     job->err_cbfunc = NULL;
-    job->err_cbstates = ORTE_JOB_STATE_UNDEF;
+    job->err_cbstates = ORTE_PROC_STATE_UNDEF;
     job->err_cbdata = NULL;
     
 #if OPAL_ENABLE_FT == 1

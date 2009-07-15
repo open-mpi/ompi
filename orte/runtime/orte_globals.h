@@ -258,7 +258,7 @@ typedef uint8_t orte_job_controls_t;
 #define ORTE_JOB_CONTROL_CONTINUOUS_OP      0x40
 
 /* error manager callback function */
-typedef void (*orte_err_cb_fn_t)(orte_jobid_t job, orte_job_state_t state, void *cbdata);
+typedef void (*orte_err_cb_fn_t)(orte_process_name_t *proc, orte_proc_state_t state, void *cbdata);
 
 typedef struct {
     /** Base object so this can be put on a list */
@@ -309,7 +309,7 @@ typedef struct {
     /* errmgr callback function for this job, if any */
     orte_err_cb_fn_t err_cbfunc;
     /* states that will trigger callback */
-    orte_job_state_t err_cbstates;
+    orte_proc_state_t err_cbstates;
     /* errmgr callback data */
     void *err_cbdata;
 #if OPAL_ENABLE_FT == 1

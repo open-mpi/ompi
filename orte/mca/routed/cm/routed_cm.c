@@ -714,7 +714,22 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
 
 static int route_lost(const orte_process_name_t *route)
 {
-    /* if we lose the connection to the lifeline and we are NOT already,
+    /* if we are the HNP and lose a route, check to see if it is
+     * to a daemon
+     */
+    if (ORTE_PROC_IS_HNP) {
+        if (ORTE_PROC_MY_NAME->jobid == route->jobid) {
+            /* this was a daemon - notify the errmgr
+             * so we can take appropriate recovery, if desired
+             */
+            orte_errmgr.proc_aborted((orte_process_name_t*)route, 1);
+        }
+        /* either way, take no further action */
+        return ORTE_SUCCESS;
+    }
+
+    /* if we are not the HNP and lose the connection to the
+     * lifeline, and we are NOT already,
      * in finalize, tell the OOB to abort.
      * NOTE: we cannot call abort from here as the OOB needs to first
      * release a thread-lock - otherwise, we will hang!!
