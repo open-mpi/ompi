@@ -636,15 +636,15 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr)
             if (NULL == (proc = (orte_proc_t *) opal_pointer_array_get_item(jdata->procs, i))) {
                 continue;
             }
+            if( k >= (int)jdata->num_procs ) {
+                orte_show_help("help-orte-runtime.txt", "orte_nidmap:too_many_nodes",
+                               true, jdata->num_procs);
+                break;
+            }
             nodes[k] = proc->node->index;
             lrank[k] = proc->local_rank;
             nrank[k] = proc->node_rank;
-            if( ++k >= (int)jdata->num_procs ) {
-                orte_show_help("help-orte-runtime.txt", "orte_nidmap:too_many_nodes",
-                               true, jdata->num_procs);
-                rc = ORTE_ERROR;
-                goto cleanup_and_return;
-            }
+            ++k;
         }
         if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, nodes, jdata->num_procs, OPAL_INT32))) {
             ORTE_ERROR_LOG(rc);
