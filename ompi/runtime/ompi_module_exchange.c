@@ -23,8 +23,12 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/dss/dss.h"
 
 #include "orte/mca/grpcomm/grpcomm.h"
+
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
 
 #include "ompi/proc/proc.h"
 #include "ompi/runtime/ompi_module_exchange.h"
@@ -79,4 +83,57 @@ ompi_modex_recv_string(const char* key,
                        void **buffer, size_t *size)
 {
     return orte_grpcomm.get_proc_attr(source_proc->proc_name, key, buffer, size);
+}
+
+int
+ompi_modex_send_key_value(const char* key,
+                          const void *value,
+                          opal_data_type_t dtype)
+{
+    int rc;
+    opal_buffer_t buf;
+    opal_byte_object_t bo;
+    
+    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, value, 1, dtype))) {
+        OBJ_DESTRUCT(&buf);
+        return rc;
+    }
+    if (OPAL_SUCCESS != (rc = opal_dss.unload(&buf, (void**)&bo.bytes, &bo.size))) {
+        OBJ_DESTRUCT(&buf);
+        return rc;
+    }
+    OBJ_DESTRUCT(&buf);
+    
+    return orte_grpcomm.set_proc_attr(key, bo.bytes, bo.size);
+}
+
+
+int
+ompi_modex_recv_key_value(const char* key,
+                          struct ompi_proc_t *source_proc,
+                          void *value, opal_data_type_t dtype)
+{
+    int rc;
+    opal_buffer_t buf;
+    opal_byte_object_t bo;
+    int32_t n;
+    size_t bsize;
+    
+    bo.bytes = NULL;
+    bo.size = 0;
+    if (OMPI_SUCCESS != (rc = orte_grpcomm.get_proc_attr(source_proc->proc_name, key,
+                                                         (void**)&bo.bytes, &bsize))) {
+        return rc;
+    }
+    bo.size = bsize;
+    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+    if (OMPI_SUCCESS != (rc = opal_dss.load(&buf, bo.bytes, bo.size))) {
+        OBJ_DESTRUCT(&buf);
+        return rc;
+    }
+    n = 1;
+    rc = opal_dss.unpack(&buf, value, &n, dtype);
+    OBJ_DESTRUCT(&buf);
+    return rc;
 }
