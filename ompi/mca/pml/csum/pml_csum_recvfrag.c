@@ -36,13 +36,14 @@
 
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/mca/notifier/notifier.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/peruse/peruse-internal.h"
 #include "ompi/memchecker.h"
-#include "orte/mca/errmgr/errmgr.h"
 
 #include "pml_csum.h"
 #include "pml_csum_comm.h"
@@ -64,6 +65,28 @@ OBJ_CLASS_INSTANCE( mca_pml_csum_recv_frag_t,
 /**
  * Static functions.
  */
+
+/**
+ * Dump data elements that caused a checksum violation
+ */
+static void dump_csum_error_data(mca_btl_base_segment_t* segments, size_t num_segments)
+{
+    size_t i, j;
+    uint8_t *data;
+    
+    printf("CHECKSUM ERROR DATA\n");
+    for (i = 0; i < num_segments; ++i) {
+        printf("Segment %lu", i);
+        data = (uint8_t*)segments[i].seg_addr.pval;
+        for (j=0; j < segments[i].seg_len; j++) {
+            if (0 == (j % 40)) {
+                printf("\n");
+            }
+            printf("%02x ", data[j]);
+        };
+    }
+    printf("\nEND CHECKSUM ERROR DATA\n\n");
+}
 
 /**
  * Append a unexpected descriptor to a queue. This function will allocate and
@@ -144,6 +167,11 @@ void mca_pml_csum_recv_frag_callback_match(mca_btl_base_module_t* btl,
     if (csum_received != csum) {
         opal_output(0, "%s:%s:%d: Invalid \'match header\' - received csum:0x%04x  != computed csum:0x%04x\n",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, csum_received, csum);
+        orte_notifier.log(ORTE_NOTIFIER_INFRA, 1,
+                          "Checksum header violation: job %s file %s line %d",
+                          (NULL == orte_job_ident) ? "UNKNOWN" : orte_job_ident,
+                          __FILE__, __LINE__);
+        dump_csum_error_data(segments, 1);
         orte_errmgr.abort(-1,NULL);
     }
     
@@ -270,6 +298,11 @@ void mca_pml_csum_recv_frag_callback_match(mca_btl_base_module_t* btl,
             if (csum_data != hdr->hdr_csum) {
                 opal_output(0, "%s:%s:%d: Invalid \'match data\' - received csum:0x%x  != computed csum:0x%x\n",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, hdr->hdr_csum, csum_data);
+                orte_notifier.log(ORTE_NOTIFIER_INFRA, 1,
+                                  "Checksum data violation: job %s file %s line %d",
+                                  (NULL == orte_job_ident) ? "UNKNOWN" : orte_job_ident,
+                                  __FILE__, __LINE__);
+                dump_csum_error_data(segments, num_segments);
                 orte_errmgr.abort(-1,NULL);
             }
         }
@@ -314,6 +347,11 @@ void mca_pml_csum_recv_frag_callback_rndv(mca_btl_base_module_t* btl,
     if (csum_received != csum) {
         opal_output(0, "%s:%s:%d: Invalid \'rndv header\' - received csum:0x%04x  != computed csum:0x%04x\n",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, csum_received, csum);
+        orte_notifier.log(ORTE_NOTIFIER_INFRA, 1,
+                          "Checksum header violation: job %s file %s line %d",
+                          (NULL == orte_job_ident) ? "UNKNOWN" : orte_job_ident,
+                          __FILE__, __LINE__);
+        dump_csum_error_data(segments, 1);
         orte_errmgr.abort(-1,NULL);
     }
     
@@ -367,6 +405,11 @@ void mca_pml_csum_recv_frag_callback_ack(mca_btl_base_module_t* btl,
     if (csum_received != csum) {
         opal_output(0, "%s:%s:%d: Invalid \'ACK header\' - received csum:0x%04x  != computed csum:0x%04x\n",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, csum_received, csum);
+        orte_notifier.log(ORTE_NOTIFIER_INFRA, 1,
+                          "Checksum header violation: job %s file %s line %d",
+                          (NULL == orte_job_ident) ? "UNKNOWN" : orte_job_ident,
+                          __FILE__, __LINE__);
+        dump_csum_error_data(segments, 1);
         orte_errmgr.abort(-1,NULL);
     }
     
@@ -415,6 +458,11 @@ void mca_pml_csum_recv_frag_callback_frag(mca_btl_base_module_t* btl,
     if(csum_received != csum) {
         opal_output(0, "%s:%s:%d: Invalid \'frag header\' - received csum:0x%04x  != computed csum:0x%04x\n",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, csum_received, csum);
+        orte_notifier.log(ORTE_NOTIFIER_INFRA, 1,
+                          "Checksum header violation: job %s file %s line %d",
+                          (NULL == orte_job_ident) ? "UNKNOWN" : orte_job_ident,
+                          __FILE__, __LINE__);
+        dump_csum_error_data(segments, 1);
         orte_errmgr.abort(-1,NULL);
     }
     
@@ -452,6 +500,11 @@ void mca_pml_csum_recv_frag_callback_put(mca_btl_base_module_t* btl,
     if(csum_received != csum) {
         opal_output(0, "%s:%s:%d: Invalid \'PUT header\' - received csum:0x%04x  != computed csum:0x%04x\n",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, csum_received, csum);
+        orte_notifier.log(ORTE_NOTIFIER_INFRA, 1,
+                          "Checksum header violation: job %s file %s line %d",
+                          (NULL == orte_job_ident) ? "UNKNOWN" : orte_job_ident,
+                          __FILE__, __LINE__);
+        dump_csum_error_data(segments, 1);
         orte_errmgr.abort(-1,NULL);
     }
     
@@ -489,6 +542,11 @@ void mca_pml_csum_recv_frag_callback_fin(mca_btl_base_module_t* btl,
     if(csum_received != csum) {
         opal_output(0, "%s:%s:%d: Invalid \'FIN header\' - received csum:0x%04x  != computed csum:0x%04x\n",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, csum_received, csum);
+        orte_notifier.log(ORTE_NOTIFIER_INFRA, 1,
+                          "Checksum header violation: job %s file %s line %d",
+                          (NULL == orte_job_ident) ? "UNKNOWN" : orte_job_ident,
+                          __FILE__, __LINE__);
+        dump_csum_error_data(segments, 1);
         orte_errmgr.abort(-1,NULL);
     }
     
