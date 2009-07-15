@@ -268,7 +268,7 @@ static int map_app_by_slot(orte_app_context_t* app,
 static int orte_rmaps_rf_map(orte_job_t *jdata)
 {
     orte_job_map_t *map;
-    orte_app_context_t *app=NULL, **apps;
+    orte_app_context_t *app=NULL;
     orte_std_cntr_t i, k;
     orte_vpid_t total_procs;
     opal_list_t node_list;
@@ -282,7 +282,12 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
     
     /* convenience def */
     map = jdata->map;
-    apps = (orte_app_context_t**)jdata->apps->addr;
+    
+    /* pickup the first app - there must be at least one */
+    if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, 0))) {
+        rc = ORTE_ERR_SILENT;
+        goto error;
+    }
     
     /* SANITY CHECKS */
     
@@ -290,7 +295,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
      * one app_context allowed in the launch, and that we are to launch it across
      * all available slots. We'll double-check the single app_context rule first
      */
-    if (0 == apps[0]->num_procs && 1 < jdata->num_apps) {
+    if (0 == app->num_procs && 1 < jdata->num_apps) {
         orte_show_help("help-rmaps_rank_file.txt", "orte-rmaps-rf:multi-apps-and-zero-np",
                        true, jdata->num_apps, NULL);
         rc = ORTE_ERR_SILENT;
@@ -327,8 +332,10 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
     }
     
     /* cycle through the app_contexts, mapping them sequentially */
-    for(i=0; i < jdata->num_apps; i++) {
-        app = apps[i];
+    for(i=0; i < jdata->apps->size; i++) {
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+            continue;
+        }
         
         /* for each app_context, we have to get the list of nodes that it can
          * use since that can now be modified with a hostfile and/or -host
@@ -473,8 +480,10 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
          * mapping policy
          */
         vpid_start = 0;
-        for(i=0; i < jdata->num_apps; i++) {
-            app = apps[i];
+        for(i=0; i < jdata->apps->size; i++) {
+            if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+                continue;
+            }
             
             /* for each app_context, we have to get the list of nodes that it can
              * use since that can now be modified with a hostfile and/or -host
@@ -530,6 +539,9 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
         jdata->bookmark = (orte_node_t*)cur_node_item;
     }
     
+    /* update the job's number of procs */
+    jdata->num_procs = total_procs;
+    
     /* compute and save convenience values */
     if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_usage(jdata))) {
         ORTE_ERROR_LOG(rc);
@@ -541,7 +553,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-
+    
     /* cleanup the rankmap */
     for (i=0; i < rankmap.size; i++) {
         if (NULL != (rfmap = opal_pointer_array_get_item(&rankmap, i))) {
