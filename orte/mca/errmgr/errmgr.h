@@ -120,7 +120,7 @@ typedef void (*orte_errmgr_base_module_incomplete_start_fn_t)(orte_jobid_t job, 
  * MUST do nothing but return ORTE_SUCCESS.
  */
 typedef int (*orte_errmgr_base_module_register_cb_fn_t)(orte_jobid_t job,
-                                                        orte_job_state_t state,
+                                                        orte_proc_state_t state,
                                                         orte_err_cb_fn_t cbfunc,
                                                         void *cbdata);
 
