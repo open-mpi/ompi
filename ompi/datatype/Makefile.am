@@ -20,7 +20,6 @@
 #
 
 headers = \
-        ompi_convertor.h \
         ompi_datatype.h \
         ompi_datatype_internal.h
 
