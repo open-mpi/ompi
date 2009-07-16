@@ -336,7 +336,7 @@ mca_btl_base_descriptor_t* mca_btl_sctp_prepare_dst(
         return NULL;
     }
 
-    ompi_datatype_type_lb(convertor->pDesc, &lb);
+    opal_datatype_type_lb(convertor->pDesc, &lb);
     frag->segments->seg_len = *size;
     frag->segments->seg_addr.pval = convertor->pBaseBuf + lb + convertor->bConverted;
 
