@@ -196,6 +196,8 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
             if (proc->state != ORTE_PROC_STATE_RESTART) {
                 continue;
             }
+            /* save the current node */
+            oldnode = proc->node;
             OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
                                  "%s rmaps:resilient: proc %s from node %s is to be restarted",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
