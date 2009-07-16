@@ -152,37 +152,6 @@ datatype_check(char *type, size_t local_size, size_t remote_size, uint32_t *coun
     }
 }
 
-#if 0 /* XXX TODO to be deleted? */
-/* char has no endian issues, so don't really worry about it */
-static int32_t
-copy_char_heterogeneous(opal_convertor_t *pConvertor, uint32_t count,
-                        const char* from, uint32_t from_len, OPAL_PTRDIFF_TYPE from_extent,
-                        char* to, uint32_t to_length, OPAL_PTRDIFF_TYPE to_extent,
-                        OPAL_PTRDIFF_TYPE *advance)
-{
-    uint32_t i;
-
-    datatype_check("char", sizeof(char), sizeof(char), &count,
-                   from, from_len, from_extent,
-                   to, to_length, to_extent);
-
-    if( (from_extent == sizeof(char)) &&
-        (to_extent == sizeof(char)) ) {
-        /* copy of contigous data at both source and destination */
-        MEMCPY( to, from, count * sizeof(char) );
-    } else {
-        /* source or destination are non-contigous */
-        for( i = 0; i < count; i++ ) {
-            MEMCPY( to, from, sizeof(char) );
-            to += to_extent;
-            from += from_extent;
-        }
-    }
-    *advance = count * from_extent;
-    return count;
-}
-#endif /* 0 */
-
 #define CXX_BOOL_COPY_LOOP(TYPE)                        \
     for( i = 0; i < count; i++ ) {                      \
         bool *to_real = (bool*) to;                     \
@@ -312,22 +281,7 @@ COPY_TYPE_HETEROGENEOUS( float16, long double )
 #define copy_float16_heterogeneous NULL
 #endif
 
-#if 0 /* XXX TODO */
-#if SIZEOF_BOOL == SIZEOF_CHAR
-COPY_TYPE_HETEROGENEOUS (bool, char)
-#elif SIZEOF_BOOL == SIZEOF_SHORT
-COPY_TYPE_HETEROGENEOUS (bool, short)
-#elif SIZEOF_BOOL == SIZEOF_INT
-COPY_TYPE_HETEROGENEOUS (bool, int)
-#elif SIZEOF_BOOL == SIZEOF_LONG
-COPY_TYPE_HETEROGENEOUS (bool, long)
-#else
-#error No basic type for copy function for opal_datatype_bool found
-#endif
-#endif /* 0 */
-
 COPY_TYPE_HETEROGENEOUS (wchar, wchar_t)
-
 
 /* table of predefined copy functions - one for each MPI type */
 conversion_fct_t opal_datatype_heterogeneous_copy_functions[OPAL_DATATYPE_MAX_PREDEFINED] = {
