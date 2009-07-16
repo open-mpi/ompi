@@ -19,7 +19,7 @@
 #include "opal/sys/atomic.h"
 #include "opal/mca/paffinity/paffinity.h"
 
-#include "ompi/datatype/convertor.h" 
+#include "ompi/datatype/ompi_convertor.h" 
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "ompi/mca/mpool/mpool.h" 

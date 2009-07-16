@@ -26,6 +26,7 @@
 #include "btl_sctp_proc.h"
 #include "btl_sctp_endpoint.h"
 #include "opal/datatype/opal_convertor.h" 
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mca/mpool/base/base.h" 
 #include "ompi/mca/mpool/mpool.h" 
 #include "ompi/proc/proc.h"
