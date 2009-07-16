@@ -21,7 +21,7 @@
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
-#if HAVE_STRING_H
+#ifdef HAVE_STRING_H
 #include <string.h>
 #endif  /* HAVE_STRING_H */
 #include "ompi/mca/mpool/mpool.h"

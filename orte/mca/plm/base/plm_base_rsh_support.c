@@ -22,7 +22,7 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#if HAVE_STRING_H
+#ifdef HAVE_STRING_H
 #include <string.h>
 #endif
 #ifdef HAVE_SYS_TIME_H

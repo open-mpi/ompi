@@ -27,7 +27,7 @@
 
 #include "opal/dss/dss.h"
 
-#if HAVE_STRING_H
+#ifdef HAVE_STRING_H
 #    if !defined(STDC_HEADERS) && HAVE_MEMORY_H
 #        include <memory.h>
 #    endif

@@ -10,7 +10,7 @@
 
 #include "ompi_config.h"
 
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H*/
 #ifdef HAVE_STDLIB_H

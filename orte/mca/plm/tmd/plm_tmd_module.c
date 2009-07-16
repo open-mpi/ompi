@@ -29,7 +29,7 @@
 #include "orte/constants.h"
 #include "orte/types.h"
 
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 #include <signal.h>

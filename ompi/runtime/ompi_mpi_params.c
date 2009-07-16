@@ -24,7 +24,7 @@
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
-#if HAVE_TIME_H
+#ifdef HAVE_TIME_H
 #include <time.h>
 #endif  /* HAVE_TIME_H */
 
