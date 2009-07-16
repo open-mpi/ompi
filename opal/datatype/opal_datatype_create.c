@@ -89,7 +89,7 @@ opal_datatype_t* opal_datatype_create( int32_t expectedSize )
     datatype->desc.length = expectedSize + 1;  /* one for the fake elem at the end */
     datatype->desc.used   = 0;
     datatype->desc.desc   = (dt_elem_desc_t*)calloc(datatype->desc.length, sizeof(dt_elem_desc_t));
-    /* XXX: an OMPI-layer configured with OPAL_MAX_OBJECT_NAME different than the OPAL-layer will not work! */
+    /* BEWARE: an upper-layer configured with OPAL_MAX_OBJECT_NAME different than the OPAL-layer will not work! */
     memset( datatype->name, 0, OPAL_MAX_OBJECT_NAME );
     return datatype;
 }
