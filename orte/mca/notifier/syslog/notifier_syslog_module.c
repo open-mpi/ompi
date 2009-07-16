@@ -74,6 +74,14 @@ static void mylog(int severity, int errcode, const char *msg, ...)
 {
     va_list arglist;
     
+    /* is the severity value above the threshold - I know
+     * this seems backward, but lower severity values are
+     * considered "more severe"
+     */
+    if (severity > orte_notifier_threshold_severity) {
+        return;
+    }
+
     /* If there was a message, output it */
     va_start(arglist, msg);
     vsyslog(severity, msg, arglist);
@@ -85,6 +93,14 @@ static void myhelplog(int severity, int errcode, const char *filename, const cha
     va_list arglist;
     char *output;
     
+    /* is the severity value above the threshold - I know
+     * this seems backward, but lower severity values are
+     * considered "more severe"
+     */
+    if (severity > orte_notifier_threshold_severity) {
+        return;
+    }
+
     va_start(arglist, topic);
     output = opal_show_help_vstring(filename, topic, false, arglist);
     va_end(arglist);
@@ -107,6 +123,14 @@ static void mypeerlog(int severity, int errcode, orte_process_name_t *peer_proc,
     char *pos = buf;
     char *errstr = (char*)orte_err2str(errcode);
     int len, space = ORTE_NOTIFIER_MAX_BUF;
+
+    /* is the severity value above the threshold - I know
+     * this seems backward, but lower severity values are
+     * considered "more severe"
+     */
+    if (severity > orte_notifier_threshold_severity) {
+        return;
+    }
 
     if (peer_proc) {
         peer_host = orte_ess.proc_get_hostname(peer_proc);
