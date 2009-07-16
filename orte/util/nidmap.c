@@ -595,14 +595,13 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo)
 
 int orte_util_encode_pidmap(opal_byte_object_t *boptr)
 {
-    int32_t *nodes;
     orte_proc_t *proc;
-    int i, j, k;
     opal_buffer_t buf;
     orte_local_rank_t *lrank = NULL;
     orte_node_rank_t *nrank = NULL;
     orte_job_t *jdata = NULL;
-    int rc;
+    int32_t *nodes = NULL;
+    int i, j, k, rc = ORTE_SUCCESS;
 
     /* setup the working buffer */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);

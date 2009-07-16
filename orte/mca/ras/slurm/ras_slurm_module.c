@@ -69,7 +69,7 @@ static int orte_ras_slurm_allocate(opal_list_t *nodes)
     char * tmp;
     char *slurm_jobid;
     
-    slurm_jobid - getenv("SLURM_JOBID");
+    slurm_jobid = getenv("SLURM_JOBID");
     /* don't need to check this for NULL as we wouldn't
      * have been selected if it wasn't already found
      *
