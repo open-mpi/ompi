@@ -56,8 +56,8 @@ OBJ_CLASS_INSTANCE( mca_pml_ob1_recv_frag_t,
 
 /**
  * Append a unexpected descriptor to a queue. This function will allocate and
- * initialize the fragment (if necessary) and the will added to the specified
- * queue. The frag will be updated to the allocated fragment if necessary.
+ * initialize the fragment (if necessary) and then will add it to the specified
+ * queue. The allocated fragment is not returned to the caller.
  */
 static void
 append_frag_to_list(opal_list_t *queue, mca_btl_base_module_t *btl,
@@ -89,11 +89,12 @@ static int mca_pml_ob1_recv_frag_match( mca_btl_base_module_t *btl,
                                         size_t num_segments,
                                         int type);
  
-static mca_pml_ob1_recv_request_t *match_one(mca_btl_base_module_t *btl,
-         mca_pml_ob1_match_hdr_t *hdr, mca_btl_base_segment_t* segments,
-         size_t num_segments, ompi_communicator_t *comm_ptr,
-         mca_pml_ob1_comm_proc_t *proc,
-         mca_pml_ob1_recv_frag_t* frag);
+static mca_pml_ob1_recv_request_t*
+match_one(mca_btl_base_module_t *btl,
+          mca_pml_ob1_match_hdr_t *hdr, mca_btl_base_segment_t* segments,
+          size_t num_segments, ompi_communicator_t *comm_ptr,
+          mca_pml_ob1_comm_proc_t *proc,
+          mca_pml_ob1_recv_frag_t* frag);
  
 void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl, 
                                           mca_btl_base_tag_t tag,
@@ -105,7 +106,6 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
     mca_pml_ob1_recv_request_t *match = NULL;
     mca_pml_ob1_comm_t *comm;
     mca_pml_ob1_comm_proc_t *proc;
-    mca_pml_ob1_recv_frag_t* frag = NULL;
     size_t num_segments = des->des_dst_cnt;
     size_t bytes_received = 0;
     
@@ -125,7 +125,7 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
          * moved to the right communicator.
          */
         append_frag_to_list( &mca_pml_ob1.non_existing_communicator_pending,
-                             btl, hdr, segments, num_segments, frag );
+                             btl, hdr, segments, num_segments, NULL );
         return;
     }
     comm = (mca_pml_ob1_comm_t *)comm_ptr->c_pml_comm;
@@ -171,7 +171,7 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
     PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_SEARCH_POSTED_Q_BEGIN, comm_ptr,
                             hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
     
-    match = match_one(btl, hdr, segments, num_segments, comm_ptr, proc, frag);
+    match = match_one(btl, hdr, segments, num_segments, comm_ptr, proc, NULL);
     
     /* The match is over. We generate the SEARCH_POSTED_Q_END here,
      * before going into the mca_pml_ob1_check_cantmatch_for_match so
@@ -444,11 +444,12 @@ static mca_pml_ob1_recv_request_t *match_incomming(
     return NULL;
 }
 
-static mca_pml_ob1_recv_request_t *match_one(mca_btl_base_module_t *btl,
-        mca_pml_ob1_match_hdr_t *hdr, mca_btl_base_segment_t* segments,
-        size_t num_segments, ompi_communicator_t *comm_ptr,
-        mca_pml_ob1_comm_proc_t *proc,
-        mca_pml_ob1_recv_frag_t* frag)
+static mca_pml_ob1_recv_request_t*
+match_one(mca_btl_base_module_t *btl,
+          mca_pml_ob1_match_hdr_t *hdr, mca_btl_base_segment_t* segments,
+          size_t num_segments, ompi_communicator_t *comm_ptr,
+          mca_pml_ob1_comm_proc_t *proc,
+          mca_pml_ob1_recv_frag_t* frag)
 {
     mca_pml_ob1_recv_request_t *match;
     mca_pml_ob1_comm_t *comm = (mca_pml_ob1_comm_t *)comm_ptr->c_pml_comm;
@@ -457,31 +458,29 @@ static mca_pml_ob1_recv_request_t *match_one(mca_btl_base_module_t *btl,
         match = match_incomming(hdr, comm, proc);
 
         /* if match found, process data */
-        if(OPAL_UNLIKELY(NULL == match)) {
-            /* if no match found, place on unexpected queue */
-            append_frag_to_list(&proc->unexpected_frags, btl, hdr, segments,
-                                num_segments, frag);
-            PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_INSERT_IN_UNEX_Q, comm_ptr,
-                                   hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
-            return NULL;
+        if(OPAL_LIKELY(NULL != match)) {
+            match->req_recv.req_base.req_proc = proc->ompi_proc;
+
+            if(OPAL_UNLIKELY(MCA_PML_REQUEST_PROBE == match->req_recv.req_base.req_type)) {
+                /* complete the probe */
+                mca_pml_ob1_recv_request_matched_probe(match, btl, segments,
+                                                       num_segments);
+                /* attempt to match actual request */
+                continue;
+            }
+
+            PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_MSG_MATCH_POSTED_REQ,
+                                    &(match->req_recv.req_base), PERUSE_RECV);
+            return match;
         }
 
-        match->req_recv.req_base.req_proc = proc->ompi_proc;
-
-        if(MCA_PML_REQUEST_PROBE == match->req_recv.req_base.req_type) {
-            /* complete the probe */
-            mca_pml_ob1_recv_request_matched_probe(match, btl, segments,
-                                                   num_segments);
-            /* attempt to match actual request */
-            continue;
-        }
-
-        PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_MSG_MATCH_POSTED_REQ,
-                                &(match->req_recv.req_base), PERUSE_RECV);
-        break;
+        /* if no match found, place on unexpected queue */
+        append_frag_to_list(&proc->unexpected_frags, btl, hdr, segments,
+                            num_segments, frag);
+        PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_INSERT_IN_UNEX_Q, comm_ptr,
+                               hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+        return NULL;
     } while(true);
-
-    return match;
 }
 
 static mca_pml_ob1_recv_frag_t *check_cantmatch_for_match(
@@ -569,7 +568,7 @@ static int mca_pml_ob1_recv_frag_match( mca_btl_base_module_t *btl,
          * moved to the right communicator.
          */
         append_frag_to_list( &mca_pml_ob1.non_existing_communicator_pending,
-                             btl, hdr, segments, num_segments, frag );
+                             btl, hdr, segments, num_segments, NULL );
         return OMPI_SUCCESS;
     }
     comm = (mca_pml_ob1_comm_t *)comm_ptr->c_pml_comm;
