@@ -46,6 +46,7 @@ static void orte_log_peer(int severity, int errcode, orte_process_name_t *peer_p
  * Global variables
  */
 int orte_notifier_base_output = -1;
+int orte_notifier_threshold_severity = ORTE_NOTIFIER_INFRA;
 orte_notifier_base_module_t orte_notifier = {
     NULL,
     NULL,
@@ -63,9 +64,21 @@ orte_notifier_base_component_t mca_notifier_base_selected_component;
  */
 int orte_notifier_base_open(void)
 {
+    char *level;
+    
     /* Debugging / verbose output.  Always have stream open, with
        verbose set by the mca open system... */
     orte_notifier_base_output = opal_output_open(NULL);
+    
+    /* let the user define a base level of severity to report */
+    mca_base_param_reg_string_name("notifier", "threshold_severity",
+                                   "Report all events at or above this severity [default: critical]",
+                                   false, false, "critical", &level);
+    if (0 == strcmp(level, "warning")) {
+        orte_notifier_threshold_severity = ORTE_NOTIFIER_WARNING;
+    } else if (0 == strcmp(level, "notice")) {
+        orte_notifier_threshold_severity = ORTE_NOTIFIER_NOTICE;
+    }
     
     /* Open up all available components */
 

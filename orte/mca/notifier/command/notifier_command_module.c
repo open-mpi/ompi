@@ -150,6 +150,14 @@ static void command_log(int severity, int errcode, const char *msg, ...)
     char *output;
     va_list arglist;
 
+    /* is the severity value above the threshold - I know
+     * this seems backward, but lower severity values are
+     * considered "more severe"
+     */
+    if (severity > orte_notifier_threshold_severity) {
+        return;
+    }
+    
     /* If there was a message, output it */
     va_start(arglist, msg);
     vasprintf(&output, msg, arglist);
@@ -166,6 +174,14 @@ static void command_help(int severity, int errcode, const char *filename,
 {
     va_list arglist;
     char *output;
+    
+    /* is the severity value above the threshold - I know
+     * this seems backward, but lower severity values are
+     * considered "more severe"
+     */
+    if (severity > orte_notifier_threshold_severity) {
+        return;
+    }
     
     va_start(arglist, topic);
     output = opal_show_help_vstring(filename, topic, false, arglist);
@@ -187,6 +203,14 @@ static void command_peer(int severity, int errcode,
     char *errstr = (char*)orte_err2str(errcode);
     int len, space = ORTE_NOTIFIER_MAX_BUF;
 
+    /* is the severity value above the threshold - I know
+     * this seems backward, but lower severity values are
+     * considered "more severe"
+     */
+    if (severity > orte_notifier_threshold_severity) {
+        return;
+    }
+    
     if (peer_proc) {
         peer_host = orte_ess.proc_get_hostname(peer_proc);
         peer_name = ORTE_NAME_PRINT(peer_proc);

@@ -49,6 +49,7 @@ ORTE_DECLSPEC    int orte_notifier_base_close(void);
  */
 
 ORTE_DECLSPEC extern int orte_notifier_base_output;
+ORTE_DECLSPEC extern int orte_notifier_threshold_severity;
 ORTE_DECLSPEC extern bool mca_notifier_base_selected;
 ORTE_DECLSPEC extern opal_list_t mca_notifier_base_components_available;
 ORTE_DECLSPEC extern orte_notifier_base_component_t mca_notifier_base_selected_component;
