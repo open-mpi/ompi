@@ -32,7 +32,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "ompi/constants.h"
-#include "ompi/datatype/convertor.h" 
+#include "ompi/datatype/ompi_convertor.h" 
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h" 
 #include "ompi/mca/btl/base/btl_base_error.h"
