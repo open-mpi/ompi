@@ -26,6 +26,9 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
 
 #include "orte/mca/notifier/base/base.h"
 
