@@ -528,7 +528,7 @@ int event_base_loopbreak(struct event_base *);
  * @param ev the event struct to be disabled
  * @param tv the timeout value, in seconds
  */
-#define oapl_timeout_add(ev, tv)		event_add(ev, tv)
+#define opal_timeout_add(ev, tv)		event_add(ev, tv)
 
 
 /**
