@@ -980,7 +980,8 @@ int orte_plm_base_report_launched(orte_jobid_t job)
     ORTE_PROGRESSED_WAIT(app_launch_failed, jdata->num_launched, jdata->num_procs);
 
     /* cancel the lingering recv */
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_APP_LAUNCH_CALLBACK))) {
+    if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_APP_LAUNCH_CALLBACK)) &&
+        ORTE_ERR_NOT_FOUND != rc) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
