@@ -54,6 +54,7 @@ int orte_iof_base_write_output(orte_process_name_t *name, orte_iof_tag_t stream,
     orte_iof_write_output_t *output;
     int i, j, k, starttaglen, endtaglen, num_buffered;
     bool endtagged;
+    char qprint[10];
 
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                          "%s write:output setting up to write %d bytes to %s for %s on fd %d",
@@ -159,56 +160,85 @@ construct:
      * and replace those with the tag
      */
     for (i=0; i < numbytes && k < ORTE_IOF_BASE_TAGGED_OUT_MAX; i++) {
-        if ('\n' == data[i]) {
-            /* we need to break the line with the end tag */
-            for (j=0; j < endtaglen && k < ORTE_IOF_BASE_TAGGED_OUT_MAX-1; j++) {
-                output->data[k++] = endtag[j];
-            }
-            /* move the <cr> over */
-            output->data[k++] = '\n';
-            /* if this isn't the end of the line, add a new start tag */
-            if (i < numbytes-1) {
-                for (j=0; j < starttaglen && k < ORTE_IOF_BASE_TAGGED_OUT_MAX; j++) {
-                    output->data[k++] = starttag[j];
-                    endtagged = false;
-                }
-            } else {
-                endtagged = true;
-            }
-        } else if (orte_xml_output) {
+        if (orte_xml_output) {
             if ('&' == data[i]) {
                 if (k+5 >= ORTE_IOF_BASE_TAGGED_OUT_MAX) {
                     ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                   goto process;
+                    goto process;
                 }
-                output->data[k++] = '&';
-                output->data[k++] = 'a';
-                output->data[k++] = 'm';
-                output->data[k++] = 'p';
-                output->data[k++] = ';';
+                snprintf(qprint, 10, "&amp;");
+                for (j=0; j < (int)strlen(qprint) && k < ORTE_IOF_BASE_TAGGED_OUT_MAX; j++) {
+                    output->data[k++] = qprint[j];
+                }
             } else if ('<' == data[i]) {
                 if (k+4 >= ORTE_IOF_BASE_TAGGED_OUT_MAX) {
                     ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                     goto process;
                 }
-                output->data[k++] = '&';
-                output->data[k++] = 'l';
-                output->data[k++] = 't';
-                output->data[k++] = ';';
+                snprintf(qprint, 10, "&lt;");
+                for (j=0; j < (int)strlen(qprint) && k < ORTE_IOF_BASE_TAGGED_OUT_MAX; j++) {
+                    output->data[k++] = qprint[j];
+                }
             } else if ('>' == data[i]) {
                 if (k+4 >= ORTE_IOF_BASE_TAGGED_OUT_MAX) {
                     ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                     goto process;
                 }
-                output->data[k++] = '&';
-                output->data[k++] = 'g';
-                output->data[k++] = 't';
-                output->data[k++] = ';';
+                snprintf(qprint, 10, "&gt;");
+                for (j=0; j < (int)strlen(qprint) && k < ORTE_IOF_BASE_TAGGED_OUT_MAX; j++) {
+                    output->data[k++] = qprint[j];
+                }
+            } else if (data[i] < 32) {
+                /* this is a non-printable character, so escape it too */
+                if (k+5 >= ORTE_IOF_BASE_TAGGED_OUT_MAX) {
+                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                    goto process;
+                }
+                snprintf(qprint, 10, "&%02d;", (int)data[i]);
+                for (j=0; j < (int)strlen(qprint) && k < ORTE_IOF_BASE_TAGGED_OUT_MAX; j++) {
+                    output->data[k++] = qprint[j];
+                }
+                /* if this was a \n, then we also need to break the line with the end tag */
+                if ('\n' == data[i]) {
+                    /* we need to break the line with the end tag */
+                    for (j=0; j < endtaglen && k < ORTE_IOF_BASE_TAGGED_OUT_MAX-1; j++) {
+                        output->data[k++] = endtag[j];
+                    }
+                    /* move the <cr> over */
+                    output->data[k++] = '\n';
+                    /* if this isn't the end of the data buffer, add a new start tag */
+                    if (i < numbytes-1) {
+                        for (j=0; j < starttaglen && k < ORTE_IOF_BASE_TAGGED_OUT_MAX; j++) {
+                            output->data[k++] = starttag[j];
+                            endtagged = false;
+                        }
+                    } else {
+                        endtagged = true;
+                    }
+                }
             } else {
                 output->data[k++] = data[i];
             }
         } else {
-            output->data[k++] = data[i];
+            if ('\n' == data[i]) {
+                /* we need to break the line with the end tag */
+                for (j=0; j < endtaglen && k < ORTE_IOF_BASE_TAGGED_OUT_MAX-1; j++) {
+                    output->data[k++] = endtag[j];
+                }
+                /* move the <cr> over */
+                output->data[k++] = '\n';
+                /* if this isn't the end of the data buffer, add a new start tag */
+                if (i < numbytes-1) {
+                    for (j=0; j < starttaglen && k < ORTE_IOF_BASE_TAGGED_OUT_MAX; j++) {
+                        output->data[k++] = starttag[j];
+                        endtagged = false;
+                    }
+                } else {
+                    endtagged = true;
+                }
+            } else {
+                output->data[k++] = data[i];
+            }
         }
     }
     if (!endtagged) {
