@@ -303,15 +303,6 @@ static orte_process_name_t get_route(orte_process_name_t *target)
         goto found;
     }
     
-    /* if I am a daemon, route it through the HNP to avoid
-     * opening unnecessary sockets
-     */
-    if (ORTE_PROC_IS_DAEMON) {
-        
-        ret = ORTE_PROC_MY_HNP;
-        goto found;
-    }
-    
     /* if the job family is zero, then this is going to a local slave,
      * so the path is direct
      */
@@ -351,7 +342,16 @@ static orte_process_name_t get_route(orte_process_name_t *target)
         ret = target;
         goto found;
     } else {
-        /* send to that daemon */
+        /* if I am a daemon, route it through the HNP to avoid
+         * opening unnecessary sockets
+         */
+        if (ORTE_PROC_IS_DAEMON) {
+            
+            ret = ORTE_PROC_MY_HNP;
+            goto found;
+        }
+        
+        /* otherwise, if I am the HNP, send to that daemon */
         ret = &daemon;
         goto found;
     }
