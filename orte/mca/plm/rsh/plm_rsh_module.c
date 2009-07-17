@@ -963,8 +963,8 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
     int argc;
     int rc;
     bool failed_launch = true;
-    orte_app_context_t **apps;
-    orte_node_t **nodes;
+    orte_app_context_t *app;
+    orte_node_t *node;
     orte_std_cntr_t nnode;
     orte_jobid_t failed_job;
     orte_job_state_t job_state = ORTE_JOB_NEVER_LAUNCHED;
@@ -1016,8 +1016,6 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
         rc = ORTE_ERR_NOT_FOUND;
         goto cleanup;
     }
-    apps = (orte_app_context_t**)jdata->apps->addr;
-    nodes = (orte_node_t**)map->nodes->addr;
     
     if (0 == map->num_new_daemons) {
         /* have all the daemons we need - launch app */
@@ -1066,10 +1064,25 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
      * Since there always MUST be at least one app_context, we are safe in
      * doing this.
      */
-    prefix_dir = apps[0]->prefix_dir;
+    app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, 0);
+    /* we also need at least one node name so we can check what shell is
+     * being used, if we have to
+     */
+    node = NULL;
+    for (nnode = 0; nnode < map->nodes->size; nnode++) {
+        if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, nnode))) {
+            break;
+        }
+    }
+    if (NULL == node) {
+        /* well, if there isn't even one node in the map, then we are hammered */
+        rc = ORTE_ERR_FATAL;
+        goto cleanup;
+    }
+    prefix_dir = app->prefix_dir;
     
     /* setup the launch */
-    if (ORTE_SUCCESS != (rc = setup_launch(&argc, &argv, nodes[0]->name, &node_name_index1,
+    if (ORTE_SUCCESS != (rc = setup_launch(&argc, &argv, node->name, &node_name_index1,
                                            &proc_vpid_index, prefix_dir))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
@@ -1126,10 +1139,14 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
     /*
      * Iterate through each of the nodes
      */
-    nnode=0;
-    while (nnode < map->num_nodes) {
+    nnode = 0;
+    while (nnode < map->nodes->size) {
         pid_t pid;
         opal_list_item_t *item;
+        
+        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, nnode))) {
+            goto next_node;
+        }
         
         /* if we are tree launching, only launch our own children */
         if (mca_plm_rsh_component.tree_spawn) {
@@ -1137,7 +1154,7 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
                  item != opal_list_get_end(&mca_plm_rsh_component.children);
                  item = opal_list_get_next(item)) {
                 orte_namelist_t *child = (orte_namelist_t*)item;
-                if (child->name.vpid == nodes[nnode]->daemon->name.vpid) {
+                if (child->name.vpid == node->daemon->name.vpid) {
                     goto launch;
                 }
             }
@@ -1147,41 +1164,41 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
     
 launch:
         /* if this daemon already exists, don't launch it! */
-        if (nodes[nnode]->daemon_launched) {
+        if (node->daemon_launched) {
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:rsh:launch daemon already exists on node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 nodes[nnode]->name));
+                                 node->name));
             goto next_node;
         }
         
         /* if the node's daemon has not been defined, then we
          * have an error!
          */
-        if (NULL == nodes[nnode]->daemon) {
+        if (NULL == node->daemon) {
             ORTE_ERROR_LOG(ORTE_ERR_FATAL);
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:rsh:launch daemon failed to be defined on node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 nodes[nnode]->name));
+                                 node->name));
             rc = ORTE_ERR_FATAL;
             goto cleanup;
         }
         
         /* setup node name */
         free(argv[node_name_index1]);
-        if (NULL != nodes[nnode]->username &&
-            0 != strlen (nodes[nnode]->username)) {
+        if (NULL != node->username &&
+            0 != strlen (node->username)) {
             asprintf (&argv[node_name_index1], "%s@%s",
-                      nodes[nnode]->username, nodes[nnode]->name);
+                      node->username, node->name);
         } else {
-            argv[node_name_index1] = strdup(nodes[nnode]->name);
+            argv[node_name_index1] = strdup(node->name);
         }
 
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:rsh: launching on node %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             nodes[nnode]->name));
+                             node->name));
 
         /* fork a child to exec the rsh/ssh session */
         pid = fork();
@@ -1195,19 +1212,19 @@ launch:
         if (pid == 0) {
             
             /* do the ssh launch - this will exit if it fails */
-            ssh_child(argc, argv, nodes[nnode]->daemon->name.vpid, proc_vpid_index);
+            ssh_child(argc, argv, node->daemon->name.vpid, proc_vpid_index);
             
             
         } else { /* father */
             /* indicate this daemon has been launched */
-            nodes[nnode]->daemon->state = ORTE_PROC_STATE_LAUNCHED;
+            node->daemon->state = ORTE_PROC_STATE_LAUNCHED;
             /* record the pid */
-            nodes[nnode]->daemon->pid = pid;
+            node->daemon->pid = pid;
             
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:rsh: recording launch of daemon %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                ORTE_NAME_PRINT(&nodes[nnode]->daemon->name)));
+                                ORTE_NAME_PRINT(&node->daemon->name)));
 
             OPAL_THREAD_LOCK(&mca_plm_rsh_component.lock);
             /* This situation can lead to a deadlock if '--debug-daemons' is set.
@@ -1223,7 +1240,7 @@ launch:
             /* setup callback on sigchild - wait until setup above is complete
              * as the callback can occur in the call to orte_wait_cb
              */
-            orte_wait_cb(pid, orte_plm_rsh_wait_daemon, (void*)nodes[nnode]->daemon);
+            orte_wait_cb(pid, orte_plm_rsh_wait_daemon, (void*)node->daemon);
 
             /* if required - add delay to avoid problems w/ X11 authentication */
             if (0 < opal_output_get_verbosity(orte_plm_globals.output)
