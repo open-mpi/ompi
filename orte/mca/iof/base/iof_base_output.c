@@ -53,6 +53,7 @@ int orte_iof_base_write_output(orte_process_name_t *name, orte_iof_tag_t stream,
     char starttag[ORTE_IOF_BASE_TAG_MAX], endtag[ORTE_IOF_BASE_TAG_MAX], *suffix;
     orte_iof_write_output_t *output;
     int i, j, k, starttaglen, endtaglen, num_buffered;
+    bool endtagged;
 
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                          "%s write:output setting up to write %d bytes to %s for %s on fd %d",
@@ -149,6 +150,7 @@ int orte_iof_base_write_output(orte_process_name_t *name, orte_iof_tag_t stream,
 construct:
     starttaglen = strlen(starttag);
     endtaglen = strlen(endtag);
+    endtagged = false;
     /* start with the tag */
     for (j=0, k=0; j < starttaglen && k < ORTE_IOF_BASE_TAGGED_OUT_MAX; j++) {
         output->data[k++] = starttag[j];
@@ -159,7 +161,7 @@ construct:
     for (i=0; i < numbytes && k < ORTE_IOF_BASE_TAGGED_OUT_MAX; i++) {
         if ('\n' == data[i]) {
             /* we need to break the line with the end tag */
-            for (j=0; j < endtaglen && k < ORTE_IOF_BASE_TAGGED_OUT_MAX; j++) {
+            for (j=0; j < endtaglen && k < ORTE_IOF_BASE_TAGGED_OUT_MAX-1; j++) {
                 output->data[k++] = endtag[j];
             }
             /* move the <cr> over */
@@ -168,7 +170,10 @@ construct:
             if (i < numbytes-1) {
                 for (j=0; j < starttaglen && k < ORTE_IOF_BASE_TAGGED_OUT_MAX; j++) {
                     output->data[k++] = starttag[j];
+                    endtagged = false;
                 }
+            } else {
+                endtagged = true;
             }
         } else if (orte_xml_output) {
             if ('&' == data[i]) {
@@ -205,6 +210,13 @@ construct:
         } else {
             output->data[k++] = data[i];
         }
+    }
+    if (!endtagged) {
+        /* need to add an endtag */
+        for (j=0; j < endtaglen && k < ORTE_IOF_BASE_TAGGED_OUT_MAX-1; j++) {
+            output->data[k++] = endtag[j];
+        }
+        output->data[k++] = '\n';
     }
     output->numbytes = k;
     
