@@ -1293,8 +1293,12 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
     
     /* if this job was ordered to abort, or if its state was already recorded
      * as abnormally terminated, then do not update its state
+     *
+     * Treat termination of any process in a continuously operating job as
+     * an error
      */
-    if (jdata->state < ORTE_JOB_STATE_TERMINATED) {
+    if (jdata->state < ORTE_JOB_STATE_TERMINATED ||
+        jdata->controls & ORTE_JOB_CONTROL_CONTINUOUS_OP) {
         for (i=0; i < jdata->procs->size; i++) {
             if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
                 /* the proc array may no longer be left justified, so
@@ -1354,8 +1358,19 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
                     }
                 }
                 break;
+            } else if (ORTE_PROC_STATE_UNTERMINATED < proc->state &&
+                       jdata->controls & ORTE_JOB_CONTROL_CONTINUOUS_OP) {
+                proc->state = ORTE_PROC_STATE_ABORTED;
+                jdata->state = ORTE_JOB_STATE_ABORTED;
+                if (!jdata->abort) {
+                    /* point to the lowest rank to cause the problem */
+                    jdata->aborted_proc = proc;
+                    /* retain the object so it doesn't get free'd */
+                    OBJ_RETAIN(proc);
+                    jdata->abort = true;
+                    ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
+                }
             }
-            
         }
     }
 
