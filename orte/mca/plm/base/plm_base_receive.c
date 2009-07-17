@@ -381,6 +381,7 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
                                                       NULL))) {
         ORTE_ERROR_LOG(rc);
     }
+    
     return;
 }
 

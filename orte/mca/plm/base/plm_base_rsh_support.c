@@ -1394,8 +1394,6 @@ void orte_plm_base_reset_job(orte_job_t *jdata)
             }
             /* adjust job accounting */
             jdata->num_terminated--;
-            jdata->num_launched--;
-            jdata->num_reported--;
         }
     }
     /* clear the info on who aborted */
@@ -1404,4 +1402,7 @@ void orte_plm_base_reset_job(orte_job_t *jdata)
         OBJ_RELEASE(jdata->aborted_proc);  /* maintain reference count */
         jdata->aborted_proc = NULL;
     }
+    /* since every daemon will be reporting status for every proc, reset these to zero */
+    jdata->num_launched = 0;
+    jdata->num_reported = 0;
 }
