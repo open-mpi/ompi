@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -176,6 +177,7 @@ do {                                                                            
     sendreq->req_send.req_base.req_sequence = OPAL_THREAD_ADD32(&proc->send_sequence,1);  \
                                                                                           \
     /* select a btl */                                                                    \
+    assert(bml_btl->btl->btl_eager_limit >= sizeof(mca_pml_dr_hdr_t));                    \
     eager_limit = bml_btl->btl->btl_eager_limit - sizeof(mca_pml_dr_hdr_t);               \
     if(size <= eager_limit) {                                                             \
         switch(sendreq->req_send.req_send_mode) {                                         \

@@ -12,6 +12,7 @@
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -349,6 +350,7 @@ mca_pml_csum_send_request_start_btl( mca_pml_csum_send_request_t* sendreq,
     size_t eager_limit = btl->btl_eager_limit - sizeof(mca_pml_csum_hdr_t);
     int rc;
 
+    assert(btl->btl_eager_limit >= sizeof(mca_pml_csum_hdr_t));
     if( OPAL_LIKELY(size <= eager_limit) ) {
         switch(sendreq->req_send.req_send_mode) {
         case MCA_PML_BASE_SEND_SYNCHRONOUS:
