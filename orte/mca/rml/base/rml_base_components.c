@@ -58,6 +58,22 @@ orte_rml_component_t *orte_rml_component = NULL;
 
 static bool       component_open_called = false;
 
+/* instantiate the msg_pkt object */
+static void msg_pkt_constructor(orte_msg_packet_t *pkt)
+{
+    pkt->buffer = NULL;
+}
+static void msg_pkt_destructor(orte_msg_packet_t *pkt)
+{
+    if (NULL != pkt->buffer) {
+        OBJ_RELEASE(pkt->buffer);
+    }
+}
+OBJ_CLASS_INSTANCE(orte_msg_packet_t,
+                   opal_list_item_t,
+                   msg_pkt_constructor,
+                   msg_pkt_destructor);
+
 int
 orte_rml_base_open(void)
 {
