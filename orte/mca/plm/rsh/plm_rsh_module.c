@@ -1128,7 +1128,8 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
         /* get the orted job data object */
         if (NULL == (jdatorted = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return ORTE_ERR_NOT_FOUND;
+            rc = ORTE_ERR_NOT_FOUND;
+            goto cleanup;
         }
         find_children(0, 0, 0, jdatorted->num_procs);
     }
@@ -1139,13 +1140,12 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
     /*
      * Iterate through each of the nodes
      */
-    nnode = 0;
-    while (nnode < map->nodes->size) {
+    for (nnode=0; nnode < map->nodes->size; nnode++) {
         pid_t pid;
         opal_list_item_t *item;
         
         if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, nnode))) {
-            goto next_node;
+            continue;
         }
         
         /* if we are tree launching, only launch our own children */
@@ -1159,7 +1159,7 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
                 }
             }
             /* didn't find it - ignore this node */
-            goto next_node;
+           continue;
         }
     
 launch:
@@ -1169,7 +1169,7 @@ launch:
                                  "%s plm:rsh:launch daemon already exists on node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  node->name));
-            goto next_node;
+            continue;
         }
         
         /* if the node's daemon has not been defined, then we
@@ -1248,8 +1248,6 @@ launch:
                 sleep(mca_plm_rsh_component.delay);
             }
         }
-next_node:
-    nnode++;
     }
 
     /* wait for daemons to callback */
