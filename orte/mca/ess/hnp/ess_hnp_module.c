@@ -136,8 +136,7 @@ static int rte_init(void)
     /* Since we are the HNP, then responsibility for
      * defining the name falls to the PLM component for our
      * respective environment - hence, we have to open the PLM
-     * first and select that component. Note that ONLY the
-     * HNP ever uses a PLM component anyway
+     * first and select that component.
      */
     if (ORTE_SUCCESS != (ret = orte_plm_base_open())) {
         ORTE_ERROR_LOG(ret);

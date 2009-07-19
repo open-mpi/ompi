@@ -100,11 +100,8 @@ int orte_ess_base_app_setup(void)
         goto error;
     }
     
-    /* although only the HNP and orteds open/select the PLM, everyone
-     * else has access to the PLM env proxy.
-     * We now provide a chance for the PLM
-     * to perform any module-specific init functions - non-HNP/orted
-     * procs will simply perform the PLM proxy init
+    /* non-daemon/HNP apps can only have the default proxy PLM
+     * module open - provide a chance for it to initialize
      */
     if (ORTE_SUCCESS != (ret = orte_plm.init())) {
         ORTE_ERROR_LOG(ret);
