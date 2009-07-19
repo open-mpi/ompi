@@ -190,11 +190,11 @@ construct:
                 }
             } else if (data[i] < 32) {
                 /* this is a non-printable character, so escape it too */
-                if (k+5 >= ORTE_IOF_BASE_TAGGED_OUT_MAX) {
+                if (k+6 >= ORTE_IOF_BASE_TAGGED_OUT_MAX) {
                     ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                     goto process;
                 }
-                snprintf(qprint, 10, "&%02d;", (int)data[i]);
+                snprintf(qprint, 10, "&#%02d;", (int)data[i]);
                 for (j=0; j < (int)strlen(qprint) && k < ORTE_IOF_BASE_TAGGED_OUT_MAX; j++) {
                     output->data[k++] = qprint[j];
                 }
