@@ -979,16 +979,15 @@ int orte_plm_base_report_launched(orte_jobid_t job)
     
     ORTE_PROGRESSED_WAIT(app_launch_failed, jdata->num_launched, jdata->num_procs);
 
-    /* cancel the lingering recv */
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_APP_LAUNCH_CALLBACK)) &&
-        ORTE_ERR_NOT_FOUND != rc) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:report_launched all apps reported",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
+    /* cancel the lingering recv */
+    if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_APP_LAUNCH_CALLBACK))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
     
     /* declare the job to be launched, but check to ensure
      * the procs haven't already reported in to avoid setting the
