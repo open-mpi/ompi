@@ -969,6 +969,17 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
     orte_jobid_t failed_job;
     orte_job_state_t job_state = ORTE_JOB_NEVER_LAUNCHED;
     
+    /* wait for the launch to complete */
+    OPAL_THREAD_LOCK(&orte_plm_globals.spawn_lock);
+    while (orte_plm_globals.spawn_in_progress) {
+        opal_condition_wait(&orte_plm_globals.spawn_in_progress_cond, &orte_plm_globals.spawn_lock);
+    }
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output, "released to spawn"));
+    OPAL_THREAD_UNLOCK(&orte_plm_globals.spawn_lock);
+    
+    orte_plm_globals.spawn_in_progress = true;
+    orte_plm_globals.spawn_status = ORTE_ERR_FATAL;
+    
     if (jdata->controls & ORTE_JOB_CONTROL_LOCAL_SLAVE) {
         /* if this is a request to launch a local slave,
          * then we will not be launching an orted - we will
@@ -977,7 +988,9 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
          * provide all the info required to launch the job,
          * including the target hosts
          */
-        return orte_plm_base_local_slave_launch(jdata);
+        rc = orte_plm_base_local_slave_launch(jdata);
+        orte_plm_globals.spawn_in_progress = false;
+        return rc;
     }
 
     /* if we are timing, record the start time */
@@ -1272,6 +1285,17 @@ launch_apps:
         goto cleanup;
     }
 
+    /* wait for the launch to complete */
+    OPAL_THREAD_LOCK(&orte_plm_globals.spawn_lock);
+    while (!orte_plm_globals.spawn_complete) {
+        opal_condition_wait(&orte_plm_globals.spawn_cond, &orte_plm_globals.spawn_lock);
+    }
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                         "completed spawn for job %s", ORTE_JOBID_PRINT(jdata->jobid)));
+    orte_plm_globals.spawn_in_progress = false;
+    opal_condition_broadcast(&orte_plm_globals.spawn_in_progress_cond);
+    OPAL_THREAD_UNLOCK(&orte_plm_globals.spawn_lock);
+    
     /* get here if launch went okay */
     failed_launch = false;
     
