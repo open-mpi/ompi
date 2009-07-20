@@ -252,7 +252,8 @@ int orte_plm_base_launch_apps(orte_jobid_t job)
     if (NULL == (jdata = orte_get_job_data_object(job))) {
         /* bad jobid */
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-        return ORTE_ERR_BAD_PARAM;
+        rc = ORTE_ERR_BAD_PARAM;
+        goto WAKEUP;
     }
 
     /* setup the buffer */
@@ -263,13 +264,13 @@ int orte_plm_base_launch_apps(orte_jobid_t job)
     if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &command, 1, ORTE_DAEMON_CMD))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buffer);
-        return rc;
+        goto WAKEUP;
     }
 
     /* get the local launcher's required data */
     if (ORTE_SUCCESS != (rc = orte_odls.get_add_procs_data(buffer, job))) {
         ORTE_ERROR_LOG(rc);
-        return rc;
+        goto WAKEUP;
     }
     
     /* if we are timing, record the time we send this message */
@@ -282,7 +283,7 @@ int orte_plm_base_launch_apps(orte_jobid_t job)
                                                  buffer, ORTE_RML_TAG_DAEMON))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buffer);
-        return rc;
+        goto WAKEUP;
     }
     OBJ_RELEASE(buffer);
     
@@ -292,7 +293,7 @@ int orte_plm_base_launch_apps(orte_jobid_t job)
                              "%s plm:base:launch failed for job %s on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(job), ORTE_ERROR_NAME(rc)));
-        return rc;
+        goto WAKEUP;
     }
     
     if (orte_timing) {
@@ -316,13 +317,20 @@ int orte_plm_base_launch_apps(orte_jobid_t job)
     
     if (ORTE_SUCCESS != (rc = orte_iof.push(&name, ORTE_IOF_STDIN, 0))) {
         ORTE_ERROR_LOG(rc);
-        return rc;
+        goto WAKEUP;
     }
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:launch completed for job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(job)));
+    
+WAKEUP:
+    /* wakeup anyone waiting for this */
+    orte_plm_globals.spawn_complete = true;
+    orte_plm_globals.spawn_status = rc;
+    opal_condition_broadcast(&orte_plm_globals.spawn_cond);
+
     return rc;
 }
 

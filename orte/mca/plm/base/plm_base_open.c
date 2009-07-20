@@ -136,6 +136,13 @@ int orte_plm_base_open(void)
     OBJ_CONSTRUCT(&orte_plm_globals.orted_cmd_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&orte_plm_globals.orted_cmd_cond, opal_condition_t);
     
+    /* initialize the condition variables for spawn */
+    OBJ_CONSTRUCT(&orte_plm_globals.spawn_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&orte_plm_globals.spawn_cond, opal_condition_t);
+    OBJ_CONSTRUCT(&orte_plm_globals.spawn_in_progress_cond, opal_condition_t);
+    orte_plm_globals.spawn_complete = false;
+    orte_plm_globals.spawn_in_progress = false;
+    
     /* init the next jobid */
     orte_plm_globals.next_jobid = 0;
     

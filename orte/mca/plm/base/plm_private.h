@@ -77,6 +77,18 @@ typedef struct {
     orte_jobid_t local_slaves;
     /* list of local slave files */
     opal_list_t slave_files;
+    /* spawn lock */
+    opal_mutex_t spawn_lock;
+    /* spawn cond */
+    opal_condition_t spawn_cond;
+    /* spawn status */
+    int spawn_status;
+    /* completion flag */
+    bool spawn_complete;
+    /* spawn in progress cond */
+    opal_condition_t spawn_in_progress_cond;
+    /* flag */
+    bool spawn_in_progress;
 } orte_plm_globals_t;
 /**
  * Global instance of PLM framework data

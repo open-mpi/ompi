@@ -61,6 +61,10 @@ int orte_plm_base_close(void)
     OBJ_DESTRUCT(&orte_plm_globals.orted_cmd_lock);
     OBJ_DESTRUCT(&orte_plm_globals.orted_cmd_cond);
     
+    /* clearout the spawn locks */
+    OBJ_DESTRUCT(&orte_plm_globals.spawn_lock);
+    OBJ_DESTRUCT(&orte_plm_globals.spawn_cond);
+    
 #ifndef __WINDOWS__
     /* clearout the rsh support */
     orte_plm_base_local_slave_finalize();
