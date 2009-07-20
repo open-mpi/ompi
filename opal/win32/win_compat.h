@@ -70,6 +70,8 @@
 #include <process.h>
 #include <signal.h>
 #include <conio.h>
+#include <fcntl.h>
+
 /**
  * For all file io operations
  */
