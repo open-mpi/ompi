@@ -53,7 +53,7 @@ typedef struct {
 } orte_msg_packet_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_msg_packet_t);
 
-
+#ifndef __WINDOWS__
 #define ORTE_PROCESS_MESSAGE(rlist, lck, flg, fd, crt, sndr, buf)   \
     do {                                                            \
         orte_msg_packet_t *pkt;                                     \
@@ -75,6 +75,29 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_msg_packet_t);
         }                                                           \
         OPAL_THREAD_UNLOCK((lck));                                  \
     } while(0);
+#else
+#define ORTE_PROCESS_MESSAGE(rlist, lck, flg, fd, crt, sndr, buf)   \
+    do {                                                            \
+        orte_msg_packet_t *pkt;                                     \
+        int data=1;                                                 \
+        pkt = OBJ_NEW(orte_msg_packet_t);                           \
+        pkt->sender.jobid = (sndr)->jobid;                          \
+        pkt->sender.vpid = (sndr)->vpid;                            \
+        if ((crt)) {                                                \
+            pkt->buffer = OBJ_NEW(opal_buffer_t);                   \
+            opal_dss.copy_payload(pkt->buffer, *(buf));             \
+        } else {                                                    \
+            pkt->buffer = *(buf);                                   \
+            *(buf) = NULL;                                          \
+        }                                                           \
+        OPAL_THREAD_LOCK((lck));                                    \
+        opal_list_append((rlist), &pkt->super);                     \
+        if (!(flg)) {                                               \
+            send((fd), (const char*) &data, sizeof(data), 0);       \
+        }                                                           \
+        OPAL_THREAD_UNLOCK((lck));                                  \
+    } while(0);
+#endif
 
 
 /**
