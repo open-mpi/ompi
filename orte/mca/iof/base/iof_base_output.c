@@ -188,18 +188,18 @@ construct:
                 for (j=0; j < (int)strlen(qprint) && k < ORTE_IOF_BASE_TAGGED_OUT_MAX; j++) {
                     output->data[k++] = qprint[j];
                 }
-            } else if (data[i] < 32) {
+            } else if (data[i] < 32 || data[i] > 127) {
                 /* this is a non-printable character, so escape it too */
-                if (k+6 >= ORTE_IOF_BASE_TAGGED_OUT_MAX) {
+                if (k+7 >= ORTE_IOF_BASE_TAGGED_OUT_MAX) {
                     ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                     goto process;
                 }
-                snprintf(qprint, 10, "&#%02d;", (int)data[i]);
+                snprintf(qprint, 10, "&#%03d;", (int)data[i]);
                 for (j=0; j < (int)strlen(qprint) && k < ORTE_IOF_BASE_TAGGED_OUT_MAX; j++) {
                     output->data[k++] = qprint[j];
                 }
                 /* if this was a \n, then we also need to break the line with the end tag */
-                if ('\n' == data[i]) {
+                if ('\n' == data[i] && (k+endtaglen+1) < ORTE_IOF_BASE_TAGGED_OUT_MAX) {
                     /* we need to break the line with the end tag */
                     for (j=0; j < endtaglen && k < ORTE_IOF_BASE_TAGGED_OUT_MAX-1; j++) {
                         output->data[k++] = endtag[j];
@@ -207,7 +207,7 @@ construct:
                     /* move the <cr> over */
                     output->data[k++] = '\n';
                     /* if this isn't the end of the data buffer, add a new start tag */
-                    if (i < numbytes-1) {
+                    if (i < numbytes-1 && (k+starttaglen) < ORTE_IOF_BASE_TAGGED_OUT_MAX) {
                         for (j=0; j < starttaglen && k < ORTE_IOF_BASE_TAGGED_OUT_MAX; j++) {
                             output->data[k++] = starttag[j];
                             endtagged = false;
