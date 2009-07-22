@@ -77,7 +77,14 @@ int orte_plm_base_comm_start(void)
     processing = false;
     OBJ_CONSTRUCT(&lock, opal_mutex_t);
     OBJ_CONSTRUCT(&recvs, opal_list_t);
+#ifndef __WINDOWS__
     pipe(ready_fd);
+#else
+    if (evutil_socketpair(AF_UNIX, SOCK_STREAM, 0, ready_fd) == -1) {
+        return ORTE_ERROR;
+    }
+#endif
+
     opal_event_set(&ready, ready_fd[0], OPAL_EV_READ, process_msg, NULL);
     opal_event_add(&ready, 0);
     
@@ -102,7 +109,11 @@ int orte_plm_base_comm_stop(void)
     
     OBJ_DESTRUCT(&recvs);
     opal_event_del(&ready);
+#ifndef __WINDOWS__
     close(ready_fd[0]);
+#else
+    closesocket(ready_fd[0]);
+#endif
     processing = false;
     OBJ_DESTRUCT(&lock);
     
@@ -142,7 +153,11 @@ void process_msg(int fd, short event, void *data)
     processing = true;
 
     /* clear the file descriptor to stop the event from refiring */
+#ifndef __WINDOWS__
     read(fd, &dump, sizeof(dump));
+#else
+    recv(fd, (char *) &dump, sizeof(dump), 0);
+#endif
     
     while (NULL != (item = opal_list_remove_first(&recvs))) {
         msgpkt = (orte_msg_packet_t*)item;
