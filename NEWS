@@ -10,7 +10,7 @@ Copyright (c) 2004-2006 The Regents of the University of California.
                         All rights reserved.
 Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006      Voltaire, Inc. All rights reserved.
-Copyright (c) 2006-2009 Sun Microsystems, Inc.  All rights reserved.
+Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
                         Use is subject to license terms.
 Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
                         reserved.
@@ -31,11 +31,6 @@ Trunk (not on release branches yet)
 
 - Added Cray Compute Node Linux (CNL) and ALPS Support.
   --> Expected: ???
-
-- Added automatic detection of installation directories for
-  Solaris and Linux.  The OPAL_PREFIX and OPAL_DESTDIR
-  environment variables no longer need to be set when binaries
-  are installed in non-default locations.
 
 1.5
 ---
