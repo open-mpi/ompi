@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -124,6 +124,7 @@ libmpi_la_DEPENDENCIES = \
 	$(EXT_ompi_FRAMEWORK_LIBS) \
 	$(top_ompi_builddir)/orte/libopen-rte.la
 libmpi_la_LDFLAGS = \
+        -version-info $(libmpi_so_version) \
 	$(OMPI_LIBMPI_EXTRA_LDFLAGS)
 
 # included subdirectory Makefile.am's and appended-to variables

@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 #                         reserved. 
 # $COPYRIGHT$
@@ -250,7 +250,9 @@ nodist_libmpi_f90_la_SOURCES += $(small_sources) $(medium_sources) $(large_sourc
 endif
 
 # see note in config/ompi_setup_f90.m4
-libmpi_f90_la_LDFLAGS = $(OMPI_F90_EXTRA_SHARED_LIBRARY_FLAGS)
+libmpi_f90_la_LDFLAGS = \
+        -version-info $(libmpi_f90_so_version) \
+        $(OMPI_F90_EXTRA_SHARED_LIBRARY_FLAGS)
 
 #
 # Clean up all F90 module files and all generated files
