@@ -191,7 +191,7 @@ static int opal_paffinity_base_socket_core_to_cpu_set(char **socket_core_list, i
     
     if (0 == strcmp("*",socket_core[1])) {
         /* bind to all available LOGICAL cores */
-        for (core = 0; core <= num_cores; core++) {
+        for (core = 0; core < num_cores; core++) {
             /* convert to PHYSICAL core id */
             if (0 > (phys_core = opal_paffinity_base_get_physical_core_id(phys_socket, core))) {
                 opal_output(0, "Rank %ld: PAFFINITY cannot get physical core id for logical core %ld in physical socket %ld (%ld)",
@@ -401,7 +401,7 @@ static int opal_paffinity_base_socket_core_to_cpu_set(char **socket_core_list, i
                 
                 if (0 == strcmp("*",socket_core[1])) {
                     /* bind to all available LOGICAL cores */
-                    for (core = 0; core <= num_cores; core++) {
+                    for (core = 0; core < num_cores; core++) {
                         /* convert to PHYSICAL core id */
                         if (0 > (phys_core = opal_paffinity_base_get_physical_core_id(phys_socket, core))) {
                             opal_output(0, "Rank %ld: PAFFINITY cannot get physical core id for logical core %ld in physical socket %ld (%ld)",
