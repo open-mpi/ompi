@@ -46,10 +46,10 @@ date="Unreleased developer copy"
 # The shared library version of each of Open MPI's public libraries.
 # These versions are maintained in accordance with the "Library
 # Interface Versions" chapter from the GNU Libtool documentation.  The
-# first Open MPI release to formally use these versions was v1.3.4 --
-# they introduced version 0:0:0.  Subsequent changes in these version
-# numbers are dictated by the Open MPI release managers (not
-# individual developers).  Notes:
+# first Open MPI release to programatically specify these versions was
+# v1.3.4 (note that Libtool defaulted all prior releases to 0:0:0).
+# All changes in these version numbers are dictated by the Open MPI
+# release managers (not individual developers).  Notes:
 
 # 1. Since these version numbers are associated with *releases*, the
 # version numbers maintained on the Open MPI SVN trunk (and developer
