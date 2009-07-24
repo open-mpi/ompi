@@ -74,6 +74,18 @@ OMPI_SAVE_VERSION([ORTE], [Open Run-Time Environment], [$srcdir/VERSION],
 OMPI_SAVE_VERSION([OPAL], [Open Portable Access Layer], [$srcdir/VERSION],
                   [opal/include/opal/version.h])
 
+# Get shared library version numbers
+
+. $srcdir/VERSION
+AC_SUBST(libmpi_so_version)
+AC_SUBST(libmpi_cxx_so_version)
+AC_SUBST(libmpi_f77_so_version)
+AC_SUBST(libmpi_f90_so_version)
+AC_SUBST(libopen_rte_so_version)
+AC_SUBST(libopen_pal_so_version)
+
+# List header files to generate
+
 AM_CONFIG_HEADER([opal/include/opal_config.h orte/include/orte_config.h ompi/include/ompi_config.h ompi/include/mpi.h ompi/include/mpi_portable_platform.h])
 
 # override/fixup the version numbers set by AC_INIT, since on
