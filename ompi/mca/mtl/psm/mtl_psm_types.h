@@ -40,8 +40,14 @@ extern "C" {
 struct mca_mtl_psm_module_t { 
     mca_mtl_base_module_t super; /**< base MTL interface */
 
-    int32_t connect_timeout;
-
+    int32_t      connect_timeout;
+  
+    uint32_t     debug_level;
+    int32_t      ib_unit;
+    int32_t      ib_port;
+    int32_t      ib_service_level;
+    uint64_t     ib_pkey;
+  
     psm_ep_t	 ep;
     psm_mq_t	 mq;
     psm_epid_t	 epid;
