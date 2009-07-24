@@ -83,6 +83,7 @@ int ompi_mtl_psm_module_init() {
     psm_mq_t	mq;
     psm_epid_t	epid; /* unique lid+port identifier */
     psm_uuid_t  unique_job_key;
+    struct psm_ep_open_opts ep_opt;
     unsigned long long *uu = (unsigned long long *) unique_job_key;
     char *generated_key;
     
@@ -103,7 +104,22 @@ int ompi_mtl_psm_module_init() {
     /* Handle our own errors for opening endpoints */
     psm_error_register_handler(ompi_mtl_psm.ep, ompi_mtl_psm_errhandler);
          
-    err = psm_ep_open(unique_job_key, NULL, &ep, &epid);
+    bzero((void*) &ep_opt, sizeof(ep_opt));
+    ep_opt.timeout = ompi_mtl_psm.connect_timeout * 1e9;
+    ep_opt.unit = ompi_mtl_psm.ib_unit;
+    ep_opt.affinity = -1; /* Let PSM choose affinity */
+    ep_opt.shm_mbytes = -1; /* Choose PSM defaults */
+    ep_opt.sendbufs_num = -1; /* Choose PSM defaults */
+
+#if PSM_VERNO >= 0x0101   
+    ep_opt.network_pkey = ompi_mtl_psm.ib_pkey;
+#endif
+    
+    ep_opt.port = ompi_mtl_psm.ib_port;
+    ep_opt.outsl = ompi_mtl_psm.ib_service_level;
+    
+    /* Open PSM endpoint */
+    err = psm_ep_open(unique_job_key, &ep_opt, &ep, &epid);
     if (err) {
         opal_output(0, "Error in psm_ep_open (error %s)\n", 
 		    psm_error_get_string(err));

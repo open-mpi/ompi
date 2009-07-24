@@ -69,11 +69,8 @@ ompi_mtl_psm_send(struct mca_mtl_base_module_t* mtl,
 		      mqtag,
 		      mtl_psm_request.buf,
 		      length);
-#if 0
-        printf("send bits: 0x%016llx\n", mqtag);
-#endif
 
-    if (mtl_psm_request.free_after) 
+    if (mtl_psm_request.free_after)
 	free(mtl_psm_request.buf);
 
     return err == PSM_OK ? OMPI_SUCCESS : OMPI_ERROR;
@@ -117,10 +114,6 @@ ompi_mtl_psm_isend(struct mca_mtl_base_module_t* mtl,
     if (mode == MCA_PML_BASE_SEND_SYNCHRONOUS)
 	flags |= PSM_MQ_FLAG_SENDSYNC;
     
-#if 0
-        printf("isend bits: 0x%016llx\n", mqtag);
-#endif
-
     psm_error = psm_mq_isend(ompi_mtl_psm.mq,
 			     psm_endpoint->peer_addr,
 			     flags,
