@@ -1,3 +1,13 @@
+5.4.10
+	- reduced list of supported MPI implementations to Open MPI
+	  (support for other MPI implementations are available in the latest
+	   stand-alone release of VampirTrace;
+	   see http://www.tu-dresden.de/zih/vampirtrace/)
+	- changed meaning of configure option '--with-openmpi': this option
+	  indicates an Open MPI internal build
+	- fixed a bug in Fortran MPI wrappers: added conversion for MPI_BOTTOM
+	  and MPI_IN_PLACE
+
 5.4.9
 	- updated version of internal OTF to 1.3.12 (see extlib/otf/ChangeLog)
 	- added support for cycle counter timer on Alpha and Sparc platforms
