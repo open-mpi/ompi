@@ -31,7 +31,7 @@
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 
-int mca_btl_base_verbose;
+int mca_btl_base_verbose = -1;
 
 int mca_btl_base_err(const char* fmt, ...)
 {

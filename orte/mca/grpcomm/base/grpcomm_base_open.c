@@ -42,7 +42,7 @@
  */
 int orte_grpcomm_base_output = -1;
 bool mca_grpcomm_base_selected;
-orte_grpcomm_base_module_t orte_grpcomm;
+orte_grpcomm_base_module_t orte_grpcomm = {0};
 opal_list_t mca_grpcomm_base_components_available;
 orte_grpcomm_base_component_t mca_grpcomm_base_selected_component;
 int orte_grpcomm_profile_fd = -1;
