@@ -1147,7 +1147,7 @@ if test "$OMPI_ENABLE_DLOPEN_SUPPORT" = "1" ; then
     fi
 
     CFLAGS_save="$CFLAGS"
-    CFLAGS="$OMPI_CFLAGS_BEFORE_PICKY"
+    CFLAGS="$OMPI_CFLAGS_BEFORE_PICKY $OMPI_VISIBILITY_CFLAGS"
 
     OMPI_CONFIG_SUBDIR(opal/libltdl, [$ompi_subdir_args], [HAPPY=1], [HAPPY=0])
     if test "$HAPPY" = "1"; then

@@ -70,6 +70,7 @@ AC_DEFUN([OMPI_CHECK_VISIBILITY],[
             have_visibility=0
         fi
         CFLAGS="$CFLAGS_orig$add"
+        OMPI_VISIBILITY_CFLAGS="$add"
         unset add 
     fi
     AC_DEFINE_UNQUOTED([OMPI_C_HAVE_VISIBILITY], [$have_visibility],
