@@ -159,25 +159,31 @@ uint64_t vt_pform_wtime()
       uint32_t low = 0;
       uint32_t higha = 0;
       uint32_t highb = 0;
-    
+
       do {
-	asm volatile ("mftbu %0" : "=r"(highb));
-	asm volatile ("mftb %0" : "=r"(low));
-	asm volatile ("mftbu %0" : "=r"(higha));
+        asm volatile ("mftbu %0" : "=r"(highb));
+        asm volatile ("mftb %0" : "=r"(low));
+        asm volatile ("mftbu %0" : "=r"(higha));
       } while (highb != higha);
       clock_value = ((uint64_t)higha << 32) | (uint64_t)low;
     }
 # elif defined(__ia64__)
     /* ... ITC */
     clock_value = __getReg(_IA64_REG_AR_ITC);
+# elif defined(__alpha__)
+    /* ... Alpha */
+    asm volatile ("rpcc %0" : "=r"(clock_value));
+# elif defined(__sparc__)
+    /* ... Sparc */
+    asm ("rd %%tick, %0" : "=r"(clock_value));
 # else
     /* ... TSC */
     {
       uint32_t low = 0;
       uint32_t high = 0;
-       
+
       asm volatile ("rdtsc" : "=a" (low), "=d" (high));
-       
+
       clock_value = ((uint64_t)high << 32) | (uint64_t)low;
     }
 # endif
