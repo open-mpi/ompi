@@ -53,7 +53,7 @@ OBJ_CLASS_INSTANCE(orte_routed_tree_t, opal_list_item_t,
                    construct, destruct);
 
 int orte_routed_base_output = -1;
-orte_routed_module_t orte_routed;
+orte_routed_module_t orte_routed = {0};
 opal_list_t orte_routed_base_components;
 
 static orte_routed_component_t *active_component = NULL;

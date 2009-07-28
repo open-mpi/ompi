@@ -47,7 +47,7 @@
 
 #include "orte/mca/iof/base/static-components.h"
 
-orte_iof_base_module_t orte_iof;
+orte_iof_base_module_t orte_iof = {0};
 
 
 #if ORTE_DISABLE_FULL_SUPPORT
