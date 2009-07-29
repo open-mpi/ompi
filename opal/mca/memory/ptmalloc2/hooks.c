@@ -20,6 +20,16 @@
 
 /* $Id: hooks.c,v 1.12 2004/11/05 14:42:32 wg Exp $ */
 
+#include "opal_config.h"
+
+#include "opal/mca/mca.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/memory/memory.h"
+#include "opal/util/show_help.h"
+#include "opal/constants.h"
+
+extern opal_memory_base_component_2_0_0_t mca_memory_ptmalloc2_component;
+
 #ifndef DEFAULT_CHECK_ACTION
 #define DEFAULT_CHECK_ACTION 1
 #endif
@@ -818,6 +828,34 @@ void *opal_memory_ptmalloc2_hook_pull(void);
 static int bogus = 37;
 void *opal_memory_ptmalloc2_hook_pull(void)
 {
+    int val;
+
+    /* Make this slightly less than a dummy function -- register the
+       MCA parameter here (that way we keep the name of this MCA
+       parameter here within this one, single file).  Register solely
+       so that it shows up in ompi_info -- by the time we register it,
+       the _malloc_init_hook() has almost certainly already fired, so
+       whatever value was set via normal MCA mechanisms likely won't
+       be see if it wasn't already see by the getenv() in the
+       _malloc_init_hook(). */
+    mca_base_param_source_t source;
+    char **file;
+    int p = mca_base_param_reg_int(&mca_memory_ptmalloc2_component.memoryc_version,
+                                   "disable",
+                                   "If this MCA parameter is set to 1 **VIA ENVIRONMENT VARIABLE ONLY*** (this MCA parameter *CANNOT* be set in a file or on the mpirun command line!), the ptmalloc2 hooks will be disabled",
+                                   false, false, 0, &val);
+    /* We can at least warn if someone tried to set this in a file */
+    if (OPAL_SUCCESS == mca_base_param_lookup_source(p, &source, &file) &&
+        (MCA_BASE_PARAM_SOURCE_DEFAULT != source &&
+         MCA_BASE_PARAM_SOURCE_ENV != source)) {
+        opal_show_help("help-opal-memory-ptmalloc2.txt",
+                       "disable incorrectly set", true,
+                       "opal_ptmalloc2_disable",
+                       "opal_ptmalloc2_disable", val,
+                       MCA_BASE_PARAM_SOURCE_FILE == source ?
+                       file : "override");
+    }
+
     return &bogus;
 }
 
