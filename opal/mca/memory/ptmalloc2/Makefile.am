@@ -44,6 +44,9 @@ ptmalloc2_sources = \
    malloc-stats.c \
    malloc.h
 
+# Help file
+dist_pkgdata_DATA = help-opal-memory-ptmalloc2.txt
+
 # This component is only ever built statically (i.e., slurped into
 # libopen-pal) -- it is never built as a DSO.
 noinst_LTLIBRARIES = libmca_memory_ptmalloc2.la
