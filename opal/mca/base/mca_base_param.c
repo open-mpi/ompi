@@ -557,7 +557,7 @@ int mca_base_param_set_string(int index, char *value)
 /*
  * Lookup the source of an MCA param's value
  */
-bool mca_base_param_lookup_source(int index, mca_base_param_source_t *source, char **source_file)
+int mca_base_param_lookup_source(int index, mca_base_param_source_t *source, char **source_file)
 {
     mca_base_param_storage_t storage;
   
