@@ -811,7 +811,7 @@ void ompi_info_do_config(bool want_all)
                   mpirun_prefix_by_default);
     ompi_info_out("MPI I/O support", "options:mpi-io", have_mpi_io);
     ompi_info_out("MPI_WTIME support", "options:mpi-wtime", wtime_support);
-    ompi_info_out("Symbol visi. support", "options:visibility", symbol_visibility);
+    ompi_info_out("Symbol vis. support", "options:visibility", symbol_visibility);
     
     ompi_info_out("MPI extensions", "options:mpi_ext", OMPI_EXT_COMPONENTS);
     
