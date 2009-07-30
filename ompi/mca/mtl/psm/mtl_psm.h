@@ -81,7 +81,7 @@ extern int ompi_mtl_psm_cancel(struct mca_mtl_base_module_t* mtl,
     
 extern int ompi_mtl_psm_finalize(struct mca_mtl_base_module_t* mtl);
 
-int ompi_mtl_psm_module_init(void);
+int ompi_mtl_psm_module_init(int local_rank, int num_local_procs);
     
 
    
