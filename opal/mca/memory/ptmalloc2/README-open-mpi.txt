@@ -69,34 +69,49 @@ function is *extremely* restricted in what it can do.  It cannot call
 any form of malloc, for example (which seems fairly obvious, but it's
 worth mentioning :-) ).  This function is one of the determining
 steps as to whether we'll use the internal ptmalloc2 allocator or
-not.  It performs checks including (but not limited to; see hooks.c
-for the most up-to-date set of tests):
+not.  Several checks are performed:
 
-- see if the OMPI_MCA_mpi_leave_pinned environment variable is set.
-  Yes, I know this is a horrid abstraction violation, but this
-  function may be invoked pre-main -- it's certainly before MCA
-  parameters have been setup.  So just getenv() and see if it has been
-  set.  
-- look for the hard-coded filename /sys/class/infiniband.
-- if the env variable was not set, but the file is there, enable our
-  ptmalloc2.
-- if the env variable was set to 0, disable our ptmalloc2
-- if the env variable is set to -1, enable our ptmalloc2 if the file
-  was found
-- if the env variable is any other value, enable our ptmalloc2
-- if we're enabling our ptmalloc2, initialize ptmalloc (via
-  ptmalloc_init()) and then set the 4 hooks to point to our
-  name-shifted ptmalloc2 functions
+- Was either the MCA params mpi_leave_pinned or
+  mpi_leave_pinned_pipeline set?
+- Is a driver found to be active indicating that an OS-bypass network
+  is in effect (OpenFabrics, MX, Open-MX, ...etc.)
+- Was an environment variable set indicating that we want to disable
+  this component?
 
-Hence, sometime during process startup, this function will definitely
-be called.  It will either set the 4 hook functions to point to our
-name-shifted ptmalloc2 functions, or it won't.  If the 4 hook
-functions are set, then the underlying glibc allocator will always
-call our 4 functions in all the relevant places instead of calling its
-own functions.  Specifically: the process is calling the underlying
-glibc allocator, but that underlying glibc allocator will make
-function pointer callbacks to our name-shifted ptmalloc2 functions to
-actually do the work.
+If the $OMPI_MCA_memory_ptmalloc2_disable or the $FAKEROOTKEY env
+variables are set, we don't enable the memory hooks.
+
+We then use the following matrix to determine whether to enable the
+memory hooks or not (explanation of the matrix is below):
+
+       lp / lpp   yes   no   runtime   not found       
+       yes        yes   yes  yes       yes
+       no         yes   no   no        no
+       runtime    yes   no   runtime   runtime
+       not found  yes   no   runtime   runtime
+
+lp = leave_pinned (the rows), lpp = leave_pinned_pipeline (the columns)
+yes = found that variable to be set to "yes" (i.e., 1)
+no = found that variable to be set to "no" (i.e., 0)
+runtime = found that variable to be set to "determine at runtime" (i.e., -1)
+not found = that variable was not set at all
+
+Hence, if we end up on a "yes" block in the matrix, we enable the
+hooks.  If we end up in a "no" block in the matrix, we disable the
+hooks.  If we end up in a "runtime" block in the matrix, then we
+enable the hooks *if* we can find indications that an OS bypass
+network is present and available for use (e.g., OpenFabrics, MX,
+Open-MX, ...etc.).
+
+To be clear: sometime during process startup, this function will
+definitely be called.  It will either set the 4 hook functions to
+point to our name-shifted ptmalloc2 functions, or it won't.  If the 4
+hook functions are set, then the underlying glibc allocator will
+always call our 4 functions in all the relevant places instead of
+calling its own functions.  Specifically: the process is calling the
+underlying glibc allocator, but that underlying glibc allocator will
+make function pointer callbacks to our name-shifted ptmalloc2
+functions to actually do the work.
 
 Note that because we know our ptmalloc will not be providing all 5
 hook variables (because we want to use the underlying glibc hook
@@ -112,25 +127,33 @@ invoke ourselves in an infinite loop!
 
 The next thing that happens in the startup sequence is that the
 ptmalloc2 memory component's "open" function is called during
-MPI_INIT.  As stated above, we always intercept munmap() -- this is
-acceptable in all environments.  But we need to test to see if the
-glibc memory hooks have been overridden before MPI_INIT was invoked.
-If so, we need to signal that our allocator support may not be
-complete.
+MPI_INIT.  But we need to test to see if the glibc memory hooks have
+been overridden before MPI_INIT was invoked.  If so, we need to signal
+that our allocator support may not be complete.
 
-Patrick Geofray/MX suggests a simple test: malloc() 4MB and then free
+Patrick Geoffray/MX suggests a simple test: malloc() 4MB and then free
 it.  Watch to see if our name-shifted ptmalloc2 free() function was
 invoked.  If it was, then all of our hooks are probably in place and
 we can proceed.  If not, then set flags indicating that this memory
 allocator only supports MUNMAP (not FREE/CHUNK).
 
+We actually perform this test for malloc, realloc, and memalign.  If
+they all pass, then we say that the memory allocator supports
+everything.  If any of them fail, then we say that the memory
+allocator does not support FREE/CHUNK.
+
 NOTE: we *used* to simply set the FREE/CHUNK support flags during our
 ptmalloc2's internal ptmalloc_init() function.  This is not a good
-idea becaus eeven after our ptmalloc_init() function has been invoked,
-someone may come in an override our memory hooks.  Doing a malloc/free
-test during the ptmalloc2 memory component's open function seems to be
-the safest way to test whether we *actually* support FREE/CHUNK (this
-is what MX does, too).
+idea becaus even after our ptmalloc_init() function has been invoked,
+someone may come in an override our memory hooks.  Doing tests during
+the ptmalloc2 memory component's open function seems to be the safest
+way to test whether we *actually* support FREE/CHUNK (this is what MX
+does, too).
+
+As stated above, we always intercept munmap() -- this is acceptable in
+all environments.  But we test that, too, just to be sure that the
+munmap intercept is working.  If we verify that it is working
+properly, then we set that we have MUNMAP support.
 
 Much later in the init sequence during MPI_INIT, components indicate
 whether they want to use mpi_leave_pinned[_pipeline] support or not.
