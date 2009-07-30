@@ -20,6 +20,8 @@ EXTRA_DIST = post_configure.sh
 
 AM_CPPFLAGS = $(mtl_psm_CPPFLAGS)
 
+dist_pkgdata_DATA = help-mtl-psm.txt
+
 mtl_psm_sources = \
 	       mtl_psm.c \
 	       mtl_psm.h \

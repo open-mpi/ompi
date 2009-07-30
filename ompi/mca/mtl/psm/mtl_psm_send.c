@@ -70,8 +70,9 @@ ompi_mtl_psm_send(struct mca_mtl_base_module_t* mtl,
 		      mtl_psm_request.buf,
 		      length);
 
-    if (mtl_psm_request.free_after)
+    if (mtl_psm_request.free_after) {
 	free(mtl_psm_request.buf);
+    }
 
     return err == PSM_OK ? OMPI_SUCCESS : OMPI_ERROR;
 }
