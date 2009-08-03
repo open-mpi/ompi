@@ -839,7 +839,7 @@ void *opal_memory_ptmalloc2_hook_pull(void)
        be see if it wasn't already see by the getenv() in the
        _malloc_init_hook(). */
     mca_base_param_source_t source;
-    char **file;
+    char *file;
     int p = mca_base_param_reg_int(&mca_memory_ptmalloc2_component.memoryc_version,
                                    "disable",
                                    "If this MCA parameter is set to 1 **VIA ENVIRONMENT VARIABLE ONLY*** (this MCA parameter *CANNOT* be set in a file or on the mpirun command line!), the ptmalloc2 hooks will be disabled",
