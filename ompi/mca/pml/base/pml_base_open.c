@@ -108,6 +108,18 @@ int mca_pml_base_open(void)
      mca_pml_base_output = opal_output_open(NULL);
      opal_output_set_verbosity(mca_pml_base_output, value);
 
+    /**
+     * Construct the send and receive request queues. There are 2 reasons to do it
+     * here. First, as they are globals it's better to construct them in one common
+     * place. Second, in order to be able to allow the external debuggers to show
+     * their content, they should get constructed as soon as possible once the MPI
+     * process is started.
+     */
+    OBJ_CONSTRUCT(&mca_pml_base_send_requests, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_pml_base_recv_requests, ompi_free_list_t);
+
+    OBJ_CONSTRUCT(&mca_pml_base_pml, opal_pointer_array_t);
+
     /* Open up all available components */
 
     if (OMPI_SUCCESS != 
@@ -130,7 +142,6 @@ int mca_pml_base_open(void)
      * uses BTLs and any other PMLs that do not in the mca_pml_base_pml array.
      */
 
-    OBJ_CONSTRUCT(&mca_pml_base_pml, opal_pointer_array_t);
 #if MCA_pml_DIRECT_CALL
     opal_pointer_array_add(&mca_pml_base_pml, 
                            stringify(MCA_pml_DIRECT_CALL_COMPONENT));
@@ -165,16 +176,6 @@ int mca_pml_base_open(void)
 #endif
 
 #endif
-
-    /**
-     * Construct the send and receive request queues. There are 2 reasons to do it
-     * here. First, as they are globals it's better to construct them in one common
-     * place. Second, in order to be able to allow the external debuggers to show
-     * their content, they should get constructed as soon as possible once the MPI
-     * process is started.
-     */
-    OBJ_CONSTRUCT(&mca_pml_base_send_requests, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_pml_base_recv_requests, ompi_free_list_t);
 
     return OMPI_SUCCESS;
 
