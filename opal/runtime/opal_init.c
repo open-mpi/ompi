@@ -250,13 +250,18 @@ opal_init_util(void)
         goto return_error;
     }
 
-    /*
-     * Initialize the data storage service.
-     */
+    /* initialize the datatype engine */
+    if (OPAL_SUCCESS != (ret = opal_datatype_init ())) {
+        error = "opal_datatype_init";
+        goto return_error;
+    }
+
+    /* Initialize the data storage service. */
     if (OPAL_SUCCESS != (ret = opal_dss_open())) {
         error = "opal_dss_open";
         goto return_error;
     }
+
     return OPAL_SUCCESS;
 
  return_error:
@@ -294,12 +299,6 @@ opal_init(void)
     /* open the processor affinity base */
     opal_paffinity_base_open();
     opal_paffinity_base_select();
-
-    /* initialize the datatype engine */
-    if (OPAL_SUCCESS != (ret = opal_datatype_init ())) {
-        error = "opal_datatype_init";
-        goto return_error;
-    }
 
     /* the memcpy component should be one of the first who get
      * loaded in order to make sure we ddo have all the available
