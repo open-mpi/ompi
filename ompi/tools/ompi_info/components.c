@@ -243,8 +243,6 @@ void ompi_info_open_components(void)
     map->type = strdup("base");
     opal_pointer_array_add(&component_map, map);
     
-    /* flag that we need to close components */
-    need_close_components = true;
     /* set default error message from here forward */
     str = "A component framework failed to open properly.";
     
@@ -568,6 +566,9 @@ void ompi_info_open_components(void)
     opal_pointer_array_add(&component_map, map);
 #endif
     
+    /* flag that we need to close components */
+    need_close_components = true;
+
     /* Restore the environment to what it was before we started so that
      * if users setenv OMPI_MCA_<framework name> to some value, they'll
      * see that value when it is shown via --param output.
