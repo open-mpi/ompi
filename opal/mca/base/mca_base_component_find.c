@@ -502,8 +502,8 @@ static int open_component(component_file_item_t *target_file,
   component_struct = (mca_base_component_t*)lt_dlsym(component_handle, struct_name);
   if (NULL == component_struct) {
     opal_output_verbose(vl, 0, "mca: base: component_find: \"%s\" does not appear to be a valid "
-                        "%s MCA dynamic component (ignored)", 
-                        target_file->basename, target_file->type);
+                        "%s MCA dynamic component (ignored): %s", 
+                        target_file->basename, target_file->type, lt_dlerror());
     free(mitem);
     free(struct_name);
     lt_dlclose(component_handle);
