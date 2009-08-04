@@ -62,8 +62,8 @@ AC_DEFUN([_OMPI_SETUP_CXX_COMPILER],[
     # case #1 or #3)
 
     ompi_cxxflags_save="$CXXFLAGS"
-    AC_PROG_CXX
-    AC_PROG_CXXCPP
+    AC_REQUIRE([AC_PROG_CXX])
+    AC_REQUIRE([AC_PROG_CXXCPP])
     BASECXX="`basename $CXX`"
     CXXFLAGS="$ompi_cxxflags_save"
 
