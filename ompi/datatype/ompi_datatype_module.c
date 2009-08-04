@@ -438,20 +438,18 @@ int32_t ompi_datatype_init( void )
      * in mpif.h
      */
 
-#if 0 /* XXX TODO The following may be deleted, both CXX and F77/F90 complex types are statically set up */
     /* the 2 complex datatypes (float and double) */
-    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_cplex.dt, OMPI_DATATYPE_COMPLEX_FLOAT, "MPI_COMPLEX",
+    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_cplex.dt, OMPI_DATATYPE_COMPLEX, "MPI_COMPLEX",
                                       float, float, OMPI_DATATYPE_FLOAT, OMPI_DATATYPE_FLOAT,
                                       OMPI_DATATYPE_FLAG_DATA_FORTRAN | OMPI_DATATYPE_FLAG_DATA_FLOAT );
-    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_dblcplex.dt, DT_COMPLEX_DOUBLE, "MPI_DOUBLE_COMPLEX",
-                                      double, double, DT_DOUBLE, DT_DOUBLE,
+    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_dblcplex.dt, OMPI_DATATYPE_DOUBLE_COMPLEX, "MPI_DOUBLE_COMPLEX",
+                                      double, double, OMPI_DATATYPE_DOUBLE, OMPI_DATATYPE_DOUBLE,
                                       OMPI_DATATYPE_FLAG_DATA_FORTRAN | OMPI_DATATYPE_FLAG_DATA_FLOAT );
 #if HAVE_LONG_DOUBLE
-    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_ldblcplex.dt, DT_COMPLEX_LONG_DOUBLE, "MPI_LONG_DOUBLE_COMPLEX",
-                                      long double, long double, DT_LONG_DOUBLE, DT_LONG_DOUBLE,
+    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_ldblcplex.dt, OMPI_DATATYPE_LONG_DOUBLE_COMPLEX, "MPI_LONG_DOUBLE_COMPLEX",
+                                      long double, long double, OMPI_DATATYPE_LONG_DOUBLE, OMPI_DATATYPE_LONG_DOUBLE,
                                       OMPI_DATATYPE_FLAG_DATA_FORTRAN | OMPI_DATATYPE_FLAG_DATA_FLOAT );
 #endif  /* HAVE_LONG_DOUBLE */
-#endif
 
     /* Now the predefined MPI2 datatypes (they should last forever!) */
     DECLARE_MPI2_COMPOSED_BLOCK_DDT( &ompi_mpi_2int.dt, OMPI_DATATYPE_2INT, "MPI_2INT",
