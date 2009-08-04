@@ -34,6 +34,11 @@ dnl  OMPI_WANT_F90_BINDINGS :
 dnl am_conditional:
 dnl  OMPI_WANT_F90_BINDINGS :
 
+# See note below about why this macro exists
+AC_DEFUN([OMPI_PROG_FC],[
+    AC_PROG_FC([gfortran f95 fort xlf95 ifort ifc efc pgf95 lf95 f90 xlf90 pgf90 epcf90])
+])dnl
+
 AC_DEFUN([OMPI_SETUP_F90],[
     AC_REQUIRE([AC_PROG_GREP])
 
@@ -80,7 +85,9 @@ else
     #
 
     ompi_fcflags_save="$FCFLAGS"
-    AC_PROG_FC([gfortran f95 fort xlf95 ifort ifc efc pgf95 lf95 f90 xlf90 pgf90 epcf90])
+    # Strangeness in AC2.64 forces us to require a macro that calls
+    # PROG_FC instead of calling it directly.  Weird.
+    AC_REQUIRE([OMPI_PROG_FC])
     FCFLAGS="$ompi_fcflags_save"
     if test -z "$FC"; then
         AC_MSG_WARN([*** Fortran 90/95 bindings disabled (could not find compiler)])

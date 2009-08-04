@@ -13,6 +13,7 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+dnl Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -31,6 +32,11 @@ dnl  OMPI_F77               : same as F77
 dnl  OMPI_WANT_F77_BINDINGS :
 dnl am_conditional:
 dnl  OMPI_WANT_F77_BINDINGS :
+
+# See note below about why this macro exists
+AC_DEFUN([OMPI_PROG_F77],[
+    AC_PROG_F77([gfortran g77 f77 xlf frt ifort pgf77 fort77 fl32 af77])
+])
 
 AC_DEFUN([OMPI_SETUP_F77],[
 
@@ -51,7 +57,9 @@ ompi_show_subtitle "Fortran 77 compiler"
 # value for the Fint tests
 #
 ompi_fflags_save="$FFLAGS"
-AC_PROG_F77([gfortran g77 f77 xlf frt ifort pgf77 fort77 fl32 af77])
+# Strangeness in AC2.64 forces us to require a macro that calls
+# PROG_FC instead of calling it directly.  Weird.
+AC_REQUIRE([OMPI_PROG_F77])
 FFLAGS="$ompi_fflags_save"
 if test -z "$F77"; then
     AC_MSG_WARN([*** Fortran 77 bindings disabled (could not find compiler)])
