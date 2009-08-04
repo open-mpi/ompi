@@ -1375,11 +1375,6 @@ if test $ac_cv_header_sys_synch_h = yes ; then
               [Do not use outside of mpi.h.  Define to 1 if you have the <sys/synch.h> header file.])
 fi
 
-AC_DEFINE_UNQUOTED(OPAL_SIZEOF_BOOL, $ac_cv_sizeof_bool,
-          [Do not use outside of mpi.h.  The size of a `bool', as computed by sizeof.]) dnl `
-AC_DEFINE_UNQUOTED(OPAL_SIZEOF_INT, $ac_cv_sizeof_int,
-          [Do not use outside of mpi.h.  The size of a `int', as computed by sizeof.]) dnl `
-
 ############################################################################
 # Party on
 ############################################################################
