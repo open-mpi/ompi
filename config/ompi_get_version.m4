@@ -38,11 +38,11 @@ dnl
 #  prefix_RELEASE_DATE
 m4_define([OMPI_GET_VERSION],[
     : ${ompi_ver_need_svn=1}
-    : ${srcdir=.}
     : ${svnversion_result=-1}
 
     dnl quote eval to suppress macro expansion with non-GNU m4
     if test -f "$1"; then
+        srcdir=`dirname $1`
         ompi_vers=`sed -n "
 	t clear
 	: clear
