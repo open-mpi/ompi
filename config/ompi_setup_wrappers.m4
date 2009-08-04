@@ -12,6 +12,7 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
 dnl                         Use is subject to license terms.
+dnl Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -231,10 +232,15 @@ AC_DEFUN([OMPI_SETUP_WRAPPER_FINAL],[
     AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_INCLUDES])
 
     # language binding support.  C++ is a bit different, as the
-    # compiler should work even if there is no language support.
+    # compiler should work even if there is no MPI C++ bindings
+    # support.  However, we do want it to fail if there is no C++
+    # compiler.
     if test "$WANT_MPI_CXX_SUPPORT" = "1" ; then
         OMPI_WRAPPER_CXX_LIB="-lmpi_cxx"
         OMPI_WRAPPER_CXX_REQUIRED_FILE=""
+    elif test "$CXX" = "none"; then
+        OMPI_WRAPPER_CXX_LIB=""
+        OMPI_WRAPPER_CXX_REQUIRED_FILE="not supported"
     else
         OMPI_WRAPPER_CXX_LIB=""
         OMPI_WRAPPER_CXX_REQUIRED_FILE=""
