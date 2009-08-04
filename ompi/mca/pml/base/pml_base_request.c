@@ -24,8 +24,8 @@
  * If you wonder why these 2 freelists are declared here read the comment
  * in the pml_base_request.h file.
  */
-ompi_free_list_t mca_pml_base_send_requests = {0};
-ompi_free_list_t mca_pml_base_recv_requests = {0};
+ompi_free_list_t mca_pml_base_send_requests = {{{0}}};
+ompi_free_list_t mca_pml_base_recv_requests = {{{0}}};
 
 static void mca_pml_base_request_construct(mca_pml_base_request_t* req)
 {

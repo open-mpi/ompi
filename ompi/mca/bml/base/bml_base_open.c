@@ -29,7 +29,7 @@
 #include "opal/mca/base/base.h"
 
 int mca_bml_base_already_opened = 0;
-opal_list_t mca_bml_base_components_available = {0};
+opal_list_t mca_bml_base_components_available = {{0}};
 
 #if OPAL_ENABLE_DEBUG_RELIABILITY
 double mca_bml_base_error_rate_floor;
