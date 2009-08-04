@@ -46,6 +46,7 @@ AC_DEFUN([OMPI_SETUP_CXX],[
 # --------------------------
 # Setup the CXX compiler
 AC_DEFUN([_OMPI_SETUP_CXX_COMPILER],[
+    OMPI_VAR_SCOPE_PUSH(ompi_cxx_compiler_works)
 
     # There's a few cases here:
     #
@@ -75,34 +76,37 @@ AC_DEFUN([_OMPI_SETUP_CXX_COMPILER],[
     AC_DEFINE_UNQUOTED(OMPI_CXX, "$CXX", [OMPI underlying C++ compiler])
     AC_SUBST(OMPI_CXX_ABSOLUTE)
 
+    # Make sure that the C++ compiler both works and is actually a C++
+    # compiler (if not cross-compiling).  Don't just use the AC macro
+    # so that we can have a pretty message.  Do something here that
+    # should force the linking of C++-specific things (e.g., STL
+    # strings) so that we can force a hard check of compiling,
+    # linking, and running a C++ application.  Note that some C
+    # compilers, such as at least some versions of the GNU and Intel
+    # compilers, will detect that the file extension is ".cc" and
+    # therefore switch into a pseudo-C++ personality which works for
+    # *compiling*, but does not work for *linking*.  So in this test,
+    # we want to cover the entire spectrum (compiling, linking,
+    # running).  Note that it is not a fatal error if the C++ compiler
+    # does not work unless the user specifically requested the C++
+    # bindings.
     AS_IF([test "$CXX" = "none"],
-          [AS_IF([test "$enable_mpi_cxx" = "yes"],
-                 [AC_MSG_WARN([Could not find functional C++ compiler, but])
-                  AC_MSG_WARN([support for the C++ MPI bindings was requested])
-                  AC_MSG_ERROR([Cannot continue])],
-                 [WANT_MPI_CXX_SUPPORT=0])],
-          [
-           # Make sure that the C++ compiler both works and is
-           # actually a C++ compiler (if not cross-compiling).  Don't
-           # just use the AC macro so that we can have a pretty
-           # message.  Do something here that should force the linking
-           # of C++-specific things (e.g., STL strings) so that we can
-           # force a hard check of compiling, linking, and running a
-           # C++ application.  Note that some C compilers, such as at
-           # least some versions of the GNU and Intel compilers, will
-           # detect that the file extension is ".cc" and therefore
-           # switch into a pseudo-C++ personality which works for
-           # *compiling*, but does not work for *linking*.  So in this
-           # test, we want to cover the entire spectrum (compiling,
-           # linking, running).  Note that it is not a fatal error if
-           # the C++ compiler does not work unless the user
-           # specifically requested the C++ bindings.
-
-           AS_IF([test "$ompi_cv_cxx_compiler_vendor" != "microsoft" ],
+          [ompi_cxx_compiler_works=no],
+          [AS_IF([test "$ompi_cv_cxx_compiler_vendor" = "microsoft" ],
+                 [ompi_cxx_compiler_works=yes],
                  [OMPI_CHECK_COMPILER_WORKS([C++], [#include <string>
 ], 
-                                            [std::string foo = "Hello, world"], [], 
-                                            [WANT_MPI_CXX_SUPPORT=0])])])
+                                            [std::string foo = "Hello, world"],
+                                            [ompi_cxx_compiler_works=yes],
+                                            [ompi_cxx_compiler_works=no])])])
+
+    AS_IF([test "$ompi_cxx_compiler_works" = "yes"],
+          [_OMPI_SETUP_CXX_COMPILER_BACKEND],
+          [AS_IF([test "$enable_mpi_cxx" = "yes"],
+                 [AC_MSG_WARN([Could not find functional C++ compiler, but])
+                  AC_MSG_WARN([support for the C++ MPI bindings was requested.])
+                  AC_MSG_ERROR([Cannot continue])],
+                 [WANT_MPI_CXX_SUPPORT=0])])
 
     AC_MSG_CHECKING([if able to build the MPI C++ bindings])
     AS_IF([test "$WANT_MPI_CXX_SUPPORT" = "1"],
@@ -114,6 +118,7 @@ AC_DEFUN([_OMPI_SETUP_CXX_COMPILER],[
 
     AS_IF([test "$WANT_MPI_CXX_SUPPORT" = "1"],
           [OMPI_CXX_COMPILER_VENDOR([ompi_cxx_vendor])])
+    OMPI_VAR_SCOPE_POP
 ])
 
 # _OMPI_SETUP_CXX_COMPILER_BACKEND()
@@ -318,7 +323,7 @@ AC_DEFUN([_OMPI_CXX_CHECK_EXCEPTIONS_BACKEND],[
 AC_DEFUN([_OMPI_CXX_CHECK_BUILTIN],[
     OMPI_VAR_SCOPE_PUSH([have_cxx_builtin_expect have_cxx_builtin_prefetch])
     have_cxx_builtin_expect=0
-    have_cxx_builtin_prefectch=0
+    have_cxx_builtin_prefetch=0
 
     AS_IF([test "$WANT_MPI_CXX_SUPPORT" = "1"],
           [_OMPI_CXX_CHECK_BUILTIN_BACKEND])
