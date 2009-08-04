@@ -675,18 +675,19 @@ static int ompi_comm_allreduce_inter ( int *inbuf, int *outbuf,
         /* local leader exchange their data and determine the overall result
            for both groups */
         rc = MCA_PML_CALL(irecv (outbuf, count, MPI_INT, 0, 
-                                OMPI_COMM_ALLREDUCE_TAG
-                                , intercomm, &req));
+                                 OMPI_COMM_ALLREDUCE_TAG,
+                                 intercomm, &req));
         if ( OMPI_SUCCESS != rc ) {
             goto exit;
         }
         rc = MCA_PML_CALL(send (tmpbuf, count, MPI_INT, 0,
-                               OMPI_COMM_ALLREDUCE_TAG, 
-                               MCA_PML_BASE_SEND_STANDARD, intercomm));
+                                OMPI_COMM_ALLREDUCE_TAG,
+                                MCA_PML_BASE_SEND_STANDARD,
+                                intercomm));
         if ( OMPI_SUCCESS != rc ) {
             goto exit;
         }
-        rc = ompi_request_wait_all ( 1, &req, MPI_STATUS_IGNORE );
+        rc = ompi_request_wait ( &req, MPI_STATUS_IGNORE );
         if ( OMPI_SUCCESS != rc ) {
             goto exit;
         }
