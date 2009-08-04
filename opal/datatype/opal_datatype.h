@@ -49,7 +49,7 @@ BEGIN_C_DECLS
  *
  * This must match the same definition as in opal_datatype_internal.h
  */
-#define OPAL_DATATYPE_MAX_PREDEFINED 22
+#define OPAL_DATATYPE_MAX_PREDEFINED 25
 /*
  * No more than this number of _Basic_ datatypes in C/CPP or Fortran
  * are supported (in order to not change setup and usage of btypes).
@@ -166,6 +166,9 @@ OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_float4;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_float8;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_float12;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_float16;
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_complex8;
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_complex16;
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_complex32;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_bool;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_wchar;
 

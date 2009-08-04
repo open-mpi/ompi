@@ -66,6 +66,9 @@ OPAL_DECLSPEC const opal_datatype_t opal_datatype_float4 =      OPAL_DATATYPE_IN
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_float8 =      OPAL_DATATYPE_INITIALIZER_FLOAT8(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_float12 =     OPAL_DATATYPE_INITIALIZER_FLOAT12(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_float16 =     OPAL_DATATYPE_INITIALIZER_FLOAT16(0);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_complex8 =    OPAL_DATATYPE_INITIALIZER_UNAVAILABLE(0);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_complex16 =   OPAL_DATATYPE_INITIALIZER_UNAVAILABLE(0);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_complex32 =   OPAL_DATATYPE_INITIALIZER_UNAVAILABLE(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_bool =        OPAL_DATATYPE_INITIALIZER_BOOL(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_wchar =       OPAL_DATATYPE_INITIALIZER_WCHAR(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_unavailable = OPAL_DATATYPE_INITIALIZER_UNAVAILABLE(0);
@@ -94,6 +97,9 @@ OPAL_DECLSPEC const size_t opal_datatype_local_sizes[OPAL_DATATYPE_MAX_PREDEFINE
     8,   /* sizeof (float8) */
     12,  /* sizeof (float12) */
     16,  /* sizeof (float16) */
+    8,   /* 2 * sizeof(float4) */
+    16,  /* 2 * sizeof(float8) */
+    32,  /* 2 * sizeof(float16) */
     sizeof (_Bool),
     sizeof (wchar_t),
     0    /* unavailable */
@@ -122,6 +128,9 @@ OPAL_DECLSPEC const opal_datatype_t* opal_datatype_basicDatatypes[OPAL_DATATYPE_
     &opal_datatype_float8,
     &opal_datatype_float12,
     &opal_datatype_float16,
+    &opal_datatype_complex8,
+    &opal_datatype_complex16,
+    &opal_datatype_complex32,
     &opal_datatype_bool,
     &opal_datatype_wchar,
     &opal_datatype_unavailable
@@ -155,6 +164,28 @@ int opal_datatype_register_params(void)
 int32_t opal_datatype_init( void )
 {
     int32_t i;
+    opal_datatype_t* temp;
+
+    opal_datatype_create_contiguous( 2, &opal_datatype_float4, &temp );
+    temp->id = OPAL_DATATYPE_COMPLEX8;
+    temp->flags |= OPAL_DATATYPE_FLAG_PREDEFINED;
+    strcpy( temp->name, "OPAL_DATATYPE_COMPLEX8" );
+    memcpy( (void*)&opal_datatype_complex8, temp, sizeof(opal_datatype_t) );
+    opal_datatype_destroy(&temp);
+
+    opal_datatype_create_contiguous( 2, &opal_datatype_float8, &temp );
+    temp->id = OPAL_DATATYPE_COMPLEX16;
+    temp->flags |= OPAL_DATATYPE_FLAG_PREDEFINED;
+    strcpy( temp->name, "OPAL_DATATYPE_COMPLEX16" );
+    memcpy( (void*)&opal_datatype_complex16, temp, sizeof(opal_datatype_t) );
+    opal_datatype_destroy(&temp);
+
+    opal_datatype_create_contiguous( 2, &opal_datatype_float16, &temp );
+    temp->id = OPAL_DATATYPE_COMPLEX32;
+    temp->flags |= OPAL_DATATYPE_FLAG_PREDEFINED;
+    strcpy( temp->name, "OPAL_DATATYPE_COMPLEX32" );
+    memcpy( (void*)&opal_datatype_complex32, temp, sizeof(opal_datatype_t) );
+    opal_datatype_destroy(&temp);
 
     opal_arch_compute_local_id( &opal_local_arch );
 
