@@ -547,8 +547,8 @@ void ompi_info_do_config(bool want_all)
     debug = OPAL_ENABLE_DEBUG ? "yes" : "no";
     mpi_interface_warning = OMPI_WANT_MPI_INTERFACE_WARNING ? "yes" : "no";
     cprofiling = OMPI_ENABLE_MPI_PROFILING ? "yes" : "no";
-    cxxprofiling = OMPI_ENABLE_MPI_PROFILING ? "yes" : "no";
-    cxxexceptions = OMPI_HAVE_CXX_EXCEPTION_SUPPORT ? "yes" : "no";
+    cxxprofiling = (OMPI_WANT_CXX_BINDINGS && OMPI_ENABLE_MPI_PROFILING) ? "yes" : "no";
+    cxxexceptions = (OMPI_WANT_CXX_BINDINGS && OMPI_HAVE_CXX_EXCEPTION_SUPPORT) ? "yes" : "no";
     f77profiling = (OMPI_ENABLE_MPI_PROFILING && OMPI_WANT_F77_BINDINGS) ? "yes" : "no";
     f90profiling = (OMPI_ENABLE_MPI_PROFILING && OMPI_WANT_F90_BINDINGS) ? "yes" : "no";
     want_libltdl = OPAL_WANT_LIBLTDL ? "yes" : "no";
@@ -605,6 +605,13 @@ void ompi_info_do_config(bool want_all)
     
     if (want_all) {
         ompi_info_out_int("C char size", "compiler:c:sizeof:char", sizeof(char));
+        /* JMS: should be fixed in MPI-2.2 to differentiate between C
+           _Bool and C++ bool.  For the moment, the code base assumes
+           that they are the same.  Because of opal_config_bottom.h,
+           we can sizeof(bool) here, so we might as well -- even
+           though this technically isn't right.  This should be fixed
+           when we update to MPI-2.2.  See below for note about C++
+           bool alignment. */
         ompi_info_out_int("C bool size", "compiler:c:sizeof:bool", sizeof(bool));
         ompi_info_out_int("C short size", "compiler:c:sizeof:short", sizeof(short));
         ompi_info_out_int("C int size", "compiler:c:sizeof:int", sizeof(int));
@@ -613,15 +620,21 @@ void ompi_info_do_config(bool want_all)
         ompi_info_out_int("C double size", "compiler:c:sizeof:double", sizeof(double));
         ompi_info_out_int("C pointer size", "compiler:c:sizeof:pointer", sizeof(void *));
         ompi_info_out_int("C char align", "compiler:c:align:char", OPAL_ALIGNMENT_CHAR);
+#if OMPI_WANT_CXX_BINDINGS
+        /* JMS: See above for note about C++ bool size.  We don't have
+           the bool alignment the way configure currently runs -- need
+           to clean this up when we update for MPI-2.2. */
         ompi_info_out_int("C bool align", "compiler:c:align:bool", OPAL_ALIGNMENT_CXX_BOOL);
+#else
+        ompi_info_out("C bool align", "compiler:c:align:bool", "skipped");
+#endif
         ompi_info_out_int("C int align", "compiler:c:align:int", OPAL_ALIGNMENT_INT);
         ompi_info_out_int("C float align", "compiler:c:align:float", OPAL_ALIGNMENT_FLOAT);
         ompi_info_out_int("C double align", "compiler:c:align:double", OPAL_ALIGNMENT_DOUBLE);
     }
-    
+
     ompi_info_out("C++ compiler", "compiler:cxx:command", OMPI_CXX);
     ompi_info_out("C++ compiler absolute", "compiler:cxx:absolute", OMPI_CXX_ABSOLUTE);
-    
     ompi_info_out("Fortran77 compiler", "compiler:f77:command", OMPI_F77);
     ompi_info_out("Fortran77 compiler abs", "compiler:f77:absolute", 
                   OMPI_F77_ABSOLUTE);

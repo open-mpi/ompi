@@ -9,7 +9,7 @@ dnl Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -970,9 +970,10 @@ AC_MSG_ERROR([Can not continue.])
          OMPI_CHECK_INLINE_C_GCC([$OMPI_GCC_INLINE_ASSIGN])
          OMPI_CHECK_INLINE_C_DEC
          OMPI_CHECK_INLINE_C_XLC
-         OMPI_CHECK_INLINE_CXX_GCC([$OMPI_GCC_INLINE_ASSIGN])
-         OMPI_CHECK_INLINE_CXX_DEC
-         OMPI_CHECK_INLINE_CXX_XLC
+         AS_IF([test "$WANT_MPI_CXX_SUPPORT" = "1"],
+               [OMPI_CHECK_INLINE_CXX_GCC([$OMPI_GCC_INLINE_ASSIGN])
+                OMPI_CHECK_INLINE_CXX_DEC
+                OMPI_CHECK_INLINE_CXX_XLC])
 
          # format:
          #   config_file-text-global-label_suffix-gsym-lsym-type-size-align_log-ppc_r_reg-64_bit-gnu_stack

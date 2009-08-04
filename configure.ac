@@ -348,6 +348,7 @@ AC_INCLUDES_DEFAULT]],
 AC_DEFINE_UNQUOTED(OPAL_NEED_C_BOOL, $OPAL_NEED_C_BOOL,
     [Whether the C compiler supports "bool" without any other help (such as <stdbool.h>)])
 AC_MSG_RESULT([$MSG])
+AC_CHECK_SIZEOF(_Bool)
 
 #
 # Check for other compiler characteristics
@@ -447,20 +448,6 @@ AC_DEFINE_UNQUOTED(OPAL_HAVE_WEAK_SYMBOLS, $OPAL_C_HAVE_WEAK_SYMBOLS,
 
 OMPI_SETUP_CXX
 
-# Does the compiler support "ident"-like constructs?
-
-OMPI_CHECK_IDENT([CXX], [CXXFLAGS], [cc], [C++])
-
-# check for type sizes
-
-AC_LANG_PUSH(C++)
-AC_CHECK_SIZEOF(bool)
-
-# check for type alignments
-
-OMPI_C_GET_ALIGNMENT(bool, OPAL_ALIGNMENT_CXX_BOOL)
-AC_LANG_POP(C++)
-
 # check if we want C++ support
 
 AM_CONDITIONAL(WANT_MPI_CXX_BINDINGS,
@@ -473,6 +460,9 @@ AC_DEFINE_UNQUOTED(OMPI_WANT_CXX_BINDINGS, $WANT_MPI_CXX_SUPPORT,
 # Only after setting up both
 # C and C++ check compiler attributes.
 ##################################
+
+ompi_show_subtitle "Compiler characteristics"
+
 OMPI_CHECK_ATTRIBUTES
 
 OPAL_CHECK_COMPILER_VERSION_ID
