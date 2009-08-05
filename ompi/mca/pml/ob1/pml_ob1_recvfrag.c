@@ -99,7 +99,8 @@ match_one(mca_btl_base_module_t *btl,
 void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl, 
                                           mca_btl_base_tag_t tag,
                                           mca_btl_base_descriptor_t* des,
-                                          void* cbdata ) { 
+                                          void* cbdata )
+{ 
     mca_btl_base_segment_t* segments = des->des_dst;
     mca_pml_ob1_match_hdr_t* hdr = (mca_pml_ob1_match_hdr_t*)segments->seg_addr.pval;
     ompi_communicator_t *comm_ptr;
@@ -244,11 +245,8 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
 void mca_pml_ob1_recv_frag_callback_rndv(mca_btl_base_module_t* btl, 
                                          mca_btl_base_tag_t tag,
                                          mca_btl_base_descriptor_t* des,
-                                         void* cbdata ) { 
-    
-    
-    
-    
+                                         void* cbdata )
+{ 
     mca_btl_base_segment_t* segments = des->des_dst;
     mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
     
@@ -264,13 +262,14 @@ void mca_pml_ob1_recv_frag_callback_rndv(mca_btl_base_module_t* btl,
 void mca_pml_ob1_recv_frag_callback_rget(mca_btl_base_module_t* btl, 
                                          mca_btl_base_tag_t tag,
                                          mca_btl_base_descriptor_t* des,
-                                         void* cbdata ) { 
+                                         void* cbdata )
+{ 
     mca_btl_base_segment_t* segments = des->des_dst;
     mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
     
     if( OPAL_UNLIKELY(segments->seg_len < sizeof(mca_pml_ob1_common_hdr_t)) ) {
         return;
-     }
+    }
     ob1_hdr_ntoh(hdr, MCA_PML_OB1_HDR_TYPE_RGET);
     mca_pml_ob1_recv_frag_match(btl, &hdr->hdr_match, segments,
                                 des->des_dst_cnt, MCA_PML_OB1_HDR_TYPE_RGET);
@@ -282,7 +281,8 @@ void mca_pml_ob1_recv_frag_callback_rget(mca_btl_base_module_t* btl,
 void mca_pml_ob1_recv_frag_callback_ack(mca_btl_base_module_t* btl, 
                                         mca_btl_base_tag_t tag,
                                         mca_btl_base_descriptor_t* des,
-                                        void* cbdata ) { 
+                                        void* cbdata )
+{ 
     mca_btl_base_segment_t* segments = des->des_dst;
     mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
     mca_pml_ob1_send_request_t* sendreq;
@@ -483,21 +483,16 @@ match_one(mca_btl_base_module_t *btl,
     } while(true);
 }
 
-static mca_pml_ob1_recv_frag_t *check_cantmatch_for_match(
-        mca_pml_ob1_comm_proc_t *proc)
+static mca_pml_ob1_recv_frag_t* check_cantmatch_for_match(mca_pml_ob1_comm_proc_t *proc)
 {
-    /* local parameters */
     mca_pml_ob1_recv_frag_t *frag;
 
     /* search the list for a fragment from the send with sequence
      * number next_msg_seq_expected
      */
-    for(frag = (mca_pml_ob1_recv_frag_t *) 
-            opal_list_get_first(&proc->frags_cant_match);
-        frag != (mca_pml_ob1_recv_frag_t *)
-            opal_list_get_end(&proc->frags_cant_match);
-        frag = (mca_pml_ob1_recv_frag_t *) 
-            opal_list_get_next(frag))
+    for(frag = (mca_pml_ob1_recv_frag_t*)opal_list_get_first(&proc->frags_cant_match);
+        frag != (mca_pml_ob1_recv_frag_t*)opal_list_get_end(&proc->frags_cant_match);
+        frag = (mca_pml_ob1_recv_frag_t*)opal_list_get_next(frag))
     {
         mca_pml_ob1_match_hdr_t* hdr = &frag->hdr.hdr_match;
         /*
