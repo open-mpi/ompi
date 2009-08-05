@@ -65,7 +65,7 @@ opal_crs_blcr_component_t mca_crs_blcr_component = {
         /* opal_output handler */
         -1,
         /* Default priority */
-        50
+        10
     }
 };
 

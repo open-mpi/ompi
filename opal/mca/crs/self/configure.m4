@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2004-2007 The Trustees of Indiana University.
+# Copyright (c) 2004-2009 The Trustees of Indiana University.
 #                         All rights reserved.
 # Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
 #                         All rights reserved.
@@ -21,10 +21,26 @@ AC_DEFUN([MCA_crs_self_CONFIG],[
     # If we don't want FT, don't compile this component
     AS_IF([test "$ompi_want_ft" = "1"],
         [crs_self_good="yes"],
-        [$2])
+        [crs_self_good="no"])
 
-    # We need to be able to dlopen the executable for this component to work.
-    AS_IF([test "$OPAL_ENABLE_DLOPEN_SUPPORT" = "1" -a "$crs_self_good" = "yes"],
+    # We need the dlfcn.h so we can access dlsym and friends
+    AS_IF([test "$crs_self_good" = "yes"],
+        [AC_CHECK_HEADER([dlfcn.h],
+                         [crs_self_good="yes"],
+                         [crs_self_good="no"])],
+        [crs_self_good="no"])
+
+    # If they did not ask for dlopen support,
+    # they probably do not want this component either
+    AS_IF([test "$crs_self_good" = "yes"],
+        [AS_IF([test "$OPAL_ENABLE_DLOPEN_SUPPORT" = "1"],
+                [crs_self_good="yes"],
+                [crs_self_good="no"])],
+        [crs_self_good="no"])
+
+    AS_IF([test "$crs_self_good" = "yes"],
         [$1],
-        [$2])
+        [$2])        
+
+
 ])dnl

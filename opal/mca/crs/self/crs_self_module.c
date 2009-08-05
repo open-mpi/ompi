@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2008 The Trustees of Indiana University.
+ * Copyright (c) 2004-2009 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -95,10 +95,13 @@ OBJ_CLASS_INSTANCE(opal_crs_self_snapshot_t,
                    opal_crs_self_destruct);
 
 
+typedef void (*opal_crs_self_dlsym_dummy_fn_t)(void);
+
 /************************************
  * Locally Global vars & functions :)
  ************************************/
-static void * crs_self_find_function(void * handle, char *prefix, char *suffix);
+static int crs_self_find_function(char *prefix, char *suffix,
+                                  opal_crs_self_dlsym_dummy_fn_t *fn_ptr);
 
 static int self_update_snapshot_metadata(opal_crs_self_snapshot_t *snapshot);
 
@@ -163,40 +166,25 @@ int opal_crs_self_component_query(mca_base_module_t **module, int *priority)
 static int opal_crs_self_extract_callbacks(void)
 {
     bool callback_matched = true;
-    void * executable = NULL;
-
-    /*
-     * Open the executable so that we can lookup the necessary symbols
-     */
-    executable = dlopen(NULL, RTLD_LOCAL|RTLD_LAZY);
-    if ( NULL == executable) {
-        opal_show_help("help-opal-crs-self.txt", "self:lt_dlopen",
-                       true);
-        return OPAL_ERROR;
-    }
+    opal_crs_self_dlsym_dummy_fn_t loc_fn;
 
     /*
      * Find the function names
      */
-    mca_crs_self_component.ucb_checkpoint_fn = (opal_crs_self_checkpoint_callback_fn_t)
-        crs_self_find_function(executable, 
-                               mca_crs_self_component.prefix,
-                               SUFFIX_CHECKPOINT);
+    crs_self_find_function(mca_crs_self_component.prefix,
+                           SUFFIX_CHECKPOINT,
+                           &loc_fn);
+    mca_crs_self_component.ucb_checkpoint_fn = (opal_crs_self_checkpoint_callback_fn_t)loc_fn;
 
-    mca_crs_self_component.ucb_continue_fn = (opal_crs_self_continue_callback_fn_t)
-        crs_self_find_function(executable, 
-                               mca_crs_self_component.prefix,
-                               SUFFIX_CONTINUE);
+    crs_self_find_function(mca_crs_self_component.prefix,
+                           SUFFIX_CONTINUE,
+                           &loc_fn);
+    mca_crs_self_component.ucb_continue_fn = (opal_crs_self_continue_callback_fn_t)loc_fn;
 
-    mca_crs_self_component.ucb_restart_fn = (opal_crs_self_restart_callback_fn_t)
-        crs_self_find_function(executable, 
-                               mca_crs_self_component.prefix,
-                               SUFFIX_RESTART);
-
-    /*
-     * Done with executable, close it
-     */
-    dlclose(executable);
+    crs_self_find_function(mca_crs_self_component.prefix,
+                           SUFFIX_RESTART,
+                           &loc_fn);
+    mca_crs_self_component.ucb_restart_fn = (opal_crs_self_restart_callback_fn_t)loc_fn;
 
     /*
      * Sanity check
@@ -557,19 +545,21 @@ int opal_crs_self_reg_thread(void)
 /******************
  * Local functions
  ******************/
-static void * crs_self_find_function(void * handle, char *prefix, char *suffix){
+static int crs_self_find_function(char *prefix, char *suffix,
+                                  opal_crs_self_dlsym_dummy_fn_t *fn_ptr) {
     char *func_to_find = NULL;
-    void * ptr = NULL;
 
     if( NULL == prefix || 0 >= strlen(prefix) ) {
         opal_output(mca_crs_self_component.super.output_handle,
                     "crs:self: crs_self_find_function: Error: prefix is NULL or empty string!");
-        return NULL;
+        *fn_ptr = NULL;
+        return OPAL_ERROR;
     }
     if( NULL == suffix || 0 >= strlen(suffix) ) {
         opal_output(mca_crs_self_component.super.output_handle,
                     "crs:self: crs_self_find_function: Error: suffix is NULL or empty string!");
-        return NULL;
+        *fn_ptr = NULL;
+        return OPAL_ERROR;
     }
 
     opal_output_verbose(10, mca_crs_self_component.super.output_handle,
@@ -578,8 +568,13 @@ static void * crs_self_find_function(void * handle, char *prefix, char *suffix){
 
     asprintf(&func_to_find, "%s_%s", prefix, suffix);
 
-    ptr = dlsym(handle, func_to_find);
-    if( NULL == ptr) {
+    /* The RTLD_DEFAULT is a special handle that searches the default libraries
+     * including the current application for the indicated symbol. This allows
+     * us to not have to dlopen/dlclose the executable. A bit of short hand
+     * really.
+     */
+    *((void**) fn_ptr) = dlsym(RTLD_DEFAULT, func_to_find);
+    if( NULL == fn_ptr) {
         opal_output_verbose(12, mca_crs_self_component.super.output_handle,
                             "crs:self: crs_self_find_function: WARNING: Function \"%s\" not found",
                             func_to_find);
@@ -590,10 +585,11 @@ static void * crs_self_find_function(void * handle, char *prefix, char *suffix){
                             func_to_find);
     }
 
-    if( NULL == func_to_find)
+    if( NULL == func_to_find) {
         free(func_to_find);
+    }
 
-    return ptr;
+    return OPAL_SUCCESS;
 }
 
 /*
