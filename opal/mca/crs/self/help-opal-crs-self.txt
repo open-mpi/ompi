@@ -20,7 +20,7 @@
 #
 [self:lt_dlopen]
 Error: We were unable to open the executable with libtool.
-       We needed  to look for the inclusion of user defined callbacks.
+       We needed to look for the inclusion of user defined callbacks.
        
        Make sure that the linker has exported all of the symbols. 
        This is usally enabled with a flag such as '-export'.

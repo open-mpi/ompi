@@ -89,7 +89,6 @@ typedef struct {
     char *filename;
     bool verbose;
     bool forked;
-    bool self_case;
     char *snapshot_loc;
     int  output;
 } opal_restart_globals_t;
@@ -123,19 +122,6 @@ opal_cmd_line_init_t cmd_line_opts[] = {
       "Where to find the checkpoint files. In most cases this is automatically "
       "detected, however if a custom location was specified to opal-checkpoint "
       "then this argument is meant to match it."},
-
-    /*
-     * We do this instead of using the '-mca crs self' convention as to not
-     * influence the user into thinking that they need to do this for all of the
-     * checkpointers. And to reinforce that the 'self' module is an exception, and
-     * all other modules are automaticly detected.
-     */
-    { NULL, NULL, NULL, 
-      's', NULL, "self", 
-      0,
-      &opal_restart_globals.self_case, OPAL_CMD_LINE_TYPE_BOOL,
-      "Is this a restart using the 'self' module. This is a special case as all "
-      "other modules are automaticly detected" },
 
     /* End of list */
     { NULL, NULL, NULL, 
@@ -252,9 +238,6 @@ main(int argc, char *argv[])
                             "\t Exec in self");
     }
 
-    /* JJH: Do not unsetenv(opal_cr_is_tool) here, as it will impact the
-     * JJH: application improperly. */
-
     snapshot = OBJ_NEW(opal_crs_base_snapshot_t);
     snapshot->cold_start      = true;
     snapshot->reference_name  = strdup(opal_restart_globals.filename);
@@ -363,6 +346,10 @@ static int initialize(int argc, char *argv[])
         goto cleanup;
     }
 
+    /*
+     * Mark this process as a tool
+     */
+    opal_cr_is_tool = true;
 
  cleanup:
     return exit_status;
@@ -384,9 +371,13 @@ static int parse_args(int argc, char *argv[])
     int i, ret, len;
     opal_cmd_line_t cmd_line;
     char **app_env = NULL, **global_env = NULL;
-    opal_restart_globals_t tmp = { false, NULL, false, false, false, NULL, 0 };
 
-    opal_restart_globals = tmp;
+    opal_restart_globals.help = false;
+    opal_restart_globals.filename = NULL;
+    opal_restart_globals.verbose = false;
+    opal_restart_globals.forked = false;
+    opal_restart_globals.snapshot_loc = NULL;
+    opal_restart_globals.output = 0;
 
     /* Parse the command line options */
     opal_cmd_line_create(&cmd_line, cmd_line_opts);
@@ -409,9 +400,6 @@ static int parse_args(int argc, char *argv[])
     for(i = 0; i < len; ++i) {
         putenv(global_env[i]);
     }
-
-    /* JJH: Do not setenv(opal_cr_is_tool, 1) here, as it will impact the
-     * JJH: application improperly. */
 
     /**
      * Now start parsing our specific arguments
@@ -453,21 +441,6 @@ static int parse_args(int argc, char *argv[])
     if(argc > 1) {
         opal_restart_globals.filename = strdup(opal_argv_join(argv, ' '));
     }
-    
-    /*
-     * Due to the special nature of the 'self' module, we need to know if that is the
-     * requested module.
-     * If it is then we don't need to do the 'snapshot reference' handling,
-     * If it is NOT then we need to extract the requested CRS module from the 
-     *   metadata file, and use that.
-     * Should note that the 'self' module is the only one that needs to be specified
-     * to opal_restart, all others are detected dynamicly.
-     */
-    if( opal_restart_globals.self_case ) {
-        /* They are not required to explicitly use the '-mca crs self' convention,
-         * so set the environment var for them */
-        expected_crs_comp = strdup("self");
-    }
 
     return OPAL_SUCCESS;
 }
@@ -486,24 +459,10 @@ static int check_file(char *given_filename)
         goto cleanup;
     }
     
-    /* If this is the self case then we need to check that the application
-     * exists
+    /*
+     * Check for the existance of the snapshot handle in the snapshot directory
      */
-    if(opal_restart_globals.self_case) {
-        if( NULL == (argv = opal_argv_split(given_filename, ' ')) ) {
-            exit_status = OPAL_ERROR;
-            goto cleanup;
-        }
-
-        /* Extract just the application name */
-        path_to_check = strdup(argv[0]);
-    }
-    /* Otherwise we are checking for the existance of the snapshot handle 
-     * in the snapshot directory
-     */
-    else {
-        path_to_check = opal_crs_base_get_snapshot_directory(given_filename);
-    }
+    path_to_check = opal_crs_base_get_snapshot_directory(given_filename);
 
     /* Do the check */
     opal_output_verbose(10, opal_restart_globals.output,

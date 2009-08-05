@@ -61,7 +61,7 @@ opal_crs_none_component_t mca_crs_none_component = {
         /* opal_output handler */
         -1,
         /* Default priority */
-        0
+        1
     }
 };
 
