@@ -33,6 +33,7 @@
 mca_btl_template_module_t mca_btl_template_module = {
     {
         &mca_btl_template_component.super,
+        "unknown",
         0, /* max size of first fragment */
         0, /* min send fragment size */
         0, /* max send fragment size */

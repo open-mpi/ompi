@@ -42,6 +42,7 @@
 mca_btl_ud_module_t mca_btl_ofud_module = {
     {
         &mca_btl_ofud_component.super,
+        "unknown",
         0, /* eager_limit */
         0, /* min_send_size */
         0, /* max_send_size */

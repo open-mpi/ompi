@@ -36,6 +36,7 @@
 
 mca_btl_base_module_t mca_btl_self = {
     &mca_btl_self_component.super,
+    "unknown",
     0, /* btl_eager_limit */
     0, /* btl_rndv_eager_limit */
     0, /* btl_max_send_size */
