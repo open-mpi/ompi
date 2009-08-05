@@ -33,17 +33,19 @@ dnl  OMPI_WANT_F77_BINDINGS :
 dnl am_conditional:
 dnl  OMPI_WANT_F77_BINDINGS :
 
-# See note below about why this macro exists
+# This macro is necessary to get the title to be displayed first.  :-)
+AC_DEFUN([OMPI_SETUP_F77_BANNER],[
+    ompi_show_subtitle "Fortran 77 compiler" 
+])
+
+# This macro is necessary because PROG_FC is REQUIREd by multiple
+# places in SETUP_F90.
 AC_DEFUN([OMPI_PROG_F77],[
     AC_PROG_F77([gfortran g77 f77 xlf frt ifort pgf77 fort77 fl32 af77])
 ])
 
 AC_DEFUN([OMPI_SETUP_F77],[
-
-# Modularize this setup so that sub-configure.in scripts can use this
-# same setup code.
-
-ompi_show_subtitle "Fortran 77 compiler" 
+    AC_REQUIRE([OMPI_SETUP_F77_BANNER])
 
 #
 # Check for the compiler
