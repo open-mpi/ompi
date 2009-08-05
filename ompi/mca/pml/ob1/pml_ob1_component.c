@@ -47,7 +47,6 @@ static mca_pml_base_module_t*
 mca_pml_ob1_component_init( int* priority, bool enable_progress_threads,
                             bool enable_mpi_threads );
 static int mca_pml_ob1_component_fini(void);
-int mca_pml_ob1_output = 0;
 
 mca_pml_base_component_2_0_0_t mca_pml_ob1_component = {
 
@@ -94,11 +93,6 @@ static inline int mca_pml_ob1_param_register_int(
 static int mca_pml_ob1_component_open(void)
 {
     mca_allocator_base_component_t* allocator_component;
-    int value;
-
-    value = mca_pml_ob1_param_register_int("verbose", 0);
-    mca_pml_ob1_output = opal_output_open(NULL);
-    opal_output_set_verbosity(mca_pml_ob1_output, value);
 
     mca_pml_ob1.free_list_num =
         mca_pml_ob1_param_register_int("free_list_num", 4);

@@ -24,7 +24,6 @@
 #ifndef MCA_BTL_IB_ENDPOINT_H
 #define MCA_BTL_IB_ENDPOINT_H
 
-#include <unistd.h>
 #include "opal/class/opal_list.h"
 #include "opal/event/event.h"
 #include "opal/util/output.h"
@@ -36,7 +35,6 @@
 #include <string.h>
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "connect/base.h"
-#include "ompi/mca/pml/ob1/pml_ob1_hdr.h" /* For debugging only */
 
 BEGIN_C_DECLS
 
@@ -422,7 +420,6 @@ static inline int check_endpoint_state(mca_btl_openib_endpoint_t *ep,
         mca_btl_base_descriptor_t *des, opal_list_t *pending_list)
 {
     int rc = OMPI_ERR_RESOURCE_BUSY;
-    int holdon = 1;
 
     switch(ep->endpoint_state) {
         case MCA_BTL_IB_CLOSED:
@@ -440,13 +437,6 @@ static inline int check_endpoint_state(mca_btl_openib_endpoint_t *ep,
             /* fall through */
         default:
             opal_list_append(pending_list, (opal_list_item_t *)des);
-#if 0
-            while (holdon) {
-                holdon++;
-                opal_output(0, "STARTING CONNECTION on %d - ATTACH DEBUGGER", getpid());
-                sleep(5);
-            }
-#endif
             break;
         case MCA_BTL_IB_FAILED:
             rc = OMPI_ERR_UNREACH;
@@ -486,40 +476,6 @@ static inline int post_send(mca_btl_openib_endpoint_t *ep,
     struct ibv_send_wr *sr_desc = &to_out_frag(frag)->sr_desc;
     struct ibv_send_wr *bad_wr;
     int qp = to_base_frag(frag)->base.order;
-    static int printstuff = 0;
-
-    if (printstuff == 1) {
-        /* Some extra debugging tool.  Should be removed eventually.  This prints
-         * out the PML header that is in the newly created fragment. */
-        mca_pml_ob1_common_hdr_t* hdr;
-        mca_pml_ob1_match_hdr_t* mhdr;
-        mca_pml_ob1_frag_hdr_t* fhdr;
-        uint8_t type;
-
-        hdr = (mca_pml_ob1_common_hdr_t*)seg->seg_addr.pval;
-        type = hdr->hdr_type;
-        switch (type) {
-        case MCA_PML_OB1_HDR_TYPE_MATCH:
-            mhdr = (mca_pml_ob1_match_hdr_t*)hdr;
-            OPAL_OUTPUT((-1, "MATCH,frag=%d,tag=%d,src=%d,seq=%d",
-                         frag, mhdr->hdr_tag, mhdr->hdr_src, mhdr->hdr_seq));
-            break;
-        case MCA_PML_OB1_HDR_TYPE_FRAG:
-            fhdr = (mca_pml_ob1_frag_hdr_t*)hdr;
-            OPAL_OUTPUT((-1, "FRAG,frag=%lx,rreq=%lx,len=%d,offset=%d",
-                         frag, fhdr->hdr_dst_req.pval, to_base_frag(frag)->segment.seg_len,
-                         fhdr->hdr_frag_offset));
-            break;
-        case MCA_PML_OB1_HDR_TYPE_RNDV:
-            OPAL_OUTPUT((-1, "RNDV,frag=%lx", frag));
-            break;
-        case MCA_PML_OB1_HDR_TYPE_ACK:
-            OPAL_OUTPUT((-1, "ACK,frag=%lx", frag));
-            break;
-        default:
-            OPAL_OUTPUT((-1, "OTHER,frag=%lx", frag));
-        }
-    }
 
     sg->length = seg->seg_len + sizeof(mca_btl_openib_header_t) +
         (rdma ? sizeof(mca_btl_openib_footer_t) : 0) + frag->coalesced_length;
@@ -571,18 +527,7 @@ static inline int post_send(mca_btl_openib_endpoint_t *ep,
 #endif
     assert(sg->addr == (uint64_t)(uintptr_t)frag->hdr);
 
-    {
-	int retval;
-	retval = ibv_post_send(ep->qps[qp].qp->lcl_qp, sr_desc, &bad_wr);
-	if (0 == retval) {
-	    OPAL_OUTPUT((-1, "SUCCESS: Posted %d frag on %s\n", frag, 
-			 ep->endpoint_btl->super.btl_ifname));
-	} else {
-	    OPAL_OUTPUT((0, "FAILURE: Did not posted %d frag on %s\n", frag,
-			ep->endpoint_btl->super.btl_ifname));
-	}
-	return retval;
-    }
+    return ibv_post_send(ep->qps[qp].qp->lcl_qp, sr_desc, &bad_wr);
 }
 
 END_C_DECLS
