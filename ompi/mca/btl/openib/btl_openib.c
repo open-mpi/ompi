@@ -67,7 +67,6 @@
 mca_btl_openib_module_t mca_btl_openib_module = {
     {
         &mca_btl_openib_component.super,
-	"unknown",
         0, /* max size of first fragment */
         0, /* min send fragment size */
         0, /* max send fragment size */
@@ -639,7 +638,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
     assert(qp != MCA_BTL_NO_ORDER);
 
     if(mca_btl_openib_component.use_message_coalescing &&
-       (flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP) && !(flags & MCA_BTL_IB_NO_COALESCE)) {
+       (flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
         int prio = !(flags & MCA_BTL_DES_FLAGS_PRIORITY);
         sfrag = check_coalescing(&ep->qps[qp].no_wqe_pending_frags[prio],
                 &ep->qps[qp].qp->lock, ep, size);
@@ -1190,8 +1189,6 @@ int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
     if(!ib_rc) {
         OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
         return OMPI_SUCCESS;
-    } else {
-        opal_output(0, "Error from ibv_post_send()");
     }
 
     /* Failed to send, do clean up all allocated resources */
@@ -1222,9 +1219,6 @@ cant_send:
     OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
     /* We can not send the data directly, so we just return descriptor */
     *descriptor = mca_btl_openib_alloc(btl, ep, order, size, flags);
-#if 0
-    opal_output(0, "Failed to send during sendi, send frag=%d back up", *descriptor);
-#endif
     return OMPI_ERR_RESOURCE_BUSY;
 }
 /*

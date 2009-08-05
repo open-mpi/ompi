@@ -66,7 +66,6 @@ const char *ibv_get_sysfs_path(void);
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/notifier/notifier.h"
 
-#include "ompi/mca/pml/ob1/pml_ob1_hdr.h" /* For debugging only */
 #include "ompi/proc/proc.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/mpool/base/base.h"
@@ -647,7 +646,6 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
             ib_selected = OBJ_NEW(mca_btl_base_selected_module_t);
             ib_selected->btl_module = (mca_btl_base_module_t*) openib_btl;
             openib_btl->device = device;
-            strncpy(openib_btl->super.btl_ifname, ibv_get_device_name(device->ib_dev), 7);
             openib_btl->port_num = (uint8_t) port_num;
             openib_btl->pkey_index = pkey_index;
             openib_btl->lid = lid;
@@ -2812,250 +2810,6 @@ static void progress_pending_frags_srq(mca_btl_openib_module_t* openib_btl,
     }
 }
 
-/**
-  * Take an existing frag and move it to another endpoint.  We first
-  * allocate a new fragment from the new btl.  We then copy over various
-  * fields from the old fragment to the new one.  Then we copy the
-  * actually data that is to be transferred.  This includes the openib
-  * header, the PML header, and all the data.
-  */
-static void mca_btl_openib_move_frag(mca_btl_openib_endpoint_t* ep, 
-                                     mca_btl_openib_com_frag_t* oldfrag) 
-{
-    mca_btl_openib_com_frag_t* frag;
-    mca_btl_base_descriptor_t* olddes;
-    mca_btl_base_descriptor_t* des;
-    int coalesced_len, retval;
-
-    if (ep->endpoint_state != MCA_BTL_IB_CONNECTED) {
-	OPAL_OUTPUT((-1, "INFO: Reposting to unconnected endpoint"));
-    }
-    
-    olddes = (mca_btl_base_descriptor_t *)oldfrag;
-
-    /* Check to see if this was a coalesced fragment.  If so, then
-     * first walk through each coalesced fragment, turn it into a send
-     * fragment, and repost. */
-    coalesced_len = opal_list_get_size(&to_send_frag(olddes)->coalesced_frags);
-    if (coalesced_len > 0) {
-        mca_btl_openib_control_header_t *ctrl_hdr;
-        mca_btl_openib_header_coalesced_t *clsc_hdr;
-        opal_list_item_t *i;
-        mca_btl_base_descriptor_t* coalesced_des;
-        OPAL_OUTPUT((-1, "INFO: Reposting coalesced fragments"));
-        while((i = opal_list_remove_first(&to_send_frag(olddes)->coalesced_frags))) {
-
-            frag = (mca_btl_openib_com_frag_t *)
-                mca_btl_openib_alloc((mca_btl_base_module_t *)ep->endpoint_btl,
-                                     ep, to_base_frag(i)->base.order,
-                                     to_base_frag(i)->segment.seg_len,
-                                     to_base_frag(i)->base.des_flags | MCA_BTL_IB_NO_COALESCE);
-
-            coalesced_des = (mca_btl_base_descriptor_t *)i;
-
-            /* First adjust the values in the descriptor portion of the fragment */
-            des = (mca_btl_base_descriptor_t*)frag;
-            des->des_cbfunc = coalesced_des->des_cbfunc;
-            des->des_cbdata = coalesced_des->des_cbdata;
-
-            /* Now adjust fragment specific information */
-            frag->endpoint = ep;
-
-            /* Finally copy over the data that is actually being transmitted */
-            memcpy(to_base_frag(frag)->segment.seg_addr.pval, to_base_frag(i)->segment.seg_addr.pval,
-                   to_base_frag(i)->segment.seg_len);
-            to_base_frag(frag)->segment.seg_len = to_base_frag(i)->segment.seg_len;
-
-            /* Restore the PML fragment type header used for callbacks */
-            clsc_hdr = (mca_btl_openib_header_coalesced_t *) to_coalesced_frag(i)->hdr;
-            to_send_frag(frag)->hdr->tag = clsc_hdr->tag;
-
-            OPAL_OUTPUT((0, "Tag pulled from old coalesced frag: tag=%d", clsc_hdr->tag));
-
-            /* Set to zero just to be safe */
-            to_send_frag(frag)->hdr->cm_seen = 0;
-            to_send_frag(frag)->hdr->credits = 0;
-
-            /* This function will either post the send or queue it up if the resource
-             * is busy.  The resource could be busy if it is out of credits or out of
-             * wqe's.  If we get something other then resource busy or success, then
-             * we will error out entirely as an unrecoverable error.  */
-            retval = mca_btl_openib_endpoint_send(ep, (mca_btl_openib_send_frag_t*)frag);
-            if ((OMPI_SUCCESS != retval) && (OMPI_ERR_RESOURCE_BUSY != retval)) {
-                ep->endpoint_btl->error_cb(&ep->endpoint_btl->super, MCA_BTL_ERROR_FLAGS_FATAL, NULL, NULL);
-            }
-        }
-    }
-
-    /* Now move the actual frag that caused the error */
-    frag = (mca_btl_openib_com_frag_t *)
-        mca_btl_openib_alloc((mca_btl_base_module_t *)ep->endpoint_btl,
-                             ep, to_base_frag(oldfrag)->base.order,
-                             to_base_frag(oldfrag)->segment.seg_len,
-                             to_base_frag(oldfrag)->base.des_flags | MCA_BTL_IB_NO_COALESCE);
-
-    OPAL_OUTPUT((-1, "Changing frag=%lx,btl=%s to frag=%lx,btl=%s, copying %d bytes\n",
-                 oldfrag, oldfrag->endpoint->endpoint_btl->super.btl_ifname, 
-                 frag, ep->endpoint_btl->super.btl_ifname,
-                 to_base_frag(oldfrag)->segment.seg_len));
-
-    /* First adjust the values in the descriptor portion of the fragment.
-     * Note that I do not currently set the des_context value.  This field
-     * is often set to the bml endpoint when the frag is created.  Not sure
-     * if I will ultimately need that. */
-    des = (mca_btl_base_descriptor_t*)frag;
-    des->des_cbfunc = olddes->des_cbfunc;
-    des->des_cbdata = olddes->des_cbdata;
-
-    /* Now adjust fragment specific information */
-    frag->endpoint = ep;
-
-    /* Finally copy over the data that is actually being transmitted */
-    memcpy(to_base_frag(frag)->segment.seg_addr.pval, to_base_frag(oldfrag)->segment.seg_addr.pval,
-           to_base_frag(oldfrag)->segment.seg_len);
-    to_base_frag(frag)->segment.seg_len = to_base_frag(oldfrag)->segment.seg_len;
-
-    /* Set the fields in the mca_btl_openib_header_t.  The fields consist of:
-     *    mca_btl_base_tag_t tag
-     *    uint8_t cm_seen;
-     *    uint16_t credits;
-     *  The tag field gets the tag from the old fragment.  The other two fields
-     *  are set to zero.  */
-
-    if (coalesced_len > 0) {
-	/* A coalesced fragment has the tag field in a different location */
-        mca_btl_openib_control_header_t *ctrl_hdr;
-        mca_btl_openib_header_coalesced_t *clsc_hdr;
-        /* Peel off the old PML tag from the header information. Need to work past
-         * the openib_header and control_header to get to coalesce_header */
-        ctrl_hdr = (mca_btl_openib_control_header_t*)(to_send_frag(oldfrag)->hdr + 1);
-        clsc_hdr = (mca_btl_openib_header_coalesced_t*)(ctrl_hdr + 1);
-        to_send_frag(frag)->hdr->tag = clsc_hdr->tag;
-    } else {
-        /* For normal send headers, copy over the tag. */
-        to_send_frag(frag)->hdr->tag = to_send_frag(oldfrag)->hdr->tag;
-    }
-    to_send_frag(frag)->hdr->cm_seen = 0;
-    to_send_frag(frag)->hdr->credits = 0;
-
-    /* This function will either post the send or queue it up if the resource
-     * is busy.  The resource could be busy if it is out of credits or out of
-     * wqe's.  If we get something other then resource busy or success, then
-     * we will error out entirely as an unrecoverable error.  */
-    retval = mca_btl_openib_endpoint_send(ep, (mca_btl_openib_send_frag_t*)frag);
-    if ((OMPI_SUCCESS != retval) && (OMPI_ERR_RESOURCE_BUSY != retval)) {
-        ep->endpoint_btl->error_cb(&ep->endpoint_btl->super, MCA_BTL_ERROR_FLAGS_FATAL, NULL, NULL);
-    }
-    
-    /* Some extra debugging tool.  Should be removed eventually.  This prints
-     * out the PML header that is in the newly created fragment. */
-    {
-        mca_pml_ob1_common_hdr_t* hdr;
-        mca_pml_ob1_match_hdr_t* mhdr;
-        mca_pml_ob1_frag_hdr_t* fhdr;
-        uint8_t type;
-
-        hdr = (mca_pml_ob1_common_hdr_t*)des->des_src->seg_addr.pval;
-        type = hdr->hdr_type;
-        switch (type) {
-        case MCA_PML_OB1_HDR_TYPE_MATCH:
-            mhdr = (mca_pml_ob1_match_hdr_t*)hdr;
-            OPAL_OUTPUT((-1, "MATCH,frag=%d,tag=%d,src=%d,seq=%d",
-                         frag, mhdr->hdr_tag, mhdr->hdr_src, mhdr->hdr_seq));
-            break;
-        case MCA_PML_OB1_HDR_TYPE_FRAG:
-            fhdr = (mca_pml_ob1_frag_hdr_t*)hdr;
-            OPAL_OUTPUT((-1, "FRAG,frag=%lx,rreq=%lx,len=%d,offset=%d",
-                         frag, fhdr->hdr_dst_req.pval, to_base_frag(frag)->segment.seg_len,
-                         fhdr->hdr_frag_offset));
-            break;
-        case MCA_PML_OB1_HDR_TYPE_RNDV:
-            OPAL_OUTPUT((-1, "RNDV,frag=%lx", frag));
-            break;
-        case MCA_PML_OB1_HDR_TYPE_ACK:
-            OPAL_OUTPUT((-1, "ACK,frag=%lx", frag));
-            break;
-        default:
-            OPAL_OUTPUT((-1, "OTHER,frag=%lx", frag));
-        }
-    }
-}
-
-/**
- * This function will move all the pending fragments from one endpoint
- * to another.  It walks through each qp with each priority and looks
- * for both no_credits_pending_frags and no_wqe_pending_frags and
- * moves any it finds.  This is called when we detect an error on a
- * btl and we are trying to recover.
- */
-static void move_all_pending_frags(mca_btl_base_endpoint_t *old_ep,
-                                   mca_btl_base_endpoint_t *new_ep)
-{
-    int qp, pri, rc, len, total;
-    opal_list_item_t *item;
-    mca_btl_openib_com_frag_t* frag;
-
-    total = 0;
-    /* Traverse all QPs and all priorities and move to other endpoint */
-    for (qp = 0; qp < mca_btl_openib_component.num_qps; ++qp) {
-        for (pri = 0; pri < 2; ++pri) {
-            /* All types of qp's have a no_wqe_pending_frags list */
-            len = opal_list_get_size(&old_ep->qps[qp].no_wqe_pending_frags[pri]);
-            if (len > 0) {
-                total += len;
-                opal_output(0, "Checking for no_wqe_pending_frags qp=%d, pri=%d, list size=%d", 
-                            qp, pri, len);
-                while (NULL != (item = opal_list_remove_first(&old_ep->qps[qp].
-                                                              no_wqe_pending_frags[pri]))) {
-                    frag = (mca_btl_openib_com_frag_t *) item;
-                    mca_btl_openib_move_frag(new_ep, frag);
-                }
-            }
-            if (BTL_OPENIB_QP_TYPE_PP(qp)) {
-                len = opal_list_get_size(&old_ep->qps[qp].no_credits_pending_frags[pri]);
-                if (len > 0) {
-                    total += len;
-                    opal_output(0, "Checking for no_credits_pending_frags qp=%d, pri=%d, list size=%d", 
-                                qp, pri, len);
-                    while (NULL != (item = opal_list_remove_first(&old_ep->qps[qp].
-                                                                  no_credits_pending_frags[pri]))) {
-                        frag = (mca_btl_openib_com_frag_t *) item;
-                        mca_btl_openib_move_frag(new_ep, frag);
-                    }
-                }
-
-            } else if (BTL_OPENIB_QP_TYPE_SRQ(qp)) {
-                len = opal_list_get_size(&old_ep->endpoint_btl->qps[qp].u.srq_qp.pending_frags[pri]);
-                if (len > 0) {
-                    total += len;
-                    opal_output(0, "Checking for srq pending_frags qp=%d, pri=%d, list size=%d", 
-                                qp, pri, len);
-                    while (NULL != (item = opal_list_remove_first(&old_ep->endpoint_btl->qps[qp].
-                                                                  u.srq_qp.pending_frags[pri]))) {
-                        frag = (mca_btl_openib_com_frag_t *) item;
-                        mca_btl_openib_move_frag(new_ep, frag);
-                    }
-                }
-            }
-        }
-    }
-
-    /* Check for any frags from a connection that was never made.  Not sure if this
-     * can actually happen. */
-    len = opal_list_get_size(&old_ep->pending_lazy_frags);
-    if (len > 0) {
-	total += len;
-	opal_output(0, "Checking for pending_lazy_frags, list size=%d", len);
-	while  (NULL != (item = opal_list_remove_first(&(old_ep->pending_lazy_frags)))) {
-	    frag = (mca_btl_openib_com_frag_t *) item;
-	    mca_btl_openib_move_frag(new_ep, frag);
-	}
-    }
-
-    OPAL_OUTPUT((-1, "Finished checking for pending_frags, total moved=%d", 
-                 total));
-}
-
 static char *cq_name[] = {"HP CQ", "LP CQ"};
 static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
         struct ibv_wc *wc)
@@ -3064,11 +2818,9 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
     mca_btl_openib_com_frag_t* frag;
     mca_btl_base_descriptor_t *des;
     mca_btl_openib_endpoint_t* endpoint;
-    mca_btl_openib_endpoint_t* newep;
     mca_btl_openib_module_t *openib_btl = NULL;
     ompi_proc_t* remote_proc = NULL;
     int qp, btl_ownership;
-    int holdon = 1;
 
     des = (mca_btl_base_descriptor_t*)(uintptr_t)wc->wr_id;
     frag = to_com_frag(des);
@@ -3082,32 +2834,6 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
     if(endpoint)
         openib_btl = endpoint->endpoint_btl;
 
-    /* These are the three types of fragments we have seen so far */
-    if ((openib_frag_type(des) != MCA_BTL_OPENIB_FRAG_RECV) &&
-	(openib_frag_type(des) != MCA_BTL_OPENIB_FRAG_SEND) &&
-	(openib_frag_type(des) != MCA_BTL_OPENIB_FRAG_CONTROL)) {
-	OPAL_OUTPUT((0, "Fragment is type %d, size=%d", openib_frag_type(des), (int)wc->byte_len));
-    }
-
-    /* Quiet some of the receive frag errors */
-    if (openib_frag_type(des) != MCA_BTL_OPENIB_FRAG_RECV) {
-        OPAL_OUTPUT((-1, "Fragment is type %d, size=%d", openib_frag_type(des), (int)wc->byte_len));
-        OPAL_OUTPUT((-1, "\nCQ btl=%s: status=%s(%d),wr_id=%d,opcode=%d", 
-                     openib_btl->super.btl_ifname,
-                     btl_openib_component_status_to_string(wc->status),
-                     wc->status, (void *)(uintptr_t)wc->wr_id, wc->opcode));
-        if (des->des_src) {
-            mca_pml_ob1_frag_hdr_t* hdr = (mca_pml_ob1_frag_hdr_t*)des->des_src->seg_addr.pval;
-            if (MCA_PML_OB1_HDR_TYPE_FRAG == hdr->hdr_common.hdr_type) {
-                OPAL_OUTPUT((-1, "frag=TYPE_FRAG,offset=%d", hdr->hdr_frag_offset));
-            } else if (MCA_PML_OB1_HDR_TYPE_RNDV == hdr->hdr_common.hdr_type) {
-                OPAL_OUTPUT((-1, "frag=TYPE_RNDV")); 
-            } else {
-                OPAL_OUTPUT((-1, "frag=OTHER"));
-            }
-        }
-    }
-    
     if(wc->status != IBV_WC_SUCCESS) {
         OPAL_OUTPUT((-1, "Got WC: ERROR"));
         goto error;
@@ -3173,7 +2899,7 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
             /* Process a RECV */
             if(btl_openib_handle_incoming(openib_btl, endpoint, to_recv_frag(frag),
                         wc->byte_len) != OMPI_SUCCESS) {
-                openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL, NULL, NULL);
+                openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL);
                 break;
             }
 
@@ -3190,7 +2916,7 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
         default:
             BTL_ERROR(("Unhandled work completion opcode is %d", wc->opcode));
             if(openib_btl)
-                openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL, NULL, NULL);
+                openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL);
             break;
     }
 
@@ -3216,7 +2942,6 @@ error:
     }
 #endif
 
-#if 0
     if(IBV_WC_WR_FLUSH_ERR != wc->status || !flush_err_printed[cq]++) {
         BTL_PEER_ERROR(remote_proc, ("error polling %s with status %s "
                     "status number %d for wr_id %" PRIx64 " opcode %d  vendor error %d qp_idx %d",
@@ -3232,13 +2957,7 @@ error:
                            wc->status, wc->wr_id, 
                            wc->opcode, wc->vendor_err, qp);
     }
-    if (openib_frag_type(des) != MCA_BTL_OPENIB_FRAG_RECV) {
-	OPAL_OUTPUT((0, "Error on btl=%s: wc->status=%s(%d), wc->wr_id=%d", 
-		     openib_btl->super.btl_ifname,
-		     btl_openib_component_status_to_string(wc->status),
-		     wc->status, (void *)(uintptr_t)wc->wr_id));
-    }
-    
+
     if (IBV_WC_RNR_RETRY_EXC_ERR == wc->status ||
         IBV_WC_RETRY_EXC_ERR == wc->status) {
         char *peer_hostname = 
@@ -3274,97 +2993,9 @@ error:
                                    device_name, peer_hostname);
         }
     }
-#endif
-    /* If failover is not enabled, just error out like we always did */
-    if(!mca_btl_openib_component.enable_hca_failover) {
-	openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL, NULL, NULL);
-    }
 
-    /* Here is where we figure out what to do with the unsent fragment.  To keep 
-     * things clear, I handle each one differently. 
-     * Note: In the wc struct, these are the only valid fields with an error:
-     * wc->wr_id, wc->status, wc->vendor_err, wc->qp_num.
-     * This means we cannot key off of the wc->opcode to see what operation we did.
-
-    /* Drop any errors receiving on a PP connection.  There is nothing else to do */
-    if ((openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_RECV) && (BTL_OPENIB_QP_TYPE_PP(qp))) {
-        OPAL_OUTPUT((-1, "RECV or CONTROL, dropping since connection is broken (des=%d)", des));
-        return;
-    }
-
-    /* Drop any CONTROL messages as they are only valid on this connection. */
-    if (openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_CONTROL) {
-        OPAL_OUTPUT((-1, "RECV or CONTROL, dropping since connection is broken (des=%d)", des));
-        return;
-    }
-
-    /* MCA_BTL_OPENIB_FRAG_EAGER_RDMA is a openib specific control message
-     * used to set up eager RDMA on a connection.  Since the connection
-     * is broken, just drop it. */
-    if (openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_EAGER_RDMA) {
-        OPAL_OUTPUT((-1, "OPENIB_FRAG_EAGER_RDMA, dropping since connection is broken (des=%d)", des));
-    }
-
-    if ((openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_RECV) && !BTL_OPENIB_QP_TYPE_PP(qp)) {
-	OPAL_OUTPUT((0, "SRQ RECV type=%d, size=%d", openib_frag_type(des), (int)wc->byte_len));
-	return;
-#if 0
-	while (holdon) {
-	     holdon++;
-	     opal_output(0, "SRQ RECV DETECTED - ATTACH DEBUGGER");	    
-	     sleep(5);
-	 }
-#endif
-    }
-
-#if 0
-    /* If we get an error on a receive then just map out the interface
-     * for any future sends.  There is nothin to retransmit. 
-     * NOTE: Not sure what to do with this yet */
-    if (((openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_RECV) && (BTL_OPENIB_QP_TYPE_PP(qp))) || 
-        (openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_CONTROL)) {
-        openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_NONFATAL, remote_proc, &newep);
-        return;
-    }
-#endif
-
-#if 0
-    /* For shared receive queues, we need to return the fragments and
-     * repost the receives since they are a shared resource.  For
-     * peer-to-peer queues, we do nothing.
-     * NOTE: Not sure what to do here yet.  I cannot get the btl or the endpoint
-     * from the fragment that is returned.  Usually, the endpoint is retrieved via
-     * the immediate data, but obviously the immediate data is non-existant on an
-     * error.  All I really need is the btl but I am not sure where I get that
-     * from.  I have observed that I am not getting many errors on the receive
-     * so I will not worry now about reposting them. */
-    if ((openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_RECV) && !BTL_OPENIB_QP_TYPE_PP(qp)) {
-        OPAL_OUTPUT((0, "SRQ RECV type=%d, size=%d", openib_frag_type(des), (int)wc->byte_len));
-        MCA_BTL_IB_FRAG_RETURN(frag);
-        mca_btl_openib_module_t *btl = endpoint->endpoint_btl;
-        OPAL_THREAD_ADD32(&btl->qps[qp].u.srq_qp.rd_posted, -1);
-        mca_btl_openib_post_srr(btl, qp);
-        return;
-    }
-#endif
-
-    /* Need to keep calling this to get the alternative endpoint back.
-     * However, subsequent calls will not actually map anything out.
-     * Note that we do not call this on a SRQ receive error or any
-     * type of receive error. */
-    openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_NONFATAL, remote_proc, &newep);
-
-    /* Move all the pending frags to the new endpoint as they can no
-     * longer go out the broken endpoint.  OPTIMIZATION: Like the PML
-     * callback, this really only needs to be called once.  However, it
-     * does not hurt anything to keep calling it.  Subsequent calls will
-     * just have nothing to move over.  */
-    move_all_pending_frags(endpoint, newep);
-
-    /* Now move the fragment that triggered the error over to the
-     * other endpoint */
-    mca_btl_openib_move_frag(newep, frag);
-	
+    if(openib_btl)
+        openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL);
 }
 
 static int poll_device(mca_btl_openib_device_t* device, int count)
@@ -3398,7 +3029,6 @@ static int poll_device(mca_btl_openib_device_t* device, int count)
             device->hp_cq_polls--;
         }
 
-        OPAL_OUTPUT((-1, "ibv_poll_cq found CQ event on %s", device->ib_dev->name));
         handle_wc(device, cq, &wc);
     }
 
@@ -3495,7 +3125,7 @@ static int progress_one_device(mca_btl_openib_device_t *device)
             ret = btl_openib_handle_incoming(btl, to_com_frag(frag)->endpoint,
                     frag, size - sizeof(mca_btl_openib_footer_t));
             if (ret != MPI_SUCCESS) {
-                btl->error_cb(&btl->super, MCA_BTL_ERROR_FLAGS_FATAL, NULL, NULL);
+                btl->error_cb(&btl->super, MCA_BTL_ERROR_FLAGS_FATAL);
                 return 0;
             }
 
@@ -3513,26 +3143,6 @@ static int progress_one_device(mca_btl_openib_device_t *device)
 
     return count;
 }
-
-void btl_dump_pending_lists() {
-    int i,j;
-    mca_btl_openib_endpoint_t* endpoint;
-
-    for(i = 0; i < mca_btl_openib_component.devices_count; i++) {
-        mca_btl_openib_device_t *device =
-            opal_pointer_array_get_item(&mca_btl_openib_component.devices, i);
-	for (j = 0; j < 10; j++) {
-	    endpoint = (mca_btl_openib_endpoint_t*)
-		opal_pointer_array_get_item(device->endpoints, j);
-	    if (endpoint != NULL) {
-		opal_output(0, "pending_lazy_frags size = %d", 
-			    endpoint->pending_lazy_frags.opal_list_length);
-	    }
-	}
-    }
-}
-	
-
 
 /*
  *  IB component progress.
@@ -3566,7 +3176,7 @@ error:
         mca_btl_openib_module_t* openib_btl =
             mca_btl_openib_component.openib_btls[i];
         if(openib_btl->device->got_fatal_event) {
-            openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL, NULL, NULL);
+            openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL);
         }
     }
     return count;

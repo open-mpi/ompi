@@ -81,7 +81,6 @@ struct mca_pml_ob1_t {
 typedef struct mca_pml_ob1_t mca_pml_ob1_t; 
 
 extern mca_pml_ob1_t mca_pml_ob1;
-extern int mca_pml_ob1_output;
 
 /*
  * PML interface functions.

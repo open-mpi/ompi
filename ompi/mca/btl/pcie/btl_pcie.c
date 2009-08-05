@@ -36,7 +36,6 @@
 mca_btl_pcie_module_t mca_btl_pcie_module = {
     {
         &mca_btl_pcie_component.super,
-        "unknown",
         0, /* max size of first fragment */
         0, /* Threshold below which BTL should not fragment */
         0, /* max send fragment size */

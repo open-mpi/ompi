@@ -422,7 +422,6 @@ void mca_pml_ob1_recv_request_progress_frag( mca_pml_ob1_recv_request_t* recvreq
                                         0, bytes_received );
     bytes_received -= sizeof(mca_pml_ob1_frag_hdr_t);
     data_offset     = hdr->hdr_frag.hdr_frag_offset;
-    OPAL_OUTPUT((-1, " Received SEND_FRAG, offset=%d", data_offset));
     /*
      *  Make user buffer accessable(defined) before unpacking.
      */

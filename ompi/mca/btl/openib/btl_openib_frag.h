@@ -166,7 +166,6 @@ do {                                               \
 } while (0)
 
 enum mca_btl_openib_frag_type_t {
-    MCA_BTL_OPENIB_FRAG_UNUSED,  /* For debugging: Makes FRAG_RECV=1 */
     MCA_BTL_OPENIB_FRAG_RECV,
     MCA_BTL_OPENIB_FRAG_RECV_USER,
     MCA_BTL_OPENIB_FRAG_SEND,

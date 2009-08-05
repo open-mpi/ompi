@@ -54,7 +54,6 @@ BEGIN_C_DECLS
 #define MCA_BTL_IB_LEAVE_PINNED 1
 #define IB_DEFAULT_GID_PREFIX 0xfe80000000000000ll
 #define MCA_BTL_IB_PKEY_MASK 0x7fff
-#define MCA_BTL_IB_NO_COALESCE 0x4000
 
 
 /*--------------------------------------------------------------------*/
@@ -255,8 +254,6 @@ struct mca_btl_openib_component_t {
     ompi_free_list_t recv_user_free;
     /**< frags for coalesced massages */
     ompi_free_list_t send_free_coalesced;
-    /** < whether to enable HCA failover mechanism */
-    bool enable_hca_failover;
 }; typedef struct mca_btl_openib_component_t mca_btl_openib_component_t;
 
 OMPI_MODULE_DECLSPEC extern mca_btl_openib_component_t mca_btl_openib_component;

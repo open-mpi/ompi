@@ -41,7 +41,6 @@
 #include "ompi/mca/bml/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
-#include "orte/mca/notifier/notifier.h"
 
 #include "ompi/runtime/ompi_cr.h"
 
@@ -71,8 +70,7 @@ mca_pml_ob1_t mca_pml_ob1 = {
 
 
 void mca_pml_ob1_error_handler( struct mca_btl_base_module_t* btl,
-                                int32_t flags, ompi_proc_t* ompi_proc,
-                                struct mca_btl_base_endpoint_t** btl_endpoint);
+                                int32_t flags );
 
 int mca_pml_ob1_enable(bool enable)
 {
@@ -567,70 +565,10 @@ void mca_pml_ob1_process_pending_rdma(void)
 }
 
 
-void mca_pml_ob1_error_handler( struct mca_btl_base_module_t* btl,
-                                int32_t flags, ompi_proc_t *errproc,
-                                struct mca_btl_base_endpoint_t** btl_endpoint)
-{
-    ompi_proc_t** procs;
-    size_t p, num_procs;
-    mca_bml_base_endpoint_t* ep;
-
-    if (flags & MCA_BTL_ERROR_FLAGS_FATAL) {
-        orte_errmgr.abort(-1, NULL);
-    }
-
-    /**
-     * Just remove the offending bml_btl corresponding to the btl with the
-     * error.  Let the other errors remove the other ones. 
-     */
-    procs = ompi_proc_all(&num_procs);
-    if(NULL != procs) {
-        if (0 < mca_bml.bml_del_proc_btl(errproc, btl)) {
-            opal_output(0, "PML error handler: rank=%d mapping out btl:name=%s,if=%s to rank=%d on node=%s",
-                        ORTE_PROC_MY_NAME->vpid,
-                        btl->btl_component->btl_version.mca_component_name,
-                        btl->btl_ifname,
-                        errproc->proc_name.vpid,
-                        errproc->proc_hostname);
-
-        }
-
-#if 0       
-        for( p = 0; p < num_procs; p++ ) {
-            ompi_proc_t* proc = procs[p];
-            ep = (mca_bml_base_endpoint_t*)proc->proc_bml;
-            opal_output(0, "p=%d, eager=%d, send=%d, rdma=%d, proc=%s",
-                        p,
-                        ep->btl_eager.arr_size,
-                        ep->btl_send.arr_size,
-                        ep->btl_rdma.arr_size,
-                        proc->proc_hostname);
-        }
-#endif
-
-        ep = (mca_bml_base_endpoint_t*)errproc->proc_bml;
-
-        if ((ep->btl_eager.arr_size == 0) &&
-            (ep->btl_send.arr_size == 0) &&
-            (ep->btl_rdma.arr_size == 0)) {
-            opal_output(0, "NO MORE INTERFACES - BYE BYE");
-            orte_errmgr.abort(-1, NULL);
-        }
-    }
-
-    /**
-     * Now return the first one in the list.  Odds are there were only
-     * two to start with and now we are down to one.
-     */
-    if (NULL != btl_endpoint) {
-        *btl_endpoint = errproc->proc_bml->btl_send.bml_btls[0].btl_endpoint;
-    }
-
-    orte_notifier.log(ORTE_NOTIFIER_INFRA, ORTE_ERR_COMM_FAILURE, 
-                      "Mapping out btl component %s with interface %s", 
-                      btl->btl_component->btl_version.mca_component_name,
-                      btl->btl_ifname);
-
+void mca_pml_ob1_error_handler(
+        struct mca_btl_base_module_t* btl,
+        int32_t flags) { 
+    orte_errmgr.abort(-1, NULL);
 }
 
 #if OPAL_ENABLE_FT    == 0

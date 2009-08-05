@@ -39,7 +39,6 @@ int    mca_bml_base_error_count;
 
 int mca_bml_base_open(void) 
 {
-    int value;
     /* See if we've already been here */
     if (++mca_bml_base_already_opened > 1) {
         return OMPI_SUCCESS;
@@ -51,15 +50,6 @@ int mca_bml_base_open(void)
                                 true)) {  
         return OMPI_ERROR; 
     }
-
-    mca_base_param_reg_int_name("bml", 
-                                "base_verbose", 
-                                "Verbosity level of the BML framework", 
-                                false, false, 
-                                0, 
-                                &value);
-    mca_bml_base_output = opal_output_open(NULL);
-    opal_output_set_verbosity(mca_bml_base_output, value);
 
 #if OPAL_ENABLE_DEBUG_RELIABILITY
     do {

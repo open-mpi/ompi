@@ -50,7 +50,6 @@ static int mca_btl_udapl_assign_netmask(mca_btl_udapl_module_t* udapl_btl);
 mca_btl_udapl_module_t mca_btl_udapl_module = {
     {
         &mca_btl_udapl_component.super,
-	"unknown",
         0, /* max size of first fragment */
         0, /* min send fragment size */
         0, /* max send fragment size */
