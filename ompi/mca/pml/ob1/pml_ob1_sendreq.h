@@ -226,7 +226,7 @@ send_request_pml_complete(mca_pml_ob1_send_request_t *sendreq)
 
     if(sendreq->req_send.req_bytes_packed > 0) {
         PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,
-                &(sendreq->req_send.req_base), PERUSE_SEND);
+                                 &(sendreq->req_send.req_base), PERUSE_SEND);
     }
 
     /* return mpool resources */

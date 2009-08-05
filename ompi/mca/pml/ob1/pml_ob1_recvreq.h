@@ -230,7 +230,7 @@ static inline void recv_req_matched(mca_pml_ob1_recv_request_t *req,
         }
 #endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT */
         PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_XFER_BEGIN,
-                &req->req_recv.req_base, PERUSE_RECV);
+                                &req->req_recv.req_base, PERUSE_RECV);
     }
 }
 
