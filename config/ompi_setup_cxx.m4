@@ -21,13 +21,18 @@ dnl
 dnl $HEADER$
 dnl
 
+# This macro is necessary to get the title to be displayed first.  :-)
+AC_DEFUN([OMPI_SETUP_CXX_BANNER],[
+    ompi_show_subtitle "C++ compiler and preprocessor" 
+])
+
 # OMPI_SETUP_CXX()
 # ----------------
 # Do everything required to setup the C++ compiler.  Safe to AC_REQUIRE
 # this macro.
 AC_DEFUN([OMPI_SETUP_CXX],[
+    AC_REQUIRE([OMPI_SETUP_CXX_BANNER])
 
-    ompi_show_subtitle "C++ compiler and preprocessor" 
     _OMPI_SETUP_CXX_COMPILER
 
     _OMPI_CXX_CHECK_EXCEPTIONS
