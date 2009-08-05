@@ -197,6 +197,7 @@ typedef uint8_t mca_btl_base_tag_t;
 
 /* error callback flags */
 #define MCA_BTL_ERROR_FLAGS_FATAL 0x1
+#define MCA_BTL_ERROR_FLAGS_NONFATAL 0x2
 
 /**
  * Asynchronous callback function on completion of an operation.
@@ -509,7 +510,9 @@ typedef int (*mca_btl_base_module_register_fn_t)(
 
 typedef void (*mca_btl_base_module_error_cb_fn_t)(
         struct mca_btl_base_module_t* btl,
-        int32_t flags                             
+        int32_t flags,
+        struct ompi_proc_t* ompi_proc,
+        struct mca_btl_base_endpoint_t** newep
 );
 
 
@@ -757,6 +760,7 @@ struct mca_btl_base_module_t {
 
     /* BTL common attributes */
     mca_btl_base_component_t* btl_component; /**< pointer back to the BTL component structure */
+    char        btl_ifname[8];        /**< name of interface associated with btl */
     size_t      btl_eager_limit;      /**< maximum size of first fragment -- eager send */
     size_t      btl_rndv_eager_limit;    /**< the size of a data sent in a first fragment of rendezvous protocol */
     size_t      btl_max_send_size;    /**< maximum send fragment size supported by the BTL */

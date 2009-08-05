@@ -56,6 +56,7 @@
 mca_btl_sm_t mca_btl_sm = {
     {
         &mca_btl_sm_component.super,
+	"sm",
         0, /* btl_eager_limit */
         0, /* btl_rndv_eager_limit */
         0, /* btl_max_send_size */

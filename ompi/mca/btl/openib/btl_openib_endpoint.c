@@ -1018,7 +1018,7 @@ void *mca_btl_openib_endpoint_invoke_error(void *context)
     }
 
     /* Invoke the callback to the upper layer */
-    btl->error_cb(&(btl->super), MCA_BTL_ERROR_FLAGS_FATAL);
+    btl->error_cb(&(btl->super), MCA_BTL_ERROR_FLAGS_FATAL, NULL, NULL);
 
     /* Will likely never get here */
     return NULL;

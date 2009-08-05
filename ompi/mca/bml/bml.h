@@ -175,6 +175,7 @@ static inline mca_bml_base_btl_t* mca_bml_base_btl_array_get_index(mca_bml_base_
  *
  * @param index (OUT)
  */
+extern int mca_bml_base_output;
 static inline mca_bml_base_btl_t* mca_bml_base_btl_array_get_next(mca_bml_base_btl_array_t* array)
 {
 #if OPAL_ENABLE_DEBUG
@@ -184,6 +185,8 @@ static inline mca_bml_base_btl_t* mca_bml_base_btl_array_get_next(mca_bml_base_b
     }
 #endif
     if( 1 == array->arr_size ) {
+        opal_output_verbose(20, mca_bml_base_output, 
+			    "%s btl selected", array->bml_btls[0].btl->btl_ifname);
         return &array->bml_btls[0];  /* force the return to avoid a jump */
     } else {
         size_t current_position = array->arr_index;  /* force to always start from zero */
@@ -192,6 +195,8 @@ static inline mca_bml_base_btl_t* mca_bml_base_btl_array_get_next(mca_bml_base_b
         } else {
             array->arr_index = current_position + 1;  /* continue */
         }
+        opal_output_verbose(20, mca_bml_base_output,
+			    "%s btl selected", array->bml_btls[current_position].btl->btl_ifname);
         return &array->bml_btls[current_position];
     }
 }

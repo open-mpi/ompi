@@ -36,6 +36,7 @@
 OBJ_CLASS_INSTANCE(mca_pml_ob1_send_range_t, ompi_free_list_item_t,
         NULL, NULL);
 
+
 void mca_pml_ob1_send_request_process_pending(mca_bml_base_btl_t *bml_btl)
 {
     int i, s = opal_list_get_size(&mca_pml_ob1.send_pending);
@@ -544,9 +545,11 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
     switch(rc) {
         case OMPI_ERR_RESOURCE_BUSY:
             /* No more resources. Allow the upper level to queue the send */
+            opal_output(0, "OMPI_ERR_RESOURCE_BUSY returned from mca_pml_ob1_send_request_start_copy");
             rc = OMPI_ERR_OUT_OF_RESOURCE;
             break;
         default:
+            opal_output(0, "ERROR ERROR ERROR ERROR ERROR in start_copy");
             mca_bml_base_free(bml_btl, des);
             break;
     }

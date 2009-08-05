@@ -555,6 +555,11 @@ int btl_openib_register_mca_params(void)
                      NULL, &mca_btl_openib_component.ipaddr_exclude,
                      0));
 
+    CHECK(reg_int("enable_hca_failover", NULL,
+                  "Enable failover from one HCA to another", 1, &ival, 0));
+    mca_btl_openib_component.enable_hca_failover = (0 != ival);
+
+
     /* Register any MCA params for the connect pseudo-components */
     if (OMPI_SUCCESS == ret) {
         ret = ompi_btl_openib_connect_base_register();

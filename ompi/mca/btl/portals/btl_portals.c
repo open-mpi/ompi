@@ -38,6 +38,7 @@
 mca_btl_portals_module_t mca_btl_portals_module = {
     {
         &mca_btl_portals_component.super,
+        "unknown",
 
         /* NOTE: All these default values are set in
            component_open() */
