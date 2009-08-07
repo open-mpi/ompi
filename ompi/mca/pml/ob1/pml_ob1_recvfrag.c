@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -304,9 +305,20 @@ void mca_pml_ob1_recv_frag_callback_ack(mca_btl_base_module_t* btl,
                                          hdr->hdr_ack.hdr_send_offset,
                                          sendreq->req_send.req_bytes_packed -
                                          hdr->hdr_ack.hdr_send_offset);
-    
-    OPAL_THREAD_ADD32(&sendreq->req_state, -1);
-     
+
+    if (sendreq->req_state != 0) {
+        /* Typical receipt of an ACK message causes req_state to be
+         * decremented. However, a send request that started as an
+         * RGET request can become a RNDV. For example, when the
+         * receiver determines that its receive buffer is not
+         * contiguous and therefore cannot support the RGET
+         * protocol. A send request that started with the RGET
+         * protocol has req_state == 0 and as such should not be
+         * decremented.
+         */
+        OPAL_THREAD_ADD32(&sendreq->req_state, -1);
+    }
+
     if(send_request_pml_complete_check(sendreq) == false)
         mca_pml_ob1_send_request_schedule(sendreq);
     
