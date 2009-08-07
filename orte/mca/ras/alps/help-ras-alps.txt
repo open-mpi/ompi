@@ -22,21 +22,18 @@
 While trying to determine what resources are available, the ALPS
 resource allocator expects to find the following environment variables:
 
-	 BATCH_PARTITION_ID
+	 OMPI_ALPS_RESID
     
 However, it was unable to find the following environment variable:
 
     %s
 
 #This is a fatal error.
-[alps-env-var-bad-value]
+[alps-env-var-invalid]
 While trying to determine what resources are available, the ALPS
-resource allocator uses the following environment variables:
+resource allocator uses the OMPI_ALPS_RESID environment variable.
 
-    ALPS_NODELIST       value: %s
-    ALPS_TASKS_PER_NODE value: %s
-    
-However, an error was encountered when trying to parse the following variable:
+However, an error was encountered when trying to parse the variable:
 
     %s
 

@@ -224,10 +224,12 @@ static int plm_alps_launch_job(orte_job_t *jdata)
     }
 
     /* number of processors needed */
-    asprintf(&tmp, "-n %lu", (unsigned long) map->num_new_daemons);
+    opal_argv_append(&argc, &argv, "-n");
+    asprintf(&tmp, "%lu", (unsigned long) map->num_new_daemons);
     opal_argv_append(&argc, &argv, tmp);
     free(tmp);
-    opal_argv_append(&argc, &argv, "-N 1");
+    opal_argv_append(&argc, &argv, "-N");
+    opal_argv_append(&argc, &argv, "1");
 
     /* create nodelist */
     nodelist_argv = NULL;
@@ -253,7 +255,8 @@ static int plm_alps_launch_job(orte_job_t *jdata)
     }
     nodelist_flat = opal_argv_join(nodelist_argv, ',');
     opal_argv_free(nodelist_argv);
-    asprintf(&tmp, "-L %s", nodelist_flat);
+    opal_argv_append(&argc, &argv, "-L");
+    asprintf(&tmp, "%s", nodelist_flat);
     opal_argv_append(&argc, &argv, tmp);
     free(tmp);
 
@@ -383,7 +386,7 @@ launch_apps:
         goto cleanup;
     }
 
-    /* JMS: short we stash the alps pid in the gpr somewhere for cleanup? */
+    /* JMS: should we stash the alps pid in the gpr somewhere for cleanup? */
 
 cleanup:
     if (NULL != argv) {
@@ -476,9 +479,10 @@ static void alps_wait_cb(pid_t pid, int status, void* cbdata){
         if (failed_launch) {
             /* we have a problem during launch */
             opal_output(0, "ERROR: alps failed to start the required daemons.");
-            opal_output(0, "ERROR: This could be due to an inability to find the orted binary");
-            opal_output(0, "ERROR: on one or more remote nodes, lack of authority to execute");
-            opal_output(0, "ERROR: on one or more specified nodes, or other factors.");
+            opal_output(0, "ERROR: This could be due to an inability to find the orted binary (--prefix)");
+            opal_output(0, "ERROR: on one or more remote nodes, compilation of the orted with dynamic libraries,");
+            opal_output(0, "ERROR: lack of authority to execute on one or more specified nodes,");
+            opal_output(0, "ERROR: or the inability to write startup files into /tmp (--tmpdir/orte_tmpdir_base).");
             
             /* report that the daemon has failed so we break out of the daemon
              * callback receive and exit
