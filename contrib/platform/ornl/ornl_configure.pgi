@@ -1,52 +1,96 @@
-#!/bin/bash 
+#!/bin/bash
 
-#!/bin/bash 
-# change the following for install path, note 
-# that VER is appended to the path.
-VER="trunk-pgi"
-SW_INSTALL_ROOT=/tmp/work/gshipman/ompi/install
+  echo ""
+  echo "If you have not loaded the xt-catamount module or your version"
+  echo "of automake is below 1.10.1, it is in your best interest to"
+  echo "type <ctrl-C> now.  Note that loading the automake module on"
+  echo "jaguar.ccs.ornl.gov/jaguarpf.ccs.ornl.gov will meet the"
+  echo "latter requirement."
+  read ANS
 
-PLATFORM=ornl/cray_xt_cnl_romio
+# Change the following for install path.  Note: VER appends to path.
+  SRC_DIR=..
+  INSTALL_ROOT=/tmp/work/keh/ompi-pgi-ken
+  VER=standard
+  BUILD=pgi
+  SVER=cnl`echo "$XTOS_VERSION" | cut -c1-3`
+  CVER=${BUILD}`pgcc -V | awk '/pgcc/{print $2}'|sed 's/-/./'`
+  SW_BLDDIR=${INSTALL_ROOT}/${VER}/${SVER}_${CVER}
 
-ORTED_MAKEFILE=orte/tools/orted/Makefile
+  PLATFORM=ornl/cray_xt_cnl_romio_debug
+  XTOSVER=`echo "$XTOS_VERSION" | cut -c1,3`
 
-if test -z "`grep "orted_LDFLAGS =.*-all-static" ${ORTED_MAKEFILE}`"; then 
-    echo "WARNING: patching ${ORTED_MAKEFILE} to build it static" 
-    sed -i 's/orted_LDFLAGS =/orted_LDFLAGS = -all-static/g' ${ORTED_MAKEFILE}
-fi
+# Set header file paths (structure of libsci changed at version 10.3.4).
+  if [ -d ${LIBSCI_BASE_DIR}/${BUILD}/include ]
+  then
+	SCI_INC=-I${LIBSCI_BASE_DIR}/${BUILD}/include
+	SCI_LIB=-L${LIBSCI_BASE_DIR}/${BUILD}/lib
+  else
+	SCI_INC=-I${LIBSCI_BASE_DIR}/${BUILD}/snos64/include
+	SCI_LIB=-L${LIBSCI_BASE_DIR}/${BUILD}/snos64/lib
+  fi
+
+  if [ ! -d ${CATAMOUNT_DIR} ] ; then
+      echo "Please load xt-catamount module"
+      echo "    module load xt-catamount
+  fi
+
+  CAT_INC=-I${CATAMOUNT_DIR}/catamount/linux/include
+
+  PCT_INC=-I${PE_DIR}/include
+  PCT_LIB=-L${PE_DIR}/lib/snos64
+
+  MPT_LIB=-L${MPT_DIR}/util/lib
+  MPT_SO=-R${MPT_DIR}/util/lib
+
+  SER_LIB=-L${SE_DIR}/lib/snos64
+
+  BASE_LPATHS="${MPT_LIB} ${PCT_LIB} ${SER_LIB}"
+  BASE_LIBS="-lrt -lpct -lalpslli -lalpsutil -lportals -lpthread -lm"
+  MAKE_OPTS="-j 4 orted_LDFLAGS=-all-static"
+
+  ID=x86_64-cray-linux-gnu
+  JD=x86_64-unknown-linux-gnu
+
+  umask 02
+  rm -f build.log config.log
+
+# Run the aclocal/autoconf/automake hierarchy.
+# cd $SRC_DIR
+#  ./autogen.sh                                  2>&1 | tee -a build.log
+# cd $OLDPWD
 
 
-VER="trunk-pgi"
-PLATFORM=ornl/cray_xt_cnl_romio
+# Do the configure.
+$SRC_DIR/configure \
+	NM=/usr/bin/nm \
+	CC=pgcc \
+	CXX=pgCC \
+	F77=pgf77 \
+	FC=pgf90 \
+	CPPFLAGS="${CAT_INC} ${PCT_INC}" \
+	LDFLAGS="${BASE_LPATHS} ${MPT_SO}" \
+	LIBS="${BASE_LIBS}" \
+	--host=${ID} \
+	--build=${JD} \
+	--disable-mpi-cxx \
+	--disable-mpi-f77 \
+	--disable-mpi-f90 \
+	--disable-heterogeneous \
+	--without-tm \
+	--with-alps \
+	--with-threads \
+	--with-platform=${SRC_DIR}/contrib/platform/${PLATFORM} \
+	--with-io-romio-flags="host_alias=${ID} build_alias=${JD} \
+		--enable-ltdl-convenience --no-recursion" \
+	--with-contrib-vt-flags="--with-platform=linux" \
+	--with-wrapper-cflags="${SCI_INC}" \
+	--with-wrapper-ldflags="-Bstatic ${SCI_LIB} ${BASE_LPATHS}" \
+	--with-wrapper-libs="-lsci_quadcore" \
+	--prefix=${SW_BLDDIR}                   2>&1 | tee -a build.log
 
-# change the following for install path, note 
-# that VER is appended to the path.
-SW_INSTALL_ROOT=/tmp/work/gshipman/ompi/install
+# Build.
+  gmake ${MAKE_OPTS} all                        2>&1 | tee -a build.log
 
-./configure \
- NM=/usr/bin/nm \
- CC=pgcc \
- CXX=pgCC \
- F77=pgf77 \
- FC=pgf90 \
- CFLAGS="-I/opt/xt-pe/default/include/  -I/opt/xt-catamount/default/catamount/linux/include/ " \
- CPPFLAGS=-I/opt/xt-pe/default/include/ \
- FCFLAGS=-I/opt/xt-pe/default/include/ \
- FFLAGS=-I/opt/xt-pe/default/include/ \
- LDFLAGS="-L/opt/xt-service/default/lib/snos64 -L/opt/xt-pe/default/cnos/linux/64/lib -L/opt/xt-mpt/default/lib/snos64" \
- LIBS="-lpct -lalpslli -lalpsutil -lportals -lpthread" \
-  --with-wrapper-cflags="-I/tmp/work/gshipman/ompi/install/trunk/include" \
-  --with-wrapper-ldflags="-Bstatic  -lnsl -lutil -lpct -lalpslli -lalpsutil -lportals -lpthread -lm -L/opt/xt-service/default/lib/snos64 -L/opt/xt-pe/default/cnos/linux/64/lib -L/opt/xt-mpt/default/lib/snos64"\
- --build=x86_64-unknown-linux-gnu  \
- --host=x86_64-cray-linux-gnu \
- --without-tm \
- --with-platform=./contrib/platform/${PLATFORM} \
-  --with-io-romio-flags="build_alias=x86_64-unknown-linux-gnu \
-  host_alias=x86_64-cray-linux-gnu \
-  --enable-ltdl-convenience --no-recursion" \
-  --with-alps=yes \
-  --with-contrib-vt-flags="--with-platform=linux" \
---prefix="$SW_INSTALL_ROOT/$VER" | tee build.log
-
-#gmake all install | tee -a build.log
-#chmod -R go+rx $SW_INSTALL_ROOT/$VER-$CMP
+# Install.
+  gmake ${MAKE_OPTS} install                    2>&1 | tee -a build.log
