@@ -27,20 +27,17 @@ AC_DEFUN([MCA_crs_self_CONFIG],[
     AS_IF([test "$crs_self_good" = "yes"],
         [AC_CHECK_HEADER([dlfcn.h],
                          [crs_self_good="yes"],
-                         [crs_self_good="no"])],
-        [crs_self_good="no"])
+                         [crs_self_good="no"])])
 
     # If they did not ask for dlopen support,
     # they probably do not want this component either
     AS_IF([test "$crs_self_good" = "yes"],
         [AS_IF([test "$OPAL_ENABLE_DLOPEN_SUPPORT" = "1"],
                 [crs_self_good="yes"],
-                [crs_self_good="no"])],
-        [crs_self_good="no"])
+                [crs_self_good="no"])])
 
     AS_IF([test "$crs_self_good" = "yes"],
         [$1],
-        [$2])        
-
+        [$2])
 
 ])dnl
