@@ -395,7 +395,6 @@ static inline int ompi_request_complete(ompi_request_t* request, bool with_signa
     if( NULL != request->req_complete_cb ) {
         request->req_complete_cb( request );
     }
-    request->req_complete = true;
     ompi_request_completed++;
     request->req_complete = true;
     if(with_signal && ompi_request_waiting) {
