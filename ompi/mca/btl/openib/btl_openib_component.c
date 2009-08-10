@@ -3124,7 +3124,7 @@ static int progress_one_device(mca_btl_openib_device_t *device)
 
             ret = btl_openib_handle_incoming(btl, to_com_frag(frag)->endpoint,
                     frag, size - sizeof(mca_btl_openib_footer_t));
-            if (ret != MPI_SUCCESS) {
+            if (ret != OMPI_SUCCESS) {
                 btl->error_cb(&btl->super, MCA_BTL_ERROR_FLAGS_FATAL);
                 return 0;
             }
