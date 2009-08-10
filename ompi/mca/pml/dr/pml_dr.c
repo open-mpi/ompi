@@ -10,6 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -161,6 +162,7 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
     opal_bitmap_t reachable;
     int rc;
     size_t i;
+    opal_list_item_t *item;
 
     if(nprocs == 0)
         return OMPI_SUCCESS;
@@ -193,7 +195,38 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
                                );
     if(OMPI_SUCCESS != rc)
         return rc;
-    
+
+    /* Check that values supplied by all initialized btls will work
+       for us.  Note that this is the list of all initialized BTLs,
+       not the ones used for the just added procs.  This is a little
+       overkill and inaccurate, as we may end up not using the BTL in
+       question and all add_procs calls after the first one are
+       duplicating an already completed check.  But the final
+       initialization of the PML occurs before the final
+       initialization of the BTLs, and iterating through the in-use
+       BTLs requires iterating over the procs, as the BML does not
+       expose all currently in use btls. */
+
+    for (item = opal_list_get_first(&mca_btl_base_modules_initialized) ;
+         item != opal_list_get_end(&mca_btl_base_modules_initialized) ;
+         item = opal_list_get_next(item)) {
+        mca_btl_base_selected_module_t *sm = 
+            (mca_btl_base_selected_module_t*) item;
+        if (sm->btl_module->btl_eager_limit < sizeof(mca_pml_dr_hdr_t)) {
+	    orte_show_help("help-mpi-pml-dr.txt", "eager_limit_too_small",
+			   true, 
+			   sm->btl_component->btl_version.mca_component_name,
+			   orte_process_info.nodename,
+			   sm->btl_component->btl_version.mca_component_name,
+			   sm->btl_module->btl_eager_limit,
+			   sm->btl_component->btl_version.mca_component_name,
+			   sizeof(mca_pml_dr_hdr_t),
+			   sm->btl_component->btl_version.mca_component_name);
+            rc = OMPI_ERR_BAD_PARAM;
+            return rc;
+        }
+    }
+
     /* register recv handler */
     rc = mca_bml.bml_register(
                               MCA_BTL_TAG_PML,
