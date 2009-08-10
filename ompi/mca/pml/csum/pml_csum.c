@@ -37,6 +37,7 @@
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/util/show_help.h"
 
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"

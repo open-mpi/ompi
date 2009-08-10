@@ -38,6 +38,7 @@
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/util/show_help.h"
 #include "ompi/mca/pml/base/base.h"
 
 mca_pml_dr_t mca_pml_dr = {
