@@ -2,7 +2,7 @@
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Type_lb 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Type_lb\fP \- Returns the lower bound of a data type. This may differ from zero if the type was constructed using MPI_LB. Use of this routine is deprecated.
+\fBMPI_Type_lb\fP \- Returns the lower bound of a data type -- use of this routine is deprecated.
 
 .SH SYNTAX
 .ft R
@@ -40,7 +40,7 @@ Note that use of this routine is \fIdeprecated\fP as of MPI-2. Please use MPI_Ty
 .sp
 This deprecated routine is not available in C++. 
 .sp
-MPI_Type_lb returns the lower bound of a data type. 
+MPI_Type_lb returns the lower bound of a data type. This may differ from zero if the type was constructed using MPI_LB.
 .sp
 The "pseudo-datatypes," MPI_LB and MPI_UB, can be used, respectively, to mark the lower bound (or the upper bound) of a datatype. These pseudo-datatypes occupy no space (extent (MPI_LB) = extent (MPI_UB) =0. They do not affect the size or count of a datatype, and do not affect the context of a message created with this datatype. However, they do affect the definition of the extent of a datatype and, therefore, affect the outcome of a replication of this datatype by a datatype constructor.
 .sp

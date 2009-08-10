@@ -37,7 +37,7 @@ Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
-Note that use of this routine is \fIdeprecated\fP as of MPI-2. Please use MPI_get_address instead. 
+Note that use of this routine is \fIdeprecated\fP as of MPI-2. Please use MPI_Get_address instead. 
 .sp
 This deprecated routine is not available in C++. 
 .sp
@@ -82,3 +82,6 @@ Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler
 may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error. 
 
+.SH SEE ALSO
+MPI_Get_address
+.br
