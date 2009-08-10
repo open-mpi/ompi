@@ -41,7 +41,7 @@
 #include "pml_ob1_rdmafrag.h"
 #include "ompi/mca/bml/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/grpcomm/grpcomm.h"
+#include "orte/util/show_help.h"
 
 #include "ompi/runtime/ompi_cr.h"
 
