@@ -767,7 +767,7 @@ void mca_btl_openib_endpoint_send_credits(mca_btl_openib_endpoint_t* endpoint,
     assert(frag->qp_idx == qp);
     credits_hdr = (mca_btl_openib_rdma_credits_header_t*)
         to_base_frag(frag)->segment.seg_addr.pval;
-    if(acquire_eager_rdma_send_credit(endpoint) == MPI_SUCCESS) {
+    if(OMPI_SUCCESS == acquire_eager_rdma_send_credit(endpoint)) {
         do_rdma = true;
     } else {
         if(OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.cm_sent, 1) >
