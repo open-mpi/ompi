@@ -19,6 +19,8 @@
 
 #include "ompi_config.h"
 
+#include "orte/util/show_help.h"
+#include "orte/util/proc_info.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/communicator/communicator.h"
 #include "opal/class/opal_list.h"
@@ -64,7 +66,9 @@ ompi_mtl_psm_errhandler(psm_ep_t ep, const psm_error_t error,
 	case PSM_EP_NO_PORTS_AVAIL:
 	case PSM_EP_NO_NETWORK:
 	case PSM_EP_INVALID_UUID_KEY:
-	    opal_output(0, "Open MPI failed to open a PSM endpoint: %s\n", error_string);
+	  orte_show_help("help-mtl-psm.txt",
+			 "unable to open endpoint", true,
+			 psm_error_get_string(error));
 	    break;
 
 	/* We can't handle any other errors than the ones above */
@@ -79,14 +83,16 @@ ompi_mtl_psm_errhandler(psm_ep_t ep, const psm_error_t error,
 
 int ompi_mtl_psm_progress( void );
 
-int ompi_mtl_psm_module_init() { 
+int ompi_mtl_psm_module_init(int local_rank, int num_local_procs) { 
     psm_error_t err;
     psm_ep_t	ep; /* endpoint handle */
     psm_mq_t	mq;
     psm_epid_t	epid; /* unique lid+port identifier */
     psm_uuid_t  unique_job_key;
+    struct psm_ep_open_opts ep_opt;
     unsigned long long *uu = (unsigned long long *) unique_job_key;
     char *generated_key;
+    char env_string[256];
     
     generated_key = getenv("OMPI_MCA_orte_precondition_transports");
     memset(uu, 0, sizeof(psm_uuid_t));
@@ -94,22 +100,47 @@ int ompi_mtl_psm_module_init() {
     if (!generated_key || (strlen(generated_key) != 33) ||
         sscanf(generated_key, "%016llx-%016llx", &uu[0], &uu[1]) != 2)
     {
-        opal_output(0, "Error obtaining unique transport key from ORTE "
-                       "(orte_precondition_transpots %s the environment)\n", 
-			generated_key ? "could not be parsed from" :
-		       "not present in");
-        return OMPI_ERROR;
-    
+      orte_show_help("help-mtl-psm.txt",
+		     "no uuid present", true,
+		     generated_key ? "could not be parsed from" :
+		     "not present in", orte_process_info.nodename);
+      return OMPI_ERROR;
+      
     }
 
     /* Handle our own errors for opening endpoints */
     psm_error_register_handler(ompi_mtl_psm.ep, ompi_mtl_psm_errhandler);
-         
-    err = psm_ep_open(unique_job_key, NULL, &ep, &epid);
+    
+    /* Setup MPI_LOCALRANKID and MPI_LOCALNRANKS so PSM can allocate hardware
+     * contexts correctly.
+     */
+    snprintf(env_string, sizeof(env_string), "%d", local_rank);
+    setenv("MPI_LOCALRANKID", env_string, 0);
+    snprintf(env_string, sizeof(env_string), "%d", num_local_procs);
+    setenv("MPI_LOCALNRANKS", env_string, 0);
+    
+    /* Setup the endpoint options. */
+    bzero((void*) &ep_opt, sizeof(ep_opt));
+    ep_opt.timeout = ompi_mtl_psm.connect_timeout * 1e9;
+    ep_opt.unit = ompi_mtl_psm.ib_unit;
+    ep_opt.affinity = -1; /* Let PSM choose affinity */
+    ep_opt.shm_mbytes = -1; /* Choose PSM defaults */
+    ep_opt.sendbufs_num = -1; /* Choose PSM defaults */
+
+#if PSM_VERNO >= 0x0101   
+    ep_opt.network_pkey = ompi_mtl_psm.ib_pkey;
+#endif
+    
+    ep_opt.port = ompi_mtl_psm.ib_port;
+    ep_opt.outsl = ompi_mtl_psm.ib_service_level;
+    
+    /* Open PSM endpoint */
+    err = psm_ep_open(unique_job_key, &ep_opt, &ep, &epid);
     if (err) {
-        opal_output(0, "Error in psm_ep_open (error %s)\n", 
-		    psm_error_get_string(err));
-        return OMPI_ERROR;
+      orte_show_help("help-mtl-psm.txt",
+		     "unable to open endpoint", true,
+		     psm_error_get_string(err));
+      return OMPI_ERROR;
     }
 
     /* Future errors are handled by the default error handler */
@@ -121,9 +152,10 @@ int ompi_mtl_psm_module_init() {
 		      0,
 		      &mq);
     if (err) {
-        opal_output(0, "Error in psm_mq_init (error %s)\n", 
-		    psm_error_get_string(err));
-        return OMPI_ERROR;
+      orte_show_help("help-mtl-psm.txt",
+		     "psm init", true,
+		     psm_error_get_string(err));
+      return OMPI_ERROR;
     }
 
     ompi_mtl_psm.ep   = ep;
@@ -137,7 +169,7 @@ int ompi_mtl_psm_module_init() {
 	opal_output(0, "Open MPI couldn't send PSM epid to head node process"); 
 	return OMPI_ERROR;
     }
-    
+
     /* register the psm progress function */
     opal_progress_register(ompi_mtl_psm_progress);
         
@@ -214,35 +246,39 @@ ompi_mtl_psm_add_procs(struct mca_mtl_base_module_t *mtl,
     psm_error_t  *errs_out = NULL, err;
     size_t size;
     int proc_errors[PSM_ERROR_LAST] = { 0 };
-    int timeout_in_secs;
+    int proc, my_local_rank = -1, num_local_procs = 0, timeout_in_secs;
     
     assert(mtl == &ompi_mtl_psm.super);
     rc = OMPI_ERR_OUT_OF_RESOURCE;
 
     errs_out = (psm_error_t *) malloc(nprocs * sizeof(psm_error_t));
-    if (errs_out == NULL)
+    if (errs_out == NULL) {
 	goto bail;
+    }
     epids_in = (psm_epid_t *) malloc(nprocs * sizeof(psm_epid_t));
-    if (epids_in == NULL)
+    if (epids_in == NULL) {
 	goto bail;
+    }
     epaddrs_out = (psm_epaddr_t *) malloc(nprocs * sizeof(psm_epaddr_t));
-    if (epaddrs_out == NULL)
+    if (epaddrs_out == NULL) {
 	goto bail;
-
+    }
     rc = OMPI_SUCCESS;
 
     /* Get the epids for all the processes from modex */
     for (i = 0; i < (int) nprocs; i++) {
 	rc = ompi_modex_recv(&mca_mtl_psm_component.super.mtl_version, 
 				     procs[i], (void**)&epid, &size);
-	if (rc != OMPI_SUCCESS || size != sizeof(psm_epid_t))
-	    return OMPI_ERROR;
+	if (rc != OMPI_SUCCESS || size != sizeof(psm_epid_t)) {
+	  return OMPI_ERROR;
+	}
 	epids_in[i] = *epid;
     }
 
     timeout_in_secs = min(180, 0.5 * nprocs);
-    if (ompi_mtl_psm.connect_timeout  < timeout_in_secs) 
+    if (ompi_mtl_psm.connect_timeout  < timeout_in_secs)  {
 	timeout_in_secs = ompi_mtl_psm.connect_timeout;
+    }
 
     psm_error_register_handler(ompi_mtl_psm.ep, PSM_ERRHANDLER_NOP);
 
@@ -267,8 +303,9 @@ ompi_mtl_psm_add_procs(struct mca_mtl_base_module_t *mtl,
 		opal_output(0, "PSM EP connect error (%s):", 
 			    errstr ? errstr : "unknown connect error");
 		for (j = 0; j < (int) nprocs; j++) {
-		    if (errs_out[j] == thiserr)
-			opal_output(0, " %s", procs[j]->proc_hostname);
+		  if (errs_out[j] == thiserr) {
+		    opal_output(0, " %s", procs[j]->proc_hostname);
+		  }
 		}
 		opal_output(0, "\n");
 	    }
@@ -294,12 +331,16 @@ ompi_mtl_psm_add_procs(struct mca_mtl_base_module_t *mtl,
     }
     
 bail:
-    if (epids_in != NULL)
+    if (epids_in != NULL) {
 	free(epids_in);
-    if (errs_out != NULL)
+    }
+    if (errs_out != NULL) {
 	free(errs_out);
-    if (epaddrs_out != NULL) 
+    }
+    if (epaddrs_out != NULL) {
 	free(epaddrs_out);
+    }
+
     return rc;
 }
 
@@ -322,16 +363,18 @@ int ompi_mtl_psm_progress( void ) {
 
     do {
         err = psm_mq_ipeek(ompi_mtl_psm.mq, &req, NULL);
-	if (err == PSM_MQ_INCOMPLETE)
+	if (err == PSM_MQ_INCOMPLETE) {
 	    return completed;
-	else if (err != PSM_OK)
+	} else if (err != PSM_OK) {
 	    goto error;
-
+	}
+	
 	completed++;
 
 	err = psm_mq_test(&req, &psm_status);
-	if (err != PSM_OK)
+	if (err != PSM_OK) {
 	    goto error;
+	}
 
         mtl_psm_request = (mca_mtl_psm_request_t*) psm_status.context;
 
@@ -349,8 +392,9 @@ int ompi_mtl_psm_progress( void ) {
 	}
 	
 	if(mtl_psm_request->type == OMPI_MTL_PSM_ISEND) { 
-	  if (mtl_psm_request->free_after) 
+	  if (mtl_psm_request->free_after) {
 	    free(mtl_psm_request->buf);
+	  }
 	}
 
 	switch (psm_status.error_code) {
@@ -373,8 +417,9 @@ int ompi_mtl_psm_progress( void ) {
     while (1);
 
  error: 
-    opal_output(0, "Error in psm progress function: %s\n", 
-		psm_error_get_string(err));
+    orte_show_help("help-mtl-psm.txt",
+		   "error polling network", true,
+		   psm_error_get_string(err));
     return 1;
 }
 
