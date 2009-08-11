@@ -63,7 +63,7 @@ int32_t ompi_datatype_sndrcv( void *sbuf, int32_t scount, const ompi_datatype_t*
     }
 
     /* If receive packed. */
-    if (rdtype->super.id == OMPI_DATATYPE_PACKED) {
+    if (rdtype->id == OMPI_DATATYPE_MPI_PACKED) {
         OBJ_CONSTRUCT( &send_convertor, opal_convertor_t );
         opal_convertor_copy_and_prepare_for_send( ompi_mpi_local_convertor,
                                                   &(sdtype->super), scount, sbuf, 0,
@@ -80,7 +80,7 @@ int32_t ompi_datatype_sndrcv( void *sbuf, int32_t scount, const ompi_datatype_t*
     }
 
     /* If send packed. */
-    if (sdtype->super.id == OMPI_DATATYPE_PACKED) {
+    if (sdtype->id == OMPI_DATATYPE_MPI_PACKED) {
         OBJ_CONSTRUCT( &recv_convertor, opal_convertor_t );
         opal_convertor_copy_and_prepare_for_recv( ompi_mpi_local_convertor,
                                                   &(rdtype->super), rcount, rbuf, 0,
