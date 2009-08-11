@@ -41,7 +41,11 @@ AC_DEFUN([OMPI_SETUP_F77_BANNER],[
 # This macro is necessary because PROG_FC is REQUIREd by multiple
 # places in SETUP_F90.
 AC_DEFUN([OMPI_PROG_F77],[
+    OMPI_VAR_SCOPE_PUSH([ompi_fflags_save])
+    ompi_fflags_save="$FFLAGS"
     AC_PROG_F77([gfortran g77 f77 xlf frt ifort pgf77 fort77 fl32 af77])
+    FFLAGS="$ompi_fflags_save"
+    OMPI_VAR_SCOPE_POP
 ])
 
 AC_DEFUN([OMPI_SETUP_F77],[
@@ -58,11 +62,11 @@ AC_DEFUN([OMPI_SETUP_F77],[
 # Always run this test, even if fortran isn't wanted so that F77 has
 # value for the Fint tests
 #
-ompi_fflags_save="$FFLAGS"
-# Strangeness in AC2.64 forces us to require a macro that calls
-# PROG_FC instead of calling it directly.  Weird.
+
+# Must REQUIRE the PROG_F77 macro and not call it directly here for
+# reasons well-described in the AC2.64 (and beyond) docs.
 AC_REQUIRE([OMPI_PROG_F77])
-FFLAGS="$ompi_fflags_save"
+
 if test -z "$F77"; then
     AC_MSG_WARN([*** Fortran 77 bindings disabled (could not find compiler)])
     OMPI_WANT_F77_BINDINGS=0

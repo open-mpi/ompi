@@ -13,7 +13,7 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
-dnl Copyright (c) 2008-20009 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -24,6 +24,17 @@ dnl
 # This macro is necessary to get the title to be displayed first.  :-)
 AC_DEFUN([OMPI_SETUP_CXX_BANNER],[
     ompi_show_subtitle "C++ compiler and preprocessor" 
+])
+
+# This macro is necessary because PROG_CXX* is REQUIREd by multiple
+# places in SETUP_CXX.
+AC_DEFUN([OMPI_PROG_CXX],[
+    OMPI_VAR_SCOPE_PUSH([ompi_cxxflags_save])
+    ompi_cxxflags_save="$CXXFLAGS"
+    AC_PROG_CXX
+    AC_PROG_CXXCPP
+    CXXFLAGS="$ompi_cxxflags_save"
+    OMPI_VAR_SCOPE_POP
 ])
 
 # OMPI_SETUP_CXX()
@@ -66,11 +77,10 @@ AC_DEFUN([_OMPI_SETUP_CXX_COMPILER],[
     # both found a c++ compiler and want the C++ bindings (i.e., either
     # case #1 or #3)
 
-    ompi_cxxflags_save="$CXXFLAGS"
-    AC_REQUIRE([AC_PROG_CXX])
-    AC_REQUIRE([AC_PROG_CXXCPP])
+    # Must REQUIRE the PROG_CXX macro and not call it directly here for
+    # reasons well-described in the AC2.64 (and beyond) docs.
+    AC_REQUIRE([OMPI_PROG_CXX])
     BASECXX="`basename $CXX`"
-    CXXFLAGS="$ompi_cxxflags_save"
 
     AS_IF([test "x$CXX" = "x"], [CXX=none])
     set dummy $CXX
