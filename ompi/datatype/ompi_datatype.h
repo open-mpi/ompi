@@ -162,11 +162,7 @@ ompi_datatype_is_contiguous_memory_layout( const ompi_datatype_t* type, int32_t 
 static inline int32_t
 ompi_datatype_commit( ompi_datatype_t ** type )
 {
-    ompi_datatype_t * pData = *type;
-
-    opal_datatype_commit ( &pData->super );
-
-    return OMPI_SUCCESS;
+    return opal_datatype_commit ( (opal_datatype_t*)*type );
 }
 
 

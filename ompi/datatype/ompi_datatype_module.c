@@ -70,7 +70,7 @@ int32_t ompi_datatype_number_of_predefined_data = 0;
 ompi_predefined_datatype_t ompi_mpi_datatype_null =
     {
         {
-            OMPI_DATATYPE_INITIALIZER_NULL (0),
+            OPAL_DATATYPE_INITIALIZER_NULL(OMPI_DATATYPE_FLAG_PREDEFINED),
             OMPI_DATATYPE_EMPTY_DATA(NULL),
         },
         {0, } /* padding */
@@ -275,35 +275,38 @@ const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX_PREDEF
     &ompi_mpi_float.dt,
     &ompi_mpi_double.dt,               /* 15 */
     &ompi_mpi_long_double.dt,
-    &ompi_mpi_wchar.dt,
+    &ompi_mpi_complex8.dt,
+    &ompi_mpi_complex16.dt,
+    &ompi_mpi_complex32.dt,
+    &ompi_mpi_wchar.dt,                /* 20 */
     &ompi_mpi_packed.dt,
 
     /* C++ / C99 datatypes */
     &ompi_mpi_cxx_bool.dt,
 
     /* Fortran datatypes */
-    &ompi_mpi_logical.dt,              /* 20 */
+    &ompi_mpi_logical.dt,
     &ompi_mpi_character.dt,
-    &ompi_mpi_integer.dt,
+    &ompi_mpi_integer.dt,              /* 25 */
     &ompi_mpi_real.dt,
     &ompi_mpi_dblprec.dt,
-    &ompi_mpi_cplex.dt,                /* 25 */
+    &ompi_mpi_cplex.dt,
     &ompi_mpi_dblcplex.dt,
-    &ompi_mpi_ldblcplex.dt,
+    &ompi_mpi_ldblcplex.dt,            /* 30 */
 
     /* Structure types, based on two basic types */
     &ompi_mpi_2int.dt,
     &ompi_mpi_2integer.dt,
-    &ompi_mpi_2real.dt,                /* 30 */
+    &ompi_mpi_2real.dt,
     &ompi_mpi_2dblprec.dt,
-    &ompi_mpi_2cplex.dt,
+    &ompi_mpi_2cplex.dt,               /* 35 */
     &ompi_mpi_2dblcplex.dt,
     &ompi_mpi_float_int.dt,
-    &ompi_mpi_double_int.dt,           /* 35 */
+    &ompi_mpi_double_int.dt,
     &ompi_mpi_longdbl_int.dt,
-    &ompi_mpi_long_int.dt,
+    &ompi_mpi_long_int.dt,             /* 40 */
     &ompi_mpi_short_int.dt,
-    &ompi_mpi_unavailable.dt           /* 39 */
+    &ompi_mpi_unavailable.dt
 };
 
 opal_pointer_array_t ompi_datatype_f_to_c_table;
@@ -438,16 +441,16 @@ int32_t ompi_datatype_init( void )
      * in mpif.h
      */
 
-    /* the 2 complex datatypes (float and double) */
+    /* the complex datatypes (float, double and long double) */
     DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_cplex.dt, OMPI_DATATYPE_COMPLEX, "MPI_COMPLEX",
-                                      float, float, OMPI_DATATYPE_FLOAT, OMPI_DATATYPE_FLOAT,
+                                      float, float, OMPI_DATATYPE_MPI_FLOAT, OMPI_DATATYPE_MPI_FLOAT,
                                       OMPI_DATATYPE_FLAG_DATA_FORTRAN | OMPI_DATATYPE_FLAG_DATA_FLOAT );
     DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_dblcplex.dt, OMPI_DATATYPE_DOUBLE_COMPLEX, "MPI_DOUBLE_COMPLEX",
-                                      double, double, OMPI_DATATYPE_DOUBLE, OMPI_DATATYPE_DOUBLE,
+                                      double, double, OMPI_DATATYPE_MPI_DOUBLE, OMPI_DATATYPE_MPI_DOUBLE,
                                       OMPI_DATATYPE_FLAG_DATA_FORTRAN | OMPI_DATATYPE_FLAG_DATA_FLOAT );
 #if HAVE_LONG_DOUBLE
     DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_ldblcplex.dt, OMPI_DATATYPE_LONG_DOUBLE_COMPLEX, "MPI_LONG_DOUBLE_COMPLEX",
-                                      long double, long double, OMPI_DATATYPE_LONG_DOUBLE, OMPI_DATATYPE_LONG_DOUBLE,
+                                      long double, long double, OMPI_DATATYPE_MPI_LONG_DOUBLE, OMPI_DATATYPE_MPI_LONG_DOUBLE,
                                       OMPI_DATATYPE_FLAG_DATA_FORTRAN | OMPI_DATATYPE_FLAG_DATA_FLOAT );
 #endif  /* HAVE_LONG_DOUBLE */
 

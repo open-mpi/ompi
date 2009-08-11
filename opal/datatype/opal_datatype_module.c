@@ -66,9 +66,9 @@ OPAL_DECLSPEC const opal_datatype_t opal_datatype_float4 =      OPAL_DATATYPE_IN
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_float8 =      OPAL_DATATYPE_INITIALIZER_FLOAT8(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_float12 =     OPAL_DATATYPE_INITIALIZER_FLOAT12(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_float16 =     OPAL_DATATYPE_INITIALIZER_FLOAT16(0);
-OPAL_DECLSPEC opal_datatype_t opal_datatype_complex8 =    OPAL_DATATYPE_INITIALIZER_UNAVAILABLE(0);
-OPAL_DECLSPEC opal_datatype_t opal_datatype_complex16 =   OPAL_DATATYPE_INITIALIZER_UNAVAILABLE(0);
-OPAL_DECLSPEC opal_datatype_t opal_datatype_complex32 =   OPAL_DATATYPE_INITIALIZER_UNAVAILABLE(0);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_complex8 =    OPAL_DATATYPE_INITIALIZER_COMPLEX8(0);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_complex16 =   OPAL_DATATYPE_INITIALIZER_COMPLEX16(0);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_complex32 =   OPAL_DATATYPE_INITIALIZER_COMPLEX32(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_bool =        OPAL_DATATYPE_INITIALIZER_BOOL(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_wchar =       OPAL_DATATYPE_INITIALIZER_WCHAR(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_unavailable = OPAL_DATATYPE_INITIALIZER_UNAVAILABLE(0);
@@ -163,34 +163,13 @@ int opal_datatype_register_params(void)
 
 int32_t opal_datatype_init( void )
 {
+    const opal_datatype_t* datatype;
     int32_t i;
-    opal_datatype_t* temp;
-
-    opal_datatype_create_contiguous( 2, &opal_datatype_float4, &temp );
-    temp->id = OPAL_DATATYPE_COMPLEX8;
-    temp->flags |= OPAL_DATATYPE_FLAG_PREDEFINED;
-    strcpy( temp->name, "OPAL_DATATYPE_COMPLEX8" );
-    memcpy( (void*)&opal_datatype_complex8, temp, sizeof(opal_datatype_t) );
-    opal_datatype_destroy(&temp);
-
-    opal_datatype_create_contiguous( 2, &opal_datatype_float8, &temp );
-    temp->id = OPAL_DATATYPE_COMPLEX16;
-    temp->flags |= OPAL_DATATYPE_FLAG_PREDEFINED;
-    strcpy( temp->name, "OPAL_DATATYPE_COMPLEX16" );
-    memcpy( (void*)&opal_datatype_complex16, temp, sizeof(opal_datatype_t) );
-    opal_datatype_destroy(&temp);
-
-    opal_datatype_create_contiguous( 2, &opal_datatype_float16, &temp );
-    temp->id = OPAL_DATATYPE_COMPLEX32;
-    temp->flags |= OPAL_DATATYPE_FLAG_PREDEFINED;
-    strcpy( temp->name, "OPAL_DATATYPE_COMPLEX32" );
-    memcpy( (void*)&opal_datatype_complex32, temp, sizeof(opal_datatype_t) );
-    opal_datatype_destroy(&temp);
 
     opal_arch_compute_local_id( &opal_local_arch );
 
     for( i = OPAL_DATATYPE_FIRST_TYPE; i < OPAL_DATATYPE_MAX_PREDEFINED; i++ ) {
-        const opal_datatype_t* datatype = opal_datatype_basicDatatypes[i];
+        datatype = opal_datatype_basicDatatypes[i];
 
         /* All of the predefined OPAL types don't have any GAPS! */
         datatype->desc.desc[0].elem.common.flags = OPAL_DATATYPE_FLAG_PREDEFINED |
@@ -208,8 +187,31 @@ int32_t opal_datatype_init( void )
         datatype->desc.desc[1].end_loop.items           = 1;
         datatype->desc.desc[1].end_loop.first_elem_disp = datatype->desc.desc[0].elem.disp;
         datatype->desc.desc[1].end_loop.size            = datatype->size;
-
     }
+
+#if !(OPAL_USE_FLOAT__COMPLEX && (SIZEOF_FLOAT__COMPLEX == 8)) && (SIZEOF_FLOAT == 4)
+    datatype = opal_datatype_basicDatatypes[OPAL_DATATYPE_COMPLEX8];
+
+    datatype->desc.desc[0].elem.common.type  = OPAL_DATATYPE_FLOAT4;
+    datatype->desc.desc[0].elem.count        = 2;
+    datatype->desc.desc[0].elem.extent       = SIZEOF_FLOAT;
+#endif
+
+#if !(OPAL_USE_DOUBLE__COMPLEX && (SIZEOF_DOUBLE__COMPLEX == 16)) && (SIZEOF_DOUBLE == 8)
+    datatype = opal_datatype_basicDatatypes[OPAL_DATATYPE_COMPLEX16];
+
+    datatype->desc.desc[0].elem.common.type  = OPAL_DATATYPE_FLOAT8;
+    datatype->desc.desc[0].elem.count        = 2;
+    datatype->desc.desc[0].elem.extent       = SIZEOF_DOUBLE;
+#endif
+
+#if !(OPAL_USE_LONG_DOUBLE__COMPLEX && (SIZEOF_LONG_DOUBLE__COMPLEX == 32)) && (HAVE_LONG_DOUBLE && (SIZEOF_LONG_DOUBLE == 16))
+    datatype = opal_datatype_basicDatatypes[OPAL_DATATYPE_COMPLEX32];
+
+    datatype->desc.desc[0].elem.common.type  = OPAL_DATATYPE_FLOAT16;
+    datatype->desc.desc[0].elem.count        = 2;
+    datatype->desc.desc[0].elem.extent       = SIZEOF_LONG_DOUBLE;
+#endif
 
     return OPAL_SUCCESS;
 }

@@ -47,77 +47,60 @@
 #define OMPI_DATATYPE_MPI_FLOAT                   0x0E
 #define OMPI_DATATYPE_MPI_DOUBLE                  0x0F
 #define OMPI_DATATYPE_MPI_LONG_DOUBLE             0x10
-#define OMPI_DATATYPE_MPI_WCHAR                   0x11
-#define OMPI_DATATYPE_MPI_PACKED                  0x12
+#define OMPI_DATATYPE_MPI_COMPLEX8                0x11
+#define OMPI_DATATYPE_MPI_COMPLEX16               0x12
+#define OMPI_DATATYPE_MPI_COMPLEX32               0x13
+#define OMPI_DATATYPE_MPI_WCHAR                   0x14
+#define OMPI_DATATYPE_MPI_PACKED                  0x15
 
-#define OMPI_DATATYPE_MPI_BOOL                    0x13   /* Was CXX_BOOL */
+#define OMPI_DATATYPE_MPI_BOOL                    0x16   /* Was CXX_BOOL */
 
-#define OMPI_DATATYPE_MPI_LOGICAL                 0x14
-#define OMPI_DATATYPE_MPI_CHARACTER               0x15   /* Changed */
-#define OMPI_DATATYPE_MPI_INTEGER                 0x16
-#define OMPI_DATATYPE_MPI_REAL                    0x17
-#define OMPI_DATATYPE_MPI_DOUBLE_PRECISION        0x18   /* Was DBLPREC */
+#define OMPI_DATATYPE_MPI_LOGICAL                 0x17
+#define OMPI_DATATYPE_MPI_CHARACTER               0x18   /* Changed */
+#define OMPI_DATATYPE_MPI_INTEGER                 0x19
+#define OMPI_DATATYPE_MPI_REAL                    0x1A
+#define OMPI_DATATYPE_MPI_DOUBLE_PRECISION        0x1B   /* Was DBLPREC */
 
 /*
  * Derived datatypes supposely contiguous
  */
-#define OMPI_DATATYPE_MPI_COMPLEX                 0x19   /* Was COMPLEX_FLOAT */
-#define OMPI_DATATYPE_MPI_DOUBLE_COMPLEX          0x1A   /* Was COMPLEX_DOUBLE */
-#define OMPI_DATATYPE_MPI_LONG_DOUBLE_COMPLEX     0x1B   /* Was COMPLEX_LONG_DOUBLE */
-#define OMPI_DATATYPE_MPI_2INT                    0x1C
-#define OMPI_DATATYPE_MPI_2INTEGER                0x1D
-#define OMPI_DATATYPE_MPI_2REAL                   0x1E
-#define OMPI_DATATYPE_MPI_2DBLPREC                0x1F
-#define OMPI_DATATYPE_MPI_2COMPLEX                0x20
-#define OMPI_DATATYPE_MPI_2DOUBLE_COMPLEX         0x21
+#define OMPI_DATATYPE_MPI_COMPLEX                 0x1C   /* Was COMPLEX_FLOAT */
+#define OMPI_DATATYPE_MPI_DOUBLE_COMPLEX          0x1D   /* Was COMPLEX_DOUBLE */
+#define OMPI_DATATYPE_MPI_LONG_DOUBLE_COMPLEX     0x1E   /* Was COMPLEX_LONG_DOUBLE */
+#define OMPI_DATATYPE_MPI_2INT                    0x1F
+#define OMPI_DATATYPE_MPI_2INTEGER                0x20
+#define OMPI_DATATYPE_MPI_2REAL                   0x21
+#define OMPI_DATATYPE_MPI_2DBLPREC                0x22
+#define OMPI_DATATYPE_MPI_2COMPLEX                0x23
+#define OMPI_DATATYPE_MPI_2DOUBLE_COMPLEX         0x24
 /*
  * Derived datatypes which will definitively be non contiguous on some architectures.
  */
-#define OMPI_DATATYPE_MPI_FLOAT_INT               0x22
-#define OMPI_DATATYPE_MPI_DOUBLE_INT              0x23
-#define OMPI_DATATYPE_MPI_LONG_DOUBLE_INT         0x24
-#define OMPI_DATATYPE_MPI_LONG_INT                0x25
-#define OMPI_DATATYPE_MPI_SHORT_INT               0x26
-#define OMPI_DATATYPE_MPI_UNAVAILABLE             0x27
+#define OMPI_DATATYPE_MPI_FLOAT_INT               0x25
+#define OMPI_DATATYPE_MPI_DOUBLE_INT              0x26
+#define OMPI_DATATYPE_MPI_LONG_DOUBLE_INT         0x27
+#define OMPI_DATATYPE_MPI_LONG_INT                0x28
+#define OMPI_DATATYPE_MPI_SHORT_INT               0x29
+#define OMPI_DATATYPE_MPI_UNAVAILABLE             0x2A
 
-#define OMPI_DATATYPE_MPI_MAX_PREDEFINED          0x28
+#define OMPI_DATATYPE_MPI_MAX_PREDEFINED          0x2B
 
 /*
  * Optional Fortran datatypes, previously no fixed id
  */
-#define OMPI_DATATYPE_MPI_LOGICAL1                0x28
-#define OMPI_DATATYPE_MPI_LOGICAL2                0x29
-#define OMPI_DATATYPE_MPI_LOGICAL4                0x30
-#define OMPI_DATATYPE_MPI_LOGICAL8                0x31
-#define OMPI_DATATYPE_MPI_INTEGER1                0x32
-#define OMPI_DATATYPE_MPI_INTEGER2                0x33
-#define OMPI_DATATYPE_MPI_INTEGER4                0x34
-#define OMPI_DATATYPE_MPI_INTEGER8                0x35
-#define OMPI_DATATYPE_MPI_INTEGER16               0x36
-#define OMPI_DATATYPE_MPI_REAL2                   0x37
-#define OMPI_DATATYPE_MPI_REAL4                   0x38
-#define OMPI_DATATYPE_MPI_REAL8                   0x39
-#define OMPI_DATATYPE_MPI_REAL16                  0x40
-#define OMPI_DATATYPE_MPI_COMPLEX8                0x41
-#define OMPI_DATATYPE_MPI_COMPLEX16               0x42
-#define OMPI_DATATYPE_MPI_COMPLEX32               0x43
-
-
-typedef struct {
-    float r;
-    float i;
-} ompi_complex_float_t;
-
-typedef struct {
-    double r;
-    double i;
-} ompi_complex_double_t;
-
-typedef struct {
-    long double r;
-    long double i;
-} ompi_complex_long_double_t;
-
+#define OMPI_DATATYPE_MPI_LOGICAL1                0x2B
+#define OMPI_DATATYPE_MPI_LOGICAL2                0x2C
+#define OMPI_DATATYPE_MPI_LOGICAL4                0x2D
+#define OMPI_DATATYPE_MPI_LOGICAL8                0x2E
+#define OMPI_DATATYPE_MPI_INTEGER1                0x2F
+#define OMPI_DATATYPE_MPI_INTEGER2                0x30
+#define OMPI_DATATYPE_MPI_INTEGER4                0x31
+#define OMPI_DATATYPE_MPI_INTEGER8                0x32
+#define OMPI_DATATYPE_MPI_INTEGER16               0x33
+#define OMPI_DATATYPE_MPI_REAL2                   0x34
+#define OMPI_DATATYPE_MPI_REAL4                   0x35
+#define OMPI_DATATYPE_MPI_REAL8                   0x36
+#define OMPI_DATATYPE_MPI_REAL16                  0x37
 
 OMPI_DECLSPEC extern union dt_elem_desc ompi_datatype_predefined_elem_desc[2 * OMPI_DATATYPE_MPI_MAX_PREDEFINED];
 extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX_PREDEFINED];
@@ -142,9 +125,6 @@ extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX
     NULL /*args*/,                                                                   \
     NULL /*packed_description*/,                                                     \
     "MPI_" # NAME /*name*/
-
-#define OMPI_DATATYPE_INITIALIZER_NULL(FLAGS)                                        \
-    OPAL_DATATYPE_INITIALIZER_NULL(OMPI_DATATYPE_FLAG_PREDEFINED | FLAGS)
 
 #define OMPI_DATATYPE_INITIALIZER_UNAVAILABLE(FLAGS)                                 \
     OPAL_DATATYPE_INITIALIZER_UNAVAILABLE(FLAGS)

@@ -56,7 +56,6 @@ int32_t ompi_datatype_sndrcv( void *sbuf, int32_t scount, const ompi_datatype_t*
     }
 
     /* If same datatypes used, just copy. */
-    /* XXX TODO sdtype ptr == rdtype ptr check enough??? Shouldn't the ID be the criteria for equality ?*/
     if (sdtype == rdtype) {
         int32_t count = ( scount < rcount ? scount : rcount );
         opal_datatype_copy_content_same_ddt(&(rdtype->super), count, (char*)rbuf, (char*)sbuf);
