@@ -49,6 +49,7 @@ AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=0 -DOMPI_COMPILING_F77_WRAPPERS=1
 
 lib_LTLIBRARIES =
 libmpi_f77_la_LIBADD = $(top_builddir)/ompi/libmpi.la
+libmpi_f77_la_LDFLAGS = -version-info $(libmpi_f77_so_version)
 
 # Are we building the F77 bindings at all?
 if OMPI_WANT_F77_BINDINGS

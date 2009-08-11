@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -38,7 +39,7 @@ libopen_rte_la_LIBADD = \
 	$(MCA_orte_FRAMEWORK_LIBS) \
 	$(top_ompi_builddir)/opal/libopen-pal.la
 libopen_rte_la_DEPENDENCIES = $(libopen_rte_la_LIBADD)
-
+libopen_rte_la_LDFLAGS = -version-info $(libopen_rte_so_version)
 
 # included subdirectory Makefile.am's and appended-to variables
 headers =
