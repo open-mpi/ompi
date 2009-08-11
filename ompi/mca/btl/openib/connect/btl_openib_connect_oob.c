@@ -810,6 +810,7 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
             if (OMPI_SUCCESS != rc) {
                 BTL_ERROR(("error in endpoint reply start connect"));
                 mca_btl_openib_endpoint_invoke_error(ib_endpoint);
+                OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
                 break;
             }
             
@@ -818,6 +819,7 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
                RML events. Note: we increment it once peer active
                connection. */
             opal_progress_event_users_increment();
+            OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
             break;
              
         case MCA_BTL_IB_CONNECTING :
@@ -825,6 +827,7 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
             if (OMPI_SUCCESS != (rc = qp_connect_all(ib_endpoint))) {
                 BTL_ERROR(("endpoint connect error: %d", rc)); 
                 mca_btl_openib_endpoint_invoke_error(ib_endpoint);
+                OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
                 break;
             }
            
@@ -833,32 +836,37 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
 
                 /* Send him an ACK */
                 send_connect_data(ib_endpoint, ENDPOINT_CONNECT_RESPONSE);
+                OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
             } else {
                 send_connect_data(ib_endpoint, ENDPOINT_CONNECT_ACK);
                 /* Tell main BTL that we're done */
                 mca_btl_openib_endpoint_cpc_complete(ib_endpoint);
+                /* cpc complete unlock the endpoint */
              }
             break;
             
         case MCA_BTL_IB_WAITING_ACK:
             /* Tell main BTL that we're done */
             mca_btl_openib_endpoint_cpc_complete(ib_endpoint);
+            /* cpc complete unlock the endpoint */
             break;
             
         case MCA_BTL_IB_CONNECT_ACK:
             send_connect_data(ib_endpoint, ENDPOINT_CONNECT_ACK);
             /* Tell main BTL that we're done */
             mca_btl_openib_endpoint_cpc_complete(ib_endpoint);
+            /* cpc complete unlock the endpoint */
             break;
             
         case MCA_BTL_IB_CONNECTED:
+            OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
             break;
 
         default :
             BTL_ERROR(("Invalid endpoint state %d", endpoint_state));
             mca_btl_openib_endpoint_invoke_error(ib_endpoint);
+            OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
         }
-        OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
         break;
     }
 }
