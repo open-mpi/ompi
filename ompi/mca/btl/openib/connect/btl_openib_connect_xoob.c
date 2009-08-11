@@ -816,6 +816,7 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
             if (OMPI_SUCCESS != mca_btl_openib_endpoint_post_recvs(ib_endpoint)) {
                 BTL_ERROR(("Failed to post on XRC SRQs"));
                 mca_btl_openib_endpoint_invoke_error(NULL);
+                OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
                 return;
             }
             /* we should create qp and send the info + srq to requestor */
@@ -823,6 +824,7 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
             if (OMPI_SUCCESS != rc) {
                 BTL_ERROR(("error in endpoint reply start connect"));
                 mca_btl_openib_endpoint_invoke_error(NULL);
+                OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
                 return;
             }
             /* enable pooling for this btl */
@@ -853,6 +855,7 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
                 if (OMPI_SUCCESS != rc) {
                     BTL_ERROR(("error in endpoint reply start connect"));
                     mca_btl_openib_endpoint_invoke_error(ib_endpoint);
+                    OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
                     return;
                 }
                 OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
@@ -863,6 +866,7 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
                 if (OMPI_SUCCESS != rc) {
                     BTL_ERROR(("error in endpoint reply start connect"));
                     mca_btl_openib_endpoint_invoke_error(ib_endpoint);
+                    OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
                     return;
                 }
                 OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
@@ -897,10 +901,11 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
             if (OMPI_SUCCESS != xoob_send_qp_connect(ib_endpoint, &rem_info)) {
                 BTL_ERROR(("Failed to connect  endpoint\n"));
                 mca_btl_openib_endpoint_invoke_error(NULL);
+                OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
                 return;
             }
             mca_btl_openib_endpoint_cpc_complete(ib_endpoint);
-            OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
+            /* cpc complete unlock the endpoint */
             break;
         case ENDPOINT_XOOB_CONNECT_XRC_RESPONSE:
             BTL_VERBOSE(("Received ENDPOINT_XOOB_CONNECT_XRC_RESPONSE: lid %d, sid %" PRIx64 "\n",
@@ -919,7 +924,7 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
             /* we got srq numbers on our request */
             XOOB_SET_REMOTE_INFO(ib_endpoint->rem_info, rem_info);
             mca_btl_openib_endpoint_cpc_complete(ib_endpoint);
-            OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
+            /* cpc complete unlock the endpoint */
             break;
         case ENDPOINT_XOOB_CONNECT_XRC_NR_RESPONSE:
             /* The XRC recv site already was destroyed so we need

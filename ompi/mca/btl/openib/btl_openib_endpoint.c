@@ -650,6 +650,23 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
        event trigger. */
     opal_progress_event_users_decrement();
 
+    if(MCA_BTL_XRC_ENABLED) {
+        while(master && !opal_list_is_empty(&endpoint->ib_addr->pending_ep)) {
+            ep_item = opal_list_remove_first(&endpoint->ib_addr->pending_ep);
+            ep = (mca_btl_openib_endpoint_t *)ep_item;
+            if (OMPI_SUCCESS != 
+                ompi_btl_openib_connect_base_start(endpoint->endpoint_local_cpc, 
+                                                   ep)) {
+                BTL_ERROR(("Failed to connect pending endpoint\n"));
+            }
+        }
+        OPAL_THREAD_UNLOCK(&endpoint->ib_addr->addr_lock);
+    }
+
+
+    OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
+    /* Process pending packet on the endpoint */
+
     /* While there are frags in the list, process them */
     while (!opal_list_is_empty(&(endpoint->pending_lazy_frags))) {
         frag_item = opal_list_remove_first(&(endpoint->pending_lazy_frags));
@@ -664,19 +681,6 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
      * state then we restart them here */
     mca_btl_openib_frag_progress_pending_put_get(endpoint,
             mca_btl_openib_component.rdma_qp);
-
-    if(MCA_BTL_XRC_ENABLED) {
-        while(master && !opal_list_is_empty(&endpoint->ib_addr->pending_ep)) {
-            ep_item = opal_list_remove_first(&endpoint->ib_addr->pending_ep);
-            ep = (mca_btl_openib_endpoint_t *)ep_item;
-            if (OMPI_SUCCESS != 
-                ompi_btl_openib_connect_base_start(endpoint->endpoint_local_cpc, 
-                                                   ep)) {
-                BTL_ERROR(("Failed to connect pending endpoint\n"));
-            }
-        }
-        OPAL_THREAD_UNLOCK(&endpoint->ib_addr->addr_lock);
-    }
 }
 
 /*
