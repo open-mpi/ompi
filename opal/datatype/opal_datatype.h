@@ -166,9 +166,9 @@ OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_float4;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_float8;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_float12;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_float16;
-OPAL_DECLSPEC extern opal_datatype_t opal_datatype_complex8;
-OPAL_DECLSPEC extern opal_datatype_t opal_datatype_complex16;
-OPAL_DECLSPEC extern opal_datatype_t opal_datatype_complex32;
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_complex8;
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_complex16;
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_complex32;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_bool;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_wchar;
 
