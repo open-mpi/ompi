@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2008 The Trustees of Indiana University.
+ * Copyright (c) 2004-2009 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -21,11 +21,15 @@
 #include "opal_config.h"
 
 #include <sys/types.h>
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-
-#include "opal/libltdl/ltdl.h"
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+#ifdef HAVE_DLFCN_H
+#include <dlfcn.h>
+#endif
 
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
@@ -91,11 +95,13 @@ OBJ_CLASS_INSTANCE(opal_crs_self_snapshot_t,
                    opal_crs_self_destruct);
 
 
+typedef void (*opal_crs_self_dlsym_dummy_fn_t)(void);
+
 /************************************
  * Locally Global vars & functions :)
  ************************************/
-static lt_ptr 
-crs_self_find_function(lt_dlhandle handle, char *prefix, char *suffix);
+static int crs_self_find_function(char *prefix, char *suffix,
+                                  opal_crs_self_dlsym_dummy_fn_t *fn_ptr);
 
 static int self_update_snapshot_metadata(opal_crs_self_snapshot_t *snapshot);
 
@@ -126,6 +132,20 @@ int opal_crs_self_component_query(mca_base_module_t **module, int *priority)
                         "crs:self: component_query()");
 
     /*
+     * If this is a tool, then return a module with the lowest priority.
+     * This allows 'mpirun' to select the 'none' component since it has
+     * a priority higher than 0.
+     * But also allows 'opal-restart' to select this component if needed
+     * since it only ever requests that a specific component be opened
+     * that is defined in the snapshot metadata file.
+     */
+    if( opal_cr_is_tool ) {
+        *priority = 0;
+        *module = (mca_base_module_t *)&loc_module;
+        return OPAL_SUCCESS;
+    }
+
+    /*
      * Extract the user level callbacks if they exist
      */
     ret = opal_crs_self_extract_callbacks();
@@ -146,44 +166,25 @@ int opal_crs_self_component_query(mca_base_module_t **module, int *priority)
 static int opal_crs_self_extract_callbacks(void)
 {
     bool callback_matched = true;
-    lt_dlhandle executable;
-
-    if( opal_cr_is_tool ) {
-        return OPAL_SUCCESS;
-    }
-    
-    /*
-     * Open the executable so that we can lookup the necessary symbols
-     */
-    executable = lt_dlopen(NULL);
-    if ( NULL == executable) {
-        opal_show_help("help-opal-crs-self.txt", "self:lt_dlopen",
-                       true);
-        return OPAL_ERROR;
-    }
+    opal_crs_self_dlsym_dummy_fn_t loc_fn;
 
     /*
      * Find the function names
      */
-    mca_crs_self_component.ucb_checkpoint_fn = (opal_crs_self_checkpoint_callback_fn_t)
-        crs_self_find_function(executable, 
-                               mca_crs_self_component.prefix,
-                               SUFFIX_CHECKPOINT);
+    crs_self_find_function(mca_crs_self_component.prefix,
+                           SUFFIX_CHECKPOINT,
+                           &loc_fn);
+    mca_crs_self_component.ucb_checkpoint_fn = (opal_crs_self_checkpoint_callback_fn_t)loc_fn;
 
-    mca_crs_self_component.ucb_continue_fn = (opal_crs_self_continue_callback_fn_t)
-        crs_self_find_function(executable, 
-                               mca_crs_self_component.prefix,
-                               SUFFIX_CONTINUE);
+    crs_self_find_function(mca_crs_self_component.prefix,
+                           SUFFIX_CONTINUE,
+                           &loc_fn);
+    mca_crs_self_component.ucb_continue_fn = (opal_crs_self_continue_callback_fn_t)loc_fn;
 
-    mca_crs_self_component.ucb_restart_fn = (opal_crs_self_restart_callback_fn_t)
-        crs_self_find_function(executable, 
-                               mca_crs_self_component.prefix,
-                               SUFFIX_RESTART);
-
-    /*
-     * Done with executable, close it
-     */
-    lt_dlclose(executable);
+    crs_self_find_function(mca_crs_self_component.prefix,
+                           SUFFIX_RESTART,
+                           &loc_fn);
+    mca_crs_self_component.ucb_restart_fn = (opal_crs_self_restart_callback_fn_t)loc_fn;
 
     /*
      * Sanity check
@@ -265,6 +266,13 @@ int opal_crs_self_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
     opal_crs_self_snapshot_t *snapshot = OBJ_NEW(opal_crs_self_snapshot_t);
     int ret, exit_status = OPAL_SUCCESS;
     char * restart_cmd = NULL;
+
+    /*
+     * This function should never be called by a tool
+     */
+    if( opal_cr_is_tool ) {
+        return OPAL_ERR_NOT_SUPPORTED;
+    }
 
     /*
      * Setup for snapshot directory creation
@@ -391,6 +399,10 @@ int opal_crs_self_restart(opal_crs_base_snapshot_t *base_snapshot, bool spawn_ch
     }
 
     /*
+     * JJH: Check to make sure the application exists?
+     */
+
+    /*
      * Get the restart command
      */
     if ( OPAL_SUCCESS != (ret = opal_crs_self_restart_cmd(snapshot, &cr_cmd)) ) {
@@ -461,6 +473,13 @@ int opal_crs_self_restart(opal_crs_base_snapshot_t *base_snapshot, bool spawn_ch
 
 int opal_crs_self_disable_checkpoint(void)
 {
+    /*
+     * This function should never be called by a tool
+     */
+    if( opal_cr_is_tool ) {
+        return OPAL_ERR_NOT_SUPPORTED;
+    }
+
     opal_output_verbose(10, mca_crs_self_component.super.output_handle,
                         "crs:self: disable_checkpoint()");
 
@@ -471,6 +490,13 @@ int opal_crs_self_disable_checkpoint(void)
 
 int opal_crs_self_enable_checkpoint(void)
 {
+    /*
+     * This function should never be called by a tool
+     */
+    if( opal_cr_is_tool ) {
+        return OPAL_ERR_NOT_SUPPORTED;
+    }
+
     opal_output_verbose(10, mca_crs_self_component.super.output_handle,
                         "crs:self: enable_checkpoint()");
 
@@ -488,6 +514,13 @@ int opal_crs_self_prelaunch(int32_t rank,
 {
     char * tmp_env_var = NULL;
 
+    /*
+     * This function should never be called by a tool
+     */
+    if( opal_cr_is_tool ) {
+        return OPAL_ERR_NOT_SUPPORTED;
+    }
+
     tmp_env_var = mca_base_param_env_var("opal_cr_is_tool");
     opal_setenv(tmp_env_var,
                 "0", true, env);
@@ -499,26 +532,34 @@ int opal_crs_self_prelaunch(int32_t rank,
 
 int opal_crs_self_reg_thread(void)
 {
+    /*
+     * This function should never be called by a tool
+     */
+    if( opal_cr_is_tool ) {
+        return OPAL_ERR_NOT_SUPPORTED;
+    }
+
     return OPAL_SUCCESS;
 }
 
 /******************
  * Local functions
  ******************/
-static lt_ptr
-crs_self_find_function(lt_dlhandle handle, char *prefix, char *suffix){
+static int crs_self_find_function(char *prefix, char *suffix,
+                                  opal_crs_self_dlsym_dummy_fn_t *fn_ptr) {
     char *func_to_find = NULL;
-    lt_ptr ptr;
 
     if( NULL == prefix || 0 >= strlen(prefix) ) {
         opal_output(mca_crs_self_component.super.output_handle,
                     "crs:self: crs_self_find_function: Error: prefix is NULL or empty string!");
-        return NULL;
+        *fn_ptr = NULL;
+        return OPAL_ERROR;
     }
     if( NULL == suffix || 0 >= strlen(suffix) ) {
         opal_output(mca_crs_self_component.super.output_handle,
                     "crs:self: crs_self_find_function: Error: suffix is NULL or empty string!");
-        return NULL;
+        *fn_ptr = NULL;
+        return OPAL_ERROR;
     }
 
     opal_output_verbose(10, mca_crs_self_component.super.output_handle,
@@ -527,8 +568,13 @@ crs_self_find_function(lt_dlhandle handle, char *prefix, char *suffix){
 
     asprintf(&func_to_find, "%s_%s", prefix, suffix);
 
-    ptr = lt_dlsym(handle, func_to_find);
-    if( NULL == ptr) {
+    /* The RTLD_DEFAULT is a special handle that searches the default libraries
+     * including the current application for the indicated symbol. This allows
+     * us to not have to dlopen/dlclose the executable. A bit of short hand
+     * really.
+     */
+    *((void**) fn_ptr) = dlsym(RTLD_DEFAULT, func_to_find);
+    if( NULL == fn_ptr) {
         opal_output_verbose(12, mca_crs_self_component.super.output_handle,
                             "crs:self: crs_self_find_function: WARNING: Function \"%s\" not found",
                             func_to_find);
@@ -539,10 +585,11 @@ crs_self_find_function(lt_dlhandle handle, char *prefix, char *suffix){
                             func_to_find);
     }
 
-    if( NULL == func_to_find)
+    if( NULL == func_to_find) {
         free(func_to_find);
+    }
 
-    return ptr;
+    return OPAL_SUCCESS;
 }
 
 /*
