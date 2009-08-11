@@ -37,7 +37,6 @@
  * Local variable
  */
 static opal_list_item_t *cur_node_item = NULL;
-static orte_vpid_t vpid_start = 0;
 
 static char *orte_getline(FILE *fp);
 
@@ -51,24 +50,22 @@ static int rr_map_default(orte_job_t *jdata, orte_app_context_t *app,
     cur_node_item = orte_rmaps_base_get_starting_point(node_list, jdata);
     
     /* now perform the mapping */
-    if (ORTE_RMAPS_BYNODE & jdata->map->policy) {
+    if (ORTE_MAPPING_BYNODE & jdata->map->policy) {
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_map_bynode(jdata, app, node_list,
-                                                             num_procs, vpid_start,
-                                                             cur_node_item))) {
+                                                             num_procs, cur_node_item))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
     } else {
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_map_byslot(jdata, app, node_list,
-                                                             num_procs, vpid_start,
-                                                             cur_node_item, 0))) {
+                                                             num_procs, cur_node_item))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
     }
     
-    /* update the starting vpid */
-    vpid_start += num_procs;
+    /* update number of procs */
+    jdata->num_procs += num_procs;
     
     return ORTE_SUCCESS;
 }
@@ -123,7 +120,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
     float avgload, minload;
     orte_node_t *node, *nd=NULL, *oldnode;
     orte_rmaps_res_ftgrp_t *ftgrp, *target;
-    orte_vpid_t totprocs, lowprocs;
+    orte_vpid_t totprocs, lowprocs, num_assigned;
     FILE *fp;
     char *ftinput;
     int grp;
@@ -275,8 +272,8 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      nd->name));
                 /* put proc on the found node */
-                if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, nd, proc->name.vpid, NULL, proc->app_idx,
-                                                                     NULL, jdata->map->oversubscribe, false))) {
+                if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, nd, jdata->map->cpus_per_rank, proc->app_idx,
+                                                                     NULL, jdata->map->oversubscribe, false, &proc))) {
                     /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
                      * really isn't an error
                      */
@@ -290,7 +287,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                 /* update the node and local ranks so static ports can
                  * be properly selected if active
                  */
-                orte_rmaps_base_update_usage(jdata, oldnode, nd, proc);
+                orte_rmaps_base_update_local_ranks(jdata, oldnode, nd, proc);
                 continue;
             }
             /* if we did find a target, re-map the proc to the lightest loaded
@@ -313,8 +310,8 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                                  ORTE_NAME_PRINT(&proc->name), target->ftgrp, nd->name));
             OBJ_RELEASE(proc->node);  /* required to maintain bookkeeping */
             /* put proc on the found node */
-            if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, nd, proc->name.vpid, NULL, proc->app_idx,
-                                                                 NULL, jdata->map->oversubscribe, false))) {
+            if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, nd, jdata->map->cpus_per_rank, proc->app_idx,
+                                                                 NULL, jdata->map->oversubscribe, false, &proc))) {
                 /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
                  * really isn't an error
                  */
@@ -328,7 +325,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
             /* update the node and local ranks so static ports can
              * be properly selected if active
              */
-            orte_rmaps_base_update_usage(jdata, oldnode, nd, proc);
+            orte_rmaps_base_update_local_ranks(jdata, oldnode, nd, proc);
         }
         /* define the daemons that we will use for this job */
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_define_daemons(jdata->map))) {
@@ -354,7 +351,6 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                          ORTE_JOBID_PRINT(jdata->jobid)));
 
     /* start at the beginning... */
-    vpid_start = 0;
     jdata->num_procs = 0;
     map = jdata->map;
     
@@ -363,6 +359,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
             continue;
         }
+        num_assigned = 0;
         /* for each app_context, we have to get the list of nodes that it can
          * use since that can now be modified with a hostfile and/or -host
          * option
@@ -434,7 +431,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                     OPAL_OUTPUT_VERBOSE((2, orte_rmaps_base.rmaps_output,
                                          "%s rmaps:resilient: no available fault group - mapping rr",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-                    if (ORTE_SUCCESS != (rc = rr_map_default(jdata, app, &node_list, app->num_procs-vpid_start))) {
+                    if (ORTE_SUCCESS != (rc = rr_map_default(jdata, app, &node_list, app->num_procs-num_assigned))) {
                         goto error;
                     }
                     goto cleanup;
@@ -455,8 +452,8 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      target->ftgrp, nd->name));
                 /* put proc on that node */
-                if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, nd, vpid_start, NULL, app->idx,
-                                                                     &node_list, jdata->map->oversubscribe, false))) {
+                if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, nd, jdata->map->cpus_per_rank, app->idx,
+                                                                     &node_list, jdata->map->oversubscribe, false, NULL))) {
                     /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
                      * really isn't an error
                      */
@@ -466,7 +463,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                     }
                 }
                 /* track number of procs mapped */
-                vpid_start++;
+                num_assigned++;
                 
                 /* flag this fault group as used */
                 target->used = true;
@@ -484,6 +481,8 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
         }
         
     cleanup:
+        /* track number of procs */
+        jdata->num_procs += app->num_procs;
         /* cleanup the node list - it can differ from one app_context
          * to another, so we have to get it every time
          */
@@ -493,11 +492,14 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
         OBJ_DESTRUCT(&node_list);
     }
     
-    /* update the number of procs in the job */
-    jdata->num_procs = vpid_start;
+    /* compute vpids and add proc objects to the job */
+    if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_vpids(jdata))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
 
-    /* compute and save convenience values */
-    if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_usage(jdata))) {
+    /* compute and save local ranks */
+    if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_local_ranks(jdata))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

@@ -107,6 +107,9 @@ static void orte_odls_job_constructor(orte_odls_job_t *ptr)
     ptr->launch_msg_processed = false;
     ptr->apps = NULL;
     ptr->num_apps = 0;
+    ptr->policy = 0;
+    ptr->cpus_per_rank = 1;
+    ptr->stride = 1;
     ptr->controls = 0;
     ptr->stdin_target = ORTE_VPID_INVALID;
     ptr->total_slots_alloc = 0;
@@ -231,6 +234,12 @@ int orte_odls_base_open(void)
         }
         opal_argv_append_nosize(&orte_odls_globals.xtermcmd, "-e");
     }
+    
+    /* see if the user wants us to report bindings */
+    mca_base_param_reg_int_name("odls", "base_report_bindings",
+                           "Report process bindings [default: no]",
+                           false, false, (int)false, &i);
+    orte_odls_globals.report_bindings = OPAL_INT_TO_BOOL(i);
     
     /* Open up all available components */
 

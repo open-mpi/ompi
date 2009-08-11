@@ -35,6 +35,9 @@
 #include "orte/mca/odls/base/odls_private.h"
 #include "orte/mca/odls/default/odls_default.h"
 
+/* instantiate a module-global variable */
+bool orte_odls_default_report_bindings;
+
 /*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
@@ -66,7 +69,6 @@ orte_odls_base_component_t mca_odls_default_component = {
 
 int orte_odls_default_component_open(void)
 {
-    /* nothing to do */
     return ORTE_SUCCESS;
 }
 

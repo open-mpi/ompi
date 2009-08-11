@@ -31,6 +31,8 @@
 #include "opal/class/opal_list.h"
 #include "opal/mca/mca.h"
 
+#include "orte/runtime/orte_globals.h"
+
 #include "orte/mca/rmaps/rmaps.h"
 
 BEGIN_C_DECLS
@@ -56,14 +58,18 @@ typedef struct {
     opal_list_t available_components;
     /** selected module */
     orte_rmaps_base_module_t *active_module;
-    /* user specified mapping policy */
-    uint8_t policy;
     /** whether or not we allow oversubscription of nodes */
     bool oversubscribe;
-    /** do we want one ppn if num_procs not specified */
-    bool pernode;
     /** number of ppn for n_per_node mode */
     int npernode;
+    /* number of procs/board */
+    int nperboard;
+    /* number of procs/socket */
+    int npersocket;
+    /* cpus per rank */
+    int cpus_per_rank;
+    /* stride */
+    int stride;
     /* do not allow use of the localhost */
     bool no_use_local;
     /* display the map after it is computed */

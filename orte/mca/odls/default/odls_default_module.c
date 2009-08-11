@@ -176,8 +176,7 @@ int orte_odls_default_kill_local_procs(opal_pointer_array_t *procs, bool set_sta
 static int odls_default_fork_local_proc(orte_app_context_t* context,
                                         orte_odls_child_t *child,
                                         char **environ_copy,
-                                        orte_job_controls_t controls,
-                                        orte_vpid_t stdin_target)
+                                        orte_odls_job_t *jobdat)
 {
     orte_iof_base_io_conf_t opts;
     int rc;
@@ -185,7 +184,13 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
     int i, p[2];
     pid_t pid;
     bool paffinity_enabled = false;
-
+    opal_paffinity_base_cpu_set_t mask;
+    orte_node_rank_t nrank;
+    int16_t n;
+    orte_local_rank_t lrank;
+    int target_socket, npersocket;
+    int logical_cpu, phys_core, phys_cpu;
+    
     if (NULL != child) {
         /* should pull this information from MPIRUN instead of going with
          default */
@@ -193,7 +198,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
         
         /* do we want to setup stdin? */
         if (NULL != child &&
-            (stdin_target == ORTE_VPID_WILDCARD || child->name->vpid == stdin_target)) {
+            (jobdat->stdin_target == ORTE_VPID_WILDCARD || child->name->vpid == jobdat->stdin_target)) {
             opts.connect_stdin = true;
         } else {
             opts.connect_stdin = false;
@@ -265,7 +270,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                 write(p[1], &i, sizeof(int));
                 exit(1);
             }
-            
+
            /* Setup process affinity.  First check to see if a slot list was
             * specified.  If so, use it.  If no slot list was specified,
             * that's not an error -- just fall through and try the next
@@ -291,39 +296,144 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                    exit(1);
                }
            }
-           /* Otherwise, if opal_paffinity_alone was set, use that scheme */
-           else if (opal_paffinity_alone) {
-               opal_paffinity_base_cpu_set_t mask;
-               int phys_cpu;
-               orte_node_rank_t nrank;
-               OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
-                                    "%s odls:default:fork setting paffinity for child %s",
+           /* Otherwise, if opal_paffinity_alone was set and a binding is specified, use that scheme */
+           else if (opal_paffinity_alone && !(ORTE_BIND_TO_NONE & jobdat->policy)) {
+               OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                    "%s odls:default:fork setting paffinity for child %s using policy %04x",
                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                    ORTE_NAME_PRINT(child->name)));
-               if (ORTE_NODE_RANK_INVALID == (nrank = orte_ess.get_node_rank(child->name))) {
-                   orte_show_help("help-odls-default.txt",
-                                  "odls-default:invalid-node-rank", true);
-                   rc = ORTE_ERR_FATAL;
-                   write(p[1], &rc, sizeof(int));
-                   exit(1);
+                                    ORTE_NAME_PRINT(child->name), jobdat->policy));
+               if (ORTE_BIND_TO_CORE & jobdat->policy) {
+                   /* we want to bind this proc to a specific core, or multiple cores
+                    * if the cpus_per_rank is > 0
+                    */
+                   OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                        "%s odls:default:fork binding child %s to core(s) cpus/rank %d stride %d",
+                                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                        ORTE_NAME_PRINT(child->name),
+                                        (int)jobdat->cpus_per_rank, (int)jobdat->stride));
+                   if (ORTE_NODE_RANK_INVALID == (nrank = orte_ess.get_node_rank(child->name))) {
+                       orte_show_help("help-odls-default.txt",
+                                      "odls-default:invalid-node-rank", true);
+                       rc = ORTE_ERR_FATAL;
+                       write(p[1], &rc, sizeof(int));
+                       exit(1);
+                   }
+                   OPAL_PAFFINITY_CPU_ZERO(mask);
+                   /* my starting core has to be offset by cpus_per_rank */
+                   logical_cpu = nrank * jobdat->cpus_per_rank;
+                   for (n=0; n < jobdat->cpus_per_rank; n++) {
+                       phys_cpu = opal_paffinity_base_get_physical_processor_id(logical_cpu);
+                       if (0 > phys_cpu) {
+                           orte_show_help("help-odls-default.txt",
+                                          "odls-default:invalid-phys-cpu", true);
+                           rc = ORTE_ERR_FATAL;
+                           write(p[1], &rc, sizeof(int));
+                           exit(1);
+                       }
+                       OPAL_PAFFINITY_CPU_SET(phys_cpu, mask);
+                       logical_cpu += jobdat->stride;
+                   }
+                   if (orte_odls_globals.report_bindings) {
+                       opal_output(0, "%s odls:default:fork binding child %s to cpus %04lx",
+                                   ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                   ORTE_NAME_PRINT(child->name), mask.bitmask[0]);
+                   }
+                   if (OPAL_SUCCESS != (rc = opal_paffinity_base_set(mask))) {
+                       orte_show_help("help-odls-default.txt",
+                                      "odls-default:failed-set-paff", true);
+                       write(p[1], &rc, sizeof(int));
+                       exit(1);
+                   }
+                   paffinity_enabled = true;
+               } else if (ORTE_BIND_TO_SOCKET & jobdat->policy) {
+                   /* bind this proc to a socket */
+                   OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                        "%s odls:default:fork binding child %s to socket",
+                                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                        ORTE_NAME_PRINT(child->name)));
+                   /* layout this process across the sockets based on
+                    * the provided mapping policy
+                    */
+                   if (ORTE_LOCAL_RANK_INVALID == (lrank = orte_ess.get_local_rank(child->name))) {
+                       orte_show_help("help-odls-default.txt",
+                                      "odls-default:invalid-local-rank", true);
+                       rc = ORTE_ERR_FATAL;
+                       write(p[1], &rc, sizeof(int));
+                       exit(1);
+                   }
+                   if (ORTE_MAPPING_NPERXXX & jobdat->policy) {
+                       /* we need to balance the children from this job across the sockets */
+                       npersocket = jobdat->num_local_procs / orte_default_num_sockets_per_board;
+                       if (ORTE_MAPPING_BYSOCKET & jobdat->policy) {
+                           target_socket = opal_paffinity_base_get_physical_socket_id(lrank % npersocket);
+                       } else {
+                           target_socket = opal_paffinity_base_get_physical_socket_id(lrank / npersocket);
+                       }
+                       OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                            "%s odls:default:fork npersocket %d target socket %d",
+                                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                            npersocket, target_socket));
+                   } else if (ORTE_MAPPING_BYSOCKET & jobdat->policy) {
+                       /* this corresponds to a mapping policy where
+                        * local rank 0 goes on socket 0, and local
+                        * rank 1 goes on socket 1, etc. - round robin
+                        * until all ranks are mapped
+                        *
+                        * NOTE: we already know our number of sockets
+                        * from when we initialized
+                        */
+                       OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                            "bysocket lrank %d numsocks %d logical socket %d", (int)lrank,
+                                            (int)orte_default_num_sockets_per_board,
+                                            (int)(lrank % orte_default_num_sockets_per_board)));
+                       target_socket = opal_paffinity_base_get_physical_socket_id(lrank % orte_default_num_sockets_per_board);
+                   } else {
+                       /* use a byslot-like policy where local rank 0 goes on
+                        * socket 0, and local rank 1 goes on socket 0, etc.
+                        * following round-robing until all ranks mapped
+                        */
+                       OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                            "byslot lrank %d numsocks %d logical socket %d", (int)lrank,
+                                            (int)orte_default_num_sockets_per_board,
+                                            (int)(lrank / orte_default_num_cores_per_socket)));
+                       target_socket = opal_paffinity_base_get_physical_socket_id(lrank / orte_default_num_cores_per_socket);
+                   }
+                   OPAL_PAFFINITY_CPU_ZERO(mask);
+                   for (n=0; n < orte_default_num_cores_per_socket; n++) {
+                       phys_core = opal_paffinity_base_get_physical_core_id(target_socket, n);
+                       if (0 > phys_core) {
+                           orte_show_help("help-odls-default.txt",
+                                          "odls-default:invalid-phys-cpu", true);
+                           rc = ORTE_ERR_FATAL;
+                           write(p[1], &rc, sizeof(int));
+                           exit(1);
+                       }
+                       if (ORTE_SUCCESS != opal_paffinity_base_get_map_to_processor_id(target_socket, phys_core, &phys_cpu)) {
+                           orte_show_help("help-odls-default.txt",
+                                          "odls-default:invalid-phys-cpu", true);
+                           rc = ORTE_ERR_FATAL;
+                           write(p[1], &rc, sizeof(int));
+                           exit(1);
+                       }
+                        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                            "%s odls:default:fork mapping phys socket %d core %d to phys_cpu %d",
+                                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                            target_socket, n, phys_cpu));
+                       OPAL_PAFFINITY_CPU_SET(phys_cpu, mask);
+                   }
+                   if (orte_odls_globals.report_bindings) {
+                       opal_output(0, "%s odls:default:fork binding child %s to socket %d cpus %04lx",
+                                   ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                   ORTE_NAME_PRINT(child->name), target_socket, mask.bitmask[0]);
+                   }
+                   if (OPAL_SUCCESS != (rc = opal_paffinity_base_set(mask))) {
+                       orte_show_help("help-odls-default.txt",
+                                      "odls-default:failed-set-paff", true);
+                       write(p[1], &rc, sizeof(int));
+                       exit(1);
+                   }
+                   paffinity_enabled = true;
                }
-               OPAL_PAFFINITY_CPU_ZERO(mask);
-               phys_cpu = opal_paffinity_base_get_physical_processor_id(nrank);
-               if (0 > phys_cpu) {
-                   orte_show_help("help-odls-default.txt",
-                                  "odls-default:invalid-phys-cpu", true);
-                   rc = ORTE_ERR_FATAL;
-                   write(p[1], &rc, sizeof(int));
-                   exit(1);
-               }
-               OPAL_PAFFINITY_CPU_SET(phys_cpu, mask);
-               if (OPAL_SUCCESS != (rc = opal_paffinity_base_set(mask))) {
-                   orte_show_help("help-odls-default.txt",
-                                  "odls-default:failed-set-paff", true);
-                   write(p[1], &rc, sizeof(int));
-                   exit(1);
-               }
-               paffinity_enabled = true;
            }
            /* If we were able to set processor affinity, try setting up
             * memory affinity
@@ -335,15 +445,15 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                }
            }
            
-        } else if (!(ORTE_JOB_CONTROL_FORWARD_OUTPUT & controls)) {
-            /* tie stdin/out/err/internal to /dev/null */
-            int fdnull;
-            for (i=0; i < 3; i++) {
-                fdnull = open("/dev/null", O_RDONLY, 0);
-                if(fdnull > i) {
-                    dup2(fdnull, i);
-                }
-                close(fdnull);
+       } else if (!(ORTE_JOB_CONTROL_FORWARD_OUTPUT & jobdat->controls)) {
+           /* tie stdin/out/err/internal to /dev/null */
+           int fdnull;
+           for (i=0; i < 3; i++) {
+               fdnull = open("/dev/null", O_RDONLY, 0);
+               if(fdnull > i) {
+                   dup2(fdnull, i);
+               }
+               close(fdnull);
             }
             fdnull = open("/dev/null", O_RDONLY, 0);
             if(fdnull > opts.p_internal[1]) {
@@ -396,7 +506,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
         exit(1);
     } else {
 
-        if (NULL != child && (ORTE_JOB_CONTROL_FORWARD_OUTPUT & controls)) {
+        if (NULL != child && (ORTE_JOB_CONTROL_FORWARD_OUTPUT & jobdat->controls)) {
             /* connect endpoints IOF */
             rc = orte_iof_base_setup_parent(child->name, &opts);
             if(ORTE_SUCCESS != rc) {
@@ -447,7 +557,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                                      "%s odls:default:fork got code %d back from child",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), i));
                 close(p[0]);
-                return i;
+                return ORTE_ERR_FAILED_TO_START;
             }
         }
 

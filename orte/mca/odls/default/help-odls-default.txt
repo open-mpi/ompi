@@ -78,6 +78,10 @@ that the specification had improper syntax.
 An invalid node rank was obtained - this is probably something
 that should be reported to the OMPI developers.
 #
+[odls-default:invalid-local-rank]
+An invalid local rank was obtained - this is probably something
+that should be reported to the OMPI developers.
+#
 [odls-default:invalid-phys-cpu]
 An invalid physical processor id was returned when attempting to
 set processor affinity. This is probably something that should be

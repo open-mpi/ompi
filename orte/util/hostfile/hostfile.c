@@ -261,6 +261,49 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
             node->username = hostfile_parse_string();
             break;
 
+        case ORTE_HOSTFILE_BOARDS:
+            rc = hostfile_parse_int();
+            if (rc < 0) {
+                orte_show_help("help-hostfile.txt", "boards",
+                               true,
+                               cur_hostfile_name, rc);
+                OBJ_RELEASE(node);
+                return ORTE_ERROR;
+            }
+            node->boards = rc;
+            break;
+
+        case ORTE_HOSTFILE_SOCKETS_PER_BOARD:
+            rc = hostfile_parse_int();
+            if (rc < 0) {
+                orte_show_help("help-hostfile.txt", "sockets",
+                               true,
+                               cur_hostfile_name, rc);
+                OBJ_RELEASE(node);
+                return ORTE_ERROR;
+            }
+            node->sockets_per_board = rc;
+            break;
+
+        case ORTE_HOSTFILE_CORES_PER_SOCKET:
+            rc = hostfile_parse_int();
+            if (rc < 0) {
+                orte_show_help("help-hostfile.txt", "cores",
+                               true,
+                               cur_hostfile_name, rc);
+                OBJ_RELEASE(node);
+                return ORTE_ERROR;
+            }
+            node->cores_per_socket = rc;
+            break;
+
+        case ORTE_HOSTFILE_CPU_SET:
+            if (NULL != node->cpu_set) {
+                free(node->cpu_set);
+            }
+            node->cpu_set = hostfile_parse_string();
+            break;
+                
         case ORTE_HOSTFILE_COUNT:
         case ORTE_HOSTFILE_CPU:
         case ORTE_HOSTFILE_SLOTS:

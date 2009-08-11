@@ -93,3 +93,19 @@ The requested number of empty hosts was not available - the system was short by 
 
 Please recheck your allocation - further information is available on the
 orte_hosts man page.
+[boards]
+Open RTE detected a bad parameter in the hostfile:
+    %s
+The boards parameter is less than 0:
+    boards=%d
+[sockets]
+Open RTE detected a bad parameter in the hostfile:
+    %s
+The sockets parameter is less than 0:
+    sockets=%d
+[cores]
+Open RTE detected a bad parameter in the hostfile:
+    %s
+The cores parameter is less than 0:
+    cores=%d
+

@@ -123,15 +123,14 @@ opal_list_item_t* orte_rmaps_base_get_starting_point(opal_list_t *node_list, ort
  */
 int orte_rmaps_base_map_byslot(orte_job_t *jdata, orte_app_context_t *app,
                                opal_list_t *node_list, orte_vpid_t num_procs,
-                               orte_vpid_t vpid_start, opal_list_item_t *cur_node_item,
-                               orte_vpid_t ppn)
+                               opal_list_item_t *cur_node_item)
 {
     int rc=ORTE_SUCCESS;
     int i;
     orte_node_t *node;
     opal_list_item_t *next;
     orte_vpid_t num_alloc = 0;
-    int num_slots_to_take;
+    int num_procs_to_assign, num_possible_procs;
     
     /* This loop continues until all procs have been mapped or we run
      out of resources. We determine that we have "run out of
@@ -185,21 +184,37 @@ int orte_rmaps_base_map_byslot(orte_job_t *jdata, orte_app_context_t *app,
          * to do so after oversubscribing).
          */
         if (node->slots_inuse >= node->slots_alloc || 0 == node->slots_inuse) {
-            num_slots_to_take = (node->slots_alloc == 0) ? 1 : node->slots_alloc;
+            if (0 == node->slots_alloc) {
+                num_procs_to_assign = 1;
+            } else {
+                num_possible_procs = node->slots_alloc / jdata->map->cpus_per_rank;
+                if (0 == num_possible_procs) {
+                    num_procs_to_assign = 1;
+                } else {
+                    num_procs_to_assign = num_possible_procs;
+                }
+            }
         } else {
-            num_slots_to_take = node->slots_alloc - node->slots_inuse;
+            num_possible_procs = (node->slots_alloc - node->slots_inuse) / jdata->map->cpus_per_rank;
+            if (0 == num_possible_procs) {
+                num_procs_to_assign = 1;
+            } else {
+                num_procs_to_assign = num_possible_procs;
+            }
         }
         
         /* check if we are in npernode mode - if so, then set the num_slots_to_take
          * to the num_per_node
          */
-        if (jdata->map->pernode) {
-            num_slots_to_take = jdata->map->npernode;
+        if (0 < jdata->map->npernode) {
+            num_procs_to_assign = jdata->map->npernode;
         }
         
-        for( i = 0; i < num_slots_to_take; ++i) {
-            if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, vpid_start + num_alloc, NULL, app->idx,
-                                                                 node_list, jdata->map->oversubscribe, true))) {
+        for( i = 0; i < num_procs_to_assign; ++i) {
+            if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node,
+                                                                 jdata->map->cpus_per_rank, app->idx,
+                                                                 node_list, jdata->map->oversubscribe,
+                                                                 true, NULL))) {
                 /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
                  * really isn't an error - we just need to break from the loop
                  * since the node is fully used up. For now, just don't report
@@ -220,8 +235,7 @@ int orte_rmaps_base_map_byslot(orte_job_t *jdata, orte_app_context_t *app,
             }
             
             /* if we have fully used up this node, then break from the loop */
-            if (ORTE_ERR_NODE_FULLY_USED == rc ||
-                (orte_rmaps_base.loadbalance && node->num_procs >= ppn)) {
+            if (ORTE_ERR_NODE_FULLY_USED == rc) {
                 break;
             }
         }
@@ -231,17 +245,13 @@ int orte_rmaps_base_map_byslot(orte_job_t *jdata, orte_app_context_t *app,
          * node is NOT max'd out
          *
          */
-        if (i < (num_slots_to_take-1) && ORTE_ERR_NODE_FULLY_USED != rc &&
-            (orte_rmaps_base.loadbalance && node->num_procs < ppn)) {
+        if (i < (num_procs_to_assign-1) && ORTE_ERR_NODE_FULLY_USED != rc) {
             continue;
         }
         cur_node_item = next;
     }
     
-complete:
-    /* update the starting vpid */
-    vpid_start += num_procs;
-    
+complete:    
     /* save the bookmark */
     jdata->bookmark = (orte_node_t*)cur_node_item;
     
@@ -250,7 +260,7 @@ complete:
 
 int orte_rmaps_base_map_bynode(orte_job_t *jdata, orte_app_context_t *app,
                                opal_list_t *node_list, orte_vpid_t num_procs,
-                               orte_vpid_t vpid_start, opal_list_item_t *cur_node_item)
+                               opal_list_item_t *cur_node_item)
 {
     int rc = ORTE_SUCCESS;
     opal_list_item_t *next;
@@ -297,8 +307,8 @@ int orte_rmaps_base_map_bynode(orte_job_t *jdata, orte_app_context_t *app,
         
         /* Allocate a slot on this node */
         node = (orte_node_t*) cur_node_item;
-        if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, vpid_start + num_alloc, NULL, app->idx,
-                                                             node_list, jdata->map->oversubscribe, true))) {
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, jdata->map->cpus_per_rank, app->idx,
+                                                             node_list, jdata->map->oversubscribe, true, NULL))) {
             /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
              * really isn't an error - we just need to break from the loop
              * since the node is fully used up. For now, just don't report

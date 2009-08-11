@@ -43,6 +43,11 @@ struct orterun_globals_t {
     bool exit;
     bool by_node;
     bool by_slot;
+    bool by_board;
+    bool by_socket;
+    bool bind_to_core;
+    bool bind_to_board;
+    bool bind_to_socket;
     bool debugger;
     int num_procs;
     char *env_val;
