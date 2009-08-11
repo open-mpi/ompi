@@ -13,6 +13,7 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+dnl Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -42,7 +43,11 @@ AC_DEFUN([OMPI_SETUP_F90_BANNER],[
 # This macro is necessary because PROG_FC is REQUIREd by multiple
 # places in SETUP_F90.
 AC_DEFUN([OMPI_PROG_FC],[
+    OMPI_VAR_SCOPE_PUSH([ompi_fcflags_save])
+    ompi_fcflags_save="$FCFLAGS"
     AC_PROG_FC([gfortran f95 fort xlf95 ifort ifc efc pgf95 lf95 f90 xlf90 pgf90 epcf90])
+    FCFLAGS="$ompi_fcflags_save"
+    OMPI_VAR_SCOPE_POP
 ])dnl
 
 AC_DEFUN([OMPI_SETUP_F90],[
@@ -86,11 +91,10 @@ else
     # list of 95 and 90 compilers and use it here.
     #
 
-    ompi_fcflags_save="$FCFLAGS"
-    # Strangeness in AC2.64 forces us to require a macro that calls
-    # PROG_FC instead of calling it directly.  Weird.
+    # Must REQUIRE the PROG_FC macro and not call it directly here for
+    # reasons well-described in the AC2.64 (and beyond) docs.
     AC_REQUIRE([OMPI_PROG_FC])
-    FCFLAGS="$ompi_fcflags_save"
+
     if test -z "$FC"; then
         AC_MSG_WARN([*** Fortran 90/95 bindings disabled (could not find compiler)])
         OMPI_WANT_F90_BINDINGS=0
