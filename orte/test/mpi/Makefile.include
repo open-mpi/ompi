@@ -47,6 +47,7 @@ EXTRA_DIST += \
         test/mpi/mpi_spin.c \
         test/mpi/multi_abort.c \
         test/mpi/pubsub.c \
+        test/mpi/sendrecv_blaster.c \
         test/mpi/simple_spawn.c \
         test/mpi/slave_spawn.c \
         test/mpi/slave.c \
