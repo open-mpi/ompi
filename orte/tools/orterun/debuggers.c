@@ -120,6 +120,7 @@
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/plm_private.h"
+#include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/util/show_help.h"
@@ -512,7 +513,6 @@ static void check_debugger(int fd, short event, void *arg)
              * one debugger daemon on each node
              */
             jdata->map = OBJ_NEW(orte_job_map_t);
-            jdata->map->pernode = true;
             jdata->map->npernode = 1;
             /* add it to the global job pool */
             ljob = ORTE_LOCAL_JOBID(jdata->jobid);

@@ -41,7 +41,7 @@
  * Query the registry for all nodes allocated to a specified app_context
  */
 int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr_t *total_num_slots,
-                                     orte_app_context_t *app, uint8_t policy)
+                                     orte_app_context_t *app, orte_mapping_policy_t policy)
 {
     opal_list_item_t *item, *next;
     orte_node_t *node;
@@ -169,7 +169,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     /* If the "no local" option was set, then remove the local node
      * from the list
      */
-    if (policy & ORTE_RMAPS_NO_USE_LOCAL) {
+    if (policy & ORTE_MAPPING_NO_USE_LOCAL) {
         /* we don't need to check through the entire list as
          * the head node - if it is on the list at all - will
          * always be in the first position
@@ -267,9 +267,9 @@ PROCESS:
      * in the mapper
      */
     OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
-                         "%s rmaps:base: mapping proc %s to node %s",
+                         "%s rmaps:base: mapping proc for job %s to node %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&proc->name),
+                         ORTE_JOBID_PRINT(proc->name.jobid),
                          (NULL == node->name) ? "NULL" : node->name));
     
     if (0 > (rc = opal_pointer_array_add(node->procs, (void*)proc))) {
@@ -289,88 +289,56 @@ PROCESS:
  */
 int orte_rmaps_base_claim_slot(orte_job_t *jdata,
                                orte_node_t *current_node,
-                               orte_vpid_t vpid,
-                               char *slot_list,
+                               int32_t cpus_per_rank,
                                orte_std_cntr_t app_idx,
                                opal_list_t *nodes,
                                bool oversubscribe,
-                               bool remove_from_list)
+                               bool remove_from_list,
+                               orte_proc_t **returnproc)
 {
-    orte_proc_t *proc, *proc_from_job;
+    orte_proc_t *proc;
     bool oversub;
     int rc;
-    int n;
-    
-    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
-                         "%s rmaps:base:claim_slot: checking for existence of vpid %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_VPID_PRINT(vpid)));
 
-    /* does this proc already exist within the job? */
-    proc = NULL;
-    for (n=0; n < jdata->procs->size; n++) {
-        if (NULL == (proc_from_job = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, n))) {
-            continue;
-        }
-        if (proc_from_job->name.vpid == vpid) {
-            /* already have it! */
-            proc = proc_from_job;
-            
-            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
-                                 "%s rmaps:base:claim_slot: found existing proc %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&proc->name)));
-            
-            if (NULL != proc->slot_list) {
-                /* cleanout stale info */
-                free(proc->slot_list);
-            }
-            break;
-        }
-    }
-    if (NULL == proc) {
-        /* need to create mapped_proc object */
+    /* if we were given a proc, just use it */
+    if (NULL != returnproc && NULL != *returnproc) {
+        proc = *returnproc;
+    } else {
+        /* create mapped_proc object */
         proc = OBJ_NEW(orte_proc_t);
         if (NULL == proc) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
-        /* create the process name */
+        /* set the jobid */
         proc->name.jobid = jdata->jobid;
-        proc->name.vpid = vpid;
+        /* we do not set the vpid here - this will be done
+         * during a second phase
+         */
         proc->app_idx = app_idx;
         OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
                              "%s rmaps:base:claim_slot: created new proc %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&proc->name)));
-        /* add this proc to the job's data - we don't have to worry here
-         * about keeping the array left-justified as all vpids
-         * from 0 to num_procs will be filled
-         */
-        if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs,
-                                                              (int)vpid,
-                                                              (void*)proc))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(proc);
-            return rc;
+        
+        /* provide returned proc, if requested */
+        if (NULL != returnproc) {
+            *returnproc = proc;
         }
     }
-    
+
     OBJ_RETAIN(current_node);  /* maintain accounting on object */
     
-    if ( NULL != slot_list) {
-        proc->slot_list = strdup(slot_list);
-    }
     proc->node = current_node;
     proc->nodename = current_node->name;
     
     OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
-                         "%s rmaps:base:claim_slot mapping rank %d in job %s to node %s",
+                         "%s rmaps:base:claim_slot mapping proc in job %s to node %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         vpid, ORTE_JOBID_PRINT(jdata->jobid), current_node->name));
+                         ORTE_JOBID_PRINT(jdata->jobid), current_node->name));
     
-    /* Be sure to demarcate this slot as claimed for the node */
-    current_node->slots_inuse++;
+    /* Be sure to demarcate the slots for this proc as claimed from the node */
+    current_node->slots_inuse += cpus_per_rank;
     
     /* see if this node is oversubscribed now */
     if (current_node->slots_inuse > current_node->slots) {
@@ -415,8 +383,68 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
     return ORTE_SUCCESS;
 }
 
+int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
+{
+    orte_job_map_t *map;
+    orte_vpid_t vpid;
+    int i, j;
+    orte_node_t *node;
+    orte_proc_t *proc;
+    int rc;
+    
+    map = jdata->map;
+    
+    if (ORTE_MAPPING_BYSLOT & map->policy ||
+        ORTE_MAPPING_BYSOCKET & map->policy ||
+        ORTE_MAPPING_BYBOARD & map->policy) {
+        /* assign the ranks sequentially */
+        vpid = 0;
+        for (i=0; i < map->nodes->size; i++) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
+                continue;
+            }
+            for (j=0; j < node->procs->size; j++) {
+                if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
+                    continue;
+                }
+                proc->name.vpid = vpid++;
+                if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs,
+                                                                      proc->name.vpid, proc))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+            }
+        }
+        return ORTE_SUCCESS;
+    }
+    
+    if (ORTE_MAPPING_BYNODE & map->policy) {
+        /* assign the ranks round-robin across nodes */
+        for (i=0; i < map->nodes->size; i++) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
+                continue;
+            }
+            vpid = i;
+            for (j=0; j < node->procs->size; j++) {
+                if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
+                    continue;
+                }
+                proc->name.vpid = vpid;
+                vpid += map->num_nodes;
+                if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs,
+                                                                      proc->name.vpid, proc))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+            }
+        }
+        return ORTE_SUCCESS;
+    }
 
-int orte_rmaps_base_compute_usage(orte_job_t *jdata)
+    return ORTE_ERR_NOT_IMPLEMENTED;
+}
+
+int orte_rmaps_base_compute_local_ranks(orte_job_t *jdata)
 {
     orte_std_cntr_t i;
     int j, k;
@@ -501,8 +529,8 @@ int orte_rmaps_base_compute_usage(orte_job_t *jdata)
  * we don't, then it would be possible for procs to conflict
  * when opening static ports, should that be enabled.
  */
-void orte_rmaps_base_update_usage(orte_job_t *jdata, orte_node_t *oldnode,
-                                  orte_node_t *newnode, orte_proc_t *newproc)
+void orte_rmaps_base_update_local_ranks(orte_job_t *jdata, orte_node_t *oldnode,
+                                        orte_node_t *newnode, orte_proc_t *newproc)
 {
     int k;
     orte_node_rank_t node_rank;

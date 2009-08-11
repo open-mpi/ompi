@@ -95,8 +95,7 @@ static int odls_process_kill_local_procs(opal_pointer_array_t *procs, bool set_s
 static int odls_process_fork_local_proc(orte_app_context_t* context,
                                         orte_odls_child_t *child,
                                         char **environ_copy,
-                                        orte_job_controls_t controls,
-                                        orte_vpid_t stdin_target)
+                                        orte_odls_job_t *jobdat)
 {
     pid_t pid;
     orte_iof_base_io_conf_t opts;
@@ -124,7 +123,7 @@ static int odls_process_fork_local_proc(orte_app_context_t* context,
     opts.usepty = OPAL_ENABLE_PTY_SUPPORT;
 
     /* do we want to setup stdin? */
-    if (stdin_target == ORTE_VPID_WILDCARD || child->name->vpid == stdin_target) {
+    if (jobdat->stdin_target == ORTE_VPID_WILDCARD || child->name->vpid == jobdat->stdin_target) {
         opts.connect_stdin = true;
     } else {
         opts.connect_stdin = false;

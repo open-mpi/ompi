@@ -61,7 +61,7 @@ int orte_rmaps_base_add_proc_to_map(orte_job_map_t *map, orte_node_t *node,
 ORTE_DECLSPEC int orte_rmaps_base_get_target_nodes(opal_list_t* node_list,
                                                    orte_std_cntr_t *total_num_slots,
                                                    orte_app_context_t *app,
-                                                   uint8_t policy);
+                                                   orte_mapping_policy_t policy);
 ORTE_DECLSPEC int orte_rmaps_base_get_target_procs(opal_list_t *procs);
 
 ORTE_DECLSPEC int orte_rmaps_base_update_node_usage(opal_list_t *nodes);
@@ -72,17 +72,19 @@ ORTE_DECLSPEC int orte_rmaps_base_get_mapped_targets(opal_list_t *mapped_node_li
 
 ORTE_DECLSPEC int orte_rmaps_base_claim_slot(orte_job_t *jdata,
                                              orte_node_t *current_node,
-                                             orte_vpid_t vpid,
-                                             char *slot_list,
+                                             int32_t stride,
                                              orte_std_cntr_t app_idx,
                                              opal_list_t *nodes,
                                              bool oversubscribe,
-                                             bool remove_from_list);
+                                             bool remove_from_list,
+                                             orte_proc_t **returnproc);
 
-ORTE_DECLSPEC int orte_rmaps_base_compute_usage(orte_job_t *jdata);
+ORTE_DECLSPEC int orte_rmaps_base_compute_vpids(orte_job_t *jdata);
 
-ORTE_DECLSPEC void orte_rmaps_base_update_usage(orte_job_t *jdata, orte_node_t *oldnode,
-                                                orte_node_t *newnode, orte_proc_t *newproc);
+ORTE_DECLSPEC int orte_rmaps_base_compute_local_ranks(orte_job_t *jdata);
+
+ORTE_DECLSPEC void orte_rmaps_base_update_local_ranks(orte_job_t *jdata, orte_node_t *oldnode,
+                                                      orte_node_t *newnode, orte_proc_t *newproc);
 
 ORTE_DECLSPEC int orte_rmaps_base_rearrange_map(orte_app_context_t *app, orte_job_map_t *map, opal_list_t *procs);
 
@@ -93,12 +95,11 @@ ORTE_DECLSPEC opal_list_item_t* orte_rmaps_base_get_starting_point(opal_list_t *
 
 ORTE_DECLSPEC int orte_rmaps_base_map_byslot(orte_job_t *jdata, orte_app_context_t *app,
                                              opal_list_t *node_list, orte_vpid_t num_procs,
-                                             orte_vpid_t vpid_start, opal_list_item_t *cur_node_item,
-                                             orte_vpid_t ppn);
+                                             opal_list_item_t *cur_node_item);
 
 ORTE_DECLSPEC int orte_rmaps_base_map_bynode(orte_job_t *jdata, orte_app_context_t *app,
                                              opal_list_t *node_list, orte_vpid_t num_procs,
-                                             orte_vpid_t vpid_start, opal_list_item_t *cur_node_item);
+                                             opal_list_item_t *cur_node_item);
 
 
 END_C_DECLS

@@ -30,7 +30,9 @@
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/paffinity/paffinity.h"
 
+#include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/rmaps/base/rmaps_private.h"
 
@@ -92,38 +94,73 @@ int orte_rmaps_base_open(void)
 
     /* Are we scheduling by node or by slot? */
     param = mca_base_param_reg_string_name("rmaps", "base_schedule_policy",
-                                           "Scheduling Policy for RMAPS. [slot | node]",
+                                           "Scheduling Policy for RMAPS. [slot (default) | socket | board | node]",
                                            false, false, "unspec", &policy);
     
-    if (0 == strcmp(policy, "unspec")) {
-        orte_rmaps_base.policy = ORTE_RMAPS_BYSLOT;  /* default to byslot */
+    if (0 == strcmp(policy, "socket")) {
+        ORTE_SET_MAPPING_POLICY(ORTE_MAPPING_BYSOCKET);
+    } else if (0 == strcmp(policy, "board")) {
+       ORTE_SET_MAPPING_POLICY(ORTE_MAPPING_BYBOARD);
     } else if (0 == strcmp(policy, "node")) {
-       orte_rmaps_base.policy = ORTE_RMAPS_BYNODE;
-    } else {
-        orte_rmaps_base.policy = ORTE_RMAPS_BYSLOT;  /* default to byslot */
+        ORTE_SET_MAPPING_POLICY(ORTE_MAPPING_BYNODE);
     }
+    /* if nothing was specified, leave it alone - we already set it
+     * in orterun
+     */
 
-    /* Do we want one ppn if num_procs not specified */
+    /* check for procs/xxx directives */
     param = mca_base_param_reg_int_name("rmaps", "base_pernode",
                                         "Launch one ppn as directed",
                                         false, false, (int)false, &value);
-    orte_rmaps_base.pernode = OPAL_INT_TO_BOOL(value);
-    
-    /* if pernode is set, we do not allow npernode to also be set - instead
-     * we default the npernode value to 1
-     */
-    if (orte_rmaps_base.pernode) {
+    if (value) {
         orte_rmaps_base.npernode = 1;
-    } else {
-        /* Do we want n ppn */
-        param = mca_base_param_reg_int_name("rmaps", "base_n_pernode",
-                                            "Launch n procs/node",
-                                            false, false, 0, &value);
-        orte_rmaps_base.npernode = value;
-        if (0 < orte_rmaps_base.npernode) {
-            orte_rmaps_base.pernode = true;
-        }
     }
+    
+    /* #procs/node */
+    param = mca_base_param_reg_int_name("rmaps", "base_n_pernode",
+                                        "Launch n procs/node",
+                                        false, false, -1, &value);
+    if (0 < value) {
+        orte_rmaps_base.npernode = value;
+    }
+    
+    /* #procs/board */
+    param = mca_base_param_reg_int_name("rmaps", "base_n_perboard",
+                                        "Launch n procs/board",
+                                        false, false, -1, &orte_rmaps_base.nperboard);
+    if (0 < orte_rmaps_base.nperboard) {
+        ORTE_ADD_MAPPING_POLICY(ORTE_MAPPING_NPERXXX);
+    }
+
+    /* #procs/socket */
+    param = mca_base_param_reg_int_name("rmaps", "base_n_persocket",
+                                        "Launch n procs/socket",
+                                        false, false, -1, &orte_rmaps_base.npersocket);
+    if (0 < orte_rmaps_base.npersocket) {
+        ORTE_ADD_MAPPING_POLICY(ORTE_MAPPING_NPERXXX);
+    }
+    
+    /* Do we want to loadbalance the job */
+    param = mca_base_param_reg_int_name("rmaps", "base_loadbalance",
+                                        "Balance total number of procs across all allocated nodes",
+                                        false, false, (int)false, &value);
+    orte_rmaps_base.loadbalance = OPAL_INT_TO_BOOL(value);
+    
+    /* #cpus/rank to use */
+    param = mca_base_param_reg_int_name("rmaps", "base_cpus_per_rank",
+                                        "Number of cpus to use for each rank [1-2**15 (default=1)]",
+                                        false, false, 1, &value);
+    orte_rmaps_base.cpus_per_rank = value;
+    /* if the cpus/rank > 1, then we have to bind to cores */
+    if (1 < orte_rmaps_base.cpus_per_rank) {
+        ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_CORE);
+    }
+    
+    /* stride to use */
+    param = mca_base_param_reg_int_name("rmaps", "base_stride",
+                                        "When binding multiple cores to a rank, the step size to use between cores [1-2**15 (default: 1)]",
+                                        false, false, 1, &value);
+    orte_rmaps_base.stride = value;
     
     /* did the user provide a slot list? */
     param = mca_base_param_reg_string_name("rmaps", "base_slot_list",
@@ -136,7 +173,7 @@ int orte_rmaps_base_open(void)
                                 "If false, allow scheduling MPI applications on the same node as mpirun (default).  If true, do not schedule any MPI applications on the same node as mpirun",
                                 false, false, (int)false, &value);
     if (value) {
-        orte_rmaps_base.policy |= ORTE_RMAPS_NO_USE_LOCAL;
+        orte_default_mapping_policy |= ORTE_MAPPING_NO_USE_LOCAL;
     }
 
     /* Should we oversubscribe or not? */
@@ -148,16 +185,6 @@ int orte_rmaps_base_open(void)
         orte_rmaps_base.oversubscribe = false;
     } else {
         orte_rmaps_base.oversubscribe = true;
-    }
-    
-    /* Do we want to loadbalance the job */
-    param = mca_base_param_reg_int_name("rmaps", "base_loadbalance",
-                                        "Balance total number of procs across all allocated nodes",
-                                        false, false, (int)false, &value);
-    orte_rmaps_base.loadbalance = OPAL_INT_TO_BOOL(value);
-    /* if we are doing npernode or pernode, then we cannot loadbalance */
-    if (orte_rmaps_base.pernode) {
-        orte_rmaps_base.loadbalance = false;
     }
     
     /* should we display the map after determining it? */

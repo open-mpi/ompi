@@ -54,6 +54,7 @@
 #include "orte/mca/ess/base/base.h"
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/routed/base/base.h"
+#include "orte/mca/rmaps/rmaps_types.h"
 
 #include "orte/util/context_fns.h"
 #include "orte/util/name_fns.h"
@@ -322,6 +323,24 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     
     /* pack the total slots allocated to us */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->total_slots_alloc, 1, ORTE_STD_CNTR))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* pack the map & binding policy for this job */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &map->policy, 1, ORTE_MAPPING_POLICY))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* pack the cpus_per_rank for this job */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &map->cpus_per_rank, 1, OPAL_INT16))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* pack the stride for this job */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &map->stride, 1, OPAL_INT16))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -741,6 +760,24 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     /* unpack the total slots allocated to us */
     cnt=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->total_slots_alloc, &cnt, ORTE_STD_CNTR))) {
+        ORTE_ERROR_LOG(rc);
+        goto REPORT_ERROR;
+    }
+    /* unpack the mapping policy for the job */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->policy, &cnt, ORTE_MAPPING_POLICY))) {
+        ORTE_ERROR_LOG(rc);
+        goto REPORT_ERROR;
+    }
+    /* unpack the cpus/rank for the job */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->cpus_per_rank, &cnt, OPAL_INT16))) {
+        ORTE_ERROR_LOG(rc);
+        goto REPORT_ERROR;
+    }
+    /* unpack the stride for the job */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->stride, &cnt, OPAL_INT16))) {
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
     }
@@ -1745,7 +1782,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                 }
             }
             
-            rc = fork_local(app, child, app->env, jobdat->controls, jobdat->stdin_target);
+            rc = fork_local(app, child, app->env, jobdat);
             /* reaquire lock so we don't double unlock... */
             OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
             if (ORTE_SUCCESS != rc) {
@@ -1791,12 +1828,22 @@ CLEANUP:
                          "%s odls:launch reporting job %s launch status",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(job)));
-    /* pack the launch results */
-    if (ORTE_SUCCESS != (ret = pack_state_update(&alert, true, jobdat))) {
-        ORTE_ERROR_LOG(ret);
-    }
     
-    if (!launch_failed) {
+    /* if the launch failed, we need to flag all the procs from this job
+     * that didn't launch as having failed, or else we will hang
+     */
+    if (launch_failed) {
+        OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
+        for (item = opal_list_get_first(&orte_local_children);
+             item != opal_list_get_end(&orte_local_children);
+             item = opal_list_get_next(item)) {
+            child = (orte_odls_child_t*)item;
+            if (child->name->jobid == jobdat->jobid &&
+                ORTE_PROC_STATE_LAUNCHED >= child->state) {
+                child->state = ORTE_PROC_STATE_FAILED_TO_START;
+            }
+        }
+    } else {
         /* if the launch succeeded, check to see if we need to
          * co-locate any debugger daemons so that they get launched
          * before we report anything to the HNP. This ensures that
@@ -1813,13 +1860,16 @@ CLEANUP:
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  (ORTE_JOB_CONTROL_FORWARD_OUTPUT & orte_odls_globals.debugger->controls) ? "output forwarded" : "no output"));
             
-            fork_local(orte_odls_globals.debugger->apps[0], NULL, NULL,
-                       orte_odls_globals.debugger->controls, ORTE_VPID_INVALID);
+            fork_local(orte_odls_globals.debugger->apps[0], NULL, NULL, orte_odls_globals.debugger);
             orte_odls_globals.debugger_launched = true;
         }
-        
     }
     
+    /* pack the launch results */
+    if (ORTE_SUCCESS != (ret = pack_state_update(&alert, true, jobdat))) {
+        ORTE_ERROR_LOG(ret);
+    }
+
     /* if we are the HNP, then we would rather not send this to ourselves -
      * instead, we queue it up for local processing
      */

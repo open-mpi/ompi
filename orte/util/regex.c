@@ -47,6 +47,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/rml/base/rml_contact.h"
+#include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/util/show_help.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/nidmap.h"
@@ -472,20 +473,14 @@ char* orte_regex_encode_maps(orte_job_t *jdata)
     char suffix, sfx;
     orte_app_context_t *app;
     
-    /* this is only supported with regular maps - i.e., when
-     * the mapping is byslot or bynode. Irregular maps cannot
-     * be expressed in a regular expression
-     *
-     * Also only supported for one app_context
-     */
-    if (jdata->map->policy & ORTE_RMAPS_BYUSER ||
-        jdata->num_apps > 1) {
+    /* this is only for one app_context */
+    if (jdata->num_apps > 1) {
         return NULL;
     }
     
     /* determine the mapping policy */
     byslot = true;
-    if (jdata->map->policy & ORTE_RMAPS_BYNODE) {
+    if (jdata->map->policy & ORTE_MAPPING_BYNODE) {
         byslot = false;
     }
     

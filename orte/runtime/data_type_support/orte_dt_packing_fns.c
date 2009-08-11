@@ -407,6 +407,15 @@ int orte_dt_pack_node(opal_buffer_t *buffer, const void *src,
             return rc;
         }
         
+        /* do not pack the local board, socket, and core info */
+        
+        /* pack the cpu set info */
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
+                          (void*)(&(nodes[i]->cpu_set)), 1, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
         /* do not pack the username */
     }
     return ORTE_SUCCESS;
@@ -814,13 +823,7 @@ int orte_dt_pack_map(opal_buffer_t *buffer, const void *src,
     
     for (i=0; i < num_vals; i++) {
         /* pack the policy used to generate it */
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, &(maps[i]->policy), 1, OPAL_UINT8))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
-        /* pack the pernode flag */
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, &(maps[i]->pernode), 1, OPAL_BOOL))) {
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, &(maps[i]->policy), 1, ORTE_MAPPING_POLICY))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

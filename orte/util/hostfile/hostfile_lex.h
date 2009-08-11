@@ -55,22 +55,26 @@ extern orte_hostfile_value_t  orte_util_hostfile_value;
 #define YY_NO_UNPUT 1
 #define YY_SKIP_YYWRAP 1
 
-#define ORTE_HOSTFILE_DONE           0
-#define ORTE_HOSTFILE_ERROR          1
-#define ORTE_HOSTFILE_QUOTED_STRING  2
-#define ORTE_HOSTFILE_EQUAL          3
-#define ORTE_HOSTFILE_INT            4
-#define ORTE_HOSTFILE_STRING         5
-#define ORTE_HOSTFILE_CPU            6
-#define ORTE_HOSTFILE_COUNT          7
-#define ORTE_HOSTFILE_SLOTS          8
-#define ORTE_HOSTFILE_SLOTS_MAX      9
-#define ORTE_HOSTFILE_USERNAME       10
-#define ORTE_HOSTFILE_IPV4           11
-#define ORTE_HOSTFILE_HOSTNAME       12
-#define ORTE_HOSTFILE_NEWLINE        13
-#define ORTE_HOSTFILE_IPV6           14
-#define ORTE_HOSTFILE_SLOT           15
-#define ORTE_HOSTFILE_RELATIVE       16
+#define ORTE_HOSTFILE_DONE                   0
+#define ORTE_HOSTFILE_ERROR                  1
+#define ORTE_HOSTFILE_QUOTED_STRING          2
+#define ORTE_HOSTFILE_EQUAL                  3
+#define ORTE_HOSTFILE_INT                    4
+#define ORTE_HOSTFILE_STRING                 5
+#define ORTE_HOSTFILE_CPU                    6
+#define ORTE_HOSTFILE_COUNT                  7
+#define ORTE_HOSTFILE_SLOTS                  8
+#define ORTE_HOSTFILE_SLOTS_MAX              9
+#define ORTE_HOSTFILE_USERNAME              10
+#define ORTE_HOSTFILE_IPV4                  11
+#define ORTE_HOSTFILE_HOSTNAME              12
+#define ORTE_HOSTFILE_NEWLINE               13
+#define ORTE_HOSTFILE_IPV6                  14
+#define ORTE_HOSTFILE_SLOT                  15
+#define ORTE_HOSTFILE_RELATIVE              16
+#define ORTE_HOSTFILE_BOARDS                17
+#define ORTE_HOSTFILE_SOCKETS_PER_BOARD     18
+#define ORTE_HOSTFILE_CORES_PER_SOCKET      19
+#define ORTE_HOSTFILE_CPU_SET               20
 
 #endif

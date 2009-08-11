@@ -67,9 +67,12 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
         /* load it with the system defaults */
-        map->policy = orte_rmaps_base.policy;
-        map->pernode = orte_rmaps_base.pernode;
+        map->policy = orte_default_mapping_policy;
         map->npernode = orte_rmaps_base.npernode;
+        map->nperboard = orte_rmaps_base.nperboard;
+        map->npersocket = orte_rmaps_base.npersocket;
+        map->cpus_per_rank = orte_rmaps_base.cpus_per_rank;
+        map->stride = orte_rmaps_base.stride;
         map->oversubscribe = orte_rmaps_base.oversubscribe;
         map->display_map = orte_rmaps_base.display_map;
         /* assign the map object to this job */

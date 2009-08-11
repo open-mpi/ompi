@@ -50,6 +50,7 @@
 #include "opal/event/event.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/paffinity/base/base.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/basename.h"
@@ -255,10 +256,16 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     /* Mapping options */
     { NULL, NULL, NULL, '\0', "bynode", "bynode", 0,
       &orterun_globals.by_node, OPAL_CMD_LINE_TYPE_BOOL,
-      "Whether to allocate/map processes round-robin by node" },
+      "Whether to assign processes round-robin by node" },
     { NULL, NULL, NULL, '\0', "byslot", "byslot", 0,
       &orterun_globals.by_slot, OPAL_CMD_LINE_TYPE_BOOL,
-      "Whether to allocate/map processes round-robin by slot (the default)" },
+      "Whether to assign processes round-robin by slot (the default)" },
+    { NULL, NULL, NULL, '\0', "bysocket", "bysocket", 0,
+      &orterun_globals.by_socket, OPAL_CMD_LINE_TYPE_BOOL,
+      "Whether to assign processes round-robin by socket" },
+    { NULL, NULL, NULL, '\0', "byboard", "byboard", 0,
+      &orterun_globals.by_slot, OPAL_CMD_LINE_TYPE_BOOL,
+      "Whether to assign processes round-robin by board (equivalent to bynode if only 1 board/node)" },
     { "rmaps", "base", "pernode", '\0', "pernode", "pernode", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Launch one process per available node on the specified number of nodes [no -np => use all allocated nodes]" },
@@ -286,7 +293,30 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { "rmaps", "base", "no_schedule_local", '\0', "nolocal", "nolocal", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Do not run any MPI applications on the local node" },
-    
+    { "rmaps", "base", "cpus_per_rank", '\0', "cpus-per-rank", "cpus-per-rank", 1,
+      NULL, OPAL_CMD_LINE_TYPE_INT,
+      "Number of cpus to use for each rank [default=1]" },
+    { "rmaps", "base", "n_perboard", '\0', "nperboard", "nperboard", 1,
+      NULL, OPAL_CMD_LINE_TYPE_INT,
+      "Launch n processes per board on all allocated nodes" },
+    { "rmaps", "base", "n_persocket", '\0', "npersocket", "npersocket", 1,
+      NULL, OPAL_CMD_LINE_TYPE_INT,
+      "Launch n processes per socket on all allocated nodes" },
+
+    /* binding options */
+    { NULL, NULL, NULL, '\0', "bind-to-core", "bind-to-core", 0,
+      &orterun_globals.bind_to_core, OPAL_CMD_LINE_TYPE_BOOL,
+      "Whether to bind processes to specific cores (the default)" },
+    { NULL, NULL, NULL, '\0', "bind-to-board", "bind-to-board", 0,
+      &orterun_globals.bind_to_board, OPAL_CMD_LINE_TYPE_BOOL,
+      "Whether to bind processes to specific boards (meaningless on 1 board/node)" },
+    { NULL, NULL, NULL, '\0', "bind-to-socket", "bind-to-socket", 0,
+      &orterun_globals.bind_to_socket, OPAL_CMD_LINE_TYPE_BOOL,
+      "Whether to bind processes to sockets" },
+    { "rmaps", "base", "stride", '\0', "stride", "stride", 1,
+      NULL, OPAL_CMD_LINE_TYPE_INT,
+      "When binding multiple cores to a rank, the step size to use between cores [default: 1]" },
+
     /* Allocation options */
     { "ras", "base", "display_alloc", '\0', "display-allocation", "display-allocation", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
@@ -294,6 +324,20 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { "ras", "base", "display_devel_alloc", '\0', "display-devel-allocation", "display-devel-allocation", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Display a detailed list (mostly intended for developers) of the allocation being used by this job"},
+    { "orte", "cpu", "set", '\0', "cpu-set", "cpu-set", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Comma-separated list of ranges specifying logical cpus allocated to this job [default: none]"},
+
+    /* cluster hardware info */
+    { "orte", "num", "boards", '\0', "num-boards", "num-boards", 1,
+      NULL, OPAL_CMD_LINE_TYPE_INT,
+      "Number of processor boards/node (1-256) [default: 1]"},
+    { "orte", "num", "sockets", '\0', "num-sockets", "num-sockets", 1,
+      NULL, OPAL_CMD_LINE_TYPE_INT,
+      "Number of sockets/board (1-256) [default: 1]"},
+    { "orte", "num", "cores", '\0', "num-cores", "num-cores", 1,
+      NULL, OPAL_CMD_LINE_TYPE_INT,
+      "Number of cores/socket (1-256) [default: 1]"},
 
     /* mpiexec-like arguments */
     { NULL, NULL, NULL, '\0', "wdir", "wdir", 1,
@@ -468,6 +512,7 @@ int orterun(int argc, char *argv[])
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
+    
     /* check what user wants us to do with stdin */
     if (0 == strcmp(orterun_globals.stdin_target, "all")) {
         jdata->stdin_target = ORTE_VPID_WILDCARD;
@@ -1144,6 +1189,11 @@ static int init_globals(void)
     orterun_globals.quiet                      = false;
     orterun_globals.by_node                    = false;
     orterun_globals.by_slot                    = false;
+    orterun_globals.by_board                   = false;
+    orterun_globals.by_socket                  = false;
+    orterun_globals.bind_to_core               = false;
+    orterun_globals.bind_to_board              = false;
+    orterun_globals.bind_to_socket             = false;
     orterun_globals.debugger                   = false;
     orterun_globals.num_procs                  =  0;
     if( NULL != orterun_globals.env_val )
@@ -1171,8 +1221,6 @@ static int init_globals(void)
 
 static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
 {
-    int id;
-
     /* print version if requested.  Do this before check for help so
        that --version --help works as one might expect. */
     if (orterun_globals.version && 
@@ -1237,31 +1285,30 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
         orte_run_debugger(orterun_basename, cmd_line, argc, argv, orterun_globals.num_procs);
     }
 
-    /* Allocate and map by node or by slot?  Shortcut for setting an
-       MCA param. */
-
-    /* Don't initialize the MCA parameter here unless we have to,
-     * since it really should be initialized in rmaps_base_open */
-    if (orterun_globals.by_node || orterun_globals.by_slot) {
-        char *policy = NULL;
-        id = mca_base_param_reg_string_name("rmaps", "base_schedule_policy",
-                                            "Scheduling policy for RMAPS. [slot | node]",
-                                            false, false, "slot", &policy);
-
-        if (orterun_globals.by_node) {
-            orterun_globals.by_slot = false;
-            mca_base_param_set_string(id, "node");
-        } else {
-            orterun_globals.by_slot = true;
-            mca_base_param_set_string(id, "slot");
-        }
-        free(policy);
+    /* extract any rank assignment policy directives */
+    if (orterun_globals.by_node) {
+        ORTE_SET_MAPPING_POLICY(ORTE_MAPPING_BYNODE);
+    } else if (orterun_globals.by_board) {
+        ORTE_SET_MAPPING_POLICY(ORTE_MAPPING_BYBOARD);
+    } else if (orterun_globals.by_socket) {
+        ORTE_SET_MAPPING_POLICY(ORTE_MAPPING_BYSOCKET);
+    } else {
+        /* byslot is the default */
+        ORTE_SET_MAPPING_POLICY(ORTE_MAPPING_BYSLOT);
     }
-    else {
-        /* Default */
-        orterun_globals.by_slot = true;
+    
+    /* extract any binding policy directives - they will
+     * be ignored unless paffinity_alone is set
+     */
+    if (orterun_globals.bind_to_socket) {
+        ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_SOCKET);
+    } else if (orterun_globals.bind_to_board) {
+        ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_BOARD);
+    } else {
+        /* default to by-core */
+        ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_CORE);
     }
-        
+    
     return ORTE_SUCCESS;
 }
 

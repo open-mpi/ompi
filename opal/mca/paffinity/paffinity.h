@@ -108,6 +108,11 @@
 #define OPAL_PROC_ON_LOCAL_CU(n)        ((n) & OPAL_PROC_ON_CU)
 #define OPAL_PROC_ON_LOCAL_CLUSTER(n)   ((n) & OPAL_PROC_ON_CLUSTER)
 
+/* Process binding modes */
+#define OPAL_PAFFINITY_DO_NOT_BIND      0x01
+#define OPAL_PAFFINITY_BIND_TO_CORE     0x02
+#define OPAL_PAFFINITY_BIND_TO_SOCKET   0x04
+#define OPAL_PAFFINITY_BIND_TO_BOARD    0x08
 /* ******************************************************************** */
 
 

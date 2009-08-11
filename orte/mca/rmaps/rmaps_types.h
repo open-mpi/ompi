@@ -25,6 +25,8 @@
 
 #include "opal/class/opal_pointer_array.h"
 
+#include "orte/runtime/orte_globals.h"
+
 /*
  * General MAP types - instanced in runtime/orte_globals_class_instances.h
  */
@@ -32,25 +34,18 @@
 BEGIN_C_DECLS
 
 /*
- * Define flags indicating the policy used to perform the map
- */
-#define ORTE_RMAPS_NOPOL            0x00
-#define ORTE_RMAPS_BYNODE           0x01
-#define ORTE_RMAPS_BYSLOT           0x02
-#define ORTE_RMAPS_BYUSER           0x04
-#define ORTE_RMAPS_NO_USE_LOCAL     0x08
-
-
-/*
  * Structure that represents the mapping of a job to an
  * allocated set of resources.
  */
 struct orte_job_map_t {
     opal_object_t super;
-    /* save the mapping configuration */
-    uint8_t policy;
-    bool pernode;
-    orte_std_cntr_t npernode;
+    /* user-specified mapping params */
+    orte_mapping_policy_t policy;
+    int npernode;
+    int nperboard;
+    int npersocket;
+    int16_t cpus_per_rank;
+    int16_t stride;
     bool oversubscribe;
     bool display_map;
     bool cpu_lists;

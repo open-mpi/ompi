@@ -110,8 +110,8 @@ static int map_app_by_node(
         
         /* Allocate a slot on this node */
         node = (orte_node_t*) cur_node_item;
-        if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, vpid_start + num_alloc, NULL, app->idx,
-                                             nodes, jdata->map->oversubscribe, true))) {
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node,  1, app->idx,
+                                             nodes, jdata->map->oversubscribe, true, NULL))) {
             /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
              * really isn't an error - we just need to break from the loop
              * since the node is fully used up. For now, just don't report
@@ -212,13 +212,13 @@ static int map_app_by_slot(
         /* check if we are in npernode mode - if so, then set the num_slots_to_take
          * to the num_per_node
          */
-        if (jdata->map->pernode) {
+        if (0 < jdata->map->npernode) {
             num_slots_to_take = jdata->map->npernode;
         }
         
         for( i = 0; i < num_slots_to_take; ++i) {
-            if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, vpid_start + num_alloc, NULL, app->idx,
-                                                 nodes, jdata->map->oversubscribe, true))) {
+            if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, 1, app->idx,
+                                                 nodes, jdata->map->oversubscribe, true, NULL))) {
                 /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
                  * really isn't an error - we just need to break from the loop
                  * since the node is fully used up. For now, just don't report
@@ -426,7 +426,7 @@ static int topo_map(orte_job_t *jdata)
         }
         
     proceed:
-        if (map->pernode && map->npernode == 1) {
+        if (map->npernode == 1) {
             /* there are three use-cases that we need to deal with:
             * (a) if -np was not provided, then we just use the number of nodes
             * (b) if -np was provided AND #procs > #nodes, then error out
@@ -442,7 +442,7 @@ static int topo_map(orte_job_t *jdata)
                 rc = ORTE_ERR_SILENT;
                 goto error;
             }
-        } else if (map->pernode && map->npernode > 1) {
+        } else if (map->npernode > 1) {
             /* first, let's check to see if there are enough slots/node to
              * meet the request - error out if not
              */
@@ -473,11 +473,11 @@ static int topo_map(orte_job_t *jdata)
             /** set the num_procs to equal the number of slots on these mapped nodes - if
             user has specified "-bynode", then set it to the number of nodes
             */
-            if (map->policy & ORTE_RMAPS_BYNODE) {
+            if (map->policy & ORTE_MAPPING_BYNODE) {
                 app->num_procs = num_nodes;
-            } else if (map->policy & ORTE_RMAPS_BYSLOT) {
+            } else if (map->policy & ORTE_MAPPING_BYSLOT) {
                 app->num_procs = num_slots;
-            } else if (map->policy & ORTE_RMAPS_BYUSER) {
+            } else {
                 /* we can't handle this - it should have been set when we got
                  * the map info. If it wasn't, then we can only error out
                  */
@@ -492,10 +492,7 @@ static int topo_map(orte_job_t *jdata)
         jdata->num_procs += app->num_procs;
 
         /* Make assignments */
-        if (map->policy == ORTE_RMAPS_BYUSER) {
-            rc = ORTE_ERR_NOT_IMPLEMENTED;
-            goto error;
-        } else if (map->policy == ORTE_RMAPS_BYNODE) {
+        if (map->policy == ORTE_MAPPING_BYNODE) {
             rc = map_app_by_node(app, jdata, vpid_start, &node_list);
         } else {
             rc = map_app_by_slot(app, jdata, vpid_start, &node_list);
@@ -522,7 +519,7 @@ static int topo_map(orte_job_t *jdata)
     }
 
     /* compute and save convenience values */
-    if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_usage(jdata))) {
+    if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_local_ranks(jdata))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

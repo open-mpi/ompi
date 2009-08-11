@@ -64,6 +64,8 @@ typedef struct {
     opal_list_t xterm_ranks;
     /* the xterm cmd to be used */
     char **xtermcmd;
+    /* whether or not to report bindings */
+    bool report_bindings;
 } orte_odls_globals_t;
 
 ORTE_DECLSPEC extern orte_odls_globals_t orte_odls_globals;
@@ -89,8 +91,7 @@ orte_odls_base_default_construct_child_list(opal_buffer_t *data,
 typedef int (*orte_odls_base_fork_local_proc_fn_t)(orte_app_context_t *context,
                                                    orte_odls_child_t *child,
                                                    char **environ_copy,
-                                                   orte_job_controls_t controls,
-                                                   orte_vpid_t stdin_target);
+                                                   orte_odls_job_t *jobdat);
 
 ORTE_DECLSPEC int
 orte_odls_base_default_launch_local(orte_jobid_t job,
