@@ -356,8 +356,8 @@ int orte_plm_base_orted_kill_local_procs(opal_pointer_array_t *procs)
             /* check to see if this daemon is known to be "dead" */
             if (proc->state > ORTE_PROC_STATE_UNTERMINATED) {
                 /* don't try to send this */
-                continue;
                 --num_being_sent;
+                continue;
             }
             /* don't worry about errors on the send here - just
              * issue it and keep going
