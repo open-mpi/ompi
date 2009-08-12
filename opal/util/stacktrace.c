@@ -177,8 +177,8 @@ static void show_stackframe (int signo, siginfo_t * info, void * p)
 #ifdef BUS_ADRALN
             case BUS_ADRALN: si_code_str = "Invalid address alignment"; break;
 #endif
-#ifdef BUSADRERR
-            case BUS_ADRERR: si_code_str = "Non-existent physical address"; break;
+#ifdef BUS_ADRERR
+            case BUS_ADRERR: si_code_str = "Non-existant physical address"; break;
 #endif
 #ifdef BUS_OBJERR
             case BUS_OBJERR: si_code_str = "Objet-specific hardware error"; break;

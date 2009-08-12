@@ -823,7 +823,7 @@ AC_CHECK_LIB([nsl], [gethostbyname])
 
 AC_CHECK_LIB([socket], [socket])
 
-# Solaris has sched_yeild in -lrt, usually in libc
+# Solaris has sched_yield in -lrt, usually in libc
 OMPI_CHECK_FUNC_LIB([sched_yield], [rt])
 
 # IRIX has dirname in -lgen, usually in libc
