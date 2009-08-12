@@ -67,7 +67,7 @@ static inline void DUMP( char* fmt, ... )
 #    else
        static inline void DUMP( char* fmt, ...) { 
 #if defined(__PGI)
-           /* Some copallers complain if we have ... and no
+           /* Some compilers complain if we have "..." arguments and no
               corresponding va_start() */
            va_list arglist;
            va_start(arglist, fmt);
