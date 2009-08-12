@@ -69,7 +69,11 @@ int mca_base_open(void)
 #if OPAL_WANT_HOME_CONFIG_FILES
   asprintf(&value, "%s%c%s"OPAL_PATH_SEP".openmpi"OPAL_PATH_SEP"components", opal_install_dirs.pkglibdir, OPAL_ENV_SEP, opal_home_directory() );
 #else
-  asprintf(&value, "%s", opal_install_dirs.pkglibdir);
+# if defined(__WINDOWS__) && defined(_DEBUG)
+    asprintf(&value, "%s/debug", opal_install_dirs.pkglibdir); 
+# else
+    asprintf(&value, "%s", opal_install_dirs.pkglibdir); 
+# endif
 #endif
 
   mca_base_param_component_path = 

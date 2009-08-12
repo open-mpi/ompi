@@ -134,9 +134,6 @@ SET(OMPI_F90_ABSOLUTE "\"none\"")
 
 SET(OMPI_F90_BUILD_SIZE "\"small\"")
 
-# we don't support libtool on Windows.
-SET(OPAL_WANT_LIBLTDL 0)
-
 # set the im/export decleration here. 
 # Don't bother with OMPI_IMPORTS
 IF(BUILD_SHARED_LIBS)
@@ -400,6 +397,19 @@ OPTION(OMPI_WANT_CCP
 
 SET (OMPI_EXT_COMPONENTS Example CACHE STRING 
   "Specify user defined MPI Extended Interface Components." FORCE)
+
+OPTION(OPAL_WANT_LIBLTDL "Whether we want to enable DSO build for Windows." OFF)
+IF(NOT OPAL_WANT_LIBLTDL)
+  SET(OPAL_WANT_LIBLTDL 0)
+ELSE(NOT OPAL_WANT_LIBLTDL)
+  INCLUDE(find_libltdl)
+  IF(LIBLTDL_FOUND)
+    SET (OPAL_WANT_LIBLTDL 1)
+  ELSE(LIBLTDL_FOUND)
+    SET(OPAL_WANT_LIBLTDL 0)
+  ENDIF(LIBLTDL_FOUND)
+ENDIF(NOT OPAL_WANT_LIBLTDL)
+
 
 ###################################################################
 #                           Check headers                         #
