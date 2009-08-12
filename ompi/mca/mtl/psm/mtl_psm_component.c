@@ -66,6 +66,7 @@ mca_mtl_psm_component_t mca_mtl_psm_component = {
 static int
 ompi_mtl_psm_component_open(void)
 {
+    int value;
     
     mca_base_param_reg_int(&mca_mtl_psm_component.super.mtl_version, 
 			   "connect_timeout",
@@ -76,7 +77,8 @@ ompi_mtl_psm_component_open(void)
 			   "debug",
 			   "PSM debug level",
 			   false, false, 1, 
-			   &ompi_mtl_psm.debug_level);
+			   &value);
+    ompi_mtl_psm.debug_level = value;
   
     mca_base_param_reg_int(&mca_mtl_psm_component.super.mtl_version, 
 			   "ib_unit",
@@ -101,8 +103,9 @@ ompi_mtl_psm_component_open(void)
 			   "ib_pkey",
 			   "Infiniband partition key",
 			   false, false, 0x7fffUL, 
-			   &ompi_mtl_psm.ib_pkey);
-  
+			   &value);
+    ompi_mtl_psm.ib_pkey = value;
+    
     if (ompi_mtl_psm.ib_service_level < 0)  {
       ompi_mtl_psm.ib_service_level = 0;
     } else if (ompi_mtl_psm.ib_service_level > 15) {
@@ -130,8 +133,8 @@ ompi_mtl_psm_component_init(bool enable_progress_threads,
     int	verno_major = PSM_VERNO_MAJOR;
     int verno_minor = PSM_VERNO_MINOR;
     ompi_proc_t *my_proc, **procs;
-    size_t num_total_procs;
-    int local_rank = -1, num_local_procs = 0, proc;
+    size_t num_total_procs, proc;
+    int local_rank = -1, num_local_procs = 0;
     
     /* Compute the total number of processes on this host and our local rank
      * on that node. We need to provide PSM with these values so it can 
