@@ -87,6 +87,7 @@ EXTRA_DIST = \
         platform/win32/CMakeModules/f77_get_sizeof.cmake \
         platform/win32/CMakeModules/find_ccp.cmake \
         platform/win32/CMakeModules/find_flex.cmake \
+        platform/win32/CMakeModules/find_libltdl.cmake \
         platform/win32/CMakeModules/generate_version_file.cmake \
         platform/win32/CMakeModules/get_c_alignment.cmake \
         platform/win32/CMakeModules/ompi_check_Microsoft.cmake \
