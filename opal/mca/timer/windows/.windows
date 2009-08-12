@@ -7,3 +7,5 @@
 # 
 # $HEADER$
 #
+
+not_single_shared_lib=1

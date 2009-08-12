@@ -9,3 +9,5 @@
 #
 
 # Specific to this module
+mca_dependencies=libopen-rte
+mca_link_libraries=Ws2_32.lib
