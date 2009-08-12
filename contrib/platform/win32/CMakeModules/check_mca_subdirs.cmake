@@ -25,6 +25,45 @@ MACRO(CHECK_SUBDIRS CURRENT_DIR OUTPUT_VARIABLE)
 
 ENDMACRO(CHECK_SUBDIRS CURRENT_DIR OUTPUT_VARIABLE)
 
+
+# there are several steps and issues for checking mca components:
+#
+#   1.   go through each framwork dir, add the top-level headers
+#        to the source list.
+#
+#   2.   go through each component dir, the framwork base dir is checked
+#        also in this setp, and is added to the source list.
+#
+#    2a.   if a .windows file exists in a framwork base dir, that means there
+#          might be properties that have to be checked for this dir, e.g. files
+#           need to be excluded.
+#
+#    2b.   if a .windows file exists in a component dir, this component
+#          should be included in the solution. There could be properties that
+#          need to check for this component. If it's a static build or not a
+#          DSO shared build, just add necessary sources; if it is a DSO build,
+#          generate a proper CMakeLists.txt file for each component, so that
+#          this component will be compiled separately.
+#
+#   3.   Generate static-components.h file with available mca components.
+#
+#
+#   Available properties in .windows files:
+#
+#       exclude_list:       files that need to be excluded from the solution.
+#
+#       required_check:     a CMake module has to be run to check the libraries/headers
+#                           that needed by this component.
+#
+#       not_single_shared_lib:   this component should not be built separately, it's not 
+#                                a single mca shared library.
+#
+#       mca_dependencies:   this component is dependent on other targets, e.g. libopen-pal
+#
+#       mca_link_libraries: this component has to be linked with external libraries,
+#                           e.g. Ws2_32.lib
+
+
 SET(MCA_FRAMEWORK_LIST "")
 CHECK_SUBDIRS("${PROJECT_SOURCE_DIR}/mca" MCA_FRAMEWORK_LIST)
 #MESSAGE("MCA_FRAMEWORK_LIST:${MCA_FRAMEWORK_LIST}")
@@ -44,7 +83,7 @@ FOREACH (MCA_FRAMEWORK ${MCA_FRAMEWORK_LIST})
 
   IF(NOT ${MCA_FRAMEWORK} STREQUAL "CMakeFiles" AND NOT ${MCA_FRAMEWORK} STREQUAL "svn")
     #SET(CURRENT_PATH "mca/${${PROJECT_NAME}_MCA_SUBDIR}")
-    FILE(GLOB MCA_FRAMEWORK_FILES "mca/${MCA_FRAMEWORK}/*.C" "mca/${MCA_FRAMEWORK}/*.h"
+    FILE(GLOB MCA_FRAMEWORK_FILES "mca/${MCA_FRAMEWORK}/*.c" "mca/${MCA_FRAMEWORK}/*.h"
                                   "mca/${MCA_FRAMEWORK}/*.cc" "mca/${MCA_FRAMEWORK}/*.cpp")
     SET(MCA_FILES ${MCA_FILES} ${MCA_FRAMEWORK_FILES})
     SOURCE_GROUP(mca\\${MCA_FRAMEWORK} FILES ${MCA_FRAMEWORK_FILES})
@@ -128,7 +167,7 @@ FOREACH (MCA_FRAMEWORK ${MCA_FRAMEWORK_LIST})
             STRING(REPLACE "not_single_shared_lib=" "" NOT_SINGLE_SHARED_LIB ${VALUE})
           ENDIF(NOT VALUE STREQUAL "")
 
-          # check out if we have to exlude some source files.
+          # check out if we have to exclude some source files.
           SET(EXCLUDE_LIST "")
           FILE(STRINGS ${CURRENT_PATH}/.windows EXCLUDE_LIST REGEX "^exclude_list=")
         
