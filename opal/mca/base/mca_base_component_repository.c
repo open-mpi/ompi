@@ -27,7 +27,11 @@
 #include <stdio.h>
 
 #if OPAL_WANT_LIBLTDL
-#include "opal/libltdl/ltdl.h"
+  #ifndef __WINDOWS__
+    #include "opal/libltdl/ltdl.h"
+  #else
+    #include "ltdl.h"
+  #endif
 #endif
 
 #include "opal/class/opal_list.h"
