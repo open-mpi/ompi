@@ -129,9 +129,11 @@ int ompi_mtl_psm_module_init(int local_rank, int num_local_procs) {
     ep_opt.network_pkey = ompi_mtl_psm.ib_pkey;
 #endif
     
+#if PSM_VERNO >= 0x0107
     ep_opt.port = ompi_mtl_psm.ib_port;
     ep_opt.outsl = ompi_mtl_psm.ib_service_level;
-    
+#endif
+
     /* Open PSM endpoint */
     err = psm_ep_open(unique_job_key, &ep_opt, &ep, &epid);
     if (err) {
@@ -244,7 +246,7 @@ ompi_mtl_psm_add_procs(struct mca_mtl_base_module_t *mtl,
     psm_error_t  *errs_out = NULL, err;
     size_t size;
     int proc_errors[PSM_ERROR_LAST] = { 0 };
-    int proc, my_local_rank = -1, num_local_procs = 0, timeout_in_secs;
+    int timeout_in_secs;
     
     assert(mtl == &ompi_mtl_psm.super);
     rc = OMPI_ERR_OUT_OF_RESOURCE;
