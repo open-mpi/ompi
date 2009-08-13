@@ -66,10 +66,6 @@ int MPI_Cart_create(MPI_Comm old_comm, int ndims, int *dims,
             return OMPI_ERRHANDLER_INVOKE (old_comm, MPI_ERR_ARG,
                                           FUNC_NAME);
         }
-        if (0 > reorder || 1 < reorder) {
-            return OMPI_ERRHANDLER_INVOKE (old_comm, MPI_ERR_ARG,
-                                          FUNC_NAME);
-        }
 
         /* check if the number of processes on the grid are corrct */
         {
@@ -114,7 +110,7 @@ int MPI_Cart_create(MPI_Comm old_comm, int ndims, int *dims,
      * the new cartesian communicator
      */
 
-    re_order = (1 == reorder)? true :false;
+    re_order = (0 == reorder)? false : true;
 
     err = ompi_topo_create (old_comm,
                             ndims,
