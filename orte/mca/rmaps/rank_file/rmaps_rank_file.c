@@ -48,7 +48,6 @@
 
 static int orte_rmaps_rank_file_parse(const char *);
 static char *orte_rmaps_rank_file_parse_string_or_int(void);
-char *orte_rmaps_rank_file_path = NULL;
 static const char *orte_rmaps_rank_file_name_cur = NULL;
 static opal_mutex_t orte_rmaps_rank_file_mutex;
 char *orte_rmaps_rank_file_slot_list;
@@ -118,7 +117,8 @@ static int map_app_by_node(orte_app_context_t* app,
         }
         /* Allocate a slot on this node */
         node = (orte_node_t*) cur_node_item;
-        /* pass the base slot list in case it was provided */
+        /* grab the slot - have a new proc object created */
+        proc = NULL;
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, 1, app->idx,
                                                              nodes, jdata->map->oversubscribe, true, &proc))) {
             /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
@@ -227,7 +227,8 @@ static int map_app_by_slot(orte_app_context_t* app,
                 ++num_alloc;
                 continue;
             }
-            /* pass the base slot list in case it was provided */
+            /* grab the slot - have a new proc object created */
+            proc = NULL;
             if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, 1, app->idx,
                                                                  nodes, jdata->map->oversubscribe, true, &proc))) {
                 /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
@@ -333,8 +334,8 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
     OBJ_CONSTRUCT(&rankmap, opal_pointer_array_t);
     
     /* parse the rankfile, storing its results in the rankmap */
-    if ( NULL != orte_rmaps_rank_file_path ) {
-        if ( ORTE_SUCCESS != (rc = orte_rmaps_rank_file_parse(orte_rmaps_rank_file_path))) {
+    if ( NULL != orte_rankfile ) {
+        if ( ORTE_SUCCESS != (rc = orte_rmaps_rank_file_parse(orte_rankfile))) {
             ORTE_ERROR_LOG(rc);
             goto error;
         }
@@ -467,6 +468,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
                     return rc;
                 }
             }
+            proc->name.vpid = rank;
             proc->slot_list = strdup(rfmap->slot_list);
             jdata->num_procs++;
         }

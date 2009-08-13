@@ -166,9 +166,13 @@ int orte_rmaps_base_open(void)
     param = mca_base_param_reg_string_name("rmaps", "base_slot_list",
                                            "List of processor IDs to bind MPI processes to (e.g., used in conjunction with rank files) [default=NULL]",
                                            false, false, NULL, &orte_rmaps_base.slot_list);
-
+    /* ensure we flag mapping by user */
+    if (NULL != orte_rmaps_base.slot_list ||
+        NULL != orte_rankfile) {
+        ORTE_ADD_MAPPING_POLICY(ORTE_MAPPING_BYUSER);
+    }
+    
     /* Should we schedule on the local node or not? */
-
     mca_base_param_reg_int_name("rmaps", "base_no_schedule_local",
                                 "If false, allow scheduling MPI applications on the same node as mpirun (default).  If true, do not schedule any MPI applications on the same node as mpirun",
                                 false, false, (int)false, &value);

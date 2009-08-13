@@ -48,10 +48,7 @@ typedef struct orte_rmaps_rank_file_component_t orte_rmaps_rank_file_component_t
 
 ORTE_MODULE_DECLSPEC extern orte_rmaps_rank_file_component_t mca_rmaps_rank_file_component;
 extern orte_rmaps_base_module_t orte_rmaps_rank_file_module;
-extern char *orte_mca_rmaps_rank_file_slot_list;
 
-
-extern char *orte_rmaps_rank_file_path;
 
 typedef struct cpu_socket_t cpu_socket_t;
 

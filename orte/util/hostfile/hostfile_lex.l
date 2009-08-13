@@ -113,6 +113,11 @@ count_max          { orte_util_hostfile_value.sval = yytext;
 max_count          { orte_util_hostfile_value.sval = yytext; 
                      return ORTE_HOSTFILE_SLOTS_MAX; }
 
+rank                { orte_util_hostfile_value.sval = yytext; 
+                     return ORTE_HOSTFILE_RANK; }
+slot               { orte_util_hostfile_value.sval = yytext; 
+                     return ORTE_HOSTFILE_SLOT; }
+
 username           { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_USERNAME; }
 "user-name"        { orte_util_hostfile_value.sval = yytext;

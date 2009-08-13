@@ -386,7 +386,7 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
 int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
 {
     orte_job_map_t *map;
-    orte_vpid_t vpid;
+    orte_vpid_t vpid, vpid_start=0;
     int i, j;
     orte_node_t *node;
     orte_proc_t *proc;
@@ -394,11 +394,9 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
     
     map = jdata->map;
     
-    if (ORTE_MAPPING_BYSLOT & map->policy ||
-        ORTE_MAPPING_BYSOCKET & map->policy ||
-        ORTE_MAPPING_BYBOARD & map->policy) {
-        /* assign the ranks sequentially */
-        vpid = 0;
+    if (ORTE_MAPPING_BYUSER & map->policy) {
+        /* find the max vpid already assigned */
+        vpid_start = ORTE_VPID_MIN;
         for (i=0; i < map->nodes->size; i++) {
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
                 continue;
@@ -407,7 +405,32 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
                 if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
                     continue;
                 }
-                proc->name.vpid = vpid++;
+                if (ORTE_VPID_INVALID != proc->name.vpid &&
+                    vpid_start < proc->name.vpid) {
+                    vpid_start = proc->name.vpid;
+                }
+            }
+        }
+        /* we start one higher than the max found */
+        vpid_start++;
+    }
+    
+    if (ORTE_MAPPING_BYSLOT & map->policy ||
+        ORTE_MAPPING_BYSOCKET & map->policy ||
+        ORTE_MAPPING_BYBOARD & map->policy) {
+        /* assign the ranks sequentially */
+        vpid = vpid_start;
+        for (i=0; i < map->nodes->size; i++) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
+                continue;
+            }
+            for (j=0; j < node->procs->size; j++) {
+                if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
+                    continue;
+                }
+                if (ORTE_VPID_INVALID == proc->name.vpid) {
+                    proc->name.vpid = vpid++;
+                }
                 if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs,
                                                                       proc->name.vpid, proc))) {
                     ORTE_ERROR_LOG(rc);
@@ -424,13 +447,15 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
                 continue;
             }
-            vpid = i;
+            vpid = i + vpid_start;
             for (j=0; j < node->procs->size; j++) {
                 if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
                     continue;
                 }
-                proc->name.vpid = vpid;
-                vpid += map->num_nodes;
+                if (ORTE_VPID_INVALID == proc->name.vpid) {
+                    proc->name.vpid = vpid;
+                    vpid += map->num_nodes;
+                }
                 if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs,
                                                                       proc->name.vpid, proc))) {
                     ORTE_ERROR_LOG(rc);
