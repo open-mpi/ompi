@@ -114,7 +114,7 @@ static void *mpool_calloc(size_t nmemb, size_t size)
 
 static void init_maffinity(int *my_mem_node, int *max_mem_node)
 {
-    static opal_carto_graph_t *topo;
+    opal_carto_graph_t *topo;
     opal_value_array_t dists;
     int i, num_core, socket;
     opal_paffinity_base_cpu_set_t cpus;
