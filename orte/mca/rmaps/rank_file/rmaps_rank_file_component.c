@@ -42,7 +42,6 @@
 static int orte_rmaps_rank_file_open(void);
 static int orte_rmaps_rank_file_close(void);
 static int orte_rmaps_rank_file_query(mca_base_module_t **module, int *priority);
-char *orte_mca_rmaps_rank_file_slot_list = NULL;
 
 orte_rmaps_rank_file_component_t mca_rmaps_rank_file_component = {
     {
@@ -75,17 +74,10 @@ static int orte_rmaps_rank_file_open(void)
 {
     mca_rmaps_rank_file_component.priority = 0;
     
-    mca_base_param_reg_string(&mca_rmaps_rank_file_component.super.base_version,
-                              "path",
-                              "The path to the rank mapping file",
-                              false, false, NULL, &orte_rmaps_rank_file_path);
-    if (NULL != orte_rmaps_rank_file_path) {
+    if (NULL != orte_rankfile ||
+        NULL != orte_rmaps_base.slot_list) {
         mca_rmaps_rank_file_component.priority = 100;
     }
-    
-    if (NULL != orte_rmaps_base.slot_list) { 
-        mca_rmaps_rank_file_component.priority = 100; 
-    } 
     
     return ORTE_SUCCESS;
 }

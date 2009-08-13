@@ -243,7 +243,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Provide a cartography file" },
 
-    { "rmaps_rank", "file", "path", '\0', "rf", "rankfile", 1,
+    { "orte", "rankfile", NULL, '\0', "rf", "rankfile", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Provide a rankfile file" },
 

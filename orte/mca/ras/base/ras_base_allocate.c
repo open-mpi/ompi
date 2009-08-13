@@ -315,10 +315,43 @@ int orte_ras_base_allocate(orte_job_t *jdata)
         goto DISPLAY;
     }
     
+    OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
+                         "%s ras:base:allocate nothing found in dash-host - checking for rankfile",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
+    /* Our next option is to look for a rankfile - if one was provided, we
+     * will use its nodes to create a default allocation pool
+     */
+    if (NULL != orte_rankfile) {
+        /* check the rankfile for node information */
+        if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes,
+                                                               &override_oversubscribed,
+                                                               orte_rankfile))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&nodes);
+            return rc;
+        }
+    }
+    /* if something was found in rankfile, we use that as our global
+     * pool - set it and we are done
+     */
+    if (!opal_list_is_empty(&nodes)) {
+        /* store the results in the global resource pool - this removes the
+         * list items
+         */
+        if (ORTE_SUCCESS != (rc = orte_ras_base_node_insert(&nodes, jdata))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        /* update the jdata object with override_oversubscribed flag */
+        jdata->oversubscribe_override = false;
+        /* cleanup */
+        OBJ_DESTRUCT(&nodes);
+        goto DISPLAY;
+    }
     
     
     OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
-                         "%s ras:base:allocate nothing found in dash-host - inserting current node",
+                         "%s ras:base:allocate nothing found in rankfile - inserting current node",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* if nothing was found by any of the above methods, then we have no

@@ -135,13 +135,13 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
     char* username = NULL;
     int cnt;
     int number_of_slots = 0;
+    char buff[64];
 
     if (ORTE_HOSTFILE_STRING == token ||
         ORTE_HOSTFILE_HOSTNAME == token ||
         ORTE_HOSTFILE_INT == token ||
         ORTE_HOSTFILE_IPV4 == token ||
         ORTE_HOSTFILE_IPV6 == token) {
-        char buff[64];
 
         if(ORTE_HOSTFILE_INT == token) {
             snprintf(buff, 64, "%d", orte_util_hostfile_value.ival);
@@ -174,7 +174,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
             }
             node_name[len-1] = '\0';  /* truncate */
             
-            OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
+            OPAL_OUTPUT_VERBOSE((0, orte_debug_output,
                                  "%s hostfile: node %s is being excluded",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node_name));
             
@@ -216,7 +216,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
             node_name = strdup(orte_process_info.nodename);
         }
 
-        OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
+        OPAL_OUTPUT_VERBOSE((0, orte_debug_output,
                              "%s hostfile: node %s is being included - keep all is %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node_name,
                              keep_all ? "TRUE" : "FALSE"));
@@ -241,16 +241,75 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
         /* store this for later processing */
         node = OBJ_NEW(orte_node_t);
         node->name = strdup(orte_util_hostfile_value.sval);
+    } else if (ORTE_HOSTFILE_RANK == token) {
+        /* we can ignore the rank, but we need to extract the node name. we
+         * first need to shift over to the other side of the equal sign as
+         * this is where the node name will be
+         */
+        while (!orte_util_hostfile_done &&
+               ORTE_HOSTFILE_EQUAL != token) {
+            token = orte_util_hostfile_lex();
+        }
+        if (orte_util_hostfile_done) {
+            /* bad syntax somewhere */
+            return ORTE_ERROR;
+        }
+        /* next position should be the node name */
+        token = orte_util_hostfile_lex();
+        if(ORTE_HOSTFILE_INT == token) {
+            snprintf(buff, 64, "%d", orte_util_hostfile_value.ival);
+            value = buff;
+        } else {
+            value = orte_util_hostfile_value.sval;
+        }
+        
+        argv = opal_argv_split (value, '@');
+        
+        cnt = opal_argv_count (argv);
+        if (1 == cnt) {
+            node_name = strdup(argv[0]);
+        } else if (2 == cnt) {
+            username = strdup(argv[0]);
+            node_name = strdup(argv[1]);
+        } else {
+            opal_output(0, "WARNING: Unhandled user@host-combination\n"); /* XXX */
+        }
+        opal_argv_free (argv);
+        /* Do we need to make a new node object?  First check to see
+         * if we are keeping everything or if it's already in the updates
+         * list. Because we check keep_all first, if that is set we will
+         * not do the hostfile_lookup call, and thus won't remove the
+         * pre-existing node from the updates list
+         */
+        if (keep_all || NULL == (node = hostfile_lookup(updates, node_name))) {
+            node = OBJ_NEW(orte_node_t);
+            node->name = node_name;
+        }
+        /* add a slot */
+        node->slots++;
+        /* do we need to record an alias for this node? */
+        if (NULL != node_alias) {
+            /* add to list of aliases for this node - only add if unique */
+            opal_argv_append_unique_nosize(&node->alias, node_alias, false);
+            free(node_alias);
+        }
+        /* skip to end of line */
+        while (!orte_util_hostfile_done &&
+               ORTE_HOSTFILE_NEWLINE != token) {
+            token = orte_util_hostfile_lex();
+        }
+        opal_list_append(updates, &node->super);
+        return ORTE_SUCCESS;
     } else {
         hostfile_parse_error(token);
         return ORTE_ERROR;
     }
-
+    
     got_count = false;
     while (!orte_util_hostfile_done) {
         token = orte_util_hostfile_lex();
-
-        switch (token) {
+        
+        switch (token) {            
         case ORTE_HOSTFILE_DONE:
             goto done;
 
@@ -417,19 +476,14 @@ static int hostfile_parse(const char *hostfile, opal_list_t* updates, opal_list_
         case ORTE_HOSTFILE_HOSTNAME:
         case ORTE_HOSTFILE_IPV4:
         case ORTE_HOSTFILE_IPV6:
+        case ORTE_HOSTFILE_RELATIVE:
+        case ORTE_HOSTFILE_RANK:
             rc = hostfile_parse_line(token, updates, exclude, keep_all);
             if (ORTE_SUCCESS != rc) {
                 goto unlock;
             }
             break;
 
-        case ORTE_HOSTFILE_RELATIVE:
-            rc = hostfile_parse_line(token, updates, exclude, keep_all);
-            if (ORTE_SUCCESS != rc) {
-                goto unlock;
-            }
-            break;
-        
         default:
             hostfile_parse_error(token);
             goto unlock;

@@ -276,6 +276,7 @@ typedef uint16_t orte_mapping_policy_t;
 #define ORTE_MAPPING_BYBOARD        0x1000
 #define ORTE_MAPPING_NO_USE_LOCAL   0x2000
 #define ORTE_MAPPING_NPERXXX        0x4000
+#define ORTE_MAPPING_BYUSER         0x8000
 /* nice macro for setting these */
 #define ORTE_SET_MAPPING_POLICY(pol) \
     orte_default_mapping_policy = (orte_default_mapping_policy & 0x00ff) | (pol);
@@ -520,8 +521,6 @@ ORTE_DECLSPEC extern int orte_startup_timeout;
 ORTE_DECLSPEC extern int orte_timeout_usec_per_proc;
 ORTE_DECLSPEC extern float orte_max_timeout;
 
-ORTE_DECLSPEC extern char *orte_default_hostfile;
-
 ORTE_DECLSPEC extern opal_buffer_t *orte_tree_launch_cmd;
 
 /* global arrays for data storage */
@@ -571,6 +570,8 @@ ORTE_DECLSPEC extern uint8_t orte_default_num_cores_per_socket;
 
 /* allocation specification */
 ORTE_DECLSPEC extern char *orte_default_cpu_set;
+ORTE_DECLSPEC extern char *orte_default_hostfile;
+ORTE_DECLSPEC extern char *orte_rankfile;
 
 /* default rank assigment and binding policy */
 ORTE_DECLSPEC extern orte_mapping_policy_t orte_default_mapping_policy;
