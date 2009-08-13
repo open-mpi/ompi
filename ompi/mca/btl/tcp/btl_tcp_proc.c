@@ -132,7 +132,7 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(ompi_proc_t* ompi_proc)
     }
     if(0 != (size % sizeof(mca_btl_tcp_addr_t))) {
         BTL_ERROR(("mca_base_modex_recv: invalid size %lu: btl-size: %lu\n",
-          (unsigned long) size, sizeof(mca_btl_tcp_addr_t)));
+          (unsigned long) size, (unsigned long)sizeof(mca_btl_tcp_addr_t)));
         return NULL;
     }
     btl_proc->proc_addr_count = size / sizeof(mca_btl_tcp_addr_t);

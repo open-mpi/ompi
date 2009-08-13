@@ -55,7 +55,7 @@ static void dump_csum_error_data(mca_btl_base_segment_t* segments, size_t num_se
     
     printf("CHECKSUM ERROR DATA\n");
     for (i = 0; i < num_segments; ++i) {
-        printf("Segment %lu", i);
+        printf("Segment %lu", (unsigned long)i);
         data = (uint8_t*)segments[i].seg_addr.pval;
         for (j=0; j < segments[i].seg_len; j++) {
             if (0 == (j % 40)) {
