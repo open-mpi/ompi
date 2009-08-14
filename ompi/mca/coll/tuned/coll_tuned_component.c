@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -31,8 +31,7 @@
 #include "mpi.h"
 #include "ompi/mca/coll/coll.h"
 #include "coll_tuned.h"
-
-
+#include "coll_tuned_dynamic_file.h"
 
 /*
  * Public string showing the coll ompi_tuned component version number
@@ -58,7 +57,6 @@ coll_tuned_force_algorithm_mca_param_indices_t ompi_coll_tuned_forced_params[COL
 /* max algorithm values */
 int ompi_coll_tuned_forced_max_algorithms[COLLCOUNT];
 
-
 /*
  * Local function
  */
@@ -71,14 +69,10 @@ static int tuned_close(void);
  */
 
 mca_coll_tuned_component_t mca_coll_tuned_component = {
-
     /* First, fill in the super */
-
     {   
-
         /* First, the mca_component_t struct containing meta information
            about the component itself */
-
         {
             MCA_COLL_BASE_VERSION_2_0_0,
 
@@ -107,13 +101,14 @@ mca_coll_tuned_component_t mca_coll_tuned_component = {
     0,
 
     /* Tuned component specific information */
-    /* Note some of this WAS in the module */
     NULL /* ompi_coll_alg_rule_t ptr */       
 };
 
 
 static int tuned_open(void)
 {
+    int rc;
+
 #if OPAL_ENABLE_DEBUG
     {
         int param;
@@ -177,6 +172,18 @@ static int tuned_open(void)
                                   "Filename of configuration file that contains the dynamic (@runtime) decision function rules",
                                   false, false, ompi_coll_tuned_dynamic_rules_filename,
                                   &ompi_coll_tuned_dynamic_rules_filename);
+        if( ompi_coll_tuned_dynamic_rules_filename ) {
+            OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:component_open Reading collective rules file [%s]", 
+                         ompi_coll_tuned_dynamic_rules_filename));
+            rc = ompi_coll_tuned_read_rules_config_file( ompi_coll_tuned_dynamic_rules_filename,
+                                                         &(mca_coll_tuned_component.all_base_rules), COLLCOUNT);
+            if( rc >= 0 ) {
+                OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_open Read %d valid rules\n", rc));
+            } else {
+                OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_open Reading collective rules file failed\n"));
+                mca_coll_tuned_component.all_base_rules = NULL;
+            }
+        }
         ompi_coll_tuned_allreduce_intra_check_forced_init(&ompi_coll_tuned_forced_params[ALLREDUCE]);
         ompi_coll_tuned_alltoall_intra_check_forced_init(&ompi_coll_tuned_forced_params[ALLTOALL]);
         ompi_coll_tuned_allgather_intra_check_forced_init(&ompi_coll_tuned_forced_params[ALLGATHER]);
@@ -206,6 +213,11 @@ static int tuned_close(void)
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:component_close: done!"));
 
+    if( NULL != mca_coll_tuned_component.all_base_rules ) {
+        ompi_coll_tuned_free_all_rules(mca_coll_tuned_component.all_base_rules, COLLCOUNT);
+        mca_coll_tuned_component.all_base_rules = NULL;
+    }
+
     return OMPI_SUCCESS;
 }
 
@@ -227,45 +239,36 @@ mca_coll_tuned_module_destruct(mca_coll_tuned_module_t *module)
     data = module->tuned_data;
     if (NULL != data) {
 #if OPAL_ENABLE_DEBUG
-	/* Reset the reqs to NULL/0 -- they'll be freed as part of freeing
-	   the generel c_coll_selected_data */
-	data->mcct_reqs = NULL;
-	data->mcct_num_reqs = 0;
+        /* Reset the reqs to NULL/0 -- they'll be freed as part of freeing
+           the generel c_coll_selected_data */
+        data->mcct_reqs = NULL;
+        data->mcct_num_reqs = 0;
 #endif
 
-	/* free any cached information that has been allocated */
-	if (data->cached_ntree) { /* destroy general tree if defined */
-	    ompi_coll_tuned_topo_destroy_tree (&data->cached_ntree);
-	}
-	if (data->cached_bintree) { /* destroy bintree if defined */
-	    ompi_coll_tuned_topo_destroy_tree (&data->cached_bintree);
-	}
-	if (data->cached_bmtree) { /* destroy bmtree if defined */
-	    ompi_coll_tuned_topo_destroy_tree (&data->cached_bmtree);
-	}
-	if (data->cached_in_order_bmtree) { /* destroy bmtree if defined */
-	    ompi_coll_tuned_topo_destroy_tree (&data->cached_in_order_bmtree);
-	}
-	if (data->cached_chain) { /* destroy general chain if defined */
-	    ompi_coll_tuned_topo_destroy_tree (&data->cached_chain);
-	}
-	if (data->cached_pipeline) { /* destroy pipeline if defined */
-	    ompi_coll_tuned_topo_destroy_tree (&data->cached_pipeline);
-	}
-	if (data->cached_in_order_bintree) { /* destroy in order bintree if defined */
-	    ompi_coll_tuned_topo_destroy_tree (&data->cached_in_order_bintree);
-	}
+        /* free any cached information that has been allocated */
+        if (data->cached_ntree) { /* destroy general tree if defined */
+            ompi_coll_tuned_topo_destroy_tree (&data->cached_ntree);
+        }
+        if (data->cached_bintree) { /* destroy bintree if defined */
+            ompi_coll_tuned_topo_destroy_tree (&data->cached_bintree);
+        }
+        if (data->cached_bmtree) { /* destroy bmtree if defined */
+            ompi_coll_tuned_topo_destroy_tree (&data->cached_bmtree);
+        }
+        if (data->cached_in_order_bmtree) { /* destroy bmtree if defined */
+            ompi_coll_tuned_topo_destroy_tree (&data->cached_in_order_bmtree);
+        }
+        if (data->cached_chain) { /* destroy general chain if defined */
+            ompi_coll_tuned_topo_destroy_tree (&data->cached_chain);
+        }
+        if (data->cached_pipeline) { /* destroy pipeline if defined */
+            ompi_coll_tuned_topo_destroy_tree (&data->cached_pipeline);
+        }
+        if (data->cached_in_order_bintree) { /* destroy in order bintree if defined */
+            ompi_coll_tuned_topo_destroy_tree (&data->cached_in_order_bintree);
+        }
 
-#if 0 /* FIXME: */
-	/* if any algorithm rules are cached on the communicator, only free them if its MCW */
-	/* as this is the only place they are allocated by reading the decision configure file */
-	if ((ompi_coll_tuned_use_dynamic_rules)&&(&ompi_mpi_comm_world==comm)) {
-	    if (comm->data->all_base_rules) {
-		ompi_coll_tuned_free_all_rules (comm->data->all_base_rules, COLLCOUNT);
-	    }
-	}
-#endif 
-	free(data);
+        free(data);
     }
 }
 

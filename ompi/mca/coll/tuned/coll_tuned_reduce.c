@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -43,7 +43,7 @@
 int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_count,
                                     ompi_datatype_t* datatype, ompi_op_t* op,
                                     int root, ompi_communicator_t* comm,
-				    mca_coll_base_module_t *module,
+                                    mca_coll_base_module_t *module,
                                     ompi_coll_tree_t* tree, int count_by_segment,
                                     int max_outstanding_reqs )
 {
@@ -79,7 +79,7 @@ int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_c
     if( tree->tree_nextsize > 0 ) {
         ptrdiff_t true_lower_bound, true_extent, real_segment_size;
         ompi_datatype_get_true_extent( datatype, &true_lower_bound, 
-                                      &true_extent );
+                                       &true_extent );
 
         /* handle non existant recv buffer (i.e. its NULL) and 
            protect the recv buffer on non-root nodes */
@@ -88,18 +88,18 @@ int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_c
             /* Allocate temporary accumulator buffer. */
             accumbuf_free = (char*)malloc(true_extent + 
                                           (original_count - 1) * extent);
-	    if (accumbuf_free == NULL) { 
+            if (accumbuf_free == NULL) { 
                 line = __LINE__; ret = -1; goto error_hndl; 
             }
             accumbuf = accumbuf_free - lower_bound;
-	} 
+        } 
 
         /* If this is a non-commutative operation we must copy
            sendbuf to the accumbuf, in order to simplfy the loops */
         if (!ompi_op_is_commute(op)) {
-           ompi_datatype_copy_content_same_ddt(datatype, original_count, 
-                                          (char*)accumbuf,
-                                          (char*)sendtmpbuf);
+            ompi_datatype_copy_content_same_ddt(datatype, original_count, 
+                                                (char*)accumbuf,
+                                                (char*)sendtmpbuf);
         }
         /* Allocate two buffers for incoming segments */
         real_segment_size = true_extent + (count_by_segment - 1) * extent;
@@ -232,11 +232,11 @@ int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_c
        the number of segments we have two options:
        - send all segments using blocking send to the parent, or
        - avoid overflooding the parent nodes by limiting the number of 
-         outstanding requests to max_oustanding_reqs.
+       outstanding requests to max_oustanding_reqs.
        TODO/POSSIBLE IMPROVEMENT: If there is a way to determine the eager size 
        for the current communication, synchronization should be used only 
        when the message/segment size is smaller than the eager size.
-     */
+    */
     else {
 
         /* If the number of segments is less than a maximum number of oustanding
@@ -266,9 +266,9 @@ int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_c
         /* Otherwise, introduce flow control:
            - post max_outstanding_reqs non-blocking synchronous send,
            - for remaining segments
-             - wait for a ssend to complete, and post the next one.
+           - wait for a ssend to complete, and post the next one.
            - wait for all outstanding sends to complete.
-         */
+        */
         else {
 
             int creq = 0;
@@ -346,7 +346,7 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
                                         ompi_datatype_t* datatype, 
                                         ompi_op_t* op, int root, 
                                         ompi_communicator_t* comm,
-					mca_coll_base_module_t *module,
+                                        mca_coll_base_module_t *module,
                                         uint32_t segsize, int fanout,
                                         int max_outstanding_reqs )
 {
@@ -376,7 +376,7 @@ int ompi_coll_tuned_reduce_intra_pipeline( void *sendbuf, void *recvbuf,
                                            int count, ompi_datatype_t* datatype,
                                            ompi_op_t* op, int root,
                                            ompi_communicator_t* comm,
-					   mca_coll_base_module_t *module,
+                                           mca_coll_base_module_t *module,
                                            uint32_t segsize,
                                            int max_outstanding_reqs  )
 {
@@ -407,7 +407,7 @@ int ompi_coll_tuned_reduce_intra_binary( void *sendbuf, void *recvbuf,
                                          int count, ompi_datatype_t* datatype,
                                          ompi_op_t* op, int root,
                                          ompi_communicator_t* comm, 
-					 mca_coll_base_module_t *module,
+                                         mca_coll_base_module_t *module,
                                          uint32_t segsize, 
                                          int max_outstanding_reqs  )
 {
@@ -438,7 +438,7 @@ int ompi_coll_tuned_reduce_intra_binomial( void *sendbuf, void *recvbuf,
                                            int count, ompi_datatype_t* datatype,
                                            ompi_op_t* op, int root,
                                            ompi_communicator_t* comm, 
-					   mca_coll_base_module_t *module,
+                                           mca_coll_base_module_t *module,
                                            uint32_t segsize,
                                            int max_outstanding_reqs  )
 {
@@ -477,7 +477,7 @@ int ompi_coll_tuned_reduce_intra_in_order_binary( void *sendbuf, void *recvbuf,
                                                   ompi_datatype_t* datatype,
                                                   ompi_op_t* op, int root,
                                                   ompi_communicator_t* comm, 
-						  mca_coll_base_module_t *module,
+                                                  mca_coll_base_module_t *module,
                                                   uint32_t segsize,
                                                   int max_outstanding_reqs  )
 {
@@ -514,57 +514,57 @@ int ompi_coll_tuned_reduce_intra_in_order_binary( void *sendbuf, void *recvbuf,
     use_this_sendbuf = sendbuf;
     use_this_recvbuf = recvbuf;
     if (io_root != root) {
-       ptrdiff_t tlb, text, lb, ext;
-       char *tmpbuf = NULL;
+        ptrdiff_t tlb, text, lb, ext;
+        char *tmpbuf = NULL;
     
-       ompi_datatype_get_extent(datatype, &lb, &ext);
-       ompi_datatype_get_true_extent(datatype, &tlb, &text);
+        ompi_datatype_get_extent(datatype, &lb, &ext);
+        ompi_datatype_get_true_extent(datatype, &tlb, &text);
 
-       if ((root == rank) && (MPI_IN_PLACE == sendbuf)) {
-          tmpbuf = (char *) malloc(text + (count - 1) * ext);
-          if (NULL == tmpbuf) {
-             return MPI_ERR_INTERN;
-          }
-          ompi_datatype_copy_content_same_ddt(datatype, count, 
-                                         (char*)tmpbuf,
-                                         (char*)recvbuf);
-          use_this_sendbuf = tmpbuf;
-       } else if (io_root == rank) {
-          tmpbuf = (char *) malloc(text + (count - 1) * ext);
-          if (NULL == tmpbuf) {
-             return MPI_ERR_INTERN;
-          }
-          use_this_recvbuf = tmpbuf;
-       }
+        if ((root == rank) && (MPI_IN_PLACE == sendbuf)) {
+            tmpbuf = (char *) malloc(text + (count - 1) * ext);
+            if (NULL == tmpbuf) {
+                return MPI_ERR_INTERN;
+            }
+            ompi_datatype_copy_content_same_ddt(datatype, count, 
+                                                (char*)tmpbuf,
+                                                (char*)recvbuf);
+            use_this_sendbuf = tmpbuf;
+        } else if (io_root == rank) {
+            tmpbuf = (char *) malloc(text + (count - 1) * ext);
+            if (NULL == tmpbuf) {
+                return MPI_ERR_INTERN;
+            }
+            use_this_recvbuf = tmpbuf;
+        }
     }
 
     /* Use generic reduce with in-order binary tree topology and io_root */
     ret = ompi_coll_tuned_reduce_generic( use_this_sendbuf, use_this_recvbuf, count, datatype,
-					  op, io_root, comm, module, 
+                                          op, io_root, comm, module, 
                                           data->cached_in_order_bintree, 
                                           segcount, max_outstanding_reqs );
     if (MPI_SUCCESS != ret) { return ret; }
 
     /* Clean up */
     if (io_root != root) {
-       if (root == rank) {
-          /* Receive result from rank io_root to recvbuf */
-          ret = MCA_PML_CALL(recv(recvbuf, count, datatype, io_root,
-                                  MCA_COLL_BASE_TAG_REDUCE, comm,
-                                  MPI_STATUS_IGNORE));
-          if (MPI_SUCCESS != ret) { return ret; }
-          if (MPI_IN_PLACE == sendbuf) {
-             free(use_this_sendbuf);
-          }
+        if (root == rank) {
+            /* Receive result from rank io_root to recvbuf */
+            ret = MCA_PML_CALL(recv(recvbuf, count, datatype, io_root,
+                                    MCA_COLL_BASE_TAG_REDUCE, comm,
+                                    MPI_STATUS_IGNORE));
+            if (MPI_SUCCESS != ret) { return ret; }
+            if (MPI_IN_PLACE == sendbuf) {
+                free(use_this_sendbuf);
+            }
           
-       } else if (io_root == rank) {
-          /* Send result from use_this_recvbuf to root */
-          ret = MCA_PML_CALL(send(use_this_recvbuf, count, datatype, root,
-                                  MCA_COLL_BASE_TAG_REDUCE, 
-                                  MCA_PML_BASE_SEND_STANDARD, comm));
-          if (MPI_SUCCESS != ret) { return ret; }
-          free(use_this_recvbuf);
-       }
+        } else if (io_root == rank) {
+            /* Send result from use_this_recvbuf to root */
+            ret = MCA_PML_CALL(send(use_this_recvbuf, count, datatype, root,
+                                    MCA_COLL_BASE_TAG_REDUCE, 
+                                    MCA_PML_BASE_SEND_STANDARD, comm));
+            if (MPI_SUCCESS != ret) { return ret; }
+            free(use_this_recvbuf);
+        }
     }
 
     return MPI_SUCCESS;
@@ -596,8 +596,8 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
                                           struct ompi_datatype_t *dtype,
                                           struct ompi_op_t *op,
                                           int root,
-					  struct ompi_communicator_t *comm,
-					  mca_coll_base_module_t *module)
+                                          struct ompi_communicator_t *comm,
+                                          mca_coll_base_module_t *module)
 {
     int i, rank, err, size;
     ptrdiff_t true_lb, true_extent, lb, extent;
@@ -650,7 +650,7 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
 
     if (rank == (size - 1)) {
         err = ompi_datatype_copy_content_same_ddt(dtype, count, (char*)rbuf, 
-                                             (char*)sbuf);
+                                                  (char*)sbuf);
     } else {
         err = MCA_PML_CALL(recv(rbuf, count, dtype, size - 1,
                                 MCA_COLL_BASE_TAG_REDUCE, comm,
@@ -688,7 +688,7 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
 
     if (NULL != inplace_temp) {
         err = ompi_datatype_copy_content_same_ddt(dtype, count, (char*)sbuf, 
-                                             inplace_temp);
+                                                  inplace_temp);
         free(inplace_temp);
     }
     if (NULL != free_buffer) {
@@ -789,7 +789,7 @@ int ompi_coll_tuned_reduce_intra_do_forced(void *sbuf, void* rbuf, int count,
                                            struct ompi_datatype_t *dtype,
                                            struct ompi_op_t *op, int root,
                                            struct ompi_communicator_t *comm,
-					   mca_coll_base_module_t *module)
+                                           mca_coll_base_module_t *module)
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
@@ -808,19 +808,19 @@ int ompi_coll_tuned_reduce_intra_do_forced(void *sbuf, void* rbuf, int count,
     case (1):  return ompi_coll_tuned_reduce_intra_basic_linear (sbuf, rbuf, count, dtype,
                                                                  op, root, comm, module);
     case (2):  return ompi_coll_tuned_reduce_intra_chain (sbuf, rbuf, count, dtype,
-							  op, root, comm, module,
-							  segsize, chain_fanout, max_requests);
+                                                          op, root, comm, module,
+                                                          segsize, chain_fanout, max_requests);
     case (3):  return ompi_coll_tuned_reduce_intra_pipeline (sbuf, rbuf, count, dtype,
-							     op, root, comm, module,
-							     segsize, max_requests);
+                                                             op, root, comm, module,
+                                                             segsize, max_requests);
     case (4):  return ompi_coll_tuned_reduce_intra_binary (sbuf, rbuf, count, dtype,
-							   op, root, comm, module,
-							   segsize, max_requests);
+                                                           op, root, comm, module,
+                                                           segsize, max_requests);
     case (5):  return ompi_coll_tuned_reduce_intra_binomial (sbuf, rbuf, count, dtype,
-							     op, root, comm, module,
-							     segsize, max_requests);
+                                                             op, root, comm, module,
+                                                             segsize, max_requests);
     case (6):  return ompi_coll_tuned_reduce_intra_in_order_binary(sbuf, rbuf, count, dtype,
-								   op, root, comm, module,
+                                                                   op, root, comm, module,
                                                                    segsize, max_requests);
     default:
         OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?",
@@ -834,7 +834,7 @@ int ompi_coll_tuned_reduce_intra_do_this(void *sbuf, void* rbuf, int count,
                                          struct ompi_datatype_t *dtype,
                                          struct ompi_op_t *op, int root,
                                          struct ompi_communicator_t *comm,
-					 mca_coll_base_module_t *module,
+                                         mca_coll_base_module_t *module,
                                          int algorithm, int faninout, 
                                          int segsize, int max_requests )
 {
@@ -843,23 +843,23 @@ int ompi_coll_tuned_reduce_intra_do_this(void *sbuf, void* rbuf, int count,
 
     switch (algorithm) {
     case (0):  return ompi_coll_tuned_reduce_intra_dec_fixed (sbuf, rbuf, count, dtype,
-							      op, root, comm, module);
+                                                              op, root, comm, module);
     case (1):  return ompi_coll_tuned_reduce_intra_basic_linear (sbuf, rbuf, count, dtype, 
                                                                  op, root, comm, module);
     case (2):  return ompi_coll_tuned_reduce_intra_chain (sbuf, rbuf, count, dtype,
-							  op, root, comm, module,
+                                                          op, root, comm, module,
                                                           segsize, faninout, max_requests);
     case (3):  return ompi_coll_tuned_reduce_intra_pipeline (sbuf, rbuf, count, dtype,
-							     op, root, comm, module,
-							     segsize, max_requests);
+                                                             op, root, comm, module,
+                                                             segsize, max_requests);
     case (4):  return ompi_coll_tuned_reduce_intra_binary (sbuf, rbuf, count, dtype,
-							   op, root, comm, module,
-							   segsize, max_requests); 
+                                                           op, root, comm, module,
+                                                           segsize, max_requests); 
     case (5):  return ompi_coll_tuned_reduce_intra_binomial (sbuf, rbuf, count, dtype,
-							     op, root, comm, module,
-							     segsize, max_requests); 
+                                                             op, root, comm, module,
+                                                             segsize, max_requests); 
     case (6):  return ompi_coll_tuned_reduce_intra_in_order_binary(sbuf, rbuf, count, dtype,
-								   op, root, comm, module,
+                                                                   op, root, comm, module,
                                                                    segsize, max_requests);
     default:
         OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
