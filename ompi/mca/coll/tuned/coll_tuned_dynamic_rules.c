@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -314,18 +314,12 @@ ompi_coll_com_rule_t* ompi_coll_tuned_get_com_rule_ptr (ompi_coll_alg_rule_t* ru
     best_com_p = com_p = alg_p->com_rules;
     i = best = 0;
 
-    while (i<alg_p->n_com_sizes) {
-        /*       OPAL_OUTPUT((ompi_coll_tuned_stream,"checking comsize %d against alg_id %d com_id %d index %d com_size %d",  */
-        /*             mpi_comsize, com_p->alg_rule_id, com_p->com_rule_id, i, com_p->mpi_comsize)); */
-        if (com_p->mpi_comsize <= mpi_comsize) {
-            best = i;
-            best_com_p = com_p;
-            /*          OPAL_OUTPUT((ompi_coll_tuned_stream(":ok\n")); */
-        }
-        else {
-            /*          OPAL_OUTPUT((ompi_coll_tuned_stream(":nop\n")); */
+    while( i < alg_p->n_com_sizes ) {
+        if (com_p->mpi_comsize > mpi_comsize) {
             break;
         }
+        best = i;
+        best_com_p = com_p;
         /* go to the next entry */
         com_p++;
         i++;
@@ -359,24 +353,9 @@ int ompi_coll_tuned_get_target_method_params (ompi_coll_com_rule_t* base_com_rul
     ompi_coll_msg_rule_t*  best_msg_p = (ompi_coll_msg_rule_t*) NULL;
     int i, best;
 
-    if (!base_com_rule) {
+    /* No rule or zero rules */
+    if( (NULL == base_com_rule) || (0 == base_com_rule->n_msg_sizes)) {
         return (0);
-    }
-
-    if (!result_topo_faninout) {
-        return (0);
-    }
-
-    if (!result_segsize) {
-        return (0);
-    }
-
-    if (!max_requests) {
-       return (0);
-    }
-
-    if (!base_com_rule->n_msg_sizes) {   /* check for count of message sizes */
-        return (0);    /* no msg sizes so no rule */
     }
 
     /* ok have some msg sizes, now to find the one closest to my mpi_msgsize */

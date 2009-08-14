@@ -2,7 +2,7 @@
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2005 The University of Tennessee and The University
+# Copyright (c) 2004-2009 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -22,14 +22,12 @@ sources = \
         coll_tuned_util.h \
         coll_tuned_dynamic_file.h \
         coll_tuned_dynamic_rules.h \
-        coll_tuned_forced.h \
         coll_tuned_topo.c \
         coll_tuned_util.c \
         coll_tuned_decision_fixed.c \
         coll_tuned_decision_dynamic.c \
         coll_tuned_dynamic_file.c \
         coll_tuned_dynamic_rules.c \
-        coll_tuned_forced.c \
         coll_tuned_allreduce.c \
         coll_tuned_alltoall.c \
         coll_tuned_alltoallv.c \
