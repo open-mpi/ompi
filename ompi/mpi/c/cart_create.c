@@ -67,7 +67,7 @@ int MPI_Cart_create(MPI_Comm old_comm, int ndims, int *dims,
                                           FUNC_NAME);
         }
 
-        /* check if the number of processes on the grid are corrct */
+        /* check if the number of processes on the grid are correct */
         {
            int i;
            int *p = dims;
