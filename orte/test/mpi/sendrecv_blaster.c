@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
         }
         i++;
         if (0 == (i % report)) {
-            fprintf(stderr, "Rank %d has completed %dk iterations\n", rank, i);
+            fprintf(stderr, "Rank %d has completed %dk iterations\n", rank, i/1000);
         }
         if (0 < inject && 0 == (i % inject)) {
             mpierr = MPI_Sendrecv(send_buff, count, MPI_CHAR, rank, tag0,
