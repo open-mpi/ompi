@@ -382,6 +382,11 @@ static int plm_tm_launch_job(orte_job_t *jdata)
             opal_output(0, "plm:tm: failed to poll for a spawned daemon, return status = %d", rc);
             goto cleanup;
         }
+        if (TM_SUCCESS != local_err) {
+            errno = local_err;
+            opal_output(0, "plm:tm: failed to spawn daemon, error code = %d", errno );
+            goto cleanup;
+        }
     }
     
     /* set a timer to tell us if one or more daemon's fails to start - use the
