@@ -569,6 +569,7 @@ int orterun(int argc, char *argv[])
     /* if we are using xml for output, put an mpirun start tag */
     if (orte_xml_output) {
         fprintf(stdout, "<mpirun>\n");
+        fflush(stdout);
     }
     
     /* check for request to report uri */
@@ -901,6 +902,7 @@ static void just_quit(int fd, short ign, void *arg)
     /* if we are using xml output, terminate the output */
     if (orte_xml_output) {
         fprintf(stdout, "</mpirun>\n");
+        fflush(stdout);
     }
     
     free(orterun_basename);
