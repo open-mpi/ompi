@@ -199,13 +199,6 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
         }
     }
     
-    if (ORTE_SUCCESS != (rc = orte_iof_base_setup_prefork(&opts))) {
-        ORTE_ERROR_LOG(rc);
-        child->state = ORTE_PROC_STATE_FAILED_TO_START;
-        child->exit_code = rc;
-        return rc;
-    }
-    
     /* A pipe is used to communicate between the parent and child to
        indicate whether the exec ultimately succeeded or failed.  The
        child sets the pipe to be close-on-exec; the child only ever
