@@ -563,6 +563,11 @@ int orterun(int argc, char *argv[])
         return rc;
     }    
     
+    /* if we are using xml for output, put an mpirun start tag */
+    if (orte_xml_output) {
+        fprintf(stdout, "<mpirun>\n");
+    }
+    
     /* check for request to report uri */
     if (NULL != orterun_globals.report_uri) {
         FILE *fp;
@@ -889,6 +894,12 @@ static void just_quit(int fd, short ign, void *arg)
     
     /* cleanup and leave */
     orte_finalize();
+
+    /* if we are using xml output, terminate the output */
+    if (orte_xml_output) {
+        fprintf(stdout, "</mpirun>\n");
+    }
+    
     free(orterun_basename);
     if (orte_debug_flag) {
         fprintf(stderr, "orterun: exiting with status %d\n", orte_exit_status);
