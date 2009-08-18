@@ -9,5 +9,5 @@
 #
 
 # Specific to this module
-
+mca_dependencies=libopen-rte
 required_check=find_ccp

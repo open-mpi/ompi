@@ -41,7 +41,11 @@
 #endif
 
 #if OMPI_WANT_LIBLTDL
-#include "opal/libltdl/ltdl.h"
+  #ifndef __WINDOWS__ 
+    #include "opal/libltdl/ltdl.h" 
+  #else 
+    #include "ltdl.h" 
+  #endif 
 #endif
 
 #include "opal/util/output.h"
@@ -372,6 +376,13 @@ static int save_filename(const char *filename, lt_ptr data)
   strncpy(component_file->filename, filename, OMPI_PATH_MAX);
   component_file->filename[OMPI_PATH_MAX] = '\0';
   component_file->status = UNVISITED;
+
+#if defined(__WINDOWS__) && defined(_DEBUG) 
+  /* remove the debug suffix 'd', otherwise we will fail to  
+     load the module in later phase. */ 
+  component_file->name[strlen(component_file->name)-1] = '\0'; 
+#endif
+
   opal_list_append(&found_files, (opal_list_item_t *) component_file);
 
   /* All done */

@@ -9,3 +9,4 @@
 #
 
 # Specific to this module
+not_single_shared_lib=1

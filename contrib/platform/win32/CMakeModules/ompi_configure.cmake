@@ -133,9 +133,6 @@ SET(OMPI_F90_ABSOLUTE "\"none\"")
 
 SET(OMPI_F90_BUILD_SIZE "\"small\"")
 
-# we don't support libtool on Windows.
-SET(OMPI_WANT_LIBLTDL 0)
-
 # set the im/export decleration here. 
 # Don't bother with OMPI_IMPORTS
 IF(BUILD_SHARED_LIBS)
@@ -358,6 +355,19 @@ IF(NOT ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT)
 ELSE(NOT ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT)
   SET (ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT 1)
 ENDIF(NOT ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT)
+
+OPTION(OMPI_WANT_LIBLTDL "Whether we want to enable DSO build for Windows." OFF) 
+IF(NOT OMPI_WANT_LIBLTDL) 
+  SET(OMPI_WANT_LIBLTDL 0) 
+ELSE(NOT OMPI_WANT_LIBLTDL) 
+  INCLUDE(find_libltdl) 
+  IF(LIBLTDL_FOUND) 
+    SET (OMPI_WANT_LIBLTDL 1) 
+  ELSE(LIBLTDL_FOUND) 
+    SET(OMPI_WANT_LIBLTDL 0) 
+  ENDIF(LIBLTDL_FOUND) 
+ENDIF(NOT OMPI_WANT_LIBLTDL) 
+
 
 ###################################################################
 #                           Check headers                         #
