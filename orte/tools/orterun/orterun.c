@@ -316,6 +316,9 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { "rmaps", "base", "stride", '\0', "stride", "stride", 1,
       NULL, OPAL_CMD_LINE_TYPE_INT,
       "When binding multiple cores to a rank, the step size to use between cores [default: 1]" },
+    { "odls", "base", "report_bindings", '\0', "report-bindings", "report-bindings", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Whether to report process bindings to stderr [default: 0 = no]" },
 
     /* Allocation options */
     { "ras", "base", "display_alloc", '\0', "display-allocation", "display-allocation", 0,
