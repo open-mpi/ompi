@@ -531,15 +531,13 @@ static int setup_launch(int *argcptr, char ***argvptr,
      * even more interesting! Gotta love rsh/ssh...
      */
     if (0 == orted_index) {
-        /* this is the default scenario, but there could be options specified
-         * so we need to account for that possibility
+        /* single word cmd - this is the default scenario, but there could
+         * be options specified so we need to account for that possibility.
+         * However, we don't need/want a prefix as nothing precedes the orted
+         * cmd itself
          */
         orted_cmd = opal_argv_join(orted_argv, ' ');
         orted_prefix = NULL;
-    } else if (0 > orted_index) {
-        /* no "orted" was included */
-        orted_cmd = NULL;
-        orted_prefix = opal_argv_join(orted_argv, ' ');
     } else {
         /* okay, so the "orted" cmd is somewhere in this array, with
          * something preceding it and perhaps things following it.
@@ -576,13 +574,13 @@ static int setup_launch(int *argcptr, char ***argvptr,
                       "%s%s%s PATH=%s/%s:$PATH ; export PATH ; "
                       "LD_LIBRARY_PATH=%s/%s:$LD_LIBRARY_PATH ; export LD_LIBRARY_PATH ; "
                       "%s %s",
-                      (opal_prefix != NULL ? "OPAL_PREFIX=" : ""),
-                      (opal_prefix != NULL ? opal_prefix : ""),
-                      (opal_prefix != NULL ? " ; export OPAL_PREFIX;" : ""),
+                      (opal_prefix != NULL ? "OPAL_PREFIX=" : " "),
+                      (opal_prefix != NULL ? opal_prefix : " "),
+                      (opal_prefix != NULL ? " ; export OPAL_PREFIX;" : " "),
                       prefix_dir, bin_base,
                       prefix_dir, lib_base,
-                      (orted_prefix != NULL ? orted_prefix : ""),
-                      (full_orted_cmd != NULL ? full_orted_cmd : ""));
+                      (orted_prefix != NULL ? orted_prefix : " "),
+                      (full_orted_cmd != NULL ? full_orted_cmd : " "));
         } else if (ORTE_PLM_RSH_SHELL_TCSH == remote_shell ||
                    ORTE_PLM_RSH_SHELL_CSH == remote_shell) {
             /* [t]csh is a bit more challenging -- we
@@ -606,14 +604,14 @@ static int setup_launch(int *argcptr, char ***argvptr,
                       "if ( $?OMPI_have_llp == 1 ) "
                       "setenv LD_LIBRARY_PATH %s/%s:$LD_LIBRARY_PATH ; "
                       "%s %s",
-                      (opal_prefix != NULL ? "setenv OPAL_PREFIX " : ""),
-                      (opal_prefix != NULL ? opal_prefix : ""),
-                      (opal_prefix != NULL ? " ;" : ""),
+                      (opal_prefix != NULL ? "setenv OPAL_PREFIX " : " "),
+                      (opal_prefix != NULL ? opal_prefix : " "),
+                      (opal_prefix != NULL ? " ;" : " "),
                       prefix_dir, bin_base,
                       prefix_dir, lib_base,
                       prefix_dir, lib_base,
-                      (orted_prefix != NULL ? orted_prefix : ""),
-                      (full_orted_cmd != NULL ? full_orted_cmd : ""));
+                      (orted_prefix != NULL ? orted_prefix : " "),
+                      (full_orted_cmd != NULL ? full_orted_cmd : " "));
         } else {
             orte_show_help("help-plm-rsh.txt", "cannot-resolve-shell-with-prefix", true,
                            (NULL == opal_prefix) ? "NULL" : opal_prefix,

@@ -891,7 +891,7 @@ void orte_plm_base_app_report_launch(int fd, short event, void *data)
     
     if (orte_report_launch_progress) {
         if (0 == num_daemons_reported % 100 || num_daemons_reported == orte_process_info.num_procs) {
-            opal_output(orte_clean_output, "Reported: %d(%d) daemons %d(%d) procs",
+            opal_output(orte_clean_output, "Reported: %d (out of %d) daemons - %d (out of %d) procs",
                         (int)num_daemons_reported, (int)orte_process_info.num_procs,
                         (int)jdata->num_launched, (int)jdata->num_procs);
         }
@@ -1013,8 +1013,10 @@ int orte_plm_base_setup_orted_cmd(int *argc, char ***argv)
     int i, loc;
     char **tmpv;
     
-    /* set default location */
-    loc = -1;
+    /* set default location to be 0, indicating that
+     * only a single word is in the cmd
+     */
+    loc = 0;
     /* split the command apart in case it is multi-word */
     tmpv = opal_argv_split(orte_launch_agent, ' ');
     for (i = 0; NULL != tmpv && NULL != tmpv[i]; ++i) {
