@@ -218,6 +218,18 @@ int orte_register_params(void)
                                 (int) false, &value);
     orte_forward_job_control = OPAL_INT_TO_BOOL(value);
         
+    /* whether or not to report launch progress */
+    mca_base_param_reg_int_name("orte", "report_launch_progress",
+                                "Output a brief periodic report on launch progress [default: no]",
+                                false, false,
+                                (int) false, &value);
+    orte_report_launch_progress = OPAL_INT_TO_BOOL(value);
+    if (orte_report_launch_progress) {
+        /* ensure the startup timeout is set to something reasonable */
+        if (0 == orte_startup_timeout) {
+            orte_startup_timeout = 2000;  /* default to 2 seconds */
+        }
+    }
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
     
     return ORTE_SUCCESS;

@@ -107,6 +107,9 @@ char *orte_xterm;
 /* whether or not to forward SIGTSTP and SIGCONT signals */
 bool orte_forward_job_control;
 
+/* report launch progress */
+bool orte_report_launch_progress = false;
+
 #endif /* !ORTE_DISABLE_FULL_RTE */
 
 int orte_debug_output = -1;

@@ -492,6 +492,20 @@ int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons)
  * for their local procs.
  */
 static bool app_launch_failed;
+static orte_vpid_t num_daemons_reported=0;
+static opal_event_t *dmn_report_ev=NULL;
+
+/* catch timeout to allow cmds to progress */
+static void timer_cb(int fd, short event, void *cbdata)
+{
+    /* free event */
+    if (NULL != dmn_report_ev) {
+        free(dmn_report_ev);
+        dmn_report_ev = NULL;
+    }
+    /* declare time is up */
+    app_launch_failed = true;
+}
 
 /* since the HNP also reports launch of procs, we need to separate out
  * the processing of the message vs its receipt so that the HNP
@@ -517,6 +531,13 @@ void orte_plm_base_app_report_launch(int fd, short event, void *data)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&mev->sender)));
     
+    /* got a response - cancel the timer */
+    if (NULL != dmn_report_ev) {
+        opal_event_del(dmn_report_ev);
+        free(dmn_report_ev);
+        dmn_report_ev = NULL;
+    }
+    
     /* unpack the jobid being reported */
     cnt = 1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &jobid, &cnt, ORTE_JOBID))) {
@@ -536,6 +557,8 @@ void orte_plm_base_app_report_launch(int fd, short event, void *data)
         goto CLEANUP;
     }
     
+    num_daemons_reported++;
+
     /* get the job data object */
     if (NULL == (jdata = orte_get_job_data_object(jobid))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -632,6 +655,14 @@ void orte_plm_base_app_report_launch(int fd, short event, void *data)
         ORTE_ERROR_LOG(rc);
     }
     
+    if (orte_report_launch_progress) {
+        if (0 == num_daemons_reported % 100 || num_daemons_reported == orte_process_info.num_procs) {
+            opal_output(orte_clean_output, "Reported: %d (out of %d) daemons -  %d (out of %d) procs",
+                        (int)num_daemons_reported, (int)orte_process_info.num_procs,
+                        (int)jdata->num_launched, (int)jdata->num_procs);
+        }
+    }
+
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:app_report_launch completed processing",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -646,7 +677,11 @@ CLEANUP:
             orte_errmgr.incomplete_start(jdata->jobid, jdata->aborted_proc->exit_code);
         }
     }
-    
+
+    /* restart the timer, if necessary */
+    if (jdata->num_launched < jdata->num_procs && 0 < orte_startup_timeout) {
+        ORTE_DETECT_TIMEOUT(&dmn_report_ev, orte_startup_timeout, 1000, 10000000, timer_cb);
+    }
 }
 
 
@@ -685,7 +720,7 @@ static int orte_plm_base_report_launched(orte_jobid_t job)
 {
     int rc;
     orte_job_t *jdata;
-
+    
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:report_launched for job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -697,6 +732,13 @@ static int orte_plm_base_report_launched(orte_jobid_t job)
         return ORTE_ERR_NOT_FOUND;
     }
     
+    /* setup a timer - if we don't hear back from a daemon in the
+     * defined time, then we know things have failed
+     */
+    if (0 < orte_startup_timeout) {
+        ORTE_DETECT_TIMEOUT(&dmn_report_ev, orte_startup_timeout, 1000, 10000000, timer_cb);
+    }
+
     /* we should get a callback from every daemon that is involved in
      * the launch. Fortunately, the mapper keeps track of this number
      * for us since num_nodes = num_participating_daemons

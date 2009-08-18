@@ -456,6 +456,9 @@ ORTE_DECLSPEC extern char *orte_output_filename;
 /* generate new xterm windows to display output from specified ranks */
 ORTE_DECLSPEC extern char *orte_xterm;
 
+/* whether or not to report launch progress */
+ORTE_DECLSPEC extern bool orte_report_launch_progress;
+
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
