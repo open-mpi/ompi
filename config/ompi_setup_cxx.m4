@@ -13,13 +13,24 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
-dnl Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
 dnl 
 dnl $HEADER$
 dnl
+
+# This macro is necessary because PROG_CXX* is REQUIREd by multiple
+# places in SETUP_CXX.
+AC_DEFUN([_OMPI_PROG_CXX_BACKEND],[
+    OMPI_VAR_SCOPE_PUSH([ompi_cxxflags_save])
+    ompi_cxxflags_save="$CXXFLAGS"
+    AC_PROG_CXX
+    AC_PROG_CXXCPP
+    CXXFLAGS="$ompi_cxxflags_save"
+    OMPI_VAR_SCOPE_POP
+])
 
 # OMPI_SETUP_CXX()
 # ----------------
@@ -266,11 +277,10 @@ AC_DEFUN([_OMPI_START_SETUP_CXX],[
 
 
 AC_DEFUN([_OMPI_PROG_CXX],[
-    ompi_cxxflags_save="$CXXFLAGS"
-    AC_PROG_CXX
-    AC_PROG_CXXCPP
+    # Must REQUIRE the PROG_CXX macro and not call it directly here for
+    # reasons well-described in the AC2.64 (and beyond) docs.
+    AC_REQUIRE([_OMPI_PROG_CXX_BACKEND])
     BASECXX="`basename $CXX`"
-    CXXFLAGS="$ompi_cxxflags_save"
     AC_DEFINE_UNQUOTED(OMPI_CXX, "$CXX", [OMPI underlying C++ compiler])
     set dummy $CXX
     ompi_cxx_argv0=[$]2

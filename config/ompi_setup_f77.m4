@@ -13,6 +13,7 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+dnl Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -32,12 +33,23 @@ dnl  OMPI_WANT_F77_BINDINGS :
 dnl am_conditional:
 dnl  OMPI_WANT_F77_BINDINGS :
 
+# This macro is necessary to get the title to be displayed first.  :-)
+AC_DEFUN([OMPI_SETUP_F77_BANNER],[
+    ompi_show_subtitle "Fortran 77 compiler" 
+])
+
+# This macro is necessary because PROG_FC is REQUIREd by multiple
+# places in SETUP_F90.
+AC_DEFUN([OMPI_PROG_F77],[
+    OMPI_VAR_SCOPE_PUSH([ompi_fflags_save])
+    ompi_fflags_save="$FFLAGS"
+    AC_PROG_F77([gfortran g77 f77 xlf frt ifort pgf77 fort77 fl32 af77])
+    FFLAGS="$ompi_fflags_save"
+    OMPI_VAR_SCOPE_POP
+])
+
 AC_DEFUN([OMPI_SETUP_F77],[
-
-# Modularize this setup so that sub-configure.in scripts can use this
-# same setup code.
-
-ompi_show_subtitle "Fortran 77 compiler" 
+    AC_REQUIRE([OMPI_SETUP_F77_BANNER])
 
 #
 # Check for the compiler
@@ -50,9 +62,11 @@ ompi_show_subtitle "Fortran 77 compiler"
 # Always run this test, even if fortran isn't wanted so that F77 has
 # value for the Fint tests
 #
-ompi_fflags_save="$FFLAGS"
-AC_PROG_F77([gfortran g77 f77 xlf frt ifort pgf77 fort77 fl32 af77])
-FFLAGS="$ompi_fflags_save"
+
+# Must REQUIRE the PROG_F77 macro and not call it directly here for
+# reasons well-described in the AC2.64 (and beyond) docs.
+AC_REQUIRE([OMPI_PROG_F77])
+
 if test -z "$F77"; then
     AC_MSG_WARN([*** Fortran 77 bindings disabled (could not find compiler)])
     OMPI_WANT_F77_BINDINGS=0
