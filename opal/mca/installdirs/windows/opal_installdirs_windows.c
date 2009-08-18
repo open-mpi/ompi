@@ -73,12 +73,17 @@ installdirs_windows_open(void)
 
     /* The OPAL_PREFIX is the only one which is required to be in the registry.
      * All others can be composed starting from OPAL_PREFIX.
+     *
+     * On 32 bit Windows, we write in HKEY_LOCAL_MACHINE\Software\Open MPI,
+     * but on 64 bit Windows, we always use HKEY_LOCAL_MACHINE\Software\Wow6432Node\Open MPI
+     * for both 32 and 64 bit OMPI, because we only have 32 bit installer, and Windows will
+     * always consider OMPI as 32 bit application.
      */
-    if( ERROR_SUCCESS != RegOpenKeyEx( HKEY_LOCAL_MACHINE, "Software\\Open MPI", 0, KEY_READ, &ompi_key) )
-        /* Windows Vista and Server 2008 handles its registry differently,
-           also need to check Wow6432Node. */
-        if( ERROR_SUCCESS != RegOpenKeyEx( HKEY_LOCAL_MACHINE, "Software\\Wow6432Node\\Open MPI", 0, KEY_READ, &ompi_key) )
+    if( ERROR_SUCCESS != RegOpenKeyEx(HKEY_LOCAL_MACHINE, "Software\\Open MPI", 0, KEY_READ, &ompi_key) ) {
+        if( ERROR_SUCCESS != RegOpenKeyEx(HKEY_LOCAL_MACHINE, "Software\\Wow6432Node\\Open MPI", 0, KEY_READ, &ompi_key) ) {
             return 0;
+        }
+    }
 
     SET_FIELD(ompi_key, prefix, "OPAL_PREFIX");
     SET_FIELD(ompi_key, exec_prefix, "OPAL_EXEC_PREFIX");
