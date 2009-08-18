@@ -106,7 +106,7 @@ mca_pml_cm_component_open(void)
                            "CM PML selection priority",
                            false,
                            false,
-                           30,
+                           10,
                            &ompi_pml_cm.default_priority);
 
     return OMPI_SUCCESS;
@@ -139,12 +139,13 @@ mca_pml_cm_component_init(int* priority,
     if (OMPI_SUCCESS != ret) { 
         *priority = -1;
         return NULL;
-    } else if(strcmp(ompi_mtl_base_selected_component->mtl_version.mca_component_name, "psm") != 0) {
-        /* if mtl is not PSM then back down priority, and require the user to */
-        /*  specify pml cm directly if that is what they want priority */
-        /*  of 1 is sufficient in that case as it is the only pml that */ 
-        /*  will be considered */
-        *priority = 1;
+    } else if(strcmp(ompi_mtl_base_selected_component->mtl_version.mca_component_name, "psm") == 0) {
+        /*
+         * If MTL is PSM then up our priority
+         * For every other communication layer having MTLs and BTLs, the user/admin
+         * may still select PML/ob1 (BTLs) or PML/cm (MTLs) if preferable for the app/site.
+         */
+        *priority = 30;
     }
 
     
