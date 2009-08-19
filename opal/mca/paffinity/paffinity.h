@@ -204,7 +204,7 @@ typedef struct opal_paffinity_base_cpu_set_t {
                 num_bound++;                                        \
             }                                                       \
         }                                                           \
-        if (num_bound < num_processors) {                           \
+        if (0 < num_bound && num_bound < num_processors) {          \
             *(bound) = true;                                        \
         }                                                           \
     } while(0);
