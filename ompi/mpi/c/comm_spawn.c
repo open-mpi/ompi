@@ -71,10 +71,6 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
                                           FUNC_NAME);
         }
-        if (NULL == info || ompi_info_is_freed(info)) {
-          return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
-                                        FUNC_NAME);
-        }
     }
    
     rank = ompi_comm_rank ( comm );
@@ -88,6 +84,10 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
                 return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
                                               FUNC_NAME);
             }
+            if (NULL == info || ompi_info_is_freed(info)) {
+                return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
+                                              FUNC_NAME);
+            }
         }
     }
 
@@ -95,7 +95,9 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
     memset(port_name, 0, MPI_MAX_PORT_NAME);
     
     /* See if the info key "ompi_non_mpi" was set to true */
-    ompi_info_get_bool(info, "ompi_non_mpi", &non_mpi, &flag);
+    if (rank == root) {
+        ompi_info_get_bool(info, "ompi_non_mpi", &non_mpi, &flag);
+    }
 
     OPAL_CR_ENTER_LIBRARY();
 
