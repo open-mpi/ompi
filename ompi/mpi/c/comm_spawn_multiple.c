@@ -69,35 +69,6 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
         if ( NULL == intercomm ) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         }
-        if (NULL == array_of_info) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
-                                        FUNC_NAME);
-        }
-        for (i = 0; i < count; ++i) {
-            if (NULL == array_of_info[i] || 
-                ompi_info_is_freed(array_of_info[i])) {
-                return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
-                                              FUNC_NAME);
-            }
-            /* If ompi_non_mpi is set to true on any info, it must be
-               set to true on all of them.  Note that not setting
-               ompi_non_mpi is the same as setting it to false. */
-            ompi_info_get_bool(array_of_info[i], "ompi_non_mpi", &non_mpi,
-                               &flag);
-            if (flag && 0 == i) {
-                /* If this is the first info, save its ompi_non_mpi value */
-                cumulative = non_mpi;
-            } else if (!flag) {
-                non_mpi = false;
-            }
-            /* If this info's effective value doesn't agree with the
-               rest of them, error */
-            if (cumulative != non_mpi) {
-                return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
-                                              MPI_ERR_INFO,
-                                              FUNC_NAME);
-            }
-        }
     }
    
     rank = ompi_comm_rank ( comm );
@@ -113,7 +84,34 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
                 return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
             }
             if ( NULL == array_of_info ) {
-                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_INFO, FUNC_NAME);
+            }
+            for (i = 0; i < count; ++i) {
+                if (NULL == array_of_info[i] || 
+                    ompi_info_is_freed(array_of_info[i])) {
+                    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
+                                                  FUNC_NAME);
+                }
+                /* If ompi_non_mpi is set to true on any info, it must
+                   be set to true on all of them.  Note that not
+                   setting ompi_non_mpi is the same as setting it to
+                   false. */
+                ompi_info_get_bool(array_of_info[i], "ompi_non_mpi", &non_mpi,
+                                   &flag);
+                if (flag && 0 == i) {
+                    /* If this is the first info, save its
+                       ompi_non_mpi value */
+                    cumulative = non_mpi;
+                } else if (!flag) {
+                    non_mpi = false;
+                }
+                /* If this info's effective value doesn't agree with
+                   the rest of them, error */
+                if (cumulative != non_mpi) {
+                    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
+                                                  MPI_ERR_INFO,
+                                                  FUNC_NAME);
+                }
             }
             for ( i=0; i<count; i++ ) {
                 if ( NULL == array_of_commands[i] ) {
@@ -126,13 +124,15 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
         }
     }
 
-    if (MPI_INFO_NULL == array_of_info[0]) {
-        non_mpi = false;
-    } else {
-        ompi_info_get_bool(array_of_info[0], "ompi_non_mpi", &non_mpi,
-                           &flag);
-        if (!flag) {
+    if (rank == root) {
+        if (MPI_INFO_NULL == array_of_info[0]) {
             non_mpi = false;
+        } else {
+            ompi_info_get_bool(array_of_info[0], "ompi_non_mpi", &non_mpi,
+                               &flag);
+            if (!flag) {
+                non_mpi = false;
+            }
         }
     }
 
