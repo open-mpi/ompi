@@ -28,6 +28,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/paffinity/base/base.h"
 #include "opal/util/output.h"
 #include "opal/util/path.h"
 #include "opal/util/argv.h"
@@ -167,7 +168,7 @@ orte_odls_globals_t orte_odls_globals;
 int orte_odls_base_open(void)
 {
     char **ranks=NULL, *tmp;
-    int i, rank;
+    int i, rank, sock, core;
     orte_namelist_t *nm;
     bool xterm_hold;
     
@@ -187,6 +188,32 @@ int orte_odls_base_open(void)
     orte_odls_globals.dmap = NULL;
     orte_odls_globals.debugger = NULL;
     orte_odls_globals.debugger_launched = false;
+    
+    /* get any external processor bindings */
+    OPAL_PAFFINITY_CPU_ZERO(orte_odls_globals.my_cores);
+    orte_odls_globals.bound = false;
+    orte_odls_globals.num_processors = 0;
+    OBJ_CONSTRUCT(&orte_odls_globals.sockets, opal_bitmap_t);
+    opal_bitmap_init(&orte_odls_globals.sockets, 16);
+    orte_odls_globals.num_sockets = orte_default_num_sockets_per_board;
+    /* see if paffinity is supported */
+    if (ORTE_SUCCESS == opal_paffinity_base_get(&orte_odls_globals.my_cores)) {
+        /* get the number of local processors */
+        opal_paffinity_base_get_processor_info(&orte_odls_globals.num_processors);
+        /* determine if we are bound */
+        OPAL_PAFFINITY_PROCESS_IS_BOUND(orte_odls_globals.my_cores, &orte_odls_globals.bound);
+        /* if we are bound, determine the number of sockets - and which ones - that are available to us */
+        if (orte_odls_globals.bound) {
+            orte_odls_globals.num_sockets = 0;
+            for (i=0; i < orte_odls_globals.num_processors; i++) {
+                if (OPAL_PAFFINITY_CPU_SET(i, orte_odls_globals.my_cores)) {
+                    opal_paffinity_base_get_map_to_socket_core(i, &sock, &core);
+                    opal_bitmap_set_bit(&orte_odls_globals.sockets, sock);
+                    orte_odls_globals.num_sockets++;
+                }
+            }
+        }
+    }
     
     /* check if the user requested that we display output in xterms */
     if (NULL != orte_xterm) {
