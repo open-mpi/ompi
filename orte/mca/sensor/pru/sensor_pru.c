@@ -30,27 +30,40 @@
 #include "sensor_pru.h"
 
 /* declare the functions */
-static int start(void);
-static int stop(void);
+static int init(void);
+static void finalize(void);
+static void start(void);
+static void stop(void);
 
 /* instantiate the module */
 orte_sensor_base_module_t orte_sensor_pru_module = {
+    init,
+    finalize,
     start,
     stop
 };
 
-
-/*
- * Start monitoring of local processes
- */
-static int start(void)
+static int init(void)
 {
     return ORTE_SUCCESS;
 }
 
-
-static int stop(void)
+static void finalize(void)
 {
-    return ORTE_SUCCESS;
+    return;
+}
+
+/*
+ * Start monitoring of local processes
+ */
+static void start(void)
+{
+    return;
+}
+
+
+static void stop(void)
+{
+    return;
 }
 
