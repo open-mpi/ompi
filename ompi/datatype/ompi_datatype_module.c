@@ -162,7 +162,7 @@ ompi_predefined_datatype_t ompi_mpi_long_int =       OMPI_DATATYPE_INIT_DEFER (L
 
 ompi_predefined_datatype_t ompi_mpi_2integer =       OMPI_DATATYPE_INIT_DEFER (2INTEGER, OMPI_DATATYPE_FLAG_DATA_FORTRAN | OMPI_DATATYPE_FLAG_DATA_INT );
 ompi_predefined_datatype_t ompi_mpi_2real =          OMPI_DATATYPE_INIT_DEFER (2REAL, OMPI_DATATYPE_FLAG_DATA_FORTRAN | OMPI_DATATYPE_FLAG_DATA_FLOAT );
-ompi_predefined_datatype_t ompi_mpi_2dblprec =       OMPI_DATATYPE_INIT_DEFER (2REAL, OMPI_DATATYPE_FLAG_DATA_FORTRAN | OMPI_DATATYPE_FLAG_DATA_FLOAT );
+ompi_predefined_datatype_t ompi_mpi_2dblprec =       OMPI_DATATYPE_INIT_DEFER (2DBLPREC, OMPI_DATATYPE_FLAG_DATA_FORTRAN | OMPI_DATATYPE_FLAG_DATA_FLOAT );
 
 ompi_predefined_datatype_t ompi_mpi_2cplex =         OMPI_DATATYPE_INIT_DEFER (2COMPLEX, OMPI_DATATYPE_FLAG_DATA_FORTRAN | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
 ompi_predefined_datatype_t ompi_mpi_2dblcplex =      OMPI_DATATYPE_INIT_DEFER (2DOUBLE_COMPLEX, OMPI_DATATYPE_FLAG_DATA_FORTRAN | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
@@ -323,17 +323,6 @@ opal_pointer_array_t ompi_datatype_f_to_c_table;
         (PDST)->super.ub       = (PSRC)->super.ub;                                   \
         (PDST)->super.align    = (PSRC)->super.align;                                \
         (PDST)->super.nbElems  = (PSRC)->super.nbElems;                              \
-        if( !opal_datatype_is_predefined (&((PDST)->super)) &&                       \
-            (NULL != (PDST)->super.desc.desc) )                                      \
-            /* free( (PDST)->super.desc.desc ) */;                                         \
-        /* Don't re-assign the (PDST)->desc because we need the pointer-value in the \
-         * following if statement.  In case of predefined datatypes both descriptors \
-         * point to the same memory: if we free memory twice, bad things happen.     \
-         */                                                                          \
-        if( !opal_datatype_is_predefined (&((PDST)->super)) &&                       \
-            (NULL != (PDST)->super.opt_desc.desc) &&                                 \
-            ((PDST)->super.opt_desc.desc != (PDST)->super.desc.desc) )               \
-            /* free( (PDST)->super.opt_desc.desc ) */;                                     \
         (PDST)->super.desc     = (PSRC)->super.desc;                                 \
         (PDST)->super.opt_desc = (PSRC)->super.opt_desc;                             \
         (PDST)->packed_description = (PSRC)->packed_description;                     \
