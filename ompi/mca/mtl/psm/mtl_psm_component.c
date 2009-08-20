@@ -152,7 +152,7 @@ ompi_mtl_psm_component_init(bool enable_progress_threads,
 	continue;
       }
       
-      if (OPAL_PROC_ON_LOCAL_NODE(procs[proc]->proc_flags)) {
+      if (procs[proc]->proc_flags & OMPI_PROC_FLAG_LOCAL) {
 	num_local_procs++;
       }
     }
