@@ -94,12 +94,12 @@ AC_DEFUN([MCA_crs_blcr_CONFIG],[
            # we just strip them off for this component
            AC_MSG_WARN([Removed -pedantic and -Wundef from CFLAGS for blcr component because libcr.h is not really ANSI C])
            # Strip off problematic arguments
-           crs_blcr_CFLAGS="`echo $crs_blcr_check_CFLAGS | sed 's/-pedantic//g'`"
+           crs_blcr_CFLAGS="`echo $crs_blcr_save_CFLAGS | sed 's/-pedantic//g'`"
            crs_blcr_CFLAGS="`echo $crs_blcr_CFLAGS | sed 's/-Wundef//g'`"
-           crs_blcr_CPPFLAGS="`echo $crs_blcr_check_CPPFLAGS | sed 's/-pedantic//g'`"
+           crs_blcr_CPPFLAGS="`echo $crs_blcr_save_CPPFLAGS | sed 's/-pedantic//g'`"
            crs_blcr_CPPFLAGS="`echo $crs_blcr_CPPFLAGS | sed 's/-Wundef//g'`"
-           crs_blcr_LDFLAGS="$crs_blcr_check_LDFLAGS"
-           crs_blcr_LIBS="$crs_blcr_check_LIBS"
+           crs_blcr_LDFLAGS="$crs_blcr_save_LDFLAGS"
+           crs_blcr_LIBS="$crs_blcr_save_LIBS"
            #
            # Add to wrapper compiler
            crs_blcr_WRAPPER_EXTRA_CFLAGS="$crs_blcr_CFLAGS"
