@@ -729,12 +729,14 @@ OMPI_DECLSPEC extern struct ompi_predefined_group_t ompi_mpi_group_null;
 OMPI_DECLSPEC extern struct ompi_predefined_request_t ompi_request_null;
 
 OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_null;
-OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_max, ompi_mpi_op_min;
+OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_min;
+OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_max;
 OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_sum;
 OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_prod;
 OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_land;
 OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_band;
-OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_lor, ompi_mpi_op_bor;
+OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_lor;
+OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_bor;
 OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_lxor;
 OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_bxor;
 OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_maxloc;

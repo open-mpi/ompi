@@ -482,7 +482,8 @@ ORTE_DECLSPEC   orte_job_t* orte_get_job_data_object(orte_jobid_t job);
 ORTE_DECLSPEC extern bool orte_timing;
 ORTE_DECLSPEC extern FILE *orte_timing_output;
 ORTE_DECLSPEC extern bool orte_timing_details;
-ORTE_DECLSPEC extern bool orte_debug_daemons_flag, orte_debug_daemons_file_flag;
+ORTE_DECLSPEC extern bool orte_debug_daemons_flag;
+ORTE_DECLSPEC extern bool orte_debug_daemons_file_flag;
 ORTE_DECLSPEC extern bool orte_leave_session_attached;
 ORTE_DECLSPEC extern bool orte_do_not_launch;
 ORTE_DECLSPEC extern bool orted_spin_flag;
@@ -509,7 +510,8 @@ ORTE_DECLSPEC extern bool orte_enable_debug_cospawn_while_running;
 ORTE_DECLSPEC extern int orte_debugger_check_rate;
 
 /* exit triggers and flags */
-ORTE_DECLSPEC extern orte_trigger_event_t orte_exit, orteds_exit;
+ORTE_DECLSPEC extern orte_trigger_event_t orte_exit;
+ORTE_DECLSPEC extern orte_trigger_event_t orteds_exit;
 ORTE_DECLSPEC extern int orte_exit_status;
 ORTE_DECLSPEC extern bool orte_abnormal_term_ordered;
 ORTE_DECLSPEC extern bool orte_routing_is_enabled;
