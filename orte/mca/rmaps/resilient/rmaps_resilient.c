@@ -64,9 +64,6 @@ static int rr_map_default(orte_job_t *jdata, orte_app_context_t *app,
         }
     }
     
-    /* update number of procs */
-    jdata->num_procs += num_procs;
-    
     return ORTE_SUCCESS;
 }
 
@@ -483,6 +480,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
     cleanup:
         /* track number of procs */
         jdata->num_procs += app->num_procs;
+
         /* cleanup the node list - it can differ from one app_context
          * to another, so we have to get it every time
          */
