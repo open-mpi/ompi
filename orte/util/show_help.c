@@ -146,6 +146,106 @@ static void tuple_list_item_destructor(tuple_list_item_t *obj)
     }
 }
 
+/* dealing with special characters in xml output */
+static char* xml_format(unsigned char *input)
+{
+    int i, j, k, len, outlen;
+    char *output, qprint[10];
+    char *endtag="</stderr>";
+    char *starttag="<stderr>";
+    int endtaglen, starttaglen;
+    bool endtagged = false;
+    
+    len = strlen((char*)input);
+    /* add some arbitrary size padding */
+    output = (char*)malloc((len+1024)*sizeof(char));
+    memset(output, 0, len+1024);
+    outlen = len+1023;
+    endtaglen = strlen(endtag);
+    starttaglen = strlen(starttag);
+    
+    /* start at the beginning */
+    k=0;
+    
+    /* start with the tag */
+    for (j=0; j < starttaglen && k < outlen; j++) {
+        output[k++] = starttag[j];
+    }        
+
+    for (i=0; i < len; i++) {
+        if ('&' == input[i]) {
+            if (k+5 >= outlen) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                goto process;
+            }
+            snprintf(qprint, 10, "&amp;");
+            for (j=0; j < (int)strlen(qprint) && k < outlen; j++) {
+                output[k++] = qprint[j];
+            }
+        } else if ('<' == input[i]) {
+            if (k+4 >= outlen) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                goto process;
+            }
+            snprintf(qprint, 10, "&lt;");
+            for (j=0; j < (int)strlen(qprint) && k < outlen; j++) {
+                output[k++] = qprint[j];
+            }
+        } else if ('>' == input[i]) {
+            if (k+4 >= outlen) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                goto process;
+            }
+            snprintf(qprint, 10, "&gt;");
+            for (j=0; j < (int)strlen(qprint) && k < outlen; j++) {
+                output[k++] = qprint[j];
+            }
+        } else if (input[i] < 32 || input[i] > 127) {
+            /* this is a non-printable character, so escape it too */
+            if (k+7 >= outlen) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                goto process;
+            }
+            snprintf(qprint, 10, "&#%03d;", (int)input[i]);
+            for (j=0; j < (int)strlen(qprint) && k < outlen; j++) {
+                output[k++] = qprint[j];
+            }
+            /* if this was a \n, then we also need to break the line with the end tag */
+            if ('\n' == input[i] && (k+endtaglen+1) < outlen) {
+                /* we need to break the line with the end tag */
+                for (j=0; j < endtaglen && k < outlen-1; j++) {
+                    output[k++] = endtag[j];
+                }
+                /* move the <cr> over */
+                output[k++] = '\n';
+                /* if this isn't the end of the input buffer, add a new start tag */
+                if (i < len-1 && (k+starttaglen) < outlen) {
+                    for (j=0; j < starttaglen && k < outlen; j++) {
+                        output[k++] = starttag[j];
+                        endtagged = false;
+                    }
+                } else {
+                    endtagged = true;
+                }
+            }
+        } else {
+            output[k++] = input[i];
+        }    
+    }
+    
+process:
+    if (!endtagged) {
+        /* need to add an endtag */
+        for (j=0; j < endtaglen && k < outlen-1; j++) {
+            output[k++] = endtag[j];
+        }
+        output[k++] = '\n';
+    }
+    
+    return output;
+}
+
+
 /*
  * Check to see if a given (filename, topic) tuple has been displayed
  * already.  Return ORTE_SUCCESS if so, or ORTE_ERR_NOT_FOUND if not.
@@ -193,6 +293,7 @@ static void show_accumulated_duplicates(int fd, short event, void *context)
     opal_list_item_t *item;
     time_t now = time(NULL);
     tuple_list_item_t *tli;
+    char *tmp, *output;
 
     /* Loop through all the messages we've displayed and see if any
        processes have sent duplicates that have not yet been displayed
@@ -203,14 +304,30 @@ static void show_accumulated_duplicates(int fd, short event, void *context)
         tli = (tuple_list_item_t*) item;
         if (tli->tli_count_since_last_display > 0) {
             static bool first = true;
-            opal_output(0, "%d more process%s sent help message %s / %s",
-                        tli->tli_count_since_last_display,
-                        (tli->tli_count_since_last_display > 1) ? "es have" : " has",
-                        tli->tli_filename, tli->tli_topic);
+            if (orte_xml_output) {
+                asprintf(&tmp, "%d more process%s sent help message %s / %s",
+                         tli->tli_count_since_last_display,
+                         (tli->tli_count_since_last_display > 1) ? "es have" : " has",
+                         tli->tli_filename, tli->tli_topic);
+                output = xml_format((unsigned char*)tmp);
+                free(tmp);
+                fprintf(stdout, "%s", output);
+                free(output);
+            } else {
+                opal_output(0, "%d more process%s sent help message %s / %s",
+                            tli->tli_count_since_last_display,
+                            (tli->tli_count_since_last_display > 1) ? "es have" : " has",
+                            tli->tli_filename, tli->tli_topic);
+            }
             tli->tli_count_since_last_display = 0;
 
             if (first) {
-                opal_output(0, "Set MCA parameter \"orte_base_help_aggregate\" to 0 to see all help / error messages");
+                if (orte_xml_output) {
+                    fprintf(stdout, "<stderr>Set MCA parameter \"orte_base_help_aggregate\" to 0 to see all help / error messages</stderr>\n");
+                    fflush(stdout);
+                } else {
+                    opal_output(0, "Set MCA parameter \"orte_base_help_aggregate\" to 0 to see all help / error messages");
+                }
                 first = false;
             }
         }
@@ -275,7 +392,15 @@ static int show_help(const char *filename, const char *topic,
     } 
     /* Not already displayed */
     else if (ORTE_ERR_NOT_FOUND == rc) {
-        fprintf(stderr, "%s", output);
+        if (orte_xml_output) {
+            char *tmp;
+            tmp = xml_format((unsigned char*)output);
+            fprintf(stdout, "%s", tmp);
+            fflush(stdout);
+            free(tmp);
+        } else {
+            fprintf(stderr, "%s", output);
+        }
         if (!show_help_timer_set) {
             show_help_time_last_displayed = now;
         }
