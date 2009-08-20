@@ -138,8 +138,7 @@ OMPI_DECLSPEC extern struct ompi_predefined_group_t ompi_mpi_group_null;
 
 
 /*
- * function prototype
-s
+ * function prototypes
  */
 
 /**
