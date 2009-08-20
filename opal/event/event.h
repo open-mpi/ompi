@@ -162,10 +162,7 @@
 #include "event_rename.h"
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
+BEGIN_C_DECLS
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -1201,9 +1198,7 @@ int evtag_unmarshal_timeval(struct evbuffer *evbuf, ev_uint32_t need_tag,
 extern const struct opal_eventop opal_win32ops;
 #endif  /* defined(__WINDOWS__) */
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 
 /* #defines to allow callers to know if opal_event_loop is going to do anything */

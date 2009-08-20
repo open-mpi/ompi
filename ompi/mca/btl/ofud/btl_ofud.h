@@ -44,9 +44,7 @@
 /* TODO - If I want this to go away, addr_t has to come over here */
 #include "btl_ofud_endpoint.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 
 /**
@@ -359,7 +357,5 @@ do {                                                                         \
 #define MCA_BTL_UD_SHOW_TIME(var)
 #endif
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

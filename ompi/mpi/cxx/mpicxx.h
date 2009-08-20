@@ -27,7 +27,8 @@
 // hasn't included <mpicxx.h> just "for completeness"
 //
 
-#if defined(__cplusplus) || defined(c_plusplus) 
+// We do not include the opal_config.h and may not replace extern "C" {
+#if defined(c_plusplus) || defined(__cplusplus) 
 
 // do not include ompi_config.h.  it will smash free() as a symbol
 #include "mpi.h"
@@ -300,5 +301,5 @@ namespace MPI {
 #endif
 #endif
 
-#endif // #if defined(__cplusplus) || defined(c_plusplus) 
+#endif // #if defined(c_plusplus) || defined(__cplusplus) 
 #endif // #ifndef MPIPP_H_

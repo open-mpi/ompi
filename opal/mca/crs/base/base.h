@@ -28,9 +28,7 @@
  * Global functions for MCA overall CRS
  */
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /* Some local strings to use genericly with the local metadata file */
 #define CRS_METADATA_BASE       ("# ")
@@ -114,8 +112,6 @@ extern "C" {
      */
     OPAL_DECLSPEC int opal_crs_base_cleanup_flush(void);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* OPAL_CRS_BASE_H */

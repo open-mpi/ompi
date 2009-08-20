@@ -35,9 +35,7 @@
 
 #include <stdio.h>
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 typedef union {
     int ival;
@@ -77,9 +75,7 @@ int orte_rmaps_rank_file_wrap(void);
 #define ORTE_RANKFILE_SLOT           15
 #define ORTE_RANKFILE_RELATIVE       16
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif
 

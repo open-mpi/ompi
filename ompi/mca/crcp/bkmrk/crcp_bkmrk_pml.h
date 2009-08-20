@@ -32,9 +32,7 @@
 
 #include "ompi/mca/crcp/bkmrk/crcp_bkmrk.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
     /*
      * PML Coordination functions
@@ -444,8 +442,6 @@ extern "C" {
      */
     extern opal_list_t ompi_crcp_bkmrk_pml_peer_refs;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* MCA_CRCP_HOKE_PML_EXPORT_H */

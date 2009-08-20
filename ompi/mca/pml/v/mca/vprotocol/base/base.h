@@ -16,9 +16,7 @@
 #include "opal/mca/mca.h"
 #include "../vprotocol.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
     
 OMPI_DECLSPEC int mca_vprotocol_base_open(char *vprotocol_include_list);
 OMPI_DECLSPEC int mca_vprotocol_base_select(bool enable_progress_threads, 
@@ -51,8 +49,6 @@ OMPI_DECLSPEC extern mca_vprotocol_base_module_t mca_vprotocol;
     0 != mca_vprotocol_component.pmlm_version.mca_type_major_version           \
 )
         
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* __INCLUDE_VPROTOCOL_BASE_H_ */

@@ -28,9 +28,7 @@
  * Global functions for MCA overall CRCP
  */
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
     /**
      * Initialize the CRCP MCA framework
@@ -207,8 +205,6 @@ extern "C" {
     OMPI_DECLSPEC extern ompi_crcp_base_component_t ompi_crcp_base_selected_component;
     OMPI_DECLSPEC extern ompi_crcp_base_module_t ompi_crcp;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* OMPI_CRCP_BASE_H */

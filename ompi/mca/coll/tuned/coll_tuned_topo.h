@@ -23,9 +23,7 @@
 
 #define MAXTREEFANOUT 32
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
     typedef struct ompi_coll_tree_t {
         int32_t tree_root;
@@ -59,9 +57,7 @@ extern "C" {
     /* debugging stuff, will be removed later */
     int ompi_coll_tuned_topo_dump_tree (ompi_coll_tree_t* tree, int rank);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif  /* MCA_COLL_TUNED_TOPO_H_HAS_BEEN_INCLUDED */
 

@@ -29,9 +29,7 @@
 #include "opal/mca/mca.h"
 #include "orte/mca/filem/filem.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 #define ORTE_FILEM_RSH_ASK   0
 #define ORTE_FILEM_RSH_ALLOW 1
@@ -79,8 +77,6 @@ extern "C" {
     int orte_filem_rsh_wait( orte_filem_base_request_t *request);
     int orte_filem_rsh_wait_all( opal_list_t *request_list);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* MCA_FILEM_RSH_EXPORT_H */

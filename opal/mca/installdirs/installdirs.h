@@ -16,9 +16,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /*
  * Most of this file is just for ompi_info.  The only public interface
@@ -77,8 +75,6 @@ typedef struct opal_installdirs_base_component_2_0_0_t opal_installdirs_base_com
     MCA_BASE_VERSION_2_0_0, \
     "installdirs", 2, 0, 0
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* OPAL_MCA_INSTALLDIRS_INSTALLDIRS_H */

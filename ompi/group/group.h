@@ -34,9 +34,7 @@
 #include "opal/class/opal_pointer_array.h"
 #include "opal/util/output.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 #define BSIZE ((int)sizeof(unsigned char)*8)
 
@@ -346,7 +344,5 @@ int ompi_group_dump (ompi_group_t* group);
  */
 int ompi_group_div_ceil (int num, int den);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif /* OMPI_GROUP_H */

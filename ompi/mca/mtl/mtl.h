@@ -38,9 +38,7 @@
 #include "ompi/mca/pml/pml.h" /* for send_mode enum */
 #include "ompi/request/request.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 struct ompi_request_t;
 struct opal_convertor_t;
@@ -405,7 +403,5 @@ typedef struct mca_mtl_base_module_t mca_mtl_base_module_t;
 
 OMPI_DECLSPEC extern mca_mtl_base_module_t *ompi_mtl;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

@@ -36,9 +36,7 @@
 #include "ompi/mca/btl/btl.h"
 #include "btl_gm_endpoint.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 #define GM_BUFFER_SIZE   7
 #define GM_BUFFER_LENGTH gm_max_length_for_size(GM_BUFFER_SIZE)
@@ -375,7 +373,5 @@ do {                                                                            
 } while (0)
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

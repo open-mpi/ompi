@@ -26,9 +26,7 @@
 #include "ompi/mca/btl/base/btl_base_error.h"
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 typedef enum {
     MCA_BTL_GM_EAGER,
@@ -137,7 +135,5 @@ do { \
 
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

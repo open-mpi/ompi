@@ -34,9 +34,7 @@
 #include "opal/class/opal_pointer_array.h"
 #include "ompi/datatype/ompi_datatype.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * DR PML module
@@ -209,9 +207,7 @@ extern int mca_pml_dr_start(
 
 extern int mca_pml_dr_ft_event(int state);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 
 #endif

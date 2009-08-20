@@ -21,9 +21,7 @@
 
 #include "opal_config.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 	
 /**
  *  Forks, execs, and waits for a subordinate program
@@ -57,7 +55,5 @@ extern "C" {
  */
 OPAL_DECLSPEC int opal_few(char *argv[], int *status);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif /* OPAL_FEW_H */

@@ -26,9 +26,7 @@
 #include "btl_tcp_addr.h"
 #include "btl_tcp_endpoint.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * Represents the state of a remote process and the set of addresses
@@ -121,7 +119,5 @@ static inline mca_btl_tcp_proc_t* mca_btl_tcp_proc_local(void)
     return mca_btl_tcp_component.tcp_local;
 }
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

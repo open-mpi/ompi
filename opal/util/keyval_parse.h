@@ -23,9 +23,7 @@
 
 #include "opal_config.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * Callback triggered for each key = value pair
@@ -52,8 +50,6 @@ OPAL_DECLSPEC int opal_util_keyval_parse_init(void);
 
 OPAL_DECLSPEC int opal_util_keyval_parse_finalize(void);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif

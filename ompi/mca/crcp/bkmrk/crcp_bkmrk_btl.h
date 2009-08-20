@@ -31,9 +31,7 @@
 #include "ompi/mca/crcp/crcp.h"
 #include "ompi/mca/crcp/bkmrk/crcp_bkmrk.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
     /*
      * BTL Coordination functions
@@ -121,8 +119,6 @@ extern "C" {
     (int state,
      ompi_crcp_base_btl_state_t*);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* MCA_CRCP_HOKE_BTL_EXPORT_H */

@@ -26,9 +26,7 @@
 #include "ompi/mca/bml/bml.h" 
 #include "pml_dr_hdr.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 struct mca_pml_dr_buffer_t {
     ompi_free_list_item_t super;
@@ -166,8 +164,6 @@ bool mca_pml_dr_recv_frag_match( mca_pml_dr_comm_t* comm,
                                  mca_btl_base_segment_t* segments,
                                  size_t num_segments);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif
 

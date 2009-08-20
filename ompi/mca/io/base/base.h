@@ -38,9 +38,7 @@
  * Global functions for MCA overall io open and close
  */
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
     /**
      * Initialize the io MCA framework
      *
@@ -321,7 +319,5 @@ OMPI_DECLSPEC extern bool mca_io_base_requests_valid;
  */
 OMPI_DECLSPEC extern ompi_free_list_t mca_io_base_requests;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif /* MCA_BASE_IO_H */

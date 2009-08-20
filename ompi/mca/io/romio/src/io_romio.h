@@ -30,9 +30,7 @@
 #include "romio/include/mpio.h"
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 OMPI_DECLSPEC extern mca_io_base_component_2_0_0_t mca_io_romio_component;
 
@@ -299,7 +297,5 @@ int mca_io_romio_file_sync (struct ompi_file_t *fh);
 
 /* End Prototypes */
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif                          /* MCA_IO_ROMIO_H */

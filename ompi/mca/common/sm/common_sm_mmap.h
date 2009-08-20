@@ -26,9 +26,7 @@
 #include "opal/sys/atomic.h"
 #include "ompi/mca/mpool/mpool.h" 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 struct mca_mpool_base_module_t;
 
@@ -124,9 +122,7 @@ int mca_common_sm_mmap_fini( mca_common_sm_mmap_t* sm_mmap );
 
 OMPI_DECLSPEC extern mca_common_sm_mmap_t *mca_common_sm_mmap;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif
 

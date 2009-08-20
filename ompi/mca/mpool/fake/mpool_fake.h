@@ -27,9 +27,7 @@
 #include "ompi_config.h"
 #include "ompi/mca/mpool/mpool.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 typedef struct mca_mpool_fake_component_t {
   mca_mpool_base_component_t super;
@@ -69,7 +67,5 @@ void mca_mpool_fake_finalize(struct mca_mpool_base_module_t *mpool);
  */
 int mca_mpool_fake_ft_event(int state);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

@@ -27,9 +27,7 @@
 #include "opal/mca/mca.h"
 #include "ompi/mca/rcache/rcache.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /* 
  * create a module by name
@@ -66,8 +64,6 @@ OMPI_DECLSPEC extern int mca_rcache_base_output;
 OMPI_DECLSPEC extern opal_list_t mca_rcache_base_components;
 OMPI_DECLSPEC extern opal_list_t mca_rcache_base_modules;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* MCA_RCACHE_BASE_H */

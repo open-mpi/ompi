@@ -34,9 +34,7 @@
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h" 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * Shared Memory (SELF) BTL module.
@@ -225,9 +223,7 @@ int mca_btl_self_rdma(
  */
 int mca_btl_self_ft_event(int state);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif
 

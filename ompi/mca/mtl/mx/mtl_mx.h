@@ -24,9 +24,7 @@
 #include "opal/datatype/opal_convertor.h"
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 int
 ompi_mtl_mx_send(struct mca_mtl_base_module_t* mtl, 
@@ -70,9 +68,7 @@ int ompi_mtl_mx_module_init(void);
     
 
    
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif  /* MTL_MX_H_HAS_BEEN_INCLUDED */
 

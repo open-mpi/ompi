@@ -22,9 +22,7 @@
  * Global functions for MCA overall memcpy open and close
  */
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
     /**
      * Initialize the memcpy MCA framework
@@ -64,9 +62,7 @@ extern "C" {
 
     OPAL_DECLSPEC extern opal_list_t opal_memcpy_base_components_opened;
     
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 /* include implementation to call */
 #include MCA_timer_IMPLEMENTATION_HEADER

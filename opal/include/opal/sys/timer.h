@@ -70,9 +70,7 @@
  *
  *********************************************************************/
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /* If you update this list, you probably also want to update
    opal/mca/timer/linux/configure.m4.  Or not. */
@@ -107,8 +105,6 @@ typedef int opal_timer_t;
 #endif
 #endif
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* OPAL_SYS_TIMER_H */

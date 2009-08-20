@@ -256,7 +256,7 @@
  * Do we have <stdint.h>?
  */
 #ifdef HAVE_STDINT_H
-#if defined(__cplusplus) && !defined(__STDC_LIMIT_MACROS)
+#if !defined(__STDC_LIMIT_MACROS) && (defined(c_plusplus) || defined (__cplusplus))
 /* When using a C++ compiler, the max / min value #defines for std
    types are only included if __STDC_LIMIT_MACROS is set before
    including stdint.h */

@@ -25,9 +25,7 @@
 #include "ompi/mca/btl/btl.h"
 #include "pml_ob1_hdr.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 typedef enum {
     MCA_PML_OB1_RDMA_PUT,
@@ -67,8 +65,6 @@ do {                                                            \
 } while(0)
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif
 

@@ -39,9 +39,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/mca/base/mca_base_param.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * \internal
@@ -179,8 +177,6 @@ OPAL_DECLSPEC extern opal_list_t mca_base_param_file_values;
  */
 OPAL_DECLSPEC int mca_base_parse_paramfile(const char *paramfile);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
     
 #endif /* OPAL_MCA_BASE_PARAM_INTERNAL_H */

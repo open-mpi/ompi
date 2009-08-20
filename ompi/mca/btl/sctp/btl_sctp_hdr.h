@@ -25,9 +25,7 @@
 #include "btl_sctp.h" 
 #include "opal/types.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * SCTP header.
@@ -62,7 +60,5 @@ typedef struct mca_btl_sctp_hdr_t mca_btl_sctp_hdr_t;
         hdr.size = ntoh64(hdr.size);  \
     } while (0)
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

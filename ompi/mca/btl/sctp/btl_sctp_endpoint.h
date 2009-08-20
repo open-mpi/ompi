@@ -23,9 +23,7 @@
 #include "opal/event/event.h"
 #include "btl_sctp_frag.h"
 #include "btl_sctp.h"
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 #define MCA_BTL_SCTP_ENDPOINT_CACHE 1
 
@@ -92,7 +90,5 @@ int  mca_btl_sctp_endpoint_send(mca_btl_base_endpoint_t*, struct mca_btl_sctp_fr
 bool mca_btl_sctp_endpoint_accept(mca_btl_base_endpoint_t*, struct sockaddr_in*, int);
 void mca_btl_sctp_endpoint_shutdown(mca_btl_base_endpoint_t*);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

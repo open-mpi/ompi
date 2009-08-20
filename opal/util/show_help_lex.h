@@ -33,9 +33,7 @@
 #endif
 
 #include <stdio.h>
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 int opal_show_help_yylex(void);
 int opal_show_help_init_buffer(FILE *file);
 
@@ -63,7 +61,5 @@ enum {
 
     OPAL_SHOW_HELP_PARSE_MAX
 };
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

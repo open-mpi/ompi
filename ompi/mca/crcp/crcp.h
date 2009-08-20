@@ -45,9 +45,7 @@
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * Module initialization function.
@@ -360,8 +358,6 @@ OMPI_DECLSPEC extern ompi_crcp_base_module_t ompi_crcp;
 #define OMPI_CRCP_REQUEST_COMPLETE(req) ;
 #endif
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* OMPI_CRCP_H */

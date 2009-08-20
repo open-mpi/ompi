@@ -24,9 +24,7 @@
 #include "opal/threads/mutex.h"
 #include "opal/class/opal_list.h"
 #include "ompi/proc/proc.h"
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 
 struct mca_pml_ob1_comm_proc_t {
@@ -76,8 +74,6 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_comm_t);
 
 extern int mca_pml_ob1_comm_init_size(mca_pml_ob1_comm_t* comm, size_t size);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif
 

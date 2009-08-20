@@ -29,9 +29,7 @@
  * Global functions for the MTL
  */
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 OMPI_DECLSPEC extern mca_mtl_base_component_t* ompi_mtl_base_selected_component;
     
@@ -44,7 +42,5 @@ OMPI_DECLSPEC int ompi_mtl_base_close(void);
 OMPI_DECLSPEC extern opal_list_t ompi_mtl_base_components_opened;
 OMPI_DECLSPEC extern int ompi_mtl_base_output;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif /* MCA_MTL_BASE_H */

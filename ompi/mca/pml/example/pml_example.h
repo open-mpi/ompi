@@ -19,9 +19,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/ptl/ptl.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 struct mca_pml_example_t {
     mca_pml_base_module_t super;
@@ -126,8 +124,6 @@ extern int mca_pml_example_start( size_t count, ompi_request_t** requests );
 extern int mca_pml_example_ft_event(int state);
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif  /* PML_EXAMPLE_H_HAS_BEEN_INCLUDED */

@@ -42,9 +42,7 @@
 #include "ompi/mca/btl/btl.h"
 #include "btl_udapl_endpoint.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 
 /**
@@ -467,7 +465,5 @@ extern mca_btl_base_descriptor_t* mca_btl_udapl_prepare_dst(
      */
 int mca_btl_udapl_ft_event(int state);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

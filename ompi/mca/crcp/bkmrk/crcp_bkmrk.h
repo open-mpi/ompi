@@ -31,9 +31,7 @@
 #include MCA_timer_IMPLEMENTATION_HEADER
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
     /*
      * Local Component structures
@@ -59,8 +57,6 @@ extern "C" {
     int ompi_crcp_bkmrk_pml_init(void);
     int ompi_crcp_bkmrk_pml_finalize(void);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* MCA_CRCP_HOKE_EXPORT_H */

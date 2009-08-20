@@ -648,9 +648,6 @@ static inline int qp_cq_prio(const int qp)
 #define BTL_OPENIB_RDMA_QP(QP) \
     ((QP) == mca_btl_openib_component.rdma_qp)
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
 END_C_DECLS
 
 #endif /* MCA_BTL_IB_H */

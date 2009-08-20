@@ -25,9 +25,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/crs/crs.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
     /*
      * Local Component structures
@@ -68,8 +66,6 @@ extern "C" {
 
     extern bool opal_crs_none_select_warning;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* MCA_CRS_NONE_EXPORT_H */

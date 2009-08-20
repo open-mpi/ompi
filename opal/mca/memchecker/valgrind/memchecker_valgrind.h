@@ -24,9 +24,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/memchecker/memchecker.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * Globally exported variable
@@ -44,7 +42,5 @@ OPAL_DECLSPEC extern const opal_memchecker_base_component_2_0_0_t
  */
 int opal_memchecker_valgrind_component_query(mca_base_module_t **module, int *priority);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif /* MCA_MEMCHECKER_VALGRIND_EXPORT_H */

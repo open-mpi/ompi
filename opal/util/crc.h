@@ -26,9 +26,7 @@
 
 #include <stddef.h>
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 #define CRC_POLYNOMIAL ((unsigned int)0x04c11db7)
 #define CRC_INITIAL_REGISTER ((unsigned int)0xffffffff)
@@ -180,9 +178,7 @@ opal_uicrc(const void *  source, size_t crclen)
     return opal_uicrc_partial(source, crclen, CRC_INITIAL_REGISTER);
 }
                                                                                                                   
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif
 

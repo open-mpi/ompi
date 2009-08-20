@@ -58,9 +58,7 @@ struct mca_allocator_basic_module_t {
 typedef struct mca_allocator_basic_module_t mca_allocator_basic_module_t;
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /*
  * Component open/cleanup.
@@ -158,9 +156,7 @@ mca_allocator_base_module_t* mca_allocator_basic_component_init(
 
 OMPI_DECLSPEC extern mca_allocator_base_component_t mca_allocator_basic_component;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* ALLOCATOR_BUCKET_ALLOC_H */
 

@@ -27,9 +27,7 @@
 
 #include "ompi_config.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
     /*
      * Initialization called in ompi_init()
@@ -57,8 +55,6 @@ extern "C" {
      */
     OPAL_DECLSPEC extern bool ompi_cr_continue_like_restart;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* OMPI_CR_H */

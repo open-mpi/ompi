@@ -43,9 +43,7 @@
 #include "opal/class/opal_hash_table.h"
 
 #define MCA_BTL_TCP_STATISTICS 0
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 
 /**
@@ -335,7 +333,5 @@ extern mca_btl_base_descriptor_t* mca_btl_tcp_prepare_dst(
   */
 int mca_btl_tcp_ft_event(int state);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

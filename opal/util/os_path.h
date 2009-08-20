@@ -46,9 +46,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /** 
  * @param relative A boolean that specifies if the path name is to be constructed
@@ -99,8 +97,6 @@ static inline char* opal_make_filename_os_friendly( char* filename )
 #define opal_make_filename_os_friendly(PATH)   (PATH)
 #endif  /* defined(__WINDOWS__) */
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* OPAL_OS_PATH_H */

@@ -29,9 +29,7 @@
 #include "ompi/mca/common/portals/common_portals.h"
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 struct mca_mtl_portals_module_t {
     mca_mtl_base_module_t base;
@@ -227,8 +225,6 @@ extern int ompi_mtl_portals_cancel(struct mca_mtl_base_module_t* mtl,
 extern int ompi_mtl_portals_progress(void);
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif  /* MTL_PORTALS_H_HAS_BEEN_INCLUDED */

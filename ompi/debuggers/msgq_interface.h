@@ -124,9 +124,7 @@
 /* No MPI2 support yet */
 #define FOR_MPI2 0
 
-#ifdef	__cplusplus
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /***********************************************************************
  * Version of the interface this header represents 
@@ -693,7 +691,6 @@ extern int mqs_next_new_process (mqs_process *, mqs_process_location *);
 extern int mqs_set_process_identity (mqs_process *, int); 
 #endif
 
-#ifdef	__cplusplus
-}
-#endif
+END_C_DECLS
+
 #endif /* defined (_MPI_INTERFACE_INCLUDED) */

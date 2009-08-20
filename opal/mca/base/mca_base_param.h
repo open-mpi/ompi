@@ -143,9 +143,7 @@ typedef struct mca_base_param_info_t mca_base_param_info_t;
  * Global functions for MCA
  */
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
     /**
      * Make a real object for the info
@@ -858,8 +856,6 @@ extern "C" {
                                                         const char *comp,
                                                         const char *param) /* __opal_attribute_deprecated__ */;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* OPAL_MCA_BASE_PARAM_H */

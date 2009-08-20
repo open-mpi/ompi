@@ -27,9 +27,7 @@
 #define MCA_BTL_UDAPL_FRAG_ALIGN (8)
 #include "ompi_config.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 typedef enum {
     MCA_BTL_UDAPL_SEND,
@@ -195,7 +193,5 @@ OBJ_CLASS_DECLARATION(mca_btl_udapl_frag_eager_rdma_t);
         0 : (MCA_BTL_UDAPL_FRAG_ALIGN - ((S) % MCA_BTL_UDAPL_FRAG_ALIGN));   \
 } while (0);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

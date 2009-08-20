@@ -20,9 +20,7 @@
  * Global functions for MCA overall memchecker open and close
  */
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * Initialize the memchecker MCA framework
@@ -290,8 +288,6 @@ OPAL_DECLSPEC int opal_memchecker_base_set_vbits(void * p, char * vbits, size_t 
 #define opal_memchecker_base_set_vbits(p, vbits, len)
 #endif
     
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* OPAL_MEMCHECKER_BASE_H */

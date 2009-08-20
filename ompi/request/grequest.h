@@ -23,9 +23,7 @@
 #include "ompi_config.h"
 #include "ompi/request/request.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_grequest_t);
 
 /**
@@ -106,8 +104,6 @@ OMPI_DECLSPEC int ompi_grequest_complete(ompi_request_t *req);
  */
 OMPI_DECLSPEC int ompi_grequest_invoke_query(ompi_request_t *request,
                                              ompi_status_public_t *status);
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif

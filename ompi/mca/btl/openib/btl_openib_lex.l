@@ -27,9 +27,7 @@
 
 #include "btl_openib_lex.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /*
  * local functions
@@ -37,9 +35,7 @@ extern "C" {
 static int finish_parsing(void) ;
 static int btl_openib_ini_yywrap(void);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 /*
  * global variables

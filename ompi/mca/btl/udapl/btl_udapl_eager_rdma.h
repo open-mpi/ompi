@@ -15,9 +15,7 @@
 #include "ompi/mca/btl/udapl/btl_udapl_endpoint.h" 
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /*
  * Describe endpoint local memory region.
@@ -103,7 +101,5 @@ typedef struct mca_btl_udapl_eager_rdma_credit_t mca_btl_udapl_eager_rdma_credit
                                 (I) = 0;                                            \
                         } while (0)
     
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

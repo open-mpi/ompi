@@ -24,9 +24,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /*
  * Most of this file is just for ompi_info.  There are two interface
@@ -73,8 +71,6 @@ typedef struct opal_backtrace_base_component_2_0_0_t opal_backtrace_base_compone
     MCA_BASE_VERSION_2_0_0, \
     "backtrace", 2, 0, 0
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* OPAL_MCA_BACKTRACE_BACKTRACE_H */

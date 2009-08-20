@@ -30,8 +30,12 @@
 /*
  * local functions
  */
+BEGIN_C_DECLS
+
 static int finish_parsing(void) ;
 static int btl_pcie_cfg_yywrap(void);
+
+END_C_DECLS
 
 /*
  * global variables

@@ -31,12 +31,8 @@ struct utsname {
     char machine[OMPI_UTSNAME_LEN];
 };
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
     OPAL_DECLSPEC int uname(struct utsname *un);
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* oMPI_UTSNAME_H */

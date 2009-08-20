@@ -30,9 +30,7 @@
 #include "psm.h"
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /** 
  * MTL Module Interface
@@ -84,9 +82,7 @@ OMPI_DECLSPEC mca_mtl_psm_component_t mca_mtl_psm_component;
 		(tagsel) &= ~0xffff00000000ULL;					\
 	} while (0)
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif  /* MTL_PSM_TYPES_H_HAS_BEEN_INCLUDED */
 

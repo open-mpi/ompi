@@ -1,8 +1,7 @@
+#include "ompi_config.h"
 #include <assert.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 void PRINT_INT(int* i);
 
@@ -70,7 +69,5 @@ void ALIGN_C__(char *a, char *w, char *x, char *y, char *z)
   align_c(a, w, x, y, z);
 }
 
+END_C_DECLS
 
-#ifdef __cplusplus
-}
-#endif

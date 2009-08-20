@@ -116,9 +116,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/threads/mutex.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
     /**
      * \internal
      *
@@ -558,9 +556,7 @@ extern "C" {
     OPAL_DECLSPEC int opal_cmd_line_get_tail(opal_cmd_line_t *cmd, int *tailc, 
                                              char ***tailv) __opal_attribute_nonnull__(1) __opal_attribute_nonnull__(2);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 
 #endif /* OPAL_CMD_LINE_H */
