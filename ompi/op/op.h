@@ -498,20 +498,23 @@ static inline void ompi_op_reduce(ompi_op_t * op, void *source,
         op->o_func.intrinsic.fns[ompi_op_ddt_map[dtype->id]](source, target,
                                                              &count, &dtype,
                                                              op->o_func.intrinsic.modules[ompi_op_ddt_map[dtype->id]]);
+        return;
     }
 
     /* User-defined function */
-
-    else if (0 != (op->o_flags & OMPI_OP_FLAGS_FORTRAN_FUNC)) {
+    if (0 != (op->o_flags & OMPI_OP_FLAGS_FORTRAN_FUNC)) {
         f_dtype = OMPI_INT_2_FINT(dtype->d_f_to_c_index);
         f_count = OMPI_INT_2_FINT(count);
         op->o_func.fort_fn(source, target, &f_count, &f_dtype);
-    } else if (0 != (op->o_flags & OMPI_OP_FLAGS_CXX_FUNC)) {
+        return;
+    }
+    if (0 != (op->o_flags & OMPI_OP_FLAGS_CXX_FUNC)) {
         op->o_func.cxx_data.intercept_fn(source, target, &count, &dtype,
                                          op->o_func.cxx_data.user_fn);
-    } else {
-        op->o_func.c_fn(source, target, &count, &dtype);
+        return;
     }
+    op->o_func.c_fn(source, target, &count, &dtype);
+    return;
 }
 
 /**
