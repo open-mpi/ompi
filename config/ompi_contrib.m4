@@ -70,7 +70,7 @@ AC_DEFUN([OMPI_CONTRIB],[
     # autogen find the packages instead of this hard-coded list
     # (https://svn.open-mpi.org/trac/ompi/ticket/1162).
     # m4_define([contrib_software_list], [libnbc, vt])
-    m4_define([contrib_software_list], [vt])
+    m4_define([contrib_software_list], [libtrace, vt])
     m4_foreach(software, [contrib_software_list],
               [m4_include([ompi/contrib/]software[/configure.m4])
               _OMPI_CONTRIB_CONFIGURE(software)])

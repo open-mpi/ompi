@@ -695,7 +695,12 @@ EOF
     # do.  By this point, there should already be a header and all
     # that.  m4_includes are relative to the currently included file,
     # so need the .. to get us from config/ to the topsrcdir again.
-    if test $6 = "mca" ; then
+    # Note that the ompi contrib system comes through here as well,
+    # but they directly m4 include their own configure.m4 files, so we
+    # skip them here.
+    if test "$m4conf_framework" = "contrib" ; then
+        true
+    elif test $6 = "mca" ; then
         echo "m4_include(${m4conf_project}/mca/${m4conf_framework}/${m4conf_component}/configure.m4)" >> "$m4conf_ompi_topdir/$mca_m4_include_file"
     else
         echo "m4_include(${m4conf_project}/${m4conf_framework}/${m4conf_component}/configure.m4)" >> "$m4conf_ompi_topdir/$ext_m4_include_file"
@@ -1367,7 +1372,7 @@ process_project() {
     # process contributed software packages (ompi/contrib/*)
     if test "$project" = "ompi"; then
         for contrib_path in $project_path/contrib/*; do
-            process_dir $contrib_path $rg_cwd
+            process_dir $contrib_path $rg_cwd ompi contrib `basename $contrib_path`
         done
     fi
 
