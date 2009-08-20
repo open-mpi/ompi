@@ -55,16 +55,12 @@
 
 #endif /* ENABLE_TRACE */
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 OPAL_DECLSPEC extern int opal_trace_handle;
 OPAL_DECLSPEC void opal_trace_init(void);
 OPAL_DECLSPEC void opal_trace_finalize(void);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* OPAL_TRACE_H */

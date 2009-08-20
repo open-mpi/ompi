@@ -26,9 +26,7 @@
 #include "ompi/constants.h"
 #include "opal/sys/cache.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 struct mca_mem_pool_t;
 struct ompi_free_list_item_t;
@@ -306,8 +304,6 @@ static inline int __ompi_free_list_wait( ompi_free_list_t* fl,
         }                                                               \
     } while(0)
     
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif 
 

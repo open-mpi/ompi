@@ -26,9 +26,7 @@
 #include "btl_sctp_endpoint.h"
 #include <netinet/sctp.h>
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * Represents the state of a remote process and the set of addresses
@@ -109,7 +107,5 @@ void mca_btl_sctp_proc_add_vpid(orte_vpid_t vpid, struct mca_btl_sctp_proc_t *pr
 void mca_btl_sctp_proc_add_assoc_id(sctp_assoc_t id, struct mca_btl_sctp_proc_t *proc, struct mca_btl_sctp_proc_table_node *table);
 mca_btl_sctp_proc_t *mca_btl_sctp_proc_get(sctp_assoc_t id, struct mca_btl_sctp_proc_table_node *table);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

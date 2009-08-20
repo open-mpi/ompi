@@ -51,9 +51,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/class/opal_object.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * States of the module
@@ -267,9 +265,7 @@ OPAL_DECLSPEC extern opal_crs_base_module_t opal_crs;
     MCA_BASE_VERSION_2_0_0, \
     "crs", 2, 0, 0
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* OPAL_CRS_H */
 

@@ -24,9 +24,7 @@
 #include "ompi_config.h"
 #include "btl_template.h" 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * TEMPLATE send fratemplateent derived type.
@@ -106,7 +104,5 @@ OBJ_CLASS_DECLARATION(mca_btl_template_frag_user_t);
 
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

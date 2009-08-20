@@ -27,9 +27,7 @@
 #include "ompi/request/request.h"
 #include "ompi/mca/pml/pml.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /* prototypes */
 int ompi_coll_tuned_sendrecv_actual( void* sendbuf, int scount, 
@@ -121,9 +119,7 @@ ompi_coll_tuned_isendrecv( void* sendbuf, int scount, ompi_datatype_t* sdtype,
    return ret;
 }
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif /* MCA_COLL_TUNED_UTIL_EXPORT_H */
 
 

@@ -47,9 +47,7 @@
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/common/sm/common_sm_mmap.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /*
  * Shared Memory FIFOs
@@ -488,9 +486,7 @@ void mca_btl_sm_component_event_thread(opal_object_t*);
 #define MCA_BTL_SM_SIGNAL_PEER(peer)
 #endif
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif
 

@@ -26,9 +26,7 @@
 #include "opal/types.h"
 #include "pml_dr.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 #define MCA_PML_DR_VFRAG_NACKED  0x01
 #define MCA_PML_DR_VFRAG_RNDV    0x02
@@ -149,8 +147,6 @@ void mca_pml_dr_vfrag_reset(mca_pml_dr_vfrag_t*);
 
 void mca_pml_dr_vfrag_reschedule(mca_pml_dr_vfrag_t*);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif
 

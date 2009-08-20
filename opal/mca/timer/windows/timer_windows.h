@@ -24,9 +24,7 @@
 
 #include <opal/sys/timer.h>
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 OPAL_DECLSPEC extern opal_timer_t opal_timer_windows_freq;
 OPAL_DECLSPEC extern opal_timer_t opal_timer_windows_start;
@@ -60,8 +58,6 @@ opal_timer_base_get_freq(void)
 #define OPAL_TIMER_USEC_NATIVE 0
 #define OPAL_TIMER_USEC_SUPPORTED OPAL_HAVE_SYS_TIMER_GET_CYCLES
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif

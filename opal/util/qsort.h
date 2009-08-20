@@ -25,15 +25,11 @@
 #include <sys/types.h> /* for size_t */
 #endif
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 void opal_qsort(void *a, size_t n, size_t es, int (*cmp)(const void *, const void*));
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #else
 #error "Don't include opal/qsort/qsort.h directly"

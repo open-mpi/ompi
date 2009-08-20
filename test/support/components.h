@@ -23,9 +23,7 @@
 #include "opal/libltdl/ltdl.h"
 #include "opal/mca/mca.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
     /**
      * Generic function pointer, suitable for casting
@@ -80,8 +78,6 @@ extern "C" {
     int test_component_close(test_component_handle_t *handle);
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* OMPI_SUPPORT_COMPONENTS_H */

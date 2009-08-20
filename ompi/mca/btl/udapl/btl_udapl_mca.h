@@ -11,9 +11,7 @@
 #ifndef MCA_BTL_UDAPL_MCA_H
 #define MCA_BTL_UDAPL_MCA_H
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /* Define Integer Boundaries */
 #define REGINT_NEG_ONE_OK 0x01            /* value = -1 is valid */
@@ -61,7 +59,5 @@ extern "C" {
 int mca_btl_udapl_register_mca_params(void);
 
     
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

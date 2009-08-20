@@ -21,9 +21,7 @@
 
 #include <sys/time.h>
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 typedef uint64_t opal_timer_t;
 
@@ -70,8 +68,6 @@ opal_timer_base_get_freq()
 #define OPAL_TIMER_USEC_NATIVE 1
 #define OPAL_TIMER_USEC_SUPPORTED 1
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif

@@ -33,9 +33,7 @@
 #define OPAL_CR_H
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /*
  * Some defines shared with opal-[checkpoint|restart] commands
@@ -330,9 +328,7 @@ typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
         }                                               \
     }
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* OPAL_CR_H */
 

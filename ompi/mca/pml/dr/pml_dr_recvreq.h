@@ -30,9 +30,7 @@
 #include "pml_dr_vfrag.h"
 #include "pml_dr_comm.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 
 struct mca_pml_dr_recv_request_t {
@@ -400,8 +398,6 @@ do {                                                                          \
    }                                                                          \
 } while(0)
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif
 

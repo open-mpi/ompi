@@ -32,9 +32,7 @@
 #include "ompi/types.h"
 #include "ompi/mca/bml/bml.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * BML module interface functions and attributes.
@@ -69,8 +67,6 @@ int mca_bml_r2_ft_event(int status);
 
 int mca_bml_r2_finalize( void );
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* OMPI_MCA_BML_R2_H */

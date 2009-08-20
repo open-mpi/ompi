@@ -53,9 +53,7 @@ struct mca_io_base_request_t {
  */
 typedef struct mca_io_base_request_t mca_io_base_request_t;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
     /**
      * Declare the class
      */
@@ -159,8 +157,6 @@ extern "C" {
         return 0;
     }
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif

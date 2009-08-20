@@ -30,9 +30,7 @@
 #include "btl_udapl.h"
 #include "btl_udapl_eager_rdma.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 
 #define BTL_UDAPL_TOKEN_AVAIL(E, C, T) \
@@ -216,7 +214,5 @@ mca_btl_udapl_endpoint_t* mca_btl_udapl_find_endpoint_address_match(
     struct mca_btl_udapl_module_t* btl,
     mca_btl_udapl_addr_t addr);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

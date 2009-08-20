@@ -16,9 +16,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/request/request.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
     
 /* PML_V->PROTOCOL Called by MCA_PML_V framework to initialize the component.
  * 
@@ -90,9 +88,7 @@ typedef struct mca_vprotocol_base_module_2_0_0_t
 } mca_vprotocol_base_module_2_0_0_t;
 typedef mca_vprotocol_base_module_2_0_0_t mca_vprotocol_base_module_t;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 /* silently include the pml_v.h as every file including vprotocol.h will also
  * need it

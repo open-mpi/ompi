@@ -26,9 +26,7 @@
 #include "ompi/mca/btl/btl.h"
 #include "pml_ob1_hdr.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 struct mca_pml_ob1_buffer_t {
     size_t len;
@@ -168,8 +166,6 @@ extern void mca_pml_ob1_recv_frag_callback_fin( mca_btl_base_module_t *btl,
                                                 void* cbdata );
 
                                               
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif
 

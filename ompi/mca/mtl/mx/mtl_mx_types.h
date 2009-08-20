@@ -29,9 +29,7 @@
 #include "myriexpress.h"
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /** 
  * MTL Module Interface
@@ -121,9 +119,7 @@ OMPI_MODULE_DECLSPEC extern mca_mtl_mx_component_t mca_mtl_mx_component;
     
 
    
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif  /* MTL_MX_TYPES_H_HAS_BEEN_INCLUDED */
 

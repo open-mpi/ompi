@@ -29,14 +29,13 @@
 /*
  * local functions
  */
+
+BEGIN_C_DECLS
+
 static int finish_parsing(void);
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
 int opal_util_keyval_yywrap(void);
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+
+END_C_DECLS
 
 /*
  * global variables

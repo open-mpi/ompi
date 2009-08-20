@@ -22,14 +22,10 @@
 #include "opal_config.h"
 #include "opal/mca/timer/windows/timer_windows.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 OPAL_DECLSPEC extern const opal_timer_base_component_2_0_0_t mca_timer_windows_component;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif

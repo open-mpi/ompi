@@ -28,9 +28,7 @@
 #include <infiniband/verbs.h>
 #include "ompi/mca/btl/btl.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 struct mca_btl_openib_reg_t;
 
@@ -347,7 +345,5 @@ typedef struct mca_btl_openib_frag_init_data_t mca_btl_openib_frag_init_data_t;
 void mca_btl_openib_frag_init(ompi_free_list_item_t* item, void* ctx);
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

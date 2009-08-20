@@ -26,9 +26,7 @@
 
 #include "opal/util/show_help_lex.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /*
  * public functions
@@ -40,9 +38,7 @@ extern int opal_show_help_finish_parsing(void);
  */
 static int opal_show_help_yywrap(void);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 /*
  * global variables

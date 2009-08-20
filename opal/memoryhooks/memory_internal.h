@@ -30,17 +30,13 @@
 #define OPAL_MEMORY_MUNMAP_SUPPORT 0x0002
 #define OPAL_MEMORY_CHUNK_SUPPORT  0x0004
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 OPAL_DECLSPEC void opal_mem_hooks_set_support(int support);
 
 OPAL_DECLSPEC void opal_mem_hooks_release_hook(void *buf, size_t length, bool from_alloc);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 
 #endif /* OPAL_MEMORY_MEMORY_INTERNAL_H */

@@ -26,9 +26,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/proc/proc.h"
 #include "pml_dr_endpoint.h"
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 
 struct mca_pml_dr_comm_proc_t {
@@ -83,8 +81,6 @@ OBJ_CLASS_DECLARATION(mca_pml_dr_comm_t);
 extern int mca_pml_dr_comm_init(mca_pml_dr_comm_t* dr_comm, ompi_communicator_t* ompi_comm);
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif
 

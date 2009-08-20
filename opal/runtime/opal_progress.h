@@ -28,9 +28,7 @@
 #ifndef OPAL_RUNTIME_OPAL_PROGRESS_H
 #define OPAL_RUNTIME_OPAL_PROGRESS_H
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 #include "opal_config.h"
 #include "opal/threads/mutex.h"
@@ -226,9 +224,7 @@ static inline uint32_t opal_progress_recursion_depth(void)
 }
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif
 

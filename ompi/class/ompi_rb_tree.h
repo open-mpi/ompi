@@ -31,9 +31,7 @@
 #include "opal/class/opal_object.h"
 #include "ompi/class/ompi_free_list.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 /*
  * Data structures and datatypes
  */
@@ -215,8 +213,6 @@ OMPI_DECLSPEC int ompi_rb_tree_traverse(ompi_rb_tree_t *tree,
   */
 OMPI_DECLSPEC int ompi_rb_tree_size(ompi_rb_tree_t *tree);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif /* OMPI_RB_TREE_H */
 

@@ -24,9 +24,7 @@
 #include "ompi/mca/bml/bml.h"
 #include "ompi/class/ompi_seq_tracker.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 /**
  *  This is the pml level endpoint
  *   simply inherity the bml_base_endpoint and 
@@ -48,8 +46,6 @@ typedef struct mca_pml_dr_endpoint_t mca_pml_dr_endpoint_t;
 OBJ_CLASS_DECLARATION(mca_pml_dr_endpoint_t);
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif
 

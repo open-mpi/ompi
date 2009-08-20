@@ -28,9 +28,7 @@
 #include <arpa/inet.h>
 #endif
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 
 /**
@@ -91,7 +89,5 @@ typedef mca_btl_base_endpoint_t  mca_btl_gm_endpoint_t;
 
 OBJ_CLASS_DECLARATION(mca_btl_gm_endpoint_t);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

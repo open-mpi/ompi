@@ -29,9 +29,7 @@
  * Global functions for MCA overall memory open and close
  */
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
     /**
      * Initialize the memory MCA framework
@@ -71,7 +69,5 @@ extern "C" {
 
     OPAL_DECLSPEC extern opal_list_t opal_memory_base_components_opened;
     
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif /* OPAL_BASE_MEMORY_H */

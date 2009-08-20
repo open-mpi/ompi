@@ -33,9 +33,7 @@
 #include "ompi/group/group.h"
 #include "ompi/mca/osc/osc.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /* flags */
 #define OMPI_WIN_FREED        0x00000001
@@ -193,7 +191,5 @@ static inline bool ompi_win_comm_allowed(ompi_win_t *win) {
     return (0 != (OMPI_WIN_ACCESS_EPOCH & mode || OMPI_WIN_FENCE & mode) ? true : false);
 }
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

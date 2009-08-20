@@ -27,9 +27,7 @@
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/allocator/allocator.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 struct mca_mpool_sm_component_t {
   mca_mpool_base_component_t super;
@@ -100,8 +98,6 @@ void mca_mpool_sm_free(
  */
 int mca_mpool_sm_ft_event(int state);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif

@@ -173,15 +173,10 @@ struct timezone
   int tz_dsttime;
 };
 
-#if defined(c_plusplus) || defined (__cplusplus)
-extern "C"
-{
-#endif
+BEGIN_C_DECLS
 
 OPAL_DECLSPEC int gettimeofday (struct timeval *tv, struct timezone *tz);
 
-#if defined(c_plusplus) || defined (__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif				/* OMPI_TIME_H */

@@ -25,17 +25,12 @@
 #error This file is supposed to be included only from win_compat.h
 #endif  /* OMPI_WIN_COMPAT_H */
 
-#if defined(c_plusplus) || defined (__cplusplus)
-extern "C"
-{
-#endif
+BEGIN_C_DECLS
 
 OPAL_DECLSPEC pid_t waitpid (pid_t pid, int *status, int options) ;
 
 OPAL_DECLSPEC int kill(pid_t pid, int sig) ;
 
-#if defined(c_plusplus) || defined (__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif				/* OMPI_PROCESS_H */

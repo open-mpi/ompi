@@ -27,9 +27,7 @@
 #include <psm.h>
 #include <psm_mq.h>
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 
 /* MTL interface functions */
@@ -85,9 +83,7 @@ int ompi_mtl_psm_module_init(int local_rank, int num_local_procs);
     
 
    
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif  /* MTL_PSM_H_HAS_BEEN_INCLUDED */
 

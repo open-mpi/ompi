@@ -65,9 +65,7 @@
 #include "opal/mca/mca.h"
 #include "mpi.h" /* needed for MPI_ANY_TAG */
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /*
  * PML component types
@@ -538,7 +536,5 @@ typedef mca_pml_base_module_1_0_0_t mca_pml_base_module_t;
 OMPI_DECLSPEC extern mca_pml_base_module_t mca_pml;
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif /* MCA_PML_H */

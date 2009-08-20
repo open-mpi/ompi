@@ -25,9 +25,7 @@
 #include <sys/types.h>
 #endif
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /* define a structure to hold the various limits we find
  * so that users can neatly access them
@@ -49,8 +47,6 @@ OPAL_DECLSPEC extern opal_sys_limits_t opal_sys_limits;
  */
 OPAL_DECLSPEC int opal_util_init_sys_limits(void);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* OPAL_STRNCPY_H */

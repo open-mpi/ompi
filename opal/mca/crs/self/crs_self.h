@@ -31,9 +31,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/crs/crs.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 #define PREFIX_DEFAULT    ("opal_crs_self_user")
 #define SUFFIX_CHECKPOINT ("checkpoint")
@@ -90,8 +88,6 @@ extern "C" {
     int opal_crs_self_reg_thread(void);
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* MCA_CRS_SELF_EXPORT_H */

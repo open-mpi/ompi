@@ -32,15 +32,11 @@
 #endif
 #define strncpy opal_strncpy
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /* Might also be pure? */
 OPAL_DECLSPEC char *opal_strncpy(char *dest, const char *src, size_t len) __opal_attribute_nonnull__(1) __opal_attribute_nonnull__(2);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* OPAL_STRNCPY_H */

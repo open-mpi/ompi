@@ -2016,7 +2016,7 @@ OMPI_DECLSPEC  double PMPI_Wtime(void);
  *   - We are using a C++ compiler
  */
 #if !defined(OMPI_SKIP_MPICXX) && OMPI_WANT_CXX_BINDINGS && !OMPI_BUILDING
-#if defined(__cplusplus) || defined(c_plusplus)
+#if defined(c_plusplus) || defined(__cplusplus)
 #include "openmpi/ompi/mpi/cxx/mpicxx.h"
 #endif
 #endif

@@ -27,9 +27,7 @@
 #include "opal/mca/mca.h"
 #include "ompi/mca/allocator/allocator.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 /**
  * Structure which describes a selected module.
  */
@@ -69,8 +67,6 @@ OMPI_DECLSPEC mca_allocator_base_component_t* mca_allocator_component_lookup(con
  */
 OMPI_DECLSPEC extern opal_list_t mca_allocator_base_components;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* MCA_ALLOCATOR_BASE_H */

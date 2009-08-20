@@ -35,9 +35,7 @@
 # endif
 #endif
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 #if OPAL_ENABLE_PTY_SUPPORT 
 
@@ -51,8 +49,6 @@ OPAL_DECLSPEC int opal_openpty(int *amaster, int *aslave, char *name,
 
 #endif
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* OPAL_UTIL_PTY_H */

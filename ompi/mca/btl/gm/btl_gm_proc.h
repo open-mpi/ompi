@@ -24,9 +24,7 @@
 #include "btl_gm.h"
 #include "btl_gm_endpoint.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 OBJ_CLASS_DECLARATION(mca_btl_gm_proc_t);
 
 /**
@@ -65,7 +63,5 @@ typedef struct mca_btl_gm_proc_t mca_btl_gm_proc_t;
 mca_btl_gm_proc_t* mca_btl_gm_proc_create(ompi_proc_t* ompi_proc);
 int mca_btl_gm_proc_insert(mca_btl_gm_proc_t*, mca_btl_base_endpoint_t*);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

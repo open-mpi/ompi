@@ -84,9 +84,7 @@
 #endif
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 /**********************************************************************
  *
  * Data structures for atomic ops
@@ -616,8 +614,6 @@ static inline int64_t opal_atomic_sub_ptr( volatile void* addr, void* delta );
  *********************************************************************/
 #include "opal/sys/atomic_impl.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* OPAL_SYS_ATOMIC_H */

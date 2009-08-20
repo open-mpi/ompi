@@ -33,9 +33,7 @@
 
 #include <libcr.h>
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
     /*
      * Local Component structures
@@ -80,8 +78,6 @@ extern "C" {
 
     int opal_crs_blcr_reg_thread(void);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* MCA_CRS_BLCR_EXPORT_H */

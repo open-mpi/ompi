@@ -82,7 +82,7 @@
   - openExternC: open extern "C" declaration
   -->
 <xsl:template name="openExternC">
-  <xsl:text>#ifdef __cplusplus</xsl:text> <xsl:value-of select="$nl"/>
+  <xsl:text>#if defined(c_plusplus) || defined(__cplusplus)</xsl:text> <xsl:value-of select="$nl"/>
   <xsl:text>extern "C" {</xsl:text> <xsl:value-of select="$nl"/>
   <xsl:text>#endif</xsl:text> <xsl:value-of select="$nl"/>
   <xsl:value-of select="$nl"/>
@@ -93,7 +93,7 @@
   - closeExternC: close extern "C" declaration
   -->
 <xsl:template name="closeExternC">
-  <xsl:text>#ifdef __cplusplus</xsl:text> <xsl:value-of select="$nl"/>
+  <xsl:text>#if defined(c_plusplus) || defined(__cplusplus)</xsl:text> <xsl:value-of select="$nl"/>
   <xsl:text>}</xsl:text> <xsl:value-of select="$nl"/>
   <xsl:text>#endif</xsl:text> <xsl:value-of select="$nl"/>
   <xsl:value-of select="$nl"/>

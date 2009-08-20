@@ -27,9 +27,7 @@
 #include "btl_ofud.h"
 #include "btl_ofud_endpoint.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * Represents the state of a remote process and the set of addresses
@@ -72,7 +70,5 @@ int mca_btl_ud_proc_insert(mca_btl_ud_proc_t*, mca_btl_base_endpoint_t*);
 
 int mca_btl_ud_proc_remove(mca_btl_ud_proc_t*, mca_btl_base_endpoint_t*);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

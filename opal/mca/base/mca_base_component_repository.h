@@ -21,9 +21,7 @@
 
 #include "opal_config.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
     OPAL_DECLSPEC int mca_base_component_repository_init(void);
 
@@ -77,8 +75,6 @@ extern "C" {
     OPAL_DECLSPEC void mca_base_component_repository_release(const mca_base_component_t *component);
     OPAL_DECLSPEC void mca_base_component_repository_finalize(void);
     
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* MCA_BASE_COMPONENT_REPOSITORY_H */

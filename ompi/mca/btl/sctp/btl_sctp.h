@@ -54,9 +54,7 @@
 #endif
 
 #define MCA_BTL_SCTP_STATISTICS 0
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 
 /**
@@ -326,7 +324,5 @@ extern mca_btl_base_descriptor_t* mca_btl_sctp_prepare_dst(
     uint32_t flags); 
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

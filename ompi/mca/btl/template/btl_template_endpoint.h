@@ -23,9 +23,7 @@
 #include "opal/event/event.h"
 #include "btl_template_frag.h"
 #include "btl_template.h"
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * An abstraction that represents a connection to a endpoint process.
@@ -48,7 +46,5 @@ typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;
 typedef mca_btl_base_endpoint_t  mca_btl_template_endpoint_t;
 OBJ_CLASS_DECLARATION(mca_btl_template_endpoint_t);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

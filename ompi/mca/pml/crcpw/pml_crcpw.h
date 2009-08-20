@@ -35,9 +35,7 @@
 #include "ompi/mca/crcp/crcp.h"
 #include "ompi/mca/crcp/base/base.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
     /**
      * CRCPW PML module
@@ -118,8 +116,6 @@ extern "C" {
     
     int mca_pml_crcpw_ft_event(int state);
     
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* MCA_PML_CRCPW_H */

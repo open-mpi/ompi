@@ -29,9 +29,7 @@
 
 #include "opal/class/opal_object.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 typedef void *(*opal_thread_fn_t) (opal_object_t *);
 
@@ -58,8 +56,6 @@ OPAL_DECLSPEC int  opal_thread_join(opal_thread_t *, void **thread_return);
 OPAL_DECLSPEC bool opal_thread_self_compare(opal_thread_t*);
 OPAL_DECLSPEC opal_thread_t *opal_thread_get_self(void);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* OPAL_THREAD_H */

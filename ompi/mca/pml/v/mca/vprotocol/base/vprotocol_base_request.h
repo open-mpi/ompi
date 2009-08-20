@@ -15,9 +15,7 @@
 #include "ompi/mca/pml/base/pml_base_request.h"
 #include "../vprotocol.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 
 /** Rebuild the PML requests pools to make room for extra space at end of each
@@ -79,8 +77,6 @@ OMPI_DECLSPEC int mca_vprotocol_base_request_parasite(void);
     )                                                                          \
 )
  
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* __INCLUDE_VPROTOCOL_REQUEST_H_ */

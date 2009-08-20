@@ -16,9 +16,7 @@
 #include <stdio.h>
 #include "pml_v.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 int pml_v_output_open(char *output, int verbosity);
 void pml_v_output_close(void);
@@ -97,8 +95,6 @@ static inline void V_OUTPUT_VERBOSE(int V, const char* fmt, ... ) {
 }
 #endif /* DEBUG */
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* PML_V_OUTPUT_H_HAS_BEEN_INCLUDED */

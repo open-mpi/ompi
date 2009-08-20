@@ -19,9 +19,7 @@
 #include "opal/mca/mca.h"
 #include "orte/mca/plm/plm.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 struct orte_plm_ccp_component_t {
     orte_plm_base_component_t super;
@@ -39,8 +37,6 @@ typedef struct orte_plm_ccp_component_t orte_plm_ccp_component_t;
 ORTE_DECLSPEC extern orte_plm_ccp_component_t mca_plm_ccp_component;
 extern orte_plm_base_module_t orte_plm_ccp_module;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* ORTE_plm_CCP_EXPORT_H */

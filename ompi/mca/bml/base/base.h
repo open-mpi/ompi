@@ -30,9 +30,7 @@
  * Global functions for the BML
  */
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 
 struct mca_bml_base_selected_module_t {
@@ -66,7 +64,5 @@ OMPI_DECLSPEC extern mca_bml_base_component_t mca_bml_component;
 OMPI_DECLSPEC extern opal_list_t mca_bml_base_components_available; 
 OMPI_DECLSPEC extern mca_bml_base_module_t mca_bml; 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif /* MCA_BML_BASE_H */

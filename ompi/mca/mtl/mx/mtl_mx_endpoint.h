@@ -27,9 +27,7 @@
 
 #include "myriexpress.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 OBJ_CLASS_DECLARATION(mca_mtl_mx_endpoint_t);
 
@@ -70,7 +68,5 @@ OBJ_CLASS_DECLARATION(mca_mtl_mx_endpoint);
 mca_mtl_mx_endpoint_t* mca_mtl_mx_endpoint_create(ompi_proc_t*);
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

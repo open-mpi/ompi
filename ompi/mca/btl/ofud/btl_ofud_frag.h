@@ -30,9 +30,7 @@
 #include "btl_ofud.h"
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 
 /**
@@ -142,7 +140,5 @@ OBJ_CLASS_DECLARATION(mca_btl_ud_recv_frag_t);
 
 struct mca_btl_ud_module_t;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

@@ -25,16 +25,12 @@
 #error This file is supposed to be included only from win_compat.h
 #endif  /* OMPI_WIN_COMPAT_H */
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 OPAL_DECLSPEC int inet_pton(int af, const char *src, void *dst);
 
 OPAL_DECLSPEC const char *inet_ntop(int af, const void *src, char *dst, size_t size);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* OMPI_INET_H */

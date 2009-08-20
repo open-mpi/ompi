@@ -25,9 +25,7 @@
 #include "btl_udapl.h"
 #include "btl_udapl_endpoint.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * Represents the state of a remote process and the set of addresses
@@ -68,7 +66,5 @@ OBJ_CLASS_DECLARATION(mca_btl_udapl_proc_t);
 mca_btl_udapl_proc_t* mca_btl_udapl_proc_create(ompi_proc_t* ompi_proc);
 int mca_btl_udapl_proc_insert(mca_btl_udapl_proc_t*, mca_btl_base_endpoint_t*);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

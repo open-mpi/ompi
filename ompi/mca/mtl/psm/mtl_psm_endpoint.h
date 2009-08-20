@@ -27,9 +27,7 @@
 
 #include "psm.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 OBJ_CLASS_DECLARATION(mca_mtl_psm_endpoint_t);
 
@@ -57,7 +55,5 @@ typedef struct mca_mtl_base_endpoint_t mca_mtl_base_endpoint_t;
 typedef mca_mtl_base_endpoint_t  mca_mtl_psm_endpoint_t;
 OBJ_CLASS_DECLARATION(mca_mtl_psm_endpoint);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

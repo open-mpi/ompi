@@ -37,9 +37,7 @@
 #include "pml_dr_endpoint.h"
 #include "opal/event/event.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 struct mca_pml_dr_send_request_t {
     mca_pml_base_send_request_t req_send;
@@ -488,8 +486,6 @@ void mca_pml_dr_send_request_frag_ack(
 void mca_pml_dr_sendreq_cleanup_active(mca_btl_base_module_t* btl);
 
  
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif
 

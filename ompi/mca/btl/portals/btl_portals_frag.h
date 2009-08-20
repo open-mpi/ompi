@@ -19,9 +19,7 @@
 #ifndef OMPI_BTL_PORTALS_FRAG_H
 #define OMPI_BTL_PORTALS_FRAG_H
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * Portals send fragment derived type
@@ -116,7 +114,5 @@ OBJ_CLASS_DECLARATION(mca_btl_portals_frag_recv_t);
 }
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

@@ -20,13 +20,9 @@
 
 #include "opal/mca/backtrace/backtrace.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
     OPAL_DECLSPEC extern const opal_backtrace_base_component_2_0_0_t mca_backtrace_none_component;
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 const opal_backtrace_base_component_2_0_0_t mca_backtrace_none_component = {
     /* First, the mca_component_t struct containing meta information

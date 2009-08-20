@@ -20,17 +20,13 @@
 #ifndef MCA_PML_OB1_COMPONENT_H
 #define MCA_PML_OB1_COMPONENT_H
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /*
  * PML module functions.
  */
 OMPI_MODULE_DECLSPEC extern mca_pml_base_component_2_0_0_t mca_pml_ob1_component;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif

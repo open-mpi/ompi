@@ -29,9 +29,7 @@
 #include "btl_ofud.h"
 #include "btl_ofud_frag.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 struct mca_btl_ud_addr_t {
     uint32_t qp_num;
@@ -68,7 +66,5 @@ OBJ_CLASS_DECLARATION(mca_btl_ud_endpoint_t);
 int mca_btl_ud_endpoint_post_send(struct mca_btl_ud_module_t* ud_btl,
                                   struct mca_btl_ud_frag_t * frag);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif

@@ -35,9 +35,7 @@
  * structure. They are the "meta" functions to ensure smooth op.
  * ******************************************************************
  */
-#if defined(__cplusplus) || defined(c_plusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 int mca_topo_unity_component_init_query(bool enable_progress_threads,
                                         bool enable_mpi_threads);
@@ -79,8 +77,6 @@ int mca_topo_unity_graph_map (struct ompi_communicator_t *comm,
  * ******************************************************************
  */ 
                                      
-#if defined(__cplusplus) || defined(c_plusplus)
-    }
-#endif
+END_C_DECLS
 
 #endif /* MCA_TOPO_UNITY_H */

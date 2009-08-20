@@ -46,9 +46,7 @@
 #include "opal/mca/paffinity/linux/plpa/src/libplpa/plpa.h"
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
     /**
      * Globally exported variable
@@ -67,7 +65,5 @@ extern "C" {
      */
     int opal_paffinity_linux_component_query(mca_base_module_t **module, int *priority);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif /* MCA_PAFFINITY_LINUX_EXPORT_H */

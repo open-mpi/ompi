@@ -33,9 +33,7 @@
 #include "ompi/mca/mpool/mpool.h" 
 #include "ompi/mca/btl/btl.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 #define MCA_BTL_HAS_MPOOL 1
 
@@ -313,7 +311,5 @@ extern mca_btl_base_descriptor_t* mca_btl_template_prepare_dst(
   */
 int mca_btl_template_ft_event(int state);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 #endif
