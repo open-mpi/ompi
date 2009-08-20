@@ -65,8 +65,8 @@ static const char FUNC_NAME[] = "MPI_WAITSOME";
 
 
 void mpi_waitsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests,
-		    MPI_Fint *outcount, MPI_Fint *array_of_indices,
-		    MPI_Fint *array_of_statuses, MPI_Fint *ierr)
+                    MPI_Fint *outcount, MPI_Fint *array_of_indices,
+                    MPI_Fint *array_of_statuses, MPI_Fint *ierr)
 {
     MPI_Request *c_req;
     MPI_Status  *c_status;
@@ -95,8 +95,8 @@ void mpi_waitsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests,
                                          c_status));
 
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
-	OMPI_SINGLE_INT_2_FINT(outcount);
-	OMPI_ARRAY_INT_2_FINT(array_of_indices, *incount);
+        OMPI_SINGLE_INT_2_FINT(outcount);
+        OMPI_ARRAY_INT_2_FINT(array_of_indices, *incount);
 
         /* Increment indexes by one for fortran conventions */
 
