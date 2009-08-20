@@ -47,6 +47,9 @@ Trunk (not on release branches yet)
 1.3.4 (expected)
 ----------------
 
+- Fix MPI_COMM_SPAWN[_MULTIPLE] to only error-check the info arguments
+  on the root process.  Thanks to Federico Golfre Andreasi for
+  reporting the problem.
 - Pass visibility flags to libltdl's configure script, resulting in
   those symbols being hidden.  This appears to mainly solve the
   problem of applications attempting to use different versions of
