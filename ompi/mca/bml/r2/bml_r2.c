@@ -267,7 +267,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
                 }
                 if( (bml_btl->btl_flags & MCA_BTL_FLAGS_GET) && (NULL == btl->btl_get) ) {
                     opal_output(0, "mca_bml_r2_add_procs: The GET flag is specified for"
-                                " the %s BTL without any GET function attached. Disard the flag !",
+                                " the %s BTL without any GET function attached. Discard the flag !",
                                 bml_btl->btl->btl_component->btl_version.mca_component_name);
                     bml_btl->btl_flags ^= MCA_BTL_FLAGS_GET;
                 }
