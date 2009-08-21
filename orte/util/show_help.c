@@ -180,7 +180,7 @@ static char* xml_format(unsigned char *input)
         if ('&' == input[i]) {
             if (k+5 >= outlen) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                goto process;
+                goto error;
             }
             snprintf(qprint, 10, "&amp;");
             for (j=0; j < (int)strlen(qprint) && k < outlen; j++) {
@@ -189,7 +189,7 @@ static char* xml_format(unsigned char *input)
         } else if ('<' == input[i]) {
             if (k+4 >= outlen) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                goto process;
+                goto error;
             }
             snprintf(qprint, 10, "&lt;");
             for (j=0; j < (int)strlen(qprint) && k < outlen; j++) {
@@ -198,7 +198,7 @@ static char* xml_format(unsigned char *input)
         } else if ('>' == input[i]) {
             if (k+4 >= outlen) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                goto process;
+                goto error;
             }
             snprintf(qprint, 10, "&gt;");
             for (j=0; j < (int)strlen(qprint) && k < outlen; j++) {
@@ -208,7 +208,7 @@ static char* xml_format(unsigned char *input)
             /* this is a non-printable character, so escape it too */
             if (k+7 >= outlen) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                goto process;
+                goto error;
             }
             snprintf(qprint, 10, "&#%03d;", (int)input[i]);
             for (j=0; j < (int)strlen(qprint) && k < outlen; j++) {
@@ -236,8 +236,7 @@ static char* xml_format(unsigned char *input)
             output[k++] = input[i];
         }    
     }
-    
-process:
+
     if (!endtagged) {
         /* need to add an endtag */
         for (j=0; j < endtaglen && k < outlen-1; j++) {
@@ -247,6 +246,14 @@ process:
     }
     
     return output;
+    
+error:
+    /* if we couldn't complete the processing for
+     * some reason, return the unprocessed input
+     * so at least the message gets out!
+     */
+    free(output);
+    return (char*)input;
 }
 
 
