@@ -159,6 +159,10 @@ static char* xml_format(unsigned char *input)
     len = strlen((char*)input);
     /* add some arbitrary size padding */
     output = (char*)malloc((len+1024)*sizeof(char));
+    if (NULL == output) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return (char*)input; /* default to no xml formatting */
+    }
     memset(output, 0, len+1024);
     outlen = len+1023;
     endtaglen = strlen(endtag);
