@@ -42,6 +42,7 @@
 #include "opal/util/argv.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/mca/paffinity/paffinity.h"
+#include "opal/util/printf.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/util/show_help.h"
@@ -161,6 +162,20 @@ static int rte_init(void)
         goto error;
     }
     orte_process_info.num_procs = strtol(envar, NULL, 10);
+    
+    /* if this is SLURM 2.0 or above, get our port
+     * assignments for use in the OOB
+     */
+    if (NULL != (envar = getenv("SLURM_STEP_RESV_PORTS"))) {
+        /* convert this to an MCA param that will be
+         * picked up by the OOB
+         */
+        orte_oob_static_ports = strdup(envar);
+        OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
+                             "%s using SLURM-reserved ports %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             envar));
+    }
     
     /* get my local nodeid */
     if (NULL == (envar = getenv("SLURM_NODEID"))) {

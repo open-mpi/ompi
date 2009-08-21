@@ -319,7 +319,7 @@ int mca_oob_tcp_component_open(void)
     mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
                               "static_ports", "Static ports for daemons and procs (IPv4)",
                               false, false,
-                              NULL,
+                              orte_oob_static_ports,
                               &str);
     /* if ports were provided, parse the provided range */
     if (NULL != str) {
@@ -366,7 +366,7 @@ int mca_oob_tcp_component_open(void)
     mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
                               "static_ports_v6", "Static ports for daemons and procs (IPv6)",
                               false, false,
-                              NULL,
+                              orte_oob_static_ports,
                               &str);
     if (NULL != str) {
         orte_static_ports = true;
