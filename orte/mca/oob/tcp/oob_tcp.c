@@ -797,7 +797,7 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
     /* cleanup and return the error */
     CLOSE_THE_SOCKET(*target_sd);
     opal_argv_free(ports);
-    return ORTE_ERROR;
+    return ORTE_ERR_SOCKET_NOT_AVAILABLE;
 
 
 socket_binded:

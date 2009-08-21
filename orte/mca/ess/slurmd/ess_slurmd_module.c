@@ -83,6 +83,7 @@ orte_ess_base_module_t orte_ess_slurmd_module = {
 
 /* Local globals */
 static bool app_init_complete;
+static bool slurm20;
 
 /****    MODULE FUNCTIONS    ****/
 
@@ -108,6 +109,7 @@ static int rte_init(void)
     
     /* init flag */
     app_init_complete = false;
+    slurm20 = false;
     
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -171,6 +173,7 @@ static int rte_init(void)
          * picked up by the OOB
          */
         orte_oob_static_ports = strdup(envar);
+        slurm20 = true;
         OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                              "%s using SLURM-reserved ports %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -350,10 +353,14 @@ static int rte_init(void)
     return ORTE_SUCCESS;
     
 error:
+    if (ORTE_ERR_SOCKET_NOT_AVAILABLE == ret && slurm20) {
+        /* exit silently with a special error code for slurm 2.0 */
+        exit(108);
+    }
+    
     orte_show_help("help-orte-runtime.txt",
                    "orte_init:startup:internal-failure",
                    true, error, ORTE_ERROR_NAME(ret), ret);
-    
     return ret;
 }
 
