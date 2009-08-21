@@ -58,16 +58,6 @@ AC_DEFUN([MCA_crs_blcr_CONFIG],[
                   check_crs_blcr_libdir_msg="$with_blcr_libdir (from --with-blcr-libdir)"])
           ])
 
-    crs_blcr_save_CFLAGS="$CFLAGS"
-    crs_blcr_save_CPPFLAGS="$CPPFLAGS"
-    crs_blcr_save_LDFLAGS="$LDFLAGS"
-    crs_blcr_save_LIBS="$LIBS"
-
-    crs_blcr_CFLAGS="$CFLAGS"
-    crs_blcr_CPPFLAGS="$CPPFLAGS"
-    crs_blcr_LDFLAGS="$LDFLAGS"
-    crs_blcr_LIBS="$LIBS"
-
     AS_IF([test "$check_crs_blcr_good" != "yes"], [$2],
           [AC_MSG_CHECKING([for BLCR dir])
            AC_MSG_RESULT([$check_crs_blcr_dir_msg])
@@ -84,6 +74,16 @@ AC_DEFUN([MCA_crs_blcr_CONFIG],[
                               [check_crs_blcr_good="no"])
           ])
 
+    crs_blcr_save_CFLAGS="$CFLAGS"
+    crs_blcr_save_CPPFLAGS="$CPPFLAGS"
+    crs_blcr_save_LDFLAGS="$LDFLAGS"
+    crs_blcr_save_LIBS="$LIBS"
+
+    crs_blcr_CFLAGS="$CFLAGS $crs_blcr_check_CFLAGS"
+    crs_blcr_CPPFLAGS="$CPPFLAGS $crs_blcr_check_CPPFLAGS"
+    crs_blcr_LDFLAGS="$LDFLAGS $crs_blcr_check_LDFLAGS"
+    crs_blcr_LIBS="$LIBS $crs_blcr_check_LIBS"
+
     # Check to see if we found the BLCR libcr.h library
     # If we did then add the arguments to the wrapper compiler
     AS_IF([test "$check_crs_blcr_good" != "yes"], [$2],
@@ -94,20 +94,19 @@ AC_DEFUN([MCA_crs_blcr_CONFIG],[
            # we just strip them off for this component
            AC_MSG_WARN([Removed -pedantic and -Wundef from CFLAGS for blcr component because libcr.h is not really ANSI C])
            # Strip off problematic arguments
-           crs_blcr_CFLAGS="`echo $crs_blcr_save_CFLAGS | sed 's/-pedantic//g'`"
+           crs_blcr_CFLAGS="`echo $crs_blcr_CFLAGS | sed 's/-pedantic//g'`"
            crs_blcr_CFLAGS="`echo $crs_blcr_CFLAGS | sed 's/-Wundef//g'`"
-           crs_blcr_CPPFLAGS="`echo $crs_blcr_save_CPPFLAGS | sed 's/-pedantic//g'`"
+           crs_blcr_CPPFLAGS="`echo $crs_blcr_CPPFLAGS | sed 's/-pedantic//g'`"
            crs_blcr_CPPFLAGS="`echo $crs_blcr_CPPFLAGS | sed 's/-Wundef//g'`"
-           crs_blcr_LDFLAGS="$crs_blcr_save_LDFLAGS"
-           crs_blcr_LIBS="$crs_blcr_save_LIBS"
+           crs_blcr_LDFLAGS="$crs_blcr_LDFLAGS"
+           crs_blcr_LIBS="$crs_blcr_LIBS"
            #
-           # Add to wrapper compiler
-           crs_blcr_WRAPPER_EXTRA_CFLAGS="$crs_blcr_CFLAGS"
+           # Setup wrapper options for static builds
+           #
            crs_blcr_WRAPPER_EXTRA_CPPFLAGS="$crs_blcr_CPPFLAGS"
            crs_blcr_WRAPPER_EXTRA_LDFLAGS="$crs_blcr_LDFLAGS"
            crs_blcr_WRAPPER_EXTRA_LIBS="$crs_blcr_LIBS"
            $1])
-
 
     #
     # Check for version difference which may have:
@@ -116,6 +115,10 @@ AC_DEFUN([MCA_crs_blcr_CONFIG],[
     # - 'requester' parameter to checkpoint_info
     #
     AS_IF([test "$check_crs_blcr_good" != "yes"], [$2], [
+            CFLAGS="$crs_blcr_CFLAGS"
+            CPPFLAGS="$crs_blcr_CPPFLAGS"
+            LDFLAGS="$crs_blcr_LDFLAGS"
+            LIBS="$crs_blcr_LIBS"
            #
            # First look for the cr_request_file function
            #
@@ -164,6 +167,9 @@ AC_DEFUN([MCA_crs_blcr_CONFIG],[
                [BLCRs cr_checkpoint_info.requester member availability])
            $1])
 
+    #
+    # Reset the flags
+    #
     CFLAGS="$crs_blcr_save_CFLAGS"
     CPPFLAGS="$crs_blcr_save_CPPFLAGS"
     LDFLAGS="$crs_blcr_save_LDFLAGS"
@@ -171,9 +177,9 @@ AC_DEFUN([MCA_crs_blcr_CONFIG],[
 
     #
     AS_IF([test "$check_crs_blcr_good" = "yes"],
-          [ AC_SUBST([crs_blcr_crs_blcr_WRAPPER_EXTRA_LDFLAGS])
-            AC_SUBST([crs_blcr_crs_blcr_WRAPPER_EXTRA_LIBS])
-            AC_SUBST([crs_blcr_crs_blcr_WRAPPER_EXTRA_CPPFLAGS])
+          [ AC_SUBST([crs_blcr_WRAPPER_EXTRA_LDFLAGS])
+            AC_SUBST([crs_blcr_WRAPPER_EXTRA_LIBS])
+            AC_SUBST([crs_blcr_WRAPPER_EXTRA_CPPFLAGS])
             AC_SUBST([crs_blcr_CFLAGS])
             AC_SUBST([crs_blcr_CPPFLAGS])
             AC_SUBST([crs_blcr_LDFLAGS])
