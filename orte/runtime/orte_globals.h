@@ -491,6 +491,7 @@ ORTE_DECLSPEC extern bool orted_spin_flag;
 /* ORTE OOB port flags */
 ORTE_DECLSPEC extern bool orte_static_ports;
 ORTE_DECLSPEC extern char *orte_oob_static_ports;
+ORTE_DECLSPEC extern bool orte_standalone_operation;
 
 ORTE_DECLSPEC extern bool orte_keep_fqdn_hostnames;
 ORTE_DECLSPEC extern bool orte_show_resolved_nodenames;

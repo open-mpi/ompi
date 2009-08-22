@@ -60,6 +60,7 @@ bool orted_spin_flag = false;
 /* ORTE OOB port flags */
 bool orte_static_ports = false;
 char *orte_oob_static_ports = NULL;
+bool orte_standalone_operation = false;
 
 bool orte_keep_fqdn_hostnames = false;
 bool orte_show_resolved_nodenames;
