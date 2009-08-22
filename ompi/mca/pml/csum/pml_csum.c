@@ -75,7 +75,7 @@ mca_pml_csum_t mca_pml_csum = {
         mca_pml_csum_start,
         mca_pml_csum_dump,
         mca_pml_csum_ft_event,
-        32768,
+        65535,
         INT_MAX
     }
 };

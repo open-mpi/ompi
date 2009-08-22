@@ -65,7 +65,7 @@ mca_pml_ob1_t mca_pml_ob1 = {
         mca_pml_ob1_start,
         mca_pml_ob1_dump,
         mca_pml_ob1_ft_event,
-        32768,
+        65535,
         INT_MAX
     }
 };
