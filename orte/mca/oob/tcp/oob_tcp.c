@@ -546,7 +546,6 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
     struct sockaddr_storage inaddr;
     opal_socklen_t addrlen;
     char **ports=NULL;
-    char *ctmp;
 
     /* create a listen socket for incoming connections */
     *target_sd = socket(af_family, SOCK_STREAM, 0);
@@ -786,17 +785,15 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
 
     }
     
-    /* if we reach this point, then no socket could be found in the specified
-     * range that was available to us, so report the error
-     */
-    ctmp = opal_argv_join(ports, ',');
-    opal_output(0, "%s oob:tcp:bind() failed - no port available in specified list:\n\t%s",
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ctmp);
-    free(ctmp);
-    
-    /* cleanup and return the error */
+    /* cleanup */
     CLOSE_THE_SOCKET(*target_sd);
     opal_argv_free(ports);
+    if (orte_standalone_operation) {
+        /* if we are running as a standalone app - i.e., one
+         * not launched by orteds - then abort
+         */
+        orte_errmgr.abort(ORTE_ERR_SOCKET_NOT_AVAILABLE, NULL);
+    }
     return ORTE_ERR_SOCKET_NOT_AVAILABLE;
 
 

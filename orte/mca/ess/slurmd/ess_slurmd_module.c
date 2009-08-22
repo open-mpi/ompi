@@ -59,6 +59,7 @@
 
 static int rte_init(void);
 static int rte_finalize(void);
+static void rte_abort(int error_code, bool report) __opal_attribute_noreturn__;
 static uint8_t proc_get_locality(orte_process_name_t *proc);
 static orte_vpid_t proc_get_daemon(orte_process_name_t *proc);
 static char* proc_get_hostname(orte_process_name_t *proc);
@@ -70,7 +71,7 @@ static int update_nidmap(opal_byte_object_t *bo);
 orte_ess_base_module_t orte_ess_slurmd_module = {
     rte_init,
     rte_finalize,
-    orte_ess_base_app_abort,
+    rte_abort,
     proc_get_locality,
     proc_get_daemon,
     proc_get_hostname,
@@ -123,6 +124,9 @@ static int rte_init(void)
      * our own global info so we can startup. Srun will have
      * provided that info in our environment, so get it from there
      */
+    
+    /* declare ourselves to be standalone - i.e., not launched by orted */
+    orte_standalone_operation = true;
     
     /* get the slurm jobid - this will be our job family */
     envar = getenv("SLURM_JOBID");
@@ -353,11 +357,6 @@ static int rte_init(void)
     return ORTE_SUCCESS;
     
 error:
-    if (ORTE_ERR_SOCKET_NOT_AVAILABLE == ret && slurm20) {
-        /* exit silently with a special error code for slurm 2.0 */
-        exit(108);
-    }
-    
     orte_show_help("help-orte-runtime.txt",
                    "orte_init:startup:internal-failure",
                    true, error, ORTE_ERROR_NAME(ret), ret);
@@ -382,6 +381,16 @@ static int rte_finalize(void)
     orte_util_nidmap_finalize();
     
     return ret;    
+}
+
+static void rte_abort(int error_code, bool report)
+{
+    if (ORTE_ERR_SOCKET_NOT_AVAILABLE == error_code && slurm20) {
+        /* exit silently with a special error code for slurm 2.0 */
+        orte_ess_base_app_abort(108, false);
+    } else {
+        orte_ess_base_app_abort(error_code, report);
+    }
 }
 
 static uint8_t proc_get_locality(orte_process_name_t *proc)

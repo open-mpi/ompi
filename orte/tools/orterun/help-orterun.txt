@@ -254,6 +254,14 @@ Node: %s
 
 when attempting to start process rank %lu.
 #
+[orterun:proc-socket-not-avail]
+%s was unable to start the specified application as it encountered an error:
+
+Error name: %s
+Node: %s
+
+when attempting to start process rank %lu.
+#
 [orterun:proc-failed-to-start-no-status]
 %s was unable to start the specified application as it encountered an error
 on node %s. More information may be available above.

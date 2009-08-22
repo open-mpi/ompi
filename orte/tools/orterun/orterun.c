@@ -1004,6 +1004,10 @@ static void dump_aborted_procs(void)
                     orte_show_help("help-orterun.txt", "orterun:proc-failed-to-start", true,
                                    orterun_basename, ORTE_ERROR_NAME(proc->exit_code), proc->node->name,
                                    (unsigned long)proc->name.vpid);
+                } else if (ORTE_ERR_SOCKET_NOT_AVAILABLE == proc->exit_code) {
+                    orte_show_help("help-orterun.txt", "orterun:proc-socket-not-avail", true,
+                                   orterun_basename, ORTE_ERROR_NAME(proc->exit_code), proc->node->name,
+                                   (unsigned long)proc->name.vpid);
                 } else {
                     orte_show_help("help-orterun.txt", "orterun:proc-failed-to-start-no-status", true,
                                    orterun_basename, proc->node->name);
