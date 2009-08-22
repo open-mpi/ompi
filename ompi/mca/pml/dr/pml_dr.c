@@ -60,7 +60,7 @@ mca_pml_dr_t mca_pml_dr = {
     mca_pml_dr_start,
     mca_pml_dr_dump,
     NULL,
-    32768,
+    65535,
     INT_MAX
     }
 };
