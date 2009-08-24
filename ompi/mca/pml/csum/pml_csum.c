@@ -302,9 +302,14 @@ int mca_pml_csum_add_procs(ompi_proc_t** procs, size_t nprocs)
     int rc;
     size_t i;
     opal_list_item_t *item;
+    opal_convertor_t *local_convertor;
 
     if(nprocs == 0)
         return OMPI_SUCCESS;
+    /* Create a convertor for processes on the same node & 
+       disable checksum computation for local communication */
+    local_convertor = opal_convertor_create(ompi_proc_local()->proc_arch, 0);
+    local_convertor->flags &= ~CONVERTOR_WITH_CHECKSUM;
 
     for (i = 0 ; i < nprocs ; ++i) {
         /* we don't have any endpoint data we need to cache on the
@@ -315,8 +320,14 @@ int mca_pml_csum_add_procs(ompi_proc_t** procs, size_t nprocs)
          */
         if (!OPAL_PROC_ON_LOCAL_NODE(procs[i]->proc_flags)) {
             procs[i]->proc_convertor->flags |= CONVERTOR_WITH_CHECKSUM;
+        } else {
+            OBJ_RELEASE(procs[i]->proc_convertor);
+            procs[i]->proc_convertor = local_convertor;
+            OBJ_RETAIN(local_convertor);
         }
     }
+    /* Decrement reference count by one, as we increment it twice for ourselves */
+    OBJ_RELEASE(local_convertor);
 
     OBJ_CONSTRUCT(&reachable, opal_bitmap_t);
     rc = opal_bitmap_init(&reachable, (int)nprocs);

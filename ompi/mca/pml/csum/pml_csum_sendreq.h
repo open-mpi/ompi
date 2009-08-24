@@ -132,18 +132,6 @@ get_request_from_send_pending(mca_pml_csum_send_pending_t *type)
         }                                                               \
     }
 
-#define MCA_PML_CSUM_CHECK_LOCAL_SEND(sendreq)                             \
-    if(OPAL_PROC_ON_LOCAL_NODE(                                            \
-        (sendreq)->req_send.req_base.req_proc->proc_flags)) {              \
-        (sendreq)->req_send.req_base.req_proc->proc_convertor->flags =     \
-            (sendreq)->req_send.req_base.req_proc->proc_convertor->flags & \
-                  ~CONVERTOR_WITH_CHECKSUM;                                \
-    } else {                                                               \
-        (sendreq)->req_send.req_base.req_proc->proc_convertor->flags =     \
-            (sendreq)->req_send.req_base.req_proc->proc_convertor->flags | \
-                  CONVERTOR_WITH_CHECKSUM;                                 \
-    }
-
 #define MCA_PML_CSUM_SEND_REQUEST_INIT(sendreq,                                 \
                                        buf,                                     \
                                        count,                                   \
@@ -154,7 +142,6 @@ get_request_from_send_pending(mca_pml_csum_send_pending_t *type)
                                        sendmode,                                \
                                        persistent)                              \
     {                                                                           \
-        MCA_PML_CSUM_CHECK_LOCAL_SEND(sendreq);                                 \
         MCA_PML_BASE_SEND_REQUEST_INIT(&sendreq->req_send,                      \
                                        buf,                                     \
                                        count,                                   \
