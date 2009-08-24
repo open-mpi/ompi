@@ -196,22 +196,9 @@ extern void mca_pml_csum_recv_req_start(mca_pml_csum_recv_request_t *req);
 #define MCA_PML_CSUM_RECV_REQUEST_START(r) mca_pml_csum_recv_req_start(r)
 
 
-#define MCA_PML_CSUM_CHECK_LOCAL_RECV(req)                             \
-    if(OPAL_PROC_ON_LOCAL_NODE(                                        \
-        (req)->req_recv.req_base.req_proc->proc_flags)) {              \
-        (req)->req_recv.req_base.req_proc->proc_convertor->flags =     \
-            (req)->req_recv.req_base.req_proc->proc_convertor->flags & \
-                  ~CONVERTOR_WITH_CHECKSUM;                            \
-    } else {                                                           \
-        (req)->req_recv.req_base.req_proc->proc_convertor->flags =     \
-            (req)->req_recv.req_base.req_proc->proc_convertor->flags | \
-                  CONVERTOR_WITH_CHECKSUM;                             \
-    }
-
 static inline void prepare_recv_req_converter(mca_pml_csum_recv_request_t *req)
 {
     if( req->req_recv.req_base.req_datatype->super.size | req->req_recv.req_base.req_count ) {
-        MCA_PML_CSUM_CHECK_LOCAL_RECV(req);
         opal_convertor_copy_and_prepare_for_recv(
                 req->req_recv.req_base.req_proc->proc_convertor,
                 &(req->req_recv.req_base.req_datatype->super),
