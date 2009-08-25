@@ -31,7 +31,6 @@ my @globals = qw/.libs
 *.loT
 .git*
 .DS_Store
-.git*
 stamp-h[1-9]
 configure
 config.guess
