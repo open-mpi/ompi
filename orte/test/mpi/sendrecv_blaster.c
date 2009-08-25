@@ -20,6 +20,7 @@ int main(int argc, char *argv[])
     int            tag0=41;              /* MPI message tag                     */
     
     int            inject;
+    int            allreduce;
     int            report;
     int            iterations;
     int            n_bytes; 
@@ -43,7 +44,8 @@ int main(int argc, char *argv[])
                    "\tsize=[value < 0 => max message size in kbytes, value > 0 => max message size in Mbytes (default=1MByte)]\n"
                    "\tinject=[value = #iterations before injecting MPI_Sendrecv to self (default: never)]\n"
                    "\treport=[value = #iterations/reporting point (default: 1000)\n"
-                   "\titerations=[value = #iterations before stopping (default: 1000000)\n");
+                   "\titerations=[value = #iterations before stopping (default: 1000000)\n"
+                   "\tallreduce=[value = #iterations before injecting MPI_Allreduce (default: never)]\n");
             return 0;
         }
     }
@@ -77,6 +79,7 @@ int main(int argc, char *argv[])
     /* setup defaults in lieu of args */
     n_bytes = 1024*1024;
     inject = -1;
+    allreduce = -1;
     report = 1000;
     iterations = 1000000;
     /* do a ring */
@@ -134,6 +137,10 @@ int main(int argc, char *argv[])
             tmp = strchr(argv[i], '=');
             tmp++;
             iterations = atoi(tmp);
+        } else if (0 == strncmp(argv[i], "allr", strlen("allr"))) {
+            tmp = strchr(argv[i], '=');
+            tmp++;
+            allreduce = atoi(tmp);
         }
     }
 
@@ -180,6 +187,18 @@ int main(int argc, char *argv[])
                 MPI_Abort(MPI_COMM_WORLD, -1);
             } else {
                 fprintf(stderr, "Rank %d has completed MPI_Sendrecv with myself\n", rank);
+            }
+        }
+        if (0 < allreduce && 0 == (i % allreduce)) {
+            mpierr = MPI_Allreduce(send_buff, count, MPI_CHAR, rank, tag0,
+                                  recv_buff, n_bytes, MPI_CHAR, rank, tag0, MPI_COMM_WORLD, &status);
+            if (mpierr != MPI_SUCCESS)
+            {
+                fprintf(stderr,"MPI Error %d (MPI_Allreduce) [%d,%d] at iteration %d\n",mpierr,rank,rank,i);
+                fflush(stderr);
+                MPI_Abort(MPI_COMM_WORLD, -1);
+            } else {
+                fprintf(stderr, "Rank %d has completed MPI_Allreduce\n", rank);
             }
         }
     }
