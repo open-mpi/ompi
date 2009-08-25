@@ -128,8 +128,9 @@ EOF
 
     # If it worked so far, try running to see what we get
     AS_IF([test "$cross_compiling" = "yes"],
-        [AC_MSG_RESULT([Error!])
-         AC_MSG_ERROR([Can not determine if REAL*16 bit-matches C if cross compiling])],
+        [happy=yes
+         AC_MSG_RESULT([yes (cross-compiling)])
+         AC_MSG_WARN([Can not determin if REAL*16 and C types match.  Assuming yes.])],
         [OMPI_LOG_COMMAND([./conftest],
             [happy=`cat conftestval`],
             [AC_MSG_RESULT([Error!])
