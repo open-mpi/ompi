@@ -206,7 +206,7 @@ int orte_odls_base_open(void)
         if (orte_odls_globals.bound) {
             orte_odls_globals.num_sockets = 0;
             for (i=0; i < orte_odls_globals.num_processors; i++) {
-                if (OPAL_PAFFINITY_CPU_SET(i, orte_odls_globals.my_cores)) {
+                if (OPAL_PAFFINITY_CPU_ISSET(i, orte_odls_globals.my_cores)) {
                     opal_paffinity_base_get_map_to_socket_core(i, &sock, &core);
                     opal_bitmap_set_bit(&orte_odls_globals.sockets, sock);
                     orte_odls_globals.num_sockets++;
