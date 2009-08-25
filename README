@@ -897,6 +897,16 @@ shell$ ./configure CC=mycc CXX=myc++ F77=myf77 F90=myf90 ...
    variables and values in the config.log file, which makes
    post-mortem analysis easier when problems occur.
 
+Note that you may also want to ensure that the value of
+LD_LIBRARY_PATH is set appropriately (or not at all) for your build
+(or whatever environment variable is relevant for your operating
+system).  For example, some users have been tripped up by setting to
+use non-default Fortran compilers via FC / F77, but then failing to
+set LD_LIBRARY_PATH to include the directory containing that
+non-default Fortran compiler's support libraries.  This causes Open
+MPI's configure script to fail when it tries to compile / link / run
+simple Fortran programs.
+
 It is required that the compilers specified be compile and link
 compatible, meaning that object files created by one compiler must be
 able to be linked with object files from the other compilers and
