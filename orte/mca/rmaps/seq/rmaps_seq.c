@@ -60,7 +60,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
     orte_app_context_t *app;
     orte_std_cntr_t i, j;
     opal_list_item_t *item;
-    orte_node_t *node, *nd, *save;
+    orte_node_t *node, *nd, *save=NULL;
     orte_vpid_t vpid;
     orte_std_cntr_t num_nodes;
     int rc;
