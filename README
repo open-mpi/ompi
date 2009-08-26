@@ -905,7 +905,7 @@ use non-default Fortran compilers via FC / F77, but then failing to
 set LD_LIBRARY_PATH to include the directory containing that
 non-default Fortran compiler's support libraries.  This causes Open
 MPI's configure script to fail when it tries to compile / link / run
-simple Fortran programs.
+simple Fortran programs. 
 
 It is required that the compilers specified be compile and link
 compatible, meaning that object files created by one compiler must be
