@@ -297,9 +297,15 @@ opal_init(void)
     }
 
     /* open the processor affinity base */
-    opal_paffinity_base_open();
-    opal_paffinity_base_select();
-
+    if (OPAL_SUCCESS != (ret = opal_paffinity_base_open())) {
+        error = "opal_paffinity_base_open";
+        goto return_error;
+    }
+    if (OPAL_SUCCESS != (ret = opal_paffinity_base_select())) {
+        error = "opal_paffinity_base_select";
+        goto return_error;
+    }
+    
     /* the memcpy component should be one of the first who get
      * loaded in order to make sure we ddo have all the available
      * versions of memcpy correctly configured.
