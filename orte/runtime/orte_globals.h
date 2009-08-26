@@ -291,6 +291,15 @@ typedef uint16_t orte_mapping_policy_t;
 /* nice macro for setting these */
 #define ORTE_SET_BINDING_POLICY(pol) \
     orte_default_mapping_policy = (orte_default_mapping_policy & 0xff00) | (pol);
+/* macro to detect if some other policy has been set */
+#define ORTE_XSET_BINDING_POLICY(pol)                           \
+    do {                                                        \
+        orte_mapping_policy_t tmp;                              \
+        tmp = (orte_default_mapping_policy & 0xff00) & ~(pol);  \
+        if (0 == tmp) {                                         \
+            ORTE_SET_BINDING_POLICY((pol));                     \
+        }                                                       \
+    } while(0);
 
 /* error manager callback function */
 typedef void (*orte_err_cb_fn_t)(orte_process_name_t *proc, orte_proc_state_t state, void *cbdata);

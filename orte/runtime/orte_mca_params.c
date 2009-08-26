@@ -346,7 +346,13 @@ int orte_register_params(void)
            ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_CORE);
         }
     }
-
+    /* if nothing was set, but opal_paffinity_alone is set, then default
+     * to bind-to-core
+     */
+    if (opal_paffinity_alone) {
+        ORTE_XSET_BINDING_POLICY(ORTE_BIND_TO_CORE);
+    }
+    
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
     
     return ORTE_SUCCESS;
