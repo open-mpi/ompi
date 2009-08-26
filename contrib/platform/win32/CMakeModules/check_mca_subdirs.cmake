@@ -13,8 +13,12 @@
 
 MACRO(CHECK_SUBDIRS CURRENT_DIR OUTPUT_VARIABLE)
 
-  EXECUTE_PROCESS (COMMAND cmd /C dir /AD /B
-                   WORKING_DIRECTORY  ${CURRENT_DIR}
+  # change the path into standard Windows format,
+  # so that we can support UNC path also.
+  STRING(REPLACE "/" "\\" DIR_FORMATTED ${CURRENT_DIR})
+
+  EXECUTE_PROCESS (COMMAND cmd /C dir /AD /B ${DIR_FORMATTED}
+                   WORKING_DIRECTORY  ${PROJECT_BINARY_DIR}
                    OUTPUT_VARIABLE    OUTPUT
                    RESULT_VARIABLE    RESULT
                    ERROR_VARIABLE     ERROR)
