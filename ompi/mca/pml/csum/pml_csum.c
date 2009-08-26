@@ -74,7 +74,7 @@ mca_pml_csum_t mca_pml_csum = {
         mca_pml_csum_start,
         mca_pml_csum_dump,
         mca_pml_csum_ft_event,
-        32768,
+        65535,
         INT_MAX
     }
 };
@@ -194,6 +194,13 @@ int mca_pml_csum_add_comm(ompi_communicator_t* comm)
     if (NULL == pml_comm) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
+
+    /* should never happen, but it was, so check */
+    if (comm->c_contextid > mca_pml_csum.super.pml_max_contextid) {
+        OBJ_RELEASE(pml_comm);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    
     mca_pml_csum_comm_init_size(pml_comm, comm->c_remote_group->grp_proc_count);
     comm->c_pml_comm = pml_comm;
 
