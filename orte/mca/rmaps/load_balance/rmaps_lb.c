@@ -101,7 +101,7 @@ static int npernode(orte_job_t *jdata)
     opal_list_item_t *item;
     orte_std_cntr_t num_slots;
     orte_node_t *node;
-    int total_procs, np;
+    int total_procs=0, np;
     
     /* setup the node list */
     OBJ_CONSTRUCT(&node_list, opal_list_t);
@@ -169,7 +169,7 @@ static int nperboard(orte_job_t *jdata)
     opal_list_item_t *item;
     orte_std_cntr_t num_slots;
     orte_node_t *node;
-    int total_procs, np;
+    int total_procs=0, np;
 
     /* setup the node list */
     OBJ_CONSTRUCT(&node_list, opal_list_t);
@@ -241,7 +241,7 @@ static int npersocket(orte_job_t *jdata)
     opal_list_item_t *item;
     orte_std_cntr_t num_slots;
     orte_node_t *node;
-    int total_procs, np;
+    int total_procs=0, np;
 
     /* setup the node list */
     OBJ_CONSTRUCT(&node_list, opal_list_t);
@@ -319,7 +319,7 @@ static int loadbalance(orte_job_t *jdata)
     int i, j;
     opal_list_t node_list;
     orte_std_cntr_t num_nodes, num_slots;
-    int rc=ORTE_SUCCESS, total_procs;
+    int rc=ORTE_SUCCESS, total_procs=0;
     int ppn = 0;
     opal_list_item_t *item, *start;
     orte_node_t *node;
