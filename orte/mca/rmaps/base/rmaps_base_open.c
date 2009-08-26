@@ -151,9 +151,11 @@ int orte_rmaps_base_open(void)
                                         "Number of cpus to use for each rank [1-2**15 (default=1)]",
                                         false, false, 1, &value);
     orte_rmaps_base.cpus_per_rank = value;
-    /* if the cpus/rank > 1, then we have to bind to cores */
+    /* if the cpus/rank > 1, then we have to bind to cores UNLESS the binding has
+     * already been set to something else
+     */
     if (1 < orte_rmaps_base.cpus_per_rank) {
-        ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_CORE);
+        ORTE_XSET_BINDING_POLICY(ORTE_BIND_TO_CORE);
     }
     
     /* stride to use */

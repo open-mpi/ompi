@@ -195,6 +195,7 @@ int orte_odls_base_open(void)
     orte_odls_globals.num_processors = 0;
     OBJ_CONSTRUCT(&orte_odls_globals.sockets, opal_bitmap_t);
     opal_bitmap_init(&orte_odls_globals.sockets, 16);
+    /* default the number of sockets to those found during startup */
     orte_odls_globals.num_sockets = orte_default_num_sockets_per_board;
     /* see if paffinity is supported */
     if (ORTE_SUCCESS == opal_paffinity_base_get(&orte_odls_globals.my_cores)) {
@@ -204,11 +205,16 @@ int orte_odls_base_open(void)
         OPAL_PAFFINITY_PROCESS_IS_BOUND(orte_odls_globals.my_cores, &orte_odls_globals.bound);
         /* if we are bound, determine the number of sockets - and which ones - that are available to us */
         if (orte_odls_globals.bound) {
-            orte_odls_globals.num_sockets = 0;
             for (i=0; i < orte_odls_globals.num_processors; i++) {
                 if (OPAL_PAFFINITY_CPU_ISSET(i, orte_odls_globals.my_cores)) {
                     opal_paffinity_base_get_map_to_socket_core(i, &sock, &core);
                     opal_bitmap_set_bit(&orte_odls_globals.sockets, sock);
+                }
+            }
+            /* determine how many sockets we have available to us */
+            orte_odls_globals.num_sockets = 0;
+            for (i=0; i < opal_bitmap_size(&orte_odls_globals.sockets); i++) {
+                if (opal_bitmap_is_set_bit(&orte_odls_globals.sockets, i)) {
                     orte_odls_globals.num_sockets++;
                 }
             }
