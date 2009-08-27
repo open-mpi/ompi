@@ -429,6 +429,7 @@ int orte_daemon(int argc, char *argv[])
         goto DONE;
     }
     
+#ifndef __WINDOWS__
     /* Set signal handlers to catch kill signals so we can properly clean up
      * after ourselves. 
      */
@@ -439,7 +440,6 @@ int orte_daemon(int argc, char *argv[])
                    shutdown_signal, NULL);
     opal_event_add(&int_handler, NULL);
 
-#ifndef __WINDOWS__
     /** setup callbacks for signals we should ignore */
     opal_signal_set(&sigusr1_handler, SIGUSR1,
                     signal_callback, &sigusr1_handler);
