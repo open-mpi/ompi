@@ -204,7 +204,7 @@ static inline void prepare_recv_req_converter(mca_pml_csum_recv_request_t *req)
                 req->req_recv.req_base.req_datatype,
                 req->req_recv.req_base.req_count,
                 req->req_recv.req_base.req_addr,
-                CONVERTOR_WITH_CHECKSUM,
+                0,
                 &req->req_recv.req_base.req_convertor);
         ompi_convertor_get_unpacked_size(&req->req_recv.req_base.req_convertor,
                 &req->req_bytes_delivered);

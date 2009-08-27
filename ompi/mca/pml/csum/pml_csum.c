@@ -300,9 +300,14 @@ int mca_pml_csum_add_procs(ompi_proc_t** procs, size_t nprocs)
     ompi_bitmap_t reachable;
     int rc;
     size_t i;
+    ompi_convertor_t *local_convertor;
 
     if(nprocs == 0)
         return OMPI_SUCCESS;
+    /* Create a convertor for processes on the same node &
+       disable checksum computation for local communication */
+    local_convertor = ompi_convertor_create(ompi_proc_local()->proc_arch, 0);
+    local_convertor->flags &= ~CONVERTOR_WITH_CHECKSUM;
 
     for (i = 0 ; i < nprocs ; ++i) {
         /* we don't have any endpoint data we need to cache on the
@@ -313,8 +318,14 @@ int mca_pml_csum_add_procs(ompi_proc_t** procs, size_t nprocs)
          */
         if (!(OMPI_PROC_FLAG_LOCAL & procs[i]->proc_flags)) {
             procs[i]->proc_convertor->flags |= CONVERTOR_WITH_CHECKSUM;
+        } else {
+            OBJ_RELEASE(procs[i]->proc_convertor);
+            procs[i]->proc_convertor = local_convertor;
+            OBJ_RETAIN(local_convertor);
         }
     }
+    /* Decrement reference count by one, as we increment it twice for ourselves */
+    OBJ_RELEASE(local_convertor);
 
     OBJ_CONSTRUCT(&reachable, ompi_bitmap_t);
     rc = ompi_bitmap_init(&reachable, (int)nprocs);

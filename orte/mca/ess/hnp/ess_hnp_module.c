@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -490,6 +491,10 @@ static int rte_finalize(void)
     
     /* clean out the global structures */
     orte_proc_info_finalize();
+    if (NULL != orte_job_ident) {
+        free(orte_job_ident);
+    }
+
     
     return ORTE_SUCCESS;    
 }

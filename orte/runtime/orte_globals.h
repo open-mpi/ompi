@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -51,6 +52,7 @@ ORTE_DECLSPEC extern int orte_debug_verbosity;  /* instantiated in orte/runtime/
 ORTE_DECLSPEC extern char *orte_prohibited_session_dirs;  /* instantiated in orte/runtime/orte_init.c */
 ORTE_DECLSPEC extern bool orte_xml_output;  /* instantiated in orte/runtime/orte_globals.c */
 ORTE_DECLSPEC extern bool orte_help_want_aggregate;  /* instantiated in orte/util/show_help.c */
+ORTE_DECLSPEC extern char *orte_job_ident;  /* instantiated in orte/runtime/orte_globals.c */
 
 /* Shortcut for some commonly used names */
 #define ORTE_NAME_WILDCARD      (&orte_name_wildcard)
