@@ -689,12 +689,17 @@ static char *plm_ccp_commandline(char *prefix, char *node_name, int argc, char *
         len += strlen(argv[i]) + 1;
     }
 
-    commandline = (char*)malloc( len + strlen(prefix) + 8);
-    memset(commandline, '\0', len+strlen(prefix)+8);
+    if(NULL != prefix) {
+        commandline = (char*)malloc( len + strlen(prefix) + 8);
+        memset(commandline, '\0', strlen(commandline));
+        commandline[0] = '"';
+        strcat(commandline, prefix);
+        strcat(commandline, "\\bin\"\\");
+    } else {
+        commandline = (char*)malloc( len + 8);
+        memset(commandline, '\0', strlen(commandline));
+    }
 
-    commandline[0] = '"';
-    strcat(commandline, prefix);
-    strcat(commandline, "\\bin\"\\");
 
     for(i=0;i<argc;i++) {
 
