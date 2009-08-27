@@ -384,16 +384,20 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                }
                if (ORTE_MAPPING_NPERXXX & jobdat->policy) {
                    /* we need to balance the children from this job across the available sockets */
+                   npersocket = jobdat->num_local_procs / orte_odls_globals.num_sockets;
+                   /* determine the socket to use based on those available */
+                   if (npersocket < 2) {
+                       /* if we only have 1/sock, or we have less procs than sockets,
+                        * then just put it on the lrank socket
+                        */
+                       logical_skt = lrank;
+                   } else if (ORTE_MAPPING_BYSOCKET & jobdat->policy) {
+                       logical_skt = lrank % npersocket;
+                   } else {
+                       logical_skt = lrank / npersocket;
+                   }
                    if (orte_odls_globals.bound) {
-                       /* if we are bound, then level across available sockets */
-                       npersocket = jobdat->num_local_procs / orte_odls_globals.num_sockets;
-                       /* determine the socket to use based on those available */
-                       if (ORTE_MAPPING_BYSOCKET & jobdat->policy) {
-                           logical_skt = lrank % npersocket;
-                       } else {
-                           logical_skt = lrank / npersocket;
-                       }
-                       /* use this as an index into our available sockets */
+                       /* if we are bound, use this as an index into our available sockets */
                        for (target_socket=0; target_socket < opal_bitmap_size(&orte_odls_globals.sockets) && n < logical_skt; target_socket++) {
                            if (opal_bitmap_is_set_bit(&orte_odls_globals.sockets, target_socket)) {
                                n++;
@@ -408,18 +412,12 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                            exit(1);
                        }
                    } else {
-                       /* if we are not bound, then spread across all sockets on board */
-                       npersocket = jobdat->num_local_procs / orte_default_num_sockets_per_board;
-                       if (ORTE_MAPPING_BYSOCKET & jobdat->policy) {
-                           target_socket = opal_paffinity_base_get_physical_socket_id(lrank % npersocket);
-                       } else {
-                           target_socket = opal_paffinity_base_get_physical_socket_id(lrank / npersocket);
-                       }
+                       target_socket = opal_paffinity_base_get_physical_socket_id(logical_skt);
                    }
                    OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
-                                        "%s odls:default:fork npersocket %d target socket %d",
-                                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                        npersocket, target_socket));
+                                        "%s odls:default:fork child %s local rank %d npersocket %d logical socket %d target socket %d",
+                                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(child->name), lrank,
+                                        npersocket, logical_skt, target_socket));
                } else if (ORTE_MAPPING_BYSOCKET & jobdat->policy) {
                    /* this corresponds to a mapping policy where
                     * local rank 0 goes on socket 0, and local
