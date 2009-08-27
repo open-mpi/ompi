@@ -170,8 +170,6 @@ IWbemLocator *pLoc = NULL;
 IWbemServices *pSvc_registry = NULL;
 /* namespace for \hostname\root\cimv2 */
 IWbemServices *pSvc_cimv2 = NULL;
-/* Security levels on a WMI connection */
-SEC_WINNT_AUTH_IDENTITY cID; 
 
 /* global storage of active jobid being launched */
 static orte_jobid_t active_job = ORTE_JOBID_INVALID;
@@ -200,7 +198,7 @@ int orte_plm_process_init(void)
                                  -1,                          /* COM authentication */ 
                                  NULL,                        /* Authentication services */ 
                                  NULL,                        /* Reserved */ 
-                                 RPC_C_AUTHN_LEVEL_DEFAULT,   /* Default authentication */  
+                                 RPC_C_AUTHN_LEVEL_CONNECT,   /* Default authentication */  
                                  RPC_C_IMP_LEVEL_IMPERSONATE, /* Default Impersonation */  
                                  NULL,                        /* Authentication info */ 
                                  EOAC_NONE,                   /* Additional capabilities */  
@@ -417,22 +415,6 @@ static char *read_remote_registry(uint32_t root, char *sub_key, char *key, char 
                              "%s plm:process: Connected to \\\\%s\\\\ROOT\\\\DEFAULT",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              remote_node));
-
-        /* default namespace */
-        hres = CoSetProxyBlanket(pSvc_registry,                  /* Indicates the proxy to set */ 
-                                 RPC_C_AUTHN_WINNT,              /* RPC_C_AUTHN_xxx */ 
-                                 RPC_C_AUTHZ_NONE,               /* RPC_C_AUTHZ_xxx */ 
-                                 NULL,                           /* Server principal name */  
-                                 RPC_C_AUTHN_LEVEL_CALL,         /* RPC_C_AUTHN_LEVEL_xxx */  
-                                 RPC_C_IMP_LEVEL_IMPERSONATE,    /* RPC_C_IMP_LEVEL_xxx */ 
-                                 &cID,                           /* client identity */ 
-                                 EOAC_NONE                       /* proxy capabilities */  
-                                );
-
-        if (FAILED(hres)) {
-            opal_output(0,"Could not set proxy blanket. Error code = %d \n", hres);
-            goto cleanup;
-        }
     }
 
     hres = pSvc_registry->GetObject(ClassName_registry, 0, NULL, &pClass_registry, NULL);
@@ -550,10 +532,11 @@ static int wmi_launch_child(char *prefix, char *remote_node, int argc, char **ar
     /*Connect to WMI through the IWbemLocator::ConnectServer method*/
     char namespace_cimv2[100];
     
-    char *ntlm_auth = (char *) malloc(sizeof(char)*(strlen("ntlmdomain:")+strlen(remote_node)+1));
+    char *domain_name = getenv("USERDOMAIN");
+    char *ntlm_auth = (char *) malloc(sizeof(char)*(strlen("ntlmdomain:")+strlen(domain_name)+1));
     memset(ntlm_auth, 0, strlen(ntlm_auth));
     strcat(ntlm_auth, "ntlmdomain:");
-    strcat(ntlm_auth, remote_node);
+    strcat(ntlm_auth, domain_name);
 
     if( 0 != get_credential(remote_node)) {
         goto cleanup;
@@ -563,7 +546,7 @@ static int wmi_launch_child(char *prefix, char *remote_node, int argc, char **ar
     char *rt_namespace_cimv2 = "\\root\\cimv2";
     strcpy(namespace_cimv2, "\\\\");  
     strcat(namespace_cimv2, remote_node );  
-    strcat(namespace_cimv2, rt_namespace_cimv2); 
+    strcat(namespace_cimv2, rt_namespace_cimv2);
 
     /* connect to cimv2 namespace */  
     hres = pLoc->ConnectServer(_com_util::ConvertStringToBSTR(namespace_cimv2),      /* namespace */ 
@@ -586,31 +569,6 @@ static int wmi_launch_child(char *prefix, char *remote_node, int argc, char **ar
                          "%s plm:process: Connected to \\\\%s\\\\ROOT\\\\CIMV2",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          remote_node));
-
-    /* Set security levels on a WMI connection */
-    cID.User           = (unsigned char *) user_name;
-    cID.UserLength     = lstrlen(user_name);
-    cID.Password       = (unsigned char *) user_password;
-    cID.PasswordLength = lstrlen(user_password);
-    cID.Domain         = (unsigned char *) remote_node;
-    cID.DomainLength   = lstrlen(remote_node);
-    cID.Flags          = SEC_WINNT_AUTH_IDENTITY_ANSI;
-
-     /* cimv2 namespace */
-    hres = CoSetProxyBlanket(pSvc_cimv2,                  /* Indicates the proxy to set */ 
-                             RPC_C_AUTHN_WINNT,           /* RPC_C_AUTHN_xxx */ 
-                             RPC_C_AUTHZ_NONE,            /* RPC_C_AUTHZ_xxx */ 
-                             NULL,                        /* Server principal name */  
-                             RPC_C_AUTHN_LEVEL_CALL,      /* RPC_C_AUTHN_LEVEL_xxx */  
-                             RPC_C_IMP_LEVEL_IMPERSONATE, /* RPC_C_IMP_LEVEL_xxx */ 
-                             &cID,                        /* client identity */ 
-                             EOAC_NONE                    /* proxy capabilities */  
-                            );
-
-    if (FAILED(hres)) {
-        opal_output(0,"Could not set proxy blanket. Error code = %d \n", hres );
-        goto cleanup;
-    }
 
     /* if there isn't a prefix ( e.g., '--noprefix' specfied,
        or Open MPI was configured without ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT), 
