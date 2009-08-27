@@ -203,7 +203,7 @@ int orte_register_params(void)
     tmp = mca_base_param_reg_string_name("orte", "rankfile",
                                          "Name of the rankfile to be used for mapping processes (relative or absolute path)",
                                          false, false, NULL, NULL);
-    mca_base_param_reg_syn_name(tmp, "rmaps", "rank_file_path", true);
+    mca_base_param_reg_syn_name(tmp, "rmaps", "rank_file_path", false);
     mca_base_param_lookup_string(tmp, &orte_rankfile);
     
     
