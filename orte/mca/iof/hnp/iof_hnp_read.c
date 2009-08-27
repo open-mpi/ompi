@@ -58,6 +58,8 @@ bool orte_iof_hnp_stdin_check(int fd)
     if( isatty(fd) && (getpgrp() != tcgetpgrp(fd)) ) {
         return false;
     }
+#elif defined(__WINDOWS__)
+    return false;
 #endif  /* !defined(__WINDOWS__) */
     return true;
 }

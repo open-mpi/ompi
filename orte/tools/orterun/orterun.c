@@ -635,6 +635,7 @@ int orterun(int argc, char *argv[])
         goto DONE;
     }
 
+#ifndef __WINDOWS__
     /** setup callbacks for abort signals - from this point
      * forward, we need to abort in a manner that allows us
      * to cleanup
@@ -646,7 +647,6 @@ int orterun(int argc, char *argv[])
                     abort_signal_callback, &int_handler);
     opal_signal_add(&int_handler, NULL);
 
-#ifndef __WINDOWS__
     /** setup callbacks for signals we should foward */
     opal_signal_set(&sigusr1_handler, SIGUSR1,
                     signal_forward_callback, &sigusr1_handler);
