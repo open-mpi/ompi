@@ -50,13 +50,8 @@ SET (OPAL_SOURCE_FILES
 
 # Recuresive search sub directories excluding mca, event, include and tools. 
 # Add sources in different source groups.
-EXECUTE_PROCESS (COMMAND cmd /C dir /AD /B
-                 WORKING_DIRECTORY  ${PROJECT_SOURCE_DIR}
-                 OUTPUT_VARIABLE    OUTPUT
-                 RESULT_VARIABLE    RESULT
-                 ERROR_VARIABLE     ERROR)
-
-STRING (REGEX MATCHALL "[a-zA-Z1-9_]+" OPAL_SUBDIRS ${OUTPUT})
+INCLUDE(list_subdirs)
+CHECK_SUBDIRS("${PROJECT_SOURCE_DIR}" OPAL_SUBDIRS)
 
 
 FOREACH(OPAL_SUBDIR ${OPAL_SUBDIRS})

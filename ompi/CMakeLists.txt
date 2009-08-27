@@ -19,13 +19,9 @@ PROJECT (OMPI)
 
 # Recuresive search sub directories excluding mca, mpi and tools. 
 # Add sources in different source groups.
-EXECUTE_PROCESS (COMMAND cmd /C dir /AD /B
-                 WORKING_DIRECTORY  ${PROJECT_SOURCE_DIR}
-                 OUTPUT_VARIABLE    OUTPUT
-                 RESULT_VARIABLE    RESULT
-                 ERROR_VARIABLE     ERROR)
+INCLUDE(list_subdirs)
+CHECK_SUBDIRS("${PROJECT_SOURCE_DIR}" OMPI_SUBDIRS)
 
-STRING (REGEX MATCHALL "[a-zA-Z1-9_]+" OMPI_SUBDIRS ${OUTPUT})
 
 FOREACH(OMPI_SUBDIR ${OMPI_SUBDIRS})
 

@@ -90,6 +90,7 @@ EXTRA_DIST = \
         platform/win32/CMakeModules/find_libltdl.cmake \
         platform/win32/CMakeModules/generate_version_file.cmake \
         platform/win32/CMakeModules/get_c_alignment.cmake \
+        platform/win32/CMakeModules/list_subdirs.cmake \
         platform/win32/CMakeModules/ompi_check_Microsoft.cmake \
         platform/win32/CMakeModules/ompi_configure.cmake \
         platform/win32/CMakeModules/ompi_find_type.cmake \
