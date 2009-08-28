@@ -314,8 +314,24 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                    exit(1);
                }
                OPAL_PAFFINITY_CPU_ZERO(mask);
-               /* my starting core has to be offset by cpus_per_rank */
-               logical_cpu = nrank * jobdat->cpus_per_rank;
+               if (ORTE_MAPPING_NPERXXX & jobdat->policy) {
+                   /* if npersocket was set, then we divide the number of cores
+                    * per socket by the #localprocs/#sockets to determine how many cores
+                    * each rank gets
+                    */
+                   npersocket = jobdat->num_local_procs / orte_odls_globals.num_sockets;
+                   /* compute the #cores/process */
+                   jobdat->cpus_per_rank = orte_default_num_cores_per_socket / npersocket;
+                   /* figure out which logical cpu this node rank should start on as we
+                    * must ensure it starts on the right socket
+                    */
+                   logical_cpu = (nrank / npersocket) * orte_default_num_cores_per_socket;
+                   /* now add an offset within the socket */
+                   logical_cpu += (nrank % npersocket) * jobdat->cpus_per_rank;
+               } else {
+                   /* my starting core has to be offset by cpus_per_rank */
+                   logical_cpu = nrank * jobdat->cpus_per_rank;
+               }
                for (n=0; n < jobdat->cpus_per_rank; n++) {
                    /* are we bound? */
                    if (orte_odls_globals.bound) {
