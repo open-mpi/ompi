@@ -154,11 +154,17 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
             break;
     }
 
+    /*
+     * BWB: Always make the multi-threaded algorithm the selected
+     * algorithm.  The others don't reuse CIDs which leads to CID
+     * space exhaustion in real-world applications. Leave the other
+     * code, as Edgar plans on adding CID reuse in the not-to-distant
+     * future. */
     /**
      * In case multi-threading is enabled, we revert to the old algorithm
      * starting from cid_block_start
      */
-    if (MPI_THREAD_MULTIPLE == ompi_mpi_thread_provided) {
+    if (1 || MPI_THREAD_MULTIPLE == ompi_mpi_thread_provided) {
         int nextlocal_cid;
         int done=0;
         int response, glresponse=0;
