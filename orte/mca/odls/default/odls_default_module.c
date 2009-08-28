@@ -290,6 +290,11 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                    write(p[1], &rc, sizeof(int));
                    exit(1);
                }
+               if (orte_odls_globals.report_bindings) {
+                   opal_output(0, "%s odls:default:fork binding child %s to slot_list %s",
+                               ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                               ORTE_NAME_PRINT(child->name), child->slot_list);
+               }
                if (OPAL_SUCCESS != (rc = opal_paffinity_base_slot_list_set((long)child->name->vpid, child->slot_list))) {
                    orte_show_help("help-odls-default.txt",
                                   "odls-default:slot-list-failed", true, child->slot_list, ORTE_ERROR_NAME(rc));
