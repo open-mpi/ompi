@@ -196,7 +196,7 @@ int mca_pml_csum_add_comm(ompi_communicator_t* comm)
     }
 
     /* should never happen, but it was, so check */
-    if (comm->c_contextid > mca_pml_csum.super.pml_max_contextid) {
+    if (comm->c_contextid > (uint32_t) mca_pml_csum.super.pml_max_contextid) {
         OBJ_RELEASE(pml_comm);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
