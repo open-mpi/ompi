@@ -826,16 +826,37 @@ static void job_completed(int trigpipe, short event, void *arg)
         /* If we showed more abort messages than were allowed,
         show a followup message here */
         if (num_failed_start > 1) {
-            printf("%d total process%s failed to start\n",
+            if (orte_xml_output) {
+                printf("<stderr>");
+            }
+            printf("%d total process%s failed to start",
                    num_failed_start, ((num_failed_start > 1) ? "es" : ""));
+            if (orte_xml_output) {
+                printf("&#010;</stderr>");
+            }
+            printf("\n");
         }
         if (num_aborted > 1) {
-            printf("%d total process%s aborted\n",
+            if (orte_xml_output) {
+                printf("<stderr>");
+            }
+            printf("%d total process%s aborted",
                    num_aborted, ((num_aborted > 1) ? "es" : ""));
+            if (orte_xml_output) {
+                printf("&#010;</stderr>");
+            }
+            printf("\n");
         }
         if (num_killed > 1) {
-            printf("%d total process%s killed (some possibly by %s during cleanup)\n",
+            if (orte_xml_output) {
+                printf("<stderr>");
+            }
+            printf("%d total process%s killed (some possibly by %s during cleanup)",
                    num_killed, ((num_killed > 1) ? "es" : ""), orterun_basename);
+            if (orte_xml_output) {
+                printf("&#010;</stderr>");
+            }
+            printf("\n");
         }
     }
     
