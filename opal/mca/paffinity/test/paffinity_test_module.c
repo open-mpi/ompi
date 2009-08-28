@@ -98,12 +98,18 @@ static int get(opal_paffinity_base_cpu_set_t *cpumask)
     int i;
     
     OPAL_PAFFINITY_CPU_ZERO(*cpumask);
-    for (i=0; i < NUM_SOCKETS*NUM_CORES; i+=2) {
-        OPAL_PAFFINITY_CPU_SET(i, *cpumask);
-    }
-    /* assign all cores in the 2nd socket */
-    for (i=NUM_CORES; i < 2*NUM_CORES; i++) {
-        OPAL_PAFFINITY_CPU_SET(i, *cpumask);
+    if (opal_paffinity_test_bound) {
+        for (i=0; i < NUM_SOCKETS*NUM_CORES; i+=2) {
+            OPAL_PAFFINITY_CPU_SET(i, *cpumask);
+        }
+        /* assign all cores in the 2nd socket */
+        for (i=NUM_CORES; i < 2*NUM_CORES; i++) {
+            OPAL_PAFFINITY_CPU_SET(i, *cpumask);
+        }
+    } else {
+        for (i=0; i < NUM_SOCKETS*NUM_CORES; i++) {
+            OPAL_PAFFINITY_CPU_SET(i, *cpumask);
+        }
     }
     return OPAL_SUCCESS;
 }

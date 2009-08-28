@@ -36,6 +36,9 @@ OPAL_DECLSPEC extern const opal_paffinity_base_component_2_0_0_t mca_paffinity_t
 /* query function */
 int opal_paffinity_test_component_query(mca_base_module_t **module, int *priority);
 
+/* local value */
+OPAL_DECLSPEC extern bool opal_paffinity_test_bound;
+
 END_C_DECLS
 
 #endif /* MCA_PAFFINITY_TEST_EXPORT_H */

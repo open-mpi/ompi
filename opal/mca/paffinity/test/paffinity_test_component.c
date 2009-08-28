@@ -45,6 +45,8 @@ static int test_open(void);
  * and pointers to our public functions in it
  */
 
+bool opal_paffinity_test_bound;
+
 const opal_paffinity_base_component_2_0_0_t mca_paffinity_test_component = {
 
     /* First, the mca_component_t struct containing meta information
@@ -79,5 +81,12 @@ const opal_paffinity_base_component_2_0_0_t mca_paffinity_test_component = {
 
 static int test_open(void)
 {
+    int tmp;
+    
+    mca_base_param_reg_int(&mca_paffinity_test_component.base_version, "bound",
+                           "Whether or not to test as if externally bound (default=0: no)",
+                           false, false, (int)false, &tmp);
+    opal_paffinity_test_bound = OPAL_INT_TO_BOOL(tmp);
+    
     return OPAL_SUCCESS;
 }
