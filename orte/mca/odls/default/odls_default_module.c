@@ -491,8 +491,18 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                            exit(1);
                        }
                    } else {
-                       /* if we are not bound, then just use all sockets, compensating for the number of cpus_per_task */
-                       target_socket = opal_paffinity_base_get_physical_socket_id(lrank / (orte_default_num_cores_per_socket / jobdat->cpus_per_rank));
+                       /* if we are not bound, then just use all sockets */
+                       if (1 == orte_odls_globals.num_sockets) {
+                           /* if we only have one socket, then just put it there */
+                           target_socket = opal_paffinity_base_get_physical_socket_id(0);
+                       } else {
+                           /* compute the logical socket, compensating for the number of cpus_per_rank */
+                           logical_skt = lrank / (orte_default_num_cores_per_socket / jobdat->cpus_per_rank);
+                           /* wrap that around the number of sockets so we round-robin */
+                           logical_skt = logical_skt % orte_odls_globals.num_sockets;
+                           /* now get the target physical socket */
+                           target_socket = opal_paffinity_base_get_physical_socket_id(logical_skt);
+                       }
                    }
                    OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                                         "byslot lrank %d socket %d", (int)lrank, target_socket));
