@@ -30,14 +30,16 @@ BEGIN_C_DECLS
 /*
  * Globally exported variable
  */
+typedef struct opal_paffinity_test_component_t {
+    opal_paffinity_base_component_t super;
+    bool bound;
+    int num_sockets;
+    int num_cores;
+} opal_paffinity_test_component_t;
 
-OPAL_DECLSPEC extern const opal_paffinity_base_component_2_0_0_t mca_paffinity_test_component;
+OPAL_MODULE_DECLSPEC extern opal_paffinity_test_component_t mca_paffinity_test_component;
 
-/* query function */
-int opal_paffinity_test_component_query(mca_base_module_t **module, int *priority);
-
-/* local value */
-OPAL_DECLSPEC extern bool opal_paffinity_test_bound;
+extern opal_paffinity_base_module_t opal_paffinity_test_module;
 
 END_C_DECLS
 
