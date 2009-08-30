@@ -151,7 +151,9 @@ int orte_rmaps_base_open(void)
     /* #cpus/rank to use */
     param = mca_base_param_reg_int_name("rmaps", "base_cpus_per_rank",
                                         "Number of cpus to use for each rank [1-2**15 (default=1)]",
-                                        false, false, 1, &value);
+                                        false, false, 1, NULL);
+    mca_base_param_reg_syn_name(param, "rmaps", "base_cpus_per_rank", false);
+    mca_base_param_lookup_int(param, &value);
     orte_rmaps_base.cpus_per_rank = value;
     /* if the cpus/rank > 1, then we have to bind to cores UNLESS the binding has
      * already been set to something else
