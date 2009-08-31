@@ -1960,7 +1960,7 @@ static int get_ib_dev_distance(struct ibv_device *dev)
         if(distance < 0)
             return 0;
 
-        if(min_distance < 0 || min_distance < distance)
+        if(min_distance < 0 || min_distance > distance)
             min_distance = distance;
     }
 
