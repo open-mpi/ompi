@@ -53,6 +53,7 @@
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/grpcomm/grpcomm.h"
+#include "orte/mca/rmaps/rmaps_types.h"
 
 #include "orte/util/context_fns.h"
 #include "orte/util/name_fns.h"
@@ -74,7 +75,6 @@
 #include "orte/mca/odls/base/odls_private.h"
 
 static int8_t *app_idx;
-static char **slot_str=NULL;
 
 /* IT IS CRITICAL THAT ANY CHANGE IN THE ORDER OF THE INFO PACKED IN
  * THIS FUNCTION BE REFLECTED IN THE CONSTRUCT_CHILD_LIST PARSER BELOW
@@ -84,10 +84,14 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
 {
     int rc;
     orte_job_t *jdata;
+    orte_proc_t *proc;
     orte_job_map_t *map;
     opal_buffer_t *wireup;
     opal_byte_object_t bo, *boptr;
     int32_t numbytes;
+    int8_t flag;
+    orte_vpid_t i;
+    int j;
     orte_daemon_cmd_flag_t command;
 
     /* get the job data pointer */
@@ -172,6 +176,24 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
         return rc;
     }
     
+    /* pack the map & binding policy for this job */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &map->policy, 1, ORTE_MAPPING_POLICY))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* pack the cpus_per_rank for this job */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &map->cpus_per_rank, 1, OPAL_INT16))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* pack the stride for this job */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &map->stride, 1, OPAL_INT16))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
     /* pack the control flags for this job */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->controls, 1, ORTE_JOB_CONTROL))) {
         ORTE_ERROR_LOG(rc);
@@ -212,6 +234,31 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     }
     /* release the data since it has now been copied into our buffer */
     free(bo.bytes);
+    
+    /* are there cpu_list strings? */
+    if (jdata->map->cpu_lists) {
+        flag = (int8_t)true;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &flag, 1, OPAL_INT8))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        for (j=0, i=0; i < jdata->num_procs && j < jdata->procs->size; j++) {
+            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, j))) {
+                continue;
+            }
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &proc->slot_list, 1, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                return rc; 
+            }
+            i++;
+        }
+    } else {
+        flag = (int8_t)false;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &flag, 1, OPAL_INT8))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
     
     return ORTE_SUCCESS;
 }
@@ -295,6 +342,8 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     orte_pmap_t *pmap;
     opal_buffer_t alert;
     opal_list_item_t *item;
+    int8_t flag;
+    char **slot_str=NULL;
     orte_namelist_t *nm;
     opal_list_t daemon_tree;
 
@@ -359,6 +408,24 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
     }
+    /* unpack the mapping policy for the job */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->policy, &cnt, ORTE_MAPPING_POLICY))) {
+        ORTE_ERROR_LOG(rc);
+        goto REPORT_ERROR;
+    }
+    /* unpack the cpus/rank for the job */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->cpus_per_rank, &cnt, OPAL_INT16))) {
+        ORTE_ERROR_LOG(rc);
+        goto REPORT_ERROR;
+    }
+    /* unpack the stride for the job */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->stride, &cnt, OPAL_INT16))) {
+        ORTE_ERROR_LOG(rc);
+        goto REPORT_ERROR;
+    }
     /* unpack the control flags for the job */
     cnt=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->controls, &cnt, ORTE_JOB_CONTROL))) {
@@ -408,6 +475,25 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         goto REPORT_ERROR;
     }
    
+    /* unpack flag to indicate if slot_strings are present */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &flag, &cnt, OPAL_INT8))) {
+        ORTE_ERROR_LOG(rc);
+        goto REPORT_ERROR;
+    }
+    
+    if (flag) {
+        /* allocate space */
+        slot_str = (char**)malloc(jobdat->num_procs * sizeof(char*));
+        for (j=0; j < jobdat->num_procs; j++) {
+            cnt=1;
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &slot_str[j], &cnt, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                goto REPORT_ERROR;
+            }
+        }
+    }
+
     /* get the daemon tree */
     OBJ_CONSTRUCT(&daemon_tree, opal_list_t);
     orte_routed.get_routing_tree(ORTE_PROC_MY_NAME->jobid, &daemon_tree);
@@ -548,6 +634,19 @@ REPORT_ERROR:
     }
     OBJ_DESTRUCT(&alert);
     
+    /* cleanup */
+    if (NULL != app_idx) {
+        free(app_idx);
+        app_idx = NULL;
+    }
+    if (NULL != slot_str && NULL != jobdat) {
+        for (j=0; j < jobdat->num_procs; j++) {
+            free(slot_str[j]);
+        }
+        free(slot_str);
+        slot_str = NULL;
+    }
+
     return rc;
 }
 
@@ -1160,7 +1259,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                 }
             }
             
-            rc = fork_local(app, child, app->env, jobdat->controls, jobdat->stdin_target);
+            rc = fork_local(app, child, app->env, jobdat);
             
             /* reaquire lock so we don't double unlock... */
             OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
@@ -1205,6 +1304,23 @@ CLEANUP:
                          "%s odls:launch reporting job %s launch status",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(job)));
+
+    /* if the launch failed, we need to flag all the procs from this job
+     * that didn't launch as having failed, or else we will hang
+     */
+    if (launch_failed) {
+        OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
+        for (item = opal_list_get_first(&orte_local_children);
+             item != opal_list_get_end(&orte_local_children);
+             item = opal_list_get_next(item)) {
+            child = (orte_odls_child_t*)item;
+            if (child->name->jobid == jobdat->jobid &&
+                ORTE_PROC_STATE_LAUNCHED >= child->state) {
+                child->state = ORTE_PROC_STATE_FAILED_TO_START;
+            }
+        }
+    }
+    
     /* pack the launch results */
     if (ORTE_SUCCESS != (ret = pack_state_update(&alert, true, job))) {
         ORTE_ERROR_LOG(ret);

@@ -40,7 +40,6 @@
 #include "opal/class/opal_pointer_array.h"
 
 #include "orte/mca/plm/plm_types.h"
-#include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/util/proc_info.h"
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_wait.h"
@@ -127,6 +126,7 @@ typedef struct orte_job_t orte_job_t;
 * defining it - resolves potential circular definition
 */
 struct orte_proc_t;
+struct orte_job_map_t;
 /************/
 
 /**
@@ -225,6 +225,14 @@ typedef struct {
         specified limit.  For example, if we have two processors, we
         may want to allow up to four processes but no more. */
     orte_std_cntr_t slots_max;
+    /* number of physical boards in the node - defaults to 1 */
+    uint8_t boards;
+    /* number of sockets on each board - defaults to 1 */
+    uint8_t sockets_per_board;
+    /* number of cores per socket - defaults to 1 */
+    uint8_t cores_per_socket;
+    /* cpus on this node that are assigned for our use */
+    char *cpu_set;
     /** Username on this node, if specified */
     char *username;
     char *slot_list;
@@ -241,6 +249,41 @@ typedef uint8_t orte_job_controls_t;
 #define ORTE_JOB_CONTROL_FORWARD_OUTPUT     0x08
 #define ORTE_JOB_CONTROL_DO_NOT_MONITOR     0x10
 #define ORTE_JOB_CONTROL_FORWARD_COMM       0x20
+
+typedef uint16_t orte_mapping_policy_t;
+#define ORTE_MAPPING_POLICY OPAL_UINT16
+/* put the rank assignment method in the upper 8 bits */
+#define ORTE_MAPPING_NOPOL          0x0100
+#define ORTE_MAPPING_BYNODE         0x0200
+#define ORTE_MAPPING_BYSLOT         0x0400
+#define ORTE_MAPPING_BYSOCKET       0x0800
+#define ORTE_MAPPING_BYBOARD        0x1000
+#define ORTE_MAPPING_NO_USE_LOCAL   0x2000
+#define ORTE_MAPPING_NPERXXX        0x4000
+#define ORTE_MAPPING_BYUSER         0x8000
+/* nice macro for setting these */
+#define ORTE_SET_MAPPING_POLICY(pol) \
+    orte_default_mapping_policy = (orte_default_mapping_policy & 0x00ff) | (pol);
+#define ORTE_ADD_MAPPING_POLICY(pol) \
+    orte_default_mapping_policy |= (pol);
+
+/* put the binding policy in the lower 8 bits, using the paffinity values */
+#define ORTE_BIND_TO_NONE           (uint16_t)OPAL_PAFFINITY_DO_NOT_BIND
+#define ORTE_BIND_TO_CORE           (uint16_t)OPAL_PAFFINITY_BIND_TO_CORE
+#define ORTE_BIND_TO_SOCKET         (uint16_t)OPAL_PAFFINITY_BIND_TO_SOCKET
+#define ORTE_BIND_TO_BOARD          (uint16_t)OPAL_PAFFINITY_BIND_TO_BOARD
+/* nice macro for setting these */
+#define ORTE_SET_BINDING_POLICY(pol) \
+    orte_default_mapping_policy = (orte_default_mapping_policy & 0xff00) | (pol);
+/* macro to detect if some other policy has been set */
+#define ORTE_XSET_BINDING_POLICY(pol)                           \
+    do {                                                        \
+        orte_mapping_policy_t tmp;                              \
+        tmp = (orte_default_mapping_policy & 0xff00) & ~(pol);  \
+        if (0 == tmp) {                                         \
+            ORTE_SET_BINDING_POLICY((pol));                     \
+        }                                                       \
+    } while(0);
 
 typedef struct {
     /** Base object so this can be put on a list */
@@ -266,7 +309,7 @@ typedef struct {
     /* array of pointers to procs in this job */
     opal_pointer_array_t *procs;
     /* map of the job */
-    orte_job_map_t *map;
+    struct orte_job_map_t *map;
     /* bookmark for where we are in mapping - this
      * indicates the node where we stopped
      */
@@ -430,8 +473,6 @@ ORTE_DECLSPEC extern int orte_startup_timeout;
 ORTE_DECLSPEC extern int orte_timeout_usec_per_proc;
 ORTE_DECLSPEC extern float orte_max_timeout;
 
-ORTE_DECLSPEC extern char *orte_default_hostfile;
-
 ORTE_DECLSPEC extern opal_buffer_t *orte_tree_launch_cmd;
 
 /* global arrays for data storage */
@@ -460,6 +501,19 @@ ORTE_DECLSPEC extern char *orte_xterm;
 
 /* whether or not to report launch progress */
 ORTE_DECLSPEC extern bool orte_report_launch_progress;
+
+/* cluster hardware info */
+ORTE_DECLSPEC extern uint8_t orte_default_num_boards;
+ORTE_DECLSPEC extern uint8_t orte_default_num_sockets_per_board;
+ORTE_DECLSPEC extern uint8_t orte_default_num_cores_per_socket;
+
+/* allocation specification */
+ORTE_DECLSPEC extern char *orte_default_cpu_set;
+ORTE_DECLSPEC extern char *orte_default_hostfile;
+ORTE_DECLSPEC extern char *orte_rankfile;
+
+/* default rank assigment and binding policy */
+ORTE_DECLSPEC extern orte_mapping_policy_t orte_default_mapping_policy;
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 

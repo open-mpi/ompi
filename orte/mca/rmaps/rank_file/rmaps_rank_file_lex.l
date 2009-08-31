@@ -21,21 +21,22 @@
 #include "orte_config.h"
 
 #include <stdio.h>
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+
 #include "orte/mca/rmaps/rank_file/rmaps_rank_file_lex.h"
+#include "opal/util/output.h"
 
-/*
- * local functions
- */
+BEGIN_C_DECLS
 
-int orte_rmaps_rank_file_wrap(void)
-{
-    orte_rmaps_rank_file_done = true;
-    return 1;
-}
+static int finish_parsing(void);
+int orte_rmaps_rank_file_yywrap(void);
 
+END_C_DECLS
+
+#define yyterminate() \
+  return finish_parsing()
 
 /*
  * global variables
@@ -110,8 +111,33 @@ username           { orte_rmaps_rank_file_value.sval = yytext;
                      orte_rmaps_rank_file_value.sval = yytext; 
                      return ORTE_RANKFILE_HOSTNAME; }
 
+\+n[0-9]+           { orte_rmaps_rank_file_value.sval = yytext;
+					 return ORTE_RANKFILE_RELATIVE; }
+
 .                  { orte_rmaps_rank_file_value.sval = yytext; 
                      return ORTE_RANKFILE_ERROR; }
 
 %%
 
+/*
+ * This cleans up at the end of the parse (since, in this case, we
+ * always parse the entire file) and prevents a memory leak.
+ */
+static int finish_parsing(void) 
+{
+    if (NULL != YY_CURRENT_BUFFER) {
+        yy_delete_buffer(YY_CURRENT_BUFFER); 
+#if defined(YY_CURRENT_BUFFER_LVALUE)
+        YY_CURRENT_BUFFER_LVALUE = NULL;
+#else
+        YY_CURRENT_BUFFER = NULL;
+#endif  /* YY_CURRENT_BUFFER_LVALUE */
+    }
+    return YY_NULL;
+}
+
+int orte_rmaps_rank_file_wrap(void)
+{
+    orte_rmaps_rank_file_done = true;
+    return 1;
+}

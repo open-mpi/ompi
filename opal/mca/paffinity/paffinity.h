@@ -90,6 +90,30 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
+/* ******************************************************************** */
+/** Process locality definitions */
+#define OPAL_PROC_ON_CLUSTER    0x10
+#define OPAL_PROC_ON_CU         0x08
+#define OPAL_PROC_ON_NODE       0x04
+#define OPAL_PROC_ON_BOARD      0x02
+#define OPAL_PROC_ON_SOCKET     0x01
+#define OPAL_PROC_NON_LOCAL     0x00
+#define OPAL_PROC_ALL_LOCAL     0x1f
+
+/** Process locality macros */
+#define OPAL_PROC_ON_LOCAL_SOCKET(n)    ((n) & OPAL_PROC_ON_SOCKET)
+#define OPAL_PROC_ON_LOCAL_BOARD(n)     ((n) & OPAL_PROC_ON_BOARD)
+#define OPAL_PROC_ON_LOCAL_NODE(n)      ((n) & OPAL_PROC_ON_NODE)
+#define OPAL_PROC_ON_LOCAL_CU(n)        ((n) & OPAL_PROC_ON_CU)
+#define OPAL_PROC_ON_LOCAL_CLUSTER(n)   ((n) & OPAL_PROC_ON_CLUSTER)
+
+/* Process binding modes */
+#define OPAL_PAFFINITY_DO_NOT_BIND      0x01
+#define OPAL_PAFFINITY_BIND_TO_CORE     0x02
+#define OPAL_PAFFINITY_BIND_TO_SOCKET   0x04
+#define OPAL_PAFFINITY_BIND_TO_BOARD    0x08
+/* ******************************************************************** */
+
 /**
  * Buffer type for paffinity processor masks.
  * Copied almost directly from PLPA.
@@ -163,6 +187,25 @@ typedef struct opal_paffinity_base_cpu_set_t {
  */
 #define OPAL_PAFFINITY_CPU_ISSET(num, cpuset) \
     (0 != (((cpuset).bitmask[OPAL_PAFFINITY_CPU_BYTE(num)]) & ((opal_paffinity_base_bitmask_t) 1 << OPAL_PAFFINITY_CPU_BIT(num))))
+
+/**
+ * Public macro to test if a process is bound anywhere
+ */
+#define OPAL_PAFFINITY_PROCESS_IS_BOUND(cpuset, bound)              \
+    do {                                                            \
+        int i, num_processors, num_bound;                           \
+        opal_paffinity_base_get_processor_info(&num_processors);    \
+        *(bound) = false;                                           \
+        num_bound = 0;                                              \
+        for (i=0; i < num_processors; i++) {                        \
+            if (OPAL_PAFFINITY_CPU_ISSET(i, (cpuset))) {            \
+                num_bound++;                                        \
+            }                                                       \
+        }                                                           \
+        if (0 < num_bound && num_bound < num_processors) {          \
+            *(bound) = true;                                        \
+        }                                                           \
+    } while(0);
 
 /***************************************************************************/
 

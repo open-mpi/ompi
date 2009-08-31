@@ -91,23 +91,26 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_odls_child_t);
  * List object to locally store job related info
  */
 typedef struct orte_odls_job_t {
-    opal_list_item_t    super;                  /* required to place this on a list */
-    orte_jobid_t        jobid;                  /* jobid for this data */
-    orte_app_context_t  **apps;                 /* app_contexts for this job */
-    orte_std_cntr_t     num_apps;               /* number of app_contexts */
-    orte_job_controls_t controls;               /* control flags for job */
-    orte_vpid_t         stdin_target;           /* where stdin is to go */
-    orte_std_cntr_t     total_slots_alloc;
-    orte_vpid_t         num_procs;
-    int32_t             num_local_procs;
-    opal_value_array_t  procmap;                /* map of procs/node, local ranks */
-    opal_byte_object_t  *pmap;                  /* byte object version of procmap */
-    opal_buffer_t       collection_bucket;
-    opal_buffer_t       local_collection;
-    orte_grpcomm_coll_t collective_type;
-    int32_t             num_contributors;
-    int                 num_participating;
-    int                 num_collected;
+    opal_list_item_t        super;                  /* required to place this on a list */
+    orte_jobid_t            jobid;                  /* jobid for this data */
+    orte_app_context_t      **apps;                 /* app_contexts for this job */
+    orte_std_cntr_t         num_apps;               /* number of app_contexts */
+    orte_mapping_policy_t   policy;                 /* mapping policy */
+    int16_t                 cpus_per_rank;          /* number of cpus/rank */
+    int16_t                 stride;                 /* step size between cores of multi-core/rank procs */
+    orte_job_controls_t     controls;               /* control flags for job */
+    orte_vpid_t             stdin_target;           /* where stdin is to go */
+    orte_std_cntr_t         total_slots_alloc;
+    orte_vpid_t             num_procs;
+    int32_t                 num_local_procs;
+    opal_value_array_t      procmap;                /* map of procs/node, local ranks */
+    opal_byte_object_t      *pmap;                  /* byte object version of procmap */
+    opal_buffer_t           collection_bucket;
+    opal_buffer_t           local_collection;
+    orte_grpcomm_coll_t     collective_type;
+    int32_t                 num_contributors;
+    int                     num_participating;
+    int                     num_collected;
 } orte_odls_job_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_odls_job_t);
 

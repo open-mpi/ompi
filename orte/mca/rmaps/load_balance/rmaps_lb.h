@@ -9,8 +9,6 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Voltaire. All rights reserved
- * 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -22,44 +20,17 @@
  *
  * Resource Mapping 
  */
-
-
-#ifndef ORTE_RMAPS_RF_H
-#define ORTE_RMAPS_RF_H
+#ifndef ORTE_RMAPS_LB_H
+#define ORTE_RMAPS_LB_H
 
 #include "orte_config.h"
-
-#include "opal/class/opal_object.h"
-#include "opal/mca/paffinity/paffinity.h"
-
 #include "orte/mca/rmaps/rmaps.h"
 
 BEGIN_C_DECLS
 
-/**
- * RMGR Component 
- */
-struct orte_rmaps_rank_file_component_t {
-    orte_rmaps_base_component_t super;
-    int debug;
-    int priority;
-};
-typedef struct orte_rmaps_rank_file_component_t orte_rmaps_rank_file_component_t;
+ORTE_MODULE_DECLSPEC extern orte_rmaps_base_component_t mca_rmaps_load_balance_component;
+extern orte_rmaps_base_module_t orte_rmaps_load_balance_module;
 
-ORTE_MODULE_DECLSPEC extern orte_rmaps_rank_file_component_t mca_rmaps_rank_file_component;
-extern orte_rmaps_base_module_t orte_rmaps_rank_file_module;
-
-
-typedef struct cpu_socket_t cpu_socket_t;
-
-struct orte_rmaps_rank_file_map_t {
-    opal_object_t super;
-    char* node_name;
-    char slot_list[64];
-};
-typedef struct orte_rmaps_rank_file_map_t orte_rmaps_rank_file_map_t;
-
-ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_rmaps_rank_file_map_t);
 
 END_C_DECLS
 

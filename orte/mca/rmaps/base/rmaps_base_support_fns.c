@@ -21,20 +21,18 @@
 
 #include <string.h>
 
-#include "opal/util/argv.h"
+#include "opal/util/if.h"
+#include "opal/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "opal/util/if.h"
 
 #include "orte/util/show_help.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/util/proc_info.h"
 #include "orte/util/hostfile/hostfile.h"
 #include "orte/util/dash_host/dash_host.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/plm/plm_types.h"
 
 #include "orte/mca/rmaps/base/rmaps_private.h"
 #include "orte/mca/rmaps/base/base.h"
@@ -43,10 +41,10 @@
  * Query the registry for all nodes allocated to a specified app_context
  */
 int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr_t *total_num_slots,
-                                     orte_app_context_t *app, uint8_t policy)
+                                     orte_app_context_t *app, orte_mapping_policy_t policy)
 {
     opal_list_item_t *item, *next;
-    orte_node_t *node, **nodes;
+    orte_node_t *node;
     orte_std_cntr_t num_slots;
     orte_std_cntr_t i;
     int rc;
@@ -54,24 +52,22 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     /** set default answer */
     *total_num_slots = 0;
     
-    /* create a working list of nodes */
-    nodes = (orte_node_t**)orte_node_pool->addr;
-    
     /* if the hnp was allocated, include it */
     if (orte_hnp_is_allocated) {
-        OBJ_RETAIN(nodes[0]);
-        opal_list_append(allocated_nodes, &nodes[0]->super);
+        node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
+        OBJ_RETAIN(node);
+        opal_list_append(allocated_nodes, &node->super);
     }
     
+    /* add everything in the node pool */
     for (i=1; i < orte_node_pool->size; i++) {
-        if (NULL == nodes[i]) {
-            break;  /* nodes are left aligned, so stop when we hit a null */
+        if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+            /* retain a copy for our use in case the item gets
+             * destructed along the way
+             */
+            OBJ_RETAIN(node);
+            opal_list_append(allocated_nodes, &node->super);
         } 
-        /* retain a copy for our use in case the item gets
-         * destructed along the way
-         */
-        OBJ_RETAIN(nodes[i]);
-        opal_list_append(allocated_nodes, &nodes[i]->super);
     }
 
     /** check that anything is here */
@@ -121,6 +117,25 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     }
     
     
+    /* did the app_context contain an add-hostfile? */
+    if (NULL != app->add_hostfile) {
+        /* yes - filter the node list through the file, removing
+         * any nodes not found in the file
+         */
+        if (ORTE_SUCCESS != (rc = orte_util_filter_hostfile_nodes(allocated_nodes,
+                                                                  app->add_hostfile))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        /** check that anything is here */
+        if (0 == opal_list_get_size(allocated_nodes)) {
+            orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-mapped-node",
+                           true, app->app, app->hostfile);
+            return ORTE_ERR_SILENT;
+        }
+    }
+    
+    
     /* now filter the list through any -host specification */
     if (NULL != app->dash_host) {
         if (ORTE_SUCCESS != (rc = orte_util_filter_dash_host_nodes(allocated_nodes,
@@ -139,7 +154,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     /* If the "no local" option was set, then remove the local node
      * from the list
      */
-    if (policy & ORTE_RMAPS_NO_USE_LOCAL) {
+    if (policy & ORTE_MAPPING_NO_USE_LOCAL) {
         /* we don't need to check through the entire list as
          * the head node - if it is on the list at all - will
          * always be in the first position
@@ -203,15 +218,17 @@ int orte_rmaps_base_add_proc_to_map(orte_job_map_t *map, orte_node_t *node,
                                     bool oversubscribed, orte_proc_t *proc)
 {
     orte_std_cntr_t i;
-    orte_node_t **nodes;
+    orte_node_t *node_from_map;
     int rc;
     
     /* see if this node has already been assigned to the map - if
      * not, then add the pointer to the pointer array
      */
-    nodes = (orte_node_t**)map->nodes->addr;
-    for (i=0; i < map->num_nodes; i++) {
-        if (nodes[i]->index == node->index) {
+    for (i=0; i < map->nodes->size; i++) {
+        if (NULL == (node_from_map = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
+            continue;
+        }
+        if (node_from_map->index == node->index) {
             /* we have this node in the array */
             goto PROCESS;
         }
@@ -235,9 +252,9 @@ PROCESS:
      * in the mapper
      */
     OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
-                         "%s rmaps:base: mapping proc %s to node %s",
+                         "%s rmaps:base: mapping proc for job %s to node %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&proc->name),
+                         ORTE_JOBID_PRINT(proc->name.jobid),
                          (NULL == node->name) ? "NULL" : node->name));
     
     if (0 > (rc = opal_pointer_array_add(node->procs, (void*)proc))) {
@@ -257,54 +274,56 @@ PROCESS:
  */
 int orte_rmaps_base_claim_slot(orte_job_t *jdata,
                                orte_node_t *current_node,
-                               orte_vpid_t vpid,
+                               int32_t cpus_per_rank,
                                orte_std_cntr_t app_idx,
                                opal_list_t *nodes,
                                bool oversubscribe,
-                               bool remove_from_list)
+                               bool remove_from_list,
+                               orte_proc_t **returnproc)
 {
     orte_proc_t *proc;
     bool oversub;
     int rc;
-    
-    /* create mapped_proc object */
-    proc = OBJ_NEW(orte_proc_t);
-    if (NULL == proc) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
+
+    /* if we were given a proc, just use it */
+    if (NULL != returnproc && NULL != *returnproc) {
+        proc = *returnproc;
+    } else {
+        /* create mapped_proc object */
+        proc = OBJ_NEW(orte_proc_t);
+        if (NULL == proc) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        /* set the jobid */
+        proc->name.jobid = jdata->jobid;
+        /* we do not set the vpid here - this will be done
+         * during a second phase
+         */
+        proc->app_idx = app_idx;
+        OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                             "%s rmaps:base:claim_slot: created new proc %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&proc->name)));
+        
+        /* provide returned proc, if requested */
+        if (NULL != returnproc) {
+            *returnproc = proc;
+        }
     }
-    
-    /* create the process name */
-    proc->name.jobid = jdata->jobid;
-    proc->name.vpid = vpid;
-    proc->app_idx = app_idx;
+
     OBJ_RETAIN(current_node);  /* maintain accounting on object */
     
-    if ( NULL != current_node->slot_list) {
-        proc->slot_list = strdup(current_node->slot_list);
-    }
-    current_node->slot_list = NULL;
     proc->node = current_node;
     proc->nodename = current_node->name;
     
-    /* add this proc to the job's data - we don't have to worry here
-     * about keeping the array left-justified as all vpids
-     * from 0 to num_procs will be filled
-     */
     OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
-                         "%s rmaps:base:claim_slot mapping rank %d to job %s",
+                         "%s rmaps:base:claim_slot mapping proc in job %s to node %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         vpid, ORTE_JOBID_PRINT(jdata->jobid)));
-    if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs,
-                                                          (int)vpid,
-                                                          (void*)proc))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(proc);
-        return rc;
-    }
+                         ORTE_JOBID_PRINT(jdata->jobid), current_node->name));
     
-    /* Be sure to demarcate this slot as claimed for the node */
-    current_node->slots_inuse++;
+    /* Be sure to demarcate the slots for this proc as claimed from the node */
+    current_node->slots_inuse += cpus_per_rank;
     
     /* see if this node is oversubscribed now */
     if (current_node->slots_inuse > current_node->slots) {
@@ -333,7 +352,7 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
          * mappers want us to do so to avoid any chance of continuing to
          * add procs to it
          */
-        if (remove_from_list) {
+        if (NULL != nodes && remove_from_list) {
             opal_list_remove_item(nodes, (opal_list_item_t*)current_node);
             /* release it - it was retained when we started, so this
              * just ensures the instance counter is correctly updated
@@ -349,13 +368,98 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
     return ORTE_SUCCESS;
 }
 
+int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
+{
+    orte_job_map_t *map;
+    orte_vpid_t vpid, vpid_start=0;
+    int i, j;
+    orte_node_t *node;
+    orte_proc_t *proc;
+    int rc;
+    
+    map = jdata->map;
+    
+    if (ORTE_MAPPING_BYUSER & map->policy) {
+        /* find the max vpid already assigned */
+        vpid_start = ORTE_VPID_MIN;
+        for (i=0; i < map->nodes->size; i++) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
+                continue;
+            }
+            for (j=0; j < node->procs->size; j++) {
+                if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
+                    continue;
+                }
+                if (ORTE_VPID_INVALID != proc->name.vpid &&
+                    vpid_start < proc->name.vpid) {
+                    vpid_start = proc->name.vpid;
+                }
+            }
+        }
+        /* we start one higher than the max found */
+        vpid_start++;
+    }
+    
+    if (ORTE_MAPPING_BYSLOT & map->policy ||
+        ORTE_MAPPING_BYSOCKET & map->policy ||
+        ORTE_MAPPING_BYBOARD & map->policy) {
+        /* assign the ranks sequentially */
+        vpid = vpid_start;
+        for (i=0; i < map->nodes->size; i++) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
+                continue;
+            }
+            for (j=0; j < node->procs->size; j++) {
+                if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
+                    continue;
+                }
+                if (ORTE_VPID_INVALID == proc->name.vpid) {
+                    proc->name.vpid = vpid++;
+                }
+                if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs,
+                                                                      proc->name.vpid, proc))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+            }
+        }
+        return ORTE_SUCCESS;
+    }
+    
+    if (ORTE_MAPPING_BYNODE & map->policy) {
+        /* assign the ranks round-robin across nodes */
+        for (i=0; i < map->nodes->size; i++) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
+                continue;
+            }
+            vpid = i + vpid_start;
+            for (j=0; j < node->procs->size; j++) {
+                if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
+                    continue;
+                }
+                if (ORTE_VPID_INVALID == proc->name.vpid) {
+                    proc->name.vpid = vpid;
+                    vpid += map->num_nodes;
+                }
+                if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs,
+                                                                      proc->name.vpid, proc))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+            }
+        }
+        return ORTE_SUCCESS;
+    }
 
-int orte_rmaps_base_compute_usage(orte_job_t *jdata)
+    return ORTE_ERR_NOT_IMPLEMENTED;
+}
+
+int orte_rmaps_base_compute_local_ranks(orte_job_t *jdata)
 {
     orte_std_cntr_t i;
-    orte_vpid_t j, k;
-    orte_node_t **nodes;
-    orte_proc_t **procs, *psave, *psave2;
+    int j, k;
+    orte_node_t *node;
+    orte_proc_t *proc, *psave, *psave2;
     orte_vpid_t minv, minv2;
     orte_local_rank_t local_rank;
     orte_job_map_t *map;
@@ -368,35 +472,47 @@ int orte_rmaps_base_compute_usage(orte_job_t *jdata)
     map = jdata->map;
     
     /* for each node in the map... */
-    nodes = (orte_node_t**)map->nodes->addr;
-    for (i=0; i < map->num_nodes; i++) {
+    for (i=0; i < map->nodes->size; i++) {
         /* cycle through the array of procs on this node, setting
          * local and node ranks, until we
          * have done so for all procs on nodes in this map
          */
+        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
+            continue;
+        }
         
         /* init search values */
-        procs = (orte_proc_t**)nodes[i]->procs->addr;
         local_rank = 0;
         
-        for (k=0; k < nodes[i]->num_procs; k++) {
+        /* the proc map may have holes in it, so cycle
+         * all the way through and avoid the holes
+         */
+        for (k=0; k < node->procs->size; k++) {
+            /* if this proc is NULL, skip it */
+            if (NULL == opal_pointer_array_get_item(node->procs, k)) {
+                continue;
+            }
             minv = ORTE_VPID_MAX;
             minv2 = ORTE_VPID_MAX;
             psave = NULL;
             psave2 = NULL;
             /* find the minimum vpid proc */
-            for (j=0; j < nodes[i]->num_procs; j++) {
-                if (procs[j]->name.jobid == jdata->jobid &&
-                    ORTE_LOCAL_RANK_MAX == procs[j]->local_rank &&
-                    procs[j]->name.vpid < minv) {
-                    minv = procs[j]->name.vpid;
-                    psave = procs[j];
+            for (j=0; j < node->procs->size; j++) {
+                /* if this proc is NULL, skip it */
+                if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
+                    continue;
+                }
+                if (proc->name.jobid == jdata->jobid &&
+                    ORTE_LOCAL_RANK_INVALID == proc->local_rank &&
+                    proc->name.vpid < minv) {
+                    minv = proc->name.vpid;
+                    psave = proc;
                 }
                 /* no matter what job...still have to handle node_rank */
-                if (ORTE_NODE_RANK_MAX == procs[j]->node_rank &&
-                    procs[j]->name.vpid < minv2) {
-                    minv2 = procs[j]->name.vpid;
-                    psave2 = procs[j];
+                if (ORTE_NODE_RANK_INVALID == proc->node_rank &&
+                    proc->name.vpid < minv2) {
+                    minv2 = proc->name.vpid;
+                    psave2 = proc;
                 }
             }
             if (NULL == psave && NULL == psave2) {
@@ -408,8 +524,8 @@ int orte_rmaps_base_compute_usage(orte_job_t *jdata)
                 ++local_rank;
             }
             if (NULL != psave2) {
-                psave2->node_rank = nodes[i]->next_node_rank;
-                nodes[i]->next_node_rank++;
+                psave2->node_rank = node->next_node_rank;
+                node->next_node_rank++;
             }
         }
     }
@@ -417,13 +533,70 @@ int orte_rmaps_base_compute_usage(orte_job_t *jdata)
     return ORTE_SUCCESS;
 }
 
+/* when we restart a process on a different node, we have to
+ * ensure that the node and local ranks assigned to the proc
+ * don't overlap with any pre-existing proc on that node. If
+ * we don't, then it would be possible for procs to conflict
+ * when opening static ports, should that be enabled.
+ */
+void orte_rmaps_base_update_local_ranks(orte_job_t *jdata, orte_node_t *oldnode,
+                                        orte_node_t *newnode, orte_proc_t *newproc)
+{
+    int k;
+    orte_node_rank_t node_rank;
+    orte_local_rank_t local_rank;
+    orte_proc_t *proc;
+    
+    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                         "%s rmaps:base:update_usage",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
+    /* if the node hasn't changed, then we can just use the
+     * pre-defined values
+     */
+    if (oldnode == newnode) {
+        return;
+    }
+    
+    /* if the node has changed, then search the new node for the
+     * lowest unused local and node rank
+     */
+    node_rank = 0;
+retry_nr:
+    for (k=0; k < newnode->procs->size; k++) {
+        /* if this proc is NULL, skip it */
+        if (NULL == (proc = (orte_proc_t *) opal_pointer_array_get_item(newnode->procs, k))) {
+            continue;
+        }
+        if (node_rank == proc->node_rank) {
+            node_rank++;
+            goto retry_nr;
+        }
+    }
+    newproc->node_rank = node_rank;
+    
+    local_rank = 0;
+retry_lr:
+    for (k=0; k < newnode->procs->size; k++) {
+        /* if this proc is NULL, skip it */
+        if (NULL == (proc = (orte_proc_t *) opal_pointer_array_get_item(newnode->procs, k))) {
+            continue;
+        }
+        if (local_rank == proc->local_rank) {
+            local_rank++;
+            goto retry_lr;
+        }
+    }
+    newproc->local_rank = local_rank;
+}
+
+
 int orte_rmaps_base_define_daemons(orte_job_map_t *map)
 {
-    orte_node_t *node, **nodes;
+    orte_node_t *node;
     orte_proc_t *proc;
     orte_job_t *daemons;
-    orte_std_cntr_t i;
-    orte_vpid_t numdaemons;
+    int i;
     int rc;
     
     OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
@@ -436,13 +609,16 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
         ORTE_ERROR_LOG(ORTE_ERR_FATAL);
         return ORTE_ERR_FATAL;
     }
-    numdaemons=0;
+    
+    /* initialize the #new daemons */
+    map->num_new_daemons = 0;
     
     /* go through the nodes in the map, checking each one's daemon name
      */
-    nodes = (orte_node_t**)map->nodes->addr;
-    for (i=0; i < map->num_nodes; i++) {
-        node = nodes[i];
+    for (i=0; i < map->nodes->size; i++) {
+        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
+            continue;
+        }
         if (NULL == node->daemon) {
             /* we haven't defined one for it
              * yet, so do so now and indicate it is to be launched
@@ -472,8 +648,6 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
                 return rc;
             }
             ++daemons->num_procs;
-            /* count number of daemons being used */
-            ++numdaemons;
             /* point the node to the daemon */
             node->daemon = proc;
             OBJ_RETAIN(proc);  /* maintain accounting */
@@ -490,8 +664,6 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
                                  "%s rmaps:base:define_daemons existing daemon %s already launched",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&node->daemon->name)));
-            /* count number of daemons being used */
-            ++numdaemons;
         }
     }
 

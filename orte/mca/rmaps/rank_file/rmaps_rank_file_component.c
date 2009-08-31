@@ -21,9 +21,11 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#include "orte/runtime/orte_globals.h"
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+
 #include "orte/mca/ras/ras_types.h"
-#include "orte/util/show_help.h"
 
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -40,7 +42,6 @@
 static int orte_rmaps_rank_file_open(void);
 static int orte_rmaps_rank_file_close(void);
 static int orte_rmaps_rank_file_query(mca_base_module_t **module, int *priority);
-char *orte_mca_rmaps_rank_file_slot_list = NULL;
 
 orte_rmaps_rank_file_component_t mca_rmaps_rank_file_component = {
     {
@@ -71,17 +72,13 @@ orte_rmaps_rank_file_component_t mca_rmaps_rank_file_component = {
   */
 static int orte_rmaps_rank_file_open(void)
 {
-    
     mca_rmaps_rank_file_component.priority = 0;
     
-    mca_base_param_reg_string(&mca_rmaps_rank_file_component.super.base_version,
-                              "path",
-                              "The path to the rank mapping file",
-                              false, false, NULL, &orte_rmaps_rank_file_path);
-    if (NULL != orte_rmaps_rank_file_path || NULL != orte_rmaps_base.slot_list) {
+    if (NULL != orte_rankfile ||
+        NULL != orte_rmaps_base.slot_list) {
         mca_rmaps_rank_file_component.priority = 100;
     }
-
+    
     return ORTE_SUCCESS;
 }
 
@@ -105,3 +102,16 @@ static int orte_rmaps_rank_file_close(void)
     return ORTE_SUCCESS;
 }
 
+static void rf_map_construct(orte_rmaps_rank_file_map_t *ptr)
+{
+    ptr->node_name = NULL;
+    memset(ptr->slot_list, (char)0x00, 64);
+}
+static void rf_map_destruct(orte_rmaps_rank_file_map_t *ptr)
+{
+    if (NULL != ptr->node_name) free(ptr->node_name);
+}
+OBJ_CLASS_INSTANCE(orte_rmaps_rank_file_map_t,
+                   opal_object_t,
+                   rf_map_construct,
+                   rf_map_destruct);

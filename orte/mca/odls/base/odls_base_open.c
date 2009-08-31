@@ -24,6 +24,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/paffinity/base/base.h"
 #include "opal/util/trace.h"
 #include "opal/util/path.h"
 #include "opal/util/argv.h"
@@ -37,6 +38,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/show_help.h"
 #include "orte/util/parse_options.h"
+#include "orte/util/proc_info.h"
 
 #include "orte/mca/odls/base/odls_private.h"
 
@@ -105,6 +107,9 @@ static void orte_odls_job_constructor(orte_odls_job_t *ptr)
     ptr->jobid = ORTE_JOBID_INVALID;
     ptr->apps = NULL;
     ptr->num_apps = 0;
+    ptr->policy = 0;
+    ptr->cpus_per_rank = 1;
+    ptr->stride = 1;
     ptr->stdin_target = ORTE_VPID_INVALID;
     ptr->total_slots_alloc = 0;
     ptr->num_procs = 0;
@@ -160,7 +165,7 @@ orte_odls_globals_t orte_odls_globals;
 int orte_odls_base_open(void)
 {
     char **ranks=NULL, *tmp;
-    int i, rank;
+    int i, rank, sock, core;
     orte_namelist_t *nm;
     bool xterm_hold;
 
@@ -172,6 +177,12 @@ int orte_odls_base_open(void)
                                 "Time to wait for a process to die after issuing a kill signal to it",
                                 false, false, 1, &orte_odls_globals.timeout_before_sigkill);
 
+    /* see if the user wants us to report bindings */
+    mca_base_param_reg_int_name("odls", "base_report_bindings",
+                                "Report process bindings [default: no]",
+                                false, false, (int)false, &i);
+    orte_odls_globals.report_bindings = OPAL_INT_TO_BOOL(i);
+    
     /* initialize ODLS globals */
     OBJ_CONSTRUCT(&orte_odls_globals.mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&orte_odls_globals.cond, opal_condition_t);
@@ -182,6 +193,42 @@ int orte_odls_base_open(void)
     /* initialize and setup the daemonmap */
     OBJ_CONSTRUCT(&orte_daemonmap, opal_pointer_array_t);
     opal_pointer_array_init(&orte_daemonmap, 8, INT32_MAX, 8);
+
+    /* get any external processor bindings */
+    OPAL_PAFFINITY_CPU_ZERO(orte_odls_globals.my_cores);
+    orte_odls_globals.bound = false;
+    orte_odls_globals.num_processors = 0;
+    OBJ_CONSTRUCT(&orte_odls_globals.sockets, opal_bitmap_t);
+    opal_bitmap_init(&orte_odls_globals.sockets, 16);
+    /* default the number of sockets to those found during startup */
+    orte_odls_globals.num_sockets = orte_default_num_sockets_per_board;
+    /* see if paffinity is supported */
+    if (ORTE_SUCCESS == opal_paffinity_base_get(&orte_odls_globals.my_cores)) {
+        /* get the number of local processors */
+        opal_paffinity_base_get_processor_info(&orte_odls_globals.num_processors);
+        /* determine if we are bound */
+        OPAL_PAFFINITY_PROCESS_IS_BOUND(orte_odls_globals.my_cores, &orte_odls_globals.bound);
+        /* if we are bound, determine the number of sockets - and which ones - that are available to us */
+        if (orte_odls_globals.bound) {
+            for (i=0; i < orte_odls_globals.num_processors; i++) {
+                if (OPAL_PAFFINITY_CPU_ISSET(i, orte_odls_globals.my_cores)) {
+                    opal_paffinity_base_get_map_to_socket_core(i, &sock, &core);
+                    opal_bitmap_set_bit(&orte_odls_globals.sockets, sock);
+                }
+            }
+            /* determine how many sockets we have available to us */
+            orte_odls_globals.num_sockets = 0;
+            for (i=0; i < opal_bitmap_size(&orte_odls_globals.sockets); i++) {
+                if (opal_bitmap_is_set_bit(&orte_odls_globals.sockets, i)) {
+                    orte_odls_globals.num_sockets++;
+                }
+            }
+            if (orte_process_info.hnp && orte_odls_globals.report_bindings) {
+                opal_output(0, "System has detected external process binding to cores %04lx",
+                            orte_odls_globals.my_cores.bitmask[0]);
+            }
+        }
+    }
 
     /* check if the user requested that we display output in xterms */
     if (NULL != orte_xterm) {

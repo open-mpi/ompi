@@ -29,14 +29,13 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_pointer_array.h"
-#include "opal/class/opal_value_array.h"
+#include "opal/class/opal_bitmap.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 #include "opal/dss/dss_types.h"
+#include "opal/mca/paffinity/paffinity.h"
 
 #include "orte/mca/grpcomm/grpcomm_types.h"
-#include "orte/mca/plm/plm_types.h"
-#include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/runtime/orte_globals.h"
 
@@ -63,6 +62,20 @@ typedef struct {
     opal_list_t xterm_ranks;
     /* the xterm cmd to be used */
     char **xtermcmd;
+    /* whether or not to report bindings */
+    bool report_bindings;
+    /* any externally provided bindings */
+    opal_paffinity_base_cpu_set_t my_cores;
+    /* flag whether or not we are bound */
+    bool bound;
+    /* local number of processors */
+    int num_processors;
+    /* map of locally available sockets
+     * as determined by external bindings
+     */
+    opal_bitmap_t sockets;
+    /* number of sockets available to us */
+    int num_sockets;
 } orte_odls_globals_t;
 
 ORTE_DECLSPEC extern orte_odls_globals_t orte_odls_globals;
@@ -88,8 +101,7 @@ orte_odls_base_default_construct_child_list(opal_buffer_t *data,
 typedef int (*orte_odls_base_fork_local_proc_fn_t)(orte_app_context_t *context,
                                                    orte_odls_child_t *child,
                                                    char **environ_copy,
-                                                   orte_job_controls_t controls,
-                                                   orte_vpid_t stdin_target);
+                                                   orte_odls_job_t *jobdat);
 
 ORTE_DECLSPEC int
 orte_odls_base_default_launch_local(orte_jobid_t job,

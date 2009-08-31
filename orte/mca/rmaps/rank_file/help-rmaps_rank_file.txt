@@ -52,7 +52,12 @@ Please verify that you have specified the allocated resources properly in
 the provided rankfile.
 
 [bad-host]
-Rankfile claimed host %s that was not allocated or oversubscribed it's slots:
+Rankfile claimed host %s that was not allocated or oversubscribed it's slots.
+Please review your rank-slot assignments and your host allocation to ensure
+a proper match.
+
+[bad-index]
+Rankfile claimed host %s by index that is bigger than number of allocated hosts.
 
 [orte-rmaps-rf:alloc-error]
 There are not enough slots available in the system to satisfy the %d slots
@@ -99,8 +104,3 @@ request to launch on a %d process-per-node basis - only %d slots/node were
 available.
 
 Either request fewer processes/node, or obtain a larger allocation.
-
-[orte-rmaps-rf:no-np-and-user-map]
-You have specified a rank-to-node/slot mapping, but failed to provide
-the number of processes to be executed. This information is critical for Rank
-Mapping component.

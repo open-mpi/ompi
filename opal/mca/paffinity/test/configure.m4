@@ -1,3 +1,4 @@
+# -*- shell-script -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
@@ -9,7 +10,8 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved. 
+# Copyright (c) 2007-2008 Cisco, Inc. All rights reserved.
+# Copyright (c) 2008      Sun Microsystems, Inc. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -17,24 +19,16 @@
 # $HEADER$
 #
 
-headers += \
-        base/base.h
+# MCA_paffinity_test_CONFIG([action-if-found], [action-if-not-found])
+# -----------------------------------------------------------
+AC_DEFUN([MCA_paffinity_test_CONFIG],[
+    OMPI_VAR_SCOPE_PUSH([paff_test_happy])
+    # check to see if we have <mach/mach_host.h>
+    # as this is a Darwin-specific thing and
+    # we are a test module for that environment
+    AC_CHECK_HEADER([mach/mach_host.h], [paff_test_happy=yes], [paff_test_happy=no])
 
-libmca_rmaps_la_SOURCES += \
-        base/rmaps_base_open.c
+    AS_IF([test "$paff_test_happy" = "yes"], [$1], [$2])
+    OMPI_VAR_SCOPE_POP
+])dnl
 
-if !ORTE_DISABLE_FULL_SUPPORT
-
-dist_pkgdata_DATA = base/help-orte-rmaps-base.txt
-
-headers += \
-        base/rmaps_private.h
-
-libmca_rmaps_la_SOURCES += \
-        base/rmaps_base_close.c \
-        base/rmaps_base_select.c \
-        base/rmaps_base_map_job.c \
-        base/rmaps_base_get_job_map.c \
-        base/rmaps_base_support_fns.c \
-	base/rmaps_base_common_mappers.c
-endif

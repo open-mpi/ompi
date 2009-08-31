@@ -42,6 +42,7 @@
 int opal_maffinity_base_output = -1;
 bool opal_maffinity_base_components_opened_valid = false;
 opal_list_t opal_maffinity_base_components_opened;
+bool opal_maffinity_setup = false;
 
 
 /*

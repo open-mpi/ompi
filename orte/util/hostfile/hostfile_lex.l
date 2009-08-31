@@ -120,6 +120,33 @@ username           { orte_util_hostfile_value.sval = yytext;
 "user_name"        { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_USERNAME; }
 
+boards             { orte_util_hostfile_value.sval = yytext;
+                     return ORTE_HOSTFILE_BOARDS; }
+
+sockets            { orte_util_hostfile_value.sval = yytext;
+                     return ORTE_HOSTFILE_SOCKETS_PER_BOARD; }
+
+sockets_per_board  { orte_util_hostfile_value.sval = yytext;
+                     return ORTE_HOSTFILE_SOCKETS_PER_BOARD; }
+
+"sockets-per-board" { orte_util_hostfile_value.sval = yytext;
+                     return ORTE_HOSTFILE_SOCKETS_PER_BOARD; }
+
+cores              { orte_util_hostfile_value.sval = yytext;
+                     return ORTE_HOSTFILE_CORES_PER_SOCKET; }
+
+cores_per_socket   { orte_util_hostfile_value.sval = yytext;
+                     return ORTE_HOSTFILE_CORES_PER_SOCKET; }
+
+"cores-per-socket" { orte_util_hostfile_value.sval = yytext;
+                     return ORTE_HOSTFILE_CORES_PER_SOCKET; }
+
+cpu_set            { orte_util_hostfile_value.sval = yytext;
+                     return ORTE_HOSTFILE_CPU_SET; }
+
+"cpu-set"           { orte_util_hostfile_value.sval = yytext;
+                     return ORTE_HOSTFILE_CPU_SET; }
+
 \+n[0-9]+	   { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_RELATIVE; }
 \+[eE][\:][0-9]+   { orte_util_hostfile_value.sval = yytext;

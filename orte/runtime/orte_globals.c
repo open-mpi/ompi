@@ -28,6 +28,7 @@
 #endif
 
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/paffinity/paffinity.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 #include "opal/util/argv.h"
@@ -82,7 +83,6 @@ int orte_startup_timeout;
 
 int orte_timeout_usec_per_proc;
 float orte_max_timeout;
-char *orte_default_hostfile;
 
 opal_buffer_t *orte_tree_launch_cmd = NULL;
 
@@ -110,6 +110,19 @@ bool orte_forward_job_control;
 
 /* report launch progress */
 bool orte_report_launch_progress = false;
+
+/* cluster hardware info */
+uint8_t orte_default_num_boards;
+uint8_t orte_default_num_sockets_per_board;
+uint8_t orte_default_num_cores_per_socket;
+
+/* allocation specification */
+char *orte_default_cpu_set;
+char *orte_default_hostfile = NULL;
+char *orte_rankfile;
+
+/* default rank assigment and binding policy */
+orte_mapping_policy_t orte_default_mapping_policy = 0;
 
 #endif /* !ORTE_DISABLE_FULL_RTE */
 
@@ -612,6 +625,16 @@ static void orte_node_construct(orte_node_t* node)
     node->slots_inuse = 0;
     node->slots_alloc = 0;
     node->slots_max = 0;
+
+    node->boards = orte_default_num_boards;
+    node->sockets_per_board = orte_default_num_sockets_per_board;
+    node->cores_per_socket = orte_default_num_cores_per_socket;
+    if (NULL != orte_default_cpu_set) {
+        node->cpu_set = strdup(orte_default_cpu_set);
+    } else {
+        node->cpu_set = NULL;
+    }
+    
     node->username = NULL;
     node->slot_list = NULL;
 }
@@ -635,6 +658,10 @@ static void orte_node_destruct(orte_node_t* node)
     }
     OBJ_RELEASE(node->procs);
     
+    if (NULL != node->cpu_set) {
+        free(node->cpu_set);
+        node->cpu_set = NULL;
+    }
     if (NULL != node->username) {
         free(node->username);
     }
@@ -652,8 +679,8 @@ static void orte_proc_construct(orte_proc_t* proc)
 {
     proc->name = *ORTE_NAME_INVALID;
     proc->pid = 0;
-    proc->local_rank = ORTE_LOCAL_RANK_MAX;
-    proc->node_rank = ORTE_NODE_RANK_MAX;
+    proc->local_rank = ORTE_LOCAL_RANK_INVALID;
+    proc->node_rank = ORTE_NODE_RANK_INVALID;
     proc->state = ORTE_PROC_STATE_UNDEF;
     proc->app_idx = -1;
     proc->slot_list = NULL;
@@ -752,9 +779,12 @@ OBJ_CLASS_INSTANCE(orte_jmap_t,
 
 static void orte_job_map_construct(orte_job_map_t* map)
 {
-    map->policy = ORTE_RMAPS_BYSLOT;    /* default to byslot mapping as per orterun options */
-    map->pernode = false;
+    map->policy = 0;
     map->npernode = 0;
+    map->nperboard = 0;
+    map->npersocket = 0;
+    map->cpus_per_rank = 1;
+    map->stride = 1;
     map->oversubscribe = true;  /* default to allowing oversubscribe */
     map->display_map = false;
     map->cpu_lists = false;

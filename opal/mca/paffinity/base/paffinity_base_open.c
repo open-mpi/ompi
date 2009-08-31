@@ -43,6 +43,8 @@
 int opal_paffinity_base_output = -1;
 bool opal_paffinity_base_components_opened_valid = false;
 opal_list_t opal_paffinity_base_components_opened;
+bool opal_paffinity_alone = false;
+char *opal_paffinity_base_slot_list;
 
 
 /*
@@ -51,7 +53,7 @@ opal_list_t opal_paffinity_base_components_opened;
  */
 int opal_paffinity_base_open(void)
 {
-    int value;
+    int value, id;
 
     /* Debugging / verbose output */
 
@@ -65,11 +67,25 @@ int opal_paffinity_base_open(void)
         opal_paffinity_base_output = -1;
     }
 
+    id = mca_base_param_reg_int_name("opal", "paffinity_alone", 
+                                     "If nonzero, assume that this job is the only (set of) process(es) running on each node and bind processes to processors, starting with processor ID 0",
+                                     false, false,
+                                     0, NULL);
+    /* register the historical mpi_paffinity_alone synonym, but don't
+     * declare it deprecated so we don't scare the users
+     *
+     * Yes, this breaks the abstraction barrier, but as indicated
+     * on the developer list....live with it. :-)
+     */
+    mca_base_param_reg_syn_name(id, "mpi", "paffinity_alone", false);
+    mca_base_param_lookup_int(id, &value);
+    opal_paffinity_alone = OPAL_INT_TO_BOOL(value);
+
     opal_paffinity_base_components_opened_valid = false;
         
     mca_base_param_reg_string_name("opal", "paffinity_base_slot_list",
                                    "Used to set list of processor IDs to bind MPI processes to (e.g., used in conjunction with rank files)",
-                                   true, false, NULL, NULL);
+                                   true, false, NULL, &opal_paffinity_base_slot_list);
 
     /* Open up all available components */
 

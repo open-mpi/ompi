@@ -22,29 +22,29 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 
-#include "orte/mca/rmaps/base/rmaps_private.h"
-#include "rmaps_rr.h"
+#include "orte/mca/rmaps/base/base.h"
+#include "rmaps_lb.h"
 
 /*
  * Local functions
  */
 
-static int orte_rmaps_round_robin_open(void);
-static int orte_rmaps_round_robin_close(void);
-static int orte_rmaps_round_robin_query(mca_base_module_t **module, int *priority);
+static int orte_rmaps_lb_open(void);
+static int orte_rmaps_lb_close(void);
+static int orte_rmaps_lb_query(mca_base_module_t **module, int *priority);
 
 
-orte_rmaps_base_component_t mca_rmaps_round_robin_component = {
+orte_rmaps_base_component_t mca_rmaps_load_balance_component = {
     {
         ORTE_RMAPS_BASE_VERSION_2_0_0,
         
-        "round_robin", /* MCA component name */
+        "load_balance", /* MCA component name */
         ORTE_MAJOR_VERSION,  /* MCA component major version */
         ORTE_MINOR_VERSION,  /* MCA component minor version */
         ORTE_RELEASE_VERSION,  /* MCA component release version */
-        orte_rmaps_round_robin_open,  /* component open  */
-        orte_rmaps_round_robin_close, /* component close */
-        orte_rmaps_round_robin_query  /* component query */
+        orte_rmaps_lb_open,  /* component open  */
+        orte_rmaps_lb_close, /* component close */
+        orte_rmaps_lb_query  /* component query */
     },
     {
         /* The component is checkpoint ready */
@@ -56,28 +56,39 @@ orte_rmaps_base_component_t mca_rmaps_round_robin_component = {
 /**
   * component open/close/init function
   */
-static int orte_rmaps_round_robin_open(void)
+static int orte_rmaps_lb_open(void)
 {
     return ORTE_SUCCESS;
 }
 
 
-static int orte_rmaps_round_robin_query(mca_base_module_t **module, int *priority)
+static int orte_rmaps_lb_query(mca_base_module_t **module, int *priority)
 {
     /* the RMAPS framework is -only- opened on HNP's,
      * so no need to check for that here
      */
     
-    *priority = 70;  /* this is the default mapper */
-    *module = (mca_base_module_t *)&orte_rmaps_round_robin_module;
-    return ORTE_SUCCESS;
+    /* if load balancing, or any nperxxx, was requested, then we must be selected */
+    if (orte_rmaps_base.loadbalance ||
+        0 < orte_rmaps_base.npernode ||
+        0 <  orte_rmaps_base.nperboard ||
+        0 < orte_rmaps_base.npersocket) {
+        *priority = 1000;  /* must be selected */
+        *module = (mca_base_module_t *)&orte_rmaps_load_balance_module;
+        return ORTE_SUCCESS;
+    }
+    
+    /* otherwise, ignore us */
+    *priority = 0;
+    *module = NULL;
+    return ORTE_ERROR;
 }
 
 /**
  *  Close all subsystems.
  */
 
-static int orte_rmaps_round_robin_close(void)
+static int orte_rmaps_lb_close(void)
 {
     return ORTE_SUCCESS;
 }

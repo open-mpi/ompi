@@ -589,7 +589,7 @@ int orte_util_encode_pidmap(orte_job_t *jdata, opal_byte_object_t *boptr)
     int32_t *nodes;
     orte_proc_t **procs;
     orte_vpid_t i;
-    int8_t *tmp, flag;
+    int8_t *tmp;
     opal_buffer_t buf;
     orte_local_rank_t *lrank;
     orte_node_rank_t *nrank;
@@ -655,27 +655,6 @@ int orte_util_encode_pidmap(orte_job_t *jdata, opal_byte_object_t *boptr)
     }
     free(tmp);
    
-    /* are there cpu_list strings? */
-    if (jdata->map->cpu_lists) {
-        flag = (int)true;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &flag, 1, OPAL_INT8))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        for (i=0; i < jdata->num_procs; i++) {
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &procs[i]->slot_list, 1, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                return rc; 
-            }
-        }
-    } else {
-        flag = (int)false;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &flag, 1, OPAL_INT8))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-    }
-
     /* transfer the payload to the byte object */
     opal_dss.unload(&buf, (void**)&boptr->bytes, &boptr->size);
     OBJ_DESTRUCT(&buf);
@@ -694,8 +673,6 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo, orte_vpid_t *nprocs,
     orte_local_rank_t *local_rank;
     orte_node_rank_t *node_rank;
     int8_t *idx;
-    int8_t flag;
-    char **slots;
     orte_std_cntr_t n;
     opal_buffer_t buf;
     int rc;
@@ -779,26 +756,6 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo, orte_vpid_t *nprocs,
     /* hand the array back to the caller */
     *app_idx = idx;
 
-    /* unpack flag to indicate if slot_strings are present */
-    n=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &flag, &n, OPAL_INT8))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    if (flag) {
-        /* allocate space */
-        slots = (char**)malloc(num_procs * sizeof(char*));
-        for (i=0; i < num_procs; i++) {
-            n=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &slots[i], &n, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-        }
-        *slot_str = slots;
-    }
-    
     OBJ_DESTRUCT(&buf);
     return ORTE_SUCCESS;
 }
