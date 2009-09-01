@@ -25,17 +25,6 @@ with_devel_headers=yes
 with_slurm=no
 with_io_romio_flags=--with-file-system=ufs+nfs
 with_valgrind=no
-LDFLAGS="-L/opt/PBS/lib64 -m64"
-CFLAGS="-m64"
-CXXFLAGS="-m64"
-FCFLAGS="-m64"
-FFLAGS="-m64"
-CCASFLAGS="-m64"
-with_wrapper_ldflags="-m64"
-with_wrapper_cflags="-m64"
-with_wrapper_cxxflags="-m64"
-with_wrapper_fcflags="-m64"
-with_wrapper_fflags="-m64"
-with_wrapper_ccasflags="-m64"
+LDFLAGS="-L/opt/PBS/lib64"
 with_memory_manager=ptmalloc2
 
