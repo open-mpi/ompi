@@ -139,7 +139,11 @@ static int rte_init(void)
         error = "could not get SLURM_STEPID";
         goto error;
     }
-    stepid = strtol(envar, NULL, 10);
+    /* because the stepid could be zero, and we want the local
+     * jobid to be unique, increment it by one so the system
+     * doesn't think that we are a bunch of daemons!
+     */
+    stepid = strtol(envar, NULL, 10) + 1;
     /* now build the jobid */
     ORTE_PROC_MY_NAME->jobid = ORTE_CONSTRUCT_LOCAL_JOBID(jobfam << 16, stepid);
     
@@ -269,7 +273,7 @@ static int rte_init(void)
         node = OBJ_NEW(orte_nid_t);
         node->name = strdup(nodes[i]);
         node->daemon = i;
-        node->index = opal_pointer_array_add(&orte_nidmap, node);
+        node->index = opal_pointer_array_set_item(&orte_nidmap, i, node);
     }
     opal_argv_free(nodes);
     
@@ -290,8 +294,10 @@ static int rte_init(void)
     if (block) {
         /* for each node, cycle through the ppn */
         vpid = 0;
-        for (i=0; i < num_nodes; i++) {
-            node = (orte_nid_t*)orte_nidmap.addr[i];
+        for (i=0; i < orte_nidmap.size; i++) {
+            if (NULL == (node = (orte_nid_t*)opal_pointer_array_get_item(&orte_nidmap, i))) {
+                continue;
+            }
             /* compute the vpid for each proc on this node
              * and add a pmap entry for it
              */
@@ -318,7 +324,11 @@ static int rte_init(void)
         while (vpid < orte_process_info.num_procs) {
             for (i=0; i < num_nodes && vpid < orte_process_info.num_procs; i++) {
                 if (0 < ppn[i]) {
-                    node = (orte_nid_t*)orte_nidmap.addr[i];
+                    if (NULL == (node = (orte_nid_t*)opal_pointer_array_get_item(&orte_nidmap, i))) {
+                        /* this is an error */
+                        error = "error initializing process map";
+                        goto error;
+                    }
                     pmap = OBJ_NEW(orte_pmap_t);
                     pmap->node = node->index;
                     pmap->local_rank = ppn[i]-1;
