@@ -40,6 +40,14 @@ EXTRA_DIST = \
         platform/lanl/macosx-dynamic \
         platform/lanl/macosx-dynamic-optimized \
         platform/lanl/macosx-static-leopard \
+        platform/lanl/rr-class/cross-debug-slave \
+        platform/lanl/rr-class/cross-debug-slave.conf \
+        platform/lanl/rr-class/cross-optimized-slave \
+        platform/lanl/rr-class/cross-optimized-slave.conf \
+        platform/lanl/rr-class/debug-master \
+        platform/lanl/rr-class/debug-master.conf \
+        platform/lanl/rr-class/optimized-master \
+        platform/lanl/rr-class/optimized-master.conf \
         platform/lanl/rr-class/debug-panasas \
         platform/lanl/rr-class/debug-panasas.conf \
         platform/lanl/rr-class/debug-nopanasas \
