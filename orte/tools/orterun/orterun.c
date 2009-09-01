@@ -393,7 +393,11 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Disable automatic --prefix behavior" },
 
-    /* End of list */
+    { "orte", "report", "launch_progress", '\0', "show-progress", "show-progress", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Output a brief periodic report on launch progress" },
+
+/* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
 };
