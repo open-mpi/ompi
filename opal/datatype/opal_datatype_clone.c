@@ -33,9 +33,13 @@
 int32_t opal_datatype_clone( const opal_datatype_t * src_type, opal_datatype_t * dest_type )
 {
     int32_t desc_length = src_type->desc.used + 1;  /* +1 because of the fake OPAL_DATATYPE_END_LOOP entry */
-    dt_elem_desc_t* temp = dest_type->desc.desc; /* temporary copy of the desc pointer */
+    dt_elem_desc_t* temp = dest_type->desc.desc;    /* temporary copy of the desc pointer */
 
-    memcpy( dest_type, src_type, sizeof(opal_datatype_t) );
+    /* copy _excluding_ the super object, we want to keep the cls_destruct_array */
+    memcpy( dest_type+sizeof(opal_object_t),
+            src_type+sizeof(opal_object_t),
+            sizeof(opal_datatype_t)-sizeof(opal_object_t) );
+
     dest_type->super.obj_reference_count = 1;
     dest_type->desc.desc = temp;
     dest_type->flags &= (~OPAL_DATATYPE_FLAG_PREDEFINED);

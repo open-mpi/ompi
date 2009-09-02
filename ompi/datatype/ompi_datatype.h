@@ -202,11 +202,14 @@ ompi_datatype_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** newTy
     }
     opal_datatype_clone ( &oldType->super, &new_ompi_datatype->super);
 
+    new_ompi_datatype->super.flags &= (~OMPI_DATATYPE_FLAG_PREDEFINED);
+
     /* Set the keyhash to NULL -- copying attributes is *only* done at
        the top level (specifically, MPI_TYPE_DUP). */
     new_ompi_datatype->d_keyhash = NULL;
     new_ompi_datatype->args = NULL;
-    strncpy (new_ompi_datatype->name, oldType->name, MPI_MAX_OBJECT_NAME);
+    snprintf (new_ompi_datatype->name, MPI_MAX_OBJECT_NAME, "Dup %s",
+              oldType->name);
 
     return OMPI_SUCCESS;
 }
