@@ -160,7 +160,10 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { "orte", "xml", "output", '\0', "xml", "xml", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Provide all output in XML format" },
-    
+    { "orte", "xml", "file", '\0', "xml-file", "xml-file", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Provide all output in XML format to the specified file" },
+
     /* tag output */
     { "orte", "tag", "output", '\0', "tag-output", "tag-output", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
@@ -568,13 +571,7 @@ int orterun(int argc, char *argv[])
         ORTE_ERROR_LOG(rc);
         return rc;
     }    
-    
-    /* if we are using xml for output, put an mpirun start tag */
-    if (orte_xml_output) {
-        fprintf(stdout, "<mpirun>\n");
-        fflush(stdout);
-    }
-    
+
     /* check for request to report uri */
     if (NULL != orterun_globals.report_uri) {
         FILE *fp;
@@ -830,36 +827,36 @@ static void job_completed(int trigpipe, short event, void *arg)
         show a followup message here */
         if (num_failed_start > 1) {
             if (orte_xml_output) {
-                printf("<stderr>");
+                fprintf(orte_xml_fp, "<stderr>");
             }
-            printf("%d total process%s failed to start",
+            fprintf(orte_xml_fp, "%d total process%s failed to start",
                    num_failed_start, ((num_failed_start > 1) ? "es" : ""));
             if (orte_xml_output) {
-                printf("&#010;</stderr>");
+                fprintf(orte_xml_fp, "&#010;</stderr>");
             }
-            printf("\n");
+            fprintf(orte_xml_fp, "\n");
         }
         if (num_aborted > 1) {
             if (orte_xml_output) {
-                printf("<stderr>");
+                fprintf(orte_xml_fp, "<stderr>");
             }
-            printf("%d total process%s aborted",
+            fprintf(orte_xml_fp, "%d total process%s aborted",
                    num_aborted, ((num_aborted > 1) ? "es" : ""));
             if (orte_xml_output) {
-                printf("&#010;</stderr>");
+                fprintf(orte_xml_fp, "&#010;</stderr>");
             }
-            printf("\n");
+            fprintf(orte_xml_fp, "\n");
         }
         if (num_killed > 1) {
             if (orte_xml_output) {
-                printf("<stderr>");
+                fprintf(orte_xml_fp, "<stderr>");
             }
-            printf("%d total process%s killed (some possibly by %s during cleanup)",
+            fprintf(orte_xml_fp, "%d total process%s killed (some possibly by %s during cleanup)",
                    num_killed, ((num_killed > 1) ? "es" : ""), orterun_basename);
             if (orte_xml_output) {
-                printf("&#010;</stderr>");
+                fprintf(orte_xml_fp, "&#010;</stderr>");
             }
-            printf("\n");
+            fprintf(orte_xml_fp, "\n");
         }
     }
     
@@ -922,12 +919,6 @@ static void just_quit(int fd, short ign, void *arg)
     
     /* cleanup and leave */
     orte_finalize();
-
-    /* if we are using xml output, terminate the output */
-    if (orte_xml_output) {
-        fprintf(stdout, "</mpirun>\n");
-        fflush(stdout);
-    }
     
     free(orterun_basename);
     if (orte_debug_flag) {

@@ -119,6 +119,12 @@ static int rte_init(void)
         goto error;
     }
     
+    /* if we are using xml for output, put an mpirun start tag */
+    if (orte_xml_output) {
+        fprintf(orte_xml_fp, "<mpirun>\n");
+        fflush(orte_xml_fp);
+    }
+
     /* open and setup the opal_pstat framework so we can provide
      * process stats if requested
      */
@@ -585,6 +591,15 @@ static int rte_finalize(void)
     orte_proc_info_finalize();
     if (NULL != orte_job_ident) {
         free(orte_job_ident);
+    }
+    
+    /* close the xml output file, if open */
+    if (orte_xml_output) {
+        fprintf(orte_xml_fp, "</mpirun>\n");
+        fflush(orte_xml_fp);
+        if (stdout != orte_xml_fp) {
+            fclose(orte_xml_fp);
+        }
     }
     
     return ORTE_SUCCESS;    
