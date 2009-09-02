@@ -322,7 +322,7 @@ static void show_accumulated_duplicates(int fd, short event, void *context)
                          tli->tli_filename, tli->tli_topic);
                 output = xml_format((unsigned char*)tmp);
                 free(tmp);
-                fprintf(stdout, "%s", output);
+                fprintf(orte_xml_fp, "%s", output);
                 free(output);
             } else {
                 opal_output(0, "%d more process%s sent help message %s / %s",
@@ -334,8 +334,8 @@ static void show_accumulated_duplicates(int fd, short event, void *context)
 
             if (first) {
                 if (orte_xml_output) {
-                    fprintf(stdout, "<stderr>Set MCA parameter \"orte_base_help_aggregate\" to 0 to see all help / error messages</stderr>\n");
-                    fflush(stdout);
+                    fprintf(orte_xml_fp, "<stderr>Set MCA parameter \"orte_base_help_aggregate\" to 0 to see all help / error messages</stderr>\n");
+                    fflush(orte_xml_fp);
                 } else {
                     opal_output(0, "Set MCA parameter \"orte_base_help_aggregate\" to 0 to see all help / error messages");
                 }
@@ -406,8 +406,8 @@ static int show_help(const char *filename, const char *topic,
         if (orte_xml_output) {
             char *tmp;
             tmp = xml_format((unsigned char*)output);
-            fprintf(stdout, "%s", tmp);
-            fflush(stdout);
+            fprintf(orte_xml_fp, "%s", tmp);
+            fflush(orte_xml_fp);
             free(tmp);
         } else {
             fprintf(stderr, "%s", output);

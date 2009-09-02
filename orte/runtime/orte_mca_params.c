@@ -224,16 +224,36 @@ int orte_register_params(void)
                                 "Tag all output with [job,rank] (default: false)",
                                 false, false, (int) false, &value);
     orte_tag_output = OPAL_INT_TO_BOOL(value);
-
-    mca_base_param_reg_int_name("orte", "xml_output",
-                                "Display all output in XML format (default: false)",
-                                false, false, (int) false, &value);
-    orte_xml_output = OPAL_INT_TO_BOOL(value);
     /* if we requested xml output, be sure to tag the output as well */
     if (orte_xml_output) {
         orte_tag_output = true;
     }
     
+    mca_base_param_reg_int_name("orte", "xml_output",
+                                "Display all output in XML format (default: false)",
+                                false, false, (int) false, &value);
+    orte_xml_output = OPAL_INT_TO_BOOL(value);
+
+    mca_base_param_reg_string_name("orte", "xml_file",
+                                   "Provide all output in XML format to the specified file",
+                                   false, false, NULL, &strval);
+    if (NULL != strval) {
+        if (ORTE_PROC_IS_HNP && NULL == orte_xml_fp) {
+            /* only the HNP opens this file! Make sure it only happens once */
+            orte_xml_fp = fopen(strval, "w");
+            if (NULL == orte_xml_fp) {
+                opal_output(0, "Could not open specified xml output file: %s", strval);
+                return ORTE_ERROR;
+            }
+        }
+        /* ensure we set the flags to tag output */
+        orte_xml_output = true;
+        orte_tag_output = true;
+    } else {
+        /* default to stdout */
+        orte_xml_fp = stdout;
+    }
+        
     /* whether to timestamp output */
     mca_base_param_reg_int_name("orte", "timestamp_output",
                                 "Timestamp all application process output (default: false)",

@@ -140,6 +140,15 @@ static void orte_iof_base_write_event_destruct(orte_iof_write_event_t* wev)
     if (wev->pending) {
         opal_event_del(&wev->ev);
     }
+    if (ORTE_PROC_IS_HNP) {
+        int xmlfd = fileno(orte_xml_fp);
+        if (xmlfd == wev->fd) {
+            /* don't close this one - will get it later */
+            OBJ_DESTRUCT(&wev->outputs);
+            return;
+        }
+    }
+    
     if (2 < wev->fd) {
         OPAL_OUTPUT_VERBOSE((20, orte_iof_base.iof_output,
                              "%s iof: closing fd %d for write event",
@@ -170,7 +179,7 @@ orte_iof_base_t orte_iof_base;
  */
 int orte_iof_base_open(void)
 {
-    int rc;
+    int rc, xmlfd;
     
     /* Initialize globals */
     OBJ_CONSTRUCT(&orte_iof_base.iof_components_opened, opal_list_t);
@@ -196,12 +205,28 @@ int orte_iof_base_open(void)
     
     /* daemons do not need to do this as they do not write out stdout/err */
     if (!ORTE_PROC_IS_DAEMON) {
-        /* setup the stdout event */
-        ORTE_IOF_SINK_DEFINE(&orte_iof_base.iof_write_stdout, ORTE_PROC_MY_NAME,
-                             1, ORTE_IOF_STDOUT, orte_iof_base_write_handler, NULL);        
-        /* setup the stderr event */
-        ORTE_IOF_SINK_DEFINE(&orte_iof_base.iof_write_stderr, ORTE_PROC_MY_NAME,
-                             2, ORTE_IOF_STDERR, orte_iof_base_write_handler, NULL);        
+        if (orte_xml_output) {
+            if (NULL != orte_xml_fp) {
+                /* user wants all xml-formatted output sent to file */
+                xmlfd = fileno(orte_xml_fp);
+            } else {
+                xmlfd = 1;
+            }
+            /* setup the stdout event */
+            ORTE_IOF_SINK_DEFINE(&orte_iof_base.iof_write_stdout, ORTE_PROC_MY_NAME,
+                                 xmlfd, ORTE_IOF_STDOUT, orte_iof_base_write_handler, NULL);
+            /* don't create a stderr event - all output will go to
+             * the stdout channel
+             */
+        } else {
+            /* setup the stdout event */
+            ORTE_IOF_SINK_DEFINE(&orte_iof_base.iof_write_stdout, ORTE_PROC_MY_NAME,
+                                 1, ORTE_IOF_STDOUT, orte_iof_base_write_handler, NULL);
+            /* setup the stderr event */
+            ORTE_IOF_SINK_DEFINE(&orte_iof_base.iof_write_stderr, ORTE_PROC_MY_NAME,
+                                 2, ORTE_IOF_STDERR, orte_iof_base_write_handler, NULL);
+        }
+        
         /* do NOT set these file descriptors to non-blocking. If we do so,
          * we set the file descriptor to non-blocking for everyone that has
          * that file descriptor, which includes everyone else in our shell

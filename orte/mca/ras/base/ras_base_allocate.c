@@ -70,7 +70,8 @@ static void display_alloc(void)
         }
     }
     if (orte_xml_output) {
-        opal_output(orte_clean_output, "%s</allocation>\n", tmp);
+        fprintf(orte_xml_fp, "%s</allocation>\n", tmp);
+        fflush(orte_xml_fp);
     } else {
         opal_output(orte_clean_output, "%s\n\n=================================================================\n", tmp);
     }

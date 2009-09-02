@@ -66,23 +66,26 @@ int orte_iof_base_close(void)
             }
         }
         OBJ_RELEASE(orte_iof_base.iof_write_stdout);
-        wev = orte_iof_base.iof_write_stderr->wev;
-        if (!opal_list_is_empty(&wev->outputs)) {
-            dump = false;
-            /* make one last attempt to write this out */
-            while (NULL != (item = opal_list_remove_first(&wev->outputs))) {
-                output = (orte_iof_write_output_t*)item;
-                if (!dump) {
-                    num_written = write(wev->fd, output->data, output->numbytes);
-                    if (num_written < output->numbytes) {
-                        /* don't retry - just cleanout the list and dump it */
-                        dump = true;
+        if (!orte_xml_output) {
+            /* we only opened stderr channel if we are NOT doing xml output */
+            wev = orte_iof_base.iof_write_stderr->wev;
+            if (!opal_list_is_empty(&wev->outputs)) {
+                dump = false;
+                /* make one last attempt to write this out */
+                while (NULL != (item = opal_list_remove_first(&wev->outputs))) {
+                    output = (orte_iof_write_output_t*)item;
+                    if (!dump) {
+                        num_written = write(wev->fd, output->data, output->numbytes);
+                        if (num_written < output->numbytes) {
+                            /* don't retry - just cleanout the list and dump it */
+                            dump = true;
+                        }
                     }
+                    OBJ_RELEASE(output);
                 }
-                OBJ_RELEASE(output);
             }
+            OBJ_RELEASE(orte_iof_base.iof_write_stderr);
         }
-        OBJ_RELEASE(orte_iof_base.iof_write_stderr);
     }
     OPAL_THREAD_UNLOCK(&orte_iof_base.iof_write_output_lock);
 
