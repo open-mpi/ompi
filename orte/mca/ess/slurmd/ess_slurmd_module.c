@@ -173,6 +173,9 @@ static int rte_init(void)
     }
     orte_process_info.num_procs = strtol(envar, NULL, 10);
     
+    /* set the app_num so that MPI attributes get set correctly */
+    orte_process_info.app_num = 1;
+    
     /* if this is SLURM 2.0 or above, get our port
      * assignments for use in the OOB
      */
@@ -273,7 +276,8 @@ static int rte_init(void)
         node = OBJ_NEW(orte_nid_t);
         node->name = strdup(nodes[i]);
         node->daemon = i;
-        node->index = opal_pointer_array_set_item(&orte_nidmap, i, node);
+        node->index = i;
+        opal_pointer_array_set_item(&orte_nidmap, i, node);
     }
     opal_argv_free(nodes);
     
