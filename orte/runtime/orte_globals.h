@@ -296,7 +296,7 @@ typedef uint16_t orte_mapping_policy_t;
 #define ORTE_XSET_BINDING_POLICY(pol)                           \
     do {                                                        \
         orte_mapping_policy_t tmp;                              \
-        tmp = (orte_default_mapping_policy & 0xff00) & ~(pol);  \
+        tmp = (orte_default_mapping_policy & 0x00ff) & ~(pol);  \
         if (0 == tmp) {                                         \
             ORTE_SET_BINDING_POLICY((pol));                     \
         }                                                       \
