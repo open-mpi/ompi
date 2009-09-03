@@ -29,37 +29,40 @@ example:  cat hosfile
     rank 0=host2 slot=0:*
     rank 2=host4 slot=1-2
     rank 3=host3 slot=0:1,1:0-2
-
+#
 [parse_error_string]
 Open RTE detected a parse error in the rankfile (%s)
 It occured on line number %d on token %d:
     %s
-
+#
 [parse_error_int]
 Open RTE detected a parse error in the rankfile (%s)
 It occured on line number %d on token %d:
     %d
-
+#
 [parse_error]
 Open RTE detected a parse error in the rankfile (%s)
 It occured on line number %d on token %d.
-
+#
 [not-all-mapped-alloc]
 Some of the requested ranks are not included in the current allocation.
     %s
 
 Please verify that you have specified the allocated resources properly in
 the provided rankfile.
-
+#
 [bad-host]
-Rankfile claimed host %s that was not allocated or oversubscribed it's slots.
-Please review your rank-slot assignments and your host allocation to ensure
-a proper match. Try using full hostname, ex: host1.openmpi.org instead of
-host1
+The rankfile that was used claimed that a host was either not
+allocated or oversubscribed its slots.  Please review your rank-slot
+assignments and your host allocation to ensure a proper match.  Also,
+some systems may require using full hostnames, such as
+"host1.example.com" (instead of just plain "host1").
 
+  Host: %s
+#
 [bad-index]
 Rankfile claimed host %s by index that is bigger than number of allocated hosts.
-
+#
 [orte-rmaps-rf:alloc-error]
 There are not enough slots available in the system to satisfy the %d slots
 that were requested by the application:
@@ -67,31 +70,32 @@ that were requested by the application:
 
 Either request fewer slots for your application, or make more slots available
 for use.
-
+#
 [bad-rankfile]
 Error, invalid rank (%d) in the rankfile (%s)
-
+#
 [bad-assign]
 Error, rank %d is already assigned to %s, check %s
-
+#
 [bad-syntax]
 Error, invalid syntax in the rankfile (%s)
 syntax must be the fallowing
 rank i=host_i slot=string
 ex: rank 1=host1 slot=1:0,1
-
+#
 [orte-rmaps-rf:multi-apps-and-zero-np]
 RMAPS found multiple applications to be launched, with
 at least one that failed to specify the number of processes to execute.
 When specifying multiple applications, you must specify how many processes
 of each to launch via the -np argument.
-
+#
 [orte-rmaps-rf:per-node-and-too-many-procs]
 There are not enough nodes in your allocation to satisfy your request to
 launch
 %d processes on a per-node basis - only %d nodes were available.
 
 Either request fewer processes, or obtain a larger allocation.
+#
 [orte-rmaps-rf:n-per-node-and-too-many-procs]
 There are not enough nodes in your allocation to satisfy your request to
 launch
@@ -99,6 +103,7 @@ launch
 %were available.
 
 Either request fewer processes, or obtain a larger allocation.
+#
 [orte-rmaps-rf:n-per-node-and-not-enough-slots]
 There are not enough slots on the nodes in your allocation to satisfy your
 request to launch on a %d process-per-node basis - only %d slots/node were
