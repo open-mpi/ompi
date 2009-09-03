@@ -20,7 +20,7 @@
 EXTRA_DIST = CMakeLists.txt
 
 # support needs to be first for dependencies
-SUBDIRS = support asm class threads peruse datatype
+SUBDIRS = support asm class threads peruse
 DIST_SUBDIRS = event $(SUBDIRS)
 
 TESTS =
