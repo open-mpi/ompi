@@ -48,6 +48,8 @@ int MPI_Win_get_attr(MPI_Win win, int win_keyval,
            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_WIN, FUNC_NAME);
        } else if ((NULL == attribute_val) || (NULL == flag)) {
            return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_ARG, FUNC_NAME);
+        } else if (MPI_KEYVAL_INVALID == win_keyval) {
+            return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_KEYVAL, FUNC_NAME);
        }
     }
 

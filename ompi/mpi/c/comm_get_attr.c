@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -49,6 +50,10 @@ int MPI_Comm_get_attr(MPI_Comm comm, int comm_keyval,
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if ((NULL == attribute_val) || (NULL == flag)) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+        } else if (ompi_comm_invalid(comm)) {
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COMM, FUNC_NAME);
+        } else if (MPI_KEYVAL_INVALID == comm_keyval) {
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_KEYVAL, FUNC_NAME);
         }
     }
 
