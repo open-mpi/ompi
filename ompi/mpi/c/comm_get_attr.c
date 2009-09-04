@@ -51,7 +51,8 @@ int MPI_Comm_get_attr(MPI_Comm comm, int comm_keyval,
         if ((NULL == attribute_val) || (NULL == flag)) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         } else if (ompi_comm_invalid(comm)) {
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COMM, FUNC_NAME);
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+                                          FUNC_NAME);
         } else if (MPI_KEYVAL_INVALID == comm_keyval) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_KEYVAL, FUNC_NAME);
         }
