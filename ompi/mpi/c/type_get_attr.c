@@ -57,6 +57,9 @@ int MPI_Type_get_attr (MPI_Datatype type,
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, 
                                           MPI_ERR_ARG, 
                                           FUNC_NAME);
+        } else if (MPI_KEYVAL_INVALID == type_keyval) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_KEYVAL, 
+                                          FUNC_NAME);
         }
     }
 
