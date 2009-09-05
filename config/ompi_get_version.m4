@@ -78,7 +78,7 @@ m4_define([OMPI_GET_VERSION],[
                 if test -d "$srcdir/.svn" ; then
                     $2_SVN_R=r`svnversion "$srcdir"`
                 elif test -d "$srcdir/.hg" ; then
-                    $2_SVN_R=hg`hg -v -R "$srcdir" tip | grep changeset | cut -d: -f3`
+                    $2_SVN_R=hg`hg -v -R "$srcdir" tip | grep ^changeset: | head -n 1 | cut -d: -f3`
                 fi
                 if test "$2_SVN_R" = ""; then
                     $2_SVN_R=svn`date '+%m%d%Y'`
