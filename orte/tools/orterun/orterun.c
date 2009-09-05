@@ -1341,9 +1341,10 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
         ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_BOARD);
     } else if (orterun_globals.bind_to_core) {
         ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_CORE);
-    } else {
-        ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_NONE);
     }
+    /* if nothing was specified, leave it as set
+     * by mca param
+     */
     
     return ORTE_SUCCESS;
 }
