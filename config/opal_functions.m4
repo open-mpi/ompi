@@ -12,12 +12,27 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+dnl Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 dnl
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
 dnl 
 dnl $HEADER$
+dnl
+dnl Portions of this file derived from GASNet v1.12:
+dnl Copyright 2004,  Dan Bonachea <bonachea@cs.berkeley.edu>
+dnl
+dnl IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR
+dnl DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT
+dnl OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF THE UNIVERSITY OF
+dnl CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+dnl 
+dnl THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+dnl INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+dnl AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
+dnl ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATION TO
+dnl PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 dnl
 
 AC_DEFUN([OMPI_CONFIGURE_SETUP],[
@@ -148,6 +163,34 @@ AC_ARG_ENABLE(dist,
 if test "$OMPI_WANT_DIST" = "yes"; then
     AC_MSG_WARN([Configuring in 'make dist' mode])
     AC_MSG_WARN([Most make targets may be non-functional!])
+fi
+
+# Suggestion from Paul Hargrove to disable --program-prefix and
+# friends.  Heavily influenced by GASNet 1.12 acinclude.m4
+# functionality to do the same thing (copyright listed at top of this
+# file).
+
+# echo program_prefix=$program_prefix  program_suffix=$program_suffix program_transform_name=$program_transform_name
+# undo prefix autoconf automatically adds during cross-compilation
+if test "$cross_compiling" = yes && test "$program_prefix" = "${target_alias}-" ; then
+    program_prefix=NONE
+fi
+# normalize empty prefix/suffix
+if test -z "$program_prefix" ; then
+    program_prefix=NONE
+fi
+if test -z "$program_suffix" ; then
+    program_suffix=NONE
+fi
+# undo transforms caused by empty prefix/suffix
+if test "$program_transform_name" = 's,^,,' || \
+   test "$program_transform_name" = 's,$$,,' || \
+   test "$program_transform_name" = 's,$$,,;s,^,,' ; then
+    program_transform_name="s,x,x,"
+fi
+if test "$program_prefix$program_suffix$program_transform_name" != "NONENONEs,x,x," ; then
+    AC_MSG_WARN([*** This configure script does not support --program-prefix, --program-suffix or --program-transform-name. Users are recommended to instead use --prefix with a unique directory and make symbolic links as desired for renaming.])
+    AC_MSG_ERROR([*** Cannot continue])
 fi])dnl
 
 dnl #######################################################################
