@@ -20,7 +20,8 @@ dnl Additional copyrights may follow
 dnl 
 dnl $HEADER$
 dnl
-dnl Portions of this file derived from GASNet v1.12:
+dnl Portions of this file derived from GASNet v1.12 (see "GASNet"
+dnl comments, below)
 dnl Copyright 2004,  Dan Bonachea <bonachea@cs.berkeley.edu>
 dnl
 dnl IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR
@@ -165,6 +166,8 @@ if test "$OMPI_WANT_DIST" = "yes"; then
     AC_MSG_WARN([Most make targets may be non-functional!])
 fi
 
+# BEGIN: Derived from GASNet
+
 # Suggestion from Paul Hargrove to disable --program-prefix and
 # friends.  Heavily influenced by GASNet 1.12 acinclude.m4
 # functionality to do the same thing (copyright listed at top of this
@@ -191,7 +194,10 @@ fi
 if test "$program_prefix$program_suffix$program_transform_name" != "NONENONEs,x,x," ; then
     AC_MSG_WARN([*** This configure script does not support --program-prefix, --program-suffix or --program-transform-name. Users are recommended to instead use --prefix with a unique directory and make symbolic links as desired for renaming.])
     AC_MSG_ERROR([*** Cannot continue])
-fi])dnl
+fi
+
+# END: Derived from GASNet
+])dnl
 
 dnl #######################################################################
 dnl #######################################################################
