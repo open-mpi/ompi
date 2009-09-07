@@ -101,11 +101,13 @@ static int npernode(orte_job_t *jdata)
     opal_list_item_t *item;
     orte_std_cntr_t num_slots;
     orte_node_t *node;
-    int total_procs=0, np;
+    int total_procs=0, np, nprocs;
+    int num_nodes;
     
     /* setup the node list */
     OBJ_CONSTRUCT(&node_list, opal_list_t);
-    
+    total_procs = 0;
+   
     /* loop through the app_contexts */
     for(i=0; i < jdata->apps->size; i++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
@@ -117,7 +119,6 @@ static int npernode(orte_job_t *jdata)
         } else {
             np = INT_MAX;
         }
-        total_procs = 0;
         /* for each app_context, we have to get the list of nodes that it can
          * use since that can now be modified with a hostfile and/or -host
          * option
@@ -128,10 +129,12 @@ static int npernode(orte_job_t *jdata)
             goto error;
         }
         /* loop through the list of nodes */
+        num_nodes = opal_list_get_size(&node_list);
+        nprocs = 0;
         while (NULL != (item = opal_list_remove_first(&node_list))) {
             node = (orte_node_t*)item;
             /* put the specified number of procs on each node */
-            for (j=0; j < orte_rmaps_base.npernode && total_procs < np; j++) {
+            for (j=0; j < orte_rmaps_base.npernode && nprocs < np; j++) {
                 if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node,
                                                                      jdata->map->cpus_per_rank, app->idx,
                                                                      &node_list, jdata->map->oversubscribe,
@@ -147,8 +150,21 @@ static int npernode(orte_job_t *jdata)
                     }
                 }
                 total_procs++;
+                nprocs++;
             }
             OBJ_RELEASE(node);
+        }
+        /* if the user requested a specific number of procs and
+         * the total number of procs we were able to assign
+         * doesn't equal the number requested, then we have a
+         * problem
+         */
+        if (0 < app->num_procs && nprocs < app->num_procs) {
+            orte_show_help("help-orte-rmaps-base.txt", "rmaps:too-many-procs", true,
+                           app->app, app->num_procs,
+                           "number of nodes", num_nodes,
+                           "npernode", orte_rmaps_base.npernode);
+            return ORTE_ERR_SILENT;
         }
     }
     jdata->num_procs = total_procs;
@@ -169,10 +185,12 @@ static int nperboard(orte_job_t *jdata)
     opal_list_item_t *item;
     orte_std_cntr_t num_slots;
     orte_node_t *node;
-    int total_procs=0, np;
+    int total_procs=0, np, nprocs;
+    int num_boards;
 
     /* setup the node list */
     OBJ_CONSTRUCT(&node_list, opal_list_t);
+    total_procs = 0;
     
     /* loop through the app_contexts */
     for(i=0; i < jdata->apps->size; i++) {
@@ -185,7 +203,6 @@ static int nperboard(orte_job_t *jdata)
         } else {
             np = INT_MAX;
         }
-        total_procs = 0;
         /* for each app_context, we have to get the list of nodes that it can
          * use since that can now be modified with a hostfile and/or -host
          * option
@@ -196,12 +213,14 @@ static int nperboard(orte_job_t *jdata)
             goto error;
         }
         /* loop through the list of nodes */
+        nprocs = 0;
         while (NULL != (item = opal_list_remove_first(&node_list))) {
             node = (orte_node_t*)item;
+            num_boards = node->boards;
             /* loop through the number of boards in this node */
-            for (k=0; k < node->boards && total_procs < np; k++) {
+            for (k=0; k < node->boards && nprocs < np; k++) {
                 /* put the specified number of procs on each board */
-                for (j=0; j < orte_rmaps_base.nperboard && total_procs < np; j++) {
+                for (j=0; j < orte_rmaps_base.nperboard && nprocs < np; j++) {
                     if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node,
                                                                          jdata->map->cpus_per_rank, app->idx,
                                                                          &node_list, jdata->map->oversubscribe,
@@ -217,9 +236,22 @@ static int nperboard(orte_job_t *jdata)
                         }
                     }
                     total_procs++;
+                    nprocs++;
                 }
             }
             OBJ_RELEASE(node);
+        }
+        /* if the user requested a specific number of procs and
+         * the total number of procs we were able to assign
+         * doesn't equal the number requested, then we have a
+         * problem
+         */
+        if (0 < app->num_procs && nprocs < app->num_procs) {
+            orte_show_help("help-orte-rmaps-base.txt", "rmaps:too-many-procs", true,
+                           app->app, app->num_procs,
+                           "number of boards", num_boards,
+                           "nperboard", orte_rmaps_base.nperboard);
+            return ORTE_ERR_SILENT;
         }
     }
     jdata->num_procs = total_procs;
@@ -241,11 +273,13 @@ static int npersocket(orte_job_t *jdata)
     opal_list_item_t *item;
     orte_std_cntr_t num_slots;
     orte_node_t *node;
-    int total_procs=0, np;
+    int total_procs=0, np, nprocs;
+    int num_sockets;
 
     /* setup the node list */
     OBJ_CONSTRUCT(&node_list, opal_list_t);
-    
+    total_procs = 0;
+   
     /* loop through the app_contexts */
     for(i=0; i < jdata->apps->size; i++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
@@ -257,7 +291,6 @@ static int npersocket(orte_job_t *jdata)
         } else {
             np = INT_MAX;
         }
-        total_procs = 0;
         /* for each app_context, we have to get the list of nodes that it can
          * use since that can now be modified with a hostfile and/or -host
          * option
@@ -268,12 +301,14 @@ static int npersocket(orte_job_t *jdata)
             goto error;
         }
         /* loop through the list of nodes */
+        nprocs = 0;
         while (NULL != (item = opal_list_remove_first(&node_list))) {
             node = (orte_node_t*)item;
+            num_sockets = node->sockets_per_board;
             /* loop through the number of boards in this node */
-            for (k=0; k < node->boards && total_procs < np; k++) {
+            for (k=0; k < node->boards && nprocs < np; k++) {
                 /* loop through the number of sockets/board */
-                for (n=0; n < node->sockets_per_board && total_procs < np; n++) {
+                for (n=0; n < node->sockets_per_board && nprocs < np; n++) {
                     /* put the specified number of procs on each socket */
                     for (j=0; j < orte_rmaps_base.npersocket && total_procs < np; j++) {
                         if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node,
@@ -292,10 +327,23 @@ static int npersocket(orte_job_t *jdata)
                         }
                         /* track the number of procs */
                         total_procs++;
+                        nprocs++;
                     }
                 }
             }
             OBJ_RELEASE(node);
+        }
+        /* if the user requested a specific number of procs and
+         * the total number of procs we were able to assign
+         * doesn't equal the number requested, then we have a
+         * problem
+         */
+        if (0 < app->num_procs && nprocs < app->num_procs) {
+            orte_show_help("help-orte-rmaps-base.txt", "rmaps:too-many-procs", true,
+                           app->app, app->num_procs,
+                           "number of sockets", num_sockets,
+                           "npersocket", orte_rmaps_base.npersocket);
+            return ORTE_ERR_SILENT;
         }
     }
     jdata->num_procs = total_procs;
@@ -319,13 +367,14 @@ static int loadbalance(orte_job_t *jdata)
     int i, j;
     opal_list_t node_list;
     orte_std_cntr_t num_nodes, num_slots;
-    int rc=ORTE_SUCCESS, total_procs=0;
+    int rc=ORTE_SUCCESS, total_procs, np, nprocs;
     int ppn = 0;
     opal_list_item_t *item, *start;
     orte_node_t *node;
 
     /* setup */
     OBJ_CONSTRUCT(&node_list, opal_list_t);
+    total_procs = 0;
 
     /* compute total #procs we are going to add and the total number of nodes available */
     for(i=0; i < jdata->apps->size; i++) {
@@ -338,20 +387,22 @@ static int loadbalance(orte_job_t *jdata)
             ORTE_ERROR_LOG(rc);
             goto error;
         }
-        if (0 == app->num_procs) {
+        if (0 < app->num_procs) {
+            np = app->num_procs;
+        } else {
             /* set the num_procs to the #slots */
-            app->num_procs = num_slots;
+            np = num_slots;
         }
         num_nodes = opal_list_get_size(&node_list);
         /* compute the base ppn */
-        ppn = app->num_procs / num_nodes;
+        ppn = np / num_nodes;
         /* if a bookmark exists from some prior mapping, set us to start there */
         start = orte_rmaps_base_get_starting_point(&node_list, jdata);
         /* loop through the list of nodes until we either assign all the procs
          * or return to the starting point
          */
-        total_procs = 0;
         item = start;
+        nprocs = 0;
         do {
             node = (orte_node_t*)item;
             /* put the specified number of procs on each node */
@@ -370,6 +421,7 @@ static int loadbalance(orte_job_t *jdata)
                     }
                 }
                 total_procs++;
+                nprocs++;
             }
             /* move to next node */
             if (opal_list_get_end(&node_list) == opal_list_get_next(item)) {
@@ -378,7 +430,7 @@ static int loadbalance(orte_job_t *jdata)
             else {
                 item = opal_list_get_next(item);
             }
-        } while (item != start);
+        } while (item != start && nprocs < np);
         
         /* save the bookmark */
         jdata->bookmark = node;
@@ -387,7 +439,7 @@ static int loadbalance(orte_job_t *jdata)
          * again, assigning 1 per node until all are assigned
          */
         item = start;
-        while (total_procs < app->num_procs) {
+        while (nprocs < np) {
             node = (orte_node_t*)item;
             if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node,
                                                                  jdata->map->cpus_per_rank, app->idx,
@@ -400,6 +452,7 @@ static int loadbalance(orte_job_t *jdata)
                 }
             }
             total_procs++;
+            nprocs++;
             /* move to next node */
             if (opal_list_get_end(&node_list) == opal_list_get_next(item)) {
                 item = opal_list_get_first(&node_list);
@@ -414,6 +467,18 @@ static int loadbalance(orte_job_t *jdata)
         /* cleanup */
         while (NULL != (item = opal_list_remove_first(&node_list))) {
             OBJ_RELEASE(item);
+        }
+        /* if the user requested a specific number of procs and
+         * the total number of procs we were able to assign
+         * doesn't equal the number requested, then we have a
+         * problem
+         */
+        if (0 < app->num_procs && nprocs < app->num_procs) {
+            orte_show_help("help-orte-rmaps-base.txt", "rmaps:too-many-procs", true,
+                           app->app, app->num_procs,
+                           "number of slots", nprocs,
+                           "number of nodes", num_nodes);
+            return ORTE_ERR_SILENT;
         }
     }
     /* record the number of procs */
