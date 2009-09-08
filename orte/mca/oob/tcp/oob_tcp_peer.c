@@ -1046,7 +1046,7 @@ void mca_oob_tcp_peer_dump(mca_oob_tcp_peer_t* peer, const char* msg)
         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
         ORTE_NAME_PRINT(&(peer->peer_name)),
         msg, src, dst, nodelay, sndbuf, rcvbuf, flags);
-    opal_output(0, buff);
+    opal_output(0, "%s", buff);
 }
 
 
