@@ -70,7 +70,7 @@ void orte_errmgr_base_error_abort(int error_code, char *fmt, ...)
     if( NULL != fmt ) {
         char* buffer = NULL;
         vasprintf( &buffer, fmt, arglist );
-        opal_output( 0, buffer );
+        opal_output( 0, "%s", buffer );
         free( buffer );
     }
     va_end(arglist);
