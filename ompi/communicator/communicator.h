@@ -313,7 +313,7 @@ static inline struct ompi_proc_t* ompi_comm_peer_lookup(ompi_communicator_t* com
 {
 #if OPAL_ENABLE_DEBUG
     if(peer_id >= comm->c_remote_group->grp_proc_count) {
-        opal_output(0, "%s: invalid peer index (%d)", __FUNCTION__,peer_id);
+        opal_output(0, "%s: invalid peer index (%d)", __func__,peer_id);
         return (struct ompi_proc_t *) NULL;
     }
 #endif
