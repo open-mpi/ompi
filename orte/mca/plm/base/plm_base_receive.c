@@ -149,6 +149,10 @@ void process_msg(int fd, short event, void *data)
     
     OPAL_THREAD_LOCK(&lock);
     
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                         "%s plm:base:receive processing msg",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
     /* tag that we are processing the list */
     processing = true;
 

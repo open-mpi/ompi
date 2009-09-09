@@ -973,10 +973,9 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
         opal_condition_wait(&orte_plm_globals.spawn_in_progress_cond, &orte_plm_globals.spawn_lock);
     }
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output, "released to spawn"));
-    OPAL_THREAD_UNLOCK(&orte_plm_globals.spawn_lock);
-    
     orte_plm_globals.spawn_in_progress = true;
     orte_plm_globals.spawn_status = ORTE_ERR_FATAL;
+    OPAL_THREAD_UNLOCK(&orte_plm_globals.spawn_lock);
     
     if (jdata->controls & ORTE_JOB_CONTROL_LOCAL_SLAVE) {
         /* if this is a request to launch a local slave,
@@ -987,7 +986,9 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
          * including the target hosts
          */
         rc = orte_plm_base_local_slave_launch(jdata);
+        OPAL_THREAD_LOCK(&orte_plm_globals.spawn_lock);
         orte_plm_globals.spawn_in_progress = false;
+        OPAL_THREAD_UNLOCK(&orte_plm_globals.spawn_lock);
         return rc;
     }
 
