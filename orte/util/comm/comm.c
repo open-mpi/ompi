@@ -100,8 +100,6 @@ int orte_util_comm_connect_tool(char *uri)
 {
     int rc;
     
-    opal_output(0, "connecting tool %s", uri);
-    
     /* set the contact info into the comm hash tables*/
     if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(uri))) {
         ORTE_ERROR_LOG(rc);
@@ -138,8 +136,6 @@ int orte_util_comm_report_event(orte_comm_event_t ev)
     if (!tool_connected) {
         return ORTE_SUCCESS;
     }
-    
-    opal_output(0, "reporting event");
     
     /* init a buffer for the data */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
