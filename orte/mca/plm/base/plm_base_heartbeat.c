@@ -26,6 +26,7 @@
 #endif
 
 #include "opal/dss/dss.h"
+#include "opal/class/opal_pointer_array.h"
 
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
@@ -76,8 +77,8 @@ CLEANUP:
  */
 static void check_heartbeat(int fd, short dummy, void *arg)
 {
-    orte_vpid_t v;
-    orte_proc_t **procs;
+    int v;
+    orte_proc_t *proc;
     orte_job_t *daemons;
     struct timeval timeout;
     bool died = false;
@@ -98,7 +99,6 @@ static void check_heartbeat(int fd, short dummy, void *arg)
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return;
     }
-    procs = (orte_proc_t**)daemons->procs->addr;
     
     /* get current time */
     gettimeofday(&timeout, NULL);
@@ -107,13 +107,16 @@ static void check_heartbeat(int fd, short dummy, void *arg)
      * in case multiple daemons died so all of those that did die
      * can be appropriately flagged
      */
-    for (v=1; v < daemons->num_procs; v++) {
-        if ((timeout.tv_sec - procs[v]->beat) > HEARTBEAT_CK*orte_heartbeat_rate) {
+    for (v=1; v < daemons->procs->size; v++) {
+        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, v))) {
+            continue;
+        }
+        if ((timeout.tv_sec - proc->beat) > HEARTBEAT_CK*orte_heartbeat_rate) {
             /* declare this orted dead */
-            procs[v]->state = ORTE_PROC_STATE_ABORTED;
-            procs[v]->exit_code = ORTE_ERROR_DEFAULT_EXIT_CODE;
+            proc->state = ORTE_PROC_STATE_ABORTED;
+            proc->exit_code = ORTE_ERROR_DEFAULT_EXIT_CODE;
             if (NULL == daemons->aborted_proc) {
-                daemons->aborted_proc = procs[v];
+                daemons->aborted_proc = proc;
             }
             ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
             died = true;
