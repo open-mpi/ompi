@@ -34,7 +34,7 @@
 
 #include "opal/dss/dss_types.h"
 #include "orte/mca/rml/rml_types.h"
-
+#include "orte/mca/odls/odls_types.h"
 
 BEGIN_C_DECLS
 
@@ -71,7 +71,7 @@ typedef int (*orte_odls_base_module_signal_local_process_fn_t)(const orte_proces
                                                               int32_t signal);
 
 /**
-    * Deliver a message to local processes
+ * Deliver a message to local processes
  */
 typedef int (*orte_odls_base_module_deliver_message_fn_t)(orte_jobid_t job, opal_buffer_t *buffer,
                                                           orte_rml_tag_t tag);
