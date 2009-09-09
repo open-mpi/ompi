@@ -1406,4 +1406,6 @@ void orte_plm_base_reset_job(orte_job_t *jdata)
     /* since every daemon will be reporting status for every proc, reset these to zero */
     jdata->num_launched = 0;
     jdata->num_reported = 0;
+    /* since we are restarting the failed proc, reset the exit status */
+    ORTE_RESET_EXIT_STATUS();
 }

@@ -1059,6 +1059,10 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     if (orted_spin_flag) {
         opal_argv_append(argc, argv, "--spin");
     }
+    if (orte_leave_session_attached) {
+        opal_argv_append(argc, argv, "--leave-session-attached");
+    }
+    
     if ((int)ORTE_VPID_INVALID != orted_debug_failure) {
         opal_argv_append(argc, argv, "--debug-failure");
         asprintf(&param, "%d", orted_debug_failure);
