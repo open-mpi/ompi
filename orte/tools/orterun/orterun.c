@@ -410,6 +410,10 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Use regular expressions for launch" },
 
+    { "orte", "report", "events", '\0', "report-events", "report-events", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Report events to a tool listening at the specified URI" },
+
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
@@ -1332,9 +1336,7 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
         ORTE_SET_MAPPING_POLICY(ORTE_MAPPING_BYSLOT);
     }
     
-    /* extract any binding policy directives - they will
-     * be ignored unless paffinity_alone is set
-     */
+    /* extract any binding policy directives */
     if (orterun_globals.bind_to_socket) {
         ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_SOCKET);
     } else if (orterun_globals.bind_to_board) {

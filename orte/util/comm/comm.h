@@ -34,6 +34,17 @@
 
 BEGIN_C_DECLS
 
+typedef uint8_t orte_comm_event_t;
+#define ORTE_COMM_EVENT OPAL_UINT8
+
+#define ORTE_COMM_EVENT_ALLOCATE    0x01
+#define ORTE_COMM_EVENT_MAP         0x02
+#define ORTE_COMM_EVENT_LAUNCH      0x04
+
+ORTE_DECLSPEC int orte_util_comm_connect_tool(char *uri);
+
+ORTE_DECLSPEC int orte_util_comm_report_event(orte_comm_event_t ev);
+
 ORTE_DECLSPEC int orte_util_comm_query_job_info(const orte_process_name_t *hnp, orte_jobid_t job,
                                                 int *num_jobs, orte_job_t ***job_info_array);
 
