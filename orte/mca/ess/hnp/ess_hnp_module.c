@@ -52,6 +52,10 @@
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/notifier/base/base.h"
+#if ORTE_ENABLE_MONITORING
+#include "orte/mca/sensor/base/base.h"
+#include "orte/mca/fddp/base/base.h"
+#endif
 
 #include "orte/mca/rmaps/base/base.h"
 #if OPAL_ENABLE_FT == 1
@@ -63,6 +67,7 @@
 #include "orte/util/hnp_contact.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
+#include "orte/util/comm/comm.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_wait.h"
@@ -471,6 +476,42 @@ static int rte_init(void)
         goto error;
     }
 
+    /* if a tool has launched us and is requesting event reports,
+     * then set its contact info into the comm system
+     */
+    if (orte_report_events) {
+        if (ORTE_SUCCESS != (ret = orte_util_comm_connect_tool(orte_report_events_uri))) {
+            error = "could not connect to tool";
+            goto error;
+        }
+    }
+    
+#if ORTE_ENABLE_MONITORING
+    /* setup the sensors */
+    if (ORTE_SUCCESS != (ret = orte_sensor_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_sensor_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_sensor_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_sensor_select";
+        goto error;
+    }
+
+    /* setup the fddp */
+    if (ORTE_SUCCESS != (ret = orte_fddp_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_sensor_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_fddp_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_sensor_select";
+        goto error;
+    }
+#endif
+    
     /* We actually do *not* want an HNP to voluntarily yield() the
      processor more than necessary.  Orterun already blocks when
      it is doing nothing, so it doesn't use any more CPU cycles than
@@ -521,6 +562,13 @@ static int rte_finalize(void)
     unlink(contact_path);
     free(contact_path);
     
+#if ORTE_ENABLE_MONITORING
+    /* finalize the sensors */
+    orte_sensor_base_close();
+    /* finalize the fddp */
+    orte_fddp_base_close();
+#endif
+
     orte_notifier_base_close();
     
     orte_cr_finalize();
