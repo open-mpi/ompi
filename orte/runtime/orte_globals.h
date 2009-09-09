@@ -118,6 +118,18 @@ typedef struct orte_job_t orte_job_t;
         }                                                                   \
     } while(0);
 
+/* sometimes we need to reset the exit status - for example, when we
+ * are restarting a failed process
+ */
+#define ORTE_RESET_EXIT_STATUS()                                \
+    do {                                                        \
+        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,              \
+                            "%s:%s(%d) reseting exit status",   \
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), \
+                            __FILE__, __LINE__));               \
+        orte_exit_status = 0;                                   \
+    } while(0);
+
 
 /* define a macro for computing time differences - used for timing tests
  * across the code base
@@ -592,6 +604,10 @@ ORTE_DECLSPEC extern char *orte_rankfile;
 
 /* default rank assigment and binding policy */
 ORTE_DECLSPEC extern orte_mapping_policy_t orte_default_mapping_policy;
+
+/* tool communication controls */
+ORTE_DECLSPEC extern bool orte_report_events;
+ORTE_DECLSPEC extern char *orte_report_events_uri;
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 

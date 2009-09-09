@@ -151,6 +151,10 @@ char *orte_rankfile;
 /* default rank assigment and binding policy */
 orte_mapping_policy_t orte_default_mapping_policy = 0;
 
+/* tool communication controls */
+bool orte_report_events = false;
+char *orte_report_events_uri = NULL;
+
 #endif /* !ORTE_DISABLE_FULL_RTE */
 
 int orte_debug_output = -1;

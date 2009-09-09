@@ -373,6 +373,14 @@ int orte_register_params(void)
         ORTE_XSET_BINDING_POLICY(ORTE_BIND_TO_CORE);
     }
     
+    /* tool communication controls */
+    mca_base_param_reg_string_name("orte", "report_events",
+                                   "URI to which events are to be reported (default: NULL)]",
+                                   false, false, NULL, &orte_report_events_uri);
+    if (NULL != orte_report_events_uri) {
+        orte_report_events = true;
+    }
+    
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
     
     return ORTE_SUCCESS;
