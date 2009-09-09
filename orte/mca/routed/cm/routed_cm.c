@@ -722,6 +722,9 @@ static int route_lost(const orte_process_name_t *route)
             /* this was a daemon - notify the errmgr
              * so we can take appropriate recovery, if desired
              */
+            opal_output(0, "%s routed:cm: daemon %s has died",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_VPID_PRINT(route->vpid));
             orte_errmgr.proc_aborted((orte_process_name_t*)route, 1);
         }
         /* either way, take no further action */
