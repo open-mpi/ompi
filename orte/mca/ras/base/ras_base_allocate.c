@@ -39,6 +39,7 @@
 #include "orte/util/hostfile/hostfile.h"
 #include "orte/util/dash_host/dash_host.h"
 #include "orte/util/proc_info.h"
+#include "orte/util/comm/comm.h"
 
 #include "orte/mca/ras/base/ras_private.h"
 
@@ -387,6 +388,12 @@ int orte_ras_base_allocate(orte_job_t *jdata)
     OBJ_DESTRUCT(&nodes);
 
 DISPLAY:
+    /* are we to report this event? */
+    if (orte_report_events) {
+        if (ORTE_SUCCESS != (rc = orte_util_comm_report_event(ORTE_COMM_EVENT_ALLOCATE))) {
+            ORTE_ERROR_LOG(rc);
+        }
+    }
     /* shall we display the results? */
     if (orte_ras_base.display_alloc) {
         display_alloc();
