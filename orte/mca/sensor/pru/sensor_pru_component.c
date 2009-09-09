@@ -69,6 +69,10 @@ static int orte_sensor_pru_open(void)
                               "Sample rate in seconds (default=10)",
                               false, false, 10,  &mca_sensor_pru_component.sample_rate);
     
+    mca_base_param_reg_int(c, "memory_limit",
+                           "Max virtual memory size in GBytes (default=10)",
+                           false, false, 10,  &mca_sensor_pru_component.sample_rate);
+    
     return ORTE_SUCCESS;
 }
 

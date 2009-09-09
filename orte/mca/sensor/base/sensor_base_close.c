@@ -20,16 +20,13 @@
 
 int orte_sensor_base_close(void)
 {
-    orte_sensor_base_selected_pair_t *pair;
     opal_list_item_t *item;
     
     /* destruct the list of modules so they each can finalize */
-    for (item = opal_list_get_first(&orte_sensor_base_selected_modules);
-         opal_list_get_end(&orte_sensor_base_selected_modules) != item;
-         item = opal_list_get_next(item)) {
-        pair = (orte_sensor_base_selected_pair_t*)item;
-        OBJ_DESTRUCT(pair);
+    while (NULL != (item = opal_list_remove_first(&orte_sensor_base_selected_modules))) {
+        OBJ_RELEASE(item);
     }
+    OBJ_DESTRUCT(&orte_sensor_base_selected_modules);
     
     /* Close all remaining available components */
     
