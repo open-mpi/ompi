@@ -305,3 +305,5 @@ if test "$greekonly" = "0"; then
     make_tarball
 fi
 
+# Put the VERSION file back the way it was
+svn revert VERSION
