@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -74,12 +75,12 @@ int mca_coll_sm_reduce_intra(void *sbuf, void* rbuf, int count,
 
     /* There are several possibilities:
      *
-
-     * 0. If the datatype is larger than a segment, fall back to basic
+     * 0. If the datatype is larger than a segment, fall back to
+     *    underlying module
      * 1. If the op is user-defined, use the strict order
      * 2. If the op is intrinsic:
      *    a. If the op is float-associative, use the unordered
-     *    b. If the op is not float-asociative:
+     *    b. If the op is not float-associative:
      *       i. if the data is floating point, use the strict order
      *       ii. if the data is not floating point, use the unordered
      */
@@ -146,6 +147,7 @@ int mca_coll_sm_reduce_intra(void *sbuf, void* rbuf, int count,
  * If we don't have a friendly datatype, then free the temporary
  * buffer at the end.
  */
+
 static int reduce_inorder(void *sbuf, void* rbuf, int count, 
                           struct ompi_datatype_t *dtype, 
                           struct ompi_op_t *op, 
@@ -154,15 +156,15 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
 {
     struct iovec iov;
     mca_coll_sm_module_t *sm_module = (mca_coll_sm_module_t*) module;
-    mca_coll_sm_comm_t *data = sm_module->sm_data;
+    mca_coll_sm_comm_t *data = sm_module->sm_comm_data;
     int ret, rank, size;
     int flag_num, segment_num, max_segment_num;
     size_t total_size, max_data, bytes;
     mca_coll_sm_in_use_flag_t *flag;
-    opal_convertor_t convertor;
-    mca_coll_base_mpool_index_t *index;
+    mca_coll_sm_data_index_t *index;
     size_t ddt_size;
     size_t segment_ddt_count, segment_ddt_bytes, zero = 0;
+    ptrdiff_t true_lb, true_extent, lb, extent;
 
     /* Setup some identities */
 
@@ -175,7 +177,13 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
        already guaranteed above that the datatype is not larger than a
        segment, so we'll at least get 1). */
 
+    /* ddt_size is the packed size (e.g., MPI_SHORT_INT is 6) */
     ompi_datatype_type_size(dtype, &ddt_size);
+    /* extent is from lb to ub (e.g., MPI_SHORT_INT is 8) */
+    ompi_datatype_get_extent(dtype, &lb, &extent);
+    /* true_extent is extent of actual type map, ignoring lb and ub
+       (e.g., MPI_SHORT_INT is 8) */
+    ompi_datatype_get_true_extent(dtype, &true_lb, &true_extent);
     segment_ddt_count = mca_coll_sm_component.sm_fragment_size / ddt_size;
     iov.iov_len = segment_ddt_bytes = segment_ddt_count * ddt_size;
     total_size = ddt_size * count;
@@ -192,13 +200,14 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
      *********************************************************************/
     
     if (root == rank) {
+        opal_convertor_t rtb_convertor, rbuf_convertor;
         char *reduce_temp_buffer, *free_buffer, *reduce_target;
-        ptrdiff_t true_lb, true_extent, lb, extent;
         char *inplace_temp;
         int peer;
         size_t count_left = (size_t)count;
         int frag_num = 0;
         bool first_operation = true;
+        bool sbuf_copied_to_rbuf = false;
         
         /* If the datatype is the same packed as it is unpacked, we
            can save a memory copy and just do the reduction operation
@@ -207,12 +216,23 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
            receive convertor and a temporary buffer to receive
            into. */
         
-        ompi_datatype_get_extent(dtype, &lb, &extent);
-        ompi_datatype_get_true_extent(dtype, &true_lb, &true_extent);
         if (ompi_datatype_is_contiguous_memory_layout(dtype, count)) {
             reduce_temp_buffer = free_buffer = NULL;
         } else {
-            OBJ_CONSTRUCT(&convertor, opal_convertor_t);
+            /* When we have a non-contiguous datatype, we need one or
+             * two convertors:
+             *
+             * rtb_convertor: unpacking from the shmem to the
+             * reduce_temp_buffer (where we can then apply the
+             * reduction).
+             *
+             * rbuf_convertor: unpacking from the shmem directly to the
+             * rbuf (no need to go to the reduce_temp_buffer first and
+             * then apply the reduction -- just copy straight to the
+             * target buffer).
+             */
+            OBJ_CONSTRUCT(&rtb_convertor, opal_convertor_t);
+            OBJ_CONSTRUCT(&rbuf_convertor, opal_convertor_t);
 
             /* See lengthy comment in coll basic reduce about
                explanation for how to malloc the extra buffer.  Note
@@ -234,24 +254,40 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
                user's count that will fit within a single segment. */
             
             if (OMPI_SUCCESS != 
-                (ret = opal_convertor_copy_and_prepare_for_recv(ompi_mpi_local_convertor,
-                                                                &(dtype->super),
-                                                                segment_ddt_count, 
-                                                                reduce_temp_buffer,
-                                                                0,
-                                                                &convertor))) {
+                (ret = opal_convertor_copy_and_prepare_for_recv(
+                                       ompi_mpi_local_convertor,
+                                       &(dtype->super),
+                                       segment_ddt_count, 
+                                       reduce_temp_buffer,
+                                       0,
+                                       &rtb_convertor))) {
                 free(free_buffer);
                 return ret;
+            }
+
+            /* See if we need the rbuf_convertor */
+            if (size - 1 != rank) {
+                if (OMPI_SUCCESS != 
+                    (ret = opal_convertor_copy_and_prepare_for_recv(
+                                       ompi_mpi_local_convertor,
+                                       &(dtype->super),
+                                       segment_ddt_count, 
+                                       rbuf,
+                                       0,
+                                       &rbuf_convertor))) {
+                    free(free_buffer);
+                    return ret;
+                }
             }
         }
 
         /* If we're a) doing MPI_IN_PLACE (which means we're the root
            -- wouldn't have gotten down here with MPI_IN_PLACE if we
-           weren't the root), and b) we're not rank 0, then we need to
-           copy the rbuf into a temporary buffer and use that as the
-           sbuf */
+           weren't the root), and b) we're not rank (size-1), then we
+           need to copy the rbuf into a temporary buffer and use that
+           as the sbuf */
 
-        if (MPI_IN_PLACE == sbuf && 0 != rank) {
+        if (MPI_IN_PLACE == sbuf && (size - 1) != rank) {
             inplace_temp = (char*)malloc(true_extent + (count - 1) * extent);
             if (NULL == inplace_temp) {
                 if (NULL != free_buffer) {
@@ -260,6 +296,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
             sbuf = inplace_temp - lb;
+            ompi_datatype_copy_content_same_ddt(dtype, count, sbuf, rbuf);
         } else {
             inplace_temp = NULL;
         }
@@ -280,74 +317,72 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
                 flag_num * mca_coll_sm_component.sm_segs_per_inuse_flag;
             max_segment_num = 
                 (flag_num + 1) * mca_coll_sm_component.sm_segs_per_inuse_flag;
-            reduce_target = (((char*) rbuf) + (frag_num * segment_ddt_bytes));
+            reduce_target = (((char*) rbuf) + (frag_num * true_extent * segment_ddt_count));
             do {
 
-                /* Process 0 (special case) */
+                /* Note that all the other coll modules reduce from
+                   process (size-1) to 0, so that's the order we'll do
+                   it here. */
 
-                if (rank == 0) {
+                /* Process (size-1) is the root (special case) */
+                if (size - 1 == rank) {
                     /* If we're the root *and* the first process to be
                        combined *and* this is the first segment in the
-                       entire algorithm, then just copy the whole
-                       buffer.  That way, we never need to copy from
-                       this process again (i.e., do the copy all at
-                       once since all the data is local, and then
-                       don't worry about it for the rest of the
+                       entire algorithm, then just copy the whole sbuf
+                       to rbuf.  That way, we never need to copy from
+                       my sbuf again (i.e., do the copy all at once
+                       since all the data is local, and then don't
+                       worry about it for the rest of the
                        algorithm) */
                     if (first_operation) {
                         first_operation = false;
                         if (MPI_IN_PLACE != sbuf) {
-                            ompi_datatype_copy_content_same_ddt(dtype,
-                                                           count,
-                                                           reduce_target, (char*)sbuf);
-                            D(("root copied entire buffer to rbuf (contig ddt, count %d) FIRST OPERATION\n", count));
+                            ompi_datatype_copy_content_same_ddt(dtype, count,
+                                               reduce_target, (char*)sbuf);
                         }
+                        sbuf_copied_to_rbuf = true;
                     }
-                } else {
-                    index = &(data->mcb_mpool_index[segment_num]);
-                    PARENT_WAIT_FOR_NOTIFY_SPECIFIC(0, rank, index, max_data);
+                } 
+
+                /* Process (size-1) is not the root */
+                else {
+                    /* Wait for the data to be copied into shmem, just
+                       like any other non-root process */
+                    index = &(data->mcb_data_index[segment_num]);
+                    PARENT_WAIT_FOR_NOTIFY_SPECIFIC(size - 1, rank, index, max_data);
                         
-                    /* If we don't need an extra buffer, memcpy the
-                       fragment straight to the output buffer.
-                       Otherwise, unpack. */
-                        
+                    /* If the datatype is contiguous, just copy it
+                       straight to the reduce_target */
                     if (NULL == free_buffer) {
-                        D(("root: special case -- copy from rank 0 shemem to reduce_target (%d bytes)\n", max_data));
-                        memcpy(reduce_target, index->mcbmi_data, max_data);
-                    } else {
-                        /* This is somethat inefficient -- should be
-                           able to avoid one of the memory copies
-                           here, but doing so would violate an
-                           abstraction barrier in the convertor (i.e.,
-                           directly manipulate some of the private
-                           data on the convertor struct) */
-                        D(("root: special case -- unpack and copy from rank 0 to reduce_target\n"));
-                        COPY_FRAGMENT_OUT(convertor, 0, index, 
+                        memcpy(reduce_target, ((char*)index->mcbmi_data) +
+                               (size - 1) * mca_coll_sm_component.sm_fragment_size, max_data);
+                    } 
+                    /* If the datatype is noncontiguous, use the
+                       rbuf_convertor to unpack it straight to the
+                       rbuf */
+                    else {
+                        max_data = segment_ddt_bytes;
+                        COPY_FRAGMENT_OUT(rbuf_convertor, size - 1, index, 
                                           iov, max_data);
-                        opal_convertor_set_position(&convertor, &zero);
-                        
-                        ompi_datatype_copy_content_same_ddt(dtype, 
-                                                       max_data / ddt_size,
-                                                       reduce_target,
-                                                       iov.iov_base);
                     }
                 }
 
                 /* Loop over all the remaining processes, receiving
                    and reducing them in order */
 
-                for (peer = 1; peer < size; ++peer) {
+                for (peer = size - 2; peer >= 0; --peer) {
 
-                    /* Handle the case where the source is this process */
-
+                    /* Handle the case where the source is this
+                       process (which, by definition, excludes the
+                       sbuf_copied_to_rbuf case because that can
+                       *only* happen when root==0).  In this case, we
+                       don't need to wait for the peer (i.e., me) to
+                       copy into shmem -- just reduce directly from my
+                       sbuf. */
                     if (rank == peer) {
-                        /* Otherwise, I'm not the first process, so
-                           instead of copying, combine in the next
-                           fragment */
-                        D(("root combining fragment from shmem (contig ddt): count %d (left %d, seg %d)\n", min(count_left, segment_ddt_count), count_left, segment_ddt_count));
                         ompi_op_reduce(op, 
                                        ((char *) sbuf) +
-                                       frag_num * segment_ddt_bytes,
+                                       frag_num * true_extent * segment_ddt_count,
                                        reduce_target,
                                        min(count_left, segment_ddt_count),
                                        dtype);
@@ -355,10 +390,9 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
 
                     /* Now handle the case where the source is not
                        this process.  Wait for the process to copy to
-                       the segment. */
-
+                       the segment into shmem. */
                     else {
-                        index = &(data->mcb_mpool_index[segment_num]);
+                        index = &(data->mcb_data_index[segment_num]);
                         PARENT_WAIT_FOR_NOTIFY_SPECIFIC(peer, rank, 
                                                         index, max_data);
                         
@@ -367,12 +401,11 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
                            from the shmem. */
                         
                         if (NULL == free_buffer) {
-                            D(("root combining %d elements in shmem from peer %d\n",
-                               max_data / ddt_size, peer));
                             ompi_op_reduce(op,
                                            (index->mcbmi_data + 
                                             (peer * mca_coll_sm_component.sm_fragment_size)),
-                                           reduce_target, max_data / ddt_size,
+                                           reduce_target, 
+                                           min(count_left, segment_ddt_count),
                                            dtype);
                         }
                         
@@ -380,23 +413,22 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
                            buffer and then do the reduction from there */
                         
                         else {
-                            D(("root combining %d elements in copy out buffer from peer %d\n",
-                               max_data / ddt_size, peer));
                             /* Unpack the fragment into my temporary
                                buffer */
-                            COPY_FRAGMENT_OUT(convertor, peer, index, 
+                            max_data = segment_ddt_bytes;
+                            COPY_FRAGMENT_OUT(rtb_convertor, peer, index, 
                                               iov, max_data);
-                            opal_convertor_set_position(&convertor, &zero);
+                            opal_convertor_set_position(&rtb_convertor, &zero);
                             
                             /* Do the reduction on this fragment */
                             ompi_op_reduce(op, reduce_temp_buffer,
                                            reduce_target, 
-                                           max_data / ddt_size,
+                                           min(count_left, segment_ddt_count),
                                            dtype);
                         }
                     } /* whether this process was me or not */
                 } /* loop over all proceses */
-
+                
                 /* We've iterated through all the processes -- now we
                    move on to the next segment */
 
@@ -404,7 +436,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
                 bytes += segment_ddt_bytes;
                 ++segment_num;
                 ++frag_num;
-                reduce_target += segment_ddt_bytes;
+                reduce_target += true_extent * segment_ddt_count;
             } while (bytes < total_size && segment_num < max_segment_num);
 
             /* Root is now done with this set of segments */
@@ -414,7 +446,8 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
         /* Kill the convertor, if we had one */
         
         if (NULL != free_buffer) {
-            OBJ_DESTRUCT(&convertor);
+            OBJ_DESTRUCT(&rtb_convertor);
+            OBJ_DESTRUCT(&rbuf_convertor);
             free(free_buffer);
         }
         if (NULL != inplace_temp) {
@@ -427,11 +460,11 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
      *********************************************************************/
 
     else {
-
         /* Here we get a convertor for the full count that the user
            provided (as opposed to the convertor that the root got) */
 
-        OBJ_CONSTRUCT(&convertor, opal_convertor_t);
+        opal_convertor_t sbuf_convertor;
+        OBJ_CONSTRUCT(&sbuf_convertor, opal_convertor_t);
         if (OMPI_SUCCESS != 
             (ret = 
              opal_convertor_copy_and_prepare_for_send(ompi_mpi_local_convertor,
@@ -439,7 +472,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
                                                       count, 
                                                       sbuf,
                                                       0,
-                                                      &convertor))) {
+                                                      &sbuf_convertor))) {
             return ret;
         }
 
@@ -462,11 +495,12 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
             max_segment_num = 
                 (flag_num + 1) * mca_coll_sm_component.sm_segs_per_inuse_flag;
             do {
-                index = &(data->mcb_mpool_index[segment_num]);
+                index = &(data->mcb_data_index[segment_num]);
 
                 /* Copy from the user's buffer to my shared mem
                    segment */
-                COPY_FRAGMENT_IN(convertor, index, rank, iov, max_data);
+                max_data = segment_ddt_bytes;
+                COPY_FRAGMENT_IN(sbuf_convertor, index, rank, iov, max_data);
                 bytes += max_data;
 
                 /* Wait for the write to absolutely complete */
@@ -486,7 +520,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
 
         /* Kill the convertor */
 
-        OBJ_DESTRUCT(&convertor);
+        OBJ_DESTRUCT(&sbuf_convertor);
     }
 
     /* All done */

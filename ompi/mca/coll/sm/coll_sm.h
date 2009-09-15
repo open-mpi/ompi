@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -28,20 +28,9 @@
 #include "opal/datatype/opal_convertor.h"
 #include "orte/types.h"
 #include "ompi/mca/coll/coll.h"
-#include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/common/sm/common_sm_mmap.h"
 
 BEGIN_C_DECLS
-
-/*
- * Horrid debugging macro
- */
-#if 0
-#include <stdio.h>
-#define D(foo) { printf foo ; fflush(stdout); }
-#else
-#define D(foo)
-#endif
 
 #ifdef HAVE_SCHED_YIELD
 #  include <sched.h>
@@ -52,82 +41,13 @@ BEGIN_C_DECLS
 #  define SPIN
 #endif
 
-    /**
-     * Structure used within bootstrap mmap file for setting up a coll
-     * sm component on a communicator
-     */
-    struct mca_coll_sm_bootstrap_comm_setup_t {
-        /** Offset to be used in the data mpool for this comm's
-            collective sm operations -- use this value plus the base
-            of the mpool to obtain the pointer to this comm's
-            mca_coll_sm_mpool_area_t */
-        volatile size_t smbcs_data_mpool_offset;
-
-        /** Number of processes in this communicator who have seen
-            this value already. */
-        volatile int smbcs_count;
-
-        /** Mechanism for letting multiple processes know whether this
-            allocation succeeded or not */
-        volatile bool smbcs_success;
-    };
-    /**
-     * Convenience typedef
-     */
-    typedef struct mca_coll_sm_bootstrap_comm_setup_t 
-        mca_coll_sm_bootstrap_comm_setup_t;
-
-    /**
-     * Structure that acts as a key for the bootstrap area -- a
-     * segment in the bootstrap mpool is uniquely identified by its
-     * CID and the process name of rank 0 in the group.
-     */
-    struct mca_coll_sm_bootstrap_comm_key_t {
-        /** CID of the communicator using a bootstrap segment */
-        uint32_t mcsbck_cid;
-        /** Process name of rank 0 in this communicator */
-        orte_process_name_t mcsbck_rank0_name;
-    };
-    /**
-     * Convenience typedef
-     */
-    typedef struct mca_coll_sm_bootstrap_comm_key_t
-        mca_coll_sm_bootstrap_comm_key_t;
-
-    /**
-     * Extension to the control structure in the bootstrap mmap file
-     */
-    struct mca_coll_sm_bootstrap_header_extension_t {
-        /** upper-level control structure */
-        mca_common_sm_file_header_t super;
-
-        /** Pointer to the start of the segments in the bootstrap area
-            (map->seg_data only points to just beyond the
-            mca_common_sm_file_header_t) */
-        mca_coll_sm_bootstrap_comm_setup_t *smbhe_segments;
-
-        /** Pointer to array containing
-            component.sm_bootstrap_num_segments (CID, rank 0 process
-            name) tuples for use in bootstrap phase -- will always
-            point immediately after the end of this struct (i.e.,
-            still within this header, but since it's variable size
-            (set by MCA param), we can't just have it here in the
-            struct.  Bonk). */
-        mca_coll_sm_bootstrap_comm_key_t *smbhe_keys;
-    };
-    /**
-     * Convenience typedef
-     */
-    typedef struct mca_coll_sm_bootstrap_header_extension_t
-        mca_coll_sm_bootstrap_header_extension_t;
-
     /** 
      * Structure to hold the sm coll component.  First it holds the
      * base coll component, and then holds a bunch of
      * sm-coll-component-specific stuff (e.g., current MCA param
      * values). 
      */
-    struct mca_coll_sm_component_t {
+    typedef struct mca_coll_sm_component_t {
         /** Base coll component */
         mca_coll_base_component_2_0_0_t super;
 
@@ -136,19 +56,6 @@ BEGIN_C_DECLS
 
         /** MCA parameter: Length of a cache line or page (in bytes) */
         int sm_control_size;
-
-        /** MCA parameter: Name of shared memory control / bootstrap
-            mmap file */
-        char *sm_bootstrap_filename;
-
-        /** MCA parameter: Number of segments in the bootstrap file
-            (for use with setting up multiple comm's with sm
-            components simultaneously) */
-        int sm_bootstrap_num_segments;
-
-        /** MCA parameter: Name of the mpool that this component will
-            use */
-        char *sm_mpool_name;
 
         /** MCA parameter: Number of "in use" flags in each
             communicator's area in the data mpool */
@@ -170,54 +77,17 @@ BEGIN_C_DECLS
 
         /******* end of MCA params ********/
 
-        /** Size of the bootstrap area -- calculated in
-            coll_sm_component.c */
-        size_t sm_bootstrap_size;
-
-        /** Size of the data mpool area -- calculated in
-            coll_sm_component.c */
-        size_t sm_data_mpool_size;
-
-        /** Data mpool that will be used */
-        mca_mpool_base_module_t *sm_data_mpool;
-
-        /** Whether we ended up creating the sm mpool or whether
-            someone else created it and we just found it */
-        bool sm_data_mpool_created;
-
-        /** Meta struct containing information about the bootstrap area */
-        mca_common_sm_mmap_t *sm_bootstrap_meta;
-
         /** How many fragment segments are protected by a single
             in-use flags.  This is solely so that we can only perform
             the division once and then just use the value without
             having to re-calculate. */
         int sm_segs_per_inuse_flag;
-
-        /** Whether the component's shared memory has been [lazily]
-            initialized or not */
-        bool sm_component_setup;
-
-        /** Once the component has been lazily initialized, keep the
-            state of it around */
-        bool sm_component_setup_success;
-
-        /** A lock protecting the lazy initialzation of the component
-            (SINCE THERE IS NO STATIC INITIALIZER FOR
-            opal_atomic_lock_t, THIS *MUST* BE THE LAST MEMBER OF THE
-            STRUCT!) */
-        opal_atomic_lock_t sm_component_setup_lock;
-
-    };
-    /**
-     * Convenience typedef
-     */
-    typedef struct mca_coll_sm_component_t mca_coll_sm_component_t;
+    } mca_coll_sm_component_t;
 
     /**
      * Structure for representing a node in the tree
      */
-    struct mca_coll_sm_tree_node_t {
+    typedef struct mca_coll_sm_tree_node_t {
         /** Arbitrary ID number, starting from 0 */
         int mcstn_id;
         /** Pointer to parent, or NULL if root */
@@ -227,11 +97,7 @@ BEGIN_C_DECLS
         /** Pointer to an array of children, or NULL if 0 ==
             mcstn_num_children */
         struct mca_coll_sm_tree_node_t **mcstn_children;
-    };
-    /**
-     * Convenienve typedef
-     */
-    typedef struct mca_coll_sm_tree_node_t mca_coll_sm_tree_node_t;
+    } mca_coll_sm_tree_node_t;
 
     /**
      * Simple structure comprising the "in use" flags.  Contains two
@@ -239,54 +105,39 @@ BEGIN_C_DECLS
      * set of segments and the operation number of the current
      * operation.
      */
-    struct mca_coll_sm_in_use_flag_t {
+    typedef struct mca_coll_sm_in_use_flag_t {
         /** Number of processes currently using this set of
             segments */
         volatile uint32_t mcsiuf_num_procs_using;
         /** Must match data->mcb_count */
         volatile uint32_t mcsiuf_operation_count;
-    };
-    /**
-     * Convenienve typedef
-     */
-    typedef struct mca_coll_sm_in_use_flag_t mca_coll_sm_in_use_flag_t;
+    } mca_coll_sm_in_use_flag_t;
 
     /**
      * Structure containing pointers to various arrays of data in the
-     * data mpool area (one of these indexes a single segment in the
-     * data mpool).  Nothing is hard-coded because all the array
-     * lengths and displacements of the pointers all depend on how
-     * many processes are in the communicator.
+     * per-communicator shmem data segment (one of these indexes a
+     * single segment in the per-communicator shmem data segment).
+     * Nothing is hard-coded because all the array lengths and
+     * displacements of the pointers all depend on how many processes
+     * are in the communicator.
      */
-    struct mca_coll_base_mpool_index_t {
+    typedef struct mca_coll_sm_data_index_t {
         /** Pointer to beginning of control data */
         uint32_t volatile *mcbmi_control;
         /** Pointer to beginning of message fragment data */
         char *mcbmi_data;
-    };
-    typedef struct mca_coll_base_mpool_index_t mca_coll_base_mpool_index_t;
+    } mca_coll_sm_data_index_t;
 
     /**
      * Structure for the sm coll module to hang off the communicator.
      * Contains communicator-specific information, including pointers
-     * into the data mpool for this comm's sm collective operations
-     * area. 
+     * into the per-communicator shmem data data segment for this
+     * comm's sm collective operations area.
      */
-    struct mca_coll_sm_comm_t {
-        /** If this process is the one that invoked mpool_alloc() for
-            the data segment, the return value will be in here.
-            Otherwise, it will be NULL (i.e., only the allocating
-            process will call free). */
-        void *mcb_data_mpool_malloc_addr;
-        /** Base of the data mpool */
-        unsigned char *mcb_mpool_base;
-        /** Offset into the data mpool where this comm's operations
-            area is */
-        size_t mcb_mpool_offset;
-        /** Pointer in the data mpool to the beginning of this comm's
-            operations area (i.e., mcb_mpool_base +
-            mcb_mpool_offset) */
-        unsigned char *mcb_mpool_area;
+    typedef struct mca_coll_sm_comm_t {
+        /* Meta data that we get back from the common mmap allocation
+           function */
+        mca_common_sm_mmap_t *mcb_mmap;
 
         /** Pointer to my barrier control pages (odd index pages are
             "in", even index pages are "out") */
@@ -311,10 +162,10 @@ BEGIN_C_DECLS
         /** "In use" flags indicating which segments are available */
         mca_coll_sm_in_use_flag_t *mcb_in_use_flags;
 
-        /** Array of indexes into the mpool area for control and data
-            fragment passing (containing pointers to each segments
-            control and data areas). */
-        mca_coll_base_mpool_index_t *mcb_mpool_index;
+        /** Array of indexes into the per-communicator shmem data
+            segment for control and data fragment passing (containing
+            pointers to each segments control and data areas). */
+        mca_coll_sm_data_index_t *mcb_data_index;
 
         /** Array of graph nodes representing the tree used for
             communications */
@@ -322,23 +173,21 @@ BEGIN_C_DECLS
 
         /** Operation number (i.e., which segment number to use) */
         uint32_t mcb_operation_count;
-    };
-    /**
-     * Convenience typedef
-     */
-    typedef struct mca_coll_sm_comm_t mca_coll_sm_comm_t;
+    } mca_coll_sm_comm_t;
 
-
-    struct mca_coll_sm_module_t {
+    /** Coll sm module */
+    typedef struct mca_coll_sm_module_t {
+        /** Base module */
 	mca_coll_base_module_t super;
 
-	mca_coll_sm_comm_t *sm_data;
+        /* Data that hangs off the communicator */
+	mca_coll_sm_comm_t *sm_comm_data;
+
+        /* Underlying reduce function and module */
 	mca_coll_base_module_reduce_fn_t previous_reduce;
 	mca_coll_base_module_t *previous_reduce_module;
-    };
-    typedef struct mca_coll_sm_module_t mca_coll_sm_module_t;
+    } mca_coll_sm_module_t;
     OBJ_CLASS_DECLARATION(mca_coll_sm_module_t);
-
     
     /**
      * Global component instance
@@ -348,14 +197,11 @@ BEGIN_C_DECLS
     /*
      * coll module functions
      */
-
     int mca_coll_sm_init_query(bool enable_progress_threads,
 			       bool enable_mpi_threads);
 
     mca_coll_base_module_t *
     mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority);
-
-    int mca_coll_sm_bootstrap_finalize(void);
 
     int mca_coll_sm_allgather_intra(void *sbuf, int scount, 
 				    struct ompi_datatype_t *sdtype, 
@@ -462,7 +308,7 @@ BEGIN_C_DECLS
  * Global variables used in the macros (essentially constants, so
  * these are thread safe)
  */
-extern uint32_t mca_coll_sm_iov_size;
+extern uint32_t mca_coll_sm_one;
 
 
 /**
@@ -508,8 +354,9 @@ extern uint32_t mca_coll_sm_iov_size;
     (iov).iov_base = \
         (index)->mcbmi_data + \
         ((rank) * mca_coll_sm_component.sm_fragment_size); \
-    (max_data) = (iov).iov_len = mca_coll_sm_component.sm_fragment_size; \
-    opal_convertor_pack(&(convertor), &(iov), &mca_coll_sm_iov_size, \
+    (iov).iov_len = (max_data); \
+    mca_coll_sm_one = 1; \
+    opal_convertor_pack(&(convertor), &(iov), &mca_coll_sm_one, \
                         &(max_data) )
 
 /**
@@ -518,8 +365,10 @@ extern uint32_t mca_coll_sm_iov_size;
  */
 #define COPY_FRAGMENT_OUT(convertor, src_rank, index, iov, max_data) \
     (iov).iov_base = (((char*) (index)->mcbmi_data) + \
-                      ((src_rank) * mca_coll_sm_component.sm_fragment_size)); \
-    opal_convertor_unpack(&(convertor), &(iov), &mca_coll_sm_iov_size, \
+                       ((src_rank) * (mca_coll_sm_component.sm_fragment_size))); \
+    (iov).iov_len = (max_data); \
+    mca_coll_sm_one = 1; \
+    opal_convertor_unpack(&(convertor), &(iov), &mca_coll_sm_one, \
                           &(max_data) )
 
 /**

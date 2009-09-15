@@ -61,7 +61,7 @@ int mca_coll_sm_barrier_intra(struct ompi_communicator_t *comm,
 
     uint_control_size = 
         mca_coll_sm_component.sm_control_size / sizeof(uint32_t);
-    data = sm_module->sm_data;
+    data = sm_module->sm_comm_data;
     rank = ompi_comm_rank(comm);
     num_children = data->mcb_tree[rank].mcstn_num_children;
     buffer_set = ((data->mcb_barrier_count++) % 2) * 2;
@@ -69,7 +69,6 @@ int mca_coll_sm_barrier_intra(struct ompi_communicator_t *comm,
     me_out = me_in + uint_control_size;
     me_out = (uint32_t*)
         (((char*) me_in) + mca_coll_sm_component.sm_control_size);
-    D(("rank %d barrier set %d: in %p, out %p\n", rank, buffer_set, me_in, me_out));
 
     /* Wait for my children to write to my *in* buffer */
 
@@ -77,12 +76,10 @@ int mca_coll_sm_barrier_intra(struct ompi_communicator_t *comm,
         /* Get children *out* buffer */
         children = data->mcb_barrier_control_children + buffer_set + 
             uint_control_size;
-        D(("rank %d waiting for fan in from %d children...\n", rank, num_children));
         while (*me_in != num_children) {
             continue;
         }
         *me_in = 0;
-        D(("rank %d got fan in\n", rank));
     }
 
     /* Send to my parent and wait for a response (don't poll on
@@ -97,25 +94,19 @@ int mca_coll_sm_barrier_intra(struct ompi_communicator_t *comm,
     if (0 != rank) {
         /* Get parent *in* buffer */
         parent = &data->mcb_barrier_control_parent[buffer_set];
-        D(("rank %d writing to parent\n", rank));
         opal_atomic_add(parent, 1);
 
-        D(("rank %d waiting for fan out from parent: %p\n", rank, me_out));
         while (0 == *me_out) {
             continue;
         }
-        D(("rank %d got fan out from parent\n", rank));
         *me_out = 0;
     }
 
     /* Send to my children */
 
     for (i = 0; i < num_children; ++i) {
-        D(("rank %d sending to child %d: %p\n", rank, i,
-           children + (i * uint_control_size * 4)));
         children[i * uint_control_size * 4] = 1;
     }
-    D(("rank %d done with barrier\n", rank));
 
     /* All done!  End state of the control segment:
 
