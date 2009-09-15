@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -44,6 +45,7 @@
 #endif  /* HAVE_UNISTD_H */
 
 #include "mpi.h"
+#include "opal_stdint.h"
 #include "opal/mca/maffinity/maffinity.h"
 #include "opal/mca/maffinity/base/base.h"
 #include "opal/util/os_path.h"
@@ -52,9 +54,9 @@
 #include "orte/util/name_fns.h"
 
 #include "ompi/communicator/communicator.h"
+#include "ompi/group/group.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
-#include "ompi/mca/mpool/base/base.h"
 #include "ompi/proc/proc.h"
 #include "coll_sm.h"
 
@@ -62,7 +64,7 @@
 /*
  * Global variables
  */
-uint32_t mca_coll_sm_iov_size = 1;
+uint32_t mca_coll_sm_one = 1;
 
 
 /*
@@ -71,17 +73,47 @@ uint32_t mca_coll_sm_iov_size = 1;
 static int sm_module_enable(mca_coll_base_module_t *module,
                           struct ompi_communicator_t *comm);
 static bool have_local_peers(ompi_group_t *group, size_t size);
-static int bootstrap_init(void);
 static int bootstrap_comm(ompi_communicator_t *comm,
                           mca_coll_sm_module_t *module);
 
+/*
+ * Module constructor
+ */
+static void mca_coll_sm_module_construct(mca_coll_sm_module_t *module)
+{
+    module->sm_comm_data = NULL;
+    module->previous_reduce = NULL;
+    module->previous_reduce_module = NULL;
+}
 
 /*
- * Local variables
+ * Module destructor
  */
-static bool bootstrap_inited = false;
+static void mca_coll_sm_module_destruct(mca_coll_sm_module_t *module)
+{
+    mca_coll_sm_comm_t *c = module->sm_comm_data;
+
+    if (NULL != c) {
+        /* Munmap the per-communicator shmem data segment */
+        if (NULL != c->mcb_mmap) {
+            /* Ignore any errors -- what are we going to do about
+               them? */
+            mca_common_sm_mmap_fini(c->mcb_mmap);
+        }
+        free(c);
+    }
+
+    /* It should always be non-NULL, but just in case */
+    if (NULL != module->previous_reduce_module) {
+        OBJ_RELEASE(module->previous_reduce_module);
+    }
+}
 
 
+OBJ_CLASS_INSTANCE(mca_coll_sm_module_t,
+                   mca_coll_base_module_t,
+                   mca_coll_sm_module_construct,
+                   mca_coll_sm_module_destruct);
 
 /*
  * Initial query function that is invoked during MPI_INIT, allowing
@@ -92,36 +124,40 @@ static bool bootstrap_inited = false;
 int mca_coll_sm_init_query(bool enable_progress_threads,
                            bool enable_mpi_threads)
 {
-#if 0
-    /* JMS: Arrgh.  Unfortunately, we don't have this information by
-       the time this is invoked -- the GPR compound command doesn't
-       fire until after coll_base_open() in ompi_mpi_init(). */
+    ompi_proc_t *my_proc, **procs;
+    size_t i, size;
 
-    ompi_proc_t **procs;
-    size_t size;
-
-    /* Check to see if anyone is local on this machine.  If not, don't
-       bother doing anything else. */
-
-    procs = ompi_proc_all(&size);
-    if (NULL == procs || 0 == size) {
-        return OMPI_ERROR;
+    /* See if there are other procs in my job on this node.  If not,
+       then don't bother going any further. */
+    if (NULL == (my_proc = ompi_proc_local()) ||
+        NULL == (procs = ompi_proc_all(&size))) {
+        opal_output_verbose(10, mca_coll_base_output,
+                            "coll:sm:init_query: weirdness on procs; disqualifying myself");
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    if (!have_local_peers(procs, size)) {
-        return OMPI_ERROR;
+    if (size <= 1) {
+        opal_output_verbose(10, mca_coll_base_output,
+                            "coll:sm:init_query: comm size too small; disqualifying myself");
+        return OMPI_ERR_NOT_AVAILABLE;
+    }
+    for (i = 0; i < size; ++i) {
+        if (procs[i] != my_proc &&
+            procs[i]->proc_name.jobid == my_proc->proc_name.jobid &&
+            OPAL_PROC_ON_LOCAL_NODE(procs[i]->proc_flags)) {
+            break;
+        }
+    }
+    if (i >= size) {
+        opal_output_verbose(10, mca_coll_base_output,
+                            "coll:sm:init_query: no other local procs; disqualifying myself");
+        return OMPI_ERR_NOT_AVAILABLE;
     }
     free(procs);
-#endif
 
     /* Don't do much here because we don't really want to allocate any
        shared memory until this component is selected to be used. */
-
-    mca_coll_sm_component.sm_data_mpool_created = false;
-    mca_coll_sm_component.sm_component_setup = false;
-    opal_atomic_init(&mca_coll_sm_component.sm_component_setup_lock, 0);
-
-    /* Alles gut */
-
+    opal_output_verbose(10, mca_coll_base_output,
+                        "coll:sm:init_query: pick me! pick me!");
     return OMPI_SUCCESS;
 }
 
@@ -136,45 +172,27 @@ mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority)
 {
     mca_coll_sm_module_t *sm_module;
 
-    /* See if someone has previously lazily initialized and failed */
-
-    if (mca_coll_sm_component.sm_component_setup &&
-        !mca_coll_sm_component.sm_component_setup_success) {
-        return NULL;
-    }
-    
     /* If we're intercomm, or if there's only one process in the
        communicator, or if not all the processes in the communicator
        are not on this node, then we don't want to run */
-
     if (OMPI_COMM_IS_INTER(comm) || 1 == ompi_comm_size(comm) ||
         !have_local_peers(comm->c_local_group, ompi_comm_size(comm))) {
+        opal_output_verbose(10, mca_coll_base_output,
+                            "coll:sm:comm_query (%d/%s): intercomm, comm is too small, or not all peers local; disqualifying myself", comm->c_contextid, comm->c_name);
 	return NULL;
     }
-
-    /* If the number of processes in this communicator is larger than
-       (mca_coll_sm_component.sm_control_size / sizeof(uint32_t)),
-       then we can't handle it. */
-
-    if (((unsigned) ompi_comm_size(comm)) > 
-        mca_coll_sm_component.sm_control_size / sizeof(uint32_t)) {
-        return NULL;
-    }
-
-    /* Get our priority */
-
 
     /* Get the priority level attached to this module. If priority is less
      * than or equal to 0, then the module is unavailable. */
     *priority = mca_coll_sm_component.sm_priority;
-    if (0 >= mca_coll_sm_component.sm_priority) {
+    if (mca_coll_sm_component.sm_priority <= 0) {
+        opal_output_verbose(10, mca_coll_base_output,
+                            "coll:sm:comm_query (%d/%s): priority too low; disqualifying myself", comm->c_contextid, comm->c_name);
 	return NULL;
     }
 
-    
     /* All is good -- return a module */
     sm_module = OBJ_NEW(mca_coll_sm_module_t);
-
     sm_module->super.coll_module_enable = sm_module_enable;
     sm_module->super.ft_event        = mca_coll_sm_ft_event;
     sm_module->super.coll_allgather  = NULL;
@@ -194,6 +212,9 @@ mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority)
     sm_module->super.coll_scatter    = NULL;
     sm_module->super.coll_scatterv   = NULL;
 
+    opal_output_verbose(10, mca_coll_base_output,
+                        "coll:sm:comm_query (%d/%s): pick me! pick me!", 
+                        comm->c_contextid, comm->c_name);
     return &(sm_module->super);
 }
 
@@ -214,66 +235,27 @@ sm_module_enable(mca_coll_base_module_t *module,
     mca_coll_sm_component_t *c = &mca_coll_sm_component;
     opal_maffinity_base_segment_t *maffinity;
     int parent, min_child, max_child, num_children;
-    char *base = NULL;
+    unsigned char *base = NULL;
     const int num_barrier_buffers = 2;
 
     if (NULL == comm->c_coll.coll_reduce ||
         NULL == comm->c_coll.coll_reduce_module) {
-        return OMPI_ERROR;
-    }
-
-    /* Once-per-component setup.  This may happen at any time --
-       during MPI_INIT or later.  So we must protect this with locks
-       to ensure that only one thread in the process actually does
-       this setup. */
-
-    opal_atomic_lock(&mca_coll_sm_component.sm_component_setup_lock);
-    if (!mca_coll_sm_component.sm_component_setup) {
-        mca_coll_sm_component.sm_component_setup = true;
-
-        if (OMPI_SUCCESS != (ret = bootstrap_init())) {
-            mca_coll_sm_component.sm_component_setup_success = false;
-            opal_atomic_unlock(&mca_coll_sm_component.sm_component_setup_lock);
-            return ret;
-        }
-
-        /* Can we get an mpool allocation?  See if there was one created
-           already.  If not, try to make one. */
-        
-        mca_coll_sm_component.sm_data_mpool = 
-            mca_mpool_base_module_lookup(mca_coll_sm_component.sm_mpool_name);
-        if (NULL == mca_coll_sm_component.sm_data_mpool) {
-            mca_coll_sm_component.sm_data_mpool = 
-                mca_mpool_base_module_create(mca_coll_sm_component.sm_mpool_name,
-                                             NULL, NULL);
-            if (NULL == mca_coll_sm_component.sm_data_mpool) {
-                mca_coll_sm_bootstrap_finalize();
-                mca_coll_sm_component.sm_component_setup_success = false;
-                opal_atomic_unlock(&mca_coll_sm_component.sm_component_setup_lock);
-                return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-            }
-            mca_coll_sm_component.sm_data_mpool_created = true;
-        } else {
-            mca_coll_sm_component.sm_data_mpool_created = false;
-        }
-        mca_coll_sm_component.sm_component_setup_success = true;
-    }
-    opal_atomic_unlock(&mca_coll_sm_component.sm_component_setup_lock);
-
-    /* Double check to see if some interleaved lazy init failed before
-       we got in here */
-
-    if (!mca_coll_sm_component.sm_component_setup_success) {
+        opal_output_verbose(10, mca_coll_base_output,
+                            "coll:sm:enable (%d/%s): no underlying reduce; disqualifying myself",
+                            comm->c_contextid, comm->c_name);
         return OMPI_ERROR;
     }
 
     /* Get some space to setup memory affinity (just easier to try to
        alloc here to handle the error case) */
-
-    maffinity = (opal_maffinity_base_segment_t*)malloc(sizeof(opal_maffinity_base_segment_t) * 
-                                                       c->sm_comm_num_segments * 3);
+    maffinity = (opal_maffinity_base_segment_t*)
+        malloc(sizeof(opal_maffinity_base_segment_t) * 
+               c->sm_comm_num_segments * 3);
     if (NULL == maffinity) {
-        return OMPI_ERROR;
+        opal_output_verbose(10, mca_coll_base_output,
+                            "coll:sm:enable (%d/%s): malloc failed (1)", 
+                            comm->c_contextid, comm->c_name);
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     /* Allocate data to hang off the communicator.  The memory we
@@ -288,27 +270,28 @@ sm_module_enable(mca_coll_base_module_t *module,
           this nodes' children) for each instance of
           mca_coll_sm_tree_node_t
     */
-
-    sm_module->sm_data = data = (mca_coll_sm_comm_t*)
+    sm_module->sm_comm_data = data = (mca_coll_sm_comm_t*)
         malloc(sizeof(mca_coll_sm_comm_t) + 
                (c->sm_comm_num_segments * 
-                sizeof(mca_coll_base_mpool_index_t)) +
+                sizeof(mca_coll_sm_data_index_t)) +
                (size * 
                 (sizeof(mca_coll_sm_tree_node_t) +
                  (sizeof(mca_coll_sm_tree_node_t*) * c->sm_tree_degree))));
-
     if (NULL == data) {
         free(maffinity);
+        opal_output_verbose(10, mca_coll_base_output,
+                            "coll:sm:enable (%d/%s): malloc failed (2)", 
+                            comm->c_contextid, comm->c_name);
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
     }
-    data->mcb_data_mpool_malloc_addr = NULL;
+    data->mcb_operation_count = 0;
 
     /* Setup #2: set the array to point immediately beyond the
        mca_coll_base_comm_t */
-    data->mcb_mpool_index = (mca_coll_base_mpool_index_t*) (data + 1);
+    data->mcb_data_index = (mca_coll_sm_data_index_t*) (data + 1);
     /* Setup array of pointers for #3 */
     data->mcb_tree = (mca_coll_sm_tree_node_t*)
-        (data->mcb_mpool_index + c->sm_comm_num_segments);
+        (data->mcb_data_index + c->sm_comm_num_segments);
     /* Finally, setup the array of children pointers in the instances
        in #5 to point to their corresponding arrays in #6 */
     data->mcb_tree[0].mcstn_children = (mca_coll_sm_tree_node_t**)
@@ -357,28 +340,24 @@ sm_module_enable(mca_coll_base_module_t *module,
         }
     }
 
-    /* Bootstrap this communicator; find the shared memory in the main
-       mpool that has been allocated among my peers for this
-       communicator. */
-
+    /* Attach to this communicator's shmem data segment */
     if (OMPI_SUCCESS != (ret = bootstrap_comm(comm, sm_module))) {
         free(data);
         free(maffinity);
-        sm_module->sm_data = NULL;
+        sm_module->sm_comm_data = NULL;
         return ret;
     }
 
     /* Once the communicator is bootstrapped, setup the pointers into
-       the data mpool area.  First, setup the barrier buffers.  There
-       are 2 sets of barrier buffers (because there can never be more
-       than one outstanding barrier occuring at any timie).  Setup
-       pointers to my control buffers, my parents, and [the beginning
-       of] my children (note that the children are contiguous, so
-       having the first pointer and the num_children from the mcb_tree
-       data is sufficient). */
-
+       the per-communicator shmem data segment.  First, setup the
+       barrier buffers.  There are 2 sets of barrier buffers (because
+       there can never be more than one outstanding barrier occuring
+       at any timie).  Setup pointers to my control buffers, my
+       parents, and [the beginning of] my children (note that the
+       children are contiguous, so having the first pointer and the
+       num_children from the mcb_tree data is sufficient). */
     control_size = c->sm_control_size;
-    base = (char*) (data->mcb_mpool_base + data->mcb_mpool_offset);
+    base = data->mcb_mmap->data_addr;
     data->mcb_barrier_control_me = (uint32_t*)
         (base + (rank * control_size * num_barrier_buffers * 2));
     if (data->mcb_tree[rank].mcstn_parent) {
@@ -402,19 +381,18 @@ sm_module_enable(mca_coll_base_module_t *module,
     /* Next, setup the pointer to the in-use flags.  The number of
        segments will be an even multiple of the number of in-use
        flags. */
-
     base += (c->sm_control_size * size * num_barrier_buffers * 2);
     data->mcb_in_use_flags = (mca_coll_sm_in_use_flag_t*) base;
 
     /* All things being equal, if we're rank 0, then make the in-use
        flags be local (memory affinity).  Then zero them all out so
        that they're marked as unused. */
-    
     j = 0;
     if (0 == rank) {
         maffinity[j].mbs_start_addr = base;
         maffinity[j].mbs_len = c->sm_control_size * 
             c->sm_comm_num_in_use_flags;
+
         /* Set the op counts to 1 (actually any nonzero value will do)
            so that the first time children/leaf processes come
            through, they don't see a value of 0 and think that the
@@ -424,31 +402,26 @@ sm_module_enable(mca_coll_base_module_t *module,
             ((mca_coll_sm_in_use_flag_t *)base)[i].mcsiuf_operation_count = 1;
             ((mca_coll_sm_in_use_flag_t *)base)[i].mcsiuf_num_procs_using = 0;
         }
-        D(("rank 0 zeroed in-use flags (num %d, len %d): %p - %p\n",
-           c->sm_comm_num_in_use_flags,
-           maffinity[j].mbs_len,
-           base, base + maffinity[j].mbs_len));
         ++j;
     }
 
     /* Next, setup pointers to the control and data portions of the
        segments, as well as to the relevant in-use flags. */
-
     base += (c->sm_comm_num_in_use_flags * c->sm_control_size);
     control_size = size * c->sm_control_size;
     frag_size = size * c->sm_fragment_size;
     for (i = 0; i < c->sm_comm_num_segments; ++i) {
-        data->mcb_mpool_index[i].mcbmi_control = (uint32_t*)
+        data->mcb_data_index[i].mcbmi_control = (uint32_t*)
             (base + (i * (control_size + frag_size)));
-        data->mcb_mpool_index[i].mcbmi_data = 
-            (((char*) data->mcb_mpool_index[i].mcbmi_control) + 
+        data->mcb_data_index[i].mcbmi_data = 
+            (((char*) data->mcb_data_index[i].mcbmi_control) + 
              control_size);
 
         /* Memory affinity: control */
 
         maffinity[j].mbs_len = c->sm_control_size;
         maffinity[j].mbs_start_addr = (void *)
-            (data->mcb_mpool_index[i].mcbmi_control +
+            (data->mcb_data_index[i].mcbmi_control +
              (rank * c->sm_control_size));
         ++j;
 
@@ -456,23 +429,21 @@ sm_module_enable(mca_coll_base_module_t *module,
 
         maffinity[j].mbs_len = c->sm_fragment_size;
         maffinity[j].mbs_start_addr = 
-            data->mcb_mpool_index[i].mcbmi_data +
+            data->mcb_data_index[i].mcbmi_data +
             (rank * c->sm_control_size);
         ++j;
     }
 
     /* Setup memory affinity so that the pages that belong to this
        process are local to this process */
-
     opal_maffinity_base_set(maffinity, j);
     free(maffinity);
 
     /* Zero out the control structures that belong to this process */
-
     memset(data->mcb_barrier_control_me, 0, 
            num_barrier_buffers * 2 * c->sm_control_size);
     for (i = 0; i < c->sm_comm_num_segments; ++i) {
-        memset((void *) data->mcb_mpool_index[i].mcbmi_control, 0,
+        memset((void *) data->mcb_data_index[i].mcbmi_control, 0,
                c->sm_control_size);
     }
 
@@ -481,8 +452,30 @@ sm_module_enable(mca_coll_base_module_t *module,
     sm_module->previous_reduce_module = comm->c_coll.coll_reduce_module;
     OBJ_RETAIN(sm_module->previous_reduce_module);
 
+    /* Indicate that we have successfully attached and setup */
+    opal_atomic_add(&(data->mcb_mmap->map_seg->seg_inited), 1);
+
+    /* Wait for everyone in this communicator to attach and setup */
+    opal_output_verbose(10, mca_coll_base_output,
+                        "coll:sm:enable (%d/%s): waiting for peers to attach",
+                        comm->c_contextid, comm->c_name);
+    while (size != data->mcb_mmap->map_seg->seg_inited) {
+        SPIN;
+    }
+
+    /* Once we're all here, remove the mmap file; it's not needed anymore */
+    if (0 == rank) {
+        unlink(data->mcb_mmap->map_path);
+        opal_output_verbose(10, mca_coll_base_output,
+                            "coll:sm:enable (%d/%s): removed mmap file %s", 
+                            comm->c_contextid, comm->c_name, data->mcb_mmap->map_path);
+    }
+
     /* All done */
 
+    opal_output_verbose(10, mca_coll_base_output,
+                        "coll:sm:enable (%d/%s): success!", 
+                        comm->c_contextid, comm->c_name);
     return OMPI_SUCCESS;
 }
 
@@ -503,279 +496,97 @@ static bool have_local_peers(ompi_group_t *group, size_t size)
 }
 
 
-static int bootstrap_init(void)
-{
-    int i;
-    size_t size;
-    char *fullpath;
-    mca_common_sm_mmap_t *meta;
-    mca_coll_sm_bootstrap_header_extension_t *bshe;
-
-    /* Create/open the sm coll bootstrap mmap.  Make it have enough
-       space for the top-level control structure and
-       sm_bootstrap_num_segments per-communicator setup struct's
-       (i.e., enough for sm_bootstrap_num_segments communicators to
-       simultaneously set themselves up)  */
-
-    if (NULL == mca_coll_sm_component.sm_bootstrap_filename) {
-        return OMPI_ERROR;
-    }
-    orte_proc_info();
-    fullpath = opal_os_path( false, orte_process_info.job_session_dir,
-                             mca_coll_sm_component.sm_bootstrap_filename, NULL );
-    if (NULL == fullpath) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    size = 
-        sizeof(mca_coll_sm_bootstrap_header_extension_t) +
-        (mca_coll_sm_component.sm_bootstrap_num_segments *
-         sizeof(mca_coll_sm_bootstrap_comm_setup_t)) +
-        (sizeof(mca_coll_sm_bootstrap_comm_key_t) *
-         mca_coll_sm_component.sm_bootstrap_num_segments);
-
-    mca_coll_sm_component.sm_bootstrap_meta = meta =
-        mca_common_sm_mmap_init(size, fullpath,
-                                sizeof(mca_coll_sm_bootstrap_header_extension_t),
-                                8);
-    if (NULL == meta) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    free(fullpath);
-
-    /* set the pointer to the bootstrap control structure */
-    bshe = (mca_coll_sm_bootstrap_header_extension_t *) meta->map_seg;
-
-    /* Lock the bootstrap control structure.  If it's not already
-       initialized, then we're the first one in and we setup the data
-       structures */
-
-    opal_atomic_lock(&bshe->super.seg_lock);
-    opal_atomic_wmb();
-    if (!bshe->super.seg_inited) {
-        bshe->smbhe_segments = (mca_coll_sm_bootstrap_comm_setup_t *)
-            (((char *) bshe) + 
-             sizeof(mca_coll_sm_bootstrap_header_extension_t) +
-             (sizeof(uint32_t) * 
-              mca_coll_sm_component.sm_bootstrap_num_segments));
-        bshe->smbhe_keys = (mca_coll_sm_bootstrap_comm_key_t *)
-            (((char *) bshe) + sizeof(*bshe));
-        for (i = 0; i < mca_coll_sm_component.sm_bootstrap_num_segments; ++i) {
-            bshe->smbhe_keys[i].mcsbck_cid = INT_MAX;
-            memset(&bshe->smbhe_keys[i].mcsbck_rank0_name, 0,
-                   sizeof(orte_process_name_t));
-        }
-
-        bshe->super.seg_inited = true;
-    }
-    opal_atomic_unlock(&bshe->super.seg_lock);
-
-    /* All done */
-
-    bootstrap_inited = true;
-    return OMPI_SUCCESS;
-}
-
-
 static int bootstrap_comm(ompi_communicator_t *comm,
                           mca_coll_sm_module_t *module)
 {
-    int i, empty_index, err;
-    bool found;
+    int i;
+    char *shortpath, *fullpath;
     mca_coll_sm_component_t *c = &mca_coll_sm_component;
-    mca_coll_sm_bootstrap_header_extension_t *bshe;
-    mca_coll_sm_bootstrap_comm_setup_t *bscs;
-    mca_coll_sm_comm_t *data = module->sm_data;
+    mca_coll_sm_comm_t *data = module->sm_comm_data;
     int comm_size = ompi_comm_size(comm);
     int num_segments = c->sm_comm_num_segments;
     int num_in_use = c->sm_comm_num_in_use_flags;
     int frag_size = c->sm_fragment_size;
     int control_size = c->sm_control_size;
-    orte_process_name_t *rank0;
-    ompi_proc_t * proc;
+    orte_process_name_t *lowest_name = NULL;
+    size_t size;
+    ompi_proc_t *proc;
 
-    /* Is our CID in the CIDs array?  If not, loop until we can find
-       an open slot in the array to use in the bootstrap to setup our
-       communicator. */
-
-    bshe = (mca_coll_sm_bootstrap_header_extension_t *) 
-        c->sm_bootstrap_meta->map_seg;
-    bscs = bshe->smbhe_segments;
-    opal_atomic_lock(&bshe->super.seg_lock);
-    proc = ompi_group_peer_lookup(comm->c_local_group,0);
-    rank0 = &(proc->proc_name);
-
-    while (1) {
-        opal_atomic_wmb();
-        found = false;
-        empty_index = -1;
-        for (i = 0; i < mca_coll_sm_component.sm_bootstrap_num_segments; ++i) {
-            if (comm->c_contextid == bshe->smbhe_keys[i].mcsbck_cid &&
-                OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
-                                     rank0,
-                                     &bshe->smbhe_keys[i].mcsbck_rank0_name)) {
-                found = true;
-                break;
-            } else if (INT_MAX == bshe->smbhe_keys[i].mcsbck_cid &&
-                       -1 == empty_index) {
-                empty_index = i;
-            }
-        }
-
-        /* Did we find our CID? */
-
-        if (found) {
-            break;
-        }
-
-        /* Nope.  Did we find an empty slot?  If so, initialize that
-           slot and its corresponding segment for our CID.  Get an
-           mpool allocation big enough to handle all the shared memory
-           collective stuff. */
-
-        else if (-1 != empty_index) {
-            char *tmp;
-            size_t size;
-
-            i = empty_index;
-            bshe->smbhe_keys[i].mcsbck_cid = comm->c_contextid;
-            /* JMS better assignment? */
-            bshe->smbhe_keys[i].mcsbck_rank0_name = *rank0;
-
-            bscs[i].smbcs_count = comm_size;
-
-            /* Calculate how much space we need in the data mpool.
-               There are several values to add:
-
-               - size of the barrier data (2 of these):
-                   - fan-in data (num_procs * control_size)
-                   - fan-out data (num_procs * control_size)
-               - size of the "in use" buffers:
-                   - num_in_use_buffers * control_size
-               - size of the message fragment area (one for each segment):
-                   - control (num_procs * control_size)
-                   - fragment data (num_procs * (frag_size))
-
-               So it's:
-
-               barrier: 2 * control_size + 2 * control_size
-               in use:  num_in_use * control_size
-               control: num_segments * (num_procs * control_size * 2 +
-                                        num_procs * control_size)
-               message: num_segments * (num_procs * frag_size)
-            */
-
-            size = 4 * control_size +
-                (num_in_use * control_size) +
-                (num_segments * (comm_size * control_size * 2)) +
-                (num_segments * (comm_size * frag_size));
-
-            data->mcb_data_mpool_malloc_addr = tmp =
-                (char*)c->sm_data_mpool->mpool_alloc(c->sm_data_mpool, size, 
-                                                     c->sm_control_size, 0, NULL);
-            if (NULL == tmp) {
-                /* Cleanup before returning; allow other processes in
-                   this communicator to learn of the failure.  Note
-                   that by definition, bscs[i].smbcs_count won't be
-                   zero after the decrement (because there must be >=2
-                   processes in this communicator, or the self coll
-                   component would have been chosen), so we don't need
-                   to do that cleanup. */
-                bscs[i].smbcs_data_mpool_offset = 0;
-                bscs[i].smbcs_success = false;
-                --bscs[i].smbcs_count;
-                opal_atomic_unlock(&bshe->super.seg_lock);
-                return OMPI_ERR_OUT_OF_RESOURCE;
-            }
-            bscs[i].smbcs_success = true;
-
-            /* Calculate the offset and put it in the bootstrap
-               area */
-
-            bscs[i].smbcs_data_mpool_offset = (size_t) 
-                (tmp - 
-                 ((char *) c->sm_data_mpool->mpool_base(c->sm_data_mpool)));
-
-            break;
-        }
-
-        /* Bad luck all around -- we didn't find our CID in the array
-           and there were no empty slots.  So give up the lock and let
-           some other processes / threads in there to try to free up
-           some slots, and then try again once we have reacquired the
-           lock. */
-
-        else {
-            opal_atomic_unlock(&bshe->super.seg_lock);
-            SPIN;
-            opal_atomic_lock(&bshe->super.seg_lock);
+    /* Make the rendezvous filename for this communicators shmem data
+       segment.  The CID is not guaranteed to be unique among all
+       procs on this node, so also pair it with the PID of the proc
+       with the lowest ORTE name to form a unique filename. */
+    proc = ompi_group_peer_lookup(comm->c_local_group, 0);
+    lowest_name = &(proc->proc_name);
+    for (i = 1; i < comm_size; ++i) {
+        proc = ompi_group_peer_lookup(comm->c_local_group, i);
+        if (orte_util_compare_name_fields(ORTE_NS_CMP_ALL, 
+                                          &(proc->proc_name),
+                                          lowest_name) < 0) {
+            lowest_name = &(proc->proc_name);
         }
     }
-
-    /* Check to see if there was an error while allocating the shared
-       memory */
-    if (!bscs[i].smbcs_success) {
-        err = OMPI_ERR_OUT_OF_RESOURCE;
+    asprintf(&shortpath, "coll-sm-cid-%d-name-%s.mmap", comm->c_contextid,
+             ORTE_NAME_PRINT(lowest_name));
+    if (NULL == shortpath) {
+        opal_output_verbose(10, mca_coll_base_output,
+                            "coll:sm:enable:bootstrap comm (%d/%s): asprintf failed", 
+                            comm->c_contextid, comm->c_name);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    fullpath = opal_os_path(false, orte_process_info.job_session_dir,
+                            shortpath, NULL);
+    free(shortpath);
+    if (NULL == fullpath) {
+        opal_output_verbose(10, mca_coll_base_output,
+                            "coll:sm:enable:bootstrap comm (%d/%s): opal_os_path failed", 
+                            comm->c_contextid, comm->c_name);
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    /* Look at the comm_setup_t section (in the data segment of the
-       bootstrap) and fill in the values on our communicator */
+    /* Calculate how much space we need in the per-communicator shmem
+       data segment.  There are several values to add:
 
-    else {
-        err = OMPI_SUCCESS;
-        data->mcb_mpool_base = (unsigned char*)c->sm_data_mpool->mpool_base(c->sm_data_mpool);
-        data->mcb_mpool_offset = bscs[i].smbcs_data_mpool_offset;
-        data->mcb_mpool_area = data->mcb_mpool_base + data->mcb_mpool_offset;
-        data->mcb_operation_count = 0;
-    }
+       - size of the barrier data (2 of these):
+           - fan-in data (num_procs * control_size)
+           - fan-out data (num_procs * control_size)
+       - size of the "in use" buffers:
+           - num_in_use_buffers * control_size
+       - size of the message fragment area (one for each segment):
+           - control (num_procs * control_size)
+           - fragment data (num_procs * (frag_size))
 
-    /* If the count is now zero, then we're finished with this section
-       in the bootstrap segment, and we should release it for others
-       to use */
+       So it's:
 
-    --bscs[i].smbcs_count;
-    if (0 == bscs[i].smbcs_count) {
-        bscs[i].smbcs_data_mpool_offset = 0;
-        bshe->smbhe_keys[i].mcsbck_cid = INT_MAX;
-        memset(&bshe->smbhe_keys[i].mcsbck_rank0_name, 0,
-               sizeof(orte_process_name_t));
+           barrier: 2 * control_size + 2 * control_size
+           in use:  num_in_use * control_size
+           control: num_segments * (num_procs * control_size * 2 +
+                                    num_procs * control_size)
+           message: num_segments * (num_procs * frag_size)
+     */
+
+    size = 4 * control_size +
+        (num_in_use * control_size) +
+        (num_segments * (comm_size * control_size * 2)) +
+        (num_segments * (comm_size * frag_size));
+    opal_output_verbose(10, mca_coll_base_output,
+                        "coll:sm:enable:bootstrap comm (%d/%s): attaching to %" PRIsize_t " byte mmap: %s",
+                        comm->c_contextid, comm->c_name, size, fullpath);
+    data->mcb_mmap =
+        mca_common_sm_mmap_init_group(comm->c_local_group, size, fullpath,
+                                sizeof(mca_common_sm_file_header_t),
+                                sizeof(void*));
+    if (NULL == data->mcb_mmap) {
+        opal_output_verbose(10, mca_coll_base_output,
+                            "coll:sm:enable:bootstrap comm (%d/%s): common_sm_mmap_init_group failed", 
+                            comm->c_contextid, comm->c_name);
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     /* All done */
-    
-    opal_atomic_unlock(&bshe->super.seg_lock);
-    return err;
-}
-
-/*
- * This function is not static and has a prefix-rule-enabled name
- * because it gets called from the component (but may also be called
- * from above).  This is only called once -- no need for reference
- * counting or thread protection.
- */
-int mca_coll_sm_bootstrap_finalize(void)
-{
-    mca_common_sm_mmap_t *meta;
-
-    if (bootstrap_inited) {
-        meta = mca_coll_sm_component.sm_bootstrap_meta;
-
-        /* Free the area in the mpool that we were using */
-        if (mca_coll_sm_component.sm_data_mpool_created) {
-            mca_mpool_base_module_destroy(mca_coll_sm_component.sm_data_mpool);
-        }
-
-        /* Free the entire bootstrap area (no need to zero out
-           anything in here -- all data structures are referencing
-           within the bootstrap area, so the one top-level unmap does
-           it all) */
-        if (OMPI_SUCCESS == mca_common_sm_mmap_fini( meta )) {
-            unlink(meta->map_path);
-        }
-        OBJ_RELEASE(meta);
-    }
-
     return OMPI_SUCCESS;
 }
+
 
 int mca_coll_sm_ft_event(int state) {
     if(OPAL_CRS_CHECKPOINT == state) {

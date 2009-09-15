@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -25,43 +26,46 @@
 #include "opal/class/opal_list.h"
 #include "opal/sys/atomic.h"
 #include "ompi/mca/mpool/mpool.h" 
+#include "ompi/proc/proc.h"
+#include "ompi/group/group.h"
 
 BEGIN_C_DECLS
 
 struct mca_mpool_base_module_t;
 
-struct mca_common_sm_file_header_t {
-
+typedef struct mca_common_sm_file_header_t {
     /* lock to control atomic access */
     opal_atomic_lock_t seg_lock;
-    /* is the segment ready for use */
 
+    /* is the segment ready for use */
     volatile int32_t seg_inited;
+
     /* Offset to next available memory location available for allocation */
     size_t seg_offset;
 
     /* total size of the segment */
     size_t seg_size;
-};
-typedef struct mca_common_sm_file_header_t mca_common_sm_file_header_t;
+} mca_common_sm_file_header_t;
 
 
-struct mca_common_sm_mmap_t {
+typedef struct mca_common_sm_mmap_t {
     /* double link list element */
     opal_list_item_t map_item;
     /* pointer to header imbeded in the shared memory file */
-    mca_common_sm_file_header_t* map_seg;
+    mca_common_sm_file_header_t *map_seg;
     /* base address of the mmap'ed file */
-    unsigned char  *map_addr;
+    unsigned char *map_addr;
     /* base address of data segment */
-    unsigned char  *data_addr;
+    unsigned char *data_addr;
+    /* How big it is (in bytes) */
     size_t map_size;
+    /* Filename */
     char map_path[OPAL_PATH_MAX];
 #if defined(__WINDOWS__)
+    /* Handle to the object */
     HANDLE hMappedObject;
 #endif  /* defined(__WINDOWS__) */
-};
-typedef struct mca_common_sm_mmap_t mca_common_sm_mmap_t;
+} mca_common_sm_mmap_t;
 
 OBJ_CLASS_DECLARATION(mca_common_sm_mmap_t);
 
@@ -71,6 +75,14 @@ OBJ_CLASS_DECLARATION(mca_common_sm_mmap_t);
  *  by a specified file.  It is assumed that the file does not
  *  exist before any of the current set of processes try and open
  *  it.
+ *
+ *  @param procs - array of (ompi_proc_t*)'s to create this shared
+ *  memory segment for.  This array must be writable; it may be edited
+ *  (in undefined ways) if the array contains procs that are not on
+ *  this host.  It is assumed that the caller will simply free this
+ *  array upon return.  (INOUT)
+ *
+ *  @param num_procs - length of the procs array (IN)
  *
  *  @param size - size of the file, in bytes (IN)
  *
@@ -87,16 +99,40 @@ OBJ_CLASS_DECLARATION(mca_common_sm_mmap_t);
  *                             be no data segment following the control 
  *                             structure. (IN)
  *
- *  @returnvalue pointer to control structure at head of file.
+ *  @return value pointer to control structure at head of file.
  */
-
 OMPI_DECLSPEC extern
 mca_common_sm_mmap_t* mca_common_sm_mmap_init(
+    ompi_proc_t **procs,
+    size_t num_procs,
     size_t size, 
     char *file_name,
     size_t size_ctl_structure, 
     size_t data_seg_alignment);
 
+/**
+ *  This routine is used to set up a shared memory file, backed
+ *  by a specified file.  It is assumed that the file does not
+ *  exist before any of the current set of processes try and open
+ *  it.
+ *
+ * This routine is the same as mca_common_sm_mmap_init() except that
+ * it takes an (ompi_group_t*) parameter to specify the peers rather
+ * than an array of procs.  Unlike mca_common_sm_mmap_init(), the
+ * group must contain *only* local peers, or this function will return
+ * NULL and not create any shared memory segment.
+ */
+OMPI_DECLSPEC extern
+mca_common_sm_mmap_t* mca_common_sm_mmap_init_group(
+    ompi_group_t *group,
+    size_t size, 
+    char *file_name,
+    size_t size_ctl_structure, 
+    size_t data_seg_alignment);
+
+/*
+ * Callback from the sm mpool
+ */
 OMPI_DECLSPEC extern
 void* mca_common_sm_mmap_seg_alloc(
     struct mca_mpool_base_module_t* mpool, 
@@ -115,12 +151,6 @@ void* mca_common_sm_mmap_seg_alloc(
 
 OMPI_DECLSPEC extern
 int mca_common_sm_mmap_fini( mca_common_sm_mmap_t* sm_mmap );
-
-/*
- * Instance that is shared between components that use shared memory
- */
-
-OMPI_DECLSPEC extern mca_common_sm_mmap_t *mca_common_sm_mmap;
 
 END_C_DECLS
 

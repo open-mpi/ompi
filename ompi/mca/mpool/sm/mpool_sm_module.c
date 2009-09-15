@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -33,6 +34,8 @@
 #include "ompi/runtime/ompi_cr.h"
 #endif
 
+static void sm_module_finalize(mca_mpool_base_module_t* module);
+
 /* 
  *  Initializes the mpool module.
  */ 
@@ -47,10 +50,15 @@ void mca_mpool_sm_module_init(mca_mpool_sm_module_t* mpool)
     mpool->super.mpool_register = NULL; 
     mpool->super.mpool_deregister = NULL; 
     mpool->super.mpool_release_memory = NULL;
-    mpool->super.mpool_finalize = NULL; 
+    mpool->super.mpool_finalize = sm_module_finalize; 
     mpool->super.mpool_ft_event = mca_mpool_sm_ft_event;
     mpool->super.flags = 0;
-    mpool->mem_node    = -1;
+
+    mpool->sm_size = 0;
+    mpool->sm_allocator = NULL;
+    mpool->sm_mmap = NULL;
+    mpool->sm_common_mmap = NULL;
+    mpool->mem_node = -1;
 }
 
 /*
@@ -58,7 +66,9 @@ void mca_mpool_sm_module_init(mca_mpool_sm_module_t* mpool)
  */
 void* mca_mpool_sm_base(mca_mpool_base_module_t* mpool)
 {
-    return (mca_common_sm_mmap != NULL) ? mca_common_sm_mmap->map_addr : NULL;
+    mca_mpool_sm_module_t *sm_mpool = (mca_mpool_sm_module_t*) mpool;
+    return (NULL != sm_mpool->sm_common_mmap) ?
+        sm_mpool->sm_common_mmap->map_addr : NULL;
 }
 
 /**
@@ -116,6 +126,30 @@ void mca_mpool_sm_free(mca_mpool_base_module_t* mpool, void * addr,
 {
     mca_mpool_sm_module_t* mpool_sm = (mca_mpool_sm_module_t*)mpool;
     mpool_sm->sm_allocator->alc_free(mpool_sm->sm_allocator, addr);
+}
+
+static void sm_module_finalize(mca_mpool_base_module_t* module)
+{
+    mca_mpool_sm_module_t *sm_module = (mca_mpool_sm_module_t*) module;
+
+    if (NULL != sm_module->sm_common_mmap) {
+        if (OMPI_SUCCESS == 
+            mca_common_sm_mmap_fini(sm_module->sm_common_mmap)) {
+#if OPAL_ENABLE_FT == 1
+            /* Only unlink the file if we are *not* restarting.  If we
+               are restarting the file will be unlinked at a later
+               time. */
+            if (OPAL_CR_STATUS_RESTART_PRE  != opal_cr_checkpointing_state &&
+                OPAL_CR_STATUS_RESTART_POST != opal_cr_checkpointing_state ) {
+                unlink(sm_module->sm_common_mmap->map_path);
+            }
+#else
+            unlink(sm_module->sm_common_mmap->map_path);
+#endif
+        }
+        OBJ_RELEASE(sm_module->sm_common_mmap);
+        sm_module->sm_common_mmap = NULL;
+    }
 }
 
 #if OPAL_ENABLE_FT    == 0

@@ -111,30 +111,12 @@ static int mca_mpool_sm_open(void)
     } else {
             mca_mpool_sm_component.verbose = -1;
     }
-    mca_mpool_sm_component.sm_size = 0;
 
     return OMPI_SUCCESS;
 }
 
 static int mca_mpool_sm_close( void )
 {
-    if( NULL != mca_common_sm_mmap ) {
-        if( OMPI_SUCCESS == mca_common_sm_mmap_fini( mca_common_sm_mmap ) ) {
-#if OPAL_ENABLE_FT    == 1
-            /* Only unlink the file if we are *not* restarting
-             * If we are restarting the file will be unlinked at a later time.
-             */
-            if(OPAL_CR_STATUS_RESTART_PRE  != opal_cr_checkpointing_state &&
-               OPAL_CR_STATUS_RESTART_POST != opal_cr_checkpointing_state ) {
-                unlink( mca_common_sm_mmap->map_path );
-            }
-#else
-            unlink( mca_common_sm_mmap->map_path );
-#endif
-        }
-        OBJ_RELEASE( mca_common_sm_mmap );
-    }
-
     if (NULL != mca_mpool_sm_component.sm_allocator_name) {
         free(mca_mpool_sm_component.sm_allocator_name);
     }
@@ -163,7 +145,6 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
             num_local_procs++;
         }
     }
-    free(procs);
 
     /* parse the min size and validate it */
     /* if other parameters are added, absolutely necessary to reset errno each time */
@@ -177,15 +158,21 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
         min_size = default_min;
     }
 
+    /* Make a new mpool module */
+    mpool_module = 
+        (mca_mpool_sm_module_t*)malloc(sizeof(mca_mpool_sm_module_t));
+    mca_mpool_sm_module_init(mpool_module);
+
     /* set sm_size */
-    mca_mpool_sm_component.sm_size = resources->size;
+    mpool_module->sm_size = resources->size;
 
     /* clip at the min size */
-    if ( mca_mpool_sm_component.sm_size < min_size )
-         mca_mpool_sm_component.sm_size = min_size;
+    if (mpool_module->sm_size < min_size) {
+        mpool_module->sm_size = min_size;
+    }
 
     /* add something for the control structure */
-    mca_mpool_sm_component.sm_size += sizeof(mca_common_sm_mmap_t);
+    mpool_module->sm_size += sizeof(mca_common_sm_mmap_t);
 
     allocator_component = mca_allocator_component_lookup(
         mca_mpool_sm_component.sm_allocator_name);
@@ -201,12 +188,11 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
         } else {
             opal_output(0, "mca_mpool_sm_init: unable to locate allocator: %s\n",
                 mca_mpool_sm_component.sm_allocator_name);
+            free(procs);
             return NULL;
         }
     }
 
-    mpool_module = (mca_mpool_sm_module_t*)malloc(sizeof(mca_mpool_sm_module_t));
-    mca_mpool_sm_module_init(mpool_module);
     mpool_module->mem_node = resources->mem_node;
 
     /* create initial shared memory mapping */
@@ -215,31 +201,34 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
                     orte_process_info.nodename );
     if ( 0 > len ) {
         free(mpool_module);
+        free(procs);
         return NULL;
     }
     
     opal_output(mca_mpool_sm_component.verbose,
-        "mca_mpool_sm_init: shared memory size used: (%ld)",
-        mca_mpool_sm_component.sm_size);
+                "mca_mpool_sm_init: shared memory size used: (%ld)",
+                mpool_module->sm_size);
 
-    if(NULL == 
-            (mca_common_sm_mmap = 
-             mca_common_sm_mmap_init(mca_mpool_sm_component.sm_size,
-                 file_name,sizeof(mca_common_sm_mmap_t), 8 )
-             )) 
-    {
+    if (NULL == (mpool_module->sm_common_mmap = 
+                 mca_common_sm_mmap_init(procs, num_all_procs,
+                                         mpool_module->sm_size,
+                                         file_name,
+                                         sizeof(mca_common_sm_mmap_t), 8))) {
         opal_output(mca_mpool_sm_component.verbose, 
                     "mca_mpool_sm_init: unable to create shared memory mapping (%s)", file_name);
         free(file_name);
         free(mpool_module);
+        free(procs);
         return NULL;
     }
+    free(procs);
     free(file_name);
 
     /* setup allocator */
     mpool_module->sm_allocator = 
       allocator_component->allocator_init(true,
-                                          mca_common_sm_mmap_seg_alloc, NULL, NULL);
+                                          mca_common_sm_mmap_seg_alloc, 
+                                          NULL, &(mpool_module->super));
     if(NULL == mpool_module->sm_allocator) {
         opal_output(0, "mca_mpool_sm_init: unable to initialize allocator");
         free(mpool_module);

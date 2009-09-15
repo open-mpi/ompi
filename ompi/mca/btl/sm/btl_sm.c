@@ -125,13 +125,14 @@ static void init_maffinity(int *my_mem_node, int *max_mem_node)
     *my_mem_node = 0;
     *max_mem_node = 1;
 
-    if(opal_carto_base_get_host_graph(&topo, "Memory") != OMPI_SUCCESS)
+    if (OMPI_SUCCESS != opal_carto_base_get_host_graph(&topo, "Memory")) {
         return;
+    }
 
      OBJ_CONSTRUCT(&dists, opal_value_array_t);
      opal_value_array_init(&dists, sizeof(opal_carto_node_distance_t));
 
-    if(opal_paffinity_base_get_processor_info(&num_core) != OMPI_SUCCESS)  {
+    if (OMPI_SUCCESS != opal_paffinity_base_get_processor_info(&num_core))  {
         num_core = 100;  /* set something large */
     }
 
@@ -139,9 +140,11 @@ static void init_maffinity(int *my_mem_node, int *max_mem_node)
      opal_paffinity_base_get(&cpus);
 
      /* find core we are running on */
-     for(i = 0; i < num_core; i++)
-         if(OPAL_PAFFINITY_CPU_ISSET(i, cpus))
+     for (i = 0; i < num_core; i++) {
+         if (OPAL_PAFFINITY_CPU_ISSET(i, cpus)) {
              break;
+         }
+     }
 
     if (OMPI_SUCCESS != opal_paffinity_base_get_map_to_socket_core(i, &socket, &i)) {
         /* no topology info available */
@@ -152,17 +155,21 @@ static void init_maffinity(int *my_mem_node, int *max_mem_node)
 
      slot_node = opal_carto_base_find_node(topo, myslot);
 
-     if(NULL == slot_node)
+     if(NULL == slot_node) {
          goto out;
+     }
 
      opal_carto_base_get_nodes_distance(topo, slot_node, "Memory", &dists);
-     if((*max_mem_node = opal_value_array_get_size(&dists)) < 2)
+     if((*max_mem_node = opal_value_array_get_size(&dists)) < 2) {
          goto out;
+     }
 
      dist = (opal_carto_node_distance_t *) opal_value_array_get_item(&dists, 0);
      opal_maffinity_base_node_name_to_id(dist->node->node_name, my_mem_node);
 out:
-     if(myslot) free(myslot);
+     if (myslot) {
+         free(myslot);
+     }
      OBJ_DESTRUCT(&dists);
      opal_carto_base_free_graph(topo);
 }
@@ -173,6 +180,8 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     char *sm_ctl_file;
     sm_fifo_t *my_fifos;
     int my_mem_node=-1, num_mem_nodes=-1, i;
+    ompi_proc_t **procs;
+    size_t num_procs;
 
     init_maffinity(&my_mem_node, &num_mem_nodes);
     mca_btl_sm_component.mem_node = my_mem_node;
@@ -246,10 +255,11 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
        segment (only the shared control structure) */
     size = sizeof(mca_common_sm_file_header_t) +
         n * (sizeof(sm_fifo_t*) + sizeof(char *) + sizeof(uint16_t)) + CACHE_LINE_SIZE;
-    if(!(mca_btl_sm_component.mmap_file =
-         mca_common_sm_mmap_init(size, sm_ctl_file,
-                                 sizeof(mca_common_sm_file_header_t),
-                                 CACHE_LINE_SIZE))) {
+    procs = ompi_proc_world(&num_procs);
+    if (!(mca_btl_sm_component.mmap_file =
+          mca_common_sm_mmap_init(procs, num_procs, size, sm_ctl_file,
+                                  sizeof(mca_common_sm_file_header_t),
+                                  CACHE_LINE_SIZE))) {
         opal_output(0, "mca_btl_sm_add_procs: unable to create shared memory "
                     "BTL coordinating strucure :: size %lu \n",
                     (unsigned long)size);

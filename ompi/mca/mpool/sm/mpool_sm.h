@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,7 +24,10 @@
 #define MCA_MPOOL_SM_H
 
 #include "ompi_config.h"
+
 #include "opal/event/event.h"
+
+#include "ompi/mca/common/sm/common_sm_mmap.h"
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/allocator/allocator.h"
 
@@ -33,7 +37,6 @@ struct mca_mpool_sm_component_t {
   mca_mpool_base_component_t super;
   /*      mca_allocator_base_module_t* sm_allocator; */
   char*  sm_allocator_name;
-  long   sm_size;
   int    verbose;
   /*      struct mca_mpool_sm_mmap_t *sm_mmap; */
 };
@@ -48,8 +51,10 @@ OMPI_MODULE_DECLSPEC extern mca_mpool_sm_component_t mca_mpool_sm_component;
 
 typedef struct mca_mpool_sm_module_t {
     mca_mpool_base_module_t super;
+    long sm_size;
     mca_allocator_base_module_t * sm_allocator;
     struct mca_mpool_sm_mmap_t *sm_mmap;
+    mca_common_sm_mmap_t *sm_common_mmap;
     int32_t mem_node;
 } mca_mpool_sm_module_t;
 

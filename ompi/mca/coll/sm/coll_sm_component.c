@@ -41,9 +41,7 @@ const char *mca_coll_sm_component_version_string =
 /*
  * Local functions
  */
-
-static int sm_open(void);
-static int sm_close(void);
+static int sm_register(void);
 
 
 /*
@@ -68,9 +66,11 @@ mca_coll_sm_component_t mca_coll_sm_component = {
             OMPI_MINOR_VERSION,
             OMPI_RELEASE_VERSION,
 
-            /* Component open and close functions */
-            sm_open,
-            sm_close,
+            /* Component functions */
+            NULL, /* open */
+            NULL, /* close */
+            NULL, /* query */
+            sm_register
         },
         {
             /* The component is not checkpoint ready */
@@ -92,21 +92,12 @@ mca_coll_sm_component_t mca_coll_sm_component = {
     /* (default) control size (bytes) */
     4096,
 
-    /* (default) bootstrap filename */
-    "shared_mem_sm_bootstrap",
-
-    /* (default) number of segments in bootstrap file */
-    8,
-
-    /* (default) mpool name to use */
-    "sm",
-
     /* (default) number of "in use" flags for each communicator's area
-       in the mpool */
+       in the per-communicator shmem segment */
     2,
 
-    /* (default) number of segments for each communicator in the mpool
-       area */
+    /* (default) number of segments for each communicator in the
+       per-communicator shmem segment */
     8,
 
     /* (default) fragment size */
@@ -121,24 +112,16 @@ mca_coll_sm_component_t mca_coll_sm_component = {
     4,
 
     /* default values for non-MCA parameters */
-    0, /* bootstrap size -- filled in below */
-    0, /* mpool data size -- filled in below */
-    NULL, /* data mpool pointer */
-    false, /* whether this process created the data mpool */
-    NULL, /* pointer to meta data about bootstrap area */
-    false, /* whether the component sm has been [lazily] inited or not */
-    false /* whether lazy init was successful or not */
-    /* the lock for lazy initialization is not initialized here --
-       there is no static initializer for opal_atomic_lock_t */
+    /* Not specifying values here gives us all 0's */
 };
 
 
 /*
- * Open the component
+ * Register MCA params
  */
-static int sm_open(void)
+static int sm_register(void)
 {
-    size_t size1, size2;
+    size_t size;
     mca_base_component_t *c = &mca_coll_sm_component.super.collm_version;
     mca_coll_sm_component_t *cs = &mca_coll_sm_component;
 
@@ -157,18 +140,6 @@ static int sm_open(void)
                            cs->sm_control_size,
                            &cs->sm_control_size);
 
-    mca_base_param_reg_string(c, "bootstrap_filename", 
-                              "Filename (in the Open MPI session directory) of the coll sm component bootstrap rendezvous mmap file",
-                              false, false,
-                              cs->sm_bootstrap_filename,
-                              &cs->sm_bootstrap_filename);
-
-    mca_base_param_reg_int(c, "bootstrap_num_segments",
-                           "Number of segments in the bootstrap file",
-                           false, false,
-                           cs->sm_bootstrap_num_segments,
-                           &cs->sm_bootstrap_num_segments);
-
     mca_base_param_reg_int(c, "fragment_size",
                            "Fragment size (in bytes) used for passing data through shared memory (will be rounded up to the nearest control_size size)",
                            false, false,
@@ -179,12 +150,6 @@ static int sm_open(void)
             (cs->sm_fragment_size % cs->sm_control_size);
     }
 
-    mca_base_param_reg_string(c, "mpool", 
-                              "Name of the mpool component to use",
-                              false, false,
-                              cs->sm_mpool_name,
-                              &cs->sm_mpool_name);
-    
     mca_base_param_reg_int(c, "comm_in_use_flags",
                            "Number of \"in use\" flags, used to mark a message passing area segment as currently being used or not (must be >= 2 and <= comm_num_segments)",
                            false, false,
@@ -227,97 +192,23 @@ static int sm_open(void)
         cs->sm_tree_degree = 255;
     }
 
-    /* Size of the bootstrap shared memory area. */
-
-    size1 = 
-        sizeof(mca_coll_sm_bootstrap_header_extension_t) +
-        (mca_coll_sm_component.sm_bootstrap_num_segments *
-         sizeof(mca_coll_sm_bootstrap_comm_setup_t)) +
-        (sizeof(uint32_t) * mca_coll_sm_component.sm_bootstrap_num_segments);
-    mca_base_param_reg_int(c, "shared_mem_used_bootstrap",
-                           "Amount of shared memory used in the shared memory bootstrap area (in bytes)",
-                           false, true,
-                           (int)size1, NULL);
-
-    /* Calculate how much space we need in the data mpool.  This
-       formula taken directly from coll_sm_module.c. */
-
+    /* INFO: Calculate how much space we need in the per-communicator
+       shmem data segment.  This formula taken directly from
+       coll_sm_module.c. */
     mca_base_param_reg_int(c, "info_num_procs",
                            "Number of processes to use for the calculation of the shared_mem_size MCA information parameter (must be => 2)",
                            false, false,
                            cs->sm_info_comm_size,
                            &cs->sm_info_comm_size);
 
-    size2 = 4 * cs->sm_control_size +
-                (cs->sm_comm_num_in_use_flags * cs->sm_control_size) +
-                (cs->sm_comm_num_segments * (cs->sm_info_comm_size * cs->sm_control_size * 2)) +
-                (cs->sm_comm_num_segments * (cs->sm_info_comm_size * cs->sm_fragment_size));
+    size = 4 * cs->sm_control_size +
+        (cs->sm_comm_num_in_use_flags * cs->sm_control_size) +
+        (cs->sm_comm_num_segments * (cs->sm_info_comm_size * cs->sm_control_size * 2)) +
+        (cs->sm_comm_num_segments * (cs->sm_info_comm_size * cs->sm_fragment_size));
     mca_base_param_reg_int(c, "shared_mem_used_data",
-                           "Amount of shared memory used in the shared memory data area for info_num_procs processes (in bytes)",
+                           "Amount of shared memory used, per communicator, in the shared memory data area for info_num_procs processes (in bytes)",
                            false, true,
-                           (int)size2, NULL);
+                           (int)size, NULL);
 
     return OMPI_SUCCESS;
 }
-
-
-/*
- * Close the component
- */
-static int sm_close(void)
-{
-    if (NULL != mca_coll_sm_component.sm_mpool_name) {
-        free(mca_coll_sm_component.sm_mpool_name);
-        mca_coll_sm_component.sm_mpool_name = NULL;
-    }
-
-    mca_coll_sm_bootstrap_finalize();
-    if (NULL != mca_coll_sm_component.sm_bootstrap_filename) {
-        free(mca_coll_sm_component.sm_bootstrap_filename);
-        mca_coll_sm_component.sm_bootstrap_filename = NULL;
-    }
-
-    return OMPI_SUCCESS;
-}
-
-
-static void
-mca_coll_sm_module_construct(mca_coll_sm_module_t *module)
-{
-    module->sm_data = NULL;
-    module->previous_reduce_module = NULL;
-}
-
-static void
-mca_coll_sm_module_destruct(mca_coll_sm_module_t *module)
-{
-    mca_coll_sm_comm_t *data;
-
-    /* Free the space in the data mpool and the data hanging off the
-       communicator */
-
-    data = module->sm_data;
-    if (NULL != data) {
-        /* If this was the process that allocated the space in the
-           data mpool, then this is the process that frees it */
-
-        if (NULL != data->mcb_data_mpool_malloc_addr) {
-            mca_coll_sm_component.sm_data_mpool->mpool_free(mca_coll_sm_component.sm_data_mpool,
-                                                       data->mcb_data_mpool_malloc_addr, NULL);
-        }
-
-        /* Now free the data hanging off the communicator */
-
-        free(data);
-    }
-
-    if (NULL != module->previous_reduce_module) {
-        OBJ_RELEASE(module->previous_reduce_module);
-    }
-}
-
-
-OBJ_CLASS_INSTANCE(mca_coll_sm_module_t,
-                   mca_coll_base_module_t,
-                   mca_coll_sm_module_construct,
-                   mca_coll_sm_module_destruct);
