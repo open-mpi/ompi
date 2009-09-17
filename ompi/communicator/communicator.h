@@ -482,7 +482,14 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm,
                                 int high );
 
 
-OMPI_DECLSPEC int ompi_comm_activate ( ompi_communicator_t** newcomm, int do_coll_select );
+OMPI_DECLSPEC int ompi_comm_activate ( ompi_communicator_t** newcomm, 
+				       ompi_communicator_t* comm,
+				       ompi_communicator_t* bridgecomm,
+				       void* local_leader,
+				       void* remote_leader,
+				       int mode,
+				       int send_first );
+				       
 
 /**
  * a simple function to dump the structure

@@ -212,7 +212,13 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
     }
 
     /* activate comm and init coll-module */
-    rc = ompi_comm_activate ( &newcomp, 1 );
+    rc = ompi_comm_activate ( &newcomp, 
+                             local_comm,                  /* old comm */
+                             bridge_comm,                 /* bridge comm */
+                             &lleader,                    /* local leader */
+                             &rleader,                    /* remote_leader */
+                             OMPI_COMM_CID_INTRA_BRIDGE,  /* mode */
+                             -1 );                        /* send_first */
     if ( MPI_SUCCESS != rc ) {
         goto err_exit;
     }

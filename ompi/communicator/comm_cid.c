@@ -473,9 +473,55 @@ static uint32_t ompi_comm_lowest_cid (void)
  * comm.c is, that this file contains the allreduce implementations
  * which are required, and thus we avoid having duplicate code...
  */
-int ompi_comm_activate ( ompi_communicator_t** newcomm, int do_coll_select )
+int ompi_comm_activate ( ompi_communicator_t** newcomm, 
+                         ompi_communicator_t* comm,
+                         ompi_communicator_t* bridgecomm,
+                         void* local_leader,
+                         void* remote_leader,
+                         int mode,
+                         int send_first )
 {
     int ret = 0;
+
+    int ok=0, gok=0;
+    ompi_comm_cid_allredfct* allredfnct;
+
+    /* Step 1: the barrier, after which it is allowed to
+     * send messages over the new communicator
+     */
+    switch (mode)
+    {
+        case OMPI_COMM_CID_INTRA:
+            allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_intra;
+            break;
+        case OMPI_COMM_CID_INTER:
+            allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_inter;
+            break;
+        case OMPI_COMM_CID_INTRA_BRIDGE:
+            allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_intra_bridge;
+            break;
+        case OMPI_COMM_CID_INTRA_OOB:
+            allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_intra_oob;
+            break;
+        default:
+            return MPI_UNDEFINED;
+            break;
+    }
+
+    if (MPI_UNDEFINED != (*newcomm)->c_local_group->grp_my_rank) {
+
+	/* Initialize the PML stuff in the newcomm  */
+	if ( OMPI_SUCCESS != (ret = MCA_PML_CALL(add_comm(*newcomm))) ) {
+	    goto bail_on_error;
+	}
+	OMPI_COMM_SET_PML_ADDED(*newcomm);
+    }
+
+
+    (allredfnct)(&ok, &gok, 1, MPI_MIN, comm, bridgecomm,
+                 local_leader, remote_leader, send_first );
+
+
 
     /**
      * Check to see if this process is in the new communicator.
@@ -504,18 +550,11 @@ int ompi_comm_activate ( ompi_communicator_t** newcomm, int do_coll_select )
     if (MPI_UNDEFINED == (*newcomm)->c_local_group->grp_my_rank) {
         return OMPI_SUCCESS;
     }
-    /* Initialize the PML stuff in the newcomm  */
-    if ( OMPI_SUCCESS != (ret = MCA_PML_CALL(add_comm(*newcomm))) ) {
-        goto bail_on_error;
-    }
-    OMPI_COMM_SET_PML_ADDED(*newcomm);
 
     /* Let the collectives components fight over who will do
        collective on this new comm.  */
-    if ( do_coll_select ) {
-	if (OMPI_SUCCESS != (ret = mca_coll_base_comm_select(*newcomm))) {
-	    goto bail_on_error;
-	}
+    if (OMPI_SUCCESS != (ret = mca_coll_base_comm_select(*newcomm))) {
+	goto bail_on_error;
     }
     return OMPI_SUCCESS;
 

@@ -132,7 +132,13 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
     }
 
     /* activate communicator and init coll-module */
-    rc = ompi_comm_activate( &newcomp, 1 );           /* new comm */ 
+    rc = ompi_comm_activate( &newcomp,             /* new comm */ 
+                             intercomm,            /* old comm */
+                             NULL,                 /* bridge comm */
+                             NULL,                 /* local leader */
+                             NULL,                 /* remote_leader */
+                             OMPI_COMM_CID_INTER,  /* mode */
+                             -1 );                 /* send_first */
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
