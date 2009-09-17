@@ -169,6 +169,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
             /* assign proc to this node - do NOT allow claim_slot to remove
              * an oversubscribed node from the list!
              */
+            proc = NULL;
             if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node,
                                                                  jdata->map->cpus_per_rank, app->idx,
                                                                  node_list,
