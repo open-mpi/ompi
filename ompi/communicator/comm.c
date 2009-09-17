@@ -350,7 +350,13 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
              newcomp->c_contextid, comm->c_contextid );
 
     /* Activate the communicator and init coll-component */
-    rc = ompi_comm_activate( &newcomp, 1 );  /* new communicator */ 
+    rc = ompi_comm_activate( &newcomp, /* new communicator */ 
+	                     comm, 
+	                     NULL, 
+	                     NULL, 
+			     NULL,
+	                     mode, 
+	                     -1 );  
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -573,17 +579,13 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
              newcomp->c_contextid, comm->c_contextid );
 
     /* Activate the communicator and init coll-component */
-    if ( MPI_UNDEFINED != color ) {
-	rc = ompi_comm_activate( &newcomp, 1 );  /* new communicator */ 
-    }
-    else {
-	/* 
-        ** this should prevent creating the subcommunicators
-        ** of the hierarch module for the cases where we
-        ** know that they will be freed anyway (e.g. color = MPI_UNDEFINED
-	*/
-	rc = ompi_comm_activate( &newcomp, 0 );  /* new communicator */ 
-    }
+    rc = ompi_comm_activate( &newcomp, /* new communicator */ 
+			     comm, 
+			     NULL,
+			     NULL, 
+			     NULL, 
+			     mode, 
+			     -1 );  
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -674,7 +676,13 @@ int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm )
              newcomp->c_contextid, comm->c_contextid );
 
     /* activate communicator and init coll-module */
-    rc = ompi_comm_activate( &newcomp, 1 );  /* new communicator */ 
+    rc = ompi_comm_activate( &newcomp, /* new communicator */ 
+			     comp,
+	                     NULL, 
+	                     NULL, 
+	                     NULL, 
+	                     mode, 
+	                     -1 );  
     if ( OMPI_SUCCESS != rc ) {
         return rc;
     }
@@ -1511,12 +1519,15 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
         return ret;
     }
 
-    if ( MPI_UNDEFINED != new_rank ) {
-	ret = ompi_comm_activate( &new_comm, 1 );  /* new communicator */
-    }
-    else {
-	ret = ompi_comm_activate( &new_comm, 0 );  /* new communicator */
-    }
+    ret = ompi_comm_activate( &new_comm,  /* new communicator */
+                              old_comm,     /* old comm */
+                              NULL,     /* bridge comm */
+                              NULL,     /* local leader */
+                              NULL,     /* remote_leader */
+                              OMPI_COMM_CID_INTRA,   /* mode */
+                             -1 );     /* send first, doesn't matter */
+
+
     if (OMPI_SUCCESS != ret) {
 	/* something wrong happened during setting the communicator */
 	*comm_topo = new_comm;

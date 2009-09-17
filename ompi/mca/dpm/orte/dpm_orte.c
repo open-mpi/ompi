@@ -441,7 +441,13 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
     }
 
     /* activate comm and init coll-component */
-    rc = ompi_comm_activate ( &newcomp, 1 );             /* new communicator */
+    rc = ompi_comm_activate ( &newcomp,               /* new communicator */
+                             comm,                    /* old communicator */
+                             NULL,                    /* bridge comm */
+                             &root,                   /* local leader */
+                             &carport,                /* remote leader */
+                             OMPI_COMM_CID_INTRA_OOB, /* mode */
+                             send_first );            /* send or recv first */
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
