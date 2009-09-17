@@ -44,6 +44,7 @@
 
 #if OPAL_ENABLE_FT    == 1
 #include "opal/mca/crs/base/base.h"
+#include "opal/util/basename.h"
 #include "ompi/runtime/ompi_cr.h"
 #endif
 
@@ -855,6 +856,8 @@ int mca_btl_sm_ft_event(int state) {
 }
 #else
 int mca_btl_sm_ft_event(int state) {
+    char * tmp_dir = NULL;
+
     /* Notify mpool */
     if( NULL != mca_btl_sm_component.sm_mpool &&
         NULL != mca_btl_sm_component.sm_mpool->mpool_ft_event) {
@@ -892,6 +895,12 @@ int mca_btl_sm_ft_event(int state) {
         if( NULL != mca_btl_sm_component.mmap_file ) {
             /* Add session directory */
             opal_crs_base_cleanup_append(orte_process_info.job_session_dir, true);
+            tmp_dir = opal_dirname(orte_process_info.job_session_dir);
+            if( NULL != tmp_dir ) {
+                opal_crs_base_cleanup_append(tmp_dir, true);
+                free(tmp_dir);
+                tmp_dir = NULL;
+            }
             /* Add shared memory file */
             opal_crs_base_cleanup_append(mca_btl_sm_component.mmap_file->map_path, false);
         }
