@@ -159,6 +159,7 @@ int mca_mpool_sm_ft_event(int state) {
 #else
 int mca_mpool_sm_ft_event(int state) {
     mca_mpool_base_module_t *self_module = NULL;
+    mca_mpool_sm_module_t   *self_sm_module = NULL;
     char * file_name = NULL;
 
     if(OPAL_CRS_CHECKPOINT == state) {
@@ -172,34 +173,32 @@ int mca_mpool_sm_ft_event(int state) {
     }
     else if(OPAL_CRS_CONTINUE == state) {
         if(ompi_cr_continue_like_restart) {
-            /* Remove self from the list of all modules */
+            /* Find the sm module */
             self_module = mca_mpool_base_module_lookup("sm");
-            mca_mpool_base_module_destroy(self_module);
+            self_sm_module = (mca_mpool_sm_module_t*) self_module;
 
-            /* Release the old sm file, if it exists */
-            if( NULL != mca_common_sm_mmap ) {
-                if( OMPI_SUCCESS == mca_common_sm_mmap_fini( mca_common_sm_mmap ) ) {
-                    /* Add old shared memory file for eventual removal */
-                    opal_crs_base_cleanup_append(mca_common_sm_mmap->map_path, false);
-                }
-                OBJ_RELEASE( mca_common_sm_mmap );
+            /* Mark the old sm file for eventual removal via CRS */
+            if (NULL != self_sm_module->sm_common_mmap) {
+                opal_crs_base_cleanup_append(self_sm_module->sm_common_mmap->map_path, false);
             }
+
+            /* Remove self from the list of all modules */
+            mca_mpool_base_module_destroy(self_module);
         }
     }
     else if(OPAL_CRS_RESTART == state ||
             OPAL_CRS_RESTART_PRE == state) {
-        /* Remove self from the list of all modules */
+        /* Find the sm module */
         self_module = mca_mpool_base_module_lookup("sm");
-        mca_mpool_base_module_destroy(self_module);
+        self_sm_module = (mca_mpool_sm_module_t*) self_module;
 
-        /* Release the old sm file, if it exists */
-        if( NULL != mca_common_sm_mmap ) {
-            if( OMPI_SUCCESS == mca_common_sm_mmap_fini( mca_common_sm_mmap ) ) {
-                /* Add old shared memory file for eventual removal */
-                opal_crs_base_cleanup_append(mca_common_sm_mmap->map_path, false);
-            }
-            OBJ_RELEASE( mca_common_sm_mmap );
+        /* Mark the old sm file for eventual removal via CRS */
+        if (NULL != self_sm_module->sm_common_mmap) {
+            opal_crs_base_cleanup_append(self_sm_module->sm_common_mmap->map_path, false);
         }
+
+        /* Remove self from the list of all modules */
+        mca_mpool_base_module_destroy(self_module);
     }
     else if(OPAL_CRS_TERM == state ) {
         ;
