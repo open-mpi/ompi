@@ -45,6 +45,7 @@ struct orterun_globals_t {
     bool by_slot;
     bool by_board;
     bool by_socket;
+    bool bind_to_none;
     bool bind_to_core;
     bool bind_to_board;
     bool bind_to_socket;

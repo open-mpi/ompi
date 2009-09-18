@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -84,11 +85,25 @@ that should be reported to the OMPI developers.
 #
 [odls-default:invalid-phys-cpu]
 An invalid physical processor id was returned when attempting to
-set processor affinity. This is probably something that should be
-reported to the OMPI developers - your system may not support
-this functionality.
+set processor affinity - please check to ensure that your system
+supports such functionality. If so, then this is probably something
+that should be reported to the OMPI developers.
 #
 [odls-default:failed-set-paff]
 An attempt to set processor affinity has failed - please check to
 ensure that your system supports such functionality. If so, then
 this is probably something that should be reported to the OMPI developers.
+#
+[odls-default:topo-not-supported]
+An attempt was made to bind a process to a specific hardware topology
+mapping (e.g., binding to a socket) but the operating system does not
+support such topology-aware actions.  Talk to your local system
+administrator to find out if your system can support topology-aware
+functionality (e.g., Linux Kernels newer than v2.6.18).
+
+Systems that do not support processor topology-aware functionality cannot
+use "bind to socket" and other related functionality.
+
+  Local host:        %s
+  Action attempted:  %s %s
+  Application name:  %s
