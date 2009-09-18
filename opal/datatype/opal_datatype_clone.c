@@ -36,13 +36,12 @@ int32_t opal_datatype_clone( const opal_datatype_t * src_type, opal_datatype_t *
     dt_elem_desc_t* temp = dest_type->desc.desc;    /* temporary copy of the desc pointer */
 
     /* copy _excluding_ the super object, we want to keep the cls_destruct_array */
-    memcpy( dest_type+sizeof(opal_object_t),
-            src_type+sizeof(opal_object_t),
+    memcpy( (char*)dest_type + sizeof(opal_object_t),
+            (char*)src_type + sizeof(opal_object_t),
             sizeof(opal_datatype_t)-sizeof(opal_object_t) );
 
-    dest_type->super.obj_reference_count = 1;
-    dest_type->desc.desc = temp;
     dest_type->flags &= (~OPAL_DATATYPE_FLAG_PREDEFINED);
+    dest_type->desc.desc = temp;
 
     /**
      * Allow duplication of MPI_UB and MPI_LB.
@@ -65,6 +64,6 @@ int32_t opal_datatype_clone( const opal_datatype_t * src_type, opal_datatype_t *
         }
     }
     dest_type->id  = src_type->id;  /* preserve the default id. This allow us to
-                              * copy predefined types. */
+                                     * copy predefined types. */
     return OPAL_SUCCESS;
 }
