@@ -101,6 +101,14 @@ orte_odls_base_module_t orte_odls_default_module = {
     orte_odls_base_default_require_sync
 };
 
+/* convenience macro for erroring out */
+#define ORTE_ODLS_ERROR_OUT(errval)     \
+    do {                                \
+        rc = (errval);                  \
+        write(p[1], &rc, sizeof(int));  \
+        exit(1);                        \
+    } while(0);
+
 static bool odls_default_child_died(pid_t pid, unsigned int timeout, int *exit_status)
 {
     time_t end;
@@ -216,13 +224,13 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
     }
     
     /* A pipe is used to communicate between the parent and child to
-       indicate whether the exec ultimately succeeded or failed.  The
-       child sets the pipe to be close-on-exec; the child only ever
-       writes anything to the pipe if there is an error (e.g.,
-       executable not found, exec() fails, etc.).  The parent does a
-       blocking read on the pipe; if the pipe closed with no data,
-       then the exec() succeeded.  If the parent reads something from
-       the pipe, then the child was letting us know that it failed. */
+     indicate whether the exec ultimately succeeded or failed.  The
+     child sets the pipe to be close-on-exec; the child only ever
+     writes anything to the pipe if there is an error (e.g.,
+     executable not found, exec() fails, etc.).  The parent does a
+     blocking read on the pipe; if the pipe closed with no data,
+     then the exec() succeeded.  If the parent reads something from
+     the pipe, then the child was letting us know that it failed. */
     if (pipe(p) < 0) {
         ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_PIPES);
         if (NULL != child) {
@@ -231,7 +239,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
         }
         return ORTE_ERR_SYS_LIMITS_PIPES;
     }
-
+    
     /* Fork off the child */
     pid = fork();
     if (NULL != child) {
@@ -246,15 +254,15 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
         }
         return ORTE_ERR_SYS_LIMITS_CHILDREN;
     }
-
+    
     if (pid == 0) {
         long fd, fdmax = sysconf(_SC_OPEN_MAX);
-
+        
         /* Setup the pipe to be close-on-exec */
         close(p[0]);
         fcntl(p[1], F_SETFD, FD_CLOEXEC);
-
-       if (NULL != child) {
+        
+        if (NULL != child) {
             /*  setup stdout/stderr so that any error messages that we may
              print out will get displayed back at orterun.
              
@@ -266,322 +274,377 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
              for large jobs, so instead we set things up so that orterun
              always outputs a nice, single message indicating what happened
              */
-            if (ORTE_SUCCESS != (i = orte_iof_base_setup_child(&opts, 
-                                                               &environ_copy))) {
-                write(p[1], &i, sizeof(int));
-                exit(1);
+            if (ORTE_SUCCESS != (i = orte_iof_base_setup_child(&opts, &environ_copy))) {
+                ORTE_ODLS_ERROR_OUT(i);
             }
-
-           /* Setup process affinity.  First check to see if a slot list was
-            * specified.  If so, use it.  If no slot list was specified,
-            * that's not an error -- just fall through and try the next
-            * paffinity scheme.
-            */
-           if (NULL != child->slot_list) {
-               OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
-                                    "%s odls:default:fork got slot_list %s for child %s",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                    child->slot_list, ORTE_NAME_PRINT(child->name)));
-               if (opal_paffinity_alone) {
-                   /* It's an error if multiple paffinity schemes were specified */
-                   orte_show_help("help-odls-default.txt",
-                                  "odls-default:multiple-paffinity-schemes", true, child->slot_list);
-                   rc = ORTE_ERR_FATAL;
-                   write(p[1], &rc, sizeof(int));
-                   exit(1);
-               }
-               if (orte_odls_globals.report_bindings) {
-                   opal_output(0, "%s odls:default:fork binding child %s to slot_list %s",
-                               ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                               ORTE_NAME_PRINT(child->name), child->slot_list);
-               }
-               if (OPAL_SUCCESS != (rc = opal_paffinity_base_slot_list_set((long)child->name->vpid, child->slot_list))) {
-                   orte_show_help("help-odls-default.txt",
-                                  "odls-default:slot-list-failed", true, child->slot_list, ORTE_ERROR_NAME(rc));
-                   write(p[1], &rc, sizeof(int));
-                   exit(1);
-               }
-           } else if (ORTE_BIND_TO_CORE & jobdat->policy) {
-               /* we want to bind this proc to a specific core, or multiple cores
-                * if the cpus_per_rank is > 0
-                */
-               OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                    "%s odls:default:fork binding child %s to core(s) cpus/rank %d stride %d",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                    ORTE_NAME_PRINT(child->name),
-                                    (int)jobdat->cpus_per_rank, (int)jobdat->stride));
-               /* get the node rank */
-               if (ORTE_NODE_RANK_INVALID == (nrank = orte_ess.get_node_rank(child->name))) {
-                   orte_show_help("help-odls-default.txt",
-                                  "odls-default:invalid-node-rank", true);
-                   rc = ORTE_ERR_FATAL;
-                   write(p[1], &rc, sizeof(int));
-                   exit(1);
-               }
-               OPAL_PAFFINITY_CPU_ZERO(mask);
-               if (ORTE_MAPPING_NPERXXX & jobdat->policy) {
-                   /* if npersocket was set, then we divide the number of cores
-                    * per socket by the #localprocs/#sockets to determine how many cores
-                    * each rank gets
-                    */
-                   npersocket = jobdat->num_local_procs / orte_odls_globals.num_sockets;
-                   /* compute the #cores/process */
-                   jobdat->cpus_per_rank = orte_default_num_cores_per_socket / npersocket;
-                   /* figure out which logical cpu this node rank should start on as we
-                    * must ensure it starts on the right socket
-                    */
-                   logical_cpu = (nrank / npersocket) * orte_default_num_cores_per_socket;
-                   /* now add an offset within the socket */
-                   logical_cpu += (nrank % npersocket) * jobdat->cpus_per_rank;
-               } else {
-                   /* my starting core has to be offset by cpus_per_rank */
-                   logical_cpu = nrank * jobdat->cpus_per_rank;
-               }
-               for (n=0; n < jobdat->cpus_per_rank; n++) {
-                   /* are we bound? */
-                   if (orte_odls_globals.bound) {
-                       /* if we are bound, then use the logical_cpu as an index
-                        * against our available cores
-                        */
-                       ncpu = 0;
-                       for (i=0; i < orte_odls_globals.num_processors && ncpu <= logical_cpu; i++) {
-                           if (OPAL_PAFFINITY_CPU_ISSET(i, orte_odls_globals.my_cores)) {
-                               ncpu++;
-                               phys_cpu = i;
-                           }
-                       }
-                       /* if we don't have enough processors, that is an error */
-                       if (ncpu < logical_cpu) {
-                           orte_show_help("help-odls-default.txt",
-                                          "odls-default:not-enough-processors", true);
-                           rc = ORTE_ERR_FATAL;
-                           write(p[1], &rc, sizeof(int));
-                           exit(1);
-                       }
-                   } else {
-                       /* if we are not bound, then all processors are available
-                        * to us, so index into the node's array to get the
-                        * physical cpu
-                        */
-                       phys_cpu = opal_paffinity_base_get_physical_processor_id(logical_cpu);
-                       if (0 > phys_cpu) {
-                           orte_show_help("help-odls-default.txt",
-                                          "odls-default:invalid-phys-cpu", true);
-                           rc = ORTE_ERR_FATAL;
-                           write(p[1], &rc, sizeof(int));
-                           exit(1);
-                       }
-                   }
-                   OPAL_PAFFINITY_CPU_SET(phys_cpu, mask);
-                   logical_cpu += jobdat->stride;
-               }
-               if (orte_odls_globals.report_bindings) {
-                   opal_output(0, "%s odls:default:fork binding child %s to cpus %04lx",
-                               ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                               ORTE_NAME_PRINT(child->name), mask.bitmask[0]);
-               }
-               if (OPAL_SUCCESS != (rc = opal_paffinity_base_set(mask))) {
-                   orte_show_help("help-odls-default.txt",
-                                  "odls-default:failed-set-paff", true);
-                   write(p[1], &rc, sizeof(int));
-                   exit(1);
-               }
-               paffinity_enabled = true;
-           } else if (ORTE_BIND_TO_SOCKET & jobdat->policy) {
-               /* bind this proc to a socket */
-               OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                    "%s odls:default:fork binding child %s to socket",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                    ORTE_NAME_PRINT(child->name)));
-               /* layout this process across the sockets based on
-                * the provided mapping policy
-                */
-               if (ORTE_LOCAL_RANK_INVALID == (lrank = orte_ess.get_local_rank(child->name))) {
-                   orte_show_help("help-odls-default.txt",
-                                  "odls-default:invalid-local-rank", true);
-                   rc = ORTE_ERR_FATAL;
-                   write(p[1], &rc, sizeof(int));
-                   exit(1);
-               }
-               if (ORTE_MAPPING_NPERXXX & jobdat->policy) {
-                   /* we need to balance the children from this job across the available sockets */
-                   npersocket = jobdat->num_local_procs / orte_odls_globals.num_sockets;
-                   /* determine the socket to use based on those available */
-                   if (npersocket < 2) {
-                       /* if we only have 1/sock, or we have less procs than sockets,
-                        * then just put it on the lrank socket
-                        */
-                       logical_skt = lrank;
-                   } else if (ORTE_MAPPING_BYSOCKET & jobdat->policy) {
-                       logical_skt = lrank % npersocket;
-                   } else {
-                       logical_skt = lrank / npersocket;
-                   }
-                   if (orte_odls_globals.bound) {
-                       /* if we are bound, use this as an index into our available sockets */
-                       for (target_socket=0; target_socket < opal_bitmap_size(&orte_odls_globals.sockets) && n < logical_skt; target_socket++) {
-                           if (opal_bitmap_is_set_bit(&orte_odls_globals.sockets, target_socket)) {
-                               n++;
-                           }
-                       }
-                       /* if we don't have enough sockets, that is an error */
-                       if (n < logical_skt) {
-                           orte_show_help("help-odls-default.txt",
-                                          "odls-default:not-enough-sockets", true);
-                           rc = ORTE_ERR_FATAL;
-                           write(p[1], &rc, sizeof(int));
-                           exit(1);
-                       }
-                   } else {
-                       target_socket = opal_paffinity_base_get_physical_socket_id(logical_skt);
-                   }
-                   OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
-                                        "%s odls:default:fork child %s local rank %d npersocket %d logical socket %d target socket %d",
-                                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(child->name), lrank,
-                                        npersocket, logical_skt, target_socket));
-               } else if (ORTE_MAPPING_BYSOCKET & jobdat->policy) {
-                   /* this corresponds to a mapping policy where
-                    * local rank 0 goes on socket 0, and local
-                    * rank 1 goes on socket 1, etc. - round robin
-                    * until all ranks are mapped
-                    *
-                    * NOTE: we already know our number of sockets
-                    * from when we initialized
-                    */
-                   target_socket = opal_paffinity_base_get_physical_socket_id(lrank % orte_odls_globals.num_sockets);
-                   OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
-                                        "bysocket lrank %d numsocks %d logical socket %d target socket %d", (int)lrank,
-                                        (int)orte_odls_globals.num_sockets,
-                                        (int)(lrank % orte_odls_globals.num_sockets),
-                                        target_socket));
-               } else {
-                   /* use a byslot-like policy where local rank 0 goes on
-                    * socket 0, and local rank 1 goes on socket 0, etc.
-                    * following round-robin until all ranks mapped
-                    */
-                   if (orte_odls_globals.bound) {
-                       /* if we are bound, then we compute the logical socket id
-                        * based on the number of available cores in each socket so
-                        * that each rank gets its own core, adjusting for the cpus_per_task
-                        */
-                       /* Find the lrank available core, accounting for cpus_per_task */
-                       logical_cpu = lrank * jobdat->cpus_per_rank;
-                       /* use the logical_cpu as an index against our available cores */
-                       ncpu = 0;
-                       for (i=0; i < orte_odls_globals.num_processors && ncpu <= logical_cpu; i++) {
-                           if (OPAL_PAFFINITY_CPU_ISSET(i, orte_odls_globals.my_cores)) {
-                               ncpu++;
-                               phys_cpu = i;
-                           }
-                       }
-                       /* if we don't have enough processors, that is an error */
-                       if (ncpu < logical_cpu) {
-                           orte_show_help("help-odls-default.txt",
-                                          "odls-default:not-enough-processors", true);
-                           rc = ORTE_ERR_FATAL;
-                           write(p[1], &rc, sizeof(int));
-                           exit(1);
-                       }
-                       /* get the physical socket of that cpu */
-                       if (OPAL_SUCCESS != opal_paffinity_base_get_map_to_socket_core(phys_cpu, &target_socket, &phys_core)) {
-                           orte_show_help("help-odls-default.txt",
-                                          "odls-default:not-enough-sockets", true);
-                           rc = ORTE_ERR_FATAL;
-                           write(p[1], &rc, sizeof(int));
-                           exit(1);
-                       }
-                   } else {
-                       /* if we are not bound, then just use all sockets */
-                       if (1 == orte_odls_globals.num_sockets) {
-                           /* if we only have one socket, then just put it there */
-                           target_socket = opal_paffinity_base_get_physical_socket_id(0);
-                       } else {
-                           /* compute the logical socket, compensating for the number of cpus_per_rank */
-                           logical_skt = lrank / (orte_default_num_cores_per_socket / jobdat->cpus_per_rank);
-                           /* wrap that around the number of sockets so we round-robin */
-                           logical_skt = logical_skt % orte_odls_globals.num_sockets;
-                           /* now get the target physical socket */
-                           target_socket = opal_paffinity_base_get_physical_socket_id(logical_skt);
-                       }
-                   }
-                   OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
-                                        "byslot lrank %d socket %d", (int)lrank, target_socket));
-               }
-               OPAL_PAFFINITY_CPU_ZERO(mask);
-               for (n=0; n < orte_default_num_cores_per_socket; n++) {
-                   /* get the physical core within this target socket */
-                   phys_core = opal_paffinity_base_get_physical_core_id(target_socket, n);
-                   if (0 > phys_core) {
-                       orte_show_help("help-odls-default.txt",
-                                      "odls-default:invalid-phys-cpu", true);
-                       rc = ORTE_ERR_FATAL;
-                       write(p[1], &rc, sizeof(int));
-                       exit(1);
-                   }
-                   /* map this to a physical cpu on this node */
-                   if (ORTE_SUCCESS != opal_paffinity_base_get_map_to_processor_id(target_socket, phys_core, &phys_cpu)) {
-                       orte_show_help("help-odls-default.txt",
-                                      "odls-default:invalid-phys-cpu", true);
-                       rc = ORTE_ERR_FATAL;
-                       write(p[1], &rc, sizeof(int));
-                       exit(1);
-                   }
-                   /* are we bound? */
-                   if (orte_odls_globals.bound) {
-                       /* see if this physical cpu is available to us */
-                       if (!OPAL_PAFFINITY_CPU_ISSET(phys_cpu, orte_odls_globals.my_cores)) {
-                           /* no it isn't - skip it */
-                           continue;
-                       }
-                   }
-                   OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
-                                        "%s odls:default:fork mapping phys socket %d core %d to phys_cpu %d",
-                                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                        target_socket, phys_core, phys_cpu));
-                   OPAL_PAFFINITY_CPU_SET(phys_cpu, mask);
-               }
-               /* if we did not bind it anywhere, then that is an error */
-               OPAL_PAFFINITY_PROCESS_IS_BOUND(mask, &bound);
-               if (!bound) {
-                   orte_show_help("help-odls-default.txt",
-                                  "odls-default:could-not-bind-to-socket", true);
-                   rc = ORTE_ERR_FATAL;
-                   write(p[1], &rc, sizeof(int));
-                   exit(1);
-               }
-               if (orte_odls_globals.report_bindings) {
-                   opal_output(0, "%s odls:default:fork binding child %s to socket %d cpus %04lx",
-                               ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                               ORTE_NAME_PRINT(child->name), target_socket, mask.bitmask[0]);
-               }
-               if (OPAL_SUCCESS != (rc = opal_paffinity_base_set(mask))) {
-                   orte_show_help("help-odls-default.txt",
-                                  "odls-default:failed-set-paff", true);
-                   write(p[1], &rc, sizeof(int));
-                   exit(1);
-               }
-               paffinity_enabled = true;
-           }
-           
-           /* If we were able to set processor affinity, try setting up
-            * memory affinity
-            */
-           if (paffinity_enabled) {
-               if (OPAL_SUCCESS == opal_maffinity_base_open() &&
-                   OPAL_SUCCESS == opal_maffinity_base_select()) {
-                   opal_maffinity_setup = true;
-               }
-           }
-           
-       } else if (!(ORTE_JOB_CONTROL_FORWARD_OUTPUT & jobdat->controls)) {
-           /* tie stdin/out/err/internal to /dev/null */
-           int fdnull;
-           for (i=0; i < 3; i++) {
-               fdnull = open("/dev/null", O_RDONLY, 0);
-               if(fdnull > i) {
-                   dup2(fdnull, i);
-               }
-               close(fdnull);
+            
+            /* Setup process affinity.  First check to see if a slot list was
+             * specified.  If so, use it.  If no slot list was specified,
+             * that's not an error -- just fall through and try the next
+             * paffinity scheme.
+             */
+            if (NULL != child->slot_list) {
+                OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+                                     "%s odls:default:fork got slot_list %s for child %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     child->slot_list, ORTE_NAME_PRINT(child->name)));
+                if (opal_paffinity_alone) {
+                    /* It's an error if multiple paffinity schemes were specified */
+                    orte_show_help("help-odls-default.txt",
+                                   "odls-default:multiple-paffinity-schemes", true, child->slot_list);
+                    ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                }
+                if (orte_odls_globals.report_bindings) {
+                    opal_output(0, "%s odls:default:fork binding child %s to slot_list %s",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                ORTE_NAME_PRINT(child->name), child->slot_list);
+                }
+                if (ORTE_SUCCESS != (rc = opal_paffinity_base_slot_list_set((long)child->name->vpid, child->slot_list))) {
+                    if (ORTE_ERR_NOT_SUPPORTED == rc) {
+                        /* OS doesn't support providing topology information */
+                        orte_show_help("help-odls-default.txt",
+                                       "odls-default:topo-not-supported", 
+                                       true, orte_process_info.nodename,  "rankfile containing a slot_list of ", 
+                                       child->slot_list, context->app);
+                        ORTE_ODLS_ERROR_OUT(rc);
+                    }
+                    
+                    orte_show_help("help-odls-default.txt",
+                                   "odls-default:slot-list-failed", true, child->slot_list, ORTE_ERROR_NAME(rc));
+                    ORTE_ODLS_ERROR_OUT(rc);
+                }
+            } else if (ORTE_BIND_TO_CORE & jobdat->policy) {
+                /* we want to bind this proc to a specific core, or multiple cores
+                 * if the cpus_per_rank is > 0
+                 */
+                OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                     "%s odls:default:fork binding child %s to core(s) cpus/rank %d stride %d",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(child->name),
+                                     (int)jobdat->cpus_per_rank, (int)jobdat->stride));
+                /* get the node rank */
+                if (ORTE_NODE_RANK_INVALID == (nrank = orte_ess.get_node_rank(child->name))) {
+                    orte_show_help("help-odls-default.txt",
+                                   "odls-default:invalid-node-rank", true);
+                    ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                }
+                OPAL_PAFFINITY_CPU_ZERO(mask);
+                if (ORTE_MAPPING_NPERXXX & jobdat->policy) {
+                    /* if npersocket was set, then we divide the number of cores
+                     * per socket by the #localprocs/#sockets to determine how many cores
+                     * each rank gets
+                     */
+                    npersocket = jobdat->num_local_procs / orte_odls_globals.num_sockets;
+                    /* compute the #cores/process */
+                    jobdat->cpus_per_rank = orte_default_num_cores_per_socket / npersocket;
+                    /* figure out which logical cpu this node rank should start on as we
+                     * must ensure it starts on the right socket
+                     */
+                    logical_cpu = (nrank / npersocket) * orte_default_num_cores_per_socket;
+                    /* now add an offset within the socket */
+                    logical_cpu += (nrank % npersocket) * jobdat->cpus_per_rank;
+                } else {
+                    /* my starting core has to be offset by cpus_per_rank */
+                    logical_cpu = nrank * jobdat->cpus_per_rank;
+                }
+                for (n=0; n < jobdat->cpus_per_rank; n++) {
+                    /* are we bound? */
+                    if (orte_odls_globals.bound) {
+                        /* if we are bound, then use the logical_cpu as an index
+                         * against our available cores
+                         */
+                        ncpu = 0;
+                        for (i=0; i < orte_odls_globals.num_processors && ncpu <= logical_cpu; i++) {
+                            if (OPAL_PAFFINITY_CPU_ISSET(i, orte_odls_globals.my_cores)) {
+                                ncpu++;
+                                phys_cpu = i;
+                            }
+                        }
+                        /* if we don't have enough processors, that is an error */
+                        if (ncpu < logical_cpu) {
+                            if (ORTE_BINDING_NOT_REQUIRED(jobdat->policy)) {
+                                goto LAUNCH_PROCS;
+                            }
+                            orte_show_help("help-odls-default.txt",
+                                           "odls-default:not-enough-processors", true);
+                            ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);                            
+                        }
+                    } else {
+                        /* if we are not bound, then all processors are available
+                         * to us, so index into the node's array to get the
+                         * physical cpu
+                         */
+                        phys_cpu = opal_paffinity_base_get_physical_processor_id(logical_cpu);
+                        if (0 > phys_cpu) {
+                            if (ORTE_BINDING_NOT_REQUIRED(jobdat->policy)) {
+                                goto LAUNCH_PROCS;
+                            }
+                            orte_show_help("help-odls-default.txt",
+                                           "odls-default:invalid-phys-cpu", true);
+                            ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                        }
+                    }
+                    OPAL_PAFFINITY_CPU_SET(phys_cpu, mask);
+                    logical_cpu += jobdat->stride;
+                }
+                if (orte_odls_globals.report_bindings) {
+                    opal_output(0, "%s odls:default:fork binding child %s to cpus %04lx",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                ORTE_NAME_PRINT(child->name), mask.bitmask[0]);
+                }
+                if (ORTE_SUCCESS != (rc = opal_paffinity_base_set(mask))) {
+                    if (ORTE_BINDING_NOT_REQUIRED(jobdat->policy)) {
+                        goto LAUNCH_PROCS;
+                    }
+                    orte_show_help("help-odls-default.txt",
+                                   "odls-default:failed-set-paff", true);
+                    ORTE_ODLS_ERROR_OUT(rc);                            
+                }
+                paffinity_enabled = true;
+            } else if (ORTE_BIND_TO_SOCKET & jobdat->policy) {
+                /* bind this proc to a socket */
+                OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                     "%s odls:default:fork binding child %s to socket",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(child->name)));
+                /* layout this process across the sockets based on
+                 * the provided mapping policy
+                 */
+                if (ORTE_LOCAL_RANK_INVALID == (lrank = orte_ess.get_local_rank(child->name))) {
+                    orte_show_help("help-odls-default.txt",
+                                   "odls-default:invalid-local-rank", true);
+                    ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                }
+                if (ORTE_MAPPING_NPERXXX & jobdat->policy) {
+                    /* we need to balance the children from this job across the available sockets */
+                    npersocket = jobdat->num_local_procs / orte_odls_globals.num_sockets;
+                    /* determine the socket to use based on those available */
+                    if (npersocket < 2) {
+                        /* if we only have 1/sock, or we have less procs than sockets,
+                         * then just put it on the lrank socket
+                         */
+                        logical_skt = lrank;
+                    } else if (ORTE_MAPPING_BYSOCKET & jobdat->policy) {
+                        logical_skt = lrank % npersocket;
+                    } else {
+                        logical_skt = lrank / npersocket;
+                    }
+                    if (orte_odls_globals.bound) {
+                        /* if we are bound, use this as an index into our available sockets */
+                        for (target_socket=0; target_socket < opal_bitmap_size(&orte_odls_globals.sockets) && n < logical_skt; target_socket++) {
+                            if (opal_bitmap_is_set_bit(&orte_odls_globals.sockets, target_socket)) {
+                                n++;
+                            }
+                        }
+                        /* if we don't have enough sockets, that is an error */
+                        if (n < logical_skt) {
+                            if (ORTE_BINDING_NOT_REQUIRED(jobdat->policy)) {
+                                goto LAUNCH_PROCS;
+                            }
+                            orte_show_help("help-odls-default.txt",
+                                           "odls-default:not-enough-sockets", true);
+                            ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                        }
+                    } else {
+                        target_socket = opal_paffinity_base_get_physical_socket_id(logical_skt);
+                        if (ORTE_ERR_NOT_SUPPORTED == target_socket) {
+                            /* OS doesn't support providing topology information */
+                            if (ORTE_BINDING_NOT_REQUIRED(jobdat->policy)) {
+                                goto LAUNCH_PROCS;
+                            }
+                            orte_show_help("help-odls-default.txt",
+                                           "odls-default:topo-not-supported", 
+                                           true, orte_process_info.nodename,  "bind-to-socket", "",
+                                           context->app);
+                            ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                        }
+                    }
+                    OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+                                         "%s odls:default:fork child %s local rank %d npersocket %d logical socket %d target socket %d",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(child->name), lrank,
+                                         npersocket, logical_skt, target_socket));
+                } else if (ORTE_MAPPING_BYSOCKET & jobdat->policy) {
+                    /* this corresponds to a mapping policy where
+                     * local rank 0 goes on socket 0, and local
+                     * rank 1 goes on socket 1, etc. - round robin
+                     * until all ranks are mapped
+                     *
+                     * NOTE: we already know our number of sockets
+                     * from when we initialized
+                     */
+                    target_socket = opal_paffinity_base_get_physical_socket_id(lrank % orte_odls_globals.num_sockets);
+                    if (ORTE_ERR_NOT_SUPPORTED == target_socket) {
+                        /* OS does not support providing topology information */
+                        if (ORTE_BINDING_NOT_REQUIRED(jobdat->policy)) {
+                            goto LAUNCH_PROCS;
+                        }
+                        orte_show_help("help-odls-default.txt",
+                                       "odls-default:topo-not-supported", 
+                                       true, orte_process_info.nodename,  "bind-to-socket", "",
+                                       context->app);
+                        ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                    }                    
+                    OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+                                         "bysocket lrank %d numsocks %d logical socket %d target socket %d", (int)lrank,
+                                         (int)orte_odls_globals.num_sockets,
+                                         (int)(lrank % orte_odls_globals.num_sockets),
+                                         target_socket));
+                } else {
+                    /* use a byslot-like policy where local rank 0 goes on
+                     * socket 0, and local rank 1 goes on socket 0, etc.
+                     * following round-robin until all ranks mapped
+                     */
+                    if (orte_odls_globals.bound) {
+                        /* if we are bound, then we compute the logical socket id
+                         * based on the number of available cores in each socket so
+                         * that each rank gets its own core, adjusting for the cpus_per_task
+                         */
+                        /* Find the lrank available core, accounting for cpus_per_task */
+                        logical_cpu = lrank * jobdat->cpus_per_rank;
+                        /* use the logical_cpu as an index against our available cores */
+                        ncpu = 0;
+                        for (i=0; i < orte_odls_globals.num_processors && ncpu <= logical_cpu; i++) {
+                            if (OPAL_PAFFINITY_CPU_ISSET(i, orte_odls_globals.my_cores)) {
+                                ncpu++;
+                                phys_cpu = i;
+                            }
+                        }
+                        /* if we don't have enough processors, that is an error */
+                        if (ncpu < logical_cpu) {
+                            if (ORTE_BINDING_NOT_REQUIRED(jobdat->policy)) {
+                                goto LAUNCH_PROCS;
+                            }
+                            orte_show_help("help-odls-default.txt",
+                                           "odls-default:not-enough-processors", true);
+                            ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                        }
+                        /* get the physical socket of that cpu */
+                        if (ORTE_SUCCESS != opal_paffinity_base_get_map_to_socket_core(phys_cpu, &target_socket, &phys_core)) {
+                            if (ORTE_BINDING_NOT_REQUIRED(jobdat->policy)) {
+                                goto LAUNCH_PROCS;
+                            }
+                            orte_show_help("help-odls-default.txt",
+                                           "odls-default:not-enough-sockets", true);
+                            ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                        }
+                    } else {
+                        /* if we are not bound, then just use all sockets */
+                        if (1 == orte_odls_globals.num_sockets) {
+                            /* if we only have one socket, then just put it there */
+                            target_socket = opal_paffinity_base_get_physical_socket_id(0);
+                            if (ORTE_ERR_NOT_SUPPORTED == target_socket) {
+                                /* OS doesn't support providing topology information */
+                                if (ORTE_BINDING_NOT_REQUIRED(jobdat->policy)) {
+                                    goto LAUNCH_PROCS;
+                                }
+                                orte_show_help("help-odls-default.txt",
+                                               "odls-default:topo-not-supported", 
+                                               true, orte_process_info.nodename,  "bind-to-socket", "",
+                                               context->app);
+                                ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                            }
+                        } else {
+                            /* compute the logical socket, compensating for the number of cpus_per_rank */
+                            logical_skt = lrank / (orte_default_num_cores_per_socket / jobdat->cpus_per_rank);
+                            /* wrap that around the number of sockets so we round-robin */
+                            logical_skt = logical_skt % orte_odls_globals.num_sockets;
+                            /* now get the target physical socket */
+                            target_socket = opal_paffinity_base_get_physical_socket_id(logical_skt);
+                            if (ORTE_ERR_NOT_SUPPORTED == target_socket) {
+                                /* OS doesn't support providing topology information */
+                                if (ORTE_BINDING_NOT_REQUIRED(jobdat->policy)) {
+                                    goto LAUNCH_PROCS;
+                                }
+                                orte_show_help("help-odls-default.txt",
+                                               "odls-default:topo-not-supported", 
+                                               true, orte_process_info.nodename,  "bind-to-socket", "",
+                                               context->app);
+                                ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                            }
+                        }
+                        OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+                                             "byslot lrank %d socket %d", (int)lrank, target_socket));
+                    }
+                }
+                
+                OPAL_PAFFINITY_CPU_ZERO(mask);
+                
+                for (n=0; n < orte_default_num_cores_per_socket; n++) {
+                    /* get the physical core within this target socket */
+                    phys_core = opal_paffinity_base_get_physical_core_id(target_socket, n);
+                    if (0 > phys_core) {
+                        if (ORTE_BINDING_NOT_REQUIRED(jobdat->policy)) {
+                            goto LAUNCH_PROCS;
+                        }
+                        orte_show_help("help-odls-default.txt",
+                                       "odls-default:invalid-phys-cpu", true);
+                        ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                    }
+                    /* map this to a physical cpu on this node */
+                    if (ORTE_SUCCESS != opal_paffinity_base_get_map_to_processor_id(target_socket, phys_core, &phys_cpu)) {
+                        if (ORTE_BINDING_NOT_REQUIRED(jobdat->policy)) {
+                            goto LAUNCH_PROCS;
+                        }
+                        orte_show_help("help-odls-default.txt",
+                                       "odls-default:invalid-phys-cpu", true);
+                        ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                    }
+                    /* are we bound? */
+                    if (orte_odls_globals.bound) {
+                        /* see if this physical cpu is available to us */
+                        if (!OPAL_PAFFINITY_CPU_ISSET(phys_cpu, orte_odls_globals.my_cores)) {
+                            /* no it isn't - skip it */
+                            continue;
+                        }
+                    }
+                    OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+                                         "%s odls:default:fork mapping phys socket %d core %d to phys_cpu %d",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         target_socket, phys_core, phys_cpu));
+                    OPAL_PAFFINITY_CPU_SET(phys_cpu, mask);
+                }
+                /* if we did not bind it anywhere, then that is an error */
+                OPAL_PAFFINITY_PROCESS_IS_BOUND(mask, &bound);
+                if (!bound) {
+                    orte_show_help("help-odls-default.txt",
+                                   "odls-default:could-not-bind-to-socket", true);
+                    ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                }
+                if (orte_odls_globals.report_bindings) {
+                    opal_output(0, "%s odls:default:fork binding child %s to socket %d cpus %04lx",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                ORTE_NAME_PRINT(child->name), target_socket, mask.bitmask[0]);
+                }
+                if (ORTE_SUCCESS != (rc = opal_paffinity_base_set(mask))) {
+                    if (ORTE_BINDING_NOT_REQUIRED(jobdat->policy)) {
+                        goto LAUNCH_PROCS;
+                    }
+                    orte_show_help("help-odls-default.txt",
+                                   "odls-default:failed-set-paff", true);
+                    ORTE_ODLS_ERROR_OUT(rc);
+                }
+                paffinity_enabled = true;
+            }
+            
+            /* If we were able to set processor affinity, try setting up
+             * memory affinity
+             */
+            if (paffinity_enabled) {
+                if (OPAL_SUCCESS == opal_maffinity_base_open() &&
+                    OPAL_SUCCESS == opal_maffinity_base_select()) {
+                    opal_maffinity_setup = true;
+                }
+            }
+            
+        } else if (!(ORTE_JOB_CONTROL_FORWARD_OUTPUT & jobdat->controls)) {
+            /* tie stdin/out/err/internal to /dev/null */
+            int fdnull;
+            for (i=0; i < 3; i++) {
+                fdnull = open("/dev/null", O_RDONLY, 0);
+                if(fdnull > i) {
+                    dup2(fdnull, i);
+                }
+                close(fdnull);
             }
             fdnull = open("/dev/null", O_RDONLY, 0);
             if(fdnull > opts.p_internal[1]) {
@@ -589,7 +652,8 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
             }
             close(fdnull);
         }
-
+        
+LAUNCH_PROCS:
         /* close all file descriptors w/ exception of
          * stdin/stdout/stderr and the pipe used for the IOF INTERNAL
          * messages
@@ -599,35 +663,35 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                 close(fd);
             }
         }
- 
+        
         if (context->argv == NULL) {
             context->argv = malloc(sizeof(char*)*2);
             context->argv[0] = strdup(context->app);
             context->argv[1] = NULL;
         }
-
+        
         /* Set signal handlers back to the default.  Do this close to
-           the exev() because the event library may (and likely will)
-           reset them.  If we don't do this, the event library may
-           have left some set that, at least on some OS's, don't get
-           reset via fork() or exec().  Hence, the launched process
-           could be unkillable (for example). */
-
+         the exev() because the event library may (and likely will)
+         reset them.  If we don't do this, the event library may
+         have left some set that, at least on some OS's, don't get
+         reset via fork() or exec().  Hence, the launched process
+         could be unkillable (for example). */
+        
         set_handler_default(SIGTERM);
         set_handler_default(SIGINT);
         set_handler_default(SIGHUP);
         set_handler_default(SIGPIPE);
         set_handler_default(SIGCHLD);
-
+        
         /* Unblock all signals, for many of the same reasons that we
-           set the default handlers, above.  This is noticable on
-           Linux where the event library blocks SIGTERM, but we don't
-           want that blocked by the launched process. */
+         set the default handlers, above.  This is noticable on
+         Linux where the event library blocks SIGTERM, but we don't
+         want that blocked by the launched process. */
         sigprocmask(0, 0, &sigs);
         sigprocmask(SIG_UNBLOCK, &sigs, 0);
-
+        
         /* Exec the new executable */
-
+        
         execve(context->app, context->argv, environ_copy);
         orte_show_help("help-odls-default.txt", "orte-odls-default:execv-error",
                        true, context->app, strerror(errno));

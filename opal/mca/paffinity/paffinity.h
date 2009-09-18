@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -113,10 +114,11 @@
 #define OPAL_PROC_ON_LOCAL_CLUSTER(n)   ((n) & OPAL_PROC_ON_CLUSTER)
 
 /* Process binding modes */
-#define OPAL_PAFFINITY_DO_NOT_BIND      0x01
-#define OPAL_PAFFINITY_BIND_TO_CORE     0x02
-#define OPAL_PAFFINITY_BIND_TO_SOCKET   0x04
-#define OPAL_PAFFINITY_BIND_TO_BOARD    0x08
+#define OPAL_PAFFINITY_DO_NOT_BIND          0x01
+#define OPAL_PAFFINITY_BIND_TO_CORE         0x02
+#define OPAL_PAFFINITY_BIND_TO_SOCKET       0x04
+#define OPAL_PAFFINITY_BIND_TO_BOARD        0x08
+#define OPAL_PAFFINITY_BIND_IF_SUPPORTED    0x80
 /* ******************************************************************** */
 
 
