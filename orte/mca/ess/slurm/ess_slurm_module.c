@@ -380,7 +380,7 @@ get_slurm_nodename(int *nodeid)
     char *slurm_nodelist;
     char *ret = NULL;
     int i;
-    size_t len, nmlen;
+    char *tmp, *ptr;
 
     slurm_nodelist = getenv("OMPI_MCA_orte_slurm_nodelist");
     
@@ -394,15 +394,16 @@ get_slurm_nodename(int *nodeid)
         return NULL;
     }
 
+    /* copy the nodename for processing */
+    tmp = strdup(orte_process_info.nodename);
+    /* truncate it */
+    if (NULL != (ptr = strchr(tmp, '.'))) {
+        *ptr = '\0';
+    }
+
     /* search list for our node */
-    nmlen = strlen(orte_process_info.nodename);
-    for (i=0; i < opal_argv_count(names); i++) {
-        if (strlen(names[i]) < nmlen) {
-            len = strlen(names[i]);
-        } else {
-            len = nmlen;
-        }
-        if (0 == strncmp(orte_process_info.nodename, names[i], len)) {
+    for (i=0; NULL !=  names[i]; i++) {
+        if (0 == strcmp(tmp, names[i])) {
             *nodeid = i;
             ret = strdup(names[i]);
             goto complete;
@@ -415,5 +416,6 @@ get_slurm_nodename(int *nodeid)
 
 complete:
     opal_argv_free(names);
+    free(tmp);
     return ret;
 }
