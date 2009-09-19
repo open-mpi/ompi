@@ -366,7 +366,7 @@ int orte_register_params(void)
         } else {
             binding = 0;
             params = opal_argv_split(strval, ':');
-            if (2 == opal_argv_count(params)) {
+            if (1 < opal_argv_count(params)) {
                 if (0 != strcasecmp(params[1], "if-avail")) {
                     /* unknown option */
                     opal_output(0, "Unknown qualifier to orte_process_binding: %s", strval);
@@ -374,11 +374,11 @@ int orte_register_params(void)
                 }
                 binding = ORTE_BIND_IF_SUPPORTED;
             }
-            if (0 == strcasecmp(strval, "socket")) {
+            if (0 == strcasecmp(params[0], "socket")) {
                 ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_SOCKET | binding);
-            } else if (0 == strcasecmp(strval, "board")) {
+            } else if (0 == strcasecmp(params[0], "board")) {
                 ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_BOARD | binding);
-            } else if (0 == strcasecmp(strval, "core")) {
+            } else if (0 == strcasecmp(params[0], "core")) {
                 ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_CORE | binding);
             }
         }
