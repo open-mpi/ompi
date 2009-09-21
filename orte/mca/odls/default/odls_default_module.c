@@ -116,7 +116,8 @@ orte_odls_base_module_t orte_odls_default_module = {
             if (orte_odls_globals.report_bindings) {                \
                 orte_show_help("help-odls-default.txt",             \
                                "odls-default:binding-not-avail",    \
-                               true, (n));                          \
+                               true, orte_process_info.nodename,    \
+                               (n), context->app);		    \
             }                                                       \
             goto LAUNCH_PROCS;                                      \
         }                                                           \
