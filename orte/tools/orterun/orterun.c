@@ -310,7 +310,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       "Launch n processes per socket on all allocated nodes" },
 
     /* binding options */
-    { NULL, NULL, NULL, '\0', "do-not-bind", "do-not-bind", 0,
+    { NULL, NULL, NULL, '\0', "bind-to-none", "bind-to-none", 0,
       &orterun_globals.bind_to_none, OPAL_CMD_LINE_TYPE_BOOL,
       "Do not bind processes to cores or sockets" },
     { NULL, NULL, NULL, '\0', "bind-to-core", "bind-to-core", 0,

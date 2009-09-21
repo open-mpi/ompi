@@ -112,7 +112,9 @@ use "bind to socket" and other related functionality.
 A request to bind the processes if the operating system supports
 such an operation was made, but the OS does not support this operation:
 
-  Action requested: %s
+  Local host:        %s
+  Action requested:  %s
+  Application name:  %s
 
 Because the request was made on an "if-available" basis, the job was
 launched without taking the requested action. If this is not the desired
