@@ -32,14 +32,19 @@
 
 BEGIN_C_DECLS
 
-#ifdef HAVE_SCHED_YIELD
-#  include <sched.h>
-#  define SPIN sched_yield()
-#elif defined(__WINDOWS__)
-#  define SPIN SwitchToThread()
-#else  /* no switch available */
-#  define SPIN
-#endif
+/* Attempt to give some sort of progress / fairness if we're blocked
+   in an sm collective for a long time: call opal_progress once in a
+   great while.  Use a "goto" label for expdiency to exit loops. */
+#define SPIN_CONDITION_MAX 100000
+#define SPIN_CONDITION(cond, exit_label) \
+  do { int i; \
+       if (cond) goto exit_label; \
+       for (i = 0; i < SPIN_CONDITION_MAX; ++i) { \
+           if (cond) { goto exit_label; } \
+       } \
+       opal_progress(); \
+  } while (1); \
+  exit_label: 
 
     /** 
      * Structure to hold the sm coll component.  First it holds the
@@ -322,16 +327,16 @@ extern uint32_t mca_coll_sm_one;
 /**
  * Macro to wait for the in-use flag to become idle (used by the root)
  */
-#define FLAG_WAIT_FOR_IDLE(flag) \
-    while (0 != (flag)->mcsiuf_num_procs_using) SPIN
+#define FLAG_WAIT_FOR_IDLE(flag, label) \
+    SPIN_CONDITION(0 == (flag)->mcsiuf_num_procs_using, label)
 
 /**
  * Macro to wait for a flag to indicate that it's ready for this
  * operation (used by non-root processes to know when FLAG_SET() has
  * been called)
  */
-#define FLAG_WAIT_FOR_OP(flag, op) \
-    while ((op) != flag->mcsiuf_operation_count) SPIN
+#define FLAG_WAIT_FOR_OP(flag, op, label) \
+    SPIN_CONDITION((op) == flag->mcsiuf_operation_count, label)
 
 /**
  * Macro to set an in-use flag with relevant data to claim it
@@ -402,12 +407,12 @@ extern uint32_t mca_coll_sm_one;
  * Save the value passed and then reset it when done.  Used in fan out
  * operations.
  */
-#define CHILD_WAIT_FOR_NOTIFY(rank, index, value) \
+#define CHILD_WAIT_FOR_NOTIFY(rank, index, value, label) \
     do { \
         uint32_t volatile *ptr = ((uint32_t*) \
                                   (((char*) index->mcbmi_control) + \
                                    ((rank) * mca_coll_sm_component.sm_control_size))); \
-        while (0 == *ptr) SPIN; \
+        SPIN_CONDITION(0 != *ptr, label); \
         (value) = *ptr; \
         *ptr = 0; \
     } while (0)
@@ -427,13 +432,13 @@ extern uint32_t mca_coll_sm_one;
  * data is in the child's segment.  Save the value when done.  Used
  * for fan in operations.
  */
-#define PARENT_WAIT_FOR_NOTIFY_SPECIFIC(child_rank, parent_rank, index, value) \
+#define PARENT_WAIT_FOR_NOTIFY_SPECIFIC(child_rank, parent_rank, index, value, label) \
     do { \
         size_t volatile *ptr = ((size_t volatile *) \
                                 (((char*) index->mcbmi_control) + \
                                  (mca_coll_sm_component.sm_control_size * \
                                   (parent_rank)))) + child_rank; \
-        while (0 == *ptr) SPIN; \
+        SPIN_CONDITION(0 != *ptr, label); \
         (value) = *ptr; \
         *ptr = 0; \
     } while (0)

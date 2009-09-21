@@ -119,7 +119,7 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
                         mca_coll_sm_component.sm_comm_num_in_use_flags);
 
             FLAG_SETUP(flag_num, flag, data);
-            FLAG_WAIT_FOR_IDLE(flag);
+            FLAG_WAIT_FOR_IDLE(flag, bcast_root_label);
             FLAG_RETAIN(flag, size - 1, data->mcb_operation_count - 1);
 
             /* Loop over all the segments in this set */
@@ -180,7 +180,7 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
             /* Wait for the root to mark this set of segments as
                ours */
             FLAG_SETUP(flag_num, flag, data);
-            FLAG_WAIT_FOR_OP(flag, data->mcb_operation_count);
+            FLAG_WAIT_FOR_OP(flag, data->mcb_operation_count, bcast_nonroot_label1);
             ++data->mcb_operation_count;
 
             /* Loop over all the segments in this set */
@@ -196,7 +196,7 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
                 index = &(data->mcb_data_index[segment_num]);
 
                 /* Wait for my parent to tell me that the segment is ready */
-                CHILD_WAIT_FOR_NOTIFY(rank, index, max_data);
+                CHILD_WAIT_FOR_NOTIFY(rank, index, max_data, bcast_nonroot_label2);
                 
                 /* If I have children, send the data to them */
                 if (num_children > 0) {

@@ -76,9 +76,7 @@ int mca_coll_sm_barrier_intra(struct ompi_communicator_t *comm,
         /* Get children *out* buffer */
         children = data->mcb_barrier_control_children + buffer_set + 
             uint_control_size;
-        while (*me_in != num_children) {
-            continue;
-        }
+        SPIN_CONDITION(*me_in == num_children, exit_label1);
         *me_in = 0;
     }
 
@@ -96,9 +94,7 @@ int mca_coll_sm_barrier_intra(struct ompi_communicator_t *comm,
         parent = &data->mcb_barrier_control_parent[buffer_set];
         opal_atomic_add(parent, 1);
 
-        while (0 == *me_out) {
-            continue;
-        }
+        SPIN_CONDITION(0 != *me_out, exit_label2);
         *me_out = 0;
     }
 
