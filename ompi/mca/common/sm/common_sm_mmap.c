@@ -202,12 +202,14 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(ompi_proc_t **procs,
         if (OPAL_PROC_ON_LOCAL_NODE(procs[p]->proc_flags)) {
             if (NULL == lowest_name) {
                 procs[0] = procs[p];
+                lowest_name = &(procs[0]->proc_name);
             } else if (orte_util_compare_name_fields(ORTE_NS_CMP_ALL, 
                                                      &(procs[p]->proc_name),
                                                      lowest_name) < 0) {
                 temp_proc = procs[0];
                 procs[0] = procs[p];
                 procs[num_local_procs] = temp_proc;
+                lowest_name = &(procs[0]->proc_name);
             }
             ++num_local_procs;
         }
@@ -216,7 +218,6 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(ompi_proc_t **procs,
     if (0 == num_local_procs) {
         return NULL;
     }
-    lowest_name = &(procs[0]->proc_name);
     num_procs = num_local_procs;
 
     iov[0].iov_base = &sm_file_created;
