@@ -115,7 +115,7 @@ orte_odls_base_module_t orte_odls_default_module = {
         if (ORTE_BINDING_NOT_REQUIRED(jobdat->policy)) {            \
             if (orte_odls_globals.report_bindings) {                \
                 orte_show_help("help-odls-default.txt",             \
-                               "odle-default:binding-not-avail",    \
+                               "odls-default:binding-not-avail",    \
                                true, (n));                          \
             }                                                       \
             goto LAUNCH_PROCS;                                      \
