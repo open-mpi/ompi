@@ -185,7 +185,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(ompi_proc_t **procs,
     int fd = -1;
     mca_common_sm_mmap_t* map = NULL;
     size_t mem_offset, p;
-    int rc = 0, sm_file_inited = 0, num_local_procs = 0;
+    int rc = 0, sm_file_inited = 0, num_local_procs;
     struct iovec iov[3];
     int sm_file_created = OMPI_RML_TAG_SM_BACK_FILE_CREATED;
     orte_process_name_t *lowest_name = NULL;
@@ -198,11 +198,10 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(ompi_proc_t **procs,
        beginning.  Simultaneously look for the local proc with the
        lowest name.  Ensure that procs[0] is the lowest named
        process. */
-    for (p = 0; p < num_procs; p++) {
+    for (num_local_procs = p = 0; p < num_procs; p++) {
         if (OPAL_PROC_ON_LOCAL_NODE(procs[p]->proc_flags)) {
-            procs[num_local_procs] = procs[p];
             if (NULL == lowest_name) {
-                procs[num_local_procs] = procs[p];
+                procs[0] = procs[p];
             } else if (orte_util_compare_name_fields(ORTE_NS_CMP_ALL, 
                                                      &(procs[p]->proc_name),
                                                      lowest_name) < 0) {
