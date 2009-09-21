@@ -459,9 +459,7 @@ sm_module_enable(mca_coll_base_module_t *module,
     opal_output_verbose(10, mca_coll_base_output,
                         "coll:sm:enable (%d/%s): waiting for peers to attach",
                         comm->c_contextid, comm->c_name);
-    while (size != data->mcb_mmap->map_seg->seg_inited) {
-        SPIN;
-    }
+    SPIN_CONDITION(size == data->mcb_mmap->map_seg->seg_inited, seg_init_exit);
 
     /* Once we're all here, remove the mmap file; it's not needed anymore */
     if (0 == rank) {

@@ -307,7 +307,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
             flag_num = (data->mcb_operation_count % 
                         mca_coll_sm_component.sm_comm_num_in_use_flags);
             FLAG_SETUP(flag_num, flag, data);
-            FLAG_WAIT_FOR_IDLE(flag);
+            FLAG_WAIT_FOR_IDLE(flag, reduce_root_flag_label);
             FLAG_RETAIN(flag, size, data->mcb_operation_count);
             ++data->mcb_operation_count;
 
@@ -349,7 +349,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
                     /* Wait for the data to be copied into shmem, just
                        like any other non-root process */
                     index = &(data->mcb_data_index[segment_num]);
-                    PARENT_WAIT_FOR_NOTIFY_SPECIFIC(size - 1, rank, index, max_data);
+                    PARENT_WAIT_FOR_NOTIFY_SPECIFIC(size - 1, rank, index, max_data, reduce_root_parent_label1);
                         
                     /* If the datatype is contiguous, just copy it
                        straight to the reduce_target */
@@ -394,7 +394,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
                     else {
                         index = &(data->mcb_data_index[segment_num]);
                         PARENT_WAIT_FOR_NOTIFY_SPECIFIC(peer, rank, 
-                                                        index, max_data);
+                                                        index, max_data, reduce_root_parent_label2);
                         
                         /* If we don't need an extra buffer, then do the
                            reduction operation on the fragment straight
@@ -485,7 +485,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
             /* Wait for the root to mark this set of segments as
                ours */
             FLAG_SETUP(flag_num, flag, data);
-            FLAG_WAIT_FOR_OP(flag, data->mcb_operation_count);
+            FLAG_WAIT_FOR_OP(flag, data->mcb_operation_count, reduce_nonroot_flag_label);
             ++data->mcb_operation_count;
 
             /* Loop over all the segments in this set */
