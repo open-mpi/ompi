@@ -192,19 +192,23 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(ompi_proc_t **procs,
     char filename_to_send[OPAL_PATH_MAX];
     opal_list_item_t *item;
     pending_rml_msg_t *rml_msg;
+    ompi_proc_t *temp_proc;
 
     /* Reorder all procs array to have all the local procs at the
        beginning.  Simultaneously look for the local proc with the
-       lowest name. */
+       lowest name.  Ensure that procs[0] is the lowest named
+       process. */
     for (p = 0; p < num_procs; p++) {
         if (OPAL_PROC_ON_LOCAL_NODE(procs[p]->proc_flags)) {
             procs[num_local_procs] = procs[p];
             if (NULL == lowest_name) {
-                lowest_name = &(procs[0]->proc_name);
+                procs[num_local_procs] = procs[p];
             } else if (orte_util_compare_name_fields(ORTE_NS_CMP_ALL, 
                                                      &(procs[p]->proc_name),
                                                      lowest_name) < 0) {
-                lowest_name = &(procs[p]->proc_name);
+                temp_proc = procs[0];
+                procs[0] = procs[p];
+                procs[num_local_procs] = temp_proc;
             }
             ++num_local_procs;
         }
@@ -213,6 +217,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(ompi_proc_t **procs,
     if (0 == num_local_procs) {
         return NULL;
     }
+    lowest_name = &(procs[0]->proc_name);
     num_procs = num_local_procs;
 
     iov[0].iov_base = &sm_file_created;
@@ -268,10 +273,12 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(ompi_proc_t **procs,
         for (p = 1; p < num_procs; p++) {
             rc = orte_rml.send(&(procs[p]->proc_name), iov, 3,
                                OMPI_RML_TAG_SM_BACK_FILE_CREATED, 0);
-            if (rc < 0) {
+            if (rc < (ssize_t) (iov[0].iov_len + iov[1].iov_len + iov[2].iov_len)) {
                 opal_output(0, "mca_common_sm_mmap_init: "
-                            "orte_rml.send failed to %lu with errno=%d\n",
-                            (unsigned long)p, errno);
+                            "orte_rml.send failed to %lu with errno=%d, ret=%d, iov_len sum=%d\n",
+                            (unsigned long)p, errno,
+                            rc, 
+                            (int) (iov[0].iov_len + iov[1].iov_len + iov[2].iov_len));
                 goto out;
             }
         }
