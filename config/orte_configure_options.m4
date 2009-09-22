@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
@@ -94,6 +94,24 @@ else
 fi
 AC_DEFINE_UNQUOTED([ORTE_ENABLE_MONITORING], [$orte_want_monitoring],
                    [Enable state-of-health monitoring of processes and hardware])
+
+#
+# Do we want reliable multicast enabled?
+#
+
+AC_MSG_CHECKING([if want reliable multicast])
+AC_ARG_ENABLE([multicast],
+    [AC_HELP_STRING([--enable-multicast],
+                    [Enable reliable multicast messaging (default: disabled)])])
+if test "$enable_multicast" = "yes"; then
+    AC_MSG_RESULT([yes])
+    orte_want_multicast=1
+else
+    AC_MSG_RESULT([no])
+    orte_want_multicast=0
+fi
+AC_DEFINE_UNQUOTED([ORTE_ENABLE_MULTICAST], [$orte_want_multicast],
+                   [Enable reliable multicast messaging])
 
 
 ])dnl
