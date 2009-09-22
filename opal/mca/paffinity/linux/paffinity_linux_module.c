@@ -178,7 +178,7 @@ static int linux_module_set(opal_paffinity_base_cpu_set_t mask)
         return OPAL_ERR_BAD_PARAM;
     } else {
         PLPA_CPU_ZERO(&plpa_mask);
-	for (i = 0; i < sizeof(plpa_mask) ; i++) {
+	for (i = 0; i < 8 * sizeof(mask) ; i++) {
 	    if (PLPA_CPU_ISSET(i,&mask)) {
 		PLPA_CPU_SET(i,&plpa_mask);
 	    }
@@ -210,7 +210,7 @@ static int linux_module_get(opal_paffinity_base_cpu_set_t *mask)
     if (0 != opal_paffinity_linux_plpa_sched_getaffinity(getpid(), sizeof(plpa_mask), &plpa_mask)) {
         return OPAL_ERR_IN_ERRNO;
     }
-    for (i = 0; i < sizeof(mask); i++) {
+    for (i = 0; i < 8 * sizeof(*mask); i++) {
 	if (PLPA_CPU_ISSET(i,&plpa_mask)) {
 	    PLPA_CPU_SET(i,mask);
 	}
