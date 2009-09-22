@@ -94,15 +94,21 @@ int orte_rmaps_base_open(void)
 
     /* Are we scheduling by node or by slot? */
     param = mca_base_param_reg_string_name("rmaps", "base_schedule_policy",
-                                           "Scheduling Policy for RMAPS. [slot (default) | socket | board | node]",
+                                           "Scheduling Policy for RMAPS. [slot (alias:core) | socket | board | node]",
                                            false, false, "unspec", &policy);
     
-    if (0 == strcmp(policy, "socket")) {
-        ORTE_SET_MAPPING_POLICY(ORTE_MAPPING_BYSOCKET);
-    } else if (0 == strcmp(policy, "board")) {
-       ORTE_SET_MAPPING_POLICY(ORTE_MAPPING_BYBOARD);
-    } else if (0 == strcmp(policy, "node")) {
-        ORTE_SET_MAPPING_POLICY(ORTE_MAPPING_BYNODE);
+    /* if something is specified, do not override what may already
+     * be present - could have been given on cmd line
+     */
+    if (0 == strcasecmp(policy, "slot") ||
+        0 == strcasecmp(policy, "core")) {
+        ORTE_XSET_MAPPING_POLICY(ORTE_MAPPING_BYSLOT);
+    } else if (0 == strcasecmp(policy, "socket")) {
+        ORTE_XSET_MAPPING_POLICY(ORTE_MAPPING_BYSOCKET);
+    } else if (0 == strcasecmp(policy, "board")) {
+       ORTE_XSET_MAPPING_POLICY(ORTE_MAPPING_BYBOARD);
+    } else if (0 == strcasecmp(policy, "node")) {
+        ORTE_XSET_MAPPING_POLICY(ORTE_MAPPING_BYNODE);
     }
     /* if nothing was specified, leave it alone - we already set it
      * in orterun
@@ -138,8 +144,8 @@ int orte_rmaps_base_open(void)
                                         false, false, -1, &orte_rmaps_base.npersocket);
     if (0 < orte_rmaps_base.npersocket) {
         ORTE_ADD_MAPPING_POLICY(ORTE_MAPPING_NPERXXX);
-        /* force bind to socket */
-        ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_SOCKET);
+        /* force bind to socket if not overridden by user */
+        ORTE_XSET_BINDING_POLICY(ORTE_BIND_TO_SOCKET);
     }
     
     /* Do we want to loadbalance the job */

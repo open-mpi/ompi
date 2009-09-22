@@ -293,6 +293,16 @@ typedef uint16_t orte_mapping_policy_t;
 /* nice macro for setting these */
 #define ORTE_SET_MAPPING_POLICY(pol) \
     orte_default_mapping_policy = (orte_default_mapping_policy & 0x00ff) | (pol);
+/* macro to detect if some other policy has been set */
+#define ORTE_XSET_MAPPING_POLICY(pol)                           \
+    do {                                                        \
+        orte_mapping_policy_t tmp;                              \
+        tmp = (orte_default_mapping_policy & 0xff00) & ~(pol);  \
+        if (0 == tmp) {                                         \
+            ORTE_SET_MAPPING_POLICY((pol));                     \
+        }                                                       \
+    } while(0);
+/* macro to add another mapping policy */
 #define ORTE_ADD_MAPPING_POLICY(pol) \
     orte_default_mapping_policy |= (pol);
 
