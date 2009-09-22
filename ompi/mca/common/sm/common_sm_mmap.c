@@ -55,9 +55,6 @@
 #include "ompi/mca/mpool/sm/mpool_sm.h"
 #include "common_sm_mmap.h"
 
-/* JMS remove me */
-#include "orte/runtime/orte_globals.h"
-
 OBJ_CLASS_INSTANCE(
     mca_common_sm_mmap_t,
     opal_object_t,
