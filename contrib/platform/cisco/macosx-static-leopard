@@ -19,4 +19,5 @@ enable_mpi_f77=no
 enable_mpi_f90=no
 enable_mpi_cxx=no
 enable_mpi_cxx_seek=no
-enable_mca_no_build=carto,crs,memchecker,rmaps-round_robin,rmaps-seq,rmaps-topo,rmaps-rank_file,filem,plm-slurm,plm-xgrid,snapc,grpcomm-basic,grpcomm-hier
+enable_memchecker=no
+enable_mca_no_build=carto,crs,memchecker,rmaps-load_balance,rmaps-round_robin,rmaps-seq,rmaps-topo,rmaps-rank_file,filem,plm-slurm,plm-xgrid,snapc,grpcomm-basic,grpcomm-hier,pml-dr,pml-crcp2,pml-cm,crcp,pml-v

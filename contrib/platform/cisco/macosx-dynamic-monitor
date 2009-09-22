@@ -1,4 +1,5 @@
 enable_monitoring=yes
+enable_multicast=yes
 with_memory_manager=no
 enable_mem_debug=yes
 enable_mem_profile=no
