@@ -33,6 +33,7 @@
 #include "opal/util/argv.h"
 
 #include "orte/util/proc_info.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
@@ -348,19 +349,15 @@ int orte_register_params(void)
                                 "Number of processor boards/node (1-256) [default: 1]",
                                 false, false, 1, &value);
     orte_default_num_boards = (uint8_t)value;
-    if (OPAL_SUCCESS != opal_paffinity_base_get_socket_info(&value)) {
-        value = 1;
-    }
+
     mca_base_param_reg_int_name("orte", "num_sockets",
-                                "Number of sockets/board (1-256) [default: auto-sensed by mpirun or 1]",
-                                false, false, value, &value);
+                                "Number of sockets/board (1-256)",
+                                false, false, 0, &value);
     orte_default_num_sockets_per_board = (uint8_t)value;
-    if (OPAL_SUCCESS != opal_paffinity_base_get_core_info(0, &value)) {
-        value = 1;
-    }
+
     mca_base_param_reg_int_name("orte", "num_cores",
-                                "Number of cores/socket (1-256) [default: auto-sensed by mpirun or 1]",
-                                false, false, value, &value);
+                                "Number of cores/socket (1-256)",
+                                false, false, 0, &value);
     orte_default_num_cores_per_socket = (uint8_t)value;
     
     /* cpu allocation specification */
