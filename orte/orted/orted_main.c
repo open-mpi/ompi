@@ -204,6 +204,10 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       &orted_launch_cmd, OPAL_CMD_LINE_TYPE_STRING,
       "A regular expression describing the job to be launched at startup" },
 
+    { "orte", "daemon", "bootstrap", '\0', "bootstrap", "bootstrap", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Bootstrap the connection to the HNP" },
+    
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
