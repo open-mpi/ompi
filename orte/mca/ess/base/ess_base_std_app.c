@@ -39,6 +39,9 @@
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/base/base.h"
+#if ORTE_ENABLE_MULTICAST
+#include "orte/mca/rmcast/base/base.h"
+#endif
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/filem/base/base.h"
 #if OPAL_ENABLE_FT == 1
@@ -62,6 +65,20 @@ int orte_ess_base_app_setup(void)
     char *error = NULL;
 
     /* Setup the communication infrastructure */
+    
+    /* start with multicast */
+#if ORTE_ENABLE_MULTICAST
+    if (ORTE_SUCCESS != (ret = orte_rmcast_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rmcast_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_rmcast_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rmcast_base_select";
+        goto error;
+    }
+#endif
     
     /* Runtime Messaging Layer */
     if (ORTE_SUCCESS != (ret = orte_rml_base_open())) {
@@ -222,6 +239,11 @@ int orte_ess_base_app_finalize(void)
     orte_grpcomm_base_close();
     orte_routed_base_close();
     orte_rml_base_close();
+    
+    /* close the multicast */
+#if ORTE_ENABLE_MULTICAST
+    orte_rmcast_base_close();
+#endif
     
     orte_session_dir_finalize(ORTE_PROC_MY_NAME);
         

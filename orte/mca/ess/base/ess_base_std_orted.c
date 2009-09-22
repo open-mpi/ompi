@@ -60,6 +60,9 @@
 #include "orte/mca/sensor/base/base.h"
 #include "orte/mca/fddp/base/base.h"
 #endif
+#if ORTE_ENABLE_MULTICAST
+#include "orte/mca/rmcast/base/base.h"
+#endif
 
 #include "orte/runtime/orte_cr.h"
 #include "orte/runtime/orte_wait.h"
@@ -121,6 +124,20 @@ int orte_ess_base_orted_setup(char **hosts)
     }
 
     /* Setup the communication infrastructure */
+    
+    /* start with multicast */
+#if ORTE_ENABLE_MULTICAST
+    if (ORTE_SUCCESS != (ret = orte_rmcast_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rmcast_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_rmcast_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rmcast_base_select";
+        goto error;
+    }
+#endif
     
     /* Runtime Messaging Layer - this opens/selects the OOB as well */
     if (ORTE_SUCCESS != (ret = orte_rml_base_open())) {
@@ -419,6 +436,11 @@ int orte_ess_base_orted_finalize(void)
     orte_routed_base_close();
     orte_rml_base_close();
         
+    /* close the multicast */
+#if ORTE_ENABLE_MULTICAST
+    orte_rmcast_base_close();
+#endif
+    
     /* cleanup the global list of local children and job data */
     while (NULL != (item = opal_list_remove_first(&orte_local_children))) {
         OBJ_RELEASE(item);

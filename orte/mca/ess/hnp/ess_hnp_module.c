@@ -56,6 +56,9 @@
 #include "orte/mca/sensor/base/base.h"
 #include "orte/mca/fddp/base/base.h"
 #endif
+#if ORTE_ENABLE_MULTICAST
+#include "orte/mca/rmcast/base/base.h"
+#endif
 
 #include "orte/mca/rmaps/base/base.h"
 #if OPAL_ENABLE_FT == 1
@@ -167,6 +170,21 @@ static int rte_init(void)
     }
     
     /* Setup the communication infrastructure */
+    
+    /* start with multicast */
+#if ORTE_ENABLE_MULTICAST
+    if (ORTE_SUCCESS != (ret = orte_rmcast_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rmcast_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_rmcast_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rmcast_base_select";
+        goto error;
+    }
+#endif
+    
     /*
      * Runtime Messaging Layer
      */
@@ -595,6 +613,11 @@ static int rte_finalize(void)
     orte_grpcomm_base_close();
     orte_routed_base_close();
     orte_rml_base_close();
+    
+    /* close the multicast */
+#if ORTE_ENABLE_MULTICAST
+    orte_rmcast_base_close();
+#endif
     
     /* if we were doing timing studies, close the timing file */
     if (orte_timing) {
