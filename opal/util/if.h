@@ -42,6 +42,10 @@
 
 BEGIN_C_DECLS
 
+#define OPAL_IF_FORMAT_ADDR(n)                              \
+    (((n) >> 24) & 0x000000FF), (((n) >> 16) & 0x000000FF), \
+    (((n) >> 8) & 0x000000FF), ((n) & 0x000000FF)
+
 /**
  *  Lookup an interface by name and return its primary address.
  *  
