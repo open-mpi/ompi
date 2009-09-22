@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
     char hostname[512];
     pid_t pid;
     
-    if (0 > (rc = orte_init(ORTE_NON_TOOL))) {
+    if (0 > (rc = orte_init(ORTE_PROC_NON_MPI))) {
         fprintf(stderr, "orte_nodename: couldn't init orte - error code %d\n", rc);
         return rc;
     }
@@ -27,10 +27,9 @@ int main(int argc, char* argv[])
     gethostname(hostname, 512);
     pid = getpid();
 
-    printf("orte_nodename: Node %s %ld Name %s Pid %ld Local Rank: %ld Num_local_procs %ld\n",
-           hostname, (long)orte_process_info.nodeid, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)pid,
-           (long)orte_process_info.local_rank, (long)orte_process_info.num_local_procs);
-
+    printf("orte_nodename: Node %s Name %s Pid %ld\n",
+           hostname, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)pid);
+    
     orte_finalize();
     return 0;
 }
