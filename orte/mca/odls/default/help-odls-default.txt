@@ -120,3 +120,13 @@ Because the request was made on an "if-available" basis, the job was
 launched without taking the requested action. If this is not the desired
 behavior, talk to your local system administrator to find out if your
 system can support the requested action.
+#
+[odls-default:not-enough-resources]
+Not enough %s were found on the local host to meet the requested
+binding action:
+
+  Local host:        %s
+  Action requested:  %s
+  Application name:  %s
+
+Please revise the request and try again.

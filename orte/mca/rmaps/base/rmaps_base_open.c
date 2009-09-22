@@ -138,8 +138,8 @@ int orte_rmaps_base_open(void)
                                         false, false, -1, &orte_rmaps_base.npersocket);
     if (0 < orte_rmaps_base.npersocket) {
         ORTE_ADD_MAPPING_POLICY(ORTE_MAPPING_NPERXXX);
-        /* bind to socket, UNLESS the user already specified something else */
-        ORTE_XSET_BINDING_POLICY(ORTE_BIND_TO_SOCKET);
+        /* force bind to socket */
+        ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_SOCKET);
     }
     
     /* Do we want to loadbalance the job */
