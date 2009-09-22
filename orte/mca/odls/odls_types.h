@@ -72,6 +72,9 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 /* request proc resource usage */
 #define ORTE_DAEMON_TOP_CMD                 (orte_daemon_cmd_flag_t) 22
 
+/* bootstrap */
+#define ORTE_DAEMON_NAME_REQ_CMD            (orte_daemon_cmd_flag_t) 23
+#define ORTE_DAEMON_CHECKIN_CMD             (orte_daemon_cmd_flag_t) 24
     
 /*
  * List object to locally store the process names and pids of
