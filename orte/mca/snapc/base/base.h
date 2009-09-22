@@ -101,6 +101,9 @@ ORTE_DECLSPEC extern orte_snapc_coord_type_t orte_snapc_coord_type;
      */
     ORTE_DECLSPEC int orte_snapc_base_close(void);
 
+    void orte_snapc_base_quiesce_construct(orte_snapc_base_quiesce_t *obj);
+    void orte_snapc_base_quiesce_destruct( orte_snapc_base_quiesce_t *obj);
+
     /**
      * 'None' component functions
      * These are to be used when no component is selected.
@@ -115,6 +118,8 @@ ORTE_DECLSPEC extern orte_snapc_coord_type_t orte_snapc_coord_type;
     ORTE_DECLSPEC int orte_snapc_base_none_setup_job(orte_jobid_t jobid);
     ORTE_DECLSPEC int orte_snapc_base_none_release_job(orte_jobid_t jobid);
     ORTE_DECLSPEC int orte_snapc_base_none_ft_event(int state);
+    ORTE_DECLSPEC int orte_snapc_base_none_start_ckpt(orte_snapc_base_quiesce_t *datum);
+    ORTE_DECLSPEC int orte_snapc_base_none_end_ckpt(orte_snapc_base_quiesce_t *datum);
 
     ORTE_DECLSPEC extern int  orte_snapc_base_output;
     ORTE_DECLSPEC extern opal_list_t orte_snapc_base_components_available;
@@ -164,12 +169,17 @@ ORTE_DECLSPEC extern orte_snapc_coord_type_t orte_snapc_coord_type;
     /* Initial handshake with the orte_checkpoint command */
     ORTE_DECLSPEC int orte_snapc_base_global_coord_ckpt_init_cmd(orte_process_name_t* peer,
                                                                  opal_buffer_t* buffer,
-                                                                 bool *term,
+                                                                 opal_crs_base_ckpt_options_t *options,
                                                                  orte_jobid_t *jobid);
     ORTE_DECLSPEC int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
                                                                    char *global_snapshot_handle,
                                                                    int seq_num,
                                                                    int ckpt_status);
+
+    ORTE_DECLSPEC int orte_snapc_base_unpack_options(opal_buffer_t* buffer,
+                                                     opal_crs_base_ckpt_options_t *options);
+    ORTE_DECLSPEC int orte_snapc_base_pack_options(opal_buffer_t* buffer,
+                                                   opal_crs_base_ckpt_options_t *options);
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 

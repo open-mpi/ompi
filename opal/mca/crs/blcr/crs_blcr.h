@@ -59,7 +59,8 @@ BEGIN_C_DECLS
      * Actual funcationality
      */
     int opal_crs_blcr_checkpoint( pid_t pid, 
-                                  opal_crs_base_snapshot_t *snapshot, 
+                                  opal_crs_base_snapshot_t *snapshot,
+                                  opal_crs_base_ckpt_options_t *options,
                                   opal_crs_state_type_t    *state);
 
     int opal_crs_blcr_restart(    opal_crs_base_snapshot_t *snapshot, 

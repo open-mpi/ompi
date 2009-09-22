@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2008 The Trustees of Indiana University.
+ * Copyright (c) 2004-2009 The Trustees of Indiana University.
  *                         All rights reserved.
  *
  * $COPYRIGHT$
@@ -53,7 +53,10 @@ int opal_crs_none_module_finalize(void)
     return OPAL_SUCCESS;
 }
 
-int opal_crs_none_checkpoint(pid_t pid, opal_crs_base_snapshot_t *snapshot, opal_crs_state_type_t *state)
+int opal_crs_none_checkpoint(pid_t pid,
+                             opal_crs_base_snapshot_t *snapshot,
+                             opal_crs_base_ckpt_options_t *options,
+                             opal_crs_state_type_t *state)
 {
     int ret;
 
@@ -73,6 +76,11 @@ int opal_crs_none_checkpoint(pid_t pid, opal_crs_base_snapshot_t *snapshot, opal
                     "crs:none: checkpoint(): Error: Unable to write component name to the directory for (%s).",
                     snapshot->reference_name);
         return ret;
+    }
+
+    if( options->stop ) {
+        opal_output(0,
+                    "crs:none: checkpoint(): Error: SIGSTOP Not currently supported!");
     }
 
     return OPAL_SUCCESS;

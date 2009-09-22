@@ -1,4 +1,14 @@
 #
+# Copyright (c) 2008-2009 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+#
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
 # An Aggregate MCA Parameter Set to enable checkpoint/restart capabilities
 # for a job.
 #
@@ -50,3 +60,8 @@ btl_openib_want_fork_support=1
 btl_openib_use_async_event_thread=0
 btl_openib_use_eager_rdma=0
 btl_openib_cpc_include=oob
+
+# Enable SIGTSTP/SIGCONT capability
+#  killall -TSTP mpirun
+#  killall -CONT mpirun
+orte_forward_job_control=1

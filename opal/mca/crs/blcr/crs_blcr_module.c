@@ -269,7 +269,10 @@ int opal_crs_blcr_module_finalize(void)
     return OPAL_SUCCESS;
 }
 
-int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,  opal_crs_state_type_t *state)
+int opal_crs_blcr_checkpoint(pid_t pid,
+                             opal_crs_base_snapshot_t *base_snapshot,
+                             opal_crs_base_ckpt_options_t *options,
+                             opal_crs_state_type_t *state)
 {
     int ret, exit_status = OPAL_SUCCESS;
     opal_crs_blcr_snapshot_t *snapshot = OBJ_NEW(opal_crs_blcr_snapshot_t);
@@ -342,6 +345,9 @@ int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
             cr_initialize_checkpoint_args_t(&cr_args);
             cr_args.cr_scope = CR_SCOPE_PROC;
             cr_args.cr_fd    = fd;
+            if( options->stop ) {
+                cr_args.cr_signal = SIGSTOP;
+            }
 
             ret = cr_request_checkpoint(&cr_args, &cr_handle);
             if( ret < 0 ) {

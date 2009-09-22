@@ -261,7 +261,10 @@ int opal_crs_self_module_finalize(void)
 }
 
 
-int opal_crs_self_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot, opal_crs_state_type_t *state)
+int opal_crs_self_checkpoint(pid_t pid,
+                             opal_crs_base_snapshot_t *base_snapshot,
+                             opal_crs_base_ckpt_options_t *options,
+                             opal_crs_state_type_t *state)
 {
     opal_crs_self_snapshot_t *snapshot = OBJ_NEW(opal_crs_self_snapshot_t);
     int ret, exit_status = OPAL_SUCCESS;
@@ -272,6 +275,11 @@ int opal_crs_self_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
      */
     if( opal_cr_is_tool ) {
         return OPAL_ERR_NOT_SUPPORTED;
+    }
+
+    if( options->stop ) {
+        opal_output(0,
+                    "crs:self: checkpoint(): Error: SIGSTOP Not currently supported!");
     }
 
     /*
