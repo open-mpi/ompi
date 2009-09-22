@@ -48,6 +48,7 @@
 
 #include "orte/mca/rml/rml.h"
 #include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
 
 #include "ompi/constants.h"
 #include "ompi/proc/proc.h"
