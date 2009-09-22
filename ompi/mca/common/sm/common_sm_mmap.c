@@ -55,6 +55,9 @@
 #include "ompi/mca/mpool/sm/mpool_sm.h"
 #include "common_sm_mmap.h"
 
+/* JMS remove me */
+#include "orte/runtime/orte_globals.h"
+
 OBJ_CLASS_INSTANCE(
     mca_common_sm_mmap_t,
     opal_object_t,
@@ -181,11 +184,11 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(ompi_proc_t **procs,
     int rc = 0, sm_file_inited = 0, num_local_procs;
     struct iovec iov[3];
     int sm_file_created = OMPI_RML_TAG_SM_BACK_FILE_CREATED;
-    orte_process_name_t *lowest_name = NULL;
     char filename_to_send[OPAL_PATH_MAX];
     opal_list_item_t *item;
     pending_rml_msg_t *rml_msg;
     ompi_proc_t *temp_proc;
+    bool found_lowest = false;
 
     /* Reorder all procs array to have all the local procs at the
        beginning.  Simultaneously look for the local proc with the
@@ -193,17 +196,25 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(ompi_proc_t **procs,
        process. */
     for (num_local_procs = p = 0; p < num_procs; p++) {
         if (OPAL_PROC_ON_LOCAL_NODE(procs[p]->proc_flags)) {
-            if (NULL == lowest_name) {
+            /* If we don't have a lowest, save the first one */
+            if (!found_lowest) {
                 procs[0] = procs[p];
-                lowest_name = &(procs[0]->proc_name);
-            } else if (orte_util_compare_name_fields(ORTE_NS_CMP_ALL, 
-                                                     &(procs[p]->proc_name),
-                                                     lowest_name) < 0) {
-                temp_proc = procs[0];
-                procs[0] = procs[p];
-                procs[num_local_procs] = temp_proc;
-                lowest_name = &(procs[0]->proc_name);
+                found_lowest = true;
+            } else {
+                /* Save this proc */
+                procs[num_local_procs] = procs[p];
+                /* If we have a new lowest, swap it with position 0 so
+                   that procs[0] is always the lowest named proc */
+                if (orte_util_compare_name_fields(ORTE_NS_CMP_ALL, 
+                                                  &(procs[p]->proc_name),
+                                                  &(procs[0]->proc_name)) < 0) {
+                    temp_proc = procs[0];
+                    procs[0] = procs[p];
+                    procs[num_local_procs] = temp_proc;
+                }
             }
+            /* Regardless of the comparisons above, we found another
+               proc on the local node, so increment */
             ++num_local_procs;
         }
     }
@@ -235,8 +246,8 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(ompi_proc_t **procs,
     /* Figure out if I am the lowest rank in the group.  If so, I will 
       create the shared file. */
     if (0 == orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
-                                           &(ompi_proc_local()->proc_name),
-                                           lowest_name)) {
+                                           ORTE_PROC_MY_NAME,
+                                           &(procs[0]->proc_name))) {
         /* process initializing the file */
         fd = open(file_name, O_CREAT|O_RDWR, 0600);
         if (fd < 0) {
