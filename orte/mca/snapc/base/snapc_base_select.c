@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2008 The Trustees of Indiana University.
+ * Copyright (c) 2004-2009 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -69,7 +69,9 @@ static orte_snapc_base_module_t none_module = {
     orte_snapc_base_module_finalize,
     orte_snapc_base_none_setup_job,
     orte_snapc_base_none_release_job,
-    orte_snapc_base_none_ft_event
+    orte_snapc_base_none_ft_event,
+    orte_snapc_base_none_start_ckpt,
+    orte_snapc_base_none_end_ckpt
 };
 
 int orte_snapc_base_select(bool seed, bool app)

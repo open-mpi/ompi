@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2008 The Trustees of Indiana University.
+ * Copyright (c) 2004-2009 The Trustees of Indiana University.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -48,7 +48,10 @@ BEGIN_C_DECLS
     /*
      * Actual funcationality
      */
-    int opal_crs_none_checkpoint( pid_t pid, opal_crs_base_snapshot_t *snapshot, opal_crs_state_type_t *state);
+    int opal_crs_none_checkpoint( pid_t pid,
+                                  opal_crs_base_snapshot_t *snapshot,
+                                  opal_crs_base_ckpt_options_t *options,
+                                  opal_crs_state_type_t *state);
 
     int opal_crs_none_restart(    opal_crs_base_snapshot_t *snapshot, bool spawn_child, pid_t *child_pid);
 

@@ -540,12 +540,18 @@ int opal_cr_inc_core_prep(void)
     return OPAL_SUCCESS;
 }
 
-int opal_cr_inc_core_ckpt(pid_t pid, opal_crs_base_snapshot_t *snapshot, bool term, int *state)
+int opal_cr_inc_core_ckpt(pid_t pid,
+                          opal_crs_base_snapshot_t *snapshot,
+                          opal_crs_base_ckpt_options_t *options,
+                          int *state)
 {
     int ret, exit_status = OPAL_SUCCESS;
 
     OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CORE0);
-    if(OPAL_SUCCESS != (ret = opal_crs.crs_checkpoint(pid, snapshot, (opal_crs_state_type_t *)state))) {
+    if(OPAL_SUCCESS != (ret = opal_crs.crs_checkpoint(pid,
+                                                      snapshot,
+                                                      options,
+                                                      (opal_crs_state_type_t *)state))) {
         opal_output(opal_cr_output,
                     "opal_cr: inc_core: Error: The checkpoint failed. %d\n", ret);
         exit_status = ret;
@@ -554,7 +560,7 @@ int opal_cr_inc_core_ckpt(pid_t pid, opal_crs_base_snapshot_t *snapshot, bool te
     if(*state == OPAL_CRS_CONTINUE) {
         OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CORE1);
 
-        if(term) {
+        if(options->term) {
             *state = OPAL_CRS_TERM;
             opal_cr_checkpointing_state  = OPAL_CR_STATUS_TERM;
         } else {
@@ -562,7 +568,7 @@ int opal_cr_inc_core_ckpt(pid_t pid, opal_crs_base_snapshot_t *snapshot, bool te
         }
     }
     else {
-        term = false;
+        options->term = false;
     }
 
     /*
@@ -613,7 +619,10 @@ int opal_cr_inc_core_recover(int state)
     return OPAL_SUCCESS;
 }
 
-int opal_cr_inc_core(pid_t pid, opal_crs_base_snapshot_t *snapshot, bool term, int *state)
+int opal_cr_inc_core(pid_t pid,
+                     opal_crs_base_snapshot_t *snapshot,
+                     opal_crs_base_ckpt_options_t *options,
+                     int *state)
 {
     int ret, exit_status = OPAL_SUCCESS;
 
@@ -627,7 +636,7 @@ int opal_cr_inc_core(pid_t pid, opal_crs_base_snapshot_t *snapshot, bool term, i
     /*
      * INC: Take the checkpoint
      */
-    if(OPAL_SUCCESS != (ret = opal_cr_inc_core_ckpt(pid, snapshot, term, state) ) ) {
+    if(OPAL_SUCCESS != (ret = opal_cr_inc_core_ckpt(pid, snapshot, options, state) ) ) {
         exit_status = ret;
         /* Don't return here since we want to restart the OPAL level stuff */
     }

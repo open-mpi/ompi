@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2009 The University of Tennessee and The University
@@ -174,6 +174,10 @@ error:
 int orte_ess_base_tool_finalize(void)
 {
     orte_wait_finalize();
+
+#if OPAL_ENABLE_FT == 1
+    orte_snapc_base_close();
+#endif
 
     /* if I am a tool, then all I will have done is
      * a very small subset of orte_init - ensure that

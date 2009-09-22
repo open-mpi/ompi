@@ -44,7 +44,9 @@ static orte_snapc_base_module_t loc_module = {
     orte_snapc_full_module_finalize,
     orte_snapc_full_setup_job,
     orte_snapc_full_release_job,
-    orte_snapc_full_ft_event
+    orte_snapc_full_ft_event,
+    orte_snapc_full_start_ckpt,
+    orte_snapc_full_end_ckpt
 };
 
 /*
@@ -85,7 +87,7 @@ void orte_snapc_full_orted_construct(orte_snapc_full_orted_snapshot_t *snapshot)
 
     snapshot->opal_crs = NULL;
 
-    snapshot->term = false;
+    snapshot->options = OBJ_NEW(opal_crs_base_ckpt_options_t);
 
     snapshot->filem_request = NULL;
 }
@@ -101,7 +103,10 @@ void orte_snapc_full_orted_destruct( orte_snapc_full_orted_snapshot_t *snapshot)
         snapshot->opal_crs = NULL;
     }
 
-    snapshot->term = false;
+    if( NULL != snapshot->options ) {
+        OBJ_RELEASE(snapshot->options);
+        snapshot->options = NULL;
+    }
 
     if( NULL != snapshot->filem_request ) {
         OBJ_RELEASE(snapshot->filem_request);
@@ -109,39 +114,42 @@ void orte_snapc_full_orted_destruct( orte_snapc_full_orted_snapshot_t *snapshot)
     }
 }
 
-void orte_snapc_full_app_construct(orte_snapc_full_app_snapshot_t *obj) {
-    obj->comm_pipe_r = NULL;
-    obj->comm_pipe_w = NULL;
+void orte_snapc_full_app_construct(orte_snapc_full_app_snapshot_t *app_snapshot) {
+    app_snapshot->comm_pipe_r = NULL;
+    app_snapshot->comm_pipe_w = NULL;
 
-    obj->comm_pipe_r_fd = -1;
-    obj->comm_pipe_w_fd = -1;
+    app_snapshot->comm_pipe_r_fd = -1;
+    app_snapshot->comm_pipe_w_fd = -1;
 
-    obj->is_eh_active = false;
+    app_snapshot->is_eh_active = false;
 
-    obj->process_pid  = 0;
+    app_snapshot->process_pid  = 0;
 
-    obj->term = false;
+    app_snapshot->options = OBJ_NEW(opal_crs_base_ckpt_options_t);
 }
 
-void orte_snapc_full_app_destruct( orte_snapc_full_app_snapshot_t *obj) {
-    if( NULL != obj->comm_pipe_r ) {
-        free(obj->comm_pipe_r);
-        obj->comm_pipe_r = NULL;
+void orte_snapc_full_app_destruct( orte_snapc_full_app_snapshot_t *app_snapshot) {
+    if( NULL != app_snapshot->comm_pipe_r ) {
+        free(app_snapshot->comm_pipe_r);
+        app_snapshot->comm_pipe_r = NULL;
     }
 
-    if( NULL != obj->comm_pipe_w ) {
-        free(obj->comm_pipe_w);
-        obj->comm_pipe_w = NULL;
+    if( NULL != app_snapshot->comm_pipe_w ) {
+        free(app_snapshot->comm_pipe_w);
+        app_snapshot->comm_pipe_w = NULL;
     }
 
-    obj->comm_pipe_r_fd = -1;
-    obj->comm_pipe_w_fd = -1;
+    app_snapshot->comm_pipe_r_fd = -1;
+    app_snapshot->comm_pipe_w_fd = -1;
 
-    obj->is_eh_active = false;
+    app_snapshot->is_eh_active = false;
 
-    obj->process_pid  = 0;
+    app_snapshot->process_pid  = 0;
 
-    obj->term = false;
+    if( NULL != app_snapshot->options ) {
+        OBJ_RELEASE(app_snapshot->options);
+        app_snapshot->options = NULL;
+    }
 }
 
 /*
@@ -298,6 +306,46 @@ int orte_snapc_full_ft_event(int state) {
             break;
         case ORTE_SNAPC_APP_COORD_TYPE:
             return app_coord_ft_event(state);
+            break;
+        default:
+            break;
+        }
+
+    return ORTE_SUCCESS;
+}
+
+int orte_snapc_full_start_ckpt(orte_snapc_base_quiesce_t *datum)
+{
+    switch(orte_snapc_coord_type) 
+        {
+        case ORTE_SNAPC_GLOBAL_COORD_TYPE:
+            return global_coord_start_ckpt(datum);
+            break;
+        case ORTE_SNAPC_LOCAL_COORD_TYPE:
+            ; /* Do nothing */
+            break;
+        case ORTE_SNAPC_APP_COORD_TYPE:
+            return app_coord_start_ckpt(datum);
+            break;
+        default:
+            break;
+        }
+
+    return ORTE_SUCCESS;
+}
+
+int orte_snapc_full_end_ckpt(orte_snapc_base_quiesce_t *datum)
+{
+    switch(orte_snapc_coord_type) 
+        {
+        case ORTE_SNAPC_GLOBAL_COORD_TYPE:
+            return global_coord_end_ckpt(datum);
+            break;
+        case ORTE_SNAPC_LOCAL_COORD_TYPE:
+            ; /* Do nothing */
+            break;
+        case ORTE_SNAPC_APP_COORD_TYPE:
+            return app_coord_end_ckpt(datum);
             break;
         default:
             break;

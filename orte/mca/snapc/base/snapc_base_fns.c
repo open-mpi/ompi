@@ -182,6 +182,58 @@ void orte_snapc_base_global_snapshot_destruct( orte_snapc_base_global_snapshot_t
     snapshot->seq_num = 0;
 }
 
+OBJ_CLASS_INSTANCE(orte_snapc_base_quiesce_t,
+                   opal_object_t,
+                   orte_snapc_base_quiesce_construct,
+                   orte_snapc_base_quiesce_destruct);
+
+void orte_snapc_base_quiesce_construct(orte_snapc_base_quiesce_t *quiesce)
+{
+    quiesce->epoch         = -1;
+    quiesce->snapshot      = NULL;
+    quiesce->handle        = NULL;
+    quiesce->target_dir    = NULL;
+    quiesce->crs_name      = NULL;
+    quiesce->cmdline       = NULL;
+    quiesce->cr_state      = OPAL_CRS_NONE;
+    quiesce->checkpointing = false;
+    quiesce->restarting    = false;
+
+}
+
+void orte_snapc_base_quiesce_destruct( orte_snapc_base_quiesce_t *quiesce)
+{
+    quiesce->epoch = -1;
+
+    if( NULL != quiesce->snapshot ) {
+        OBJ_RELEASE(quiesce->snapshot);
+        quiesce->snapshot      = NULL;
+    }
+
+    if( NULL != quiesce->handle ) {
+        free(quiesce->handle);
+        quiesce->handle = NULL;
+    }
+    if( NULL != quiesce->target_dir ) {
+        free(quiesce->target_dir);
+        quiesce->target_dir = NULL;
+    }
+    if( NULL != quiesce->crs_name ) {
+        free(quiesce->crs_name);
+        quiesce->crs_name = NULL;
+    }
+    if( NULL != quiesce->cmdline ) {
+        free(quiesce->cmdline);
+        quiesce->cmdline = NULL;
+    }
+
+    quiesce->cr_state      = OPAL_CRS_NONE;
+    quiesce->checkpointing = false;
+    quiesce->restarting    = false;
+
+}
+
+
 /***********************
  * None component stuff
  ************************/
@@ -256,6 +308,17 @@ int orte_snapc_base_none_ft_event(int state)
     return ORTE_SUCCESS;
 }
 
+int orte_snapc_base_none_start_ckpt(orte_snapc_base_quiesce_t *datum)
+{
+    return ORTE_SUCCESS;
+}
+
+int orte_snapc_base_none_end_ckpt(orte_snapc_base_quiesce_t *datum)
+{
+    return ORTE_SUCCESS;
+}
+
+
 /********************
  * Local Functions
  ********************/
@@ -269,8 +332,10 @@ static void snapc_none_global_cmdline_request(int status,
     int ret, exit_status = ORTE_SUCCESS;
     orte_snapc_cmd_flag_t command;
     orte_std_cntr_t n = 1;
-    bool term = false;
+    opal_crs_base_ckpt_options_t *options = NULL;
     orte_jobid_t jobid;
+
+    options = OBJ_NEW(opal_crs_base_ckpt_options_t);
 
     n = 1;
     if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &command, &n, ORTE_SNAPC_CMD))) {
@@ -287,7 +352,7 @@ static void snapc_none_global_cmdline_request(int status,
         /*
          * Do the basic handshake with the orte_checkpoint command
          */
-        if( ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_ckpt_init_cmd(sender, buffer, &term, &jobid)) ) {
+        if( ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_ckpt_init_cmd(sender, buffer, options, &jobid)) ) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
@@ -310,6 +375,11 @@ static void snapc_none_global_cmdline_request(int status,
     }
     
  cleanup:
+    if( NULL != options ) {
+        OBJ_RELEASE(options);
+        options = NULL;
+    }
+
     return;
 }
 
@@ -318,7 +388,7 @@ static void snapc_none_global_cmdline_request(int status,
  ********************/
 int orte_snapc_base_global_coord_ckpt_init_cmd(orte_process_name_t* peer,
                                                opal_buffer_t* buffer,
-                                               bool *term,
+                                               opal_crs_base_ckpt_options_t *options,
                                                orte_jobid_t *jobid)
 {
     int ret, exit_status = ORTE_SUCCESS;
@@ -342,20 +412,18 @@ int orte_snapc_base_global_coord_ckpt_init_cmd(orte_process_name_t* peer,
     /********************
      * Receive command line checkpoint request:
      * - Command (already received)
-     * - term flag
+     * - options
      * - jobid
      ********************/
-    count = 1;
-    if ( ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, term, &count, OPAL_BOOL)) ) {
+    if( ORTE_SUCCESS != (ret = orte_snapc_base_unpack_options(buffer, options)) ) {
         opal_output(orte_snapc_base_output,
-                    "%s) base:ckpt_init_cmd: Error: DSS Unpack (term) Failure (ret = %d) (LINE = %d)\n",
-                    ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
-                    ret, __LINE__);
+                    "%s) base:ckpt_init_cmd: Error: Unpack (options) Failure (ret = %d)\n",
+                    ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type), ret );
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
-    
+
     count = 1;
     if ( ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, jobid, &count, ORTE_JOBID)) ) {
         opal_output(orte_snapc_base_output,
@@ -368,10 +436,62 @@ int orte_snapc_base_global_coord_ckpt_init_cmd(orte_process_name_t* peer,
     }
 
     OPAL_OUTPUT_VERBOSE((10, orte_snapc_base_output,
-                         "%s) base:ckpt_init_cmd: Received [%d, %s]\n",
+                         "%s) base:ckpt_init_cmd: Received [%d, %d, %s]\n",
                          ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
-                         (int)*term,
+                         (int)(options->term),
+                         (int)(options->stop),
                          ORTE_JOBID_PRINT(*jobid)));
+
+ cleanup:
+    return exit_status;
+}
+
+int orte_snapc_base_unpack_options(opal_buffer_t* buffer,
+                                   opal_crs_base_ckpt_options_t *options)
+{
+    int ret, exit_status = ORTE_SUCCESS;
+    orte_std_cntr_t count = 1;
+
+    count = 1;
+    if ( ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &(options->term), &count, OPAL_BOOL)) ) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base:unpack_options: Error: Unpack (term) Failure (ret = %d)\n",
+                    ret);
+        ORTE_ERROR_LOG(ret);
+        exit_status = ret;
+        goto cleanup;
+    }
+
+    count = 1;
+    if ( ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &(options->stop), &count, OPAL_BOOL)) ) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base:unpack_options: Error: Unpack (stop) Failure (ret = %d)\n",
+                    ret);
+        ORTE_ERROR_LOG(ret);
+        exit_status = ret;
+        goto cleanup;
+    }
+    
+ cleanup:
+    return exit_status;
+}
+
+int orte_snapc_base_pack_options(opal_buffer_t* buffer,
+                                 opal_crs_base_ckpt_options_t *options)
+{
+    int ret, exit_status = ORTE_SUCCESS;
+
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &(options->term), 1, OPAL_BOOL))) {
+        ORTE_ERROR_LOG(ret);
+        exit_status = ret;
+        goto cleanup;
+    }
+
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &(options->stop), 1, OPAL_BOOL))) {
+        ORTE_ERROR_LOG(ret);
+        exit_status = ret;
+        goto cleanup;
+    }
 
  cleanup:
     return exit_status;
@@ -391,7 +511,7 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
      */
     if( NULL == peer ||
         OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_NAME_INVALID, peer) ) {
-        /*return OMPI_ERR_BAD_PARAM;*/
+        /*return ORTE_ERR_BAD_PARAM;*/
         return ORTE_SUCCESS;
     }
 
@@ -439,6 +559,7 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
     }
 
     if( ORTE_SNAPC_CKPT_STATE_FINISHED == ckpt_status ||
+        ORTE_SNAPC_CKPT_STATE_STOPPED  == ckpt_status ||
         ORTE_SNAPC_CKPT_STATE_ERROR    == ckpt_status ) {
         if (ORTE_SUCCESS != (ret = opal_dss.pack(loc_buffer, &global_snapshot_handle, 1, OPAL_STRING))) {
             opal_output(orte_snapc_base_output,
@@ -1162,14 +1283,14 @@ int orte_snapc_ckpt_state_str(char ** state_str, int state)
     case ORTE_SNAPC_CKPT_STATE_REQUEST:
         *state_str = strdup("Requested");
         break;
-    case ORTE_SNAPC_CKPT_STATE_PENDING_TERM:
-        *state_str = strdup("Pending (Termination)");
-        break;
     case ORTE_SNAPC_CKPT_STATE_PENDING:
         *state_str = strdup("Pending");
         break;
     case ORTE_SNAPC_CKPT_STATE_RUNNING:
         *state_str = strdup("Running");
+        break;
+    case ORTE_SNAPC_CKPT_STATE_STOPPED:
+        *state_str = strdup("Stopped");
         break;
     case ORTE_SNAPC_CKPT_STATE_FILE_XFER:
         *state_str = strdup("File Transfer");

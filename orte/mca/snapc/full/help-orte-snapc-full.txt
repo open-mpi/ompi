@@ -1,6 +1,6 @@
  -*- text -*-
 #
-# Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -18,3 +18,8 @@
 #
 # This is the US/English general help file for ORTE SnapC framework.
 #
+[waitpid_stop_fail]
+Warning: waitpid(%d) failed with ret = %d while waiting on process
+         %s. Typically this means that you are stopping a restarted
+         process. We skip the rest of the checks, since this is normally
+         not a problem.

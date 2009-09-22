@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2008 The Trustees of Indiana University.
+ * Copyright (c) 2004-2009 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -91,7 +91,18 @@ OBJ_CLASS_INSTANCE(opal_crs_base_snapshot_t,
                    opal_crs_base_construct,
                    opal_crs_base_destruct);
 
+static void opal_crs_base_ckpt_options_construct(opal_crs_base_ckpt_options_t *opts) {
+    opal_crs_base_clear_options(opts);
+}
 
+static void opal_crs_base_ckpt_options_destruct(opal_crs_base_ckpt_options_t *opts) {
+    opal_crs_base_clear_options(opts);
+}
+
+OBJ_CLASS_INSTANCE(opal_crs_base_ckpt_options_t,
+                   opal_object_t,
+                   opal_crs_base_ckpt_options_construct,
+                   opal_crs_base_ckpt_options_destruct);
 
 /*
  * Utility functions
@@ -363,6 +374,42 @@ char * opal_crs_base_state_str(opal_crs_state_type_t state)
     
     return str;
 }
+
+int opal_crs_base_copy_options(opal_crs_base_ckpt_options_t *from,
+                                 opal_crs_base_ckpt_options_t *to)
+{
+    if( NULL == from ) {
+        opal_output(opal_crs_base_output,
+                    "opal:crs:base: copy_options: Error: from value is NULL\n");
+        return OPAL_ERROR;
+    }
+
+    if( NULL == to ) {
+        opal_output(opal_crs_base_output,
+                    "opal:crs:base: copy_options: Error: to value is NULL\n");
+        return OPAL_ERROR;
+    }
+
+    to->term = from->term;
+    to->stop = from->stop;
+
+    return OPAL_SUCCESS;
+}
+
+int opal_crs_base_clear_options(opal_crs_base_ckpt_options_t *target)
+{
+    if( NULL == target ) {
+        opal_output(opal_crs_base_output,
+                    "opal:crs:base: copy_options: Error: target value is NULL\n");
+        return OPAL_ERROR;
+    }
+
+    target->term = false;
+    target->stop = false;
+
+    return OPAL_SUCCESS;
+}
+
 
 /******************
  * Local Functions
