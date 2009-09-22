@@ -62,13 +62,6 @@ OBJ_CLASS_INSTANCE(
     NULL
 );
 
-/*
- * Instance that is shared between components that use shared memory
- */
-#if 0
-/* JMS remove me! */
-mca_common_sm_mmap_t *mca_common_sm_mmap = NULL;
-#endif
 
 /*
  * Lock to protect multiple instances of mmap_init() from being
