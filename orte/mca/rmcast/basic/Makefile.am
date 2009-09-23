@@ -19,17 +19,19 @@ component_noinst = libmca_rmcast_basic.la
 component_install =
 endif
 
-hnp_SOURCES = \
-    rmcast_basic.c \
-    rmcast_basic.h \
-    rmcast_basic_component.c
+dist_pkgdata_DATA = help-orte-rmcast-basic.txt
+
+rmcast_basic_SOURCES = \
+        rmcast_basic.c \
+        rmcast_basic.h \
+        rmcast_basic_component.c
 
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
-mca_rmcast_basic_la_SOURCES = $(hnp_SOURCES)
+mca_rmcast_basic_la_SOURCES = $(rmcast_basic_SOURCES)
 mca_rmcast_basic_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
-libmca_rmcast_basic_la_SOURCES = $(hnp_SOURCES)
+libmca_rmcast_basic_la_SOURCES = $(rmcast_basic_SOURCES)
 libmca_rmcast_basic_la_LIBADD =
 libmca_rmcast_basic_la_LDFLAGS = -module -avoid-version

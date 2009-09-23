@@ -63,6 +63,7 @@ orte_rmcast_module_t orte_rmcast = {
     NULL,
     NULL,
     NULL,
+    NULL,
     NULL
 };
 orte_rmcast_base_t orte_rmcast_base;
@@ -111,8 +112,6 @@ int orte_rmcast_base_open(void)
     orte_rmcast_base.base_ip_addr = ((orte_rmcast_base.subnet << 24) & 0xFF000000) |
                                     ((orte_rmcast_base.scope << 16) & 0x00FF0000);
     
-    opal_output(0, "rmcast: base ip addr %08x", orte_rmcast_base.base_ip_addr);
-
     /* Debugging / verbose output.  Always have stream open, with
         verbose set by the mca open system... */
     orte_rmcast_base.rmcast_output = opal_output_open(NULL);

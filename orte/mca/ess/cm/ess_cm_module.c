@@ -320,25 +320,38 @@ static bool name_success = false;
 static void cbfunc(int channel, opal_buffer_t *buf, void *cbdata)
 {
     int32_t n;
-    orte_process_name_t name, *nmptr;
+    orte_process_name_t name;
     int rc;
+    char *uri;
     
     /* ensure we default to failure */
     name_success = false;
 
-    /* unpack the response */
-    nmptr = &name;
+    /* unpack the name */
     n = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &nmptr, &n, ORTE_NAME))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &name, &n, ORTE_NAME))) {
         ORTE_ERROR_LOG(rc);
-        goto depart;
+        return;
     }
-    /* setup name */
     ORTE_PROC_MY_NAME->jobid = name.jobid;
     ORTE_PROC_MY_NAME->vpid = name.vpid;
+
+    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
+                         "set my name to %s", ORTE_NAME_PRINT(&name)));
+    
+    /* unpack the HNP uri */
+    n = 1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &uri, &n, OPAL_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
+                         "%s got hnp uri %s",
+                         ORTE_NAME_PRINT(&name), uri));
+    orte_process_info.my_hnp_uri = uri;
+
     name_success = true;
     
-depart:
     arrived = true;
 }
 
@@ -367,7 +380,6 @@ static int cm_set_name(void)
             continue;
         }
         addr = htonl(if_addr.sin_addr.s_addr);
-        opal_output(0, "IP address: %d.%d.%d.%d", OPAL_IF_FORMAT_ADDR(addr));
 
         /* break address into sections */
         net = 0x000000FF & ((0xFF000000 & addr) >> 24);
@@ -400,18 +412,23 @@ static int cm_set_name(void)
     opal_dss.pack(&buf, &cmd, 1, ORTE_DAEMON_CMD_T);
     
     /* set the recv to get the answer */
-    if (ORTE_SUCCESS != (rc = orte_rmcast.recv_nb(ORTE_RMCAST_SYS_ADDR, cbfunc, NULL))) {
+    if (ORTE_SUCCESS != (rc = orte_rmcast.recv_nb(ORTE_RMCAST_SYS_ADDR,
+                                                  ORTE_RMCAST_NON_PERSISTENT,
+                                                  ORTE_RMCAST_TAG_BOOTSTRAP,
+                                                  cbfunc, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&buf);
         return rc;
     }
     /* send the request */
-    if (ORTE_SUCCESS != (rc = orte_rmcast.send(ORTE_RMCAST_SYS_ADDR, &buf))) {
+    if (ORTE_SUCCESS != (rc = orte_rmcast.send(ORTE_RMCAST_SYS_ADDR,
+                                               ORTE_RMCAST_TAG_BOOTSTRAP,
+                                               &buf))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&buf);
         return rc;
     }
-    OBJ_DESTRUCT(&buf);
+    /* OBJ_DESTRUCT(&buf); */
 
     /* wait for response */
     ORTE_PROGRESSED_WAIT(arrived, 0, 1);
