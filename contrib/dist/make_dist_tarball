@@ -202,3 +202,5 @@ if test "$1" != "-greekonly" -a "$1" != "--greekonly"; then
     make_tarball
 fi
 
+# Put the VERSION file back the way it was
+svn revert VERSION
