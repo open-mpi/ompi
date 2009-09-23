@@ -35,10 +35,27 @@ BEGIN_C_DECLS
 #define ORTE_RMCAST_DYNAMIC_CHANNELS    100
 
 
+/* define channel directions */
 #define ORTE_RMCAST_XMIT    0x01
 #define ORTE_RMCAST_RECV    0x02
 #define ORTE_RMCAST_BIDIR   0x03
 
+/* Message matching tag */
+typedef uint16_t orte_rmcast_tag_t;
+#define ORTE_RMCAST_TAG_T   OPAL_UINT16
+
+/* tag values for well-known services */
+#define ORTE_RMCAST_TAG_INVALID     0
+#define ORTE_RMCAST_TAG_BOOTSTRAP   1
+
+/* starting value for dynamicall assignable tags */
+#define ORTE_RMCAST_TAG_DYNAMIC     100
+
+
+/* persistence of recv requests */
+typedef uint8_t orte_rmcast_flag_t;
+#define ORTE_RMCAST_NON_PERSISTENT  0x00
+#define ORTE_RMCAST_PERSISTENT      0x01
 
 END_C_DECLS
 
