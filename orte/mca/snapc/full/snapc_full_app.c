@@ -72,6 +72,8 @@ static int snapc_full_app_ckpt_handshake_start(opal_crs_base_ckpt_options_t *opt
                                                opal_cr_ckpt_cmd_state_t resp);
 static int snapc_full_app_ckpt_handshake_end(int cr_state);
 
+static int snapc_full_app_ft_event_update_process_info(orte_process_name_t proc, pid_t pid);
+
 static char *app_comm_pipe_r = NULL;
 static char *app_comm_pipe_w = NULL;
 static int   app_comm_pipe_r_fd = -1;
@@ -741,7 +743,7 @@ static int snapc_full_app_ckpt_handshake_end(int cr_state)
 }
 
 int app_coord_ft_event(int state) {
-    int exit_status = ORTE_SUCCESS;
+    int ret, exit_status = ORTE_SUCCESS;
 
     OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
                          "App) In ft_event(%d)", state));
@@ -760,10 +762,23 @@ int app_coord_ft_event(int state) {
     }
     /******** Restart Recovery ********/
     else if (OPAL_CRS_RESTART == state ) {
-        ; /* Nothing */
         OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
                              "App) Initalized for Application %s (Restart)\n", 
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
+        /*
+         * Send new PID to HNP/daemon
+         * The checkpointer could have used a proxy program to boot us
+         * so the pid that the orted got from fork() may not be the
+         * PID of this application.
+         * - Note: BLCR does this because it tries to preseve the PID
+         *         of the program across checkpointes
+         */
+        if( ORTE_SUCCESS != (ret = snapc_full_app_ft_event_update_process_info(orte_process_info.my_name, getpid())) ) {
+            ORTE_ERROR_LOG(ret);
+            exit_status = ret;
+            goto cleanup;
+        }
     }
     /******** Termination ********/
     else if (OPAL_CRS_TERM == state ) {
@@ -773,6 +788,45 @@ int app_coord_ft_event(int state) {
     else {
         ; /* Nothing */
     }
+
+ cleanup:
+    return exit_status;
+}
+
+static int snapc_full_app_ft_event_update_process_info(orte_process_name_t proc, pid_t proc_pid)
+{
+    int ret, exit_status = ORTE_SUCCESS;
+    opal_buffer_t buffer;
+    orte_snapc_cmd_flag_t command = ORTE_SNAPC_LOCAL_UPDATE_CMD;
+
+    OBJ_CONSTRUCT(&buffer, opal_buffer_t);
+
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &command, 1, ORTE_SNAPC_CMD )) ) {
+        ORTE_ERROR_LOG(ret);
+        exit_status = ret;
+        goto cleanup;
+    }
+
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &proc, 1, ORTE_NAME))) {
+        ORTE_ERROR_LOG(ret);
+        exit_status = ret;
+        goto cleanup;
+    }
+
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &proc_pid, 1, OPAL_PID))) {
+        ORTE_ERROR_LOG(ret);
+        exit_status = ret;
+        goto cleanup;
+    }
+
+    if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_DAEMON, &buffer, ORTE_RML_TAG_SNAPC, 0))) {
+        ORTE_ERROR_LOG(ret);
+        exit_status = ret;
+        goto cleanup;
+    }
+
+ cleanup:
+    OBJ_DESTRUCT(&buffer);
 
     return exit_status;
 }
