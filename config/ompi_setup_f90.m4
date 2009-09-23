@@ -151,7 +151,7 @@ AS_IF([test $OMPI_WANT_F90_BINDINGS -eq 1],
 # symbols in shared libraries.  Because we can't figure out how to
 # implement MPI_STATUSES_IGNORE and friends wihtout common symbols, on
 # OS X we can't build the F90 bindings as a shared library.
-AC_MSG_CHECKING([for extra arguments to build a shard library])
+AC_MSG_CHECKING([for extra arguments to build a shared library])
 case "$host" in
     *apple-darwin*)
         if test -z ${MACOSX_DEPLOYMENT_TARGET} ; then
