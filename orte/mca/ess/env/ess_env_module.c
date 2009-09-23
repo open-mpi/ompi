@@ -422,6 +422,7 @@ static int rte_ft_event(int state)
          * Notify SnapC
          */
         if( ORTE_SUCCESS != (ret = orte_snapc.ft_event(OPAL_CRS_CHECKPOINT))) {
+            ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
         }
@@ -430,6 +431,7 @@ static int rte_ft_event(int state)
          * Notify Routed
          */
         if( ORTE_SUCCESS != (ret = orte_routed.ft_event(OPAL_CRS_CHECKPOINT))) {
+            ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
         }
@@ -438,6 +440,7 @@ static int rte_ft_event(int state)
          * Notify RML -> OOB
          */
         if( ORTE_SUCCESS != (ret = orte_rml.ft_event(OPAL_CRS_CHECKPOINT))) {
+            ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
         }
@@ -448,6 +451,7 @@ static int rte_ft_event(int state)
          * Notify RML -> OOB
          */
         if( ORTE_SUCCESS != (ret = orte_rml.ft_event(OPAL_CRS_CONTINUE))) {
+            ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
         }
@@ -456,6 +460,7 @@ static int rte_ft_event(int state)
          * Notify Routed
          */
         if( ORTE_SUCCESS != (ret = orte_routed.ft_event(OPAL_CRS_CONTINUE))) {
+            ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
         }
@@ -464,6 +469,7 @@ static int rte_ft_event(int state)
          * Notify SnapC
          */
         if( ORTE_SUCCESS != (ret = orte_snapc.ft_event(OPAL_CRS_CONTINUE))) {
+            ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
         }
@@ -490,6 +496,7 @@ static int rte_ft_event(int state)
          * Notify RML -> OOB
          */
         if( ORTE_SUCCESS != (ret = orte_rml.ft_event(OPAL_CRS_RESTART))) {
+            ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
         }
@@ -501,11 +508,13 @@ static int rte_ft_event(int state)
         svtype = orte_process_info.proc_type;
         orte_process_info.proc_type = ORTE_PROC_TOOL;
         if (ORTE_SUCCESS != (ret = orte_routed.finalize()) ) {
+            ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
         }
         orte_process_info.proc_type = svtype;
         if (ORTE_SUCCESS != (ret = orte_routed.initialize()) ) {
+            ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
         }
@@ -515,10 +524,12 @@ static int rte_ft_event(int state)
          */
         orte_grpcomm.finalize();
         if (ORTE_SUCCESS != (ret = orte_grpcomm.init())) {
+            ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
         }
         if (ORTE_SUCCESS != (ret = orte_grpcomm.purge_proc_attrs())) {
+            ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
         }
@@ -542,6 +553,7 @@ static int rte_ft_event(int state)
          * RML - Enable communications
          */
         if (ORTE_SUCCESS != (ret = orte_rml.enable_comm())) {
+            ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
         }
@@ -564,6 +576,7 @@ static int rte_ft_event(int state)
          * Notify Routed
          */
         if( ORTE_SUCCESS != (ret = orte_routed.ft_event(OPAL_CRS_RESTART))) {
+            ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
         }
@@ -572,6 +585,7 @@ static int rte_ft_event(int state)
          * Notify SnapC
          */
         if( ORTE_SUCCESS != (ret = orte_snapc.ft_event(OPAL_CRS_RESTART))) {
+            ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
         }
@@ -585,6 +599,7 @@ static int rte_ft_event(int state)
          *         of the program across checkpointes
          */
         if( ORTE_SUCCESS != (ret = ess_env_ft_event_update_process_info(orte_process_info.my_name, getpid())) ) {
+            ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
         }

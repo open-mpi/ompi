@@ -531,6 +531,10 @@ static void snapc_full_local_process_app_update_cmd(int fd, short event, void *c
         goto cleanup;
     }
 
+    OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+                         "Local) Updated PID: %s : %d -> %d",
+                         ORTE_NAME_PRINT(&vpid_snapshot->super.process_name), vpid_snapshot->process_pid, proc_pid));
+
     /* JJH: Maybe we should save the old and the newly restarted pid? */
     vpid_snapshot->process_pid = proc_pid;
     
