@@ -179,16 +179,18 @@ static void snapc_full_app_signal_handler (int signo)
  */
 int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
 {
-    opal_crs_base_ckpt_options_t *options = NULL;
+    static opal_crs_base_ckpt_options_t *options = NULL;
     static int cr_state;
     int app_pid;
     int ret, exit_status = ORTE_SUCCESS;
 
+    if( NULL == options ) {
+        options = OBJ_NEW(opal_crs_base_ckpt_options_t);
+    }
+
     if( opal_cr_currently_stalled ) {
         goto STAGE_1;
     }
-
-    options = OBJ_NEW(opal_crs_base_ckpt_options_t);
 
     OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                          "App) notify_response: Stage 1..."));
