@@ -87,7 +87,6 @@ static int update_nidmap(opal_byte_object_t *bo);
 
 #if OPAL_ENABLE_FT == 1
 static int rte_ft_event(int state);
-static int ess_env_ft_event_update_process_info(orte_process_name_t proc, pid_t pid);
 #endif
 
 orte_ess_base_module_t orte_ess_env_module = {
@@ -590,20 +589,6 @@ static int rte_ft_event(int state)
             goto cleanup;
         }
 
-        /*
-         * Send new PID to HNP/daemon
-         * The checkpointer could have used a proxy program to boot us
-         * so the pid that the orted got from fork() may not be the
-         * PID of this application.
-         * - Note: BLCR does this because it tries to preseve the PID
-         *         of the program across checkpointes
-         */
-        if( ORTE_SUCCESS != (ret = ess_env_ft_event_update_process_info(orte_process_info.my_name, getpid())) ) {
-            ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
-        }
-
         /* if one was provided, build my nidmap */
         if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(orte_process_info.sync_buf))) {
             ORTE_ERROR_LOG(ret);
@@ -622,43 +607,4 @@ static int rte_ft_event(int state)
 
     return exit_status;
 }
-
-static int ess_env_ft_event_update_process_info(orte_process_name_t proc, pid_t proc_pid)
-{
-    int ret, exit_status = ORTE_SUCCESS;
-    opal_buffer_t buffer;
-    orte_snapc_cmd_flag_t command = ORTE_SNAPC_LOCAL_UPDATE_CMD;
-
-    OBJ_CONSTRUCT(&buffer, opal_buffer_t);
-
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &command, 1, ORTE_SNAPC_CMD )) ) {
-        ORTE_ERROR_LOG(ret);
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &proc, 1, ORTE_NAME))) {
-        ORTE_ERROR_LOG(ret);
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &proc_pid, 1, OPAL_PID))) {
-        ORTE_ERROR_LOG(ret);
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_DAEMON, &buffer, ORTE_RML_TAG_SNAPC, 0))) {
-        ORTE_ERROR_LOG(ret);
-        exit_status = ret;
-        goto cleanup;
-    }
-
- cleanup:
-    OBJ_DESTRUCT(&buffer);
-
-    return exit_status;
-}
 #endif
-
