@@ -180,13 +180,13 @@ static int sm_register(void)
                            cs->sm_tree_degree,
                            &cs->sm_tree_degree);
     if (cs->sm_tree_degree > cs->sm_control_size) {
-        orte_show_help("help-coll-sm.txt", 
+        orte_show_help("help-mpi-coll-sm.txt", 
                        "tree-degree-larger-than-control", true,
                        cs->sm_tree_degree, cs->sm_control_size);
         cs->sm_tree_degree = cs->sm_control_size;
     }
     if (cs->sm_tree_degree > 255) {
-        orte_show_help("help-coll-sm.txt", 
+        orte_show_help("help-mpi-coll-sm.txt", 
                        "tree-degree-larger-than-255", true,
                        cs->sm_tree_degree);
         cs->sm_tree_degree = 255;
