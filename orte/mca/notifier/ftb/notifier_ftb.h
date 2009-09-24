@@ -28,20 +28,29 @@
 
 BEGIN_C_DECLS
 
-/*
- * Component open / close
- */
-int orte_notifier_ftb_open(void);
-int orte_notifier_ftb_close(void);
-int orte_notifier_ftb_component_query(mca_base_module_t **module, int *priority);
+typedef struct {
+    orte_notifier_base_component_t super;
 
+    /* FTB client subscription style */
+    char *subscription_style;
+
+    /* Priority of this component */
+    int priority;
+} orte_notifier_ftb_component_t;
 
 /*
  * Notifier interfaces
  */
 
-ORTE_MODULE_DECLSPEC extern orte_notifier_base_component_t mca_notifier_ftb_component;
+ORTE_MODULE_DECLSPEC extern orte_notifier_ftb_component_t mca_notifier_ftb_component;
 extern orte_notifier_base_module_t orte_notifier_ftb_module;
+
+/*
+ * FTB client information
+ */
+
+extern FTB_client_t ftb_client_info;
+extern FTB_client_handle_t ftb_client_handle;
 
 END_C_DECLS
 

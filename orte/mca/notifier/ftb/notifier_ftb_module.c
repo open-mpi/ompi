@@ -51,14 +51,11 @@ orte_notifier_base_module_t orte_notifier_ftb_module = {
     mypeerlog
 };
 
-/* Module "global" variables */
-static FTB_client_t cinfo = {
-    .event_space = "ftb.mpi.openmpi",
-    .client_name = "",
-    .client_jobid = "",
-    .client_subscription_style = "FTB_SUBSCRIPTION_NONE"
-};
-static FTB_client_handle_t chandle;
+/* FTB client information */
+FTB_client_t ftb_client_info;
+
+/* FTB client handle */
+FTB_client_handle_t ftb_client_handle;
 
 static FTB_event_info_t ftb_event_info[] = {
 /* 0 */    {"UNKNOWN_ERROR",	"error"},
@@ -102,23 +99,11 @@ static int orte_err2ftb(int errnum)
 static int init(void) {
     int ret;
 
-/*    snprintf(cinfo.client_name, FTB_MAX_CLIENT_NAME, "%s", argv[0]); 
- * How to obtain argv[0] at this point?  I don't know...
- * similarly, how do we obtain client_jobid?
- *    snprintf(cinfo.client_jobid, FTB_MAX_CLIENT_JOBID, "%s", orte_jobid???); 
- */
-    
-    if (FTB_SUCCESS != (ret = FTB_Connect(&cinfo, &chandle))) {
-        opal_output(orte_notifier_base_output,
-            "notifier:ftb:init FTB_Connect failed ret=%d\n", ret);
-        return ORTE_ERROR;
-    }
-
-    ret = FTB_Declare_publishable_events(chandle, 0, ftb_event_info, ftb_event_info_count);
+    ret = FTB_Declare_publishable_events(ftb_client_handle, 0, ftb_event_info, ftb_event_info_count);
     if (FTB_SUCCESS != ret) {
         opal_output(orte_notifier_base_output,
             "notifier:ftb:init FTB_Declare_publishable_events failed ret=%d\n", ret);
-        FTB_Disconnect(chandle);
+        FTB_Disconnect(ftb_client_handle);
         return ORTE_ERROR;
     }
 
@@ -126,7 +111,7 @@ static int init(void) {
 }
 
 static void finalize(void) {
-    FTB_Disconnect(chandle);
+    FTB_Disconnect(ftb_client_handle);
 }
 
 static void convert2ftb(int errcode, char *payload)
@@ -138,7 +123,7 @@ static void convert2ftb(int errcode, char *payload)
     snprintf(eprop.event_payload, FTB_MAX_PAYLOAD_DATA, "%s", (payload != NULL) ? payload : "");
 
     event_id = orte_err2ftb(errcode);
-    ret = FTB_Publish(chandle, ftb_event_info[event_id].event_name, &eprop, &ehandle);
+    ret = FTB_Publish(ftb_client_handle, ftb_event_info[event_id].event_name, &eprop, &ehandle);
     if (FTB_SUCCESS != ret) {
         opal_output(orte_notifier_base_output,
             "notifier:ftb:convert2ftb(%d,'%s') FTB_Publish failed ret=%d\n", errcode, eprop.event_payload, ret);
