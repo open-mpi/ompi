@@ -75,11 +75,11 @@ int MPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, int *count)
           /* If the size of the datatype is zero let's return a count of zero */
          return MPI_SUCCESS;
       }
-      *count = (int)(status->_count / size);
-      size = status->_count - (*count) * size;
+      *count = (int)(status->_count / size);    /* how many full types? */
+      size = status->_count - (*count) * size;  /* leftover bytes */
       /* if basic type we should return the same result as MPI_Get_count */
       if( ompi_datatype_is_predefined(datatype) ) {
-         if( size != 0 ) {
+         if( size != 0 ) {  /* no leftover is supported for predefined types */
             *count = MPI_UNDEFINED;
          }
          return MPI_SUCCESS;
@@ -91,6 +91,9 @@ int MPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, int *count)
          *count = total * (*count);
       }
       if( size > 0 ) {
+         /* If there are any leftover bytes, compute the number of predefined
+          * types in the datatype that can fit in these bytes.
+          */
          if( (i = ompi_datatype_get_element_count( datatype, size )) != -1 )
             *count += i;
          else
