@@ -28,9 +28,10 @@
 
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/paffinity/base/base.h"
+#include "opal/util/argv.h"
 
 #include "orte/util/proc_info.h"
-#include "orte/util/show_help.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
@@ -38,7 +39,8 @@
 int orte_register_params(void)
 {
     int value, tmp;
-    char *strval;
+    char *strval, **params;
+    uint16_t binding;
 
     mca_base_param_reg_int_name("orte", "base_help_aggregate",
                                 "If orte_base_help_aggregate is true, duplicate help messages will be aggregated rather than displayed individually.  This can be helpful for parallel jobs that experience multiple identical failures; rather than print out the same help/failure message N times, display it once with a count of how many processes sent the same message.",
@@ -244,19 +246,15 @@ int orte_register_params(void)
                                 "Number of processor boards/node (1-256) [default: 1]",
                                 false, false, 1, &value);
     orte_default_num_boards = (uint8_t)value;
-    if (OPAL_SUCCESS != opal_paffinity_base_get_socket_info(&value)) {
-        value = 1;
-    }
+
     mca_base_param_reg_int_name("orte", "num_sockets",
-                                "Number of sockets/board (1-256) [default: auto-sensed by mpirun or 1]",
-                                false, false, value, &value);
+                                "Number of sockets/board (1-256)",
+                                false, false, 0, &value);
     orte_default_num_sockets_per_board = (uint8_t)value;
-    if (OPAL_SUCCESS != opal_paffinity_base_get_core_info(0, &value)) {
-        value = 1;
-    }
+
     mca_base_param_reg_int_name("orte", "num_cores",
-                                "Number of cores/socket (1-256) [default: auto-sensed by mpirun or 1]",
-                                false, false, value, &value);
+                                "Number of cores/socket (1-256)",
+                                false, false, 0, &value);
     orte_default_num_cores_per_socket = (uint8_t)value;
     
     /* cpu allocation specification */
@@ -267,16 +265,31 @@ int orte_register_params(void)
     /* binding specification - this will be overridden by any cmd line directive, and
      * ignored unless opal_paffinity_alone is set
      */
-    mca_base_param_reg_string_name("orte", "process_binding",
-                                   "Policy for binding processes [core | socket | board (default: none)]",
-                                   false, false, NULL, &strval);
-    if (NULL != strval) {
-        if (0 == strcmp(strval, "socket")) {
-            ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_SOCKET);
-        } else if (0 == strcmp(strval, "board")) {
-            ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_BOARD);
-        } else if (0 == strcmp(strval, "core")) {
-            ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_CORE);
+	mca_base_param_reg_string_name("orte", "process_binding",
+						     "Policy for binding processes [none | core | socket | board] (supported qualifier: if-avail)",
+						     false, false, NULL, &strval);
+	if (NULL != strval) {
+        if (0 == strcasecmp(strval, "none")) {
+            /* no binding */
+            ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_NONE);
+        } else {
+            binding = 0;
+            params = opal_argv_split(strval, ':');
+            if (1 < opal_argv_count(params)) {
+                if (0 != strcasecmp(params[1], "if-avail")) {
+                    /* unknown option */
+                    opal_output(0, "Unknown qualifier to orte_process_binding: %s", strval);
+                    return ORTE_ERR_BAD_PARAM;
+                }
+                binding = ORTE_BIND_IF_SUPPORTED;
+            }
+            if (0 == strcasecmp(params[0], "socket")) {
+                ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_SOCKET | binding);
+            } else if (0 == strcasecmp(params[0], "board")) {
+                ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_BOARD | binding);
+            } else if (0 == strcasecmp(params[0], "core")) {
+                ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_CORE | binding);
+            }
         }
     }
     /* if nothing was set, but opal_paffinity_alone is set, then default

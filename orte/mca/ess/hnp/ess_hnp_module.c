@@ -37,6 +37,7 @@
 #include "opal/util/os_path.h"
 #include "opal/util/malloc.h"
 #include "opal/util/basename.h"
+#include "opal/mca/paffinity/base/base.h"
 
 #include "orte/util/show_help.h"
 #include "orte/mca/rml/base/base.h"
@@ -104,6 +105,7 @@ static int rte_init(char flags)
     orte_job_t *jdata;
     orte_node_t *node;
     orte_proc_t *proc;
+    int value;
     
     /* initialize the global list of local children and job data */
     OBJ_CONSTRUCT(&orte_local_children, opal_list_t);
@@ -113,6 +115,27 @@ static int rte_init(char flags)
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
         error = "orte_ess_base_std_prolog";
         goto error;
+    }
+    
+    /* determine the topology info */
+    if (0 == orte_default_num_sockets_per_board) {
+        /* we weren't given a number, so try to determine it */
+        if (OPAL_SUCCESS != opal_paffinity_base_get_socket_info(&value)) {
+            /* can't get any info - default to 1 */
+            value = 1;
+        }
+        orte_default_num_sockets_per_board = (uint8_t)value;
+    }
+    if (0 == orte_default_num_cores_per_socket) {
+        /* we weren't given a number, so try to determine it */
+        if (OPAL_SUCCESS != (ret = opal_paffinity_base_get_core_info(0, &value))) {
+            /* don't have topo info - can we at least get #processors? */
+            if (OPAL_SUCCESS != opal_paffinity_base_get_processor_info(&value)) {
+                /* can't get any info - default to 1 */
+                value = 1;
+            }
+        }
+        orte_default_num_cores_per_socket = (uint8_t)value;
     }
     
     /* Since we are the HNP, then responsibility for

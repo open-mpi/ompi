@@ -264,6 +264,16 @@ typedef uint16_t orte_mapping_policy_t;
 /* nice macro for setting these */
 #define ORTE_SET_MAPPING_POLICY(pol) \
     orte_default_mapping_policy = (orte_default_mapping_policy & 0x00ff) | (pol);
+/* macro to detect if some other policy has been set */
+#define ORTE_XSET_MAPPING_POLICY(pol)                           \
+    do {                                                        \
+        orte_mapping_policy_t tmp;                              \
+        tmp = (orte_default_mapping_policy & 0xff00) & ~(pol);  \
+        if (0 == tmp) {                                         \
+            ORTE_SET_MAPPING_POLICY((pol));                     \
+        }                                                       \
+    } while(0);
+/* macro to add another mapping policy */
 #define ORTE_ADD_MAPPING_POLICY(pol) \
     orte_default_mapping_policy |= (pol);
 
@@ -272,6 +282,7 @@ typedef uint16_t orte_mapping_policy_t;
 #define ORTE_BIND_TO_CORE           (uint16_t)OPAL_PAFFINITY_BIND_TO_CORE
 #define ORTE_BIND_TO_SOCKET         (uint16_t)OPAL_PAFFINITY_BIND_TO_SOCKET
 #define ORTE_BIND_TO_BOARD          (uint16_t)OPAL_PAFFINITY_BIND_TO_BOARD
+#define ORTE_BIND_IF_SUPPORTED      (uint16_t)OPAL_PAFFINITY_BIND_IF_SUPPORTED
 /* nice macro for setting these */
 #define ORTE_SET_BINDING_POLICY(pol) \
     orte_default_mapping_policy = (orte_default_mapping_policy & 0xff00) | (pol);
@@ -284,6 +295,9 @@ typedef uint16_t orte_mapping_policy_t;
             ORTE_SET_BINDING_POLICY((pol));                     \
         }                                                       \
     } while(0);
+/* macro to detect if binding was qualified */
+#define ORTE_BINDING_NOT_REQUIRED(n) \
+    (ORTE_BIND_IF_SUPPORTED & (n))
 
 typedef struct {
     /** Base object so this can be put on a list */

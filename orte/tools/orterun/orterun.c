@@ -254,6 +254,9 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, '\0', "byslot", "byslot", 0,
       &orterun_globals.by_slot, OPAL_CMD_LINE_TYPE_BOOL,
       "Whether to assign processes round-robin by slot (the default)" },
+    { NULL, NULL, NULL, '\0', "bycore", "bycore", 0,
+      &orterun_globals.by_slot, OPAL_CMD_LINE_TYPE_BOOL,
+      "Alias for byslot" },
     { NULL, NULL, NULL, '\0', "bysocket", "bysocket", 0,
       &orterun_globals.by_socket, OPAL_CMD_LINE_TYPE_BOOL,
       "Whether to assign processes round-robin by socket" },
@@ -301,6 +304,9 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       "Launch n processes per socket on all allocated nodes" },
 
     /* binding options */
+    { NULL, NULL, NULL, '\0', "bind-to-none", "bind-to-none", 0,
+      &orterun_globals.bind_to_none, OPAL_CMD_LINE_TYPE_BOOL,
+      "Do not bind processes to cores or sockets" },
     { NULL, NULL, NULL, '\0', "bind-to-core", "bind-to-core", 0,
       &orterun_globals.bind_to_core, OPAL_CMD_LINE_TYPE_BOOL,
       "Whether to bind processes to specific cores (the default)" },
@@ -1327,6 +1333,8 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
         ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_BOARD);
     } else if (orterun_globals.bind_to_core) {
         ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_CORE);
+    } else if (orterun_globals.bind_to_none) {
+        ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_NONE);
     }
     /* if nothing was specified, leave it as set
      * by mca param

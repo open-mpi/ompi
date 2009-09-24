@@ -32,6 +32,7 @@
 #include "orte/util/show_help.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
+#include "opal/mca/paffinity/base/base.h"
 
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/routed/base/base.h"
@@ -65,10 +66,32 @@ int orte_ess_base_orted_setup(void)
     int ret;
     char *error = NULL;
     char *plm_to_use;
+    int value;
 
     /* initialize the global list of local children and job data */
     OBJ_CONSTRUCT(&orte_local_children, opal_list_t);
     OBJ_CONSTRUCT(&orte_local_jobdata, opal_list_t);
+    
+    /* determine the topology info */
+    if (0 == orte_default_num_sockets_per_board) {
+        /* we weren't given a number, so try to determine it */
+        if (OPAL_SUCCESS != opal_paffinity_base_get_socket_info(&value)) {
+            /* can't get any info - default to 1 */
+            value = 1;
+        }
+        orte_default_num_sockets_per_board = (uint8_t)value;
+    }
+    if (0 == orte_default_num_cores_per_socket) {
+        /* we weren't given a number, so try to determine it */
+        if (OPAL_SUCCESS != opal_paffinity_base_get_core_info(0, &value)) {
+            /* don't have topo info - can we at least get #processors? */
+            if (OPAL_SUCCESS != opal_paffinity_base_get_processor_info(&value)) {
+                /* can't get any info - default to 1 */
+                value = 1;
+            }
+        }
+        orte_default_num_cores_per_socket = (uint8_t)value;
+    }
     
     /* some environments allow remote launches - e.g., ssh - so
      * open the PLM and select something -only- if we are given
