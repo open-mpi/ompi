@@ -1,0 +1,27 @@
+# -*- text -*-
+#
+# Copyright (c) 2009 The Trustees of Indiana University and Indiana
+#                    University Research and Technology Corporation.
+#                    All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+# This is the US/English help file for Open MPI's FTB notifier support
+#
+[invalid subscription style]
+Error: the Open MPI FTB component tried to register with an invalid
+FTB client subscription style.
+
+ Subscription style: %s
+#
+[invalid value]
+Error: the Open MPI FTB notifier component tried to register with an
+invalid value in the FTB client information.
+#
+[unable to connect]
+Open MPI's FTB notifier component was unable to establish a connection
+with the FTB backplane.
+#
