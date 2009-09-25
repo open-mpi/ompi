@@ -51,16 +51,6 @@ present in all OMPI executables and user-level applications, it won't
 necessarily be used -- it's a separate/run-time decision as to whether
 it will be used.
 
-For hysterical raisins (v1.3.0 and v1.3.1), an empty
-libopenmpi_malloc.la is created.  This library *used* to be the whole
-ptmalloc2 allocator, but since we're now name-shifting all the
-ptmalloc2 symbols, it's no longer necessary to make it a separate
-library.  Having an empty/dummy library of this name ensures that
-users who added -lopenmpi_malloc to their compile/link lines won't
-fail linking.  They may get a linker warning about no symbols being
-used in this library -- but that's a Good Thing; it'll encourage users
-to stop linking in this library.
-
 We set the __malloc_initialize_hook variable to point to
 opal_memory_ptmalloc2_malloc_init_hook (in hooks.c).  This function is
 called by the underlying glibc allocator before any allocations occur

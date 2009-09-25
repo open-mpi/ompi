@@ -817,25 +817,6 @@ for a full list); a summary of the more commonly used ones follows:
   with different endian representations).  Heterogeneous support is
   disabled by default because it imposes a minor performance penalty.
 
---enable-ptmalloc2-internal
-  ***NOTE: This option no longer exists.
-
-  This option was introduced in Open MPI v1.3 and was then removed in
-  Open MPI v1.3.2.  Open MPI fundamentally changed how it uses
-  ptmalloc2 support in v1.3.2 such that the
-  --enable-ptmalloc2-internal flag was no longer necessary.  It can
-  still harmlessly be supplied to Open MPI's configure script, but a
-  warning will appear about how it is an unrecognized option.
-
-  In v1.3 and v1.3.1, Open MPI built the ptmalloc2 library as a
-  standalone library that users could choose to link in or not (by
-  adding -lopenmpi-malloc to their link command).  Using this option
-  restored pre-v1.3 behavior of *always* forcing the user to use the
-  ptmalloc2 memory manager (because it is part of libmpi).
-
-  Starting with v1.3.2, ptmalloc2 is always built into Open MPI, but
-  is only activated in certain scenarios.
-
 --with-wrapper-cflags=<cflags>
 --with-wrapper-cxxflags=<cxxflags>
 --with-wrapper-fflags=<fflags>

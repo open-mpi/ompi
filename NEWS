@@ -35,6 +35,8 @@ Trunk (not on release branches yet)
 1.5
 ---
 
+- Removed the libopenmpi_malloc library (added in the v1.3 series)
+  since it is no longer necessary
 - Add several notifier plugins (generally used when Open MPI detects
   system/network administrator-worthy problems); each have their own
   MCA parameters to govern their usage.  See "ompi_info --param

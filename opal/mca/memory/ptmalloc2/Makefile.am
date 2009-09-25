@@ -59,11 +59,6 @@ libmca_memory_ptmalloc2_la_LDFLAGS = \
    -module -avoid-version $(memory_ptmalloc2_LDFLAGS)
 libmca_memory_ptmalloc2_la_LIBADD = $(memory_ptmalloc2_LIBS)
 
-# For hysterical raisins, we create a dummy libopenmpi_malloc.la.  See
-# README-open-mpi.txt for details
-lib_LTLIBRARIES = libopenmpi_malloc.la
-libopenmpi_malloc_la_SOURCES = dummy.c
-
 # these are included directly and shouldn't be built solo
 EXTRA_libmca_memory_ptmalloc2_la_SOURCES = \
     arena.c \
