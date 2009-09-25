@@ -86,8 +86,9 @@ int MPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, int *count)
       }
       if( (*count) != 0 ) {
          int total;  /* count the basic elements in the datatype */
-         for( i = 4, total = 0; i < OMPI_DATATYPE_MAX_PREDEFINED; i++ )
+         for( i = 4, total = 0; i < OPAL_DATATYPE_MAX_PREDEFINED; i++ ) {
             total += datatype->super.btypes[i];
+         }
          *count = total * (*count);
       }
       if( size > 0 ) {
