@@ -261,7 +261,7 @@ void ompi_wait_for_debugger(void)
  * defined in orterun for the starter.  It should never conflict with
  * this one, but we'll make it static, just to be sure.
  */
-static void *MPIR_Breakpoint(void)
+void *MPIR_Breakpoint(void)
 {
     return NULL;
 }
