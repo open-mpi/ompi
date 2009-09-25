@@ -41,7 +41,6 @@ static opal_mutex_t lock;
 static opal_list_t recvs;
 static opal_list_t channels;
 static unsigned int next_channel;
-static uint8_t my_packed_name[8];
 static bool init_completed = false;
 
 /* LOCAL FUNCTIONS */
@@ -237,7 +236,6 @@ static int init(void)
     rmcast_basic_channel_t *chan;
     int channel;
     char *name;
-    uint32_t tmp;
     
     if (init_completed) {
         return ORTE_SUCCESS;
@@ -252,12 +250,6 @@ static int init(void)
     OBJ_CONSTRUCT(&recvs, opal_list_t);
     OBJ_CONSTRUCT(&channels, opal_list_t);
 
-    /* convert my name to get it into network-byte-order */
-    tmp = htonl(ORTE_PROC_MY_NAME->jobid);
-    memcpy(&my_packed_name[0], &tmp, 4);
-    tmp = htonl(ORTE_PROC_MY_NAME->vpid);
-    memcpy(&my_packed_name[4], &tmp, 4);
-    
     /* define the starting point for new channels */
     next_channel = ORTE_RMCAST_DYNAMIC_CHANNELS;
     
@@ -783,6 +775,7 @@ static void xmit_data(int sd, short flags, void* send_req)
     int32_t sz;
     int rc;
     uint16_t tmp;
+    uint32_t nm;
 
     OPAL_THREAD_LOCK(&chan->send_lock);
     while (NULL != (item = opal_list_remove_first(&chan->pending_sends))) {
@@ -792,7 +785,10 @@ static void xmit_data(int sd, short flags, void* send_req)
         opal_dss.unload(snd->data, (void**)&bytes, &sz);
         
         /* start the send data area with our name in network-byte-order */
-        memcpy(chan->send_data, my_packed_name, 8);
+        nm = htonl(ORTE_PROC_MY_NAME->jobid);
+        memcpy(&chan->send_data[0], &nm, 4);
+        nm = htonl(ORTE_PROC_MY_NAME->vpid);
+        memcpy(&chan->send_data[4], &nm, 4);
         
         /* add the tag data, also converted */
         tmp = htons(snd->tag);

@@ -75,7 +75,8 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 /* bootstrap */
 #define ORTE_DAEMON_NAME_REQ_CMD            (orte_daemon_cmd_flag_t) 23
 #define ORTE_DAEMON_CHECKIN_CMD             (orte_daemon_cmd_flag_t) 24
-    
+#define ORTE_TOOL_CHECKIN_CMD               (orte_daemon_cmd_flag_t) 25
+
 /*
  * List object to locally store the process names and pids of
  * our children. This can subsequently be used to order termination

@@ -127,9 +127,7 @@ int orte_ess_base_tool_setup(void)
     
     /* setup I/O forwarding system - must come after we init routes */
     if (NULL != orte_process_info.my_hnp_uri) {
-        /* only do this if we were NOT given an HNP - i.e., if we
-         * are a standalone tool
-         */
+        /* only do this if we were given an HNP */
         if (ORTE_SUCCESS != (ret = orte_iof_base_open())) {
             ORTE_ERROR_LOG(ret);
             error = "orte_iof_base_open";
