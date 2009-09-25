@@ -97,9 +97,16 @@ static int finalize(void)
 {
     int rc;
     
+    /* if I am a tool without a daemon, just cleanout
+     * the basics and leave
+     */
+    if (ORTE_PROC_IS_TOOL && NULL == orte_process_info.my_daemon_uri) {
+        goto cleanup;
+    }
+    
     /* if I am an application process, indicate that I am
-        * truly finalizing prior to departure
-        */
+     * truly finalizing prior to departure
+     */
     if (ORTE_PROC_IS_APP) {
         if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync(false))) {
             ORTE_ERROR_LOG(rc);
@@ -112,6 +119,7 @@ static int finalize(void)
         orte_routed_base_comm_stop();
     }
     
+cleanup:
     OBJ_DESTRUCT(&jobfam_list);
     /* destruct the global condition and lock */
     OBJ_DESTRUCT(&cond);
@@ -291,18 +299,18 @@ static orte_process_name_t get_route(orte_process_name_t *target)
         goto found;
     }
     
+    /* if I am a tool without a daemon, the route is direct */
+    if (ORTE_PROC_IS_TOOL && NULL == orte_process_info.my_daemon_uri) {
+        ret = target;
+        goto found;
+    }
+    
     /* if I am an application process, always route via my local daemon */
     if (ORTE_PROC_IS_APP) {
         ret = ORTE_PROC_MY_DAEMON;
         goto found;
     }
 
-    /* if I am a tool, the route is direct */
-    if (ORTE_PROC_IS_TOOL) {
-        ret = target;
-        goto found;
-    }
-    
     /* if the job family is zero, then this is going to a local slave,
      * so the path is direct
      */
@@ -469,8 +477,30 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
      */
     int rc;
 
-    /* if I am a tool, then I stand alone - there is nothing to do */
+    /* if I am a tool, then see if I stand alone - otherwise,
+     * setup the HNP info
+     */
     if (ORTE_PROC_IS_TOOL) {
+        if (NULL == orte_process_info.my_hnp_uri) {
+            return ORTE_SUCCESS;
+        }
+        
+        /* set the contact info into the hash table */
+        if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(orte_process_info.my_hnp_uri))) {
+            ORTE_ERROR_LOG(rc);
+            return(rc);
+        }
+        
+        /* extract the hnp name and store it */
+        if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_hnp_uri,
+                                                           ORTE_PROC_MY_HNP, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /* set our lifeline to the HNP - we will abort if that connection is lost */
+        lifeline = ORTE_PROC_MY_HNP;
+        
         return ORTE_SUCCESS;
     }
     
