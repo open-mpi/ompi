@@ -259,7 +259,7 @@ void ompi_wait_for_debugger(void)
 /*
  * Breakpoint function for parallel debuggers.  This function is also
  * defined in orterun for the starter.  It should never conflict with
- * this one, but we'll make it static, just to be sure.
+ * this one.
  */
 void *MPIR_Breakpoint(void)
 {
