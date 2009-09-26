@@ -95,7 +95,7 @@ orte_iof_base_module_t orte_iof_hnp_module = {
 static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag, int fd)
 {
     orte_job_t *jdata;
-    orte_proc_t **procs;
+    orte_proc_t *proc;
     orte_iof_sink_t *sink;
     orte_iof_proc_t *proct;
     opal_list_item_t *item;
@@ -223,14 +223,17 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
             ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
             return ORTE_ERR_BAD_PARAM;
         }
-        procs = (orte_proc_t**)jdata->procs->addr;
+        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, dst_name->vpid))) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return ORTE_ERR_NOT_FOUND;
+        }
         /* if it is me, then don't set this up - we'll get it on the pull */
-        if (ORTE_PROC_MY_NAME->vpid != procs[dst_name->vpid]->node->daemon->name.vpid) {
+        if (ORTE_PROC_MY_NAME->vpid != proc->node->daemon->name.vpid) {
             ORTE_IOF_SINK_DEFINE(&sink, dst_name, -1, ORTE_IOF_STDIN,
                                  stdin_write_handler,
                                  &mca_iof_hnp_component.sinks);
             sink->daemon.jobid = ORTE_PROC_MY_NAME->jobid;
-            sink->daemon.vpid = procs[dst_name->vpid]->node->daemon->name.vpid;
+            sink->daemon.vpid = proc->node->daemon->name.vpid;
         }
     }
     
