@@ -1003,6 +1003,9 @@ int orte_plm_base_report_launched(orte_jobid_t job)
      */
     if (jdata->state < ORTE_JOB_STATE_LAUNCHED) {
         jdata->state = ORTE_JOB_STATE_LAUNCHED;
+    } else if (ORTE_JOB_STATE_TERMINATED < jdata->state) {
+        /* job failed - indicate so */
+        return ORTE_ERR_FATAL;
     }
     
     return ORTE_SUCCESS;
