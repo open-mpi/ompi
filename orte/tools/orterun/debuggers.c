@@ -630,8 +630,8 @@ void orte_debugger_init_before_spawn(orte_job_t *jdata)
  */
 void orte_debugger_init_after_spawn(orte_job_t *jdata)
 {
-    orte_proc_t **procs;
-    orte_app_context_t *appctx, **apps;
+    orte_proc_t *proc;
+    orte_app_context_t *appctx;
     orte_vpid_t i, j;
     opal_buffer_t buf;
     orte_process_name_t rank0;
@@ -662,19 +662,19 @@ void orte_debugger_init_after_spawn(orte_job_t *jdata)
     }
     
     /* initialize MPIR_proctable */
-    procs = (orte_proc_t**)jdata->procs->addr;
-    apps = (orte_app_context_t**)jdata->apps->addr;
     for (j=0; j < jdata->num_procs; j++) {
-        if (NULL == procs[j]) {
-            opal_output(0, "Error: undefined proc at position %ld\n", (long)j);
+        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, j))) {
+            continue;
         }
         /* store this data in the location whose index
          * corresponds to the proc's rank
          */
-        i = procs[j]->name.vpid;
-        appctx = apps[procs[j]->app_idx];
+        i = proc->name.vpid;
+        if (NULL == (appctx = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, proc->app_idx))) {
+            continue;
+        }
         
-        MPIR_proctable[i].host_name = strdup(procs[j]->node->name);
+        MPIR_proctable[i].host_name = strdup(proc->node->name);
         if ( 0 == strncmp(appctx->app, OPAL_PATH_SEP, 1 )) { 
             MPIR_proctable[i].executable_name = 
             opal_os_path( false, appctx->app, NULL ); 
@@ -682,7 +682,7 @@ void orte_debugger_init_after_spawn(orte_job_t *jdata)
             MPIR_proctable[i].executable_name =
             opal_os_path( false, appctx->cwd, appctx->app, NULL ); 
         } 
-        MPIR_proctable[i].pid = procs[j]->pid;
+        MPIR_proctable[i].pid = proc->pid;
     }
 
     if (orte_debug_flag) {
