@@ -253,12 +253,14 @@ static int init(void)
     /* define the starting point for new channels */
     next_channel = ORTE_RMCAST_DYNAMIC_CHANNELS;
     
-    if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
+    if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_TOOL) {
         channel = ORTE_RMCAST_SYS_ADDR;
         name = "system";
     } else if (ORTE_PROC_IS_APP) {
         channel = ORTE_RMCAST_APP_PUBLIC_ADDR;
         name = "app-public";
+    } else {
+        return ORTE_ERR_NOT_SUPPORTED;
     }
     
     /* create a xmit socket */
