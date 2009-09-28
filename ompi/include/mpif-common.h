@@ -408,6 +408,9 @@
       integer MPI_DOUBLE_COMPLEX
       integer MPI_2REAL, MPI_2DOUBLE_PRECISION, MPI_2INTEGER
       integer MPI_2COMPLEX, MPI_2DOUBLE_COMPLEX
+! Note that MPI_LOGICALx are not defined by the MPI spec, but there are
+! other MPI implementations that have them, so it's good for us to have
+! as well.
       integer MPI_LOGICAL1, MPI_LOGICAL2, MPI_LOGICAL4, MPI_LOGICAL8
 
 !
