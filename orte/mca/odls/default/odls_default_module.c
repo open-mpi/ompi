@@ -210,6 +210,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
     int target_socket, npersocket, logical_skt;
     int logical_cpu, phys_core, phys_cpu, ncpu;
     bool bound = false;
+    orte_pmap_t *pmap;
     
     if (NULL != child) {
         /* should pull this information from MPIRUN instead of going with
@@ -285,6 +286,18 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                 ORTE_ODLS_ERROR_OUT(i);
             }
             
+            /* get the pmap object for this child */
+            if (NULL == (pmap = (orte_pmap_t*)opal_value_array_get_item(&jobdat->procmap, child->name->vpid))) {
+                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                ORTE_ODLS_ERROR_OUT(ORTE_ERR_NOT_FOUND);
+            }
+            /* get the local rank */
+            if (ORTE_LOCAL_RANK_INVALID == (lrank = pmap->local_rank)) {
+                orte_show_help("help-odls-default.txt",
+                               "odls-default:invalid-local-rank", true);
+                ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+            }
+            
             /* Setup process affinity.  First check to see if a slot list was
              * specified.  If so, use it.  If no slot list was specified,
              * that's not an error -- just fall through and try the next
@@ -329,16 +342,11 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(child->name),
                                      (int)jobdat->cpus_per_rank, (int)jobdat->stride));
+
                 /* get the node rank */
-                if (ORTE_NODE_RANK_INVALID == (nrank = orte_ess.get_node_rank(child->name))) {
+                if (ORTE_NODE_RANK_INVALID == (nrank = pmap->node_rank)) {
                     orte_show_help("help-odls-default.txt",
                                    "odls-default:invalid-node-rank", true);
-                    ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
-                }
-                /* get the local rank */
-                if (ORTE_LOCAL_RANK_INVALID == (lrank = orte_ess.get_local_rank(child->name))) {
-                    orte_show_help("help-odls-default.txt",
-                                   "odls-default:invalid-local-rank", true);
                     ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
                 }
                 /* init the mask */
@@ -525,11 +533,6 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                 /* layout this process across the sockets based on
                  * the provided mapping policy
                  */
-                if (ORTE_LOCAL_RANK_INVALID == (lrank = orte_ess.get_local_rank(child->name))) {
-                    orte_show_help("help-odls-default.txt",
-                                   "odls-default:invalid-local-rank", true);
-                    ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
-                }
                 if (ORTE_MAPPING_NPERXXX & jobdat->policy) {
                     /* we need to balance the children from this job across the available sockets */
                     npersocket = jobdat->num_local_procs / orte_odls_globals.num_sockets;
