@@ -66,8 +66,6 @@ typedef struct {
     opal_list_t xterm_ranks;
     /* the xterm cmd to be used */
     char **xtermcmd;
-    /* whether or not to report bindings */
-    bool report_bindings;
     /* any externally provided bindings */
     opal_paffinity_base_cpu_set_t my_cores;
     /* flag whether or not we are bound */

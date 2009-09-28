@@ -180,12 +180,6 @@ int orte_odls_base_open(void)
                                 "Time to wait for a process to die after issuing a kill signal to it",
                                 false, false, 1, &orte_odls_globals.timeout_before_sigkill);
 
-    /* see if the user wants us to report bindings */
-    mca_base_param_reg_int_name("odls", "base_report_bindings",
-                                "Report process bindings [default: no]",
-                                false, false, (int)false, &i);
-    orte_odls_globals.report_bindings = OPAL_INT_TO_BOOL(i);
-    
     /* initialize ODLS globals */
     OBJ_CONSTRUCT(&orte_odls_globals.mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&orte_odls_globals.cond, opal_condition_t);
@@ -224,7 +218,7 @@ int orte_odls_base_open(void)
                     orte_odls_globals.num_sockets++;
                 }
             }
-            if (ORTE_PROC_IS_HNP && orte_odls_globals.report_bindings) {
+            if (ORTE_PROC_IS_HNP && orte_report_bindings) {
                 opal_output(0, "System has detected external process binding to cores %04lx",
                             orte_odls_globals.my_cores.bitmask[0]);
             }

@@ -156,6 +156,9 @@ orte_mapping_policy_t orte_default_mapping_policy = 0;
 bool orte_report_events = false;
 char *orte_report_events_uri = NULL;
 
+/* report bindings */
+bool orte_report_bindings = false;
+
 #endif /* !ORTE_DISABLE_FULL_RTE */
 
 int orte_debug_output = -1;

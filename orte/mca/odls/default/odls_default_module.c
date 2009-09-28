@@ -113,7 +113,7 @@ orte_odls_base_module_t orte_odls_default_module = {
 #define ORTE_ODLS_IF_BIND_NOT_REQD(n)                               \
     do {                                                            \
         if (ORTE_BINDING_NOT_REQUIRED(jobdat->policy)) {            \
-            if (orte_odls_globals.report_bindings) {                \
+            if (orte_report_bindings) {                             \
                 orte_show_help("help-odls-default.txt",             \
                                "odls-default:binding-not-avail",    \
                                true, orte_process_info.nodename,    \
@@ -308,7 +308,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                                    "odls-default:multiple-paffinity-schemes", true, child->slot_list);
                     ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
                 }
-                if (orte_odls_globals.report_bindings) {
+                if (orte_report_bindings) {
                     opal_output(0, "%s odls:default:fork binding child %s to slot_list %s",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                 ORTE_NAME_PRINT(child->name), child->slot_list);
@@ -463,7 +463,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                         /* increment logical cpu */
                         logical_cpu += jobdat->stride;
                     }
-                    if (orte_odls_globals.report_bindings) {
+                    if (orte_report_bindings) {
                         opal_output(0, "%s odls:default:fork binding child %s to socket %d cpus %04lx",
                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                     ORTE_NAME_PRINT(child->name), target_socket, mask.bitmask[0]);
@@ -510,7 +510,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                         /* increment logical cpu */
                         logical_cpu += jobdat->stride;
                     }
-                    if (orte_odls_globals.report_bindings) {
+                    if (orte_report_bindings) {
                         opal_output(0, "%s odls:default:fork binding child %s to cpus %04lx",
                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                     ORTE_NAME_PRINT(child->name), mask.bitmask[0]);
@@ -722,7 +722,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                                    "odls-default:could-not-bind-to-socket", true);
                     ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
                 }
-                if (orte_odls_globals.report_bindings) {
+                if (orte_report_bindings) {
                     opal_output(0, "%s odls:default:fork binding child %s to socket %d cpus %04lx",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                 ORTE_NAME_PRINT(child->name), target_socket, mask.bitmask[0]);
