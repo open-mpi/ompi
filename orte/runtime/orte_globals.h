@@ -624,6 +624,9 @@ ORTE_DECLSPEC extern orte_mapping_policy_t orte_default_mapping_policy;
 ORTE_DECLSPEC extern bool orte_report_events;
 ORTE_DECLSPEC extern char *orte_report_events_uri;
 
+/* report bindings */
+ORTE_DECLSPEC extern bool orte_report_bindings;
+
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS

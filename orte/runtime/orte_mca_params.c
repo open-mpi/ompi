@@ -402,6 +402,13 @@ int orte_register_params(void)
         ORTE_XSET_BINDING_POLICY(ORTE_BIND_TO_CORE);
     }
     
+    /* whether or not to report bindings */
+    mca_base_param_reg_int_name("orte", "report_bindings",
+                                "Report bindings",
+                                false, false,
+                                (int) false, &value);
+    orte_report_bindings = OPAL_INT_TO_BOOL(value);
+    
     /* tool communication controls */
     mca_base_param_reg_string_name("orte", "report_events",
                                    "URI to which events are to be reported (default: NULL)]",

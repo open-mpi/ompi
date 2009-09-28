@@ -208,6 +208,10 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Bootstrap the connection to the HNP" },
     
+    { "orte", "report", "bindings", '\0', "report-bindings", "report-bindings", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Whether to report process bindings to stderr" },
+
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
