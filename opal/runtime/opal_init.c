@@ -195,6 +195,13 @@ opal_init_util(void)
     /* initialize the output system */
     opal_output_init();
 
+    /* initialize install dirs code */
+    if (OPAL_SUCCESS != (ret = opal_installdirs_base_open())) {
+        fprintf(stderr, "opal_installdirs_base_open() failed -- process will likely abort (%s:%d, returned %d instead of OPAL_INIT)\n",
+                __FILE__, __LINE__, ret);
+        return ret;
+    }
+    
     /* initialize the help system */
     opal_show_help_init();
 
@@ -204,13 +211,6 @@ opal_init_util(void)
                                    OPAL_ERR_BASE, OPAL_ERR_MAX, opal_err2str))) {
         error = "opal_error_register";
         goto return_error;
-    }
-
-    /* initialize install dirs code */
-    if (OPAL_SUCCESS != (ret = opal_installdirs_base_open())) {
-        fprintf(stderr, "opal_installdirs_base_open() failed -- process will likely abort (%s:%d, returned %d instead of OPAL_INIT)\n",
-                __FILE__, __LINE__, ret);
-        return ret;
     }
 
     /* init the trace function */
