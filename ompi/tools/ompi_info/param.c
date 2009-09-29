@@ -138,7 +138,7 @@ void ompi_info_do_params(bool want_all_in, bool want_internal)
             
             if (!found) {
                 char *usage = opal_cmd_line_get_usage_msg(ompi_info_cmd_line);
-                orte_show_help("help-ompi_info.txt", "usage", true, usage);
+                orte_show_help("help-ompi_info.txt", "not-found", true, type);
                 free(usage);
                 exit(1);
             }
