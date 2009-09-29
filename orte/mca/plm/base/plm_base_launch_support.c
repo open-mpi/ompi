@@ -1062,9 +1062,6 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     if (orted_spin_flag) {
         opal_argv_append(argc, argv, "--spin");
     }
-    if (orte_leave_session_attached) {
-        opal_argv_append(argc, argv, "--leave-session-attached");
-    }
     if (orte_report_bindings) {
         opal_argv_append(argc, argv, "--report-bindings");
     }
