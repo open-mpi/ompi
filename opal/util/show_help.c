@@ -40,16 +40,18 @@
 static const char *default_filename = "help-messages";
 static const char *dash_line = "--------------------------------------------------------------------------\n";
 static int output_stream = -1;
-
+static char **search_dirs = NULL;
 
 int opal_show_help_init(void)
 {
     opal_output_stream_t lds;
-
+    
     OBJ_CONSTRUCT(&lds, opal_output_stream_t);
     lds.lds_want_stderr = true;
     output_stream = opal_output_open(&lds);
-
+    
+    opal_argv_append_nosize(&search_dirs, opal_install_dirs.pkgdatadir);
+    
     return OPAL_SUCCESS;
 }
 
@@ -57,6 +59,12 @@ int opal_show_help_finalize(void)
 {
     opal_output_close(output_stream);
     output_stream = -1;
+    
+    /* destruct the search list */
+    if (NULL != search_dirs) {
+        opal_argv_free(search_dirs);
+    };
+    
     return OPAL_SUCCESS;
 }
 
@@ -118,32 +126,36 @@ static int open_file(const char *base, const char *topic)
     char *filename;
     char *err_msg = NULL;
     size_t base_len;
-
+    int i;
+    
     /* If no filename was supplied, use the default */
 
     if (NULL == base) {
         base = default_filename;
     }
-
+    
     /* Try to open the file.  If we can't find it, try it with a .txt
-       extension. */
-
-    filename = opal_os_path( false, opal_install_dirs.pkgdatadir, base, NULL );
-    opal_show_help_yyin = fopen(filename, "r");
-    if (NULL == opal_show_help_yyin) {
-        asprintf(&err_msg, "%s: %s", filename, strerror(errno));
-        base_len = strlen(base);
-        if (4 > base_len || 0 != strcmp(base + base_len - 4, ".txt")) {
-            free(filename);
-            asprintf(&filename, "%s%s%s.txt", opal_install_dirs.pkgdatadir,
-                     OPAL_PATH_SEP, base);
-            opal_show_help_yyin = fopen(filename, "r");
+     * extension.
+     */
+    for (i=0; NULL != search_dirs[i]; i++) {
+        filename = opal_os_path( false, search_dirs[i], base, NULL );
+        opal_show_help_yyin = fopen(filename, "r");
+        if (NULL == opal_show_help_yyin) {
+            asprintf(&err_msg, "%s: %s", filename, strerror(errno));
+            base_len = strlen(base);
+            if (4 > base_len || 0 != strcmp(base + base_len - 4, ".txt")) {
+                free(filename);
+                asprintf(&filename, "%s%s%s.txt", search_dirs[i], OPAL_PATH_SEP, base);
+                opal_show_help_yyin = fopen(filename, "r");
+            }
+        }
+        free(filename);
+        if (NULL != opal_show_help_yyin) {
+            break;
         }
     }
-    free(filename);
 
     /* If we still couldn't open it, then something is wrong */
-
     if (NULL == opal_show_help_yyin) {
         opal_output(output_stream, "%sSorry!  You were supposed to get help about:\n    %s\nBut I couldn't open the help file:\n    %s.  Sorry!\n%s", dash_line, topic, err_msg, dash_line);
         free(err_msg);
@@ -329,4 +341,10 @@ int opal_show_help(const char *filename, const char *topic,
     va_end(arglist);
 
     return rc;
+}
+
+int opal_show_help_add_dir(const char *directory)
+{
+    opal_argv_append_nosize(&search_dirs, directory);
+    return OPAL_SUCCESS;
 }
