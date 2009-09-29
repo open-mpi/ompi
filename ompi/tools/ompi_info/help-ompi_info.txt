@@ -43,3 +43,15 @@ Aborting...
 ***   Value:      "%s"
 ***   Max length: %d
 **************************************************************************
+#
+[not-found]
+The specified framework could not be found:
+
+  Framework: %s
+
+This could be due to a misspelling of the framework name, or because support
+for that framework was not configured into this version of OMPI. Please see
+
+  ompi_info --config
+
+for a full report of how OMPI was configured.
