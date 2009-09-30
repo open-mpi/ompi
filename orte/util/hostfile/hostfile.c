@@ -174,7 +174,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
             }
             node_name[len-1] = '\0';  /* truncate */
             
-            OPAL_OUTPUT_VERBOSE((0, orte_debug_output,
+            OPAL_OUTPUT_VERBOSE((3, orte_debug_output,
                                  "%s hostfile: node %s is being excluded",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node_name));
             
@@ -216,7 +216,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
             node_name = strdup(orte_process_info.nodename);
         }
 
-        OPAL_OUTPUT_VERBOSE((0, orte_debug_output,
+        OPAL_OUTPUT_VERBOSE((3, orte_debug_output,
                              "%s hostfile: node %s is being included - keep all is %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node_name,
                              keep_all ? "TRUE" : "FALSE"));
