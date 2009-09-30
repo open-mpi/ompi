@@ -484,8 +484,7 @@ checkin:
     opal_dss.pack(&buf, &orte_process_info.nodename, 1, OPAL_STRING);
 
     /* set the recv to get the answer */
-    if (ORTE_SUCCESS != (rc = orte_rmcast.recv_nb(ORTE_RMCAST_SYS_ADDR,
-                                                  ORTE_RMCAST_NON_PERSISTENT,
+    if (ORTE_SUCCESS != (rc = orte_rmcast.recv_nb(0, ORTE_RMCAST_NON_PERSISTENT,
                                                   ORTE_RMCAST_TAG_BOOTSTRAP,
                                                   cbfunc, NULL))) {
         ORTE_ERROR_LOG(rc);
@@ -494,8 +493,7 @@ checkin:
     }
     
     /* send the request */
-    if (ORTE_SUCCESS != (rc = orte_rmcast.send(ORTE_RMCAST_SYS_ADDR,
-                                               ORTE_RMCAST_TAG_BOOTSTRAP,
+    if (ORTE_SUCCESS != (rc = orte_rmcast.send(0, ORTE_RMCAST_TAG_BOOTSTRAP,
                                                &buf))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&buf);

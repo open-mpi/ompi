@@ -31,10 +31,10 @@ ORTE_DECLSPEC int orte_rmcast_base_open(void);
 typedef struct {
     int rmcast_output;
     opal_list_t rmcast_opened;
-    uint8_t subnet;
-    uint8_t scope;
-    uint16_t af_family;
-    uint32_t base_ip_addr;
+    uint8_t octet1[2];
+    uint8_t octet2[2];
+    uint8_t octet3[2];
+    uint8_t channel_offset;
     uint16_t ports[256];
 } orte_rmcast_base_t;
 

@@ -21,12 +21,6 @@
 
 BEGIN_C_DECLS
 
-/* define the default ORTE multicast subnet */
-#define ORTE_RMCAST_DEFAULT_SUBNET      239
-
-/* default IP multicast scope - site-local, per IANA 2009-03-17 */
-#define ORTE_RMCAST_DEFAULT_SCOPE       255
-
 /* ORTE IP multicast channels */
 #define ORTE_RMCAST_SYS_ADDR            1
 #define ORTE_RMCAST_APP_PUBLIC_ADDR     2

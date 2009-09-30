@@ -7,6 +7,8 @@
 # $HEADER$
 #
 
+dist_pkgdata_DATA += base/help-rmcast-base.txt
+
 headers += \
         base/base.h
 
