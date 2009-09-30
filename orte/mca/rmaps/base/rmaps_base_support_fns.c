@@ -267,10 +267,11 @@ PROCESS:
      * in the mapper
      */
     OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
-                         "%s rmaps:base: mapping proc for job %s to node %s",
+                         "%s rmaps:base: mapping proc for job %s to node %s whose daemon is %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(proc->name.jobid),
-                         (NULL == node->name) ? "NULL" : node->name));
+                         (NULL == node->name) ? "NULL" : node->name,
+                         (NULL == node->daemon) ? "NULL" : ORTE_NAME_PRINT(&(node->daemon->name))));
     
     if (0 > (rc = opal_pointer_array_add(node->procs, (void*)proc))) {
         ORTE_ERROR_LOG(rc);
