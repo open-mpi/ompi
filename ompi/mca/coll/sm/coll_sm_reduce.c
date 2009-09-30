@@ -296,7 +296,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
             sbuf = inplace_temp - lb;
-            ompi_datatype_copy_content_same_ddt(dtype, count, sbuf, rbuf);
+            ompi_datatype_copy_content_same_ddt(dtype, count, (char *) sbuf, (char *) rbuf);
         } else {
             inplace_temp = NULL;
         }
