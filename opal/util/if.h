@@ -46,6 +46,11 @@ BEGIN_C_DECLS
     (((n) >> 24) & 0x000000FF), (((n) >> 16) & 0x000000FF), \
     (((n) >> 8) & 0x000000FF), ((n) & 0x000000FF)
 
+#define OPAL_IF_ASSEMBLE_NETWORK(n1, n2, n3)    \
+    (((n1) << 24) & 0xFF000000) |               \
+    (((n2) << 16) & 0x00FF0000) |               \
+    (((n3) <<  8) & 0x0000FF00)
+
 /**
  *  Lookup an interface by name and return its primary address.
  *  
