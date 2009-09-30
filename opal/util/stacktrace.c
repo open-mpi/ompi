@@ -389,7 +389,7 @@ void opal_stackframe_output(int stream)
            function calls, which will be this function and
            opa_backtrace_buffer(). */
         for (i = 2; i < traces_size; ++i) {
-            opal_output(stream, traces[i]);
+            opal_output(stream, "%s", traces[i]);
         }
     } else {
         opal_backtrace_print(stderr);
