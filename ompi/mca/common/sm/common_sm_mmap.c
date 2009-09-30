@@ -136,40 +136,6 @@ static mca_common_sm_mmap_t* create_map(int fd, size_t size, char *file_name,
     return map;
 }
 
-/*
- * Same as mca_common_sm_mmap_init(), but takes an (ompi_group_t*)
- * argument instead of na array of ompi_proc_t's.
- *
- * This function just checks the group to ensure that all the procs
- * are local, and if they are, calls mca_common_sm_mmap_init().
- */
-mca_common_sm_mmap_t* mca_common_sm_mmap_init_group(ompi_group_t *group,
-                                                    size_t size, 
-                                                    char *file_name,
-                                                    size_t size_ctl_structure, 
-                                                    size_t data_seg_alignment)
-{
-    size_t i, group_size;
-    ompi_proc_t *proc, **procs;
-
-    group_size = ompi_group_size(group);
-    procs = (ompi_proc_t**) malloc(sizeof(ompi_proc_t*) * group_size);
-    if (NULL == procs) {
-        return NULL;
-    }
-    for (i = 0; i < group_size; ++i) {
-        proc = ompi_group_peer_lookup(group,i);
-        if (!OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags)) {
-            free(procs);
-            return NULL;
-        }
-        procs[i] = proc;
-    }
-
-    return mca_common_sm_mmap_init(procs, group_size, size, file_name,
-                                   size_ctl_structure, data_seg_alignment);
-}
-
 mca_common_sm_mmap_t* mca_common_sm_mmap_init(ompi_proc_t **procs,
                                               size_t num_procs,
                                               size_t size, char *file_name,
@@ -355,8 +321,12 @@ out:
     return map;
 }
 #else
-mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
-        size_t size_ctl_structure, size_t data_seg_alignment)
+
+mca_common_sm_mmap_t* mca_common_sm_mmap_init(ompi_proc_t **procs,
+                                              size_t num_procs,
+                                              size_t size, char *file_name,
+                                              size_t size_ctl_structure,
+                                              size_t data_seg_alignment)
 {
     int fd = -1, return_code = OMPI_SUCCESS;
     bool file_previously_opened = false;
@@ -470,6 +440,40 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
     return NULL;
 }
 #endif
+
+/*
+ * Same as mca_common_sm_mmap_init(), but takes an (ompi_group_t*)
+ * argument instead of na array of ompi_proc_t's.
+ *
+ * This function just checks the group to ensure that all the procs
+ * are local, and if they are, calls mca_common_sm_mmap_init().
+ */
+mca_common_sm_mmap_t* mca_common_sm_mmap_init_group(ompi_group_t *group,
+                                                    size_t size, 
+                                                    char *file_name,
+                                                    size_t size_ctl_structure, 
+                                                    size_t data_seg_alignment)
+{
+    size_t i, group_size;
+    ompi_proc_t *proc, **procs;
+
+    group_size = ompi_group_size(group);
+    procs = (ompi_proc_t**) malloc(sizeof(ompi_proc_t*) * group_size);
+    if (NULL == procs) {
+        return NULL;
+    }
+    for (i = 0; i < group_size; ++i) {
+        proc = ompi_group_peer_lookup(group,i);
+        if (!OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags)) {
+            free(procs);
+            return NULL;
+        }
+        procs[i] = proc;
+    }
+
+    return mca_common_sm_mmap_init(procs, group_size, size, file_name,
+                                   size_ctl_structure, data_seg_alignment);
+}
 
 int mca_common_sm_mmap_fini( mca_common_sm_mmap_t* sm_mmap )
 {
