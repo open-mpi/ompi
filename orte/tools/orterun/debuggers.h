@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -32,7 +32,7 @@ void orte_debugger_init_before_spawn(orte_job_t *jdata);
 void orte_debugger_init_after_spawn(orte_job_t *jdata);
 void orte_debugger_finalize(void);
 
-extern void *MPIR_Breakpoint(void);
+ORTE_DECLSPEC void *MPIR_Breakpoint(void);
 
 END_C_DECLS
 
