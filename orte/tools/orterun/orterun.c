@@ -491,17 +491,6 @@ int orterun(int argc, char *argv[])
      *  depend upon opal_init_util() functionality.
      */
     /* Need to initialize OPAL so that install_dirs are filled in */
-    /*
-     * NOTE: (JJH)
-     *  We need to allow 'mca_base_cmd_line_process_args()' to process command
-     *  line arguments *before* calling opal_init_util() since the command
-     *  line could contain MCA parameters that affect the way opal_init_util()
-     *  functions. AMCA parameters are one such option normally received on the
-     *  command line that affect the way opal_init_util() behaves.
-     *  It is "safe" to call mca_base_cmd_line_process_args() before 
-     *  opal_init_util() since mca_base_cmd_line_process_args() does *not*
-     *  depend upon opal_init_util() functionality.
-     */
     if (OPAL_SUCCESS != opal_init_util()) {
         exit(1);
     }
