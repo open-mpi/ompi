@@ -1,0 +1,30 @@
+# -*- text -*-
+#
+# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved. 
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+# This is the US/English general help file for Open RTE.
+#
+[unrecognized-scope]
+An out-of-range value for the scope of the multicast address range was specified:
+
+  Scope: %s
+
+Please specify a valid scope - as a reminder, you can use
+
+ompi_info -param rmcast all
+
+to see the allowed values.
+#
+[value-range]
+The specified parameter is outside of valid range:
+
+  Parameter: %s
+  Value given: %d
+  Valid range: %s
+
+Please adjust the value and try again.

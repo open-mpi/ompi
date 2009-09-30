@@ -40,8 +40,12 @@
 static opal_mutex_t lock;
 static opal_list_t recvs;
 static opal_list_t channels;
-static unsigned int next_channel;
+static opal_list_t networks;
 static bool init_completed = false;
+static uint8_t next_octet1 = 0;
+static uint8_t next_octet2 = 0;
+static uint8_t next_octet3 = 0;
+static unsigned int next_channel = 0;
 
 /* LOCAL FUNCTIONS */
 #define CLOSE_THE_SOCKET(socket)    \
@@ -52,9 +56,29 @@ static bool init_completed = false;
 
 static void recv_handler(int sd, short flags, void* user);
 
-static int setup_socket(int *sd, int channel, bool bindsocket);
+static int setup_socket(int *sd, uint32_t chan, uint16_t port, bool bindsocket);
 
 static void xmit_data(int sd, short flags, void* send_req);
+
+static uint32_t parse_network(char *network);
+
+/*
+ * Data structure for tracking networks and their channels
+ */
+typedef struct {
+    opal_list_item_t item;
+    uint32_t network;
+    uint8_t next_freq;
+} rmcast_basic_network_t;
+static void newtork_construct(rmcast_basic_network_t *ptr)
+{
+    ptr->network = 0;
+    ptr->next_freq = 0;
+}
+OBJ_CLASS_INSTANCE(rmcast_basic_network_t,
+                   opal_list_item_t,
+                   newtork_construct,
+                   NULL);
 
 /*
  * Data structure for tracking assigned channels
@@ -62,7 +86,10 @@ static void xmit_data(int sd, short flags, void* send_req);
 typedef struct {
     opal_list_item_t item;
     char *name;
-    uint32_t channel;
+    unsigned int channel;
+    uint32_t full_addr;
+    uint16_t port;
+    uint8_t freq;
     int xmit;
     int recv;
     struct sockaddr_in addr;
@@ -79,6 +106,9 @@ static void channel_construct(rmcast_basic_channel_t *ptr)
 {
     ptr->name = NULL;
     ptr->channel = 0;
+    ptr->full_addr = 0;
+    ptr->port = 0;
+    ptr->freq = 0;
     ptr->xmit = -1;
     ptr->recv = -1;
     memset(&ptr->addr, 0, sizeof(ptr->addr));
@@ -126,9 +156,9 @@ OBJ_CLASS_INSTANCE(rmcast_basic_channel_t,
  */
 typedef struct {
     opal_list_item_t item;
+    uint32_t channel;
     bool recvd;
     opal_buffer_t *data;
-    uint32_t channel;
     orte_rmcast_tag_t tag;
     orte_rmcast_flag_t flags;
     orte_rmcast_callback_fn_t cbfunc;
@@ -137,6 +167,7 @@ typedef struct {
 
 static void recv_construct(rmcast_basic_recv_t *ptr)
 {
+    ptr->channel = 0;
     ptr->recvd = false;
     ptr->data = NULL;
     ptr->tag = ORTE_RMCAST_TAG_INVALID;
@@ -211,7 +242,7 @@ static int basic_recv_nb(unsigned int channel,
 static void cancel_recv(unsigned int channel,
                         orte_rmcast_tag_t tag);
 
-static unsigned int get_channel(char *name, uint8_t direction);
+static unsigned int open_channel(char *name, char *network, uint8_t direction);
 
 /* The API's in this module are solely used to support LOCAL
  * procs - i.e., procs that are co-located to the HNP. Remote
@@ -227,15 +258,18 @@ orte_rmcast_module_t orte_rmcast_basic_module = {
     basic_recv,
     basic_recv_nb,
     cancel_recv,
-    get_channel
+    open_channel
 };
 
 static int init(void)
 {
     int xmitsd, recvsd;
     rmcast_basic_channel_t *chan;
-    int channel;
+    rmcast_basic_network_t *net;
+    uint8_t freq;
     char *name;
+    int rc;
+    uint16_t port;
     
     if (init_completed) {
         return ORTE_SUCCESS;
@@ -249,39 +283,68 @@ static int init(void)
     OBJ_CONSTRUCT(&lock, opal_mutex_t);
     OBJ_CONSTRUCT(&recvs, opal_list_t);
     OBJ_CONSTRUCT(&channels, opal_list_t);
+    OBJ_CONSTRUCT(&networks, opal_list_t);
 
-    /* define the starting point for new channels */
-    next_channel = ORTE_RMCAST_DYNAMIC_CHANNELS;
+    /* set the last octets to point at the beginning of the
+     * specified octet ranges
+     */
+    next_octet1 = orte_rmcast_base.octet1[0];
+    next_octet2 = orte_rmcast_base.octet2[0];
+    next_octet3 = orte_rmcast_base.octet3[0];
     
+    /* form our base-level network */
+    net = OBJ_NEW(rmcast_basic_network_t);
+    net->network = OPAL_IF_ASSEMBLE_NETWORK(next_octet1, next_octet2, next_octet3);
+    
+    /* select our frequency and port */
     if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_TOOL) {
-        channel = ORTE_RMCAST_SYS_ADDR;
+        freq = ORTE_RMCAST_SYS_ADDR + orte_rmcast_base.channel_offset;
         name = "system";
     } else if (ORTE_PROC_IS_APP) {
-        channel = ORTE_RMCAST_APP_PUBLIC_ADDR;
+        freq = ORTE_RMCAST_APP_PUBLIC_ADDR + orte_rmcast_base.channel_offset;
         name = "app-public";
     } else {
         return ORTE_ERR_NOT_SUPPORTED;
     }
+    port = orte_rmcast_base.ports[freq-orte_rmcast_base.channel_offset-1];
     
-    /* create a xmit socket */
-    setup_socket(&xmitsd, channel, false);
+    /* setup the next freq for this network */
+    net->next_freq = freq + 1;
     
-    /* create a recv socket */
-    setup_socket(&recvsd, channel, true);
-    
-    
-    /* this channel is available for use, so add it to our list */
+    /* add this channel to our list */
     chan = OBJ_NEW(rmcast_basic_channel_t);
     chan->name = strdup(name);
-    chan->channel = channel;
+    chan->full_addr = net->network + freq;
+    chan->port = port;
+    chan->channel = next_channel++;
+
+    /* setup the IPv4 addr info */
+    chan->addr.sin_family = AF_INET;
+    chan->addr.sin_addr.s_addr = htonl(chan->full_addr);
+    chan->addr.sin_port = htons(chan->port);
+    
+    OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
+                         "addr %03d.%03d.%03d.%03d port %d freq %d offset %d ports %d",
+                         OPAL_IF_FORMAT_ADDR(chan->full_addr), (int)port,
+                         (int)freq, (int)orte_rmcast_base.channel_offset,
+                         (int)orte_rmcast_base.ports[0]));
+    
+    /* create a xmit socket */
+    if (ORTE_SUCCESS != (rc = setup_socket(&xmitsd, chan->full_addr, port, false))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
     chan->xmit = xmitsd;
     chan->send_data = (uint8_t*)malloc(mca_rmcast_basic_component.max_msg_size);
+
+    /* create a recv socket */
+    if (ORTE_SUCCESS != (rc = setup_socket(&recvsd, chan->full_addr, port, true))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
     chan->recv = recvsd;
     chan->recvd_data = (uint8_t*)malloc(mca_rmcast_basic_component.max_msg_size);
-    chan->addr.sin_family = AF_INET;
-    chan->addr.sin_addr.s_addr = htonl(orte_rmcast_base.base_ip_addr + channel);
-    chan->addr.sin_port = htons(orte_rmcast_base.ports[channel-1]);
-    
+
     /* setup an event to catch messages */
     opal_event_set(&chan->recv_ev, chan->recv, OPAL_EV_READ|OPAL_EV_PERSIST, recv_handler, chan);
     opal_event_add(&chan->recv_ev, 0);
@@ -309,6 +372,10 @@ static void finalize(void)
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&channels);
+    while (NULL != (item = opal_list_remove_first(&networks))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&networks);
     OPAL_THREAD_UNLOCK(&lock);
 
     OBJ_DESTRUCT(&lock);
@@ -328,30 +395,11 @@ static int basic_send(unsigned int channel,
                       orte_rmcast_tag_t tag,
                       opal_buffer_t *buf)
 {
-    uint32_t chan;
     opal_list_item_t *item;
     rmcast_basic_channel_t *chptr, *ch;
     rmcast_basic_send_t *snd;
     
-    chan = orte_rmcast_base.base_ip_addr + channel;
-    OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
-                         "%s rmcast:basic: send of %lu bytes"
-                         " called on multicast channel %03d.%03d.%03d.%03d %0x",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (unsigned long)buf->bytes_used, OPAL_IF_FORMAT_ADDR(chan), chan));
-    
-    /* check the msg size to ensure it isn't too big */
-    if (buf->bytes_used > (ORTE_RMCAST_BASIC_MAX_MSG_SIZE-10)) {
-        orte_show_help("help-orte-rmcast-basic.txt",
-                       "orte-rmcast-basic:msg-too-large", true,
-                       ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                       OPAL_IF_FORMAT_ADDR(chan), tag,
-                       buf->bytes_used,
-                       ORTE_RMCAST_BASIC_MAX_MSG_SIZE-10);
-        return ORTE_ERR_NOT_SUPPORTED;
-    }
-    
-    /* do we already have this channel open? */
+    /* find the channel */
     ch = NULL;
     for (item = opal_list_get_first(&channels);
          item != opal_list_get_end(&channels);
@@ -363,8 +411,26 @@ static int basic_send(unsigned int channel,
         }
     }
     if (NULL == ch) {
-        /* didn't find it - open the channel */
-        return ORTE_ERR_NOT_IMPLEMENTED;
+        /* didn't find it */
+        return ORTE_ERR_NOT_FOUND;
+    }
+    
+    OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
+                         "%s rmcast:basic: send of %lu bytes"
+                         " called on multicast channel %03d.%03d.%03d.%03d %0x",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (unsigned long)buf->bytes_used,
+                         OPAL_IF_FORMAT_ADDR(ch->full_addr), ch->full_addr));
+    
+    /* check the msg size to ensure it isn't too big */
+    if (buf->bytes_used > (ORTE_RMCAST_BASIC_MAX_MSG_SIZE-10)) {
+        orte_show_help("help-orte-rmcast-basic.txt",
+                       "orte-rmcast-basic:msg-too-large", true,
+                       ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                       OPAL_IF_FORMAT_ADDR(ch->full_addr), tag,
+                       buf->bytes_used,
+                       ORTE_RMCAST_BASIC_MAX_MSG_SIZE-10);
+        return ORTE_ERR_NOT_SUPPORTED;
     }
     
     /* queue it to be sent - preserves order! */
@@ -397,29 +463,11 @@ static int basic_send_nb(unsigned int channel,
                          orte_rmcast_callback_fn_t cbfunc,
                          void *cbdata)
 {
-    uint32_t chan;
     opal_list_item_t *item;
     rmcast_basic_channel_t *chptr, *ch;
     rmcast_basic_send_t *snd;
     
-    chan = orte_rmcast_base.base_ip_addr + channel;
-    OPAL_OUTPUT_VERBOSE((0, orte_rmcast_base.rmcast_output,
-                         "%s rmcast:basic: send_nb of %lu bytes"
-                         " called on multicast channel %03d.%03d.%03d.%03d %0x",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (unsigned long)buf->bytes_used, OPAL_IF_FORMAT_ADDR(chan), chan));
-    
-    if (buf->bytes_used > (ORTE_RMCAST_BASIC_MAX_MSG_SIZE-10)) {
-        orte_show_help("help-orte-rmcast-basic.txt",
-                       "orte-rmcast-basic:msg-too-large", true,
-                       ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                       OPAL_IF_FORMAT_ADDR(chan), tag,
-                       buf->bytes_used,
-                       ORTE_RMCAST_BASIC_MAX_MSG_SIZE-10);
-        return ORTE_ERR_NOT_SUPPORTED;
-    }
-
-    /* do we already have this channel open? */
+    /* find the channel */
     ch = NULL;
     for (item = opal_list_get_first(&channels);
          item != opal_list_get_end(&channels);
@@ -431,10 +479,27 @@ static int basic_send_nb(unsigned int channel,
         }
     }
     if (NULL == ch) {
-        /* didn't find it - open the channel */
-        return ORTE_ERR_NOT_IMPLEMENTED;
+        /* didn't find it */
+        return ORTE_ERR_NOT_FOUND;
     }
     
+    OPAL_OUTPUT_VERBOSE((0, orte_rmcast_base.rmcast_output,
+                         "%s rmcast:basic: send_nb of %lu bytes"
+                         " called on multicast channel %03d.%03d.%03d.%03d %0x",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (unsigned long)buf->bytes_used,
+                         OPAL_IF_FORMAT_ADDR(ch->full_addr), ch->full_addr));
+    
+    if (buf->bytes_used > (ORTE_RMCAST_BASIC_MAX_MSG_SIZE-10)) {
+        orte_show_help("help-orte-rmcast-basic.txt",
+                       "orte-rmcast-basic:msg-too-large", true,
+                       ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                       OPAL_IF_FORMAT_ADDR(ch->full_addr), tag,
+                       buf->bytes_used,
+                       ORTE_RMCAST_BASIC_MAX_MSG_SIZE-10);
+        return ORTE_ERR_NOT_SUPPORTED;
+    }
+
     /* queue it to be sent - preserves order! */
     snd = OBJ_NEW(rmcast_basic_send_t);
     snd->data = buf;
@@ -460,13 +525,29 @@ static int basic_recv(unsigned int channel,
                       orte_rmcast_tag_t tag,
                       opal_buffer_t *buf)
 {
-    int32_t chan;
+    opal_list_item_t *item;
     rmcast_basic_recv_t *recvptr;
-
-    chan = orte_rmcast_base.base_ip_addr + channel;
+    rmcast_basic_channel_t *ch, *chptr;
+    
+    /* find the channel */
+    ch = NULL;
+    for (item = opal_list_get_first(&channels);
+         item != opal_list_get_end(&channels);
+         item = opal_list_get_next(item)) {
+        chptr = (rmcast_basic_channel_t*)item;
+        if (channel == chptr->channel) {
+            ch = chptr;
+            break;
+        }
+    }
+    if (NULL == ch) {
+        /* didn't find it */
+        return ORTE_ERR_NOT_FOUND;
+    }
+    
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                          "%s rmcast:basic: recv called on multicast channel %03d.%03d.%03d.%03d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), OPAL_IF_FORMAT_ADDR(chan)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), OPAL_IF_FORMAT_ADDR(ch->full_addr)));
     
     recvptr = OBJ_NEW(rmcast_basic_recv_t);
     recvptr->channel = channel;
@@ -488,13 +569,29 @@ static int basic_recv_nb(unsigned int channel,
                          orte_rmcast_tag_t tag,
                          orte_rmcast_callback_fn_t cbfunc, void *cbdata)
 {
-    int32_t chan;
+    opal_list_item_t *item;
     rmcast_basic_recv_t *recvptr;
+    rmcast_basic_channel_t *ch, *chptr;
 
-    chan = orte_rmcast_base.base_ip_addr + channel;
+    /* find the channel */
+    ch = NULL;
+    for (item = opal_list_get_first(&channels);
+         item != opal_list_get_end(&channels);
+         item = opal_list_get_next(item)) {
+        chptr = (rmcast_basic_channel_t*)item;
+        if (channel == chptr->channel) {
+            ch = chptr;
+            break;
+        }
+    }
+    if (NULL == ch) {
+        /* didn't find it */
+        return ORTE_ERR_NOT_FOUND;
+    }
+    
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                          "%s rmcast:basic: recv_nb called on multicast channel %03d.%03d.%03d.%03d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), OPAL_IF_FORMAT_ADDR(chan)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), OPAL_IF_FORMAT_ADDR(ch->full_addr)));
     
     recvptr = OBJ_NEW(rmcast_basic_recv_t);
     recvptr->channel = channel;
@@ -529,10 +626,14 @@ static void cancel_recv(unsigned int channel,
     }
 }
 
-static unsigned int get_channel(char *name, uint8_t direction)
+static unsigned int open_channel(char *name, char *network, uint8_t direction)
 {
     opal_list_item_t *item;
     rmcast_basic_channel_t *nchan, *chan;
+    rmcast_basic_network_t *net, *netitem;
+    uint32_t netaddr;
+    int rc;
+    int xmitsd, recvsd;
     
     /* see if this name has already been assigned a channel */
     chan = NULL;
@@ -541,7 +642,7 @@ static unsigned int get_channel(char *name, uint8_t direction)
          item = opal_list_get_next(item)) {
         nchan = (rmcast_basic_channel_t*)item;
         
-        if (0 == strcmp(nchan->name, name)) {
+        if (0 == strcasecmp(nchan->name, name)) {
             chan = nchan;
             break;
         }
@@ -552,10 +653,10 @@ static unsigned int get_channel(char *name, uint8_t direction)
          * socket is setup
          */
         if (0 > chan->xmit && ORTE_RMCAST_XMIT & direction) {
-            setup_socket(&chan->xmit, chan->channel, false);
+            setup_socket(&chan->xmit, chan->full_addr, chan->port, false);
         }
         if (0 > chan->recv && ORTE_RMCAST_RECV & direction) {
-            setup_socket(&chan->recv, chan->channel, true);
+            setup_socket(&chan->recv, chan->full_addr, chan->port, true);
             /* setup an event to catch messages */
             opal_event_set(&chan->recv_ev, chan->recv, OPAL_EV_READ, recv_handler, chan);
             opal_event_add(&chan->recv_ev, 0);
@@ -563,22 +664,118 @@ static unsigned int get_channel(char *name, uint8_t direction)
         return chan->channel;
     }
     
-    /* doesn't exist - create it */
+    /* the named channel doesn't exist - did they give
+     * us a specific network to use?
+     */
+    if (NULL != network) {
+        net = NULL;
+        netaddr = parse_network(network);
+        for (item = opal_list_get_first(&networks);
+             item != opal_list_get_end(&networks);
+             item = opal_list_get_next(item)) {
+            netitem = (rmcast_basic_network_t*)item;
+            
+            if (netaddr == netitem->network) {
+                net = netitem;
+                break;
+            }
+        }
+        if (NULL == net) {
+            /* new network - create it */
+            net = OBJ_NEW(rmcast_basic_network_t);
+            net->network = OPAL_IF_ASSEMBLE_NETWORK(next_octet1, next_octet2, next_octet3);
+            net->next_freq = orte_rmcast_base.channel_offset + 1;
+        }
+        /* assign next freq to the next available channel */
+        chan = OBJ_NEW(rmcast_basic_channel_t);
+        chan->name = strdup(name);
+        chan->full_addr = net->network + net->next_freq;
+        chan->port = orte_rmcast_base.ports[net->next_freq-orte_rmcast_base.channel_offset-1];
+        chan->channel = next_channel++;
+        /* setup the IPv4 addr info */
+        chan->addr.sin_family = AF_INET;
+        chan->addr.sin_addr.s_addr = htonl(chan->full_addr);
+        chan->addr.sin_port = htons(chan->port);
+        if (ORTE_RMCAST_XMIT & direction) {
+            /* create a xmit socket */
+            if (ORTE_SUCCESS != (rc = setup_socket(&xmitsd, chan->full_addr, chan->port, false))) {
+                ORTE_ERROR_LOG(rc);
+                return 0;
+            }
+            chan->xmit = xmitsd;
+            chan->send_data = (uint8_t*)malloc(mca_rmcast_basic_component.max_msg_size);
+        }
+        if (ORTE_RMCAST_RECV & direction) {
+            /* create a recv socket */
+            if (ORTE_SUCCESS != (rc = setup_socket(&recvsd, chan->full_addr, chan->port, true))) {
+                ORTE_ERROR_LOG(rc);
+                return 0;
+            }
+            chan->recv = recvsd;
+            chan->recvd_data = (uint8_t*)malloc(mca_rmcast_basic_component.max_msg_size);
+        }
+        /* change to the next freq */
+        net->next_freq++;
+        return chan->channel;
+    }
+    
+    /* if we get here, then we couldn't find a channel of the given name
+     * AND we were not given a network address to use. In this case, use
+     * the next available network/freq
+     *
+     * RHC: for now, we are not going to worry about balancing loads
+     * across available networks. We are just going to use the next
+     * network with an available freq
+     */
+    
+    net = NULL;
+    for (item = opal_list_get_first(&networks);
+         item != opal_list_get_end(&networks);
+         item = opal_list_get_next(item)) {
+        netitem = (rmcast_basic_network_t*)item;
+        
+        if (netitem->next_freq < 255) {
+            net = netitem;
+            break;
+        }
+    }
+    if (NULL == net) {
+        /* we are hosed */
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return 255;
+    }
+    
     chan = OBJ_NEW(rmcast_basic_channel_t);  /* puts it on list */
     chan->name = strdup(name);
+    chan->full_addr = net->network + net->next_freq;
+    chan->port = orte_rmcast_base.ports[net->next_freq-orte_rmcast_base.channel_offset-1];
     chan->channel = next_channel++;
     
-    /* open requested sockets */
+    /* setup the IPv4 addr info */
+    chan->addr.sin_family = AF_INET;
+    chan->addr.sin_addr.s_addr = htonl(chan->full_addr);
+    chan->addr.sin_port = htons(chan->port);
     if (ORTE_RMCAST_XMIT & direction) {
-        setup_socket(&chan->xmit, chan->channel, false);
+        /* create a xmit socket */
+        if (ORTE_SUCCESS != (rc = setup_socket(&xmitsd, chan->full_addr, chan->port, false))) {
+            ORTE_ERROR_LOG(rc);
+            return 255;
+        }
+        chan->xmit = xmitsd;
+        chan->send_data = (uint8_t*)malloc(mca_rmcast_basic_component.max_msg_size);
     }
     if (ORTE_RMCAST_RECV & direction) {
-        setup_socket(&chan->recv, chan->channel, true);
-        /* setup an event to catch messages */
-        opal_event_set(&chan->recv_ev, chan->recv, OPAL_EV_READ, recv_handler, chan);
-        opal_event_add(&chan->recv_ev, 0);
+        /* create a recv socket */
+        if (ORTE_SUCCESS != (rc = setup_socket(&recvsd, chan->full_addr, chan->port, true))) {
+            ORTE_ERROR_LOG(rc);
+            return 255;
+        }
+        chan->recv = recvsd;
+        chan->recvd_data = (uint8_t*)malloc(mca_rmcast_basic_component.max_msg_size);
     }
-    
+    /* change to the next freq */
+    net->next_freq++;
+
     return chan->channel;
 }
 
@@ -674,7 +871,7 @@ static void recv_handler(int sd, short flags, void* cbdata)
     return;
 }
 
-static int setup_socket(int *sd, int channel, bool bindsocket)
+static int setup_socket(int *sd, uint32_t chan, uint16_t port, bool bindsocket)
 {
     uint8_t ttl = 1;
     struct sockaddr_in inaddr;
@@ -682,7 +879,6 @@ static int setup_socket(int *sd, int channel, bool bindsocket)
     int addrlen;
     int target_sd;
     int flags;
-    uint32_t chan;
 
     target_sd = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if(target_sd < 0) {
@@ -710,18 +906,13 @@ static int setup_socket(int *sd, int channel, bool bindsocket)
         CLOSE_THE_SOCKET(target_sd);
         return ORTE_ERROR;
     }
-    
-    chan = orte_rmcast_base.base_ip_addr + channel;
-    
+
     /* Bind the socket if requested */
     if (bindsocket) {
-        if (AF_INET != orte_rmcast_base.af_family) {
-            return ORTE_ERROR;
-        }
         memset(&inaddr, 0, sizeof(inaddr));
         inaddr.sin_family = AF_INET;
         inaddr.sin_addr.s_addr = htonl(chan);
-        inaddr.sin_port = htons(orte_rmcast_base.ports[channel-1]);
+        inaddr.sin_port = htons(port);
         addrlen = sizeof(struct sockaddr_in);
         
         /* bind the socket */
@@ -833,4 +1024,23 @@ static void xmit_data(int sd, short flags, void* send_req)
     chan->sends_in_progress = false;
 
     OPAL_THREAD_UNLOCK(&chan->send_lock);
+}
+
+static uint32_t parse_network(char *network)
+{
+    char **octets=NULL;
+    uint32_t net, oct1, oct2, oct3;
+    
+    /* the network will be provided as a set of dot-separated
+     * octets, so split at those points
+     */
+    octets = opal_argv_split(network, '.');
+    oct1 = strtoul(octets[0], NULL, 10);
+    oct2 = strtoul(octets[1], NULL, 10);
+    oct3 = strtoul(octets[2], NULL, 10);
+    net = ((oct1 >> 24) & 0x000000FF) |
+          ((oct2 >> 16) & 0x000000FF) |
+          ((oct3 >>  8) & 0x000000FF);
+    opal_argv_free(octets);
+    return net;
 }

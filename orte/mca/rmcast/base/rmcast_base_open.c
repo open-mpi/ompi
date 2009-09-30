@@ -26,6 +26,8 @@
 #include "opal/util/argv.h"
 
 #include "orte/util/parse_options.h"
+#include "orte/util/show_help.h"
+
 #include "orte/mca/errmgr/errmgr.h"
 
 #endif
@@ -79,20 +81,55 @@ int orte_rmcast_base_open(void)
     char *tmp, **ports=NULL;
     
     /* public multicast channel for this job */
-    mca_base_param_reg_int_name("rmcast", "base_multicast_subnet",
-                                "Multicast subnet for the ORTE system (default: 239)",
-                                false, false, (int)ORTE_RMCAST_DEFAULT_SUBNET, &value);
+    mca_base_param_reg_string_name("rmcast", "base_scope",
+                                "Scope of the multicast system [link (default) | site | org | global]",
+                                false, false, "link", &tmp);
+    if (0 == strcasecmp(tmp, "site")) {
+        orte_rmcast_base.octet1[0] = 239;
+        orte_rmcast_base.octet1[1] = 239;
+        orte_rmcast_base.octet2[0] = 255;
+        orte_rmcast_base.octet2[1] = 255;
+        orte_rmcast_base.octet3[0] = 0;
+        orte_rmcast_base.octet3[1] = 255;
+    } else if (0 == strcasecmp(tmp, "org")) {
+        orte_rmcast_base.octet1[0] = 239;
+        orte_rmcast_base.octet1[1] = 239;
+        orte_rmcast_base.octet2[0] = 192;
+        orte_rmcast_base.octet2[1] = 195;
+        orte_rmcast_base.octet3[0] = 0;
+        orte_rmcast_base.octet3[1] = 255;
+    } else if (0 == strcasecmp(tmp, "global")) {
+        orte_rmcast_base.octet1[0] = 224;
+        orte_rmcast_base.octet1[1] = 238;
+        orte_rmcast_base.octet2[0] = 0;
+        orte_rmcast_base.octet2[1] = 255;
+        orte_rmcast_base.octet3[0] = 1;
+        orte_rmcast_base.octet3[1] = 255;
+    } else if (0 == strcasecmp(tmp, "link")) {
+        /* default to link */
+        orte_rmcast_base.octet1[0] = 224;
+        orte_rmcast_base.octet1[1] = 224;
+        orte_rmcast_base.octet2[0] = 0;
+        orte_rmcast_base.octet2[1] = 0;
+        orte_rmcast_base.octet3[0] = 0;
+        orte_rmcast_base.octet3[1] = 0;
+    } else {
+        orte_show_help("help-rmcast-base.txt", "unrecognized-scope", true, tmp);
+        return ORTE_ERR_SILENT;
+    }
+
+    /* channel offset */
+    mca_base_param_reg_int_name("rmcast", "base_starting_channel",
+                                "Offset to use within each network when computing channel (default: 0)",
+                                false, false, 0, &value);
     /* check for correctness of value */
-    orte_rmcast_base.subnet = (uint8_t)value;
-    
-    /* scope of the public channel */
-    mca_base_param_reg_int_name("rmcast", "base_multicast_scope",
-                                "Scope of the multicast channel (default: 255)",
-                                false, false, (int)ORTE_RMCAST_DEFAULT_SCOPE, &value);
-    /* check for correctness of value */
-    orte_rmcast_base.scope = (uint8_t)value;
-    
-    
+    if (value < 0 || value > 255) {
+        orte_show_help("help-rmcast-base.txt", "value-range", true,
+                       "starting channel", value, "0-255");
+        return ORTE_ERR_SILENT;
+    }
+    orte_rmcast_base.channel_offset = (uint8_t)value;
+
     /* range of available ports */
     mca_base_param_reg_string_name("rmcast", "base_multicast_ports",
                                 "Ports available for multicast channels (default: 6900-7155)",
@@ -106,11 +143,6 @@ int orte_rmcast_base_open(void)
         }
         orte_rmcast_base.ports[i] = pval;
     }
-    
-    /* create the base IP multicase addr */
-    orte_rmcast_base.af_family = AF_INET;
-    orte_rmcast_base.base_ip_addr = ((orte_rmcast_base.subnet << 24) & 0xFF000000) |
-                                    ((orte_rmcast_base.scope << 16) & 0x00FF0000);
     
     /* Debugging / verbose output.  Always have stream open, with
         verbose set by the mca open system... */

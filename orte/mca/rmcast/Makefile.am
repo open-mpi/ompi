@@ -24,6 +24,7 @@ libmca_rmcast_la_SOURCES =
 
 # header setup
 nobase_orte_HEADERS =
+dist_pkgdata_DATA =
 
 # local files
 headers = rmcast.h rmcast_types.h

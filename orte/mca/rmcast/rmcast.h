@@ -73,8 +73,8 @@ typedef int (*orte_rmcast_base_module_recv_fn_t)(unsigned int channel,
 typedef void (*orte_rmcast_base_module_cancel_recv_fn_t)(unsigned int channel,
                                                          orte_rmcast_tag_t tag);
 
-/* get the next available channel */
-typedef unsigned int (*orte_rmcast_base_module_get_rmcast_channel_fn_t)(char *name, uint8_t direction);
+/* open the next available channel */
+typedef unsigned int (*orte_rmcast_base_module_open_rmcast_channel_fn_t)(char *name, char *network, uint8_t direction);
 
 /*
  * rmcast component
@@ -101,7 +101,7 @@ struct orte_rmcast_base_module_t {
     orte_rmcast_base_module_recv_fn_t                   recv;
     orte_rmcast_base_module_recv_nb_fn_t                recv_nb;
     orte_rmcast_base_module_cancel_recv_fn_t            cancel_recv;
-    orte_rmcast_base_module_get_rmcast_channel_fn_t     get_channel;
+    orte_rmcast_base_module_open_rmcast_channel_fn_t    open_channel;
 };
 /** Convienence typedef */
 typedef struct orte_rmcast_base_module_t orte_rmcast_module_t;
