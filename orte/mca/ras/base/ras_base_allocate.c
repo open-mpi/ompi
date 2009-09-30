@@ -137,6 +137,15 @@ int orte_ras_base_allocate(orte_job_t *jdata)
     if (NULL != orte_ras_base.active_module)  {
         /* read the allocation */
         if (ORTE_SUCCESS != (rc = orte_ras_base.active_module->allocate(&nodes))) {
+            if (ORTE_ERR_SYSTEM_WILL_BOOTSTRAP == rc) {
+                /* this module indicates that nodes will be discovered
+                 * on a bootstrap basis, so there is nothing more
+                 * for us to do
+                 */
+                OBJ_DESTRUCT(&nodes);
+                rc = ORTE_SUCCESS;
+                goto DISPLAY;
+            }
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&nodes);
             return rc;
