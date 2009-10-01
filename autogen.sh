@@ -184,6 +184,7 @@ find_app() {
     local version="0.0.0"
     local min_version="99.99.99"
     local found=0
+    local versions_found=""
     local tmpIFS=$IFS
 
     eval "min_version=\"\$ompi_${app_name}_version\""
@@ -206,6 +207,7 @@ find_app() {
             found=1
             break
         fi
+        versions_found="${versions_found} ${version}"
     done
 
     IFS="$tmpIFS"
@@ -213,6 +215,7 @@ find_app() {
     if test "$found" = "0" ; then
 	cat <<EOF
 I could not find a recent enough copy of ${app_name}.
+Need at least $min_version but found $versions_found in $search_path.
 I am gonna abort.  :-(
 
 Please make sure you are using at least the following versions of the
