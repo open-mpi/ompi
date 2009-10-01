@@ -329,6 +329,12 @@ void process_msg(int fd, short event, void *data)
                             continue;
                         }
                         
+                        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                             "%s plm:base:receive updating state for proc %s current state %x new state %x",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                             ORTE_NAME_PRINT(&proc->name),
+                                             (unsigned int)proc->state, (unsigned int)state));
+                        
                         /* update the termination counter IFF the state is changing to something
                          * indicating terminated
                          */
