@@ -406,6 +406,11 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
                 if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
                     continue;
                 }
+                /* ignore procs from other jobs */
+                if (proc->name.jobid != jdata->jobid) {
+                    continue;
+                }
+                /* if the vpid is already defined, then update start */
                 if (ORTE_VPID_INVALID != proc->name.vpid &&
                     vpid_start < proc->name.vpid) {
                     vpid_start = proc->name.vpid;
@@ -427,6 +432,10 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
             }
             for (j=0; j < node->procs->size; j++) {
                 if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
+                    continue;
+                }
+                /* ignore procs from other jobs */
+                if (proc->name.jobid != jdata->jobid) {
                     continue;
                 }
                 if (ORTE_VPID_INVALID == proc->name.vpid) {
@@ -451,6 +460,10 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
             vpid = i + vpid_start;
             for (j=0; j < node->procs->size; j++) {
                 if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
+                    continue;
+                }
+                /* ignore procs from other jobs */
+                if (proc->name.jobid != jdata->jobid) {
                     continue;
                 }
                 if (ORTE_VPID_INVALID == proc->name.vpid) {
@@ -518,6 +531,9 @@ int orte_rmaps_base_compute_local_ranks(orte_job_t *jdata)
                 if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
                     continue;
                 }
+                /* only look at procs for this job when
+                 * determining local rank
+                 */
                 if (proc->name.jobid == jdata->jobid &&
                     ORTE_LOCAL_RANK_INVALID == proc->local_rank &&
                     proc->name.vpid < minv) {
@@ -596,6 +612,10 @@ retry_lr:
     for (k=0; k < newnode->procs->size; k++) {
         /* if this proc is NULL, skip it */
         if (NULL == (proc = (orte_proc_t *) opal_pointer_array_get_item(newnode->procs, k))) {
+            continue;
+        }
+        /* ignore procs from other jobs */
+        if (proc->name.jobid != jdata->jobid) {
             continue;
         }
         if (local_rank == proc->local_rank) {
