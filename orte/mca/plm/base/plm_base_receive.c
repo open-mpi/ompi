@@ -233,9 +233,11 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
                     }
                     
                     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                                         "%s plm:base:receive got update_proc_state for vpid %lu state %x exit_code %d",
+                                         "%s plm:base:receive got update_proc_state for proc %s curnt state %x new state %x exit_code %d",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                         (unsigned long)vpid, (unsigned int)state, (int)exit_code));
+                                         ORTE_NAME_PRINT(&procs[vpid]->name),
+                                         (unsigned int)procs[vpid]->state,
+                                         (unsigned int)state, (int)exit_code));
                     
                     /* update the termination counter IFF the state is changing to something
                      * indicating terminated

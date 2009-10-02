@@ -212,6 +212,7 @@ int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
             j=0;
         } else {
             /* pack a one to indicate a map is there */
+            j=1;
         }
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
                             (void*)&j, 1, ORTE_STD_CNTR))) {
