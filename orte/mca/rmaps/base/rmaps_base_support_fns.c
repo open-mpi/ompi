@@ -387,7 +387,7 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
 int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
 {
     orte_job_map_t *map;
-    orte_vpid_t vpid, vpid_start=0;
+    orte_vpid_t vpid, vpid_start;
     int i, j;
     orte_node_t *node;
     orte_proc_t *proc;
@@ -395,28 +395,31 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
     
     map = jdata->map;
     
-    if (ORTE_MAPPING_BYUSER & map->policy) {
-        /* find the max vpid already assigned */
-        vpid_start = ORTE_VPID_MIN;
-        for (i=0; i < map->nodes->size; i++) {
-            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
+    /* find the max vpid already assigned */
+    vpid_start = ORTE_VPID_MIN;
+    for (i=0; i < map->nodes->size; i++) {
+        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
+            continue;
+        }
+        for (j=0; j < node->procs->size; j++) {
+            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
                 continue;
             }
-            for (j=0; j < node->procs->size; j++) {
-                if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
-                    continue;
-                }
-                /* ignore procs from other jobs */
-                if (proc->name.jobid != jdata->jobid) {
-                    continue;
-                }
-                /* if the vpid is already defined, then update start */
-                if (ORTE_VPID_INVALID != proc->name.vpid &&
-                    vpid_start < proc->name.vpid) {
-                    vpid_start = proc->name.vpid;
-                }
+            /* ignore procs from other jobs */
+            if (proc->name.jobid != jdata->jobid) {
+                continue;
+            }
+            /* if the vpid is already defined, then update start */
+            if (ORTE_VPID_INVALID != proc->name.vpid &&
+                vpid_start < proc->name.vpid) {
+                vpid_start = proc->name.vpid;
             }
         }
+    }
+    if (ORTE_VPID_MIN == vpid_start) {
+        /* start at zero */
+        vpid_start = 0;
+    } else {
         /* we start one higher than the max found */
         vpid_start++;
     }

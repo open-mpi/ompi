@@ -92,9 +92,6 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
             app->num_procs = num_slots;
         }
         
-        /* track the total number of processes we mapped */
-        jdata->num_procs += app->num_procs;
-
         /* Make assignments */
         if (jdata->map->policy & ORTE_MAPPING_BYNODE) {
             rc = orte_rmaps_base_map_bynode(jdata, app, &node_list,
@@ -108,6 +105,9 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
             goto error;
         }
 
+        /* track the total number of processes we mapped */
+        jdata->num_procs += app->num_procs;
+        
         /* cleanup the node list - it can differ from one app_context
          * to another, so we have to get it every time
          */
