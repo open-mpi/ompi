@@ -185,6 +185,9 @@ BEGIN_C_DECLS
         /** Base module */
 	mca_coll_base_module_t super;
 
+        /* Whether this module has been lazily initialized or not yet */
+        bool enabled;
+
         /* Data that hangs off the communicator */
 	mca_coll_sm_comm_t *sm_comm_data;
 
@@ -207,6 +210,11 @@ BEGIN_C_DECLS
 
     mca_coll_base_module_t *
     mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority);
+    
+    /* Lazily enable a module (since it involves expensive/slow mmap
+       allocation, etc.) */
+    int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
+                                 struct ompi_communicator_t *comm);
 
     int mca_coll_sm_allgather_intra(void *sbuf, int scount, 
 				    struct ompi_datatype_t *sdtype, 
@@ -360,7 +368,6 @@ extern uint32_t mca_coll_sm_one;
         (index)->mcbmi_data + \
         ((rank) * mca_coll_sm_component.sm_fragment_size); \
     (iov).iov_len = (max_data); \
-    mca_coll_sm_one = 1; \
     opal_convertor_pack(&(convertor), &(iov), &mca_coll_sm_one, \
                         &(max_data) )
 
@@ -372,7 +379,6 @@ extern uint32_t mca_coll_sm_one;
     (iov).iov_base = (((char*) (index)->mcbmi_data) + \
                        ((src_rank) * (mca_coll_sm_component.sm_fragment_size))); \
     (iov).iov_len = (max_data); \
-    mca_coll_sm_one = 1; \
     opal_convertor_unpack(&(convertor), &(iov), &mca_coll_sm_one, \
                           &(max_data) )
 

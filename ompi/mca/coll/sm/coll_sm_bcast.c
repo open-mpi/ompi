@@ -62,7 +62,7 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
 {
     struct iovec iov;
     mca_coll_sm_module_t *sm_module = (mca_coll_sm_module_t*) module;
-    mca_coll_sm_comm_t *data = sm_module->sm_comm_data;
+    mca_coll_sm_comm_t *data;
     int i, ret, rank, size, num_children, src_rank;
     int flag_num, segment_num, max_segment_num;
     int parent_rank;
@@ -71,6 +71,15 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
     opal_convertor_t convertor;
     mca_coll_sm_tree_node_t *me, *parent, **children;
     mca_coll_sm_data_index_t *index;
+
+    /* Lazily enable the module the first time we invoke a collective
+       on it */
+    if (!sm_module->enabled) {
+        if (OMPI_SUCCESS != (ret = ompi_coll_sm_lazy_enable(module, comm))) {
+            return ret;
+        }
+    }
+    data = sm_module->sm_comm_data;
 
     /* Setup some identities */
 
@@ -228,7 +237,6 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
                 }
                 
                 /* Copy to my output buffer */
-                max_data = mca_coll_sm_component.sm_fragment_size;
                 COPY_FRAGMENT_OUT(convertor, src_rank, index, iov, max_data);
 
                 bytes += max_data;

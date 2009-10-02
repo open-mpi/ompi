@@ -81,6 +81,7 @@ static int bootstrap_comm(ompi_communicator_t *comm,
  */
 static void mca_coll_sm_module_construct(mca_coll_sm_module_t *module)
 {
+    module->enabled = false;
     module->sm_comm_data = NULL;
     module->previous_reduce = NULL;
     module->previous_reduce_module = NULL;
@@ -107,6 +108,8 @@ static void mca_coll_sm_module_destruct(mca_coll_sm_module_t *module)
     if (NULL != module->previous_reduce_module) {
         OBJ_RELEASE(module->previous_reduce_module);
     }
+
+    module->enabled = false;
 }
 
 
@@ -222,9 +225,23 @@ mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority)
 /*
  * Init module on the communicator
  */
-static int
-sm_module_enable(mca_coll_base_module_t *module,
-                 struct ompi_communicator_t *comm)
+static int sm_module_enable(mca_coll_base_module_t *module,
+                            struct ompi_communicator_t *comm)
+{
+    if (NULL == comm->c_coll.coll_reduce ||
+        NULL == comm->c_coll.coll_reduce_module) {
+        opal_output_verbose(10, mca_coll_base_output,
+                            "coll:sm:enable (%d/%s): no underlying reduce; disqualifying myself",
+                            comm->c_contextid, comm->c_name);
+        return OMPI_ERROR;
+    }
+
+    /* We do everything lazily in ompi_coll_sm_enable() */
+    return OMPI_SUCCESS;
+}
+
+int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
+                             struct ompi_communicator_t *comm)
 {
     int i, j, root, ret;
     int rank = ompi_comm_rank(comm);
@@ -238,13 +255,11 @@ sm_module_enable(mca_coll_base_module_t *module,
     unsigned char *base = NULL;
     const int num_barrier_buffers = 2;
 
-    if (NULL == comm->c_coll.coll_reduce ||
-        NULL == comm->c_coll.coll_reduce_module) {
-        opal_output_verbose(10, mca_coll_base_output,
-                            "coll:sm:enable (%d/%s): no underlying reduce; disqualifying myself",
-                            comm->c_contextid, comm->c_name);
-        return OMPI_ERROR;
+    /* Just make sure we haven't been here already */
+    if (sm_module->enabled) {
+        return OMPI_SUCCESS;
     }
+    sm_module->enabled = true;
 
     /* Get some space to setup memory affinity (just easier to try to
        alloc here to handle the error case) */

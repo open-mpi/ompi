@@ -450,9 +450,11 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
                                        (long)pStack->disp, (unsigned long)iov_len_local ); );
                 if( --(pStack->count) == 0 ) { /* end of loop */
                     if( pConvertor->stack_pos == 0 ) {
-                        /* Force the conversion to stop by lowering the number of iovecs. */
-                        *out_size = iov_count;
-                        goto complete_loop;  /* completed */
+                        /* Do the same thing as when the loop is completed (com plete_loop:) */
+                        iov[iov_count].iov_len -= iov_len_local;  /* update the amount of valid data */
+                        total_unpacked += iov[iov_count].iov_len;
+                        iov_count++;  /* go to the next */
+                        goto complete_conversion;
                     }
                     pConvertor->stack_pos--;
                     pStack--;
@@ -498,6 +500,7 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
         iov[iov_count].iov_len -= iov_len_local;  /* update the amount of valid data */
         total_unpacked += iov[iov_count].iov_len;
     }
+ complete_conversion:
     *max_data = total_unpacked;
     pConvertor->bConverted += total_unpacked;  /* update the already converted bytes */
     *out_size = iov_count;

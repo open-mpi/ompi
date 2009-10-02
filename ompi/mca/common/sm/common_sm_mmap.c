@@ -48,6 +48,7 @@
 
 #include "orte/mca/rml/rml.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
 
 #include "ompi/constants.h"
@@ -102,7 +103,11 @@ static mca_common_sm_mmap_t* create_map(int fd, size_t size, char *file_name,
     /* map the file and initialize segment state */
     seg = (mca_common_sm_file_header_t*)
         mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-    if((void*)-1 == seg) {
+    if ((void*)-1 == seg) {
+        orte_show_help("help-mpi-common-sm.txt", "sys call fail",
+                       orte_process_info.nodename,
+                       "mmap(2)", "", 
+                       strerror(errno), errno);
         return NULL;
     }
 
@@ -117,15 +122,18 @@ static mca_common_sm_mmap_t* create_map(int fd, size_t size, char *file_name,
     addr = ((unsigned char *)seg) + size_ctl_structure;
     /* If we have a data segment (i.e., if 0 != data_seg_alignment),
        then make it the first aligned address after the control
-       structure. */
+       structure.  IF THIS HAPPENS, THIS IS A PROGRAMMING ERROR IN
+       OPEN MPI!*/
     if (0 != data_seg_alignment) {
         addr = OPAL_ALIGN_PTR(addr,  data_seg_alignment, unsigned char*);
 
         /* is addr past end of file ? */
         if((unsigned char*)seg + size < addr) {
-            opal_output(0, "mca_common_sm_mmap_init: "
-                        "memory region too small len %lu  addr %p\n",
-                        (unsigned long)size, addr);
+            orte_show_help("help-mpi-common-sm.txt", "mmap too small",
+                           orte_process_info.nodename,
+                           (unsigned long) size, 
+                           (unsigned long) size_ctl_structure,
+                           (unsigned long) data_seg_alignment);
             return NULL;
         }
     }
@@ -215,11 +223,18 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(ompi_proc_t **procs,
         /* process initializing the file */
         fd = open(file_name, O_CREAT|O_RDWR, 0600);
         if (fd < 0) {
-            opal_output(0, "mca_common_sm_mmap_init: "
-                        "open %s failed with errno=%d\n", file_name, errno);
+            orte_show_help("help-mpi-common-sm.txt", "sys call fail", 1,
+                           orte_process_info.nodename,
+                           "open(2)", file_name, 
+                           strerror(errno), errno);
         } else if (ftruncate(fd, size) != 0) {
-            opal_output(0, "mca_common_sm_mmap_init: "
-                        "ftruncate failed with errno=%d\n", errno);
+            orte_show_help("help-mpi-common-sm.txt", "sys call fail", 1,
+                           orte_process_info.nodename,
+                           "ftruncate(2)", "", 
+                           strerror(errno), errno);
+            close(fd);
+            unlink(file_name);
+            fd = -1;
         } else {
             map = create_map(fd, size, file_name, size_ctl_structure,
                              data_seg_alignment);
@@ -233,11 +248,17 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(ompi_proc_t **procs,
                 map->map_seg->seg_size = size - mem_offset;
                 opal_atomic_unlock(&map->map_seg->seg_lock);
                 map->map_seg->seg_inited = 0;
+            } else {
+                close(fd);
+                unlink(file_name);
+                fd = -1;
             }
         }
 
-        /* signal the rest of the local procs that the backing file
-           has been created */
+        /* Signal the rest of the local procs that the backing file
+           has been created.  Bump up the libevent polling frequency
+           while we're using the RML. */
+        opal_progress_event_users_increment();
         for (p = 1; p < num_procs; p++) {
             rc = orte_rml.send(&(procs[p]->proc_name), iov, 3,
                                OMPI_RML_TAG_SM_BACK_FILE_CREATED, 0);
@@ -247,9 +268,17 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(ompi_proc_t **procs,
                             (unsigned long)p, errno,
                             rc, 
                             (int) (iov[0].iov_len + iov[1].iov_len + iov[2].iov_len));
+                opal_progress_event_users_decrement();
+
+                /* Free it all -- bad things are going to happen */
+                munmap(map, size);
+                close(fd);
+                unlink(file_name);
+                fd = -1;
                 goto out;
             }
         }
+        opal_progress_event_users_decrement();
     } else {
         /* All other procs wait for the file to be initialized before
            using the backing file.  However, since these shared
@@ -273,12 +302,21 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(ompi_proc_t **procs,
            receiving from the RML. */
         if (opal_list_get_end(&pending_rml_msgs) == item) {
             while (1) {
+                /* Bump up the libevent polling frequency while we're
+                   in this RML recv, just to ensure we're checking
+                   libevent frequently. */
+                opal_progress_event_users_increment();
                 rc = orte_rml.recv(&(procs[0]->proc_name), iov, 3,
                                    OMPI_RML_TAG_SM_BACK_FILE_CREATED, 0);
+                opal_progress_event_users_decrement();
                 if (rc < 0) {
                     opal_output(0, "mca_common_sm_mmap_init: "
                                 "orte_rml.recv failed from %d with errno=%d\n",
                                 0, errno);
+                    munmap(map, size);
+                    close(fd);
+                    unlink(file_name);
+                    fd = -1;
                     goto out;
                 }
                 
@@ -291,6 +329,10 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(ompi_proc_t **procs,
                 rml_msg = OBJ_NEW(pending_rml_msg_t);
                 if (NULL == rml_msg) {
                     opal_output(0, "mca_common_sm_mmap_init: failed to create pending rml message");
+                    munmap(map, size);
+                    close(fd);
+                    unlink(file_name);
+                    fd = -1;
                     goto out;
                 }
                 memcpy(rml_msg->file_name, filename_to_send, 

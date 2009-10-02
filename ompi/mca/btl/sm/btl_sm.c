@@ -264,10 +264,11 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
         opal_output(0, "mca_btl_sm_add_procs: unable to create shared memory "
                     "BTL coordinating strucure :: size %lu \n",
                     (unsigned long)size);
+        free(procs);
         free(sm_ctl_file);
         return OMPI_ERROR;
     }
-
+    free(procs);
     free(sm_ctl_file);
 
     /* set the pointer to the shared memory control structure */
