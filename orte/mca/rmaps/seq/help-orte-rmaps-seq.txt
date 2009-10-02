@@ -31,4 +31,13 @@ The specified hostfile contained a node (%s) that is not in your
 allocation. We therefore cannot map a process rank to it. Please
 check your allocation and hostfile to ensure the hostfile only
 contains allocated nodes.
+#
+[orte-rmaps-seq:not-enough-resources]
+The specified sequential mapping file does not have enough
+identified resources to meet the requested number of processes:
 
+  Num processes: %d
+  Num resources: %d
+
+Please provide additional resources or reduce the number of
+processes and try again.

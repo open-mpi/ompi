@@ -143,6 +143,14 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
             app->num_procs = num_nodes;
         }
         
+        /* do we have enough nodes in our list? */
+        if (num_nodes < app->num_procs) {
+            orte_show_help("help-orte-rmaps-seq.txt",
+                           "orte-rmaps-seq:not-enough-resources",
+                           true, app->num_procs, num_nodes);
+            return ORTE_ERR_SILENT;
+        }
+        
         for (i=0; i < app->num_procs; i++) {
             /* find this node on the global array - this is necessary so
              * that our mapping gets saved on that array as the objects
