@@ -92,15 +92,39 @@ int mca_coll_sm_reduce_intra(void *sbuf, void* rbuf, int count,
                                           sm_module->previous_reduce_module);
     } 
 #if WANT_REDUCE_NO_ORDER
-    else if (!ompi_op_is_intrinsic(op) ||
-        (ompi_op_is_intrinsic(op) && !ompi_op_is_float_assoc(op) &&
-         0 != (dtype->flags & OMPI_DATATYPE_FLAG_DATA_FLOAT))) {
-        return reduce_inorder(sbuf, rbuf, count, dtype, op, root, comm, module);
-    } else {
-        return reduce_no_order(sbuf, rbuf, count, dtype, op, root, comm, module);
+    else {
+        /* Lazily enable the module the first time we invoke a
+           collective on it */
+        if (!sm_module->enabled) {
+            if (OMPI_SUCCESS != 
+                (ret = ompi_coll_sm_lazy_enable(module, comm))) {
+                return ret;
+            }
+        }
+        
+        if (!ompi_op_is_intrinsic(op) ||
+            (ompi_op_is_intrinsic(op) && !ompi_op_is_float_assoc(op) &&
+             0 != (dtype->flags & OMPI_DATATYPE_FLAG_DATA_FLOAT))) {
+            return reduce_inorder(sbuf, rbuf, count, dtype, op, 
+                                  root, comm, module);
+        } else {
+            return reduce_no_order(sbuf, rbuf, count, dtype, op, 
+                                   root, comm, module);
+        }
     }
 #else
     else {
+        /* Lazily enable the module the first time we invoke a
+           collective on it */
+        if (!sm_module->enabled) {
+            int ret;
+
+            if (OMPI_SUCCESS != 
+                (ret = ompi_coll_sm_lazy_enable(module, comm))) {
+                return ret;
+            }
+        }
+
         return reduce_inorder(sbuf, rbuf, count, dtype, op, root, comm, module);
     }
 #endif
@@ -147,6 +171,7 @@ int mca_coll_sm_reduce_intra(void *sbuf, void* rbuf, int count,
  * If we don't have a friendly datatype, then free the temporary
  * buffer at the end.
  */
+
 
 static int reduce_inorder(void *sbuf, void* rbuf, int count, 
                           struct ompi_datatype_t *dtype, 
@@ -208,7 +233,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
         int frag_num = 0;
         bool first_operation = true;
         bool sbuf_copied_to_rbuf = false;
-        
+
         /* If the datatype is the same packed as it is unpacked, we
            can save a memory copy and just do the reduction operation
            directly from the shared memory segment.  However, if the
@@ -271,7 +296,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
                     (ret = opal_convertor_copy_and_prepare_for_recv(
                                        ompi_mpi_local_convertor,
                                        &(dtype->super),
-                                       segment_ddt_count, 
+                                       count, 
                                        rbuf,
                                        0,
                                        &rbuf_convertor))) {
@@ -317,13 +342,12 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
                 flag_num * mca_coll_sm_component.sm_segs_per_inuse_flag;
             max_segment_num = 
                 (flag_num + 1) * mca_coll_sm_component.sm_segs_per_inuse_flag;
-            reduce_target = (((char*) rbuf) + (frag_num * true_extent * segment_ddt_count));
+            reduce_target = (((char*) rbuf) + (frag_num * extent * segment_ddt_count));
             do {
 
                 /* Note that all the other coll modules reduce from
                    process (size-1) to 0, so that's the order we'll do
                    it here. */
-
                 /* Process (size-1) is the root (special case) */
                 if (size - 1 == rank) {
                     /* If we're the root *and* the first process to be
@@ -382,7 +406,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
                     if (rank == peer) {
                         ompi_op_reduce(op, 
                                        ((char *) sbuf) +
-                                       frag_num * true_extent * segment_ddt_count,
+                                       frag_num * extent * segment_ddt_count,
                                        reduce_target,
                                        min(count_left, segment_ddt_count),
                                        dtype);
@@ -436,7 +460,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
                 bytes += segment_ddt_bytes;
                 ++segment_num;
                 ++frag_num;
-                reduce_target += true_extent * segment_ddt_count;
+                reduce_target += extent * segment_ddt_count;
             } while (bytes < total_size && segment_num < max_segment_num);
 
             /* Root is now done with this set of segments */

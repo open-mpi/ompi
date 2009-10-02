@@ -59,6 +59,15 @@ int mca_coll_sm_barrier_intra(struct ompi_communicator_t *comm,
     int uint_control_size;
     mca_coll_sm_module_t *sm_module = (mca_coll_sm_module_t*) module;
 
+    /* Lazily enable the module the first time we invoke a collective
+       on it */
+    if (!sm_module->enabled) {
+        int ret;
+        if (OMPI_SUCCESS != (ret = ompi_coll_sm_lazy_enable(module, comm))) {
+            return ret;
+        }
+    }
+
     uint_control_size = 
         mca_coll_sm_component.sm_control_size / sizeof(uint32_t);
     data = sm_module->sm_comm_data;

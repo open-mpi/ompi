@@ -50,6 +50,10 @@ headers = \
 sources = \
         common_sm_mmap.c
 
+# Help file
+
+dist_pkgdata_DATA = help-mpi-common-sm.txt
+
 # As per above, we'll either have an installable or noinst result.
 # The installable one should follow the same MCA prefix naming rules
 # (i.e., libmca_<type>_<name>.la).  The noinst one can be named
