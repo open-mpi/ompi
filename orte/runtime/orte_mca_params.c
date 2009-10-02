@@ -36,12 +36,22 @@
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
 
+static bool passed_thru = false;
+
 int orte_register_params(void)
 {
     int value, tmp;
     char *strval, **params;
     uint16_t binding;
 
+    /* only go thru this once - mpirun calls it twice, which causes
+     * any error messages to show up twice
+     */
+    if (passed_thru) {
+        return ORTE_SUCCESS;
+    }
+    passed_thru = true;
+    
     mca_base_param_reg_int_name("orte", "base_help_aggregate",
                                 "If orte_base_help_aggregate is true, duplicate help messages will be aggregated rather than displayed individually.  This can be helpful for parallel jobs that experience multiple identical failures; rather than print out the same help/failure message N times, display it once with a count of how many processes sent the same message.",
                                 false, false,
