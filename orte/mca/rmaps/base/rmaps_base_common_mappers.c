@@ -128,8 +128,10 @@ int orte_rmaps_base_map_byslot(orte_job_t *jdata, orte_app_context_t *app,
     int rc=ORTE_SUCCESS;
     int i;
     orte_node_t *node;
+    orte_proc_t *proc;
     opal_list_item_t *next;
     orte_vpid_t num_alloc = 0;
+    orte_vpid_t start;
     int num_procs_to_assign, num_possible_procs;
     
     /* This loop continues until all procs have been mapped or we run
@@ -139,6 +141,8 @@ int orte_rmaps_base_map_byslot(orte_job_t *jdata, orte_app_context_t *app,
      have reached their soft limit and the user directed us to "no oversubscribe".
      If we still have processes that haven't been mapped yet, then it's an
      "out of resources" error. */
+    
+    start = jdata->num_procs;
     
     while ( num_alloc < num_procs) {
         /** see if any nodes remain unused and available. We need to do this check
@@ -211,10 +215,11 @@ int orte_rmaps_base_map_byslot(orte_job_t *jdata, orte_app_context_t *app,
         }
         
         for( i = 0; i < num_procs_to_assign; ++i) {
+            proc = NULL;
             if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node,
                                                                  jdata->map->cpus_per_rank, app->idx,
                                                                  node_list, jdata->map->oversubscribe,
-                                                                 true, NULL))) {
+                                                                 true, &proc))) {
                 /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
                  * really isn't an error - we just need to break from the loop
                  * since the node is fully used up. For now, just don't report
@@ -225,6 +230,9 @@ int orte_rmaps_base_map_byslot(orte_job_t *jdata, orte_app_context_t *app,
                     return rc;
                 }
             }
+            
+            /* assign the vpid */
+            proc->name.vpid = start++;
             
             /* Update the number of procs allocated */
             ++num_alloc;
@@ -265,7 +273,9 @@ int orte_rmaps_base_map_bynode(orte_job_t *jdata, orte_app_context_t *app,
     int rc = ORTE_SUCCESS;
     opal_list_item_t *next;
     orte_node_t *node;
+    orte_proc_t *proc;
     orte_vpid_t num_alloc=0;
+    orte_vpid_t start;
     
     /* This loop continues until all procs have been mapped or we run
      out of resources. We determine that we have "run out of
@@ -283,6 +293,8 @@ int orte_rmaps_base_map_bynode(orte_job_t *jdata, orte_app_context_t *app,
      it. Since we are taking one slot from each node as we cycle through, the
      list, oversubscription is automatically taken care of via this logic.
      */
+    
+    start = jdata->num_procs;
     
     while (num_alloc < num_procs) {
         /** see if any nodes remain unused and available. We need to do this check
@@ -307,8 +319,9 @@ int orte_rmaps_base_map_bynode(orte_job_t *jdata, orte_app_context_t *app,
         
         /* Allocate a slot on this node */
         node = (orte_node_t*) cur_node_item;
+        proc = NULL;
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, jdata->map->cpus_per_rank, app->idx,
-                                                             node_list, jdata->map->oversubscribe, true, NULL))) {
+                                                             node_list, jdata->map->oversubscribe, true, &proc))) {
             /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
              * really isn't an error - we just need to break from the loop
              * since the node is fully used up. For now, just don't report
@@ -320,6 +333,10 @@ int orte_rmaps_base_map_bynode(orte_job_t *jdata, orte_app_context_t *app,
             }
         }
         
+        /* assign the vpid */
+        proc->name.vpid = start++;
+        
+        /* Update the number of procs allocated */
         ++num_alloc;
         
         cur_node_item = next;

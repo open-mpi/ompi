@@ -68,12 +68,6 @@ static int switchyard(orte_job_t *jdata)
         return rc;
     }
     
-    /* compute vpids and add proc objects to the job */
-    if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_vpids(jdata))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
     /* compute and save local ranks */
     if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_local_ranks(jdata))) {
         ORTE_ERROR_LOG(rc);
@@ -150,6 +144,14 @@ static int npernode(orte_job_t *jdata)
             }
             OBJ_RELEASE(node);
         }
+        /* compute vpids and add proc objects to the job - this has to be
+         * done after each app_context is mapped in order to keep the
+         * vpids contiguous within an app_context
+         */
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_vpids(jdata))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     }
     jdata->num_procs = total_procs;
 
@@ -220,6 +222,14 @@ static int nperboard(orte_job_t *jdata)
                 }
             }
             OBJ_RELEASE(node);
+        }
+        /* compute vpids and add proc objects to the job - this has to be
+         * done after each app_context is mapped in order to keep the
+         * vpids contiguous within an app_context
+         */
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_vpids(jdata))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
         }
     }
     jdata->num_procs = total_procs;
@@ -296,6 +306,14 @@ static int npersocket(orte_job_t *jdata)
                 }
             }
             OBJ_RELEASE(node);
+        }
+        /* compute vpids and add proc objects to the job - this has to be
+         * done after each app_context is mapped in order to keep the
+         * vpids contiguous within an app_context
+         */
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_vpids(jdata))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
         }
     }
     jdata->num_procs = total_procs;
@@ -414,6 +432,14 @@ static int loadbalance(orte_job_t *jdata)
         /* cleanup */
         while (NULL != (item = opal_list_remove_first(&node_list))) {
             OBJ_RELEASE(item);
+        }
+        /* compute vpids and add proc objects to the job - this has to be
+         * done after each app_context is mapped in order to keep the
+         * vpids contiguous within an app_context
+         */
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_vpids(jdata))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
         }
     }
     /* record the number of procs */
