@@ -268,7 +268,7 @@ opal_unpack_homogeneous_contig_function( opal_convertor_t* pConv,
         }
         pConv->bConverted += bConverted;
     }
-    *out_size = iov_count;
+    *out_size = iov_count; /* we only reach this line after the for loop succesfully complete */
     *max_data = (pConv->bConverted - initial_bytes_converted);
     if( pConv->bConverted == pConv->local_size ) {
         pConv->flags |= CONVERTOR_COMPLETED;
