@@ -134,6 +134,9 @@ static int ptmalloc2_open(void)
     }
 
     p = mmap(NULL, 4096, PROT_READ, MAP_ANONYMOUS, -1, 0);
+    if (NULL == p) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
     munmap(p, 4096);
 
     if (opal_memory_ptmalloc2_munmap_invoked) {
