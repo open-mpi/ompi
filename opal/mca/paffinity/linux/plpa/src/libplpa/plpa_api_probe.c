@@ -56,6 +56,7 @@ int PLPA_NAME(api_probe_init)(void)
             rc = syscall(__NR_sched_setaffinity, 0, tmp, NULL);
 #if PLPA_WANT_VALGRIND_SUPPORT
             VALGRIND_MAKE_MEM_UNDEFINED(0, len);
+            VALGRIND_MAKE_MEM_NOACCESS(0, len);
 #endif
             if ((rc < 0) && (errno == EFAULT)) {
                 cache = PLPA_NAME_CAPS(PROBE_OK);
