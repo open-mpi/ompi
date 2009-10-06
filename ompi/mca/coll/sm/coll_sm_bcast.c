@@ -57,7 +57,7 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
 {
     struct iovec iov;
     mca_coll_sm_module_t *sm_module = (mca_coll_sm_module_t*) module;
-    mca_coll_sm_comm_t *data = sm_module->sm_data;
+    mca_coll_sm_comm_t *data;
     int i, ret, rank, size, num_children, src_rank;
     int flag_num, segment_num, max_segment_num;
     int parent_rank;
@@ -65,7 +65,16 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
     mca_coll_sm_in_use_flag_t *flag;
     ompi_convertor_t convertor;
     mca_coll_sm_tree_node_t *me, *parent, **children;
-    mca_coll_base_mpool_index_t *index;
+    mca_coll_sm_data_index_t *index;
+
+    /* Lazily enable the module the first time we invoke a collective
+       on it */
+    if (!sm_module->enabled) {
+        if (OMPI_SUCCESS != (ret = ompi_coll_sm_lazy_enable(module, comm))) {
+            return ret;
+        }
+    }
+    data = sm_module->sm_comm_data;
 
     /* Setup some identities */
 
@@ -77,7 +86,6 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
     bytes = 0;
 
     me = &data->mcb_tree[(rank + size - root) % size];
-    D(("rank %d: virtual rank %d\n", rank, me - data->mcb_tree));
     parent = me->mcstn_parent;
     children = me->mcstn_children;
     num_children = me->mcstn_num_children;
@@ -107,8 +115,6 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
             return ret;
         }
         ompi_convertor_get_packed_size(&convertor, &total_size);
-        D(("root got send convertor w/ total_size == %lu\n", 
-           (unsigned long) total_size));
 
         /* Main loop over sending fragments */
 
@@ -117,7 +123,7 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
                         mca_coll_sm_component.sm_comm_num_in_use_flags);
 
             FLAG_SETUP(flag_num, flag, data);
-            FLAG_WAIT_FOR_IDLE(flag);
+            FLAG_WAIT_FOR_IDLE(flag, bcast_root_label);
             FLAG_RETAIN(flag, size - 1, data->mcb_operation_count - 1);
 
             /* Loop over all the segments in this set */
@@ -127,10 +133,11 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
             max_segment_num = 
                 (flag_num + 1) * mca_coll_sm_component.sm_segs_per_inuse_flag;
             do {
-                index = &(data->mcb_mpool_index[segment_num]);
+                index = &(data->mcb_data_index[segment_num]);
 
                 /* Copy the fragment from the user buffer to my fragment
                    in the current segment */
+                max_data = mca_coll_sm_component.sm_fragment_size;
                 COPY_FRAGMENT_IN(convertor, index, rank, iov, max_data);
                 bytes += max_data;
                 
@@ -166,8 +173,6 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
             return ret;
         }
         ompi_convertor_get_packed_size(&convertor, &total_size);
-        D(("rank %d got recv convertor w/ total_size == %lu\n", 
-           rank, (unsigned long) total_size));
 
         /* Loop over receiving (and possibly re-sending) the
            fragments */
@@ -179,7 +184,7 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
             /* Wait for the root to mark this set of segments as
                ours */
             FLAG_SETUP(flag_num, flag, data);
-            FLAG_WAIT_FOR_OP(flag, data->mcb_operation_count);
+            FLAG_WAIT_FOR_OP(flag, data->mcb_operation_count, bcast_nonroot_label1);
             ++data->mcb_operation_count;
 
             /* Loop over all the segments in this set */
@@ -192,10 +197,10 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
 
                 /* Pre-calculate some values */
                 parent_rank = (parent->mcstn_id + root) % size;
-                index = &(data->mcb_mpool_index[segment_num]);
+                index = &(data->mcb_data_index[segment_num]);
 
                 /* Wait for my parent to tell me that the segment is ready */
-                CHILD_WAIT_FOR_NOTIFY(rank, index, max_data);
+                CHILD_WAIT_FOR_NOTIFY(rank, index, max_data, bcast_nonroot_label2);
                 
                 /* If I have children, send the data to them */
                 if (num_children > 0) {
@@ -248,6 +253,5 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
 
     /* All done */
 
-    D(("rank %d done with bcast\n", rank));
     return OMPI_SUCCESS;
 }

@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -42,17 +42,22 @@
 #include <sys/mman.h>
 #endif
 
-#include "ompi/constants.h"
-#include "ompi/proc/proc.h"
-#include "common_sm_mmap.h"
 #include "opal/util/basename.h"
 #include "orte/util/show_help.h"
 #include "opal/align.h"
+#include "opal/threads/mutex.h"
+
 #include "orte/util/proc_info.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/rml/base/base.h"
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
 
+#include "ompi/constants.h"
+#include "ompi/proc/proc.h"
 #include "ompi/mca/dpm/dpm.h"
+#include "ompi/mca/mpool/sm/mpool_sm.h"
+#include "common_sm_mmap.h"
 
 OBJ_CLASS_INSTANCE(
     mca_common_sm_mmap_t,
@@ -61,10 +66,31 @@ OBJ_CLASS_INSTANCE(
     NULL
 );
 
+
 /*
- * Instance that is shared between components that use shared memory
+ * Lock to protect multiple instances of mmap_init() from being
+ * invoked simultaneously (because of RML usage).
  */
-mca_common_sm_mmap_t *mca_common_sm_mmap = NULL;
+static opal_mutex_t mutex;
+
+/*
+ * List of RML messages that have arrived that have not yet been
+ * consumed by the thread who is looking to attach to the backing file
+ * that the RML message corresponds to.
+ */
+static opal_list_t pending_rml_msgs;
+static bool pending_rml_msgs_init = false;
+
+/*
+ * Items on the pending_rml_msgs list
+ */
+typedef struct {
+    opal_list_item_t super;
+    char file_name[OMPI_PATH_MAX];
+    int sm_file_inited;
+} pending_rml_msg_t;
+
+OBJ_CLASS_INSTANCE(pending_rml_msg_t, opal_list_item_t, NULL, NULL);
 
 #if !defined(__WINDOWS__)
 
@@ -79,7 +105,11 @@ static mca_common_sm_mmap_t* create_map(int fd, size_t size, char *file_name,
     /* map the file and initialize segment state */
     seg = (mca_common_sm_file_header_t*)
         mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-    if((void*)-1 == seg) {
+    if ((void*)-1 == seg) {
+        orte_show_help("help-mpi-common-sm.txt", "sys call fail",
+                       orte_process_info.nodename,
+                       "mmap(2)", "", 
+                       strerror(errno), errno);
         return NULL;
     }
 
@@ -94,15 +124,18 @@ static mca_common_sm_mmap_t* create_map(int fd, size_t size, char *file_name,
     addr = ((unsigned char *)seg) + size_ctl_structure;
     /* If we have a data segment (i.e., if 0 != data_seg_alignment),
        then make it the first aligned address after the control
-       structure. */
+       structure.  IF THIS HAPPENS, THIS IS A PROGRAMMING ERROR IN
+       OPEN MPI!*/
     if (0 != data_seg_alignment) {
         addr = OPAL_ALIGN_PTR(addr,  data_seg_alignment, unsigned char*);
 
         /* is addr past end of file ? */
         if((unsigned char*)seg + size < addr) {
-            opal_output(0, "mca_common_sm_mmap_init: "
-                        "memory region too small len %lu  addr %p\n",
-                        (unsigned long)size, addr);
+            orte_show_help("help-mpi-common-sm.txt", "mmap too small",
+                           orte_process_info.nodename,
+                           (unsigned long) size, 
+                           (unsigned long) size_ctl_structure,
+                           (unsigned long) data_seg_alignment);
             return NULL;
         }
     }
@@ -113,51 +146,135 @@ static mca_common_sm_mmap_t* create_map(int fd, size_t size, char *file_name,
     return map;
 }
 
-mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
+/*
+ * Same as mca_common_sm_mmap_init(), but takes an (ompi_group_t*)
+ * argument instead of na array of ompi_proc_t's.
+ *
+ * This function just checks the group to ensure that all the procs
+ * are local, and if they are, calls mca_common_sm_mmap_init().
+ */
+mca_common_sm_mmap_t* mca_common_sm_mmap_init_group(ompi_group_t *group,
+                                                    size_t size, 
+                                                    char *file_name,
+                                                    size_t size_ctl_structure, 
+                                                    size_t data_seg_alignment)
+{
+    size_t i, group_size;
+    ompi_proc_t *proc, **procs;
+
+    group_size = ompi_group_size(group);
+    procs = (ompi_proc_t**) malloc(sizeof(ompi_proc_t*) * group_size);
+    if (NULL == procs) {
+        return NULL;
+    }
+    for (i = 0; i < group_size; ++i) {
+        proc = ompi_group_peer_lookup(group,i);
+        if (0 == (proc->proc_flags & OMPI_PROC_FLAG_LOCAL)) {
+            free(procs);
+            return NULL;
+        }
+        procs[i] = proc;
+    }
+
+    return mca_common_sm_mmap_init(procs, group_size, size, file_name,
+                                   size_ctl_structure, data_seg_alignment);
+}
+
+mca_common_sm_mmap_t* mca_common_sm_mmap_init(ompi_proc_t **procs,
+                                              size_t num_procs,
+                                              size_t size, char *file_name,
                                               size_t size_ctl_structure,
                                               size_t data_seg_alignment)
 {
     int fd = -1;
     mca_common_sm_mmap_t* map = NULL;
-    size_t mem_offset;
-    ompi_proc_t **procs = NULL;
-    size_t n_local_procs = 0, n_total_procs = 0, p;
-    int rc = 0, sm_file_inited = 0;
-    struct iovec iov[2];
+    size_t mem_offset, p;
+    int rc = 0, sm_file_inited = 0, num_local_procs;
+    struct iovec iov[3];
     int sm_file_created = OMPI_RML_TAG_SM_BACK_FILE_CREATED;
+    char filename_to_send[OMPI_PATH_MAX];
+    opal_list_item_t *item;
+    pending_rml_msg_t *rml_msg;
+    ompi_proc_t *temp_proc;
+    bool found_lowest = false;
 
-    /* figure out how many local procs are on this host and create list of
-       local proc_t pointers by compressing the original list */
-    procs = ompi_proc_world(&n_total_procs);
-
-    for(p=0; p < n_total_procs; p++) {
-        if(procs[p]->proc_flags & OMPI_PROC_FLAG_LOCAL) {
-            procs[n_local_procs++] = procs[p];
+    /* Reorder all procs array to have all the local procs at the
+       beginning.  Simultaneously look for the local proc with the
+       lowest name.  Ensure that procs[0] is the lowest named
+       process. */
+    for (num_local_procs = p = 0; p < num_procs; p++) {
+        if (procs[p]->proc_flags & OMPI_PROC_FLAG_LOCAL) {
+            /* If we don't have a lowest, save the first one */
+            if (!found_lowest) {
+                procs[0] = procs[p];
+                found_lowest = true;
+            } else {
+                /* Save this proc */
+                procs[num_local_procs] = procs[p];
+                /* If we have a new lowest, swap it with position 0 so
+                   that procs[0] is always the lowest named proc */
+                if (orte_util_compare_name_fields(ORTE_NS_CMP_ALL, 
+                                                  &(procs[p]->proc_name),
+                                                  &(procs[0]->proc_name)) < 0) {
+                    temp_proc = procs[0];
+                    procs[0] = procs[p];
+                    procs[num_local_procs] = temp_proc;
+                }
+            }
+            /* Regardless of the comparisons above, we found another
+               proc on the local node, so increment */
+            ++num_local_procs;
         }
     }
+    /* If there's no local procs, there's nothing to do */
+    if (0 == num_local_procs) {
+        return NULL;
+    }
+    num_procs = num_local_procs;
 
     iov[0].iov_base = &sm_file_created;
     iov[0].iov_len = sizeof(sm_file_created);
-    iov[1].iov_base = &sm_file_inited;
-    iov[1].iov_len = sizeof(sm_file_inited);
+    memset(filename_to_send, 0, sizeof(filename_to_send));
+    strncpy(filename_to_send, file_name, sizeof(filename_to_send) - 1);
+    iov[1].iov_base = filename_to_send;
+    iov[1].iov_len = sizeof(filename_to_send);
+    iov[2].iov_base = &sm_file_inited;
+    iov[2].iov_len = sizeof(sm_file_inited);
 
-    /* figure out if I am the lowest rank on host, who will create
-       the shared file */
-    if(ompi_proc_local() == procs[0]) {
+    /* Lock here to prevent multiple threads from invoking this
+       function simultaneously.  The critical section we're protecting
+       is usage of the RML in this block. */
+    opal_mutex_lock(&mutex);
+
+    if (!pending_rml_msgs_init) {
+        OBJ_CONSTRUCT(&(pending_rml_msgs), opal_list_t);
+        pending_rml_msgs_init = true;
+    }
+
+    /* Figure out if I am the lowest rank in the group.  If so, I will 
+      create the shared file. */
+    if (0 == orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
+                                           ORTE_PROC_MY_NAME,
+                                           &(procs[0]->proc_name))) {
         /* process initializing the file */
         fd = open(file_name, O_CREAT|O_RDWR, 0600);
-        if(fd < 0) {
-            opal_output(0, "mca_common_sm_mmap_init: "
-                        "open %s failed with errno=%d\n", file_name, errno);
-        } else if(ftruncate(fd, size) != 0) {
-            opal_output(0, "mca_common_sm_mmap_init: "
-                        "ftruncate failed with errno=%d\n", errno);
+        if (fd < 0) {
+            orte_show_help("help-mpi-common-sm.txt", "sys call fail", 1,
+                           orte_process_info.nodename,
+                           "open(2)", file_name, 
+                           strerror(errno), errno);
+        } else if (ftruncate(fd, size) != 0) {
+            orte_show_help("help-mpi-common-sm.txt", "sys call fail", 1,
+                           orte_process_info.nodename,
+                           "ftruncate(2)", "", 
+                           strerror(errno), errno);
+            close(fd);
+            unlink(file_name);
+            fd = -1;
         } else {
-
             map = create_map(fd, size, file_name, size_ctl_structure,
                              data_seg_alignment);
-
-            if(map != NULL) {
+            if (map != NULL) {
                 sm_file_inited = 1;
 
                 /* initialize the segment - only the first process
@@ -166,47 +283,118 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
                 map->map_seg->seg_offset = mem_offset;
                 map->map_seg->seg_size = size - mem_offset;
                 opal_atomic_unlock(&map->map_seg->seg_lock);
-                map->map_seg->seg_inited = false;
+                map->map_seg->seg_inited = 0;
+            } else {
+                close(fd);
+                unlink(file_name);
+                fd = -1;
             }
         }
 
-        /* signal the rest of the local procs that the backing file
-           has been created */
-        for(p=1; p < n_local_procs; p++) {
-            rc = orte_rml.send(&(procs[p]->proc_name), iov, 2,
+        /* Signal the rest of the local procs that the backing file
+           has been created.  Bump up the libevent polling frequency
+           while we're using the RML. */
+        opal_progress_event_users_increment();
+        for (p = 1; p < num_procs; p++) {
+            rc = orte_rml.send(&(procs[p]->proc_name), iov, 3,
                                OMPI_RML_TAG_SM_BACK_FILE_CREATED, 0);
-            if(rc < 0) {
+            if (rc < (ssize_t) (iov[0].iov_len + iov[1].iov_len + iov[2].iov_len)) {
                 opal_output(0, "mca_common_sm_mmap_init: "
-                            "orte_rml.send failed to %lu with errno=%d\n",
-                            (unsigned long)p, errno);
+                            "orte_rml.send failed to %lu with errno=%d, ret=%d, iov_len sum=%d\n",
+                            (unsigned long)p, errno,
+                            rc, 
+                            (int) (iov[0].iov_len + iov[1].iov_len + iov[2].iov_len));
+                opal_progress_event_users_decrement();
+
+                /* Free it all -- bad things are going to happen */
+                munmap(map, size);
+                close(fd);
+                unlink(file_name);
+                fd = -1;
                 goto out;
             }
         }
+        opal_progress_event_users_decrement();
     } else {
-        /* all other procs wait for the file to be initialized
-           before using the backing file */
-        rc = orte_rml.recv(&(procs[0]->proc_name), iov, 2,
-                           OMPI_RML_TAG_SM_BACK_FILE_CREATED, 0);
-        if(rc < 0) {
-            opal_output(0, "mca_common_sm_mmap_init: "
-                        "orte_rml.recv failed from %d with errno=%d\n",
-                        0, errno);
-            goto out;
+        /* All other procs wait for the file to be initialized before
+           using the backing file.  However, since these shared
+           backing files may be created simultaneously in multiple
+           threads, the RML messages may arrive in any order.  So
+           first check to see if we previously received a message for
+           me. */
+        for (item = opal_list_get_first(&pending_rml_msgs);
+             opal_list_get_end(&pending_rml_msgs) != item;
+             item = opal_list_get_next(item)) {
+            rml_msg = (pending_rml_msg_t*) item;
+            if (0 == strcmp(rml_msg->file_name, file_name)) {
+                opal_list_remove_item(&pending_rml_msgs, item);
+                sm_file_inited = rml_msg->sm_file_inited;
+                OBJ_RELEASE(item);
+                break;
+            }
+        }
+
+        /* If we didn't find a message already waiting, block on
+           receiving from the RML. */
+        if (opal_list_get_end(&pending_rml_msgs) == item) {
+            while (1) {
+                /* Bump up the libevent polling frequency while we're
+                   in this RML recv, just to ensure we're checking
+                   libevent frequently. */
+                opal_progress_event_users_increment();
+                rc = orte_rml.recv(&(procs[0]->proc_name), iov, 3,
+                                   OMPI_RML_TAG_SM_BACK_FILE_CREATED, 0);
+                opal_progress_event_users_decrement();
+                if (rc < 0) {
+                    opal_output(0, "mca_common_sm_mmap_init: "
+                                "orte_rml.recv failed from %d with errno=%d\n",
+                                0, errno);
+                    munmap(map, size);
+                    close(fd);
+                    unlink(file_name);
+                    fd = -1;
+                    goto out;
+                }
+                
+                /* Was the message for me?  If so, we're done */
+                if (0 == strcmp(filename_to_send, file_name)) {
+                    break;
+                }
+
+                /* If not, put it on the pending list and try again */
+                rml_msg = OBJ_NEW(pending_rml_msg_t);
+                if (NULL == rml_msg) {
+                    opal_output(0, "mca_common_sm_mmap_init: failed to create pending rml message");
+                    munmap(map, size);
+                    close(fd);
+                    unlink(file_name);
+                    fd = -1;
+                    goto out;
+                }
+                memcpy(rml_msg->file_name, filename_to_send, 
+                       sizeof(rml_msg->file_name));
+                rml_msg->sm_file_inited = sm_file_inited;
+                opal_list_append(&pending_rml_msgs, &(rml_msg->super));
+            }
         }
 
         /* check to see if file inited correctly */
-        if(sm_file_inited != 0) {
+        if (sm_file_inited != 0) {
             fd = open(file_name, O_RDWR, 0600);
 
-            if(fd != -1)
+            if (fd != -1) {
                 map = create_map(fd, size, file_name, size_ctl_structure,
                                  data_seg_alignment);
+            }
         }
     }
 
 out:
-    if(NULL != procs) free(procs);
-    if(fd != -1) close(fd);
+    opal_mutex_unlock(&mutex);
+
+    if (fd != -1) {
+        close(fd);
+    }
 
     return map;
 }
@@ -362,7 +550,8 @@ void* mca_common_sm_mmap_seg_alloc(
     size_t* size,
     mca_mpool_base_registration_t** registration)
 {
-    mca_common_sm_mmap_t* map = mca_common_sm_mmap;
+    mca_mpool_sm_module_t *sm_module = (mca_mpool_sm_module_t*) mpool;
+    mca_common_sm_mmap_t *map = sm_module->sm_common_mmap;
     mca_common_sm_file_header_t* seg = map->map_seg;
     void* addr;
 

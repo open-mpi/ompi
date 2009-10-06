@@ -1,0 +1,31 @@
+# -*- text -*-
+#
+# Copyright (c) 2009 Cisco Systems, Inc.  All rights reserved.
+#
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+# This is the US/English help file for Open MPI's common shmem support.
+#
+[sys call fail]
+A system call failed during shared memory initialization that should
+not have.  It is likely that your MPI job will now either abort or
+experience performance degredation.
+
+  Local host:  %s
+  System call: %s %s
+  Error:       %s (errno %d)
+#
+[mmap too small]
+Open MPI requested a shared memory segment that was too small to do
+anything useful.  This is likely an error in Open MPI itself.  If you
+see this error, you should see if there is an update available for
+Open MPI, and if not, contact the Open MPI developers.
+
+  Local host:        %s
+  Requested size:    %ul
+  Control seg size:  %ul
+  Data seg aligment: %ul
