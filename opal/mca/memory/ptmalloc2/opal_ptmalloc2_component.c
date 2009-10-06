@@ -108,7 +108,7 @@ static int ptmalloc2_open(void)
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
     free(p);
-    p = memalign(1, 1024 * 1024);
+    p = memalign(4, 1024 * 1024);
     if (NULL == p) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
