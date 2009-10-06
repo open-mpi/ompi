@@ -342,6 +342,12 @@ GETMAP:
         }
     }
 
+    if(NULL != mca_plm_ccp_component.job_name){
+        pJob->put_Name(_bstr_t(mca_plm_ccp_component.job_name));
+    } else {
+        pJob->put_Name(_bstr_t((*(*apps)).app));
+    }
+
     pJob->put_MinimumNumberOfProcessors(num_processors);
     if (FAILED(hr)) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
