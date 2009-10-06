@@ -392,7 +392,7 @@ ELSE(NOT OMPI_WANT_MPI_INTERFACE_WARNING)
   SET (OMPI_WANT_MPI_INTERFACE_WARNING 1)
 ENDIF(NOT OMPI_WANT_MPI_INTERFACE_WARNING)
 
-OPTION(OMPI_WANT_CCP
+OPTION(ORTE_WANT_CCP
   "Whether we want to have the CCP remote process launch support." ON)
 
 SET (OMPI_EXT_COMPONENTS Example CACHE STRING 
@@ -409,6 +409,8 @@ ELSE(NOT OPAL_WANT_LIBLTDL)
     SET(OPAL_WANT_LIBLTDL 0)
   ENDIF(LIBLTDL_FOUND)
 ENDIF(NOT OPAL_WANT_LIBLTDL)
+
+OPTION(OMPI_WANT_NETWORK_DIRECT "Whether we want to enable Network Direct support." ON)
 
 
 ###################################################################
