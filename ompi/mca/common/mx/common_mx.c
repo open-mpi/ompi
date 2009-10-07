@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Myricom. All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2009      Cisco systems, Inc.  All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * 
  * $COPYRIGHT$
  *
