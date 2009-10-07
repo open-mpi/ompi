@@ -225,14 +225,12 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(ompi_proc_t **procs,
         fd = open(file_name, O_CREAT|O_RDWR, 0600);
         if (fd < 0) {
             int err = errno;
-            ORTE_ERROR_LOG(OMPI_ERR_IN_ERRNO);
             orte_show_help("help-mpi-common-sm.txt", "sys call fail", 1,
                            orte_process_info.nodename,
                            "open(2)", file_name, 
                            strerror(err), err);
         } else if (ftruncate(fd, size) != 0) {
             int err = errno;
-            ORTE_ERROR_LOG(OMPI_ERR_IN_ERRNO);
             orte_show_help("help-mpi-common-sm.txt", "sys call fail", 1,
                            orte_process_info.nodename,
                            "ftruncate(2)", "", 
@@ -269,11 +267,6 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(ompi_proc_t **procs,
                                OMPI_RML_TAG_SM_BACK_FILE_CREATED, 0);
             if (rc < (ssize_t) (iov[0].iov_len + iov[1].iov_len + iov[2].iov_len)) {
                 ORTE_ERROR_LOG(OMPI_ERR_COMM_FAILURE);
-                opal_output(0, "mca_common_sm_mmap_init: "
-                            "orte_rml.send failed to %lu with errno=%d, ret=%d, iov_len sum=%d\n",
-                            (unsigned long)p, errno,
-                            rc, 
-                            (int) (iov[0].iov_len + iov[1].iov_len + iov[2].iov_len));
                 opal_progress_event_users_decrement();
 
                 /* Free it all -- bad things are going to happen */
