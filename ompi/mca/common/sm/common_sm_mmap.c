@@ -103,7 +103,7 @@ static mca_common_sm_mmap_t* create_map(int fd, size_t size, char *file_name,
     /* map the file and initialize segment state */
     seg = (mca_common_sm_file_header_t*)
         mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-    if ((void*)-1 == seg) {
+    if (MAP_FAILED == seg) {
         orte_show_help("help-mpi-common-sm.txt", "sys call fail",
                        orte_process_info.nodename,
                        "mmap(2)", "", 
@@ -271,10 +271,12 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(ompi_proc_t **procs,
                 opal_progress_event_users_decrement();
 
                 /* Free it all -- bad things are going to happen */
-                munmap(map, size);
-                close(fd);
-                unlink(file_name);
-                fd = -1;
+                if (1 == sm_file_inited) {
+                    munmap(map, size);
+                    close(fd);
+                    unlink(file_name);
+                    fd = -1;
+                }
                 goto out;
             }
         }
