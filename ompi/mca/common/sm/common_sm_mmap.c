@@ -498,6 +498,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init_group(ompi_group_t *group,
 {
     size_t i, group_size;
     ompi_proc_t *proc, **procs;
+    mca_common_sm_mmap_t *ret;
 
     group_size = ompi_group_size(group);
     procs = (ompi_proc_t**) malloc(sizeof(ompi_proc_t*) * group_size);
@@ -513,8 +514,10 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init_group(ompi_group_t *group,
         procs[i] = proc;
     }
 
-    return mca_common_sm_mmap_init(procs, group_size, size, file_name,
-                                   size_ctl_structure, data_seg_alignment);
+    ret = mca_common_sm_mmap_init(procs, group_size, size, file_name,
+                                  size_ctl_structure, data_seg_alignment);
+    free(procs);
+    return ret;
 }
 
 int mca_common_sm_mmap_fini( mca_common_sm_mmap_t* sm_mmap )
