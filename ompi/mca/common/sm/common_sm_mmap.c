@@ -314,9 +314,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(ompi_proc_t **procs,
                                 "orte_rml.recv failed from %d with errno=%d\n",
                                 0, errno);
                     munmap(map, size);
-                    close(fd);
-                    unlink(file_name);
-                    fd = -1;
+                    /* fd wasn't opened here; no need to close/reset */
                     goto out;
                 }
                 
@@ -330,9 +328,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(ompi_proc_t **procs,
                 if (NULL == rml_msg) {
                     opal_output(0, "mca_common_sm_mmap_init: failed to create pending rml message");
                     munmap(map, size);
-                    close(fd);
-                    unlink(file_name);
-                    fd = -1;
+                    /* fd wasn't opened here; no need to close/reset */
                     goto out;
                 }
                 memcpy(rml_msg->file_name, filename_to_send, 
