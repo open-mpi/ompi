@@ -133,8 +133,8 @@ static int ptmalloc2_open(void)
         val |= OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_CHUNK_SUPPORT;
     }
 
-    p = mmap(NULL, 4096, PROT_READ, MAP_ANONYMOUS, -1, 0);
-    if (NULL == p) {
+    p = mmap(NULL, 4096, PROT_READ, (MAP_ANONYMOUS | MAP_PRIVATE), -1, 0);
+    if (((void*) -1) == p) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
     munmap(p, 4096);
