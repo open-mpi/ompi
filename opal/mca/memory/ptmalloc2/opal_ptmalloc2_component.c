@@ -134,7 +134,7 @@ static int ptmalloc2_open(void)
     }
 
     p = mmap(NULL, 4096, PROT_READ, (MAP_ANONYMOUS | MAP_PRIVATE), -1, 0);
-    if (((void*) -1) == p) {
+    if (MAP_FAILED == p) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
     munmap(p, 4096);
