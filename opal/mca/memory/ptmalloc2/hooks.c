@@ -845,7 +845,8 @@ void *opal_memory_ptmalloc2_hook_pull(void)
                                    "If this MCA parameter is set to 1 **VIA ENVIRONMENT VARIABLE ONLY*** (this MCA parameter *CANNOT* be set in a file or on the mpirun command line!), the ptmalloc2 hooks will be disabled",
                                    false, false, 0, &val);
     /* We can at least warn if someone tried to set this in a file */
-    if (OPAL_SUCCESS == mca_base_param_lookup_source(p, &source, &file) &&
+    if (p >= 0 &&
+        OPAL_SUCCESS == mca_base_param_lookup_source(p, &source, &file) &&
         (MCA_BASE_PARAM_SOURCE_DEFAULT != source &&
          MCA_BASE_PARAM_SOURCE_ENV != source)) {
         opal_show_help("help-opal-memory-ptmalloc2.txt",
