@@ -202,16 +202,18 @@ typedef struct opal_paffinity_base_cpu_set_t {
 #define OPAL_PAFFINITY_PROCESS_IS_BOUND(cpuset, bound)              \
     do {                                                            \
         int i, num_processors, num_bound;                           \
-        opal_paffinity_base_get_processor_info(&num_processors);    \
         *(bound) = false;                                           \
-        num_bound = 0;                                              \
-        for (i=0; i < num_processors; i++) {                        \
-            if (OPAL_PAFFINITY_CPU_ISSET(i, (cpuset))) {            \
-                num_bound++;                                        \
+        if (OPAL_SUCCESS ==                                         \
+            opal_paffinity_base_get_processor_info(&num_processors)) {\
+            num_bound = 0;                                          \
+            for (i = 0; i < num_processors; i++) {                  \
+                if (OPAL_PAFFINITY_CPU_ISSET(i, (cpuset))) {        \
+                    num_bound++;                                    \
+                }                                                   \
             }                                                       \
-        }                                                           \
-        if (0 < num_bound && num_bound < num_processors) {          \
-            *(bound) = true;                                        \
+            if (0 < num_bound && num_bound < num_processors) {      \
+                *(bound) = true;                                    \
+            }                                                       \
         }                                                           \
     } while(0);
 
