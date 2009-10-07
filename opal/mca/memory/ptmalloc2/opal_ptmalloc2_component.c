@@ -118,8 +118,8 @@ static int ptmalloc2_open(void)
     /* Double check for posix_memalign, too */
     if (opal_memory_ptmalloc2_memalign_invoked) {
         opal_memory_ptmalloc2_memalign_invoked = false;
-        if (0 != posix_memalign(&p, sizeof(void*), 1024 * 1024) || NULL == p) {
-            return OPAL_ERR_OUT_OF_RESOURCE;
+        if (0 != posix_memalign(&p, sizeof(void*), 1024 * 1024)) {
+            return OPAL_ERR_IN_ERRNO;
         }
         free(p);
     }
