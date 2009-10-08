@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -108,6 +109,10 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
             if (OMPI_SUCCESS != (rc = ompi_dpm.open_port (port_name, OMPI_RML_TAG_INVALID))) {
                 goto error;
             }
+        } else if (1 < ompi_comm_size(comm)) {
+             /* we do not support non_mpi spawns on comms this size */
+             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_UNSUPPORTED_OPERATION,
+                                           FUNC_NAME);
         }
         if (OMPI_SUCCESS != (rc = ompi_dpm.spawn (1, &command, &argv, &maxprocs, 
                                                   &info, port_name))) {
