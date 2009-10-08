@@ -111,8 +111,8 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
             }
         } else if (1 < ompi_comm_size(comm)) {
              /* we do not support non_mpi spawns on comms this size */
-             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_UNSUPPORTED_OPERATION,
-                                           FUNC_NAME);
+             rc = OMPI_ERR_NOT_SUPPORTED
+             goto error;
         }
         if (OMPI_SUCCESS != (rc = ompi_dpm.spawn (1, &command, &argv, &maxprocs, 
                                                   &info, port_name))) {
