@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -47,7 +48,7 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
     ompi_communicator_t *newcomp=NULL;
     bool send_first=false; /* they are contacting us first */
     char port_name[MPI_MAX_PORT_NAME];
-    bool non_mpi, cumulative = false;
+    bool non_mpi = false, cumulative = false;
 
     MEMCHECKER(
         memchecker_comm(comm);
@@ -148,6 +149,10 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
             if (OMPI_SUCCESS != (rc = ompi_dpm.open_port (port_name, OMPI_RML_TAG_INVALID))) {
                 goto error;
             }
+        } else if (1 < ompi_comm_size(comm)) {
+             /* we do not support non_mpi spawns on comms this size */
+             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_UNSUPPORTED_OPERATION,
+                                           FUNC_NAME);
         }
         if (OMPI_SUCCESS != (rc = ompi_dpm.spawn(count, array_of_commands,
                                                  array_of_argv, array_of_maxprocs,
