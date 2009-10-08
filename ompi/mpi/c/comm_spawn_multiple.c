@@ -149,7 +149,7 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
             }
         } else if (1 < ompi_comm_size(comm)) {
              /* we do not support non_mpi spawns on comms this size */
-             rc = OMPI_ERR_NOT_SUPPORTED
+             rc = OMPI_ERR_NOT_SUPPORTED;
              goto error;
         }
         if (OMPI_SUCCESS != (rc = ompi_dpm.spawn(count, array_of_commands,
