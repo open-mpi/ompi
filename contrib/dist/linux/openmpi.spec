@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -66,7 +66,7 @@
 # type: string (root path to install shell scripts)
 %{!?shell_scripts_path: %define shell_scripts_path %{_bindir}}
 # type: string (base name of the shell scripts)
-%{!?shell_scripts_basename: %define shell_scripts_basename mpivars-%{version}}
+%{!?shell_scripts_basename: %define shell_scripts_basename mpivars}
 
 # Define this to 1 if you want this RPM to install a modulefile.
 # type: bool (0/1)
@@ -651,7 +651,7 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 %if !%{sysconfdir_in_prefix}
 %{_sysconfdir}
 %endif
-# If %{instal_in_opt}, then we're instaling OMPI to
+# If %{install_in_opt}, then we're instaling OMPI to
 # /opt/openmpi/<version>.  But be sure to also explicitly mention
 # /opt/openmpi so that it can be removed by RPM when everything under
 # there is also removed.  Also list /opt/openmpi/<version>/share so
@@ -708,6 +708,10 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 #############################################################################
 %changelog
+* Thu Sep  8 2009 Jeff Squyres <jsquyres@cisco.com>
+- Change shell_scripts_basename to not include version number to
+  accomodate what mpi-selector expects.
+
 * Mon Feb  4 2008 Jeff Squyres <jsquyres@cisco.com>
 - OFED 1.3 has a much better installer; remove all the
   leave_build_root kludge nastyness.  W00t!
