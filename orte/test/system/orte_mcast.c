@@ -32,13 +32,13 @@ int main(int argc, char* argv[])
         fprintf(stderr, "orte_nodename: couldn't init orte - error code %d\n", rc);
         return rc;
     }
-
+    
     gethostname(hostname, 512);
     pid = getpid();
-
+    
     printf("orte_nodename: Node %s Name %s Pid %ld\n",
            hostname, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)pid);
-
+    
     
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
     
@@ -46,16 +46,20 @@ int main(int argc, char* argv[])
         orte_grpcomm.barrier();
         fprintf(stderr, "%d: past barrier\n", (int)ORTE_PROC_MY_NAME->vpid);
         
-        if (ORTE_SUCCESS != (rc = orte_rmcast.recv_nb(ORTE_RMCAST_APP_PUBLIC_ADDR, cbfunc, NULL))) {
+        if (ORTE_SUCCESS != (rc = orte_rmcast.recv_nb(0, ORTE_RMCAST_PERSISTENT,
+                                                      ORTE_RMCAST_TAG_WILDCARD,
+                                                      cbfunc, NULL))) {
             ORTE_ERROR_LOG(rc);
         }
         opal_dss.pack(&buf, &i32, 1, OPAL_INT32);
-            if (ORTE_SUCCESS != (rc = orte_rmcast.send(ORTE_RMCAST_APP_PUBLIC_ADDR, &buf))) {
-                ORTE_ERROR_LOG(rc);
-                goto blast;
-            }
+        if (ORTE_SUCCESS != (rc = orte_rmcast.send(0, ORTE_RMCAST_TAG_WILDCARD, &buf))) {
+            ORTE_ERROR_LOG(rc);
+            goto blast;
+        }
     } else {
-        if (ORTE_SUCCESS != (rc = orte_rmcast.recv_nb(ORTE_RMCAST_APP_PUBLIC_ADDR, cbfunc, NULL))) {
+        if (ORTE_SUCCESS != (rc = orte_rmcast.recv_nb(0, ORTE_RMCAST_PERSISTENT,
+                                                      ORTE_RMCAST_TAG_WILDCARD,
+                                                      cbfunc, NULL))) {
             ORTE_ERROR_LOG(rc);
         }
         orte_grpcomm.barrier();
@@ -71,10 +75,21 @@ blast:
     return 0;
 }
 
-static void cbfunc(int channel, opal_buffer_t *buf, void *cbdata)
+static void cbfunc(int channel, opal_buffer_t *buffer, void *cbdata)
 {
+    opal_buffer_t buf;
+    int32_t i32=1, rc;
+
     fprintf(stderr, "GOT MESSAGE\n");
     fflush(stderr);
+    if (0 != ORTE_PROC_MY_NAME->vpid) {
+        OBJ_CONSTRUCT(&buf, opal_buffer_t);
+        opal_dss.pack(&buf, &i32, 1, OPAL_INT32);
+        if (ORTE_SUCCESS != (rc = orte_rmcast.send(0, ORTE_RMCAST_TAG_WILDCARD, &buf))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        OBJ_DESTRUCT(&buf);
+    }
     orte_finalize();
     exit(0);
 }
