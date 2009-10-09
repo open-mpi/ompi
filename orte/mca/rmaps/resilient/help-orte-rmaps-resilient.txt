@@ -10,43 +10,19 @@
 #
 # This is the US/English general help file for the resilient mapper.
 #
-[orte-rmaps-resilient:alloc-error]
-There are not enough slots available in the system to satisfy the %d slots 
-that were requested by the application:
-  %s
-
-Either request fewer slots for your application, or make more slots available
-for use.
-[orte-rmaps-resilient:multi-apps-and-zero-np]
-RMAPS found multiple applications to be launched, with
-at least one that failed to specify the number of processes to execute.
-When specifying multiple applications, you must specify how many processes
-of each to launch via the -np argument.
-
-[orte-rmaps-resilient:per-node-and-too-many-procs]
-There are not enough nodes in your allocation to satisfy your request to launch
-%d processes on a per-node basis - only %d nodes were available.
-
-Either request fewer processes, or obtain a larger allocation.
-[orte-rmaps-resilient:n-per-node-and-too-many-procs]
-There are not enough nodes in your allocation to satisfy your request to launch
-%d processes on a %d per-node basis - only %d nodes with a total of %d slots were available.
-
-Either request fewer processes, or obtain a larger allocation.
-[orte-rmaps-resilient:n-per-node-and-not-enough-slots]
-There are not enough slots on the nodes in your allocation to satisfy your request to launch on a %d process-per-node basis - only %d slots/node were available.
-
-Either request fewer processes/node, or obtain a larger allocation.
-
-[orte-rmaps-resilient:no-np-and-user-map]
-You have specified a rank-to-node/slot mapping, but failed to provide
-the number of processes to be executed. For some reason, this information
-could not be obtained from the mapping you provided, so we cannot continue
-with executing the specified application.
-#
 [orte-rmaps-resilient:file-not-found]
 The specified file that describes the fault groups for this system:
 
 FILE: %s
 
 was not found. Please verify the file name and location.
+#
+[orte-rmaps-resilient:num-procs]
+The resilient mapper requires that you specify the number of processes
+to be launched for each application. Please provide the required information
+and try again.
+
+Alternatively, if you truly wish to take advantage of the -perxxx options
+or to simply launch one process on every available slot, do not specify the
+resilient mapper. Mpirun will automatically select the appropriate mapper
+to support your request.

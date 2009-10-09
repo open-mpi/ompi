@@ -136,7 +136,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
         if (NULL == fp) { /* not found */
             orte_show_help("help-orte-rmaps-resilient.txt", "orte-rmaps-resilient:file-not-found",
                            true, mca_rmaps_resilient_component.fault_group_file);
-            return ORTE_ERROR;
+            return ORTE_ERR_SILENT;
         }
         /* build list of fault groups */
         grp = 0;
@@ -355,6 +355,15 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
         /* get the app_context */
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
             continue;
+        }
+        /* you cannot use this mapper unless you specify the number of procs to
+         * launch for each app
+         */
+        if (0 == app->num_procs) {
+            orte_show_help("help-orte-rmaps-resilient.txt",
+                           "orte-rmaps-resilient:num-procs",
+                           true);
+            return ORTE_ERR_SILENT;
         }
         num_assigned = 0;
         /* for each app_context, we have to get the list of nodes that it can
