@@ -46,11 +46,12 @@ BEGIN_C_DECLS
     (((n) >> 24) & 0x000000FF), (((n) >> 16) & 0x000000FF), \
     (((n) >> 8) & 0x000000FF), ((n) & 0x000000FF)
 
-#define OPAL_IF_ASSEMBLE_NETWORK(n1, n2, n3)    \
-    (((n1) << 24) & 0xFF000000) |               \
-    (((n2) << 16) & 0x00FF0000) |               \
-    (((n3) <<  8) & 0x0000FF00)
-
+#define OPAL_IF_ASSEMBLE_NETWORK(n1, n2, n3, n4)    \
+    (((n1) << 24) & 0xFF000000) |                   \
+    (((n2) << 16) & 0x00FF0000) |                   \
+    (((n3) <<  8) & 0x0000FF00) |                   \
+    ( (n4)        & 0x000000FF)        
+        
 /**
  *  Lookup an interface by name and return its primary address.
  *  
@@ -177,6 +178,25 @@ OPAL_DECLSPEC bool opal_ifislocal(const char *hostname);
  * @return OPAL_ERROR if data could not be released
  */
 OPAL_DECLSPEC int opal_iffinalize(void);
+
+/**
+ * Convert a dot-delimited network tuple to an IP address
+ *
+ * @param addr (IN) character string tuple
+ * @param net (IN) Pointer to returned network address
+ * @param mask (IN) Pointer to returned netmask
+ * @return OPAL_SUCCESS if no problems encountered
+ * @return OPAL_ERROR if data could not be released
+ */
+OPAL_DECLSPEC int opal_iftupletoaddr(char *addr, uint32_t *net, uint32_t *mask);
+
+/**
+ * Determine if given interface is loopback
+ *
+ *  @param if_index (IN)  Interface index
+ */
+OPAL_DECLSPEC bool opal_ifisloopback(int if_index);
+
 
 END_C_DECLS
 
