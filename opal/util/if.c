@@ -71,6 +71,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/util/if.h"
 #include "opal/util/output.h"
+#include "opal/util/argv.h"
 #include "opal/constants.h"
 #include "opal/mca/base/mca_base_param.h"
 
@@ -1200,6 +1201,132 @@ opal_ifislocal(const char *hostname)
     return (OPAL_SUCCESS == ret) ? true : false;
 }
 
+static uint32_t parse_dots(char *addr)
+{
+    char **tuple;
+    uint32_t n[]={0,0,0,0};
+    uint32_t net;
+    int i;
+
+    tuple = opal_argv_split(addr, '.');
+    /* now assemble the address */
+    for (i=0; NULL != tuple[i]; i++) {
+        n[i] = strtoul(tuple[i], NULL, 10);
+    }
+    net = OPAL_IF_ASSEMBLE_NETWORK(n[0], n[1], n[2], n[3]);
+    opal_argv_free(tuple);
+    return net;
+}
+
+int
+opal_iftupletoaddr(char *inaddr, uint32_t *net, uint32_t *mask)
+{
+    char *addr;
+    char **tuple;
+    int pval;
+    char *msk, *ptr;
+    
+    /* if a mask was desired... */
+    if (NULL != mask) {
+        /* set default */
+        *mask = 0xFFFFFFFF;
+        /* protect the input */
+        addr = strdup(inaddr);
+        
+        /* if entry includes mask, split that off */
+        msk = NULL;
+        if (NULL != (ptr = strchr(addr, '/'))) {
+            *ptr = '\0';
+            msk = ptr + 1;
+            /* is the mask a tuple? */
+            if (NULL != strchr(msk, '.')) {
+                /* yes - extract mask from it */
+                *mask = parse_dots(msk);
+            } else {
+                /* no - must be an int telling us how
+                 * much of the addr to use: e.g., /16
+                 */
+                pval = strtol(msk, NULL, 10);
+                if (24 == pval) {
+                    *mask = 0xFFFFFF00;
+                } else if (16 == pval) {
+                    *mask = 0xFFFF0000;
+                } else if (8 == pval) {
+                    *mask = 0xFF000000;
+                } else {
+                    opal_output(0, "opal_iftupletoaddr: unknown mask");
+                    free(addr);
+                    return OPAL_ERROR;
+                }
+            }
+        } else {
+            /* use the number of dots to determine it */
+            tuple = opal_argv_split(addr, '.');
+            pval = opal_argv_count(tuple);
+            /* if we have three dots, then we have four
+             * fields since it is a full address, so the
+             * default netmask is fine
+             */
+            if (pval < 4) {
+                if (3 == pval) {         /* 2 dots */
+                    *mask = 0xFFFFFF00;
+                } else if (2 == pval) {  /* 1 dot */
+                    *mask = 0xFFFF0000;
+                } else if (1 == pval) {  /* no dots */
+                    *mask = 0xFF000000;
+                } else {
+                    opal_output(0, "opal_iftupletoaddr: unknown mask");
+                    free(addr);
+                    return OPAL_ERROR;
+                }
+            }
+            opal_argv_free(tuple);
+        }
+        free(addr);
+    }
+    
+    /* if network addr is desired... */
+    if (NULL != net) {
+        /* set default */
+        *net = 0;
+        /* protect the input */
+        addr = strdup(inaddr);
+        
+        /* if entry includes mask, split that off */
+        if (NULL != (ptr = strchr(addr, '/'))) {
+            *ptr = '\0';
+        }
+        /* now assemble the address */
+        *net = parse_dots(addr);
+        free(addr);
+    }
+    
+    return OPAL_SUCCESS;
+}
+
+/* 
+ *  Determine if the specified interface is loopback
+ */
+
+bool opal_ifisloopback(int if_index)
+{
+    opal_if_t* intf;
+    int rc = opal_ifinit();
+    if(rc != OPAL_SUCCESS)
+        return rc;
+    
+    for(intf =  (opal_if_t*)opal_list_get_first(&opal_if_list);
+        intf != (opal_if_t*)opal_list_get_end(&opal_if_list);
+        intf =  (opal_if_t*)opal_list_get_next(intf)) {
+        if(intf->if_index == if_index) {
+            if ((intf->if_flags & IFF_LOOPBACK) != 0) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 
 #else /* HAVE_STRUCT_SOCKADDR_IN */
 
@@ -1293,5 +1420,10 @@ opal_iffinalize(void)
     return OPAL_SUCCESS;
 }
 
+uint32_t
+opal_iftupletoaddr(char *addr)
+{
+    return 0;
+}
 #endif /* HAVE_STRUCT_SOCKADDR_IN */
 
