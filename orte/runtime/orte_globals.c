@@ -124,11 +124,15 @@ char *orte_rankfile;
 /* default rank assigment and binding policy */
 orte_mapping_policy_t orte_default_mapping_policy = 0;
 
+/* basename of the orte/mpirun cmd */
+char *orte_cmd_basename = NULL;
+
 #endif /* !ORTE_DISABLE_FULL_RTE */
 
 int orte_debug_output = -1;
 bool orte_debug_daemons_flag = false;
 bool orte_xml_output = false;
+FILE *orte_xml_fp = NULL;
 char *orte_job_ident = NULL;
 
 /* See comment in orte/tools/orterun/debuggers.c about this MCA

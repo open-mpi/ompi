@@ -117,6 +117,12 @@ static int rte_init(char flags)
         goto error;
     }
     
+    /* if we are using xml for output, put a basename start tag */
+    if (orte_xml_output) {
+        fprintf(orte_xml_fp, "<%s>\n", orte_cmd_basename);
+        fflush(orte_xml_fp);
+    }
+    
     /* determine the topology info */
     if (0 == orte_default_num_sockets_per_board) {
         /* we weren't given a number, so try to determine it */
@@ -126,6 +132,7 @@ static int rte_init(char flags)
         }
         orte_default_num_sockets_per_board = (uint8_t)value;
     }
+
     if (0 == orte_default_num_cores_per_socket) {
         /* we weren't given a number, so try to determine it */
         if (OPAL_SUCCESS != (ret = opal_paffinity_base_get_core_info(0, &value))) {
@@ -518,6 +525,15 @@ static int rte_finalize(void)
         free(orte_job_ident);
     }
 
+    
+    /* close the xml output file, if open */
+    if (orte_xml_output) {
+        fprintf(orte_xml_fp, "</%s>\n", orte_cmd_basename);
+        fflush(orte_xml_fp);
+        if (stdout != orte_xml_fp) {
+            fclose(orte_xml_fp);
+        }
+    }
     
     return ORTE_SUCCESS;    
 }

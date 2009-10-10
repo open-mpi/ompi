@@ -36,6 +36,42 @@
 
 #include "orte/mca/ras/base/ras_private.h"
 
+/* static function to display allocation */
+static void display_alloc(void)
+{
+    char *tmp=NULL, *tmp2, *tmp3, *pfx=NULL;
+    int i;
+    orte_node_t *alloc;
+    
+    if (orte_xml_output) {
+        asprintf(&tmp, "<allocation>\n");
+        pfx = "\t";
+    } else {
+        asprintf(&tmp, "\n======================   ALLOCATED NODES   ======================\n");
+    }
+    for (i=0; i < orte_node_pool->size; i++) {
+        if (NULL == (alloc = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+            continue;
+        }
+        opal_dss.print(&tmp2, pfx, alloc, ORTE_NODE);
+        if (NULL == tmp) {
+            tmp = tmp2;
+        } else {
+            asprintf(&tmp3, "%s%s", tmp, tmp2);
+            free(tmp);
+            free(tmp2);
+            tmp = tmp3;
+        }
+    }
+    if (orte_xml_output) {
+        fprintf(orte_xml_fp, "%s</allocation>\n", tmp);
+        fflush(orte_xml_fp);
+    } else {
+        opal_output(orte_clean_output, "%s\n\n=================================================================\n", tmp);
+    }
+    free(tmp);    
+}
+
 /*
  * Function for selecting one component from all those that are
  * available.
@@ -44,7 +80,7 @@ int orte_ras_base_allocate(orte_job_t *jdata)
 {
     int rc;
     opal_list_t nodes;
-    orte_node_t *node, **alloc;
+    orte_node_t *node;
     orte_std_cntr_t i;
     bool override_oversubscribed;
     orte_app_context_t **apps;
@@ -312,34 +348,7 @@ int orte_ras_base_allocate(orte_job_t *jdata)
 DISPLAY:
     /* shall we display the results? */
     if (orte_ras_base.display_alloc) {
-        char *tmp=NULL, *tmp2, *tmp3, *pfx=NULL;
-        if (orte_xml_output) {
-            asprintf(&tmp, "<allocation>\n");
-            pfx = "\t";
-        } else {
-            asprintf(&tmp, "\n======================   ALLOCATED NODES   ======================\n");
-        }
-        alloc = (orte_node_t**)orte_node_pool->addr;
-        for (i=0; i < orte_node_pool->size; i++) {
-            if (NULL == alloc[i]) {
-                break;
-            }
-            opal_dss.print(&tmp2, pfx, alloc[i], ORTE_NODE);
-            if (NULL == tmp) {
-                tmp = tmp2;
-            } else {
-                asprintf(&tmp3, "%s%s", tmp, tmp2);
-                free(tmp);
-                free(tmp2);
-                tmp = tmp3;
-            }
-        }
-        if (orte_xml_output) {
-            opal_output(orte_clean_output, "%s</allocation>\n", tmp);
-        } else {
-            opal_output(orte_clean_output, "%s\n\n=================================================================\n", tmp);
-        }
-        free(tmp);
+        display_alloc();
     }
     
     return rc;

@@ -50,6 +50,7 @@ BEGIN_C_DECLS
 ORTE_DECLSPEC extern int orte_debug_verbosity;  /* instantiated in orte/runtime/orte_init.c */
 ORTE_DECLSPEC extern char *orte_prohibited_session_dirs;  /* instantiated in orte/runtime/orte_init.c */
 ORTE_DECLSPEC extern bool orte_xml_output;  /* instantiated in orte/runtime/orte_globals.c */
+ORTE_DECLSPEC extern FILE *orte_xml_fp;   /* instantiated in orte/runtime/orte_globals.c */
 ORTE_DECLSPEC extern bool orte_help_want_aggregate;  /* instantiated in orte/util/show_help.c */
 ORTE_DECLSPEC extern char *orte_job_ident;  /* instantiated in orte/runtime/orte_globals.c */
 
@@ -528,6 +529,9 @@ ORTE_DECLSPEC extern char *orte_rankfile;
 
 /* default rank assigment and binding policy */
 ORTE_DECLSPEC extern orte_mapping_policy_t orte_default_mapping_policy;
+
+/* basename of the orte/mpirun cmd */
+ORTE_DECLSPEC extern char *orte_cmd_basename;
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 
