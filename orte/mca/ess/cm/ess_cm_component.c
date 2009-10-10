@@ -70,10 +70,25 @@ orte_ess_cm_component_open(void)
 
 int orte_ess_cm_component_query(mca_base_module_t **module, int *priority)
 {
+#if ORTE_ENABLE_MULTICAST
+    char *spec;
+    
     /* only select us if specified */
-    *priority = 0;
+    spec = getenv("OMPI_MCA_ess");
+    if (NULL == spec || 0 != strcmp("cm", spec)) {
+        *priority = 0;
+        *module = NULL;
+        return ORTE_ERROR;
+    }
+    *priority = 1000;
     *module = (mca_base_module_t *)&orte_ess_cm_module;
     return ORTE_SUCCESS;
+#else
+    /* cannot be used */
+    *priority = 0;
+    *module = NULL;
+    return ORTE_ERROR;
+#endif
 }
 
 

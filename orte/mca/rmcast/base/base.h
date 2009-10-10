@@ -17,6 +17,10 @@
  */
 #include "orte_config.h"
 
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+
 #include "orte/mca/rmcast/rmcast.h"
 
 BEGIN_C_DECLS
@@ -31,10 +35,10 @@ ORTE_DECLSPEC int orte_rmcast_base_open(void);
 typedef struct {
     int rmcast_output;
     opal_list_t rmcast_opened;
-    uint8_t octet1[2];
-    uint8_t octet2[2];
-    uint8_t octet3[2];
-    uint8_t channel_offset;
+    uint32_t xmit_network;
+    char *my_group_name;
+    uint8_t my_group_number;
+    uint32_t interface;
     uint16_t ports[256];
 } orte_rmcast_base_t;
 

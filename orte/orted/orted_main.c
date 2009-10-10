@@ -718,14 +718,26 @@ int orte_daemon(int argc, char *argv[])
                 OBJ_RELEASE(buffer);
                 goto DONE;
             }
+        } else if (orte_daemon_bootstrap) {
+            /* send to a different callback location as the
+             * HNP didn't launch us and isn't waiting for a
+             * callback
+             */
+            if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_HNP, buffer,
+                                                ORTE_RML_TAG_BOOTSTRAP, 0))) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_RELEASE(buffer);
+                goto DONE;
+            }
+        } else {
+            if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_HNP, buffer,
+                                                ORTE_RML_TAG_ORTED_CALLBACK, 0))) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_RELEASE(buffer);
+                goto DONE;
+            }            
         }
  
-        if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_HNP, buffer,
-                                            ORTE_RML_TAG_ORTED_CALLBACK, 0))) {
-            ORTE_ERROR_LOG(ret);
-            OBJ_RELEASE(buffer);
-            goto DONE;
-        }
 
         OBJ_RELEASE(buffer);  /* done with this */
     }

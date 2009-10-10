@@ -1279,6 +1279,14 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
         rc = ORTE_ERR_NOT_FOUND;
         goto CLEANUP;
     }
+    
+    /* do we have any local procs to launch? */
+    if (0 == jobdat->num_local_procs) {
+        /* no - just return */
+        opal_condition_signal(&orte_odls_globals.cond);
+        OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
+        return ORTE_SUCCESS;
+    }
     apps = jobdat->apps;
     num_apps = jobdat->num_apps;
     
@@ -1874,10 +1882,17 @@ CLEANUP:
      * instead, we queue it up for local processing
      */
     if (ORTE_PROC_IS_HNP) {
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                             "%s odls:launch flagging launch report to myself",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &alert,
                            ORTE_RML_TAG_APP_LAUNCH_CALLBACK,
                            orte_plm_base_app_report_launch);
     } else {
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                             "%s odls:launch sending launch report to %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_HNP)));
         /* go ahead and send the update to the HNP */
         if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &alert, ORTE_RML_TAG_APP_LAUNCH_CALLBACK, 0))) {
             ORTE_ERROR_LOG(ret);

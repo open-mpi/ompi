@@ -168,6 +168,9 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_msg_packet_t);
 /* onesided barrier */
 #define ORTE_RML_TAG_ONESIDED_BARRIER       34
 
+/* bootstrap */
+#define ORTE_RML_TAG_BOOTSTRAP              35
+
 
 #define ORTE_RML_TAG_MAX                   100
 
