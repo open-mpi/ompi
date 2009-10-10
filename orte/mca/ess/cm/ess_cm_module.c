@@ -110,10 +110,6 @@ static int rte_init(void)
             goto error;
         }
         
-        /* initialize the global list of local children and job data */
-        OBJ_CONSTRUCT(&orte_local_children, opal_list_t);
-        OBJ_CONSTRUCT(&orte_local_jobdata, opal_list_t);
-        
         /* get the list of nodes used for this job */
         nodelist = getenv("OMPI_MCA_orte_nodelist");
         
@@ -370,11 +366,12 @@ static void cbfunc(int channel, opal_buffer_t *buf, void *cbdata)
     
     /* ensure we default to failure */
     name_success = false;
-
+    
     /* unpack the cmd */
     n = 1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &cmd, &n, ORTE_DAEMON_CMD_T))) {
         ORTE_ERROR_LOG(rc);
+        arrived = true;
         return;
     }
 
@@ -383,6 +380,14 @@ static void cbfunc(int channel, opal_buffer_t *buf, void *cbdata)
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &name, &n, ORTE_NAME))) {
             ORTE_ERROR_LOG(rc);
+            arrived = true;
+            return;
+        }
+        /* if we got an invalid name, then declare failure */
+        if (ORTE_JOBID_INVALID == name.jobid &&
+            ORTE_VPID_INVALID == name.vpid) {
+            opal_output(0, "got invalid name");
+            arrived = true;
             return;
         }
         ORTE_PROC_MY_NAME->jobid = name.jobid;
@@ -395,30 +400,21 @@ static void cbfunc(int channel, opal_buffer_t *buf, void *cbdata)
     n = 1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &uri, &n, OPAL_STRING))) {
         ORTE_ERROR_LOG(rc);
+        arrived = true;
         return;
     }
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                          "%s got hnp uri %s",
                          ORTE_NAME_PRINT(&name), uri));
     orte_process_info.my_hnp_uri = uri;
-
-    name_success = true;
     
+    name_success = true;
     arrived = true;
 }
 
 static int cm_set_name(void)
 {
-    int i, rc;
-    struct sockaddr_in if_addr;
-    char *ifnames[] = {
-        "ce",
-        "eth0",
-        "eth1",
-        NULL
-    };
-    int32_t net, rack, slot, function;
-    int32_t addr;
+    int rc;
     opal_buffer_t buf;
     orte_daemon_cmd_flag_t cmd;
     
@@ -426,48 +422,7 @@ static int cm_set_name(void)
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
 
     if (ORTE_PROC_IS_DAEMON) {
-       /* try constructing the name from the IP address - first,
-         * find an appropriate interface
-         */
-        for (i=0; NULL != ifnames[i]; i++) {
-            if (ORTE_SUCCESS != (rc = opal_ifnametoaddr(ifnames[i],
-                                                        (struct sockaddr*)&if_addr,
-                                                        sizeof(struct sockaddr_in)))) {
-                continue;
-            }
-            addr = htonl(if_addr.sin_addr.s_addr);
-            
-            /* break address into sections */
-            net = 0x000000FF & ((0xFF000000 & addr) >> 24);
-            rack = 0x000000FF & ((0x00FF0000 & addr) >> 16);
-            slot = 0x000000FF & ((0x0000FF00 & addr) >> 8);
-            function = 0x000000FF & addr;
-            
-            /* is this an appropriate interface to use */
-            if (10 == net) {
-                /* set our vpid - add 1 to ensure it cannot be zero */
-                ORTE_PROC_MY_NAME->vpid = (rack * mca_ess_cm_component.max_slots) + slot + function + 1;
-                /* set our jobid to 0 */
-                ORTE_PROC_MY_NAME->jobid = 0;
-                /* notify the HNP of our existence */
-                cmd = ORTE_DAEMON_CHECKIN_CMD;
-                opal_dss.pack(&buf, &cmd, 1, ORTE_DAEMON_CMD_T);
-                opal_dss.pack(&buf, ORTE_PROC_MY_NAME, 1, ORTE_NAME);
-                goto checkin;
-            } else if (192 == net && 168 == rack) {
-                /* just use function */
-                ORTE_PROC_MY_NAME->vpid = function + 1;
-                /* set our jobid to 0 */
-                ORTE_PROC_MY_NAME->jobid = 0;
-                /* notify the HNP of our existence */
-                cmd = ORTE_DAEMON_CHECKIN_CMD;
-                opal_dss.pack(&buf, &cmd, 1, ORTE_DAEMON_CMD_T);
-                opal_dss.pack(&buf, ORTE_PROC_MY_NAME, 1, ORTE_NAME);
-                goto checkin;
-            }
-        }
-        /* if we get here, then we didn't find a usable interface.
-         * use the reliable multicast system to contact the HNP and
+        /* use the reliable multicast system to contact the HNP and
          * get a name
          */
         cmd = ORTE_DAEMON_NAME_REQ_CMD;
@@ -479,12 +434,11 @@ static int cm_set_name(void)
         opal_dss.pack(&buf, ORTE_PROC_MY_NAME, 1, ORTE_NAME);
     }
 
-checkin:
     /* always include our node name */
     opal_dss.pack(&buf, &orte_process_info.nodename, 1, OPAL_STRING);
 
     /* set the recv to get the answer */
-    if (ORTE_SUCCESS != (rc = orte_rmcast.recv_nb(0, ORTE_RMCAST_NON_PERSISTENT,
+    if (ORTE_SUCCESS != (rc = orte_rmcast.recv_nb(ORTE_RMCAST_SYS_CHANNEL, ORTE_RMCAST_NON_PERSISTENT,
                                                   ORTE_RMCAST_TAG_BOOTSTRAP,
                                                   cbfunc, NULL))) {
         ORTE_ERROR_LOG(rc);
@@ -492,21 +446,24 @@ checkin:
         return rc;
     }
     
+    opal_output(0, "sending name request");
     /* send the request */
-    if (ORTE_SUCCESS != (rc = orte_rmcast.send(0, ORTE_RMCAST_TAG_BOOTSTRAP,
+    if (ORTE_SUCCESS != (rc = orte_rmcast.send(ORTE_RMCAST_SYS_CHANNEL, ORTE_RMCAST_TAG_BOOTSTRAP,
                                                &buf))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&buf);
         return rc;
     }
-    /* OBJ_DESTRUCT(&buf); */
+    OBJ_DESTRUCT(&buf);
 
     /* wait for response */
     ORTE_PROGRESSED_WAIT(arrived, 0, 1);
     
     /* if we got a valid name, return success */
     if (name_success) {
+        opal_output(0, "returning success");
         return ORTE_SUCCESS;
     }
+    opal_output(0, "returning not found");
     return ORTE_ERR_NOT_FOUND;
 }

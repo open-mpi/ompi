@@ -21,12 +21,17 @@
 
 BEGIN_C_DECLS
 
+/* channel type */
+typedef int32_t orte_rmcast_channel_t;
+#define ORTE_RMCAST_CHANNEL_T   OPAL_INT32
+
 /* ORTE IP multicast channels */
-#define ORTE_RMCAST_SYS_ADDR            1
-#define ORTE_RMCAST_APP_PUBLIC_ADDR     2
+#define ORTE_RMCAST_WILDCARD_CHANNEL       -1
+#define ORTE_RMCAST_INVALID_CHANNEL         0
+#define ORTE_RMCAST_SYS_CHANNEL             1
+#define ORTE_RMCAST_APP_PUBLIC_CHANNEL      2
 
-
-#define ORTE_RMCAST_DYNAMIC_CHANNELS    100
+#define ORTE_RMCAST_DYNAMIC_CHANNELS        3
 
 
 /* define channel directions */
@@ -35,12 +40,13 @@ BEGIN_C_DECLS
 #define ORTE_RMCAST_BIDIR   0x03
 
 /* Message matching tag */
-typedef uint16_t orte_rmcast_tag_t;
-#define ORTE_RMCAST_TAG_T   OPAL_UINT16
+typedef int32_t orte_rmcast_tag_t;
+#define ORTE_RMCAST_TAG_T   OPAL_INT32
 
 /* tag values for well-known services */
-#define ORTE_RMCAST_TAG_INVALID     0
-#define ORTE_RMCAST_TAG_BOOTSTRAP   1
+#define ORTE_RMCAST_TAG_WILDCARD    -1
+#define ORTE_RMCAST_TAG_INVALID      0
+#define ORTE_RMCAST_TAG_BOOTSTRAP    1
 
 /* starting value for dynamicall assignable tags */
 #define ORTE_RMCAST_TAG_DYNAMIC     100

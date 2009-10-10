@@ -38,7 +38,7 @@ BEGIN_C_DECLS
 /**
  * Function prototype for callback from receiving multicast messages
  */
-typedef void (*orte_rmcast_callback_fn_t)(int channel, opal_buffer_t *buf, void* cbdata);
+typedef void (*orte_rmcast_callback_fn_t)(orte_rmcast_channel_t channel, opal_buffer_t *buf, void* cbdata);
 
 /* initialize the selected module */
 typedef int (*orte_rmcast_base_module_init_fn_t)(void);
@@ -47,34 +47,38 @@ typedef int (*orte_rmcast_base_module_init_fn_t)(void);
 typedef void (*orte_rmcast_base_module_finalize_fn_t)(void);
 
 /* send a buffered message across a multicast channel */
-typedef int (*orte_rmcast_base_module_send_fn_t)(unsigned int channel,
+typedef int (*orte_rmcast_base_module_send_fn_t)(orte_rmcast_channel_t channel,
                                                  orte_rmcast_tag_t tag,
                                                  opal_buffer_t *buf);
 
 /* non-blocking send messages from a multicast channel */
-typedef int (*orte_rmcast_base_module_send_nb_fn_t)(unsigned int channel,
+typedef int (*orte_rmcast_base_module_send_nb_fn_t)(orte_rmcast_channel_t channel,
                                                     orte_rmcast_tag_t tag,
                                                     opal_buffer_t *buf,
                                                     orte_rmcast_callback_fn_t cbfunc,
                                                     void *cbdata);
 
 /* non-blocking receive messages from a multicast channel */
-typedef int (*orte_rmcast_base_module_recv_nb_fn_t)(unsigned int channel,
+typedef int (*orte_rmcast_base_module_recv_nb_fn_t)(orte_rmcast_channel_t channel,
                                                     orte_rmcast_flag_t flags,
                                                     orte_rmcast_tag_t tag,
                                                     orte_rmcast_callback_fn_t cbfunc, void *cbdata);
 
 /* blocking receive from a multicast channel */
-typedef int (*orte_rmcast_base_module_recv_fn_t)(unsigned int channel,
+typedef int (*orte_rmcast_base_module_recv_fn_t)(orte_rmcast_channel_t channel,
                                                  orte_rmcast_tag_t tag,
                                                  opal_buffer_t *buf);
 
 /* cancel a receive */
-typedef void (*orte_rmcast_base_module_cancel_recv_fn_t)(unsigned int channel,
+typedef void (*orte_rmcast_base_module_cancel_recv_fn_t)(orte_rmcast_channel_t channel,
                                                          orte_rmcast_tag_t tag);
 
 /* open the next available channel */
-typedef unsigned int (*orte_rmcast_base_module_open_rmcast_channel_fn_t)(char *name, char *network, uint8_t direction);
+typedef int (*orte_rmcast_base_module_open_channel_fn_t)(orte_rmcast_channel_t *channel, char *name,
+                                                         char *network, int port, char *interface, uint8_t direction);
+
+/* close the channel */
+typedef int (*orte_rmcast_base_module_close_channel_fn_t)(orte_rmcast_channel_t channel);
 
 /*
  * rmcast component
@@ -94,14 +98,15 @@ typedef orte_rmcast_base_component_1_0_0_t orte_rmcast_base_component_t;
  * Component modules Ver 1.0
  */
 struct orte_rmcast_base_module_t {
-    orte_rmcast_base_module_init_fn_t                   init;
-    orte_rmcast_base_module_finalize_fn_t               finalize;
-    orte_rmcast_base_module_send_fn_t                   send;
-    orte_rmcast_base_module_send_nb_fn_t                send_nb;
-    orte_rmcast_base_module_recv_fn_t                   recv;
-    orte_rmcast_base_module_recv_nb_fn_t                recv_nb;
-    orte_rmcast_base_module_cancel_recv_fn_t            cancel_recv;
-    orte_rmcast_base_module_open_rmcast_channel_fn_t    open_channel;
+    orte_rmcast_base_module_init_fn_t           init;
+    orte_rmcast_base_module_finalize_fn_t       finalize;
+    orte_rmcast_base_module_send_fn_t           send;
+    orte_rmcast_base_module_send_nb_fn_t        send_nb;
+    orte_rmcast_base_module_recv_fn_t           recv;
+    orte_rmcast_base_module_recv_nb_fn_t        recv_nb;
+    orte_rmcast_base_module_cancel_recv_fn_t    cancel_recv;
+    orte_rmcast_base_module_open_channel_fn_t   open_channel;
+    orte_rmcast_base_module_close_channel_fn_t  close_channel;
 };
 /** Convienence typedef */
 typedef struct orte_rmcast_base_module_t orte_rmcast_module_t;

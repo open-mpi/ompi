@@ -219,13 +219,6 @@ static int update_route(orte_process_name_t *target,
         return ORTE_SUCCESS;
     }
     
-    /* if the job family is zero, then this is going to a local slave,
-     * so the path is direct and there is nothing to do here
-     */
-    if (0 == ORTE_JOB_FAMILY(target->jobid)) {
-        return ORTE_SUCCESS;
-    }
-    
     OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                          "%s routed_cm_update: %s --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -311,16 +304,13 @@ static orte_process_name_t get_route(orte_process_name_t *target)
         goto found;
     }
 
-    /* if the job family is zero, then this is going to a local slave,
-     * so the path is direct
-     */
-    if (0 == ORTE_JOB_FAMILY(target->jobid)) {
-        ret = target;
-        goto found;
-    }
-    
     /* IF THIS IS FOR A DIFFERENT JOB FAMILY... */
     if (ORTE_JOB_FAMILY(target->jobid) != ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
+        /* if I am a daemon, send it to the HNP */
+        if (ORTE_PROC_IS_DAEMON) {
+            ret = ORTE_PROC_MY_HNP;
+            goto found;
+        }
         /* if I am the HNP, then I stored a route to
          * this job family, so look it up
          */
@@ -350,17 +340,13 @@ static orte_process_name_t get_route(orte_process_name_t *target)
         ret = target;
         goto found;
     } else {
-        /* if I am a daemon, route it through the HNP to avoid
-         * opening unnecessary sockets
-         */
-        if (ORTE_PROC_IS_DAEMON) {
-            
+        /* otherwise, if I am the HNP, send to the daemon */
+        if (ORTE_PROC_IS_HNP) {
+            ret = &daemon;
+        } else {
+            /* send to the HNP for routing */
             ret = ORTE_PROC_MY_HNP;
-            goto found;
         }
-        
-        /* otherwise, if I am the HNP, send to that daemon */
-        ret = &daemon;
         goto found;
     }
     
@@ -510,7 +496,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
      */
     if (ORTE_PROC_IS_DAEMON) {
         
-        OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+        OPAL_OUTPUT_VERBOSE((0, orte_routed_base_output,
                              "%s routed_cm: init routes for daemon job %s\n\thnp_uri %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(job),
@@ -537,7 +523,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
-
+            
             /* set our lifeline to the HNP - we will abort if that connection is lost */
             lifeline = ORTE_PROC_MY_HNP;
             
@@ -545,16 +531,10 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
              * part of the message confirming they are read to go. HNP's
              * load their contact info during orte_init
              */
-        } else {
-                /* ndat != NULL means we are getting an update of RML info
-                 * for the daemons - so update our contact info and routes
-                 */
-                if (ORTE_SUCCESS != (rc = orte_rml_base_update_contact_info(ndat))) {
-                    ORTE_ERROR_LOG(rc);
-                }
-                return rc;
-            }
-
+        }
+        
+        /* ignore any other call as we only talk to the HNP */
+        
         OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
                              "%s routed_cm: completed init routes",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -562,10 +542,10 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
         return ORTE_SUCCESS;
     }
     
-
+    
     if (ORTE_PROC_IS_HNP) {
         
-        OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+        OPAL_OUTPUT_VERBOSE((0, orte_routed_base_output,
                              "%s routed_cm: init routes for HNP job %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(job)));

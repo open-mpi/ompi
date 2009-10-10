@@ -17,6 +17,7 @@
 
 #include "orte/mca/rmcast/base/base.h"
 
+static bool selected = false;
 
 /*
  * Select one RMCAST component from all those that are available.
@@ -27,6 +28,12 @@ int orte_rmcast_base_select(void)
     orte_rmcast_module_t *best_module = NULL;
     int rc;
 
+    if (selected) {
+        /* ensure we don't do this twice */
+        return ORTE_SUCCESS;
+    }
+    selected = true;
+    
     /*
      * Select the best component
      */
