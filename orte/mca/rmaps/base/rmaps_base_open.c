@@ -95,7 +95,7 @@ int orte_rmaps_base_open(void)
     /* Are we scheduling by node or by slot? */
     param = mca_base_param_reg_string_name("rmaps", "base_schedule_policy",
                                            "Scheduling Policy for RMAPS. [slot (alias:core) | socket | board | node]",
-                                           false, false, "unspec", &policy);
+                                           false, false, "slot", &policy);
     
     /* if something is specified, do not override what may already
      * be present - could have been given on cmd line
@@ -110,9 +110,6 @@ int orte_rmaps_base_open(void)
     } else if (0 == strcasecmp(policy, "node")) {
         ORTE_XSET_MAPPING_POLICY(ORTE_MAPPING_BYNODE);
     }
-    /* if nothing was specified, leave it alone - we already set it
-     * in orterun
-     */
 
     /* check for procs/xxx directives */
     param = mca_base_param_reg_int_name("rmaps", "base_pernode",
