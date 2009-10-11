@@ -1326,10 +1326,12 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
         ORTE_SET_MAPPING_POLICY(ORTE_MAPPING_BYBOARD);
     } else if (orterun_globals.by_socket) {
         ORTE_SET_MAPPING_POLICY(ORTE_MAPPING_BYSOCKET);
-    } else {
-        /* byslot is the default */
+    } else if (orterun_globals.by_slot) {
         ORTE_SET_MAPPING_POLICY(ORTE_MAPPING_BYSLOT);
     }
+    /* if nothing was specified, leave it as set by
+     * mca param
+     */
     
     /* extract any binding policy directives */
     if (orterun_globals.bind_to_socket) {
