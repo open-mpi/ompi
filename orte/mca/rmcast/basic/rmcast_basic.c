@@ -910,15 +910,16 @@ static int setup_socket(int *sd, rmcast_basic_channel_t *chan, bool recvsocket)
         }
     } else {
         /* on the xmit side, need to set the interface */
-        memset(&req, 0, sizeof (req));
-        req.imr_interface.s_addr = htonl(chan->interface);
+        memset(&inaddr, 0, sizeof(inaddr));
+        inaddr.sin_addr.s_addr = htonl(chan->interface);
+        addrlen = sizeof(struct sockaddr_in);
         
         OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                              "setup:socket:xmit interface %03d.%03d.%03d.%03d",
                              OPAL_IF_FORMAT_ADDR(chan->interface)));
         
         if ((setsockopt(target_sd, IPPROTO_IP, IP_MULTICAST_IF, 
-                        (void *)&req, sizeof (req))) < 0) {
+                        (void *)&inaddr, addrlen)) < 0) {
             opal_output(0, "%s rmcast:init: setsockopt() failed on MULTICAST_IF\n"
                         "\tfor multicast network %03d.%03d.%03d.%03d interface %03d.%03d.%03d.%03d\n\tError: %s (%d)",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
