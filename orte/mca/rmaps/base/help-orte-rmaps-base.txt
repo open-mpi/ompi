@@ -75,3 +75,12 @@ additional directives and conditions:
 %s:   %d
 
 Please revise the conflict and try again.
+#
+[too-many-cpus-per-rank]
+Your job has requested more cpus per process(rank) than there
+are cpus in a socket:
+
+  Cpus/rank: %d
+  #cpus/socket: %d
+
+Please correct one or both of these values and try again.
