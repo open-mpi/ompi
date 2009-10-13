@@ -33,6 +33,7 @@
 #include "opal/mca/paffinity/paffinity.h"
 
 #include "orte/runtime/orte_globals.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/rmaps/base/rmaps_private.h"
 
@@ -152,12 +153,19 @@ int orte_rmaps_base_open(void)
     orte_rmaps_base.loadbalance = OPAL_INT_TO_BOOL(value);
     
     /* #cpus/rank to use */
-    param = mca_base_param_reg_int_name("rmaps", "base_cpus_per_rank",
+    param = mca_base_param_reg_int_name("rmaps", "base_cpus_per_proc",
                                         "Number of cpus to use for each rank [1-2**15 (default=1)]",
                                         false, false, 1, NULL);
     mca_base_param_reg_syn_name(param, "rmaps", "base_cpus_per_rank", false);
     mca_base_param_lookup_int(param, &value);
     orte_rmaps_base.cpus_per_rank = value;
+    /* if the #cpus/rank > #cpus/socket, politely tell the user and abort */
+    if (orte_rmaps_base.cpus_per_rank > orte_default_num_cores_per_socket) {
+        orte_show_help("help-orte-rmaps-base.txt", "too-many-cpus-per-rank",
+                       true, orte_rmaps_base.cpus_per_rank,
+                       orte_default_num_cores_per_socket);
+        return ORTE_ERR_SILENT;
+    }
     /* if the cpus/rank > 1, then we have to bind to cores UNLESS the binding has
      * already been set to something else
      */
