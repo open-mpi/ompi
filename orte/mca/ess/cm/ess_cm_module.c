@@ -363,6 +363,7 @@ static void cbfunc(int channel, opal_buffer_t *buf, void *cbdata)
     orte_process_name_t name;
     int rc;
     char *uri;
+    char *host;
     
     /* ensure we default to failure */
     name_success = false;
@@ -376,6 +377,20 @@ static void cbfunc(int channel, opal_buffer_t *buf, void *cbdata)
     }
 
     if (ORTE_DAEMON_NAME_REQ_CMD == cmd) {
+        /* unpack the intended recipient's hostname */
+        n=1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &host, &n, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            arrived = true;
+            return;
+        }
+        
+        /* is this intended for me? */
+        if (0 != strcmp(host, orte_process_info.nodename)) {
+            /* nope - ignore it */
+            return;
+        }
+        
         /* unpack the name */
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &name, &n, ORTE_NAME))) {
@@ -386,7 +401,6 @@ static void cbfunc(int channel, opal_buffer_t *buf, void *cbdata)
         /* if we got an invalid name, then declare failure */
         if (ORTE_JOBID_INVALID == name.jobid &&
             ORTE_VPID_INVALID == name.vpid) {
-            opal_output(0, "got invalid name");
             arrived = true;
             return;
         }
@@ -438,7 +452,8 @@ static int cm_set_name(void)
     opal_dss.pack(&buf, &orte_process_info.nodename, 1, OPAL_STRING);
 
     /* set the recv to get the answer */
-    if (ORTE_SUCCESS != (rc = orte_rmcast.recv_nb(ORTE_RMCAST_SYS_CHANNEL, ORTE_RMCAST_NON_PERSISTENT,
+    if (ORTE_SUCCESS != (rc = orte_rmcast.recv_nb(ORTE_RMCAST_SYS_CHANNEL,
+                                                  ORTE_RMCAST_PERSISTENT,
                                                   ORTE_RMCAST_TAG_BOOTSTRAP,
                                                   cbfunc, NULL))) {
         ORTE_ERROR_LOG(rc);
@@ -446,9 +461,9 @@ static int cm_set_name(void)
         return rc;
     }
     
-    opal_output(0, "sending name request");
     /* send the request */
-    if (ORTE_SUCCESS != (rc = orte_rmcast.send(ORTE_RMCAST_SYS_CHANNEL, ORTE_RMCAST_TAG_BOOTSTRAP,
+    if (ORTE_SUCCESS != (rc = orte_rmcast.send(ORTE_RMCAST_SYS_CHANNEL,
+                                               ORTE_RMCAST_TAG_BOOTSTRAP,
                                                &buf))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&buf);
@@ -459,11 +474,14 @@ static int cm_set_name(void)
     /* wait for response */
     ORTE_PROGRESSED_WAIT(arrived, 0, 1);
     
+    /* cancel the recv */
+    orte_rmcast.cancel_recv(ORTE_RMCAST_SYS_CHANNEL,
+                            ORTE_RMCAST_TAG_BOOTSTRAP);
+    
     /* if we got a valid name, return success */
     if (name_success) {
-        opal_output(0, "returning success");
         return ORTE_SUCCESS;
     }
-    opal_output(0, "returning not found");
+
     return ORTE_ERR_NOT_FOUND;
 }
