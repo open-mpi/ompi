@@ -48,7 +48,7 @@ typedef int32_t orte_rmcast_tag_t;
 #define ORTE_RMCAST_TAG_INVALID      0
 #define ORTE_RMCAST_TAG_BOOTSTRAP    1
 
-/* starting value for dynamicall assignable tags */
+/* starting value for dynamically assignable tags */
 #define ORTE_RMCAST_TAG_DYNAMIC     100
 
 
