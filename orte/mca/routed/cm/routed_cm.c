@@ -496,7 +496,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
      */
     if (ORTE_PROC_IS_DAEMON) {
         
-        OPAL_OUTPUT_VERBOSE((0, orte_routed_base_output,
+        OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
                              "%s routed_cm: init routes for daemon job %s\n\thnp_uri %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(job),
@@ -545,7 +545,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
     
     if (ORTE_PROC_IS_HNP) {
         
-        OPAL_OUTPUT_VERBOSE((0, orte_routed_base_output,
+        OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
                              "%s routed_cm: init routes for HNP job %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(job)));
