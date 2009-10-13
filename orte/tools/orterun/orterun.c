@@ -447,6 +447,12 @@ int orterun(int argc, char *argv[])
         return rc;
     }
 
+    /*
+     * Since this process can now handle MCA/GMCA parameters, make sure to
+     * process them.
+     */
+    mca_base_cmd_line_process_args(&cmd_line, &environ, &environ);
+    
     /* Need to initialize OPAL so that install_dirs are filled in */
     /*
      * NOTE: (JJH)
@@ -1345,10 +1351,12 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
         ORTE_SET_MAPPING_POLICY(ORTE_MAPPING_BYBOARD);
     } else if (orterun_globals.by_socket) {
         ORTE_SET_MAPPING_POLICY(ORTE_MAPPING_BYSOCKET);
-    } else {
-        /* byslot is the default */
+    } else if (orterun_globals.by_slot) {
         ORTE_SET_MAPPING_POLICY(ORTE_MAPPING_BYSLOT);
     }
+    /* if nothing was specified, leave it as set by
+     * mca param
+     */
     
     /* extract any binding policy directives */
     if (orterun_globals.bind_to_socket) {
