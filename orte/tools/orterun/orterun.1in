@@ -13,8 +13,8 @@
 orterun, mpirun, mpiexec \- Execute serial and parallel jobs in Open MPI.
 
 .B Note:
-\fImpirun\fP, \fImpiexec\fP, and \fIorterun\fP are all exact synonyms for each
-other.  Using any of the names will result in exactly identical behavior.
+\fImpirun\fP, \fImpiexec\fP, and \fIorterun\fP are all synonyms for each
+other.  Using any of the names will produce the same behavior.
 .
 .\" **************************
 .\"    Synopsis Section
@@ -46,16 +46,16 @@ Multiple Instruction Multiple Data (MIMD) Model:
 [ <argsN> ]
 .P
 
-Note that in both models, invoking \fImpirun\fR via an absolute path
-name is equivalent to specifying the \fI--prefix\fR option with a
+Note that in both models, invoking \fImpirun\fP via an absolute path
+name is equivalent to specifying the \fI--prefix\fP option with a
 \fI<dir>\fR value equivalent to the directory where \fImpirun\fR
 resides, minus its last subdirectory.  For example:
 
-    \fBshell$\fP /usr/local/bin/mpirun ...
+    \fB%\fP /usr/local/bin/mpirun ...
 
 is equivalent to
 
-    \fBshell$\fP mpirun --prefix /usr/local
+    \fB%\fP mpirun --prefix /usr/local
 
 .
 .\" **************************
@@ -66,7 +66,7 @@ is equivalent to
 If you are simply looking for how to run an MPI application, you
 probably want to use a command line of the following form:
 
-    \fBshell$\fP mpirun [ -np X ] [ --hostfile <filename> ]  <program>
+    \fB%\fP mpirun [ -np X ] [ --hostfile <filename> ]  <program>
 
 This will run X copies of \fI<program>\fR in your current run-time
 environment (if running under a supported resource manager, Open MPI's
@@ -90,65 +90,16 @@ details.
 .\" Start options listing
 .\"    Indent 10 characters from start of first column to start of second column
 .TP 10
-.B <args>
-Pass these run-time arguments to every new process.  These must always
-be the last arguments to \fImpirun\fP. If an app context file is used,
-\fI<args>\fP will be ignored.
-.
-.
-.TP
 .B <program>
 The program executable. This is identified as the first non-recognized argument
 to mpirun.
 .
 .
 .TP
-.B -aborted\fR,\fP --aborted \fR<#>\fP
-Set the maximum number of aborted processes to display.
-.
-.
-.TP
-.B --app \fR<appfile>\fP
-Provide an appfile, ignoring all other command line options.
-.
-.
-.TP
-.B -bynode\fR,\fP --bynode
-Allocate (map) the processes by node in a round-robin scheme.
-.
-.
-.TP
-.B -byslot\fR,\fP --byslot
-Allocate (map) the processes by slot in a round-robin scheme. This is the
-default.
-.
-.
-.TP
-.B -c \fR<#>\fP
-Synonym for \fI-np\fP.
-.
-.
-.TP
-.B -cf\fR,\fP --cartofile \fR<arg0>\fP
-Provide a cartography file.
-.
-.
-.TP
-.B -debug\fR,\fP --debug
-Invoke the user-level debugger indicated by the \fIorte_base_user_debugger\fP
-MCA parameter.
-.
-.
-.TP
-.B -debugger\fR,\fP --debugger
-Sequence of debuggers to search for when \fI--debug\fP is used (i.e.
-a synonym for \fIorte_base_user_debugger\fP MCA parameter).
-.
-.
-.TP
-.B -gmca\fR,\fP --gmca \fR<key> <value>\fP
-Pass global MCA parameters that are applicable to all contexts. \fI<key>\fP is
-the parameter name; \fI<value>\fP is the parameter value.
+.B <args>
+Pass these run-time arguments to every new process.  These must always
+be the last arguments to \fImpirun\fP. If an app context file is used,
+\fI<args>\fP will be ignored.
 .
 .
 .TP
@@ -157,35 +108,37 @@ Display help for this command
 .
 .
 .TP
-.B -H \fR<host1,host2,...,hostN>\fP
-Synonym for \fI-host\fP.
+.B -q\fR,\fP --quiet
+Suppress informative messages from orterun during application execution.
 .
 .
 .TP
-.B --hetero
-Indicates that multiple app_contexts are being provided that are a mix of 32/64-bit binaries.
+.B -v\fR,\fP --verbose
+Be verbose
 .
 .
 .TP
-.B -host\fR,\fP --host \fR<host1,host2,...,hostN>\fP
+.B -V\fR,\fP --version
+Print version number.  If no other arguments are given, this will also
+cause orterun to exit.
+.
+.
+.
+.
+.P
+To specify which hosts (nodes) of the cluster to run on:
+.
+.
+.TP
+.B -H\fR,\fP -host\fR,\fP --host \fR<host1,host2,...,hostN>\fP
 List of hosts on which to invoke processes.
 .
 .
 .TP
-.B -hostfile\fR,\fP --hostfile \fR<hostfile>\fP
+.B
+-hostfile\fR,\fP --hostfile \fR<hostfile>\fP
 Provide a hostfile to use. 
 .\" JJH - Should have man page for how to format a hostfile properly.
-.
-.
-.TP
-.B -leave-session-attached\fR,\fP --leave-session-attached
-Do not detach OmpiRTE daemons used by this application. This allows error messages from the daemons
-as well as the underlying environment (e.g., when failing to launch a daemon) to be output.
-.
-.
-.TP
-.B -loadbalance\fR,\fP --loadbalance
-Uniform distribution of ranks across all nodes. See more detailed description below.
 .
 .
 .TP
@@ -193,33 +146,14 @@ Uniform distribution of ranks across all nodes. See more detailed description be
 Synonym for \fI-hostfile\fP.
 .
 .
-.TP
-.B -mca\fR,\fP --mca <key> <value>
-Send arguments to various MCA modules.  See the "MCA" section, below.
+.
+.
+.P
+To specify the number of processes to launch:
 .
 .
 .TP
-.B -n\fR,\fP --n \fR<#>\fP
-Synonym for \fI-np\fP.
-.
-.
-.TP
-.B -nolocal\fR,\fP --nolocal
-Do not run any copies of the launched application on the same node as
-mpirun is running.  This option will override listing the localhost
-with \fB--host\fR or any other host-specifying mechanism.
-.
-.
-.TP
-.B -nooversubscribe\fR,\fP --nooversubscribe
-Do not oversubscribe any nodes; error (without starting any processes)
-if the requested number of processes would cause oversubscription.
-This option implicitly sets "max_slots" equal to the "slots" value for
-each node.
-.
-.
-.TP
-.B -np \fR<#>\fP
+.B -c\fR,\fP -n\fR,\fP --n\fR,\fP -np \fR<#>\fP
 Run this many copies of the program on the given nodes.  This option
 indicates that the specified file is an executable program and not an
 application context. If no value is provided for the number of copies to
@@ -231,37 +165,113 @@ error (without beginning execution of the application) otherwise.
 .
 .
 .TP
+.B -npersocket\fR,\fP --npersocket <#persocket>
+On each node, launch this many processes times the number of processor
+sockets on the node.
+The \fI-npersocket\fP option also turns on the \fI-bind-to-socket\fP option.
+.
+.
+.TP
 .B -npernode\fR,\fP --npernode <#pernode>
-Launch the specified number of processes on each node of the allocation. Can be used
-with both \fI-bynode\fP and \fI-byslot\fP mapping modes.
+On each node, launch this many processes.
 .
 .
 .TP
 .B -pernode\fR,\fP --pernode
-Launch one process on each node of the allocation - equivalent to npernode 1.
+On each node, launch one process -- equivalent to \fI-npernode\fP 1.
+.
+.
+.
+.
+.P
+To map processes to nodes:
 .
 .
 .TP
-.B -ompi-server\fR,\fP --ompi-server <uri or file>
-Specify the URI of the Open MPI server (or the mpirun to be used as the server), the name
-of the file (specified as file:filename) that
-contains that info, or the PID (specified as pid:#) of the mpirun to be used as the server.
-The Open MPI server is used to support multi-application data exchange via
-the MPI-2 MPI_Publish_name and MPI_Lookup_name functions.
+.B -loadbalance\fR,\fP --loadbalance
+Uniform distribution of ranks across all nodes. See more detailed description below.
+.
+.TP
+.B -nolocal\fR,\fP --nolocal
+Do not run any copies of the launched application on the same node as
+orterun is running.  This option will override listing the localhost
+with \fB--host\fR or any other host-specifying mechanism.
+.
+.TP
+.B -nooversubscribe\fR,\fP --nooversubscribe
+Do not oversubscribe any nodes; error (without starting any processes)
+if the requested number of processes would cause oversubscription.
+This option implicitly sets "max_slots" equal to the "slots" value for
+each node.
+.
+.TP
+.B -bynode\fR,\fP --bynode
+Launch processes one per node, cycling by node in a round-robin
+fashion.  This spreads processes evenly among nodes and assigns
+ranks in a round-robin, "by node" manner.
+.
+.
+.
+.
+.P
+For process binding:
+.
+.TP
+.B -bycore\fR,\fP --bycore
+Associate processes with successive cores
+if used with one of the \fI-bind-to-*\fP options.
+.
+.TP
+.B -bysocket\fR,\fP --bysocket
+Associate processes with successive processor sockets
+if used with one of the \fI-bind-to-*\fP options.
+.
+.TP
+.B -cpus-per-proc\fR,\fP --cpus-per-proc <#perproc>
+Use the number of cores per process
+if used with one of the \fI-bind-to-*\fP options.
+.
+.TP
+.B -cpus-per-rank\fR,\fP --cpus-per-rank <#perrank>
+Alias for \fI-cpus-per-proc\fP.
+.
+.TP
+.B -bind-to-core\fR,\fP --bind-to-core
+Bind processes to cores.
+.
+.TP
+.B -bind-to-socket\fR,\fP --bind-to-socket
+Bind processes to processor sockets.
+.
+.TP
+.B -bind-to-none\fR,\fP --bind-to-none
+Do not bind processes.  (Default.)
+.
+.TP
+.B -report-bindings\fR,\fP --report-bindings
+Report any bindings for launched processes.
+.
+.TP
+.B -slot-list\fR,\fP --slot-list <slots>
+List of processor IDs to be used for binding MPI processes. The specified bindings will
+be applied to all MPI processes. See explanation below for syntax.
+.
+.
+.
+.
+.P
+For rankfiles:
 .
 .
 .TP
-.B -wait-for-server\fR,\fP --wait-for-server
-Pause mpirun before launching the job until the Open MPI server is detected. This
-is useful in scripts where the server may be started in the background, followed immediately by
-an \fImpirun\fP command that wishes to connect to it. Mpirun will pause until either the specified
-server is contacted or the server-wait-time is exceeded.
+.B -rf\fR,\fP --rankfile <rankfile>
+Provide a rankfile file.
 .
 .
-.TP
-.B -server-wait-time\fR,\fP --server-wait-time <secs>
-The max amount of time (in seconds) mpirun should wait for the specified server to start. The default
-is 10 seconds.
+.
+.
+.P
+To manage standard I/O:
 .
 .
 .TP
@@ -270,6 +280,49 @@ Redirect the stdout, stderr, and stddiag of all ranks to a rank-unique version o
 the specified filename. Any directories in the filename will automatically be created.
 Each output file will consist of filename.rank, where the rank will be left-filled with
 zero's for correct ordering in listings.
+.
+.
+.TP
+.B -stdin\fR,\fP --stdin <rank>
+The MPI rank that is to receive stdin. The default is to forward stdin to rank=0, but this
+option can be used to forward stdin to any rank. It is also acceptable to specify \fInone\fP,
+indicating that no ranks are to receive stdin.
+.
+.
+.TP
+.B -tag-output\fR,\fP --tag-output
+Tag each line of output to stdout, stderr, and stddiag with \fB[jobid, rank]<stdxxx>\fP indicating the process jobid
+and rank that generated the output, and the channel which generated it.
+.
+.
+.TP
+.B -timestamp-output\fR,\fP --timestamp-output
+Timestamp each line of output to stdout, stderr, and stddiag.
+.
+.
+.TP
+.B -xml\fR,\fP --xml
+Provide all output to stdout, stderr, and stddiag in an xml format.
+.
+.
+.TP
+.B -xterm\fR,\fP --xterm \fR<ranks>\fP
+Display the specified ranks in separate xterm windows. The ranks are specified
+as a comma-separated list of ranges, with a -1 indicating all. A separate
+window will be created for each specified rank.
+.B Note:
+In some environments, xterm may require that the executable be in the user's
+path, or be specified in absolute or relative terms. Thus, it may be necessary
+to specify a local executable as "./foo" instead of just "foo". If xterm fails to
+find the executable, mpirun will hang, but still respond correctly to a ctrl-c.
+If this happens, please check that the executable is being specified correctly
+and try again.
+.
+.
+.
+.
+.P
+To manage files and runtime environment:
 .
 .
 .TP
@@ -305,71 +358,8 @@ directory. By default, the absolute and relative paths provided by --preload-fil
 .
 .
 .TP
-.B -q\fR,\fP --quiet
-Suppress informative messages from mpirun during application execution.
-.
-.
-.TP
-.B -report-uri\fR,\fP --report-uri <channel>
-Print out mpirun's URI during startup. The channel must be either a '-' to indicate that
-the URI is to be output to stdout, a '+' to indicate that the URI is to be output to stderr,
-or a filename to which the URI is to be written.
-.
-.
-.TP
-.B -report-pid\fR,\fP --report-pid <channel>
-Print out mpirun's PID during startup. The channel must be either a '-' to indicate that
-the pid is to be output to stdout, a '+' to indicate that the pid is to be output to stderr,
-or a filename to which the pid is to be written.
-.
-.
-.TP
-.B -rf\fR,\fP --rankfile <arg0>
-Provide a rankfile file.
-.
-.
-.TP
-.B -slot-list\fR,\fP --slot-list <slots>
-List of processor IDs to be used for binding MPI processes. The specified bindings will
-be applied to all MPI processes. See explanation below for syntax.
-.
-.
-.TP
-.B -stdin\fR,\fP --stdin <rank>
-The MPI rank that is to receive stdin. The default is to forward stdin to rank=0, but this
-option can be used to forward stdin to any rank. It is also acceptable to specify \fInone\fP,
-indicating that no ranks are to receive stdin.
-.
-.
-.TP
-.B -tag-output\fR,\fP --tag-output
-Tag each line of output to stdout, stderr, and stddiag with \fB[jobid, rank]<stdxxx>\fP indicating the process jobid
-and rank that generated the output, and the channel which generated it.
-.
-.
-.TP
-.B -timestamp-output\fR,\fP --timestamp-output
-Timestamp each line of output to stdout, stderr, and stddiag.
-.
-.
-.TP
 .B --tmpdir \fR<dir>\fP
 Set the root for the session directory tree for mpirun only.
-.
-.
-.TP
-.B -tv\fR,\fP --tv
-Launch processes under the TotalView debugger.
-Deprecated backwards compatibility flag. Synonym for \fI--debug\fP.
-.
-.
-.TP
-.B -v\fR,\fP --verbose
-Be verbose
-.TP
-.B -V\fR,\fP --version
-Print version number.  If no other arguments are given, this will also
-cause mpirun to exit.
 .
 .
 .TP
@@ -384,10 +374,7 @@ See the "Current Working Directory" section for notes on relative paths.
 .B Note:
 If the \fI-wdir\fP option appears both on the command line and in an
 application context, the context will take precedence over the command
-line. Relative paths are converted to absolute paths on the node where
-mpirun is executed. Thus, if the path to the desired wdir is different
-on the backend nodes, then it must be specified as an absolute path that
-is correct for the backend node.
+line.
 .
 .
 .TP
@@ -397,30 +384,107 @@ executing the program.  Only one environment variable can be specified
 per \fI-x\fP option.  Existing environment variables can be specified
 or new variable names specified with corresponding values.  For
 example:
-    \fBshell$\fP mpirun -x DISPLAY -x OFILE=/tmp/out ...
+    \fB%\fP mpirun -x DISPLAY -x OFILE=/tmp/out ...
 
 The parser for the \fI-x\fP option is not very sophisticated; it does
 not even understand quoted values.  Users are advised to set variables
 in the environment, and then use \fI-x\fP to export (not define) them.
 .
 .
-.TP
-.B -xml\fR,\fP --xml
-Provide all output to stdout, stderr, and stddiag in an xml format.
+.
+.
+.P
+Setting MCA parameters:
 .
 .
 .TP
-.B -xterm\fR,\fP --xterm \fR<ranks>\fP
-Display the specified ranks in separate xterm windows. The ranks are specified
-as a comma-separated list of ranges, with a -1 indicating all. A separate
-window will be created for each specified rank.
-.B Note:
-In some environments, xterm may require that the executable be in the user's
-path, or be specified in absolute or relative terms. Thus, it may be necessary
-to specify a local executable as "./foo" instead of just "foo". If xterm fails to
-find the executable, mpirun will hang, but still respond correctly to a ctrl-c.
-If this happens, please check that the executable is being specified correctly
-and try again.
+.B -gmca\fR,\fP --gmca \fR<key> <value>\fP
+Pass global MCA parameters that are applicable to all contexts. \fI<key>\fP is
+the parameter name; \fI<value>\fP is the parameter value.
+.
+.
+.TP
+.B -mca\fR,\fP --mca <key> <value>
+Send arguments to various MCA modules.  See the "MCA" section, below.
+.
+.
+.
+.
+.P
+For debugging:
+.
+.
+.TP
+.B -debug\fR,\fP --debug
+Invoke the user-level debugger indicated by the \fIorte_base_user_debugger\fP
+MCA parameter.
+.
+.
+.TP
+.B -debugger\fR,\fP --debugger
+Sequence of debuggers to search for when \fI--debug\fP is used (i.e.
+a synonym for \fIorte_base_user_debugger\fP MCA parameter).
+.
+.
+.TP
+.B -tv\fR,\fP --tv
+Launch processes under the TotalView debugger.
+Deprecated backwards compatibility flag. Synonym for \fI--debug\fP.
+.
+.
+.
+.
+.P
+There are also other options:
+.
+.
+.TP
+.B -aborted\fR,\fP --aborted \fR<#>\fP
+Set the maximum number of aborted processes to display.
+.
+.
+.TP
+.B --app \fR<appfile>\fP
+Provide an appfile, ignoring all other command line options.
+.
+.
+.TP
+.B -cf\fR,\fP --cartofile \fR<cartofile>\fP
+Provide a cartography file.
+.
+.
+.TP
+.B --hetero
+Indicates that multiple app_contexts are being provided that are a mix of 32/64-bit binaries.
+.
+.
+.TP
+.B -leave-session-attached\fR,\fP --leave-session-attached
+Do not detach OmpiRTE daemons used by this application. This allows error messages from the daemons
+as well as the underlying environment (e.g., when failing to launch a daemon) to be output.
+.
+.
+.TP
+.B -ompi-server\fR,\fP --ompi-server <uri or file>
+Specify the URI of the Open MPI server, or the name of the file (specified as file:filename) that
+contains that info. The Open MPI server is used to support multi-application data exchange via
+the MPI-2 MPI_Publish_name and MPI_Lookup_name functions.
+.
+.
+.TP
+.B -wait-for-server\fR,\fP --wait-for-server
+Pause mpirun before launching the job until ompi-server is detected. This
+is useful in scripts where ompi-server may be started in the background, followed immediately by
+an \fImpirun\fP command that wishes to connect to it. Mpirun will pause until either the specified
+ompi-server is contacted or the server-wait-time is exceeded.
+.
+.
+.TP
+.B -server-wait-time\fR,\fP --server-wait-time <secs>
+The max amount of time (in seconds) mpirun should wait for the ompi-server to start. The default
+is 10 seconds.
+.
+.
 .
 .
 .P
@@ -458,6 +522,10 @@ without clutter from mpirun itself.
 Disable the automatic --prefix behavior
 .
 .
+.P
+There may be other options listed with \fImpirun --help\fP.
+.
+.
 .\" **************************
 .\"    Description Section
 .\" **************************
@@ -486,305 +554,314 @@ programs (e.g. --hostfile), while others are specific to a single program
 .
 .
 .
-.SS Process Slots
+.SS Specifying Host Nodes
 .
-Open MPI uses "slots" to represent a potential location for a process.
-Hence, a node with 2 slots means that 2 processes can be launched on
-that node. For performance, the community typically equates a "slot"
-with a physical CPU, thus ensuring that any process assigned to that
-slot has a dedicated processor. This is not, however, a requirement for
-the operation of Open MPI.
+Host nodes can be identified on the \fImpirun\fP command line with the \fI-host\fP
+option or in a hostfile.
+.
 .PP
-Slots can be specified in hostfiles after the hostname.  For example:
+For example,
 .
 .TP 4
-host1.example.com slots=4
-Indicates that there are 4 process slots on host1.
+mpirun -H aa,aa,bb ./a.out
+launches two processes on node aa and one on bb.
 .
 .PP
-If no slots value is specified, then Open MPI will automatically assign
-a default value of "slots=1" to that host.
+Or, consider the hostfile
 .
-.PP
-When running under resource managers (e.g., SLURM, Torque, etc.), Open
-MPI will obtain both the hostnames and the number of slots directly
-from the resource manger.  For example, if running under a SLURM job,
-Open MPI will automatically receive the hosts that SLURM has allocated
-to the job as well as how many slots on each node that SLURM says
-are usable - in most high-performance environments, the slots will
-equate to the number of processors on the node.
-.
-.PP
-When deciding where to launch processes, Open MPI will first fill up
-all available slots before oversubscribing (see "Location
-Nomenclature", below, for more details on the scheduling algorithms
-available).  Unless told otherwise, Open MPI will arbitrarily
-oversubscribe nodes.  For example, if the only node available is the
-localhost, Open MPI will run as many processes as specified by the
--n (or one of its variants) command line option on the
-localhost (although they may run quite slowly, since they'll all be
-competing for CPU and other resources).
-.
-.PP
-Limits can be placed on oversubscription with the "max_slots"
-attribute in the hostfile.  For example:
-.
-.TP 4
-host2.example.com slots=4 max_slots=6
-Indicates that there are 4 process slots on host2.  Further, Open MPI
-is limited to launching a maximum of 6 processes on host2.
-.
-.TP
-host3.example.com slots=2 max_slots=2
-Indicates that there are 2 process slots on host3 and that no
-oversubscription is allowed (similar to the \fI--nooversubscribe\fR
-option).
-.
-.TP
-host4.example.com max_slots=2
-Shorthand; same as listing "slots=2 max_slots=2".
-.
-.
-.PP
-Note that Open MPI's support for resource managers does not currently
-set the "max_slots" values for hosts.  If you wish to prevent
-oversubscription in such scenarios, use the \fI--nooversubscribe\fR
-option.
-.
-.PP
-In scenarios where the user wishes to launch an application across
-all available slots by not providing a "-n" option on the mpirun
-command line, Open MPI will launch a process on each process slot
-for each host within the provided environment. For example, if a
-hostfile has been provided, then Open MPI will spawn processes
-on each identified host up to the "slots=x" limit if oversubscription
-is not allowed. If oversubscription is allowed (the default), then
-Open MPI will spawn processes on each host up to the "max_slots=y" limit
-if that value is provided. In all cases, the "-bynode" and "-byslot"
-mapping directives will be enforced to ensure proper placement of
-process ranks.
-.
-.
-.
-.SS Location Nomenclature
-.
-As described above, \fImpirun\fP can specify arbitrary locations in
-the current Open MPI universe.  Locations can be specified either by
-CPU or by node.
 
-.B Note:
-This nomenclature does not force Open MPI to bind processes to CPUs --
-specifying a location "by CPU" is really a convenience mechanism for
-SMPs that ultimately maps down to a specific node.
+   \fB%\fP cat myhostfile
+   aa slots=2
+   bb slots=2
+   cc slots=2
+
+.
 .PP
-Specifying locations by node will launch one copy of an executable per
-specified node.
-Using the \fI--bynode\fP option tells Open MPI to use all available nodes.
-Using the \fI--byslot\fP option tells Open MPI to use all slots on an available
-node before allocating resources on the next available node.
-For example:
+Here, we list both the host names (aa, bb, and cc) but also how many "slots"
+there are for each.  Slots indicate how many processes can potentially execute
+on a node.  For best performance, the number of slots may be chosen to be the
+number of cores on the node or the number of processor sockets.  If the hostfile
+does not provide slots information, a default of 1 is assumed.
+When running under resource managers (e.g., SLURM, Torque, etc.),
+Open MPI will obtain both the hostnames and the number of slots directly
+from the resource manger.
+.
+.PP
 .
 .TP 4
-mpirun --bynode -np 4 a.out
-Runs one copy of the the executable
-.I a.out
-on all available nodes in the Open MPI universe.  MPI_COMM_WORLD rank 0
-will be on node0, rank 1 will be on node1, etc. Regardless of how many slots
-are available on each of the nodes.
+mpirun -hostfile myhostfile ./a.out
+will launch two processes on each of the three nodes.
+.
+.TP 4
+mpirun -hostfile myhostfile -host aa ./a.out
+will launch two processes, both on node aa.
+.
+.TP 4
+mpirun -hostfile myhostfile -host dd ./a.out
+will find no hosts to run on and abort with an error.
+That is, the specified host dd is not in the specified hostfile.
+.
+.SS Specifying Number of Processes
+.
+As we have just seen, the number of processes to run can be set using the
+hostfile.  Other mechanisms exist.
+.
+.PP
+The number of processes launched can be specified as a multiple of the
+number of nodes or processor sockets available.  For example,
+.
+.TP 4
+mpirun -H aa,bb -npersocket 2 ./a.out
+launches processes 0-3 on node aa and process 4-7 on node bb,
+where aa and bb are both dual-socket nodes.
+The \fI-npersocket\fP option also turns on the \fI-bind-to-socket\fP option,
+which is discussed in a later section.
+.
+.TP 4
+mpirun -H aa,bb -npernode 2 ./a.out
+launches processes 0-1 on node aa and processes 2-3 on node bb.
+.
+.TP 4
+mpirun -H aa,bb -npernode 1 ./a.out
+launches one process per host node.
+.
+.TP 4
+mpirun -H aa,bb -pernode ./a.out
+is the same as \fI-npernode\fP 1.
 .
 .
-.TP
-mpirun --byslot -np 4 a.out
-Runs one copy of the the executable
-.I a.out
-on each slot on a given node before running the executable on other available
+.PP
+Another alternative is to specify the number of processes with the
+\fI-np\fP option.  Consider now the hostfile
+.
+
+   \fB%\fP cat myhostfile
+   aa slots=4
+   bb slots=4
+   cc slots=4
+
+.
+.PP
+Now,
+.
+.TP 4
+mpirun -hostfile myhostfile -np 6 ./a.out
+will launch ranks 0-3 on node aa and ranks 4-5 on node bb.  The remaining
+slots in the hostfile will not be used since the \fI-np\fP option indicated
+that only 6 processes should be launched.
+.
+.SS Mapping Processes to Nodes
+.
+The examples above illustrate the default mapping of process ranks
+to nodes.  This mapping can also be controlled with various
+\fImpirun\fP options.  Here, we consider the same hostfile as
+above with \fI-np\fP 6 again:
+.
+
+                          node aa      node bb      node cc
+
+  mpirun                  0 1 2 3      4 5
+
+  mpirun -loadbalance     0 1          2 3          4 5
+
+  mpirun -bynode          0 3          1 4          2 5
+
+  mpirun -nolocal                      0 1 2 3      4 5
+.
+.PP
+The \fI-loadbalance\fP option tries to spread processes out fairly among the
 nodes.
 .
-.
-.SS Loadbalance rank allocation
-.
-Uniform distribution of the ranks on all nodes when using Round Robin mapper 
-while retaining byslot rank associations.
-
- ex :               byslot    bynode   loadbalance
-        node0:      0,1,2,3   0,3,6    0,1,2   
-        node1:      4,5,6     1,4      3,4
-        node2:                2,5      5,6
-.
-.
-.
-.SS Specifying Hosts
-.
-Hosts can be specified in a number of ways. The most common of which is in a
-\&'hostfile' or 'machinefile'. If our hostfile contain the following information:
-.
-.
-
-   \fBshell$\fP cat my-hostfile
-   node00 slots=2
-   node01 slots=2
-   node02 slots=2
-
-.
-.
-.TP
-mpirun --hostfile my-hostfile -np 3 a.out
-This will run one copy of the executable
-.I a.out
-on hosts node00,node01, and node02.
-.
+.PP
+The \fI-bynode\fP option does likewise but numbers the processes in "by node"
+in a round-robin fashion.
 .
 .PP
-Another method for specifying hosts is directly on the command line. Here can
-can include and exclude hosts from the set of hosts to run on. For example:
+The \fI-nolocal\fP option prevents any processes from being mapped onto the
+local host (in this case node aa).  While \fImpirun\fP typically consumes
+few system resources, \fI-nolocal\fP can be helpful for launching very
+large jobs where \fImpirun\fP may actually need to use noticable amounts
+of memory and/or processing time.
 .
-.
-.TP
-mpirun -np 3 --host a a.out
-Runs three copies of the executable
-.I a.out
-on host a.
-.
-.
-.TP
-mpirun -np 3 --host a,b,c a.out
-Runs one copy of the executable
-.I a.out
-on hosts a, b, and c.
-.
-.
-.TP
-mpirun -np 3 --hostfile my-hostfile --host node00 a.out
-Runs three copies of the executable
-.I a.out
-on host node00.
-.
-.
-.TP
-mpirun -np 3 --hostfile my-hostfile --host node10 a.out
-This will prompt an error since node10 is not in my-hostfile; mpirun will
-abort.
-.
-.
-.TP
-shell$ mpirun -np 1 --host a hostname : -np 2 --host b,c uptime
-Runs one copy of the executable
-.I hostname
-on host a. And runs one copy of the executable
-.I uptime
-on hosts b and c.
-.
-.
-.SS Specifying Ranks
-.
-Rankfile came to provide Open MPI a file with the location of each MPI_COMM_WORLD rank. 
-The syntax of the rankfile as follows:
- rank i=host_j slot=x
-
-    \fBshell$\fP cat my-rankfile
-    rank 1=host1 slot=1:0,1
-    rank 0=host2 slot=0:*
-    rank 2=host4 slot=1-2
-    rank 3=host3 slot=0:1,1:0-2
-
-    \fBshell$\fP mpirun --hostfile my-hostfile -np 4 --rankfile my-rankfile a.out
-    
-This means that
- a. rank 1 will run on host1 bounded to socket1:core0 and socket1:core1
- b. rank 0 will run on host2 bounded to any core on socket0
- c. rank 2 will run on host4 bounded to CPU#1 and CPU#2
- d. rank 3 will run on host3 bounded to socket0:core1 and socket1:core0, socket1:core1, \
-    socket1:core2
-. 
-.
-.
-.SS Providing cartofile
-.
-The cartofile supplies an information of the the host structure and connection among the host 
-components, i.e., memory nodes, CPUs, Ethernet and Infiniband ports. The information stored as 
-a graph in the cartofile. This graph contains the names and types of EDGEs, connecting BRANCHes 
-and distance among them. See the following example of the cartofile:
-
-. 
- #Node declaration Node type (Free string) Node name
- #(Reserve word)   (socket is a reserve    (free string)
- #                 word for CPU socket)
- #=============================================================
- EDGE                Memory                      mem0
- EDGE                Memory                      mem3
- #
- EDGE                socket                      socket0
- EDGE                socket                      socket1
- EDGE                socket                      socket2
- EDGE                socket                      socket3
- # 
- EDGE                Infiniband                  mthca0
- EDGE                Infiniband                  mthca1
- #
- EDGE                Ethernet                    eth0
- EDGE                Ethernet                    eth1
- #
- #
- #Connection        From node   To node:weight   To node:weight
- #declaration       (declared   (declared        (declared
- #(Reserve word)    above)      above)           above)
- #========================================================================
- BRANCH             mem0        socket0:0
- BRANCH             mem3        socket3:0
- #
- BRANCH             socket0     mem0:0           socket1:1      socket2:1 mthca0:1 eth0:1
- BRANCH             socket1     socket0:1        socket3:1
- BRANCH             socket2     socket1:1        socket3:1
- BRANCH             socket3     mem3:0           socket1:1      socket2:1 mthca1:1 eth1:1
- # 
- BRANCH             mthca0      socket0:1
- BRANCH             mthca1      socket3:1
- #
- BRANCH             eth0        socket0:1
- BRANCH             eth1        socket3:1
- 
- #Bi-Directional connection
- #
- BRANCH_BI_DIR      socket1       mem1:0
- BRANCH_BI_DIR      socket2       mem3:0
- # 
- #end of cartofile
-
- . 
-.SS No Local Launch
-.
-Using the \fB--nolocal\fR option to mpirun tells the system to not
-launch any of the application processes on the same node that mpirun
-is running.  While mpirun typically blocks and consumes few system
-resources, this option can be helpful for launching very large jobs
-where mpirun may actually need to use noticable amounts of memory
-and/or processing time.  \fB--nolocal\fR allows orteun to run without
-sharing the local node with the launched applications, and likewise
-allows the launched applications to run unhindered by mpirun's system
-usage.
 .PP
-Note that \fB--nolocal\fR will override any other specification to
-launch the application on the local node.  It will disqualify the
-localhost from being capable of running any processes in the
-application.
+Just as \fI-np\fP can specify fewer processes than there are slots, it can
+also oversubscribe the slots.  For example, with the same hostfile:
+.
+.TP 4
+mpirun -hostfile myhostfile -np 14 ./a.out
+will launch processes 0-3 on node aa, 4-7 on bb, and 8-11 on cc.  It will
+then add the remaining two processes to whichever nodes it chooses.
+.
+.PP
+One can also specify limits to oversubscription.  For example, with the same
+hostfile:
+.
+.TP 4
+mpirun -hostfile myhostfile -np 14 -nooversubscribe ./a.out
+will produce an error since \fI-nooversubscribe\fP prevents oversubscription.
+.
+.PP
+Limits to oversubscription can also be specified in the hostfile itself:
+.
+ % cat myhostfile
+ aa slots=4 max_slots=4
+ bb         max_slots=4
+ cc slots=4
+.
+.PP
+The \fImax_slots\fP field specifies such a limit.  When it does, the
+\fIslots\fP value defaults to the limit.  Now:
+.
+.TP 4
+mpirun -hostfile myhostfile -np 14 ./a.out
+causes the first 12 processes to be launched as before, but the remaining
+two processes will be forced onto node cc.  The other two nodes are
+protected by the hostfile against oversubscription by this job.
+.
+.PP
+Using the \fI--nooversubscribe\fR option can be helpful since Open MPI
+currently does not get "max_slots" values from the resource manager.
+.
+.PP
+Of course, \fI-np\fP can also be used with the \fI-H\fP or \fI-host\fP
+option.  For example,
+.
+.TP 4
+mpirun -H aa,bb -np 8 ./a.out
+launches 8 processes.  Since only two hosts are specified, after the first
+two processes are mapped, one to aa and one to bb, the remaining processes
+oversubscribe the specified hosts.
+.
+.PP
+And here is a MIMD example:
+.
+.TP 4
+mpirun -H aa -np 1 hostname : -H bb,cc -np 2 uptime
+will launch process 0 running \fIhostname\fP on node aa and processes 1 and 2
+each running \fIuptime\fP on nodes bb and cc, respectively.
+.
+.SS Process Binding
+.
+Processes may be bound to specific resources on a node.  This can
+improve performance if the operating system is placing processes
+suboptimally.  For example, it might oversubscribe some multi-core
+processor sockets, leaving other sockets idle;  this can lead
+processes to contend unnecessarily for common resources.  Or, it
+might spread processes out too widely;  this can be suboptimal if
+application performance is sensitive to interprocess communication
+costs.  Binding can also keep the operating system from migrating
+processes excessively, regardless of how optimally those processes
+were placed to begin with.
+.
+.PP
+To bind processes, one must first associate them with the resources
+on which they should run.  For example, the \fI-bycore\fP option
+associates the processes on a node with successive cores.  Or,
+\fI-bysocket\fP associates the processes with successive processor sockets,
+cycling through the sockets in a round-robin fashion if necessary.
+And \fI-cpus-per-proc\fP indicates how many cores to bind per process.
+.
+.PP
+But, such association is meaningless unless the processes are actually
+bound to those resources.  The binding option specifies the granularity
+of binding -- say, with \fI-bind-to-core\fP or \fI-bind-to-socket\fP.
+One can also turn binding off with \fI-bind-to-none\fP, which is
+typically the default.
+.
+.PP
+Finally, \fI-report-bindings\fP can be used to report bindings.
+.
+.PP
+As an example, consider a node with two processor sockets, each comprising
+four cores.  We run \fImpirun\fP with \fI-np 4 -report-bindings\fP and
+the following additional options:
+.
+
+ % mpirun ... -bycore -bind-to-core
+ [...] ... binding child [...,0] to cpus 0001
+ [...] ... binding child [...,1] to cpus 0002
+ [...] ... binding child [...,2] to cpus 0004
+ [...] ... binding child [...,3] to cpus 0008
+
+ % mpirun ... -bysocket -bind-to-socket
+ [...] ... binding child [...,0] to socket 0 cpus 000f
+ [...] ... binding child [...,1] to socket 1 cpus 00f0
+ [...] ... binding child [...,2] to socket 0 cpus 000f
+ [...] ... binding child [...,3] to socket 1 cpus 00f0
+
+ % mpirun ... -cpus-per-proc 2 -bind-to-core
+ [...] ... binding child [...,0] to cpus 0003
+ [...] ... binding child [...,1] to cpus 000c
+ [...] ... binding child [...,2] to cpus 0030
+ [...] ... binding child [...,3] to cpus 00c0
+
+ % mpirun ... -bind-to-none
+.
+.PP
+Here, \fI-report-bindings\fP shows the binding of each process as a mask.
+In the first case, the processes bind to successive cores as indicated by
+the masks 0001, 0002, 0004, and 0008.  In the second case, processes bind
+to all cores on successive sockets as indicated by the masks 000f and 00f0.
+The processes cycle through the processor sockets in a round-robin fashion
+as many times as are needed.  In the third case, the masks show us that
+2 cores have been bind per process.  In the fourth case, binding is
+turned off and no bindings are reported.
+.
+.PP
+Open MPI's support for process binding depends on the underlying
+operating system.  Therefore, processing binding may not be available
+on every system.
+.
+.PP
+Process binding can also be set with MCA parameters.
+Their usage is less convenient than that of \fImpirun\fP options.
+On the other hand, MCA parameters can be set not only on the \fImpirun\fP
+command line, but alternatively in a system or user mca-params.conf file
+or as environment variables, as described in the MCA section below.
+The correspondences are:
+.
+
+  mpirun option          MCA parameter key           value
+
+  -bycore                rmaps_base_schedule_policy  core
+  -bysocket              rmaps_base_schedule_policy  socket
+  -bind-to-core          orte_process_binding        core
+  -bind-to-socket        orte_process_binding        socket
+  -bind-to-none          orte_process_binding        none
+.
+.PP
+The \fIorte_process_binding\fP value can also take on the
+\fI:if-avail\fP attribute.  This attribute means that processes
+will be bound only if this is supported on the underlying
+operating system.  Without the attribute, if there is no
+such support, the binding request results in an error.
+For example, you could have
+.
+
+  % cat $HOME/.openmpi/mca-params.conf
+  rmaps_base_schedule_policy = socket
+  orte_process_binding       = socket:if-avail
 .
 .
-.TP
-shell$ mpirun -np 1 --host localhost --nolocal hostname
-This example will result in an error because mpirun will not find
-anywhere to launch the application.
+.SS Rankfiles
 .
+Rankfiles provide a means for specifying detailed information about
+how process ranks should be mapped to nodes and how they should be bound.
+Consider the following:
 .
+
+    cat myrankfile
+    rank 0=aa slot=1:0-2
+    rank 1=bb slot=0:0,1
+    rank 2=cc slot=1-2
+    mpirun -H aa,bb,cc,dd -rf myrankfile ./a.out
 .
-.SS No Oversubscription
-.
-Using the \fI--nooversubscribe\fR option causes Open MPI to implicitly
-set the "max_slots" value to be the same as the "slots" value for each
-node.  This can be especially helpful when running jobs under a
-resource manager because Open MPI currently only sets the "slots"
-value for each node that it obtains from the resource manager.
-.
-.
+So that
+
+  Rank 0 runs on node aa, bound to socket 1, cores 0-2.
+  Rank 1 runs on node bb, bound to socket 0, cores 0 and 1.
+  Rank 2 runs on node cc, bound to cores 1 and 2.
+. 
 .
 .SS Application Context or Executable Program?
 .
@@ -860,7 +937,7 @@ to it directly.
 Thus it is possible to redirect standard I/O for Open MPI applications by
 using the typical shell redirection procedure on \fImpirun\fP.
 
-      \fBshell$\fP mpirun -np 2 my_app < my_input > my_output
+      \fB%\fP mpirun -np 2 my_app < my_input > my_output
 
 Note that in this example \fIonly\fP the MPI_COMM_WORLD rank 0 process will
 receive the stream from \fImy_input\fP on stdin.  The stdin on all the other
@@ -871,14 +948,25 @@ be collected into the \fImy_output\fP file.
 .
 .SS Signal Propagation
 .
-When mpirun receives a SIGTERM and SIGINT, it will attempt to kill
+When orterun receives a SIGTERM and SIGINT, it will attempt to kill
 the entire job by sending all processes in the job a SIGTERM, waiting
 a small number of seconds, then sending all processes in the job a
 SIGKILL.
 .
-SIGUSR1 and SIGUSR2 signals received by mpirun are propagated to
-all processes in the job.  Other signals are not currently propagated
-by mpirun.
+.PP
+SIGUSR1 and SIGUSR2 signals received by orterun are propagated to
+all processes in the job.
+.
+.PP
+One can turn on forwarding of SIGSTOP and SIGCONT to the program executed
+by mpirun by setting the MCA parameter orte_forward_job_control to 1.
+A SIGTSTOP signal to mpirun will then cause a SIGSTOP signal to be sent
+to all of the programs started by mpirun and likewise a SIGCONT signal
+to mpirun will cause a SIGCONT sent.
+.
+.PP
+Other signals are not currently propagated
+by orterun.
 .
 .
 .SS Process Termination / Signal Handling
@@ -957,7 +1045,7 @@ Local libdir:
 .PP
 If the following command line is used:
 
-    \fBshell$\fP mpirun --prefix /remote/node/directory
+    \fB%\fP mpirun --prefix /remote/node/directory
 
 Open MPI will add "/remote/node/directory/bin" to the \fIPATH\fR
 and "/remote/node/directory/lib64" to the \fLD_LIBRARY_PATH\fR on the
@@ -976,11 +1064,11 @@ Note that executing \fImpirun\fR via an absolute pathname is
 equivalent to specifying \fI--prefix\fR without the last subdirectory
 in the absolute pathname to \fImpirun\fR.  For example:
 
-    \fBshell$\fP /usr/local/bin/mpirun ...
+    \fB%\fP /usr/local/bin/mpirun ...
 
 is equivalent to
 
-    \fBshell$\fP mpirun --prefix /usr/local
+    \fB%\fP mpirun --prefix /usr/local
 .
 .
 .
@@ -997,9 +1085,10 @@ environment and use \fI\-x\fP to export them; not to define them.
 .
 .
 .
-.SS MCA (Modular Component Architecture)
+.SS Setting MCA Parameters
 .
-The \fI-mca\fP switch allows the passing of parameters to various MCA modules.
+The \fI-mca\fP switch allows the passing of parameters to various MCA
+(Modular Component Architecture) modules.
 .\" Open MPI's MCA modules are described in detail in ompimca(7).
 MCA modules have direct impact on MPI programs because they allow tunable
 parameters to be set at run time (such as which BTL communication device driver
@@ -1028,16 +1117,21 @@ The \fI-mca\fP switch can be used multiple times to specify different
 specified more than once, the \fI<value>\fPs are concatenated with a comma
 (",") separating them.
 .PP
-.B Note:
-The \fI-mca\fP switch is simply a shortcut for setting environment variables.
+Note that the \fI-mca\fP switch is simply a shortcut for setting environment variables.
 The same effect may be accomplished by setting corresponding environment
 variables before running \fImpirun\fP.
-The form of the environment variables that Open MPI sets are:
+The form of the environment variables that Open MPI sets is:
 
-      OMPI_<key>=<value>
+      OMPI_MCA_<key>=<value>
 .PP
-Note that the \fI-mca\fP switch overrides any previously set environment
-variables.  Also note that unknown \fI<key>\fP arguments are still set as
+Thus, the \fI-mca\fP switch overrides any previously set environment
+variables.  The \fI-mca\fP settings similarly override MCA parameters set
+in the
+$OPAL_PREFIX/etc/openmpi-mca-params.conf or $HOME/.openmpi/mca-params.conf
+file.
+.
+.PP
+Unknown \fI<key>\fP arguments are still set as
 environment variable -- they are not checked (by \fImpirun\fP) for correctness.
 Illegal or incorrect \fI<value>\fP arguments may or may not be reported -- it
 depends on the specific MCA module.
@@ -1050,26 +1144,15 @@ See the \fIompi_info(1)\fP man page for detailed information on the command.
 .\"    Examples Section
 .\" **************************
 .SH EXAMPLES
-Be sure to also see the examples in the "Location Nomenclature" section, above.
+Be sure also to see the examples throughout the sections above.
 .
 .TP 4
-mpirun -np 1 prog1
-Load and execute prog1 on one node.  Search the user's $PATH for the
-executable file on each node.
-.
-.
-.TP
-mpirun -np 8 --byslot prog1
-Run 8 copies of prog1 wherever Open MPI wants to run them.
-.
-.
-.TP
 mpirun -np 4 -mca btl ib,tcp,self prog1
 Run 4 copies of prog1 using the "ib", "tcp", and "self" BTL's for the transport
 of MPI messages.
 .
 .
-.TP
+.TP 4
 mpirun -np 4 -mca btl tcp,sm,self 
 .br
 --mca btl_tcp_if_include ce0 prog1
