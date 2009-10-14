@@ -139,12 +139,10 @@ int orte_ras_base_allocate(orte_job_t *jdata)
         if (ORTE_SUCCESS != (rc = orte_ras_base.active_module->allocate(&nodes))) {
             if (ORTE_ERR_SYSTEM_WILL_BOOTSTRAP == rc) {
                 /* this module indicates that nodes will be discovered
-                 * on a bootstrap basis, so there is nothing more
-                 * for us to do
+                 * on a bootstrap basis, so all we do here is add our
+                 * own node to the list
                  */
-                OBJ_DESTRUCT(&nodes);
-                rc = ORTE_SUCCESS;
-                goto DISPLAY;
+                goto addlocal;
             }
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&nodes);
@@ -365,6 +363,7 @@ int orte_ras_base_allocate(orte_job_t *jdata)
                          "%s ras:base:allocate nothing found in rankfile - inserting current node",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
+addlocal:
     /* if nothing was found by any of the above methods, then we have no
      * earthly idea what to do - so just add the local host
      */

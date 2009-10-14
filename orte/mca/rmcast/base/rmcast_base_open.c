@@ -29,13 +29,13 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/parse_options.h"
 #include "orte/util/show_help.h"
-
 #include "orte/mca/errmgr/errmgr.h"
+
+#include "orte/mca/rmcast/base/private.h"
 
 #endif
 
 #include "orte/mca/rmcast/base/base.h"
-
 
 /*
  * The following file was created by configure.  It contains extern
@@ -255,5 +255,102 @@ int orte_rmcast_base_open(void)
     /* All done */
     return ORTE_SUCCESS;
 }
+
+
+/****    CLASS INSTANCES    ****/
+static void mcast_event_constructor(orte_mcast_msg_event_t *ev)
+{
+    ev->ev = (opal_event_t*)malloc(sizeof(opal_event_t));
+    ev->data = NULL;
+}
+static void mcast_event_destructor(orte_mcast_msg_event_t *ev)
+{
+    if (NULL != ev->ev) { 
+        free(ev->ev); 
+    } 
+    if (NULL != ev->data) {
+        free(ev->data);
+    }
+}
+OBJ_CLASS_INSTANCE(orte_mcast_msg_event_t, 
+                   opal_object_t, 
+                   mcast_event_constructor, 
+                   mcast_event_destructor); 
+
+static void send_construct(rmcast_base_send_t *ptr)
+{
+    ptr->send_complete = false;
+    ptr->data = NULL;
+    ptr->tag = ORTE_RMCAST_TAG_INVALID;
+    ptr->cbfunc = NULL;
+    ptr->cbdata = NULL;
+}
+OBJ_CLASS_INSTANCE(rmcast_base_send_t,
+                   opal_list_item_t,
+                   send_construct,
+                   NULL);
+
+static void recv_construct(rmcast_base_recv_t *ptr)
+{
+    ptr->channel = ORTE_RMCAST_INVALID_CHANNEL;
+    ptr->recvd = false;
+    ptr->data = NULL;
+    ptr->tag = ORTE_RMCAST_TAG_INVALID;
+    ptr->flags = ORTE_RMCAST_NON_PERSISTENT;  /* default */
+    ptr->cbfunc = NULL;
+    ptr->cbdata = NULL;
+}
+static void recv_destruct(rmcast_base_recv_t *ptr)
+{
+    if (NULL != ptr->data) {
+        OBJ_RELEASE(ptr->data);
+    }
+}
+OBJ_CLASS_INSTANCE(rmcast_base_recv_t,
+                   opal_list_item_t,
+                   recv_construct,
+                   recv_destruct);
+
+static void channel_construct(rmcast_base_channel_t *ptr)
+{
+    ptr->name = NULL;
+    ptr->channel = ORTE_RMCAST_INVALID_CHANNEL;
+    ptr->network = 0;
+    ptr->port = 0;
+    ptr->interface = 0;
+    ptr->xmit = -1;
+    ptr->recv = -1;
+    memset(&ptr->addr, 0, sizeof(ptr->addr));
+    OBJ_CONSTRUCT(&ptr->send_lock, opal_mutex_t);
+    ptr->sends_in_progress = false;
+    OBJ_CONSTRUCT(&ptr->pending_sends, opal_list_t);
+    ptr->send_data = NULL;
+}
+static void channel_destruct(rmcast_base_channel_t *ptr)
+{
+    /* cleanup the recv side */
+    opal_event_del(&ptr->recv_ev);
+    if (0 < ptr->recv) {
+        CLOSE_THE_SOCKET(ptr->recv);
+    }
+    /* attempt to xmit any pending sends */
+    /* cleanup the xmit side */
+    opal_event_del(&ptr->send_ev);
+    if (0 < ptr->xmit) {
+        CLOSE_THE_SOCKET(ptr->xmit);
+    }
+    OBJ_DESTRUCT(&ptr->send_lock);
+    /* release the channel name */
+    if (NULL != ptr->name) {
+        free(ptr->name);
+    }
+    if (NULL != ptr->send_data) {
+        free(ptr->send_data);
+    }
+}
+OBJ_CLASS_INSTANCE(rmcast_base_channel_t,
+                   opal_list_item_t,
+                   channel_construct,
+                   channel_destruct);
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */

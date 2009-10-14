@@ -16,6 +16,7 @@
 #include "opal/mca/base/base.h"
 
 #include "orte/mca/rmcast/base/base.h"
+#include "orte/mca/rmcast/base/private.h"
 
 int orte_rmcast_base_close(void)
 {
