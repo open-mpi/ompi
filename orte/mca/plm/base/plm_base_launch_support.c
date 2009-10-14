@@ -1374,6 +1374,14 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
                     }
                 }
                 break;
+            } else if (ORTE_PROC_STATE_KILLED_BY_CMD == proc->state) {
+                /* we ordered this proc to die */
+                jdata->state = ORTE_JOB_STATE_KILLED_BY_CMD;
+                jdata->aborted_proc = NULL; /* no reason to save it */
+                /* use the default exit code since we ordered the termination */
+                ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                /* now just check the remaining jobs to see if anyone is still alive */
+                goto CHECK_ALL_JOBS;
             } else if (ORTE_PROC_STATE_UNTERMINATED < proc->state &&
                        jdata->controls & ORTE_JOB_CONTROL_CONTINUOUS_OP) {
                 proc->state = ORTE_PROC_STATE_ABORTED;

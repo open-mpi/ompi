@@ -2997,7 +2997,7 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs, bool se
                                  "%s odls:kill_local_proc child %s killed",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(child->name)));
-            child->state = ORTE_PROC_STATE_ABORTED_BY_SIG;  /* we may have sent it, but that's what happened */
+            child->state = ORTE_PROC_STATE_KILLED_BY_CMD;  /* we ordered it to die */
             /* let this fall through to record the proc as "not alive" even
              * if child_died failed. We did our best, so as far as we are
              * concerned, this child is dead
