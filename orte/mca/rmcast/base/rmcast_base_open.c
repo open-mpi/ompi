@@ -69,6 +69,7 @@ orte_rmcast_module_t orte_rmcast = {
     NULL,
     NULL,
     NULL,
+    NULL,
     NULL
 };
 orte_rmcast_base_t orte_rmcast_base;
