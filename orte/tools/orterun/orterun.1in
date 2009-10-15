@@ -374,7 +374,9 @@ See the "Current Working Directory" section for notes on relative paths.
 .B Note:
 If the \fI-wdir\fP option appears both on the command line and in an
 application context, the context will take precedence over the command
-line.
+line. Thus, if the path to the desired wdir is different
+on the backend nodes, then it must be specified as an absolute path that
+is correct for the backend node.
 .
 .
 .TP
@@ -466,9 +468,31 @@ as well as the underlying environment (e.g., when failing to launch a daemon) to
 .
 .TP
 .B -ompi-server\fR,\fP --ompi-server <uri or file>
-Specify the URI of the Open MPI server, or the name of the file (specified as file:filename) that
-contains that info. The Open MPI server is used to support multi-application data exchange via
+Specify the URI of the Open MPI server (or the mpirun to be used as the server)
+, the name
+of the file (specified as file:filename) that
+contains that info, or the PID (specified as pid:#) of the mpirun to be used as
+ the server.
+The Open MPI server is used to support multi-application data exchange via
 the MPI-2 MPI_Publish_name and MPI_Lookup_name functions.
+.
+.
+.TP
+.B -report-pid\fR,\fP --report-pid <channel>
+Print out mpirun's PID during startup. The channel must be either a '-' to indi
+cate that
+the pid is to be output to stdout, a '+' to indicate that the pid is to be outp
+ut to stderr,
+or a filename to which the pid is to be written.
+.
+.
+.TP
+.B -report-pid\fR,\fP --report-pid <channel>
+Print out mpirun's PID during startup. The channel must be either a '-' to indi
+cate that
+the pid is to be output to stdout, a '+' to indicate that the pid is to be outp
+ut to stderr,
+or a filename to which the pid is to be written.
 .
 .
 .TP
