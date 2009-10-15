@@ -176,7 +176,7 @@ static int init(void)
         OPAL_THREAD_LOCK(&lock);
         opal_list_append(&channels, &chan->item);
         OPAL_THREAD_UNLOCK(&lock);
-        if (ORTE_SUCCESS != (rc = setup_channel(chan, ORTE_RMCAST_BIDIR))) {
+        if (ORTE_SUCCESS != (rc = setup_channel(chan, ORTE_RMCAST_XMIT))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -211,11 +211,11 @@ static void finalize(void)
 }
 
 /* internal blocking send support */
+static bool send_complete;
+
 static void internal_snd_cb(orte_rmcast_channel_t channel, opal_buffer_t *buf, void *cbdata)
 {
-    rmcast_base_send_t *snd = (rmcast_base_send_t*)cbdata;
-    
-    snd->send_complete = true;
+    send_complete = true;
 }
 
 static int basic_send(orte_rmcast_channel_t channel,
@@ -278,6 +278,7 @@ process:
     snd->tag = tag;
     snd->cbfunc = internal_snd_cb;
     snd->cbdata = snd;
+    send_complete = false;
     
     /* add it to this channel's pending sends */
     OPAL_THREAD_LOCK(&ch->send_lock);
@@ -291,7 +292,7 @@ process:
     OPAL_THREAD_UNLOCK(&ch->send_lock);
 
     /* now wait for the send to complete */
-    ORTE_PROGRESSED_WAIT(snd->send_complete, 0, 1);
+    ORTE_PROGRESSED_WAIT(send_complete, 0, 1);
     
     return ORTE_SUCCESS;
 }
