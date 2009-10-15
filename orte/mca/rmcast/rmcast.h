@@ -80,6 +80,9 @@ typedef int (*orte_rmcast_base_module_open_channel_fn_t)(orte_rmcast_channel_t *
 /* close the channel */
 typedef int (*orte_rmcast_base_module_close_channel_fn_t)(orte_rmcast_channel_t channel);
 
+/* return my group's channel */
+typedef orte_rmcast_channel_t (*orte_rmcast_base_module_query_channel_fn_t)(void);
+
 /*
  * rmcast component
  */
@@ -107,6 +110,7 @@ struct orte_rmcast_base_module_t {
     orte_rmcast_base_module_cancel_recv_fn_t    cancel_recv;
     orte_rmcast_base_module_open_channel_fn_t   open_channel;
     orte_rmcast_base_module_close_channel_fn_t  close_channel;
+    orte_rmcast_base_module_query_channel_fn_t  query_channel;
 };
 /** Convienence typedef */
 typedef struct orte_rmcast_base_module_t orte_rmcast_module_t;
