@@ -279,7 +279,6 @@ OBJ_CLASS_INSTANCE(orte_mcast_msg_event_t,
 
 static void send_construct(rmcast_base_send_t *ptr)
 {
-    ptr->send_complete = false;
     ptr->data = NULL;
     ptr->tag = ORTE_RMCAST_TAG_INVALID;
     ptr->cbfunc = NULL;
@@ -329,14 +328,14 @@ static void channel_construct(rmcast_base_channel_t *ptr)
 static void channel_destruct(rmcast_base_channel_t *ptr)
 {
     /* cleanup the recv side */
-    opal_event_del(&ptr->recv_ev);
     if (0 < ptr->recv) {
+        opal_event_del(&ptr->recv_ev);
         CLOSE_THE_SOCKET(ptr->recv);
     }
     /* attempt to xmit any pending sends */
     /* cleanup the xmit side */
-    opal_event_del(&ptr->send_ev);
     if (0 < ptr->xmit) {
+        opal_event_del(&ptr->send_ev);
         CLOSE_THE_SOCKET(ptr->xmit);
     }
     OBJ_DESTRUCT(&ptr->send_lock);

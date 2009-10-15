@@ -102,7 +102,6 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(rmcast_base_recv_t);
  */
 typedef struct {
     opal_list_item_t item;
-    bool send_complete;
     opal_buffer_t *data;
     orte_rmcast_tag_t tag;
     orte_rmcast_callback_fn_t cbfunc;
