@@ -50,6 +50,7 @@ typedef int32_t orte_rmcast_tag_t;
 #define ORTE_RMCAST_TAG_BOOTSTRAP    1
 #define ORTE_RMCAST_TAG_ANNOUNCE     2
 #define ORTE_RMCAST_TAG_OUTPUT       3
+#define ORTE_RMCAST_TAG_PS           4
 
 /* starting value for dynamically assignable tags */
 #define ORTE_RMCAST_TAG_DYNAMIC     100
