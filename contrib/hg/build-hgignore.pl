@@ -46,6 +46,8 @@ aclocal.m4
 autom4te.cache
 Makefile
 static-components.h
+project_list.m4
+orte_wrapper_script
 *~
 *\\\#/;
 

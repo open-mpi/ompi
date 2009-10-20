@@ -32,16 +32,20 @@ dnl
 AC_DEFUN([OMPI_SETUP_WRAPPER_INIT],[
     WRAPPER_EXTRA_CPPFLAGS=
     WRAPPER_EXTRA_CFLAGS=
-    WRAPPER_EXTRA_CXXFLAGS=
-    WRAPPER_EXTRA_FFLAGS=
-    WRAPPER_EXTRA_FCFLAGS=
+    # Only worry about C++ and Fortran if we're building the OMPI project
+    m4_ifdef([project_ompi],
+             [WRAPPER_EXTRA_CXXFLAGS=
+              WRAPPER_EXTRA_FFLAGS=
+              WRAPPER_EXTRA_FCFLAGS=])
     WRAPPER_EXTRA_LDFLAGS=
     WRAPPER_EXTRA_LIBS=
 
     USER_WRAPPER_EXTRA_CFLAGS=
-    USER_WRAPPER_EXTRA_CXXFLAGS=
-    USER_WRAPPER_EXTRA_FFLAGS=
-    USER_WRAPPER_EXTRA_FCFLAGS=
+    # Only worry about C++ and Fortran if we're building the OMPI project
+    m4_ifdef([project_ompi],
+             [USER_WRAPPER_EXTRA_CXXFLAGS=
+              USER_WRAPPER_EXTRA_FFLAGS=
+              USER_WRAPPER_EXTRA_FCFLAGS=])
     USER_WRAPPER_EXTRA_LDFLAGS=
     USER_WRAPPER_EXTRA_LIBS=
 
@@ -54,32 +58,35 @@ AC_DEFUN([OMPI_SETUP_WRAPPER_INIT],[
         USER_WRAPPER_EXTRA_CFLAGS="$with_wrapper_cflags"
     fi
 
-    AC_ARG_WITH([wrapper-cxxflags], 
-                [AC_HELP_STRING([--with-wrapper-cxxflags],
-                                [Extra flags to add to CXXFLAGS when using mpiCC/mpic++])])
-    if test "$with_wrapper_cxxflags" = "yes" -o "$with_wrapper_cxxflags" = "no"; then
-        AC_MSG_ERROR([--with-wrapper-cxxflags must have an argument.  Aborting])
-    elif test ! -z "$with_wrapper_cxxflags" ; then
-        USER_WRAPPER_EXTRA_CXXFLAGS="$with_wrapper_cxxflags"
-    fi
+    # Only worry about C++ and Fortran if we're building the OMPI project
+    m4_ifdef([project_ompi],
+             [AC_ARG_WITH([wrapper-cxxflags], 
+                          [AC_HELP_STRING([--with-wrapper-cxxflags],
+                                          [Extra flags to add to CXXFLAGS when using mpiCC/mpic++])])
+              if test "$with_wrapper_cxxflags" = "yes" -o "$with_wrapper_cxxflags" = "no"; then
+                  AC_MSG_ERROR([--with-wrapper-cxxflags must have an argument.  Aborting])
+              elif test ! -z "$with_wrapper_cxxflags" ; then
+                  USER_WRAPPER_EXTRA_CXXFLAGS="$with_wrapper_cxxflags"
+              fi
 
-    AC_ARG_WITH([wrapper-fflags], 
-                [AC_HELP_STRING([--with-wrapper-fflags],
-                                [Extra flags to add to FFLAGS when using mpif77])])
-    if test "$with_wrapper_fflags" = "yes" -o "$with_wrapper_fflags" = "no"; then
-        AC_MSG_ERROR([--with-wrapper-fflags must have an argument.  Aborting])
-    elif test ! -z "$with_wrapper_fflags" ; then
-        USER_WRAPPER_EXTRA_FFLAGS="$with_wrapper_fflags"
-    fi
+              AC_ARG_WITH([wrapper-fflags], 
+                          [AC_HELP_STRING([--with-wrapper-fflags],
+                                          [Extra flags to add to FFLAGS when using mpif77])])
+              if test "$with_wrapper_fflags" = "yes" -o "$with_wrapper_fflags" = "no"; then
+                  AC_MSG_ERROR([--with-wrapper-fflags must have an argument.  Aborting])
+              elif test ! -z "$with_wrapper_fflags" ; then
+                  USER_WRAPPER_EXTRA_FFLAGS="$with_wrapper_fflags"
+              fi
 
-    AC_ARG_WITH([wrapper-fcflags], 
-                [AC_HELP_STRING([--with-wrapper-fcflags],
-                                [Extra flags to add to FCFLAGS when using mpif90])])
-    if test "$with_wrapper_fcflags" = "yes" -o "$with_wrapper_fcflags" = "no"; then
-        AC_MSG_ERROR([--with-wrapper-fcflags must have an argument.  Aborting])
-    elif test ! -z "$with_wrapper_fcflags" ; then
-        USER_WRAPPER_EXTRA_FCFLAGS="$with_wrapper_fcflags"
-    fi
+              AC_ARG_WITH([wrapper-fcflags], 
+                          [AC_HELP_STRING([--with-wrapper-fcflags],
+                                          [Extra flags to add to FCFLAGS when using mpif90])])
+              if test "$with_wrapper_fcflags" = "yes" -o "$with_wrapper_fcflags" = "no"; then
+                  AC_MSG_ERROR([--with-wrapper-fcflags must have an argument.  Aborting])
+              elif test ! -z "$with_wrapper_fcflags" ; then
+                  USER_WRAPPER_EXTRA_FCFLAGS="$with_wrapper_fcflags"
+              fi
+    ])
 
     AC_ARG_WITH([wrapper-ldflags], 
                 [AC_HELP_STRING([--with-wrapper-ldflags],
@@ -104,9 +111,11 @@ AC_DEFUN([OMPI_SETUP_WRAPPER_INIT],[
 AC_DEFUN([OMPI_SETUP_WRAPPER_FINAL],[
     OMPI_UNIQ([WRAPPER_EXTRA_CPPFLAGS])
     OMPI_UNIQ([WRAPPER_EXTRA_CFLAGS])
-    OMPI_UNIQ([WRAPPER_EXTRA_CXXFLAGS])
-    OMPI_UNIQ([WRAPPER_EXTRA_FFLAGS])
-    OMPI_UNIQ([WRAPPER_EXTRA_FCFLAGS])
+    # Only worry about C++ and Fortran if we're building the OMPI project
+    m4_ifdef([project_ompi],
+             [OMPI_UNIQ([WRAPPER_EXTRA_CXXFLAGS])
+              OMPI_UNIQ([WRAPPER_EXTRA_FFLAGS])
+              OMPI_UNIQ([WRAPPER_EXTRA_FCFLAGS])])
     OMPI_UNIQ([WRAPPER_EXTRA_LDFLAGS])
 
     #
@@ -124,11 +133,6 @@ AC_DEFUN([OMPI_SETUP_WRAPPER_FINAL],[
     OPAL_WRAPPER_EXTRA_CFLAGS="$WRAPPER_EXTRA_CFLAGS $USER_WRAPPER_EXTRA_CFLAGS"
     AC_SUBST([OPAL_WRAPPER_EXTRA_CFLAGS])
     AC_MSG_RESULT([$OPAL_WRAPPER_EXTRA_CFLAGS])
-
-    AC_MSG_CHECKING([for OPAL CXXFLAGS])
-    OPAL_WRAPPER_EXTRA_CXXFLAGS="$WRAPPER_EXTRA_CXXFLAGS $USER_WRAPPER_EXTRA_CXXFLAGS"
-    AC_SUBST([OPAL_WRAPPER_EXTRA_CXXFLAGS])
-    AC_MSG_RESULT([$OPAL_WRAPPER_EXTRA_CXXFLAGS])
 
     AC_MSG_CHECKING([for OPAL LDFLAGS])
     OPAL_WRAPPER_EXTRA_LDFLAGS="$opal_WRAPPER_EXTRA_LDFLAGS $WRAPPER_EXTRA_LDFLAGS $USER_WRAPPER_EXTRA_LDFLAGS"
@@ -152,115 +156,114 @@ AC_DEFUN([OMPI_SETUP_WRAPPER_FINAL],[
     #
     # ORTE
     #
-    OMPI_UNIQ([orte_WRAPPER_EXTRA_LDFLAGS])
-    OMPI_UNIQ([orte_WRAPPER_EXTRA_LIBS])
+    m4_ifdef([project_orte],
+             [OMPI_UNIQ([orte_WRAPPER_EXTRA_LDFLAGS])
+              OMPI_UNIQ([orte_WRAPPER_EXTRA_LIBS])
 
-    AC_MSG_CHECKING([for ORTE CPPFLAGS])
-    ORTE_WRAPPER_EXTRA_CPPFLAGS="$OPAL_WRAPPER_EXTRA_CPPFLAGS"
-    AC_SUBST([ORTE_WRAPPER_EXTRA_CPPFLAGS])
-    AC_MSG_RESULT([$ORTE_WRAPPER_EXTRA_CPPFLAGS])
+              AC_MSG_CHECKING([for ORTE CPPFLAGS])
+              ORTE_WRAPPER_EXTRA_CPPFLAGS="$OPAL_WRAPPER_EXTRA_CPPFLAGS"
+              AC_SUBST([ORTE_WRAPPER_EXTRA_CPPFLAGS])
+              AC_MSG_RESULT([$ORTE_WRAPPER_EXTRA_CPPFLAGS])
 
-    AC_MSG_CHECKING([for ORTE CFLAGS])
-    ORTE_WRAPPER_EXTRA_CFLAGS="$OPAL_WRAPPER_EXTRA_CFLAGS"
-    AC_SUBST([ORTE_WRAPPER_EXTRA_CFLAGS])
-    AC_MSG_RESULT([$ORTE_WRAPPER_EXTRA_CFLAGS])
+              AC_MSG_CHECKING([for ORTE CFLAGS])
+              ORTE_WRAPPER_EXTRA_CFLAGS="$OPAL_WRAPPER_EXTRA_CFLAGS"
+              AC_SUBST([ORTE_WRAPPER_EXTRA_CFLAGS])
+              AC_MSG_RESULT([$ORTE_WRAPPER_EXTRA_CFLAGS])
 
-    AC_MSG_CHECKING([for ORTE CXXFLAGS])
-    ORTE_WRAPPER_EXTRA_CXXFLAGS="$OPAL_WRAPPER_EXTRA_CXXFLAGS"
-    AC_SUBST([ORTE_WRAPPER_EXTRA_CXXFLAGS])
-    AC_MSG_RESULT([$ORTE_WRAPPER_EXTRA_CXXFLAGS])
+              AC_MSG_CHECKING([for ORTE LDFLAGS])
+              ORTE_WRAPPER_EXTRA_LDFLAGS="$orte_WRAPPER_EXTRA_LDFLAGS $OPAL_WRAPPER_EXTRA_LDFLAGS"
+              AC_SUBST([ORTE_WRAPPER_EXTRA_LDFLAGS])
+              AC_MSG_RESULT([$ORTE_WRAPPER_EXTRA_LDFLAGS])
 
-    AC_MSG_CHECKING([for ORTE LDFLAGS])
-    ORTE_WRAPPER_EXTRA_LDFLAGS="$orte_WRAPPER_EXTRA_LDFLAGS $OPAL_WRAPPER_EXTRA_LDFLAGS"
-    AC_SUBST([ORTE_WRAPPER_EXTRA_LDFLAGS])
-    AC_MSG_RESULT([$ORTE_WRAPPER_EXTRA_LDFLAGS])
+              AC_MSG_CHECKING([for ORTE LIBS])
+              ORTE_WRAPPER_EXTRA_LIBS="$orte_WRAPPER_EXTRA_LIBS $OPAL_WRAPPER_EXTRA_LIBS"
+              AC_SUBST([ORTE_WRAPPER_EXTRA_LIBS])
+              AC_MSG_RESULT([$ORTE_WRAPPER_EXTRA_LIBS])
 
-    AC_MSG_CHECKING([for ORTE LIBS])
-    ORTE_WRAPPER_EXTRA_LIBS="$orte_WRAPPER_EXTRA_LIBS $OPAL_WRAPPER_EXTRA_LIBS"
-    AC_SUBST([ORTE_WRAPPER_EXTRA_LIBS])
-    AC_MSG_RESULT([$ORTE_WRAPPER_EXTRA_LIBS])
-
-    AC_MSG_CHECKING([for ORTE extra include dirs])
-    ORTE_WRAPPER_EXTRA_INCLUDES="$OPAL_WRAPPER_EXTRA_INCLUDES"
-    AC_SUBST([ORTE_WRAPPER_EXTRA_INCLUDES])
-    AC_MSG_RESULT([$ORTE_WRAPPER_EXTRA_INCLUDES])
+              AC_MSG_CHECKING([for ORTE extra include dirs])
+              ORTE_WRAPPER_EXTRA_INCLUDES="$OPAL_WRAPPER_EXTRA_INCLUDES"
+              AC_SUBST([ORTE_WRAPPER_EXTRA_INCLUDES])
+              AC_MSG_RESULT([$ORTE_WRAPPER_EXTRA_INCLUDES])
+    ])
 
     #
     # OMPI
     #
-    OMPI_UNIQ([ompi_WRAPPER_EXTRA_LDFLAGS])
-    OMPI_UNIQ([ompi_WRAPPER_EXTRA_LIBS])
+    m4_ifdef([project_ompi],
+             [OMPI_UNIQ([ompi_WRAPPER_EXTRA_LDFLAGS])
+              OMPI_UNIQ([ompi_WRAPPER_EXTRA_LIBS])
 
-    AC_MSG_CHECKING([for OMPI CPPFLAGS])
-    OMPI_WRAPPER_EXTRA_CPPFLAGS="$ORTE_WRAPPER_EXTRA_CPPFLAGS"
-    AC_SUBST([OMPI_WRAPPER_EXTRA_CPPFLAGS])
-    AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_CPPFLAGS])
+              AC_MSG_CHECKING([for OMPI CPPFLAGS])
+              OMPI_WRAPPER_EXTRA_CPPFLAGS="$ORTE_WRAPPER_EXTRA_CPPFLAGS"
+              AC_SUBST([OMPI_WRAPPER_EXTRA_CPPFLAGS])
+              AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_CPPFLAGS])
 
-    AC_MSG_CHECKING([for OMPI CFLAGS])
-    OMPI_WRAPPER_EXTRA_CFLAGS="$ORTE_WRAPPER_EXTRA_CFLAGS"
-    AC_SUBST([OMPI_WRAPPER_EXTRA_CFLAGS])
-    AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_CFLAGS])
+              AC_MSG_CHECKING([for OMPI CFLAGS])
+              OMPI_WRAPPER_EXTRA_CFLAGS="$ORTE_WRAPPER_EXTRA_CFLAGS"
+              AC_SUBST([OMPI_WRAPPER_EXTRA_CFLAGS])
+              AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_CFLAGS])
 
-    AC_MSG_CHECKING([for OMPI CXXFLAGS])
-    OMPI_WRAPPER_EXTRA_CXXFLAGS="$ORTE_WRAPPER_EXTRA_CXXFLAGS"
-    AC_SUBST([OMPI_WRAPPER_EXTRA_CXXFLAGS])
-    AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_CXXFLAGS])
+              AC_MSG_CHECKING([for OMPI CXXFLAGS])
+              OMPI_WRAPPER_EXTRA_CXXFLAGS="$ORTE_WRAPPER_EXTRA_CXXFLAGS"
+              AC_SUBST([OMPI_WRAPPER_EXTRA_CXXFLAGS])
+              AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_CXXFLAGS])
 
-    AC_MSG_CHECKING([for OMPI FFLAGS])
-    OMPI_WRAPPER_EXTRA_FFLAGS="$WRAPPER_EXTRA_FFLAGS $USER_WRAPPER_EXTRA_FFLAGS"
-    AC_SUBST([OMPI_WRAPPER_EXTRA_FFLAGS])
-    AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_FFLAGS])
+              AC_MSG_CHECKING([for OMPI FFLAGS])
+              OMPI_WRAPPER_EXTRA_FFLAGS="$WRAPPER_EXTRA_FFLAGS $USER_WRAPPER_EXTRA_FFLAGS"
+              AC_SUBST([OMPI_WRAPPER_EXTRA_FFLAGS])
+              AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_FFLAGS])
 
-    AC_MSG_CHECKING([for OMPI FCFLAGS])
-    OMPI_WRAPPER_EXTRA_FCFLAGS="$WRAPPER_EXTRA_FCFLAGS $USER_WRAPPER_EXTRA_FCFLAGS"
-    AC_SUBST([OMPI_WRAPPER_EXTRA_FCFLAGS])
-    AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_FCFLAGS])
+              AC_MSG_CHECKING([for OMPI FCFLAGS])
+              OMPI_WRAPPER_EXTRA_FCFLAGS="$WRAPPER_EXTRA_FCFLAGS $USER_WRAPPER_EXTRA_FCFLAGS"
+              AC_SUBST([OMPI_WRAPPER_EXTRA_FCFLAGS])
+              AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_FCFLAGS])
 
-    AC_MSG_CHECKING([for OMPI LDFLAGS])
-    OMPI_WRAPPER_EXTRA_LDFLAGS="$ompi_WRAPPER_EXTRA_LDFLAGS $ORTE_WRAPPER_EXTRA_LDFLAGS"
-    AC_SUBST([OMPI_WRAPPER_EXTRA_LDFLAGS])
-    AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_LDFLAGS])
+              AC_MSG_CHECKING([for OMPI LDFLAGS])
+              OMPI_WRAPPER_EXTRA_LDFLAGS="$ompi_WRAPPER_EXTRA_LDFLAGS $ORTE_WRAPPER_EXTRA_LDFLAGS"
+              AC_SUBST([OMPI_WRAPPER_EXTRA_LDFLAGS])
+              AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_LDFLAGS])
 
-    AC_MSG_CHECKING([for OMPI LIBS])
-    OMPI_WRAPPER_EXTRA_LIBS="$ompi_WRAPPER_EXTRA_LIBS $ORTE_WRAPPER_EXTRA_LIBS"
-    AC_SUBST([OMPI_WRAPPER_EXTRA_LIBS])
-    AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_LIBS])
+              AC_MSG_CHECKING([for OMPI LIBS])
+              OMPI_WRAPPER_EXTRA_LIBS="$ompi_WRAPPER_EXTRA_LIBS $ORTE_WRAPPER_EXTRA_LIBS"
+              AC_SUBST([OMPI_WRAPPER_EXTRA_LIBS])
+              AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_LIBS])
 
-    AC_MSG_CHECKING([for OMPI extra include dirs])
-    OMPI_WRAPPER_EXTRA_INCLUDES="$ORTE_WRAPPER_EXTRA_INCLUDES"
-    AC_SUBST([OMPI_WRAPPER_EXTRA_INCLUDES])
-    AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_INCLUDES])
+              AC_MSG_CHECKING([for OMPI extra include dirs])
+              OMPI_WRAPPER_EXTRA_INCLUDES="$ORTE_WRAPPER_EXTRA_INCLUDES"
+              AC_SUBST([OMPI_WRAPPER_EXTRA_INCLUDES])
+              AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_INCLUDES])
 
-    # language binding support.  C++ is a bit different, as the
-    # compiler should work even if there is no MPI C++ bindings
-    # support.  However, we do want it to fail if there is no C++
-    # compiler.
-    if test "$WANT_MPI_CXX_SUPPORT" = "1" ; then
-        OMPI_WRAPPER_CXX_LIB="-lmpi_cxx"
-        OMPI_WRAPPER_CXX_REQUIRED_FILE=""
-    elif test "$CXX" = "none"; then
-        OMPI_WRAPPER_CXX_LIB=""
-        OMPI_WRAPPER_CXX_REQUIRED_FILE="not supported"
-    else
-        OMPI_WRAPPER_CXX_LIB=""
-        OMPI_WRAPPER_CXX_REQUIRED_FILE=""
-    fi
-    AC_SUBST([OMPI_WRAPPER_CXX_LIB])
-    AC_SUBST([OMPI_WRAPPER_CXX_REQUIRED_FILE])
+              # language binding support.  C++ is a bit different, as the
+              # compiler should work even if there is no MPI C++ bindings
+              # support.  However, we do want it to fail if there is no C++
+              # compiler.
+              if test "$WANT_MPI_CXX_SUPPORT" = "1" ; then
+                  OMPI_WRAPPER_CXX_LIB="-lmpi_cxx"
+                  OMPI_WRAPPER_CXX_REQUIRED_FILE=""
+              elif test "$CXX" = "none"; then
+                  OMPI_WRAPPER_CXX_LIB=""
+                  OMPI_WRAPPER_CXX_REQUIRED_FILE="not supported"
+              else
+                  OMPI_WRAPPER_CXX_LIB=""
+                  OMPI_WRAPPER_CXX_REQUIRED_FILE=""
+              fi
+              AC_SUBST([OMPI_WRAPPER_CXX_LIB])
+              AC_SUBST([OMPI_WRAPPER_CXX_REQUIRED_FILE])
 
-    if test "$OMPI_WANT_F77_BINDINGS" = "1" ; then
-        OMPI_WRAPPER_F77_REQUIRED_FILE=""
-    else
-        OMPI_WRAPPER_F77_REQUIRED_FILE="not supported"
-    fi
-    AC_SUBST([OMPI_WRAPPER_F77_REQUIRED_FILE])
+              if test "$OMPI_WANT_F77_BINDINGS" = "1" ; then
+                  OMPI_WRAPPER_F77_REQUIRED_FILE=""
+              else
+                  OMPI_WRAPPER_F77_REQUIRED_FILE="not supported"
+              fi
+              AC_SUBST([OMPI_WRAPPER_F77_REQUIRED_FILE])
 
-    if test "$OMPI_WANT_F90_BINDINGS" = "1" ; then
-        OMPI_WRAPPER_F90_REQUIRED_FILE=""
-    else
-        OMPI_WRAPPER_F90_REQUIRED_FILE="not supported"
-    fi
-    AC_SUBST([OMPI_WRAPPER_F90_REQUIRED_FILE])
+              if test "$OMPI_WANT_F90_BINDINGS" = "1" ; then
+                  OMPI_WRAPPER_F90_REQUIRED_FILE=""
+              else
+                  OMPI_WRAPPER_F90_REQUIRED_FILE="not supported"
+              fi
+              AC_SUBST([OMPI_WRAPPER_F90_REQUIRED_FILE])
+    ])
 
     # For script-based wrappers that don't do relocatable binaries.
     # Don't use if you don't have to.
@@ -274,27 +277,30 @@ AC_DEFUN([OMPI_SETUP_WRAPPER_FINAL],[
 
     # compatibility defines that will eventually go away
     WRAPPER_EXTRA_CFLAGS="$OMPI_WRAPPER_EXTRA_CFLAGS"
-    WRAPPER_EXTRA_CXXFLAGS="$OMPI_WRAPPER_EXTRA_CXXFLAGS"
-    WRAPPER_EXTRA_FFLAGS="$OMPI_WRAPPER_EXTRA_FFLAGS"
-    WRAPPER_EXTRA_FCFLAGS="$OMPI_WRAPPER_EXTRA_FCFLAGS"
+    m4_ifdef([project_ompi],
+             [WRAPPER_EXTRA_CXXFLAGS="$OMPI_WRAPPER_EXTRA_CXXFLAGS"
+              WRAPPER_EXTRA_FFLAGS="$OMPI_WRAPPER_EXTRA_FFLAGS"
+              WRAPPER_EXTRA_FCFLAGS="$OMPI_WRAPPER_EXTRA_FCFLAGS"])
     WRAPPER_EXTRA_LDFLAGS="$OMPI_WRAPPER_EXTRA_LDFLAGS"
     WRAPPER_EXTRA_LIBS="$OMPI_WRAPPER_EXTRA_LIBS"
 
     AC_SUBST(WRAPPER_EXTRA_CFLAGS)
-    AC_SUBST(WRAPPER_EXTRA_CXXFLAGS)
-    AC_SUBST(WRAPPER_EXTRA_FFLAGS)
-    AC_SUBST(WRAPPER_EXTRA_FCFLAGS)
+    m4_ifdef([project_ompi],
+             [AC_SUBST(WRAPPER_EXTRA_CXXFLAGS)
+              AC_SUBST(WRAPPER_EXTRA_FFLAGS)
+              AC_SUBST(WRAPPER_EXTRA_FCFLAGS)])
     AC_SUBST(WRAPPER_EXTRA_LDFLAGS)
     AC_SUBST(WRAPPER_EXTRA_LIBS)
 
     AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_CFLAGS, "$WRAPPER_EXTRA_CFLAGS",
         [Additional CFLAGS to pass through the wrapper compilers])
-    AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_CXXFLAGS, "$WRAPPER_EXTRA_CXXFLAGS",
-        [Additional CXXFLAGS to pass through the wrapper compilers])
-    AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_FFLAGS, "$WRAPPER_EXTRA_FFLAGS",
-        [Additional FFLAGS to pass through the wrapper compilers])
-    AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_FCFLAGS, "$WRAPPER_EXTRA_FCFLAGS",
-        [Additional FCFLAGS to pass through the wrapper compilers])
+    m4_ifdef([project_ompi],
+             [AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_CXXFLAGS, "$WRAPPER_EXTRA_CXXFLAGS",
+                  [Additional CXXFLAGS to pass through the wrapper compilers])
+              AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_FFLAGS, "$WRAPPER_EXTRA_FFLAGS",
+                  [Additional FFLAGS to pass through the wrapper compilers])
+              AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_FCFLAGS, "$WRAPPER_EXTRA_FCFLAGS",
+                  [Additional FCFLAGS to pass through the wrapper compilers])])
     AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_LDFLAGS, "$WRAPPER_EXTRA_LDFLAGS",
         [Additional LDFLAGS to pass through the wrapper compilers])
     AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_LIBS, "$WRAPPER_EXTRA_LIBS",

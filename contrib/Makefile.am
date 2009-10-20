@@ -110,6 +110,7 @@ EXTRA_DIST = \
 	platform/cisco/macosx-dynamic-optimized.conf \
 	platform/cisco/hlfr/debug \
 	platform/cisco/hlfr/debug.conf \
+	platform/cisco/hlfr/ebuild \
 	platform/cisco/hlfr/optimized \
 	platform/cisco/hlfr/optimized.conf \
 	platform/cisco/ludd-1/debug \
