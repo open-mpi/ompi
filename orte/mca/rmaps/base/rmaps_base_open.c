@@ -159,8 +159,14 @@ int orte_rmaps_base_open(void)
     mca_base_param_reg_syn_name(param, "rmaps", "base_cpus_per_rank", false);
     mca_base_param_lookup_int(param, &value);
     orte_rmaps_base.cpus_per_rank = value;
-    /* if the #cpus/rank > #cpus/socket, politely tell the user and abort */
-    if (orte_rmaps_base.cpus_per_rank > orte_default_num_cores_per_socket) {
+    /* if the #cpus/rank > #cpus/socket, politely tell the user and abort
+     *
+     * NOTE: have to check that the default_num_cores_per_socket was set
+     * as ompi_info doesn't call the ess init function, and thus might
+     * leave this value at its default of zero
+     */
+    if (0 < orte_default_num_cores_per_socket &&
+        orte_rmaps_base.cpus_per_rank > orte_default_num_cores_per_socket) {
         orte_show_help("help-orte-rmaps-base.txt", "too-many-cpus-per-rank",
                        true, orte_rmaps_base.cpus_per_rank,
                        orte_default_num_cores_per_socket);
