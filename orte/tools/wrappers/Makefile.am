@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -20,7 +20,22 @@
 man_pages = ortecc.1 ortec++.1
 
 if !ORTE_DISABLE_FULL_SUPPORT
-if !OMPI_WANT_SCRIPT_WRAPPER_COMPILERS
+if OMPI_WANT_SCRIPT_WRAPPER_COMPILERS
+
+bin_SCRIPTS = orte_wrapper_script
+CLEANFILES += $(bin_SCRIPTS)
+
+install-exec-hook:
+	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
+	(cd $(DESTDIR)$(bindir); rm -f ortecc; $(LN_S) orte_wrapper_script ortecc)
+	(cd $(DESTDIR)$(bindir); rm -f ortec++; $(LN_S) orte_wrapper_script ortec++)
+
+uninstall-local:
+	rm -f $(DESTDIR)$(bindir)/ortecc \
+	$(DESTDIR)$(bindir)/ortec++
+
+else # OMPI_WANT_SCRIPT_WRAPPER_COMPILERS
+
 if WANT_INSTALL_HEADERS
 
 nodist_pkgdata_DATA = \
