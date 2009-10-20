@@ -326,11 +326,13 @@ static char *list_env_get(char *var, char **list)
 char* opal_find_absolute_path( char* app_name )
 {
     char* abs_app_name;
+    char cwd[OPAL_PATH_MAX], *pcwd;
 
     if( opal_path_is_absolute(app_name) ) { /* already absolute path */
         abs_app_name = app_name;
-    } else if( '.' == app_name[0] ) { /* the app is in the current directory */
-        char cwd[OPAL_PATH_MAX], *pcwd;
+    } else if ( '.' == app_name[0] ||
+               NULL != strchr(app_name, OPAL_PATH_SEP[0])) {
+        /* the app is in the current directory or below it */
         pcwd = getcwd( cwd, OPAL_PATH_MAX );
         if( NULL == pcwd ) {
             /* too bad there is no way we can get the app absolute name */
