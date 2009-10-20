@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
@@ -415,6 +415,7 @@ AC_ARG_ENABLE([script-wrapper-compilers],
 AM_CONDITIONAL([OMPI_WANT_SCRIPT_WRAPPER_COMPILERS],
     [test "$enable_script_wrapper_compilers" = "yes"])
 AC_CONFIG_FILES([ompi/tools/wrappers/ompi_wrapper_script], [chmod +x ompi/tools/wrappers/ompi_wrapper_script])
+AC_CONFIG_FILES([orte/tools/wrappers/orte_wrapper_script], [chmod +x orte/tools/wrappers/orte_wrapper_script])
 
 #
 # Support per-user config files?

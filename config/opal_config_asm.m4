@@ -801,7 +801,8 @@ dnl
 dnl #################################################################
 AC_DEFUN([OMPI_CONFIG_ASM],[
     AC_REQUIRE([OMPI_SETUP_CC])
-    AC_REQUIRE([OMPI_SETUP_CXX])
+    # Only require C++ if we're building the OMPI project
+    m4_ifdef([project_ompi], [AC_REQUIRE([OMPI_SETUP_CXX])])
     AC_REQUIRE([AM_PROG_AS])
 
     # OS X Leopard ld bus errors if you have "-g" or "-gX" in the link line
@@ -970,10 +971,13 @@ AC_MSG_ERROR([Can not continue.])
          OMPI_CHECK_INLINE_C_GCC([$OMPI_GCC_INLINE_ASSIGN])
          OMPI_CHECK_INLINE_C_DEC
          OMPI_CHECK_INLINE_C_XLC
-         AS_IF([test "$WANT_MPI_CXX_SUPPORT" = "1"],
-               [OMPI_CHECK_INLINE_CXX_GCC([$OMPI_GCC_INLINE_ASSIGN])
-                OMPI_CHECK_INLINE_CXX_DEC
-                OMPI_CHECK_INLINE_CXX_XLC])
+         # Only check C++ if we're building the OMPI project and we
+         # want the C++ bindings
+         m4_ifdef([project_ompi],
+                  [AS_IF([test "$WANT_MPI_CXX_SUPPORT" = "1"],
+                         [OMPI_CHECK_INLINE_CXX_GCC([$OMPI_GCC_INLINE_ASSIGN])
+                          OMPI_CHECK_INLINE_CXX_DEC
+                          OMPI_CHECK_INLINE_CXX_XLC])])
 
          # format:
          #   config_file-text-global-label_suffix-gsym-lsym-type-size-align_log-ppc_r_reg-64_bit-gnu_stack

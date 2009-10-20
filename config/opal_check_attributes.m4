@@ -145,6 +145,7 @@ AC_DEFUN([_OMPI_CHECK_SPECIFIC_ATTRIBUTE], [
 
 
 AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
+  AC_LANG(C)
   AC_MSG_CHECKING(for __attribute__)
 
   AC_CACHE_VAL(opal_cv___attribute__, [

@@ -27,15 +27,19 @@
 # Initialization, version number, and other random setup/init stuff
 ############################################################################
 
+# Load project list and names
+m4_include([config/project_list.m4])
+
 # Init autoconf
 
 # We don't have the version number to put in here yet, and we can't
 # call OMPI_GET_VERSION (etc.) before AC_INIT.  So use the shell
-# version.
+# version.  project_name_* comes from config/project_list.m4, which
+# was set during autogen.sh.
 
-AC_INIT([Open MPI],
+AC_INIT([project_name_long],
         [m4_normalize(esyscmd([config/ompi_get_version.sh VERSION --base]))],
-        [http://www.open-mpi.org/community/help/], [openmpi])
+        [http://www.open-mpi.org/community/help/], [project_name_short])
 AC_PREREQ(2.60)
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
@@ -54,22 +58,29 @@ m4_pattern_allow([m4_ifval])
 # Make configure depend on the VERSION file, since it's used in AC_INIT
 AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/VERSION'])
 
+# Set up project specific AM_CONDITIONALs
+AM_CONDITIONAL([PROJECT_OMPI], m4_ifdef([project_ompi], [/bin/true], [/bin/false]))
+AM_CONDITIONAL([PROJECT_ORTE], m4_ifdef([project_orte], [/bin/true], [/bin/false]))
+
 #
 # Start it up
 #
 
 OMPI_CONFIGURE_SETUP
-ompi_show_title "Configuring Open MPI"
+ompi_show_title "Configuring project_name_long"
 
 ompi_show_subtitle "Checking versions"
 
 # Get the version of OMPI that we are installing
 
-OMPI_SAVE_VERSION([OMPI], [Open MPI], [$srcdir/VERSION],
-                  [ompi/include/ompi/version.h])
+m4_ifdef([project_ompi],
+         [OMPI_SAVE_VERSION([OMPI], [Open MPI], [$srcdir/VERSION],
+                            [ompi/include/ompi/version.h])])
 
-OMPI_SAVE_VERSION([ORTE], [Open Run-Time Environment], [$srcdir/VERSION],
-                  [orte/include/orte/version.h])
+m4_ifdef([project_orte],
+         [OMPI_SAVE_VERSION([ORTE], [Open MPI Run-Time Environment], 
+                            [$srcdir/VERSION],
+                            [orte/include/orte/version.h])])
 
 OMPI_SAVE_VERSION([OPAL], [Open Portable Access Layer], [$srcdir/VERSION],
                   [opal/include/opal/version.h])
@@ -77,16 +88,22 @@ OMPI_SAVE_VERSION([OPAL], [Open Portable Access Layer], [$srcdir/VERSION],
 # Get shared library version numbers
 
 . $srcdir/VERSION
-AC_SUBST(libmpi_so_version)
-AC_SUBST(libmpi_cxx_so_version)
-AC_SUBST(libmpi_f77_so_version)
-AC_SUBST(libmpi_f90_so_version)
-AC_SUBST(libopen_rte_so_version)
+m4_ifdef([project_ompi],
+         [AC_SUBST(libmpi_so_version)
+          AC_SUBST(libmpi_cxx_so_version)
+          AC_SUBST(libmpi_f77_so_version)
+          AC_SUBST(libmpi_f90_so_version)])
+m4_ifdef([project_orte],
+         [AC_SUBST(libopen_rte_so_version)])
 AC_SUBST(libopen_pal_so_version)
 
 # List header files to generate
 
-AM_CONFIG_HEADER([opal/include/opal_config.h orte/include/orte_config.h ompi/include/ompi_config.h ompi/include/mpi.h ompi/include/mpi_portable_platform.h])
+AM_CONFIG_HEADER([opal/include/opal_config.h])
+m4_ifdef([project_orte],
+         [AM_CONFIG_HEADER([orte/include/orte_config.h])])
+m4_ifdef([project_ompi],
+         [AM_CONFIG_HEADER([ompi/include/ompi_config.h ompi/include/mpi.h ompi/include/mpi_portable_platform.h])])
 
 # override/fixup the version numbers set by AC_INIT, since on
 # developer builds, there's no good way to know what the version is
@@ -161,8 +178,8 @@ AC_SUBST(top_ompi_builddir)
 ############################################################################
 
 OPAL_CONFIGURE_OPTIONS
-ORTE_CONFIGURE_OPTIONS
-OMPI_CONFIGURE_OPTIONS
+m4_ifdef([project_orte], [ORTE_CONFIGURE_OPTIONS])
+m4_ifdef([project_ompi], [OMPI_CONFIGURE_OPTIONS])
 
 if test "$enable_binaries" = "no" -a "$enable_dist" = "yes"; then
     AC_MSG_WARN([--disable-binaries is incompatible with --enable dist])
@@ -249,6 +266,8 @@ AC_CHECK_TYPES(uint128_t)
 AC_CHECK_TYPES(long long)
 
 AC_CHECK_TYPES(long double)
+# We only need these types if we're building the OMPI project, but
+# OPAL currently doesn't protect for their lack of presence well.
 AC_CHECK_TYPES(float _Complex)
 AC_CHECK_TYPES(double _Complex)
 AC_CHECK_TYPES(long double _Complex)
@@ -276,6 +295,8 @@ if test $ac_cv_type_long_double = yes; then
     AC_CHECK_SIZEOF(long double)
 fi
 
+# We only need these types if we're building the OMPI project, but
+# OPAL currently doesn't protect for their lack of presence well.
 if test "$ac_cv_type_float__Complex" = yes; then
     AC_CHECK_SIZEOF(float _Complex)
 fi
@@ -323,6 +344,8 @@ if test "$ac_cv_type_long_double" = yes; then
     OMPI_C_GET_ALIGNMENT(long double, OPAL_ALIGNMENT_LONG_DOUBLE)
 fi
 
+# We only need these types if we're building the OMPI project, but
+# OPAL currently doesn't protect for their lack of presence well.
 if test "$ac_cv_type_float__Complex" = yes; then
     OMPI_C_GET_ALIGNMENT(float _Complex, OPAL_ALIGNMENT_FLOAT_COMPLEX)
 fi
@@ -415,45 +438,16 @@ fi
 
 OPAL_CHECK_OFFSETOF
 
-#
-# There are 2 layers to the MPI Language binidings One layer generates
-# MPI_* bindings. The other layer generates PMPI_* bindings. The
-# following conditions determine whether each (or both) these layers
-# are built.
-# 1. MPI_* bindings are needed if:
-#    - Profiling is not required
-#    - Profiling is required but weak symbols are not
-#      supported
-# 2. PMPI_* bindings are needed if profiling is required.  Hence we
-# define 2 conditionals which tell us whether each of these layers
-# need to be built or NOT
-#
+# Setup OMPI bindings (if we're building the OMPI project)
 
-AM_CONDITIONAL(WANT_MPI_BINDINGS_LAYER,
-    test "$WANT_MPI_PROFILING" = 0 -o "$OMPI_PROFILING_COMPILE_SEPARATELY" = 1)
-
-AM_CONDITIONAL(WANT_PMPI_BINDINGS_LAYER,
-    test "$WANT_MPI_PROFILING" = 1)
-AM_CONDITIONAL(COMPILE_PROFILING_SEPARATELY,
-    test "$OMPI_PROFILING_COMPILE_SEPARATELY" = 1)
-AC_DEFINE_UNQUOTED(OMPI_ENABLE_MPI_PROFILING, $WANT_MPI_PROFILING,
-    [Whether we want MPI profiling or not])
-AC_DEFINE_UNQUOTED(OPAL_HAVE_WEAK_SYMBOLS, $OPAL_C_HAVE_WEAK_SYMBOLS,
-    [Whether we have weak symbols or not])
+m4_ifdef([project_ompi], [OMPI_SETUP_MPI_PROFILING])
 
 
 ##################################
 # C++ compiler characteristics
 ##################################
 
-OMPI_SETUP_CXX
-
-# check if we want C++ support
-
-AM_CONDITIONAL(WANT_MPI_CXX_BINDINGS,
-    test "$WANT_MPI_CXX_SUPPORT" = 1)
-AC_DEFINE_UNQUOTED(OMPI_WANT_CXX_BINDINGS, $WANT_MPI_CXX_SUPPORT,
-    [Whether we want MPI cxx support or not])
+m4_ifdef([project_ompi], [OMPI_SETUP_CXX])
 
 
 ##################################
@@ -466,6 +460,7 @@ ompi_show_subtitle "Compiler characteristics"
 OMPI_CHECK_ATTRIBUTES
 
 OPAL_CHECK_COMPILER_VERSION_ID
+
 
 ##################################
 # Assembler Configuration
@@ -481,208 +476,17 @@ OMPI_CONFIG_ASM
 # Fortran
 ##################################
 
-#-----------
-# Fortran 77
-#-----------
-
-OMPI_SETUP_F77
-
-# This allows us to mark bogus types, but still have them be a valid
-# [sentinel] value
-
-AC_DEFINE([ompi_fortran_bogus_type_t], [int],
-          [A bogus type that allows us to have sentinel type values that are still valid])
-
-# We want to set the #define's for all of these, so invoke the macros
-# regardless of whether we have F77 support or not.
-OMPI_F77_CHECK([CHARACTER], [yes],
-               [char, int32_t, int, int64_t, long long, long], [-1])
-
-OMPI_F77_CHECK([LOGICAL], [yes],
-               [char, int32_t, int, int64_t, long long, long], [-1])
-OMPI_F77_CHECK([LOGICAL*1], [yes],
-               [char, int8_t, short, int32_t, int, int64_t, long long, long], [1])
-OMPI_F77_CHECK([LOGICAL*2], [yes],
-               [short, int16_t, int32_t, int, int64_t, long long, long], [2])
-OMPI_F77_CHECK([LOGICAL*4], [yes],
-               [int32_t, int, int64_t, long long, long], [4])
-OMPI_F77_CHECK([LOGICAL*8], [yes],
-               [int, int64_t, long long, long], [8])
-
-OMPI_F77_CHECK([INTEGER], [yes],
-               [int32_t, int, int64_t, long long, long], [-1])
-OMPI_F77_CHECK([INTEGER*1], [no],
-               [char, int8_t, short, int, int64_t, long long, long], [1])
-OMPI_F77_CHECK([INTEGER*2], [no],
-               [short, int16_t, int32_t, int, int64_t, long long, long], [2])
-OMPI_F77_CHECK([INTEGER*4], [no],
-               [int32_t, int, int64_t, long long, long], [4])
-OMPI_F77_CHECK([INTEGER*8], [no],
-               [int, int64_t, long long, long], [8])
-OMPI_F77_CHECK([INTEGER*16], [no],
-               [int, int64_t, long long, long], [16])
-
-OMPI_F77_CHECK([REAL], [yes],
-               [float, double, long double], [-1])
-OMPI_F77_CHECK([REAL*2], [no],
-               [float, double, long double], [2])
-OMPI_F77_CHECK([REAL*4], [no],
-               [float, double, long double], [4])
-OMPI_F77_CHECK([REAL*8], [no],
-               [float, double, long double], [8])
-OMPI_F77_CHECK([REAL*16], [no],
-               [float, double, long double], [16])
-
-# In some compilers, the bit representation of REAL*16 is not the same
-# as the C counterpart that we found.  If this is the case, then we
-# want to disable reduction support for MPI_REAL16 (per ticket #1603).
-OMPI_F77_CHECK_REAL16_C_EQUIV
-
-OMPI_F77_CHECK([DOUBLE PRECISION], [yes],
-               [float, double, long double], [-1])
-
-OMPI_F77_CHECK([COMPLEX], [yes], [], [-1])
-
-# The complex*N tests are a bit different (note: the complex tests are
-# the same as all the rest, because complex is a composite of two
-# reals, which we *have* to have.  It's only the complex*N tests that
-# are different).  The fortran complex types are composites of the
-# real*(N/2) types.  So for us to support complex*N, two conditions
-# must be true:
-#
-# a) we must support real*(N/2) (i.e., compiler supports it and we
-#    have a back-end C type for it)
-# b) compiler supports complex*N
-
-OMPI_F77_CHECK([COMPLEX*8], [no], [], [8])
-OMPI_F77_CHECK([COMPLEX*16], [no], [], [16])
-OMPI_F77_CHECK([COMPLEX*32], [no], [], [32])
-
-# Regardless of whether we have fortran bindings, or even a fortran
-# compiler, get the max value for a fortran MPI handle (this macro
-# handles the case where we don't have a fortran compiler).
-
-OMPI_F77_GET_FORTRAN_HANDLE_MAX
-
-#
-# Check for Fortran compilers value of TRUE and for the correct assumption
-# on LOGICAL for conversion into what C considers to be a true value
-#
-OMPI_F77_GET_VALUE_TRUE
-OMPI_F77_CHECK_LOGICAL_ARRAY
-
-#
-# There are 2 layers to the MPI f77 layer. The only extra thing that
-# determine f77 bindings is that fortran can be disabled by user. In
-# such cases, we need to not build the target at all.  One layer
-# generates MPI_f77* bindings. The other layer generates PMPI_f77*
-# bindings. The following conditions determine whether each (or both)
-# these layers are built.
-#
-# Superceeding clause:
-#   - fortran77 bindings should be enabled, else everything is
-#     disabled
-# 1. MPI_f77* bindings are needed if:
-#   - Profiling is not required
-#   - Profiling is required but weak symbols are not
-#     supported
-# 2. PMPI_* bindings are needed if profiling is required.  Hence we
-# define 2 conditionals which tell us whether each of these layers
-# need to be built or NOT
-#
-AM_CONDITIONAL(WANT_MPI_F77_BINDINGS_LAYER,
-               test \( "$WANT_MPI_PROFILING" = 0 -o "$OMPI_PROFILING_COMPILE_SEPARATELY" = 1 \) -a "$OMPI_WANT_F77_BINDINGS" = 1)
-
-AM_CONDITIONAL(WANT_PMPI_F77_BINDINGS_LAYER,
-               test "$OMPI_WANT_F77_BINDINGS" = 1 -a "$WANT_MPI_PROFILING" = 1)
-
-#-----------
-# Fortran 90
-#-----------
-
-OMPI_SETUP_F90
-
-# Look for the fortran module compiler flag
-OMPI_F90_FIND_MODULE_INCLUDE_FLAG
-
-# Look for all the types
-OMPI_F90_IKINDS=""
-OMPI_F90_RKINDS=""
-OMPI_F90_CKINDS=""
-
-OMPI_F90_CHECK([CHARACTER])
-
-# LOGICAL and friends
-OMPI_F90_CHECK([LOGICAL])
-OMPI_F90_CHECK([LOGICAL*1], [1])
-OMPI_F90_CHECK([LOGICAL*2], [2])
-OMPI_F90_CHECK([LOGICAL*4], [4])
-OMPI_F90_CHECK([LOGICAL*8], [8])
-
-# INTEGER and friends
-OMPI_F90_CHECK([INTEGER])
-OMPI_F90_CHECK([INTEGER*1], [1])
-OMPI_F90_CHECK([INTEGER*2], [2])
-OMPI_F90_CHECK([INTEGER*4], [4])
-OMPI_F90_CHECK([INTEGER*8], [8])
-OMPI_F90_CHECK([INTEGER*16], [16])
-
-# REAL, DOUBLE PRECISION, REAL*4, *8, *16
-OMPI_F90_CHECK([REAL])
-OMPI_F90_CHECK([REAL*2], [2])
-OMPI_F90_CHECK([REAL*4], [4])
-OMPI_F90_CHECK([REAL*8], [8])
-OMPI_F90_CHECK([REAL*16], [16])
-OMPI_F90_CHECK([DOUBLE PRECISION])
-
-# COMPLEX, DOUBLE COMPLEX, COMPLEX*8, *16, *32
-OMPI_F90_CHECK([COMPLEX])
-OMPI_F90_CHECK([COMPLEX*8], [8])
-OMPI_F90_CHECK([COMPLEX*16], [16])
-OMPI_F90_CHECK([COMPLEX*32], [32])
-OMPI_F90_CHECK([DOUBLE COMPLEX])
-
-AC_SUBST(OMPI_F90_IKINDS)
-AC_SUBST(OMPI_F90_RKINDS)
-AC_SUBST(OMPI_F90_CKINDS)
-
-# get kind value for Fortran MPI_INTEGER_KIND (corresponding to
-# whatever is the same size as a F77 INTEGER -- for the
-# most-likely-will-never-occur case where F77 INTEGER is smaller than
-# an F90 INTEGER; see MPI-2 4.12.6.5
-if test "$OMPI_SIZEOF_FORTRAN_INTEGER" = "2"; then
-    OMPI_F90_GET_INT_KIND(MPI_INTEGER_KIND, 4, OMPI_MPI_INTEGER_KIND)
-elif test "$OMPI_SIZEOF_FORTRAN_INTEGER" = "4"; then
-    OMPI_F90_GET_INT_KIND(MPI_INTEGER_KIND, 9, OMPI_MPI_INTEGER_KIND)
-elif test "$OMPI_SIZEOF_FORTRAN_INTEGER" = "8"; then
-    OMPI_F90_GET_INT_KIND(MPI_INTEGER_KIND, 18, OMPI_MPI_INTEGER_KIND)
-elif test "$OMPI_SIZEOF_FORTRAN_INTEGER" = "16"; then
-    OMPI_F90_GET_INT_KIND(MPI_INTEGER_KIND, 19, OMPI_MPI_INTEGER_KIND)
-    AC_MSG_ERROR([Cannot support Fortran MPI_INTEGER_KIND!])
-fi
-AC_SUBST(OMPI_MPI_INTEGER_KIND)
-
-# get kind value for Fortran MPI_ADDRESS_KIND (corresponding to
-# whatever is big enough to hold (void*))
-if test $ac_cv_sizeof_void_p = 2 ; then
-    OMPI_F90_GET_INT_KIND(MPI_ADDRESS_KIND, 4, OMPI_MPI_ADDRESS_KIND)
-elif test $ac_cv_sizeof_void_p = 4 ; then
-    OMPI_F90_GET_INT_KIND(MPI_ADDRESS_KIND, 9, OMPI_MPI_ADDRESS_KIND)
-elif test $ac_cv_sizeof_void_p = 8 ; then
-    OMPI_F90_GET_INT_KIND(MPI_ADDRESS_KIND, 18, OMPI_MPI_ADDRESS_KIND)
-elif test $ac_cv_sizeof_void_p = 16 ; then
-    OMPI_F90_GET_INT_KIND(MPI_ADDRESS_KIND, 19, OMPI_MPI_ADDRESS_KIND)
-else
-    AC_MSG_ERROR([Cannot support Fortran MPI_ADDRESS_KIND!])
-fi
-AC_SUBST(OMPI_MPI_ADDRESS_KIND)
-
-# get kind value for Fortran MPI_OFFSET_KIND (corresponding to INTEGER*8)
-OMPI_F90_GET_INT_KIND(MPI_OFFSET_KIND, 18, OMPI_MPI_OFFSET_KIND)
-AC_SUBST(OMPI_MPI_OFFSET_KIND)
+# OPAL uses opal_fortran_logical_t and OMPI_FORTRAN_HANDLE_MAX (long
+# story; yes, it's an intentional abstraction break).  So ensure to
+# define it to a valid C type if we're not building the OMPI project.
+m4_ifdef([project_ompi], [OMPI_SETUP_MPI_FORTRAN],
+         [AC_DEFINE([ompi_fortran_logical_t], [int], [Bogus type for OPAL])
+          AC_DEFINE([OMPI_FORTRAN_HANDLE_MAX], [128], [Bogus type for OPAL])
+])
 
 # checkpoint results
 AC_CACHE_SAVE
+
 
 ##################################
 # Header files
@@ -1008,18 +812,20 @@ AC_DEFINE_UNQUOTED([OPAL_ALIGN_WORD_SIZE_INTEGERS], [$results],
 
 OMPI_CONFIG_THREADS
 CFLAGS="$CFLAGS $THREAD_CFLAGS"
-CXXFLAGS="$CXXFLAGS $THREAD_CXXFLAGS"
-CPPFLAGS="$CPPFLAGS $THREAD_CPPFLAGS"
-CXXCPPFLAGS="$CXXCPPFLAGS $THREAD_CXXCPPFLAGS"
+m4_ifdef([project_ompi],
+         [CXXFLAGS="$CXXFLAGS $THREAD_CXXFLAGS"
+          CPPFLAGS="$CPPFLAGS $THREAD_CPPFLAGS"
+          CXXCPPFLAGS="$CXXCPPFLAGS $THREAD_CXXCPPFLAGS"])
 LDFLAGS="$LDFLAGS $THREAD_LDFLAGS"
 LIBS="$LIBS $THREAD_LIBS"
 
 
 WRAPPER_EXTRA_CPPFLAGS="$WRAPPER_EXTRA_CPPFLAGS $THREAD_CPPFLAGS"
 WRAPPER_EXTRA_CFLAGS="$WRAPPER_EXTRA_CFLAGS $THREAD_CFLAGS"
-WRAPPER_EXTRA_CXXFLAGS="$WRAPPER_EXTRA_CXXFLAGS $THREAD_CXXFLAGS"
-WRAPPER_EXTRA_FFLAGS="$WRAPPER_EXTRA_FFLAGS $THREAD_FFLAGS"
-WRAPPER_EXTRA_FCFLAGS="$WRAPPER_EXTRA_FCFLAGS $THREAD_FFLAGS"
+m4_ifdef([project_ompi],
+         [WRAPPER_EXTRA_CXXFLAGS="$WRAPPER_EXTRA_CXXFLAGS $THREAD_CXXFLAGS"
+          WRAPPER_EXTRA_FFLAGS="$WRAPPER_EXTRA_FFLAGS $THREAD_FFLAGS"
+          WRAPPER_EXTRA_FCFLAGS="$WRAPPER_EXTRA_FCFLAGS $THREAD_FFLAGS"])
 WRAPPER_EXTRA_LDFLAGS="$WRAPPER_EXTRA_LDFLAGS $THREAD_LDFLAGS"
 # no need to update WRAPPER_EXTRA_LIBS - we'll get it from LT later
 
@@ -1067,13 +873,13 @@ fi
 #
 # Look for ps command and arguments for orte-clean
 #
-OMPI_PS_FLAVOR_CHECK
+m4_ifdef([project_orte], [OMPI_PS_FLAVOR_CHECK])
 
 #
 # File system case sensitivity
 #
 
-OMPI_CASE_SENSITIVE_FS_SETUP
+m4_ifdef([project_ompi], [OMPI_CASE_SENSITIVE_FS_SETUP])
 
 # AIX: FIONBIO in sys/ioctl.h
 # glibc: memcpy
@@ -1121,12 +927,7 @@ AC_CACHE_SAVE
 # MPI Extended Interfaces
 ##################################
 
-ompi_show_title "Extended MPI interfaces setup" 
-
-OMPI_EXT
-
-AC_DEFINE_UNQUOTED(OMPI_EXT_COMPONENTS, "$EXT_mpiext_ALL_COMPONENTS",
-    [MPI Extended Interface Components])
+m4_ifdef([project_ompi], [OMPI_SETUP_MPI_EXT])
 
 # checkpoint results
 AC_CACHE_SAVE
@@ -1146,12 +947,11 @@ OMPI_CHECK_VISIBILITY
 # Contributed software
 ##################################
 
-ompi_show_title "Contributed software setup"
-
-OMPI_CONTRIB
+m4_ifdef([project_ompi], [OMPI_SETUP_CONTRIB])
 
 # checkpoint results
 AC_CACHE_SAVE
+
 
 
 ############################################################################
@@ -1292,40 +1092,23 @@ ompi_show_subtitle "Compiler flags"
 # source directories, however.
 #
 if test "$OMPI_TOP_BUILDDIR" != "$OMPI_TOP_SRCDIR"; then
-    CPPFLAGS='-I$(top_srcdir) -I$(top_builddir) -I$(top_srcdir)/opal/include -I$(top_srcdir)/orte/include -I$(top_srcdir)/ompi/include'" $CPPFLAGS"
-    CXXCPPFLAGS='-I$(top_srcdir) -I$(top_builddir) -I$(top_srcdir)/opal/include -I$(top_srcdir)/orte/include -I$(top_srcdir)/ompi/include'" $CXXCPPFLAGS"
+    # Note the embedded m4 directives here -- we must embed them
+    # rather than have successive assignments to these shell
+    # variables, lest the $(foo) names try to get evaluated here.
+    # Yuck!
+    CPPFLAGS='-I$(top_srcdir) -I$(top_builddir) -I$(top_srcdir)/opal/include m4_ifdef([project_orte], [-I$(top_srcdir)/orte/include]) m4_ifdef([project_ompi], [-I$(top_srcdir)/ompi/include])'" $CPPFLAGS"
+    # C++ is only relevant if we're building OMPI
+    m4_ifdef([project_ompi], [CXXCPPFLAGS='-I$(top_srcdir) -I$(top_builddir) -I$(top_srcdir)/opal/include -I$(top_srcdir)/orte/include -I$(top_srcdir)/ompi/include'" $CXXCPPFLAGS"])
 else
     CPPFLAGS='-I$(top_srcdir)'" $CPPFLAGS"
-    CXXCPPFLAGS='-I$(top_srcdir)'" $CXXCPPFLAGS"
+    # C++ is only relevant if we're building OMPI
+    m4_ifdef([project_ompi], [CXXCPPFLAGS='-I$(top_srcdir)'" $CXXCPPFLAGS"])
 fi
 
-#
-# Do a final process of the CFLAGS to make a WITHOUT_OPTFLAGS version.
-# We need this so that we can guarantee to build the TotalView stuff
-# with -g and nothing else.
-#
+# OMPI wants some additional processing of the flags (e.g., get
+# versions without optimization for debugger modules).
 
-OMPI_MAKE_STRIPPED_FLAGS($CFLAGS)
-CFLAGS_WITHOUT_OPTFLAGS="$s_result"
-if test "$with_tv_debug_flags" != ""; then
-    TOTALVIEW_DEBUG_FLAGS="$with_tv_debug_flags"
-else
-    # Tweak the compiler flags passed to orterun for Sun Studio SPARC
-    # https://svn.open-mpi.org/trac/ompi/ticket/1448
-    if test "x$ompi_cv_c_compiler_vendor" = "xsun" -a -n "`echo $host | $GREP sparc`"; then
-        TOTALVIEW_DEBUG_FLAGS="-g -xO0"
-    else
-        TOTALVIEW_DEBUG_FLAGS="-g"
-    fi
-fi
-AC_MSG_CHECKING([which of CFLAGS are ok for TotalView modules])
-AC_MSG_RESULT([$CFLAGS_WITHOUT_OPTFLAGS])
-AC_MSG_CHECKING([extra CFLAGS for TotalView modules])
-AC_MSG_RESULT([$TOTALVIEW_DEBUG_FLAGS])
-
-AC_SUBST(CFLAGS_WITHOUT_OPTFLAGS)
-AC_SUBST(TOTALVIEW_DEBUG_FLAGS)
-
+m4_ifdef([project_ompi], [OMPI_SETUP_DEBUGGER_FLAGS])
 
 #
 # Delayed the substitution of CFLAGS and CXXFLAGS until now because
@@ -1334,13 +1117,13 @@ AC_SUBST(TOTALVIEW_DEBUG_FLAGS)
 
 AC_SUBST(CFLAGS)
 AC_SUBST(CPPFLAGS)
-AC_SUBST(CXXFLAGS)
-AC_SUBST(CXXCPPFLAGS)
-AC_SUBST(FFLAGS)
-AC_SUBST(FCFLAGS)
+m4_ifdef([project_ompi], [AC_SUBST(CXXFLAGS)
+                          AC_SUBST(CXXCPPFLAGS)
+                          AC_SUBST(FFLAGS)
+                          AC_SUBST(FCFLAGS)
 
-AC_SUBST(OMPI_LIBMPI_EXTRA_LIBS)
-AC_SUBST(OMPI_LIBMPI_EXTRA_LDFLAGS)
+                          AC_SUBST(OMPI_LIBMPI_EXTRA_LIBS)
+                          AC_SUBST(OMPI_LIBMPI_EXTRA_LDFLAGS)])
 
 #
 # Aggregate MCA parameters directory
@@ -1388,76 +1171,16 @@ AC_CONFIG_FILES([
 
     contrib/Makefile
 
-    opal/Makefile
-    opal/etc/Makefile
-    opal/include/Makefile
-    opal/asm/Makefile
-    opal/datatype/Makefile
-    opal/event/Makefile
-    opal/event/compat/Makefile
-    opal/event/compat/sys/Makefile
-    opal/util/Makefile
-    opal/util/keyval/Makefile
-    opal/mca/base/Makefile
-    opal/tools/wrappers/Makefile
-    opal/tools/wrappers/opalcc-wrapper-data.txt
-    opal/tools/wrappers/opalc++-wrapper-data.txt
-    opal/tools/opal-checkpoint/Makefile
-    opal/tools/opal-restart/Makefile
-
-    orte/Makefile
-    orte/include/Makefile
-    orte/etc/Makefile
-
-    orte/tools/orted/Makefile
-    orte/tools/orterun/Makefile
-    orte/tools/wrappers/Makefile
-    orte/tools/wrappers/ortecc-wrapper-data.txt
-    orte/tools/wrappers/ortec++-wrapper-data.txt
-    orte/tools/orte-checkpoint/Makefile
-    orte/tools/orte-iof/Makefile
-    orte/tools/orte-restart/Makefile
-    orte/tools/orte-ps/Makefile
-    orte/tools/orte-clean/Makefile
-    orte/tools/orte-top/Makefile
-    orte/tools/orte-bootproxy/Makefile
-
-    ompi/Makefile
-    ompi/etc/Makefile
-    ompi/include/Makefile
-    ompi/include/mpif.h
-    ompi/include/mpif-config.h
-
-    ompi/datatype/Makefile
-    ompi/debuggers/Makefile
-
-    ompi/mpi/c/Makefile
-    ompi/mpi/c/profile/Makefile
-    ompi/mpi/cxx/Makefile
-    ompi/mpi/f77/Makefile
-    ompi/mpi/f77/profile/Makefile
-    ompi/mpi/f90/Makefile
-    ompi/mpi/f90/fortran_kinds.sh
-    ompi/mpi/f90/fortran_sizes.h
-    ompi/mpi/f90/scripts/Makefile
-
-    ompi/tools/ompi_info/Makefile
-    ompi/tools/wrappers/Makefile
-    ompi/tools/wrappers/mpicc-wrapper-data.txt
-    ompi/tools/wrappers/mpic++-wrapper-data.txt
-    ompi/tools/wrappers/mpif77-wrapper-data.txt
-    ompi/tools/wrappers/mpif90-wrapper-data.txt
-    ompi/tools/ortetools/Makefile
-    ompi/tools/ompi-server/Makefile
-    ompi/tools/ompi-probe/Makefile
-    ompi/tools/ompi-profiler/Makefile
-
     test/Makefile
     test/event/Makefile
     test/asm/Makefile
     test/class/Makefile
     test/support/Makefile
     test/threads/Makefile
-    test/peruse/Makefile
 ])
+
+m4_include([opal/config/config_files.m4])
+m4_ifdef([project_orte], [m4_include([orte/config/config_files.m4])])
+m4_ifdef([project_ompi], [m4_include([ompi/config/config_files.m4])])
+
 AC_OUTPUT

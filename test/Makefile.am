@@ -19,8 +19,12 @@
 
 EXTRA_DIST = CMakeLists.txt
 
+if PROJECT_OMPI
+  REQUIRES_OMPI = peruse
+endif
+
 # support needs to be first for dependencies
-SUBDIRS = support asm class threads peruse
+SUBDIRS = support asm class threads $(REQUIRES_OMPI)
 DIST_SUBDIRS = event $(SUBDIRS)
 
 TESTS =

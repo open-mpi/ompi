@@ -1,5 +1,13 @@
 #!/usr/bin/perl -w
 # -*- perl -*-
+#
+# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
 
 use File::Basename;
 use File::Spec::Functions;
@@ -7,7 +15,7 @@ use File::Spec::Functions;
 my $includedir = "@OMPI_WRAPPER_INCLUDEDIR@";
 my $libdir = "@OMPI_WRAPPER_LIBDIR@";
 
-# obey the OPAL_DESTDIR environmant variable
+# obey the OPAL_DESTDIR environment variable
 if (exists($ENV{'OPAL_DESTDIR'})
   && defined($ENV{'OPAL_DESTDIR'})
   && (length($ENV{'OPAL_DESTDIR'}) > 0)) {
