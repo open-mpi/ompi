@@ -26,28 +26,28 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/show_help.h"
 
-#include "sensor_pru.h"
+#include "sensor_crsvm.h"
 
 /*
  * Local functions
  */
 
-static int orte_sensor_pru_open(void);
-static int orte_sensor_pru_close(void);
-static int orte_sensor_pru_query(mca_base_module_t **module, int *priority);
+static int orte_sensor_crsvm_open(void);
+static int orte_sensor_crsvm_close(void);
+static int orte_sensor_crsvm_query(mca_base_module_t **module, int *priority);
 
-orte_sensor_pru_component_t mca_sensor_pru_component = {
+orte_sensor_crsvm_component_t mca_sensor_crsvm_component = {
     {
         {
             ORTE_SENSOR_BASE_VERSION_1_0_0,
             
-            "pru", /* MCA component name */
+            "crsvm", /* MCA component name */
             ORTE_MAJOR_VERSION,  /* MCA component major version */
             ORTE_MINOR_VERSION,  /* MCA component minor version */
             ORTE_RELEASE_VERSION,  /* MCA component release version */
-            orte_sensor_pru_open,  /* component open  */
-            orte_sensor_pru_close, /* component close */
-            orte_sensor_pru_query  /* component query */
+            orte_sensor_crsvm_open,  /* component open  */
+            orte_sensor_crsvm_close, /* component close */
+            orte_sensor_crsvm_query  /* component query */
         },
         {
             /* The component is checkpoint ready */
@@ -60,33 +60,27 @@ orte_sensor_pru_component_t mca_sensor_pru_component = {
 /**
   * component open/close/init function
   */
-static int orte_sensor_pru_open(void)
+static int orte_sensor_crsvm_open(void)
 {
-    mca_base_component_t *c = &mca_sensor_pru_component.super.base_version;
-    int tmp;
+    mca_base_component_t *c = &mca_sensor_crsvm_component.super.base_version;
 
     /* lookup parameters */
     mca_base_param_reg_int(c, "sample_rate",
-                           "Sample rate in seconds (default=10)",
-                           false, false, 10,  &mca_sensor_pru_component.sample_rate);
+                              "Sample rate in seconds (default=10)",
+                              false, false, 10,  &mca_sensor_crsvm_component.sample_rate);
     
-    mca_base_param_reg_int(c, "memory_limit",
-                           "Max virtual memory size in GBytes (default=10)",
-                           false, false, 10,  &tmp);
-    if (tmp < 0) {
-        opal_output(0, "Illegal value %d - must be > 0", tmp);
-        return ORTE_ERR_FATAL;
-    }
-    mca_sensor_pru_component.memory_limit = tmp;
+    mca_base_param_reg_int(c, "celsius_limit",
+                           "Max temperature in celsius (default=50)",
+                           false, false, 50,  &mca_sensor_crsvm_component.celsius_limit);
     
     return ORTE_SUCCESS;
 }
 
 
-static int orte_sensor_pru_query(mca_base_module_t **module, int *priority)
+static int orte_sensor_crsvm_query(mca_base_module_t **module, int *priority)
 {    
     *priority = 0;  /* select only if specified */
-    *module = (mca_base_module_t *)&orte_sensor_pru_module;
+    *module = (mca_base_module_t *)&orte_sensor_crsvm_module;
     
     return ORTE_SUCCESS;
 }
@@ -95,7 +89,7 @@ static int orte_sensor_pru_query(mca_base_module_t **module, int *priority)
  *  Close all subsystems.
  */
 
-static int orte_sensor_pru_close(void)
+static int orte_sensor_crsvm_close(void)
 {
     return ORTE_SUCCESS;
 }
