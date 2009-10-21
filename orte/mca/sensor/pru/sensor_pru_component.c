@@ -20,6 +20,7 @@
 #include "orte/constants.h"
 
 #include "opal/mca/base/base.h"
+#include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/class/opal_pointer_array.h"
 
