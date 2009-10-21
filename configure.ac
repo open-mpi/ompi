@@ -438,9 +438,14 @@ fi
 
 OPAL_CHECK_OFFSETOF
 
-# Setup OMPI bindings (if we're building the OMPI project)
+# Setup OMPI bindings (if we're building the OMPI project).  Note that
+# opal_wrapper.c has a hard-coded use of the OMPI_ENABLE_MPI_PROFILING
+# macro, so we need to define it (to 0) even if we're not building the
+# OMPI project.
 
-m4_ifdef([project_ompi], [OMPI_SETUP_MPI_PROFILING])
+m4_ifdef([project_ompi], [OMPI_SETUP_MPI_PROFILING],
+                         [AC_DEFINE([OMPI_ENABLE_MPI_PROFILING], [0],
+                                    [We are not building OMPI, so no profiling])])
 
 
 ##################################
