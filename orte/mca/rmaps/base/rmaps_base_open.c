@@ -33,6 +33,7 @@
 #include "opal/mca/paffinity/paffinity.h"
 
 #include "orte/runtime/orte_globals.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/rmaps/base/rmaps_private.h"
 
@@ -95,7 +96,7 @@ int orte_rmaps_base_open(void)
     /* Are we scheduling by node or by slot? */
     param = mca_base_param_reg_string_name("rmaps", "base_schedule_policy",
                                            "Scheduling Policy for RMAPS. [slot (alias:core) | socket | board | node]",
-                                           false, false, "unspec", &policy);
+                                           false, false, "slot", &policy);
     
     /* if something is specified, do not override what may already
      * be present - could have been given on cmd line
@@ -110,9 +111,6 @@ int orte_rmaps_base_open(void)
     } else if (0 == strcasecmp(policy, "node")) {
         ORTE_XSET_MAPPING_POLICY(ORTE_MAPPING_BYNODE);
     }
-    /* if nothing was specified, leave it alone - we already set it
-     * in orterun
-     */
 
     /* check for procs/xxx directives */
     param = mca_base_param_reg_int_name("rmaps", "base_pernode",
@@ -155,12 +153,25 @@ int orte_rmaps_base_open(void)
     orte_rmaps_base.loadbalance = OPAL_INT_TO_BOOL(value);
     
     /* #cpus/rank to use */
-    param = mca_base_param_reg_int_name("rmaps", "base_cpus_per_rank",
+    param = mca_base_param_reg_int_name("rmaps", "base_cpus_per_proc",
                                         "Number of cpus to use for each rank [1-2**15 (default=1)]",
                                         false, false, 1, NULL);
     mca_base_param_reg_syn_name(param, "rmaps", "base_cpus_per_rank", false);
     mca_base_param_lookup_int(param, &value);
     orte_rmaps_base.cpus_per_rank = value;
+    /* if the #cpus/rank > #cpus/socket, politely tell the user and abort
+     *
+     * NOTE: have to check that the default_num_cores_per_socket was set
+     * as ompi_info doesn't call the ess init function, and thus might
+     * leave this value at its default of zero
+     */
+    if (0 < orte_default_num_cores_per_socket &&
+        orte_rmaps_base.cpus_per_rank > orte_default_num_cores_per_socket) {
+        orte_show_help("help-orte-rmaps-base.txt", "too-many-cpus-per-rank",
+                       true, orte_rmaps_base.cpus_per_rank,
+                       orte_default_num_cores_per_socket);
+        return ORTE_ERR_SILENT;
+    }
     /* if the cpus/rank > 1, then we have to bind to cores UNLESS the binding has
      * already been set to something else
      */
