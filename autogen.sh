@@ -1602,8 +1602,8 @@ for arg in $*; do
     case $arg in
     -l) want_local=yes ;;
     -ompidir|--ompidir|-ompi|--ompi) ompidir="$2" ;;
-    -no-ompi) want_ompi=0 ;;
-    -no-orte) want_orte=0 ;;
+    -no-ompi|--no-ompi) want_ompi=0 ;;
+    -no-orte|--no-orte) want_orte=0 ;;
     *) ;;
     esac
     shift
