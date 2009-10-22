@@ -138,3 +138,12 @@ MPI::Op::Reduce_local(const void *inbuf, void *inoutbuf, int count,
     (void)MPI_Reduce_local(const_cast<void*>(inbuf), inoutbuf, count, 
                            datatype, mpi_op);
 }
+
+
+inline bool 
+MPI::Op::Is_commutative(void) const
+{
+    int commute;
+    (void)MPI_Op_commutative(mpi_op, &commute);
+    return (bool) commute;
+}

@@ -200,6 +200,7 @@ libmpi_f77_la_SOURCES += \
         keyval_create_f.c \
         keyval_free_f.c \
         lookup_name_f.c \
+        op_commutative_f.c \
         op_create_f.c \
         open_port_f.c \
         op_free_f.c \

@@ -1265,6 +1265,7 @@ OMPI_DECLSPEC  int MPI_Keyval_free(int *keyval)
                                    __mpi_interface_deprecated__("MPI_Keyval_free is superseded by MPI_Comm_keyval_free in MPI-2.0");
 OMPI_DECLSPEC  int MPI_Lookup_name(char *service_name, MPI_Info info, char *port_name);
 OMPI_DECLSPEC  MPI_Fint MPI_Op_c2f(MPI_Op op);
+OMPI_DECLSPEC  int MPI_Op_commutative(MPI_Op op, int *commute);
 OMPI_DECLSPEC  int MPI_Op_create(MPI_User_function *function, int commute, MPI_Op *op);
 OMPI_DECLSPEC  int MPI_Open_port(MPI_Info info, char *port_name);
 OMPI_DECLSPEC  MPI_Op MPI_Op_f2c(MPI_Fint op);
@@ -1791,6 +1792,7 @@ OMPI_DECLSPEC  int PMPI_Keyval_free(int *keyval)
                                     __mpi_interface_deprecated__("MPI_Keyval_free is superseded by MPI_Comm_keyval_free in MPI-2.0");
 OMPI_DECLSPEC  int PMPI_Lookup_name(char *service_name, MPI_Info info, char *port_name);
 OMPI_DECLSPEC  MPI_Fint PMPI_Op_c2f(MPI_Op op);
+OMPI_DECLSPEC  int PMPI_Op_commutative(MPI_Op op, int *commute);
 OMPI_DECLSPEC  int PMPI_Op_create(MPI_User_function *function, int commute, MPI_Op *op);
 OMPI_DECLSPEC  int PMPI_Open_port(MPI_Info info, char *port_name);
 OMPI_DECLSPEC  MPI_Op PMPI_Op_f2c(MPI_Fint op);

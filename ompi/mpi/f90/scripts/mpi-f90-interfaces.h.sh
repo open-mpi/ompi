@@ -5912,6 +5912,29 @@ end MPI_Keyval_free
 
 #------------------------------------------------------------------------
 
+output_171_commutative() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    cat <<EOF
+
+subroutine ${procedure}(op, commute, ierr)
+  integer, intent(in) :: op
+  logical, intent(out) :: commute
+  integer, intent(out) :: ierr
+end subroutine ${procedure}
+
+EOF
+}
+
+start MPI_Op_commutative small
+output_171_commutative MPI_Op_commutative
+end MPI_Op_commutative
+
+#------------------------------------------------------------------------
+
 output_171() {
     if test "$output" = "0"; then
         return 0
