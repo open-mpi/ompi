@@ -37,6 +37,7 @@ EXTRA_DIST = \
 	platform/ornl/cray_xt_cnl_romio_debug \
         platform/ornl/ornl_configure.gnu \
         platform/ornl/ornl_configure.pgi \
+        platform/ornl/ornl_configure_self_contained \
         platform/lanl/macosx-dynamic \
         platform/lanl/macosx-dynamic-optimized \
         platform/lanl/macosx-static-leopard \
