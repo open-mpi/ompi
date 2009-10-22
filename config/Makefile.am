@@ -23,7 +23,8 @@ EXTRA_DIST = \
 	libltdl_dlopen_global.diff \
 	lt1522-pathCC.diff \
 	lt21a-pathCC.diff \
-	ltmain_otool.diff
+	ltmain_otool.diff \
+	lt-sun-fortran.diff
 
 maintainer-clean-local:
 	rm -f ompi_get_version.sh
