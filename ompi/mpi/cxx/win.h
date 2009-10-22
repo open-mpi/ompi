@@ -10,7 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
 // Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
@@ -85,12 +85,14 @@ public:
   typedef int Delete_attr_function(Win& win, int win_keyval, 
 				   void* attribute_val, void* extra_state); 
   
-  typedef void Errhandler_fn(Win &, int *, ... );
+  typedef void Errhandler_function(Win &, int *, ... );
+  typedef Errhandler_function Errhandler_fn
+        __mpi_interface_deprecated__("MPI::Win::Errhandler_fn was deprecated in MPI-2.2; use MPI::Win::Errhandler_function instead");
   
   //
   // Errhandler
   //
-  static MPI::Errhandler Create_errhandler(Errhandler_fn* function);
+  static MPI::Errhandler Create_errhandler(Errhandler_function* function);
 
   virtual void Set_errhandler(const MPI::Errhandler& errhandler) const;
 

@@ -10,7 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
 // Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
@@ -101,8 +101,8 @@ void ompi_mpi_cxx_comm_errhandler_invoke(ompi_errhandler_t *c_errhandler,
     // those.  So fake it by instantiating an MPI::Intracomm and then
     // casting it down to an (MPI::Comm&) when invoking the callback.
     MPI::Intracomm cxx_comm(*c_comm);
-    MPI::Comm::Errhandler_fn *cxx_fn = 
-        (MPI::Comm::Errhandler_fn*) c_errhandler->eh_comm_fn;
+    MPI::Comm::Errhandler_function *cxx_fn = 
+        (MPI::Comm::Errhandler_function*) c_errhandler->eh_comm_fn;
 
     cxx_fn((MPI::Comm&) cxx_comm, err, message);
 }
@@ -117,8 +117,8 @@ void ompi_mpi_cxx_file_errhandler_invoke(ompi_errhandler_t *c_errhandler,
                                          const char *message)
 {
     MPI::File cxx_file(*c_file);
-    MPI::File::Errhandler_fn *cxx_fn = 
-        (MPI::File::Errhandler_fn*) c_errhandler->eh_file_fn;
+    MPI::File::Errhandler_function *cxx_fn = 
+        (MPI::File::Errhandler_function*) c_errhandler->eh_file_fn;
 
     cxx_fn(cxx_file, err, message);
 }
@@ -133,8 +133,8 @@ void ompi_mpi_cxx_win_errhandler_invoke(ompi_errhandler_t *c_errhandler,
                                         const char *message)
 {
     MPI::Win cxx_win(*c_win);
-    MPI::Win::Errhandler_fn *cxx_fn = 
-        (MPI::Win::Errhandler_fn*) c_errhandler->eh_win_fn;
+    MPI::Win::Errhandler_function *cxx_fn = 
+        (MPI::Win::Errhandler_function*) c_errhandler->eh_win_fn;
 
     cxx_fn(cxx_win, err, message);
 }

@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -213,13 +213,13 @@ ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
       new_errhandler->eh_lang = lang;
       switch (object_type ) {
 	  case (OMPI_ERRHANDLER_TYPE_COMM):
-	      new_errhandler->eh_comm_fn = (MPI_Comm_errhandler_fn *)func;
+	      new_errhandler->eh_comm_fn = (MPI_Comm_errhandler_function *)func;
 	      break;
 	  case (OMPI_ERRHANDLER_TYPE_FILE):
 	      new_errhandler->eh_file_fn = (ompi_file_errhandler_fn *)func;
 	      break;
 	  case (OMPI_ERRHANDLER_TYPE_WIN):
-	      new_errhandler->eh_win_fn = (MPI_Win_errhandler_fn *)func;
+	      new_errhandler->eh_win_fn = (MPI_Win_errhandler_function *)func;
 	      break;
 	  default:
 	      break;
