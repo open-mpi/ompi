@@ -2,7 +2,7 @@
  ...........................................................................
  Copyright (c) 2004-2006 The Regents of the University of California.
                          All rights reserved.
- Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
  $COPYRIGHT$
  
  Additional copyrights may follow
@@ -382,7 +382,7 @@ end </xsl:text>
     <xsl:when test="@kind = 'ptr'">
       <xsl:choose>
         <xsl:when
-             test="indirect/type/@usertype='MPI_Comm_errhandler_fn'"/>
+             test="indirect/type/@usertype='MPI_Comm_errhandler_function'"/>
         <xsl:when
              test="indirect/type/@usertype='MPI_Comm_copy_attr_function'"/>
         <xsl:when
@@ -390,7 +390,7 @@ end </xsl:text>
         <xsl:when
              test="indirect/type/@usertype='MPI_Handler_function'"/>
         <xsl:when
-             test="indirect/type/@usertype='MPI_File_errhandler_fn'"/>
+             test="indirect/type/@usertype='MPI_File_errhandler_function'"/>
         <xsl:when
              test="indirect/type/@usertype='MPI_Grequest_query_function'"/>
         <xsl:when
@@ -412,7 +412,7 @@ end </xsl:text>
         <xsl:when
              test="indirect/type/@usertype='MPI_Type_delete_attr_function'"/>
         <xsl:when
-             test="indirect/type/@usertype='MPI_Win_errhandler_fn'"/>
+             test="indirect/type/@usertype='MPI_Win_errhandler_function'"/>
         <xsl:when
              test="indirect/type/@usertype='MPI_Win_copy_attr_function'"/>
         <xsl:when
@@ -527,7 +527,7 @@ end </xsl:text>
         <xsl:when test="@usertype = 'MPI_Status'">
           <xsl:text>integer, dimension(MPI_STATUS_SIZE)</xsl:text>
         </xsl:when>
-        <xsl:when test="@usertype = 'MPI_Comm_errhandler_fn'">
+        <xsl:when test="@usertype = 'MPI_Comm_errhandler_function'">
           <xsl:text>external</xsl:text>
         </xsl:when>
         <xsl:when test="@usertype = 'MPI_Comm_copy_attr_function'">
@@ -539,7 +539,7 @@ end </xsl:text>
         <xsl:when test="@usertype = 'MPI_Handler_function'">
           <xsl:text>external</xsl:text>
         </xsl:when>
-        <xsl:when test="@usertype = 'MPI_File_errhandler_fn'">
+        <xsl:when test="@usertype = 'MPI_File_errhandler_function'">
           <xsl:text>external</xsl:text>
         </xsl:when>
         <xsl:when test="@usertype = 'MPI_Grequest_query_function'">
@@ -572,7 +572,7 @@ end </xsl:text>
         <xsl:when test="@usertype = 'MPI_Type_delete_attr_function'">
           <xsl:text>external</xsl:text>
         </xsl:when>
-        <xsl:when test="@usertype = 'MPI_Win_errhandler_fn'">
+        <xsl:when test="@usertype = 'MPI_Win_errhandler_function'">
           <xsl:text>external</xsl:text>
         </xsl:when>
         <xsl:when test="@usertype = 'MPI_Win_copy_attr_function'">

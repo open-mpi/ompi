@@ -10,6 +10,7 @@
                          University of Stuttgart.  All rights reserved.
  Copyright (c) 2004-2005 The Regents of the University of California.
                          All rights reserved.
+ Copyrgiht (c) 2009      All rights reserved.
  $COPYRIGHT$
  
  Additional copyrights may follow
@@ -1539,7 +1540,7 @@
     </method>
     
     <!-- 
-      -  METHOD: int MPI_Comm_create_errhandler(MPI_Comm_errhandler_fn *, MPI_Errhandler *) C
+      -  METHOD: int MPI_Comm_create_errhandler(MPI_Comm_errhandler_function *, MPI_Errhandler *) C
       - NOTE: First parameter is an external function
       -->
     <method name="MPI_Comm_create_errhandler" kind="final">
@@ -1548,7 +1549,7 @@
       <arg name="function" intent="in">
         <type kind="ptr" >
           <indirect depth="1" kind="pointer">
-            <type kind="usertype" usertype="MPI_Comm_errhandler_fn" >
+            <type kind="usertype" usertype="MPI_Comm_errhandler_function" >
             </type>
           </indirect>
         </type>
@@ -2456,7 +2457,7 @@
     </method>
     
     <!-- 
-      -  METHOD: int MPI_File_create_errhandler(MPI_File_errhandler_fn *, MPI_Errhandler *) C
+      -  METHOD: int MPI_File_create_errhandler(MPI_File_errhandler_function *, MPI_Errhandler *) C
       - NOTE: First parameter is an external function
       -->
     <method name="MPI_File_create_errhandler" kind="final">
@@ -2465,7 +2466,7 @@
       <arg name="function" intent="in">
         <type kind="ptr" >
           <indirect depth="1" kind="pointer">
-            <type kind="usertype" usertype="MPI_File_errhandler_fn" >
+            <type kind="usertype" usertype="MPI_File_errhandler_function" >
             </type>
           </indirect>
         </type>
@@ -10608,7 +10609,7 @@
     </method>
     
     <!-- 
-      -  METHOD: int MPI_Win_create_errhandler(MPI_Win_errhandler_fn *, MPI_Errhandler *) C
+      -  METHOD: int MPI_Win_create_errhandler(MPI_Win_errhandler_function *, MPI_Errhandler *) C
       - NOTE: First parameter is an external function
       -->
     <method name="MPI_Win_create_errhandler" kind="final">
@@ -10617,7 +10618,7 @@
       <arg name="function" intent="in">
         <type kind="ptr" >
           <indirect depth="1" kind="pointer">
-            <type kind="usertype" usertype="MPI_Win_errhandler_fn" >
+            <type kind="usertype" usertype="MPI_Win_errhandler_function" >
             </type>
           </indirect>
         </type>
