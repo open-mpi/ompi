@@ -189,6 +189,7 @@ libmpi_c_mpi_la_SOURCES = \
         keyval_free.c \
         lookup_name.c \
         op_c2f.c \
+        op_commutative.c \
         op_create.c \
         op_f2c.c \
         op_free.c \

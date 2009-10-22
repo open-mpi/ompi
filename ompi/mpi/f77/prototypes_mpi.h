@@ -241,6 +241,7 @@ PN(void, mpi_is_thread_main, MPI_IS_THREAD_MAIN, (ompi_fortran_logical_t *flag, 
 PN(void, mpi_keyval_create, MPI_KEYVAL_CREATE, (ompi_mpi1_fortran_copy_attr_function* copy_fn, ompi_mpi1_fortran_delete_attr_function* delete_fn, MPI_Fint *keyval, MPI_Fint *extra_state, MPI_Fint *ierr));
 PN(void, mpi_keyval_free, MPI_KEYVAL_FREE, (MPI_Fint *keyval, MPI_Fint *ierr));
 PN(void, mpi_lookup_name, MPI_LOOKUP_NAME, (char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr, int service_name_len, int port_name_len));
+PN(void, mpi_op_commutative, MPI_OP_COMMUTATIVE, (MPI_Fint *op, MPI_Fint *commute, MPI_Fint *ierr));
 PN(void, mpi_op_create, MPI_OP_CREATE, (ompi_op_fortran_handler_fn_t* function, ompi_fortran_logical_t *commute, MPI_Fint *op, MPI_Fint *ierr));
 PN(void, mpi_open_port, MPI_OPEN_PORT, (MPI_Fint *info, char *port_name, MPI_Fint *ierr, int port_name_len));
 PN(void, mpi_op_free, MPI_OP_FREE, (MPI_Fint *op, MPI_Fint *ierr));

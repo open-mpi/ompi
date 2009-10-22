@@ -172,6 +172,7 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         plookup_name.c \
         pop_c2f.c \
         pop_create.c \
+        pop_commutative.c \
         pop_f2c.c \
         pop_free.c \
         popen_port.c \
