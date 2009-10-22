@@ -20,26 +20,43 @@ fi
 [[ -z ${MPT_DIR} ]] && echo "MPT_DIR is not set.  Please load the xt-mpt module"
 [[ -z ${PE_ENV} ]] && echo "PE_ENV is not set.  Please load the PrgEnv module"
 
-if test "$PE_ENV" != "GNU" ; then
-    echo "PrgEnv module is not GNU"
-    return
-fi
 
 ###################################################################
 
 # If the env flags SRCDIR and PREFIX are not set, initialize to default...
 SRCDIR=${SRCDIR:-..}
-
+COMPILER=${COMPILER:-gcc}
 INSTALL_ROOT=/sw/xt5/ompi
-VERSION=`${SRCDIR}/config/ompi_get_version.sh ${SRCDIR}/VERSION`
-BUILD=gnu
-SVER=cnl`echo "${XTOS_VERSION}" | cut -c1-3`
-CVER=${BUILD}`gcc --version  | awk '/gcc/{print $3}'`
+VERSION=${VERSION:-"`${SRCDIR}/config/ompi_get_version.sh ${SRCDIR}/VERSION`"}
+SVER=${SVER:-"cnl`echo "${XTOS_VERSION}" | cut -c1-3`"}
+CVER=${CVER:-"${COMPILER}`gcc --version  | awk '/gcc/{print $3}'`"}
 INSTALL_DIR=${INSTALL_ROOT}/${VERSION}/${SVER}_${CVER}
-
 PREFIX=${PREFIX:-$INSTALL_DIR}
 
 ###################################################################
+
+case "$COMPILER" in
+    "cray" )
+        ;;
+    "gcc" )
+        ;;
+    "intel" )
+        ADD_COMPILER="CC=icc CXX=icpc F77=ifort FC=ifort"
+        ;;
+    "pathscale" )
+        ADD_COMPILER="CC=pathcc CXX=pathCC F77=pathf90 FC=pathf90"
+        ;;
+    "pgi" )
+        ADD_COMPILER="CC=pgcc CXX=pgCC F77=pgf77 FC=pgf90"
+        ADD_FFLAGS="-Mnomain $PGI/linux86-64/default/lib/pgfmain.o"
+        ADD_FCFLAGS="-Mnomain $PGI/linux86-64/default/lib/pgfmain.o"
+        ADD_LDFLAGS="-L$PGI/linux86-64/default/lib"
+        ;;
+    * )
+        echo "Error: Unknown Compiler: $COMPILER"
+        return
+        ;;
+esac
 
 $SRCDIR/configure \
    --prefix=$PREFIX \
@@ -49,11 +66,12 @@ $SRCDIR/configure \
    --enable-mca-no-build=timer-catamount,maffinity-first_use,maffinity-libnuma,ess-cnos,filem-rsh,grpcomm-cnos,pml-dr \
    --with-wrapper-ldflags="-static -L${PE_DIR}/lib/snos64 -L${SE_DIR}/lib/snos64 -L${MPT_DIR}/util/lib" \
    --with-wrapper-libs="-lpct -lalpslli -lalpsutil -lportals -lpthread -lm" \
-   CPPFLAGS="-I${CATAMOUNT_DIR}/catamount/linux/include -I${PE_DIR}/include" \
-   FFLAGS="-I${PE_DIR}/include" \
-   FCFLAGS="-I${PE_DIR}/include" \
-   LDFLAGS="-L${PE_DIR}/lib/snos64 -L${SE_DIR}/lib/snos64 -L${MPT_DIR}/util/lib" \
-   LIBS="-lrt -lpct -lalpslli -lalpsutil -lportals -lpthread -lm" | tee build.log
+   ${ADD_COMPILER} \
+   CPPFLAGS=${ADD_CPPFLAGS}" -I${CATAMOUNT_DIR}/catamount/linux/include -I${PE_DIR}/include" \
+   FFLAGS=${ADD_FFLAGS}" -I${PE_DIR}/include" \
+   FCFLAGS=${ADD_FCFLAGS}" -I${PE_DIR}/include" \
+   LDFLAGS=${ADD_LDFLAGS}" -L${PE_DIR}/lib/snos64 -L${SE_DIR}/lib/snos64 -L${MPT_DIR}/util/lib" \
+   LIBS=${ADD_LIBS}" -lrt -lpct -lalpslli -lalpsutil -lportals -lpthread -lm" | tee build.log
 
 #
 # To build orted static, use the libtool-flag -all-static
