@@ -3,7 +3,7 @@
 // Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
 //                         reserved. 
 // Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
-// Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -29,7 +29,7 @@ MPI::Win::Free()
 
 // This function needs some internal OMPI types, so it's not inlined
 MPI::Errhandler
-MPI::Win::Create_errhandler(MPI::Win::Errhandler_fn* function)
+MPI::Win::Create_errhandler(MPI::Win::Errhandler_function* function)
 {
     MPI_Errhandler c_errhandler = 
         ompi_errhandler_create(OMPI_ERRHANDLER_TYPE_WIN,

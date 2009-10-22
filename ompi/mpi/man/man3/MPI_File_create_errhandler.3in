@@ -1,3 +1,4 @@
+.\"Copyright 2009 Cisco Systems, Inc.
 .\"Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_File_create_errhandler 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
@@ -9,7 +10,7 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_File_create_errhandler(MPI_File_errhandler_fn \fI*function\fP,
+int MPI_File_create_errhandler(MPI_File_errhandler_function \fI*function\fP,
 	MPI_Errhandler \fI*errhandler\fP)
 
 .SH Fortran Syntax
@@ -20,10 +21,19 @@ MPI_FILE_CREATE_ERRHANDLER(\fIFUNCTION, ERRHANDLER, IERROR\fP)
 	INTEGER	\fIERRHANDLER, IERROR\fP
 
 .SH C++ Syntax
+.nf
 #include <mpi.h>
 static MPI::Errhandler
-	MPI::File::Create_errhandler(MPI::File::Errhandler_fn*
+	MPI::File::Create_errhandler(MPI::File::Errhandler_function*
 	\fIfunction\fP)
+
+.SH DEPRECATED TYPE NAME NOTE
+.ft R
+MPI-2.2 deprecated the MPI_File_errhandler_fn and
+MPI::file::Errhandler_fn types in favor of
+MPI_File_errhandler_function and MPI::File::Errhandler_function,
+respectively.  Open MPI supports both names (indeed, the _fn names are
+typedefs to the _function names).
 
 .SH INPUT PARAMETER
 .ft R
@@ -45,10 +55,10 @@ Fortran only: Error status (integer).
 .ft R
 Registers the user routine \fIfunction\fP for use as an MPI exception handler. Returns in errhandler a handle to the registered exception handler. 
 .sp
-In the C language, the user routine \fIfunction\fP should be a C function of type MPI_File_errhandler_fn, which is defined as
+In the C language, the user routine \fIfunction\fP should be a C function of type MPI_File_errhandler_function, which is defined as
 .sp
 .nf
-    typedef void (MPI_File_errhandler_fn)(MPI_File *, int *, 
+    typedef void (MPI_File_errhandler_function)(MPI_File *, int *, 
     \&...); 
 .fi
 .sp
@@ -58,14 +68,14 @@ to be returned by the MPI routine that raised the error.
 In the Fortran language, the user routine should be of the form:
 .sp
 .nf
-    SUBROUTINE FILE_ERRHANDLER_FN(FILE, ERROR_CODE, ...)
+    SUBROUTINE FILE_ERRHANDLER_FUNCTION(FILE, ERROR_CODE, ...)
         INTEGER FILE, ERROR_CODE
 .fi
 .sp
 In C++, the user routine \fIfunction\fP should be of the form:
 .sp
 .nf
-    typedef void MPI::File::Errhandler_fn(MPI::File &, int *, 
+    typedef void MPI::File::Errhandler_function(MPI::File &, int *, 
     ...);
 .fi
 .sp

@@ -10,7 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -293,9 +293,11 @@ public:
   //
   // Errhandler
   //
-  typedef void Errhandler_fn(MPI::File &, int *, ... );
+  typedef void Errhandler_function(MPI::File &, int *, ... );
+  typedef Errhandler_function Errhandler_fn
+        __mpi_interface_deprecated__("MPI::File::Errhandler_fn was deprecated in MPI-2.2; use MPI::File::Errhandler_function instead");
 
-  static MPI::Errhandler Create_errhandler(Errhandler_fn* function); 
+  static MPI::Errhandler Create_errhandler(Errhandler_function* function); 
 
   MPI::Errhandler Get_errhandler() const;
 
