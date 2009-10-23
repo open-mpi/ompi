@@ -22,31 +22,27 @@
 # $HEADER$
 #
 
-AC_DEFUN([OMPI_SETUP_DEBUGGER_FLAGS],[
+AC_DEFUN([ORTE_SETUP_DEBUGGER_FLAGS],[
     #
-    # Do a final process of the CFLAGS to make a WITHOUT_OPTFLAGS version.
-    # We need this so that we can guarantee to build the TotalView stuff
-    # with -g and nothing else.
+    # Do a final process of the CFLAGS to make a WITHOUT_OPTFLAGS
+    # version.  We need this so that we can guarantee to build the
+    # debugger-sensitive files with -g and nothing else.
     #
-    
+
     OMPI_MAKE_STRIPPED_FLAGS($CFLAGS)
     CFLAGS_WITHOUT_OPTFLAGS="$s_result"
-    if test "$with_tv_debug_flags" != ""; then
-        TOTALVIEW_DEBUG_FLAGS="$with_tv_debug_flags"
+    # Tweak the compiler flags passed to orterun for Sun Studio SPARC
+    # https://svn.open-mpi.org/trac/ompi/ticket/1448
+    if test "x$ompi_cv_c_compiler_vendor" = "xsun" -a -n "`echo $host | $GREP sparc`"; then
+        DEBUGGER_CFLAGS="-g -xO0"
     else
-        # Tweak the compiler flags passed to orterun for Sun Studio SPARC
-        # https://svn.open-mpi.org/trac/ompi/ticket/1448
-        if test "x$ompi_cv_c_compiler_vendor" = "xsun" -a -n "`echo $host | $GREP sparc`"; then
-            TOTALVIEW_DEBUG_FLAGS="-g -xO0"
-        else
-            TOTALVIEW_DEBUG_FLAGS="-g"
-        fi
+        DEBUGGER_CFLAGS="-g"
     fi
-    AC_MSG_CHECKING([which of CFLAGS are ok for TotalView modules])
+    AC_MSG_CHECKING([which of CFLAGS are ok for debugger modules])
     AC_MSG_RESULT([$CFLAGS_WITHOUT_OPTFLAGS])
-    AC_MSG_CHECKING([extra CFLAGS for TotalView modules])
-    AC_MSG_RESULT([$TOTALVIEW_DEBUG_FLAGS])
+    AC_MSG_CHECKING([for debugger extra CFLAGS])
+    AC_MSG_RESULT([$DEBUGGER_CFLAGS])
     
     AC_SUBST(CFLAGS_WITHOUT_OPTFLAGS)
-    AC_SUBST(TOTALVIEW_DEBUG_FLAGS)
+    AC_SUBST(DEBUGGER_CFLAGS)
 ])
