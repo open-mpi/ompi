@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -27,7 +27,7 @@ pkglib_LTLIBRARIES = libompi_dbg_msgq.la
 # post-processed forms of the CFLAGS in the library targets down
 # below.
 
-CFLAGS = $(CFLAGS_WITHOUT_OPTFLAGS) $(TOTALVIEW_DEBUG_FLAGS)
+CFLAGS = $(CFLAGS_WITHOUT_OPTFLAGS) $(DEBUGGER_CFLAGS)
 
 # Source code files
 

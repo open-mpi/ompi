@@ -1110,10 +1110,11 @@ else
     m4_ifdef([project_ompi], [CXXCPPFLAGS='-I$(top_srcdir)'" $CXXCPPFLAGS"])
 fi
 
-# OMPI wants some additional processing of the flags (e.g., get
+# OMPI/ORTE wants some additional processing of the flags (e.g., get
 # versions without optimization for debugger modules).
 
-m4_ifdef([project_ompi], [OMPI_SETUP_DEBUGGER_FLAGS])
+m4_ifdef([project_orte], [ORTE_SETUP_DEBUGGER_FLAGS],
+         [m4_ifdef([project_ompi], [ORTE_SETUP_DEBUGGER_FLAGS])])
 
 #
 # Delayed the substitution of CFLAGS and CXXFLAGS until now because
