@@ -34,6 +34,7 @@
 #include "orte/util/show_help.h"
 
 #include "orte/mca/rmcast/base/private.h"
+#include "orte/mca/rmcast/base/base.h"
 #include "rmcast_basic.h"
 
 /* LOCAL DATA */

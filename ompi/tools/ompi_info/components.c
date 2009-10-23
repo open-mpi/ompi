@@ -417,7 +417,7 @@ void ompi_info_open_components(void)
     }
     map = OBJ_NEW(ompi_info_component_map_t);
     map->type = strdup("rmcast");
-    map->components = &orte_rmcast_base.available_components;
+    map->components = &orte_rmcast_base.rmcast_opened;
     opal_pointer_array_add(&component_map, map);
 #endif
 
@@ -451,7 +451,7 @@ void ompi_info_open_components(void)
     }
     map = OBJ_NEW(ompi_info_component_map_t);
     map->type = strdup("sensor");
-    map->components = &orte_sensor_base.available_components;
+    map->components = &mca_sensor_base_components_available;
     opal_pointer_array_add(&component_map, map);
     
     if (ORTE_SUCCESS != orte_fddp_base_open()) {
