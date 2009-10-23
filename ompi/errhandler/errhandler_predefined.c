@@ -149,13 +149,13 @@ static void out(char *str, char *arg)
         if (NULL != arg) {
             opal_output(0, str, arg);
         } else {
-            opal_output(0, str);
+            opal_output(0, "%s", str);
         }
     } else {
         if (NULL != arg) {
             fprintf(stderr, str, arg);
         } else {
-            fprintf(stderr, str);
+            fprintf(stderr, "%s", str);
         }
     }
 }
