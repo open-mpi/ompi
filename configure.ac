@@ -59,8 +59,8 @@ m4_pattern_allow([m4_ifval])
 AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/VERSION'])
 
 # Set up project specific AM_CONDITIONALs
-AM_CONDITIONAL([PROJECT_OMPI], m4_ifdef([project_ompi], [/bin/true], [/bin/false]))
-AM_CONDITIONAL([PROJECT_ORTE], m4_ifdef([project_orte], [/bin/true], [/bin/false]))
+AM_CONDITIONAL([PROJECT_OMPI], m4_ifdef([project_ompi], [true], [false]))
+AM_CONDITIONAL([PROJECT_ORTE], m4_ifdef([project_orte], [true], [false]))
 
 #
 # Start it up
