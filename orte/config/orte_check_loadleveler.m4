@@ -18,33 +18,33 @@
 # $HEADER$
 #
 
-# OMPI_CHECK_LOADLEVELER(prefix, [action-if-found], [action-if-not-found])
+# ORTE_CHECK_LOADLEVELER(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
-AC_DEFUN([OMPI_CHECK_LOADLEVELER],[
+AC_DEFUN([ORTE_CHECK_LOADLEVELER],[
     AC_ARG_WITH([loadleveler],
                 [AC_HELP_STRING([--with-loadleveler(=DIR)],
                                 [Build LoadLeveler support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
     OMPI_CHECK_WITHDIR([loadleveler], [$with_loadleveler], [include/llapi.h])
 
     AS_IF([test "$with_loadleveler" = "no"],
-          [ompi_check_loadleveler_happy="no"],
-          [ompi_check_loadleveler_happy="yes"
+          [orte_check_loadleveler_happy="no"],
+          [orte_check_loadleveler_happy="yes"
            AS_IF([test ! -z "$with_loadleveler" -a "$with_loadleveler" != "yes"],
-                 [ompi_check_loadleveler_dir="$with_loadleveler"],
-                 [ompi_check_loadleveler_dir=""])])
+                 [orte_check_loadleveler_dir="$with_loadleveler"],
+                 [orte_check_loadleveler_dir=""])])
 
-    AS_IF([test "$ompi_check_loadleveler_happy" = "yes"],
+    AS_IF([test "$orte_check_loadleveler_happy" = "yes"],
           [OMPI_CHECK_PACKAGE([$1],
                               [llapi.h],
                               [llapi],
                               [ll_query],
                               [],
-                              [$ompi_check_loadleveler_dir],
+                              [$orte_check_loadleveler_dir],
                               [],
-                              [ompi_check_loadleveler_happy="yes"],
-                              [ompi_check_loadleveler_happy="no"])])
+                              [orte_check_loadleveler_happy="yes"],
+                              [orte_check_loadleveler_happy="no"])])
 
-    AS_IF([test "$ompi_check_loadleveler_happy" = "yes"],
+    AS_IF([test "$orte_check_loadleveler_happy" = "yes"],
           [$2],
           [AS_IF([test ! -z "$with_loadleveler" -a "$with_loadleveler" != "no"],
                  [AC_MSG_ERROR([LOADLEVELER support requested but not found.  Aborting])])

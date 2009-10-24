@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -20,7 +21,7 @@
 # MCA_plm_bproc_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
 AC_DEFUN([MCA_plm_bproc_CONFIG],[
-    OMPI_CHECK_BPROC([plm_bproc], [plm_bproc_good=2], 
+    ORTE_CHECK_BPROC([plm_bproc], [plm_bproc_good=2], 
                      [plm_bproc_good=1], [plm_bproc_good=0])
     # if check worked, set wrapper flags if so.  
     # Evaluate succeed / fail

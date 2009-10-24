@@ -12,8 +12,8 @@
 use File::Basename;
 use File::Spec::Functions;
 
-my $includedir = "@OMPI_WRAPPER_INCLUDEDIR@";
-my $libdir = "@OMPI_WRAPPER_LIBDIR@";
+my $includedir = "@ORTE_WRAPPER_INCLUDEDIR@";
+my $libdir = "@ORTE_WRAPPER_LIBDIR@";
 
 # obey the OPAL_DESTDIR environment variable
 if (exists($ENV{'OPAL_DESTDIR'})
@@ -27,17 +27,13 @@ if (exists($ENV{'OPAL_DESTDIR'})
 
 my $CC = "@CC@";
 my $CXX = "@CXX@";
-#my $F77 = "@F77@";
-#my $FC = "@FC@";
 my $extra_includes = "@ORTE_WRAPPER_EXTRA_INCLUDES@";
 my $extra_cppflags = "@ORTE_WRAPPER_EXTRA_CPPFLAGS@";
 my $extra_cflags = "@ORTE_WRAPPER_EXTRA_CFLAGS@";
 my $extra_cxxflags = "@ORTE_WRAPPER_EXTRA_CXXFLAGS@";
-#my $extra_fflags = "@OMPI_WRAPPER_EXTRA_FFLAGS@";
 my $extra_ldflags = "@ORTE_WRAPPER_EXTRA_LDFLAGS@";
 my $extra_libs = "@ORTE_WRAPPER_EXTRA_LIBS@";
 #my $cxx_lib = "@ORTE_WRAPPER_CXX_LIB@";
-#my $fc_module_flag = "@OMPI_FC_MODULE_FLAG@";
 
 # Someone might want to fix for windows
 my $include_flag = "-I";
@@ -117,8 +113,6 @@ while (scalar(@args) > 0) {
 
     if ($arg eq "-showme") {
         $dry_run = 1;
-    } elsif ($arg eq "-lpmpi") {
-        $want_pmpi = 1;
     } else {
         if ($arg eq "-c") {
             $want_link = 0;

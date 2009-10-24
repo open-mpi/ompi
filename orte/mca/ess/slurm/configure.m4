@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -20,7 +21,7 @@
 # MCA_ess_slurm_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
 AC_DEFUN([MCA_ess_slurm_CONFIG],[
-    OMPI_CHECK_SLURM([ess_slurm], [ess_slurm_good=1], [ess_slurm_good=0])
+    ORTE_CHECK_SLURM([ess_slurm], [ess_slurm_good=1], [ess_slurm_good=0])
          
     # if check worked, set wrapper flags if so.  
     # Evaluate succeed / fail

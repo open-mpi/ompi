@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -20,7 +21,7 @@
 # MCA_plm_tm_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
 AC_DEFUN([MCA_plm_tm_CONFIG],[
-    OMPI_CHECK_TM([plm_tm], [plm_tm_good=1], [plm_tm_good=0])
+    ORTE_CHECK_TM([plm_tm], [plm_tm_good=1], [plm_tm_good=0])
          
     # if check worked, set wrapper flags if so.  
     # Evaluate succeed / fail

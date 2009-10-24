@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -17,17 +18,16 @@
 # $HEADER$
 #
 
-
-# OMPI_CHECK_ALPS(prefix, [action-if-found], [action-if-not-found])
+# ORTE_CHECK_ALPS(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
-AC_DEFUN([OMPI_CHECK_ALPS],[
+AC_DEFUN([ORTE_CHECK_ALPS],[
 	AC_ARG_WITH([alps],
 	    [AC_HELP_STRING([--with-alps],
 		    [Build ALPS scheduler component (default: no)])])
 	if test "$with_alps" = "yes" ; then
-	    ompi_check_alps_happy="yes"
+	    orte_check_alps_happy="yes"
 	fi
-	AS_IF([test "$ompi_check_alps_happy" = "yes"], 
+	AS_IF([test "$orte_check_alps_happy" = "yes"], 
 	    [$2], 
 	    [$3])
 	])

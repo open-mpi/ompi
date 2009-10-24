@@ -19,7 +19,7 @@
 
 man_pages = mpicc.1 mpic++.1 mpicxx.1 mpif77.1 mpif90.1
 
-if OMPI_WANT_SCRIPT_WRAPPER_COMPILERS
+if OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 
 bin_SCRIPTS = ompi_wrapper_script
 CLEANFILES += $(bin_SCRIPTS)
@@ -47,7 +47,7 @@ install-exec-hook: install-exec-hook-always
 uninstall-local: uninstall-local-always
 endif # CASE_SENSITIVE_FS
 
-else # OMPI_WANT_SHELL_WRAPPER_COMPILERS
+else # OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 
 if OMPI_INSTALL_BINARIES
 
@@ -100,7 +100,7 @@ endif # CASE_SENSITIVE_FS
 
 endif # OMPI_INSTALL_BINARIES
 
-endif # OMPI_WANT_SHELL_WRAPPER_COMPILERS
+endif # OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 
 
 ########################################################

@@ -12,6 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
 #                         reserved. 
+# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -19,10 +20,9 @@
 # $HEADER$
 #
 
-
-# OMPI_CHECK_XGRID(prefix, [action-if-found], [action-if-not-found])
+# ORTE_CHECK_XGRID(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
-AC_DEFUN([OMPI_CHECK_XGRID],[
+AC_DEFUN([ORTE_CHECK_XGRID],[
   AC_REQUIRE([AC_PROG_OBJC])
 
   AC_ARG_WITH([xgrid],
@@ -33,7 +33,7 @@ AC_DEFUN([OMPI_CHECK_XGRID],[
     [OMPI_LANG_LINK_WITH_C([Objective C],
        [AC_CACHE_CHECK([for XgridFoundation Framework],
           [ompi_cv_check_xgrid_foundation],
-          [_OMPI_CHECK_XGRID([ompi_cv_check_xgrid_foundation="yes"],
+          [_ORTE_CHECK_XGRID([ompi_cv_check_xgrid_foundation="yes"],
              [ompi_cv_check_xgrid_foundation="no"])])
         AS_IF([test "$ompi_cv_check_xgrid_foundation" = "yes"],
           [ompi_check_xgrid_happy="yes"],
@@ -47,9 +47,9 @@ AC_DEFUN([OMPI_CHECK_XGRID],[
 ])
 
 
-# _OMPI_CHECK_XGRID([action-if-found], [action-if-not-found])
+# _ORTE_CHECK_XGRID([action-if-found], [action-if-not-found])
 # --------------------------------------------------------
-AC_DEFUN([_OMPI_CHECK_XGRID],[
+AC_DEFUN([_ORTE_CHECK_XGRID],[
   AC_LANG_PUSH(Objective C)
   ompi_check_xgrid_save_LDFLAGS="$LDFLAGS"
   LDFLAGS="$LDFLAGS -framework XgridFoundation -framework Foundation"
