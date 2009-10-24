@@ -48,6 +48,7 @@ Makefile
 static-components.h
 project_list.m4
 orte_wrapper_script
+ompi_wrapper_script
 *~
 *\\\#/;
 
