@@ -10,6 +10,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+dnl Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -17,7 +18,7 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN([OMPI_SETUP_LIBEVENT],[
+AC_DEFUN([OPAL_SETUP_LIBEVENT],[
 
 dnl OMPI: don't use AC_LIBOBJ
 sources=
@@ -395,8 +396,8 @@ AC_CHECK_TYPE(u_int8_t, unsigned char)
 
 
 # OMPI: Save the libobj sources
-OMPI_LIBEVENT_SOURCES="$sources"
-AC_SUBST(OMPI_LIBEVENT_SOURCES)
+OPAL_LIBEVENT_SOURCES="$sources"
+AC_SUBST(OPAL_LIBEVENT_SOURCES)
 
 # OMPI: All done
 unset sources])dnl

@@ -20,7 +20,7 @@
 man_pages = ortecc.1 ortec++.1
 
 if !ORTE_DISABLE_FULL_SUPPORT
-if OMPI_WANT_SCRIPT_WRAPPER_COMPILERS
+if OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 
 bin_SCRIPTS = orte_wrapper_script
 CLEANFILES += $(bin_SCRIPTS)
@@ -34,7 +34,7 @@ uninstall-local:
 	rm -f $(DESTDIR)$(bindir)/ortecc \
 	$(DESTDIR)$(bindir)/ortec++
 
-else # OMPI_WANT_SCRIPT_WRAPPER_COMPILERS
+else # OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 
 if WANT_INSTALL_HEADERS
 
@@ -58,7 +58,7 @@ uninstall-local:
 endif # OMPI_INSTALL_BINARIES
 
 endif # WANT_INSTALL_HEADERS
-endif # OMPI_WANT_SCRIPT_WRAPPER_COMPILERS
+endif # OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 
 distclean-local:
 	rm -f $(man_pages)

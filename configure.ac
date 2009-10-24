@@ -205,7 +205,10 @@ ompi_enable_static="$enable_static"
 AM_ENABLE_SHARED
 AM_DISABLE_STATIC
 
-OMPI_SETUP_WRAPPER_INIT
+OPAL_SETUP_WRAPPER_INIT
+# There is no [need for] ORTE_SETUP_WRAPPER_INIT; this is not an
+# accidental omission
+m4_ifdef([project_ompi], [OMPI_SETUP_WRAPPER_INIT])
 
 ##################################
 # Check for known incompatibility
@@ -452,8 +455,9 @@ m4_ifdef([project_ompi], [OMPI_SETUP_MPI_PROFILING],
 # C++ compiler characteristics
 ##################################
 
+OPAL_SETUP_CXX
+# The MPI project has a boatload more C++ tests (ORTE does not).
 m4_ifdef([project_ompi], [OMPI_SETUP_CXX])
-
 
 ##################################
 # Only after setting up both
@@ -972,7 +976,7 @@ ompi_show_title "Final top-level OMPI configuration"
 ompi_show_subtitle "Libevent 3rd party event handler"
 CFLAGS_save="$CFLAGS"
 CFLAGS="$OMPI_CFLAGS_BEFORE_PICKY"
-OMPI_SETUP_LIBEVENT
+OPAL_SETUP_LIBEVENT
 CFLAGS="$CFLAGS_save"
 
 
@@ -1083,7 +1087,8 @@ AC_DEFINE_UNQUOTED(OPAL_HAVE_LTDL_ADVISE, $OPAL_HAVE_LTDL_ADVISE,
 # final compiler config
 ############################################################################
 
-ompi_show_subtitle "Compiler flags"
+m4_ifdef([project_ompi], [ompi_show_subtitle "Compiler flags"],
+         [m4_ifdef([project_orte], [ompi_show_subtitle "Compiler flags"])])
 
 #
 # This is needed for VPATH builds, so that it will -I the appropriate
@@ -1123,9 +1128,9 @@ m4_ifdef([project_orte], [ORTE_SETUP_DEBUGGER_FLAGS],
 
 AC_SUBST(CFLAGS)
 AC_SUBST(CPPFLAGS)
-m4_ifdef([project_ompi], [AC_SUBST(CXXFLAGS)
-                          AC_SUBST(CXXCPPFLAGS)
-                          AC_SUBST(FFLAGS)
+AC_SUBST(CXXFLAGS)
+AC_SUBST(CXXCPPFLAGS)
+m4_ifdef([project_ompi], [AC_SUBST(FFLAGS)
                           AC_SUBST(FCFLAGS)
 
                           AC_SUBST(OMPI_LIBMPI_EXTRA_LIBS)
@@ -1141,7 +1146,9 @@ AC_SUBST([AMCA_PARAM_SETS_DIR], ['$(pkgdatadir)/amca-param-sets'])
 ############################################################################
 
 ompi_show_subtitle "Wrapper compiler flags"
-OMPI_SETUP_WRAPPER_FINAL
+OPAL_SETUP_WRAPPER_FINAL
+m4_ifdef([project_orte], [ORTE_SETUP_WRAPPER_FINAL])
+m4_ifdef([project_ompi], [OMPI_SETUP_WRAPPER_FINAL])
 
 # Recreate some defines prefixed with OMPI_ so that there are no bare
 # autoconf macro defines in mpi.h.  Since AC sometimes changes whether
@@ -1185,8 +1192,8 @@ AC_CONFIG_FILES([
     test/threads/Makefile
 ])
 
-m4_include([opal/config/config_files.m4])
-m4_ifdef([project_orte], [m4_include([orte/config/config_files.m4])])
-m4_ifdef([project_ompi], [m4_include([ompi/config/config_files.m4])])
+OPAL_CONFIG_FILES
+m4_ifdef([project_orte], [ORTE_CONFIG_FILES])
+m4_ifdef([project_ompi], [OMPI_CONFIG_FILES])
 
 AC_OUTPUT

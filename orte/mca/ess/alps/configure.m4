@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -20,7 +21,7 @@
 # MCA_ess_alps_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
 AC_DEFUN([MCA_ess_alps_CONFIG],[
-	OMPI_CHECK_ALPS([ess_alps],
+	ORTE_CHECK_ALPS([ess_alps],
 	    [AC_CHECK_FUNC([cnos_get_rank], [$1], [$2])],
 	    [$2])
 ])dnl

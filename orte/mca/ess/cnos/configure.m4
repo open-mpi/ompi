@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -25,6 +26,6 @@ AC_DEFUN([MCA_ess_cnos_CONFIG],[
     # was requested, and we can't rely on build priority because 
     # ess_alps uses priorty 10 so that ess_hnp is built as well. 
     AC_CHECK_FUNC([cnos_get_rank], 
-                  [OMPI_CHECK_ALPS([ess_cnos], [$2], [$1])],
+                  [ORTE_CHECK_ALPS([ess_cnos], [$2], [$1])],
                   [$2])
 ])dnl

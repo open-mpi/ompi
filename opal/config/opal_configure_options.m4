@@ -412,10 +412,12 @@ AM_CONDITIONAL([OMPI_INSTALL_BINARIES], [test "$enable_binaries" != "no"])
 AC_ARG_ENABLE([script-wrapper-compilers],
   [AC_HELP_STRING([--enable-script-wrapper-compilers],
      [Use less featured script-based wrapper compilers instead of the standard C-based wrapper compilers.  This option ignores the --disable-binaries option and is mainly useful in cross-compile environments])])
-AM_CONDITIONAL([OMPI_WANT_SCRIPT_WRAPPER_COMPILERS],
-    [test "$enable_script_wrapper_compilers" = "yes"])
-AC_CONFIG_FILES([ompi/tools/wrappers/ompi_wrapper_script], [chmod +x ompi/tools/wrappers/ompi_wrapper_script])
-AC_CONFIG_FILES([orte/tools/wrappers/orte_wrapper_script], [chmod +x orte/tools/wrappers/orte_wrapper_script])
+  if test "$enable_script_wrapper_compilers" = "yes"; then
+      WANT_SCRIPT_WRAPPER_COMPILERS=1
+  else
+      WANT_SCRIPT_WRAPPER_COMPILERS=0
+  fi
+AM_CONDITIONAL([OPAL_WANT_SCRIPT_WRAPPER_COMPILERS], [test "$enable_script_wrapper_compilers" = "yes"])
 
 #
 # Support per-user config files?

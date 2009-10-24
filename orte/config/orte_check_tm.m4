@@ -18,60 +18,60 @@
 # $HEADER$
 #
 
-# OMPI_CHECK_TM_LIBS_FLAGS(prefix, [LIBS or LDFLAGS])
+# ORTE_CHECK_TM_LIBS_FLAGS(prefix, [LIBS or LDFLAGS])
 # ---------------------------------------------------
-AC_DEFUN([OMPI_CHECK_TM_LIBS_FLAGS],[
-    ompi_check_tm_flags=`$ompi_check_tm_pbs_config --libs`
-    for ompi_check_tm_val in $ompi_check_tm_flags; do
-        if test "`echo $ompi_check_tm_val | cut -c1-2`" = "-l"; then
+AC_DEFUN([ORTE_CHECK_TM_LIBS_FLAGS],[
+    orte_check_tm_flags=`$orte_check_tm_pbs_config --libs`
+    for orte_check_tm_val in $orte_check_tm_flags; do
+        if test "`echo $orte_check_tm_val | cut -c1-2`" = "-l"; then
             if test "$2" = "LIBS"; then
-                $1_$2="$$1_$2 $ompi_check_tm_val"
+                $1_$2="$$1_$2 $orte_check_tm_val"
             fi
         else
             if test "$2" = "LDFLAGS"; then
-                $1_$2="$$1_$2 $ompi_check_tm_val"
+                $1_$2="$$1_$2 $orte_check_tm_val"
             fi
         fi
     done
 ])
 
 
-# OMPI_CHECK_TM(prefix, [action-if-found], [action-if-not-found])
+# ORTE_CHECK_TM(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
-AC_DEFUN([OMPI_CHECK_TM],[
+AC_DEFUN([ORTE_CHECK_TM],[
     AC_ARG_WITH([tm],
                 [AC_HELP_STRING([--with-tm(=DIR)],
                                 [Build TM (Torque, PBSPro, and compatible) support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
     OMPI_CHECK_WITHDIR([tm], [$with_tm], [include/tm.h])
 
-    ompi_check_tm_found=no
+    orte_check_tm_found=no
     AS_IF([test "$with_tm" = "no"],
-          [ompi_check_tm_happy="no"],
-          [ompi_check_tm_happy="yes"
+          [orte_check_tm_happy="no"],
+          [orte_check_tm_happy="yes"
            AS_IF([test ! -z "$with_tm" -a "$with_tm" != "yes"],
-                 [ompi_check_tm_dir="$with_tm"],
-                 [ompi_check_tm_dir=""])])
+                 [orte_check_tm_dir="$with_tm"],
+                 [orte_check_tm_dir=""])])
 
-    AS_IF([test "$ompi_check_tm_happy" = "yes"],
+    AS_IF([test "$orte_check_tm_happy" = "yes"],
           [AC_MSG_CHECKING([for pbs-config])
-           ompi_check_tm_pbs_config="not found"
-           AS_IF([test "$ompi_check_tm_dir" != "" -a -d "$ompi_check_tm_dir" -a -x "$ompi_check_tm_dir/bin/pbs-config"],
-                 [ompi_check_tm_pbs_config="$ompi_check_tm_dir/bin/pbs-config"],
+           orte_check_tm_pbs_config="not found"
+           AS_IF([test "$orte_check_tm_dir" != "" -a -d "$orte_check_tm_dir" -a -x "$orte_check_tm_dir/bin/pbs-config"],
+                 [orte_check_tm_pbs_config="$orte_check_tm_dir/bin/pbs-config"],
                  [AS_IF([pbs-config --prefix >/dev/null 2>&1],
-                        [ompi_check_tm_pbs_config="pbs-config"])])
-           AC_MSG_RESULT([$ompi_check_tm_pbs_config])])
+                        [orte_check_tm_pbs_config="pbs-config"])])
+           AC_MSG_RESULT([$orte_check_tm_pbs_config])])
 
     # If we have pbs-config, get the flags we need from there and then
     # do simplistic tests looking for the tm headers and symbols
 
-    AS_IF([test "$ompi_check_tm_happy" = "yes" -a "$ompi_check_tm_pbs_config" != "not found"],
-          [$1_CPPFLAGS=`$ompi_check_tm_pbs_config --cflags`
+    AS_IF([test "$orte_check_tm_happy" = "yes" -a "$orte_check_tm_pbs_config" != "not found"],
+          [$1_CPPFLAGS=`$orte_check_tm_pbs_config --cflags`
            OMPI_LOG_MSG([$1_CPPFLAGS from pbs-config: $$1_CPPFLAGS], 1)
 
-           OMPI_CHECK_TM_LIBS_FLAGS([$1], [LDFLAGS])
+           ORTE_CHECK_TM_LIBS_FLAGS([$1], [LDFLAGS])
            OMPI_LOG_MSG([$1_LDFLAGS from pbs-config: $$1_LDFLAGS], 1)
 
-           OMPI_CHECK_TM_LIBS_FLAGS([$1], [LIBS])
+           ORTE_CHECK_TM_LIBS_FLAGS([$1], [LIBS])
            OMPI_LOG_MSG([$1_LIBS from pbs-config: $$1_LIBS], 1)
 
            # Now that we supposedly have the right flags, try them out.
@@ -86,7 +86,7 @@ AC_DEFUN([OMPI_CHECK_TM],[
 
            AC_CHECK_HEADER([tm.h],
                [AC_CHECK_FUNC([tm_finalize],
-                   [ompi_check_tm_found="yes"])])
+                   [orte_check_tm_found="yes"])])
 
            CPPFLAGS="$CPPFLAGS_save"
            LDFLAGS="$LDFLAGS_save"
@@ -99,45 +99,45 @@ AC_DEFUN([OMPI_CHECK_TM],[
     # library to "libtorque".  So we have to check for both libpbs and
     # libtorque.  First, check for libpbs.
 
-    ompi_check_package_$1_save_CPPFLAGS="$CPPFLAGS"
-    ompi_check_package_$1_save_LDFLAGS="$LDFLAGS"
-    ompi_check_package_$1_save_LIBS="$LIBS"
+    orte_check_package_$1_save_CPPFLAGS="$CPPFLAGS"
+    orte_check_package_$1_save_LDFLAGS="$LDFLAGS"
+    orte_check_package_$1_save_LIBS="$LIBS"
 
-    ompi_check_package_$1_orig_CPPFLAGS="$$1_CPPFLAGS"
-    ompi_check_package_$1_orig_LDFLAGS="$$1_LDFLAGS"
-    ompi_check_package_$1_orig_LIBS="$$1_LIBS"
+    orte_check_package_$1_orig_CPPFLAGS="$$1_CPPFLAGS"
+    orte_check_package_$1_orig_LDFLAGS="$$1_LDFLAGS"
+    orte_check_package_$1_orig_LIBS="$$1_LIBS"
 
-    AS_IF([test "$ompi_check_tm_found" = "no"],
-          [AS_IF([test "$ompi_check_tm_happy" = "yes"],
+    AS_IF([test "$orte_check_tm_found" = "no"],
+          [AS_IF([test "$orte_check_tm_happy" = "yes"],
                  [_OMPI_CHECK_PACKAGE_HEADER([$1], 
                        [tm.h],
-                       [$ompi_check_tm_dir],
-                       [ompi_check_tm_found="yes"],
-                       [ompi_check_tm_found="no"])])
+                       [$orte_check_tm_dir],
+                       [orte_check_tm_found="yes"],
+                       [orte_check_tm_found="no"])])
 
-           AS_IF([test "$ompi_check_tm_found" = "yes"],
+           AS_IF([test "$orte_check_tm_found" = "yes"],
                  [_OMPI_CHECK_PACKAGE_LIB([$1],
                        [pbs],
                        [tm_init],
                        [],
-                       [$ompi_check_tm_dir],
-                       [$ompi_check_tm_libdir],
-                       [ompi_check_tm_found="yes"],
+                       [$orte_check_tm_dir],
+                       [$orte_check_tm_libdir],
+                       [orte_check_tm_found="yes"],
                        [_OMPI_CHECK_PACKAGE_LIB([$1],
                              [torque],
                              [tm_init],
                              [],
-                             [$ompi_check_tm_dir],
-                             [$ompi_check_tm_libdir],
-                             [ompi_check_tm_found="yes"],
-                             [ompi_check_tm_found="no"])])])])
+                             [$orte_check_tm_dir],
+                             [$orte_check_tm_libdir],
+                             [orte_check_tm_found="yes"],
+                             [orte_check_tm_found="no"])])])])
 
-    CPPFLAGS="$ompi_check_package_$1_save_CPPFLAGS"
-    LDFLAGS="$ompi_check_package_$1_save_LDFLAGS"
-    LIBS="$ompi_check_package_$1_save_LIBS"
+    CPPFLAGS="$orte_check_package_$1_save_CPPFLAGS"
+    LDFLAGS="$orte_check_package_$1_save_LDFLAGS"
+    LIBS="$orte_check_package_$1_save_LIBS"
 
     # Did we find the right stuff?
-    AS_IF([test "$ompi_check_tm_happy" = "yes" -a "$ompi_check_tm_found" = "yes"],
+    AS_IF([test "$orte_check_tm_happy" = "yes" -a "$orte_check_tm_found" = "yes"],
           [$2],
           [AS_IF([test ! -z "$with_tm" -a "$with_tm" != "no"],
                  [AC_MSG_ERROR([TM support requested but not found.  Aborting])])
