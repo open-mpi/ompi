@@ -197,7 +197,7 @@ AC_DEFUN([OMPI_SETUP_WRAPPER_FINAL],[
     AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_FFLAGS, "$WRAPPER_EXTRA_FFLAGS",
         [Additional FFLAGS to pass through the wrapper compilers])
     AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_FCFLAGS, "$WRAPPER_EXTRA_FCFLAGS",
-        [Additional FCFLAGS to pass through the wrapper compilers])])
+        [Additional FCFLAGS to pass through the wrapper compilers])
 
     # if wrapper compilers were requested, set the ompi one up
     if test "$WANT_SCRIPT_WRAPPER_COMPILERS" = "1" ; then
