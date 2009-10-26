@@ -25,23 +25,43 @@ ADD_CUSTOM_COMMAND (TARGET opal-wrapper
   ${PROJECT_BINARY_DIR}/mpicc.exe
   COMMAND ${CMAKE_COMMAND} -E copy
   ${OpenMPI_BINARY_DIR}/${CMAKE_CFG_INTDIR}/opal-wrapper.exe
-  ${PROJECT_BINARY_DIR}/mpic++.exe
-  COMMAND ${CMAKE_COMMAND} -E copy
-  ${OpenMPI_BINARY_DIR}/${CMAKE_CFG_INTDIR}/opal-wrapper.exe
-  ${PROJECT_BINARY_DIR}/mpicxx.exe
-  COMMAND ${CMAKE_COMMAND} -E copy
-  ${OpenMPI_BINARY_DIR}/${CMAKE_CFG_INTDIR}/opal-wrapper.exe
   ${PROJECT_BINARY_DIR}/mpiexec.exe
-  COMMENT "Copying renamed executables...")
-  
+  COMMENT "Copying C compiler wrappers...")
+
+IF(WANT_CXX_BINDINGS)
+  ADD_CUSTOM_COMMAND (TARGET opal-wrapper
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+    ${OpenMPI_BINARY_DIR}/${CMAKE_CFG_INTDIR}/opal-wrapper.exe
+    ${PROJECT_BINARY_DIR}/mpic++.exe
+    COMMAND ${CMAKE_COMMAND} -E copy
+    ${OpenMPI_BINARY_DIR}/${CMAKE_CFG_INTDIR}/opal-wrapper.exe
+    ${PROJECT_BINARY_DIR}/mpicxx.exe
+    COMMENT "Copying C++ compiler wrappers...")
+
+  INSTALL(FILES ${PROJECT_BINARY_DIR}/mpic++.exe
+    ${PROJECT_BINARY_DIR}/mpicxx.exe
+    DESTINATION bin)
+ENDIF(WANT_CXX_BINDINGS)
+
+IF(WANT_F77_BINDINGS)
+  ADD_CUSTOM_COMMAND(TARGET opal-wrapper
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy
+  ${OpenMPI_BINARY_DIR}/${CMAKE_CFG_INTDIR}/opal-wrapper.exe
+  ${PROJECT_BINARY_DIR}/mpif77.exe
+  COMMENT "Copying F77 compiler wrappers...")
+
+  INSTALL(FILES ${PROJECT_BINARY_DIR}/mpif77.exe
+    DESTINATION bin)
+ENDIF(WANT_F77_BINDINGS)
+
 INSTALL(TARGETS opal-wrapper
   DESTINATION bin)
 INSTALL(FILES help-opal-wrapper.txt
   DESTINATION share/openmpi
   RENAME help-opal-wrapper.exe.txt)
 INSTALL(FILES ${PROJECT_BINARY_DIR}/mpicc.exe
-  ${PROJECT_BINARY_DIR}/mpic++.exe
-  ${PROJECT_BINARY_DIR}/mpicxx.exe
   ${PROJECT_BINARY_DIR}/mpiexec.exe
   DESTINATION bin)
 
