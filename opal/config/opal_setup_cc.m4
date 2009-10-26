@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
+dnl Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
@@ -272,41 +272,13 @@ AC_DEFUN([OMPI_SETUP_CC],[
     OMPI_CHECK_OPTFLAGS(["$CFLAGS"])
     AC_MSG_RESULT([$co_result])
     CFLAGS="$co_result"
-
-    CFLAGS_WITHOUT_OPTFLAGS=""
-    for co_word in $CFLAGS ; do
-      co_found=0
-      # See http://www.gnu.org/software/autoconf/manual/html_node/Quadrigraphs.html#Quadrigraphs
-      # for an explanation of @<:@ and @:>@ -- they m4 expand to [ and ]
-      case $co_word in
-        +K@<:@0-5@:>@)  co_found=1 ;;
-        -O)             co_found=1 ;;
-        -O@<:@0-9@:>@)  co_found=1 ;;
-        -xO)            co_found=1 ;;
-        -xO@<:@0-9@:>@) co_found=1 ;;
-        -fast)          co_found=1 ;;
-
-        # The below Sun Studio flags require or
-        # trigger -xO optimization
-        -xvector*)     co_found=1 ;;
-        -xdepend=yes)  co_found=1 ;;
-
-      esac
-      if test "$co_found" = "0" ; then
-        CFLAGS_WITHOUT_OPTFLAGS="$CFLAGS_WITHOUT_OPTFLAGS $co_word"
-      fi 
-    done
-
-    unset co_found co_word
-
-    AC_SUBST([CFLAGS_WITHOUT_OPTFLAGS])
 ])
 
 
 AC_DEFUN([_OMPI_START_SETUP_CC],[
     ompi_show_subtitle "C compiler and preprocessor" 
 
-    # $%@#!@#% AIX!!  This has to be called before anything invokes the C
+	# $%@#!@#% AIX!!  This has to be called before anything invokes the C
     # compiler.
     dnl AC_AIX
 ])
