@@ -344,19 +344,26 @@ typedef int (MPI_Delete_function)(MPI_Comm, int, void *, void *);
 typedef int (MPI_Datarep_extent_function)(MPI_Datatype, MPI_Aint *, void *);
 typedef int (MPI_Datarep_conversion_function)(void *, MPI_Datatype, 
                                               int, void *, MPI_Offset, void *);
-typedef void (MPI_Comm_errhandler_fn)(MPI_Comm *, int *, ...);
+typedef void (MPI_Comm_errhandler_function)(MPI_Comm *, int *, ...);
+typedef MPI_Comm_errhandler_function MPI_Comm_errhandler_fn
+__mpi_interface_deprecated__("MPI_Comm_errhandler_fn was deprecated in MPI-2.2; use MPI_Comm_errhandler_function instead");
+
 #if OMPI_PROVIDE_MPI_FILE_INTERFACE
     /* This is a little hackish, but errhandler.h needs space for a
        MPI_File_errhandler_fn.  While it could just be removed, this
        allows us to maintain a stable ABI within OMPI, at least for
        apps that don't use MPI I/O. */
 typedef void (ompi_file_errhandler_fn)(MPI_File *, int *, ...);
-typedef ompi_file_errhandler_fn MPI_File_errhandler_fn;
+typedef ompi_file_errhandler_fn MPI_File_errhandler_fn 
+__mpi_interface_deprecated__("MPI_File_errhandler_fn was deprecated in MPI-2.2; use MPI_File_errhandler_function instead"); 
+typedef ompi_file_errhandler_fn MPI_File_errhandler_function; 
 #else
 struct ompi_file_t;
 typedef void (ompi_file_errhandler_fn)(struct ompi_file_t**, int *, ...);
 #endif
-typedef void (MPI_Win_errhandler_fn)(MPI_Win *, int *, ...);
+typedef void (MPI_Win_errhandler_function)(MPI_Win *, int *, ...); 
+typedef MPI_Win_errhandler_function MPI_Win_errhandler_fn 
+__mpi_interface_deprecated__("MPI_Win_errhandler_fn was deprecated in MPI-2.2; use MPI_Win_errhandler_function instead"); 
     /* MPI_Handler_function is deprecated, but we don't mark it as
        such because otherwise the MPI_Errhandler_create() declaration
        would cause a warning to be issued */
@@ -731,12 +738,14 @@ OMPI_DECLSPEC extern struct ompi_predefined_group_t ompi_mpi_group_null;
 OMPI_DECLSPEC extern struct ompi_predefined_request_t ompi_request_null;
 
 OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_null;
-OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_max, ompi_mpi_op_min;
+OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_min; 
+OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_max; 
 OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_sum;
 OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_prod;
 OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_land;
 OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_band;
-OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_lor, ompi_mpi_op_bor;
+OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_lor; 
+OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_bor; 
 OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_lxor;
 OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_bxor;
 OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_maxloc;
@@ -1017,7 +1026,7 @@ OMPI_DECLSPEC  int MPI_Comm_call_errhandler(MPI_Comm comm, int errorcode);
 OMPI_DECLSPEC  int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result);
 OMPI_DECLSPEC  int MPI_Comm_connect(char *port_name, MPI_Info info, int root, 
                                     MPI_Comm comm, MPI_Comm *newcomm);
-OMPI_DECLSPEC  int MPI_Comm_create_errhandler(MPI_Comm_errhandler_fn *function, 
+OMPI_DECLSPEC  int MPI_Comm_create_errhandler(MPI_Comm_errhandler_function *function, 
                                               MPI_Errhandler *errhandler);
 OMPI_DECLSPEC  int MPI_Comm_create_keyval(MPI_Comm_copy_attr_function *comm_copy_attr_fn, 
                                           MPI_Comm_delete_attr_function *comm_delete_attr_fn, 
@@ -1071,7 +1080,7 @@ OMPI_DECLSPEC  int MPI_Exscan(void *sendbuf, void *recvbuf, int count,
 OMPI_DECLSPEC  MPI_Fint MPI_File_c2f(MPI_File file);
 OMPI_DECLSPEC  MPI_File MPI_File_f2c(MPI_Fint file);
 OMPI_DECLSPEC  int MPI_File_call_errhandler(MPI_File fh, int errorcode);
-OMPI_DECLSPEC  int MPI_File_create_errhandler(MPI_File_errhandler_fn *function,
+OMPI_DECLSPEC  int MPI_File_create_errhandler(MPI_File_errhandler_function *function,
                                               MPI_Errhandler *errhandler);
 OMPI_DECLSPEC  int MPI_File_set_errhandler( MPI_File file, MPI_Errhandler errhandler);
 OMPI_DECLSPEC  int MPI_File_get_errhandler( MPI_File file, MPI_Errhandler *errhandler);
@@ -1254,7 +1263,8 @@ OMPI_DECLSPEC  int MPI_Keyval_create(MPI_Copy_function *copy_fn,
 OMPI_DECLSPEC  int MPI_Keyval_free(int *keyval)
                                    __mpi_interface_deprecated__("MPI_Keyval_free is superseded by MPI_Comm_keyval_free in MPI-2.0");
 OMPI_DECLSPEC  int MPI_Lookup_name(char *service_name, MPI_Info info, char *port_name);
-OMPI_DECLSPEC  MPI_Fint MPI_Op_c2f(MPI_Op op); 
+OMPI_DECLSPEC  MPI_Fint MPI_Op_c2f(MPI_Op op);
+OMPI_DECLSPEC  int MPI_Op_commutative(MPI_Op op, int *commute);
 OMPI_DECLSPEC  int MPI_Op_create(MPI_User_function *function, int commute, MPI_Op *op);
 OMPI_DECLSPEC  int MPI_Open_port(MPI_Info info, char *port_name);
 OMPI_DECLSPEC  MPI_Op MPI_Op_f2c(MPI_Fint op);
@@ -1447,7 +1457,7 @@ OMPI_DECLSPEC  int MPI_Win_call_errhandler(MPI_Win win, int errorcode);
 OMPI_DECLSPEC  int MPI_Win_complete(MPI_Win win);
 OMPI_DECLSPEC  int MPI_Win_create(void *base, MPI_Aint size, int disp_unit, 
                                   MPI_Info info, MPI_Comm comm, MPI_Win *win);
-OMPI_DECLSPEC  int MPI_Win_create_errhandler(MPI_Win_errhandler_fn *function, 
+OMPI_DECLSPEC  int MPI_Win_create_errhandler(MPI_Win_errhandler_function *function, 
                                              MPI_Errhandler *errhandler);
 OMPI_DECLSPEC  int MPI_Win_create_keyval(MPI_Win_copy_attr_function *win_copy_attr_fn, 
                                          MPI_Win_delete_attr_function *win_delete_attr_fn, 
@@ -1542,7 +1552,7 @@ OMPI_DECLSPEC  int PMPI_Comm_call_errhandler(MPI_Comm comm, int errorcode);
 OMPI_DECLSPEC  int PMPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result);
 OMPI_DECLSPEC  int PMPI_Comm_connect(char *port_name, MPI_Info info, int root, 
                                      MPI_Comm comm, MPI_Comm *newcomm);
-OMPI_DECLSPEC  int PMPI_Comm_create_errhandler(MPI_Comm_errhandler_fn *function, 
+OMPI_DECLSPEC  int PMPI_Comm_create_errhandler(MPI_Comm_errhandler_function *function, 
                                                MPI_Errhandler *errhandler);
 OMPI_DECLSPEC  int PMPI_Comm_create_keyval(MPI_Comm_copy_attr_function *comm_copy_attr_fn, 
                                            MPI_Comm_delete_attr_function *comm_delete_attr_fn, 
@@ -1596,7 +1606,7 @@ OMPI_DECLSPEC  int PMPI_Exscan(void *sendbuf, void *recvbuf, int count,
 OMPI_DECLSPEC  MPI_Fint PMPI_File_c2f(MPI_File file);
 OMPI_DECLSPEC  MPI_File PMPI_File_f2c(MPI_Fint file);
 OMPI_DECLSPEC  int PMPI_File_call_errhandler(MPI_File fh, int errorcode);
-OMPI_DECLSPEC  int PMPI_File_create_errhandler(MPI_File_errhandler_fn *function,
+OMPI_DECLSPEC  int PMPI_File_create_errhandler(MPI_File_errhandler_function *function,
                                                MPI_Errhandler *errhandler);
 OMPI_DECLSPEC  int PMPI_File_set_errhandler( MPI_File file, MPI_Errhandler errhandler);
 OMPI_DECLSPEC  int PMPI_File_get_errhandler( MPI_File file, MPI_Errhandler *errhandler);
@@ -1780,7 +1790,8 @@ OMPI_DECLSPEC  int PMPI_Keyval_create(MPI_Copy_function *copy_fn,
 OMPI_DECLSPEC  int PMPI_Keyval_free(int *keyval)
                                     __mpi_interface_deprecated__("MPI_Keyval_free is superseded by MPI_Comm_keyval_free in MPI-2.0");
 OMPI_DECLSPEC  int PMPI_Lookup_name(char *service_name, MPI_Info info, char *port_name);
-OMPI_DECLSPEC  MPI_Fint PMPI_Op_c2f(MPI_Op op); 
+OMPI_DECLSPEC  MPI_Fint PMPI_Op_c2f(MPI_Op op);
+OMPI_DECLSPEC  int PMPI_Op_commutative(MPI_Op op, int *commute);
 OMPI_DECLSPEC  int PMPI_Op_create(MPI_User_function *function, int commute, MPI_Op *op);
 OMPI_DECLSPEC  int PMPI_Open_port(MPI_Info info, char *port_name);
 OMPI_DECLSPEC  MPI_Op PMPI_Op_f2c(MPI_Fint op);
@@ -1973,7 +1984,7 @@ OMPI_DECLSPEC  int PMPI_Win_call_errhandler(MPI_Win win, int errorcode);
 OMPI_DECLSPEC  int PMPI_Win_complete(MPI_Win win);
 OMPI_DECLSPEC  int PMPI_Win_create(void *base, MPI_Aint size, int disp_unit, 
                                    MPI_Info info, MPI_Comm comm, MPI_Win *win);
-OMPI_DECLSPEC  int PMPI_Win_create_errhandler(MPI_Win_errhandler_fn *function, 
+OMPI_DECLSPEC  int PMPI_Win_create_errhandler(MPI_Win_errhandler_function *function, 
                                               MPI_Errhandler *errhandler);
 OMPI_DECLSPEC  int PMPI_Win_create_keyval(MPI_Win_copy_attr_function *win_copy_attr_fn, 
                                           MPI_Win_delete_attr_function *win_delete_attr_fn, 
@@ -2013,7 +2024,7 @@ OMPI_DECLSPEC  double PMPI_Wtime(void);
  *   - We are using a C++ compiler
  */
 #if !defined(OMPI_SKIP_MPICXX) && OMPI_WANT_CXX_BINDINGS && !OMPI_BUILDING
-#if defined(__cplusplus) || defined(c_plusplus) 
+#if defined(c_plusplus) || defined(__cplusplus) 
 #include "openmpi/ompi/mpi/cxx/mpicxx.h"
 #endif
 #endif
