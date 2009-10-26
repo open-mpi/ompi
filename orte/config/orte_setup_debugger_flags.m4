@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
+# Copyright (c) 2006-2009 Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 #                         reserved. 
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
@@ -36,7 +36,13 @@ AC_DEFUN([ORTE_SETUP_DEBUGGER_FLAGS],[
     if test "x$ompi_cv_c_compiler_vendor" = "xsun" -a -n "`echo $host | $GREP sparc`"; then
         DEBUGGER_CFLAGS="-g -xO0"
     else
-        DEBUGGER_CFLAGS="-g"
+        # Tweak the compiler flags passed for intel
+        # to stop its aggressive inlining of functions
+        if test "x$ompi_cv_c_compiler_vendor" = "xintel"; then
+            DEBUGGER_CFLAGS="-g -O0"
+        else
+            DEBUGGER_CFLAGS="-g"
+        fi
     fi
     AC_MSG_CHECKING([which of CFLAGS are ok for debugger modules])
     AC_MSG_RESULT([$CFLAGS_WITHOUT_OPTFLAGS])
