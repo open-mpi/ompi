@@ -98,11 +98,7 @@ EXTRA_DIST = \
         platform/win32/CMakeModules/ompi_get_version.cmake \
         platform/win32/CMakeModules/opal_functions.cmake \
         platform/win32/CMakeModules/setup_f77.cmake \
-        platform/win32/ConfigFiles/install_dirs.h.cmake \
         platform/win32/ConfigFiles/mpi.h.cmake \
-        platform/win32/ConfigFiles/mpic++-wrapper-data.txt.cmake \
-        platform/win32/ConfigFiles/mpicc-wrapper-data.txt.cmake \
-        platform/win32/ConfigFiles/mpif77-wrapper-data.txt.cmake \
         platform/win32/ConfigFiles/opal_config.h.cmake \
         platform/win32/ConfigFiles/revision.in \
 	platform/cisco/macosx-dynamic \
