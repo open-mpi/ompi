@@ -28,7 +28,7 @@ ADD_CUSTOM_COMMAND (TARGET opal-wrapper
   ${PROJECT_BINARY_DIR}/mpiexec.exe
   COMMENT "Copying C compiler wrappers...")
 
-IF(WANT_CXX_BINDINGS)
+IF(OMPI_WANT_CXX_BINDINGS)
   ADD_CUSTOM_COMMAND (TARGET opal-wrapper
     POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
@@ -42,9 +42,9 @@ IF(WANT_CXX_BINDINGS)
   INSTALL(FILES ${PROJECT_BINARY_DIR}/mpic++.exe
     ${PROJECT_BINARY_DIR}/mpicxx.exe
     DESTINATION bin)
-ENDIF(WANT_CXX_BINDINGS)
+ENDIF(OMPI_WANT_CXX_BINDINGS)
 
-IF(WANT_F77_BINDINGS)
+IF(OMPI_WANT_F77_BINDINGS)
   ADD_CUSTOM_COMMAND(TARGET opal-wrapper
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy
@@ -54,7 +54,7 @@ IF(WANT_F77_BINDINGS)
 
   INSTALL(FILES ${PROJECT_BINARY_DIR}/mpif77.exe
     DESTINATION bin)
-ENDIF(WANT_F77_BINDINGS)
+ENDIF(OMPI_WANT_F77_BINDINGS)
 
 INSTALL(TARGETS opal-wrapper
   DESTINATION bin)
@@ -89,11 +89,10 @@ IF(WANT_INSTALL_HEADERS)
     INSTALL(FILES ${OPAL_BINARY_DIR}/tools/wrappers/opalc++-wrapper-data.txt
             DESTINATION share/openmpi)
   ENDIF(OMPI_WANT_CXX_BINDINGS)
-  
+
   CONFIGURE_FILE(${OPAL_SOURCE_DIR}/tools/wrappers/opalcc-wrapper-data.txt.in
                  ${OPAL_BINARY_DIR}/tools/wrappers/opalcc-wrapper-data.txt @ONLY)
   INSTALL(FILES ${OPAL_BINARY_DIR}/tools/wrappers/opalcc-wrapper-data.txt
           DESTINATION share/openmpi)
-
 
 ENDIF(WANT_INSTALL_HEADERS)

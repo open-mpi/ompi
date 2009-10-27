@@ -117,7 +117,21 @@ ELSE (BUILD_SHARED_LIBS)
 ENDIF(BUILD_SHARED_LIBS)
 
 # Generate install_dirs.h
-CONFIGURE_FILE(${OpenMPI_SOURCE_DIR}/contrib/platform/win32/ConfigFiles/install_dirs.h.cmake
+SET(prefix ${CMAKE_INSTALL_PREFIX})
+SET(bindir ${prefix}/bin)
+SET(sbindir ${prefix}/sbin)
+SET(libexecdir ${prefix}/libexec)
+SET(datarootdir ${prefix}/share)
+SET(datadir ${prefix}/share)
+SET(PACKAGE "openmpi")
+SET(sysconfdir ${prefix}/etc)
+SET(sharedstatedir ${prefix}/com)
+SET(localstatedir ${prefix}/var)
+SET(libdir ${prefix}/lib)
+SET(includedir ${prefix}/include)
+SET(infodir ${datarootdir}/info)
+SET(mandir ${datarootdir}/man)
+CONFIGURE_FILE(${OpenMPI_SOURCE_DIR}/opal/mca/installdirs/config/install_dirs.h.in
   ${OpenMPI_BINARY_DIR}/opal/mca/installdirs/config/install_dirs.h)
 
 # Generate version file.
