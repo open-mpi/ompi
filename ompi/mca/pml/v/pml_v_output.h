@@ -30,7 +30,7 @@ static inline void V_OUTPUT_ERR(const char *fmt, ... )
     va_start(list, fmt);
     ret = vasprintf(&str, fmt, list);
     assert(-1 != ret);
-    opal_output(0, str);
+    opal_output(0, "%s", str);
     free(str);
     va_end(list);    
 }
@@ -60,7 +60,7 @@ static inline void V_OUTPUT(const char* fmt, ... )
     va_start(list, fmt);
     ret = vasprintf(&str, fmt, list);
     assert(-1 != ret);
-    opal_output(mca_pml_v.output, str);
+    opal_output(mca_pml_v.output, "%s", str);
     free(str);
     va_end(list);
 }
@@ -72,7 +72,7 @@ static inline void V_OUTPUT_VERBOSE(int V, const char* fmt, ... ) {
     va_start(list, fmt);
     ret = vasprintf(&str, fmt, list);
     assert(-1 != ret);
-    opal_output_verbose(V, mca_pml_v.output, str);
+    opal_output_verbose(V, mca_pml_v.output, "%s", str);
     free(str);
     va_end(list);
 }
