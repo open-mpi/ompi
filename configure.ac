@@ -92,7 +92,15 @@ m4_ifdef([project_ompi],
          [AC_SUBST(libmpi_so_version)
           AC_SUBST(libmpi_cxx_so_version)
           AC_SUBST(libmpi_f77_so_version)
-          AC_SUBST(libmpi_f90_so_version)])
+          AC_SUBST(libmpi_f90_so_version)
+          # It's icky that we have to hard-code the names of the
+          # common components here.  :-( This could probably be done
+          # transparently by adding some intelligence in autogen.sh
+          # and/or ompi_mca.m4, but I don't have the cycles to do this
+          # right now.
+          AC_SUBST(libmca_common_sm_so_version)
+          AC_SUBST(libmca_common_mx_so_version)
+          AC_SUBST(libmca_common_portals_so_version)])
 m4_ifdef([project_orte],
          [AC_SUBST(libopen_rte_so_version)])
 AC_SUBST(libopen_pal_so_version)
