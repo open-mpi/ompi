@@ -114,3 +114,4 @@ EXTRA_DIST = \
 	platform/cisco/ludd-1/optimized \
 	platform/cisco/ludd-1/optimized.conf
 
+dist_pkgdata_DATA = openmpi-valgrind.supp
