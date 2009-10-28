@@ -59,6 +59,8 @@
 
 #define ORTE_RELEASE_DATE ${RELEASE_DATE}
 
+#define OPAL_BUILD_PLATFORM_COMPILER_FAMILYID ${OPAL_BUILD_PLATFORM_COMPILER_FAMILYID}
+
 #define OPAL_BUILD_PLATFORM_COMPILER_FAMILYNAME ${COMPILER_FAMILYNAME}
 
 #define OPAL_BUILD_PLATFORM_COMPILER_VERSION_STR ${COMPILER_VERSION}
@@ -1163,7 +1165,7 @@
 
 /* Type of MPI_Offset -- has to be defined here and typedef'ed later because
    mpi.h does not get AC SUBST's */
-#cmakedefine OMPI_MPI_OFFSET_TYPE ${OMPI_MPI_OFFSET_TYPE_STRING}
+#cmakedefine OMPI_MPI_OFFSET_TYPE ${OMPI_MPI_OFFSET_TYPE}
 
 /* Version of the MX API to use */
 #cmakedefine OMPI_MX_API_VERSION
@@ -1320,7 +1322,7 @@
 #cmakedefine OPAL_HAVE__SC_NPROCESSORS_ONLN
 
 /* ident string for Open MPI */
-#cmakedefine OPAL_IDENT_STRING "${OPAL_IDENT_STRING_VALUE}"
+#cmakedefine OPAL_IDENT_STRING "${OPAL_IDENT_STRING}"
 
 /* Major release number of Open Portable Access Layer */
 #cmakedefine OPAL_MAJOR_VERSION ${OPAL_MAJOR_VERSION_STRING}
