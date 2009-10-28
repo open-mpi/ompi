@@ -50,8 +50,9 @@ version 1.0.
 - Fixed minimum distance finding for OpenFabrics devices in the openib
   BTL.
 - Relax the parameter checking MPI_CART_CREATE a bit.
-- Change MPI_COMM_SPAWN[_MULTIPLE] to check for MPI_Info parameters
-  only on the root.
+- Fix MPI_COMM_SPAWN[_MULTIPLE] to only error-check the info arguments
+  on the root process.  Thanks to Federico Golfre Andreasi for
+  reporting the problem.
 - Fixed some BLCR configure issues.
 - Fixed a potential deadlock when the openib BTL was used with
   MPI_THREAD_MULTIPLE.
