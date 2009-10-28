@@ -11,11 +11,14 @@
 # $HEADER$
 #
 
-TESTS = checksum position ddt_test ddt_raw opal_datatype_test
+if PROJECT_OMPI
+    MPI_TESTS = checksum position ddt_test ddt_raw
+    MPI_CHECKS = to_self ddt_pack
+endif
+TESTS = opal_datatype_test $(MPI_TESTS)
 
-check_PROGRAMS = $(TESTS) to_self ddt_pack
+check_PROGRAMS = $(TESTS) $(MPI_CHECKS)
 
-# This test currently not built because of #1242.
 ddt_test_SOURCES = ddt_test.c ddt_lib.c ddt_lib.h
 ddt_test_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
 ddt_test_LDADD = $(top_builddir)/ompi/libmpi.la
