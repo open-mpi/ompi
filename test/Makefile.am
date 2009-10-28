@@ -24,7 +24,7 @@ if PROJECT_OMPI
 endif
 
 # support needs to be first for dependencies
-SUBDIRS = support asm class threads $(REQUIRES_OMPI)
+SUBDIRS = support asm class threads datatype $(REQUIRES_OMPI)
 DIST_SUBDIRS = event $(SUBDIRS)
 
 TESTS =
