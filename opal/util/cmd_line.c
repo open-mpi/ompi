@@ -172,6 +172,9 @@ int opal_cmd_line_create(opal_cmd_line_t *cmd,
         /* Nope -- it's an entry.  Process it. */
 
         ret = make_opt(cmd, &table[i]);
+        if (OPAL_SUCCESS != ret) {
+            return ret;
+        }
     }
 
     return ret;
@@ -183,8 +186,6 @@ int opal_cmd_line_create(opal_cmd_line_t *cmd,
 int opal_cmd_line_make_opt_mca(opal_cmd_line_t *cmd,
                                opal_cmd_line_init_t entry)
 {
-    int ret;
-
     /* Ensure we got an entry */
     if ('\0' == entry.ocl_cmd_short_name &&
         NULL == entry.ocl_cmd_single_dash_name &&
@@ -192,9 +193,7 @@ int opal_cmd_line_make_opt_mca(opal_cmd_line_t *cmd,
         return OPAL_SUCCESS;
     }
 
-    ret = make_opt(cmd, &entry);
-
-    return OPAL_SUCCESS;
+    return make_opt(cmd, &entry);
 }
 
 
