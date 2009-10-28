@@ -29,7 +29,7 @@ AC_DEFUN([ORTE_SETUP_DEBUGGER_FLAGS],[
     # debugger-sensitive files with -g and nothing else.
     #
 
-    OMPI_MAKE_STRIPPED_FLAGS($CFLAGS)
+    OMPI_STRIP_OPTFLAGS($CFLAGS)
     CFLAGS_WITHOUT_OPTFLAGS="$s_result"
     # Tweak the compiler flags passed to orterun for Sun Studio SPARC
     # https://svn.open-mpi.org/trac/ompi/ticket/1448

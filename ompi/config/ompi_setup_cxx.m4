@@ -12,7 +12,7 @@ dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
-dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+dnl Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
@@ -254,8 +254,8 @@ EOF
         fi
     fi
 
-    # config/ompi_check_optflags.m4
-    OMPI_CHECK_OPTFLAGS(["$CXXFLAGS"])
+    # config/ompi_ensure_contains_optflags.m4
+    OMPI_ENSURE_CONTAINS_OPTFLAGS(["$CXXFLAGS"])
     AC_MSG_CHECKING([for C++ optimization flags])
     AC_MSG_RESULT([$co_result])
     CXXFLAGS="$co_result"

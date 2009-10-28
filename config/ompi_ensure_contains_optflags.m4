@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
+dnl Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
@@ -19,7 +19,7 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN([OMPI_CHECK_OPTFLAGS],[
+AC_DEFUN([OMPI_ENSURE_CONTAINS_OPTFLAGS],[
 
 # Modularize this setup so that sub-configure.in scripts can use this
 # same setup code.
