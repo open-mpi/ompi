@@ -63,9 +63,8 @@ noinst_LTLIBRARIES += $(comp_noinst)
 endif
 
 libmca_common_mx_la_SOURCES = $(headers) $(sources)
-libmca_common_mx_la_LDFLAGS = $(common_mx_LDFLAGS)
+libmca_common_mx_la_LDFLAGS = -version-info $(libmca_common_mx_so_version) $(common_mx_LDFLAGS)
 libmca_common_mx_la_LIBADD = $(common_mx_LIBS)
-libmca_common_mx_la_LDFLAGS = -version-info $(libmca_common_mx_so_version)
 
 libmca_common_mx_noinst_la_SOURCES = $(libmca_common_mx_la_SOURCES)
 libmca_common_mx_noinst_la_LDFLAGS = $(common_mx_LDFLAGS)

@@ -81,9 +81,8 @@ noinst_LTLIBRARIES += $(comp_noinst)
 endif
 
 libmca_common_portals_la_SOURCES = $(headers) $(sources)
-libmca_common_portals_la_LDFLAGS = $(common_portals_LDFLAGS)
+libmca_common_portals_la_LDFLAGS = -version-info $(libmca_common_portals_so_version) $(common_portals_LDFLAGS)
 libmca_common_portals_la_LIBADD = $(common_portals_LIBS)
-libmca_common_portals_la_LDFLAGS = -version-info $(libmca_common_portals_so_version)
 
 libmca_common_portals_noinst_la_SOURCES = $(libmca_common_portals_la_SOURCES)
 libmca_common_portals_noinst_la_LDFLAGS = $(common_portals_LDFLAGS)
