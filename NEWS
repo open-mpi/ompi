@@ -29,8 +29,8 @@ version 1.0.
 Trunk (not on release branches yet)
 -----------------------------------
 
-- Added Cray Compute Node Linux (CNL) and ALPS Support.
-  --> Expected: ???
+- Nothing yet...
+
 
 1.5
 ---
@@ -46,12 +46,53 @@ Trunk (not on release branches yet)
   - command to execute arbitrary commands (e.g., run a script).
 
 
-1.3.4 (expected)
-----------------
+1.4 (expected)
+--------------
 
+- Nothing yet...
+
+
+1.3.4
+-----
+
+- Fix some issues in OMPI's SRPM with regard to shell_scripts_basename
+  and its use with mpi-selector.  Thanks to Bill Johnstone for
+  pointing out the problem.
+- Added many new MPI job process affinity options to mpirun.  See the
+  newly-updated mpirun(1) man page for details.
+- Several updates to mpirun's XML output.
+- Update to fix a few Valgrind warnings with regards to the ptmalloc2
+  allocator and Open MPI's use of PLPA.
+- Many updates and fixes to the (non-default) "sm" collective
+  component (i.e., native shared memory MPI collective operations).
+- Updates and fixes to some MPI_COMM_SPAWN_MULTIPLE corner cases.
+- Fix some internal copying functions in Open MPI's use of PLPA.
+- Correct some SLURM nodelist parsing logic that may have interfered
+  with large jobs.  Additionally, per advice from the SLURM team,
+  change the environment variable that we use for obtaining the job's
+  allocation.
+- Revert to an older, safer (but slower) communicator ID allocation
+  algorithm. 
+- Fixed minimum distance finding for OpenFabrics devices in the openib
+  BTL.
+- Relax the parameter checking MPI_CART_CREATE a bit.
 - Fix MPI_COMM_SPAWN[_MULTIPLE] to only error-check the info arguments
   on the root process.  Thanks to Federico Golfre Andreasi for
   reporting the problem.
+- Fixed some BLCR configure issues.
+- Fixed a potential deadlock when the openib BTL was used with
+  MPI_THREAD_MULTIPLE.
+- Fixed dynamic rules selection for the "tuned" coll component.
+- Added a launch progress meter to mpirun (useful for large jobs; set
+  the orte_report_launch_progress MCA parameter to 1 to see it).
+- Reduced the number of file descriptors consumed by each MPI process.
+- Add new device IDs for Chelsio T3 RNICs to the openib BTL config file.
+- Fix some CRS self component issues.
+- Added some MCA parameters to the PSM MTL to tune its run-time
+  behavior.
+- Fix some VT issues with MPI_BOTTOM/MPI_IN_PLACE.
+- Man page updates from the Debain Open MPI package maintainers.
+- Add cycle counter support for the Alpha and Sparc platforms.
 - Pass visibility flags to libltdl's configure script, resulting in
   those symbols being hidden.  This appears to mainly solve the
   problem of applications attempting to use different versions of
