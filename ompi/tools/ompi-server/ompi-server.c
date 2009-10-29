@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
     cmd_line = OBJ_NEW(opal_cmd_line_t);
     opal_cmd_line_create(cmd_line, ompi_server_cmd_line_opts);
     mca_base_cmd_line_setup(cmd_line);
-    if (ORTE_SUCCESS != (ret = opal_cmd_line_parse(cmd_line, false,
+    if (OPAL_SUCCESS != (ret = opal_cmd_line_parse(cmd_line, false,
                                                    argc, argv))) {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(cmd_line);
