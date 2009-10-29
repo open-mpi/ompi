@@ -216,10 +216,16 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
         res.size = m->nfifos * ( sizeof(sm_fifo_t) + sizeof(void *) * m->fifo_size + 4 * CACHE_LINE_SIZE )
             + ( 2 * n + m->sm_free_list_inc ) * ( m->eager_limit   + 2 * CACHE_LINE_SIZE )
             +           m->sm_free_list_num   * ( m->max_frag_size + 2 * CACHE_LINE_SIZE );
-        if ( ((double) res.size) * n > LONG_MAX )
-            res.size  = LONG_MAX;
-        else
-            res.size *= n;
+
+        /* before we multiply by n, make sure the result won't overflow */
+        /* Stick that little pad in, particularly since we'll eventually
+         * need a little extra space.  E.g., in mca_mpool_sm_init() in
+         * mpool_sm_component.c when sizeof(mca_common_sm_mmap_t) is
+         * added.
+         */
+        if ( ((double) res.size) * n > LONG_MAX - 4096 )
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        res.size *= n;
 
         /* now, create it */
         mca_btl_sm_component.sm_mpools[i] =
