@@ -1195,6 +1195,7 @@ AC_CONFIG_FILES([
     test/Makefile
     test/event/Makefile
     test/asm/Makefile
+    test/datatype/Makefile
     test/class/Makefile
     test/support/Makefile
     test/threads/Makefile
