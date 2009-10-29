@@ -47,6 +47,7 @@ PREFIX=${PREFIX:-${INSTALL_ROOT}/${VERSION}/${SVER}_${CVER}}
 
 case "$COMPILER" in
     "cray" )
+        ADD_COMPILER="CC=craycc CXX=crayc++ F77=crayftn FC=crayftn"
         ;;
     "gcc" )
         ;;
@@ -58,9 +59,9 @@ case "$COMPILER" in
         ;;
     "pgi" )
         ADD_COMPILER="CC=pgcc CXX=pgCC F77=pgf77 FC=pgf90"
-        ADD_FFLAGS="-Mnomain $PGI/linux86-64/default/lib/pgfmain.o"
-        ADD_FCFLAGS="-Mnomain $PGI/linux86-64/default/lib/pgfmain.o"
-        ADD_LDFLAGS="-L$PGI/linux86-64/default/lib"
+        ADD_FFLAGS="-Mnomain $PGI/linux86-64/default/lib/pgfmain.o "
+        ADD_FCFLAGS="-Mnomain $PGI/linux86-64/default/lib/pgfmain.o "
+        ADD_LDFLAGS="-L$PGI/linux86-64/default/lib "
         ;;
     * )
         echo "Error: Unknown Compiler: $COMPILER"
@@ -77,16 +78,16 @@ $SRCDIR/configure \
    --with-wrapper-ldflags="-static -L${PE_DIR}/lib/snos64 -L${SE_DIR}/lib/snos64 -L${MPT_DIR}/util/lib" \
    --with-wrapper-libs="-lpct -lalpslli -lalpsutil -lportals -lpthread -lm" \
    ${ADD_COMPILER} \
-   CPPFLAGS="${ADD_CPPFLAGS} -I${CATAMOUNT_DIR}/catamount/linux/include -I${PE_DIR}/include" \
-   FFLAGS="${ADD_FFLAGS} -I${PE_DIR}/include" \
-   FCFLAGS="${ADD_FCFLAGS} -I${PE_DIR}/include" \
-   LDFLAGS="${ADD_LDFLAGS} -L${PE_DIR}/lib/snos64 -L${SE_DIR}/lib/snos64 -L${MPT_DIR}/util/lib" \
-   LIBS="${ADD_LIBS} -lrt -lpct -lalpslli -lalpsutil -lportals -lpthread -lm" | tee build.log
+   CPPFLAGS="${ADD_CPPFLAGS}-I${CATAMOUNT_DIR}/catamount/linux/include -I${PE_DIR}/include" \
+   FFLAGS="${ADD_FFLAGS}-I${PE_DIR}/include" \
+   FCFLAGS="${ADD_FCFLAGS}-I${PE_DIR}/include" \
+   LDFLAGS="${ADD_LDFLAGS}-L${PE_DIR}/lib/snos64 -L${SE_DIR}/lib/snos64 -L${MPT_DIR}/util/lib" \
+   LIBS="${ADD_LIBS}-lrt -lpct -lalpslli -lalpsutil -lportals -lpthread -lm" | tee build.log
 
 #
 # To build orted static, use the libtool-flag -all-static
 #
 make -s -j4 orted_LDFLAGS=-all-static all | tee -a build.log
 
-# make -s orted_LDFLAGS=-all-static install | tee -a install.log
+make -s orted_LDFLAGS=-all-static install | tee -a install.log
 
