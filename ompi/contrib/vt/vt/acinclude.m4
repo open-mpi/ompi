@@ -1537,7 +1537,12 @@ AC_DEFUN([ACVT_PLATFORM],
 		AC_DEFINE([TIMER_CLOCK_GETTIME], [1], [Use `clock_gettime' function])
 		AC_DEFINE([TIMER_CYCLE_COUNTER], [2], [Cycle counter (e.g. TSC)])
 		AC_DEFINE([TIMER_GETTIMEOFDAY], [3], [Use `gettimeofday' function])
-		pform_timer=TIMER_CYCLE_COUNTER
+		AS_IF([test x`basename $CC` = "xcraycc"],
+		[
+			pform_timer=TIMER_GETTIMEOFDAY
+		], [
+			pform_timer=TIMER_CYCLE_COUNTER
+		])
 
 		AC_TRY_COMPILE([],
 [
