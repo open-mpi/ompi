@@ -118,7 +118,7 @@ Trunk (not on release branches yet)
   to barrier every 1,000th collective.
 - Various fixes for the IBM XL C/C++ v10.1 compiler.
 - Allow explicit disabling of ptmalloc2 hooks at runtime (e.g., enable
-  support for Debain's builtroot system).  Thanks to Manuel Prinz and
+  support for Debian's builtroot system).  Thanks to Manuel Prinz and
   the rest of the Debian crew for helping identify and fix this issue.
 - Various minor fixes for the I/O forwarding subsystem.
 - Big endian iWARP fixes in the Open Fabrics RDMA CM support.
