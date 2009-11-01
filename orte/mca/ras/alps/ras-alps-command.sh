@@ -12,7 +12,7 @@
   APSTAT=/usr/bin/apstat
   GREP=/usr/bin/grep
   AWK=/usr/bin/awk
-  SLEEP=/usr/bin/sleep
+  SLEEP=/bin/sleep
   ECHO=/bin/echo
 
 # If the old variable still is being set, use it.
