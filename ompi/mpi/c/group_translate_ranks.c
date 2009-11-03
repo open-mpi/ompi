@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -45,18 +46,22 @@ int MPI_Group_translate_ranks(MPI_Group group1, int n_ranks, int *ranks1,
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if ((MPI_GROUP_NULL == group1) || (MPI_GROUP_NULL == group2) ||
-                (NULL == group1) || (NULL == group2) ) {
+            (NULL == group1) || (NULL == group2)) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP, 
                                           FUNC_NAME);
         }
-        if( 0 > n_ranks ){
+        if (n_ranks < 0) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP, 
                                           FUNC_NAME);
         }
-        if( (NULL == ranks1) || (NULL == ranks2 ) ) {
+        if (n_ranks > 0 && ((NULL == ranks1) || (NULL == ranks2 ))) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP, 
                                           FUNC_NAME);
         }
+    }
+
+    if (0 == n_ranks) {
+        return MPI_SUCCESS;
     }
 
     OPAL_CR_ENTER_LIBRARY();
