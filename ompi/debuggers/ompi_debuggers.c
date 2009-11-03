@@ -66,7 +66,9 @@
 #include "ompi/mca/pml/base/pml_base_recvreq.h"
 #include "opal/class/opal_pointer_array.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/mca/topo/topo.h"
 #include "ompi/group/group.h"
+#include "opal/datatype/opal_datatype.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/include/mpi.h"
 
@@ -119,6 +121,7 @@ OMPI_DECLSPEC opal_pointer_array_t* opal_pointer_array_t_type_force_inclusion = 
 OMPI_DECLSPEC ompi_communicator_t* ompi_communicator_t_type_force_inclusion = NULL;
 OMPI_DECLSPEC ompi_group_t* ompi_group_t_type_force_inclusion = NULL;
 OMPI_DECLSPEC ompi_status_public_t* ompi_status_public_t_type_force_inclusion = NULL;
+OMPI_DECLSPEC opal_datatype_t* opal_datatype_t_type_force_inclusion = NULL;
 OMPI_DECLSPEC ompi_datatype_t* ompi_datatype_t_type_force_inclusion = NULL;
 
 OMPI_DECLSPEC volatile int MPIR_debug_gate = 0;
