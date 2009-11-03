@@ -151,6 +151,14 @@ INSTALL(TARGETS libmpi
 INSTALL(FILES ${PROJECT_BINARY_DIR}/include/mpi.h ${PROJECT_BINARY_DIR}/include/mpi_portable_platform.h
   DESTINATION include)
 
+INSTALL(FILES errhandler/help-mpi-errors.txt
+  DESTINATION share/openmpi)
+
+IF (OMPI_DEBUG_BUILD)
+  INSTALL(FILES ${OpenMPI_BINARY_DIR}/Debug/libmpi${CMAKE_DEBUG_POSTFIX}.pdb
+    DESTINATION bin)
+ENDIF (OMPI_DEBUG_BUILD)
+
 IF(OMPI_WANT_F77_BINDINGS)
   INSTALL(FILES ${PROJECT_BINARY_DIR}/include/mpif.h
     ${PROJECT_BINARY_DIR}/include/mpif-config.h 

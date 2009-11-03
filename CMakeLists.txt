@@ -31,6 +31,11 @@ IF (NOT CMAKE_BUILD_TYPE)
     "Choose the type of build, options are: None, Debug, Release, RelWithDebInfo and MinSizeRel." FORCE)
 ENDIF (NOT CMAKE_BUILD_TYPE)
 
+STRING(TOLOWER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
+IF(${CMAKE_BUILD_TYPE} STREQUAL "debug")
+  SET(OMPI_DEBUG_BUILD 1)
+ENDIF(${CMAKE_BUILD_TYPE} STREQUAL "debug")
+
 # add debug-suffix to distinguish between debug and release version libraries.
 SET(CMAKE_DEBUG_POSTFIX  "d") 
 
@@ -72,6 +77,13 @@ SET (CMAKE_SUPPRESS_REGENERATION true)
 # Dynamic/shared build, the default is set to static(OFF)
 OPTION(BUILD_SHARED_LIBS "Wether we want to build shared libraries." ON)
 
+IF(CMAKE_CL_64)
+  SET(COMPILER_TYPE "x64")
+ELSE(CMAKE_CL_64)
+  SET(COMPILER_TYPE "win32")
+ENDIF(CMAKE_CL_64)
+
+
 INCLUDE(ompi_configure)
 
 ADD_SUBDIRECTORY(opal)
@@ -97,12 +109,12 @@ ELSE(${RELEASE_VERSION} EQUAL 0)
   SET(OpenMPI_version "${MAJOR_VERSION}.${MINOR_VERSION}.${RELEASE_VERSION}")
 ENDIF(${RELEASE_VERSION} EQUAL 0)
 
-SET(CPACK_PACKAGE_INSTALL_DIRECTORY "OpenMPI_v${OpenMPI_version}")
-SET(CPACK_PACKAGE_FILE_NAME "OpenMPI-${OpenMPI_version}")
+SET(CPACK_PACKAGE_INSTALL_DIRECTORY "OpenMPI_v${OpenMPI_version}-${COMPILER_TYPE}")
+SET(CPACK_PACKAGE_FILE_NAME "OpenMPI_v${OpenMPI_version}-${COMPILER_TYPE}-${CMAKE_BUILD_TYPE}")
 SET(CPACK_INSTALLED_DIRECTORIES "${CMAKE_INSTALL_PREFIX}" ".")
 SET(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "Open MPI")
 
-SET(CPACK_SOURCE_PACKAGE_FILE_NAME "OpenMPI-${VERSION_STRING}")
+SET(CPACK_SOURCE_PACKAGE_FILE_NAME "OpenMPI-${OpenMPI_version}")
 #SET(CPACK_SOURCE_INSTALLED_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}")
 #There is a bug in NSI that does not handle full unix paths properly. Make
 # sure there is at least one set of four (4) backlasshes.

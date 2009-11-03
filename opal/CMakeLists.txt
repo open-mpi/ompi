@@ -144,4 +144,12 @@ INSTALL(TARGETS libopen-pal
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib)
-INSTALL(FILES runtime/help-opal-runtime.txt DESTINATION share/openmpi)
+INSTALL(FILES runtime/help-opal-runtime.txt
+    mca/base/help-mca-base.txt
+    mca/base/help-mca-param.txt
+    DESTINATION share/openmpi)
+
+IF (OMPI_DEBUG_BUILD)
+  INSTALL(FILES ${OpenMPI_BINARY_DIR}/Debug/libopen-pal${CMAKE_DEBUG_POSTFIX}.pdb
+    DESTINATION bin)
+ENDIF (OMPI_DEBUG_BUILD)

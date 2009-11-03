@@ -221,17 +221,19 @@ FOREACH (MCA_FRAMEWORK ${MCA_FRAMEWORK_LIST})
               SET(INSTALL_DEST "RUNTIME DESTINATION bin
                                 LIBRARY DESTINATION lib
                                 ARCHIVE DESTINATION lib")
+              SET(PDB_DEST "bin")
             ELSE("${MCA_FRAMEWORK}" STREQUAL "common")
               SET(LIB_NAME_PREFIX "")
-              IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
+              IF(OMPI_DEBUG_BUILD)
                 SET(INSTALL_DEST "RUNTIME DESTINATION lib/openmpi/debug
                                   LIBRARY DESTINATION lib/openmpi/debug
                                   ARCHIVE DESTINATION lib/openmpi/debug")
-              ELSE(CMAKE_BUILD_TYPE STREQUAL "Debug")
+                SET(PDB_DEST "lib/openmpi/debug")
+              ELSE(OMPI_DEBUG_BUILD)
                 SET(INSTALL_DEST "RUNTIME DESTINATION lib/openmpi
                                   LIBRARY DESTINATION lib/openmpi
                                   ARCHIVE DESTINATION lib/openmpi")
-              ENDIF(CMAKE_BUILD_TYPE STREQUAL "Debug")
+              ENDIF(OMPI_DEBUG_BUILD)
             ENDIF("${MCA_FRAMEWORK}" STREQUAL "common")
             
 
@@ -263,6 +265,10 @@ TARGET_LINK_LIBRARIES (${LIB_NAME_PREFIX}mca_${MCA_FRAMEWORK}_${MCA_COMPONENT} $
 ADD_DEPENDENCIES(${LIB_NAME_PREFIX}mca_${MCA_FRAMEWORK}_${MCA_COMPONENT} libopen-pal ${MCA_DEPENDENCIES})
 
 INSTALL(TARGETS ${LIB_NAME_PREFIX}mca_${MCA_FRAMEWORK}_${MCA_COMPONENT} ${INSTALL_DEST})
+IF (OMPI_DEBUG_BUILD)
+  INSTALL(FILES ${OpenMPI_BINARY_DIR}/Debug/${LIB_NAME_PREFIX}mca_${MCA_FRAMEWORK}_${MCA_COMPONENT}${CMAKE_DEBUG_POSTFIX}.pdb
+    DESTINATION ${PDB_DEST})
+ENDIF (OMPI_DEBUG_BUILD)
           ")
 
             ADD_SUBDIRECTORY (${PROJECT_BINARY_DIR}/mca/${MCA_FRAMEWORK}/${MCA_COMPONENT} mca/${MCA_FRAMEWORK}/${MCA_COMPONENT})
