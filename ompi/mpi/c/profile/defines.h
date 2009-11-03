@@ -216,6 +216,7 @@
 #define MPI_Keyval_free PMPI_Keyval_free 
 #define MPI_Lookup_name PMPI_Lookup_name
 #define MPI_Op_c2f PMPI_Op_c2f 
+#define MPI_Op_commutative PMPI_Op_commutative 
 #define MPI_Op_create PMPI_Op_create 
 #define MPI_Op_f2c PMPI_Op_f2c 
 #define MPI_Op_free PMPI_Op_free

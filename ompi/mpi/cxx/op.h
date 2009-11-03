@@ -49,6 +49,7 @@ public:
  
   virtual void Reduce_local(const void *inbuf, void *inoutbuf, int count, 
                             const MPI::Datatype& datatype) const;
+  virtual bool Is_commutative(void) const;
 
 #if ! 0 /* OMPI_ENABLE_MPI_PROFILING */
 protected:

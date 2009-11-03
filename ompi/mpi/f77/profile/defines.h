@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -198,6 +198,7 @@
 #define mpi_keyval_create_f pmpi_keyval_create_f
 #define mpi_keyval_free_f pmpi_keyval_free_f
 #define mpi_lookup_name_f pmpi_lookup_name_f
+#define mpi_op_commutative_f pmpi_op_commutative_f
 #define mpi_op_create_f pmpi_op_create_f
 #define mpi_open_port_f pmpi_open_port_f
 #define mpi_op_free_f pmpi_op_free_f
