@@ -81,3 +81,9 @@ INSTALL(TARGETS libopen-rte
 INSTALL(FILES orted/help-orted.txt runtime/help-orte-runtime.txt
   util/hostfile/help-hostfile.txt util/dash_host/help-dash-host.txt
   DESTINATION share/openmpi)
+
+IF (OMPI_DEBUG_BUILD)
+  INSTALL(FILES ${OpenMPI_BINARY_DIR}/Debug/libopen-rte${CMAKE_DEBUG_POSTFIX}.pdb
+    DESTINATION bin)
+ENDIF (OMPI_DEBUG_BUILD)
+
