@@ -342,19 +342,26 @@ typedef int (MPI_Delete_function)(MPI_Comm, int, void *, void *);
 typedef int (MPI_Datarep_extent_function)(MPI_Datatype, MPI_Aint *, void *);
 typedef int (MPI_Datarep_conversion_function)(void *, MPI_Datatype,
                                               int, void *, MPI_Offset, void *);
-typedef void (MPI_Comm_errhandler_fn)(MPI_Comm *, int *, ...);
+typedef void (MPI_Comm_errhandler_function)(MPI_Comm *, int *, ...);
+typedef MPI_Comm_errhandler_function MPI_Comm_errhandler_fn
+        __mpi_interface_deprecated__("MPI_Comm_errhandler_fn was deprecated in MPI-2.2; use MPI_Comm_errhandler_function instead");
+
 #if OMPI_PROVIDE_MPI_FILE_INTERFACE
     /* This is a little hackish, but errhandler.h needs space for a
        MPI_File_errhandler_fn.  While it could just be removed, this
        allows us to maintain a stable ABI within OMPI, at least for
        apps that don't use MPI I/O. */
 typedef void (ompi_file_errhandler_fn)(MPI_File *, int *, ...);
-typedef ompi_file_errhandler_fn MPI_File_errhandler_fn;
+typedef ompi_file_errhandler_fn MPI_File_errhandler_fn
+        __mpi_interface_deprecated__("MPI_File_errhandler_fn was deprecated in MPI-2.2; use MPI_File_errhandler_function instead");
+typedef ompi_file_errhandler_fn MPI_File_errhandler_function;
 #else
 struct ompi_file_t;
 typedef void (ompi_file_errhandler_fn)(struct ompi_file_t**, int *, ...);
 #endif
-typedef void (MPI_Win_errhandler_fn)(MPI_Win *, int *, ...);
+typedef void (MPI_Win_errhandler_function)(MPI_Win *, int *, ...);
+typedef MPI_Win_errhandler_function MPI_Win_errhandler_fn
+        __mpi_interface_deprecated__("MPI_Win_errhandler_fn was deprecated in MPI-2.2; use MPI_Win_errhandler_function instead");
     /* MPI_Handler_function is deprecated, but we don't mark it as
        such because otherwise the MPI_Errhandler_create() declaration
        would cause a warning to be issued */
@@ -1020,7 +1027,7 @@ OMPI_DECLSPEC  int MPI_Comm_call_errhandler(MPI_Comm comm, int errorcode);
 OMPI_DECLSPEC  int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result);
 OMPI_DECLSPEC  int MPI_Comm_connect(char *port_name, MPI_Info info, int root,
                                     MPI_Comm comm, MPI_Comm *newcomm);
-OMPI_DECLSPEC  int MPI_Comm_create_errhandler(MPI_Comm_errhandler_fn *function,
+OMPI_DECLSPEC  int MPI_Comm_create_errhandler(MPI_Comm_errhandler_function *function,
                                               MPI_Errhandler *errhandler);
 OMPI_DECLSPEC  int MPI_Comm_create_keyval(MPI_Comm_copy_attr_function *comm_copy_attr_fn,
                                           MPI_Comm_delete_attr_function *comm_delete_attr_fn,
@@ -1074,7 +1081,7 @@ OMPI_DECLSPEC  int MPI_Exscan(void *sendbuf, void *recvbuf, int count,
 OMPI_DECLSPEC  MPI_Fint MPI_File_c2f(MPI_File file);
 OMPI_DECLSPEC  MPI_File MPI_File_f2c(MPI_Fint file);
 OMPI_DECLSPEC  int MPI_File_call_errhandler(MPI_File fh, int errorcode);
-OMPI_DECLSPEC  int MPI_File_create_errhandler(MPI_File_errhandler_fn *function,
+OMPI_DECLSPEC  int MPI_File_create_errhandler(MPI_File_errhandler_function *function,
                                               MPI_Errhandler *errhandler);
 OMPI_DECLSPEC  int MPI_File_set_errhandler( MPI_File file, MPI_Errhandler errhandler);
 OMPI_DECLSPEC  int MPI_File_get_errhandler( MPI_File file, MPI_Errhandler *errhandler);
@@ -1450,7 +1457,7 @@ OMPI_DECLSPEC  int MPI_Win_call_errhandler(MPI_Win win, int errorcode);
 OMPI_DECLSPEC  int MPI_Win_complete(MPI_Win win);
 OMPI_DECLSPEC  int MPI_Win_create(void *base, MPI_Aint size, int disp_unit,
                                   MPI_Info info, MPI_Comm comm, MPI_Win *win);
-OMPI_DECLSPEC  int MPI_Win_create_errhandler(MPI_Win_errhandler_fn *function,
+OMPI_DECLSPEC  int MPI_Win_create_errhandler(MPI_Win_errhandler_function *function,
                                              MPI_Errhandler *errhandler);
 OMPI_DECLSPEC  int MPI_Win_create_keyval(MPI_Win_copy_attr_function *win_copy_attr_fn,
                                          MPI_Win_delete_attr_function *win_delete_attr_fn,
@@ -1545,7 +1552,7 @@ OMPI_DECLSPEC  int PMPI_Comm_call_errhandler(MPI_Comm comm, int errorcode);
 OMPI_DECLSPEC  int PMPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result);
 OMPI_DECLSPEC  int PMPI_Comm_connect(char *port_name, MPI_Info info, int root,
                                      MPI_Comm comm, MPI_Comm *newcomm);
-OMPI_DECLSPEC  int PMPI_Comm_create_errhandler(MPI_Comm_errhandler_fn *function,
+OMPI_DECLSPEC  int PMPI_Comm_create_errhandler(MPI_Comm_errhandler_function *function,
                                                MPI_Errhandler *errhandler);
 OMPI_DECLSPEC  int PMPI_Comm_create_keyval(MPI_Comm_copy_attr_function *comm_copy_attr_fn,
                                            MPI_Comm_delete_attr_function *comm_delete_attr_fn,
@@ -1599,7 +1606,7 @@ OMPI_DECLSPEC  int PMPI_Exscan(void *sendbuf, void *recvbuf, int count,
 OMPI_DECLSPEC  MPI_Fint PMPI_File_c2f(MPI_File file);
 OMPI_DECLSPEC  MPI_File PMPI_File_f2c(MPI_Fint file);
 OMPI_DECLSPEC  int PMPI_File_call_errhandler(MPI_File fh, int errorcode);
-OMPI_DECLSPEC  int PMPI_File_create_errhandler(MPI_File_errhandler_fn *function,
+OMPI_DECLSPEC  int PMPI_File_create_errhandler(MPI_File_errhandler_function *function,
                                                MPI_Errhandler *errhandler);
 OMPI_DECLSPEC  int PMPI_File_set_errhandler( MPI_File file, MPI_Errhandler errhandler);
 OMPI_DECLSPEC  int PMPI_File_get_errhandler( MPI_File file, MPI_Errhandler *errhandler);
@@ -1976,7 +1983,7 @@ OMPI_DECLSPEC  int PMPI_Win_call_errhandler(MPI_Win win, int errorcode);
 OMPI_DECLSPEC  int PMPI_Win_complete(MPI_Win win);
 OMPI_DECLSPEC  int PMPI_Win_create(void *base, MPI_Aint size, int disp_unit,
                                    MPI_Info info, MPI_Comm comm, MPI_Win *win);
-OMPI_DECLSPEC  int PMPI_Win_create_errhandler(MPI_Win_errhandler_fn *function,
+OMPI_DECLSPEC  int PMPI_Win_create_errhandler(MPI_Win_errhandler_function *function,
                                               MPI_Errhandler *errhandler);
 OMPI_DECLSPEC  int PMPI_Win_create_keyval(MPI_Win_copy_attr_function *win_copy_attr_fn,
                                           MPI_Win_delete_attr_function *win_delete_attr_fn,

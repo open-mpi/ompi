@@ -10,7 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -96,7 +96,9 @@ protected:
 class Comm : public Comm_Null {
 public:
 
-  typedef void Errhandler_fn(Comm&, int*, ...);
+  typedef void Errhandler_function(Comm&, int*, ...);
+  typedef Errhandler_function Errhandler_fn
+        __mpi_interface_deprecated__("MPI::Comm::Errhandler_fn was deprecated in MPI-2.2; use MPI::Comm::Errhandler_function instead");
   typedef int Copy_attr_function(const Comm& oldcomm, int comm_keyval,
 				 void* extra_state, void* attribute_val_in,
 				 void* attribute_val_out, 
@@ -105,7 +107,7 @@ public:
 				   void* attribute_val,
 				   void* extra_state);
 #if !0 /* OMPI_ENABLE_MPI_PROFILING */
-#define _MPI2CPP_ERRHANDLERFN_ Errhandler_fn
+#define _MPI2CPP_ERRHANDLERFN_ Errhandler_function
 #define _MPI2CPP_COPYATTRFN_ Copy_attr_function
 #define _MPI2CPP_DELETEATTRFN_ Delete_attr_function
 #endif
@@ -380,7 +382,7 @@ public:
   // Errhandler
   //
 
-  static Errhandler Create_errhandler(Comm::Errhandler_fn* function);
+  static Errhandler Create_errhandler(Comm::Errhandler_function* function);
 
   virtual void Set_errhandler(const Errhandler& errhandler) const;
 
