@@ -65,8 +65,8 @@ void mpi_op_commutative_f(MPI_Fint *op, MPI_Fint *commute, MPI_Fint *ierr)
 
     c_op = MPI_Op_f2c(*op);
 
-    *ierr = OMPI_INT_2_FINT(MPI_op_commutative(c_op,
-                                               OMPI_SINGLE_NAME_CONVERT(commute));
+    *ierr = OMPI_INT_2_FINT(MPI_Op_commutative(c_op,
+                                               OMPI_SINGLE_NAME_CONVERT(commute)));
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
         OMPI_SINGLE_INT_2_FINT(commute);
     }
