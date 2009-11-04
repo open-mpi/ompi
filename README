@@ -529,25 +529,12 @@ Shared library versioning support
 
 Open MPI started using GNU-Libtool recommended shared library
 versioning with the v1.3.3 release (where all versions were set to
-0:0:0).
+0:0:0) for the main MPI libraries: libmpi, libmpi_cxx, libmpi_f77, and
+libmpi_f90.
 
-However, due to unfortunate over-aggressive linking by Open MPI's
-wrapper compilers, we were unable to properly follow the library
-versioning guidelines for two of Open MPI's internal libraries in the
-1.3 and 1.4 series: libopen-rte.so and libopen-pal.so.  Doing so would
-have broken forward binary compatibility with Open MPI applications
-compiled since v1.3.2.
-
-Specifically: the interfaces to these two internal libraries have
-changed more than their shared library version numbers imply -- *BUT
-THIS DOESN'T MATTER*.  We consider these two libraries to be wholly
-internal to Open MPI; MPI applications should *NOT* be calling any
-functions in these libraries directly.  Hence, we considered it a
-lesser evil to fudge the shared library version numbers than to break
-forward binary compatibility.
-
-These two internal libraries will likely be versioned properly
-starting with the v1.5 series.
+Open MPI's other internal libraries are not [yet] versioned for deep
+voodoo technical reasons.  Please see
+https://svn.open-mpi.org/trac/ompi/ticket/2092 for more details.
 
 ===========================================================================
 
