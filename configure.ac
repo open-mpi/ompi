@@ -77,7 +77,6 @@ OMPI_SAVE_VERSION([OPAL], [Open Portable Access Layer], [$srcdir/VERSION],
 # Get shared library version numbers
 
 . $srcdir/VERSION
-<<<<<<< .working
 AC_SUBST(libmpi_so_version)
 AC_SUBST(libmpi_cxx_so_version)
 AC_SUBST(libmpi_f77_so_version)
