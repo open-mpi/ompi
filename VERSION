@@ -83,8 +83,8 @@ libmpi_so_version=0:1:0
 libmpi_cxx_so_version=0:0:0
 libmpi_f77_so_version=0:0:0
 libmpi_f90_so_version=0:0:0
-libopen_rte_so_version=1:0:0
-libopen_pal_so_version=1:0:0
+libopen_rte_so_version=0:1:0
+libopen_pal_so_version=0:1:0
 
 # "Common" components install standalone libraries that are run-time
 # linked by one or more components.  So they need to be versioned as
