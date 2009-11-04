@@ -6,6 +6,9 @@ AC_INIT(VampirTrace, 5.4.10, vampirsupport@zih.tu-dresden.de)
 AM_INIT_AUTOMAKE(VampirTrace, 5.4.10)
 AM_CONFIG_HEADER(config.h)
 
+# Open MPI: If Automake supports silent rules, enable them.
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+
 ACVT_CONF_INIT
 
 ACVT_CONF_TITLE([Initialization])
