@@ -361,7 +361,7 @@ int mca_btl_sm_component_progress(void)
     sm_fifo_t *fifo = NULL;
     mca_btl_sm_hdr_t *hdr;
     int my_smp_rank = mca_btl_sm_component.my_smp_rank;
-    int peer_smp_rank, j, rc = 0;
+    int peer_smp_rank, j, rc = 0, nevents = 0;
 
     /* first, deal with any pending sends */
     /* This check should be fast since we only need to check one variable. */
@@ -399,7 +399,7 @@ int mca_btl_sm_component_progress(void)
             continue;
         }
 
-        rc++;
+        nevents++;
         /* dispatch fragment by type */
         switch(((uintptr_t)hdr) & MCA_BTL_SM_FRAG_TYPE_MASK) {
             case MCA_BTL_SM_FRAG_SEND:
@@ -480,5 +480,5 @@ int mca_btl_sm_component_progress(void)
                 break;
         }
     }
-    return rc;
+    return nevents;
 }
