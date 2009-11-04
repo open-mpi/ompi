@@ -89,7 +89,7 @@ AC_SUBST(libopen_rte_so_version)
 # right now.
 AC_SUBST(libmca_common_sm_so_version)
 AC_SUBST(libmca_common_mx_so_version)
-AC_SUBST(libmca_common_portals_so_version)])
+AC_SUBST(libmca_common_portals_so_version)
 AC_SUBST(libopen_pal_so_version)
 
 # List header files to generate
