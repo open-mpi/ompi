@@ -398,7 +398,7 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
          * of super and then the offset of size in opal_datatype_t.
          */
         { 
-            int super_offset;
+            int super_offset = 0;
 
             ompi_field_offset(super_offset,
                               qh_type, ompi_datatype_t, super);
