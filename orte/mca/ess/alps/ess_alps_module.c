@@ -20,7 +20,11 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#include <catamount/cnos_mpi_os.h>
+#if defined(HAVE_CNOS_MPI_OS_H)
+#  include "cnos_mpi_os.h"
+#elif defined(HAVE_CATAMOUNT_CNOS_MPI_OS_H)
+#  include "catamount/cnos_mpi_os.h"
+#endif
 
 #include "orte/util/show_help.h"
 #include "opal/mca/paffinity/paffinity.h"
