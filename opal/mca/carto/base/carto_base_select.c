@@ -49,8 +49,11 @@ int opal_carto_base_select(void)
                                         &opal_carto_base_components_opened,
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component) ) {
-        /* This will only happen if no component was selected */
-        exit_status = OPAL_ERR_NOT_FOUND;
+        /* This will only happen if no component was selected, so
+         * use the default module instead
+         */
+        opal_carto_base_module    = &opal_carto_default_module;
+        opal_carto_base_selected  = true;
         goto cleanup;
     }
 
