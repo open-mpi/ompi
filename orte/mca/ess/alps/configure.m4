@@ -21,6 +21,11 @@
 # MCA_ess_alps_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
 AC_DEFUN([MCA_ess_alps_CONFIG],[
+        AC_CHECK_HEADERS([catamount/cnos_mpi_os.h], [],
+                         [AC_CHECK_HEADERS([cnos_mpi_os.h], [], [$2],
+                             [AC_INCLUDES_DEFAULT])],
+                         [AC_INCLUDES_DEFAULT])
+
 	ORTE_CHECK_ALPS([ess_alps],
 	    [AC_CHECK_FUNC([cnos_get_rank], [$1], [$2])],
 	    [$2])

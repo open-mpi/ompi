@@ -35,7 +35,11 @@
 #include "grpcomm_cnos.h"
 
 #if OMPI_GRPCOMM_CNOS_HAVE_BARRIER
-#include <catamount/cnos_mpi_os.h>
+#  if defined(HAVE_CNOS_MPI_OS_H)
+#    include "cnos_mpi_os.h"
+#  elif defined(HAVE_CATAMOUNT_CNOS_MPI_OS_H)
+#    include "catamount/cnos_mpi_os.h"
+#  endif
 #endif
 
 /* API functions */
