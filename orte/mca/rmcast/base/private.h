@@ -70,12 +70,16 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(rmcast_base_channel_t);
  */
 typedef struct {
     opal_list_item_t item;
+    orte_process_name_t name;
     orte_rmcast_channel_t channel;
     bool recvd;
-    opal_buffer_t *data;
     orte_rmcast_tag_t tag;
     orte_rmcast_flag_t flags;
-    orte_rmcast_callback_fn_t cbfunc;
+    struct iovec *iovec_array;
+    int iovec_count;
+    opal_buffer_t *buf;
+    orte_rmcast_callback_fn_t cbfunc_iovec;
+    orte_rmcast_callback_buffer_fn_t cbfunc_buffer;
     void *cbdata;
 } rmcast_base_recv_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(rmcast_base_recv_t);
@@ -86,9 +90,12 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(rmcast_base_recv_t);
  */
 typedef struct {
     opal_list_item_t item;
-    opal_buffer_t *data;
+    struct iovec *iovec_array;
+    int32_t iovec_count;
+    opal_buffer_t *buf;
     orte_rmcast_tag_t tag;
-    orte_rmcast_callback_fn_t cbfunc;
+    orte_rmcast_callback_fn_t cbfunc_iovec;
+    orte_rmcast_callback_buffer_fn_t cbfunc_buffer;
     void *cbdata;
 } rmcast_base_send_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(rmcast_base_send_t);
@@ -128,6 +135,45 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_mcast_msg_event_t);
     } while(0);
 
 
+#define ORTE_MULTICAST_MESSAGE_HDR_HTON(bfr, tg)    \
+    do {                                            \
+        uint32_t nm;                                \
+        uint16_t tmp;                               \
+        nm = htonl(ORTE_PROC_MY_NAME->jobid);       \
+        memcpy((bfr), &nm, 4);                      \
+        nm = htonl(ORTE_PROC_MY_NAME->vpid);        \
+        memcpy((bfr)+4, &nm, 4);                    \
+        /* add the tag data, also converted */      \
+        tmp = htons(snd->tag);                      \
+        memcpy((bfr)+8, &tmp, 2);                   \
+    } while(0);
+
+#define ORTE_MULTICAST_MESSAGE_HDR_NTOH(bfr, nm, tg)        \
+    do {                                                    \
+        uint32_t tmp;                                       \
+        uint16_t tmp16;                                     \
+        /* extract the name and convert it to host order */ \
+        memcpy(&tmp, (bfr), 4);                             \
+        (nm)->jobid = ntohl(tmp);                           \
+        memcpy(&tmp, (bfr)+4, 4);                           \
+        (nm)->vpid = ntohl(tmp);                            \
+        /* extract the target tag */                        \
+        memcpy(&tmp16, (bfr)+8, 2);                         \
+        (tg) = ntohs(tmp16);                                \
+    } while(0);
+
+#define ORTE_MULTICAST_LOAD_MESSAGE(bfr, dat, sz, maxsz, endsz) \
+    do {                                                        \
+        if ((maxsz) <= (sz) + 10) {                             \
+            *(endsz) = 0;                                       \
+        } else {                                                \
+            memcpy((bfr)+10, (dat), (sz));                      \
+            *(endsz) = (sz) + 10;                               \
+        }                                                       \
+    } while(0);
+
+#define ORTE_MULTICAST_UNLOAD_MESSAGE(bfr, dat, sz) \
+        opal_dss.load((bfr), (dat)+10, (sz)-10);
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 
