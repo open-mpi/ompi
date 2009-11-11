@@ -31,14 +31,12 @@
 /*
  * Globals
  */
-bool opal_carto_base_selected = false;
 const opal_carto_base_component_2_0_0_t *opal_carto_base_component = NULL;
 const opal_carto_base_module_1_0_0_t *opal_carto_base_module = NULL;
 
 
 int opal_carto_base_select(void)
 {
-    int ret, exit_status = OPAL_SUCCESS;
     opal_carto_base_component_2_0_0_t *best_component = NULL;
     opal_carto_base_module_1_0_0_t *best_module = NULL;
 
@@ -52,25 +50,16 @@ int opal_carto_base_select(void)
         /* This will only happen if no component was selected, so
          * use the default module instead
          */
-        opal_carto_base_module    = &opal_carto_default_module;
-        opal_carto_base_selected  = true;
+        opal_carto_base_module = &opal_carto_default_module;
         goto cleanup;
     }
 
     /* Save the winner */
     opal_carto_base_component = best_component;
     opal_carto_base_module    = best_module;
-    opal_carto_base_selected  = true;
 
     /* Initialize the winner */
-    if (NULL != opal_carto_base_module) {
-        if (OPAL_SUCCESS != (ret = opal_carto_base_module->carto_module_init()) ) {
-            exit_status = ret;
-            goto cleanup;
-        }
-    }
-
- cleanup:
-    return exit_status;
+cleanup:
+    return opal_carto_base_module->carto_module_init();
 }
 
