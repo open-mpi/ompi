@@ -812,9 +812,6 @@ static void process_recv(int fd, short event, void *cbdata)
         goto cleanup;
     }
     
-    opal_output(0, "%s recvd message type %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                (0 == flag) ? "iovec" : "buffer");
-    
     /* find all recv's for this channel and tag */
     item = opal_list_get_first(&recvs);
     while (item != opal_list_get_end(&recvs)) {
