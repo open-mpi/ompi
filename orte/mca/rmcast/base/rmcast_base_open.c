@@ -70,6 +70,10 @@ orte_rmcast_module_t orte_rmcast = {
     NULL,
     NULL,
     NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
     NULL
 };
 orte_rmcast_base_t orte_rmcast_base;
@@ -84,7 +88,7 @@ int orte_rmcast_base_open(void)
 {
     int value, pval, i;
     char *tmp, **nets=NULL, **ports=NULL, *ptr;
-    int idx;
+    int idx, lb;
     struct sockaddr_in inaddr;
     uint32_t addr, netaddr, netmask;
     bool assigned;
@@ -157,11 +161,15 @@ int orte_rmcast_base_open(void)
                                    "Comma-separated list of interfaces (given in IP form) to use for multicast messages",
                                    false, false, NULL, &tmp);
     /* if nothing was provided, default to first non-loopback interface */
+    lb = -1;
     if (NULL == tmp) {
         idx = opal_ifbegin();
         while (0 < idx) {
             /* ignore the loopback interface */
             if (opal_ifisloopback(idx)) {
+                /* save the loopback index */
+                lb = idx;
+                /* look at next one */
                 idx = opal_ifnext(idx);
                 continue;
             }
@@ -173,8 +181,17 @@ int orte_rmcast_base_open(void)
             break;
         }
         if (idx < 0) {
-            orte_show_help("help-rmcast-base.txt", "no-avail-interfaces", true);
-            return ORTE_ERR_SILENT;
+            /* if we didn't at least find a loopback, punt */
+            if (lb < 0) {
+                orte_show_help("help-rmcast-base.txt", "no-avail-interfaces", true);
+                return ORTE_ERR_SILENT;
+            }
+            /* use the loopback device */
+            if (ORTE_SUCCESS != (rc = opal_ifindextoaddr(lb, (struct sockaddr*)&inaddr, sizeof(inaddr)))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            orte_rmcast_base.interface = ntohl(inaddr.sin_addr.s_addr);
         }
     } else {
         /* separate the list */
@@ -280,9 +297,12 @@ OBJ_CLASS_INSTANCE(orte_mcast_msg_event_t,
 
 static void send_construct(rmcast_base_send_t *ptr)
 {
-    ptr->data = NULL;
+    ptr->iovec_array = NULL;
+    ptr->iovec_count = 0;
+    ptr->buf = NULL;
     ptr->tag = ORTE_RMCAST_TAG_INVALID;
-    ptr->cbfunc = NULL;
+    ptr->cbfunc_iovec = NULL;
+    ptr->cbfunc_buffer = NULL;
     ptr->cbdata = NULL;
 }
 OBJ_CLASS_INSTANCE(rmcast_base_send_t,
@@ -292,24 +312,23 @@ OBJ_CLASS_INSTANCE(rmcast_base_send_t,
 
 static void recv_construct(rmcast_base_recv_t *ptr)
 {
+    ptr->name.jobid = ORTE_JOBID_INVALID;
+    ptr->name.vpid = ORTE_VPID_INVALID;
     ptr->channel = ORTE_RMCAST_INVALID_CHANNEL;
     ptr->recvd = false;
-    ptr->data = NULL;
     ptr->tag = ORTE_RMCAST_TAG_INVALID;
     ptr->flags = ORTE_RMCAST_NON_PERSISTENT;  /* default */
-    ptr->cbfunc = NULL;
+    ptr->iovec_array = NULL;
+    ptr->iovec_count = 0;
+    ptr->buf = NULL;
+    ptr->cbfunc_buffer = NULL;
+    ptr->cbfunc_iovec = NULL;
     ptr->cbdata = NULL;
-}
-static void recv_destruct(rmcast_base_recv_t *ptr)
-{
-    if (NULL != ptr->data) {
-        OBJ_RELEASE(ptr->data);
-    }
 }
 OBJ_CLASS_INSTANCE(rmcast_base_recv_t,
                    opal_list_item_t,
                    recv_construct,
-                   recv_destruct);
+                   NULL);
 
 static void channel_construct(rmcast_base_channel_t *ptr)
 {

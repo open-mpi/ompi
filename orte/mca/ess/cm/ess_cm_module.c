@@ -356,7 +356,7 @@ static int update_nidmap(opal_byte_object_t *bo)
 static bool arrived = false;
 static bool name_success = false;
 
-static void cbfunc(int channel, opal_buffer_t *buf, void *cbdata)
+static void cbfunc(int channel, orte_process_name_t *sender, opal_buffer_t *buf, void *cbdata)
 {
     int32_t n;
     orte_daemon_cmd_flag_t cmd;
@@ -452,19 +452,19 @@ static int cm_set_name(void)
     opal_dss.pack(&buf, &orte_process_info.nodename, 1, OPAL_STRING);
 
     /* set the recv to get the answer */
-    if (ORTE_SUCCESS != (rc = orte_rmcast.recv_nb(ORTE_RMCAST_SYS_CHANNEL,
-                                                  ORTE_RMCAST_PERSISTENT,
-                                                  ORTE_RMCAST_TAG_BOOTSTRAP,
-                                                  cbfunc, NULL))) {
+    if (ORTE_SUCCESS != (rc = orte_rmcast.recv_buffer_nb(ORTE_RMCAST_SYS_CHANNEL,
+                                                         ORTE_RMCAST_PERSISTENT,
+                                                         ORTE_RMCAST_TAG_BOOTSTRAP,
+                                                         cbfunc, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&buf);
         return rc;
     }
     
     /* send the request */
-    if (ORTE_SUCCESS != (rc = orte_rmcast.send(ORTE_RMCAST_SYS_CHANNEL,
-                                               ORTE_RMCAST_TAG_BOOTSTRAP,
-                                               &buf))) {
+    if (ORTE_SUCCESS != (rc = orte_rmcast.send_buffer(ORTE_RMCAST_SYS_CHANNEL,
+                                                      ORTE_RMCAST_TAG_BOOTSTRAP,
+                                                      &buf))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&buf);
         return rc;
