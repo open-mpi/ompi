@@ -356,7 +356,10 @@ static int update_nidmap(opal_byte_object_t *bo)
 static bool arrived = false;
 static bool name_success = false;
 
-static void cbfunc(int channel, orte_process_name_t *sender, opal_buffer_t *buf, void *cbdata)
+static void cbfunc(int status,
+                   int channel, orte_rmcast_tag_t tag,
+                   orte_process_name_t *sender,
+                   opal_buffer_t *buf, void *cbdata)
 {
     int32_t n;
     orte_daemon_cmd_flag_t cmd;
@@ -453,8 +456,8 @@ static int cm_set_name(void)
 
     /* set the recv to get the answer */
     if (ORTE_SUCCESS != (rc = orte_rmcast.recv_buffer_nb(ORTE_RMCAST_SYS_CHANNEL,
-                                                         ORTE_RMCAST_PERSISTENT,
                                                          ORTE_RMCAST_TAG_BOOTSTRAP,
+                                                         ORTE_RMCAST_PERSISTENT,
                                                          cbfunc, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&buf);
