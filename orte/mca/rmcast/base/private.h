@@ -144,7 +144,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_mcast_msg_event_t);
         nm = htonl(ORTE_PROC_MY_NAME->vpid);        \
         memcpy((bfr)+4, &nm, 4);                    \
         /* add the tag data, also converted */      \
-        tmp = htons(snd->tag);                      \
+        tmp = htons((tg));                          \
         memcpy((bfr)+8, &tmp, 2);                   \
     } while(0);
 

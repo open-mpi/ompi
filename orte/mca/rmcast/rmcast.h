@@ -23,6 +23,12 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
 
 #include "opal/mca/mca.h"
 #include "opal/dss/dss_types.h"
@@ -38,11 +44,15 @@ BEGIN_C_DECLS
 /**
  * Function prototypes for callback from receiving multicast messages
  */
-typedef void (*orte_rmcast_callback_buffer_fn_t)(orte_rmcast_channel_t channel,
+typedef void (*orte_rmcast_callback_buffer_fn_t)(int status,
+                                                 orte_rmcast_channel_t channel,
+                                                 orte_rmcast_tag_t tag,
                                                  orte_process_name_t *sender,
                                                  opal_buffer_t *buf, void* cbdata);
 
-typedef void (*orte_rmcast_callback_fn_t)(orte_rmcast_channel_t channel,
+typedef void (*orte_rmcast_callback_fn_t)(int status,
+                                          orte_rmcast_channel_t channel,
+                                          orte_rmcast_tag_t tag,
                                           orte_process_name_t *sender,
                                           struct iovec *msg, int count, void* cbdata);
 
@@ -84,8 +94,8 @@ typedef int (*orte_rmcast_base_module_recv_buffer_fn_t)(orte_process_name_t *sen
 
 /* non-blocking receive buffer messages from a multicast channel */
 typedef int (*orte_rmcast_base_module_recv_buffer_nb_fn_t)(orte_rmcast_channel_t channel,
-                                                           orte_rmcast_flag_t flags,
                                                            orte_rmcast_tag_t tag,
+                                                           orte_rmcast_flag_t flags,
                                                            orte_rmcast_callback_buffer_fn_t cbfunc,
                                                            void *cbdata);
 
@@ -97,8 +107,8 @@ typedef int (*orte_rmcast_base_module_recv_fn_t)(orte_process_name_t *sender,
 
 /* non-blocking receive iovec messages from a multicast channel */
 typedef int (*orte_rmcast_base_module_recv_nb_fn_t)(orte_rmcast_channel_t channel,
-                                                    orte_rmcast_flag_t flags,
                                                     orte_rmcast_tag_t tag,
+                                                    orte_rmcast_flag_t flags,
                                                     orte_rmcast_callback_fn_t cbfunc,
                                                     void *cbdata);
 

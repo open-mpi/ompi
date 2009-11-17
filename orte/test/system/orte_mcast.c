@@ -18,10 +18,20 @@
 #include "orte/mca/rmcast/rmcast.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 
-static void cbfunc(orte_rmcast_channel_t channel, orte_process_name_t *sender, opal_buffer_t *buf, void *cbdata);
-static void cbfunc_buf_snt(orte_rmcast_channel_t channel, orte_process_name_t *sender, opal_buffer_t *buf, void *cbdata);
+static void cbfunc(int status,
+                   orte_rmcast_channel_t channel,
+                   orte_rmcast_tag_t tag,
+                   orte_process_name_t *sender,
+                   opal_buffer_t *buf, void *cbdata);
+static void cbfunc_buf_snt(int status,
+                           orte_rmcast_channel_t channel,
+                           orte_rmcast_tag_t tag,
+                           orte_process_name_t *sender,
+                           opal_buffer_t *buf, void *cbdata);
 
-static void cbfunc_iovec(orte_rmcast_channel_t channel,
+static void cbfunc_iovec(int status,
+                         orte_rmcast_channel_t channel,
+                         orte_rmcast_tag_t tag,
                          orte_process_name_t *sender,
                          struct iovec *msg, int count, void* cbdata);
 
@@ -89,14 +99,14 @@ int main(int argc, char* argv[])
         return 0;
     } else {
         if (ORTE_SUCCESS != (rc = orte_rmcast.recv_buffer_nb(ORTE_RMCAST_APP_PUBLIC_CHANNEL,
-                                                             ORTE_RMCAST_PERSISTENT,
                                                              ORTE_RMCAST_TAG_WILDCARD,
+                                                             ORTE_RMCAST_PERSISTENT,
                                                              cbfunc, NULL))) {
             ORTE_ERROR_LOG(rc);
         }
         if (ORTE_SUCCESS != (rc = orte_rmcast.recv_nb(ORTE_RMCAST_APP_PUBLIC_CHANNEL,
-                                                      ORTE_RMCAST_PERSISTENT,
                                                       ORTE_RMCAST_TAG_WILDCARD,
+                                                      ORTE_RMCAST_PERSISTENT,
                                                       cbfunc_iovec, NULL))) {
             ORTE_ERROR_LOG(rc);
         }
@@ -112,7 +122,11 @@ blast:
     return 0;
 }
 
-static void cbfunc(orte_rmcast_channel_t channel, orte_process_name_t *sender, opal_buffer_t *buffer, void *cbdata)
+static void cbfunc(int status,
+                   orte_rmcast_channel_t channel,
+                   orte_rmcast_tag_t tag,
+                   orte_process_name_t *sender,
+                   opal_buffer_t *buffer, void *cbdata)
 {
     int32_t i32, rc;
 
@@ -150,7 +164,9 @@ static void cbfunc(orte_rmcast_channel_t channel, orte_process_name_t *sender, o
 #endif
 }
 
-static void cbfunc_iovec(orte_rmcast_channel_t channel,
+static void cbfunc_iovec(int status,
+                         orte_rmcast_channel_t channel,
+                         orte_rmcast_tag_t tag,
                          orte_process_name_t *sender,
                          struct iovec *msg, int count, void* cbdata)
 {
@@ -173,7 +189,11 @@ static void cbfunc_iovec(orte_rmcast_channel_t channel,
     exit(0);
 }
 
-static void cbfunc_buf_snt(orte_rmcast_channel_t channel, orte_process_name_t *sender, opal_buffer_t *buf, void *cbdata)
+static void cbfunc_buf_snt(int status,
+                           orte_rmcast_channel_t channel,
+                           orte_rmcast_tag_t tag,
+                           orte_process_name_t *sender,
+                           opal_buffer_t *buf, void *cbdata)
 {
     fprintf(stderr, "%s BUFFERED_NB SEND COMPLETE\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     fflush(stderr);

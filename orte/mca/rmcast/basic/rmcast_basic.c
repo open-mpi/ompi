@@ -87,8 +87,8 @@ static int basic_recv_buffer(orte_process_name_t *sender,
                              opal_buffer_t *buf);
 
 static int basic_recv_buffer_nb(orte_rmcast_channel_t channel,
-                                orte_rmcast_flag_t flags,
                                 orte_rmcast_tag_t tag,
+                                orte_rmcast_flag_t flags,
                                 orte_rmcast_callback_buffer_fn_t cbfunc,
                                 void *cbdata);
 
@@ -98,8 +98,8 @@ static int basic_recv(orte_process_name_t *sender,
                       struct iovec **msg, int *count);
 
 static int basic_recv_nb(orte_rmcast_channel_t channel,
-                         orte_rmcast_flag_t flags,
                          orte_rmcast_tag_t tag,
+                         orte_rmcast_flag_t flags,
                          orte_rmcast_callback_fn_t cbfunc,
                          void *cbdata);
 
@@ -244,14 +244,18 @@ static void finalize(void)
 /* internal blocking send support */
 static bool send_complete, send_buf_complete;
 
-static void internal_snd_cb(orte_rmcast_channel_t channel,
+static void internal_snd_cb(int status,
+                            orte_rmcast_channel_t channel,
+                            orte_rmcast_tag_t tag,
                             orte_process_name_t *sender,
                             struct iovec *msg, int count, void *cbdata)
 {
     send_complete = true;
 }
 
-static void internal_snd_buf_cb(orte_rmcast_channel_t channel,
+static void internal_snd_buf_cb(int status,
+                                orte_rmcast_channel_t channel,
+                                orte_rmcast_tag_t tag,
                                 orte_process_name_t *sender,
                                 opal_buffer_t *buf, void *cbdata)
 {
@@ -464,9 +468,11 @@ static int queue_recv(rmcast_base_recv_t *recvptr,
                 OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                                      "%s rmcast:basic: matching recv_nb already active on multicast channel %03d.%03d.%03d.%03d",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), OPAL_IF_FORMAT_ADDR(ch->network)));
-                return ORTE_SUCCESS;
+                OPAL_THREAD_UNLOCK(&lock);
+                return ORTE_EXISTS;
             }
         }
+        OPAL_THREAD_UNLOCK(&lock);
     }
     
     OPAL_THREAD_LOCK(&lock);
@@ -515,8 +521,8 @@ static int basic_recv(orte_process_name_t *name,
 }
 
 static int basic_recv_nb(orte_rmcast_channel_t channel,
-                         orte_rmcast_flag_t flags,
                          orte_rmcast_tag_t tag,
+                         orte_rmcast_flag_t flags,
                          orte_rmcast_callback_fn_t cbfunc, void *cbdata)
 {
     rmcast_base_recv_t *recvptr;
@@ -533,6 +539,11 @@ static int basic_recv_nb(orte_rmcast_channel_t channel,
     recvptr->cbdata = cbdata;
     
     if (ORTE_SUCCESS != (ret = queue_recv(recvptr, channel, tag, cbfunc, NULL, true))) {
+        if (ORTE_EXISTS == ret) {
+            /* this recv already exists - just release the copy */
+            OBJ_RELEASE(recvptr);
+            return ORTE_SUCCESS;
+        }
         ORTE_ERROR_LOG(ret);
         OBJ_RELEASE(recvptr);
         return ret;
@@ -586,8 +597,8 @@ cleanup:
 }
 
 static int basic_recv_buffer_nb(orte_rmcast_channel_t channel,
-                                orte_rmcast_flag_t flags,
                                 orte_rmcast_tag_t tag,
+                                orte_rmcast_flag_t flags,
                                 orte_rmcast_callback_buffer_fn_t cbfunc, void *cbdata)
 {
     rmcast_base_recv_t *recvptr;
@@ -605,10 +616,12 @@ static int basic_recv_buffer_nb(orte_rmcast_channel_t channel,
     recvptr->cbdata = cbdata;
     
     if (ORTE_SUCCESS != (ret = queue_recv(recvptr, channel, tag, NULL, cbfunc, false))) {
+        if (ORTE_EXISTS == ret) {
+            /* this recv already exists - just release the copy */
+            OBJ_RELEASE(recvptr);
+            return ORTE_SUCCESS;
+        }
         ORTE_ERROR_LOG(ret);
-        OPAL_THREAD_LOCK(&lock);
-        opal_list_remove_item(&recvs, &recvptr->item);
-        OPAL_THREAD_UNLOCK(&lock);
         OBJ_RELEASE(recvptr);
         return ret;
     }
@@ -869,7 +882,8 @@ static void process_recv(int fd, short event, void *cbdata)
             if (0 == flag) {
                 /* dealing with iovecs */
                 if (NULL != ptr->cbfunc_iovec) {
-                    ptr->cbfunc_iovec(ptr->channel, &name, iovec_array, iovec_count, ptr->cbdata);
+                    ptr->cbfunc_iovec(ORTE_SUCCESS, ptr->channel, tag,
+                                      &name, iovec_array, iovec_count, ptr->cbdata);
                     /* if it isn't persistent, remove it */
                     if (!(ORTE_RMCAST_PERSISTENT & ptr->flags)) {
                         OPAL_THREAD_LOCK(&lock);
@@ -893,7 +907,7 @@ static void process_recv(int fd, short event, void *cbdata)
                 }
             } else {
                 if (NULL != ptr->cbfunc_buffer) {
-                    ptr->cbfunc_buffer(ptr->channel, &name, recvd_buf, ptr->cbdata);
+                    ptr->cbfunc_buffer(ORTE_SUCCESS, ptr->channel, tag, &name, recvd_buf, ptr->cbdata);
                     /* if it isn't persistent, remove it */
                     if (!(ORTE_RMCAST_PERSISTENT & ptr->flags)) {
                         OPAL_THREAD_LOCK(&lock);
@@ -1130,7 +1144,7 @@ static void xmit_data(int sd, short flags, void* send_req)
         snd = (rmcast_base_send_t*)item;
         
         /* start the send data area with our header */
-        ORTE_MULTICAST_MESSAGE_HDR_HTON(chan->send_data, tag);
+        ORTE_MULTICAST_MESSAGE_HDR_HTON(chan->send_data, snd->tag);
 
         /* are we sending a buffer? */
         if (NULL == snd->buf) {
@@ -1226,12 +1240,12 @@ static void xmit_data(int sd, short flags, void* send_req)
             
             /* call the cbfunc if required */
             if (NULL != snd->cbfunc_buffer) {
-                snd->cbfunc_buffer(chan->channel, ORTE_PROC_MY_NAME, snd->buf, snd->cbdata);
+                snd->cbfunc_buffer(rc, chan->channel, snd->tag, ORTE_PROC_MY_NAME, snd->buf, snd->cbdata);
             }
         } else {
             /* call the cbfunc if required */
             if (NULL != snd->cbfunc_iovec) {
-                snd->cbfunc_iovec(chan->channel, ORTE_PROC_MY_NAME,
+                snd->cbfunc_iovec(rc, chan->channel, snd->tag, ORTE_PROC_MY_NAME,
                                   snd->iovec_array, snd->iovec_count, snd->cbdata);
             }
         }
