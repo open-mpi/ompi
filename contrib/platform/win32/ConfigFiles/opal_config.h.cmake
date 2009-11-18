@@ -569,7 +569,7 @@
 #cmakedefine HAVE_UINT8_T 1
 
 /* Define to 1 if the system has the type `uintptr_t'. */
-#cmakedefine HAVE_UINTPTR_T
+#cmakedefine HAVE_UINTPTR_T 1
 
 /* Define to 1 if you have the <ulimit.h> header file. */
 #cmakedefine HAVE_ULIMIT_H 1
