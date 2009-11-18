@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2009 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -94,7 +94,7 @@ static int orte_ras_ccp_allocate(opal_list_t *nodes)
     }
 
     /* Get rid of the beginning '//'. */
-    for( i = 0; i < sizeof(cluster_head) * 2 - 2; i++){
+    for( i = 0; i < len - 2; i++){
 	    cluster_head[i] = cluster_head[i+2];
         cluster_head[i+2] = '\0';
     }
