@@ -447,8 +447,6 @@ static int cm_set_name(void)
     } else if (ORTE_PROC_IS_TOOL) {
         cmd = ORTE_TOOL_CHECKIN_CMD;
         opal_dss.pack(&buf, &cmd, 1, ORTE_DAEMON_CMD_T);
-        /* provide our name */
-        opal_dss.pack(&buf, ORTE_PROC_MY_NAME, 1, ORTE_NAME);
     }
 
     /* always include our node name */
