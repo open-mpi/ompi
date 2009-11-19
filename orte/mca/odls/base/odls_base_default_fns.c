@@ -2959,9 +2959,9 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs, bool se
              value. */
             kill_local(child->pid, SIGCONT);
             
-            /* Send a sigterm to the process.  If we get ESRCH back, that
+            /* Send a sigkill to the process.  If we get ESRCH back, that
              means the process is already dead, so just move on. */
-            if (0 != (err = kill_local(child->pid, SIGTERM))) {
+            if (0 != (err = kill_local(child->pid, SIGKILL))) {
                 orte_show_help("help-odls-default.txt",
                                "odls-default:could-not-send-kill",
                                true, orte_process_info.nodename, child->pid, err);
