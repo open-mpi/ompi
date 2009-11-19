@@ -136,6 +136,9 @@ static bool odls_default_child_died(pid_t pid, unsigned int timeout, int *exit_s
     do {
         ret = waitpid(pid, exit_status, WNOHANG);
         if (pid == ret) {
+            OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+                                 "%s odls:default:WAITPID INDICATES PROC %d IS DEAD",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)pid));
             /* It died -- return success */
             return true;
         } else if (0 == ret) {
@@ -147,10 +150,16 @@ static bool odls_default_child_died(pid_t pid, unsigned int timeout, int *exit_s
              * by waitpid in this case, so we cannot check it - just assume
              * the proc has indeed died
              */
+            OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+                                 "%s odls:default:WAITPID INDICATES PROC %d HAS ALREADY EXITED",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)pid));
             return true;
         } else if (-1 == ret && ECHILD == errno) {
             /* The pid no longer exists, so we'll call this "good
                enough for government work" */
+            OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+                                 "%s odls:default:WAITPID INDICATES PID %d NO LONGER EXISTS",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)pid));
             return true;
         }
         
@@ -174,8 +183,16 @@ static bool odls_default_child_died(pid_t pid, unsigned int timeout, int *exit_s
 static int odls_default_kill_local(pid_t pid, int signum)
 {
     if (0 != kill(pid, signum)) {
-        if (ESRCH != errno) return errno;
+        if (ESRCH != errno) {
+            OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+                                 "%s odls:default:SENT KILL %d TO PID %d GOT ERRNO %d",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), signum, (int)pid, errno));
+            return errno;
+        }
     }
+    OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+                         "%s odls:default:SENT KILL %d TO PID %d SUCCESS",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), signum, (int)pid));
     return 0;
 }
 

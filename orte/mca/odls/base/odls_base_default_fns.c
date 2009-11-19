@@ -2338,7 +2338,7 @@ static bool any_live_children(orte_jobid_t job)
         child = (orte_odls_child_t*)item;
         
         /* is this child part of the specified job? */
-        if (OPAL_EQUAL == opal_dss.compare(&child->name->jobid, &job, ORTE_JOBID) &&
+        if ((job == child->name->jobid || ORTE_JOBID_WILDCARD == job) &&
             child->alive) {
             return true;
         }
@@ -2382,6 +2382,25 @@ static void check_proc_complete(orte_odls_child_t *child)
     /* setup the alert buffer */
     OBJ_CONSTRUCT(&alert, opal_buffer_t);
     
+    /* find the jobdat */
+    jdat = NULL;
+    for (item = opal_list_get_first(&orte_local_jobdata);
+         item != opal_list_get_end(&orte_local_jobdata);
+         item = opal_list_get_next(item)) {
+        jdat = (orte_odls_job_t*)item;
+        
+        /* is this the specified job? */
+        if (jdat->jobid == child->name->jobid) {
+            break;
+        }
+    }
+    if (NULL == jdat) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        goto unlock;
+    }
+    /* decrement the num_local_procs as this one is complete */
+    jdat->num_local_procs--;
+
     /* if the proc aborted, tell the HNP right away */
     if (ORTE_PROC_STATE_TERMINATED != child->state) {
         /* pack update state command */
@@ -2402,11 +2421,17 @@ static void check_proc_complete(orte_odls_child_t *child)
             goto unlock;
         }
         
+        /* remove the child from our local list as it is no longer alive */
+        opal_list_remove_item(&orte_local_children, &child->super);
+
         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls:proc_complete reporting proc %s aborted to HNP",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(child->name)));
         
+        /* release the child object */
+        OBJ_RELEASE(child);
+
         /* if we are the HNP, then we would rather not send this to ourselves -
          * instead, we queue it up for local processing
          */
@@ -2431,21 +2456,6 @@ static void check_proc_complete(orte_odls_child_t *child)
                 goto unlock;
             }
             /* pack the data for the job */
-            jdat = NULL;
-            for (item = opal_list_get_first(&orte_local_jobdata);
-                 item != opal_list_get_end(&orte_local_jobdata);
-                 item = opal_list_get_next(item)) {
-                 jdat = (orte_odls_job_t*)item;
-                
-                /* is this the specified job? */
-                if (jdat->jobid == child->name->jobid) {
-                    break;
-                }
-            }
-            if (NULL == jdat) {
-                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                goto unlock;
-            }
             if (ORTE_SUCCESS != (rc = pack_state_update(&alert, false, jdat))) {
                 ORTE_ERROR_LOG(rc);
                 goto unlock;
@@ -2804,7 +2814,7 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs, bool se
     int i;
     opal_pointer_array_t procarray, *procptr;
     bool do_cleanup;
-    
+
     OBJ_CONSTRUCT(&procs_killed, opal_list_t);
 
     /* since we are going to be working with the global list of
@@ -2898,7 +2908,7 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs, bool se
             }
             
             /* remove the child from the list since it is either already dead or soon going to be dead */
-            opal_list_remove_item(&orte_local_children, item);
+            opal_list_remove_item(&orte_local_children, &child->super);
             
             /* store the jobid, if required */
             if (last_job != child->name->jobid) {
