@@ -192,6 +192,8 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
             }
             /* save the current node */
             oldnode = proc->node;
+            /* point to the app */
+            app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, proc->app_idx);
             OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
                                  "%s rmaps:resilient: proc %s from node %s is to be restarted",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -248,22 +250,30 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                 }
             }
             /* if no ftgrps are available, then just map it on the lightest loaded
-             * node in the current map, avoiding the current node if possible
+             * node known to the system, avoiding the current node if possible and
+             * taking into account any limitations specified by user in hostfile
+             * and -host options
              */
             if (NULL == target) {
                 nd = oldnode;  /* put it back where it was if nothing else is found */
                 totprocs = 1000000;
+                OBJ_CONSTRUCT(&node_list, opal_list_t);
                 map = jdata->map;
-                for (k=0; k < map->nodes->size; k++) {
-                    if (NULL == (node = opal_pointer_array_get_item(map->nodes, k)) ||
-                        node == oldnode) {
-                        continue;
-                    }
+                if (ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&node_list, &num_slots, app, map->policy))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+                /* find the lightest loaded node while deconstructing the list */
+                while (NULL != (item = opal_list_remove_first(&node_list))) {
+                    node = (orte_node_t*)item;
                     if (node->num_procs < totprocs) {
                         nd = node;
                         totprocs = node->num_procs;
                     }
+                    OBJ_RELEASE(item);
                 }
+                OBJ_DESTRUCT(&node_list);
+
                 OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
                                      "%s rmaps:resilient: no avail fault groups found - placing proc on node %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
