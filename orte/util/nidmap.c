@@ -773,6 +773,13 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                 }
                 OBJ_RELEASE(pmap);
             }
+            /* now use the opal function to reset the internal pointers */
+            opal_pointer_array_remove_all(&jmap->pmap);
+            /* set the size of the storage so we minimize realloc's */
+            if (ORTE_SUCCESS != (rc = opal_pointer_array_set_size(&jmap->pmap, num_procs))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
             /* add in the updated array */
             for (i=0; i < num_procs; i++) {
                 pmap = OBJ_NEW(orte_pmap_t);
