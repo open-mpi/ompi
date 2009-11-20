@@ -98,7 +98,7 @@ static int orte_ras_ccp_allocate(opal_list_t *nodes)
     }
 
     /* Get rid of the beginning '//'. */
-    for( i = 0; i < sizeof(cluster_head) * 2 - 2; i++){
+    for( i = 0; i < len - 2; i++){
 	    cluster_head[i] = cluster_head[i+2];
         cluster_head[i+2] = '\0';
     }
