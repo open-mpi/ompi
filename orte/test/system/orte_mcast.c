@@ -8,6 +8,7 @@
 
 #include "opal/dss/dss.h"
 #include "opal/event/event.h"
+#include "opal/util/output.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
@@ -43,6 +44,7 @@ int main(int argc, char* argv[])
     opal_buffer_t buf, *bfptr;
     int32_t i32=1;
     struct iovec iovec_array[3];
+    orte_rmcast_channel_t chan=4;
     
     if (0 > (rc = orte_init(ORTE_PROC_NON_MPI))) {
         fprintf(stderr, "orte_nodename: couldn't init orte - error code %d\n", rc);
@@ -58,13 +60,17 @@ int main(int argc, char* argv[])
     
     
     if (0 == ORTE_PROC_MY_NAME->vpid) {
+        /* open a new channel */
+        if (ORTE_SUCCESS != (rc = orte_rmcast.open_channel(&chan, "orte_mcast", NULL, -1, NULL, ORTE_RMCAST_XMIT))) {
+            ORTE_ERROR_LOG(rc);
+            goto blast;
+        }
         orte_grpcomm.barrier();
-        fprintf(stderr, "%d: past barrier\n", (int)ORTE_PROC_MY_NAME->vpid);
         
         OBJ_CONSTRUCT(&buf, opal_buffer_t);
         opal_dss.pack(&buf, &i32, 1, OPAL_INT32);
         if (ORTE_SUCCESS != (rc = orte_rmcast.send_buffer(ORTE_RMCAST_APP_PUBLIC_CHANNEL,
-                                                          ORTE_RMCAST_TAG_WILDCARD, &buf))) {
+                                                          ORTE_RMCAST_TAG_ANNOUNCE, &buf))) {
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&buf);
             goto blast;
@@ -74,8 +80,8 @@ int main(int argc, char* argv[])
         bfptr = OBJ_NEW(opal_buffer_t);
         i32 = 2;
         opal_dss.pack(bfptr, &i32, 1, OPAL_INT32);
-        if (ORTE_SUCCESS != (rc = orte_rmcast.send_buffer_nb(ORTE_RMCAST_APP_PUBLIC_CHANNEL,
-                                                             ORTE_RMCAST_TAG_WILDCARD, bfptr,
+        if (ORTE_SUCCESS != (rc = orte_rmcast.send_buffer_nb(chan,
+                                                             ORTE_RMCAST_TAG_OUTPUT, bfptr,
                                                              cbfunc_buf_snt, NULL))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(bfptr);
@@ -98,7 +104,17 @@ int main(int argc, char* argv[])
         orte_finalize();
         return 0;
     } else {
+        /* open a new channel */
+        if (ORTE_SUCCESS != (rc = orte_rmcast.open_channel(&chan, "orte_mcast", NULL, -1, NULL, ORTE_RMCAST_RECV))) {
+            ORTE_ERROR_LOG(rc);
+        }
         if (ORTE_SUCCESS != (rc = orte_rmcast.recv_buffer_nb(ORTE_RMCAST_APP_PUBLIC_CHANNEL,
+                                                             ORTE_RMCAST_TAG_WILDCARD,
+                                                             ORTE_RMCAST_PERSISTENT,
+                                                             cbfunc, NULL))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        if (ORTE_SUCCESS != (rc = orte_rmcast.recv_buffer_nb(chan,
                                                              ORTE_RMCAST_TAG_WILDCARD,
                                                              ORTE_RMCAST_PERSISTENT,
                                                              cbfunc, NULL))) {
@@ -112,7 +128,6 @@ int main(int argc, char* argv[])
         }
         
         orte_grpcomm.barrier();
-        fprintf(stderr, "%d: past barrier\n", (int)ORTE_PROC_MY_NAME->vpid);
         
     }
     opal_event_dispatch();
@@ -134,10 +149,9 @@ static void cbfunc(int status,
     rc = 1;
     opal_dss.unpack(buffer, &i32, &rc, OPAL_INT32);
 
-    fprintf(stderr, "%s GOT BUFFER MESSAGE from %s with value %d\n",
+    opal_output(0, "%s GOT BUFFER MESSAGE from %s on channel %d tag %d with value %d\n",
             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-            ORTE_NAME_PRINT(sender), i32);
-    fflush(stderr);
+            ORTE_NAME_PRINT(sender), channel, tag, i32);
 
     orte_grpcomm.barrier();
 
@@ -172,9 +186,9 @@ static void cbfunc_iovec(int status,
 {
     int rc;
     
-    fprintf(stderr, "%s GOT IOVEC MESSAGE from %s of %d elements\n",
+    opal_output(0, "%s GOT IOVEC MESSAGE from %s of %d elements\n",
             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(sender), count);
-    fflush(stderr);
+
 #if 0
     if (0 != ORTE_PROC_MY_NAME->vpid) {
         /* send it back */
@@ -195,8 +209,7 @@ static void cbfunc_buf_snt(int status,
                            orte_process_name_t *sender,
                            opal_buffer_t *buf, void *cbdata)
 {
-    fprintf(stderr, "%s BUFFERED_NB SEND COMPLETE\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-    fflush(stderr);
+    opal_output(0, "%s BUFFERED_NB SEND COMPLETE\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     
     OBJ_RELEASE(buf);
 }

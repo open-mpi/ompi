@@ -1311,7 +1311,7 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
      * as abnormally terminated, then do not update its state
      *
      * Treat termination of any process in a continuously operating job as
-     * an error
+     * an error unless it was specifically commanded
      */
     if (jdata->state < ORTE_JOB_STATE_TERMINATED ||
         jdata->controls & ORTE_JOB_CONTROL_CONTINUOUS_OP) {
@@ -1375,12 +1375,16 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
                 }
                 break;
             } else if (ORTE_PROC_STATE_KILLED_BY_CMD == proc->state) {
-                /* we ordered this proc to die */
-                jdata->state = ORTE_JOB_STATE_KILLED_BY_CMD;
-                jdata->aborted_proc = NULL; /* no reason to save it */
-                /* use the default exit code since we ordered the termination */
-                ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-                /* now just check the remaining jobs to see if anyone is still alive */
+                /* we ordered this proc to die, so it isn't an abnormal termination
+                 * and we don't flag it as such - just check the remaining jobs to
+                 * see if anyone is still alive
+                 */
+                if (jdata->num_terminated >= jdata->num_procs) {
+                    /* this job has terminated - now we need to check to see if ALL
+                     * the other jobs have also completed and wakeup if that is true
+                     */
+                    jdata->state = ORTE_JOB_STATE_KILLED_BY_CMD;
+                }
                 goto CHECK_ALL_JOBS;
             } else if (ORTE_PROC_STATE_UNTERMINATED < proc->state &&
                        jdata->controls & ORTE_JOB_CONTROL_CONTINUOUS_OP) {
@@ -1446,7 +1450,7 @@ CHECK_ALL_JOBS:
          * anything further - just return here
          */
         if (NULL != jdata && ORTE_JOB_CONTROL_CONTINUOUS_OP & jdata->controls) {
-            return;
+            goto CHECK_ALIVE;
         }
 
         /* if the job that is being checked is the HNP, then we are
@@ -1511,6 +1515,7 @@ CHECK_ALL_JOBS:
             jdata->map = NULL;
         }
         
+CHECK_ALIVE:
         /* now check to see if all jobs are done - release this jdata
          * object when we find it
          */
@@ -1529,7 +1534,8 @@ CHECK_ALL_JOBS:
              * report appropriately to the user
              */
             if (NULL != jdata && job->jobid == jdata->jobid &&
-                jdata->state == ORTE_JOB_STATE_TERMINATED) {
+                (jdata->state == ORTE_JOB_STATE_TERMINATED ||
+                 jdata->state == ORTE_JOB_STATE_KILLED_BY_CMD)) {
                 /* release this object, ensuring that the
                  * pointer array internal accounting
                  * is maintained!
