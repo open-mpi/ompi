@@ -242,6 +242,28 @@ AC_DEFINE_UNQUOTED([OPAL_ENABLE_PROGRESS_THREADS], [$OPAL_ENABLE_PROGRESS_THREAD
                    [Whether we should use progress threads rather than polling])
 AC_MSG_RESULT([$enable_progress_threads])
 
+AS_IF([test "$enable_progress_threads" = "yes"],
+      [cat <<EOF
+*******************************************************************************
+WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
+*******************************************************************************
+
+Open MPI was specifically configured to enable "progress threads" (via
+--enable-progress-threads). This feature is currently known not to work
+-- MPI jobs may crash.
+
+Note that this feature is only active so that developers can debug it.
+Use this feature at your own risk.
+
+(sleeping for 5 seconds to give you a chance to reconsider!)
+
+*******************************************************************************
+WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
+*******************************************************************************
+
+EOF
+       sleep 5])
+
 #
 # Fault Tolerance Thread
 #
