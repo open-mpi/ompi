@@ -23,6 +23,9 @@ AM_CPPFLAGS = $(ras_alps_CPPFLAGS)
 dist_pkgdata_DATA = help-ras-alps.txt \
 		  ras-alps-command.sh
 
+install-data-hook:
+	chmod +x $(DESTDIR)$(pkgdatadir)/ras-alps-command.sh
+
 sources = \
         ras_alps.h \
         ras_alps_component.c \
