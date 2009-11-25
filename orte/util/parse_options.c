@@ -44,6 +44,11 @@ void orte_util_parse_range_options(char *inp, char ***output)
     char *input, *bang;
     bool bang_option=false;
     
+    /* protect against null input */
+    if (NULL == inp) {
+        return;
+    }
+    
     /* protect the provided input */
     input = strdup(inp);
     
