@@ -2,8 +2,8 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.60)
-AC_INIT(VampirTrace, 5.4.10, vampirsupport@zih.tu-dresden.de)
-AM_INIT_AUTOMAKE(VampirTrace, 5.4.10)
+AC_INIT(VampirTrace, 5.4.11, vampirsupport@zih.tu-dresden.de)
+AM_INIT_AUTOMAKE(VampirTrace, 5.4.11)
 AM_CONFIG_HEADER(config.h)
 
 # Open MPI: If Automake supports silent rules, enable them.
