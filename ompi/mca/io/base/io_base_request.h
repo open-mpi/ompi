@@ -54,108 +54,11 @@ struct mca_io_base_request_t {
 typedef struct mca_io_base_request_t mca_io_base_request_t;
 
 BEGIN_C_DECLS
+
     /**
      * Declare the class
      */
     OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_io_base_request_t);
-
-    /**
-     * Setup freelist of IO requests
-     *
-     * @returns OMPI_SUCCESS upon success
-     *
-     * Initialize the IO freelist of requests, making each request be
-     * the size of the base IO request plus the maxiumum number of
-     * bytes from all the available IO components.
-     */
-    int mca_io_base_request_create_freelist(void);
-
-    /**
-     * Get a new IO request
-     *
-     * @param fh The file handle
-     * @param req Pointer to an IO base request
-     *
-     * @returns OMPI_SUCCESS on success
-     * @returns err otherwise
-     *
-     * This function allocates an MPI_Request (ompi_request_t)
-     * according to the io module that is selected on the file handle.
-     * Specifically, it mallocs enough contiguous space for an
-     * ompi_request_t, an mca_io_base_request_t, and the value of
-     * io_cache_bytes from the selected module.  This allows all three
-     * entities to have space allocated in one contiguous chunk.
-     *
-     * This function will either allocate an initialize a new request
-     * (in which case it will call the module's request init
-     * function), or it will take an old request off a cache of
-     * already-created requests.  Either way, the return is a new IO
-     * request that is suitable for use by the selected module.
-     *
-     * For optimization reasons, only minimal error checking is
-     * performed.
-     */
-    int mca_io_base_request_alloc(ompi_file_t *file, 
-                                  mca_io_base_request_t **req);
-
-    /**
-     * Return a module-specific IO MPI_Request.
-     *
-     * @param fh The file handle
-     * @param req The request to return
-     *
-     * Returns a module-specific IO request when it has completed.
-     * This request may actually be freed (in which case it will call
-     * the IO module's fini function before freeing it) or it may be
-     * placed on a freelist.
-     *
-     * The req argument is set to MPI_REQUEST_NULL upon return.
-     *
-     * For optimization reasons, \em no error checking is performed.
-     */
-    OMPI_DECLSPEC void mca_io_base_request_free(ompi_file_t *file,
-                                                mca_io_base_request_t *req);
-
-
-    /*
-     * count of number of pending requests in the IO subsystem.  Should
-     * only be modified with OPAL_THREAD_ADD32.  Probably should not be
-     * used outside of IO components.  Here only for the progress check
-     * optimzation.
-     */
-    OMPI_DECLSPEC extern volatile int32_t mca_io_base_request_num_pending;
-
-    /**
-     * Initialize the request progress code
-     *
-     */
-    void mca_io_base_request_progress_init(void);
-
-    /**
-     *
-     */
-    OMPI_DECLSPEC void mca_io_base_request_progress_add(void);
-
-    /**
-     *
-     */
-    OMPI_DECLSPEC void mca_io_base_request_progress_del(void);
-
-    /**
-     * Finalize the request progress code
-     */
-    void mca_io_base_request_progress_fini(void);
-
-    /**
-     * External progress function; invoked from opal_progress()
-     */
-    static inline int mca_io_base_request_progress(void)
-    {
-        if (mca_io_base_request_num_pending > 0) {
-            return mca_io_base_component_run_progress();
-        }
-        return 0;
-    }
 
 END_C_DECLS
 

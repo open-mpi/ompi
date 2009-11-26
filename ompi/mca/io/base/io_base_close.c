@@ -30,16 +30,6 @@
 
 int mca_io_base_close(void)
 {
-    /* stop the progress engine */
-    mca_io_base_request_progress_fini();
-
-    /* Destroy the freelist */
-
-    if (mca_io_base_requests_valid) {
-        OBJ_DESTRUCT(&mca_io_base_requests);
-        mca_io_base_requests_valid = false;
-    }
-
     /* Close all components that are still open.  This may be the opened
      list (if we're in ompi_info), or it may be the available list (if
      we're anywhere else). */
@@ -55,10 +45,6 @@ int mca_io_base_close(void)
         OBJ_DESTRUCT(&mca_io_base_components_available);
         mca_io_base_components_available_valid = false;
     }
-
-    /* Destroy some io framework resrouces */
-
-    mca_io_base_component_finalize();
 
     /* All done */
 
