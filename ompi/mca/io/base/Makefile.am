@@ -21,7 +21,6 @@ headers += \
         base/io_base_request.h
 
 libmca_io_la_SOURCES += \
-        base/io_base_component_list.c \
         base/io_base_close.c \
         base/io_base_delete.c \
         base/io_base_file_select.c \

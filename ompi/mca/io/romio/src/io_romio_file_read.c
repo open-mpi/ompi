@@ -72,21 +72,16 @@ mca_io_romio_file_iread_at (ompi_file_t *fh,
                             void *buf,
                             int count,
                             struct ompi_datatype_t *datatype,
-                            mca_io_base_request_t *request)
+                            ompi_request_t **request)
 {
     int ret;
     mca_io_romio_data_t *data;
-    mca_io_romio_request_t *req;
 
     data = (mca_io_romio_data_t *) fh->f_io_selected_data;
-    req = (mca_io_romio_request_t *) request;
     OPAL_THREAD_LOCK (&mca_io_romio_mutex);
     ret =
         ROMIO_PREFIX(MPI_File_iread_at) (data->romio_fh, offset, buf, count,
-                                        datatype, &req->romio_rq);
-    if (MPI_SUCCESS == ret) {
-        MCA_IO_ROMIO_REQUEST_ADD(request);
-    }
+                                         datatype, request);
     OPAL_THREAD_UNLOCK (&mca_io_romio_mutex);
 
     return ret;
@@ -140,21 +135,16 @@ mca_io_romio_file_iread (ompi_file_t *fh,
                          void *buf,
                          int count,
                          struct ompi_datatype_t *datatype,
-                         mca_io_base_request_t * request)
+                         ompi_request_t **request)
 {
     int ret;
     mca_io_romio_data_t *data;
-    mca_io_romio_request_t *req;
 
     data = (mca_io_romio_data_t *) fh->f_io_selected_data;
-    req = (mca_io_romio_request_t *) request;
     OPAL_THREAD_LOCK (&mca_io_romio_mutex);
     ret =
         ROMIO_PREFIX(MPI_File_iread) (data->romio_fh, buf, count, datatype,
-                                     &req->romio_rq);
-    if (MPI_SUCCESS == ret) {
-        MCA_IO_ROMIO_REQUEST_ADD(request);
-    }
+                                      request);
     OPAL_THREAD_UNLOCK (&mca_io_romio_mutex);
 
     return ret;
@@ -187,21 +177,16 @@ mca_io_romio_file_iread_shared (ompi_file_t *fh,
                                 void *buf,
                                 int count,
                                 struct ompi_datatype_t *datatype,
-                                mca_io_base_request_t * request)
+                                ompi_request_t **request)
 {
     int ret;
     mca_io_romio_data_t *data;
-    mca_io_romio_request_t *req;
 
     data = (mca_io_romio_data_t *) fh->f_io_selected_data;
-    req = (mca_io_romio_request_t *) request;
     OPAL_THREAD_LOCK (&mca_io_romio_mutex);
     ret =
         ROMIO_PREFIX(MPI_File_iread_shared) (data->romio_fh, buf, count, 
-                                             datatype, &req->romio_rq);
-    if (MPI_SUCCESS == ret) {
-        MCA_IO_ROMIO_REQUEST_ADD(request);
-    }
+                                             datatype, request);
     OPAL_THREAD_UNLOCK (&mca_io_romio_mutex);
 
     return ret;

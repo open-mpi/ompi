@@ -180,78 +180,6 @@ BEGIN_C_DECLS
                                          struct ompi_info_t *info);
 
     /**
-     * Initialize the components-in-use list.
-     *
-     * @returns OMPI_SUCCESS Always
-     *
-     * Creates resources associated with the io framework's
-     * currently-in-use list.
-     */
-    OMPI_DECLSPEC int mca_io_base_component_init(void);
-
-    /**
-     * Add a comoponent to the io framework's currently-in-use list,
-     * or increase its refcount if it's already in the list.
-     *
-     * @param comp The component being added (union)
-     *
-     * Add a component to the list of components that is monitored
-     * every time we go to make progress on asynchronous requests.  If
-     * the component is already in the list, its reference count will
-     * be increases.  
-     *
-     * For asynchronous progress, opal_progress() will call
-     * mca_io_base_progress(), which will go down the list of active
-     * io components and call their progress() function.
-     *
-     * Since components on this list are refcounted; they must be
-     * removed with mca_io_base_component_del() for each time that
-     * they are added with mca_io_base_component_add().  Once their
-     * refcount reaches 0, they are removed from the list and will not
-     * be called for asynchronous progress.
-     *
-     * This function is protected by a mutex; it is safe to call this
-     * function from multiple threads simultaneously.
-     */
-    OMPI_DECLSPEC int mca_io_base_component_add(mca_io_base_components_t *comp);
-
-    /**
-     * Decrease the refcount of a component in the io framework's
-     * currently-in-use list.
-     *
-     * @param comp The component to be [potentially] removed from the
-     * currently-in-use list.
-     *
-     * Find a component in the currently-in-use list and decrease its
-     * refcount.  If its refcount goes to 0, it will be removed from
-     * the list and will not be polled for asynchonous progress.
-     *
-     * This function is protected by a mutex; it is safe to call this
-     * function from multiple threads simultaneously.
-     */
-    OMPI_DECLSPEC int mca_io_base_component_del(mca_io_base_components_t *comp);
-
-    /**
-     * Return all the cached requests on an MPI_File to the global IO
-     * request freelist.
-     *
-     * @param file MPI_File to flush the cache
-     *
-     * 
-     */
-    OMPI_DECLSPEC void mca_io_base_request_return(struct ompi_file_t *file);
-
-    /**
-     * Shut down the component list
-     *
-     * @returns OMPI_SUCCESS Always
-     *
-     * Destroys resources associated with the io framework's
-     * currently-in-use list.
-     */
-    OMPI_DECLSPEC int mca_io_base_component_finalize(void);
-
-    /**
      * Shut down the io MCA framework.
      *
      * @retval OMPI_SUCCESS Always
@@ -263,8 +191,6 @@ BEGIN_C_DECLS
      * It must be the last function invoked on the io MCA framework.
      */
     OMPI_DECLSPEC int mca_io_base_close(void);
-
-    OMPI_DECLSPEC int mca_io_base_component_run_progress(void);
 
     OMPI_DECLSPEC int mca_io_base_register_datarep(char *,
                                               MPI_Datarep_conversion_function*,
@@ -309,15 +235,6 @@ OMPI_DECLSPEC extern bool mca_io_base_components_available_valid;
  * process.
  */
 OMPI_DECLSPEC extern opal_list_t mca_io_base_components_available;
-/**
- * Indicator as to whether the freelist of IO requests is valid or
- * not.
- */
-OMPI_DECLSPEC extern bool mca_io_base_requests_valid;
-/**
- * Free list of IO requests
- */
-OMPI_DECLSPEC extern ompi_free_list_t mca_io_base_requests;
 
 END_C_DECLS
 #endif /* MCA_BASE_IO_H */

@@ -38,17 +38,6 @@ void ADIOI_Datatype_iscontig(MPI_Datatype datatype, int *flag);
  * The ROMIO module operations
  */
 mca_io_base_module_2_0_0_t mca_io_romio_module = {
-
-    /* Once-per-process request init / finalize functions */
-
-    NULL,
-    NULL,
-
-    /* Finalize, free, cancel */
-
-    mca_io_romio_request_free,
-    mca_io_romio_request_cancel,
-
     /* Back end to MPI API calls (pretty much a 1-to-1 mapping) */
 
     mca_io_romio_file_open,

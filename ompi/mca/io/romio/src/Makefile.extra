@@ -42,6 +42,5 @@ sources += \
 	src/io_romio_file_open.c \
 	src/io_romio_file_read.c \
 	src/io_romio_file_write.c \
-	src/io_romio_module.c \
-	src/io_romio_request.c
+	src/io_romio_module.c
 

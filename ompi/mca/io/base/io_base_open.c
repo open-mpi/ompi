@@ -97,14 +97,6 @@ int mca_io_base_open(void)
     
     mca_io_base_param = mca_base_param_find("io", "base", NULL);
 
-    /* Initialize some io framework resrouces */
-
-    mca_io_base_component_init();
-
-    /* Intialize the request progression code */
-
-    mca_io_base_request_progress_init();
-
     /* All done */
     
     return OMPI_SUCCESS;

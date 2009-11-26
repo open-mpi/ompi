@@ -43,7 +43,6 @@ int MPI_File_iread_at(MPI_File fh, MPI_Offset offset, void *buf,
                       int count, MPI_Datatype datatype, MPI_Request *request)
 {
     int rc;
-    mca_io_base_request_t *io_request;
 
     MEMCHECKER(
         memchecker_datatype(datatype);
@@ -57,6 +56,8 @@ int MPI_File_iread_at(MPI_File fh, MPI_Offset offset, void *buf,
             rc = MPI_ERR_FILE;
         } else if (count < 0) {
             rc = MPI_ERR_COUNT;
+        } else if (NULL == request) {
+            rc = MPI_ERR_REQUEST;
         } else {
            OMPI_CHECK_DATATYPE_FOR_RECV(rc, datatype, count);
         }
@@ -65,21 +66,12 @@ int MPI_File_iread_at(MPI_File fh, MPI_Offset offset, void *buf,
 
     OPAL_CR_ENTER_LIBRARY();
 
-    /* Get a request */
-
-    if (OMPI_SUCCESS != mca_io_base_request_alloc(fh, &io_request)) {
-        OPAL_CR_EXIT_LIBRARY();
-        return OMPI_ERRHANDLER_INVOKE(fh, MPI_ERR_NO_MEM, FUNC_NAME);
-    }
-    *request = (ompi_request_t*) io_request;
-
     /* Call the back-end io component function */
-
     switch (fh->f_io_version) {
     case MCA_IO_BASE_V_2_0_0:
         rc = fh->f_io_selected_module.v2_0_0.
             io_module_file_iread_at(fh, offset, buf, count, datatype, 
-                                    io_request);
+                                    request);
         break;
 
     default:
