@@ -47,15 +47,14 @@ TD.eqno			{ }	/* equation-number cells */
 
 
 /* document-specific styles come next */
-DIV.navigation		{   }
 PRE.preform		{   }
-SPAN.textit		{ font-style: italic  }
-SPAN.arabic		{   }
+DIV.navigation		{   }
 SPAN.textbf		{ font-weight: bold  }
+SPAN.arabic		{   }
+SPAN.textit		{ font-style: italic  }
 
-BODY { font-family: sans-serif }
+BODY {font-family: sans-serif;}
 </STYLE>
-
 </HEAD>
 
 <BODY >
@@ -63,7 +62,7 @@ BODY { font-family: sans-serif }
 <P>
 
 <P>
-<B><BIG CLASS="XHUGE">VampirTrace 5.4.10 User Manual</BIG></B>
+<B><BIG CLASS="XHUGE">VampirTrace 5.4.11 User Manual</BIG></B>
 <BR>
 <BR>
 <BR>
@@ -253,7 +252,7 @@ trace files of several hundred megabytes. To protect users from
 creating trace files of several gigabytes, the default behavior of 
 VampirTrace limits the internal buffer to 32 MB. This produces trace 
 files that are not larger than 32 MB per process, typically a lot smaller.
-Please read Section <A HREF="#trace_file_size">3.2</A> on how to remove or change the limit. 
+Please read Section <A HREF="#trace_file_size">[*]</A> on how to remove or change the limit. 
 
 <P>
 VampirTrace supports various Unix and Linux platforms common in  
@@ -276,9 +275,9 @@ of function calls, as well as sending and receiving of MPI messages.
 By default, VampirTrace handles this automatically. In order to enable
 instrumentation of function calls, the user only needs to replace the compiler 
 and linker commands with VampirTrace's wrappers, 
-see Section <A HREF="#compiler_wrappers">2.1</A> below. 
+see Section <A HREF="#compiler_wrappers">[*]</A> below. 
 VampirTrace supports different ways of instrumentation as described in 
-Section <A HREF="#instrumentation_types">2.2</A>.
+Section <A HREF="#instrumentation_types">[*]</A>.
 
 <P>
 
@@ -371,7 +370,7 @@ by VampirTrace's compiler wrapper:
 <P>
 If you want to instrument MPI events only (creates smaller trace files and less overhead)
 use the option <TT>-vt:inst manual</TT> to disable automatic instrumentation
-of user functions (see also Section <A HREF="#A1">2.4</A>).
+of user functions (see also Section <A HREF="#A1">[*]</A>).
 
 <P>
 </LI>
@@ -432,7 +431,7 @@ your program uses by the switches
 hybrid programs, respectively.
 Note that these switches do not change the underlying compiler or compiler flags.
 Use the option <TT>-vt:verbose</TT> to see the command line the compiler wrapper executes.
-Refer to Appendix <A HREF="#comm_wrappers">A.1</A> for a list of all compiler wrapper options.
+Refer to Appendix <A HREF="#comm_wrappers">[*]</A> for a list of all compiler wrapper options.
 
 <P>
 The default settings of the compiler wrappers can be modified in the files
@@ -459,7 +458,7 @@ instrumentation type to use. Following values for <TT>&lt;insttype&gt;</TT> are 
 <P>
 
 <UL>
-<LI>fully-automatic instrumentation by the compiler (see Section <A HREF="#compiler_instrumentation">2.3</A>):
+<LI>fully-automatic instrumentation by the compiler (see Section <A HREF="#compiler_instrumentation">[*]</A>):
 
 <P>
 <TABLE CELLPADDING=3>
@@ -496,10 +495,10 @@ instrumentation type to use. Following values for <TT>&lt;insttype&gt;</TT> are 
 <TH ALIGN="LEFT"><SPAN  CLASS="textbf">&nbsp;</SPAN></TH>
 </TR>
 <TR><TD ALIGN="LEFT">manual</TD>
-<TD ALIGN="LEFT">VampirTrace's API (see Section <A HREF="#A1">2.4</A>)</TD>
+<TD ALIGN="LEFT">VampirTrace's API (see Section <A HREF="#A1">[*]</A>)</TD>
 </TR>
 <TR><TD ALIGN="LEFT">pomp</TD>
-<TD ALIGN="LEFT">POMP INST directives (see Section <A HREF="#A2">2.5</A>)</TD>
+<TD ALIGN="LEFT">POMP INST directives (see Section <A HREF="#A2">[*]</A>)</TD>
 </TR>
 </TABLE>
 
@@ -513,7 +512,7 @@ instrumentation type to use. Following values for <TT>&lt;insttype&gt;</TT> are 
 <TH ALIGN="LEFT"><SPAN  CLASS="textbf">&nbsp;</SPAN></TH>
 </TR>
 <TR><TD ALIGN="LEFT">dyninst</TD>
-<TD ALIGN="LEFT">binary-instrumentation with Dyninst (Section <A HREF="#A3">2.6</A>)</TD>
+<TD ALIGN="LEFT">binary-instrumentation with Dyninst (Section <A HREF="#A3">[*]</A>)</TD>
 </TR>
 </TABLE>
 
@@ -528,7 +527,7 @@ wrapper's configuration file (e.g. <TT>share/vampirtrace/vtcc-wrapper-data.txt</
 installation directory of VampirTrace for the C compiler wrapper).
 
 <P>
-See Appendix <A HREF="#comm_wrappers">A.1</A> or type <TT>vtcc -vt:help</TT> for other
+See Appendix <A HREF="#comm_wrappers">[*]</A> or type <TT>vtcc -vt:help</TT> for other
 options that can be passed through VampirTrace's compiler wrapper.
 
 <P>
@@ -592,7 +591,7 @@ Please consider that BFD is deliviered under the GNU General Public License
 (GPL). So if you want to build binary packages including VampirTrace make sure
 to use the option <TT>-without-bfd</TT> to get a version without BFD. In this
 case you have to use <TT>nm</TT> to get symbol information from the running
-application executable (see Section&nbsp;<A HREF="#bfdnotes">2.3.1</A>).
+application executable (see Section&nbsp;<A HREF="#bfdnotes">[*]</A>).
 
 <P>
 
@@ -791,7 +790,7 @@ The compiler wrapper dynamically links the library <TT>libvt.dynatt.so</TT>
   Note that the application should have been compiled with the <TT>-g</TT>
   switch in order to have symbol names visible.
   After a trace-run by using this way of instrumenting, the <TT>vtunify</TT>
-  utility needs to be invoked manually (see Sections <A HREF="#unification">3.3</A> and <A HREF="#VTUNIFY">A.2</A>).
+  utility needs to be invoked manually (see Sections <A HREF="#unification">[*]</A> and <A HREF="#VTUNIFY">[*]</A>).
 
 <P>
 To prevent certain functions from being instrumented you can set
@@ -830,7 +829,7 @@ VampirTrace run-time system which might help tracking down the problem.
 <P>
 The internal buffer of VampirTrace is limited to 32 MB. Use the environment
 variable <TT>VT_BUFFER_SIZE</TT> and <TT>VT_MAX_FLUSHES</TT> to increase
-this limit. Section <A HREF="#trace_file_size">3.2</A> contains further information on
+this limit. Section <A HREF="#trace_file_size">[*]</A> contains further information on
 influencing trace file size.
 
 <P>
@@ -882,15 +881,15 @@ of a VampirTrace instrumented executable:
 </TR>
 <TR><TD ALIGN="LEFT"><TT>VT_METRICS</TT></TD>
 <TD ALIGN="LEFT">Specify counter metrics to be recorded with trace events as a
-	colon-separated list of names. (for details see Appendix <A HREF="#papi">B</A>)</TD>
+	colon-separated list of names. (for details see Appendix <A HREF="#papi">[*]</A>)</TD>
 <TD ALIGN="LEFT">-</TD>
 </TR>
 <TR><TD ALIGN="LEFT"><TT>VT_MEMTRACE</TT></TD>
-<TD ALIGN="LEFT">Enable memory allocation counters? (see Sec. <A HREF="#mem_alloc_counters">4.2</A>)</TD>
+<TD ALIGN="LEFT">Enable memory allocation counters? (see Sec. <A HREF="#mem_alloc_counters">[*]</A>)</TD>
 <TD ALIGN="LEFT">no</TD>
 </TR>
 <TR><TD ALIGN="LEFT"><TT>VT_IOTRACE</TT></TD>
-<TD ALIGN="LEFT">Enable tracing of application I/O calls? (see Sec. <A HREF="#app_io_calls">4.3</A>)</TD>
+<TD ALIGN="LEFT">Enable tracing of application I/O calls? (see Sec. <A HREF="#app_io_calls">[*]</A>)</TD>
 <TD ALIGN="LEFT">no</TD>
 </TR>
 <TR><TD ALIGN="LEFT"><TT>VT_MPITRACE</TT></TD>
@@ -898,20 +897,20 @@ of a VampirTrace instrumented executable:
 <TD ALIGN="LEFT">yes</TD>
 </TR>
 <TR><TD ALIGN="LEFT"><TT>VT_DYN_BLACKLIST</TT></TD>
-<TD ALIGN="LEFT">Name of blacklist file for Dyninst instrumentation (see Section <A HREF="#A3">2.6</A>)</TD>
+<TD ALIGN="LEFT">Name of blacklist file for Dyninst instrumentation (see Section <A HREF="#A3">[*]</A>)</TD>
 <TD ALIGN="LEFT">-</TD>
 </TR>
 <TR><TD ALIGN="LEFT"><TT>VT_DYN_SHLIBS</TT></TD>
-<TD ALIGN="LEFT">Colon-separated list of shared libraries for Dyninst instrumentation (see Section <A HREF="#A3">2.6</A>)</TD>
+<TD ALIGN="LEFT">Colon-separated list of shared libraries for Dyninst instrumentation (see Section <A HREF="#A3">[*]</A>)</TD>
 <TD ALIGN="LEFT">-</TD>
 </TR>
 <TR><TD ALIGN="LEFT"><TT>VT_FILTER_SPEC</TT></TD>
-<TD ALIGN="LEFT">Name of function/region filter file (see Section <A HREF="#function_filter">5.1</A>)</TD>
+<TD ALIGN="LEFT">Name of function/region filter file (see Section <A HREF="#function_filter">[*]</A>)</TD>
 <TD ALIGN="LEFT">-</TD>
 </TR>
 <TR><TD ALIGN="LEFT"><TT>VT_GROUPS_SPEC</TT></TD>
 <TD ALIGN="LEFT">Name of function grouping file
-	(See Section <A HREF="#function_groups">5.2</A>)</TD>
+	(See Section <A HREF="#function_groups">[*]</A>)</TD>
 <TD ALIGN="LEFT">-</TD>
 </TR>
 <TR><TD ALIGN="LEFT"><TT>VT_UNIFY</TT></TD>
@@ -1007,7 +1006,7 @@ PAPI Hardware Performance Counters</A>
 
 <P>
 If VampirTrace has been built with hardware-counter support enabled (see
-  Section <A HREF="#install">C</A>), VampirTrace is capable of recording hardware counter
+  Section <A HREF="#install">[*]</A>), VampirTrace is capable of recording hardware counter
   information as part of the event records. To request the measurement of
   certain counters, the user must set the environment variable <TT>VT_METRICS</TT>.
   The variable should contain a colon-separated list of counter names,
@@ -1023,7 +1022,7 @@ If VampirTrace has been built with hardware-counter support enabled (see
 <BR>
 <BR>
 to record the number of floating point instructions and level 2 cache misses.
-  See Appendix <A HREF="#papi">B</A> for a full list of PAPI preset counters.
+  See Appendix <A HREF="#papi">[*]</A> for a full list of PAPI preset counters.
 
 <P>
 The user can leave the environment variable unset to indicate that no
@@ -1048,7 +1047,7 @@ The GNU glibc implementation provides a special hook mechanism that allows
 
 <P>
 If VampirTrace has been built with memory-tracing support enabled (see
-  Section <A HREF="#install">C</A>), VampirTrace is capable of recording memory allocation
+  Section <A HREF="#install">[*]</A>), VampirTrace is capable of recording memory allocation
   information as part of the event records. To request the measurement of
   the application's allocated memory, the user must set the environment variable
   <TT>VT_MEMTRACE</TT> to <TT>yes</TT>.
@@ -1149,7 +1148,7 @@ User Defined Counters</A>
 </H1>
 
 <P>
-In addition to the manual instrumentation (see Section <A HREF="#A1">2.4</A>) the VampirTrace API
+In addition to the manual instrumentation (see Section <A HREF="#A1">[*]</A>) the VampirTrace API
   provides instrumentation calls which allow recording of 
   program variable values (e.g. iteration counts, calculation results, ...) or any other 
   numerical quantity.
@@ -1295,7 +1294,7 @@ C/C++:
 For all three languages the instrumented sources have to be compiled 
   with <TT>-DVTRACE</TT>. Otherwise the <TT>VT_*</TT> calls are ignored.
   If additionally any functions or regions are manually instrumented by VT's API
-  (see Section <A HREF="#A1">2.4</A>) and only the instrumentation calls for user defined
+  (see Section <A HREF="#A1">[*]</A>) and only the instrumentation calls for user defined
   counter should be disabled, then the sources have to be compiled with
   <TT>-DVTRACE_NO_COUNT</TT>, too.
 
@@ -1353,7 +1352,7 @@ The remaining functions <TT>*</TT> will be recorded at most 3000000 times.
 Besides creating filter files by hand, you can also use the <TT>vtfilter</TT>
 tool to generate them automatically. This tool reads the provided trace
 and decides whether a function should be filtered or not, based on the evaluation of
-certain parameters. For more information see Section <A HREF="#VTFILTER">A.4</A>.
+certain parameters. For more information see Section <A HREF="#VTFILTER">[*]</A>.
 
 <P>
 
@@ -1380,10 +1379,10 @@ VampirTrace allows assigning functions/regions to a group.
 <TD ALIGN="LEFT">OpenMP constructs and functions</TD>
 </TR>
 <TR><TD ALIGN="LEFT"><TT>MEM</TT></TD>
-<TD ALIGN="LEFT">Memory allocation functions (see <A HREF="#mem_alloc_counters">4.2</A>)</TD>
+<TD ALIGN="LEFT">Memory allocation functions (see <A HREF="#mem_alloc_counters">[*]</A>)</TD>
 </TR>
 <TR><TD ALIGN="LEFT"><TT>I/O</TT></TD>
-<TD ALIGN="LEFT">I/O functions (see <A HREF="#app_io_calls">4.3</A>)</TD>
+<TD ALIGN="LEFT">I/O functions (see <A HREF="#app_io_calls">[*]</A>)</TD>
 </TR>
 <TR><TD ALIGN="LEFT"><TT>Application</TT></TD>
 <TD ALIGN="LEFT">remaining instrumented functions and source code regions</TD>
