@@ -38,6 +38,7 @@
 #include "opal/class/opal_hash_table.h"
 #include "opal/util/output.h"
 #include "opal/event/event.h"
+#include "opal/threads/threads.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
