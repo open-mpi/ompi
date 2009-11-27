@@ -35,7 +35,6 @@
 #include "opal/dss/dss.h"
 
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/sensor/sensor_types.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
 
@@ -984,27 +983,4 @@ OBJ_CLASS_INSTANCE(orte_regex_node_t,
                    orte_regex_node_construct,
                    orte_regex_node_destruct);
 
-static void orte_sensor_data_construct(orte_sensor_data_t *ptr)
-{
-    ptr->sensor = NULL;
-    ptr->scaling_law = ORTE_SENSOR_SCALE_LINEAR;
-    ptr->min = 0.0;
-    ptr->max = 100.0;
-    ptr->gain = 1.0;
-    ptr->data.size = 0;
-    ptr->data.bytes = NULL;
-}
-static void orte_sensor_data_destruct(orte_sensor_data_t *ptr)
-{
-    if (NULL != ptr->sensor) {
-        free(ptr->sensor);
-    }
-    if (NULL != ptr->data.bytes) {
-        free(ptr->data.bytes);
-    }
-}
-OBJ_CLASS_INSTANCE(orte_sensor_data_t,
-                   opal_object_t,
-                   orte_sensor_data_construct,
-                   orte_sensor_data_destruct);
 #endif

@@ -57,10 +57,6 @@
 #include "orte/util/regex.h"
 #include "orte/util/show_help.h"
 #include "orte/mca/notifier/base/base.h"
-#if ORTE_ENABLE_MONITORING
-#include "orte/mca/sensor/base/base.h"
-#include "orte/mca/fddp/base/base.h"
-#endif
 #if ORTE_ENABLE_MULTICAST
 #include "orte/mca/rmcast/base/base.h"
 #endif
@@ -375,32 +371,6 @@ int orte_ess_base_orted_setup(char **hosts)
         goto error;
     }
     
-#if ORTE_ENABLE_MONITORING
-    /* setup the sensors */
-    if (ORTE_SUCCESS != (ret = orte_sensor_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_sensor_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_sensor_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_sensor_select";
-        goto error;
-    }
-    
-    /* setup the fddp */
-    if (ORTE_SUCCESS != (ret = orte_fddp_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_sensor_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_fddp_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_sensor_select";
-        goto error;
-    }
-#endif
-
     return ORTE_SUCCESS;
     
 error:
@@ -428,13 +398,6 @@ int orte_ess_base_orted_finalize(void)
         orte_grpcomm.onesided_barrier();
     }
     
-#if ORTE_ENABLE_MONITORING
-    /* finalize the sensors */
-    orte_sensor_base_close();
-    /* finalize the fddp */
-    orte_fddp_base_close();
-#endif
-
     orte_notifier_base_close();
     
     orte_cr_finalize();
