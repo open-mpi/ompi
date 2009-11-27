@@ -23,6 +23,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_free_list.h"
 #include "opal/class/opal_hash_table.h"
+#include "opal/threads/threads.h"
 
 #include "ompi/win/win.h"
 #include "ompi/communicator/communicator.h"

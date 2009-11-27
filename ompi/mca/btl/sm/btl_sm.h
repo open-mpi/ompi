@@ -41,6 +41,7 @@
 #include "opal/class/opal_free_list.h"
 #include "ompi/class/ompi_free_list.h"
 #include "opal/event/event.h"
+#include "opal/threads/threads.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
 
