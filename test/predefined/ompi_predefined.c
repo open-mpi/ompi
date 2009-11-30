@@ -154,8 +154,6 @@ int main(int argc, char **argv) {
     GAP_CHECK("f_io_selected_component", test_file, f_io_selected_component, f_io_version, 1);
     GAP_CHECK("f_io_selected_module", test_file, f_io_selected_module, f_io_selected_component, 1);
     GAP_CHECK("f_io_selected_data", test_file, f_io_selected_data, f_io_selected_module, 1);
-    GAP_CHECK("f_io_requests", test_file, f_io_requests, f_io_selected_data, 1);
-    GAP_CHECK("f_io_requests_lock", test_file, f_io_requests_lock, f_io_requests, 1);
     
     return 0;
 }
