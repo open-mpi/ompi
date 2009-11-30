@@ -58,6 +58,9 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/daemon_init.h"
 #include "opal/dss/dss.h"
+#if ORTE_ENABLE_BOOTSTRAP
+#include "opal/mca/sysinfo/sysinfo.h"
+#endif
 
 #include "orte/constants.h"
 #include "orte/util/show_help.h"
@@ -719,6 +722,52 @@ int orte_daemon(int argc, char *argv[])
                 goto DONE;
             }
         } else if (orte_daemon_bootstrap) {
+            /* include our node name */
+            opal_dss.pack(buffer, &orte_process_info.nodename, 1, OPAL_STRING);
+            
+#if !ORTE_ENABLE_MULTICAST
+            /* if we have multicast, then this info was already sent */
+#if ORTE_ENABLE_BOOTSTRAP
+            {
+                /* get our local resources */
+                char *keys[] = {
+                    OPAL_SYSINFO_CPU_TYPE,
+                    OPAL_SYSINFO_CPU_MODEL,
+                    OPAL_SYSINFO_NUM_CPUS,
+                    OPAL_SYSINFO_MEM_SIZE,
+                    NULL
+                };
+                opal_list_t resources;
+                opal_list_item_t *item;
+                opal_sysinfo_value_t *info;
+                int32_t num_values;
+                
+                OBJ_CONSTRUCT(&resources, opal_list_t);
+                opal_sysinfo.query(keys, &resources);
+                /* add number of values to the buffer */
+                num_values = opal_list_get_size(&resources);
+                opal_dss.pack(buffer, &num_values, 1, OPAL_INT32);
+                /* add them to the buffer */
+                while (NULL != (item = opal_list_remove_first(&resources))) {
+                    info = (opal_sysinfo_value_t*)item;
+                    opal_dss.pack(buffer, &info, 1, OPAL_STRING);
+                    opal_dss.pack(buffer, &info->type, 1, OPAL_DATA_TYPE_T);
+                    if (OPAL_INT64 == info->type) {
+                        opal_dss.pack(buffer, &(info->data.i64), 1, OPAL_INT64);
+                    } else if (OPAL_STRING == info->type) {
+                        opal_dss.pack(buffer, &(info->data.str), 1, OPAL_STRING);
+                    }
+                    /* if this is the cpu model, save it for later use */
+                    if (0 == strcmp(info->key, OPAL_SYSINFO_CPU_MODEL)) {
+                        orte_local_cpu_model = strdup(info->data.str);
+                    }
+                    OBJ_RELEASE(info);
+                }
+                OBJ_DESTRUCT(&resources);                
+            }
+#endif
+#endif
+
             /* send to a different callback location as the
              * HNP didn't launch us and isn't waiting for a
              * callback

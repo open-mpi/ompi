@@ -1,4 +1,6 @@
 enable_dlopen=no
+enable_multicast=yes
+enable_bootstrap=yes
 enable_mem_debug=no
 enable_mem_profile=no
 enable_memchecker=no
