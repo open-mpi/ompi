@@ -39,6 +39,9 @@
 #include "opal/util/basename.h"
 #include "opal/mca/pstat/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
+#if ORTE_ENABLE_BOOTSTRAP
+#include "opal/mca/sysinfo/base/base.h"
+#endif
 
 #include "orte/util/show_help.h"
 #include "orte/mca/rml/base/base.h"
@@ -165,6 +168,20 @@ static int rte_init(void)
         goto error;
     }
     
+#if ORTE_ENABLE_BOOTSTRAP
+    /* open and setup the local resource discovery framework */
+    if (ORTE_SUCCESS != (ret = opal_sysinfo_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "opal_sysinfo_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = opal_sysinfo_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "opal_sysinfo_base_select";
+        goto error;
+    }
+#endif
+
     /* Since we are the HNP, then responsibility for
      * defining the name falls to the PLM component for our
      * respective environment - hence, we have to open the PLM
@@ -405,6 +422,33 @@ static int rte_init(void)
     node = OBJ_NEW(orte_node_t);
     node->name = strdup(orte_process_info.nodename);
     node->index = opal_pointer_array_add(orte_node_pool, node);
+#if ORTE_ENABLE_BOOTSTRAP
+    {
+        /* get and store our local resources */
+        char *keys[] = {
+            OPAL_SYSINFO_CPU_TYPE,
+            OPAL_SYSINFO_CPU_MODEL,
+            OPAL_SYSINFO_NUM_CPUS,
+            OPAL_SYSINFO_MEM_SIZE,
+            NULL
+        };
+        opal_list_item_t *item;
+        opal_sysinfo_value_t *info;
+
+        opal_sysinfo.query(keys, &node->resources);
+        /* find our cpu model and save it for later */
+        for (item = opal_list_get_first(&node->resources);
+             item != opal_list_get_end(&node->resources);
+             item = opal_list_get_next(item)) {
+            info = (opal_sysinfo_value_t*)item;
+
+            if (0 == strcmp(info->key, OPAL_SYSINFO_CPU_MODEL)) {
+                orte_local_cpu_model = strdup(info->data.str);
+                break;
+            }
+        }
+    }
+#endif
     
     /* create and store a proc object for us */
     proc = OBJ_NEW(orte_proc_t);
@@ -658,6 +702,12 @@ static int rte_finalize(void)
         }
     }
     
+    /* handle the orted-specific OPAL stuff */
+#if ORTE_ENABLE_BOOTSTRAP
+    opal_sysinfo_base_close();
+#endif
+    opal_pstat_base_close();
+
     return ORTE_SUCCESS;    
 }
 

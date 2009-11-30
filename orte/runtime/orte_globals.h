@@ -264,6 +264,8 @@ typedef struct {
     char *cpu_set;
     /** Username on this node, if specified */
     char *username;
+    /* list of known system resources for this node */
+    opal_list_t resources;
 } orte_node_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_node_t);
 
@@ -524,6 +526,7 @@ ORTE_DECLSPEC extern bool orte_leave_session_attached;
 ORTE_DECLSPEC extern bool orte_do_not_launch;
 ORTE_DECLSPEC extern bool orted_spin_flag;
 ORTE_DECLSPEC extern bool orte_daemon_bootstrap;
+ORTE_DECLSPEC extern char *orte_local_cpu_model;
 
 /* ORTE OOB port flags */
 ORTE_DECLSPEC extern bool orte_static_ports;

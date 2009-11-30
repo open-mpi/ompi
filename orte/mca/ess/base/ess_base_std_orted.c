@@ -36,6 +36,9 @@
 #include "opal/runtime/opal_cr.h"
 #include "opal/mca/pstat/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
+#if ORTE_ENABLE_BOOTSTRAP
+#include "opal/mca/sysinfo/base/base.h"
+#endif
 
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/routed/base/base.h"
@@ -114,6 +117,20 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "orte_pstat_base_select";
         goto error;
     }
+    
+#if ORTE_ENABLE_BOOTSTRAP
+    /* open and setup the local resource discovery framework */
+    if (ORTE_SUCCESS != (ret = opal_sysinfo_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "opal_sysinfo_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = opal_sysinfo_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "opal_sysinfo_base_select";
+        goto error;
+    }
+#endif
     
     /* some environments allow remote launches - e.g., ssh - so
      * open the PLM and select something -only- if we are given
@@ -439,6 +456,12 @@ int orte_ess_base_orted_finalize(void)
     
     /* cleanup any lingering session directories */
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
+    
+    /* handle the orted-specific OPAL stuff */
+#if ORTE_ENABLE_BOOTSTRAP
+    opal_sysinfo_base_close();
+#endif
+    opal_pstat_base_close();
     
     return ORTE_SUCCESS;    
 }

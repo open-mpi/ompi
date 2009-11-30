@@ -1096,6 +1096,16 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     free(param);
     free(param2);
 
+    /* pass a param telling the child what model of cpu we are on,
+     * if we know it
+     */
+    if (NULL != orte_local_cpu_model) {
+        param = mca_base_param_environ_variable("cpu", NULL,"model");
+        /* do not overwrite what the user may have provided */
+        opal_setenv(param, orte_local_cpu_model, false, environ_copy);
+        free(param);
+    }
+    
     /* push data into environment - don't push any single proc
      * info, though. We are setting the environment up on a
      * per-context basis, and will add the individual proc

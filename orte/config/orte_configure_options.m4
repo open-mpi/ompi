@@ -95,5 +95,23 @@ fi
 AC_DEFINE_UNQUOTED([ORTE_ENABLE_MULTICAST], [$orte_want_multicast],
                    [Enable reliable multicast messaging])
 
+#
+# Do we want bootstrap of daemons enabled?
+#
+
+AC_MSG_CHECKING([if want bootstrap])
+AC_ARG_ENABLE([bootstrap],
+    [AC_HELP_STRING([--enable-bootstrap],
+                    [Enable bootstrap of daemons at node startup (default: disabled)])])
+if test "$enable_bootstrap" = "yes"; then
+    AC_MSG_RESULT([yes])
+    orte_want_bootstrap=1
+else
+    AC_MSG_RESULT([no])
+    orte_want_bootstrap=0
+fi
+AC_DEFINE_UNQUOTED([ORTE_ENABLE_BOOTSTRAP], [$orte_want_bootstrap],
+                   [Enable bootstrap of daemons at node startup])
+
 
 ])dnl

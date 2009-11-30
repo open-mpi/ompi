@@ -56,6 +56,7 @@ bool orte_leave_session_attached;
 bool orte_do_not_launch = false;
 bool orted_spin_flag = false;
 bool orte_daemon_bootstrap = false;
+char *orte_local_cpu_model = NULL;
 
 /* ORTE OOB port flags */
 bool orte_static_ports = false;
@@ -708,11 +709,14 @@ static void orte_node_construct(orte_node_t* node)
     }
     
     node->username = NULL;
+    
+    OBJ_CONSTRUCT(&node->resources, opal_list_t);
 }
 
 static void orte_node_destruct(orte_node_t* node)
 {
     int i;
+    opal_list_item_t *item;
     
     if (NULL != node->name) {
         free(node->name);
@@ -747,6 +751,11 @@ static void orte_node_destruct(orte_node_t* node)
         free(node->username);
         node->username = NULL;
     }
+    
+    while (NULL != (item = opal_list_remove_first(&node->resources))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&node->resources);
 }
 
 
