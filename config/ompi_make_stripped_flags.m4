@@ -11,7 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
-dnl Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+dnl Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -30,19 +30,20 @@ for s_word in $s_arg; do
     # See http://www.gnu.org/software/autoconf/manual/html_node/Quadrigraphs.html#Quadrigraphs
     # for an explanation of @<:@ and @:>@ -- they m4 expand to [ and ]
     case $s_word in
-    -g)             ;;
-    -g@<:@1-3@:>@)  ;;
-    +K@<:@0-5@:>@)  ;;
-    -O)             ;;
-    -O@<:@0-9@:>@)  ;;
-    -xO)            ;;
-    -xO@<:@0-9@:>@) ;;
-    -fast)          ;;
+    -g)                 ;;
+    -g@<:@1-3@:>@)      ;;
+    +K@<:@0-5@:>@)      ;;
+    -O)                 ;;
+    -O@<:@0-9@:>@)      ;;
+    -xO)                ;;
+    -xO@<:@0-9@:>@)     ;;
+    -fast)              ;;
+    -finline-functions) ;;
 
     # The below Sun Studio flags require or
     # trigger -xO optimization
-    -xvector*)     ;;
-    -xdepend=yes)  ;;
+    -xvector*)          ;;
+    -xdepend=yes)       ;;
 
     *)     s_result="$s_result $s_word"
     esac
