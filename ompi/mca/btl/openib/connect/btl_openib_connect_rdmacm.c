@@ -1159,7 +1159,7 @@ static int rdmacm_disconnected(id_context_t *context)
 static int rdmacm_destroy_dummy_qp(id_context_t *context)
 {
     /* We need to check id pointer because of retransmitions.
-                               Maybe the reject was already done. */
+       Maybe the reject was already done. */
 
     if (NULL != context->id) {
 	    if (NULL != context->id->qp) {
