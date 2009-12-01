@@ -71,11 +71,6 @@ int MPI_Graph_create(MPI_Comm old_comm, int nnodes, int *index,
             return OMPI_ERRHANDLER_INVOKE (old_comm, MPI_ERR_ARG,
                                            FUNC_NAME);
         }
-
-        if ((0 > reorder) || (1 < reorder)) {
-            return OMPI_ERRHANDLER_INVOKE (old_comm, MPI_ERR_ARG,
-                                           FUNC_NAME);
-        }
     }
 
     /* MPI-2.1 7.5.3 states that if nnodes == 0, all processes should
@@ -110,7 +105,7 @@ int MPI_Graph_create(MPI_Comm old_comm, int nnodes, int *index,
      * the new graph communicator
      */
 
-    re_order = (1 == reorder) ? true:false;
+    re_order = (0 == reorder) ? false : true;
 
     err = ompi_topo_create ((struct ompi_communicator_t *)old_comm,
                             nnodes,
