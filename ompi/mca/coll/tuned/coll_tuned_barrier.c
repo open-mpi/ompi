@@ -445,7 +445,7 @@ int ompi_coll_tuned_barrier_intra_check_forced_init (coll_tuned_force_algorithm_
 
 
 int ompi_coll_tuned_barrier_intra_do_forced(struct ompi_communicator_t *comm,
-					    mca_coll_base_module_t *module)
+                                            mca_coll_base_module_t *module)
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
@@ -473,8 +473,8 @@ int ompi_coll_tuned_barrier_intra_do_forced(struct ompi_communicator_t *comm,
 
 
 int ompi_coll_tuned_barrier_intra_do_this (struct ompi_communicator_t *comm,
-					   mca_coll_base_module_t *module,
-					   int algorithm, int faninout, int segsize)
+                                           mca_coll_base_module_t *module,
+                                           int algorithm, int faninout, int segsize)
 {
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:barrier_intra_do_this selected algorithm %d topo fanin/out%d", algorithm, faninout));
 
