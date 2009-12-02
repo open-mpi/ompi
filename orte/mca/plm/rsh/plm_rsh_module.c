@@ -83,6 +83,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmaps/rmaps.h"
 #include "orte/mca/routed/routed.h"
+#include "orte/mca/rml/base/rml_contact.h"
 
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/base.h"
@@ -941,6 +942,89 @@ cleanup:
     return rc;
 }
 
+static int orted_num_callback = 0;
+static bool orted_failed_launch = false;
+static void
+plm_rsh_report_orted_launch(int status, orte_process_name_t* sender,
+                            opal_buffer_t *buffer,
+                            orte_rml_tag_t tag, void *cbdata)
+{
+    orte_process_name_t peer;
+    char *rml_uri = NULL;
+    int rc, idx;
+    orte_proc_t *daemon;
+    orte_job_t *jdatorted;
+    
+    orted_failed_launch = true;
+    /* unpack its contact info */
+    idx = 1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &rml_uri, &idx, OPAL_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+
+    /* set the contact info into the hash table */
+    if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(rml_uri))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+
+    rc = orte_rml_base_parse_uris(rml_uri, &peer, NULL );
+    if( ORTE_SUCCESS != rc ) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                         "%s plm:base:orted_report_launch from daemon %s via %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(&peer),
+                         ORTE_NAME_PRINT(sender)));
+    
+    if (NULL == (jdatorted = orte_get_job_data_object(peer.jobid))) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        goto CLEANUP;
+    }
+
+    /* update state and record for this daemon contact info */
+    if (NULL == (daemon = (orte_proc_t*)opal_pointer_array_get_item(jdatorted->procs, peer.vpid))) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        goto CLEANUP;
+    }
+    daemon->state = ORTE_PROC_STATE_RUNNING;
+    daemon->rml_uri = rml_uri;
+
+    /* This is now considered as correctly started even if we fail to decrypt
+     * the timing information.
+     */
+    orted_failed_launch = false;
+
+    /* if we are doing a timing test, unload the start and setup times of the daemon */
+    if (orte_timing) {
+        /* Deal with the timing if this information is considered useful */
+    }
+    
+    /* if a tree-launch is underway, send the cmd back */
+    if (NULL != orte_tree_launch_cmd) {
+        orte_rml.send_buffer(&peer, orte_tree_launch_cmd, ORTE_RML_TAG_DAEMON, 0);
+    }
+    
+CLEANUP:
+
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                         "%s plm:base:orted_report_launch %s for daemon %s (via %s) at contact %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         orted_failed_launch ? "failed" : "completed",
+                         ORTE_NAME_PRINT(&peer),
+                         ORTE_NAME_PRINT(sender), daemon->rml_uri));
+
+    if (orted_failed_launch) {
+        if( NULL != rml_uri ) free(rml_uri);
+        orte_errmgr.incomplete_start(peer.jobid, ORTE_ERROR_DEFAULT_EXIT_CODE);
+    } else {
+        orted_num_callback++;
+    }
+}
 
 /**
  * Launch a daemon (bootproxy) on each node. The daemon will be responsible
@@ -1148,6 +1232,16 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
     
     /* set the job state to indicate we attempted to launch */
     job_state = ORTE_JOB_STATE_FAILED_TO_START;
+
+    /* Register a callback to listen for our daemons */
+    orted_num_callback = 0;
+    orted_failed_launch = false;
+    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ORTED_CALLBACK,
+                                 ORTE_RML_PERSISTENT, plm_rsh_report_orted_launch, NULL);
+    if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
     
     /*
      * Iterate through each of the nodes
@@ -1238,6 +1332,11 @@ launch:
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                 ORTE_NAME_PRINT(&node->daemon->name)));
 
+            /* setup callback on sigchild - wait until setup above is complete
+             * as the callback can occur in the call to orte_wait_cb
+             */
+            orte_wait_cb(pid, orte_plm_rsh_wait_daemon, (void*)node->daemon);
+
             OPAL_THREAD_LOCK(&mca_plm_rsh_component.lock);
             /* This situation can lead to a deadlock if '--debug-daemons' is set.
              * However, the deadlock condition is tested at the begining of this
@@ -1249,11 +1348,6 @@ launch:
             }
             OPAL_THREAD_UNLOCK(&mca_plm_rsh_component.lock);
             
-            /* setup callback on sigchild - wait until setup above is complete
-             * as the callback can occur in the call to orte_wait_cb
-             */
-            orte_wait_cb(pid, orte_plm_rsh_wait_daemon, (void*)node->daemon);
-
             /* if required - add delay to avoid problems w/ X11 authentication */
             if (0 < opal_output_get_verbosity(orte_plm_globals.output)
                 && mca_plm_rsh_component.delay) {
@@ -1263,14 +1357,8 @@ launch:
     }
 
     /* wait for daemons to callback */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_daemon_callback(map->num_new_daemons))) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                             "%s plm:rsh: daemon launch failed for job %s on error %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(active_job), ORTE_ERROR_NAME(rc)));
-        goto cleanup;
-    }
-    
+    ORTE_PROGRESSED_WAIT(orted_failed_launch, orted_num_callback, map->num_new_daemons);
+
 launch_apps:
     /* if we get here, then the daemons succeeded, so any failure would now be
      * for the application job
@@ -1316,6 +1404,12 @@ launch_apps:
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
         orte_plm_base_launch_failed(failed_job, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, job_state);
+    }
+
+    /* cancel the lingering recv */
+    if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ORTED_CALLBACK))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
     }
 
     /* setup a "heartbeat" timer to periodically check on
