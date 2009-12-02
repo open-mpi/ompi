@@ -107,12 +107,6 @@
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/routed/base/base.h"
-#if ORTE_ENABLE_MONITORING
-#include "orte/mca/sensor/sensor.h"
-#include "orte/mca/sensor/base/base.h"
-#include "orte/mca/fddp/fddp.h"
-#include "orte/mca/fddp/base/base.h"
-#endif
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/base.h"
 #if OPAL_ENABLE_FT == 1
@@ -444,25 +438,7 @@ void ompi_info_open_components(void)
     map->type = strdup("plm");
     map->components = &orte_plm_base.available_components;
     opal_pointer_array_add(&component_map, map);
-    
-#if ORTE_ENABLE_MONITORING
-    if (ORTE_SUCCESS != orte_sensor_base_open()) {
-        goto error;
-    }
-    map = OBJ_NEW(ompi_info_component_map_t);
-    map->type = strdup("sensor");
-    map->components = &mca_sensor_base_components_available;
-    opal_pointer_array_add(&component_map, map);
-    
-    if (ORTE_SUCCESS != orte_fddp_base_open()) {
-        goto error;
-    }
-    map = OBJ_NEW(ompi_info_component_map_t);
-    map->type = strdup("fddp");
-    map->components = &orte_rmaps_base.available_components;
-    opal_pointer_array_add(&component_map, map);
-#endif
-    
+
 #if OPAL_ENABLE_FT == 1
     if (ORTE_SUCCESS != orte_snapc_base_open()) {
         goto error;
@@ -686,11 +662,6 @@ void ompi_info_close_components()
 #if ORTE_ENABLE_MULTICAST
 
         (void) orte_rmcast_base_close();
-#endif
-#if ORTE_ENABLE_MONITORING
-
-        (void) orte_sensor_base_close();
-        (void) orte_fddp_base_close();
 #endif
 #endif
         (void) orte_errmgr_base_close();

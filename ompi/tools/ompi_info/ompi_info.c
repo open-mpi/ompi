@@ -227,10 +227,6 @@ int main(int argc, char *argv[])
 #endif
     opal_pointer_array_add(&mca_types, "rml");
     opal_pointer_array_add(&mca_types, "routed");
-#if ORTE_ENABLE_MONITORING
-    opal_pointer_array_add(&mca_types, "sensor");
-    opal_pointer_array_add(&mca_types, "fddp");
-#endif
     opal_pointer_array_add(&mca_types, "plm");
 #if OPAL_ENABLE_FT == 1
     opal_pointer_array_add(&mca_types, "snapc");
