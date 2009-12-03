@@ -1050,6 +1050,7 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
     orte_std_cntr_t nnode;
     orte_jobid_t failed_job;
     orte_job_state_t job_state = ORTE_JOB_NEVER_LAUNCHED;
+    bool recv_issued = false;
     
     /* wait for the launch to complete */
     OPAL_THREAD_LOCK(&orte_plm_globals.spawn_lock);
@@ -1242,6 +1243,7 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+    recv_issued = true;
     
     /*
      * Iterate through each of the nodes
@@ -1407,11 +1409,14 @@ launch_apps:
     }
 
     /* cancel the lingering recv */
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ORTED_CALLBACK))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
+    if (recv_issued) {
+        if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ORTED_CALLBACK))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        recv_issued = false;
     }
-
+    
     /* setup a "heartbeat" timer to periodically check on
      * the state-of-health of the orteds, if requested AND
      * we actually launched some daemons!
