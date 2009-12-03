@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
     double pi;
     pid_t pid;
 
-    if (0 > (rc = orte_init(ORTE_NON_TOOL))) {
+    if (0 > (rc = orte_init(ORTE_PROC_NON_MPI))) {
         fprintf(stderr, "spin: couldn't init orte - error code %d\n", rc);
         return rc;
     }
