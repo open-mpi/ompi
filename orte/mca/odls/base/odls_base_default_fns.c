@@ -2492,6 +2492,9 @@ static void check_proc_complete(orte_odls_child_t *child)
                 }
             }
 
+            /* ensure the job's local session directory tree is removed */
+            orte_session_dir_cleanup(jdat->jobid);
+            
             /* remove this job from our local job data since it is complete */
             opal_list_remove_item(&orte_local_jobdata, &jdat->super);
             OBJ_RELEASE(jdat);
@@ -2930,6 +2933,12 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs, bool se
                         ORTE_ERROR_LOG(rc);
                         goto CLEANUP;
                     }
+                    /* if no children are left alive for this job, cleanup the
+                     * job session dir tree to ensure it is removed
+                     */
+                    if (!any_live_children(last_job)) {
+                        orte_session_dir_cleanup(last_job);
+                    }
                 }
                 /* pack the jobid */
                 if (ORTE_SUCCESS != (rc = opal_dss.pack(&alert, &(child->name->jobid), 1, ORTE_JOBID))) {
@@ -3032,6 +3041,9 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs, bool se
             if (ORTE_SUCCESS != (rc = pack_state_for_proc(&alert, false, child))) {
                 ORTE_ERROR_LOG(rc);
             }
+            
+            /* ensure the child's session directory is cleaned up */
+            orte_session_dir_finalize(child->name);
             
             /* release the memory - this child is already removed from list */
             OBJ_RELEASE(child);
