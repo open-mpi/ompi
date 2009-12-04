@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 
     test_init("opal_value_array_t");
 
-    i = opal_init();
+    i = opal_init(&argc, &argv);
     test_verify_int(OPAL_SUCCESS, i);
     if (OPAL_SUCCESS != i) {
         test_finalize();
