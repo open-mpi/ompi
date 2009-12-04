@@ -317,6 +317,7 @@ static void recv_construct(rmcast_base_recv_t *ptr)
     ptr->channel = ORTE_RMCAST_INVALID_CHANNEL;
     ptr->recvd = false;
     ptr->tag = ORTE_RMCAST_TAG_INVALID;
+    ptr->seq_num = 0;
     ptr->flags = ORTE_RMCAST_NON_PERSISTENT;  /* default */
     ptr->iovec_array = NULL;
     ptr->iovec_count = 0;
@@ -338,6 +339,7 @@ static void channel_construct(rmcast_base_channel_t *ptr)
     ptr->port = 0;
     ptr->interface = 0;
     ptr->xmit = -1;
+    ptr->seq_num = 0;
     ptr->recv = -1;
     memset(&ptr->addr, 0, sizeof(ptr->addr));
     OBJ_CONSTRUCT(&ptr->send_lock, opal_mutex_t);
