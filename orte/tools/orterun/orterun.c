@@ -491,7 +491,7 @@ int orterun(int argc, char *argv[])
      *  depend upon opal_init_util() functionality.
      */
     /* Need to initialize OPAL so that install_dirs are filled in */
-    if (OPAL_SUCCESS != opal_init_util()) {
+    if (OPAL_SUCCESS != opal_init_util(&argc, &argv)) {
         exit(1);
     }
     
@@ -566,7 +566,7 @@ int orterun(int argc, char *argv[])
      * up incorrect infrastructure that only a singleton would
      * require
      */
-    if (ORTE_SUCCESS != (rc = orte_init(ORTE_PROC_HNP))) {
+    if (ORTE_SUCCESS != (rc = orte_init(&argc, &argv, ORTE_PROC_HNP))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }    

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -337,7 +337,7 @@ static int orte_ps_init(int argc, char *argv[]) {
      * to ensure installdirs is setup properly
      * before calling mca_base_open();
      */
-    if( ORTE_SUCCESS != (ret = opal_init_util()) ) {
+    if( ORTE_SUCCESS != (ret = opal_init_util(&argc, &argv)) ) {
         return ret;
     }
 
@@ -384,7 +384,7 @@ static int orte_ps_init(int argc, char *argv[]) {
     /***************************
      * We need all of OPAL and the TOOL portion of ORTE
      ***************************/
-    ret = orte_init(ORTE_PROC_TOOL);
+    ret = orte_init(&argc, &argv, ORTE_PROC_TOOL);
 
     return ret;
 }
