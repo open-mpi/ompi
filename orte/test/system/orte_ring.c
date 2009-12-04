@@ -29,7 +29,7 @@ main(int argc, char *argv[]){
     /*
      * Init
      */
-    orte_init(ORTE_NON_TOOL);
+    orte_init(&argc, &argv, ORTE_PROC_NON_MPI);
 
     num_peers = orte_process_info.num_procs;
 
