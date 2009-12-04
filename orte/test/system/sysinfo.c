@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
     opal_list_item_t *item;
     char *model;
     
-    if (ORTE_SUCCESS != orte_init(ORTE_PROC_NON_MPI)) {
+    if (ORTE_SUCCESS != orte_init(&argc, &argv, ORTE_PROC_NON_MPI)) {
         fprintf(stderr, "Failed orte_init\n");
         exit(1);
     }

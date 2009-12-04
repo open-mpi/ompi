@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
     char hostname[512];
     pid_t pid;
     
-    if (0 > (rc = orte_init(ORTE_PROC_NON_MPI))) {
+    if (0 > (rc = orte_init(&argc, &argv, ORTE_PROC_NON_MPI))) {
         fprintf(stderr, "orte_nodename: couldn't init orte - error code %d\n", rc);
         return rc;
     }

@@ -112,7 +112,7 @@ int main(int argc, char* argv[])
         exit(1);
     }
     
-    orte_init(ORTE_PROC_TOOL);
+    orte_init(&argc, &argv, ORTE_PROC_TOOL);
         
     num_procs = atoi(argv[1]);
     

@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
     int32_t i32=1;
     struct iovec iovec_array[3];
     
-    if (0 > (rc = orte_init(ORTE_PROC_NON_MPI))) {
+    if (0 > (rc = orte_init(&argc, &argv, ORTE_PROC_NON_MPI))) {
         fprintf(stderr, "orte_nodename: couldn't init orte - error code %d\n", rc);
         return rc;
     }

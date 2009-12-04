@@ -22,7 +22,7 @@ main(int argc, char *argv[]){
     /*
      * Init
      */
-    orte_init(ORTE_NON_TOOL);
+    orte_init(&argc, &argv, ORTE_PROC_NON_MPI);
 
     if (argc >= 2) {
         count = atoi(argv[1]);

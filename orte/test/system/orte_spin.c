@@ -16,7 +16,7 @@ int main(int argc, char* argv[])
     int i;
     double pi;
 
-    orte_init(ORTE_PROC_NON_MPI);
+    orte_init(&argc, &argv, ORTE_PROC_NON_MPI);
 
     i = 0;
     while (1) {

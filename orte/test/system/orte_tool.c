@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
     orte_app_context_t *app;
     char cwd[OPAL_PATH_MAX];
     
-    if (0 > (rc = orte_init(ORTE_PROC_TOOL))) {
+    if (0 > (rc = orte_init(&argc, &argv, ORTE_PROC_TOOL))) {
         fprintf(stderr, "orte_tool: couldn't init orte\n");
         return rc;
     }
