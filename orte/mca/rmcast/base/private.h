@@ -53,6 +53,7 @@ typedef struct {
     uint16_t port;
     uint32_t interface;
     int xmit;
+    orte_rmcast_seq_t seq_num;
     int recv;
     struct sockaddr_in addr;
     opal_event_t send_ev;
@@ -74,6 +75,7 @@ typedef struct {
     orte_rmcast_channel_t channel;
     bool recvd;
     orte_rmcast_tag_t tag;
+    orte_rmcast_seq_t seq_num;
     orte_rmcast_flag_t flags;
     struct iovec *iovec_array;
     int iovec_count;
@@ -135,20 +137,23 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_mcast_msg_event_t);
     } while(0);
 
 
-#define ORTE_MULTICAST_MESSAGE_HDR_HTON(bfr, tg)    \
-    do {                                            \
-        uint32_t nm;                                \
-        uint16_t tmp;                               \
-        nm = htonl(ORTE_PROC_MY_NAME->jobid);       \
-        memcpy((bfr), &nm, 4);                      \
-        nm = htonl(ORTE_PROC_MY_NAME->vpid);        \
-        memcpy((bfr)+4, &nm, 4);                    \
-        /* add the tag data, also converted */      \
-        tmp = htons((tg));                          \
-        memcpy((bfr)+8, &tmp, 2);                   \
+#define ORTE_MULTICAST_MESSAGE_HDR_HTON(bfr, tg, seq)   \
+    do {                                                \
+        uint32_t nm;                                    \
+        uint16_t tmp;                                   \
+        nm = htonl(ORTE_PROC_MY_NAME->jobid);           \
+        memcpy((bfr), &nm, 4);                          \
+        nm = htonl(ORTE_PROC_MY_NAME->vpid);            \
+        memcpy((bfr)+4, &nm, 4);                        \
+        /* add the tag data, also converted */          \
+        tmp = htons((tg));                              \
+        memcpy((bfr)+8, &tmp, 2);                       \
+        /* add the sequence number, also converted */   \
+        nm = htonl((seq));                              \
+        memcpy((bfr)+10, &nm, 4);                       \
     } while(0);
 
-#define ORTE_MULTICAST_MESSAGE_HDR_NTOH(bfr, nm, tg)        \
+#define ORTE_MULTICAST_MESSAGE_HDR_NTOH(bfr, nm, tg, seq)   \
     do {                                                    \
         uint32_t tmp;                                       \
         uint16_t tmp16;                                     \
@@ -160,20 +165,32 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_mcast_msg_event_t);
         /* extract the target tag */                        \
         memcpy(&tmp16, (bfr)+8, 2);                         \
         (tg) = ntohs(tmp16);                                \
+        /* extract the sequence number */                   \
+        memcpy(&tmp, (bfr)+10, 4);                          \
+        (seq) = ntohl(tmp);                                 \
     } while(0);
 
 #define ORTE_MULTICAST_LOAD_MESSAGE(bfr, dat, sz, maxsz, endsz) \
     do {                                                        \
-        if ((maxsz) <= (sz) + 10) {                             \
+        if ((maxsz) <= (sz) + 14) {                             \
             *(endsz) = 0;                                       \
         } else {                                                \
-            memcpy((bfr)+10, (dat), (sz));                      \
-            *(endsz) = (sz) + 10;                               \
+            memcpy((bfr)+14, (dat), (sz));                      \
+            *(endsz) = (sz) + 14;                               \
         }                                                       \
     } while(0);
 
 #define ORTE_MULTICAST_UNLOAD_MESSAGE(bfr, dat, sz) \
-        opal_dss.load((bfr), (dat)+10, (sz)-10);
+        opal_dss.load((bfr), (dat)+14, (sz)-14);
+
+#define ORTE_MULTICAST_NEXT_SEQUENCE_NUM(seq)   \
+    do {                                        \
+        if ((seq) < ORTE_RMCAST_SEQ_MAX) {      \
+            (seq) += 1;                         \
+        } else {                                \
+            (seq) = 0;                          \
+        }                                       \
+    } while(0);
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 
