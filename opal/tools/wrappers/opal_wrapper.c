@@ -477,7 +477,7 @@ main(int argc, char *argv[])
     bool disable_flags = true;
     bool real_flag = false;
 
-    if (OPAL_SUCCESS != (ret = opal_init_util())) {
+    if (OPAL_SUCCESS != (ret = opal_init_util(&argc, &argv))) {
         return ret;
     }
 

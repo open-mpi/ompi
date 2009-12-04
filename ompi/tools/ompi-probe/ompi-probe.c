@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
     char * tmp_env_var = NULL;
 
     /* init enough of opal to use a few utilities */
-    if (OPAL_SUCCESS != opal_init_util()) {
+    if (OPAL_SUCCESS != opal_init_util(&argc, &argv)) {
         fprintf(stderr, "OPAL failed to initialize -- ompi-probe aborting\n");
         exit(1);
     }

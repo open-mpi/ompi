@@ -127,7 +127,7 @@ main(int argc, char *argv[])
     char *tmp_env_var;
 
     /* This is needed so we can print the help message */
-    if (ORTE_SUCCESS != (ret = opal_init_util())) {
+    if (ORTE_SUCCESS != (ret = opal_init_util(&argc, &argv))) {
         return ret;
     }
 
@@ -157,7 +157,7 @@ main(int argc, char *argv[])
 #endif
     tmp_env_var = NULL; /* Silence compiler warning */
 
-    if (ORTE_SUCCESS != (ret = orte_init(ORTE_PROC_TOOL))) {
+    if (ORTE_SUCCESS != (ret = orte_init(&argc, &argv, ORTE_PROC_TOOL))) {
         return ret;
     }
 

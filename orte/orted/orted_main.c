@@ -283,7 +283,7 @@ int orte_daemon(int argc, char *argv[])
      *  opal_init_util() since mca_base_cmd_line_process_args() does *not*
      *  depend upon opal_init_util() functionality.
      */
-    if (OPAL_SUCCESS != opal_init_util()) {
+    if (OPAL_SUCCESS != opal_init_util(&argc, &argv)) {
         fprintf(stderr, "OPAL failed to initialize -- orted aborting\n");
         exit(1);
     }
@@ -325,7 +325,6 @@ int orte_daemon(int argc, char *argv[])
 #endif  /* !defined(__WINDOWS__) */
     /* see if they want us to spin until they can connect a debugger to us */
     i=0;
-	/*orted_globals.spin = 1;*/
     while (orted_spin_flag) {
         i++;
         if (1000 < i) i=0;        
@@ -347,12 +346,12 @@ int orte_daemon(int argc, char *argv[])
      * require.
      */
     if (orted_globals.hnp) {
-        if (ORTE_SUCCESS != (ret = orte_init(ORTE_PROC_HNP))) {
+        if (ORTE_SUCCESS != (ret = orte_init(&argc, &argv, ORTE_PROC_HNP))) {
             ORTE_ERROR_LOG(ret);
             return ret;
         }
     } else {
-        if (ORTE_SUCCESS != (ret = orte_init(ORTE_PROC_DAEMON))) {
+        if (ORTE_SUCCESS != (ret = orte_init(&argc, &argv, ORTE_PROC_DAEMON))) {
             ORTE_ERROR_LOG(ret);
             return ret;
         }

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -42,7 +42,7 @@ OPAL_DECLSPEC extern char *opal_profile_file;
  * \note If this function is called, opal_init_util() should *not* be
  * called.
  */
-OPAL_DECLSPEC int opal_init(void);
+OPAL_DECLSPEC int opal_init(int* pargc, char*** pargv);
 
 /**
  * Finalize the OPAL layer, including the MCA system. 
@@ -64,7 +64,7 @@ OPAL_DECLSPEC int opal_finalize(void);
  * \note If this function is called, opal_init() should *not*
  * be called.
  */
-OPAL_DECLSPEC int opal_init_util(void);
+OPAL_DECLSPEC int opal_init_util(int* pargc, char*** pargv);
 
 /**
  * Finalize the OPAL layer, excluding the MCA system. 
