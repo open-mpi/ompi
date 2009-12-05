@@ -63,7 +63,8 @@ typedef uint8_t orte_rmcast_flag_t;
 
 /* message sequence number */
 typedef uint32_t orte_rmcast_seq_t;
-#define ORTE_RMCAST_SEQ_MAX UINT32_MAX
+#define ORTE_RMCAST_SEQ_MAX         UINT32_MAX-1
+#define ORTE_RMCAST_SEQ_INVALID     UINT32_MAX
 
 END_C_DECLS
 
