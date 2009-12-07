@@ -48,6 +48,8 @@
   #endif
 #endif
 
+#include "opal/mca/installdirs/installdirs.h"
+#include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/util/show_help.h"
@@ -248,7 +250,21 @@ static void find_dyn_components(const char *path, const char *type_name,
     component_file_item_t *file;
     opal_list_item_t *cur;
     char prefix[32 + MCA_BASE_MAX_TYPE_NAME_LEN], *basename;
-
+    char *system_default;
+    char *user_default=NULL;
+    
+    /* copy the default location definitions */
+#if OPAL_WANT_HOME_CONFIG_FILES
+    system_default = opal_install_dirs.pkglibdir;  /* DO NOT FREE */
+    asprintf(&user_default, "%s"OPAL_PATH_SEP".openmpi"OPAL_PATH_SEP"components", opal_home_directory());
+#else
+# if defined(__WINDOWS__) && defined(_DEBUG)
+    asprintf(&system_default, "%s/debug", opal_install_dirs.pkglibdir); 
+# else
+    asprintf(&system_default, "%s", opal_install_dirs.pkglibdir); 
+# endif
+#endif
+    
     /* If path is NULL, iterate over the set of directories specified by
        the MCA param mca_base_component_path.  If path is not NULL, then
        use that as the path. */
@@ -277,14 +293,30 @@ static void find_dyn_components(const char *path, const char *type_name,
                 if (NULL != end) {
                     *end = '\0';
                 }
-                if (0 != lt_dlforeachfile(dir, save_filename, NULL)) {
-                    break;
+                if ((0 == strcmp(dir, "USER_DEFAULT") ||
+                     0 == strcmp(dir, "USR_DEFAULT"))
+                    && NULL != user_default) {
+                    if (0 != lt_dlforeachfile(user_default, save_filename, NULL)) {
+                        break;
+                    }
+                } else if (0 == strcmp(dir, "SYS_DEFAULT") ||
+                           0 == strcmp(dir, "SYSTEM_DEFAULT")) {
+                    if (0 != lt_dlforeachfile(system_default, save_filename, NULL)) {
+                        break;
+                    }                    
+                } else {
+                    if (0 != lt_dlforeachfile(dir, save_filename, NULL)) {
+                        break;
+                    }
                 }
                 dir = end + 1;
             } while (NULL != end);
         }
     }
-  
+    if (NULL != user_default) {
+        free(user_default);
+    }
+    
     /* Look through the list of found files and find those that match
        the desired framework name */
     snprintf(prefix, sizeof(prefix) - 1, component_template, type_name);
