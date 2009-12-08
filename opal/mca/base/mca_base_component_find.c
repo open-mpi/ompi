@@ -255,7 +255,7 @@ static void find_dyn_components(const char *path, const char *type_name,
     
     /* copy the default location definitions */
 #if OPAL_WANT_HOME_CONFIG_FILES
-    system_default = opal_install_dirs.pkglibdir;  /* DO NOT FREE */
+    system_default = strdup(opal_install_dirs.pkglibdir);
     asprintf(&user_default, "%s"OPAL_PATH_SEP".openmpi"OPAL_PATH_SEP"components", opal_home_directory());
 #else
 # if defined(__WINDOWS__) && defined(_DEBUG)
@@ -313,6 +313,7 @@ static void find_dyn_components(const char *path, const char *type_name,
             } while (NULL != end);
         }
     }
+    free(system_default);
     if (NULL != user_default) {
         free(user_default);
     }
