@@ -29,9 +29,6 @@ version 1.0.
 Trunk (not on release branches yet)
 -----------------------------------
 
-- Nothing yet...
-
-
 1.5
 ---
 
@@ -46,10 +43,21 @@ Trunk (not on release branches yet)
   - command to execute arbitrary commands (e.g., run a script).
 
 
-1.4 (expected)
---------------
+1.4.1 (expected)
+----------------
 
-- Nothing yet...
+Nothing yet...
+
+
+1.4
+---
+
+The *only* change in the Open MPI v1.4 release (as compared to v1.3.4)
+was to update the embedded version of Libtool's libltdl to address a
+potential security vulnerability.  Specifically: Open MPI v1.3.4 was
+created with GNU Libtool 2.2.6a; Open MPI v1.4 was created with GNU
+Libtool 2.2.6b.  There are no other changes between Open MPI v1.3.4
+and v1.4.
 
 
 1.3.4
