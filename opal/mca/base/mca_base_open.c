@@ -65,21 +65,11 @@ int mca_base_open(void)
     return OPAL_SUCCESS;
   }
 
-  /* Register some params */
-#if OPAL_WANT_HOME_CONFIG_FILES
-  asprintf(&value, "%s%c%s"OPAL_PATH_SEP".openmpi"OPAL_PATH_SEP"components", opal_install_dirs.pkglibdir, OPAL_ENV_SEP, opal_home_directory() );
-#else
-# if defined(__WINDOWS__) && defined(_DEBUG)
-    asprintf(&value, "%s/debug", opal_install_dirs.pkglibdir); 
-# else
-    asprintf(&value, "%s", opal_install_dirs.pkglibdir); 
-# endif
-#endif
-
+    /* the system and user default paths will be defined in component_find */
   mca_base_param_component_path = 
     mca_base_param_reg_string_name("mca", "component_path",
                                    "Path where to look for Open MPI and ORTE components", 
-                                   false, false, value, NULL);
+                                   false, false, "SYSTEM_DEFAULT:USER_DEFAULT", NULL);
   free(value);
   param_index = mca_base_param_reg_string_name("mca", "verbose", 
                                                "Top-level verbosity parameter",
