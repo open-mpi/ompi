@@ -570,7 +570,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                     }
                     if (orte_odls_globals.bound) {
                         /* if we are bound, use this as an index into our available sockets */
-                        for (target_socket=0; target_socket < opal_bitmap_size(&orte_odls_globals.sockets) && n < logical_skt; target_socket++) {
+                        for (target_socket=0, n = 0; target_socket < opal_bitmap_size(&orte_odls_globals.sockets) && n < logical_skt; target_socket++) {
                             if (opal_bitmap_is_set_bit(&orte_odls_globals.sockets, target_socket)) {
                                 n++;
                             }
