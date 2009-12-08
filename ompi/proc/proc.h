@@ -57,7 +57,7 @@ struct ompi_proc_t {
     /** this process' name */
     orte_process_name_t             proc_name;
     /** PML specific proc data */
-    struct mca_pml_base_endpoint_t* proc_pml;
+    struct mca_pml_endpoint_t* proc_pml;
     /** BML specific proc data */
     struct mca_bml_base_endpoint_t* proc_bml;
     /** architecture of this process */
