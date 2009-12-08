@@ -600,15 +600,18 @@ EOF
 
     # Ugh.  LT <=2.2.6b need to be patched for the PGI 10.0 fortran
     # compiler name (pgfortran).  The following comes from the
-    # upstream LT patch:
-    # http://lists.gnu.org/archive/html/libtool-patches/2009-11/msg00012.html.
+    # upstream LT patches:
+    # http://lists.gnu.org/archive/html/libtool-patches/2009-11/msg00012.html
+    # http://lists.gnu.org/archive/html/bug-libtool/2009-11/msg00045.html
     # Note that that patch is part of Libtool (which is not in this
     # OMPI source tree); we can't fix it.  So all we can do is patch
     # the resulting configure script.  :-(
     echo "  ++ Patching configure for Libtool PGI 10 fortran compiler name"
     rm -f configure.patched
-    cp configure configure.org
-    sed -e 's/gfortran g95 xlf95 f95 fort ifort ifc efc pgf95 lf95 ftn/gfortran g95 xlf95 f95 fort ifort ifc efc pgfortran pgf95 lf95 ftn/' configure > configure.patched
+    sed -e 's/gfortran g95 xlf95 f95 fort ifort ifc efc pgf95 lf95 ftn/gfortran g95 xlf95 f95 fort ifort ifc efc pgfortran pgf95 lf95 ftn/' \
+        -e 's/pgcc\* | pgf77\* | pgf90\* | pgf95\*)/pgcc* | pgf77* | pgf90* | pgf95* | pgfortran*)/' \
+        -e 's/pgf77\* | pgf90\* | pgf95\*)/pgf77* | pgf90* | pgf95* | pgfortran*)/' \
+        configure > configure.patched
     cp configure.patched configure
     rm -f configure.patched
 
