@@ -597,6 +597,32 @@ EOF
     run_and_check $ompi_autoconf
 
     run_and_check $ompi_automake --foreign -a --copy --include-deps
+
+    # Ugh.  LT <=2.2.6b need to be patched for the PGI 10.0 fortran
+    # compiler name (pgfortran).  The following comes from the
+    # upstream LT patch:
+    # http://lists.gnu.org/archive/html/libtool-patches/2009-11/msg00012.html.
+    # Note that that patch is part of Libtool (which is not in this
+    # OMPI source tree); we can't fix it.  So all we can do is patch
+    # the resulting configure script.  :-(
+    echo "  ++ Patching configure for Libtool PGI 10 fortran compiler name"
+    rm -f configure.patched
+    cp configure configure.org
+    sed -e 's/gfortran g95 xlf95 f95 fort ifort ifc efc pgf95 lf95 ftn/gfortran g95 xlf95 f95 fort ifort ifc efc pgfortran pgf95 lf95 ftn/' configure > configure.patched
+    cp configure.patched configure
+    rm -f configure.patched
+
+    # Similar issue as above -- the PGI 10 version number broke <=LT
+    # 2.2.6b's version number checking regexps.  Again, we can't fix
+    # the Libtool install; all we can do is patch the resulting
+    # configure script.  :-( The following comes from the upstream
+    # patch:
+    # http://lists.gnu.org/archive/html/libtool-patches/2009-11/msg00016.html
+    echo "  ++ Patching configure for Libtool PGI version number regexps"
+    rm -f configure.patched
+    sed -e 's/\*pgCC\\ \[1-5\]\* | \*pgcpp\\ \[1-5\]\*/*pgCC\\ [1-5]\.* | *pgcpp\\ [1-5]\.*/' configure > configure.patched
+    cp configure.patched configure
+    rm -f configure.patched
 }
 
 
