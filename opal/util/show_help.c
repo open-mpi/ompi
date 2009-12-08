@@ -322,7 +322,7 @@ int opal_show_vhelp(const char *filename, const char *topic,
 
     /* If we got a single string, output it with formatting */
     if (NULL != output) {
-        opal_output(output_stream, output);
+        opal_output(output_stream, "%s", output);
         free(output);
     }
 
