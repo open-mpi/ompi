@@ -173,7 +173,7 @@ error:
 
 static int rte_finalize(void)
 {
-    int ret;
+    int ret = ORTE_SUCCESS;
     
     if (ORTE_PROC_IS_DAEMON) {
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_finalize())) {
