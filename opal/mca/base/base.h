@@ -60,6 +60,8 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_component_priority_list_item_t);
  * Public variables
  */
 OPAL_DECLSPEC extern int mca_base_param_component_path;
+OPAL_DECLSPEC extern char *mca_base_system_default_path;
+OPAL_DECLSPEC extern char *mca_base_user_default_path;
 
 /*
  * Public functions

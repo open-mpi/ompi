@@ -33,6 +33,14 @@ int mca_base_close(void)
   extern bool mca_base_opened;
   if (mca_base_opened) {
 
+      /* release the default paths */
+      if (NULL != mca_base_system_default_path) {
+          free(mca_base_system_default_path);
+      }
+      if (NULL != mca_base_user_default_path) {
+          free(mca_base_user_default_path);
+      }
+      
     /* Close down the component repository */
     mca_base_component_repository_finalize();
 
