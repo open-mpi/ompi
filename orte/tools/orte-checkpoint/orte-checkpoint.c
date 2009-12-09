@@ -287,9 +287,15 @@ main(int argc, char *argv[])
     if(!orte_checkpoint_globals.nowait) { 
         while( ORTE_SNAPC_CKPT_STATE_FINISHED != orte_checkpoint_globals.ckpt_status &&
                ORTE_SNAPC_CKPT_STATE_STOPPED  != orte_checkpoint_globals.ckpt_status &&
+               ORTE_SNAPC_CKPT_STATE_NO_CKPT  != orte_checkpoint_globals.ckpt_status &&
                ORTE_SNAPC_CKPT_STATE_ERROR    != orte_checkpoint_globals.ckpt_status ) {
             opal_progress();
         }
+    }
+
+    if( ORTE_SNAPC_CKPT_STATE_NO_CKPT  == orte_checkpoint_globals.ckpt_status ) {
+        exit_status = ORTE_ERROR;
+        goto cleanup;
     }
 
     if( ORTE_SNAPC_CKPT_STATE_ERROR == orte_checkpoint_globals.ckpt_status ) {
