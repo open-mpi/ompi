@@ -201,6 +201,9 @@ int mca_base_components_open(const char *type_name, int output_id,
                                         type_name,
                                         dummy->version.mca_component_name);
                     opal_list_remove_item(&components_found, item);
+                    /* Make sure to release the component since we are not
+                     * opening it */
+                    mca_base_component_repository_release(component);
                 }
             }
         }
