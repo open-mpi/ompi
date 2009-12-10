@@ -21,6 +21,7 @@ EXTRA_DIST = \
         distscript.csh \
 	ompi_get_version.m4sh \
 	libltdl_dlopen_global.diff \
+        lt-sun-fortran.diff \
 	lt1522-pathCC.diff \
 	lt21a-pathCC.diff \
 	ltmain_otool.diff \
