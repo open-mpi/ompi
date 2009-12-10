@@ -26,6 +26,15 @@ This file contains the main features as well as overviews of specific
 bug fixes (and other actions) for each version of Open MPI since
 version 1.0.
 
+1.4.1 (expected)
+----------------
+
+- Add fix for Libtool 2.2.6b's problems with the PGI 10.x compiler
+  suite.  Inspired directly from the upstream Libtool patches that fix
+  the issue (but we need something working before the next Libtool
+  release).
+
+
 1.4
 ---
 
