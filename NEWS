@@ -46,7 +46,10 @@ Trunk (not on release branches yet)
 1.4.1 (expected)
 ----------------
 
-Nothing yet...
+- Add fix for Libtool 2.2.6b's problems with the PGI 10.x compiler
+  suite.  Inspired directly from the upstream Libtool patches that fix
+  the issue (but we need something working before the next Libtool
+  release).
 
 
 1.4
