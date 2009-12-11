@@ -19,6 +19,8 @@
 
 noinst_LTLIBRARIES = libdebuggers.la libompi_debugger_canary.la
 pkglib_LTLIBRARIES = libompi_dbg_msgq.la
+check_PROGRAMS = dlopen_test
+TESTS = $(check_PROGRAMS)
 
 # This is not quite in the Automake spirit, but we have to do it.
 # Since the totalview portion of the library must be built with -g, we
@@ -35,6 +37,11 @@ headers = \
         debuggers.h \
         ompi_common_dll_defs.h \
         msgq_interface.h ompi_msgq_dll_defs.h
+
+# Simple checks to ensure that the DSOs are functional
+
+dlopen_test_SOURCES = dlopen_test.c
+dlopen_test_LDADD = $(top_builddir)/opal/libltdl/libltdlc.la
 
 libdebuggers_la_SOURCES = \
         $(headers) \
