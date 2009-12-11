@@ -41,6 +41,7 @@ headers = \
 # Simple checks to ensure that the DSOs are functional
 
 dlopen_test_SOURCES = dlopen_test.c
+dlopen_test_CPPFLAGS = -I$(top_srcdir)/opal/libltdl
 dlopen_test_LDADD = $(top_builddir)/opal/libltdl/libltdlc.la
 
 libdebuggers_la_SOURCES = \
