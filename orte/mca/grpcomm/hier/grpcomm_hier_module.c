@@ -376,6 +376,9 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
         
         ORTE_PROGRESSED_WAIT(false, allgather_num_recvd, 1);
 
+        /* cancel the lingering recv */
+        orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ALLGATHER);
+
         /* copy payload to the caller's buffer */
         if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(rbuf, &allgather_buf))) {
             ORTE_ERROR_LOG(rc);
@@ -403,6 +406,9 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
         }
         
         ORTE_PROGRESSED_WAIT(false, allgather_num_recvd, num_local_peers);
+        
+        /* cancel the lingering recv */
+        orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ALLGATHER);
         
         /* take the recv'd data and use one of the base collectives
          * to exchange it with all other local_rank=0 procs in a scalable
