@@ -1,6 +1,5 @@
 oparidoc_DATA = \
 	lacsi01.pdf \
-	lacsi01.ps.gz \
 	opari-logo-100.gif \
 	Readme.html \
 	ChangeLog \
