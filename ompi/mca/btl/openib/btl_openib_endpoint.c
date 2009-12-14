@@ -664,7 +664,6 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
     }
 
 
-    OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
     /* Process pending packet on the endpoint */
 
     /* While there are frags in the list, process them */
@@ -676,6 +675,7 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
         if(OMPI_ERROR == mca_btl_openib_endpoint_post_send(endpoint, frag))
             BTL_ERROR(("Error posting send"));
     }
+    OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
 
     /* if upper layer called put or get before connection moved to connected
      * state then we restart them here */
