@@ -137,6 +137,16 @@
 # type: bool (0/1)
 %{!?disable_auto_requires: %define disable_auto_requires 0}
 
+# On some platforms, Open MPI just flat-out doesn't work with
+# -D_FORTIFY_SOURCE (e.g., some users have reported that there are
+# problems on ioa64 platforms).  In this case, just turn it off
+# (meaning: this specfile will strip out that flag from the
+# OS-provided compiler flags).  We already strip out _FORTIFY_SOURCE
+# for non-GCC compilers; setting this option to 0 will *always* strip
+# it out, even if you're using GCC.
+# type: bool (0/1)
+%{!?allow_fortify_source: %define allow_fortify_source 1}
+
 #############################################################################
 #
 # OSCAR-specific defaults
@@ -371,6 +381,7 @@ rm -rf $RPM_BUILD_ROOT
 # examine the basename of the compiler, so search for it in a few
 # places.
 
+%if %{allow_fortify_source}
 using_gcc=1
 if test "$CC" != ""; then
     # Do horrible things to get the basename of just the compiler,
@@ -402,6 +413,11 @@ if test "$using_gcc" = "1"; then
         fi
     fi
 fi
+%else
+# If we're not allowing _FORTIFY_SOURCE, then just set using_gcc to 0 and
+# the logic below will strip _FORTIFY_SOURCE out if it's present.
+using_gcc=0
+%endif
 
 # If we're not using the default RPM_OPT_FLAGS, then wipe them clean
 # (the "optflags" macro has already been wiped clean, above).
@@ -541,15 +557,20 @@ EOF
 # barf.  So be super lame and dump the egrep through /bin/true -- this
 # always gives a 0 exit status.
 
-# Runtime files
+# Runtime files.  Note that the VT files are variable; if they're
+# there, then take them (e.g., VT build may have been disabled via a
+# configure option).  Do *not* include the VT wrapper compilers
 find $RPM_BUILD_ROOT -type f -o -type l | \
    sed -e "s@$RPM_BUILD_ROOT@@" | \
-   egrep "lib.*.so|mca.*so" > runtime.files | /bin/true
+   egrep "lib.*.so|mca.*so|/vt*|/*otf*|/vampirtrace/|opari" | \
+   egrep -v '/vtcc*|/vtcxx*|/vtf77*|/vtf90*' \
+   > runtime.files | /bin/true
 
-# Devel files
+# Devel files, potentially including VT files
 find $RPM_BUILD_ROOT -type f -o -type l | \
    sed -e "s@$RPM_BUILD_ROOT@@" | \
-   egrep "lib.*\.a|lib.*\.la|mpi.*mod" > devel.files | /bin/true
+   egrep "lib.*\.a|lib.*\.la|mpi.*mod|/vtcc*|/vtcxx*|/vtf77*|/vtf90*|*\.SPEC" \
+   > devel.files | /bin/true
 
 %endif
 # End of build_all_in_one_rpm
@@ -679,6 +700,10 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 %{_bindir}/ompi_info
 %{_bindir}/orterun
 %{_bindir}/orted
+%{_bindir}/ompi-server
+%{_bindir}/orte-clean
+%{_bindir}/orte-iof
+%{_bindir}/orte-ps
 
 %files devel -f devel.files
 %defattr(-, root, root, -)
@@ -708,6 +733,14 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 #############################################################################
 %changelog
+* Mon Dec 14 2009 Jeff Squyres <jsquyres@cisco.com>
+- Add missing executables to specfile (ompi-server, etc.)
+- Fix: pull in VT files when building multiple RPMs (reported by Jim
+  Kusznir).
+- Add allow_fortify_source option to let users selectively disable
+  _FORTIFY_SOURCE processing on platforms where it just doesn't work
+  (even with gcc; also reported by Jim Kusznir).
+
 * Thu Sep  8 2009 Jeff Squyres <jsquyres@cisco.com>
 - Change shell_scripts_basename to not include version number to
   accomodate what mpi-selector expects.
