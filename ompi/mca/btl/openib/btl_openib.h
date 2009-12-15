@@ -76,6 +76,14 @@ BEGIN_C_DECLS
  */
 
 typedef enum {
+    MCA_BTL_OPENIB_TRANSPORT_IB,
+    MCA_BTL_OPENIB_TRANSPORT_IWARP,
+    MCA_BTL_OPENIB_TRANSPORT_RDMAOE,
+    MCA_BTL_OPENIB_TRANSPORT_UNKNOWN,
+    MCA_BTL_OPENIB_TRANSPORT_SIZE
+} mca_btl_openib_transport_type_t;
+
+typedef enum {
     MCA_BTL_OPENIB_PP_QP,
     MCA_BTL_OPENIB_SRQ_QP,
     MCA_BTL_OPENIB_XRC_QP
@@ -253,6 +261,8 @@ struct mca_btl_openib_component_t {
     ompi_free_list_t recv_user_free;
     /**< frags for coalesced massages */
     ompi_free_list_t send_free_coalesced;
+    /** Default receive queues */
+    char* default_recv_qps;
 }; typedef struct mca_btl_openib_component_t mca_btl_openib_component_t;
 
 OMPI_MODULE_DECLSPEC extern mca_btl_openib_component_t mca_btl_openib_component;
@@ -271,6 +281,12 @@ typedef struct mca_btl_openib_modex_message_t {
     uint16_t apm_lid;
     /** The MTU used by this port */
     uint8_t mtu;
+    /** vendor id define device type and tuning */
+    uint32_t vendor_id;
+    /** vendor part id define device type and tuning */
+    uint32_t vendor_part_id;
+    /** Transport type of remote port */
+    uint8_t transport_type;
     /** Dummy field used to calculate the real length */
     uint8_t end;
 } mca_btl_openib_modex_message_t;
@@ -631,6 +647,18 @@ void mca_btl_openib_show_init_error(const char *file, int line,
  */
 
 int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl, const int qp);
+
+/**
+ * Get a transport name of btl by its transport type.
+ */
+
+const char* btl_openib_get_transport_name(mca_btl_openib_transport_type_t transport_type);
+
+/**
+ * Get a transport type of btl.
+ */
+
+mca_btl_openib_transport_type_t mca_btl_openib_get_transport_type(mca_btl_openib_module_t* openib_btl);
 
 static inline int qp_cq_prio(const int qp)
 {
