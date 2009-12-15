@@ -143,6 +143,7 @@ int btl_openib_component_open(void)
     OBJ_CONSTRUCT(&mca_btl_openib_component.devices, opal_pointer_array_t);
     mca_btl_openib_component.devices_count = 0;
     mca_btl_openib_component.cpc_explicitly_defined = false;
+    mca_btl_openib_component.default_recv_qps = NULL;
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_openib_component.ib_procs, opal_list_t);
@@ -194,6 +195,10 @@ static int btl_openib_component_close(void)
     ompi_btl_openib_ini_finalize();
     if (NULL != mca_btl_openib_component.receive_queues) {
         free(mca_btl_openib_component.receive_queues);
+    }
+
+    if (NULL != mca_btl_openib_component.default_recv_qps) {
+        free(mca_btl_openib_component.default_recv_qps);
     }
 
     return rc;
@@ -303,6 +308,16 @@ static int btl_openib_modex_send(void)
 
         /* Pack the modex common message struct.  */
         size = modex_message_size;
+
+        (mca_btl_openib_component.openib_btls[i]->port_info).vendor_id =
+            (mca_btl_openib_component.openib_btls[i]->device->ib_dev_attr).vendor_id;
+
+        (mca_btl_openib_component.openib_btls[i]->port_info).vendor_part_id =
+            (mca_btl_openib_component.openib_btls[i]->device->ib_dev_attr).vendor_part_id;
+
+        (mca_btl_openib_component.openib_btls[i]->port_info).transport_type =
+            mca_btl_openib_get_transport_type(mca_btl_openib_component.openib_btls[i]);
+
         memcpy(offset, 
                &(mca_btl_openib_component.openib_btls[i]->port_info), 
                size);
@@ -1657,45 +1672,6 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
         ibv_destroy_cq(cq);
     }
 
-    /* If the user specified btl_openib_receive_queues MCA param, it
-       overrides all device INI params */
-    if (BTL_OPENIB_RQ_SOURCE_MCA != 
-        mca_btl_openib_component.receive_queues_source && 
-        NULL != values.receive_queues) {
-        /* If a prior device's INI values set a different value for
-           receive_queues, this is unsupported (see
-           https://svn.open-mpi.org/trac/ompi/ticket/1285) */
-        if (BTL_OPENIB_RQ_SOURCE_DEVICE_INI ==
-            mca_btl_openib_component.receive_queues_source) {
-            if (0 != strcmp(values.receive_queues, 
-                            mca_btl_openib_component.receive_queues)) {
-                orte_show_help("help-mpi-btl-openib.txt",
-                               "conflicting receive_queues", true,
-                               orte_process_info.nodename,
-                               ibv_get_device_name(device->ib_dev),
-                               device->ib_dev_attr.vendor_id,
-                               device->ib_dev_attr.vendor_part_id,
-                               values.receive_queues,
-                               ibv_get_device_name(receive_queues_device->ib_dev),
-                               receive_queues_device->ib_dev_attr.vendor_id,
-                               receive_queues_device->ib_dev_attr.vendor_part_id,
-                               mca_btl_openib_component.receive_queues,
-                               opal_install_dirs.pkgdatadir);
-                ret = OMPI_ERR_RESOURCE_BUSY;
-                goto error;
-            }
-        } else {
-            if (NULL != mca_btl_openib_component.receive_queues) {
-                free(mca_btl_openib_component.receive_queues);
-            }
-            receive_queues_device = device;
-            mca_btl_openib_component.receive_queues = 
-                strdup(values.receive_queues);
-            mca_btl_openib_component.receive_queues_source =
-                BTL_OPENIB_RQ_SOURCE_DEVICE_INI;
-        }
-    }
-
     /* Should we use RDMA for short / eager messages?  First check MCA
        param, then check INI file values. */
     if (mca_btl_openib_component.use_eager_rdma >= 0) {
@@ -1794,6 +1770,45 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
             orte_show_help("help-mpi-btl-openib.txt",
                            "apm not enough ports", true);
             mca_btl_openib_component.apm_ports = 0;
+        }
+
+        /* If the user specified btl_openib_receive_queues MCA param, it
+           overrides all device INI params */
+        if (BTL_OPENIB_RQ_SOURCE_MCA !=
+            mca_btl_openib_component.receive_queues_source &&
+            NULL != values.receive_queues) {
+            /* If a prior device's INI values set a different value for
+               receive_queues, this is unsupported (see
+               https://svn.open-mpi.org/trac/ompi/ticket/1285) */
+            if (BTL_OPENIB_RQ_SOURCE_DEVICE_INI ==
+                mca_btl_openib_component.receive_queues_source) {
+                if (0 != strcmp(values.receive_queues,
+                                mca_btl_openib_component.receive_queues)) {
+                    orte_show_help("help-mpi-btl-openib.txt",
+                                   "conflicting receive_queues", true,
+                                   orte_process_info.nodename,
+                                   ibv_get_device_name(device->ib_dev),
+                                   device->ib_dev_attr.vendor_id,
+                                   device->ib_dev_attr.vendor_part_id,
+                                   values.receive_queues,
+                                   ibv_get_device_name(receive_queues_device->ib_dev),
+                                   receive_queues_device->ib_dev_attr.vendor_id,
+                                   receive_queues_device->ib_dev_attr.vendor_part_id,
+                                   mca_btl_openib_component.receive_queues,
+                                   opal_install_dirs.pkgdatadir);
+                    ret = OMPI_ERR_RESOURCE_BUSY;
+                    goto error;
+                }
+            } else {
+                if (NULL != mca_btl_openib_component.receive_queues) {
+                    free(mca_btl_openib_component.receive_queues);
+                }
+                receive_queues_device = device;
+                mca_btl_openib_component.receive_queues =
+                    strdup(values.receive_queues);
+                mca_btl_openib_component.receive_queues_source =
+                    BTL_OPENIB_RQ_SOURCE_DEVICE_INI;
+            }
         }
         return OMPI_SUCCESS;
     }
