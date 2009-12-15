@@ -2,13 +2,14 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,6 +52,14 @@ static void mca_btl_sm_frag2_constructor(mca_btl_sm_frag_t* frag)
     mca_btl_sm_frag_common_constructor(frag);
 }
 
+static void mca_btl_sm_user_constructor(mca_btl_sm_frag_t* frag)
+{
+	frag->size = 0;
+	frag->my_list = &mca_btl_sm_component.sm_frags_user;
+	mca_btl_sm_frag_common_constructor(frag);
+}
+
+
 static void mca_btl_sm_frag_destructor(mca_btl_sm_frag_t* frag)
 {
 }
@@ -68,3 +77,8 @@ OBJ_CLASS_INSTANCE(
     mca_btl_sm_frag2_constructor,
     mca_btl_sm_frag_destructor);
 
+OBJ_CLASS_INSTANCE(
+    mca_btl_sm_user_t,
+    mca_btl_base_descriptor_t,
+    mca_btl_sm_user_constructor,
+    mca_btl_sm_frag_destructor);

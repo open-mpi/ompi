@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -43,6 +43,7 @@
 #include "opal/event/event.h"
 #include "opal/util/output.h"
 #include "orte/util/proc_info.h"
+#include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
 
 #include "opal/mca/base/mca_base_param.h"
@@ -118,6 +119,50 @@ static inline int mca_btl_sm_param_register_int(
 
 int mca_btl_sm_component_open(void)
 {
+    int i;
+
+    /* Register an MCA param to indicate whether we have knem support
+       or not */
+    mca_base_param_reg_int(&mca_btl_sm_component.super.btl_version,
+                           "have_knem_support", "Whether this component supports the knem Linux kernel module or not",
+                           false, true, OMPI_BTL_SM_HAVE_KNEM, NULL);
+
+    if (OMPI_BTL_SM_HAVE_KNEM) {
+        i = -1;
+    } else {
+        i = 0;
+    }
+    mca_base_param_reg_int(&mca_btl_sm_component.super.btl_version,
+                           "use_knem",
+                           "Whether knem support is desired or not "
+                           "(negative = try to enable knem support, but continue even if it is not available, 0 = do not enable knem support, positive = try to enable knem support and fail if it is not available)",
+                           false, false, i, &i);
+    if (OMPI_BTL_SM_HAVE_KNEM) {
+        mca_btl_sm_component.use_knem = i;
+    } else {
+        if (i > 0) {
+            orte_show_help("help-mpi-btl-sm.txt",
+                           "knem requested but not supported", true,
+                           orte_process_info.nodename);
+            return OMPI_ERROR;
+        }
+        mca_btl_sm_component.use_knem = 0;
+    }
+    /* Currently disabling DMA mode by default; it's not clear that
+       this is useful in all applications and architectures. */
+    mca_base_param_reg_int(&mca_btl_sm_component.super.btl_version,
+                           "knem_dma_min",
+                           "Minimum message size (in bytes) to use the knem DMA mode; ignored if knem does not support DMA mode (0 = do not use the knem DMA mode)",
+                           false, false, 0, &i);
+    mca_btl_sm_component.knem_dma_min = (uint32_t) i;
+
+    mca_base_param_reg_int(&mca_btl_sm_component.super.btl_version,
+                           "knem_max_simultaneous",
+                           "Max number of simultaneous ongoing knem operations to support (0 = do everything synchronously, which probably gives the best large message latency; >0 means to do all operations asynchronously, which supports better overlap for simultaneous large message sends)",
+                           false, false, 0,
+                           &mca_btl_sm_component.knem_max_simultaneous);
+
+    mca_btl_sm_component.sm_max_btls = 1;
     /* register SM component parameters */
     mca_btl_sm_component.sm_free_list_num =
         mca_btl_sm_param_register_int("free_list_num", 8);
@@ -135,10 +180,10 @@ int mca_btl_sm_component_open(void)
         mca_btl_sm_param_register_int("num_fifos", 1);
     /* make sure the number of fifos is a power of 2 */
     {
-      int i = 1;
-      while ( i < mca_btl_sm_component.nfifos )
-        i <<= 1;
-      mca_btl_sm_component.nfifos = i;
+        int i = 1;
+        while ( i < mca_btl_sm_component.nfifos )
+            i <<= 1;
+        mca_btl_sm_component.nfifos = i;
     }
     mca_btl_sm_component.fifo_lazy_free =
         mca_btl_sm_param_register_int("fifo_lazy_free", 120);
@@ -157,15 +202,20 @@ int mca_btl_sm_component_open(void)
     mca_btl_sm.super.btl_eager_limit = 4*1024;
     mca_btl_sm.super.btl_rndv_eager_limit = 4*1024;
     mca_btl_sm.super.btl_max_send_size = 32*1024;
-    mca_btl_sm.super.btl_rdma_pipeline_send_length = 32*1024;
-    mca_btl_sm.super.btl_rdma_pipeline_frag_size = 32*1024;
-    mca_btl_sm.super.btl_min_rdma_pipeline_size = 0;
+    mca_btl_sm.super.btl_rdma_pipeline_send_length = 64*1024;
+    mca_btl_sm.super.btl_rdma_pipeline_frag_size = 64*1024;
+    mca_btl_sm.super.btl_min_rdma_pipeline_size = 64*1024;
     mca_btl_sm.super.btl_flags = MCA_BTL_FLAGS_SEND;
-    mca_btl_sm.super.btl_bandwidth = 900;
-    mca_btl_sm.super.btl_latency = 100;
+#if OMPI_BTL_SM_HAVE_KNEM
+    if (mca_btl_sm_component.use_knem) {
+        mca_btl_sm.super.btl_flags |= MCA_BTL_FLAGS_GET;
+    }
+#endif
+    mca_btl_sm.super.btl_bandwidth = 9000;  /* Mbs */
+    mca_btl_sm.super.btl_latency   = 1;     /* Microsecs */
 
     mca_btl_base_param_register(&mca_btl_sm_component.super.btl_version,
-            &mca_btl_sm.super);
+                                &mca_btl_sm.super);
     mca_btl_sm_component.max_frag_size = mca_btl_sm.super.btl_max_send_size;
     mca_btl_sm_component.eager_limit = mca_btl_sm.super.btl_eager_limit;
 
@@ -173,6 +223,7 @@ int mca_btl_sm_component_open(void)
     OBJ_CONSTRUCT(&mca_btl_sm_component.sm_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags_eager, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags_max, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags_user, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_sm_component.pending_send_fl, opal_free_list_t);
     return OMPI_SUCCESS;
 }
@@ -185,6 +236,22 @@ int mca_btl_sm_component_open(void)
 int mca_btl_sm_component_close(void)
 {
     int return_value = OMPI_SUCCESS;
+
+#if OMPI_BTL_SM_HAVE_KNEM
+    if (NULL != mca_btl_sm.knem_frag_array) {
+        free(mca_btl_sm.knem_frag_array);
+        mca_btl_sm.knem_frag_array = NULL;
+    }
+    if (NULL != mca_btl_sm.knem_status_array) {
+        munmap(mca_btl_sm.knem_status_array, 
+               mca_btl_sm_component.knem_max_simultaneous);
+        mca_btl_sm.knem_status_array = NULL;
+    }
+    if (-1 != mca_btl_sm.knem_fd) {
+        close(mca_btl_sm.knem_fd);
+        mca_btl_sm.knem_fd = -1;
+    }
+#endif
 
     OBJ_DESTRUCT(&mca_btl_sm_component.sm_lock);
     /**
@@ -259,6 +326,9 @@ mca_btl_base_module_t** mca_btl_sm_component_init(
     bool enable_mpi_threads)
 {
     mca_btl_base_module_t **btls = NULL;
+#if OMPI_BTL_SM_HAVE_KNEM
+    int rc;
+#endif
 
     *num_btls = 0;
 
@@ -278,7 +348,7 @@ mca_btl_base_module_t** mca_btl_sm_component_init(
     mca_btl_sm_component.sm_fifo_fd = open(mca_btl_sm_component.sm_fifo_path, O_RDWR);
     if(mca_btl_sm_component.sm_fifo_fd < 0) {
         opal_output(0, "mca_btl_sm_component_init: open(%s) failed with errno=%d\n",
-            mca_btl_sm_component.sm_fifo_path, errno);
+                    mca_btl_sm_component.sm_fifo_path, errno);
         return NULL;
     }
 
@@ -286,6 +356,11 @@ mca_btl_base_module_t** mca_btl_sm_component_init(
     mca_btl_sm_component.sm_fifo_thread.t_run = (opal_thread_fn_t) mca_btl_sm_component_event_thread;
     opal_thread_start(&mca_btl_sm_component.sm_fifo_thread);
 #endif
+
+    mca_btl_sm_component.sm_btls = malloc( mca_btl_sm_component.sm_max_btls * sizeof (mca_btl_sm_t *));
+    if (NULL == mca_btl_sm_component.sm_btls) {
+        return NULL;
+    }
 
     /* allocate the Shared Memory BTL */
     *num_btls = 1;
@@ -295,17 +370,140 @@ mca_btl_base_module_t** mca_btl_sm_component_init(
     }
 
     /* get pointer to the btls */
-    btls[0] = (mca_btl_base_module_t *)(&(mca_btl_sm));
+    btls[0] = (mca_btl_base_module_t*)(&(mca_btl_sm));
+    mca_btl_sm_component.sm_btls[0] = (mca_btl_sm_t*)(&(mca_btl_sm));
 
-    /* initialize some PTL data */
+    /* initialize some BTL data */
     /* start with no SM procs */
     mca_btl_sm_component.num_smp_procs = 0;
     mca_btl_sm_component.my_smp_rank   = -1;  /* not defined */
-
+    mca_btl_sm_component.sm_num_btls   = 1;
     /* set flag indicating btl not inited */
-    mca_btl_sm.btl_inited=false;
+    mca_btl_sm.btl_inited = false;
+
+#if OMPI_BTL_SM_HAVE_KNEM
+    /* Set knem_status_num_used outside the check for use_knem so that
+       we can only have to check one thing (knem_status_num_used) in
+       the progress loop. */
+    mca_btl_sm.knem_fd = -1;
+    mca_btl_sm.knem_status_array = NULL;
+    mca_btl_sm.knem_frag_array = NULL;
+    mca_btl_sm.knem_status_num_used = 0;
+    mca_btl_sm.knem_status_first_avail = 0;
+    mca_btl_sm.knem_status_first_used = 0;
+
+    if (0 != mca_btl_sm_component.use_knem) {
+        /* Open the knem device.  Try to print a helpful message if we
+           fail to open it. */
+        mca_btl_sm.knem_fd = open("/dev/knem", O_RDWR);
+        if (mca_btl_sm.knem_fd < 0) {
+            if (EACCES == errno) {
+                struct stat sbuf;
+                if (0 != stat("/dev/knem", &sbuf)) {
+                    sbuf.st_mode = 0;
+                }
+                orte_show_help("help-mpi-btl-sm.txt", "knem permission denied",
+                               true, orte_process_info.nodename, sbuf.st_mode);
+            } else {
+                orte_show_help("help-mpi-btl-sm.txt", "knem fail open",
+                               true, orte_process_info.nodename, errno,
+                               strerror(errno));
+            }
+            goto no_knem;
+        }
+
+        /* Check that the ABI if the kernel module running is the same
+           as what we were compiled against */
+        rc = ioctl(mca_btl_sm.knem_fd, KNEM_CMD_GET_INFO, 
+                   &mca_btl_sm_component.knem_info);
+        if (rc < 0) {
+            orte_show_help("help-mpi-btl-sm.txt", "knem get ABI fail",
+                           true, orte_process_info.nodename, errno,
+                           strerror(errno));
+            goto no_knem;
+        }
+        if (KNEM_ABI_VERSION != mca_btl_sm_component.knem_info.abi) {
+            orte_show_help("help-mpi-btl-sm.txt", "knem ABI mismatch",
+                           true, orte_process_info.nodename, KNEM_ABI_VERSION,
+                           mca_btl_sm_component.knem_info.abi);
+            goto no_knem;
+        }
+
+        /* If we want DMA mode and DMA mode is supported, then set
+           knem_dma_flag to KNEM_FLAG_DMA. */
+        mca_btl_sm_component.knem_dma_flag = 0;
+        if (mca_btl_sm_component.knem_dma_min > 0 && 
+            (mca_btl_sm_component.knem_info.features & KNEM_FEATURE_DMA)) {
+            mca_btl_sm_component.knem_dma_flag = KNEM_FLAG_DMA;
+        }
+
+        /* Get the array of statuses from knem if max_simultaneous > 0 */
+        if (mca_btl_sm_component.knem_max_simultaneous > 0) {
+            mca_btl_sm.knem_status_array = mmap(NULL, 
+                                                mca_btl_sm_component.knem_max_simultaneous,
+                                                (PROT_READ | PROT_WRITE), 
+                                                MAP_SHARED, mca_btl_sm.knem_fd, 
+                                                KNEM_STATUS_ARRAY_FILE_OFFSET);
+            if (MAP_FAILED == mca_btl_sm.knem_status_array) {
+                orte_show_help("help-mpi-btl-sm.txt", "knem mmap fail",
+                               true, orte_process_info.nodename, errno,
+                               strerror(errno));
+                goto no_knem;
+            }
+
+            /* The first available status index is 0.  Make an empty frag
+               array. */
+            mca_btl_sm.knem_frag_array = (mca_btl_sm_frag_t **)
+                malloc(sizeof(mca_btl_sm_frag_t *) *
+                       mca_btl_sm_component.knem_max_simultaneous);
+            if (NULL == mca_btl_sm.knem_frag_array) {
+                orte_show_help("help-mpi-btl-sm.txt", "knem init fail",
+                               true, orte_process_info.nodename, "malloc",
+                               errno, strerror(errno));
+                goto no_knem;
+            }
+        }
+    }
+    /* Set the BTL get function pointer if we're supporting KNEM;
+       choose between synchronous and asynchronous. */
+    if (mca_btl_sm_component.knem_max_simultaneous > 0) {
+        mca_btl_sm.super.btl_get = mca_btl_sm_get_async;
+    } else {
+        mca_btl_sm.super.btl_get = mca_btl_sm_get_sync;
+    }
+#endif
 
     return btls;
+
+#if OMPI_BTL_SM_HAVE_KNEM
+ no_knem:
+    mca_btl_sm.super.btl_flags &= ~MCA_BTL_FLAGS_GET;
+
+    if (NULL != mca_btl_sm.knem_frag_array) {
+        free(mca_btl_sm.knem_frag_array);
+        mca_btl_sm.knem_frag_array = NULL;
+    }
+    if (NULL != mca_btl_sm.knem_status_array) {
+        munmap(mca_btl_sm.knem_status_array, 
+               mca_btl_sm_component.knem_max_simultaneous);
+        mca_btl_sm.knem_status_array = NULL;
+    }
+    if (-1 != mca_btl_sm.knem_fd) {
+        close(mca_btl_sm.knem_fd);
+        mca_btl_sm.knem_fd = -1;
+    }
+    
+    /* If "use_knem" is positive, then it's an error if knem support
+       is not available -- deactivate the sm btl. */
+    if (mca_btl_sm_component.use_knem > 0) {
+        return NULL;
+    }
+
+    /* Otherwise, use_knem was 0 (and we didn't get here) or use_knem
+       was <0, in which case the fact that knem is not available is
+       not an error. */
+    return btls;
+#endif
 }
 
 
@@ -412,8 +610,8 @@ int mca_btl_sm_component_progress(void)
 #if OPAL_ENABLE_DEBUG
                 if ( FIFO_MAP(peer_smp_rank) != j ) {
                     opal_output(0, "mca_btl_sm_component_progress: "
-                        "rank %d got %d on FIFO %d, but this sender should send to FIFO %d\n",
-                        my_smp_rank, peer_smp_rank, j, FIFO_MAP(peer_smp_rank));
+                                "rank %d got %d on FIFO %d, but this sender should send to FIFO %d\n",
+                                my_smp_rank, peer_smp_rank, j, FIFO_MAP(peer_smp_rank));
                 }
 #endif
                 /* recv upcall */
@@ -431,15 +629,15 @@ int mca_btl_sm_component_progress(void)
                         my_smp_rank, peer_smp_rank, hdr->frag, false, true, rc);
                 break;
             }
-            case MCA_BTL_SM_FRAG_ACK:
+        case MCA_BTL_SM_FRAG_ACK:
             {
                 int status = (uintptr_t)hdr & MCA_BTL_SM_FRAG_STATUS_MASK;
                 int btl_ownership;
                 struct mca_btl_base_endpoint_t* endpoint;
 
                 frag = (mca_btl_sm_frag_t *)((char*)((uintptr_t)hdr &
-                            (~(MCA_BTL_SM_FRAG_TYPE_MASK |
-                            MCA_BTL_SM_FRAG_STATUS_MASK))));
+                                                     (~(MCA_BTL_SM_FRAG_TYPE_MASK |
+                                                        MCA_BTL_SM_FRAG_STATUS_MASK))));
 
                 endpoint = frag->endpoint;
                 btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
@@ -480,5 +678,63 @@ int mca_btl_sm_component_progress(void)
                 break;
         }
     }
+
+#if OMPI_BTL_SM_HAVE_KNEM
+    /* The sm btl is currently hard-wired for a single module.  So
+       we're not breaking anything here by checking that one module
+       for knem specifics.
+
+       Since knem completes requests in order, we can loop around the
+       circular status buffer until:
+           - we find a KNEM_STATUS_PENDING, or
+           - knem_status_num_used == 0
+
+       Note that knem_status_num_used will never be >0 if
+       component.use_knem<0, so we'll never enter the while loop if
+       knem is not being used.  It will also never be >0 if
+       max_simultaneous == 0 (because they will all complete
+       synchronously in _get). However, in order to save a jump
+       before the return we should test the use_knem here.
+    */
+    if( 0 == mca_btl_sm_component.use_knem ) {
+        return nevents;
+    }
+    while (mca_btl_sm.knem_status_num_used > 0 &&
+           KNEM_STATUS_PENDING != 
+           mca_btl_sm.knem_status_array[mca_btl_sm.knem_status_first_used]) {
+        if (KNEM_STATUS_SUCCESS == 
+            mca_btl_sm.knem_status_array[mca_btl_sm.knem_status_first_used]) {
+            int btl_ownership;
+
+            /* Handle the completed fragment */
+            frag = 
+                mca_btl_sm.knem_frag_array[mca_btl_sm.knem_status_first_used];
+            btl_ownership = (frag->base.des_flags & 
+                             MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
+            if (0 != (MCA_BTL_DES_SEND_ALWAYS_CALLBACK & 
+                      frag->base.des_flags)) {
+                frag->base.des_cbfunc(&mca_btl_sm.super, 
+                                      frag->endpoint, &frag->base, 
+                                      OMPI_SUCCESS);
+            }
+            if (btl_ownership) {
+                MCA_BTL_SM_FRAG_RETURN(frag);
+            }
+
+            /* Bump counters, loop around the circular buffer if
+               necessary */
+            ++nevents;
+            --mca_btl_sm.knem_status_num_used;
+            ++mca_btl_sm.knem_status_first_used;
+            if (mca_btl_sm.knem_status_first_used >= 
+                mca_btl_sm_component.knem_max_simultaneous) {
+                mca_btl_sm.knem_status_first_used = 0;
+            }
+        } else {
+            /* JMS knem fail */
+            break;
+        }
+    }
+#endif
     return nevents;
 }
