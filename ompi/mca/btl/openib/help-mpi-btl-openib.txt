@@ -168,6 +168,13 @@ peer to which it was connected:
 You may need to consult with your system administrator to get this
 problem fixed.
 #
+[SRQ doesn't found]
+The srq doesn't found.
+Below is some information about the host that raised the error:
+
+    Local host:   %s
+    Local device: %s
+#
 [srq rnr retry exceeded]
 The OpenFabrics "receiver not ready" retry count on a shared receive
 queue or XRC receive queue has been exceeded.  This error can occur if
@@ -386,21 +393,27 @@ WARNING: An invalid shared receive queue specification was detected as
 part of the btl_openib_receive_queues MCA parameter.  The OpenFabrics
 (openib) BTL will therefore be deactivated for this run.
 
-Shared receive queues can take between 2 and 4 parameters:
+Shared receive queues can take between 2 and 6 parameters:
 
   1. Buffer size in bytes (mandatory)
   2. Number of buffers (mandatory)
   3. Low buffer count watermark (optional; defaults to (num_buffers / 2))
   4. Maximum number of outstanding sends a sender can have (optional;
      defaults to (low_watermark / 4)
+  5. Start value of number of receive buffers that will be pre-posted (optional; defaults to (num_buffers / 4))
+  6. Event limit buffer count watermark (optional; defaults to (3/16 of start value of buffers number))
 
-  Example: S,1024,256,128,32
+  Example: S,1024,256,128,32,32,8
   - 1024 byte buffers
   - 256 buffers to receive incoming MPI messages
   - When the number of available buffers reaches 128, re-post 128 more
     buffers to reach a total of 256
   - A sender will not send to a peer unless it has less than 32
     outstanding sends to that peer.
+  - 32 receive buffers will be preposted.
+  - When the number of not used receive buffers will decreased to 8
+    the IBV_EVENT_SRQ_LIMIT_REACHED event will be signaled and the number
+    of receive buffers that we can pre-post will be increased.
 
   Local host: %s
   Bad queue specification: %s
@@ -409,6 +422,24 @@ Shared receive queues can take between 2 and 4 parameters:
 WARNING: The number of buffers for a queue pair specified via the
 btl_openib_receive_queues MCA parameter must be greater than the low
 buffer count watermark.  The OpenFabrics (openib) BTL will therefore
+be deactivated for this run.
+
+  Local host: %s
+  Bad queue specification: %s
+#
+[rd_num must be >= rd_init]
+WARNING: The number of buffers for a queue pair specified via the
+btl_openib_receive_queues MCA parameter (parameter #2) must be
+greater or equal to the initial SRQ size (parameter #5).
+The OpenFabrics (openib) BTL will therefore be deactivated for this run.
+
+  Local host: %s
+  Bad queue specification: %s
+#
+[srq_limit must be > rd_num]
+WARNING: The number of buffers for a queue pair specified via the
+btl_openib_receive_queues MCA parameter (parameter #2) must be greater than the limit
+buffer count (parameter #6).  The OpenFabrics (openib) BTL will therefore
 be deactivated for this run.
 
   Local host: %s

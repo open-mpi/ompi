@@ -1376,8 +1376,8 @@ static int setup_qps(void)
                         true, rd_win, rd_num - rd_low);
             }
         } else {
-            int32_t sd_max;
-            if (count < 3 || count > 5) {
+            int32_t sd_max, rd_init, srq_limit;
+            if (count < 3 || count > 7) {
                 orte_show_help("help-mpi-btl-openib.txt",
                                "invalid srq specification", true,
                                orte_process_info.nodename, queues[qp]);
@@ -1391,15 +1391,47 @@ static int setup_qps(void)
             /* by default set rd_low to be 3/4 of rd_num */
             rd_low = atoi_param(P(3), rd_num - (rd_num / 4));
             sd_max = atoi_param(P(4), rd_low / 4);
-            BTL_VERBOSE(("srq: rd_num is %d rd_low is %d sd_max is %d",
-                         rd_num, rd_low, sd_max));
+            /* rd_init is initial value for rd_curr_num of all SRQs, 1/4 of rd_num by default */
+            rd_init = atoi_param(P(5), rd_num / 4);
+            /* by default set srq_limit to be 3/16 of rd_init (it's 1/4 of rd_low_local,
+               the value of rd_low_local we calculate in create_srq function) */
+            srq_limit = atoi_param(P(6), (rd_init - (rd_init / 4)) / 4);
+
+            /* If we set srq_limit less or greater than rd_init
+               (init value for rd_curr_num) => we receive the IBV_EVENT_SRQ_LIMIT_REACHED
+               event immediately and the value of rd_curr_num will be increased */
+
+            /* If we set srq_limit to zero, but size of SRQ greater than 1 and
+               it is not a user request (param number 6 in --mca btl_openib_receive_queues) => set it to be 1 */
+            if((0 == srq_limit) && (1 < rd_num) && (0 != P(6))) {
+                srq_limit = 1;
+            }
+
+            BTL_VERBOSE(("srq: rd_num is %d rd_low is %d sd_max is %d rd_max is %d srq_limit is %d",
+                         rd_num, rd_low, sd_max, rd_init, srq_limit));
 
             /* Calculate the smallest freelist size that can be allowed */
             if (rd_num > min_freelist_size) {
                 min_freelist_size = rd_num;
             }
 
+            if (rd_num < rd_init) {
+                orte_show_help("help-mpi-btl-openib.txt", "rd_num must be >= rd_init",
+                        true, orte_process_info.nodename, queues[qp]);
+                ret = OMPI_ERR_BAD_PARAM;
+                goto error;
+            }
+
+            if (rd_num < srq_limit) {
+                orte_show_help("help-mpi-btl-openib.txt", "srq_limit must be > rd_num",
+                        true, orte_process_info.nodename, queues[qp]);
+                ret = OMPI_ERR_BAD_PARAM;
+                goto error;
+            }
+
             mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max = sd_max;
+            mca_btl_openib_component.qp_infos[qp].u.srq_qp.rd_init = rd_init;
+            mca_btl_openib_component.qp_infos[qp].u.srq_qp.srq_limit = srq_limit;
         }
 
         if (rd_num <= rd_low) {
@@ -3200,19 +3232,19 @@ error:
 
 int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl, const int qp)
 {
-    int rd_low = mca_btl_openib_component.qp_infos[qp].rd_low;
-    int rd_num = mca_btl_openib_component.qp_infos[qp].rd_num;
+    int rd_low_local = openib_btl->qps[qp].u.srq_qp.rd_low_local;
+    int rd_curr_num = openib_btl->qps[qp].u.srq_qp.rd_curr_num;
     int num_post, i, rc;
     struct ibv_recv_wr *bad_wr, *wr_list = NULL, *wr = NULL;
 
     assert(!BTL_OPENIB_QP_TYPE_PP(qp));
 
     OPAL_THREAD_LOCK(&openib_btl->ib_lock);
-    if(openib_btl->qps[qp].u.srq_qp.rd_posted > rd_low) {
+    if(openib_btl->qps[qp].u.srq_qp.rd_posted > rd_low_local) {
         OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
         return OMPI_SUCCESS;
     }
-    num_post = rd_num - openib_btl->qps[qp].u.srq_qp.rd_posted;
+    num_post = rd_curr_num - openib_btl->qps[qp].u.srq_qp.rd_posted;
 
     for(i = 0; i < num_post; i++) {
         ompi_free_list_item_t* item;
@@ -3229,7 +3261,26 @@ int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl, const int qp)
 
     rc = ibv_post_srq_recv(openib_btl->qps[qp].u.srq_qp.srq, wr_list, &bad_wr);
     if(OPAL_LIKELY(0 == rc)) {
+        struct ibv_srq_attr srq_attr;
+
         OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.rd_posted, num_post);
+
+        if(true == openib_btl->qps[qp].u.srq_qp.srq_limit_event_flag) {
+            srq_attr.max_wr = openib_btl->qps[qp].u.srq_qp.rd_curr_num;
+            srq_attr.max_sge = 1;
+            srq_attr.srq_limit = mca_btl_openib_component.qp_infos[qp].u.srq_qp.srq_limit;
+
+            openib_btl->qps[qp].u.srq_qp.srq_limit_event_flag = false;
+            if(ibv_modify_srq(openib_btl->qps[qp].u.srq_qp.srq, &srq_attr, IBV_SRQ_LIMIT)) {
+                BTL_ERROR(("Failed to request limit event for srq on  %s.  "
+                   "Fatal error, stoping asynch event thread",
+                   ibv_get_device_name(openib_btl->device->ib_dev)));
+
+                OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
+                return OMPI_ERROR;
+            }
+        }
+
         OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
         return OMPI_SUCCESS;
     }

@@ -163,6 +163,11 @@ int btl_openib_register_mca_params(void)
                   1, &ival, 0));
     mca_btl_openib_component.warn_nonexistent_if = (0 != ival);
 
+    CHECK(reg_int("enable_srq_resize", NULL,
+                  "Enable/Disable on demand SRQ resize. "
+                  "(0 = without resizing, nonzero = with resizing)", 1, &ival, 0));
+    mca_btl_openib_component.enable_srq_resize = (0 != ival);
+
     if (OMPI_HAVE_IBV_FORK_INIT) {
         ival2 = -1;
     } else {
