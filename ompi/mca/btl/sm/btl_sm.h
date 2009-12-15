@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,6 +27,17 @@
 #include "ompi_config.h"
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+#include <sched.h>
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <unistd.h>
+#if OMPI_BTL_SM_HAVE_KNEM
+#include "knem_io.h"
+#endif
+
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif  /* HAVE_SYS_TYPES_H */
@@ -150,6 +162,7 @@ struct mca_btl_sm_component_t {
                                         *   SMP specfic data structures. */
     ompi_free_list_t sm_frags_eager;   /**< free list of sm first */
     ompi_free_list_t sm_frags_max;     /**< free list of sm second */
+    ompi_free_list_t sm_frags_user;
     ompi_free_list_t sm_first_frags_to_progress;  /**< list of first
                                                     fragments that are
                                                     awaiting resources */
@@ -166,9 +179,71 @@ struct mca_btl_sm_component_t {
     int  sm_fifo_fd;               /**< file descriptor corresponding to opened fifo */
     opal_thread_t sm_fifo_thread;
 #endif
+    struct mca_btl_sm_t      **sm_btls;
+    struct mca_btl_sm_frag_t **table;
+    size_t sm_num_btls;
+    size_t sm_max_btls;
+
+#if OMPI_BTL_SM_HAVE_KNEM
+    /* Knem capabilities info */
+    struct knem_cmd_info knem_info;
+#endif
+
+    /** MCA: should we be using knem or not?  neg=try but continue if
+        not available, 0=don't try, 1=try and fail if not available */
+    int use_knem;
+
+    /** MCA: minimal message size (bytes) to offload on DMA engine
+        when using knem */
+    uint32_t knem_dma_min;
+
+    /** MCA: how many simultaneous ongoing knem operations to
+        support */
+    int knem_max_simultaneous;
+
+    /** If we want DMA and DMA is supported, this will be loaded with
+        KNEM_FLAG_DMA.  Otherwise, it'll be 0. */
+    int knem_dma_flag;
 };
 typedef struct mca_btl_sm_component_t mca_btl_sm_component_t;
 OMPI_MODULE_DECLSPEC extern mca_btl_sm_component_t mca_btl_sm_component;
+
+/**
+ * SM BTL Interface
+ */
+struct mca_btl_sm_t {
+    mca_btl_base_module_t  super;       /**< base BTL interface */
+    bool btl_inited;  /**< flag indicating if btl has been inited */
+    mca_btl_base_module_error_cb_fn_t error_cb;
+
+#if OMPI_BTL_SM_HAVE_KNEM
+
+    /* File descriptor for knem */
+    int knem_fd;
+
+    /* Array of knem status items for non-blocking knem requests */
+    knem_status_t *knem_status_array;
+
+    /* Array of fragments currently being moved by knem non-blocking
+       operations */
+    struct mca_btl_sm_frag_t **knem_frag_array;
+
+    /* First free/available location in knem_status_array */
+    int knem_status_first_avail;
+
+    /* First currently-being used location in the knem_status_array */
+    int knem_status_first_used;
+
+    /* Number of status items currently in use */
+    int knem_status_num_used;
+#endif
+};
+typedef struct mca_btl_sm_t mca_btl_sm_t;
+OMPI_MODULE_DECLSPEC extern mca_btl_sm_t mca_btl_sm;
+
+
+
+
 
 struct btl_sm_pending_send_item_t
 {
@@ -314,17 +389,7 @@ extern mca_btl_base_module_t** mca_btl_sm_component_init(
  */
 extern int mca_btl_sm_component_progress(void);
 
-/**
- * SM BTL Interface
- */
-struct mca_btl_sm_t {
-    mca_btl_base_module_t  super;       /**< base BTL interface */
-    bool btl_inited;  /**< flag indicating if btl has been inited */
-    mca_btl_base_module_error_cb_fn_t error_cb;
-};
-typedef struct mca_btl_sm_t mca_btl_sm_t;
 
-extern mca_btl_sm_t mca_btl_sm;
 
 /**
  * Register a callback function that is called on error..
@@ -463,6 +528,33 @@ extern int mca_btl_sm_send(
     struct mca_btl_base_descriptor_t* descriptor,
     mca_btl_base_tag_t tag
 );
+
+#if OMPI_BTL_SM_HAVE_KNEM
+/*
+ * Synchronous knem get
+ */
+extern int mca_btl_sm_get_sync(
+		struct mca_btl_base_module_t* btl,
+		struct mca_btl_base_endpoint_t* endpoint,
+		struct mca_btl_base_descriptor_t* des );
+/*
+ * Asynchronous knem get
+ */
+extern int mca_btl_sm_get_async(
+		struct mca_btl_base_module_t* btl,
+		struct mca_btl_base_endpoint_t* endpoint,
+		struct mca_btl_base_descriptor_t* des );
+
+extern struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_dst(
+		struct mca_btl_base_module_t* btl,
+		struct mca_btl_base_endpoint_t* endpoint,
+		struct mca_mpool_base_registration_t* registration,
+		struct opal_convertor_t* convertor,
+		uint8_t order,
+		size_t reserve,
+		size_t* size,
+		uint32_t flags);
+#endif
 
 /**
  * Fault Tolerance Event Notification Function
