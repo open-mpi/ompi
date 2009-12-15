@@ -13,7 +13,7 @@
 # Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 #                         reserved.
-# Copyright (c) 2006-2008 Mellanox Technologies. All rights reserved.
+# Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -204,6 +204,21 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
                        [$1_have_ibcm=1
                        $1_LIBS="-libcm $$1_LIBS"])])
            fi
+		   
+           # Check support for RDMAoE devices
+           $1_have_rdmaoe=0
+           AC_CHECK_DECLS([IBV_LINK_LAYER_ETHERNET],
+                          [$1_have_rdmaoe=1], [],
+                          [#include <infiniband/verbs.h>])
+
+           AC_MSG_CHECKING([if RDMAoE support is enabled])
+           if test "1" = "$$1_have_rdmaoe"; then
+                AC_DEFINE_UNQUOTED([OMPI_HAVE_RDMAOE], [$$1_have_rdmaoe], [Enable RDMAoE support])
+                AC_MSG_RESULT([yes])
+           else
+                AC_MSG_RESULT([no])
+           fi
+
           ])
 
     # Check to see if <infiniband/driver.h> works.  It is known to
