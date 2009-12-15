@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2008-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * $COPYRIGHT$
@@ -226,10 +226,53 @@ static int btl_openib_async_commandh(struct mca_btl_openib_async_poll *devices_p
     return OMPI_SUCCESS;
 }
 
+/* The main idea of resizing SRQ algorithm - 
+   We create a SRQ with size = rd_num, but for efficient usage of resources
+   the number of WQEs that we post = rd_curr_num < rd_num and this value is
+   increased (by needs) in IBV_EVENT_SRQ_LIMIT_REACHED event handler (i.e. in this function),
+   the event will thrown by device if number of WQEs in SRQ will be less than srq_limit */
+static int btl_openib_async_srq_limit_event(struct ibv_srq* srq, 
+                                              mca_btl_openib_module_t *openib_btl)
+{
+    int qp;
+
+    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
+        if (!BTL_OPENIB_QP_TYPE_PP(qp)) {
+            if(openib_btl->qps[qp].u.srq_qp.srq == srq) {
+                break;
+            }
+        }
+    }
+
+    if(qp >= mca_btl_openib_component.num_qps) {
+        orte_show_help("help-mpi-btl-openib.txt", "SRQ doesn't found",
+            true,orte_process_info.nodename,
+            ibv_get_device_name(openib_btl->device->ib_dev));
+        return OMPI_ERROR;
+    }
+
+    /* dynamically re-size the SRQ to be larger */
+    openib_btl->qps[qp].u.srq_qp.rd_curr_num <<= 1;
+
+    if(openib_btl->qps[qp].u.srq_qp.rd_curr_num >= mca_btl_openib_component.qp_infos[qp].rd_num) {
+        openib_btl->qps[qp].u.srq_qp.rd_curr_num = mca_btl_openib_component.qp_infos[qp].rd_num;
+        openib_btl->qps[qp].u.srq_qp.rd_low_local = mca_btl_openib_component.qp_infos[qp].rd_low;
+
+        openib_btl->qps[qp].u.srq_qp.srq_limit_event_flag = false;
+
+        return OMPI_SUCCESS;
+    }
+
+    openib_btl->qps[qp].u.srq_qp.rd_low_local <<= 1;
+    openib_btl->qps[qp].u.srq_qp.srq_limit_event_flag = true;
+
+    return OMPI_SUCCESS;
+}
+
 /* Function handle async device events */
 static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_poll, int index)
 {
-    int j;
+    int j, btl_index = 0;
     mca_btl_openib_device_t *device = NULL;
     struct ibv_async_event event;
     bool xrc_event = false;
@@ -240,6 +283,8 @@ static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_po
         if (mca_btl_openib_component.openib_btls[j]->device->ib_dev_context->async_fd ==
                 devices_poll->async_pollfd[index].fd ) {
             device = mca_btl_openib_component.openib_btls[j]->device;
+            btl_index = j;
+
             break;
         }
     }
@@ -306,7 +351,15 @@ static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_po
 #if HAVE_DECL_IBV_EVENT_CLIENT_REREGISTER
             case IBV_EVENT_CLIENT_REREGISTER:
 #endif
+                break;
+            /* The event is signaled when number of prepost receive WQEs is going
+                                            under predefined threshold - srq_limit */
             case IBV_EVENT_SRQ_LIMIT_REACHED:
+                if(OMPI_SUCCESS != btl_openib_async_srq_limit_event(event.element.srq, 
+                                     mca_btl_openib_component.openib_btls[btl_index])) {
+                    return OMPI_ERROR;
+                }
+
                 break;
             default:
                 orte_show_help("help-mpi-btl-openib.txt", "of unknown event",

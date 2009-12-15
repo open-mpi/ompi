@@ -96,6 +96,12 @@ struct mca_btl_openib_pp_qp_info_t {
 
 struct mca_btl_openib_srq_qp_info_t {
     int32_t sd_max;
+    /* The init value for rd_curr_num variables of all SRQs */
+    int32_t rd_init;
+    /* The watermark, threshold - if the number of WQEs in SRQ is less then this value =>
+       the SRQ limit event (IBV_EVENT_SRQ_LIMIT_REACHED) will be generated on corresponding SRQ.
+       As result the maximal number of pre-posted WQEs on the SRQ will be increased */
+    int32_t srq_limit;
 }; typedef struct mca_btl_openib_srq_qp_info_t mca_btl_openib_srq_qp_info_t;
 
 struct mca_btl_openib_qp_info_t {
@@ -263,6 +269,8 @@ struct mca_btl_openib_component_t {
     ompi_free_list_t send_free_coalesced;
     /** Default receive queues */
     char* default_recv_qps;
+    /** Whether we want a dynamically resizing srq, enabled by default */
+    bool enable_srq_resize;
 }; typedef struct mca_btl_openib_component_t mca_btl_openib_component_t;
 
 OMPI_MODULE_DECLSPEC extern mca_btl_openib_component_t mca_btl_openib_component;
@@ -363,6 +371,16 @@ struct mca_btl_openib_module_srq_qp_t {
     int32_t sd_credits;  /* the max number of outstanding sends on a QP when using SRQ */
                          /*  i.e. the number of frags that  can be outstanding (down counter) */
     opal_list_t pending_frags[2];    /**< list of high/low prio frags */
+    /** The number of receive buffers that can be post in the current time.
+        The value may be increased in the IBV_EVENT_SRQ_LIMIT_REACHED
+        event handler. The value starts from (rd_num / 4) and increased up to rd_num */
+    int32_t rd_curr_num;
+    /** We post additional WQEs only if a number of WQEs (in specific SRQ) is less of this value.
+         The value increased together with rd_curr_num. The value is unique for every SRQ. */
+    int32_t rd_low_local;
+    /** The flag points if we want to get the 
+         IBV_EVENT_SRQ_LIMIT_REACHED events for dynamically resizing SRQ */
+    bool srq_limit_event_flag;
 }; typedef struct mca_btl_openib_module_srq_qp_t mca_btl_openib_module_srq_qp_t;
 
 struct mca_btl_openib_module_qp_t {

@@ -223,6 +223,7 @@ static int adjust_cq(mca_btl_openib_device_t *device, const int cq)
 static int create_srq(mca_btl_openib_module_t *openib_btl)
 {
     int qp;
+    int32_t rd_num, rd_curr_num; 
 
     /* create the SRQ's */
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
@@ -250,6 +251,24 @@ static int create_srq(mca_btl_openib_module_t *openib_btl)
                                                "ibv_create_srq",
                                                ibv_get_device_name(openib_btl->device->ib_dev));
                 return OMPI_ERROR;
+            }
+
+            rd_num = mca_btl_openib_component.qp_infos[qp].rd_num;
+            rd_curr_num = openib_btl->qps[qp].u.srq_qp.rd_curr_num = mca_btl_openib_component.qp_infos[qp].u.srq_qp.rd_init;
+
+            if(true == mca_btl_openib_component.enable_srq_resize) {
+                if(0 == rd_curr_num) {
+                    openib_btl->qps[qp].u.srq_qp.rd_curr_num = 1;
+                }
+
+                openib_btl->qps[qp].u.srq_qp.rd_low_local = rd_curr_num - (rd_curr_num >> 2);
+                openib_btl->qps[qp].u.srq_qp.srq_limit_event_flag = true;
+            } else {
+                openib_btl->qps[qp].u.srq_qp.rd_curr_num = rd_num;
+                openib_btl->qps[qp].u.srq_qp.rd_low_local = mca_btl_openib_component.qp_infos[qp].rd_low;
+                /* Not used in this case, but we don't need a garbage */
+                mca_btl_openib_component.qp_infos[qp].u.srq_qp.srq_limit = 0;
+                openib_btl->qps[qp].u.srq_qp.srq_limit_event_flag = false;
             }
         }
     }
