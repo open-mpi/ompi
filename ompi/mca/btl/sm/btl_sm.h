@@ -267,10 +267,6 @@ typedef struct btl_sm_pending_send_item_t btl_sm_pending_send_item_t;
 #define VIRTUAL2RELATIVE(VADDR ) ((long)(VADDR)  - (long)mca_btl_sm_component.shm_bases[mca_btl_sm_component.my_smp_rank])
 #define RELATIVE2VIRTUAL(OFFSET) ((long)(OFFSET) + (long)mca_btl_sm_component.shm_bases[mca_btl_sm_component.my_smp_rank])
 
-/* ================================================== */
-/* ================================================== */
-/* ================================================== */
-
 static inline int sm_fifo_init(int fifo_size, mca_mpool_base_module_t *mpool,
                                sm_fifo_t *fifo, int lazy_free)
 {
