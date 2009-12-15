@@ -161,20 +161,6 @@ int orte_ess_base_orted_setup(char **hosts)
 
     /* Setup the communication infrastructure */
     
-    /* start with multicast */
-#if ORTE_ENABLE_MULTICAST
-    if (ORTE_SUCCESS != (ret = orte_rmcast_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rmcast_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_rmcast_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rmcast_base_select";
-        goto error;
-    }
-#endif
-    
     /* Runtime Messaging Layer - this opens/selects the OOB as well */
     if (ORTE_SUCCESS != (ret = orte_rml_base_open())) {
         ORTE_ERROR_LOG(ret);
@@ -211,6 +197,20 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "orte_grpcomm_base_select";
         goto error;
     }
+    
+    /* multicast */
+#if ORTE_ENABLE_MULTICAST
+    if (ORTE_SUCCESS != (ret = orte_rmcast_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rmcast_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_rmcast_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rmcast_base_select";
+        goto error;
+    }
+#endif
     
     /* Open/select the odls */
     if (ORTE_SUCCESS != (ret = orte_odls_base_open())) {

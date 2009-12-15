@@ -206,20 +206,6 @@ static int rte_init(void)
     
     /* Setup the communication infrastructure */
     
-    /* start with multicast */
-#if ORTE_ENABLE_MULTICAST
-    if (ORTE_SUCCESS != (ret = orte_rmcast_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rmcast_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_rmcast_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rmcast_base_select";
-        goto error;
-    }
-#endif
-    
     /*
      * Runtime Messaging Layer
      */
@@ -259,6 +245,20 @@ static int rte_init(void)
         error = "orte_grpcomm_base_select";
         goto error;
     }
+    
+    /* multicast */
+#if ORTE_ENABLE_MULTICAST
+    if (ORTE_SUCCESS != (ret = orte_rmcast_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rmcast_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_rmcast_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rmcast_base_select";
+        goto error;
+    }
+#endif
     
     /* Now provide a chance for the PLM
      * to perform any module-specific init functions. This
@@ -638,16 +638,16 @@ static int rte_finalize(void)
     orte_plm_base_close();
     orte_errmgr_base_close();
     
-    /* now can close the rml and its friendly group comm */
-    orte_grpcomm_base_close();
-    orte_routed_base_close();
-    orte_rml_base_close();
-    
     /* close the multicast */
 #if ORTE_ENABLE_MULTICAST
     orte_rmcast_base_close();
 #endif
-    
+
+    /* now can close the rml and its friendly group comm */
+    orte_grpcomm_base_close();
+    orte_routed_base_close();
+    orte_rml_base_close();
+
     /* if we were doing timing studies, close the timing file */
     if (orte_timing) {
         if (stdout != orte_timing_output &&

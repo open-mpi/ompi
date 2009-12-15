@@ -91,26 +91,29 @@ static int rte_init(void)
         goto error;
     }
     
-    /* open the reliable multicast framework, just in
-     * case we need it to query the HNP for a name
-     */
-    if (ORTE_SUCCESS != (ret = orte_rmcast_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rmcast_base_open";
-        goto error;
-    }
-    
-    if (ORTE_SUCCESS != (ret = orte_rmcast_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rmcast_base_select";
-        goto error;
-    }
-    
     if (ORTE_PROC_IS_DAEMON) {
-        /* get a name for ourselves */
-        if (ORTE_SUCCESS != (ret = cm_set_name())) {
-            error = "set_name";
-            goto error;
+        /* if we do not know the HNP, then we have to
+         * use the multicast system to find it
+         */
+        if (NULL == orte_process_info.my_hnp_uri) {
+            /* open the reliable multicast framework */
+            if (ORTE_SUCCESS != (ret = orte_rmcast_base_open())) {
+                ORTE_ERROR_LOG(ret);
+                error = "orte_rmcast_base_open";
+                goto error;
+            }
+            
+            if (ORTE_SUCCESS != (ret = orte_rmcast_base_select())) {
+                ORTE_ERROR_LOG(ret);
+                error = "orte_rmcast_base_select";
+                goto error;
+            }
+            
+            /* get a name for ourselves */
+            if (ORTE_SUCCESS != (ret = cm_set_name())) {
+                error = "set_name";
+                goto error;
+            }
         }
         
         /* get the list of nodes used for this job */
@@ -148,10 +151,27 @@ static int rte_init(void)
          */
         orte_plm_base_close();
 
-        /* checkin with the HNP */
-        if (ORTE_SUCCESS != (ret = cm_set_name())) {
-            error = "set_name";
-            goto error;
+        /* if we do not know the HNP, then we have to use
+         * the multicast system to find it
+         */
+        if (NULL == orte_process_info.my_hnp_uri) {
+            /* open the reliable multicast framework */
+            if (ORTE_SUCCESS != (ret = orte_rmcast_base_open())) {
+                ORTE_ERROR_LOG(ret);
+                error = "orte_rmcast_base_open";
+                goto error;
+            }
+            
+            if (ORTE_SUCCESS != (ret = orte_rmcast_base_select())) {
+                ORTE_ERROR_LOG(ret);
+                error = "orte_rmcast_base_select";
+                goto error;
+            }
+            /* checkin with the HNP */
+            if (ORTE_SUCCESS != (ret = cm_set_name())) {
+                error = "set_name";
+                goto error;
+            }            
         }
         
         /* do the rest of the standard tool init */
