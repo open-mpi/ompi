@@ -33,7 +33,7 @@ int32_t opal_datatype_get_element_count( const opal_datatype_t* datatype, size_t
     dt_stack_t* pStack;   /* pointer to the position on the stack */
     uint32_t pos_desc;    /* actual position in the description of the derived datatype */
     int32_t nbElems = 0, stack_pos = 0;
-	size_t local_size;
+    size_t local_size;
     dt_elem_desc_t* pElems;
 
     /* Normally the size should be less or equal to the size of the datatype.
