@@ -1401,9 +1401,8 @@ static int setup_qps(void)
                (init value for rd_curr_num) => we receive the IBV_EVENT_SRQ_LIMIT_REACHED
                event immediately and the value of rd_curr_num will be increased */
 
-            /* If we set srq_limit to zero, but size of SRQ greater than 1 and
-               it is not a user request (param number 6 in --mca btl_openib_receive_queues) => set it to be 1 */
-            if((0 == srq_limit) && (1 < rd_num) && (0 != P(6))) {
+            /* If we set srq_limit to zero, but size of SRQ greater than 1 => set it to be 1 */
+            if((0 == srq_limit) && (1 < rd_num)) {
                 srq_limit = 1;
             }
 

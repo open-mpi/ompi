@@ -215,6 +215,63 @@ static int adjust_cq(mca_btl_openib_device_t *device, const int cq)
 
     return OMPI_SUCCESS;
 }
+/* In this function we check if the device supports srq limit event. We create
+   the temporary srq, post some receive buffers - in order to prevent srq limit event immediately 
+   and call the "ibv_modify_srq" function. If a return value of the function not success => our decision
+   that the device doesn't support this capability. */
+static int check_if_device_support_modify_srq(mca_btl_openib_module_t *openib_btl)
+{
+    char buff;
+    int rc = OMPI_SUCCESS;
+
+    struct ibv_srq* dummy_srq = NULL;
+    struct ibv_srq_attr modify_attr;
+
+    struct ibv_sge sge_elem;
+    struct ibv_recv_wr wr1, wr2, bad_wr;
+
+    struct ibv_srq_init_attr init_attr;
+    memset(&init_attr, 0, sizeof(struct ibv_srq_init_attr));
+
+    init_attr.attr.max_wr = 3;
+    init_attr.attr.max_sge = 1;
+
+    dummy_srq = ibv_create_srq(openib_btl->device->ib_pd, &init_attr);
+    if(NULL == dummy_srq) {
+        rc = OMPI_ERROR;
+        goto destroy_dummy_srq;
+    }
+
+    sge_elem.addr = (uint64_t) &buff;
+    sge_elem.length = sizeof(buff);
+
+    wr1.num_sge = wr2.num_sge = 1;
+    wr1.sg_list = wr2.sg_list = &sge_elem;
+
+    wr1.next = &wr2;
+    wr2.next = NULL;
+
+    if(ibv_post_srq_recv(dummy_srq, &wr1, &bad_wr)) {
+        rc = OMPI_ERROR;
+        goto destroy_dummy_srq;
+    }
+
+    modify_attr.max_wr = 2;
+    modify_attr.max_sge = 1;
+    modify_attr.srq_limit = 1;
+
+    if(ibv_modify_srq(dummy_srq, &modify_attr, IBV_SRQ_LIMIT)) {
+        rc = OMPI_ERR_NOT_SUPPORTED;
+        goto destroy_dummy_srq;
+    }
+
+destroy_dummy_srq:
+    if(ibv_destroy_srq(dummy_srq)) {
+        rc = OMPI_ERROR;
+    }
+
+    return rc;
+}
 
 /*
  * create both the high and low priority completion queues
@@ -222,12 +279,26 @@ static int adjust_cq(mca_btl_openib_device_t *device, const int cq)
  */
 static int create_srq(mca_btl_openib_module_t *openib_btl)
 {
-    int qp;
-    int32_t rd_num, rd_curr_num; 
+    int qp, rc = 0;
+    int32_t rd_num, rd_curr_num;
+
+    bool device_support_modify_srq = true;
+
+    /* Check if our device supports modify srq ability */
+    rc = check_if_device_support_modify_srq(openib_btl);
+    if(OMPI_ERR_NOT_SUPPORTED == rc) {
+        device_support_modify_srq = false;
+    } else if(OMPI_ERROR == rc) {
+        mca_btl_openib_show_init_error(__FILE__, __LINE__,
+                    "ibv_create_srq",
+                    ibv_get_device_name(openib_btl->device->ib_dev));
+        return OMPI_ERROR;
+    }
 
     /* create the SRQ's */
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
         struct ibv_srq_init_attr attr;
+        memset(&attr, 0, sizeof(struct ibv_srq_init_attr));
 
         if(!BTL_OPENIB_QP_TYPE_PP(qp)) {
             attr.attr.max_wr = mca_btl_openib_component.qp_infos[qp].rd_num +
@@ -256,7 +327,8 @@ static int create_srq(mca_btl_openib_module_t *openib_btl)
             rd_num = mca_btl_openib_component.qp_infos[qp].rd_num;
             rd_curr_num = openib_btl->qps[qp].u.srq_qp.rd_curr_num = mca_btl_openib_component.qp_infos[qp].u.srq_qp.rd_init;
 
-            if(true == mca_btl_openib_component.enable_srq_resize) {
+            if(true == mca_btl_openib_component.enable_srq_resize &&
+                                    true == device_support_modify_srq) {
                 if(0 == rd_curr_num) {
                     openib_btl->qps[qp].u.srq_qp.rd_curr_num = 1;
                 }
