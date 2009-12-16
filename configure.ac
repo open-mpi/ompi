@@ -1182,6 +1182,31 @@ if test $ac_cv_header_sys_synch_h = yes ; then
               [Do not use outside of mpi.h.  Define to 1 if you have the <sys/synch.h> header file.])
 fi
 
+# If there is a local hook for each project, call it.  This allows 3rd
+# parties to add configuration steps to OPAL, ORTE, and/or OMPI simply
+# by placing a file in [opal|orte|ompi]/config/whatever.m4 that
+# AC_DEFUN's the appropriate macro name -- no patching is necessary.
+# If that macro is defined, we'll run it here.
+#
+# Unfortunately, aclocal is not smart enough to parse something like
+# the following in ompi_mca.m4 (when we're already m4 looping over the
+# project list):
+#
+# m4_foreach(mca_project, [mca_project_list], 
+#           [m4_ifdef(mca_project[_CONFIG_LOCAL], mca_project[_CONFIG_LOCAL])])
+#
+# Meaning that aclocal doesn't see that, for example,
+# "ompi_CONFIG_LOCAL" is actually invoked at the bottom and therefore
+# go look for an .m4 file that contains it.  Instead, we have to
+# manually list the macros here.  *Then* aclocal is smart enough to go
+# look for an .m4 file containing each macro, and if found,
+# automatically m4_include the corresponding in aclocal.m4.  Bummer.
+# :-\
+
+m4_ifdef([opal_CONFIG_LOCAL], [opal_CONFIG_LOCAL])
+m4_ifdef([orte_CONFIG_LOCAL], [orte_CONFIG_LOCAL])
+m4_ifdef([ompi_CONFIG_LOCAL], [ompi_CONFIG_LOCAL])
+
 ############################################################################
 # Party on
 ############################################################################
