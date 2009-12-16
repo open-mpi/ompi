@@ -245,7 +245,7 @@ static int btl_openib_async_srq_limit_event(struct ibv_srq* srq,
     }
 
     if(qp >= mca_btl_openib_component.num_qps) {
-        orte_show_help("help-mpi-btl-openib.txt", "SRQ doesn't found",
+        orte_show_help("help-mpi-btl-openib.txt", "SRQ not found",
             true,orte_process_info.nodename,
             ibv_get_device_name(openib_btl->device->ib_dev));
         return OMPI_ERROR;
