@@ -32,6 +32,9 @@ Trunk (not on release branches yet)
 1.5
 ---
 
+- Added "knem" support (direct process-to-process copying for shared
+  memory message passing).  See http://runtime.bordeaux.inria.fr/knem/
+  and the README file for more details.
 - Removed the libopenmpi_malloc library (added in the v1.3 series)
   since it is no longer necessary
 - Add several notifier plugins (generally used when Open MPI detects
