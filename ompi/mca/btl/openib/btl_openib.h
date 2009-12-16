@@ -381,6 +381,15 @@ struct mca_btl_openib_module_srq_qp_t {
     /** The flag points if we want to get the 
          IBV_EVENT_SRQ_LIMIT_REACHED events for dynamically resizing SRQ */
     bool srq_limit_event_flag;
+    /**< In difference of the "--mca enable_srq_resize" parameter that says, if we want(or no)
+         to start with small num of pre-posted receive buffers (rd_curr_num) and to increase this number by needs
+         (the max of this value is rd_num – the whole size of SRQ), the "srq_limit_event_flag" says if we want to get limit event
+         from device if the defined srq limit was reached (signal to the main thread) and we put off this flag if the rd_curr_num
+         was increased up to rd_num.
+         In order to prevent lock/unlock operation in the critical path we prefer only put-on
+         the srq_limit_event_flag in asynchronous thread, because in this way we post receive buffers
+         in the main thread only and only after posting we set (if srq_limit_event_flag is true)
+         the limit for IBV_EVENT_SRQ_LIMIT_REACHED event. */
 }; typedef struct mca_btl_openib_module_srq_qp_t mca_btl_openib_module_srq_qp_t;
 
 struct mca_btl_openib_module_qp_t {

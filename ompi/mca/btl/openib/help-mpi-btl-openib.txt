@@ -168,9 +168,9 @@ peer to which it was connected:
 You may need to consult with your system administrator to get this
 problem fixed.
 #
-[SRQ doesn't found]
-The srq doesn't found.
-Below is some information about the host that raised the error:
+[SRQ not found]
+Open MPI tried to access a shared receive queue (SRQ) that was not found.
+This should not happen, and is a fatal error.  Your MPI job will now abort.
 
     Local host:   %s
     Local device: %s
@@ -411,9 +411,8 @@ Shared receive queues can take between 2 and 6 parameters:
   - A sender will not send to a peer unless it has less than 32
     outstanding sends to that peer.
   - 32 receive buffers will be preposted.
-  - When the number of not used receive buffers will decreased to 8
-    the IBV_EVENT_SRQ_LIMIT_REACHED event will be signaled and the number
-    of receive buffers that we can pre-post will be increased.
+  - When the number of unused shared receive buffers reaches 8, more
+    buffers (32 in this case) will be posted.
 
   Local host: %s
   Bad queue specification: %s
