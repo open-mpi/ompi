@@ -517,6 +517,14 @@ Network Support
   using multiple interconnects at the same time (including TCP), or
   transferring non contiguous data-types.
 
+- Linux "knem" support is used when the "sm" (shared memory) BTL is
+  compiled with knem support (see the --with-knem configure option)
+  and the knem Linux module is loaded in the running kernel.  If the
+  knem Linux kernel module is not loaded, the knem support is (by
+  default) silently deactivated during Open MPI jobs.
+
+  See http://runtime.bordeaux.inria.fr/knem/ for details on Knem.
+
 ===========================================================================
 
 Building Open MPI
@@ -564,6 +572,17 @@ for a full list); a summary of the more commonly used ones follows:
   Look in directory for the GM libraries.  By default, Open MPI will
   look in <gm directory>/lib and <gm directory>/lib64, which covers
   most cases.  This option is only needed for special configurations.
+
+--with-knem=<directory>
+  Specify the directory where the knem libraries and header files are
+  located.  This option is generally only necessary if the kenm headers
+  and libraries are not in default compiler/linker search paths.
+
+  kenm is a Linux kernel module that allows direct process-to-process
+  memory copies (optionally using hardware offload), potentially
+  increasing bandwidth for large messages sent between messages on the
+  same server.  See http://runtime.bordeaux.inria.fr/knem/ for
+  details.
 
 --with-mx=<directory>
   Specify the directory where the MX libraries and header files are
@@ -1059,8 +1078,8 @@ pubsub    - MPI-2 publish/subscribe management
 rcache    - Memory registration cache
 topo      - MPI topology routines
 
-Back-end run-time environment component frameworks:
----------------------------------------------------
+Back-end run-time environment (RTE) component frameworks:
+---------------------------------------------------------
 
 errmgr    - RTE error manager
 ess       - RTE environment-specfic services
@@ -1090,6 +1109,7 @@ memcpy      - Memopy copy support
 memory      - Memory management hooks
 paffinity   - Processor affinity
 pstat       - Process status
+sysinfo     - Basic system information
 timer       - High-resolution timers
 
 ---------------------------------------------------------------------------
@@ -1147,6 +1167,37 @@ These locations are checked in order.  For example, a parameter value
 passed on the mpirun command line will override an environment
 variable; an environment variable will override the system-wide
 defaults.
+
+Each component typically activates itself when relavant.  For example,
+the MX component will detect that MX devices are present and will
+automatically be used for MPI communications.  The SLURM component
+will automatically detect when running inside a SLURM job and activate
+itself.  And so on.
+
+Components can be manually activated or deactivated if necessary, of
+course.  The most common components that are manually activated,
+deactivated, or tuned are the "BTL" components -- components that are
+used for MPI point-to-point communications on many types common
+networks. 
+
+For example, to *only* activate the TCP and "self" (process loopback)
+components are used for MPI communications, specify them in a
+comma-delimited list to the "btl" MCA parameter:
+
+   shell$ mpirun --mca btl tcp,self hello_world_mpi
+
+To add shared memory support, add "sm" into the command-delimited list
+(list order does not matter):
+    
+   shell$ mpirun --mca btl tcp,sm,self hello_world_mpi
+
+To specifically deactivate a specific component, the comma-delimited
+list can be prepended with a "^" to negate it:
+
+   shell$ mpirun --mca btl ^tcp hello_mpi_world
+
+The above command will use any other BTL component other than the tcp
+component.
 
 ===========================================================================
 
