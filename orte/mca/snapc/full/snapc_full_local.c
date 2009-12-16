@@ -1778,9 +1778,9 @@ static int snapc_full_local_get_vpids(void)
     /*
      * Otherwise update or populate the list
      */
-    for (item = opal_list_get_first(&orte_local_children);
+    for (item  = opal_list_get_first(&orte_local_children);
          item != opal_list_get_end(&orte_local_children);
-         item = opal_list_get_next(item)) {
+         item  = opal_list_get_next(item)) {
         child = (orte_odls_child_t*)item;
 
         /* if the list is empty or this child is not in the list then add it */
@@ -1790,9 +1790,12 @@ static int snapc_full_local_get_vpids(void)
             opal_list_append(&snapc_local_vpids, &(vpid_snapshot->super.super));
         }
 
-        vpid_snapshot->process_pid              = child->pid;
-        vpid_snapshot->super.process_name.jobid = child->name->jobid;
-        vpid_snapshot->super.process_name.vpid  = child->name->vpid;
+        /* Only update if the PID is -not- already set */
+        if( 0 >= vpid_snapshot->process_pid ) {
+            vpid_snapshot->process_pid              = child->pid;
+            vpid_snapshot->super.process_name.jobid = child->name->jobid;
+            vpid_snapshot->super.process_name.vpid  = child->name->vpid;
+        }
     }
 
     return ORTE_SUCCESS;
