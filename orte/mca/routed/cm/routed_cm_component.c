@@ -44,13 +44,15 @@ orte_routed_component_t mca_routed_cm_component = {
       }
 };
 
+static int is_component_requested(bool *is_req);
+
 static int orte_routed_cm_component_query(mca_base_module_t **module, int *priority)
 {
-    char *spec;
-    
-    /* only select us if specified */
-    spec = getenv("OMPI_MCA_routed");
-    if (NULL == spec || 0 != strcmp("cm", spec)) {
+    bool is_requested = false;
+
+    is_component_requested(&is_requested);
+
+    if( !is_requested ) {
         *priority = 0;
         *module = NULL;
         return ORTE_ERROR;
@@ -58,5 +60,44 @@ static int orte_routed_cm_component_query(mca_base_module_t **module, int *prior
     
     *priority = 1000;
     *module = (mca_base_module_t *)&orte_routed_cm_module;
+    return ORTE_SUCCESS;
+}
+
+static int is_component_requested(bool *is_req)
+{
+    char *spec = NULL;
+    opal_list_item_t *item = NULL;
+    mca_base_component_list_item_t *cli = NULL;
+    mca_base_component_t *component = NULL;
+
+    /*
+     * Check the environment variable
+     */
+    *is_req = false;
+    spec = getenv("OMPI_MCA_routed");
+    if (NULL != spec && 0 == strcmp("cm", spec)) {
+        *is_req = true;
+        return ORTE_SUCCESS;
+    }
+
+    /*
+     * Otherwise look through the components available for opening
+     * Must be the -only- component in the list
+     */
+    *is_req = false;
+    if( 1 == opal_list_get_size(&orte_routed_base_components) ) {
+        item  = opal_list_get_first(&orte_routed_base_components);
+
+        cli = (mca_base_component_list_item_t *) item;
+        component = (mca_base_component_t *) cli->cli_component;
+
+        if( 0 == strncmp(component->mca_component_name,
+                         mca_routed_cm_component.base_version.mca_component_name,
+                         strlen(mca_routed_cm_component.base_version.mca_component_name)) ) {
+            *is_req = true;
+            return ORTE_SUCCESS;
+        }
+    }
+
     return ORTE_SUCCESS;
 }
