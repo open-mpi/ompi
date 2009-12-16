@@ -56,14 +56,14 @@
 	OBJ_CONSTRUCT(&state_mutex, opal_mutex_t);
 
 	if (NULL != password) {
-	    controller_password = [NSString stringWithCString: password];
+	    controller_password = [NSString stringWithUTF8String: password];
 	}
 	if (NULL != hostname) {
-	    controller_hostname = [NSString stringWithCString: hostname];
+	    controller_hostname = [NSString stringWithUTF8String: hostname];
 	}
 	cleanup = val;
 	if (NULL != ortedname) {
-	    orted = [NSString stringWithCString: ortedname];
+	    orted = [NSString stringWithUTF8String: ortedname];
 	}
 
 	active_xgrid_jobs = [NSMutableDictionary dictionary];
@@ -118,19 +118,19 @@
 
 -(void) setOrtedAsCString: (char*) name
 {
-    orted = [NSString stringWithCString: name];
+    orted = [NSString stringWithUTF8String: name];
 }
 
 
 -(void) setControllerPasswordAsCString: (char*) name
 {
-    controller_password = [NSString stringWithCString: name];
+    controller_password = [NSString stringWithUTF8String: name];
 }
 
 
 -(void) setControllerHostnameAsCString: (char*) password
 {
-    controller_hostname = [NSString stringWithCString: password];
+    controller_hostname = [NSString stringWithUTF8String: password];
 }
 
 
@@ -267,7 +267,7 @@
         NSMutableDictionary *task = [NSMutableDictionary dictionary];
 
 	/* fill in applicaton to start */
-        [task setObject: [NSString stringWithCString: orted_path]
+        [task setObject: [NSString stringWithUTF8String: orted_path]
             forKey: XGJobSpecificationCommandKey];
 
 	/* fill in task arguments */
@@ -281,11 +281,11 @@
 	    opal_output(0, "orte_plm_rsh: unable to get daemon vpid as string");
 	    goto cleanup;
 	}
-	[taskArguments addObject: [NSString stringWithCString: vpid_string]];
+	[taskArguments addObject: [NSString stringWithUTF8String: vpid_string]];
 	free(vpid_string);
 
 	[taskArguments addObject: @"--nodename"];
-	[taskArguments addObject: [NSString stringWithCString: nodes[nnode]->name]];
+	[taskArguments addObject: [NSString stringWithUTF8String: nodes[nnode]->name]];
 
         [task setObject: taskArguments forKey: XGJobSpecificationArgumentsKey];
 
@@ -393,8 +393,8 @@ cleanup:
 -(void) connectionDidNotOpen:(XGConnection*) myConnection withError: (NSError*) error
 {
     opal_output(orte_plm_globals.output,
-		"orte:plm:xgrid: Controller connection did not open: (%d) %s",
-		[error code],
+		"orte:plm:xgrid: Controller connection did not open: (%ld) %s",
+		(long)[error code],
 		[[error localizedDescription] UTF8String]);
     opal_condition_broadcast(&state_cond);
 }
@@ -411,13 +411,13 @@ cleanup:
 	case 530:
 	case 535:
 	    opal_output(orte_plm_globals.output,
-			"orte:plm:xgrid: Connection to XGrid controller failed due to authentication error (%d):",
-			[[myConnection error] code]);
+			"orte:plm:xgrid: Connection to XGrid controller failed due to authentication error (%ld):",
+			(long)[[myConnection error] code]);
 	    break;
 	default:
 	    opal_output(orte_plm_globals.output,
-			"orte:plm:xgrid: Connection to XGrid controller unexpectedly closed: (%d) %s",
-			[[myConnection error] code],
+			"orte:plm:xgrid: Connection to XGrid controller unexpectedly closed: (%ld) %s",
+			(long)[[myConnection error] code],
 			[[[myConnection error] localizedDescription] UTF8String]);
 	    break;
 	}
@@ -443,7 +443,7 @@ cleanup:
     /* Note that capacity is a starting capacity, not max */
     NSMutableArray *ret = [NSMutableArray arrayWithCapacity: argc];
     for (i = 0 ; i < argc ; ++i) {
-	[ret addObject: [NSString stringWithCString: argv[i]]];
+	[ret addObject: [NSString stringWithUTF8String: argv[i]]];
     }
 
     if (NULL != argv) opal_argv_free(argv);
