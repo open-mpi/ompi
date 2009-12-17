@@ -1369,9 +1369,7 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
                      * that the user realizes there was an error, so in this -one- case,
                      * we overwrite the process' exit code with the default error code
                      */
-                    if (ORTE_PROC_STATE_TERM_WO_SYNC == proc->state) {
-                        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-                    }
+                    ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
                 }
                 break;
             } else if (ORTE_PROC_STATE_KILLED_BY_CMD == proc->state) {

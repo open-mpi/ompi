@@ -34,8 +34,8 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_param.h"
-
 #include "opal/dss/dss.h"
+
 #include "orte/constants.h"
 #include "orte/types.h"
 #include "orte/util/proc_info.h"
@@ -129,7 +129,7 @@ int orte_plm_base_comm_stop(void)
 
 
 /* process incoming messages in order of receipt */
-void process_msg(int fd, short event, void *data)
+static void process_msg(int fd, short event, void *data)
 {
     orte_msg_packet_t *msgpkt;
     orte_plm_cmd_flag_t command;

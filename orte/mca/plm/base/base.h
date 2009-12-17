@@ -81,6 +81,7 @@ ORTE_DECLSPEC int orte_plm_base_close(void);
  */
 ORTE_DECLSPEC void orte_plm_base_app_report_launch(int fd, short event, void *data);
 ORTE_DECLSPEC void orte_plm_base_receive_process_msg(int fd, short event, void *data);
+ORTE_DECLSPEC void orte_plm_base_check_job_completed(orte_job_t *jdata);
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 

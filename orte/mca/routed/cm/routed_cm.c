@@ -360,71 +360,6 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     return *ret;
 }
 
-static int process_callback(orte_jobid_t job, opal_buffer_t *buffer)
-{
-    orte_proc_t **procs;
-    orte_job_t *jdata;
-    orte_std_cntr_t cnt;
-    char *rml_uri;
-    orte_process_name_t name;
-    int rc;
-    
-    /* lookup the job object for this process */
-    if (NULL == (jdata = orte_get_job_data_object(job))) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return ORTE_ERR_NOT_FOUND;
-    }
-    procs = (orte_proc_t**)jdata->procs->addr;
-    
-    /* unpack the data for each entry */
-    cnt = 1;
-    while (ORTE_SUCCESS == (rc = opal_dss.unpack(buffer, &rml_uri, &cnt, OPAL_STRING))) {
-        
-        OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
-                             "%s routed_cm:callback got uri %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             (NULL == rml_uri) ? "NULL" : rml_uri));
-        
-        if (rml_uri == NULL) continue;
-        
-        /* we don't need to set the contact info into our rml
-         * hash table as we won't talk to the proc directly
-         */
-        
-        /* extract the proc's name */
-        if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(rml_uri, &name, NULL))) {
-            ORTE_ERROR_LOG(rc);
-            free(rml_uri);
-            continue;
-        }
-        /* the procs are stored in vpid order, so update the record */
-        procs[name.vpid]->rml_uri = strdup(rml_uri);
-        free(rml_uri);
-        
-        /* update the proc state */
-        if (procs[name.vpid]->state < ORTE_PROC_STATE_RUNNING) {
-            procs[name.vpid]->state = ORTE_PROC_STATE_RUNNING;
-        }
-        
-        ++jdata->num_reported;
-        cnt = 1;
-    }
-    if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }    
-    
-    /* if all procs have reported, update our job state */
-    if (jdata->num_reported == jdata->num_procs) {
-        /* update the job state */
-        if (jdata->state < ORTE_JOB_STATE_RUNNING) {
-            jdata->state = ORTE_JOB_STATE_RUNNING;
-        }
-    }
-    
-    return ORTE_SUCCESS;
-}
-
 /* HANDLE ACK MESSAGES FROM AN HNP */
 static void release_ack(int fd, short event, void *data)
 {
@@ -571,7 +506,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                 }
             } else {
                 /* if not, then I need to process the callback */
-                if (ORTE_SUCCESS != (rc = process_callback(job, ndat))) {
+                if (ORTE_SUCCESS != (rc = orte_routed_base_process_callback(job, ndat))) {
                     ORTE_ERROR_LOG(rc);
                     return rc;
                 }
