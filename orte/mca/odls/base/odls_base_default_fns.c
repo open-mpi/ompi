@@ -2074,10 +2074,14 @@ static bool all_children_registered(orte_jobid_t job)
             if (!child->init_recvd) {
                 return false;
             }
+            /* if this child has registered a finalize, return false */
+            if (child->fini_recvd) {
+                return false;
+            }
         }
     }
     
-    /* if we get here, then everyone in the job is registered */
+    /* if we get here, then everyone in the job is currently registered */
     return true;
     
 }
@@ -2716,6 +2720,8 @@ GOTCHILD:
                     
                     goto MOVEON;
                 }
+                /* if we did recv a finalize sync, then it terminated normally */
+                child->state = ORTE_PROC_STATE_TERMINATED;
             } else {
                 /* has any child in this job already registered? */
                 for (item = opal_list_get_first(&orte_local_children);
