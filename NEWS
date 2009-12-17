@@ -32,8 +32,6 @@ Trunk (not on release branches yet)
 1.5
 ---
 
-- Correctly declare the output dependencies on %eax for the atomic
-  operations based on cmpxchg on x86 and x86_64.
 - Added "knem" support (direct process-to-process copying for shared
   memory message passing).  See http://runtime.bordeaux.inria.fr/knem/
   and the README file for more details.
@@ -51,6 +49,8 @@ Trunk (not on release branches yet)
 1.4.1 (expected)
 ----------------
 
+- Fix a shared memory "hang" problem that occurred on x86/x86_64
+  platforms when used with the GNU >=4.4.x compiler series.
 - Add fix for Libtool 2.2.6b's problems with the PGI 10.x compiler
   suite.  Inspired directly from the upstream Libtool patches that fix
   the issue (but we need something working before the next Libtool
