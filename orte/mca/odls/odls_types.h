@@ -91,6 +91,8 @@ typedef struct {
     bool coll_recvd;             /* collective operation recvd */
     orte_proc_state_t state;     /* the state of the process */
     orte_exit_code_t exit_code;  /* process exit code */
+    bool init_recvd;             /* process called orte_init */
+    bool fini_recvd;             /* process called orte_finalize */
     char *rml_uri;               /* contact info for this child */
     char *slot_list;             /* list of slots for this child */
     bool waitpid_recvd;          /* waitpid has detected proc termination */

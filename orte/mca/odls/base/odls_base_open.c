@@ -85,6 +85,8 @@ static void orte_odls_child_constructor(orte_odls_child_t *ptr)
      */
     ptr->state = ORTE_PROC_STATE_FAILED_TO_START;
     ptr->exit_code = 0;
+    ptr->init_recvd = false;
+    ptr->fini_recvd = false;
     ptr->rml_uri = NULL;
     ptr->slot_list = NULL;
     ptr->waitpid_recvd = false;

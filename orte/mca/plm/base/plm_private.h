@@ -111,8 +111,6 @@ ORTE_DECLSPEC int orte_plm_base_report_launched(orte_jobid_t job);
 
 ORTE_DECLSPEC int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons);
 
-ORTE_DECLSPEC void orte_plm_base_check_job_completed(orte_job_t *jdata);
-
 ORTE_DECLSPEC int orte_plm_base_set_hnp_name(void);
 
 ORTE_DECLSPEC int orte_plm_base_create_jobid(orte_job_t *jdata);

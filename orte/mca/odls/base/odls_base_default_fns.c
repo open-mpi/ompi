@@ -2057,8 +2057,21 @@ static bool all_children_registered(orte_jobid_t job)
         
         /* is this child part of the specified job? */
         if (OPAL_EQUAL == opal_dss.compare(&child->name->jobid, &job, ORTE_JOBID)) {
+            /* if this child has terminated, we consider it as having
+             * registered for the purposes of this function. If it never
+             * did register, then we will send a NULL rml_uri back to
+             * the HNP, which will then know that the proc did not register.
+             * If other procs did register, then the HNP can declare an
+             * abnormal termination
+             */
+            if (ORTE_PROC_STATE_UNTERMINATED < child->state) {
+                /* this proc has terminated somehow - consider it
+                 * as registered for now
+                 */
+                continue;
+            }
             /* if this child is *not* registered yet, return false */
-            if (NULL == child->rml_uri) {
+            if (!child->init_recvd) {
                 return false;
             }
         }
@@ -2084,6 +2097,11 @@ static int pack_child_contact_info(orte_jobid_t job, opal_buffer_t *buf)
         
         /* is this child part of the specified job? */
         if (OPAL_EQUAL == opal_dss.compare(&child->name->jobid, &job, ORTE_JOBID)) {
+            /* pack the child's vpid - must be done in case rml_uri is NULL */
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &(child->name->vpid), 1, ORTE_VPID))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }            
             /* pack the contact info */
             if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &child->rml_uri, 1, OPAL_STRING))) {
                 ORTE_ERROR_LOG(rc);
@@ -2173,6 +2191,7 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
     int rc;
     bool found=false;
     int8_t flag;
+    orte_odls_job_t *jobdat, *jdat;
 
     /* protect operations involving the global list of children */
     OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
@@ -2216,13 +2235,15 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
     /* if the contact info is already set, then we are "de-registering" the child
      * so free the info and set it to NULL
      */
-    if (NULL != child->rml_uri) {
+    if (child->init_recvd && NULL != child->rml_uri) {
         free(child->rml_uri);
         child->rml_uri = NULL;
+        child->fini_recvd = true;
     } else {
         /* if the contact info is not set, then we are registering the child so
          * unpack the contact info from the buffer and store it
          */
+        child->init_recvd = true;
         cnt = 1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &(child->rml_uri), &cnt, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
@@ -2233,13 +2254,14 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
     OBJ_CONSTRUCT(&buffer, opal_buffer_t);
     /* do they want the nidmap? */
     if (drop_nidmap) {
-        orte_odls_job_t *jobdat = NULL;
         /* get the jobdata object */
+        jobdat = NULL;
         for (item = opal_list_get_first(&orte_local_jobdata);
              item != opal_list_get_end(&orte_local_jobdata);
              item = opal_list_get_next(item)) {
-            jobdat = (orte_odls_job_t*)item;
-            if (jobdat->jobid == child->name->jobid) {
+            jdat = (orte_odls_job_t*)item;
+            if (jdat->jobid == child->name->jobid) {
+                jobdat = jdat;
                 break;
             }
         }
@@ -2247,6 +2269,7 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             goto CLEANUP;
         }
+        
         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls:sync nidmap requested for job %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -2577,7 +2600,7 @@ GOTCHILD:
 
 void orte_base_default_waitpid_fired(orte_process_name_t *proc, int32_t status)
 {
-    orte_odls_child_t *child;
+    orte_odls_child_t *child, *chd;
     opal_list_item_t *item;
     char *job, *vpid, *abort_file;
     struct stat buf;
@@ -2677,21 +2700,47 @@ GOTCHILD:
             /* okay, it terminated normally - check to see if a sync was required and
              * if it was received
              */
-            if (NULL != child->rml_uri) {
-                /* if this is set, then we required a sync and didn't get it, so this
-                 * is considered an abnormal termination and treated accordingly
-                 */
-                child->state = ORTE_PROC_STATE_TERM_WO_SYNC;
-                
-                OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                     "%s odls:waitpid_fired child process %s terminated normally "
-                                     "but did not provide a required sync - it "
-                                     "will be treated as an abnormal termination",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(child->name)));
-                
-                goto MOVEON;
+            if (child->init_recvd) {
+                if (!child->fini_recvd) {
+                    /* we required a finalizing sync and didn't get it, so this
+                     * is considered an abnormal termination and treated accordingly
+                     */
+                    child->state = ORTE_PROC_STATE_TERM_WO_SYNC;
+                    
+                    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                         "%s odls:waitpid_fired child process %s terminated normally "
+                                         "but did not provide a required finalize sync - it "
+                                         "will be treated as an abnormal termination",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         ORTE_NAME_PRINT(child->name)));
+                    
+                    goto MOVEON;
+                }
             } else {
+                /* has any child in this job already registered? */
+                for (item = opal_list_get_first(&orte_local_children);
+                     item != opal_list_get_end(&orte_local_children);
+                     item = opal_list_get_next(item)) {
+                    chd = (orte_odls_child_t*)item;
+                    
+                    if (chd->init_recvd) {
+                        /* someone has registered, and we didn't before
+                         * terminating - this is an abnormal termination
+                         */
+                        child->state = ORTE_PROC_STATE_TERM_WO_SYNC;
+                        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                             "%s odls:waitpid_fired child process %s terminated normally "
+                                             "but did not provide a required init sync - it "
+                                             "will be treated as an abnormal termination",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                             ORTE_NAME_PRINT(child->name)));
+                        
+                        goto MOVEON;
+                    }
+                }
+                /* if no child has registered, then it is possible that
+                 * none of them will. This is considered acceptable
+                 */
                 child->state = ORTE_PROC_STATE_TERMINATED;
             }
             
@@ -2699,7 +2748,6 @@ GOTCHILD:
                                  "%s odls:waitpid_fired child process %s terminated normally",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(child->name)));
-            
         }
     } else {
         /* the process was terminated with a signal! That's definitely

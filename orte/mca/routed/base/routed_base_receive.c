@@ -53,6 +53,13 @@
 #include "orte/mca/routed/base/base.h"
 
 static bool recv_issued=false;
+static opal_mutex_t lock;
+static opal_list_t recvs;
+static opal_event_t ready;
+static int ready_fd[2];
+static bool processing;
+
+static void process_msg(int fd, short event, void *data);
 
 int orte_routed_base_comm_start(void)
 {
@@ -66,6 +73,20 @@ int orte_routed_base_comm_start(void)
                          "%s routed:base: Receive: Start command recv",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
+    processing = false;
+    OBJ_CONSTRUCT(&lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&recvs, opal_list_t);
+#ifndef __WINDOWS__
+    pipe(ready_fd);
+#else
+    if (evutil_socketpair(AF_UNIX, SOCK_STREAM, 0, ready_fd) == -1) {
+        return ORTE_ERROR;
+    }
+#endif
+    
+    opal_event_set(&ready, ready_fd[0], OPAL_EV_READ, process_msg, NULL);
+    opal_event_add(&ready, 0);
+    
     if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                                       ORTE_RML_TAG_INIT_ROUTES,
                                                       ORTE_RML_NON_PERSISTENT,
@@ -92,37 +113,73 @@ int orte_routed_base_comm_stop(void)
                          "%s routed:base:receive stop comm",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_INIT_ROUTES))) {
-        ORTE_ERROR_LOG(rc);
-    }
+    OBJ_DESTRUCT(&recvs);
+    opal_event_del(&ready);
+#ifndef __WINDOWS__
+    close(ready_fd[0]);
+#else
+    closesocket(ready_fd[0]);
+#endif
+    processing = false;
+    OBJ_DESTRUCT(&lock);
+    
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_INIT_ROUTES);
     recv_issued = false;
     
     return rc;
 }
 
-void orte_routed_base_process_msg(int fd, short event, void *data)
+static void process_msg(int fd, short event, void *data)
 {
-    orte_message_event_t *mev = (orte_message_event_t*)data;
+    orte_msg_packet_t *msgpkt;
     orte_jobid_t job;
     int rc;
     orte_std_cntr_t cnt;
+    opal_list_item_t *item;
+    int dump[128];
 
-    /* unpack the jobid this is for */
-    cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(mev->buffer, &job, &cnt, ORTE_JOBID))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(mev);
-        return;
+    OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
+                         "%s routed:base:receive processing msg",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
+    OPAL_THREAD_LOCK(&lock);
+    
+    /* tag that we are processing the list */
+    processing = true;
+    
+    /* clear the file descriptor to stop the event from refiring */
+#ifndef __WINDOWS__
+    read(fd, &dump, sizeof(dump));
+#else
+    recv(fd, (char *) &dump, sizeof(dump), 0);
+#endif
+    
+    while (NULL != (item = opal_list_remove_first(&recvs))) {
+        msgpkt = (orte_msg_packet_t*)item;
+        
+        /* unpack the jobid this is for */
+        cnt=1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(msgpkt->buffer, &job, &cnt, ORTE_JOBID))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(msgpkt);
+            continue;
+        }
+        
+        /* pass the remainder of the buffer to the active module's
+         * init_routes API
+         */
+        if (ORTE_SUCCESS != (rc = orte_routed.init_routes(job, msgpkt->buffer))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        OBJ_RELEASE(msgpkt);
     }
     
-    /* pass the remainder of the buffer to the active module's
-     * init_routes API
-     */
-    if (ORTE_SUCCESS != (rc = orte_routed.init_routes(job, mev->buffer))) {
-        ORTE_ERROR_LOG(rc);
-    }
-    OBJ_RELEASE(mev);
-    return;
+    /* reset the event */
+    processing = false;
+    opal_event_add(&ready, 0);
+    
+    /* release the thread */
+    OPAL_THREAD_UNLOCK(&lock);
 }
 
 
@@ -151,7 +208,7 @@ void orte_routed_base_recv(int status, orte_process_name_t* sender,
      * buffer, however, is NOT released here, although its payload IS transferred
      * to the message buffer for later processing
      */
-    ORTE_MESSAGE_EVENT(sender, buffer, tag, orte_routed_base_process_msg);
+    ORTE_PROCESS_MESSAGE(&recvs, &lock, processing, ready_fd[1], true, sender, &buffer);
     
     /* reissue the recv */
     if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
@@ -162,4 +219,13 @@ void orte_routed_base_recv(int status, orte_process_name_t* sender,
         ORTE_ERROR_LOG(rc);
     }
     return;
+}
+
+/* where HNP messages come */
+void orte_routed_base_process_msg(int fd, short event, void *data)
+{
+    orte_message_event_t *mev = (orte_message_event_t*)data;
+    
+    ORTE_PROCESS_MESSAGE(&recvs, &lock, processing, ready_fd[1], false, &mev->sender, &mev->buffer);
+    OBJ_RELEASE(mev);
 }
