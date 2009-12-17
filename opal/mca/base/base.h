@@ -107,6 +107,19 @@ OPAL_DECLSPEC int mca_base_select(const char *type_name, int output_id,
                                   mca_base_module_t **best_module,
                                   mca_base_component_t **best_component);
 
+/**
+ * A function for component query functions to discover if they have
+ * been explicitly required to or requested to be selected.
+ *
+ * exclusive: If the specified component is the only component that is
+ *            available for selection.
+ *
+ */
+OPAL_DECLSPEC int mca_base_is_component_required(opal_list_t *components_available,
+                                                 mca_base_component_t *component,
+                                                 bool exclusive,
+                                                 bool *is_required);
+
 /* mca_base_cmd_line.c */
 
 OPAL_DECLSPEC int mca_base_cmd_line_setup(opal_cmd_line_t *cmd);

@@ -229,6 +229,61 @@ int mca_base_components_open(const char *type_name, int output_id,
     return ret;
 }
 
+int mca_base_is_component_required(opal_list_t *components_available,
+                                   mca_base_component_t *component,
+                                   bool exclusive,
+                                   bool *is_required)
+{
+    opal_list_item_t *item = NULL;
+    mca_base_component_list_item_t *cli = NULL;
+    mca_base_component_t *comp = NULL;
+
+    /* Sanity check */
+    if( NULL == components_available ||
+        NULL == component) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+
+    *is_required = false;
+
+    /*
+     * Look through the components available for opening
+     */
+    if( exclusive ) {
+        /* Must be the -only- component in the list */
+        if( 1 == opal_list_get_size(components_available) ) {
+            item  = opal_list_get_first(components_available);
+            cli   = (mca_base_component_list_item_t *) item;
+            comp  = (mca_base_component_t *) cli->cli_component;
+
+            if( 0 == strncmp(comp->mca_component_name,
+                             component->mca_component_name,
+                             strlen(component->mca_component_name)) ) {
+                *is_required = true;
+                return OPAL_SUCCESS;
+            }
+        }
+    }
+    else {
+        /* Must be one of the components in the list */
+        for (item  = opal_list_get_first(components_available);
+             item != opal_list_get_end(components_available);
+             item  = opal_list_get_next(item) ) {
+            cli  = (mca_base_component_list_item_t *) item;
+            comp = (mca_base_component_t *) cli->cli_component;
+
+            if( 0 == strncmp(comp->mca_component_name,
+                             component->mca_component_name,
+                             strlen(component->mca_component_name)) ) {
+                *is_required = true;
+                return OPAL_SUCCESS;
+            }
+        }
+    }
+
+    return OPAL_SUCCESS;
+}
+
 
 static int parse_requested(int mca_param, bool *include_mode,
                            char ***requested_component_names)
