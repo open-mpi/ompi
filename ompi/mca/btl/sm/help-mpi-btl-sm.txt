@@ -12,7 +12,7 @@
 #
 # This is the US/English help file for Open MPI's shared memory support.
 #
-[knem requested by not supported]
+[knem requested but not supported]
 WARNING: Linux kernel kenm support was requested for the shared memory
 (sm) BTL, but it is not supported.  Deactivating the shared memory
 BTL.
