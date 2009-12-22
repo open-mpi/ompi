@@ -107,6 +107,7 @@ EXTRA_DIST = \
 	platform/cisco/hlfr/debug \
 	platform/cisco/hlfr/debug.conf \
 	platform/cisco/hlfr/ebuild \
+	platform/cisco/hlfr/ebuild.conf \
 	platform/cisco/hlfr/optimized \
 	platform/cisco/hlfr/optimized.conf \
 	platform/cisco/ludd-1/debug \
