@@ -26,6 +26,7 @@ endif
 
 EXTRA_DIST = \
 	dist/make_dist_tarball \
+	dist/make_orte_dist_tarball \
 	dist/linux/openmpi.spec \
 	dist/macosx-pkg/buildpackage.sh \
 	dist/macosx-pkg/ReadMe.rtf \
@@ -104,15 +105,9 @@ EXTRA_DIST = \
 	platform/cisco/macosx-dynamic.conf \
 	platform/cisco/macosx-dynamic-optimized \
 	platform/cisco/macosx-dynamic-optimized.conf \
-	platform/cisco/hlfr/debug \
-	platform/cisco/hlfr/debug.conf \
-	platform/cisco/hlfr/ebuild \
-	platform/cisco/hlfr/ebuild.conf \
-	platform/cisco/hlfr/optimized \
-	platform/cisco/hlfr/optimized.conf \
-	platform/cisco/ludd-1/debug \
-	platform/cisco/ludd-1/debug.conf \
-	platform/cisco/ludd-1/optimized \
-	platform/cisco/ludd-1/optimized.conf
+	platform/cisco/ebuild/hlfr \
+	platform/cisco/ebuild/hlfr.conf \
+	platform/cisco/ebuild/native \
+	platform/cisco/ebuild/native.conf
 
 dist_pkgdata_DATA = openmpi-valgrind.supp
