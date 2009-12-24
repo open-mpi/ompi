@@ -103,8 +103,6 @@ int orte_routed_base_comm_start(void)
 
 int orte_routed_base_comm_stop(void)
 {
-    int rc;
-    
     if (!recv_issued) {
         return ORTE_SUCCESS;
     }
@@ -126,7 +124,7 @@ int orte_routed_base_comm_stop(void)
     orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_INIT_ROUTES);
     recv_issued = false;
     
-    return rc;
+    return ORTE_SUCCESS;
 }
 
 static void process_msg(int fd, short event, void *data)
