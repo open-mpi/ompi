@@ -311,6 +311,12 @@ Display the specified ranks in separate xterm windows. The ranks are specified
 as a comma-separated list of ranges, with a -1 indicating all. A separate
 window will be created for each specified rank.
 .B Note:
+xterm will normally terminate the window upon termination of the process running
+within it. However, by adding a "!" to the end of the list of specified ranks,
+the proper options will be provided to ensure that xterm keeps the window open
+\fIafter\fP the process terminates, thus allowing you to see the process' output.
+Each xterm window will subsequently need to be manually closed.
+.B Note:
 In some environments, xterm may require that the executable be in the user's
 path, or be specified in absolute or relative terms. Thus, it may be necessary
 to specify a local executable as "./foo" instead of just "foo". If xterm fails to
