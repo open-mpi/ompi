@@ -65,6 +65,8 @@
 
 #define OPAL_BUILD_PLATFORM_COMPILER_VERSION_STR ${COMPILER_VERSION}
 
+#define OMPI_BTL_SM_HAVE_KNEM ${OMPI_BTL_SM_HAVE_KNEM}
+
 /* Maximum length of datarep strings (default is 128) */
 #define OPAL_MAX_DATAREP_STRING ${OPAL_MAX_DATAREP_STRING}
 
