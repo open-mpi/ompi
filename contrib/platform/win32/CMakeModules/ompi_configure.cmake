@@ -134,6 +134,8 @@ SET(OMPI_F90_ABSOLUTE "\"none\"")
 
 SET(OMPI_F90_BUILD_SIZE "\"small\"")
 
+SET(OMPI_BTL_SM_HAVE_KNEM 0)
+
 # set the im/export decleration here. 
 # Don't bother with OMPI_IMPORTS
 IF(BUILD_SHARED_LIBS)
