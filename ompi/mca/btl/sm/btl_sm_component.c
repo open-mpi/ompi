@@ -357,7 +357,7 @@ mca_btl_base_module_t** mca_btl_sm_component_init(
     opal_thread_start(&mca_btl_sm_component.sm_fifo_thread);
 #endif
 
-    mca_btl_sm_component.sm_btls = malloc( mca_btl_sm_component.sm_max_btls * sizeof (mca_btl_sm_t *));
+    mca_btl_sm_component.sm_btls = (mca_btl_sm_t **) malloc( mca_btl_sm_component.sm_max_btls * sizeof (mca_btl_sm_t *));
     if (NULL == mca_btl_sm_component.sm_btls) {
         return NULL;
     }
