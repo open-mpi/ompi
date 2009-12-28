@@ -40,10 +40,9 @@
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif  /* HAVE_SYS_MMAN_H */
+#ifdef HAVE_FCNTL_H
 #include <fcntl.h>
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif  /* HAVE_UNISTD_H */
+#endif  /* HAVE_FCNTL_H */
 #if OMPI_BTL_SM_HAVE_KNEM
 #include "knem_io.h"
 #endif  /* OMPI_BTL_SM_HAVE_KNEM */
