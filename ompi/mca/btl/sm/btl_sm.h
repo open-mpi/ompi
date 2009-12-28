@@ -28,15 +28,25 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
+#endif  /* HAVE_STDINT_H */
+#ifdef HAVE_SCHED_H
 #include <sched.h>
+#endif  /* HAVE_SCHED_H */
+#ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
+#endif  /* HAVE_SYS_IOCTL_H */
+#ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
+#endif  /* HAVE_SYS_MMAN_H */
 #include <fcntl.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif  /* HAVE_UNISTD_H */
 #if OMPI_BTL_SM_HAVE_KNEM
 #include "knem_io.h"
-#endif
+#endif  /* OMPI_BTL_SM_HAVE_KNEM */
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
