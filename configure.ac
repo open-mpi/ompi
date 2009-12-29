@@ -899,7 +899,7 @@ m4_ifdef([project_orte], [OMPI_PS_FLAVOR_CHECK])
 # File system case sensitivity
 #
 
-m4_ifdef([project_ompi], [OMPI_CASE_SENSITIVE_FS_SETUP])
+m4_ifdef([project_opal], [OPAL_CASE_SENSITIVE_FS_SETUP])
 
 # AIX: FIONBIO in sys/ioctl.h
 # glibc: memcpy

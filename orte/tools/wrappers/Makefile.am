@@ -25,39 +25,67 @@ if OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 bin_SCRIPTS = orte_wrapper_script
 CLEANFILES += $(bin_SCRIPTS)
 
-install-exec-hook:
+install-exec-hook-always:
 	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
 	(cd $(DESTDIR)$(bindir); rm -f ortecc; $(LN_S) orte_wrapper_script ortecc)
 	(cd $(DESTDIR)$(bindir); rm -f ortec++; $(LN_S) orte_wrapper_script ortec++)
 
-uninstall-local:
+uninstall-local-always:
 	rm -f $(DESTDIR)$(bindir)/ortecc \
 	$(DESTDIR)$(bindir)/ortec++
+if CASE_SENSITIVE_FS
+install-exec-hook: install-exec-hook-always
+	(cd $(DESTDIR)$(bindir); rm -f orteCC; $(LN_S) orte_wrapper_script orteCC)
+uninstall-local: uninstall-local-always
+	rm -f $(DESTDIR)$(bindir)/orteCC
+else # CASE_SENSITIVE_FS
+install-exec-hook: install-exec-hook-always
+uninstall-local: uninstall-local-always
+endif # CASE_SENSITIVE_FS
 
 else # OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 
-if WANT_INSTALL_HEADERS
+if OMPI_INSTALL_BINARIES
 
-nodist_pkgdata_DATA = \
+dist_pkgdata_DATA = \
 	ortecc-wrapper-data.txt \
 	ortec++-wrapper-data.txt
 
-if OMPI_INSTALL_BINARIES
-
 man_MANS = $(man_pages)
 
-install-exec-hook:
+install-exec-hook-always:
 	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
 	(cd $(DESTDIR)$(bindir); rm -f ortecc$(EXEEXT); $(LN_S) opal_wrapper ortecc)
 	(cd $(DESTDIR)$(bindir); rm -f ortec++$(EXEEXT); $(LN_S) opal_wrapper ortec++)
 
-uninstall-local:
+uninstall-local-always:
 	rm -f $(DESTDIR)$(bindir)/ortecc$(EXEEXT) \
 	$(DESTDIR)$(bindir)/ortec++$(EXEEXT)
 
+if CASE_SENSITIVE_FS
+install-exec-hook: install-exec-hook-always
+	(cd $(DESTDIR)$(bindir); rm -f orteCC$(EXEEXT); $(LN_S) opal_wrapper orteCC)
+
+install-data-hook:
+	(cd $(DESTDIR)$(pkgdatadir); rm -f orteCC-wrapper-data.txt; $(LN_S) ortec++-wrapper-data.txt orteCC-wrapper-data.txt)
+	(cd $(DESTDIR)$(mandir)/man1; rm -f orteCC.1; $(LN_S) ortec++.1 orteCC.1)
+
+uninstall-local: uninstall-local-always
+	rm -f $(DESTDIR)$(bindir)/mpiCC$(EXEEXT) \
+	$(DESTDIR)$(mandir)/man1/mpiCC.1 \
+	$(DESTDIR)$(pkgdatadir)/mpiCC-wrapper-data.txt
+
+else # CASE_SENSITIVE_FS
+install-exec-hook: install-exec-hook-always
+
+install-data-hook:
+
+uninstall-local: uninstall-local-always
+
+endif # CASE_SENSITIVE_FS
+
 endif # OMPI_INSTALL_BINARIES
 
-endif # WANT_INSTALL_HEADERS
 endif # OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 
 distclean-local:
