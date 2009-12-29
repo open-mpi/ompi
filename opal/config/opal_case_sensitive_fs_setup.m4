@@ -17,15 +17,15 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN([OMPI_CASE_SENSITIVE_FS_SETUP],[
+AC_DEFUN([OPAL_CASE_SENSITIVE_FS_SETUP],[
 #
 # Arguments: none
 #
 # Dependencies: None
 #
 # See if we are on a case sensitive filesystem.  Some filesystems
-# (like HFS+ on MacOS X and MS Windows) are not case sensitive - mpicc
-# and mpiCC are the same file.
+# (like HFS+ on MacOS X and MS Windows) are not case sensitive - opalcc
+# and opalCC are the same file.
 #
 # Sets prefix_OS_HAVE_CASE_SENSITIVE_FS to 1 if filesystem is case
 # sensitive (ie, mpicc and mpiCC will be different files) or 0 if
@@ -64,31 +64,31 @@ AC_ARG_WITH(cs_fs,
                            [Destination FS is case sensitive (default: set to value of the build FS's case sensitivity)]))
 
 if test "$with_cs_fs" = "yes"; then
-    OMPI_WANT_CS_FS=1
+    OPAL_WANT_CS_FS=1
 elif test -z "$with_cs_fs"; then
-    OMPI_WANT_CS_FS=$have_cs_fs
+    OPAL_WANT_CS_FS=$have_cs_fs
 else
-    OMPI_WANT_CS_FS=0
+    OPAL_WANT_CS_FS=0
 fi
 
-if test "$OMPI_WANT_CS_FS" = "1"; then
+if test "$OPAL_WANT_CS_FS" = "1"; then
     AC_MSG_RESULT([yes])
 else
     AC_MSG_RESULT([no])
 fi
 
-AM_CONDITIONAL(CASE_SENSITIVE_FS, test "$OMPI_WANT_CS_FS" = "1")
+AM_CONDITIONAL(CASE_SENSITIVE_FS, test "$OPAL_WANT_CS_FS" = "1")
 
-if test "$OMPI_WANT_CS_FS" = "0"; then
+if test "$OPAL_WANT_CS_FS" = "0"; then
 	cat <<EOF
 
 *******************************************************************************
 NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
 *******************************************************************************
 
-Because Open MPI is being installed on a non-case sensitive file
-system, the C++ wrapper compiler will be named mpic++ instead of the
-traditional mpiCC.
+Because OPAL is being installed on a non-case sensitive file
+system, the C++ wrapper compiler will be named opalc++ instead of the
+traditional opalCC.
 
 Please update any makefiles appropriately.
 
