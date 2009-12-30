@@ -1201,7 +1201,7 @@ static void xmit_data(int sd, short flags, void* send_req)
                     goto CLEANUP;
                 }
                 /* pack the bytes */
-                if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &(snd->iovec_array[sz].iov_base), tmp32, OPAL_UINT8))) {
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, snd->iovec_array[sz].iov_base, tmp32, OPAL_UINT8))) {
                     ORTE_ERROR_LOG(rc);
                     goto CLEANUP;
                 }
