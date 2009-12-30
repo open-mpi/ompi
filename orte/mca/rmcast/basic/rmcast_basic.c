@@ -1179,10 +1179,16 @@ static void xmit_data(int sd, short flags, void* send_req)
             
             /* flag the buffer as containing iovecs */
             flag = 0;
-            opal_dss.pack(&buf, &flag, 1, OPAL_INT8);
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &flag, 1, OPAL_INT8))) {
+                ORTE_ERROR_LOG(rc);
+                goto CLEANUP;
+            }            
             
             /* pack the number of iovecs */
-            opal_dss.pack(&buf, &snd->iovec_count, 1, OPAL_INT32);
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &snd->iovec_count, 1, OPAL_INT32))) {
+                ORTE_ERROR_LOG(rc);
+                goto CLEANUP;
+            }
             
             /* pack each iovec into a buffer in prep for sending
              * so we can recreate the array at the other end
@@ -1190,13 +1196,22 @@ static void xmit_data(int sd, short flags, void* send_req)
             for (sz=0; sz < snd->iovec_count; sz++) {
                 /* pack the size */
                 tmp32 = snd->iovec_array[sz].iov_len;
-                opal_dss.pack(&buf, &tmp32, 1, OPAL_INT32);
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &tmp32, 1, OPAL_INT32))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto CLEANUP;
+                }
                 /* pack the bytes */
-                opal_dss.pack(&buf, &(snd->iovec_array[sz].iov_base), tmp32, OPAL_UINT8);
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &(snd->iovec_array[sz].iov_base), tmp32, OPAL_UINT8))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto CLEANUP;
+                }
             }
             
             /* unload the working buf to obtain the payload */
-            opal_dss.unload(&buf, (void**)&bytes, &sz);
+            if (ORTE_SUCCESS != (rc = opal_dss.unload(&buf, (void**)&bytes, &sz))) {
+                ORTE_ERROR_LOG(rc);
+                goto CLEANUP;
+            }
             
             /* done with the working buf */
             OBJ_DESTRUCT(&buf);
@@ -1205,16 +1220,22 @@ static void xmit_data(int sd, short flags, void* send_req)
             OBJ_CONSTRUCT(&buf, opal_buffer_t);
             /* flag it as being a buffer */
             flag = 1;
-            opal_dss.pack(&buf, &flag, 1, OPAL_INT8);
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &flag, 1, OPAL_INT8))) {
+                ORTE_ERROR_LOG(rc);
+                goto CLEANUP;
+            }
 
             /* copy the payload */
             if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(&buf, snd->buf))) {
                 ORTE_ERROR_LOG(rc);
-                continue;
+                goto CLEANUP;
             }
             
             /* unload the working buf to obtain the payload */
-            opal_dss.unload(&buf, (void**)&bytes, &sz);
+            if (ORTE_SUCCESS != (rc = opal_dss.unload(&buf, (void**)&bytes, &sz))) {
+                ORTE_ERROR_LOG(rc);
+                goto CLEANUP;
+            }
             
             /* done with the working buf */
             OBJ_DESTRUCT(&buf);
@@ -1232,11 +1253,12 @@ static void xmit_data(int sd, short flags, void* send_req)
                         outbound, ORTE_RMCAST_BASIC_MAX_MSG_SIZE);
             if (1 == flag) {
                 /* reload into original buffer */
-                opal_dss.load(snd->buf, (void*)bytes, sz);
+                if (ORTE_SUCCESS != (rc = opal_dss.load(snd->buf, (void*)bytes, sz))) {
+                    ORTE_ERROR_LOG(rc);
+                }
             }
             /* cleanup */
-            OBJ_RELEASE(item);
-            continue;
+            goto CLEANUP;
         }
         
         OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
@@ -1254,8 +1276,7 @@ static void xmit_data(int sd, short flags, void* send_req)
                 opal_dss.load(snd->buf, (void*)bytes, sz);
             }
             /* cleanup */
-            OBJ_RELEASE(item);
-            continue;
+            goto CLEANUP;
         }
         
         if (1 == flag) {
@@ -1279,7 +1300,7 @@ static void xmit_data(int sd, short flags, void* send_req)
 
         /* roll to next message sequence number */
         ORTE_MULTICAST_NEXT_SEQUENCE_NUM(chan->seq_num);
-        
+CLEANUP:        
         /* cleanup */
         OBJ_RELEASE(item);
     }
