@@ -362,10 +362,16 @@ process:
     if (NULL == snd->buf) {
         /* no, flag the buffer as containing iovecs */
         flag = 0;
-        opal_dss.pack(&buf, &flag, 1, OPAL_INT8);
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &flag, 1, OPAL_INT8))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
         
         /* pack the number of iovecs */
-        opal_dss.pack(&buf, &snd->iovec_count, 1, OPAL_INT32);
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &snd->iovec_count, 1, OPAL_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
         
         /* pack each iovec into a buffer in prep for sending
          * so we can recreate the array at the other end
@@ -373,15 +379,24 @@ process:
         for (sz=0; sz < snd->iovec_count; sz++) {
             /* pack the size */
             tmp32 = snd->iovec_array[sz].iov_len;
-            opal_dss.pack(&buf, &tmp32, 1, OPAL_INT32);
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &tmp32, 1, OPAL_INT32))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
             /* pack the bytes */
-            opal_dss.pack(&buf, &(snd->iovec_array[sz].iov_base), tmp32, OPAL_UINT8);
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &(snd->iovec_array[sz].iov_base), tmp32, OPAL_UINT8))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
         }
         
     } else {
         /* flag it as being a buffer */
         flag = 1;
-        opal_dss.pack(&buf, &flag, 1, OPAL_INT8);
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &flag, 1, OPAL_INT8))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
         
         /* copy the payload */
         if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(&buf, snd->buf))) {
