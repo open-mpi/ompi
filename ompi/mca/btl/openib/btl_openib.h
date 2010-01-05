@@ -95,8 +95,6 @@ struct mca_btl_openib_qp_info_t {
     size_t size;
     int32_t rd_num;
     int32_t rd_low;
-    ompi_free_list_t send_free;     /**< free lists of send buffer descriptors */
-    ompi_free_list_t recv_free;     /**< free lists of receive buffer descriptors */
     union {
         mca_btl_openib_pp_qp_info_t pp_qp;
         mca_btl_openib_srq_qp_info_t srq_qp;
