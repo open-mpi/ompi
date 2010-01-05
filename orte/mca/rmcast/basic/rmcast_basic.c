@@ -534,7 +534,7 @@ static int basic_recv_nb(orte_rmcast_channel_t channel,
     recvptr->cbfunc_iovec = cbfunc;
     recvptr->cbdata = cbdata;
     
-    if (ORTE_SUCCESS != (ret = queue_recv(recvptr, channel, tag, cbfunc, NULL, true))) {
+    if (ORTE_SUCCESS != (ret = queue_recv(recvptr, channel, tag, cbfunc, NULL, false))) {
         if (ORTE_EXISTS == ret) {
             /* this recv already exists - just release the copy */
             OBJ_RELEASE(recvptr);
