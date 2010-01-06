@@ -11,7 +11,7 @@
 
 major=1
 minor=4
-release=0
+release=1
 
 # greek is used for alpha or beta release tags.  If it is non-empty,
 # it will be appended to the version number.  It does not have to be
@@ -37,11 +37,11 @@ want_svn=1
 # distribution tarball is being made from an SVN checkout, the value
 # of svn_r in this file is replaced with the output of "svnversion".
 
-svn_r=-1
+svn_r=rc1
 
 # The date when this release was created
 
-date="Nov 11, 2009"
+date="Jan 6, 2010"
 
 # The shared library version of each of Open MPI's public libraries.
 # These versions are maintained in accordance with the "Library
