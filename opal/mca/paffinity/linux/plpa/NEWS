@@ -3,7 +3,7 @@ Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
                         Corporation.  All rights reserved.
 Copyright (c) 2004-2005 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -15,6 +15,31 @@ $HEADER$
 This file contains the main features as well as overviews of specific
 bug fixes (and other actions) for each version of PLPA since
 version 1.0.
+
+1.3.2
+-----
+
+- Removed a clause from AMD's license notice in plpa_map.c by
+  direction from Barry S. Newberger, Ph.D., Assistant General Counsel,
+  Advanced Micro Devices, Inc. per a Red Hat licensing concern
+  (initiated at https://bugzilla.redhat.com/show_bug.cgi?id=530230).
+  Removing this clause alleviates Red Hat's concern, even though this
+  resolution not shown on the above-cited bugzilla ticket.
+- Julian Seward noticed that PLPA's use of the Valgrind API in the
+  affinity API probe was incorrect and suggested an improvement.  Even
+  though we're ramping down PLPA development, I couldn't really ignore
+  the Valgrind author's suggestion!
+
+
+1.3.1
+-----
+
+- Fixed bug identified by Eugene Loh at Sun; plpa-taskset -c ranges
+  were accidentally excluding the processor ID at the top of the
+  range.
+- For standalone PLPA builds, the .so library is now versioned
+  according to the GNU Libtool guidelines.
+
 
 1.3
 ---
