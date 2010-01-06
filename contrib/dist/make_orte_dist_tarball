@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -25,7 +25,7 @@
 M4_TARGET_VERSION=1.4.13
 AM_TARGET_VERSION=1.11
 AC_TARGET_VERSION=2.65
-LT_TARGET_VERSION=2.2.6
+LT_TARGET_VERSION=2.2.6b
 
 #
 # Check command line flags
@@ -78,6 +78,16 @@ check_gnu_version() {
         target_release=0
     fi
 
+    # Gah -- Libtool released version 2.2.6b, the "b" of which totally
+    # screws up the -lt and -gt comparisons, below.  So strip out any
+    # trailing letters in the target_release and ver_release variables
+    # -- if they don't match, we'll just get a "they don't match
+    # somehow" kind of message (because I'm not going to code up a
+    # complex/clever alphanumeric lower/higher comparison thingy).
+    # Sigh.
+    ver_release=`echo $ver_release | sed 's/[a-z]//g'`
+    target_release=`echo $target_release | sed 's/[a-z]//g'`
+
     result=same
     if test "$ver" != "$target"; then 
         if test "$ver_major" -lt "$target_major"; then
@@ -115,9 +125,8 @@ the correct version of the tools.
 ----------------------------------------------------------------------
 EOF
         exit 1
-    fi
 
-    if test "$result" = "high"; then
+    elif test "$result" = "high"; then
         if test "$highok" = "0"; then
             cat <<EOF
 ----------------------------------------------------------------------
@@ -155,7 +164,27 @@ to give you the chance to quit before doing anything.
 EOF
             sleep 5
         fi
+
+    elif test "$result" = "unknown"; then
+        cat <<EOF
+----------------------------------------------------------------------
+ERROR: Program "$prog" does not have the correct version:
+       Found: $ver
+       Expected: $target
+
+Expected versions:
+m4: $M4_TARGET_VERSION
+Automake: $AM_TARGET_VERSION
+Autoconf: $AC_TARGET_VERSION
+Libtool:  $LT_TARGET_VERSION
+
+Either change this script to match the found version, or install
+the correct version of the tools.
+----------------------------------------------------------------------
+EOF
+        exit 1
     fi
+
 }
 
 #
