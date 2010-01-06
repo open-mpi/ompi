@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -32,6 +32,7 @@ public_headers = plpa.h
 if PLPA_BUILD_STANDALONE
 lib_LTLIBRARIES += libplpa.la
 nodist_include_HEADERS += $(public_headers)
+libplpa_la_LDFLAGS = -version-info $(libplpa_so_version)
 else
 noinst_LTLIBRARIES += libplpa_included.la
 nodist_noinst_HEADERS += $(public_headers)

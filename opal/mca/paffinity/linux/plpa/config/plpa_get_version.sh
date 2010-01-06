@@ -1,29 +1,46 @@
 #!/bin/sh
 #
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+# ompi_get_version is created from ompi_get_version.m4 and ompi_get_version.m4sh.
+#
+# Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
+# 5 June 2009: this file was copied from Open MPI's SVN trunk as of
+# r21383 on 5 June 2009.  The only change made to it was
+# s/OMPI/PLPA/ig.
+
+
+# PLPA_GET_VERSION(version_file, variable_prefix)
+# -----------------------------------------------
+# parse version_file for version information, setting
+# the following shell variables:
 #
-# This file is almost identical in functionality to
-# ompi_get_version.m4.  It is unfortunate that we have to duplicate
-# code, but it is really the only what that I can think to do it.  :-(
-# Hence, if you change the logic here for determining version numbers,
-# YOU MUST ALSO CHANGE IT IN ompi_get_version.m4!!
-#
+#  prefix_VERSION
+#  prefix_BASE_VERSION
+#  prefix_MAJOR_VERSION
+#  prefix_MINOR_VERSION
+#  prefix_RELEASE_VERSION
+#  prefix_GREEK_VERSION
+#  prefix_WANT_SVN
+#  prefix_SVN_R
+#  prefix_RELEASE_DATE
+
+
 
 srcfile="$1"
 option="$2"
@@ -31,43 +48,67 @@ option="$2"
 case "$option" in
     # svnversion can take a while to run.  If we don't need it, don't run it.
     --major|--minor|--release|--greek|--base|--help)
-        OMPI_NEED_SVN=0
+        ompi_ver_need_svn=0
         ;;
     *)
-        OMPI_NEED_SVN=1
+        ompi_ver_need_svn=1
 esac
 
 
-if test "$srcfile" = ""; then
+if test -z "$srcfile"; then
     option="--help"
 else
-    OMPI_MAJOR_VERSION="`cat $srcfile | egrep '^major=' | cut -d= -f2`"
-    OMPI_MINOR_VERSION="`cat $srcfile | egrep '^minor=' | cut -d= -f2`"
-    OMPI_RELEASE_VERSION="`cat $srcfile | egrep '^release=' | cut -d= -f2`"
-    OMPI_GREEK_VERSION="`cat $srcfile | egrep '^greek=' | cut -d= -f2`"
-    OMPI_WANT_SVN="`cat $srcfile | egrep '^want_svn=' | cut -d= -f2`"
-    OMPI_SVN_R="`cat $srcfile | egrep '^svn_r=' | cut -d= -f2`"
-    if test "$OMPI_RELEASE_VERSION" != "0" -a "$OMPI_RELEASE_VERSION" != ""; then
-	OMPI_VERSION="$OMPI_MAJOR_VERSION.$OMPI_MINOR_VERSION.$OMPI_RELEASE_VERSION"
-    else
-	OMPI_VERSION="$OMPI_MAJOR_VERSION.$OMPI_MINOR_VERSION"
-    fi
 
-    OMPI_VERSION="${OMPI_VERSION}${OMPI_GREEK_VERSION}"
+    : ${ompi_ver_need_svn=1}
+    : ${srcdir=.}
+    : ${svnversion_result=-1}
 
-    OMPI_BASE_VERSION="$OMPI_VERSION"
+        if test -f "$srcfile"; then
+        ompi_vers=`sed -n "
+	t clear
+	: clear
+	s/^major/PLPA_MAJOR_VERSION/
+	s/^minor/PLPA_MINOR_VERSION/
+	s/^release/PLPA_RELEASE_VERSION/
+	s/^greek/PLPA_GREEK_VERSION/
+	s/^want_svn/PLPA_WANT_SVN/
+	s/^svn_r/PLPA_SVN_R/
+	s/^date/PLPA_RELEASE_DATE/
+	t print
+	b
+	: print
+	p" < "$srcfile"`
+	eval "$ompi_vers"
 
-    if test "$OMPI_WANT_SVN" = "1" -a "$OMPI_NEED_SVN" = "1" ; then
-        if test "$OMPI_SVN_R" = "-1"; then
-            if test -d .svn; then
-                ver="r`svnversion .`"
-            else
-                ver="svn`date '+%m%d%Y'`"
-            fi
-            OMPI_SVN_R="$ver"
+        # Only print release version if it isn't 0
+        if test $PLPA_RELEASE_VERSION -ne 0 ; then
+            PLPA_VERSION="$PLPA_MAJOR_VERSION.$PLPA_MINOR_VERSION.$PLPA_RELEASE_VERSION"
+        else
+            PLPA_VERSION="$PLPA_MAJOR_VERSION.$PLPA_MINOR_VERSION"
         fi
-	OMPI_VERSION="${OMPI_VERSION}$OMPI_SVN_R"
+        PLPA_VERSION="${PLPA_VERSION}${PLPA_GREEK_VERSION}"
+        PLPA_BASE_VERSION=$PLPA_VERSION
+
+        if test $PLPA_WANT_SVN -eq 1 && test $ompi_ver_need_svn -eq 1 ; then
+            if test "$svnversion_result" != "-1" ; then
+                PLPA_SVN_R=$svnversion_result
+            fi
+            if test "$PLPA_SVN_R" = "-1" ; then
+
+                if test -d "$srcdir/.svn" ; then
+                    PLPA_SVN_R=r`svnversion "$srcdir"`
+                elif test -d "$srcdir/.hg" ; then
+                    PLPA_SVN_R=hg`hg -v -R "$srcdir" tip | grep changeset | cut -d: -f3`
+                fi
+                if test "PLPA_SVN_R" = ""; then
+                    PLPA_SVN_R=svn`date '+%m%d%Y'`
+                fi
+
+            fi
+            PLPA_VERSION="${PLPA_VERSION}${PLPA_SVN_R}"
+        fi
     fi
+
 
     if test "$option" = ""; then
 	option="--full"
@@ -76,44 +117,48 @@ fi
 
 case "$option" in
     --full|-v|--version)
-	echo $OMPI_VERSION
+	echo $PLPA_VERSION
 	;;
     --major)
-	echo $OMPI_MAJOR_VERSION
+	echo $PLPA_MAJOR_VERSION
 	;;
     --minor)
-	echo $OMPI_MINOR_VERSION
+	echo $PLPA_MINOR_VERSION
 	;;
     --release)
-	echo $OMPI_RELEASE_VERSION
+	echo $PLPA_RELEASE_VERSION
 	;;
     --greek)
-	echo $OMPI_GREEK_VERSION
+	echo $PLPA_GREEK_VERSION
 	;;
     --svn)
-	echo $OMPI_SVN_R
+	echo $PLPA_SVN_R
 	;;
     --base)
-        echo $OMPI_BASE_VERSION
+        echo $PLPA_BASE_VERSION
+        ;;
+    --release-date)
+        echo $PLPA_RELEASE_DATE
         ;;
     --all)
-        echo ${OMPI_VERSION} ${OMPI_MAJOR_VERSION} ${OMPI_MINOR_VERSION} ${OMPI_RELEASE_VERSION} ${OMPI_GREEK_VERSION} ${OMPI_SVN_R}
+        echo ${PLPA_VERSION} ${PLPA_MAJOR_VERSION} ${PLPA_MINOR_VERSION} ${PLPA_RELEASE_VERSION} ${PLPA_GREEK_VERSION} ${PLPA_SVN_R}
         ;;
     -h|--help)
 	cat <<EOF
-$0 <srcfile> [<option>]
+$0 <srcfile> <option>
 
 <srcfile> - Text version file
 <option>  - One of:
-    --full    - Full version number
-    --major   - Major version number
-    --minor   - Minor version number
-    --release - Release version number
-    --greek   - Greek (alpha, beta, etc) version number
-    --svn     - Subversion repository number
-    --all     - Show all version numbers, separated by :
-    --base    - Show base version number (no svn number)
-    --help    - This message
+    --full         - Full version number
+    --major        - Major version number
+    --minor        - Minor version number
+    --release      - Release version number
+    --greek        - Greek (alpha, beta, etc) version number
+    --svn          - Subversion repository number
+    --all          - Show all version numbers, separated by :
+    --base         - Show base version number (no svn number)
+    --release-date - Show the release date
+    --help         - This message
 EOF
         ;;
     *)
