@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -58,6 +58,11 @@ AC_MSG_RESULT([$PLPA_VERSION])
 PACKAGE_VERSION="$PLPA_VERSION"
 PACKAGE_STRING="${PACKAGE_NAME} ${PACKAGE_VERSION}"
 VERSION="${PACKAGE_VERSION}"
+
+# For standalone configurations, we include a .so version number.
+
+. $srcdir/VERSION
+AC_SUBST([libplpa_so_version])
 
 # Setup the header file
 AH_TOP([/* -*- c -*-

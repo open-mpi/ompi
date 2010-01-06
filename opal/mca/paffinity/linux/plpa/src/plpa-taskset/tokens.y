@@ -1,6 +1,6 @@
 %{
 
-/* Copyright 2007-2008 Cisco Systems, Inc.  All rights reserved. */
+/* Copyright 2007-2009 Cisco Systems, Inc.  All rights reserved. */
 
 #include "plpa_config.h"
 
@@ -261,7 +261,7 @@ static void cpu_set_range(PLPA_NAME(cpu_set_t) *out, int min, int max)
 {
     int i;
     PLPA_CPU_ZERO(out);
-    for (i = min; i < max && i < PLPA_BITMASK_CPU_MAX; ++i) {
+    for (i = min; i <= max && i < PLPA_BITMASK_CPU_MAX; ++i) {
         PLPA_CPU_SET(i, out);
     }
 }
