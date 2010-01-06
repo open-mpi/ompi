@@ -20,7 +20,7 @@ release=1
 # only requirement is that it must be entirely printable ASCII 
 # characters and have no white space.
 
-greek=a1
+greek=rc1
 
 # If want_svn=1, then the SVN r number will be included in the overall
 # Open MPI version number in some form.
@@ -37,11 +37,11 @@ want_svn=1
 # distribution tarball is being made from an SVN checkout, the value
 # of svn_r in this file is replaced with the output of "svnversion".
 
-svn_r=rc1
+svn_r=-1
 
 # The date when this release was created
 
-date="Jan 6, 2010"
+date=
 
 # The shared library version of each of Open MPI's public libraries.
 # These versions are maintained in accordance with the "Library
