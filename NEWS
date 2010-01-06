@@ -52,6 +52,11 @@ Trunk (not on release branches yet)
 - Update to PLPA v1.3.2, addressing a licensing issue identified by
   the Fedora project.  See
   https://svn.open-mpi.org/trac/plpa/changeset/262 for details.
+- Add check for malformed checkpoint metadata files (Ticket #2141).
+- Fix error path in ompi-checkpoint when not able to checkpoint
+  (Ticket #2138).
+- Cleanup component release logic when selecting checkpoint/restart
+  enabled components (Ticket #2135).
 - Fixed VT node name detection for Cray XT platforms, and fixed some
   broken VT documentation files.
 - Fix a possible race condition in tearing down RDMA CM-based
