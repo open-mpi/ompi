@@ -215,10 +215,14 @@ static int adjust_cq(mca_btl_openib_device_t *device, const int cq)
 
     return OMPI_SUCCESS;
 }
-/* In this function we check if the device supports srq limit event. We create
-   the temporary srq, post some receive buffers - in order to prevent srq limit event immediately 
-   and call the "ibv_modify_srq" function. If a return value of the function not success => our decision
-   that the device doesn't support this capability. */
+
+
+/* In this function we check if the device supports srq limit
+   event. We create the temporary srq, post some receive buffers - in
+   order to prevent srq limit event immediately and call the
+   "ibv_modify_srq" function. If a return value of the function not
+   success => our decision that the device doesn't support this
+   capability. */
 static int check_if_device_support_modify_srq(mca_btl_openib_module_t *openib_btl)
 {
     char buff;
@@ -228,7 +232,7 @@ static int check_if_device_support_modify_srq(mca_btl_openib_module_t *openib_bt
     struct ibv_srq_attr modify_attr;
 
     struct ibv_sge sge_elem;
-    struct ibv_recv_wr wr1, wr2, bad_wr;
+    struct ibv_recv_wr wr1, wr2, *bad_wr;
 
     struct ibv_srq_init_attr init_attr;
     memset(&init_attr, 0, sizeof(struct ibv_srq_init_attr));
