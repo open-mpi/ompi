@@ -212,6 +212,22 @@ int orte_ess_base_app_setup(void)
         goto error;
     }
     
+    /* if we are an ORTE app - and not an MPI app - then
+     * we need to barrier here. MPI_Init has its own barrier,
+     * so we don't need to do two of them. However, if we
+     * don't do a barrier at all, then one process could
+     * finalize before another one called orte_init. This
+     * causes ORTE to believe that the proc abnormally
+     * terminated
+     */
+    if (ORTE_PROC_IS_NON_MPI) {
+        if (ORTE_SUCCESS != (ret = orte_grpcomm.barrier())) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte barrier";
+            goto error;
+        }
+    }
+    
     return ORTE_SUCCESS;
     
 error:
