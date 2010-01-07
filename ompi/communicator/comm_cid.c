@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Voltaire All rights reserved.
- * Copyright (c) 2006-2009 University of Houston.  All rights reserved.
+ * Copyright (c) 2006-2010 University of Houston.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -48,11 +48,6 @@ BEGIN_C_DECLS
  * pseudo inter-communicator described by two separate intra-comms
  * and a bridge-comm (intercomm-create scenario).
  */
-
-static int cid_block_start = 28;
-
-static int ompi_comm_cid_checkforreuse ( int c_id_start_index, int block );
-static int ompi_comm_get_blocksize ( ompi_communicator_t* comm  );
 
 
 typedef int ompi_comm_cid_allredfct (int *inbuf, int* outbuf, 
@@ -115,6 +110,7 @@ OBJ_CLASS_INSTANCE (ompi_comm_reg_t,
 
 static opal_mutex_t ompi_cid_lock;
 static opal_list_t ompi_registered_comms;
+
 
 /* This variable is zero (false) if all processes in MPI_COMM_WORLD
  * did not require MPI_THREAD_MULTIPLE support, and is 1 (true) as
@@ -191,178 +187,90 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
             break;
     }
 
-    /*
-     * BWB: Always make the multi-threaded algorithm the selected
-     * algorithm.  The others don't reuse CIDs which leads to CID
-     * space exhaustion in real-world applications. Leave the other
-     * code, as Edgar plans on adding CID reuse in the not-to-distant
-     * future. */
-    /*
-     * In case multi-threading is enabled by at least one process, or in 
-     * case of dynamic communicators, we revert to the old algorithm
-     * starting from cid_block_start
-     */
-    if (1 || ompi_comm_world_thread_level_mult || OMPI_COMM_IS_DYNAMIC (newcomm) ) {
-        int nextlocal_cid;
-        int done=0;
-        int response, glresponse=0;
-        int start;
-        unsigned int i;
- 
-        do {
-            /* Only one communicator function allowed in same time on the
-             * same communicator.
-             */
-            OPAL_THREAD_LOCK(&ompi_cid_lock);
-            response = ompi_comm_register_cid (comm->c_contextid);
-            OPAL_THREAD_UNLOCK(&ompi_cid_lock);
-        } while (OMPI_SUCCESS != response );
-        start = ompi_mpi_communicators.lowest_free;
-
-        while (!done) {
-            /**
-             * This is the real algorithm described in the doc 
-             */
-            
-            OPAL_THREAD_LOCK(&ompi_cid_lock);
-            if (comm->c_contextid != ompi_comm_lowest_cid() ) {
-                /* if not lowest cid, we do not continue, but sleep and try again */
-                OPAL_THREAD_UNLOCK(&ompi_cid_lock);
-                continue;
-            }
-            OPAL_THREAD_UNLOCK(&ompi_cid_lock);
-            
-            
-            for (i=start; i < mca_pml.pml_max_contextid ; i++) {
-                flag=opal_pointer_array_test_and_set_item(&ompi_mpi_communicators, 
-                                                          i, comm);
-                if (true == flag) {
-                    nextlocal_cid = i;
-                    break;
-                }
-            }
-            
-            (allredfnct)(&nextlocal_cid, &nextcid, 1, MPI_MAX, comm, bridgecomm,
-                         local_leader, remote_leader, send_first );
-            if (nextcid == nextlocal_cid) {
-                response = 1; /* fine with me */
-            }
-            else {
-                opal_pointer_array_set_item(&ompi_mpi_communicators, 
-                                            nextlocal_cid, NULL);
-                
-                flag = opal_pointer_array_test_and_set_item(&ompi_mpi_communicators, 
-                                                            nextcid, comm );
-                if (true == flag) {
-                    response = 1; /* works as well */
-                }
-                else {
-                    response = 0; /* nope, not acceptable */
-                }
-            }
-            
-            (allredfnct)(&response, &glresponse, 1, MPI_MIN, comm, bridgecomm,
-                         local_leader, remote_leader, send_first );
-            if (1 == glresponse) {
-                done = 1;             /* we are done */
-                break;
-            }
-            else if ( 0 == glresponse ) {
-                if ( 1 == response ) {
-                    /* we could use that, but other don't agree */
-                    opal_pointer_array_set_item(&ompi_mpi_communicators, 
-                                                nextcid, NULL);
-                }
-                start = nextcid+1; /* that's where we can start the next round */
-            }
-        }
-        
-        /* set the according values to the newcomm */
-        newcomm->c_contextid = nextcid;
-        newcomm->c_f_to_c_index = newcomm->c_contextid;
-        opal_pointer_array_set_item (&ompi_mpi_communicators, nextcid, newcomm);
-        
-        OPAL_THREAD_LOCK(&ompi_cid_lock);
-        ompi_comm_unregister_cid (comm->c_contextid);
-        OPAL_THREAD_UNLOCK(&ompi_cid_lock);
-        
-        return (MPI_SUCCESS);
-    }
-
-     /**
-      * In case the communication mode is INTRA_OOB or INTAR_BRIDGE, we use the 
-      * highest-free algorithm
-      */
-    if ( OMPI_COMM_CID_INTRA_OOB == mode || OMPI_COMM_CID_INTRA_BRIDGE == mode) {       
-        (allredfnct)(&cid_block_start, &global_block_start, 1, 
-                     MPI_MAX, comm, bridgecomm,
-                     local_leader, remote_leader, send_first );
-        cid_block_start = global_block_start;
-        nextcid = cid_block_start;
-        cid_block_start = cid_block_start + 1;
-    }
-    else {
+    int nextlocal_cid;
+    int done=0;
+    int response, glresponse=0;
+    int start;
+    unsigned int i;
     
-        block = ompi_comm_get_blocksize ( comm  ); 
-
-	/**
-	 * If the communicator has IDs available then allocate one for the child
+    do {
+	/* Only one communicator function allowed in same time on the
+	 * same communicator.
 	 */
-	if ( MPI_UNDEFINED != comm->c_id_available && 
-	     MPI_UNDEFINED != comm->c_id_start_index &&  
-	     block > comm->c_id_available - comm->c_id_start_index) {
-	    nextcid = comm->c_id_available;
-	    flag=opal_pointer_array_test_and_set_item (&ompi_mpi_communicators,
-						       nextcid, comm);
+	OPAL_THREAD_LOCK(&ompi_cid_lock);
+	response = ompi_comm_register_cid (comm->c_contextid);
+	OPAL_THREAD_UNLOCK(&ompi_cid_lock);
+    } while (OMPI_SUCCESS != response );
+    start = ompi_mpi_communicators.lowest_free;
+    
+    while (!done) {
+	/**
+	 * This is the real algorithm described in the doc 
+	 */
+	
+	OPAL_THREAD_LOCK(&ompi_cid_lock);
+	if (comm->c_contextid != ompi_comm_lowest_cid() ) {
+	    /* if not lowest cid, we do not continue, but sleep and try again */
+	    OPAL_THREAD_UNLOCK(&ompi_cid_lock);
+	    continue;
 	}
-	/**
-	 * Otherwise the communicator needs to negotiate a new block of IDs
-	 */
-	else {
-	    int start[3], gstart[3];
-	    /* the next function either returns exactly the same start_id as 
-	       the communicator had, or the cid_block_start*/
-	    start[0] = ompi_comm_cid_checkforreuse ( comm->c_id_start_index, block );
-	    
-	    /* this is now a little tricky. By multiplying the start[0] values with -1
-	       and executing the MAX operation on those as well, we will be able to
-	       determine the minimum value across the provided input */ 
-	    start[1] = (-1) * start[0]; 
-	    start[2] = cid_block_start;
-	    
-	    (allredfnct)(start, gstart, 3, MPI_MAX, comm, bridgecomm,
-			 local_leader, remote_leader, send_first );
-	    
-	    /* revert the minimum value back to a positive number */
-	    gstart[1] = (-1) * gstart[1];
-	    
-	    if  ( gstart[0] == start[0] && 
-		  gstart[1] == start[0] && 
-		  gstart[0] != cid_block_start ) {
-		comm->c_id_available   = gstart[0];
-		comm->c_id_start_index = gstart[0];
-		nextcid                = comm->c_id_available;
-		/* note: cid_block_start not modified in this section */
-	    }
-	    else {
-		/* no, one process did not agree on the reuse of the block
-		   so we have to go with the higher number */
-		comm->c_id_available   = gstart[2];
-		comm->c_id_start_index = gstart[2];
-		cid_block_start        = gstart[2] + block;
-		nextcid                = comm->c_id_available;
+	OPAL_THREAD_UNLOCK(&ompi_cid_lock);
+        
+        
+	for (i=start; i < mca_pml.pml_max_contextid ; i++) {
+	    flag=opal_pointer_array_test_and_set_item(&ompi_mpi_communicators, 
+						      i, comm);
+	    if (true == flag) {
+		nextlocal_cid = i;
+		break;
 	    }
 	}
 	
-	comm->c_id_available++;
+	(allredfnct)(&nextlocal_cid, &nextcid, 1, MPI_MAX, comm, bridgecomm,
+		     local_leader, remote_leader, send_first );
+	if (nextcid == nextlocal_cid) {
+	    response = 1; /* fine with me */
+	}
+	else {
+	    opal_pointer_array_set_item(&ompi_mpi_communicators, 
+					nextlocal_cid, NULL);
+	    
+	    flag = opal_pointer_array_test_and_set_item(&ompi_mpi_communicators, 
+							nextcid, comm );
+	    if (true == flag) {
+		response = 1; /* works as well */
+	    }
+	    else {
+		response = 0; /* nope, not acceptable */
+	    }
+	}
+        
+	(allredfnct)(&response, &glresponse, 1, MPI_MIN, comm, bridgecomm,
+		     local_leader, remote_leader, send_first );
+	if (1 == glresponse) {
+	    done = 1;             /* we are done */
+	    break;
+	}
+	else if ( 0 == glresponse ) {
+	    if ( 1 == response ) {
+		/* we could use that, but other don't agree */
+		opal_pointer_array_set_item(&ompi_mpi_communicators, 
+					    nextcid, NULL);
+	    }
+	    start = nextcid+1; /* that's where we can start the next round */
+	}
     }
+    
     /* set the according values to the newcomm */
     newcomm->c_contextid = nextcid;
     newcomm->c_f_to_c_index = newcomm->c_contextid;
     opal_pointer_array_set_item (&ompi_mpi_communicators, nextcid, newcomm);
-
+    
+    OPAL_THREAD_LOCK(&ompi_cid_lock);
+    ompi_comm_unregister_cid (comm->c_contextid);
+    OPAL_THREAD_UNLOCK(&ompi_cid_lock);
+    
     return (MPI_SUCCESS);
-
 }
 
 /**************************************************************************/
@@ -563,80 +471,6 @@ int ompi_comm_activate ( ompi_communicator_t** newcomm,
     *newcomm = MPI_COMM_NULL;
     return ret;
 }                         
-
-/**************************************************************************/
-/**************************************************************************/
-/**************************************************************************/
-/* check whether all communicators registered from c_id_start_index to 
-** c_id_start_index + block have been freed. For this, we rely on 
-** the communicators having been properly removed from the fortran array, 
-** i.e. the according request should return a NULL pointer. 
-*/
-static int ompi_comm_cid_checkforreuse ( int c_id_start_index, int block )
-{
-    int ret=cid_block_start;
-    int i, count=0;
-    ompi_communicator_t * tempcomm;
-
-    if ( MPI_UNDEFINED != c_id_start_index ) {
-	for ( i= c_id_start_index; i < c_id_start_index + block; i++ ) {
-	    tempcomm = (ompi_communicator_t *) opal_pointer_array_get_item ( &ompi_mpi_communicators, i );
-	    if ( NULL == tempcomm ) {
-		count++;
-	    }
-	}
-	
-	if ( count == block ) {
-	    ret = c_id_start_index;
-	}
-    }
-
-    return ret;
-}
-
-/* this function is called from the communicator destructor. It is a
-   generic interface which verifies whether the cid block assigned to 
-   that communicator can be reused. 
-   In the current implementation it checks whether all communicators 
-   have been freed. If that's the case *and* the current leading fron
-   of cid's (i.e. cid_block-start) is right after the block following
-   the block assigned to that communicator, we reset the leading block.
-*/
-void  ompi_comm_checkfor_blockreset ( ompi_communicator_t *comm )
-{
-    int block=ompi_comm_get_blocksize ( comm );
-    int next=0;
-
-    if (MPI_THREAD_MULTIPLE == ompi_mpi_thread_provided) {
-	return;
-    }
-
-    if ( MPI_UNDEFINED == comm->c_id_start_index ) {
-	return;
-    }
-
-    next = ompi_comm_cid_checkforreuse ( comm->c_id_start_index, block );
-    if ( next            == comm->c_id_start_index && 
-	 cid_block_start == (comm->c_id_start_index + block ) ) {
- 	cid_block_start = comm->c_id_start_index;
-    }
-
-    return;
-}
-
-static int ompi_comm_get_blocksize ( ompi_communicator_t* comm  ) 
-{
-    int block=0;
-
-    if( 0 == comm->c_contextid ) {
-	block = OMPI_COMM_BLOCK_WORLD;
-    }
-    else {
-	block = OMPI_COMM_BLOCK_OTHERS;
-    }
-
-    return block;
-}
 
 /**************************************************************************/
 /**************************************************************************/
