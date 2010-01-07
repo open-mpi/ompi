@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
@@ -66,13 +66,14 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
         [AC_HELP_STRING([--enable-openib-connectx-xrc],
                         [Enable ConnectX XRC support. If you do not have InfiniBand ConnectX adapters, you may disable the ConnectX XRC support. If you do not know which InfiniBand adapter is installed on your cluster, leave this option enabled (default: enabled)])],
                         [enable_connectx_xrc="$enableval"], [enable_connectx_xrc="yes"])
-    #
-    # Openfabrics IBCM
-    #
-    AC_ARG_ENABLE([openib-ibcm],
-        [AC_HELP_STRING([--enable-openib-ibcm],
-                        [Enable Open Fabrics IBCM support in openib BTL (default: disabled)])], 
-                        [enable_openib_ibcm="$enableval"], [enable_openib_ibcm="no"])
+dnl Temporarily disable ibcm support; it is broken.
+dnl    #
+dnl    # Openfabrics IBCM
+dnl    #
+dnl    AC_ARG_ENABLE([openib-ibcm],
+dnl        [AC_HELP_STRING([--enable-openib-ibcm],
+dnl                        [Enable Open Fabrics IBCM support in openib BTL (default: disabled)])], 
+dnl                        [enable_openib_ibcm="$enableval"], [enable_openib_ibcm="no"])
     #
     # Openfabrics RDMACM
     #
@@ -193,17 +194,18 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
                  fi
            fi
 
-           # Do we have IB CM? (note that OFED IB CM depends on RDMA
-           # CM, so no need to add it into the other-libraries
-           # argument to AC_CHECK_ LIB).  Note that we only want IBCM
-           # starting with OFED 1.2 or so, so check for
-           # ib_cm_open_device (introduced in libibcm 1.0/OFED 1.2).
-           if test "$enable_openib_ibcm" = "yes"; then
-               AC_CHECK_HEADERS([infiniband/cm.h],
-                   [AC_CHECK_LIB([ibcm], [ib_cm_open_device],
-                       [$1_have_ibcm=1
-                       $1_LIBS="-libcm $$1_LIBS"])])
-           fi
+dnl Temporarily disable ibcm support; it is broken.
+dnl           # Do we have IB CM? (note that OFED IB CM depends on RDMA
+dnl           # CM, so no need to add it into the other-libraries
+dnl           # argument to AC_CHECK_ LIB).  Note that we only want IBCM
+dnl           # starting with OFED 1.2 or so, so check for
+dnl           # ib_cm_open_device (introduced in libibcm 1.0/OFED 1.2).
+dnl           if test "$enable_openib_ibcm" = "yes"; then
+dnl               AC_CHECK_HEADERS([infiniband/cm.h],
+dnl                   [AC_CHECK_LIB([ibcm], [ib_cm_open_device],
+dnl                       [$1_have_ibcm=1
+dnl                       $1_LIBS="-libcm $$1_LIBS"])])
+dnl           fi
 		   
            # Check support for RDMAoE devices
            $1_have_rdmaoe=0
@@ -251,6 +253,10 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
         AC_MSG_RESULT([no])
     fi
 
+    # Note that IBCM support is hard-coded disabled (see above).  The
+    # CPC is currently broken, so there's no point in even offering
+    # the opprotunity to enable it (i.e., don't even offer an --enable
+    # switch; it'll just confuse users).
     AC_MSG_CHECKING([if OpenFabrics IBCM support is enabled])
     AC_DEFINE_UNQUOTED([OMPI_HAVE_IBCM], [$$1_have_ibcm],
         [Whether IB CM is available or not])
