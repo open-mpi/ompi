@@ -85,6 +85,7 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 typedef struct {
     opal_list_item_t super;      /* required to place this on a list */
     orte_process_name_t *name;   /* the OmpiRTE name of the proc */
+    int32_t restarts;            /* number of times this proc has been restarted */
     pid_t pid;                   /* local pid of the proc */
     orte_std_cntr_t app_idx;     /* index of the app_context for this proc */
     bool alive;                  /* is this proc alive? */

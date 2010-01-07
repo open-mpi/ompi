@@ -597,6 +597,7 @@ static void orte_job_construct(orte_job_t* job)
     job->err_cbfunc = NULL;
     job->err_cbstates = ORTE_PROC_STATE_UNDEF;
     job->err_cbdata = NULL;
+    job->max_restarts = INT32_MAX;
     
 #if OPAL_ENABLE_FT == 1
     job->ckpt_state = 0;
@@ -779,6 +780,7 @@ static void orte_proc_construct(orte_proc_t* proc)
     proc->nodename = NULL;
     proc->rml_uri = NULL;
     proc->beat = 0;
+    proc->restarts = 0;
 #if OPAL_ENABLE_FT == 1
     proc->ckpt_state = 0;
     proc->ckpt_snapshot_ref = NULL;

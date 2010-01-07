@@ -484,6 +484,13 @@ int orte_dt_pack_proc(opal_buffer_t *buffer, const void *src,
             return rc;
         }
         
+        /* pack the number of restarts */
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
+                         (void*)&(procs[i]->restarts), 1, OPAL_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
 #if OPAL_ENABLE_FT == 1
         /* pack the ckpt state */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,

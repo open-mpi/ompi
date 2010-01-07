@@ -75,6 +75,7 @@ orte_odls_base_module_t orte_odls;
 static void orte_odls_child_constructor(orte_odls_child_t *ptr)
 {
     ptr->name = NULL;
+    ptr->restarts = 0;
     ptr->pid = 0;
     ptr->app_idx = -1;
     ptr->alive = false;

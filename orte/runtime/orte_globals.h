@@ -385,6 +385,8 @@ typedef struct {
     orte_proc_state_t err_cbstates;
     /* errmgr callback data */
     void *err_cbdata;
+    /* max number of times a process can be restarted */
+    int32_t max_restarts;
 #if OPAL_ENABLE_FT == 1
     /* ckpt state */
     size_t ckpt_state;
@@ -435,6 +437,8 @@ struct orte_proc_t {
     char *rml_uri;
     /* seconds when last heartbeat was detected */
     int beat;
+    /* number of times this process has been restarted */
+    int32_t restarts;
 #if OPAL_ENABLE_FT == 1
     /* ckpt state */
     size_t ckpt_state;

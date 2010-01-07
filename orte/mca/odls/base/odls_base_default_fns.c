@@ -89,7 +89,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     orte_job_map_t *map;
     opal_buffer_t *wireup;
     opal_byte_object_t bo, *boptr;
-    int32_t numbytes;
+    int32_t numbytes, *tmp32;
     int8_t flag;
     int8_t *tmp;
     orte_vpid_t i;
@@ -385,19 +385,26 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     /* release the data since it has now been copied into our buffer */
     free(bo.bytes);
     
-    /* transfer and pack the app_idx array for this job in one pack */
+    /* transfer and pack the app_idx and restart arrays for this job */
     tmp = (int8_t*)malloc(jdata->num_procs);
+    tmp32 = (int32_t*)malloc(jdata->num_procs * sizeof(int32_t));
     for (j=0, i=0; i < jdata->num_procs && j < jdata->procs->size; j++) {
         if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, j))) {
             continue;
         }
-        tmp[i++] = proc->app_idx;
+        tmp[i] = proc->app_idx;
+        tmp32[i++] = proc->restarts;
     }
     if (ORTE_SUCCESS != (rc = opal_dss.pack(data, tmp, jdata->num_procs, OPAL_INT8))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     free(tmp);
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, tmp32, jdata->num_procs, OPAL_INT32))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    free(tmp32);
     
     /* are there cpu_list strings? */
     if (jdata->map->cpu_lists) {
@@ -573,6 +580,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     opal_list_item_t *item;
     int8_t flag;
     int8_t *app_idx=NULL;
+    int32_t *restarts=NULL;
     char **slot_str=NULL;
     orte_jobid_t debugger;
     bool add_child;
@@ -846,6 +854,15 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         goto REPORT_ERROR;
     }
     
+    /* allocate memory for restarts */
+    restarts = (int32_t*)malloc(jobdat->num_procs  * sizeof(int32_t));
+    /* unpack restarts in one shot */
+    cnt=jobdat->num_procs;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, restarts, &cnt, OPAL_INT32))) {
+        ORTE_ERROR_LOG(rc);
+        goto REPORT_ERROR;
+    }
+    
     /* unpack flag to indicate if slot_strings are present */
     cnt=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &flag, &cnt, OPAL_INT8))) {
@@ -909,6 +926,7 @@ find_my_procs:
                                              ORTE_NAME_PRINT(&proc),
                                              (child->alive) ? "ALIVE" : "DEAD"));
                         add_child = false;
+                        child->restarts = restarts[j];
                         /* mark that this app_context is being used on this node */
                         jobdat->apps[app_idx[j]]->used_on_node = true;
                         break;
@@ -928,6 +946,7 @@ find_my_procs:
                     goto REPORT_ERROR;
                 }
                 child->app_idx = app_idx[j];  /* save the index into the app_context objects */
+                child->restarts = restarts[j];
                 if (NULL != slot_str && NULL != slot_str[j]) {
                     child->slot_list = strdup(slot_str[j]);
                 }
@@ -948,6 +967,10 @@ find_my_procs:
     if (NULL != app_idx) {
         free(app_idx);
         app_idx = NULL;
+    }
+    if (NULL != restarts) {
+        free(restarts);
+        restarts = NULL;
     }
     if (NULL != slot_str) {
         for (j=0; j < jobdat->num_procs; j++) {
@@ -988,6 +1011,10 @@ REPORT_ERROR:
     if (NULL != app_idx) {
         free(app_idx);
         app_idx = NULL;
+    }
+    if (NULL != restarts) {
+        free(restarts);
+        restarts = NULL;
     }
     if (NULL != slot_str && NULL != jobdat) {
         for (j=0; j < jobdat->num_procs; j++) {
@@ -1680,7 +1707,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                 ORTE_ERROR_LOG(rc);
                 goto CLEANUP;
             }
-            if(NULL == (param = mca_base_param_environ_variable("orte","ess","jobid"))) {
+            if (NULL == (param = mca_base_param_environ_variable("orte","ess","jobid"))) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 rc = ORTE_ERR_OUT_OF_RESOURCE;
                 goto CLEANUP;
@@ -1689,7 +1716,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
             free(param);
             free(job_str);
             
-            if(NULL == (param = mca_base_param_environ_variable("orte","ess","vpid"))) {
+            if (NULL == (param = mca_base_param_environ_variable("orte","ess","vpid"))) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 rc = ORTE_ERR_OUT_OF_RESOURCE;
                 goto CLEANUP;
@@ -1744,6 +1771,20 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                 rc = ORTE_ERR_OUT_OF_RESOURCE;
                 goto CLEANUP;
             }
+            opal_setenv(param, value, true, &app->env);
+            free(param);
+            free(value);
+            
+            /* pass the number of restarts for this proc - will be zero for
+             * an initial start, but procs would like to know if they are being
+             * restarted so they can take appropriate action
+             */
+            if (NULL == (param = mca_base_param_environ_variable("orte","num","restarts"))) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                rc = ORTE_ERR_OUT_OF_RESOURCE;
+                goto CLEANUP;
+            }
+            asprintf(&value, "%d", child->restarts);
             opal_setenv(param, value, true, &app->env);
             free(param);
             free(value);
