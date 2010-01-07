@@ -250,7 +250,7 @@ int orte_dt_print_job(char **output, char *prefix, orte_job_t *src, opal_data_ty
         tmp = tmp2;
     }
     
-    asprintf(&tmp2, "%s\n%sNum procs: %ld", tmp, pfx, (long)src->num_procs);
+    asprintf(&tmp2, "%s\n%sNum procs: %ld\tMax Restarts: %d", tmp, pfx, (long)src->num_procs, src->max_restarts);
     free(tmp);
     tmp = tmp2;
 
@@ -534,8 +534,8 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
     free(tmp);
     tmp = tmp2;
     
-    asprintf(&tmp2, "%s\n%s\tState: %0x\tApp_context: %ld\tSlot list: %s", tmp, pfx2,
-             src->state, (long)src->app_idx,
+    asprintf(&tmp2, "%s\n%s\tState: %0x\tRestarts: %d\tApp_context: %ld\tSlot list: %s", tmp, pfx2,
+             src->state, src->restarts, (long)src->app_idx,
              (NULL == src->slot_list) ? "NULL" : src->slot_list);
     free(tmp);
     
