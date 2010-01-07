@@ -162,7 +162,12 @@ static void out(char *str, char *arg)
 
 /*
  * Use orte_show_help() to aggregate the error messages (i.e., show it
- * once rather than N times).
+ * once rather than N times).  
+ *
+ * Note that this function will only be invoked for errors during the
+ * MPI application (i.e., after MPI_INIT and before MPI_FINALIZE).  So
+ * there's no need to handle the pre-MPI_INIT and post-MPI_FINALIZE
+ * errors here.
  */
 static void backend_fatal_aggregate(char *type, 
                                     struct ompi_communicator_t *comm,
@@ -207,67 +212,99 @@ static void backend_fatal_aggregate(char *type,
 }
 
 /* 
- * THESE MESSAGES ARE COORDINATED WITH FIXED STRINGS IN
- * help-mpi-errors.txt!  Do not change these messages without also
- * changing help-mpi-errors.txt!
+ * Note that this function has to handle pre-MPI_INIT and
+ * post-MPI_FINALIZE errors, which backend_fatal_aggregate() does not
+ * have to handle.
  */
 static void backend_fatal_no_aggregate(char *type, 
                                        struct ompi_communicator_t *comm,
                                        char *name, int *error_code, 
                                        va_list arglist)
 {
-    int len;
     char *arg;
-    char str[MPI_MAX_PROCESSOR_NAME * 2];
 
     fflush(stdout);
     fflush(stderr);
 
     arg = va_arg(arglist, char*);
-    if (NULL != arg) {
-        out("*** An error occurred in %s\n", arg);
-    } else {
-        out("*** An error occurred\n", NULL);
+
+    /* Per #2152, print out in plain english if something was invoked
+       before MPI_INIT* or after MPI_FINALIZE */
+    if (!ompi_mpi_initialized) {
+        if (NULL != arg) {
+            out("*** The %s() function was called before MPI_INIT was invoked.\n"
+                "*** This is disallowed by the MPI standard.\n", arg);
+        } else {
+            out("*** An MPI function was called before MPI_INIT was invoked.\n"
+                "*** This is disallowed by the MPI standard.\n"
+                "*** Unfortunately, no further information is available on *which* MPI\n"
+                "*** function was invoked, sorry.  :-(\n", NULL);
+        }
+        out("*** Your MPI job will now abort.\n", NULL);
+    } else if (ompi_mpi_finalized) {
+        if (NULL != arg) {
+            out("*** The %s() function was called after MPI_FINALIZE was invoked.\n"
+                "*** This is disallowed by the MPI standard.\n", arg);
+        } else {
+            out("*** An MPI function was called after MPI_FINALIZE was invoked.\n"
+                "*** This is disallowed by the MPI standard.\n"
+                "*** Unfortunately, no further information is available on *which* MPI\n"
+                "*** function was invoked, sorry.  :-(\n", NULL);
+        }
+        out("*** Your MPI job will now abort.\n", NULL);
     }
-    va_end(arglist);
 
-    if (NULL != name && ompi_mpi_initialized && !ompi_mpi_finalized) {
-        /* Don't use asprintf() here because there may be stack / heap
-           corruption by the time we're invoked, so just do it on the
-           stack */
-        str[0] = '\0';
-        len = sizeof(str) - 1;
-        strncat(str, type, len);
+    else {
+        int len;
+        char str[MPI_MAX_PROCESSOR_NAME * 2];
+        
+        /* THESE MESSAGES ARE COORDINATED WITH FIXED STRINGS IN
+           help-mpi-errors.txt!  Do not change these messages without
+           also changing help-mpi-errors.txt! */
 
-        len -= strlen(type);
-        if (len > 0) {
-            strncat(str, " ", len);
+        /* This is after MPI_INIT* and before MPI_FINALIZE, so print
+           the error message normally */
+        if (NULL != arg) {
+            out("*** An error occurred in %s\n", arg);
+        } else {
+            out("*** An error occurred\n", NULL);
+        }
 
-            --len;
+        if (NULL != name) {
+            /* Don't use asprintf() here because there may be stack /
+               heap corruption by the time we're invoked, so just do
+               it on the stack */
+            str[0] = '\0';
+            len = sizeof(str) - 1;
+            strncat(str, type, len);
+            
+            len -= strlen(type);
             if (len > 0) {
-                strncat(str, name, len);
+                strncat(str, " ", len);
+                
+                --len;
+                if (len > 0) {
+                    strncat(str, name, len);
+                }
+            }
+            out("*** on %s", str);
+        } else if (NULL == name) {
+            out("*** on a NULL %s\n", type);
+        }
+
+        if (NULL != error_code) {
+            char *tmp = ompi_mpi_errnum_get_string(*error_code);
+            if (NULL != tmp) {
+                out("*** %s\n", tmp);
+            } else {
+                char intbuf[32];
+                snprintf(intbuf, 32, "%d", *error_code);
+                out("*** Error code: %d (no associated error message)\n", intbuf);
             }
         }
-        out("*** on %s", str);
-    } else if (!ompi_mpi_initialized) {
-        out("*** before MPI was initialized\n", NULL);
-    } else if (ompi_mpi_finalized) {
-        out("*** after MPI was finalized\n", NULL);
-    } else if (NULL == name) {
-        out("*** on a NULL %s\n", type);
+        out("*** MPI_ERRORS_ARE_FATAL (your MPI job will now abort)\n", NULL);
     }
-
-    if (NULL != error_code) {
-        char *tmp = ompi_mpi_errnum_get_string(*error_code);
-        if (NULL != tmp) {
-            out("*** %s\n", tmp);
-        } else {
-            char intbuf[32];
-            snprintf(intbuf, 32, "%d", *error_code);
-            out("*** Error code: %d (no associated error message)\n", intbuf);
-        }
-    }
-    out("*** MPI_ERRORS_ARE_FATAL (your MPI job will now abort)\n", NULL);
+    va_end(arglist);
 }
 
 static void backend_fatal(char *type, struct ompi_communicator_t *comm,
