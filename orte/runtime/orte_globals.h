@@ -71,6 +71,10 @@ ORTE_DECLSPEC extern orte_process_name_t orte_name_invalid;  /** instantiated in
    param */
 ORTE_DECLSPEC extern bool orte_in_parallel_debugger;
 
+/* error manager callback function */
+typedef void (*orte_err_cb_fn_t)(orte_process_name_t *proc, orte_proc_state_t state, void *cbdata);
+
+typedef uint16_t orte_mapping_policy_t;
 
 #if ORTE_DISABLE_FULL_SUPPORT
 
@@ -281,7 +285,6 @@ typedef uint8_t orte_job_controls_t;
 #define ORTE_JOB_CONTROL_FORWARD_COMM       0x20
 #define ORTE_JOB_CONTROL_CONTINUOUS_OP      0x40
 
-typedef uint16_t orte_mapping_policy_t;
 #define ORTE_MAPPING_POLICY OPAL_UINT16
 /* put the rank assignment method in the upper 8 bits */
 #define ORTE_MAPPING_NOPOL          0x0100
@@ -329,9 +332,6 @@ typedef uint16_t orte_mapping_policy_t;
 /* macro to detect if binding was qualified */
 #define ORTE_BINDING_NOT_REQUIRED(n) \
     (ORTE_BIND_IF_SUPPORTED & (n))
-
-/* error manager callback function */
-typedef void (*orte_err_cb_fn_t)(orte_process_name_t *proc, orte_proc_state_t state, void *cbdata);
 
 typedef struct {
     /** Base object so this can be put on a list */
