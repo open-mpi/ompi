@@ -1420,10 +1420,11 @@ opal_iffinalize(void)
     return OPAL_SUCCESS;
 }
 
-uint32_t
-opal_iftupletoaddr(char *addr)
+int
+opal_iftupletoaddr(char *inaddr, uint32_t *net, uint32_t *mask)
 {
     return 0;
 }
+
 #endif /* HAVE_STRUCT_SOCKADDR_IN */
 
