@@ -15,7 +15,7 @@
 
 int main(int argc, char* argv[])
 {
-    int rc, restart;
+    int rc, restart=-1;
     char hostname[512], *rstrt;
     pid_t pid;
     
