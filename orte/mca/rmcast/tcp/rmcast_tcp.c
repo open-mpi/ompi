@@ -341,7 +341,7 @@ process:
     }
     
     /* pack the channel */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &channel, 1, ORTE_RMCAST_CHANNEL_T))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &ch->channel, 1, ORTE_RMCAST_CHANNEL_T))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
@@ -408,13 +408,13 @@ process:
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                          "%s rmcast:tcp multicasting %d bytes to channel %d tag %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)buf.bytes_used,
-                         (int)channel, (int)tag));
+                         (int)ch->channel, (int)tag));
     
     if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(ORTE_JOBID_WILDCARD,
                                                  &buf, ORTE_RML_TAG_MULTICAST))) {
         /* didn't get the message out */
         opal_output(0, "%s failed to send message to multicast channel %d",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)channel);
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)ch->channel);
         goto cleanup;
     }
     
