@@ -43,12 +43,15 @@ else
 fi
 
 greekonly=0
+want_ompi=1
 while test "$1" != ""; do
     case $1 in
         -greekonly) greekonly=1 ;;
         --greekonly) greekonly=1 ;;
         -highok) highok=1 ;;
         --highok) highok=1 ;;
+        -no-ompi) want_ompi=0 ;;
+        --no-ompi) want_ompi=0 ;;
     esac
     shift
 done
@@ -197,7 +200,11 @@ make_tarball() {
     #
     echo "*** Running autogen.sh..."
     rm -f success
-    (./autogen.sh 2>&1 && touch success) | tee auto.out
+    if test "$want_ompi" = "1" ; then
+        (./autogen.sh 2>&1 && touch success) | tee auto.out
+    else
+        (./autogen.sh -no-ompi 2>&1 && touch success) | tee auto.out
+    fi
     if test ! -f success; then
         echo "Autogen failed.  Aborting"
         exit 1
