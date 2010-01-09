@@ -20,11 +20,18 @@
 #man_pages = ortecc.1 ortec++.1
 
 if !ORTE_DISABLE_FULL_SUPPORT
-if OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 
+# always include the following in tarballs as the selection of
+# script vs binary wrapper compilers is a configure option
 bin_SCRIPTS = orte_wrapper_script
 CLEANFILES += $(bin_SCRIPTS)
 
+dist_pkgdata_DATA = \
+	ortecc-wrapper-data.txt \
+	ortec++-wrapper-data.txt
+
+
+if OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 install-exec-hook-always:
 	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
 	(cd $(DESTDIR)$(bindir); rm -f ortecc; $(LN_S) orte_wrapper_script ortecc)
@@ -46,10 +53,6 @@ endif # CASE_SENSITIVE_FS
 else # OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 
 if OMPI_INSTALL_BINARIES
-
-dist_pkgdata_DATA = \
-	ortecc-wrapper-data.txt \
-	ortec++-wrapper-data.txt
 
 #man_MANS = $(man_pages)
 
