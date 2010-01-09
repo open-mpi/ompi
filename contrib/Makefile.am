@@ -26,7 +26,6 @@ endif
 
 EXTRA_DIST = \
 	dist/make_dist_tarball \
-	dist/make_orte_dist_tarball \
 	dist/linux/openmpi.spec \
 	dist/macosx-pkg/buildpackage.sh \
 	dist/macosx-pkg/ReadMe.rtf \
