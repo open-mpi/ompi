@@ -51,6 +51,7 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .proc_type =            */   ORTE_PROC_TYPE_NONE,
     /*  .sync_buf =             */   NULL,
     /*  .my_port =              */   0,
+    /*  .num_restarts =         */   0,
     /*  .tmpdir_base =          */   NULL,
     /*  .top_session_dir =      */   NULL,
     /*  .job_session_dir =      */   NULL,
@@ -131,6 +132,12 @@ int orte_proc_info(void)
                                 true, false,
                                 orte_process_info.num_nodes, &tmp);
     orte_process_info.num_nodes = tmp;
+    
+    /* get the number of times this proc has restarted */
+    mca_base_param_reg_int_name("orte", "num_restarts",
+                                "Number of times this proc has restarted",
+                                true, false, 0, &tmp);
+    orte_process_info.num_restarts = tmp;
     
     /* setup the sync buffer */
     orte_process_info.sync_buf = OBJ_NEW(opal_buffer_t);

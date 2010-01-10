@@ -219,8 +219,12 @@ int orte_ess_base_app_setup(void)
      * finalize before another one called orte_init. This
      * causes ORTE to believe that the proc abnormally
      * terminated
+     *
+     * NOTE: only do this when the process originally launches.
+     * Cannot do this on a restart as the rest of the processes
+     * in the job won't be executing this step, so we would hang
      */
-    if (ORTE_PROC_IS_NON_MPI) {
+    if (0 == orte_process_info.num_restarts && ORTE_PROC_IS_NON_MPI) {
         if (ORTE_SUCCESS != (ret = orte_grpcomm.barrier())) {
             ORTE_ERROR_LOG(ret);
             error = "orte barrier";

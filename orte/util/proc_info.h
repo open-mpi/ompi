@@ -90,6 +90,7 @@ struct orte_proc_info_t {
     orte_proc_type_t proc_type;         /**< Type of process */
     opal_buffer_t *sync_buf;            /**< buffer to store sync response */
     uint16_t my_port;                   /**< TCP port for out-of-band comm */
+    int32_t num_restarts;               /**< number of times this proc has restarted */
     /* The session directory has the form
      * <prefix>/<openmpi-sessions-user>/<jobid>/<procid>, where the prefix
      * can either be provided by the user via the
