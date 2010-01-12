@@ -173,7 +173,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_mcast_msg_event_t);
 #define ORTE_MULTICAST_LOAD_MESSAGE(bfr, dat, sz, maxsz, endsz) \
     do {                                                        \
         if ((maxsz) <= (sz) + 14) {                             \
-            *(endsz) = 0;                                       \
+            *(endsz) = -1 * ((sz) + 14);                        \
         } else {                                                \
             memcpy((bfr)+14, (dat), (sz));                      \
             *(endsz) = (sz) + 14;                               \

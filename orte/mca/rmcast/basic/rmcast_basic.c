@@ -1164,6 +1164,10 @@ static void xmit_data(int sd, short flags, void* send_req)
     int32_t tmp32;
     
     OPAL_THREAD_LOCK(&chan->send_lock);
+    OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
+                         "%s transmitting data for channel %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), chan->channel));
+    
     while (NULL != (item = opal_list_remove_first(&chan->pending_sends))) {
         snd = (rmcast_base_send_t*)item;
         
@@ -1224,7 +1228,10 @@ static void xmit_data(int sd, short flags, void* send_req)
                 ORTE_ERROR_LOG(rc);
                 goto CLEANUP;
             }
-
+            
+            OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
+                                 "%s copying payload", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            
             /* copy the payload */
             if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(&buf, snd->buf))) {
                 ORTE_ERROR_LOG(rc);
@@ -1246,11 +1253,11 @@ static void xmit_data(int sd, short flags, void* send_req)
                                     mca_rmcast_basic_component.max_msg_size,
                                     &outbound);
         
-        if (0 == outbound) {
+        if (outbound < 0) {
             /* message was too large */
             opal_output(0, "%s message to multicast network %03d.%03d.%03d.%03d failed - size %d was too large (limit: %d)",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), OPAL_IF_FORMAT_ADDR(chan->network),
-                        outbound, ORTE_RMCAST_BASIC_MAX_MSG_SIZE);
+                        -1*outbound, mca_rmcast_basic_component.max_msg_size);
             if (1 == flag) {
                 /* reload into original buffer */
                 if (ORTE_SUCCESS != (rc = opal_dss.load(snd->buf, (void*)bytes, sz))) {
