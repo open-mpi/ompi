@@ -349,6 +349,7 @@ static int parse_requested(int mca_param, bool *include_mode,
 static int open_components(const char *type_name, int output_id, 
                            opal_list_t *src, opal_list_t *dest)
 {
+    int ret;
     opal_list_item_t *item;
     const mca_base_component_t *component;
     mca_base_component_list_item_t *cli;
@@ -383,17 +384,24 @@ static int open_components(const char *type_name, int output_id,
                                 "component %s has no register function",
                                 component->mca_component_name);
         } else {
-            if (MCA_SUCCESS == component->mca_register_component_params()) {
+            ret = component->mca_register_component_params();
+            if (MCA_SUCCESS == ret) {
                 registered = true;
                 opal_output_verbose(10, output_id, 
                                     "mca: base: components_open: "
                                     "component %s register function successful",
                                     component->mca_component_name);
-            } else {
-                /* We may end up displaying this twice, but it may go
-                   to separate streams.  So better to be redundant
-                   than to not display the error in the stream where
-                   it was expected. */
+            } else if (OPAL_ERR_NOT_AVAILABLE != ret) {
+                /* If the component returns OPAL_ERR_NOT_AVAILABLE,
+                   it's a cue to "silently ignore me" -- it's not a
+                   failure, it's just a way for the component to say
+                   "nope!".  
+
+                   Otherwise, however, display an error.  We may end
+                   up displaying this twice, but it may go to separate
+                   streams.  So better to be redundant than to not
+                   display the error in the stream where it was
+                   expected. */
                 
                 if (show_errors) {
                     opal_output(0, "mca: base: components_open: "
@@ -416,17 +424,24 @@ static int open_components(const char *type_name, int output_id,
                                 component->mca_component_name);
         } else {
             called_open = true;
-            if (MCA_SUCCESS == component->mca_open_component()) {
+            ret = component->mca_open_component();
+            if (MCA_SUCCESS == ret) {
                 opened = true;
                 opal_output_verbose(10, output_id, 
                                     "mca: base: components_open: "
                                     "component %s open function successful",
                                     component->mca_component_name);
-            } else {
-                /* We may end up displaying this twice, but it may go
-                   to separate streams.  So better to be redundant
-                   than to not display the error in the stream where
-                   it was expected. */
+            } else if (OPAL_ERR_NOT_AVAILABLE != ret) {
+                /* If the component returns OPAL_ERR_NOT_AVAILABLE,
+                   it's a cue to "silently ignore me" -- it's not a
+                   failure, it's just a way for the component to say
+                   "nope!".  
+
+                   Otherwise, however, display an error.  We may end
+                   up displaying this twice, but it may go to separate
+                   streams.  So better to be redundant than to not
+                   display the error in the stream where it was
+                   expected. */
                 
                 if (show_errors) {
                     opal_output(0, "mca: base: components_open: "
