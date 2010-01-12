@@ -75,9 +75,9 @@ int PERUSE_Init (void)
 
 
 /* Query all implemented events */
-int PERUSE_Query_supported_events( int* num_supported,
-                                                 char*** event_names,
-                                                 int** events )
+int PERUSE_Query_supported_events (int* num_supported,
+                                   char*** event_names,
+                                   int** events)
 {
     int i;
     *num_supported = PERUSE_num_events;
@@ -122,7 +122,7 @@ int PERUSE_Query_event_name (int event, char** event_name)
 
 
 /* Get environment variables that affect MPI library behavior */
-int PERUSE_Query_environment( int * env_size, char *** env )
+int PERUSE_Query_environment (int * env_size, char *** env)
 {
     /* XXX tbd */
     return PERUSE_SUCCESS;
@@ -141,14 +141,16 @@ int PERUSE_Query_queue_event_scope (int * scope)
  * II. Events, objects initialization and manipulation
  */
 /* Initialize event associated with an MPI communicator */
-int PERUSE_Event_comm_register( int                       event,
-                                              MPI_Comm                  comm,
-                                              peruse_comm_callback_f *  callback_fn,
-                                              void *                    param,
-                                              peruse_event_h *          event_h )
+int PERUSE_Event_comm_register (int                       event,
+                                MPI_Comm                  comm,
+                                peruse_comm_callback_f *  callback_fn,
+                                void *                    param,
+                                peruse_event_h *          event_h)
 {
     ompi_peruse_handle_t * handle;
     if (MPI_PARAM_CHECK) {
+        OMPI_ERR_PERUSE_INIT_FINALIZE;
+
         if( (event < 0) || (event > PERUSE_num_events) ||
             (NULL == PERUSE_events[event].name) )
             return PERUSE_ERR_EVENT;
@@ -196,6 +198,8 @@ int PERUSE_Event_activate (peruse_event_h event_h)
     ompi_peruse_handle_t* handle = (ompi_peruse_handle_t*)event_h;
 
     if (MPI_PARAM_CHECK) {
+        OMPI_ERR_PERUSE_INIT_FINALIZE;
+
         if (PERUSE_EVENT_HANDLE_NULL == event_h)
             return PERUSE_ERR_EVENT_HANDLE;
     }
@@ -213,6 +217,8 @@ int PERUSE_Event_deactivate (peruse_event_h event_h)
     ompi_peruse_handle_t* handle = (ompi_peruse_handle_t*)event_h;
 
     if (MPI_PARAM_CHECK) {
+        OMPI_ERR_PERUSE_INIT_FINALIZE;
+
         if (PERUSE_EVENT_HANDLE_NULL == event_h)
             return PERUSE_ERR_EVENT_HANDLE;
     }
@@ -228,6 +234,8 @@ int PERUSE_Event_deactivate (peruse_event_h event_h)
 int PERUSE_Event_release (peruse_event_h * event_h)
 {
     if (MPI_PARAM_CHECK) {
+        OMPI_ERR_PERUSE_INIT_FINALIZE;
+
         if (PERUSE_EVENT_HANDLE_NULL == event_h)
             return PERUSE_ERR_EVENT_HANDLE;
     }
@@ -240,6 +248,8 @@ int PERUSE_Event_release (peruse_event_h * event_h)
 
 #define PERUSE_MPI_PARAM_CHECK(obj_upper,obj_lower )                  \
     if (MPI_PARAM_CHECK) {                                            \
+        OMPI_ERR_PERUSE_INIT_FINALIZE;                                \
+                                                                      \
         if (PERUSE_EVENT_HANDLE_NULL == event_h ||                    \
             ((ompi_peruse_handle_t*)event_h)->active ||               \
             ((ompi_peruse_handle_t*)event_h)->type !=                 \
@@ -249,7 +259,7 @@ int PERUSE_Event_release (peruse_event_h * event_h)
         if (NULL == callback_fn)                                      \
             return PERUSE_ERR_PARAMETER;                              \
         /*                                                            \
-         * XXX whethter the underlying MPI-object has been freed!??   \
+         * XXX whether the underlying MPI-object has been freed!??    \
         if (ompi_ ## obj_lower ## _invalid (                          \
               ((ompi_peruse_handle_t*)event_h)->obj_lower))           \
             return PERUSE_ERR_MPI_OBJECT;                             \
@@ -257,9 +267,9 @@ int PERUSE_Event_release (peruse_event_h * event_h)
     }                                                                 \
 
 /* Set a new comm callback */
-int PERUSE_Event_comm_callback_set( peruse_event_h           event_h,
-                                                  peruse_comm_callback_f*  callback_fn,
-                                                  void*                    param )
+int PERUSE_Event_comm_callback_set (peruse_event_h           event_h,
+                                    peruse_comm_callback_f*  callback_fn,
+                                    void*                    param)
 {
     ompi_peruse_handle_t* handle = (ompi_peruse_handle_t*)event_h;
 
@@ -274,9 +284,9 @@ int PERUSE_Event_comm_callback_set( peruse_event_h           event_h,
 }
 
 /* Get the current comm callback */
-int PERUSE_Event_comm_callback_get( peruse_event_h           event_h,
-                                                  peruse_comm_callback_f** callback_fn,
-                                                  void**                   param )
+int PERUSE_Event_comm_callback_get (peruse_event_h           event_h,
+                                    peruse_comm_callback_f** callback_fn,
+                                    void**                   param)
 {
     ompi_peruse_handle_t* handle = (ompi_peruse_handle_t*)event_h;
 
@@ -291,9 +301,11 @@ int PERUSE_Event_comm_callback_get( peruse_event_h           event_h,
 }
 
 /* Obtain event descriptor from an event handle (reverse lookup) */
-int PERUSE_Event_get( peruse_event_h event_h, int* event )
+int PERUSE_Event_get (peruse_event_h event_h, int* event)
 {
     if (MPI_PARAM_CHECK) {
+        OMPI_ERR_PERUSE_INIT_FINALIZE;
+
         if (NULL == event_h)
             return PERUSE_ERR_EVENT_HANDLE;
 
@@ -307,17 +319,20 @@ int PERUSE_Event_get( peruse_event_h event_h, int* event )
 
 
 /* Obtain MPI object associated with event handle */
-int PERUSE_Event_object_get( peruse_event_h event_h, void** mpi_object )
+int PERUSE_Event_object_get (peruse_event_h event_h, void** mpi_object)
 {
     ompi_peruse_handle_t* p = (ompi_peruse_handle_t*)event_h;
 
     if (MPI_PARAM_CHECK) {
+        OMPI_ERR_PERUSE_INIT_FINALIZE;
+
         if (NULL == event_h)
             return PERUSE_ERR_EVENT_HANDLE;
 
         if (NULL == mpi_object)
             return PERUSE_ERR_PARAMETER;
     }
+
     switch (p->type) {
         case PERUSE_TYPE_COMM:
             *mpi_object = p->comm;
@@ -327,7 +342,7 @@ int PERUSE_Event_object_get( peruse_event_h event_h, void** mpi_object )
 }
 
 
-/* Propagaiont mode */
+/* Propagation mode */
 int PERUSE_Event_propagate (peruse_event_h event_h, int mode)
 {
     return PERUSE_SUCCESS;
