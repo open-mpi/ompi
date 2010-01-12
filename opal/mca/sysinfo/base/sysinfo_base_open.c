@@ -36,6 +36,7 @@ static int opal_sysinfo_base_query(char **keys, opal_list_t *values);
 int opal_sysinfo_base_output = -1;
 opal_list_t opal_sysinfo_base_components_opened;
 opal_list_t opal_sysinfo_avail_modules;
+bool opal_sysinfo_initialized=false;
 
 opal_sysinfo_API_module_t opal_sysinfo = {
     opal_sysinfo_base_query
@@ -48,6 +49,11 @@ opal_sysinfo_API_module_t opal_sysinfo = {
  */
 int opal_sysinfo_base_open(void)
 {
+    if (opal_sysinfo_initialized) {
+        return OPAL_SUCCESS;
+    }
+    opal_sysinfo_initialized = true;
+    
     opal_sysinfo_base_output = opal_output_open(NULL);
 
     /* init the list of available modules */

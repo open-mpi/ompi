@@ -29,6 +29,7 @@
 #include "opal/mca/paffinity/paffinity.h"
 #if ORTE_ENABLE_BOOTSTRAP
 #include "opal/mca/sysinfo/sysinfo.h"
+#include "opal/mca/sysinfo/base/base.h"
 #endif
 
 #include "orte/mca/rmcast/base/base.h"
@@ -108,12 +109,33 @@ static int rte_init(void)
                 error = "orte_rmcast_base_select";
                 goto error;
             }
-            
+
+#if ORTE_ENABLE_BOOTSTRAP
+            /* open and setup the local resource discovery framework */
+            if (ORTE_SUCCESS != (ret = opal_sysinfo_base_open())) {
+                ORTE_ERROR_LOG(ret);
+                error = "opal_sysinfo_base_open";
+                goto error;
+            }
+            if (ORTE_SUCCESS != (ret = opal_sysinfo_base_select())) {
+                ORTE_ERROR_LOG(ret);
+                error = "opal_sysinfo_base_select";
+                goto error;
+            }
+#endif
+
             /* get a name for ourselves */
             if (ORTE_SUCCESS != (ret = cm_set_name())) {
                 error = "set_name";
                 goto error;
             }
+        } else {
+            /* if we were given an HNP, then we must have also
+             * been given a vpid - we can get the jobid from
+             * the HNP's name
+             */
+            ORTE_PROC_MY_NAME->jobid = orte_process_info.my_hnp.jobid;
+            
         }
         
         /* get the list of nodes used for this job */
@@ -500,7 +522,7 @@ static int cm_set_name(void)
             /* add them to the buffer */
             while (NULL != (item = opal_list_remove_first(&resources))) {
                 info = (opal_sysinfo_value_t*)item;
-                opal_dss.pack(&buf, &info, 1, OPAL_STRING);
+                opal_dss.pack(&buf, &info->key, 1, OPAL_STRING);
                 opal_dss.pack(&buf, &info->type, 1, OPAL_DATA_TYPE_T);
                 if (OPAL_INT64 == info->type) {
                     opal_dss.pack(&buf, &(info->data.i64), 1, OPAL_INT64);
