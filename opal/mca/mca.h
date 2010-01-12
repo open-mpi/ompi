@@ -110,10 +110,16 @@ typedef struct mca_base_module_2_0_0_t mca_base_module_2_0_0_t;
 /**
  * MCA component open function.
  *
- * @retval MCA_SUCCESS This component can be used in the process. 
+ * @retval MCA_SUCCESS (or OPAL_SUCCESS or ORTE_SUCCESS or
+ * OMPI_SUCCESS) This component can be used in the process.
  *
- * @retval anything_else The MCA will ignore this component for the
- * duration of the process.
+ * @retval OPAL_ERR_NOT_AVAILABLE Silently ignore this component for
+ * the duration of the process (it may even be unloaded from the
+ * process).
+ *
+ * @retval anything_else The MCA base will print an error message
+ * ignore this component for the duration of the process (it may even
+ * be unloaded from the process).
  *
  * All MCA components can have an "open" function that is invoked once
  * per process, when the component is located and loaded.  This function
