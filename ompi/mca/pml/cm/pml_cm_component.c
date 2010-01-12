@@ -7,6 +7,7 @@
  *                         reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,6 +28,7 @@
 #include "pml_cm_recvreq.h"
 #include "pml_cm_component.h"
 
+static int mca_pml_cm_component_register(void);
 static int mca_pml_cm_component_open(void);
 static int mca_pml_cm_component_close(void);
 static mca_pml_base_module_t* mca_pml_cm_component_init( int* priority,
@@ -46,7 +48,9 @@ mca_pml_base_component_2_0_0_t mca_pml_cm_component = {
          OMPI_MINOR_VERSION,  /* MCA component minor version */
          OMPI_RELEASE_VERSION,  /* MCA component release version */
          mca_pml_cm_component_open,  /* component open */
-         mca_pml_cm_component_close  /* component close */
+         mca_pml_cm_component_close,  /* component close */
+         NULL,
+         mca_pml_cm_component_register,
      },
      {
          /* This component is not checkpoint ready */
@@ -70,12 +74,8 @@ void (*send_completion_callbacks[MCA_PML_BASE_SEND_SIZE])
     mca_pml_cm_send_request_completion } ;
 
 static int
-mca_pml_cm_component_open(void)
+mca_pml_cm_component_register(void)
 {
-    int ret;
-
-    ret = ompi_mtl_base_open();
-    if (OMPI_SUCCESS != ret) return ret;
 
     mca_base_param_reg_int(&mca_pml_cm_component.pmlm_version,
                            "free_list_num",
@@ -109,7 +109,15 @@ mca_pml_cm_component_open(void)
                            10,
                            &ompi_pml_cm.default_priority);
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
+}
+
+static int
+mca_pml_cm_component_open(void)
+{
+    /* Avneesh -- might want to check the return code here with
+       respect to r22391 (i.e., OPAL_ERR_NOT_AVAILABLE issues) */
+    return ompi_mtl_base_open();
 }
 
 
