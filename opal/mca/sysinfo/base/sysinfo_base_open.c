@@ -37,6 +37,7 @@ int opal_sysinfo_base_output = -1;
 opal_list_t opal_sysinfo_base_components_opened;
 opal_list_t opal_sysinfo_avail_modules;
 bool opal_sysinfo_initialized=false;
+bool opal_sysinfo_selected=false;
 
 opal_sysinfo_API_module_t opal_sysinfo = {
     opal_sysinfo_base_query

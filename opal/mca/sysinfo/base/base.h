@@ -65,6 +65,7 @@ OPAL_DECLSPEC extern int opal_sysinfo_base_output;
 OPAL_DECLSPEC extern opal_list_t opal_sysinfo_base_components_opened;
 OPAL_DECLSPEC extern opal_list_t opal_sysinfo_avail_modules;
 OPAL_DECLSPEC extern bool opal_sysinfo_initialized;
+OPAL_DECLSPEC extern bool opal_sysinfo_selected;
 
 END_C_DECLS
 

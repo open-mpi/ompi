@@ -33,10 +33,11 @@ int opal_sysinfo_base_select(void)
     mca_base_component_t *component;
     opal_list_item_t *item;
 
-    if (opal_sysinfo_initialized) {
+    if (opal_sysinfo_selected) {
         return OPAL_SUCCESS;
     }
-
+    opal_sysinfo_selected = true;
+    
     /*
      * Select all available components
      */
