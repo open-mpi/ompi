@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2009 QLogic Corporation. All rights reserved.
+ * Copyright (c) 2006-2010 QLogic Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,6 +33,7 @@
 
 static int ompi_mtl_psm_component_open(void);
 static int ompi_mtl_psm_component_close(void);
+static int ompi_mtl_psm_component_register(void);
 
 static mca_mtl_base_module_t* ompi_mtl_psm_component_init( bool enable_progress_threads, 
                                                           bool enable_mpi_threads );
@@ -51,7 +52,9 @@ mca_mtl_psm_component_t mca_mtl_psm_component = {
             OMPI_MINOR_VERSION,  /* MCA component minor version */
             OMPI_RELEASE_VERSION,  /* MCA component release version */
             ompi_mtl_psm_component_open,  /* component open */
-            ompi_mtl_psm_component_close  /* component close */
+            ompi_mtl_psm_component_close,  /* component close */
+	    NULL,
+	    ompi_mtl_psm_component_register
         },
         {
             /* The component is not checkpoint ready */
@@ -64,14 +67,16 @@ mca_mtl_psm_component_t mca_mtl_psm_component = {
 
     
 static int
-ompi_mtl_psm_component_open(void)
+ompi_mtl_psm_component_register(void)
 {
     int value;
+    char *service_id = NULL;
+    char *path_res = NULL;
     
     mca_base_param_reg_int(&mca_mtl_psm_component.super.mtl_version, 
 			   "connect_timeout",
 			   "PSM connection timeout value in seconds",
-			   false, false, 30, &ompi_mtl_psm.connect_timeout);
+			   false, false, 180, &ompi_mtl_psm.connect_timeout);
   
     mca_base_param_reg_int(&mca_mtl_psm_component.super.mtl_version, 
 			   "debug",
@@ -106,6 +111,34 @@ ompi_mtl_psm_component_open(void)
 			   &value);
     ompi_mtl_psm.ib_pkey = value;
     
+#if PSM_VERNO >= 0x010d
+    mca_base_param_reg_string(&mca_mtl_psm_component.super.mtl_version,
+			      "ib_service_id",
+			      "Infiniband service ID to use for application (default is 0)",
+			      false, false, "0x1000117500000000",
+			      &service_id);
+    ompi_mtl_psm.ib_service_id = (uint64_t) strtoull(service_id, NULL, 0);
+    
+    mca_base_param_reg_string(&mca_mtl_psm_component.super.mtl_version,
+			      "path_query",
+			      "Path record query mechanisms (valid values: opp, none)",
+			      false, false, NULL, &path_res);
+    if ((NULL != path_res) && strcasecmp(path_res, "none")) {
+      if (!strcasecmp(path_res, "opp"))
+	ompi_mtl_psm.path_res_type = PSM_PATH_RES_OPP;
+      else {
+	orte_show_help("help-mtl-psm.txt",
+		       "path query mechanism unknown", true,
+		       path_res, "OfedPlus (opp) | Static Routes (none)");
+	return OMPI_ERR_NOT_FOUND;
+      }
+    }
+    else {
+      /* Default is "static/none" path record queries */
+      ompi_mtl_psm.path_res_type = PSM_PATH_RES_NONE;
+    }
+#endif
+    
     if (ompi_mtl_psm.ib_service_level < 0)  {
       ompi_mtl_psm.ib_service_level = 0;
     } else if (ompi_mtl_psm.ib_service_level > 15) {
@@ -116,6 +149,11 @@ ompi_mtl_psm_component_open(void)
     
 }
 
+static int
+ompi_mtl_psm_component_open(void)
+{
+  return OMPI_SUCCESS;
+}
 
 static int
 ompi_mtl_psm_component_close(void)
