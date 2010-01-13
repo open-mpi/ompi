@@ -18,7 +18,7 @@
 #
 # This is the US/English general help file for Open RTE.
 #
-[orte-rmcast-basic:msg-too-large]
+[orte-rmcast-udp:msg-too-large]
 A multicast message that exceeds size limits is attempting to be sent:
 
   Process: %s
