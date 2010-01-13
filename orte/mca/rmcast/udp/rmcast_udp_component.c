@@ -21,14 +21,14 @@
 #include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/iof/base/base.h"
-#include "rmcast_basic.h"
+#include "rmcast_udp.h"
 
 /*
  * Local functions
  */
-static int orte_rmcast_basic_open(void);
-static int orte_rmcast_basic_close(void);
-static int orte_rmcast_basic_query(mca_base_module_t **module, int *priority);
+static int orte_rmcast_udp_open(void);
+static int orte_rmcast_udp_close(void);
+static int orte_rmcast_udp_query(mca_base_module_t **module, int *priority);
 
 /*
  * Local variables
@@ -38,23 +38,23 @@ static bool initialized = false;
 /*
  * Public string showing the iof hnp component version number
  */
-const char *mca_rmcast_basic_component_version_string =
-    "Open MPI basic rmcast MCA component version " ORTE_VERSION;
+const char *mca_rmcast_udp_component_version_string =
+    "Open MPI udp rmcast MCA component version " ORTE_VERSION;
 
-orte_rmcast_basic_component_t mca_rmcast_basic_component = {
+orte_rmcast_udp_component_t mca_rmcast_udp_component = {
     {
         {
             ORTE_RMCAST_BASE_VERSION_1_0_0,
             
-            "basic", /* MCA component name */
+            "udp", /* MCA component name */
             ORTE_MAJOR_VERSION,  /* MCA component major version */
             ORTE_MINOR_VERSION,  /* MCA component minor version */
             ORTE_RELEASE_VERSION,  /* MCA component release version */
             
             /* Component open, close, and query functions */
-            orte_rmcast_basic_open,
-            orte_rmcast_basic_close,
-            orte_rmcast_basic_query 
+            orte_rmcast_udp_open,
+            orte_rmcast_udp_close,
+            orte_rmcast_udp_query 
         },
         {
             /* The component is checkpoint ready */
@@ -66,21 +66,21 @@ orte_rmcast_basic_component_t mca_rmcast_basic_component = {
 /**
   * component open/close/init function
   */
-static int orte_rmcast_basic_open(void)
+static int orte_rmcast_udp_open(void)
 {
-    mca_base_component_t *c = &mca_rmcast_basic_component.super.version;
+    mca_base_component_t *c = &mca_rmcast_udp_component.super.version;
     
     mca_base_param_reg_int(c, "max_msg_size",
                            "Max #bytes in a single msg (must be > 0)",
                            false, false,
-                           ORTE_RMCAST_BASIC_MAX_MSG_SIZE,
-                           &mca_rmcast_basic_component.max_msg_size);
+                           ORTE_RMCAST_UDP_MAX_MSG_SIZE,
+                           &mca_rmcast_udp_component.max_msg_size);
     
     return ORTE_SUCCESS;
 }
 
 
-static int orte_rmcast_basic_close(void)
+static int orte_rmcast_udp_close(void)
 {
     return ORTE_SUCCESS;
 }
@@ -89,11 +89,11 @@ static int orte_rmcast_basic_close(void)
  * Module query
  */
 
-static int orte_rmcast_basic_query(mca_base_module_t **module, int *priority)
+static int orte_rmcast_udp_query(mca_base_module_t **module, int *priority)
 {
     /* selected by default */
     *priority = 10;
-    *module = (mca_base_module_t *) &orte_rmcast_basic_module;
+    *module = (mca_base_module_t *) &orte_rmcast_udp_module;
     initialized = true;
     
     return ORTE_SUCCESS;
