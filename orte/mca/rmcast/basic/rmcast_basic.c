@@ -976,6 +976,13 @@ static void recv_handler(int sd, short flags, void* cbdata)
     data = (uint8_t*)malloc(mca_rmcast_basic_component.max_msg_size * sizeof(uint8_t));
     sz = read(sd, data, mca_rmcast_basic_component.max_msg_size);
     
+    if (sz <= 0) {
+        /* this shouldn't happen - report the errno */
+        opal_output(0, "%s Error on multicast recv socket event: %s(%d)",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), strerror(errno), errno);
+        return;
+    }
+    
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                          "%s rmcast:basic recvd %d bytes from channel %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
