@@ -352,7 +352,7 @@ static int basic_send_nb(orte_rmcast_channel_t channel,
     snd->iovec_count = count;
     snd->tag = tag;
     snd->cbfunc_iovec = cbfunc;
-    snd->cbdata = snd;
+    snd->cbdata = cbdata;
     
     if (ORTE_SUCCESS != (ret = queue_xmit(snd, channel, tag))) {
         ORTE_ERROR_LOG(ret);
@@ -1188,6 +1188,11 @@ static void xmit_data(int sd, short flags, void* send_req)
                 goto CLEANUP;
             }            
             
+            OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
+                                 "%s packing %d iovecs",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 snd->iovec_count));
+            
             /* pack the number of iovecs */
             if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &snd->iovec_count, 1, OPAL_INT32))) {
                 ORTE_ERROR_LOG(rc);
@@ -1200,6 +1205,11 @@ static void xmit_data(int sd, short flags, void* send_req)
             for (sz=0; sz < snd->iovec_count; sz++) {
                 /* pack the size */
                 tmp32 = snd->iovec_array[sz].iov_len;
+                OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
+                                     "%s packing %d bytes for iovec %d",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     tmp32, sz));
+                
                 if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &tmp32, 1, OPAL_INT32))) {
                     ORTE_ERROR_LOG(rc);
                     goto CLEANUP;
