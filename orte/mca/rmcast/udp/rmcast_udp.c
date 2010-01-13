@@ -35,7 +35,7 @@
 
 #include "orte/mca/rmcast/base/private.h"
 #include "orte/mca/rmcast/base/base.h"
-#include "rmcast_basic.h"
+#include "rmcast_udp.h"
 
 /* LOCAL DATA */
 static opal_mutex_t lock;
@@ -61,45 +61,45 @@ static int init(void);
 
 static void finalize(void);
 
-static int basic_send_buffer(orte_rmcast_channel_t channel,
+static int udp_send_buffer(orte_rmcast_channel_t channel,
                              orte_rmcast_tag_t tag,
                              opal_buffer_t *buf);
 
-static int basic_send_buffer_nb(orte_rmcast_channel_t channel,
+static int udp_send_buffer_nb(orte_rmcast_channel_t channel,
                                 orte_rmcast_tag_t tag,
                                 opal_buffer_t *buf,
                                 orte_rmcast_callback_buffer_fn_t cbfunc,
                                 void *cbdata);
 
-static int basic_send(orte_rmcast_channel_t channel,
+static int udp_send(orte_rmcast_channel_t channel,
                       orte_rmcast_tag_t tag,
                       struct iovec *msg, int count);
 
-static int basic_send_nb(orte_rmcast_channel_t channel,
+static int udp_send_nb(orte_rmcast_channel_t channel,
                          orte_rmcast_tag_t tag,
                          struct iovec *msg, int count,
                          orte_rmcast_callback_fn_t cbfunc,
                          void *cbdata);
 
-static int basic_recv_buffer(orte_process_name_t *sender,
+static int udp_recv_buffer(orte_process_name_t *sender,
                              orte_rmcast_channel_t channel,
                              orte_rmcast_tag_t tag,
                              opal_buffer_t *buf,
                              orte_rmcast_seq_t *seq_num);
 
-static int basic_recv_buffer_nb(orte_rmcast_channel_t channel,
+static int udp_recv_buffer_nb(orte_rmcast_channel_t channel,
                                 orte_rmcast_tag_t tag,
                                 orte_rmcast_flag_t flags,
                                 orte_rmcast_callback_buffer_fn_t cbfunc,
                                 void *cbdata);
 
-static int basic_recv(orte_process_name_t *sender,
+static int udp_recv(orte_process_name_t *sender,
                       orte_rmcast_channel_t channel,
                       orte_rmcast_tag_t tag,
                       struct iovec **msg, int *count,
                       orte_rmcast_seq_t *seq_num);
 
-static int basic_recv_nb(orte_rmcast_channel_t channel,
+static int udp_recv_nb(orte_rmcast_channel_t channel,
                          orte_rmcast_tag_t tag,
                          orte_rmcast_flag_t flags,
                          orte_rmcast_callback_fn_t cbfunc,
@@ -117,17 +117,17 @@ static orte_rmcast_channel_t query(void);
 
 /* Define the module */
 
-orte_rmcast_module_t orte_rmcast_basic_module = {
+orte_rmcast_module_t orte_rmcast_udp_module = {
     init,
     finalize,
-    basic_send,
-    basic_send_nb,
-    basic_send_buffer,
-    basic_send_buffer_nb,
-    basic_recv,
-    basic_recv_nb,
-    basic_recv_buffer,
-    basic_recv_buffer_nb,
+    udp_send,
+    udp_send_nb,
+    udp_send_buffer,
+    udp_send_buffer_nb,
+    udp_recv,
+    udp_recv_nb,
+    udp_recv_buffer,
+    udp_recv_buffer_nb,
     cancel_recv,
     open_channel,
     close_channel,
@@ -163,7 +163,7 @@ static int init(void)
     }
     init_completed = true;
     
-    OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output, "%s rmcast:basic: init called",
+    OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output, "%s rmcast:udp: init called",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* setup the globals */
@@ -188,7 +188,7 @@ static int init(void)
             return rc;
         }
     } else {
-        opal_output(0, "rmcast:basic:init - unknown process type");
+        opal_output(0, "rmcast:udp:init - unknown process type");
         return ORTE_ERR_SILENT;
     }
     
@@ -210,7 +210,7 @@ static void finalize(void)
 {
     opal_list_item_t *item;
     
-    OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output, "%s rmcast:basic: finalize called",
+    OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output, "%s rmcast:udp: finalize called",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* deconstruct the globals */
@@ -289,7 +289,7 @@ static int queue_xmit(rmcast_base_send_t *snd,
     
 process:    
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
-                         "%s rmcast:basic: send of %d %s"
+                         "%s rmcast:udp: send of %d %s"
                          " called on multicast channel %03d.%03d.%03d.%03d %0x",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == snd->iovec_array) ? (int)snd->buf->bytes_used : (int)snd->iovec_count,
@@ -310,7 +310,7 @@ process:
     return ORTE_SUCCESS;
 }
 
-static int basic_send(orte_rmcast_channel_t channel,
+static int udp_send(orte_rmcast_channel_t channel,
                       orte_rmcast_tag_t tag,
                       struct iovec *msg, int count)
 {
@@ -337,7 +337,7 @@ static int basic_send(orte_rmcast_channel_t channel,
     return ORTE_SUCCESS;
 }
 
-static int basic_send_nb(orte_rmcast_channel_t channel,
+static int udp_send_nb(orte_rmcast_channel_t channel,
                          orte_rmcast_tag_t tag,
                          struct iovec *msg, int count,
                          orte_rmcast_callback_fn_t cbfunc,
@@ -362,7 +362,7 @@ static int basic_send_nb(orte_rmcast_channel_t channel,
     return ORTE_SUCCESS;
 }
 
-static int basic_send_buffer(orte_rmcast_channel_t channel,
+static int udp_send_buffer(orte_rmcast_channel_t channel,
                              orte_rmcast_tag_t tag,
                              opal_buffer_t *buf)
 {
@@ -389,7 +389,7 @@ static int basic_send_buffer(orte_rmcast_channel_t channel,
     return ORTE_SUCCESS;
 }
 
-static int basic_send_buffer_nb(orte_rmcast_channel_t channel,
+static int udp_send_buffer_nb(orte_rmcast_channel_t channel,
                                 orte_rmcast_tag_t tag,
                                 opal_buffer_t *buf,
                                 orte_rmcast_callback_buffer_fn_t cbfunc,
@@ -442,7 +442,7 @@ static int queue_recv(rmcast_base_recv_t *recvptr,
     }
     
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
-                         "%s rmcast:basic: queue_recv called on multicast channel %03d.%03d.%03d.%03d tag %d",
+                         "%s rmcast:udp: queue_recv called on multicast channel %03d.%03d.%03d.%03d tag %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), OPAL_IF_FORMAT_ADDR(ch->network), tag));
     
     if (!blocking) {
@@ -458,7 +458,7 @@ static int queue_recv(rmcast_base_recv_t *recvptr,
                 (NULL != cbfunc_buffer && cbfunc_buffer == rptr->cbfunc_buffer))) {
                 /* matching recv in place */
                 OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
-                                     "%s rmcast:basic: matching recv already active on multicast channel %03d.%03d.%03d.%03d tag %d",
+                                     "%s rmcast:udp: matching recv already active on multicast channel %03d.%03d.%03d.%03d tag %d",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), OPAL_IF_FORMAT_ADDR(ch->network), tag));
                 OPAL_THREAD_UNLOCK(&lock);
                 return ORTE_EXISTS;
@@ -468,7 +468,7 @@ static int queue_recv(rmcast_base_recv_t *recvptr,
     }
     
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
-                         "%s rmcast:basic: adding non-blocking recv on multicast channel %03d.%03d.%03d.%03d tag %d",
+                         "%s rmcast:udp: adding non-blocking recv on multicast channel %03d.%03d.%03d.%03d tag %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), OPAL_IF_FORMAT_ADDR(ch->network), tag));
     OPAL_THREAD_LOCK(&lock);
     opal_list_append(&recvs, &recvptr->item);
@@ -477,7 +477,7 @@ static int queue_recv(rmcast_base_recv_t *recvptr,
     return ORTE_SUCCESS;
 }
 
-static int basic_recv(orte_process_name_t *name,
+static int udp_recv(orte_process_name_t *name,
                       orte_rmcast_channel_t channel,
                       orte_rmcast_tag_t tag,
                       struct iovec **msg, int *count, orte_rmcast_seq_t *seq_num)
@@ -516,7 +516,7 @@ static int basic_recv(orte_process_name_t *name,
     return ORTE_SUCCESS;
 }
 
-static int basic_recv_nb(orte_rmcast_channel_t channel,
+static int udp_recv_nb(orte_rmcast_channel_t channel,
                          orte_rmcast_tag_t tag,
                          orte_rmcast_flag_t flags,
                          orte_rmcast_callback_fn_t cbfunc, void *cbdata)
@@ -524,7 +524,7 @@ static int basic_recv_nb(orte_rmcast_channel_t channel,
     rmcast_base_recv_t *recvptr;
     int ret;
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
-                         "%s rmcast:basic: recv_nb called on channel %d",
+                         "%s rmcast:udp: recv_nb called on channel %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), channel));
     
     recvptr = OBJ_NEW(rmcast_base_recv_t);
@@ -548,7 +548,7 @@ static int basic_recv_nb(orte_rmcast_channel_t channel,
     return ORTE_SUCCESS;
 }
 
-static int basic_recv_buffer(orte_process_name_t *name,
+static int udp_recv_buffer(orte_process_name_t *name,
                              orte_rmcast_channel_t channel,
                              orte_rmcast_tag_t tag,
                              opal_buffer_t *buf, orte_rmcast_seq_t *seq_num)
@@ -557,7 +557,7 @@ static int basic_recv_buffer(orte_process_name_t *name,
     int ret;
     
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
-                         "%s rmcast:basic: recv_buffer called on multicast channel %d",
+                         "%s rmcast:udp: recv_buffer called on multicast channel %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), channel));
 
     recvptr = OBJ_NEW(rmcast_base_recv_t);
@@ -593,7 +593,7 @@ cleanup:
     return ret;
 }
 
-static int basic_recv_buffer_nb(orte_rmcast_channel_t channel,
+static int udp_recv_buffer_nb(orte_rmcast_channel_t channel,
                                 orte_rmcast_tag_t tag,
                                 orte_rmcast_flag_t flags,
                                 orte_rmcast_callback_buffer_fn_t cbfunc, void *cbdata)
@@ -602,7 +602,7 @@ static int basic_recv_buffer_nb(orte_rmcast_channel_t channel,
     int ret;
     
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
-                         "%s rmcast:basic: recv_buffer_nb called on multicast channel %d tag %d",
+                         "%s rmcast:udp: recv_buffer_nb called on multicast channel %d tag %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), channel, tag));
     
     recvptr = OBJ_NEW(rmcast_base_recv_t);
@@ -700,7 +700,7 @@ static int open_channel(orte_rmcast_channel_t *channel, char *name,
          * sockets are setup
          */
         OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
-                             "%s rmcast:basic using existing channel network %03d.%03d.%03d.%03d port %d",
+                             "%s rmcast:udp using existing channel network %03d.%03d.%03d.%03d port %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              OPAL_IF_FORMAT_ADDR(chan->network),
                              (int)chan->port));
@@ -745,7 +745,7 @@ static int open_channel(orte_rmcast_channel_t *channel, char *name,
     OPAL_THREAD_UNLOCK(&lock);
     
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
-                         "%s rmcast:basic opening new channel network %03d.%03d.%03d.%03d port %d for%s%s",
+                         "%s rmcast:udp opening new channel network %03d.%03d.%03d.%03d port %d for%s%s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          OPAL_IF_FORMAT_ADDR(chan->network),
                          (int)chan->port,
@@ -811,14 +811,14 @@ static void process_recv(int fd, short event, void *cbdata)
     ORTE_MULTICAST_MESSAGE_HDR_NTOH(msg->data, &name, tag, recvd_seq_num);
     
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
-                         "%s rmcast:basic:recv sender: %s tag: %d seq_num: %d",
+                         "%s rmcast:udp:recv sender: %s tag: %d seq_num: %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&name), (int)tag, recvd_seq_num));
     
     /* if this message is from myself, ignore it */
     if (name.jobid == ORTE_PROC_MY_NAME->jobid && name.vpid == ORTE_PROC_MY_NAME->vpid) {
         OPAL_OUTPUT_VERBOSE((10, orte_rmcast_base.rmcast_output,
-                             "%s rmcast:basic:recv sent from myself: %s",
+                             "%s rmcast:udp:recv sent from myself: %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&name)));
         goto cleanup;
@@ -844,7 +844,7 @@ static void process_recv(int fd, short event, void *cbdata)
         ptr = (rmcast_base_recv_t*)item;
         
         OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
-                             "%s rmcast:basic:recv checking channel %d tag %d",
+                             "%s rmcast:udp:recv checking channel %d tag %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              (int)ptr->channel, (int)ptr->tag));
         
@@ -892,7 +892,7 @@ static void process_recv(int fd, short event, void *cbdata)
             }
             
             OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
-                                 "%s rmcast:basic:recv delivering message to channel %d tag %d",
+                                 "%s rmcast:udp:recv delivering message to channel %d tag %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ptr->channel, (int)tag));
             
             if (0 == flag) {
@@ -973,8 +973,8 @@ static void recv_handler(int sd, short flags, void* cbdata)
     rmcast_base_channel_t *chan = (rmcast_base_channel_t*)cbdata;
     
     /* read the data */
-    data = (uint8_t*)malloc(mca_rmcast_basic_component.max_msg_size * sizeof(uint8_t));
-    sz = read(sd, data, mca_rmcast_basic_component.max_msg_size);
+    data = (uint8_t*)malloc(mca_rmcast_udp_component.max_msg_size * sizeof(uint8_t));
+    sz = read(sd, data, mca_rmcast_udp_component.max_msg_size);
     
     if (sz <= 0) {
         /* this shouldn't happen - report the errno */
@@ -984,7 +984,7 @@ static void recv_handler(int sd, short flags, void* cbdata)
     }
     
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
-                         "%s rmcast:basic recvd %d bytes from channel %d",
+                         "%s rmcast:udp recvd %d bytes from channel %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (int)sz, (int)chan->channel));
 
@@ -1016,7 +1016,7 @@ static int setup_channel(rmcast_base_channel_t *chan, uint8_t direction)
             return rc;
         }
         chan->xmit = xmitsd;
-        chan->send_data = (uint8_t*)malloc(mca_rmcast_basic_component.max_msg_size);
+        chan->send_data = (uint8_t*)malloc(mca_rmcast_udp_component.max_msg_size);
         /* setup the event to xmit messages, but don't activate it */
         opal_event_set(&chan->send_ev, chan->xmit, OPAL_EV_WRITE, xmit_data, chan);        
     }
@@ -1074,7 +1074,7 @@ static int setup_socket(int *sd, rmcast_base_channel_t *chan, bool recvsocket)
     /* enable port sharing */
     flags = 1;
     if (setsockopt (target_sd, SOL_SOCKET, SO_REUSEADDR, (const char *)&flags, sizeof(flags)) < 0) {
-        opal_output(0, "rmcast:basic: unable to set the "
+        opal_output(0, "rmcast:udp: unable to set the "
                     "SO_REUSEADDR option (%s:%d)\n",
                     strerror(opal_socket_errno), opal_socket_errno);
         CLOSE_THE_SOCKET(target_sd);
@@ -1267,14 +1267,14 @@ static void xmit_data(int sd, short flags, void* send_req)
         
         /* add the payload, up to the limit */
         ORTE_MULTICAST_LOAD_MESSAGE(chan->send_data, bytes, sz,
-                                    mca_rmcast_basic_component.max_msg_size,
+                                    mca_rmcast_udp_component.max_msg_size,
                                     &outbound);
         
         if (outbound < 0) {
             /* message was too large */
             opal_output(0, "%s message to multicast network %03d.%03d.%03d.%03d failed - size %d was too large (limit: %d)",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), OPAL_IF_FORMAT_ADDR(chan->network),
-                        -1*outbound, mca_rmcast_basic_component.max_msg_size);
+                        -1*outbound, mca_rmcast_udp_component.max_msg_size);
             if (1 == flag) {
                 /* reload into original buffer */
                 if (ORTE_SUCCESS != (rc = opal_dss.load(snd->buf, (void*)bytes, sz))) {
@@ -1286,7 +1286,7 @@ static void xmit_data(int sd, short flags, void* send_req)
         }
         
         OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
-                             "%s rmcast:basic multicasting %d bytes to network %03d.%03d.%03d.%03d port %d tag %d",
+                             "%s rmcast:udp multicasting %d bytes to network %03d.%03d.%03d.%03d port %d tag %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), outbound,
                              OPAL_IF_FORMAT_ADDR(chan->network), (int)chan->port, (int)snd->tag));
                 
