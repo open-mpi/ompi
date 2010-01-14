@@ -1,4 +1,4 @@
-# Copyright (c) 2007-2009 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2010 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -16,10 +16,7 @@ IF(BUILD_SHARED_LIBS)
     COMPILE_FLAGS "-D_USRDLL -DOPAL_IMPORTS -DOMPI_IMPORTS -DORTE_IMPORTS /TP")
 ENDIF(BUILD_SHARED_LIBS)
 
-TARGET_LINK_LIBRARIES (orted Ws2_32.lib shlwapi.lib)
+TARGET_LINK_LIBRARIES (orted libopen-rte)
 
 INSTALL(TARGETS orted
   DESTINATION bin)
-
-ADD_DEPENDENCIES (orted libopen-pal libopen-rte)
-

@@ -1,4 +1,4 @@
-# Copyright (c) 2008      High Performance Computing Center Stuttgart, 
+# Copyright (c) 2008-2010 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -55,7 +55,7 @@ ENDIF(OMPI_ENABLE_MPI_PROFILING)
 
 ADD_LIBRARY(libmpi_f77 STATIC ${OMPI_F77_FILES} ${OMPI_F77_HEADER_FILES})
 SET_TARGET_PROPERTIES(libmpi_f77 PROPERTIES LINKER_LANGUAGE CXX)
-ADD_DEPENDENCIES(libmpi_f77 libmpi)
+TARGET_LINK_LIBRARIES(libmpi_f77 libmpi)
 
 INSTALL(TARGETS libmpi_f77
         RUNTIME DESTINATION bin

@@ -1,4 +1,4 @@
-# Copyright (c) 2007-2008 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2010 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -28,7 +28,7 @@ SET_TARGET_PROPERTIES (libmpi_cxx PROPERTIES LINKER_LANGUAGE CXX)
 # Set compile flags for this target
 IF (BUILD_SHARED_LIBS)
 
-  ADD_DEPENDENCIES(libmpi_cxx libmpi libopen-pal)
+  TARGET_LINK_LIBRARIES(libmpi_cxx libmpi)
   # Need OMPI_BUILDING_CXX_BINDINGS_LIBRARY so that we can get the path 
   # names correct inside the MPI C++ library.  OMPI_SKIP_MPICXX is necessary
   # so that mpi.h doesn't include mpicxx.h through the incorrect pathname 

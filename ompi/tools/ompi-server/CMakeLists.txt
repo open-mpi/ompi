@@ -1,4 +1,4 @@
-# Copyright (c) 2007-2009 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2010 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2008      The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
@@ -19,11 +19,8 @@ IF(BUILD_SHARED_LIBS)
     COMPILE_FLAGS "-D_USRDLL -DOPAL_IMPORTS -DOMPI_IMPORTS -DORTE_IMPORTS /TP")
 ENDIF(BUILD_SHARED_LIBS)
 
-TARGET_LINK_LIBRARIES (ompi-server Ws2_32.lib shlwapi.lib)
+TARGET_LINK_LIBRARIES (ompi-server libmpi)
 
 INSTALL(TARGETS ompi-server
   DESTINATION bin)
 INSTALL(FILES help-ompi-server.txt DESTINATION share/openmpi)
-
-ADD_DEPENDENCIES (ompi-server libmpi libopen-pal libopen-rte )
-
