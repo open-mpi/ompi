@@ -634,6 +634,9 @@ ORTE_DECLSPEC extern char *orte_report_events_uri;
 /* report bindings */
 ORTE_DECLSPEC extern bool orte_report_bindings;
 
+/* barrier control */
+ORTE_DECLSPEC extern bool orte_do_not_barrier;
+
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS

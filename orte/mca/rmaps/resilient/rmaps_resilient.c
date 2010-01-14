@@ -174,6 +174,9 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
      * so check to see if any nodes are in the map - this will be our
      * indicator that this is the prior map for a failed job that
      * needs to be re-mapped
+     *
+     * NOTE: if a proc is being ADDED to an existing job, then its
+     * node field will be NULL.
      */
     if (0 < jdata->map->num_nodes) {
         OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
@@ -197,7 +200,8 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
             OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
                                  "%s rmaps:resilient: proc %s from node %s is to be restarted",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&proc->name), proc->node->name));
+                                 ORTE_NAME_PRINT(&proc->name),
+                                 (NULL == proc->node) ? "NULL" : proc->node->name));
              /* if we have fault groups, flag all the fault groups that
              * include this node so we don't reuse them
              */
@@ -214,7 +218,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                     if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(&ftgrp->nodes, k))) {
                         continue;
                     }
-                    if (0 == strcmp(node->name, proc->node->name)) {
+                    if (NULL != proc->node && 0 == strcmp(node->name, proc->node->name)) {
                         /* yes - mark it to not be included */
                         OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
                                              "%s rmaps:resilient: node %s is in fault group %d, which will be excluded",
@@ -315,7 +319,9 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                                  "%s rmaps:resilient: placing proc %s into fault group %d node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&proc->name), target->ftgrp, nd->name));
-            OBJ_RELEASE(proc->node);  /* required to maintain bookkeeping */
+            if (NULL != proc->node) {
+                OBJ_RELEASE(proc->node);  /* required to maintain bookkeeping */
+            }
             /* put proc on the found node */
             if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, nd, jdata->map->cpus_per_rank, proc->app_idx,
                                                                  NULL, jdata->map->oversubscribe, false, &proc))) {
