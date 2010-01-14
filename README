@@ -450,10 +450,10 @@ Network Support
   (first released as part of OFED v1.2), per restrictions imposed by
   the OFED network stack.
 
-- There are two MPI network models available: "ob1" and "cm".  "ob1"
-  uses BTL ("Byte Transfer Layer") components for each supported
-  network.  "cm" uses MTL ("Matching Tranport Layer") components for
-  each supported network.
+- There are two three MPI network models available: "ob1" / "csum" and
+  "cm".  "ob1" and "csum" use BTL ("Byte Transfer Layer") components
+  for each supported network.  "cm" uses MTL ("Matching Tranport
+  Layer") components for each supported network.
 
   - "ob1" supports a variety of networks that can be used in
     combination with each other (per OS constraints; e.g., there are
@@ -469,6 +469,12 @@ Network Support
     - SCTP
     - uDAPL
 
+  - "csum" is exactly the same as "ob1", except that it performs
+    additional data integrity checks to ensure that the received data
+    is intact (vs. trusting the underlying network to deliver the data
+    correctly).  csum supports all the same networks as ob1, but there
+    is a performance penalty for the additional integrity checks.
+
   - "cm" supports a smaller number of networks (and they cannot be
     used together), but may provide better better overall MPI
     performance:
@@ -477,11 +483,14 @@ Network Support
     - Portals
 
   Open MPI will, by default, choose to use "cm" when the InfiniPath
-  PSM MTL can be used.  Otherwise, OB1 will be used and the
-  corresponding BTLs will be selected.  Users can force the use of ob1
-  or cm if desired by setting the "pml" MCA parameter at run-time:
+  PSM MTL can be used.  Otherwise, "ob1" will be used and the
+  corresponding BTLs will be selected.  "csum" will never be selected
+  by default.  Users can force the use of ob1 or cm if desired by
+  setting the "pml" MCA parameter at run-time:
 
     shell$ mpirun --mca pml ob1 ...
+    or
+    shell$ mpirun --mca pml csum ...
     or
     shell$ mpirun --mca pml cm ...
 
