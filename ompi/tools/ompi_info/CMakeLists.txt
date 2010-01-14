@@ -19,7 +19,8 @@ IF(BUILD_SHARED_LIBS)
     COMPILE_FLAGS "-D_USRDLL -DOPAL_IMPORTS -DOMPI_IMPORTS -DORTE_IMPORTS /TP")
 ENDIF(BUILD_SHARED_LIBS)
 
-TARGET_LINK_LIBRARIES (ompi_info libmpi)
+TARGET_LINK_LIBRARIES (ompi_info libmpi libopen-rte libopen-pal Ws2_32.lib shlwapi.lib)
+
 INSTALL(TARGETS ompi_info
   DESTINATION bin)
 INSTALL(FILES help-ompi_info.txt DESTINATION share/openmpi)

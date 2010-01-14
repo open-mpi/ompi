@@ -9,4 +9,4 @@
 #
 
 # Specific to this module
-mca_link_libraries=libopen-rte
+mca_link_libraries=libopen-rte Ws2_32.lib

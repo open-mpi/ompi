@@ -11,7 +11,7 @@ FILE(GLOB_RECURSE OPAL_WRAPPER_SOURCE_FILES "*.h" "*.c" "*.cc" "*.cpp")
 
 ADD_EXECUTABLE (opal-wrapper ${OPAL_WRAPPER_SOURCE_FILES})
 
-TARGET_LINK_LIBRARIES (opal-wrapper libopen-pal)
+TARGET_LINK_LIBRARIES (opal-wrapper libopen-pal Ws2_32.lib shlwapi.lib)
 
 IF(BUILD_SHARED_LIBS)
   SET_TARGET_PROPERTIES(opal-wrapper PROPERTIES
