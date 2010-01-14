@@ -148,6 +148,10 @@ Known issues
   o MPI_REDUCE_SCATTER does not work with counts of 0.
     https://svn.open-mpi.org/trac/ompi/ticket/1559
 
+  o Processes that were spawned via MPI_COMM_SPAWN[_MULTIPLE] cannot
+    themselves invoke MPI_COMM_SPAWN[_MULTIPLE].  This has been fixed
+    in the Open MPI v1.5 series.
+
   o Please also see the Open MPI bug tracker for bugs beyond this release.
     https://svn.open-mpi.org/trac/ompi/report
 
