@@ -360,7 +360,7 @@ static int get_credential(char *node_name)
                 /* something more to be done here. */
                 OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                     "%s plm:process: credential saved for %s on %s",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), user, remote_node));
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), user_name, node_name));
                 printf("%c\n", ch);
                 opal_output(0, "This feature hasn't been implemented yet.");
                 break;
@@ -1307,7 +1307,7 @@ int orte_plm_process_launch(orte_job_t *jdata)
             nodes[nnode]->daemon->state = ORTE_PROC_STATE_LAUNCHED;
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:process: daemon launched (pid %d on %s)\n",
-                                 RTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  pid, nodes[nnode]->name));
         
             OPAL_THREAD_LOCK(&mca_plm_process_component.lock);
