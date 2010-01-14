@@ -192,7 +192,7 @@ General notes
   - PBS Pro, Open PBS, Torque
   - Platform LSF (v7.0.2 and later)
   - SLURM
-  - XGrid (known to be broken in 1.3 through 1.3.2)
+  - XGrid (known to be broken in the 1.3 and 1.4 series)
   - Cray XT-3 and XT-4
   - Sun Grid Engine (SGE) 6.1, 6.2 and open source Grid Engine
   - Microsoft Windows CCP (Microsoft Windows server 2003 and 2008)
