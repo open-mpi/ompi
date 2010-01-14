@@ -103,4 +103,4 @@ EXTRA_DIST = \
         platform/win32/ConfigFiles/opal_config.h.cmake \
         platform/win32/ConfigFiles/revision.in
 
-
+dist_pkgdata_DATA = openmpi-valgrind.supp
