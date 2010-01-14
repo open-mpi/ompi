@@ -622,11 +622,14 @@ value will be ignored.
   Message:    %s
 #
 [unsupported queues configuration]
-The Open MPI receive queue configuration for the OpenFabrics devices on two nodes are incompatible, 
-meaning that MPI processes on two specific nodes were unable to communicate with each other.  
-This generally happens when you are using OpenFabrics devices from different vendors on the same network.  
-You should be able to use the mca_btl_openib_receive_queues MCA parameter to set a uniform receive queue configuration 
-for all the devices in the MPI job, and therefore be able to run successfully.
+The Open MPI receive queue configuration for the OpenFabrics devices
+on two nodes are incompatible, meaning that MPI processes on two
+specific nodes were unable to communicate with each other.  This
+generally happens when you are using OpenFabrics devices from
+different vendors on the same network.  You should be able to use the
+mca_btl_openib_receive_queues MCA parameter to set a uniform receive
+queue configuration for all the devices in the MPI job, and therefore
+be able to run successfully.
 
   Local host:       %s
   Local adapter:    %s (vendor 0x%x, part ID %d)
