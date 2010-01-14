@@ -8,7 +8,7 @@ Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2007 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006-2007 Voltaire, Inc. All rights reserved.
 Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 Copyright (c) 2007      Myricom, Inc.  All rights reserved.
@@ -54,7 +54,7 @@ Much, much more information is also available in the Open MPI FAQ:
 
 ===========================================================================
 
-Detailed Open MPI v1.3 Feature List:
+Detailed Open MPI v1.3 / v1.4 Feature List:
 
   o Open MPI RunTime Environment (ORTE) improvements
     - General robustness improvements
@@ -154,7 +154,7 @@ Known issues
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (10 July 2009):
+base as of this writing (14 January 2010):
 
 General notes
 -------------
@@ -211,8 +211,7 @@ General notes
 - Other systems have been lightly (but not fully tested):
   - Other 64 bit platforms (e.g., Linux on PPC64)
   - Microsoft Windows CCP (Microsoft Windows server 2003 and 2008);
-    more testing and support is expected later in the Open MPI v1.3.x
-    series.  See the README.WINDOWS file.
+    see the README.WINDOWS file.
 
 Compiler Notes
 --------------
@@ -450,7 +449,7 @@ Network Support
   (first released as part of OFED v1.2), per restrictions imposed by
   the OFED network stack.
 
-- There are two three MPI network models available: "ob1" / "csum" and
+- There are three MPI network models available: "ob1", "csum", and
   "cm".  "ob1" and "csum" use BTL ("Byte Transfer Layer") components
   for each supported network.  "cm" uses MTL ("Matching Tranport
   Layer") components for each supported network.
@@ -461,7 +460,7 @@ Network Support
     well together):
     - OpenFabrics: InfiniBand and iWARP
     - Loopback (send-to-self)
-    - Myrinet: GM and MX
+    - Myrinet: GM and MX (including Open-MX)
     - Portals
     - Quadrics Elan
     - Shared memory
@@ -478,7 +477,7 @@ Network Support
   - "cm" supports a smaller number of networks (and they cannot be
     used together), but may provide better better overall MPI
     performance:
-    - Myrinet MX (not GM)
+    - Myrinet MX (including Open-MX, but not GM)
     - InfiniPath PSM
     - Portals
 
@@ -494,31 +493,32 @@ Network Support
     or
     shell$ mpirun --mca pml cm ...
 
-- Myrinet MX support is shared between the 2 internal devices, the MTL
-  and the BTL.  The design of the BTL interface in Open MPI assumes
-  that only naive one-sided communication capabilities are provided by
-  the low level communication layers.  However, modern communication
-  layers such as Myrinet MX, InfiniPath PSM, or Portals, natively
-  implement highly-optimized two-sided communication semantics.  To
-  leverage these capabilities, Open MPI provides the "cm" PML and
-  corresponding MTL components to transfer messages rather than bytes.
-  The MTL interface implements a shorter code path and lets the
-  low-level network library decide which protocol to use (depending on
-  issues such as message length, internal resources and other
-  parameters specific to the underlying interconnect).  However, Open
-  MPI cannot currently use multiple MTL modules at once.  In the case
-  of the MX MTL, process loopback and on-node shared memory
-  communications are provided by the MX library.  Moreover, the
-  current MX MTL does not support message pipelining resulting in
-  lower performances in case of non-contiguous data-types.
+- Myrinet MX (and Open-MX) support is shared between the 2 internal
+  devices, the MTL and the BTL.  The design of the BTL interface in
+  Open MPI assumes that only naive one-sided communication
+  capabilities are provided by the low level communication layers.
+  However, modern communication layers such as Myrinet MX, InfiniPath
+  PSM, or Portals, natively implement highly-optimized two-sided
+  communication semantics.  To leverage these capabilities, Open MPI
+  provides the "cm" PML and corresponding MTL components to transfer
+  messages rather than bytes.  The MTL interface implements a shorter
+  code path and lets the low-level network library decide which
+  protocol to use (depending on issues such as message length,
+  internal resources and other parameters specific to the underlying
+  interconnect).  However, Open MPI cannot currently use multiple MTL
+  modules at once.  In the case of the MX MTL, process loopback and
+  on-node shared memory communications are provided by the MX library.
+  Moreover, the current MX MTL does not support message pipelining
+  resulting in lower performances in case of non-contiguous
+  data-types.
 
-  The "ob1" PML and BTL components use Open MPI's internal on-node
-  shared memory and process loopback devices for high performance.
-  The BTL interface allows multiple devices to be used simultaneously.
-  For the MX BTL it is recommended that the first segment (which is as
-  a threshold between the eager and the rendezvous protocol) should
-  always be at most 4KB, but there is no further restriction on the
-  size of subsequent fragments.
+  The "ob1" and "csum" PMLs and BTL components use Open MPI's internal
+  on-node shared memory and process loopback devices for high
+  performance.  The BTL interface allows multiple devices to be used
+  simultaneously.  For the MX BTL it is recommended that the first
+  segment (which is as a threshold between the eager and the
+  rendezvous protocol) should always be at most 4KB, but there is no
+  further restriction on the size of subsequent fragments.
 
   The MX MTL is recommended in the common case for best performance on
   10G hardware when most of the data transfers cover contiguous memory
@@ -598,7 +598,10 @@ for a full list); a summary of the more commonly used ones follows:
   located.  This option is generally only necessary if the MX headers
   and libraries are not in default compiler/linker search paths.
 
-  MX is the support library for Myrinet-based networks.
+  MX is the support library for Myrinet-based networks.  An open
+  source software package named Open-MX provides the same
+  functionality on Ethernet-based clusters (Open-MX can provide
+  MPI performance improvements compared to TCP messaging).
 
 --with-mx-libdir=<directory>
   Look in directory for the MX libraries.  By default, Open MPI will
@@ -1128,7 +1131,7 @@ run-time.  For example, the btl framework is used by the MPI layer to
 send bytes across different types underlying networks.  The tcp btl,
 for example, sends messages across TCP-based networks; the openib btl
 sends messages across OpenFabrics-based networks; the MX btl sends
-messages across Myrinet networks.
+messages across Myrinet MX / Open-MX networks.
 
 Each component typically has some tunable parameters that can be
 changed at run-time.  Use the ompi_info command to check a component
