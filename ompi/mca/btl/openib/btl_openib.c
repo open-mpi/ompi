@@ -292,11 +292,11 @@ static int create_srq(mca_btl_openib_module_t *openib_btl)
     rc = check_if_device_support_modify_srq(openib_btl);
     if(OMPI_ERR_NOT_SUPPORTED == rc) {
         device_support_modify_srq = false;
-    } else if(OMPI_ERROR == rc) {
+    } else if(OMPI_SUCCESS != rc) {
         mca_btl_openib_show_init_error(__FILE__, __LINE__,
                     "ibv_create_srq",
                     ibv_get_device_name(openib_btl->device->ib_dev));
-        return OMPI_ERROR;
+        return rc;
     }
 
     /* create the SRQ's */
@@ -382,8 +382,10 @@ static int mca_btl_openib_size_queues(struct mca_btl_openib_module_t* openib_btl
         goto out;
     }
 
-    if (0 == openib_btl->num_peers) {
-       rc = create_srq(openib_btl);
+    if (0 == openib_btl->num_peers && 
+            (mca_btl_openib_component.num_srq_qps > 0 || 
+             mca_btl_openib_component.num_xrc_qps > 0)) {
+        rc = create_srq(openib_btl);
     }
 
     openib_btl->num_peers += nprocs;
