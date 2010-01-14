@@ -13,6 +13,11 @@
 #include "pvfs2.h"
 #endif
 
+#ifdef PVFS2_VERSION_MAJOR
+#include "pvfs2-compat.h"
+#endif
+
+
 void ADIOI_PVFS2_Open(ADIO_File fd, int *error_code);
 void ADIOI_PVFS2_Close(ADIO_File fd, int *error_code);
 void ADIOI_PVFS2_ReadContig(ADIO_File fd, void *buf, int count, 
