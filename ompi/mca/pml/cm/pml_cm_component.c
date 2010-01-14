@@ -115,9 +115,17 @@ mca_pml_cm_component_register(void)
 static int
 mca_pml_cm_component_open(void)
 {
-    /* Avneesh -- might want to check the return code here with
-       respect to r22391 (i.e., OPAL_ERR_NOT_AVAILABLE issues) */
-    return ompi_mtl_base_open();
+    int ret;
+
+    ret = ompi_mtl_base_open();
+    if (OMPI_SUCCESS == ret) {
+      /* If no MTL components initialized CM component can be unloaded */
+      if (0 == opal_list_get_size(&ompi_mtl_base_components_opened)) {
+	ret = OPAL_ERR_NOT_AVAILABLE;
+      }
+    }
+    
+    return ret;
 }
 
 

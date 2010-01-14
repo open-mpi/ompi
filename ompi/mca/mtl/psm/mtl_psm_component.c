@@ -31,6 +31,10 @@
 
 #include "psm.h"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 static int ompi_mtl_psm_component_open(void);
 static int ompi_mtl_psm_component_close(void);
 static int ompi_mtl_psm_component_register(void);
@@ -152,7 +156,15 @@ ompi_mtl_psm_component_register(void)
 static int
 ompi_mtl_psm_component_open(void)
 {
-  return OMPI_SUCCESS;
+  struct stat st;
+  
+  /* Component available only if Truescale hardware is present */
+  if (0 == stat("/dev/ipath", &st)) {
+    return OMPI_SUCCESS;
+  }
+  else {
+    return OPAL_ERR_NOT_AVAILABLE;
+  }
 }
 
 static int
