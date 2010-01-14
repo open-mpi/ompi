@@ -1,4 +1,4 @@
-# Copyright (c) 2007-2009 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2010 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -16,9 +16,7 @@ IF(BUILD_SHARED_LIBS)
     COMPILE_FLAGS "-D_USRDLL -DOPAL_IMPORTS -DOMPI_IMPORTS -DORTE_IMPORTS /TP")
 ENDIF(BUILD_SHARED_LIBS)
 
-TARGET_LINK_LIBRARIES (orte-clean Ws2_32.lib shlwapi.lib)
-
-ADD_DEPENDENCIES (orte-clean libopen-pal libopen-rte)
+TARGET_LINK_LIBRARIES (orte-clean libopen-rte)
 
 ADD_CUSTOM_COMMAND (TARGET orte-clean
   POST_BUILD
@@ -26,7 +24,7 @@ ADD_CUSTOM_COMMAND (TARGET orte-clean
   ${OpenMPI_BINARY_DIR}/${CMAKE_CFG_INTDIR}/orte-clean.exe
   ${PROJECT_BINARY_DIR}/ompi-clean.exe
   COMMENT "Copying renamed executables...")
-  
+
 INSTALL(TARGETS orte-clean
   DESTINATION bin)
 INSTALL(FILES help-orte-clean.txt DESTINATION share/openmpi)

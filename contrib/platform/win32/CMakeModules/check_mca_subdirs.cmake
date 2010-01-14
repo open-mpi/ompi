@@ -1,5 +1,4 @@
-#
-# Copyright (c) 2007-2009 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2010 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -42,9 +41,7 @@ INCLUDE(list_subdirs)
 #       not_single_shared_lib:   this component should not be built separately, it's not 
 #                                a single mca shared library.
 #
-#       mca_dependencies:   this component is dependent on other targets, e.g. libopen-pal
-#
-#       mca_link_libraries: this component has to be linked with external libraries,
+#       mca_link_libraries: this component has to be linked with other targets or libraries,
 #                           e.g. Ws2_32.lib
 
 
@@ -199,13 +196,6 @@ FOREACH (MCA_FRAMEWORK ${MCA_FRAMEWORK_LIST})
 
 
           ELSE(NOT OPAL_WANT_LIBLTDL OR NOT_SINGLE_SHARED_LIB STREQUAL "1")
- 
-            # get the dependencies for this component.
-            SET(MCA_DEPENDENCIES "")
-            FILE(STRINGS ${CURRENT_PATH}/.windows VALUE REGEX "^mca_dependencies=")
-            IF(NOT VALUE STREQUAL "")
-              STRING(REPLACE "mca_dependencies=" "" MCA_DEPENDENCIES ${VALUE})
-            ENDIF(NOT VALUE STREQUAL "")
 
             # get the libraries required for this component.
             SET(MCA_LINK_LIBRARIES "")
@@ -260,9 +250,8 @@ ADD_LIBRARY(${LIB_NAME_PREFIX}mca_${MCA_FRAMEWORK}_${MCA_COMPONENT} SHARED
 SET_TARGET_PROPERTIES(${LIB_NAME_PREFIX}mca_${MCA_FRAMEWORK}_${MCA_COMPONENT}
                       PROPERTIES COMPILE_FLAGS \"-D_USRDLL -DOPAL_IMPORTS -DOMPI_IMPORTS -DORTE_IMPORTS /TP\")
 
-TARGET_LINK_LIBRARIES (${LIB_NAME_PREFIX}mca_${MCA_FRAMEWORK}_${MCA_COMPONENT} ${MCA_LINK_LIBRARIES})
-
-ADD_DEPENDENCIES(${LIB_NAME_PREFIX}mca_${MCA_FRAMEWORK}_${MCA_COMPONENT} libopen-pal ${MCA_DEPENDENCIES})
+TARGET_LINK_LIBRARIES (${LIB_NAME_PREFIX}mca_${MCA_FRAMEWORK}_${MCA_COMPONENT}
+  libopen-pal ${MCA_LINK_LIBRARIES})
 
 INSTALL(TARGETS ${LIB_NAME_PREFIX}mca_${MCA_FRAMEWORK}_${MCA_COMPONENT} ${INSTALL_DEST})
 IF (OMPI_DEBUG_BUILD)

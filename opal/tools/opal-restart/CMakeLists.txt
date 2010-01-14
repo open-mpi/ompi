@@ -1,4 +1,4 @@
-# Copyright (c) 2007-2009 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2010 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -16,11 +16,8 @@ IF(BUILD_SHARED_LIBS)
     COMPILE_FLAGS "-D_USRDLL -DOPAL_IMPORTS -DOMPI_IMPORTS -DORTE_IMPORTS /TP")
 ENDIF(BUILD_SHARED_LIBS)
 
-TARGET_LINK_LIBRARIES (opal-restart Ws2_32.lib shlwapi.lib)
+TARGET_LINK_LIBRARIES (opal-restart libopen-pal)
 
 INSTALL(TARGETS opal-restart
   DESTINATION bin)
 INSTALL(FILES help-opal-restart.txt DESTINATION share/openmpi)
-
-ADD_DEPENDENCIES (opal-restart libopen-pal)
-

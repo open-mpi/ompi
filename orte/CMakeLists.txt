@@ -1,4 +1,4 @@
-# Copyright (c) 2007-2009 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2010 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -55,13 +55,12 @@ SET (ORTE_SOURCE_FILES ${ORTE_SOURCE_FILES} ${MCA_FILES})
 
 ADD_LIBRARY (libopen-rte ${ORTE_SOURCE_FILES})
 
-ADD_DEPENDENCIES (libopen-rte libopen-pal)
 
 # Set compile flags for this target
 IF (BUILD_SHARED_LIBS)
   SET_TARGET_PROPERTIES(libopen-rte PROPERTIES
     COMPILE_FLAGS "-D_USRDLL -DORTE_EXPORTS -DOPAL_IMPORTS /TP")
-  TARGET_LINK_LIBRARIES (libopen-rte Ws2_32.lib shlwapi.lib)
+  TARGET_LINK_LIBRARIES (libopen-rte libopen-pal)
 ELSE (BUILD_SHARED_LIBS)
   SET_TARGET_PROPERTIES(libopen-rte PROPERTIES COMPILE_FLAGS "-D_LIB /TP")
 ENDIF(BUILD_SHARED_LIBS)
