@@ -896,7 +896,7 @@ find_my_procs:
         
         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls:constructing child list - checking proc %s on daemon %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_VPID_PRINT(j),
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&proc),
                              ORTE_VPID_PRINT(host_daemon)));
 
         /* does this proc belong to us? */
@@ -904,7 +904,7 @@ find_my_procs:
             
             OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:constructing child list - found proc %s for me!",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_VPID_PRINT(j)));
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&proc)));
             
             add_child = true;
             /* if this job is restarting procs, then we need to treat things
@@ -927,6 +927,7 @@ find_my_procs:
                                              (child->alive) ? "ALIVE" : "DEAD"));
                         add_child = false;
                         child->restarts = restarts[j];
+                        child->do_not_barrier = true;
                         /* mark that this app_context is being used on this node */
                         jobdat->apps[app_idx[j]]->used_on_node = true;
                         break;
@@ -936,6 +937,9 @@ find_my_procs:
             
             /* if we need to add the child, do so */
             if (add_child) {
+                OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                     "adding proc %s to my local list",
+                                     ORTE_NAME_PRINT(&proc)));
                 /* keep tabs of the number of local procs */
                 jobdat->num_local_procs++;
                 /* add this proc to our child list */
@@ -947,7 +951,11 @@ find_my_procs:
                 }
                 child->app_idx = app_idx[j];  /* save the index into the app_context objects */
                 child->restarts = restarts[j];
-                if (NULL != slot_str && NULL != slot_str[j]) {
+                /* if the job is in restart mode, the child must not barrier when launched */
+                if (ORTE_JOB_STATE_RESTART == jobdat->state) {
+                    child->do_not_barrier = true;
+                }
+               if (NULL != slot_str && NULL != slot_str[j]) {
                     child->slot_list = strdup(slot_str[j]);
                 }
                 /* mark that this app_context is being used on this node */
@@ -1556,6 +1564,11 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
              item = opal_list_get_next(item)) {
             child = (orte_odls_child_t*)item;
             
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                 "%s odls:launch working child %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(child->name)));
+            
             /* does this child belong to this app? */
             if (i != child->app_idx) {
                 continue;
@@ -1788,6 +1801,17 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
             opal_setenv(param, value, true, &app->env);
             free(param);
             free(value);
+            
+            /* if the proc should not barrier in orte_init, tell it */
+            if (child->do_not_barrier || 0 < child->restarts) {
+                if (NULL == (param = mca_base_param_environ_variable("orte","do_not","barrier"))) {
+                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                    rc = ORTE_ERR_OUT_OF_RESOURCE;
+                    goto CLEANUP;
+                }
+                opal_setenv(param, "1", true, &app->env);
+                free(param);
+            }
             
             /* if the proc isn't going to forward IO, then we need to flag that
              * it has "completed" iof termination as otherwise it will never fire

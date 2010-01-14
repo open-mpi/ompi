@@ -224,7 +224,7 @@ int orte_ess_base_app_setup(void)
      * Cannot do this on a restart as the rest of the processes
      * in the job won't be executing this step, so we would hang
      */
-    if (0 == orte_process_info.num_restarts && ORTE_PROC_IS_NON_MPI) {
+    if (ORTE_PROC_IS_NON_MPI && !orte_do_not_barrier) {
         if (ORTE_SUCCESS != (ret = orte_grpcomm.barrier())) {
             ORTE_ERROR_LOG(ret);
             error = "orte barrier";

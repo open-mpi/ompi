@@ -99,6 +99,7 @@ typedef struct {
     bool waitpid_recvd;          /* waitpid has detected proc termination */
     bool iof_complete;           /* IOF has noted proc terminating all channels */
     struct timeval starttime;    /* when the proc was started - for timing purposes only */
+    bool do_not_barrier;         /* the proc should not barrier in orte_init */
 } orte_odls_child_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_odls_child_t);
 

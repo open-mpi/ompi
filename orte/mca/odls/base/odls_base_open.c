@@ -92,6 +92,7 @@ static void orte_odls_child_constructor(orte_odls_child_t *ptr)
     ptr->slot_list = NULL;
     ptr->waitpid_recvd = false;
     ptr->iof_complete = false;
+    ptr->do_not_barrier = false;
 }
 static void orte_odls_child_destructor(orte_odls_child_t *ptr)
 {

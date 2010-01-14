@@ -159,6 +159,9 @@ char *orte_report_events_uri = NULL;
 /* report bindings */
 bool orte_report_bindings = false;
 
+/* barrier control */
+bool orte_do_not_barrier = false;
+
 #endif /* !ORTE_DISABLE_FULL_RTE */
 
 int orte_debug_output = -1;
