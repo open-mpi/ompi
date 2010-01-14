@@ -160,6 +160,11 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
     int nextcid, block;
     int global_block_start;
     bool flag;
+    int nextlocal_cid;
+    int done=0;
+    int response, glresponse=0;
+    int start;
+    unsigned int i;
     
     ompi_comm_cid_allredfct* allredfnct;
 
@@ -186,12 +191,6 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
             return MPI_UNDEFINED;
             break;
     }
-
-    int nextlocal_cid;
-    int done=0;
-    int response, glresponse=0;
-    int start;
-    unsigned int i;
     
     do {
 	/* Only one communicator function allowed in same time on the
