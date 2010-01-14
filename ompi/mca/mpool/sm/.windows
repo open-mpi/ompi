@@ -9,4 +9,4 @@
 #
 
 # Specific to this module
-mca_link_libraries=libmpi libmca_common_sm
+mca_link_libraries=libmpi libopen-rte libmca_common_sm
