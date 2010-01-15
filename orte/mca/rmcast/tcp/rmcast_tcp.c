@@ -488,6 +488,7 @@ static int tcp_send_nb(orte_rmcast_channel_t channel,
     snd.iovec_count = count;
     snd.tag = tag;
     snd.cbfunc_iovec = cbfunc;
+    snd.cbdata = cbdata;
     
     if (ORTE_SUCCESS != (ret = queue_xmit(&snd, channel, tag))) {
         ORTE_ERROR_LOG(ret);
@@ -540,6 +541,7 @@ static int tcp_send_buffer_nb(orte_rmcast_channel_t channel,
     snd.buf = buf;
     snd.tag = tag;
     snd.cbfunc_buffer = cbfunc;
+    snd.cbdata = cbdata;
     
     if (ORTE_SUCCESS != (ret = queue_xmit(&snd, channel, tag))) {
         ORTE_ERROR_LOG(ret);
