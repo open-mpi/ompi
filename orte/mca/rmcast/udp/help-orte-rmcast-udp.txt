@@ -1,0 +1,30 @@
+# -*- text -*-
+#
+# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+# Copyright (c) 2004-2005 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Regents of the University of California.
+#                         All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+# This is the US/English general help file for Open RTE.
+#
+[orte-rmcast-udp:msg-too-large]
+A multicast message that exceeds size limits is attempting to be sent:
+
+  Process: %s
+  Channel: %03d.%03d.%03d.%03d
+  bytes: %d
+  limit: %d
+
+The message will not be sent - please revise your program.
+

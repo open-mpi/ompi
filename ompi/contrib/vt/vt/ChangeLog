@@ -1,3 +1,6 @@
+5.4.11
+	- create a process group with the real node name on CrayXT platforms
+
 5.4.10
 	- reduced list of supported MPI implementations to Open MPI
 	  (support for other MPI implementations are available in the latest

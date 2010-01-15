@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2008 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
@@ -162,6 +162,11 @@ int btl_openib_register_mca_params(void)
                   "Warn if non-existent devices and/or ports are specified in the btl_openib_if_[in|ex]clude MCA parameters (0 = do not warn; any other value = warn)",
                   1, &ival, 0));
     mca_btl_openib_component.warn_nonexistent_if = (0 != ival);
+
+    CHECK(reg_int("enable_srq_resize", NULL,
+                  "Enable/Disable on demand SRQ resize. "
+                  "(0 = without resizing, nonzero = with resizing)", 1, &ival, 0));
+    mca_btl_openib_component.enable_srq_resize = (0 != ival);
 
     if (OMPI_HAVE_IBV_FORK_INIT) {
         ival2 = -1;
@@ -526,6 +531,13 @@ int btl_openib_register_mca_params(void)
             mid_qp_size,
             (uint32_t)mca_btl_openib_module.super.btl_eager_limit,
             (uint32_t)mca_btl_openib_module.super.btl_max_send_size);
+
+    mca_btl_openib_component.default_recv_qps = strdup(default_qps);
+    if(NULL == mca_btl_openib_component.default_recv_qps) {
+        BTL_ERROR(("Unable to allocate memory for default receive queues string.\n"));
+        return OMPI_ERROR;
+    }
+
     CHECK(reg_string("receive_queues", NULL,
                      "Colon-delimited, comma delimited list of receive queues: P,4096,8,6,4:P,32768,8,6,4",
                      default_qps, &mca_btl_openib_component.receive_queues, 

@@ -549,7 +549,7 @@ BEGIN_C_DECLS
      * @retval OPAL_ERROR If the parameter was not found.
      * @retval OPAL_SUCCESS Upon success.
      *
-     * This function sets an integer value on the MCA parmeter
+     * This function sets an integer value on the MCA parameter
      * indicated by the index value index.  This value will be used in
      * lieu of any other value from any other MCA source (environment
      * variable, file, etc.) until the value is unset with
@@ -569,7 +569,7 @@ BEGIN_C_DECLS
      * @retval OPAL_ERROR If the parameter was not found.
      * @retval OPAL_SUCCESS Upon success.
      *
-     * This function sets a string value on the MCA parmeter
+     * This function sets a string value on the MCA parameter
      * indicated by the index value index.  This value will be used in
      * lieu of any other value from any other MCA source (environment
      * variable, file, etc.) until the value is unset with

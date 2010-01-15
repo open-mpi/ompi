@@ -99,7 +99,7 @@ int main(int argc, char** argv)
 
     test_init("opal_condition_t");
 
-    rc = opal_init();
+    rc = opal_init(&argc, &argv);
     test_verify_int(OPAL_SUCCESS, rc);
     if (OPAL_SUCCESS != rc) {
         test_finalize();

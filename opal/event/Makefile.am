@@ -56,7 +56,7 @@ junk = \
 noinst_LTLIBRARIES = libevent.la
 
 # OMPI: Automake sillyness so that we can have variable sources
-objects = $(OMPI_LIBEVENT_SOURCES:.c=.lo)
+objects = $(OPAL_LIBEVENT_SOURCES:.c=.lo)
 
 # OMPI: Changed to libevent_la_*
 headers = event.h event_rename.h evutil.h min_heap.h
@@ -64,7 +64,6 @@ headers = event.h event_rename.h evutil.h min_heap.h
 libevent_la_SOURCES = event.c log.c evutil.c $(headers)
 libevent_la_LIBADD = $(objects)
 libevent_la_DEPENDENCIES = $(objects)
-
 
 if WANT_INSTALL_HEADERS
 ompidir = $(includedir)/openmpi/opal/event

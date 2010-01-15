@@ -21,6 +21,8 @@
 #include <netinet/in.h>
 #endif
 
+#include "opal/event/event.h"
+
 #include "orte/mca/rmcast/rmcast.h"
 
 BEGIN_C_DECLS
@@ -28,6 +30,7 @@ BEGIN_C_DECLS
 ORTE_DECLSPEC int orte_rmcast_base_open(void);
 
 #if !ORTE_DISABLE_FULL_SUPPORT
+
 
 /*
  * globals that might be needed

@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
     int i;
     double pi;
 
-    orte_init(ORTE_PROC_TOOL_WNAME);
+    orte_init(&argc, &argv, ORTE_PROC_TOOL);
     
     if (signal(SIGUSR1, sigusr_handler) == SIG_IGN) {
         fprintf(stderr, "Could not setup signal trap for SIGUSR1\n");

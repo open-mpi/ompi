@@ -65,7 +65,7 @@ orte_process_name_t orte_name_invalid = {ORTE_JOBID_INVALID, ORTE_VPID_INVALID};
 #endif
 const char orte_version_string[] = ORTE_IDENT_STRING;
 
-int orte_init(orte_proc_type_t flags)
+int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
 {
     int ret;
     char *error = NULL;
@@ -75,7 +75,7 @@ int orte_init(orte_proc_type_t flags)
     }
 
     /* initialize the opal layer */
-    if (ORTE_SUCCESS != (ret = opal_init())) {
+    if (ORTE_SUCCESS != (ret = opal_init(pargc, pargv))) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }

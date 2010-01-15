@@ -21,8 +21,6 @@
 dist_pkgdata_DATA = \
 	help-mpi-pml-dr.txt
 
-EXTRA_DIST = .windows
-
 dr_sources  = \
 	pml_dr.c \
 	pml_dr.h \

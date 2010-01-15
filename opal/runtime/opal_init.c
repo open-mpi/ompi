@@ -177,7 +177,7 @@ opal_err2str(int errnum)
 
 
 int
-opal_init_util(void)
+opal_init_util(int* pargc, char*** pargv)
 {
     int ret;
     char *error = NULL;
@@ -273,7 +273,7 @@ opal_init_util(void)
 
 
 int
-opal_init(void)
+opal_init(int* pargc, char*** pargv)
 {
     int ret;
     char *error = NULL;
@@ -286,7 +286,7 @@ opal_init(void)
     }
 
     /* initialize util code */
-    if (OPAL_SUCCESS != (ret = opal_init_util())) {
+    if (OPAL_SUCCESS != (ret = opal_init_util(pargc, pargv))) {
         return ret;
     }
 

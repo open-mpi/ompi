@@ -74,16 +74,23 @@ if ("$cur_svn_r" == "-1") then
     touch -r "${srcdir}/VERSION" "${distdir}/VERSION"
     echo "*** Updated VERSION file with SVN r number"
 else
-    echo "*** Did NOT updated VERSION file with SVN r number"
+    echo "*** Did NOT update VERSION file with SVN r number"
 endif
 
 # Copy configure.params and autogen.subdirs files into distribution.
 # This should really be in each component's Makefile.am, but that's
 # never going to happen.  So copy here automagically.
 echo "*** Copying configure.params files"
-find opal orte ompi -name "configure.params" -exec cp -f -p "{}" "$distdir/{}" \; >& /dev/null
+set dirs=opal
+if (-d orte) then
+    set dirs="$dirs orte"
+endif
+if (-d ompi) then
+    set dirs="$dirs ompi"
+endif
+find $dirs -name "configure.params" -exec cp -f -p "{}" "$distdir/{}" \; >& /dev/null
 echo "*** Copying autogen.subdirs files"
-find opal orte ompi -name "autogen.subdirs" -exec cp -f -p "{}" "$distdir/{}" \; >& /dev/null
+find $dirs -name "autogen.subdirs" -exec cp -f -p "{}" "$distdir/{}" \; >& /dev/null
 
 #########################################################
 # VERY IMPORTANT: Now go into the new distribution tree #
@@ -157,10 +164,12 @@ echo "*** Now in: `pwd`"
 echo "*** Replacing config.sub/config.guess with latest from ftp.gnu.org..."
 foreach file (config.guess config.sub)
     foreach dir (opal orte ompi)
-        find $dir -name $file \
-            -exec chmod +w {} \; \
-            -exec cp -f $configdir/$file {} \; \
-            -print
+        if (-d $dir) then
+            find $dir -name $file \
+                -exec chmod +w {} \; \
+                -exec cp -f $configdir/$file {} \; \
+                -print
+        endif
     end
 end
 

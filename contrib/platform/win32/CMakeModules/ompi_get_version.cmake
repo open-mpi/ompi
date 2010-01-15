@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2007-2008 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2009 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -79,12 +79,13 @@ IF("${WANT_SVN}" STREQUAL "1")
       ENDIF(${RESULT} EQUAL 0 AND NOT "${OUTPUT}" STREQUAL "exported")
     ENDIF(NOT RESULT STREQUAL "0")
 
-  ELSE("${SVN_R}" STREQUAL "-1")
-    SET(SVN_VERSION ${SVN_R})
   ENDIF("${SVN_R}" STREQUAL "-1")
 
   SET(VERSION_STRING ${VERSION_STRING}${SVN_VERSION})
   
+  
+ELSE("${WANT_SVN}" STREQUAL "1")
+    SET(SVN_VERSION ${SVN_R})
 ENDIF("${WANT_SVN}" STREQUAL "1")
 
 # Set opal versions
@@ -100,9 +101,7 @@ SET(OPAL_MAJOR_VERSION_STRING ${MAJOR_VERSION})
 SET(OPAL_MINOR_VERSION_STRING ${MINOR_VERSION})
 SET(OPAL_RELEASE_VERSION_STRING ${RELEASE_VERSION})
 SET(OPAL_VERSION_STRING ${VERSION_STRING})
-
-SET(OPAL_IDENT_STRING 1)
-SET(OPAL_IDENT_STRING_VALUE ${VERSION_STRING})
+SET(OPAL_IDENT_STRING ${VERSION_STRING})
 
 # Set OMPI versions
 

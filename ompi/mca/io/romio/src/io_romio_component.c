@@ -47,7 +47,6 @@ static int delete_query(char *filename, struct ompi_info_t *info,
                         bool *usable, int *priorty);
 static int delete_select(char *filename, struct ompi_info_t *info,
                          struct mca_io_base_delete_t *private_data);
-static int progress(void);
 
 static int register_datarep(char *,
                             MPI_Datarep_conversion_function*,
@@ -66,12 +65,6 @@ static int delete_priority_param = -1;
  * Global, component-wide ROMIO mutex because ROMIO is not thread safe
  */
 opal_mutex_t mca_io_romio_mutex;
-
-
-/*
- * Global list of requests for this component
- */
-opal_list_t mca_io_romio_pending_requests;
 
 
 /*
@@ -99,11 +92,6 @@ mca_io_base_component_2_0_0_t mca_io_romio_component = {
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
 
-    /* Additional number of bytes required for this component's
-       requests */
-
-    sizeof(mca_io_romio_request_t) - sizeof(mca_io_base_request_t),
-
     /* Initial configuration / Open a new file */
 
     init_query,
@@ -116,9 +104,6 @@ mca_io_base_component_2_0_0_t mca_io_romio_component = {
     NULL,
     delete_select,
 
-    /* Progression of non-blocking requests */
-
-    (mca_io_base_component_progress_fn_t) progress,
     register_datarep
 };
 
@@ -157,22 +142,12 @@ static int open_component(void)
     /* Create the mutex */
     OBJ_CONSTRUCT(&mca_io_romio_mutex, opal_mutex_t);
 
-    /* Create the list of pending requests */
-
-    OBJ_CONSTRUCT(&mca_io_romio_pending_requests, opal_list_t);
-
     return OMPI_SUCCESS;
 }
 
 
 static int close_component(void)
 {
-    /* Destroy the list of pending requests */
-    /* JMS: Good opprotunity here to list out all the IO requests that
-       were not destroyed / completed upon MPI_FINALIZE */
-
-    OBJ_DESTRUCT(&mca_io_romio_pending_requests);
-
     OBJ_DESTRUCT(&mca_io_romio_mutex);
 
     return OMPI_SUCCESS;
@@ -264,57 +239,6 @@ static int delete_select(char *filename, struct ompi_info_t *info,
 
     return ret;
 }
-
-
-static int progress()
-{
-    opal_list_item_t *item, *next;
-    int ret, flag, count;
-    MPI_Request romio_rq;
-    mca_io_base_request_t *ioreq;
-
-    /* Troll through all pending requests and try to progress them.
-       If a request finishes, remove it from the list. */
-
-    count = 0;
-    OPAL_THREAD_LOCK (&mca_io_romio_mutex);
-    for (item = opal_list_get_first(&mca_io_romio_pending_requests);
-         item != opal_list_get_end(&mca_io_romio_pending_requests); 
-         item = next) {
-        next = opal_list_get_next(item);
-
-        ioreq = (mca_io_base_request_t*) item;
-        romio_rq = ((mca_io_romio_request_t *) item)->romio_rq;
-        ret = MPI_Test(&romio_rq, &flag, 
-                       &(((ompi_request_t *) item)->req_status));
-        if ((0 != ret) || (0 != flag)) {
-            ioreq->super.req_status.MPI_ERROR = ret;
-            ++count;
-            /* we're done, so remove us from the pending list */
-            opal_list_remove_item(&mca_io_romio_pending_requests, item);
-            /* mark as complete (and make sure to wake up any waiters */
-            ompi_request_complete((ompi_request_t*) item, true);
-            mca_io_base_request_progress_del();
-            /* if the request has been freed already, the user isn't
-             * going to call test or wait on us, so we need to do it
-             * here
-             */
-            if (ioreq->free_called) {
-                ret = ompi_request_free((ompi_request_t**) &ioreq);
-                if (OMPI_SUCCESS != ret) {
-                    OPAL_THREAD_UNLOCK(&mca_io_romio_mutex);
-                    return count;
-                }
-            }
-        }
-    }
-    OPAL_THREAD_UNLOCK (&mca_io_romio_mutex);
-
-    /* Return how many requests completed */
-
-    return count;
-}
-
 
 
 static int

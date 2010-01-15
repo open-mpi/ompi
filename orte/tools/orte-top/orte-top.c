@@ -223,7 +223,7 @@ main(int argc, char *argv[])
      * to ensure installdirs is setup properly
      * before calling mca_base_open();
      */
-    if( ORTE_SUCCESS != (ret = opal_init_util()) ) {
+    if( ORTE_SUCCESS != (ret = opal_init_util(&argc, &argv)) ) {
         return ret;
     }
     
@@ -257,7 +257,7 @@ main(int argc, char *argv[])
     /***************************
      * We need all of OPAL and the TOOL portion of ORTE
      ***************************/
-    if (ORTE_SUCCESS != orte_init(ORTE_PROC_TOOL)) {
+    if (ORTE_SUCCESS != orte_init(&argc, &argv, ORTE_PROC_TOOL)) {
         orte_finalize();
         return 1;
     }

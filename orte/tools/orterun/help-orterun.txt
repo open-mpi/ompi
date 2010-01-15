@@ -95,8 +95,18 @@ in the application to be terminated by signals sent by %s
 #
 [orterun:proc-exit-no-sync]
 %s has exited due to process rank %lu with PID %lu on
-node %s exiting without calling "finalize". This may
-have caused other processes in the application to be
+node %s exiting improperly. There are two reasons this could occur:
+
+1. this process did not call "init" before exiting, but others in
+the job did. This can cause a job to hang indefinitely while it waits
+for all processes to call "init". By rule, if one process calls "init",
+then ALL processes must call "init" prior to termination.
+
+2. this process called "init", but exited without calling "finalize".
+By rule, all processes that call "init" MUST call "finalize" prior to
+exiting or it will be considered an "abnormal termination"
+
+This may have caused other processes in the application to be
 terminated by signals sent by %s (as reported here).
 #
 [orterun:proc-exit-no-sync-unknown]

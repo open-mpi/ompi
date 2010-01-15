@@ -299,7 +299,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* Setup enough to check get/set MCA params */
 
-    if (ORTE_SUCCESS != (ret = opal_init_util())) {
+    if (ORTE_SUCCESS != (ret = opal_init_util(&argc, &argv))) {
         error = "ompi_mpi_init: opal_init_util failed";
         goto error;
     }
@@ -347,7 +347,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
     
     /* Setup ORTE - note that we are an MPI process  */
-    if (ORTE_SUCCESS != (ret = orte_init(ORTE_PROC_MPI))) {
+    if (ORTE_SUCCESS != (ret = orte_init(NULL, NULL, ORTE_PROC_MPI))) {
         error = "ompi_mpi_init: orte_init failed";
         goto error;
     }

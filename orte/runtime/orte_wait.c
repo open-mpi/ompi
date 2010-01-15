@@ -518,7 +518,7 @@ int orte_wait_event(opal_event_t **event, orte_trigger_event_t *trig,
     trig->channel = p[1];
     
     /* define the event to fire when someone writes to the pipe */
-    opal_event_set(*event, p[0], OPAL_EV_READ, cbfunc, NULL);
+    opal_event_set(*event, p[0], OPAL_EV_READ, cbfunc, trig);
     
     /* Add it to the active events, without a timeout */
     opal_event_add(*event, NULL);

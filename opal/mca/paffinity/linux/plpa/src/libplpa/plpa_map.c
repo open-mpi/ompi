@@ -36,13 +36,6 @@
  Devices, Inc.
  and any copyright holders and contributors.
 
- + In no event shall anyone redistributing or accessing or using this
- material commence or participate in any arbitration or legal action 
- relating to this material against Advanced Micro Devices, Inc. or any 
- copyright holders or contributors. The foregoing shall survive any 
- expiration or termination of this license or any agreement or access 
- or use related to this material.
-
  + ANY BREACH OF ANY TERM OF THIS LICENSE SHALL RESULT IN THE IMMEDIATE
  REVOCATION OF ALL RIGHTS TO REDISTRIBUTE, ACCESS OR USE THIS MATERIAL.
 

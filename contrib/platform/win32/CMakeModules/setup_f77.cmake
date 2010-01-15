@@ -1,4 +1,4 @@
-# Copyright (c) 2008      High Performance Computing Center Stuttgart, 
+# Copyright (c) 2008-2009 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 #
 # $COPYRIGHT$
@@ -18,7 +18,7 @@ SET(CMAKE_GENERATOR_FC "")
 include(CMakeDetermineFortranCompiler)
 include(CMakeFortranInformation)
 
-SET(F77 ${CMAKE_Fortran_COMPILER})
+GET_FILENAME_COMPONENT(F77 ${CMAKE_Fortran_COMPILER} NAME)
 
 INCLUDE(F77_find_ext_symbol_convention)
 # make sure we know the linking convention

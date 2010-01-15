@@ -94,6 +94,12 @@ typedef struct mca_btl_openib_rem_info_t {
     mca_btl_openib_rem_qp_info_t *rem_qps;
     /* Remote xrc_srq info, used only with XRC connections */
     mca_btl_openib_rem_srq_info_t *rem_srqs;
+    /* Vendor id of remote HCA */
+    uint32_t rem_vendor_id;
+    /* Vendor part id of remote HCA */
+    uint32_t rem_vendor_part_id;
+    /* Transport type of remote port */
+    mca_btl_openib_transport_type_t rem_transport_type;
 } mca_btl_openib_rem_info_t;
 
 

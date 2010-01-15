@@ -85,17 +85,21 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 typedef struct {
     opal_list_item_t super;      /* required to place this on a list */
     orte_process_name_t *name;   /* the OmpiRTE name of the proc */
+    int32_t restarts;            /* number of times this proc has been restarted */
     pid_t pid;                   /* local pid of the proc */
     orte_std_cntr_t app_idx;     /* index of the app_context for this proc */
     bool alive;                  /* is this proc alive? */
     bool coll_recvd;             /* collective operation recvd */
     orte_proc_state_t state;     /* the state of the process */
     orte_exit_code_t exit_code;  /* process exit code */
+    bool init_recvd;             /* process called orte_init */
+    bool fini_recvd;             /* process called orte_finalize */
     char *rml_uri;               /* contact info for this child */
     char *slot_list;             /* list of slots for this child */
     bool waitpid_recvd;          /* waitpid has detected proc termination */
     bool iof_complete;           /* IOF has noted proc terminating all channels */
     struct timeval starttime;    /* when the proc was started - for timing purposes only */
+    bool do_not_barrier;         /* the proc should not barrier in orte_init */
 } orte_odls_child_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_odls_child_t);
 

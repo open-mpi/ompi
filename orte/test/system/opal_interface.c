@@ -17,7 +17,7 @@ int main(int argc, char* argv[])
     uint32_t addr, netmask, netaddr;
     struct sockaddr_in inaddr;
 
-    if (0 > (rc = opal_init())) {
+    if (0 > (rc = opal_init(&argc, &argv))) {
         fprintf(stderr, "orte_interface: couldn't init opal - error code %d\n", rc);
         return rc;
     }

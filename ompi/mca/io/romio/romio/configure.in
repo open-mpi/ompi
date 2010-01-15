@@ -205,6 +205,9 @@ AC_CONFIG_AUX_DIR(confdb)
 # Open MPI: Init automake
 AM_INIT_AUTOMAKE(io-romio, 1.0.0, 'no')
 
+# Open MPI: If Automake supports silent rules, enable them.
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+
 #
 # Check that an arch was set
 # If it wasn't set, try to guess using "util/tarch"

@@ -86,6 +86,15 @@ get_print_name_buffer(void)
     orte_print_args_buffers_t *ptr;
     int ret, i;
     
+    if (!fns_init) {
+        /* setup the print_args function */
+        if (ORTE_SUCCESS != (ret = opal_tsd_key_create(&print_args_tsd_key, buffer_cleanup))) {
+            ORTE_ERROR_LOG(ret);
+            return NULL;
+        }
+        fns_init = true;
+    }
+    
     ret = opal_tsd_getspecific(print_args_tsd_key, (void**)&ptr);
     if (OPAL_SUCCESS != ret) return NULL;
     
@@ -153,17 +162,7 @@ char* orte_util_print_name_args(const orte_process_name_t *name)
 char* orte_util_print_jobids(const orte_jobid_t job)
 {
     orte_print_args_buffers_t *ptr;
-    int rc;
     unsigned long tmp1, tmp2;
-    
-    if (!fns_init) {
-        /* setup the print_args function */
-        if (ORTE_SUCCESS != (rc = opal_tsd_key_create(&print_args_tsd_key, buffer_cleanup))) {
-            ORTE_ERROR_LOG(rc);
-            return NULL;
-        }
-        fns_init = true;
-    }
     
     ptr = get_print_name_buffer();
     
@@ -194,17 +193,7 @@ char* orte_util_print_jobids(const orte_jobid_t job)
 char* orte_util_print_job_family(const orte_jobid_t job)
 {
     orte_print_args_buffers_t *ptr;
-    int rc;
     unsigned long tmp1;
-    
-    if (!fns_init) {
-        /* setup the print_args function */
-        if (ORTE_SUCCESS != (rc = opal_tsd_key_create(&print_args_tsd_key, buffer_cleanup))) {
-            ORTE_ERROR_LOG(rc);
-            return NULL;
-        }
-        fns_init = true;
-    }
     
     ptr = get_print_name_buffer();
     
@@ -234,17 +223,7 @@ char* orte_util_print_job_family(const orte_jobid_t job)
 char* orte_util_print_local_jobid(const orte_jobid_t job)
 {
     orte_print_args_buffers_t *ptr;
-    int rc;
     unsigned long tmp1;
-    
-    if (!fns_init) {
-        /* setup the print_args function */
-        if (ORTE_SUCCESS != (rc = opal_tsd_key_create(&print_args_tsd_key, buffer_cleanup))) {
-            ORTE_ERROR_LOG(rc);
-            return NULL;
-        }
-        fns_init = true;
-    }
     
     ptr = get_print_name_buffer();
     
@@ -274,16 +253,6 @@ char* orte_util_print_local_jobid(const orte_jobid_t job)
 char* orte_util_print_vpids(const orte_vpid_t vpid)
 {
     orte_print_args_buffers_t *ptr;
-    int rc;
-    
-    if (!fns_init) {
-        /* setup the print_args function */
-        if (ORTE_SUCCESS != (rc = opal_tsd_key_create(&print_args_tsd_key, buffer_cleanup))) {
-            ORTE_ERROR_LOG(rc);
-            return NULL;
-        }
-        fns_init = true;
-    }
     
     ptr = get_print_name_buffer();
     

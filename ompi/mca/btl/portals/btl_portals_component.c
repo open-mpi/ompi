@@ -601,8 +601,8 @@ mca_btl_portals_component_progress(void)
 
                     if (ev.rlength == 0)
                         opal_output_verbose(10, mca_btl_portals_component.portals_output,
-                                            "PTL_EVENT_ACK: ev.rlength=%d ev.mlength=%d: requeueing request",
-                                            ev.rlength, ev.mlength);
+                                            "PTL_EVENT_ACK: ev.rlength=%lu ev.mlength=%lu: requeueing request",
+                                            (unsigned long)ev.rlength, (unsigned long)ev.mlength);
                     else
                         opal_output_verbose(50, mca_btl_portals_component.portals_output,
                                             "message was dropped.  Trying again");

@@ -32,6 +32,12 @@ AC_DEFUN([MCA_btl_portals_CONFIG],[
            $1],
           [$2])
 
+    AC_CHECK_HEADERS([catamount/cnos_mpi_os.h], [],
+                      [AC_CHECK_HEADERS([cnos_mpi_os.h], [], [$2],
+                          [AC_INCLUDES_DEFAULT])],
+                      [AC_INCLUDES_DEFAULT])
+
+
     # substitute in the things needed to build portals
     AC_SUBST([btl_portals_CPPFLAGS])
     AC_SUBST([btl_portals_LDFLAGS])

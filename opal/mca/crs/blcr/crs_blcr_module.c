@@ -893,6 +893,13 @@ static int blcr_cold_start(opal_crs_blcr_snapshot_t *snapshot) {
      * Context Filename
      */
     opal_crs_base_metadata_read_token(snapshot->super.local_location, CRS_METADATA_CONTEXT, &tmp_argv);
+    if( NULL == tmp_argv ) {
+        opal_output(mca_crs_blcr_component.super.output_handle,
+                    "crs:blcr: blcr_cold_start: Error: Failed to read the %s token from the local checkpoint in %s",
+                    CRS_METADATA_CONTEXT, snapshot->super.local_location);
+        exit_status = OPAL_ERROR;
+        goto cleanup;
+    }
     asprintf(&snapshot->context_filename, "%s/%s", snapshot->super.local_location, tmp_argv[0]);
 
     /*

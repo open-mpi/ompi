@@ -39,6 +39,9 @@
 #include "opal/util/basename.h"
 #include "opal/mca/pstat/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
+#if ORTE_ENABLE_BOOTSTRAP
+#include "opal/mca/sysinfo/base/base.h"
+#endif
 
 #include "orte/util/show_help.h"
 #include "orte/mca/rml/base/base.h"
@@ -52,10 +55,6 @@
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/notifier/base/base.h"
-#if ORTE_ENABLE_MONITORING
-#include "orte/mca/sensor/base/base.h"
-#include "orte/mca/fddp/base/base.h"
-#endif
 #if ORTE_ENABLE_MULTICAST
 #include "orte/mca/rmcast/base/base.h"
 #endif
@@ -169,6 +168,20 @@ static int rte_init(void)
         goto error;
     }
     
+#if ORTE_ENABLE_BOOTSTRAP
+    /* open and setup the local resource discovery framework */
+    if (ORTE_SUCCESS != (ret = opal_sysinfo_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "opal_sysinfo_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = opal_sysinfo_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "opal_sysinfo_base_select";
+        goto error;
+    }
+#endif
+
     /* Since we are the HNP, then responsibility for
      * defining the name falls to the PLM component for our
      * respective environment - hence, we have to open the PLM
@@ -192,20 +205,6 @@ static int rte_init(void)
     }
     
     /* Setup the communication infrastructure */
-    
-    /* start with multicast */
-#if ORTE_ENABLE_MULTICAST
-    if (ORTE_SUCCESS != (ret = orte_rmcast_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rmcast_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_rmcast_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rmcast_base_select";
-        goto error;
-    }
-#endif
     
     /*
      * Runtime Messaging Layer
@@ -246,6 +245,20 @@ static int rte_init(void)
         error = "orte_grpcomm_base_select";
         goto error;
     }
+    
+    /* multicast */
+#if ORTE_ENABLE_MULTICAST
+    if (ORTE_SUCCESS != (ret = orte_rmcast_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rmcast_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_rmcast_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rmcast_base_select";
+        goto error;
+    }
+#endif
     
     /* Now provide a chance for the PLM
      * to perform any module-specific init functions. This
@@ -409,6 +422,33 @@ static int rte_init(void)
     node = OBJ_NEW(orte_node_t);
     node->name = strdup(orte_process_info.nodename);
     node->index = opal_pointer_array_add(orte_node_pool, node);
+#if ORTE_ENABLE_BOOTSTRAP
+    {
+        /* get and store our local resources */
+        char *keys[] = {
+            OPAL_SYSINFO_CPU_TYPE,
+            OPAL_SYSINFO_CPU_MODEL,
+            OPAL_SYSINFO_NUM_CPUS,
+            OPAL_SYSINFO_MEM_SIZE,
+            NULL
+        };
+        opal_list_item_t *item;
+        opal_sysinfo_value_t *info;
+
+        opal_sysinfo.query(keys, &node->resources);
+        /* find our cpu model and save it for later */
+        for (item = opal_list_get_first(&node->resources);
+             item != opal_list_get_end(&node->resources);
+             item = opal_list_get_next(item)) {
+            info = (opal_sysinfo_value_t*)item;
+
+            if (0 == strcmp(info->key, OPAL_SYSINFO_CPU_MODEL)) {
+                orte_local_cpu_model = strdup(info->data.str);
+                break;
+            }
+        }
+    }
+#endif
     
     /* create and store a proc object for us */
     proc = OBJ_NEW(orte_proc_t);
@@ -525,33 +565,7 @@ static int rte_init(void)
             goto error;
         }
     }
-    
-#if ORTE_ENABLE_MONITORING
-    /* setup the sensors */
-    if (ORTE_SUCCESS != (ret = orte_sensor_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_sensor_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_sensor_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_sensor_select";
-        goto error;
-    }
 
-    /* setup the fddp */
-    if (ORTE_SUCCESS != (ret = orte_fddp_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_sensor_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_fddp_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_sensor_select";
-        goto error;
-    }
-#endif
-    
     /* We actually do *not* want an HNP to voluntarily yield() the
      processor more than necessary.  Orterun already blocks when
      it is doing nothing, so it doesn't use any more CPU cycles than
@@ -602,13 +616,6 @@ static int rte_finalize(void)
     unlink(contact_path);
     free(contact_path);
     
-#if ORTE_ENABLE_MONITORING
-    /* finalize the sensors */
-    orte_sensor_base_close();
-    /* finalize the fddp */
-    orte_fddp_base_close();
-#endif
-
     orte_notifier_base_close();
     
     orte_cr_finalize();
@@ -631,16 +638,16 @@ static int rte_finalize(void)
     orte_plm_base_close();
     orte_errmgr_base_close();
     
-    /* now can close the rml and its friendly group comm */
-    orte_grpcomm_base_close();
-    orte_routed_base_close();
-    orte_rml_base_close();
-    
     /* close the multicast */
 #if ORTE_ENABLE_MULTICAST
     orte_rmcast_base_close();
 #endif
-    
+
+    /* now can close the rml and its friendly group comm */
+    orte_grpcomm_base_close();
+    orte_routed_base_close();
+    orte_rml_base_close();
+
     /* if we were doing timing studies, close the timing file */
     if (orte_timing) {
         if (stdout != orte_timing_output &&
@@ -695,6 +702,12 @@ static int rte_finalize(void)
         }
     }
     
+    /* handle the orted-specific OPAL stuff */
+#if ORTE_ENABLE_BOOTSTRAP
+    opal_sysinfo_base_close();
+#endif
+    opal_pstat_base_close();
+
     return ORTE_SUCCESS;    
 }
 

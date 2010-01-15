@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -19,6 +19,8 @@
 
 noinst_LTLIBRARIES = libdebuggers.la libompi_debugger_canary.la
 pkglib_LTLIBRARIES = libompi_dbg_msgq.la
+check_PROGRAMS = dlopen_test
+TESTS = $(check_PROGRAMS)
 
 # This is not quite in the Automake spirit, but we have to do it.
 # Since the totalview portion of the library must be built with -g, we
@@ -27,7 +29,7 @@ pkglib_LTLIBRARIES = libompi_dbg_msgq.la
 # post-processed forms of the CFLAGS in the library targets down
 # below.
 
-CFLAGS = $(CFLAGS_WITHOUT_OPTFLAGS) $(TOTALVIEW_DEBUG_FLAGS)
+CFLAGS = $(CFLAGS_WITHOUT_OPTFLAGS) $(DEBUGGER_CFLAGS)
 
 # Source code files
 
@@ -35,6 +37,12 @@ headers = \
         debuggers.h \
         ompi_common_dll_defs.h \
         msgq_interface.h ompi_msgq_dll_defs.h
+
+# Simple checks to ensure that the DSOs are functional
+
+dlopen_test_SOURCES = dlopen_test.c
+dlopen_test_CPPFLAGS = -I$(top_srcdir)/opal/libltdl
+dlopen_test_LDADD = $(top_builddir)/opal/libltdl/libltdlc.la
 
 libdebuggers_la_SOURCES = \
         $(headers) \

@@ -66,20 +66,6 @@ int orte_ess_base_app_setup(void)
 
     /* Setup the communication infrastructure */
     
-    /* start with multicast */
-#if ORTE_ENABLE_MULTICAST
-    if (ORTE_SUCCESS != (ret = orte_rmcast_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rmcast_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_rmcast_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rmcast_base_select";
-        goto error;
-    }
-#endif
-    
     /* Runtime Messaging Layer */
     if (ORTE_SUCCESS != (ret = orte_rml_base_open())) {
         ORTE_ERROR_LOG(ret);
@@ -116,6 +102,20 @@ int orte_ess_base_app_setup(void)
         error = "orte_grpcomm_base_select";
         goto error;
     }
+    
+    /* multicast */
+#if ORTE_ENABLE_MULTICAST
+    if (ORTE_SUCCESS != (ret = orte_rmcast_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rmcast_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_rmcast_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rmcast_base_select";
+        goto error;
+    }
+#endif
     
     /* non-daemon/HNP apps can only have the default proxy PLM
      * module open - provide a chance for it to initialize
@@ -212,6 +212,26 @@ int orte_ess_base_app_setup(void)
         goto error;
     }
     
+    /* if we are an ORTE app - and not an MPI app - then
+     * we need to barrier here. MPI_Init has its own barrier,
+     * so we don't need to do two of them. However, if we
+     * don't do a barrier at all, then one process could
+     * finalize before another one called orte_init. This
+     * causes ORTE to believe that the proc abnormally
+     * terminated
+     *
+     * NOTE: only do this when the process originally launches.
+     * Cannot do this on a restart as the rest of the processes
+     * in the job won't be executing this step, so we would hang
+     */
+    if (ORTE_PROC_IS_NON_MPI && !orte_do_not_barrier) {
+        if (ORTE_SUCCESS != (ret = orte_grpcomm.barrier())) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte barrier";
+            goto error;
+        }
+    }
+    
     return ORTE_SUCCESS;
     
 error:
@@ -235,15 +255,15 @@ int orte_ess_base_app_finalize(void)
     
     orte_wait_finalize();
     
-    /* now can close the rml and its friendly group comm */
-    orte_grpcomm_base_close();
-    orte_routed_base_close();
-    orte_rml_base_close();
-    
     /* close the multicast */
 #if ORTE_ENABLE_MULTICAST
     orte_rmcast_base_close();
 #endif
+    
+    /* now can close the rml and its friendly group comm */
+    orte_grpcomm_base_close();
+    orte_routed_base_close();
+    orte_rml_base_close();
     
     orte_session_dir_finalize(ORTE_PROC_MY_NAME);
         

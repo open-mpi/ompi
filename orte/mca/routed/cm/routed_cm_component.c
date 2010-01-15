@@ -46,11 +46,14 @@ orte_routed_component_t mca_routed_cm_component = {
 
 static int orte_routed_cm_component_query(mca_base_module_t **module, int *priority)
 {
-    char *spec;
-    
-    /* only select us if specified */
-    spec = getenv("OMPI_MCA_routed");
-    if (NULL == spec || 0 != strcmp("cm", spec)) {
+    bool is_required = false;
+
+    mca_base_is_component_required(&orte_routed_base_components,
+                                   &mca_routed_cm_component.base_version,
+                                   true,
+                                   &is_required);
+
+    if( !is_required ) {
         *priority = 0;
         *module = NULL;
         return ORTE_ERROR;

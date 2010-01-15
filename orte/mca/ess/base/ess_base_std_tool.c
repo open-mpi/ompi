@@ -43,6 +43,9 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/show_help.h"
+#if ORTE_ENABLE_MULTICAST
+#include "orte/mca/rmcast/base/base.h"
+#endif
 
 #include "orte/runtime/orte_cr.h"
 #include "orte/runtime/orte_globals.h"
@@ -88,6 +91,20 @@ int orte_ess_base_tool_setup(void)
         error = "orte_routed_base_select";
         goto error;
     }
+    
+    /* multicast */
+#if ORTE_ENABLE_MULTICAST
+    if (ORTE_SUCCESS != (ret = orte_rmcast_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rmcast_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_rmcast_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rmcast_base_select";
+        goto error;
+    }
+#endif
     
     /* since I am a tool, then all I really want to do is communicate.
      * So setup communications and be done - finding the HNP

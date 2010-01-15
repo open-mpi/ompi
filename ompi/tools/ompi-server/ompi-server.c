@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
     char * tmp_env_var = NULL;
 
     /* init enough of opal to process cmd lines */
-    if (OPAL_SUCCESS != opal_init_util()) {
+    if (OPAL_SUCCESS != opal_init_util(&argc, &argv)) {
         fprintf(stderr, "OPAL failed to initialize -- orted aborting\n");
         exit(1);
     }
@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
     cmd_line = OBJ_NEW(opal_cmd_line_t);
     opal_cmd_line_create(cmd_line, ompi_server_cmd_line_opts);
     mca_base_cmd_line_setup(cmd_line);
-    if (ORTE_SUCCESS != (ret = opal_cmd_line_parse(cmd_line, false,
+    if (OPAL_SUCCESS != (ret = opal_cmd_line_parse(cmd_line, false,
                                                    argc, argv))) {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(cmd_line);
@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
      * so that we only open up the communications infrastructure. No
      * session directories will be created.
      */
-    if (ORTE_SUCCESS != (ret = orte_init(ORTE_PROC_TOOL))) {
+    if (ORTE_SUCCESS != (ret = orte_init(&argc, &argv, ORTE_PROC_TOOL))) {
         fprintf(stderr, "ompi-server: failed to initialize -- aborting\n");
         exit(1);
     }

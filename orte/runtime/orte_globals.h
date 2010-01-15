@@ -71,6 +71,10 @@ ORTE_DECLSPEC extern orte_process_name_t orte_name_invalid;  /** instantiated in
    param */
 ORTE_DECLSPEC extern bool orte_in_parallel_debugger;
 
+/* error manager callback function */
+typedef void (*orte_err_cb_fn_t)(orte_process_name_t *proc, orte_proc_state_t state, void *cbdata);
+
+typedef uint16_t orte_mapping_policy_t;
 
 #if ORTE_DISABLE_FULL_SUPPORT
 
@@ -264,6 +268,8 @@ typedef struct {
     char *cpu_set;
     /** Username on this node, if specified */
     char *username;
+    /* list of known system resources for this node */
+    opal_list_t resources;
 } orte_node_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_node_t);
 
@@ -279,7 +285,6 @@ typedef uint8_t orte_job_controls_t;
 #define ORTE_JOB_CONTROL_FORWARD_COMM       0x20
 #define ORTE_JOB_CONTROL_CONTINUOUS_OP      0x40
 
-typedef uint16_t orte_mapping_policy_t;
 #define ORTE_MAPPING_POLICY OPAL_UINT16
 /* put the rank assignment method in the upper 8 bits */
 #define ORTE_MAPPING_NOPOL          0x0100
@@ -327,9 +332,6 @@ typedef uint16_t orte_mapping_policy_t;
 /* macro to detect if binding was qualified */
 #define ORTE_BINDING_NOT_REQUIRED(n) \
     (ORTE_BIND_IF_SUPPORTED & (n))
-
-/* error manager callback function */
-typedef void (*orte_err_cb_fn_t)(orte_process_name_t *proc, orte_proc_state_t state, void *cbdata);
 
 typedef struct {
     /** Base object so this can be put on a list */
@@ -383,6 +385,8 @@ typedef struct {
     orte_proc_state_t err_cbstates;
     /* errmgr callback data */
     void *err_cbdata;
+    /* max number of times a process can be restarted */
+    int32_t max_restarts;
 #if OPAL_ENABLE_FT == 1
     /* ckpt state */
     size_t ckpt_state;
@@ -433,6 +437,8 @@ struct orte_proc_t {
     char *rml_uri;
     /* seconds when last heartbeat was detected */
     int beat;
+    /* number of times this process has been restarted */
+    int32_t restarts;
 #if OPAL_ENABLE_FT == 1
     /* ckpt state */
     size_t ckpt_state;
@@ -524,6 +530,7 @@ ORTE_DECLSPEC extern bool orte_leave_session_attached;
 ORTE_DECLSPEC extern bool orte_do_not_launch;
 ORTE_DECLSPEC extern bool orted_spin_flag;
 ORTE_DECLSPEC extern bool orte_daemon_bootstrap;
+ORTE_DECLSPEC extern char *orte_local_cpu_model;
 
 /* ORTE OOB port flags */
 ORTE_DECLSPEC extern bool orte_static_ports;
@@ -626,6 +633,9 @@ ORTE_DECLSPEC extern char *orte_report_events_uri;
 
 /* report bindings */
 ORTE_DECLSPEC extern bool orte_report_bindings;
+
+/* barrier control */
+ORTE_DECLSPEC extern bool orte_do_not_barrier;
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 

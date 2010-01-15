@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2007-2009 Cisco, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -349,7 +349,7 @@ run_gnu_tools() {
 echo "[Checking] prerequisites"
 
 # sanity check to make sure user isn't being stupid
-if test ! -d .svn ; then
+if test ! -d .svn -a ! -d .hg ; then
     cat <<EOF
 
 This doesn't look like a developer copy of PLPA.  You probably do not

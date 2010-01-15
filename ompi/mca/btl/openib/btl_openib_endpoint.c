@@ -310,6 +310,11 @@ void mca_btl_openib_endpoint_init(mca_btl_openib_module_t *btl,
                 ep->rem_info.rem_subnet_id,
                 ep->rem_info.rem_mtu);
 
+    ep->rem_info.rem_vendor_id = (remote_proc_info->pm_port_info).vendor_id;
+    ep->rem_info.rem_vendor_part_id = (remote_proc_info->pm_port_info).vendor_part_id;
+
+    ep->rem_info.rem_transport_type = (remote_proc_info->pm_port_info).transport_type;
+
     for (qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
         endpoint_init_qp(ep, qp);
     }
@@ -664,7 +669,6 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
     }
 
 
-    OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
     /* Process pending packet on the endpoint */
 
     /* While there are frags in the list, process them */
@@ -676,6 +680,7 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
         if(OMPI_ERROR == mca_btl_openib_endpoint_post_send(endpoint, frag))
             BTL_ERROR(("Error posting send"));
     }
+    OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
 
     /* if upper layer called put or get before connection moved to connected
      * state then we restart them here */

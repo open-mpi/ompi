@@ -55,9 +55,11 @@ ORTE_DECLSPEC extern bool orte_debug_flag;
      * be called by every application using the RTE interface, including
      * MPI applications and mpirun.
      *
-     * @param tool Whether we are ORTE tool or not
+     * @param pargc  Pointer to the number of arguments in the pargv array
+     * @param pargv  The list of arguments.
+     * @param flags  Whether we are ORTE tool or not
      */
-ORTE_DECLSPEC    int orte_init(orte_proc_type_t flags);
+ORTE_DECLSPEC    int orte_init(int*pargc, char*** pargv, orte_proc_type_t flags);
 
     /**
      * Initialize parameters for ORTE.

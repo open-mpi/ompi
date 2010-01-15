@@ -10,7 +10,8 @@
 dist_pkgdata_DATA += base/help-rmcast-base.txt
 
 headers += \
-        base/base.h
+        base/base.h \
+        base/private.h
 
 libmca_rmcast_la_SOURCES += \
         base/rmcast_base_open.c

@@ -38,6 +38,7 @@
 #include "opal/class/opal_hash_table.h"
 #include "opal/util/output.h"
 #include "opal/event/event.h"
+#include "opal/threads/threads.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
@@ -75,6 +76,14 @@ BEGIN_C_DECLS
  */
 
 typedef enum {
+    MCA_BTL_OPENIB_TRANSPORT_IB,
+    MCA_BTL_OPENIB_TRANSPORT_IWARP,
+    MCA_BTL_OPENIB_TRANSPORT_RDMAOE,
+    MCA_BTL_OPENIB_TRANSPORT_UNKNOWN,
+    MCA_BTL_OPENIB_TRANSPORT_SIZE
+} mca_btl_openib_transport_type_t;
+
+typedef enum {
     MCA_BTL_OPENIB_PP_QP,
     MCA_BTL_OPENIB_SRQ_QP,
     MCA_BTL_OPENIB_XRC_QP
@@ -87,6 +96,12 @@ struct mca_btl_openib_pp_qp_info_t {
 
 struct mca_btl_openib_srq_qp_info_t {
     int32_t sd_max;
+    /* The init value for rd_curr_num variables of all SRQs */
+    int32_t rd_init;
+    /* The watermark, threshold - if the number of WQEs in SRQ is less then this value =>
+       the SRQ limit event (IBV_EVENT_SRQ_LIMIT_REACHED) will be generated on corresponding SRQ.
+       As result the maximal number of pre-posted WQEs on the SRQ will be increased */
+    int32_t srq_limit;
 }; typedef struct mca_btl_openib_srq_qp_info_t mca_btl_openib_srq_qp_info_t;
 
 struct mca_btl_openib_qp_info_t {
@@ -94,8 +109,6 @@ struct mca_btl_openib_qp_info_t {
     size_t size;
     int32_t rd_num;
     int32_t rd_low;
-    ompi_free_list_t send_free;     /**< free lists of send buffer descriptors */
-    ompi_free_list_t recv_free;     /**< free lists of receive buffer descriptors */
     union {
         mca_btl_openib_pp_qp_info_t pp_qp;
         mca_btl_openib_srq_qp_info_t srq_qp;
@@ -254,6 +267,10 @@ struct mca_btl_openib_component_t {
     ompi_free_list_t recv_user_free;
     /**< frags for coalesced massages */
     ompi_free_list_t send_free_coalesced;
+    /** Default receive queues */
+    char* default_recv_qps;
+    /** Whether we want a dynamically resizing srq, enabled by default */
+    bool enable_srq_resize;
 }; typedef struct mca_btl_openib_component_t mca_btl_openib_component_t;
 
 OMPI_MODULE_DECLSPEC extern mca_btl_openib_component_t mca_btl_openib_component;
@@ -272,6 +289,12 @@ typedef struct mca_btl_openib_modex_message_t {
     uint16_t apm_lid;
     /** The MTU used by this port */
     uint8_t mtu;
+    /** vendor id define device type and tuning */
+    uint32_t vendor_id;
+    /** vendor part id define device type and tuning */
+    uint32_t vendor_part_id;
+    /** Transport type of remote port */
+    uint8_t transport_type;
     /** Dummy field used to calculate the real length */
     uint8_t end;
 } mca_btl_openib_modex_message_t;
@@ -348,6 +371,25 @@ struct mca_btl_openib_module_srq_qp_t {
     int32_t sd_credits;  /* the max number of outstanding sends on a QP when using SRQ */
                          /*  i.e. the number of frags that  can be outstanding (down counter) */
     opal_list_t pending_frags[2];    /**< list of high/low prio frags */
+    /** The number of receive buffers that can be post in the current time.
+        The value may be increased in the IBV_EVENT_SRQ_LIMIT_REACHED
+        event handler. The value starts from (rd_num / 4) and increased up to rd_num */
+    int32_t rd_curr_num;
+    /** We post additional WQEs only if a number of WQEs (in specific SRQ) is less of this value.
+         The value increased together with rd_curr_num. The value is unique for every SRQ. */
+    int32_t rd_low_local;
+    /** The flag points if we want to get the 
+         IBV_EVENT_SRQ_LIMIT_REACHED events for dynamically resizing SRQ */
+    bool srq_limit_event_flag;
+    /**< In difference of the "--mca enable_srq_resize" parameter that says, if we want(or no)
+         to start with small num of pre-posted receive buffers (rd_curr_num) and to increase this number by needs
+         (the max of this value is rd_num – the whole size of SRQ), the "srq_limit_event_flag" says if we want to get limit event
+         from device if the defined srq limit was reached (signal to the main thread) and we put off this flag if the rd_curr_num
+         was increased up to rd_num.
+         In order to prevent lock/unlock operation in the critical path we prefer only put-on
+         the srq_limit_event_flag in asynchronous thread, because in this way we post receive buffers
+         in the main thread only and only after posting we set (if srq_limit_event_flag is true)
+         the limit for IBV_EVENT_SRQ_LIMIT_REACHED event. */
 }; typedef struct mca_btl_openib_module_srq_qp_t mca_btl_openib_module_srq_qp_t;
 
 struct mca_btl_openib_module_qp_t {
@@ -632,6 +674,18 @@ void mca_btl_openib_show_init_error(const char *file, int line,
  */
 
 int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl, const int qp);
+
+/**
+ * Get a transport name of btl by its transport type.
+ */
+
+const char* btl_openib_get_transport_name(mca_btl_openib_transport_type_t transport_type);
+
+/**
+ * Get a transport type of btl.
+ */
+
+mca_btl_openib_transport_type_t mca_btl_openib_get_transport_type(mca_btl_openib_module_t* openib_btl);
 
 static inline int qp_cq_prio(const int qp)
 {

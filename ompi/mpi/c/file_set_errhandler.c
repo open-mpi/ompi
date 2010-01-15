@@ -61,23 +61,17 @@ int MPI_File_set_errhandler( MPI_File file, MPI_Errhandler errhandler)
         }
     }
 
+    /* Prepare the new error handler */
+    OBJ_RETAIN(errhandler);
+
     /* Ditch the old errhandler, and decrement its refcount.  On 64
        bits environments we have to make sure the reading of the
        error_handler became atomic. */
     do {
         tmp = file->error_handler;
-    } while (!OPAL_ATOMIC_CMPSET(&(file->error_handler), tmp, tmp));
+    } while (!OPAL_ATOMIC_CMPSET(&(file->error_handler), tmp, errhandler));
     OBJ_RELEASE(tmp);
 
-    /* Now set the new errhandler and increase its refcount */
-    do {
-        file->error_handler = errhandler;
-    } while (!OPAL_ATOMIC_CMPSET(&(errhandler), file->error_handler, 
-                                 file->error_handler));
-    file->error_handler = errhandler;
-    OBJ_RETAIN(errhandler);
-
     /* All done */
-
     return MPI_SUCCESS;
 }

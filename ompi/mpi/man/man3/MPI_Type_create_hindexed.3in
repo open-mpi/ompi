@@ -9,7 +9,7 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Type_create_hindexed(int\fI count\fP, int \fIarray_of_blocklengths\fP,
+int MPI_Type_create_hindexed(int\fI count\fP, int \fIarray_of_blocklengths\fP[],
 	MPI_Aint \fIarray_of_displacements\fP[], MPI_Datatype \fIoldtype\fP,
 	MPI_Datatype *\fInewtype\fP)
 
@@ -25,7 +25,7 @@ MPI_TYPE_CREATE_HINDEXED(\fICOUNT\fP,\fI ARRAY_OF_BLOCKLENGTHS\fP,
 .nf
 #include <mpi.h>
 MPI::Datatype MPI::Datatype::Create_hindexed(int \fIcount\fP, 
-	const int \fIarray_of_blocklengths\fP,
+	const int \fIarray_of_blocklengths\fP[],
 	const MPI::Aint \fIarray_of_displacements\fP[]) const
 
 .SH INPUT PARAMETERS

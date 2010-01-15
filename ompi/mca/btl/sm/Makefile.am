@@ -2,13 +2,14 @@
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2005 The University of Tennessee and The University
+# Copyright (c) 2004-2009 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2009 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -17,6 +18,8 @@
 #
 
 EXTRA_DIST = .windows
+
+dist_pkgdata_DATA = help-mpi-btl-sm.txt
 
 libmca_btl_sm_la_sources = \
     btl_sm.c \
@@ -48,7 +51,9 @@ mca_btl_sm_la_SOURCES = $(libmca_btl_sm_la_sources)
 mca_btl_sm_la_LDFLAGS = -module -avoid-version
 mca_btl_sm_la_LIBADD = \
     $(top_ompi_builddir)/ompi/mca/common/sm/libmca_common_sm.la
+mca_btl_sm_la_CPPFLAGS = $(btl_sm_CPPFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_btl_sm_la_SOURCES = $(libmca_btl_sm_la_sources)
 libmca_btl_sm_la_LDFLAGS = -module -avoid-version
+libmca_btl_sm_la_CPPFLAGS = $(btl_sm_CPPFLAGS)

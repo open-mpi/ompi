@@ -36,6 +36,9 @@
 #include "opal/runtime/opal_cr.h"
 #include "opal/mca/pstat/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
+#if ORTE_ENABLE_BOOTSTRAP
+#include "opal/mca/sysinfo/base/base.h"
+#endif
 
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/routed/base/base.h"
@@ -57,10 +60,6 @@
 #include "orte/util/regex.h"
 #include "orte/util/show_help.h"
 #include "orte/mca/notifier/base/base.h"
-#if ORTE_ENABLE_MONITORING
-#include "orte/mca/sensor/base/base.h"
-#include "orte/mca/fddp/base/base.h"
-#endif
 #if ORTE_ENABLE_MULTICAST
 #include "orte/mca/rmcast/base/base.h"
 #endif
@@ -119,6 +118,20 @@ int orte_ess_base_orted_setup(char **hosts)
         goto error;
     }
     
+#if ORTE_ENABLE_BOOTSTRAP
+    /* open and setup the local resource discovery framework */
+    if (ORTE_SUCCESS != (ret = opal_sysinfo_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "opal_sysinfo_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = opal_sysinfo_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "opal_sysinfo_base_select";
+        goto error;
+    }
+#endif
+    
     /* some environments allow remote launches - e.g., ssh - so
      * open the PLM and select something -only- if we are given
      * a specific module to use
@@ -147,20 +160,6 @@ int orte_ess_base_orted_setup(char **hosts)
     }
 
     /* Setup the communication infrastructure */
-    
-    /* start with multicast */
-#if ORTE_ENABLE_MULTICAST
-    if (ORTE_SUCCESS != (ret = orte_rmcast_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rmcast_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_rmcast_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rmcast_base_select";
-        goto error;
-    }
-#endif
     
     /* Runtime Messaging Layer - this opens/selects the OOB as well */
     if (ORTE_SUCCESS != (ret = orte_rml_base_open())) {
@@ -198,6 +197,20 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "orte_grpcomm_base_select";
         goto error;
     }
+    
+    /* multicast */
+#if ORTE_ENABLE_MULTICAST
+    if (ORTE_SUCCESS != (ret = orte_rmcast_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rmcast_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_rmcast_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rmcast_base_select";
+        goto error;
+    }
+#endif
     
     /* Open/select the odls */
     if (ORTE_SUCCESS != (ret = orte_odls_base_open())) {
@@ -375,32 +388,6 @@ int orte_ess_base_orted_setup(char **hosts)
         goto error;
     }
     
-#if ORTE_ENABLE_MONITORING
-    /* setup the sensors */
-    if (ORTE_SUCCESS != (ret = orte_sensor_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_sensor_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_sensor_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_sensor_select";
-        goto error;
-    }
-    
-    /* setup the fddp */
-    if (ORTE_SUCCESS != (ret = orte_fddp_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_sensor_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_fddp_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_sensor_select";
-        goto error;
-    }
-#endif
-
     return ORTE_SUCCESS;
     
 error:
@@ -428,13 +415,6 @@ int orte_ess_base_orted_finalize(void)
         orte_grpcomm.onesided_barrier();
     }
     
-#if ORTE_ENABLE_MONITORING
-    /* finalize the sensors */
-    orte_sensor_base_close();
-    /* finalize the fddp */
-    orte_fddp_base_close();
-#endif
-
     orte_notifier_base_close();
     
     orte_cr_finalize();
@@ -476,6 +456,12 @@ int orte_ess_base_orted_finalize(void)
     
     /* cleanup any lingering session directories */
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
+    
+    /* handle the orted-specific OPAL stuff */
+#if ORTE_ENABLE_BOOTSTRAP
+    opal_sysinfo_base_close();
+#endif
+    opal_pstat_base_close();
     
     return ORTE_SUCCESS;    
 }

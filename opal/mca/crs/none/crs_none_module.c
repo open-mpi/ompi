@@ -95,6 +95,12 @@ int opal_crs_none_restart(opal_crs_base_snapshot_t *base_snapshot, bool spawn_ch
     *child_pid = getpid();
 
     opal_crs_base_metadata_read_token(base_snapshot->local_location, CRS_METADATA_CONTEXT, &tmp_argv);
+    if( NULL == tmp_argv ) {
+        opal_output(opal_crs_base_output,
+                    "crs:none: none_restart: Error: Failed to read the %s token from the local checkpoint in %s",
+                    CRS_METADATA_CONTEXT, base_snapshot->local_location);
+        return OPAL_ERROR;
+    }
 
     if( opal_argv_count(tmp_argv) <= 0 ) {
         opal_output_verbose(10, opal_crs_base_output,

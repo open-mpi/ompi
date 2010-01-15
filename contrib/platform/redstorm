@@ -1,4 +1,4 @@
-enable_io_romio=yes
+enable_visibility=no
 enable_static=yes
 enable_shared=no
 with_threads=no

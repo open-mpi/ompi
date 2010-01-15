@@ -65,6 +65,7 @@
 #endif
 
 static long vt_node_id = 0;
+static char* vt_node_name = NULL;
 static char* vt_exec = NULL;
 
 /* platform specific initialization */
@@ -110,20 +111,36 @@ void vt_pform_init() {
   vt_time_base = vt_metric_real_usec();
 #endif
 
+  /* get unique numeric/string SMP-node identifier */
 #ifdef __LIBCATAMOUNT__
-  vt_node_id = _my_pnid;
+  vt_node_id = (long)_my_pnid;
+  if (asprintf(&vt_node_name, "node%ld", vt_node_id) == -1)
+    vt_error();
 #else
   {
-    char buf[16];
+    char buf[256];
     ssize_t bytes;
-    int fd = open(VT_PROCDIR"cray_xt/nid", O_RDONLY);
+    int fd;
+
+    /* get numeric identifier */
+    fd = open(VT_PROCDIR"cray_xt/nid", O_RDONLY);
     if (fd < 0) vt_error_msg("Cannot open file "VT_PROCDIR"cray_xt/nid: %s",
-			     strerror(errno));
-    bytes = read(fd, buf, 16);
+      strerror(errno));
+    bytes = read(fd, buf, 256);
     if (bytes <= 0) vt_error_msg("Cannot read file "VT_PROCDIR"cray_xt/nid: %s",
-				 strerror(errno));
+      strerror(errno));
     close(fd);
-    vt_node_id = atoi(buf);
+    vt_node_id = atol(buf);
+    
+    /* get string identifier */
+    fd = open(VT_PROCDIR"cray_xt/cname", O_RDONLY);
+    if (fd < 0) vt_error_msg("Cannot open file "VT_PROCDIR"cray_xt/cname: %s",
+      strerror(errno));
+    bytes = read(fd, buf, 256);
+    if (bytes <= 0) vt_error_msg("Cannot read file "VT_PROCDIR"cray_xt/cname: %s",
+      strerror(errno));
+    close(fd);
+    vt_node_name = strdup(buf);
   }
 #endif
 
@@ -207,9 +224,7 @@ long vt_pform_node_id() {
 
 /* unique string SMP-node identifier */
 char* vt_pform_node_name() {
-  static char node[16];
-  sprintf(node, "node%d", vt_node_id);
-  return node;              
+  return vt_node_name;
 }
 
 /* number of CPUs */

@@ -363,103 +363,60 @@ int orte_session_dir(bool create,
                      char *batchid, orte_process_name_t *proc)
 {
     char *fulldirpath = NULL,
-        *frontend     = NULL,
-        *sav          = NULL;
-    int return_code = ORTE_SUCCESS, rtn;
-    /* This indicates if the prefix was set, and so if it fails then we
-     * should try with the default prefixes.*/
-    bool dbl_check_prefix = false;
-
-    if( NULL != prefix)
-        dbl_check_prefix = true;
-
- try_again:
-    /*
-     * If the first attempt at the path creation failed, try with a null
-     * prefix. unless the original prefix was null, then we fail.
-     */
-    if(!dbl_check_prefix && /* an indicator that we are trying a second time */
-       NULL != prefix) {
-        free(prefix);
-        prefix = NULL;
+    *frontend     = NULL,
+    *sav          = NULL;
+    int rc = ORTE_SUCCESS;
+    char *local_prefix = NULL;
+    
+    /* use the specified prefix, if one was given */
+    if (NULL != prefix) {
+        local_prefix = strdup(prefix);
     }
     
     /*
      * Get the session directory full name
-     * First try it with the specified prefix.
      */
-    if( ORTE_SUCCESS != ( rtn = orte_session_dir_get_name(&fulldirpath, 
-                                                          &prefix,
-                                                          &frontend,
-                                                          hostid, 
-                                                          batchid, proc) ) ) {
-        if (ORTE_ERR_FATAL == rtn) {
-            /* this indicates we definitely need to abort, so
-             * don't try the NULL prefix
-             */
-            return_code = ORTE_ERR_SILENT;
+    if( ORTE_SUCCESS != ( rc = orte_session_dir_get_name(&fulldirpath, 
+                                                         &local_prefix,
+                                                         &frontend,
+                                                         hostid, 
+                                                         batchid, proc) ) ) {
+        if (ORTE_ERR_FATAL == rc) {
+            /* this indicates we should abort quietly */
+            rc = ORTE_ERR_SILENT;
             goto cleanup;
         }
-        return_code = rtn;
-        /*
-         * If the first attempt at the path creation failed, try with a null
-         * prefix. unless the original prefix was null, then we fail :(
-         */
-        if(dbl_check_prefix) {
-            dbl_check_prefix = false;
-            goto try_again;
-        }
-        else {
-            ORTE_ERROR_LOG(return_code);
-            goto cleanup;
-        }
+        /* otherwise, bark a little first */
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
     }
-
+    
     /*
      * Now that we have the full path, go ahead and create it if necessary
      */
     if( create ) {
-        if( ORTE_SUCCESS != (rtn = orte_create_dir(fulldirpath) ) ) {
-            return_code = rtn;
-            
-            if(dbl_check_prefix) {
-                dbl_check_prefix = false;
-                goto try_again;
-            }
-            else {
-                ORTE_ERROR_LOG(return_code);
-                goto cleanup;
-            }
+        if( ORTE_SUCCESS != (rc = orte_create_dir(fulldirpath) ) ) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
         }
     }
     /*
      * if we are not creating, then just verify that the path is OK
      */
     else {
-        if( ORTE_SUCCESS != (rtn = opal_os_dirpath_access(fulldirpath, 0) )) {
-            /* It is not valid so we give up and return an error */
-            return_code = rtn;
-            
-            if(dbl_check_prefix) {
-                dbl_check_prefix = false;
-                goto try_again;
+        if( ORTE_SUCCESS != (rc = opal_os_dirpath_access(fulldirpath, 0) )) {
+            /* it is okay for the path not to be found - don't error
+             * log that case, but do error log others
+             */
+            if (ORTE_ERR_NOT_FOUND != rc) {
+                ORTE_ERROR_LOG(rc);
             }
-            else {
-                /* it is okay for the path not to be found - don't error
-                 * log that case, but do error log others
-                 */
-                if (ORTE_ERR_NOT_FOUND != return_code) {
-                    ORTE_ERROR_LOG(return_code);
-                }
-                goto cleanup;
-            }
+            goto cleanup;
         }
     }
-
-    return_code = ORTE_SUCCESS;
-
+    
     /*
-     * If we are creating the directory tree, the overwrite the
+     * If we are creating the directory tree, then force overwrite of the
      * global structure fields
      */
     if (create) {
@@ -472,16 +429,15 @@ int orte_session_dir(bool create,
     	    orte_process_info.top_session_dir = NULL;
     	}
     }
-
+    
     /* 
      * Update some of the global structures if they are empty
      */
     if (NULL == orte_process_info.tmpdir_base)
-        orte_process_info.tmpdir_base = strdup(prefix);
-
+        orte_process_info.tmpdir_base = strdup(local_prefix);
+    
     if (NULL == orte_process_info.top_session_dir)
         orte_process_info.top_session_dir = strdup(frontend);
-    
 
     /*
      * Set the process session directory
@@ -496,14 +452,14 @@ int orte_session_dir(bool create,
     	if (NULL == orte_process_info.proc_session_dir) {
     	    orte_process_info.proc_session_dir = strdup(fulldirpath);
     	}
-
+        
         /* Strip off last part of directory structure */
         sav = opal_dirname(fulldirpath);
         free(fulldirpath);
         fulldirpath = sav;
         sav = NULL;
     }
-
+    
     /*
      * Set the job session directory
      */
@@ -518,7 +474,7 @@ int orte_session_dir(bool create,
     	    orte_process_info.job_session_dir = strdup(fulldirpath);
     	}
     }
-
+    
     if (orte_debug_flag) {
     	opal_output(0, "procdir: %s", 
                     OMPI_PRINTF_FIX_STRING(orte_process_info.proc_session_dir));
@@ -529,14 +485,14 @@ int orte_session_dir(bool create,
     	opal_output(0, "tmp: %s", 
                     OMPI_PRINTF_FIX_STRING(orte_process_info.tmpdir_base));
     }
-
- cleanup:
+    
+cleanup:
     if(NULL != fulldirpath)
         free(fulldirpath);
     if(NULL != frontend)
         free(frontend);
-
-    return return_code;
+    
+    return rc;
 }
 
 /*

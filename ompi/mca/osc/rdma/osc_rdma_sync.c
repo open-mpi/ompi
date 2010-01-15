@@ -601,7 +601,7 @@ ompi_osc_rdma_module_unlock(int target,
     while (0 != module->m_num_pending_out) {
         opal_condition_wait(&module->m_cond, &module->m_lock);
     }
-    OPAL_THREAD_LOCK(&module->m_lock);
+    OPAL_THREAD_UNLOCK(&module->m_lock);
 
     /* set our mode on the window */
     ompi_win_remove_mode(win, OMPI_WIN_ACCESS_EPOCH | OMPI_WIN_LOCK_ACCESS);

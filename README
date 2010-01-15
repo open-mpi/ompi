@@ -8,7 +8,7 @@ Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2007 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006-2007 Voltaire, Inc. All rights reserved.
 Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 Copyright (c) 2007      Myricom, Inc.  All rights reserved.
@@ -54,7 +54,7 @@ Much, much more information is also available in the Open MPI FAQ:
 
 ===========================================================================
 
-Detailed Open MPI v1.3 Feature List:
+Detailed Open MPI v1.3 / v1.4 Feature List:
 
   o Open MPI RunTime Environment (ORTE) improvements
     - General robustness improvements
@@ -148,13 +148,17 @@ Known issues
   o MPI_REDUCE_SCATTER does not work with counts of 0.
     https://svn.open-mpi.org/trac/ompi/ticket/1559
 
+  o Processes that were spawned via MPI_COMM_SPAWN[_MULTIPLE] cannot
+    themselves invoke MPI_COMM_SPAWN[_MULTIPLE].  This has been fixed
+    in the Open MPI v1.5 series.
+
   o Please also see the Open MPI bug tracker for bugs beyond this release.
     https://svn.open-mpi.org/trac/ompi/report
 
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (10 July 2009):
+base as of this writing (14 January 2010):
 
 General notes
 -------------
@@ -192,7 +196,7 @@ General notes
   - PBS Pro, Open PBS, Torque
   - Platform LSF (v7.0.2 and later)
   - SLURM
-  - XGrid (known to be broken in 1.3 through 1.3.2)
+  - XGrid (known to be broken in the 1.3 and 1.4 series)
   - Cray XT-3 and XT-4
   - Sun Grid Engine (SGE) 6.1, 6.2 and open source Grid Engine
   - Microsoft Windows CCP (Microsoft Windows server 2003 and 2008)
@@ -211,8 +215,7 @@ General notes
 - Other systems have been lightly (but not fully tested):
   - Other 64 bit platforms (e.g., Linux on PPC64)
   - Microsoft Windows CCP (Microsoft Windows server 2003 and 2008);
-    more testing and support is expected later in the Open MPI v1.3.x
-    series.  See the README.WINDOWS file.
+    see the README.WINDOWS file.
 
 Compiler Notes
 --------------
@@ -450,10 +453,10 @@ Network Support
   (first released as part of OFED v1.2), per restrictions imposed by
   the OFED network stack.
 
-- There are two MPI network models available: "ob1" and "cm".  "ob1"
-  uses BTL ("Byte Transfer Layer") components for each supported
-  network.  "cm" uses MTL ("Matching Tranport Layer") components for
-  each supported network.
+- There are three MPI network models available: "ob1", "csum", and
+  "cm".  "ob1" and "csum" use BTL ("Byte Transfer Layer") components
+  for each supported network.  "cm" uses MTL ("Matching Tranport
+  Layer") components for each supported network.
 
   - "ob1" supports a variety of networks that can be used in
     combination with each other (per OS constraints; e.g., there are
@@ -461,7 +464,7 @@ Network Support
     well together):
     - OpenFabrics: InfiniBand and iWARP
     - Loopback (send-to-self)
-    - Myrinet: GM and MX
+    - Myrinet: GM and MX (including Open-MX)
     - Portals
     - Quadrics Elan
     - Shared memory
@@ -469,53 +472,71 @@ Network Support
     - SCTP
     - uDAPL
 
+  - "csum" is exactly the same as "ob1", except that it performs
+    additional data integrity checks to ensure that the received data
+    is intact (vs. trusting the underlying network to deliver the data
+    correctly).  csum supports all the same networks as ob1, but there
+    is a performance penalty for the additional integrity checks.
+
   - "cm" supports a smaller number of networks (and they cannot be
     used together), but may provide better better overall MPI
     performance:
-    - Myrinet MX (not GM)
+    - Myrinet MX (including Open-MX, but not GM)
     - InfiniPath PSM
     - Portals
 
   Open MPI will, by default, choose to use "cm" when the InfiniPath
-  PSM MTL can be used.  Otherwise, OB1 will be used and the
-  corresponding BTLs will be selected.  Users can force the use of ob1
-  or cm if desired by setting the "pml" MCA parameter at run-time:
+  PSM MTL can be used.  Otherwise, "ob1" will be used and the
+  corresponding BTLs will be selected.  "csum" will never be selected
+  by default.  Users can force the use of ob1 or cm if desired by
+  setting the "pml" MCA parameter at run-time:
 
     shell$ mpirun --mca pml ob1 ...
     or
+    shell$ mpirun --mca pml csum ...
+    or
     shell$ mpirun --mca pml cm ...
 
-- Myrinet MX support is shared between the 2 internal devices, the MTL
-  and the BTL.  The design of the BTL interface in Open MPI assumes
-  that only naive one-sided communication capabilities are provided by
-  the low level communication layers.  However, modern communication
-  layers such as Myrinet MX, InfiniPath PSM, or Portals, natively
-  implement highly-optimized two-sided communication semantics.  To
-  leverage these capabilities, Open MPI provides the "cm" PML and
-  corresponding MTL components to transfer messages rather than bytes.
-  The MTL interface implements a shorter code path and lets the
-  low-level network library decide which protocol to use (depending on
-  issues such as message length, internal resources and other
-  parameters specific to the underlying interconnect).  However, Open
-  MPI cannot currently use multiple MTL modules at once.  In the case
-  of the MX MTL, process loopback and on-node shared memory
-  communications are provided by the MX library.  Moreover, the
-  current MX MTL does not support message pipelining resulting in
-  lower performances in case of non-contiguous data-types.
+- Myrinet MX (and Open-MX) support is shared between the 2 internal
+  devices, the MTL and the BTL.  The design of the BTL interface in
+  Open MPI assumes that only naive one-sided communication
+  capabilities are provided by the low level communication layers.
+  However, modern communication layers such as Myrinet MX, InfiniPath
+  PSM, or Portals, natively implement highly-optimized two-sided
+  communication semantics.  To leverage these capabilities, Open MPI
+  provides the "cm" PML and corresponding MTL components to transfer
+  messages rather than bytes.  The MTL interface implements a shorter
+  code path and lets the low-level network library decide which
+  protocol to use (depending on issues such as message length,
+  internal resources and other parameters specific to the underlying
+  interconnect).  However, Open MPI cannot currently use multiple MTL
+  modules at once.  In the case of the MX MTL, process loopback and
+  on-node shared memory communications are provided by the MX library.
+  Moreover, the current MX MTL does not support message pipelining
+  resulting in lower performances in case of non-contiguous
+  data-types.
 
-  The "ob1" PML and BTL components use Open MPI's internal on-node
-  shared memory and process loopback devices for high performance.
-  The BTL interface allows multiple devices to be used simultaneously.
-  For the MX BTL it is recommended that the first segment (which is as
-  a threshold between the eager and the rendezvous protocol) should
-  always be at most 4KB, but there is no further restriction on the
-  size of subsequent fragments.
+  The "ob1" and "csum" PMLs and BTL components use Open MPI's internal
+  on-node shared memory and process loopback devices for high
+  performance.  The BTL interface allows multiple devices to be used
+  simultaneously.  For the MX BTL it is recommended that the first
+  segment (which is as a threshold between the eager and the
+  rendezvous protocol) should always be at most 4KB, but there is no
+  further restriction on the size of subsequent fragments.
 
   The MX MTL is recommended in the common case for best performance on
   10G hardware when most of the data transfers cover contiguous memory
   layouts.  The MX BTL is recommended in all other cases, such as when
   using multiple interconnects at the same time (including TCP), or
   transferring non contiguous data-types.
+
+- Linux "knem" support is used when the "sm" (shared memory) BTL is
+  compiled with knem support (see the --with-knem configure option)
+  and the knem Linux module is loaded in the running kernel.  If the
+  knem Linux kernel module is not loaded, the knem support is (by
+  default) silently deactivated during Open MPI jobs.
+
+  See http://runtime.bordeaux.inria.fr/knem/ for details on Knem.
 
 ===========================================================================
 
@@ -565,12 +586,26 @@ for a full list); a summary of the more commonly used ones follows:
   look in <gm directory>/lib and <gm directory>/lib64, which covers
   most cases.  This option is only needed for special configurations.
 
+--with-knem=<directory>
+  Specify the directory where the knem libraries and header files are
+  located.  This option is generally only necessary if the kenm headers
+  and libraries are not in default compiler/linker search paths.
+
+  kenm is a Linux kernel module that allows direct process-to-process
+  memory copies (optionally using hardware offload), potentially
+  increasing bandwidth for large messages sent between messages on the
+  same server.  See http://runtime.bordeaux.inria.fr/knem/ for
+  details.
+
 --with-mx=<directory>
   Specify the directory where the MX libraries and header files are
   located.  This option is generally only necessary if the MX headers
   and libraries are not in default compiler/linker search paths.
 
-  MX is the support library for Myrinet-based networks.
+  MX is the support library for Myrinet-based networks.  An open
+  source software package named Open-MX provides the same
+  functionality on Ethernet-based clusters (Open-MX can provide
+  MPI performance improvements compared to TCP messaging).
 
 --with-mx-libdir=<directory>
   Look in directory for the MX libraries.  By default, Open MPI will
@@ -1059,8 +1094,8 @@ pubsub    - MPI-2 publish/subscribe management
 rcache    - Memory registration cache
 topo      - MPI topology routines
 
-Back-end run-time environment component frameworks:
----------------------------------------------------
+Back-end run-time environment (RTE) component frameworks:
+---------------------------------------------------------
 
 errmgr    - RTE error manager
 ess       - RTE environment-specfic services
@@ -1090,6 +1125,7 @@ memcpy      - Memopy copy support
 memory      - Memory management hooks
 paffinity   - Processor affinity
 pstat       - Process status
+sysinfo     - Basic system information
 timer       - High-resolution timers
 
 ---------------------------------------------------------------------------
@@ -1099,7 +1135,7 @@ run-time.  For example, the btl framework is used by the MPI layer to
 send bytes across different types underlying networks.  The tcp btl,
 for example, sends messages across TCP-based networks; the openib btl
 sends messages across OpenFabrics-based networks; the MX btl sends
-messages across Myrinet networks.
+messages across Myrinet MX / Open-MX networks.
 
 Each component typically has some tunable parameters that can be
 changed at run-time.  Use the ompi_info command to check a component
@@ -1147,6 +1183,37 @@ These locations are checked in order.  For example, a parameter value
 passed on the mpirun command line will override an environment
 variable; an environment variable will override the system-wide
 defaults.
+
+Each component typically activates itself when relavant.  For example,
+the MX component will detect that MX devices are present and will
+automatically be used for MPI communications.  The SLURM component
+will automatically detect when running inside a SLURM job and activate
+itself.  And so on.
+
+Components can be manually activated or deactivated if necessary, of
+course.  The most common components that are manually activated,
+deactivated, or tuned are the "BTL" components -- components that are
+used for MPI point-to-point communications on many types common
+networks. 
+
+For example, to *only* activate the TCP and "self" (process loopback)
+components are used for MPI communications, specify them in a
+comma-delimited list to the "btl" MCA parameter:
+
+   shell$ mpirun --mca btl tcp,self hello_world_mpi
+
+To add shared memory support, add "sm" into the command-delimited list
+(list order does not matter):
+    
+   shell$ mpirun --mca btl tcp,sm,self hello_world_mpi
+
+To specifically deactivate a specific component, the comma-delimited
+list can be prepended with a "^" to negate it:
+
+   shell$ mpirun --mca btl ^tcp hello_mpi_world
+
+The above command will use any other BTL component other than the tcp
+component.
 
 ===========================================================================
 

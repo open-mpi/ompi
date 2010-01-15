@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2006 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2007-2008 Mellanox Technologies. All rights reserved.
+# Copyright (c) 2007-2009 Mellanox Technologies. All rights reserved.
 # Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -167,6 +167,13 @@ peer to which it was connected:
 
 You may need to consult with your system administrator to get this
 problem fixed.
+#
+[SRQ not found]
+Open MPI tried to access a shared receive queue (SRQ) that was not found.
+This should not happen, and is a fatal error.  Your MPI job will now abort.
+
+    Local host:   %s
+    Local device: %s
 #
 [srq rnr retry exceeded]
 The OpenFabrics "receiver not ready" retry count on a shared receive
@@ -386,21 +393,26 @@ WARNING: An invalid shared receive queue specification was detected as
 part of the btl_openib_receive_queues MCA parameter.  The OpenFabrics
 (openib) BTL will therefore be deactivated for this run.
 
-Shared receive queues can take between 2 and 4 parameters:
+Shared receive queues can take between 2 and 6 parameters:
 
   1. Buffer size in bytes (mandatory)
   2. Number of buffers (mandatory)
   3. Low buffer count watermark (optional; defaults to (num_buffers / 2))
   4. Maximum number of outstanding sends a sender can have (optional;
      defaults to (low_watermark / 4)
+  5. Start value of number of receive buffers that will be pre-posted (optional; defaults to (num_buffers / 4))
+  6. Event limit buffer count watermark (optional; defaults to (3/16 of start value of buffers number))
 
-  Example: S,1024,256,128,32
+  Example: S,1024,256,128,32,32,8
   - 1024 byte buffers
   - 256 buffers to receive incoming MPI messages
   - When the number of available buffers reaches 128, re-post 128 more
     buffers to reach a total of 256
   - A sender will not send to a peer unless it has less than 32
     outstanding sends to that peer.
+  - 32 receive buffers will be preposted.
+  - When the number of unused shared receive buffers reaches 8, more
+    buffers (32 in this case) will be posted.
 
   Local host: %s
   Bad queue specification: %s
@@ -409,6 +421,24 @@ Shared receive queues can take between 2 and 4 parameters:
 WARNING: The number of buffers for a queue pair specified via the
 btl_openib_receive_queues MCA parameter must be greater than the low
 buffer count watermark.  The OpenFabrics (openib) BTL will therefore
+be deactivated for this run.
+
+  Local host: %s
+  Bad queue specification: %s
+#
+[rd_num must be >= rd_init]
+WARNING: The number of buffers for a queue pair specified via the
+btl_openib_receive_queues MCA parameter (parameter #2) must be
+greater or equal to the initial SRQ size (parameter #5).
+The OpenFabrics (openib) BTL will therefore be deactivated for this run.
+
+  Local host: %s
+  Bad queue specification: %s
+#
+[srq_limit must be > rd_num]
+WARNING: The number of buffers for a queue pair specified via the
+btl_openib_receive_queues MCA parameter (parameter #2) must be greater than the limit
+buffer count (parameter #6).  The OpenFabrics (openib) BTL will therefore
 be deactivated for this run.
 
   Local host: %s
@@ -590,3 +620,33 @@ value will be ignored.
   Local host: %s
   Value:      %s
   Message:    %s
+#
+[unsupported queues configuration]
+The Open MPI receive queue configuration for the OpenFabrics devices
+on two nodes are incompatible, meaning that MPI processes on two
+specific nodes were unable to communicate with each other.  This
+generally happens when you are using OpenFabrics devices from
+different vendors on the same network.  You should be able to use the
+mca_btl_openib_receive_queues MCA parameter to set a uniform receive
+queue configuration for all the devices in the MPI job, and therefore
+be able to run successfully.
+
+  Local host:       %s
+  Local adapter:    %s (vendor 0x%x, part ID %d)
+  Local queues:     %s
+  
+  Remote host:      %s
+  Remote adapter:   (vendor 0x%x, part ID %d)
+  Remote queues:    %s
+#
+[conflicting transport types]
+Open MPI detected two different OpenFabrics transport types in the same Infiniband network.
+Such mixed network trasport configuration is not supported by Open MPI.
+
+  Local host:            %s
+  Local adapter:         %s (vendor 0x%x, part ID %d)
+  Local transport type:  %s
+  
+  Remote host:           %s
+  Remote Adapter:        (vendor 0x%x, part ID %d)
+  Remote transport type: %s

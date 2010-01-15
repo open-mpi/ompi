@@ -57,6 +57,7 @@ typedef uint16_t orte_proc_state_t;
 #define ORTE_PROC_STATE_FAILED_TO_START     0x0200  /* process failed to start */
 #define ORTE_PROC_STATE_ABORTED_BY_SIG      0x0400  /* process aborted by signal */
 #define ORTE_PROC_STATE_TERM_WO_SYNC        0x0800  /* process exit'd w/o required sync */
+#define ORTE_PROC_STATE_KILLED_BY_CMD       0x1000  /* process was killed by ORTE cmd */
 
 
 /*
@@ -83,11 +84,12 @@ typedef uint16_t orte_job_state_t;
 #define ORTE_JOB_STATE_FAILED_TO_START      0x0200  /* at least one process failed to start */
 #define ORTE_JOB_STATE_ABORTED_BY_SIG       0x0400  /* job was killed by a signal */
 #define ORTE_JOB_STATE_ABORTED_WO_SYNC      0x0800  /* job was aborted because proc exit'd w/o required sync */
+#define ORTE_JOB_STATE_KILLED_BY_CMD        0x1000  /* job was killed by ORTE cmd */
 
 /* the job never even attempted to launch due to an error earlier in the
  * launch procedure
  */
-#define ORTE_JOB_NEVER_LAUNCHED             0x1000
+#define ORTE_JOB_NEVER_LAUNCHED             0x2000
 
 /* the processes in this job have been ordered to "die", but may not have completed it yet. Don't order it again */
 #define ORTE_JOB_STATE_ABORT_ORDERED        0x8000

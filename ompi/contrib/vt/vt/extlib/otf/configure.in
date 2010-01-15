@@ -9,6 +9,9 @@ AM_INIT_AUTOMAKE(OTF, 1.3.12)
 AC_CONFIG_SRCDIR([config.h.in])
 AM_CONFIG_HEADER(config.h)
 
+# Open MPI: If Automake supports silent rules, enable them.
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_CC

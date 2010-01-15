@@ -26,6 +26,7 @@ typedef int32_t orte_rmcast_channel_t;
 #define ORTE_RMCAST_CHANNEL_T   OPAL_INT32
 
 /* ORTE IP multicast channels */
+#define ORTE_RMCAST_GROUP_OUTPUT_CHANNEL   -2
 #define ORTE_RMCAST_WILDCARD_CHANNEL       -1
 #define ORTE_RMCAST_INVALID_CHANNEL         0
 #define ORTE_RMCAST_SYS_CHANNEL             1
@@ -47,8 +48,11 @@ typedef int32_t orte_rmcast_tag_t;
 #define ORTE_RMCAST_TAG_WILDCARD    -1
 #define ORTE_RMCAST_TAG_INVALID      0
 #define ORTE_RMCAST_TAG_BOOTSTRAP    1
+#define ORTE_RMCAST_TAG_ANNOUNCE     2
+#define ORTE_RMCAST_TAG_OUTPUT       3
+#define ORTE_RMCAST_TAG_PS           4
 
-/* starting value for dynamicall assignable tags */
+/* starting value for dynamically assignable tags */
 #define ORTE_RMCAST_TAG_DYNAMIC     100
 
 
@@ -56,6 +60,12 @@ typedef int32_t orte_rmcast_tag_t;
 typedef uint8_t orte_rmcast_flag_t;
 #define ORTE_RMCAST_NON_PERSISTENT  0x00
 #define ORTE_RMCAST_PERSISTENT      0x01
+
+/* message sequence number */
+typedef uint32_t orte_rmcast_seq_t;
+#define ORTE_RMCAST_SEQ_MAX         UINT32_MAX-1
+#define ORTE_RMCAST_SEQ_INVALID     UINT32_MAX
+#define ORTE_RMCAST_SEQ_T   OPAL_UINT32
 
 END_C_DECLS
 

@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2008      Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2008-2009 Mellanox Technologies.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -120,7 +120,7 @@ static int oob_component_query(mca_btl_openib_module_t *btl,
        transport_type member, then we must be < OFED v1.2, and
        therefore we must be IB. */   
 #if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
-    if (IBV_TRANSPORT_IB != btl->device->ib_dev->transport_type) {
+    if (BTL_OPENIB_CONNECT_BASE_CHECK_IF_NOT_IB(btl)) {
         opal_output_verbose(5, mca_btl_base_output,
                             "openib BTL: oob CPC only supported on InfiniBand; skipped on  %s:%d",
                             ibv_get_device_name(btl->device->ib_dev),

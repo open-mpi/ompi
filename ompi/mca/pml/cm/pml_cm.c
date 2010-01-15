@@ -142,7 +142,7 @@ mca_pml_cm_add_procs(struct ompi_proc_t** procs, size_t nprocs)
     }
 
     for (i = 0 ; i < nprocs ; ++i) {
-        procs[i]->proc_pml = (struct mca_pml_base_endpoint_t*) endpoints[i];
+        procs[i]->proc_pml = (struct mca_pml_endpoint_t*) endpoints[i];
     }
 
     free(endpoints);

@@ -29,12 +29,12 @@ version 1.0.
 Trunk (not on release branches yet)
 -----------------------------------
 
-- Added Cray Compute Node Linux (CNL) and ALPS Support.
-  --> Expected: ???
-
 1.5
 ---
 
+- Added "knem" support (direct process-to-process copying for shared
+  memory message passing).  See http://runtime.bordeaux.inria.fr/knem/
+  and the README file for more details.
 - Removed the libopenmpi_malloc library (added in the v1.3 series)
   since it is no longer necessary
 - Add several notifier plugins (generally used when Open MPI detects
@@ -46,12 +46,83 @@ Trunk (not on release branches yet)
   - command to execute arbitrary commands (e.g., run a script).
 
 
-1.3.4 (expected)
+1.4.1 (expected)
 ----------------
 
+- Update to PLPA v1.3.2, addressing a licensing issue identified by
+  the Fedora project.  See
+  https://svn.open-mpi.org/trac/plpa/changeset/262 for details.
+- Add check for malformed checkpoint metadata files (Ticket #2141).
+- Fix error path in ompi-checkpoint when not able to checkpoint
+  (Ticket #2138).
+- Cleanup component release logic when selecting checkpoint/restart
+  enabled components (Ticket #2135).
+- Fixed VT node name detection for Cray XT platforms, and fixed some
+  broken VT documentation files.
+- Fix a possible race condition in tearing down RDMA CM-based
+  connections.
+- Relax error checking on MPI_GRAPH_CREATE.  Thanks to David Singleton
+  for pointing out the issue.
+- Fix a shared memory "hang" problem that occurred on x86/x86_64
+  platforms when used with the GNU >=4.4.x compiler series.
+- Add fix for Libtool 2.2.6b's problems with the PGI 10.x compiler
+  suite.  Inspired directly from the upstream Libtool patches that fix
+  the issue (but we need something working before the next Libtool
+  release).
+
+
+1.4
+---
+
+The *only* change in the Open MPI v1.4 release (as compared to v1.3.4)
+was to update the embedded version of Libtool's libltdl to address a
+potential security vulnerability.  Specifically: Open MPI v1.3.4 was
+created with GNU Libtool 2.2.6a; Open MPI v1.4 was created with GNU
+Libtool 2.2.6b.  There are no other changes between Open MPI v1.3.4
+and v1.4.
+
+
+1.3.4
+-----
+
+- Fix some issues in OMPI's SRPM with regard to shell_scripts_basename
+  and its use with mpi-selector.  Thanks to Bill Johnstone for
+  pointing out the problem.
+- Added many new MPI job process affinity options to mpirun.  See the
+  newly-updated mpirun(1) man page for details.
+- Several updates to mpirun's XML output.
+- Update to fix a few Valgrind warnings with regards to the ptmalloc2
+  allocator and Open MPI's use of PLPA.
+- Many updates and fixes to the (non-default) "sm" collective
+  component (i.e., native shared memory MPI collective operations).
+- Updates and fixes to some MPI_COMM_SPAWN_MULTIPLE corner cases.
+- Fix some internal copying functions in Open MPI's use of PLPA.
+- Correct some SLURM nodelist parsing logic that may have interfered
+  with large jobs.  Additionally, per advice from the SLURM team,
+  change the environment variable that we use for obtaining the job's
+  allocation.
+- Revert to an older, safer (but slower) communicator ID allocation
+  algorithm. 
+- Fixed minimum distance finding for OpenFabrics devices in the openib
+  BTL.
+- Relax the parameter checking MPI_CART_CREATE a bit.
 - Fix MPI_COMM_SPAWN[_MULTIPLE] to only error-check the info arguments
   on the root process.  Thanks to Federico Golfre Andreasi for
   reporting the problem.
+- Fixed some BLCR configure issues.
+- Fixed a potential deadlock when the openib BTL was used with
+  MPI_THREAD_MULTIPLE.
+- Fixed dynamic rules selection for the "tuned" coll component.
+- Added a launch progress meter to mpirun (useful for large jobs; set
+  the orte_report_launch_progress MCA parameter to 1 to see it).
+- Reduced the number of file descriptors consumed by each MPI process.
+- Add new device IDs for Chelsio T3 RNICs to the openib BTL config file.
+- Fix some CRS self component issues.
+- Added some MCA parameters to the PSM MTL to tune its run-time
+  behavior.
+- Fix some VT issues with MPI_BOTTOM/MPI_IN_PLACE.
+- Man page updates from the Debain Open MPI package maintainers.
+- Add cycle counter support for the Alpha and Sparc platforms.
 - Pass visibility flags to libltdl's configure script, resulting in
   those symbols being hidden.  This appears to mainly solve the
   problem of applications attempting to use different versions of
@@ -77,7 +148,7 @@ Trunk (not on release branches yet)
   to barrier every 1,000th collective.
 - Various fixes for the IBM XL C/C++ v10.1 compiler.
 - Allow explicit disabling of ptmalloc2 hooks at runtime (e.g., enable
-  support for Debain's builtroot system).  Thanks to Manuel Prinz and
+  support for Debian's builtroot system).  Thanks to Manuel Prinz and
   the rest of the Debian crew for helping identify and fix this issue.
 - Various minor fixes for the I/O forwarding subsystem.
 - Big endian iWARP fixes in the Open Fabrics RDMA CM support.

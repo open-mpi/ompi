@@ -111,6 +111,11 @@ int ompi_mpi_finalize(void)
         return MPI_ERR_OTHER;
     }
 
+    /* As finalize is the last legal MPI call, we are allowed to force the release
+     * of the user buffer used for bsend, before going anywhere further.
+     */
+    (void)mca_pml_base_bsend_detach(NULL, NULL);
+
     /* If desired, send a notify message */
     if (ompi_notify_init_finalize) {
         orte_notifier.log(ORTE_NOTIFIER_NOTICE,

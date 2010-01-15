@@ -35,7 +35,6 @@
 #include "opal/dss/dss.h"
 
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/sensor/sensor_types.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
 
@@ -57,6 +56,7 @@ bool orte_leave_session_attached;
 bool orte_do_not_launch = false;
 bool orted_spin_flag = false;
 bool orte_daemon_bootstrap = false;
+char *orte_local_cpu_model = NULL;
 
 /* ORTE OOB port flags */
 bool orte_static_ports = false;
@@ -158,6 +158,9 @@ char *orte_report_events_uri = NULL;
 
 /* report bindings */
 bool orte_report_bindings = false;
+
+/* barrier control */
+bool orte_do_not_barrier = false;
 
 #endif /* !ORTE_DISABLE_FULL_RTE */
 
@@ -597,6 +600,7 @@ static void orte_job_construct(orte_job_t* job)
     job->err_cbfunc = NULL;
     job->err_cbstates = ORTE_PROC_STATE_UNDEF;
     job->err_cbdata = NULL;
+    job->max_restarts = INT32_MAX;
     
 #if OPAL_ENABLE_FT == 1
     job->ckpt_state = 0;
@@ -709,11 +713,14 @@ static void orte_node_construct(orte_node_t* node)
     }
     
     node->username = NULL;
+    
+    OBJ_CONSTRUCT(&node->resources, opal_list_t);
 }
 
 static void orte_node_destruct(orte_node_t* node)
 {
     int i;
+    opal_list_item_t *item;
     
     if (NULL != node->name) {
         free(node->name);
@@ -748,6 +755,11 @@ static void orte_node_destruct(orte_node_t* node)
         free(node->username);
         node->username = NULL;
     }
+    
+    while (NULL != (item = opal_list_remove_first(&node->resources))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&node->resources);
 }
 
 
@@ -771,6 +783,7 @@ static void orte_proc_construct(orte_proc_t* proc)
     proc->nodename = NULL;
     proc->rml_uri = NULL;
     proc->beat = 0;
+    proc->restarts = 0;
 #if OPAL_ENABLE_FT == 1
     proc->ckpt_state = 0;
     proc->ckpt_snapshot_ref = NULL;
@@ -984,27 +997,4 @@ OBJ_CLASS_INSTANCE(orte_regex_node_t,
                    orte_regex_node_construct,
                    orte_regex_node_destruct);
 
-static void orte_sensor_data_construct(orte_sensor_data_t *ptr)
-{
-    ptr->sensor = NULL;
-    ptr->scaling_law = ORTE_SENSOR_SCALE_LINEAR;
-    ptr->min = 0.0;
-    ptr->max = 100.0;
-    ptr->gain = 1.0;
-    ptr->data.size = 0;
-    ptr->data.bytes = NULL;
-}
-static void orte_sensor_data_destruct(orte_sensor_data_t *ptr)
-{
-    if (NULL != ptr->sensor) {
-        free(ptr->sensor);
-    }
-    if (NULL != ptr->data.bytes) {
-        free(ptr->data.bytes);
-    }
-}
-OBJ_CLASS_INSTANCE(orte_sensor_data_t,
-                   opal_object_t,
-                   orte_sensor_data_construct,
-                   orte_sensor_data_destruct);
 #endif

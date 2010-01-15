@@ -39,6 +39,8 @@
 #include "ompi/runtime/ompi_cr.h"
 #endif
 
+#include "btl_openib_ini.h"
+
 #include "btl_openib.h"
 #include "btl_openib_frag.h"
 #include "btl_openib_proc.h"
@@ -95,6 +97,13 @@ mca_btl_openib_module_t mca_btl_openib_module = {
         mca_btl_openib_register_error_cb, /* error call back registration */
         mca_btl_openib_ft_event
     }
+};
+
+char* const mca_btl_openib_transport_name_strings[MCA_BTL_OPENIB_TRANSPORT_SIZE] = {
+    "MCA_BTL_OPENIB_TRANSPORT_IB",
+    "MCA_BTL_OPENIB_TRANSPORT_IWARP",
+    "MCA_BTL_OPENIB_TRANSPORT_RDMAOE",
+    "MCA_BTL_OPENIB_TRANSPORT_UNKNOWN"
 };
 
 static int mca_btl_openib_finalize_resources(struct mca_btl_base_module_t* btl);
@@ -207,17 +216,93 @@ static int adjust_cq(mca_btl_openib_device_t *device, const int cq)
     return OMPI_SUCCESS;
 }
 
+
+/* In this function we check if the device supports srq limit
+   event. We create the temporary srq, post some receive buffers - in
+   order to prevent srq limit event immediately and call the
+   "ibv_modify_srq" function. If a return value of the function not
+   success => our decision that the device doesn't support this
+   capability. */
+static int check_if_device_support_modify_srq(mca_btl_openib_module_t *openib_btl)
+{
+    char buff;
+    int rc = OMPI_SUCCESS;
+
+    struct ibv_srq* dummy_srq = NULL;
+    struct ibv_srq_attr modify_attr;
+
+    struct ibv_sge sge_elem;
+    struct ibv_recv_wr wr1, wr2, *bad_wr;
+
+    struct ibv_srq_init_attr init_attr;
+    memset(&init_attr, 0, sizeof(struct ibv_srq_init_attr));
+
+    init_attr.attr.max_wr = 3;
+    init_attr.attr.max_sge = 1;
+
+    dummy_srq = ibv_create_srq(openib_btl->device->ib_pd, &init_attr);
+    if(NULL == dummy_srq) {
+        rc = OMPI_ERROR;
+        goto destroy_dummy_srq;
+    }
+
+    sge_elem.addr = (uint64_t) &buff;
+    sge_elem.length = sizeof(buff);
+
+    wr1.num_sge = wr2.num_sge = 1;
+    wr1.sg_list = wr2.sg_list = &sge_elem;
+
+    wr1.next = &wr2;
+    wr2.next = NULL;
+
+    if(ibv_post_srq_recv(dummy_srq, &wr1, &bad_wr)) {
+        rc = OMPI_ERROR;
+        goto destroy_dummy_srq;
+    }
+
+    modify_attr.max_wr = 2;
+    modify_attr.max_sge = 1;
+    modify_attr.srq_limit = 1;
+
+    if(ibv_modify_srq(dummy_srq, &modify_attr, IBV_SRQ_LIMIT)) {
+        rc = OMPI_ERR_NOT_SUPPORTED;
+        goto destroy_dummy_srq;
+    }
+
+destroy_dummy_srq:
+    if(ibv_destroy_srq(dummy_srq)) {
+        rc = OMPI_ERROR;
+    }
+
+    return rc;
+}
+
 /*
  * create both the high and low priority completion queues
  * and the shared receive queue (if requested)
  */
 static int create_srq(mca_btl_openib_module_t *openib_btl)
 {
-    int qp;
+    int qp, rc = 0;
+    int32_t rd_num, rd_curr_num;
+
+    bool device_support_modify_srq = true;
+
+    /* Check if our device supports modify srq ability */
+    rc = check_if_device_support_modify_srq(openib_btl);
+    if(OMPI_ERR_NOT_SUPPORTED == rc) {
+        device_support_modify_srq = false;
+    } else if(OMPI_SUCCESS != rc) {
+        mca_btl_openib_show_init_error(__FILE__, __LINE__,
+                    "ibv_create_srq",
+                    ibv_get_device_name(openib_btl->device->ib_dev));
+        return rc;
+    }
 
     /* create the SRQ's */
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
         struct ibv_srq_init_attr attr;
+        memset(&attr, 0, sizeof(struct ibv_srq_init_attr));
 
         if(!BTL_OPENIB_QP_TYPE_PP(qp)) {
             attr.attr.max_wr = mca_btl_openib_component.qp_infos[qp].rd_num +
@@ -241,6 +326,25 @@ static int create_srq(mca_btl_openib_module_t *openib_btl)
                                                "ibv_create_srq",
                                                ibv_get_device_name(openib_btl->device->ib_dev));
                 return OMPI_ERROR;
+            }
+
+            rd_num = mca_btl_openib_component.qp_infos[qp].rd_num;
+            rd_curr_num = openib_btl->qps[qp].u.srq_qp.rd_curr_num = mca_btl_openib_component.qp_infos[qp].u.srq_qp.rd_init;
+
+            if(true == mca_btl_openib_component.enable_srq_resize &&
+                                    true == device_support_modify_srq) {
+                if(0 == rd_curr_num) {
+                    openib_btl->qps[qp].u.srq_qp.rd_curr_num = 1;
+                }
+
+                openib_btl->qps[qp].u.srq_qp.rd_low_local = rd_curr_num - (rd_curr_num >> 2);
+                openib_btl->qps[qp].u.srq_qp.srq_limit_event_flag = true;
+            } else {
+                openib_btl->qps[qp].u.srq_qp.rd_curr_num = rd_num;
+                openib_btl->qps[qp].u.srq_qp.rd_low_local = mca_btl_openib_component.qp_infos[qp].rd_low;
+                /* Not used in this case, but we don't need a garbage */
+                mca_btl_openib_component.qp_infos[qp].u.srq_qp.srq_limit = 0;
+                openib_btl->qps[qp].u.srq_qp.srq_limit_event_flag = false;
             }
         }
     }
@@ -278,13 +382,169 @@ static int mca_btl_openib_size_queues(struct mca_btl_openib_module_t* openib_btl
         goto out;
     }
 
-    if (0 == openib_btl->num_peers) {
-       rc = create_srq(openib_btl);
+    if (0 == openib_btl->num_peers && 
+            (mca_btl_openib_component.num_srq_qps > 0 || 
+             mca_btl_openib_component.num_xrc_qps > 0)) {
+        rc = create_srq(openib_btl);
     }
 
     openib_btl->num_peers += nprocs;
 out:
     return rc;
+}
+
+mca_btl_openib_transport_type_t mca_btl_openib_get_transport_type(mca_btl_openib_module_t* openib_btl)
+{
+/* If we have a driver with RDMAoE supporting as the device struct contains the same type (IB) for 
+   IBV_LINK_LAYER_INFINIBAND and IBV_LINK_LAYER_ETHERNET link layers and the single way
+   to detect this fact is to check their link_layer fields in a port_attr struct.
+   If our driver doesn't support this feature => the checking of transport type in device struct will be enough.
+   If the driver doesn't support completely transport types =>
+   our assumption that it is very old driver - that supports IB devices only */
+
+#ifdef HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE
+    switch(openib_btl->device->ib_dev->transport_type) {
+        case IBV_TRANSPORT_IB:
+#ifdef OMPI_HAVE_RDMAOE
+            switch(openib_btl->ib_port_attr.link_layer) {
+                case IBV_LINK_LAYER_ETHERNET:
+                    return MCA_BTL_OPENIB_TRANSPORT_RDMAOE;
+
+                case IBV_LINK_LAYER_INFINIBAND:
+                    return MCA_BTL_OPENIB_TRANSPORT_IB;
+            /* It is not possible that a device struct contains
+               IB transport and port was configured to IBV_LINK_LAYER_UNSPECIFIED */
+                case IBV_LINK_LAYER_UNSPECIFIED:
+                default:
+                    return MCA_BTL_OPENIB_TRANSPORT_UNKNOWN;
+            }
+#endif
+            return MCA_BTL_OPENIB_TRANSPORT_IB;
+
+        case IBV_TRANSPORT_IWARP:
+            return MCA_BTL_OPENIB_TRANSPORT_IWARP;
+
+        case IBV_TRANSPORT_UNKNOWN:		 
+        default:
+            return MCA_BTL_OPENIB_TRANSPORT_UNKNOWN;
+    }
+#else
+    return MCA_BTL_OPENIB_TRANSPORT_IB;
+#endif
+}
+
+static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl, 
+                                            mca_btl_base_endpoint_t* endpoint)
+{
+    int ret = OMPI_SUCCESS;
+
+    char* recv_qps = NULL;
+
+    ompi_btl_openib_ini_values_t values;
+
+    if(mca_btl_openib_get_transport_type(openib_btl) != endpoint->rem_info.rem_transport_type) {
+        orte_show_help("help-mpi-btl-openib.txt",
+                "conflicting transport types", true,
+                orte_process_info.nodename,
+                        ibv_get_device_name(openib_btl->device->ib_dev),
+                        (openib_btl->device->ib_dev_attr).vendor_id,
+                        (openib_btl->device->ib_dev_attr).vendor_part_id,
+                        mca_btl_openib_transport_name_strings[mca_btl_openib_get_transport_type(openib_btl)],
+                        endpoint->endpoint_proc->proc_ompi->proc_hostname,
+                        endpoint->rem_info.rem_vendor_id,
+                        endpoint->rem_info.rem_vendor_part_id,
+                        mca_btl_openib_transport_name_strings[endpoint->rem_info.rem_transport_type]);
+    
+        return OMPI_ERROR;
+    }
+
+    memset(&values, 0, sizeof(ompi_btl_openib_ini_values_t));
+    ret = ompi_btl_openib_ini_query(endpoint->rem_info.rem_vendor_id,
+                          endpoint->rem_info.rem_vendor_part_id, &values);
+
+    if (OMPI_SUCCESS != ret && OMPI_ERR_NOT_FOUND != ret) {
+        orte_show_help("help-mpi-btl-openib.txt",
+                       "error in device init", true,
+                       orte_process_info.nodename,
+                       ibv_get_device_name(openib_btl->device->ib_dev));
+        return ret;
+    }
+
+    if(openib_btl->device->mtu < endpoint->rem_info.rem_mtu) {
+        endpoint->rem_info.rem_mtu = openib_btl->device->mtu; 
+    }
+
+    endpoint->use_eager_rdma = openib_btl->device->use_eager_rdma &
+                               endpoint->use_eager_rdma;
+
+    /* Receive queues checking */
+
+    /* In this check we assume that the command line or INI file parameters are the same
+       for all processes on all machines. The assumption is correct for 99.9999% of users,
+       if a user distributes different INI files or parameters for different node/procs,
+       it is on his own responsibility */
+    switch(mca_btl_openib_component.receive_queues_source) {
+        case BTL_OPENIB_RQ_SOURCE_MCA:
+        case BTL_OPENIB_RQ_SOURCE_MAX:
+            break;
+
+        /* If the queues configuration was set from command line 
+           (with --mca btl_openib_receive_queues parameter) => both sides have a same configuration */
+
+        /* In this case the local queues configuration was gotten from INI file =>
+           not possible that remote side got its queues configuration from command line => 
+           (by prio) the configuration was set from INI file or (if not configure)
+           by default queues configuration */
+        case BTL_OPENIB_RQ_SOURCE_DEVICE_INI:
+            if(NULL != values.receive_queues) {
+                recv_qps = values.receive_queues;
+            } else {
+                recv_qps = mca_btl_openib_component.default_recv_qps;
+            }
+
+            if(0 != strcmp(mca_btl_openib_component.receive_queues,
+                                                         recv_qps)) {
+                orte_show_help("help-mpi-btl-openib.txt",
+                               "unsupported queues configuration", true,
+                               orte_process_info.nodename,
+                               ibv_get_device_name(openib_btl->device->ib_dev),
+                               (openib_btl->device->ib_dev_attr).vendor_id,
+                               (openib_btl->device->ib_dev_attr).vendor_part_id,
+                               mca_btl_openib_component.receive_queues,
+                               endpoint->endpoint_proc->proc_ompi->proc_hostname,
+                               endpoint->rem_info.rem_vendor_id,
+                               endpoint->rem_info.rem_vendor_part_id,
+                               recv_qps);
+
+                return OMPI_ERROR;
+            }
+            break;
+
+        /* If the local queues configuration was set 
+           by default queues => check all possible cases for remote side and compare */
+        case  BTL_OPENIB_RQ_SOURCE_DEFAULT:
+            if(NULL != values.receive_queues) {
+                if(0 != strcmp(mca_btl_openib_component.receive_queues,
+                                                values.receive_queues)) {
+                     orte_show_help("help-mpi-btl-openib.txt",
+                               "unsupported queues configuration", true,
+                               orte_process_info.nodename,
+                               ibv_get_device_name(openib_btl->device->ib_dev),
+                               (openib_btl->device->ib_dev_attr).vendor_id,
+                               (openib_btl->device->ib_dev_attr).vendor_part_id,
+                               mca_btl_openib_component.receive_queues,
+                               endpoint->endpoint_proc->proc_ompi->proc_hostname,
+                               endpoint->rem_info.rem_vendor_id,
+                               endpoint->rem_info.rem_vendor_part_id,
+                               values.receive_queues);
+
+                    return OMPI_ERROR;
+                }
+            }
+            break;
+    }
+
+    return OMPI_SUCCESS;
 }
 
 /*
@@ -350,6 +610,13 @@ int mca_btl_openib_add_procs(
            unreachable.  See trac ticket #1352. */
         if (IBV_TRANSPORT_IWARP == openib_btl->device->ib_dev->transport_type &&
             OPAL_PROC_ON_LOCAL_NODE(ompi_proc->proc_flags)) {
+            continue;
+        }
+#endif
+
+#ifdef OMPI_HAVE_RDMAOE
+        if(IBV_LINK_LAYER_ETHERNET == openib_btl->ib_port_attr.link_layer &&
+                OPAL_PROC_ON_LOCAL_NODE(ompi_proc->proc_flags)) {
             continue;
         }
 #endif
@@ -469,6 +736,12 @@ int mca_btl_openib_add_procs(
             OBJ_RELEASE(endpoint);
             OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
             continue;
+        }
+
+         if(OMPI_SUCCESS != mca_btl_openib_tune_endpoint(openib_btl, endpoint)) {
+            OBJ_RELEASE(endpoint);
+            OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
+            return OMPI_ERROR;
         }
 
         endpoint->index = opal_pointer_array_add(openib_btl->device->endpoints, (void*)endpoint);

@@ -75,6 +75,7 @@ orte_odls_base_module_t orte_odls;
 static void orte_odls_child_constructor(orte_odls_child_t *ptr)
 {
     ptr->name = NULL;
+    ptr->restarts = 0;
     ptr->pid = 0;
     ptr->app_idx = -1;
     ptr->alive = false;
@@ -85,10 +86,13 @@ static void orte_odls_child_constructor(orte_odls_child_t *ptr)
      */
     ptr->state = ORTE_PROC_STATE_FAILED_TO_START;
     ptr->exit_code = 0;
+    ptr->init_recvd = false;
+    ptr->fini_recvd = false;
     ptr->rml_uri = NULL;
     ptr->slot_list = NULL;
     ptr->waitpid_recvd = false;
     ptr->iof_complete = false;
+    ptr->do_not_barrier = false;
 }
 static void orte_odls_child_destructor(orte_odls_child_t *ptr)
 {

@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2009 University of Houston.  All rights reserved.
+ * Copyright (c) 2006-2010 University of Houston.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
@@ -511,15 +511,10 @@ void ompi_comm_reg_finalize(void);
 extern int ompi_comm_num_dyncomm;
 
 
-/* check in the communicator destructor whether a block if cid's 
-   can be reused.
-*/
-OMPI_DECLSPEC void  ompi_comm_checkfor_blockreset ( ompi_communicator_t *comm );
-
-
 /* check whether any of the processes has requested support for 
-   MPI_THREAD_MULTIPLE. If yes, we can not use any of the
-   advanced cid allocation algorithms
+   MPI_THREAD_MULTIPLE. Note, that this produces global
+   information across MPI_COMM_WORLD, in contrary to the local
+   flag ompi_mpi_thread_provided 
 */
 OMPI_DECLSPEC int ompi_comm_cid_init ( void );
 

@@ -25,7 +25,7 @@ EXTRA_DIST = $(real_man_pages:.1=.1in) CMakeLists.txt
 
 include $(top_srcdir)/Makefile.man-page-rules
 
-if !OMPI_WANT_SCRIPT_WRAPPER_COMPILERS
+if !OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 if OMPI_INSTALL_BINARIES
 
 bin_PROGRAMS = opal_wrapper
@@ -54,7 +54,7 @@ uninstall-local:
 endif # WANT_INSTALL_HEADERS
 
 endif # OMPI_INSTALL_BINARIES
-endif # OMPI_WANT_SCRIPT_WRAPPER_COMPILERS
+endif # OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 
 opal_wrapper_SOURCES = opal_wrapper.c
 opal_wrapper_LDADD = $(top_builddir)/opal/libopen-pal.la

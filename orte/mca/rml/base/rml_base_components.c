@@ -61,10 +61,14 @@ static bool       component_open_called = false;
 /* instantiate the msg_pkt object */
 static void msg_pkt_constructor(orte_msg_packet_t *pkt)
 {
+    pkt->sender.jobid = ORTE_JOBID_INVALID;
+    pkt->sender.vpid = ORTE_VPID_INVALID;
     pkt->buffer = NULL;
 }
 static void msg_pkt_destructor(orte_msg_packet_t *pkt)
 {
+    pkt->sender.jobid = ORTE_JOBID_INVALID;
+    pkt->sender.vpid = ORTE_VPID_INVALID;
     if (NULL != pkt->buffer) {
         OBJ_RELEASE(pkt->buffer);
     }

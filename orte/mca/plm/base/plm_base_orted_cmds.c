@@ -231,6 +231,11 @@ int orte_plm_base_orted_terminate_job(orte_jobid_t jobid)
     orte_proc_t proc;
     int rc;
     
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                         "%s plm:base:orted_terminate job %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_JOBID_PRINT(jobid)));
+    
     OBJ_CONSTRUCT(&procs, opal_pointer_array_t);
     opal_pointer_array_init(&procs, 1, 1, 1);
     OBJ_CONSTRUCT(&proc, orte_proc_t);
@@ -271,6 +276,9 @@ int orte_plm_base_orted_kill_local_procs(opal_pointer_array_t *procs)
     
     /* bozo check */
     if (0 == num_procs) {
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                             "%s plm:base:orted_cmd:kill_local_procs no procs given",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         return ORTE_SUCCESS;
     }
     
@@ -400,6 +408,10 @@ int orte_plm_base_orted_kill_local_procs(opal_pointer_array_t *procs)
     }
     
     /* we are not abnormally terminating - send it express delivery! */
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                         "%s plm:base:orted_cmd:kill_local_procs term ordered",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
     if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid, &cmd, ORTE_RML_TAG_DAEMON))) {
         ORTE_ERROR_LOG(rc);
     }

@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -20,7 +21,7 @@
 # MCA_ras_bjs_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
 AC_DEFUN([MCA_ras_bjs_CONFIG],[
-    OMPI_CHECK_BPROC([ras_bjs], [ras_bjs_good=1], [ras_bjs_good=1], 
+    ORTE_CHECK_BPROC([ras_bjs], [ras_bjs_good=1], [ras_bjs_good=1], 
                      [ras_bjs_good=0])
 
     # if check worked, set wrapper flags if so.  

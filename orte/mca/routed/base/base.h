@@ -37,6 +37,8 @@ ORTE_DECLSPEC extern int orte_routed_base_output;
 ORTE_DECLSPEC extern opal_list_t orte_routed_base_components;
 
 ORTE_DECLSPEC extern int orte_routed_base_register_sync(bool setup);
+ORTE_DECLSPEC extern int orte_routed_base_process_callback(orte_jobid_t job,
+                                                           opal_buffer_t *buffer);
 
 ORTE_DECLSPEC int orte_routed_base_comm_start(void);
 ORTE_DECLSPEC int orte_routed_base_comm_stop(void);

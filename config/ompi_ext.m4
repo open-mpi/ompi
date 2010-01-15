@@ -36,7 +36,7 @@ AC_DEFUN([OMPI_EXT],[
     AC_ARG_ENABLE(mpi-ext,
         AC_HELP_STRING([--enable-mpi-ext[=LIST]],
                        [Comma-separated list of extensions that should be
-                        built.]))
+                        built (default: none).]))
 
 
     AC_MSG_CHECKING([which extension components should be enabled])

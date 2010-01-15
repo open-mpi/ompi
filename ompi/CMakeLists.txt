@@ -1,4 +1,4 @@
-# Copyright (c) 2007-2009 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2010 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2008      The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
@@ -123,10 +123,9 @@ SET_TARGET_PROPERTIES(libmpi PROPERTIES COMPILE_FLAGS
 
 # Set compile flags for this target
 IF (BUILD_SHARED_LIBS)
-  ADD_DEPENDENCIES (libmpi libopen-pal libopen-rte)
   SET_TARGET_PROPERTIES(libmpi PROPERTIES 
     COMPILE_FLAGS "-D_USRDLL -DHAVE_CONFIG_H -DOMPI_EXPORTS /TP")
-  TARGET_LINK_LIBRARIES (libmpi Ws2_32.lib shlwapi.lib)
+  TARGET_LINK_LIBRARIES (libmpi libopen-rte Ws2_32.lib shlwapi.lib)
 ELSE (BUILD_SHARED_LIBS)
   SET_TARGET_PROPERTIES(libmpi PROPERTIES COMPILE_FLAGS "-D_LIB")
 ENDIF(BUILD_SHARED_LIBS)
@@ -150,6 +149,14 @@ INSTALL(TARGETS libmpi
         ARCHIVE DESTINATION lib)
 INSTALL(FILES ${PROJECT_BINARY_DIR}/include/mpi.h ${PROJECT_BINARY_DIR}/include/mpi_portable_platform.h
   DESTINATION include)
+
+INSTALL(FILES errhandler/help-mpi-errors.txt
+  DESTINATION share/openmpi)
+
+IF (OMPI_DEBUG_BUILD)
+  INSTALL(FILES ${OpenMPI_BINARY_DIR}/Debug/libmpi${CMAKE_DEBUG_POSTFIX}.pdb
+    DESTINATION bin)
+ENDIF (OMPI_DEBUG_BUILD)
 
 IF(OMPI_WANT_F77_BINDINGS)
   INSTALL(FILES ${PROJECT_BINARY_DIR}/include/mpif.h

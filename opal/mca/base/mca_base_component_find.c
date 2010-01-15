@@ -48,6 +48,8 @@
   #endif
 #endif
 
+#include "opal/mca/installdirs/installdirs.h"
+#include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/util/show_help.h"
@@ -248,7 +250,7 @@ static void find_dyn_components(const char *path, const char *type_name,
     component_file_item_t *file;
     opal_list_item_t *cur;
     char prefix[32 + MCA_BASE_MAX_TYPE_NAME_LEN], *basename;
-
+    
     /* If path is NULL, iterate over the set of directories specified by
        the MCA param mca_base_component_path.  If path is not NULL, then
        use that as the path. */
@@ -277,14 +279,29 @@ static void find_dyn_components(const char *path, const char *type_name,
                 if (NULL != end) {
                     *end = '\0';
                 }
-                if (0 != lt_dlforeachfile(dir, save_filename, NULL)) {
-                    break;
+                if ((0 == strcmp(dir, "USER_DEFAULT") ||
+                     0 == strcmp(dir, "USR_DEFAULT"))
+                    && NULL != mca_base_user_default_path) {
+                    if (0 != lt_dlforeachfile(mca_base_user_default_path,
+                                              save_filename, NULL)) {
+                        break;
+                    }
+                } else if (0 == strcmp(dir, "SYS_DEFAULT") ||
+                           0 == strcmp(dir, "SYSTEM_DEFAULT")) {
+                    if (0 != lt_dlforeachfile(mca_base_system_default_path,
+                                              save_filename, NULL)) {
+                        break;
+                    }                    
+                } else {
+                    if (0 != lt_dlforeachfile(dir, save_filename, NULL)) {
+                        break;
+                    }
                 }
                 dir = end + 1;
             } while (NULL != end);
         }
     }
-  
+    
     /* Look through the list of found files and find those that match
        the desired framework name */
     snprintf(prefix, sizeof(prefix) - 1, component_template, type_name);

@@ -98,23 +98,15 @@ EXTRA_DIST = \
         platform/win32/CMakeModules/ompi_get_version.cmake \
         platform/win32/CMakeModules/opal_functions.cmake \
         platform/win32/CMakeModules/setup_f77.cmake \
-        platform/win32/ConfigFiles/install_dirs.h.cmake \
-        platform/win32/ConfigFiles/mpi.h.cmake \
-        platform/win32/ConfigFiles/mpic++-wrapper-data.txt.cmake \
-        platform/win32/ConfigFiles/mpicc-wrapper-data.txt.cmake \
-        platform/win32/ConfigFiles/mpif77-wrapper-data.txt.cmake \
         platform/win32/ConfigFiles/opal_config.h.cmake \
         platform/win32/ConfigFiles/revision.in \
 	platform/cisco/macosx-dynamic \
 	platform/cisco/macosx-dynamic.conf \
 	platform/cisco/macosx-dynamic-optimized \
 	platform/cisco/macosx-dynamic-optimized.conf \
-	platform/cisco/hlfr/debug \
-	platform/cisco/hlfr/debug.conf \
-	platform/cisco/hlfr/optimized \
-	platform/cisco/hlfr/optimized.conf \
-	platform/cisco/suder/debug \
-	platform/cisco/suder/debug.conf \
-	platform/cisco/suder/optimized \
-	platform/cisco/suder/optimized.conf
+	platform/cisco/ebuild/hlfr \
+	platform/cisco/ebuild/hlfr.conf \
+	platform/cisco/ebuild/native \
+	platform/cisco/ebuild/native.conf
 
+dist_pkgdata_DATA = openmpi-valgrind.supp

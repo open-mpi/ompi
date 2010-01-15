@@ -8,10 +8,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-/* Open MPI: include our printf.h to ensure that we get an snprintf()
-   that works on this platform */
-#include "opal/util/printf.h"
-
 /* tests noncontiguous reads/writes using collective I/O */
 
 /* this test is almost exactly like noncontig_coll.c with the following changes:

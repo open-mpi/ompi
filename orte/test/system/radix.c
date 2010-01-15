@@ -87,7 +87,7 @@ main(int argc, char **argv)
         exit(1);
     }
     
-    orte_init(ORTE_PROC_TOOL);
+    orte_init(&argc, &argv, ORTE_PROC_NON_MPI);
     
     Radix = atoi(argv[1]);
     NProcs = atoi(argv[2]);

@@ -27,6 +27,10 @@
 #include "opal/util/argv.h"
 #include "opal/util/if.h"
 #include "opal/mca/paffinity/paffinity.h"
+#if ORTE_ENABLE_BOOTSTRAP
+#include "opal/mca/sysinfo/sysinfo.h"
+#include "opal/mca/sysinfo/base/base.h"
+#endif
 
 #include "orte/mca/rmcast/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -88,26 +92,50 @@ static int rte_init(void)
         goto error;
     }
     
-    /* open the reliable multicast framework, just in
-     * case we need it to query the HNP for a name
-     */
-    if (ORTE_SUCCESS != (ret = orte_rmcast_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rmcast_base_open";
-        goto error;
-    }
-    
-    if (ORTE_SUCCESS != (ret = orte_rmcast_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rmcast_base_select";
-        goto error;
-    }
-    
     if (ORTE_PROC_IS_DAEMON) {
-        /* get a name for ourselves */
-        if (ORTE_SUCCESS != (ret = cm_set_name())) {
-            error = "set_name";
-            goto error;
+        /* if we do not know the HNP, then we have to
+         * use the multicast system to find it
+         */
+        if (NULL == orte_process_info.my_hnp_uri) {
+            /* open the reliable multicast framework */
+            if (ORTE_SUCCESS != (ret = orte_rmcast_base_open())) {
+                ORTE_ERROR_LOG(ret);
+                error = "orte_rmcast_base_open";
+                goto error;
+            }
+            
+            if (ORTE_SUCCESS != (ret = orte_rmcast_base_select())) {
+                ORTE_ERROR_LOG(ret);
+                error = "orte_rmcast_base_select";
+                goto error;
+            }
+
+#if ORTE_ENABLE_BOOTSTRAP
+            /* open and setup the local resource discovery framework */
+            if (ORTE_SUCCESS != (ret = opal_sysinfo_base_open())) {
+                ORTE_ERROR_LOG(ret);
+                error = "opal_sysinfo_base_open";
+                goto error;
+            }
+            if (ORTE_SUCCESS != (ret = opal_sysinfo_base_select())) {
+                ORTE_ERROR_LOG(ret);
+                error = "opal_sysinfo_base_select";
+                goto error;
+            }
+#endif
+
+            /* get a name for ourselves */
+            if (ORTE_SUCCESS != (ret = cm_set_name())) {
+                error = "set_name";
+                goto error;
+            }
+        } else {
+            /* if we were given an HNP, then we must have also
+             * been given a vpid - we can get the jobid from
+             * the HNP's name
+             */
+            ORTE_PROC_MY_NAME->jobid = orte_process_info.my_hnp.jobid;
+            
         }
         
         /* get the list of nodes used for this job */
@@ -145,10 +173,27 @@ static int rte_init(void)
          */
         orte_plm_base_close();
 
-        /* checkin with the HNP */
-        if (ORTE_SUCCESS != (ret = cm_set_name())) {
-            error = "set_name";
-            goto error;
+        /* if we do not know the HNP, then we have to use
+         * the multicast system to find it
+         */
+        if (NULL == orte_process_info.my_hnp_uri) {
+            /* open the reliable multicast framework */
+            if (ORTE_SUCCESS != (ret = orte_rmcast_base_open())) {
+                ORTE_ERROR_LOG(ret);
+                error = "orte_rmcast_base_open";
+                goto error;
+            }
+            
+            if (ORTE_SUCCESS != (ret = orte_rmcast_base_select())) {
+                ORTE_ERROR_LOG(ret);
+                error = "orte_rmcast_base_select";
+                goto error;
+            }
+            /* checkin with the HNP */
+            if (ORTE_SUCCESS != (ret = cm_set_name())) {
+                error = "set_name";
+                goto error;
+            }            
         }
         
         /* do the rest of the standard tool init */
@@ -170,7 +215,7 @@ error:
 
 static int rte_finalize(void)
 {
-    int ret;
+    int ret = ORTE_SUCCESS;
     
     if (ORTE_PROC_IS_DAEMON) {
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_finalize())) {
@@ -356,13 +401,18 @@ static int update_nidmap(opal_byte_object_t *bo)
 static bool arrived = false;
 static bool name_success = false;
 
-static void cbfunc(int channel, opal_buffer_t *buf, void *cbdata)
+static void cbfunc(int status,
+                   int channel, orte_rmcast_tag_t tag,
+                   orte_process_name_t *sender,
+                   orte_rmcast_seq_t seq_num,
+                   opal_buffer_t *buf, void *cbdata)
 {
     int32_t n;
     orte_daemon_cmd_flag_t cmd;
     orte_process_name_t name;
     int rc;
     char *uri;
+    char *host;
     
     /* ensure we default to failure */
     name_success = false;
@@ -376,6 +426,20 @@ static void cbfunc(int channel, opal_buffer_t *buf, void *cbdata)
     }
 
     if (ORTE_DAEMON_NAME_REQ_CMD == cmd) {
+        /* unpack the intended recipient's hostname */
+        n=1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &host, &n, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            arrived = true;
+            return;
+        }
+        
+        /* is this intended for me? */
+        if (0 != strcmp(host, orte_process_info.nodename)) {
+            /* nope - ignore it */
+            return;
+        }
+        
         /* unpack the name */
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &name, &n, ORTE_NAME))) {
@@ -386,7 +450,6 @@ static void cbfunc(int channel, opal_buffer_t *buf, void *cbdata)
         /* if we got an invalid name, then declare failure */
         if (ORTE_JOBID_INVALID == name.jobid &&
             ORTE_VPID_INVALID == name.vpid) {
-            opal_output(0, "got invalid name");
             arrived = true;
             return;
         }
@@ -430,26 +493,67 @@ static int cm_set_name(void)
     } else if (ORTE_PROC_IS_TOOL) {
         cmd = ORTE_TOOL_CHECKIN_CMD;
         opal_dss.pack(&buf, &cmd, 1, ORTE_DAEMON_CMD_T);
-        /* provide our name */
-        opal_dss.pack(&buf, ORTE_PROC_MY_NAME, 1, ORTE_NAME);
     }
 
     /* always include our node name */
     opal_dss.pack(&buf, &orte_process_info.nodename, 1, OPAL_STRING);
 
+#if ORTE_ENABLE_BOOTSTRAP
+    {
+        /* get our local resources */
+        char *keys[] = {
+            OPAL_SYSINFO_CPU_TYPE,
+            OPAL_SYSINFO_CPU_MODEL,
+            OPAL_SYSINFO_NUM_CPUS,
+            OPAL_SYSINFO_MEM_SIZE,
+            NULL
+        };
+        opal_list_t resources;
+        opal_list_item_t *item;
+        opal_sysinfo_value_t *info;
+        int32_t num_values;
+        
+        if (ORTE_PROC_IS_DAEMON) {
+            OBJ_CONSTRUCT(&resources, opal_list_t);
+            opal_sysinfo.query(keys, &resources);
+            /* add number of values to the buffer */
+            num_values = opal_list_get_size(&resources);
+            opal_dss.pack(&buf, &num_values, 1, OPAL_INT32);
+            /* add them to the buffer */
+            while (NULL != (item = opal_list_remove_first(&resources))) {
+                info = (opal_sysinfo_value_t*)item;
+                opal_dss.pack(&buf, &info->key, 1, OPAL_STRING);
+                opal_dss.pack(&buf, &info->type, 1, OPAL_DATA_TYPE_T);
+                if (OPAL_INT64 == info->type) {
+                    opal_dss.pack(&buf, &(info->data.i64), 1, OPAL_INT64);
+                } else if (OPAL_STRING == info->type) {
+                    opal_dss.pack(&buf, &(info->data.str), 1, OPAL_STRING);
+                }
+                /* if this is the cpu model, save it for later use */
+                if (0 == strcmp(info->key, OPAL_SYSINFO_CPU_MODEL)) {
+                    orte_local_cpu_model = strdup(info->data.str);
+                }
+                OBJ_RELEASE(info);
+            }
+            OBJ_DESTRUCT(&resources);                
+        }
+    }
+#endif
+
     /* set the recv to get the answer */
-    if (ORTE_SUCCESS != (rc = orte_rmcast.recv_nb(ORTE_RMCAST_SYS_CHANNEL, ORTE_RMCAST_NON_PERSISTENT,
-                                                  ORTE_RMCAST_TAG_BOOTSTRAP,
-                                                  cbfunc, NULL))) {
+    if (ORTE_SUCCESS != (rc = orte_rmcast.recv_buffer_nb(ORTE_RMCAST_SYS_CHANNEL,
+                                                         ORTE_RMCAST_TAG_BOOTSTRAP,
+                                                         ORTE_RMCAST_PERSISTENT,
+                                                         cbfunc, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&buf);
         return rc;
     }
     
-    opal_output(0, "sending name request");
     /* send the request */
-    if (ORTE_SUCCESS != (rc = orte_rmcast.send(ORTE_RMCAST_SYS_CHANNEL, ORTE_RMCAST_TAG_BOOTSTRAP,
-                                               &buf))) {
+    if (ORTE_SUCCESS != (rc = orte_rmcast.send_buffer(ORTE_RMCAST_SYS_CHANNEL,
+                                                      ORTE_RMCAST_TAG_BOOTSTRAP,
+                                                      &buf))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&buf);
         return rc;
@@ -459,11 +563,14 @@ static int cm_set_name(void)
     /* wait for response */
     ORTE_PROGRESSED_WAIT(arrived, 0, 1);
     
+    /* cancel the recv */
+    orte_rmcast.cancel_recv(ORTE_RMCAST_SYS_CHANNEL,
+                            ORTE_RMCAST_TAG_BOOTSTRAP);
+    
     /* if we got a valid name, return success */
     if (name_success) {
-        opal_output(0, "returning success");
         return ORTE_SUCCESS;
     }
-    opal_output(0, "returning not found");
+
     return ORTE_ERR_NOT_FOUND;
 }

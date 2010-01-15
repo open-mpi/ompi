@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
     struct iovec msg;
     orte_vpid_t i;
     
-    if (0 > (rc = orte_init(ORTE_NON_TOOL))) {
+    if (0 > (rc = orte_init(&argc, &argv, ORTE_PROC_NON_MPI))) {
         fprintf(stderr, "couldn't init orte - error code %d\n", rc);
         return rc;
     }
@@ -57,8 +57,7 @@ int main(int argc, char* argv[])
     jdata->map->display_map = true;
 #endif    
     /* launch the job */
-    fprintf(stderr, "Parent: My local rank is %ld with %ld num_local_procs - spawning children!\n",
-                    (long)orte_process_info.local_rank, (long)orte_process_info.num_local_procs);
+    fprintf(stderr, "Parent: spawning children!\n");
     if (ORTE_SUCCESS != (rc = orte_plm.spawn(jdata))) {
         ORTE_ERROR_LOG(rc);
         orte_finalize();

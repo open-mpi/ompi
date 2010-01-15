@@ -215,11 +215,6 @@ int mca_io_base_file_select(ompi_file_t *file,
         return err;
     }
 
-    /* Add the component to the list of components that the io
-       framework is maintaining */
-
-    mca_io_base_component_add(&selected.ai_component);
-
     /* Announce the winner */
   
     opal_output_verbose(10, mca_io_base_output,

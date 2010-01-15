@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -17,7 +17,7 @@
 # $HEADER$
 #
 
-if !OMPI_WANT_SCRIPT_WRAPPER_COMPILERS
+if !OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 if OMPI_INSTALL_BINARIES
 
 dist_pkgdata_DATA = \
@@ -64,4 +64,4 @@ uninstall-local: uninstall-local-always
 endif # CASE_SENSITIVE_FS
 
 endif # OMPI_INSTALL_BINARIES
-endif # OMPI_WANT_SCRIPT_WRAPPER_COMPILERS
+endif # OPAL_WANT_SCRIPT_WRAPPER_COMPILERS

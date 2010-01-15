@@ -16,6 +16,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/rmcast/base/base.h"
+#include "orte/mca/rmcast/base/private.h"
 
 static bool selected = false;
 

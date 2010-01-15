@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -287,9 +287,15 @@ main(int argc, char *argv[])
     if(!orte_checkpoint_globals.nowait) { 
         while( ORTE_SNAPC_CKPT_STATE_FINISHED != orte_checkpoint_globals.ckpt_status &&
                ORTE_SNAPC_CKPT_STATE_STOPPED  != orte_checkpoint_globals.ckpt_status &&
+               ORTE_SNAPC_CKPT_STATE_NO_CKPT  != orte_checkpoint_globals.ckpt_status &&
                ORTE_SNAPC_CKPT_STATE_ERROR    != orte_checkpoint_globals.ckpt_status ) {
             opal_progress();
         }
+    }
+
+    if( ORTE_SNAPC_CKPT_STATE_NO_CKPT  == orte_checkpoint_globals.ckpt_status ) {
+        exit_status = ORTE_ERROR;
+        goto cleanup;
     }
 
     if( ORTE_SNAPC_CKPT_STATE_ERROR == orte_checkpoint_globals.ckpt_status ) {
@@ -508,7 +514,7 @@ static int ckpt_init(int argc, char *argv[]) {
      * to ensure installdirs is setup properly
      * before calling mca_base_open();
      */
-    if( ORTE_SUCCESS != (ret = opal_init_util()) ) {
+    if( ORTE_SUCCESS != (ret = opal_init_util(&argc, &argv)) ) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
@@ -539,7 +545,7 @@ static int ckpt_init(int argc, char *argv[]) {
      * We need all of OPAL and the TOOLS portion of ORTE - this
      * sets us up so we can talk to any HNP over the wire
      ***************************/
-    if (ORTE_SUCCESS != (ret = orte_init(ORTE_PROC_TOOL))) {
+    if (ORTE_SUCCESS != (ret = orte_init(&argc, &argv, ORTE_PROC_TOOL))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;

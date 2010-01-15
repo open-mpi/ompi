@@ -703,6 +703,13 @@ static int self_cold_start(opal_crs_self_snapshot_t *snapshot) {
      * JJH: Command lines limited to 256 chars.
      */
     opal_crs_base_metadata_read_token(snapshot->super.local_location, CRS_METADATA_CONTEXT, &tmp_argv);
+    if( NULL == tmp_argv ) {
+        opal_output(mca_crs_self_component.super.output_handle,
+                    "crs:self: self_cold_start: Error: Failed to read the %s token from the local checkpoint in %s",
+                    CRS_METADATA_CONTEXT, snapshot->super.local_location);
+        exit_status = OPAL_ERROR;
+        goto cleanup;
+    }
     asprintf(&snapshot->cmd_line, "%s", tmp_argv[0]);
 
     /*

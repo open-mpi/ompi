@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
     char *str;
     
     /* Initialize the argv parsing handle */
-    if (OMPI_SUCCESS != opal_init_util()) {
+    if (OMPI_SUCCESS != opal_init_util(&argc, &argv)) {
         orte_show_help("help-ompi_info.txt", "lib-call-fail", true, 
                        "opal_init_util", __FILE__, __LINE__, NULL);
         exit(ret);
@@ -227,10 +227,6 @@ int main(int argc, char *argv[])
 #endif
     opal_pointer_array_add(&mca_types, "rml");
     opal_pointer_array_add(&mca_types, "routed");
-#if ORTE_ENABLE_MONITORING
-    opal_pointer_array_add(&mca_types, "sensor");
-    opal_pointer_array_add(&mca_types, "fddp");
-#endif
     opal_pointer_array_add(&mca_types, "plm");
 #if OPAL_ENABLE_FT == 1
     opal_pointer_array_add(&mca_types, "snapc");

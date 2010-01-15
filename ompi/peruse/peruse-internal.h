@@ -50,13 +50,19 @@ enum {
     PERUSE_TYPE_WIN
 };
 
+extern int ompi_peruse_initialized;
+extern int ompi_peruse_finalized;
+
+#define OMPI_ERR_PERUSE_INIT_FINALIZE \
+    if( OPAL_UNLIKELY(!ompi_peruse_initialized || ompi_peruse_finalized) ) { \
+        return PERUSE_ERR_INIT; \
+    }
 
 /*
  * Module internal function declarations
  */
 int ompi_peruse_init (void);
 int ompi_peruse_finalize (void);
-
 
 /*
  * Global macros
