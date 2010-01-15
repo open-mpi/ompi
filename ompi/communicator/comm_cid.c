@@ -157,8 +157,7 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
                         void* remote_leader,
                         int mode, int send_first )
 {
-    int nextcid, block;
-    int global_block_start;
+    int nextcid;
     bool flag;
     int nextlocal_cid;
     int done=0;
