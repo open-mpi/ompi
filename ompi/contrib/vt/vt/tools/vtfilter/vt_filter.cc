@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -313,7 +313,7 @@ void Filter::operator+=( const Filter& filter ) {
 		&& timerResolution != filter.getTimerResolution() ) {
 
 		cerr << "Multiple timerresolutions found. aborting" << endl;
-		abort();
+		exit(1);
 		
 	} else if ( timerResolution == 0 && filter.getTimerResolution() != 0 ) {
 		timerResolution = filter.getTimerResolution();

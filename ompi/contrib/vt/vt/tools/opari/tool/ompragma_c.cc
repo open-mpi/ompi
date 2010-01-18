@@ -5,7 +5,7 @@
 **  Copyright (c) 1998-2008                                                **
 **  Forschungszentrum Juelich, Juelich Supercomputing Centre               **
 **                                                                         **
-**  See the file COPYING in the package base directory for details       **
+**  See the file COPYING in the package base directory for details         **
 ****************************************************************************/
 
 #include "ompragma.h"
@@ -57,6 +57,9 @@ void OMPragmaC::add_descr(int n) {
     // not 100% right but best we can do if compiler doesn't allow macro
     // replacement on pragma statements
     os << " shared(omp_rd_" << n << ")";
+#ifdef OPARI_VT
+    os << " copyin(omp_pt_" << n << ")";
+#endif //OPARI_VT
   }
   int lastline = lines.size() - 1;
   lines[lastline].append(os.str());

@@ -35,7 +35,13 @@ int handleDefVersion( void *userData, uint32_t stream, uint8_t major,
   info->otfVersionMajor  = major;
   info->otfVersionMinor  = minor;
   info->otfVersionSub    = sub;
-  info->otfVersionString = strdup(string);
+
+  if( string != NULL ) {
+  	info->otfVersionString = strdup(string);
+  } else {
+	info->otfVersionString = strdup("");
+  }
+
   return OTF_RETURN_OK;
 }
 
@@ -61,7 +67,7 @@ int handleDefProcess( void *userData, uint32_t stream, uint32_t process,
 
 int handleDefTimerResolution( void *userData, uint32_t stream,
                               uint64_t ticksPerSecond )
-{
+{ 
   ((definitionInfoT*)userData)->timerResolution = ticksPerSecond;
   return OTF_RETURN_OK;
 }
@@ -117,6 +123,26 @@ int handleDefCounter( void *userData, uint32_t stream, uint32_t counter,
     (info->counters)[i].name = strdup(name);
     (info->counters)[i].id = counter;
     (info->counters)[i].properties = properties;
+  }
+  return OTF_RETURN_OK;
+}
+
+int handleDefMarker( void *userData, uint32_t stream, uint32_t token,
+                     const char *name, uint32_t type )
+{
+  /*in a low info level, increment the marker counter*/
+  if( MAXINFOLEVEL > ((definitionInfoT*)userData)->infoLevel )
+  {
+    ((definitionInfoT*)userData)->counterDefinitionMarker++;
+  }
+  else
+  {
+    /*in the max info level, get the marker names*/
+    uint32_t index = 0;
+    definitionInfoT *info = (definitionInfoT*)userData;
+    while(info->markerNames[index])
+      index++;
+    (info->markerNames)[index] = strdup(name);
   }
   return OTF_RETURN_OK;
 }
@@ -224,6 +250,36 @@ int handleRecvMsg( void *userData, uint64_t time, uint32_t recvProc,
   return OTF_RETURN_OK;
 }
 
+int handleRMAPut( void *userData, uint64_t time, uint32_t process,
+                  uint32_t origin, uint32_t target, uint32_t communicator,
+                  uint32_t tag, uint64_t bytes, uint32_t source )
+{
+  ((definitionInfoT*)userData)->counterRMAPut++;
+  return OTF_RETURN_OK;
+}
+int handleRMAPutRemoteEnd( void *userData, uint64_t time, uint32_t process,
+                           uint32_t origin, uint32_t target,
+                           uint32_t communicator, uint32_t tag, uint64_t bytes,
+                           uint32_t source )
+{
+  ((definitionInfoT*)userData)->counterRMAPutRemoteEnd++;
+  return OTF_RETURN_OK;
+}
+int handleRMAGet( void *userData, uint64_t time, uint32_t process,
+                  uint32_t origin, uint32_t target, uint32_t communicator,
+                  uint32_t tag, uint64_t bytes, uint32_t source )
+{
+  ((definitionInfoT*)userData)->counterRMAGet++;
+  return OTF_RETURN_OK;
+}
+int handleRMAEnd( void *userData, uint64_t time, uint32_t process,
+                  uint32_t remote, uint32_t communicator, uint32_t tag,
+                  uint32_t source )
+{
+  ((definitionInfoT*)userData)->counterRMAEnd++;
+  return OTF_RETURN_OK;
+}
+
 int handleDefCollectiveOperation( void *userData, uint32_t stream,
                                   uint32_t collOp, const char *name,
                                   uint32_t type )
@@ -252,6 +308,15 @@ int handleFileOperation( void *userData, uint64_t time, uint32_t fileid,
   return OTF_RETURN_OK;
 }
 
+int handleEndFileOperation( void *userData, uint64_t time, uint32_t process,
+                            uint32_t fileid, uint64_t handleid,
+                            uint32_t operation, uint64_t bytes,
+                            uint32_t source )
+{
+  ((definitionInfoT*)userData)->counterFileOperation++;
+  return OTF_RETURN_OK;
+}
+
 int handleEnterSnapshot( void *userData, uint64_t time, uint64_t originaltime,
                          uint32_t function, uint32_t process, uint32_t source )
 {
@@ -269,8 +334,8 @@ int handleCounter( void* userData, uint64_t time, uint32_t process,
   mapInfoProcessT *currentElement = NULL;
   definitionInfoT *info = (definitionInfoT*)userData;
 
-  while( (info->counters[i].id != counter) &&
-         (i < info->counterCounterDefinition) )
+  while( (i < info->counterCounterDefinition) &&
+         (info->counters[i].id != counter))
   {
     i++;
   }

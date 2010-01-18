@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -10,13 +10,11 @@
  * See the file COPYING in the package base directory for details
  **/
 
-#include "vt_unify_defs.h"
 #include "vt_unify.h"
+#include "vt_unify_defs.h"
 #include "vt_unify_defs_hdlr.h"
 #include "vt_unify_stats.h"
 #include "vt_unify_tkfac.h"
-
-#include "vt_inttypes.h"
 
 #include "otf.h"
 
@@ -29,42 +27,37 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 Definitions * theDefinitions; // instance of class Definitions
 
 bool
 LocDefsCmp( Definitions::DefRec_Base_struct * a,
-	    Definitions::DefRec_Base_struct * b )
+            Definitions::DefRec_Base_struct * b )
 {
-   // both record types are DEF_REC_TYPE__DefinitionComment ? ...
+   // both record types are Definitions::DEF_REC_TYPE__DefProcess ? ...
    //
-   if( a->etype == Definitions::DEF_REC_TYPE__DefinitionComment &&
-       b->etype == Definitions::DEF_REC_TYPE__DefinitionComment )
+   if( a->etype == Definitions::DEF_REC_TYPE__DefProcess &&
+       b->etype == Definitions::DEF_REC_TYPE__DefProcess )
    {
-      Definitions::DefRec_DefinitionComment_struct * c1 =
-	 static_cast<Definitions::DefRec_DefinitionComment_struct*>(a);
-      Definitions::DefRec_DefinitionComment_struct * c2 =
-	 static_cast<Definitions::DefRec_DefinitionComment_struct*>(b);
-
-      // ... sort by trace order
-      return c1->orderidx < c2->orderidx;
+      // do nothing, 'cause the process definition records will be sorted later
+      return false;
    }
    // both records have the same type ? ...
    //
-   if( a->etype == b->etype &&
-       ( a->etype != Definitions::DEF_REC_TYPE__DefCreator &&
-	 a->etype != Definitions::DEF_REC_TYPE__DefTimerResolution ) )
-       
+   else if( a->etype == b->etype &&
+            ( a->etype != Definitions::DEF_REC_TYPE__DefCreator &&
+              a->etype != Definitions::DEF_REC_TYPE__DefTimerResolution ) )
    {
       if( a->deftoken == b->deftoken )
       {
-	 // ... sort by local process id if local tokens are equal
-	 return a->loccpuid < b->loccpuid;
+         // ... sort by local process id if local tokens are equal
+         return a->loccpuid < b->loccpuid;
       }
       else
       {
-	 // ... sort by local token
-	 return a->deftoken < b->deftoken;
+         // ... sort by local token
+         return a->deftoken < b->deftoken;
       }
    }
    // otherwise ...
@@ -77,49 +70,16 @@ LocDefsCmp( Definitions::DefRec_Base_struct * a,
 
 bool
 GlobDefsCmp( Definitions::DefRec_Base_struct * a,
-	     Definitions::DefRec_Base_struct * b )
+             Definitions::DefRec_Base_struct * b )
 {
    // both record types are Definitions::DEF_REC_TYPE__DefProcess ? ...
    //
    if( a->etype == Definitions::DEF_REC_TYPE__DefProcess &&
        b->etype == Definitions::DEF_REC_TYPE__DefProcess )
    {
-      // ... sort as follow:
-      // Master 0
-      //  Child 1/0
-      //  Child 2/0
-      // Master 1
-      //  Child 1/1
-      // Child  2/1
-      // ...
-
-      Definitions::DefRec_DefProcess_struct * p1 =
-	 static_cast<Definitions::DefRec_DefProcess_struct*>(a);
-      Definitions::DefRec_DefProcess_struct * p2 =
-	 static_cast<Definitions::DefRec_DefProcess_struct*>(b);
-
-      // both are master
-      if( p1->parent == 0 && p2->parent == 0 )
-	 return p1->deftoken < p2->deftoken;
-      // p2 child of p1
-      else if( p1->deftoken == p2->parent )
-	 return true;
-      // p1 child of p2
-      else if( p1->parent == p2->deftoken )
-	 return false;
-      // both are childs and have same master
-      else if( p1->parent != 0 && ( p1->parent == p2->parent ) )
-	 return p1->deftoken < p2->deftoken;
-      // both are childs, but not from same master
-      else if( p1->parent != 0 && p2->parent != 0 &&
-	       ( p1->parent != p2->parent ) )
-	 return p1->parent < p2->parent;
-      // p1 is master and p2 is child, but both have no reference
-      else if( p1->parent == 0 && p2->parent != 0 )
-	 return p1->deftoken < p2->parent;
-      // p1 is child and p2 is master, but both have no reference
-      else
-	 return p1->parent < p2->deftoken;
+      // do nothing, 'cause the process definition records were already
+      // been sorted
+      return false;
    }
    // both record types are Definitions::DEF_REC_TYPE__DefProcessGroup ? ...
    //
@@ -216,8 +176,8 @@ GlobDefsCmp( Definitions::DefRec_Base_struct * a,
    }
    // both record types are Definitions::DEF_REC_TYPE__DefinitionComment ? ...
    //
-   if( a->etype == Definitions::DEF_REC_TYPE__DefinitionComment &&
-       b->etype == Definitions::DEF_REC_TYPE__DefinitionComment )
+   else if( a->etype == Definitions::DEF_REC_TYPE__DefinitionComment &&
+            b->etype == Definitions::DEF_REC_TYPE__DefinitionComment )
    {
       Definitions::DefRec_DefinitionComment_struct * c1 =
 	 static_cast<Definitions::DefRec_DefinitionComment_struct*>(a);
@@ -263,6 +223,8 @@ Definitions::~Definitions()
 bool
 Definitions::run()
 {
+   VPrint( 1, "Unifying definitions\n" );
+
    bool error = false;
 
    // allocate vector for local definitions
@@ -305,8 +267,7 @@ Definitions::run()
 bool
 Definitions::readLocal( std::vector<DefRec_Base_struct*> * p_vecLocDefs )
 {
-   if( Params.beverbose )
-      std::cout << "Reading local definitions ..." << std::endl;
+   VPrint( 1, " Reading local definitions\n" );
 
    bool error = false;
 
@@ -445,19 +406,14 @@ Definitions::readLocal( std::vector<DefRec_Base_struct*> * p_vecLocDefs )
 			   p_loc_def_manager );
       assert( p_loc_def_rstream );
 
-      if( Params.beverbose )
-	 std::cout << " Opened OTF reader stream [namestub "
-		   << Params.in_file_prefix << " id "
-		   << std::hex << g_vecUnifyCtls[i]->streamid << "]" 
-		   << std::dec << std::endl;
+      VPrint( 2, "  Opened OTF reader stream [namestub %s id %x]\n",
+	      Params.in_file_prefix.c_str(),
+	      g_vecUnifyCtls[i]->streamid );
 
       if( !OTF_RStream_getDefBuffer( p_loc_def_rstream ) )
       {
-	 if( Params.beverbose )
-	 {
-	    std::cout << "  No definitions found in this OTF reader stream "
-		      << "- Ignored" << std::endl;
-	 }
+	 VPrint( 2, "   No definitions found in this OTF reader stream "
+		    "- Ignored\n" );
       }
       else
       {
@@ -482,11 +438,9 @@ Definitions::readLocal( std::vector<DefRec_Base_struct*> * p_vecLocDefs )
       // close file manager for reader stream
       OTF_FileManager_close( p_loc_def_manager );
       
-      if( Params.beverbose )
-	 std::cout << " Closed OTF reader stream [namestub "
-		   << Params.in_file_prefix << " id "
-		   << std::hex << g_vecUnifyCtls[i]->streamid << "]" 
-		   << std::dec << std::endl;
+      VPrint( 2, "  Closed OTF reader stream [namestub %s id %x]\n",
+	      Params.in_file_prefix.c_str(),
+	      g_vecUnifyCtls[i]->streamid );
 
       if( error ) break;
    }
@@ -497,14 +451,14 @@ Definitions::readLocal( std::vector<DefRec_Base_struct*> * p_vecLocDefs )
    if( error )
    {
       std::cerr << ExeName << ": "
-		<< "An error occurred during unifying definitions - Terminating ..."
+		<< "An error occurred during unifying definitions. Aborting"
 		<< std::endl;
    }
    else
    {
       // sort local definitions
-      std::sort( p_vecLocDefs->begin(), p_vecLocDefs->end(),
-		 LocDefsCmp );
+      std::stable_sort( p_vecLocDefs->begin(), p_vecLocDefs->end(),
+                        LocDefsCmp );
    }
 
    return !error;
@@ -515,12 +469,63 @@ Definitions::createGlobal( const std::vector<DefRec_Base_struct*> *
 			   p_vecLocDefs,
 			   std::vector<DefRec_Base_struct*> * p_vecGlobDefs )
 {
+   VPrint( 1, " Creating global definitions\n" );
+
    assert( p_vecLocDefs->size() > 0 );
 
    bool error = false;
 
    uint32_t omp_comm_idx = 0;
    uint32_t mpi_comm_self_idx = 0;
+
+   // if available, write definition comment records for start-time, stop-time,
+   // and elapsed time
+   //
+   if( g_uMinStartTimeEpoch != (uint64_t)-1 && g_uMaxStopTimeEpoch > 0 )
+   {
+      time_t tt;
+      struct tm elapsed_tm;
+      char comment[STRBUFSIZE];
+
+      // headline for time comments
+      //
+      p_vecGlobDefs->push_back( new DefRec_DefinitionComment_struct(
+				   0,
+				   "Trace Times:" ) );
+
+      // start-time 
+      //
+      tt = (time_t)(g_uMinStartTimeEpoch / 1e6);
+      sprintf( comment, " Start: %s (%"U64STR")",
+	       asctime(localtime(&tt)),
+	       g_uMinStartTimeEpoch );
+      p_vecGlobDefs->push_back( new DefRec_DefinitionComment_struct(
+				   1,
+				   comment ) );
+
+      // stop-time
+      //
+      tt = (time_t)(g_uMaxStopTimeEpoch / 1e6);
+      sprintf( comment, " Stop: %s (%"U64STR")",
+	       asctime(localtime(&tt)),
+	       g_uMaxStopTimeEpoch );
+      p_vecGlobDefs->push_back( new DefRec_DefinitionComment_struct(
+				   2,
+				   comment ) );
+
+      // elapsed time
+      //
+      tt = (time_t)((g_uMaxStopTimeEpoch - g_uMinStartTimeEpoch) / 1e6);
+      gmtime_r(&tt, &elapsed_tm);
+      sprintf( comment, " Elapsed: %s%d:%s%d:%s%d (%"U64STR")",
+	       elapsed_tm.tm_hour < 10 ? "0" : "", elapsed_tm.tm_hour,
+	       elapsed_tm.tm_min  < 10 ? "0" : "", elapsed_tm.tm_min,
+	       elapsed_tm.tm_sec  < 10 ? "0" : "", elapsed_tm.tm_sec,
+	       (g_uMaxStopTimeEpoch - g_uMinStartTimeEpoch) );
+      p_vecGlobDefs->push_back( new DefRec_DefinitionComment_struct(
+				   3,
+				   comment ) );
+   }
 
    for( uint32_t i = 0; i < p_vecLocDefs->size(); i++ )
    {
@@ -534,12 +539,8 @@ Definitions::createGlobal( const std::vector<DefRec_Base_struct*> *
 	    DefRec_DefinitionComment_struct * p_loc_def_entry =
 	       (DefRec_DefinitionComment_struct*)((*p_vecLocDefs)[i]);
 
-	    // add definition without any changes to vector of
-	    // global definitions
-	    p_vecGlobDefs->push_back( new DefRec_DefinitionComment_struct(
-					 p_loc_def_entry->orderidx,
-					 p_loc_def_entry->comment ) );
-	    
+            addDefComment( p_loc_def_entry );
+
 	    break;
 	 }
 	 // DefCreator
@@ -580,12 +581,7 @@ Definitions::createGlobal( const std::vector<DefRec_Base_struct*> *
 	    DefRec_DefProcess_struct *p_loc_def_entry =
 	       (DefRec_DefProcess_struct*)((*p_vecLocDefs)[i]);
 
-	    // add definition without any changes to vector of
-	    // global definitions
-	    p_vecGlobDefs->push_back( new DefRec_DefProcess_struct(
-					 p_loc_def_entry->deftoken,
-					 p_loc_def_entry->name,
-					 p_loc_def_entry->parent ) );
+            addDefProcess( p_loc_def_entry );
 
 	    break;
 	 }
@@ -1248,15 +1244,21 @@ Definitions::createGlobal( const std::vector<DefRec_Base_struct*> *
       }
    }
 
-   // add process group records for nodes to global definition records
+   // add definition comments to global definition records
+   addDefComments2Global( p_vecGlobDefs );
+
+   // add processes to global definition records
+   addDefProcesses2Global( p_vecGlobDefs );
+
+   // add process groups for nodes to global definition records
    addNodeGroups2Global( p_vecGlobDefs );
 
-   // add process group records for MPI communicators to global def. records
+   // add process groups for MPI communicators to global def. records
    addMPIComms2Global( p_vecGlobDefs );
 
    // sort global definition records
-   std::sort( p_vecGlobDefs->begin(), p_vecGlobDefs->end(),
-	      GlobDefsCmp );
+   std::stable_sort( p_vecGlobDefs->begin(), p_vecGlobDefs->end(),
+                     GlobDefsCmp );
 
    return !error;
 }
@@ -1265,8 +1267,7 @@ bool
 Definitions::writeGlobal( const std::vector<DefRec_Base_struct*> *
 			  p_vecGlobDefs )
 {
-   if( Params.beverbose )
-      std::cout << "Writing global definitions ..."  << std::endl;
+   VPrint( 1, " Writing global definitions\n" );
 
    assert( p_vecGlobDefs->size() > 0 );
 
@@ -1303,11 +1304,8 @@ Definitions::writeGlobal( const std::vector<DefRec_Base_struct*> *
       return false;
    }
 
-   if( Params.beverbose )
-   {
-      std::cout << " Opened OTF writer stream [namestub "
-		<< tmp_out_file_prefix.c_str() << " id 0]" << std::endl;
-   }
+   VPrint( 2, "  Opened OTF writer stream [namestub %s id 0]\n",
+	   tmp_out_file_prefix.c_str() );
 
    // write OTF version record
    OTF_WStream_writeOtfVersion( p_glob_def_wstream );
@@ -1499,14 +1497,85 @@ Definitions::writeGlobal( const std::vector<DefRec_Base_struct*> *
    // close file manager for writer stream
    OTF_FileManager_close( p_glob_def_manager );
 
-   if( Params.beverbose )
-      std::cout << " Closed OTF writer stream [namestub "
-		<< tmp_out_file_prefix << " id 0]" << std::endl;
+   VPrint( 2, "  Closed OTF writer stream [namestub %s id 0]\n",
+	   tmp_out_file_prefix.c_str() );
 
    return !error;
 }
 
-bool
+void
+Definitions::addDefComment( const DefRec_DefinitionComment_struct * p_comment )
+{
+   uint32_t i;
+
+   // definition comment already exists?
+   //
+   for( i = 0; i < m_vecDefComments.size(); i++ )
+   {
+      if( m_vecDefComments[i]->comment.compare(p_comment->comment) == 0 )
+         break;
+   }
+
+   // no -> add comment
+   //
+   if( i == m_vecDefComments.size() )
+      m_vecDefComments.push_back( p_comment );
+}
+
+void
+Definitions::addDefComments2Global( std::vector<DefRec_Base_struct*> *
+				    p_vecGlobDefs )
+{
+   for( uint32_t i = 0; i < m_vecDefComments.size(); i++ )
+   {
+      p_vecGlobDefs->push_back( new DefRec_DefinitionComment_struct(
+				   m_vecDefComments[i]->orderidx,
+				   m_vecDefComments[i]->comment ) );
+   }
+}
+
+void
+Definitions::addDefProcess( const DefRec_DefProcess_struct * p_proc )
+{
+   // add process definition
+   m_vecDefProcesses.push_back( p_proc );
+}
+
+void
+Definitions::addDefProcesses2Global( std::vector<DefRec_Base_struct*> *
+                                     p_vecGlobDefs, uint32_t i )
+{
+   // first (non-recursive) call?
+   if( i == (uint32_t)-1 )
+   {
+      // call recursive for all master processes
+      //
+      for( i = 0; i < m_vecDefProcesses.size(); i++ )
+      {
+         if( m_vecDefProcesses[i]->parent == 0 )
+            addDefProcesses2Global( p_vecGlobDefs, i );
+      }
+   }
+   // otherwise, add process definition to global definition records
+   // in correct order
+   else
+   {
+      p_vecGlobDefs->push_back( new DefRec_DefProcess_struct(
+                                   m_vecDefProcesses[i]->deftoken,
+                                   m_vecDefProcesses[i]->name,
+                                   m_vecDefProcesses[i]->parent ) );
+
+      // call recursive for all child processes
+      //
+      for( uint32_t j = i+1; j < m_vecDefProcesses.size(); j++ )
+      {
+         if( m_vecDefProcesses[j]->parent == m_vecDefProcesses[i]->deftoken )
+            addDefProcesses2Global( p_vecGlobDefs, j );
+      }
+   }
+}
+
+void
 Definitions::addProc2NodeGroup( const std::string & nodeName,
 				const uint32_t & nodeProc )
 {
@@ -1523,13 +1592,10 @@ Definitions::addProc2NodeGroup( const std::string & nodeName,
       std::sort( m_mapNodeProcs[nodeName].begin(),
 		 m_mapNodeProcs[nodeName].end(),
 		 std::less<NodeProc_struct>() );
-      return true;
    }
-
-   return false;
 }
 
-bool
+void
 Definitions::addNodeGroups2Global( std::vector<DefRec_Base_struct*> *
 				   p_vecGlobDefs )
 {
@@ -1549,11 +1615,9 @@ Definitions::addNodeGroups2Global( std::vector<DefRec_Base_struct*> *
 				   it->first,
 				   vec_procids ) );
    }
-
-   return true;
 }
 
-bool
+void
 Definitions::addMPIComm( const uint32_t proc, const uint32_t defToken,
 			 const std::vector<uint32_t> & vecMembers )
 {
@@ -1577,11 +1641,9 @@ Definitions::addMPIComm( const uint32_t proc, const uint32_t defToken,
    //
    MPIComm_struct new_comm( comm_id, proc, defToken, index );
    m_mapProcMPIComms[proc].push_front( new_comm );
-
-   return true;
 }
 
-bool
+void
 Definitions::addMPIComms2Global( std::vector<DefRec_Base_struct*> *
 				 p_vecGlobDefs )
 {
@@ -1590,15 +1652,11 @@ Definitions::addMPIComms2Global( std::vector<DefRec_Base_struct*> *
    // convert local MPI comm. map to list
    //
    for( std::map<uint32_t, std::list<MPIComm_struct> >::iterator map_it =
-	   m_mapProcMPIComms.begin(); map_it != m_mapProcMPIComms.end();
-	map_it++ )
+      m_mapProcMPIComms.begin(); map_it != m_mapProcMPIComms.end();
+      map_it++ )
    {
-      for( std::list<MPIComm_struct>::iterator list_it =
-	      map_it->second.begin(); list_it != map_it->second.end();
-	   list_it++ )
-      {
-	 list_mpi_comms.push_back( *list_it );
-      }
+      list_mpi_comms.insert( list_mpi_comms.end(),
+                             map_it->second.begin(), map_it->second.end() );
    }
 
    // get global token factory for this definition type
@@ -1608,63 +1666,64 @@ Definitions::addMPIComms2Global( std::vector<DefRec_Base_struct*> *
    char comm_name[256];
    uint32_t comm_name_idx = 0;
 
+   std::map<std::pair<uint32_t, uint32_t>, uint32_t> map_global_token;
+
    // unify local MPI comms.
    //
-   while( list_mpi_comms.size() > 0 )
+   for( std::list<MPIComm_struct>::iterator list_it =
+        list_mpi_comms.begin(); list_it != list_mpi_comms.end(); list_it++ )
    {
-      std::list<MPIComm_struct>::iterator it = list_mpi_comms.begin();
+      // look for already created global token by commid/index
+      std::map<std::pair<uint32_t, uint32_t>, uint32_t>::iterator map_globtok_it =
+         map_global_token.find( std::make_pair( list_it->commid, list_it->index ) );
 
-      uint32_t commid = it->commid;
-      uint32_t index = it->index;
-      std::vector<uint32_t> vec_members = m_mapMPICommId2Members[commid];
-
-      // add index to comm's name
-      snprintf( comm_name, sizeof( comm_name ) - 1,
-		"MPI Communicator %d", comm_name_idx++ );
-
-      // create token for global comm.
-      uint32_t global_token =
-	 p_tkfac_defprocessgroup->createGlobalToken(
-	    it->loccpuid,
-	    it->deftoken,
-	    comm_name,
-	    vec_members );
-
-      // add process group definition to vector of global definitions
-      p_vecGlobDefs->push_back( new DefRec_DefProcessGroup_struct(
-				0,
-				global_token,
-				DefRec_DefProcessGroup_struct::TYPE_MPI_COMM_USER,
-				comm_name,
-				vec_members ) );
-
-      // set translation for all remaining comms. which have this commid
-      // and index
+      // if not found -> create global token for commid/index
       //
-      do
+      if( map_globtok_it == map_global_token.end() )
       {
-	 if( p_tkfac_defprocessgroup->translateLocalToken(
-		it->loccpuid,
-		it->deftoken ) == 0 )
-	 {
-	    p_tkfac_defprocessgroup->setTranslation(
-	       it->loccpuid,
-	       it->deftoken,
-	       global_token );
-	 }
+         std::vector<uint32_t> vec_members =
+            m_mapMPICommId2Members[list_it->commid];
 
-	 // delete processed comm. from list
-	 list_mpi_comms.erase( it );
+         // add index to comm's name
+         snprintf( comm_name, sizeof( comm_name ) - 1,
+                   "MPI Communicator %d", comm_name_idx++ );
 
-	 // search next comm. which have this commid and index
-	 it = std::find( list_mpi_comms.begin(),
-			 list_mpi_comms.end(),
-			 MPIComm_struct(commid, index) );
+         // create token for global comm.
+         uint32_t global_token =
+            p_tkfac_defprocessgroup->createGlobalToken(
+            list_it->loccpuid,
+            list_it->deftoken,
+            comm_name,
+            vec_members );
+
+         // save global token for commid/index
+         map_global_token.insert( std::make_pair(
+            (std::pair<uint32_t, uint32_t>)std::make_pair(
+               (uint32_t)list_it->commid, (uint32_t)list_it->index ),
+            (uint32_t)global_token ) );
+
+         // add process group definition to vector of global definitions
+         p_vecGlobDefs->push_back( new DefRec_DefProcessGroup_struct(
+            0,
+            global_token,
+            DefRec_DefProcessGroup_struct::TYPE_MPI_COMM_USER,
+            comm_name,
+            vec_members ) );
       }
-      while( it != list_mpi_comms.end() );
+      // otherwise, set translation for this local process id, if necessary
+      //
+      else
+      {
+         if( p_tkfac_defprocessgroup->translateLocalToken(
+                list_it->loccpuid, list_it->deftoken ) == 0 )
+         {
+            p_tkfac_defprocessgroup->setTranslation(
+            list_it->loccpuid,
+            list_it->deftoken,
+            map_globtok_it->second );
+         }
+      }
    }
-
-   return true;
 }
 
 uint32_t

@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -52,8 +52,8 @@
  *      
  *      Write some definition records.
  *      \code
- *      OTF_WStream_writeDefTimerResolution( wstream, 0, 1000 );
- *      OTF_WStream_writeDefProcess( wstream, 0, 1, "proc one", 0 );
+ *      OTF_WStream_writeDefTimerResolution( wstream, 1000 );
+ *      OTF_WStream_writeDefProcess( wstream, 1, "proc one", 0 );
  *      \endcode
  *
  *      Clean up before exiting the program.
@@ -126,6 +126,11 @@ struct struct_OTF_WStream {
 		reading through all events of that interval. */
 	OTF_WBuffer* statsBuffer;
 
+	/**	Marker buffer. Marker buffer carries marker definitions and spots
+		which live in a separate file and wich are not sorted according to time stamp
+        in any way. */
+	OTF_WBuffer* markerBuffer;
+
 	/** Default compression method for all buffers managed by this stream */
 	OTF_FileCompression compression;
 	
@@ -150,7 +155,7 @@ typedef struct struct_OTF_WStream OTF_WStream;
  * @param namestub     File name prefix which is going to be used by 
  *                     all sub-files which belong to the writer stream.
  * @param id           Abitrary but unique identifier of the writer stream.
- *                     Cannot be '0'.
+		       Must be > '0' for real streams. Use '0' for global definitions.
  * @param manager      File handle manager. 
  *
  * @return             Initialized OTF_WStream instance or 0 if an error
@@ -238,6 +243,19 @@ OTF_WBuffer* OTF_WStream_getSnapshotBuffer( OTF_WStream* wstream );
  * \ingroup wstream
  */
 OTF_WBuffer* OTF_WStream_getStatsBuffer( OTF_WStream* wstream );
+
+
+/** 
+ * Returns the marker buffer of the according writer stream.
+ *
+ * @param wstream  Pointer to an initialized OTF_WStream object. See 
+ *                 also OTF_WStream_open().
+ * 
+ * @return         Initialized OTF_WBuffer instance or 0 if an error occured.
+ *
+ * \ingroup wstream
+ */
+OTF_WBuffer* OTF_WStream_getMarkerBuffer( OTF_WStream* wstream );
 
 
 /**
@@ -357,62 +375,107 @@ uint32_t OTF_WStream_getFormat( OTF_WStream* wstream );
 /* *** definition record write handlers *** ******************************** */
 
 
-/**	Write a DEFINITIONCOMMENT record to stream 'wstream'. \ingroup wstream */
+/**	Write a DEFINITIONCOMMENT record to stream 'wstream'. 
+ * @see OTF_Writer_writeDefinitionComment()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeDefinitionComment( OTF_WStream* wstream,
 	const char* comment );
 
-/**	Write a DEFTIMERRESOLUTION record to stream 'wstream'. \ingroup wstream  */
+/**	Write a DEFTIMERRESOLUTION record to stream 'wstream'.
+ * @see OTF_Writer_writeDefTimerResolution()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeDefTimerResolution( OTF_WStream* wstream,
 	uint64_t ticksPerSecond );
 
-/**	Write a DEFPROCESS record to stream 'wstream'. \ingroup wstream  */
+/**	Write a DEFPROCESS record to stream 'wstream'.
+ * @see OTF_Writer_writeDefProcess()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeDefProcess( OTF_WStream* wstream, uint32_t deftoken,
 	const char* name, uint32_t parent );
 
-/**	Write a DEFPROCESSGROUP record to stream 'wstream'. \ingroup wstream  */
+/**	Write a DEFPROCESSGROUP record to stream 'wstream'.
+ * @see OTF_Writer_writeDefProcessGroup()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeDefProcessGroup( OTF_WStream* wstream, uint32_t deftoken,
 	const char* name, uint32_t n, const uint32_t* array );
 
-/**	Write a DEFFUNCTION record to stream 'wstream'. \ingroup wstream  */
+/**	Write a DEFFUNCTION record to stream 'wstream'.
+ * @see OTF_Writer_writeDefFunction()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeDefFunction( OTF_WStream* wstream, uint32_t deftoken,
 	const char* name, uint32_t group, uint32_t scltoken );
 
-/**	Write a DEFFUNCTIONGROUP record to stream 'wstream'. \ingroup wstream  */
+/**	Write a DEFFUNCTIONGROUP record to stream 'wstream'.
+ * @see OTF_Writer_writeDefFunctionGroup()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeDefFunctionGroup( OTF_WStream* wstream,
 	uint32_t deftoken, const char* name );
 
-/** Write a DEFCOLLECTIVEOPERATION record to stream 'wstream'. \ingroup wstream  */
+/** Write a DEFCOLLECTIVEOPERATION record to stream 'wstream'.
+ * @see OTF_Writer_writeDefCollectiveOperation()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeDefCollectiveOperation( OTF_WStream* wstream, 
 	uint32_t collOp, const char* name, uint32_t type );
 
-/**	Write a DEFCOUNTER record to stream 'wstream'. \ingroup wstream  */
+/**	Write a DEFCOUNTER record to stream 'wstream'.
+ * @see OTF_Writer_writeDefCounter()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeDefCounter( OTF_WStream* wstream, uint32_t deftoken,
 	const char* name, uint32_t properties, uint32_t countergroup, 
 	const char* unit );
 
-/**	Write a DEFCOUNTERGROUP record to stream 'wstream'. \ingroup wstream  */
+/**	Write a DEFCOUNTERGROUP record to stream 'wstream'.
+ * @see OTF_Writer_writeDefCounterGroup()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeDefCounterGroup( OTF_WStream* wstream,
 	uint32_t deftoken, const char* name );
 
-/**	Write a DEFSCL record to stream 'wstream'. \ingroup wstream  */
+/**	Write a DEFSCL record to stream 'wstream'. 
+ * @see OTF_Writer_writeDefScl()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeDefScl( OTF_WStream* wstream, uint32_t deftoken,
 	uint32_t sclfile, uint32_t sclline );
 
-/**	Write a DEFSCLFILE record to stream 'wstream'. \ingroup wstream  */
+/**	Write a DEFSCLFILE record to stream 'wstream'.
+ * @see OTF_Writer_writeDefSclFile()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeDefSclFile( OTF_WStream* wstream,
 	uint32_t deftoken, const char* filename );
 
-/**	Write a DEFCREATOR record to stream 'wstream'. \ingroup wstream  */
+/**	Write a DEFCREATOR record to stream 'wstream'.
+ * @see OTF_Writer_writeDefCreator()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeDefCreator( OTF_WStream* wstream, const char* creator );
 
-/** Write a DEFVERSION record to stream 'wstream'. \ingroup wstream  */
+/** Write a DEFVERSION record to stream 'wstream'.
+ * @see OTF_Writer_writeOtfVersion()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeOtfVersion( OTF_WStream* wstream );
 
-/** Write a DEFFILE record to stream 'wstream'. \ingroup wstream  */
+/** Write a DEFFILE record to stream 'wstream'. 
+ * @see OTF_Writer_writeDefFile()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeDefFile( OTF_WStream* wstream, uint32_t token,
 	const char* name, uint32_t group );
 
-/** Write a DEFFILEGROUP record to stream 'wstream'. \ingroup wstream  */
+/** Write a DEFFILEGROUP record to stream 'wstream'.
+ * @see OTF_Writer_writeDefFileGroup()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeDefFileGroup( OTF_WStream* wstream, uint32_t token,
 	const char* name );
 
@@ -420,68 +483,176 @@ int OTF_WStream_writeDefFileGroup( OTF_WStream* wstream, uint32_t token,
 /* *** event record write handlers *** ************************************* */
 
 
-/**	Write a ENTER record to stream 'wstream'. \ingroup wstream  */
+/**	Write a ENTER record to stream 'wstream'.
+ * @see OTF_Writer_writeEnter()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeEnter( OTF_WStream* wstream, uint64_t time,
     uint32_t statetoken, uint32_t cpuid, uint32_t scltoken );
 
-/**	Write a RECEIVE record to stream 'wstream'. \ingroup wstream  */
+/**	Write a RECEIVE record to stream 'wstream'.
+ * @see OTF_Writer_writeRecvMsg()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeRecvMsg( OTF_WStream* wstream, uint64_t time,
     uint32_t receiver, uint32_t sender, uint32_t communicator,
     uint32_t msgtype, uint32_t msglength, uint32_t scltoken );
 
-/**	Write a SEND record to stream 'wstream'. \ingroup wstream  */
+/**	Write a SEND record to stream 'wstream'.
+ * @see OTF_Writer_writeSendMsg()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeSendMsg( OTF_WStream* wstream, uint64_t time, 
     uint32_t sender, uint32_t receiver, uint32_t communicator, 
     uint32_t msgtype, uint32_t msglength, uint32_t scltoken );
 
-/**	Write a LEAVE record to stream 'wstream'. \ingroup wstream  */
+/**	Write a LEAVE record to stream 'wstream'.
+ * @see OTF_Writer_writeLeave()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeLeave( OTF_WStream* wstream, uint64_t time,
     uint32_t statetoken, uint32_t cpuid, uint32_t scltoken );
 
-/**	Write a COUNTER record to stream 'wstream'. \ingroup wstream  */
+/**	Write a COUNTER record to stream 'wstream'.
+ * @see OTF_Writer_writeCounter()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeCounter( OTF_WStream* wstream, uint64_t time, 
     uint32_t process, uint32_t counter_token, uint64_t value );
 
-/** Write a COLLOP record to stream 'wstream'. \ingroup wstream  */
+/** Write a COLLOP record to stream 'wstream'. 
+ * @deprecated This event record has been deprecated due to usage constraints.
+ *             Please use OTF_WStream_writeBeginCollectiveOperation() and
+ *             OTF_WStream_writeEndCollectiveOperation(), repectively.
+ * \ingroup wstream  */
 int OTF_WStream_writeCollectiveOperation( OTF_WStream* wstream, uint64_t time, 
     uint32_t process, uint32_t functionToken, uint32_t communicator, 
     uint32_t rootprocess, uint32_t sent, uint32_t received, 
     uint64_t duration, uint32_t scltoken );
 
-/** Write a #EVTCOMMENT record to stream 'wstream'. \ingroup wstream  */
+/** Write a COLLOPBEGIN record to stream 'wstream'.
+ * @see OTF_Writer_writeBeginCollectiveOperation()
+ * \ingroup wstream 
+ */
+int OTF_WStream_writeBeginCollectiveOperation( OTF_WStream* wstream,
+                uint64_t time, uint32_t process, uint32_t collOp,
+                uint64_t matchingId, uint32_t procGroup, uint32_t rootProc,
+                uint64_t sent, uint64_t received, uint32_t scltoken );
+
+/** Write a COLLOPEND record to stream 'wstream'.
+ * @see OTF_Writer_writeEndCollectiveOperation()
+ * \ingroup wstream 
+ */
+int OTF_WStream_writeEndCollectiveOperation( OTF_WStream* wstream,
+                uint64_t time, uint32_t process, uint64_t matchingId );
+
+/** Write a #EVTCOMMENT record to stream 'wstream'.
+ * @see OTF_Writer_writeEventComment()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeEventComment( OTF_WStream* wstream, uint64_t time, 
     uint32_t process, const char* comment );
 
-/** Write a PROCESSBEGIN record to stream 'wstream'. \ingroup wstream  */
+/** Write a PROCESSBEGIN record to stream 'wstream'.
+ * @see OTF_Writer_writeBeginProcess()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeBeginProcess( OTF_WStream* wstream, uint64_t time,
     uint32_t process );
 
-/** Write a PROCESSEND record to stream 'wstream'. \ingroup wstream  */
+/** Write a PROCESSEND record to stream 'wstream'.
+ * @see OTF_Writer_writeEndProcess()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeEndProcess( OTF_WStream* wstream, uint64_t time,
     uint32_t process );
 
+/** Write a FILEOP record to stream 'wstream'.
+ * @deprecated This event record has been deprecated due to usage constraints.
+ *             Please use OTF_WStream_writeBeginFileOperation() and
+ *             OTF_WStream_writeEndFileOperation(), respectively.
+ * \ingroup wstream  */
 int OTF_WStream_writeFileOperation( OTF_WStream* wstream, uint64_t time,
 	uint32_t fileid, uint32_t process, uint64_t handleid, uint32_t operation,
 	uint64_t bytes, uint64_t duration, uint32_t source );
+
+/** Write a FILEOPBEGIN record to stream 'wstream'.
+ * @see OTF_Writer_writeBeginFileOperation()
+ * \ingroup wstream 
+ */
+int OTF_WStream_writeBeginFileOperation( OTF_WStream* wstream, uint64_t time,
+                uint32_t process, uint64_t handleid, uint32_t scltoken );
+
+/** Write a FILEOPEND record to stream 'wstream'.
+ * @see OTF_Writer_writeEndFileOperation()
+ * \ingroup wstream 
+ */
+int OTF_WStream_writeEndFileOperation( OTF_WStream* wstream, uint64_t time,
+                uint32_t process, uint32_t fileid, uint64_t handleid,
+                uint32_t operation, uint64_t bytes, uint32_t scltoken );
+
+/** Write a RMAPUT record to stream 'wstream'.
+ * @see OTF_Writer_writeRMAPut()
+ * \ingroup wstream 
+ */
+int OTF_WStream_writeRMAPut( OTF_WStream* wstream, uint64_t time,
+    uint32_t process, uint32_t origin, uint32_t target, uint32_t communicator,
+    uint32_t tag, uint64_t bytes, uint32_t scltoken );
+
+/** Write a RMAPUTRE record to stream 'wstream'.
+ * @see OTF_Writer_writeRMAPutRemoteEnd()
+ * \ingroup wstream 
+ */
+int OTF_WStream_writeRMAPutRemoteEnd( OTF_WStream* wstream, uint64_t time,
+    uint32_t process, uint32_t origin, uint32_t target, uint32_t communicator,
+    uint32_t tag, uint64_t bytes, uint32_t scltoken );
+
+/** Write a RMAGET record to stream 'wstream'.
+ * @see OTF_Writer_writeRMAGet()
+ * \ingroup wstream 
+ */
+int OTF_WStream_writeRMAGet( OTF_WStream* wstream, uint64_t time,
+    uint32_t process, uint32_t origin, uint32_t target, uint32_t communicator,
+    uint32_t tag, uint64_t bytes, uint32_t scltoken );
+
+/** Write a RMAEND record to stream 'wstream'.
+ * @see OTF_Writer_writeRMAEnd()
+ * \ingroup wstream 
+ */
+int OTF_WStream_writeRMAEnd( OTF_WStream* wstream, uint64_t time,
+    uint32_t process, uint32_t remote, uint32_t communicator, uint32_t tag,
+    uint32_t scltoken );
 
 
 /* *** public snapshot record write handlers *** */
 
 
-/** Write a #TCOMMENT record to stream 'wstream'. \ingroup wstream  */
+/** Write a #TCOMMENT record to stream 'wstream'.
+ * @see OTF_Writer_writeSnapshotComment()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeSnapshotComment( OTF_WStream* wstream, uint64_t time, 
     uint32_t process, const char* comment );
 
-/** Write a TENTER record to stream 'wstream'. \ingroup wstream  */
+/** Write a TENTER record to stream 'wstream'.
+ * @see OTF_Writer_writeEnterSnapshot()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeEnterSnapshot( OTF_WStream* wstream, uint64_t time,
     uint64_t originaltime, uint32_t statetoken, uint32_t cpuid, uint32_t scltoken );
 
-/** Write a TSEND record to stream 'wstream'. \ingroup wstream  */
+/** Write a TSEND record to stream 'wstream'.
+ * @see OTF_Writer_writeSendSnapshot()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeSendSnapshot( OTF_WStream* wstream, uint64_t time,
 		uint64_t originaltime, uint32_t sender, uint32_t receiver,
 		uint32_t procGroup, uint32_t type, uint32_t source );
 
-/** Write a TOPENFILE record to stream 'wstream'. \ingroup wstream  */
+/** Write a TOPENFILE record to stream 'wstream'.
+ * @see OTF_Writer_writeOpenFileSnapshot()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeOpenFileSnapshot( OTF_WStream* wstream,uint64_t time,
 	uint64_t originaltime, uint32_t fileid, uint32_t process, uint64_t handleid,
 	uint32_t source );
@@ -490,33 +661,59 @@ int OTF_WStream_writeOpenFileSnapshot( OTF_WStream* wstream,uint64_t time,
 /* *** public statistics record write handlers *** */
 
 
-/** Write a SUMCOMMENT record to stream 'wstream'. \ingroup wstream  */
+/** Write a SUMCOMMENT record to stream 'wstream'.
+ * @see OTF_Writer_writeSummaryComment()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeSummaryComment( OTF_WStream* wstream, uint64_t time, 
     uint32_t process, const char* comment );
 
-/** Write a SUMFUNCTION record to stream 'wstream'. \ingroup wstream  */
+/** Write a SUMFUNCTION record to stream 'wstream'.
+ * @see OTF_Writer_writeFunctionSummary()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeFunctionSummary( OTF_WStream* wstream, 
 	uint64_t time, uint32_t function, uint32_t process, 
 	uint64_t count, uint64_t excltime, uint64_t incltime );
 
-/** Write a SUMFUNCTIONGROUP record to stream 'wstream'. \ingroup wstream  */
+/** Write a SUMFUNCTIONGROUP record to stream 'wstream'.
+ * @see OTF_Writer_writeFunctionGroupSummary()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeFunctionGroupSummary( OTF_WStream* wstream, 
 	uint64_t time,  uint32_t functiongroup,  uint32_t process,  
 	uint64_t count,  uint64_t excltime,  uint64_t incltime );
 
-/** Write a SUMMESSAGE record to stream 'wstream'. \ingroup wstream  */
+/** Write a SUMMESSAGE record to stream 'wstream'. 
+ * @see OTF_Writer_writeMessageSummary()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeMessageSummary( OTF_WStream* wstream, 
 	uint64_t time, uint32_t process, uint32_t peer, 
 	uint32_t comm,  uint32_t tag, uint64_t number_sent, uint64_t number_recved,
 	uint64_t bytes_sent,  uint64_t bytes_recved );
 
-/** Write a SUMFILEOPERATION record to stream 'wstream'. \ingroup wstream  */
+/** Write a COLLOPMESSAGE record to stream 'wstream'.
+ * @see OTF_Writer_writeCollopSummary()
+ * \ingroup wstream 
+ */
+int OTF_WStream_writeCollopSummary( OTF_WStream* wstream,
+	uint64_t time, uint32_t process, uint32_t comm, uint32_t collective,
+	uint64_t number_sent, uint64_t number_recved, uint64_t bytes_sent,  uint64_t bytes_recved );
+
+/** Write a SUMFILEOPERATION record to stream 'wstream'.
+ * @see OTF_Writer_writeFileOperationSummary()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeFileOperationSummary( OTF_WStream* wstream, uint64_t time,
 	uint32_t fileid, uint32_t process, uint64_t nopen, uint64_t nclose,
 	uint64_t nread, uint64_t nwrite, uint64_t nseek, uint64_t bytesread,
 	uint64_t byteswrite );
 
-/** Write a SUMFILEGROUPOPERATION record to stream 'wstream'. \ingroup wstream  */
+/** Write a SUMFILEGROUPOPERATION record to stream 'wstream'.
+ * @see OTF_Writer_writeFileGroupOperationSummary()
+ * \ingroup wstream 
+ */
 int OTF_WStream_writeFileGroupOperationSummary( OTF_WStream* wstream, uint64_t time,
 	uint32_t groupid, uint32_t process, uint64_t nopen, uint64_t nclose,
 	uint64_t nread, uint64_t nwrite, uint64_t nseek, uint64_t bytesread,
@@ -531,6 +728,30 @@ int OTF_WStream_writeCollOpSummary( OTF_WStream* wstream,
 	uint64_t time, uint32_t process,  uint32_t root,  
 	uint64_t bytes_sent, uint64_t bytes_recved );
 */
+
+
+
+/* *** marker record types *** */
+
+/** Write a def marker record to stream 'wstream'.
+ * @see OTF_Writer_writeDefMarker()
+ * \ingroup wstream 
+ */
+int OTF_WStream_writeDefMarker( OTF_WStream* wstream, 
+                                uint32_t token, 
+                                const char* name, 
+                                uint32_t type );
+
+/** Write a marker record to stream 'wstream'.
+ * @see OTF_Writer_writeMarker()
+ * \ingroup wstream 
+ */
+int OTF_WStream_writeMarker( OTF_WStream* wstream, 
+                             uint64_t time, 
+                             uint32_t process, 
+                             uint32_t token, 
+                             const char* text );
+
 
 #ifdef __cplusplus
 }

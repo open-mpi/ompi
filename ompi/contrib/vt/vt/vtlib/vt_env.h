@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -24,31 +24,56 @@
 EXTERN char*  vt_env_apppath(void);
 EXTERN char*  vt_env_dyn_blacklist(void);
 EXTERN char*  vt_env_dyn_shlibs(void);
+EXTERN char*  vt_env_gnu_nmfile(void);
+EXTERN int    vt_env_gnu_demangle(void);
+EXTERN int    vt_env_gnu_getsrc(void);
 EXTERN char*  vt_env_gdir(void);
 EXTERN char*  vt_env_ldir(void);
+EXTERN int    vt_env_gdir_check(void);
+EXTERN int    vt_env_ldir_check(void);
 EXTERN char*  vt_env_fprefix(void);
+EXTERN int    vt_env_funique(void);
 EXTERN size_t vt_env_bsize(void);
+EXTERN size_t vt_env_copy_bsize(void);
+EXTERN int    vt_env_pthread_reuse(void);
 EXTERN int    vt_env_mode(void);
 EXTERN int    vt_env_stat_intv(void);
-EXTERN int    vt_env_stat_show(void);
-EXTERN int    vt_env_is_verbose(void);
+EXTERN int    vt_env_stat_props(void);
+EXTERN int    vt_env_stat_msg_dtls(void);
+EXTERN int    vt_env_stat_collop_dtls(void);
+EXTERN int    vt_env_verbose(void);
 EXTERN int    vt_env_debug(void);
-EXTERN int    vt_env_do_demangle(void);
 EXTERN int    vt_env_do_unify(void);
 EXTERN int    vt_env_do_clean(void);
 EXTERN int    vt_env_memtrace(void);
+EXTERN int    vt_env_memtrace_marker(void);
+EXTERN int    vt_env_cpuidtrace(void);
 EXTERN int    vt_env_iotrace(void);
+EXTERN char*  vt_env_iolibpathname(void);
+EXTERN int    vt_env_libctrace(void);
 EXTERN int    vt_env_mpitrace(void);
+EXTERN int    vt_env_mpicheck(void);
+EXTERN int    vt_env_mpicheck_errexit(void);
+EXTERN char*  vt_env_rusage(void);
+EXTERN int    vt_env_rusage_intv(void);
 EXTERN char*  vt_env_metrics(void);
 EXTERN char*  vt_env_metrics_spec(void);
+EXTERN int    vt_env_sync_flush(void);
+EXTERN int    vt_env_sync_flush_level(void);
+EXTERN int    vt_env_max_stack_depth(void);
 EXTERN int    vt_env_max_flushes(void);
 EXTERN int    vt_env_max_threads(void);
-EXTERN char*  vt_env_nmfile(void);
 EXTERN int    vt_env_compression(void);
+EXTERN int    vt_env_java_native(void);
+EXTERN int    vt_env_java_synthetic(void);
+EXTERN int    vt_env_java_group_classes(void);
+EXTERN char*  vt_env_java_filter_spec(void);
 EXTERN char*  vt_env_filter_spec(void);
 EXTERN char*  vt_env_groups_spec(void);
+EXTERN int    vt_env_etimesync(void);
+EXTERN int    vt_env_etimesync_intv(void);
 
-#endif
+#endif /* _VT_ENV_H */
 
 
 

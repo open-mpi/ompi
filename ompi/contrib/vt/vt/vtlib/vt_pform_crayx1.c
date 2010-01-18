@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -43,9 +43,10 @@
 #elif TIMER == TIMER_GETTIMEOFDAY
   static uint64_t vt_time_base = 0;
 #elif TIMER == TIMER_PAPI_REAL_CYC
-# include <vt_metric.h>
+  extern uint64_t vt_metric_clckrt(void);
+  extern uint64_t vt_metric_real_cyc(void);
 #elif TIMER == TIMER_PAPI_REAL_USEC
-# include <vt_metric.h>
+  extern uint64_t vt_metric_real_usec(void);
   static uint64_t vt_time_base = 0;
 #endif
 
@@ -90,11 +91,17 @@ char* vt_pform_gdir() {
 
 /* directory of local file system  */
 char* vt_pform_ldir() {
-  #ifdef PFORM_LDIR
-    return PFORM_LDIR;
-  #else
-    return "/tmp";
-  #endif
+#ifdef DEFAULT_PFORM_LDIR
+  return DEFAULT_PFORM_LDIR;
+#else
+  return "/tmp";
+#endif
+}
+
+/* full path of executable  */
+char* vt_pform_exec()
+{
+  return NULL;
 }
 
 /* clock resolution */

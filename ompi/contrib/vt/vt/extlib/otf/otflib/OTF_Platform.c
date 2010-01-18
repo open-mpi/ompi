@@ -1,6 +1,6 @@
 /*
  This is part of the OTF library.
- Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
  
  Copyright (c) 2004-2005, The Trustees of Indiana University and Indiana
@@ -11,14 +11,18 @@
                           University of Stuttgart
  Copyright (c) 2004-2005, The Regents of the University of California
  Copyright (c) 2007,      Cisco Systems, Inc.
- Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
 */
 
 #include "OTF_Platform.h"
 
+#include <stdlib.h>
+#include <string.h>
+
 #if defined(_WIN32) /* windows */
 
 #include <Windows.h>
+
 
 int gettimeofday(struct timeval* tv, void* dummytimezone) {
 	union {
@@ -37,7 +41,6 @@ int gettimeofday(struct timeval* tv, void* dummytimezone) {
 
 #include <errno.h>
 #include <stdio.h>
-#include <string.h>
 
 static int guess_strlen(const char* fmt, va_list ap) {
 	char* sarg;
@@ -256,6 +259,7 @@ int OTF_vsnprintf(char* str, size_t size, const char* fmt, va_list ap) {
 
 	/* free allocated buffer */
 	free(buf);
+	buf = NULL;
 
 	return length;
 }
@@ -274,4 +278,27 @@ char* OTF_strdup(const char* s) {
 }
 
 #endif /* windows/unix */
+
+char* OTF_basename(char* path) {
+	char *ret;
+#if defined(_WIN32)
+	const char* s = "\\";
+#else
+	const char* s = "/";
+#endif
+	
+	if( path == NULL || strlen( path ) == 0 ) {
+		ret = strdup( "." );
+	} else if( path[strlen(path)-1] == *s ) {
+		ret = strdup( s );
+	} else {
+		char* tmp;
+		if( ( tmp = strrchr( path, *s ) ) != NULL )
+			ret = strdup( tmp+1 );
+		else
+			ret = strdup( path );
+	}
+	
+	return ret;
+}
 

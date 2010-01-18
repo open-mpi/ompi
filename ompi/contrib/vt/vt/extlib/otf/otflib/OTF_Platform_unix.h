@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -23,9 +23,18 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
+
+#include <limits.h>
+#if defined(HAVE_SYS_PARAM_H) && HAVE_SYS_PARAM_H
+#	include <sys/param.h>
+#endif
+#if defined(PATH_MAX)
+#	define OTF_PATH_MAX (PATH_MAX + 1)
+#elif defined(_POSIX_PATH_MAX)
+#	define OTF_PATH_MAX (_POSIX_PATH_MAX + 1)
+#else
+#	define OTF_PATH_MAX 256
+#endif
 
 #if !(defined(HAVE_FSEEKO) && HAVE_FSEEKO)
 #	undef fseeko
@@ -61,6 +70,10 @@ extern "C" {
 #	undef strdup
 #	define strdup OTF_strdup
 #endif /* HAVE_STRDUP */
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
 int OTF_asprintf( char** ptr, const char* fmt, ... );
 int OTF_snprintf( char* str, size_t size, const char* fmt, ... );

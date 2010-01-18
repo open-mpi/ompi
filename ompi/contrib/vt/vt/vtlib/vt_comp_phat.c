@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -15,10 +15,8 @@
 #include "vt_comp.h"
 #include "vt_memhook.h"
 #include "vt_pform.h"
+#include "vt_thrd.h"
 #include "vt_trc.h"
-#if (defined (VT_OMPI) || defined (VT_OMP))
-#  include <omp.h>
-#endif
 
 /*
  *-----------------------------------------------------------------------------
@@ -77,9 +75,31 @@ static uint32_t register_region(char *str) {
   uint32_t rid;
 
   /* -- register region and store region identifier -- */
-  rid = vt_def_region(str, VT_NO_ID, VT_NO_LNO, VT_NO_LNO, VT_DEF_GROUP, VT_FUNCTION);
+  rid = vt_def_region(str, VT_NO_ID, VT_NO_LNO, VT_NO_LNO, NULL, VT_FUNCTION);
   hash_put((long) str, rid);
   return rid;
+}
+
+void phat_finalize(void);
+void phat_enter(char *str, int *id);
+void phat_exit(char *str, int *id);
+
+/*
+ * Finalize instrumentation interface
+ */
+
+void phat_finalize()
+{
+  int i;
+
+  for ( i = 0; i < HASH_MAX; i++ )
+  {
+    if ( htab[i] ) {
+      free(htab[i]);
+      htab[i] = NULL;
+    }
+  }
+  phat_init = 1;
 }
 
 /*
@@ -92,14 +112,10 @@ void phat_enter(char *str, int *id) {
 
   /* -- if not yet initialized, initialize VampirTrace -- */
   if ( phat_init ) {
-    uint32_t main_id;
     VT_MEMHOOKS_OFF();
     phat_init = 0;
     vt_open();
-
-    main_id = register_region("main");
-    time = vt_pform_wtime();
-    vt_enter(&time, main_id);
+    vt_comp_finalize = &phat_finalize;
     VT_MEMHOOKS_ON();
   }
 
@@ -116,20 +132,14 @@ void phat_enter(char *str, int *id) {
   /* -- get region identifier -- */
   if ( *id == -1 ) {
     /* -- region entered the first time, register region -- */
-#   if defined (VT_OMPI) || defined (VT_OMP)
-    if (omp_in_parallel()) {
-#     pragma omp critical (vt_comp_phat_1)
-      {
-        if ( (*id = hash_get((long) str)) == VT_NO_ID ) {
-          *id = register_region(str);
-        }
-      }
-    } else {
-      *id = register_region(str);
-    }
-#   else
-    *id = register_region(str);
-#   endif
+#if (defined(VT_MT) || defined(VT_HYB))
+     VTTHRD_LOCK_IDS();
+     if ( (*id = hash_get((long) str)) == VT_NO_ID )
+       *id = register_region(str);
+     VTTHRD_UNLOCK_IDS();
+#else /* VT_MT || VT_HYB */
+     *id = register_region(str);
+#endif /* VT_MT || VT_HYB */
   }
 
   /* -- write enter record -- */

@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -10,6 +10,7 @@
 
 #include "OTF_Platform.h"
 #include "OTF_MasterControl.h"
+#include "OTF_Errno.h"
 
 
 /**	constructor - internal use only */
@@ -110,10 +111,8 @@ void OTF_MasterControl_finish( OTF_MasterControl* mc ) {
 
 	OTF_MasterControl_close( mc );
 
-#	ifdef OTF_VERBOSE
-		fprintf( stderr, "OTF_MasterControl_finish() deprecated, "
+	OTF_fprintf( stderr, "OTF_MasterControl_finish() deprecated, "
 			"use OTF_MasterControl_close() instead\n" );
-#	endif /* OTF_VERBOSE */
 }
 
 
@@ -123,6 +122,7 @@ void OTF_MasterControl_close( OTF_MasterControl* mc ) {
 	OTF_MasterControl_finalize( mc );
 
 	free( mc );
+	mc = NULL;
 }
 
 
@@ -138,15 +138,13 @@ int OTF_MasterControl_read( OTF_MasterControl* mc, const char* namestub ) {
 	int r;
 
 
-	/* fprintf( stderr, "OTF_MasterControl_read()\n" ); */
+	/* OTF_fprintf( stderr, "OTF_MasterControl_read()\n" ); */
 
 	if( NULL == mc ) {
 		
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"master control has not been specified.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif /* OTF_VERBOSE */
 	
 		return 0;
 	}		
@@ -161,11 +159,9 @@ int OTF_MasterControl_read( OTF_MasterControl* mc, const char* namestub ) {
 
 	if ( NULL == filename ) {
 
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"OTF_getFilename() failed.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif /* OTF_VERBOSE */
 		
 		return 0;
 	}
@@ -173,7 +169,7 @@ int OTF_MasterControl_read( OTF_MasterControl* mc, const char* namestub ) {
 /*
 	if ( ! OTF_fileExists( filename ) ) {
 
-		fprintf( stderr, "ERROR in '%s'.c: "
+		OTF_fprintf( stderr, "ERROR in '%s'.c: "
 			"Invalid input file '%s'\n", __FUNCTION__, filename );
 		return 0;
 	}
@@ -182,20 +178,22 @@ int OTF_MasterControl_read( OTF_MasterControl* mc, const char* namestub ) {
 	buffer = OTF_RBuffer_open( filename, mc->manager );
 	if( NULL == buffer ) {
 		
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"could not open file \"%s\" for reading.\n",
 				__FUNCTION__, __FILE__, __LINE__, filename );
-#		endif /* OTF_VERBOSE */
 		
+		free( filename );
+		filename = NULL;
+
 		return 0;
 	}
 	
 	OTF_RBuffer_setSize( buffer, 1024 );
 
-	/* fprintf( stderr, "filename=%s\n", filename ); */
+	/* OTF_fprintf( stderr, "filename=%s\n", filename ); */
 
 	free( filename );
+	filename = NULL;
 
 	/* must not use getRecord here! */
 	while ( OTF_RBuffer_guaranteeRecord( buffer ) ) {
@@ -212,18 +210,18 @@ int OTF_MasterControl_read( OTF_MasterControl* mc, const char* namestub ) {
 			continue;
 		}
 
-		/* fprintf( stderr ,"arg= %x\n", argument ); */
+		/* OTF_fprintf( stderr ,"arg= %x\n", argument ); */
 
 		do {
 
 			value= OTF_RBuffer_readUint32( buffer );
 
-			/* fprintf( stderr ,"  v= %x\n", value ); */
+			/* OTF_fprintf( stderr ,"  v= %x\n", value ); */
 
 			r= OTF_MasterControl_append( mc, argument, value );
 			if ( 0 == r ) {
 			
-				fprintf( stderr ,"OTF_MasterControl_read() "
+				OTF_fprintf( stderr ,"OTF_MasterControl_read() "
 					"ERROR: appending (%u,%u)\n",
 					argument, value );
 			}
@@ -249,11 +247,9 @@ OTF_MasterControl* OTF_MasterControl_new( OTF_FileManager* manager ) {
 	ret= (OTF_MasterControl*) malloc( sizeof(OTF_MasterControl) );
 	if( NULL == ret ) {
 		
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"no memory left.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif /* OTF_VERBOSE */
 		
 		return NULL;
 	}
@@ -262,11 +258,9 @@ OTF_MasterControl* OTF_MasterControl_new( OTF_FileManager* manager ) {
 
 	if( NULL == manager ) {
 		
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"manager has not been specified.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif /* OTF_VERBOSE */
 
 		free( ret );
 		ret= NULL;
@@ -294,11 +288,9 @@ OTF_MapEntry* OTF_MasterControl_insertMapEntry( OTF_MasterControl* mc,
 			mc->s * sizeof(OTF_MapEntry) );
 		if( NULL == mc->map ) {
 		
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"no memory left.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif /* OTF_VERBOSE */
 		
 			return NULL;
 		}
@@ -418,11 +410,9 @@ int OTF_MapEntry_insertValue( OTF_MapEntry* mc, uint32_t value ) {
 			mc->s * sizeof(uint32_t) );
 		if( NULL == mc->values ) {
 		
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"no memory left.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif /* OTF_VERBOSE */
 		
 			return 0;
 		}
@@ -494,11 +484,9 @@ int OTF_MasterControl_insertRMapEntry( OTF_MasterControl* mc,
 			mc->rs * sizeof(OTF_Pair) );
 		if( NULL == mc->rmap ) {
 		
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"no memory left.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif /* OTF_VERBOSE */
 		
 			return 0;
 		}
@@ -554,12 +542,9 @@ int OTF_MasterControl_append( OTF_MasterControl* mc,
 
 	if ( 0 == argument || ((uint32_t) -1) == argument ) {
 
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"invalid argument value %x.\n",
 				__FUNCTION__, __FILE__, __LINE__, argument );
-
-#		endif /* OTF_VERBOSE */
 
 		return 0;
 	}
@@ -570,12 +555,9 @@ int OTF_MasterControl_append( OTF_MasterControl* mc,
 
 	if ( 0 == ret ) {
 
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"OTF_MasterControl_insertRMapEntry() failed.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-
-#		endif /* OTF_VERBOSE */
 		
 		return 0;
 	}
@@ -584,11 +566,9 @@ int OTF_MasterControl_append( OTF_MasterControl* mc,
 	entry = OTF_MasterControl_getMapEntry( mc, argument );
 	if( NULL == entry ) {
 		
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"OTF_MasterControl_getMapEntry() failed.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif /* OTF_VERBOSE */
 
 		return 0;
 	}
@@ -628,10 +608,10 @@ uint32_t OTF_MasterControl_mapReverse( OTF_MasterControl* mc,
 	b= mc->rn;
 
 	/*
-	fprintf( stderr, "OTF_MasterControl_mapReverse\n" );
+	OTF_fprintf( stderr, "OTF_MasterControl_mapReverse\n" );
 	for ( c= a; c < b; ++c  ) {
 
-		fprintf( stderr, "   %u: %u\n", 
+		OTF_fprintf( stderr, "   %u: %u\n", 
 			mc->rmap[c].argument, 
 			mc->rmap[c].value );
 	}
@@ -695,11 +675,9 @@ int OTF_MasterControl_write( OTF_MasterControl* mc, const char* namestub ) {
 		0, NULL );
 	if( NULL == filename ) {
 		
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"OTF_getFilename() failed.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif /* OTF_VERBOSE */
 
 		return 0;
 	}
@@ -707,11 +685,9 @@ int OTF_MasterControl_write( OTF_MasterControl* mc, const char* namestub ) {
 	buffer = OTF_WBuffer_open( filename, mc->manager );
 	if ( NULL == buffer ) {
 		
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"OTF_WBuffer_open( %s ) failed.\n",
 				__FUNCTION__, __FILE__, __LINE__, filename );
-#		endif /* OTF_VERBOSE */
 		
 		return  0;
 	}
@@ -719,6 +695,7 @@ int OTF_MasterControl_write( OTF_MasterControl* mc, const char* namestub ) {
 	OTF_WBuffer_setSize( buffer, 1024 );
 
 	free( filename );
+	filename = NULL;
 
 
 	for ( i= 0; i < mc->n; i++ ) {
@@ -763,11 +740,9 @@ int OTF_MasterControl_check( OTF_MasterControl* mc ) {
 
 		if ( mc->map[i].argument <= mc->map[i-1].argument ) {
 
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"map not sorted at %u.\n",
 					__FUNCTION__, __FILE__, __LINE__, i );
-#			endif /* OTF_VERBOSE */
 			
 			return 0;
 		}
@@ -783,11 +758,9 @@ int OTF_MasterControl_check( OTF_MasterControl* mc ) {
 
 			if ( e->values[j] <= e->values[j-1] ) {
 		
-#				ifdef OTF_VERBOSE
-					fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 						"map[%u] not sorted at %u.\n",
 						__FUNCTION__, __FILE__, __LINE__, i, j );
-#				endif /* OTF_VERBOSE */
 
 				return 0;
 			}
@@ -799,11 +772,9 @@ int OTF_MasterControl_check( OTF_MasterControl* mc ) {
 
 		if ( mc->rmap[i].argument <= mc->rmap[i-1].argument ) {
 	
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"rmap not sorted at %u.\n",
 					__FUNCTION__, __FILE__, __LINE__, i );
-#			endif /* OTF_VERBOSE */
 			
 			return 0;
 		}
@@ -821,25 +792,25 @@ void OTF_MasterControl_print( OTF_MasterControl* mc ) {
 	OTF_MapEntry* e; 
 
 
-	fprintf( stderr, "map:\n" );
+	OTF_fprintf( stderr, "map:\n" );
 	for ( i= 0; i < mc->n; i++ ) {
 
 		e= &(mc->map[i]);
 
-		fprintf( stderr, "%x: ", e->argument );
+		OTF_fprintf( stderr, "%x: ", e->argument );
 
 		for ( j= 0; j < e->n; j++ ) {
 
-			fprintf( stderr, "%x ", e->values[j] );
+			OTF_fprintf( stderr, "%x ", e->values[j] );
 		}
 
-		fprintf( stderr, "\n" );
+		OTF_fprintf( stderr, "\n" );
 	}
 
-	fprintf( stderr, "rmap:\n" );
+	OTF_fprintf( stderr, "rmap:\n" );
 	for ( i= 0; i < mc->rn; i++ ) {
 
-		fprintf( stderr, "%x: %x\n", 
+		OTF_fprintf( stderr, "%x: %x\n", 
 			mc->rmap[i].argument, mc->rmap[i].value );
 	}
 }

@@ -5,7 +5,7 @@
 **  Copyright (c) 1998-2008                                                **
 **  Forschungszentrum Juelich, Juelich Supercomputing Centre               **
 **                                                                         **
-**  See the file COPYING in the package base directory for details       **
+**  See the file COPYING in the package base directory for details         **
 ****************************************************************************/
 
 #include "ompregion.h"
@@ -28,21 +28,40 @@ void OMPRegion::generate_header(ostream& os) {
   os << "#include \"pomp_lib.h\"\n\n";
 }
 
+#ifdef OPARI_VT
+void OMPRegion::generate_descr(ostream& os, Language lang) {
+#else // OPARI_VT
 void OMPRegion::generate_descr(ostream& os) {
+#endif // OPARI_VT
   os << "struct ompregdescr omp_rd_" << id << " = {\n";
   os << "  \"" << name << "\", \"" << sub_name << "\", "
      << num_sections << ", \"" << file_name << "\", "
      << begin_first_line << ", " << begin_last_line << ", "
-     << end_first_line << ", " << end_last_line << "\n};\n\n";
+     << end_first_line << ", " << end_last_line << "\n};\n";
+#ifdef OPARI_VT
+  if (!(lang & L_FORTRAN)) {
+    os << "int omp_pt_" << id << " = -1;\n";
+    os << "#pragma omp threadprivate(omp_pt_" << id << ")\n";
+  }
+#endif // OPARI_VT
+  os << "\n";
 
   if (descrs.size()) {
     os << "#define POMP_DLIST_" << setw(5) << setfill('0') << id
-       << " shared(";
+        << " shared(";
     for (set<int>::const_iterator it = descrs.begin();
-         it != descrs.end(); ++it) {
+      it != descrs.end(); ++it) {
       if (it != descrs.begin()) os << ",";
       os << "omp_rd_" << *it;
     }
+#ifdef OPARI_VT
+    os << ") copyin(";
+    for (set<int>::const_iterator it = descrs.begin();
+      it != descrs.end(); ++it) {
+      if (it != descrs.begin()) os << ",";
+      os << "omp_pt_" << *it;
+    }
+#endif // OPARI_VT
     os << ")\n\n";
   }
 }

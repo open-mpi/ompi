@@ -31,6 +31,7 @@ typedef struct definitionInfoS
   char      **collectiveOperationNames;
   counterT   *counters;
   char      **counterGroupNames;
+  char      **markerNames;
   char       *otfVersionString;
   int         infoLevel;
   uint8_t     otfVersionMajor;
@@ -50,7 +51,12 @@ typedef struct definitionInfoS
   uint64_t    counterEnter;
   uint64_t    counterSend;
   uint64_t    counterReceive;
+  uint64_t    counterDefinitionMarker;
   uint64_t    timerResolution;
+  uint64_t    counterRMAPut;
+  uint64_t    counterRMAPutRemoteEnd;
+  uint64_t    counterRMAGet;
+  uint64_t    counterRMAEnd;
   uint64_t    counterFileOperation;
   uint64_t    counterSnapshot;
 } definitionInfoT;
@@ -83,6 +89,9 @@ int handleDefCounter( void *userData, uint32_t stream, uint32_t counter,
                       const char *name, uint32_t properties,
                       uint32_t counterGroup, const char *unit );
 
+int handleDefMarker( void *userData, uint32_t stream, uint32_t token,
+                     const char *name, uint32_t type );
+
 int handleDefProcessGroup( void *userData, uint32_t stream, uint32_t procGroup,
                            const char *name, uint32_t numberOfProcs,
                            const uint32_t *procs );
@@ -112,6 +121,23 @@ int handleRecvMsg( void *userData, uint64_t time, uint32_t recvProc,
                    uint32_t sendProc, uint32_t group, uint32_t type,
                    uint32_t length, uint32_t source );
 
+int handleRMAPut( void *userData, uint64_t time, uint32_t process,
+                  uint32_t origin, uint32_t target, uint32_t communicator,
+                  uint32_t tag, uint64_t bytes, uint32_t source );
+
+int handleRMAPutRemoteEnd( void *userData, uint64_t time, uint32_t process,
+                           uint32_t origin, uint32_t target,
+                           uint32_t communicator, uint32_t tag, uint64_t bytes,
+                           uint32_t source );
+
+int handleRMAGet( void *userData, uint64_t time, uint32_t process,
+                  uint32_t origin, uint32_t target, uint32_t communicator,
+                  uint32_t tag, uint64_t bytes, uint32_t source );
+
+int handleRMAEnd( void *userData, uint64_t time, uint32_t process,
+                  uint32_t remote, uint32_t communicator, uint32_t tag,
+                  uint32_t source );
+
 int handleDefCollectiveOperation( void *userData, uint32_t stream,
                                   uint32_t collOp, const char *name,
                                   uint32_t type );
@@ -120,6 +146,11 @@ int handleFileOperation( void *userData, uint64_t time, uint32_t fileid,
                          uint32_t process, uint64_t handleid,
                          uint32_t operation, uint64_t bytes, uint64_t duration,
                          uint32_t source );
+
+int handleEndFileOperation( void *userData, uint64_t time, uint32_t process,
+                            uint32_t fileid, uint64_t handleid,
+                            uint32_t operation, uint64_t bytes,
+                            uint32_t source );
 
 int handleEnterSnapshot( void *userData, uint64_t time, uint64_t originaltime,
                          uint32_t function, uint32_t process,

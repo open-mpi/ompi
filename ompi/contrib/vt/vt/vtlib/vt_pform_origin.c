@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -12,6 +12,8 @@
 
 #include "config.h"
 
+#include "vt_defs.h"
+#include "vt_error.h"
 #include "vt_pform.h"
 
 #include <stdio.h>
@@ -35,14 +37,19 @@
 # include <sys/time.h>
   static uint64_t vt_time_base = 0;
 #elif TIMER == TIMER_PAPI_REAL_CYC
-# include <vt_metric.h>
+  extern uint64_t vt_metric_clckrt(void);
+  extern uint64_t vt_metric_real_cyc(void);
 #elif TIMER == TIMER_PAPI_REAL_USEC
-# include <vt_metric.h>
+  extern uint64_t vt_metric_real_usec(void);
   static uint64_t vt_time_base = 0;
 #endif
 
+static long vt_node_id = 0;
+
 /* platform specific initialization */
 void vt_pform_init() {
+  int hostid_retries;
+
 #if TIMER == TIMER_CLOCK_GETTIME
   struct timespec tp;
   clock_gettime(CLOCK_SGI_CYCLE,&tp);
@@ -50,6 +57,15 @@ void vt_pform_init() {
 #elif TIMER == TIMER_PAPI_REAL_USEC
   vt_time_base = vt_metric_real_usec();
 #endif
+
+  /* get unique numeric SMP-node identifier */
+  hostid_retries = 0;
+  while( !vt_node_id && (hostid_retries++ < VT_MAX_GETHOSTID_RETRIES) ) {
+    vt_node_id = gethostid();
+  }
+  if (!vt_node_id)
+    vt_error_msg("Maximum retries (%i) for gethostid exceeded!",
+		 VT_MAX_GETHOSTID_RETRIES);
 }
 
 /* directory of global file system  */
@@ -59,11 +75,16 @@ char* vt_pform_gdir() {
 
 /* directory of local file system  */
 char* vt_pform_ldir() {
-  #ifdef PFORM_LDIR
-    return PFORM_LDIR;
-  #else
-    return "/tmp";
-  #endif
+#ifdef DEFAULT_PFORM_LDIR
+  return DEFAULT_PFORM_LDIR;
+#else
+  return "/tmp";
+#endif
+}
+
+/* full path of executable  */
+char* vt_pform_exec() {
+  return NULL;
 }
 
 /* clock resolution */
@@ -92,7 +113,7 @@ uint64_t vt_pform_wtime() {
 
 /* unique numeric SMP-node identifier */
 long vt_pform_node_id() {
-  return gethostid();
+  return vt_node_id;
 }
 
 /* unique string SMP-node identifier */

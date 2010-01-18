@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -60,6 +60,16 @@ int handleDefFile( void* firsthandlerarg, uint32_t stream, uint32_t token,
 	Control* control= (Control*) firsthandlerarg;
 	
 	control->state->defFile( token, group );
+
+	return OTF_RETURN_OK;
+}
+
+int handleDefCollectiveOperation(void *firsthandlerarg, uint32_t stream, uint32_t collOp, const char *name, uint32_t type) {
+
+
+	Control* control= (Control*) firsthandlerarg;
+	
+	control->state->defCollOp( collOp, type );
 
 	return OTF_RETURN_OK;
 }
@@ -204,6 +214,8 @@ int handleCollectiveOperation( void* firsthandlerarg, uint64_t time,
 	
 	while ( time > control->checkTime( time ) )
 		;
+
+	control->state->collOperation( time, process, rootprocess, collective, sent, received );
 
 	return OTF_RETURN_OK;
 }

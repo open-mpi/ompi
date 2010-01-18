@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -19,8 +19,6 @@
 #include <map>
 #include <string>
 #include <vector>
-
-#include <assert.h>
 
 //
 // Definitions class
@@ -149,8 +147,8 @@ public:
 	 {
 	    loccpuid = _loccpuid;
 	    deftoken = _deftoken;
-	    for( uint32_t i = 0; i < _nmembers; i++ )
-	       members.push_back( _members[i] );
+	    members.resize( _nmembers );
+	    members.assign( _members, _members + _nmembers );
 	 }
 
       DefRec_DefProcessGroup_struct(uint32_t _loccpuid,
@@ -345,7 +343,7 @@ private:
       NodeProc_struct(const uint32_t & _procid) : procid(_procid) {}
 
       uint32_t procid;
-      
+
       bool operator==(const NodeProc_struct & a) const
       {
 	 return procid == a.procid;
@@ -392,17 +390,29 @@ private:
 		      std::vector<DefRec_Base_struct*> * p_vecGlobDefs );
    bool writeGlobal( const std::vector<DefRec_Base_struct*> * p_vecGlobDefs );
 
-   bool addProc2NodeGroup( const std::string & nodeName,
+   void addDefComment( const DefRec_DefinitionComment_struct * p_comment );
+   void addDefComments2Global( std::vector<DefRec_Base_struct*> *
+			       p_vecGlobDefs );
+
+   void addDefProcess( const DefRec_DefProcess_struct * proc );
+   void addDefProcesses2Global( std::vector<DefRec_Base_struct*> *
+                                p_vecGlobDefs, uint32_t i = (uint32_t)-1 );
+
+   void addProc2NodeGroup( const std::string & nodeName,
 			   const uint32_t & nodeProc );
-   bool addNodeGroups2Global( std::vector<DefRec_Base_struct*> *
+   void addNodeGroups2Global( std::vector<DefRec_Base_struct*> *
 			      p_vecGlobDefs );
 
-   bool addMPIComm( const uint32_t proc, const uint32_t defToken,
+   void addMPIComm( const uint32_t proc, const uint32_t defToken,
 		    const std::vector<uint32_t> & vecMembers );
-   bool addMPIComms2Global( std::vector<DefRec_Base_struct*> *
+   void addMPIComms2Global( std::vector<DefRec_Base_struct*> *
 			    p_vecGlobDefs );
 
    uint32_t getMPICommIdByMembers( const std::vector<uint32_t> & vecMembers );
+
+   std::vector<const DefRec_DefinitionComment_struct*> m_vecDefComments;
+
+   std::vector<const DefRec_DefProcess_struct*> m_vecDefProcesses;
 
    std::map<std::string, std::vector<NodeProc_struct> > m_mapNodeProcs;
 

@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -29,7 +29,8 @@ int handleDefFunction( void* firsthandlerarg, uint32_t streamid,
 int handleDefFile( void* userData, uint32_t stream, uint32_t token,
 	const char* name, uint32_t group );
 
-
+int handleDefCollectiveOperation(void *firsthandlerarg, uint32_t stream, 
+	uint32_t collOp, const char *name, uint32_t type);
 
 /* *** Event handler *** ****************************************** */
 

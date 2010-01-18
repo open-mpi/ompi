@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -30,30 +30,39 @@ static int vt_pid = -1;
 void vt_error_pid(const int pid)
 {
   vt_pid = pid;
-  return;
 }
 
-static void vt_print_msg(const char* fmt, va_list az)
+static void vt_print_msg(const char* prefix, const char* fmt, va_list az)
 {
   char buffer[VT_MSG_SIZE];
 
   if (vt_pid != -1) snprintf(buffer, sizeof(buffer)-1,
 			     "[%d]", vt_pid); else buffer[0]=0;
   snprintf(buffer + strlen(buffer), sizeof(buffer)-1, "%s: ", VT_MSG_PFIX);
+
+  if (prefix) snprintf(buffer + strlen(buffer), sizeof(buffer)-1,
+		       "%s: ", prefix);
+
   vsnprintf(buffer + strlen(buffer), sizeof(buffer)-1, fmt, az);
-  VT_SUSPEND_IO_TRACING();
-  fprintf(stderr, "%s\n", buffer);
+
+  vt_iowrap_externals_init();
+  libc_fprintf(stderr, "%s\n", buffer);
   fflush(NULL);
-  VT_RESUME_IO_TRACING();
-  return;
+}
+
+void vt_assert_impl(const char* f, int l, const char* expr)
+{
+  vt_iowrap_externals_init();
+  libc_fprintf(stderr, "%s: FATAL: %s:%d: Assertion `%s' failed\n\nPlease report this incident to " PACKAGE_BUGREPORT "\n",
+	       VT_MSG_PFIX, f, l, expr);
+  exit(EXIT_FAILURE);
 }
 
 void vt_error_impl(const char* f, int l)
 {
   char buffer[VT_MSG_SIZE];
-  snprintf(buffer, sizeof(buffer)-1, "%s [%s:%d]", VT_MSG_PFIX, f, l);
+  snprintf(buffer, sizeof(buffer)-1, "%s: FATAL: %s:%d", VT_MSG_PFIX, f, l);
 
-  VT_SUSPEND_IO_TRACING();
   perror(buffer);
   fflush(stderr);
   exit(EXIT_FAILURE);
@@ -64,7 +73,7 @@ void vt_error_msg(const char* fmt, ...)
   va_list ap;
 
   va_start(ap, fmt);
-  vt_print_msg(fmt, ap);
+  vt_print_msg("FATAL", fmt, ap);
   va_end(ap);
   exit(EXIT_FAILURE);
 }
@@ -73,39 +82,32 @@ void vt_warning(const char* fmt, ...)
 {
   va_list ap;
 
-  va_start(ap, fmt);
-  vt_print_msg(fmt, ap);
-  va_end(ap);
-  return;
+  if (vt_env_verbose() >= 1) {
+    va_start(ap, fmt);
+    vt_print_msg("WARNING", fmt, ap);
+    va_end(ap);
+  }
 }
 
-void vt_cntl_msg(const char* fmt, ...)
+void vt_cntl_msg(int level, const char* fmt, ...)
 {
   va_list ap;
 
-  if (vt_env_is_verbose())
-    {
-      va_start(ap, fmt);
-      vt_print_msg(fmt, ap);
-      va_end(ap);
-      return;
-    }
+  if (vt_env_verbose() >= level) {
+    va_start(ap, fmt);
+    vt_print_msg(NULL, fmt, ap);
+    va_end(ap);
+  }
 }
 
 void vt_debug_msg(int level, const char* fmt, ...)
 {
   va_list ap;
 
-  if( vt_env_debug() >= level ) {
+  if (vt_env_debug() >= level) {
     va_start(ap, fmt);
-    vt_print_msg(fmt, ap);
+    vt_print_msg("DEBUG", fmt, ap);
     va_end(ap);
   }
 }
-
-
-
-
-
-
 

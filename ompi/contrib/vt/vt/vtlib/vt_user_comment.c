@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -18,7 +18,7 @@
 #include "vt_trc.h"
 #define VTRACE
 #undef VTRACE_NO_COMMENT
-#include "vt_user_comment.h"
+#include "vt_user.h"
 
 static int vt_init = 1;        /* is initialization needed? */
 

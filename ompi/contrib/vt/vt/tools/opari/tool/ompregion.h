@@ -5,7 +5,7 @@
 **  Copyright (c) 1998-2008                                                **
 **  Forschungszentrum Juelich, Juelich Supercomputing Centre               **
 **                                                                         **
-**  See the file COPYING in the package base directory for details       **
+**  See the file COPYING in the package base directory for details         **
 ****************************************************************************/
 
 #ifndef OMPREGION_H
@@ -18,6 +18,10 @@
 #include <string>
   using std::string;
 
+#ifdef OPARI_VT
+#include "opari.h"
+#endif // OPARI_VT
+
 class OMPRegion {
 public:
   OMPRegion(const string& n, const string& file, int i, int bfl, int bll,
@@ -25,7 +29,11 @@ public:
 
   static void generate_header(ostream& os);
 
+#ifdef OPARI_VT
+  void generate_descr(ostream& os, Language lang);
+#else // OPARI_VT
   void generate_descr(ostream& os);
+#endif // OPARI_VT
 
   void finish();
 

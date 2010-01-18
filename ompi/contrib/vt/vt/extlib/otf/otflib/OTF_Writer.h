@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -314,6 +314,18 @@ OTF_MasterControl* OTF_Writer_getMasterControl( OTF_Writer* writer );
  * \ingroup writer
  */
 void OTF_Writer_setMasterControl( OTF_Writer* writer, OTF_MasterControl* mc );
+
+
+/** For a process with id 'processId' return a stream id of the stream the
+    data is to be written to. If no mapping has been set so far it is defined
+    in a way such that it is added to the stream with the least processes.
+	\ingroup writer */
+uint32_t OTF_Writer_mapProcess( OTF_Writer* writer, uint32_t processId );
+
+
+/** Return the stream with the given stream id. If there is no such stream yet
+    create one and append it to 'streams'. \ingroup writer */
+OTF_WStream* OTF_Writer_getStream( OTF_Writer* writer, uint32_t stream );
 
 
 /* Methods for writing public definition records ************************** */
@@ -798,6 +810,9 @@ int OTF_Writer_writeCounter( OTF_Writer* writer,
 
 /**
  * Write a collective operation member record.
+ * @deprecated This event record has been deprecated due to usage constraints.
+ *             Please use OTF_Writer_writeBeginCollectiveOperation() and
+ *             OTF_Writer_writeEndCollectiveOperation(), repectively.
  *
  * @param writer      Initialized OTF_Writer instance.
  * @param time        Time when collective operation was entered by member.
@@ -825,6 +840,57 @@ int OTF_Writer_writeCollectiveOperation( OTF_Writer* writer,
                                          uint32_t received, 
                                          uint64_t duration, 
                                          uint32_t source );
+
+
+/**
+ * Write a begin collective operation member record.
+ *
+ * @param writer      Initialized OTF_Writer instance.
+ * @param time        Time when collective operation was entered by member.
+ * @param process     Process identifier i.e. collective member. 
+ * @param collOp      Collective identifier to be defined with
+ *                    OTF_Writer_writeDefCollectiveOperation(). 
+ * @param matchingId  Identifier for finding the associated end collective event
+ *                    record. It must be unique within this procGroup.
+ * @param procGroup   Group of processes participating in this collective.
+ * @param rootProc    Root process if != 0.
+ * @param sent        Data volume sent by member or 0.
+ * @param received    Data volume received by member or 0.
+ * @param scltoken    Explicit source code location or 0.
+ *
+ * @return            1 on success, 0 if an error occurs.       
+ *
+ * \ingroup writer
+ */
+int OTF_Writer_writeBeginCollectiveOperation( OTF_Writer* writer,
+					      uint64_t time,
+					      uint32_t process,
+					      uint32_t collOp,
+					      uint64_t matchingId,
+					      uint32_t procGroup,
+					      uint32_t rootProc,
+					      uint64_t sent,
+					      uint64_t received,
+					      uint32_t scltoken );
+
+
+/**
+ * Write an end collective operation member record.
+ *
+ * @param writer      Initialized OTF_Writer instance.
+ * @param time        Time when collective operation was entered by member.
+ * @param process     Process identifier i.e. collective member. 
+ * @param matchingId  Matching identifier, must match a previous start
+ *                    collective operation.
+ *
+ * @return            1 on success, 0 if an error occurs.       
+ *
+ * \ingroup writer
+ */
+int OTF_Writer_writeEndCollectiveOperation( OTF_Writer* writer,
+					    uint64_t time,
+					    uint32_t process,
+					    uint64_t matchingId );
 
 
 /**
@@ -883,20 +949,17 @@ int OTF_Writer_writeEndProcess( OTF_Writer* writer,
 
 
 /**
- * Write an file operation record
+ * Write a file operation record
+ * @deprecated This event record has been deprecated due to usage constraints.
+ *             Please use OTF_Writer_writeBeginFileOperation() and
+ *             OTF_Writer_writeEndFileOperation(), respectively.
  *
  * @param writer    Initialized OTF_Writer instance.
- *
- * @param time      Time when process was referenced for the last time. 
- *
+ * @param time      Start time of the file operation. 
  * @param fileid    File identifier > 0.
- *
  * @param handleid  File open identifier.
- *
  * @param process   Process identifier > 0.
- *
  * @param operation Type of file operation @see OTF_Handler_FileOperation()
- *
  * @param bytes     Depends on operation @see OTF_Handler_FileOperation()
  * @param duration  time spent in the file operation
  *
@@ -913,6 +976,184 @@ int OTF_Writer_writeFileOperation( OTF_Writer* writer,
                                    uint64_t bytes,
                                    uint64_t duration,
                                    uint32_t source );
+
+
+/**
+ * Write a begin file operation record
+ *
+ * @param writer    Initialized OTF_Writer instance.
+ * @param time      Start time of file operation. 
+ * @param process   Process identifier > 0.
+ * @param handleid  Operation identifier, used for finding the associated end
+ *                  file operation event record.
+ * @param scltoken  Optional reference to source code.
+ *
+ * @return          1 on success, 0 if an error occurs.       
+ *
+ * \ingroup writer
+ */
+int OTF_Writer_writeBeginFileOperation( OTF_Writer* writer,
+					uint64_t time,
+					uint32_t process,
+					uint64_t handleid,
+					uint32_t scltoken );
+
+
+/**
+ * Write an end file operation record
+ *
+ * @param writer    Initialized OTF_Writer instance.
+ * @param time      End time of file operation. 
+ * @param process   Process identifier > 0.
+ * @param fileid    File identifier > 0.
+ * @param handleid  Operation identifier, must match a previous start file
+ *                  operation event record.
+ * @param operation Type of file operation @see OTF_Handler_FileOperation()
+ * @param bytes     Depends on operation @see OTF_Handler_FileOperation()
+ * @param scltoken  Optional reference to source code.
+ *
+ * @return          1 on success, 0 if an error occurs.       
+ *
+ * \ingroup writer
+ */
+int OTF_Writer_writeEndFileOperation( OTF_Writer* writer,
+				      uint64_t time,
+				      uint32_t process,
+				      uint32_t fileid,
+				      uint64_t handleid,
+				      uint32_t operation,
+				      uint64_t bytes,
+				      uint32_t scltoken );
+
+
+/**
+ * Write a RMA put record - local end record.
+ * The end of this transfer is marked by the NEXT end record on this <process>
+ * with the same communicator/tag pair.
+ *
+ * @param writer      Initialized OTF_Writer instance.
+ * @param time        Time when process was referenced for the last time.
+ * @param process     Process initiating the transfer.
+ * @param origin      If >0, Process whose memory will be transferred, instead
+                      of this <process>.
+ * @param target      Process whose memory will be written.
+ * @param communicator Together with tag, it is used to identify the
+ *                    corresponding RMA end record.
+ * @param tag         Together with communicator, it is used to identify the
+ *                    corresponding RMA end record.
+ * @param bytes       How many bytes have been transfered by this call.
+ * @param source      Explicit source code location or 0.
+ *
+ * @return            1 on success, 0 if an error occurs.
+ *
+ * \ingroup writer
+ */
+int OTF_Writer_writeRMAPut( OTF_Writer* writer,
+                            uint64_t time,
+                            uint32_t process,
+                            uint32_t origin,
+                            uint32_t target,
+                            uint32_t communicator,
+                            uint32_t tag,
+                            uint64_t bytes,
+                            uint32_t scltoken );
+
+/**
+ * Write a RMA put record - remote end record.
+ * The end of this transfer is marked by the NEXT end record on process <target>
+ * with the same communicator/tag pair.
+ *
+ * @param writer      Initialized OTF_Writer instance.
+ * @param time        Time when process was referenced for the last time.
+ * @param process     Process initiating the transfer.
+ * @param origin      If >0, Process whose memory will be transferred, instead
+                      of this <process>.
+ * @param target      Process whose memory will be written and where the end
+ *                    record is located.
+ * @param communicator Together with tag, it is used to identify the
+ *                    corresponding RMA end record.
+ * @param tag         Together with communicator, it is used to identify the
+ *                    corresponding RMA end record.
+ * @param bytes       How many bytes have been transfered by this call.
+ * @param source      Explicit source code location or 0.
+ *
+ * @return            1 on success, 0 if an error occurs.
+ *
+ * \ingroup writer
+ */
+int OTF_Writer_writeRMAPutRemoteEnd( OTF_Writer* writer,
+                                     uint64_t time,
+                                     uint32_t process,
+                                     uint32_t origin,
+                                     uint32_t target,
+                                     uint32_t communicator,
+                                     uint32_t tag,
+                                     uint64_t bytes,
+                                     uint32_t scltoken );
+
+/**
+ * Write a RMA get record.
+ * The end of this transfer is marked by the NEXT end record on this <process>
+ * with the same communicator/tag pair.
+ *
+ * @param writer      Initialized OTF_Writer instance.
+ * @param time        Time when process was referenced for the last time.
+ * @param process     Process initiating the transfer.
+ * @param origin      If >0, Process where data will be transferred to (instead
+                      of this <process>).
+ * @param target      Process whose memory will be read.
+ * @param communicator Together with tag, it is used to identify the
+ *                    corresponding RMA end record.
+ * @param tag         Together with communicator, it is used to identify the
+ *                    corresponding RMA end record.
+ * @param bytes       How many bytes have been transfered by this call.
+ * @param source      Explicit source code location or 0.
+ *
+ * @return            1 on success, 0 if an error occurs.
+ *
+ * \ingroup writer
+ */
+int OTF_Writer_writeRMAGet( OTF_Writer* writer,
+                            uint64_t time,
+                            uint32_t process,
+                            uint32_t origin,
+                            uint32_t target,
+                            uint32_t communicator,
+                            uint32_t tag,
+                            uint64_t bytes,
+                            uint32_t scltoken );
+
+/**
+ * Write a RMA end record.
+ * The end record marks the finalization of all put and get operations with the
+ * same communicator/tag pair that occured so far for this <process>.
+ *
+ * @param writer      Initialized OTF_Writer instance.
+ * @param time        Time when process was referenced for the last time.
+ * @param process     Process identifier > 0.
+ * @param remote      If >0, ends RMA transfers on Process <remote>, instead of
+                      this <process>.
+                      [remote!=0 is really weird crap and would never be used by
+                       sane programmers ;-) -- nevertheless, the IBM Cell could
+                       be programmed like this.]
+ * @param communicator Together with tag, it is used to identify the
+ *                    related RMA put/get records.
+ * @param tag         Together with communicator, it is used to identify the
+ *                    related RMA put/get records.
+ * @param source      Explicit source code location or 0.
+ *
+ * @return            1 on success, 0 if an error occurs.
+ *
+ * \ingroup writer
+ */
+int OTF_Writer_writeRMAEnd( OTF_Writer* writer,
+                            uint64_t time,
+                            uint32_t process,
+                            uint32_t remote,
+                            uint32_t communicator,
+                            uint32_t tag,
+                            uint32_t scltoken );
+
 
 /* *** public snapshot record write handlers *** */
 
@@ -1111,6 +1352,29 @@ int OTF_Writer_writeMessageSummary( OTF_Writer* writer,
 
 
 /**
+ * Write a summary record of collective operations.
+ *
+ * @param writer         Initialized OTF_Writer instance.
+ * @param time           Time when summary was computed.
+ * @param process        Process identifier i.e. collective member.
+ * @param comm		 Communicator of collective operation summary.
+ * @param collective     Collective identifier to be defined with
+ *                       OTF_Writer_writeDefCollectiveOperation().
+ * @param number_sent    The number of messages sent by member or 0.
+ * @param number_recved  The number of messages received by member or 0.
+ * @param bytes_sent     The number of bytes sent by member or 0.
+ * @param bytes_recved   The number of bytes received by member or 0.
+ *
+ * @return               1 on success, 0 if an error occurs.
+ *
+ * \ingroup writer
+ */
+
+int OTF_Writer_writeCollopSummary( OTF_Writer* writer, 
+        uint64_t time, uint32_t process, uint32_t comm, uint32_t collective,
+	uint64_t number_sent, uint64_t number_recved, uint64_t bytes_sent, uint64_t bytes_recved );
+
+/**
  * Writes a file operation summary record.
  *
  * @param writer         Initialized OTF_Writer instance.
@@ -1161,16 +1425,46 @@ int OTF_Writer_writeFileGroupOperationSummary( OTF_Writer* writer, uint64_t time
 /* *** private member functions *** */
 
 
-/** For a process with id 'processId' return a stream id of the stream the
-    data is to be written to. If no mapping has been set so far it is defined
-    in a way such that it is added to the stream with the least processes.
-	\ingroup writer */
-uint32_t OTF_Writer_mapProcess( OTF_Writer* writer, uint32_t processId );
+/* *** marker record types *** */
 
 
-/** Return the stream with the given stream id. If there is no such stream yet
-    create one and append it to 'streams'. \ingroup writer */
-OTF_WStream* OTF_Writer_getStream( OTF_Writer* writer, uint32_t stream );
+/**
+ * Writes a def marker record.
+ *
+ * @param writer         Initialized OTF_Writer instance.
+ * qparam streamID       stream identifier that must be 0, any other value is ignored
+ * @param token          The newly defined marker token.
+ * @param name           Its name
+ * @param type           Marker type, one of OTF_MARKER_TYPE_xxx
+ * *
+ * @return               1 on success, 0 if an error occurs.       
+ *
+ * \ingroup writer
+ */
+int OTF_Writer_writeDefMarker( OTF_Writer* writer, 
+                               uint32_t streamID,
+                               uint32_t token, 
+                               const char* name, 
+                               uint32_t type );
+
+/**
+ * Writes a marker record.
+ *
+ * @param writer         Initialized OTF_Writer instance.
+ * @param time           Time stamp of the marker record. Note that marker records are 
+ *                       not sorted according to time stamps!
+ * @param process        The process or process group of the marker.
+ * @param token          A marker token defined by 'DefMarker' before.
+ * @param text           Descriptive text. *
+ * @return               1 on success, 0 if an error occurs.       
+ *
+ * \ingroup writer
+ */
+int OTF_Writer_writeMarker( OTF_Writer* writer, 
+                            uint64_t time, 
+                            uint32_t process, 
+                            uint32_t token, 
+                            const char* text );
 
 #ifdef __cplusplus
 }

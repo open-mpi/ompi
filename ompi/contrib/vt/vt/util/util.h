@@ -15,7 +15,7 @@
  *
  * Copyright (c) 2007,      Cisco Systems, Inc.
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -40,5 +40,6 @@ EXTERN int vt_snprintf(char* str, size_t size, const char* fmt, ...);
 EXTERN int vt_vasprintf(char** ptr, const char* fmt, va_list ap);
 EXTERN int vt_vsnprintf(char* str, size_t size, const char* fmt, va_list ap);
 EXTERN char* vt_strdup(const char* s);
+EXTERN char* vt_strtrim(char* s);
 
 #endif /* _UTIL_H */

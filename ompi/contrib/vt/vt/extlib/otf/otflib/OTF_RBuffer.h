@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -56,6 +56,12 @@ struct struct_OTF_RBuffer {
 	/**	If 'OTF_RBuffer_jump()' is called only 'jumpsize' bytes are
 		read into buffer. */
 	uint32_t jumpsize;
+
+	/**	Array which hold the members of a DEFPROCESSGROUP record */
+	uint32_t* array;
+	
+	/**	Current size of array. */
+	uint32_t arraysize;
 
 	/**	Current time inside this stream, necessary for state machine,
 		(-1) means unknown. */
@@ -148,9 +154,9 @@ uint32_t OTF_RBuffer_readUint32( OTF_RBuffer* rbuffer );
 /**	Read a string from buffer and return it. */
 const char* OTF_RBuffer_readString( OTF_RBuffer* rbuffer );
 
-/**	Read a array from buffer and return the number of elements. 
-	malloc memory for *array internally, needs to be freed by caller */
-uint32_t OTF_RBuffer_readArray( OTF_RBuffer* rbuffer, uint32_t** array );
+/**	Read an array from buffer and return the number of elements. 
+	(re)malloc memory for *array internally, needs to be freed by caller */
+uint32_t OTF_RBuffer_readArray( OTF_RBuffer* rbuffer, uint32_t** array, uint32_t* size );
 
 /**	Test if the next character equals the given one (leading spaces are
 	ignored). If the right character is found return 1, and advance by 1 step.

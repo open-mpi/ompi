@@ -1,0 +1,2 @@
+bin_SCRIPTS = vtjava
+

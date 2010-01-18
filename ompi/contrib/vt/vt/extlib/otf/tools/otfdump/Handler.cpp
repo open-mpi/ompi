@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -440,6 +440,57 @@ int handleCollectiveOperation( void* userData, uint64_t time,
 }
 
 
+int handleBeginCollectiveOperation( void* userData, uint64_t time,
+		uint32_t process, uint32_t collOp, uint64_t matchingId,
+		uint32_t procGroup, uint32_t rootProc, uint32_t sent,
+		uint32_t received, uint32_t scltoken )
+{
+	Control* c = (Control*) userData;
+
+	if( c->records[OTF_BEGINCOLLOP_RECORD] ) {
+
+		++c->num;
+		if( c->num >= c->minNum && c->num <= c->maxNum ) {
+
+			fprintf( c->outfile, "(#%llu) \t%llu BeginCollective: "
+					"process %u, collective %u, "
+					"group %u, matchinId %llu, "
+					"root %u, sent %u, "
+					"received %u, source %u\n",
+					(long long unsigned) c->num,
+					(long long unsigned) time, process,
+					collOp, procGroup,
+					(long long unsigned) matchingId,
+					rootProc, sent, received, scltoken );
+		}
+	}
+
+	return OTF_RETURN_OK;
+}
+
+
+int handleEndCollectiveOperation( void* userData, uint64_t time,
+		uint32_t process, uint64_t matchingId )
+{
+	Control* c = (Control*) userData;
+
+	if( c->records[OTF_ENDCOLLOP_RECORD] ) {
+
+		++c->num;
+		if( c->num >= c->minNum && c->num <= c->maxNum ) {
+
+			fprintf( c->outfile, "(#%llu) \t%llu EndCollective: "
+					"process %u, matchingId %llu\n",
+					(long long unsigned) c->num,
+					(long long unsigned) time, process,
+					(long long unsigned) matchingId );
+		}
+	}
+
+	return OTF_RETURN_OK;
+}
+
+
 int handleEventComment( void* userData, uint64_t time, uint32_t process,
 	const char* comment ) {
 
@@ -680,6 +731,297 @@ int handleMessageSummary( void* userData, uint64_t time, uint32_t process,
 }
 
 
+int handleCollopSummary( void* userData, uint64_t time, uint32_t process,
+	uint32_t comm, uint32_t collective, uint64_t sentNumber, uint64_t receivedNumber,
+	uint64_t sentBytes, uint64_t receivedBytes) {
+
+
+	Control* c= (Control*) userData;
+
+
+	if( c->records[OTF_COLLOPSUMMARY_RECORD] ) {
+	
+		++c->num;
+		if( c->num >= c->minNum && c->num <= c->maxNum ) {
+
+			fprintf( c->outfile, "(#%llu) \t%llu StatCollOp: process %u, group %u, "
+				"col %u, numsent %llu, numreceived %llu, "
+				"bytessent %llu, bytesreceived %llu\n",
+				(long long unsigned) c->num, (long long unsigned) time,
+				process, comm, collective, (long long unsigned) sentNumber,
+				(long long unsigned) receivedNumber, (long long unsigned) sentBytes,
+				(long long unsigned) receivedBytes );
+		}
+	}
+
+
+	return OTF_RETURN_OK;
+}
+
+
+int handleDefFile( void* userData, uint32_t stream,
+           uint32_t token, const char *name,
+           uint32_t group )
+{
+        Control* c= (Control*) userData;
+
+        if( c->records[OTF_DEFFILE_RECORD] ) {
+
+                ++c->num;
+                if( c->num >= c->minNum && c->num <= c->maxNum ) {
+
+                        fprintf( c->outfile, "(#%llu) \tDefFile: %s, stream %llu, "
+                                             "token %llu, group %llu\n",
+                                (long long unsigned) c->num, name, (long long unsigned) stream,
+                                (long long unsigned) token, (long long unsigned) group );
+                }
+        }
+        return OTF_RETURN_OK;
+}
+
+
+int handleDefFileGroup( void* userData, uint32_t stream,
+                uint32_t token, const char *name )
+{
+        Control* c= (Control*) userData;
+
+        if( c->records[OTF_DEFFILEGROUP_RECORD] ) {
+
+                ++c->num;
+                if( c->num >= c->minNum && c->num <= c->maxNum ) {
+
+                        fprintf( c->outfile, "(#%llu) \tDefFileGroup: %s, token %llu, "
+                                             "stream %llu\n",
+                                (long long unsigned) c->num, name,
+                                (long long unsigned) token, (long long unsigned) stream);
+                }
+        }
+        return OTF_RETURN_OK;
+}
+
+
+int handleFileOperation( void* userData, uint64_t time,
+                 uint32_t fileid, uint32_t process,
+                 uint64_t handleid, uint32_t operation,
+                 uint64_t bytes, uint64_t duration,
+                 uint32_t source )
+{
+        Control* c= (Control*) userData;
+
+        if( c->records[OTF_FILEOPERATION_RECORD] ) {
+
+                ++c->num;
+                if( c->num >= c->minNum && c->num <= c->maxNum ) {
+        
+                        fprintf( c->outfile, "(#%llu) \t%llu FileOperation: file ID %llu, "
+                                             "process %llu, handle ID %llu, operation %llu, "
+                                             "bytes %llu, duration %llu, source %llu\n",
+                                (long long unsigned) c->num, (long long unsigned) time,
+                                (long long unsigned) fileid, (long long unsigned) process,
+                                (long long unsigned) handleid, (long long unsigned) operation,
+                                (long long unsigned) bytes, (long long unsigned) duration,
+                                (long long unsigned) source);
+                }
+        }
+        return OTF_RETURN_OK;
+}
+
+
+int handleBeginFileOperation( void* userData, uint64_t time,
+		uint32_t process, uint64_t handleid, uint32_t scltoken )
+{
+        Control* c = (Control*) userData;
+
+	if( c->records[OTF_BEGINFILEOP_RECORD] ) {
+
+		++c->num;
+		if( c->num >= c->minNum && c->num <= c->maxNum ) {
+
+			fprintf( c->outfile, "(#%llu) \t%llu BeginFileOperation: "
+					"process %llu, handle ID %llu, "
+					"source %llu\n",
+					(long long unsigned) c->num,
+					(long long unsigned) time,
+					(long long unsigned) process,
+					(long long unsigned) handleid,
+					(long long unsigned) scltoken );
+		}
+	}
+	return OTF_RETURN_OK;
+}
+
+
+int handleEndFileOperation( void* userData, uint64_t time,
+		uint32_t process, uint32_t fileid, uint64_t handleid,
+		uint32_t operation, uint64_t bytes, uint32_t scltoken )
+{
+	Control* c = (Control*) userData;
+
+	if( c->records[OTF_ENDFILEOP_RECORD] ) {
+
+		++c->num;
+		if( c->num >= c->minNum && c->num <= c->maxNum ) {
+
+			fprintf( c->outfile, "(#%llu) \t%llu EndFileOperation: "
+					"process %llu, file ID %llu, "
+					"handle ID %llu, operation %llu, "
+					"bytes %llu, source %llu\n",
+					(long long unsigned) c->num,
+					(long long unsigned) time,
+					(long long unsigned) process,
+					(long long unsigned) fileid,
+					(long long unsigned) handleid,
+					(long long unsigned) operation,
+					(long long unsigned) bytes,
+					(long long unsigned) scltoken );
+		}
+	}
+	return OTF_RETURN_OK;
+}
+
+
+int handleRMAPut( void* userData, uint64_t time, uint32_t process,
+        uint32_t origin, uint32_t target, uint32_t communicator, uint32_t tag,
+        uint64_t bytes, uint32_t source )
+{
+        Control* c= (Control*) userData;
+
+        if( c->records[OTF_RMAPUT_RECORD] ) {
+
+                ++c->num;
+                if( c->num >= c->minNum && c->num <= c->maxNum ) {
+  
+                    if( origin != 0 ) {
+                        /* transfer initiated from 3rd-party process */
+                        fprintf( c->outfile, "(#%llu) \t%llu RMAPut: initiator %u, "
+                                             "origin %u, target %u, communicator %u, "
+                                             "tag %u, bytes %llu, source %llu\n",
+                                 (long long unsigned) c->num, (long long unsigned) time,
+                                 process, origin, target,
+                                 communicator, tag, (long long unsigned) bytes,
+                                 (long long unsigned) source);
+                    }
+                    else {
+                        fprintf( c->outfile, "(#%llu) \t%llu RMAPut: "
+                                             "origin %u, target %u, communicator %u, "
+                                             "tag %u, bytes %llu, source %llu\n",
+                                 (long long unsigned) c->num, (long long unsigned) time,
+                                 process, target,
+                                 communicator, tag, (long long unsigned) bytes,
+                                 (long long unsigned) source);
+                    }
+                }
+        }
+        return OTF_RETURN_OK;
+}
+
+
+int handleRMAPutRemoteEnd( void* userData, uint64_t time,
+        uint32_t process, uint32_t origin, uint32_t target,
+        uint32_t communicator, uint32_t tag, uint64_t bytes, uint32_t source )
+{
+        Control* c= (Control*) userData;
+
+        if( c->records[OTF_RMAPUTRE_RECORD] ) {
+
+                ++c->num;
+                if( c->num >= c->minNum && c->num <= c->maxNum ) {
+
+                    if( origin != 0 ) {
+                        /* transfer initiated from 3rd-party process */
+                        fprintf( c->outfile, "(#%llu) \t%llu RMAPutRemoteEnd: initiator %u, "
+                                             "origin %u, target %u, communicator %u, "
+                                             "tag %u, bytes %llu, source %llu\n",
+                             (long long unsigned) c->num, (long long unsigned) time,
+                             process, origin, target,
+                             communicator, tag, (long long unsigned) bytes,
+                             (long long unsigned) source);
+                    }
+                    else {
+                        fprintf( c->outfile, "(#%llu) \t%llu RMAPutRemoteEnd: "
+                                             "origin %u, target %u, communicator %u, "
+                                             "tag %u, bytes %llu, source %llu\n",
+                             (long long unsigned) c->num, (long long unsigned) time,
+                             process, target,
+                             communicator, tag, (long long unsigned) bytes,
+                             (long long unsigned) source);
+                    }
+                }
+        }
+        return OTF_RETURN_OK;
+}
+
+
+int handleRMAGet( void* userData, uint64_t time, uint32_t process,
+        uint32_t origin, uint32_t target, uint32_t communicator, uint32_t tag,
+        uint64_t bytes, uint32_t source)
+{
+        Control* c= (Control*) userData;
+
+        if( c->records[OTF_RMAGET_RECORD] ) {
+
+                ++c->num;
+                if( c->num >= c->minNum && c->num <= c->maxNum ) {
+  
+                    if( origin != 0 ) {
+                        /* transfer initiated from 3rd-party process */
+                        fprintf( c->outfile, "(#%llu) \t%llu RMAGet: initiator %u, "
+                                             "origin %u, target %u, communicator %u, "
+                                             "tag %u, bytes %llu, source %llu\n",
+                                 (long long unsigned) c->num, (long long unsigned) time,
+                                 process, origin, target,
+                                 communicator, tag, (long long unsigned) bytes,
+                                 (long long unsigned) source);
+                    }
+                    else {
+                        fprintf( c->outfile, "(#%llu) \t%llu RMAGet: "
+                                             "origin %u, target %u, communicator %u, "
+                                             "tag %u, bytes %llu, source %llu\n",
+                                 (long long unsigned) c->num, (long long unsigned) time,
+                                 process, target,
+                                 communicator, tag, (long long unsigned) bytes,
+                                 (long long unsigned) source);
+                    }
+                }
+        }
+        return OTF_RETURN_OK;
+}
+
+
+int handleRMAEnd( void* userData, uint64_t time, uint32_t process,
+        uint32_t remote, uint32_t communicator, uint32_t tag, uint32_t source )
+{
+        Control* c= (Control*) userData;
+
+        if( c->records[OTF_RMAEND_RECORD] ) {
+
+                ++c->num;
+                if( c->num >= c->minNum && c->num <= c->maxNum ) {
+  
+                    if( remote != 0 ) {
+                        /* transfer initiated from 3rd-party process */
+                        fprintf( c->outfile, "(#%llu) \t%llu RMAEnd: initiator %u, "
+                                             "remote %u, communicator %u, "
+                                             "tag %u, source %llu\n",
+                                 (long long unsigned) c->num, (long long unsigned) time,
+                                 process, remote,
+                                 communicator, tag,
+                                 (long long unsigned) source);
+                    }
+                    else {
+                        fprintf( c->outfile, "(#%llu) \t%llu RMAEnd: "
+                                             "process %u, communicator %u, "
+                                             "tag %u, source %llu\n",
+                                 (long long unsigned) c->num, (long long unsigned) time,
+                                 process, communicator, tag,
+                                 (long long unsigned) source);
+                    }
+                }
+        }
+        return OTF_RETURN_OK;
+}
+
+
 int handleUnknown( void* userData, uint64_t time, uint32_t process,
 	const char* record ) {
 
@@ -701,3 +1043,42 @@ int handleUnknown( void* userData, uint64_t time, uint32_t process,
 
 	return OTF_RETURN_OK;
 }
+
+
+int handleDefMarker( void *userData, uint32_t stream, uint32_t token, const char* name, uint32_t type ) {
+
+	Control* c= (Control*) userData;
+
+	if( c->records[OTF_DEFMARKER_RECORD] ) {
+
+		++c->num;
+		if( c->num >= c->minNum && c->num <= c->maxNum ) {
+
+			fprintf( c->outfile, "(#%llu) DefMarker: ID %u, name \"%s\", type %u\n",
+				(long long unsigned) c->num, token, name, type );
+		}
+	}
+
+	return OTF_RETURN_OK;
+}
+
+
+int handleMarker( void *userData, uint64_t time, uint32_t process, 
+		uint32_t token, const char* text ) {
+
+	Control* c= (Control*) userData;
+
+	if( c->records[OTF_MARKER_RECORD] ) {
+
+		++c->num;
+		if( c->num >= c->minNum && c->num <= c->maxNum ) {
+
+			fprintf( c->outfile, "(#%llu) \t%llu Marker: ID %u, process %u, text \"%s\"\n",
+				(long long unsigned) c->num, (long long unsigned) time, token, process, text );
+		}
+	}
+
+	return OTF_RETURN_OK;
+
+}
+

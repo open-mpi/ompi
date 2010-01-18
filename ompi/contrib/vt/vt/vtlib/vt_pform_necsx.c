@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -12,6 +12,8 @@
 
 #include "config.h"
 
+#include "vt_defs.h"
+#include "vt_error.h"
 #include "vt_pform.h"
 
 #include <stdio.h>
@@ -22,38 +24,30 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#ifndef TIMER_PAPI_REAL_CYC
-#  define TIMER_PAPI_REAL_CYC 10
-#endif
-#ifndef TIMER_PAPI_REAL_USEC
-#  define TIMER_PAPI_REAL_USEC 11
-#endif
-
-#if TIMER != TIMER_SYSSX_HGTIME && \
-    TIMER != TIMER_PAPI_REAL_CYC && \
-    TIMER != TIMER_PAPI_REAL_USEC
+#if TIMER != TIMER_SYSSX_HGTIME
 # error Unknown timer specified! Check the timer configuration in 'config.h'.
 #endif
 
-#if TIMER == TIMER_SYSSX_HGTIME
-# include <sys/syssx.h>
-  static uint64_t vt_time_base = 0;
-#elif TIMER == TIMER_PAPI_REAL_CYC
-# include <vt_metric.h>
-#elif TIMER == TIMER_PAPI_REAL_USEC
-# include <vt_metric.h>
-  static uint64_t vt_time_base = 0;
-#endif
+#include <sys/syssx.h>
+
+static uint64_t vt_time_base = 0;
+static long vt_node_id = 0;
 
 /* platform specific initialization */
 void vt_pform_init() {
-#if TIMER == TIMER_SYSSX_HGTIME
   unsigned long long val;
+  int hostid_retries;
   syssx(HGTIME, &val);
   vt_time_base = val - (val % 10000000000);
-#elif TIMER == TIMER_PAPI_REAL_USEC
-  vt_time_base = vt_metric_real_usec();
-#endif
+
+  /* get unique numeric SMP-node identifier */
+  hostid_retries = 0;
+  while( !vt_node_id && (hostid_retries++ < VT_MAX_GETHOSTID_RETRIES) ) {
+    vt_node_id = gethostid();
+  }
+  if (!vt_node_id)
+    vt_error_msg("Maximum retries (%i) for gethostid exceeded!",
+		 VT_MAX_GETHOSTID_RETRIES);
 }
 
 /* directory of global file system  */
@@ -63,47 +57,40 @@ char* vt_pform_gdir() {
 
 /* directory of local file system  */
 char* vt_pform_ldir() {
-  #ifdef PFORM_LDIR
-    return PFORM_LDIR;
-  #else
-    return "/tmp";
-  #endif
+#ifdef DEFAULT_PFORM_LDIR
+  return DEFAULT_PFORM_LDIR;
+#else
+  return "/tmp";
+#endif
+}
+
+/* full path of executable  */
+char* vt_pform_exec() {
+  return NULL;
 }
 
 /* clock resolution */
 uint64_t vt_pform_clockres() {
-#if TIMER == TIMER_SYSSX_HGTIME
   return 1e6;
-#elif TIMER == TIMER_PAPI_REAL_CYC
-  return vt_metric_clckrt();
-#elif TIMER == TIMER_PAPI_REAL_USEC
-  return 1e6;
-#endif
 }
 
 /* local or global wall-clock time */
 uint64_t vt_pform_wtime() {
-#if TIMER == TIMER_SYSSX_HGTIME
   unsigned long long val;
   syssx(HGTIME, &val);
   return (uint64_t)val - vt_time_base;
-#elif TIMER == TIMER_PAPI_REAL_CYC
-  return vt_metric_real_cyc();
-#elif TIMER == TIMER_PAPI_REAL_USEC
-  return vt_metric_real_usec() - vt_time_base;
-#endif
 }
 
 /* unique numeric SMP-node identifier */
 long vt_pform_node_id() {
-  return gethostid();
+  return vt_node_id;
 }
 
 /* unique string SMP-node identifier */
 char* vt_pform_node_name() {
   static char host_name[20];
   gethostname(host_name, 20);
-  return host_name;              
+  return host_name;
 }
 
 /* number of CPUs */

@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -13,12 +13,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "vt_comp.h"
 #include "vt_memhook.h"
 #include "vt_pform.h"
+#include "vt_thrd.h"
 #include "vt_trc.h"
-#if (defined (VT_OMPI) || defined (VT_OMP))
-#  include <omp.h>
-#endif
 
 extern void* vftr_getname(void);
 extern int vftr_getname_len(void);
@@ -81,16 +80,34 @@ static uint32_t register_region(char *func, int len) {
 
   strncpy(fname, func, len);
   fname[len] = '\0';
-  rid = vt_def_region(fname, VT_NO_ID, VT_NO_LNO, VT_NO_LNO,
-                       VT_DEF_GROUP, VT_FUNCTION);
+  rid = vt_def_region(fname, VT_NO_ID, VT_NO_LNO, VT_NO_LNO, NULL,
+                      VT_FUNCTION);
   hash_put((long) func, rid);
   return rid;
 }
 
-
+void ftrace_finalize(void);
 void _ftrace_enter2_(void);
 void _ftrace_exit2_(void);
 void _ftrace_stop2_(void);
+
+/*
+ * Finalize instrumentation interface
+ */
+
+void ftrace_finalize()
+{
+  int i;
+
+  for ( i = 0; i < HASH_MAX; i++ )
+  {
+    if ( htab[i] ) {
+      free(htab[i]);
+      htab[i] = NULL;
+    }
+  }
+  necsx_init = 1;  
+}
 
 /*
  * This function is called at the entry of each function
@@ -108,6 +125,7 @@ void _ftrace_enter2_() {
     VT_MEMHOOKS_OFF();
     necsx_init = 0;
     vt_open();
+    vt_comp_finalize = &ftrace_finalize;
     VT_MEMHOOKS_ON();
   }
 
@@ -124,20 +142,14 @@ void _ftrace_enter2_() {
   /* -- get region identifier -- */
   if ( (rid = hash_get((long) func)) == VT_NO_ID ) {
     /* -- region entered the first time, register region -- */
-#   if defined (VT_OMPI) || defined (VT_OMP)
-    if (omp_in_parallel()) {
-#     pragma omp critical (vt_comp_ftrace_1)
-      {
-        if ( (rid = hash_get((long) func)) == VT_NO_ID ) {
-          rid = register_region(func, len);
-        }
-      }
-    } else {
+#if (defined(VT_MT) || defined(VT_HYB))
+    VTTHRD_LOCK_IDS();
+    if ( (rid = hash_get((long) func)) == VT_NO_ID )
       rid = register_region(func, len);
-    }
-#   else
+    VTTHRD_UNLOCK_IDS();
+#else /* VT_MT || VT_HYB */
     rid = register_region(func, len);
-#   endif
+#endif /* VT_MT || VT_HYB */
   }
 
   /* -- write enter record -- */

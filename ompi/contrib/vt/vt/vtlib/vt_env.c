@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -12,18 +12,16 @@
 
 #include "config.h"
 
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <limits.h>
-#include <ctype.h>
-
 #include "vt_env.h"
 #include "vt_error.h"
 #include "vt_defs.h"
 #include "vt_pform.h"
 
-#define VT_MAX_THREADS 65536
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <limits.h>
+#include <ctype.h>
 
 static char* replace_vars(char *v) {
   char* start;
@@ -36,7 +34,7 @@ static char* replace_vars(char *v) {
 
   if ((start = strchr(v, '$')) == NULL ) {
     /* no $ in v -> no replacement necessary */
-    return v;
+    return strdup(v);
   } else {
     if ( start[1] == '{' ) {
       /* ${....} form */
@@ -72,6 +70,25 @@ static char* replace_vars(char *v) {
   }
 }
 
+static char* strip_dir(char *path) {
+  char* start;
+  char* res;
+
+  if ((start = strrchr(path, '/')) == NULL ) {
+    /* no / in path -> no removing necessary */
+    return path;
+  } else {
+    if (*(++start) == '\0') {
+      /* path has a trailing slash or is "/", return empty string */
+      return "";
+    } else {
+      /* otherwise, strip directory from path and return */
+      res = strdup(start);
+      return res;
+    }
+  }
+}
+
 static int parse_bool(char *str) {
   static char strbuf[128];
   char* ptr = strbuf;
@@ -98,19 +115,38 @@ static int parse_bool(char *str) {
 static size_t parse_size(char *str) {
   size_t size = 0;
 
-  if (strlen(str) > 1)
+  if (strlen(str) >= 1)
   {
-     int multiply = 1;
+     int multiply = 0;
 
-     if (str[strlen(str)-1] == 'M' 
-	 || str[strlen(str)-1] == 'm')
+     switch(str[strlen(str)-1])
      {
-	multiply = 1e6;
-     }
-     else if (str[strlen(str)-1] == 'G' 
-	      || str[strlen(str)-1] == 'g')
-     {
-	multiply = 1e9;
+       case '0':
+       case '1':
+       case '2':
+       case '3':
+       case '4':
+       case '5':
+       case '6':
+       case '7':
+       case '8':
+       case '9':
+	 multiply = 1;
+	 break;
+       case 'K':
+       case 'k':
+	 multiply = 1024;
+	 break;
+       case 'M':
+       case 'm':
+	 multiply = 1024*1024;
+	 break;
+       case 'G':
+       case 'g':
+	 multiply = 1024*1024*1024;
+	 break;
+       default:
+	 break;
      }
 
      size = atoll(str) * multiply;
@@ -132,6 +168,10 @@ char* vt_env_apppath()
       if (tmp != NULL && strlen(tmp) > 0)
         {
 	  apppath = replace_vars(tmp);
+	}
+      else
+        {
+	  apppath = vt_pform_exec();
 	}
     }
   return apppath;
@@ -171,6 +211,64 @@ char* vt_env_dyn_shlibs()
 	}
     }
   return dyn_shlibs;
+}
+
+char* vt_env_gnu_nmfile()
+{
+  static int read = 1;
+  static char* gnu_nmfile = NULL;
+  char* tmp;
+
+  if (read)
+  {
+    read = 0;
+    tmp = getenv("VT_GNU_NMFILE");
+    if (tmp != NULL && strlen(tmp) > 0)
+      {
+	gnu_nmfile = replace_vars(tmp);
+      }
+  }
+  return gnu_nmfile;
+}
+
+int vt_env_gnu_demangle()
+{
+  static int gnu_demangle = -1;
+  char* tmp;
+
+  if (gnu_demangle == -1)
+    {
+      tmp = getenv("VT_GNU_DEMANGLE");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+	  gnu_demangle = parse_bool(tmp);
+	}
+      else
+        {
+	  gnu_demangle = 0;
+	}
+    }
+  return gnu_demangle;
+}
+
+int vt_env_gnu_getsrc()
+{
+  static int gnu_getsrc = -1;
+  char* tmp;
+
+  if (gnu_getsrc == -1)
+    {
+      tmp = getenv("VT_GNU_GETSRC");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+	  gnu_getsrc = parse_bool(tmp);
+	}
+      else
+        {
+	  gnu_getsrc = 1;
+	}
+    }
+  return gnu_getsrc;
 }
 
 char* vt_env_gdir()
@@ -213,6 +311,46 @@ char* vt_env_ldir()
   return ldir;
 }
 
+int vt_env_gdir_check()
+{
+  static int gdir_check = -1;
+  char* tmp;
+
+  if (gdir_check == -1)
+  {
+    tmp = getenv("VT_PFORM_GDIR_CHECK");
+    if (tmp != NULL && strlen(tmp) > 0)
+    {
+      gdir_check = parse_bool(tmp);
+    }
+    else
+    {
+      gdir_check = 1;
+    }
+  }
+  return gdir_check;
+}
+
+int vt_env_ldir_check()
+{
+  static int ldir_check = -1;
+  char* tmp;
+
+  if (ldir_check == -1)
+  {
+    tmp = getenv("VT_PFORM_LDIR_CHECK");
+    if (tmp != NULL && strlen(tmp) > 0)
+    {
+      ldir_check = parse_bool(tmp);
+    }
+    else
+    {
+      ldir_check = 1;
+    }
+  }
+  return ldir_check;
+}
+
 char* vt_env_fprefix()
 {
   static char* fprefix = NULL;
@@ -227,10 +365,62 @@ char* vt_env_fprefix()
         }
       else
         {
-          fprefix = "a";
-        } 
+	  tmp = vt_env_apppath();
+	  if (tmp != NULL && strlen(tmp) > 0)
+	    {
+	      fprefix = strip_dir(tmp);
+	      if (strlen(fprefix) >= 4 &&
+		  (strcmp(fprefix+(strlen(fprefix)-4), ".out") == 0 ||
+		   strcmp(fprefix+(strlen(fprefix)-4), ".exe") == 0))
+	        {
+		  fprefix[strlen(fprefix)-4] = '\0';
+		}
+	    }
+	  else
+	    {
+	      fprefix = "a";
+	    }
+        }
     }
   return fprefix;
+}
+
+int vt_env_funique()
+{
+  static int funique = -2; /* -1 may be used */
+  char* tmp;
+
+  if (funique == -2)
+    {
+      tmp = getenv("VT_FILE_UNIQUE");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+	  char tmpbuf[128];
+	  char* p = tmpbuf;
+	  strncpy(tmpbuf, tmp, 128);
+          tmpbuf[127] = '\0';
+	  while( *p ) { *p = tolower(*p); p++; }
+	  
+	  if (strcmp(tmpbuf, "yes") == 0  ||
+	      strcmp(tmpbuf, "true") == 0 ||
+	      strcmp(tmpbuf, "auto") == 0)
+	    {
+	      funique = 0;
+	    }
+	  else
+	    {
+	      funique = atoi(tmp);
+	      if (funique == 0)	funique = -1;
+	      else if (funique < 0)
+		vt_error_msg("VT_FILE_UNIQUE not properly set");
+	    }
+	}
+      else
+        {
+	  funique = -1;
+	}
+    }
+  return funique;
 }
 
 size_t vt_env_bsize()
@@ -260,6 +450,48 @@ size_t vt_env_bsize()
   return buffer_size;
 }
 
+size_t vt_env_copy_bsize()
+{
+   static size_t buffer_size = 0;
+   char* tmp;
+
+   if (buffer_size == 0)
+     {
+       tmp = getenv("VT_COPY_BUFFER_SIZE");
+       if (tmp != NULL && strlen(tmp) > 0)
+         {
+	   buffer_size = parse_size(tmp);
+	   if (buffer_size <= 0)
+	     vt_error_msg("VT_COPY_BUFFER_SIZE not properly set");
+	 }
+       else
+         {
+	   buffer_size = VT_DEFAULT_COPY_BUFFER_SIZE;
+	 }
+     }
+  return buffer_size;
+}
+
+int vt_env_pthread_reuse()
+{
+  static int pthread_reuse = -1;
+  char* tmp;
+
+  if (pthread_reuse == -1)
+    {
+      tmp = getenv("VT_PTHREAD_REUSE");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          pthread_reuse = parse_bool(tmp);
+        }
+      else
+        {
+          pthread_reuse = 1;
+        }
+    }
+  return pthread_reuse;
+}
+
 int vt_env_mode()
 {
   static int modeflags = 0;
@@ -270,16 +502,24 @@ int vt_env_mode()
       tmp = getenv("VT_MODE");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-	  char* tk = strtok(tmp, ":");
-	  int dc = 0;
+	  char tmpbuf[128];
+	  char* p = tmpbuf;
+	  char* tk;
+	  int dc;
+
+	  strncpy(tmpbuf, tmp, 128);
+	  while( *p ) { *p = tolower(*p); p++; }
+
+	  tk = strtok(tmpbuf, ":");
+	  dc = 0;
 	  modeflags = 0;
 	  do {
 	    if (dc <= 1 &&
-	       (strcmp( tk, "TRACE" ) == 0 || strcmp( tk, "trace" ) == 0))
-	      modeflags |= 1;
+	       (strcmp( tk, "trace" ) == 0))
+	      modeflags |= VT_MODE_TRACE;
 	    else if(dc <= 1 &&
-		    (strcmp( tk, "STAT" ) == 0 || strcmp( tk, "stat" ) == 0))
-	      modeflags |= 2;
+		    (strcmp( tk, "stat" ) == 0))
+	      modeflags |= VT_MODE_STAT;
 	    else
 	      vt_error_msg("VT_MODE not properly set");
 	    dc++;
@@ -287,7 +527,7 @@ int vt_env_mode()
 	}
       else
         {
-	   modeflags = 1;
+	  modeflags = VT_MODE_TRACE;
 	}
     }
   return modeflags;
@@ -315,27 +555,148 @@ int vt_env_stat_intv()
   return stat_intv;
 }
 
-int vt_env_stat_show()
+int vt_env_stat_props()
 {
-  static int stat_show = -1;
+  static int propflags = 0;
   char* tmp;
 
-  if (stat_show == -1)
+  if (propflags == 0)
     {
-      tmp = getenv("VT_STAT_SHOW");
+      tmp = getenv("VT_STAT_PROPS");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-	  stat_show = parse_bool(tmp);
+	  char tmpbuf[128];
+	  char* p = tmpbuf;
+	  char* tk;
+	  int dc;
+
+	  strncpy(tmpbuf, tmp, 128);
+	  while( *p ) { *p = tolower(*p); p++; }
+
+	  if (strcmp( tmpbuf, "all" ) == 0)
+	    {
+	      propflags = (VT_SUM_PROP_FUNC | VT_SUM_PROP_MSG | VT_SUM_PROP_COLLOP);
+	    }
+	  else
+	    {
+	      tk = strtok(tmpbuf, ":");
+	      dc = 0;
+	      propflags = 0;
+	      do {
+		if (dc <= 2 &&
+		    (strcmp( tk, "func" ) == 0))
+		  propflags |= VT_SUM_PROP_FUNC;
+		else if(dc <= 2 &&
+			(strcmp( tk, "msg" ) == 0))
+		  propflags |= VT_SUM_PROP_MSG;
+		else if(dc <= 2 &&
+			(strcmp( tk, "collop" ) == 0))
+		  propflags |= VT_SUM_PROP_COLLOP;
+/*		else if(dc <= 3 &&
+			(strcmp( tk, "fileop" ) == 0))
+			propflags |= VT_SUM_PROP_FILEOP; */
+		else
+		  vt_error_msg("VT_STAT_PROPS not properly set");
+		dc++;
+	      } while((tk = strtok(0, ":")));
+	    }
 	}
       else
         {
-	  stat_show = 0;
+	  /* propflags =
+	       (VT_SUM_PROP_FUNC | VT_SUM_PROP_MSG | VT_SUM_PROP_COLLOP | VT_SUM_PROP_FILEOP); */
+	  propflags = (VT_SUM_PROP_FUNC | VT_SUM_PROP_MSG | VT_SUM_PROP_COLLOP);
 	}
     }
-  return stat_show;
+  return propflags;
 }
 
-int vt_env_is_verbose()
+int vt_env_stat_msg_dtls()
+{
+  static int dtlsflags = 0;
+  char* tmp;
+
+  if (dtlsflags == 0)
+    {
+      tmp = getenv("VT_STAT_MSG_DTLS");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+	  char tmpbuf[128];
+	  char* p = tmpbuf;
+	  char* tk;
+	  int dc;
+
+	  strncpy(tmpbuf, tmp, 128);
+	  while( *p ) { *p = tolower(*p); p++; }
+
+	  tk = strtok(tmpbuf, ":");
+	  dc = 0;
+	  dtlsflags = 0;
+	  do {
+	    if (dc <= 2 &&
+	       (strcmp( tk, "peer" ) == 0))
+	      dtlsflags |= VT_SUM_MSG_DTL_PEER;
+	    else if(dc <= 2 &&
+		    (strcmp( tk, "comm" ) == 0))
+	      dtlsflags |= VT_SUM_MSG_DTL_COMM;
+	    else if(dc <= 2 &&
+		    (strcmp( tk, "tag" ) == 0))
+	      dtlsflags |= VT_SUM_MSG_DTL_TAG;
+	    else
+	      vt_error_msg("VT_STAT_MSG_DTLS not properly set");
+	    dc++;
+	  } while((tk = strtok(0, ":")));
+	}
+      else
+        {
+	  dtlsflags = VT_SUM_MSG_DTL_PEER;
+	}
+    }
+  return dtlsflags;
+}
+
+int vt_env_stat_collop_dtls()
+{
+  static int dtlsflags = 0;
+  char* tmp;
+
+  if (dtlsflags == 0)
+    {
+      tmp = getenv("VT_STAT_COLLOP_DTLS");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+	  char tmpbuf[128];
+	  char* p = tmpbuf;
+	  char* tk;
+	  int dc;
+
+	  strncpy(tmpbuf, tmp, 128);
+	  while( *p ) { *p = tolower(*p); p++; }
+
+	  tk = strtok(tmpbuf, ":");
+	  dc = 0;
+	  dtlsflags = 0;
+	  do {
+	    if (dc <= 1 &&
+	       (strcmp( tk, "comm" ) == 0))
+	      dtlsflags |= VT_SUM_COLLOP_DTL_COMM;
+	    else if(dc <= 1 &&
+		    (strcmp( tk, "op" ) == 0))
+	      dtlsflags |= VT_SUM_COLLOP_DTL_OP;
+	    else
+	      vt_error_msg("VT_STAT_COLLOP_DTLS not properly set");
+	    dc++;
+	  } while((tk = strtok(0, ":")));
+	}
+      else
+        {
+	  dtlsflags = VT_SUM_COLLOP_DTL_OP;
+	}
+    }
+  return dtlsflags;
+}
+
+int vt_env_verbose()
 {
   static int verbose = -1;
   char* tmp;
@@ -345,15 +706,12 @@ int vt_env_is_verbose()
       tmp = getenv("VT_VERBOSE");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-	  int val = atoi(tmp);
-	  if (val > 0)
-	    verbose = val;
-	  else
-	    verbose = parse_bool(tmp);
+	  verbose = atoi(tmp);
+	  if (verbose < 0) verbose = 0;
 	}
       else
         {
-	  verbose = 0;
+	  verbose = 1;
 	}
     }
   return verbose;
@@ -369,35 +727,15 @@ int vt_env_debug()
       tmp = getenv("VT_DEBUG");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-          debug = atoi(tmp);
-          if (debug < 0) debug = 0;
-        }
+	  debug = atoi(tmp);
+	  if (debug < 0) debug = 0;
+	}
       else
         {
-          debug = 0;
-        }
+	  debug = 0;
+	}
     }
   return debug;
-}
-
-int vt_env_do_demangle()
-{
-  static int do_demangle = -1;
-  char* tmp;
-
-  if (do_demangle == -1)
-    {
-      tmp = getenv("VT_DEMANGLE");
-      if (tmp != NULL && strlen(tmp) > 0)
-        {
-	  do_demangle = parse_bool(tmp);
-	}
-      else
-        {
-	  do_demangle = 0;
-	}
-    }
-  return do_demangle;
 }
 
 int vt_env_do_unify()
@@ -460,6 +798,46 @@ int vt_env_memtrace()
   return memtrace;
 }
 
+int vt_env_memtrace_marker()
+{
+  static int memtrace_marker = -1;
+  char* tmp;
+
+  if (memtrace_marker == -1)
+    {
+      tmp = getenv("VT_MEMTRACE_MARKER");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          memtrace_marker = parse_bool(tmp);
+        }
+      else
+        {
+          memtrace_marker = 0;
+        }
+    }
+  return memtrace_marker;
+}
+
+int vt_env_cpuidtrace()
+{
+  static int cpuidtrace = -1;
+  char* tmp;
+
+  if (cpuidtrace == -1)
+  {
+    tmp = getenv("VT_CPUIDTRACE");
+    if (tmp != NULL && strlen(tmp) > 0)
+    {
+      cpuidtrace = parse_bool(tmp);
+    }
+    else
+    {
+      cpuidtrace = 0;
+    }
+  }
+  return cpuidtrace;
+}
+
 int vt_env_iotrace()
 {
   static int iotrace = -1;
@@ -480,6 +858,46 @@ int vt_env_iotrace()
   return iotrace;
 }
 
+char* vt_env_iolibpathname()
+{
+  static char* pathname = NULL;
+  char* tmp;
+
+  if (! pathname)
+    {
+      tmp = getenv("VT_IOLIB_PATHNAME");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          pathname = replace_vars(tmp);
+        }
+      else
+        {
+          pathname = NULL;
+        }
+    }
+  return pathname;
+}
+
+int vt_env_libctrace()
+{
+  static int libctrace = -1;
+  char* tmp;
+
+  if (libctrace == -1)
+    {
+      tmp = getenv("VT_LIBCTRACE");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+	  libctrace = parse_bool(tmp);
+	}
+      else
+        {
+	  libctrace = 1;
+	}
+    }
+  return libctrace;
+}
+
 int vt_env_mpitrace()
 {
   static int mpitrace = -1;
@@ -498,6 +916,81 @@ int vt_env_mpitrace()
 	}
     }
   return mpitrace;
+}
+
+int vt_env_mpicheck()
+{
+  static int mpicheck = -1;
+  char* tmp;
+
+  if (mpicheck == -1)
+    {
+      tmp = getenv("VT_MPICHECK");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          mpicheck = parse_bool(tmp);
+        }
+      else
+        {
+          mpicheck = 0;
+        }
+    }
+  return mpicheck;
+}
+
+int vt_env_mpicheck_errexit()
+{
+  static int mpicheck_errexit = -1;
+  char* tmp;
+
+  if (mpicheck_errexit == -1)
+    {
+      tmp = getenv("VT_MPICHECK_ERREXIT");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          mpicheck_errexit = parse_bool(tmp);
+        }
+      else
+        {
+          mpicheck_errexit = 0;
+        }
+    }
+  return mpicheck_errexit;
+}
+
+char* vt_env_rusage()
+{
+  static int read = 1;
+  static char* rusage = NULL;
+
+  if (read)
+    {
+      read = 0;
+      rusage = getenv("VT_RUSAGE");
+    }
+  return rusage;
+}
+
+int vt_env_rusage_intv()
+{
+  static int rusage_intv = -1;
+  char* tmp;
+
+  if (rusage_intv == -1)
+    {
+      tmp = getenv("VT_RUSAGE_INTV");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+	  rusage_intv = atoi(tmp);
+	  if (rusage_intv < 0)
+	    vt_error_msg("VT_RUSAGE_INTV not properly set");
+	}
+      else
+        {
+	  rusage_intv = 100;
+	}
+    }
+  return rusage_intv;
 }
 
 char* vt_env_metrics()
@@ -525,7 +1018,7 @@ char* vt_env_metrics_spec()
 {
   char  msg[128];
   char* spec = getenv("VT_METRICS_SPEC");
-  int len;
+  int   len;
 
   if ( spec != NULL && strlen(spec) > 0 ) { /* use specified file */
     snprintf(msg, sizeof(msg)-1, "VT_METRICS_SPEC=%s", spec);
@@ -538,7 +1031,7 @@ char* vt_env_metrics_spec()
   } else {
 #ifdef DATADIR
     /* default to installation file */
-    len = strlen(DATADIR)+strlen(METRICS_SPEC)+2;
+    len = strlen(DATADIR)+strlen(METRICS_SPEC)+3;
     spec = (char*)calloc(len, sizeof(char));
     snprintf(spec, len-1, "%s/%s", DATADIR, METRICS_SPEC);
     snprintf(msg, sizeof(msg)-1, "[DATADIR] VT_METRICS_SPEC=%s", spec);
@@ -546,8 +1039,72 @@ char* vt_env_metrics_spec()
     snprintf(msg, sizeof(msg)-1, "VT_METRICS_SPEC not set");
 #endif
   }
-  vt_cntl_msg(msg);
+  vt_cntl_msg(2, msg);
   return spec;
+}
+
+int vt_env_sync_flush()
+{
+  static int sync_flush = -1;
+  char* tmp;
+
+  if (sync_flush == -1)
+    {
+      tmp = getenv("VT_SYNC_FLUSH");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+	  sync_flush = parse_bool(tmp);
+	}
+      else
+        {
+	  sync_flush = 0;
+	}
+    }
+  return sync_flush;
+}
+
+int vt_env_sync_flush_level()
+{
+  static int sync_flush_level = -1;
+  char* tmp;
+
+  if (sync_flush_level == -1)
+    {
+      tmp = getenv("VT_SYNC_FLUSH_LEVEL");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+	  sync_flush_level = atoi(tmp);
+	  if (sync_flush_level < 0 || sync_flush_level > 100)
+	    vt_error_msg("VT_SYNC_FLUSH_LEVEL not properly set");
+	}
+      else
+        {
+	   sync_flush_level = 80;
+	}
+    }
+  return sync_flush_level;
+}
+
+int vt_env_max_stack_depth()
+{
+  static int max_stack_depth = -1;
+  char* tmp;
+
+  if (max_stack_depth == -1)
+    {
+      tmp = getenv("VT_MAX_STACK_DEPTH");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+	  max_stack_depth = atoi(tmp);
+	  if (max_stack_depth < 0)
+	    vt_error_msg("VT_MAX_STACK_DEPTH not properly set");
+	}
+      else
+        {
+	  max_stack_depth = 0;
+	}
+    }
+  return max_stack_depth;
 }
 
 int vt_env_max_flushes()
@@ -592,24 +1149,6 @@ int vt_env_max_threads()
   return max_threads;
 }
 
-char* vt_env_nmfile()
-{
-  static int read = 1;
-  static char* nmfile = NULL;
-  char* tmp;
-
-  if (read)
-  {
-    read = 0;
-    tmp = getenv("VT_NMFILE");
-    if (tmp != NULL && strlen(tmp) > 0)
-      {
-	nmfile = replace_vars(tmp);
-      }
-  }
-  return nmfile;
-}
-
 int vt_env_compression()
 {
   static int compression = -1;
@@ -630,7 +1169,85 @@ int vt_env_compression()
   return compression;
 }
 
-char*  vt_env_filter_spec()
+int vt_env_java_native()
+{
+  static int native = -1;
+  char* tmp;
+
+  if (native == -1)
+    {
+      tmp = getenv("VT_JAVA_NATIVE");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          native = parse_bool(tmp);
+        }
+      else
+        {
+          native = 0;
+        }
+    }
+  return native;
+}
+
+int vt_env_java_synthetic()
+{
+  static int synthetic = -1;
+  char* tmp;
+
+  if (synthetic == -1)
+    {
+      tmp = getenv("VT_JAVA_SYNTHETIC");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          synthetic = parse_bool(tmp);
+        }
+      else
+        {
+          synthetic = 0;
+        }
+    }
+  return synthetic;
+}
+
+int vt_env_java_group_classes()
+{
+  static int group_classes = -1;
+  char* tmp;
+
+  if (group_classes == -1)
+    {
+      tmp = getenv("VT_JAVA_GROUP_CLASSES");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          group_classes = parse_bool(tmp);
+        }
+      else
+        {
+          group_classes = 1;
+        }
+    }
+  return group_classes;
+}
+
+char* vt_env_java_filter_spec()
+{
+  static int read = 1;
+  static char* spec = NULL;
+  char* tmp;
+
+  if (read)
+    {
+      read = 0;
+      tmp = getenv("VT_JAVA_FILTER_SPEC");
+      if (tmp != NULL && strlen(tmp) > 0)
+      {
+        spec = replace_vars(tmp);
+      }
+    }
+  return spec;
+}
+
+char* vt_env_filter_spec()
 {
   static int read = 1;
   static char* spec = NULL;
@@ -648,7 +1265,7 @@ char*  vt_env_filter_spec()
   return spec;
 }
 
-char*  vt_env_groups_spec()
+char* vt_env_groups_spec()
 {
   static int read = 1;
   static char* spec = NULL;
@@ -664,4 +1281,46 @@ char*  vt_env_groups_spec()
 	}
     }
   return spec;
+}
+
+int vt_env_etimesync()
+{
+  static int etimesync = -1;
+  char* tmp;
+
+  if (etimesync == -1)
+    {
+      tmp = getenv("VT_ETIMESYNC");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+	  etimesync = parse_bool(tmp);
+	}
+      else
+        {
+	  etimesync = 0;
+	}
+    }
+  return etimesync;
+}
+
+int vt_env_etimesync_intv()
+{
+  static int etimesync_intv = -1;
+  char* tmp;
+
+  if (etimesync_intv == -1)
+    {
+      tmp = getenv("VT_ETIMESYNC_INTV");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+	  etimesync_intv = atoi(tmp);
+	  if (etimesync_intv < 0)
+	    vt_error_msg("VT_ETIMESYNC_INTV not properly set");
+	}
+      else
+        {
+	  etimesync_intv = 120;
+	}
+    }
+  return etimesync_intv;
 }

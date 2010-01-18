@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -17,7 +17,7 @@
 #include "OTF_Platform.h"
 #include "OTF_RBuffer.h"
 #include "OTF_Platform.h"
-
+#include "OTF_Errno.h"
 
 
 /** constructor - internal use only */
@@ -144,15 +144,18 @@ int OTF_RBuffer_init( OTF_RBuffer* rbuffer ) {
 	rbuffer->file = NULL;
 
 	/* buffer is allocated on demand */
-	rbuffer->buffer = NULL;
+	rbuffer->buffer= NULL;
 	rbuffer->pos= 0;
 	rbuffer->lastnewline= 0;
 	rbuffer->end= 0;
 	rbuffer->size= 0;
-	rbuffer->jumpsize = 1024;
+	rbuffer->jumpsize= 1024;
+	
+	rbuffer->array= NULL;
+	rbuffer->arraysize= 0;
 
-	rbuffer->time = (uint64_t) -1;
-	rbuffer->process = (uint32_t) -1;
+	rbuffer->time= (uint64_t) -1;
+	rbuffer->process= (uint32_t) -1;
 
 	rbuffer->filesize= (uint64_t) -1;
 	rbuffer->firstTime= (uint64_t) -1;
@@ -171,6 +174,11 @@ int OTF_RBuffer_finish( OTF_RBuffer* rbuffer ) {
 
 	free( rbuffer->buffer );
 	rbuffer->buffer= NULL;
+	
+	if ( NULL != rbuffer->array ) {
+		free( rbuffer->array );
+		rbuffer->array= NULL;
+	}
 
 	return 1;
 }
@@ -182,11 +190,9 @@ OTF_RBuffer* OTF_RBuffer_open( const char* filename, OTF_FileManager* manager ) 
 	OTF_RBuffer* ret= (OTF_RBuffer*) malloc( sizeof(OTF_RBuffer) );
 	if ( NULL == ret ) {
 
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"no memory left.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
 				
 		return NULL;
 	}
@@ -196,11 +202,9 @@ OTF_RBuffer* OTF_RBuffer_open( const char* filename, OTF_FileManager* manager ) 
 
 	if( NULL == manager ) {
 		
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"manager has not been defined.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
 
 		free( ret );
 		ret= NULL;
@@ -212,13 +216,11 @@ OTF_RBuffer* OTF_RBuffer_open( const char* filename, OTF_FileManager* manager ) 
 
 	if ( NULL == ret->file ) {
 
-#		ifdef OTF_VERBOSE
 /* *** commented because it can happen when defstream cannot be loaded
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"OTF_File_open() failed. filename '%s'\n",
 				__FUNCTION__, __FILE__, __LINE__, filename );
 */
-#		endif /* OTF_VERBOSE */
 
 		free( ret );
 		ret= NULL;
@@ -246,6 +248,7 @@ int OTF_RBuffer_close( OTF_RBuffer* rbuffer ) {
 	OTF_RBuffer_finish( rbuffer );
 
 	free( rbuffer );
+	rbuffer = NULL;
 
 	return ret;
 }
@@ -256,23 +259,19 @@ int OTF_RBuffer_setSize( OTF_RBuffer* rbuffer, size_t size ) {
 
 	if ( size < 100 ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"buffer size %u too small, rejected.\n",
 				__FUNCTION__, __FILE__, __LINE__, (uint32_t) size );
-#		endif /* OTF_VERBOSE */
 
 		return 0;
 	}
 
 	if ( size < rbuffer->size ) {
 
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"cannot shrink buffer from %u to %u.\n",
 				__FUNCTION__, __FILE__, __LINE__, (uint32_t) rbuffer->size,
 				(uint32_t) size );
-#		endif /* OTF_VERBOSE */
 
 		return 0;
 	}
@@ -282,11 +281,9 @@ int OTF_RBuffer_setSize( OTF_RBuffer* rbuffer, size_t size ) {
 		rbuffer->size * sizeof(char) );
 	if( NULL == rbuffer->buffer ) {
 		
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"no memory left.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif /* OTF_VERBOSE */
 
 		return 0;
 	}
@@ -307,29 +304,23 @@ void OTF_RBuffer_setZBufferSize( OTF_RBuffer* rbuffer, uint32_t size ) {
 	
 	if ( 32 > size ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"intended zbuffer size %u is too small, rejected.\n",
 				__FUNCTION__, __FILE__, __LINE__, size );
-#		endif /* OTF_VERBOSE */
 		
 		return;
 
 	} else if ( 512 > size ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"zbuffer size %u is very small, accepted though.\n",
 				__FUNCTION__, __FILE__, __LINE__, size );
-#		endif /* OTF_VERBOSE */
 
 	} else if ( 10 * 1024 *1024 < size ) {
 
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"zbuffer size %u is rather big, accepted though.\n",
 				__FUNCTION__, __FILE__, __LINE__, size );
-#		endif /* OTF_VERBOSE */
 	}
 
 	rbuffer->zbuffersize= size;
@@ -347,22 +338,18 @@ int OTF_RBuffer_setJumpSize( OTF_RBuffer* rbuffer, size_t size ) {
 
 	if ( size < 100 ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"jump buffer size %u too small, rejected.\n",
 				__FUNCTION__, __FILE__, __LINE__, (uint32_t) size );
-#		endif /* OTF_VERBOSE */
 
 		return 0;
 	}
 
 	if ( size > rbuffer->size ) {
 
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"buffer size is smaller than jump size %u.\n",
 				__FUNCTION__, __FILE__, __LINE__, (uint32_t) size );
-#		endif /* OTF_VERBOSE */
 
 		return 0;
 	}
@@ -430,7 +417,7 @@ int OTF_RBuffer_guaranteeRecord( OTF_RBuffer* rbuffer ) {
 		/* no complete record available! end of file. */
 
 		/*
-		fprintf( stderr, "OTF_RBuffer_guaranteeRecord() "
+		OTF_fprintf( stderr, "OTF_RBuffer_guaranteeRecord() "
 			"cannot read, file exceeded\n" );
 		*/
 
@@ -453,7 +440,7 @@ int OTF_RBuffer_guaranteeRecord( OTF_RBuffer* rbuffer ) {
 
 
 		/*
-		fprintf( stderr, "OTF_RBuffer_guaranteeRecord() double buffer size "
+		OTF_fprintf( stderr, "OTF_RBuffer_guaranteeRecord() double buffer size "
 			"%u -> %u!\n", rbuffer->size, 2* rbuffer->size );
 		*/
 
@@ -461,11 +448,9 @@ int OTF_RBuffer_guaranteeRecord( OTF_RBuffer* rbuffer ) {
 
 		if ( 1 != ret ) {
 
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"cannot double buffer size.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif /* OTF_VERBOSE */
 
 			return 0;
 		}
@@ -473,11 +458,9 @@ int OTF_RBuffer_guaranteeRecord( OTF_RBuffer* rbuffer ) {
 		add= OTF_RBuffer_advance( rbuffer );
 		if ( 0 == add ) {
 
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"file exceeded.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif /* OTF_VERBOSE */
 
 			return 0;
 		}
@@ -489,11 +472,9 @@ int OTF_RBuffer_guaranteeRecord( OTF_RBuffer* rbuffer ) {
 		}
 	}
 
-#	ifdef OTF_VERBOSE
-		fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+	OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 			"buffer is too small. Extending buffer has finally failed.\n",
 			__FUNCTION__, __FILE__, __LINE__ );
-#	endif /* OTF_VERBOSE */
 
 	return 0;
 }
@@ -515,11 +496,9 @@ char *OTF_RBuffer_printRecord( OTF_RBuffer* rbuffer ) {
 			ret= (char*) realloc( ret, size + REALLOCSIZE );
 			if( NULL == ret ) {
 				
-#				ifdef OTF_VERBOSE
-					fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 						"no memory left.\n",
 						__FUNCTION__, __FILE__, __LINE__ );
-#				endif /* OTF_VERBOSE */
 
 				return NULL;
 			}
@@ -548,11 +527,9 @@ size_t OTF_RBuffer_advance( OTF_RBuffer* rbuffer ) {
 
 	if( rbuffer->pos > rbuffer->end ) {
 		
-#	ifdef OTF_VERBOSE
-		fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 			"current position exceeds the file length.\n",
 			__FUNCTION__, __FILE__, __LINE__ );
-#	endif /* OTF_VERBOSE */
 
 		return 0;
 	}
@@ -603,17 +580,15 @@ int OTF_RBuffer_jump( OTF_RBuffer* rbuffer, uint64_t filepos ) {
 	/* uint64_t currentPos; */
 	uint32_t i;
 
-	/* fprintf( stderr, "\tjump to %llu\n", (unsigned long long) filepos ); */
+	/* OTF_fprintf( stderr, "\tjump to %llu\n", (unsigned long long) filepos ); */
 
 	ret= OTF_File_seek( rbuffer->file, filepos );
 
 	if ( 0 != ret ) {
 
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"OTF_File_seek() failed.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif /* OTF_VERBOSE */
 		
 		return 0;
 	}
@@ -642,7 +617,7 @@ int OTF_RBuffer_jump( OTF_RBuffer* rbuffer, uint64_t filepos ) {
 	if ( 0 == OTF_RBuffer_guaranteeRecord( rbuffer ) ) {
 
 		/*
-		fprintf( stderr, "OTF_RBuffer_jump() "
+		OTF_fprintf( stderr, "OTF_RBuffer_jump() "
 				"ERROR: could not read far enough\n" );
 		*/
 
@@ -660,7 +635,7 @@ int OTF_RBuffer_jump( OTF_RBuffer* rbuffer, uint64_t filepos ) {
 	if ( 0 == OTF_RBuffer_guaranteeRecord( rbuffer ) ) {
 
 		/*
-		fprintf( stderr, "OTF_RBuffer_jump() "
+		OTF_fprintf( stderr, "OTF_RBuffer_jump() "
 				"ERROR: could not read far enough\n" );
 		*/
 
@@ -681,7 +656,7 @@ int OTF_RBuffer_jump( OTF_RBuffer* rbuffer, uint64_t filepos ) {
 		if ( 0 == OTF_RBuffer_guaranteeRecord( rbuffer ) ) {
 
 			/*
-			fprintf( stderr, "OTF_RBuffer_jump() "
+			OTF_fprintf( stderr, "OTF_RBuffer_jump() "
 					"ERROR: could not read far enough\n" );
 			*/
 			return 0;
@@ -706,7 +681,7 @@ int OTF_RBuffer_jump( OTF_RBuffer* rbuffer, uint64_t filepos ) {
 		if ( 0 == OTF_RBuffer_guaranteeRecord( rbuffer ) ) {
 
 			/*
-			fprintf( stderr, "OTF_RBuffer_jump() "
+			OTF_fprintf( stderr, "OTF_RBuffer_jump() "
 					"ERROR: could not read far enough\n" );
 			*/
 
@@ -766,7 +741,7 @@ uint64_t OTF_RBuffer_getCurrentTime( OTF_RBuffer* rbuffer ) {
 
 
 	if ( rbuffer->time == (uint64_t) -1 ) {
-		fprintf( stderr, "Warning: Invalid time\n" );
+		OTF_fprintf( stderr, "Warning: Invalid time\n" );
 	}
 
 	return rbuffer->time;
@@ -879,7 +854,6 @@ int OTF_RBuffer_testKeyword( OTF_RBuffer* rbuffer, const char* string ) {
 	uint32_t i = 0;
 	uint32_t j = rbuffer->pos;
 
-
 	OTF_RBuffer_skipSpaces( rbuffer );
 
 	/* only advance the buffer position if the right string is found */
@@ -971,7 +945,7 @@ int OTF_RBuffer_getFileProperties( OTF_RBuffer* rbuffer ) {
 
 
 	/*
-	fprintf( stderr, "search min/max time\n" );
+	OTF_fprintf( stderr, "search min/max time\n" );
 	*/
 
 	/* get very first timestamp easily */
@@ -983,11 +957,9 @@ int OTF_RBuffer_getFileProperties( OTF_RBuffer* rbuffer ) {
 	searchRange= ( SEARCH_RANGE < rbuffer->size ) ? SEARCH_RANGE : rbuffer->size;
 	if( 0 >= searchRange ) {
 		
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"the search range is not allowed to be '0'.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif /* OTF_VERBOSE */
 
 		return 0;
 	}
@@ -1001,7 +973,7 @@ int OTF_RBuffer_getFileProperties( OTF_RBuffer* rbuffer ) {
 			( pos > searchRange ) ) {
 
 		pos= pos - searchRange;
-		fprintf( stderr, "  jumppos: %llu\n", (long long unsigned) pos );
+		OTF_fprintf( stderr, "  jumppos: %llu\n", (long long unsigned) pos );
 	}*/
 	while ( ( !OTF_RBuffer_jump( rbuffer, pos ) ) &&
 			( pos > 0 ) ) {
@@ -1050,15 +1022,13 @@ int OTF_RBuffer_searchTime( OTF_RBuffer* rbuffer, uint64_t time ) {
 
 	if ( 0 == OTF_RBuffer_getFileProperties( rbuffer ) ) {
 
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"could not determine file size (%llu) or first/last time"
 				" (%llx/%llx)\n",
 				__FUNCTION__, __FILE__, __LINE__,
 				(unsigned long long) rbuffer->filesize,
 				(unsigned long long) rbuffer->firstTime,
 				(unsigned long long) rbuffer->lastTime );
-#		endif /* OTF_VERBOSE */
 
 		return 0;
 	}
@@ -1076,11 +1046,9 @@ int OTF_RBuffer_searchTime( OTF_RBuffer* rbuffer, uint64_t time ) {
 		ret= OTF_RBuffer_jump( rbuffer, posA );
 		if ( 1 != ret ) {
 
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"unsuccessful jump to begin pos= %llu.\n",
 					__FUNCTION__, __FILE__, __LINE__, (unsigned long long) posA );
-#			endif /* OTF_VERBOSE */
 			
 			return 0;
 		}
@@ -1136,11 +1104,9 @@ int OTF_RBuffer_searchTime( OTF_RBuffer* rbuffer, uint64_t time ) {
 	ret= OTF_RBuffer_jump( rbuffer, posA );
 	if ( 1 != ret ) {
 
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"unsuccessful jump to begin pos= %llu.\n",
 				__FUNCTION__, __FILE__, __LINE__, (unsigned long long) posA );
-#		endif /* OTF_VERBOSE */
 
 		return 0;
 	}
@@ -1151,11 +1117,9 @@ int OTF_RBuffer_searchTime( OTF_RBuffer* rbuffer, uint64_t time ) {
 		ret2= OTF_RBuffer_getRecord( rbuffer );
 		if( NULL == ret2 ) {
 			
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_RBuffer_getRecord() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif /* OTF_VERBOSE */
 
 			return 0;
 		}
@@ -1201,7 +1165,7 @@ const char* OTF_RBuffer_readString( OTF_RBuffer* rbuffer ) {
 }
 
 
-uint32_t OTF_RBuffer_readArray( OTF_RBuffer* rbuffer, uint32_t** array ) {
+uint32_t OTF_RBuffer_readArray( OTF_RBuffer* rbuffer, uint32_t** array, uint32_t* size ) {
 
 
 	uint32_t i= 0;
@@ -1223,9 +1187,12 @@ uint32_t OTF_RBuffer_readArray( OTF_RBuffer* rbuffer, uint32_t** array ) {
 		++p;
 	}
 
-	(*array)= (uint32_t*) malloc( n * sizeof(uint32_t) );
-	assert( NULL != (*array) );
-
+	if ( n > (*size) ) {
+		(*array)= (uint32_t*) realloc( (*array), n * sizeof(uint32_t) );
+		assert( NULL != (*array) );
+		(*size)= n;
+	}
+	
 	for ( i= 0; i < n; ++i ) {
 
 		OTF_RBuffer_skipSpaces( rbuffer );

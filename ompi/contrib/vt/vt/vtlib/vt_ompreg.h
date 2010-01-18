@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -19,7 +19,7 @@
 #   define EXTERN extern 
 #endif
 
-#define VT__OMP_DESTROY_LOCK                     0 
+#define VT__OMP_DESTROY_LOCK                     0
 #define VT__OMP_DESTROY_NEST_LOCK                1
 #define VT__OMP_GET_DYNAMIC                      2
 #define VT__OMP_GET_MAX_THREADS                  3
@@ -28,7 +28,7 @@
 #define VT__OMP_GET_NUM_THREADS                  6
 #define VT__OMP_GET_THREAD_NUM                   7
 #define VT__OMP_IN_PARALLEL                      8
-#define VT__OMP_INIT_LOCK                        9 
+#define VT__OMP_INIT_LOCK                        9
 #define VT__OMP_INIT_NEST_LOCK                  10
 #define VT__OMP_SET_DYNAMIC                     11
 #define VT__OMP_SET_LOCK                        12
@@ -45,8 +45,7 @@ extern int     vt_omp_regid[VT__OMP_REGID_NUM];
 
 EXTERN void    vt_omp_register(void);
 
-
-#endif
+#endif /* _VT_OMPREG_H */
 
 
 

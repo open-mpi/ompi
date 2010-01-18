@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -161,8 +161,8 @@ char* vt_pform_gdir() {
 
 /* directory of local file system  */
 char* vt_pform_ldir() {
-#ifdef PFORM_LDIR
-  return PFORM_LDIR;
+#ifdef DEFAULT_PFORM_LDIR
+  return DEFAULT_PFORM_LDIR;
 #else
   return "/tmp";
 #endif

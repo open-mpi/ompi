@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -21,9 +21,11 @@
 
 #include <stdarg.h>
 
-
 /* set process id/rank for messages */
 EXTERN void vt_error_pid(const int pid);
+
+#define vt_assert(expr) if(!(expr)) vt_assert_impl(__FILE__, __LINE__, #expr);
+EXTERN void vt_assert_impl(const char* f, int l, const char* expr);
 
 /* abort and system error message */
 #define vt_error() vt_error_impl(__FILE__, __LINE__)
@@ -36,11 +38,9 @@ EXTERN void vt_error_msg(const char* fmt, ...);
 EXTERN void vt_warning(const char* fmt, ...);
 
 /* user control message without abort (printed only if VT_VERBOSE is set) */
-EXTERN void vt_cntl_msg(const char* fmt, ...);
+EXTERN void vt_cntl_msg(int level, const char* fmt, ...);
 
-/* Debug messages if compiled with -DVT_DEBUG=level, the higher the level,
- * the more output you get ;-)
- */
+/* debug messages without abort (printed only if VT_DEBUG is set) */
 EXTERN void vt_debug_msg(int level, const char* fmt, ...);
 
 #endif

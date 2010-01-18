@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -12,14 +12,14 @@
 
 #include <stdlib.h>
 #include <string.h>
-#if (defined (VT_OMPI) || defined (VT_OMP))
-  #include "opari_omp.h"
-#endif
+
 #include "vt_fbindings.h"
 #include "vt_memhook.h"
 #include "vt_pform.h"
+#include "vt_thrd.h"
 #include "vt_trc.h"
 #define VTRACE
+#undef VTRACE_NO_REGION
 #include "vt_user.h"
 
 /*
@@ -74,13 +74,13 @@ static uint32_t hash_get(unsigned long h) {
  * Register new region
  */
 
-static uint32_t register_region(char *name, unsigned long addr, char* file, int lno) {
+static uint32_t register_region(const char *name, unsigned long addr, const char* file, int lno) {
   uint32_t rid;
   uint32_t fid;
 
   /* -- register file and region and store region identifier -- */
-  fid = vt_def_file(file);
-  rid = vt_def_region(name, fid, lno, VT_NO_LNO, VT_DEF_GROUP, VT_FUNCTION);
+  fid = vt_def_scl_file(file);
+  rid = vt_def_region(name, fid, lno, VT_NO_LNO, NULL, VT_FUNCTION);
   hash_put(addr == 0 ? (unsigned long) name : addr, rid);
   return rid;
 }
@@ -90,7 +90,7 @@ static uint32_t register_region(char *name, unsigned long addr, char* file, int 
  * C/C++ version
  */
 
-void VT_User_start__(char* name, char *file, int lno) {
+void VT_User_start__(const char* name, const char *file, int lno) {
   uint32_t rid;
   uint64_t time;
 
@@ -109,20 +109,14 @@ void VT_User_start__(char* name, char *file, int lno) {
   /* -- get region identifier -- */
   if ( (rid = hash_get((unsigned long) name)) == VT_NO_ID ) {
     /* -- region entered the first time, register region -- */
-#   if defined (VT_OMPI) || defined (VT_OMP)
-    if (omp_in_parallel()) {
-#     pragma omp critical (vt_api_region_1)
-      {
-        if ( (rid = hash_get((unsigned long) name)) == VT_NO_ID ) {
-          rid = register_region(name, 0, file, lno);
-        }
-      }
-    } else {
+#if (defined(VT_MT) || defined(VT_HYB))
+    VTTHRD_LOCK_IDS();
+    if ( (rid = hash_get((unsigned long) name)) == VT_NO_ID )
       rid = register_region(name, 0, file, lno);
-    }
-#   else
+    VTTHRD_UNLOCK_IDS();
+#else /* VT_MT || VT_HYB */
     rid = register_region(name, 0, file, lno);
-#   endif
+#endif /* VT_MT || VT_HYB */
   }
 
   /* -- write enter record -- */
@@ -136,7 +130,7 @@ void VT_User_start__(char* name, char *file, int lno) {
  * C/C++ version
  */
 
-void VT_User_end__(char *name) {
+void VT_User_end__(const char *name) {
   uint64_t time;
 
   VT_MEMHOOKS_OFF();
@@ -153,12 +147,12 @@ void VT_User_end__(char *name) {
  * Fortran version
  */
 
-void VT_User_start___f(char* name, char *file, int *lno, int nl, int fl);
-void VT_User_end___f(char *name, int nl);
+void VT_User_start___f(const char* name, const char *file, int *lno, int nl, int fl);
+void VT_User_end___f(const char *name, int nl);
 static char fnambuf[128];
 static char ffilbuf[1024];
 
-void VT_User_start___f(char* name, char *file, int *lno, int nl, int fl) {
+void VT_User_start___f(const char* name, const char *file, int *lno, int nl, int fl) {
   uint32_t rid;
   uint64_t time;
   int namlen;
@@ -187,20 +181,14 @@ void VT_User_start___f(char* name, char *file, int *lno, int nl, int fl) {
   /* -- get region identifier -- */
   if ( (rid = hash_get((unsigned long) name)) == VT_NO_ID ) {
     /* -- region entered the first time, register region -- */
-#   if defined (VT_OMPI) || defined (VT_OMP)
-    if (omp_in_parallel()) {
-#     pragma omp critical (vt_api_region_1)
-      {
-        if ( (rid = hash_get((unsigned long) name)) == VT_NO_ID ) {
-          rid = register_region(fnambuf, (unsigned long) name, ffilbuf, *lno);
-        }
-      }
-    } else {
+#if (defined(VT_MT) || defined(VT_HYB))
+    VTTHRD_LOCK_IDS();
+    if ( (rid = hash_get((unsigned long) name)) == VT_NO_ID )
       rid = register_region(fnambuf, (unsigned long) name, ffilbuf, *lno);
-    }
-#   else
+    VTTHRD_UNLOCK_IDS();
+#else
     rid = register_region(fnambuf, (unsigned long) name, ffilbuf, *lno);
-#   endif
+#endif
   }
 
   /* -- write enter record -- */
@@ -209,7 +197,7 @@ void VT_User_start___f(char* name, char *file, int *lno, int nl, int fl) {
   VT_MEMHOOKS_ON();
 } VT_GENERATE_F77_BINDINGS(vt_user_start__, VT_USER_START__,
 			   VT_User_start___f,
-			   (char* name, char *file, int *lno, int nl, int fl),
+			   (const char* name, const char *file, int *lno, int nl, int fl),
 			   (name, file, lno, nl, fl))
 
 /*
@@ -217,7 +205,7 @@ void VT_User_start___f(char* name, char *file, int *lno, int nl, int fl) {
  * Fortran version
  */
 
-void VT_User_end___f(char *name, int nl) {
+void VT_User_end___f(const char *name, int nl) {
   uint64_t time;
 
   VT_MEMHOOKS_OFF();
@@ -229,5 +217,5 @@ void VT_User_end___f(char *name, int nl) {
   VT_MEMHOOKS_ON();
 } VT_GENERATE_F77_BINDINGS(vt_user_end__, VT_USER_END__,
 			   VT_User_end___f,
-			   (char *name, int nl),
+			   (const char *name, int nl),
 			   (name, nl))

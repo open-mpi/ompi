@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -10,6 +10,7 @@
  * See the file COPYING in the package base directory for details
  **/
 
+#include "vt_unify.h"
 #include "vt_unify_defs.h"
 #include "vt_unify_stats.h"
 
@@ -26,12 +27,55 @@ Handle_DefinitionComment( std::vector<Definitions::DefRec_Base_struct*>*
 			  p_vecLocDefRecs, uint32_t streamid,
 			  const char* comment )
 {
-   static uint32_t orderidx = 0;
+   static uint32_t orderidx = 4; // 0-3 reserved for time comments
+   static bool first_user = true;
 
-   if( streamid == 1 )
+   // Start-time comment(s)
+   if( strlen( comment ) >= 14 &&
+       strncmp( comment, "__STARTTIME__", 13 ) == 0 )
+   {
+      uint64_t starttime = ATOL8(comment+14);
+      if( starttime < g_uMinStartTimeEpoch )
+	 g_uMinStartTimeEpoch = starttime;
+   }
+   // Stop-time comment(s)
+   else if( strlen( comment ) >= 13 &&
+	    strncmp( comment, "__STOPTIME__", 12 ) == 0 )
+   {
+      uint64_t stoptime = ATOL8(comment+13);
+      if( stoptime > g_uMaxStopTimeEpoch )
+	 g_uMaxStopTimeEpoch = stoptime;
+   }
+   // VampirTrace comments
+   else if( strlen( comment ) >= 15 &&
+	    strncmp( comment, "__VT_COMMENT__", 14 ) == 0 )
+   {
       p_vecLocDefRecs->push_back( new Definitions::DefRec_DefinitionComment_struct(
 				     orderidx++,
-				     comment ) );
+				     comment+15 ) );
+   }
+   // User comments
+   else
+   {
+      // first user comment?
+      if( first_user )
+      {
+	 // yes -> add headline for user comments to vector of
+	 // local definitions
+	 //
+	 p_vecLocDefRecs->push_back(
+	    new Definitions::DefRec_DefinitionComment_struct(
+	       100,
+	       "User Comments:" ) );
+	 first_user = false;
+      }
+
+      // add user comment to vector of local definitions
+      p_vecLocDefRecs->push_back(
+	 new Definitions::DefRec_DefinitionComment_struct(
+	    100 + orderidx++,
+	    (std::string(" ") + std::string(comment) ) ) );
+   }
 
    return OTF_RETURN_OK;
 }

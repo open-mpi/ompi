@@ -1,0 +1,31 @@
+# This file lists all calls, which should not be generated
+# automatically by mk_fortran_wrapper.sh 
+
+MPI_Group_range_excl
+MPI_Group_range_incl
+MPI_Init
+MPI_Initialized
+MPI_Init_thread
+MPI_Pcontrol
+MPI_Wtick
+MPI_Wtime
+
+MPI_Comm_call_errhandler
+MPI_Comm_create_errhandler
+MPI_Comm_get_errhandler
+MPI_Comm_set_errhandler
+MPI_File_call_errhandler
+MPI_File_create_errhandler
+MPI_File_get_errhandler
+MPI_File_set_errhandler
+MPI_Win_call_errhandler
+MPI_Win_create_errhandler
+MPI_Win_get_errhandler
+MPI_Win_set_errhandler
+
+MPI_Comm_create_keyval
+MPI_Type_create_keyval
+MPI_Win_create_keyval
+
+MPI_Comm_spawn
+MPI_Comm_spawn_multiple

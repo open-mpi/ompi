@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -159,6 +159,38 @@ the keywords identifying record types must follow some special rules:
 #define OTF_KEYWORD_S_FILEOPERATION				"F"
 #define OTF_KEYWORD_F_FILEOPERATION				'F'
 
+#define OTF_KEYWORD_L_RMAPUT                                    "TRMAPUT"
+#define OTF_KEYWORD_S_RMAPUT                                    "T"
+#define OTF_KEYWORD_F_RMAPUT                                    'T'
+
+#define OTF_KEYWORD_L_RMAPUTRE                                  "URMAPUTRE"
+#define OTF_KEYWORD_S_RMAPUTRE                                  "U"
+#define OTF_KEYWORD_F_RMAPUTRE                                  'U'
+
+#define OTF_KEYWORD_L_RMAGET                                    "GRMAGET"
+#define OTF_KEYWORD_S_RMAGET                                    "G"
+#define OTF_KEYWORD_F_RMAGET                                    'G'
+
+#define OTF_KEYWORD_L_RMAEND                                    "MRMAEND"
+#define OTF_KEYWORD_S_RMAEND                                    "M"
+#define OTF_KEYWORD_F_RMAEND                                    'M'
+
+#define OTF_KEYWORD_L_BEGINCOLLECTIVEOPERATION 			"COLLOPBEGIN"
+#define OTF_KEYWORD_S_BEGINCOLLECTIVEOPERATION 			"COPB"
+#define OTF_KEYWORD_F_BEGINCOLLECTIVEOPERATION 			'C'
+
+#define OTF_KEYWORD_L_ENDCOLLECTIVEOPERATION 			"COLLOPEND"
+#define OTF_KEYWORD_S_ENDCOLLECTIVEOPERATION 			"COPE"
+#define OTF_KEYWORD_F_ENDCOLLECTIVEOPERATION 			'C'
+
+#define OTF_KEYWORD_L_BEGINFILEOPERATION			"FILEOPBEGIN"
+#define OTF_KEYWORD_S_BEGINFILEOPERATION			"FB"
+#define OTF_KEYWORD_F_BEGINFILEOPERATION			'F'
+
+#define OTF_KEYWORD_L_ENDFILEOPERATION				"FILEOPEND"
+#define OTF_KEYWORD_S_ENDFILEOPERATION				"FE"
+#define OTF_KEYWORD_F_ENDFILEOPERATION				'F'
+
 
 /* *** summary record keywords *** */
 
@@ -178,6 +210,10 @@ the keywords identifying record types must follow some special rules:
 #define OTF_KEYWORD_L_SUMMESSAGE 				"MESSAGE"
 #define OTF_KEYWORD_S_SUMMESSAGE 				"M"
 #define OTF_KEYWORD_F_SUMMESSAGE 				'M'
+
+#define OTF_KEYWORD_L_COLLOPMESSAGE 				"COLLMESSAGE"
+#define OTF_KEYWORD_S_COLLOPMESSAGE 				"CO"
+#define OTF_KEYWORD_F_COLLOPMESSAGE 				'C'
 
 #define OTF_KEYWORD_L_SUMCOMMENT 				"COMMENT"
 #define OTF_KEYWORD_S_SUMCOMMENT 				"C"
@@ -222,6 +258,24 @@ the keywords identifying record types must follow some special rules:
 #define OTF_KEYWORD_F_SNAPSHOT_OPENFILE			'O'
 
 
+/* *** marker keywords */
+
+
+#define OTF_KEYWORD_L_MARKER_PREFIX 			"MARKER"
+#define OTF_KEYWORD_S_MARKER_PREFIX 			"M"
+#define OTF_KEYWORD_F_MARKER_PREFIX 			'M'
+
+#define OTF_KEYWORD_L_MARKER_DEFMARKER			"DEF"
+#define OTF_KEYWORD_S_MARKER_DEFMARKER			"D"
+#define OTF_KEYWORD_F_MARKER_DEFMARKER			'D'
+
+#define OTF_KEYWORD_L_MARKER_MARKERSPOT			"SPOT"
+#define OTF_KEYWORD_S_MARKER_MARKERSPOT			"S"
+#define OTF_KEYWORD_F_MARKER_MARKERSPOT			'S'
+
+
+
+
 /* *** local keywords *** */
 
 
@@ -233,6 +287,9 @@ the keywords identifying record types must follow some special rules:
 
 #define OTF_KEYWORD_L_LOCAL_BYTESWRITE			"BYTESWRITE"
 #define OTF_KEYWORD_S_LOCAL_BYTESWRITE			"BW"
+
+#define OTF_KEYWORD_L_LOCAL_COLLECTIVE			"COLL"
+#define OTF_KEYWORD_S_LOCAL_COLLECTIVE			"CL"
 
 #define OTF_KEYWORD_L_LOCAL_COMMUNICATOR		"COMM"
 #define OTF_KEYWORD_S_LOCAL_COMMUNICATOR		"C"
@@ -327,6 +384,11 @@ the keywords identifying record types must follow some special rules:
 #define OTF_KEYWORD_L_LOCAL_VALUE				"VALUE"
 #define OTF_KEYWORD_S_LOCAL_VALUE				"V"
 
+#define OTF_KEYWORD_L_LOCAL_TIME				"TIME"
+#define OTF_KEYWORD_S_LOCAL_TIME				"T"
+
+#define OTF_KEYWORD_L_LOCAL_PROCESS				"PROCESS"
+#define OTF_KEYWORD_S_LOCAL_PROCESS				"P"
 
 
 #endif /* OTF_KEYWORDS_H */

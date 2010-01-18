@@ -5,7 +5,7 @@
 **  Copyright (c) 1998-2008                                                **
 **  Forschungszentrum Juelich, Juelich Supercomputing Centre               **
 **                                                                         **
-**  See the file COPYING in the package base directory for details       **
+**  See the file COPYING in the package base directory for details         **
 ****************************************************************************/
 
 #include "ompragma.h"
@@ -103,10 +103,15 @@ namespace {
 }
 
 void OMPragmaF::remove_empties() {
-  // remove lines without content
+  // remove comma at end of line and
+  // lines without content
   vector<string>::iterator it=lines.begin();
   while ( it!=lines.end() ) {
     string::size_type s = it->find(sentinel) + slen;
+    string::size_type c = it->find('!', s);
+    if ( c != string::npos ) --c;
+    string::size_type amp = it->find_last_not_of(" \t&", c);
+    if ( (*it)[amp] == ',' ) (*it)[amp] = ' ';
     string::size_type l = it->find_first_not_of(" \t&", s);
     if ( l == string::npos || (*it)[l] == '!' )
       it = lines.erase(it);
