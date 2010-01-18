@@ -11,6 +11,9 @@ AM_CONFIG_HEADER(config.h)
 # If Automake supports silent rules, enable them.
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
+# Check whether we are inside Open MPI package
+AC_ARG_WITH(openmpi-inside, [], [inside_openmpi="yes"])
+
 ACVT_CONF_INIT
 
 ACVT_CONF_TITLE([Initialization])
@@ -53,22 +56,6 @@ AS_IF([test "$top_vt_builddir" != "$top_vt_srcdir"],
 	# to find '<srcdir>/config_bottom.h' and '<srcdir>/util/util.h'
 	CPPFLAGS='-I$(top_srcdir)'" $CPPFLAGS"
 	CXXCPPFLAGS='-I$(top_srcdir)'" $CXXCPPFLAGS"
-])
-
-# Check whether we are inside Open MPI package
-# TODO: This option should be hidden in the help text
-AC_ARG_WITH(openmpi-inside,
-	AC_HELP_STRING([--with-openmpi-inside], [configure inside Open MPI]),
-[
-	inside_openmpi="yes"
-
-	enable_config_titles="no"
-	enable_config_summary="no"
-
-	# TODO: Avoid building of shared libraries, due to currently unsupported
-	#       OMPI's symbol visibility stuff
-	enable_static="yes"
-	enable_shared="no" 
 ])
 
 # Check for file system case sensitivity

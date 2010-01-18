@@ -2,13 +2,19 @@ AC_DEFUN([ACVT_CONF_INIT],
 [
 	AC_ARG_ENABLE(config-summary,
 		AC_HELP_STRING([--enable-config-summary],
-			[show summary of configuration, default: enabled]),
-		[enable_config_summary="$enableval"], [enable_config_summary="yes"])
+			[show summary of configuration, default: enabled]), [],
+	[
+		AS_IF([test x"$inside_openmpi" = "xyes"],
+		[enable_config_summary="no"], [enable_config_summary="yes"])
+	])
 
 	AC_ARG_ENABLE(config-titles,
 		AC_HELP_STRING([--enable-config-titles],
-			[show titles for each configure section, default: enabled]),
-		[enable_config_titles="$enableval"], [enable_config_titles="yes"])
+			[show titles for each configure section, default: enabled]), [],
+	[
+		AS_IF([test x"$inside_openmpi" = "xyes"],
+		[enable_config_titles="no"], [enable_config_titles="yes"])
+	])
 ])
 
 AC_DEFUN([ACVT_CONF_OPTIONS],
