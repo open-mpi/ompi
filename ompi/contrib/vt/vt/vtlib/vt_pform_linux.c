@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -12,9 +12,9 @@
 
 #include "config.h"
 
-#include "vt_pform.h"
 #include "vt_defs.h"
 #include "vt_error.h"
+#include "vt_pform.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -22,15 +22,15 @@
 #include <errno.h>
 #include <unistd.h>
 
+#ifndef VT_PROCDIR 
+#  define VT_PROCDIR "/proc/"
+#endif
+
 #ifndef TIMER_PAPI_REAL_CYC
 #  define TIMER_PAPI_REAL_CYC 10
 #endif
 #ifndef TIMER_PAPI_REAL_USEC
 #  define TIMER_PAPI_REAL_USEC 11
-#endif
-
-#ifndef VT_PROCDIR 
-#  define VT_PROCDIR "/proc/"
 #endif
 
 #if TIMER != TIMER_CYCLE_COUNTER && \
@@ -41,7 +41,9 @@
 # error Unknown timer specified! Check the timer configuration in 'config.h'.
 #endif
 
+
 #if TIMER == TIMER_CYCLE_COUNTER
+#include <sys/time.h>
 # if defined(__ia64__)
 #   include <asm/intrinsics.h>
 # endif
@@ -51,20 +53,71 @@
 # include <sys/time.h>
   static uint64_t vt_time_base = 0;
 #elif TIMER == TIMER_PAPI_REAL_CYC
-# include <vt_metric.h>
+  extern uint64_t vt_metric_clckrt(void);
+  extern uint64_t vt_metric_real_cyc(void);
 #elif TIMER == TIMER_PAPI_REAL_USEC
-# include <vt_metric.h>
+  extern uint64_t vt_metric_real_usec(void);
   static uint64_t vt_time_base = 0;
 #endif
 
-static uint32_t vt_cpu_count=0;
+#if TIMER == TIMER_CYCLE_COUNTER
+/* to have the declaration befor the implementation */
+uint64_t cylce_counter_frequency(long usleep_time);
+
+uint64_t cylce_counter_frequency(long usleep_time)
+{
+    uint64_t start1_cylce_counter, start2_cylce_counter;
+    uint64_t end1_cylce_counter, end2_cylce_counter;
+    uint64_t start_time, end_time;
+    uint64_t start_time_cylce_counter, end_time_cylce_counter;
+    struct timeval timestamp;
+
+    /* start timestamp */
+    start1_cylce_counter = vt_pform_wtime();
+    gettimeofday(&timestamp,NULL);
+    start2_cylce_counter = vt_pform_wtime();
+  
+    start_time=timestamp.tv_sec*1000000+timestamp.tv_usec;
+    
+    usleep( usleep_time );
+  
+    /* end timestamp */
+    end1_cylce_counter = vt_pform_wtime();
+    gettimeofday(&timestamp,NULL);
+    end2_cylce_counter = vt_pform_wtime();
+    
+    end_time=timestamp.tv_sec*1000000+timestamp.tv_usec;
+
+    start_time_cylce_counter = (start1_cylce_counter+start2_cylce_counter)/2;
+    end_time_cylce_counter   = (  end1_cylce_counter+  end2_cylce_counter)/2;
+
+    /* freq is 1e6 * cylce_counter_time_diff/gettimeofday_time_diff */
+    return (uint64_t) ((double)1000000.0*(double)(end_time_cylce_counter-start_time_cylce_counter)/
+                                         (double)(end_time-start_time));
+}
+#endif /* TIMER == TIMER_CYCLE_COUNTER */
+
+static char* vt_exec = NULL;
+static long vt_node_id = 0;
+static uint32_t vt_cpu_count = 0;
 
 /* platform specific initialization */
 void vt_pform_init()
 {
-  FILE   *cpuinfofp;
-  char   line[1024];
-  
+  int  pid = getpid();
+  char exec_proc[512];
+  char exec[1024];
+  int  exec_len;
+  FILE *cpuinfofp;
+  char line[1024];
+  int  hostid_retries;
+
+#if TIMER == TIMER_CYCLE_COUNTER
+    int num_measurements=0, loop;
+    int done=0;
+    uint64_t value, test_value, diff;
+#endif 
+
 #if TIMER == TIMER_CLOCK_GETTIME
   struct timespec tp;
   clock_gettime(CLOCK_REALTIME, &tp);
@@ -78,7 +131,7 @@ void vt_pform_init()
 #endif
 
   if ((cpuinfofp = fopen (VT_PROCDIR "cpuinfo", "r")) == NULL) 
-    vt_error_msg("Cannot open file %s: %s\n", VT_PROCDIR "cpuinfo",
+    vt_error_msg("Cannot open file %s: %s", VT_PROCDIR "cpuinfo",
                   strerror(errno));
   
   while (fgets(line, sizeof (line), cpuinfofp))
@@ -98,7 +151,7 @@ void vt_pform_init()
 	vt_ticks_per_sec =
 	  strtol((char*) strtok(NULL, " \n"), (char**) NULL, 0) * 1e6;
       }
-      if (!strncmp("timebase", line, 8))
+      else if (!strncmp("timebase", line, 8))
       {
 	strtok(line, ":");
       
@@ -110,6 +163,63 @@ void vt_pform_init()
   }
   
   fclose(cpuinfofp);
+
+/* try to something better on ia32 by doing timing measurements 
+ * on the TSC 
+ */
+#if TIMER == TIMER_CYCLE_COUNTER
+    do /* ~100 milli sec sleeps until we have a stable value */
+    {
+        value = cylce_counter_frequency(100000);
+        /* printf("cylce_counter freq initial at: %llu\n", value); */
+        /* at max two test against this value to see if it is stable;
+         * or to see if we are able to read the get the same value 
+         * (hopefully stable means good) again 
+         */
+        for( loop=0; loop<2; loop++)
+        {
+            test_value = cylce_counter_frequency(100000);
+            /* printf("cylce_counter freq (t %d) at: %llu\n", loop, test_value); */
+            diff = ( test_value>value ) ? test_value-value :
+                                          value-test_value;
+            /* stable value is here defined as not more than 0.001% difference */
+            if( ((double) diff) < ((double) 0.00001 * value) )
+            {
+                /* printf("updating cylce_counter freq to: %llu\n", value); */
+                vt_ticks_per_sec = value;
+                done=1;
+                break;
+            }
+        }
+        num_measurements++;
+    } while( done==0 && num_measurements<3 );
+
+    /*
+    if( done==0 )
+    {
+        printf("unable to get a stable cycle counter frequency");
+    }
+    */
+
+#endif /* TIMER == TIMER_CYCLE_COUNTER */
+
+  /* get full path of executable */
+  snprintf(exec_proc, sizeof (exec_proc), VT_PROCDIR"%d/exe", pid);
+  exec_len = readlink(exec_proc, exec, sizeof (exec));
+  if(exec_len != -1)
+  {
+    exec[exec_len] = '\0';
+    vt_exec = strdup(exec);
+  }
+
+  /* get unique numeric SMP-node identifier */
+  hostid_retries = 0;
+  while( !vt_node_id && (hostid_retries++ < VT_MAX_GETHOSTID_RETRIES) ) {
+    vt_node_id = gethostid();
+  }
+  if (!vt_node_id)
+    vt_error_msg("Maximum retries (%i) for gethostid exceeded!",
+		 VT_MAX_GETHOSTID_RETRIES);
 }
 
 /* directory of global file system  */
@@ -121,11 +231,17 @@ char* vt_pform_gdir()
 /* directory of local file system  */
 char* vt_pform_ldir()
 {
-#  ifdef PFORM_LDIR
-    return PFORM_LDIR;
-#  else
-    return "/tmp";
-#  endif
+#ifdef DEFAULT_PFORM_LDIR
+  return DEFAULT_PFORM_LDIR;
+#else
+  return "/tmp";
+#endif
+}
+
+/* full path of executable  */
+char* vt_pform_exec()
+{
+  return vt_exec;
 }
 
 /* clock resolution */
@@ -168,7 +284,7 @@ uint64_t vt_pform_wtime()
       clock_value = ((uint64_t)higha << 32) | (uint64_t)low;
     }
 # elif defined(__ia64__)
-    /* ... ITC */
+    /* ... IA64 */
     clock_value = __getReg(_IA64_REG_AR_ITC);
 # elif defined(__alpha__)
     /* ... Alpha */
@@ -206,7 +322,7 @@ uint64_t vt_pform_wtime()
 /* unique numeric SMP-node identifier */
 long vt_pform_node_id()
 {
-  return gethostid(); 
+  return vt_node_id;
 }
 
 /* unique string SMP-node identifier */
@@ -222,5 +338,5 @@ char* vt_pform_node_name()
 /* number of CPUs */
 int vt_pform_num_cpus()
 {
-   return vt_cpu_count;
+  return vt_cpu_count;
 }

@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -11,6 +11,7 @@
 #include "OTF_Platform.h"
 #include "OTF_FileManager.h"
 #include "OTF_File.h"
+#include "OTF_Errno.h"
 
 
 /* *** structs *** */
@@ -75,7 +76,7 @@ void OTF_FileManager_finalize( OTF_FileManager* manager ) {
 #	ifdef OTF_DEBUG
 		if ( 0 < manager->count ) {
 		
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"open file remaining.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 		}
@@ -103,14 +104,13 @@ void OTF_FileManager_finalize( OTF_FileManager* manager ) {
 OTF_FileManager* OTF_FileManager_open( uint32_t number ) {
 
 
+
 	OTF_FileManager* ret= (OTF_FileManager*) malloc( sizeof(OTF_FileManager) );
 	if( NULL == ret ) {
 		
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"no memory left.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif /* OTF_VERBOSE */
 
 		return NULL;
 	}
@@ -129,6 +129,8 @@ void OTF_FileManager_close( OTF_FileManager* fh ) {
 	OTF_FileManager_finalize( fh );
 
 	free( fh );
+	fh = NULL;
+
 }
 
 
@@ -151,11 +153,9 @@ uint32_t OTF_FileManager_setNumber( OTF_FileManager* fh, uint32_t number ) {
 
 	if ( 0 == number ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"illegal value 0 ignored.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif /* OTF_VERBOSE */
 
 		return fh->number;
 	}
@@ -172,7 +172,7 @@ int OTF_FileManager_guaranteeFile( OTF_FileManager* m ) {
 
 
 	/*
-	fprintf( stderr, "OTF_FileManager_guaranteeFile()\n" );
+	OTF_fprintf( stderr, "OTF_FileManager_guaranteeFile()\n" );
 	*/
 
 	if ( m->count < m->number ) {
@@ -180,30 +180,28 @@ int OTF_FileManager_guaranteeFile( OTF_FileManager* m ) {
 		/* free file handles available */
 
 		/*
-		fprintf( stderr, "    OTF_FileManager_guaranteeFile() free handles left\n" );
+		OTF_fprintf( stderr, "    OTF_FileManager_guaranteeFile() free handles left\n" );
 		*/
 
 		return 1;
 	}
 
 	/*	
-	fprintf( stderr, "    OTF_FileManager_guaranteeFile() need new handles\n" );
+	OTF_fprintf( stderr, "    OTF_FileManager_guaranteeFile() need new handles\n" );
 	*/
 
 	/* suspend last entry in list */
 	if ( 0 == OTF_FileManager_suspendFile( m, m->list->file ) ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"OTF_FileManager_suspendFile() failed.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif /* OTF_VERBOSE */
 		
 		return 0;
 	}
 
 	/*
-	fprintf( stderr, "post suspend %u / %u\n", m->count, m->number );
+	OTF_fprintf( stderr, "post suspend %u / %u\n", m->count, m->number );
 	*/
 
 	return 1;
@@ -215,28 +213,24 @@ int OTF_FileManager_registerFile( OTF_FileManager* m, OTF_File* file ) {
 
 
 	/*
-	fprintf( stderr, "OTF_FileManager_registerFile()\n" );
+	OTF_fprintf( stderr, "OTF_FileManager_registerFile()\n" );
 	*/
 
 	if ( OTF_FILESTATUS_ACTIVE != OTF_File_status( file ) ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"file not open.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif /* OTF_VERBOSE */
 
 		return 0;
 	}
 
 	if ( m->count >= m->number ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"cannot register new file because limit %u exceeded, call "
 						"'OTF_FileManager_guaranteeFile()' before.\n",
 				__FUNCTION__, __FILE__, __LINE__, m->number );
-#		endif /* OTF_VERBOSE */
 			
 		return 0;
 	}
@@ -244,7 +238,7 @@ int OTF_FileManager_registerFile( OTF_FileManager* m, OTF_File* file ) {
 	OTF_FileManager_listInsertAtHead( &(m->list), file );
 
 	/*
-	fprintf( stderr, " c++ %u -> %u\n", m->count, m->count+1 );
+	OTF_fprintf( stderr, " c++ %u -> %u\n", m->count, m->count+1 );
 	*/
 	m->count++;
 
@@ -259,7 +253,7 @@ int OTF_FileManager_touchFile( OTF_FileManager* m, OTF_File* file ) {
 
 
 	/*
-	fprintf( stderr, "OTF_FileManager_touchFile()\n" );
+	OTF_fprintf( stderr, "OTF_FileManager_touchFile()\n" );
 	*/
 
 	if ( OTF_FILESTATUS_ACTIVE != OTF_File_status( file ) ) {
@@ -282,35 +276,31 @@ int OTF_FileManager_suspendFile( OTF_FileManager* m, OTF_File* file ) {
 
 
 	/*
-	fprintf( stderr, "OTF_FileManager_suspendFile()\n" );
+	OTF_fprintf( stderr, "OTF_FileManager_suspendFile()\n" );
 	*/
 
 	if ( OTF_FILESTATUS_ACTIVE != OTF_File_status( file ) ) {
 	
 		/* file not open, so cannot be suspended */
 
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"file to be suspended is not open.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif /* OTF_VERBOSE */
 
 		return 0;
 	}
 
 	if ( 0 == OTF_FileManager_listUnlinkAtTail( &(m->list), file ) ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"could not unlink this entry.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif /* OTF_VERBOSE */
 
 		return 0;
 	};
 
 	/*
-	fprintf( stderr, " c-- %u -> %u\n", m->count, m->count-1 );
+	OTF_fprintf( stderr, " c-- %u -> %u\n", m->count, m->count-1 );
 	*/
 	m->count--;
 
@@ -326,11 +316,9 @@ int OTF_FileManager_listInsertAtHead( OTF_FileList** list, OTF_File* entry ) {
 	OTF_FileList* newentry= (OTF_FileList*) malloc( sizeof(OTF_FileList) );
 	if( NULL == newentry ) {
 		
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"no memory left.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif /* OTF_VERBOSE */
 
 		return 0;
 	}
@@ -338,7 +326,7 @@ int OTF_FileManager_listInsertAtHead( OTF_FileList** list, OTF_File* entry ) {
 	if ( NULL != (*list) ) {
 
 		/*
-		fprintf( stderr, "pre insert : %p --> %p  (%p)\n", 
+		OTF_fprintf( stderr, "pre insert : %p --> %p  (%p)\n", 
 			*list, (*list)->next, (*list)->file );
 		*/
 
@@ -347,7 +335,7 @@ int OTF_FileManager_listInsertAtHead( OTF_FileList** list, OTF_File* entry ) {
 		newentry->next= (*list);
 
 		/*
-		fprintf( stderr, "new entry  : %p --> %p  (%p)\n", 
+		OTF_fprintf( stderr, "new entry  : %p --> %p  (%p)\n", 
 			newentry, newentry->next, newentry->file );
 		*/
 
@@ -357,7 +345,7 @@ int OTF_FileManager_listInsertAtHead( OTF_FileList** list, OTF_File* entry ) {
 		*list= newentry;
 
 		/*
-		fprintf( stderr, "post insert: %p --> %p  (%p)\n", 
+		OTF_fprintf( stderr, "post insert: %p --> %p  (%p)\n", 
 			*list, (*list)->next, (*list)->file );
 		*/
 
@@ -373,7 +361,7 @@ int OTF_FileManager_listInsertAtHead( OTF_FileList** list, OTF_File* entry ) {
 	}
 
 	/*
-	fprintf( stderr, "after OTF_FileManager_listInsertAtHead():\n" );
+	OTF_fprintf( stderr, "after OTF_FileManager_listInsertAtHead():\n" );
 	*/
 	/*
 	OTF_FileManager_listPrint( list );
@@ -419,9 +407,10 @@ int OTF_FileManager_listUnlinkAtHead( OTF_FileList** list, OTF_File* file ) {
 		}
 
 		free( pos );
+		pos = NULL;
 
 		/* 
-		fprintf( stderr, "after OTF_FileManager_listUnlinkAtHead() %p found:\n", file );
+		OTF_fprintf( stderr, "after OTF_FileManager_listUnlinkAtHead() %p found:\n", file );
 		*/
 		/*
 		OTF_FileManager_listPrint( listHead, listTail );
@@ -432,7 +421,7 @@ int OTF_FileManager_listUnlinkAtHead( OTF_FileList** list, OTF_File* file ) {
 	
 	/* not found */
 	/* 
-	fprintf( stderr, "after OTF_FileManager_listUnlinkAtHead() %p not found:\n", file );
+	OTF_fprintf( stderr, "after OTF_FileManager_listUnlinkAtHead() %p not found:\n", file );
 	*/
 	/* 
 	OTF_FileManager_listPrint( listHead, listTail ); 
@@ -478,9 +467,10 @@ int OTF_FileManager_listUnlinkAtTail( OTF_FileList** list, OTF_File* file ) {
 		}
 
 		free( pos );
+		pos = NULL;
 
 		/* 
-		fprintf( stderr, "after OTF_FileManager_listUnlinkAtHead() %p found:\n", file ); 
+		OTF_fprintf( stderr, "after OTF_FileManager_listUnlinkAtHead() %p found:\n", file ); 
 		*/
 		/*
 		OTF_FileManager_listPrint( listHead, listTail );
@@ -491,7 +481,7 @@ int OTF_FileManager_listUnlinkAtTail( OTF_FileList** list, OTF_File* file ) {
 
 	/* not found */
 	/*
-	fprintf( stderr, "after OTF_FileManager_listUnlinkAtTail():\n" );
+	OTF_fprintf( stderr, "after OTF_FileManager_listUnlinkAtTail():\n" );
 	*/
 	/*
 	OTF_FileManager_listPrint( listHead, listTail );
@@ -509,25 +499,25 @@ void OTF_FileManager_listPrint( OTF_FileList** list ) {
 
 	if ( NULL == *list ) {
 	
-		fprintf( stderr, "empty list\n ----- \n" );
+		OTF_fprintf( stderr, "empty list\n ----- \n" );
 	
 		return;
 	}
 
 	pos= *list;
 
-	fprintf( stderr, "head: %p --> %p  (%p %u)\n", (void*)pos,
+	OTF_fprintf( stderr, "head: %p --> %p  (%p %u)\n", (void*)pos,
 		(void*)pos->next, (void*)pos->file,
 		OTF_File_status( pos->file ) );
 	while ( pos != (*list)->prev ) {
 
 		pos= pos->next;
 
-		fprintf( stderr, "      %p --> %p  (%p %u)\n", (void*)pos,
+		OTF_fprintf( stderr, "      %p --> %p  (%p %u)\n", (void*)pos,
 			(void*)pos->next, (void*)pos->file,
 			OTF_File_status( pos->file ) );
 	}
 
-	fprintf( stderr, " ----- \n" );
+	OTF_fprintf( stderr, " ----- \n" );
 }
 

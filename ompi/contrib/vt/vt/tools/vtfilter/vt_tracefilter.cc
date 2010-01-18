@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -47,13 +47,13 @@
 using namespace std;
 
 
-#if (defined (VT_OMP))
+#if defined(HAVE_OMP) && HAVE_OMP
 #	include <omp.h>
-#else
+#else // HAVE_OMP
 #	define omp_get_num_threads() 1
 #	define omp_get_thread_num() 0
 #       define omp_get_max_threads() 1
-#endif
+#endif // HAVE_OMP
 
 
 #if SIZEOF_LONG == 4
@@ -252,7 +252,7 @@ int main( int argc, char** argv ) {
 	if( nfiles < (uint32_t)omp_get_max_threads() ) {
 		cerr << "The maximum number of open files is not allowed to be less than"
 			" the threadcount. Aborting" << endl;
-		abort();
+		exit(1);
 	}
 
 	switch(action) {
@@ -285,6 +285,25 @@ int main( int argc, char** argv ) {
 
 	if( err == true ) exit(1);
 
+  /* cut the ".otf"-suffix from output/input trace file name */
+  if(!intrace.empty() || !outtrace.empty())
+  {
+    char* tmp = new char[((intrace.length() > outtrace.length()) ? 
+                          intrace.length() : outtrace.length()) + 1];
+
+    if(!intrace.empty()) {
+      strncpy(tmp, intrace.c_str(), intrace.length());
+      tmp[intrace.length()] = '\0';
+      intrace = OTF_stripFilename(tmp);
+    }
+    if(!outtrace.empty()) {
+      strncpy(tmp, outtrace.c_str(), outtrace.length());
+      tmp[outtrace.length()] = '\0';
+      outtrace = OTF_stripFilename(tmp);
+    }
+  
+    delete[] tmp;
+  }
 
 	/* *** read the exclude symbols file, if there is one *** */
 	char* tfef = getenv("TRACEFILTER_EXCLUDEFILE");
@@ -342,7 +361,7 @@ int main( int argc, char** argv ) {
 		uint64_t pretev= OTF_Reader_readEvents( preader, phandlers );
 		if( pretev == OTF_READ_ERROR ) {
 			cerr << "Error while reading Events. Aborting" << endl;
-			abort();
+			exit(1);
 		}
 
 		OTF_Reader_eventBytesProgress( preader, &pminbytestmp, &pcurbytestmp, &pmaxbytestmp );
@@ -356,7 +375,7 @@ int main( int argc, char** argv ) {
 		uint64_t pretde= OTF_Reader_readDefinitions( preader, phandlers );
 		if( pretde == OTF_READ_ERROR ) {
 			cerr << "Error while reading Definitions. Aborting" << endl;
-			abort();
+			exit(1);
 		}
 		
 		/* 3. insert all streams into the stream2filter mapping */
@@ -382,7 +401,7 @@ int main( int argc, char** argv ) {
 		assert(mc);
 		if( 0 == OTF_MasterControl_read( mc, intrace.c_str() ) ) {
 			cerr << "Could not read Master Control File. Aborting" << endl;
-			abort();
+			exit(1);
 		}
 		
 		/* *** prepare the parallel construct *** */
@@ -392,12 +411,12 @@ int main( int argc, char** argv ) {
 		uint64_t lastprogressupdate = 0;
 		uint64_t progress_counter = 0;
 		bool erroroccured = false;
-		
-		#ifdef VT_OMP
-		#pragma omp parallel for firstprivate(mc,nfiles,minbytes,maxbytes) \
+
+#		if defined(HAVE_OMP) && HAVE_OMP		
+#		pragma omp parallel for firstprivate(mc,nfiles,minbytes,maxbytes) \
 			shared(fha,curbytes,readrecords,lastprogressupdate,progress_counter,erroroccured) \
 			private(retev,retst,retsn)
-		#endif
+#		endif // HAVE_OMP
 		for( int streamindex = 0; streamindex < maxstreams; ++streamindex )
 		{
 			/* *** init otf *** */
@@ -452,9 +471,9 @@ int main( int argc, char** argv ) {
 				while ( 0 != ( retev= OTF_RStream_readEvents( rstream, handlers ) ) ) {
 
 					if( OTF_READ_ERROR == retev ) {
-						#ifdef VT_OMP
-						#pragma omp critical (consoleout)
-						#endif
+#						if defined(HAVE_OMP) && HAVE_OMP
+#						pragma omp critical (consoleout)
+#						endif // HAVE_OMP
 						{
 							cerr << "Error while reading events. aborting" << endl;
 						}
@@ -467,9 +486,9 @@ int main( int argc, char** argv ) {
 						&minbytestmp, &curbytestmp, &maxbytestmp );
 
 					/* update the progress */
-					#ifdef VT_OMP
-					#pragma omp critical (progressupdate)
-					#endif
+#					if defined(HAVE_OMP) && HAVE_OMP
+#					pragma omp critical (progressupdate)
+#					endif // HAVE_OMP
 					{
 						curbytes += curbytestmp - lastbytestmp;
 
@@ -490,9 +509,9 @@ int main( int argc, char** argv ) {
 
 				retev = OTF_RStream_readEvents( rstream, handlers );
 				if( retev == OTF_READ_ERROR ) {
-					#ifdef VT_OMP
-					#pragma omp critical (consoleout)
-					#endif
+#					if defined(HAVE_OMP) && HAVE_OMP
+#					pragma omp critical (consoleout)
+#					endif // HAVE_OMP
 					{
 						cerr << "Error while reading events. aborting" << endl;
 					}
@@ -516,7 +535,7 @@ int main( int argc, char** argv ) {
 		}
 
 		if( erroroccured ) {
-			abort();
+			exit(1);
 		}
 
 		Filter filter;
@@ -607,11 +626,11 @@ int main( int argc, char** argv ) {
 		if( 1 == OTF_MasterControl_read( fha.mc, intrace.c_str() ) ) {
 			if( 0 == OTF_MasterControl_write( fha.mc, outtrace.c_str() ) ) {
 				cerr << "Could not write Master Control File. Aborting" << endl;
-				abort();
+				exit(1);
 			}
 		} else {
 			cerr << "Could not read Master Control File. Aborting" << endl;
-			abort();
+			exit(1);
 		}
 		
 		/* *** Read the Definitions:
@@ -702,7 +721,7 @@ int main( int argc, char** argv ) {
 			cerr << "Error while reading definitions. aborting" << endl;
 			OTF_WStream_close( fha.wstream );
 			OTF_RStream_close( defrstream );
-			abort();
+			exit(1);
 		}
 
 		OTF_WStream_close( fha.wstream );
@@ -727,7 +746,7 @@ int main( int argc, char** argv ) {
 				cerr << "Error while reading definitions. aborting" << endl;
 				OTF_WStream_close( fha.wstream );
 				OTF_RStream_close( defrstream );
-				abort();
+				exit(1);
 			}
 			
 			OTF_WStream_close( fha.wstream );
@@ -799,12 +818,11 @@ int main( int argc, char** argv ) {
 
 		//cerr << "parallel part " << endl;
 
-		
-		#ifdef VT_OMP
-		#pragma omp parallel for firstprivate(fha,nfiles,compression,minbytes,maxbytes) \
+#		if defined(HAVE_OMP) && HAVE_OMP
+#		pragma omp parallel for firstprivate(fha,nfiles,compression,minbytes,maxbytes) \
 			shared(curbytes,readrecords,lastprogressupdate,progress_counter) \
 			private(retev,retst,retsn)
-		#endif
+#		endif // HAVE_OMP
 		for( int streamindex = 0; streamindex < maxstreams; ++streamindex )
 		{
 
@@ -933,9 +951,9 @@ int main( int argc, char** argv ) {
 					OTF_RStream_eventBytesProgress( rstream,
 						&minbytestmp, &curbytestmp, &maxbytestmp );
 
-					#ifdef VT_OMP
-					#pragma omp critical (progressupdate)
-					#endif
+#					if defined(HAVE_OMP) && HAVE_OMP
+#					pragma omp critical (progressupdate)
+#					endif // HAVE_OMP
 					{
 						curbytes += curbytestmp - lastbytestmp;
 						lastbytestmp = curbytestmp;
@@ -963,9 +981,9 @@ int main( int argc, char** argv ) {
 					OTF_RStream_statisticBytesProgress( rstream,
 						&minbytestmp, &curbytestmp, &maxbytestmp );
 
-					#ifdef VT_OMP
-					#pragma omp critical (progressupdate)
-					#endif
+#					if defined(HAVE_OMP) && HAVE_OMP
+#					pragma omp critical (progressupdate)
+#					endif // HAVE_OMP
 					{
 						curbytes += curbytestmp - lastbytestmp;
 						lastbytestmp = curbytestmp;
@@ -991,9 +1009,9 @@ int main( int argc, char** argv ) {
 					OTF_RStream_snapshotBytesProgress( rstream,
 							&minbytestmp, &curbytestmp, &maxbytestmp );
 
-					#ifdef VT_OMP
-					#pragma omp critical (progressupdate)
-					#endif
+#					if defined(HAVE_OMP) && HAVE_OMP
+#					pragma omp critical (progressupdate)
+#					endif // HAVE_OMP
 					{
 						curbytes += curbytestmp - lastbytestmp;
 						lastbytestmp = curbytestmp;
@@ -1179,6 +1197,7 @@ static map<uint32_t,uint64_t> readFilterFile( const string& filename, const map<
             line= line.substr(0, a);
             sline= new char[line.length()+1];
             strncpy( sline, line.c_str(), line.length() );
+            sline[line.length()] = '\0';
 
             char* token = strtok(sline, ";");
 			while( token ) {

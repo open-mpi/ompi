@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -480,6 +480,19 @@ uint64_t OTF_Reader_readStatistics( OTF_Reader* reader, OTF_HandlerArray* handle
 uint64_t OTF_Reader_readStatisticsUnsorted( OTF_Reader* reader, OTF_HandlerArray* handlers );
 
 /**
+ * This function reads all markers from trace.
+ *
+ * @param reader    Pointer to an initialized OTF_Reader object. See 
+ *                  also OTF_Reader_open().
+ * @param handlers  Pointer to the handler array.
+ *
+ * @return          number of records successfully read or OTF_READ_ERROR
+ *
+ * \ingroup reader
+ */
+uint64_t OTF_Reader_readMarkers( OTF_Reader* reader, OTF_HandlerArray* handlers );
+
+/**
  * Searchs a reader stream and returns it.
  * If the stream does not exist it will be created.
  *
@@ -660,15 +673,16 @@ uint8_t OTF_Reader_statisticProgress( OTF_Reader* reader,
 	
 	
 /**
- * Delivers a progress report for reading events. Progress is given in terms
+ * Delivers a progress report for reading events. It is given in terms
  * of time stamps. A percentage can be computed as 
  * ( current - minimum ) / ( maximum - minimum ). 
- * This computation takes restricted time intervals into account! This would not
- * be possible when referring to bytes read instead of time stamps.
+ * This computation takes restricted time intervals into account which is not 
+ * possible with OTF_Reader_eventBytesProgress().
+ *
  * The progress report is only valid after one or several calls to
- * 'readEvents()'.In the latter case the return arguments
- * 'minimum', 'current' and 'maximum' are undefined! If 'minimum' > 'maximum'
- * the values are invalid.
+ * OTF_Reader_readEvents(). Otherwise the return arguments 'minimum', 'current' 
+ * and 'maximum' are undefined! 
+ * If 'minimum' > 'maximum' the values are invalid.
  *
  * @param reader     Pointer to an initialized OTF_Reader object. See 
  *                   also OTF_Reader_open().
@@ -685,15 +699,16 @@ uint8_t OTF_Reader_eventTimeProgress( OTF_Reader* reader, uint64_t* minimum,
 
 
 /**
- * Delivers a progress report for reading snapshots. Progress is given in terms
- * of time stamps. a percentage can be computed as
+ * Delivers a progress report for reading snapshots. It is given in terms
+ * of time stamps. A percentage can be computed as 
  * ( current - minimum ) / ( maximum - minimum ). 
- * This computation takes restricted time intervals into account! this would
- * not be possible when refering to bytes read instead of time stamps.
+ * This computation takes restricted time intervals into account which is not 
+ * possible with OTF_Reader_snapshotBytesProgress().
+ *
  * The progress report is only valid after one or several calls to
- * 'readSnapshots()'. In the latter case the return arguments
- * 'minimum', 'current' and 'maximum' are undefined! If 'minimum' > 'maximum'
- * the values are invalid.
+ * OTF_Reader_readSnapshots(). Otherwise the return arguments 'minimum', 'current' 
+ * and 'maximum' are undefined! 
+ * If 'minimum' > 'maximum' the values are invalid.
  *
  * @param reader     Pointer to an initialized OTF_Reader object. See 
  *                   also OTF_Reader_open().
@@ -710,15 +725,16 @@ uint8_t OTF_Reader_snapshotTimeProgress( OTF_Reader* reader,
 
 
 /**
- * Delivers a progress report for reading statistics. Progress is given in terms
- * of time stamps. a percentage can be computed as
+ * Delivers a progress report for reading statistics. It is given in terms
+ * of time stamps. A percentage can be computed as 
  * ( current - minimum ) / ( maximum - minimum ). 
- * This computation takes restricted time intervals into account! this would
- * not be possible when refering to bytes read instead of time stamps.
+ * This computation takes restricted time intervals into account which is not 
+ * possible with OTF_Reader_statisticBytesProgress().
+ *
  * The progress report is only valid after one or several calls to
- * 'readStatistics()'. In the latter case the return arguments
- * 'minimum', 'current' and 'maximum' are undefined! If 'minimum' > 'maximum'
- * the values are invalid.
+ * OTF_Reader_readStatistics(). Otherwise the return arguments 'minimum', 'current' 
+ * and 'maximum' are undefined! 
+ * If 'minimum' > 'maximum' the values are invalid.
  *
  * @param reader     Pointer to an initialized OTF_Reader object. See 
  *                   also OTF_Reader_open().
@@ -736,10 +752,16 @@ uint8_t OTF_Reader_statisticTimeProgress( OTF_Reader* reader,
 
 /**
  * Delivers a progress report for reading events. Progress is given in terms
- * of time stamps. a percentage can be computed as
- * ( current - minimum ) / ( maximum - minimum ). 
- * This computation takes the read bytes of every stream into account. In the
- * latter case the return arguments 'minimum', 'current' and 'maximum' are
+ * of bytes. The percentage can be computed as ( current - minimum ) / ( maximum - minimum ). 
+ * 
+ * ATTENTION: This is only a rough estimate of the progress, because it is
+ * computed based on the block I/O from files but not based on the actual bytes 
+ * processed. This may result in constant values for small traces.
+ * See also OTF_Reader_eventTimeProgress():
+ *
+ * This computation takes the read bytes of every active stream into account. 
+ * The progress report is only valid after one or several calls to
+ * OTF_Reader_readEvents(). Otherwise the return arguments 'minimum', 'current' and 'maximum' are
  * undefined! If 'minimum' > 'maximum' the values are invalid.
  *
  * @param reader     Pointer to an initialized OTF_Reader object. See 
@@ -758,10 +780,16 @@ uint8_t OTF_Reader_eventBytesProgress( OTF_Reader* reader, uint64_t* minimum,
 
 /**
  * Delivers a progress report for reading snapshots. Progress is given in terms
- * of time stamps. a percentage can be computed as
- * ( current - minimum ) / ( maximum - minimum ). 
- * This computation takes the read bytes of every stream into account. In the
- * latter case the return arguments 'minimum', 'current' and 'maximum' are
+ * of bytes. The percentage can be computed as ( current - minimum ) / ( maximum - minimum ). 
+ * 
+ * ATTENTION: This is only a rough estimate of the progress, because it is
+ * computed based on the block I/O from files but not based on the actual bytes 
+ * processed. This may result in constant values for small traces.
+ * See also OTF_Reader_snapshotTimeProgress():
+ *
+ * This computation takes the read bytes of every active stream into account. 
+ * The progress report is only valid after one or several calls to
+ * OTF_Reader_readSnapshots(). Otherwise the return arguments 'minimum', 'current' and 'maximum' are
  * undefined! If 'minimum' > 'maximum' the values are invalid.
  *
  * @param reader     Pointer to an initialized OTF_Reader object. See 
@@ -779,10 +807,16 @@ uint8_t OTF_Reader_snapshotBytesProgress( OTF_Reader* reader,
 
 /**
  * Delivers a progress report for reading statistics. Progress is given in terms
- * of time stamps. a percentage can be computed as
- * ( current - minimum ) / ( maximum - minimum ). 
- * This computation takes the read bytes of every stream into account. In the
- * latter case the return arguments 'minimum', 'current' and 'maximum' are
+ * of bytes. The percentage can be computed as ( current - minimum ) / ( maximum - minimum ). 
+ * 
+ * ATTENTION: This is only a rough estimate of the progress, because it is
+ * computed based on the block I/O from files but not based on the actual bytes 
+ * processed. This may result in constant values for small traces.
+ * See also OTF_Reader_statisticTimeProgress():
+ *
+ * This computation takes the read bytes of every active stream into account. 
+ * The progress report is only valid after one or several calls to
+ * OTF_Reader_readStatistics(). Otherwise the return arguments 'minimum', 'current' and 'maximum' are
  * undefined! If 'minimum' > 'maximum' the values are invalid.
  *
  * @param reader     Pointer to an initialized OTF_Reader object. See 

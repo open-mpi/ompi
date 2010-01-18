@@ -5,16 +5,18 @@ endif
 if AMEXTERNOTF
 OTFINCLUDE = $(OTFINCDIR)
 OTFLIBRARY = $(OTFLIBDIR) $(OTFLIB)
+OTFDEPENDENCIES =
 else
 OTFINCLUDE = -I$(top_srcdir)/extlib/otf/otflib -I$(top_builddir)/extlib/otf/otflib
-OTFLIBRARY = -L$(top_builddir)/extlib/otf/otflib -L$(top_builddir)/extlib/otf/otflib/.libs $(OTFLIB)
+OTFLIBRARY = $(top_builddir)/extlib/otf/otflib/libotf.la
+OTFDEPENDENCIES = $(OTFLIBRARY)
 endif
 
 INCLUDES = $(OTFINCLUDE) -I$(top_srcdir)/vtlib/ -I$(top_builddir)/vtlib
 
 if AMHAVEOMP
-vtfilter_CXXFLAGS = $(OMPFLAG) -DVT_OMP
-vtfilter_LDFLAGS = $(OMPFLAG)
+vtfilter_CXXFLAGS = $(OPENMP_CFLAGS)
+vtfilter_LDFLAGS = $(OPENMP_CFLAGS)
 else
 vtfilter_CXXFLAGS =
 vtfilter_LDFLAGS =
@@ -30,6 +32,10 @@ vtfilter_SOURCES = \
 	vt_tracefilter.cc
 
 vtfilter_LDADD = \
-	$(top_builddir)/util/util.$(OBJEXT) \
+	$(top_builddir)/util/libutil.la \
 	$(OTFLIBRARY)
+
+vtfilter_DEPENDENCIES = \
+	$(top_builddir)/util/libutil.la \
+	$(OTFDEPENDENCIES)
 

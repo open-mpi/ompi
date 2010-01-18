@@ -5,7 +5,7 @@
 **  Copyright (c) 1998-2008                                                **
 **  Forschungszentrum Juelich, Juelich Supercomputing Centre               **
 **                                                                         **
-**  See the file COPYING in the package base directory for details       **
+**  See the file COPYING in the package base directory for details         **
 ****************************************************************************/
 
 #include <iostream>
@@ -31,6 +31,7 @@ void process_pragma(OMPragma* p, ostream& os, bool* hasEnd, bool* isFor) {
     if ( hasEnd )
       *hasEnd = (p->name != "barrier" && p->name != "noinstrument" &&
                  p->name != "flush"   && p->name != "threadprivate" &&
+                 p->name != "ordered" &&
 #if defined(__GNUC__) && (__GNUC__ < 3)
                  p->name.substr(0, 4) != "inst");
 #else

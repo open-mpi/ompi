@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -27,6 +27,12 @@ int Handle_MessageSummary(
    uint64_t time, uint32_t process, uint32_t peer, uint32_t comm,
    uint32_t type, uint64_t sentNumber, uint64_t receivedNumber,
    uint64_t sentBytes, uint64_t receivedBytes );
+
+int Handle_CollopSummary(
+   OTF_WStream* wstream, 
+   uint64_t time, uint32_t process, uint32_t comm, uint32_t collective,
+   uint64_t sentNumber, uint64_t receivedNumber, uint64_t sentBytes,
+   uint64_t receivedBytes );
 
 int Handle_FileOperationSummary(
    OTF_WStream* wstream,

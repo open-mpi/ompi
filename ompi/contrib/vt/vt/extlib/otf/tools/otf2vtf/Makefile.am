@@ -8,10 +8,7 @@ bin_PROGRAMS = \
 endif
 
 otf2vtf_LDADD = $(top_builddir)/otflib/libotf.la $(VTF3_LIB_LINE)
-if ! AMDEPZLIB
-otf2vtf_LDADD += $(ZLIB_LIB_LINE)
-endif
-
+otf2vtf_DEPENDENCIES = $(top_builddir)/otflib/libotf.la
 otf2vtf_SOURCES = \
 	Handler.h \
 	Treehash.h \

@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -15,7 +15,17 @@
 #ifdef VT_BFD
 #  include "bfd.h"
 #  if defined(HAVE_GNU_DEMANGLE) && HAVE_GNU_DEMANGLE
-#    include "demangle.h"
+#    if defined(HAVE_DEMANGLE_H) && HAVE_DEMANGLE_H
+#      include "demangle.h"
+#    else /* HAVE_DEMANGLE_H */
+      extern char* cplus_demangle (const char* mangled, int options);
+#     define DMGL_NO_OPTS 0
+#     define DMGL_PARAMS  (1 << 0)
+#     define DMGL_ANSI    (1 << 1)
+#     define DMGL_JAVA    (1 << 2)
+#     define DMGL_VERBOSE (1 << 3)
+#     define DMGL_TYPES   (1 << 4)
+#    endif /* HAVE_DEMANGLE_H */
 #  endif /* HAVE_GNU_DEMANGLE */
 #endif /* VT_BFD */
 #include <stdio.h>
@@ -26,12 +36,11 @@
 #include "vt_comp.h"
 #include "vt_env.h"
 #include "vt_error.h"
+#include "vt_iowrap.h"
 #include "vt_memhook.h"
 #include "vt_pform.h"
 #include "vt_trc.h"
-#if (defined (VT_OMPI) || defined (VT_OMP))
-#  include <omp.h>
-#endif
+#include "vt_thrd.h"
 
 static int gnu_init = 1;       /* is initialization needed? */
 
@@ -43,8 +52,8 @@ static int gnu_init = 1;       /* is initialization needed? */
 
 typedef struct HN {
   long id;            /* hash code (address of function */
-  const char* name;   /* associated function name       */
-  const char* fname;  /*            file name           */
+  char* name;         /* associated function name       */
+  char* fname;        /*            file name           */
   int lno;            /*            line number         */
   uint32_t vtid;      /* associated region identifier   */
   struct HN* next;
@@ -53,6 +62,7 @@ typedef struct HN {
 #define HASH_MAX 1021
 
 static HashNode* htab[HASH_MAX];
+static uint32_t n_htab_entries = 0;
 
 /*
  * Stores function name `n' under hash code `h'
@@ -62,12 +72,13 @@ static void hash_put(long h, const char* n, const char* fn, int lno) {
   long id = h % HASH_MAX;
   HashNode *add = (HashNode*)malloc(sizeof(HashNode));
   add->id = h;
-  add->name  = n;
-  add->fname = fn ? (const char*)strdup(fn) : fn;
+  add->name  = (char*)n;
+  add->fname = fn ? strdup(fn) : (char*)fn;
   add->lno   = lno;
   add->vtid = VT_NO_ID;
   add->next = htab[id];
   htab[id] = add;
+  n_htab_entries++;
 }
 
 /*
@@ -99,9 +110,10 @@ static void get_symtab_bfd(void) {
    int i; 
    size_t size;
    char* exe_env;
-   asymbol **syms; 
+   asymbol **syms;
+   int do_getsrc = vt_env_gnu_getsrc();
 #if defined(HAVE_GNU_DEMANGLE) && HAVE_GNU_DEMANGLE
-   int do_demangle = vt_env_do_demangle();
+   int do_demangle = vt_env_gnu_demangle();
 #endif /* HAVE_GNU_DEMANGLE */
 
    /* initialize BFD */
@@ -109,78 +121,67 @@ static void get_symtab_bfd(void) {
 
    /* get executable path from environment var. VT_APPPATH */
    exe_env = vt_env_apppath();
-   if ( exe_env )
+   if ( ! exe_env )
+   {
+     vt_error_msg("Could not determine path of executable.\n"
+		  "There are two possible ways to solve this problem:\n"
+		  "Set either the environment variable VT_APPPATH to the path of the executable or set VT_GNU_NMFILE to a symbol list file, created with 'nm'.");
+   }
+   else
    {
      /* get executable image */
      BfdImage = bfd_openr(exe_env, 0 );
      if ( ! BfdImage )
-       vt_error_msg("BFD: Could not get executable image from %s.\n"
-		    "A possible solution to the problem is to set the "
-		    "environment variable VT_NMFILE\n"
-		    "to a symbol list file, created with 'nm'.", exe_env);
-   }
-   else
-   {
-     int pid = getpid();
-     char exe[256];
-
-     snprintf(exe, sizeof(exe)-1, "/proc/%d/exe", pid);
-     BfdImage = bfd_openr(exe, 0 );
-     if ( ! BfdImage ) {
-       snprintf(exe, sizeof(exe)-1, "/proc/%d/object/a.out", pid);
-       BfdImage = bfd_openr(exe, 0 );
-      
-       if ( ! BfdImage ) {
-	 vt_error_msg("BFD: Could not get executable image.\n"
-		      "There are two possible ways to solve this problem:\n"
-		      "Set either the environment variable VT_APPPATH to the "
-		      "path of your application\n"
-		      "or set VT_NMFILE to a symbol list file, created with "
-		      "'nm'.", exe);
-       }
-     }
+       vt_error_msg("BFD: bfd_openr(): failed\n"
+		    "Could not get executable image from %s.\n"
+		    "A possible solution to the problem is to set the environment variable VT_GNU_NMFILE to a symbol list file, created with 'nm'.", exe_env);
    }
 
    /* check image format */
    if ( ! bfd_check_format(BfdImage, bfd_object) ) { 
      vt_error_msg("BFD: bfd_check_format(): failed");
    }
-   
+
    /* return if file has no symbols at all */
    if ( ! ( bfd_get_file_flags(BfdImage) & HAS_SYMS ) )
      vt_error_msg("BFD: bfd_get_file_flags(): failed");
-   
+
    /* get the upper bound number of symbols */
    size = bfd_get_symtab_upper_bound(BfdImage);
-   
+
    /* HAS_SYMS can be set even with no symbols in the file! */
    if ( size < 1 )
      vt_error_msg("BFD: bfd_get_symtab_upper_bound(): < 1");
-   
+
    /* read canonicalized symbols */
    syms = (asymbol **)malloc(size);
    nr_all_syms = bfd_canonicalize_symtab(BfdImage, syms);
    if ( nr_all_syms < 1 )
      vt_error_msg("BFD: bfd_canonicalize_symtab(): < 1");
-   
+
    for (i=0; i<nr_all_syms; ++i) {
-      char* dem_name = 0;
+      char* dem_name = NULL;
       long addr;
       const char* filename;
       const char* funcname;
       unsigned int lno;
-      
+
+      /* ignore symbols that are not a function */
+      if ( !(syms[i]->flags & BSF_FUNCTION) ) continue;
+
       /* ignore system functions */
-      if ( strncmp(syms[i]->name, "__", 2) == 0 ||
-	   strncmp(syms[i]->name, "bfd_", 4) == 0 ||
-	   strstr(syms[i]->name, "@@") != NULL ) continue;
+      if ( syms[i]->name[0] == '.' ||
+           strncmp(syms[i]->name, "bfd_", 4) == 0 ||
+           strstr(syms[i]->name, "@@") != NULL ) continue;
 
       /* get filename and linenumber from debug info */
       /* needs -g */
       filename = NULL;
-      lno = -1;
-      bfd_find_nearest_line(BfdImage, bfd_get_section(syms[i]), syms,
-			    syms[i]->value, &filename, &funcname, &lno);
+      lno = VT_NO_LNO;
+      if ( do_getsrc ) {
+	bfd_find_nearest_line(BfdImage, bfd_get_section(syms[i]), syms,
+			      syms[i]->value, &filename, &funcname, &lno);
+      }
 
       /* calculate function address */
       addr = syms[i]->section->vma+syms[i]->value;
@@ -197,7 +198,7 @@ static void get_symtab_bfd(void) {
       if( dem_name ) {
 	hash_put(addr, dem_name, filename, lno);
       } else {
-	char *n = strdup(syms[i]->name);
+	char* n = strdup(syms[i]->name);
 	hash_put(addr, n, filename, lno);
       }
    }
@@ -216,6 +217,7 @@ static void get_symtab_nm(const char* nmfilename)
 {
   FILE* nmfile;
   char  line[1024];
+  int   do_getsrc = vt_env_gnu_getsrc();
 
   /* open nm-file */
   if( !(nmfile = fopen(nmfilename, "r")) )
@@ -260,7 +262,10 @@ static void get_symtab_nm(const char* nmfilename)
       }
       else if( nc == 3 ) /* column 4 (filename) */
       {
-	filename = col;
+	if( do_getsrc )
+	  filename = col;
+	else
+	  break;
       }
       else /* column 5 (line) */
       {
@@ -289,8 +294,10 @@ static void get_symtab_nm(const char* nmfilename)
  */
 static void get_symtab(void)
 {
-  char* nmfilename = vt_env_nmfile();
-   
+  char* nmfilename = vt_env_gnu_nmfile();
+
+  VT_SUSPEND_IO_TRACING();
+
   /* read nm-output file, if given? */
   if( nmfilename )
   {
@@ -302,9 +309,11 @@ static void get_symtab(void)
 #ifdef VT_BFD
     get_symtab_bfd();
 #else
-    vt_error_msg("No symbol list file given. Please set the environment variable VT_NMFILE to the path of your symbol list file, created with 'nm'.");
+    vt_error_msg("No symbol list file given. Please set the environment variable VT_GNU_NMFILE to the path of your symbol list file, created with 'nm'.");
 #endif
   }
+
+  VT_RESUME_IO_TRACING();
 }
 
 /*
@@ -318,17 +327,69 @@ static void register_region(HashNode *hn) {
   /* -- register file if available -- */
   if (hn->fname != NULL)
   {
-    fid = vt_def_file(hn->fname);
+    fid = vt_def_scl_file(hn->fname);
     lno = hn->lno;
   }
 
   /* -- register region and store region identifier -- */
-  hn->vtid = vt_def_region(hn->name, fid, lno, VT_NO_LNO, VT_DEF_GROUP, VT_FUNCTION);
+  hn->vtid = vt_def_region(hn->name, fid, lno, VT_NO_LNO, NULL, VT_FUNCTION);
 }
 
-
+void gnu_finalize(void);
 void __cyg_profile_func_enter(void* func, void* callsite);
 void __cyg_profile_func_exit(void* func, void* callsite);
+
+/*
+ * Finalize instrumentation interface
+ */
+
+void gnu_finalize()
+{
+  int i, idx_min, idx_max;
+  uint32_t min, max, n;
+  double avg;
+  min = 0xffffffff;
+  max = 0;
+  idx_min = idx_max = 0;
+  avg = 0.0;
+
+  n = n_htab_entries;
+  for( i = 0; i < HASH_MAX; i++ )
+  {
+    uint32_t n_bucket_entries = 0;
+    while( htab[i] )
+    {
+      struct HN* next = htab[i]->next;
+      free(htab[i]->name);
+      if( htab[i]->fname ) free(htab[i]->fname);
+      free(htab[i]);
+      htab[i] = next;
+      n_htab_entries--;
+      n_bucket_entries++;
+    }
+    if( n_bucket_entries < min ) {
+      min = n_bucket_entries;
+      idx_min = i;
+    }
+    if( n_bucket_entries > max ) {
+      max = n_bucket_entries;
+      idx_max = i;
+    }
+    avg += n_bucket_entries;
+    vt_cntl_msg( 3, "Hash bucket %i had %u entries (%.1f/1000)", i, n_bucket_entries, ((double)n_bucket_entries*1000)/n );
+  }
+  avg /= HASH_MAX;
+  vt_cntl_msg( 3, "Hash statistics:\n"
+                  "\tNumber of entries: %u\n"
+                  "\tMin bucket size:   %u (%.1f/1000) at index %i\n"
+                  "\tMax bucket size:   %u (%.1f/1000) at index %i\n"
+                  "\tAvg bucket size:   %.1f",
+                  n,
+                  min, ((double)min*1000)/n, idx_min,
+                  max, ((double)max*1000)/n, idx_max,
+                  avg );
+  vt_assert( n_htab_entries==0 );
+}
 
 /*
  * This function is called at the entry of each function
@@ -351,6 +412,7 @@ void __cyg_profile_func_enter(void* func, void* callsite) {
     VT_MEMHOOKS_OFF();
     gnu_init = 0;
     vt_open();
+    vt_comp_finalize = gnu_finalize;
     get_symtab();
     VT_MEMHOOKS_ON();
   }
@@ -366,20 +428,14 @@ void __cyg_profile_func_enter(void* func, void* callsite) {
   if ( (hn = hash_get((long)funcptr))) {
     if ( hn->vtid == VT_NO_ID ) {
       /* -- region entered the first time, register region -- */
-#     if defined (VT_OMPI) || defined (VT_OMP)
-      if (omp_in_parallel()) {
-#       pragma omp critical (vt_comp_gnu_1)
-	{
-	  if ( hn->vtid == VT_NO_ID ) {
-	    register_region(hn);
-	  }
-	}
-      } else {
-	register_region(hn);
-      }
-#     else
+#if (defined(VT_MT) || defined(VT_HYB))
+      VTTHRD_LOCK_IDS();
+      if( hn->vtid == VT_NO_ID )
+        register_region(hn);
+      VTTHRD_UNLOCK_IDS();
+#else /* VT_MT || VT_HYB */
       register_region(hn);
-#     endif
+#endif /* VT_MT || VT_HYB */
     }
 
     /* -- write enter record -- */
@@ -409,6 +465,7 @@ void __cyg_profile_func_exit(void* func, void* callsite) {
   funcptr = *( void ** )func;
 #endif
 
+  /* -- write exit record -- */
   if ( hash_get((long)funcptr) ) {
     vt_exit(&time);
   }

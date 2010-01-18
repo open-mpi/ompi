@@ -15,7 +15,7 @@
  *
  * Copyright (c) 2007,      Cisco Systems, Inc.
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -280,4 +280,21 @@ char* vt_strdup(const char* s)
   strcpy(c, s) ;
 
   return c;
+}
+
+char* vt_strtrim(char* s)
+{
+  int trim_start_idx = 0;
+  int trim_stop_idx = strlen(s);
+  int i, j;
+
+  if (trim_stop_idx > 0)
+  {
+    for ( i = 0; i < trim_stop_idx && s[i] == ' '; i++ ) trim_start_idx++;
+    for ( i = trim_stop_idx - 1; i >= 0 && s[i] == ' '; i-- ) trim_stop_idx--;
+    for ( j = 0, i = trim_start_idx; i < trim_stop_idx; i++, j++ ) s[j] = s[i];
+    s[j] = '\0';
+  }
+
+  return s;
 }

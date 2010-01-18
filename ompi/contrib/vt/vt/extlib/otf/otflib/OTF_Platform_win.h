@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -21,15 +21,20 @@ extern "C" {
 
 #if defined(_MSC_VER) /* visual studio */
 
+#	include <limits.h>
+#	include <winsock2.h>
+
 #	define HAVE_IO_H
 #	define HAVE_ZLIB
+
+#	define OTF_PATH_MAX PATH_MAX
 
 #	undef ftello
 #	define ftello (uint64_t) _ftelli64
 #	undef fseeko
 #	define fseeko(f,off,orig) _fseeki64(f,(__int64)off,orig)
 
-#	define snprintf
+#	undef snprintf
 #	define snprintf _snprintf
 
 #	pragma warning (disable : 4996) /* disable insecurity/deprication warnings */

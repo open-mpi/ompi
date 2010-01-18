@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -11,19 +11,19 @@
  **/
 
 #include <string.h>
+
 #include "otf.h"
-#if (defined (VT_OMPI) || defined (VT_OMP))
-  #include "opari_omp.h"
-#endif
+
+#include "vt_error.h"
 #include "vt_fbindings.h"
 #include "vt_inttypes.h"
 #include "vt_memhook.h"
 #include "vt_pform.h"
+#include "vt_thrd.h"
 #include "vt_trc.h"
-#include "vt_error.h"
 #define VTRACE
 #undef VTRACE_NO_COUNT
-#include "vt_user_count.h"
+#include "vt_user.h"
 
 static int vt_init = 1;        /* is initialization needed? */
 static uint32_t def_gid = 0;   /* default counter group id */
@@ -36,7 +36,7 @@ static uint32_t def_gid = 0;   /* default counter group id */
     VT_MEMHOOKS_ON(); \
   }
 
-unsigned int VT_User_count_group_def__(char* gname)
+unsigned int VT_User_count_group_def__(const char* gname)
 {
   uint32_t gid;
 
@@ -44,27 +44,20 @@ unsigned int VT_User_count_group_def__(char* gname)
 
   VT_MEMHOOKS_OFF();
 
-# if defined (VT_OMPI) || defined (VT_OMP)
-    if (omp_in_parallel()) {
-#     pragma omp critical (vt_api_count_1)
-      {
-	gid = (uint32_t)vt_def_counter_group(gname);
-      }
-    }
-    else
-    {
-      gid = (uint32_t)vt_def_counter_group(gname);
-    }
-# else
-    gid = (uint32_t)vt_def_counter_group(gname);
-# endif
+#if (defined(VT_MT) || defined(VT_HYB))
+  VTTHRD_LOCK_IDS();
+#endif
+  gid = (uint32_t)vt_def_counter_group(gname);
+#if (defined(VT_MT) || defined(VT_HYB))
+  VTTHRD_UNLOCK_IDS();
+#endif
 
   VT_MEMHOOKS_ON();
 
   return gid;
 }
 
-unsigned int VT_User_count_def__(char* cname, char* cunit, int ctype,
+unsigned int VT_User_count_def__(const char* cname, const char* cunit, int ctype,
 				 unsigned int gid)
 {
   uint32_t cid;
@@ -114,20 +107,13 @@ unsigned int VT_User_count_def__(char* cname, char* cunit, int ctype,
     }
   }
 
-# if defined (VT_OMPI) || defined (VT_OMP)
-    if (omp_in_parallel()) {
-#     pragma omp critical (vt_api_count_2)
-      {
-	cid = (uint32_t)vt_def_counter(cname, cprop, gid, cunit);
-      }
-    }
-    else
-    {
-      cid = (uint32_t)vt_def_counter(cname, cprop, gid, cunit);
-    }
-# else
-    cid = (uint32_t)vt_def_counter(cname, cprop, gid, cunit);
-# endif
+#if (defined(VT_MT) || defined(VT_HYB))
+  VTTHRD_LOCK_IDS();
+#endif
+  cid = (uint32_t)vt_def_counter(cname, cprop, gid, cunit);
+#if (defined(VT_MT) || defined(VT_HYB))
+  VTTHRD_UNLOCK_IDS();
+#endif
 
     VT_MEMHOOKS_ON();
 
@@ -202,8 +188,8 @@ void VT_User_count_double_val__(unsigned int cid, double val)
  * Fortran version
  */
 
-void VT_User_count_group_def___f(char* gname, unsigned int* gid, int nl);
-void VT_User_count_def___f(char* cname, char* cunit, int* ctype,
+void VT_User_count_group_def___f(const char* gname, unsigned int* gid, int nl);
+void VT_User_count_def___f(const char* cname, const char* cunit, int* ctype,
 			   unsigned int* gid, unsigned int* cid,
 			   int nl, int ul);
 void VT_User_count_integer_val___f(unsigned int* cid, int* val);
@@ -211,7 +197,7 @@ void VT_User_count_integer8_val___f(unsigned int* cid, long long* val);
 void VT_User_count_real_val___f(unsigned int* cid, float* val);
 void VT_User_count_double_val___f(unsigned int* cid, double* val);
 
-void VT_User_count_group_def___f(char* gname, unsigned int* gid, int nl)
+void VT_User_count_group_def___f(const char* gname, unsigned int* gid, int nl)
 {
   int namlen;
   char fnambuf[128];
@@ -224,10 +210,10 @@ void VT_User_count_group_def___f(char* gname, unsigned int* gid, int nl)
   *gid = VT_User_count_group_def__(fnambuf);
 } VT_GENERATE_F77_BINDINGS(vt_user_count_group_def__, VT_USER_COUNT_GROUP_DEF__,
 			   VT_User_count_group_def___f,
-			   (char* gname, unsigned int* gid, int nl),
+			   (const char* gname, unsigned int* gid, int nl),
 			   (gname, gid, nl))
 
-void VT_User_count_def___f(char* cname, char* cunit, int* ctype,
+void VT_User_count_def___f(const char* cname, const char* cunit, int* ctype,
 			   unsigned int* gid, unsigned int* cid,
 			   int nl, int ul)
 {
@@ -247,7 +233,7 @@ void VT_User_count_def___f(char* cname, char* cunit, int* ctype,
   *cid = VT_User_count_def__(fnambuf, funibuf, *ctype, *gid);
 } VT_GENERATE_F77_BINDINGS(vt_user_count_def__, VT_USER_COUNT_DEF__,
 			   VT_User_count_def___f,
-			   (char* cname, char* cunit, int* ctype, unsigned int* gid, unsigned int* cid, int nl, int ul),
+			   (const char* cname, const char* cunit, int* ctype, unsigned int* gid, unsigned int* cid, int nl, int ul),
 			   (cname, cunit, ctype, gid, cid, nl, ul))
 
 

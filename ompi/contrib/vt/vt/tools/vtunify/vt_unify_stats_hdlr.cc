@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -35,7 +35,7 @@ Handle_FunctionSummary( OTF_WStream* wstream,
       p_tkfac_deffunction->translateLocalToken( mprocess, function );
    assert( global_function != 0 );
    
-   time = CorrectTime( mprocess, time ) - g_uMinStartTime;
+   time = CorrectTime( mprocess, time );
 
    theStatistics->addFuncStat( process, global_function, invocations,
 			       inclTime, exclTime );
@@ -59,11 +59,16 @@ Handle_MessageSummary( OTF_WStream* wstream,
    TokenFactory_DefProcessGroup * p_tkfac_defprocessgroup =
       static_cast<TokenFactory_DefProcessGroup*>(theTokenFactory[TKFAC__DEF_PROCESS_GROUP]);
 
-   uint32_t global_comm =
-      p_tkfac_defprocessgroup->translateLocalToken( mprocess, comm );
-   assert( global_comm != 0 );
+   uint32_t global_comm = comm;
 
-   time = CorrectTime( mprocess, time ) - g_uMinStartTime;
+   if( comm != 0 )
+   {
+      global_comm =
+	 p_tkfac_defprocessgroup->translateLocalToken( mprocess, comm );
+      assert( global_comm != 0 );
+   }
+
+   time = CorrectTime( mprocess, time );
 
    int wrrc = OTF_WStream_writeMessageSummary( wstream,
 					       time, process, peer,
@@ -71,6 +76,51 @@ Handle_MessageSummary( OTF_WStream* wstream,
 					       type, sentNumber,
 					       receivedNumber, sentBytes,
 					       receivedBytes );
+
+   return wrrc == 1 ? OTF_RETURN_OK : OTF_RETURN_ABORT;
+}
+
+int
+Handle_CollopSummary( OTF_WStream* wstream, 
+		      uint64_t time, uint32_t process, uint32_t comm,
+		      uint32_t collective, uint64_t sentNumber,
+		      uint64_t receivedNumber, uint64_t sentBytes,
+		      uint64_t receivedBytes )
+{
+   uint32_t mprocess = process % 65536;
+
+   TokenFactory_DefCollectiveOperation * p_tkfac_defcollop =
+      static_cast<TokenFactory_DefCollectiveOperation*>(theTokenFactory[TKFAC__DEF_COLL_OP]);
+
+   TokenFactory_DefProcessGroup * p_tkfac_defprocessgroup =
+      static_cast<TokenFactory_DefProcessGroup*>(theTokenFactory[TKFAC__DEF_PROCESS_GROUP]);
+
+   uint32_t global_collective = collective;
+
+   if( collective != 0 )
+   {
+      global_collective =
+	 p_tkfac_defcollop->translateLocalToken( mprocess, collective );
+      assert( global_collective != 0 );
+   }
+
+   uint32_t global_comm = comm;
+
+   if( comm != 0 )
+   {
+      global_comm =
+	 p_tkfac_defprocessgroup->translateLocalToken( mprocess, comm );
+      assert( global_comm != 0 );
+   }
+
+   time = CorrectTime( mprocess, time );
+
+   int wrrc = OTF_WStream_writeCollopSummary( wstream,
+					      time, process,
+					      global_comm,
+					      global_collective,
+					      sentNumber, receivedNumber,
+					      sentBytes, receivedBytes );
 
    return wrrc == 1 ? OTF_RETURN_OK : OTF_RETURN_ABORT;
 }
@@ -91,7 +141,7 @@ Handle_FileOperationSummary( OTF_WStream* wstream,
       p_tkfac_deffile->translateLocalToken( mprocess, fileid );
    assert( global_fileid != 0 );
 
-   time = CorrectTime( mprocess, time ) - g_uMinStartTime;
+   time = CorrectTime( mprocess, time );
 
    int wrrc = OTF_WStream_writeFileOperationSummary( wstream,
 						     time, global_fileid,

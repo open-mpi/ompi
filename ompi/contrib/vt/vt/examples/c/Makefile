@@ -2,7 +2,8 @@ include Makefile.config
 
 TARGETS = $(HELLO_TGT1) $(HELLO_TGT2) $(HELLO_TGT3) \
           $(PI_TGT1) $(PI_TGT2) $(PI_TGT3) \
-          $(RING_TGT1) $(RING_TGT2) $(RING_TGT3)
+          $(RING_TGT1) $(RING_TGT2) $(RING_TGT3) \
+          $(MDLBROT_TGT1) $(MDLBROT_TGT2) $(MDLBROT_TGT3) $(MDLBROT_TGT4) $(MDLBROT_TGT5)
 
 .PHONY: all
 all: $(TARGETS)
@@ -41,6 +42,26 @@ ring-dyn: ring.c
 	$(MPICC) -vt:inst dyninst $(MPICFLAGS) $^ -o $@ $(MPILIB)
 
 
+### mdlbrot-man ###
+mdlbrot-man: mdlbrot.c
+	$(MPICC) -vt:inst manual $(MPICFLAGS) $(SDLINCDIR) -DMANUAL $^ -o $@ -DVTRACE $(MPILIB) $(SDLLIB)
+### mdlbrot-comp ###
+mdlbrot-comp: mdlbrot.c
+	$(MPICC) $(MPICFLAGS) $(SDLINCDIR) $^ -o $@ $(MPILIB) $(SDLLIB)
+### mdlbrot-dyn ###
+mdlbrot-dyn: mdlbrot.c
+	$(MPICC) -vt:inst dyninst $(MPICFLAGS) $(SDLINCDIR) $^ -o $@ $(MPILIB) $(SDLLIB)
+### libSDLwrap.<a|so> ###
+libSDLwrap.a: SDLwrap.c
+	vtlibwrapgen --build -o libSDLwrap --static $^
+libSDLwrap.so: SDLwrap.c
+	vtlibwrapgen --build -o libSDLwrap --shared $^
+SDLwrap.c:
+	vtlibwrapgen -g SDL -o $@ $(SDLHEADERS)
+
+
 .PHONY: clean
 clean:
-	-rm -f $(TARGETS) *~ *.o
+	-rm -f $(TARGETS) SDLwrap.c *~ *.o
+	-rm -f *.uctl *.filt *.otf *.z
+

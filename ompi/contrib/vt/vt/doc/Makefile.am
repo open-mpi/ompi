@@ -5,16 +5,12 @@ vtdata_DATA = \
 
 vtdoc_DATA = \
 	$(top_srcdir)/ChangeLog \
-	 \
-	LICENSE \
+	$(top_srcdir)/LICENSE \
 	UserManual.html \
 	UserManual.pdf
 
 vtdatadir = $(datadir)
 vtdocdir = $(docdir)
-
-LICENSE: $(top_srcdir)/COPYING
-	cp $(top_srcdir)/COPYING LICENSE
 
 EXTRA_DIST = \
 	$(vtdata_DATA) \

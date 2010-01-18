@@ -1,10 +1,10 @@
 #include "config.h"
 
 #include "rfg_filter.h"
-#include "rfg_strmkrs.h"
 
 #include "vt_inttypes.h"
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,7 +13,7 @@
 #define STRBUF_SIZE  0x400   /* buffer size for strings */
 #define MAX_LINE_LEN 0x20000 /* max file line length */
 
-/* data structure for fitler assignments */
+/* data structure for filter assignments */
 
 typedef struct RFG_FilterAssigns_struct
 {
@@ -100,7 +100,7 @@ int RFG_Filter_setDefaultCallLimit( RFG_Filter* filter, int32_t limit )
   if( limit == 0 || limit < -1 )
   {
     fprintf( stderr,
-	     "RFG_Filter_setDefaultCallLimit(): Error: Default call limit must be greater then 0 or -1\n" );
+	     "RFG_Filter_setDefaultCallLimit(): Error: Default call limit must be greater than 0 or -1\n" );
     return 0;
   }
 
@@ -111,11 +111,12 @@ int RFG_Filter_setDefaultCallLimit( RFG_Filter* filter, int32_t limit )
   return 1;
 }
 
-int RFG_Filter_readDefFile( RFG_Filter* filter )
+int RFG_Filter_readDefFile( RFG_Filter* filter, int rank )
 {
   FILE*    f;
   char*    orgline;
   uint32_t lineno = 0;
+  uint8_t  includes_current_rank = 1;
   uint8_t  parse_err = 0;
 
   if( !filter ) return 0;
@@ -150,8 +151,9 @@ int RFG_Filter_readDefFile( RFG_Filter* filter )
 
     /* remove newline */
 
-    chomp( orgline );
-    
+    if( strlen(orgline) > 0 && orgline[strlen(orgline)-1] == '\n' )
+      orgline[strlen(orgline)-1] = '\0';
+
     /* copy line so that the original line keep alive */
 
     line = strdup( orgline );
@@ -164,68 +166,145 @@ int RFG_Filter_readDefFile( RFG_Filter* filter )
       continue;
     }
 
-    trim( line );
+    vt_strtrim( line );
 
     if( line[0] == '#' )
     {
       free( line );
       continue;
     }
-    
-    /* search for '--'
-       e.g. "func1;func2;func3 -- 1000"
-                               p
-    */
 
-    p = strstr( line, "--" );
-    if( p == NULL )
+    if( line[0] == '@' )
     {
-      parse_err = 1;
-      free( line );
-      break;
-    }
+      int a = -1;
+      int b = -1;
+      char* q;
 
-    /* get call limit
-       e.g. "func1;func2;func3 -- 1000"
-                                  p+2
-    */
+      /* stop reading file at first @ line, if no specific rank given */
 
-    climit = atoi( p+2 );
-    if( climit != -1 && climit != 0 )
-      climit++;
-
-    /* cut call limit from remaining line
-       e.g.   "func1;func2;func3 -- 1000"
-           => "func1;func2;func3"
-    */
-
-    *p = '\0';
-
-    /* split remaining line at ';' to get pattern */
-
-    p = strtok( line, ";" );
-    do
-    {
-      char pattern[STRBUF_SIZE];
-
-      if( !p )
+      if( rank == -1 )
       {
-	parse_err = 1;
-	break;
+        free( line );
+        break;
       }
 
-      strcpy( pattern, p );
+      /* parse rank selection
+         If current rank is included, then read the following filter rules.
+         Otherwise, jump to next @ clause. */
 
-      trim( pattern );
+      p = line + 1;
 
-      /* add call limit assignment */
+      includes_current_rank = 0;
 
-      if( strlen( pattern ) > 0 )
-	RFG_Filter_add( filter, pattern, climit );
+      while( 1 )
+      {
+        while( *p == ' ' || *p == '\t' ) p++;
 
-    } while( ( p = strtok( 0, ";" ) ) );
+        if( *p >= '0' && *p <= '9' )
+        {
+          errno = 0;
+          a = strtol( p, &q, 10 );
+          p = q;
+          if( errno != 0 )
+          {
+            parse_err = 1;
+            break;
+          }
+        }
+        else if( *p == '-' && *(p+1) != '\0' && a != -1 )
+        {
+          p++;
 
-    free( line );
+          errno = 0;
+          b = strtol( p, &q, 10 );
+          p = q;
+          if( errno != 0 )
+          {
+            parse_err = 1;
+            break;
+          }
+        }
+        else if( (*p == ';' || *p == ',') && a != -1 )
+        {
+          p++;
+
+          if( a == rank || (a < rank && rank <= b ) )
+            includes_current_rank = 1;
+
+          a = b = -1;
+        }
+        else if( *p == '\0' && a != -1 )
+        {
+          if( a == rank || (a < rank && rank <= b ) )
+            includes_current_rank = 1;
+
+          break;
+        }
+        else
+        {
+          parse_err = 1;
+          break;
+        }
+      }
+
+      free( line );
+    }
+    else
+    {
+      /* search for '--'
+         e.g. "func1;func2;func3 -- 1000"
+                                 p
+      */
+
+      p = strstr( line, "--" );
+      if( p == NULL )
+      {
+        parse_err = 1;
+        free( line );
+        break;
+      }
+
+      /* get call limit
+         e.g. "func1;func2;func3 -- 1000"
+                                    p+2
+      */
+
+      climit = atoi( p+2 );
+      if( climit != -1 && climit != 0 )
+        climit++;
+
+      /* cut call limit from remaining line
+         e.g.   "func1;func2;func3 -- 1000"
+             => "func1;func2;func3"
+      */
+
+      *p = '\0';
+
+      /* split remaining line at ';' to get pattern */
+
+      p = strtok( line, ";" );
+      do
+      {
+        char pattern[STRBUF_SIZE];
+
+        if( !p )
+        {
+          parse_err = 1;
+          break;
+        }
+
+        strcpy( pattern, p );
+
+        vt_strtrim( pattern );
+
+        /* add call limit assignment */
+        if( strlen( pattern ) > 0 && includes_current_rank )
+          RFG_Filter_add( filter, pattern, climit );
+
+      } while( ( p = strtok( 0, ";" ) ) );
+
+      free( line );
+    }
   }
 
   if( parse_err )

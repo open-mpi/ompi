@@ -6,10 +6,7 @@ bin_PROGRAMS = \
 endif
 
 otfaux_LDADD = $(top_builddir)/otflib/libotf.la
-if ! AMDEPZLIB
-otfaux_LDADD += $(ZLIB_LIB_LINE)
-endif
-
+otfaux_DEPENDENCIES = $(otfaux_LDADD)
 otfaux_SOURCES = \
 	Control.h \
 	Handler.h \

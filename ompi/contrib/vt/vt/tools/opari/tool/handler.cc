@@ -5,7 +5,7 @@
 **  Copyright (c) 1998-2008                                                **
 **  Forschungszentrum Juelich, Juelich Supercomputing Centre               **
 **                                                                         **
-**  See the file COPYING in the package base directory for details       **
+**  See the file COPYING in the package base directory for details         **
 ****************************************************************************/
 
 #include <vector>
@@ -112,6 +112,13 @@ namespace {
          << "_" << event << "(" << id << ")\n";
     else {
       if ( strcmp(event, "begin") == 0 ) os << "{ ";
+#ifdef OPARI_VT
+      if ( strcmp(event, "fork") == 0 ||
+           ( strcmp(event, "begin") == 0 && strcmp(type, "parallel") == 0 ) )
+        os << "POMP_" << c1 << (type+1)
+           << "_" << event << "2(&omp_rd_" << id << ", &omp_pt_" << id << ");";
+      else
+#endif // OPARI_VT
       os << "POMP_" << c1 << (type+1)
          << "_" << event << "(&omp_rd_" << id << ");";
       if ( strcmp(event, "end") == 0 ) os << " }";
@@ -900,7 +907,11 @@ void finalize_handler(const char* rcdir,
   OMPRegion::generate_header(incs);
   if ( regions.size() ) {
     for (unsigned i=0; i<regions.size(); ++i)
+#ifdef OPARI_VT
+      regions[i]->generate_descr(incs, lang);
+#else // OPARI_VT
       regions[i]->generate_descr(incs);
+#endif // OPARI_VT
   }
 
   // generate opari table file

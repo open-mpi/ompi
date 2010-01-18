@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -12,20 +12,24 @@
 
 #include "config.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "vt_otf_gen.h"
 #include "vt_otf_sum.h"
+#include "vt_env.h"
 #include "vt_error.h"
 #include "vt_inttypes.h"
 #include "vt_pform.h"
 #include "vt_trc.h"
 
-#include <stdio.h>
-#include <stdlib.h>
+#include "util/hash.h"
 
 #include "otf.h"
 
-#define VTSUM_STACK_BSIZE 100
-#define VTSUM_STAT_BSIZE  500
+#define VTSUM_STACK_BSIZE  100
+#define VTSUM_STAT_BSIZE   500
+#define VTSUM_HASH_MAX    1021
 
 /*
  *-----------------------------------------------------------------------------
@@ -36,68 +40,92 @@
 #define VTSUM_CHECK(sum) \
   if (sum == NULL) vt_error_msg("Abort: Uninitialized summary generator")
 
-#define VTSUM_FUNC_STAT_ADD(_sum, _rid, _stat)                        \
+#define VTSUM_FUNC_STAT_ADD(_sum, _rid, _stat_idx)                    \
 {                                                                     \
   if (_sum->func_stat_num == _sum->func_stat_size)                    \
   {                                                                   \
     _sum->func_stat = (VTSum_funcStat*)realloc(_sum->func_stat,       \
-				    (_sum->func_stat_size             \
-				     + VTSUM_STAT_BSIZE)              \
-				    * sizeof(VTSum_funcStat));        \
+		        (_sum->func_stat_size                         \
+		         + VTSUM_STAT_BSIZE)                          \
+		        * sizeof(VTSum_funcStat));                    \
     _sum->func_stat_size += VTSUM_STAT_BSIZE;                         \
   }                                                                   \
                                                                       \
-  _stat = &(_sum->func_stat[_sum->func_stat_num++]);                  \
-  _stat->rid  = _rid;                                                 \
-  _stat->cnt  = 0;                                                    \
-  _stat->excl = 0;                                                    \
-  _stat->incl = 0;                                                    \
+  _stat_idx = _sum->func_stat_num++;                                  \
+                                                                      \
+  _sum->func_stat[_stat_idx].rid  = _rid;                             \
+  _sum->func_stat[_stat_idx].cnt  = 0;                                \
+  _sum->func_stat[_stat_idx].excl = 0;                                \
+  _sum->func_stat[_stat_idx].incl = 0;                                \
 }
 
-#define VTSUM_MSG_STAT_ADD(_sum, _peer, _cid, _tag, _stat)            \
+#define VTSUM_MSG_STAT_ADD(_sum, _peer, _cid, _tag, _stat_idx)        \
 {                                                                     \
   if (_sum->msg_stat_num == _sum->msg_stat_size)                      \
   {                                                                   \
     _sum->msg_stat = (VTSum_msgStat*)realloc(_sum->msg_stat,          \
-				  (_sum->msg_stat_size                \
-				   + VTSUM_STAT_BSIZE)                \
-				  * sizeof(VTSum_msgStat));           \
+		       (_sum->msg_stat_size                           \
+		        + VTSUM_STAT_BSIZE)                           \
+		       * sizeof(VTSum_msgStat));                      \
     _sum->msg_stat_size += VTSUM_STAT_BSIZE;                          \
   }                                                                   \
                                                                       \
-  _stat = &(_sum->msg_stat[_sum->msg_stat_num++]);                    \
-  _stat->peer  = _peer;                                               \
-  _stat->cid   = _cid;                                                \
-  _stat->tag   = _tag;                                                \
-  _stat->scnt  = 0;                                                   \
-  _stat->rcnt  = 0;                                                   \
-  _stat->sent  = 0;                                                   \
-  _stat->recvd = 0;                                                   \
+  _stat_idx = _sum->msg_stat_num++;                                   \
+                                                                      \
+  _sum->msg_stat[_stat_idx].peer  = _peer;                            \
+  _sum->msg_stat[_stat_idx].cid   = _cid;                             \
+  _sum->msg_stat[_stat_idx].tag   = _tag;                             \
+  _sum->msg_stat[_stat_idx].scnt  = 0;                                \
+  _sum->msg_stat[_stat_idx].rcnt  = 0;                                \
+  _sum->msg_stat[_stat_idx].sent  = 0;                                \
+  _sum->msg_stat[_stat_idx].recvd = 0;                                \
 }
 
-#define VTSUM_FOP_STAT_ADD(_sum, _fid, _stat)                         \
+#define VTSUM_COLLOP_STAT_ADD(_sum, _rid, _cid, _stat_idx)            \
 {                                                                     \
-  if (_sum->fop_stat_num == _sum->fop_stat_size)                      \
+  if (_sum->collop_stat_num == _sum->collop_stat_size)                \
   {                                                                   \
-    _sum->fop_stat = (VTSum_fopStat*)realloc(_sum->fop_stat,          \
-				    (_sum->fop_stat_size              \
-				     + VTSUM_STAT_BSIZE)              \
-				    * sizeof(VTSum_fopStat));         \
-    _sum->fop_stat_size += VTSUM_STAT_BSIZE;                          \
+    _sum->collop_stat = (VTSum_collopStat*)realloc(_sum->collop_stat, \
+			  (_sum->collop_stat_size                     \
+			   + VTSUM_STAT_BSIZE)                        \
+			  * sizeof(VTSum_collopStat));                \
+    _sum->collop_stat_size += VTSUM_STAT_BSIZE;                       \
+  }						                      \
+                                                                      \
+  _stat_idx = _sum->collop_stat_num++;                                \
+                                                                      \
+  _sum->collop_stat[_stat_idx].rid   = _rid;                          \
+  _sum->collop_stat[_stat_idx].cid   = _cid;                          \
+  _sum->collop_stat[_stat_idx].scnt  = 0;                             \
+  _sum->collop_stat[_stat_idx].rcnt  = 0;                             \
+  _sum->collop_stat[_stat_idx].sent  = 0;                             \
+  _sum->collop_stat[_stat_idx].recvd = 0;                             \
+}
+
+#define VTSUM_FILEOP_STAT_ADD(_sum, _fid, _stat_idx)                  \
+{                                                                     \
+  if (_sum->fileop_stat_num == _sum->fileop_stat_size)                \
+  {                                                                   \
+    _sum->fileop_stat = (VTSum_fileopStat*)realloc(_sum->fileop_stat, \
+			  (_sum->fileop_stat_size                     \
+			   + VTSUM_STAT_BSIZE)                        \
+			  * sizeof(VTSum_fileopStat));                \
+    _sum->fileop_stat_size += VTSUM_STAT_BSIZE;                       \
   }                                                                   \
                                                                       \
-  _stat = &(_sum->fop_stat[_sum->fop_stat_num++]);                    \
-  _stat->fid    = _fid;                                               \
-  _stat->nopen  = 0;                                                  \
-  _stat->nclose = 0;                                                  \
-  _stat->nread  = 0;                                                  \
-  _stat->nwrite = 0;                                                  \
-  _stat->nseek  = 0;                                                  \
-  _stat->read   = 0;                                                  \
-  _stat->wrote  = 0;                                                  \
+  _stat_idx = _sum->fileop_stat_num++;                                \
+                                                                      \
+  _sum->fileop_stat[_stat_idx].fid    = _fid;                         \
+  _sum->fileop_stat[_stat_idx].nopen  = 0;                            \
+  _sum->fileop_stat[_stat_idx].nclose = 0;                            \
+  _sum->fileop_stat[_stat_idx].nread  = 0;                            \
+  _sum->fileop_stat[_stat_idx].nwrite = 0;                            \
+  _sum->fileop_stat[_stat_idx].nseek  = 0;                            \
+  _sum->fileop_stat[_stat_idx].read   = 0;                            \
+  _sum->fileop_stat[_stat_idx].wrote  = 0;                            \
 }
 
-#define VTSUM_STACK_PUSH(_sum, _stat, _time)                          \
+#define VTSUM_STACK_PUSH(_sum, _stat_idx, _time)                      \
 {                                                                     \
   if (_sum->stack_pos+1 == (int32_t)_sum->stack_size)                 \
   {                                                                   \
@@ -108,15 +136,16 @@
     _sum->stack_size += VTSUM_STACK_BSIZE;                            \
   }                                                                   \
                                                                       \
+  _sum->func_stat[_stat_idx].cnt++;                                   \
+                                                                      \
   _sum->stack_pos++;                                                  \
-  _sum->stack[_sum->stack_pos].stat = _stat;                          \
-  _sum->stack[_sum->stack_pos].stat->cnt++;                           \
+  _sum->stack[_sum->stack_pos].stat_idx = _stat_idx;                  \
   _sum->stack[_sum->stack_pos].hexcl = *_time;                        \
   _sum->stack[_sum->stack_pos].hincl = *_time;                        \
                                                                       \
   if (_sum->stack_pos > 0)                                            \
   {                                                                   \
-    _sum->stack[_sum->stack_pos-1].stat->excl +=                      \
+    _sum->func_stat[_sum->stack[_sum->stack_pos-1].stat_idx].excl +=  \
        (*_time - _sum->stack[_sum->stack_pos-1].hexcl);               \
   }                                                                   \
 }
@@ -126,11 +155,12 @@
   if (_sum->stack_pos == -1)                                          \
     vt_error_msg("Abort: Stack underflow");                           \
                                                                       \
+  _sum->func_stat[_sum->stack[_sum->stack_pos].stat_idx].excl +=      \
+     (*_time - _sum->stack[_sum->stack_pos].hexcl);                   \
+  _sum->func_stat[_sum->stack[_sum->stack_pos].stat_idx].incl +=      \
+     (*_time - _sum->stack[_sum->stack_pos].hincl);                   \
+                                                                      \
   _sum->stack_pos--;                                                  \
-  _sum->stack[_sum->stack_pos+1].stat->excl +=                        \
-     (*_time - _sum->stack[_sum->stack_pos+1].hexcl);                 \
-  _sum->stack[_sum->stack_pos+1].stat->incl +=                        \
-     (*_time - _sum->stack[_sum->stack_pos+1].hincl);                 \
   if (_sum->stack_pos != -1)                                          \
      _sum->stack[_sum->stack_pos].hexcl = *_time;                     \
 }
@@ -138,23 +168,12 @@
 #define VT_CHECK_DUMP(_sum, _time)                                    \
   if (*_time >= _sum->next_dump) VTSum_dump(_sum, 1);
 
-
-/* Robert Jenkins' 96 bit mix function */
-/* (http://www.cris.com/~Ttwang/tech/inthash.htm) */
-
-#define RJ96MIX(a, b, c, h)                                           \
-{                                                                     \
-  a=a-b;  a=a-c;  a=a^(c >> 13);                                      \
-  b=b-c;  b=b-a;  b=b^(a << 8);                                       \
-  c=c-a;  c=c-b;  c=c^(b >> 13);                                      \
-  a=a-b;  a=a-c;  a=a^(c >> 12);                                      \
-  b=b-c;  b=b-a;  b=b^(a << 16);                                      \
-  c=c-a;  c=c-b;  c=c^(b >> 5);                                       \
-  a=a-b;  a=a-c;  a=a^(c >> 3);                                       \
-  b=b-c;  b=b-a;  b=b^(a << 10);                                      \
-  c=c-a;  c=c-b;  c=c^(b >> 15);                                      \
-  h=c;                                                                \
-}
+#define VTSUM_IS_PROP_ON(_sum, _prop) \
+  ((_sum->props & _prop) != 0)
+#define VTSUM_IS_MSG_DTL_ON(_sum, _dtl) \
+  ((_sum->msg_stat_dtls & _dtl) != 0)
+#define VTSUM_IS_COLLOP_DTL_ON(_sum, _dtl) \
+  ((_sum->collop_stat_dtls & _dtl) != 0)
 
 /*
  *-----------------------------------------------------------------------------
@@ -185,6 +204,18 @@ typedef struct
   uint64_t         recvd;
 } VTSum_msgStat;
 
+/* Data structure for collective operation statistics */
+
+typedef struct
+{
+  uint32_t         rid;
+  uint32_t         cid;
+  uint64_t         scnt;
+  uint64_t         rcnt;
+  uint64_t         sent; 
+  uint64_t         recvd;
+} VTSum_collopStat;
+
 /* Data structure for file operation statistic */
 
 typedef struct
@@ -197,7 +228,7 @@ typedef struct
   uint64_t         nseek;
   uint64_t         read;
   uint64_t         wrote;
-} VTSum_fopStat;
+} VTSum_fileopStat;
 
 /* Data structure for call stack */
 
@@ -205,79 +236,102 @@ typedef struct
 {
   uint64_t         hexcl;
   uint64_t         hincl;
-  VTSum_funcStat*  stat;
+  uint64_t         stat_idx;
 } VTSum_stack;
+
+/* Hash table to map function ids to statistic */
+
+typedef struct HN_func
+{
+  uint32_t id;              /* hash code (identifier of region) */
+  uint64_t stat_idx;        /* index of associated statistic    */
+  struct HN_func* next;
+} VTSum_funcHashNode;
+
+/* Hash table to map message peer, comm, and tag to statistic */
+
+typedef struct HN_msg
+{
+  uint32_t peer, cid, tag;  /* peer, comm, tag of message    */
+  uint64_t stat_idx;        /* index of associated statistic */
+  struct HN_msg* next;
+} VTSum_msgHashNode;
+
+/* Hash table to map collop and comm to statistic */
+
+typedef struct HN_collop
+{
+  uint32_t rid, cid;        /* op, comm of collective op.    */
+  uint64_t stat_idx;        /* index of associated statistic */
+  struct HN_collop* next;
+} VTSum_collopHashNode;
+
+/* Hash table to map file op. ids to statistic */
+
+typedef struct HN_fileop
+{
+  uint32_t id;              /* hash code (identifier of file op.) */
+  uint64_t stat_idx;        /* index of associated statistic      */
+  struct HN_fileop* next;
+} VTSum_fileopHashNode;
 
 /* VTSum record */
 
 struct VTSum_struct
 {
-  VTGen*           gen;
-  VTSum_stack*     stack;
-  VTSum_funcStat*  func_stat;
-  VTSum_msgStat*   msg_stat;
-  VTSum_fopStat*   fop_stat;
-  uint32_t         stack_size;
-  int32_t          stack_pos;
-  uint64_t         func_stat_size;
-  uint64_t         func_stat_num;
-  uint64_t         msg_stat_size;
-  uint64_t         msg_stat_num;
-  uint64_t         fop_stat_size;
-  uint64_t         fop_stat_num;
-  uint64_t         next_dump;
+  VTGen*                 gen;
+
+  VTSum_funcStat*        func_stat;
+  VTSum_funcHashNode**   func_stat_htab;
+  VTSum_stack*           stack;
+  uint64_t               func_stat_size;
+  uint64_t               func_stat_num;
+  uint32_t               stack_size;
+  int32_t                stack_pos;
+
+  VTSum_msgStat*         msg_stat;
+  VTSum_msgHashNode**    msg_stat_htab;
+  uint64_t               msg_stat_size;
+  uint64_t               msg_stat_num;
+  uint8_t                msg_stat_dtls;
+
+  VTSum_collopStat*      collop_stat;
+  VTSum_collopHashNode** collop_stat_htab;
+  uint64_t               collop_stat_size;
+  uint64_t               collop_stat_num;
+  uint8_t                collop_stat_dtls;
+
+  VTSum_fileopStat*      fileop_stat;
+  VTSum_fileopHashNode** fileop_stat_htab;
+  uint64_t               fileop_stat_size;
+  uint64_t               fileop_stat_num;
+
+  uint64_t               intv;
+  uint64_t               next_dump;
+  uint8_t                props;
 };
 
 /* Summary interval */
 static uint64_t SumIntv = 0;
 
-/* Hash table to map function ids to statistic */
+/* Stores index of function statistic `stat_idx' under hash code `h' */
 
-typedef struct HN_func {
-  uint32_t id;            /* hash code (identifier of region) */
-  VTSum_funcStat* stat;   /* associated statistic             */
-  struct HN_func* next;
-} HashNode_func;
-
-/* Hash table to map message peer, comm, and tag to statistic */
-
-typedef struct HN_msg {
-  uint32_t id;              /* hash code (generated by RJ96MIX) */
-  uint32_t peer, cid, tag;  /* peer, comm, tag of message       */
-  VTSum_msgStat* stat;      /* associated statistic             */
-  struct HN_msg* next;
-} HashNode_msg;
-
-/* Hash table to map file op. ids to statistic */
-
-typedef struct HN_fop {
-  uint32_t id;            /* hash code (identifier of file op.) */
-  VTSum_fopStat* stat;    /* associated statistic               */
-  struct HN_fop* next;
-} HashNode_fop;
-
-#define HASH_MAX 1021
-static HashNode_func* htab_func[HASH_MAX];
-static HashNode_msg*  htab_msg[HASH_MAX];
-static HashNode_fop*  htab_fop[HASH_MAX];
-
-/* Stores function statistic `stat' under hash code `h' */
-
-static void hash_put_func(uint32_t h, VTSum_funcStat* stat) {
-  uint32_t id = h % HASH_MAX;
-  HashNode_func *add = (HashNode_func*)malloc(sizeof(HashNode_func));
+static void hash_put_func(VTSum* sum, uint32_t h, uint64_t stat_idx) {
+  uint32_t id = h % VTSUM_HASH_MAX;
+  VTSum_funcHashNode* add =
+    (VTSum_funcHashNode*)malloc(sizeof(VTSum_funcHashNode));
   add->id = h;
-  add->stat = stat;
-  add->next = htab_func[id];
-  htab_func[id] = add;
+  add->stat_idx = stat_idx;
+  add->next = sum->func_stat_htab[id];
+  sum->func_stat_htab[id] = add;
 }
 
 /* Lookup hash code `h'
  * Returns hash table entry if already stored, otherwise NULL */
 
-static HashNode_func* hash_get_func(uint32_t h) {
-  uint32_t id = h % HASH_MAX;
-  HashNode_func *curr = htab_func[id];
+static VTSum_funcHashNode* hash_get_func(VTSum* sum, uint32_t h) {
+  uint32_t id = h % VTSUM_HASH_MAX;
+  VTSum_funcHashNode* curr = sum->func_stat_htab[id];
   while ( curr ) {
     if ( curr->id == h ) {
       return curr;
@@ -287,38 +341,68 @@ static HashNode_func* hash_get_func(uint32_t h) {
   return NULL;
 }
 
-/* Stores message statistic `stat' under hash code input `peer',`cid',`tag' */
+/* Clear hash table for function statistics */
 
-static void hash_put_msg(uint32_t peer, uint32_t cid, uint32_t tag,
-			 VTSum_msgStat* stat)
+static void hash_clear_func(VTSum* sum) {
+  int i;
+  VTSum_funcHashNode* tmp;
+
+  if (!sum->func_stat_htab) return;
+
+  for (i = 0; i < VTSUM_HASH_MAX; i++)
+  {
+    while( sum->func_stat_htab[i] )
+    {
+      tmp = sum->func_stat_htab[i]->next;
+      free(sum->func_stat_htab[i]);
+      sum->func_stat_htab[i] = tmp;
+    }
+  }
+
+  free(sum->func_stat_htab);
+}
+
+/* Stores index of message statistic `stat_idx' under hash code
+   input `peer',`cid',`tag' */
+
+static void hash_put_msg(VTSum* sum, uint32_t peer, uint32_t cid, uint32_t tag,
+			 uint64_t stat_idx)
 {
   uint32_t id;
-  uint32_t h;
-  uint32_t a=peer, b=cid, c=tag;
-  HashNode_msg *add = (HashNode_msg*)malloc(sizeof(HashNode_msg));
-  RJ96MIX(a,b,c,h);
-  id = h % HASH_MAX;
-  add->id = h;
-  add->peer = peer;
-  add->cid  = cid;
-  add->tag  = tag;
-  add->stat = stat;
-  add->next = htab_msg[id];
-  htab_msg[id] = add;
+  VTSum_msgHashNode* add;
+
+  id = 0;
+  if ( peer > 0 ) id = vt_hash((uint8_t*)&peer, sizeof(uint32_t), id);
+  if ( cid > 0 )  id = vt_hash((uint8_t*)&cid,  sizeof(uint32_t), id);
+  if ( tag > 0 )  id = vt_hash((uint8_t*)&tag,  sizeof(uint32_t), id);
+  id %= VTSUM_HASH_MAX;
+
+  add = (VTSum_msgHashNode*)malloc(sizeof(VTSum_msgHashNode));
+  add->peer     = peer;
+  add->cid      = cid;
+  add->tag      = tag;
+  add->stat_idx = stat_idx;
+  add->next     = sum->msg_stat_htab[id];
+  sum->msg_stat_htab[id] = add;
 }
 
 /* Lookup hash code input `peer',`cid',`tag'
  * Returns hash table entry if already stored, otherwise NULL */
 
-static HashNode_msg* hash_get_msg(uint32_t peer, uint32_t cid, uint32_t tag) {
-  uint32_t h;
-  uint32_t a=peer, b=cid, c=tag;
-  HashNode_msg *curr;
-  RJ96MIX(a,b,c,h);
-  curr = htab_msg[h % HASH_MAX];
+static VTSum_msgHashNode* hash_get_msg(VTSum* sum, uint32_t peer, uint32_t cid,
+				       uint32_t tag) {
+  uint32_t id;
+  VTSum_msgHashNode* curr;
+
+  id = 0;
+  if ( peer > 0 ) id = vt_hash((uint8_t*)&peer, sizeof(uint32_t), id);
+  if ( cid > 0 )  id = vt_hash((uint8_t*)&cid,  sizeof(uint32_t), id);
+  if ( tag > 0 )  id = vt_hash((uint8_t*)&tag,  sizeof(uint32_t), id);
+  id %= VTSUM_HASH_MAX;
+
+  curr = sum->msg_stat_htab[id];
   while ( curr ) {
-    if ( curr->id == h &&
-	 curr->peer == peer &&
+    if ( curr->peer == peer &&
 	 curr->cid == cid &&
 	 curr->tag == tag ) {
        return curr;
@@ -328,23 +412,111 @@ static HashNode_msg* hash_get_msg(uint32_t peer, uint32_t cid, uint32_t tag) {
   return NULL;
 }
 
-/* Stores file operation statistic `stat' under hash code `h' */
+/* Clear hash table for message statistics */
 
-static void hash_put_fop(uint32_t h, VTSum_fopStat* stat) {
-  uint32_t id = h % HASH_MAX;
-  HashNode_fop *add = (HashNode_fop*)malloc(sizeof(HashNode_fop));
-  add->id = h;
-  add->stat = stat;
-  add->next = htab_fop[id];
-  htab_fop[id] = add;
+static void hash_clear_msg(VTSum* sum) {
+  int i;
+  VTSum_msgHashNode* tmp;
+
+  if (!sum->msg_stat_htab) return;
+
+  for (i = 0; i < VTSUM_HASH_MAX; i++)
+  {
+    while( sum->msg_stat_htab[i] )
+    {
+      tmp = sum->msg_stat_htab[i]->next;
+      free(sum->msg_stat_htab[i]);
+      sum->msg_stat_htab[i] = tmp;
+    }
+  }
+
+  free(sum->msg_stat_htab);
+}
+
+/* Stores index of collective operation statistic `stat_idx' under hash code
+   input `rid',`cid', */
+
+static void hash_put_collop(VTSum* sum, uint32_t rid, uint32_t cid,
+			    uint64_t stat_idx) {
+  uint32_t id;
+  VTSum_collopHashNode* add;
+
+  id = 0;
+  if ( rid > 0 ) id = vt_hash((uint8_t*)&rid, sizeof(uint32_t), id);
+  if ( cid > 0 ) id = vt_hash((uint8_t*)&cid, sizeof(uint32_t), id);
+  id %= VTSUM_HASH_MAX;
+
+  add = (VTSum_collopHashNode*)malloc(sizeof(VTSum_collopHashNode));
+  add->rid        = rid;
+  add->cid        = cid;
+  add->stat_idx   = stat_idx;
+  add->next       = sum->collop_stat_htab[id];
+  sum->collop_stat_htab[id] = add;
 }
 
 /* Lookup hash code `h'
  * Returns hash table entry if already stored, otherwise NULL */
 
-static HashNode_fop* hash_get_fop(uint32_t h) {
-  uint32_t id = h % HASH_MAX;
-  HashNode_fop *curr = htab_fop[id];
+static VTSum_collopHashNode* hash_get_collop(VTSum* sum, uint32_t rid,
+					     uint32_t cid) {
+  uint32_t id;
+  VTSum_collopHashNode* curr;
+
+  id = 0;
+  if ( rid > 0 ) id = vt_hash((uint8_t*)&rid, sizeof(uint32_t), id);
+  if ( cid > 0 ) id = vt_hash((uint8_t*)&cid, sizeof(uint32_t), id);
+  id %= VTSUM_HASH_MAX;
+
+  curr = sum->collop_stat_htab[id];
+  while ( curr ) {
+    if ( curr->rid == rid &&
+	 curr->cid == cid ) {
+       return curr;
+    }
+    curr = curr->next;
+  }
+  return NULL;
+}
+
+/* Clear hash table for collective operation statistics */
+
+static void hash_clear_collop(VTSum* sum) {
+  int i;
+  VTSum_collopHashNode* tmp;
+
+  if (!sum->collop_stat_htab) return;
+
+  for (i = 0; i < VTSUM_HASH_MAX; i++)
+  {
+    while( sum->collop_stat_htab[i] )
+    {
+      tmp = sum->collop_stat_htab[i]->next;
+      free(sum->collop_stat_htab[i]);
+      sum->collop_stat_htab[i] = tmp;
+    }
+  }
+
+  free(sum->collop_stat_htab);
+}
+
+/* Stores index of file operation statistic `stat_idx' under hash code `h' */
+
+static void hash_put_fileop(VTSum* sum, uint32_t h, uint64_t stat_idx) {
+  uint32_t id = h % VTSUM_HASH_MAX;
+  VTSum_fileopHashNode* add =
+    (VTSum_fileopHashNode*)malloc(sizeof(VTSum_fileopHashNode));
+  add->id       = h;
+  add->stat_idx = stat_idx;
+  add->next     = sum->fileop_stat_htab[id];
+  sum->fileop_stat_htab[id] = add;
+}
+
+/* Lookup hash code `h'
+ * Returns hash table entry if already stored, otherwise NULL */
+
+static VTSum_fileopHashNode* hash_get_fileop(VTSum* sum, uint32_t h) {
+  uint32_t id = h % VTSUM_HASH_MAX;
+  VTSum_fileopHashNode* curr = sum->fileop_stat_htab[id];
   while ( curr ) {
     if ( curr->id == h ) {
       return curr;
@@ -354,10 +526,31 @@ static HashNode_fop* hash_get_fop(uint32_t h) {
   return NULL;
 }
 
+/* Clear hash table for file operation statistics */
 
-VTSum* VTSum_open(VTGen* gen, uint32_t intv)
+static void hash_clear_fileop(VTSum* sum) {
+  int i;
+  VTSum_fileopHashNode* tmp;
+
+  if (!sum->fileop_stat_htab) return;
+
+  for (i = 0; i < VTSUM_HASH_MAX; i++)
+  {
+    while( sum->fileop_stat_htab[i] )
+    {
+      tmp = sum->fileop_stat_htab[i]->next;
+      free(sum->fileop_stat_htab[i]);
+      sum->fileop_stat_htab[i] = tmp;
+    }
+  }
+
+  free(sum->fileop_stat_htab);
+}
+
+VTSum* VTSum_open(VTGen* gen)
 {
   VTSum* sum;
+  uint32_t intv = (uint32_t)vt_env_stat_intv();
 
   /* allocate VTSum record */
 
@@ -368,40 +561,104 @@ VTSum* VTSum_open(VTGen* gen, uint32_t intv)
   /* set pointer to corresponding VTGen record */
   sum->gen = gen;
 
-  /* initialize call stack */
+  /* initialize statistics properties */
+  sum->props = (uint8_t)vt_env_stat_props();
 
-  sum->stack = (VTSum_stack*)malloc(VTSUM_STACK_BSIZE * sizeof(VTSum_stack));
-  if (sum->stack == NULL)
-    vt_error();
-  sum->stack_size = VTSUM_STACK_BSIZE;
-  sum->stack_pos = -1;
+  if (VTSUM_IS_PROP_ON(sum, VT_SUM_PROP_FUNC))
+  {
+    /* initialize function statistics */
 
-  /* initialize function statistics */
+    sum->func_stat = (VTSum_funcStat*)malloc(VTSUM_STAT_BSIZE
+					     * sizeof(VTSum_funcStat));
+    if (sum->func_stat == NULL)
+      vt_error();
+    sum->func_stat_size = VTSUM_STAT_BSIZE;
+    sum->func_stat_num = 0;
 
-  sum->func_stat = (VTSum_funcStat*)malloc(VTSUM_STAT_BSIZE
-					   * sizeof(VTSum_funcStat));
-  if (sum->func_stat == NULL)
-    vt_error();
-  sum->func_stat_size = VTSUM_STAT_BSIZE;
-  sum->func_stat_num = 0;
+    /* initialize hash table for function statistics */
 
-  /* initialize message statistics */
+    sum->func_stat_htab =
+      (VTSum_funcHashNode**)calloc(VTSUM_HASH_MAX,
+				   sizeof(VTSum_funcHashNode*));
+    if (sum->func_stat_htab == NULL)
+      vt_error();
 
-  sum->msg_stat = (VTSum_msgStat*)malloc(VTSUM_STAT_BSIZE
-					 * sizeof(VTSum_msgStat));
-  if (sum->msg_stat == NULL)
-    vt_error();
-  sum->msg_stat_size = VTSUM_STAT_BSIZE;
-  sum->msg_stat_num = 0;
+    /* initialize call stack */
 
-  /* initialize file operation statistics */
+    sum->stack = (VTSum_stack*)malloc(VTSUM_STACK_BSIZE * sizeof(VTSum_stack));
+    if (sum->stack == NULL)
+      vt_error();
+    sum->stack_size = VTSUM_STACK_BSIZE;
+    sum->stack_pos = -1;
+  }
 
-  sum->fop_stat = (VTSum_fopStat*)malloc(VTSUM_STAT_BSIZE
-					 * sizeof(VTSum_fopStat));
-  if (sum->fop_stat == NULL)
-    vt_error();
-  sum->fop_stat_size = VTSUM_STAT_BSIZE;
-  sum->fop_stat_num = 0;
+  if (VTSUM_IS_PROP_ON(sum, VT_SUM_PROP_MSG))
+  {
+    /* initialize message statistics */
+     
+    sum->msg_stat = (VTSum_msgStat*)malloc(VTSUM_STAT_BSIZE
+					   * sizeof(VTSum_msgStat));
+    if (sum->msg_stat == NULL)
+      vt_error();
+    sum->msg_stat_size = VTSUM_STAT_BSIZE;
+    sum->msg_stat_num = 0;
+
+    /* initialize hash table for message statistics */
+    
+    sum->msg_stat_htab =
+      (VTSum_msgHashNode**)calloc(VTSUM_HASH_MAX,
+				  sizeof(VTSum_msgHashNode*));
+    if (sum->msg_stat_htab == NULL)
+      vt_error();
+
+    /* initialize message statistics details */
+
+    sum->msg_stat_dtls = (uint8_t)vt_env_stat_msg_dtls();
+  }
+
+  if (VTSUM_IS_PROP_ON(sum, VT_SUM_PROP_COLLOP))
+  {
+    /* initialize collective operation statistics */
+  
+    sum->collop_stat = (VTSum_collopStat*)malloc(VTSUM_STAT_BSIZE
+						 * sizeof(VTSum_collopStat));
+    if (sum->collop_stat == NULL)
+      vt_error();
+    sum->collop_stat_size = VTSUM_STAT_BSIZE;
+    sum->collop_stat_num = 0;
+
+    /* initialize hash table for collective operation statistics */
+    
+    sum->collop_stat_htab =
+      (VTSum_collopHashNode**)calloc(VTSUM_HASH_MAX,
+				     sizeof(VTSum_collopHashNode*));
+    if (sum->collop_stat_htab == NULL)
+      vt_error();
+
+    /* initialize collective operation statistics details */
+
+    sum->collop_stat_dtls = (uint8_t)vt_env_stat_collop_dtls();
+  }
+
+  if (VTSUM_IS_PROP_ON(sum, VT_SUM_PROP_FILEOP))
+  {
+    /* initialize file operation statistics */
+
+    sum->fileop_stat = (VTSum_fileopStat*)malloc(VTSUM_STAT_BSIZE
+						 * sizeof(VTSum_fileopStat));
+    if (sum->fileop_stat == NULL)
+      vt_error();
+    sum->fileop_stat_size = VTSUM_STAT_BSIZE;
+    sum->fileop_stat_num = 0;
+
+    /* initialize hash table for file operation statistics */
+
+    sum->fileop_stat_htab =
+      (VTSum_fileopHashNode**)calloc(VTSUM_HASH_MAX,
+				     sizeof(VTSum_fileopHashNode*));
+    if (sum->fileop_stat_htab == NULL)
+      vt_error();
+  }
 
   /* set summary interval */
 
@@ -431,42 +688,67 @@ void VTSum_dump(VTSum* sum, uint8_t markDump)
 
   /* dump function statistics */
 
-  for(i=0; i < sum->func_stat_num; i++)
+  if (VTSUM_IS_PROP_ON(sum, VT_SUM_PROP_FUNC))
   {
-    VTGen_write_FUNCTION_SUMMARY(sum->gen, &time,
-      sum->func_stat[i].rid,
-      sum->func_stat[i].cnt,
-      sum->func_stat[i].excl,
-      sum->func_stat[i].incl);
+    for(i = 0; i < sum->func_stat_num; i++)
+    {
+      VTGen_write_FUNCTION_SUMMARY(sum->gen, &time,
+	sum->func_stat[i].rid,
+	sum->func_stat[i].cnt,
+	sum->func_stat[i].excl,
+	sum->func_stat[i].incl);
+    }
   }
 
   /* dump message statistics */
 
-  for(i=0; i < sum->msg_stat_num; i++)
+  if (VTSUM_IS_PROP_ON(sum, VT_SUM_PROP_MSG))
   {
-    VTGen_write_MESSAGE_SUMMARY(sum->gen, &time,
-      sum->msg_stat[i].peer,
-      sum->msg_stat[i].cid,
-      sum->msg_stat[i].tag,
-      sum->msg_stat[i].scnt,
-      sum->msg_stat[i].rcnt,
-      sum->msg_stat[i].sent,
-      sum->msg_stat[i].recvd);
+    for(i = 0; i < sum->msg_stat_num; i++)
+    {
+      VTGen_write_MESSAGE_SUMMARY(sum->gen, &time,
+	sum->msg_stat[i].peer,
+	sum->msg_stat[i].cid,
+	sum->msg_stat[i].tag,
+	sum->msg_stat[i].scnt,
+	sum->msg_stat[i].rcnt,
+	sum->msg_stat[i].sent,
+	sum->msg_stat[i].recvd);
+    }
+  }
+
+  /* dump collective operation statistics */
+
+  if (VTSUM_IS_PROP_ON(sum, VT_SUM_PROP_COLLOP))
+  {
+    for(i = 0; i < sum->collop_stat_num; i++)
+    {
+      VTGen_write_COLLECTIVE_OPERATION_SUMMARY(sum->gen, &time,
+	sum->collop_stat[i].cid,
+	sum->collop_stat[i].rid,
+	sum->collop_stat[i].scnt,
+	sum->collop_stat[i].rcnt,
+	sum->collop_stat[i].sent,
+	sum->collop_stat[i].recvd);
+    }
   }
 
   /* dump file operation statistics */
 
-  for(i=0; i < sum->fop_stat_num; i++)
+  if (VTSUM_IS_PROP_ON(sum, VT_SUM_PROP_FILEOP))
   {
-    VTGen_write_FILE_OPERATION_SUMMARY(sum->gen, &time,
-      sum->fop_stat[i].fid,
-      sum->fop_stat[i].nopen,
-      sum->fop_stat[i].nclose,
-      sum->fop_stat[i].nread,
-      sum->fop_stat[i].nwrite,
-      sum->fop_stat[i].nseek,
-      sum->fop_stat[i].read,
-      sum->fop_stat[i].wrote);
+    for(i = 0; i < sum->fileop_stat_num; i++)
+    {
+      VTGen_write_FILE_OPERATION_SUMMARY(sum->gen, &time,
+	sum->fileop_stat[i].fid,
+        sum->fileop_stat[i].nopen,
+        sum->fileop_stat[i].nclose,
+	sum->fileop_stat[i].nread,
+	sum->fileop_stat[i].nwrite,
+	sum->fileop_stat[i].nseek,
+	sum->fileop_stat[i].read,
+	sum->fileop_stat[i].wrote);
+    }
   }
 
   time = vt_pform_wtime();
@@ -481,20 +763,53 @@ void VTSum_dump(VTSum* sum, uint8_t markDump)
 
 void VTSum_close(VTSum* sum)
 {
-  /* dump summaries */
+  /* dump statistics */
   VTSum_dump(sum, 0);
+}
 
-  /* free call stack */
-  free(sum->stack);
+void VTSum_delete(VTSum* sum)
+{
+  if (VTSUM_IS_PROP_ON(sum, VT_SUM_PROP_FUNC))
+  {
+    /* free function statistics */
+    free(sum->func_stat);
 
-  /* free function statistics */
-  free(sum->func_stat);
+    /* free hash table for function statistics */
+    hash_clear_func(sum);
 
-  /* free message statistics */
-  free(sum->msg_stat);
+    /* free call stack */
+    free(sum->stack);
+  }
 
-  /* free file operation statistics */
-  free(sum->fop_stat);
+  if (VTSUM_IS_PROP_ON(sum, VT_SUM_PROP_MSG))
+  {
+    /* free message statistics */
+    free(sum->msg_stat);
+
+    /* free hash table for message statistics */
+    hash_clear_msg(sum);
+  }
+
+  if (VTSUM_IS_PROP_ON(sum, VT_SUM_PROP_COLLOP))
+  {
+    /* free collective operation statistics */
+    free(sum->collop_stat);
+
+    /* free hash table for collective operation statistics */
+    hash_clear_collop(sum);
+  }
+
+  if (VTSUM_IS_PROP_ON(sum, VT_SUM_PROP_FILEOP))
+  {
+    /* free file operation statistics */
+    free(sum->fileop_stat);
+
+    /* free hash table for file operation statistics */
+    hash_clear_fileop(sum);
+  }
+
+  /* free sum record */
+  free(sum);
 }
 
 
@@ -502,22 +817,22 @@ void VTSum_close(VTSum* sum)
 
 void VTSum_enter(VTSum* sum, uint64_t* time, uint32_t rid)
 {
-  HashNode_func* hn;
-  VTSum_funcStat* stat = NULL;
+  uint64_t stat_idx;
+  VTSum_funcHashNode* hn;
 
   VTSUM_CHECK(sum);
 
-  if ( (hn = hash_get_func(rid)) )
+  if ( (hn = hash_get_func(sum, rid)) )
   {
-    stat = hn->stat;
+    stat_idx = hn->stat_idx;
   }
   else
   {
-    VTSUM_FUNC_STAT_ADD(sum, rid, stat);
-    hash_put_func(rid, stat);
+    VTSUM_FUNC_STAT_ADD(sum, rid, stat_idx);
+    hash_put_func(sum, rid, stat_idx);
   }
 
-  VTSUM_STACK_PUSH(sum, stat, time);
+  VTSUM_STACK_PUSH(sum, stat_idx, time);
 
   VT_CHECK_DUMP(sum, time);
 }
@@ -534,47 +849,101 @@ void VTSum_exit(VTSum* sum, uint64_t* time, uint32_t rid)
 
 /* -- Message -- */
 
-#define VTSum_mpi(_sum, _time, _peer, _cid, _tag, _stat)    \
+#define VTSum_msg(_sum, _peer, _cid, _tag, _stat_idx)       \
 {                                                           \
-  HashNode_msg* hn;                                         \
+  VTSum_msgHashNode* hn;                                    \
                                                             \
-  if ( (hn = hash_get_msg(_peer, _cid, _tag)) )             \
+  if ( (hn = hash_get_msg(_sum, _peer, _cid, _tag)) )       \
   {                                                         \
-    _stat = hn->stat;                                       \
+    _stat_idx = hn->stat_idx;                               \
   }                                                         \
   else                                                      \
   {                                                         \
-    VTSUM_MSG_STAT_ADD(_sum, _peer, _cid, _tag, _stat);     \
-    hash_put_msg(_peer, _cid, _tag, _stat);                 \
+    VTSUM_MSG_STAT_ADD(_sum, _peer, _cid, _tag, _stat_idx); \
+    hash_put_msg(_sum, _peer, _cid, _tag, _stat_idx);       \
   }                                                         \
 }
 
-void VTSum_mpi_send(VTSum* sum, uint64_t* time, uint32_t dpid, uint32_t cid,
+void VTSum_msg_send(VTSum* sum, uint64_t* time, uint32_t dpid, uint32_t cid,
 		    uint32_t tag, uint64_t sent)
 {
-  VTSum_msgStat* stat;
+  uint64_t stat_idx;
+  uint32_t ldpid;
+  uint32_t lcid;
+  uint32_t ltag;
 
   VTSUM_CHECK(sum);
-
-  VTSum_mpi(sum, time, dpid, cid, tag, stat);
   
-  stat->scnt++;
-  stat->sent += sent;
+  ldpid = VTSUM_IS_MSG_DTL_ON(sum, VT_SUM_MSG_DTL_PEER) ? dpid : 0;
+  lcid  = VTSUM_IS_MSG_DTL_ON(sum, VT_SUM_MSG_DTL_COMM) ? cid  : 0;
+  ltag  = VTSUM_IS_MSG_DTL_ON(sum, VT_SUM_MSG_DTL_TAG)  ? tag  : 0;
+
+  VTSum_msg(sum, ldpid, lcid, ltag, stat_idx);
+
+  sum->msg_stat[stat_idx].scnt++;
+  sum->msg_stat[stat_idx].sent += sent;
   
   VT_CHECK_DUMP(sum, time);
 }
 
-void VTSum_mpi_recv(VTSum* sum, uint64_t* time, uint32_t spid, uint32_t cid,
+void VTSum_msg_recv(VTSum* sum, uint64_t* time, uint32_t spid, uint32_t cid,
 		    uint32_t tag, uint64_t recvd)
 {
-  VTSum_msgStat* stat;
+  uint64_t stat_idx;
+  uint32_t lspid;
+  uint32_t lcid;
+  uint32_t ltag;
 
   VTSUM_CHECK(sum);
   
-  VTSum_mpi(sum, time, spid, cid, tag, stat);
+  lspid = VTSUM_IS_MSG_DTL_ON(sum, VT_SUM_MSG_DTL_PEER) ? spid : 0;
+  lcid  = VTSUM_IS_MSG_DTL_ON(sum, VT_SUM_MSG_DTL_COMM) ? cid  : 0;
+  ltag  = VTSUM_IS_MSG_DTL_ON(sum, VT_SUM_MSG_DTL_TAG)  ? tag  : 0;
 
-  stat->rcnt++;
-  stat->recvd += recvd;
+  VTSum_msg(sum, lspid, lcid, ltag, stat_idx);
+
+  sum->msg_stat[stat_idx].rcnt++;
+  sum->msg_stat[stat_idx].recvd += recvd;
+  
+  VT_CHECK_DUMP(sum, time);
+}
+
+
+/* -- Collop -- */
+
+void VTSum_collop(VTSum* sum, uint64_t* time, uint32_t rid, uint32_t cid,
+		  uint64_t sent, uint64_t recvd)
+{
+  uint64_t stat_idx;
+  uint32_t lrid;
+  uint32_t lcid;
+  VTSum_collopHashNode* hn;
+
+  VTSUM_CHECK(sum);
+
+  lrid = VTSUM_IS_COLLOP_DTL_ON(sum, VT_SUM_COLLOP_DTL_OP)   ? rid : 0;
+  lcid = VTSUM_IS_COLLOP_DTL_ON(sum, VT_SUM_COLLOP_DTL_COMM) ? cid : 0;
+
+  if ( (hn = hash_get_collop(sum, lrid, lcid)) )
+  {
+    stat_idx = hn->stat_idx;
+  }
+  else
+  {
+    VTSUM_COLLOP_STAT_ADD(sum, lrid, lcid, stat_idx);
+    hash_put_collop(sum, lrid, lcid, stat_idx);
+  }
+  
+  if ( sent > 0 )
+  {
+    sum->collop_stat[stat_idx].scnt++;
+    sum->collop_stat[stat_idx].sent += sent;
+  }
+  if ( recvd > 0 )
+  {
+    sum->collop_stat[stat_idx].rcnt++;
+    sum->collop_stat[stat_idx].recvd += recvd;
+  }
   
   VT_CHECK_DUMP(sum, time);
 }
@@ -582,84 +951,84 @@ void VTSum_mpi_recv(VTSum* sum, uint64_t* time, uint32_t spid, uint32_t cid,
 
 /* -- File I/O -- */
 
-#define VTSum_fop(_sum, _time, _fid, _stat)                 \
+#define VTSum_fileop(_sum, _fid, _stat_idx)                 \
 {                                                           \
-  HashNode_fop* hn;                                         \
+  VTSum_fileopHashNode* hn;                                 \
                                                             \
-  if ( (hn = hash_get_fop(_fid)) )                          \
+  if ( (hn = hash_get_fileop(_sum, _fid)) )                 \
   {                                                         \
-    _stat = hn->stat;                                       \
+    _stat_idx = hn->stat_idx;                               \
   }                                                         \
   else                                                      \
   {                                                         \
-    VTSUM_FOP_STAT_ADD(_sum, _fid, _stat);                  \
-    hash_put_fop(_fid, _stat);                              \
+    VTSUM_FILEOP_STAT_ADD(_sum, _fid, _stat_idx);           \
+    hash_put_fileop(_sum, _fid, _stat_idx);                 \
   }                                                         \
 }
 
-void VTSum_fop_open(VTSum* sum, uint64_t* time, uint32_t fid)
+void VTSum_fileop_open(VTSum* sum, uint64_t* time, uint32_t fid)
 {
-  VTSum_fopStat* stat = NULL;
+  uint64_t stat_idx;
 
   VTSUM_CHECK(sum);
 
-  VTSum_fop(sum, time, fid, stat);
+  VTSum_fileop(sum, fid, stat_idx);
 
-  stat->nopen++;
+  sum->fileop_stat[stat_idx].nopen++;
 
   VT_CHECK_DUMP(sum, time);
 }
 
-void VTSum_fop_close(VTSum* sum, uint64_t* time, uint32_t fid)
+void VTSum_fileop_close(VTSum* sum, uint64_t* time, uint32_t fid)
 {
-  VTSum_fopStat* stat = NULL;
+  uint64_t stat_idx;
 
   VTSUM_CHECK(sum);
 
-  VTSum_fop(sum, time, fid, stat);
+  VTSum_fileop(sum, fid, stat_idx);
 
-  stat->nclose++;
+  sum->fileop_stat[stat_idx].nclose++;
 
   VT_CHECK_DUMP(sum, time);
 }
 
-void VTSum_fop_read(VTSum* sum, uint64_t* time, uint32_t fid, uint64_t read)
+void VTSum_fileop_read(VTSum* sum, uint64_t* time, uint32_t fid, uint64_t read)
 {
-  VTSum_fopStat* stat = NULL;
+  uint64_t stat_idx;
 
   VTSUM_CHECK(sum);
 
-  VTSum_fop(sum, time, fid, stat);
+  VTSum_fileop(sum, fid, stat_idx);
 
-  stat->nread++;
-  stat->read += read;
+  sum->fileop_stat[stat_idx].nread++;
+  sum->fileop_stat[stat_idx].read += read;
 
   VT_CHECK_DUMP(sum, time);
 }
 
-void VTSum_fop_write(VTSum* sum, uint64_t* time, uint32_t fid, uint64_t wrote)
+void VTSum_fileop_write(VTSum* sum, uint64_t* time, uint32_t fid, uint64_t wrote)
 {
-  VTSum_fopStat* stat = NULL;
+  uint64_t stat_idx;
 
   VTSUM_CHECK(sum);
 
-  VTSum_fop(sum, time, fid, stat);
+  VTSum_fileop(sum, fid, stat_idx);
 
-  stat->nwrite++;
-  stat->wrote += wrote;
+  sum->fileop_stat[stat_idx].nwrite++;
+  sum->fileop_stat[stat_idx].wrote += wrote;
 
   VT_CHECK_DUMP(sum, time);
 }
 
-void VTSum_fop_seek(VTSum* sum, uint64_t* time, uint32_t fid)
+void VTSum_fileop_seek(VTSum* sum, uint64_t* time, uint32_t fid)
 {
-  VTSum_fopStat* stat = NULL;
+  uint64_t stat_idx;
 
   VTSUM_CHECK(sum);
 
-  VTSum_fop(sum, time, fid, stat);
+  VTSum_fileop(sum, fid, stat_idx);
 
-  stat->nseek++;
+  sum->fileop_stat[stat_idx].nseek++;
 
   VT_CHECK_DUMP(sum, time);
 }

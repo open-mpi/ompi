@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -14,6 +14,7 @@
 #include "OTF_Reader.h"
 #include "OTF_RStream.h"
 #include "OTF_Parse.h"
+#include "OTF_Errno.h"
 
 /* #include "OTF_Keywords.h" */
 
@@ -94,6 +95,7 @@ int OTF_Heap_initEventHeap( OTF_Heap* heap, OTF_Reader* reader );
 int OTF_Heap_initDefHeap( OTF_Heap* heap, OTF_Reader* reader );
 int OTF_Heap_initStatisticsHeap( OTF_Heap* heap, OTF_Reader* reader );
 int OTF_Heap_initSnapshotsHeap( OTF_Heap* heap, OTF_Reader* reader );
+int OTF_Heap_initMarkerHeap( OTF_Heap* heap, OTF_Reader* reader );
 
 void OTF_Heap_finalize( OTF_Heap* heap );
 
@@ -126,6 +128,8 @@ struct struct_OTF_Reader {
 	OTF_Heap* eventHeap;
 	OTF_Heap* snapshotsHeap;
 	OTF_Heap* statisticsHeap;
+	OTF_Heap* markerHeap;
+
 
 	/**	Master control structure. */
 	OTF_MasterControl* mc;
@@ -184,11 +188,9 @@ int OTF_ProcessList_init( OTF_ProcessList* list, OTF_MasterControl* mc ) {
 		n= OTF_MasterControl_getrCount( mc );
 		if ( 0 >= n ) {
 		
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"no process has been defined in the master control.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif
 
 			return 0;
 		}
@@ -198,11 +200,9 @@ int OTF_ProcessList_init( OTF_ProcessList* list, OTF_MasterControl* mc ) {
 		list->processes= (uint32_t*) malloc( n * sizeof(uint32_t) );
 		if( NULL == list->processes ) {
 		
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"no memory left.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif
 
 			return 0;
 		}
@@ -210,11 +210,9 @@ int OTF_ProcessList_init( OTF_ProcessList* list, OTF_MasterControl* mc ) {
 		list->status= (uint8_t*) malloc( n * sizeof(uint8_t) );
 		if( NULL == list->status ) {
 		
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"no memory left.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif
 
 			free( list->processes );
 			list->processes= NULL;
@@ -228,11 +226,9 @@ int OTF_ProcessList_init( OTF_ProcessList* list, OTF_MasterControl* mc ) {
 			pair= OTF_MasterControl_getREntryByIndex( mc, i );
 			if( NULL == pair ) {
 			
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_MasterControl_getREntryByIndex() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif
 
 				free( list->processes );
 				list->processes= NULL;
@@ -261,7 +257,7 @@ int OTF_ProcessList_init( OTF_ProcessList* list, OTF_MasterControl* mc ) {
 	
 			if ( 1 != test ) {
 			
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"process list from MasterControl is not sorted.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 				
@@ -422,11 +418,9 @@ int OTF_Heap_initEventHeap( OTF_Heap* heap, OTF_Reader* reader ) {
 	heap->buffers= (OTF_RBuffer**) malloc( heap->s * sizeof(OTF_RBuffer*) );
 	if( NULL == heap->buffers ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"no memory left.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
 	
 		return 0;
 	}
@@ -436,11 +430,9 @@ int OTF_Heap_initEventHeap( OTF_Heap* heap, OTF_Reader* reader ) {
 		entry= OTF_MasterControl_getEntryByIndex( reader->mc, i );
 		if( NULL == entry ) {
 		
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_MasterControl_getEntryByIndex() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif
 		
 			free( heap->buffers );
 			heap->buffers= NULL;
@@ -469,11 +461,9 @@ int OTF_Heap_initEventHeap( OTF_Heap* heap, OTF_Reader* reader ) {
 
 			} else {
 
-#				ifdef OTF_VERBOSE
-					fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 						"cannot open event buffer of stream %u.\n",
 						__FUNCTION__, __FILE__, __LINE__, entry->argument );
-#				endif
 
 				free( heap->buffers );
 				heap->buffers= NULL;
@@ -511,11 +501,9 @@ int OTF_Heap_initDefHeap( OTF_Heap* heap, OTF_Reader* reader ) {
 	heap->buffers= (OTF_RBuffer**) malloc( heap->s * sizeof(OTF_RBuffer*) );
 	if( NULL == heap->buffers ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"no memory left.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
 
 		return 0;
 	}
@@ -540,11 +528,9 @@ int OTF_Heap_initDefHeap( OTF_Heap* heap, OTF_Reader* reader ) {
 		entry= OTF_MasterControl_getEntryByIndex( reader->mc, i );
 		if( NULL == entry ) {
 		
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_MasterControl_getEntryByIndex() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif
 
 			free( heap->buffers );
 			heap->buffers= NULL;
@@ -565,12 +551,10 @@ int OTF_Heap_initDefHeap( OTF_Heap* heap, OTF_Reader* reader ) {
 			stream= OTF_Reader_getStream( reader, entry->argument );
 			if( NULL == stream ) {
 	
-#				ifdef OTF_VERBOSE
-					fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 						"cannot get stream '%llu'\n",
 						__FUNCTION__, __FILE__, __LINE__,
 						(long long unsigned) entry->argument );
-#				endif
 
 				free( heap->buffers );
 				heap->buffers= NULL;
@@ -610,11 +594,9 @@ int OTF_Heap_initStatisticsHeap( OTF_Heap* heap, OTF_Reader* reader ) {
 	heap->buffers= (OTF_RBuffer**) malloc( heap->s * sizeof(OTF_RBuffer*) );
 	if( NULL == heap->buffers ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"no memory left.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
 
 		return 0;
 	}
@@ -624,11 +606,9 @@ int OTF_Heap_initStatisticsHeap( OTF_Heap* heap, OTF_Reader* reader ) {
 		entry= OTF_MasterControl_getEntryByIndex( reader->mc, i );
 		if( NULL == entry ) {
 		
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_MasterControl_getEntryByIndex() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif
 
 			free( heap->buffers );
 			heap->buffers= NULL;
@@ -650,12 +630,10 @@ int OTF_Heap_initStatisticsHeap( OTF_Heap* heap, OTF_Reader* reader ) {
 			stream= OTF_Reader_getStream( reader, entry->argument );
 			if( NULL == stream ) {
 	
-#				ifdef OTF_VERBOSE
-					fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 						"cannot get stream '%llu'\n",
 						__FUNCTION__, __FILE__, __LINE__,
 						(long long unsigned) entry->argument );
-#				endif
 
 				free( heap->buffers );
 				heap->buffers= NULL;
@@ -701,11 +679,9 @@ int OTF_Heap_initSnapshotsHeap( OTF_Heap* heap, OTF_Reader* reader ) {
 	heap->buffers= (OTF_RBuffer**) malloc( heap->s * sizeof(OTF_RBuffer*) );
 	if( NULL == heap->buffers ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"no memory left.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
 
 		return 0;
 	}
@@ -715,11 +691,9 @@ int OTF_Heap_initSnapshotsHeap( OTF_Heap* heap, OTF_Reader* reader ) {
 		entry= OTF_MasterControl_getEntryByIndex( reader->mc, i );
 		if( NULL == entry ) {
 		
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_MasterControl_getEntryByIndex() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif
 
 			free( heap->buffers );
 			heap->buffers= NULL;
@@ -753,6 +727,99 @@ int OTF_Heap_initSnapshotsHeap( OTF_Heap* heap, OTF_Reader* reader ) {
 	heap->progressMin= 0;
 	heap->progressMax= (uint64_t) -1;
 	heap->progressCurrent= 0;
+
+	return 1;
+}
+
+
+/** initialize heap. taking RBuffers from the given  master control object, keep only 
+that streams that have at least one process enabled. 'which' decides whether to take
+definition buffer, event buffer, etc. from every stream */
+int OTF_Heap_initMarkerHeap( OTF_Heap* heap, OTF_Reader* reader ) {
+
+
+	uint32_t i;
+	uint32_t j;
+	uint8_t enabled;
+	OTF_MapEntry* entry;
+	OTF_RStream* stream;
+	OTF_RBuffer* buffer;
+
+
+	heap->n= 0;
+	heap->s= 1 + OTF_MasterControl_getCount( reader->mc );
+
+	heap->buffers= (OTF_RBuffer**) malloc( heap->s * sizeof(OTF_RBuffer*) );
+	if( NULL == heap->buffers ) {
+	
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				"no memory left.\n",
+				__FUNCTION__, __FILE__, __LINE__ );
+
+		return 0;
+	}
+
+	/* stream 0 */
+	stream= OTF_Reader_getStream( reader, 0 );
+	if( NULL != stream ) {
+	
+		buffer= OTF_RStream_getMarkerBuffer( stream );
+		if( NULL != buffer ) {
+		
+			/* buffer == NULL allowed! */
+			heap->buffers[ heap->n ]= buffer;
+			(heap->n)++;
+		}
+	}
+
+	/* remaining streams */
+
+	for ( i= 0; i < heap->s -1; i++ ) {
+	
+		entry= OTF_MasterControl_getEntryByIndex( reader->mc, i );
+		if( NULL == entry ) {
+		
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+					"OTF_MasterControl_getEntryByIndex() failed.\n",
+					__FUNCTION__, __FILE__, __LINE__ );
+
+			free( heap->buffers );
+			heap->buffers= NULL;
+			
+			return 0;
+		}
+
+		enabled= 0;
+		j= 0;
+		while ( ( j < entry->n ) && ( 0 == enabled ) ) {
+
+			enabled= enabled || OTF_ProcessList_getStatus( reader->processList,	entry->values[j] );
+			j++;
+		}
+
+		if ( enabled ) {
+
+			stream= OTF_Reader_getStream( reader, entry->argument );
+			if( NULL == stream ) {
+	
+				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+						"cannot get stream '%llu'\n",
+						__FUNCTION__, __FILE__, __LINE__,
+						(long long unsigned) entry->argument );
+
+				free( heap->buffers );
+				heap->buffers= NULL;
+		
+				return 0;
+			}
+
+			buffer= OTF_RStream_getMarkerBuffer( stream );
+
+			/* buffer == NULL allowed! */
+			heap->buffers[ heap->n ]= buffer;
+			(heap->n)++;
+		}
+	}
 
 	return 1;
 }
@@ -895,10 +962,10 @@ int OTF_Heap_checksorted( OTF_Heap* heap ) {
 
 
 	/*
-	fprintf( stderr, "%u-heap with %u entries:\n", HEAP_CHILDRENCOUNT, heap->n );
+	OTF_fprintf( stderr, "%u-heap with %u entries:\n", HEAP_CHILDRENCOUNT, heap->n );
 	for ( i= 0; i < heap->n; i++ ) {
 
-		fprintf( stderr, "%i: %llu\n", i, heap->buffers[i]->time );
+		OTF_fprintf( stderr, "%i: %llu\n", i, heap->buffers[i]->time );
 	}
 	*/
 
@@ -933,6 +1000,7 @@ int OTF_Reader_init( OTF_Reader* reader ) {
 	reader->eventHeap= NULL;
 	reader->snapshotsHeap= NULL;
 	reader->statisticsHeap= NULL;
+	reader->markerHeap= NULL;
 
 	reader->minTime= 0;
 	reader->maxTime= (uint64_t) -1;
@@ -995,6 +1063,12 @@ int OTF_Reader_finish( OTF_Reader* reader ) {
 		free( reader->statisticsHeap );
 		reader->statisticsHeap= NULL;
 	}
+	if ( NULL != reader->markerHeap ) { 
+
+		OTF_Heap_finalize( reader->markerHeap ); 
+		free( reader->markerHeap );
+		reader->markerHeap= NULL;
+	}
 
 	OTF_MasterControl_close( reader->mc );
 	reader->mc = NULL;
@@ -1030,6 +1104,12 @@ void OTF_Reader_resetHeaps( OTF_Reader* reader ) {
 		free( reader->statisticsHeap );
 		reader->statisticsHeap= NULL;
 	}
+	if ( NULL != reader->markerHeap ) { 
+
+		OTF_Heap_finalize( reader->markerHeap ); 
+		free( reader->markerHeap );
+		reader->markerHeap= NULL;
+	}
 }
 
 
@@ -1043,11 +1123,9 @@ OTF_Reader* OTF_Reader_open( const char* namestub, OTF_FileManager* manager ) {
 	ret = (OTF_Reader*) malloc( sizeof( OTF_Reader ) );
 	if( NULL == ret ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"no memory left.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
 
 		return NULL;
 	}
@@ -1058,12 +1136,11 @@ OTF_Reader* OTF_Reader_open( const char* namestub, OTF_FileManager* manager ) {
 
 	if( NULL == manager ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"manager has not been specified.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
 
+		OTF_Reader_finish(ret);
 		free( ret );
 		ret= NULL;
 
@@ -1074,12 +1151,11 @@ OTF_Reader* OTF_Reader_open( const char* namestub, OTF_FileManager* manager ) {
 	ret->mc= OTF_MasterControl_new( manager );
 	if( NULL == ret->mc ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"OTF_MasterControl_new() failed.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
 
+		OTF_Reader_finish(ret);
 		free( ret );
 		ret= NULL;
 
@@ -1090,12 +1166,11 @@ OTF_Reader* OTF_Reader_open( const char* namestub, OTF_FileManager* manager ) {
 	read= OTF_MasterControl_read( ret->mc, ret->namestub );
 	if( 0 == read ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"OTF_MasterControl_read() failed.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
 
+		OTF_Reader_finish(ret);
 		free( ret );
 		ret= NULL;
 
@@ -1105,12 +1180,11 @@ OTF_Reader* OTF_Reader_open( const char* namestub, OTF_FileManager* manager ) {
 	ret->processList= (OTF_ProcessList*) malloc( sizeof(OTF_ProcessList) );
 	if( NULL == ret->processList ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"no memory left.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
 
+		OTF_Reader_finish(ret);
 		free( ret );
 		ret= NULL;
 		
@@ -1119,15 +1193,11 @@ OTF_Reader* OTF_Reader_open( const char* namestub, OTF_FileManager* manager ) {
 	
 	if( 0 == OTF_ProcessList_init( ret->processList, ret->mc ) ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"OTF_ProcessList_init() failed.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
-
 		
-		free( ret->processList );
-		ret->processList= NULL;
+		OTF_Reader_finish(ret);
 		free( ret );
 		ret= NULL;
 	
@@ -1144,11 +1214,9 @@ int OTF_Reader_close( OTF_Reader* reader ) {
 	int ret=1;
 	if( NULL == reader ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"no reader has been specified.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
 	
 		return 0;
 	}
@@ -1156,6 +1224,7 @@ int OTF_Reader_close( OTF_Reader* reader ) {
 	ret&= OTF_Reader_finish( reader );
 
 	free( reader );
+	reader = NULL;
 
 	return ret;
 }
@@ -1165,29 +1234,23 @@ int OTF_Reader_setBufferSizes( OTF_Reader* reader, uint32_t size ) {
 
 	if ( 50 > size ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"intended buffer size %u is too small, rejected.\n",
 				__FUNCTION__, __FILE__, __LINE__, size );
-#		endif /* OTF_VERBOSE */
 		
 		return 0;
 
 	} else if ( 500 > size ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"buffer size %u is very small, accepted though.\n",
 				__FUNCTION__, __FILE__, __LINE__, size );
-#		endif /* OTF_VERBOSE */
 
 	} else if ( 10 * 1024 *1024 < size ) {
 
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"buffer size %u is rather big, accepted though.\n",
 				__FUNCTION__, __FILE__, __LINE__, size );
-#		endif /* OTF_VERBOSE */
 
 	}
 
@@ -1211,29 +1274,23 @@ void OTF_Reader_setZBufferSizes( OTF_Reader* reader, uint32_t size ) {
 	
 	if ( 32 > size ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"intended zbuffer size %u is too small, rejected.\n",
 				__FUNCTION__, __FILE__, __LINE__, size );
-#		endif /* OTF_VERBOSE */
 		
 		return;
 
 	} else if ( 512 > size ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"buffer size %u is very small, accepted though.\n",
 				__FUNCTION__, __FILE__, __LINE__, size );
-#		endif /* OTF_VERBOSE */
 
 	} else if ( 10 * 1024 *1024 < size ) {
 
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"buffer size %u is rather big, accepted though.\n",
 				__FUNCTION__, __FILE__, __LINE__, size );
-#		endif /* OTF_VERBOSE */
 	}
 
 	reader->zbuffersizes= size;
@@ -1311,11 +1368,9 @@ OTF_RStream* OTF_Reader_getStream( OTF_Reader* reader, uint32_t id ) {
 		reader->n * sizeof( OTF_RStream* ) );
 	if( NULL == reader->stream ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"no memory left.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif /* OTF_VERBOSE */
 
 		return NULL;
 	}
@@ -1402,22 +1457,18 @@ uint64_t OTF_Reader_readDefinitions( OTF_Reader* reader,
 		reader->definitionHeap= (OTF_Heap*) malloc( sizeof(OTF_Heap) );
 		if( NULL == reader->definitionHeap ) {
 		
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"no memory left.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif /* OTF_VERBOSE */
 
 			return OTF_READ_ERROR;
 		}
 
 		if( 0 == OTF_Heap_initDefHeap( reader->definitionHeap, reader ) ) {
 		
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_Heap_initDefHeap() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif /* OTF_VERBOSE */
 
 			OTF_Heap_finalize( reader->definitionHeap );
 			free( reader->definitionHeap );
@@ -1473,11 +1524,9 @@ uint64_t OTF_Reader_readDefinitions( OTF_Reader* reader,
 				handlers, streamId );
 			if ( 0 == ret ) {
 
-#				ifdef OTF_VERBOSE
-					fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 						"OTF_Reader_parseDefRecord() failed.\n",
 						__FUNCTION__, __FILE__, __LINE__ );
-#				endif /* OTF_VERBOSE */
 
 				OTF_Heap_finalize( reader->definitionHeap );
 				free( reader->definitionHeap );
@@ -1502,11 +1551,9 @@ uint64_t OTF_Reader_readDefinitions( OTF_Reader* reader,
 						handlers, streamId );
 					if ( 0 == ret ) {
 
-#						ifdef OTF_VERBOSE
-							fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+						OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 								"OTF_Reader_readUnknownDefRecord() failed.\n",
 								__FUNCTION__, __FILE__, __LINE__ );
-#						endif /* OTF_VERBOSE */
 						
 						OTF_Heap_finalize( reader->definitionHeap );
 						free( reader->definitionHeap );
@@ -1559,22 +1606,18 @@ uint64_t OTF_Reader_readEvents( OTF_Reader* reader, OTF_HandlerArray* handlers )
 		reader->eventHeap= (OTF_Heap*) malloc( sizeof(OTF_Heap) );
 		if( NULL == reader->eventHeap ) {
 		
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"no memory left.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif /* OTF_VERBOSE */
 
 			return OTF_READ_ERROR;
 		}
 
 		if( 0 == OTF_Heap_initEventHeap( reader->eventHeap, reader) ) {
 		
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_Heap_initEventHeap() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif /* OTF_VERBOSE */
 			
 			OTF_Heap_finalize( reader->eventHeap );
 			free( reader->eventHeap );
@@ -1628,11 +1671,9 @@ uint64_t OTF_Reader_readEvents( OTF_Reader* reader, OTF_HandlerArray* handlers )
 			
 			if( 0 == ret ) {
 			
-#				ifdef OTF_VERBOSE
-					fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 						"OTF_RBuffer_searchTime failed.\n",
 						__FUNCTION__, __FILE__, __LINE__ );
-#				endif /* OTF_VERBOSE */
 
 				OTF_Heap_finalize( reader->eventHeap );
 				free( reader->eventHeap );
@@ -1666,13 +1707,11 @@ uint64_t OTF_Reader_readEvents( OTF_Reader* reader, OTF_HandlerArray* handlers )
 			/* inlined OTF_RBuffer_getCurrentTime() */
 			if( reader->eventHeap->buffers[i]->time < reader->minTime ) {
 			
-#				ifdef OTF_VERBOSE
-					fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 						"current time %llu < mintime %llu.\n",
 						__FUNCTION__, __FILE__, __LINE__,
 						(long long unsigned) reader->eventHeap->buffers[i]->time,
 						(long long unsigned) reader->minTime );
-#				endif /* OTF_VERBOSE */
 			
 				OTF_Heap_finalize( reader->eventHeap );
 				free( reader->eventHeap );
@@ -1723,7 +1762,7 @@ uint64_t OTF_Reader_readEvents( OTF_Reader* reader, OTF_HandlerArray* handlers )
 #		ifdef OTF_DEBUG
 			if ( oldtime > reader->eventHeap->progressCurrent ) {
 			
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"Time decreases. %llu < %llu.\n",
 					__FUNCTION__, __FILE__, __LINE__,
 					(unsigned long long) reader->eventHeap->progressCurrent,
@@ -1776,11 +1815,9 @@ uint64_t OTF_Reader_readEvents( OTF_Reader* reader, OTF_HandlerArray* handlers )
 					ret= OTF_Reader_readUnknownRecord( reader->eventHeap->buffers[0], handlers );
 					if ( 0 == ret ) {
 					
-#						ifdef OTF_VERBOSE
-							fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+						OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 								"OTF_Reader_readUnknownRecord() failed.\n",
 								__FUNCTION__, __FILE__, __LINE__ );
-#						endif /* OTF_VERBOSE */
 
 						OTF_Heap_finalize( reader->eventHeap );
 						free( reader->eventHeap );
@@ -1809,11 +1846,9 @@ uint64_t OTF_Reader_readEvents( OTF_Reader* reader, OTF_HandlerArray* handlers )
 		ret= OTF_Reader_parseEventRecord( reader->eventHeap->buffers[0], handlers );
 		if ( 0 == ret ) {
 
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_Reader_parseEventRecord() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif /* OTF_VERBOSE */
 
 			OTF_Heap_finalize( reader->eventHeap );
 			free( reader->eventHeap );
@@ -1838,11 +1873,9 @@ uint64_t OTF_Reader_readEvents( OTF_Reader* reader, OTF_HandlerArray* handlers )
 				ret= OTF_Reader_readUnknownRecord( reader->eventHeap->buffers[0], handlers );
 				if ( 0 == ret ) {
 
-#					ifdef OTF_VERBOSE
-						fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+						OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 							"OTF_Reader_readUnknownRecord() failed.\n",
 							__FUNCTION__, __FILE__, __LINE__ );
-#					endif /* OTF_VERBOSE */
 
 					OTF_Heap_finalize( reader->eventHeap );
 					free( reader->eventHeap );
@@ -1892,22 +1925,18 @@ uint64_t OTF_Reader_readEventsUnsorted( OTF_Reader* reader, OTF_HandlerArray* ha
 		reader->eventHeap= (OTF_Heap*) malloc( sizeof(OTF_Heap) );
 		if( NULL == reader->eventHeap ) {
 		
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"no memory left.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif /* OTF_VERBOSE */
 
 			return OTF_READ_ERROR;
 		}
 
 		if( 0 == OTF_Heap_initEventHeap( reader->eventHeap, reader) ) {
 		
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_Heap_initEventHeap() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif /* OTF_VERBOSE */
 			
 			OTF_Heap_finalize( reader->eventHeap );
 			free( reader->eventHeap );
@@ -1961,11 +1990,9 @@ uint64_t OTF_Reader_readEventsUnsorted( OTF_Reader* reader, OTF_HandlerArray* ha
 			
 			if( 0 == ret ) {
 			
-#				ifdef OTF_VERBOSE
-					fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 						"OTF_RBuffer_searchTime() failed.\n",
 						__FUNCTION__, __FILE__, __LINE__ );
-#				endif /* OTF_VERBOSE */
 
 				OTF_Heap_finalize( reader->eventHeap );
 				free( reader->eventHeap );
@@ -1999,13 +2026,11 @@ uint64_t OTF_Reader_readEventsUnsorted( OTF_Reader* reader, OTF_HandlerArray* ha
 			/* inlined OTF_RBuffer_getCurrentTime() */
 			if( reader->eventHeap->buffers[i]->time < reader->minTime ) {
 			
-#				ifdef OTF_VERBOSE
-					fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 						"current time %llu < mintime %llu.\n",
 						__FUNCTION__, __FILE__, __LINE__,
 						(long long unsigned) reader->eventHeap->buffers[i]->time,
 						(long long unsigned) reader->minTime );
-#				endif /* OTF_VERBOSE */
 			
 				OTF_Heap_finalize( reader->eventHeap );
 				free( reader->eventHeap );
@@ -2088,11 +2113,9 @@ uint64_t OTF_Reader_readEventsUnsorted( OTF_Reader* reader, OTF_HandlerArray* ha
 					ret= OTF_Reader_readUnknownRecord( reader->eventHeap->buffers[0], handlers );
 					if ( 0 == ret ) {
 
-#						ifdef OTF_VERBOSE
-							fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+						OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 								"OTF_Reader_readUnknownRecord() failed.\n",
 								__FUNCTION__, __FILE__, __LINE__ );
-#						endif /* OTF_VERBOSE */
 
 						OTF_Heap_finalize( reader->eventHeap );
 						free( reader->eventHeap );
@@ -2120,11 +2143,9 @@ uint64_t OTF_Reader_readEventsUnsorted( OTF_Reader* reader, OTF_HandlerArray* ha
 		ret= OTF_Reader_parseEventRecord( reader->eventHeap->buffers[0], handlers );
 		if ( 0 == ret ) {
 
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_Reader_parseEventRecord() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif /* OTF_VERBOSE */
 
 			OTF_Heap_finalize( reader->eventHeap );
 			free( reader->eventHeap );
@@ -2148,11 +2169,9 @@ uint64_t OTF_Reader_readEventsUnsorted( OTF_Reader* reader, OTF_HandlerArray* ha
 				ret= OTF_Reader_readUnknownRecord( reader->eventHeap->buffers[0], handlers );
 				if ( 0 == ret ) {
 
-#					ifdef OTF_VERBOSE
-						fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+					OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 							"OTF_Reader_readUnknownRecord() failed.\n",
 							__FUNCTION__, __FILE__, __LINE__ );
-#					endif /* OTF_VERBOSE */
 					
 					OTF_Heap_finalize( reader->eventHeap );
 					free( reader->eventHeap );
@@ -2206,22 +2225,18 @@ uint64_t OTF_Reader_readSnapshots( OTF_Reader* reader,
 		reader->snapshotsHeap= (OTF_Heap*) malloc( sizeof(OTF_Heap) );
 		if( NULL == reader->snapshotsHeap ) {
 		
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"no memory left.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif /* OTF_VERBOSE */
 
 			return OTF_READ_ERROR;
 		}
 
 		if( 0 == OTF_Heap_initSnapshotsHeap( reader->snapshotsHeap, reader) ) {
 		
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"no memory left.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif /* OTF_VERBOSE */
 
 			OTF_Heap_finalize( reader->snapshotsHeap );
 			free( reader->snapshotsHeap );
@@ -2278,11 +2293,9 @@ uint64_t OTF_Reader_readSnapshots( OTF_Reader* reader,
 			
 			if( 0 == ret ) {
 			
-#				ifdef OTF_VERBOSE
-					fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 						"OTF_RBuffer_searchTime() failed.\n",
 						__FUNCTION__, __FILE__, __LINE__ );
-#				endif /* OTF_VERBOSE */
 
 				OTF_Heap_finalize( reader->snapshotsHeap );
 				free( reader->snapshotsHeap );
@@ -2317,13 +2330,11 @@ uint64_t OTF_Reader_readSnapshots( OTF_Reader* reader,
 			/* inlined OTF_RBuffer_getCurrentTime() */
 			if( reader->snapshotsHeap->buffers[i]->time < reader->minTime ) {
 			
-#				ifdef OTF_VERBOSE
-					fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 						"current time %llu < mintime %llu.\n",
 						__FUNCTION__, __FILE__, __LINE__,
 						(long long unsigned) reader->snapshotsHeap->buffers[i]->time,
 						(long long unsigned) reader->minTime );
-#				endif /* OTF_VERBOSE */
 
 				OTF_Heap_finalize( reader->snapshotsHeap );
 				free( reader->snapshotsHeap );
@@ -2374,7 +2385,7 @@ uint64_t OTF_Reader_readSnapshots( OTF_Reader* reader,
 #		ifdef OTF_DEBUG
 			if ( oldtime > reader->snapshotsHeap->progressCurrent ) {
 			
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"Time does decrease. %llu < %llu.\n",
 					__FUNCTION__, __FILE__, __LINE__,
 					(unsigned long long) reader->snapshotsHeap->progressCurrent,
@@ -2428,11 +2439,9 @@ uint64_t OTF_Reader_readSnapshots( OTF_Reader* reader,
 					ret= OTF_Reader_readUnknownRecord( reader->snapshotsHeap->buffers[0], handlers );
 					if ( 0 == ret ) {
 
-#						ifdef OTF_VERBOSE
-							fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+						OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 								"OTF_Reader_readUnknownRecord() failed.\n",
 								__FUNCTION__, __FILE__, __LINE__ );
-#						endif /* OTF_VERBOSE */
 						
 						OTF_Heap_finalize( reader->snapshotsHeap );
 						free( reader->snapshotsHeap );
@@ -2460,11 +2469,9 @@ uint64_t OTF_Reader_readSnapshots( OTF_Reader* reader,
 		ret= OTF_Reader_parseSnapshotsRecord( reader->snapshotsHeap->buffers[0], handlers );
 		if ( 0 == ret ) {
 
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_Reader_parseSnapshotsRecord() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif /* OTF_VERBOSE */
 			
 			OTF_Heap_finalize( reader->snapshotsHeap );
 			free( reader->snapshotsHeap );
@@ -2488,11 +2495,9 @@ uint64_t OTF_Reader_readSnapshots( OTF_Reader* reader,
 				ret= OTF_Reader_readUnknownRecord( reader->snapshotsHeap->buffers[0], handlers );
 				if ( 0 == ret ) {
 
-#					ifdef OTF_VERBOSE
-						fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+					OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 							"OTF_Reader_parseSnapshotsRecord() failed.\n",
 							__FUNCTION__, __FILE__, __LINE__ );
-#					endif /* OTF_VERBOSE */
 					
 					OTF_Heap_finalize( reader->snapshotsHeap );
 					free( reader->snapshotsHeap );
@@ -2541,22 +2546,18 @@ uint64_t OTF_Reader_readSnapshotsUnsorted( OTF_Reader* reader, OTF_HandlerArray*
 		reader->snapshotsHeap= (OTF_Heap*) malloc( sizeof(OTF_Heap) );
 		if( NULL == reader->snapshotsHeap ) {
 		
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"no memory left.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif /* OTF_VERBOSE */
 
 			return OTF_READ_ERROR;
 		}
 
 		if( 0 == OTF_Heap_initSnapshotsHeap( reader->snapshotsHeap, reader) ) {
 		
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_Heap_initSnapshotsHeap() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif /* OTF_VERBOSE */
 			
 			OTF_Heap_finalize( reader->snapshotsHeap );
 			free( reader->snapshotsHeap );
@@ -2610,11 +2611,9 @@ uint64_t OTF_Reader_readSnapshotsUnsorted( OTF_Reader* reader, OTF_HandlerArray*
 			
 			if( 0 == ret ) {
 			
-#				ifdef OTF_VERBOSE
-					fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 						"OTF_RBuffer_searchTime() failed.\n",
 						__FUNCTION__, __FILE__, __LINE__ );
-#				endif /* OTF_VERBOSE */
 
 				OTF_Heap_finalize( reader->snapshotsHeap );
 				free( reader->snapshotsHeap );
@@ -2648,13 +2647,11 @@ uint64_t OTF_Reader_readSnapshotsUnsorted( OTF_Reader* reader, OTF_HandlerArray*
 			/* inlined OTF_RBuffer_getCurrentTime() */
 			if( reader->snapshotsHeap->buffers[i]->time < reader->minTime ) {
 			
-#				ifdef OTF_VERBOSE
-					fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 						"current time %llu < mintime %llu.\n",
 						__FUNCTION__, __FILE__, __LINE__,
 						(long long unsigned) reader->snapshotsHeap->buffers[i]->time,
 						(long long unsigned) reader->minTime );
-#				endif /* OTF_VERBOSE */
 			
 				OTF_Heap_finalize( reader->snapshotsHeap );
 				free( reader->snapshotsHeap );
@@ -2736,11 +2733,9 @@ uint64_t OTF_Reader_readSnapshotsUnsorted( OTF_Reader* reader, OTF_HandlerArray*
 					ret= OTF_Reader_readUnknownRecord( reader->snapshotsHeap->buffers[0], handlers );
 					if ( 0 == ret ) {
 
-#						ifdef OTF_VERBOSE
-							fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+						OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 								"OTF_Reader_readUnknownRecord() failed.\n",
 								__FUNCTION__, __FILE__, __LINE__ );
-#						endif /* OTF_VERBOSE */
 						
 						OTF_Heap_finalize( reader->snapshotsHeap );
 						free( reader->snapshotsHeap );
@@ -2790,11 +2785,9 @@ uint64_t OTF_Reader_readSnapshotsUnsorted( OTF_Reader* reader, OTF_HandlerArray*
 				ret= OTF_Reader_readUnknownRecord( reader->snapshotsHeap->buffers[0], handlers );
 				if ( 0 == ret ) {
 
-#					ifdef OTF_VERBOSE
-						fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+					OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 							"OTF_Reader_readUnknownRecord() failed.\n",
 							__FUNCTION__, __FILE__, __LINE__ );
-#					endif /* OTF_VERBOSE */
 					
 					OTF_Heap_finalize( reader->snapshotsHeap );
 					free( reader->snapshotsHeap );
@@ -2847,22 +2840,18 @@ uint64_t OTF_Reader_readStatistics( OTF_Reader* reader,
 		reader->statisticsHeap= (OTF_Heap*) malloc( sizeof(OTF_Heap) );
 		if( NULL == reader->statisticsHeap ) {
 		
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"no memory left.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif /* OTF_VERBOSE */
 
 			return OTF_READ_ERROR;
 		}
 
 		if( 0 == OTF_Heap_initStatisticsHeap( reader->statisticsHeap, reader) ) {
 		
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_Heap_initStatisticsHeap() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif /* OTF_VERBOSE */
 
 			OTF_Heap_finalize( reader->statisticsHeap );
 			free( reader->statisticsHeap );
@@ -2920,11 +2909,9 @@ uint64_t OTF_Reader_readStatistics( OTF_Reader* reader,
 				reader->statisticsHeap->buffers[i] );
 			if( 0 == ret ) {
 			
-#				ifdef OTF_VERBOSE
-					fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 						"OTF_RBuffer_searchTime() failed.\n",
 						__FUNCTION__, __FILE__, __LINE__ );
-#				endif /* OTF_VERBOSE */
 
 				OTF_Heap_finalize( reader->statisticsHeap );
 				free( reader->statisticsHeap );
@@ -2959,13 +2946,11 @@ uint64_t OTF_Reader_readStatistics( OTF_Reader* reader,
 			/* inlined OTF_RBuffer_getCurrentTime() */
 			if( reader->statisticsHeap->buffers[i]->time < reader->minTime ) {
 			
-#				ifdef OTF_VERBOSE
-					fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 						"current time %llu < mintime %llu.\n",
 						__FUNCTION__, __FILE__, __LINE__,
 						(long long unsigned) reader->statisticsHeap->buffers[i]->time,
 						(long long unsigned) reader->minTime );
-#				endif /* OTF_VERBOSE */
 
 				OTF_Heap_finalize( reader->statisticsHeap );
 				free( reader->statisticsHeap );
@@ -3017,7 +3002,7 @@ uint64_t OTF_Reader_readStatistics( OTF_Reader* reader,
 #		ifdef OTF_DEBUG
 			if ( oldtime > reader->statisticsHeap->progressCurrent ) {
 			
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"Time does decrease. %llu < %llu.\n",
 					__FUNCTION__, __FILE__, __LINE__,
 					(unsigned long long) reader->statisticsHeap->progressCurrent,
@@ -3071,11 +3056,9 @@ uint64_t OTF_Reader_readStatistics( OTF_Reader* reader,
 					ret= OTF_Reader_readUnknownRecord( reader->statisticsHeap->buffers[0], handlers );
 					if ( 0 == ret ) {
 
-#					ifdef OTF_VERBOSE
-						fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+						OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 							"OTF_RBuffer_searchTime() failed.\n",
 							__FUNCTION__, __FILE__, __LINE__ );
-#					endif /* OTF_VERBOSE */
 						
 						OTF_Heap_finalize( reader->statisticsHeap );
 						free( reader->statisticsHeap );
@@ -3103,11 +3086,9 @@ uint64_t OTF_Reader_readStatistics( OTF_Reader* reader,
 		ret= OTF_Reader_parseStatisticsRecord( reader->statisticsHeap->buffers[0], handlers );
 		if ( 0 == ret ) {
 
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_Reader_parseStatisticsRecord() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif /* OTF_VERBOSE */
 			
 			OTF_Heap_finalize( reader->statisticsHeap );
 			free( reader->statisticsHeap );
@@ -3131,11 +3112,9 @@ uint64_t OTF_Reader_readStatistics( OTF_Reader* reader,
 				ret= OTF_Reader_readUnknownRecord( reader->statisticsHeap->buffers[0], handlers );
 				if ( 0 == ret ) {
 
-#					ifdef OTF_VERBOSE
-						fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+					OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 							"OTF_Reader_readUnknownRecord() failed.\n",
 							__FUNCTION__, __FILE__, __LINE__ );
-#					endif /* OTF_VERBOSE */
 					
 					OTF_Heap_finalize( reader->statisticsHeap );
 					free( reader->statisticsHeap );
@@ -3186,22 +3165,18 @@ uint64_t OTF_Reader_readStatisticsUnsorted( OTF_Reader* reader, OTF_HandlerArray
 		reader->statisticsHeap= (OTF_Heap*) malloc( sizeof(OTF_Heap) );
 		if( NULL == reader->statisticsHeap ) {
 		
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"no memory left.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif /* OTF_VERBOSE */
 
 			return OTF_READ_ERROR;
 		}
 
 		if( 0 == OTF_Heap_initStatisticsHeap( reader->statisticsHeap, reader) ) {
 		
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_Heap_initStatisticsHeap() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif /* OTF_VERBOSE */
 			
 			OTF_Heap_finalize( reader->statisticsHeap );
 			free( reader->statisticsHeap );
@@ -3255,11 +3230,9 @@ uint64_t OTF_Reader_readStatisticsUnsorted( OTF_Reader* reader, OTF_HandlerArray
 			
 			if( 0 == ret ) {
 			
-#				ifdef OTF_VERBOSE
-					fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 						"OTF_RBuffer_searchTime() failed.\n",
 						__FUNCTION__, __FILE__, __LINE__ );
-#				endif /* OTF_VERBOSE */
 
 				OTF_Heap_finalize( reader->statisticsHeap );
 				free( reader->statisticsHeap );
@@ -3293,13 +3266,11 @@ uint64_t OTF_Reader_readStatisticsUnsorted( OTF_Reader* reader, OTF_HandlerArray
 			/* inlined OTF_RBuffer_getCurrentTime() */
 			if( reader->statisticsHeap->buffers[i]->time < reader->minTime ) {
 			
-#				ifdef OTF_VERBOSE
-					fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 						"current time %llu < mintime %llu.\n",
 						__FUNCTION__, __FILE__, __LINE__,
 						(long long unsigned) reader->statisticsHeap->buffers[i]->time,
 						(long long unsigned) reader->minTime );
-#				endif /* OTF_VERBOSE */
 			
 				OTF_Heap_finalize( reader->statisticsHeap );
 				free( reader->statisticsHeap );
@@ -3381,11 +3352,9 @@ uint64_t OTF_Reader_readStatisticsUnsorted( OTF_Reader* reader, OTF_HandlerArray
 					ret= OTF_Reader_readUnknownRecord( reader->statisticsHeap->buffers[0], handlers );
 					if ( 0 == ret ) {
 
-#						ifdef OTF_VERBOSE
-							fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+						OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 								"OTF_Reader_readUnknownRecord() failed.\n",
 								__FUNCTION__, __FILE__, __LINE__ );
-#						endif /* OTF_VERBOSE */
 						
 						OTF_Heap_finalize( reader->statisticsHeap );
 						free( reader->statisticsHeap );
@@ -3413,11 +3382,9 @@ uint64_t OTF_Reader_readStatisticsUnsorted( OTF_Reader* reader, OTF_HandlerArray
 		ret= OTF_Reader_parseStatisticsRecord( reader->statisticsHeap->buffers[0], handlers );
 		if ( 0 == ret ) {
 
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_Reader_parseStatisticsRecord() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif /* OTF_VERBOSE */
 			
 			OTF_Heap_finalize( reader->statisticsHeap );
 			free( reader->statisticsHeap );
@@ -3441,11 +3408,9 @@ uint64_t OTF_Reader_readStatisticsUnsorted( OTF_Reader* reader, OTF_HandlerArray
 				ret= OTF_Reader_readUnknownRecord( reader->statisticsHeap->buffers[0], handlers );
 				if ( 0 == ret ) {
 
-#					ifdef OTF_VERBOSE
-						fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+					OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 							"OTF_Reader_readUnknownRecord() failed.\n",
 							__FUNCTION__, __FILE__, __LINE__ );
-#					endif /* OTF_VERBOSE */
 					
 					OTF_Heap_finalize( reader->statisticsHeap );
 					free( reader->statisticsHeap );
@@ -3469,6 +3434,145 @@ uint64_t OTF_Reader_readStatisticsUnsorted( OTF_Reader* reader, OTF_HandlerArray
 
 	return recordcount;
 }
+
+
+/* this is much simple than the other 'OTF_Reader_readXXX' functions because it 
+only looks at stream '0' */
+uint64_t OTF_Reader_readMarkers( OTF_Reader* reader, OTF_HandlerArray* handlers ) {
+
+
+	uint64_t recordcount= 0;
+
+	int ret;
+	char* pos;
+	uint32_t i;
+
+	OTF_MapEntry* entry;
+	uint32_t streamId;
+
+
+	/* initialized? */
+	if ( NULL == reader->markerHeap ) {
+
+
+		/* init */
+
+		reader->markerHeap= (OTF_Heap*) malloc( sizeof(OTF_Heap) );
+		if( NULL == reader->markerHeap ) {
+		
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+					"no memory left.\n",
+					__FUNCTION__, __FILE__, __LINE__ );
+
+			return OTF_READ_ERROR;
+		}
+
+		if( 0 == OTF_Heap_initMarkerHeap( reader->markerHeap, reader ) ) {
+		
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+					"OTF_Heap_initDefHeap() failed.\n",
+					__FUNCTION__, __FILE__, __LINE__ );
+
+			OTF_Heap_finalize( reader->markerHeap );
+			free( reader->markerHeap );
+			reader->markerHeap= NULL;
+			
+			return OTF_READ_ERROR;
+		}
+
+		for ( i= 0; i < reader->markerHeap->n; i++ ) {
+
+
+			if ( NULL != reader->markerHeap->buffers[i] ) {
+
+				pos= OTF_RBuffer_getRecord( reader->markerHeap->buffers[i] );
+
+				/* remove empty streams */
+				if ( NULL == pos ) {
+
+					/* keep original order */
+					reader->markerHeap->buffers[i]= NULL;
+				}
+			}
+		}
+	}
+
+
+	/* read streams */
+	for ( i= 0; i < reader->markerHeap->n; i ++ ) {
+
+
+		if ( NULL == reader->markerHeap->buffers[i] ) {
+		
+			continue;
+		}
+
+		streamId= 0;
+		if ( i > 0 ) {
+
+			entry= OTF_MasterControl_getEntryByIndex( reader->mc, i -1 );
+			streamId= entry->argument;
+		}
+
+		pos= (char*) 0x2;
+		while ( NULL != pos ) {
+
+			if ( recordcount >= reader->recordLimit ) {
+
+				/* record count limit reached, return */
+				return recordcount;
+			}
+
+			ret= OTF_Reader_parseMarkerRecord( reader->markerHeap->buffers[i], handlers, streamId );
+			if ( 0 == ret ) {
+
+				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+						"OTF_Reader_parseDefRecord() failed.\n",
+						__FUNCTION__, __FILE__, __LINE__ );
+
+				OTF_Heap_finalize( reader->markerHeap );
+				free( reader->markerHeap );
+				reader->markerHeap= NULL;
+			
+				return OTF_READ_ERROR;
+			}
+
+			recordcount++;
+
+			/* prepare next record in that stream */
+			pos= OTF_RBuffer_getRecord( reader->markerHeap->buffers[i] );
+			if ( NULL == pos ) {
+
+				/* test if the file is really exceeded or if there is some junk left.
+				test here instead of in 'OTF_RBuffer_getRecord()'. 
+				throw a warning/error in case*/
+
+				if ( reader->markerHeap->buffers[i]->pos < reader->markerHeap->buffers[i]->end ) {
+
+					ret= OTF_Reader_readUnknownMarkerRecord( reader->markerHeap->buffers[i], handlers, streamId );
+					if ( 0 == ret ) {
+
+						OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+								"OTF_Reader_readUnknownDefRecord() failed.\n",
+								__FUNCTION__, __FILE__, __LINE__ );
+						
+						OTF_Heap_finalize( reader->markerHeap );
+						free( reader->markerHeap );
+						reader->markerHeap= NULL;
+
+						return OTF_READ_ERROR;
+					}
+				}
+
+				/* stream is empty -> remove from heap */
+				reader->markerHeap->buffers[i]= NULL;
+			}
+		}
+	}
+
+	return recordcount;
+}
+
 
 
 void OTF_Reader_setTimeInterval( OTF_Reader* reader, 
@@ -3501,12 +3605,10 @@ void OTF_Reader_setRecordLimit( OTF_Reader* reader, uint64_t limit ) {
 
 	if( limit == OTF_READ_ERROR ) {
 
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"limit cannot be set to %llu. Reset to OTF_READ_MAXRECORDS.\n",
 				__FUNCTION__, __FILE__, __LINE__,
 				(long long unsigned) limit );
-#		endif /* OTF_VERBOSE */
 	
 		limit= OTF_READ_MAXRECORDS;
 	}

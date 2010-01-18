@@ -1,7 +1,10 @@
-noinst_PROGRAMS = dummy
+noinst_LTLIBRARIES = libutil.la
 
-dummy_SOURCES = \
-	dummy.c \
+libutil_la_CFLAGS = -static -prefer-pic
+libutil_la_LDFLAGS = -static
+libutil_la_SOURCES = \
+	hash.h \
 	util.h \
+	hash.c \
 	util.c
 

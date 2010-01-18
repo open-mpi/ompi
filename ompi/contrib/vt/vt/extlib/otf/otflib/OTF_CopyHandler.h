@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -94,6 +94,14 @@ int OTF_CopyHandler_CollectiveOperation( void* userData, uint64_t time,
 	uint32_t rootProc, uint32_t sent, uint32_t received, uint64_t duration, 
 	uint32_t source );
 
+int OTF_CopyHandler_BeginCollectiveOperation( void* userData, uint64_t time,
+	uint32_t process, uint32_t collOp, uint64_t matchingId,
+	uint32_t procGroup, uint32_t rootProc, uint64_t sent,
+	uint64_t received, uint32_t scltoken );
+
+int OTF_CopyHandler_EndCollectiveOperation( void* userData, uint64_t time,
+	uint32_t process, uint64_t matchingId );
+
 int OTF_CopyHandler_EventComment( void* userData, uint64_t time, uint32_t process, 
 	const char* comment );
 
@@ -107,7 +115,29 @@ int OTF_CopyHandler_SnapshotComment( void* userData, uint64_t time,
 int OTF_CopyHandler_FileOperation( void* userData, uint64_t time, uint32_t fileid,
 	uint32_t process, uint64_t handleid, uint32_t operation, uint64_t bytes,
 	uint64_t duration, uint32_t source );
-	
+
+int OTF_CopyHandler_BeginFileOperation( void* userData, uint64_t time,
+	uint32_t process, uint64_t handleid, uint32_t scltoken );
+
+int OTF_CopyHandler_EndFileOperation( void* userData, uint64_t time,
+	uint32_t process, uint32_t fileid, uint64_t handleid,
+	uint32_t operation, uint64_t bytes, uint32_t scltoken );
+
+int OTF_CopyHandler_RMAPut( void* userData, uint64_t time, uint32_t process,
+        uint32_t origin, uint32_t target, uint32_t communicator, uint32_t tag,
+        uint64_t bytes, uint32_t scltoken );
+
+int OTF_CopyHandler_RMAPutRemoteEnd( void* userData, uint64_t time,
+        uint32_t process, uint32_t origin, uint32_t target, uint32_t communicator,
+        uint32_t tag, uint64_t bytes, uint32_t scltoken );
+
+int OTF_CopyHandler_RMAGet( void* userData, uint64_t time, uint32_t process,
+        uint32_t origin, uint32_t target, uint32_t communicator, uint32_t tag,
+        uint64_t bytes, uint32_t scltoken );
+
+int OTF_CopyHandler_RMAEnd( void* userData, uint64_t time, uint32_t process,
+        uint32_t remote, uint32_t communicator, uint32_t tag, uint32_t scltoken );
+
 
 int OTF_CopyHandler_EnterSnapshot( void *userData, uint64_t time,
 	uint64_t originaltime, uint32_t function, uint32_t process,
@@ -137,6 +167,10 @@ int OTF_CopyHandler_MessageSummary( void* userData, uint64_t time, uint32_t proc
 	uint32_t peer, uint32_t comm, uint32_t type, uint64_t sentNumber,
 	uint64_t receivedNumber, uint64_t sentBytes, uint64_t receivedBytes );
 
+int OTF_CopyHandler_CollopSummary(void *userData, uint64_t time, uint32_t process, uint32_t comm,
+	uint32_t collective, uint64_t sentNumber, uint64_t receivedNumber, uint64_t sentBytes,
+	uint64_t receivedBytes);
+
 int OTF_CopyHandler_FileOperationSummary( void* userData, uint64_t time,
 	uint32_t fileid, uint32_t process, uint64_t nopen, uint64_t nclose,
 	uint64_t nread, uint64_t nwrite, uint64_t nseek, uint64_t bytesread,
@@ -146,6 +180,12 @@ int OTF_CopyHandler_FileGroupOperationSummary( void* userData, uint64_t time,
 	uint32_t groupid, uint32_t process, uint64_t nopen, uint64_t nclose,
 	uint64_t nread, uint64_t nwrite, uint64_t nseek, uint64_t bytesread,
 	uint64_t byteswrite );
+
+int OTF_CopyHandler_DefMarker( void *userData, uint32_t stream,
+	uint32_t token, const char* name, uint32_t type );
+
+int OTF_CopyHandler_Marker( void *userData, uint64_t time,
+	uint32_t process, uint32_t token, const char* text );
 
 #ifdef __cplusplus
 }

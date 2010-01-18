@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -45,8 +45,7 @@ Statistics::~Statistics()
 bool
 Statistics::run()
 {
-   if( Params.beverbose )
-      std::cout << "Unifying statistics ..." << std::endl;
+   VPrint( 1, "Unifying statistics\n" );
 
    bool error = false;
 
@@ -67,21 +66,14 @@ Statistics::run()
 			   p_org_stats_manager );
       assert( p_org_stats_rstream );
 
-      if( Params.beverbose )
-      {
-	 std::cout << " Opened OTF reader stream [namestub "
-		   << Params.in_file_prefix << " id "
-		   << std::hex << g_vecUnifyCtls[i]->streamid << "]" 
-		   << std::dec << std::endl;
-      }
+      VPrint( 2, " Opened OTF reader stream [namestub %s id %x]\n",
+	      Params.in_file_prefix.c_str(),
+	      g_vecUnifyCtls[i]->streamid );
 
       if( !OTF_RStream_getStatsBuffer( p_org_stats_rstream ) )
       {
-	 if( Params.beverbose )
-	 {
-	    std::cout << "  No statistics found in this OTF reader stream "
-		      << "- Ignored" << std::endl;
-	 }
+	 VPrint( 2, "  No statistics found in this OTF reader stream "
+		    "- Ignored\n" );
       }
       else
       {
@@ -100,13 +92,9 @@ Statistics::run()
 			      p_uni_stats_manager );
 	 assert( p_uni_stats_wstream );
 
-	 if( Params.beverbose )
-	 {
-	    std::cout << " Opened OTF writer stream [namestub "
-		      << tmp_out_file_prefix << " id "
-		      << std::hex << g_vecUnifyCtls[i]->streamid << "]"
-		      << std::dec << std::endl;
-	 }
+	 VPrint( 2, " Opened OTF writer stream [namestub %s id %x]\n",
+		 tmp_out_file_prefix.c_str(),
+		 g_vecUnifyCtls[i]->streamid );
       
 	 // create record handler
 	 OTF_HandlerArray * p_handler_array =
@@ -129,6 +117,13 @@ Statistics::run()
 				   OTF_MESSAGESUMMARY_RECORD );
 	 OTF_HandlerArray_setFirstHandlerArg( p_handler_array,
 	    p_uni_stats_wstream, OTF_MESSAGESUMMARY_RECORD );
+
+	 // ... OTF_COLLOPSUMMARY_RECORD
+	 OTF_HandlerArray_setHandler( p_handler_array,
+	    (OTF_FunctionPointer*)Handle_CollopSummary,
+				   OTF_COLLOPSUMMARY_RECORD );
+	 OTF_HandlerArray_setFirstHandlerArg( p_handler_array,
+	    p_uni_stats_wstream, OTF_COLLOPSUMMARY_RECORD );
 
 	 // ... OTF_FILEOPERATIONSUMMARY_RECORD
 	 OTF_HandlerArray_setHandler( p_handler_array,
@@ -164,13 +159,9 @@ Statistics::run()
 	 // close file manager for writer stream
 	 OTF_FileManager_close( p_uni_stats_manager );
 	 
-	 if( Params.beverbose )
-	 {
-	    std::cout << " Closed OTF writer stream [namestub "
-		      << tmp_out_file_prefix << " id "
-		      << std::hex << g_vecUnifyCtls[i]->streamid << "]"
-		      << std::dec << std::endl;
-	 }
+	 VPrint( 2, " Closed OTF writer stream [namestub %s id %x]\n",
+		 tmp_out_file_prefix.c_str(),
+		 g_vecUnifyCtls[i]->streamid );
       }
 
       // close reader stream
@@ -178,13 +169,9 @@ Statistics::run()
       // close file manager for reader stream
       OTF_FileManager_close( p_org_stats_manager );
 
-      if( Params.beverbose )
-      {
-	 std::cout << " Closed OTF reader stream [namestub "
-		   << Params.in_file_prefix << " id "
-		   << std::hex << g_vecUnifyCtls[i]->streamid << "]"
-		   << std::dec << std::endl;
-      }
+      VPrint( 2, " Closed OTF reader stream [namestub %s id %x]\n",
+	      Params.in_file_prefix.c_str(),
+	      g_vecUnifyCtls[i]->streamid );
 
       if( error ) break;
    }
@@ -192,7 +179,7 @@ Statistics::run()
    if( error )
    {
       std::cerr << ExeName << ": "
-		<< "An error occurred during unifying statistics - Terminating ..."
+		<< "An error occurred during unifying statistics. Aborting"
 		<< std::endl;
    }
 
@@ -375,9 +362,11 @@ Statistics::printFuncStat( std::string outFile,
       if( out == stdout ) str_funcname = shortName( vecFuncStat[i].funcname ); 
 
       fprintf( out,
-	       "%11s %11s %10.9g %11s %11s  %s\n",
+	       "%11s %11s %10.*f %11s %11s  %s\n",
 	       str_excl.c_str(),
 	       str_incl.c_str(),
+	       ((double)((uint64_t)vecFuncStat[i].count) ==
+		vecFuncStat[i].count) ? 0 : 2,
 	       vecFuncStat[i].count,
 	       str_excl_call.c_str(),
 	       str_incl_call.c_str(),
@@ -514,7 +503,7 @@ Statistics::formatTime( uint64_t time )
    double d_res = (double)m_lTimerRes;
    double sec = d_time / d_res;
 
-   static const char unit[4][3] = { "s", "ms", "us", "ns" };
+   static const char unit[4][3] = { "s ", "ms", "us", "ns" };
 
    for( uint32_t i = 0; i < 4; i++ )
    {

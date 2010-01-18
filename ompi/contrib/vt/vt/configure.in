@@ -2,16 +2,24 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.60)
-AC_INIT(VampirTrace, 5.4.11, vampirsupport@zih.tu-dresden.de)
-AM_INIT_AUTOMAKE(VampirTrace, 5.4.11)
+AC_INIT([VampirTrace], [m4_normalize(esyscmd([cat VERSION]))], [vampirsupport@zih.tu-dresden.de], [VampirTrace])
+AC_CONFIG_AUX_DIR(config)
+AC_CONFIG_MACRO_DIR(config/m4)
+AM_INIT_AUTOMAKE
 AM_CONFIG_HEADER(config.h)
 
-# Open MPI: If Automake supports silent rules, enable them.
+# If Automake supports silent rules, enable them.
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 ACVT_CONF_INIT
 
 ACVT_CONF_TITLE([Initialization])
+
+# Check for platform
+ACVT_PLATFORM
+
+# Get configuration options
+ACVT_CONF_OPTIONS
 
 # Setup the top and bottom of the config.h file
 AH_TOP([
@@ -29,7 +37,15 @@ cd "$srcdir"
 top_vt_srcdir="`pwd`"
 cd "$top_vt_builddir"
 AC_MSG_NOTICE([builddir: $top_vt_builddir])
+eval "echo $top_vt_builddir | grep \" \"" >/dev/null 2>&1
+AS_IF([test "$?" = "0"],
+[AC_MSG_ERROR([VampirTrace does not allow whitespace in the build directory path!])])
+AC_SUBST(top_vt_builddir)
 AC_MSG_NOTICE([srcdir: $top_vt_srcdir])
+eval "echo $top_vt_srcdir | grep \" \"" >/dev/null 2>&1
+AS_IF([test "$?" = "0"],
+[AC_MSG_ERROR([VampirTrace does not allow whitespace in the source directory path!])])
+AC_SUBST(top_vt_srcdir)
 AS_IF([test "$top_vt_builddir" != "$top_vt_srcdir"],
 [
 	AC_MSG_NOTICE([detected VPATH build])
@@ -39,8 +55,25 @@ AS_IF([test "$top_vt_builddir" != "$top_vt_srcdir"],
 	CXXCPPFLAGS='-I$(top_srcdir)'" $CXXCPPFLAGS"
 ])
 
-# Check for type of host system
-AC_CANONICAL_HOST
+# Check whether we are inside Open MPI package
+# TODO: This option should be hidden in the help text
+AC_ARG_WITH(openmpi-inside,
+	AC_HELP_STRING([--with-openmpi-inside], [configure inside Open MPI]),
+[
+	inside_openmpi="yes"
+
+	enable_config_titles="no"
+	enable_config_summary="no"
+
+	# TODO: Avoid building of shared libraries, due to currently unsupported
+	#       OMPI's symbol visibility stuff
+	enable_static="yes"
+	enable_shared="no" 
+])
+
+# Check for file system case sensitivity
+ACVT_CSFS
+AM_CONDITIONAL(AMHAVECSFS, test x"$have_csfs" = "xyes")
 
 # Correct install paths
 AS_IF([test x"$prefix" = "xNONE"], [prefix="$ac_default_prefix"])
@@ -63,12 +96,18 @@ AC_PROG_CPP
 AC_PROG_CXXCPP
 AC_PROG_F77
 AC_PROG_FC
+AM_PROG_AS
 
+AS_IF([test x"$F77" != x],
+[AC_DEFINE([HAVE_F77], [1], [Define to 1 if VT is configured with Fortran 77 support.])])
 AM_CONDITIONAL(AMHAVEF77, test x"$F77" != x)
-AM_CONDITIONAL(AMHAVEFC, test x"$FC" != x)
+AS_IF([test x"$FC" != x],
+[AC_DEFINE([HAVE_F90], [1], [Define to 1 if VT is configured with Fortran 90 support.])])
+AM_CONDITIONAL(AMHAVEF90, test x"$FC" != x)
 
 # Check cross-build related stuff
 ACVT_CROSS
+AM_CONDITIONAL(AMHAVECROSSPREFIX, test x"$CROSS_PREFIX" != x)
 
 # Do we want to build and install binaries
 AC_ARG_ENABLE(binaries,
@@ -77,11 +116,15 @@ AC_ARG_ENABLE(binaries,
 	[enable_binaries="$enableval"], [enable_binaries="yes"])
 AM_CONDITIONAL(AMBUILDBINARIES, test x"$enable_binaries" = "xyes")
 
+# Declare additional variables
+AC_ARG_VAR(AR, [archiver command])
+AC_ARG_VAR(NM, [command to list symbols from object files])
+
 # Check for programs
-AC_ARG_VAR(AR, [archiver command]) #AC_PROG_AR ?
+#AC_PROG_AR
 AC_CHECK_PROGS(AR, ar, AR=ar)
-AC_PROG_RANLIB
-AM_PROG_AS
+AC_PROG_LN_S
+AC_PROG_AWK
 
 ACVT_CONF_TITLE([Header files, types, and functions])
 
@@ -108,15 +151,21 @@ AC_CHECK_DECL([__va_copy],
 [], [#include <stdarg.h>])
 AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf strdup])
 
+# Check for libtool
+ACVT_CONF_TITLE([Libtool])
+AS_IF([test "$PLATFORM" = "bgl" -o "$PLATFORM" = "bgp"],
+[
+	AS_IF([test x"$enable_shared" = "xyes"],
+	[AC_MSG_WARN([VampirTrace does not support shared libraries on IBM BlueGene; build static libraries])])
+	enable_shared="no"; enable_static="yes"
+])
+AC_PROG_LIBTOOL
+
 # Check for OTF
-ACVT_CONF_TITLE([Open Trace Format (OTF) library and tools])
+ACVT_CONF_TITLE([Open Trace Format (OTF)])
 ACVT_OTF
 AS_IF([test x"$use_extern_otf" = "xyes" -a x"$otf_error" = "xyes"], [exit 1])
 AM_CONDITIONAL(AMEXTERNOTF, test x"$use_extern_otf" = "xyes")
-
-# Check for platform
-ACVT_CONF_TITLE([Platform specific setup])
-ACVT_PLATFORM
 
 # Check for compiler instrumentation
 ACVT_CONF_TITLE([Compiler instrumentation])
@@ -124,12 +173,13 @@ ACVT_COMPINST
 AS_IF([test x"$force_compinst" = "xyes" -a x"$compinst_error" = "xyes"], [exit 1])
 AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_compinst" = "xno"],
 [AC_MSG_NOTICE([disabled via command line switch])])
-AM_CONDITIONAL(AMBUILDCOMPINST_GNU, test x"$build_compinst_gnu" = "xyes")
-AM_CONDITIONAL(AMBUILDCOMPINST_INTEL, test x"$build_compinst_intel" = "xyes")
-AM_CONDITIONAL(AMBUILDCOMPINST_PGI, test x"$build_compinst_pgi" = "xyes")
-AM_CONDITIONAL(AMBUILDCOMPINST_PHAT, test x"$build_compinst_phat" = "xyes")
-AM_CONDITIONAL(AMBUILDCOMPINST_XL, test x"$build_compinst_xl" = "xyes")
-AM_CONDITIONAL(AMBUILDCOMPINST_FTRACE, test x"$build_compinst_ftrace" = "xyes")
+AM_CONDITIONAL(AMHAVECOMPINST, test x"$compinst_type" != x)
+AM_CONDITIONAL(AMBUILDCOMPINST_GNU, test x"$compinst_type" = "xgnu" -o x"$compinst_type" = "xpgi9")
+AM_CONDITIONAL(AMBUILDCOMPINST_PGI, test x"$compinst_type" = "xpgi")
+AM_CONDITIONAL(AMBUILDCOMPINST_PHAT, test x"$compinst_type" = "xsun")
+AM_CONDITIONAL(AMBUILDCOMPINST_XL, test x"$compinst_type" = "xxl")
+AM_CONDITIONAL(AMBUILDCOMPINST_FTRACE, test x"$compinst_type" = "xnec")
+AM_CONDITIONAL(AMBUILDCOMPINST_OPENUH, test x"$compinst_type" = "xopenuh")
 AM_CONDITIONAL(AMHAVEBFD, test x"$have_bfd" = "xyes")
 
 # Check for binary instrumentation by Dyninst
@@ -140,113 +190,125 @@ AS_IF([test x"$force_dynattlib" = "xyes" -a x"$dynattlib_error" = "xyes"], [exit
 AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_dyninst" = "xno"],
 [AC_MSG_NOTICE([disabled via command line switch])])
 AM_CONDITIONAL(AMHAVEDYNINST, test x"$have_dyninst" = "xyes")
-AM_CONDITIONAL(AMBUILDDYNATTLIB, test x"$have_dyninst" = "xyes" -a x"$LDSHFLAG" != "x")
 AM_CONDITIONAL(AMHAVELIBERTY, test x"$have_liberty" = "xyes")
+AM_CONDITIONAL(AMBUILDDYNATTLIB, test x"$build_dynattlib" = "xyes")
 
-# Check for MPI and OpenMP
-check_omp="yes"; build_omp="yes"; force_omp="no"
-check_mpi="yes"; build_mpi="yes"; force_mpi="no"
-build_hyb="yes"
-AC_ARG_ENABLE(mpi,
-	AC_HELP_STRING([--enable-mpi], [enable MPI support, default: enable if MPI-installation found by configure]),
-	[
-		AS_IF([test x"$enableval" = "xyes"],
-		[force_mpi="yes"], [check_mpi="no"; build_mpi="no"])
-	], [])
-
-AC_ARG_ENABLE(omp,
-	AC_HELP_STRING([--enable-omp], [enable OpenMP support, default: enable if given compiler supports OpenMP]),
-	[
-		AS_IF([test x"$enableval" = "xyes"],
-		[force_omp="yes"], [check_omp="no"; build_omp="no"])
-	], [])
-
-AC_ARG_ENABLE(hyb,
-	AC_HELP_STRING([--enable-hyb], [enable Hybrid (MPI/OpenMP) support, default: enable if MPI-installation found and given compiler supports OpenMP]),
-	[
-		AS_IF([test x"$enableval" = "xyes"],
-                [check_omp="yes"; force_omp="yes"
-		 check_mpi="yes"; force_mpi="yes"],
-		[build_hyb="no"])
-	], [check_omp="yes"; check_mpi="yes"])
-
+# Check for MPI support
 ACVT_CONF_TITLE([Message Passing Interface (MPI)])
-
-AS_IF([test x"$check_mpi" = "xyes"],
-[
-	ACVT_MPI
-	AS_IF([test x"$mpi_error" = "xyes"],
-	[
-		AS_IF([test x"$force_mpi" = "xyes"], [exit 1])
-		build_mpi="no"; build_hyb="no"
-        ])
-],
-[
-	AS_IF([test x"$enable_config_titles" = "xyes"],
-	[AC_MSG_NOTICE([disabled via command line switch])])
-])
+ACVT_MPI
+AS_IF([test x"$force_mpi" = "xyes" -a x"$mpi_error" = "xyes"], [exit 1])
+AS_IF([test x"$force_fmpiwraplib" = "xyes" -a x"$fmpiwraplib_error" = "xyes"], [exit 1])
 AS_IF([test x"$MPICC" = x], [MPICC=$CC])
-
-ACVT_CONF_TITLE([OpenMP parallelizer])
-
-AS_IF([test x"$check_omp" = "xyes"],
+AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_mpi" = "xno"],
+[AC_MSG_NOTICE([disabled via command line switch])])
+AM_CONDITIONAL(AMHAVEMPI, test x"$have_mpi" = "xyes")
+AM_CONDITIONAL(AMHAVEMPI2CONST, test x"$have_mpi2_const" = "xyes")
+AM_CONDITIONAL(AMHAVEMPI2IO, test x"$have_mpi2_io" = "xyes")
+AM_CONDITIONAL(AMHAVEFMPI, test x"$have_fmpi" = "xyes")
+AM_CONDITIONAL(AMBUILDMPI, test x"$have_mpi" = "xyes")
+AM_CONDITIONAL(AMBUILDFMPIWRAPLIB, test x"$build_fmpiwraplib" = "xyes")
+AS_IF([test x"$have_mpi" = "xyes"],
 [
-	ACVT_OMP
-	AS_IF([test x"$omp_error" = "xyes"],
-	[
-		AS_IF([test x"$force_omp" = "xyes"], [exit 1])
-		build_omp="no"; build_hyb="no"
-	])
-],
-[
-	AS_IF([test x"$enable_config_titles" = "xyes"],
+#	Check for enhanced time synchronization support
+	ACVT_CONF_SUBTITLE([Enhanced time synchronization])
+	ACVT_ETIMESYNC
+	AS_IF([test x"$force_etimesync" = "xyes" -a x"$etimesync_error" = "xyes"], [exit 1])
+	AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_etimesync" = "xno"],
+	[AC_MSG_NOTICE([disabled via command line switch])])
+
+#	Check for UniMCI support
+	ACVT_CONF_SUBTITLE([Universal MPI Correctness Interface (UniMCI)])
+	ACVT_UNIMCI
+	AS_IF([test x"$force_unimci" = "xyes" -a x"$unimci_error" = "xyes"], [exit 1])
+	AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_unimci" = "xno"],
 	[AC_MSG_NOTICE([disabled via command line switch])])
 ])
+AM_CONDITIONAL(AMBUILDETIMESYNC, test x"$have_etimesync" = "xyes")
+AM_CONDITIONAL(AMHAVEMATH, test x"$have_math" = "xyes")
+AM_CONDITIONAL(AMHAVEUNIMCI, test x"$have_unimci" = "xyes")
 
-AM_CONDITIONAL(AMBUILDMPI, test x"$build_mpi" = "xyes")
+# Check for Threads support
+ACVT_CONF_TITLE([Multithreading])
+ACVT_THREADS
+AS_IF([test x"$force_threads" = "xyes" -a x"$threads_error" = "xyes"], [exit 1])
+AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_threads" = "xno"],
+[AC_MSG_NOTICE([disabled via command line switch])])
+AM_CONDITIONAL(AMHAVETHREADS, test x"$have_threads" = "xyes")
+AM_CONDITIONAL(AMHAVEPTHREAD, test x"$have_pthread" = "xyes")
 AM_CONDITIONAL(AMHAVEOMP, test x"$have_omp" = "xyes")
-AM_CONDITIONAL(AMBUILDOMP, test x"$build_omp" = "xyes")
-AM_CONDITIONAL(AMBUILDHYB, test x"$build_hyb" = "xyes")
+AM_CONDITIONAL(AMBUILDMT, test x"$have_threads" = "xyes")
+AM_CONDITIONAL(AMBUILDOPARI, test x"$build_opari" = "xyes")
+AM_CONDITIONAL(AMTHRDPTHREAD, test x"$have_pthread" = "xyes")
+AM_CONDITIONAL(AMTHRDOMP, test x"$have_pthread" != "xyes" -a x"$have_omp" = "xyes")
 
-ACVT_CONF_TITLE([Additional tracing support])
+# Check for Hybrid (MPI/Threads) support
+AS_IF([test x"$have_mpi" = "xyes" -a x"$have_threads" = "xyes"],
+[
+	build_hybrid="yes"
+        AC_DEFINE([HAVE_HYBRID], [1], [Define to 1 if VT is configured with Hybrid (MPI/Threads) support.])
+
+])
+AM_CONDITIONAL(AMBUILDHYBRID, test x"$build_hybrid" = "xyes")
+
+# Check for JAVA support
+ACVT_CONF_TITLE([Java])
+ACVT_JAVA
+AS_IF([test x"$force_java" = "xyes" -a x"$java_error" = "xyes"], [exit 1])
+AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_java" = "xno"],
+[AC_MSG_NOTICE([disabled via command line switch])])
+AM_CONDITIONAL(AMBUILDJAVA, test x"$have_java" = "xyes")
+
+# Check for timer
+ACVT_CONF_TITLE([Timer])
+ACVT_TIMER
+
+# Check for hardware performace counter support
+ACVT_CONF_TITLE([Hardware performance counter])
+ACVT_METRICS
+AS_IF([test x"$force_metrics" = "xyes" -a x"$metrics_error" = "xyes"], [exit 1])
+AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_metrics" = "xno"],
+[AC_MSG_NOTICE([disabled via command line switch])])
+AM_CONDITIONAL(AMHAVEMETRICS, test x"$have_metrics" = "xyes")
+AM_CONDITIONAL(AMHAVEPAPI, test x"$have_papi" = "xyes")
+AM_CONDITIONAL(AMHAVECPC, test x"$have_cpc" = "xyes")
+AM_CONDITIONAL(AMHAVENECSXCNTR, test x"$have_necsxcntr" = "xyes")
+
+# Check for resource usage tracing support
+ACVT_CONF_TITLE([Resource usage tracing])
+ACVT_RUSAGE
+AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_rusage" = "xno"],
+[AC_MSG_NOTICE([disabled via command line switch])])
+AS_IF([test x"$force_rusage" = "xyes" -a x"$rusage_error" = "xyes"], [exit 1])
+AM_CONDITIONAL(AMHAVERUSAGE, test x"$have_rusage" = "xyes")
 
 # Check for memory tracing support
-ACVT_CONF_SUBTITLE([GLIBC's memory allocation tracing])
+ACVT_CONF_TITLE([GLIBC's memory allocation tracing])
 ACVT_MEMHOOKS
 AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_memhooks" = "xno"],
 [AC_MSG_NOTICE([disabled via command line switch])])
 AS_IF([test x"$force_memhooks" = "xyes" -a x"$memhooks_error" = "xyes"], [exit 1])
 AM_CONDITIONAL(AMHAVEMEMHOOKS, test x"$have_memhooks" = "xyes")
 
-# Check for I/O tracing support
-ACVT_CONF_SUBTITLE([LIBC's I/O tracing])
-AS_IF([test x"$PLATFORM" = "xmacos"],
-[
-	AC_MSG_NOTICE([not supported on MacOS])
-	have_iowrap="no"
-],
-[
-	ACVT_IOWRAP
-	AS_IF([test x"$force_iowrap" = "xyes" -a x"$iowrap_error" = "xyes"], [exit 1])
-	AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_iowrap" = "xno"],
-	[AC_MSG_NOTICE([disabled via command line switch])])
-])
-AM_CONDITIONAL(AMBUILDIOWRAP, test x"$have_iowrap" = "xyes")
+# Check for CPU ID tracing support
+ACVT_CONF_TITLE([GLIBC's CPU ID tracing])
+ACVT_GETCPU
+AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_getcpu" = "xno"],
+[AC_MSG_NOTICE([disabled via command line switch])])
+AS_IF([test x"$force_getcpu" = "xyes" -a x"$getcpu_error" = "xyes"], [exit 1])
+AM_CONDITIONAL(AMHAVEGETCPU, test x"$have_getcpu" = "xyes")
 
-# Check for PAPI hardware counter support
-ACVT_CONF_SUBTITLE([PAPI hardware counter])
-AS_IF([test x"$PLATFORM" = "xnecsx"],
-[
-	AC_MSG_NOTICE([not supported on NEC SX])
-	have_papi="no"
-],
-[
-	ACVT_PAPI
-	AS_IF([test x"$force_papi" = "xyes" -a x"$papi_error" = "xyes"], [exit 1])
-	AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_papi" = "xno"],
-	[AC_MSG_NOTICE([disabled via command line switch])])
-])
-AM_CONDITIONAL(AMHAVEPAPI, test x"$have_papi" = "xyes")
+# Check for library tracing support
+ACVT_CONF_TITLE([Library tracing])
+ACVT_LIBWRAP
+AS_IF([test x"$force_libwrap" = "xyes" -a x"$libwrap_error" = "xyes"], [exit 1])
+AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_libwrap" = "xno"],
+[AC_MSG_NOTICE([disabled via command line switch])])
+AM_CONDITIONAL(AMBUILDLIBWRAP, test x"$have_libwrap" = "xyes")
+AM_CONDITIONAL(AMBUILDLIBWRAPGEN, test x"$build_libwrapgen" = "xyes")
+AM_CONDITIONAL(AMHAVEDL, test x"$have_dl" = "xyes")
+AM_CONDITIONAL(AMBUILDLIBCWRAP, test x"$have_libcwrap" = "xyes")
+AM_CONDITIONAL(AMHAVEFORK, test x"$have_libcwrap" = "xyes" -a x"$have_fork" = "xyes")
+AM_CONDITIONAL(AMBUILDIOWRAP, test x"$have_iowrap" = "xyes")
 
 # Check path for node-local temporary directory
 ACVT_LTMPDIR
@@ -260,25 +322,57 @@ AC_CONFIG_FILES([Makefile
 	extlib/Makefile
 	vtlib/Makefile
 	tools/Makefile
-	tools/compwrap/Makefile
-	tools/compwrap/vtcc-wrapper-data.txt
-	tools/compwrap/vtcxx-wrapper-data.txt
-	tools/compwrap/vtf77-wrapper-data.txt
-	tools/compwrap/vtf90-wrapper-data.txt
 	tools/opari/Makefile
 	tools/opari/tool/Makefile
 	tools/opari/doc/Makefile
+	tools/vtcpcavail/Makefile
 	tools/vtdyn/Makefile
 	tools/vtdyn/dynattlib/Makefile
 	tools/vtfilter/Makefile
+	tools/vtjava/Makefile
+	tools/vtjava/vtjava
+	tools/vtlibwrapgen/Makefile
+	tools/vtlibwrapgen/vt_libwrapgen_defs.h
 	tools/vtunify/Makefile
+	tools/vtunify/mpi/Makefile
+	tools/vtwrapper/Makefile
+	tools/vtwrapper/vtcc-wrapper-data.txt
+	tools/vtwrapper/vtc++-wrapper-data.txt
+	tools/vtwrapper/vtf77-wrapper-data.txt
+	tools/vtwrapper/vtf90-wrapper-data.txt
 	doc/Makefile
+	etc/Makefile
+])
+
+# Add MPI wrapper generator scripts to output files
+AS_IF([test x"$have_mpi" = "xyes"],
+[
+	AC_CONFIG_FILES([config/mpigen/mk_registry.sh])
+	AC_CONFIG_FILES([config/mpigen/mk_c_wrapper.sh])
+	AS_IF([test x"$build_fmpiwraplib" = "xyes"],
+	[AC_CONFIG_FILES([config/mpigen/mk_fortran_wrapper.sh])])
 ])
 
 # Create output files
 ACVT_CONF_TITLE([Final output])
 AC_OUTPUT
 
+# Generate MPI wrappers
+AS_IF([test x"$have_mpi" = "xyes"],
+[
+	AC_MSG_NOTICE([executing MPI wrapper generator])
+
+	$SHELL $top_vt_builddir/config/mpigen/mk_registry.sh
+	AS_IF([test $? != 0], [exit 1])
+	$SHELL $top_vt_builddir/config/mpigen/mk_c_wrapper.sh
+	AS_IF([test $? != 0], [exit 1])
+	AS_IF([test x"$build_fmpiwraplib" = "xyes"],
+	[
+		$SHELL $top_vt_builddir/config/mpigen/mk_fortran_wrapper.sh
+		AS_IF([test $? != 0], [exit 1])
+	])
+])
+	
 # Show configure summary
 ACVT_CONF_SUMMARY
 

@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -12,40 +12,106 @@
 
 #include "config.h"
 
-#include "vt_pform.h"
-#include "vt_trc.h"
-#include "vt_memhook.h"
-#include "vt_memreg.h"
-#include "vt_inttypes.h"
 #include <malloc.h>
 #include <stdlib.h>
 
-/* Variables to save original hooks */
-void *(*org_malloc_hook)(size_t size, const void* caller);
-void *(*org_realloc_hook)(void* ptr, size_t size, const void* caller);
-void  (*org_free_hook)(void* ptr, const void* caller);
+#include "vt_env.h"
+#include "vt_error.h"
+#include "vt_inttypes.h"
+#include "vt_memhook.h"
+#include "vt_pform.h"
+#include "vt_trc.h"
 
-uint8_t memhook_is_initialized = 0;
-uint8_t memhook_is_enabled = 0;
+#include "otf.h"
+
+#define MEMHOOK_REG_MALLOC  0
+#define MEMHOOK_REG_REALLOC 1
+#define MEMHOOK_REG_FREE    2
+
+#define MEMHOOK_MARK_ALLOC  0
+#define MEMHOOK_MARK_FREE   1
+
+/* variables to save original hooks */
+void *(*vt_malloc_hook_org)(size_t size, const void* caller);
+void *(*vt_realloc_hook_org)(void* ptr, size_t size, const void* caller);
+void  (*vt_free_hook_org)(void* ptr, const void* caller);
+
+uint8_t vt_memhook_is_initialized = 0;
+uint8_t vt_memhook_is_enabled = 0;
+
+/* write marker for each alloc/free event? */
+uint8_t memalloc_marker = 0;
+
+/* array of memory allocation region IDs */
+static uint32_t memhook_regid[3];
+
+/* memory allocation marker IDs */
+static uint32_t memalloc_mid[2];
+
+/* memory allocation counter ID */
+static uint32_t memalloc_cid;
+
+/* memory allocation counter value */
+static uint64_t memalloc_val = 0;
 
 void vt_memhook_init()
 {
-  if( memhook_is_initialized ) return;
+  uint32_t fid;
+  uint32_t gid;
 
-  org_malloc_hook = __malloc_hook;
-  org_realloc_hook = __realloc_hook;
-  org_free_hook = __free_hook;
+#if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
+  vt_error_msg("Memory tracing by GNU C malloc-hooks for threaded application "
+               "not yet supported");
+#endif /* VT_MT || VT_HYB || VT_JAVA */
 
-  memhook_is_initialized = 1;
+  if( vt_memhook_is_initialized ) return;
+
+  vt_malloc_hook_org = __malloc_hook;
+  vt_realloc_hook_org = __realloc_hook;
+  vt_free_hook_org = __free_hook;
+
+  /* define source */
+  fid = vt_def_scl_file("MEM");
+
+  /* define regions */
+  memhook_regid[MEMHOOK_REG_MALLOC] =
+    vt_def_region("malloc", fid, VT_NO_LNO, VT_NO_LNO, NULL, VT_MEMORY);
+  memhook_regid[MEMHOOK_REG_REALLOC] =
+    vt_def_region("realloc", fid, VT_NO_LNO, VT_NO_LNO, NULL, VT_MEMORY);
+  memhook_regid[MEMHOOK_REG_FREE] =
+    vt_def_region("free", fid, VT_NO_LNO, VT_NO_LNO, NULL, VT_MEMORY);
+
+  /* define markers, if necessary */
+  if( (memalloc_marker = vt_env_memtrace_marker()) )
+  {
+    memalloc_mid[MEMHOOK_MARK_ALLOC] =
+      vt_def_marker("Memory Allocation", OTF_MARKER_TYPE_HINT);
+    memalloc_mid[MEMHOOK_MARK_FREE] =
+      vt_def_marker("Memory Deallocation", OTF_MARKER_TYPE_HINT);
+  }
+
+  /* define counter group */
+  gid = vt_def_counter_group("Memory");
+
+  /* define counter */
+  memalloc_cid =
+    vt_def_counter("MEM_ALLOC",
+                   OTF_COUNTER_TYPE_ABS|OTF_COUNTER_SCOPE_NEXT,
+                   gid, "Bytes");
+
+  vt_memhook_is_initialized = 1;
 }
 
 void vt_memhook_finalize()
 {
-  if( !memhook_is_initialized ) return;
+  if( !vt_memhook_is_initialized ) return;
 
-  __malloc_hook = org_malloc_hook;
-  __realloc_hook = org_realloc_hook;
-  __free_hook = org_free_hook;
+  __malloc_hook = vt_malloc_hook_org;
+  __realloc_hook = vt_realloc_hook_org;
+  __free_hook = vt_free_hook_org;
+
+  vt_memhook_is_initialized = 0;
+  vt_memhook_is_enabled = 0;
 }
 
 void* vt_malloc_hook(size_t size, const void* caller)
@@ -53,15 +119,16 @@ void* vt_malloc_hook(size_t size, const void* caller)
   void* result;
   uint64_t bytes;
   uint64_t time;
+  uint8_t was_recorded;
 
-  VT_MEMHOOKS_OFF();   /* Restore original hooks */
+  VT_MEMHOOKS_OFF(); /* restore original hooks */
 
   time = vt_pform_wtime();
-  vt_enter(&time, vt_mem_regid[VT__MEM_MALLOC]);
-    
-  result = malloc(size);   /* Call recursively */
+  was_recorded = vt_enter(&time, memhook_regid[MEMHOOK_REG_MALLOC]);
 
-  /* Get total allocated memory */
+  result = malloc(size); /* call recursively */
+
+  /* get total allocated memory */
   if ( result != NULL )
   {
     bytes = ( ~ (uint64_t) 3 ) & (uint64_t) *( (size_t*) ( (char*)result - SIZEOF_VOIDP ) );
@@ -71,12 +138,27 @@ void* vt_malloc_hook(size_t size, const void* caller)
     bytes = 0;
   }
 
+  /* update counter value */
+  memalloc_val += bytes;
+
   time = vt_pform_wtime();
-  
-  vt_mem_alloc(&time, bytes);
+
+  if ( was_recorded && bytes > 0 )
+  {
+    /* write marker, if desired */
+    if( memalloc_marker )
+    {
+      vt_marker(&time, memalloc_mid[MEMHOOK_MARK_ALLOC],
+                "Allocated %llu Bytes", (unsigned long long)bytes);
+    }
+
+    /* write counter value */
+    vt_count(&time, memalloc_cid, memalloc_val);
+  }
+
   vt_exit(&time);
 
-  VT_MEMHOOKS_ON();   /* Restore our own hooks */
+  VT_MEMHOOKS_ON(); /* restore our own hooks */
 
   return result;
 }
@@ -84,45 +166,86 @@ void* vt_malloc_hook(size_t size, const void* caller)
 void* vt_realloc_hook(void* ptr, size_t size, const void* caller)
 {
   void* result;
+  uint64_t bytes;
   uint64_t bytes1;
   uint64_t bytes2;
   uint64_t time;
+  uint8_t was_recorded;
 
-  VT_MEMHOOKS_OFF();   /* Restore original hooks */
+  VT_MEMHOOKS_OFF(); /* restore original hooks */
 
   time = vt_pform_wtime();
-  vt_enter(&time, vt_mem_regid[VT__MEM_REALLOC]);
+  was_recorded = vt_enter(&time, memhook_regid[MEMHOOK_REG_REALLOC]);
 
-  /* Get total allocated memory before realloc */
+  /* get total allocated memory before realloc */
   if ( NULL != ptr )
   {
     bytes1 = ( ~ (uint64_t) 3 ) & (uint64_t) *( (size_t*) ( (char*)ptr - SIZEOF_VOIDP ) );
   }
   else
   {
-    bytes1 = 0;
+    bytes1 = bytes = 0;
   }
 
-  result = realloc(ptr, size);   /* Call recursively */
+  result = realloc(ptr, size); /* call recursively */
 
-  /* Get total allocated memory after realloc */
+  /* get total allocated memory after realloc */
   if ( NULL != result )
   {
     bytes2 = ( ~ (uint64_t) 3 ) & (uint64_t) *( (size_t*) ( (char*)result - SIZEOF_VOIDP ) );
+    bytes = bytes2 < bytes1 ? bytes1 - bytes2 : bytes2 - bytes1;
   }
   else
   {
-    bytes2 = 0;
+    bytes2 = bytes = 0;
+  }
+
+  /* update counter value */
+  if ( bytes2 < bytes1 )
+  {
+    if ( bytes <= memalloc_val )
+      memalloc_val -= bytes;
+    else
+      memalloc_val = 0;
+  }
+  else
+  {
+    memalloc_val += bytes;
   }
 
   time = vt_pform_wtime();
-  if ( bytes2 < bytes1 )
-    vt_mem_free(&time, bytes1 - bytes2);
-  else
-    vt_mem_alloc(&time, bytes2 - bytes1);
+
+  if( was_recorded && bytes > 0 )
+  {
+    /* write marker, if desired */
+    if( memalloc_marker )
+    {
+      uint32_t marker_type;
+      char* marker_prefix;
+
+      if ( bytes2 < bytes1 )
+      {
+        marker_type = MEMHOOK_MARK_FREE;
+        marker_prefix = "Freed";
+      }
+      else
+      {
+        marker_type = MEMHOOK_MARK_ALLOC;
+        marker_prefix = "Allocated";
+      }
+
+      /* write marker */
+      vt_marker(&time, memalloc_mid[marker_type], "%s %llu Bytes",
+                marker_prefix, (unsigned long long)bytes);
+    }
+
+    /* write counter value */
+    vt_count(&time, memalloc_cid, memalloc_val);
+  }
+
   vt_exit(&time);
 
-  VT_MEMHOOKS_ON();   /* Restore our own hooks */
+  VT_MEMHOOKS_ON(); /* restore our own hooks */
 
   return result;
 }
@@ -131,11 +254,12 @@ void vt_free_hook(void* ptr, const void* caller)
 {
   uint64_t bytes;
   uint64_t time;
+  uint8_t was_recorded;
 
-  VT_MEMHOOKS_OFF();   /* Restore original hooks */
+  VT_MEMHOOKS_OFF(); /* restore original hooks */
 
   time = vt_pform_wtime();
-  vt_enter(&time, vt_mem_regid[VT__MEM_FREE]);
+  was_recorded = vt_enter(&time, memhook_regid[MEMHOOK_REG_FREE]);
 
   if ( NULL != ptr )
   {
@@ -146,11 +270,30 @@ void vt_free_hook(void* ptr, const void* caller)
     bytes = 0;
   }
 
-  free(ptr);   /* Call recursively */
+  free(ptr); /* call recursively */
+
+  /* update counter value */
+  if ( bytes <= memalloc_val )
+    memalloc_val -= bytes;
+  else
+    memalloc_val = 0;
 
   time = vt_pform_wtime();
-  vt_mem_free(&time, bytes);
+
+  if ( was_recorded && bytes > 0 )
+  {
+    /* write marker, if desired */
+    if( memalloc_marker )
+    {
+      vt_marker(&time, memalloc_mid[MEMHOOK_MARK_FREE],
+                "Freed %llu Bytes", (unsigned long long)bytes);
+    }
+
+    /* write counter value */
+    vt_count(&time, memalloc_cid, memalloc_val);
+  }
+
   vt_exit(&time);
 
-  VT_MEMHOOKS_ON();   /* Restore our own hooks */
+  VT_MEMHOOKS_ON(); /* restore our own hooks */
 }

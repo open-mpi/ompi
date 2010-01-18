@@ -1,16 +1,70 @@
-1.3.12
+1.6.4openmpi
+	- enhanced reading of process group definition records
+
+1.6.3stingray
+	- fixed errors while reading the long OTF format
+	- updated python interface
+
+1.6.2stingray
+	- fixed build errors on SUN Solaris with older GNU compilers
+	- fixed skewed arguments for OTF_WStream_writeEndFileOperation
+	- fixed progress calculation of otfprofile
+	- improved performance of otfprofile - especially handling of huge
+	  tracefiles
+
+1.6.1stingray
 	- added tool 'otfinfo' which can be used to get basic information of
 	  a trace
-	- removed python bindings
-	  (a working version of the OTF python bindings are available in the
-	  latest stand-alone release; see http://www.tu-dresden.de/zih/otf/)
+	- fix invalid pointer dereferences in OTF_stripFilename() and 
+	  OTF_File_open_zlevel()
+	- fixed doxygen documentation: add OTF_Handler.h to package
 
-1.3.11
-	- build/install tool 'otfdump' by default
-	- install documentation
+1.6stingray
+	- added tool 'otfshrink' which can be used to reduce a trace to
+	  specified processes
+	- introduced an error variable (otf_errno, otf_strerr) that indicates
+	  whether an error occurred or not
+	- fixed build dependencies of otfprofile
+	- added file operation types OTF_FILEOP_DUP, OTF_FILEOP_SYNC,
+	  OTF_FILEOP_LOCK, and OTF_FILEOP_UNLOCK
+	- changed datatype for sent/received data volume of collective
+	  operation begin/end records from 'uint32_t' to 'uint64_t'
+	- replaced usage of PATH_MAX by VT_PATH_MAX to avoid compile errors
+
+1.5.2dolphin
+	- adapted python bindings to the current API (related to new record
+	  types)
+	- if possible, otfprofile creates a PS-file
+	- fixed VPATH issue, when using python bindings
+	- fixed infinite recursion in python wrappers
+	  pyOTF_COUNTER_VARTYPE_ISSIGNED and pyOTF_COUNTER_VARTYPE_ISUNSIGNED
+
+1.5.1dolphin
+	- corrected package preparation for libtool
+	- build shared OTF library by default
+	- added version information to shared OTF library
+
+1.5
+	- added file operation begin/end records
+	- added file operation types OTF_FILEOP_UNLINK, OTF_FILEOP_RENAME,
+	  and OTF_FILEOP_OTHER
+	- use part of fileop for I/O flags (e.g. async, coll.)
+	- added collective operation begin/end records
+	- added remote memory access (RMA) operation records
+	- added marker records
+
+1.4.1
 	- bugfix: removed included system headers inside 'extern "C" {}'
 	- bugfix: added configure check for functions 'fseeko()' and 'ftello()'
 	  (these functions are not available on NEC SX platforms)
+	- bugfix in otfprofile: fixed infinite loop while drawing the
+	  statistics for "top 50 of counters"
+
+1.4
+	- added tool 'otfprofile' which can be used to generate CSV/Latex-
+	  summaries about functions and P2P-messages of a trace
+	- build/install tool 'otfdump' by default
+	- install documentation
 
 1.3.10
 	- added configure option '--[enable|disable]-binaries' to control
@@ -81,13 +135,16 @@
 	- fixed warning which appeared when not using zlib
 	- added python bindings to the otf library
 
+1.2.25
+	- added doxygen html documentation (docu/doxygen/html/index.html)
+
 1.2.24
 	- minor change in otf[de|un]compress
 	- strictly avoid writing of unsorted time stamps. Now, there will be an
 	  error message and the corresponding buffer/stream will be disabled for
 	  further writing. The write routines provide an invlaid return code but
-	  currently there is no way to "repair" the buffer/stream after an unsorted
-	  time stamp has been issued.
+	  currently there is no way to "repair" the buffer/stream after an
+	  unsorted time stamp has been issued.
 
 1.2.23
 	- removed libtool from autoconf to make configure much faster, 
@@ -112,14 +169,14 @@
 
 1.2.18
 	- added fwrite check for writting less bytes than expected
-	- re-write of otfdump. Now, it uses OTF read lib instead of plain scanf. 
-	  It produces nicer output and numbers records in read order.
+	- re-write of otfdump. Now, it uses OTF read lib instead of plain
+	  scanf. It produces nicer output and numbers records in read order.
 
 1.2.17
 	- bugfixed parser (wrong treatment of unknown records)
 	- added FileGroupOperationSummary record
-	- changed FileOperation-, OpenFileSnapshot- and FileOperationSummary- record
-	  NOTE: these records are still experimental
+	- changed FileOperation-, OpenFileSnapshot- and FileOperationSummary-
+	  record NOTE: these records are still experimental
 	- included file operation records into all tools
 	  NOTE: some parameters were added/changed
 	- the byte-parameter in the FileOperation record does now contain the
@@ -197,17 +254,23 @@
 1.2
 	- introduce transparent zlib compression
 
+1.1.7
+	- really did the bugfix for 1.1.6, was missing for some reasons
+
+1.1.6
+	- bugfix: correctly handle process groups with more than 1000 entries
+
 1.1.5
-	- have UnknownRecord report handle incomplete records or additional bytes at 
-	  the end of a file.
+	- have UnknownRecord report handle incomplete records or additional
+	  bytes at the end of a file.
 
 1.1.4
 	- fixed a bug in OTF_Reader which might have caused the very first 
 	  time stamp of a trace to be not properly sorted
 	- introduced '--snapshots' and '--statistics' switches to do only 
 	  snapshots or statistics. for statistics a selective mode is allowed
-	  which regards only some streams. By this means statistics can be created
-	  in parallel by calling otfaux multiple times.
+	  which regards only some streams. By this means statistics can be
+	  created in parallel by calling otfaux multiple times.
 
 1.1.3
 	- fixed a minor bug in otfaux

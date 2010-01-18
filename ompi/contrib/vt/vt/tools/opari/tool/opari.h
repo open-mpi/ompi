@@ -5,7 +5,7 @@
 **  Copyright (c) 1998-2008                                                **
 **  Forschungszentrum Juelich, Juelich Supercomputing Centre               **
 **                                                                         **
-**  See the file COPYING in the package base directory for details       **
+**  See the file COPYING in the package base directory for details         **
 ****************************************************************************/
 
 #ifndef OPARI_H

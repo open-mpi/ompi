@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
@@ -43,7 +43,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;OTF_DEBUG;OTF_VERBOSE;HAVE_ZLIB"
+				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;OTF_DEBUG;OTF_VERBOSE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -107,7 +107,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;OTF_DEBUG;OTF_VERBOSE;HAVE_ZLIB"
+				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;OTF_DEBUG;OTF_VERBOSE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -151,7 +151,7 @@
 			OutputDirectory="../release_static_32bit"
 			IntermediateDirectory="tmp_32bit"
 			ConfigurationType="4"
-			UseOfMFC="1"
+			UseOfMFC="0"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -172,7 +172,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories=""
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="false"
@@ -213,7 +213,7 @@
 			OutputDirectory="../release_static_64bit"
 			IntermediateDirectory="tmp_64bit"
 			ConfigurationType="4"
-			UseOfMFC="1"
+			UseOfMFC="0"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -235,7 +235,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories=""
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="false"
@@ -290,6 +290,10 @@
 			</File>
 			<File
 				RelativePath=".\OTF_Definitions.h"
+				>
+			</File>
+			<File
+				RelativePath=".\OTF_Errno.h"
 				>
 			</File>
 			<File
@@ -349,6 +353,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\OTF_Version.h"
+				>
+			</File>
+			<File
 				RelativePath=".\OTF_WBuffer.h"
 				>
 			</File>
@@ -374,6 +382,10 @@
 			>
 			<File
 				RelativePath=".\OTF_CopyHandler.c"
+				>
+			</File>
+			<File
+				RelativePath=".\OTF_Errno.c"
 				>
 			</File>
 			<File

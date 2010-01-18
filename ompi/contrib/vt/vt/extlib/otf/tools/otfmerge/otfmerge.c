@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -52,6 +52,7 @@ static const char* Helptext[] = {
 "      -z <zlevel>   write compressed output                       \n",
 "                    zlevel reaches from 0 to 9 where 0 is no      \n",
 "                    compression and 9 is the highest level        \n",
+"      -l            write long OTF format                         \n",
 "      -p            show progress                                 \n",
 "                                                                  \n",
 "                                                                  \n", NULL };
@@ -73,6 +74,7 @@ int main ( int argc, char** argv ) {
 	int read_snaps= 0;
 	int nstreams = 1;
 	int nfiles = 200;
+	int longformat = 0;
 	int showprogress= 0;
 	int i;
 
@@ -96,6 +98,7 @@ int main ( int argc, char** argv ) {
 	uint32_t progress_counter= 0;
 
 	uint64_t retde;
+	uint64_t retma;
 	uint64_t retev;
 	uint64_t retst;
 	uint64_t retsn;
@@ -154,6 +157,10 @@ int main ( int argc, char** argv ) {
 			compression= atoi( argv[i+1] );
 
 			++i;
+
+                } else if ( 0 == strcmp( "-l", argv[i] ) ) {
+
+                        longformat = 1;
 
 		} else if ( 0 == strcmp( "-p", argv[i] ) ) {
 
@@ -233,7 +240,11 @@ int main ( int argc, char** argv ) {
 	fcb.writer = OTF_Writer_open( outfile, nstreams, manager );
 	OTF_Writer_setBufferSizes( fcb.writer, writerbuffersize );
 	OTF_Writer_setCompression( fcb.writer, compression );
-	
+	if( longformat )
+		OTF_Writer_setFormat( fcb.writer, OTF_WSTREAM_FORMAT_LONG );
+	else
+                OTF_Writer_setFormat( fcb.writer, OTF_WSTREAM_FORMAT_SHORT );
+
 	mc = OTF_Reader_getMasterControl( reader );
 
 	/* set your own handler functions */
@@ -355,6 +366,18 @@ int main ( int argc, char** argv ) {
         &fcb, OTF_COLLOP_RECORD );
 
 	OTF_HandlerArray_setHandler( handlers, 
+		(OTF_FunctionPointer*) handleBeginCollectiveOperation,
+		OTF_BEGINCOLLOP_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, 
+        &fcb, OTF_BEGINCOLLOP_RECORD );
+
+	OTF_HandlerArray_setHandler( handlers, 
+		(OTF_FunctionPointer*) handleEndCollectiveOperation,
+		OTF_ENDCOLLOP_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, 
+        &fcb, OTF_ENDCOLLOP_RECORD );
+
+	OTF_HandlerArray_setHandler( handlers, 
 		(OTF_FunctionPointer*) handleRecvMsg,
 		OTF_RECEIVE_RECORD );
 	OTF_HandlerArray_setFirstHandlerArg( handlers, 
@@ -389,7 +412,43 @@ int main ( int argc, char** argv ) {
 		OTF_FILEOPERATION_RECORD );
 	OTF_HandlerArray_setFirstHandlerArg( handlers, &fcb, 
 		OTF_FILEOPERATION_RECORD );
-			
+
+	OTF_HandlerArray_setHandler( handlers, 
+		(OTF_FunctionPointer*) handleBeginFileOperation,
+		OTF_BEGINFILEOP_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, &fcb, 
+		OTF_BEGINFILEOP_RECORD );
+
+	OTF_HandlerArray_setHandler( handlers, 
+		(OTF_FunctionPointer*) handleEndFileOperation,
+		OTF_ENDFILEOP_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, &fcb, 
+		OTF_ENDFILEOP_RECORD );
+
+        OTF_HandlerArray_setHandler( handlers, 
+                (OTF_FunctionPointer*) handleRMAPut,
+                OTF_RMAPUT_RECORD );
+        OTF_HandlerArray_setFirstHandlerArg( handlers, &fcb,
+                OTF_RMAPUT_RECORD );
+
+        OTF_HandlerArray_setHandler( handlers, 
+                (OTF_FunctionPointer*) handleRMAPutRemoteEnd,
+                OTF_RMAPUTRE_RECORD );
+        OTF_HandlerArray_setFirstHandlerArg( handlers, &fcb,
+                OTF_RMAPUTRE_RECORD );
+
+        OTF_HandlerArray_setHandler( handlers, 
+                (OTF_FunctionPointer*) handleRMAGet,
+                OTF_RMAGET_RECORD );
+        OTF_HandlerArray_setFirstHandlerArg( handlers, &fcb,
+                OTF_RMAGET_RECORD );
+
+        OTF_HandlerArray_setHandler( handlers, 
+                (OTF_FunctionPointer*) handleRMAEnd,
+                OTF_RMAEND_RECORD );
+        OTF_HandlerArray_setFirstHandlerArg( handlers, &fcb,
+                OTF_RMAEND_RECORD );
+
 
 	/* snapshot records */
 
@@ -445,6 +504,12 @@ int main ( int argc, char** argv ) {
         &fcb, OTF_MESSAGESUMMARY_RECORD );
 
 	OTF_HandlerArray_setHandler( handlers, 
+		(OTF_FunctionPointer*) handleCollopSummary,
+		OTF_COLLOPSUMMARY_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, 
+        &fcb, OTF_COLLOPSUMMARY_RECORD );
+
+	OTF_HandlerArray_setHandler( handlers, 
 		(OTF_FunctionPointer*) handleFileOperationSummary,
 		OTF_FILEOPERATIONSUMMARY_RECORD );
 	OTF_HandlerArray_setFirstHandlerArg( handlers, 
@@ -454,7 +519,15 @@ int main ( int argc, char** argv ) {
 		(OTF_FunctionPointer*) handleFileGroupOperationSummary,
 		OTF_FILEGROUPOPERATIONSUMMARY_RECORD );
 	OTF_HandlerArray_setFirstHandlerArg( handlers, 
-        &fcb, OTF_FILEGROUPOPERATIONSUMMARY_RECORD );
+		&fcb, OTF_FILEGROUPOPERATIONSUMMARY_RECORD );
+
+	/* marker record types */
+
+	OTF_HandlerArray_setHandler( handlers, (OTF_FunctionPointer*) handleDefMarker, OTF_DEFMARKER_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, &fcb, OTF_DEFMARKER_RECORD );
+	
+	OTF_HandlerArray_setHandler( handlers, (OTF_FunctionPointer*) handleMarker, OTF_MARKER_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, &fcb, OTF_MARKER_RECORD );	
 
 	/* misc records */
 	
@@ -491,6 +564,14 @@ int main ( int argc, char** argv ) {
 	retde= OTF_Reader_readDefinitions( reader, handlers );
 	if( OTF_READ_ERROR == retde || 1 == fcb.error ) {
 		fprintf( stderr, "Error while reading definitions. aborting\n" );
+		FINISH_EVERYTHING;
+		exit(1);
+	}
+
+	/* read markers */
+	retma= OTF_Reader_readMarkers( reader, handlers );
+	if( OTF_READ_ERROR == retma || 1 == fcb.error ) {
+		fprintf( stderr, "Error while reading marker records. aborting\n" );
 		FINISH_EVERYTHING;
 		exit(1);
 	}

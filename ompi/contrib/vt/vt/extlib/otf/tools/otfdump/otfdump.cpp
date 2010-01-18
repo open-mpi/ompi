@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -42,6 +42,7 @@ static const char* Helptext[] = {
 "     --noevent      omit event records                                    \n",
 "     --nostat       omit statistic records                                \n",
 "     --nosnap       omit snapshot records                                 \n",
+"     --nomarker     omit marker records                                   \n",
 "                                                                          \n",
 "     --procs <a>    show only processes <a>                               \n",
 "                    <a> is a space-seperated list of process-tokens       \n",
@@ -68,16 +69,21 @@ int main ( int argc, const char** argv ) {
 	bool event= true;
 	bool stat= true;
 	bool snap= true;
+	bool marker= true;
 
 	uint64_t mintime= 0;
 	uint64_t maxtime= (uint64_t) -1;
+	uint64_t read;
 	
 	Control fha;
 	fha.num= 0;
 	fha.minNum= 0;
 	fha.maxNum= (uint64_t) -1;
 	fha.outfile= stdout;
-	for( uint32_t i= 0; i < OTF_NRECORDS; ++i ) fha.records[i]= true;
+	for( uint32_t i= 0; i < OTF_NRECORDS; ++i ) {
+
+		fha.records[i]= true;
+	}
 	
 
 	/* argument handling */
@@ -135,6 +141,10 @@ int main ( int argc, const char** argv ) {
 		} else if ( 0 == strcmp( "--nosnap", argv[i] ) ) {
 
 			snap= false;
+
+		} else if ( 0 == strcmp( "--nomarker", argv[i] ) ) {
+
+			marker= false;
 
 		} else if ( (0 == strcmp( "--procs", argv[i] )) && ( i+1 < argc ) ) {
 
@@ -289,6 +299,24 @@ int main ( int argc, const char** argv ) {
 	OTF_HandlerArray_setFirstHandlerArg( handlers, 
         &fha, OTF_DEFVERSION_RECORD );
 
+        OTF_HandlerArray_setHandler( handlers,
+                (OTF_FunctionPointer*) handleDefFile,
+                OTF_DEFFILE_RECORD );
+        OTF_HandlerArray_setFirstHandlerArg( handlers,
+        &fha, OTF_DEFFILE_RECORD );
+
+        OTF_HandlerArray_setHandler( handlers,
+                (OTF_FunctionPointer*) handleDefFileGroup,
+                OTF_DEFFILEGROUP_RECORD );
+        OTF_HandlerArray_setFirstHandlerArg( handlers,
+        &fha, OTF_DEFFILEGROUP_RECORD );
+
+	OTF_HandlerArray_setHandler( handlers,
+		(OTF_FunctionPointer*) handleDefCollectiveOperation,
+		OTF_DEFCOLLOP_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, 
+        &fha, OTF_DEFCOLLOP_RECORD );
+
 
 	OTF_HandlerArray_setHandler( handlers, 
 		(OTF_FunctionPointer*) handleEventComment,
@@ -313,6 +341,18 @@ int main ( int argc, const char** argv ) {
 		OTF_COLLOP_RECORD );
 	OTF_HandlerArray_setFirstHandlerArg( handlers, 
         &fha, OTF_COLLOP_RECORD );
+
+	OTF_HandlerArray_setHandler( handlers, 
+		(OTF_FunctionPointer*) handleBeginCollectiveOperation,
+		OTF_BEGINCOLLOP_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, 
+        &fha, OTF_BEGINCOLLOP_RECORD );
+
+	OTF_HandlerArray_setHandler( handlers, 
+		(OTF_FunctionPointer*) handleEndCollectiveOperation,
+		OTF_ENDCOLLOP_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, 
+        &fha, OTF_ENDCOLLOP_RECORD );
 
 	OTF_HandlerArray_setHandler( handlers, 
 		(OTF_FunctionPointer*) handleRecvMsg,
@@ -343,7 +383,49 @@ int main ( int argc, const char** argv ) {
 		OTF_ENDPROCESS_RECORD );
 	OTF_HandlerArray_setFirstHandlerArg( handlers, &fha,
 		OTF_ENDPROCESS_RECORD );
-			
+
+	OTF_HandlerArray_setHandler( handlers, 
+		(OTF_FunctionPointer*) handleFileOperation,
+		OTF_FILEOPERATION_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, &fha,
+		OTF_FILEOPERATION_RECORD );
+
+	OTF_HandlerArray_setHandler( handlers, 
+		(OTF_FunctionPointer*) handleBeginFileOperation,
+		OTF_BEGINFILEOP_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, &fha,
+		OTF_BEGINFILEOP_RECORD );
+
+	OTF_HandlerArray_setHandler( handlers, 
+		(OTF_FunctionPointer*) handleEndFileOperation,
+		OTF_ENDFILEOP_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, &fha,
+		OTF_ENDFILEOP_RECORD );
+
+        OTF_HandlerArray_setHandler( handlers, 
+                (OTF_FunctionPointer*) handleRMAPut,
+                OTF_RMAPUT_RECORD );
+        OTF_HandlerArray_setFirstHandlerArg( handlers, &fha,
+                OTF_RMAPUT_RECORD );
+
+        OTF_HandlerArray_setHandler( handlers, 
+                (OTF_FunctionPointer*) handleRMAPutRemoteEnd,
+                OTF_RMAPUTRE_RECORD );
+        OTF_HandlerArray_setFirstHandlerArg( handlers, &fha,
+                OTF_RMAPUTRE_RECORD );
+
+        OTF_HandlerArray_setHandler( handlers, 
+                (OTF_FunctionPointer*) handleRMAGet,
+                OTF_RMAGET_RECORD );
+        OTF_HandlerArray_setFirstHandlerArg( handlers, &fha,
+                OTF_RMAGET_RECORD );
+
+        OTF_HandlerArray_setHandler( handlers, 
+                (OTF_FunctionPointer*) handleRMAEnd,
+                OTF_RMAEND_RECORD );
+        OTF_HandlerArray_setFirstHandlerArg( handlers, &fha,
+                OTF_RMAEND_RECORD );
+
 
 	/* snapshot records */
 
@@ -380,6 +462,30 @@ int main ( int argc, const char** argv ) {
 	OTF_HandlerArray_setFirstHandlerArg( handlers, 
         &fha, OTF_MESSAGESUMMARY_RECORD );
 
+	OTF_HandlerArray_setHandler( handlers, 
+		(OTF_FunctionPointer*) handleCollopSummary,
+		OTF_COLLOPSUMMARY_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, 
+        &fha, OTF_COLLOPSUMMARY_RECORD );
+
+
+       /* I/O records */
+
+        OTF_HandlerArray_setHandler( handlers,
+                (OTF_FunctionPointer*) handleFileOperation,
+                OTF_FILEOPERATION_RECORD );
+        OTF_HandlerArray_setFirstHandlerArg( handlers,
+        &fha, OTF_FILEOPERATION_RECORD );
+
+
+	/* marker records */
+
+	OTF_HandlerArray_setHandler( handlers, (OTF_FunctionPointer*) handleDefMarker, OTF_DEFMARKER_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, &fha, OTF_DEFMARKER_RECORD );
+	
+	OTF_HandlerArray_setHandler( handlers, (OTF_FunctionPointer*) handleMarker, OTF_MARKER_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, &fha, OTF_MARKER_RECORD );	
+
 
 	/* misc records */
 	
@@ -390,15 +496,57 @@ int main ( int argc, const char** argv ) {
         &fha, OTF_UNKNOWN_RECORD );
 
 
-	if ( def && fha.num <= fha.maxNum )
-		OTF_Reader_readDefinitions( reader, handlers );
-	if ( event && fha.num <= fha.maxNum )
-		OTF_Reader_readEvents( reader, handlers );
-	if ( stat && fha.num <= fha.maxNum )
-		OTF_Reader_readStatistics( reader, handlers );
-	if ( snap && fha.num <= fha.maxNum )
-		OTF_Reader_readSnapshots( reader, handlers );
-	
+	if ( def && fha.num <= fha.maxNum ) {
+
+		fprintf( stdout, "\ndefinitions:\n\n" );
+		read = OTF_Reader_readDefinitions( reader, handlers );
+		if( read == OTF_READ_ERROR ) {
+			fprintf(stderr,"An error occurred while reading the tracefile. It seems to be damaged. Abort.\n");
+			return 1;
+		}
+	}
+
+	if ( event && fha.num <= fha.maxNum ) {
+
+		fprintf( stdout, "\nevents:\n\n" );
+		read = OTF_Reader_readEvents( reader, handlers );
+		if( read == OTF_READ_ERROR ) {
+			fprintf(stderr,"An error occurred while reading the tracefile. It seems to be damaged. Abort.\n");
+			return 1;
+		}
+	}
+
+	if ( stat && fha.num <= fha.maxNum ) {
+
+		fprintf( stdout, "\nstatistics:\n\n" );
+		read = OTF_Reader_readStatistics( reader, handlers );
+		if( read == OTF_READ_ERROR ) {
+			fprintf(stderr,"An error occurred while reading the tracefile. It seems to be damaged. Abort.\n");
+			return 1;
+		}
+	}
+
+	if ( snap && fha.num <= fha.maxNum ) {
+
+		fprintf( stdout, "\nsnapshots:\n\n" );
+		read = OTF_Reader_readSnapshots( reader, handlers );
+		if( read == OTF_READ_ERROR ) {
+			fprintf(stderr,"An error occurred while reading the tracefile. It seems to be damaged. Abort.\n");
+			return 1;
+		}
+	}
+
+	if ( marker && fha.num <= fha.maxNum ) {
+
+		fprintf( stdout, "\nmarkers:\n\n" );
+		read = OTF_Reader_readMarkers( reader, handlers );
+		if( read == OTF_READ_ERROR ) {
+			fprintf(stderr,"An error occurred while reading the tracefile. It seems to be damaged. Abort.\n");
+			return 1;
+		}
+	}
+
+	fprintf( stdout, "\ndone\n" );
 
 	OTF_Reader_close( reader );
 	OTF_HandlerArray_close( handlers );

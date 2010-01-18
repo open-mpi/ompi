@@ -168,6 +168,9 @@ int main(int argc, char **argv)
   checkVal = OTF_Reader_readDefinitions( reader, handles );
   otfinfo_assert( checkVal != OTF_READ_ERROR );
 
+  checkVal = OTF_Reader_readMarkers( reader, handles );
+  otfinfo_assert( checkVal != OTF_READ_ERROR );
+
   /*getting the size of the event files*/
   OTF_Reader_setRecordLimit( reader, 0 );
   checkVal = OTF_Reader_readEvents( reader, handles );
@@ -216,6 +219,13 @@ int main(int argc, char **argv)
     /*read definitions*/
     checkVal = OTF_Reader_readDefinitions( reader, handles );
     otfinfo_assert( checkVal != OTF_READ_ERROR );
+
+    if( info.counterDefinitionMarker != 0 )
+    {
+      /*read markers*/
+      checkVal = OTF_Reader_readMarkers( reader, handles );
+      otfinfo_assert( checkVal != OTF_READ_ERROR );
+    }
 
     if( 1 == showProgress )
     {
@@ -406,6 +416,13 @@ static void set_handles_level_2( OTF_HandlerArray *handles, definitionInfoT *inf
                                OTF_DEFCOUNTER_RECORD);
   OTF_HandlerArray_setFirstHandlerArg( handles, info, OTF_DEFCOUNTER_RECORD );
 
+  /*handler and inits for getting the count of marker definitions*/
+  info->counterDefinitionMarker = 0;
+  OTF_HandlerArray_setHandler( handles,
+                               (OTF_FunctionPointer*)handleDefMarker,
+                               OTF_DEFMARKER_RECORD );
+  OTF_HandlerArray_setFirstHandlerArg( handles, info, OTF_DEFMARKER_RECORD  );
+
   /*handler and inits for getting the count of process group definitions*/
   info->counterProcessGroupDefinition = 0;
   OTF_HandlerArray_setHandler( handles,
@@ -450,6 +467,8 @@ static void show_info_level_2( definitionInfoT info )
           (unsigned long long)info.counterFunctionDefinition );
   printf( "| counter definitions        | %llu\n",
           (unsigned long long)info.counterCounterDefinition );
+  printf( "| marker definitions         | %llu\n",
+          (unsigned long long)info.counterDefinitionMarker );
   printf( "|                            |\n" );
   printf( "| process group definitions  | %llu\n",
           (unsigned long long)info.counterProcessGroupDefinition );
@@ -519,6 +538,34 @@ static void set_handles_level_3( OTF_HandlerArray *handles,
                                OTF_RECEIVE_RECORD);
   OTF_HandlerArray_setFirstHandlerArg( handles, info, OTF_RECEIVE_RECORD );
 
+  /*handler and inits for getting the count of RMA puts*/
+  info->counterRMAPut = 0;
+  OTF_HandlerArray_setHandler( handles,
+                               (OTF_FunctionPointer*)handleRMAPut,
+                               OTF_RMAPUT_RECORD );
+  OTF_HandlerArray_setFirstHandlerArg( handles, info, OTF_RMAPUT_RECORD  );
+
+  /*handler and inits for getting the count RAM put remote end*/
+  info->counterRMAPutRemoteEnd = 0;
+  OTF_HandlerArray_setHandler( handles,
+                               (OTF_FunctionPointer*)handleRMAPutRemoteEnd,
+                               OTF_RMAPUTRE_RECORD );
+  OTF_HandlerArray_setFirstHandlerArg( handles, info, OTF_RMAPUTRE_RECORD  );
+
+   /*handler and inits for getting the count of RMA get*/
+  info->counterRMAGet = 0;
+  OTF_HandlerArray_setHandler( handles,
+                               (OTF_FunctionPointer*)handleRMAGet,
+                               OTF_RMAGET_RECORD );
+  OTF_HandlerArray_setFirstHandlerArg( handles, info, OTF_RMAGET_RECORD  );
+
+  /*handler and inits for getting the count of RMA end*/
+  info->counterRMAEnd = 0;
+  OTF_HandlerArray_setHandler( handles,
+                               (OTF_FunctionPointer*)handleRMAEnd,
+                               OTF_RMAEND_RECORD );
+  OTF_HandlerArray_setFirstHandlerArg( handles, info, OTF_RMAEND_RECORD  );
+
   /*handler and inits for getting the count of collective operations*/
   info->counterCollectiveOperation = 0;
   OTF_HandlerArray_setHandler( handles,
@@ -532,6 +579,11 @@ static void set_handles_level_3( OTF_HandlerArray *handles,
                                (OTF_FunctionPointer*)handleFileOperation,
                                OTF_FILEOPERATION_RECORD );
   OTF_HandlerArray_setFirstHandlerArg( handles, info, OTF_FILEOPERATION_RECORD  );
+
+  OTF_HandlerArray_setHandler( handles,
+                               (OTF_FunctionPointer*)handleEndFileOperation,
+                               OTF_ENDFILEOP_RECORD );
+  OTF_HandlerArray_setFirstHandlerArg( handles, info, OTF_ENDFILEOP_RECORD  );
 
   /*handler and inits for getting the count of snapshots*/
   info->counterSnapshot = 0;
@@ -577,6 +629,14 @@ static void show_info_level_3( definitionInfoT info )
           (unsigned long long)info.counterSend );
   printf( "| receives              | %llu\n",
           (unsigned long long)info.counterReceive );
+  printf( "| RMA Put               | %llu\n",
+          (unsigned long long)info.counterRMAPut );
+  printf( "| RMA Put remote end    | %llu\n",
+          (unsigned long long)info.counterRMAPutRemoteEnd );
+  printf( "| RMA Get               | %llu\n",
+          (unsigned long long)info.counterRMAGet );
+  printf( "| RMA End               | %llu\n",
+          (unsigned long long)info.counterRMAEnd );
   printf( "| collective operations | %llu\n",
           (unsigned long long)info.counterCollectiveOperation );
   printf( "| file operations       | %llu\n",
@@ -648,6 +708,15 @@ static void set_handles_level_4( OTF_HandlerArray *handles,
                                OTF_DEFFUNCTION_RECORD);
   OTF_HandlerArray_setFirstHandlerArg( handles, info, OTF_DEFFUNCTION_RECORD );
 
+  /*handler and inits for getting the names of markers*/
+  info->markerNames = NULL;
+  info->markerNames = (char**)calloc( info->counterDefinitionMarker,
+                                      sizeof(char*) );
+  OTF_HandlerArray_setHandler( handles,
+                               (OTF_FunctionPointer*)handleDefMarker,
+                               OTF_DEFMARKER_RECORD );
+  OTF_HandlerArray_setFirstHandlerArg( handles, info, OTF_DEFMARKER_RECORD  );
+
   /*handler and inits for getting the names of processe groups*/
   info->processGroupNames = NULL;
   info->processGroupNames = (char**)calloc( info->counterProcessGroupDefinition,
@@ -702,6 +771,16 @@ static void show_info_level_4( definitionInfoT info )
   for(i = 0; i < info.counterFunctionDefinition; i++ )
   {
     printf( "| %s\n",info.functionNames[i] );
+  }
+  printf( "+-------------------------------------------------------------------------------\n" );
+  printf( "\n" );
+  printf( "+-------------------------------------------------------------------------------\n" );
+  printf( "| marker definitions[%llu]\n",
+          (unsigned long long)info.counterDefinitionMarker );
+  printf( "+-------------------------------------------------------------------------------\n" );
+  for( i = 0; i < info.counterDefinitionMarker; i++ )
+  {
+     printf( "| %s\n", info.markerNames[i] );
   }
   printf( "+-------------------------------------------------------------------------------\n" );
   printf( "\n" );
@@ -797,4 +876,10 @@ static void free_data_level_4( definitionInfoT info )
     free( (info.counterGroupNames)[i] );
   }
   free( info.counterGroupNames );
+
+  for( i = 0; i < info.counterDefinitionMarker; i++ )
+  {
+    free( (info.markerNames)[i] );
+  }
+  free( info.markerNames );
 }

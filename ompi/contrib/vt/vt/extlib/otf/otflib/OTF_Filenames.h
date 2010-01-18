@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -36,7 +36,8 @@ extern "C" {
 #define OTF_FILETYPE_EVENT  		128
 #define OTF_FILETYPE_SNAPS  		256
 #define OTF_FILETYPE_STATS  		512
-#define OTF_FILETYPE_BITS 			(16+32+64+128+256+512)
+#define OTF_FILETYPE_MARKER  		1024
+#define OTF_FILETYPE_BITS 			(16+32+64+128+256+512+1024)
 typedef uint32_t OTF_FileType;
 
 /* zlevel has to be 0-9 */

@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -43,6 +43,11 @@ int OTF_Reader_parseStatisticsRecord( OTF_RBuffer* buffer,
 int OTF_Reader_parseSnapshotsRecord( OTF_RBuffer* buffer, 
 	OTF_HandlerArray* handlers );
 
+/**	Parse one marker record from buffer and call the appropriate
+	function - internal use only. */
+int OTF_Reader_parseMarkerRecord( OTF_RBuffer* buffer, 
+	OTF_HandlerArray* handlers, uint32_t streamid );
+
 
 /* *** handle unknown records or parts of it - internal use only! ****** *** */
 
@@ -51,6 +56,9 @@ int OTF_Reader_readUnknownRecord( OTF_RBuffer* buffer,
 		OTF_HandlerArray* handlers );
 
 int OTF_Reader_readUnknownDefRecord( OTF_RBuffer* buffer, 
+		OTF_HandlerArray* handlers, uint32_t streamid );
+
+int OTF_Reader_readUnknownMarkerRecord( OTF_RBuffer* buffer, 
 		OTF_HandlerArray* handlers, uint32_t streamid );
 
 #ifdef __cplusplus

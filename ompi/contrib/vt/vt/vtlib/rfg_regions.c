@@ -153,11 +153,11 @@ int RFG_Regions_setGroupsDefFile( RFG_Regions* regions, const char* deffile )
   return RFG_Groups_setDefFile( regions->groups, deffile );
 }
 
-int RFG_Regions_readFilterDefFile( RFG_Regions* regions )
+int RFG_Regions_readFilterDefFile( RFG_Regions* regions, int rank )
 {
   if( !regions || !regions->filter ) return 0;
 
-  return RFG_Filter_readDefFile( regions->filter );
+  return RFG_Filter_readDefFile( regions->filter, rank );
 }
 
 int RFG_Regions_readGroupsDefFile( RFG_Regions* regions )
@@ -173,14 +173,6 @@ int RFG_Regions_setDefaultCallLimit( RFG_Regions* regions,
   if( !regions || !regions->filter ) return 0;
 
   return RFG_Filter_setDefaultCallLimit( regions->filter, limit );
-}
-
-int RFG_Regions_setDefaultGroup( RFG_Regions* regions,
-				 const char* name )
-{
-  if( !regions || !regions->groups ) return 0;
-
-  return RFG_Groups_setDefaultGroup( regions->groups, name );
 }
 
 int RFG_Regions_addGroupAssign( RFG_Regions* regions,
@@ -239,6 +231,46 @@ int RFG_Regions_getFilteredRegions( RFG_Regions* regions,
       }
     }
   }
+
+  return 1;
+}
+
+int RFG_Regions_dumpFilteredRegions( RFG_Regions* regions,
+				     char* filename )
+{
+  uint32_t nrinfs = 0;
+  RFG_RegionInfo** rinfs = NULL;
+  FILE* filt_file;
+  uint32_t i;
+
+  if( !regions ) return 0;
+
+  /* get regions, whose call limit are reached */
+  RFG_Regions_getFilteredRegions( regions,
+				  &nrinfs, &rinfs);
+
+  if( nrinfs == 0) return 1;
+
+  if( ( filt_file = fopen( filename, "w" ) ) == NULL )
+  {
+    fprintf( stderr, "RFG_Regions_dumpFilteredRegions(): Error: Could not open %s\n", filename );
+    return 0;
+  }
+
+  fprintf( filt_file, "# list of regions, which are denied or whose call limit are reached\n" );
+  fprintf( filt_file, "# (region:limit)\n" );
+
+  /* write region names and call limits */
+  
+  for( i = 0; i < nrinfs; i++ )
+  {
+    fprintf( filt_file, "%s:%i\n",
+	     rinfs[i]->regionName,
+	     rinfs[i]->callLimit == 0 ? 0 : rinfs[i]->callLimit-1 );
+  }
+
+  fclose( filt_file );
+  free( rinfs );
 
   return 1;
 }
@@ -406,7 +438,7 @@ static void hash_put( RFG_RegionInfo** htab, uint32_t h,
   uint32_t id         = h % HASH_MAX;
   RFG_RegionInfo* add = ( RFG_RegionInfo* )malloc( sizeof( RFG_RegionInfo ) );
   add->regionId       = h;
-  add->groupName      = strdup( g );
+  add->groupName      = ( g != NULL ) ? strdup( g ) : NULL;
   add->regionName     = strdup( r );
   add->callLimit      = l;
   add->callLimitCD    = l;

@@ -33,8 +33,9 @@ int RFG_Regions_setFilterDefFile( RFG_Regions* regions, const char* deffile );
 /* sets region grouping definition file */
 int RFG_Regions_setGroupsDefFile( RFG_Regions* regions, const char* deffile );
 
-/* reads region filter definition file */
-int RFG_Regions_readFilterDefFile( RFG_Regions* regions );
+/* reads region filter definition file
+   if rank != -1, read file with MPI-rank specific entries */
+int RFG_Regions_readFilterDefFile( RFG_Regions* regions, int rank );
 
 /* reads region grouping definition file */
 int RFG_Regions_readGroupsDefFile( RFG_Regions* regions );
@@ -43,10 +44,6 @@ int RFG_Regions_readGroupsDefFile( RFG_Regions* regions );
 int RFG_Regions_setDefaultCallLimit( RFG_Regions* regions,
 				     const uint32_t limit );
 
-/* sets default group name */
-int RFG_Regions_setDefaultGroup( RFG_Regions* regions,
-				 const char* name );
-
 /* adds group assignment */
 int RFG_Regions_addGroupAssign( RFG_Regions* regions,
 				const char* gname, int n, ... );
@@ -54,6 +51,10 @@ int RFG_Regions_addGroupAssign( RFG_Regions* regions,
 /* gets list of regions, whose call limit are reached */
 int RFG_Regions_getFilteredRegions( RFG_Regions* regions,
 				    uint32_t* r_nrinfs, RFG_RegionInfo*** r_rinfs );
+
+/* dump filtered regions to file */
+int RFG_Regions_dumpFilteredRegions( RFG_Regions* regions,
+				     char* filename );
 
 /* function that should be called if a region enter event invoked */
 int RFG_Regions_stackPush( RFG_Regions* regions,
