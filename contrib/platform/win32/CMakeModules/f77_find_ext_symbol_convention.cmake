@@ -1,4 +1,4 @@
-# Copyright (c) 2008      High Performance Computing Center Stuttgart, 
+# Copyright (c) 2008-2010 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 #
 # $COPYRIGHT$
@@ -10,7 +10,7 @@
 
 
 MACRO(OMPI_F77_FIND_EXT_SYMBOL_CONVENTION)
-  IF(OMPI_WANT_F77_BINDINGS)
+  IF(OMPI_WANT_F77_BINDINGS AND NOT DEFINED SYMBOL_CONVENTION_CHECK_DONE)
     SET(OMPI_F77_DOUBLE_UNDERSCORE 0
       CACHE INTERNAL "external symbol convention - double underscore")
     SET(OMPI_F77_SINGLE_UNDERSCORE 0
@@ -120,7 +120,10 @@ MACRO(OMPI_F77_FIND_EXT_SYMBOL_CONVENTION)
     IF(NOT TEST_OK)
       MESSAGE(FATAL_ERROR "C and Fortran 77 compilers are not link compatible.  Can not continue.")
     ENDIF(NOT TEST_OK)
-  ELSE(OMPI_WANT_F77_BINDINGS)
+
+    SET(SYMBOL_CONVENTION_CHECK_DONE TRUE CACHE INTERNAL "Symbol convention check done.")
+
+  ELSEIF(NOT OMPI_WANT_F77_BINDINGS)
     SET(OMPI_F77_DOUBLE_UNDERSCORE 0
       CACHE INTERNAL "external symbol convention - double underscore")
     SET(OMPI_F77_SINGLE_UNDERSCORE 0
@@ -129,7 +132,9 @@ MACRO(OMPI_F77_FIND_EXT_SYMBOL_CONVENTION)
       CACHE INTERNAL "external symbol convention - captital")
     SET(OMPI_F77_PLAIN 0
       CACHE INTERNAL "external symbol convention - plain")
-  ENDIF(OMPI_WANT_F77_BINDINGS)
+
+    UNSET(SYMBOL_CONVENTION_CHECK_DONE CACHE)
+  ENDIF(OMPI_WANT_F77_BINDINGS AND NOT DEFINED SYMBOL_CONVENTION_CHECK_DONE)
 
 ENDMACRO(OMPI_F77_FIND_EXT_SYMBOL_CONVENTION)
 
