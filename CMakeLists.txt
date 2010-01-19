@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2007-2009 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2010 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -44,8 +44,6 @@ IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   SET(CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/installed" CACHE PATH "CMAKE_INSTALL_PREFIX" FORCE)
 ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
-INCLUDE(ompi_get_version)
-
 # Make the include path visible to all targets
 INCLUDE_DIRECTORIES (
   ${OpenMPI_SOURCE_DIR}/contrib/platform/win32
@@ -86,11 +84,15 @@ ENDIF(CMAKE_CL_64)
 
 INCLUDE(ompi_configure)
 
+# find flex command
+INCLUDE (find_flex)
+FIND_FLEX()
+
 ADD_SUBDIRECTORY(opal)
 ADD_SUBDIRECTORY(ompi)
 ADD_SUBDIRECTORY(orte)
 
-INCLUDE(InstallRequiredSystemLibraries) 
+INCLUDE(InstallRequiredSystemLibraries)
 
 # CPACK settings
 #SET(CPACK_PACKAGE_NAME "Open MPI")

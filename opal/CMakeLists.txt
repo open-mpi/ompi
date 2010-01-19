@@ -1,4 +1,4 @@
-# Copyright (c) 2007-2009 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2010 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -28,6 +28,9 @@ SET_SOURCE_FILES_PROPERTIES(${DATATYPE_CHECKSUM_FILES}
 SET(OPAL_SOURCE_FILES ${OPAL_SOURCE_FILES} ${DATATYPE_CHECKSUM_FILES})
 SOURCE_GROUP(datatype FILES  ${DATATYPE_CHECKSUM_FILES})
 
+IF(OPAL_WANT_LIBLTDL)
+  INCLUDE(find_libltdl)
+ENDIF(OPAL_WANT_LIBLTDL)
 
 # Add source files
 
@@ -134,8 +137,8 @@ SET(mandir ${datarootdir}/man)
 CONFIGURE_FILE(${OpenMPI_SOURCE_DIR}/opal/mca/installdirs/config/install_dirs.h.in
   ${OpenMPI_BINARY_DIR}/opal/mca/installdirs/config/install_dirs.h)
 
-# Generate version file.
-INCLUDE(generate_version_file)
+# generate version.h
+CONFIGURE_FILE(${OpenMPI_SOURCE_DIR}/opal/include/opal/version.h.in  ${OpenMPI_BINARY_DIR}/opal/include/opal/version.h)
 
 ADD_SUBDIRECTORY(tools)
 

@@ -68,7 +68,8 @@ ENDIF(BUILD_SHARED_LIBS)
 # generate orte_config.h
 CONFIGURE_FILE(${OpenMPI_SOURCE_DIR}/orte/include/orte_config.h.in  ${OpenMPI_BINARY_DIR}/orte/include/orte_config.h)
 
-INCLUDE(generate_version_file)
+# generate version.h
+CONFIGURE_FILE(${OpenMPI_SOURCE_DIR}/orte/include/orte/version.h.in  ${OpenMPI_BINARY_DIR}/orte/include/orte/version.h)
 
 ADD_SUBDIRECTORY(tools)
 
