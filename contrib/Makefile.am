@@ -75,11 +75,12 @@ EXTRA_DIST = \
         platform/lanl/tlcc/optimized-panasas.conf \
         platform/win32/bin/flex.exe \
         platform/win32/bin/COPYING.flex \
-        platform/win32/CMakeModules/c_check_bool.cmake \
+        platform/win32/CMakeModules/check_bool.cmake \
         platform/win32/CMakeModules/check_c_inline.cmake \
         platform/win32/CMakeModules/check_c_type_exists.cmake \
         platform/win32/CMakeModules/check_mca_subdirs.cmake \
-        platform/win32/CMakeModules/check_sizeof_bool.cmake \
+        platform/win32/CMakeModules/ompi_base_checks.cmake \
+        platform/win32/CMakeModules/ompi_define.cmake \
         platform/win32/CMakeModules/f77_check.cmake \
         platform/win32/CMakeModules/f77_check_real16_c_equiv.cmake \
         platform/win32/CMakeModules/f77_check_type.cmake \
@@ -98,7 +99,6 @@ EXTRA_DIST = \
         platform/win32/CMakeModules/ompi_get_version.cmake \
         platform/win32/CMakeModules/opal_functions.cmake \
         platform/win32/CMakeModules/setup_f77.cmake \
-        platform/win32/ConfigFiles/opal_config.h.cmake \
         platform/win32/ConfigFiles/revision.in \
 	platform/cisco/macosx-dynamic \
 	platform/cisco/macosx-dynamic.conf \
