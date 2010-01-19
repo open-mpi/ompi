@@ -1,4 +1,4 @@
-# Copyright (c) 2008      High Performance Computing Center Stuttgart, 
+# Copyright (c) 2008-2010 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 #
 # $COPYRIGHT$
@@ -25,27 +25,14 @@ MACRO(OMPI_F77_CHECK FORTRAN_TYPE C_TYPE TYPE_LIST EXPECTED_SIZE)
 
   STRING(REPLACE "*" "" TYPE_NAME ${FORTRAN_TYPE})
   STRING(REPLACE " " "_" TYPE_NAME ${TYPE_NAME})
-  SET(NEED_RECHECK TRUE)
+  STRING(TOLOWER ${TYPE_NAME} TYPE_NAME_L)
 
-  # do we need to check all the features?
-  IF(DEFINED OMPI_HAVE_FORTRAN_${TYPE_NAME})
-    IF(${F77_SETUP_${TYPE_NAME}} STREQUAL ${OMPI_WANT_F77_BINDINGS})
-      SET(NEED_RECHECK FALSE)
-    ELSE(${F77_SETUP_${TYPE_NAME}} STREQUAL ${OMPI_WANT_F77_BINDINGS})
-      SET(NEED_RECHECK TRUE)
-    ENDIF(${F77_SETUP_${TYPE_NAME}} STREQUAL ${OMPI_WANT_F77_BINDINGS})
-  ENDIF(DEFINED OMPI_HAVE_FORTRAN_${TYPE_NAME})
-  
-  # use this variable to check whether user changed F77 option.
-  # every time OMPI_WANT_F77_BINDINGS got changed, we need to re-check everything.
-  SET(F77_SETUP_${TYPE_NAME} ${OMPI_WANT_F77_BINDINGS} CACHE INTERNAL "requir re-check ${TYPE_NAME} or not")
-
-  IF(NEED_RECHECK)
+  IF(OMPI_WANT_F77_BINDINGS AND NOT DEFINED F77_SETUP_${TYPE_NAME}_DONE)
 
     INCLUDE(F77_check_type)
     INCLUDE(F77_get_alignment)
     INCLUDE(F77_get_sizeof)
-    INCLUDE(OMPI_find_type)
+    INCLUDE(ompi_find_type)
 
     SET(ofc_expected_size ${EXPECTED_SIZE})
     SET(ofc_have_type 0)
@@ -53,17 +40,7 @@ MACRO(OMPI_F77_CHECK FORTRAN_TYPE C_TYPE TYPE_LIST EXPECTED_SIZE)
     SET(ofc_type_alignment ${SIZEOF_INT})
     SET(ofc_c_type ${ompi_fortran_bogus_type_t})
 
-    # Only check if we actually want the F77 bindings / have a F77
-    # compiler.  This allows us to call this macro, even if there is
-    # no F77 compiler.  If we have no f77 compiler, then just set a
-    # bunch of defaults.
-    IF(OMPI_WANT_F77_BINDINGS)
-      OMPI_F77_CHECK_TYPE(${FORTRAN_TYPE} ofc_have_type)
-    ELSE(OMPI_WANT_F77_BINDINGS)
-      # skip checking, set with expected values
-      # MESSAGE(STATUS "Checking if Fortran 77 compiler supports ${FORTRAN_TYPE}...skipped.")
-    ENDIF(OMPI_WANT_F77_BINDINGS)
-
+    OMPI_F77_CHECK_TYPE(${FORTRAN_TYPE} ofc_have_type)
 
     IF(ofc_have_type)
       # What is the size of this type?
@@ -109,15 +86,31 @@ MACRO(OMPI_F77_CHECK FORTRAN_TYPE C_TYPE TYPE_LIST EXPECTED_SIZE)
     SET(OMPI_SIZEOF_FORTRAN_${TYPE_NAME} ${ofc_type_size} CACHE INTERNAL "OMPI_SIZEOF_FORTRAN_${TYPE_NAME}")
     SET(OMPI_ALIGNMENT_FORTRAN_${TYPE_NAME} ${ofc_type_alignment} CACHE INTERNAL "OMPI_ALIGNMENT_FORTRAN_${TYPE_NAME}")
     IF(NOT "${TYPE_LIST}" STREQUAL "")
-      STRING(TOLOWER ${TYPE_NAME} TYPE_NAME_L)
       SET(ompi_fortran_${TYPE_NAME_L}_t ${ofc_c_type} CACHE INTERNAL "ompi_fortran_${TYPE_NAME_L}_t")
     ENDIF(NOT "${TYPE_LIST}" STREQUAL "")
+
+    SET(F77_SETUP_${TYPE_NAME}_DONE TRUE CACHE INTERNAL "F77 ${TYPE_NAME} check done or not.")
 
     #MESSAGE("OMPI_HAVE_FORTRAN_${TYPE_NAME}:${OMPI_HAVE_FORTRAN_${TYPE_NAME}}")
     #MESSAGE("OMPI_SIZEOF_FORTRAN_${TYPE_NAME}:${OMPI_SIZEOF_FORTRAN_${TYPE_NAME}}")
     #MESSAGE("OMPI_ALIGNMENT_FORTRAN_${TYPE_NAME}:${OMPI_ALIGNMENT_FORTRAN_${TYPE_NAME}}")
     #MESSAGE("ompi_fortran_${TYPE_NAME_L}_t:${ompi_fortran_${TYPE_NAME_L}_t}")
 
-  ENDIF(NEED_RECHECK)
+  ELSEIF(NOT OMPI_WANT_F77_BINDINGS)
+
+    # when don't want F77 bindings, just set them to int.
+    SET(OMPI_HAVE_FORTRAN_${TYPE_NAME} 0 CACHE INTERNAL "OMPI_HAVE_FORTRAN_${TYPE_NAME}")
+    SET(ompi_fortran_${TYPE_NAME_L}_t int CACHE INTERNAL "ompi_fortran_${TYPE_NAME_L}_t")
+    SET(OMPI_SIZEOF_FORTRAN_${TYPE_NAME} ${SIZEOF_INT} CACHE INTERNAL "OMPI_SIZEOF_FORTRAN_${TYPE_NAME}")
+    SET(OMPI_ALIGNMENT_FORTRAN_${TYPE_NAME} ${OPAL_ALIGNMENT_INT} CACHE INTERNAL "OMPI_ALIGNMENT_FORTRAN_${TYPE_NAME}")
+
+    UNSET(F77_SETUP_${TYPE_NAME}_DONE CACHE)
+
+  ENDIF(OMPI_WANT_F77_BINDINGS AND NOT DEFINED F77_SETUP_${TYPE_NAME}_DONE)
+
+OMPI_DEF_VAR(OMPI_HAVE_FORTRAN_${TYPE_NAME} "Whether we have Fortran 77 `${FORTRAN_TYPE}' or not." 0 1)
+OMPI_DEF_VAR(OMPI_SIZEOF_FORTRAN_${TYPE_NAME} "Size of Fortran 77 `${FORTRAN_TYPE}'." 0 1)
+OMPI_DEF_VAR(OMPI_ALIGNMENT_FORTRAN_${TYPE_NAME} "Alignment of Fortran 77 `${FORTRAN_TYPE}'." 0 1)
+OMPI_DEF_VAR(ompi_fortran_${TYPE_NAME_L}_t "C type corresponding to Fortran 77 `${FORTRAN_TYPE}'." 0 1)
 
 ENDMACRO(OMPI_F77_CHECK FORTRAN_TYPE C_TYPE TYPE_LIST EXPECTED_SIZE)

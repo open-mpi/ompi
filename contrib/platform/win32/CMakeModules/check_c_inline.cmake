@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2007-2008 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2010 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -48,6 +48,7 @@ MACRO(CHECK_C_INLINE)
     ENDIF(NOT HAVE_INLINE)
     
   ENDIF(NOT HAVE_INLINE)
-  
-  
+
+  OMPI_DEF(inline ${INLINE_STRING} "Define to `__inline__' or `__inline'." 0 1)
+
 ENDMACRO(CHECK_C_INLINE)
