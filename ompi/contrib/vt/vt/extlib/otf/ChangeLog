@@ -1,7 +1,12 @@
+1.6.5openmpi
+	- enforce building position independent code (PIC) for the static
+	  version of the OTF library
+	  (so it's possible to add these objects to 3rd-party shared libraries)
+
 1.6.4openmpi
 	- enhanced reading of process group definition records
 
-1.6.3stingray
+1.6.3stingray	
 	- fixed errors while reading the long OTF format
 	- updated python interface
 

@@ -222,7 +222,11 @@ endif
 
 if AMHAVEBFD
 BFDCFLAGS = -DVT_BFD $(BFDINCDIR)
-BFDLIBRARY = $(BFDLIBDIR) $(BFDLIB)
+# On some platforms only a static version of the BFD library is available
+# which might be built without PIC, so do not add its objects to the shared
+# VT libraries.
+#BFDLIBRARY = $(BFDLIBDIR) $(BFDLIB)
+BFDLIBRARY =
 else
 BFDCFLAGS =
 BFDLIBRARY =
@@ -230,7 +234,11 @@ endif
 
 if AMHAVELIBERTY
 LIBERTYCFLAGS = $(LIBERTYINCDIR)
-LIBERTYLIBRARY = $(LIBERTYLIBDIR) $(LIBERTYLIB)
+# On some platforms only a static version of the liberty library is available
+# which might be built without PIC, so do not add its objects to the shared
+# VT libraries.
+#LIBERTYLIBRARY = $(LIBERTYLIBDIR) $(LIBERTYLIB)
+LIBERTYLIBRARY =
 else
 LIBERTYCFLAGS =
 LIBERTYLIBRARY =
