@@ -965,6 +965,7 @@ static int dyn_init(void)
     
     /* Set name for debugging purposes */
     snprintf(newcomm->c_name, MPI_MAX_OBJECT_NAME, "MPI_COMM_PARENT");
+    newcomm->c_flags |= OMPI_COMM_NAMEISSET;
     
     return OMPI_SUCCESS;
 }
