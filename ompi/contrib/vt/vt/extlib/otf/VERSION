@@ -7,7 +7,7 @@
 
 major=1
 minor=6
-sub=4
+sub=5
 
 # string is used for alpha, beta, or release tags. If it is non-empty, it will
 # be appended to the version number.

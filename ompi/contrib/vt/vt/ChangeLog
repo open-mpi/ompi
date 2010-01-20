@@ -1,3 +1,10 @@
+5.8.1openmpi
+	- updated version of internal OTF to 1.6.5openmpi
+	  (see extlib/otf/ChangeLog)
+	- fixed build error: do not add objects from the static version of the
+	  BFD library to the shared VT libraries, because the BFD objects might
+	  be built without position independent code (PIC)
+
 5.8openmpi
 	- updated version of internal OTF to 1.6.4openmpi
 	  (see extlib/otf/ChangeLog)
