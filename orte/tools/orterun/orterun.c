@@ -100,6 +100,7 @@
  */
 static struct opal_event term_handler;
 static struct opal_event int_handler;
+static struct opal_event epipe_handler;
 #ifndef __WINDOWS__
 static struct opal_event sigusr1_handler;
 static struct opal_event sigusr2_handler;
@@ -431,6 +432,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
 static void job_completed(int trigpipe, short event, void *arg);
 static void abort_signal_callback(int fd, short flags, void *arg);
 static void abort_exit_callback(int fd, short event, void *arg);
+static void epipe_signal_callback(int fd, short flags, void *arg);
 static void signal_forward_callback(int fd, short event, void *arg);
 static int create_app(int argc, char* argv[], orte_app_context_t **app,
                       bool *made_app, char ***app_env);
@@ -635,6 +637,10 @@ int orterun(int argc, char *argv[])
     }
 
 #ifndef __WINDOWS__
+    /* setup callback for SIGPIPE */
+    opal_signal_set(&epipe_handler, SIGPIPE,
+                    epipe_signal_callback, &epipe_handler);
+    opal_signal_add(&epipe_handler, NULL);
     /** setup callbacks for abort signals - from this point
      * forward, we need to abort in a manner that allows us
      * to cleanup
@@ -895,6 +901,8 @@ static void just_quit(int fd, short ign, void *arg)
     }
     
     if (signals_set) {
+        /* Remove the epipe handler */
+        opal_signal_del(&epipe_handler);
         /* Remove the TERM and INT signal handlers */
         opal_signal_del(&term_handler);
         opal_signal_del(&int_handler);
@@ -1174,6 +1182,17 @@ static void abort_signal_callback(int fd, short flags, void *arg)
        Instead, we have to exit this handler and setup to call
        job_completed() after this. */
     ORTE_TIMER_EVENT(0, 0, abort_exit_callback);
+}
+
+/**
+ * Deal with sigpipe errors
+ */
+static void epipe_signal_callback(int fd, short flags, void *arg)
+{
+    /* for now, we just announce and ignore them */
+    opal_output(0, "%s reports a SIGPIPE error on fd %d",
+                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), fd);
+    return;
 }
 
 /**
