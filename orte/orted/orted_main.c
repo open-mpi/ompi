@@ -97,6 +97,7 @@
 static opal_event_t term_handler;
 static opal_event_t int_handler;
 static opal_event_t pipe_handler;
+static opal_event_t epipe_handler;
 #ifndef __WINDOWS__
 static opal_event_t sigusr1_handler;
 static opal_event_t sigusr2_handler;
@@ -108,6 +109,7 @@ static bool signals_set=false;
 static void shutdown_callback(int fd, short flags, void *arg);
 static void shutdown_signal(int fd, short flags, void *arg);
 static void signal_callback(int fd, short event, void *arg);
+static void epipe_signal_callback(int fd, short flags, void *arg);
 
 static struct {
     bool debug;
@@ -440,6 +442,10 @@ int orte_daemon(int argc, char *argv[])
     }
     
 #ifndef __WINDOWS__
+    /* setup callback for SIGPIPE */
+    opal_signal_set(&epipe_handler, SIGPIPE,
+                    epipe_signal_callback, &epipe_handler);
+    opal_signal_add(&epipe_handler, NULL);
     /* Set signal handlers to catch kill signals so we can properly clean up
      * after ourselves. 
      */
@@ -896,6 +902,7 @@ static void shutdown_callback(int fd, short flags, void *arg)
 
     if (signals_set) {
         /* Release all local signal handlers */
+        opal_event_del(&epipe_handler);
         opal_event_del(&term_handler);
         opal_event_del(&int_handler);
 #ifndef __WINDOWS__
@@ -907,6 +914,17 @@ static void shutdown_callback(int fd, short flags, void *arg)
     /* Finalize and clean up ourselves */
     ret = orte_finalize();
     exit(orte_exit_status);
+}
+
+/**
+ * Deal with sigpipe errors
+ */
+static void epipe_signal_callback(int fd, short flags, void *arg)
+{
+    /* for now, we just announce and ignore them */
+    opal_output(0, "%s reports a SIGPIPE error on fd %d",
+                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), fd);
+    return;
 }
 
 static void signal_callback(int fd, short event, void *arg)
