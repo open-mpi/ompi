@@ -27,7 +27,7 @@ bug fixes (and other actions) for each version of Open MPI since
 version 1.0.
 
 1.4.1
-----------------
+-----
 
 - Update to PLPA v1.3.2, addressing a licensing issue identified by
   the Fedora project.  See
