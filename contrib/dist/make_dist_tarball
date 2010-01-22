@@ -26,6 +26,7 @@ M4_TARGET_VERSION=1.4.13
 AM_TARGET_VERSION=1.11
 AC_TARGET_VERSION=2.65
 LT_TARGET_VERSION=2.2.6b
+FLEX_TARGET_VERSION=2.5.35
 
 #
 # Check command line flags
@@ -66,6 +67,7 @@ check_gnu_version() {
     target="$2"
 
     ver="`$prog --version | head -n 1 | sed -e's/([^)]*)//g' -e's/[^0-9 .][^ ]* / /g' -e's/ //g'`"
+    echo $prog version is $ver
 
     ver_major=`echo $ver | cut -d. -f1`
     ver_minor=`echo $ver | cut -d. -f2`
@@ -122,6 +124,7 @@ m4: $M4_TARGET_VERSION
 Automake: $AM_TARGET_VERSION
 Autoconf: $AC_TARGET_VERSION
 Libtool:  $LT_TARGET_VERSION
+Flex:     $FLEX_TARGET_VERSION
 
 Either change this script to match the found version, or install
 the correct version of the tools.
@@ -142,6 +145,7 @@ m4: $M4_TARGET_VERSION
 Automake: $AM_TARGET_VERSION
 Autoconf: $AC_TARGET_VERSION
 Libtool:  $LT_TARGET_VERSION
+Flex:     $FLEX_TARGET_VERSION
 
 Either change this script to match the found version, or install
 the correct version of the tools.
@@ -160,6 +164,7 @@ m4: $M4_TARGET_VERSION
 Automake: $AM_TARGET_VERSION
 Autoconf: $AC_TARGET_VERSION
 Libtool:  $LT_TARGET_VERSION
+Flex:     $FLEX_TARGET_VERSION
 
 This is *usually* ok, but this script is going to sleep for 5 seconds
 to give you the chance to quit before doing anything.
@@ -180,6 +185,7 @@ m4: $M4_TARGET_VERSION
 Automake: $AM_TARGET_VERSION
 Autoconf: $AC_TARGET_VERSION
 Libtool:  $LT_TARGET_VERSION
+Flex:     $FLEX_TARGET_VERSION
 
 Either change this script to match the found version, or install
 the correct version of the tools.
@@ -222,6 +228,15 @@ make_tarball() {
     fi
 
     #
+    # Remove all generated *_lex.c files so that we ensure to invoke
+    # flex from here in this script (to ensure that we're using a good
+    # version of flex, and not picking up random *_lex.c files that
+    # happened to be in the tree already).
+    #
+    echo "*** Removing old generated flex files..."
+    find . -name \*_lex.c -exec rm -f {} \; -print
+
+    #
     # make tarball
     #
     echo "*** Running make $dist_target..."
@@ -249,11 +264,14 @@ make_tarball() {
 # main
 #########################################################################
 
-echo "*** Checking GNU tools versions..."
+echo "*** Checking tools versions..."
 check_gnu_version m4 $M4_TARGET_VERSION
 check_gnu_version automake $AM_TARGET_VERSION
 check_gnu_version autoconf $AC_TARGET_VERSION
 check_gnu_version libtool $LT_TARGET_VERSION
+# Windows needs a recent version of flex; old versions don't generate
+# Windows-friendly *_lex.c files.
+check_gnu_version flex $FLEX_TARGET_VERSION
 
 #
 # Verify that we're in a top Open MPI dir
