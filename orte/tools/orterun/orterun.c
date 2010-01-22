@@ -1190,8 +1190,9 @@ static void abort_signal_callback(int fd, short flags, void *arg)
 static void epipe_signal_callback(int fd, short flags, void *arg)
 {
     /* for now, we just announce and ignore them */
-    opal_output(0, "%s reports a SIGPIPE error on fd %d",
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), fd);
+    OPAL_OUTPUT_VERBOSE((1, orte_debug_verbosity,
+                         "%s reports a SIGPIPE error on fd %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), fd));
     return;
 }
 
