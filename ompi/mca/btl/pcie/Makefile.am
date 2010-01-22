@@ -11,6 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 #                         reserved. 
+# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -35,12 +36,9 @@ sources = \
     btl_pcie_frag.h \
     btl_pcie_proc.c \
     btl_pcie_proc.h \
-    btl_pcie_lex.c \
+    btl_pcie_lex.l \
     btl_pcie_lex.h \
     btl_pcie_cfg.c
-
-EXTRA_DIST = btl_pcie_lex.l
-
 
 if OMPI_BUILD_btl_pcie_DSO
 lib =
