@@ -73,8 +73,6 @@ EXTRA_DIST = \
         platform/lanl/tlcc/optimized-nopanasas.conf \
         platform/lanl/tlcc/optimized-panasas \
         platform/lanl/tlcc/optimized-panasas.conf \
-        platform/win32/bin/flex.exe \
-        platform/win32/bin/COPYING.flex \
         platform/win32/CMakeModules/check_bool.cmake \
         platform/win32/CMakeModules/check_c_inline.cmake \
         platform/win32/CMakeModules/check_c_type_exists.cmake \
