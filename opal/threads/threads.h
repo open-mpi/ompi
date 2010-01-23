@@ -33,6 +33,13 @@ BEGIN_C_DECLS
 
 typedef void *(*opal_thread_fn_t) (opal_object_t *);
 
+#ifdef __WINDOWS__
+#define OPAL_THREAD_CANCELLED   ((void*)1);
+#elif OPAL_HAVE_POSIX_THREADS
+#define OPAL_THREAD_CANCELLED   ((void*)1);
+#elif OPAL_HAVE_SOLARIS_THREADS
+#define OPAL_THREAD_CANCELLED   ((void*)1);
+#endif
 
 struct opal_thread_t {
     opal_object_t super;
