@@ -187,20 +187,19 @@ static int init(void)
             ORTE_ERROR_LOG(rc);
             return rc;
         }
+        /* setup our grp channel, if one was given */
+        if (NULL != orte_rmcast_base.my_group_name) {
+            channel = orte_rmcast_base.my_group_number;
+            if (ORTE_SUCCESS != (rc = open_channel(&channel, orte_rmcast_base.my_group_name,
+                                                   NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            my_group_channel = (rmcast_base_channel_t*)opal_list_get_last(&channels);
+        }
     } else {
         opal_output(0, "rmcast:udp:init - unknown process type");
         return ORTE_ERR_SILENT;
-    }
-    
-    /* finally, if we are an app, setup our grp channel, if one was given */
-    if (ORTE_PROC_IS_APP && NULL != orte_rmcast_base.my_group_name) {
-        channel = orte_rmcast_base.my_group_number;
-        if (ORTE_SUCCESS != (rc = open_channel(&channel, orte_rmcast_base.my_group_name,
-                                               NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        my_group_channel = (rmcast_base_channel_t*)opal_list_get_last(&channels);
     }
 
     return ORTE_SUCCESS;
