@@ -90,6 +90,7 @@ ORTE_DECLSPEC int orte_rmaps_base_rearrange_map(orte_app_context_t *app, orte_jo
 
 ORTE_DECLSPEC int orte_rmaps_base_define_daemons(orte_job_map_t *map);
 
+ORTE_DECLSPEC int orte_rmaps_base_setup_virtual_machine(orte_job_t *jdata);
 
 ORTE_DECLSPEC opal_list_item_t* orte_rmaps_base_get_starting_point(opal_list_t *node_list, orte_job_t *jdata);
 

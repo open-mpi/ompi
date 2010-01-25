@@ -34,6 +34,7 @@
 #include "opal/runtime/opal_progress.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/dss/dss.h"
+#include "opal/mca/sysinfo/sysinfo.h"
 
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -80,8 +81,8 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
 
-    /* if the job is not being restarted, prep it */
-    if (ORTE_JOB_STATE_RESTART != jdata->state) {
+    /* if the job is not being restarted or hasn't already been given a jobid, prep it */
+    if (ORTE_JOB_STATE_RESTART != jdata->state &&  ORTE_JOBID_INVALID == jdata->jobid) {
         /* get a jobid for it */
         if (ORTE_SUCCESS != (rc = orte_plm_base_create_jobid(jdata))) {
             ORTE_ERROR_LOG(rc);
@@ -91,14 +92,14 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
         /* store it on the global job data pool */
         ljob = ORTE_LOCAL_JOBID(jdata->jobid);
         opal_pointer_array_set_item(orte_job_data, ljob, jdata);
-        
-        /* get its allocation */
-        if (ORTE_SUCCESS != (rc = orte_ras.allocate(jdata))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
     }
     
+    /* get the allocation */
+    if (ORTE_SUCCESS != (rc = orte_ras.allocate(jdata))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
     if (ORTE_SUCCESS != (rc = orte_rmaps.map_job(jdata))) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -238,6 +239,14 @@ int orte_plm_base_launch_apps(orte_jobid_t job)
     int rc;
     orte_process_name_t name = {ORTE_JOBID_INVALID, 0};
 
+    /* if we are launching the daemon job, then we are
+     * starting a virtual machine and there is no app
+     * to launch. Just flag the launch as complete
+     */
+    if (ORTE_PROC_MY_NAME->jobid == job) {
+        rc = ORTE_SUCCESS;
+        goto WAKEUP;
+    }
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:launch_apps for job %s",
@@ -448,6 +457,11 @@ static void process_orted_launch_report(int fd, short event, void *data)
     int64_t setupsec, setupusec;
     int64_t startsec, startusec;
     orte_proc_t *daemon;
+    int32_t i, num_values;
+    opal_sysinfo_value_t *info;
+    orte_node_t *node;
+    char *nodename;
+    opal_list_item_t *item;
     
     /* see if we need to timestamp this receipt */
     if (orte_timing) {
@@ -559,6 +573,61 @@ static void process_orted_launch_report(int fd, short event, void *data)
         } else if (secs == daemoncbtime.tv_sec &&
                    usecs > daemoncbtime.tv_usec) {
             daemoncbtime.tv_usec = usecs;
+        }
+    }
+    
+    /* unpack the node name - we don't need it here, but it is included
+     * in the message for other uses
+     */
+    idx = 1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &nodename, &idx, OPAL_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        orted_failed_launch = true;
+        goto CLEANUP;
+    }
+    
+    /* store the local resources for that node */
+    idx=1;
+    node = daemon->node;
+    if (OPAL_SUCCESS == opal_dss.unpack(buffer, &num_values, &idx, OPAL_INT32) &&
+        0 < num_values) {
+        /* clear the old list, if it exists */
+        while (NULL != (item = opal_list_remove_first(&node->resources))) {
+            OBJ_RELEASE(item);
+        }
+        for (i=0; i < num_values; i++) {
+            info = OBJ_NEW(opal_sysinfo_value_t);
+            idx=1;
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &info->key, &idx, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                orted_failed_launch = true;
+                goto CLEANUP;
+            }
+            idx=1;
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &info->type, &idx, OPAL_DATA_TYPE_T))) {
+                ORTE_ERROR_LOG(rc);
+                orted_failed_launch = true;
+                goto CLEANUP;
+            }
+            idx=1;
+            if (OPAL_INT64 == info->type) {
+                if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &(info->data.i64), &idx, OPAL_INT64))) {
+                    ORTE_ERROR_LOG(rc);
+                    orted_failed_launch = true;
+                    goto CLEANUP;
+                }
+            } else if (OPAL_STRING == info->type) {
+                if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &(info->data.str), &idx, OPAL_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    orted_failed_launch = true;
+                    goto CLEANUP;
+                }
+            }
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                 "%s adding resource %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 info->key));
+            opal_list_append(&node->resources, &info->super);
         }
     }
     
@@ -1064,6 +1133,11 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     }
     if (orte_report_bindings) {
         opal_argv_append(argc, argv, "--report-bindings");
+    }
+    
+    /* check for bootstrap */
+    if (orte_daemon_bootstrap) {
+        opal_argv_append(argc, argv, "--bootstrap");
     }
     
     if ((int)ORTE_VPID_INVALID != orted_debug_failure) {

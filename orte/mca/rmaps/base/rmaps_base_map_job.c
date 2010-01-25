@@ -83,10 +83,20 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
         }
     }
 
-    /* go ahead and map the job */
-    if (ORTE_SUCCESS != (rc = orte_rmaps_base.active_module->map_job(jdata))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
+    /* if the job is the daemon job, then we are just mapping daemons and
+     * not apps in preparation to launch a virtual machine
+     */
+    if (ORTE_PROC_MY_NAME->jobid == jdata->jobid) {
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_setup_virtual_machine(jdata))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    } else {
+        /* go ahead and map the job */
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base.active_module->map_job(jdata))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     }
     
     /* if we wanted to display the map, now is the time to do it */

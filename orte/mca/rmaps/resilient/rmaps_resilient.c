@@ -171,14 +171,12 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
     }
     
     /* the map will never be NULL as we initialize it before getting here,
-     * so check to see if any nodes are in the map - this will be our
-     * indicator that this is the prior map for a failed job that
-     * needs to be re-mapped
+     * so check to see if the job state is RESTART
      *
      * NOTE: if a proc is being ADDED to an existing job, then its
      * node field will be NULL.
      */
-    if (0 < jdata->map->num_nodes) {
+    if (ORTE_JOB_STATE_RESTART == jdata->state) {
         OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
                              "%s rmaps:resilient: remapping job %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
