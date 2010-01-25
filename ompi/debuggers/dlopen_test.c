@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
 	printf("File opened with dladvise_global\n");
 	return 1;
     }
-    printf("File failed to opene with dladvise_global: %s\n", lt_dlerror());
+    printf("File failed to open with dladvise_global: %s\n", lt_dlerror());
 
     return 2;
 }
