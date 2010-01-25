@@ -19,7 +19,12 @@
 
 noinst_LTLIBRARIES = libdebuggers.la libompi_debugger_canary.la
 pkglib_LTLIBRARIES = libompi_dbg_msgq.la
+if OPAL_HAVE_DLOPEN
 check_PROGRAMS = dlopen_test
+else
+check_PROGRAMS = 
+endif
+
 TESTS = $(check_PROGRAMS)
 
 # This is not quite in the Automake spirit, but we have to do it.
