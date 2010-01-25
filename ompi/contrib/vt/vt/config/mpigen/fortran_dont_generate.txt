@@ -1,8 +1,6 @@
 # This file lists all calls, which should not be generated
 # automatically by mk_fortran_wrapper.sh 
 
-MPI_Group_range_excl
-MPI_Group_range_incl
 MPI_Init
 MPI_Initialized
 MPI_Init_thread

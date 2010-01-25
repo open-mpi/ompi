@@ -496,9 +496,9 @@ Definitions::createGlobal( const std::vector<DefRec_Base_struct*> *
       // start-time 
       //
       tt = (time_t)(g_uMinStartTimeEpoch / 1e6);
-      sprintf( comment, " Start: %s (%"U64STR")",
-	       asctime(localtime(&tt)),
-	       g_uMinStartTimeEpoch );
+      snprintf( comment, sizeof( comment ) - 1, " Start: %s (%"U64STR")",
+                asctime(localtime(&tt)),
+                g_uMinStartTimeEpoch );
       p_vecGlobDefs->push_back( new DefRec_DefinitionComment_struct(
 				   1,
 				   comment ) );
@@ -506,9 +506,9 @@ Definitions::createGlobal( const std::vector<DefRec_Base_struct*> *
       // stop-time
       //
       tt = (time_t)(g_uMaxStopTimeEpoch / 1e6);
-      sprintf( comment, " Stop: %s (%"U64STR")",
-	       asctime(localtime(&tt)),
-	       g_uMaxStopTimeEpoch );
+      snprintf( comment, sizeof( comment ) - 1, " Stop: %s (%"U64STR")",
+                asctime(localtime(&tt)),
+                g_uMaxStopTimeEpoch );
       p_vecGlobDefs->push_back( new DefRec_DefinitionComment_struct(
 				   2,
 				   comment ) );
@@ -517,11 +517,12 @@ Definitions::createGlobal( const std::vector<DefRec_Base_struct*> *
       //
       tt = (time_t)((g_uMaxStopTimeEpoch - g_uMinStartTimeEpoch) / 1e6);
       gmtime_r(&tt, &elapsed_tm);
-      sprintf( comment, " Elapsed: %s%d:%s%d:%s%d (%"U64STR")",
-	       elapsed_tm.tm_hour < 10 ? "0" : "", elapsed_tm.tm_hour,
-	       elapsed_tm.tm_min  < 10 ? "0" : "", elapsed_tm.tm_min,
-	       elapsed_tm.tm_sec  < 10 ? "0" : "", elapsed_tm.tm_sec,
-	       (g_uMaxStopTimeEpoch - g_uMinStartTimeEpoch) );
+      snprintf( comment, sizeof( comment ) - 1,
+                " Elapsed: %s%d:%s%d:%s%d (%"U64STR")",
+                elapsed_tm.tm_hour < 10 ? "0" : "", elapsed_tm.tm_hour,
+                elapsed_tm.tm_min  < 10 ? "0" : "", elapsed_tm.tm_min,
+                elapsed_tm.tm_sec  < 10 ? "0" : "", elapsed_tm.tm_sec,
+                (g_uMaxStopTimeEpoch - g_uMinStartTimeEpoch) );
       p_vecGlobDefs->push_back( new DefRec_DefinitionComment_struct(
 				   3,
 				   comment ) );

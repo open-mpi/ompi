@@ -110,7 +110,7 @@ cat <<End-of-File >$tmp.awk
       if (type[i-2] == "char*") {
         strings[stringcnt++] = para[i-2]
         printf "%s %s", type[i-2], para[i-2]
-      } else if (index(type[i-2], "*") != 0) {
+      } else if (index(type[i-2], "*") != 0 || index(para[i-2], "[") != 0) {
         printf "%s %s", converttype(type[i-2]), para[i-2]
       } else {
         printf "%s* %s", converttype(type[i-2]), para[i-2]
@@ -155,8 +155,6 @@ cat <<End-of-File >$tmp.awk
   printf "  *ierr = %s(", mpicall
   for (i=3; i<=NF; i++) {
     if (i > 3) printf ", "
-    #remove arrays declarations from parameter:
-    gsub("[[].*[]]","",para[i-2])
     # If the original type already needed a pointer, pass as is,
     # otherwise dereference the parameter
     printf "%s", get_converted_name(para[i-2],type[i-2])
@@ -179,7 +177,7 @@ cat <<End-of-File >$tmp.awk
   } else {
     for (i=3; i<=NF; i++) {
       if (i > 3) printf ", "
-      if (index(type[i-2], "*") != 0)
+      if (index(type[i-2], "*") != 0 || index(para[i-2], "[") != 0)
         printf "%s %s", converttype(type[i-2]), para[i-2]
       else
         printf "%s* %s", converttype(type[i-2]), para[i-2]
@@ -763,10 +761,13 @@ function get_converted_name(para,type) {
     if (type == "char*") return para "C"
 
     pointer=""
-    if (index(type, "*") == 0)
+    if (index(type, "*") == 0 && index(para, "[") == 0)
         pointer="*"
 
-    #Find out wheter we have to pass address operator "&"
+    #remove arrays declarations from parameter:
+    gsub("[[].*[]]","",para)
+
+    #find out wheter we have to pass address operator "&"
     address=""
     if ((index(para,"_CLASS_SINGLE_") != 0) && (index(type,"MPI_Status") == 0) )
         address="&"

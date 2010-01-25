@@ -507,7 +507,8 @@ int vt_env_mode()
 	  char* tk;
 	  int dc;
 
-	  strncpy(tmpbuf, tmp, 128);
+	  strncpy(tmpbuf, tmp, 127);
+    tmpbuf[127] = '\0';
 	  while( *p ) { *p = tolower(*p); p++; }
 
 	  tk = strtok(tmpbuf, ":");
@@ -570,7 +571,8 @@ int vt_env_stat_props()
 	  char* tk;
 	  int dc;
 
-	  strncpy(tmpbuf, tmp, 128);
+	  strncpy(tmpbuf, tmp, 127);
+    tmpbuf[127] = '\0';
 	  while( *p ) { *p = tolower(*p); p++; }
 
 	  if (strcmp( tmpbuf, "all" ) == 0)
@@ -626,7 +628,8 @@ int vt_env_stat_msg_dtls()
 	  char* tk;
 	  int dc;
 
-	  strncpy(tmpbuf, tmp, 128);
+	  strncpy(tmpbuf, tmp, 127);
+    tmpbuf[127] = '\0';
 	  while( *p ) { *p = tolower(*p); p++; }
 
 	  tk = strtok(tmpbuf, ":");
@@ -670,7 +673,8 @@ int vt_env_stat_collop_dtls()
 	  char* tk;
 	  int dc;
 
-	  strncpy(tmpbuf, tmp, 128);
+	  strncpy(tmpbuf, tmp, 127);
+    tmpbuf[127] = '\0';
 	  while( *p ) { *p = tolower(*p); p++; }
 
 	  tk = strtok(tmpbuf, ":");
@@ -1006,6 +1010,22 @@ char* vt_env_metrics()
 	metrics = NULL;
     }
   return metrics;
+}
+
+char* vt_env_metrics_sep()
+{
+  static char* metrics_sep = NULL;
+
+  if (!metrics_sep)
+    {
+      metrics_sep = getenv("VT_METRICS_SEP");
+      if (metrics_sep == NULL || strlen(metrics_sep) == 0)
+        {
+          metrics_sep = ":";
+        }
+    }
+
+  return metrics_sep;
 }
 
 /* The file with the metrics specifications can be defined with the

@@ -25,6 +25,9 @@
 #define RANGE_MODE 1
 #define TABLE_MODE 2
 
+#define CLEAR_EVERYTHING free_all_pointers(ch_i, first, entries, writer, reader, \
+					   handlers, manager, master, new_master);
+
 #define HELPTEXT "" \
 "                                                                  \n" \
 " otfshrink  -  creates a new otf file that only includes          \n" \
@@ -50,10 +53,13 @@ map<int, bool> cpuMap;
 
 int write_master(string input, string output, bool invers, bool show, int sim_mode);
 int display_processes(firstarg *first, int sim_mode);
+void free_all_pointers(char *ch_i, firstarg *first, OTF_MapEntry *entries, OTF_Writer *writer,
+		      OTF_Reader *reader, OTF_HandlerArray *handlers, OTF_FileManager *manager,
+		      OTF_MasterControl *master, OTF_MasterControl *new_master);
 
 int main (int argc, char* argv[]) {
 	
-	char *pwd = new char[OTF_PATH_MAX];
+	char *pwd = NULL;
 	bool enable = true;
 	bool invers_mode = true;
 	bool mode_set = false;
@@ -68,12 +74,6 @@ int main (int argc, char* argv[]) {
 	string output_file;
 	string output_folder;
 	string output_path;
-
-	/* get current working directory */
-	pwd = getcwd(pwd, OTF_PATH_MAX);
-	if ( pwd == NULL) {
-		cerr << "Error: Path length greater than the maximum." << endl;
-	}
 
 	if ( argc <= 1 ) {
 		cout << HELPTEXT << endl;
@@ -222,6 +222,16 @@ int main (int argc, char* argv[]) {
 		cerr << "Error: No input file given." << endl;
 		return 1;
 	}
+
+	/* get current working directory */
+  	pwd = new char[OTF_PATH_MAX];
+  	*pwd = '\0';
+	pwd = getcwd(pwd, OTF_PATH_MAX);
+	if ( pwd == NULL) {
+		cerr << "Error: Path length greater than the maximum." << endl;
+		delete[] pwd;
+		return 1;
+	}
 	
 	/* make absolute path - necessary to create a symbolic link later on */
 	if (input_path[0] != '/') {
@@ -288,16 +298,10 @@ int main (int argc, char* argv[]) {
 	}
 
 	/*** end string operations ***/
-	
+
 	/* create symbolic links, definiton file and master file */
-	if ( write_master(input_path ,output_path, invers_mode, simulation, sim_mode) ) {
-		return 2;
-	}
-
-
-	return 0;
+	return write_master(input_path ,output_path, invers_mode, simulation, sim_mode);
 }
-
 
 int write_master(string input, string output, bool invers, bool show, int sim_mode) {
 
@@ -320,8 +324,9 @@ int write_master(string input, string output, bool invers, bool show, int sim_mo
 	OTF_HandlerArray *handlers = NULL;
 	OTF_FileManager *manager = NULL;
 	OTF_MasterControl *master = NULL;
+	OTF_MasterControl *new_master = NULL;
 
-	manager = OTF_FileManager_open(1);
+	manager = OTF_FileManager_open(2);
 	master = OTF_MasterControl_new(manager);
 	OTF_MasterControl_read(master, input.c_str());
 
@@ -333,6 +338,7 @@ int write_master(string input, string output, bool invers, bool show, int sim_mo
 		} else {
 			cerr << "Error while reading tracefile. No entries in file found." << endl;
 		}
+		CLEAR_EVERYTHING
 		return 2;
 	}
 	
@@ -354,13 +360,13 @@ int write_master(string input, string output, bool invers, bool show, int sim_mo
 		}
 	}
 
-	/* create new master and symbolic links */
-	master = OTF_MasterControl_new(manager);
+	/* create new empty master and symbolic links */
+	new_master = OTF_MasterControl_new(manager);
 	for(uint32_t i = 0; i < num_args; i++) {
 		append = false;
 		for(uint32_t j = 0; j < entries[i].n; j++) {
 			if(entries[i].values[j] > 0) {
-				OTF_MasterControl_append(master, i+1, entries[i].values[j]);
+				OTF_MasterControl_append(new_master, i+1, entries[i].values[j]);
 				first->procMap[ entries[i].values[j] ] = true;
 				append = true;
 			}
@@ -372,7 +378,7 @@ int write_master(string input, string output, bool invers, bool show, int sim_mo
 		}
 
 		/* create symbolic links */
-		sprintf(ch_i, "%x", i+1);
+		snprintf(ch_i, MAX_L, "%x", i+1);
 		
 		for(int k = 0; k < 4; k++) {
 			
@@ -383,11 +389,13 @@ int write_master(string input, string output, bool invers, bool show, int sim_mo
 				if ( ! access(s_link.c_str(), F_OK) ) {
 					if ( unlink(s_link.c_str()) ) {
 						cerr << "Error while removing symbolic link " << s_link << endl;
+						CLEAR_EVERYTHING
 						return 2;
 					}
 				}
 				if ( symlink( file.c_str(), s_link.c_str() ) ) {
 					cerr << "Error while creating symbolic link " << s_link << endl;
+					CLEAR_EVERYTHING
 					return 2;
 				}
 			} else {
@@ -398,16 +406,19 @@ int write_master(string input, string output, bool invers, bool show, int sim_mo
 					if ( ! access(s_link.c_str(), F_OK) ) {
 						if ( unlink(s_link.c_str()) ) {
 							cerr << "Error while removing symbolic link " << s_link << endl;
+							CLEAR_EVERYTHING
 							return 2;
 						}
 					}
 					if ( symlink( file.c_str(), s_link.c_str() ) ) {
 						cerr << "Error while creating symbolic link " << s_link << endl;
+						CLEAR_EVERYTHING
 						return 2;
 					}
 				} else {
 					if ( k == 0 ) {
 						cerr << "Error: Could not find " << file << endl;
+						CLEAR_EVERYTHING
 						return 2;
 					}
 				}
@@ -415,14 +426,20 @@ int write_master(string input, string output, bool invers, bool show, int sim_mo
 		}
 	}
 
+	/* close original master, he is not needed anymore */
+	OTF_MasterControl_close(master);
+	master = NULL;
+
 	if (show) {
 		display_processes(first, sim_mode);
+		CLEAR_EVERYTHING
 		return 0;
 	}
 
 	/* check if there is at least one process to show */
-	if (OTF_MasterControl_getCount(master) < 1) {
+	if (OTF_MasterControl_getCount(new_master) < 1) {
 		cerr << "You exclude all processes! Master not wrote." << endl;
+		CLEAR_EVERYTHING
 		return 2;
 	}
 
@@ -513,24 +530,17 @@ int write_master(string input, string output, bool invers, bool show, int sim_mo
 
 	read = OTF_Reader_readDefinitions (reader, handlers);
 	if( read == OTF_READ_ERROR ) {
-		fprintf(stderr,"An error occurred while reading the tracefile. It seems to be damaged. Abort.\n");
+		cerr << "An error occurred while reading the tracefile. It seems to be damaged. Abort." << endl;
+		CLEAR_EVERYTHING
 		return 1;
 	}
 
-	OTF_HandlerArray_close(handlers);
-	OTF_Reader_close(reader);
-	OTF_Writer_close(writer);
-
-	/* writes new master file to harddisk */
-	OTF_MasterControl_write(master, output.c_str());
-
-	OTF_MasterControl_close(master); 
-	OTF_FileManager_close(manager);
+	/* set the writer's master to the modified master instance */
+	/* closing the writer at the end writes the new master file to harddisk */
+	OTF_Writer_setMasterControl(writer, new_master);
 
 	/* clear everything */
-	delete[] ch_i;
-	delete first;
-	delete[] entries;
+	CLEAR_EVERYTHING
 
 	return 0;
 }
@@ -593,5 +603,58 @@ int display_processes(firstarg *first, int sim_mode) {
 	}
 
 	return 0;
+}
+
+void free_all_pointers(char *ch_i, firstarg *first, OTF_MapEntry *entries, OTF_Writer *writer,
+		      OTF_Reader *reader, OTF_HandlerArray *handlers, OTF_FileManager *manager,
+		      OTF_MasterControl *master, OTF_MasterControl *new_master) {
+
+	if(ch_i != NULL) {
+		delete[] ch_i;
+		ch_i = NULL;
+	}
+
+	if(first != NULL) {
+		delete first;
+		first = NULL;
+	}
+
+	if(entries != NULL) {
+		delete[] entries;
+		entries = NULL;
+	}
+
+	/* new_master is free'd by writer instance */
+	if(writer != NULL) {
+		OTF_Writer_close(writer);
+		writer = NULL;
+		new_master = NULL;
+	}
+
+	if(reader != NULL) {
+		OTF_Reader_close(reader);
+		reader = NULL;
+	}
+
+
+	if(handlers != NULL) {
+		OTF_HandlerArray_close(handlers);
+		handlers = NULL;
+	}
+
+	if(manager != NULL) {
+		OTF_FileManager_close(manager);
+		manager = NULL;
+	}
+
+	if(master != NULL) {
+		OTF_MasterControl_close(master);
+		master = NULL;
+	}
+
+	if(new_master != NULL) {
+		OTF_MasterControl_close(new_master);
+		new_master = NULL;
+	}
 }
 

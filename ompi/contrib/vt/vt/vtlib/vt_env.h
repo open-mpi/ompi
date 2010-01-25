@@ -57,6 +57,7 @@ EXTERN int    vt_env_mpicheck_errexit(void);
 EXTERN char*  vt_env_rusage(void);
 EXTERN int    vt_env_rusage_intv(void);
 EXTERN char*  vt_env_metrics(void);
+EXTERN char*  vt_env_metrics_sep(void);
 EXTERN char*  vt_env_metrics_spec(void);
 EXTERN int    vt_env_sync_flush(void);
 EXTERN int    vt_env_sync_flush_level(void);

@@ -4094,12 +4094,12 @@ VT_MPI_INT MPI_Exscan( void* sendbuf,
       vt_mpifile_data *fdata = vt_mpifile_get_data(fh); \
       if (result == MPI_SUCCESS) \
         { \
-          VT_MPI_INT sz, count; \
+          VT_MPI_INT sz, cnt; \
           PMPI_Type_size(fdata->datatype, &sz); \
-          PMPI_Get_count(status, fdata->datatype, &count); \
-          if (count == MPI_UNDEFINED) \
-            count = 0; \
-          vt_ioend(&time, fdata->fid, fdata->split_collective_id, IOOP, (uint64_t)count * (uint64_t)sz); \
+          PMPI_Get_count(status, fdata->datatype, &cnt); \
+          if (cnt == MPI_UNDEFINED) \
+            cnt = 0; \
+          vt_ioend(&time, fdata->fid, fdata->split_collective_id, IOOP, (uint64_t)cnt * (uint64_t)sz); \
         } \
       else \
         { \
@@ -4120,12 +4120,12 @@ VT_MPI_INT MPI_Exscan( void* sendbuf,
       uint32_t fid = vt_mpifile_get_id(fh); \
       if (result == MPI_SUCCESS) \
         { \
-          VT_MPI_INT sz, count; \
+          VT_MPI_INT sz, cnt; \
           PMPI_Type_size(datatype, &sz); \
-          PMPI_Get_count(status, datatype, &count); \
-          if (count == MPI_UNDEFINED) \
-            count = 0; \
-          vt_ioend(&time, fid, handleid, IOOP, (uint64_t)count * (uint64_t)sz); \
+          PMPI_Get_count(status, datatype, &cnt); \
+          if (cnt == MPI_UNDEFINED) \
+            cnt = 0; \
+          vt_ioend(&time, fid, handleid, IOOP, (uint64_t)cnt * (uint64_t)sz); \
         } \
       else \
         { \

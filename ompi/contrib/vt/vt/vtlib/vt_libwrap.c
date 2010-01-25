@@ -284,8 +284,10 @@ void VTLibwrap_func_init(const VTLibwrap* lw, const char* func,
 
       for( i = 0; i < lw->handlen; i++ )
       {
-        if( i > 0 ) strcat(dlsym_errors_merged, "\n");
-        strcat(dlsym_errors_merged, dlsym_errors[i]);
+        if( i > 0 )
+          strncat(dlsym_errors_merged, "\n", 255 - strlen(dlsym_errors_merged));
+        strncat(dlsym_errors_merged, dlsym_errors[i],
+                255 - strlen(dlsym_errors_merged));
       }
       vt_error_msg("dlsym(\"%s\") failed:\n%s", func, dlsym_errors_merged);
     }

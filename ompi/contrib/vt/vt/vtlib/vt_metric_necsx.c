@@ -355,6 +355,7 @@ int vt_metric_open()
 {
   int i;
   char* env;
+  char* env_sep;
   char* var;
   char* token;
   const int max_metrics = sizeof (vt_sx_metrics) / sizeof (vt_sx_metrics[0]);
@@ -364,6 +365,8 @@ int vt_metric_open()
   if ( env == NULL )
     return nmetrics;
 
+  env_sep = vt_env_metrics_sep();
+
   var = strdup(env);
   vt_cntl_msg(2, "VT_METRICS=%s", var);
 
@@ -372,7 +375,7 @@ int vt_metric_open()
   while ( *token ) { *token = tolower(*token); token++; }
 
   /* read metrics from specification string */
-  token = strtok(var, ":");
+  token = strtok(var, env_sep);
   if (token && (0 == strcmp (token, "all"))) {
     vt_cntl_msg(2, "token:%s Adding all metrics", token);
     for (i = 0; i < max_metrics; i++) {
@@ -393,7 +396,7 @@ int vt_metric_open()
       if (i == max_metrics) {
 	vt_error_msg ("Metric <%s> not supported", token);
       }
-      token = strtok(NULL, ":");
+      token = strtok(NULL, env_sep);
     }
   }
 

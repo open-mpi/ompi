@@ -344,7 +344,7 @@ int main( int argc, const char** argv )
 		    }
 		}
 
-		data_array = (global_data**) malloc(num_threads * sizeof(global_data));
+		data_array = (global_data**) malloc(num_threads * sizeof(global_data*));
 		cpu2thread = (uint32_t*) malloc(num_cpus * sizeof(uint32_t));
 
 		/* Definitons */		
@@ -472,9 +472,11 @@ int main( int argc, const char** argv )
 
 		uint32_t start = 0;
 		uint32_t end = 0;
+#   ifdef _OPENMP
 		for(int k=0; k<omp_get_thread_num(); k++) {
 		  	start += threads[k];
 		}
+#   endif
 		end = start + threads[omp_get_thread_num()] - 1;
 
 		for(uint32_t i=0; i<num_cpus; i++) {

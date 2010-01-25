@@ -38,6 +38,7 @@ int handleDefProcessGroup (void *userData, uint32_t stream, uint32_t procGroup, 
 	
 	uint32_t *mod_procs = new uint32_t[numberOfProcs];
 	uint32_t mod_numberOfProcs = 0;
+	int ret;
 
 	for(uint32_t i = 0; i < numberOfProcs; i++) {
 		if (  first->procMap.end() != first->procMap.find(procs[i]) ) {
@@ -48,11 +49,16 @@ int handleDefProcessGroup (void *userData, uint32_t stream, uint32_t procGroup, 
 	}
 
 	if(mod_numberOfProcs < 1) {
+		delete[] mod_procs;
 		return OTF_RETURN_OK;
 	}
 	
-	return ( 0 == OTF_Writer_writeDefProcessGroup ( (OTF_Writer*) first->writer, stream, procGroup, name,
+	ret = ( 0 == OTF_Writer_writeDefProcessGroup ( (OTF_Writer*) first->writer, stream, procGroup, name,
 		mod_numberOfProcs, mod_procs) ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+
+	delete[] mod_procs;
+
+	return ret;
 
 }
 
@@ -106,8 +112,11 @@ int handleDefCreator (void *userData, uint32_t stream, const char *creator) {
 
 int handleDefVersion (void *userData, uint32_t stream, uint8_t major, uint8_t minor, uint8_t sub, const char *string) {
 
-	return ( 0 == OTF_Writer_writeOtfVersion ( (OTF_Writer*) userData, stream) )
-		? OTF_RETURN_ABORT : OTF_RETURN_OK;
+	/* this is deprecated and not necessary at all */
+	/*return ( 0 == OTF_Writer_writeOtfVersion ( (OTF_Writer*) userData, stream) )
+		? OTF_RETURN_ABORT : OTF_RETURN_OK;*/
+
+	return OTF_RETURN_OK;
 }
 
 int handleDefFile (void *userData, uint32_t stream, uint32_t token, const char *name, uint32_t group) {

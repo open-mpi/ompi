@@ -11,7 +11,7 @@ AC_DEFUN([ACVT_BFD],
 	BFDLIB=
 
 	AC_ARG_WITH(bfd,
-		AC_HELP_STRING([--with-bfd], [use BFD to get symbol information of an executable instrumented with GNU, Intel, or Pathscale compiler, default: yes]),
+		AC_HELP_STRING([--with-bfd], [use BFD to get symbol information of an executable instrumented with GNU, Intel, PGI9, or Pathscale compiler, default: yes]),
 	[AS_IF([test x"$withval" = "xyes"], [force_bfd="yes"], [check_bfd="no"])])
 
 	AC_ARG_WITH(bfd-dir,

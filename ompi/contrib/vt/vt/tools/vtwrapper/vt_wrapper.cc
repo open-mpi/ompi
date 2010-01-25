@@ -264,8 +264,9 @@ Wrapper::readDataFile()
          case 21: // inst_avail
 	 {
 	    char cvalue[128];
-	    strcpy( cvalue, value.c_str() );
-	    
+	    strncpy( cvalue, value.c_str(), sizeof( cvalue ) - 1 );
+	    cvalue[sizeof(cvalue) - 1]  = '\0';
+
 	    char * token = strtok( cvalue, " " );
 	    if( !token )
 	    {
@@ -465,10 +466,12 @@ Wrapper::parseCommandLine( int argc, char ** argv )
 	    return false;
 	 }
 
-	 char * args = new char[strlen(argv[i+1])+1];
-	 strcpy( args, argv[++i] );
-	 char * token = strtok( args, " " );
+   size_t args_len = strlen(argv[i+1])+1;
+   char * args = new char[args_len];
+   strncpy( args, argv[++i], args_len - 1 );
+   args[args_len - 1] = '\0';
 
+   char * token = strtok( args, " " );
 	 do
 	 {
 	    if( strcmp( token, "-rcfile" ) == 0 )
@@ -478,7 +481,7 @@ Wrapper::parseCommandLine( int argc, char ** argv )
 	       {
 		  std::cerr << ExeName << ": <rcfile> expected -- -rcfile"
 			    << std::endl;
-		  delete args;
+		  delete [] args;
 		  return false;
 	       }
 	       m_pConfig->opari_setRcFile( token ); 
@@ -490,7 +493,7 @@ Wrapper::parseCommandLine( int argc, char ** argv )
 	       {
 		  std::cerr << ExeName << ": <tabfile> expected -- -table"
 			    << std::endl;
-		  delete args;
+		  delete [] args;
 		  return false;
 	       }
 	       
@@ -502,7 +505,7 @@ Wrapper::parseCommandLine( int argc, char ** argv )
 	    }
 	 } while( ( token = strtok( 0, " " ) ) );
 
-	 delete args;
+	 delete [] args;
       }
       //
       // -vt:seq
@@ -937,31 +940,34 @@ Wrapper::run()
       //
       for( i = 0; i < m_pConfig->m_vecOpari_ModObjFiles.size(); i++ )
       {
-	 if( access( m_pConfig->m_vecOpari_ModObjFiles[i].c_str(), F_OK ) == 0 )
-	 {
-	    int modi = m_pConfig->m_vecOpari_ModObjFiles[i].find( ".mod" );
+         int modi = m_pConfig->m_vecOpari_ModObjFiles[i].find( ".mod" );
 
-	    if( modi != -1 )
-	    {
-	       std::string target = m_pConfig->m_vecOpari_ModObjFiles[i];
-	       target.erase( modi, 4 );
-	       
-	       if( beverbose )
-		  std::cout << "+++ rename " << m_pConfig->m_vecOpari_ModObjFiles[i]
-			    << " to " << target << std::endl;
-	       
-	       rename( m_pConfig->m_vecOpari_ModObjFiles[i].c_str(),
-		       target.c_str() );
-	    }
-	 }
+         if( modi != -1 )
+         {
+            std::string target = m_pConfig->m_vecOpari_ModObjFiles[i];
+            target.erase( modi, 4 );
+
+            if( beverbose )
+               std::cout << "+++ rename " << m_pConfig->m_vecOpari_ModObjFiles[i]
+                         << " to " << target << std::endl;
+
+            if( rename( m_pConfig->m_vecOpari_ModObjFiles[i].c_str(),
+                        target.c_str() ) == -1 )
+            {
+               std::cerr << ExeName << ": could not rename "
+                         << m_pConfig->m_vecOpari_ModObjFiles[i] << " to "
+                         << target << std::endl;
+               return 1;
+            }
+         }
       }
 
       // delete intermediate opari output (in non-verbose mode)
       //
       if( !beverbose )
       {
-	 for( i = 0; i < m_pConfig->m_vecOpari_ModSrcFiles.size(); i++ )
-	    remove( m_pConfig->m_vecOpari_ModSrcFiles[i].c_str() );
+         for( i = 0; i < m_pConfig->m_vecOpari_ModSrcFiles.size(); i++ )
+            remove( m_pConfig->m_vecOpari_ModSrcFiles[i].c_str() );
       }
    }
 
@@ -1208,7 +1214,7 @@ Wrapper::getIncFilesFromTabFile()
 //
 
 Config::Config() :
-   m_eInstType(INST_TYPE_MANUAL), m_iInstAvail(0),
+   m_eLangType(LANG_CC), m_eInstType(INST_TYPE_MANUAL), m_iInstAvail(0),
 
    m_bBeVerbose(false), m_bCompOnly(false),
    m_bUsesMpi(false), m_bUsesThreads(false),
@@ -1228,22 +1234,23 @@ Config::~Config()
 bool
 Config::setLanguage( const LangTypeT lang )
 {
+#if !(defined(HAVE_F77) && HAVE_F77) || !(defined(HAVE_F90) && HAVE_F90)
    bool error = false;
    std::string str_lang;
 
    if( lang == LANG_F77 )
    {
-#if !(defined(HAVE_F77) && HAVE_F77)
+#     if !(defined(HAVE_F77) && HAVE_F77)
       str_lang = "Fortran 77";
       error = true;
-#endif // HAVE_F77
+#     endif // HAVE_F77
    }
    else if( lang == LANG_F90 )
    {
-#if !(defined(HAVE_F90) && HAVE_F90)
+#     if !(defined(HAVE_F90) && HAVE_F90)
       str_lang = "Fortran 90";
       error = true;
-#endif // HAVE_F90
+#     endif // HAVE_F90
    }
 
    if( !error )
@@ -1253,12 +1260,16 @@ Config::setLanguage( const LangTypeT lang )
    else
    {
       std::cerr << "Unfortunately, this installation of VampirTrace "
-		<< "was not compiled with" << std::endl
-		<< str_lang << " support.  As such, the " << ExeName
-		<< " compiler is non-functional." << std::endl;
+                << "was not compiled with" << std::endl
+                << str_lang << " support.  As such, the " << ExeName
+                << " compiler is non-functional." << std::endl;
    }
 
    return !error;
+#else // HAVE_F77 || HAVE_F90
+   m_eLangType = lang;
+   return true;
+#endif // HAVE_F77 || HAVE_F90
 }
 
 void
