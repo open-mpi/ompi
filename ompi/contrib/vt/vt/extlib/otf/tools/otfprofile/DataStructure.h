@@ -827,7 +827,7 @@ class Summary_Container
 		int csv_P2P(fstream& out, uint32_t trace);
 		int csv_CollOp(fstream& out, uint32_t trace);
 		int csv_Data(fstream& out, uint32_t trace);
-		int mergeContainer(Summary_Container container);
+		int mergeContainer(Summary_Container& container);
 	
 	private:
 		FunctionMap   function_map;

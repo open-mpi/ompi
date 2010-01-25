@@ -52,8 +52,7 @@ DIV.navigation		{   }
 SPAN.textbf		{ font-weight: bold  }
 SPAN.arabic		{   }
 SPAN.textit		{ font-style: italic  }
-
-BODY {font-family: sans-serif;}
+body {font-family: sans-serif;}
 </STYLE>
 </HEAD>
 
@@ -62,7 +61,7 @@ BODY {font-family: sans-serif;}
 <P>
 
 <P>
-<B><BIG CLASS="XHUGE">VampirTrace 5.8 User Manual</BIG></B>
+<B><BIG CLASS="XHUGE">VampirTrace 5.8.1 User Manual</BIG></B>
 <BR>
 <BR>
 <BR>
@@ -289,18 +288,18 @@ OpenMP events, and performance counters.
 <P>
 After a successful tracing run, VampirTrace writes all collected data to a  
 trace file in the Open Trace Format (OTF)<A NAME="tex2html3"
-  HREF="#foot1148"><SUP>[+]</SUP></A>.
+  HREF="#foot1149"><SUP>[+]</SUP></A>.
 As a result, the information is available for post-mortem analysis and 
 visualization by various tools. 
 Most notably, VampirTrace provides the input data for the Vampir analysis  
 and visualization tool<A NAME="tex2html5"
-  HREF="#foot1149"><SUP>[+]</SUP></A>. 
+  HREF="#foot1150"><SUP>[+]</SUP></A>. 
 
 <P>
 VampirTrace is included in OpenMPI&nbsp;1.3 and later versions.
 If not disabled explicitly, VampirTrace is built automatically when installing
 OpenMPI<A NAME="tex2html7"
-  HREF="#foot1150"><SUP>[+]</SUP></A>.
+  HREF="#foot1151"><SUP>[+]</SUP></A>.
 
 <P>
 Trace files can quickly become very large, especially with automatic instrumentation.
@@ -1048,7 +1047,7 @@ Binary Instrumentation Using Dyninst
 The option <TT>-vt:inst dyninst</TT> is used with the compiler wrapper to 
 instrument the application during runtime (binary instrumentation), by using 
 Dyninst<A NAME="tex2html10"
-  HREF="#foot1174"><SUP>[+]</SUP></A>.
+  HREF="#foot1175"><SUP>[+]</SUP></A>.
 Recompiling is not necessary for this kind of instrumentation,
 but relinking:
 
@@ -1310,7 +1309,7 @@ of a VampirTrace instrumented executable:
 <TD ALIGN="LEFT">1</TD>
 </TR>
 <TR><TD ALIGN="LEFT"><TT>VT_MAX_THREADS</TT></TD>
-<TD ALIGN="LEFT">Maximum number of threads (<SPAN CLASS="MATH"><A NAME="tex2html_wrap_inline2599"
+<TD ALIGN="LEFT">Maximum number of threads (<SPAN CLASS="MATH"><A NAME="tex2html_wrap_inline2602"
  HREF="img3.png">[IMAGE png]</A></SPAN>) per process that VampirTrace reserves resources for.</TD>
 <TD ALIGN="LEFT">65536</TD>
 </TR>
@@ -1430,10 +1429,14 @@ of a VampirTrace instrumented executable:
 </TR>
 <TR><TD ALIGN="LEFT"><TT>VT_METRICS</TT></TD>
 <TD ALIGN="LEFT">Specify counter metrics to be recorded with trace events as a
-	colon-separated list of names.
+	colon/VT_METRICS_SEP-separated list of names.
 	<BR>
 	&rArr; Section&nbsp;<A HREF="#hw_perf_counters">[*]</A></TD>
 <TD ALIGN="LEFT">-</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><TT>VT_METRICS_SEP</TT></TD>
+<TD ALIGN="LEFT">Separator string between counter specifications in VT_METRICS.</TD>
+<TD ALIGN="LEFT">:</TD>
 </TR>
 <TR><TD ALIGN="LEFT"><TT>VT_RUSAGE</TT></TD>
 <TD ALIGN="LEFT">Colon-separated list of resource usage counters which shall be recorded.
@@ -1684,7 +1687,7 @@ for the enhanced timer synchronization:
 
 <UL>
 <LI>CLAPACK<A NAME="tex2html12"
-  HREF="#foot1184"><SUP>[+]</SUP></A>
+  HREF="#foot1185"><SUP>[+]</SUP></A>
 </LI>
 <LI>AMD ACML
 </LI>
@@ -2619,7 +2622,7 @@ default: automatically by configure
 enable support for Dyninst instrumentation,
                               default: enable if found by configure
                               <SPAN  CLASS="textbf">Note:</SPAN> Requires Dyninst<A NAME="tex2html17"
-  HREF="#foot1200"><SUP>[+]</SUP></A>   version 5.1 or higher!
+  HREF="#foot1201"><SUP>[+]</SUP></A>   version 5.1 or higher!
 
 <P>
 </DD>
@@ -4090,39 +4093,39 @@ into the official VampirTrace package.
 <P>
 <BR><HR><H4>Footnotes</H4>
 <DL>
-<DT><A NAME="foot1148">... (OTF)</A><A
+<DT><A NAME="foot1149">... (OTF)</A><A
  HREF="UserManual.html#tex2html3"><SUP>[+]</SUP></A></DT>
 <DD><TT><A NAME="tex2html4"
   HREF="http://www.tu-dresden.de/zih/otf">http://www.tu-dresden.de/zih/otf</A></TT>
 
 </DD>
-<DT><A NAME="foot1149">... tool </A><A
+<DT><A NAME="foot1150">... tool </A><A
  HREF="UserManual.html#tex2html5"><SUP>[+]</SUP></A></DT>
 <DD><TT><A NAME="tex2html6"
   HREF="http://www.vampir.eu">http://www.vampir.eu</A></TT>
 
 </DD>
-<DT><A NAME="foot1150">...
+<DT><A NAME="foot1151">...
 Open MPI </A><A
  HREF="UserManual.html#tex2html7"><SUP>[+]</SUP></A></DT>
 <DD><TT><A NAME="tex2html8"
   HREF="http://www.open-mpi.org/faq/?category=vampirtrace">http://www.open-mpi.org/faq/?category=vampirtrace</A></TT>
 
 </DD>
-<DT><A NAME="foot1174">...
+<DT><A NAME="foot1175">...
 Dyninst </A><A
  HREF="UserManual.html#tex2html10"><SUP>[+]</SUP></A></DT>
 <DD><TT><A NAME="tex2html11"
   HREF="http://www.dyninst.org">http://www.dyninst.org</A></TT>
 
 </DD>
-<DT><A NAME="foot1184">... CLAPACK</A><A
+<DT><A NAME="foot1185">... CLAPACK</A><A
  HREF="UserManual.html#tex2html12"><SUP>[+]</SUP></A></DT>
 <DD><TT><A NAME="tex2html13"
   HREF="www.netlib.org/clapack">www.netlib.org/clapack</A></TT> 
 
 </DD>
-<DT><A NAME="foot1200">... Dyninst </A><A
+<DT><A NAME="foot1201">... Dyninst </A><A
  HREF="UserManual.html#tex2html17"><SUP>[+]</SUP></A></DT>
 <DD><TT><A NAME="tex2html18"
   HREF="http://www.dyninst.org">http://www.dyninst.org</A></TT>

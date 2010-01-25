@@ -1283,7 +1283,7 @@ static uint32_t vt_get_unique_file_id()
     VT_SUSPEND_IO_TRACING();
 
     /* create filename for unique id file */
-    sprintf(lock_filename, "%s/%s.lock", vt_env_gdir(), vt_env_fprefix());
+    snprintf(lock_filename, sizeof(lock_filename)-1, "%s/%s.lock", vt_env_gdir(), vt_env_fprefix());
 
     /* open/create unique id file */
     if( (fd = open(lock_filename, (O_RDWR | O_CREAT),
@@ -1299,8 +1299,11 @@ static uint32_t vt_get_unique_file_id()
     }
 
     /* read current unique id */
-    if( read(fd, tmp, 16) == -1 )
+    if( read(fd, tmp, 15) == -1 )
       vt_error_msg("Cannot read file %s: %s", lock_filename, strerror(errno));
+
+    /* terminate buffer to avoid issues in upcoming functions */
+    tmp[15] = '\0';
 
     if( tmp[0] == '\0' )
       new_fuid = 0;             /* set unique id to 0, if file is empty */
@@ -1343,16 +1346,19 @@ static void vt_write_def_header()
   /* VT_MODE */
   tmp_int32 = vt_env_mode();
 
-  strcpy(tmp_char, "");
+  tmp_char[0] = '\0';
   if( (tmp_int32 & VT_MODE_TRACE) != 0 )
-    strcpy(tmp_char, "TRACE");
+  {
+    strncpy(tmp_char, "TRACE", sizeof(tmp_char)-1);
+    tmp_char[sizeof(tmp_char)-1] = '\0';
+  }
 
   if( (tmp_int32 & VT_MODE_STAT) != 0 )
   {
     if( strlen(tmp_char) > 0 )
-      strcat(tmp_char, ":");
+      strncat(tmp_char, ":", sizeof(tmp_char)-1-strlen(tmp_char));
 
-    strcat(tmp_char, "STAT");
+    strncat(tmp_char, "STAT", sizeof(tmp_char)-1-strlen(tmp_char));
   }
 
   vt_def_comment("__VT_COMMENT__  VT_MODE: %s", tmp_char);
@@ -1363,16 +1369,16 @@ static void vt_write_def_header()
   if( tmp_uint64 >= (1024*1024*1024) )
   {
     tmp_uint64 /= (1024*1024*1024);
-    sprintf(tmp_char, "%"U64STR"G", tmp_uint64);
+    snprintf(tmp_char, sizeof(tmp_char)-1, "%"U64STR"G", tmp_uint64);
   }
   else if( tmp_uint64 >= (1024*1024) )
   {
     tmp_uint64 /= (1024*1024);
-    sprintf(tmp_char, "%"U64STR"M", tmp_uint64);
+    snprintf(tmp_char, sizeof(tmp_char)-1, "%"U64STR"M", tmp_uint64);
   }
   else
   {
-    sprintf(tmp_char, "%"U64STR, tmp_uint64);
+    snprintf(tmp_char, sizeof(tmp_char)-1, "%"U64STR, tmp_uint64);
   }
 
   vt_def_comment("__VT_COMMENT__  VT_BUFFER_SIZE: %s", tmp_char);

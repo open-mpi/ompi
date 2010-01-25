@@ -1,12 +1,15 @@
 5.8.1openmpi
 	- updated version of internal OTF to 1.6.5openmpi
 	  (see extlib/otf/ChangeLog)
+	- added functions 'MPI_Group_range_<incl|excl>' to Fortran MPI wrappers 
+	- added environment variable VT_METRICS_SEP to specify a string which separate
+	  the counter names in VT_METRICS 
 	- fixed build error: do not add objects from the static version of the
 	  BFD library to the shared VT libraries, because the BFD objects might
 	  be built without position independent code (PIC)
 
 5.8openmpi
-	- updated version of internal OTF to 1.6.4openmpi
+	- updated version of internal OTF to 1.6.4stingray
 	  (see extlib/otf/ChangeLog)
 	- added support for tracing calls to arbitrary third party libraries
 	  The new tool 'vtlibwrapgen' can be used to generate a wrapper library.
@@ -14,6 +17,7 @@
 	  filter directives
 	- added support for automatic instrumentation with PGI 9 compiler using
 	  its new compiler flag '-Minstrument'
+	- added MPI-parallel trace unifier (vtunify-mpi)
 	- disabled simultaneous support for multiple compiler instrumentation
 	  types in one VampirTrace installation
 	  (all known compiler instrumentation types for the compiler wrappers

@@ -72,7 +72,6 @@ struct Params_struct
    bool        showusage;
    bool        showprogress;
    bool        bequiet;
-   bool        beverbose;
 };
 
 //

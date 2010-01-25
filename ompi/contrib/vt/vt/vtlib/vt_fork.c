@@ -77,8 +77,9 @@ static int get_new_trcid()
   }
 
   /* read current trace id */
-  if ( read(fd, tmp, 10) == -1 )
+  if ( read(fd, tmp, 9) == -1 )
     vt_error_msg("Cannot read file %s: %s", trcid_filename, strerror(errno));
+  tmp[9] = '\0';
 
   if ( tmp[0] == '\0' )
     new_trcid = 1;             /* set trace id to 1, if file is empty */
@@ -116,8 +117,8 @@ void vt_fork_init()
   /* create temp. id filename, if necessary */
   if ( trcid_filename[0] == '\0' )
   {
-    sprintf(trcid_filename, "%s/%s.%lx.%u.trcid.tmp",
-	    vt_env_ldir(), vt_env_fprefix(), vt_pform_node_id(), getpid());
+    snprintf(trcid_filename, sizeof(trcid_filename)-1, "%s/%s.%lx.%u.trcid.tmp",
+	           vt_env_ldir(), vt_env_fprefix(), vt_pform_node_id(), getpid());
   }
 }
 

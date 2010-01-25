@@ -66,12 +66,15 @@ static void metricv_add(char* name)
 int vt_metric_open()
 {
   char* env;
+  char* env_sep;
   char* var;
   char* token;
 
   /* read environment variable "VT_METRICS" */
   if ( ( env = vt_env_metrics() ) == NULL )
     return 0;
+
+  env_sep = vt_env_metrics_sep();
 
   var = strdup(env);
   vt_cntl_msg(2, "VT_METRICS=%s", var);
@@ -81,11 +84,11 @@ int vt_metric_open()
     vt_error_msg("cpc_open: %s", strerror(errno));
 
   /* read metrics from specification string */
-  token = strtok(var, ":");
+  token = strtok(var, env_sep);
   while ( token && (nmetrics < VT_METRIC_MAXNUM) )
   {
     metricv_add( token );
-    token = strtok(NULL, ":");
+    token = strtok(NULL, env_sep);
   }
 
   free(var);

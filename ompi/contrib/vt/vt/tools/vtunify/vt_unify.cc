@@ -727,7 +727,7 @@ parseCommandLine( int argc, char ** argv )
       {
 	 Params.bequiet = true;
 	 Params.showprogress = false;
-	 Params.beverbose = false;
+	 Params.verbose_level = 0;
       }
       else if( strcmp( argv[i], "-v" ) == 0 
 	       || strcmp( argv[i], "--verbose" ) == 0 )
@@ -880,10 +880,6 @@ getMinStartTime()
 
       // store minimum timestamp
       g_uMinStartTime = min_start_time;
-
-#ifdef VT_MPI
-      if( error ) return false;
-#endif // VT_MPI
    } // MASTER
 
 #ifdef VT_MPI
@@ -927,50 +923,53 @@ cleanUp()
       }
 
       if( i != Params.uctl_files_num )
-	 return false;
+         return false;
 
       // remove local def./events/stats/marker trace files
       //
       for( i = 0; i < g_vecUnifyCtls.size(); i++ )
       {
-	 for( uint32_t j = 0; j < 4; j++ )
-	 {
-	    switch( j )
-	    {
-	       case 0:
-		  filetype = OTF_FILETYPE_DEF;
-		  break;
-	       case 1:
-		  filetype = OTF_FILETYPE_EVENT;
-		  break;
-	       case 2:
-		  filetype = OTF_FILETYPE_STATS;
-	       case 3:
-	       default:
-		  filetype = OTF_FILETYPE_MARKER;
-		  break;
-	    }
+         for( uint32_t j = 0; j < 4; j++ )
+         {
+            bool removed = false;
 
-	    OTF_getFilename( Params.in_file_prefix.c_str(),
-			     g_vecUnifyCtls[i]->streamid,
-			     filetype,
-			     STRBUFSIZE, filename1 );
-	    
-	    if( access( filename1, F_OK ) != 0 )
-	    {
-	       assert( strlen( filename1 ) + 2 + 1 < sizeof( filename1 ) - 1 );
+            switch( j )
+            {
+               case 0:
+                  filetype = OTF_FILETYPE_DEF;
+                  break;
+               case 1:
+                  filetype = OTF_FILETYPE_EVENT;
+                  break;
+               case 2:
+                  filetype = OTF_FILETYPE_STATS;
+               case 3:
+               default:
+                  filetype = OTF_FILETYPE_MARKER;
+                  break;
+            }
 
-	       // file not found, try '.z' suffix
-	       strncat( filename1, ".z", 2 );
-	    }
+            OTF_getFilename( Params.in_file_prefix.c_str(),
+                             g_vecUnifyCtls[i]->streamid, filetype,
+                             STRBUFSIZE, filename1 );
 
-	    if( remove( filename1 ) == 0 )
-	       VPrint( 2, " Removed %s\n", filename1 );
-	 }
+            if( !( removed = ( remove( filename1 ) == 0 ) ) )
+            {
+               OTF_getFilename( Params.in_file_prefix.c_str(),
+                                g_vecUnifyCtls[i]->streamid,
+                                filetype | OTF_FILECOMPRESSION_COMPRESSED,
+                                STRBUFSIZE, filename1 );
+
+               removed = ( remove( filename1 ) == 0 );
+            }
+
+            if( removed )
+               VPrint( 2, " Removed %s\n", filename1 );
+         }
       }
 
-      if( i != g_vecUnifyCtls.size() )
-	 return false;
+      if( i < g_vecUnifyCtls.size() )
+         return false;
    }
 
    std::string tmp_out_file_prefix =
@@ -980,41 +979,41 @@ cleanUp()
    //
    for( i = 0; i < 2; i++ )
    {
+      bool renamed = false;
+
       if( i == 0 ) filetype = OTF_FILETYPE_DEF;
       else filetype = OTF_FILETYPE_MARKER;
 
-      OTF_getFilename( tmp_out_file_prefix.c_str(), 0,
-		       filetype,
-		       STRBUFSIZE, filename1 );
-      OTF_getFilename( Params.out_file_prefix.c_str(), 0,
-		       filetype,
-		       STRBUFSIZE, filename2 );
-   
-      if( access( filename1, F_OK ) != 0 )
-      {
-	 assert( strlen( filename1 ) + 2 + 1 < sizeof( filename1 ) - 1 );
-	 assert( strlen( filename2 ) + 2 + 1 < sizeof( filename2 ) - 1 );
+      OTF_getFilename( tmp_out_file_prefix.c_str(), 0, filetype,
+                       STRBUFSIZE, filename1 );
+      OTF_getFilename( Params.out_file_prefix.c_str(), 0, filetype,
+                       STRBUFSIZE, filename2 );
 
-	 // file not found, try '.z' suffix
-	 strncat( filename1, ".z", 2 );
-	 strncat( filename2, ".z", 2 );
+      if( !( renamed = ( rename( filename1, filename2 ) == 0 ) ) )
+      {
+         OTF_getFilename( tmp_out_file_prefix.c_str(), 0,
+                          filetype | OTF_FILECOMPRESSION_COMPRESSED,
+                          STRBUFSIZE, filename1 );
+         OTF_getFilename( Params.out_file_prefix.c_str(), 0,
+                          filetype | OTF_FILECOMPRESSION_COMPRESSED,
+                          STRBUFSIZE, filename2 );
+
+         renamed = ( rename( filename1, filename2 ) == 0 );
       }
 
-      if( rename( filename1, filename2 ) != 0 )
-      {
-	 if( i == 0 )
-	 {
-	    std::cerr << ExeName << ": Error: Could not rename " 
-		      << filename1 << " to "
-		      << filename2 << std::endl;
-	    return false;
-	 }
-      }
-      else
+      if( renamed )
       {
          VPrint( 2, " Renamed %s to %s\n", filename1, filename2 );
       }
+      else if( i == 0 )
+      {
+         std::cerr << ExeName << ": Error: Could not rename "
+                   << filename1 << " to "
+                   << filename2 << std::endl;
+         break;
+      }
    }
+   if( i < 2 ) return false;
 
    // rename temporary master control file
    //
@@ -1098,7 +1097,7 @@ shareParams()
    // create MPI datatype for Params_struct
    //
 
-   char filenames[3][1024];
+   char **filenames;
    char flags[5];
    VT_MPI_INT blockcounts[5] = { 3*1024, 1, 1, 1, 5 };
    VTUnify_MPI_Aint displ[5];
@@ -1107,7 +1106,12 @@ shareParams()
      VTUnify_MPI_INT, VTUnify_MPI_CHAR };
    VTUnify_MPI_Datatype newtype;
 
-   VTUnify_MPI_Address( &filenames, &displ[0] );
+   filenames = new char*[3];
+   filenames[0] = new char[3*1024];
+   filenames[1] = filenames[0] + ( 1024 * sizeof(char) );
+   filenames[2] = filenames[1] + ( 1024 * sizeof(char) );
+
+   VTUnify_MPI_Address( filenames[0], &displ[0] );
    VTUnify_MPI_Address( &(Params.uctl_files_num), &displ[1] );
    VTUnify_MPI_Address( &(Params.verbose_level), &displ[2] );
    VTUnify_MPI_Address( &(Params.stats_sort_flags), &displ[3] );
@@ -1145,6 +1149,9 @@ shareParams()
       Params.showprogress = (flags[3] == 1);
       Params.bequiet = (flags[4] == 1);
    }
+
+   delete [] filenames[0];
+   delete [] filenames;
 
    // free MPI datatype
    VTUnify_MPI_Type_free( &newtype );

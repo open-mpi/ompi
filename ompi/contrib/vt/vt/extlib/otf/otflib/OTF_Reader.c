@@ -1070,8 +1070,10 @@ int OTF_Reader_finish( OTF_Reader* reader ) {
 		reader->markerHeap= NULL;
 	}
 
-	OTF_MasterControl_close( reader->mc );
-	reader->mc = NULL;
+	if ( NULL != reader->mc ) {
+		OTF_MasterControl_close( reader->mc );
+		reader->mc = NULL;
+	}
 
 	return ret;
 }
