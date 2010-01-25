@@ -26,23 +26,76 @@ First approach: Using CMake
 NOTE: CMake support is available in the Open MPI development
 trunk and 1.3.3 release.
 
-1. Download the latest version of CMake (at least v2.4).
 
-2. In the CMake GUI, add the source path and build path of Open MPI
+I. Build Open MPI
+
+  1. Download the latest version of CMake (at least v2.4).
+
+  2. In the CMake GUI, add the source path and build path of Open MPI
    (out of source build is recommended).
 
-3. Then configure, and after the first time configuration, all
-   available options will show up in the CMake GUI.  Select the
-   options that you require.
+  3. Then configure, and after the first time configuration, all
+     available options will show up in the CMake GUI.  Select the
+     options that you require.
 
-4. Run configure again to generate all Windows solution files; they
-   will be generated in build path.
+  4. Run configure again to generate all Windows solution files; they
+     will be generated in build path.
 
-5. Go to the build directory, open the generated Windows solution
-   file, and compile.
+  5. Go to the build directory, open the generated Windows solution
+     file, and compile.
 
-6. To generate a installer, you should install NSIS, and build the 
-    'PACKAGE' project in the Open MPI sulotion.
+  6. Build the 'INSTALL' project to install files into the path that
+     has been set with CMAKE_INSTALL_PREFIX variable in CMake GUI.
+
+  7. (optional) To generate a installer, you should install NSIS, and build the 
+     'PACKAGE' project in the Open MPI sulotion. 
+
+
+II. Build MPI applications with Open MPI
+
+After successfully built and installed Open MPI, there are two ways
+to compile and link your applications against the generated libraries:
+
+  Using Visual Studio IDE
+
+  1. In your application's Visual Studio solution, on the target project
+  that needs to link with MPI, add the installed Open MPI library path 
+  (for example C:\Program Files\OpenMPI_v1.4\lib) into "Project Property Pages" -> 
+  "Configuration Properties" -> Linker -> General -> "Additional Library Directories"
+
+  2. Also put the library names, for example libopen-mpi.lib, into 
+  "Project Property Pages" -> "Configuration Properties" -> Linker -> 
+  Input -> "Additional Dependencies". Please note that, if you built 
+  debug version of Open MPI, the generated library names will have
+  suffix 'd', for example, libopen-mpid.lib.
+
+  Using Open MPI compiler wrappers in VS Command Prompt
+
+  1. Open up a Visual Studio Command Prompt, so that the Visual Studio 
+  environment is set, and the VS compiler command cl.exe is available.
+
+  2. Set up Open MPI path environment variable, for example,
+  "set PATH=c:\Program Files\OpenMPI_v1.4\bin;%PATH%", or set it up in
+  the system settings. Please note, using an Open MPI installer, there
+  will be an option to set the system variables automatically.
+
+  3. Simply use one of the Open MPI compiler wrapper to compile and 
+  link your application with one single command, for example:
+      c:\> mpicc app.c
+
+
+III. Run MPI applications
+
+To launch the application, use the mpirun command, for example:
+      c:\> mpirun -np 2 app.exe
+or
+      c:\> mpirun -np 2 -host host1 host2 app.exe
+
+Please note, in order to launch remote MPI processes using WMI, a few Windows 
+settings has to be configured on all nodes, please refer to the following links:
+http://msdn.microsoft.com/en-us/library/aa393266(VS.85).aspx
+http://community.spiceworks.com/topic/578
+
 
 ----------------------------------------------------------------------------
 
