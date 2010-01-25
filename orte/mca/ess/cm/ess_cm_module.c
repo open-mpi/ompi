@@ -27,10 +27,8 @@
 #include "opal/util/argv.h"
 #include "opal/util/if.h"
 #include "opal/mca/paffinity/paffinity.h"
-#if ORTE_ENABLE_BOOTSTRAP
 #include "opal/mca/sysinfo/sysinfo.h"
 #include "opal/mca/sysinfo/base/base.h"
-#endif
 
 #include "orte/mca/rmcast/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -110,7 +108,6 @@ static int rte_init(void)
                 goto error;
             }
 
-#if ORTE_ENABLE_BOOTSTRAP
             /* open and setup the local resource discovery framework */
             if (ORTE_SUCCESS != (ret = opal_sysinfo_base_open())) {
                 ORTE_ERROR_LOG(ret);
@@ -122,7 +119,6 @@ static int rte_init(void)
                 error = "opal_sysinfo_base_select";
                 goto error;
             }
-#endif
 
             /* get a name for ourselves */
             if (ORTE_SUCCESS != (ret = cm_set_name())) {
@@ -480,6 +476,17 @@ static int cm_set_name(void)
     int rc;
     opal_buffer_t buf;
     orte_daemon_cmd_flag_t cmd;
+    char *keys[] = {
+        OPAL_SYSINFO_CPU_TYPE,
+        OPAL_SYSINFO_CPU_MODEL,
+        OPAL_SYSINFO_NUM_CPUS,
+        OPAL_SYSINFO_MEM_SIZE,
+        NULL
+    };
+    opal_list_t resources;
+    opal_list_item_t *item;
+    opal_sysinfo_value_t *info;
+    int32_t num_values;
     
     /* setup the query */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
@@ -498,48 +505,32 @@ static int cm_set_name(void)
     /* always include our node name */
     opal_dss.pack(&buf, &orte_process_info.nodename, 1, OPAL_STRING);
 
-#if ORTE_ENABLE_BOOTSTRAP
-    {
-        /* get our local resources */
-        char *keys[] = {
-            OPAL_SYSINFO_CPU_TYPE,
-            OPAL_SYSINFO_CPU_MODEL,
-            OPAL_SYSINFO_NUM_CPUS,
-            OPAL_SYSINFO_MEM_SIZE,
-            NULL
-        };
-        opal_list_t resources;
-        opal_list_item_t *item;
-        opal_sysinfo_value_t *info;
-        int32_t num_values;
-        
-        if (ORTE_PROC_IS_DAEMON) {
-            OBJ_CONSTRUCT(&resources, opal_list_t);
-            opal_sysinfo.query(keys, &resources);
-            /* add number of values to the buffer */
-            num_values = opal_list_get_size(&resources);
-            opal_dss.pack(&buf, &num_values, 1, OPAL_INT32);
-            /* add them to the buffer */
-            while (NULL != (item = opal_list_remove_first(&resources))) {
-                info = (opal_sysinfo_value_t*)item;
-                opal_dss.pack(&buf, &info->key, 1, OPAL_STRING);
-                opal_dss.pack(&buf, &info->type, 1, OPAL_DATA_TYPE_T);
-                if (OPAL_INT64 == info->type) {
-                    opal_dss.pack(&buf, &(info->data.i64), 1, OPAL_INT64);
-                } else if (OPAL_STRING == info->type) {
-                    opal_dss.pack(&buf, &(info->data.str), 1, OPAL_STRING);
-                }
-                /* if this is the cpu model, save it for later use */
-                if (0 == strcmp(info->key, OPAL_SYSINFO_CPU_MODEL)) {
-                    orte_local_cpu_model = strdup(info->data.str);
-                }
-                OBJ_RELEASE(info);
+    /* get our local resources */
+    if (ORTE_PROC_IS_DAEMON) {
+        OBJ_CONSTRUCT(&resources, opal_list_t);
+        opal_sysinfo.query(keys, &resources);
+        /* add number of values to the buffer */
+        num_values = opal_list_get_size(&resources);
+        opal_dss.pack(&buf, &num_values, 1, OPAL_INT32);
+        /* add them to the buffer */
+        while (NULL != (item = opal_list_remove_first(&resources))) {
+            info = (opal_sysinfo_value_t*)item;
+            opal_dss.pack(&buf, &info->key, 1, OPAL_STRING);
+            opal_dss.pack(&buf, &info->type, 1, OPAL_DATA_TYPE_T);
+            if (OPAL_INT64 == info->type) {
+                opal_dss.pack(&buf, &(info->data.i64), 1, OPAL_INT64);
+            } else if (OPAL_STRING == info->type) {
+                opal_dss.pack(&buf, &(info->data.str), 1, OPAL_STRING);
             }
-            OBJ_DESTRUCT(&resources);                
+            /* if this is the cpu model, save it for later use */
+            if (0 == strcmp(info->key, OPAL_SYSINFO_CPU_MODEL)) {
+                orte_local_cpu_model = strdup(info->data.str);
+            }
+            OBJ_RELEASE(info);
         }
+        OBJ_DESTRUCT(&resources);                
     }
-#endif
-
+    
     /* set the recv to get the answer */
     if (ORTE_SUCCESS != (rc = orte_rmcast.recv_buffer_nb(ORTE_RMCAST_SYS_CHANNEL,
                                                          ORTE_RMCAST_TAG_BOOTSTRAP,

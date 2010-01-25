@@ -99,7 +99,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     
     
     /* did the app_context contain a hostfile? */
-    if (NULL != app->hostfile) {
+    if (NULL != app && NULL != app->hostfile) {
         /* yes - filter the node list through the file, removing
          * any nodes not found in the file
          */
@@ -118,7 +118,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     
     
     /* did the app_context contain an add-hostfile? */
-    if (NULL != app->add_hostfile) {
+    if (NULL != app && NULL != app->add_hostfile) {
         /* yes - filter the node list through the file, removing
          * any nodes not found in the file
          */
@@ -137,7 +137,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     
     
     /* now filter the list through any -host specification */
-    if (NULL != app->dash_host) {
+    if (NULL != app && NULL != app->dash_host) {
         if (ORTE_SUCCESS != (rc = orte_util_filter_dash_host_nodes(allocated_nodes,
                                                                    app->dash_host))) {
             ORTE_ERROR_LOG(rc);
@@ -152,7 +152,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     }
     
     /* now filter the list through any add-host specification */
-    if (NULL != app->add_host) {
+    if (NULL != app && NULL != app->add_host) {
         if (ORTE_SUCCESS != (rc = orte_util_filter_dash_host_nodes(allocated_nodes,
                                                                    app->add_host))) {
             ORTE_ERROR_LOG(rc);
@@ -192,6 +192,30 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         }
     }
 
+    /* if the app is NULL, then we are mapping daemons - so remove
+     * all nodes that already have a daemon on them
+     */
+    if (NULL == app) {
+        item  = opal_list_get_first(allocated_nodes);
+        while (item != opal_list_get_end(allocated_nodes)) {
+            
+            /** save the next pointer in case we remove this node */
+            next  = opal_list_get_next(item);
+            
+            /** already have a daemon? - remove if so */
+            node = (orte_node_t*)item;
+            if (NULL != node->daemon) {
+                opal_list_remove_item(allocated_nodes, item);
+                OBJ_RELEASE(item);  /* "un-retain" it */
+            }
+            
+            /** go on to next item */
+            item = next;
+        }
+        *total_num_slots = 0;
+        return ORTE_SUCCESS;
+    }
+    
     /* remove all nodes that are already at max usage, and
      * compute the total number of allocated slots while
      * we do so
@@ -706,5 +730,45 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
         }
     }
 
+    return ORTE_SUCCESS;
+}
+
+int orte_rmaps_base_setup_virtual_machine(orte_job_t *jdata)
+{
+    orte_node_t *node;
+    opal_list_t node_list;
+    opal_list_item_t *item;
+    orte_app_context_t *app;
+    orte_std_cntr_t num_slots;
+    int rc;
+    
+    /* get the daemon app if provided - may include -host or hostfile
+     * info about available nodes
+     */
+    app = opal_pointer_array_get_item(jdata->apps, 0);
+    
+    /* get the list of all available nodes that do not already
+     * have a daemon on them
+     */
+    OBJ_CONSTRUCT(&node_list, opal_list_t);
+    if (ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&node_list, &num_slots,
+                                                               app, ORTE_MAPPING_NO_USE_LOCAL))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&node_list);
+        return rc;
+    }
+    /* add all these nodes to the map */
+    while (NULL != (item = opal_list_remove_first(&node_list))) {
+        node = (orte_node_t*)item;
+        opal_pointer_array_add(jdata->map->nodes, (void*)node);
+        ++(jdata->map->num_nodes);
+    }
+    OBJ_DESTRUCT(&node_list);
+    /* define the missing daemons */
+    if (ORTE_SUCCESS != (rc = orte_rmaps_base_define_daemons(jdata->map))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
     return ORTE_SUCCESS;
 }
