@@ -52,16 +52,31 @@ Error: The process with PID %d is not checkpointable.
        We were looking for the named file:
          %s
 
+[no_hnps]
+Error: Unable to find a list of active MPIRUN processes on this machine.
+       This could be due to one of the following:
+        - The PID specified (%d) is not that of an active MPIRUN.
+        - The session directory location could not be found/parsed.
+
+       ompi-checkpoint attempted to find the session directory:
+         %s/%s
+       Check to make sure that this directory exists while the MPIRUN
+       process is running.
+
+       Return Code: %d (%s)
+
 [no_universe]
-Error: Unable to find the contact information for PID %d.
+Error: Unable to find the requested, active MPIRUN process on this machine.
        This could be due to one of the following:
         - The jobid specified by the '--hnp-jobid' option is not 
           correct.
-        - The PID is not that of an active MPIRUN.
-        - The application with this PID isn't checkpointable
-        - The application with this PID isn't an Open MPI application.
-       ompi-checkpoint attempted to find the session directory:
-         %s
+        - The PID specified (%d) is not that of an active MPIRUN.
+        - The application with this PID is not checkpointable
+        - The application with this PID is not an Open MPI application.
+        - The session directory location could not be parsed.
+
+       ompi-checkpoint attempted to use the session directory:
+         %s/%s
 
 [unable_to_connect]
 Error: Unable to connect to the Head Node Process to initiate the 
