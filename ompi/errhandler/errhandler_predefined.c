@@ -156,7 +156,7 @@ static void out(char *str, char *arg)
         if (NULL != arg) {
             fprintf(stderr, str, arg);
         } else {
-            fprintf(stderr, "%s, "str);
+            fprintf(stderr, "%s", str);
         }
     }
 }
