@@ -74,7 +74,7 @@ foreach my $file (@files) {
     mkdir($outdir)
         if (! -d $outdir);
 
-    print "Generating: $name ($section)\n";
+    print "*** Generating: $name ($section)\n";
 
     # Run the groff command and send the output to the file
     open(CMD, "groff -mandoc -T html $file|") || die("Can't open command");
@@ -105,8 +105,49 @@ foreach my $file (@files) {
     $text =~ s/[ \t]+\n/\n/g;
     $text =~ s/\n{3,}/\n\n/g;
 
-    # Now we're left with what we want.  Output the PHP page.
+    # Cross-link to any other man pages that we might have.  Search
+    # through the string for MPI_<foo> and look for any corresponding
+    # man pages in @files.  Sequentially replace MPI_<foo> with
+    # $replaced<foo> so that we can find all the MPI_<foo>'s (we'll
+    # put the "MPI_" back when we're ).
+    my $replace = "ZAZZZERZAZ_";
 
+    # This is a doozy of a regexp (see perlre(1)).  Look for MPI_<foo>
+    # cases that aren't followed by .[0-9].php (i.e., not the href
+    # clause of an A HTML tag).
+    while ($text =~ m/^(.*\W)MPI_([a-zA-Z0-9_]+(?!\.[0-9]\.php))(\W.*)$/s) {
+        my $comp = lc("mpi_$2");
+        print "Found: $2 -- looking for $comp: ";
+
+        my $prefix = $1;
+        my $meat = $2;
+        my $suffix = $3;
+
+        my $replaced = 0;
+        foreach my $f2 (@files) {
+            # If we have another file that matches the regexp that we
+            # just pulled out from the text, *and* that file is not
+            # the same file that we're already processing (i.e., don't
+            # link to myself!), then link to it.
+            if (basename(lc($f2)) =~ /^$comp\.[0-9]/ && $f2 ne $file) {
+                # Hard-coded to link only to MPI API functions in
+                # section 3 (i.e., ../man3/<foo>).
+                my $link_file = "../man3/" . basename($f2) . ".php";
+                print "Linked to $link_file!\n";
+                $text = "$prefix<a href=\"$link_file\">$replace$meat</a>$suffix";
+                $replaced = 1;
+                last;
+            }
+        }
+        if (!$replaced) {
+            print "Not linked\n";
+            $text = "$prefix$replace$meat$suffix";
+        }
+    }
+    # Now replace the $replaced back with MPI_.
+    $text =~ s/$replace/MPI_/g;
+
+    # Now we're left with what we want.  Output the PHP page.
     # Write the output PHP file with our own header and footer,
     # suitable for www.open-mpi.org.
     unlink($outfile);
