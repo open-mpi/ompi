@@ -266,8 +266,6 @@ int ompi_mpi_finalize(void)
 
     /* Free communication objects */
 
-    /* free window resources */
-
     /* free file resources */
     if (OMPI_SUCCESS != (ret = ompi_file_finalize())) {
         return ret;
