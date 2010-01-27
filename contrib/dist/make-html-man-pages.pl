@@ -77,7 +77,8 @@ foreach my $file (@files) {
     print "*** Generating: $name ($section)\n";
 
     # Run the groff command and send the output to the file
-    open(CMD, "groff -mandoc -T html $file|") || die("Can't open command");
+#    open(CMD, "groff -mandoc -T html $file|") || die("Can't open command");
+    open(CMD, "man $file | man2html -bare -botm 4 -topm 4|") || die("Can't open command");
     my $text;
     $text .= $_
         while (<CMD>);
@@ -115,9 +116,9 @@ foreach my $file (@files) {
     # This is a doozy of a regexp (see perlre(1)).  Look for MPI_<foo>
     # cases that aren't followed by .[0-9].php (i.e., not the href
     # clause of an A HTML tag).
-    while ($text =~ m/^(.*\W)MPI_([a-zA-Z0-9_]+(?!\.[0-9]\.php))(\W.*)$/s) {
+    while ($text =~ m/^(.*\W)MPI_(\w+(?!\.[0-9]\.php))(\W.*)$/s) {
         my $comp = lc("mpi_$2");
-        print "Found: $2 -- looking for $comp: ";
+#        print "Found: $2 -- looking for $comp: ";
 
         my $prefix = $1;
         my $meat = $2;
@@ -133,19 +134,23 @@ foreach my $file (@files) {
                 # Hard-coded to link only to MPI API functions in
                 # section 3 (i.e., ../man3/<foo>).
                 my $link_file = "../man3/" . basename($f2) . ".php";
-                print "Linked to $link_file!\n";
+#                print "Linked to $link_file!\n";
                 $text = "$prefix<a href=\"$link_file\">$replace$meat</a>$suffix";
                 $replaced = 1;
                 last;
             }
         }
         if (!$replaced) {
-            print "Not linked\n";
+#            print "Not linked\n";
             $text = "$prefix$replace$meat$suffix";
         }
     }
     # Now replace the $replaced back with MPI_.
     $text =~ s/$replace/MPI_/g;
+
+    # Obscure any email addresses in there; don't want to give the
+    # spammers any new fodder!
+    $text =~ s/(\W)[\w\.\-]+@[\w.\-]+(\W)/$1email-address-removed$2/g;
 
     # Now we're left with what we want.  Output the PHP page.
     # Write the output PHP file with our own header and footer,
