@@ -1,5 +1,4 @@
 enable_multicast=yes
-enable_bootstrap=yes
 with_memory_manager=no
 enable_mem_debug=yes
 enable_mem_profile=no
