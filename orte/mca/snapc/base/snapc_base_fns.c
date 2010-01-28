@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2008 The Trustees of Indiana University.
+ * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -32,6 +32,8 @@
 #include "orte/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/os_dirpath.h"
+#include "opal/util/output.h"
+#include "opal/util/show_help.h"
 #include "opal/util/basename.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
@@ -660,7 +662,9 @@ int orte_snapc_base_add_vpid_metadata( orte_process_name_t *proc,
 
     /* Extract the checkpointer */
     if( OPAL_SUCCESS != (ret = opal_crs_base_extract_expected_component(snapshot_location, &crs_comp, &prev_pid)) ) {
-        exit_status = ORTE_ERROR;
+        opal_show_help("help-orte-snapc-base.txt", "invalid_metadata", true,
+                       proc_name, opal_crs_base_metadata_filename, snapshot_location);
+        exit_status = ret;
         goto cleanup;
     }
 
@@ -675,13 +679,18 @@ int orte_snapc_base_add_vpid_metadata( orte_process_name_t *proc,
     fprintf(meta_data, "%s%s\n", SNAPC_METADATA_SNAP_LOC,  local_dir);
 
  cleanup:
-    if( NULL != meta_data )
+    if( NULL != meta_data ) {
         fclose(meta_data);
-    if( NULL != meta_data_fname)
+        meta_data = NULL;
+    }
+    if( NULL != meta_data_fname) {
         free(meta_data_fname);
-    
-    if( NULL != local_dir)
+        meta_data_fname = NULL;
+    }
+    if( NULL != local_dir) {
         free(local_dir);
+        local_dir = NULL;
+    }
 
     return exit_status;
 }
