@@ -383,10 +383,12 @@ process:
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
-            /* pack the bytes */
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, snd->iovec_array[sz].iov_base, tmp32, OPAL_UINT8))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
+            if (0 < tmp32) {
+                /* pack the bytes */
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, snd->iovec_array[sz].iov_base, tmp32, OPAL_UINT8))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
+                }
             }
         }
         
@@ -978,14 +980,17 @@ static void process_recv(int fd, short event, void *cbdata)
                         ORTE_ERROR_LOG(rc);
                         goto cleanup;
                     }
-                    /* allocate the space */
-                    iovec_array[i].iov_base = (uint8_t*)malloc(sz);
+                    iovec_array[i].iov_base = NULL;
                     iovec_array[i].iov_len = sz;
-                    /* unpack the data */
-                    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, iovec_array[i].iov_base, &sz, OPAL_UINT8))) {
-                        ORTE_ERROR_LOG(rc);
-                        goto cleanup;
-                    }                    
+                    if (0 < sz) {
+                        /* allocate the space */
+                        iovec_array[i].iov_base = (uint8_t*)malloc(sz);
+                        /* unpack the data */
+                        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, iovec_array[i].iov_base, &sz, OPAL_UINT8))) {
+                            ORTE_ERROR_LOG(rc);
+                            goto cleanup;
+                        }                    
+                    }
                 }
             } else if (1 == flag && NULL == recvd_buf) {
                 /* buffer was included */
