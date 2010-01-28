@@ -68,12 +68,12 @@ int main( int argc, char** argv ) {
 		
 		} else if ( 0 == strcmp( argv[i], "--libs" ) ) {
 
-			snprintf( tmp, sizeof(tmp) -1, "-L%s -lotf %s\n",
-				OTFCONFIG_LIBDIR,
 #ifdef HAVE_ZLIB
-				"-lz" );
+			snprintf( tmp, sizeof(tmp) -1, "-L%s -lotf -lz\n",
+				OTFCONFIG_LIBDIR );
 #else /* HAVE_ZLIB */
-				"" );
+			snprintf( tmp, sizeof(tmp) -1, "-L%s -lotf\n",
+				OTFCONFIG_LIBDIR );
 #endif /* HAVE_ZLIB */
 
 			printf( "%s", tmp );

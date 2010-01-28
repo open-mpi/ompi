@@ -37,12 +37,8 @@
 
 #if SIZEOF_LONG == 4
 #  define ATOL8 atoll
-#  define S64STR "lli"
-#  define U64STR "llu"
 #else
 #  define ATOL8 atol
-#  define S64STR "li"
-#  define U64STR "lu"
 #endif
 
 #ifdef VT_MPI

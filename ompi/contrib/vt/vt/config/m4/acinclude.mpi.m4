@@ -152,6 +152,7 @@ AC_DEFUN([ACVT_MPI],
 			MPILIB="-lmpi -llam"
 			PMPILIB="$MPILIB"
 			FMPILIB="-llamf77mpi"
+			check_mpi2_io="no"; have_mpi2_io="no"
 		])
 	])
 
@@ -652,7 +653,8 @@ dnl			check for MPI-2 One-Sided Communications
 			AS_IF([test x"$check_mpi2_1sided" = "xyes"],
 			[
 				AC_CHECK_FUNC([MPI_Get],
-				 [AC_CHECK_FUNC([MPI_Put], [have_mpi2_1sided="yes"])])
+				 [AC_CHECK_FUNC([MPI_Put], [have_mpi2_1sided="yes"
+				   AC_CHECK_FUNCS([PMPI_Win_test PMPI_Win_lock PMPI_Win_unlock])])])
 				AS_IF([test x"$force_mpi2_1sided" = "xyes" -a x"$have_mpi2_1sided" = "xno"], [exit 1])
 			],
 			[
@@ -687,8 +689,14 @@ dnl			check for MPI-2 I/O
 			ACVT_CONF_SUBTITLE([MPI-2 I/O])
 			AS_IF([test x"$check_mpi2_io" = "xyes"],
 			[
-				AC_CHECK_FUNC([MPI_File_open],
-				 [AC_CHECK_FUNC([MPI_File_close], [have_mpi2_io="yes"])])
+				AC_CHECK_DECL([LAM_MPI],
+				[
+					AC_MSG_NOTICE([error: MPI-2 I/O isn't supported for LAM/MPI])
+				],
+				[
+					AC_CHECK_FUNC([MPI_File_open],
+					 [AC_CHECK_FUNC([MPI_File_close], [have_mpi2_io="yes"])])
+				], [#include "mpi.h"])
 				AS_IF([test x"$force_mpi2_io" = "xyes" -a x"$have_mpi2_io" = "xno"], [exit 1])
 			],
 			[
@@ -711,22 +719,22 @@ dnl		check for Fortran interoperability
 		[
 			ACVT_CONF_SUBTITLE([Fortran interoperability])
 
-			AC_CHECK_PROGS(MPIF77, mpif77 hf77 mpxlf_r mpxlf mpf77 cmpifc mpif90 mpxlf95_r mpxlf90_r mpxlf95 mpxlf90 mpf90 cmpif90c)
-			AS_IF([test x"$MPIF77" != x],
+			AS_IF([test x"$F77" != x],
 			[
-				mpif77=`echo $MPIF77 | cut -d ' ' -f 1`
-				which_mpif77=`which $mpif77 2>/dev/null`
-				AS_IF([test x"$which_mpif77" = x], [AC_MSG_ERROR([$mpif77 not found])])
-
-				mpi_bin_dir=`dirname $which_mpif77`
-				AS_IF([test "$mpi_bin_dir" != "/usr/bin"],
+				AC_CHECK_PROGS(MPIF77, mpif77 hf77 mpxlf_r mpxlf mpf77 cmpifc mpif90 mpxlf95_r mpxlf90_r mpxlf95 mpxlf90 mpf90 cmpif90c)
+				AS_IF([test x"$MPIF77" != x],
 				[
-					AS_IF([test x"$FMPIINCDIR" = x],
-					[FMPIINCDIR=-I`echo $mpi_bin_dir | sed -e 's/bin/include/'`])
-				])
-			],
-			[
-				AS_IF([test x"$F77" != x],
+					mpif77=`echo $MPIF77 | cut -d ' ' -f 1`
+					which_mpif77=`which $mpif77 2>/dev/null`
+					AS_IF([test x"$which_mpif77" = x], [AC_MSG_ERROR([$mpif77 not found])])
+
+					mpi_bin_dir=`dirname $which_mpif77`
+					AS_IF([test "$mpi_bin_dir" != "/usr/bin"],
+					[
+						AS_IF([test x"$FMPIINCDIR" = x],
+						[FMPIINCDIR=-I`echo $mpi_bin_dir | sed -e 's/bin/include/'`])
+					])
+				],
 				[
 					MPIF77="$F77"
 					AC_MSG_CHECKING([for mpif.h])
@@ -745,11 +753,11 @@ EOF
 						fmpiwraplib_error="yes"
 					])
 					rm -f conftest.f conftest.o
-				],
-				[
-					AC_MSG_NOTICE([error: no Fortran 77 compiler command given!])
-					fmpiwraplib_error="yes"
 				])
+			],
+			[
+				AC_MSG_NOTICE([error: no Fortran 77 compiler command given!])
+				fmpiwraplib_error="yes"
 			])
 
 			AS_IF([test x"$check_fc_conv" = "xyes" -a x"$fmpiwraplib_error" = "xno"],

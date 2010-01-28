@@ -569,7 +569,7 @@ off64_t lseek64(int fd, off64_t offset, int whence)
 
 	VT_IOWRAP_CHECK_TRACING3(fd, offset, whence);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %" S64STR ", %i", fd, offset, whence);
+	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %lli, %i", fd, (long long)offset, whence);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
@@ -745,7 +745,7 @@ ssize_t pread64(int fd, void *buf, size_t count, off64_t offset)
 
 	VT_IOWRAP_CHECK_TRACING4(fd, buf, count, offset);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %zu, %" S64STR, fd, count, offset);
+	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %zu, %lli", fd, count, (long long)offset);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
@@ -772,7 +772,7 @@ ssize_t pwrite64(int fd, const void *buf, size_t count, off64_t offset)
 
 	VT_IOWRAP_CHECK_TRACING4(fd, buf, count, offset);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %zu, %" S64STR, fd, count, offset);
+	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %zu, %lli", fd, count, (long long)offset);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
@@ -963,9 +963,9 @@ int fseeko64(FILE *stream, off64_t offset, int whence)
 
 	VT_IOWRAP_CHECK_TRACING3(stream, offset, whence);
 
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %" S64STR ", %i",
+	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %lli, %i",
 	 	stream != NULL ? fileno(stream) : -1,
-	 	offset, whence);
+	 	(long long)offset, whence);
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
@@ -1049,9 +1049,9 @@ int fsetpos64(FILE *stream, const fpos64_t *pos) {
 	VT_IOWRAP_CHECK_TRACING2(stream, pos);
 
 /*
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %" S64STR,
+	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %lli",
 	 	stream != NULL ? fileno(stream) : -1,
-	 	pos->__pos);
+	 	(long long)pos->__pos);
 */
 	/* pos->__pos does not exist on every platform */
 	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i",
@@ -1595,7 +1595,7 @@ int lockf(int fd, int function, off_t size)
                         uint32_t fid = file->vampir_file_id;
                         if( fid ) {
                                 if( ret != 0 ) {
-                                        vt_debug_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %" U64STR, time);
+                                        vt_debug_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", time);
                                         vt_ioend( &time, fid, handleid, ioop | VT_IOFLAG_IOFAILED, (uint64_t)num_bytes );
                                 }
                                 else {
@@ -1677,7 +1677,7 @@ int fcntl(int fd, int cmd, ...)
                 uint32_t fid = file->vampir_file_id;
                 if( fid ) {
                         if( ret == -1 ) {
-                                vt_debug_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %" U64STR, time);
+                                vt_debug_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", (unsigned long long)time);
                                 vt_ioend( &time, fid, handleid, ioop | VT_IOFLAG_IOFAILED, (uint64_t)num_bytes );
                         }
                         else {

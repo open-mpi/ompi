@@ -306,7 +306,7 @@ void vt_open()
 
     start_time_epoch = ((uint64_t)tv1.tv_sec * (uint64_t)1000000) +
        (uint64_t)tv1.tv_usec;
-    vt_def_comment("__STARTTIME__ %"U64STR, start_time_epoch);
+    vt_def_comment("__STARTTIME__ %llu", (unsigned long long)start_time_epoch);
   }
 
 #if !(defined(VT_MPI) || defined(VT_HYB))
@@ -747,7 +747,7 @@ void vt_close()
 
     stop_time_epoch = ((uint64_t)tv0.tv_sec * (uint64_t)1000000) +
        (uint64_t)tv0.tv_usec;
-    vt_def_comment("__STOPTIME__ %"U64STR, stop_time_epoch);
+    vt_def_comment("__STOPTIME__ %llu", (unsigned long long)stop_time_epoch);
   }
 
   /* close trace files */
@@ -1369,16 +1369,19 @@ static void vt_write_def_header()
   if( tmp_uint64 >= (1024*1024*1024) )
   {
     tmp_uint64 /= (1024*1024*1024);
-    snprintf(tmp_char, sizeof(tmp_char)-1, "%"U64STR"G", tmp_uint64);
+    snprintf(tmp_char, sizeof(tmp_char)-1, "%lluG",
+             (unsigned long long)tmp_uint64);
   }
   else if( tmp_uint64 >= (1024*1024) )
   {
     tmp_uint64 /= (1024*1024);
-    snprintf(tmp_char, sizeof(tmp_char)-1, "%"U64STR"M", tmp_uint64);
+    snprintf(tmp_char, sizeof(tmp_char)-1, "%lluM",
+             (unsigned long long)tmp_uint64);
   }
   else
   {
-    snprintf(tmp_char, sizeof(tmp_char)-1, "%"U64STR, tmp_uint64);
+    snprintf(tmp_char, sizeof(tmp_char)-1, "%llu",
+             (unsigned long long)tmp_uint64);
   }
 
   vt_def_comment("__VT_COMMENT__  VT_BUFFER_SIZE: %s", tmp_char);
