@@ -184,8 +184,8 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
             opal_list_remove_item(allocated_nodes, item);
             OBJ_RELEASE(item);  /* "un-retain" it */
         }
-        /** check that anything is left! */
-        if (0 == opal_list_get_size(allocated_nodes)) {
+        /** if we aren't mapping daemons, check that anything is left! */
+        if (NULL != app && 0 == opal_list_get_size(allocated_nodes)) {
             orte_show_help("help-orte-rmaps-base.txt",
                            "orte-rmaps-base:nolocal-no-available-resources", true);
             return ORTE_ERR_SILENT;
@@ -194,6 +194,10 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
 
     /* if the app is NULL, then we are mapping daemons - so remove
      * all nodes that already have a daemon on them
+     *
+     * NOTE: it is okay if the final list is empty. It just means
+     * that there are no new daemons to be launched for the
+     * virtual machine
      */
     if (NULL == app) {
         item  = opal_list_get_first(allocated_nodes);
