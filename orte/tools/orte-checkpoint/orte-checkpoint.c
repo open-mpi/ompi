@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -192,9 +192,7 @@ main(int argc, char *argv[])
      * Find the HNP that we want to connect to, if it exists
      ***************************/
     if (ORTE_SUCCESS != (ret = find_hnp())) {
-        opal_output(0,
-                    "HNP with PID %d Not found!",
-                    orte_checkpoint_globals.pid);
+        /* Error printed by called function */
         exit_status = ret;
         goto cleanup;
     }
@@ -402,7 +400,11 @@ static int find_hnp(void) {
      */
     OBJ_CONSTRUCT(&hnp_list, opal_list_t);
     if (ORTE_SUCCESS != (ret = orte_list_local_hnps(&hnp_list, true) ) ) {
-        ORTE_ERROR_LOG(ret);
+        orte_show_help("help-orte-checkpoint.txt", "no_hnps", true,
+                       orte_checkpoint_globals.pid,
+                       orte_process_info.tmpdir_base,
+                       orte_process_info.top_session_dir,
+                       ret, ORTE_ERROR_NAME(ret));
         exit_status = ret;
         goto cleanup;
     }
@@ -418,6 +420,12 @@ static int find_hnp(void) {
             goto cleanup;
         }
     }
+
+    /* If no match was found, error out */
+    orte_show_help("help-orte-checkpoint.txt", "no_universe", true,
+                   orte_checkpoint_globals.pid,
+                   orte_process_info.tmpdir_base,
+                   orte_process_info.top_session_dir);
     
 cleanup:
     while (NULL != (item = opal_list_remove_first(&hnp_list))) {
