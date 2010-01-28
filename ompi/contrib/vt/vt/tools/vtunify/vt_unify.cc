@@ -898,7 +898,7 @@ cleanUp()
 
    bool error = false;
 
-   uint32_t i;
+   uint32_t i, j;
    char filename1[STRBUFSIZE];
    char filename2[STRBUFSIZE];
    OTF_FileType filetype;
@@ -929,7 +929,7 @@ cleanUp()
       //
       for( i = 0; i < g_vecUnifyCtls.size(); i++ )
       {
-         for( uint32_t j = 0; j < 4; j++ )
+         for( j = 0; j < 4; j++ )
          {
             bool removed = false;
 
@@ -1038,34 +1038,38 @@ cleanUp()
    //
    for( i = 0; i < g_vecUnifyCtls.size(); i++ )
    {
-      for( uint32_t j = 0; j < 2; j++ )
+      for( j = 0; j < 2; j++ )
       {
-	 OTF_FileType filetype;
+         bool renamed = false;
 
-	 if( j == 0 ) filetype = OTF_FILETYPE_EVENT;
-	 else filetype = OTF_FILETYPE_STATS;
+         if( j == 0 ) filetype = OTF_FILETYPE_EVENT;
+         else filetype = OTF_FILETYPE_STATS;
 
-	 OTF_getFilename( tmp_out_file_prefix.c_str(),
-			  g_vecUnifyCtls[i]->streamid,
-			  filetype,
-			  STRBUFSIZE, filename1 );
-	 OTF_getFilename( Params.out_file_prefix.c_str(),
-			  g_vecUnifyCtls[i]->streamid,
-			  filetype,
-			  STRBUFSIZE, filename2 );
+         OTF_getFilename( tmp_out_file_prefix.c_str(),
+                          g_vecUnifyCtls[i]->streamid, filetype,
+                          STRBUFSIZE, filename1 );
+         OTF_getFilename( Params.out_file_prefix.c_str(),
+                          g_vecUnifyCtls[i]->streamid, filetype,
+                          STRBUFSIZE, filename2 );
 
-	 if( access( filename1, F_OK ) != 0 )
-	 {
-	    assert( strlen( filename1 ) + 2 + 1 < sizeof( filename1 ) - 1 );
-	    assert( strlen( filename2 ) + 2 + 1 < sizeof( filename2 ) - 1 );
+         if( !(renamed = ( rename( filename1, filename2 ) == 0 ) ) )
+         {
+            OTF_getFilename( tmp_out_file_prefix.c_str(),
+                             g_vecUnifyCtls[i]->streamid,
+                             filetype | OTF_FILECOMPRESSION_COMPRESSED,
+                             STRBUFSIZE, filename1 );
+            OTF_getFilename( Params.out_file_prefix.c_str(),
+                             g_vecUnifyCtls[i]->streamid,
+                             filetype | OTF_FILECOMPRESSION_COMPRESSED,
+                             STRBUFSIZE, filename2 );
 
-	    // file not found, try '.z' suffix
-	    strncat( filename1, ".z", 2 );
-	    strncat( filename2, ".z", 2 );
-	 }
+            renamed = ( rename( filename1, filename2 ) == 0 );
+         }
 
-	 if( rename( filename1, filename2 ) == 0 )
-	    VPrint( 2, " Renamed %s to %s\n", filename1, filename2 );
+         if( renamed )
+         {
+            VPrint( 2, " Renamed %s to %s\n", filename1, filename2 );
+         }
       }
    }
 

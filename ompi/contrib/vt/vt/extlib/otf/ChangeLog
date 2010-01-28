@@ -2,6 +2,7 @@
 	- enforce building position independent code (PIC) for the static
 	  version of the OTF library
 	  (so it's possible to add these objects to 3rd-party shared libraries)
+	- patched libtool to avoid a bug in detection of the PGI 10 C++ compiler
 
 1.6.4openmpi
 	- enhanced reading of process group definition records

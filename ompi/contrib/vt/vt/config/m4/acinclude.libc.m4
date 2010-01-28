@@ -22,11 +22,11 @@ AC_DEFUN([ACVT_LIBC],
 		[
 			AS_IF([test -r "conftest"],
 			[
-				libc_pathname=`ldd conftest | grep "libc\." | \
-				               sed -e "s/.*=>//"              \
-				                   -e "s/[[\(].*[\)]]//"      \
-				                   -e "s/[[	 ]]//g"    \
-				                   -e "s%^[[^/]].*%%"       | \
+				libc_pathname=`ldd conftest 2>/dev/null | grep "libc\." | \
+				               sed -e "s/.*=>//"                          \
+				                   -e "s/[[\(].*[\)]]//"                  \
+				                   -e "s/[[	 ]]//g"                   \
+				                   -e "s%^[[^/]].*%%"                   | \
 				               head -n1`
 			],
 			[

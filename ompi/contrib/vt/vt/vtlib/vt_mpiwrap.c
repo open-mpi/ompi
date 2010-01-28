@@ -3693,6 +3693,8 @@ VT_MPI_INT MPI_Win_wait( MPI_Win win )
   return result;
 }
 
+#if defined(HAVE_PMPI_WIN_TEST) && HAVE_PMPI_WIN_TEST
+
 /* -- MPI_Win_test -- */
 
 VT_MPI_INT MPI_Win_test( MPI_Win win, VT_MPI_INT* flag )
@@ -3738,6 +3740,10 @@ VT_MPI_INT MPI_Win_test( MPI_Win win, VT_MPI_INT* flag )
   return result;
 }
 
+#endif /* HAVE_PMPI_WIN_TEST */
+
+#if defined(HAVE_PMPI_WIN_LOCK) && HAVE_PMPI_WIN_LOCK
+
 /* -- MPI_Win_lock -- */
 
 VT_MPI_INT MPI_Win_lock( VT_MPI_INT lock_type,
@@ -3774,6 +3780,10 @@ VT_MPI_INT MPI_Win_lock( VT_MPI_INT lock_type,
 
   return result;
 }
+
+#endif /* HAVE_PMPI_WIN_LOCK */
+
+#if defined(HAVE_PMPI_WIN_UNLOCK) && HAVE_PMPI_WIN_UNLOCK
 
 /* -- MPI_Win_unlock -- */
 
@@ -3817,6 +3827,8 @@ VT_MPI_INT MPI_Win_unlock( VT_MPI_INT rank,
 
   return result;
 }
+
+#endif /* HAVE_PMPI_WIN_UNLOCK */
 
 #endif /* HAVE_MPI2_1SIDED */
 
