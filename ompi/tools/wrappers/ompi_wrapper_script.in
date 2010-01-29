@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # -*- perl -*-
 #
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -160,13 +160,15 @@ my @exec_argv = ();
 
 # assemble command
 push(@exec_argv, split(' ', $comp));
+# Per https://svn.open-mpi.org/trac/ompi/ticket/2201, add all the user
+# arguments before anything else.
+push(@exec_argv, @appargs);
 if ($want_preproc == 1) {
     push(@exec_argv, split(' ', $preproc_flags));
 }
 if ($want_compile == 1) {
     push(@exec_argv, split(' ', $comp_flags));
 }
-push(@exec_argv, @appargs);
 if ($want_link == 1) {
     push(@exec_argv, split(' ', $linker_flags));
     push(@exec_argv, split(' ', $libs));
