@@ -126,6 +126,12 @@ ompi_coll_tuned_forced_getvalues( enum COLLTYPE type,
 
     mca_params = &(ompi_coll_tuned_forced_params[type]);
 
+    /**
+     * Set the selected algorithm to 0 by default. Later on we can check this against 0
+     * to see if it was setted explicitly (if we suppose that setting it to 0 enable the
+     * default behavior) or not.
+     */
+    forced_values->algorithm = 0;
     mca_base_param_lookup_int (mca_params->algorithm_param_index,    &(forced_values->algorithm));
     if( BARRIER != type ) {
         mca_base_param_lookup_int (mca_params->segsize_param_index,      &(forced_values->segsize));
@@ -135,6 +141,29 @@ ompi_coll_tuned_forced_getvalues( enum COLLTYPE type,
     }
     return (MPI_SUCCESS);
 }
+
+#define COLL_TUNED_EXECUTE_IF_DYNAMIC(DATA, TYPE, EXECUTE)              \
+    {                                                                   \
+        int need_dynamic_decision = 0;                                  \
+        ompi_coll_tuned_forced_getvalues( (TYPE), &((DATA)->user_forced[(TYPE)]) ); \
+        if( 0 != (DATA)->user_forced[(TYPE)].algorithm ) {              \
+            need_dynamic_decision = 1;                                  \
+            EXECUTE;                                                    \
+        }                                                               \
+        if( NULL != mca_coll_tuned_component.all_base_rules ) {         \
+            (DATA)->com_rules[(TYPE)]                                   \
+                = ompi_coll_tuned_get_com_rule_ptr( mca_coll_tuned_component.all_base_rules, \
+                                                    (TYPE), size );     \
+            if( NULL != (DATA)->com_rules[(TYPE)] ) {                   \
+                need_dynamic_decision = 1;                              \
+            }                                                           \
+        }                                                               \
+        if( 1 == need_dynamic_decision ) {                              \
+            OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned: enable dynamic selection for "#TYPE)); \
+            ompi_coll_tuned_use_dynamic_rules = 1;                      \
+            EXECUTE;                                                    \
+        }                                                               \
+    }
 
 /*
  * Init module on the communicator
@@ -148,18 +177,6 @@ tuned_module_enable( mca_coll_base_module_t *module,
     mca_coll_tuned_comm_t *data = NULL;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init called."));
-
-    /* This routine will become more complex and might have to be
-     * broken into more sections/function calls
-     *
-     * Order of operations:
-     * alloc memory for nb reqs (in case we fall through) 
-     * add decision rules if using dynamic rules
-     *     compact rules using communicator size info etc
-     * build first guess cached topologies (might depend on the rules from above)
-     *
-     * then attach all to the communicator and return base module funct ptrs 
-     */
 
     /* Allocate the data that hangs off the communicator */
     if (OMPI_COMM_IS_INTER(comm)) {
@@ -198,74 +215,54 @@ tuned_module_enable( mca_coll_base_module_t *module,
         data->mcct_num_reqs = 0;
     }
 
-    /**
-     * If using dynamic and you are MPI_COMM_WORLD and you want to use a parameter file..
-     * then this effects how much storage space you need
-     * (This is a basic version of what will go into V2)
-     */
-
-    /* if using dynamic rules make sure all overrides are NULL before we start override anything accidently */
     if (ompi_coll_tuned_use_dynamic_rules) {
-        int has_dynamic_rules = 0;
-
         OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init MCW & Dynamic"));
+        /**
+         * Reset it to 0, it will be enabled again if we discover any need for dynamic decisions.
+         */
+        ompi_coll_tuned_use_dynamic_rules = 0;
 
         /**
          * next dynamic state, recheck all forced rules as well
          * warning, we should check to make sure this is really an INTRA comm here...
          */
-        ompi_coll_tuned_forced_getvalues( ALLGATHER,     &(data->user_forced[ALLGATHER]));
-        ompi_coll_tuned_forced_getvalues( ALLGATHERV,    &(data->user_forced[ALLGATHERV]));
-        ompi_coll_tuned_forced_getvalues( ALLREDUCE,     &(data->user_forced[ALLREDUCE]));
-        ompi_coll_tuned_forced_getvalues( ALLTOALL,      &(data->user_forced[ALLTOALL]));
-        ompi_coll_tuned_forced_getvalues( ALLTOALLV,     &(data->user_forced[ALLTOALLV]));
-        ompi_coll_tuned_forced_getvalues( ALLTOALLW,     &(data->user_forced[ALLTOALLW]));
-        ompi_coll_tuned_forced_getvalues( BARRIER,       &(data->user_forced[BARRIER]));
-        ompi_coll_tuned_forced_getvalues( BCAST,         &(data->user_forced[BCAST]));
-        ompi_coll_tuned_forced_getvalues( EXSCAN,        &(data->user_forced[EXSCAN]));
-        ompi_coll_tuned_forced_getvalues( GATHER,        &(data->user_forced[GATHER]));
-        ompi_coll_tuned_forced_getvalues( GATHERV,       &(data->user_forced[GATHERV]));
-        ompi_coll_tuned_forced_getvalues( REDUCE,        &(data->user_forced[REDUCE]));
-        ompi_coll_tuned_forced_getvalues( REDUCESCATTER, &(data->user_forced[REDUCESCATTER]));
-        ompi_coll_tuned_forced_getvalues( SCAN,          &(data->user_forced[SCAN]));
-        ompi_coll_tuned_forced_getvalues( SCATTER,       &(data->user_forced[SCATTER]));
-        ompi_coll_tuned_forced_getvalues( SCATTERV,      &(data->user_forced[SCATTERV]));
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, ALLGATHER,
+                                      tuned_module->super.coll_allgather  = ompi_coll_tuned_allgather_intra_dec_dynamic);
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, ALLGATHERV,
+                                      tuned_module->super.coll_allgatherv = ompi_coll_tuned_allgatherv_intra_dec_dynamic);
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, ALLREDUCE,
+                                      tuned_module->super.coll_allreduce  = ompi_coll_tuned_allreduce_intra_dec_dynamic);
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, ALLTOALL,
+                                      tuned_module->super.coll_alltoall   = ompi_coll_tuned_alltoall_intra_dec_dynamic);
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, ALLTOALLV,
+                                      tuned_module->super.coll_alltoallv  = ompi_coll_tuned_alltoallv_intra_dec_dynamic);
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, ALLTOALLW,
+                                      tuned_module->super.coll_alltoallw  = NULL);
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, BARRIER,
+                                      tuned_module->super.coll_barrier    = ompi_coll_tuned_barrier_intra_dec_dynamic);
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, BCAST,
+                                      tuned_module->super.coll_bcast      = ompi_coll_tuned_bcast_intra_dec_dynamic);
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, EXSCAN,
+                                      tuned_module->super.coll_exscan     = NULL);
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, GATHER,
+                                      tuned_module->super.coll_gather     = ompi_coll_tuned_gather_intra_dec_dynamic);
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, GATHERV,
+                                      tuned_module->super.coll_gatherv    = NULL);
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, REDUCE,
+                                      tuned_module->super.coll_reduce     = ompi_coll_tuned_reduce_intra_dec_dynamic);
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, REDUCESCATTER,
+                                      tuned_module->super.coll_reduce_scatter = ompi_coll_tuned_reduce_scatter_intra_dec_dynamic);
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, SCAN,
+                                      tuned_module->super.coll_scan       = NULL);
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, SCATTER,
+                                      tuned_module->super.coll_scatter    = ompi_coll_tuned_scatter_intra_dec_dynamic);
+        COLL_TUNED_EXECUTE_IF_DYNAMIC(data, SCATTERV,
+                                      tuned_module->super.coll_scatterv   = NULL);
 
-        if( NULL != mca_coll_tuned_component.all_base_rules ) {
-            /* extract our customized communicator sized rule set, for each collective */
-            for( i = 0; i < COLLCOUNT; i++ ) {
-                data->com_rules[i] = ompi_coll_tuned_get_com_rule_ptr( mca_coll_tuned_component.all_base_rules,
-                                                                       i, size );
-                if( NULL != data->com_rules[i] ) {
-                    has_dynamic_rules++;
-                }
-            }
-        }
-        if( 0 == has_dynamic_rules ) {
-            /* no real dynamic rules available. Switch back
-             * to default.
-             */
-            ompi_coll_tuned_use_dynamic_rules = 0;
+        if( 0 == ompi_coll_tuned_use_dynamic_rules ) {
+            /* no real need for dynamic decisions */
             OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:module_enable switch back to fixed"
                          " decision by lack of dynamic rules"));
-        } else {
-            OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_enable using intra_dynamic"));
-            tuned_module->super.coll_allgather  = ompi_coll_tuned_allgather_intra_dec_dynamic;
-            tuned_module->super.coll_allgatherv = ompi_coll_tuned_allgatherv_intra_dec_dynamic;
-            tuned_module->super.coll_allreduce  = ompi_coll_tuned_allreduce_intra_dec_dynamic;
-            tuned_module->super.coll_alltoall   = ompi_coll_tuned_alltoall_intra_dec_dynamic;
-            tuned_module->super.coll_alltoallv  = ompi_coll_tuned_alltoallv_intra_dec_dynamic;
-            tuned_module->super.coll_alltoallw  = NULL;
-            tuned_module->super.coll_barrier    = ompi_coll_tuned_barrier_intra_dec_dynamic;
-            tuned_module->super.coll_bcast      = ompi_coll_tuned_bcast_intra_dec_dynamic;
-            tuned_module->super.coll_exscan     = NULL;
-            tuned_module->super.coll_gather     = ompi_coll_tuned_gather_intra_dec_dynamic;
-            tuned_module->super.coll_gatherv    = NULL;
-            tuned_module->super.coll_reduce     = ompi_coll_tuned_reduce_intra_dec_dynamic;
-            tuned_module->super.coll_reduce_scatter = ompi_coll_tuned_reduce_scatter_intra_dec_dynamic;
-            tuned_module->super.coll_scan       = NULL;
-            tuned_module->super.coll_scatter    = ompi_coll_tuned_scatter_intra_dec_dynamic;
-            tuned_module->super.coll_scatterv   = NULL;
         }
     }
     
