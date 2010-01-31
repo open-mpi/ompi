@@ -749,7 +749,7 @@ int orte_rmaps_base_setup_virtual_machine(orte_job_t *jdata)
     /* get the daemon app if provided - may include -host or hostfile
      * info about available nodes
      */
-    app = opal_pointer_array_get_item(jdata->apps, 0);
+    app = (orte_app_context_t *) opal_pointer_array_get_item(jdata->apps, 0);
     
     /* get the list of all available nodes that do not already
      * have a daemon on them
