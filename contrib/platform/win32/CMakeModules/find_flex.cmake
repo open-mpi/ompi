@@ -89,6 +89,7 @@ MACRO(ADD_FLEX_FILE _sourcelist _source _prefix _output_dir)
 
   IF (NOT ${RESULT} STREQUAL "1")
     MESSAGE(STATUS "${ERROR}parse ${_basename} with flex...done")
+    SET_SOURCE_FILES_PROPERTIES(${_out} PROPERTIES COMPILE_DEFINITIONS YY_NO_UNISTD_H)
   ELSE (NOT ${RESULT} STREQUAL "1")
     MESSAGE(FATAL_ERROR "${ERROR}parse ${_basename} with flex...failed")
   ENDIF (NOT ${RESULT} STREQUAL "1")
