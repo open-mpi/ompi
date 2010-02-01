@@ -152,6 +152,13 @@ foreach my $file (@files) {
     # spammers any new fodder!
     $text =~ s/(\W)[\w\.\-]+@[\w.\-]+(\W)/$1email-address-removed$2/g;
 
+    # Setup meta name: make the MPI name be all caps if we're in
+    # section 3 and it has an MPI_ prefix.
+    my $meta_name = $name;
+    if (3 == $section && $name =~ /^MPI_/) {
+        $meta_name = uc($name);
+    }
+    
     # Now we're left with what we want.  Output the PHP page.
     # Write the output PHP file with our own header and footer,
     # suitable for www.open-mpi.org.
@@ -160,6 +167,7 @@ foreach my $file (@files) {
     print FILE '<?php
 $topdir = "../../..";
 $title = "' . "$name($section) man page (version $version)" . '";
+$meta_desc = "Open MPI v' . "$version man page: $meta_name($section)" . '";
 
 include_once("$topdir/doc/nav.inc");
 include_once("$topdir/includes/header.inc");
