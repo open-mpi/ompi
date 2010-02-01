@@ -161,6 +161,7 @@ foreach my $file (@files) {
 $topdir = "../../..";
 $title = "' . "$name($section) man page (version $version)" . '";
 
+include_once("$topdir/doc/nav.inc");
 include_once("$topdir/includes/header.inc");
 ?>
 <p> <a href="../">&laquo; Return to documentation listing</a></p>
