@@ -37,17 +37,11 @@ FOREACH(ORTE_SUBDIR ${ORTE_SUBDIRS})
 
 ENDFOREACH(ORTE_SUBDIR ${ORTE_SUBDIRS})
 
-# Generate flex files.
-ADD_FLEX_FILE(ORTE_SOURCE_FILES "./util/hostfile/hostfile_lex.l" "orte_util_hostfile_"
-              "${PROJECT_BINARY_DIR}/util/hostfile/")
-SET_SOURCE_FILES_PROPERTIES(${PROJECT_BINARY_DIR}/util/hostfile/hostfile_lex.c
-                            PROPERTIES COMPILE_DEFINITIONS YY_NO_UNISTD_H)
-
-# Exclude the same flex files that generaged on Linux,
-# which could be found in a tarball.
-IF(EXISTS ${PROJECT_SOURCE_DIR}/util/hostfile/hostfile_lex.c)
-  LIST(REMOVE_ITEM ORTE_SOURCE_FILES "${PROJECT_SOURCE_DIR}/util/hostfile/hostfile_lex.c")
-ENDIF(EXISTS ${PROJECT_SOURCE_DIR}/util/hostfile/hostfile_lex.c)
+#only generate if it's not a tarball
+IF(NOT EXISTS ${PROJECT_SOURCE_DIR}/util/hostfile/hostfile_lex.c)
+  ADD_FLEX_FILE(ORTE_SOURCE_FILES ./util/hostfile/hostfile_lex.l "orte_util_hostfile_"
+    "${PROJECT_BINARY_DIR}/util/hostfile/")
+ENDIF(NOT EXISTS ${PROJECT_SOURCE_DIR}/util/hostfile/hostfile_lex.c)
 
 
 INCLUDE (check_mca_subdirs)
