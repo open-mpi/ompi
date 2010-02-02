@@ -1,6 +1,8 @@
 5.8.1openmpi
 	- updated version of internal OTF to 1.6.5openmpi
 	  (see extlib/otf/ChangeLog)
+	- if VampirTrace is configured for Open MPI use its Fortran wrapper
+	  library 'libmpi_f77' to build Fortran programs
 	- added functions 'MPI_Group_range_<incl|excl>' to Fortran MPI wrappers 
 	- added environment variable VT_METRICS_SEP to specify a string which
 	  separate the counter names in VT_METRICS
