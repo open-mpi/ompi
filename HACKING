@@ -8,7 +8,7 @@ Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2005 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -256,11 +256,18 @@ supported: given the choice of making parsing code portable between
 all flavors of lex and doing more interesting work on Open MPI, we
 greatly prefer the latter.  
 
-Several developers use the stable flex version v2.5.4a from July of
-1997.  Others have upgraded to more recent versions; these also seem
-to work fine.  Note that no testing has been performed to see what the
-minimum version of Flex is required by Open MPI.  We suggest that you
-use v2.5.4a at the earliest.
+Several POSIXly-oriented developers use the stable flex version
+v2.5.4a from July of 1997.  Others have upgraded to more recent
+versions; these also seem to work fine.  Note that no testing has been
+performed to see what the minimum version of Flex is required by Open
+MPI.  We suggest that you use v2.5.4a at the earliest.
+
+*** NOTE: Windows builds of Open MPI require Flex version 2.5.35.
+Specifically, we know that v2.5.35 works and 2.5.4a does not.  We have
+not tested to figure out exactly what the minimum required flex
+version is on Windows; we suggest that you use 2.5.35 at the earliest.
+It is for this reason that the contrib/dist/make_dist_tarball script
+checks for a Windows-friendly version of flex before continuing.
 
 Note that the flex-generated code generates some compiler warnings on
 some platforms, but the warnings do not seem to be consistent or
