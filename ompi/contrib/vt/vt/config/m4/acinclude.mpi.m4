@@ -167,7 +167,6 @@ AC_DEFUN([ACVT_MPI],
 			MPICFLAGS="$MPICFLAGS -DMPICH_IGNORE_CXX_SEEK"
 			check_mpi2_1sided="no"; have_mpi2_1sided="yes"
 			check_mpi2_extcoll="no"; have_mpi2_extcoll="yes"
-			ac_cv_have_decl_MPI_IN_PLACE="yes"
 		])
 	])
 
@@ -183,7 +182,6 @@ AC_DEFUN([ACVT_MPI],
 			check_mpi2_thread="no"; have_mpi2_thread="yes"
 			check_mpi2_1sided="no"; have_mpi2_1sided="yes"
 			check_mpi2_extcoll="no"; have_mpi2_extcoll="yes"
-			ac_cv_have_decl_MPI_IN_PLACE="yes"
 		])
 	])
 
@@ -200,7 +198,6 @@ AC_DEFUN([ACVT_MPI],
 			check_mpi2_1sided="no"; have_mpi2_1sided="no"
 			check_mpi2_extcoll="no"; have_mpi2_extcoll="no"
 			check_mpi2_io="no"; have_mpi2_io="no"
-			ac_cv_have_decl_MPI_IN_PLACE="no"
 		])
 	])
 
@@ -216,7 +213,6 @@ AC_DEFUN([ACVT_MPI],
 			check_mpi2_thread="no"; have_mpi2_thread="yes"
 			check_mpi2_1sided="no"; have_mpi2_1sided="yes"
 			check_mpi2_extcoll="no"; have_mpi2_extcoll="yes"
-			ac_cv_have_decl_MPI_IN_PLACE="yes"
 		])
 	])
 
@@ -233,7 +229,6 @@ AC_DEFUN([ACVT_MPI],
 			check_mpi2_1sided="no"; have_mpi2_1sided="no"
 			check_mpi2_extcoll="no"; have_mpi2_extcoll="no"
 			check_mpi2_io="no"; have_mpi2_io="no"
-			ac_cv_have_decl_MPI_IN_PLACE="no"
 		])
 	])
 
@@ -249,7 +244,6 @@ AC_DEFUN([ACVT_MPI],
 			check_mpi2_thread="no"; have_mpi2_thread="yes"
 			check_mpi2_1sided="no"; have_mpi2_1sided="yes"
 			check_mpi2_extcoll="no"; have_mpi2_extcoll="yes"
-			ac_cv_have_decl_MPI_IN_PLACE="yes"
 		])
 	])
 
@@ -293,22 +287,10 @@ AC_DEFUN([ACVT_MPI],
 		[
 			MPILIB="-lmpi"
 			PMPILIB="$MPILIB"
-			FMPILIB="-lvt-fmpi"
+			FMPILIB="-lmpi_f77"
 			check_mpi2_thread="no"; have_mpi2_thread="yes"
 			check_mpi2_1sided="no"; have_mpi2_1sided="yes"
 			check_mpi2_extcoll="no"; have_mpi2_extcoll="yes"
-			ac_cv_func_MPI_Comm_f2c="yes"; ac_cv_func_MPI_Comm_c2f="yes"
-			ac_cv_func_MPI_Errhandler_f2c="yes"; ac_cv_func_MPI_Errhandler_c2f="yes"
-			ac_cv_func_MPI_File_f2c="yes"; ac_cv_func_MPI_File_c2f="yes"
-			ac_cv_func_MPI_Group_f2c="yes"; ac_cv_func_MPI_Group_c2f="yes"
-			ac_cv_func_MPI_Info_f2c="yes"; ac_cv_func_MPI_Info_c2f="yes"
-			ac_cv_func_MPI_Op_f2c="yes"; ac_cv_func_MPI_Op_c2f="yes"
-			ac_cv_func_MPI_Request_f2c="yes"; ac_cv_func_MPI_Request_c2f="yes"
-			ac_cv_func_MPI_Status_f2c="yes"; ac_cv_func_MPI_Status_c2f="yes"
-			ac_cv_func_MPI_Type_f2c="yes"; ac_cv_func_MPI_Type_c2f="yes"
-			ac_cv_func_MPI_Win_f2c="yes"; ac_cv_func_MPI_Win_c2f="yes"
-			ac_cv_have_decl_MPI_IN_PLACE="yes"
-			ac_cv_have_decl_MPI_STATUS_SIZE="no"
 		])
 	])
 
@@ -593,6 +575,16 @@ dnl		check for FMPILIB
 			AC_MSG_CHECKING([whether linking with -lfmpi works])
 			AC_TRY_LINK([],[],
 			[AC_MSG_RESULT([yes]); FMPILIB=-lfmpi],[AC_MSG_RESULT([no])])
+			LIBS=$sav_LIBS
+		])
+
+		AS_IF([test x"$FMPILIB" = x -a x"$mpi_error" = "xno"],
+		[
+			sav_LIBS=$LIBS
+			LIBS="$LIBS $MPILIBDIR -lmpi_f77 $MPILIB"
+			AC_MSG_CHECKING([whether linking with -lmpi_f77 $MPILIB works])
+			AC_TRY_LINK([],[],
+			[AC_MSG_RESULT([yes]); FMPILIB=-lmpi_f77],[AC_MSG_RESULT([no])])
 			LIBS=$sav_LIBS
 		])
 
