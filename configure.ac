@@ -1094,7 +1094,7 @@ AC_DEFINE_UNQUOTED(OPAL_WANT_LIBLTDL, $OPAL_ENABLE_DLOPEN_SUPPORT,
 AC_DEFINE_UNQUOTED(OPAL_HAVE_LTDL_ADVISE, $OPAL_HAVE_LTDL_ADVISE,
     [Whether libltdl appears to have the lt_dladvise interface])
 
-AM_CONDITIONAL(OPAL_HAVE_DLOPEN, $OPAL_ENABLE_DLOPEN_SUPPORT )
+AM_CONDITIONAL(OPAL_HAVE_DLOPEN, [test "$OPAL_ENABLE_DLOPEN_SUPPORT" = "1"] )
 
 
 ############################################################################
