@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -14,16 +14,16 @@
 #define _VT_MPISYNC_H
 
 #ifdef __cplusplus
-#   define EXTERN extern "C" 
+# define EXTERN extern "C" 
 #else
-#   define EXTERN extern 
+# define EXTERN extern 
 #endif
 
 #include "vt_inttypes.h"
 
 #include "mpi.h"
 
-EXTERN int64_t vt_offset(int64_t* ltime, MPI_Comm comm);
+EXTERN void vt_sync(MPI_Comm comm, uint64_t* ltime, int64_t* offset);
 
 #endif
 

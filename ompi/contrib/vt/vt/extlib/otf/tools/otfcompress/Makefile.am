@@ -11,10 +11,7 @@ install-exec-hook:
 endif
 
 otfcompress_LDADD = $(top_builddir)/otflib/libotf.la
-if ! AMDEPZLIB
-otfcompress_LDADD += $(ZLIB_LIB_LINE)
-endif
-
+otfcompress_DEPENDENCIES = $(otfcompress_LDADD)
 otfcompress_SOURCES = \
 	sys_time.h \
 	otfcompress.c

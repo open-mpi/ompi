@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -159,6 +159,9 @@ struct struct_OTF_RStream {
 		reading through all events of that interval. */
 	OTF_RBuffer* statsBuffer;
 
+	/**	Marker buffer. */
+	OTF_RBuffer* markerBuffer;
+
 	/** Default size of buffers managed by this RStream. */
 	uint32_t buffersizes;
 	
@@ -184,7 +187,7 @@ typedef struct struct_OTF_RStream OTF_RStream;
  * @param  nameStub     File name prefix which is going to be used by 
  *                      all sub-files which belong to the reader stream.
  * @param  id           Abitrary but unique identifier of the reader stream.
- *                      Cannot be '0'.
+ *                      Must be > '0' for real streams. Use '0' for global definitions.
  * @param  manager      File handle manager. 
  *
  * @return              Initialized OTF_RStream instance or 0 if an error
@@ -222,7 +225,7 @@ OTF_RBuffer* OTF_RStream_getDefBuffer( OTF_RStream* rstream );
 
 
 /**
- * Closes the stream defefinition buffer.
+ * Closes the stream definition buffer.
  *
  * @param rstream  Pointer to an initialized OTF_RStream object. See 
  *                 also OTF_RStream_open().
@@ -309,6 +312,32 @@ OTF_RBuffer* OTF_RStream_getStatsBuffer( OTF_RStream* rstream );
  * \ingroup rstream
  */
 int OTF_RStream_closeStatsBuffer( OTF_RStream* rstream );
+
+
+/** 
+ * Returns the marker buffer of the according reader stream.
+ *
+ * @param rstream  Pointer to an initialized OTF_RStream object. See 
+ *                 also OTF_RStream_open().
+ * 
+ * @return         Initialized OTF_RBuffer instance or 0 if an error occured.
+ *
+ * \ingroup rstream
+ */
+OTF_RBuffer* OTF_RStream_getMarkerBuffer( OTF_RStream* rstream );
+
+
+/**
+ * Closes the stream marker buffer.
+ *
+ * @param rstream  Pointer to an initialized OTF_RStream object. See 
+ *                 also OTF_RStream_open().
+ *
+ * @return         1 on success, 0 if an error occurs
+ *
+ * \ingroup rstream
+ */
+int OTF_RStream_closeMarkerBuffer( OTF_RStream* rstream );
 
 
 /** 
@@ -461,6 +490,19 @@ uint64_t OTF_RStream_readSnapshots( OTF_RStream* rstream, OTF_HandlerArray* hand
 uint64_t OTF_RStream_readStatistics( OTF_RStream* rstream, OTF_HandlerArray* handlers );
 
 
+/**
+ * Reads all markers from the stream.
+ *
+ * @param rstream   Pointer to an initialized OTF_RStream object. See 
+ *                  also OTF_RStream_open().
+ * @param handlers  Pointer to the handler array.
+ *
+ * @return          Number of records read or OTF_READ_MAXRECORDS
+ *
+ * \ingroup rstream
+ */
+uint64_t OTF_RStream_readMarker( OTF_RStream* rstream, OTF_HandlerArray* handlers );
+
 
 /** depricated. @see OTF_RStream_eventTimeProgress() \ingroup rstream */
 uint8_t OTF_RStream_eventProgress( OTF_RStream* rstream, uint64_t* minimum,
@@ -476,15 +518,16 @@ uint8_t OTF_RStream_statisticProgress( OTF_RStream* rstream,
 	
 	
 /**
- * Delivers a progress report for reading events. Progress is given in terms
+ * Delivers a progress report for reading events. It is given in terms
  * of time stamps. A percentage can be computed as 
  * ( current - minimum ) / ( maximum - minimum ). 
- * This computation takes restricted time intervals into account! This would not
- * be possible when referring to bytes read instead of time stamps.
+ * This computation takes restricted time intervals into account which is not 
+ * possible with OTF_RStream_eventBytesProgress().
+ *
  * The progress report is only valid after one or several calls to
- * 'readEvents()'.In the latter case the return arguments
- * 'minimum', 'current' and 'maximum' are undefined! If 'minimum' > 'maximum'
- * the values are invalid.
+ * OTF_RStream_readEvents(). Otherwise the return arguments 'minimum', 'current' 
+ * and 'maximum' are undefined! 
+ * If 'minimum' > 'maximum' the values are invalid.
  *
  * @param rstream    Pointer to an initialized OTF_RStream object. See 
  *                   also OTF_RStream_open().
@@ -501,15 +544,16 @@ uint8_t OTF_RStream_eventTimeProgress( OTF_RStream* rstream, uint64_t* minimum,
 
 
 /**
- * Delivers a progress report for reading snapshots. Progress is given in terms
- * of time stamps. a percentage can be computed as
+ * Delivers a progress report for reading snapshots. It is given in terms
+ * of time stamps. A percentage can be computed as 
  * ( current - minimum ) / ( maximum - minimum ). 
- * This computation takes restricted time intervals into account! this would
- * not be possible when refering to bytes read instead of time stamps.
+ * This computation takes restricted time intervals into account which is not 
+ * possible with OTF_RStream_snapshotBytesProgress().
+ *
  * The progress report is only valid after one or several calls to
- * 'readSnapshots()'. In the latter case the return arguments
- * 'minimum', 'current' and 'maximum' are undefined! If 'minimum' > 'maximum'
- * the values are invalid.
+ * OTF_RStream_readSnapshots(). Otherwise the return arguments 'minimum', 'current' 
+ * and 'maximum' are undefined! 
+ * If 'minimum' > 'maximum' the values are invalid.
  *
  * @param rstream    Pointer to an initialized OTF_RStream object. See 
  *                   also OTF_RStream_open().
@@ -526,15 +570,16 @@ uint8_t OTF_RStream_snapshotTimeProgress( OTF_RStream* rstream,
 
 
 /**
- * Delivers a progress report for reading statistics. Progress is given in terms
- * of time stamps. a percentage can be computed as
+ * Delivers a progress report for reading statistics. It is given in terms
+ * of time stamps. A percentage can be computed as 
  * ( current - minimum ) / ( maximum - minimum ). 
- * This computation takes restricted time intervals into account! this would
- * not be possible when refering to bytes read instead of time stamps.
+ * This computation takes restricted time intervals into account which is not 
+ * possible with OTF_Reader_statisticBytesProgress().
+ *
  * The progress report is only valid after one or several calls to
- * 'readStatistics()'. In the latter case the return arguments
- * 'minimum', 'current' and 'maximum' are undefined! If 'minimum' > 'maximum'
- * the values are invalid.
+ * OTF_Reader_readStatistics(). Otherwise the return arguments 'minimum', 'current' 
+ * and 'maximum' are undefined! 
+ * If 'minimum' > 'maximum' the values are invalid.
  *
  * @param rstream    Pointer to an initialized OTF_RStream object. See 
  *                   also OTF_RStream_open().
@@ -552,12 +597,17 @@ uint8_t OTF_RStream_statisticTimeProgress( OTF_RStream* rstream,
 
 /**
  * Delivers a progress report for reading events. Progress is given in terms
- * of time stamps. a percentage can be computed as
- * ( current - minimum ) / ( maximum - minimum ). 
- * This computation takes the read bytes of every stream into account. In the
- * latter case the return arguments 'minimum', 'current' and 'maximum' are
- * undefined! If 'minimum' > 'maximum' the values are invalid.
+ * of bytes. The percentage can be computed as ( current - minimum ) / ( maximum - minimum ). 
+ * 
+ * ATTENTION: This in only a rough estimate of the progress, because it is
+ * computed based on the block I/O from files but not based on the actual bytes 
+ * processed. This may result in constant values for small traces.
+ * See also OTF_RStream_eventTimeProgress():
  *
+ * The progress report is only valid after one or several calls to
+ * OTF_RStream_readEvents(). Otherwise the return arguments 'minimum', 'current' and 'maximum' are
+ * undefined! If 'minimum' > 'maximum' the values are invalid.
+*
  * @param rstream    Pointer to an initialized OTF_RStream object. See 
  *                   also OTF_RStream_open().
  * @param minimum    Return value for the minium bytes read ( is 0 everytime ).
@@ -574,10 +624,15 @@ uint8_t OTF_RStream_eventBytesProgress( OTF_RStream* rstream, uint64_t* minimum,
 
 /**
  * Delivers a progress report for reading snapshots. Progress is given in terms
- * of time stamps. a percentage can be computed as
- * ( current - minimum ) / ( maximum - minimum ). 
- * This computation takes the read bytes of every stream into account. In the
- * latter case the return arguments 'minimum', 'current' and 'maximum' are
+ * of bytes. The percentage can be computed as ( current - minimum ) / ( maximum - minimum ). 
+ * 
+ * ATTENTION: This in only a rough estimate of the progress, because it is
+ * computed based on the block I/O from files but not based on the actual bytes 
+ * processed. This may result in constant values for small traces.
+ * See also OTF_RStream_snapshotTimeProgress():
+ *
+ * The progress report is only valid after one or several calls to
+ * OTF_RStream_readSnapshots(). Otherwise the return arguments 'minimum', 'current' and 'maximum' are
  * undefined! If 'minimum' > 'maximum' the values are invalid.
  *
  * @param rstream    Pointer to an initialized OTF_RStream object. See 
@@ -595,10 +650,15 @@ uint8_t OTF_RStream_snapshotBytesProgress( OTF_RStream* rstream,
 
 /**
  * Delivers a progress report for reading statistics. Progress is given in terms
- * of time stamps. a percentage can be computed as
- * ( current - minimum ) / ( maximum - minimum ). 
- * This computation takes the read bytes of every stream into account. In the
- * latter case the return arguments 'minimum', 'current' and 'maximum' are
+ * of bytes. The percentage can be computed as ( current - minimum ) / ( maximum - minimum ). 
+ * 
+ * ATTENTION: This in only a rough estimate of the progress, because it is
+ * computed based on the block I/O from files but not based on the actual bytes 
+ * processed. This may result in constant values for small traces.
+ * See also OTF_RStream_statisticTimeProgress():
+ *
+ * The progress report is only valid after one or several calls to
+ * OTF_RStream_readStatistics(). Otherwise the return arguments 'minimum', 'current' and 'maximum' are
  * undefined! If 'minimum' > 'maximum' the values are invalid.
  *
  * @param rstream    Pointer to an initialized OTF_RStream object. See 

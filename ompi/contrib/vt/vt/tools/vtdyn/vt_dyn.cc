@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -105,7 +105,7 @@ main( int argc, char ** argv )
    {
       // set/overwrite environment variable VT_UNIFY to zero,
       // so VampirTrace don't unify local traces (DYNINST Bug?)
-      putenv( "VT_UNIFY=no" );
+      putenv( (char*)"VT_UNIFY=no" );
    }
 
    // create instance of mutator
@@ -563,8 +563,7 @@ Mutator::constraintFunction( std::string name )
       return true;    // don't instrument MPI functions
                       // (already done by function wrapper)
    }
-   else if( checkFunctionBL( name ) ||
-	    name.compare( "ataxit" ) == 0 )
+   else if( checkFunctionBL( name ) )
    {
       return true;    // don't instrument function
    }

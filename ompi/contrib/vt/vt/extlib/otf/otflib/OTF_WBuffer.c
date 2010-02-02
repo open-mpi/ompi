@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -14,6 +14,7 @@
 
 #include "OTF_Platform.h"
 #include "OTF_WBuffer.h"
+#include "OTF_Errno.h"
 
 
 /** constructor - internal use only */
@@ -52,11 +53,9 @@ int OTF_WBuffer_finish( OTF_WBuffer* wbuffer ) {
 	/* buffer shall be empty now */
 	if( 0 != wbuffer->pos ) {
 		
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"buffer is not empty (but is supposed to).\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
 
 		return 0;
 	}
@@ -91,7 +90,7 @@ int OTF_WBuffer_close( OTF_WBuffer* wbuffer ) {
 		int tmpret= OTF_WBuffer_flush( wbuffer );
 		if( 0 == tmpret ) {
 			
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"OTF_WBuffer_flush() failed.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 		}
@@ -100,7 +99,7 @@ int OTF_WBuffer_close( OTF_WBuffer* wbuffer ) {
 		tmpret= OTF_File_close( wbuffer->file );
 		if( 0 == tmpret ) {
 			
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"OTF_File_close() failed.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 		}
@@ -109,7 +108,7 @@ int OTF_WBuffer_close( OTF_WBuffer* wbuffer ) {
 		tmpret= OTF_WBuffer_finish( wbuffer );
 		if( 0 == tmpret ) {
 			
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_WBuffer_finish() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 		}
@@ -118,6 +117,7 @@ int OTF_WBuffer_close( OTF_WBuffer* wbuffer ) {
 #	endif
 
 	free( wbuffer );
+	wbuffer = NULL;
 	
 	return ret;
 }
@@ -128,12 +128,10 @@ int OTF_WBuffer_setSize( OTF_WBuffer* wbuffer, size_t size ) {
 
 	if ( size < wbuffer->size ) {
 
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"cannot shrink buffer from %u to %u.\n",
 				__FUNCTION__, __FILE__, __LINE__, (uint32_t) wbuffer->size,
 				(uint32_t) size );
-#		endif
 
 		return 0;
 	}
@@ -142,11 +140,9 @@ int OTF_WBuffer_setSize( OTF_WBuffer* wbuffer, size_t size ) {
 		size * sizeof(char) );
 	if( NULL == wbuffer->buffer ) {
 		
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"no memory left.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
 
 		return 0;
 	}
@@ -164,29 +160,23 @@ void OTF_WBuffer_setZBufferSize( OTF_WBuffer* wbuffer, uint32_t size ) {
 	
 	if ( 32 > size ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"intended zbuffer size %u is too small, rejected.\n",
 				__FUNCTION__, __FILE__, __LINE__, size );
-#		endif /* OTF_VERBOSE */
 		
 		return;
 
 	} else if ( 512 > size ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"zbuffer size %u is very small, accepted though.\n",
 				__FUNCTION__, __FILE__, __LINE__, size );
-#		endif /* OTF_VERBOSE */
 
 	} else if ( 10 * 1024 *1024 < size ) {
 
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"zbuffer size %u is rather big, accepted though.\n",
 				__FUNCTION__, __FILE__, __LINE__, size );
-#		endif /* OTF_VERBOSE */
 	}
 
 	wbuffer->zbuffersize= size;
@@ -209,11 +199,9 @@ int OTF_WBuffer_flush( OTF_WBuffer* wbuffer ) {
 	ret= OTF_File_write( wbuffer->file, wbuffer->buffer, wbuffer->pos );
 	if( ret != wbuffer->pos ) {
 		
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"OTF_File_write() failed.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
 		retval= 0;
 	}
 	
@@ -235,23 +223,19 @@ int OTF_WBuffer_guarantee( OTF_WBuffer* wbuffer, size_t space ) {
 
 	if ( space > wbuffer->size ) {
 
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"requested %u bytes > buffer size %u.\n",
 				__FUNCTION__, __FILE__, __LINE__, 
 				(uint32_t) space, wbuffer->size );
-#		endif
 		
 		return 0;
 	}
 
 	if( 0 == OTF_WBuffer_flush( wbuffer ) ) {
 		
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"OTF_WBuffer_flush() failed.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
 		
 		return 0;
 	}
@@ -305,7 +289,7 @@ int OTF_WBuffer_setTimeAndProcess( OTF_WBuffer* wbuffer,
 		there should be _no_ way to avoid this error message! */
 		if ( ( (uint64_t) -1 ) != wbuffer->time ) {
 
-			fprintf( stderr, "OTF ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "OTF ERROR in function %s, file: %s, line: %i:\n "
 				"time not increasing. (t= %llu, p= %u)\n",
 				__FUNCTION__, __FILE__, __LINE__, 
 				(unsigned long long int) t, (unsigned int) p );
@@ -334,11 +318,9 @@ uint32_t OTF_WBuffer_writeKeyword( OTF_WBuffer* wbuffer,
 	int ret= OTF_WBuffer_guarantee( wbuffer, l );
 	if( 0 == ret ) {
 		
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"OTF_WBuffer_guarantee() failed.\n",
 				__FUNCTION__, __FILE__, __LINE__  );
-#		endif
 
 		return 0;
 	}
@@ -364,11 +346,9 @@ uint32_t OTF_WBuffer_writeString( OTF_WBuffer* wbuffer, const char* string ) {
 	
 	if( 0 == OTF_WBuffer_guarantee( wbuffer, l+2 ) ) {
 		
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"OTF_WBuffer_guarantee() failed.\n",
 				__FUNCTION__, __FILE__, __LINE__  );
-#		endif
 
 		return 0;
 	}
@@ -406,11 +386,9 @@ uint32_t OTF_WBuffer_writeChar( OTF_WBuffer* wbuffer, const char character ) {
 
 	if( 0 == OTF_WBuffer_guarantee( wbuffer, 1 ) ) {
 		
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"OTF_WBuffer_guarantee() failed.\n",
 				__FUNCTION__, __FILE__, __LINE__  );
-#		endif
 
 		return 0;
 	}
@@ -438,11 +416,9 @@ uint32_t OTF_WBuffer_writeUint32( OTF_WBuffer* wbuffer, uint32_t value ) {
 	/* at max 8 digits will be written */
 	if( 0 == OTF_WBuffer_guarantee( wbuffer, 8 ) ) {
 		
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"OTF_WBuffer_guarantee() failed.\n",
 				__FUNCTION__, __FILE__, __LINE__  );
-#		endif
 
 		return 0;
 	}
@@ -487,11 +463,9 @@ uint32_t OTF_WBuffer_writeUint64( OTF_WBuffer* wbuffer, uint64_t value ) {
 	/* at max 16 digits will be written */
 	if( 0 == OTF_WBuffer_guarantee( wbuffer, 16 ) ) {
 		
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"OTF_WBuffer_guarantee() failed.\n",
 				__FUNCTION__, __FILE__, __LINE__  );
-#		endif
 
 		return 0;
 	}
@@ -527,11 +501,9 @@ uint32_t OTF_WBuffer_writeNewline( OTF_WBuffer* wbuffer ) {
 
 	if( 0 == OTF_WBuffer_guarantee( wbuffer, 1 ) ) {
 		
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"OTF_WBuffer_guarantee() failed.\n",
 				__FUNCTION__, __FILE__, __LINE__  );
-#		endif
 
 		return 0;
 	}
@@ -552,11 +524,9 @@ OTF_WBuffer* OTF_WBuffer_open_zlevel( const char* filename,
 	OTF_WBuffer* ret= (OTF_WBuffer*) malloc( sizeof(OTF_WBuffer) );
 	if( NULL == ret ) {
 		
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"no memory left.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
 
 		return NULL;
 	}
@@ -565,11 +535,9 @@ OTF_WBuffer* OTF_WBuffer_open_zlevel( const char* filename,
 
 	if( NULL == manager ) {
 		
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"manager has not been specified.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
 
 		free( ret );
 		ret= NULL;
@@ -579,11 +547,9 @@ OTF_WBuffer* OTF_WBuffer_open_zlevel( const char* filename,
 	ret->file= OTF_File_open_zlevel( filename, manager, OTF_FILEMODE_WRITE, compression );
 	if( NULL == ret->file ) {
 		
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"OTF_File_open() failed.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
 
 		free( ret );
 		ret= NULL;

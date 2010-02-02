@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -123,6 +123,14 @@ int handleCollectiveOperation( void* firsthandlerarg, uint64_t time,
     uint32_t rootprocess, uint32_t sent, uint32_t received, 
     uint64_t duration, uint32_t scltoken );
 
+int handleBeginCollectiveOperation( void* fcb, uint64_t time, uint32_t process,
+		uint32_t collOp, uint64_t matchingId, uint32_t procGroup,
+		uint32_t rootprocess, uint64_t sent, uint64_t received,
+		uint32_t scltoken );
+
+int handleEndCollectiveOperation( void* fcb, uint64_t time, uint32_t process,
+		uint64_t matchingId );
+
 int handleRecvMsg( void* firsthandlerarg, uint64_t time,
 	uint32_t receiver, uint32_t sender, uint32_t communicator, 
 	uint32_t msgtype, uint32_t msglength,
@@ -144,6 +152,29 @@ int handleEndProcess( void* firsthandlerarg, uint64_t time,
 int handleFileOperation( void* firsthandlerarg, uint64_t time, uint32_t fileid,
 	uint32_t process, uint64_t handleid, uint32_t operation, uint64_t bytes,
 	uint64_t duration, uint32_t source );
+
+int handleBeginFileOperation( void* fcb, uint64_t time, uint32_t process,
+		uint64_t handleid, uint32_t scltoken );
+
+int handleEndFileOperation( void* fcb, uint64_t time, uint32_t process,
+		uint32_t fileid, uint64_t handleid, uint32_t operation,
+		uint64_t bytes, uint32_t scltoken );
+
+int handleRMAPut( void* firsthandlerarg, uint64_t time, uint32_t process,
+        uint32_t origin, uint32_t target, uint32_t communicator, uint32_t tag,
+        uint64_t bytes, uint32_t scltoken );
+
+int handleRMAPutRemoteEnd( void* firsthandlerarg, uint64_t time,
+        uint32_t process, uint32_t origin, uint32_t target,
+        uint32_t communicator, uint32_t tag, uint64_t bytes,
+        uint32_t scltoken );
+
+int handleRMAGet( void* firsthandlerarg, uint64_t time, uint32_t process,
+        uint32_t origin, uint32_t target, uint32_t communicator, uint32_t tag,
+        uint64_t bytes, uint32_t scltoken);
+
+int handleRMAEnd( void* firsthandlerarg, uint64_t time, uint32_t process,
+        uint32_t remote, uint32_t communicator, uint32_t tag, uint32_t scltoken );
 
 
 /* *** Handlers for OTF snapshot records ****************************** */
@@ -183,6 +214,12 @@ int handleMessageSummary( void* firsthandlerarg,
 	uint32_t comm, uint32_t tag, uint64_t number_sent, uint64_t number_recvd,
 	uint64_t bytes_sent, uint64_t bytes_recved );
 
+int handleCollopSummary( void* firsthandlerarg,
+	uint64_t time, uint32_t process, uint32_t comm, uint32_t collective,
+	uint64_t number_sent, uint64_t number_recvd, uint64_t bytes_sent,
+	uint64_t bytes_recved );
+
+
 int handleFileOperationSummary( void* firsthandlerarg, uint64_t time, uint32_t fileid,
 	uint32_t process, uint64_t nopen, uint64_t nclose, uint64_t nread,
 	uint64_t nwrite, uint64_t nseek, uint64_t bytesread, uint64_t byteswrite );
@@ -192,6 +229,16 @@ int handleFileGroupOperationSummary( void* firsthandlerarg, uint64_t time,
 	uint64_t nread, uint64_t nwrite, uint64_t nseek, uint64_t bytesread,
 	uint64_t byteswrite );
 
+
+/* *** Marker handler *** ******************************************* */
+
+
+int handleDefMarker( void *userData, uint32_t stream, 
+	uint32_t token, const char* name, uint32_t type );
+
+int handleMarker( void *userData, uint64_t time,
+	uint32_t process, uint32_t token, const char* text );
+    
 
 /* *** Misc handlers *** ******************************************** */
 

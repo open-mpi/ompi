@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -195,6 +195,27 @@ int OTF_CopyHandler_CollectiveOperation( void* userData, uint64_t time,
 }
 
 
+int OTF_CopyHandler_BeginCollectiveOperation( void* userData, uint64_t time,
+		uint32_t process, uint32_t collOp, uint64_t matchingId,
+		uint32_t procGroup, uint32_t rootProc, uint64_t sent,
+		uint64_t received, uint32_t scltoken )
+{
+	return (0 == OTF_Writer_writeBeginCollectiveOperation(
+			(OTF_Writer*) userData, time, process, collOp,
+			matchingId, procGroup, rootProc, sent, received,
+			scltoken )) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+}
+
+
+int OTF_CopyHandler_EndCollectiveOperation( void* userData, uint64_t time,
+		uint32_t process, uint64_t matchingId )
+{
+	return (0 == OTF_Writer_writeEndCollectiveOperation(
+			(OTF_Writer*) userData, time, process,
+			matchingId )) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+}
+
+
 int OTF_CopyHandler_RecvMsg( void* userData, uint64_t time, 
 		uint32_t receiver, uint32_t sender, uint32_t communicator, 
 		uint32_t msgtype, uint32_t msglength, uint32_t scltoken ) {
@@ -250,6 +271,68 @@ int OTF_CopyHandler_FileOperation( void* userData, uint64_t time, uint32_t filei
 	return ( 0 == OTF_Writer_writeFileOperation( (OTF_Writer*)userData, time, fileid,
 		process, handleid, operation, bytes, duration, source )
 		 ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+}
+
+
+int OTF_CopyHandler_BeginFileOperation( void* userData, uint64_t time,
+		uint32_t process, uint64_t handleid, uint32_t scltoken )
+{
+	return (0 == OTF_Writer_writeBeginFileOperation(
+			(OTF_Writer*) userData, time, process, handleid,
+			scltoken )) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+}
+
+
+int OTF_CopyHandler_EndFileOperation( void* userData, uint64_t time,
+		uint32_t process, uint32_t fileid, uint64_t handleid,
+		uint32_t operation, uint64_t bytes, uint32_t scltoken )
+{
+	return (0 == OTF_Writer_writeEndFileOperation( (OTF_Writer*) userData,
+			time, process, fileid, handleid, operation, bytes,
+			scltoken )) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+}
+
+
+int OTF_CopyHandler_RMAPut( void* userData, uint64_t time, uint32_t process,
+        uint32_t origin, uint32_t target, uint32_t communicator, uint32_t tag,
+        uint64_t bytes, uint32_t scltoken ) {
+
+
+        return ( 0 == OTF_Writer_writeRMAPut( (OTF_Writer*)userData, time,
+                process, origin, target, communicator, tag, bytes, scltoken )
+                 ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+}
+
+
+int OTF_CopyHandler_RMAPutRemoteEnd( void* userData, uint64_t time,
+        uint32_t process, uint32_t origin, uint32_t target, uint32_t communicator,
+        uint32_t tag, uint64_t bytes, uint32_t scltoken ) {
+
+
+        return ( 0 == OTF_Writer_writeRMAPutRemoteEnd( (OTF_Writer*)userData,
+                time, process, origin, target, communicator, tag, bytes, scltoken )
+                 ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+}
+
+
+int OTF_CopyHandler_RMAGet( void* userData, uint64_t time, uint32_t process,
+        uint32_t origin, uint32_t target, uint32_t communicator, uint32_t tag,
+        uint64_t bytes, uint32_t scltoken) {
+
+
+        return ( 0 == OTF_Writer_writeRMAGet( (OTF_Writer*)userData, time,
+                process, origin, target, communicator, tag, bytes, scltoken )
+                 ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+}
+
+
+int OTF_CopyHandler_RMAEnd( void* userData, uint64_t time, uint32_t process,
+        uint32_t remote, uint32_t communicator, uint32_t tag, uint32_t scltoken ) {
+
+
+        return ( 0 == OTF_Writer_writeRMAEnd( (OTF_Writer*)userData, time,
+                process, remote, communicator, tag, scltoken )
+                 ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
 }
 
 
@@ -340,6 +423,16 @@ int OTF_CopyHandler_MessageSummary( void* userData, uint64_t time,
 }
 
 
+int OTF_CopyHandler_CollopSummary( void *userData, uint64_t time,
+	uint32_t process, uint32_t comm, uint32_t collective, uint64_t sentNumber,
+	uint64_t receivedNumber, uint64_t sentBytes, uint64_t receivedBytes ) {
+
+	return ( 0 == OTF_Writer_writeCollopSummary((OTF_Writer*) userData,
+		time, process, comm, collective, sentNumber, receivedNumber, sentBytes,
+		receivedBytes ) ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+}
+
+
 int OTF_CopyHandler_FileOperationSummary( void* userData, uint64_t time,
 	uint32_t fileid, uint32_t process, uint64_t nopen, uint64_t nclose,
 	uint64_t nread, uint64_t nwrite, uint64_t nseek, uint64_t bytesread,
@@ -358,7 +451,29 @@ int OTF_CopyHandler_FileGroupOperationSummary( void* userData, uint64_t time,
 	uint64_t byteswrite ) {
 
 
-	return ( 0 == OTF_Writer_writeFileOperationSummary( (OTF_Writer*) userData,
+	return ( 0 == OTF_Writer_writeFileGroupOperationSummary( (OTF_Writer*) userData,
 		time, groupid, process, nopen, nclose, nread, nwrite, nseek,
 		bytesread, byteswrite ) ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+}
+
+
+int OTF_CopyHandler_DefMarker( void *userData, uint32_t stream,
+	uint32_t token, const char* name, uint32_t type ) {
+
+
+	/* even if marker definitions could be read from many streams, they are 
+	written to stream 0 forcedly, because this is where all markers belong. */
+	stream= 0;
+
+	return ( 0 == OTF_Writer_writeDefMarker( (OTF_Writer*) userData,
+		stream, token, name, type ) ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;;
+}
+
+
+int OTF_CopyHandler_Marker( void *userData, uint64_t time,
+	uint32_t process, uint32_t token, const char* text ) {
+
+
+	return ( 0 == OTF_Writer_writeMarker( (OTF_Writer*) userData,
+		time, process, token, text ) ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
 }

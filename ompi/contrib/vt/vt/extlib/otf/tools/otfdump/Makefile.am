@@ -6,10 +6,7 @@ bin_PROGRAMS = \
 endif
 
 otfdump_LDADD = $(top_builddir)/otflib/libotf.la
-if ! AMDEPZLIB
-otfdump_LDADD += $(ZLIB_LIB_LINE)
-endif
-
+otfdump_DEPENDENCIES = $(otfdump_LDADD)
 otfdump_SOURCES = \
 	Makefile.am \
 	Handler.h \

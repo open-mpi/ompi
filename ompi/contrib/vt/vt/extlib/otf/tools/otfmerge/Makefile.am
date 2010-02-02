@@ -6,10 +6,7 @@ bin_PROGRAMS = \
 endif
 
 otfmerge_LDADD = $(top_builddir)/otflib/libotf.la
-if ! AMDEPZLIB
-otfmerge_LDADD += $(ZLIB_LIB_LINE)
-endif
-
+otfmerge_DEPENDENCIES = $(otfmerge_LDADD)
 otfmerge_SOURCES = \
 	handler.h \
 	hash.h \

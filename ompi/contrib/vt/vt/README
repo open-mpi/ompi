@@ -8,3 +8,5 @@ VampirTrace version is available as open source software under the BSD license, 
 
 For instructions on how use VampirTrace to instrument application programs so that they produce an OTF event trace when executed, see 'doc/UserManual.pdf'.
 
+Please, report bugs, wishes, and suggestions to
+<vampirsupport@zih.tu-dresden.de>.

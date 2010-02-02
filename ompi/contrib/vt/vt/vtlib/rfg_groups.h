@@ -14,9 +14,6 @@ int RFG_Groups_free( RFG_Groups* groups );
 /* sets group definition file name */
 int RFG_Groups_setDefFile( RFG_Groups* groups, const char* deffile );
 
-/* sets default group name */
-int RFG_Groups_setDefaultGroup( RFG_Groups* groups, const char* name );
-
 /* reads group definition file */
 int RFG_Groups_readDefFile( RFG_Groups* groups );
 

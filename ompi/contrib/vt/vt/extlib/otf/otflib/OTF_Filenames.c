@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -38,6 +38,9 @@
 #define OTF_FILENAMESUFFIX_EVENTS	"events"
 #define OTF_FILENAMESUFFIX_SNAPS	"snaps"
 #define OTF_FILENAMESUFFIX_STATS	"stats"
+#define OTF_FILENAMESUFFIX_MARKER	"marker"
+
+#include "OTF_Errno.h"
 
 
 char* OTF_getFilename( const char* namestub, uint32_t id, OTF_FileType type,
@@ -89,8 +92,15 @@ char* OTF_getFilename( const char* namestub, uint32_t id, OTF_FileType type,
 			((type&OTF_FILECOMPRESSION_BITS) > 0 && (type&OTF_FILECOMPRESSION_BITS) <= 9 ) ? ".z" : "" );
 		break;
 
+	case OTF_FILETYPE_MARKER:
+
+		snprintf( ret, l, "%s.%x.%s%s", namestub, id, OTF_FILENAMESUFFIX_MARKER,
+			((type&OTF_FILECOMPRESSION_BITS) > 0 && (type&OTF_FILECOMPRESSION_BITS) <= 9 ) ? ".z" : "" );
+		break;
+
 	default:
 		free(ret);
+		ret = NULL;
 		return NULL;
 	}
 
@@ -107,25 +117,27 @@ char* OTF_stripFilename( const char* filename ) {
 
 	if( NULL == p ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"no memory left.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif /* OTF_VERBOSE */
 
 		return NULL;
 	}
 
-	while ( '\0' != *p ) {
-	
-		p++;
+	/* find last '.' and compare remainder with OTF_FILENAMESUFFIX_MAIN */
+	p= strrchr( ret, '.' );
+	if ( NULL != p && 0 == strcmp( p + 1, OTF_FILENAMESUFFIX_MAIN ) ) {
+		*p= '\0';
 	}
 
-	p -= 4;
+	/* fail if the resulting filename is empty */
+	if ( '\0' == *ret ) {
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				"empty filename base.\n",
+				__FUNCTION__, __FILE__, __LINE__ );
 
-	if ( 0 == strcmp( p, "."OTF_FILENAMESUFFIX_MAIN ) ) {
-	
-		*p= '\0';
+		free( ret );
+		return NULL;
 	}
 
 	return ret;

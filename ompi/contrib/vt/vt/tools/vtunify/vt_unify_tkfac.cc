@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -10,9 +10,8 @@
  * See the file COPYING in the package base directory for details
  **/
 
+#include "vt_unify.h"
 #include "vt_unify_tkfac.h"
-
-#include "vt_inttypes.h"
 
 #include <map>
 #include <string>
@@ -78,6 +77,156 @@ TokenFactory::translateLocalToken( uint32_t mCpuId, uint32_t localToken )
 
    return 0;
 }
+
+#ifdef VT_MPI
+
+VT_MPI_INT
+TokenFactory::getPackSize()
+{
+   VT_MPI_INT buffer_size;
+
+   // m_mapLocGlobToken.size()
+   VTUnify_MPI_Pack_size( 1, VTUnify_MPI_UNSIGNED,
+                          VTUnify_MPI_COMM_WORLD,
+                          &buffer_size );
+
+   if( m_mapLocGlobToken.size() > 0 )
+   {
+      VT_MPI_INT size;
+
+      std::map<uint32_t, std::map<uint32_t, uint32_t>* >::iterator it_cpu;
+      for( it_cpu = m_mapLocGlobToken.begin(); it_cpu != m_mapLocGlobToken.end();
+         it_cpu++ )
+      {
+         // m_mapLocGlobToken[].first, m_mapLocGlobToken[].second.size()
+         VTUnify_MPI_Pack_size( 2, VTUnify_MPI_UNSIGNED,
+                                VTUnify_MPI_COMM_WORLD, &size );
+         buffer_size += size;
+
+         if( it_cpu->second && it_cpu->second->size() > 0 )
+         {
+            // m_mapLocGlobToken[]
+            VTUnify_MPI_Pack_size( (VT_MPI_INT)it_cpu->second->size() * 2,
+                                   VTUnify_MPI_UNSIGNED,
+                                   VTUnify_MPI_COMM_WORLD, &size );
+            buffer_size += size;
+         }
+      }
+   }
+
+   return buffer_size;
+}
+
+void
+TokenFactory::packTranslations( char * buffer, VT_MPI_INT bufferSize,
+                                VT_MPI_INT * position )
+{
+   // m_mapLocGlobToken.size()
+   uint32_t cpu_map_size = m_mapLocGlobToken.size();
+   VTUnify_MPI_Pack( &cpu_map_size, 1, VTUnify_MPI_UNSIGNED,
+                      buffer, bufferSize, position, VTUnify_MPI_COMM_WORLD );
+
+   // m_mapLocGlobToken
+   //
+   if( cpu_map_size > 0 )
+   {
+      std::map<uint32_t, std::map<uint32_t, uint32_t>* >::iterator it_cpu;
+      for( it_cpu = m_mapLocGlobToken.begin(); it_cpu != m_mapLocGlobToken.end();
+           it_cpu++ )
+      {
+         // m_mapLocGlobToken[].first
+         uint32_t cpu_id = it_cpu->first;
+         VTUnify_MPI_Pack( &cpu_id, 1, VTUnify_MPI_UNSIGNED,
+                           buffer, bufferSize, position,
+                           VTUnify_MPI_COMM_WORLD );
+
+         // m_mapLocGlobToken[].second.size()
+         uint32_t token_map_size = (it_cpu->second) ? it_cpu->second->size() : 0;
+         VTUnify_MPI_Pack( &token_map_size, 1, VTUnify_MPI_UNSIGNED,
+                           buffer, bufferSize, position,
+                           VTUnify_MPI_COMM_WORLD );
+
+         // m_mapLocGlobToken[].second
+         //
+         if( token_map_size > 0 )
+         {
+            uint32_t * token_map_firsts = new uint32_t[token_map_size];
+            uint32_t * token_map_seconds = new uint32_t[token_map_size];
+            std::map<uint32_t, uint32_t>::iterator it_token;
+            uint32_t i;
+
+            for( it_token = it_cpu->second->begin(), i = 0;
+                 it_token != it_cpu->second->end(), i < token_map_size;
+                 it_token++, i++ )
+            {
+               token_map_firsts[i] = it_token->first;
+               token_map_seconds[i] = it_token->second;
+            }
+
+            VTUnify_MPI_Pack( token_map_firsts, (VT_MPI_INT)token_map_size,
+                              VTUnify_MPI_UNSIGNED, buffer, bufferSize,
+                              position, VTUnify_MPI_COMM_WORLD );
+            VTUnify_MPI_Pack( token_map_seconds, (VT_MPI_INT)token_map_size,
+                              VTUnify_MPI_UNSIGNED, buffer, bufferSize,
+                              position, VTUnify_MPI_COMM_WORLD );
+
+            delete [] token_map_firsts;
+            delete [] token_map_seconds;
+         }
+      }
+   }
+}
+
+void
+TokenFactory::unpackTranslations( char * buffer, VT_MPI_INT bufferSize,
+                                  VT_MPI_INT * position )
+{
+   // m_mapLocGlobToken.size()
+   uint32_t cpu_map_size;
+   VTUnify_MPI_Unpack( buffer, bufferSize, position, &cpu_map_size, 1,
+                       VTUnify_MPI_UNSIGNED, VTUnify_MPI_COMM_WORLD );
+
+   // m_mapLocGlobToken
+   //
+   if( cpu_map_size > 0 )
+   {
+      for( uint32_t i = 0; i < cpu_map_size; i++ )
+      {
+         // m_mapLocGlobToken[].first
+         uint32_t cpu_id;
+         VTUnify_MPI_Unpack( buffer, bufferSize, position, &cpu_id, 1,
+                             VTUnify_MPI_UNSIGNED, VTUnify_MPI_COMM_WORLD );
+
+         // m_mapLocGlobToken[].second.size()
+         uint32_t token_map_size;
+         VTUnify_MPI_Unpack( buffer, bufferSize, position, &token_map_size, 1,
+                             VTUnify_MPI_UNSIGNED, VTUnify_MPI_COMM_WORLD );
+
+         // m_mapLocGlobToken[].second
+         //
+         if( token_map_size > 0 )
+         {
+            uint32_t * token_map_firsts = new uint32_t[token_map_size];
+            uint32_t * token_map_seconds = new uint32_t[token_map_size];
+
+            VTUnify_MPI_Unpack( buffer, bufferSize, position,
+                                token_map_firsts, (VT_MPI_INT)token_map_size,
+                                VTUnify_MPI_UNSIGNED, VTUnify_MPI_COMM_WORLD );
+            VTUnify_MPI_Unpack( buffer, bufferSize, position,
+                                token_map_seconds, (VT_MPI_INT)token_map_size,
+                                VTUnify_MPI_UNSIGNED, VTUnify_MPI_COMM_WORLD );
+
+            for( uint32_t j = 0; j < token_map_size; j++ )
+               setTranslation( cpu_id, token_map_firsts[j], token_map_seconds[j] );
+
+            delete [] token_map_firsts;
+            delete [] token_map_seconds;
+         }
+      }
+   }
+}
+
+#endif // VT_MPI
 
 //
 // TokenFactory_DefSclFile
@@ -414,6 +563,42 @@ TokenFactory_DefProcessGroup::createGlobalToken( uint32_t mCpuId, uint32_t local
    defprocessgroup.members = vecMembers;
 
    m_vecDefProcessGroup.push_back( defprocessgroup );
+
+   setTranslation( mCpuId, localToken, global_token );
+
+   return global_token;
+}
+
+//
+// TokenFactory_DefMarker
+//
+
+uint32_t
+TokenFactory_DefMarker::getGlobalToken( std::string name, uint32_t type )
+{
+   std::vector<DefMarker_struct>::iterator it =
+      std::find_if( m_vecDefMarker.begin(), m_vecDefMarker.end(),
+		    DefMarker_eq( name, type ) );
+	       
+   if( it != m_vecDefMarker.end() )
+      return it->global_token;
+   else
+      return 0;
+}
+
+uint32_t
+TokenFactory_DefMarker::createGlobalToken( uint32_t mCpuId, uint32_t localToken,
+					   std::string name, uint32_t type )
+{
+   uint32_t global_token = m_SeqToken++;
+
+   DefMarker_struct defmarker;
+
+   defmarker.global_token = global_token;
+   defmarker.name = name;
+   defmarker.type = type;
+
+   m_vecDefMarker.push_back( defmarker );
 
    setTranslation( mCpuId, localToken, global_token );
 

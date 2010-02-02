@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -59,6 +59,16 @@ void ProcessState::leaveFunction( uint64_t time, uint32_t token ) {
 	}
 }
 
+void ProcessState::collOperation( uint64_t time, uint32_t col, uint32_t type, uint32_t numSent,
+	uint32_t numRecv, uint32_t bytesSent, uint32_t bytesRecv ) {
+	
+	CollOps.numSent[type] += numSent;
+	CollOps.numRecv[type] += numRecv;
+	CollOps.bytesSent[type] += bytesSent;
+	CollOps.bytesRecv[type] += bytesRecv;
+	CollOps.Type2Col[type] = col;
+}
+
 
 void ProcessState::sendMessage( uint64_t time, uint32_t receiver,
 	uint32_t procGroup, uint32_t tag, uint32_t msglength, uint32_t source ) {
@@ -103,15 +113,15 @@ int ProcessState::openFile( uint64_t time, uint32_t fileid, uint64_t handleid,
 	uint32_t source ) {
 
 
-	std::map<uint64_t, OpenFile>::iterator it;
+	std::map<uint64_t, FileOpen>::iterator it;
 
 	it= openfiles.find( handleid );
 
 	if( it == openfiles.end() ) {
 
 		/* insert the file into the list of opened files */
-		openfiles.insert( pair<uint64_t,OpenFile>( handleid,
-			OpenFile( time, fileid, source ) ) );
+		openfiles.insert( pair<uint64_t,FileOpen>( handleid,
+			FileOpen( time, fileid, source ) ) );
 
 		
 		/* make the statistics */
@@ -151,7 +161,7 @@ int ProcessState::closeFile( uint64_t handleid ) {
 
 
 	uint32_t ret;
-	map<uint64_t/*handleid*/, OpenFile>::iterator it;
+	map<uint64_t/*handleid*/, FileOpen>::iterator it;
 
 	it= openfiles.find( handleid );
 	
@@ -312,8 +322,8 @@ void ProcessState::printOpenFiles( uint32_t processid ) const {
 
 	cerr << "  opened files on process " << processid << endl;
 
-	map<uint64_t/*handleid*/, OpenFile>::const_iterator it;
-	map<uint64_t/*handleid*/, OpenFile>::const_iterator itend= openfiles.end();
+	map<uint64_t/*handleid*/, FileOpen>::const_iterator it;
+	map<uint64_t/*handleid*/, FileOpen>::const_iterator itend= openfiles.end();
 
 
 	for( it= openfiles.begin(); it != itend; ++it ) {
@@ -613,6 +623,13 @@ void ProcessState::writeStatistics( OTF_Writer* writer, uint64_t time,
 			sstatistics.bytes_sent, sstatistics.bytes_recvd );
 	}
 
+	/* write the collop summary */
+	map<uint32_t,uint32_t>::iterator Iter;
+
+	for(Iter=CollOps.Type2Col.begin(); Iter!=CollOps.Type2Col.end(); ++Iter) {
+	     OTF_Writer_writeCollopSummary(writer,time,processid,0,Iter->second,CollOps.numSent[Iter->first],
+                 CollOps.numRecv[Iter->first],CollOps.bytesSent[Iter->first],CollOps.bytesRecv[Iter->first]);
+	}
 
 	/* write file operation statistics */
 	map<uint32_t,FileOperationStatistics>::const_iterator itfo;
@@ -726,8 +743,8 @@ void ProcessState::writeOpenFiles( OTF_Writer* writer, uint64_t time,
 	*/
 
 
-	map<uint64_t, OpenFile>::const_iterator it;
-	map<uint64_t, OpenFile>::const_iterator itend= openfiles.end();
+	map<uint64_t, FileOpen>::const_iterator it;
+	map<uint64_t, FileOpen>::const_iterator itend= openfiles.end();
 
 
 	for( it= openfiles.begin(); it != itend; ++it ) {
@@ -767,6 +784,10 @@ void State::defFile( uint32_t fileid, uint32_t group ) {
 	filegroups[fileid]= group;
 }
 
+void State::defCollOp( uint32_t col, uint32_t type) {
+
+	Col2Type[col] = type;
+}
 
 void State::enterFunction( uint64_t time, uint32_t processid, uint32_t token ) {
 
@@ -808,6 +829,43 @@ void State::recvMessage( uint32_t sender, uint32_t receiver, uint32_t procGroup,
 
 		processes[ sender ].matchMessage( receiver, procGroup, tag  );
 	}
+}
+
+
+void State::collOperation( uint64_t time, uint32_t proc, uint32_t root,	uint32_t col,
+	uint32_t bytesSent, uint32_t bytesRecv ) {
+
+	uint32_t invoc_sent = 0;
+  	uint32_t invoc_recv = 0;
+
+	switch (Col2Type[col])
+  	{
+    	  case OTF_COLLECTIVE_TYPE_ALL2ONE:
+	    if(proc == root) {
+	      invoc_sent = 1;
+	      invoc_recv = 1;
+	    } else {
+ 	      invoc_sent = 1;
+	    }
+	    break;
+          case OTF_COLLECTIVE_TYPE_ONE2ALL:
+	    if(proc == root) {
+	      invoc_sent = 1;
+	      invoc_recv = 1;
+	    } else {
+ 	      invoc_recv = 1;
+	    }
+            break;
+          case OTF_COLLECTIVE_TYPE_ALL2ALL:
+	    invoc_sent = 1;
+	    invoc_recv = 1;
+            break;
+    	  case OTF_COLLECTIVE_TYPE_BARRIER:
+	    invoc_sent = 1;
+	    break;
+ 	}	
+	
+	processes[proc].collOperation( time, col, Col2Type[col], invoc_sent, invoc_recv, bytesSent, bytesRecv );
 }
 
 

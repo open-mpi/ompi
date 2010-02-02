@@ -20,8 +20,12 @@ How to install and configure VampirTrace
 
     However, for more details, read also the following instructions. Sometimes
     it might be necessary to provide ./configure with options, e.g.
-    specifications of paths or compilers. Consult the CONFIG-EXAMPLES file to
-    get an idea of how to configure VampirTrace for your platform.
+    specifications of paths or compilers.
+
+    VampirTrace comes with example programs written in C, C++, and Fortran.
+    They can be used to test different instrumentation types of the
+    VampirTrace installation.
+    You can find them in the directory examples of the VampirTrace package.
 
 
   Configure Options
@@ -50,39 +54,123 @@ How to install and configure VampirTrace
 
     * Optional Features
 
-      --enable-compinst=COMPINSTLIST
-                              enable support for compiler instrumentation
-                              (gnu,intel,pgi,phat,xl,ftrace), default:
-                              automatically by configure
-                              NOTE: the first item in list is the default 
-                              instrumentation type for the compiler-wrapper
+      --enable-compinst=LIST
+                              enable support for compiler instrumentation,
+                              (gnu,intel,pathscale,pgi,sun,xl,ftrace,openuh)
+                              A VampirTrace installation can handle different
+                              compilers. The first item in the list is the
+                              run-time default.
+                              default: automatically by configure
 
-      --enable-mpi            enable MPI support, default: enable if
-                              Open MPI found by configure
+      --enable-dyninst
+                              enable support for Dyninst instrumentation,
+                              default: enable if found by configure
+                              Note: Requires Dyninst version 5.1 or higher!
 
-      --enable-omp            enable OpenMP support, default: enable if given
-                              compiler supports OpenMP
+      --enable-dyninst-attlib
+                              build shared library which attaches Dyninst to 
+                              the running application, default: enable if
+                              Dyninst found by configure and system supports
+                              shared libraries
 
-      --enable-hyb            enable Hybrid (MPI/OpenMP) support, default:
-                              enable if MPI-installation found and given
-                              compiler supports OpenMP
+      --enable-iotrace
+                              enable LIBC's I/O tracing support, default: enable
+                              if libdl found by configure
 
-      --enable-dyninst        enable support for binary-instrumentation using
-                              Dyninst, default: enable if found by configure
-                              Note: needs Dyninst version 5.0.1 or higher !
-                              (downloadable at http://www.dyninst.org)
+      --enable-libctrace
+                              enable tracing support for several LIBC functions,
+                              default: enable if libdl found by configure
 
-      --enable-dyninst-attlib build shared library which attach dyninst to running
-                              user's application, default: enable if dyninst found
-                              by configure and system supports shared libraries
+      --enable-memtrace
+                              enable memory tracing support, default: enable if
+                              found by configure
 
-      --enable-papi           enable PAPI hardware counter support, default:
+      --enable-cpuidtrace
+                              enable CPU ID tracing support, default: enable if
+                              found by configure
+
+      --enable-rutrace
+                              enable resource usage tracing support, default:
                               enable if found by configure
+
+
+      --enable-metrics=TYPE
+                              enable support for hardware performance counter
+                              (papi,cpc,necsx), default: automatically by
+                              configure
+
+      --enable-zlib
+                              enable ZLIB trace compression support, default:
+                              enable if found by configure
+
+      --enable-mpi
+                              enable MPI support, default: enable if
+                              MPI found by configure
+
+      --enable-fmpi-lib
+                              build the MPI Fortran support library, in case your 
+                              system does not have a MPI Fortran library.
+                              default: enable if no MPI Fortran library 
+                              found by configure
+
+      --enable-fmpi-handle-convert
+                              do convert MPI handles, default: enable if MPI
+                              conversion functions found by configure
+
+      --enable-mpi2-thread
+                              enable MPI-2 Thread support, default: enable if
+                              found by configure
+
+      --enable-mpi2-1sided
+                              enable MPI-2 One-Sided Communication support,
+                              default: enable if found by configure
+
+      --enable-mpi2-extcoll
+                              enable MPI-2 Extended Collective Operation support,
+                              default: enable if found by configure
+
+      --enable-mpi2-io
+                              enable MPI-2 I/O support, default: enable if found
+                              by configure
+
+      --enable-mpicheck
+                              enable support for Universal MPI Correctness
+                              Interface (UniMCI), default: enable if
+                              unimci-config found by configure
+
+      --enable-etimesync
+                              enable enhanced timer synchronization support,
+                              default: enable if C-LAPACK found by configure
+
+      --enable-threads=LIST
+                              enable support for threads (pthread, omp), default:
+                              automatically by configure
+
+      --enable-java
+                              enable Java support, default: enable if JVMTI
+                              found by configure
 
 
     * Important Optional Packages
 
-      --with-local-tmp-dir=LTMPDIR
+      This a summary of the most important optional features. For a full list
+      of all available features run `./configure --help'.
+
+      --with-platform=PLATFORM
+                              configure for given platform
+                              (altix,bgl,bgp,crayt3e,crayx1,crayxt,ibm,linux,
+                               macos,necsx,origin,sicortex,sun,generic),
+                              default: automatically by configure
+
+      --with-bitmode=<32|64>
+                              specify bit mode
+
+      --with-options=FILE
+                              load options from FILE, default: configure
+                              searches for a config file in config/defaults
+                              based on given platform and bitmode
+
+      --with-local-tmp-dir=DIR
                               give the path for node-local temporary directory,
                               default: /tmp
 
@@ -90,15 +178,18 @@ How to install and configure VampirTrace
         temporary trace files.
 
       If you would like to use an external version of OTF library, set
-      --with-extern-otf       use external OTF library, default: not set
+      --with-extern-otf
+                              use external OTF library, default: not seta
+
       --with-extern-otf-dir=OTFDIR
                               give the path for OTF, default: /usr
 
-      --with-otf-extra-opts=OTFEXTRAOPTS
-                              extra options for OTF configuration
+      --with-otf-flags=FLAGS
+                              pass FLAGS to the OTF distribution configuration
                               (only for internal OTF version)
 
-      --with-otf-lib=OTFLIB   use given otf lib, default: -lotf -lz
+      --with-otf-lib=OTFLIB
+                              use given otf lib, default: -lotf -lz
 
         If used OTF library was built without zlib support, then it will do
         to set OTFLIB to '-lotf'.
@@ -109,11 +200,15 @@ How to install and configure VampirTrace
       --with-papi-dir=PAPIDIR
                               give the path for PAPI, default: /usr
 
+      --with-cpc-dir=CPCDIR
+                              give the path for CPC, default: /usr
+
       If you don't have specified the environment variable MPICC
       (MPI compiler command), use following options to set location
       of your MPI installation:
 
-      --with-mpi-dir=MPIDIR   give the path for MPI, default: /usr
+      --with-mpi-dir=MPIDIR
+                              give the path for MPI, default: /usr
 
       --with-mpi-inc-dir=MPIINCDIR
                               give the path for MPI-include-files, default:
@@ -123,9 +218,113 @@ How to install and configure VampirTrace
                               give the path for MPI-libraries, default:
                               MPIDIR/lib
 
-      --with-mpi-lib=MPILIB   use given mpi lib
+      --with-mpi-lib
+                              use given mpi lib
 
-      --with-pmpi-lib=PMPILIB use given pmpi lib, default MPILIB
+      --with-pmpi-lib
+                              use given pmpi lib
+
+      If your system does not have a MPI Fortran library,
+      set '--enable-fmpi-lib' (see above), otherwise set
+
+      --with-fmpi-lib
+                              use given fmpi lib
+
+      Use the following options to specify your MPI-implementation
+
+      --with-hpmpi            set MPI-libs for HP MPI
+
+      --with-intelmpi         set MPI-libs for Intel MPI
+
+      --with-intelmpi2        set MPI-libs for Intel MPI2
+
+      --with-lam              set MPI-libs for LAM/MPI
+       
+      --with-mpibgl           set MPI-libs for IBM BG/L
+
+      --with-mpibgp           set MPI-libs for IBM BG/P 
+
+      --with-mpich            set MPI-libs for MPICH
+
+      --with-mpich2           set MPI-libs for MPICH2
+
+      --with-mvapich          set MPI-libs for MVAPICH
+
+      --with-mvapich2         set MPI-libs for MVAPICH2
+
+      --with-mpisx            set MPI-libs for NEC MPI/SX
+
+      --with-mpisx-ew         set MPI-libs for NEC MPI/SX with 
+                              8 Byte Fortran Integer 
+
+      --with-openmpi          set MPI-libs for Open MPI
+
+      --with-sgimpt           set MPI-libs for SGI MPT
+
+      --with-sunmpi           set MPI-libs for SUN MPI
+
+      --with-sunmpi-mt        set MPI-libs for SUN MPI-MT 
+
+      To enable enhanced timer synchronization a LAPACK library with C wrapper
+      support is needed:
+
+      --with-clapack-dir=LAPACKDIR
+                              set the path for CLAPACK,
+                              default: /usr
+
+      --with-clapack-lib
+                              set CLAPACK-libs, default: 
+                              -lclapack -lcblas -lf2c
+
+      --with-clapack-acml     set CLAPACK-libs for ACML
+
+      --with-clapack-essl     set CLAPACK-libs for ESSL
+
+      --with-clapack-mkl      set CLAPACK-libs for MKL
+
+      --with-clapack-sunperf  set CLAPACK-libs for SUN Performance Library 
+
+      To enable Java support the JVM Tool Interface (JVMTI) version 1.0 or
+      higher is needed:
+
+      --with-jvmti-dir=JVMTIDIR
+                              give the path for JVMTI, default: JAVA_HOME
+
+      --with-jvmti-inc-dir=JVMTIINCDIR
+                              give the path for JVMTI-include files, default:
+                              JVMTI/include
+
+
+  Cross Compilation
+  -----------------
+
+    Building VampirTrace on cross compilation platforms needs some special attention.
+    The compiler wrappers and OPARI are built for the front-end (build system) whereas
+    the VampirTrace libraries, vtdyn, vtunify, and vtfilter are built for the back-end
+    (host system). Some configure options which are of interest for cross compilation
+    are shown below:
+
+      * Set CC, CXX, F77, and FC to the cross compilers installed on the front-end.
+
+      * Set CXX_FOR_BUILD to the native compiler of the front-end
+        (used to compile compiler wrappers and OPARI only).
+
+      * Set --host= to the output of config.guess on the back-end.
+
+      * Set --with-cross-prefix= to a prefix which will be prepended to the executables
+        of the compiler wrappers and OPARI (default: cross-)
+
+      * Maybe you also need to set additional commands and flags for the back-end
+        (e.g. RANLIB, AR, MPICC, CXXFLAGS).
+
+    For example, this configure command line works for an NEC SX6 system with an X86_64
+    based front-end:
+
+      ./configure CC=sxcc CXX=sxc++ F77=sxf90 FC=sxf90 MPICC=sxmpicc
+          AR=sxar RANLIB="sxar st" CXX_FOR_BUILD=c++
+          --host=sx6-nec-superux14.1
+           --with-cross-prefix=sx
+           --with-otf-lib=-lotf
 
 
   Set up the Environment
@@ -149,25 +348,14 @@ How to install and configure VampirTrace
   Notes for Developers
   --------------------
 
-    * Building
+    * Build from CVS
     
       If you have checked out a DEVELOPER'S COPY of VampirTrace (i.e. you
       checked out from CVS), you should first run:
 
-           $ ./bootstrap
+           $ ./bootstrap [--otf-package <package>] [--version <version>]
 
-      (Note that GNU Autoconf 2.53 or higher is required.)
-
-
-    * Creating a distribution tarball (VampirTrace-X.X.X.tar.gz)
-
-      If you would like create a new distribution tarball, run:
-
-           $ ./makedist <version> <otftarball>
-
-      instead of 'make dist'.
-
-      The script 'makedist' adapts the version number (<version>) in
-      configure.in and extracts given OTF-tarball (<otftarball>) in 
-      ./extlib/otf.
+      Note that GNU Autoconf >= 2.60 and GNU Automake >= 1.9.6 is required.
+      You can download them from http://www.gnu.org/software/autoconf and
+      http://www.gnu.org/software/automake.
 

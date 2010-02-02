@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -102,7 +102,9 @@ int main ( int argc, const char** argv ) {
 	bool listonly= false;
 
 	bool doSnapshots= true;
-    bool doStatistics= true;
+    	bool doStatistics= true;
+
+	uint64_t read;
 
 	/* has something been set? 1= n, 2= p, 4= t */
 	int npt= 0;
@@ -415,6 +417,12 @@ int main ( int argc, const char** argv ) {
 	OTF_HandlerArray_setFirstHandlerArg( handlers, (void*) control,
 		OTF_DEFFILE_RECORD );
 
+	OTF_HandlerArray_setHandler( handlers,
+		(OTF_FunctionPointer*) handleDefCollectiveOperation,
+		OTF_DEFCOLLOP_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, (void*) control,
+		OTF_DEFCOLLOP_RECORD );
+
 	
 	OTF_HandlerArray_setHandler( handlers,
 		(OTF_FunctionPointer*) handleCounter,
@@ -478,8 +486,11 @@ int main ( int argc, const char** argv ) {
 	
 	
 	/* cout << "read " << read << " defs" << endl; */
-	OTF_Reader_readDefinitions( reader, handlers );
-
+	read = OTF_Reader_readDefinitions( reader, handlers );
+	if( read == OTF_READ_ERROR ) {
+		fprintf(stderr,"An error occurred while reading the tracefile. It seems to be damaged. Abort.\n");
+		return 1;
+	}
 
 	/** compute where to put snapshots */
 
@@ -490,7 +501,12 @@ int main ( int argc, const char** argv ) {
 	/* init read operation but do not start to read records yet. this ensures the
 	time interval of the trace is extracted */
 	OTF_Reader_setRecordLimit( reader, 0 );
-	OTF_Reader_readEvents( reader, handlers );
+	read = OTF_Reader_readEvents( reader, handlers );
+	if( read == OTF_READ_ERROR ) {
+		fprintf(stderr,"An error occurred while reading the tracefile. It seems to be damaged. Abort.\n");
+		return 1;
+	}
+
 	/* cout << "read " << read << " events" << endl; */
 	OTF_Reader_setRecordLimit( reader, OTF_READ_MAXRECORDS );
 
@@ -568,7 +584,12 @@ int main ( int argc, const char** argv ) {
 
 		OTF_Reader_setRecordLimit( reader, 100000 );
 
-		while ( 0 < OTF_Reader_readEvents( reader, handlers ) ) {
+		while ( 0 < ( read = OTF_Reader_readEvents( reader, handlers ) ) ) {
+
+			if( read == OTF_READ_ERROR ) {
+				fprintf(stderr,"An error occurred while reading the tracefile. It seems to be damaged. Abort. Abort.\n");
+				return 1;
+			}
 
 			OTF_Reader_eventProgress( reader, &min, &cur, &max );
 			fprintf( stdout, "    progress %4.1f %%\r%10s", 
@@ -581,7 +602,11 @@ int main ( int argc, const char** argv ) {
 
 	} else {
 
-		OTF_Reader_readEvents( reader, handlers );
+		read = OTF_Reader_readEvents( reader, handlers );
+		if( read == OTF_READ_ERROR ) {
+			fprintf(stderr,"An error occurred while reading the tracefile. It seems to be damaged. Abort.\n");
+			return 1;
+		}
 		/* cout << "read " << read << " events" << endl; */
 	}
 

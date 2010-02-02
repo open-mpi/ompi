@@ -17,8 +17,9 @@ int RFG_Filter_setDefFile( RFG_Filter* filter, const char* deffile );
 /* sets default call limit */
 int RFG_Filter_setDefaultCallLimit( RFG_Filter* filter, int32_t limit );
 
-/* reads filter definition file */
-int RFG_Filter_readDefFile( RFG_Filter* filter );
+/* reads region filter definition file
+   if rank != -1, read file with MPI-rank specific entries */
+int RFG_Filter_readDefFile( RFG_Filter* filter, int rank );
 
 /* adds filter assignment */
 int RFG_Filter_add( RFG_Filter* filter, const char* pattern,

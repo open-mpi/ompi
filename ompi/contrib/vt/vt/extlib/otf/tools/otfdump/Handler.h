@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -96,6 +96,14 @@ int handleCollectiveOperation( void* userData, uint64_t time,
 	uint32_t rootProc, uint32_t sent, uint32_t received, uint64_t duration, 
 	uint32_t source );
 
+int handleBeginCollectiveOperation( void* userData, uint64_t time,
+		uint32_t process, uint32_t collOp, uint64_t matchingId,
+		uint32_t procGroup, uint32_t rootprocess, uint32_t sent,
+		uint32_t received, uint32_t scltoken );
+
+int handleEndCollectiveOperation( void* userData, uint64_t time,
+		uint32_t process, uint64_t matchingId );
+
 int handleEventComment( void* userData, uint64_t time, uint32_t process,
 	const char* comment );
 
@@ -135,10 +143,54 @@ int handleMessageSummary( void* userData, uint64_t time, uint32_t process,
 	uint32_t peer, uint32_t comm, uint32_t type, uint64_t sentNumber,
 	uint64_t receivedNumber, uint64_t sentBytes, uint64_t receivedBytes );
 
+int handleCollopSummary( void* userData, uint64_t time, uint32_t process,
+	uint32_t comm, uint32_t collective, uint64_t sentNumber, uint64_t receivedNumber,
+	uint64_t sentBytes, uint64_t receivedBytes);
+
+int handleDefFile( void* userData, uint32_t stream,
+                   uint32_t token, const char *name,
+                   uint32_t group );
+
+int handleDefFileGroup( void* userData, uint32_t stream,
+                        uint32_t token, const char *name );
+
+int handleFileOperation( void* userData, uint64_t time,
+                         uint32_t fileid, uint32_t process,
+                         uint64_t handleid, uint32_t operation,
+                         uint64_t bytes, uint64_t duration,
+                         uint32_t source );
+
+int handleBeginFileOperation( void* userData, uint64_t time, uint32_t process,
+		uint64_t handleid, uint32_t scltoken );
+
+int handleEndFileOperation( void* userData, uint64_t time, uint32_t process,
+		uint32_t fileid, uint64_t handleid, uint32_t operation,
+		uint64_t bytes, uint32_t scltoken );
+
+int handleRMAPut( void* userData, uint64_t time, uint32_t process,
+        uint32_t origin, uint32_t target, uint32_t communicator, uint32_t tag,
+        uint64_t bytes, uint32_t scltoken );
+
+int handleRMAPutRemoteEnd( void* userData, uint64_t time,
+        uint32_t process, uint32_t origin, uint32_t target,
+        uint32_t communicator, uint32_t tag, uint64_t bytes,
+        uint32_t scltoken );
+
+int handleRMAGet( void* userData, uint64_t time, uint32_t process,
+        uint32_t origin, uint32_t target, uint32_t communicator, uint32_t tag,
+        uint64_t bytes, uint32_t scltoken);
+
+int handleRMAEnd( void* userData, uint64_t time, uint32_t process,
+        uint32_t remote, uint32_t communicator, uint32_t tag, uint32_t scltoken );
 
 int handleUnknown( void* fcb, uint64_t time, uint32_t process,
 	const char* record );
 
+
+int handleDefMarker( void *userData, uint32_t stream, uint32_t token, const char* name, uint32_t type );
+
+int handleMarker( void *userData, uint64_t time, uint32_t process,
+	uint32_t token, const char* text );
 
 
 #endif /* OTFTOVTF3_HANDLER_H */

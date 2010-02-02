@@ -1,7 +1,6 @@
 #include "config.h"
 
 #include "rfg_groups.h"
-#include "rfg_strmkrs.h"
 
 #include "vt_inttypes.h"
 
@@ -27,7 +26,6 @@ typedef struct RFG_GroupsAssign_struct
 struct RFG_Groups_struct
 {
   char* deffile;              /* name of group definition file */
-  char* default_group;        /* name of default group */
 
   uint32_t          nassigns; /* number of group assignments */
   RFG_GroupsAssign* assigns;  /* array of group assignments */
@@ -46,7 +44,6 @@ RFG_Groups* RFG_Groups_init()
   /* some initializes of data structure elements */
 
   ret->deffile = NULL;
-  ret->default_group = strdup( "Application" );
 
   ret->nassigns = 0;
   ret->assigns = NULL;
@@ -65,10 +62,6 @@ int RFG_Groups_free( RFG_Groups* groups )
 
   if( groups->deffile )
     free( groups->deffile );
-
-  /* free default group name */
-
-  free( groups->default_group );
 
   /* free array of group assignments */
 
@@ -103,22 +96,6 @@ int RFG_Groups_setDefFile( RFG_Groups* groups, const char* deffile )
   /* set new group definition file */
 
   groups->deffile = strdup( deffile );
-
-  return 1;
-}
-
-int RFG_Groups_setDefaultGroup( RFG_Groups* groups, const char* name )
-{
-  if( !groups ) return 0;
-
-  /* if a default group already set, then free this */
-
-  if( groups->default_group )
-    free( groups->default_group );
-
-  /* set new default group */
-
-  groups->default_group = strdup( name );
 
   return 1;
 }
@@ -162,7 +139,8 @@ int RFG_Groups_readDefFile( RFG_Groups* groups )
 
     /* remove newline */
 
-    chomp( orgline );
+    if( strlen(orgline) > 0 && orgline[strlen(orgline)-1] == '\n' )
+      orgline[strlen(orgline)-1] = '\0';
 
     /* copy line so that the original line keep alive */
 
@@ -176,7 +154,7 @@ int RFG_Groups_readDefFile( RFG_Groups* groups )
       continue;
     }
 
-    trim( line );
+    vt_strtrim( line );
 
     if( line[0] == '#' )
     {
@@ -204,7 +182,7 @@ int RFG_Groups_readDefFile( RFG_Groups* groups )
 
     *p = '\0';
     strcpy( group, line );
-    trim( group );
+    vt_strtrim( group );
 
     /* split remaining line at ';' to get pattern */
 
@@ -221,7 +199,7 @@ int RFG_Groups_readDefFile( RFG_Groups* groups )
 
       strcpy( pattern, p );
 
-      trim( pattern );
+      vt_strtrim( pattern );
 
       /* add group assignment */
 
@@ -333,9 +311,7 @@ int RFG_Groups_get( RFG_Groups* groups, const char* rname,
     }
   }
 
-  /* return default group name, if no matching pattern found */
-
-  *r_gname = groups->default_group;
+  *r_gname = NULL;
 
   return 1;
 }

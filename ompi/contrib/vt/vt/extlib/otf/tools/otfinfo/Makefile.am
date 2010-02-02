@@ -6,10 +6,7 @@ bin_PROGRAMS = \
 endif
 
 otfinfo_LDADD = $(top_builddir)/otflib/libotf.la
-if ! AMDEPZLIB
-otfinfo_LDADD += $(ZLIB_LIB_LINE)
-endif
-
+otfinfo_DEPENDENCIES = $(otfinfo_LDADD)
 otfinfo_SOURCES = \
 	handler.h \
 	hash.h \

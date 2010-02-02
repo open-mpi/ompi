@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -110,8 +110,20 @@ public:
 };
 
 
+struct CollectiveOperations {
+
+public:
+
+	mutable std::map<uint32_t,uint64_t> numSent;
+	mutable std::map<uint32_t,uint64_t> numRecv;
+	mutable std::map<uint32_t,uint64_t> bytesSent;
+	mutable std::map<uint32_t,uint64_t> bytesRecv;
+	mutable std::map<uint32_t,uint32_t> Type2Col;
+};
+
+
 /* *** file operation stuff ******************************** */
-struct OpenFile {
+struct FileOpen {
 
 public:
 
@@ -121,7 +133,7 @@ public:
 
 public:
 
-	OpenFile( uint64_t tm, uint32_t id, uint32_t src ) :
+	FileOpen( uint64_t tm, uint32_t id, uint32_t src ) :
 		time( tm ), fileid( id ), source( src ) {};
 };
 
@@ -168,13 +180,16 @@ public:
 	std::deque<Send> sstack;
 
 	/* map of open files */
-	std::map<uint64_t/*handleid*/, OpenFile> openfiles;
+	std::map<uint64_t/*handleid*/, FileOpen> openfiles;
 
 	/* statistic per function since the beginning of the trace */
 	std::map<uint32_t,FunctionStatistics> fstatistics;
 
 	/* statistics for messages */
 	SendStatistics sstatistics;
+
+	/* statistics for collective operations */
+	CollectiveOperations CollOps;
 
 	/* statistic per file since the beginning of the trace */
 	std::map<uint32_t,FileOperationStatistics> fostatistics;
@@ -193,6 +208,9 @@ public:
 	void sendMessage( uint64_t time, uint32_t receiver, uint32_t procGroup,
 		uint32_t tag, uint32_t msglength, uint32_t source );
 
+	void collOperation( uint64_t time, uint32_t col, uint32_t type, uint32_t numSent, uint32_t numRecv, 
+		uint32_t bytesSent, uint32_t bytesRecv );
+	
 	void recvMessage( uint32_t msglength );
 		
 	void matchMessage( uint32_t receiver, uint32_t procGroup, uint32_t tag );
@@ -229,6 +247,9 @@ class State {
 
 	std::map<uint32_t,ProcessState> processes;
 
+	/* maps the collective operation to its type */
+	std::map<uint32_t,uint32_t> Col2Type;
+
 	/* maps the function to its funtiongroupid */
 	std::map< uint32_t, uint32_t> functiongroups;
 	
@@ -255,6 +276,8 @@ public:
 
 	void defFile( uint32_t fileid, uint32_t group );
 
+	void defCollOp( uint32_t col, uint32_t type );
+
 	void enterFunction( uint64_t time, uint32_t processid, uint32_t token );
 
 	void leaveFunction( uint64_t time, uint32_t processid, uint32_t token );
@@ -262,6 +285,9 @@ public:
 	void sendMessage( uint64_t time, uint32_t sender, uint32_t receiver,
 		uint32_t procGroup, uint32_t tag, uint32_t length, uint32_t source );
 
+	void collOperation( uint64_t time, uint32_t proc, uint32_t root, uint32_t col,
+		uint32_t bytesSent, uint32_t bytesRecv );
+	
 	void recvMessage( uint32_t sender, uint32_t receiver, uint32_t procGroup,
 		uint32_t tag, uint32_t msglength );
 

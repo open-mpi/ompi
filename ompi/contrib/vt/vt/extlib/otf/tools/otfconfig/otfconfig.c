@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -76,7 +76,7 @@ int main( int argc, char** argv ) {
 				"" );
 #endif /* HAVE_ZLIB */
 
-			printf( tmp );
+			printf( "%s", tmp );
 
 		} else if ( 0 == strcmp( argv[i], "--sizes" ) ) {
 

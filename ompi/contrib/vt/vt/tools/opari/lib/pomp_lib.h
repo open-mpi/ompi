@@ -9,15 +9,17 @@
 
 #include "opari_omp.h"
 
+#define OPARI_VT
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 struct ompregdescr {
-  char* name;                  /* name of construct                     */
-  char* sub_name;              /* optional: region name                 */
+  const char* name;            /* name of construct                     */
+  const char* sub_name;        /* optional: region name                 */
   int   num_sections;          /* sections only: number of sections     */
-  char* file_name;             /* source code location                  */
+  const char* file_name;       /* source code location                  */
   int   begin_first_line;      /* line number first line opening pragma */
   int   begin_last_line;       /* line number last  line opening pragma */
   int   end_first_line;        /* line number first line closing pragma */
@@ -66,6 +68,10 @@ extern void POMP_Single_enter(struct ompregdescr* r);
 extern void POMP_Single_exit(struct ompregdescr* r);
 extern void POMP_Workshare_enter(struct ompregdescr* r);
 extern void POMP_Workshare_exit(struct ompregdescr* r);
+#ifdef OPARI_VT
+extern void POMP_Parallel_begin2(struct ompregdescr* r, int* p);
+extern void POMP_Parallel_fork2(struct ompregdescr* r, int* p);
+#endif
 
 extern void POMP_Init_lock(omp_lock_t *s);
 extern void POMP_Destroy_lock(omp_lock_t *s);

@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -7,12 +7,12 @@
 #include "config.h"
 #endif
 
-
 #include "OTF_Platform.h"
 #include "OTF_Definitions.h"
 
 #include "OTF_Writer.h"
 #include "OTF_Platform.h"
+#include "OTF_Errno.h"
 
 #include <assert.h>
 
@@ -112,22 +112,18 @@ int OTF_Writer_finish( OTF_Writer* writer ) {
 	tmpret= OTF_MasterControl_write( writer->mc, writer->namestub );
 	if( 0 == tmpret ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"OTF_MasterControl_write() failed.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
 	}
 	ret&= tmpret;
 
 	tmpret= OTF_Writer_closeAllStreams( writer );
 	if( 0 == tmpret ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"OTF_Writer_closeAllStreams() failed.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
 	}
 	ret&= tmpret;
 	
@@ -156,11 +152,9 @@ OTF_Writer* OTF_Writer_open( const char* namestub, uint32_t m, OTF_FileManager* 
 
 	if( NULL == manager ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"manager has not been specified.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
 
 		return NULL;
 	}
@@ -168,11 +162,9 @@ OTF_Writer* OTF_Writer_open( const char* namestub, uint32_t m, OTF_FileManager* 
 	ret= (OTF_Writer*) malloc( sizeof(OTF_Writer) );
 	if( NULL == ret ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"no memory left.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
 
 		return NULL;
 	}
@@ -188,11 +180,9 @@ OTF_Writer* OTF_Writer_open( const char* namestub, uint32_t m, OTF_FileManager* 
 	ret->mc= OTF_MasterControl_new( ret->manager );
 	if( NULL == ret->mc ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"OTF_MasterControl_new() failed.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
 
 		free( ret->namestub );
 		ret->namestub= NULL;
@@ -211,28 +201,26 @@ int OTF_Writer_close( OTF_Writer* writer ) {
 
 	if( NULL == writer ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"writer has not been specified.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
 
 		return 0;
 	}		
 
 	if( 0 == OTF_Writer_finish( writer ) ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"OTF_Writer_finish() failed.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
 		
 		free( writer );
+		writer = NULL;
 		return 0;
 	}
 
 	free( writer );
+	writer = NULL;
 
 	return 1;
 }
@@ -251,11 +239,9 @@ int OTF_Writer_setCompression( OTF_Writer* writer, OTF_FileCompression
 		
 	} else {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"compression is no expected value (%u). ignored.\n",
 				__FUNCTION__, __FILE__, __LINE__, compression );
-#		endif
 
 		return 0;
 	}
@@ -290,29 +276,23 @@ void OTF_Writer_setBufferSizes( OTF_Writer* writer, uint32_t size ) {
 
 	if ( 50 > size ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"intended buffer size %u is too small, rejected.\n",
 				__FUNCTION__, __FILE__, __LINE__, size );
-#		endif
 		
 		return;
 
 	} else if ( 500 > size ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"buffer size %u is very small, accepted though.\n",
 				__FUNCTION__, __FILE__, __LINE__, size );
-#		endif
 
 	} else if ( 10 * 1024 *1024 < size ) {
 
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"buffer size %u is rather big, accepted though.\n",
 				__FUNCTION__, __FILE__, __LINE__, size );
-#		endif
 	}
 
 	writer->buffersizes= size;
@@ -333,29 +313,24 @@ void OTF_Writer_setZBufferSizes( OTF_Writer* writer, uint32_t size ) {
 	
 	if ( 32 > size ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"intended zbuffer size %u is too small, rejected.\n",
 				__FUNCTION__, __FILE__, __LINE__, size );
-#		endif /* OTF_VERBOSE */
 		
 		return;
 
 	} else if ( 512 > size ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"buffer size %u is very small, accepted though.\n",
 				__FUNCTION__, __FILE__, __LINE__, size );
-#		endif /* OTF_VERBOSE */
 
 	} else if ( 10 * 1024 *1024 < size ) {
 
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"buffer size %u is rather big, accepted though.\n",
 				__FUNCTION__, __FILE__, __LINE__, size );
-#		endif /* OTF_VERBOSE */
+
 	}
 
 	writer->zbuffersizes= size;
@@ -380,11 +355,10 @@ void OTF_Writer_setFormat( OTF_Writer* writer, uint32_t format ) {
 
 	if ( format > 1 ) {
 	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"unknown ouput format chosen.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
+
 	}
 	
 	writer->format= format;
@@ -454,7 +428,7 @@ OTF_WStream* OTF_Writer_getStream( OTF_Writer* writer, uint32_t streamId ) {
 	/* not found, create & append at position 'a' */
 
 	/*
-	fprintf(stderr," at %u\n", a );
+	OTF_fprintf(stderr," at %u\n", a );
 	*/
 
 	if ( writer->s <= writer->n ) {
@@ -464,11 +438,9 @@ OTF_WStream* OTF_Writer_getStream( OTF_Writer* writer, uint32_t streamId ) {
 			writer->s * sizeof(OTF_WStream*) );
 		if( NULL == writer->streams ) {
 		
-#			ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 					"no memory left.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
-#			endif
 
 			return NULL;
 		}
@@ -502,22 +474,18 @@ uint32_t OTF_Writer_assignProcess( OTF_Writer* writer,
 
 	if ( 0 == stream ) {
 
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"stream id must not be '0'.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
 		
 		return 0;
 	}
 
 	if( 0 == OTF_MasterControl_append( writer->mc, stream, process ) ) {
 
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"OTF_MasterControl_append() failed.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
 
 		return 0;
 	}
@@ -545,7 +513,7 @@ uint32_t OTF_Writer_mapProcess( OTF_Writer* writer, uint32_t process ) {
 	if ( 0 == ret ) {
 
 		/*
-		fprintf( stderr, "OTF_Writer_mapProcess() %u unknown\n", process );
+		OTF_fprintf( stderr, "OTF_Writer_mapProcess() %u unknown\n", process );
 		*/
 
 		ret= (uint32_t) -1;
@@ -564,11 +532,9 @@ uint32_t OTF_Writer_mapProcess( OTF_Writer* writer, uint32_t process ) {
 			must take care!*/
 			if( 0 >= n ) {
 			
-#				ifdef OTF_VERBOSE
-					fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 						"no processes/stream have been defined.\n",
 						__FUNCTION__, __FILE__, __LINE__ );
-#				endif
 
 				assert (0);
 			}
@@ -803,11 +769,9 @@ int OTF_Writer_writeDefSclFile( OTF_Writer* writer, uint32_t streamid,
 int OTF_Writer_writeOtfVersion( OTF_Writer* writer, uint32_t streamid ) {
 
 	
-	#ifdef OTF_VERBOSE
-		fprintf( stderr, "WARNING in function %s, file: %s, line: %i:\n "
+	OTF_fprintf( stderr, "WARNING in function %s, file: %s, line: %i:\n "
 			"calling depricated function. ignored.\n",
 			__FUNCTION__, __FILE__, __LINE__ );
-	#endif
 	
 	return 1;
 }
@@ -933,6 +897,31 @@ int OTF_Writer_writeCollectiveOperation( OTF_Writer* writer, uint64_t time,
 }
 
 
+int OTF_Writer_writeBeginCollectiveOperation( OTF_Writer* writer,
+                uint64_t time, uint32_t process, uint32_t collOp,
+                uint64_t matchingId, uint32_t procGroup, uint32_t rootProc,
+                uint64_t sent, uint64_t received, uint32_t scltoken )
+{
+	OTF_WStream* stream = OTF_Writer_getStream( writer,
+	                OTF_Writer_mapProcess( writer, process ) );
+
+	return OTF_WStream_writeBeginCollectiveOperation( stream, time,
+			process, collOp, matchingId, procGroup, rootProc, sent,
+			received, scltoken );
+}
+
+
+int OTF_Writer_writeEndCollectiveOperation( OTF_Writer* writer, uint64_t time,
+                uint32_t process, uint64_t matchingId )
+{
+	OTF_WStream* stream = OTF_Writer_getStream( writer,
+	                OTF_Writer_mapProcess( writer, process ) );
+
+	return OTF_WStream_writeEndCollectiveOperation( stream, time, process,
+	                matchingId );
+}
+
+
 int OTF_Writer_writeEventComment( OTF_Writer* writer, uint64_t time, 
 		uint32_t process, const char* comment ) {
 
@@ -974,11 +963,88 @@ int OTF_Writer_writeFileOperation( OTF_Writer* writer, uint64_t time, uint32_t f
 
 
 	OTF_WStream* stream= OTF_Writer_getStream( writer,
-		OTF_Writer_mapProcess( writer, process ) );
+	        OTF_Writer_mapProcess( writer, process ) );
 
 	return OTF_WStream_writeFileOperation( stream, time, fileid, process,
 		handleid, operation, bytes, duration, source );
 }
+
+
+int OTF_Writer_writeBeginFileOperation( OTF_Writer* writer, uint64_t time,
+                uint32_t process, uint64_t handleid, uint32_t scltoken )
+{
+	OTF_WStream* stream = OTF_Writer_getStream( writer,
+	                OTF_Writer_mapProcess( writer, process ) );
+
+	return OTF_WStream_writeBeginFileOperation( stream, time, process,
+	                handleid, scltoken );
+}
+
+
+int OTF_Writer_writeEndFileOperation( OTF_Writer* writer, uint64_t time,
+                uint32_t process, uint32_t fileid, uint64_t handleid,
+                uint32_t operation, uint64_t bytes, uint32_t scltoken )
+{
+	OTF_WStream* stream = OTF_Writer_getStream( writer,
+	                OTF_Writer_mapProcess( writer, process ) );
+
+	return OTF_WStream_writeEndFileOperation( stream, time, process, fileid,
+	                handleid, operation, bytes, scltoken );
+}
+
+
+int OTF_Writer_writeRMAPut( OTF_Writer* writer, uint64_t time,
+        uint32_t process, uint32_t origin, uint32_t target, uint32_t communicator,
+        uint32_t tag, uint64_t bytes, uint32_t scltoken ) {
+
+
+        OTF_WStream* stream= OTF_Writer_getStream( writer,
+                OTF_Writer_mapProcess( writer, process ) );
+
+        return OTF_WStream_writeRMAPut( stream, time, process, origin, target,
+                communicator, tag, bytes, scltoken );
+}
+
+
+int OTF_Writer_writeRMAPutRemoteEnd( OTF_Writer* writer, uint64_t time,
+        uint32_t process, uint32_t origin, uint32_t target, uint32_t communicator,
+        uint32_t tag, uint64_t bytes, uint32_t scltoken ) {
+
+
+        OTF_WStream* stream= OTF_Writer_getStream( writer,
+                OTF_Writer_mapProcess( writer, process ) );
+
+        return OTF_WStream_writeRMAPutRemoteEnd( stream, time, process,
+                origin, target, communicator, tag, bytes, scltoken );
+}
+
+
+int OTF_Writer_writeRMAGet( OTF_Writer* writer, uint64_t time,
+        uint32_t process, uint32_t origin, uint32_t target, uint32_t communicator,
+        uint32_t tag, uint64_t bytes, uint32_t scltoken ) {
+
+
+        OTF_WStream* stream= OTF_Writer_getStream( writer,
+                OTF_Writer_mapProcess( writer, process ) );
+
+        return OTF_WStream_writeRMAGet( stream, time, process, origin, target,
+                communicator, tag, bytes, scltoken );
+}
+
+
+int OTF_Writer_writeRMAEnd( OTF_Writer* writer, uint64_t time,
+        uint32_t process, uint32_t remote, uint32_t communicator, uint32_t tag,
+        uint32_t scltoken ) {
+
+
+        OTF_WStream* stream= OTF_Writer_getStream( writer,
+                OTF_Writer_mapProcess( writer, process ) );
+
+        return OTF_WStream_writeRMAEnd( stream, time, process, remote, communicator,
+                tag, scltoken );
+}
+
+
 /* *** public snapshot record write handlers *** */
 
 
@@ -1091,6 +1157,19 @@ int OTF_Writer_writeMessageSummary( OTF_Writer* writer,
 		tag, number_sent, number_recved, bytes_sent, bytes_recved );
 }
 
+int OTF_Writer_writeCollopSummary( OTF_Writer* writer,
+		uint64_t time, uint32_t process, uint32_t comm, uint32_t collective,
+		uint64_t number_sent, uint64_t number_recved, uint64_t bytes_sent,
+		uint64_t bytes_recved ) {
+
+
+	OTF_WStream* stream= OTF_Writer_getStream( writer,
+		OTF_Writer_mapProcess( writer, process ) );
+
+	return OTF_WStream_writeCollopSummary( stream, time, process, comm,
+		collective, number_sent, number_recved, bytes_sent, bytes_recved );
+}
+
 
 int OTF_Writer_writeFileOperationSummary( OTF_Writer* writer, uint64_t time,
 	uint32_t fileid, uint32_t process, uint64_t nopen, uint64_t nclose,
@@ -1121,6 +1200,32 @@ int OTF_Writer_writeFileGroupOperationSummary( OTF_Writer* writer, uint64_t time
 		nopen, nclose, nread, nwrite, nseek, bytesread, byteswrite );
 }
 
+
+int OTF_Writer_writeDefMarker( OTF_Writer* writer, uint32_t streamID,
+    uint32_t token, const char* name, uint32_t type ) {
+
+	OTF_WStream* stream= OTF_Writer_getStream( writer, 0 );
+
+#ifdef OTF_DEBUG
+	if ( 0 != streamID ) {
+
+		OTF_fprintf( stderr, "WARNING in function %s, file: %s, line: %i:\n "
+				 "streamID value of '%u' is ignored, '0' is used instead\n",
+				 __FUNCTION__, __FILE__, __LINE__, streamID );
+	}
+#endif /* OTF_DEBUG */
+
+	return OTF_WStream_writeDefMarker( stream, token, name, type );
+}
+
+
+int OTF_Writer_writeMarker( OTF_Writer* writer, 
+    uint64_t time, uint32_t process, uint32_t token, const char* text ) {
+
+	OTF_WStream* stream= OTF_Writer_getStream( writer, 0 );
+
+	return OTF_WStream_writeMarker( stream, time, process, token, text );
+}
 
 
 int OTF_Writer_closeAllStreams( OTF_Writer* writer ) {

@@ -18,6 +18,7 @@ CPPFLAGS = $(CPPFLAGS_FOR_BUILD)
 LDFLAGS = $(LDFLAGS_FOR_BUILD)
 LIBS = $(LIBS_FOR_BUILD)
 
+opari_CXXFLAGS = -DOPARI_VT
 opari_SOURCES = \
 	handler.h \
 	ompragma.h \

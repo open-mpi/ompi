@@ -1,0 +1,8 @@
+otf python bindings
+--
+
+The interface is exact the same as in C
+except:
+  - all 'OTF_*_*Progress' functions return a list of 4 values, namely
+    [old-return-value, minimum, current, maximum] and take only one argument,
+    which is a pointer to a OTF_{Reader,RStream} object

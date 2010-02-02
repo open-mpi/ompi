@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -12,6 +12,7 @@
 #include "OTF_HandlerArray.h"
 #include "OTF_Definitions.h"
 #include "OTF_CopyHandler.h"
+#include "OTF_Errno.h"
 
 
 /** Constructor - internal use only */
@@ -61,11 +62,9 @@ OTF_HandlerArray* OTF_HandlerArray_open() {
 	ret = (OTF_HandlerArray*) malloc( sizeof( OTF_HandlerArray ) );
 	if( NULL == ret ) {
 
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"no memory left.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif /* OTF_VERBOSE */
 
 		return NULL;
 	}
@@ -74,11 +73,9 @@ OTF_HandlerArray* OTF_HandlerArray_open() {
 		OTF_NRECORDS * sizeof( OTF_FunctionPointer* ) );
 	if( NULL == ret->pointer ) {
 
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"no memory left.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif /* OTF_VERBOSE */
 
 		free( ret );
 		ret= NULL;
@@ -89,11 +86,9 @@ OTF_HandlerArray* OTF_HandlerArray_open() {
 	ret->firsthandlerarg = (void**) malloc( OTF_NRECORDS * sizeof( void* ) );
 	if( NULL == ret->firsthandlerarg ) {
 
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"no memory left.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif /* OTF_VERBOSE */
 
 		free( ret->pointer );
 		ret->pointer= NULL;
@@ -114,11 +109,9 @@ int OTF_HandlerArray_close( OTF_HandlerArray* handlers ) {
 
 	if( NULL == handlers ) {
 
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"handlers have not been specified.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
-#		endif /* OTF_VERBOSE */
 
 		return 0;
 	}
@@ -138,11 +131,9 @@ int OTF_HandlerArray_setHandler( OTF_HandlerArray* handlers,
 
 	if( recordtype >= OTF_NRECORDS ) {
 
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"unknown record type %u.\n",
 				__FUNCTION__, __FILE__, __LINE__, recordtype );
-#		endif /* OTF_VERBOSE */
 
 		return 0;
 	}
@@ -158,11 +149,9 @@ int OTF_HandlerArray_setFirstHandlerArg( OTF_HandlerArray* handlers,
 
 	if( recordtype >= OTF_NRECORDS ) {
 
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 				"unknown record type %u.\n",
 				__FUNCTION__, __FILE__, __LINE__, recordtype );
-#		endif /* OTF_VERBOSE */
 
 		return 0;
 	}
@@ -304,6 +293,18 @@ int OTF_HandlerArray_getCopyHandler( OTF_HandlerArray* handlers,
 	OTF_HandlerArray_setFirstHandlerArg( handlers, writer, 
 		OTF_COLLOP_RECORD );
 
+	OTF_HandlerArray_setHandler( handlers,
+		(OTF_FunctionPointer*) OTF_CopyHandler_BeginCollectiveOperation,
+		OTF_BEGINCOLLOP_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, writer, 
+		OTF_BEGINCOLLOP_RECORD );
+
+	OTF_HandlerArray_setHandler( handlers, 
+		(OTF_FunctionPointer*) OTF_CopyHandler_EndCollectiveOperation,
+		OTF_ENDCOLLOP_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, writer, 
+		OTF_ENDCOLLOP_RECORD );
+
 	OTF_HandlerArray_setHandler( handlers, 
 		(OTF_FunctionPointer*) OTF_CopyHandler_EventComment,
 		OTF_EVENTCOMMENT_RECORD );
@@ -327,6 +328,42 @@ int OTF_HandlerArray_getCopyHandler( OTF_HandlerArray* handlers,
 		OTF_FILEOPERATION_RECORD );
 	OTF_HandlerArray_setFirstHandlerArg( handlers, writer, 
 		OTF_FILEOPERATION_RECORD );
+
+	OTF_HandlerArray_setHandler( handlers,
+		(OTF_FunctionPointer*) OTF_CopyHandler_BeginFileOperation,
+		OTF_BEGINFILEOP_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, writer, 
+		OTF_BEGINFILEOP_RECORD );
+
+	OTF_HandlerArray_setHandler( handlers,
+		(OTF_FunctionPointer*) OTF_CopyHandler_EndFileOperation,
+		OTF_ENDFILEOP_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, writer, 
+		OTF_ENDFILEOP_RECORD );
+
+        OTF_HandlerArray_setHandler( handlers, 
+                (OTF_FunctionPointer*) OTF_CopyHandler_RMAPut,
+                OTF_RMAPUT_RECORD );
+        OTF_HandlerArray_setFirstHandlerArg( handlers, writer,
+                OTF_RMAPUT_RECORD );
+
+        OTF_HandlerArray_setHandler( handlers, 
+                (OTF_FunctionPointer*) OTF_CopyHandler_RMAPutRemoteEnd,
+                OTF_RMAPUTRE_RECORD );
+        OTF_HandlerArray_setFirstHandlerArg( handlers, writer,
+                OTF_RMAPUTRE_RECORD );
+
+        OTF_HandlerArray_setHandler( handlers, 
+                (OTF_FunctionPointer*) OTF_CopyHandler_RMAGet,
+                OTF_RMAGET_RECORD );
+        OTF_HandlerArray_setFirstHandlerArg( handlers, writer,
+                OTF_RMAGET_RECORD );
+
+        OTF_HandlerArray_setHandler( handlers, 
+                (OTF_FunctionPointer*) OTF_CopyHandler_RMAEnd,
+                OTF_RMAEND_RECORD );
+        OTF_HandlerArray_setFirstHandlerArg( handlers, writer,
+                OTF_RMAEND_RECORD );
 
 
 	OTF_HandlerArray_setHandler( handlers, 
@@ -377,7 +414,13 @@ int OTF_HandlerArray_getCopyHandler( OTF_HandlerArray* handlers,
 		OTF_MESSAGESUMMARY_RECORD );
 	OTF_HandlerArray_setFirstHandlerArg( handlers, writer, 
 		OTF_MESSAGESUMMARY_RECORD );
-		
+
+	OTF_HandlerArray_setHandler( handlers, 
+		(OTF_FunctionPointer*) OTF_CopyHandler_CollopSummary,
+		OTF_COLLOPSUMMARY_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, writer, 
+		OTF_COLLOPSUMMARY_RECORD );
+
 	OTF_HandlerArray_setHandler( handlers, 
 		(OTF_FunctionPointer*) OTF_CopyHandler_FileOperationSummary,
 		OTF_FILEOPERATIONSUMMARY_RECORD );
@@ -390,6 +433,17 @@ int OTF_HandlerArray_getCopyHandler( OTF_HandlerArray* handlers,
 	OTF_HandlerArray_setFirstHandlerArg( handlers, writer, 
 		OTF_FILEGROUPOPERATIONSUMMARY_RECORD );
 
+	OTF_HandlerArray_setHandler( handlers, 
+		(OTF_FunctionPointer*) OTF_CopyHandler_DefMarker,
+		OTF_DEFMARKER_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, writer, 
+		OTF_DEFMARKER_RECORD );
+
+	OTF_HandlerArray_setHandler( handlers, 
+		(OTF_FunctionPointer*) OTF_CopyHandler_Marker,
+		OTF_MARKER_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, writer, 
+		OTF_MARKER_RECORD );
 
 	return 1;
 }

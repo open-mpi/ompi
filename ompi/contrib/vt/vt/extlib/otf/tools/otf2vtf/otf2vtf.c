@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -59,6 +59,7 @@ int main (int argc, char **argv) {
 	char* inputFile = NULL;
 	char* outputFile = NULL;
 	int buffersize= 1024;
+	uint64_t ret_read;
 
 	OTF_FileManager* manager;
 	OTF_Reader* reader;
@@ -277,8 +278,12 @@ int main (int argc, char **argv) {
 	VTF3_WriteDefversion( fha.fcb, OTF2VTF3VERSION);
 	VTF3_WriteDefcreator( fha.fcb, OTF2VTF3CREATOR );
 	
-	OTF_Reader_readDefinitions( reader, handlers );
-	
+	ret_read = OTF_Reader_readDefinitions( reader, handlers );
+	if( ret_read == OTF_READ_ERROR ) {
+		fprintf(stderr,"An error occurred while reading the tracefile. It seems to be damaged. Abort.\n");
+		return 1;
+	}
+
 	/***************/
 	numcpus = 0;
 	/* indicate the processes */
@@ -304,7 +309,11 @@ int main (int argc, char **argv) {
 	}
 	/***************/
 
-	OTF_Reader_readEvents( reader, handlers );
+	ret_read = OTF_Reader_readEvents( reader, handlers );
+	if( ret_read == OTF_READ_ERROR ) {
+		fprintf(stderr,"An error occurred while reading the tracefile. It seems to be damaged. Abort.\n");
+		return 1;
+	}
 
 	/***************/
 	FileIOEndQueue_finish( &fha.FileIOQueue );

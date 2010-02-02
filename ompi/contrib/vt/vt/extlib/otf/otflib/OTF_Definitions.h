@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -16,33 +16,16 @@
 #define OTF_DEFINITIONS_H
 
 
-/* version information */
-
-#define OTF_VERSION_MAYOR	1
-#define OTF_VERSION_MINOR	3
-#define OTF_VERSION_SUB 	12
-#define OTF_VERSION_STRING	"jellyfish"
-
-/* version history:
-
-0.2.1 	"octopussy"
-0.3.1 	"starfish"
-0.3.2 	"starfish"
-0.4.0 	"starfish"
-0.4.1 	"starfish"
-0.5.0	"starfish"
-1.0.*	"starfish"
-1.1.*	"starfish"
-1.2.*	"pufferfish"
-1.3.*   "jellyfish"
-
-*/
+#include "OTF_Version.h"
 
 
 /* definitions of record type identifiers */
 
 
-/* Event records*/
+/* Event records -- have them numbered and sorted, 
+this does not affect the format at all. 
+This is always safe with recompilation and re-linking, 
+yet it breaks the link compatibility of library versions.*/
 
 #define OTF_EVENTCOMMENT_RECORD					0
 #define OTF_COUNTER_RECORD						1
@@ -58,6 +41,17 @@
 #define OTF_ENDPROCESS_RECORD					36
 
 #define OTF_FILEOPERATION_RECORD				42
+
+#define OTF_RMAPUT_RECORD                                       47
+#define OTF_RMAPUTRE_RECORD                                     48
+#define OTF_RMAGET_RECORD                                       49
+#define OTF_RMAEND_RECORD                                       50
+
+#define OTF_BEGINCOLLOP_RECORD					51
+#define OTF_ENDCOLLOP_RECORD					52
+
+#define OTF_BEGINFILEOP_RECORD					53
+#define OTF_ENDFILEOP_RECORD					54
 
 /* Definition records*/
 
@@ -80,6 +74,7 @@
 #define OTF_FUNCTIONSUMMARY_RECORD				28
 #define OTF_FUNCTIONGROUPSUMMARY_RECORD			29
 #define OTF_MESSAGESUMMARY_RECORD				30
+#define OTF_COLLOPSUMMARY_RECORD				44
 #define OTF_FILEOPERATIONSUMMARY_RECORD			31
 #define OTF_FILEGROUPOPERATIONSUMMARY_RECORD	32
 
@@ -94,9 +89,11 @@
 
 #define OTF_UNKNOWN_RECORD						41
 
+#define OTF_DEFMARKER_RECORD					45
+#define OTF_MARKER_RECORD						46
 
 /* Number of records */
-#define OTF_NRECORDS							44
+#define OTF_NRECORDS							55
 
 /* Stream format definition */
 
@@ -104,21 +101,59 @@
 #define OTF_WSTREAM_FORMAT_LONG			1
 
 
-/* Counter properties */
+/* 
+
+Counter properties 
+
+There are three groups of counter properties that can be combined. 
+Not all combinations make perfect sense, some are only there for completeness.
+
+For all groups the _BITS macro allows to identify the bits that are valid for 
+this group. This might be useful to AND away all other bits.
+*/
+
+
+/*
+The counter type uses the first bit (the second is reserved so far). It says 
+whether the counter is an accumulating counter ( OTF_COUNTER_TYPE_ACC) that is 
+monotonously increasing. Then it's probably a good idea to visualize it's 
+derivative instead of the original value. The alternative is an absolute 
+value (OTF_COUNTER_TYPE_ABS) that should be displayed as is.
+*/
+
 
 /* 1st-2nd bit */
 #define OTF_COUNTER_TYPE_BITS		3
 #define OTF_COUNTER_TYPE_ACC		0
 #define OTF_COUNTER_TYPE_ABS		1
 
-/* 3rd-4th bit */
+/* 
+The counter scope says when the values have been collected or for which 
+interval of time they are valid. It uses the 3rd and 4th bit(bit 5 is 
+reserved again). The default is OTF_COUNTER_SCOPE_START which means the values 
+belong to the time interval since the beginning of the measurement. 
+OTF_COUNTER_SCOPE_POINT means the value is only valid at a point in time but 
+not necessarily for any interval of time. OTF_COUNTER_SCOPE_LAST means the 
+value is related to the time interval since the last counter sample of the 
+same counter, i.e. the immediate past. And finally OTF_COUNTER_SCOPE_NEXT 
+means it is valid from now until the next counter sample, i.e. the future 
+right ahead.
+*/
+
 #define OTF_COUNTER_SCOPE_BITS 		12
 #define OTF_COUNTER_SCOPE_START 	0
 #define OTF_COUNTER_SCOPE_POINT 	4
 #define OTF_COUNTER_SCOPE_LAST		8
 #define OTF_COUNTER_SCOPE_NEXT		12
 
-/* 6th-9th bit */
+/* 
+Finally, there is the variable type which occupies the 6th - 9th bit. The bit 
+values are chosen to allow easy distinction of integers and non-integers as 
+well as unsigned and signed.
+Furthermore, there are some macros to ask for the type. Some similar macros 
+could be added for convenience.
+*/
+
 #define OTF_COUNTER_VARTYPE_ISINTEGER(x) (x < 256)
 #define OTF_COUNTER_VARTYPE_ISSIGNED(x) ((x&32) == 32)
 #define OTF_COUNTER_VARTYPE_ISUNSIGNED(x) ((x&32) == 0)
@@ -148,12 +183,41 @@
 
 
 /* File Operations */
-#define OTF_FILEOP_OPEN		0
-#define OTF_FILEOP_CLOSE	1
-#define OTF_FILEOP_READ		2
-#define OTF_FILEOP_WRITE	3
-#define OTF_FILEOP_SEEK		4
+#define OTF_FILEOP_BITS			0x0000001f
+#define OTF_FILEOP_OPEN			0
+#define OTF_FILEOP_CLOSE		1
+#define OTF_FILEOP_READ			2
+#define OTF_FILEOP_WRITE		3
+#define OTF_FILEOP_SEEK			4
+#define OTF_FILEOP_UNLINK		5
+#define OTF_FILEOP_RENAME		6
+#define OTF_FILEOP_DUP                  7
+#define OTF_FILEOP_SYNC                 8
+#define OTF_FILEOP_LOCK                 9
+#define OTF_FILEOP_UNLOCK               10
+#define OTF_FILEOP_OTHER        	31
+#define OTF_IOFLAGS_BITS		0xffffffe0
+#define OTF_IOFLAG_IOFAILED		32
+#define OTF_IOFLAG_ASYNC		64
+#define OTF_IOFLAG_COLL			128
+#define OTF_IOFLAG_DIRECT		256
+#define OTF_IOFLAG_SYNC			512
+#define OTF_IOFLAG_ISREADLOCK           1024
 
+/* Types of markers */
+
+#define OTF_MARKER_TYPE_UNKNOWN     0
+#define OTF_MARKER_TYPE_ERROR       1
+#define OTF_MARKER_TYPE_WARNING     2
+#define OTF_MARKER_TYPE_HINT        3
+
+/* otf_errno related defines */
+#define OTF_ERR_LEN 1000
+#define OTF_NO_ERROR 0
+#define OTF_ERROR -1
+
+extern char otf_strerr[OTF_ERR_LEN];
+extern int otf_errno;
 
 /* return values for handlers. they are not yet evaluated!!! */
 

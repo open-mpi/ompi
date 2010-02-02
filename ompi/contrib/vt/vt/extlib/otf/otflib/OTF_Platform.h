@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2008.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -25,6 +25,10 @@
 #	include "OTF_Platform_unix.h"
 #endif /* windows/unix */
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 /* if you know (for sure) of more compilers supporting __FUNCTION__,
    then add them here */
 #if defined(__GNUC__) /* gnu */
@@ -44,5 +48,11 @@
 #ifndef __LINE__
 #	define __LINE__ 0
 #endif
+
+char* OTF_basename( char* path );
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OTF_PLATFORM_H */

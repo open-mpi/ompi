@@ -8,10 +8,7 @@ bin_PROGRAMS = \
 endif
 
 vtf2otf_LDADD = $(top_builddir)/otflib/libotf.la $(VTF3_LIB_LINE)
-if ! AMDEPZLIB
-vtf2otf_LDADD += $(ZLIB_LIB_LINE)
-endif
-
+vtf2otf_DEPENDENCIES = $(top_builddir)/otflib/libotf.la
 vtf2otf_SOURCES = \
 	Handler.h \
 	Stack.h \

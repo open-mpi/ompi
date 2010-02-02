@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -34,6 +34,7 @@ enum
    TKFAC__DEF_COUNTER_GROUP,
    TKFAC__DEF_COUNTER,
    TKFAC__DEF_PROCESS_GROUP,
+   TKFAC__DEF_MARKER,
    TKFAC_NUM
 };
 
@@ -56,6 +57,19 @@ public:
 
    // translate local to global token
    uint32_t translateLocalToken( uint32_t mCpuId, uint32_t localToken );
+
+#ifdef VT_MPI
+   // get buffer size needed to pack translations
+   VT_MPI_INT getPackSize( void );
+
+   // pack token translations (to share these to all MPI ranks)
+   void packTranslations( char * buffer, VT_MPI_INT bufferSize,
+                          VT_MPI_INT * position );
+
+   // unpack token translations (shared by MPI rank 0)
+   void unpackTranslations( char * buffer, VT_MPI_INT bufferSize,
+                            VT_MPI_INT * position );
+#endif // VT_MPI
 
 protected:
 
@@ -82,7 +96,7 @@ public:
 
    // get global token by definition specifications
    uint32_t getGlobalToken( std::string filename );
-   
+
    // create global token by definition specifications
    uint32_t createGlobalToken( uint32_t mCpuId, uint32_t localToken,
 			       std::string filename );
@@ -508,6 +522,59 @@ private:
 
    // vector of definition specifications
    std::vector<DefProcessGroup_struct> m_vecDefProcessGroup;
+
+};
+
+//
+// TokenFactory_DefMarker
+//
+class TokenFactory_DefMarker : public TokenFactory
+{
+public:
+
+   // definition specifications
+   //
+   struct DefMarker_struct
+   {
+      uint32_t global_token;
+      std::string name;
+      uint32_t type;
+   };
+
+   // class for compare definition specifications
+   //
+   class DefMarker_eq: public std::unary_function<DefMarker_struct, bool>
+   {
+      std::string name;
+      uint32_t type;
+   public:
+      explicit DefMarker_eq(const std::string & _name,
+			    const uint32_t & _type)
+	 : name(_name), type(_type) {}
+      bool operator()(const DefMarker_struct & a) const 
+      {
+	 return ( a.name.compare( name ) == 0
+		  && a.type == type );
+      }
+   };
+
+   // constructor
+   TokenFactory_DefMarker() : TokenFactory() {}
+   
+   // destructor
+   ~TokenFactory_DefMarker() {}
+
+   // get global token by definition specifications
+   uint32_t getGlobalToken( std::string name, uint32_t type );
+
+   // create global token by definition specifications
+   uint32_t createGlobalToken( uint32_t mCpuId, uint32_t localToken,
+			       std::string name, uint32_t type );
+
+private:
+
+   // vector of definition specifications
+   std::vector<DefMarker_struct> m_vecDefMarker;
 
 };
 
