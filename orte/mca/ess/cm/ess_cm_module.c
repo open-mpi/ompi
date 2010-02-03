@@ -403,7 +403,7 @@ static void cbfunc(int status,
                    orte_rmcast_seq_t seq_num,
                    opal_buffer_t *buf, void *cbdata)
 {
-    int32_t n;
+    int32_t n, np;
     orte_daemon_cmd_flag_t cmd;
     orte_process_name_t name;
     int rc;
@@ -466,6 +466,18 @@ static void cbfunc(int status,
                          "%s got hnp uri %s",
                          ORTE_NAME_PRINT(&name), uri));
     orte_process_info.my_hnp_uri = uri;
+    
+    if (ORTE_DAEMON_NAME_REQ_CMD == cmd ||
+        ORTE_DAEMON_CHECKIN_CMD == cmd) {
+        /* unpack the number of daemons */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &np, &n, OPAL_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            arrived = true;
+            return;
+        }
+        orte_process_info.num_procs = np;
+    }
     
     name_success = true;
     arrived = true;
