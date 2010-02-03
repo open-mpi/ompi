@@ -25,45 +25,30 @@ MACRO(OMPI_MICROSOFT_COMPILER)
 
     MESSAGE( STATUS "Start Microsoft specific detection....")
 
-    # search for Microsoft VC tools
-    SET(VC_BIN_PATH ${VC_BIN_PATH}
-      "C:/Program Files/Microsoft Visual Studio 9.0/VC/bin"
-      "C:/Program Files (x86)/Microsoft Visual Studio 9.0/VC/bin"
-      "C:/Program Files/Microsoft Visual Studio 8/VC/BIN"
-      "C:/Program Files (x86)/Microsoft Visual Studio 8/VC/BIN"
-      "C:/Program Files/Microsoft Visual Studio .NET 2003/VC7/BIN"
-      "C:/Program Files (x86)/Microsoft Visual Studio .NET 2003/VC7/BIN"
-      "$ENV{VS90COMNTOOLS}../../VC/bin"
-      "$ENV{VS80COMNTOOLS}../../VC/bin"
-      )
+    # Set up VS environments.
+    GET_FILENAME_COMPONENT(CL_EXE_PATH ${CMAKE_C_COMPILER} PATH)
+    GET_FILENAME_COMPONENT(SDK_ROOT_PATH
+      "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows;CurrentInstallFolder]" ABSOLUTE CACHE)
+    SET(VS_ROOT_DIR ${CL_EXE_PATH}/../../)
+    SET(VS_COMMON_TOOLS_DIR ${VS_ROOT_DIR}/Common7/Tools)
+    SET(VS_IDE_DIR ${VS_ROOT_DIR}/Common7/IDE)
+    SET(VC_INCLUDE_DIR ${VS_ROOT_DIR}/VC/INCLUDE)
+    SET(VC_LIB_DIR ${VS_ROOT_DIR}/VC/LIB)
 
-    # If we are using one of the Microsoft compilers check that we are
-    # able to include windows.h. Most of the types that follow are defined
-    # in this file. If we check for it here it will get included in the
-    # default list of header files.
-    FIND_PROGRAM(CL_EXE cl PATHS ${VC_BIN_PATH})
+    SET(ENV{PATH} "${CL_EXE_PATH};${SDK_ROOT_PATH}/bin;$ENV{PATH}")
+    SET(ENV{INCLUDE} "${VC_INCLUDE_DIR};$ENV{INCLUDE}")
+    SET(ENV{LIB} "${VC_LIB_DIR};${SDK_ROOT_PATH}/lib;$ENV{LIB}")
+    SET(ENV{LIBPATH} "${VC_LIB_DIR};${SDK_ROOT_PATH}/lib;$ENV{LIBPATH}")
 
-    # set the default include path for VC
-    GET_FILENAME_COMPONENT(CL_EXE_PATH "${CL_EXE}" PATH)
-    GET_FILENAME_COMPONENT(VC_INCLUDE_PATH "${CL_EXE_PATH}/../include" ABSOLUTE CACHE)
-    GET_FILENAME_COMPONENT(VC_LIB_PATH "${CL_EXE_PATH}/../lib" ABSOLUTE CACHE)
+    # Default compiler settings.
+    SET(OMPI_C_OPTION_COMPILE "/c" CACHE INTERNAL
+      "C compiler option for compiling without linking.")
+    SET(OMPI_C_OUTPUT_OBJ "/Fo" CACHE INTERNAL
+      "C compiler option for setting object file name.")
+    SET(OMPI_C_OUTPUT_EXE "/Fe" CACHE INTERNAL
+      "C compiler option for setting executable file name.")
 
-    # the dumpbin path will be checked again when the f77 support is needed.
-    FIND_PROGRAM(DUMPBIN_EXE dumpbin PATHS ${VC_BIN_PATH})
-
-    # WHEN running dumpbin, it also needs the "Common7/IDE" directory in the
-    # PATH. It will already be in the PATH if being run from a Visual Studio
-    # command prompt. Add it to the PATH here in case we are running from a
-    # different command prompt.
-    GET_FILENAME_COMPONENT(DUMPBIN_EXE_DIR "${DUMPBIN_EXE}" PATH)
-    GET_FILENAME_COMPONENT(DUMPBIN_EXE_DLLS_DIR "${DUMPBIN_EXE_DIR}/../../Common7/IDE" ABSOLUTE)
-
-    IF(EXISTS "${DUMPBIN_EXE_DLLS_DIR}")
-      # only add to the path if it is not already in the path
-      IF(NOT "$ENV{PATH}" MATCHES "${DUMPBIN_EXE_DLLS_DIR}")
-        SET(ENV{PATH} "$ENV{PATH};${DUMPBIN_EXE_DLLS_DIR}")
-      ENDIF(NOT "$ENV{PATH}" MATCHES "${DUMPBIN_EXE_DLLS_DIR}")
-    ENDIF(EXISTS "${DUMPBIN_EXE_DLLS_DIR}")
+    SET(DUMP_UTIL "dumpbin.exe" CACHE INTERNAL "the dumpbin application.")
 
     FILE(WRITE ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/cl_test.c
       "int main() {return 0;}")
@@ -73,15 +58,10 @@ MACRO(OMPI_MICROSOFT_COMPILER)
 
     IF(CL_EXE_OK)
 
-      MESSAGE( STATUS "Found Microsoft compiler: ${CL_EXE}.")
-
       # The atomic functions are defined in a very unuasual manner.
       # Some of them are intrinsic defined in windows.h others are
       # exported by kernel32.dll. If we force the usage of TRY_RUN
       # here we will check for both in same time: compilation and run.
-
-      # path of foo test programs
-      SET (FOO_SOURCE_DIR ${OpenMPI_SOURCE_DIR}/CMakeTests)
 
       IF(${CMAKE_SYSTEM_VERSION} GREATER 5.1)
         SET(FUNCTION_LIST Exchange ExchangeAcquire ExchangeRelease Exchange64)
