@@ -114,12 +114,13 @@ OPAL_DECLSPEC int opal_bitmap_clear_bit(opal_bitmap_t *bm, int bit);
   *
   * @param  bitmap  The input bitmap (IN)
   * @param  bit     The bit which is to be checked (IN)
-  * @return OPAL error code if the bit is out of range
-  *         1 if the bit is set
-  *         0 if the bit is not set
+  * @return true    if the bit is set
+  *         false   if the bit is not set OR the index
+  *                 is outside the bounds of the provided
+  *                 bitmap
   *
   */
-OPAL_DECLSPEC int opal_bitmap_is_set_bit(opal_bitmap_t *bm, int bit);
+OPAL_DECLSPEC bool opal_bitmap_is_set_bit(opal_bitmap_t *bm, int bit);
 
 
 /**

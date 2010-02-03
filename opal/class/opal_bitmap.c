@@ -180,27 +180,27 @@ opal_bitmap_clear_bit(opal_bitmap_t *bm, int bit)
 }
 
 
-int
+bool
 opal_bitmap_is_set_bit(opal_bitmap_t *bm, int bit)
 {
     int index, offset;
     
     if ((bit < 0) || NULL == bm || (bit >= (bm->array_size * SIZE_OF_CHAR))) {
-        return OPAL_ERR_BAD_PARAM;
+        return false;
     }
     
     index = bit / SIZE_OF_CHAR; 
     offset = bit % SIZE_OF_CHAR;
     
     if (index >= bm->array_size) {
-        return OPAL_ERR_BAD_PARAM;
+        return false;
     }
     
     if (0 != (bm->bitmap[index] & (1 << offset))) {
-        return (int) true;
+        return true;
     }
     
-    return (int) false;
+    return false;
 }
 
 
