@@ -749,7 +749,7 @@ int orte_daemon(int argc, char *argv[])
             /* add them to the buffer */
             while (NULL != (item = opal_list_remove_first(&resources))) {
                 info = (opal_sysinfo_value_t*)item;
-                opal_dss.pack(buffer, &info, 1, OPAL_STRING);
+                opal_dss.pack(buffer, &info->key, 1, OPAL_STRING);
                 opal_dss.pack(buffer, &info->type, 1, OPAL_DATA_TYPE_T);
                 if (OPAL_INT64 == info->type) {
                     opal_dss.pack(buffer, &(info->data.i64), 1, OPAL_INT64);
