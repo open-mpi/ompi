@@ -136,13 +136,20 @@ int ompi_comm_cid_init (void)
     for ( i=0; i<numprocs; i++ ) {
         thisproc = procs[i];
        
-        if (OMPI_SUCCESS != (ret = ompi_modex_recv_string("MPI_THREAD_LEVEL", thisproc, &tlpointer, &size))) {
-            return OMPI_ERROR;
-        }
-        thread_level = *((uint8_t *) tlpointer);
-        if ( OMPI_THREADLEVEL_IS_MULTIPLE (thread_level) ) {
-            ompi_comm_world_thread_level_mult = 1;
+        ret = ompi_modex_recv_string("MPI_THREAD_LEVEL", thisproc, &tlpointer, &size);
+        if (OMPI_SUCCESS == ret) {
+            thread_level = *((uint8_t *) tlpointer);
+            if ( OMPI_THREADLEVEL_IS_MULTIPLE (thread_level) ) {
+                ompi_comm_world_thread_level_mult = 1;
+                break;
+            }
+        } else if (OMPI_ERR_NOT_IMPLEMENTED == ret) {
+            if (ompi_mpi_thread_multiple) {
+                ompi_comm_world_thread_level_mult = 1;
+            }
             break;
+        } else {
+            return ret;
         }
     }
 
