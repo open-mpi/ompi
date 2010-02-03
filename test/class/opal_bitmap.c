@@ -48,19 +48,16 @@ int main(int argc, char *argv[])
     opal_bitmap_t bm;
     int err;
     
-    fprintf(stderr, "Bitmap test starting\n");
     /* Perform overall test initialization */
     test_init("opal_bitmap_t");
-    fprintf(stderr, "...initialized\n");
-    error_out = stderr;
-#if 0
+
 #ifdef STANDALONE
     error_out = stderr;
 #else
     error_out = fopen( "./opal_bitmap_test_out.txt", "w" );
     if( error_out == NULL ) error_out = stderr;
 #endif
-#endif
+
     /* Initialize bitmap  */
 
     PRINT_VALID_ERR;
