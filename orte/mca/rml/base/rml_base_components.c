@@ -57,6 +57,8 @@ opal_list_t       orte_rml_base_components;
 orte_rml_component_t *orte_rml_component = NULL;
 
 static bool       component_open_called = false;
+static bool       opened = false;
+static bool       selected = false;
 
 /* instantiate the msg_pkt object */
 static void msg_pkt_constructor(orte_msg_packet_t *pkt)
@@ -83,6 +85,11 @@ orte_rml_base_open(void)
 {
     int ret;
 
+    if (opened) {
+        return ORTE_SUCCESS;
+    }
+    opened = true;
+    
     /* Initialize globals */
     OBJ_CONSTRUCT(&orte_rml_base_components, opal_list_t);
     OBJ_CONSTRUCT(&orte_rml_base_subscriptions, opal_list_t);
@@ -127,6 +134,11 @@ orte_rml_base_select(void)
     orte_rml_module_t *wrapper_module = NULL;
     char *rml_wrapper = NULL;
 
+    if (selected) {
+        return ORTE_SUCCESS;
+    }
+    selected = true;
+    
     mca_base_param_reg_string_name("rml", "wrapper",
                                    "Use a Wrapper component around the selected RML component",
                                    false, false,
