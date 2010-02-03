@@ -34,6 +34,8 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/plm/base/base.h"
+#include "orte/mca/rml/base/base.h"
+#include "orte/mca/rml/rml.h"
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
@@ -95,6 +97,20 @@ static int rte_init(void)
          * use the multicast system to find it
          */
         if (NULL == orte_process_info.my_hnp_uri) {
+            /* Runtime Messaging Layer - this opens/selects the OOB as well
+             * so we can get our url
+             */
+            if (ORTE_SUCCESS != (ret = orte_rml_base_open())) {
+                ORTE_ERROR_LOG(ret);
+                error = "orte_rml_base_open";
+                goto error;
+            }
+            if (ORTE_SUCCESS != (ret = orte_rml_base_select())) {
+                ORTE_ERROR_LOG(ret);
+                error = "orte_rml_base_select";
+                goto error;
+            }
+            
             /* open the reliable multicast framework */
             if (ORTE_SUCCESS != (ret = orte_rmcast_base_open())) {
                 ORTE_ERROR_LOG(ret);
@@ -499,6 +515,7 @@ static int cm_set_name(void)
     opal_list_item_t *item;
     opal_sysinfo_value_t *info;
     int32_t num_values;
+    char *rml_uri;
     
     /* setup the query */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
@@ -517,8 +534,8 @@ static int cm_set_name(void)
     /* always include our node name */
     opal_dss.pack(&buf, &orte_process_info.nodename, 1, OPAL_STRING);
 
-    /* get our local resources */
     if (ORTE_PROC_IS_DAEMON) {
+        /* get our local resources */
         OBJ_CONSTRUCT(&resources, opal_list_t);
         opal_sysinfo.query(keys, &resources);
         /* add number of values to the buffer */
@@ -540,7 +557,14 @@ static int cm_set_name(void)
             }
             OBJ_RELEASE(info);
         }
-        OBJ_DESTRUCT(&resources);                
+        OBJ_DESTRUCT(&resources);
+        /* get and send our url */
+        if (NULL == (rml_uri = orte_rml.get_contact_info())) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return ORTE_ERR_NOT_FOUND;
+        }
+        opal_dss.pack(&buf, &rml_uri, 1, OPAL_STRING);
+        free(rml_uri);
     }
     
     /* set the recv to get the answer */
