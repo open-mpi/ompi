@@ -198,6 +198,7 @@ typedef unsigned int uint;
  */
 #define SIGCHLD SIGILL
 #define SIGKILL WM_QUIT
+#define SIGPIPE 13
 #define SIGCONT 18
 #define SIGSTOP 19
 #define SIGTSTP 20
