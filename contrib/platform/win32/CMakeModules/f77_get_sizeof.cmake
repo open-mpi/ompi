@@ -52,13 +52,23 @@ MACRO(OMPI_F77_GET_SIZEOF TYPE OUTPUT_VARIABLE)
        "} \n"
        "#endif \n")
 
-  EXECUTE_PROCESS(COMMAND ${CL_EXE} /c conftest.c /I${VC_INCLUDE_PATH}
+  # generate the C object file
+  EXECUTE_PROCESS(COMMAND ${CMAKE_C_COMPILER} ${OMPI_C_OPTION_COMPILE} conftest.c ${OMPI_C_OUTPUT_OBJ}conftest_c.obj
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp
     OUTPUT_VARIABLE OUTPUT
     RESULT_VARIABLE RESULT
     ERROR_VARIABLE ERROR)
-  
-  EXECUTE_PROCESS(COMMAND ${F77} conftest.f conftest.obj -o conftest
+
+  # generate the Fortran object file
+  # some Fortran compilers don't allow to compile and link in one step. :-(
+  EXECUTE_PROCESS(COMMAND ${F77} ${OMPI_F77_OPTION_COMPILE} conftest.f ${OMPI_F77_OUTPUT_OBJ}conftest.obj
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp
+    OUTPUT_VARIABLE OUTPUT
+    RESULT_VARIABLE RESULT
+    ERROR_VARIABLE ERROR)
+
+  # link the C and Fortran object files.
+  EXECUTE_PROCESS(COMMAND ${F77} conftest.obj conftest_c.obj ${OMPI_F77_OUTPUT_EXE}conftest.exe
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp
     OUTPUT_VARIABLE OUTPUT
     RESULT_VARIABLE RESULT

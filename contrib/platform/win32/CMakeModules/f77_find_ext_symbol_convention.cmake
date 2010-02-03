@@ -20,11 +20,6 @@ MACRO(OMPI_F77_FIND_EXT_SYMBOL_CONVENTION)
     SET(OMPI_F77_PLAIN 0
       CACHE INTERNAL "external symbol convention - plain")
 
-    # first check if we have already detected dumpbin.exe
-    IF(NOT DUMPBIN_EXE)
-      MESSAGE(FATAL_ERROR "could not find dumpbin, cannot continue...")
-    ENDIF(NOT DUMPBIN_EXE)
-
     # make sure we know our linking convention...
     MESSAGE(STATUS "Check ${CMAKE_Fortran_COMPILER} external symbol convention...")
     FILE(WRITE ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/conftest.f
@@ -34,7 +29,7 @@ MACRO(OMPI_F77_FIND_EXT_SYMBOL_CONVENTION)
       "\t return \n"
       "\t end \n")
     
-    EXECUTE_PROCESS(COMMAND ${F77} -c conftest.f -o conftest.lib
+    EXECUTE_PROCESS(COMMAND ${F77} ${OMPI_F77_OPTION_COMPILE} conftest.f ${OMPI_F77_OUTPUT_OBJ}conftest.lib
       WORKING_DIRECTORY  ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp
       OUTPUT_VARIABLE    OUTPUT
       RESULT_VARIABLE    RESULT
@@ -43,11 +38,12 @@ MACRO(OMPI_F77_FIND_EXT_SYMBOL_CONVENTION)
     SET(OUTPUT_OBJ_FILE "conftest.lib")
 
     # now run dumpbin to generate an output file
-    EXECUTE_PROCESS(COMMAND ${DUMPBIN_EXE} ${OUTPUT_OBJ_FILE} /symbols /out:conftest_out
+    EXECUTE_PROCESS(COMMAND ${DUMP_UTIL} ${OUTPUT_OBJ_FILE} /symbols /out:conftest_out
       WORKING_DIRECTORY  ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp
       OUTPUT_VARIABLE    OUTPUT
       RESULT_VARIABLE    RESULT
       ERROR_VARIABLE     ERROR)
+
 
     # find out the external symbol convention
     FILE(STRINGS ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/conftest_out 
@@ -104,7 +100,9 @@ MACRO(OMPI_F77_FIND_EXT_SYMBOL_CONVENTION)
       "int main(){${FUNC_NAME}();return(0);}")
 
     FILE(WRITE ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/CMakeLists.txt
-      "PROJECT(conftest_c C)\n" 
+      "CMAKE_MINIMUM_REQUIRED(VERSION 2.4.6 FATAL_ERROR)\n"
+      "PROJECT(conftest_c C)\n"
+      "LINK_DIRECTORIES(\"${OMPI_F77_LIB_PATH}\")\n"
       "ADD_EXECUTABLE(conftest_c conftest_c.c)\n"
       "TARGET_LINK_LIBRARIES(conftest_c ${OUTPUT_OBJ_FILE})\n")
 

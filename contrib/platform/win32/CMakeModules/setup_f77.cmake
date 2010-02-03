@@ -18,7 +18,20 @@ SET(CMAKE_GENERATOR_FC "")
 include(CMakeDetermineFortranCompiler)
 include(CMakeFortranInformation)
 
-GET_FILENAME_COMPONENT(F77 ${CMAKE_Fortran_COMPILER} NAME)
+GET_FILENAME_COMPONENT(F77 ${CMAKE_Fortran_COMPILER} NAME_WE)
+GET_FILENAME_COMPONENT(F77_PATH ${CMAKE_Fortran_COMPILER} PATH)
+
+# Default compiler settings.
+SET(OMPI_F77_OPTION_COMPILE "-c" CACHE STRING
+  "Fortran compiler option for compiling without linking.")
+SET(OMPI_F77_OUTPUT_OBJ "-o" CACHE STRING
+  "Fortran compiler option for setting object file name.")
+SET(OMPI_F77_OUTPUT_EXE "-o" CACHE STRING
+  "Fortran compiler option for setting executable file name.")
+SET(OMPI_F77_LIB_PATH "" CACHE PATH
+  "Library path for the fortran compiler")
+SET(OMPI_F77_INCLUDE_PATH "" CACHE PATH
+  "Include path for the fortran compiler")
 
 INCLUDE(F77_find_ext_symbol_convention)
 # make sure we know the linking convention
@@ -26,6 +39,11 @@ INCLUDE(F77_find_ext_symbol_convention)
 OMPI_F77_FIND_EXT_SYMBOL_CONVENTION()
 
 IF(OMPI_WANT_F77_BINDINGS AND NOT F77_SETUP_DONE)
+
+  # Export env variables for fortran compiler.
+  SET(ENV{PATH} "${F77_PATH};$ENV{PATH}")
+  SET(ENV{LIB} "${OMPI_F77_LIB_PATH};$ENV{LIB}")
+  SET(ENV{INCLUDE} "${OMPI_F77_INCLUDE_PATH};$ENV{INCLUDE}")
 
   # make sure the compiler actually works, if not cross-compiling
   MESSAGE(STATUS "Checking for working Fortran compiler...")
