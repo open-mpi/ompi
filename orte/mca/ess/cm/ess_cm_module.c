@@ -535,6 +535,13 @@ static int cm_set_name(void)
     opal_dss.pack(&buf, &orte_process_info.nodename, 1, OPAL_STRING);
 
     if (ORTE_PROC_IS_DAEMON) {
+        /* get and send our url */
+        if (NULL == (rml_uri = orte_rml.get_contact_info())) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return ORTE_ERR_NOT_FOUND;
+        }
+        opal_dss.pack(&buf, &rml_uri, 1, OPAL_STRING);
+        free(rml_uri);
         /* get our local resources */
         OBJ_CONSTRUCT(&resources, opal_list_t);
         opal_sysinfo.query(keys, &resources);
@@ -558,13 +565,6 @@ static int cm_set_name(void)
             OBJ_RELEASE(info);
         }
         OBJ_DESTRUCT(&resources);
-        /* get and send our url */
-        if (NULL == (rml_uri = orte_rml.get_contact_info())) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return ORTE_ERR_NOT_FOUND;
-        }
-        opal_dss.pack(&buf, &rml_uri, 1, OPAL_STRING);
-        free(rml_uri);
     }
     
     /* set the recv to get the answer */
