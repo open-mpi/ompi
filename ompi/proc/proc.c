@@ -151,24 +151,28 @@ int ompi_proc_set_arch(void)
         proc = (ompi_proc_t*)item;
         
         if (proc->proc_name.vpid != ORTE_PROC_MY_NAME->vpid) {
-            if (OMPI_SUCCESS != (ret = ompi_modex_recv_key_value("OMPI_ARCH", proc, (void*)&(proc->proc_arch), OPAL_UINT32))) {
+            ret = ompi_modex_recv_key_value("OMPI_ARCH", proc, (void*)&(proc->proc_arch), OPAL_UINT32);
+            if (OMPI_SUCCESS == ret) {
+                /* if arch is different than mine, create a new convertor for this proc */
+                if (proc->proc_arch != opal_local_arch) {
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+                    OBJ_RELEASE(proc->proc_convertor);
+                    proc->proc_convertor = opal_convertor_create(proc->proc_arch, 0);
+#else
+                    orte_show_help("help-mpi-runtime",
+                                   "heterogeneous-support-unavailable",
+                                   true, orte_process_info.nodename, 
+                                   proc->proc_hostname == NULL ? "<hostname unavailable>" :
+                                   proc->proc_hostname);
+                    OPAL_THREAD_UNLOCK(&ompi_proc_lock);
+                    return OMPI_ERR_NOT_SUPPORTED;
+#endif
+                }
+            } else if (OMPI_ERR_NOT_IMPLEMENTED == ret) {
+                proc->proc_arch = opal_local_arch;
+            } else {
                 OPAL_THREAD_UNLOCK(&ompi_proc_lock);
                 return ret;
-            }
-            /* if arch is different than mine, create a new convertor for this proc */
-            if (proc->proc_arch != opal_local_arch) {
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-                OBJ_RELEASE(proc->proc_convertor);
-                proc->proc_convertor = opal_convertor_create(proc->proc_arch, 0);
-#else
-                orte_show_help("help-mpi-runtime",
-                               "heterogeneous-support-unavailable",
-                               true, orte_process_info.nodename, 
-                               proc->proc_hostname == NULL ? "<hostname unavailable>" :
-                               proc->proc_hostname);
-                OPAL_THREAD_UNLOCK(&ompi_proc_lock);
-                return OMPI_ERR_NOT_SUPPORTED;
-#endif
             }
         }
     }

@@ -34,7 +34,13 @@ AC_DEFUN([MCA_pstat_linux_CONFIG],[
         ;;
    esac
 
-    AS_IF([test "$pstat_linux_happy" = "yes"], 
-          [$1], 
-          [$2])
+   AS_IF([test "$pstat_linux_happy" = "yes"], 
+         [AC_CHECK_DECLS([HZ],
+            [], [pstat_linux_happy="no"], [AC_INCLUDES_DEFAULT
+#include <sys/param.h>
+])])
+
+   AS_IF([test "$pstat_linux_happy" = "yes"], 
+         [$1], 
+         [$2])
 ])
