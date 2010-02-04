@@ -81,6 +81,7 @@ ORTE_DECLSPEC extern bool orte_in_parallel_debugger;
    simple (and throw an error if someone does try to use them) */
 struct orte_job_t;
 typedef struct orte_job_t orte_job_t;
+typedef uint16_t orte_mapping_policy_t;
 
 #else
 
