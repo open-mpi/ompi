@@ -1,4 +1,4 @@
-# Copyright (c) 2007-2008 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2010 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -12,8 +12,6 @@ IF(WIN32)
   SET (EVENT_WIN32_FILES
     ${EVENT_WIN32_FILES}
     config.h
-    misc.h
-    misc.h
     tree.h
     win32.c
   )
