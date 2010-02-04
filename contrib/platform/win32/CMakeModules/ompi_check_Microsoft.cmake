@@ -25,8 +25,23 @@ MACRO(OMPI_MICROSOFT_COMPILER)
 
     MESSAGE( STATUS "Start Microsoft specific detection....")
 
+    # search for Microsoft VC tools 
+    SET(VC_BIN_PATH ${VC_BIN_PATH} 
+      "C:/Program Files/Microsoft Visual Studio 9.0/VC/bin" 
+      "C:/Program Files (x86)/Microsoft Visual Studio 9.0/VC/bin" 
+      "C:/Program Files/Microsoft Visual Studio 8/VC/BIN" 
+      "C:/Program Files (x86)/Microsoft Visual Studio 8/VC/BIN" 
+      "C:/Program Files/Microsoft Visual Studio .NET 2003/VC7/BIN" 
+      "C:/Program Files (x86)/Microsoft Visual Studio .NET 2003/VC7/BIN" 
+      "$ENV{VS90COMNTOOLS}../../VC/bin" 
+      "$ENV{VS80COMNTOOLS}../../VC/bin")
+
+    FIND_PROGRAM(CL_EXE cl PATHS ${VC_BIN_PATH})
+
     # Set up VS environments.
-    GET_FILENAME_COMPONENT(CL_EXE_PATH ${CMAKE_C_COMPILER} PATH)
+    GET_FILENAME_COMPONENT(CL_EXE_PATH ${CL_EXE} PATH)
+    GET_FILENAME_COMPONENT(CC ${CL_EXE} NAME CACHE)
+    GET_FILENAME_COMPONENT(CXX ${CL_EXE} NAME CACHE)
     GET_FILENAME_COMPONENT(SDK_ROOT_PATH
       "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows;CurrentInstallFolder]" ABSOLUTE CACHE)
     SET(VS_ROOT_DIR ${CL_EXE_PATH}/../../)
