@@ -72,23 +72,26 @@ FOREACH(OPAL_SUBDIR ${OPAL_SUBDIRS})
 
 ENDFOREACH(OPAL_SUBDIR ${OPAL_SUBDIRS})
 
-# Generate flex files.
-ADD_FLEX_FILE(OPAL_SOURCE_FILES ./util/keyval/keyval_lex.l opal_util_keyval_yy "${PROJECT_BINARY_DIR}/util/keyval/")
-ADD_FLEX_FILE(OPAL_SOURCE_FILES ./util/show_help_lex.l  opal_show_help_yy "${PROJECT_BINARY_DIR}/util/")
-SET_SOURCE_FILES_PROPERTIES(${PROJECT_BINARY_DIR}/util/keyval/keyval_lex.c
-                            PROPERTIES COMPILE_DEFINITIONS YY_NO_UNISTD_H)
-SET_SOURCE_FILES_PROPERTIES(${PROJECT_BINARY_DIR}/util/show_help_lex.c
-                            PROPERTIES COMPILE_DEFINITIONS YY_NO_UNISTD_H)
+#only generate if it's not a tarball
+IF(NOT EXISTS ${PROJECT_SOURCE_DIR}/util/keyval/keyval_lex.c) 
+  ADD_FLEX_FILE(OPAL_SOURCE_FILES ./util/keyval/keyval_lex.l 
+    opal_util_keyval_yy "${PROJECT_BINARY_DIR}/util/keyval/") 
+  SET_SOURCE_FILES_PROPERTIES(${PROJECT_BINARY_DIR}/util/keyval/keyval_lex.c
+    PROPERTIES COMPILE_DEFINITIONS YY_NO_UNISTD_H)
+ELSE(NOT EXISTS ${PROJECT_SOURCE_DIR}/util/keyval/keyval_lex.c)
+  SET_SOURCE_FILES_PROPERTIES(${PROJECT_SOURCE_DIR}/util/keyval/keyval_lex.c
+    PROPERTIES COMPILE_DEFINITIONS YY_NO_UNISTD_H)
+ENDIF(NOT EXISTS ${PROJECT_SOURCE_DIR}/util/keyval/keyval_lex.c)
 
-# Exclude the same flex files that generaged on Linux,
-# which could be found in a tarball.
-IF(EXISTS ${PROJECT_SOURCE_DIR}/util/keyval/keyval_lex.c)
-  LIST(REMOVE_ITEM OPAL_SOURCE_FILES "${PROJECT_SOURCE_DIR}/util/keyval/keyval_lex.c")
-ENDIF(EXISTS ${PROJECT_SOURCE_DIR}/util/keyval/keyval_lex.c)
-
-IF(EXISTS ${PROJECT_SOURCE_DIR}/util/keyval/show_help_lex.c)
-  LIST(REMOVE_ITEM OPAL_SOURCE_FILES "${PROJECT_SOURCE_DIR}/util/keyval/show_help_lex.c")
-ENDIF(EXISTS ${PROJECT_SOURCE_DIR}/util/keyval/show_help_lex.c)
+IF(NOT EXISTS ${PROJECT_SOURCE_DIR}/util/show_help_lex.c) 
+  ADD_FLEX_FILE(OPAL_SOURCE_FILES ./util/show_help_lex.l 
+    opal_show_help_yy "${PROJECT_BINARY_DIR}/util/")
+  SET_SOURCE_FILES_PROPERTIES(${PROJECT_BINARY_DIR}/util/show_help_lex.c
+    PROPERTIES COMPILE_DEFINITIONS YY_NO_UNISTD_H)
+ELSE(NOT EXISTS ${PROJECT_SOURCE_DIR}/util/show_help_lex.c)
+  SET_SOURCE_FILES_PROPERTIES(${PROJECT_SOURCE_DIR}/util/show_help_lex.c
+    PROPERTIES COMPILE_DEFINITIONS YY_NO_UNISTD_H)
+ENDIF(NOT EXISTS ${PROJECT_SOURCE_DIR}/util/show_help_lex.c) 
 
 
 # Add source files from mca subdirectories.
