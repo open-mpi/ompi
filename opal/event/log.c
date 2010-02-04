@@ -48,7 +48,9 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #else
+#  ifndef HAVE_WINSOCK2_H
 #include <sys/_libevent_time.h>
+#  endif
 #endif
 #include <stdio.h>
 #include <stdlib.h>
