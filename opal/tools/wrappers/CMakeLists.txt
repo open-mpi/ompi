@@ -1,4 +1,4 @@
-# Copyright (c) 2007-2009 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2010 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -11,7 +11,7 @@ FILE(GLOB_RECURSE OPAL_WRAPPER_SOURCE_FILES "*.h" "*.c" "*.cc" "*.cpp")
 
 ADD_EXECUTABLE (opal-wrapper ${OPAL_WRAPPER_SOURCE_FILES})
 
-TARGET_LINK_LIBRARIES (opal-wrapper Ws2_32.lib shlwapi.lib)
+TARGET_LINK_LIBRARIES (opal-wrapper libopen-pal Ws2_32.lib shlwapi.lib)
 
 IF(BUILD_SHARED_LIBS)
   SET_TARGET_PROPERTIES(opal-wrapper PROPERTIES
@@ -44,8 +44,6 @@ INSTALL(FILES ${PROJECT_BINARY_DIR}/mpicc.exe
   ${PROJECT_BINARY_DIR}/mpicxx.exe
   ${PROJECT_BINARY_DIR}/mpiexec.exe
   DESTINATION bin)
-
-ADD_DEPENDENCIES (opal-wrapper libopen-pal)
 
 IF(WANT_INSTALL_HEADERS)
 
