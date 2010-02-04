@@ -78,6 +78,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/iof/base/iof_base_setup.h"
+#include "orte/mca/plm/plm.h"
 #include "orte/util/name_fns.h"
 
 #include "orte/mca/odls/base/odls_private.h"
@@ -182,6 +183,9 @@ static bool odls_default_child_died(pid_t pid, unsigned int timeout, int *exit_s
 
 static int odls_default_kill_local(pid_t pid, int signum)
 {
+    if (orte_forward_job_control) {
+        pid = -pid;
+    }
     if (0 != kill(pid, signum)) {
         if (ESRCH != errno) {
             OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
@@ -288,6 +292,13 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
     
     if (pid == 0) {
         long fd, fdmax = sysconf(_SC_OPEN_MAX);
+
+	if (orte_forward_job_control) {
+	    /* Set a new process group for this child, so that a
+	       SIGSTOP can be sent to it without being sent to the
+	       orted. */
+	    setpgrp();
+	}
         
         /* Setup the pipe to be close-on-exec */
         close(p[0]);
@@ -900,6 +911,7 @@ int orte_odls_default_launch_local_procs(opal_buffer_t *data)
 {
     int rc;
     orte_jobid_t job;
+    orte_job_t *jdata;
 
     /* construct the list of children we are to launch */
     if (ORTE_SUCCESS != (rc = orte_odls_base_default_construct_child_list(data, &job))) {
@@ -917,6 +929,23 @@ int orte_odls_default_launch_local_procs(opal_buffer_t *data)
         goto CLEANUP;
     }
     
+    /* look up job data object */
+    if (NULL != (jdata = orte_get_job_data_object(job))) {
+        if (jdata->state & ORTE_JOB_STATE_SUSPENDED) {
+            if (ORTE_PROC_IS_HNP) {
+		/* Have the plm send the signal to all the nodes.
+		   If the signal arrived before the orteds started,
+		   then they won't know to suspend their procs.
+		   The plm also arranges for any local procs to
+		   be signaled.
+		 */
+                orte_plm.signal_job(jdata->jobid, SIGTSTP);
+            } else {
+                orte_odls_default_signal_local_procs(NULL, SIGTSTP);
+            }
+        }
+    }
+
 CLEANUP:
    
     return rc;
@@ -946,7 +975,12 @@ static int send_signal(pid_t pid, int signal)
                          "%s sending signal %d to pid %ld",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          signal, (long)pid));
-    
+
+    if (orte_forward_job_control) {
+	/* Send the signal to the process group rather than the
+	   process.  The child is the leader of its process group. */
+	pid = -pid;
+    }
     if (kill(pid, signal) != 0) {
         switch(errno) {
             case EINVAL:

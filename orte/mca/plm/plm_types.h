@@ -72,12 +72,13 @@ typedef uint16_t orte_job_state_t;
 #define ORTE_JOB_STATE_RESTART              0x0002  /* the job is ready for restart after one or more procs failed */
 #define ORTE_JOB_STATE_LAUNCHED             0x0004  /* job has been launched by plm */
 #define ORTE_JOB_STATE_RUNNING              0x0010  /* all process have been fork'd */
+#define ORTE_JOB_STATE_SUSPENDED            0x0020  /* job has been suspended */
 /*
  * Define a "boundary" so we can easily and quickly determine
  * if a job is still running or not - any value less than
  * this one means that we are not terminated
  */
-#define ORTE_JOB_STATE_UNTERMINATED         0x0020
+#define ORTE_JOB_STATE_UNTERMINATED         0x0040
 
 #define ORTE_JOB_STATE_TERMINATED           0x0080  /* all processes have terminated and is no longer running */
 #define ORTE_JOB_STATE_ABORTED              0x0100  /* at least one process aborted, causing job to abort */
