@@ -298,7 +298,7 @@ static void ADIO_FileSysType_fncall(char *filename, int *fstype, int *error_code
     /* --END ERROR HANDLING-- */
 #endif /* STATVFS APPROACH */
 
-#ifdef HAVE_STRUCT_STATFS
+#if defined(HAVE_STRUCT_STATFS) && defined(HAVE_STATFS)
     do {
 	err = statfs(filename, &fsbuf);
     } while (err && (errno == ESTALE));

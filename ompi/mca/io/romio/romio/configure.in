@@ -1646,6 +1646,7 @@ fi
 # Check for statfs (many) and specifically f_fstypename field (BSD)
 #
 AC_CHECK_HEADERS(sys/vfs.h sys/param.h sys/mount.h sys/statvfs.h)
+AC_CHECK_FUNCS([statfs])
 AC_MSG_CHECKING([whether struct statfs properly defined])
 AC_TRY_COMPILE([
 #ifdef HAVE_SYS_VFS_H
