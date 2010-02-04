@@ -34,7 +34,7 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #else
-#include <sys/_time.h>
+#include <sys/_libevent_time.h>
 #endif
 #include <sys/queue.h>
 #ifdef HAVE_POLL_H
@@ -99,7 +99,7 @@ poll_init(struct event_base *base)
 	struct pollop *pollop;
 
 	/* Disable poll when this environment variable is set */
-	if (getenv("EVENT_NOPOLL"))
+	if (evutil_getenv("EVENT_NOPOLL"))
 		return (NULL);
 
 	if (!(pollop = calloc(1, sizeof(struct pollop))))
@@ -147,7 +147,7 @@ poll_check_ok(struct pollop *pop)
 static int
 poll_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 {
-	int res, i, msec = -1, nfds;
+	int res, i, j, msec = -1, nfds;
 	struct pollop *pop = arg;
 
 	poll_check_ok(pop);
@@ -185,12 +185,17 @@ poll_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 
 	event_debug(("%s: poll reports %d", __func__, res));
 
-	if (res == 0)
+	if (res == 0 || nfds == 0)
 		return (0);
 
-	for (i = 0; i < nfds; i++) {
-		int what = pop->event_set[i].revents;
+	i = random() % nfds;
+	for (j = 0; j < nfds; j++) {
 		struct event *r_ev = NULL, *w_ev = NULL;
+		int what;
+		if (++i == nfds)
+			i = 0;
+		what = pop->event_set[i].revents;
+
 		if (!what)
 			continue;
 

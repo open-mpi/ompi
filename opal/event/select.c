@@ -33,9 +33,7 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #else
-#  ifndef HAVE_WINSOCK2_H
-#include <sys/_time.h>
-#  endif
+#include <sys/_libevent_time.h>
 #endif
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
@@ -54,6 +52,7 @@
 #endif
 
 #include "event.h"
+#include "evutil.h"
 #include "event-internal.h"
 #include "evsignal.h"
 #include "log.h"
@@ -73,8 +72,6 @@ extern volatile sig_atomic_t opal_evsignal_caught;
 #define NFDBITS 32
 int fd_mask;
 #endif
-
-
 
 struct selectop {
 	int event_fds;		/* Highest fd in fd set */
@@ -111,7 +108,7 @@ select_init(struct event_base *base)
 	struct selectop *sop;
 
 	/* Disable select when this environment variable is set */
-	if (getenv("EVENT_NOSELECT"))
+	if (evutil_getenv("EVENT_NOSELECT"))
 		return (NULL);
 
 	if (!(sop = calloc(1, sizeof(struct selectop))))
@@ -155,7 +152,7 @@ check_selectop(struct selectop *sop)
 static int
 select_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 {
-	int res, i;
+	int res, i, j;
 	struct selectop *sop = arg;
 
 	check_selectop(sop);
@@ -197,8 +194,12 @@ select_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 	event_debug(("%s: select reports %d", __func__, res));
 
 	check_selectop(sop);
-	for (i = 0; i <= sop->event_fds; ++i) {
+	i = random() % (sop->event_fds+1);
+	for (j = 0; j <= sop->event_fds; ++j) {
 		struct event *r_ev = NULL, *w_ev = NULL;
+		if (++i >= sop->event_fds+1)
+			i = 0;
+
 		res = 0;
 		if (FD_ISSET(i, sop->event_readset_out)) {
 			r_ev = sop->event_r_by_fd[i];

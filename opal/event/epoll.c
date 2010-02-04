@@ -37,7 +37,7 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #else
-#include <sys/_time.h>
+#include <sys/_libevent_time.h>
 #endif
 #include <sys/queue.h>
 #include <sys/epoll.h>
@@ -85,7 +85,7 @@ static int epoll_del	(void *, struct event *);
 static int epoll_dispatch	(struct event_base *, void *, struct timeval *);
 static void epoll_dealloc	(struct event_base *, void *);
 
-struct eventop epollops = {
+const struct eventop epollops = {
 	"epoll",
 	epoll_init,
 	epoll_add,
@@ -104,33 +104,32 @@ struct eventop epollops = {
 #define FD_CLOSEONEXEC(x)
 #endif
 
-#define NEVENT	32000
+/* On Linux kernels at least up to 2.6.24.4, epoll can't handle timeout
+ * values bigger than (LONG_MAX - 999ULL)/HZ.  HZ in the wild can be
+ * as big as 1000, and LONG_MAX can be as small as (1<<31)-1, so the
+ * largest number of msec we can support here is 2147482.  Let's
+ * round that down by 47 seconds.
+ */
+#define MAX_EPOLL_TIMEOUT_MSEC (35*60*1000)
+
+#define INITIAL_NFILES 32
+#define INITIAL_NEVENTS 32
+#define MAX_NEVENTS 4096
 
 static void *
 epoll_init(struct event_base *base)
 {
-	int epfd, nfiles = NEVENT;
-	struct rlimit rl;
+	int epfd;
 	struct epollop *epollop;
 
 	/* Disable epollueue when this environment variable is set */
-	if (getenv("EVENT_NOEPOLL"))
+	if (evutil_getenv("EVENT_NOEPOLL"))
 		return (NULL);
 
-	if (getrlimit(RLIMIT_NOFILE, &rl) == 0 &&
-	    rl.rlim_cur != RLIM_INFINITY) {
-		/*
-		 * Solaris is somewhat retarded - it's important to drop
-		 * backwards compatibility when making changes.  So, don't
-		 * dare to put rl.rlim_cur here.
-		 */
-		nfiles = rl.rlim_cur - 1;
-	}
-
 	/* Initalize the kernel queue */
-
-	if ((epfd = epoll_create(nfiles)) == -1) {
-                event_warn("epoll_create");
+	if ((epfd = epoll_create(32000)) == -1) {
+		if (errno != ENOSYS)
+			event_warn("epoll_create");
 		return (NULL);
 	}
 
@@ -142,20 +141,20 @@ epoll_init(struct event_base *base)
 	epollop->epfd = epfd;
 
 	/* Initalize fields */
-	epollop->events = malloc(nfiles * sizeof(struct epoll_event));
+	epollop->events = malloc(INITIAL_NEVENTS * sizeof(struct epoll_event));
 	if (epollop->events == NULL) {
 		free(epollop);
 		return (NULL);
 	}
-	epollop->nevents = nfiles;
+	epollop->nevents = INITIAL_NEVENTS;
 
-	epollop->fds = calloc(nfiles, sizeof(struct evepoll));
+	epollop->fds = calloc(INITIAL_NFILES, sizeof(struct evepoll));
 	if (epollop->fds == NULL) {
 		free(epollop->events);
 		free(epollop);
 		return (NULL);
 	}
-	epollop->nfds = nfiles;
+	epollop->nfds = INITIAL_NFILES;
 
 #if OPAL_EVENT_USE_SIGNALS
 	evsignal_init(base);
@@ -168,12 +167,12 @@ epoll_recalc(struct event_base *base, void *arg, int max)
 {
 	struct epollop *epollop = arg;
 
-	if (max > epollop->nfds) {
+	if (max >= epollop->nfds) {
 		struct evepoll *fds;
 		int nfds;
 
 		nfds = epollop->nfds;
-		while (nfds < max)
+		while (nfds <= max)
 			nfds <<= 1;
 
 		fds = realloc(epollop->fds, nfds * sizeof(struct evepoll));
@@ -201,6 +200,12 @@ epoll_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 	if (tv != NULL)
 		timeout = tv->tv_sec * 1000 + (tv->tv_usec + 999) / 1000;
 
+	if (timeout > MAX_EPOLL_TIMEOUT_MSEC) {
+		/* Linux kernels can wait forever if the timeout is too big;
+		 * see comment on MAX_EPOLL_TIMEOUT_MSEC. */
+		timeout = MAX_EPOLL_TIMEOUT_MSEC;
+	}
+
         /* we should release the lock if we're going to enter the
            kernel in a multi-threaded application.  However, if we're
            single threaded, there's really no advantage to releasing
@@ -209,7 +214,6 @@ epoll_dispatch(struct event_base *base, void *arg, struct timeval *tv)
         OPAL_THREAD_UNLOCK(&opal_event_lock);
         res = epoll_wait(epollop->epfd, events, epollop->nevents, timeout);
         OPAL_THREAD_LOCK(&opal_event_lock);
-        
 	if (res == -1) {
 		if (errno != EINTR) {
 			event_warn("epoll_wait");
@@ -230,8 +234,11 @@ epoll_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 	for (i = 0; i < res; i++) {
 		int what = events[i].events;
 		struct event *evread = NULL, *evwrite = NULL;
+		int fd = events[i].data.fd;
 
-		evep = (struct evepoll *)events[i].data.ptr;
+		if (fd < 0 || fd >= epollop->nfds)
+			continue;
+		evep = &epollop->fds[fd];
 
 		if (what & (EPOLLHUP|EPOLLERR)) {
 			evread = evep->evread;
@@ -253,6 +260,20 @@ epoll_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 			event_active(evread, EV_READ, 1);
 		if (evwrite != NULL)
 			event_active(evwrite, EV_WRITE, 1);
+	}
+
+	if (res == epollop->nevents && epollop->nevents < MAX_NEVENTS) {
+		/* We used all of the event space this time.  We should
+		   be ready for more events next time. */
+		int new_nevents = epollop->nevents * 2;
+		struct epoll_event *new_events;
+
+		new_events = realloc(epollop->events,
+		    new_nevents * sizeof(struct epoll_event));
+		if (new_events) {
+			epollop->events = new_events;
+			epollop->nevents = new_nevents;
+		}
 	}
 
 	return (0);
@@ -295,7 +316,7 @@ epoll_add(void *arg, struct event *ev)
 	if (ev->ev_events & EV_WRITE)
 		events |= EPOLLOUT;
 
-	epev.data.ptr = evep;
+	epev.data.fd = fd;
 	epev.events = events;
 	if (epoll_ctl(epollop->epfd, op, ev->ev_fd, &epev) == -1)
 			return (-1);
@@ -349,7 +370,7 @@ epoll_del(void *arg, struct event *ev)
 	}
 
 	epev.events = events;
-	epev.data.ptr = evep;
+	epev.data.fd = fd;
 
 	if (needreaddelete)
 		evep->evread = NULL;
