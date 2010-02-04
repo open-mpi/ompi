@@ -62,6 +62,7 @@
 #endif
 
 #include "event.h"
+#include "evutil.h"
 
 
 struct evbuffer *
@@ -154,18 +155,13 @@ evbuffer_add_vprintf(struct evbuffer *buf, const char *fmt, va_list ap)
 #endif
 		va_copy(aq, ap);
 
-#ifdef WIN32
-		sz = vsnprintf(buffer, space - 1, fmt, aq);
-		buffer[space - 1] = '\0';
-#else
-		sz = vsnprintf(buffer, space, fmt, aq);
-#endif
+		sz = evutil_vsnprintf(buffer, space, fmt, aq);
 
 		va_end(aq);
 
 		if (sz < 0)
 			return (-1);
-		if (sz < space) {
+		if ((size_t)sz < space) {
 			buf->off += sz;
 			if (buf->cb != NULL)
 				(*buf->cb)(buf, oldoff, buf->off, buf->cbarg);
@@ -229,7 +225,6 @@ evbuffer_readline(struct evbuffer *buffer)
 
 	if ((line = malloc(i + 1)) == NULL) {
 		fprintf(stderr, "%s: out of memory\n", __func__);
-		evbuffer_drain(buffer, i);
 		return (NULL);
 	}
 
@@ -361,9 +356,9 @@ evbuffer_read(struct evbuffer *buf, int fd, int howmuch)
 #if defined(FIONREAD)
 #ifdef WIN32
 	long lng = n;
-	if (ioctlsocket(fd, FIONREAD, &lng) == -1 || (n=lng) == 0) {
+	if (ioctlsocket(fd, FIONREAD, &lng) == -1 || (n=lng) <= 0) {
 #else
-	if (ioctl(fd, FIONREAD, &n) == -1 || n == 0) {
+	if (ioctl(fd, FIONREAD, &n) == -1 || n <= 0) {
 #endif
 		n = EVBUFFER_MAX_READ;
 	} else if (n > EVBUFFER_MAX_READ && n > howmuch) {
@@ -374,7 +369,7 @@ evbuffer_read(struct evbuffer *buf, int fd, int howmuch)
 		 * about it.  If the reader does not tell us how much
 		 * data we should read, we artifically limit it.
 		 */
-		if (n > buf->totallen << 2)
+		if ((size_t)n > buf->totallen << 2)
 			n = buf->totallen << 2;
 		if (n < EVBUFFER_MAX_READ)
 			n = EVBUFFER_MAX_READ;

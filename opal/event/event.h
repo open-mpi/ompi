@@ -232,6 +232,7 @@ struct {								\
 #endif /* !TAILQ_ENTRY */
 
 struct event_base;
+#ifndef EVENT_NO_STRUCT
 struct event {
 	TAILQ_ENTRY (event) ev_next;
 	TAILQ_ENTRY (event) ev_active_next;
@@ -262,6 +263,9 @@ struct event {
 
 };
 typedef struct event opal_event_t;
+#else
+struct event;
+#endif
 
 #define EVENT_SIGNAL(ev)	(int)(ev)->ev_fd
 #define EVENT_FD(ev)		(int)(ev)->ev_fd
@@ -442,7 +446,7 @@ int event_base_loop(struct event_base *, int);
   @return 0 if successful, or -1 if an error occurred
   @see event_loop(), event_base_loop(), event_base_loopexit()
   */
-int event_loopexit(struct timeval *);
+int event_loopexit(const struct timeval *);
 
 
 /**
@@ -459,7 +463,7 @@ int event_loopexit(struct timeval *);
   @return 0 if successful, or -1 if an error occurred
   @see event_loopexit()
  */
-int event_base_loopexit(struct event_base *, struct timeval *);
+int event_base_loopexit(struct event_base *, const struct timeval *);
 
 /**
   Abort the active event_loop() immediately.
@@ -605,7 +609,8 @@ OPAL_DECLSPEC extern opal_mutex_t opal_event_lock;
   @see event_set()
 
  */
-int event_once(int, short, void (*)(int, short, void *), void *, struct timeval *);
+int event_once(int, short, void (*)(int, short, void *), void *,
+    const struct timeval *);
 
 
 /**
@@ -626,7 +631,9 @@ int event_once(int, short, void (*)(int, short, void *), void *, struct timeval 
   @return 0 if successful, or -1 if an error occurred
   @see event_once()
  */
-int event_base_once(struct event_base *, int, short, void (*)(int, short, void *), void *, struct timeval *);
+int event_base_once(struct event_base *base, int fd, short events,
+    void (*callback)(int, short, void *), void *arg,
+    const struct timeval *timeout);
 
 
 
@@ -649,7 +656,7 @@ int event_base_once(struct event_base *, int, short, void (*)(int, short, void *
   @return 0 if successful, or -1 if an error occurred
   @see event_del(), event_set()
   */
-OPAL_DECLSPEC int event_add(struct event *, struct timeval *);
+OPAL_DECLSPEC int event_add(struct event *ev, const struct timeval *timeout);
 
 
 /**
@@ -701,7 +708,7 @@ opal_event_active(struct opal_event* ev, int res, short ncalls)
   @return 1 if the event is pending, or 0 if the event has not occurred
 
  */
-int event_pending(struct event *, short, struct timeval *);
+int event_pending(struct event *ev, short event, struct timeval *tv);
 
 
 /**
@@ -814,7 +821,10 @@ struct event_watermark {
 	size_t high;
 };
 
+#ifndef EVENT_NO_STRUCT
 struct bufferevent {
+	struct event_base *ev_base;
+
 	struct event ev_read;
 	struct event ev_write;
 
@@ -834,7 +844,7 @@ struct bufferevent {
 
 	short enabled;	/* events that are currently enabled */
 };
-
+#endif
 
 /**
   Create a new bufferevent.
@@ -902,6 +912,31 @@ int bufferevent_priority_set(struct bufferevent *bufev, int pri);
   */
 void bufferevent_free(struct bufferevent *bufev);
 
+
+/**
+  Changes the callbacks for a bufferevent.
+
+  @param bufev the bufferevent object for which to change callbacks
+  @param readcb callback to invoke when there is data to be read, or NULL if
+         no callback is desired
+  @param writecb callback to invoke when the file descriptor is ready for
+         writing, or NULL if no callback is desired
+  @param errorcb callback to invoke when there is an error on the file
+         descriptor
+  @param cbarg an argument that will be supplied to each of the callbacks
+         (readcb, writecb, and errorcb)
+  @see bufferevent_new()
+  */
+void bufferevent_setcb(struct bufferevent *bufev,
+    evbuffercb readcb, evbuffercb writecb, everrorcb errorcb, void *cbarg);
+
+/**
+  Changes the file descriptor on which the bufferevent operates.
+
+  @param bufev the bufferevent object for which to change the file descriptor
+  @param fd the file descriptor to operate on
+*/
+void bufferevent_setfd(struct bufferevent *bufev, int fd);
 
 /**
   Write data to a bufferevent buffer.
@@ -976,6 +1011,25 @@ int bufferevent_disable(struct bufferevent *bufev, short event);
 void bufferevent_settimeout(struct bufferevent *bufev,
     int timeout_read, int timeout_write);
 
+
+/**
+  Sets the watermarks for read and write events.
+
+  On input, a bufferevent does not invoke the user read callback unless
+  there is at least low watermark data in the buffer.   If the read buffer
+  is beyond the high watermark, the buffevent stops reading from the network.
+
+  On output, the user write callback is invoked whenever the buffered data
+  falls below the low watermark.
+
+  @param bufev the bufferevent to be modified
+  @param events EV_READ, EV_WRITE or both
+  @param lowmark the lower watermark to set
+  @param highmark the high watermark to set
+*/
+
+void bufferevent_setwatermark(struct bufferevent *bufev, short events,
+    size_t lowmark, size_t highmark);
 
 #define EVBUFFER_LENGTH(x)	(x)->off
 #define EVBUFFER_DATA(x)	(x)->buffer
@@ -1065,7 +1119,7 @@ int evbuffer_add_buffer(struct evbuffer *, struct evbuffer *);
   @param buf the evbuffer that will be appended to
   @param fmt a format string
   @param ... arguments that will be passed to printf(3)
-  @return 0 if successful, or -1 if an error occurred
+  @return The number of bytes added if successful, or -1 if an error occurred.
  */
 int evbuffer_add_printf(struct evbuffer *, const char *fmt, ...)
 #ifdef __GNUC__
@@ -1080,7 +1134,7 @@ int evbuffer_add_printf(struct evbuffer *, const char *fmt, ...)
   @param buf the evbuffer that will be appended to
   @param fmt a format string
   @param ap a varargs va_list argument array that will be passed to vprintf(3)
-  @return 0 if successful, or -1 if an error occurred
+  @return The number of bytes added if successful, or -1 if an error occurred.
  */
 int evbuffer_add_vprintf(struct evbuffer *, const char *fmt, va_list ap);
 
@@ -1090,7 +1144,6 @@ int evbuffer_add_vprintf(struct evbuffer *, const char *fmt, va_list ap);
 
   @param buf the evbuffer to be drained
   @param len the number of bytes to drain from the beginning of the buffer
-  @return 0 if successful, or -1 if an error occurred
  */
 void evbuffer_drain(struct evbuffer *, size_t);
 
