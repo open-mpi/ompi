@@ -78,7 +78,8 @@ MACRO(OMPI_F77_CHECK FORTRAN_TYPE C_TYPE TYPE_LIST EXPECTED_SIZE)
         ENDIF(ofc_have_type)
 
       ENDIF(NOT ${ofc_expected_size} STREQUAL "-1" AND NOT ${ofc_type_size} EQUAL "${ofc_expected_size}")
-    ENDIF(ofc_have_type)
+      SET(F77_SETUP_${TYPE_NAME}_DONE TRUE CACHE INTERNAL "F77 ${TYPE_NAME} check done or not.")
+     ENDIF(ofc_have_type)
 
     # We always need these defines -- even if we don't have a given type,
     # there are some places in the code where we have to have *something*.
@@ -88,8 +89,6 @@ MACRO(OMPI_F77_CHECK FORTRAN_TYPE C_TYPE TYPE_LIST EXPECTED_SIZE)
     IF(NOT "${TYPE_LIST}" STREQUAL "")
       SET(ompi_fortran_${TYPE_NAME_L}_t ${ofc_c_type} CACHE INTERNAL "ompi_fortran_${TYPE_NAME_L}_t")
     ENDIF(NOT "${TYPE_LIST}" STREQUAL "")
-
-    SET(F77_SETUP_${TYPE_NAME}_DONE TRUE CACHE INTERNAL "F77 ${TYPE_NAME} check done or not.")
 
     #MESSAGE("OMPI_HAVE_FORTRAN_${TYPE_NAME}:${OMPI_HAVE_FORTRAN_${TYPE_NAME}}")
     #MESSAGE("OMPI_SIZEOF_FORTRAN_${TYPE_NAME}:${OMPI_SIZEOF_FORTRAN_${TYPE_NAME}}")
@@ -108,9 +107,9 @@ MACRO(OMPI_F77_CHECK FORTRAN_TYPE C_TYPE TYPE_LIST EXPECTED_SIZE)
 
   ENDIF(OMPI_WANT_F77_BINDINGS AND NOT DEFINED F77_SETUP_${TYPE_NAME}_DONE)
 
-OMPI_DEF_VAR(OMPI_HAVE_FORTRAN_${TYPE_NAME} "Whether we have Fortran 77 `${FORTRAN_TYPE}' or not." 0 1)
-OMPI_DEF_VAR(OMPI_SIZEOF_FORTRAN_${TYPE_NAME} "Size of Fortran 77 `${FORTRAN_TYPE}'." 0 1)
-OMPI_DEF_VAR(OMPI_ALIGNMENT_FORTRAN_${TYPE_NAME} "Alignment of Fortran 77 `${FORTRAN_TYPE}'." 0 1)
-OMPI_DEF_VAR(ompi_fortran_${TYPE_NAME_L}_t "C type corresponding to Fortran 77 `${FORTRAN_TYPE}'." 0 1)
+  OMPI_DEF_VAR(OMPI_HAVE_FORTRAN_${TYPE_NAME} "Whether we have Fortran 77 `${FORTRAN_TYPE}' or not." 0 1)
+  OMPI_DEF_VAR(OMPI_SIZEOF_FORTRAN_${TYPE_NAME} "Size of Fortran 77 `${FORTRAN_TYPE}'." 0 1)
+  OMPI_DEF_VAR(OMPI_ALIGNMENT_FORTRAN_${TYPE_NAME} "Alignment of Fortran 77 `${FORTRAN_TYPE}'." 0 1)
+  OMPI_DEF_VAR(ompi_fortran_${TYPE_NAME_L}_t "C type corresponding to Fortran 77 `${FORTRAN_TYPE}'." 0 1)
 
 ENDMACRO(OMPI_F77_CHECK FORTRAN_TYPE C_TYPE TYPE_LIST EXPECTED_SIZE)

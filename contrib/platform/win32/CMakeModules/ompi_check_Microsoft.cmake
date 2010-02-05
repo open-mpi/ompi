@@ -26,7 +26,7 @@ MACRO(OMPI_MICROSOFT_COMPILER)
     MESSAGE( STATUS "Start Microsoft specific detection....")
 
     # search for Microsoft VC tools 
-    SET(VC_BIN_PATH ${VC_BIN_PATH} 
+    SET(CHECK_PATHS ${CHECK_PATHS} 
       "C:/Program Files/Microsoft Visual Studio 9.0/VC/bin" 
       "C:/Program Files (x86)/Microsoft Visual Studio 9.0/VC/bin" 
       "C:/Program Files/Microsoft Visual Studio 8/VC/BIN" 
@@ -36,21 +36,22 @@ MACRO(OMPI_MICROSOFT_COMPILER)
       "$ENV{VS90COMNTOOLS}../../VC/bin" 
       "$ENV{VS80COMNTOOLS}../../VC/bin")
 
-    FIND_PROGRAM(CL_EXE cl PATHS ${VC_BIN_PATH})
+    FIND_PROGRAM(CL_EXE cl PATHS ${CHECK_PATHS})
 
     # Set up VS environments.
-    GET_FILENAME_COMPONENT(CL_EXE_PATH ${CL_EXE} PATH)
-    GET_FILENAME_COMPONENT(CC ${CL_EXE} NAME CACHE)
-    GET_FILENAME_COMPONENT(CXX ${CL_EXE} NAME CACHE)
+    GET_FILENAME_COMPONENT(VC_BIN_PATH ${CL_EXE} PATH)
+    GET_FILENAME_COMPONENT(COMPILER_NAME ${CL_EXE} NAME)
+    SET(CC ${COMPILER_NAME} CACHE INTERNAL "C compiler executable")
+    SET(CXX ${COMPILER_NAME} CACHE INTERNAL "CXX compiler executable")
     GET_FILENAME_COMPONENT(SDK_ROOT_PATH
       "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows;CurrentInstallFolder]" ABSOLUTE CACHE)
-    SET(VS_ROOT_DIR ${CL_EXE_PATH}/../../)
+    SET(VS_ROOT_DIR ${VC_BIN_PATH}/../../)
     SET(VS_COMMON_TOOLS_DIR ${VS_ROOT_DIR}/Common7/Tools)
     SET(VS_IDE_DIR ${VS_ROOT_DIR}/Common7/IDE)
     SET(VC_INCLUDE_DIR ${VS_ROOT_DIR}/VC/INCLUDE)
     SET(VC_LIB_DIR ${VS_ROOT_DIR}/VC/LIB)
 
-    SET(ENV{PATH} "${CL_EXE_PATH};${SDK_ROOT_PATH}/bin;$ENV{PATH}")
+    SET(ENV{PATH} "${VC_BIN_PATH};${SDK_ROOT_PATH}/bin;${VS_IDE_DIR};$ENV{PATH}")
     SET(ENV{INCLUDE} "${VC_INCLUDE_DIR};$ENV{INCLUDE}")
     SET(ENV{LIB} "${VC_LIB_DIR};${SDK_ROOT_PATH}/lib;$ENV{LIB}")
     SET(ENV{LIBPATH} "${VC_LIB_DIR};${SDK_ROOT_PATH}/lib;$ENV{LIBPATH}")
@@ -63,7 +64,7 @@ MACRO(OMPI_MICROSOFT_COMPILER)
     SET(OMPI_C_OUTPUT_EXE "/Fe" CACHE INTERNAL
       "C compiler option for setting executable file name.")
 
-    SET(DUMP_UTIL "dumpbin.exe" CACHE INTERNAL "the dumpbin application.")
+    SET(DUMP_UTIL "${VC_BIN_PATH}/dumpbin.exe" CACHE INTERNAL "the dumpbin application.")
 
     FILE(WRITE ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/cl_test.c
       "int main() {return 0;}")
