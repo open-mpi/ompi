@@ -15,25 +15,29 @@
 
 MACRO(OMPI_F77_CHECK_TYPE TYPE HAVE_TYPE)
 
-  MESSAGE(STATUS "Check if Fortran 77 compiler supports ${TYPE}...")
+  IF(NOT OMPI_HAVE_FORTRAN_${TYPE_NAME})
 
-  FILE(WRITE ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/check_fortran_type.f
-       "\t program main \n"
-       "\t ${TYPE} bogus_variable \n"
-       "\t END \n")
+    MESSAGE(STATUS "Check if Fortran 77 compiler supports ${TYPE}...")
 
-  EXECUTE_PROCESS(COMMAND ${F77} check_fortran_type.f
-                  WORKING_DIRECTORY  ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp
-                  OUTPUT_VARIABLE    OUTPUT
-                  RESULT_VARIABLE    RESULT
-                  ERROR_VARIABLE     ERROR)
+    FILE(WRITE ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/check_fortran_type.f
+      "\t program main \n"
+      "\t ${TYPE} bogus_variable \n"
+      "\t END \n")
 
-  IF(RESULT)
-    SET(${HAVE_TYPE} 0)
-    MESSAGE(STATUS "Check if Fortran 77 compiler supports ${TYPE}...failed")
-  ELSE(RESULT)
-    SET(${HAVE_TYPE} 1)
-    MESSAGE(STATUS "Check if Fortran 77 compiler supports ${TYPE}...done")
-  ENDIF(RESULT)
+    EXECUTE_PROCESS(COMMAND ${F77} check_fortran_type.f
+      WORKING_DIRECTORY  ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp
+      OUTPUT_VARIABLE    OUTPUT
+      RESULT_VARIABLE    RESULT
+      ERROR_VARIABLE     ERROR)
+
+    IF(RESULT)
+      SET(${HAVE_TYPE} 0 CACHE INTERNAL "have Fortran ${TYPE}")
+      MESSAGE(STATUS "Check if Fortran 77 compiler supports ${TYPE}...failed")
+    ELSE(RESULT)
+      SET(${HAVE_TYPE} 1 CACHE INTERNAL "have Fortran ${TYPE}")
+      MESSAGE(STATUS "Check if Fortran 77 compiler supports ${TYPE}...done")
+    ENDIF(RESULT)
+
+  ENDIF(NOT OMPI_HAVE_FORTRAN_${TYPE_NAME})
 
 ENDMACRO(OMPI_F77_CHECK_TYPE TYPE HAVE_TYPE)
