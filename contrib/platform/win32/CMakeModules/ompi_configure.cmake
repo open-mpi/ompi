@@ -795,18 +795,23 @@ OMPI_DEF(OMPI_CXX ${CXX_COMPILER_NAME} "OMPI underlying C++ compiler name." 1 1)
 
 OMPI_DEF(OMPI_CXX_ABSOLUTE ${CMAKE_CXX_COMPILER} "OMPI underlying C++ compiler absolute path." 1 1)
 
+IF(OMPI_WANT_F77_BINDINGS)
+  GET_FILENAME_COMPONENT(F77_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME_WE)
+  OMPI_DEF(OMPI_F77 ${F77_COMPILER_NAME} "OMPI underlying Fortran 77 compiler name." 1 1)
+  OMPI_DEF(OMPI_F77_ABSOLUTE ${CMAKE_Fortran_COMPILER} "OMPI underlying Fortran 77 compiler absolute path" 1 1)
+ELSE(OMPI_WANT_F77_BINDINGS)
+  OMPI_DEF(OMPI_F77 "none" "OMPI underlying Fortran 77 compiler name." 1 1)
+  OMPI_DEF(OMPI_F77_ABSOLUTE "none" "OMPI underlying Fortran 77 compiler absolute path" 1 1)
+ENDIF(OMPI_WANT_F77_BINDINGS)
 
-GET_FILENAME_COMPONENT(F77_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME_WE)
-OMPI_DEF(OMPI_F77 ${F77_COMPILER_NAME} "OMPI underlying Fortran 77 compiler name." 1 1)
-
-OMPI_DEF(OMPI_F77_ABSOLUTE ${CMAKE_Fortran_COMPILER} "OMPI underlying Fortran 77 compiler absolute path" 1 1)
-
-
-GET_FILENAME_COMPONENT(F90_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME_WE)
-OMPI_DEF(OMPI_F90 ${F90_COMPILER_NAME} "OMPI underlying Fortran 90 compiler name." 1 1)
-
-OMPI_DEF(OMPI_F90_ABSOLUTE ${CMAKE_Fortran_COMPILER} "OMPI underlying Fortran 90 compiler absolute path" 1 1)
-
+IF(OMPI_WANT_F90_BINDINGS)
+  GET_FILENAME_COMPONENT(F90_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME_WE)
+  OMPI_DEF(OMPI_F90 ${F90_COMPILER_NAME} "OMPI underlying Fortran 90 compiler name." 1 1)
+  OMPI_DEF(OMPI_F90_ABSOLUTE ${CMAKE_Fortran_COMPILER} "OMPI underlying Fortran 90 compiler absolute path" 1 1)
+ELSE(OMPI_WANT_F90_BINDINGS)
+  OMPI_DEF(OMPI_F90 "none" "OMPI underlying Fortran 90 compiler name." 1 1)
+  OMPI_DEF(OMPI_F90_ABSOLUTE "none" "OMPI underlying Fortran 90 compiler absolute path" 1 1)
+ENDIF(OMPI_WANT_F90_BINDINGS)
 
 IF(HAVE_LONG_LONG)
   OMPI_DEF(OPAL_HAVE_LONG_LONG 1 "Do not use outside of mpi.h.\n   Define to 1 if the system has the type 'long long'." 0 1)
