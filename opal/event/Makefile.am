@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -38,8 +38,8 @@ EXTRA_DIST = event.h event-internal.h evsignal.h event.3 \
 	Doxyfile \
 	kqueue.c epoll_sub.c epoll.c select.c poll.c signal.c \
 	devpoll.c evport.c log.h\
-	WIN32-Code/config.h WIN32-Code/misc.c \
-	WIN32-Code/misc.h  WIN32-Code/win32.c \
+	WIN32-Code/config.h \
+	WIN32-Code/win32.c \
 	WIN32-Code/tree.h CMakeLists.txt \
 	WIN32-Code/CMakeLists.txt
 
