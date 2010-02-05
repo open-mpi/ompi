@@ -342,5 +342,8 @@ int orte_rmaps_base_map_bynode(orte_job_t *jdata, orte_app_context_t *app,
         cur_node_item = next;
     }
     
+    /* save the bookmark */
+    jdata->bookmark = (orte_node_t*)cur_node_item;
+
     return ORTE_SUCCESS;
 }

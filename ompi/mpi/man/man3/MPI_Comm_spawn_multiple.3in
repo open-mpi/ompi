@@ -163,6 +163,10 @@ ompi_param                      char *    Pass an OMPI MCA parameter to the chil
                                           If that parameter already exists in the
                                           environment, the value will be overwritten
                                           by the provided value.
+map_bynode                      bool      If set to true, the processes are mapped bynode.
+                                          If set to false, the processes are mapped byslot.
+                                          By default, mapping is determined by the default
+                                          mapping policy set when the job was started.
 .fi
 
 .sp 

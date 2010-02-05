@@ -35,6 +35,9 @@
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
+#include "orte/mca/rmaps/rmaps.h"
+#include "orte/mca/rmaps/rmaps_types.h"
+#include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/util/name_fns.h"
@@ -506,6 +509,7 @@ static int spawn(int count, char **array_of_commands,
     orte_job_t *jdata;
     orte_app_context_t *app;
     bool local_spawn, non_mpi;
+    bool local_bynode = false;
     
     /* parse the info object */
     /* check potentially for:
@@ -663,6 +667,32 @@ static int spawn(int count, char **array_of_commands,
             ompi_info_get_bool(array_of_info[i], "ompi_local_slave", &local_spawn, &flag);
             if ( local_spawn ) {
                 jdata->controls |= ORTE_JOB_CONTROL_LOCAL_SLAVE;
+            }
+
+            /* check for 'map_bynode' */
+            ompi_info_get_bool(array_of_info[i], "map_bynode", &local_bynode, &flag);
+            if ( flag ) {
+                jdata->map = OBJ_NEW(orte_job_map_t);
+                if (NULL == jdata->map) {
+                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                    return ORTE_ERR_OUT_OF_RESOURCE;
+                }
+                /* load it with the system defaults */
+                jdata->map->policy = orte_default_mapping_policy;
+                jdata->map->npernode = orte_rmaps_base.npernode;
+                jdata->map->nperboard = orte_rmaps_base.nperboard;
+                jdata->map->npersocket = orte_rmaps_base.npersocket;
+                jdata->map->cpus_per_rank = orte_rmaps_base.cpus_per_rank;
+                jdata->map->stride = orte_rmaps_base.stride;
+                jdata->map->oversubscribe = orte_rmaps_base.oversubscribe;
+                jdata->map->display_map = orte_rmaps_base.display_map;
+
+                if( local_bynode ) {
+                    jdata->map->policy = ORTE_MAPPING_BYNODE;
+                }
+                else {
+                    jdata->map->policy = ORTE_MAPPING_BYSLOT;
+                }
             }
 
             /* check for 'preload_binary' */
