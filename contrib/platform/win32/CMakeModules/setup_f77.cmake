@@ -19,11 +19,11 @@ include(CMakeFortranInformation)
 
 IF(OMPI_WANT_F77_BINDINGS AND NOT F77_SETUP_DONE)
 
-  GET_FILENAME_COMPONENT(F77 ${CMAKE_Fortran_COMPILER} NAME_WE)
+  GET_FILENAME_COMPONENT(F77 ${CMAKE_Fortran_COMPILER} NAME)
   GET_FILENAME_COMPONENT(F77_PATH ${CMAKE_Fortran_COMPILER} PATH)
 
   # Default compiler settings.
-  IF(${F77} STREQUAL "ifort")
+  IF(${F77} STREQUAL "ifort.exe")
     #settings for Intel Fortran
     SET(F77_OPTION_COMPILE "/c" CACHE INTERNAL
       "Fortran compiler option for compiling without linking.")
@@ -34,7 +34,7 @@ IF(OMPI_WANT_F77_BINDINGS AND NOT F77_SETUP_DONE)
     FIND_LIBRARY(F77_IFCONSOL_LIB ifconsol.lib PATHS ${F77_PATH}/../../)
     GET_FILENAME_COMPONENT(F77_LIB_PATH ${F77_IFCONSOL_LIB} PATH)
     UNSET(F77_IFCONSOL_LIB CACHE)
-  ELSEIF(${F77} STREQUAL "g95")
+  ELSEIF(${F77} STREQUAL "g95.exe")
     #settings for G95
     SET(F77_OPTION_COMPILE "-c" CACHE INTERNAL
       "Fortran compiler option for compiling without linking.")
@@ -42,7 +42,7 @@ IF(OMPI_WANT_F77_BINDINGS AND NOT F77_SETUP_DONE)
       "Fortran compiler option for setting object file name.")
     SET(F77_OUTPUT_EXE "-o" CACHE INTERNAL
       "Fortran compiler option for setting executable file name.")
-  ELSE(${F77} STREQUAL "ifort")
+  ELSE(${F77} STREQUAL "ifort.exe")
     # in other case, let user specify their fortran configrations.
     SET(F77_OPTION_COMPILE "-c" CACHE STRING
       "Fortran compiler option for compiling without linking.")
@@ -54,7 +54,7 @@ IF(OMPI_WANT_F77_BINDINGS AND NOT F77_SETUP_DONE)
       "Library path for the fortran compiler")
     SET(F77_INCLUDE_PATH "" CACHE PATH
       "Include path for the fortran compiler")
-  ENDIF(${F77} STREQUAL "ifort")
+  ENDIF(${F77} STREQUAL "ifort.exe")
 
   # Export env variables for fortran compiler.
   SET(ENV{PATH} "${F77_PATH};$ENV{PATH}")
