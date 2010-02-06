@@ -680,12 +680,15 @@ will launch ranks 0-3 on node aa and ranks 4-5 on node bb.  The remaining
 slots in the hostfile will not be used since the \fI-np\fP option indicated
 that only 6 processes should be launched.
 .
-.SS Mapping Processes to Nodes
+.SS Mapping Processes to Nodes:  Using Policies
 .
 The examples above illustrate the default mapping of process ranks
 to nodes.  This mapping can also be controlled with various
-\fImpirun\fP options.  Here, we consider the same hostfile as
-above with \fI-np\fP 6 again:
+\fImpirun\fP options that describe mapping policies.
+.
+.
+.PP
+Consider the same hostfile as above, again with \fI-np\fP 6:
 .
 
                           node aa      node bb      node cc
@@ -769,6 +772,27 @@ And here is a MIMD example:
 mpirun -H aa -np 1 hostname : -H bb,cc -np 2 uptime
 will launch process 0 running \fIhostname\fP on node aa and processes 1 and 2
 each running \fIuptime\fP on nodes bb and cc, respectively.
+.
+.SS Mapping Processes to Nodes:  Using Arbitrary Mappings
+.
+The mapping of process ranks to nodes can be prescribed not just
+with general policies but also, if necessary, using arbitrary mappings
+that cannot be described by a simple policy.  One can use the "sequential
+mapper," which reads the hostfile line by line, assigning processes
+to nodes in whatever order the hostfile specifies.  Use the
+\fI-mca rmaps seq\fP option.  For example, using the same hostfile
+as before
+.
+.TP 4
+mpirun -hostfile myhostfile ./a.out
+will launch three processes, on ranks aa, bb, and cc, respectively.
+The slot counts don't matter;  one process is launched per line on
+whatever node is listed on the line.
+.
+.PP
+Another way to specify arbitrary mappings is with a rank file, which
+gives you detailed control over process binding as well.  Rank files
+are discussed below.
 .
 .SS Process Binding
 .
