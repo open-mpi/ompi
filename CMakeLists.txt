@@ -81,6 +81,10 @@ ELSE(CMAKE_CL_64)
   SET(COMPILER_TYPE "win32")
 ENDIF(CMAKE_CL_64)
 
+#store current environment variables
+SET(PATH_OLD "$ENV{PATH}")
+SET(LIB_OLD "$ENV{LIB}")
+SET(INCLUDE_OLD "$ENV{INCLUDE}")
 
 INCLUDE(ompi_configure)
 
@@ -91,6 +95,11 @@ FIND_FLEX()
 ADD_SUBDIRECTORY(opal)
 ADD_SUBDIRECTORY(ompi)
 ADD_SUBDIRECTORY(orte)
+
+#restore environment variables
+SET(ENV{PATH} "${PATH_OLD}")
+SET(ENV{LIB} "${LIB_OLD}")
+SET(ENV{INCLUDE} "${INCLUDE_OLD}")
 
 INCLUDE(InstallRequiredSystemLibraries)
 
