@@ -31,9 +31,24 @@ IF(OMPI_WANT_F77_BINDINGS AND NOT F77_SETUP_DONE)
       "Fortran compiler option for setting object file name.")
     SET(F77_OUTPUT_EXE "/Fe" CACHE INTERNAL
       "Fortran compiler option for setting executable file name.")
-    FIND_LIBRARY(F77_IFCONSOL_LIB ifconsol.lib PATHS ${F77_PATH}/../../)
-    GET_FILENAME_COMPONENT(F77_LIB_PATH ${F77_IFCONSOL_LIB} PATH)
-    UNSET(F77_IFCONSOL_LIB CACHE)
+
+    IF(CMAKE_CL_64)
+      SET(F77_LIB_PATH "$ENV{IFORT_COMPILER11}/lib/intel64")
+    ELSE(CMAKE_CL_64)
+      SET(F77_LIB_PATH "$ENV{IFORT_COMPILER11}/lib/ia32")
+    ENDIF(CMAKE_CL_64)
+
+    IF(NOT F77_LIB_PATH)
+      IF(CMAKE_CL_64)
+        FIND_LIBRARY(F77_IFCONSOL_LIB ifconsol.lib PATHS ${F77_PATH}/../../intel64)
+      ELSE(CMAKE_CL_64)
+        FIND_LIBRARY(F77_IFCONSOL_LIB ifconsol.lib PATHS ${F77_PATH}/../../ia32)
+      ENDIF(CMAKE_CL_64)
+      GET_FILENAME_COMPONENT(F77_LIB_PATH ${F77_IFCONSOL_LIB} PATH)
+      UNSET(F77_IFCONSOL_LIB CACHE)
+    ELSE(NOT F77_LIB_PATH)
+      STRING(REPLACE "\\" "/" F77_LIB_PATH ${F77_LIB_PATH})
+    ENDIF(NOT F77_LIB_PATH)
   ELSEIF(${F77} STREQUAL "g95.exe")
     #settings for G95
     SET(F77_OPTION_COMPILE "-c" CACHE INTERNAL
@@ -57,9 +72,10 @@ IF(OMPI_WANT_F77_BINDINGS AND NOT F77_SETUP_DONE)
   ENDIF(${F77} STREQUAL "ifort.exe")
 
   # Export env variables for fortran compiler.
-  SET(ENV{PATH} "${F77_PATH};$ENV{PATH}")
-  SET(ENV{LIB} "${F77_LIB_PATH};$ENV{LIB}")
-  SET(ENV{INCLUDE} "${F77_INCLUDE_PATH};$ENV{INCLUDE}")
+  SET(ENV{PATH} "${C_COMPILER_PATH};${F77_PATH};$ENV{PATH}")
+  SET(ENV{LIB} "${C_COMPILER_LIB};${F77_LIB_PATH};$ENV{LIB}")
+  SET(ENV{INCLUDE} "${C_COMPILER_INCLUDE};${F77_INCLUDE_PATH};$ENV{INCLUDE}")
+  SET(ENV{LIBPATH} "${C_COMPILER_LIBPATH};$ENV{LIBPATH}")
 
   # make sure the compiler actually works, if not cross-compiling
   MESSAGE(STATUS "Checking for working Fortran compiler...")
@@ -69,16 +85,18 @@ IF(OMPI_WANT_F77_BINDINGS AND NOT F77_SETUP_DONE)
        "\t END \n")
 
   # lets use execute_process to run the compile test
-  EXECUTE_PROCESS(COMMAND ${CMAKE_Fortran_COMPILER} testFortranCompiler.f
+  EXECUTE_PROCESS(COMMAND ${F77} testFortranCompiler.f
                   WORKING_DIRECTORY  ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp
                   OUTPUT_VARIABLE    OUTPUT
                   RESULT_VARIABLE    RESULT
                   ERROR_VARIABLE     ERROR)
 
+
   IF(RESULT)
-    MESSAGE("Fortran compiler ${F77} can't compile a simple fortran program.")
-    MESSAGE(FATAL_ERROR "Cannot continue. Please check Fortran compiler installation, or disable Fortran 77 support.")
     SET(F77_SETUP_DONE FALSE CACHE INTERNAL "f77 setup done.")
+    MESSAGE(STATUS "${OUTPUT}\n${ERROR}")
+    MESSAGE(STATUS "Fortran compiler ${F77} can't compile a simple fortran program.")
+    MESSAGE(FATAL_ERROR "Cannot continue. Please check Fortran compiler installation, or disable Fortran 77 support.")
   ELSE(RESULT)
     MESSAGE(STATUS "Checking for working Fortran compiler...${F77}")
     SET(F77_SETUP_DONE TRUE CACHE INTERNAL "f77 setup done.")

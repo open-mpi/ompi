@@ -118,9 +118,10 @@ MACRO(OMPI_F77_FIND_EXT_SYMBOL_CONVENTION)
     SET(SYMBOL_CONVENTION_CHECK_DONE TRUE CACHE INTERNAL "Symbol convention check done.")
 
     IF(NOT TEST_OK)
-      MESSAGE(FATAL_ERROR "C and Fortran 77 compilers are not link compatible.  Can not continue.")
-      MESSAGE(STATUS "*** Probably you have to setup the library path of the Fortran compiler.")
       UNSET(SYMBOL_CONVENTION_CHECK_DONE CACHE)
+      MESSAGE(STATUS "${MY_OUTPUT}")
+      MESSAGE(STATUS "*** Probably you have to setup the library path of the Fortran compiler.")
+      MESSAGE(FATAL_ERROR "C and Fortran 77 compilers are not link compatible.  Can not continue.")
     ENDIF(NOT TEST_OK)
 
   ENDIF(NOT SYMBOL_CONVENTION_CHECK_DONE)

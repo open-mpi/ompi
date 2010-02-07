@@ -25,16 +25,30 @@ MACRO(OMPI_MICROSOFT_COMPILER)
 
     MESSAGE( STATUS "Start Microsoft specific detection....")
 
-    # search for Microsoft VC tools 
-    SET(CHECK_PATHS ${CHECK_PATHS} 
-      "C:/Program Files/Microsoft Visual Studio 9.0/VC/bin" 
-      "C:/Program Files (x86)/Microsoft Visual Studio 9.0/VC/bin" 
-      "C:/Program Files/Microsoft Visual Studio 8/VC/BIN" 
-      "C:/Program Files (x86)/Microsoft Visual Studio 8/VC/BIN" 
-      "C:/Program Files/Microsoft Visual Studio .NET 2003/VC7/BIN" 
-      "C:/Program Files (x86)/Microsoft Visual Studio .NET 2003/VC7/BIN" 
-      "$ENV{VS90COMNTOOLS}../../VC/bin" 
-      "$ENV{VS80COMNTOOLS}../../VC/bin")
+    # search for Microsoft VC tools
+    IF(CMAKE_CL_64)
+      SET(CHECK_PATHS ${CHECK_PATHS}
+        "C:/Program Files/Microsoft Visual Studio 9.0/VC/bin/amd64"
+        "C:/Program Files (x86)/Microsoft Visual Studio 9.0/VC/bin/amd64"
+        "C:/Program Files/Microsoft Visual Studio 8/VC/bin/amd64"
+        "C:/Program Files (x86)/Microsoft Visual Studio 8/VC/bin/amd64"
+        "C:/Program Files/Microsoft Visual Studio .NET 2003/VC7/bin/amd64"
+        "C:/Program Files (x86)/Microsoft Visual Studio .NET 2003/VC7/bin/amd64"
+        "$ENV{VS90COMNTOOLS}../../VC/bin/amd64"
+        "$ENV{VS80COMNTOOLS}../../VC/bin//amd64"
+        "$ENV{VS90COMNTOOLS}../../VC/bin/ia64"
+        "$ENV{VS80COMNTOOLS}../../VC/bin//ia64")
+    ELSE(CMAKE_CL_64)
+      SET(CHECK_PATHS ${CHECK_PATHS}
+        "C:/Program Files/Microsoft Visual Studio 9.0/VC/bin"
+        "C:/Program Files (x86)/Microsoft Visual Studio 9.0/VC/bin"
+        "C:/Program Files/Microsoft Visual Studio 8/VC/bin"
+        "C:/Program Files (x86)/Microsoft Visual Studio 8/VC/bin"
+        "C:/Program Files/Microsoft Visual Studio .NET 2003/VC7/bin"
+        "C:/Program Files (x86)/Microsoft Visual Studio .NET 2003/VC7/bin"
+        "$ENV{VS90COMNTOOLS}../../VC/bin"
+        "$ENV{VS80COMNTOOLS}../../VC/bin")
+    ENDIF(CMAKE_CL_64)
 
     FIND_PROGRAM(CL_EXE cl PATHS ${CHECK_PATHS})
 
@@ -44,17 +58,31 @@ MACRO(OMPI_MICROSOFT_COMPILER)
     SET(CC ${COMPILER_NAME} CACHE INTERNAL "C compiler executable")
     SET(CXX ${COMPILER_NAME} CACHE INTERNAL "CXX compiler executable")
     GET_FILENAME_COMPONENT(SDK_ROOT_PATH
-      "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows;CurrentInstallFolder]" ABSOLUTE CACHE)
-    SET(VS_ROOT_DIR ${VC_BIN_PATH}/../../)
+      "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows;CurrentInstallFolder]" ABSOLUTE)
+    IF(CMAKE_CL_64)
+      SET(VS_ROOT_DIR ${VC_BIN_PATH}/../../..)
+      SET(VC_LIB_DIR ${VS_ROOT_DIR}/VC/lib/amd64)
+      SET(SDK_LIB_DIR ${SDK_ROOT_PATH}/lib/x64)
+    ELSE(CMAKE_CL_64)
+      SET(VS_ROOT_DIR ${VC_BIN_PATH}/../..)
+      SET(VC_LIB_DIR ${VS_ROOT_DIR}/VC/lib)
+      SET(SDK_LIB_DIR ${SDK_ROOT_PATH}/lib)
+    ENDIF(CMAKE_CL_64)
     SET(VS_COMMON_TOOLS_DIR ${VS_ROOT_DIR}/Common7/Tools)
     SET(VS_IDE_DIR ${VS_ROOT_DIR}/Common7/IDE)
-    SET(VC_INCLUDE_DIR ${VS_ROOT_DIR}/VC/INCLUDE)
-    SET(VC_LIB_DIR ${VS_ROOT_DIR}/VC/LIB)
+    SET(VC_INCLUDE_DIR ${VS_ROOT_DIR}/VC/include)
 
-    SET(ENV{PATH} "${VC_BIN_PATH};${SDK_ROOT_PATH}/bin;${VS_IDE_DIR};$ENV{PATH}")
-    SET(ENV{INCLUDE} "${VC_INCLUDE_DIR};$ENV{INCLUDE}")
-    SET(ENV{LIB} "${VC_LIB_DIR};${SDK_ROOT_PATH}/lib;$ENV{LIB}")
-    SET(ENV{LIBPATH} "${VC_LIB_DIR};${SDK_ROOT_PATH}/lib;$ENV{LIBPATH}")
+
+    # Cache the compilers paths that could be used later.
+    SET(C_COMPILER_PATH ${VC_BIN_PATH} ${SDK_ROOT_PATH}/bin ${VS_IDE_DIR} CACHE INTERNAL "Compiler binary paths.")
+    SET(C_COMPILER_INCLUDE ${VC_INCLUDE_DIR} CACHE INTERNAL "Compiler include paths.")
+    SET(C_COMPILER_LIB ${VC_LIB_DIR} ${SDK_LIB_DIR} CACHE INTERNAL "Compiler libraries.")
+    SET(C_COMPILER_LIBPATH ${VC_LIB_DIR} ${SDK_LIB_DIR} CACHE INTERNAL "Compiler libraries path.")
+
+    SET(ENV{PATH} "${C_COMPILER_PATH};$ENV{PATH}")
+    SET(ENV{INCLUDE} "${C_COMPILER_INCLUDE};$ENV{INCLUDE}")
+    SET(ENV{LIB} "${C_COMPILER_LIB};$ENV{LIB}")
+    SET(ENV{LIBPATH} "${C_COMPILER_LIBPATH};$ENV{LIBPATH}")
 
     # Default compiler settings.
     SET(OMPI_C_OPTION_COMPILE "/c" CACHE INTERNAL
