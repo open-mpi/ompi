@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2009 The Trustees of Indiana University.
+ * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -873,6 +873,9 @@ static int blcr_cold_start(opal_crs_blcr_snapshot_t *snapshot) {
      */
     if( OPAL_SUCCESS != (ret = opal_crs_base_extract_expected_component(snapshot->super.local_location, 
                                                                         &component_name, &prev_pid) ) ) {
+        opal_output(mca_crs_blcr_component.super.output_handle,
+                    "crs:blcr: blcr_cold_start: Error: Failed to extract the metadata from the local snapshot (%s). Returned %d.",
+                    snapshot->super.local_location, ret);
         exit_status = ret;
         goto cleanup;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2009 The Trustees of Indiana University.
+ * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -194,6 +194,7 @@ int opal_crs_base_metadata_write_token(char *snapshot_loc, char * token, char *v
 
 int opal_crs_base_extract_expected_component(char *snapshot_loc, char ** component_name, int *prev_pid)
 {
+    int exit_status = OPAL_SUCCESS;
     char **pid_argv = NULL;
     char **name_argv = NULL;
 
@@ -202,6 +203,8 @@ int opal_crs_base_extract_expected_component(char *snapshot_loc, char ** compone
         *prev_pid = atoi(pid_argv[0]);
     } else {
         opal_output(0, "Error: expected_component: PID information unavailable!");
+        exit_status = OPAL_ERROR;
+        goto cleanup;
     }
 
     opal_crs_base_metadata_read_token(snapshot_loc, CRS_METADATA_COMP, &name_argv);
@@ -209,8 +212,11 @@ int opal_crs_base_extract_expected_component(char *snapshot_loc, char ** compone
         *component_name = strdup(name_argv[0]);
     } else {
         opal_output(0, "Error: expected_component: Component Name information unavailable!");
+        exit_status = OPAL_ERROR;
+        goto cleanup;
     }
 
+ cleanup:
     if( NULL != pid_argv ) {
         opal_argv_free(pid_argv);
         pid_argv = NULL;
@@ -221,7 +227,7 @@ int opal_crs_base_extract_expected_component(char *snapshot_loc, char ** compone
         name_argv = NULL;
     }
 
-    return OPAL_SUCCESS;
+    return exit_status;
 }
 
 char * opal_crs_base_get_snapshot_directory(char *uniq_snapshot_name)

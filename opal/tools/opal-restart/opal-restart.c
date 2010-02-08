@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2007 The University of Tennessee and The University
@@ -173,7 +173,14 @@ main(int argc, char *argv[])
         char * base = NULL;
 
         base = opal_crs_base_get_snapshot_directory(opal_restart_globals.filename);
-        opal_crs_base_extract_expected_component(base, &expected_crs_comp, &prev_pid);
+        if( OPAL_SUCCESS != (ret = opal_crs_base_extract_expected_component(base,
+                                                                            &expected_crs_comp,
+                                                                            &prev_pid)) ) {
+            opal_show_help("help-opal-restart.txt", "invalid_metadata", true,
+                           opal_crs_base_metadata_filename, base);
+            exit_status = ret;
+            goto cleanup;
+        }
 
         free(base);
     }
