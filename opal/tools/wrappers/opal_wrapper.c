@@ -712,6 +712,11 @@ main(int argc, char *argv[])
         exec_argc = 0;
     }
 
+    /* Per https://svn.open-mpi.org/trac/ompi/ticket/2201, add all the
+       user arguments before anything else. */
+    opal_argv_insert(&exec_argv, exec_argc, user_argv);
+    exec_argc = opal_argv_count(exec_argv);
+
     /* preproc flags */
     if (flags & COMP_WANT_PREPROC) {
         opal_argv_insert(&exec_argv, exec_argc, options_data[user_data_idx].preproc_flags);
@@ -731,10 +736,6 @@ main(int argc, char *argv[])
         }
         exec_argc = opal_argv_count(exec_argv);
     }
-
-    /* add all the user arguments */
-    opal_argv_insert(&exec_argv, exec_argc, user_argv);
-    exec_argc = opal_argv_count(exec_argv);
 
     /* link flags and libs */
     if (flags & COMP_WANT_LINK) {
