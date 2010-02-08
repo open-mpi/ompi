@@ -57,6 +57,7 @@ int main(int argc, char *argv[])
     error_out = fopen( "./opal_bitmap_test_out.txt", "w" );
     if( error_out == NULL ) error_out = stderr;
 #endif
+
     /* Initialize bitmap  */
 
     PRINT_VALID_ERR;
@@ -162,15 +163,12 @@ void test_bitmap_is_set(opal_bitmap_t *bm)
     is_set_bit(bm, 31);
     is_set_bit(bm, 32);
 
-    PRINT_VALID_ERR;
     result = is_set_bit(bm, 1122);
-    TEST_AND_REPORT(result,ERR_CODE,"opal_bitmap_is_set_bit");    
-    PRINT_VALID_ERR;
+    TEST_AND_REPORT(result,0,"opal_bitmap_is_set_bit");    
     is_set_bit(bm, -33);
-    TEST_AND_REPORT(result,ERR_CODE,"opal_bitmap_is_set_bit");    
-    PRINT_VALID_ERR;
+    TEST_AND_REPORT(result,0,"opal_bitmap_is_set_bit");    
     is_set_bit(bm, -1);
-    TEST_AND_REPORT(result,ERR_CODE,"opal_bitmap_is_set_bit");    
+    TEST_AND_REPORT(result,0,"opal_bitmap_is_set_bit");    
 }
 
 
@@ -250,14 +248,26 @@ int clear_bit(opal_bitmap_t *bm, int bit)
 
 int is_set_bit(opal_bitmap_t *bm, int bit) 
 {
-    int result = opal_bitmap_is_set_bit(bm, bit);
-    if (((1 == result) 
-	&& !(bm->bitmap[bit/SIZE_OF_CHAR] & (1 << bit % SIZE_OF_CHAR)))
-	|| (result < 0)
-	|| ((0 == result) 
-	    &&(bm->bitmap[bit/SIZE_OF_CHAR] & (1 << bit % SIZE_OF_CHAR)))) {
-	fprintf(error_out, "ERROR: is_set_bit for bit = %d \n\n",bit);
-	return ERR_CODE;
+    bool result = opal_bitmap_is_set_bit(bm, bit);
+    
+    if (result) {
+        if (bit < 0) {
+            fprintf(error_out, "ERROR: is_set_bit for bit = %d \n\n",bit);
+            return ERR_CODE;
+        }
+        if (!(bm->bitmap[bit/SIZE_OF_CHAR] & (1 << bit % SIZE_OF_CHAR))) {
+            fprintf(error_out, "ERROR: is_set_bit for bit = %d \n\n",bit);
+            return ERR_CODE;
+        }
+        return 0;
+    }
+    
+	if (!result) {
+        if (0 <= bit && bit <= bm->array_size && !(bm->bitmap[bit/SIZE_OF_CHAR] & (1 << bit % SIZE_OF_CHAR))) {
+            fprintf(error_out, "ERROR: is_set_bit for bit = %d \n\n",bit);
+            return ERR_CODE;
+        }
+        return 0;
     }
 	
     return 0;
