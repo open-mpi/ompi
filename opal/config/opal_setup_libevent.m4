@@ -68,7 +68,7 @@ dnl Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_TIME
 
 dnl Checks for library functions.
-AC_CHECK_FUNCS(gettimeofday vasprintf fcntl)
+AC_CHECK_FUNCS(gettimeofday vasprintf fcntl strtoll)
 
 AC_MSG_CHECKING(for F_SETFD in fcntl.h)
 AC_EGREP_CPP(yes,
