@@ -459,6 +459,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                 OPAL_PAFFINITY_CPU_ZERO(mask);
                 phys_cpu = opal_paffinity_base_get_physical_processor_id(nrank);
                 if (0 > phys_cpu) {
+                    ret = phys_cpu;
                     error = "Could not get physical processor id - cannot set processor affinity";
                     goto error;
                 }
