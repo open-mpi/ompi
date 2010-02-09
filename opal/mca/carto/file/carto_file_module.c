@@ -33,9 +33,6 @@
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif  /* HAVE_STRING_H */
-#ifdef HAVE_ERRNO_H
-#include <errno.h>
-#endif  /* HAVE_ERRNO_H */
 
 #include "opal/constants.h"
 #include "opal/mca/base/mca_base_param.h"
