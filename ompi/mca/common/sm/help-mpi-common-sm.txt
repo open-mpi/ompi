@@ -29,3 +29,14 @@ Open MPI, and if not, contact the Open MPI developers.
   Requested size:    %ul
   Control seg size:  %ul
   Data seg aligment: %ul
+
+[mmap on nfs]
+Creating the shared memory backup file on a network file system, such
+as NFS or Lustre is not recommended.
+This may be due to using the wrong tmpdir variable.
+Please ask Your system administrator to provide a system-wide MCA
+parameter file, in which parameter orte_no_session_dir is specified:
+It states paths of directories, not allowed as session directories.
+
+  File Name:        %s
+

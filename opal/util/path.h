@@ -119,5 +119,23 @@ OPAL_DECLSPEC char* opal_find_absolute_path( char* app_name ) __opal_attribute_w
  */
 OPAL_DECLSPEC char *opal_path_access(char *fname, char *path, int mode) __opal_attribute_malloc__ __opal_attribute_warn_unused_result__;
 
+
+/**
+ * @brief Figure out, whether fname is on network file system
+ *
+ * Try to figure out, whether the file name specified through fname is
+ * on any network file system (currently NFS, Lustre and Panasas).
+ *
+ * If the file is not created, the parent directory is checked.
+ * This allows checking for NFS prior to opening the file.
+ *
+ * @param[in]     fname        File name to check
+ *
+ * @retval true                If fname is on NFS, Lustre or Panasas
+ * @retval false               otherwise
+ */
+OPAL_DECLSPEC bool opal_path_nfs(char *fname) __opal_attribute_warn_unused_result__;
+
 END_C_DECLS
 #endif /* OPAL_PATH_H */
+

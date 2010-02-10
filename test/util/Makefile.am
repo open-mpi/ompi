@@ -26,7 +26,8 @@ check_PROGRAMS = \
 	opal_timer \
 	opal_os_create_dirpath \
 	opal_argv \
-	opal_basename
+	opal_basename \
+	opal_path_nfs
 
 TESTS = \
 	$(check_PROGRAMS)
@@ -60,6 +61,12 @@ opal_basename_LDADD = \
         $(top_builddir)/opal/libopen-pal.la \
         $(top_builddir)/test/support/libsupport.a 
 opal_basename_DEPENDENCIES = $(opal_basename_LDADD)
+
+opal_path_nfs_SOURCES = opal_path_nfs.c
+opal_path_nfs_LDADD = \
+        $(top_builddir)/opal/libopen-pal.la \
+        $(top_builddir)/test/support/libsupport.a
+opal_path_nfs_DEPENDENCIES = $(opal_path_nfs_LDADD)
 
 opal_os_path_SOURCES = opal_os_path.c
 opal_os_path_LDADD = \
