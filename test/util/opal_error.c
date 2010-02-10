@@ -38,7 +38,7 @@
 #include "opal/util/error.h"
 #include "opal/constants.h"
 #include "opal/runtime/opal.h"
-#include "orte/orte_constants.h"
+#include "orte/constants.h"
 
 int
 main(int argc, char *argv[])
@@ -53,7 +53,7 @@ main(int argc, char *argv[])
                      1 }; /* sentinal */
     char buf[1024];
 
-    opal_init();
+    opal_init(&argc, &argv);
 
     for (i = 0 ; errors[i] <= 0 ; ++i) {
         printf("--> error code: %d\n", errors[i]);

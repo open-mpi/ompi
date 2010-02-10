@@ -30,8 +30,7 @@
 #include <sys/stat.h>
 
 #include "support.h"
-#include "orte/orte_constants.h"
-#include "orte/mca/ns/ns_types.h"
+#include "orte/constants.h"
 #include "orte/util/proc_info.h"
 #include "opal/util/os_path.h"
 #include "orte/util/session_dir.h"

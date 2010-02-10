@@ -50,7 +50,7 @@ static bool test3(void);   /* test making a directory tree */
 
 int main(int argc, char* argv[])
 {
-    opal_init();
+    opal_init(&argc, &argv);
 
     test_init("opal_os_create_dirpath_t");
 
