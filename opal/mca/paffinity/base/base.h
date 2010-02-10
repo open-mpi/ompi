@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -30,6 +30,16 @@
  */
 
 BEGIN_C_DECLS
+
+/**
+ * Register MCA params for the paffinity base.
+ *
+ * @retval OPAL_SUCCESS Upon success
+ *
+ * This function is invoked by opal_register_params().  It registers
+ * some paffinity-wide MCA parameters.
+ */
+OPAL_DECLSPEC int opal_paffinity_base_register_params(void);
 
 /**
  * Initialize the paffinity MCA framework
