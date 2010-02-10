@@ -44,7 +44,7 @@ static bool test4(void);   /* missing path separator test */
 
 int main(int argc, char* argv[])
 {
-    opal_init();
+    opal_init(&argc, &argv);
 
     test_init("opal_os_path_t");
     

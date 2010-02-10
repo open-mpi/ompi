@@ -26,7 +26,7 @@ main(int argc, char *argv[])
 {
     int ret;
 
-    ret = opal_init();
+    ret = opal_init(&argc, &argv);
     if (OPAL_SUCCESS != ret) {
         return (-1 * ret);
     }

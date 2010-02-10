@@ -61,7 +61,7 @@ main(int argc, char *argv[])
 {
     char hostname[MAXHOSTNAMELEN];
 
-    opal_init();
+    opal_init(&argc, &argv);
     test_init("opal_if");
 
     /* 127.0.0.1 */

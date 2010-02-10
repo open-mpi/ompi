@@ -50,7 +50,7 @@ opal_dss_value_t dval = { {OBJ_CLASS(opal_dss_value_t),0},OPAL_UNDEF,NULL};
 
 int main (int argc, char* argv[])
 {
-    opal_init();
+    opal_init(&argc, &argv);
     
     test_out = stderr;
 
