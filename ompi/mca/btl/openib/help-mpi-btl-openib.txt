@@ -560,22 +560,39 @@ Can not provide %d alternative paths with LMC bit configured to %d.
 WARNING: For APM over ports ompi require at least 2 active ports and
 only single active port was found. Disabling APM over ports
 #
-[conflicting receive_queues]
-Open MPI detected two different sets of OpenFabrics receives queues on
-the same host (in the openib BTL).  Open MPI currently only supports
-one set of OF receive queues in an MPI job, even if you have different
-types of OpenFabrics adapters on the same host.
+[locally conflicting receive_queues]
+Open MPI detected two devices on a single server that have different
+"receive_queues" parameter values (in the openib BTL).  Open MPI
+currently only supports one OpenFabrics receive_queues value in an MPI
+job, even if you have different types of OpenFabrics adapters on the
+same host.
 
-  Local host:      %s
-  Adapter 1: %s (vendor 0x%x, part ID %d)
-  Queues:    %s
-  Adapter 2: %s (vendor 0x%x, part ID %d)
-  Queues:    %s
+Device 2 (in the details shown below) will be ignored for the duration
+of this MPI job.
 
-Note that these receive queues values may have come from the Open MPI
-adapter default settings file:
+You can fix this issue by one or more of the following:
+
+  1. Set the MCA parameter btl_openib_receive_queues to a value that
+     is usable by all the OpenFabrics devices that you will use.
+  2. Use the btl_openib_if_include or btl_openib_if_exclue MCA
+     parameters to select exactly which OpenFabrics devices to use in
+     your MPI job.
+
+Finally, note that the "receive_queues" values may have been set by
+the Open MPI device default settings file.  You may want to look in
+this file and see if your devices are getting receive_queues values
+from this file:
 
     %s/mca-btl-openib-device-params.ini
+
+Here is more detailed information about the recieive_queus value
+conflict:
+
+  Local host:     %s
+  Device 1:       %s (vendor 0x%x, part ID %d)
+  Receive queues: %s
+  Device 2:       %s (vendor 0x%x, part ID %d)
+  Receive queues: %s
 #
 [eager RDMA and progress threads]
 WARNING: The openib BTL was directed to use "eager RDMA" for short
