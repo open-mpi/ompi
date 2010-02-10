@@ -25,10 +25,8 @@ check_PROGRAMS = \
 	opal_os_path \
 	opal_timer \
 	opal_os_create_dirpath \
-	orte_session_dir \
 	opal_argv \
-	opal_basename \
-	orte_universe_setup_file_io
+	opal_basename
 
 TESTS = \
 	$(check_PROGRAMS)
@@ -76,12 +74,12 @@ opal_timer_LDADD = \
 opal_timer_DEPENDENCIES = $(opal_timer_LDADD)
 
 
-orte_sys_info_SOURCES = orte_sys_info.c
-orte_sys_info_LDADD = \
-        $(top_builddir)/orte/libopen-rte.la \
-        $(top_builddir)/opal/libopen-pal.la \
-        $(top_builddir)/test/support/libsupport.a 
-orte_sys_info_DEPENDENCIES = $(orte_sys_info_LDADD)
+# orte_sys_info_SOURCES = orte_sys_info.c
+# orte_sys_info_LDADD = \
+#         $(top_builddir)/orte/libopen-rte.la \
+#         $(top_builddir)/opal/libopen-pal.la \
+#         $(top_builddir)/test/support/libsupport.a 
+# orte_sys_info_DEPENDENCIES = $(orte_sys_info_LDADD)
 
 opal_os_create_dirpath_SOURCES = opal_os_create_dirpath.c
 opal_os_create_dirpath_LDADD = \
@@ -89,19 +87,19 @@ opal_os_create_dirpath_LDADD = \
         $(top_builddir)/test/support/libsupport.a 
 opal_os_create_dirpath_DEPENDENCIES = $(opal_os_create_dirpath_LDADD)
 
-orte_session_dir_SOURCES = orte_session_dir.c
-orte_session_dir_LDADD = \
-        $(top_builddir)/orte/libopen-rte.la \
-        $(top_builddir)/opal/libopen-pal.la \
-        $(top_builddir)/test/support/libsupport.a 
-orte_session_dir_DEPENDENCIES = $(orte_session_dir_LDADD)
+# orte_session_dir_SOURCES = orte_session_dir.c
+# orte_session_dir_LDADD = \
+#         $(top_builddir)/orte/libopen-rte.la \
+#         $(top_builddir)/opal/libopen-pal.la \
+#         $(top_builddir)/test/support/libsupport.a 
+# orte_session_dir_DEPENDENCIES = $(orte_session_dir_LDADD)
 
-orte_universe_setup_file_io_SOURCES = orte_universe_setup_file_io.c
-orte_universe_setup_file_io_LDADD = \
-        $(top_builddir)/orte/libopen-rte.la \
-        $(top_builddir)/opal/libopen-pal.la \
-        $(top_builddir)/test/support/libsupport.a 
-orte_universe_setup_file_io_DEPENDENCIES = $(orte_universe_setup_file_io_LDADD)
+# orte_universe_setup_file_io_SOURCES = orte_universe_setup_file_io.c
+# orte_universe_setup_file_io_LDADD = \
+#         $(top_builddir)/orte/libopen-rte.la \
+#         $(top_builddir)/opal/libopen-pal.la \
+#         $(top_builddir)/test/support/libsupport.a 
+# orte_universe_setup_file_io_DEPENDENCIES = $(orte_universe_setup_file_io_LDADD)
 
 clean-local:
 	rm -f test_session_dir_out test-file
