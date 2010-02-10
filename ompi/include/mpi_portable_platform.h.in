@@ -1,7 +1,7 @@
 /*
  * Header file with preprocessor magic to figure out, which compiler the user has been calling!
  *
- * This code is adapted from the file other/portable_platform.h of GASnet-1.12.0:
+ * This code is adapted from the file other/portable_platform.h of GASnet-1.14.0:
  *  - Ripping out the required parts.
  *  - Get rid of brackets as it messes up autoconf
  *  - Delete version tests for older PGI versions (#include "omp.h" not acceptabe)
@@ -264,14 +264,14 @@
 #    else
 #        define PLATFORM_COMPILER_CRAY_C  1
 #    endif
-#    if defined(_RELEASE) && defined(_RELEASE_MINOR) /* X1 */
+#    if defined(_RELEASE) && defined(_RELEASE_MINOR) /* X1 and XT */
 #        define PLATFORM_COMPILER_VERSION \
              PLATFORM_COMPILER_VERSION_INT(_RELEASE,_RELEASE_MINOR,0)
 #     elif defined(_RELEASE) /* T3E */
 #        define PLATFORM_COMPILER_VERSION \
              PLATFORM_COMPILER_VERSION_INT(_RELEASE,0,0)
 #     endif
-#     ifdef _RELEASE_STRING /* X1 */
+#     ifdef _RELEASE_STRING /* X1 and XT */
 #        define PLATFORM_COMPILER_VERSION_STR _RELEASE_STRING
 #     endif
 
