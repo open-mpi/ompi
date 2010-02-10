@@ -46,34 +46,13 @@ Trunk (not on release branches yet)
   - command to execute arbitrary commands (e.g., run a script).
 
 
-1.4.1 (expected)
-----------------
-
-- Update to PLPA v1.3.2, addressing a licensing issue identified by
-  the Fedora project.  See
-  https://svn.open-mpi.org/trac/plpa/changeset/262 for details.
-- Add check for malformed checkpoint metadata files (Ticket #2141).
-- Fix error path in ompi-checkpoint when not able to checkpoint
-  (Ticket #2138).
-- Cleanup component release logic when selecting checkpoint/restart
-  enabled components (Ticket #2135).
-- Fixed VT node name detection for Cray XT platforms, and fixed some
-  broken VT documentation files.
-- Fix a possible race condition in tearing down RDMA CM-based
-  connections.
-- Relax error checking on MPI_GRAPH_CREATE.  Thanks to David Singleton
-  for pointing out the issue.
-- Fix a shared memory "hang" problem that occurred on x86/x86_64
-  platforms when used with the GNU >=4.4.x compiler series.
-- Add fix for Libtool 2.2.6b's problems with the PGI 10.x compiler
-  suite.  Inspired directly from the upstream Libtool patches that fix
-  the issue (but we need something working before the next Libtool
-  release).
-
-
 1.4.2 (expected)
 ----------------
 
+- Fixed "mpirun --report-bindings" behavior when used with
+  mpi_paffinity_alone=1.  Also fixed mpi_paffinity_alone=1 behavior
+  with non-MPI applications.  Thanks to Brice Goglin for noticing the
+  problem.
 - Removed flex.exe binary from Open MPI tarballs; now generate flex
   code from a newer (Windows-friendly) flex when we make official
   tarballs.
