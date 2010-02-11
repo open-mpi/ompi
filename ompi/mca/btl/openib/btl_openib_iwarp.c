@@ -273,8 +273,32 @@ static int add_rdma_addr(struct sockaddr *ipaddr, uint32_t netmask)
     int rc = OMPI_SUCCESS;
     struct rdma_addr_list *myaddr;
 
-    sinp = (struct sockaddr_in *)ipaddr;
+    /* Ensure that this IP address is not in 127.0.0.1/8.  If it is,
+       skip it because we never want loopback addresses to be
+       considered RDMA devices that remote peers can use to connect
+       to.  
 
+       This check is necessary because of a change that almost went
+       into RDMA CM in OFED 1.5.1.  We asked for a delay so that we
+       could get a release of Open MPI out that includes the
+       127-ignoring logic; hence, this change will likely be in a
+       future version of OFED (perhaps OFED 1.6?).
+
+       OMPI uses rdma_bind_addr() to determine if a local IP address
+       is an RDMA device or not.  If it succeeds and we get a non-NULL
+       verbs pointer back in the return, we say that it's a valid RDMA
+       device.  Up through OFED 1.5, rdma_bind_addr(127.0.0.1), would
+       succeed, but the verbs pointer returned would be NULL.  Hence,
+       we knew it was loopback, and therefore we skipped it.
+
+       The proposed RDMA CM change would return a non-NULL/valid verbs
+       pointer when binding to 127.0.0.1/8.  This, of course, screws
+       up OMPI because we then advertise 127.0.0.1 in the modex as an
+       address that remote peers can use to contact this process via
+       RDMA.  Hence, we have to specifically exclude 127.0.0.1/8 --
+       don't even both trying to rdma_bind_addr() to it because we
+       know we don't want loopback addresses at all. */
+    sinp = (struct sockaddr_in *)ipaddr;
     if ((sinp->sin_addr.s_addr & htonl(0xff000000)) == htonl(0x7f000000)) {
         rc = OMPI_SUCCESS;
         goto out1;
@@ -294,8 +318,9 @@ static int add_rdma_addr(struct sockaddr *ipaddr, uint32_t netmask)
         goto out2;
     }
 
-    /* Bind the newly created cm_id to the IP address.  This will, amongst other
-       things, verify that the device is iWARP capable */
+    /* Bind the newly created cm_id to the IP address.  This will,
+       amongst other things, verify that the device is verbs
+       capable */
     rc = rdma_bind_addr(cm_id, ipaddr);
     if (rc || !cm_id->verbs) {
         rc = OMPI_SUCCESS;
