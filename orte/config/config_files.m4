@@ -26,5 +26,6 @@ AC_DEFUN([ORTE_CONFIG_FILES],[
         orte/tools/orte-clean/Makefile
         orte/tools/orte-top/Makefile
         orte/tools/orte-bootproxy/Makefile
+        orte/tools/orte-info/Makefile
     ])
 ])
