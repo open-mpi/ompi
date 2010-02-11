@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
 
 #ifdef __WINDOWS__
 #endif
-  
+
     /* All done */
     return test_finalize();
 }
@@ -121,6 +121,15 @@ void get_mounts (int * num_dirs, char ** dirs[], bool * nfs[])
         if (2 != (rc = sscanf (buffer, "%s %s\n", dirs_tmp[i], fs))) {
             goto out;
         }
+
+        /*
+         * rpc_pipefs is a FS mounted on /var/lib/nfs/rpc_pipefs for NFS4
+         * Cannot distinguish it from NFS in opal_path_nfs, therefore just
+         * disregard it, as it is NOT an parallel filesystem...
+         */
+        if (0 == strcasecmp (fs, "rpc_pipefs"))
+            continue;
+
         nfs_tmp[i] = false;
         if (0 == strcasecmp (fs, "nfs") ||
             0 == strcasecmp (fs, "lustre") ||
