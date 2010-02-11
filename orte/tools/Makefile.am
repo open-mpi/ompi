@@ -33,7 +33,8 @@ SUBDIRS += \
 	tools/orted \
 	tools/orterun \
 	tools/wrappers \
-        tools/orte-top
+        tools/orte-top \
+        tools/orte-info
 
 DIST_SUBDIRS += \
 	tools/orte-bootproxy \
@@ -45,5 +46,6 @@ DIST_SUBDIRS += \
 	tools/orted \
 	tools/orterun \
 	tools/wrappers \
-        tools/orte-top
+        tools/orte-top \
+        tools/orte-info
 
