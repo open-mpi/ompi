@@ -76,8 +76,7 @@
       parameter (OMPI_MINOR_VERSION=@OMPI_MINOR_VERSION@)
       parameter (OMPI_RELEASE_VERSION=@OMPI_RELEASE_VERSION@)
       parameter (OMPI_GREEK_VERSION="@OMPI_GREEK_VERSION@")
-      parameter (OMPI_SVN_VERSION=
-     & "@OMPI_SVN_R@")
+      parameter (OMPI_SVN_VERSION="@OMPI_SVN_R@")
 !
 !     Kind parameters
 !
