@@ -381,14 +381,14 @@ char* opal_find_absolute_path( char* app_name )
  * @brief Figure out, whether fname is on network file system
  *
  * Try to figure out, whether the file name specified through fname is
- * on any network file system (currently NFS, Lustre and Panasas).
+ * on any network file system (currently NFS, Lustre, Panasas and GPFS).
  *
  * If the file is not created, the parent directory is checked.
  * This allows checking for NFS prior to opening the file.
  *
  * @param[in]     fname        File name to check
  *
- * @retval true                If fname is on NFS, Lustre or Panasas
+ * @retval true                If fname is on NFS, Lustre, Panasas or GPFS
  * @retval false               otherwise
  *
  *
@@ -429,6 +429,9 @@ char* opal_find_absolute_path( char* app_name )
 #ifndef PAN_KERNEL_FS_CLIENT_SUPER_MAGIC
 #define PAN_KERNEL_FS_CLIENT_SUPER_MAGIC  0xAAD7AAEA     /* Panasas FS */
 #endif
+#ifndef GPFS_SUPER_MAGIC
+#define GPFS_SUPER_MAGIC  0x47504653    /* Thats GPFS in ASCII */
+#endif
 
 #define MASK1          0xff
 #define MASK2        0xffff
@@ -455,6 +458,7 @@ bool opal_path_nfs(char *fname)
         {LL_SUPER_MAGIC,                   MASK4, "lustre"},
         {NFS_SUPER_MAGIC,                  MASK2, "nfs"},
         {PAN_KERNEL_FS_CLIENT_SUPER_MAGIC, MASK4, "panfs"},
+        {GPFS_SUPER_MAGIC, MASK4, "gpfs"}
     };
 #define FS_TYPES_NUM (int)(sizeof (fs_types)/sizeof (fs_types[0]))
 
