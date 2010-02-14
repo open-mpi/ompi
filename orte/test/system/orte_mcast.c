@@ -23,20 +23,17 @@ static void cbfunc(int status,
                    orte_rmcast_channel_t channel,
                    orte_rmcast_tag_t tag,
                    orte_process_name_t *sender,
-                   orte_rmcast_seq_t seq_num,
                    opal_buffer_t *buf, void *cbdata);
 static void cbfunc_buf_snt(int status,
                            orte_rmcast_channel_t channel,
                            orte_rmcast_tag_t tag,
                            orte_process_name_t *sender,
-                           orte_rmcast_seq_t seq_num,
                            opal_buffer_t *buf, void *cbdata);
 
 static void cbfunc_iovec(int status,
                          orte_rmcast_channel_t channel,
                          orte_rmcast_tag_t tag,
                          orte_process_name_t *sender,
-                         orte_rmcast_seq_t seq_num,
                          struct iovec *msg, int count, void* cbdata);
 
 orte_rmcast_channel_t chan=4;
@@ -143,7 +140,6 @@ static void cbfunc(int status,
                    orte_rmcast_channel_t channel,
                    orte_rmcast_tag_t tag,
                    orte_process_name_t *sender,
-                   orte_rmcast_seq_t seq_num,
                    opal_buffer_t *buffer, void *cbdata)
 {
     int32_t i32, rc;
@@ -152,9 +148,9 @@ static void cbfunc(int status,
     rc = 1;
     opal_dss.unpack(buffer, &i32, &rc, OPAL_INT32);
 
-    opal_output(0, "%s GOT BUFFER MESSAGE from %s on channel %d tag %d seq_num %d with value %d\n",
+    opal_output(0, "%s GOT BUFFER MESSAGE from %s on channel %d tag %d with value %d\n",
             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-            ORTE_NAME_PRINT(sender), channel, tag, seq_num, i32);
+            ORTE_NAME_PRINT(sender), channel, tag, i32);
 
     if (i32 < 0) {
         return;
@@ -185,13 +181,12 @@ static void cbfunc_iovec(int status,
                          orte_rmcast_channel_t channel,
                          orte_rmcast_tag_t tag,
                          orte_process_name_t *sender,
-                         orte_rmcast_seq_t seq_num,
                          struct iovec *msg, int count, void* cbdata)
 {
     int rc;
     
-    opal_output(0, "%s GOT IOVEC MESSAGE from %s of %d elements on tag %d seq_num %d\n",
-            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(sender), count, tag, seq_num);
+    opal_output(0, "%s GOT IOVEC MESSAGE from %s of %d elements on tag %d\n",
+            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(sender), count, tag);
 
 }
 
@@ -199,7 +194,6 @@ static void cbfunc_buf_snt(int status,
                            orte_rmcast_channel_t channel,
                            orte_rmcast_tag_t tag,
                            orte_process_name_t *sender,
-                           orte_rmcast_seq_t seq_num,
                            opal_buffer_t *buf, void *cbdata)
 {
     opal_output(0, "%s BUFFERED_NB SEND COMPLETE\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));

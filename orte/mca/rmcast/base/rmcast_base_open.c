@@ -25,6 +25,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/argv.h"
 #include "opal/util/if.h"
+#include "opal/class/opal_ring_buffer.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/parse_options.h"
@@ -258,6 +259,11 @@ int orte_rmcast_base_open(void)
     free(tmp);
     opal_argv_free(ports);
     
+    /* send cache size */
+    mca_base_param_reg_int_name("rmcast", "base_cache_size",
+                                "Number of messages to be held in send cache (default: 16)",
+                                   false, false, 16, &orte_rmcast_base.cache_size);
+
     /* Debugging / verbose output.  Always have stream open, with
         verbose set by the mca open system... */
     orte_rmcast_base.rmcast_output = opal_output_open(NULL);
@@ -297,6 +303,7 @@ OBJ_CLASS_INSTANCE(orte_mcast_msg_event_t,
 
 static void send_construct(rmcast_base_send_t *ptr)
 {
+    ptr->retransmit = false;
     ptr->iovec_array = NULL;
     ptr->iovec_count = 0;
     ptr->buf = NULL;
@@ -316,8 +323,8 @@ static void recv_construct(rmcast_base_recv_t *ptr)
     ptr->name.vpid = ORTE_VPID_INVALID;
     ptr->channel = ORTE_RMCAST_INVALID_CHANNEL;
     ptr->recvd = false;
+    ptr->iovecs_requested = false;
     ptr->tag = ORTE_RMCAST_TAG_INVALID;
-    ptr->seq_num = 0;
     ptr->flags = ORTE_RMCAST_NON_PERSISTENT;  /* default */
     ptr->iovec_array = NULL;
     ptr->iovec_count = 0;
@@ -346,9 +353,13 @@ static void channel_construct(rmcast_base_channel_t *ptr)
     ptr->sends_in_progress = false;
     OBJ_CONSTRUCT(&ptr->pending_sends, opal_list_t);
     ptr->send_data = NULL;
+    OBJ_CONSTRUCT(&ptr->cache, opal_ring_buffer_t);
+    opal_ring_buffer_init(&ptr->cache, orte_rmcast_base.cache_size);
 }
 static void channel_destruct(rmcast_base_channel_t *ptr)
 {
+    rmcast_send_log_t *rb;
+    
     /* cleanup the recv side */
     if (0 < ptr->recv) {
         opal_event_del(&ptr->recv_ev);
@@ -368,10 +379,53 @@ static void channel_destruct(rmcast_base_channel_t *ptr)
     if (NULL != ptr->send_data) {
         free(ptr->send_data);
     }
+    /* clear the cache */
+    while (NULL != (rb = (rmcast_send_log_t*)opal_ring_buffer_pop(&ptr->cache))) {
+        OBJ_RELEASE(rb);
+    }
+    OBJ_DESTRUCT(&ptr->cache);
 }
 OBJ_CLASS_INSTANCE(rmcast_base_channel_t,
                    opal_list_item_t,
                    channel_construct,
                    channel_destruct);
+
+static void recvlog_construct(rmcast_recv_log_t *ptr)
+{
+    ptr->name.jobid = ORTE_JOBID_INVALID;
+    ptr->name.vpid = ORTE_VPID_INVALID;
+    ptr->channel = ORTE_RMCAST_INVALID_CHANNEL;
+    ptr->seq_num = 0;
+}
+static void recvlog_destruct(rmcast_recv_log_t *ptr)
+{
+    ptr->name.jobid = ORTE_JOBID_INVALID;
+    ptr->name.vpid = ORTE_VPID_INVALID;
+    ptr->channel = ORTE_RMCAST_INVALID_CHANNEL;
+    ptr->seq_num = 0;
+}
+OBJ_CLASS_INSTANCE(rmcast_recv_log_t,
+                   opal_object_t,
+                   recvlog_construct,
+                   recvlog_destruct);
+
+static void sendlog_construct(rmcast_send_log_t *ptr)
+{
+    ptr->channel = ORTE_RMCAST_INVALID_CHANNEL;
+    ptr->seq_num = 0;
+    ptr->buf = OBJ_NEW(opal_buffer_t);
+}
+static void sendlog_destruct(rmcast_send_log_t *ptr)
+{
+    ptr->channel = ORTE_RMCAST_INVALID_CHANNEL;
+    ptr->seq_num = 0;
+    if (NULL != ptr->buf) {
+        OBJ_RELEASE(ptr->buf);
+    }
+}
+OBJ_CLASS_INSTANCE(rmcast_send_log_t,
+                   opal_object_t,
+                   sendlog_construct,
+                   sendlog_destruct);
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */

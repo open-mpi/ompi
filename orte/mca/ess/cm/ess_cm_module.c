@@ -416,7 +416,6 @@ static bool name_success = false;
 static void cbfunc(int status,
                    int channel, orte_rmcast_tag_t tag,
                    orte_process_name_t *sender,
-                   orte_rmcast_seq_t seq_num,
                    opal_buffer_t *buf, void *cbdata)
 {
     int32_t n, np;
