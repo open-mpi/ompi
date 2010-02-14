@@ -26,6 +26,7 @@
 
 #include "opal/event/event.h"
 #include "opal/class/opal_list.h"
+#include "opal/class/opal_ring_buffer.h"
 
 #include "orte/mca/rmcast/rmcast.h"
 
@@ -62,6 +63,8 @@ typedef struct {
     opal_list_t pending_sends;
     uint8_t *send_data;
     opal_event_t recv_ev;
+    /* ring buffer to cache our messages */
+    opal_ring_buffer_t cache;
 } rmcast_base_channel_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(rmcast_base_channel_t);
 
@@ -74,8 +77,8 @@ typedef struct {
     orte_process_name_t name;
     orte_rmcast_channel_t channel;
     bool recvd;
+    bool iovecs_requested;
     orte_rmcast_tag_t tag;
-    orte_rmcast_seq_t seq_num;
     orte_rmcast_flag_t flags;
     struct iovec *iovec_array;
     int iovec_count;
@@ -92,6 +95,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(rmcast_base_recv_t);
  */
 typedef struct {
     opal_list_item_t item;
+    bool retransmit;
     struct iovec *iovec_array;
     int32_t iovec_count;
     opal_buffer_t *buf;
@@ -118,6 +122,28 @@ typedef struct {
     rmcast_base_channel_t *channel;
 } orte_mcast_msg_event_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_mcast_msg_event_t);
+
+/* Data structure for tracking recvd sequence numbers */
+typedef struct {
+    opal_object_t super;
+    orte_process_name_t name;
+    orte_rmcast_channel_t channel;
+    orte_rmcast_seq_t seq_num;
+} rmcast_recv_log_t;
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(rmcast_recv_log_t);
+
+
+/* Data structure for holding messages in case
+ * of retransmit
+ */
+typedef struct {
+    opal_object_t super;
+    orte_rmcast_seq_t seq_num;
+    orte_rmcast_channel_t channel;
+    opal_buffer_t *buf;
+} rmcast_send_log_t;
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(rmcast_send_log_t);
+
 
 #define ORTE_MULTICAST_MESSAGE_EVENT(dat, n, chan, cbfunc)      \
     do {                                                        \

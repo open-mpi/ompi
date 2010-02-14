@@ -43,6 +43,7 @@ typedef struct {
     uint8_t my_group_number;
     uint32_t interface;
     uint16_t ports[256];
+    int cache_size;
 } orte_rmcast_base_t;
 
 ORTE_DECLSPEC extern orte_rmcast_base_t orte_rmcast_base;

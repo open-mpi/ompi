@@ -54,14 +54,12 @@ typedef void (*orte_rmcast_callback_buffer_fn_t)(int status,
                                                  orte_rmcast_channel_t channel,
                                                  orte_rmcast_tag_t tag,
                                                  orte_process_name_t *sender,
-                                                 orte_rmcast_seq_t seq_num,
                                                  opal_buffer_t *buf, void* cbdata);
 
 typedef void (*orte_rmcast_callback_fn_t)(int status,
                                           orte_rmcast_channel_t channel,
                                           orte_rmcast_tag_t tag,
                                           orte_process_name_t *sender,
-                                          orte_rmcast_seq_t seq_num,
                                           struct iovec *msg, int count, void* cbdata);
 
 /* initialize the selected module */
@@ -98,8 +96,7 @@ typedef int (*orte_rmcast_base_module_send_nb_fn_t)(orte_rmcast_channel_t channe
 typedef int (*orte_rmcast_base_module_recv_buffer_fn_t)(orte_process_name_t *sender,
                                                         orte_rmcast_channel_t channel,
                                                         orte_rmcast_tag_t tag,
-                                                        opal_buffer_t *buf,
-                                                        orte_rmcast_seq_t *seq_num);
+                                                        opal_buffer_t *buf);
 
 /* non-blocking receive buffer messages from a multicast channel */
 typedef int (*orte_rmcast_base_module_recv_buffer_nb_fn_t)(orte_rmcast_channel_t channel,
@@ -112,8 +109,7 @@ typedef int (*orte_rmcast_base_module_recv_buffer_nb_fn_t)(orte_rmcast_channel_t
 typedef int (*orte_rmcast_base_module_recv_fn_t)(orte_process_name_t *sender,
                                                  orte_rmcast_channel_t channel,
                                                  orte_rmcast_tag_t tag,
-                                                 struct iovec **msg, int *count,
-                                                 orte_rmcast_seq_t *seq_num);
+                                                 struct iovec **msg, int *count);
 
 /* non-blocking receive iovec messages from a multicast channel */
 typedef int (*orte_rmcast_base_module_recv_nb_fn_t)(orte_rmcast_channel_t channel,
