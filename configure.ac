@@ -114,7 +114,7 @@ AM_CONFIG_HEADER([opal/include/opal_config.h])
 m4_ifdef([project_orte],
          [AM_CONFIG_HEADER([orte/include/orte_config.h])])
 m4_ifdef([project_ompi],
-         [AM_CONFIG_HEADER([ompi/include/ompi_config.h ompi/include/mpi.h ompi/include/mpi_portable_platform.h])])
+         [AM_CONFIG_HEADER([ompi/include/ompi_config.h ompi/include/mpi.h])])
 
 # override/fixup the version numbers set by AC_INIT, since on
 # developer builds, there's no good way to know what the version is
