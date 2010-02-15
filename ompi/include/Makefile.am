@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -28,7 +28,7 @@ nodist_headers = \
 	ompi_config.h
 
 # Install these in $(includedir)
-include_HEADERS =
+include_HEADERS = mpi_portable_platform.h
 
 # Always install these in $(pkgincludedir)
 pkginclude_HEADERS =
@@ -44,8 +44,7 @@ endif
 # counterparts (which AM automatically ships).
 nodist_include_HEADERS = \
         mpi.h \
-        mpi-ext.h \
-        mpi_portable_platform.h
+        mpi-ext.h
 
 if OMPI_WANT_F77_BINDINGS
 nodist_include_HEADERS += \

@@ -133,9 +133,6 @@ ENDIF(BUILD_SHARED_LIBS)
 # generate ompi_config.h
 CONFIGURE_FILE(${OpenMPI_SOURCE_DIR}/ompi/include/ompi_config.h.in  ${OpenMPI_BINARY_DIR}/ompi/include/ompi_config.h)
 
-# generate mpi_portable_platform.h
-CONFIGURE_FILE(${OpenMPI_SOURCE_DIR}/ompi/include/mpi_portable_platform.h.in  ${OpenMPI_BINARY_DIR}/ompi/include/mpi_portable_platform.h)
-
 # generate version.h
 CONFIGURE_FILE(${OpenMPI_SOURCE_DIR}/ompi/include/ompi/version.h.in  ${OpenMPI_BINARY_DIR}/ompi/include/ompi/version.h)
 

@@ -39,10 +39,10 @@
 #include "opal/util/printf.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/include/opal_portable_platform.h"
 
 #include "orte/util/show_help.h"
 
-#include "ompi/include/mpi_portable_platform.h"
 
 #include "orte/tools/orte-info/orte-info.h"
 
@@ -535,13 +535,13 @@ void orte_info_do_config(bool want_all)
     orte_info_out("Built on", "build:timestamp", OMPI_BUILD_DATE);
     orte_info_out("Built host", "build:host", OMPI_BUILD_HOST);
 
-    orte_info_out("C corteler", "corteler:c:command", OPAL_CC);
-    orte_info_out("C corteler absolute", "corteler:c:absolute", OPAL_CC_ABSOLUTE);
-    orte_info_out("C corteler family name", "corteler:c:familyname", _STRINGIFY(OPAL_BUILD_PLATFORM_COMPILER_FAMILYNAME));
-    orte_info_out("C corteler version", "corteler:c:version", _STRINGIFY(OPAL_BUILD_PLATFORM_COMPILER_VERSION_STR));
+    orte_info_out("C compiler", "compiler:c:command", OPAL_CC);
+    orte_info_out("C compiler absolute", "compiler:c:absolute", OPAL_CC_ABSOLUTE);
+    orte_info_out("C compiler family name", "compiler:c:familyname", _STRINGIFY(OPAL_BUILD_PLATFORM_COMPILER_FAMILYNAME));
+    orte_info_out("C compiler version", "compiler:c:version", _STRINGIFY(OPAL_BUILD_PLATFORM_COMPILER_VERSION_STR));
     
     if (want_all) {
-        orte_info_out_int("C char size", "corteler:c:sizeof:char", sizeof(char));
+        orte_info_out_int("C char size", "compiler:c:sizeof:char", sizeof(char));
         /* JMS: should be fixed in MPI-2.2 to differentiate between C
          _Bool and C++ bool.  For the moment, the code base assumes
          that they are the same.  Because of opal_config_bottom.h,
@@ -549,18 +549,18 @@ void orte_info_do_config(bool want_all)
          though this technically isn't right.  This should be fixed
          when we update to MPI-2.2.  See below for note about C++
          bool alignment. */
-        orte_info_out_int("C bool size", "corteler:c:sizeof:bool", sizeof(bool));
-        orte_info_out_int("C short size", "corteler:c:sizeof:short", sizeof(short));
-        orte_info_out_int("C int size", "corteler:c:sizeof:int", sizeof(int));
-        orte_info_out_int("C long size", "corteler:c:sizeof:long", sizeof(long));
-        orte_info_out_int("C float size", "corteler:c:sizeof:float", sizeof(float));
-        orte_info_out_int("C double size", "corteler:c:sizeof:double", sizeof(double));
-        orte_info_out_int("C pointer size", "corteler:c:sizeof:pointer", sizeof(void *));
-        orte_info_out_int("C char align", "corteler:c:align:char", OPAL_ALIGNMENT_CHAR);
-        orte_info_out("C bool align", "corteler:c:align:bool", "skipped");
-        orte_info_out_int("C int align", "corteler:c:align:int", OPAL_ALIGNMENT_INT);
-        orte_info_out_int("C float align", "corteler:c:align:float", OPAL_ALIGNMENT_FLOAT);
-        orte_info_out_int("C double align", "corteler:c:align:double", OPAL_ALIGNMENT_DOUBLE);
+        orte_info_out_int("C bool size", "compiler:c:sizeof:bool", sizeof(bool));
+        orte_info_out_int("C short size", "compiler:c:sizeof:short", sizeof(short));
+        orte_info_out_int("C int size", "compiler:c:sizeof:int", sizeof(int));
+        orte_info_out_int("C long size", "compiler:c:sizeof:long", sizeof(long));
+        orte_info_out_int("C float size", "compiler:c:sizeof:float", sizeof(float));
+        orte_info_out_int("C double size", "compiler:c:sizeof:double", sizeof(double));
+        orte_info_out_int("C pointer size", "compiler:c:sizeof:pointer", sizeof(void *));
+        orte_info_out_int("C char align", "compiler:c:align:char", OPAL_ALIGNMENT_CHAR);
+        orte_info_out("C bool align", "compiler:c:align:bool", "skipped");
+        orte_info_out_int("C int align", "compiler:c:align:int", OPAL_ALIGNMENT_INT);
+        orte_info_out_int("C float align", "compiler:c:align:float", OPAL_ALIGNMENT_FLOAT);
+        orte_info_out_int("C double align", "compiler:c:align:double", OPAL_ALIGNMENT_DOUBLE);
     }
     
     if (want_all) {
