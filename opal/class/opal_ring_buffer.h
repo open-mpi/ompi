@@ -93,7 +93,7 @@ static inline void* opal_ring_buffer_push(opal_ring_buffer_t *ring, void *ptr)
             }
         }
     }
-    *ring->head = ptr;
+    *ring->head = (char *) ptr;
     if (ring->head == &ring->addr[ring->size-1]) {
         ring->head = &ring->addr[0];
     } else {
