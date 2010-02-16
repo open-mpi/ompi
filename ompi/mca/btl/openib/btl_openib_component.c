@@ -1080,7 +1080,6 @@ static int prepare_device_for_use(mca_btl_openib_device_t *device)
         }
     }
 
-    mca_btl_openib_component.devices_count++;
     return OMPI_SUCCESS;
 }
 
@@ -1803,44 +1802,305 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
             mca_btl_openib_component.apm_ports = 0;
         }
 
-        /* If the user specified btl_openib_receive_queues MCA param, it
-           overrides all device INI params */
-        if (BTL_OPENIB_RQ_SOURCE_MCA !=
-            mca_btl_openib_component.receive_queues_source &&
-            NULL != values.receive_queues) {
-            /* If a prior device's INI values set a different value for
-               receive_queues, this is unsupported (see
-               https://svn.open-mpi.org/trac/ompi/ticket/1285) */
-            if (BTL_OPENIB_RQ_SOURCE_DEVICE_INI ==
-                mca_btl_openib_component.receive_queues_source) {
-                if (0 != strcmp(values.receive_queues,
-                                mca_btl_openib_component.receive_queues)) {
-                    orte_show_help("help-mpi-btl-openib.txt",
-                                   "conflicting receive_queues", true,
-                                   orte_process_info.nodename,
-                                   ibv_get_device_name(device->ib_dev),
-                                   device->ib_dev_attr.vendor_id,
-                                   device->ib_dev_attr.vendor_part_id,
-                                   values.receive_queues,
-                                   ibv_get_device_name(receive_queues_device->ib_dev),
-                                   receive_queues_device->ib_dev_attr.vendor_id,
-                                   receive_queues_device->ib_dev_attr.vendor_part_id,
-                                   mca_btl_openib_component.receive_queues,
-                                   opal_install_dirs.pkgdatadir);
-                    ret = OMPI_ERR_RESOURCE_BUSY;
-                    goto error;
-                }
-            } else {
+        /* Check to ensure that all devices used in this process have
+           compatible receive_queues values (we check elsewhere to see
+           if all devices used in other processes in this job have
+           compatible receive_queues values).
+
+           Not only is the check complex, but the reasons behind what
+           it does (and does not do) are complex.  Before explaining
+           the code below, here's some notes:
+
+           1. The openib BTL component only supports 1 value of the
+              receive_queues between all of its modules.
+
+              --> This could be changed to allow every module to have
+                  its own receive_queues.  But that would be a big
+                  deal; no one has time to code this up right now.
+
+           2. The receive_queues value can be specified either as an
+              MCA parameter or in the INI file.  Specifying the value
+              as an MCA parameter overrides all INI file values
+              (meaning: that MCA param value will be used for all
+              openib BTL modules in the process).
+
+           Effectively, the first device through init_one_device()
+           gets to decide what the receive_queues will be for the all
+           modules in this process.  This is an unfortunate artifact
+           of the openib BTL startup sequence (see below for more
+           details).  The first device will choose the receive_queues
+           value from: (in priority order): 
+
+           1. If the btl_openib_receive_queues MCA param was
+              specified, use that.
+           2. If this device has a receive_queues value specified in
+              the INI file, use that.
+           3. Otherwise, use the default MCA param value for
+              btl_openib_receive_queues.
+
+           If any successive device has a different value specified in
+           the INI file, we show_help and return up the stack that
+           this device failed.
+
+           In the case that the user does not specify a
+           mca_btl_openib_receive_queues value, the short description
+           of what is allowed is that either a) no devices specify a
+           receive_queues value in the INI file (in which case we use
+           the default MCA param value), b) all devices specify the
+           same receive_queues value in the INI value, or c) some/all
+           devices specify the same receive_queues value in the INI
+           value as the default MCA param value.
+
+           Let's take some sample cases to explain this more clearly...
+
+           THESE ARE THE "GOOD" CASES
+           --------------------------
+
+           Case 1: no INI values
+           - MCA parameter: not specified
+           - default receive_queues: value A
+           - device 0: no receive_queues in INI file
+           - device 1: no receive_queues in INI file
+           - device 2: no receive_queues in INI file
+           --> use receive_queues value A with all devices
+
+           Case 2: all INI values the same (same as default)
+           - MCA parameter: not specified
+           - default receive_queues: value A
+           - device 0: receive_queues value A in the INI file
+           - device 1: receive_queues value A in the INI file
+           - device 2: receive_queues value A in the INI file
+           --> use receive_queues value A with all devices
+
+           Case 3: all INI values the same (but different than default)
+           - MCA parameter: not specified
+           - default receive_queues: value A
+           - device 0: receive_queues value B in the INI file
+           - device 1: receive_queues value B in the INI file
+           - device 2: receive_queues value B in the INI file
+           --> use receive_queues value B with all devices
+
+           Case 4: some INI unspecified, but rest same as default
+           - MCA parameter: not specified
+           - default receive_queues: value A
+           - device 0: receive_queues value A in the INI file
+           - device 1: no receive_queues in INI file
+           - device 2: receive_queues value A in the INI file
+           --> use receive_queues value A with all devices
+
+           Case 5: some INI unspecified (including device 0), but rest same as default
+           - MCA parameter: not specified
+           - default receive_queues: value A
+           - device 0: no receive_queues in INI file
+           - device 1: no receive_queues in INI file
+           - device 2: receive_queues value A in the INI file
+           --> use receive_queues value A with all devices
+
+           Case 6: different default/INI values, but MCA param is specified
+           - MCA parameter: value D
+           - default receive_queues: value A
+           - device 0: no receive_queues in INI file
+           - device 1: receive_queues value B in INI file
+           - device 2: receive_queues value C in INI file
+           --> use receive_queues value D with all devices
+
+           What this means is that this selection process is
+           unfortunately tied to the order of devices.  :-( Device 0
+           effectively sets what the receive_queues value will be for
+           that process.  If any later device disagrees, that's
+           problematic and we have to error/abort.
+
+           ALL REMAINING CASES WILL FAIL
+           -----------------------------
+
+           Case 7: one INI value (different than default)
+           - MCA parameter: not specified
+           - default receive_queues: value A
+           - device 0: receive_queues value B in INI file
+           - device 1: no receive_queues in INI file
+           - device 2: no receive_queues in INI file
+           --> Jeff thinks that it would be great to use
+               receive_queues value B with all devices.  However, it
+               shares one of the problems cited in case 8, below.  So
+               we need to fail this scenario; print an error and
+               abort.
+           
+           Case 8: one INI value, different than default
+           - MCA parameter: not specified
+           - default receive_queues: value A
+           - device 0: no receive_queues in INI file
+           - device 1: receive_queues value B in INI file
+           - device 2: no receive_queues in INI file
+
+           --> Jeff thinks that it would be great to use
+               receive_queues value B with all devices.  However, it
+               has (at least) 2 problems:
+
+               1. The check for local receive_queue compatibility is
+                  done here in init_one_device().  By the time we call
+                  init_one_device() for device 1, we have already
+                  called init_one_device() for device 0, meaning that
+                  device 0's QPs have already been created and setup
+                  using the MCA parameter's default receive_queues
+                  value.  So if device 1 *changes* the
+                  component.receive_queues value, then device 0 and
+                  device 1 now have different receive_queue sets (more
+                  specifically: the QPs setup for device 0 are now
+                  effectively lost).  This is Bad.
+
+                  It would be great if we didn't have this restriction
+                  -- either by letting each module have its own
+                  receive_queues value or by scanning all devices and
+                  figuring out a final receive_queues value *before*
+                  actually setting up any QPs.  But that's not the
+                  current flow of the code (patches would be greatly
+                  appreciated here, of course!).  Unfortunately, no
+                  one has time to code this up right now, so we're
+                  leaving this as explicitly documented for some
+                  future implementer...
+
+               2. Conside a scenario with server 1 having HCA A/subnet
+                  X, and server 2 having HCA B/subnet X and HCA
+                  C/subnet Y.  And let's assume:
+
+                  Server 1:
+                  HCA A: no receive_queues in INI file
+
+                  Server 2:
+                  HCA B: no receive_queues in INI file
+                  HCA C: receive_queues specified in INI file
+                
+                  A will therefore use the default receive_queues
+                  value.  B and C will use C's INI receive_queues.
+                  But note that modex [currently] only sends around
+                  vendor/part IDs for OpenFabrics devices -- not the
+                  actual receive_queues value (it was felt that
+                  including the final receive_queues string value in
+                  the modex would dramatically increase the size of
+                  the modex).  So processes on server 1 will get the
+                  vendor/part ID for HCA B, look it up in the INI
+                  file, see that it has no receive_queues value
+                  specified, and then assume that it uses the default
+                  receive_queues value.  Hence, procs on server 1 will
+                  try to connect HCA A-->HCA B with the wrong
+                  receive_queues value.  Bad.  Further, the error
+                  won't be discovered by checks like this because A
+                  won't check D's receive_queues because D is on a
+                  different subnet.
+
+                  This could be fixed, of course; either by a) send
+                  the final receive_queues value in the modex (perhaps
+                  compressing or encoding it so that it can be much
+                  shorter than the string -- the current vendor/part
+                  ID stuff takes 8 bytes for each device), or b)
+                  replicating the determination process of each host
+                  in each process (i.e., procs on server 1 would see
+                  both B and C, and use them both to figure out what
+                  the "final" receive_queues value is for B).
+                  Unfortunately, no one has time to code this up right
+                  now, so we're leaving this as explicitly documented
+                  for some future implementer...
+
+               Because of both of these problems, this case is
+               problematic and must fail with a show_help error.
+
+           Case 9: two devices with same INI value (different than default)
+           - MCA parameter: not specified
+           - default receive_queues: value A
+           - device 0: no receive_queues in INI file
+           - device 1: receive_queues value B in INI file
+           - device 2: receive_queues value B in INI file
+           --> per case 8, fail with a show_help message.
+           
+           Case 10: two devices with different INI values
+           - MCA parameter: not specified
+           - default receive_queues: value A
+           - device 0: no receive_queues in INI file
+           - device 1: receive_queues value B in INI file
+           - device 2: receive_queues value C in INI file
+           --> per case 8, fail with a show_help message.
+
+        */
+
+        /* If the MCA param was specified, skip all the checks */
+        if (BTL_OPENIB_RQ_SOURCE_MCA ==
+            mca_btl_openib_component.receive_queues_source) {
+            goto good;
+        }
+
+        /* If we're the first device and we have a receive_queues
+           value from the INI file *that is different than the
+           already-existing default value*, then set the component to
+           use that. */
+        if (0 == mca_btl_openib_component.devices_count) {
+            if (NULL != values.receive_queues &&
+                0 != strcmp(values.receive_queues,
+                            mca_btl_openib_component.receive_queues)) {
                 if (NULL != mca_btl_openib_component.receive_queues) {
                     free(mca_btl_openib_component.receive_queues);
                 }
-                receive_queues_device = device;
                 mca_btl_openib_component.receive_queues =
                     strdup(values.receive_queues);
                 mca_btl_openib_component.receive_queues_source =
                     BTL_OPENIB_RQ_SOURCE_DEVICE_INI;
             }
         }
+
+        /* If we're not the first device, then we have to conform to
+           either the default value if the first device didn't set
+           anything, or to whatever the first device decided. */
+        else {
+            /* In all cases, if this device has a receive_queues value
+               in the INI, then it must agree with
+               component.receive_queues. */
+            if (NULL != values.receive_queues) {
+                if (0 != strcmp(values.receive_queues, 
+                                mca_btl_openib_component.receive_queues)) {
+                    orte_show_help("help-mpi-btl-openib.txt",
+                                   "locally conflicting receive_queues", true,
+                                   opal_install_dirs.pkgdatadir,
+                                   orte_process_info.nodename,
+                                   ibv_get_device_name(receive_queues_device->ib_dev),
+                                   receive_queues_device->ib_dev_attr.vendor_id,
+                                   receive_queues_device->ib_dev_attr.vendor_part_id,
+                                   mca_btl_openib_component.receive_queues,
+                                   ibv_get_device_name(device->ib_dev),
+                                   device->ib_dev_attr.vendor_id,
+                                   device->ib_dev_attr.vendor_part_id,
+                                   values.receive_queues);
+                    ret = OMPI_ERR_RESOURCE_BUSY;
+                    goto error;
+                }
+            }
+
+            /* If this device doesn't have an INI receive_queues
+               value, then if the component.receive_queues value came
+               from the default, we're ok.  But if the
+               component.receive_queues value came from the 1st
+               device's INI file, we must error. */
+            else if (BTL_OPENIB_RQ_SOURCE_DEVICE_INI ==
+                mca_btl_openib_component.receive_queues_source) {
+                orte_show_help("help-mpi-btl-openib.txt",
+                               "locally conflicting receive_queues", true,
+                               opal_install_dirs.pkgdatadir,
+                               orte_process_info.nodename,
+                               ibv_get_device_name(receive_queues_device->ib_dev),
+                               receive_queues_device->ib_dev_attr.vendor_id,
+                               receive_queues_device->ib_dev_attr.vendor_part_id,
+                               mca_btl_openib_component.receive_queues,
+                               ibv_get_device_name(device->ib_dev),
+                               device->ib_dev_attr.vendor_id,
+                               device->ib_dev_attr.vendor_part_id,
+                               mca_btl_openib_component.default_recv_qps);
+                ret = OMPI_ERR_RESOURCE_BUSY;
+                goto error;
+            }
+        }
+
+        receive_queues_device = device;
+
+    good:
+        mca_btl_openib_component.devices_count++;
         return OMPI_SUCCESS;
     }
 
