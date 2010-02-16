@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -77,6 +77,8 @@ static int parse_args(int argc, char *argv[]);
 static int check_file(orte_snapc_base_global_snapshot_t *snapshot);
 static int create_appfile(orte_snapc_base_global_snapshot_t *snapshot);
 static int spawn_children(orte_snapc_base_global_snapshot_t *snapshot, pid_t *child_pid);
+static int snapshot_sort_compare_fn(opal_list_item_t **a,
+                                    opal_list_item_t **b);
 
 /*****************************************
  * Global Vars for Command line Arguments
@@ -454,6 +456,14 @@ static int create_appfile(orte_snapc_base_global_snapshot_t *snapshot)
         goto cleanup;
     }
 
+    /*
+     * Sort the snapshots so that they are in order
+     */
+    opal_list_sort(&snapshot->snapshots, snapshot_sort_compare_fn);
+
+    /*
+     * Construct the appfile
+     */
     for(item  = opal_list_get_first(&snapshot->snapshots);
         item != opal_list_get_end(&snapshot->snapshots);
         item  = opal_list_get_next(item) ) {
@@ -582,4 +592,23 @@ static int spawn_children(orte_snapc_base_global_snapshot_t *snapshot, pid_t *ch
         opal_argv_free(argv);
 
     return exit_status;
+}
+
+static int snapshot_sort_compare_fn(opal_list_item_t **a,
+                                    opal_list_item_t **b)
+{
+    orte_snapc_base_snapshot_t *snap_a, *snap_b;
+
+    snap_a = (orte_snapc_base_snapshot_t*)(*a);
+    snap_b = (orte_snapc_base_snapshot_t*)(*b);
+
+    if( snap_a->process_name.vpid > snap_b->process_name.vpid ) {
+        return 1;
+    }
+    else if( snap_a->process_name.vpid == snap_b->process_name.vpid ) {
+        return 0;
+    }
+    else {
+        return -1;
+    }
 }
