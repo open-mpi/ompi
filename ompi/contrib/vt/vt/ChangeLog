@@ -1,3 +1,18 @@
+5.8.1openmpi
+	- updated version of internal OTF to 1.6.5openmpi
+	  (see extlib/otf/ChangeLog)
+	- if VampirTrace is configured for Open MPI use its Fortran wrapper
+	  library 'libmpi_f77' to build Fortran programs
+	- added functions 'MPI_Group_range_<incl|excl>' to Fortran MPI wrappers 
+	- added environment variable VT_METRICS_SEP to specify a string which
+	  separate the counter names in VT_METRICS
+	- fixed detection of unique node id on MacOS platforms
+	- fixed support for LAM/MPI
+	- fixed build error: do not add objects from the static version of the
+	  BFD library to the shared VT libraries, because the BFD objects might
+	  be built without position independent code (PIC)
+	- patched libtool to avoid a bug in detection of the PGI 10 compilers
+
 5.8openmpi
 	- updated version of internal OTF to 1.6.4openmpi
 	  (see extlib/otf/ChangeLog)
@@ -7,6 +22,7 @@
 	  filter directives
 	- added support for automatic instrumentation with PGI 9 compiler using
 	  its new compiler flag '-Minstrument'
+	- added MPI-parallel trace unifier (vtunify-mpi)
 	- disabled simultaneous support for multiple compiler instrumentation
 	  types in one VampirTrace installation
 	  (all known compiler instrumentation types for the compiler wrappers

@@ -3693,6 +3693,8 @@ VT_MPI_INT MPI_Win_wait( MPI_Win win )
   return result;
 }
 
+#if defined(HAVE_PMPI_WIN_TEST) && HAVE_PMPI_WIN_TEST
+
 /* -- MPI_Win_test -- */
 
 VT_MPI_INT MPI_Win_test( MPI_Win win, VT_MPI_INT* flag )
@@ -3738,6 +3740,10 @@ VT_MPI_INT MPI_Win_test( MPI_Win win, VT_MPI_INT* flag )
   return result;
 }
 
+#endif /* HAVE_PMPI_WIN_TEST */
+
+#if defined(HAVE_PMPI_WIN_LOCK) && HAVE_PMPI_WIN_LOCK
+
 /* -- MPI_Win_lock -- */
 
 VT_MPI_INT MPI_Win_lock( VT_MPI_INT lock_type,
@@ -3774,6 +3780,10 @@ VT_MPI_INT MPI_Win_lock( VT_MPI_INT lock_type,
 
   return result;
 }
+
+#endif /* HAVE_PMPI_WIN_LOCK */
+
+#if defined(HAVE_PMPI_WIN_UNLOCK) && HAVE_PMPI_WIN_UNLOCK
 
 /* -- MPI_Win_unlock -- */
 
@@ -3817,6 +3827,8 @@ VT_MPI_INT MPI_Win_unlock( VT_MPI_INT rank,
 
   return result;
 }
+
+#endif /* HAVE_PMPI_WIN_UNLOCK */
 
 #endif /* HAVE_MPI2_1SIDED */
 
@@ -4094,12 +4106,12 @@ VT_MPI_INT MPI_Exscan( void* sendbuf,
       vt_mpifile_data *fdata = vt_mpifile_get_data(fh); \
       if (result == MPI_SUCCESS) \
         { \
-          VT_MPI_INT sz, count; \
+          VT_MPI_INT sz, cnt; \
           PMPI_Type_size(fdata->datatype, &sz); \
-          PMPI_Get_count(status, fdata->datatype, &count); \
-          if (count == MPI_UNDEFINED) \
-            count = 0; \
-          vt_ioend(&time, fdata->fid, fdata->split_collective_id, IOOP, (uint64_t)count * (uint64_t)sz); \
+          PMPI_Get_count(status, fdata->datatype, &cnt); \
+          if (cnt == MPI_UNDEFINED) \
+            cnt = 0; \
+          vt_ioend(&time, fdata->fid, fdata->split_collective_id, IOOP, (uint64_t)cnt * (uint64_t)sz); \
         } \
       else \
         { \
@@ -4120,12 +4132,12 @@ VT_MPI_INT MPI_Exscan( void* sendbuf,
       uint32_t fid = vt_mpifile_get_id(fh); \
       if (result == MPI_SUCCESS) \
         { \
-          VT_MPI_INT sz, count; \
+          VT_MPI_INT sz, cnt; \
           PMPI_Type_size(datatype, &sz); \
-          PMPI_Get_count(status, datatype, &count); \
-          if (count == MPI_UNDEFINED) \
-            count = 0; \
-          vt_ioend(&time, fid, handleid, IOOP, (uint64_t)count * (uint64_t)sz); \
+          PMPI_Get_count(status, datatype, &cnt); \
+          if (cnt == MPI_UNDEFINED) \
+            cnt = 0; \
+          vt_ioend(&time, fid, handleid, IOOP, (uint64_t)cnt * (uint64_t)sz); \
         } \
       else \
         { \

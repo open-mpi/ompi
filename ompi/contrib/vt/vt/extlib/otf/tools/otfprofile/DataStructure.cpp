@@ -1643,7 +1643,7 @@ bool Summary_Container::find_CollOp(CollOp_Def_Key coll_def_key)
 		return true; 
 }
 
-int Summary_Container::mergeContainer(Summary_Container container) {
+int Summary_Container::mergeContainer(Summary_Container& container) {
 	FunctionMap fmap = container.function_map;
 	FunctionMap::iterator fit;
 

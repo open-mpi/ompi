@@ -16,10 +16,11 @@
 
 /* *** some macros *** ****************************************** */
 
-#define PARSE_ERROR( buffer ) \
-	OTF_fprintf( stderr, "parse error in %s() %s:%u : %s", \
-		__FUNCTION__, __FILE__, __LINE__, OTF_RBuffer_printRecord( buffer ) );
-
+#define PARSE_ERROR( buffer ) {                                \
+  char* record_str = OTF_RBuffer_printRecord( buffer );        \
+  OTF_fprintf( stderr, "parse error in %s() %s:%u : %s",       \
+               __FUNCTION__, __FILE__, __LINE__, record_str ); \
+  free( record_str ); }
 
 /* *** local headers *** **************************************************** */
 
@@ -1119,7 +1120,7 @@ int OTF_Reader_readDefProcessGroup( OTF_RBuffer* buffer,
 
 		if ( name == NULL ) {
 
-		PARSE_ERROR( buffer );
+			PARSE_ERROR( buffer );
 
 			return 0;
 		}

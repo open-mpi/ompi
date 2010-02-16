@@ -106,31 +106,27 @@ static metricmap_t* metricmap_append(metricmap_t* map,
 
 static void metricmap_dump(metricmap_t* map)
 {
-  unsigned j=0;
+  unsigned i = 0;
 
-  if (map == NULL) {
-    printf("Can't dump empty metricmap!\n");
+  if (map == NULL || vt_env_verbose() < 3)
     return;
-  }
 
-  printf("Metricmap dump (head=0x%p):\n", (void*)map);
+  vt_cntl_msg(3, "Metricmap dump (head=0x%p):", (void*)map);
   while (map != NULL) {
-    printf("m[%3u] 0x%X %s = %s\n", j, map->type,
-	   map->event_name, map->alias_name);
-    j++;
+    vt_cntl_msg(3, "m[%3u] 0x%X %s = %s", i, map->type,
+                map->event_name, map->alias_name);
+    i++;
     map = map->next;
   }
-  printf("Metricmap dumped %u maps\n", j);
+  vt_cntl_msg(3, "Metricmap dumped %u maps", i);
 }
 
 static void metricmap_free(metricmap_t* map)
 {
-  if (map == NULL) {
-    /*printf("Can't free empty metricmap!\n");*/
+  if (map == NULL)
     return;
-  }
 
-  /*printf("Metricmap free (head=0x%p):\n", map);*/
+  vt_cntl_msg(3, "Metricmap free (head=0x%p):", map);
   while (map != NULL) {
     metricmap_t* next = map->next;
     if (map->event_name != NULL) free(map->event_name);
@@ -353,6 +349,7 @@ int vt_metric_open()
 {
   int retval;
   char* env;
+  char* env_sep;
   char* var;
   char* token;
   PAPI_event_info_t info;
@@ -368,9 +365,11 @@ int vt_metric_open()
 #endif
   }
 
+  env_sep = vt_env_metrics_sep();
+
   mapv = vt_metricmap_init(
     (metmap_t)(METMAP_MEASURE|METMAP_AGGROUP));
-  /*metricmap_dump(mapv);*/
+  metricmap_dump(mapv);
 
   /* initialize PAPI */
   retval = PAPI_library_init(PAPI_VER_CURRENT);
@@ -385,7 +384,7 @@ int vt_metric_open()
   vt_cntl_msg(2, "VT_METRICS=%s", var);
         
   /* read metrics from specification string */
-  token = strtok(var, ":");
+  token = strtok(var, env_sep);
   while ( token && (nmetrics < VT_METRIC_MAXNUM) ) {
     /* search metricmap for a suitable definition */
     metricmap_t* map = mapv;
@@ -447,7 +446,7 @@ int vt_metric_open()
       metricv_add(component, code);
     }
 
-    token = strtok(NULL, ":");
+    token = strtok(NULL, env_sep);
   }
 
   /*printf("nmetrics=%d\n", nmetrics);*/
@@ -617,7 +616,9 @@ uint32_t vt_metric_props(int i)
   return OTF_COUNTER_TYPE_ACC;
 }
 
-uint64_t vt_metric_clckrt()
+#if TIMER == TIMER_PAPI_REAL_CYC
+
+uint64_t vt_metric_clckrt(void)
 {
   const PAPI_hw_info_t* hwinfo = NULL;
   double hertz;
@@ -639,12 +640,16 @@ uint64_t vt_metric_clckrt()
   return (uint64_t)hertz;
 }
 
-uint64_t vt_metric_real_cyc()
+uint64_t vt_metric_real_cyc(void)
 {
   return (uint64_t)PAPI_get_real_cyc();
 }
 
-uint64_t vt_metric_real_usec()
+#elif TIMER == TIMER_PAPI_REAL_USEC
+
+uint64_t vt_metric_real_usec(void)
 {
   return (uint64_t)PAPI_get_real_usec();
 }
+
+#endif /* TIMER */

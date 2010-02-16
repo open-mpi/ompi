@@ -12,7 +12,9 @@ AM_CONFIG_HEADER(config.h)
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 # Check whether we are inside Open MPI package
-AC_ARG_WITH(openmpi-inside, [], [inside_openmpi="yes"])
+inside_openmpi="no"
+AC_ARG_WITH(openmpi-inside, [],
+[AS_IF([test x"$withval" != "xno"], [inside_openmpi="yes"])])
 
 ACVT_CONF_INIT
 

@@ -442,7 +442,7 @@ EXTERN int(*libc_fprintf)(FILE *, const char *, ...);
 #define VT_IOWRAP_ENTER_IOFUNC() \
 { \
 	enter_time = vt_pform_wtime(); \
-	vt_debug_msg(DBG_VT_CALL, "vt_enter(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %" U64STR, enter_time); \
+	vt_debug_msg(DBG_VT_CALL, "vt_enter(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", (unsigned long long)enter_time); \
 	was_recorded = vt_enter( &enter_time, iofunctions[FUNC_IDX(VT_IOWRAP_THISFUNCNAME)].vt_func_id ); \
 	if( was_recorded ) { \
                 handleid = VTTHRD_IO_NEXT_HANDLEID(VTTHRD_MY_VTTHRD); \
@@ -471,7 +471,7 @@ EXTERN int(*libc_fprintf)(FILE *, const char *, ...);
                 } \
                 if( fid ) { \
                         if( ERROR_CONDITION ) { \
-                                vt_debug_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %" U64STR, time); \
+                                vt_debug_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", (unsigned long long)time); \
                                 vt_ioend( &time, fid, handleid, ioop | VT_IOFLAG_IOFAILED, (uint64_t)num_bytes ); \
                         } \
                         else { \
@@ -491,7 +491,7 @@ EXTERN int(*libc_fprintf)(FILE *, const char *, ...);
                 uint32_t ioop = VT_IOWRAP_FUNCTYPE(VT_IOWRAP_THISFUNCNAME); \
                 if( ERROR_CONDITION ) { \
                         uint32_t fid = vt_iofile_id( path ); \
-                        vt_debug_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %" U64STR, time); \
+                        vt_debug_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", (unsigned long long)time); \
                         vt_ioend( &time, fid, handleid, ioop | VT_IOFLAG_IOFAILED, 0 ); \
                 } \
                 else { \
@@ -520,7 +520,7 @@ EXTERN int(*libc_fprintf)(FILE *, const char *, ...);
                 fid = file->vampir_file_id; \
                 if( fid ) { \
                         if( ERROR_CONDITION ) { \
-                                vt_debug_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %" U64STR, time); \
+                                vt_debug_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", (unsigned long long)time); \
                                 vt_ioend( &time, fid, handleid, ioop | VT_IOFLAG_IOFAILED, (uint64_t)num_bytes ); \
                         } \
                         else { \
@@ -544,7 +544,7 @@ EXTERN int(*libc_fprintf)(FILE *, const char *, ...);
                 uint32_t fid = vt_iofile_id(PATH); \
                 if( fid ) { \
                         if( ERROR_CONDITION ) { \
-                                vt_debug_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %" U64STR, time); \
+                                vt_debug_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", (unsigned long long)time); \
                                 vt_ioend( &time, fid, handleid, ioop | VT_IOFLAG_IOFAILED, 0 ); \
                         } \
                         else { \

@@ -1242,6 +1242,7 @@ void VTGen_delete(VTGen* gen)
   {
     char* tmp_namev[5];
     char* global_name;
+    uint32_t global_name_len;
     char* suffix;
 
     char* gdir = vt_env_gdir();
@@ -1284,18 +1285,19 @@ void VTGen_delete(VTGen* gen)
       suffix = strchr(tmp_namev[i]+strlen(gen->fileprefix)+1, '.');
 
       /* build global file name */
-      global_name = (char*)calloc(strlen(gdir) +
-                                  strlen(fprefix) + 32, sizeof(char));
+      global_name_len = strlen(gdir) + strlen(fprefix) + 32;
+      global_name = (char*)calloc(global_name_len+1, sizeof(char));
+
       if (vt_my_funique > 0)
       {
-        sprintf(global_name, "%s/%s_%u.%x%s",
-                gdir, fprefix, vt_my_funique, 65536*gen->tid+(vt_my_trace+1),
-                suffix);
+        snprintf(global_name, global_name_len, "%s/%s_%u.%x%s",
+                 gdir, fprefix, vt_my_funique, 65536*gen->tid+(vt_my_trace+1),
+                 suffix);
       }
       else
       {
-        sprintf(global_name, "%s/%s.%x%s",
-                gdir, fprefix, 65536*gen->tid+(vt_my_trace+1), suffix);
+        snprintf(global_name, global_name_len, "%s/%s.%x%s",
+                 gdir, fprefix, 65536*gen->tid+(vt_my_trace+1), suffix);
       }
 
       /* rename file, if possible */

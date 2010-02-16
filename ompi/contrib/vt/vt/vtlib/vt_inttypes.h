@@ -53,12 +53,4 @@
 # endif /* _SX && _W8 */
 #endif /* VT_MPI || VT_HYB */
 
-#if SIZEOF_LONG == 8
-# define S64STR "li"
-# define U64STR "lu"
-#else /* SIZEOF_LONG */
-# define S64STR "lli"
-# define U64STR "llu"
-#endif /* SIZEOF_LONG */
-
 #endif /* _VT_INTTYPES_H */

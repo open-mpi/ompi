@@ -121,13 +121,11 @@ void vt_pform_init()
   free(procargs);
 
   /* get unique numeric SMP-node identifier */
-  hostid_retries = 0;
-  while( !vt_node_id && (hostid_retries++ < VT_MAX_GETHOSTID_RETRIES) ) {
-    vt_node_id = gethostid();
-  }
-  if (!vt_node_id)
-    vt_error_msg("Maximum retries (%i) for gethostid exceeded!",
-		 VT_MAX_GETHOSTID_RETRIES);
+  mib[0] = CTL_KERN;
+  mib[1] = KERN_HOSTID;
+  len = sizeof(vt_node_id);
+  if (sysctl(mib, 2, &vt_node_id, &len, NULL, 0) == -1)
+    vt_error_msg("sysctl[KERN_HOSTID] failed: %s", strerror(errno));
 }
 
 /* directory of global file system  */
