@@ -1321,11 +1321,6 @@ int orte_plm_process_launch(orte_job_t *jdata)
             }
             OPAL_THREAD_UNLOCK(&mca_plm_process_component.lock);
 
-            /* setup callback on sigchild - wait until setup above is complete
-             * as the callback can occur in the call to orte_wait_cb
-             */
-            orte_wait_cb(pid, orte_plm_process_wait_daemon, NULL);
-            
             /* if required - add delay to avoid problems w/ X11 authentication */
             if (0 < opal_output_get_verbosity(orte_plm_globals.output)
                 && mca_plm_process_component.delay) {
