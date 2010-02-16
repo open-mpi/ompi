@@ -1054,17 +1054,6 @@ void mca_pml_csum_recv_req_start(mca_pml_csum_recv_request_t *req)
     if(req->req_recv.req_base.req_peer == OMPI_ANY_SOURCE) {
         frag = recv_req_match_wild(req, &proc);
         queue = &comm->wild_receives;
-#if !OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-        /* As we are in a homogeneous environment we know that all remote
-         * architectures are exactly the same as the local one. Therefore,
-         * we can safely construct the convertor based on the proc
-         * information of rank 0.
-         */
-        if( NULL == frag ) {
-            req->req_recv.req_base.req_proc = ompi_proc_local_proc;
-            prepare_recv_req_converter(req);
-        }
-#endif  /* !OPAL_ENABLE_HETEROGENEOUS_SUPPORT */
     } else {
         proc = &comm->procs[req->req_recv.req_base.req_peer];
         req->req_recv.req_base.req_proc = proc->ompi_proc;
