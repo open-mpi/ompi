@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -32,9 +32,12 @@
 #include "opal/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/threads/mutex.h"
+#include "opal/mca/paffinity/base/base.h"
 
 int opal_register_params(void)
 {
+    int ret;
+
     /*
      * This string is going to be used in opal/util/stacktrace.c
      */
@@ -91,5 +94,6 @@ int opal_register_params(void)
     }
 #endif
 
-    return OPAL_SUCCESS;
+    /* Paffinity base also has some parameters */
+    return opal_paffinity_base_register_params();
 }
