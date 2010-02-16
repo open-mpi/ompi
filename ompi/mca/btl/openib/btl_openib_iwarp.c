@@ -273,6 +273,13 @@ static int add_rdma_addr(struct sockaddr *ipaddr, uint32_t netmask)
     int rc = OMPI_SUCCESS;
     struct rdma_addr_list *myaddr;
 
+    sinp = (struct sockaddr_in *)ipaddr;
+
+    if ((sinp->sin_addr.s_addr & htonl(0xff000000)) == htonl(0x7f000000)) {
+        rc = OMPI_SUCCESS;
+        goto out1;
+    }
+
     ch = rdma_create_event_channel();
     if (NULL == ch) {
         BTL_VERBOSE(("failed creating RDMA CM event channel"));
@@ -316,7 +323,6 @@ static int add_rdma_addr(struct sockaddr *ipaddr, uint32_t netmask)
         goto out3;
     }
 
-    sinp = (struct sockaddr_in *)ipaddr;
     myaddr->addr = sinp->sin_addr.s_addr;
     myaddr->subnet = ntohl(myaddr->addr) & ~(~0 >> netmask);
     inet_ntop(sinp->sin_family, &sinp->sin_addr, 
