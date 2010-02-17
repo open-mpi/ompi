@@ -69,12 +69,12 @@ ompi_coll_tuned_gather_intra_binomial(void *sbuf, int scount,
 
     ompi_datatype_get_extent(sdtype, &slb, &sextent);
     ompi_datatype_get_true_extent(sdtype, &strue_lb, &strue_extent);
-    ompi_datatype_get_extent(rdtype, &rlb, &rextent);
-    ompi_datatype_get_true_extent(rdtype, &rtrue_lb, &rtrue_extent);
 
     vrank = (rank - root + size) % size;
 
     if (rank == root) {
+        ompi_datatype_get_extent(rdtype, &rlb, &rextent);
+        ompi_datatype_get_true_extent(rdtype, &rtrue_lb, &rtrue_extent);
 	if (0 == root){
 	    /* root on 0, just use the recv buffer */
 	    ptmp = (char *) rbuf;
@@ -117,7 +117,7 @@ ompi_coll_tuned_gather_intra_binomial(void *sbuf, int scount,
 	ptmp = tempbuf - slb;
 	/* local copy to tempbuf */
 	err = ompi_datatype_sndrcv(sbuf, scount, sdtype,
-			      ptmp, scount, sdtype);
+                                   ptmp, scount, sdtype);
 	if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
 	/* use sdtype,scount as rdtype,rdcount since they are ignored on
