@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -16,6 +16,8 @@
 #include "vt_error.h"
 #include "vt_defs.h"
 #include "vt_pform.h"
+
+#include "util/installdirs.h"
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -1049,15 +1051,12 @@ char* vt_env_metrics_spec()
     snprintf(spec, len-1, "./%s", METRICS_SPEC);
     snprintf(msg, sizeof(msg)-1, "[CURDIR] VT_METRICS_SPEC=%s", spec);
   } else {
-#ifdef DATADIR
+    char* datadir = vt_installdirs_get(VT_INSTALLDIR_DATADIR);
     /* default to installation file */
-    len = strlen(DATADIR)+strlen(METRICS_SPEC)+3;
+    len = strlen(datadir)+strlen(METRICS_SPEC)+3;
     spec = (char*)calloc(len, sizeof(char));
-    snprintf(spec, len-1, "%s/%s", DATADIR, METRICS_SPEC);
+    snprintf(spec, len-1, "%s/%s", datadir, METRICS_SPEC);
     snprintf(msg, sizeof(msg)-1, "[DATADIR] VT_METRICS_SPEC=%s", spec);
-#else
-    snprintf(msg, sizeof(msg)-1, "VT_METRICS_SPEC not set");
-#endif
   }
   vt_cntl_msg(2, msg);
   return spec;

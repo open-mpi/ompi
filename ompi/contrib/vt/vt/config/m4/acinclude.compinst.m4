@@ -201,6 +201,8 @@ AC_DEFUN([ACVT_COMPINST],
 					AS_IF([test x"$have_bfd" = "xyes"],
 					[ACVT_GNUDMGL])
 				])
+
+				AS_IF([test x"$dl_error" = x], [ACVT_DL])
 			])
 		])
 

@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -10,24 +10,10 @@
  * See the file COPYING in the package base directory for details
  **/
 
+#define _GNU_SOURCE
+
 #include "config.h"
 
-#ifdef VT_BFD
-#  include "bfd.h"
-#  if defined(HAVE_GNU_DEMANGLE) && HAVE_GNU_DEMANGLE
-#    if defined(HAVE_DEMANGLE_H) && HAVE_DEMANGLE_H
-#      include "demangle.h"
-#    else /* HAVE_DEMANGLE_H */
-      extern char* cplus_demangle (const char* mangled, int options);
-#     define DMGL_NO_OPTS 0
-#     define DMGL_PARAMS  (1 << 0)
-#     define DMGL_ANSI    (1 << 1)
-#     define DMGL_JAVA    (1 << 2)
-#     define DMGL_VERBOSE (1 << 3)
-#     define DMGL_TYPES   (1 << 4)
-#    endif /* HAVE_DEMANGLE_H */
-#  endif /* HAVE_GNU_DEMANGLE */
-#endif /* VT_BFD */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,6 +27,37 @@
 #include "vt_pform.h"
 #include "vt_trc.h"
 #include "vt_thrd.h"
+
+#if defined(HAVE_BFD) && HAVE_BFD
+# include "bfd.h"
+# if defined(HAVE_GNU_DEMANGLE) && HAVE_GNU_DEMANGLE
+#   if defined(HAVE_DEMANGLE_H) && HAVE_DEMANGLE_H
+#     include "demangle.h"
+#   else /* HAVE_DEMANGLE_H */
+      extern char* cplus_demangle (const char* mangled, int options);
+#     define DMGL_NO_OPTS 0
+#     define DMGL_PARAMS  (1 << 0)
+#     define DMGL_ANSI    (1 << 1)
+#     define DMGL_JAVA    (1 << 2)
+#     define DMGL_VERBOSE (1 << 3)
+#     define DMGL_TYPES   (1 << 4)
+#   endif /* HAVE_DEMANGLE_H */
+# endif /* HAVE_GNU_DEMANGLE */
+#endif /* HAVE_BFD */
+
+#if (defined(HAVE_DL) && HAVE_DL) && (defined(HAVE_DECL_RTLD_DEFAULT) && HAVE_DECL_RTLD_DEFAULT)
+# include <dlfcn.h>
+# define GET_ADDR_OF_UNDEF_FUNC(func) \
+  DEREF_IA64_FUNC_PTR(dlsym(RTLD_DEFAULT, (func)))
+#else /* HAVE_DL && HAVE_DECL_RTLD_DEFAULT */
+# define GET_ADDR_OF_UNDEF_FUNC(func) 0
+#endif /* HAVE_DL && HAVE_DECL_RTLD_DEFAULT */
+
+#ifdef __ia64__
+# define DEREF_IA64_FUNC_PTR(ptr) ((ptr) ? *(void**)(ptr) : (ptr))
+#else /* __ia64__ */
+# define DEREF_IA64_FUNC_PTR(ptr) (ptr)
+#endif /* __ia64__ */
 
 static int gnu_init = 1;       /* is initialization needed? */
 
@@ -70,7 +87,7 @@ static uint32_t n_htab_entries = 0;
 
 static void hash_put(long h, const char* n, const char* fn, int lno) {
   long id = h % HASH_MAX;
-  HashNode *add = (HashNode*)malloc(sizeof(HashNode));
+  HashNode* add = (HashNode*)malloc(sizeof(HashNode));
   add->id = h;
   add->name  = (char*)n;
   add->fname = fn ? strdup(fn) : (char*)fn;
@@ -88,7 +105,7 @@ static void hash_put(long h, const char* n, const char* fn, int lno) {
 
 static HashNode* hash_get(long h) {
   long id = h % HASH_MAX;
-  HashNode *curr = htab[id];
+  HashNode* curr = htab[id];
   while ( curr ) {
     if ( curr->id == h ) {
       return curr;
@@ -98,19 +115,19 @@ static HashNode* hash_get(long h) {
   return NULL;
 }
 
-#ifdef VT_BFD
+#if defined(HAVE_BFD) && HAVE_BFD
 
 /*
  * Get symbol table by using BFD
  */
 
 static void get_symtab_bfd(void) {
-   bfd * BfdImage = 0;
+   bfd* BfdImage = 0;
    int nr_all_syms;
    int i; 
    size_t size;
    char* exe_env;
-   asymbol **syms;
+   asymbol** syms;
    int do_getsrc = vt_env_gnu_getsrc();
 #if defined(HAVE_GNU_DEMANGLE) && HAVE_GNU_DEMANGLE
    int do_demangle = vt_env_gnu_demangle();
@@ -124,8 +141,10 @@ static void get_symtab_bfd(void) {
    if ( ! exe_env )
    {
      vt_error_msg("Could not determine path of executable.\n"
-		  "There are two possible ways to solve this problem:\n"
-		  "Set either the environment variable VT_APPPATH to the path of the executable or set VT_GNU_NMFILE to a symbol list file, created with 'nm'.");
+                  "There are two possible ways to solve this problem:\n"
+                  "Set either the environment variable VT_APPPATH to the path "
+                  "of the executable or set VT_GNU_NMFILE to a symbol list "
+                  "file, created with 'nm'.");
    }
    else
    {
@@ -133,8 +152,10 @@ static void get_symtab_bfd(void) {
      BfdImage = bfd_openr(exe_env, 0 );
      if ( ! BfdImage )
        vt_error_msg("BFD: bfd_openr(): failed\n"
-		    "Could not get executable image from %s.\n"
-		    "A possible solution to the problem is to set the environment variable VT_GNU_NMFILE to a symbol list file, created with 'nm'.", exe_env);
+                    "Could not get executable image from %s.\n"
+                    "A possible solution to the problem is to set the "
+                    "environment variable VT_GNU_NMFILE to a symbol list file, "
+                    "created with 'nm'.", exe_env);
    }
 
    /* check image format */
@@ -154,7 +175,7 @@ static void get_symtab_bfd(void) {
      vt_error_msg("BFD: bfd_get_symtab_upper_bound(): < 1");
 
    /* read canonicalized symbols */
-   syms = (asymbol **)malloc(size);
+   syms = (asymbol**)malloc(size);
    nr_all_syms = bfd_canonicalize_symtab(BfdImage, syms);
    if ( nr_all_syms < 1 )
      vt_error_msg("BFD: bfd_canonicalize_symtab(): < 1");
@@ -179,27 +200,35 @@ static void get_symtab_bfd(void) {
       filename = NULL;
       lno = VT_NO_LNO;
       if ( do_getsrc ) {
-	bfd_find_nearest_line(BfdImage, bfd_get_section(syms[i]), syms,
-			      syms[i]->value, &filename, &funcname, &lno);
+        bfd_find_nearest_line(BfdImage, bfd_get_section(syms[i]), syms,
+                              syms[i]->value, &filename, &funcname, &lno);
       }
 
       /* calculate function address */
       addr = syms[i]->section->vma+syms[i]->value;
 
+      /* try to get address of undefined function, if necessary */
+      if ( addr == 0 )
+        addr = (long)GET_ADDR_OF_UNDEF_FUNC(syms[i]->name);
+
+      /* ignore function, if its address could not be determined */
+      if ( addr == 0 )
+        continue;
+
       /* use demangled name if possible */
 #if defined(HAVE_GNU_DEMANGLE) && HAVE_GNU_DEMANGLE
       if ( do_demangle ) {
-	dem_name = cplus_demangle(syms[i]->name,
-				  DMGL_PARAMS | DMGL_ANSI 
-				  | DMGL_VERBOSE | DMGL_TYPES);
+        dem_name = cplus_demangle(syms[i]->name,
+                                  DMGL_PARAMS | DMGL_ANSI |
+                                  DMGL_VERBOSE | DMGL_TYPES);
       }
 #endif /* HAVE_GNU_DEMANGLE */
 
       if( dem_name ) {
-	hash_put(addr, dem_name, filename, lno);
+        hash_put(addr, dem_name, filename, lno);
       } else {
-	char* n = strdup(syms[i]->name);
-	hash_put(addr, n, filename, lno);
+        char* n = strdup(syms[i]->name);
+        hash_put(addr, n, filename, lno);
       }
    }
 
@@ -207,7 +236,7 @@ static void get_symtab_bfd(void) {
    bfd_close(BfdImage);
    return;
 }
-#endif
+#endif /* HAVE_BFD */
 
 /*
  * Get symbol table by parsing nm-file
@@ -230,55 +259,74 @@ static void get_symtab_nm(const char* nmfilename)
     char  delim[2] = " ";
     int   nc = 0;
 
-    long  addr = -1;
+    long  addr = 0;
     char* filename = NULL;
     char* funcname = NULL;
     unsigned int lno = VT_NO_LNO;
 
-    if( strlen(line) == 0 || line[0] == ' ' )
+    if( strlen(line) == 0 )
       continue;
 
     if( line[strlen(line)-1] == '\n' )
       line[strlen(line)-1] = '\0';
-    
+
     /* split line to columns */
     col = strtok(line, delim);
     do
     {
       if( nc == 0 ) /* column 1 (address) */
       {
-	addr = strtol(col, NULL, 16);
-	if( addr == 0 )
-	  break;
+        /* undefined symbol?
+           try to get its address by dlsym() if we've a symbol name (nc==2) */
+        if( col[0] == 'U' )
+        {
+          nc++;
+          continue;
+        }
+        else
+        {
+          addr = strtol(col, NULL, 16);
+          if( addr == 0 )
+            break;
+        }
       }
       else if( nc == 1 ) /* column 2 (type) */
       {
-	strcpy(delim, "\t");
+        strcpy(delim, "\t");
       }
       else if( nc == 2 ) /* column 3 (symbol) */
       {
-	funcname = col;
-	strcpy(delim, ":");
+        funcname = col;
+        strcpy(delim, ":");
+
+        /* try to get address of undefined function, if necessary */
+        if( addr == 0 )
+          addr = (long)GET_ADDR_OF_UNDEF_FUNC(funcname);
+
+        /* ignore function, if its address could not be determined */
+        if( addr == 0 )
+          break;
       }
       else if( nc == 3 ) /* column 4 (filename) */
       {
-	if( do_getsrc )
-	  filename = col;
-	else
-	  break;
+        if( do_getsrc )
+          filename = col;
+        else
+          break;
       }
       else /* column 5 (line) */
       {
-	lno = atoi(col);
-	if( lno == 0 ) lno = VT_NO_LNO;
-	break;
+        lno = atoi(col);
+        if( lno == 0 ) lno = VT_NO_LNO;
+        break;
       }
-      
+
       nc++;
-    } while( ( col = strtok(0, delim) ) );
+      col = strtok(0, delim);
+    } while( col );
 
     /* add symbol to hash table */
-    if( nc >= 3 )
+    if( nc >= 3 && addr > 0 )
     {
       char* n = strdup(funcname);
       hash_put(addr, n, filename, lno);
@@ -306,11 +354,11 @@ static void get_symtab(void)
   /* read application's executable by using BFD */
   else
   {
-#ifdef VT_BFD
+#if defined(HAVE_BFD) && HAVE_BFD
     get_symtab_bfd();
-#else
+#else /* HAVE_BFD */
     vt_error_msg("No symbol list file given. Please set the environment variable VT_GNU_NMFILE to the path of your symbol list file, created with 'nm'.");
-#endif
+#endif /* HAVE_BFD */
   }
 
   VT_RESUME_IO_TRACING();
@@ -320,7 +368,7 @@ static void get_symtab(void)
  * Register new region
  */
 
-static void register_region(HashNode *hn) {
+static void register_region(HashNode* hn) {
   uint32_t fid = VT_NO_ID;
   uint32_t lno = VT_NO_LNO;
 
@@ -397,15 +445,11 @@ void gnu_finalize()
  */
 
 void __cyg_profile_func_enter(void* func, void* callsite) {
-  HashNode *hn;
-
-  void * funcptr = func;
-
+  void* funcptr;
   uint64_t time;
+  HashNode* hn;
 
-#ifdef __ia64__
-  funcptr = *( void ** )func;
-#endif
+  funcptr = DEREF_IA64_FUNC_PTR(func);
 
   /* -- if not yet initialized, initialize VampirTrace -- */
   if ( gnu_init ) {
@@ -451,8 +495,10 @@ void __cyg_profile_func_enter(void* func, void* callsite) {
  */
 
 void __cyg_profile_func_exit(void* func, void* callsite) {
-  void * funcptr = func;
+  void* funcptr;
   uint64_t time;
+
+  funcptr = DEREF_IA64_FUNC_PTR(func);
 
   /* -- if VampirTrace already finalized, return -- */
   if ( !vt_is_alive ) return;
@@ -460,10 +506,6 @@ void __cyg_profile_func_exit(void* func, void* callsite) {
   VT_MEMHOOKS_OFF();
 
   time = vt_pform_wtime();
-
-#ifdef __ia64__
-  funcptr = *( void ** )func;
-#endif
 
   /* -- write exit record -- */
   if ( hash_get((long)funcptr) ) {

@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -28,7 +28,9 @@
 #include "vt_thrd.h"
 #include "vt_trc.h"
 
-#define DEFAULT_FILTER_FILE SYSCONFDIR"/vt-java-default-filter.spec"
+#include "util/installdirs.h"
+
+#define DEFAULT_FILTER_FILE "${sysconfdir}/vt-java-default-filter.spec"
 #define MAX_FILTER_LINE_LEN 131072
 #define MAX_METHOD_NAME_LEN 300
 #define MAX_METHOD_ID_HKEY  10069
@@ -94,15 +96,16 @@ VTJVMAgent*             vt_jvmti_agent = NULL;
 
 static void read_filter(void)
 {
-  const char* filenamev[2];
+  char*       filenamev[2];
   char*       line;
   int         i;
 
   /* set filter file names for reading in this order:
-     1. user's filer specifications (VT_JAVA_FILTER_SPEC)
+     1. user's filter specifications (VT_JAVA_FILTER_SPEC)
      2. VampirTrace's default filter specifications */
   filenamev[0] = vt_env_java_filter_spec();
-  filenamev[1] = DEFAULT_FILTER_FILE;
+  filenamev[1] = vt_installdirs_expand(DEFAULT_FILTER_FILE);
+  if ( filenamev[1] == NULL ) vt_error();
 
   /* allocate memory for filter lines */
   line = (char*)malloc(MAX_FILTER_LINE_LEN * sizeof(char));
@@ -245,6 +248,9 @@ static void read_filter(void)
     if ( parse_error )
       vt_error_msg("%s:%u: Could not be parsed", filenamev[i], lineno);
   }
+
+  /* free memory for default filter file name */
+  free(filenamev[1]);
 
   /* free memory for filter lines */
   free(line);

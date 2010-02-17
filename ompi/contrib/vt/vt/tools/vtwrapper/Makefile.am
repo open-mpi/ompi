@@ -100,10 +100,10 @@ else # AMHAVECROSSPREFIX
 CROSSPREFIXCLEANFILES =
 endif # AMHAVECROSSPREFIX
 
-INCLUDES = -I$(top_srcdir)/vtlib/
+INCLUDES = -I$(top_srcdir)/util -I$(top_builddir)/util -I$(top_srcdir)/vtlib/
 
 CXX = $(CXX_FOR_BUILD)
-CXXFLAGS = $(CXXFLAGS_FOR_BUILD) -DDATADIR=\"$(datadir)\"
+CXXFLAGS = $(CXXFLAGS_FOR_BUILD)
 CXXCPP = $(CXXCPP_FOR_BUILD)
 CPPFLAGS = $(CPPFLAGS_FOR_BUILD)
 LDFLAGS = $(LDFLAGS_FOR_BUILD)
@@ -111,7 +111,9 @@ LIBS = $(LIBS_FOR_BUILD)
 
 @CROSS_PREFIX@vtwrapper_SOURCES = \
 	vt_wrapper.cc \
-	vt_wrapper.h
+	vt_wrapper.h \
+	$(top_srcdir)/util/installdirs.c \
+	$(top_srcdir)/util/util.c
 
 @CROSS_PREFIX@vtwrapper_CXXFLAGS = \
 	$(HAVEF77CXXFLAGS) \

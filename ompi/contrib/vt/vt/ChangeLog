@@ -1,11 +1,20 @@
 5.8.1openmpi
 	- updated version of internal OTF to 1.6.5openmpi
 	  (see extlib/otf/ChangeLog)
-	- if VampirTrace is configured for Open MPI use its Fortran wrapper
-	  library 'libmpi_f77' to build Fortran programs
-	- added functions 'MPI_Group_range_<incl|excl>' to Fortran MPI wrappers 
+	- added support for tracing functions in shared libraries instrumented
+	  by the GNU, Intel, Pathscale, ot PGI 9 compiler
+	- added support for PAPI-C counters which belong to different components
 	- added environment variable VT_METRICS_SEP to specify a string which
 	  separate the counter names in VT_METRICS
+	- extended usability of environment variable VT_METRICS for PAPI
+	  counters to specifiy whether a counter provides increasing or
+	  absolute values
+	- added support for "re-locate" an existing VampirTrace installation
+	  without re-build it from source
+	- fixed configure's version detection for PAPI to support version 4.x
+	- added configure tests to detect Bull MPICH2
+	- use Open MPI provided Fortran wrapper library 'libmpi_f77'
+	- added functions 'MPI_Group_range_<incl|excl>' to Fortran MPI wrappers
 	- fixed detection of unique node id on MacOS platforms
 	- fixed support for LAM/MPI
 	- fixed build error: do not add objects from the static version of the
