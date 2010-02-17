@@ -60,7 +60,7 @@ cat <<End-of-File >$tmp.c
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -90,6 +90,19 @@ cat <<End-of-File >$tmp.awk
   if (!generate) {
     printf "/* -- %s -- not generated */\n\n", mpicall
     next
+  }
+
+  if (index(mpicall,"MPI_Win_test") != 0) {
+    printf "#if defined(HAVE_PMPI_WIN_TEST) && HAVE_PMPI_WIN_TEST\n\n"
+  }
+  if (index(mpicall,"MPI_Win_lock") != 0) {
+    printf "#if defined(HAVE_PMPI_WIN_LOCK) && HAVE_PMPI_WIN_LOCK\n\n"
+  }
+  if (index(mpicall,"MPI_Win_unlock") != 0) {
+    printf "#if defined(HAVE_PMPI_WIN_UNLOCK) && HAVE_PMPI_WIN_UNLOCK\n\n"
+  }
+  if (index(mpicall,"MPI_Register_datarep") != 0) {
+    printf "#if defined(HAVE_MPI_REGISTER_DATAREP) && HAVE_MPI_REGISTER_DATAREP\n\n"
   }
 
   stringcnt=0
@@ -206,6 +219,19 @@ cat <<End-of-File >$tmp.awk
       printf ", %s_len", strings[i]
     }
     printf "))\n\n"
+  }
+
+  if (index(mpicall,"MPI_Win_test") != 0) {
+    printf "#endif /* HAVE_PMPI_WIN_TEST */\n\n"
+  }
+  if (index(mpicall,"MPI_Win_lock") != 0) {
+    printf "#endif /* HAVE_PMPI_WIN_LOCK */\n\n"
+  }
+  if (index(mpicall,"MPI_Win_unlock") != 0) {
+    printf "#endif /* HAVE_PMPI_WIN_UNLOCK */\n\n"
+  }
+  if (index(mpicall,"MPI_Register_datarep") != 0) {
+    printf "#endif /* HAVE_MPI_REGISTER_DATAREP */\n\n"
   }
 }
 

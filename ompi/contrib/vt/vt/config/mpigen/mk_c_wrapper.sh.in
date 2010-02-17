@@ -48,7 +48,7 @@ cat <<End-of-File >$tmp.c
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -80,6 +80,19 @@ cat <<End-of-File >$tmp.awk
     next
   }
 
+  if (index(mpicall,"MPI_Win_test") != 0) {
+    printf "#if defined(HAVE_PMPI_WIN_TEST) && HAVE_PMPI_WIN_TEST\n\n"
+  }
+  if (index(mpicall,"MPI_Win_lock") != 0) {
+    printf "#if defined(HAVE_PMPI_WIN_LOCK) && HAVE_PMPI_WIN_LOCK\n\n"
+  }
+  if (index(mpicall,"MPI_Win_unlock") != 0) {
+    printf "#if defined(HAVE_PMPI_WIN_UNLOCK) && HAVE_PMPI_WIN_UNLOCK\n\n"
+  }
+  if (index(mpicall,"MPI_Register_datarep") != 0) {
+    printf "#if defined(HAVE_MPI_REGISTER_DATAREP) && HAVE_MPI_REGISTER_DATAREP\n\n"
+  }
+
   printf "/* -- %s -- */\n\n", mpicall
 
   printf "%s %s(", rettype, mpicall
@@ -90,10 +103,7 @@ cat <<End-of-File >$tmp.awk
       type[i-2]=typeandpara[1]
       para[i-2]=typeandpara[2]
       if (i > 3) printf ", "
-      if (index(\$i, "*") == 0)
-        printf "%s %s",type[i-2],para[i-2]
-      else
-        printf "%s %s",type[i-2],para[i-2]
+      printf "%s %s",type[i-2],para[i-2]
     }
   }
   print ")"
@@ -147,6 +157,19 @@ cat <<End-of-File >$tmp.awk
   print "  return result;"
   print "}"
   print ""
+
+  if (index(mpicall,"MPI_Win_test") != 0) {
+    printf "#endif /* HAVE_PMPI_WIN_TEST */\n\n"
+  }
+  if (index(mpicall,"MPI_Win_lock") != 0) {
+    printf "#endif /* HAVE_PMPI_WIN_LOCK */\n\n"
+  }
+  if (index(mpicall,"MPI_Win_unlock") != 0) {
+    printf "#endif /* HAVE_PMPI_WIN_UNLOCK */\n\n"
+  }
+  if (index(mpicall,"MPI_Register_datarep") != 0) {
+    printf "#endif /* HAVE_MPI_REGISTER_DATAREP */\n\n"
+  }
 }
 End-of-File
 

@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -30,10 +30,11 @@
 
 /* if all MPI2 parts are available define 'UNIMCI_MPI2' before
    including 'unimci.h' */
-# if (defined(HAVE_MPI2_1SIDED)  && HAVE_MPI2_1SIDED)  &&   \
-     (defined(HAVE_MPI2_EXTCOLL) && HAVE_MPI2_EXTCOLL) &&   \
-     (defined(HAVE_MPI2_THREAD)  && HAVE_MPI2_THREAD)  &&   \
-     (defined(HAVE_MPI2_IO)      && HAVE_MPI2_IO)
+# if (defined(HAVE_MPI2_1SIDED)          && HAVE_MPI2_1SIDED)  &&      \
+     (defined(HAVE_MPI2_EXTCOLL)         && HAVE_MPI2_EXTCOLL) &&      \
+     (defined(HAVE_MPI2_THREAD)          && HAVE_MPI2_THREAD)  &&      \
+     (defined(HAVE_MPI2_IO)              && HAVE_MPI2_IO)      &&      \
+     (defined(HAVE_MPI_REGISTER_DATAREP) && HAVE_MPI_REGISTER_DATAREP)
 #   define UNIMCI_MPI2
 # endif /* HAVE_MPI2_* */
 # include "unimci.h"

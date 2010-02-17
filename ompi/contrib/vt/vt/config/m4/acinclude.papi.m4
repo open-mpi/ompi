@@ -56,22 +56,22 @@ AC_DEFUN([ACVT_PAPI],
 
 	AS_IF([test x"$papi_error" = "xno"],
 	[
-		AC_MSG_CHECKING([whether PAPI version = 3.x])
+		AC_MSG_CHECKING([whether PAPI version >= 3])
 
 		sav_CPPFLAGS=$CPPFLAGS
 		CPPFLAGS="$CPPFLAGS $PAPIINCDIR"
 		AC_TRY_COMPILE([#include <papi.h>],
 [
 #ifndef PAPI_VERSION
-#  error "PAPI_VERSION not defined; version < 3.x"
-#elif PAPI_VERSION_MAJOR(PAPI_VERSION) != 3
-#  error "PAPI_VERSION_MAJOR != 3"
+#  error "PAPI_VERSION not defined; version < 3"
+#elif PAPI_VERSION_MAJOR(PAPI_VERSION) < 3
+#  error "PAPI_VERSION_MAJOR < 3"
 #endif
 ],
 		[AC_MSG_RESULT([yes])],
 		[
 			AC_MSG_RESULT([no])
-			AC_MSG_NOTICE([error: PAPI version could not be determined and/or is incompatible (!= 3.x)
+			AC_MSG_NOTICE([error: PAPI version could not be determined and/or is incompatible (< 3)
 See \`config.log' for more details.])
 			papi_error="yes"
 		])

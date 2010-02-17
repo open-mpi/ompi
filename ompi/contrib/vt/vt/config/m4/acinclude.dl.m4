@@ -3,6 +3,9 @@ AC_DEFUN([ACVT_DL],
 	dl_error="no"
 	have_dl="no"
 
+	have_rtld_default="no"
+	have_rtld_next="no"
+
 	DLDIR=
 	DLINCDIR=
 	DLLIBDIR=
@@ -56,9 +59,12 @@ AC_DEFUN([ACVT_DL],
 	AS_IF([test x"$dl_error" = "xno"],
 	[
 		have_dl="yes"
+		AC_DEFINE([HAVE_DL], [1], [Define to 1 if you have the DL.])
+
 		sav_CPPFLAGS=$CPPFLAGS
                 CPPFLAGS="$CPPFLAGS $DLINCDIR -D_GNU_SOURCE"
-                AC_CHECK_DECLS([RTLD_NEXT], [], [], [#include <dlfcn.h>])
+                AC_CHECK_DECLS([RTLD_DEFAULT], [have_rtld_default="yes"], [], [#include <dlfcn.h>])
+		AC_CHECK_DECLS([RTLD_NEXT], [have_rtld_next="yes"], [], [#include <dlfcn.h>])
                 CPPFLAGS=$sav_CPPFLAGS
 	])
 

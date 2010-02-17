@@ -61,7 +61,11 @@ AC_DEFUN([ACVT_BFD],
 			bfd_error="yes"
 		])
 
-		AS_IF([test "$bfd_error" = "no"], [have_bfd="yes"])
+		AS_IF([test "$bfd_error" = "no"],
+		[
+			have_bfd="yes"
+			AC_DEFINE([HAVE_BFD], [1], [Define to 1 if you have the BFD.])
+		])
 	])
 
 	AC_SUBST(BFDINCDIR)
