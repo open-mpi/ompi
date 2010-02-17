@@ -443,7 +443,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                     goto error;
                 }
                 ret = opal_paffinity_base_slot_list_set((long)ORTE_PROC_MY_NAME->vpid, opal_paffinity_base_slot_list);
-                if (OPAL_ERR_NOT_FOUND != ret) {
+                if (OPAL_SUCCESS != ret && OPAL_ERR_NOT_FOUND != ret) {
                     error = "opal_paffinity_base_slot_list_set() returned an error";
                     goto error;
                 }
@@ -453,6 +453,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                 int phys_cpu;
                 orte_node_rank_t nrank;
                 if (ORTE_NODE_RANK_INVALID == (nrank = orte_ess.get_node_rank(ORTE_PROC_MY_NAME))) {
+                    ret = OMPI_ERR_BAD_PARAM;
                     error = "Could not get node rank - cannot set processor affinity";
                     goto error;
                 }
