@@ -18,7 +18,7 @@
 
 #define OTF_VERSION_MAYOR	1
 #define OTF_VERSION_MINOR	6
-#define OTF_VERSION_SUB 	4
+#define OTF_VERSION_SUB 	5
 #define OTF_VERSION_STRING	"openmpi"
 
 

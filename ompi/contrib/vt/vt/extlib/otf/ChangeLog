@@ -7,7 +7,7 @@
 1.6.4openmpi
 	- enhanced reading of process group definition records
 
-1.6.3stingray
+1.6.3stingray	
 	- fixed errors while reading the long OTF format
 	- updated python interface
 
