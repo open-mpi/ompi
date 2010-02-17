@@ -136,7 +136,7 @@ ompi_datatype_is_overlapped( const ompi_datatype_t* type )
 }
 
 static inline int32_t
-ompi_datatype_is_acceptable_for_one_sided( const ompi_datatype_t* type )
+ompi_datatype_is_acceptable_for_one_sided( const ompi_datatype_t* type __opal_attribute_unused__ )
 {
     /* Please see https://svn.open-mpi.org/trac/ompi/ticket/2233.
 
