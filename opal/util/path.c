@@ -479,20 +479,17 @@ again:
     /* In case some error with the current filename, try the directory */
     if (-1 == rc) {
         char * last_sep;
-        char * tmp;
-        for (tmp = file; '\0' != *tmp; tmp++) {
-            if (OPAL_PATH_SEP[0] == *tmp)
-              last_sep = tmp;
-        }
-        *last_sep = '\0';
 
         OPAL_OUTPUT_VERBOSE((10, 0, "opal_path_nfs: stat(v)fs on file:%s failed errno:%d directory:%s\n",
                              fname, errno, file));
+
+        last_sep = strrchr(file, OPAL_PATH_SEP[0]);
         /* Stop the search, when we have searched past root '/' */
-        if (0 == strlen (file)) {
+        if (NULL == last_sep || '/' == *last_sep) {
             free (file); 
             return false;
         }
+        *last_sep = '\0';
 
         goto again;
     }
