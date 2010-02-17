@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -47,10 +47,9 @@ bool opal_paffinity_alone = false;
 char *opal_paffinity_base_slot_list;
 
 /*
- * Function for finding and opening either all MCA components, or the one
- * that was specifically requested via a MCA parameter.
+ * Register some paffinity-wide MCA params
  */
-int opal_paffinity_base_open(void)
+int opal_paffinity_base_register_params(void)
 {
     int value, id;
 
@@ -71,7 +70,7 @@ int opal_paffinity_base_open(void)
                                 false, false,
                                 0, NULL);
     /* register the historical mpi_paffinity_alone synonym, but don't
-     * declare it deprecated so we don't scare the users
+     * declare it deprecated so we don't scare the users.
      *
      * Yes, this breaks the abstraction barrier, but as indicated
      * on the developer list....live with it. :-)
@@ -80,6 +79,15 @@ int opal_paffinity_base_open(void)
     mca_base_param_lookup_int(id, &value);
     opal_paffinity_alone = OPAL_INT_TO_BOOL(value);
 
+    return OPAL_SUCCESS;
+}
+
+/*
+ * Function for finding and opening either all MCA components, or the one
+ * that was specifically requested via a MCA parameter.
+ */
+int opal_paffinity_base_open(void)
+{
     opal_paffinity_base_components_opened_valid = false;
         
     mca_base_param_reg_string_name("opal", "paffinity_base_slot_list",
