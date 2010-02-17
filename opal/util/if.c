@@ -38,6 +38,9 @@
 #endif
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#if defined(__DragonFly__)
+#define IN_LINKLOCAL(i)        (((u_int32_t)(i) & 0xffff0000) == 0xa9fe0000)
+#endif
 #endif
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
@@ -164,6 +167,126 @@ static int opal_ifinit(void)
                                 false, false, (int)false, &sd);
     do_not_resolve = OPAL_INT_TO_BOOL(sd);
 
+#if defined(__NetBSD__) || defined(__FreeBSD__) || \
+    defined(__OpenBSD__) || defined(__DragonFly__)
+    /* configure using getifaddrs(3) */
+    {
+        OBJ_CONSTRUCT(&opal_if_list, opal_list_t);
+
+        struct ifaddrs **ifadd_list;
+        struct ifaddrs *cur_ifaddrs;
+        struct sockaddr_in* sin_addr;
+
+        /* 
+         * the manpage claims that getifaddrs() allocates the memory,
+         * and freeifaddrs() is later used to release the allocated memory.
+         * however, without this malloc the call to getifaddrs() segfaults
+         */
+        ifadd_list = (struct ifaddrs **) malloc(sizeof(struct ifaddrs*));
+
+        /* create the linked list of ifaddrs structs */
+        if(getifaddrs(ifadd_list) < 0) {
+            opal_output(0, "opal_ifinit: getifaddrs() failed with error=%d\n",
+                    errno);
+            return OPAL_ERROR;
+        }
+
+        for(cur_ifaddrs = *ifadd_list; NULL != cur_ifaddrs; 
+                cur_ifaddrs = cur_ifaddrs->ifa_next) {
+
+            opal_if_t intf;
+            opal_if_t *intf_ptr;
+            struct in_addr a4;
+
+            /* skip non- af_inet interface addresses */
+            if(AF_INET != cur_ifaddrs->ifa_addr->sa_family) {
+		continue;
+	    }
+
+            /* skip interface if it is down (IFF_UP not set) */
+            if(0 == (cur_ifaddrs->ifa_flags & IFF_UP)) {
+                continue;
+            }
+
+            /* skip interface if it is a loopback device (IFF_LOOPBACK set) */
+            /* or if it is a point-to-point interface */
+            /* TODO: do we really skip p2p? */
+            if(0 != (cur_ifaddrs->ifa_flags & IFF_LOOPBACK)
+                    || 0!= (cur_ifaddrs->ifa_flags & IFF_POINTOPOINT)) {
+                continue;
+            }
+
+            sin_addr = (struct sockaddr_in *) cur_ifaddrs->ifa_addr;
+
+	    /* Do we really need to skip link-local addresses? */
+#if 0
+            /* skip link local address: */
+            if(IN_LINKLOCAL (htonl(((struct sockaddr_in*)cur_ifaddrs->ifa_addr)->sin_addr.s_addr))) {
+#if 0
+                opal_output(0, "opal_ifinit: skipping link-local ip address on interface %s.\n",
+                        cur_ifaddrs->ifa_name);
+#endif
+                continue;
+            }
+#endif
+
+            memset(&intf, 0, sizeof(intf));
+            OBJ_CONSTRUCT(&intf, opal_list_item_t);
+#if 0 
+            char *addr_name = (char *) malloc(48*sizeof(char));
+            inet_ntop(AF_INET, &sin_addr->sin_addr, addr_name, 48*sizeof(char));
+            opal_output(0, "inet capable interface %s discovered, address %s.\n", 
+                    cur_ifaddrs->ifa_name, addr_name);
+            free(addr_name);
+#endif
+
+            /* fill values into the opal_if_t */
+            memcpy(&a4, &(sin_addr->sin_addr), sizeof(struct in_addr));
+            
+            strncpy(intf.if_name, cur_ifaddrs->ifa_name, IF_NAMESIZE);
+            intf.if_index = opal_list_get_size(&opal_if_list) + 1;
+            ((struct sockaddr_in*) &intf.if_addr)->sin_addr = a4;
+            ((struct sockaddr_in*) &intf.if_addr)->sin_family = AF_INET;
+            ((struct sockaddr_in*) &intf.if_addr)->sin_len =  cur_ifaddrs->ifa_addr->sa_len;
+
+            /* since every scope != 0 is ignored, we just set the scope to 0 */
+            /* There's no scope_id in the non-ipv6 stuff 
+	    ((struct sockaddr_in6*) &intf.if_addr)->sin6_scope_id = 0; 
+	    */
+
+            /*
+             * hardcoded netmask, adrian says that's ok
+             */
+	    /* Non-NetBSD uses intf.if_mask = prefix(((struct sockaddr_in*) &ifr->ifr_addr)->sin_addr.s_addr); */
+            /* intf.if_mask = 64; */
+	    intf.if_mask = prefix( sin_addr->sin_addr.s_addr);
+            intf.if_flags = cur_ifaddrs->ifa_flags;
+
+            /*
+             * FIXME: figure out how to gain access to the kernel index
+             * (or create our own), getifaddrs() does not contain such
+             * data
+             */
+
+            intf.if_kernel_index = (uint16_t) if_nametoindex(cur_ifaddrs->ifa_name);
+
+            intf_ptr = (opal_if_t*) calloc(1, sizeof(opal_if_t));
+            if(NULL == intf_ptr) {
+                opal_output(0, "opal_ifinit: unable to allocate %lu bytes\n",
+                            sizeof(opal_if_t));
+                OBJ_DESTRUCT(&intf);
+                return OPAL_ERR_OUT_OF_RESOURCE;
+            }
+            memcpy(intf_ptr, &intf, sizeof(intf));
+
+	    /* opal_list_append(&opal_if_list, &intf_ptr->super); */
+            opal_list_append(&opal_if_list, (opal_list_item_t*) intf_ptr);
+
+            OBJ_DESTRUCT(&intf);
+        }   /*  of for loop over ifaddrs list */
+
+    }
+#else
     /* create the internet socket to test off */
 /*
    Change AF_INET to AF_UNSPEC (or AF_INET6) and everything will fail.
@@ -356,6 +479,10 @@ static int opal_ifinit(void)
     }
     free(ifconf.ifc_req);
     close(sd);
+
+#endif /* anything other than {Net,Open,Free}BSD and DragonFly */
+
+
 #if OPAL_WANT_IPV6
 #ifdef __linux__ /* Linux does not have SIOCGL*, so parse
                      /proc/net/if_inet6 instead */
