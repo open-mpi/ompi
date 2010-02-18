@@ -328,6 +328,24 @@ static int create_srq(mca_btl_openib_module_t *openib_btl)
                 return OMPI_ERROR;
             }
 
+#if OPAL_HAVE_THREADS
+            {
+                opal_mutex_t *lock = &mca_btl_openib_component.srq_manager.lock;
+                opal_hash_table_t *srq_addr_table = &mca_btl_openib_component.srq_manager.srq_addr_table;
+
+                opal_mutex_lock(lock);
+                if (OPAL_SUCCESS != opal_hash_table_set_value_ptr(
+                                srq_addr_table, &openib_btl->qps[qp].u.srq_qp.srq,
+                                sizeof(struct ibv_srq*), (void*) openib_btl)) {
+                    BTL_ERROR(("SRQ Internal error."
+                            " Failed to add element to mca_btl_openib_component.srq_manager.srq_addr_table\n"));
+
+                    opal_mutex_unlock(lock);
+                    return OMPI_ERROR;
+                }
+                opal_mutex_unlock(lock);
+            }
+#endif
             rd_num = mca_btl_openib_component.qp_infos[qp].rd_num;
             rd_curr_num = openib_btl->qps[qp].u.srq_qp.rd_curr_num = mca_btl_openib_component.qp_infos[qp].u.srq_qp.rd_init;
 
@@ -1260,17 +1278,36 @@ static int mca_btl_openib_finalize_resources(struct mca_btl_base_module_t* btl) 
     /* Release SRQ resources */
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
         if(!BTL_OPENIB_QP_TYPE_PP(qp)) {
-                MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
-                        &openib_btl->qps[qp].u.srq_qp.pending_frags[0]);
-                MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
-                        &openib_btl->qps[qp].u.srq_qp.pending_frags[1]);
-                if (NULL != openib_btl->qps[qp].u.srq_qp.srq &&
-                        ibv_destroy_srq(openib_btl->qps[qp].u.srq_qp.srq)){
+            MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
+                    &openib_btl->qps[qp].u.srq_qp.pending_frags[0]);
+            MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
+                    &openib_btl->qps[qp].u.srq_qp.pending_frags[1]);
+            if (NULL != openib_btl->qps[qp].u.srq_qp.srq) {
+#if OPAL_HAVE_THREADS
+                opal_mutex_t *lock =
+                             &mca_btl_openib_component.srq_manager.lock;
+
+                opal_hash_table_t *srq_addr_table =
+                            &mca_btl_openib_component.srq_manager.srq_addr_table;
+
+                opal_mutex_lock(lock);		
+                if (OPAL_SUCCESS !=
+                        opal_hash_table_remove_value_ptr(srq_addr_table,
+                                    &openib_btl->qps[qp].u.srq_qp.srq,
+                                    sizeof(struct ibv_srq *))) {
+                    BTL_VERBOSE(("Failed to remove SRQ  %d entry from hash table.", qp));
+                    rc = OMPI_ERROR;
+                }
+                opal_mutex_unlock(lock);
+#endif
+                if (0 != ibv_destroy_srq(openib_btl->qps[qp].u.srq_qp.srq)) {
                     BTL_VERBOSE(("Failed to close SRQ %d", qp));
                     rc = OMPI_ERROR;
                 }
-                OBJ_DESTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[0]);
-                OBJ_DESTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[1]);
+            }
+
+            OBJ_DESTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[0]);
+            OBJ_DESTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[1]);
         }
     }
 
@@ -1286,6 +1323,10 @@ static int mca_btl_openib_finalize_resources(struct mca_btl_base_module_t* btl) 
     /* Release device if there are no more users */
     if(!(--openib_btl->device->btls)) {
         OBJ_RELEASE(openib_btl->device);
+    }
+
+    if (NULL != openib_btl->qps) {
+        free(openib_btl->qps); 
     }
 
     return rc;

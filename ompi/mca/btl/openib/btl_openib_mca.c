@@ -163,11 +163,6 @@ int btl_openib_register_mca_params(void)
                   1, &ival, 0));
     mca_btl_openib_component.warn_nonexistent_if = (0 != ival);
 
-    CHECK(reg_int("enable_srq_resize", NULL,
-                  "Enable/Disable on demand SRQ resize. "
-                  "(0 = without resizing, nonzero = with resizing)", 1, &ival, 0));
-    mca_btl_openib_component.enable_srq_resize = (0 != ival);
-
     if (OMPI_HAVE_IBV_FORK_INIT) {
         ival2 = -1;
     } else {
@@ -455,6 +450,13 @@ int btl_openib_register_mca_params(void)
                 "If nonzero, use the thread that will handle InfiniBand asyncihronous events ",
                 1, &ival, 0));
     mca_btl_openib_component.use_async_event_thread = (0 != ival);
+
+    CHECK(reg_int("enable_srq_resize", NULL,
+                  "Enable/Disable on demand SRQ resize. "
+                  "(0 = without resizing, nonzero = with resizing)", 1, &ival, 0));
+    mca_btl_openib_component.enable_srq_resize = (0 != ival);
+#else
+    mca_btl_openib_component.enable_srq_resize = 0;
 #endif
 
     CHECK(reg_int("buffer_alignment", NULL,
