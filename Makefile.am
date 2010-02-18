@@ -25,4 +25,4 @@ include examples/Makefile.include
 dist-hook:
 	csh "$(top_srcdir)/config/distscript.csh" "$(top_srcdir)" "$(distdir)" "$(OMPI_VERSION)" "$(OMPI_SVN_R)"
 
-ACLOCAL_AMFLAGS = -I config
+ACLOCAL_AMFLAGS = -I config -I opal/config -I ompi/config -I orte/config
