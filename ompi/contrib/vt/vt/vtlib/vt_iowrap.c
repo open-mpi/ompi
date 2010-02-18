@@ -1613,6 +1613,9 @@ int lockf(int fd, int function, off_t size)
 #endif /* HAVE_LOCKF */
 
 
+/* MaJu: Temporary disabled the following wrapper function, due to a curious
+   behaviour on some platforms */
+#if 0
 int fcntl(int fd, int cmd, ...)
 {
 #define VT_IOWRAP_THISFUNCNAME fcntl
@@ -1691,3 +1694,5 @@ int fcntl(int fd, int cmd, ...)
         return ret;
 #undef VT_IOWRAP_THISFUNCNAME
 }
+#endif
+
