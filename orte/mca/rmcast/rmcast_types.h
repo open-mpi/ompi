@@ -45,12 +45,12 @@ typedef int32_t orte_rmcast_tag_t;
 #define ORTE_RMCAST_TAG_T   OPAL_INT32
 
 /* tag values for well-known services */
-#define ORTE_RMCAST_TAG_WILDCARD    -1
-#define ORTE_RMCAST_TAG_INVALID      0
-#define ORTE_RMCAST_TAG_BOOTSTRAP    1
-#define ORTE_RMCAST_TAG_ANNOUNCE     2
-#define ORTE_RMCAST_TAG_OUTPUT       3
-#define ORTE_RMCAST_TAG_PS           4
+#define ORTE_RMCAST_TAG_WILDCARD     0
+#define ORTE_RMCAST_TAG_INVALID      1
+#define ORTE_RMCAST_TAG_BOOTSTRAP    2
+#define ORTE_RMCAST_TAG_ANNOUNCE     3
+#define ORTE_RMCAST_TAG_OUTPUT       4
+#define ORTE_RMCAST_TAG_PS           5
 
 /* starting value for dynamically assignable tags */
 #define ORTE_RMCAST_TAG_DYNAMIC     100
