@@ -115,6 +115,7 @@ void get_mounts (int * num_dirs, char ** dirs[], bool * nfs[])
     i = 0;
     rc = 4711;
     while (NULL != fgets (buffer, SIZE, file)) {
+        int mount_known;
         char fs[MAXNAMLEN];
 
         dirs_tmp[i] = malloc (MAXNAMLEN);
@@ -130,16 +131,35 @@ void get_mounts (int * num_dirs, char ** dirs[], bool * nfs[])
         if (0 == strcasecmp (fs, "rpc_pipefs"))
             continue;
 
-        nfs_tmp[i] = false;
+        /*
+         * Later mounts override earlier mounts
+         * (e.g. nfs-mount of /, vs. initial rootfs-mount of /).
+         */
+        for (mount_known = 0; mount_known < i; mount_known++) {
+            /* If we know this mount-point, then exit early */
+            if (0 == strcasecmp (dirs_tmp[mount_known], dirs_tmp[i])) {
+#ifdef DEBUG
+                printf ("get_mounts: already know dir[%d]:%s\n",
+                        mount_known, dirs_tmp[mount_known]);
+#endif
+                break;
+            }
+        }
+
+        nfs_tmp[mount_known] = false;
         if (0 == strcasecmp (fs, "nfs") ||
             0 == strcasecmp (fs, "lustre") ||
             0 == strcasecmp (fs, "panfs"))
-            nfs_tmp[i] = true;
+            nfs_tmp[mount_known] = true;
 #ifdef DEBUG
         printf ("get_mounts: dirs[%d]:%s fs:%s nfs:%s\n",
-                i, dirs_tmp[i], fs, nfs_tmp[i] ? "Yes" : "No");
+                mount_known, dirs_tmp[mount_known],
+                fs, nfs_tmp[mount_known] ? "Yes" : "No");
 #endif
-        i++;
+
+        if (mount_known >= i)
+            i++;
+
     }
 out:
     *num_dirs = i;
