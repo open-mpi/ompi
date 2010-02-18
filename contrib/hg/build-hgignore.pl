@@ -65,6 +65,17 @@ print "Thinking...\n"
 # Start at the top level
 process(".");
 
+# See if there's an .hgignore_local file.  If so, add its contents to the end.
+if (-f ".hgignore_local") {
+    open(IN, ".hgignore_local") || die "Can't open .hgignore_local";
+    while (<IN>) {
+        chomp;
+        push(@globals, $_);
+    }
+
+    close(IN);
+}
+
 # If there's an old .hgignore, delete it
 unlink(".hgignore")
     if (-f ".hgignore");
