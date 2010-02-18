@@ -168,13 +168,6 @@ peer to which it was connected:
 You may need to consult with your system administrator to get this
 problem fixed.
 #
-[SRQ not found]
-Open MPI tried to access a shared receive queue (SRQ) that was not found.
-This should not happen, and is a fatal error.  Your MPI job will now abort.
-
-    Local host:   %s
-    Local device: %s
-#
 [srq rnr retry exceeded]
 The OpenFabrics "receiver not ready" retry count on a shared receive
 queue or XRC receive queue has been exceeded.  This error can occur if

@@ -136,6 +136,17 @@ typedef enum {
     BTL_OPENIB_DT_ALL
 } btl_openib_device_type_t;
 
+#if OPAL_HAVE_THREADS
+/* The structer for manage all BTL SRQs */
+typedef struct mca_btl_openib_srq_manager_t {
+    opal_mutex_t lock;
+    /* The keys of this hash table are addresses of 
+       SRQs structures, and the elements are BTL modules
+       pointers that associated with these SRQs */
+    opal_hash_table_t srq_addr_table;
+} mca_btl_openib_srq_manager_t;
+#endif
+
 struct mca_btl_openib_component_t {
     mca_btl_base_component_2_0_0_t          super;  /**< base BTL component */
 
@@ -217,6 +228,7 @@ struct mca_btl_openib_component_t {
     int async_comp_pipe[2];          /**< Pipe for async thread comunication with main thread */
     pthread_t   async_thread;        /**< Async thread that will handle fatal errors */
     uint32_t use_async_event_thread; /**< Use the async event handler */
+    mca_btl_openib_srq_manager_t srq_manager;     /**< Hash table for all BTL SRQs */
 #endif
     btl_openib_device_type_t device_type;
     char *if_include;
