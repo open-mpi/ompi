@@ -425,6 +425,9 @@ static int process_commands(orte_process_name_t* sender,
                 goto CLEANUP;
             }
                 
+            /* look up job data object */
+            jdata = orte_get_job_data_object(job);
+
             /* get the signal */
             n = 1;
             if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &signal, &n, OPAL_INT32))) {
@@ -439,6 +442,11 @@ static int process_commands(orte_process_name_t* sender,
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
                 }
                 signal = SIGSTOP;
+                if (NULL != jdata) {
+                    jdata->state |= ORTE_JOB_STATE_SUSPENDED;
+                }
+            } else if (SIGCONT == signal && NULL != jdata) {
+                jdata->state &= ~ORTE_JOB_STATE_SUSPENDED;
             }
 
             if (orte_debug_daemons_flag) {
