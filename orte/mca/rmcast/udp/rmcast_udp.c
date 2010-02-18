@@ -227,7 +227,7 @@ static void finalize(void)
     OBJ_DESTRUCT(&channels);
     for (j=0; j < msg_log.size; j++) {
         if (NULL != (log = opal_pointer_array_get_item(&msg_log, j))) {
-            OBJ_RELEASE(item);
+            OBJ_RELEASE(log);
         }
     }
     OBJ_DESTRUCT(&msg_log);
@@ -266,6 +266,11 @@ static int queue_xmit(rmcast_base_send_t *snd,
     opal_list_item_t *item;
     rmcast_base_channel_t *chptr, *ch;
     
+    OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
+                         "%s rmcast:udp: queue_xmit to %d:%d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         channel, tag));
+
     /* if we were asked to send this on our group output
      * channel, substitute it
      */
@@ -932,7 +937,7 @@ static void process_recv(int fd, short event, void *cbdata)
         }
         if (NULL == log) {
             /* new sender - create a log */
-            OPAL_OUTPUT_VERBOSE((-1, orte_rmcast_base.rmcast_output,
+            OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                                  "%s rmcast:udp:recv creating new msg log for %s channel %d seq# %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&name), (int)msg->channel->channel, recvd_seq_num));
