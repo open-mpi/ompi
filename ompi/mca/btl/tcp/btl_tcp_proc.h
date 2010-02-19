@@ -41,9 +41,6 @@ struct mca_btl_tcp_proc_t {
     ompi_proc_t *proc_ompi;                  
     /**< pointer to corresponding ompi_proc_t */
 
-    orte_process_name_t proc_name;           
-    /**< globally unique identifier for the process */
-
     struct mca_btl_tcp_addr_t* proc_addrs;
     /**< array of addresses exported by peer */
 

@@ -315,7 +315,7 @@ static int mca_btl_tcp_endpoint_send_connect_ack(mca_btl_base_endpoint_t* btl_en
 {
     /* send process identifier to remote endpoint */
     mca_btl_tcp_proc_t* btl_proc = mca_btl_tcp_proc_local();
-    orte_process_name_t guid = btl_proc->proc_name;
+    orte_process_name_t guid = btl_proc->proc_ompi->proc_name;
 
     ORTE_PROCESS_NAME_HTON(guid);
     if(mca_btl_tcp_endpoint_send_blocking(btl_endpoint, &guid, sizeof(guid)) != 
@@ -479,7 +479,9 @@ static int mca_btl_tcp_endpoint_recv_connect_ack(mca_btl_base_endpoint_t* btl_en
     }
     ORTE_PROCESS_NAME_NTOH(guid);
     /* compare this to the expected values */
-    if (OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &btl_proc->proc_name, &guid)) {
+    if (OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
+                                                    &btl_proc->proc_ompi->proc_name,
+                                                    &guid)) {
         BTL_ERROR(("received unexpected process identifier %s", 
                    ORTE_NAME_PRINT(&guid)));
         mca_btl_tcp_endpoint_close(btl_endpoint);
