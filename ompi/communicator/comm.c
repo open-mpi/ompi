@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2009 University of Houston. All rights reserved.
+ * Copyright (c) 2007-2010 University of Houston. All rights reserved.
  * Copyright (c) 2007-2008 Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -578,6 +578,15 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
     snprintf(newcomp->c_name, MPI_MAX_OBJECT_NAME, "MPI COMMUNICATOR %d SPLIT FROM %d", 
              newcomp->c_contextid, comm->c_contextid );
 
+    /* set the rank to MPI_UNDEFINED. This prevents in comm_activate
+     * the collective module selection for a communicator that will
+     * be freed anyway.
+     */
+    if ( MPI_UNDEFINED == color ) {
+	newcomp->c_local_group->grp_my_rank = MPI_UNDEFINED;
+    }
+
+
     /* Activate the communicator and init coll-component */
     rc = ompi_comm_activate( &newcomp, /* new communicator */ 
 			     comm, 
@@ -942,6 +951,9 @@ static int ompi_comm_allgather_emulate_intra( void *inbuf, int incount,
 int ompi_comm_free ( ompi_communicator_t **comm )
 {
     int ret;
+    int cid = (*comm)->c_contextid;
+    int is_internal = OMPI_COMM_IS_INTERNAL(*comm);
+
 
     /* Release attributes.  We do this now instead of during the
        communicator destructor for 2 reasons:
@@ -986,6 +998,30 @@ int ompi_comm_free ( ompi_communicator_t **comm )
         ompi_comm_num_dyncomm --;
     }
     OBJ_RELEASE ( (*comm) );
+
+    if ( is_internal) {
+        /* This communicator has been marked as an internal
+         * communicator. This can happen if a communicator creates
+         * 'dependent' subcommunicators (e.g. for inter
+         * communicators or when using hierarch collective
+         * module *and* the cid of the dependent communicator
+         * turned out to be lower than of the parent one.
+         * In that case, the reference counter has been increased
+         * by one more, in order to handle the scenario,
+         * that the user did not free the communicator.
+         * Note, that if we enter this routine, we can
+         * decrease the counter by one more therefore. However,
+         * in ompi_comm_finalize, we only used OBJ_RELEASE instead
+         * of ompi_comm_free(), and the increased reference counter
+         * makes sure that the pointer to the dependent communicator
+         * still contains a valid object.
+         */
+        ompi_communicator_t *tmpcomm = opal_pointer_array_get_item(&ompi_mpi_communicators, cid);
+        if ( NULL != tmpcomm ){
+            OBJ_RELEASE (tmpcomm);
+        }
+    }
+
 
     *comm = MPI_COMM_NULL;
     return OMPI_SUCCESS;
