@@ -256,11 +256,23 @@ int ompi_comm_finalize(void)
             comm=(ompi_communicator_t *)opal_pointer_array_get_item(&ompi_mpi_communicators, i);
             if ( NULL != comm ) {
                 /* Still here ? */
-                if ( ompi_debug_show_handle_leaks && !(OMPI_COMM_IS_FREED(comm)) ){
-                    opal_output(0,"WARNING: MPI_Comm still allocated in MPI_Finalize\n");
-                    ompi_comm_dump ( comm);
-                    OBJ_RELEASE(comm);
-                }
+		if ( !OMPI_COMM_IS_INTERNAL(comm)) {
+
+		    /* For communicator that have been marked as internal, we do not further
+		     * enforce to decrease the reference counter once more. These internal
+		     * communicators created e.g. by the hierarch or inter module did increase
+		     * the reference count by one more than other communicators, on order to
+		     * allow for deallocation with the parent communicator. Note, that
+		     * this only occurs if the cid of the local_comm is lower than of its
+		     * parent communicator. Read the comment in comm_activate for
+		     * a full explanation.
+		     */
+		    if ( ompi_debug_show_handle_leaks && !(OMPI_COMM_IS_FREED(comm)) ){
+			opal_output(0,"WARNING: MPI_Comm still allocated in MPI_Finalize\n");
+			ompi_comm_dump ( comm);
+			OBJ_RELEASE(comm);
+		    }
+		}
             }
         }
     }

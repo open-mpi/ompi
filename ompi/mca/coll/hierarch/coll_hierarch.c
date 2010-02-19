@@ -268,6 +268,14 @@ int mca_coll_hierarch_module_enable (mca_coll_base_module_t *module,
     if ( OMPI_SUCCESS != ret ) {
         goto exit;
     }
+    if ( OMPI_COMM_CID_IS_LOWER ( lcomm, comm ) ) {
+        /* Mark the communicator as 'interna' and increase the
+           reference count by one more. See ompi_comm_activate
+           for detailed comments
+	*/
+        OMPI_COMM_SET_INTERNAL (lcomm);
+        OBJ_RETAIN(lcomm);
+    }
     
     hierarch_module->hier_comm     = comm;
     hierarch_module->hier_lcomm    = lcomm;
@@ -298,10 +306,24 @@ int mca_coll_hierarch_module_enable (mca_coll_base_module_t *module,
     /* Generate the lleader communicator assuming that all lleaders are the first
        process in the list of processes with the same color. A function generating 
        other lleader-comms will follow soon. */
-    ret = ompi_comm_split ( comm, llead->am_lleader, rank, &llcomm, 0);
+    color = MPI_UNDEFINED;
+    if ( llead->am_lleader ) {
+	color = 1;
+    }
+    ret = ompi_comm_split ( comm, color, rank, &llcomm, 0);
     if ( OMPI_SUCCESS != ret ) {
         goto exit;
     }
+    if ( OMPI_COMM_CID_IS_LOWER ( llcomm, comm ) ) {
+        /* Mark the communicator as 'internal' and increase the
+           reference count by one more. See ompi_comm_activate
+	   for detailed explanation. 
+	*/
+        OMPI_COMM_SET_INTERNAL (llcomm);
+        OBJ_RETAIN(llcomm);
+    }
+
+    
     llead->llcomm = llcomm;
     
     /* Store it now on the data structure */
@@ -375,7 +397,7 @@ int mca_coll_hierarch_get_all_lleaders ( int rank, mca_coll_hierarch_module_t *h
 	llead->my_lleader = MPI_UNDEFINED;
     }
     else {
-	llead->am_lleader = MPI_UNDEFINED;
+	llead->am_lleader = 0;
 	for ( i=0; i< hierarch_module->hier_num_lleaders; i++ ) {
 	    if ( hierarch_module->hier_llr[i] == mycolor ) {
 		llead->my_lleader = cntarr[i]-1;
@@ -446,6 +468,7 @@ struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int root,
     struct mca_coll_hierarch_llead_t *llead=NULL;
     int found, i, rc, num_llead, offset;
     int rank = ompi_comm_rank (hierarch_module->hier_comm);
+    int color;
     
     /* determine what our offset of root is in the colorarr */
     offset = mca_coll_hierarch_get_offset ( root, 
@@ -484,12 +507,25 @@ struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int root,
 	
 	/* generate the list of lleaders with this offset */
 	mca_coll_hierarch_get_all_lleaders ( rank, hierarch_module, llead, offset );   
-	
+	color = MPI_UNDEFINED;
+	if ( llead->am_lleader ) {
+	    color = 1;
+	}
+
 	/* create new lleader subcommunicator */
-	rc = ompi_comm_split ( hierarch_module->hier_comm, llead->am_lleader, root, &llcomm, 0);
+	rc = ompi_comm_split ( hierarch_module->hier_comm, color, root, &llcomm, 0);
 	if ( OMPI_SUCCESS != rc ) {
 	    return NULL;
 	}
+	if ( OMPI_COMM_CID_IS_LOWER ( llcomm, hierarch_module->hier_comm ) ) {
+            /* Mark the communicator as 'interna' and increase the
+               reference count by one more. See ompi_comm_activate 
+	       for detailed explanation. */
+            OMPI_COMM_SET_INTERNAL (llcomm);
+            OBJ_RETAIN(llcomm);
+        }
+
+
 	llead->llcomm = llcomm;
 
 	/* Store the new element on the hierarch_module struct */

@@ -469,6 +469,32 @@ int ompi_comm_activate ( ompi_communicator_t** newcomm,
     if (OMPI_SUCCESS != (ret = mca_coll_base_comm_select(*newcomm))) {
 	goto bail_on_error;
     }
+
+    /* For an inter communicator, we have to deal with the potential
+     * problem of what is happening if the local_comm that we created
+     * has a lower CID than the parent comm. This is not a problem
+     * as long as the user calls MPI_Comm_free on the inter communicator.
+     * However, if the communicators are not freed by the user but released
+     * by Open MPI in MPI_Finalize, we walk through the list of still available
+     * communicators and free them one by one. Thus, local_comm is freed before
+     * the actual inter-communicator. However, the local_comm pointer in the
+     * inter communicator will still contain the 'previous' address of the local_comm
+     * and thus this will lead to a segmentation violation. In order to prevent
+     * that from happening, we increase the reference counter local_comm
+     * by one if its CID is lower than the parent. We cannot increase however
+     *  its reference counter if the CID of local_comm is larger than
+     * the CID of the inter communicators, since a regular MPI_Comm_free would
+     * leave in that the case the local_comm hanging around and thus we would not
+     * recycle CID's properly, which was the reason and the cause for this trouble.
+     */
+    if ( OMPI_COMM_IS_INTER(*newcomm)) {
+        if ( OMPI_COMM_CID_IS_LOWER(*newcomm, comm)) {
+            OMPI_COMM_SET_INTERNAL (*newcomm);
+            OBJ_RETAIN (*newcomm);
+        }
+    }
+
+
     return OMPI_SUCCESS;
 
  bail_on_error:
