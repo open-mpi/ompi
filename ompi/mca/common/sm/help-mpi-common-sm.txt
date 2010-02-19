@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 #
 # $COPYRIGHT$
 # 
@@ -29,14 +29,23 @@ Open MPI, and if not, contact the Open MPI developers.
   Requested size:    %ul
   Control seg size:  %ul
   Data seg aligment: %ul
-
+#
 [mmap on nfs]
+WARNING: Open MPI will create a shared memory backing file in a
+directory that appears to be mounted on a network filesystem. 
 Creating the shared memory backup file on a network file system, such
-as NFS or Lustre is not recommended.
-This may be due to using the wrong tmpdir variable.
-Please ask Your system administrator to provide a system-wide MCA
-parameter file, in which parameter orte_no_session_dir is specified:
-It states paths of directories, not allowed as session directories.
+as NFS or Lustre is not recommended -- it may cause excessive network
+traffic to your file servers and/or cause shared memory traffic in
+Open MPI to be much slower than expected.
 
-  File Name:        %s
+You may want to check your compute nodes, what the typical temporari
+directory: node.  Possible sources of the location of this temporary
+directory include the $TEMPDIR, $TEMP, and $TMP environment variables.
+
+Note, too, that system administrators can set a list of filesystems
+where Open MPI is disallowed from creating temporary files by settings
+the MCA parameter "orte_no_session_dir".
+
+  Local host: %s
+  File Name:  %s
 
