@@ -146,7 +146,7 @@ INSTALL(TARGETS libmpi
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib)
-INSTALL(FILES ${PROJECT_BINARY_DIR}/include/mpi.h ${PROJECT_BINARY_DIR}/include/mpi_portable_platform.h
+INSTALL(FILES ${PROJECT_BINARY_DIR}/include/mpi.h ${PROJECT_SOURCE_DIR}/include/mpi_portable_platform.h
   DESTINATION include)
 
 INSTALL(FILES errhandler/help-mpi-errors.txt
