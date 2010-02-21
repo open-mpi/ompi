@@ -2936,7 +2936,7 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs, bool se
 {
     orte_odls_child_t *child;
     opal_list_item_t *item, *next;
-    int rc = ORTE_SUCCESS, exit_status = 0, err;
+    int rc = ORTE_SUCCESS, exit_status = 0;
     opal_list_t procs_killed;
     opal_buffer_t alert;
     orte_plm_cmd_flag_t cmd=ORTE_PLM_UPDATE_PROC_STATE;
@@ -3080,6 +3080,15 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs, bool se
                 /* ensure, though, that the state is terminated so we don't lockup if
                  * the proc never started
                  */
+                if (ORTE_PROC_STATE_UNDEF == child->state ||
+                    ORTE_PROC_STATE_INIT == child->state ||
+                    ORTE_PROC_STATE_LAUNCHED == child->state ||
+                    ORTE_PROC_STATE_RUNNING == child->state) {
+                    /* we can't be sure what happened, but make sure we
+                     * at least have a value that will let us eventually wakeup
+                     */
+                    child->state = ORTE_PROC_STATE_TERMINATED;
+                }
                 goto RECORD;
             }
             
@@ -3098,21 +3107,6 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs, bool se
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(child->name)));
                 
-                goto MOVEON;
-            }
-            
-            /* First send a SIGCONT in case the process is in stopped state.
-             If it is in a stopped state and we do not first change it to
-             running, then SIGTERM will not get delivered.  Ignore return
-             value. */
-            kill_local(child->pid, SIGCONT);
-            
-            /* Send a sigkill to the process.  If we get ESRCH back, that
-             means the process is already dead, so just move on. */
-            if (0 != (err = kill_local(child->pid, SIGKILL))) {
-                orte_show_help("help-odls-default.txt",
-                               "odls-default:could-not-send-kill",
-                               true, orte_process_info.nodename, child->pid, err);
                 /* check the proc state - ensure it is in one of the termination
                  * states so that we properly wakeup
                  */
@@ -3128,11 +3122,20 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs, bool se
                 goto MOVEON;
             }
             
-            /* The kill succeeded.  Wait up to timeout_before_sigkill
-             seconds to see if it died. */
+            /* First send a SIGCONT in case the process is in stopped state.
+             If it is in a stopped state and we do not first change it to
+             running, then SIGTERM will not get delivered.  Ignore return
+             value. */
+            kill_local(child->pid, SIGCONT);
             
+            /* Send a sigterm to the process before sigkill to be nice */
+            kill_local(child->pid, SIGTERM);
+
+            /* check to see if it died - the child_died function will continue
+             * to check every microsecond until we reach the timeout
+             */
             if (!child_died(child->pid, orte_odls_globals.timeout_before_sigkill, &exit_status)) {
-                /* try killing it again */
+                /* if it still isn't dead, try killing it one more time */
                 kill_local(child->pid, SIGKILL);
                 /* Double check that it actually died this time */
                 if (!child_died(child->pid, orte_odls_globals.timeout_before_sigkill, &exit_status)) {
