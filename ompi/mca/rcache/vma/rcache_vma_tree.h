@@ -91,6 +91,11 @@ int mca_rcache_vma_tree_delete(
                               mca_mpool_base_registration_t* reg
                               ); 
 
+/* 
+ * Destroy a vma
+ * Do not call this function with rcache lock as it can deadlock 
+ */
+void mca_rcache_vma_destroy(mca_rcache_vma_t *vma);
 
 #endif /* MCA_RCACHE_VMA_TREE_H */
 

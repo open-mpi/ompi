@@ -36,6 +36,7 @@ void mca_rcache_vma_module_init( mca_rcache_vma_module_t* rcache ) {
     rcache->base.rcache_find_all = mca_rcache_vma_find_all;
     rcache->base.rcache_insert = mca_rcache_vma_insert; 
     rcache->base.rcache_delete = mca_rcache_vma_delete; 
+    rcache->base.rcache_clean = mca_rcache_vma_clean; 
     rcache->base.rcache_finalize = mca_rcache_vma_finalize; 
     OBJ_CONSTRUCT(&rcache->base.lock, opal_mutex_t);
     mca_rcache_vma_tree_init(rcache);
@@ -98,6 +99,30 @@ int mca_rcache_vma_delete(struct mca_rcache_base_module_t* rcache,
 {
     mca_rcache_vma_module_t *vma_rcache = (mca_rcache_vma_module_t*)rcache;
     return mca_rcache_vma_tree_delete(vma_rcache, reg);
+}
+
+void mca_rcache_vma_clean(struct mca_rcache_base_module_t* rcache)
+{
+    mca_rcache_vma_module_t *vma_rcache = (mca_rcache_vma_module_t*)rcache;
+    mca_rcache_vma_t *vma;
+    opal_list_item_t *i;
+
+    do {
+	OPAL_THREAD_LOCK(&rcache->lock);
+	i = opal_list_get_first(&vma_rcache->vma_delete_list);
+	if(opal_list_get_end(&vma_rcache->vma_delete_list) == i) {
+	    vma = NULL;
+	    OPAL_THREAD_UNLOCK(&rcache->lock);
+	} else {
+	    vma = (mca_rcache_vma_t *)i;
+	    opal_list_remove_item(&vma_rcache->vma_delete_list, &vma->super);
+	    
+	    /* Need to drop the rcache lock before destroying the vma */
+	    OPAL_THREAD_UNLOCK(&rcache->lock);
+	    
+	    mca_rcache_vma_destroy(vma);
+	}
+    } while (NULL != vma);
 }
 
 /**
