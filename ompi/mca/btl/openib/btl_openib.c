@@ -16,6 +16,7 @@
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -932,7 +933,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
        (flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
         int prio = !(flags & MCA_BTL_DES_FLAGS_PRIORITY);
         sfrag = check_coalescing(&ep->qps[qp].no_wqe_pending_frags[prio],
-                &ep->qps[qp].qp->lock, ep, size);
+                &ep->endpoint_lock, ep, size);
 
         if(NULL == sfrag) {
             if(BTL_OPENIB_QP_TYPE_PP(qp)) {
