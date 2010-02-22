@@ -18,6 +18,8 @@
    write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
    Boston, MA 02111-1307, USA.  */
 
+/* Copyright (c) 2009-2010      IBM Corporation.  All rights reserved. */
+
 /* $Id: arena.c,v 1.9 2004/11/05 14:42:23 wg Exp $ */
 
 /* Compile-time constants.  */
@@ -290,6 +292,8 @@ ptmalloc_unlock_all2 __MALLOC_P((void))
 
 #endif /* !defined NO_THREADS */
 
+#include <dlfcn.h>
+
 /* Initialization routine. */
 #ifdef _LIBC
 #include <string.h>
@@ -515,6 +519,42 @@ dump_heap(heap) heap_info *heap;
 
 #endif /* MALLOC_DEBUG > 1 */
 
+int
+munmap_real(void *start, size_t length)
+{
+#if !defined(HAVE___MUNMAP) && \
+    !(defined(HAVE_SYSCALL) && defined(__NR_munmap)) && defined(HAVE_DLSYM)
+    static int (*realmunmap)(void*, size_t);
+#endif
+
+    {
+      extern bool opal_memory_ptmalloc2_munmap_invoked;
+      opal_memory_ptmalloc2_munmap_invoked = true;
+    }
+
+
+#if defined(HAVE___MUNMAP)
+    return __munmap(start, length);
+#elif defined(HAVE_SYSCALL) && defined(__NR_munmap)
+    return syscall(__NR_munmap, start, length);
+#elif defined(HAVE_DLSYM)
+    if (NULL == realmunmap) {
+        union { 
+            int (*munmap_fp)(void*, size_t);
+            void *munmap_p;
+        } tmp;
+
+        tmp.munmap_p = dlsym(RTLD_NEXT, "munmap");
+        realmunmap = tmp.munmap_fp;
+    }
+
+    return realmunmap(start, length);
+#else
+    #error "Can not determine how to call munmap"
+#endif
+}
+
+
 /* Create a new heap.  size is automatically rounded up to a multiple
    of the page size. */
 
@@ -549,8 +589,8 @@ new_heap(size, top_pad) size_t size, top_pad;
   if(p1 != MAP_FAILED) {
     p2 = (char *)(((unsigned long)p1 + (HEAP_MAX_SIZE-1)) & ~(HEAP_MAX_SIZE-1));
     ul = p2 - p1;
-    munmap(p1, ul);
-    munmap(p2 + HEAP_MAX_SIZE, HEAP_MAX_SIZE - ul);
+    munmap_real(p1, ul);
+    munmap_real(p2 + HEAP_MAX_SIZE, HEAP_MAX_SIZE - ul);
   } else {
     /* Try to take the chance that an allocation of only HEAP_MAX_SIZE
        is already aligned. */
@@ -558,12 +598,12 @@ new_heap(size, top_pad) size_t size, top_pad;
     if(p2 == MAP_FAILED)
       return 0;
     if((unsigned long)p2 & (HEAP_MAX_SIZE-1)) {
-      munmap(p2, HEAP_MAX_SIZE);
+      munmap_real(p2, HEAP_MAX_SIZE);
       return 0;
     }
   }
   if(mprotect(p2, size, PROT_READ|PROT_WRITE) != 0) {
-    munmap(p2, HEAP_MAX_SIZE);
+    munmap_real(p2, HEAP_MAX_SIZE);
     return 0;
   }
   h = (heap_info *)p2;
