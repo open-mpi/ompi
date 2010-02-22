@@ -13,6 +13,7 @@
  * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006      Voltaire. All rights reserved.
  * Copyright (c) 2007      Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -148,7 +149,6 @@ static int register_cache_bypass(mca_mpool_base_module_t *mpool,
              mca_mpool_base_page_size_log);
     OMPI_FREE_LIST_GET(&mpool_rdma->reg_list, item, rc);
     if(OMPI_SUCCESS != rc) {
-        OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
         return rc;
     }
     rdma_reg = (mca_mpool_base_registration_t*)item;
