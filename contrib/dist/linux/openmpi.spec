@@ -505,7 +505,7 @@ fi
 
 # LD_LIBRARY_PATH
 if test -z "\`echo \$LD_LIBRARY_PATH | grep %{_libdir}\`"; then
-    LD_LIBRARY_PATH=%{_libdir}:\${LD_LIBRARY_PATH}
+    LD_LIBRARY_PATH=%{_libdir}\${LD_LIBRARY_PATH:+:}\${LD_LIBRARY_PATH}
     export LD_LIBRARY_PATH
 fi
 
