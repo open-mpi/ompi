@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -293,12 +293,16 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
     if (pid == 0) {
         long fd, fdmax = sysconf(_SC_OPEN_MAX);
 
-	if (orte_forward_job_control) {
-	    /* Set a new process group for this child, so that a
-	       SIGSTOP can be sent to it without being sent to the
-	       orted. */
-	    setpgrp();
-	}
+        if (orte_forward_job_control) {
+            /* Set a new process group for this child, so that a
+               SIGSTOP can be sent to it without being sent to the
+               orted. */
+#if defined(__NetBSD__)
+            setpgrp(0, 0);
+#else
+            setpgrp();
+#endif
+        }
         
         /* Setup the pipe to be close-on-exec */
         close(p[0]);
