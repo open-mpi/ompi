@@ -35,6 +35,7 @@ struct mca_rcache_vma_module_t {
     mca_rcache_base_module_t base;
     ompi_rb_tree_t rb_tree;
     opal_list_t vma_list;
+    opal_list_t vma_delete_list;
     size_t reg_cur_cache_size;
 };
 typedef struct mca_rcache_vma_module_t mca_rcache_vma_module_t; 
@@ -63,6 +64,12 @@ int mca_rcache_vma_insert(struct mca_rcache_base_module_t* rcache,
 int mca_rcache_vma_delete(struct mca_rcache_base_module_t* rcache,
         mca_mpool_base_registration_t* registration);
 
+/* It is not safe to call mca_rcache_vma_clean with the rcache lock held */
+void mca_rcache_vma_clean(struct mca_rcache_base_module_t* rcache);
+/* Destroy vma objects which are on the deferred delete list. These were placed
+   on the list earlier when the rcache lock was held and it was not safe to
+   destory them. They should not be linked into any other structure anymore except
+   the vma_list_delete list */
 
 /**
   * init/finalize

@@ -120,7 +120,7 @@ static inline mca_rcache_vma_t *mca_rcache_vma_new(
     return vma;
 }
 
-static inline void mca_rcache_vma_destroy(mca_rcache_vma_t *vma)
+void mca_rcache_vma_destroy(mca_rcache_vma_t *vma)
 {
     opal_list_item_t *item;
 
@@ -254,6 +254,7 @@ int mca_rcache_vma_tree_init(mca_rcache_vma_module_t* rcache)
 { 
     OBJ_CONSTRUCT(&rcache->rb_tree, ompi_rb_tree_t);
     OBJ_CONSTRUCT(&rcache->vma_list, opal_list_t); 
+    OBJ_CONSTRUCT(&rcache->vma_delete_list, opal_list_t); 
     rcache->reg_cur_cache_size = 0;
     return ompi_rb_tree_init(&rcache->rb_tree, 
                              mca_rcache_vma_tree_node_compare);
@@ -487,7 +488,7 @@ int mca_rcache_vma_tree_delete(mca_rcache_vma_module_t* vma_rcache,
             mca_rcache_vma_update_byte_count(vma_rcache,
                     vma->start - vma->end - 1);
             opal_list_remove_item(&vma_rcache->vma_list, &vma->super);
-            mca_rcache_vma_destroy(vma);
+	    opal_list_append(&vma_rcache->vma_delete_list, &vma->super);
             vma = next;
         } else {
             int merged;
@@ -504,7 +505,7 @@ int mca_rcache_vma_tree_delete(mca_rcache_vma_module_t* vma_rcache,
                     prev->end = vma->end;
                     opal_list_remove_item(&vma_rcache->vma_list, &vma->super);
                     ompi_rb_tree_delete(&vma_rcache->rb_tree, vma);
-                    mca_rcache_vma_destroy(vma);
+		    opal_list_append(&vma_rcache->vma_delete_list, &vma->super);
                     vma = prev;
                     merged = 1;
                 }
@@ -517,7 +518,7 @@ int mca_rcache_vma_tree_delete(mca_rcache_vma_module_t* vma_rcache,
                     vma->end = next->end;
                     opal_list_remove_item(&vma_rcache->vma_list, &next->super);
                     ompi_rb_tree_delete(&vma_rcache->rb_tree, next);
-                    mca_rcache_vma_destroy(next);
+		    opal_list_append(&vma_rcache->vma_delete_list, &next->super);
                     merged = 1;
                 }
             } while(merged);

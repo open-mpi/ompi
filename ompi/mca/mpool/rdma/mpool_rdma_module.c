@@ -287,6 +287,9 @@ int mca_mpool_rdma_register(mca_mpool_base_module_t *mpool, void *addr,
     *reg = rdma_reg;
     (*reg)->ref_count++;
     OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
+
+    /* Cleanup any vmas that we have deferred deletion on */
+    mpool->rcache->rcache_clean(mpool->rcache);
     return OMPI_SUCCESS;
 }
 
@@ -386,6 +389,9 @@ int mca_mpool_rdma_deregister(struct mca_mpool_base_module_t *mpool,
     }
     OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
 
+    /* Cleanup any vmas that we have deferred deletion on */
+    mpool->rcache->rcache_clean(mpool->rcache);
+
     return rc;
 }
 
@@ -476,6 +482,10 @@ void mca_mpool_rdma_finalize(struct mca_mpool_base_module_t *mpool)
     OBJ_DESTRUCT(&mpool_rdma->gc_list);
     OBJ_DESTRUCT(&mpool_rdma->reg_list);
     OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
+
+    /* Cleanup any vmas that we have deferred deletion on */
+    mpool->rcache->rcache_clean(mpool->rcache);
+
 }
 
 int mca_mpool_rdma_ft_event(int state) {
