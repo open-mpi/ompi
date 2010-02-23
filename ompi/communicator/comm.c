@@ -952,7 +952,7 @@ int ompi_comm_free ( ompi_communicator_t **comm )
 {
     int ret;
     int cid = (*comm)->c_contextid;
-    int is_internal = OMPI_COMM_IS_INTERNAL(*comm);
+    int is_extra_retain = OMPI_COMM_IS_EXTRA_RETAIN(*comm);
 
 
     /* Release attributes.  We do this now instead of during the
@@ -999,8 +999,8 @@ int ompi_comm_free ( ompi_communicator_t **comm )
     }
     OBJ_RELEASE ( (*comm) );
 
-    if ( is_internal) {
-        /* This communicator has been marked as an internal
+    if ( is_extra_retain) {
+        /* This communicator has been marked as an "extra retain"
          * communicator. This can happen if a communicator creates
          * 'dependent' subcommunicators (e.g. for inter
          * communicators or when using hierarch collective

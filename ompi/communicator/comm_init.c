@@ -256,10 +256,10 @@ int ompi_comm_finalize(void)
             comm=(ompi_communicator_t *)opal_pointer_array_get_item(&ompi_mpi_communicators, i);
             if ( NULL != comm ) {
                 /* Still here ? */
-		if ( !OMPI_COMM_IS_INTERNAL(comm)) {
+		if ( !OMPI_COMM_IS_EXTRA_RETAIN(comm)) {
 
-		    /* For communicator that have been marked as internal, we do not further
-		     * enforce to decrease the reference counter once more. These internal
+		    /* For communicator that have been marked as "extra retain", we do not further
+		     * enforce to decrease the reference counter once more. These "extra retain"
 		     * communicators created e.g. by the hierarch or inter module did increase
 		     * the reference count by one more than other communicators, on order to
 		     * allow for deallocation with the parent communicator. Note, that
