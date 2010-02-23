@@ -89,3 +89,17 @@ include mca/Makefile.am
 include win32/Makefile.am
 include tools/Makefile.am
 include dss/Makefile.am
+
+# Set the convenience library to be the same as the non-convenience
+# library, but a) it's marked as "noinst", so LT knows it's a
+# convenience library, and b) no .so version number is assigned here.
+# Note that we only need to make the convenience library if the ORTE
+# project is being built (i.e., if there is an upper layer that needs
+# to slurp in OPAL as a convenience library).
+
+if PROJECT_ORTE
+noinst_LTLIBRARIES += libopen-pal-lt.la
+endif
+libopen_pal_lt_la_SOURCES = $(libopen_pal_la_SOURCES)
+libopen_pal_lt_la_LIBADD = $(libopen_pal_la_LIBADD)
+libopen_pal_lt_la_DEPENDENCIES = $(libopen_pal_la_DEPENDENCIES)
