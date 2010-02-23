@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2009      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2009-2010 Cisco Systems, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,6 +31,15 @@
 #endif
 #include <stdio.h>
 #include <unistd.h>
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#if HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
 
 #include "opal/util/show_help.h"
 
