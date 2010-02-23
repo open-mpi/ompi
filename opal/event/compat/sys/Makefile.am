@@ -20,4 +20,4 @@
 
 EXTRA_DIST = CMakeLists.txt
 
-noinst_HEADERS = queue.h _time.h _timeradd.h
+noinst_HEADERS = queue.h _libevent_time.h _timeradd.h

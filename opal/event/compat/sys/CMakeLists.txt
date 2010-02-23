@@ -1,4 +1,4 @@
-# Copyright (c) 2007-2008 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2010 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -13,7 +13,6 @@ IF(WIN32)
   SET(COMPAT_SYS_FILES
     ${COMPAT_SYS_FILES}
     queue.h
-    _time.h
     _timeradd.h  
   )
 ELSE(WIN32)
