@@ -500,7 +500,9 @@ static inline int post_send(mca_btl_openib_endpoint_t *ep,
         MCA_BTL_OPENIB_RDMA_FRAG_SET_SIZE(ftr, sg->length);
         MCA_BTL_OPENIB_RDMA_MAKE_LOCAL(ftr);
 #if OPAL_ENABLE_DEBUG
-        ftr->seq = ep->eager_rdma_remote.seq++;
+	do {
+	  ftr->seq = ep->eager_rdma_remote.seq;
+	} while (!OPAL_ATOMIC_CMPSET_32(&ep->eager_rdma_remote.seq, ftr->seq, ftr->seq+1));
 #endif
         if(ep->nbo)
             BTL_OPENIB_FOOTER_HTON(*ftr);
