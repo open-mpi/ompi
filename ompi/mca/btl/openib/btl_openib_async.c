@@ -231,10 +231,22 @@ static int btl_openib_async_commandh(struct mca_btl_openib_async_poll *devices_p
    the number of WQEs that we post = rd_curr_num < rd_num and this value is
    increased (by needs) in IBV_EVENT_SRQ_LIMIT_REACHED event handler (i.e. in this function),
    the event will thrown by device if number of WQEs in SRQ will be less than srq_limit */
-static int btl_openib_async_srq_limit_event(struct ibv_srq* srq, 
-                                              mca_btl_openib_module_t *openib_btl)
+static int btl_openib_async_srq_limit_event(struct ibv_srq* srq)
 {
-    int qp;
+    int qp, rc = OMPI_SUCCESS;
+    mca_btl_openib_module_t *openib_btl = NULL;
+
+    opal_mutex_t *lock = &mca_btl_openib_component.srq_manager.lock;
+    opal_hash_table_t *srq_addr_table = &mca_btl_openib_component.srq_manager.srq_addr_table;
+
+    opal_mutex_lock(lock);
+
+    if (OPAL_SUCCESS != opal_hash_table_get_value_ptr(srq_addr_table,
+                            &srq, sizeof(struct ibv_srq*), (void*) &openib_btl)) {
+        /* If there isn't any element with the key in the table =>
+           we assume that SRQ was destroyed and don't serve the event */
+        goto srq_limit_event_exit;
+    }
 
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
         if (!BTL_OPENIB_QP_TYPE_PP(qp)) {
@@ -245,34 +257,36 @@ static int btl_openib_async_srq_limit_event(struct ibv_srq* srq,
     }
 
     if(qp >= mca_btl_openib_component.num_qps) {
-        orte_show_help("help-mpi-btl-openib.txt", "SRQ not found",
-            true,orte_process_info.nodename,
-            ibv_get_device_name(openib_btl->device->ib_dev));
-        return OMPI_ERROR;
+        BTL_ERROR(("Open MPI tried to access a shared receive queue (SRQ) on the device %s that was not found.  This should not happen, and is a fatal error.  Your MPI job will now abort.\n", ibv_get_device_name(openib_btl->device->ib_dev)));
+        rc = OMPI_ERROR;
+        goto srq_limit_event_exit;
     }
 
     /* dynamically re-size the SRQ to be larger */
     openib_btl->qps[qp].u.srq_qp.rd_curr_num <<= 1;
 
-    if(openib_btl->qps[qp].u.srq_qp.rd_curr_num >= mca_btl_openib_component.qp_infos[qp].rd_num) {
+    if(openib_btl->qps[qp].u.srq_qp.rd_curr_num >=
+                         mca_btl_openib_component.qp_infos[qp].rd_num) {
         openib_btl->qps[qp].u.srq_qp.rd_curr_num = mca_btl_openib_component.qp_infos[qp].rd_num;
         openib_btl->qps[qp].u.srq_qp.rd_low_local = mca_btl_openib_component.qp_infos[qp].rd_low;
 
         openib_btl->qps[qp].u.srq_qp.srq_limit_event_flag = false;
 
-        return OMPI_SUCCESS;
+        goto srq_limit_event_exit;
     }
 
     openib_btl->qps[qp].u.srq_qp.rd_low_local <<= 1;
     openib_btl->qps[qp].u.srq_qp.srq_limit_event_flag = true;
 
-    return OMPI_SUCCESS;
+srq_limit_event_exit:
+    opal_mutex_unlock(lock);
+    return rc;
 }
 
 /* Function handle async device events */
 static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_poll, int index)
 {
-    int j, btl_index = 0;
+    int j;
     mca_btl_openib_device_t *device = NULL;
     struct ibv_async_event event;
     bool xrc_event = false;
@@ -283,8 +297,6 @@ static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_po
         if (mca_btl_openib_component.openib_btls[j]->device->ib_dev_context->async_fd ==
                 devices_poll->async_pollfd[index].fd ) {
             device = mca_btl_openib_component.openib_btls[j]->device;
-            btl_index = j;
-
             break;
         }
     }
@@ -355,8 +367,8 @@ static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_po
             /* The event is signaled when number of prepost receive WQEs is going
                                             under predefined threshold - srq_limit */
             case IBV_EVENT_SRQ_LIMIT_REACHED:
-                if(OMPI_SUCCESS != btl_openib_async_srq_limit_event(event.element.srq, 
-                                     mca_btl_openib_component.openib_btls[btl_index])) {
+                if(OMPI_SUCCESS !=
+                         btl_openib_async_srq_limit_event(event.element.srq)) {
                     return OMPI_ERROR;
                 }
 

@@ -137,6 +137,15 @@ int btl_openib_component_open(void)
 {
     int ret;
 
+#if OPAL_HAVE_THREADS
+    opal_mutex_t *lock = &mca_btl_openib_component.srq_manager.lock;
+    opal_hash_table_t *srq_addr_table = &mca_btl_openib_component.srq_manager.srq_addr_table;
+
+    /* Construct hash table that stores pointers to SRQs */
+    OBJ_CONSTRUCT(lock, opal_mutex_t);
+    OBJ_CONSTRUCT(srq_addr_table, opal_hash_table_t);
+#endif
+
     /* initialize state */
     mca_btl_openib_component.ib_num_btls = 0;
     mca_btl_openib_component.openib_btls = NULL;
@@ -188,6 +197,9 @@ static int btl_openib_component_close(void)
         close(mca_btl_openib_component.async_comp_pipe[0]);
         close(mca_btl_openib_component.async_comp_pipe[1]);
     }
+
+    OBJ_DESTRUCT(&mca_btl_openib_component.srq_manager.lock);
+    OBJ_DESTRUCT(&mca_btl_openib_component.srq_manager.srq_addr_table);
 #endif
 
     ompi_btl_openib_connect_base_finalize();
@@ -2643,6 +2655,19 @@ btl_openib_component_init(int *num_btl_modules,
     if (OMPI_SUCCESS != setup_qps()) {
         goto no_btls;
     }
+#if OPAL_HAVE_THREADS
+    if (mca_btl_openib_component.num_srq_qps > 0 ||
+                     mca_btl_openib_component.num_xrc_qps > 0) {
+        opal_hash_table_t *srq_addr_table = &mca_btl_openib_component.srq_manager.srq_addr_table;
+        if(OPAL_SUCCESS != opal_hash_table_init(
+                srq_addr_table, (mca_btl_openib_component.num_srq_qps +
+                                 mca_btl_openib_component.num_xrc_qps) *
+                                 mca_btl_openib_component.ib_num_btls)) {
+            BTL_ERROR(("SRQ internal error. Failed to allocate SRQ addr hash table"));
+            goto no_btls;
+        }
+    }
+#endif
 
     /* For XRC: 
      * from this point we know if MCA_BTL_XRC_ENABLED it true or false */
