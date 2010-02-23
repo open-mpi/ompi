@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -38,6 +38,7 @@
 #include "vt_error.h"
 
 #include "util/hash.h"
+#include "util/installdirs.h"
 
 #include "otf.h"
 
@@ -814,6 +815,7 @@ void vt_close()
   /*- Rank 0: unify trace files -*/
   if (vt_my_trace == 0 && vt_env_do_unify())
     {
+      char* vtunify;
       char* filename;
       char* fprefix;
       char* cmd;
@@ -821,71 +823,74 @@ void vt_close()
       int nf;
       int8_t exec_stat;
 
-      if ( access(BINDIR "/vtunify", X_OK) == -1 )
-	vt_error_msg("Cannot execute "BINDIR"/vtunify: %s", strerror(errno));
+      vtunify = vt_installdirs_expand("${bindir}/vtunify");
+      if ( vtunify == NULL )
+        vt_error();
+
+      if ( access(vtunify, X_OK) == -1 )
+        vt_error_msg("Cannot execute %s: %s", vtunify, strerror(errno));
 
       len = strlen(vt_env_gdir()) + strlen(vt_env_fprefix()) + 32;
-
       filename = (char*)calloc(len, sizeof(char));
       if ( filename == NULL )
-	vt_error();
+        vt_error();
 
-      fprefix = (char*)calloc(strlen(vt_env_fprefix()) + 16,
-			      sizeof(char));
+      fprefix = (char*)calloc(strlen(vt_env_fprefix()) + 16, sizeof(char));
       if ( fprefix == NULL )
-	vt_error();
+        vt_error();
 
       if ( vt_my_funique > 0 )
-	sprintf(fprefix, "%s_%u",  vt_env_fprefix(), vt_my_funique);
+        sprintf(fprefix, "%s_%u",  vt_env_fprefix(), vt_my_funique);
       else
-	strcpy(fprefix, vt_env_fprefix());
+        strcpy(fprefix, vt_env_fprefix());
 
 #if (defined(VT_LIBCWRAP) && defined(VT_FORK))
       if (vt_env_libctrace())
         {
-	  char* trcid_filename = vt_fork_get_trcid_filename();
-	  /* get total number of child processes */
-	  vt_num_traces = 1 + vt_fork_get_num_childs_tot();
-	  /* remove temp. trace-id file */
-	  remove(trcid_filename);
-	  free(trcid_filename);
-	}
+          char* trcid_filename = vt_fork_get_trcid_filename();
+          /* get total number of child processes */
+          vt_num_traces = 1 + vt_fork_get_num_childs_tot();
+          /* remove temp. trace-id file */
+          remove(trcid_filename);
+          free(trcid_filename);
+        }
 #endif /* VT_LIBCWRAP && VT_FORK */
 
       /*- wait for files to be ready -*/
       for (i = 0; i < vt_num_traces; i++)
         {
-	  sprintf(filename, "%s/%s.%x.uctl", vt_env_gdir(),
-		  fprefix, i+1);
+          sprintf(filename, "%s/%s.%x.uctl", vt_env_gdir(),
+                  fprefix, i+1);
 
-	  vt_cntl_msg(2, "Checking for %s ...", filename);
-	  nf = 0;
-	  while (access(filename, R_OK) != 0 )
-	    {
-	      ++nf;
-	      /*- if file not ready in 15 sec give up -*/
-	      if ( nf > 15 ) return;
-	      sleep(1);
-	    }
-	}
+          vt_cntl_msg(2, "Checking for %s ...", filename);
+          nf = 0;
+          while (access(filename, R_OK) != 0 )
+          {
+            ++nf;
+            /*- if file not ready in 15 sec give up -*/
+            if ( nf > 15 ) return;
+            sleep(1);
+          }
+        }
 
       /*- do actual merge -*/
-      cmd = (char*)calloc(strlen(BINDIR) + 16 + len, sizeof(char));
+      cmd = (char*)calloc(strlen(vtunify) + 16 + len, sizeof(char));
       if ( cmd == NULL )
-	 vt_error();
-      sprintf(cmd, "%s/vtunify %d %s/%s %s %s %s %s",
-	      BINDIR, vt_num_traces,
-	      vt_env_gdir(), fprefix,
-	      vt_env_compression() ? "" : "-c",
-	      vt_env_do_clean() ? "" : "-k",
-	      (vt_env_verbose() == 0) ? "-q" : "",
-	      (vt_env_verbose() >= 2) ? "-v" : "");
+        vt_error();
+      sprintf(cmd, "%s %d %s/%s %s %s %s %s",
+              vtunify, vt_num_traces,
+              vt_env_gdir(), fprefix,
+              vt_env_compression() ? "" : "-c",
+              vt_env_do_clean() ? "" : "-k",
+              (vt_env_verbose() == 0) ? "-q" : "",
+              (vt_env_verbose() >= 2) ? "-v" : "");
 
       vt_cntl_msg(2, "Executing %s", cmd);
       exec_stat = system( cmd ); 
       if( exec_stat == 127 || exec_stat == -1 )
         vt_error_msg("Failed to execute %s (i): %s", cmd, exec_stat, strerror(errno));
 
+      free(vtunify);
       free(filename);
       free(fprefix);
       free(cmd);

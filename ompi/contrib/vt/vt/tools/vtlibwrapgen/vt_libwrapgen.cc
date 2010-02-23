@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -12,6 +12,8 @@
 
 #include "vt_libwrapgen.h"
 
+#include "util/installdirs.h"
+
 #include <iostream>
 #include <sstream>
 
@@ -19,6 +21,7 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
@@ -514,12 +517,22 @@ getParams( int argc, char** argv )
     if( Params.b_ld_flags.length() == 0 )
       Params.b_ld_flags = Params.b_cc_flags;
 
+    // expand install directories from libtool command, if necessary
+    //
+    if( Params.b_libtool_cmd.length() == 0 )
+    {
+      char* tmp = vt_installdirs_expand( VT_LIBWRAPGEN_DEFAULT_LIBTOOL );
+      Params.b_libtool_cmd = tmp;
+      free( tmp );
+    }
+
     // disable libtool verbosity, if necessary
     if( Params.verbose_level == 0 )
       Params.b_libtool_flags = "--quiet";
 
     // add VT include directory to compiler flags
-    Params.b_cc_flags += " -I"INCLUDEDIR;
+    Params.b_cc_flags += " -I" +
+      std::string(vt_installdirs_get( VT_INSTALLDIR_INCLUDEDIR ));
 
     // add libtool arg. '-static' or '-shared' to compiler/linker flags,
     // if necessary
@@ -598,15 +611,19 @@ showUsage()
     << std::endl
     << "   build-options:" << std::endl
     << "     -o, --output=PREFIX Prefix of output wrapper library." << std::endl
-      << "                         (default: "VT_LIBWRAPGEN_DEFAULT_OUTPUT_LIB_PREFIX")" << std::endl
+    << "                         (default: "VT_LIBWRAPGEN_DEFAULT_OUTPUT_LIB_PREFIX")" << std::endl
     << std::endl
     << "     --shared            Do only build shared wrapper library." << std::endl
     << std::endl
     << "     --static            Do only build static wrapper library." << std::endl
     << std::endl
-    << "     --libtool=LT        Libtool command" << std::endl
-    << "                         (default: "VT_LIBWRAPGEN_DEFAULT_LIBTOOL")" << std::endl
-    << std::endl
+    << "     --libtool=LT        Libtool command" << std::endl;
+
+  char* tmp = vt_installdirs_expand( VT_LIBWRAPGEN_DEFAULT_LIBTOOL );
+  std::cout << "                         (default: " << tmp << ")" << std::endl;
+  free( tmp );
+
+  std::cout 
     << "     --cc=CC             C compiler command" << std::endl
     << "                         (default: "VT_LIBWRAPGEN_DEFAULT_CC")" << std::endl
     << std::endl
@@ -657,7 +674,7 @@ bool
 GeneratorC::genSource()
 {
   VPrint( 1, "Generating library wrapper source file\n" );
-  
+
   // create instance of class Filter
   m_filter = new FilterC();
 
@@ -711,7 +728,7 @@ bool
 GeneratorC::buildLib()
 {
   VPrint( 1, "Building wrapper library\n" );
-  
+
   // check whether input source file exists
   //
   if( access( Params.b_input_srcfile.c_str(), R_OK ) == -1 )

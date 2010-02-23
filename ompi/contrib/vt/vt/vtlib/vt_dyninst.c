@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -26,6 +26,8 @@
 #include "vt_pform.h"
 #include "vt_thrd.h"
 #include "vt_trc.h"
+
+#include "util/installdirs.h"
 
 static int dyn_init = 1;       /* is initialization needed? */
 
@@ -232,7 +234,7 @@ void VT_Dyn_attach()
        */
       signal(SIGUSR1, SIG_DFL);
       signal(SIGUSR2, SIG_DFL);
-       
+
       /* Try to get path of mutatee
        */
       vt_pform_init();
@@ -253,27 +255,14 @@ void VT_Dyn_attach()
 	shlibs_arg[strlen(shlibs_arg)-1] = '\0';
       }
 
-#ifdef BINDIR
-      if(access(BINDIR "/vtdyn", X_OK) == 0)
-      {
-        sprintf(cmd, "%s/vtdyn %s %s %s %s %s -p %i %s", BINDIR,
-		(vt_env_verbose() >= 2) ? "-v" : "",
-		blist ? "-b" : "", blist ? blist : "",
-		shlibs_arg ? "-s" : "", shlibs_arg ? shlibs_arg : "",
-		mutatee_pid,
-		mutatee_path ? mutatee_path : "");
-      }
-      else
-#endif
-      {
-	sprintf(cmd, "vtdyn %s %s %s %s %s -p %i %s",
-		(vt_env_verbose() >= 2) ? "-v" : "",
-		blist ? "-b" : "", blist ? blist : "",
-		shlibs_arg ? "-s" : "", shlibs_arg ? shlibs_arg : "",
-		mutatee_pid,
-		mutatee_path ? mutatee_path : "");
-      }
-      
+      sprintf(cmd, "%s/vtdyn %s %s %s %s %s -p %i %s",
+	      vt_installdirs_get(VT_INSTALLDIR_BINDIR),
+	      (vt_env_verbose() >= 2) ? "-v" : "",
+	      blist ? "-b" : "", blist ? blist : "",
+	      shlibs_arg ? "-s" : "", shlibs_arg ? shlibs_arg : "",
+	      mutatee_pid,
+	      mutatee_path ? mutatee_path : "");
+
       if ( shlibs_arg )
 	free(shlibs_arg);
 

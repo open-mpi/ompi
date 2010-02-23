@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -79,7 +79,9 @@ Wrapper::readDataFile()
 {
    bool error = false;
 
-   const std::string data_file = DATADIR"/" + std::string(ExeName) + "-wrapper-data.txt";
+   const std::string data_file =
+     std::string(vt_installdirs_get(VT_INSTALLDIR_DATADIR)) + "/" +
+     std::string(ExeName) + "-wrapper-data.txt";
 
    const uint32_t keys_num = 22;
    const std::string keys[] = {
@@ -201,13 +203,41 @@ Wrapper::readDataFile()
          case 9: // includedir
 	 {
 	    if( value.length() > 0 )
-	       m_pConfig->m_sVT_IncDir = "-I" + value;
+	    {
+	       char* includedir = vt_installdirs_expand( value.c_str() );
+	       if( includedir )
+	       {
+		  m_pConfig->m_sVT_IncDir = "-I" + std::string(includedir);
+		  free( includedir );
+	       }
+	       else
+	       {
+		  std::cerr << ExeName << ": "
+			    << data_file << ":" << line_no << ": "
+			    << "could not be parsed" << std::endl;
+		  error = true;
+	       }
+	    }
 	    break;
 	 }
          case 10: // libdir
 	 {
 	    if( value.length() > 0 )
-	       m_pConfig->m_sVT_LibDir = "-L" + value;
+	    {
+	       char* libdir = vt_installdirs_expand( value.c_str() );
+	       if( libdir )
+	       {
+		  m_pConfig->m_sVT_LibDir = "-L" + std::string(libdir);
+		  free( libdir );
+	       }
+	       else
+	       {
+		  std::cerr << ExeName << ": "
+			    << data_file << ":" << line_no << ": "
+			    << "could not be parsed" << std::endl;
+		  error = true;
+	       }
+	    }
 	    break;
 	 }
          case 11: // vtlib
@@ -1043,7 +1073,9 @@ Wrapper::showUsageText()
 	     << std::endl << std::endl
 	     << "     -vt:opari <args>    Set options for OPARI command."
 	     << std::endl
-	     << "                         (see "DATADIR"/doc/opari/Readme.html for more information)"
+	     << "                         (see "
+       << vt_installdirs_get(VT_INSTALLDIR_DATADIR)
+       << "/doc/opari/Readme.html for more information)"
 	     << std::endl << std::endl
 	     << "     -vt:<seq|mpi|mt|hyb>"
 	     << std::endl

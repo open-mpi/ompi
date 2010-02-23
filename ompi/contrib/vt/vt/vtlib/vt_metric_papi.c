@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -30,6 +30,10 @@
 #if !(defined(HAVE_DECL_LONG_LONG) && HAVE_DECL_LONG_LONG)
 # define long_long long long
 #endif /* HAVE_DECL_LONG_LONG */
+
+#if PAPI_VER_CURRENT >= PAPI_VERSION_NUMBER(3,9,0,0)
+# define PAPIC
+#endif
 
 #ifndef TIMER_PAPI_REAL_CYC
 # define TIMER_PAPI_REAL_CYC 10
@@ -59,11 +63,21 @@ struct metric
   char* name;
   char  descr[PAPI_HUGE_STR_LEN];
   int   papi_code;
+  uint32_t props;
 };
+
+typedef struct eventmap_t   // we need an eventset for each component
+{
+  int EventId; // eventset id
+  long_long Values[VT_METRIC_MAXNUM]; // return values for the eventsets
+  int nEvents; // number of recorded events in this set
+  int ComponentId;
+}eventmap_t;
 
 struct vt_metv
 {
-  int EventSet;
+  struct eventmap_t * EventSet[VT_METRIC_MAXNUM]; // a struct for each active component
+  long_long * Values[VT_METRIC_MAXNUM]; // for each counter a pointer, that points to the eventsets return values
 };
 
 /*
@@ -233,6 +247,7 @@ static void metricv_add(char* name, int code)
     metricv[nmetrics] = (struct metric*)malloc(sizeof(struct metric));
     metricv[nmetrics]->name = strdup(name);
     metricv[nmetrics]->descr[0] = '\0';
+    metricv[nmetrics]->props = OTF_COUNTER_TYPE_ACC;
     metricv[nmetrics]->papi_code = code;
     nmetrics++;
   }
@@ -249,7 +264,7 @@ static void metric_error(int errcode, char *note)
     strncat(errstring, ": ", PAPI_MAX_STR_LEN-strlen(errstring));
     strncat(errstring, strerror(errno), PAPI_MAX_STR_LEN-strlen(errstring));
   }
-  vt_error_msg("%s: %s (fatal)", note?note:"PAPI", errstring);
+  vt_error_msg("%s: %s (fatal)\n", note?note:"PAPI", errstring);
 }
 
 /* PAPI-specific warning message */
@@ -263,7 +278,7 @@ static void metric_warning(int errcode, char *note)
     strncat(errstring, ": ", PAPI_MAX_STR_LEN-strlen(errstring));
     strncat(errstring, strerror(errno), PAPI_MAX_STR_LEN-strlen(errstring));
   }
-  vt_warning("%s: %s (ignored)", note?note:"PAPI", errstring);
+  vt_warning("%s: %s (ignored)\n", note?note:"PAPI", errstring);
 }
 
 /* Get metric descriptions */
@@ -315,18 +330,35 @@ static void metric_descriptions(void)
 /* Test whether requested event combination valid */
 static void metric_test(void)
 {
-  int i;
+  int i, j;
   int retval;
-  int EventSet = PAPI_NULL;
   
-  /* create event set */
-  retval = PAPI_create_eventset(&EventSet);
-  if ( retval != PAPI_OK)
-    metric_error(retval, "PAPI_create_eventset");
-
+  int component;
+  struct eventmap_t * EventSet[VT_METRIC_MAXNUM];
+  for (i=0; i<VT_METRIC_MAXNUM; i++)
+    EventSet[i] = NULL;
   for (i=0; i < nmetrics; i++) {
+#ifdef PAPIC
+    // Preset-counter belong to Component 0!
+    component = PAPI_COMPONENT_INDEX(metricv[i]->papi_code);
+#else
+    component = 0;
+#endif
+    j=0;
+    while (EventSet[j]!=NULL && j < VT_METRIC_MAXNUM && EventSet[j]->ComponentId!=component){ // search for the eventset that matches the counter
+      j++;
+    }
+    if (EventSet[j]==NULL) // create eventset, if no matching found
+    {
+      EventSet[j] = malloc(sizeof(eventmap_t));
+      EventSet[j]->EventId=PAPI_NULL;
+      retval = PAPI_create_eventset(&(EventSet[j]->EventId));
+      if ( retval != PAPI_OK)
+        metric_error(retval, "PAPI_create_eventset");
+      EventSet[j]->ComponentId=component;
+    }
     /* add event to event set */
-    retval = PAPI_add_event(EventSet, metricv[i]->papi_code);
+    retval = PAPI_add_event(EventSet[j]->EventId, metricv[i]->papi_code);
     if ( retval != PAPI_OK ) {
       char errstring[PAPI_MAX_STR_LEN];
       sprintf(errstring, "PAPI_add_event(%d:\"%s\")", i, metricv[i]->name);
@@ -334,13 +366,17 @@ static void metric_test(void)
     }
     vt_cntl_msg(2, "Event %s added to event set", metricv[i]->name);
   }
-  retval = PAPI_cleanup_eventset(EventSet);
-  if ( retval != PAPI_OK )
-    metric_error(retval, "PAPI_cleanup_eventset");
-
-  retval = PAPI_destroy_eventset(&EventSet);
-  if ( retval != PAPI_OK )
-    metric_error(retval, "PAPI_destroy_eventset");
+  for (i=0; i < VT_METRIC_MAXNUM && EventSet[i]!=NULL; i++) // foreach used eventset
+  {
+    retval = PAPI_cleanup_eventset(EventSet[i]->EventId);
+    if ( retval != PAPI_OK )
+      metric_error(retval, "PAPI_cleanup_eventset");
+  
+    retval = PAPI_destroy_eventset(&(EventSet[i]->EventId));
+    if ( retval != PAPI_OK )
+      metric_error(retval, "PAPI_destroy_eventset");
+    free(EventSet[i]);
+  }
 
   vt_cntl_msg(2, "Event set tested OK");
 }
@@ -352,6 +388,7 @@ int vt_metric_open()
   char* env_sep;
   char* var;
   char* token;
+  int forceprop;
   PAPI_event_info_t info;
   metricmap_t* mapv = NULL;
 
@@ -386,6 +423,13 @@ int vt_metric_open()
   /* read metrics from specification string */
   token = strtok(var, env_sep);
   while ( token && (nmetrics < VT_METRIC_MAXNUM) ) {
+    if (token[0]=='!')
+    {
+      forceprop=1;
+      token++;
+    }
+    else
+      forceprop=0;
     /* search metricmap for a suitable definition */
     metricmap_t* map = mapv;
     /*printf("Token%d: <%s>\n", nmetrics, token);*/
@@ -435,17 +479,19 @@ int vt_metric_open()
       /*printf("Comp[X] <%s>\n", component);*/
       retval = PAPI_event_name_to_code(component, &code);
       if (retval != PAPI_OK || code == -1)
-	vt_error_msg("Metric <%s> not supported", component);
+	vt_error_msg("Metric <%s> not supported\n", component);
 
       memset(&info, 0, sizeof(PAPI_event_info_t));
       retval = PAPI_get_event_info(code, &info);
       /*printf("v[%d] %s [0x%X] %d\n", nmetrics, component, code, info.count);*/
       if (retval != PAPI_OK)
-	vt_error_msg("Metric <%s> not available", component);
+	vt_error_msg("Metric <%s> not available\n", component);
 
       metricv_add(component, code);
     }
 
+    if (forceprop)
+      metricv[nmetrics-1]->props=OTF_COUNTER_TYPE_ABS;
     token = strtok(NULL, env_sep);
   }
 
@@ -473,12 +519,15 @@ void vt_metric_close()
     free (metricv[i]->name);
     free(metricv[i]);
   }
+  if ( nmetrics > 0 )
+    PAPI_shutdown();
 }
 
 struct vt_metv* vt_metric_create()
 {
   struct vt_metv* metv;
-  int retval, i;
+  int retval, i,j;
+  int component;
 
   if ( nmetrics == 0 )
     return NULL;
@@ -488,28 +537,54 @@ struct vt_metv* vt_metric_create()
     vt_error();
   
   /* create event set */
-  metv->EventSet = PAPI_NULL;
-  retval = PAPI_create_eventset(&metv->EventSet);
-  if ( retval != PAPI_OK)
-    metric_error(retval, "PAPI_create_eventset");
-  
-  for ( i = 0; i < nmetrics; i++ ) {
+  for (i=0; i<VT_METRIC_MAXNUM; i++)
+    metv->EventSet[i] = NULL;
+
+
+  for (i=0; i < nmetrics; i++)
+  {
+#ifdef PAPIC
+    component = PAPI_COMPONENT_INDEX(metricv[i]->papi_code);
+#else
+    component = 0;
+#endif
+    j=0;
+    while (metv->EventSet[j]!=NULL && j < VT_METRIC_MAXNUM && metv->EventSet[j]->ComponentId!=component){ // search for the eventset that matches the counter
+      j++;
+    }
+    if (metv->EventSet[j]==NULL)   // no event of this component yet!
+    {
+      metv->EventSet[j] = (struct eventmap_t*)malloc(sizeof(eventmap_t));
+      metv->EventSet[j]->EventId=PAPI_NULL;
+      metv->EventSet[j]->nEvents = 0;
+      retval = PAPI_create_eventset(&(metv->EventSet[j]->EventId));
+      if ( retval != PAPI_OK)
+        metric_error(retval, "PAPI_create_eventset");
+      metv->EventSet[j]->ComponentId=component;
+    }
+    struct eventmap_t *eventset = metv->EventSet[j];
+
     /* add event to event set */
-    retval = PAPI_add_event(metv->EventSet, metricv[i]->papi_code);
+    retval = PAPI_add_event(eventset->EventId, metricv[i]->papi_code);
     if ( retval != PAPI_OK )
       metric_error(retval, "PAPI_add_event");
+    metv->Values[i] = &(eventset->Values[eventset->nEvents]); // for demux the values from eventset -> returnvector
+    eventset->nEvents++;
   }
 
-  retval = PAPI_start(metv->EventSet);
-  if ( retval != PAPI_OK )
-    metric_error(retval, "PAPI_start");
+  for (i=0; i < VT_METRIC_MAXNUM && metv->EventSet[i]!=NULL; i++) // foreach used eventset
+  {
+    retval = PAPI_start(metv->EventSet[i]->EventId);
+    if ( retval != PAPI_OK )
+      metric_error(retval, "PAPI_start");
+  }
 
   return metv;
 }
 
 void vt_metric_free(struct vt_metv* metv)
 {
-  int retval;
+  int retval, i;
   long_long papi_vals[VT_METRIC_MAXNUM];
 
   if ( metv == NULL )
@@ -517,21 +592,22 @@ void vt_metric_free(struct vt_metv* metv)
 
   /* treat PAPI failures at this point as non-fatal */
 
-  retval = PAPI_stop(metv->EventSet, papi_vals);
-  if ( retval != PAPI_OK ) {
-    metric_warning(retval, "PAPI_stop");
-  } else { /* cleanup/destroy require successful PAPI_stop */
-
-    retval = PAPI_cleanup_eventset(metv->EventSet);
-    if ( retval != PAPI_OK )
-      metric_warning(retval, "PAPI_cleanup_eventset");
-
-    retval = PAPI_destroy_eventset(&metv->EventSet);
-    if ( retval != PAPI_OK )
-      metric_warning(retval, "PAPI_destroy_eventset");
-    
-    free(metv);
+  for (i=0; i < VT_METRIC_MAXNUM && metv->EventSet[i]!=NULL; i++) // foreach used eventset
+  {
+    retval = PAPI_stop(metv->EventSet[i]->EventId, papi_vals);
+    if ( retval != PAPI_OK ) {
+      metric_warning(retval, "PAPI_stop");
+    } else { /* cleanup/destroy require successful PAPI_stop */
+      retval = PAPI_cleanup_eventset(metv->EventSet[i]->EventId);
+      if ( retval != PAPI_OK )
+        metric_warning(retval, "PAPI_cleanup_eventset");
+      retval = PAPI_destroy_eventset(&metv->EventSet[i]->EventId);
+      if ( retval != PAPI_OK )
+        metric_warning(retval, "PAPI_destroy_eventset");
+    }
+    free(metv->EventSet[i]);
   }
+  free(metv);
 }
 
 void vt_metric_thread_init(long (*id_fn)(void))
@@ -564,29 +640,19 @@ void vt_metric_read(struct vt_metv* metv, uint64_t offsets[],
 
   if ( metv == NULL )
     return;
-
-  if ( sizeof(long_long) == 8 )
+  for (i=0; i < VT_METRIC_MAXNUM && metv->EventSet[i]!=NULL; i++) // foreach used eventset
   {
-    retval = PAPI_read(metv->EventSet, (long_long*) values);
+    retval = PAPI_read(metv->EventSet[i]->EventId, metv->EventSet[i]->Values );
     if ( retval != PAPI_OK )
       metric_error(retval, "PAPI_read");
   }
-  else
-  {
-    long_long papi_vals[VT_METRIC_MAXNUM];
-    retval = PAPI_read(metv->EventSet, papi_vals);
-    if ( retval != PAPI_OK )
-      metric_error(retval, "PAPI_read");
-    for ( i = 0; i < nmetrics; i++ )
-      values[i] = (uint64_t) papi_vals[i];
-  }
 
-  /* add offsets to values, if necessary */
   if ( offsets != NULL )
-  {
     for ( i = 0; i < nmetrics; i++ )
-      values[i] += offsets[i];
-  }
+      values[i] = (uint64_t) *metv->Values[i] + offsets[i];
+  else
+    for ( i = 0; i < nmetrics; i++ )
+      values[i] = (uint64_t) *metv->Values[i];
 }
 
 int vt_metric_num()
@@ -612,8 +678,7 @@ const char* vt_metric_unit(int i)
 
 uint32_t vt_metric_props(int i)
 {
-  (void)i;
-  return OTF_COUNTER_TYPE_ACC;
+  return metricv[i]->props;
 }
 
 #if TIMER == TIMER_PAPI_REAL_CYC
@@ -632,7 +697,7 @@ uint64_t vt_metric_clckrt(void)
 
   hwinfo = PAPI_get_hardware_info(); 
   if ( hwinfo == NULL)
-    vt_error_msg("Failed to access PAPI hardware info");
+    vt_error_msg("Failed to access PAPI hardware info\n");
   vt_cntl_msg(2, "Clock rate: %f MHz", hwinfo->mhz);
 
   hertz = hwinfo->mhz * 1000000.0;

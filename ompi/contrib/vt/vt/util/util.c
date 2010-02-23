@@ -15,15 +15,13 @@
  *
  * Copyright (c) 2007,      Cisco Systems, Inc.
  *
- * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
  *
  * See the file COPYING in the package base directory for details
  **/
-
-#include "config.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -194,9 +192,9 @@ int vt_vasprintf(char** ptr, const char* fmt, va_list ap)
   /* va_list might have pointer to internal state and using
      it twice is a bad idea.  So make a copy for the second
      use.  Copy order taken from Autoconf docs. */
-#if defined(HAVE_VA_COPY) && HAVE_VA_COPY
+#if defined(va_copy)
   va_copy(ap2, ap);
-#elif defined(HAVE_UNDERSCORE_VA_COPY) && HAVE_UNDERSCORE_VA_COPY
+#elif defined(__va_copy)
   __va_copy(ap2, ap);
 #else
   memcpy (&ap2, &ap, sizeof(va_list));
@@ -215,9 +213,9 @@ int vt_vasprintf(char** ptr, const char* fmt, va_list ap)
 
   /* fill the buffer */
   length = vsprintf(*ptr, fmt, ap2);
-#if (defined(HAVE_VA_COPY) && HAVE_VA_COPY) || (defined(HAVE_UNDERSCORE_VA_COPY) && HAVE_UNDERSCORE_VA_COPY)
+#if defined(va_copy) || defined(__va_copy)
   va_end(ap2);
-#endif /* HAVE_VA_COPY || HAVE_UNDERSCORE_VA_COPY */
+#endif /* va_copy || __va_copy */
 
   /* realloc */
   *ptr = (char*)realloc(*ptr, (size_t)length + 1);

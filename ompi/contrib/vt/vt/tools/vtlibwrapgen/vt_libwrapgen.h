@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -52,7 +52,7 @@ struct ParamsS
     g_cpp_cmd(VT_LIBWRAPGEN_DEFAULT_CPP),
     g_use_cpp(true), g_keep_cpp_file(false),
     b_output_libprefix(VT_LIBWRAPGEN_DEFAULT_OUTPUT_LIB_PREFIX),
-    b_libtool_cmd(VT_LIBWRAPGEN_DEFAULT_LIBTOOL),
+    b_libtool_cmd(""),
     b_cc_cmd(VT_LIBWRAPGEN_DEFAULT_CC),
     b_cc_flags(VT_LIBWRAPGEN_DEFAULT_CFLAGS),
     b_shared(false), b_static(false) {}

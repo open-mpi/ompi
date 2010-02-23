@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -1613,6 +1613,9 @@ int lockf(int fd, int function, off_t size)
 #endif /* HAVE_LOCKF */
 
 
+/* MaJu: Temporary disabled the following wrapper function, due to a curious
+   behaviour on some platforms */
+#if 0
 int fcntl(int fd, int cmd, ...)
 {
 #define VT_IOWRAP_THISFUNCNAME fcntl
@@ -1691,3 +1694,5 @@ int fcntl(int fd, int cmd, ...)
         return ret;
 #undef VT_IOWRAP_THISFUNCNAME
 }
+#endif
+
