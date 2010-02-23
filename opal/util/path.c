@@ -445,7 +445,7 @@ bool opal_path_nfs(char *fname)
     int rc;
     int trials;
     char * file = strdup (fname);
-#if defined (__sun__)
+#if defined(__SVR4) && defined(__sun)
     struct statvfs buf;
 #elif defined(linux) || defined (__BSD) || defined(__MACOSX__)
     struct statfs buf;
@@ -469,7 +469,7 @@ bool opal_path_nfs(char *fname)
 again:
     trials = 5;
     do {
-#if defined (__sun__)
+#if defined(__SVR4) && defined(__sun)
         rc = statvfs (file, &buf);
 #elif defined(linux) || defined (__BSD) || defined(__MACOSX__)
         rc = statfs (file, &buf);
@@ -485,7 +485,8 @@ again:
 
         last_sep = strrchr(file, OPAL_PATH_SEP[0]);
         /* Stop the search, when we have searched past root '/' */
-        if (NULL == last_sep || '/' == *last_sep) {
+        if (NULL == last_sep || (1 == strlen(last_sep) && 
+            OPAL_PATH_SEP[0] == last_sep)) {
             free (file); 
             return false;
         }
@@ -495,8 +496,8 @@ again:
     }
 
     /* Next, extract the magic value */
-#if defined (__sun__)
-    for (i = 0; i < FS_TYPES_NUM; i++)
+#if defined(__SVR4) && defined(__sun)
+    for (i = 0; i < FS_TYPES_NUM; i++) 
         if (0 == strncasecmp (fs_types[i].f_fsname, buf.f_basetype, FSTYPSZ))
             goto found;
 #elif defined(__MACOSX__)
