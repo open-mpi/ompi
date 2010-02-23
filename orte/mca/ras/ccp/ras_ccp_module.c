@@ -84,19 +84,23 @@ static int orte_ras_ccp_allocate(opal_list_t *nodes)
         return ORTE_ERROR;
     }
     
-    /* Get the cluster head nodes name */
-    _dupenv_s(&cluster_head, &len, "LOGONSERVER");
+    if(NULL == orte_ccp_headnode) {
+        /* Get the cluster head nodes name */
+        _dupenv_s(&cluster_head, &len, "LOGONSERVER");
 
-    if(cluster_head == NULL) {
-        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
-                            "ras:ccp:allocate: connot find cluster head node!"));
-	    return ORTE_ERROR;
-    }
+        if(cluster_head == NULL) {
+            OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+                                "ras:ccp:allocate: connot find cluster head node!"));
+            return ORTE_ERROR;
+        }
 
-    /* Get rid of the beginning '//'. */
-    for( i = 0; i < len - 2; i++){
-	    cluster_head[i] = cluster_head[i+2];
-        cluster_head[i+2] = '\0';
+        /* Get rid of the beginning '//'. */
+        for( i = 0; i < len - 2; i++){
+            cluster_head[i] = cluster_head[i+2];
+            cluster_head[i+2] = '\0';
+        }
+    } else {
+        cluster_head = orte_ccp_headnode;
     }
 
     /* Connect to the cluster's head node */

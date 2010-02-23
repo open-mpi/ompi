@@ -650,20 +650,24 @@ static int plm_ccp_connect(ICluster* pCluster)
     size_t i, len;
     char *cluster_head = NULL;
     HRESULT hr = S_OK;
-    
-    /* Get the cluster head nodes name */
-    _dupenv_s(&cluster_head, &len, "LOGONSERVER");
 
-    if(cluster_head == NULL) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                            "plm:ccp:allocate: connot find cluster head node!"));
-	    return ORTE_ERROR;
-    }
+    if (NULL == orte_ccp_headnode) {
+        /* Get the cluster head nodes name */
+        _dupenv_s(&cluster_head, &len, "LOGONSERVER");
 
-    /* Get rid of the beginning '//'. */
-    for( i = 0; i < len; i++){
-	    cluster_head[i] = cluster_head[i+2];
-        cluster_head[i+2] = '\0';
+        if(cluster_head == NULL) {
+            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                                "plm:ccp:allocate: connot find cluster head node!"));
+            return ORTE_ERROR;
+        }
+
+        /* Get rid of the beginning '//'. */
+        for( i = 0; i < len; i++){
+            cluster_head[i] = cluster_head[i+2];
+            cluster_head[i+2] = '\0';
+        }
+    } else {
+        cluster_head = orte_ccp_headnode;
     }
 
     /* Connect to the cluster's head node */

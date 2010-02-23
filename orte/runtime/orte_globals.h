@@ -623,6 +623,7 @@ ORTE_DECLSPEC extern uint8_t orte_default_num_cores_per_socket;
 ORTE_DECLSPEC extern char *orte_default_cpu_set;
 ORTE_DECLSPEC extern char *orte_default_hostfile;
 ORTE_DECLSPEC extern char *orte_rankfile;
+ORTE_DECLSPEC extern char *orte_ccp_headnode;
 
 /* default rank assigment and binding policy */
 ORTE_DECLSPEC extern orte_mapping_policy_t orte_default_mapping_policy;
