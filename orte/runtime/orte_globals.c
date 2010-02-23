@@ -148,6 +148,7 @@ uint8_t orte_default_num_cores_per_socket;
 char *orte_default_cpu_set;
 char *orte_default_hostfile = NULL;
 char *orte_rankfile;
+char *orte_ccp_headnode;
 
 /* default rank assigment and binding policy */
 orte_mapping_policy_t orte_default_mapping_policy = 0;
