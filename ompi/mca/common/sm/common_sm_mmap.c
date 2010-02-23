@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -43,6 +43,7 @@
 #endif
 
 #include "opal/util/output.h"
+#include "opal/util/path.h"
 #include "opal/align.h"
 #include "opal/threads/mutex.h"
 
@@ -221,6 +222,11 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(ompi_proc_t **procs,
     if (0 == orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
                                            ORTE_PROC_MY_NAME,
                                            &(procs[0]->proc_name))) {
+        /* Check, whether the specified filename is on a network file system */
+        if (opal_path_nfs(file_name)) {
+            orte_show_help("help-mpi-common-sm.txt", "mmap on nfs", 1,
+                           orte_process_info.nodename, file_name);
+        }
         /* process initializing the file */
         fd = open(file_name, O_CREAT|O_RDWR, 0600);
         if (fd < 0) {

@@ -17,7 +17,7 @@
  */
 
 #include "orte_config.h"
-#include "orte/orte_constants.h"
+#include "orte/constants.h"
 
 #include <stdio.h>
 #include <string.h>
