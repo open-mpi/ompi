@@ -269,11 +269,11 @@ int mca_coll_hierarch_module_enable (mca_coll_base_module_t *module,
         goto exit;
     }
     if ( OMPI_COMM_CID_IS_LOWER ( lcomm, comm ) ) {
-        /* Mark the communicator as 'interna' and increase the
+        /* Mark the communicator as 'extra retain' and increase the
            reference count by one more. See ompi_comm_activate
            for detailed comments
 	*/
-        OMPI_COMM_SET_INTERNAL (lcomm);
+        OMPI_COMM_SET_EXTRA_RETAIN (lcomm);
         OBJ_RETAIN(lcomm);
     }
     
@@ -315,11 +315,11 @@ int mca_coll_hierarch_module_enable (mca_coll_base_module_t *module,
         goto exit;
     }
     if ( OMPI_COMM_CID_IS_LOWER ( llcomm, comm ) ) {
-        /* Mark the communicator as 'internal' and increase the
+        /* Mark the communicator as 'extra retain' and increase the
            reference count by one more. See ompi_comm_activate
 	   for detailed explanation. 
 	*/
-        OMPI_COMM_SET_INTERNAL (llcomm);
+        OMPI_COMM_SET_EXTRA_RETAIN (llcomm);
         OBJ_RETAIN(llcomm);
     }
 
@@ -518,10 +518,10 @@ struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int root,
 	    return NULL;
 	}
 	if ( OMPI_COMM_CID_IS_LOWER ( llcomm, hierarch_module->hier_comm ) ) {
-            /* Mark the communicator as 'interna' and increase the
+            /* Mark the communicator as 'extra retain' and increase the
                reference count by one more. See ompi_comm_activate 
 	       for detailed explanation. */
-            OMPI_COMM_SET_INTERNAL (llcomm);
+            OMPI_COMM_SET_EXTRA_RETAIN (llcomm);
             OBJ_RETAIN(llcomm);
         }
 

@@ -489,7 +489,7 @@ int ompi_comm_activate ( ompi_communicator_t** newcomm,
      */
     if ( OMPI_COMM_IS_INTER(*newcomm)) {
         if ( OMPI_COMM_CID_IS_LOWER(*newcomm, comm)) {
-            OMPI_COMM_SET_INTERNAL (*newcomm);
+            OMPI_COMM_SET_EXTRA_RETAIN (*newcomm);
             OBJ_RETAIN (*newcomm);
         }
     }
