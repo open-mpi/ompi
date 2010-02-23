@@ -119,16 +119,25 @@ void* mca_mpool_rdma_alloc(mca_mpool_base_module_t *mpool, size_t size,
     return addr;
 }
 
+/* This function must be called with the rcache lock held */
 static void do_unregistration_gc(struct mca_mpool_base_module_t *mpool)
 {
     mca_mpool_rdma_module_t *mpool_rdma = (mca_mpool_rdma_module_t*)mpool;
     mca_mpool_base_registration_t *reg;
 
     do {
+        /* Remove registration from garbage collection list
+           before deregistering it */
         reg = (mca_mpool_base_registration_t *)
             opal_list_remove_first(&mpool_rdma->gc_list);
-        dereg_mem(mpool, reg);
         mpool->rcache->rcache_delete(mpool->rcache, reg);
+
+        /* Drop the rcache lock before calling dereg_mem as there
+           may be memory allocations */
+        OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
+        dereg_mem(mpool, reg);
+        OPAL_THREAD_LOCK(&mpool->rcache->lock);
+
         OMPI_FREE_LIST_RETURN(&mpool_rdma->reg_list,
                 (ompi_free_list_item_t*)reg);
     } while(!opal_list_is_empty(&mpool_rdma->gc_list));
@@ -254,11 +263,22 @@ int mca_mpool_rdma_register(mca_mpool_base_module_t *mpool, void *addr,
             opal_list_get_last(&mpool_rdma->mru_list);
         if(opal_list_get_end(&mpool_rdma->mru_list) !=
                 (opal_list_item_t*)old_reg) {
+
+	    /* Remove the registration from the cache and list before
+	       deregistering the memory */
+	    mpool->rcache->rcache_delete(mpool->rcache, old_reg);
+	    opal_list_remove_item(&mpool_rdma->mru_list,
+				  (opal_list_item_t*)old_reg);
+
+	    /* Drop the rcache lock while we deregister the memory */
+	    OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
             rc = dereg_mem(mpool, old_reg);
+	    OPAL_THREAD_LOCK(&mpool->rcache->lock);
+
+	    /* This introduces a potential leak of registrations if
+	       the deregistration fails to occur as we no longer have
+	       a reference to it. Is this possible? */
             if(OMPI_SUCCESS == rc) {
-                mpool->rcache->rcache_delete(mpool->rcache, old_reg);
-                opal_list_remove_item(&mpool_rdma->mru_list,
-                        (opal_list_item_t*)old_reg);
                 OMPI_FREE_LIST_RETURN(&mpool_rdma->reg_list,
                         (ompi_free_list_item_t*)old_reg);
                 mpool_rdma->stat_evicted++;
@@ -379,10 +399,16 @@ int mca_mpool_rdma_deregister(struct mca_mpool_base_module_t *mpool,
          * on MRU list for future use */
         opal_list_prepend(&mpool_rdma->mru_list, (opal_list_item_t*)reg);
     } else {
+	/* Remove from rcache first */
+	if(!(reg->flags & MCA_MPOOL_FLAGS_CACHE_BYPASS))
+	    mpool->rcache->rcache_delete(mpool->rcache, reg);
+
+	/* Drop the rcache lock before deregistring the memory */
+	OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
         rc = dereg_mem(mpool, reg);
+	OPAL_THREAD_LOCK(&mpool->rcache->lock);
+
         if(OMPI_SUCCESS == rc) {
-            if(!(reg->flags & MCA_MPOOL_FLAGS_CACHE_BYPASS))
-                mpool->rcache->rcache_delete(mpool->rcache, reg);
             OMPI_FREE_LIST_RETURN(&mpool_rdma->reg_list,
                     (ompi_free_list_item_t*)reg);
         }
@@ -440,6 +466,7 @@ void mca_mpool_rdma_finalize(struct mca_mpool_base_module_t *mpool)
     mca_mpool_base_registration_t *reg;
     mca_mpool_base_registration_t *regs[RDMA_MPOOL_NREGS];
     int reg_cnt, i;
+    int rc;
 
     /* Statistic */
     if(true == mca_mpool_rdma_component.print_stats) {
@@ -468,11 +495,20 @@ void mca_mpool_rdma_finalize(struct mca_mpool_base_module_t *mpool)
                         (opal_list_item_t*)reg);
             }
 
-            if(dereg_mem(mpool, reg) != OMPI_SUCCESS) {
+	    /* Remove from rcache first */
+            mpool->rcache->rcache_delete(mpool->rcache, reg);
+
+	    /* Drop lock before deregistering memory */
+	    OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
+	    rc = dereg_mem(mpool, reg);
+	    OPAL_THREAD_LOCK(&mpool->rcache->lock);
+
+            if(rc != OMPI_SUCCESS) {
+		/* Potentially lose track of registrations
+		   do we have to put it back? */
                 continue;
             }
 
-            mpool->rcache->rcache_delete(mpool->rcache, reg);
             OMPI_FREE_LIST_RETURN(&mpool_rdma->reg_list,
                     (ompi_free_list_item_t*)reg);
         }
