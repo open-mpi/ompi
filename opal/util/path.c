@@ -486,7 +486,7 @@ again:
         last_sep = strrchr(file, OPAL_PATH_SEP[0]);
         /* Stop the search, when we have searched past root '/' */
         if (NULL == last_sep || (1 == strlen(last_sep) && 
-            OPAL_PATH_SEP[0] == last_sep)) {
+            OPAL_PATH_SEP[0] == *last_sep)) {
             free (file); 
             return false;
         }
