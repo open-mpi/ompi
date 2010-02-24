@@ -1194,6 +1194,37 @@ Customizing the behavior of the wrapper compilers is possible (e.g.,
 changing the compiler [not recommended] or specifying additional
 compiler/linker flags); see the Open MPI FAQ for more information.
 
+Alternatively, starting in the Open MPI v1.5 series, Open MPI also
+installs pkg-config(1) configuration files under $libdir/pkgconfig.
+If pkg-config is configured to find these files, then compiling /
+linking Open MPI programs can be performed like this:
+
+shell$ gcc hello_world_mpi.c -o hello_world_mpi -g \
+            `pkg-config ompi-c --cflags --libs`
+shell$
+
+Open MPI supplies multiple pkg-config(1) configuration files; one for
+each different wrapper compiler (language):
+
+------------------------------------------------------------------------
+ompi       Synonym for "ompi-c"; Open MPI applications using the C
+           MPI bindings
+ompi-c     Open MPI applications using the C MPI bindings
+ompi-cxx   Open MPI applications using the C or C++ MPI bindings
+ompi-f77   Open MPI applications using the C or "mpif.h" MPI bindings
+ompi-f90   Open MPI applications using the C, "mpif.h" or "use mpi" MPI
+           bindings
+------------------------------------------------------------------------
+
+The following pkg-config(1) configuration files *may* be installed,
+depending on which command line options were specified to Open MPI's
+configure script.  They are not necessary for MPI applications, but
+may be used by applications that use Open MPI's lower layer support
+libraries.
+
+orte:       Open MPI Run-Time Environment applicaions
+opal:       Open Portable Access Layer applications
+
 ===========================================================================
 
 Running Open MPI Applications
