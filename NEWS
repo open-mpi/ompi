@@ -29,6 +29,10 @@ version 1.0.
 Trunk (not on release branches yet)
 -----------------------------------
 
+- Add pkg-config(1) configuration files for ompi, ompi-c, ompi-cxx,
+  ompi-f77, ompi-f90.  See the README for more details.
+
+
 1.5
 ---
 
