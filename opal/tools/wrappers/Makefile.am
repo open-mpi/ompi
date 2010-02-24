@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -42,6 +42,9 @@ nodist_pkgdata_DATA = \
 	opalc++-wrapper-data.txt
 
 nodist_man_MANS += opalcc.1 opalc++.1
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = opal.pc
 
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f opalcc$(EXEEXT); $(LN_S) opal_wrapper opalcc)

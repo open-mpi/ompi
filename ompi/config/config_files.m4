@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -35,6 +35,11 @@ AC_DEFUN([OMPI_CONFIG_FILES],[
         ompi/tools/wrappers/mpic++-wrapper-data.txt
         ompi/tools/wrappers/mpif77-wrapper-data.txt
         ompi/tools/wrappers/mpif90-wrapper-data.txt
+        ompi/tools/wrappers/ompi.pc
+        ompi/tools/wrappers/ompi-c.pc
+        ompi/tools/wrappers/ompi-cxx.pc
+        ompi/tools/wrappers/ompi-f77.pc
+        ompi/tools/wrappers/ompi-f90.pc
         ompi/tools/ortetools/Makefile
         ompi/tools/ompi-server/Makefile
         ompi/tools/ompi-probe/Makefile

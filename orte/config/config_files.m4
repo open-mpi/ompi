@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -19,6 +19,7 @@ AC_DEFUN([ORTE_CONFIG_FILES],[
         orte/tools/wrappers/Makefile
         orte/tools/wrappers/ortecc-wrapper-data.txt
         orte/tools/wrappers/ortec++-wrapper-data.txt
+        orte/tools/wrappers/orte.pc
         orte/tools/orte-checkpoint/Makefile
         orte/tools/orte-iof/Makefile
         orte/tools/orte-restart/Makefile
