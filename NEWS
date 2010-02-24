@@ -8,7 +8,7 @@ Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2006 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006      Voltaire, Inc. All rights reserved.
 Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
                         Use is subject to license terms.
@@ -32,6 +32,9 @@ Trunk (not on release branches yet)
 1.5
 ---
 
+- Updated shared library versioning scheme and linking style of MPI
+  applications.  ABI has been broken from the v1.4 series; see the
+  README file for more details.
 - Added "knem" support (direct process-to-process copying for shared
   memory message passing).  See http://runtime.bordeaux.inria.fr/knem/
   and the README file for more details.
