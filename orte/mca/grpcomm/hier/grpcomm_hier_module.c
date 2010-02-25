@@ -51,8 +51,8 @@ static void finalize(void);
 static int xcast(orte_jobid_t job,
                  opal_buffer_t *buffer,
                  orte_rml_tag_t tag);
-static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf);
-static int barrier(void);
+static int hier_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf);
+static int hier_barrier(void);
 static int modex(opal_list_t *procs);
 static int set_proc_attr(const char *attr_name, const void *data, size_t size);
 static int get_proc_attr(const orte_process_name_t proc,
@@ -64,9 +64,9 @@ orte_grpcomm_base_module_t orte_grpcomm_hier_module = {
     init,
     finalize,
     xcast,
-    allgather,
+    hier_allgather,
     orte_grpcomm_base_allgather_list,
-    barrier,
+    hier_barrier,
     NULL,  /* onesided barrier only used by daemons */
     set_proc_attr,
     get_proc_attr,
@@ -79,10 +79,11 @@ orte_grpcomm_base_module_t orte_grpcomm_hier_module = {
 static orte_local_rank_t my_local_rank;
 static opal_list_t my_local_peers;
 static orte_process_name_t my_local_rank_zero_proc;
-static int num_local_peers;
+static size_t num_local_peers;
 static bool coll_initialized = false;
 static orte_vpid_t *my_coll_peers=NULL;
 static int cpeers=0;
+static orte_grpcomm_collective_t barrier, allgather;
 
 /**
  * Initialize the module
@@ -92,6 +93,8 @@ static int init(void)
     int rc;
     
     OBJ_CONSTRUCT(&my_local_peers, opal_list_t);
+    OBJ_CONSTRUCT(&barrier, orte_grpcomm_collective_t);
+    OBJ_CONSTRUCT(&allgather, orte_grpcomm_collective_t);
 
     if (ORTE_SUCCESS != (rc = orte_grpcomm_base_modex_init())) {
         ORTE_ERROR_LOG(rc);
@@ -115,6 +118,9 @@ static void finalize(void)
     }
     OBJ_DESTRUCT(&my_local_peers);
     
+    OBJ_DESTRUCT(&barrier);
+    OBJ_DESTRUCT(&allgather);
+
     if (NULL != my_coll_peers) {
         free(my_coll_peers);
     }
@@ -132,9 +138,8 @@ static int xcast(orte_jobid_t job,
 {
     int rc = ORTE_SUCCESS;
     opal_buffer_t buf;
-    orte_daemon_cmd_flag_t command;
     
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                          "%s grpcomm:xcast sent to job %s tag %ld",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(job), (long)tag));
@@ -144,58 +149,11 @@ static int xcast(orte_jobid_t job,
         return ORTE_SUCCESS;
     }
     
-    /* setup a buffer to handle the xcast command */
+    /* prep the output buffer */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
-    /* all we need to do is send this to the HNP - the relay logic
-     * will ensure everyone else gets it! So tell the HNP to
-     * process and relay it. The HNP will use the routed.get_routing_tree
-     * to find out who it should relay the message to.
-     */
-    command = ORTE_DAEMON_PROCESS_AND_RELAY_CMD;
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &command, 1, ORTE_DAEMON_CMD))) {
-        ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
-    }
-    /* pack the target jobid and tag for use in relay */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &job, 1, ORTE_JOBID))) {
-        ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
-    }
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &tag, 1, ORTE_RML_TAG))) {
-        ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
-    }
     
-    /* if this isn't intended for the daemon command tag, then we better
-     * tell the daemon to deliver it to the procs, and what job is supposed
-     * to get it - this occurs when a caller just wants to send something
-     * to all the procs in a job. In that use-case, the caller doesn't know
-     * anything about inserting daemon commands or what routing algo might
-     * be used, so we have to help them out a little. Functions that are
-     * sending commands to the daemons themselves are smart enough to know
-     * what they need to do.
-     */
-    if (ORTE_RML_TAG_DAEMON != tag) {
-        command = ORTE_DAEMON_MESSAGE_LOCAL_PROCS;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &command, 1, ORTE_DAEMON_CMD))) {
-            ORTE_ERROR_LOG(rc);
-            goto CLEANUP;
-        }
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &job, 1, ORTE_JOBID))) {
-            ORTE_ERROR_LOG(rc);
-            goto CLEANUP;
-        }
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &tag, 1, ORTE_RML_TAG))) {
-            ORTE_ERROR_LOG(rc);
-            goto CLEANUP;
-        }
-    }
-    
-    /* copy the payload into the new buffer - this is non-destructive, so our
-     * caller is still responsible for releasing any memory in the buffer they
-     * gave to us
-     */
-    if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(&buf, buffer))) {
+    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_app_pack_xcast(ORTE_DAEMON_PROCESS_AND_RELAY_CMD,
+                                                               job, &buf, buffer, tag))) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
@@ -225,80 +183,58 @@ CLEANUP:
 
 
 /* the barrier is executed as an allgather with data length of zero */
-static int barrier(void)
+static int hier_barrier(void)
 {
     opal_buffer_t buf1, buf2;
     int rc;
     
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                          "%s grpcomm:hier entering barrier",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     OBJ_CONSTRUCT(&buf1, opal_buffer_t);
     OBJ_CONSTRUCT(&buf2, opal_buffer_t);
     
-    if (ORTE_SUCCESS != (rc = allgather(&buf1, &buf2))) {
+    if (ORTE_SUCCESS != (rc = hier_allgather(&buf1, &buf2))) {
         ORTE_ERROR_LOG(rc);
     }
     OBJ_DESTRUCT(&buf1);
     OBJ_DESTRUCT(&buf2);
     
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                          "%s grpcomm:hier barrier complete",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     return rc;
 }
 
-static opal_buffer_t allgather_buf;
-static int allgather_num_recvd;
-
-static void process_msg(int fd, short event, void *data)
-{
-    int rc;
-    orte_message_event_t *mev = (orte_message_event_t*)data;
-    
-    /* xfer the data */
-    if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(&allgather_buf, mev->buffer))) {
-        ORTE_ERROR_LOG(rc);
-    }
-    allgather_num_recvd++;
-    /* release the message */
-    OBJ_RELEASE(mev);
-}
-
 static void allgather_recv(int status, orte_process_name_t* sender,
                             opal_buffer_t *buffer,
                             orte_rml_tag_t tag, void *cbdata)
 {
+    orte_grpcomm_collective_t *coll = (orte_grpcomm_collective_t*)cbdata;
     int rc;
     
-    /* don't process this right away - we need to get out of the recv before
-     * we process the message as it may ask us to do something that involves
-     * more messaging! Instead, setup an event so that the message gets processed
-     * as soon as we leave the recv.
-     *
-     * The macro makes a copy of the buffer, which we release above - the incoming
-     * buffer, however, is NOT released here, although its payload IS transferred
-     * to the message buffer for later processing
-     */
-    ORTE_MESSAGE_EVENT(sender, buffer, tag, process_msg);
-    
-    /* reissue the recv */
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ALLGATHER,
-                                                      ORTE_RML_NON_PERSISTENT, allgather_recv, NULL))) {
+    OPAL_THREAD_LOCK(&coll->lock);
+    /* xfer the data */
+    if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(&coll->results, buffer))) {
         ORTE_ERROR_LOG(rc);
     }
+    coll->recvd += 1;
+    if (num_local_peers == coll->recvd) {
+        opal_condition_broadcast(&coll->cond);
+    }
+    OPAL_THREAD_UNLOCK(&coll->lock);
 }
 
-static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
+static int hier_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
 {
     int rc=ORTE_SUCCESS;
     opal_list_item_t *item;
     orte_namelist_t *nm;
-    opal_buffer_t final_buf;
+    opal_buffer_t tmp_buf;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                          "%s grpcomm:hier entering allgather",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -354,58 +290,74 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
     
     /* if I am not local rank = 0 */
     if (0 != my_local_rank) {
+        /* setup the collective */
+        OPAL_THREAD_LOCK(&allgather.lock);
+        allgather.recvd = num_local_peers - 1;
+        /* reset the collector */
+        OBJ_DESTRUCT(&allgather.results);
+        OBJ_CONSTRUCT(&allgather.results, opal_buffer_t);
+        OPAL_THREAD_UNLOCK(&allgather.lock);
+        
         /* send our data to the local_rank=0 proc on this node */
         if (0 > (rc = orte_rml.send_buffer(&my_local_rank_zero_proc, sbuf, ORTE_RML_TAG_ALLGATHER, 0))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         
-        /* setup to get return buffer */
-        OBJ_CONSTRUCT(&allgather_buf, opal_buffer_t);
-
         /* now receive the final result. Be sure to do this in
          * a manner that allows us to return without being in a recv!
          */
-        allgather_num_recvd = 0;
         rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ALLGATHER,
-                                     ORTE_RML_NON_PERSISTENT, allgather_recv, NULL);
+                                     ORTE_RML_NON_PERSISTENT, allgather_recv, &allgather);
         if (rc != ORTE_SUCCESS) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         
-        ORTE_PROGRESSED_WAIT(false, allgather_num_recvd, 1);
-
-        /* cancel the lingering recv */
-        orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ALLGATHER);
-
+        /* wait to complete */
+        OPAL_THREAD_LOCK(&allgather.lock);
+        while (allgather.recvd < num_local_peers) {
+            opal_condition_wait(&allgather.cond, &allgather.lock);
+        }
         /* copy payload to the caller's buffer */
-        if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(rbuf, &allgather_buf))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(rbuf, &allgather.results))) {
             ORTE_ERROR_LOG(rc);
         }
-        OBJ_DESTRUCT(&allgather_buf);
+        OPAL_THREAD_UNLOCK(&allgather.lock);
+        
         
     } else {
         /* I am local_rank = 0 on this node! */
         
-        /* setup to recv data from the procs that share this node with me */
-        OBJ_CONSTRUCT(&allgather_buf, opal_buffer_t);
-        
-        /* seed it with my own data */
-        opal_dss.copy_payload(&allgather_buf, sbuf);
-        
+        /* setup the collective */
+        OPAL_THREAD_LOCK(&allgather.lock);
+        allgather.recvd = 1;
+        /* reset the collector */
+        OBJ_DESTRUCT(&allgather.results);
+        OBJ_CONSTRUCT(&allgather.results, opal_buffer_t);
+        /* seed with my data */
+        opal_dss.copy_payload(&allgather.results, sbuf);
+        OPAL_THREAD_UNLOCK(&allgather.lock);
+
         /* wait to receive their data. Be sure to do this in
          * a manner that allows us to return without being in a recv!
          */
-        allgather_num_recvd = 0;
         rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ALLGATHER,
-                                     ORTE_RML_NON_PERSISTENT, allgather_recv, NULL);
+                                     ORTE_RML_PERSISTENT, allgather_recv, &allgather);
         if (rc != ORTE_SUCCESS) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         
-        ORTE_PROGRESSED_WAIT(false, allgather_num_recvd, num_local_peers);
+        /* wait to complete */
+        OPAL_THREAD_LOCK(&allgather.lock);
+        while (allgather.recvd < num_local_peers) {
+            opal_condition_wait(&allgather.cond, &allgather.lock);
+        }
+        /* xfer to the tmp buf in case another allgather comes along */
+        OBJ_CONSTRUCT(&tmp_buf, opal_buffer_t);
+        opal_dss.copy_payload(&tmp_buf, &allgather.results);
+        OPAL_THREAD_UNLOCK(&allgather.lock);
         
         /* cancel the lingering recv */
         orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ALLGATHER);
@@ -415,16 +367,14 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
          * manner - the exact collective will depend upon the number of
          * nodes in the job
          */
-        OBJ_CONSTRUCT(&final_buf, opal_buffer_t);
-        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_allgather(&allgather_buf, rbuf, num_local_peers + 1,
+        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_allgather(&tmp_buf, rbuf, num_local_peers + 1,
                                                               ORTE_PROC_MY_NAME->jobid,
                                                               cpeers, my_coll_peers))) {
             ORTE_ERROR_LOG(rc);
-            OBJ_DESTRUCT(&allgather_buf);
-            OBJ_DESTRUCT(&final_buf);
+            OBJ_DESTRUCT(&tmp_buf);
             return rc;
         }
-        OBJ_DESTRUCT(&allgather_buf);  /* done with this */
+        OBJ_DESTRUCT(&tmp_buf);  /* done with this */
 
         /* distribute the results to our local peers */
         for (item = opal_list_get_first(&my_local_peers);
@@ -438,7 +388,7 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
         }
     }
 
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                          "%s grpcomm:hier allgather completed",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -458,7 +408,7 @@ static int modex(opal_list_t *procs)
     orte_attr_t *attrdata;
     opal_buffer_t bobuf;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                          "%s grpcomm:hier: modex entered",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -511,7 +461,7 @@ static int modex(opal_list_t *procs)
          * no mixing of the two. In this case, we include the info in the modex
          */
         if (orte_hetero_apps || !orte_homogeneous_nodes) {
-            OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+            OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                                  "%s grpcomm:hier: modex is required",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             
@@ -527,7 +477,7 @@ static int modex(opal_list_t *procs)
         /* if we don't have any other way to do this, then let's default to doing the
          * modex so we at least can function, even if it isn't as fast as we might like
          */
-        OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                              "%s grpcomm:hier: modex is required",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         if (ORTE_SUCCESS != (rc = orte_grpcomm_base_peer_modex(false))) {
@@ -542,7 +492,7 @@ static int modex(opal_list_t *procs)
         return ORTE_ERR_NOT_FOUND;
     }
     
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                          "%s grpcomm:hier:modex reading %s file",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),  opal_profile_file));
 
@@ -606,7 +556,7 @@ static int modex(opal_list_t *procs)
         OBJ_DESTRUCT(&bobuf);
     }
 
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                          "%s grpcomm:hier: modex completed",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -616,7 +566,7 @@ static int modex(opal_list_t *procs)
 /* the HNP will -never- execute the following as it is NOT an MPI process */
 static int set_proc_attr(const char *attr_name, const void *data, size_t size)
 {
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                          "%s grpcomm:hier:set_proc_attr for attribute %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), attr_name));
 
@@ -637,7 +587,7 @@ static int get_proc_attr(const orte_process_name_t proc,
     /* find this proc's node in the nidmap */
     if (NULL == (nid = orte_util_lookup_nid((orte_process_name_t*)&proc))) {
         /* proc wasn't found - return error */
-        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
+        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
                              "%s grpcomm:hier:get_proc_attr: no modex entry for proc %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&proc)));
@@ -660,7 +610,7 @@ static int get_proc_attr(const orte_process_name_t proc,
             memcpy(copy, attr->bytes, attr->size);
             *val = copy;
             *size = attr->size;
-            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
+            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
                                  "%s grpcomm:hier:get_proc_attr: found %d bytes for attr %s on proc %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)attr->size,
                                  attribute_name, ORTE_NAME_PRINT(&proc)));
@@ -669,7 +619,7 @@ static int get_proc_attr(const orte_process_name_t proc,
     }
     
     /* get here if attribute isn't found */
-    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
+    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
                          "%s grpcomm:hier:get_proc_attr: no attr avail or zero byte size for proc %s attribute %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&proc), attribute_name));

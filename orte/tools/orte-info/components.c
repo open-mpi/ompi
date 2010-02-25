@@ -73,10 +73,8 @@
 #include "orte/mca/ras/base/ras_private.h"
 #include "orte/mca/rmaps/rmaps.h"
 #include "orte/mca/rmaps/base/base.h"
-#if ORTE_ENABLE_MULTICAST
 #include "orte/mca/rmcast/rmcast.h"
 #include "orte/mca/rmcast/base/base.h"
-#endif
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/routed/routed.h"
@@ -312,7 +310,7 @@ void orte_info_open_components(void)
     }
     map = OBJ_NEW(orte_info_component_map_t);
     map->type = strdup("grpcomm");
-    map->components = &mca_grpcomm_base_components_available;
+    map->components = &orte_grpcomm_base.components_available;
     opal_pointer_array_add(&component_map, map);
     
     if (ORTE_SUCCESS != orte_ess_base_open()) {
@@ -372,7 +370,6 @@ void orte_info_open_components(void)
     map->components = &orte_rmaps_base.available_components;
     opal_pointer_array_add(&component_map, map);
     
-#if ORTE_ENABLE_MULTICAST
     if (ORTE_SUCCESS != orte_rmcast_base_open()) {
         goto error;
     }
@@ -380,7 +377,6 @@ void orte_info_open_components(void)
     map->type = strdup("rmcast");
     map->components = &orte_rmcast_base.rmcast_opened;
     opal_pointer_array_add(&component_map, map);
-#endif
 
     if (ORTE_SUCCESS != orte_rml_base_open()) {
         goto error;
@@ -488,10 +484,7 @@ void orte_info_close_components()
         (void) orte_rml_base_close();
         (void) orte_routed_base_close();
         (void) mca_oob_base_close();
-#if ORTE_ENABLE_MULTICAST
-
         (void) orte_rmcast_base_close();
-#endif
 #endif
         (void) orte_errmgr_base_close();
         

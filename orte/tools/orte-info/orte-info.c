@@ -202,9 +202,7 @@ int main(int argc, char *argv[])
     opal_pointer_array_add(&mca_types, "odls");
     opal_pointer_array_add(&mca_types, "ras");
     opal_pointer_array_add(&mca_types, "rmaps");
-#if ORTE_ENABLE_MULTICAST
     opal_pointer_array_add(&mca_types, "rmcast");
-#endif
     opal_pointer_array_add(&mca_types, "rml");
     opal_pointer_array_add(&mca_types, "routed");
     opal_pointer_array_add(&mca_types, "plm");

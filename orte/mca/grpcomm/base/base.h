@@ -28,6 +28,10 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/mca/mca.h"
+#include "opal/threads/mutex.h"
+#include "opal/threads/condition.h"
+
+#include "orte/mca/odls/odls_types.h"
 
 #include "orte/mca/grpcomm/grpcomm.h"
 
@@ -44,17 +48,34 @@ ORTE_DECLSPEC    int orte_grpcomm_base_open(void);
 ORTE_DECLSPEC    int orte_grpcomm_base_select(void);
 ORTE_DECLSPEC    int orte_grpcomm_base_close(void);
 
+/* daemon collective function */
+typedef void (*orte_grpcomm_daemon_collective_fn_t)(orte_process_name_t *sender,
+                                                    opal_buffer_t *data);
 /*
  * globals that might be needed
  */
+typedef struct {
+    int output;
+    bool selected;
+    opal_list_t components_available;
+    orte_grpcomm_base_component_t selected_component;
+    int profile_fd;
+    orte_grpcomm_daemon_collective_fn_t daemon_coll;
+} orte_grpcomm_base_t;
 
-ORTE_DECLSPEC extern int orte_grpcomm_base_output;
-ORTE_DECLSPEC extern bool mca_grpcomm_base_selected;
-ORTE_DECLSPEC extern opal_list_t mca_grpcomm_base_components_available;
-ORTE_DECLSPEC extern orte_grpcomm_base_component_t mca_grpcomm_base_selected_component;
-ORTE_DECLSPEC extern int orte_grpcomm_profile_fd;
+ORTE_DECLSPEC extern orte_grpcomm_base_t orte_grpcomm_base;
 
 #if !ORTE_DISABLE_FULL_SUPPORT
+
+/* structure for tracking collective operations */
+typedef struct {
+    opal_object_t super;
+    opal_mutex_t lock;
+    opal_condition_t cond;
+    orte_vpid_t recvd;
+    opal_buffer_t results;
+} orte_grpcomm_collective_t;
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_grpcomm_collective_t);
 
 /*
  * Base functions
@@ -80,13 +101,30 @@ ORTE_DECLSPEC   int orte_grpcomm_base_update_modex_entries(orte_process_name_t *
 ORTE_DECLSPEC   int orte_grpcomm_base_load_modex_data(orte_process_name_t *proc, char *attribute_name,
                                                       void *data, int num_bytes);
 
+/* app functions */
+ORTE_DECLSPEC   int orte_grpcomm_base_app_barrier(orte_process_name_t *recipient,
+                                                  orte_grpcomm_collective_t *coll);
+ORTE_DECLSPEC   int orte_grpcomm_base_app_allgather(orte_process_name_t *recipient,
+                                                    orte_grpcomm_collective_t *coll,
+                                                    opal_buffer_t *sbuf,
+                                                    opal_buffer_t *rbuf);
+ORTE_DECLSPEC   int orte_grpcomm_base_app_pack_xcast(orte_daemon_cmd_flag_t cmd,
+                                                     orte_jobid_t job,
+                                                     opal_buffer_t *buffer,
+                                                     opal_buffer_t *message,
+                                                     orte_rml_tag_t tag);
+
 /* Tuned collectives */
 ORTE_DECLSPEC void orte_grpcomm_base_coll_recv(int status, orte_process_name_t* sender,
                                                opal_buffer_t* buffer, orte_rml_tag_t tag,
                                                void* cbdata);
 ORTE_DECLSPEC int orte_grpcomm_base_allgather(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int32_t num_entries,
                                               orte_jobid_t jobid, orte_vpid_t np, orte_vpid_t *vpids);
-
+ORTE_DECLSPEC void orte_grpcomm_base_daemon_coll_recv(int status, orte_process_name_t* sender,
+                                                      opal_buffer_t* buffer, orte_rml_tag_t tag,
+                                                      void* cbdata);
+ORTE_DECLSPEC void orte_grpcomm_base_daemon_collective(orte_process_name_t *sender,
+                                                       opal_buffer_t *data);
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 
