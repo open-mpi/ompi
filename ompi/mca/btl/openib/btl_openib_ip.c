@@ -27,7 +27,7 @@
 #endif
 /* Always want to include this file */
 #include "btl_openib_endpoint.h"
-#include "btl_openib_iwarp.h"
+#include "btl_openib_ip.h"
 #if OMPI_HAVE_RDMACM
 
 /* 
@@ -84,15 +84,15 @@ static char *stringify(uint32_t addr)
  * precisely specify which addresses are used (e.g., to effect
  * specific subnet routing).
  */
-uint64_t mca_btl_openib_get_iwarp_subnet_id(struct ibv_device *ib_dev,
-                                            uint8_t port)
+uint64_t mca_btl_openib_get_ip_subnet_id(struct ibv_device *ib_dev,
+                                         uint8_t port)
 {
     opal_list_item_t *item;
 
-    /* In the off chance that the user forces non-rdmacm cpc and
-     * iwarp, the list will be uninitialized.  Return 0 to prevent
-     * crashes, and the lack of it actually working will be caught at
-     * a later stage.
+    /* In the off chance that the user forces a non-RDMACM CPC and an
+     * IP-based mechanism, the list will be uninitialized.  Return 0
+     * to prevent crashes, and the lack of it actually working will be
+     * caught at a later stage.
      */
     if (NULL == myaddrs) {
         return 0;
@@ -116,7 +116,7 @@ uint64_t mca_btl_openib_get_iwarp_subnet_id(struct ibv_device *ib_dev,
  * not necessitate having to do a list look up).  Unfortunately, the
  * subnet and IP address look up needs to match or there could be a
  * mismatch if IP Aliases are being used.  For more information on
- * this, please read comment above mca_btl_openib_get_iwarp_subnet_id.
+ * this, please read comment above mca_btl_openib_get_ip_subnet_id.
  */
 uint32_t mca_btl_openib_rdma_get_ipv4addr(struct ibv_context *verbs, 
                                           uint8_t port)
@@ -421,7 +421,7 @@ void mca_btl_openib_free_rdma_addr_list(void)
 #else 
 /* !OMPI_HAVE_RDMACM case */
 
-uint64_t mca_btl_openib_get_iwarp_subnet_id(struct ibv_device *ib_dev,
+uint64_t mca_btl_openib_get_ip_subnet_id(struct ibv_device *ib_dev,
                                             uint8_t port) 
 {
     return 0;
