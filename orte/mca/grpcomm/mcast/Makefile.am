@@ -7,8 +7,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 sources = \
         grpcomm_mcast.h \
 	grpcomm_mcast.c \
