@@ -970,7 +970,10 @@ find_my_procs:
     }
     
     /* flag that the launch msg has been processed so daemon collectives can proceed */
+    OPAL_THREAD_LOCK(&jobdat->lock);
     jobdat->launch_msg_processed = true;
+    opal_condition_broadcast(&jobdat->cond);
+    OPAL_THREAD_UNLOCK(&jobdat->lock);
     
     if (NULL != app_idx) {
         free(app_idx);

@@ -40,12 +40,9 @@
 /*
  * Global variables
  */
-int orte_grpcomm_base_output = -1;
-bool mca_grpcomm_base_selected;
+orte_grpcomm_base_t orte_grpcomm_base;
+
 orte_grpcomm_base_module_t orte_grpcomm = {0};
-opal_list_t mca_grpcomm_base_components_available;
-orte_grpcomm_base_component_t mca_grpcomm_base_selected_component;
-int orte_grpcomm_profile_fd = -1;
 
 /**
  * Function for finding and opening either all MCA components, or the one
@@ -55,14 +52,18 @@ int orte_grpcomm_base_open(void)
 {
     /* Debugging / verbose output.  Always have stream open, with
        verbose set by the mca open system... */
-    orte_grpcomm_base_output = opal_output_open(NULL);
+    orte_grpcomm_base.output = opal_output_open(NULL);
+    orte_grpcomm_base.profile_fd = -1;
+    
+    /* define the default daemon collective fn */
+    orte_grpcomm_base.daemon_coll = orte_grpcomm_base_daemon_collective;
     
     /* Open up all available components */
 
     if (ORTE_SUCCESS !=
-        mca_base_components_open("grpcomm", orte_grpcomm_base_output,
+        mca_base_components_open("grpcomm", orte_grpcomm_base.output,
                                  mca_grpcomm_base_static_components,
-                                 &mca_grpcomm_base_components_available, true)) {
+                                 &orte_grpcomm_base.components_available, true)) {
         return ORTE_ERROR;
     }
 
@@ -70,3 +71,22 @@ int orte_grpcomm_base_open(void)
 
     return ORTE_SUCCESS;
 }
+
+/* local objects */
+static void collective_constructor(orte_grpcomm_collective_t *ptr)
+{
+    OBJ_CONSTRUCT(&ptr->lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&ptr->cond, opal_condition_t);
+    OBJ_CONSTRUCT(&ptr->results, opal_buffer_t);
+    ptr->recvd = 0;
+}
+static void collective_destructor(orte_grpcomm_collective_t *ptr)
+{
+    OBJ_DESTRUCT(&ptr->lock);
+    OBJ_DESTRUCT(&ptr->cond);
+    OBJ_DESTRUCT(&ptr->results);
+}
+OBJ_CLASS_INSTANCE(orte_grpcomm_collective_t,
+                   opal_object_t,
+                   collective_constructor,
+                   collective_destructor);

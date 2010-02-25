@@ -65,6 +65,7 @@
 #include "orte/mca/plm/base/plm_private.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/ess/ess.h"
+#include "orte/mca/rmcast/rmcast.h"
 
 #include "orte/mca/odls/base/odls_private.h"
 
@@ -178,7 +179,7 @@ void orte_daemon_cmd_processor(int fd, short event, void *data)
     int ret;
     ptrdiff_t unpack_rel, save_rel;
     orte_std_cntr_t n;
-    orte_daemon_cmd_flag_t command;
+    orte_daemon_cmd_flag_t command, cmd;
 
     /* check to see if we are in a progress recursion */
     if (ORTE_PROC_IS_DAEMON && 1 < (ret = opal_progress_recursion_depth())) {
@@ -248,8 +249,9 @@ void orte_daemon_cmd_processor(int fd, short event, void *data)
         goto CLEANUP;
     }
     
-    /* see if this is a "process-and-relay" command - i.e., an xcast is underway */
-    if (ORTE_DAEMON_PROCESS_AND_RELAY_CMD == command) {
+    /* see if this is a "process-and-relay" or "process" command - i.e., an xcast is underway */
+    if (ORTE_DAEMON_PROCESS_AND_RELAY_CMD == command ||
+        ORTE_DAEMON_PROCESS_CMD == command) {
         /* get the target jobid and tag */
         n = 1;
         if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &job, &n, ORTE_JOBID))) {
@@ -265,12 +267,12 @@ void orte_daemon_cmd_processor(int fd, short event, void *data)
         save_rel = buffer->unpack_ptr - buffer->base_ptr;
         /* unpack the command that will actually be executed */
         n = 1;
-        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &command, &n, ORTE_DAEMON_CMD))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &cmd, &n, ORTE_DAEMON_CMD))) {
             ORTE_ERROR_LOG(ret);
             goto CLEANUP;
         }
         /* is this an add-procs cmd? */
-        if (ORTE_DAEMON_ADD_LOCAL_PROCS == command) {
+        if (ORTE_DAEMON_ADD_LOCAL_PROCS == cmd) {
             /* store the time the cmd was recvd */
             if (orte_timing) {
                 orte_daemon_msg_recvd.tv_sec = mesg_recvd.tv_sec;
@@ -285,16 +287,19 @@ void orte_daemon_cmd_processor(int fd, short event, void *data)
             save_rel = buffer->unpack_ptr - buffer->base_ptr;
         }
         
-        /* setup the relay buffer */
-        OBJ_CONSTRUCT(&relay_buf, opal_buffer_t);
-        /* rewind the buffer to the beginning */
-        buffer->unpack_ptr = buffer->base_ptr + unpack_rel;
-        /* copy everything to the relay buffer */
-        opal_dss.copy_payload(&relay_buf, buffer);
-        /* do the relay */
-        send_relay(&relay_buf);
-        /* cleanup */
-        OBJ_DESTRUCT(&relay_buf);
+        if (ORTE_DAEMON_PROCESS_AND_RELAY_CMD == command) {
+            /* need to relay it */
+            /* setup the relay buffer */
+            OBJ_CONSTRUCT(&relay_buf, opal_buffer_t);
+            /* rewind the buffer to the beginning */
+            buffer->unpack_ptr = buffer->base_ptr + unpack_rel;
+            /* copy everything to the relay buffer */
+            opal_dss.copy_payload(&relay_buf, buffer);
+            /* do the relay */
+            send_relay(&relay_buf);
+            /* cleanup */
+            OBJ_DESTRUCT(&relay_buf);
+        }
 
         /* rewind the buffer to the right place for processing the cmd */
         buffer->unpack_ptr = buffer->base_ptr + save_rel;

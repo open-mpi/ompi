@@ -32,6 +32,8 @@
 #include "opal/util/output.h"
 #include "opal/util/path.h"
 #include "opal/util/argv.h"
+#include "opal/threads/mutex.h"
+#include "opal/threads/condition.h"
 
 #include "orte/mca/plm/plm_types.h"
 #include "orte/util/name_fns.h"
@@ -107,6 +109,8 @@ OBJ_CLASS_INSTANCE(orte_odls_child_t,
 
 static void orte_odls_job_constructor(orte_odls_job_t *ptr)
 {
+    OBJ_CONSTRUCT(&ptr->lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&ptr->cond, opal_condition_t);
     ptr->jobid = ORTE_JOBID_INVALID;
     ptr->state = ORTE_JOB_STATE_UNDEF;
     ptr->launch_msg_processed = false;
@@ -133,6 +137,8 @@ static void orte_odls_job_destructor(orte_odls_job_t *ptr)
 {
     orte_std_cntr_t i;
     
+    OBJ_DESTRUCT(&ptr->lock);
+    OBJ_DESTRUCT(&ptr->cond);
     if (NULL != ptr->apps) {
         for (i=0; i < ptr->num_apps; i++) {
             OBJ_RELEASE(ptr->apps[i]);

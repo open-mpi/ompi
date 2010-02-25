@@ -29,6 +29,8 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/dss/dss_types.h"
+#include "opal/threads/mutex.h"
+#include "opal/threads/condition.h"
 
 #include "orte/mca/plm/plm_types.h"
 #include "orte/mca/grpcomm/grpcomm_types.h"
@@ -77,6 +79,10 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 #define ORTE_DAEMON_CHECKIN_CMD             (orte_daemon_cmd_flag_t) 24
 #define ORTE_TOOL_CHECKIN_CMD               (orte_daemon_cmd_flag_t) 25
 
+/* process msg command */
+#define ORTE_DAEMON_PROCESS_CMD             (orte_daemon_cmd_flag_t) 26
+
+
 /*
  * List object to locally store the process names and pids of
  * our children. This can subsequently be used to order termination
@@ -110,6 +116,8 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_odls_child_t);
  */
 typedef struct orte_odls_job_t {
     opal_list_item_t        super;                  /* required to place this on a list */
+    opal_mutex_t            lock;
+    opal_condition_t        cond;
     orte_job_state_t        state;                  /* state of the job */
     orte_jobid_t            jobid;                  /* jobid for this data */
     bool                    launch_msg_processed;   /* launch msg has been fully processed */

@@ -29,15 +29,15 @@ int orte_grpcomm_base_close(void)
 {
   /* If we have a selected component and module, then finalize it */
 
-  if (mca_grpcomm_base_selected) {
+  if (orte_grpcomm_base.selected) {
     orte_grpcomm.finalize();
   }
 
     /* Close all remaining available components (may be one if this is a
      OpenRTE program, or [possibly] multiple if this is ompi_info) */
 
-  mca_base_components_close(orte_grpcomm_base_output, 
-                            &mca_grpcomm_base_components_available, NULL);
+  mca_base_components_close(orte_grpcomm_base.output, 
+                            &orte_grpcomm_base.components_available, NULL);
 
   /* All done */
 
