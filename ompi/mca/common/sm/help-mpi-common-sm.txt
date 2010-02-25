@@ -13,7 +13,7 @@
 [sys call fail]
 A system call failed during shared memory initialization that should
 not have.  It is likely that your MPI job will now either abort or
-experience performance degredation.
+experience performance degradation.
 
   Local host:  %s
   System call: %s %s
