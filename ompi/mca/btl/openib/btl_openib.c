@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -629,13 +629,6 @@ int mca_btl_openib_add_procs(
            unreachable.  See trac ticket #1352. */
         if (IBV_TRANSPORT_IWARP == openib_btl->device->ib_dev->transport_type &&
             OPAL_PROC_ON_LOCAL_NODE(ompi_proc->proc_flags)) {
-            continue;
-        }
-#endif
-
-#ifdef OMPI_HAVE_RDMAOE
-        if(IBV_LINK_LAYER_ETHERNET == openib_btl->ib_port_attr.link_layer &&
-                OPAL_PROC_ON_LOCAL_NODE(ompi_proc->proc_flags)) {
             continue;
         }
 #endif
