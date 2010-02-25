@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -505,6 +505,14 @@ EOF
                 patch -N -p0 < ../../../config/lt224-icc.diff > /dev/null 2>&1
                 rm -f libtool.m4.orig
                 rm -f libtool.m4.rej
+
+                # We must touch aclocal.m4 here, because it must be
+                # newer than libtool.m4, otherwise a whole bunch of
+                # Automake-mandated timestamps may be off (depending
+                # on the resolution of timestamps on your
+                # filesystem).
+                touch -r ../aclocal.m4 libtool.m4
+
                 cd ../../..
                 patched=1
             fi
@@ -559,6 +567,7 @@ EOF
                 patch -N -p0 < lt224-icc.diff > /dev/null 2>&1
                 rm -f libtool.m4.orig
                 rm -f libtool.m4.rej
+                # We'll touch aclocal.m4 below (see comment below).
                 cd ..
                 patched=1
             fi
@@ -592,6 +601,11 @@ EOF
         patch -N -p0 < config/lt-sun-fortran.diff > /dev/null 2>&1
         rm -f libtool.m4.orig
         rm -f libtool.m4.rej
+        # We must touch aclocal.m4 here, because it must be newer than
+        # libtool.m4, otherwise a whole bunch of Automake-mandated
+        # timestamps may be off (depending on the resolution of
+        # timestamps on your filesystem).
+        touch -r aclocal.m4 config/libtool.m4
     fi
 
     run_and_check $ompi_autoconf
