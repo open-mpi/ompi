@@ -592,6 +592,11 @@ static void daemon_recv(int status,
  */
 void orte_grpcomm_mcast_daemon_coll(orte_process_name_t* sender, opal_buffer_t* buffer)
 {
+    opal_buffer_t buf;
+    int32_t n;
+    orte_jobid_t jobid;
+    orte_rml_tag_t rmltag;
+    int rc;
     
     /* we have to partially unpack the provided buffer so it can be
      * reconstructed properly for use here
@@ -622,4 +627,6 @@ void orte_grpcomm_mcast_daemon_coll(orte_process_name_t* sender, opal_buffer_t* 
         goto CLEANUP;
     }
     
+CLEANUP:
+    return;
 }
