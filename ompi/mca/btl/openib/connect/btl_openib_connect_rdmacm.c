@@ -38,7 +38,7 @@
 #include "btl_openib_proc.h"
 #include "btl_openib_endpoint.h"
 #include "connect/connect.h"
-#include "btl_openib_iwarp.h"
+#include "btl_openib_ip.h"
 #include "btl_openib_ini.h"
 
 /* JMS to be removed: see #1264 */
@@ -1697,7 +1697,7 @@ static int ipaddrcheck(id_context_t *context,
      * up).  Unfortunately, the subnet and IP address look up needs to match or
      * there could be a mismatch if IP Aliases are being used.  For more
      * information on this, please read comment above
-     * mca_btl_openib_get_iwarp_subnet_id in btl_openib_iwarp.c 
+     * mca_btl_openib_get_ip_subnet_id in btl_openib_ip.c 
      */
     ipaddr = 
         mca_btl_openib_rdma_get_ipv4addr(openib_btl->device->ib_dev_context, 
