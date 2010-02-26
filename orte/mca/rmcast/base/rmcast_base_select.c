@@ -42,8 +42,10 @@ int orte_rmcast_base_select(void)
                                         &orte_rmcast_base.rmcast_opened,
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component) ) {
-        /* This will only happen if no component was selected */
-        return ORTE_ERR_NOT_FOUND;
+        /* it is okay if no component was selected - just
+         * leave the default NULL module in place
+         */
+        return ORTE_SUCCESS;
     }
 
     orte_rmcast = *best_module;
