@@ -234,7 +234,6 @@ static mca_btl_tcp_interface_t** mca_btl_tcp_retrieve_local_interfaces(void)
     struct sockaddr_storage local_addr;
     char local_if_name[IF_NAMESIZE];
     char **include, **exclude, **argv;
-    bool skip;
     int idx;
 
     if( NULL != local_interfaces )
@@ -258,13 +257,19 @@ static mca_btl_tcp_interface_t** mca_btl_tcp_retrieve_local_interfaces(void)
      */
     for( idx = opal_ifbegin(); idx >= 0; idx = opal_ifnext (idx) ) {
         int kindex, index;
+        bool skip = false;
 
         opal_ifindextoaddr (idx, (struct sockaddr*) &local_addr, sizeof (local_addr));
         opal_ifindextoname (idx, local_if_name, sizeof (local_if_name));
 
-        /* If we were given a list of included interfaces, then check to see if the
-         * current one is a member of this set.  If so, drop down and complete
-         * processing.  If not, skip it and continue on to the next one. */
+        /* If we were given a list of included interfaces, then check
+         * to see if the current one is a member of this set.  If so,
+         * drop down and complete processing.  If not, skip it and
+         * continue on to the next one.  Note that providing an include
+         * list will override providing an exclude list as the two are
+         * mutually exclusive.  This matches how it works in
+         * mca_btl_tcp_component_create_instances() which is the function
+         * that exports the interfaces.  */
         if(NULL != include) {
             argv = include;
             skip = true;
@@ -277,14 +282,11 @@ static mca_btl_tcp_interface_t** mca_btl_tcp_retrieve_local_interfaces(void)
                 }
                 argv++;
             }
-        }
-
-        /* If we were given a list of excluded interfaces, then check to see if the
-         * current one is a member of this set.  If not, drop down and complete
-         * processing.  If so, skip it and continue on to the next one. */
-        if (NULL != exclude) {
+        } else if (NULL != exclude) {
+            /* If we were given a list of excluded interfaces, then check to see if the
+             * current one is a member of this set.  If not, drop down and complete
+             * processing.  If so, skip it and continue on to the next one. */
             argv = exclude;
-            skip = false;
             while(argv && *argv) {
                 /* When looking for interfaces to exclude, we only look at
                  * the number of characters equal to what the user provided.
