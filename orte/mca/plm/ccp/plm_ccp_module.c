@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2010 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -701,13 +701,13 @@ static char *plm_ccp_commandline(char *prefix, char *node_name, int argc, char *
 
     if(NULL != prefix) {
         commandline = (char*)malloc(len + strlen(prefix) + 8);
-        memset(commandline, '\0', strlen(commandline));
+        memset(commandline, 0, len + strlen(prefix) + 8);
         commandline[0] = '"';
         strcat(commandline, prefix);
         strcat(commandline, "\\bin\"\\");
     } else {
         commandline = (char*)malloc(len + 1);
-        memset(commandline, '\0', strlen(commandline));
+        memset(commandline, 0, len + 1);
     }
 
 
