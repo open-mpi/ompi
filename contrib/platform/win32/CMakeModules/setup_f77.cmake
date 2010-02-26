@@ -19,8 +19,10 @@ include(CMakeFortranInformation)
 
 IF(OMPI_WANT_F77_BINDINGS AND NOT F77_SETUP_DONE)
 
-  GET_FILENAME_COMPONENT(F77 ${CMAKE_Fortran_COMPILER} NAME)
+  GET_FILENAME_COMPONENT(F77_NAME ${CMAKE_Fortran_COMPILER} NAME)
   GET_FILENAME_COMPONENT(F77_PATH ${CMAKE_Fortran_COMPILER} PATH)
+
+  SET(F77 ${F77_NAME} CACHE INTERNAL "Name of the fortran compiler.")
 
   # Default compiler settings.
   IF(${F77} STREQUAL "ifort.exe")
@@ -31,6 +33,10 @@ IF(OMPI_WANT_F77_BINDINGS AND NOT F77_SETUP_DONE)
       "Fortran compiler option for setting object file name.")
     SET(F77_OUTPUT_EXE "/Fe" CACHE INTERNAL
       "Fortran compiler option for setting executable file name.")
+    SET(F77_DYNAMIC_FLAG_DEBUG "/MDd" CACHE INTERNAL
+      "Compile flag for using dynamically-loaded, multithread C runtime (Debug).")
+    SET(F77_DYNAMIC_FLAG "/MD" CACHE INTERNAL
+      "Compile flag for using dynamically-loaded, multithread C runtime.")
 
     IF(CMAKE_CL_64)
       SET(F77_LIB_PATH "$ENV{IFORT_COMPILER11}/lib/intel64")
