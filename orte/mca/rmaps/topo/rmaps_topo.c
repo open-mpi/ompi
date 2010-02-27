@@ -270,8 +270,8 @@ static int map_app_by_slot(
 static int topo_map(orte_job_t *jdata)
 {
     orte_job_map_t *map;
-    orte_app_context_t *app, **apps;
-    orte_std_cntr_t i;
+    orte_app_context_t *app;
+    int i;
     opal_list_t node_list;
     opal_list_item_t *item;
     orte_node_t *node, *nd1;
@@ -287,7 +287,6 @@ static int topo_map(orte_job_t *jdata)
     
     /* conveniece def */
     map = jdata->map;
-    apps = (orte_app_context_t**)jdata->apps->addr;
     
     /* start at the beginning... */
     vpid_start = 0;
@@ -300,8 +299,10 @@ static int topo_map(orte_job_t *jdata)
     }
     
     /* cycle through the app_contexts, mapping them sequentially */
-    for(i=0; i < jdata->num_apps; i++) {
-        app = apps[i];
+    for(i=0; i < jdata->apps->size; i++) {
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+            continue;
+        }
 
         /* if the number of processes wasn't specified, then we know there can be only
          * one app_context allowed in the launch, and that we are to launch it across
