@@ -42,8 +42,8 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .my_daemon_uri =        */   NULL,
     /*  .my_hnp =               */   {ORTE_JOBID_INVALID, ORTE_VPID_INVALID},
     /*  .my_hnp_uri =           */   NULL,
-    /*  .hnp_pid =              */    0,
-    /*  .app_num =              */   -1,
+    /*  .hnp_pid =              */   0,
+    /*  .app_num =              */   0,
     /*  .num_procs =            */   1,
     /*  .num_nodes =            */   1,
     /*  .nodename =             */   NULL,
@@ -116,7 +116,7 @@ int orte_proc_info(void)
     
     mca_base_param_reg_int_name("orte", "app_num",
                                 "Index of the app_context that defines this proc",
-                                true, false, -1, &tmp);
+                                true, false, 0, &tmp);
     orte_process_info.app_num = tmp;
     
     /* get the process id */

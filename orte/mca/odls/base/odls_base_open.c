@@ -79,7 +79,7 @@ static void orte_odls_child_constructor(orte_odls_child_t *ptr)
     ptr->name = NULL;
     ptr->restarts = 0;
     ptr->pid = 0;
-    ptr->app_idx = -1;
+    ptr->app_idx = 0;
     ptr->alive = false;
     ptr->coll_recvd = false;
     /* set the default state to "failed to start" so
@@ -135,7 +135,7 @@ static void orte_odls_job_constructor(orte_odls_job_t *ptr)
 }
 static void orte_odls_job_destructor(orte_odls_job_t *ptr)
 {
-    orte_std_cntr_t i;
+    orte_app_idx_t i;
     
     OBJ_DESTRUCT(&ptr->lock);
     OBJ_DESTRUCT(&ptr->cond);

@@ -67,8 +67,8 @@ int orte_pre_condition_transports(orte_job_t *jdata)
     char *cs_env, *string_key = NULL, *format = NULL;
     uint64_t unique_key[2];
     unsigned int *int_ptr;
-    orte_std_cntr_t n;
-    orte_app_context_t **apps;
+    int n;
+    orte_app_context_t *app;
 
 #if !defined(__WINDOWS__)
     int fd_rand;
@@ -152,9 +152,11 @@ int orte_pre_condition_transports(orte_job_t *jdata)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    apps = (orte_app_context_t**)jdata->apps->addr;
-    for (n=0; n < jdata->num_apps; n++) {
-        opal_setenv(cs_env, string_key, true, &apps[n]->env);
+    for (n=0; n < jdata->apps->size; n++) {
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, n))) {
+            continue;
+        }
+        opal_setenv(cs_env, string_key, true, &app->env);
     }
 
     free(cs_env);
