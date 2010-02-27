@@ -58,7 +58,8 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
 {
     orte_job_map_t *map;
     orte_app_context_t *app;
-    orte_std_cntr_t i, j;
+    int i, n;
+    orte_std_cntr_t j;
     opal_list_item_t *item;
     orte_node_t *node, *nd, *save=NULL;
     orte_vpid_t vpid;
@@ -93,7 +94,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
     }
     
     /* cycle through the app_contexts, mapping them sequentially */
-    for(i=0; i < jdata->num_apps; i++) {
+    for(i=0; i < jdata->apps->size; i++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
             continue;
         }
@@ -143,7 +144,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
             app->num_procs = num_nodes;
         }
         
-        for (i=0; i < app->num_procs; i++) {
+        for (n=0; n < app->num_procs; n++) {
             /* find this node on the global array - this is necessary so
              * that our mapping gets saved on that array as the objects
              * returned by the hostfile function are -not- on the array
