@@ -150,9 +150,10 @@ int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
                        int32_t *num_vals, opal_data_type_t type)
 {
     int rc;
-    int32_t i, j, n, np, nprocs;
+    int32_t i, n, np, nprocs;
     orte_job_t **jobs;
     orte_proc_t *proc;
+    orte_app_idx_t j;
     
     /* unpack into array of orte_job_t objects */
     jobs = (orte_job_t**) dest;
@@ -176,7 +177,7 @@ int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
         /* unpack the num apps */
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
-                                (&(jobs[i]->num_apps)), &n, ORTE_STD_CNTR))) {
+                                (&(jobs[i]->num_apps)), &n, ORTE_APP_IDX))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

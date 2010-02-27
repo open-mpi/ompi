@@ -560,8 +560,8 @@ static void check_debugger(int fd, short event, void *arg)
 void orte_debugger_init_before_spawn(orte_job_t *jdata)
 {
     char *env_name;
-    orte_app_context_t **apps, *app;
-    orte_std_cntr_t i;
+    orte_app_context_t *app;
+    int i;
     int32_t ljob;
 
     if (!MPIR_being_debugged && !orte_in_parallel_debugger) {
@@ -582,12 +582,14 @@ void orte_debugger_init_before_spawn(orte_job_t *jdata)
     }
     
     /* tell the procs they are being debugged */
-    apps = (orte_app_context_t**)jdata->apps->addr;
     env_name = mca_base_param_environ_variable("orte", 
                                                "in_parallel_debugger", NULL);
     
-    for (i=0; i < jdata->num_apps; i++) {
-        opal_setenv(env_name, "1", true, &apps[i]->env);
+    for (i=0; i < jdata->apps->size; i++) {
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+            continue;
+        }
+        opal_setenv(env_name, "1", true, &app->env);
     }
     free(env_name);
     

@@ -93,7 +93,7 @@ typedef struct {
     orte_process_name_t *name;   /* the OmpiRTE name of the proc */
     int32_t restarts;            /* number of times this proc has been restarted */
     pid_t pid;                   /* local pid of the proc */
-    orte_std_cntr_t app_idx;     /* index of the app_context for this proc */
+    orte_app_idx_t app_idx;      /* index of the app_context for this proc */
     bool alive;                  /* is this proc alive? */
     bool coll_recvd;             /* collective operation recvd */
     orte_proc_state_t state;     /* the state of the process */
@@ -122,7 +122,7 @@ typedef struct orte_odls_job_t {
     orte_jobid_t            jobid;                  /* jobid for this data */
     bool                    launch_msg_processed;   /* launch msg has been fully processed */
     orte_app_context_t      **apps;                 /* app_contexts for this job */
-    orte_std_cntr_t         num_apps;               /* number of app_contexts */
+    orte_app_idx_t          num_apps;               /* number of app_contexts */
     orte_mapping_policy_t   policy;                 /* mapping policy */
     int16_t                 cpus_per_rank;          /* number of cpus/rank */
     int16_t                 stride;                 /* step size between cores of multi-core/rank procs */

@@ -167,7 +167,7 @@ typedef struct {
     /** Parent object */
     opal_object_t super;
     /** Unique index when multiple apps per job */
-    int8_t idx;
+    orte_app_idx_t idx;
     /** Absolute pathname of argv[0] */
     char   *app;
     /** Number of copies of this process that are to be launched */
@@ -341,7 +341,7 @@ typedef struct {
     /* app_context array for this job */
     opal_pointer_array_t *apps;
     /* number of app_contexts in the array */
-    orte_std_cntr_t num_apps;
+    orte_app_idx_t num_apps;
     /* flags to control the launch of this job - see above
      * for description of supported flags
      */
@@ -423,7 +423,7 @@ struct orte_proc_t {
     /* exit code */
     orte_exit_code_t exit_code;
     /* the app_context that generated this proc */
-    int8_t app_idx;
+    orte_app_idx_t app_idx;
     /* a cpu list, if specified by the user */
     char *slot_list;
     /* pointer to the node where this proc is executing */

@@ -782,7 +782,7 @@ static void orte_proc_construct(orte_proc_t* proc)
     proc->local_rank = ORTE_LOCAL_RANK_INVALID;
     proc->node_rank = ORTE_NODE_RANK_INVALID;
     proc->state = ORTE_PROC_STATE_UNDEF;
-    proc->app_idx = -1;
+    proc->app_idx = 0;
     proc->slot_list = NULL;
     proc->node = NULL;
     proc->nodename = NULL;

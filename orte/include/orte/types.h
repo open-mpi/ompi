@@ -52,6 +52,10 @@ typedef uint16_t orte_node_rank_t;
 #define ORTE_LOCAL_RANK_INVALID UINT16_MAX
 #define ORTE_NODE_RANK_INVALID  UINT16_MAX
 
+/* index for app_contexts */
+typedef uint32_t orte_app_idx_t;
+#define ORTE_APP_IDX        OPAL_UINT32
+#define ORTE_APP_IDX_MAX    UINT32_MAX
 
 /*
  * general typedefs & structures

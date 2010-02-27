@@ -89,9 +89,9 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     orte_job_map_t *map;
     opal_buffer_t *wireup;
     opal_byte_object_t bo, *boptr;
-    int32_t numbytes, *tmp32;
+    int32_t numbytes, *restarts;
     int8_t flag;
-    int8_t *tmp;
+    orte_app_idx_t *app_idx;
     orte_vpid_t i;
     int j;
     orte_daemon_cmd_flag_t command;
@@ -358,7 +358,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     }
     
     /* pack the number of app_contexts for this job */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->num_apps, 1, ORTE_STD_CNTR))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->num_apps, 1, ORTE_APP_IDX))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -386,25 +386,25 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     free(bo.bytes);
     
     /* transfer and pack the app_idx and restart arrays for this job */
-    tmp = (int8_t*)malloc(jdata->num_procs);
-    tmp32 = (int32_t*)malloc(jdata->num_procs * sizeof(int32_t));
+    app_idx = (orte_app_idx_t*)malloc(jdata->num_procs * sizeof(orte_app_idx_t));
+    restarts = (int32_t*)malloc(jdata->num_procs * sizeof(int32_t));
     for (j=0, i=0; i < jdata->num_procs && j < jdata->procs->size; j++) {
         if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, j))) {
             continue;
         }
-        tmp[i] = proc->app_idx;
-        tmp32[i++] = proc->restarts;
+        app_idx[i] = proc->app_idx;
+        restarts[i++] = proc->restarts;
     }
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, tmp, jdata->num_procs, OPAL_INT8))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, app_idx, jdata->num_procs, ORTE_APP_IDX))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    free(tmp);
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, tmp32, jdata->num_procs, OPAL_INT32))) {
+    free(app_idx);
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, restarts, jdata->num_procs, OPAL_INT32))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    free(tmp32);
+    free(restarts);
     
     /* are there cpu_list strings? */
     if (jdata->map->cpu_lists) {
@@ -579,7 +579,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     opal_buffer_t alert;
     opal_list_item_t *item;
     int8_t flag;
-    int8_t *app_idx=NULL;
+    orte_app_idx_t *app_idx=NULL;
     int32_t *restarts=NULL;
     char **slot_str=NULL;
     orte_jobid_t debugger;
@@ -643,8 +643,8 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
             }
         }
         /* fake an app_idx array */
-        app_idx = (int8_t*)malloc(jobdat->num_procs * sizeof(int8_t));
-        memset(app_idx, 0, jobdat->num_procs * sizeof(int8_t));
+        app_idx = (orte_app_idx_t*)malloc(jobdat->num_procs * sizeof(orte_app_idx_t));
+        memset(app_idx, 0, jobdat->num_procs * sizeof(orte_app_idx_t));
         /* if we are doing a timing test, store the time the msg was recvd */
         if (orte_timing) {
             jobdat->launch_msg_recvd.tv_sec = orte_daemon_msg_recvd.tv_sec;
@@ -684,8 +684,9 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             goto REPORT_ERROR;
         }
+        cnt = 1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, orte_odls_globals.debugger->apps,
-                                                  &(orte_odls_globals.debugger->num_apps), ORTE_APP_CONTEXT))) {
+                                                  &cnt, ORTE_APP_CONTEXT))) {
             ORTE_ERROR_LOG(rc);
             goto REPORT_ERROR;
         }
@@ -803,7 +804,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     }
     /* unpack the number of app_contexts for this job */
     cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->num_apps, &cnt, ORTE_STD_CNTR))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->num_apps, &cnt, ORTE_APP_IDX))) {
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
     }
@@ -822,7 +823,8 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         goto REPORT_ERROR;
     }
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, jobdat->apps, &jobdat->num_apps, ORTE_APP_CONTEXT))) {
+    cnt = jobdat->num_apps;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, jobdat->apps, &cnt, ORTE_APP_CONTEXT))) {
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
     }
@@ -846,10 +848,10 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     }
    
     /* allocate memory for app_idx */
-    app_idx = (int8_t*)malloc(jobdat->num_procs);
+    app_idx = (orte_app_idx_t*)malloc(jobdat->num_procs * sizeof(orte_app_idx_t));
     /* unpack app_idx in one shot */
     cnt=jobdat->num_procs;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, app_idx, &cnt, OPAL_INT8))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, app_idx, &cnt, ORTE_APP_IDX))) {
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
     }
@@ -1269,9 +1271,9 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     char *job_str, *vpid_str, *param, *value;
     opal_list_item_t *item;
     orte_app_context_t *app, **apps;
-    orte_std_cntr_t num_apps;
+    orte_app_idx_t i, num_apps;
     orte_odls_child_t *child=NULL;
-    int i, num_processors;
+    int num_processors;
     bool oversubscribed;
     int rc=ORTE_SUCCESS, ret;
     bool launch_failed=true;

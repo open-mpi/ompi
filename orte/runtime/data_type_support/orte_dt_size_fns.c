@@ -106,7 +106,8 @@ int orte_dt_size_job(size_t *size, orte_job_t *src, opal_data_type_t type)
 {
     size_t sz;
     int32_t i;
-    orte_app_context_t **apps;
+    orte_app_context_t *app;
+    orte_proc_t *proc;
     
     /* account for the object itself */
     *size = sizeof(orte_job_t);
@@ -114,9 +115,11 @@ int orte_dt_size_job(size_t *size, orte_job_t *src, opal_data_type_t type)
     /* if src is NULL, then that's all we wanted */
     if (NULL == src) return ORTE_SUCCESS;
 
-    apps = (orte_app_context_t**)src->apps->addr;
-    for (i=0; i < src->num_apps; i++) {
-        opal_dss.size(&sz, apps[i], ORTE_APP_CONTEXT);
+    for (i=0; i < src->apps->size; i++) {
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(src->apps, i))) {
+            continue;
+        }
+        opal_dss.size(&sz, app, ORTE_APP_CONTEXT);
         *size += sz;
     }
     
@@ -124,10 +127,11 @@ int orte_dt_size_job(size_t *size, orte_job_t *src, opal_data_type_t type)
     *size += sz;
     
     for (i=0; i < src->procs->size; i++) {
-        if (NULL != src->procs->addr[i]) {
-            orte_dt_size_proc(&sz, (orte_proc_t *) src->procs->addr[i], ORTE_PROC);
-            *size += sz;
+        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(src->procs, i))) {
+            continue;
         }
+        orte_dt_size_proc(&sz, proc, ORTE_PROC);
+        *size += sz;
     }
 
 #if OPAL_ENABLE_FT == 1

@@ -165,7 +165,7 @@ int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
 
         /* pack the number of apps */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                         (void*)(&(jobs[i]->num_apps)), 1, ORTE_STD_CNTR))) {
+                         (void*)(&(jobs[i]->num_apps)), 1, ORTE_APP_IDX))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
