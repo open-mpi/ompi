@@ -135,6 +135,12 @@ int orte_register_params(void)
                                 "has attached to a running job and requested cospawn support (default: 2 sec)",
                                 false, false, 2, &orte_debugger_check_rate);
     
+    mca_base_param_reg_int_name("orte",
+                                "output_debugger_proctable",
+                                "Whether or not to output the debugger proctable after launch (default: false)",
+                                true, false, 0, &value);
+    orte_output_debugger_proctable = OPAL_INT_TO_BOOL(value);
+
     mca_base_param_reg_int_name("orte", "do_not_launch",
                                 "Perform all necessary operations to prepare to launch the application, but do not actually launch it",
                                 false, false, (int)false, &value);
