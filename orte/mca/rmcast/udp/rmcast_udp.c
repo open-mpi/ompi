@@ -842,6 +842,31 @@ static void process_recv(int fd, short event, void *cbdata)
         goto cleanup;
     }
     
+    /* if this message is from a different job family, ignore it unless
+     * it is on the system channel. We ignore these messages to avoid
+     * confusion between different jobs since we all may be sharing
+     * multicast channels. The system channel is left open to support
+     * cross-job communications via the HNP.
+     */
+    if (ORTE_JOB_FAMILY(name.jobid) != ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
+        /* if the channel is other than the system channel, ignore it */
+        if (ORTE_RMCAST_SYS_CHANNEL != chan->channel) {
+            OPAL_OUTPUT_VERBOSE((10, orte_rmcast_base.rmcast_output,
+                                 "%s rmcast:udp:recv from a different job family: %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&name)));
+            goto cleanup;
+        }
+        /* if I am other than the HNP, ignore it */
+        if (!ORTE_PROC_IS_HNP) {
+            OPAL_OUTPUT_VERBOSE((10, orte_rmcast_base.rmcast_output,
+                                 "%s rmcast:udp:recv from a different job family: %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&name)));
+            goto cleanup;
+        }
+    }
+    
     /* construct the buffer for unpacking */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
     
