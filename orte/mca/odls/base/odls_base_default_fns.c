@@ -1031,7 +1031,9 @@ REPORT_ERROR:
     }
     if (NULL != slot_str && NULL != jobdat) {
         for (j=0; j < jobdat->num_procs; j++) {
-            free(slot_str[j]);
+            if (NULL != slot_str[j]) {
+                free(slot_str[j]);
+            }
         }
         free(slot_str);
         slot_str = NULL;
