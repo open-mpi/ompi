@@ -2,7 +2,7 @@
 	- updated version of internal OTF to 1.6.5openmpi
 	  (see extlib/otf/ChangeLog)
 	- added support for tracing functions in shared libraries instrumented
-	  by the GNU, Intel, Pathscale, ot PGI 9 compiler
+	  by the GNU, Intel, PathScale, or PGI 9 compiler
 	- added support for PAPI-C counters which belong to different components
 	- added environment variable VT_METRICS_SEP to specify a string which
 	  separate the counter names in VT_METRICS
@@ -15,6 +15,9 @@
 	- added configure tests to detect Bull MPICH2
 	- use Open MPI provided Fortran wrapper library 'libmpi_f77'
 	- added functions 'MPI_Group_range_<incl|excl>' to Fortran MPI wrappers
+	- use more portable 'nm' command instead of the BFD library to collect
+	  symbol information for instrumentation with the GNU, Intel, PathScale,
+	  and PGI 9 compiler
 	- fixed detection of unique node id on MacOS platforms
 	- fixed support for LAM/MPI
 	- fixed build error: do not add objects from the static version of the
@@ -87,7 +90,7 @@
 	- do not install 'vtCC' and the corresponding config file, if the file
 	  system is case insensitive (e.g. HFS+ on MacOS X)
 	- added configure option '--with[out]-bfd' to control usage of BFD
-	  library to get symbol information for GNU, Intel, and Pathscale
+	  library to get symbol information for GNU, Intel, and PathScale
 	  compiler instrumentation
 	- preselect availability of MPI type converter functions
 	  (e.g. MPI_Comm_f2c), if '--with-openmpi' was given
@@ -236,7 +239,7 @@
 
 5.5
 	- updated version of internal OTF to 1.4 (see extlib/otf/ChangeLog)
-	- added support for automatic instrumentation by using Pathscale
+	- added support for automatic instrumentation by using PathScale
 	  compiler (version 3.1 or higher required)
 	- added support for recording function and message statistics
 	- extended user API for enable/disable tracing

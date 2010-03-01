@@ -191,18 +191,8 @@ AC_DEFUN([ACVT_COMPINST],
 		[
 			AS_IF([test x"$compinst_type" = "xgnu" -o x"$compinst_type" = "xpgi9"],
 			[
-				ACVT_BFD
-				AS_IF([test x"$bfd_error" = "xyes"],
-				[
-					AS_IF([test x"$force_bfd" = "xyes"], [exit 1])
-					AC_MSG_WARN([no usable BFD found; using nm-output file for addr./symbol mapping])
-				],
-				[
-					AS_IF([test x"$have_bfd" = "xyes"],
-					[ACVT_GNUDMGL])
-				])
-
-				AS_IF([test x"$dl_error" = x], [ACVT_DL])
+				ACVT_NM
+				ACVT_DL
 			])
 		])
 
