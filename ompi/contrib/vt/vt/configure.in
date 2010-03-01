@@ -8,9 +8,6 @@ AC_CONFIG_MACRO_DIR(config/m4)
 AM_INIT_AUTOMAKE
 AM_CONFIG_HEADER(config.h)
 
-# If Automake supports silent rules, enable them.
-m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
-
 # Check whether we are inside Open MPI package
 inside_openmpi="no"
 AC_ARG_WITH(openmpi-inside, [],
@@ -174,7 +171,6 @@ AM_CONDITIONAL(AMBUILDCOMPINST_PHAT, test x"$compinst_type" = "xsun")
 AM_CONDITIONAL(AMBUILDCOMPINST_XL, test x"$compinst_type" = "xxl")
 AM_CONDITIONAL(AMBUILDCOMPINST_FTRACE, test x"$compinst_type" = "xnec")
 AM_CONDITIONAL(AMBUILDCOMPINST_OPENUH, test x"$compinst_type" = "xopenuh")
-AM_CONDITIONAL(AMHAVEBFD, test x"$have_bfd" = "xyes")
 
 # Check for binary instrumentation by Dyninst
 ACVT_CONF_TITLE([Binary instrumentation by Dyninst])
@@ -184,7 +180,6 @@ AS_IF([test x"$force_dynattlib" = "xyes" -a x"$dynattlib_error" = "xyes"], [exit
 AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_dyninst" = "xno"],
 [AC_MSG_NOTICE([disabled via command line switch])])
 AM_CONDITIONAL(AMHAVEDYNINST, test x"$have_dyninst" = "xyes")
-AM_CONDITIONAL(AMHAVELIBERTY, test x"$have_liberty" = "xyes")
 AM_CONDITIONAL(AMBUILDDYNATTLIB, test x"$build_dynattlib" = "xyes")
 
 # Check for MPI support

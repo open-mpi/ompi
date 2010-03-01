@@ -22,28 +22,12 @@
 #include "vt_comp.h"
 #include "vt_env.h"
 #include "vt_error.h"
+#include "vt_inttypes.h"
 #include "vt_iowrap.h"
 #include "vt_memhook.h"
 #include "vt_pform.h"
 #include "vt_trc.h"
 #include "vt_thrd.h"
-
-#if defined(HAVE_BFD) && HAVE_BFD
-# include "bfd.h"
-# if defined(HAVE_GNU_DEMANGLE) && HAVE_GNU_DEMANGLE
-#   if defined(HAVE_DEMANGLE_H) && HAVE_DEMANGLE_H
-#     include "demangle.h"
-#   else /* HAVE_DEMANGLE_H */
-      extern char* cplus_demangle (const char* mangled, int options);
-#     define DMGL_NO_OPTS 0
-#     define DMGL_PARAMS  (1 << 0)
-#     define DMGL_ANSI    (1 << 1)
-#     define DMGL_JAVA    (1 << 2)
-#     define DMGL_VERBOSE (1 << 3)
-#     define DMGL_TYPES   (1 << 4)
-#   endif /* HAVE_DEMANGLE_H */
-# endif /* HAVE_GNU_DEMANGLE */
-#endif /* HAVE_BFD */
 
 #if (defined(HAVE_DL) && HAVE_DL) && (defined(HAVE_DECL_RTLD_DEFAULT) && HAVE_DECL_RTLD_DEFAULT)
 # include <dlfcn.h>
@@ -58,6 +42,9 @@
 #else /* __ia64__ */
 # define DEREF_IA64_FUNC_PTR(ptr) (ptr)
 #endif /* __ia64__ */
+
+#define NM_LINE_BLK_LEN 1024
+#define NM_LINE_MAX_LEN 16384
 
 static int gnu_init = 1;       /* is initialization needed? */
 
@@ -115,204 +102,195 @@ static HashNode* hash_get(long h) {
   return NULL;
 }
 
-#if defined(HAVE_BFD) && HAVE_BFD
-
 /*
- * Get symbol table by using BFD
+ * Get symbol table by 'nm'
  */
 
-static void get_symtab_bfd(void) {
-   bfd* BfdImage = 0;
-   int nr_all_syms;
-   int i; 
-   size_t size;
-   char* exe_env;
-   asymbol** syms;
-   int do_getsrc = vt_env_gnu_getsrc();
-#if defined(HAVE_GNU_DEMANGLE) && HAVE_GNU_DEMANGLE
-   int do_demangle = vt_env_gnu_demangle();
-#endif /* HAVE_GNU_DEMANGLE */
-
-   /* initialize BFD */
-   bfd_init();
-
-   /* get executable path from environment var. VT_APPPATH */
-   exe_env = vt_env_apppath();
-   if ( ! exe_env )
-   {
-     vt_error_msg("Could not determine path of executable.\n"
-                  "There are two possible ways to solve this problem:\n"
-                  "Set either the environment variable VT_APPPATH to the path "
-                  "of the executable or set VT_GNU_NMFILE to a symbol list "
-                  "file, created with 'nm'.");
-   }
-   else
-   {
-     /* get executable image */
-     BfdImage = bfd_openr(exe_env, 0 );
-     if ( ! BfdImage )
-       vt_error_msg("BFD: bfd_openr(): failed\n"
-                    "Could not get executable image from %s.\n"
-                    "A possible solution to the problem is to set the "
-                    "environment variable VT_GNU_NMFILE to a symbol list file, "
-                    "created with 'nm'.", exe_env);
-   }
-
-   /* check image format */
-   if ( ! bfd_check_format(BfdImage, bfd_object) ) { 
-     vt_error_msg("BFD: bfd_check_format(): failed");
-   }
-
-   /* return if file has no symbols at all */
-   if ( ! ( bfd_get_file_flags(BfdImage) & HAS_SYMS ) )
-     vt_error_msg("BFD: bfd_get_file_flags(): failed");
-
-   /* get the upper bound number of symbols */
-   size = bfd_get_symtab_upper_bound(BfdImage);
-
-   /* HAS_SYMS can be set even with no symbols in the file! */
-   if ( size < 1 )
-     vt_error_msg("BFD: bfd_get_symtab_upper_bound(): < 1");
-
-   /* read canonicalized symbols */
-   syms = (asymbol**)malloc(size);
-   nr_all_syms = bfd_canonicalize_symtab(BfdImage, syms);
-   if ( nr_all_syms < 1 )
-     vt_error_msg("BFD: bfd_canonicalize_symtab(): < 1");
-
-   for (i=0; i<nr_all_syms; ++i) {
-      char* dem_name = NULL;
-      long addr;
-      const char* filename;
-      const char* funcname;
-      unsigned int lno;
-
-      /* ignore symbols that are not a function */
-      if ( !(syms[i]->flags & BSF_FUNCTION) ) continue;
-
-      /* ignore system functions */
-      if ( syms[i]->name[0] == '.' ||
-           strncmp(syms[i]->name, "bfd_", 4) == 0 ||
-           strstr(syms[i]->name, "@@") != NULL ) continue;
-
-      /* get filename and linenumber from debug info */
-      /* needs -g */
-      filename = NULL;
-      lno = VT_NO_LNO;
-      if ( do_getsrc ) {
-        bfd_find_nearest_line(BfdImage, bfd_get_section(syms[i]), syms,
-                              syms[i]->value, &filename, &funcname, &lno);
-      }
-
-      /* calculate function address */
-      addr = syms[i]->section->vma+syms[i]->value;
-
-      /* try to get address of undefined function, if necessary */
-      if ( addr == 0 )
-        addr = (long)GET_ADDR_OF_UNDEF_FUNC(syms[i]->name);
-
-      /* ignore function, if its address could not be determined */
-      if ( addr == 0 )
-        continue;
-
-      /* use demangled name if possible */
-#if defined(HAVE_GNU_DEMANGLE) && HAVE_GNU_DEMANGLE
-      if ( do_demangle ) {
-        dem_name = cplus_demangle(syms[i]->name,
-                                  DMGL_PARAMS | DMGL_ANSI |
-                                  DMGL_VERBOSE | DMGL_TYPES);
-      }
-#endif /* HAVE_GNU_DEMANGLE */
-
-      if( dem_name ) {
-        hash_put(addr, dem_name, filename, lno);
-      } else {
-        char* n = strdup(syms[i]->name);
-        hash_put(addr, n, filename, lno);
-      }
-   }
-
-   free(syms);
-   bfd_close(BfdImage);
-   return;
-}
-#endif /* HAVE_BFD */
-
-/*
- * Get symbol table by parsing nm-file
- */
-
-static void get_symtab_nm(const char* nmfilename)
+static void get_symtab(void)
 {
-  FILE* nmfile;
-  char  line[1024];
-  int   do_getsrc = vt_env_gnu_getsrc();
+  char* nm_cmd = NULL;
+  char* nm_filename;
+  FILE* nm_stream;
 
-  /* open nm-file */
-  if( !(nmfile = fopen(nmfilename, "r")) )
-    vt_error_msg("Could not open symbol list file %s", nmfilename);
+  char* line;
+  size_t line_size;
+  uint32_t lineno = 0;
+
+  uint8_t parse_error = 0;
+
+  VT_SUSPEND_IO_TRACING();
+
+  /* open nm-file, if given */
+  nm_filename = vt_env_gnu_nmfile();
+  if ( nm_filename != NULL && strlen(nm_filename) > 0 )
+  {
+    vt_cntl_msg(2, "Collecting symbols from file %s", nm_filename);
+
+    /* open nm-file */
+    if ( (nm_stream = fopen(nm_filename, "r")) == NULL )
+      vt_error_msg("Could not open symbol list file %s", nm_filename);
+  }
+  /* otherwise, try to get symbol table automatically */
+  else
+  {
+    char* apppath;
+    char* nm;
+    size_t nm_cmd_len;
+
+    vt_cntl_msg(2, "Collecting symbols by 'nm'");
+
+    /* get executable path specified by VT_APPPATH */
+    apppath = vt_env_apppath();
+    if ( apppath == NULL || strlen(apppath) == 0 )
+    {
+      vt_error_msg("Could not determine path of executable.\n"
+                   "Please set the environment variable VT_APPPATH to the path "
+                   "of your executable or set VT_GNU_NMFILE to a symbol list "
+                   "file created with 'nm'.");
+    }
+
+    /* get nm command specified by VT_GNU_NM */
+    nm = vt_env_gnu_nm();
+    if ( nm == NULL )
+    {
+      vt_error_msg("VampirTrace was configured without an 'nm' command.\n"
+                   "Please set the environment variable VT_GNU_NM to the 'nm' "
+                   "command including command line switches which lists "
+                   "symbol/addresses of an object file in BSD-style or set "
+                   "VT_GNU_NMFILE to a pre-created symbol list file." );
+    }
+
+    /* allocate memory for nm command */
+    nm_cmd_len = strlen(nm) + 1 + strlen(apppath) + 1;
+    nm_cmd = (char*)malloc(nm_cmd_len * sizeof(char));
+    if ( nm_cmd == NULL )
+      vt_error();
+
+    /* compose nm command */
+    snprintf(nm_cmd, nm_cmd_len, "%s %s", nm, apppath);
+
+    /* execute nm command */
+    vt_cntl_msg(2, "Executing %s", nm_cmd);
+    nm_stream = popen(nm_cmd, "r");
+    /* error handling after pclose below */
+
+    nm_filename = NULL;
+  }
+
+  /* allocate memory for lines */
+  line = (char*)malloc(NM_LINE_BLK_LEN * sizeof(char));
+  if ( line == NULL )
+    vt_error();
+  line_size = NM_LINE_BLK_LEN;
 
   /* read lines */
-  while( fgets( line, sizeof(line)-1, nmfile ) )
+
+  while( nm_stream != NULL && fgets(line, line_size, nm_stream) )
   {
     char* col;
     char  delim[2] = " ";
-    int   nc = 0;
+    int   nc = 1;
 
-    long  addr = 0;
+    long  addr = -1;
     char* filename = NULL;
     char* funcname = NULL;
     unsigned int lno = VT_NO_LNO;
 
-    if( strlen(line) == 0 )
-      continue;
+    lineno++;
 
-    if( line[strlen(line)-1] == '\n' )
+    /* trigger a parse error, if line is empty */
+    if ( strlen(line) == 0 )
+    {
+      parse_error = 1;
+      break;
+    }
+
+    /* if line seems to be incomplete, enlarge line buffer and read the
+       remaining line */
+    while( !parse_error && line[strlen(line)-1] != '\n' )
+    {
+      char tmp[NM_LINE_BLK_LEN];
+
+      /* read the remaining line; if it fails (EOF) the line seems to
+         be complete after all */
+      if ( !fgets(tmp, sizeof(tmp), nm_stream) )
+        break;
+
+      /* trigger a parse error, if line is to long (>NM_LINE_MAX_LEN) */
+      if ( line_size + NM_LINE_BLK_LEN > NM_LINE_MAX_LEN )
+      {
+        parse_error = 1;
+        break;
+      }
+
+      /* enlarge line buffer */
+      line = (char*)realloc(line, (line_size + NM_LINE_BLK_LEN) * sizeof(char));
+      if ( line == NULL )
+        vt_error();
+      line_size += NM_LINE_BLK_LEN;
+
+      /* complete line */
+      strcat(line, tmp);
+    }
+    if ( parse_error )
+      break;
+
+    /* chop new-line character from line */
+    if ( line[strlen(line)-1] == '\n' )
       line[strlen(line)-1] = '\0';
 
     /* split line to columns */
     col = strtok(line, delim);
     do
     {
-      if( nc == 0 ) /* column 1 (address) */
+      if ( nc == 1 ) /* column 1 (address) */
       {
-        /* undefined symbol?
-           try to get its address by dlsym() if we've a symbol name (nc==2) */
-        if( col[0] == 'U' )
+        /* if there is no address in the first column the symbol could be
+           undefined; try get its address later (nc==3) */
+        if ( strlen(col) == 1 )
         {
-          nc++;
+          nc = 3;
+          strcpy(delim, "\t");
           continue;
         }
+        /* otherwise, try to convert address string */
         else
         {
           addr = strtol(col, NULL, 16);
-          if( addr == 0 )
+          /* check boundaries of address */
+          if ( addr == LONG_MIN || addr == LONG_MAX )
+          {
+            parse_error = 1;
             break;
+          }
         }
       }
-      else if( nc == 1 ) /* column 2 (type) */
+      else if ( nc == 2 ) /* column 2 (type) */
       {
+        /* type must have a length of 1 */
+        if ( strlen(col) != 1 )
+        {
+          parse_error = 1;
+          break;
+        }
         strcpy(delim, "\t");
       }
-      else if( nc == 2 ) /* column 3 (symbol) */
+      else if ( nc == 3 ) /* column 3 (symbol) */
       {
         funcname = col;
         strcpy(delim, ":");
 
         /* try to get address of undefined function, if necessary */
-        if( addr == 0 )
+        if ( addr == -1 )
           addr = (long)GET_ADDR_OF_UNDEF_FUNC(funcname);
 
         /* ignore function, if its address could not be determined */
-        if( addr == 0 )
+        if ( addr == 0 )
           break;
       }
-      else if( nc == 3 ) /* column 4 (filename) */
+      else if( nc == 4 ) /* column 4 (filename) */
       {
-        if( do_getsrc )
-          filename = col;
-        else
-          break;
+        filename = col;
       }
       else /* column 5 (line) */
       {
@@ -325,41 +303,63 @@ static void get_symtab_nm(const char* nmfilename)
       col = strtok(0, delim);
     } while( col );
 
-    /* add symbol to hash table */
-    if( nc >= 3 && addr > 0 )
+    /* stop reading file, if an parse error occurred */
+    if ( parse_error )
+    {
+      break;
+    }
+    /* at least three columns must be read (nc>=3) */
+    else if ( nc < 3 )
+    {
+      parse_error = 1;
+      break;
+    }
+    /* add symbol to hash table, if we have its address */
+    else if ( addr > 0 )
     {
       char* n = strdup(funcname);
       hash_put(addr, n, filename, lno);
     }
   }
 
-  /* close nm-file */
-  fclose(nmfile);
-}
+  /* close file/pipe stream */
 
-/*
- * Get symbol table either by using BFD or by parsing nm-file
- */
-static void get_symtab(void)
-{
-  char* nmfilename = vt_env_gnu_nmfile();
-
-  VT_SUSPEND_IO_TRACING();
-
-  /* read nm-output file, if given? */
-  if( nmfilename )
+  if ( nm_filename != NULL )
   {
-    get_symtab_nm( nmfilename );
+    fclose(nm_stream);
+
+    if ( parse_error )
+    {
+      vt_error_msg("%s:%u: could not be parsed.\n"
+                   "Please check the content of %s for BSD-style.",
+                   nm_filename, lineno, nm_filename);
+    }
   }
-  /* read application's executable by using BFD */
   else
   {
-#if defined(HAVE_BFD) && HAVE_BFD
-    get_symtab_bfd();
-#else /* HAVE_BFD */
-    vt_error_msg("No symbol list file given. Please set the environment variable VT_GNU_NMFILE to the path of your symbol list file, created with 'nm'.");
-#endif /* HAVE_BFD */
+    if ( nm_stream == NULL || pclose(nm_stream) != 0 )
+    {
+      vt_error_msg("Failed to execute %s\n"
+                   "Please set the environment variable VT_GNU_NM to the 'nm' "
+                   "command including command line switches which lists "
+                   "symbol/addresses of an object file in BSD-style or set "
+                   "VT_GNU_NMFILE to a pre-created symbol list file.",
+                   nm_cmd);
+    }
+    else if ( parse_error )
+    {
+      vt_error_msg("Could not parse 'nm' output created with %s.\n"
+                   "Please set the environment variable VT_GNU_NM to the 'nm' "
+                   "command including command line switches which lists "
+                   "symbol/addresses of an object file in BSD-style or set "
+                   "VT_GNU_NMFILE to a pre-created symbol list file.",
+                   nm_cmd);
+    }
+
+    free(nm_cmd);
   }
+
+  free(line);
 
   VT_RESUME_IO_TRACING();
 }

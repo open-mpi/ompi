@@ -306,22 +306,11 @@ AC_DEFUN([ACVT_CONF_SUMMARY],
 		echo ""
 		echo "  Build compiler instrumentation support:    $answer"
 
-		AS_IF([test x"$compinst_type" = "xgnu" -o x"$compinst_type" = "xpgi9"],
+		AS_IF([test x"$compinst_type" = "xgnu"],
 		[
-			AS_IF([test x"$have_bfd" = "xyes"],
-			[answer="yes"], [answer="no"])
-			echo "   Use BFD to get symbol information:        $answer"
-
-			AS_IF([test x"$have_gnudmgl" = "xyes"],
-			[answer="yes"], [answer="no"])
-			echo "    Name demangling of C++ symbols:          $answer"
-
-			AS_IF([test x"$compinst_type" != "xpgi9"],
-			[
-				echo ""
-				echo "   * The instrumentation type 'gnu' also"
-				echo "     works for Intel and Pathscale compilers."
-			])
+			echo ""
+			echo "   * The instrumentation type 'gnu' also"
+			echo "     works for Intel and Pathscale compilers."
 		])
 
 		AS_IF([test x"$have_dyninst" = "xyes"],
