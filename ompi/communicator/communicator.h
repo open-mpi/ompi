@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2009 University of Houston.  All rights reserved.
+ * Copyright (c) 2006-2010 University of Houston.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
@@ -46,6 +46,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 #define OMPI_COMM_DYNAMIC    0x00000040
 #define OMPI_COMM_INVALID    0x00000080
 #define OMPI_COMM_PML_ADDED  0x00000100
+#define OMPI_COMM_EXTRA_RETAIN   0x00000200
 
 /* some utility #defines */
 #define OMPI_COMM_IS_INTER(comm) ((comm)->c_flags & OMPI_COMM_INTER)
@@ -57,11 +58,12 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 #define OMPI_COMM_IS_DYNAMIC(comm) ((comm)->c_flags & OMPI_COMM_DYNAMIC)
 #define OMPI_COMM_IS_INVALID(comm) ((comm)->c_flags & OMPI_COMM_INVALID)
 #define OMPI_COMM_IS_PML_ADDED(comm) ((comm)->c_flags & OMPI_COMM_PML_ADDED)
+#define OMPI_COMM_IS_EXTRA_RETAIN(comm) ((comm)->c_flags & OMPI_COMM_EXTRA_RETAIN)
 
 #define OMPI_COMM_SET_DYNAMIC(comm) ((comm)->c_flags |= OMPI_COMM_DYNAMIC)
 #define OMPI_COMM_SET_INVALID(comm) ((comm)->c_flags |= OMPI_COMM_INVALID)
-
 #define OMPI_COMM_SET_PML_ADDED(comm) ((comm)->c_flags |= OMPI_COMM_PML_ADDED)
+#define OMPI_COMM_SET_EXTRA_RETAIN(comm) ((comm)->c_flags |= OMPI_COMM_EXTRA_RETAIN)
 
 /* a set of special tags: */
 
@@ -89,6 +91,9 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
  */
 #define OMPI_COMM_BLOCK_WORLD      16
 #define OMPI_COMM_BLOCK_OTHERS     8
+
+/* A macro comparing two CIDs */
+#define OMPI_COMM_CID_IS_LOWER(comm1,comm2) ( ((comm1)->c_contextid < (comm2)->c_contextid)? 1:0)
 
 OMPI_DECLSPEC extern opal_pointer_array_t ompi_mpi_communicators;
 

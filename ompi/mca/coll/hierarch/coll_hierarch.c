@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2008 University of Houston. All rights reserved.
+ * Copyright (c) 2007-2010 University of Houston. All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -269,6 +269,14 @@ int mca_coll_hierarch_module_enable (mca_coll_base_module_t *module,
     if ( OMPI_SUCCESS != ret ) {
         goto exit;
     }
+    if ( OMPI_COMM_CID_IS_LOWER ( lcomm, comm ) ) {	
+	/* Mark the communicator as 'interna' and increase the 
+	   reference count by one more. See ompi_comm_activate
+	   for detailed comments 
+	*/
+        OMPI_COMM_SET_EXTRA_RETAIN (lcomm);
+	OBJ_RETAIN(lcomm);
+    }
     
     hierarch_module->hier_comm     = comm;
     hierarch_module->hier_lcomm    = lcomm;
@@ -282,7 +290,7 @@ int mca_coll_hierarch_module_enable (mca_coll_base_module_t *module,
        information about local leader and the according subcommunicators 
     */
     llead = (struct mca_coll_hierarch_llead_t * ) malloc ( 
-                                                          sizeof(struct mca_coll_hierarch_llead_t));
+	                          sizeof(struct mca_coll_hierarch_llead_t));
     if ( NULL == llead ) {
         goto exit;
     }
@@ -295,14 +303,27 @@ int mca_coll_hierarch_module_enable (mca_coll_base_module_t *module,
      */
     mca_coll_hierarch_get_llr ( hierarch_module );
     mca_coll_hierarch_get_all_lleaders ( rank, hierarch_module, llead, 1 );        
-    
+
     /* Generate the lleader communicator assuming that all lleaders are the first
        process in the list of processes with the same color. A function generating 
        other lleader-comms will follow soon. */
-    ret = ompi_comm_split ( comm, llead->am_lleader, rank, &llcomm, 0);
+    color = MPI_UNDEFINED;
+    if ( llead->am_lleader ) {
+	color = 1;
+    }
+    ret = ompi_comm_split ( comm, color, rank, &llcomm, 0);
     if ( OMPI_SUCCESS != ret ) {
         goto exit;
     }
+    if ( OMPI_COMM_CID_IS_LOWER ( llcomm, comm ) ) {	
+	/* Mark the communicator as 'extra_retain' and increase the 
+	   reference count by one more. See ompi_comm_activate
+	   for detailed explanations. */
+	OMPI_COMM_SET_EXTRA_RETAIN (llcomm);
+	OBJ_RETAIN(llcomm);
+    }
+
+
     llead->llcomm = llcomm;
     
     /* Store it now on the data structure */
@@ -447,6 +468,7 @@ struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int root,
     struct mca_coll_hierarch_llead_t *llead=NULL;
     int found, i, rc, num_llead, offset;
     int rank = ompi_comm_rank (hierarch_module->hier_comm);
+    int color;
     
     /* determine what our offset of root is in the colorarr */
     offset = mca_coll_hierarch_get_offset ( root, 
@@ -487,10 +509,22 @@ struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int root,
 	mca_coll_hierarch_get_all_lleaders ( rank, hierarch_module, llead, offset );   
 	
 	/* create new lleader subcommunicator */
-	rc = ompi_comm_split ( hierarch_module->hier_comm, llead->am_lleader, root, &llcomm, 0);
+	color = MPI_UNDEFINED;
+	if ( llead->am_lleader ) {
+	    color = 1;
+	}
+	rc = ompi_comm_split ( hierarch_module->hier_comm, color, root, &llcomm, 0);
 	if ( OMPI_SUCCESS != rc ) {
 	    return NULL;
 	}
+	if ( OMPI_COMM_CID_IS_LOWER ( llcomm, hierarch_module->hier_comm ) ) {	
+	    /* Mark the communicator as 'extra_retain' and increase the 
+	       reference count by one more. See ompi_comm_activate
+	       for detailed explanations. */
+	    OMPI_COMM_SET_EXTRA_RETAIN (llcomm);
+	    OBJ_RETAIN(llcomm);
+	}
+
 	llead->llcomm = llcomm;
 
 	/* Store the new element on the hierarch_module struct */
@@ -502,22 +536,13 @@ struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int root,
     *llroot = MPI_UNDEFINED;
 
     if ( MPI_COMM_NULL != llcomm ) {
-	rc = ompi_comm_group ( hierarch_module->hier_comm, &group);
-	if ( OMPI_SUCCESS != rc ) {
-	    return NULL;
-	}
-
-	rc = ompi_comm_group ( llcomm, &llgroup);
-	if ( OMPI_SUCCESS != rc ) {
-	    return NULL;
-	}
+	group = hierarch_module->hier_comm->c_local_group;
+	llgroup = llcomm->c_local_group;
 	
 	rc = ompi_group_translate_ranks ( group, 1, &root, llgroup, llroot);
 	if ( OMPI_SUCCESS != rc ) {
 	    return NULL;
 	}
-	/* ompi_group_free (&llgroup) */
-	/* ompi_group_free (&group); */
     }
      
     return llcomm;

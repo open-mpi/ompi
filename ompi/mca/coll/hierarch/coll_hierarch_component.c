@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2009 University of Houston. All rights reserved.
+ * Copyright (c) 2007-2010 University of Houston. All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -163,9 +163,12 @@ mca_coll_hierarch_module_destruct(mca_coll_hierarch_module_t *hierarch_module)
         }
 
         if ( NULL != current->lleaders ) {
-            ompi_comm_free ( &(current->llcomm));
             free ( current->lleaders );
         }
+	if ( MPI_COMM_NULL != current->llcomm ) {
+            ompi_comm_free ( &(current->llcomm));
+	}
+
         free ( current );
     }
     opal_pointer_array_remove_all ( &(hierarch_module->hier_llead));
