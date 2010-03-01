@@ -143,6 +143,7 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     orte_app_context_t **apps;
     orte_node_t **nodes;
     orte_std_cntr_t n;
+    orte_app_idx_t idx;
     orte_job_map_t *map;
     char *jobid_string = NULL;
     char *param;
@@ -331,8 +332,8 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
        don't support different --prefix'es for different nodes in
        the SLURM plm) */
     cur_prefix = NULL;
-    for (n=0; n < jdata->num_apps; n++) {
-        char * app_prefix_dir = apps[n]->prefix_dir;
+    for (idx=0; idx < jdata->num_apps; idx++) {
+        char * app_prefix_dir = apps[idx]->prefix_dir;
          /* Check for already set cur_prefix_dir -- if different,
            complain */
         if (NULL != app_prefix_dir) {
