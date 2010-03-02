@@ -78,17 +78,18 @@ IF(OMPI_ENABLE_MPI_PROFILING)
   # i.e. add the pre-processor "OMPI_PROFILING_DEFINES" explicitly.
   
   # first get the file names.
-  FILE(GLOB OMPI_PROFILE_NAMES "mpi/c/*.c" )
+  # FILE(GLOB OMPI_PROFILE_NAMES "mpi/c/*.c" )
   # then copy them to the build directory with a prefix.
   FOREACH(FILE_NAME ${OMPI_MPI_C_FILES})
     GET_FILENAME_COMPONENT(relname ${FILE_NAME} NAME)
     IF(NOT ${relname} STREQUAL "attr_fn.c")
       CONFIGURE_FILE(${FILE_NAME}
                      ${PROJECT_BINARY_DIR}/mpi/c/profile/p${relname} [COPYONLY])
+      SET(OMPI_C_PROFILE_FILES ${OMPI_C_PROFILE_FILES} ${PROJECT_BINARY_DIR}/mpi/c/profile/p${relname})
     ENDIF(NOT ${relname} STREQUAL "attr_fn.c")
   ENDFOREACH(FILE_NAME ${OMPI_MPI_C_FILES})
 
-  FILE(GLOB_RECURSE OMPI_C_PROFILE_FILES "${PROJECT_BINARY_DIR}/mpi/c/profile/*.c" )
+  # FILE(GLOB_RECURSE OMPI_C_PROFILE_FILES "${PROJECT_BINARY_DIR}/mpi/c/profile/*.c" )
 
   SET_SOURCE_FILES_PROPERTIES(${OMPI_C_PROFILE_FILES} 
                               PROPERTIES COMPILE_DEFINITIONS OMPI_PROFILING_DEFINES)
