@@ -870,6 +870,9 @@ static void shutdown_callback(int fd, short flags, void *arg)
      */
     orte_odls.kill_local_procs(NULL, false);
     
+    /* whack any lingering session directory files from our jobs */
+    orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
+    
     /* cleanup the triggers */
     OBJ_DESTRUCT(&orte_exit);
 
@@ -902,9 +905,6 @@ static void shutdown_callback(int fd, short flags, void *arg)
         opal_signal_del(&sigusr2_handler);
 #endif  /* __WINDOWS__ */
     }
-
-    /* whack any lingering session directory files from our jobs */
-    orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
 
     /* Finalize and clean up ourselves */
     ret = orte_finalize();
