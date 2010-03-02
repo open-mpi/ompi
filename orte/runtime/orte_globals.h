@@ -52,6 +52,7 @@ ORTE_DECLSPEC extern bool orte_xml_output;  /* instantiated in orte/runtime/orte
 ORTE_DECLSPEC extern FILE *orte_xml_fp;   /* instantiated in orte/runtime/orte_globals.c */
 ORTE_DECLSPEC extern bool orte_help_want_aggregate;  /* instantiated in orte/util/show_help.c */
 ORTE_DECLSPEC extern char *orte_job_ident;  /* instantiated in orte/runtime/orte_globals.c */
+ORTE_DECLSPEC extern bool orte_create_session_dirs;  /* instantiated in orte/runtime/orte_init.c */
 
 /* Shortcut for some commonly used names */
 #define ORTE_NAME_WILDCARD      (&orte_name_wildcard)

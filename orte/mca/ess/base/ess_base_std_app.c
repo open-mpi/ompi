@@ -130,27 +130,28 @@ int orte_ess_base_app_setup(void)
     }
     
     /* setup my session directory */
-    OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
-                         "%s setting up session dir with\n\ttmpdir: %s\n\thost %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (NULL == orte_process_info.tmpdir_base) ? "UNDEF" : orte_process_info.tmpdir_base,
-                         orte_process_info.nodename));
-    
-    if (ORTE_SUCCESS != (ret = orte_session_dir(true,
-                                                orte_process_info.tmpdir_base,
-                                                orte_process_info.nodename, NULL,
-                                                ORTE_PROC_MY_NAME))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_session_dir";
-        goto error;
+    if (orte_create_session_dirs) {
+        OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
+                             "%s setting up session dir with\n\ttmpdir: %s\n\thost %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             (NULL == orte_process_info.tmpdir_base) ? "UNDEF" : orte_process_info.tmpdir_base,
+                             orte_process_info.nodename));
+        
+        if (ORTE_SUCCESS != (ret = orte_session_dir(true,
+                                                    orte_process_info.tmpdir_base,
+                                                    orte_process_info.nodename, NULL,
+                                                    ORTE_PROC_MY_NAME))) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_session_dir";
+            goto error;
+        }
+        
+        /* Once the session directory location has been established, set
+         the opal_output env file location to be in the
+         proc-specific session directory. */
+        opal_output_set_output_file_info(orte_process_info.proc_session_dir,
+                                         "output-", NULL, NULL);
     }
-    
-    /* Once the session directory location has been established, set
-        the opal_output env file location to be in the
-        proc-specific session directory. */
-    opal_output_set_output_file_info(orte_process_info.proc_session_dir,
-                                     "output-", NULL, NULL);
-    
     
     /* setup the routed info - the selected routed component
      * will know what to do. Some may put us in a blocking
@@ -307,20 +308,26 @@ void orte_ess_base_app_abort(int status, bool report)
     orte_cr_finalize();
     
     /* If we were asked to report this termination,
-     * write an "abort" file into our session directory
+     * write an "abort" file into our session directory if we have one
      */
     if (report) {
-        abort_file = opal_os_path(false, orte_process_info.proc_session_dir, "abort", NULL);
-        if (NULL == abort_file) {
-            /* got a problem */
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            goto CLEANUP;
+        if (orte_create_session_dirs) {
+            abort_file = opal_os_path(false, orte_process_info.proc_session_dir, "abort", NULL);
+            if (NULL == abort_file) {
+                /* got a problem */
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                goto CLEANUP;
+            }
+            OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
+                                 "%s orte_ess_app_abort: dropping abort file %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), abort_file));
+            fd = open(abort_file, O_CREAT, 0600);
+            if (0 < fd) close(fd);        
+        } else {
+            OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
+                                 "%s cannot create abort file as no session dir was created",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         }
-        OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
-                             "%s orte_ess_app_abort: dropping abort file %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), abort_file));
-        fd = open(abort_file, O_CREAT, 0600);
-        if (0 < fd) close(fd);        
     }
     
 CLEANUP:
