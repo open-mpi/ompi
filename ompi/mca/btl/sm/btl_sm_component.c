@@ -332,6 +332,11 @@ mca_btl_base_module_t** mca_btl_sm_component_init(
 
     *num_btls = 0;
 
+    /* if no session directory was created, then we cannot be used */
+    if (!orte_create_session_dirs) {
+        return NULL;
+    }
+    
     /* lookup/create shared memory pool only when used */
     mca_btl_sm_component.sm_mpool = NULL;
     mca_btl_sm_component.sm_mpool_base = NULL;

@@ -505,6 +505,11 @@ orte_session_dir_cleanup(orte_jobid_t jobid)
     char *tmp;
     char *job_session_dir=NULL;
 
+    if (!orte_create_session_dirs) {
+        /* didn't create them */
+        return ORTE_SUCCESS;
+    }
+    
     /* need to setup the top_session_dir with the prefix */
     tmp = opal_os_path(false,
                        orte_process_info.tmpdir_base,
@@ -570,6 +575,11 @@ orte_session_dir_finalize(orte_process_name_t *proc)
     char *tmp;
     char *job_session_dir, *vpid, *proc_session_dir;
 
+    if (!orte_create_session_dirs) {
+        /* didn't create them */
+        return ORTE_SUCCESS;
+    }
+    
     /* need to setup the top_session_dir with the prefix */
     tmp = opal_os_path(false,
                        orte_process_info.tmpdir_base,

@@ -422,16 +422,18 @@ static int rte_ft_event(int state)
         /*
          * Session directory re-init
          */
-        if (ORTE_SUCCESS != (ret = orte_session_dir(true,
-                                                    orte_process_info.tmpdir_base,
-                                                    orte_process_info.nodename,
-                                                    NULL, /* Batch ID -- Not used */
-                                                    ORTE_PROC_MY_NAME))) {
-            exit_status = ret;
+        if (orte_create_session_dirs) {
+            if (ORTE_SUCCESS != (ret = orte_session_dir(true,
+                                                        orte_process_info.tmpdir_base,
+                                                        orte_process_info.nodename,
+                                                        NULL, /* Batch ID -- Not used */
+                                                        ORTE_PROC_MY_NAME))) {
+                exit_status = ret;
+            }
+            
+            opal_output_set_output_file_info(orte_process_info.proc_session_dir,
+                                             "output-", NULL, NULL);
         }
-
-        opal_output_set_output_file_info(orte_process_info.proc_session_dir,
-                                         "output-", NULL, NULL);
 
         /*
          * Notify Routed

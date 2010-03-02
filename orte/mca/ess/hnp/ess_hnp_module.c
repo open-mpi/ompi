@@ -350,48 +350,50 @@ static int rte_init(void)
 #endif
 
     /* setup my session directory */
-    OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
-                         "%s setting up session dir with\n\ttmpdir: %s\n\thost %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (NULL == orte_process_info.tmpdir_base) ? "UNDEF" : orte_process_info.tmpdir_base,
-                         orte_process_info.nodename));
-
-    if (ORTE_SUCCESS != (ret = orte_session_dir(true,
-                                orte_process_info.tmpdir_base,
-                                orte_process_info.nodename, NULL,
-                                ORTE_PROC_MY_NAME))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_session_dir";
-        goto error;
-    }
-
-    /* Once the session directory location has been established, set
-       the opal_output hnp file location to be in the
-       proc-specific session directory. */
-    opal_output_set_output_file_info(orte_process_info.proc_session_dir,
-                                     "output-", NULL, NULL);
-
-    /* save my contact info in a file for others to find */
-    jobfam_dir = opal_dirname(orte_process_info.job_session_dir);
-    contact_path = opal_os_path(false, jobfam_dir, "contact.txt", NULL);
-    free(jobfam_dir);
-    
-    OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
-                         "%s writing contact file %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         contact_path));
-    
-    if (ORTE_SUCCESS != (ret = orte_write_hnp_contact_file(contact_path))) {
+    if (orte_create_session_dirs) {
         OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
-                             "%s writing contact file failed with error %s",
+                             "%s setting up session dir with\n\ttmpdir: %s\n\thost %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_ERROR_NAME(ret)));
-    } else {
+                             (NULL == orte_process_info.tmpdir_base) ? "UNDEF" : orte_process_info.tmpdir_base,
+                             orte_process_info.nodename));
+        
+        if (ORTE_SUCCESS != (ret = orte_session_dir(true,
+                                                    orte_process_info.tmpdir_base,
+                                                    orte_process_info.nodename, NULL,
+                                                    ORTE_PROC_MY_NAME))) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_session_dir";
+            goto error;
+        }
+        
+        /* Once the session directory location has been established, set
+         the opal_output hnp file location to be in the
+         proc-specific session directory. */
+        opal_output_set_output_file_info(orte_process_info.proc_session_dir,
+                                         "output-", NULL, NULL);
+        
+        /* save my contact info in a file for others to find */
+        jobfam_dir = opal_dirname(orte_process_info.job_session_dir);
+        contact_path = opal_os_path(false, jobfam_dir, "contact.txt", NULL);
+        free(jobfam_dir);
+        
         OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
-                             "%s wrote contact file",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                             "%s writing contact file %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             contact_path));
+        
+        if (ORTE_SUCCESS != (ret = orte_write_hnp_contact_file(contact_path))) {
+            OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
+                                 "%s writing contact file failed with error %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_ERROR_NAME(ret)));
+        } else {
+            OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
+                                 "%s wrote contact file",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        }
+        free(contact_path);
     }
-    free(contact_path);
 
     /* setup the global job and node arrays */
     orte_job_data = OBJ_NEW(opal_pointer_array_t);
