@@ -32,6 +32,7 @@
 #include "orte/util/name_fns.h"
 #include "orte/util/session_dir.h"
 #include "orte/mca/ess/ess.h"
+#include "orte/mca/odls/odls.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/errmgr/base/errmgr_private.h"
@@ -75,8 +76,16 @@ void orte_errmgr_base_error_abort(int error_code, char *fmt, ...)
     }
     va_end(arglist);
     
-    /* cleanup my session directory */
-    orte_session_dir_finalize(ORTE_PROC_MY_NAME);
+    /* if I am a daemon or the HNP... */
+    if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
+        /* whack my local procs */
+        orte_odls.kill_local_procs(NULL, false);
+        /* whack any session directories */
+        orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
+    } else {
+        /* cleanup my session directory */
+        orte_session_dir_finalize(ORTE_PROC_MY_NAME);
+    }
     
     /* abnormal exit */
     orte_ess.abort(error_code, false);
