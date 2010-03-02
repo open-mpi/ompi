@@ -29,7 +29,7 @@ vtdatadir = $(datadir)
 
 bin_PROGRAMS = $(WRAP_CC) $(WRAP_CXX) $(WRAP_F77) $(WRAP_FC)
 
-INCLUDES = -I$(top_srcdir)/vtlib/
+INCLUDES = -I$(top_builddir)/util/ -I$(top_srcdir)/vtlib/
 
 CC = $(CC_FOR_BUILD)
 CFLAGS = $(CFLAGS_FOR_BUILD)
@@ -41,20 +41,18 @@ CPPFLAGS = $(CPPFLAGS_FOR_BUILD)
 LDFLAGS = $(LDFLAGS_FOR_BUILD)
 LIBS = $(LIBS_FOR_BUILD)
 
-AM_CXXFLAGS = -DDATADIR=\"$(datadir)\"
-
-vtcc_SOURCES = compwrap.cc compwrap.h $(top_srcdir)/util/util.c
+vtcc_SOURCES = compwrap.cc compwrap.h $(top_srcdir)/util/util.c $(top_srcdir)/util/installdirs.c
 vtcc_CXXFLAGS = $(AM_CXXFLAGS) -DWRAP_LANG_CC 
 
 vtcxx_SOURCES = compwrap.cc compwrap.h
 vtcxx_CXXFLAGS = $(AM_CXXFLAGS) -DWRAP_LANG_CXX
-vtcxx_LDADD = util.$(OBJEXT)
+vtcxx_LDADD = util.$(OBJEXT) installdirs.$(OBJEXT)
 
 vtf77_SOURCES = compwrap.cc compwrap.h
 vtf77_CXXFLAGS = $(AM_CXXFLAGS) -DWRAP_LANG_F77
-vtf77_LDADD = util.$(OBJEXT)
+vtf77_LDADD = util.$(OBJEXT) installdirs.$(OBJEXT)
 
 vtf90_SOURCES = compwrap.cc compwrap.h
 vtf90_CXXFLAGS = $(AM_CXXFLAGS) -DWRAP_LANG_F90
-vtf90_LDADD = util.$(OBJEXT)
+vtf90_LDADD = util.$(OBJEXT) installdirs.$(OBJEXT)
 

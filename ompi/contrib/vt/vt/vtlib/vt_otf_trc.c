@@ -25,6 +25,8 @@
 #include "vt_pform.h"
 #include "vt_error.h"
 
+#include "util/installdirs.h"
+
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -457,10 +459,19 @@ void vt_close()
   /*- Rank 0: unify trace files -*/
   if (my_trace == 0 && vt_env_do_unify())
     {
-      int len = strlen(vt_env_gdir()) + strlen(vt_env_fprefix()) + 32;
+      char* vtunify;
       char* filename;
       char* cmd;
+      int len;
 
+      vtunify = vt_installdirs_expand("${bindir}/vtunify");
+      if ( vtunify == NULL )
+	vt_error();
+
+      if ( access(vtunify, X_OK) == -1 )
+	vt_error_msg("Cannot execute %s", vtunify);
+
+      len = strlen(vt_env_gdir()) + strlen(vt_env_fprefix()) + 32;
       filename = (char*)calloc(len, sizeof(char));
       if ( filename == NULL )
 	vt_error();
@@ -482,36 +493,21 @@ void vt_close()
         }
 
       /*- do actual merge -*/
-#ifdef BINDIR
-      if (access(BINDIR "/vtunify", X_OK) == 0 )
-        {
-	  cmd = (char*)calloc(strlen(BINDIR) + 16 + len, sizeof(char));
-	  if ( cmd == NULL )
-	    vt_error();
-          sprintf(cmd, "%s/vtunify %d %s/%s %s %s %s %s", BINDIR, num_traces,
+      cmd = (char*)calloc(strlen(vtunify) + 16 + len, sizeof(char));
+      if ( cmd == NULL )
+	vt_error();
+      sprintf(cmd, "%s %d %s/%s %s %s %s %s",
+	          vtunify, num_traces,
 	          vt_env_gdir(), vt_env_fprefix(),
 		  vt_env_stat_show() ? "" : "-q",
 		  vt_env_compression() ? "" : "-c",
 		  vt_env_do_clean() ? "" : "-k",
 		  vt_env_is_verbose() ? "-v" : "");
-        }
-      else
-        {
-#endif
-	  cmd = (char*)calloc(10 + len, sizeof(char));
-	  if ( cmd == NULL )
-	    vt_error();
-          sprintf(cmd, "vtunify %d %s/%s %s %s %s %s", num_traces,
-		  vt_env_gdir(), vt_env_fprefix(),
-		  vt_env_stat_show() ? "" : "-q",
-		  vt_env_compression() ? "" : "-c",
-		  vt_env_do_clean() ? "" : "-k",
-		  vt_env_is_verbose() ? "-v" : "");
-#ifdef BINDIR
-        }
-#endif
+
       vt_cntl_msg(cmd);
       system(cmd);
+
+      free(vtunify);
       free(filename);
       free(cmd);
     }

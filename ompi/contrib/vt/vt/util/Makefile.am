@@ -1,7 +1,12 @@
 noinst_PROGRAMS = dummy
 
 dummy_SOURCES = \
-	dummy.c \
+	installdirs.h \
 	util.h \
+	dummy.c \
+	installdirs.c \
 	util.c
+
+nodist_dummy_SOURCES = \
+	installdirs_conf.h
 

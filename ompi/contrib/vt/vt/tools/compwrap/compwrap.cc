@@ -24,6 +24,7 @@
 #include <sys/wait.h>
 
 #include "util/util.h"
+#include "util/installdirs.h"
 
 #include "compwrap.h"
 
@@ -99,7 +100,10 @@ ReadDataFile()
       "compiler_iflags_ftrace", "inst_avail", "inst_default"
    };
    
-   std::string data_file = DATADIR"/" + ExeName + "-wrapper-data.txt";
+   std::string data_file =
+     std::string(vt_installdirs_get(VT_INSTALLDIR_DATADIR)) + "/" +
+     ExeName + "-wrapper-data.txt";
+
    std::ifstream in( data_file.c_str() );
    if( !in )
    {
@@ -186,12 +190,40 @@ ReadDataFile()
       else if( key.compare( "includedir" ) == 0 )
       {
 	 if( value.length() > 0 )
-	    Properties.includedir = "-I" + value;
+	 {
+	    char* includedir = vt_installdirs_expand( value.c_str() );
+	    if( includedir )
+	    {
+	       Properties.includedir = "-I" + std::string(includedir);
+	       free( includedir );
+	    }
+	    else
+	    {
+	       std::cerr << ExeName << ": "
+		         << data_file << ":" << line_no << ": "
+		         << "could not be parsed" << std::endl;
+	       error = true;
+	    }
+	 }
       }
       else if( key.compare( "libdir" ) == 0 )
       {
 	 if( value.length() > 0 )
-	    Properties.libdir = "-L" + value;
+	 {
+	    char* libdir = vt_installdirs_expand( value.c_str() );
+	    if( libdir )
+	    {
+	       Properties.libdir = "-L" + std::string(libdir);
+	       free( libdir );
+	    }
+	    else
+	    {
+	       std::cerr << ExeName << ": "
+		         << data_file << ":" << line_no << ": "
+		         << "could not be parsed" << std::endl;
+	       error = true;
+	    }
+	 }
       }
       else if( key.compare( "opari_bin" ) == 0 )
       {
@@ -895,7 +927,9 @@ Wrapper::showUsageText()
 
    std::cout << "     -vt:opari <args>    Set options for OPARI command."
 	     << std::endl
-	     << "                         (see "DATADIR"/doc/opari/Readme.html for more information)"
+	     << "                         (see "
+	     << vt_installdirs_get(VT_INSTALLDIR_DATADIR)
+	     << "/doc/opari/Readme.html for more information)"
 	     << std::endl << std::endl
 	     << "     -vt:<seq|mpi|omp|hyb>"
 	     << std::endl

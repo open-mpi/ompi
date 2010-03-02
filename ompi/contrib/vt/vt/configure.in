@@ -2,8 +2,8 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.60)
-AC_INIT(VampirTrace, 5.4.11, vampirsupport@zih.tu-dresden.de)
-AM_INIT_AUTOMAKE(VampirTrace, 5.4.11)
+AC_INIT(VampirTrace, 5.4.12, vampirsupport@zih.tu-dresden.de)
+AM_INIT_AUTOMAKE(VampirTrace, 5.4.12)
 AM_CONFIG_HEADER(config.h)
 
 ACVT_CONF_INIT
@@ -41,7 +41,7 @@ AC_CANONICAL_HOST
 
 # Correct install paths
 AS_IF([test x"$prefix" = "xNONE"], [prefix="$ac_default_prefix"])
-AS_IF([test x"$exec_prefix" = "xNONE"], [exec_prefix="$prefix"])
+AS_IF([test x"$exec_prefix" = "xNONE"], [exec_prefix="\${prefix}"])
 AS_IF([test x"$includedir" = x -o "$includedir" = "\${prefix}/include"],
 [includedir="$includedir/vampirtrace"])
 AS_IF([test x"$datarootdir" = x -o "$datarootdir" = "\${prefix}/share"],
@@ -254,6 +254,7 @@ ACVT_COMPWRAP
 # Output files
 AC_CONFIG_FILES([Makefile
 	util/Makefile
+	util/installdirs_conf.h
 	extlib/Makefile
 	vtlib/Makefile
 	tools/Makefile
