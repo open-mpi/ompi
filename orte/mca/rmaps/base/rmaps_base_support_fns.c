@@ -415,7 +415,7 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
 int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
 {
     orte_job_map_t *map;
-    orte_vpid_t vpid, n;
+    orte_vpid_t vpid;
     int i, j;
     orte_node_t *node;
     orte_proc_t *proc;
@@ -467,7 +467,6 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
                 continue;
             }
-            vpid = i;
             for (j=0; j < node->procs->size; j++) {
                 if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
                     continue;
@@ -478,11 +477,12 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
                 }
                 if (ORTE_VPID_INVALID == proc->name.vpid) {
                     /* find the next available vpid */
-                    for (n=0; n < jdata->num_procs; n++) {
-                        if (NULL == opal_pointer_array_get_item(jdata->procs, n)) {
-                            break;
-                        }
+                    vpid = i;
+                    while (NULL != opal_pointer_array_get_item(jdata->procs, vpid)) {
                         vpid += map->num_nodes;
+                        if (jdata->num_procs <= vpid) {
+                            vpid = vpid - jdata->num_procs;
+                        }
                     }
                     proc->name.vpid = vpid;
                 }
