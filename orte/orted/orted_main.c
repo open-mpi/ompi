@@ -903,6 +903,9 @@ static void shutdown_callback(int fd, short flags, void *arg)
 #endif  /* __WINDOWS__ */
     }
 
+    /* whack any lingering session directory files from our jobs */
+    orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
+
     /* Finalize and clean up ourselves */
     ret = orte_finalize();
     exit(orte_exit_status);
