@@ -379,10 +379,12 @@ static int rdmacm_setup_qp(rdmacm_contents_t *contents,
     size_t req_inline;
 
     if (qpnum == mca_btl_openib_component.credits_qp) {
-        int i;
+        int qp;
 
-        for (i = 0; i < mca_btl_openib_component.num_qps; i++) {
-            reserved += mca_btl_openib_component.qp_infos[i].u.pp_qp.rd_rsv;
+        for (qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
+            if(BTL_OPENIB_QP_TYPE_PP(qp)) {
+                reserved += mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv;
+            }
         }
         credits = mca_btl_openib_component.num_qps;
     }
