@@ -610,7 +610,7 @@ static int mca_btl_tcp_component_create_instances(void)
             /* check to see if this interface exists in the exclude list */
             argv = exclude;
             while(argv && *argv) {
-                if(strcmp(*argv,if_name) == 0)
+                if(strncmp(*argv,if_name,strlen(*argv)) == 0)
                     break;
                 argv++;
             }
