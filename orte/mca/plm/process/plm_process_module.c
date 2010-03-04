@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
+ * Copyright (c) 2004-2010 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -246,7 +246,7 @@ static char *generate_commandline(char *prefix, int argc, char **argv)
     }
 
     commandline = (char*)malloc( len + strlen(prefix) + 13);
-    memset(commandline, '\0', strlen(commandline));
+    memset(commandline, 0, len + strlen(prefix) + 13);
 
     strcat(commandline, "\"");
     strcat(commandline, prefix);
@@ -534,7 +534,7 @@ static int wmi_launch_child(char *prefix, char *remote_node, int argc, char **ar
     
     char *domain_name = getenv("USERDOMAIN");
     char *ntlm_auth = (char *) malloc(sizeof(char)*(strlen("ntlmdomain:")+strlen(domain_name)+1));
-    memset(ntlm_auth, 0, strlen(ntlm_auth));
+    memset(ntlm_auth, 0, sizeof(char)*(strlen("ntlmdomain:")+strlen(domain_name)+1));
     strcat(ntlm_auth, "ntlmdomain:");
     strcat(ntlm_auth, domain_name);
 
