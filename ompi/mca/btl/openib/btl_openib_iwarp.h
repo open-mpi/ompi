@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2008 Chelsio, Inc. All rights reserved.
- * Copyright (c) 2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008      Chelsio, Inc. All rights reserved.
+ * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
  *
  * Additional copyrights may follow
  *
@@ -22,7 +22,8 @@ BEGIN_C_DECLS
  * @param ib_dev (IN) IB/iWARP device
  * @return            Value of the IPv4 Address bitwise-and'ed with the Netmask
  */
-extern uint64_t mca_btl_openib_get_iwarp_subnet_id(struct ibv_device *ib_dev);
+extern uint64_t mca_btl_openib_get_iwarp_subnet_id(struct ibv_device *ib_dev,
+                                                   uint8_t port);
 
 /**
  * Get the IPv4 address of the specified HCA/RNIC device and physical port.
