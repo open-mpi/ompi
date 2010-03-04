@@ -253,16 +253,10 @@ static void get_symtab(void)
           strcpy(delim, "\t");
           continue;
         }
-        /* otherwise, try to convert address string */
+        /* otherwise, convert address string */
         else
         {
           addr = strtol(col, NULL, 16);
-          /* check boundaries of address */
-          if ( addr == LONG_MIN || addr == LONG_MAX )
-          {
-            parse_error = 1;
-            break;
-          }
         }
       }
       else if ( nc == 2 ) /* column 2 (type) */
@@ -337,18 +331,20 @@ static void get_symtab(void)
   }
   else
   {
-    if ( nm_stream == NULL || pclose(nm_stream) != 0 )
+    uint8_t nmcmd_error = (nm_stream == NULL || pclose(nm_stream) != 0);
+
+    if ( parse_error )
     {
-      vt_error_msg("Failed to execute %s\n"
+      vt_error_msg("Could not parse 'nm' output created with %s.\n"
                    "Please set the environment variable VT_GNU_NM to the 'nm' "
                    "command including command line switches which lists "
                    "symbol/addresses of an object file in BSD-style or set "
                    "VT_GNU_NMFILE to a pre-created symbol list file.",
                    nm_cmd);
     }
-    else if ( parse_error )
+    else if ( nmcmd_error )
     {
-      vt_error_msg("Could not parse 'nm' output created with %s.\n"
+      vt_error_msg("Failed to execute %s\n"
                    "Please set the environment variable VT_GNU_NM to the 'nm' "
                    "command including command line switches which lists "
                    "symbol/addresses of an object file in BSD-style or set "
