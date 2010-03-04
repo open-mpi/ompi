@@ -76,10 +76,12 @@ void Filter::addLeave( uint32_t process, uint64_t time ) {
 	stack<StackItem>& rstack= callStack.insert(
 		pair<uint32_t, stack<StackItem> >( process, stack<StackItem>() ) ).first->second;
 	
-	rstack.top().it->second.accDurationIncl+= time;
-	rstack.top().it->second.accDurationExcl+= time;
-	
-	rstack.pop();
+	if( false == rstack.empty() ) {
+		rstack.top().it->second.accDurationIncl+= time;
+		rstack.top().it->second.accDurationExcl+= time;
+
+		rstack.pop();
+	}
 
 	if( false == rstack.empty() ) {
 
