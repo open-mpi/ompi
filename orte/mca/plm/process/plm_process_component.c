@@ -114,15 +114,6 @@ int orte_plm_process_component_open(void)
                            "Force the launcher to always use process, even for local daemons",
                            false, false, false, &tmp);
     mca_plm_process_component.force_process = OPAL_INT_TO_BOOL(tmp);
-        
-    tmp = mca_base_param_reg_int_name("orte", "timing",
-                                      "Request that critical timing loops be measured",
-                                      false, false, 0, &value);
-    if (value != 0) {
-        mca_plm_process_component.timing = true;
-    } else {
-        mca_plm_process_component.timing = false;
-    }
 
     mca_base_param_reg_string(c, "orted",
                               "The command name that the process plm component will invoke for the ORTE daemon",

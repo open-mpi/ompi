@@ -124,15 +124,6 @@ static int plm_ccp_open(void)
                               "It is set to the application name by default.",
                               false, false, NULL,
                               &mca_plm_ccp_component.job_name);
-
-    tmp = mca_base_param_reg_int_name("orte", "timing",
-                                      "Request that critical timing loops be measured",
-                                      false, false, 0, &value);
-    if (value != 0) {
-        mca_plm_ccp_component.timing = true;
-    } else {
-        mca_plm_ccp_component.timing = false;
-    }
     
     mca_plm_ccp_component.checked_paths = NULL;
 
