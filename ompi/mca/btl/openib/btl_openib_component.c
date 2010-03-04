@@ -2678,41 +2678,6 @@ btl_openib_component_init(int *num_btl_modules,
                 opal_hash_table_t);
     }
 
-    /* Loop through all the btl modules that we made and find every
-       base device that doesn't have device->qps setup on it yet (remember
-       that some modules may share the same device, so when going through
-       to loop, we may hit a device that was already setup earlier in
-       the loop). */
-    for (item = opal_list_get_first(&btl_list);
-         opal_list_get_end(&btl_list) != item;
-         item = opal_list_get_next(item)) {
-        mca_btl_base_selected_module_t *m = 
-            (mca_btl_base_selected_module_t*) item;
-        mca_btl_openib_device_t *device = 
-            ((mca_btl_openib_module_t*) m->btl_module)->device;
-        if (NULL == device->qps) {
-
-            /* Setup the device qps info */
-            device->qps = (mca_btl_openib_device_qp_t*)
-                calloc(mca_btl_openib_component.num_qps,
-                       sizeof(mca_btl_openib_device_qp_t));
-            for (i = 0; i < mca_btl_openib_component.num_qps; i++) {
-                OBJ_CONSTRUCT(&device->qps[i].send_free, ompi_free_list_t);
-                OBJ_CONSTRUCT(&device->qps[i].recv_free, ompi_free_list_t);
-            }
-
-            /* Do finial init on device */
-            ret = prepare_device_for_use(device);
-            if (OMPI_SUCCESS != ret) {
-                orte_show_help("help-mpi-btl-openib.txt",
-                               "error in device init", true, 
-                               orte_process_info.nodename,
-                               ibv_get_device_name(device->ib_dev));
-                goto no_btls;
-            }
-        }
-    }
-
     /* Allocate space for btl modules */
     mca_btl_openib_component.openib_btls =
         malloc(sizeof(mca_btl_openib_module_t*) *
@@ -2735,6 +2700,8 @@ btl_openib_component_init(int *num_btl_modules,
     while (NULL != (item = opal_list_remove_first(&btl_list))) {
         ib_selected = (mca_btl_base_selected_module_t*)item;
         openib_btl = (mca_btl_openib_module_t*)ib_selected->btl_module;
+        mca_btl_openib_device_t *device = openib_btl->device;
+        int qp_index;
 
         /* Search for a CPC that can handle this port */
         ret = ompi_btl_openib_connect_base_select_for_local_port(openib_btl);
@@ -2756,6 +2723,39 @@ btl_openib_component_init(int *num_btl_modules,
             goto no_btls;
         }
         ++i;
+
+        /* For each btl module that we made - find every
+           base device that doesn't have device->qps setup on it yet (remember
+           that some modules may share the same device, so when going through
+           to loop, we may hit a device that was already setup earlier in
+           the loop). 
+           
+           We may to call for prepare_device_for_use() only after adding the btl
+           to mca_btl_openib_component.openib_btls, since the prepare_device_for_use 
+           adds device to async thread that require access to 
+           mca_btl_openib_component.openib_btls.
+        */
+
+        if (NULL == device->qps) {
+            /* Setup the device qps info */
+            device->qps = (mca_btl_openib_device_qp_t*)
+                calloc(mca_btl_openib_component.num_qps,
+                       sizeof(mca_btl_openib_device_qp_t));
+            for (qp_index = 0; qp_index < mca_btl_openib_component.num_qps; qp_index++) {
+                OBJ_CONSTRUCT(&device->qps[qp_index].send_free, ompi_free_list_t);
+                OBJ_CONSTRUCT(&device->qps[qp_index].recv_free, ompi_free_list_t);
+            }
+
+            /* Do finial init on device */
+            ret = prepare_device_for_use(device);
+            if (OMPI_SUCCESS != ret) {
+                orte_show_help("help-mpi-btl-openib.txt",
+                               "error in device init", true, 
+                               orte_process_info.nodename,
+                               ibv_get_device_name(device->ib_dev));
+                goto no_btls;
+            }
+        }
     }
     /* If we got nothing, then error out */
     if (0 == i) {
