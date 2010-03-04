@@ -27,7 +27,7 @@
 #endif
 /* Always want to include this file */
 #include "btl_openib_endpoint.h"
-#include "btl_openib_iwarp.h"
+#include "btl_openib_ip.h"
 #if OMPI_HAVE_RDMACM
 
 /* 
@@ -84,15 +84,15 @@ static char *stringify(uint32_t addr)
  * precisely specify which addresses are used (e.g., to effect
  * specific subnet routing).
  */
-uint64_t mca_btl_openib_get_iwarp_subnet_id(struct ibv_device *ib_dev,
-                                            uint8_t port)
+uint64_t mca_btl_openib_get_ip_subnet_id(struct ibv_device *ib_dev,
+                                         uint8_t port)
 {
     opal_list_item_t *item;
 
-    /* In the off chance that the user forces non-rdmacm cpc and
-     * iwarp, the list will be uninitialized.  Return 0 to prevent
-     * crashes, and the lack of it actually working will be caught at
-     * a later stage.
+    /* In the off chance that the user forces a non-RDMACM CPC and an
+     * IP-based mechanism, the list will be uninitialized.  Return 0
+     * to prevent crashes, and the lack of it actually working will be
+     * caught at a later stage.
      */
     if (NULL == myaddrs) {
         return 0;
@@ -116,7 +116,7 @@ uint64_t mca_btl_openib_get_iwarp_subnet_id(struct ibv_device *ib_dev,
  * not necessitate having to do a list look up).  Unfortunately, the
  * subnet and IP address look up needs to match or there could be a
  * mismatch if IP Aliases are being used.  For more information on
- * this, please read comment above mca_btl_openib_get_iwarp_subnet_id.
+ * this, please read comment above mca_btl_openib_get_ip_subnet_id.
  */
 uint32_t mca_btl_openib_rdma_get_ipv4addr(struct ibv_context *verbs, 
                                           uint8_t port)
@@ -278,8 +278,32 @@ static int add_rdma_addr(struct sockaddr *ipaddr, uint32_t netmask)
     struct rdma_addr_list *myaddr;
     uint32_t all = ~((uint32_t) 0);
 
-    sinp = (struct sockaddr_in *)ipaddr;
+    /* Ensure that this IP address is not in 127.0.0.1/8.  If it is,
+       skip it because we never want loopback addresses to be
+       considered RDMA devices that remote peers can use to connect
+       to.  
 
+       This check is necessary because of a change that almost went
+       into RDMA CM in OFED 1.5.1.  We asked for a delay so that we
+       could get a release of Open MPI out that includes the
+       127-ignoring logic; hence, this change will likely be in a
+       future version of OFED (perhaps OFED 1.6?).
+
+       OMPI uses rdma_bind_addr() to determine if a local IP address
+       is an RDMA device or not.  If it succeeds and we get a non-NULL
+       verbs pointer back in the return, we say that it's a valid RDMA
+       device.  Up through OFED 1.5, rdma_bind_addr(127.0.0.1), would
+       succeed, but the verbs pointer returned would be NULL.  Hence,
+       we knew it was loopback, and therefore we skipped it.
+
+       The proposed RDMA CM change would return a non-NULL/valid verbs
+       pointer when binding to 127.0.0.1/8.  This, of course, screws
+       up OMPI because we then advertise 127.0.0.1 in the modex as an
+       address that remote peers can use to contact this process via
+       RDMA.  Hence, we have to specifically exclude 127.0.0.1/8 --
+       don't even both trying to rdma_bind_addr() to it because we
+       know we don't want loopback addresses at all. */
+    sinp = (struct sockaddr_in *)ipaddr;
     if ((sinp->sin_addr.s_addr & htonl(0xff000000)) == htonl(0x7f000000)) {
         rc = OMPI_SUCCESS;
         goto out1;
@@ -299,8 +323,9 @@ static int add_rdma_addr(struct sockaddr *ipaddr, uint32_t netmask)
         goto out2;
     }
 
-    /* Bind the newly created cm_id to the IP address.  This will, amongst other
-       things, verify that the device is iWARP capable */
+    /* Bind the newly created cm_id to the IP address.  This will,
+       amongst other things, verify that the device is verbs
+       capable */
     rc = rdma_bind_addr(cm_id, ipaddr);
     if (rc || !cm_id->verbs) {
         rc = OMPI_SUCCESS;
@@ -396,7 +421,7 @@ void mca_btl_openib_free_rdma_addr_list(void)
 #else 
 /* !OMPI_HAVE_RDMACM case */
 
-uint64_t mca_btl_openib_get_iwarp_subnet_id(struct ibv_device *ib_dev,
+uint64_t mca_btl_openib_get_ip_subnet_id(struct ibv_device *ib_dev,
                                             uint8_t port) 
 {
     return 0;
