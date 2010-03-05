@@ -85,7 +85,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
     orte_iof_read_event_t *rev = (orte_iof_read_event_t*)cbdata;
     unsigned char data[ORTE_IOF_BASE_MSG_MAX];
     int32_t numbytes;
-    opal_list_item_t *item;
+    opal_list_item_t *item, *prev_item;
     orte_iof_proc_t *proct;
     int rc;
     
@@ -182,7 +182,15 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                  * sent - this will tell the daemon to close
                  * the fd for stdin to that proc
                  */
-                orte_iof_hnp_send_data_to_endpoint(&sink->daemon, &sink->name, ORTE_IOF_STDIN, data, numbytes);
+                if( ORTE_SUCCESS != (rc = orte_iof_hnp_send_data_to_endpoint(&sink->daemon, &sink->name, ORTE_IOF_STDIN, data, numbytes))) {
+                    /* if the addressee is unknown, remove the sink from the list */
+                    if( ORTE_ERR_ADDRESSEE_UNKNOWN == rc ) {
+                        prev_item = opal_list_get_prev(item);
+                        opal_list_remove_item(&mca_iof_hnp_component.sinks, item);
+                        OBJ_RELEASE(item);
+                        item = prev_item;
+                    }
+                }
             }
         }
         /* if num_bytes was zero, then we need to terminate the event */
