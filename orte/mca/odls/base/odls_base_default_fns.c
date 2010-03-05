@@ -2727,6 +2727,17 @@ GOTCHILD:
         goto MOVEON;
     }
     
+    /* if this child was ordered to die, then just pass that along
+     * so we don't hang
+     */
+    if (ORTE_PROC_STATE_KILLED_BY_CMD == child->state) {
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                             "%s odls:waitpid_fired child %s was ordered to die",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(child->name)));
+        goto MOVEON;
+    }
+    
     /* determine the state of this process */
     if(WIFEXITED(status)) {
         /* set the exit status appropriately */
@@ -2942,17 +2953,15 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs, bool se
                                             orte_odls_base_child_died_fn_t child_died)
 {
     orte_odls_child_t *child;
-    opal_list_item_t *item, *next;
+    opal_list_item_t *item, *itm2;
     int rc = ORTE_SUCCESS, exit_status = 0;
     opal_list_t procs_killed;
-    opal_buffer_t alert;
-    orte_plm_cmd_flag_t cmd=ORTE_PLM_UPDATE_PROC_STATE;
-    orte_vpid_t null=ORTE_VPID_INVALID;
-    orte_jobid_t last_job;
+    orte_jobid_t last_job=ORTE_JOBID_INVALID;
     orte_proc_t *proc, proctmp;
     int i;
     opal_pointer_array_t procarray, *procptr;
     bool do_cleanup;
+    orte_odls_job_t *jobdat=NULL;
 
     OBJ_CONSTRUCT(&procs_killed, opal_list_t);
 
@@ -2983,19 +2992,6 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs, bool se
         do_cleanup = false;
     }
     
-    /* setup the alert buffer - we will utilize the fact that
-     * children are stored on the list in job order. In other words,
-     * the children from one job are stored in sequence on the
-     * list
-     */
-    OBJ_CONSTRUCT(&alert, opal_buffer_t);
-    /* pack update state command */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&alert, &cmd, 1, ORTE_PLM_CMD))) {
-        ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
-    }
-    last_job = ORTE_JOBID_INVALID;
-    
     /* cycle through the provided array of processes to kill */
     for (i=0; i < procptr->size; i++) {
         if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(procptr, i))) {
@@ -3003,12 +2999,8 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs, bool se
         }
         for (item = opal_list_get_first(&orte_local_children);
              item != opal_list_get_end(&orte_local_children);
-             item = next) {
+             item = opal_list_get_next(item)) {
             child = (orte_odls_child_t*)item;
-            
-            /* preserve the pointer to the next item in list in case we release it */
-            next = opal_list_get_next(item);
-            
             
             OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:kill_local_proc checking child process %s",
@@ -3046,33 +3038,41 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs, bool se
                 continue;
             }
             
-            /* remove the child from the list since it is either already dead or soon going to be dead */
-            opal_list_remove_item(&orte_local_children, &child->super);
-            
-            /* store the jobid, if required */
+            /* save the jobid, if required */
             if (last_job != child->name->jobid) {
-                /* if it isn't the first time through, pack a job_end flag so the
-                 * receiver can correctly process the buffer
-                 */
-                if (ORTE_JOBID_INVALID != last_job) {
-                    if (ORTE_SUCCESS != (rc = opal_dss.pack(&alert, &null, 1, ORTE_VPID))) {
-                        ORTE_ERROR_LOG(rc);
-                        goto CLEANUP;
-                    }
-                    /* if no children are left alive for this job, cleanup the
-                     * job session dir tree to ensure it is removed
-                     */
-                    if (!any_live_children(last_job)) {
-                        orte_session_dir_cleanup(last_job);
-                    }
-                }
-                /* pack the jobid */
-                if (ORTE_SUCCESS != (rc = opal_dss.pack(&alert, &(child->name->jobid), 1, ORTE_JOBID))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto CLEANUP;
-                }
                 last_job = child->name->jobid;
+                
+                /* find the corresponding jobdat */
+                for (itm2 = opal_list_get_first(&orte_local_jobdata);
+                     itm2 != opal_list_get_end(&orte_local_jobdata);
+                     itm2 = opal_list_get_next(itm2)) {
+                    orte_odls_job_t *jdat = (orte_odls_job_t*)itm2;
+                    
+                    /* is this the specified job? */
+                    if (jdat->jobid == last_job) {
+                        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                             "%s odls:kill_local_proc Found existing jobdat for job %s (local procs = %3d)",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                             ORTE_JOBID_PRINT(last_job),
+                                             jdat->num_local_procs ));
+                        jobdat = jdat;
+                        break;
+                    }
+                }
+                if (NULL == jobdat) {
+                    /* we have a problem */
+                    rc = ORTE_ERR_NOT_FOUND;
+                    ORTE_ERROR_LOG(rc);
+                    goto MOVEON;
+                }
             }
+            
+            jobdat->num_local_procs--;
+
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                 "%s odls:kill_local_proc Adjusted num_local_procs to %3d",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 jobdat->num_local_procs ));
             
             /* is this process alive? if not, then nothing for us
              * to do to it
@@ -3096,39 +3096,19 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs, bool se
                      */
                     child->state = ORTE_PROC_STATE_TERMINATED;
                 }
-                goto RECORD;
+                goto CLEANUP;
             }
+            
+            /* mark the child as "killed" since the waitpid will
+             * fire as soon as we kill it
+             */
+            child->state = ORTE_PROC_STATE_KILLED_BY_CMD;  /* we ordered it to die */
             
             /* ensure the stdin IOF channel for this child is closed. The other
              * channels will automatically close when the proc is killed
              */
             orte_iof.close(child->name, ORTE_IOF_STDIN);
 
-            /* de-register the SIGCHILD callback for this pid so we don't get
-             * multiple alerts sent back to the HNP
-             */
-            if (ORTE_SUCCESS != (rc = orte_wait_cb_cancel(child->pid))) {
-                /* no need to error_log this - it just means that the pid is already gone */
-                OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                     "%s odls:kill_local_proc child %s wait_cb_cancel failed",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(child->name)));
-                
-                /* check the proc state - ensure it is in one of the termination
-                 * states so that we properly wakeup
-                 */
-                if (ORTE_PROC_STATE_UNDEF == child->state ||
-                    ORTE_PROC_STATE_INIT == child->state ||
-                    ORTE_PROC_STATE_LAUNCHED == child->state ||
-                    ORTE_PROC_STATE_RUNNING == child->state) {
-                    /* we can't be sure what happened, but make sure we
-                     * at least have a value that will let us eventually wakeup
-                     */
-                    child->state = ORTE_PROC_STATE_TERMINATED;
-                }
-                goto MOVEON;
-            }
-            
             /* First send a SIGCONT in case the process is in stopped state.
              If it is in a stopped state and we do not first change it to
              running, then SIGTERM will not get delivered.  Ignore return
@@ -3155,50 +3135,17 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs, bool se
                                  "%s odls:kill_local_proc child %s killed",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(child->name)));
-            child->state = ORTE_PROC_STATE_KILLED_BY_CMD;  /* we ordered it to die */
-            /* let this fall through to record the proc as "not alive" even
-             * if child_died failed. We did our best, so as far as we are
-             * concerned, this child is dead
-             */
-            
+
         MOVEON:
             /* set the process to "not alive" */
             child->alive = false;
             
-        RECORD:
-            /* store the child in the alert buffer */
-            if (ORTE_SUCCESS != (rc = pack_state_for_proc(&alert, false, child))) {
-                ORTE_ERROR_LOG(rc);
-            }
-            
+        CLEANUP:
             /* ensure the child's session directory is cleaned up */
             orte_session_dir_finalize(child->name);
-            
-            /* release the memory - this child is already removed from list */
-            OBJ_RELEASE(child);
         }
     }
     
-    /* if set_state, alert the HNP to what happened */
-    if (set_state) {
-        /* if we are the HNP, then we would rather not send this to ourselves -
-         * instead, we queue it up for local processing
-         */
-        if (ORTE_PROC_IS_HNP) {
-            ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &alert,
-                               ORTE_RML_TAG_PLM,
-                               orte_plm_base_receive_process_msg);
-        } else {
-            /* go ahead and send it */
-            if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &alert, ORTE_RML_TAG_PLM, 0))) {
-                ORTE_ERROR_LOG(rc);
-                goto CLEANUP;
-            }
-            rc = ORTE_SUCCESS; /* need to set this correctly if it wasn't an error */
-        }
-    }
-    
-CLEANUP:
     /* cleanup, if required */
     if (do_cleanup) {
         OBJ_DESTRUCT(&procarray);
@@ -3211,8 +3158,6 @@ CLEANUP:
     opal_condition_signal(&orte_odls_globals.cond);
     OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
 
-    OBJ_DESTRUCT(&alert);
-    
     return rc;    
 }
 
