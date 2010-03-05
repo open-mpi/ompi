@@ -2959,15 +2959,13 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
                                             orte_odls_base_child_died_fn_t child_died)
 {
     orte_odls_child_t *child;
-    opal_list_item_t *item, *itm2;
+    opal_list_item_t *item;
     int rc = ORTE_SUCCESS, exit_status = 0;
     opal_list_t procs_killed;
-    orte_jobid_t last_job=ORTE_JOBID_INVALID;
     orte_proc_t *proc, proctmp;
     int i;
     opal_pointer_array_t procarray, *procptr;
     bool do_cleanup;
-    orte_odls_job_t *jobdat=NULL;
 
     OBJ_CONSTRUCT(&procs_killed, opal_list_t);
 
@@ -3044,42 +3042,6 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
                 continue;
             }
             
-            /* save the jobid, if required */
-            if (last_job != child->name->jobid) {
-                last_job = child->name->jobid;
-                
-                /* find the corresponding jobdat */
-                for (itm2 = opal_list_get_first(&orte_local_jobdata);
-                     itm2 != opal_list_get_end(&orte_local_jobdata);
-                     itm2 = opal_list_get_next(itm2)) {
-                    orte_odls_job_t *jdat = (orte_odls_job_t*)itm2;
-                    
-                    /* is this the specified job? */
-                    if (jdat->jobid == last_job) {
-                        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                             "%s odls:kill_local_proc Found existing jobdat for job %s (local procs = %3d)",
-                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                             ORTE_JOBID_PRINT(last_job),
-                                             jdat->num_local_procs ));
-                        jobdat = jdat;
-                        break;
-                    }
-                }
-                if (NULL == jobdat) {
-                    /* we have a problem */
-                    rc = ORTE_ERR_NOT_FOUND;
-                    ORTE_ERROR_LOG(rc);
-                    goto MOVEON;
-                }
-            }
-            
-            jobdat->num_local_procs--;
-
-            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                 "%s odls:kill_local_proc Adjusted num_local_procs to %3d",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 jobdat->num_local_procs ));
-            
             /* is this process alive? if not, then nothing for us
              * to do to it
              */
@@ -3142,7 +3104,6 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(child->name)));
 
-        MOVEON:
             /* set the process to "not alive" */
             child->alive = false;
             
