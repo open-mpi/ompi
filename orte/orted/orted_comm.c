@@ -81,6 +81,7 @@
 static int process_commands(orte_process_name_t* sender,
                             opal_buffer_t *buffer,
                             orte_rml_tag_t tag);
+static char *get_orted_comm_cmd_str(int command);
 
 /* instantiate this - it is shared via orted.h */
 struct timeval orte_daemon_msg_recvd;
@@ -362,14 +363,22 @@ static int process_commands(orte_process_name_t* sender,
     bool hnp_accounted_for;
     opal_pointer_array_t procarray;
     orte_proc_t *proct;
-    
+    char *cmd_str = NULL;
+
     /* unpack the command */
     n = 1;
     if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &command, &n, ORTE_DAEMON_CMD))) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
-    
+
+    cmd_str = get_orted_comm_cmd_str(command);
+    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                         "%s orted:comm:process_commands() Processing Command: %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), cmd_str));
+    free(cmd_str);
+    cmd_str = NULL;
+
     /* now process the command locally */
     switch(command) {
 
@@ -1230,4 +1239,50 @@ static int process_commands(orte_process_name_t* sender,
 
 CLEANUP:
     return ret;
+}
+
+static char *get_orted_comm_cmd_str(int command)
+{
+    switch(command) {
+    case ORTE_DAEMON_NULL_CMD:
+        return strdup("NULL");
+    case ORTE_DAEMON_KILL_LOCAL_PROCS:
+        return strdup("ORTE_DAEMON_KILL_LOCAL_PROCS");
+    case ORTE_DAEMON_SIGNAL_LOCAL_PROCS:
+        return strdup("ORTE_DAEMON_SIGNAL_LOCAL_PROCS");
+    case ORTE_DAEMON_ADD_LOCAL_PROCS:
+        return strdup("ORTE_DAEMON_ADD_LOCAL_PROCS");
+    case ORTE_DAEMON_TREE_SPAWN:
+        return strdup("ORTE_DAEMON_TREE_SPAWN");
+    case ORTE_DAEMON_MESSAGE_LOCAL_PROCS:
+        return strdup("ORTE_DAEMON_MESSAGE_LOCAL_PROCS");
+    case ORTE_DAEMON_WAITPID_FIRED:
+        return strdup("ORTE_DAEMON_WAITPID_FIRED");
+    case ORTE_DAEMON_IOF_COMPLETE:
+        return strdup("ORTE_DAEMON_IOF_COMPLETE");
+    case ORTE_DAEMON_EXIT_CMD:
+        return strdup("ORTE_DAEMON_EXIT_CMD");
+    case ORTE_DAEMON_HALT_VM_CMD:
+        return strdup("ORTE_DAEMON_HALT_VM_CMD");
+    case ORTE_DAEMON_SPAWN_JOB_CMD:
+        return strdup("ORTE_DAEMON_SPAWN_JOB_CMD");
+    case ORTE_DAEMON_CONTACT_QUERY_CMD:
+        return strdup("ORTE_DAEMON_CONTACT_QUERY_CMD");
+    case ORTE_DAEMON_REPORT_JOB_INFO_CMD:
+        return strdup("ORTE_DAEMON_REPORT_JOB_INFO_CMD");
+    case ORTE_DAEMON_REPORT_NODE_INFO_CMD:
+        return strdup("ORTE_DAEMON_REPORT_NODE_INFO_CMD");
+    case ORTE_DAEMON_REPORT_PROC_INFO_CMD:
+        return strdup("ORTE_DAEMON_REPORT_PROC_INFO_CMD");
+    case ORTE_DAEMON_HEARTBEAT_CMD:
+        return strdup("ORTE_DAEMON_HEARTBEAT_CMD");
+    case ORTE_DAEMON_SYNC_BY_PROC:
+        return strdup("ORTE_DAEMON_SYNC_BY_PROC");
+    case ORTE_DAEMON_SYNC_WANT_NIDMAP:
+        return strdup("ORTE_DAEMON_SYNC_WANT_NIDMAP");
+    case ORTE_DAEMON_TOP_CMD:
+        return strdup("ORTE_DAEMON_TOP_CMD");
+    default:
+        return strdup("Unknown Command!");
+    }
 }
