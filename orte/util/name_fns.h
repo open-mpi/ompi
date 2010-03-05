@@ -86,6 +86,9 @@ ORTE_DECLSPEC char* orte_util_print_local_jobid(const orte_jobid_t job);
 #define ORTE_LOCAL_JOBID(n) \
     ( (n) & 0x0000ffff)
 
+#define ORTE_CONSTRUCT_JOB_FAMILY(n) \
+    ( ((n) << 16) & 0xffff0000)
+
 #define ORTE_CONSTRUCT_LOCAL_JOBID(local, job) \
     ( ((local) & 0xffff0000) | ((job) & 0x0000ffff) )
 
