@@ -51,10 +51,10 @@ static void send_cb(int status, orte_process_name_t *peer,
     OBJ_RELEASE(buf);
 }
 
-void orte_iof_hnp_send_data_to_endpoint(orte_process_name_t *host,
-                                        orte_process_name_t *target,
-                                        orte_iof_tag_t tag,
-                                        unsigned char *data, int numbytes)
+int orte_iof_hnp_send_data_to_endpoint(orte_process_name_t *host,
+                                       orte_process_name_t *target,
+                                       orte_iof_tag_t tag,
+                                       unsigned char *data, int numbytes)
 {
     opal_buffer_t *buf;
     int rc;
@@ -67,7 +67,7 @@ void orte_iof_hnp_send_data_to_endpoint(orte_process_name_t *host,
     if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &tag, 1, ORTE_IOF_TAG))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
-        return;
+        return rc;
     }
     /* pack the name of the target - this is either the intended
      * recipient (if the tag is stdin and we are sending to a daemon),
@@ -76,7 +76,7 @@ void orte_iof_hnp_send_data_to_endpoint(orte_process_name_t *host,
     if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, target, 1, ORTE_NAME))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
-        return;
+        return rc;
     }
     
     /* if data is NULL, then we are done */
@@ -85,7 +85,7 @@ void orte_iof_hnp_send_data_to_endpoint(orte_process_name_t *host,
         if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, data, numbytes, OPAL_BYTE))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(buf);
-            return;
+            return rc;
         }
     }
     
@@ -95,12 +95,17 @@ void orte_iof_hnp_send_data_to_endpoint(orte_process_name_t *host,
         /* xcast this to everyone - the local daemons will know how to handle it */
         orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid, buf, ORTE_RML_TAG_IOF_PROXY);
         OBJ_RELEASE(buf);
-        return;
+        return ORTE_SUCCESS;
     }
     
     /* send the buffer to the host - this is either a daemon or
      * a tool that requested IOF
      */
-    orte_rml.send_buffer_nb(host, buf, ORTE_RML_TAG_IOF_PROXY,
-                            0, send_cb, NULL);
+    if( ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(host, buf, ORTE_RML_TAG_IOF_PROXY,
+                                                      0, send_cb, NULL))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    return ORTE_SUCCESS;
 }

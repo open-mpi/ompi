@@ -79,10 +79,10 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata);
 void orte_iof_hnp_stdin_cb(int fd, short event, void *cbdata);
 bool orte_iof_hnp_stdin_check(int fd);
 
-void orte_iof_hnp_send_data_to_endpoint(orte_process_name_t *host,
-                                        orte_process_name_t *target,
-                                        orte_iof_tag_t tag,
-                                        unsigned char *data, int numbytes);
+int orte_iof_hnp_send_data_to_endpoint(orte_process_name_t *host,
+                                       orte_process_name_t *target,
+                                       orte_iof_tag_t tag,
+                                       unsigned char *data, int numbytes);
 
 END_C_DECLS
     
