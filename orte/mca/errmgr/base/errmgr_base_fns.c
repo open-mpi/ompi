@@ -79,7 +79,7 @@ void orte_errmgr_base_error_abort(int error_code, char *fmt, ...)
     /* if I am a daemon or the HNP... */
     if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
         /* whack my local procs */
-        orte_odls.kill_local_procs(NULL, false);
+        orte_odls.kill_local_procs(NULL);
         /* whack any session directories */
         orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
     } else {

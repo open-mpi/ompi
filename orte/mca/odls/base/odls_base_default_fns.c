@@ -2265,7 +2265,7 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
     orte_odls_child_t *child;
     orte_std_cntr_t cnt;
     int rc;
-    bool found=false;
+    bool found=false, registering=false;
     int8_t flag;
     orte_odls_job_t *jobdat, *jdat;
 
@@ -2320,6 +2320,7 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
          * unpack the contact info from the buffer and store it
          */
         child->init_recvd = true;
+        registering = true;
         cnt = 1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &(child->rml_uri), &cnt, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
@@ -2385,6 +2386,11 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
         goto CLEANUP;
     }            
     OBJ_DESTRUCT(&buffer);
+    
+    /* if we are deregistering, then we are done */
+    if (!registering) {
+        goto CLEANUP;
+    }
     
     /* now check to see if everyone in this job has registered */
     if (all_children_registered(proc->jobid)) {
@@ -2948,7 +2954,7 @@ CLEANUP:
     return;
 }
 
-int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs, bool set_state,
+int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
                                             orte_odls_base_kill_local_fn_t kill_local,
                                             orte_odls_base_child_died_fn_t child_died)
 {

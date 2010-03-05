@@ -201,10 +201,8 @@ void orte_daemon_cmd_processor(int fd, short event, void *data)
             opal_output(0, "%s ORTED_CMD_PROCESSOR: STUCK IN INFINITE LOOP - ABORTING",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             OBJ_RELEASE(mev);
-            /* make sure our local procs are dead - but don't update their state
-             * on the HNP as this may be redundant
-             */
-            orte_odls.kill_local_procs(NULL, false);
+            /* make sure our local procs are dead */
+            orte_odls.kill_local_procs(NULL);
             
             /* do -not- call finalize as this will send a message to the HNP
              * indicating clean termination! Instead, just forcibly cleanup
@@ -407,7 +405,7 @@ static int process_commands(orte_process_name_t* sender,
             }
             
             /* kill the procs */
-            if (ORTE_SUCCESS != (ret = orte_odls.kill_local_procs(&procarray, true))) {
+            if (ORTE_SUCCESS != (ret = orte_odls.kill_local_procs(&procarray))) {
                 ORTE_ERROR_LOG(ret);
             }
             
@@ -625,7 +623,7 @@ static int process_commands(orte_process_name_t* sender,
             }
             /* if we are the HNP, just kill our local procs */
             if (ORTE_PROC_IS_HNP) {
-                orte_odls.kill_local_procs(NULL, false);
+                orte_odls.kill_local_procs(NULL);
                 return ORTE_SUCCESS;
             }
             

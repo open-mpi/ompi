@@ -865,10 +865,8 @@ static void shutdown_callback(int fd, short flags, void *arg)
         unlink(log_path);
     }
     
-    /* make sure our local procs are dead - but don't update their state
-     * on the HNP as this may be redundant
-     */
-    orte_odls.kill_local_procs(NULL, false);
+    /* make sure our local procs are dead */
+    orte_odls.kill_local_procs(NULL);
     
     /* whack any lingering session directory files from our jobs */
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);

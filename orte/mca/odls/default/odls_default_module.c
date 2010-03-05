@@ -88,7 +88,7 @@
  * External Interface
  */
 static int orte_odls_default_launch_local_procs(opal_buffer_t *data);
-static int orte_odls_default_kill_local_procs(opal_pointer_array_t *procs, bool set_state);
+static int orte_odls_default_kill_local_procs(opal_pointer_array_t *procs);
 static int orte_odls_default_signal_local_procs(const orte_process_name_t *proc, int32_t signal);
 
 static void set_handler_default(int sig);
@@ -200,11 +200,11 @@ static int odls_default_kill_local(pid_t pid, int signum)
     return 0;
 }
 
-int orte_odls_default_kill_local_procs(opal_pointer_array_t *procs, bool set_state)
+int orte_odls_default_kill_local_procs(opal_pointer_array_t *procs)
 {
     int rc;
     
-    if (ORTE_SUCCESS != (rc = orte_odls_base_default_kill_local_procs(procs, set_state,
+    if (ORTE_SUCCESS != (rc = orte_odls_base_default_kill_local_procs(procs,
                                     odls_default_kill_local, odls_default_child_died))) {
         ORTE_ERROR_LOG(rc);
         return rc;
