@@ -35,7 +35,7 @@ AC_DEFUN([OPAL_CHECK_COMPILER], [
             AC_TRY_RUN([
 #include <stdio.h>
 #include <stdlib.h>
-#include "mpi_portable_platform.h.in"   /* Yes, it is supposed to be a .in-file */
+#include "mpi_portable_platform.h"
 
 int main (int argc, char * argv[])
 {
@@ -70,7 +70,7 @@ AC_DEFUN([OPAL_CHECK_COMPILER_STRINGIFY], [
             AC_TRY_RUN([
 #include <stdio.h>
 #include <stdlib.h>
-#include "mpi_portable_platform.h.in"   /* Yes, it is supposed to be a .in-file */
+#include "mpi_portable_platform.h"
 
 int main (int argc, char * argv[])
 {
