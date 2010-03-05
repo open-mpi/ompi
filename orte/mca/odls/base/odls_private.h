@@ -128,7 +128,7 @@ typedef int (*orte_odls_base_kill_local_fn_t)(pid_t pid, int signum);
 typedef bool (*orte_odls_base_child_died_fn_t)(pid_t pid, unsigned int timeout, int *exit_status);
 
 ORTE_DECLSPEC int
-orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs, bool set_state,
+orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
                                         orte_odls_base_kill_local_fn_t kill_local,
                                         orte_odls_base_child_died_fn_t child_died);
 

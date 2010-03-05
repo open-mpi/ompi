@@ -62,7 +62,7 @@ typedef int (*orte_odls_base_module_launch_local_processes_fn_t)(opal_buffer_t *
 /**
  * Kill the local processes on this node
  */
-typedef int (*orte_odls_base_module_kill_local_processes_fn_t)(opal_pointer_array_t *procs, bool set_state);
+typedef int (*orte_odls_base_module_kill_local_processes_fn_t)(opal_pointer_array_t *procs);
 
 /**
  * Signal local processes

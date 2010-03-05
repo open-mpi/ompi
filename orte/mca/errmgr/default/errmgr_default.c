@@ -46,12 +46,23 @@ void orte_errmgr_default_proc_aborted(orte_process_name_t *name, int exit_code)
 {
     int rc;
     orte_job_t *jdata;
+    orte_proc_t *proc;
     int i;
     
     /* get the job data object for this process */
     if (NULL == (jdata = orte_get_job_data_object(name->jobid))) {
         /* nothing we can do - abort things */
         goto PROCESS;
+    }
+    
+    /* if the proc was terminated by cmd, ignore it */
+    if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, name->vpid))) {
+        /* nothing we can do */
+        goto PROCESS;
+    }
+    if (ORTE_PROC_STATE_KILLED_BY_CMD == proc->state) {
+        /* don't do anything or else we can enter an infinite loop */
+        return;
     }
     
     if (NULL != jdata->err_cbfunc && (ORTE_PROC_STATE_ABORTED & jdata->err_cbstates)) {
