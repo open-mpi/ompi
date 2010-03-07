@@ -592,6 +592,32 @@ int vt_env_max_threads()
   return max_threads;
 }
 
+char* vt_env_nm()
+{
+  static int read = 1;
+  static char* nm = NULL;
+  char* tmp;
+
+  if (read)
+    {
+      read = 0;
+      tmp = getenv("VT_NM");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+	  nm = replace_vars(tmp);
+        }
+      else
+        {
+#ifdef DEFAULT_NM
+          nm = DEFAULT_NM;
+#endif /* DEFAULT_NM */
+        }
+    }
+
+  return nm;
+
+}
+
 char* vt_env_nmfile()
 {
   static int read = 1;

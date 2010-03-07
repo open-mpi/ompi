@@ -3,6 +3,7 @@
 
 AC_PREREQ(2.60)
 AC_INIT(VampirTrace, 5.4.12, vampirsupport@zih.tu-dresden.de)
+AC_CONFIG_MACRO_DIR(m4)
 AM_INIT_AUTOMAKE(VampirTrace, 5.4.12)
 AM_CONFIG_HEADER(config.h)
 
@@ -105,6 +106,9 @@ AC_CHECK_DECL([__va_copy],
 [], [#include <stdarg.h>])
 AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf strdup])
 
+ACVT_CONF_TITLE([Libtool])
+AC_PROG_LIBTOOL
+
 # Check for OTF
 ACVT_CONF_TITLE([Open Trace Format (OTF) library and tools])
 ACVT_OTF
@@ -127,7 +131,6 @@ AM_CONDITIONAL(AMBUILDCOMPINST_PGI, test x"$build_compinst_pgi" = "xyes")
 AM_CONDITIONAL(AMBUILDCOMPINST_PHAT, test x"$build_compinst_phat" = "xyes")
 AM_CONDITIONAL(AMBUILDCOMPINST_XL, test x"$build_compinst_xl" = "xyes")
 AM_CONDITIONAL(AMBUILDCOMPINST_FTRACE, test x"$build_compinst_ftrace" = "xyes")
-AM_CONDITIONAL(AMHAVEBFD, test x"$have_bfd" = "xyes")
 
 # Check for binary instrumentation by Dyninst
 ACVT_CONF_TITLE([Binary instrumentation by Dyninst])
@@ -138,7 +141,6 @@ AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_dyninst" = "xno"],
 [AC_MSG_NOTICE([disabled via command line switch])])
 AM_CONDITIONAL(AMHAVEDYNINST, test x"$have_dyninst" = "xyes")
 AM_CONDITIONAL(AMBUILDDYNATTLIB, test x"$have_dyninst" = "xyes" -a x"$LDSHFLAG" != "x")
-AM_CONDITIONAL(AMHAVELIBERTY, test x"$have_liberty" = "xyes")
 
 # Check for MPI and OpenMP
 check_omp="yes"; build_omp="yes"; force_omp="no"

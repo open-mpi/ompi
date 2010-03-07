@@ -1,6 +1,9 @@
 5.4.12
 	- added support for "re-locate" an existing VampirTrace installation
 	  without re-build it from source
+	- use more portable 'nm' command instead of the BFD library to collect
+	  symbol information for instrumentation with the GNU, Intel,
+	  and PathScale compiler
 
 5.4.11
 	- create a process group with the real node name on CrayXT platforms
@@ -21,7 +24,7 @@
 	- install header files to 'PREFIX/include/vampirtrace' by default to
 	  avoid conflicts with the OpenMPI integrated version of VT
 	- added configure option '--with[out]-bfd' to control usage of BFD
-	  library to get symbol information for GNU, Intel, and Pathscale
+	  library to get symbol information for GNU, Intel, and PathScale
 	  compiler instrumentation
 	- fixed detection of Sun Studio compiler on Linux for automatic
 	  instrumentation
@@ -46,7 +49,7 @@
 5.4.6
 	- updated version of internal OTF to 1.3.11 (see extlib/otf/ChangeLog)
 	- added support for Cray CNL
-	- added support for automatic instrumentation by using Pathscale
+	- added support for automatic instrumentation by using PathScale
 	  compiler (version 3.1 or higher required)
 	- fixed a bug in vtfilter where the tool dies when a counter appears
 	  outside of function
