@@ -12,6 +12,7 @@
  * Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
  * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -510,14 +511,14 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                              * against our available cores
                              */
                             ncpu = 0;
-                            for (i=0; i < orte_odls_globals.num_processors && ncpu <= logical_cpu; i++) {
+                            for (i=0; i < OPAL_PAFFINITY_BITMASK_CPU_MAX && ncpu <= logical_cpu; i++) {
                                 if (OPAL_PAFFINITY_CPU_ISSET(i, orte_odls_globals.my_cores)) {
                                     ncpu++;
                                     phys_cpu = i;
                                 }
                             }
                             /* if we don't have enough processors, that is an error */
-                            if (ncpu < logical_cpu) {
+                            if (ncpu <= logical_cpu) {
                                 ORTE_ODLS_IF_BIND_NOT_REQD("bind-to-core");
                                 orte_show_help("help-odls-default.txt",
                                                "odls-default:not-enough-resources", true,
