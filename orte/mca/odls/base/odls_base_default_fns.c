@@ -596,7 +596,9 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     }
     if (NULL != slot_str) {
         for (j=0; j < jobdat->num_procs; j++) {
-            free(slot_str[j]);
+            if (NULL != slot_str[j]) {
+                free(slot_str[j]);
+            }
         }
         free(slot_str);
         slot_str = NULL;

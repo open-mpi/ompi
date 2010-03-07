@@ -44,6 +44,7 @@
 #include "orte/mca/rmaps/rank_file/rmaps_rank_file.h"
 #include "orte/mca/rmaps/rank_file/rmaps_rank_file_lex.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/util/name_fns.h"
 #include "orte/mca/ras/ras_types.h"
 
 static int orte_rmaps_rank_file_parse(const char *);
@@ -470,6 +471,12 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
             }
             proc->name.vpid = rank;
             proc->slot_list = strdup(rfmap->slot_list);
+            /* insert the proc into the proper place */
+            if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs,
+                                                                  proc->name.vpid, proc))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
             jdata->num_procs++;
         }
         /* update the starting point */
