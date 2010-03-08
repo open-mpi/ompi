@@ -742,7 +742,7 @@ int orte_rmaps_base_setup_virtual_machine(orte_job_t *jdata)
      */
     OBJ_CONSTRUCT(&node_list, opal_list_t);
     if (ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&node_list, &num_slots,
-                                                               app, ORTE_MAPPING_NO_USE_LOCAL))) {
+                                                               app, jdata->map->policy))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&node_list);
         return rc;
