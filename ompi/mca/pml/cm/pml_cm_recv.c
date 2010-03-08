@@ -92,7 +92,7 @@ mca_pml_cm_recv(void *addr,
     ompi_proc_t* ompi_proc;
     
     MCA_PML_CM_THIN_RECV_REQUEST_ALLOC(recvreq, ret);
-    if( OPAL_LIKELY(OMPI_SUCCESS != ret) ) return ret;
+    if( OPAL_UNLIKELY(OMPI_SUCCESS != ret) ) return ret;
 
     MCA_PML_CM_THIN_RECV_REQUEST_INIT(recvreq,
                                       ompi_proc,
@@ -105,7 +105,7 @@ mca_pml_cm_recv(void *addr,
     
     
     MCA_PML_CM_THIN_RECV_REQUEST_START(recvreq, comm, tag, src, ret);
-    if( OPAL_LIKELY(OMPI_SUCCESS != ret) ) {
+    if( OPAL_UNLIKELY(OMPI_SUCCESS != ret) ) {
         /* BWB - XXX - need cleanup of request here */
         MCA_PML_CM_THIN_RECV_REQUEST_RETURN(recvreq);
         return ret;
