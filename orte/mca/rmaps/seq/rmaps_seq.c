@@ -35,6 +35,7 @@
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/hostfile/hostfile.h"
+#include "orte/util/dash_host/dash_host.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 
@@ -98,20 +99,31 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
             continue;
         }
-        
-       /* for each app_context, if a hostfile was specified, then we let it
-         * override what we may have obtained from the default hostfile
-         */
-        if (NULL != app->hostfile) {
+    
+        /* dash-host trumps hostfile */
+        if (NULL != app->dash_host) {
+            node_list = OBJ_NEW(opal_list_t);
+            if (ORTE_SUCCESS != (rc = orte_util_get_ordered_dash_host_list(node_list, app->dash_host))) {
+                ORTE_ERROR_LOG(rc);
+                goto error;
+            }            
+            nd = (orte_node_t*)opal_list_get_first(node_list);
+        } else if (NULL != app->hostfile) {
             node_list = OBJ_NEW(opal_list_t);
             if (ORTE_SUCCESS != (rc = orte_util_get_ordered_host_list(node_list, app->hostfile))) {
                 ORTE_ERROR_LOG(rc);
                 goto error;
-            }
+            }            
             nd = (orte_node_t*)opal_list_get_first(node_list);
-        } else {
+        } else if (NULL != default_node_list) {
             node_list = default_node_list;
             nd = save;
+        } else {
+            /* can't do anything - no nodes available! */
+            orte_show_help("help-orte-rmaps-base.txt",
+                           "orte-rmaps-base:no-available-resources",
+                           true);
+            return ORTE_ERR_SILENT;
         }
         
         /* check for nolocal and remove the head node, if required */
@@ -127,7 +139,6 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                 if (opal_ifislocal(node->name)) {
                     opal_list_remove_item(node_list, item);
                     OBJ_RELEASE(item);  /* "un-retain" it */
-                    break;
                 }
             }
         }
