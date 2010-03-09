@@ -256,7 +256,7 @@ int mca_btl_sm_component_close(void)
     OBJ_DESTRUCT(&mca_btl_sm_component.sm_lock);
     /**
      * We don't have to destroy the fragment lists. They are allocated
-     * directly into the mmapped file, they will auto-magically dissapear
+     * directly into the mmapped file, they will auto-magically disappear
      * when the file get unmapped.
      */
     /*OBJ_DESTRUCT(&mca_btl_sm_component.sm_frags_eager);*/
