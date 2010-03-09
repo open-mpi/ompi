@@ -205,7 +205,7 @@ static int parse_dash_host(char ***mapped_nodes, char** host_argv)
                     }
                     /* see if that location is filled */
                     
-                    if (NULL == (node = opal_pointer_array_get_item(orte_node_pool, nodeidx))) {
+                    if (NULL == (node = (orte_node_t *) opal_pointer_array_get_item(orte_node_pool, nodeidx))) {
                         /* this is an error */
                         orte_show_help("help-dash-host.txt", "dash-host:relative-node-not-found",
                                        true, nodeidx, mini_map[k]);
