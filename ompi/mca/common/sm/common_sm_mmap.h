@@ -51,7 +51,7 @@ typedef struct mca_common_sm_file_header_t {
 typedef struct mca_common_sm_mmap_t {
     /* double link list element */
     opal_list_item_t map_item;
-    /* pointer to header imbeded in the shared memory file */
+    /* pointer to header embedded in the shared memory file */
     mca_common_sm_file_header_t *map_seg;
     /* base address of the mmap'ed file */
     unsigned char *map_addr;
@@ -140,7 +140,7 @@ void* mca_common_sm_mmap_seg_alloc(
     mca_mpool_base_registration_t** registration);
 
 /**
- * This function will release all local ressources attached to the
+ * This function will release all local resources attached to the
  * mmapped file. We assume that the operating system will destroy the
  * file when the last process release it.
  *
