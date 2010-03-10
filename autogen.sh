@@ -490,6 +490,11 @@ EOF
             mv configure.new configure
             chmod a+x configure
         fi
+        echo "   ++ preopen error masking ib libltdl"
+        if test -r opal/libltdl/loaders/preopen.c; then
+            patch -N -p0 < config/libltdl-preopen-error.patch
+            rm -f opal/libltdl/loaders/preopen.c.rej
+        fi
 
         # See
         # http://lists.gnu.org/archive/html/bug-libtool/2008-05/msg00045.html.
