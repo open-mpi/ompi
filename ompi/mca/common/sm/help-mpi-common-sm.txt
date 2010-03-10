@@ -17,6 +17,7 @@ experience performance degradation.
 
   Local host:  %s
   System call: %s %s
+  Process:     %s
   Error:       %s (errno %d)
 #
 [mmap too small]
