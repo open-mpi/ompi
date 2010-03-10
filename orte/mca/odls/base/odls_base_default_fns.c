@@ -77,6 +77,8 @@
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/odls/base/odls_private.h"
 
+static void check_proc_complete(orte_odls_child_t *child);
+
 /* IT IS CRITICAL THAT ANY CHANGE IN THE ORDER OF THE INFO PACKED IN
  * THIS FUNCTION BE REFLECTED IN THE CONSTRUCT_CHILD_LIST PARSER BELOW
 */
@@ -1923,14 +1925,22 @@ CLEANUP:
      * that didn't launch as having failed, or else we will hang
      */
     if (launch_failed) {
-        OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
         for (item = opal_list_get_first(&orte_local_children);
              item != opal_list_get_end(&orte_local_children);
              item = opal_list_get_next(item)) {
             child = (orte_odls_child_t*)item;
-            if (child->name->jobid == jobdat->jobid &&
-                ORTE_PROC_STATE_LAUNCHED >= child->state) {
-                child->state = ORTE_PROC_STATE_FAILED_TO_START;
+            if (child->name->jobid == jobdat->jobid) {
+                if (ORTE_PROC_STATE_LAUNCHED >= child->state) {
+                    child->state = ORTE_PROC_STATE_FAILED_TO_START;
+                } else if (ORTE_PROC_STATE_FAILED_TO_START == child->state) {
+                    /* this proc never started - flag that the iof
+                     * is complete or else we will hang waiting for
+                     * pipes to close that were never opened
+                     */
+                    child->iof_complete = true;
+                    /* ditto for waitpid */
+                    child->waitpid_recvd = true;
+                }
             }
         }
     } else {
@@ -3064,6 +3074,10 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
                      */
                     child->state = ORTE_PROC_STATE_TERMINATED;
                 }
+                /* ensure we realize that the waitpid will never come, if
+                 * it already hasn't
+                 */
+                child->waitpid_recvd = true;
                 goto CLEANUP;
             }
             
@@ -3110,6 +3124,8 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
         CLEANUP:
             /* ensure the child's session directory is cleaned up */
             orte_session_dir_finalize(child->name);
+            /* check for everything complete */
+            check_proc_complete(child);
         }
     }
     
