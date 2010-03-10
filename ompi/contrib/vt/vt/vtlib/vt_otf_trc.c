@@ -1835,10 +1835,8 @@ uint8_t vt_enter(uint64_t* time, uint32_t rid) {
   if (VTTHRD_TRACE_STATUS(VTThrdv[VT_MY_THREAD]) ==
       VT_TRACE_OFF_PERMANENT) return 0;
 
-  VTTHRD_STACK_PUSH(VTThrdv[VT_MY_THREAD]);
-
   do_trace = ((VTTHRD_TRACE_STATUS(VTThrdv[VT_MY_THREAD]) == VT_TRACE_ON) &&
-	      (VTTHRD_STACK_LEVEL(VTThrdv[VT_MY_THREAD]) <= max_stack_depth));
+	      (VTTHRD_STACK_LEVEL(VTThrdv[VT_MY_THREAD]) < max_stack_depth));
 
 #if !defined(VT_DISABLE_RFG)
   if( !RFG_Regions_stackPush(VTTHRD_RFGREGIONS(VTThrdv[VT_MY_THREAD]),
@@ -1926,6 +1924,12 @@ uint8_t vt_enter(uint64_t* time, uint32_t rid) {
     /* update resource usage counters (VT_RUSAGE) */
     UPDATE_RUSAGE(time);
   }
+
+  /* push call stack, if tracing was not disabled by this event
+     (max buffer flushes reached) */
+  if (VTTHRD_TRACE_STATUS(VTThrdv[VT_MY_THREAD]) != VT_TRACE_OFF_PERMANENT)
+    VTTHRD_STACK_PUSH(VTThrdv[VT_MY_THREAD]);
+
   return do_trace;
 }
 
@@ -1941,10 +1945,8 @@ void vt_exit(uint64_t* time) {
   if (VTTHRD_TRACE_STATUS(VTThrdv[VT_MY_THREAD]) ==
       VT_TRACE_OFF_PERMANENT) return;
 
-  VTTHRD_STACK_POP(VTThrdv[VT_MY_THREAD]);
-
   do_trace = ((VTTHRD_TRACE_STATUS(VTThrdv[VT_MY_THREAD]) == VT_TRACE_ON) &&
-	      (VTTHRD_STACK_LEVEL(VTThrdv[VT_MY_THREAD])+1 <= max_stack_depth));
+	      (VTTHRD_STACK_LEVEL(VTThrdv[VT_MY_THREAD]) <= max_stack_depth));
 
 #if !defined(VT_DISABLE_RFG)
   if (!RFG_Regions_stackPop(VTTHRD_RFGREGIONS(VTThrdv[VT_MY_THREAD]),
@@ -1994,6 +1996,11 @@ void vt_exit(uint64_t* time) {
 			0, NULL);
 #   endif /* VT_METR */
   }
+
+  /* pop call stack, if tracing was not disabled by this event
+     (max buffer flushes reached) */
+  if (VTTHRD_TRACE_STATUS(VTThrdv[VT_MY_THREAD]) != VT_TRACE_OFF_PERMANENT)
+    VTTHRD_STACK_POP(VTThrdv[VT_MY_THREAD]);
 }
 
 /* -- File I/O -- */

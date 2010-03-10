@@ -18,6 +18,9 @@
 	- use more portable 'nm' command instead of the BFD library to collect
 	  symbol information for instrumentation with the GNU, Intel, PathScale,
 	  and PGI 9 compiler
+	- fixed stack shutdown if maximum number of buffer flushes was reached
+	- fixed potential stack underflow in vtfilter which might be cause a
+	  segmentation fault
 	- fixed detection of unique node id on MacOS platforms
 	- fixed support for LAM/MPI
 	- fixed build error: do not add objects from the static version of the
