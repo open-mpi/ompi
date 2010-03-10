@@ -677,7 +677,7 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
 #ifdef IPV6_V6ONLY
         /* in case of AF_INET6, disable v4-mapped addresses */
         if (AF_INET6 == af_family) {
-            int flg = 0;
+            int flg = 1;
             if (setsockopt (sd, IPPROTO_IPV6, IPV6_V6ONLY,
                             (char *) &flg, sizeof (flg)) < 0) {
                 opal_output(0,
