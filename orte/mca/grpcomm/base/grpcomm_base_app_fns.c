@@ -155,6 +155,7 @@ int orte_grpcomm_base_app_allgather(orte_process_name_t *recipient,
     int rc;
     opal_buffer_t buf;
     orte_rml_tag_t tag=ORTE_RML_TAG_ALLGATHER;
+    int32_t nc;
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                          "%s grpcomm:app entering allgather",
@@ -163,6 +164,12 @@ int orte_grpcomm_base_app_allgather(orte_process_name_t *recipient,
     
     /* if I am alone, just copy data across and return */
     if (1 == orte_process_info.num_procs) {
+        /* since we won't be going through the daemon collective,
+         * we have to pack num_contributors=1 so that
+         * things will unpack correctly
+         */
+        nc = 1;
+        opal_dss.pack(rbuf, &nc, 1, OPAL_INT32);
         opal_dss.copy_payload(rbuf, sbuf);
         return ORTE_SUCCESS;
     }
