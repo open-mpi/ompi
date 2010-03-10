@@ -37,7 +37,7 @@ lib_LTLIBRARIES = libopen-rte.la
 libopen_rte_la_SOURCES =
 libopen_rte_la_LIBADD = \
 	$(MCA_orte_FRAMEWORK_LIBS) \
-	$(top_ompi_builddir)/opal/libopen-pal.la
+	$(top_ompi_builddir)/opal/libopen-pal-lt.la
 libopen_rte_la_DEPENDENCIES = $(libopen_rte_la_LIBADD)
 libopen_rte_la_LDFLAGS = -version-info $(libopen_rte_so_version)
 
@@ -66,3 +66,17 @@ include tools/Makefile.am
 include orted/Makefile.am
 include test/mpi/Makefile.include
 include test/system/Makefile.include
+
+# Set the convenience library to be the same as the non-convenience
+# library, but a) it's marked as "noinst", so LT knows it's a
+# convenience library, and b) no .so version number is assigned here.
+# Note that we only need to make the convenience library if the OMPI
+# project is being built (i.e., if there is an upper layer that needs
+# to slurp in ORTE as a convenience library).
+
+if PROJECT_ORTE
+noinst_LTLIBRARIES += libopen-rte-lt.la
+endif
+libopen_rte_lt_la_SOURCES = $(libopen_rte_la_SOURCES)
+libopen_rte_lt_la_LIBADD = $(libopen_rte_la_LIBADD)
+libopen_rte_lt_la_DEPENDENCIES = $(libopen_rte_la_DEPENDENCIES)

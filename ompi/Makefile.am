@@ -112,7 +112,7 @@ libmpi_la_LIBADD = \
 	$(MCA_ompi_FRAMEWORK_LIBS) \
 	$(EXT_ompi_FRAMEWORK_LIBS) \
 	$(OMPI_LIBMPI_EXTRA_LIBS) \
-	$(top_ompi_builddir)/orte/libopen-rte.la
+	$(top_ompi_builddir)/orte/libopen-rte-lt.la
 libmpi_la_DEPENDENCIES = \
 	datatype/libdatatype.la \
 	debuggers/libdebuggers.la \
@@ -122,7 +122,7 @@ libmpi_la_DEPENDENCIES = \
 	$(f77_base_lib) \
 	$(MCA_ompi_FRAMEWORK_LIBS) \
 	$(EXT_ompi_FRAMEWORK_LIBS) \
-	$(top_ompi_builddir)/orte/libopen-rte.la
+	$(top_ompi_builddir)/orte/libopen-rte-lt.la
 libmpi_la_LDFLAGS = \
         -version-info $(libmpi_so_version) \
 	$(OMPI_LIBMPI_EXTRA_LDFLAGS)
