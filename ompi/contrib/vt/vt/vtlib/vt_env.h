@@ -24,9 +24,8 @@
 EXTERN char*  vt_env_apppath(void);
 EXTERN char*  vt_env_dyn_blacklist(void);
 EXTERN char*  vt_env_dyn_shlibs(void);
+EXTERN char*  vt_env_gnu_nm(void);
 EXTERN char*  vt_env_gnu_nmfile(void);
-EXTERN int    vt_env_gnu_demangle(void);
-EXTERN int    vt_env_gnu_getsrc(void);
 EXTERN char*  vt_env_gdir(void);
 EXTERN char*  vt_env_ldir(void);
 EXTERN int    vt_env_gdir_check(void);

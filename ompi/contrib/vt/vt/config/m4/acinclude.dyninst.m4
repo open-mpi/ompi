@@ -42,14 +42,11 @@ AC_DEFUN([ACVT_DYNINST],
 	[AS_IF([test x"$DYNIDIR" != x], [DYNILIBDIR="-L$DYNIDIR"lib/])])
 
 	AC_ARG_WITH(dyninst-lib,
-		AC_HELP_STRING([--with-dyninst-lib=DYNILIB], [use given Dyninst lib, default: -ldyninstAPI -liberty]),
+		AC_HELP_STRING([--with-dyninst-lib=DYNILIB], [use given Dyninst lib, default: -ldyninstAPI]),
 	[DYNILIB="$withval"])
 
 	AS_IF([test "$check_dyninst" = "yes"],
 	[
-		AS_IF([test x"$liberty_error" = x], [ACVT_LIBERTY])
-		AS_IF([test x"$have_liberty" = "xno"], [dyninst_error="yes"])
-
 		AC_LANG([C++])
 
 		AS_IF([test x"$dyninst_error" = "xno"],
@@ -67,10 +64,10 @@ AC_DEFUN([ACVT_DYNINST],
 		AS_IF([test x"$DYNILIB" = x -a x"$dyninst_error" = "xno"],
 		[
 			sav_LIBS=$LIBS
-			LIBS="$LIBS $DYNILIBDIR -ldyninstAPI $LIBERTYLIBDIR $LIBERTYLIB"
-			AC_MSG_CHECKING([whether linking with -ldyninstAPI $LIBERTYLIB works])
+			LIBS="$LIBS $DYNILIBDIR -ldyninstAPI"
+			AC_MSG_CHECKING([whether linking with -ldyninstAPI works])
 			AC_TRY_LINK([],[],
-			[AC_MSG_RESULT([yes]); DYNILIB="-ldyninstAPI $LIBERTYLIBDIR $LIBERTYLIB"],
+			[AC_MSG_RESULT([yes]); DYNILIB="-ldyninstAPI"],
 			[AC_MSG_RESULT([no])])
 			LIBS=$sav_LIBS
 		])

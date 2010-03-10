@@ -215,6 +215,30 @@ char* vt_env_dyn_shlibs()
   return dyn_shlibs;
 }
 
+char* vt_env_gnu_nm()
+{
+  static int read = 1;
+  static char* gnu_nm = NULL;
+  char* tmp;
+
+  if (read)
+    {
+      read = 0;
+      tmp = getenv("VT_GNU_NM");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          gnu_nm = replace_vars(tmp);
+        }
+      else
+        {
+#ifdef DEFAULT_NM
+          gnu_nm = DEFAULT_NM;
+#endif /* DEFAULT_NM */
+        }
+    }
+
+  return gnu_nm;
+}
 char* vt_env_gnu_nmfile()
 {
   static int read = 1;
@@ -227,50 +251,10 @@ char* vt_env_gnu_nmfile()
     tmp = getenv("VT_GNU_NMFILE");
     if (tmp != NULL && strlen(tmp) > 0)
       {
-	gnu_nmfile = replace_vars(tmp);
+        gnu_nmfile = replace_vars(tmp);
       }
   }
   return gnu_nmfile;
-}
-
-int vt_env_gnu_demangle()
-{
-  static int gnu_demangle = -1;
-  char* tmp;
-
-  if (gnu_demangle == -1)
-    {
-      tmp = getenv("VT_GNU_DEMANGLE");
-      if (tmp != NULL && strlen(tmp) > 0)
-        {
-	  gnu_demangle = parse_bool(tmp);
-	}
-      else
-        {
-	  gnu_demangle = 0;
-	}
-    }
-  return gnu_demangle;
-}
-
-int vt_env_gnu_getsrc()
-{
-  static int gnu_getsrc = -1;
-  char* tmp;
-
-  if (gnu_getsrc == -1)
-    {
-      tmp = getenv("VT_GNU_GETSRC");
-      if (tmp != NULL && strlen(tmp) > 0)
-        {
-	  gnu_getsrc = parse_bool(tmp);
-	}
-      else
-        {
-	  gnu_getsrc = 1;
-	}
-    }
-  return gnu_getsrc;
 }
 
 char* vt_env_gdir()

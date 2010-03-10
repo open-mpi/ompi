@@ -220,30 +220,6 @@ else
 DYNINSTSOURCES =
 endif
 
-if AMHAVEBFD
-BFDCFLAGS = $(BFDINCDIR)
-# On some platforms only a static version of the BFD library is available
-# which might be built without PIC, so do not add its objects to the shared
-# VT libraries.
-#BFDLIBRARY = $(BFDLIBDIR) $(BFDLIB)
-BFDLIBRARY =
-else
-BFDCFLAGS =
-BFDLIBRARY =
-endif
-
-if AMHAVELIBERTY
-LIBERTYCFLAGS = $(LIBERTYINCDIR)
-# On some platforms only a static version of the liberty library is available
-# which might be built without PIC, so do not add its objects to the shared
-# VT libraries.
-#LIBERTYLIBRARY = $(LIBERTYLIBDIR) $(LIBERTYLIB)
-LIBERTYLIBRARY =
-else
-LIBERTYCFLAGS =
-LIBERTYLIBRARY =
-endif
-
 if AMHAVEDL
 DLCFLAGS = $(DLINCDIR)
 DLLIBRARY = $(DLLIBDIR) $(DLLIB)
@@ -373,24 +349,24 @@ VT_FMPI_SOURCES = \
 	$(FMPI2CONSTSOURCES)
 
 CC = $(MPICC)
-AM_CFLAGS = $(OTFCFLAGS) $(BFDCFLAGS) $(LIBERTYCFLAGS) $(DLCFLAGS) $(LIBWRAPCFLAGS) $(LIBCWRAPCFLAGS) $(IOWRAPCFLAGS) $(MEMHOOKCFLAGS) $(GETCPUCFLAGS) $(RUSAGECFLAGS) $(METRCFLAGS)
+AM_CFLAGS = $(OTFCFLAGS) $(DLCFLAGS) $(LIBWRAPCFLAGS) $(LIBCWRAPCFLAGS) $(IOWRAPCFLAGS) $(MEMHOOKCFLAGS) $(GETCPUCFLAGS) $(RUSAGECFLAGS) $(METRCFLAGS)
 
-libvt_la_LIBADD = $(top_builddir)/util/libutil.la $(OTFLIBRARY) $(BFDLIBRARY) $(LIBERTYLIBRARY) $(METRLIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
+libvt_la_LIBADD = $(top_builddir)/util/libutil.la $(OTFLIBRARY) $(METRLIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
 libvt_la_DEPENDENCIES = $(top_builddir)/util/libutil.la $(OTFDEPENDENCIES)
 libvt_la_SOURCES = $(VT_COMMON_SOURCES) $(VT_SEQ_SOURCES)
 
 libvt_mpi_la_CFLAGS = -DVT_MPI $(AM_CFLAGS) $(MPICFLAGS) $(MPIINCDIR) $(ETIMESYNCCFLAGS) $(UNIMCICFLAGS)
-libvt_mpi_la_LIBADD = $(top_builddir)/util/libutil.la $(OTFLIBRARY) $(BFDLIBRARY) $(LIBERTYLIBRARY) $(METRLIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
+libvt_mpi_la_LIBADD = $(top_builddir)/util/libutil.la $(OTFLIBRARY) $(METRLIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
 libvt_mpi_la_DEPENDENCIES = $(top_builddir)/util/libutil.la $(OTFDEPENDENCIES)
 libvt_mpi_la_SOURCES = $(VT_COMMON_SOURCES) $(VT_MPI_SOURCES)
 
 libvt_mt_la_CFLAGS = -DVT_MT $(AM_CFLAGS) $(PTHREADCFLAGS) $(OMPCFLAGS) $(THRDCFLAGS)
-libvt_mt_la_LIBADD = $(top_builddir)/util/libutil.la $(OTFLIBRARY) $(BFDLIBRARY) $(LIBERTYLIBRARY) $(METRLIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
+libvt_mt_la_LIBADD = $(top_builddir)/util/libutil.la $(OTFLIBRARY) $(METRLIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
 libvt_mt_la_DEPENDENCIES = $(top_builddir)/util/libutil.la $(OTFDEPENDENCIES)
 libvt_mt_la_SOURCES = $(VT_COMMON_SOURCES) $(VT_MT_SOURCES)
 
 libvt_hyb_la_CFLAGS = -DVT_HYB $(AM_CFLAGS) $(MPICFLAGS) $(MPIINCDIR) $(PTHREADCFLAGS) $(OMPCFLAGS) $(THRDCFLAGS) $(ETIMESYNCCFLAGS) $(UNIMCICFLAGS)
-libvt_hyb_la_LIBADD = $(top_builddir)/util/libutil.la $(OTFLIBRARY) $(BFDLIBRARY) $(LIBERTYLIBRARY) $(METRLIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
+libvt_hyb_la_LIBADD = $(top_builddir)/util/libutil.la $(OTFLIBRARY) $(METRLIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
 libvt_hyb_la_DEPENDENCIES = $(top_builddir)/util/libutil.la $(OTFDEPENDENCIES)
 libvt_hyb_la_SOURCES = $(VT_COMMON_SOURCES) $(VT_HYB_SOURCES)
 
