@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -21,6 +21,7 @@ EXTRA_DIST = \
         distscript.csh \
 	ompi_get_version.m4sh \
 	libltdl_dlopen_global.diff \
+	libltdl-preopen-error.diff \
         lt-sun-fortran.diff \
 	lt1522-pathCC.diff \
 	lt21a-pathCC.diff \
