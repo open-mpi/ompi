@@ -1,6 +1,6 @@
 /* -*- C -*-
  *
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -294,8 +294,9 @@ static void process_msg(int fd, short event, void *data)
                 
             case ORTE_PLM_UPDATE_PROC_STATE:
                 OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                                     "%s plm:base:receive update proc state command",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                                     "%s plm:base:receive update proc state command from %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&(msgpkt->sender)) ));
                 count = 1;
                 jdata = NULL;
                 while (ORTE_SUCCESS == (rc = opal_dss.unpack(msgpkt->buffer, &job, &count, ORTE_JOBID))) {
