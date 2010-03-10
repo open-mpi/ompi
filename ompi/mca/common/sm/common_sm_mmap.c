@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -108,7 +108,7 @@ static mca_common_sm_mmap_t* create_map(int fd, size_t size, char *file_name,
     if (MAP_FAILED == seg) {
         orte_show_help("help-mpi-common-sm.txt", "sys call fail",
                        orte_process_info.nodename,
-                       "mmap(2)", "", 
+                       "mmap(2)", "", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                        strerror(errno), errno);
         return NULL;
     }
@@ -233,13 +233,13 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(ompi_proc_t **procs,
             int err = errno;
             orte_show_help("help-mpi-common-sm.txt", "sys call fail", 1,
                            orte_process_info.nodename,
-                           "open(2)", file_name, 
+                           "open(2)", file_name, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                            strerror(err), err);
         } else if (ftruncate(fd, size) != 0) {
             int err = errno;
             orte_show_help("help-mpi-common-sm.txt", "sys call fail", 1,
                            orte_process_info.nodename,
-                           "ftruncate(2)", "", 
+                           "ftruncate(2)", "", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                            strerror(err), err);
             close(fd);
             unlink(file_name);
