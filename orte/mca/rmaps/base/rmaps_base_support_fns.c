@@ -427,7 +427,6 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
         ORTE_MAPPING_BYSOCKET & map->policy ||
         ORTE_MAPPING_BYBOARD & map->policy) {
         /* assign the ranks sequentially */
-        vpid = 0;
         for (i=0; i < map->nodes->size; i++) {
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
                 continue;
@@ -455,7 +454,6 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
                         return rc;
                     }                    
                 }
-                vpid++;
             }
         }
         return ORTE_SUCCESS;
