@@ -194,6 +194,9 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
             if (NULL == (node = hostfile_lookup(exclude, node_name))) {
                 node = OBJ_NEW(orte_node_t);
                 node->name = node_name;
+                if (NULL != username) {
+                    node->username = strdup(username);
+                }
             }
             /* Note that we need to add this back to the exclude list.
              If it was found, we just removed it (in hostfile_lookup()),
@@ -230,6 +233,9 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
         if (keep_all || NULL == (node = hostfile_lookup(updates, node_name))) {
             node = OBJ_NEW(orte_node_t);
             node->name = node_name;
+            if (NULL != username) {
+                node->username = strdup(username);
+            }
         }
         /* do we need to record an alias for this node? */
         if (NULL != node_alias) {
@@ -241,6 +247,9 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
         /* store this for later processing */
         node = OBJ_NEW(orte_node_t);
         node->name = strdup(orte_util_hostfile_value.sval);
+        if (NULL != username) {
+            node->username = strdup(username);
+        }
     } else if (ORTE_HOSTFILE_RANK == token) {
         /* we can ignore the rank, but we need to extract the node name. we
          * first need to shift over to the other side of the equal sign as
@@ -284,6 +293,9 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
         if (keep_all || NULL == (node = hostfile_lookup(updates, node_name))) {
             node = OBJ_NEW(orte_node_t);
             node->name = node_name;
+            if (NULL != username) {
+                node->username = strdup(username);
+            }
         }
         /* add a slot */
         node->slots++;
