@@ -1,0 +1,106 @@
+#
+# Input file for script ompi_branch_check_revisions.sh 
+# here for the v1.5 branch
+#
+# Contains optional notes for revisions, about:
+#  1. reasons, why this revision ought not to be merged
+#  2. dependencies on other revisions (if any known)
+#  3. existing CMRs
+#
+# Yes this file is optional, also revisions, that do not show
+# up in `svn mergeinfo --svn eligible` are not required
+# here (but don't hurt either).
+#
+
+# R-number, TYPE
+r22451, Win Mailed
+r22452, Win Mailed Depends on r22451
+r22453, Win Mailed Depends on r22452
+r22454, Win Mailed Depends on r22453
+r22455, Win Mailed
+r22456, Win Mailed
+r22460, MERGED
+r22465, Cleanup
+r22466, Cleanup
+r22467, Superseded by r22496
+r22470, Doc
+r22471, RTE BUGFIX?
+r22472, RTE efficiency RMCAST
+r22480, RTE Feature
+r22485, Doc (man-page)
+r22493, Doc
+r22494, Doc
+r22495, Doc
+r22497, Doc in m4
+r22499, Cleanup
+r22500, Doc Cleanup
+r22501, Platform files
+r22502, Platform files
+r22507, RTE RMCAST
+r22509, RTE BUGFIX
+r22520, Win Build Fix
+r22523, Doc
+r22524, Doc
+r22537, RTE Fix Mailed
+r22538, RTE Fix ess/cm Mailed
+r22539, RTE Fix ess/cm Mailed
+r22540, Win Mailed
+r22541, RTE Fix Mailed
+r22560, Win Build Fix Mailed
+r22561, Win Mailed
+r22563, Win Mailed
+r22564, RTE spawn fix cmr:v1.5.1:#2235
+r22565, Win Mailed
+r22566, Cleanup
+r22567, Doc fix
+r22568, Win Mailed
+r22579, MERGED Discard due to test commit and reversal in next commit
+r22580, MERGED Discard
+r22587, Buglet (errno.h)
+r22591, Small update for mpi_portable_platform.h.in
+r22603, Doc
+r22605, Doc
+r22606, IB Doc
+r22608, RTE feature
+r22609, MERGED Discard due to reversal in r22611
+r22610, Win build fix Mailed
+r22609, MERGED Discard, see r22609
+r22610, Win build fix Mailed
+r22613, RTE Doc depends on r22608
+r22615, New OPAL class for ring-buffer
+r22616, RTE RMCAST depends on r22615
+r22618, Win compile fix Mailed
+r22634, Depends on r22619
+r22640, NetBSD Fix Depends on future cmr:v1.5:#2272
+r22641, Doc and DDT Check fix (Depends on XXX)
+r22642, Doc and DDT fix (depends on r22641)
+r22643, RTE fix errorcode Mailed
+r22650, RTE RMCAST depends on r22616
+r22660, Cleanup
+r22663, Build Cleanup
+r22664, ASM Fix! cmr:v1.5:#2278
+r22665, ASM Fix! cmr:v1.5:#2278
+r22669, Fix TCP Mailed and cmr:v1.5:#2326
+r22673, Win build fix Mailed
+r22674, MERGED (in r22763 and not discovered via svn mergeinfo)
+r22675, IB locking fix! cmr:v1.5:#2335
+r22676, IB locking fix! cmr:v1.5:#2335
+r22677, MERGED
+r22678, IB locking fix! cmr:v1.5:#2335
+r22679, IB locking fix! cmr:v1.5:#2335
+r22680, MERGED (in r22699 and not disocvered via svn mergeinfo)
+r22682, IB locking fix! cmr:v1.5:#2335
+r22683, IB locking fix! cmr:v1.5:#2335
+r22684, IB locking fix! cmr:v1.5:#2335
+r22688, MERGED (in r22764)
+r22689, cmr:v1.5:#2334
+r22691, cmr:v1.5:#2303 MERGED (in r22808 and not discovered via svn mergeinfo)
+r22700, IB locking fix! cmr:v1.5:#2338
+r22701, MERGED (in r22764)
+r22703, MERGED (in r22808 and not discovered via svn mergeinfo)
+r22706, cmr:v1.5:#2334
+r22710, RTE RMCAST
+r22714, cmr:v1.5:#2334
+r22721, MERGED (in r22764)
+r22722, Fix TCP Mailed and cmr:v1.5:#2326 depends on r22669
+r22724, cmr:v1.5:#2334
