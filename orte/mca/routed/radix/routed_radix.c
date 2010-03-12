@@ -46,7 +46,7 @@ static orte_vpid_t get_routing_tree(opal_list_t *children);
 static int get_wireup_info(opal_buffer_t *buf);
 static int set_lifeline(orte_process_name_t *proc);
 
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
 static int radix_ft_event(int state);
 #endif
 
@@ -63,7 +63,7 @@ orte_routed_module_t orte_routed_radix_module = {
     update_routing_tree,
     get_routing_tree,
     get_wireup_info,
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     radix_ft_event
 #else
     NULL
@@ -907,7 +907,7 @@ static int get_wireup_info(opal_buffer_t *buf)
     return ORTE_SUCCESS;
 }
 
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
 static int radix_ft_event(int state)
 {
     int ret, exit_status = ORTE_SUCCESS;

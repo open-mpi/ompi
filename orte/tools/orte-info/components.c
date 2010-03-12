@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -45,7 +45,7 @@
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/installdirs/base/base.h"
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 #endif
@@ -81,7 +81,7 @@
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/base.h"
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
 #endif
@@ -273,7 +273,7 @@ void orte_info_open_components(void)
     map->components = &opal_timer_base_components_opened;
     opal_pointer_array_add(&component_map, map);
     
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     if (OPAL_SUCCESS != opal_crs_base_open()) {
         goto error;
     }
@@ -402,7 +402,7 @@ void orte_info_open_components(void)
     map->components = &orte_plm_base.available_components;
     opal_pointer_array_add(&component_map, map);
 
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     if (ORTE_SUCCESS != orte_snapc_base_open()) {
         goto error;
     }
@@ -472,7 +472,7 @@ void orte_info_close_components()
         (void) orte_ess_base_close();
         (void) orte_show_help_finalize();
 #if !ORTE_DISABLE_FULL_SUPPORT
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
         (void) orte_snapc_base_close();
 #endif
         (void) orte_filem_base_close();
@@ -495,7 +495,7 @@ void orte_info_close_components()
         (void) opal_carto_base_close();
         (void) opal_maffinity_base_close();
         (void) opal_timer_base_close();
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
         (void) opal_crs_base_close();
 #endif
         

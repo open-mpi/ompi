@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -63,8 +63,6 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/runtime/opal.h"
-#if OPAL_ENABLE_FT == 1
-#endif
 
 #include "orte/runtime/runtime.h"
 #include "orte/util/hnp_contact.h"
@@ -73,9 +71,6 @@
 #include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/iof/iof.h"
-#if OPAL_ENABLE_FT == 1
-#include "orte/mca/snapc/base/base.h"
-#endif
 
 
 /*****************************************

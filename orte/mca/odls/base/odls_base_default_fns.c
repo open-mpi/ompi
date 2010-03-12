@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2008 The University of Tennessee and The University
@@ -67,7 +67,7 @@
 #include "orte/runtime/orte_wait.h"
 #include "orte/orted/orted.h"
 
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
 #include "opal/mca/crs/crs.h"
@@ -1344,7 +1344,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     apps = jobdat->apps;
     num_apps = jobdat->num_apps;
     
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     /*
      * Notify the local SnapC component regarding new job
      */
@@ -1840,7 +1840,6 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
             opal_condition_signal(&orte_odls_globals.cond);
             OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
             
-#if OPAL_ENABLE_FT    == 1
 #if OPAL_ENABLE_FT_CR == 1
             /*
              * OPAL CRS components need the opportunity to take action before a process
@@ -1862,7 +1861,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                 }
             }
 #endif
-#endif
+
             if (5 < opal_output_get_verbosity(orte_odls_globals.output)) {
                 opal_output(orte_odls_globals.output, "%s odls:launch: spawning child %s",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

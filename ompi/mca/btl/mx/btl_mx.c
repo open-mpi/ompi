@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2008 The University of Tennessee and The University
@@ -19,7 +19,7 @@
 #include "ompi_config.h"
 #include "opal/class/opal_bitmap.h"
 
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
 #include "ompi/runtime/ompi_cr.h"
 #endif
 
@@ -621,7 +621,7 @@ int mca_btl_mx_finalize( struct mca_btl_base_module_t* btl )
 }
 
 
-#if OPAL_ENABLE_FT == 0
+#if OPAL_ENABLE_FT_CR == 0
 int mca_btl_mx_ft_event(int state) {
     return OMPI_SUCCESS;
 }
@@ -667,7 +667,7 @@ int mca_btl_mx_ft_event(int state) {
 
     return OMPI_SUCCESS;
 }
-#endif /* OPAL_ENABLE_FT */
+#endif /* OPAL_ENABLE_FT_CR */
 
 mca_btl_mx_module_t mca_btl_mx_module = {
     {

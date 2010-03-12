@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -135,7 +135,7 @@ static int orte_rml_ftrm_open(void)
     /* Enable this wrapper = RML_SELECT_WRAPPER_PRIORITY
      * ow = -1 or never selected
      */
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     ftrm_priority = value;
 #else
     ftrm_priority = -1;

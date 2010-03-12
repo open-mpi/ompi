@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2008 The University of Tennessee and The University
@@ -330,7 +330,7 @@ int orte_daemon(int argc, char *argv[])
         if (1000 < i) i=0;        
     }
 
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     /* Mark as a tool program */
     tmp_env_var = mca_base_param_env_var("opal_cr_is_tool");
     opal_setenv(tmp_env_var,

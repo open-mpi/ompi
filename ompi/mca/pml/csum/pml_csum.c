@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
- * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2009 The University of Tennessee and The University
@@ -340,7 +340,7 @@ int mca_pml_csum_add_procs(ompi_proc_t** procs, size_t nprocs)
      * return failure as all processes will return the wrapper PML
      * component in use instead of the wrapped PML component underneath.
      */
-#if OPAL_ENABLE_FT == 0
+#if OPAL_ENABLE_FT_CR == 0
     /* make sure remote procs are using the same PML as us */
     if (OMPI_SUCCESS != (rc = mca_pml_base_pml_check_selected("csum",
                                                               procs,
@@ -637,7 +637,7 @@ void mca_pml_csum_error_handler(
     orte_errmgr.abort(-1, NULL);
 }
 
-#if OPAL_ENABLE_FT    == 0
+#if OPAL_ENABLE_FT_CR    == 0
 int mca_pml_csum_ft_event( int state ) {
     return OMPI_SUCCESS;
 }
@@ -858,7 +858,7 @@ int mca_pml_csum_ft_event( int state )
 
     return OMPI_SUCCESS;
 }
-#endif /* OPAL_ENABLE_FT */
+#endif /* OPAL_ENABLE_FT_CR */
 
 int mca_pml_csum_com_btl_comp(const void *v1, const void *v2)
 {

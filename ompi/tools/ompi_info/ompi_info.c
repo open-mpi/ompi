@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -194,7 +194,7 @@ int main(int argc, char *argv[])
     opal_pointer_array_add(&mca_types, "maffinity");
     opal_pointer_array_add(&mca_types, "timer");
     opal_pointer_array_add(&mca_types, "installdirs");
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     opal_pointer_array_add(&mca_types, "crs");
 #endif
     opal_pointer_array_add(&mca_types, "dpm");
@@ -212,7 +212,7 @@ int main(int argc, char *argv[])
     opal_pointer_array_add(&mca_types, "osc");
     opal_pointer_array_add(&mca_types, "op");
     opal_pointer_array_add(&mca_types, "common");
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     opal_pointer_array_add(&mca_types, "crcp");
 #endif
     
@@ -226,7 +226,7 @@ int main(int argc, char *argv[])
     opal_pointer_array_add(&mca_types, "rml");
     opal_pointer_array_add(&mca_types, "routed");
     opal_pointer_array_add(&mca_types, "plm");
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     opal_pointer_array_add(&mca_types, "snapc");
 #endif
     opal_pointer_array_add(&mca_types, "filem");

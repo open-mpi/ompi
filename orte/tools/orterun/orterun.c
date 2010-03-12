@@ -1,6 +1,6 @@
 /* -*- C -*-
  *
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2008 The University of Tennessee and The University
@@ -59,7 +59,7 @@
 #include "opal/util/opal_getcwd.h"
 #include "orte/util/show_help.h"
 #include "opal/sys/atomic.h"
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
 #include "opal/runtime/opal_cr.h"
 #endif
 
@@ -554,7 +554,7 @@ int orterun(int argc, char *argv[])
      */
     orte_launch_environ = opal_argv_copy(environ);
     
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     /* Disable OPAL CR notifications for this tool */
     opal_cr_set_enabled(false);
     tmp_env_var = mca_base_param_env_var("opal_cr_is_tool");
@@ -562,9 +562,10 @@ int orterun(int argc, char *argv[])
                 "1",
                 true, &environ);
     free(tmp_env_var);
-#endif
+#else
     tmp_env_var = NULL; /* Silence compiler warning */
-    
+#endif
+
     /* Intialize our Open RTE environment
      * Set the flag telling orte_init that I am NOT a
      * singleton, but am "infrastructure" - prevents setting

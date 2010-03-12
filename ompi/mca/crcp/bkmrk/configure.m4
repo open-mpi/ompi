@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2004-2007 The Trustees of Indiana University.
+# Copyright (c) 2004-2010 The Trustees of Indiana University.
 #                         All rights reserved.
 # Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
 #                         All rights reserved.
@@ -19,7 +19,7 @@
 # -----------------------------------------------------------
 AC_DEFUN([MCA_crcp_bkmrk_CONFIG],[
     # If we don't want FT, don't compile this component
-    AS_IF([test "$ompi_want_ft" = "1"],
+    AS_IF([test "$ompi_want_ft_cr" = "1"],
         [$1],
         [$2])
 ])dnl

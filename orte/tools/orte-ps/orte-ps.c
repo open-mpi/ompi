@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2007 The University of Tennessee and The University
@@ -59,7 +59,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/runtime/opal.h"
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
 #include "opal/runtime/opal_cr.h"
 #endif
 
@@ -71,7 +71,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/comm/comm.h"
 #include "orte/mca/ras/ras_types.h"
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
 #include "orte/mca/snapc/base/base.h"
 #endif
 #include "orte/runtime/orte_globals.h"
@@ -358,7 +358,7 @@ static int orte_ps_init(int argc, char *argv[]) {
         orte_ps_globals.output = 0; /* Default=STDERR */
     }
 
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     /* Disable the checkpoint notification routine for this
      * tool. As we will never need to checkpoint this tool.
      * Note: This must happen before opal_init().
@@ -378,8 +378,9 @@ static int orte_ps_init(int argc, char *argv[]) {
                 "1",
                 true, &environ);
     free(tmp_env_var);
-#endif
+#else
     tmp_env_var = NULL; /* Silence compiler warning */
+#endif
 
     /***************************
      * We need all of OPAL and the TOOL portion of ORTE
@@ -517,7 +518,7 @@ static int pretty_print_jobs(orte_job_t **jobs, orte_std_cntr_t num_jobs) {
                             strlen(pretty_job_state(job->state)));
         len_slots  = 6;
         len_vpid_r = (int) strlen("Num Procs");
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
         orte_snapc_ckpt_state_str(&state_str, job->ckpt_state);
         len_ckpt_s = (int) (strlen(state_str) < strlen("Ckpt State") ?
                             strlen("Ckpt State") :
@@ -554,7 +555,7 @@ static int pretty_print_jobs(orte_job_t **jobs, orte_std_cntr_t num_jobs) {
         printf("%*s | ", len_state  , "State");
         printf("%*s | ", len_slots  , "Slots");
         printf("%*s | ", len_vpid_r , "Num Procs");
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
         printf("%*s | ", len_ckpt_s , "Ckpt State");
         printf("%*s | ", len_ckpt_r , "Ckpt Ref");
         printf("%*s |",  len_ckpt_l , "Ckpt Loc");
@@ -570,7 +571,7 @@ static int pretty_print_jobs(orte_job_t **jobs, orte_std_cntr_t num_jobs) {
         printf("%*s | ",  len_state ,  pretty_job_state(job->state));
         printf("%*d | ",  len_slots ,  (uint)job->total_slots_alloc);
         printf("%*d | ",  len_vpid_r,  job->num_procs);
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
         printf("%*s | ",  len_ckpt_s,  state_str);
         printf("%*s | ",  len_ckpt_r,  (NULL == job->ckpt_snapshot_ref ? 
                                         "" :
@@ -615,7 +616,7 @@ static int pretty_print_vpids(orte_job_t *job) {
     len_pid         = 6;
     len_state       = 0;
     len_node        = 0;
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     len_ckpt_s      = strlen("Ckpt State");
     len_ckpt_r      = strlen("Ckpt Ref");
     len_ckpt_l      = strlen("Ckpt Loc");
@@ -670,7 +671,7 @@ static int pretty_print_vpids(orte_job_t *job) {
         if( (int)strlen(pretty_vpid_state(vpid->state)) > len_state)
             len_state = strlen(pretty_vpid_state(vpid->state));
         
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
         orte_snapc_ckpt_state_str(&state_str, vpid->ckpt_state);
         if( (int)strlen(state_str) > len_ckpt_s)
             len_ckpt_s = strlen(state_str);
@@ -708,7 +709,7 @@ static int pretty_print_vpids(orte_job_t *job) {
     printf("%*s | ", len_pid         , "PID");
     printf("%*s | ", len_node        , "Node");
     printf("%*s | ", len_state       , "State");
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     printf("%*s | ", len_ckpt_s      , "Ckpt State");
     printf("%*s | ", len_ckpt_r      , "Ckpt Ref");
     printf("%*s |",  len_ckpt_l      , "Ckpt Loc");
@@ -749,7 +750,7 @@ static int pretty_print_vpids(orte_job_t *job) {
         printf("%*s | ",  len_node       , (NULL == vpid->nodename) ? "Unknown" : vpid->nodename);
         printf("%*s | ",  len_state      , pretty_vpid_state(vpid->state));
         
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
         printf("%*s | ",  len_ckpt_s, state_str);
         printf("%*s | ",  len_ckpt_r, (NULL == vpid->ckpt_snapshot_ref ? 
                                        "" : 

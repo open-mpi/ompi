@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2009 The University of Tennessee and The University
@@ -47,7 +47,7 @@
 #include <knem_io.h>
 #endif
 
-#if OPAL_ENABLE_FT    == 1
+#if OPAL_ENABLE_FT_CR    == 1
 #include "opal/mca/crs/base/base.h"
 #include "opal/util/basename.h"
 #include "ompi/runtime/ompi_cr.h"
@@ -1091,7 +1091,7 @@ int mca_btl_sm_get_async(struct mca_btl_base_module_t* btl,
 #endif
 
 
-#if OPAL_ENABLE_FT    == 0
+#if OPAL_ENABLE_FT_CR    == 0
 int mca_btl_sm_ft_event(int state) {
     return OMPI_SUCCESS;
 }
@@ -1158,4 +1158,4 @@ int mca_btl_sm_ft_event(int state) {
 
     return OMPI_SUCCESS;
 }
-#endif /* OPAL_ENABLE_FT */
+#endif /* OPAL_ENABLE_FT_CR */

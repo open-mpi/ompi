@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University.
+ * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -134,7 +134,7 @@ int orte_dt_size_job(size_t *size, orte_job_t *src, opal_data_type_t type)
         *size += sz;
     }
 
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     if (NULL != src->ckpt_snapshot_ref) {
         *size += strlen(src->ckpt_snapshot_ref);
     }
@@ -193,7 +193,7 @@ int orte_dt_size_proc(size_t *size, orte_proc_t *src, opal_data_type_t type)
         *size += strlen(src->slot_list);
     }
     
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     if (NULL != src->ckpt_snapshot_ref) {
         *size += strlen(src->ckpt_snapshot_ref);
     }

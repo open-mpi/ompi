@@ -1,6 +1,6 @@
 dnl -*- shell-script -*-
 dnl
-dnl Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+dnl Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -368,27 +368,32 @@ else
     ompi_want_ft_cr=0
     ompi_want_ft_type=none
 
-    # Default value
-    if test "$with_ft" = "" -o "$with_ft" = "yes"; then
-        ompi_want_ft_type=cr
-        ompi_want_ft_cr=1
-    elif test "$with_ft" = "LAM"; then
-        ompi_want_ft_type=lam
-        ompi_want_ft_cr=1
-    elif test "$with_ft" = "lam"; then
-        ompi_want_ft_type=lam
-        ompi_want_ft_cr=1
-    elif test "$with_ft" = "CR"; then
-        ompi_want_ft_type=cr
-        ompi_want_ft_cr=1
-    elif test "$with_ft" = "cr"; then
-        ompi_want_ft_type=cr
-        ompi_want_ft_cr=1
-    else
-        AC_MSG_RESULT([Unrecognized FT TYPE: $with_ft])
-        AC_MSG_ERROR([Cannot continue])
+    as_save_IFS=$IFS
+    IFS=","
+    for opt in $with_ft; do
+        IFS=$as_save_IFS
+
+        # Default value
+        if test "$opt" = "" -o "$opt" = "yes"; then
+            ompi_want_ft_cr=1
+        elif test "$opt" = "LAM"; then
+            ompi_want_ft_cr=1
+        elif test "$opt" = "lam"; then
+            ompi_want_ft_cr=1
+        elif test "$opt" = "CR"; then
+            ompi_want_ft_cr=1
+        elif test "$opt" = "cr"; then
+            ompi_want_ft_cr=1
+        else
+            AC_MSG_RESULT([Unrecognized FT TYPE: $opt])
+            AC_MSG_ERROR([Cannot continue])
+        fi
+    done
+    if test "$ompi_want_ft_cr" = 1; then
+        ompi_want_ft_type="cr"
     fi
-    AC_MSG_RESULT([Enabled $with_ft ($ompi_want_ft_type)])
+
+    AC_MSG_RESULT([Enabled $ompi_want_ft_type (Specified $with_ft)])
     AC_MSG_WARN([**************************************************])
     AC_MSG_WARN([*** Fault Tolerance Integration into Open MPI is *])
     AC_MSG_WARN([*** a research quality implementation, and care  *])

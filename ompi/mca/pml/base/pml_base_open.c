@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2007 The University of Tennessee and The University
@@ -91,7 +91,7 @@ opal_pointer_array_t mca_pml_base_pml;
 int mca_pml_base_open(void)
 {
     int value;
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     char* wrapper_pml = NULL;
 #endif
 
@@ -160,7 +160,7 @@ int mca_pml_base_open(void)
             opal_pointer_array_add(&mca_pml_base_pml, strdup(default_pml));
         }
     }
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     /* 
      * Which PML Wrapper component to use, if any
      *  - NULL or "" = No wrapper

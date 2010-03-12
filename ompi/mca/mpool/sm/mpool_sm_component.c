@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -36,7 +36,7 @@
 #include "ompi/mca/common/sm/common_sm_mmap.h"
 #include "ompi/proc/proc.h"
 
-#if OPAL_ENABLE_FT    == 1
+#if OPAL_ENABLE_FT_CR    == 1
 #include "opal/runtime/opal_cr.h"
 #endif
 
