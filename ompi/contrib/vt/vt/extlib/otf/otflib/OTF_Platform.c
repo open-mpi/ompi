@@ -1,6 +1,5 @@
 /*
- This is part of the OTF library.
- Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
  
  Copyright (c) 2004-2005, The Trustees of Indiana University and Indiana
@@ -11,7 +10,6 @@
                           University of Stuttgart
  Copyright (c) 2004-2005, The Regents of the University of California
  Copyright (c) 2007,      Cisco Systems, Inc.
- Copyright (c) 2005-2009, ZIH, TU Dresden, Federal Republic of Germany
 */
 
 #include "OTF_Platform.h"

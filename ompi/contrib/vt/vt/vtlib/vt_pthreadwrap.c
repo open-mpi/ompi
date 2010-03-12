@@ -10,6 +10,8 @@
  * See the file COPYING in the package base directory for details
  **/
 
+#include "config.h"
+
 #include <stdlib.h>
 
 #include <pthread.h>
@@ -430,17 +432,25 @@ GEN_WRAPFUNC(VT__PTHREAD_MUTEXATTR_DESTROY, pthread_mutexattr_destroy, int,
  *-----------------------------------------------------------------------------
  */
 
+#if defined(HAVE_PTHREAD_MUTEXATTR_GETPSHARED) && HAVE_PTHREAD_MUTEXATTR_GETPSHARED
+
 /* -- pthread_mutexattr_getpshared -- */
 
 GEN_WRAPFUNC(VT__PTHREAD_MUTEXATTR_GETPSHARED, pthread_mutexattr_getpshared, int,
 	     (const pthread_mutexattr_t* attr, int* pshared),
 	     (attr, pshared))
 
+#endif /* HAVE_PTHREAD_MUTEXATTR_GETPSHARED */
+
+#if defined(HAVE_PTHREAD_MUTEXATTR_SETPSHARED) && HAVE_PTHREAD_MUTEXATTR_SETPSHARED
+
 /* -- pthread_mutexattr_setpshared -- */
 
 GEN_WRAPFUNC(VT__PTHREAD_MUTEXATTR_SETPSHARED, pthread_mutexattr_setpshared, int,
 	     (pthread_mutexattr_t* attr, int pshared),
 	     (attr, pshared))
+
+#endif /* HAVE_PTHREAD_MUTEXATTR_SETPSHARED */
 
 /*
  *-----------------------------------------------------------------------------
@@ -515,14 +525,22 @@ GEN_WRAPFUNC(VT__PTHREAD_CONDATTR_DESTROY, pthread_condattr_destroy, int,
  *-----------------------------------------------------------------------------
  */
 
+#if defined(HAVE_PTHREAD_CONDATTR_GETPSHARED) && HAVE_PTHREAD_CONDATTR_GETPSHARED
+
 /* -- pthread_condattr_getpshared -- */
 
 GEN_WRAPFUNC(VT__PTHREAD_CONDATTR_GETPSHARED, pthread_condattr_getpshared, int,
 	     (const pthread_condattr_t* attr, int* pshared),
 	     (attr, pshared))
 
+#endif /* HAVE_PTHREAD_CONDATTR_GETPSHARED */
+
+#if defined(HAVE_PTHREAD_CONDATTR_SETPSHARED) && HAVE_PTHREAD_CONDATTR_SETPSHARED
+
 /* -- pthread_condattr_setpshared -- */
 
 GEN_WRAPFUNC(VT__PTHREAD_CONDATTR_SETPSHARED, pthread_condattr_setpshared, int,
 	     (pthread_condattr_t* attr, int pshared),
 	     (attr, pshared))
+
+#endif /* HAVE_PTHREAD_CONDATTR_SETPSHARED */

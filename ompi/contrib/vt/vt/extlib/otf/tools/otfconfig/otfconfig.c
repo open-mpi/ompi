@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -52,7 +52,7 @@ int main( int argc, char** argv ) {
 			
 		} else if ( 0 == strcmp( argv[i], "--version" ) ) {
 
-			printf( "%u.%u.%u %s\n", OTF_VERSION_MAYOR, OTF_VERSION_MINOR, OTF_VERSION_SUB, OTF_VERSION_STRING );
+			printf( "%u.%u.%u %s\n", OTF_VERSION_MAJOR, OTF_VERSION_MINOR, OTF_VERSION_SUB, OTF_VERSION_STRING );
 		
 		} else if ( 0 == strcmp( argv[i], "--have-zlib" ) ) {
 

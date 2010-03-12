@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -1353,7 +1353,7 @@ int OTF_WStream_writeDefVersion( OTF_WStream* wstream, uint8_t major,
 int OTF_WStream_writeOtfVersion( OTF_WStream* wstream ) {
 
 
-	return OTF_WStream_writeDefVersion( wstream, OTF_VERSION_MAYOR,
+	return OTF_WStream_writeDefVersion( wstream, OTF_VERSION_MAJOR,
 		OTF_VERSION_MINOR, OTF_VERSION_SUB, OTF_VERSION_STRING );
 }
 

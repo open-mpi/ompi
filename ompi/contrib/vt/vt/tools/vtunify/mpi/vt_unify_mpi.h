@@ -34,7 +34,7 @@
 #define VTUnify_MPI_UNSIGNED_LONG_LONG 6
 #define VTUnify_MPI_PACKED             7
 
-#define VTUnify_MPI_BOTTOM             ((void*)-0)
+#define VTUnify_MPI_BOTTOM             ((void*)0)
 #define VTUnify_MPI_STATUS_IGNORE      ((VTUnify_MPI_Status*)0)
 
 typedef struct {
@@ -42,9 +42,9 @@ typedef struct {
    VT_MPI_INT tag;
 } VTUnify_MPI_Status;
 
-typedef size_t VTUnify_MPI_Aint;
-typedef int    VTUnify_MPI_Comm;
-typedef int    VTUnify_MPI_Datatype;
+typedef long long VTUnify_MPI_Aint;
+typedef int       VTUnify_MPI_Comm;
+typedef int       VTUnify_MPI_Datatype;
 
 EXTERN VT_MPI_INT VTUnify_MPI_Abort( VTUnify_MPI_Comm ucomm,
                                      VT_MPI_INT errorcode );

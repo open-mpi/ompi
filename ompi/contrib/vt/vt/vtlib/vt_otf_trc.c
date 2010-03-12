@@ -1946,7 +1946,7 @@ void vt_exit(uint64_t* time) {
       VT_TRACE_OFF_PERMANENT) return;
 
   do_trace = ((VTTHRD_TRACE_STATUS(VTThrdv[VT_MY_THREAD]) == VT_TRACE_ON) &&
-	      (VTTHRD_STACK_LEVEL(VTThrdv[VT_MY_THREAD]) <= max_stack_depth));
+	      (VTTHRD_STACK_LEVEL(VTThrdv[VT_MY_THREAD])+1 < max_stack_depth));
 
 #if !defined(VT_DISABLE_RFG)
   if (!RFG_Regions_stackPop(VTTHRD_RFGREGIONS(VTThrdv[VT_MY_THREAD]),

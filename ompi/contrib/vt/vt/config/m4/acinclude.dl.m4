@@ -11,6 +11,8 @@ AC_DEFUN([ACVT_DL],
 	DLLIBDIR=
 	DLLIB=
 
+	AC_REQUIRE([ACVT_PLATFORM])
+
 	AC_ARG_WITH(dl-dir,
 		AC_HELP_STRING([--with-dl-dir=DLDIR], [give the path for libdl, default: /usr]),
 	[DLDIR="$withval/"])
@@ -31,14 +33,23 @@ AC_DEFUN([ACVT_DL],
 		AC_HELP_STRING([--with-dl-lib=DLLIB], [use given libdl lib, default: -ldl]),
 	[DLLIB="$withval"])
 
-	sav_CPPFLAGS=$CPPFLAGS
-	CPPFLAGS="$CPPFLAGS $DLINCDIR"
-	AC_CHECK_HEADER([dlfcn.h], [],
+	AS_IF([test "$PLATFORM" = "bgl" -o "$PLATFORM" = "bgp" -o "$PLATFORM" = "crayxt"],
 	[
-		AC_MSG_NOTICE([error: no dlfcn.h found; check path for libdl package first...])
+		AC_MSG_NOTICE([error: dynamic linking library (libdl) isn't suitable on this platform])
 		dl_error="yes"
 	])
-	CPPFLAGS=$sav_CPPFLAGS
+
+	AS_IF([test x"$dl_error" = "xno"],
+	[
+		sav_CPPFLAGS=$CPPFLAGS
+		CPPFLAGS="$CPPFLAGS $DLINCDIR"
+		AC_CHECK_HEADER([dlfcn.h], [],
+		[
+			AC_MSG_NOTICE([error: no dlfcn.h found; check path for libdl package first...])
+			dl_error="yes"
+		])
+		CPPFLAGS=$sav_CPPFLAGS
+	])
 
 	AS_IF([test x"$DLLIB" = x -a x"$dl_error" = "xno"],
 	[
