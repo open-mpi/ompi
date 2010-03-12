@@ -492,7 +492,7 @@ EOF
         fi
         echo "   ++ preopen error masking ib libltdl"
         if test -r opal/libltdl/loaders/preopen.c; then
-            patch -N -p0 < config/libltdl-preopen-error.patch
+            patch -N -p0 < config/libltdl-preopen-error.diff
             rm -f opal/libltdl/loaders/preopen.c.rej
         fi
 
