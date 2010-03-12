@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2008 The University of Tennessee and The University
@@ -36,7 +36,7 @@
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
 #include "ompi/runtime/ompi_cr.h"
 #endif
 
@@ -1711,7 +1711,7 @@ int mca_btl_openib_get(mca_btl_base_module_t* btl,
     return OMPI_SUCCESS;
 }
 
-#if OPAL_ENABLE_FT == 0
+#if OPAL_ENABLE_FT_CR == 0
 int mca_btl_openib_ft_event(int state) {
     return OMPI_SUCCESS;
 }
@@ -1760,4 +1760,4 @@ int mca_btl_openib_ft_event(int state) {
     return OMPI_SUCCESS;
 }
 
-#endif /* OPAL_ENABLE_FT */
+#endif /* OPAL_ENABLE_FT_CR */

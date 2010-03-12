@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -29,7 +29,7 @@
 #include "opal/mca/maffinity/base/base.h"
 #include "orte/util/proc_info.h"
 
-#if OPAL_ENABLE_FT    == 1
+#if OPAL_ENABLE_FT_CR    == 1
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/runtime/ompi_cr.h"
 #endif
@@ -135,7 +135,7 @@ static void sm_module_finalize(mca_mpool_base_module_t* module)
     if (NULL != sm_module->sm_common_mmap) {
         if (OMPI_SUCCESS == 
             mca_common_sm_mmap_fini(sm_module->sm_common_mmap)) {
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
             /* Only unlink the file if we are *not* restarting.  If we
                are restarting the file will be unlinked at a later
                time. */
@@ -152,7 +152,7 @@ static void sm_module_finalize(mca_mpool_base_module_t* module)
     }
 }
 
-#if OPAL_ENABLE_FT    == 0
+#if OPAL_ENABLE_FT_CR    == 0
 int mca_mpool_sm_ft_event(int state) {
     return OMPI_SUCCESS;
 }
@@ -209,4 +209,4 @@ int mca_mpool_sm_ft_event(int state) {
 
     return OMPI_SUCCESS;
 }
-#endif /* OPAL_ENABLE_FT */
+#endif /* OPAL_ENABLE_FT_CR */

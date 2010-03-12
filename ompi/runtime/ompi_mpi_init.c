@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2008 The University of Tennessee and The University
@@ -90,7 +90,7 @@
 #include "ompi/mca/dpm/base/base.h"
 #include "ompi/mca/pubsub/base/base.h"
 
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
 #include "ompi/mca/crcp/crcp.h"
 #include "ompi/mca/crcp/base/base.h"
 #endif
@@ -546,7 +546,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     if (OMPI_SUCCESS != (ret = ompi_crcp_base_open())) {
         error = "ompi_crcp_base_open() failed";
         goto error;
@@ -596,7 +596,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     if (OMPI_SUCCESS != (ret = ompi_crcp_base_select() ) ) {
         error = "ompi_crcp_base_select() failed";
         goto error;

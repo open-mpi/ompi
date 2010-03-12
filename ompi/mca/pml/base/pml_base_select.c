@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2007 The University of Tennessee and The University
@@ -69,7 +69,7 @@ int mca_pml_base_select(bool enable_progress_threads,
     opal_list_t opened;
     opened_component_t *om = NULL;
     bool found_pml;
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     mca_pml_base_component_t *wrapper_component = NULL;
     mca_pml_base_module_t *wrapper_module = NULL;
     int wrapper_priority = -1;
@@ -140,7 +140,7 @@ int mca_pml_base_select(bool enable_progress_threads,
 
         opal_output_verbose( 10, mca_pml_base_output,
                              "select: init returned priority %d", priority );
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
         /* Determine if this is the wrapper component */
         if( priority <= PML_SELECT_WRAPPER_PRIORITY) {
             opal_output_verbose( 10, mca_pml_base_output,
@@ -205,7 +205,7 @@ int mca_pml_base_select(bool enable_progress_threads,
         om = (opened_component_t *) item;
 
         if (om->om_component != best_component
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
             && om->om_component != wrapper_component
 #endif
             ) {
@@ -228,7 +228,7 @@ int mca_pml_base_select(bool enable_progress_threads,
     }
     OBJ_DESTRUCT( &opened );
 
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     /* Remove the wrapper component from the mca_pml_base_components_available list
      * so we don't unload it prematurely in the next call
      */
@@ -266,7 +266,7 @@ int mca_pml_base_select(bool enable_progress_threads,
                               &mca_pml_base_components_available, 
                               (mca_base_component_t *) best_component);
     
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     /* If we have a wrapper then initalize it */
     if( NULL != wrapper_component ) {
         priority = PML_SELECT_WRAPPER_PRIORITY;

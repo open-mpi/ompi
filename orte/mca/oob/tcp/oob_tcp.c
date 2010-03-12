@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2007 The University of Tennessee and The University
@@ -1900,7 +1900,7 @@ int mca_oob_tcp_set_addr(const orte_process_name_t* name, const char* uri)
 
 
 /* Dummy function for when we are not using FT. */
-#if OPAL_ENABLE_FT == 0
+#if OPAL_ENABLE_FT_CR == 0
 int mca_oob_tcp_ft_event(int state) {
     return ORTE_SUCCESS;
 }

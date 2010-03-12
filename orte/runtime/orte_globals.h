@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2008 The University of Tennessee and The University
@@ -388,7 +388,7 @@ typedef struct {
     void *err_cbdata;
     /* max number of times a process can be restarted */
     int32_t max_restarts;
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     /* ckpt state */
     size_t ckpt_state;
     /* snapshot reference */
@@ -440,7 +440,7 @@ struct orte_proc_t {
     int beat;
     /* number of times this process has been restarted */
     int32_t restarts;
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     /* ckpt state */
     size_t ckpt_state;
     /* snapshot reference */

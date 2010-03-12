@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -349,7 +349,7 @@ OMPI_DECLSPEC extern ompi_crcp_base_module_t ompi_crcp;
 /**
  * Macro to call the CRCP Request Complete function
  */
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
 #define OMPI_CRCP_REQUEST_COMPLETE(req)      \
   if( NULL != ompi_crcp.request_complete) {  \
     ompi_crcp.request_complete(req);         \

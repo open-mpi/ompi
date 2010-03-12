@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2008 The University of Tennessee and The University
@@ -46,7 +46,7 @@
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/odls/odls.h"
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
 #include "orte/mca/snapc/snapc.h"
 #endif
 #include "orte/mca/filem/filem.h"
@@ -216,7 +216,7 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
      *** IS NOTHING WE NEED DO HERE TO SETUP IOF
      ***/
     
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     /*
      * Notify the Global SnapC component regarding new job
      */

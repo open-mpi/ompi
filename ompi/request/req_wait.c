@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -36,7 +36,7 @@ int ompi_request_default_wait(
 
     ompi_request_wait_completion(req);
 
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     OMPI_CRCP_REQUEST_COMPLETE(req);
 #endif
         
@@ -193,7 +193,7 @@ finished:
         *index = completed;
     }
 
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     if( opal_cr_is_enabled) {
         rptr = requests;
         for (i = 0; i < count; i++, rptr++) {
@@ -276,7 +276,7 @@ int ompi_request_default_wait_all( size_t count,
         OPAL_THREAD_UNLOCK(&ompi_request_lock);
     }
 
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     if( opal_cr_is_enabled) {
         rptr = requests;
         for (i = 0; i < count; i++, rptr++) {
@@ -442,7 +442,7 @@ int ompi_request_default_wait_some(
 finished:
 #endif  /* OPAL_ENABLE_PROGRESS_THREADS */
 
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     if( opal_cr_is_enabled) {
         rptr = requests;
         for (i = 0; i < count; i++, rptr++) {

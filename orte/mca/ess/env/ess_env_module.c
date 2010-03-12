@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2009 The University of Tennessee and The University
@@ -55,7 +55,7 @@
 #include "orte/mca/plm/base/base.h"
 
 #include "orte/mca/rmaps/base/base.h"
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
 #include "orte/mca/snapc/base/base.h"
 #endif
 #include "orte/mca/filem/base/base.h"
@@ -85,7 +85,7 @@ static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc);
 static int update_pidmap(opal_byte_object_t *bo);
 static int update_nidmap(opal_byte_object_t *bo);
 
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
 static int rte_ft_event(int state);
 #endif
 
@@ -100,7 +100,7 @@ orte_ess_base_module_t orte_ess_env_module = {
     proc_get_node_rank,
     update_pidmap,
     update_nidmap,
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     rte_ft_event
 #else
     NULL
@@ -409,7 +409,7 @@ static int env_set_name(void)
     return ORTE_SUCCESS;
 }
 
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
 static int rte_ft_event(int state)
 {
     int ret, exit_status = ORTE_SUCCESS;
