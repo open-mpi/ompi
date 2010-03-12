@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -160,53 +160,60 @@ int ProcessState::openFile( uint64_t time, uint32_t fileid, uint64_t handleid,
 int ProcessState::closeFile( uint64_t handleid ) {
 
 
-	uint32_t ret;
-	map<uint64_t/*handleid*/, FileOpen>::iterator it;
+    uint32_t ret;
+    map<uint64_t/*handleid*/, FileOpen>::iterator it;
 
-	it= openfiles.find( handleid );
-	
-	if( it != openfiles.end() ) {
+    it= openfiles.find( handleid );
 
-		/* make the statistics */
-		map<uint32_t,FileOperationStatistics>::iterator it2;
-		
-		it2= fostatistics.find( it->second.fileid );	
-	
-		if( it2 != fostatistics.end() ) {
-	
-			FileOperationStatistics& fos= it2->second;
-	
-			++fos.nclose;
 
-			ret= OTF_RETURN_OK;
-	
-		} else {
-		
-	#		ifdef OTF_VERBOSE
-				fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
-					"Trying to close not yet opened file. aborting\n",
-					__FUNCTION__, __FILE__, __LINE__ );
-	#		endif
-	
-			ret= OTF_RETURN_ABORT;
-		}
-		
-		/* erase the file from the opened files list */
-		openfiles.erase( it );
-	
-	} else {
+    if( it == openfiles.end() ) {
+/*
+#       ifdef OTF_VERBOSE
+            fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+                "Trying to close not yet opened file. aborting\n",
+            __FUNCTION__, __FILE__, __LINE__ );
+#       endif
+*/
+            fprintf( stderr, "WARNING in function %s, file: %s, line: %i:\n "
+                "Trying to close a file that is not open with handle %llu. "
+                "This might be caused by a VT error, please check! Ignore this for now.\n",
+            __FUNCTION__, __FILE__, __LINE__, (long long unsigned) handleid );
 
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
-				"Trying to close not yet opened file. aborting\n",
-				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
+        /* make it a warning that cannot be disabled because I suspect an error in VT ! */
+        /* return OTF_RETURN_ABORT; */
+        return OTF_RETURN_OK;
+    }
 
-		ret= OTF_RETURN_ABORT;
 
-	}
 
-	return ret;
+    /* make the statistics */
+    map<uint32_t,FileOperationStatistics>::iterator it2;
+
+    it2= fostatistics.find( it->second.fileid );	
+
+    if( it2 != fostatistics.end() ) {
+
+        FileOperationStatistics& fos= it2->second;
+
+        ++fos.nclose;
+
+        ret= OTF_RETURN_OK;
+
+    } else {
+
+#       ifdef OTF_VERBOSE
+            fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+                "Trying to close not yet opened file. aborting\n",
+                __FUNCTION__, __FILE__, __LINE__ );
+#       endif
+
+        ret= OTF_RETURN_ABORT;
+    }
+
+    /* erase the file from the opened files list */
+    openfiles.erase( it );
+
+    return ret;
 }
 
 
@@ -872,7 +879,6 @@ void State::collOperation( uint64_t time, uint32_t proc, uint32_t root,	uint32_t
 int State::fileOperation( uint64_t time, uint32_t fileid, uint32_t process,
 	uint64_t handleid, uint32_t operation, uint64_t bytes, uint64_t duration,
 	uint32_t source ) {
-
 
 	switch( operation ) {
 

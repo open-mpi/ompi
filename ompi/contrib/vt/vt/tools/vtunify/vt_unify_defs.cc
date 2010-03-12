@@ -644,6 +644,7 @@ Definitions::createGlobal( const std::vector<DefRec_Base_struct*> *
 		  {
 		     strncpy( new_name, "MPI_COMM_WORLD",
 			      sizeof( new_name ) - 1 );
+		     new_name[sizeof( new_name ) - 1] = '\0';
 		  }
 		  else if( p_loc_def_entry->type ==
 			   DefRec_DefProcessGroup_struct::TYPE_MPI_COMM_SELF )
@@ -655,8 +656,9 @@ Definitions::createGlobal( const std::vector<DefRec_Base_struct*> *
 		  {
 		     strncpy( new_name, p_loc_def_entry->name.c_str(),
 			      sizeof( new_name ) - 1 );
+		     new_name[sizeof( new_name ) - 1] = '\0';
 		  }
-		  
+
 		  // add new definition to vector of global definitions
 		  p_vecGlobDefs->push_back( new DefRec_DefProcessGroup_struct(
 					       0,

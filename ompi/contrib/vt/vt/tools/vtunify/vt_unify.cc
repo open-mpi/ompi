@@ -1128,8 +1128,11 @@ shareParams()
    if( g_iMPIRank == 0 )
    {
      strncpy( filenames[0], Params.in_file_prefix.c_str(), 1023 );
+     filenames[0][1023] = '\0';
      strncpy( filenames[1], Params.out_file_prefix.c_str(), 1023 );
+     filenames[1][1023] = '\0';
      strncpy( filenames[2], Params.stats_out_file.c_str(), 1023 );
+     filenames[2][1023] = '\0';
      flags[0] = (char)Params.docompress;
      flags[1] = (char)Params.doclean;
      flags[2] = (char)Params.showusage;

@@ -312,6 +312,16 @@ static void get_symtab(void)
     else if ( addr > 0 )
     {
       char* n = strdup(funcname);
+      char* p;
+
+      if ( n == NULL )
+        vt_error();
+
+      /* chop function name at '??', if necessary */
+      p = strstr(n, "??");
+      if ( p != NULL && p != n )
+        *p = '\0';
+
       hash_put(addr, n, filename, lno);
     }
   }
@@ -419,10 +429,9 @@ void gnu_finalize()
       max = n_bucket_entries;
       idx_max = i;
     }
-    avg += n_bucket_entries;
     vt_cntl_msg( 3, "Hash bucket %i had %u entries (%.1f/1000)", i, n_bucket_entries, ((double)n_bucket_entries*1000)/n );
   }
-  avg /= HASH_MAX;
+  avg = (double)n / HASH_MAX;
   vt_cntl_msg( 3, "Hash statistics:\n"
                   "\tNumber of entries: %u\n"
                   "\tMin bucket size:   %u (%.1f/1000) at index %i\n"
