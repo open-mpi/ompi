@@ -142,14 +142,14 @@ int mca_coll_sync_module_enable(mca_coll_base_module_t *module,
     bool good = true;
     char *msg = NULL;
     mca_coll_sync_module_t *s = (mca_coll_sync_module_t*) module;
-    
+
     /* Save the prior layer of coll functions */
     s->c_coll = comm->c_coll;
 
 #define CHECK_AND_RETAIN(name) \
     if (NULL == s->c_coll.coll_ ## name ## _module) { \
         good = false; \
-        msg = "##name##"; \
+        msg = #name; \
     } else if (good) { \
         OBJ_RETAIN(s->c_coll.coll_ ## name ## _module); \
     }
