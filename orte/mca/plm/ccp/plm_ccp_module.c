@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2009 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2010 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -663,20 +663,24 @@ static int plm_ccp_connect(ICluster* pCluster)
     size_t i, len;
     char *cluster_head = NULL;
     HRESULT hr = S_OK;
-    
-    /* Get the cluster head nodes name */
-    _dupenv_s(&cluster_head, &len, "LOGONSERVER");
 
-    if(cluster_head == NULL) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                            "plm:ccp:allocate: connot find cluster head node!"));
-	    return ORTE_ERROR;
-    }
+    if (NULL == orte_ccp_headnode) {
+        /* Get the cluster head nodes name */
+        _dupenv_s(&cluster_head, &len, "LOGONSERVER");
 
-    /* Get rid of the beginning '//'. */
-    for( i = 0; i < len; i++){
-	    cluster_head[i] = cluster_head[i+2];
-        cluster_head[i+2] = '\0';
+        if(cluster_head == NULL) {
+            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                                "plm:ccp:allocate: connot find cluster head node!"));
+            return ORTE_ERROR;
+        }
+
+        /* Get rid of the beginning '//'. */
+        for( i = 0; i < len; i++){
+            cluster_head[i] = cluster_head[i+2];
+            cluster_head[i+2] = '\0';
+        }
+    } else {
+        cluster_head = orte_ccp_headnode;
     }
 
     /* Connect to the cluster's head node */
@@ -708,8 +712,16 @@ static char *plm_ccp_commandline(char *prefix, char *node_name, int argc, char *
         len += strlen(argv[i]) + 1;
     }
 
-    commandline = (char*)malloc( len + strlen(prefix) + 8);
-    memset(commandline, '\0', len+strlen(prefix)+8);
+    if(NULL != prefix) {
+        commandline = (char*)malloc(len + strlen(prefix) + 8);
+        memset(commandline, 0, len + strlen(prefix) + 8);
+        commandline[0] = '"';
+        strcat(commandline, prefix);
+        strcat(commandline, "\\bin\"\\");
+    } else {
+        commandline = (char*)malloc(len + 1);
+        memset(commandline, 0, len + 1);
+    }
 
     commandline[0] = '"';
     strcat(commandline, prefix);

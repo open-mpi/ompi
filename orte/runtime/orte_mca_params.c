@@ -168,6 +168,13 @@ int orte_register_params(void)
     mca_base_param_lookup_string(tmp, &orte_rankfile);
 
     
+#ifdef __WINDOWS__
+    mca_base_param_reg_string_name("orte", "ccp_headnode",
+                          "Name of the cluster head node. (For Windows CCP only.)",
+                          false, false,
+                          NULL, &orte_ccp_headnode);
+#endif
+    
     /* whether or not to keep FQDN hostnames */
     mca_base_param_reg_int_name("orte", "keep_fqdn_hostnames",
                                 "Whether or not to keep FQDN hostnames [default: no]",
