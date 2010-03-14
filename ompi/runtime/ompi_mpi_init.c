@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2006-2009 University of Houston. All rights reserved.
@@ -723,7 +723,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
     ret = MCA_PML_CALL(add_procs(procs, nprocs));
     free(procs);
-    if( OMPI_SUCCESS != ret ) {
+    /* If we got "unreachable", then print a specific error message.
+       Otherwise, if we got some other failure, fall through to print
+       a generic message. */
+    if (OMPI_ERR_UNREACH == ret) {
+        orte_show_help("help-mpi-runtime",
+                       "mpi_init:startup:pml-add-procs-fail", true);
+        error = NULL;
+        goto error;
+    } else if (OMPI_SUCCESS != ret) {
         error = "PML add procs failed";
         goto error;
     }
@@ -892,16 +900,19 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
  error:
     if (ret != OMPI_SUCCESS) {
-        const char *err_msg = opal_strerror(ret);
-        /* If ORTE was not setup yet, don't use orte_show_help */
-        if (orte_setup) {
-            orte_show_help("help-mpi-runtime",
-                           "mpi_init:startup:internal-failure", true,
-                           "MPI_INIT", "MPI_INIT", error, err_msg, ret);
-        } else {
-            opal_show_help("help-mpi-runtime",
-                           "mpi_init:startup:internal-failure", true,
-                           "MPI_INIT", "MPI_INIT", error, err_msg, ret);
+        /* Only print a message if one was not already printed */
+        if (NULL != error) {
+            const char *err_msg = opal_strerror(ret);
+            /* If ORTE was not setup yet, don't use orte_show_help */
+            if (orte_setup) {
+                orte_show_help("help-mpi-runtime",
+                               "mpi_init:startup:internal-failure", true,
+                               "MPI_INIT", "MPI_INIT", error, err_msg, ret);
+            } else {
+                opal_show_help("help-mpi-runtime",
+                               "mpi_init:startup:internal-failure", true,
+                               "MPI_INIT", "MPI_INIT", error, err_msg, ret);
+            }
         }
         return ret;
     }
