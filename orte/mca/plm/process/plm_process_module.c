@@ -551,7 +551,7 @@ static int wmi_launch_child(char *prefix, char *remote_node, int argc, char **ar
     char namespace_cimv2[100];
     
     char *ntlm_auth = (char *) malloc(sizeof(char)*(strlen("ntlmdomain:")+strlen(remote_node)+1));
-    memset(ntlm_auth, 0, sizeof(char)*(strlen("ntlmdomain:")+strlen(domain_name)+1));
+    memset(ntlm_auth, 0, sizeof(char)*(strlen("ntlmdomain:")+strlen(remote_node)+1));
     strcat(ntlm_auth, "ntlmdomain:");
     strcat(ntlm_auth, remote_node);
 
