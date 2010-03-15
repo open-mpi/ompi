@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # The purpose of this shell script is to extract the ALPS resId for the
 # current batch job (under which we are running).  Ideally, we would not
 # relegate such a function to a script; rather, we would extract this
@@ -29,7 +29,7 @@
 
 #	Otherwise, parse it from the PBS/Torque environmental variable.
 	jid=${PBS_JOBID:--1}
-	if [ $jid == "-1" ]
+	if [ $jid = "-1" ]
 	then
 		${ECHO} -1
 		exit 0
@@ -41,7 +41,7 @@
 # file; but let's not be too hasty about reporting failure.
   resId=""
   count=0
-  while ( [ "$resId" == "" ] )
+  while [ "$resId" = "" ]
   do
 
 #	We're in a while loop, so skip the delay on the first trip.
@@ -63,7 +63,7 @@
 
 # If we still don't have it after 10 attempts, then, I reckon that it
 # just wasn't meant to be.
-  if [ "$resId" == "" ]
+  if [ "$resId" = "" ]
   then
 	${ECHO} 2
 	exit 0

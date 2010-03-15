@@ -298,11 +298,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
             /* Set a new process group for this child, so that a
                SIGSTOP can be sent to it without being sent to the
                orted. */
-#if defined(__NetBSD__)
-            setpgrp(0, 0);
-#else
-            setpgrp();
-#endif
+            setpgid(0, 0);
         }
         
         /* Setup the pipe to be close-on-exec */
