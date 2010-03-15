@@ -265,7 +265,8 @@ static void show_stackframe (int signo, siginfo_t * info, void * p)
 #ifdef SI_KERNEL
             case SI_KERNEL: si_code_str = "Kernel signal"; break;
 #endif
-#ifdef SI_UNDEFINED
+/* Dragonfly defines SI_USER and SI_UNDEFINED both as zero: */
+#if defined(SI_UNDEFINED) && (SI_UNDEFINED != SI_USER)
             case SI_UNDEFINED: si_code_str = "Undefined code"; break;
 #endif
             }
