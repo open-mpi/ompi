@@ -13,6 +13,7 @@
   *
   * Copyright (c) 2006      Voltaire. All rights reserved.
   * Copyright (c) 2007      Mellanox Technologies. All rights reserved.
+  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
   *
   * $COPYRIGHT$
   * 
@@ -36,12 +37,14 @@ static void mca_rcache_vma_construct(opal_object_t *object)
 {
     mca_rcache_vma_t *vma = (mca_rcache_vma_t*)object;
     OBJ_CONSTRUCT(&vma->reg_list, opal_list_t);
+    OBJ_CONSTRUCT(&vma->reg_delete_list, opal_list_t);
 }
 
 static void mca_rcache_vma_destruct(opal_object_t *object)
 {
     mca_rcache_vma_t *vma = (mca_rcache_vma_t*)object;
     OBJ_DESTRUCT(&vma->reg_list);
+    OBJ_DESTRUCT(&vma->reg_delete_list);
 }
 
 OBJ_CLASS_INSTANCE(mca_rcache_vma_t, ompi_free_list_item_t,
@@ -127,6 +130,9 @@ void mca_rcache_vma_destroy(mca_rcache_vma_t *vma)
     while ((item = opal_list_remove_first(&vma->reg_list)))
         OBJ_RELEASE(item);
 
+     while ((item = opal_list_remove_first(&vma->reg_delete_list)))
+         OBJ_RELEASE(item);
+ 
     OBJ_RELEASE(vma);
 }
 
@@ -191,7 +197,7 @@ static inline void mca_rcache_vma_remove_reg(mca_rcache_vma_t *vma,
 
         if(item->reg == reg) {
             opal_list_remove_item(&vma->reg_list, &item->super);
-            OBJ_RELEASE(item);
+	    opal_list_append(&vma->reg_delete_list, &item->super);
             break;
         }
     }

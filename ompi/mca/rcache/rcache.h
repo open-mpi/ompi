@@ -10,6 +10,7 @@
   *                         University of Stuttgart.  All rights reserved.
   * Copyright (c) 2004-2005 The Regents of the University of California.
   *                         All rights reserved.
+  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
   * $COPYRIGHT$
   * 
   * Additional copyrights may follow
