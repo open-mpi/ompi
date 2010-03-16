@@ -4,6 +4,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,8 +45,6 @@ BEGIN_C_DECLS
 /* These flags are on top of the flags in opal_datatype.h */
 /* Is the datatype predefined as MPI type (not necessarily as OPAL type, e.g. struct/block types) */
 #define OMPI_DATATYPE_FLAG_PREDEFINED    0x0200
-/* Is the datatype suitable for one sided operations */
-#define OMPI_DATATYPE_FLAG_ONE_SIDED     0x0400
 /* Keep trace of the type of the predefined datatypes */
 #define OMPI_DATATYPE_FLAG_DATA_INT      0x1000
 #define OMPI_DATATYPE_FLAG_DATA_FLOAT    0x2000
@@ -133,47 +132,6 @@ static inline int32_t
 ompi_datatype_is_overlapped( const ompi_datatype_t* type )
 {
     return opal_datatype_is_overlapped(&type->super);
-}
-
-static inline int32_t
-ompi_datatype_is_acceptable_for_one_sided( const ompi_datatype_t* type __opal_attribute_unused__ )
-{
-    /* Please see https://svn.open-mpi.org/trac/ompi/ticket/2233.
-
-       This function used to check for the
-       OMPI_DATATYPE_FLAG_ONE_SIDED flag on the .flags of the
-       datatype, i.e.:
-
-       return (type->super.flags & OMPI_DATATYPE_FLAG_ONE_SIDED);
-
-       However, after lengthy discussions between George and Brian,
-       the conclusion was that the current DDT engine (as of r22640)
-       does not support checking for what the MPI spec defines as
-       invalid datatypes for one-sided operations.
-
-       The DDT engine currently sets the _ONE_SIDED flag on datatypes
-       that have offsets expressed in bytes (vs. offsets expressed in
-       items).  Such datatypes actually *are* valid for use with
-       one-sided operations, but are not portable (and therefore are
-       not recommended).  
-
-       The DDT engine cannot currently check for *absolute* offsets,
-       which are not valid for MPI one-sided operations.  Hence, since
-       we effectively can't check for invalid-for-one-sided-operations
-       datatypes, just always return 1/true (i.e., that this datatype
-       is acceptable for one-sided operations).  
-
-       Maybe someday someone will write a better check that can look
-       for absolute offsets, and therefore this function would have
-       some meaning again.  :-) This function therefore only still
-       exists for this future possibility.  Since it's an inline
-       function that returns a constant, any optimizing compiler worth
-       its salt will simply optimize it out.  So we figured it was
-       safe to leave this function, especially since it gives a
-       convenient location to put this lengthy explanation/comment.
-       :-)
-    */
-    return 1;
 }
 
 static inline int32_t
