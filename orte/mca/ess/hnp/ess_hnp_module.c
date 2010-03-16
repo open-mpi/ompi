@@ -54,6 +54,7 @@
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/notifier/base/base.h"
 #include "orte/mca/rmcast/base/base.h"
+#include "orte/mca/state/base/base.h"
 
 #include "orte/mca/rmaps/base/base.h"
 #if OPAL_ENABLE_FT_CR == 1
@@ -547,6 +548,18 @@ static int rte_init(void)
         goto error;
     }
 
+    /* setup the state framework */
+    if (ORTE_SUCCESS != (ret = orte_state_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_state_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_state_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_state_select";
+        goto error;
+    }
+    
     /* if a tool has launched us and is requesting event reports,
      * then set its contact info into the comm system
      */
@@ -607,6 +620,7 @@ static int rte_finalize(void)
     unlink(contact_path);
     free(contact_path);
     
+    orte_state_base_close();
     orte_notifier_base_close();
     
     orte_cr_finalize();
