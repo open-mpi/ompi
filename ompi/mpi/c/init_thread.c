@@ -52,7 +52,7 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
      *   = MPI_THREAD_MULTIPLE. Such an implementation may always return provided
      *   = MPI_THREAD_MULTIPLE, irrespective of the value of required.
      */
-#if OPAL_ENABLE_MPI_THREADS
+#if OMPI_ENABLE_THREAD_MULTIPLE
     *provided = MPI_THREAD_MULTIPLE;
 #else
     *provided = MPI_THREAD_SINGLE;

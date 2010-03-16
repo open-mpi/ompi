@@ -373,7 +373,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     if (OPAL_HAVE_THREAD_SUPPORT == 0) {
         ompi_mpi_thread_provided = *provided = MPI_THREAD_SINGLE;
         ompi_mpi_main_thread = NULL;
-    } else if (OPAL_ENABLE_MPI_THREADS == 1) {
+    } else if (OMPI_ENABLE_THREAD_MULTIPLE == 1) {
         ompi_mpi_thread_provided = *provided = requested;
         ompi_mpi_main_thread = opal_thread_get_self();
     } else {
@@ -509,7 +509,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
     if (OMPI_SUCCESS != 
         (ret = ompi_op_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
-                                           OPAL_ENABLE_MPI_THREADS))) {
+                                           OMPI_ENABLE_THREAD_MULTIPLE))) {
         error = "ompi_op_base_find_available() failed";
         goto error;
     }
@@ -563,20 +563,20 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     if (OMPI_SUCCESS != 
         (ret = mca_mpool_base_init(OPAL_ENABLE_PROGRESS_THREADS,
-                                   OPAL_ENABLE_MPI_THREADS))) {
+                                   OMPI_ENABLE_THREAD_MULTIPLE))) {
         error = "mca_mpool_base_init() failed";
         goto error;
     }
 
     if (OMPI_SUCCESS != 
         (ret = mca_pml_base_select(OPAL_ENABLE_PROGRESS_THREADS,
-                                   OPAL_ENABLE_MPI_THREADS))) {
+                                   OMPI_ENABLE_THREAD_MULTIPLE))) {
         error = "mca_pml_base_select() failed";
         goto error;
     }
 
     /* select buffered send allocator component to be used */
-    ret=mca_pml_base_bsend_init(OPAL_ENABLE_MPI_THREADS);
+    ret=mca_pml_base_bsend_init(OMPI_ENABLE_THREAD_MULTIPLE);
     if( OMPI_SUCCESS != ret ) {
         error = "mca_pml_base_bsend_init() failed";
         goto error;
@@ -584,14 +584,14 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     if (OMPI_SUCCESS != 
         (ret = mca_coll_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
-                                            OPAL_ENABLE_MPI_THREADS))) {
+                                            OMPI_ENABLE_THREAD_MULTIPLE))) {
         error = "mca_coll_base_find_available() failed";
         goto error;
     }
 
     if (OMPI_SUCCESS != 
         (ret = ompi_osc_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
-                                           OPAL_ENABLE_MPI_THREADS))) {
+                                           OMPI_ENABLE_THREAD_MULTIPLE))) {
         error = "ompi_osc_base_find_available() failed";
         goto error;
     }
