@@ -75,7 +75,7 @@ mca_btl_gm_module_t mca_btl_gm_module = {
         mca_btl_gm_free, 
         mca_btl_gm_prepare_src,
         mca_btl_gm_prepare_dst,
-#if OPAL_ENABLE_MPI_THREADS || OPAL_ENABLE_PROGRESS_THREADS
+#if OMPI_ENABLE_THREAD_MULTIPLE || OPAL_ENABLE_PROGRESS_THREADS
         mca_btl_gm_send,
         NULL, /* send immediate */
         mca_btl_gm_put,

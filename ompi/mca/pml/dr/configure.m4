@@ -16,7 +16,7 @@ AC_DEFUN([MCA_pml_dr_CONFIG],[
     # support for 64 bits atomics.
     AS_IF([test $OPAL_ASM_SUPPORT_64BIT -eq 1],
         [$1],
-        [AS_IF([test $OPAL_ENABLE_PROGRESS_THREADS -eq 1 -o $OPAL_ENABLE_MPI_THREADS -eq 1],
+        [AS_IF([test $OPAL_ENABLE_PROGRESS_THREADS -eq 1 -o $OMPI_ENABLE_THREAD_MULTIPLE -eq 1],
                [$2],
                [$1])
         ])

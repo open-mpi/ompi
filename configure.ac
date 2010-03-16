@@ -108,6 +108,15 @@ m4_ifdef([project_orte],
          [AC_SUBST(libopen_rte_so_version)])
 AC_SUBST(libopen_pal_so_version)
 
+#
+# Hardwire OPAL progress threads to be off
+#
+OPAL_ENABLE_PROGRESS_THREADS=0
+enable_progress_threads="no"
+AC_DEFINE_UNQUOTED([OPAL_ENABLE_PROGRESS_THREADS], [$OPAL_ENABLE_PROGRESS_THREADS],
+                   [Hardcode the OPAL progress thread to be off])
+
+
 # List header files to generate
 
 AM_CONFIG_HEADER([opal/include/opal_config.h])
@@ -829,8 +838,9 @@ AC_DEFINE_UNQUOTED([OPAL_ALIGN_WORD_SIZE_INTEGERS], [$results],
 #
 # Check out what thread support we have
 #
+OPAL_CONFIG_THREADS
+m4_ifdef([project_ompi], [OMPI_CONFIG_THREADS])
 
-OMPI_CONFIG_THREADS
 CFLAGS="$CFLAGS $THREAD_CFLAGS"
 CPPFLAGS="$CPPFLAGS $THREAD_CPPFLAGS"
 m4_ifdef([project_ompi],
