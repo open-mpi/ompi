@@ -9,6 +9,7 @@
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,7 +32,6 @@
 
 static void __ompi_datatype_allocate( ompi_datatype_t* datatype )
 {
-    datatype->super.flags       |= OMPI_DATATYPE_FLAG_ONE_SIDED;
     datatype->args               = NULL;
     datatype->d_f_to_c_index     = opal_pointer_array_add(&ompi_datatype_f_to_c_table, datatype);
     /* Later generated datatypes will have their id according to the Fortran ID, as ALL types are registered */

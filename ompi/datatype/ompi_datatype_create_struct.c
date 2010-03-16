@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -90,11 +91,6 @@ int32_t ompi_datatype_create_struct( int count, const int* pBlockLength, const O
     }
     ompi_datatype_add( pdt, lastType, lastBlock, lastDisp, lastExtent );
 
-    /*
-     * A datatype based on bytes displacements is not suitable for
-     * one sided communications.
-     */
-    pdt->super.flags &= ~OMPI_DATATYPE_FLAG_ONE_SIDED;
      *newType = pdt;
     return OMPI_SUCCESS;
 }
