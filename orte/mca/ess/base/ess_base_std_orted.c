@@ -59,6 +59,7 @@
 #include "orte/util/show_help.h"
 #include "orte/mca/notifier/base/base.h"
 #include "orte/mca/rmcast/base/base.h"
+#include "orte/mca/state/base/base.h"
 
 #include "orte/runtime/orte_cr.h"
 #include "orte/runtime/orte_wait.h"
@@ -388,6 +389,18 @@ int orte_ess_base_orted_setup(char **hosts)
         goto error;
     }
     
+    /* setup the state framework */
+    if (ORTE_SUCCESS != (ret = orte_state_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_state_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_state_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_state_select";
+        goto error;
+    }
+    
     return ORTE_SUCCESS;
     
 error:
@@ -415,6 +428,7 @@ int orte_ess_base_orted_finalize(void)
         orte_grpcomm.onesided_barrier();
     }
     
+    orte_state_base_close();
     orte_notifier_base_close();
     
     orte_cr_finalize();

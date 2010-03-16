@@ -525,7 +525,7 @@ AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h \
     sys/types.h sys/uio.h net/uio.h sys/utsname.h sys/vfs.h sys/wait.h syslog.h \
     time.h termios.h ulimit.h unistd.h util.h utmp.h malloc.h \
     ifaddrs.h sys/sysctl.h crt_externs.h regex.h \
-    ioLib.h sockLib.h hostLib.h shlwapi.h sys/synch.h])
+    ioLib.h sockLib.h hostLib.h shlwapi.h sys/synch.h limits.h db.h ndbm.h])
 
 # Needed to work around Darwin requiring sys/socket.h for
 # net/if.h
@@ -656,7 +656,7 @@ OMPI_CHECK_FUNC_LIB([dirname], [gen])
 # Darwin doesn't need -lm, as it's a symlink to libSystem.dylib
 OMPI_CHECK_FUNC_LIB([ceil], [m])
 
-AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty getpwuid fork waitpid execve pipe ptsname setsid mmap tcgetpgrp posix_memalign strsignal sysconf syslog regcmp regexec regfree _NSGetEnviron socketpair strncpy_s _strdup usleep mkfifo])
+AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty getpwuid fork waitpid execve pipe ptsname setsid mmap tcgetpgrp posix_memalign strsignal sysconf syslog regcmp regexec regfree _NSGetEnviron socketpair strncpy_s _strdup usleep mkfifo dbopen dbm_open])
 
 # On some hosts, htonl is a define, so the AC_CHECK_FUNC will get
 # confused.  On others, it's in the standard library, but stubbed with
