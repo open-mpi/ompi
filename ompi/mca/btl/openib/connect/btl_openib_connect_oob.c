@@ -13,6 +13,7 @@
  * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2008      Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -726,6 +727,9 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
     master = orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_PROC_MY_NAME,
                                     process_name) > 0 ? true : false;
     
+    /* Need to protect the ib_procs list */
+    OPAL_THREAD_LOCK(&mca_btl_openib_component.ib_lock);
+
     for (ib_proc = (mca_btl_openib_proc_t*)
             opal_list_get_first(&mca_btl_openib_component.ib_procs);
         ib_proc != (mca_btl_openib_proc_t*)
@@ -778,6 +782,7 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
                just ignore this connection request */
             if (found && !master &&
                 MCA_BTL_IB_CLOSED != ib_endpoint->endpoint_state) {
+		OPAL_THREAD_UNLOCK(&mca_btl_openib_component.ib_lock);
                 return;
             }
         }
@@ -785,6 +790,7 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
         if (!found) {
             BTL_ERROR(("can't find suitable endpoint for this peer\n")); 
             mca_btl_openib_endpoint_invoke_error(NULL);
+	    OPAL_THREAD_UNLOCK(&mca_btl_openib_component.ib_lock);
             return; 
         }
         
@@ -867,4 +873,5 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
         }
         break;
     }
+    OPAL_THREAD_UNLOCK(&mca_btl_openib_component.ib_lock);
 }
