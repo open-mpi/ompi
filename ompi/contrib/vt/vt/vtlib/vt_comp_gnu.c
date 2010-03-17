@@ -442,6 +442,8 @@ void gnu_finalize()
                   max, ((double)max*1000)/n, idx_max,
                   avg );
   vt_assert( n_htab_entries==0 );
+
+  gnu_init = 1;
 }
 
 /*
