@@ -407,12 +407,6 @@ MPI Functionality and Features
   portable C datatype can be found that matches the Fortran type
   REAL*16, both in size and bit representation.
 
-- Asynchronous message passing progress using threads can be turned on
-  with the --enable-progress-threads option to configure.
-  Asynchronous message passing progress is only supported with devices
-  that support MPI_THREAD_MULTIPLE, but is only very lightly tested
-  (and may not provide very much performance benefit).
-
 
 Collectives
 -----------
@@ -748,20 +742,19 @@ for a full list); a summary of the more commonly used ones follows:
     (default: yes).
 
 --with-threads=value
-  Since thread support (both support for MPI_THREAD_MULTIPLE and
-  asynchronous progress) is only partially tested, it is disabled by
+  Since thread support is only partially tested, it is disabled by
   default.  To enable threading, use "--with-threads=posix".  This is
-  most useful when combined with --enable-mpi-threads and/or
-  --enable-progress-threads.
+  most useful when combined with --enable-mpi-thread-multiple.
 
---enable-mpi-threads
+--enable-mpi-thread-multiple
   Allows the MPI thread level MPI_THREAD_MULTIPLE.  See
-  --with-threads; this is currently disabled by default.
+  --with-threads; this is currently disabled by default. Enabling
+  this feature will automatically --enable-opal-multi-threads.
 
---enable-progress-threads
-  Allows asynchronous progress in some transports.  See
-  --with-threads; this is currently disabled by default.  See the
-  above note about asynchronous progress.
+--enable-opal-multi-threads
+  Enables thread lock support in the OPAL and ORTE layers. Does
+  not enable MPI_THREAD_MULTIPLE - see above option for that feature.
+  This is currently disabled by default.
 
 --disable-mpi-cxx
   Disable building the C++ MPI bindings.  Note that this does *not*
