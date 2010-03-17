@@ -11,6 +11,14 @@ dnl
 # MCA_state_db_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
 AC_DEFUN([MCA_state_db_CONFIG], [
-    # only build if db.h is found
-    AC_CHECK_HEADERS([db.h], [$1], [$2], [AC_INCLUDES_DEFAULT])
+    # only build if db.h and its corresponding library are found
+    OMPI_CHECK_PACKAGE([state_db],
+                       [db.h],
+                       [db],
+                       [dbopen],
+                       [],
+                       [],
+                       [],
+                       [$1],
+                       [$2])])
 ])dnl

@@ -27,8 +27,8 @@ endif
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_state_dbm_la_SOURCES = $(sources)
-mca_state_dbm_la_LDFLAGS = -module -avoid-version -ldbm
+mca_state_dbm_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_state_dbm_la_SOURCES =$(sources)
-libmca_state_dbm_la_LDFLAGS = -module -avoid-version -ldbm
+libmca_state_dbm_la_LDFLAGS = -module -avoid-version
