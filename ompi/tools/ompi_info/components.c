@@ -82,6 +82,8 @@
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/grpcomm/base/base.h"
+#include "orte/mca/state/state.h"
+#include "orte/mca/state/base/base.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/base/base.h"
 #include "orte/mca/notifier/notifier.h"
@@ -344,6 +346,14 @@ void ompi_info_open_components(void)
     map = OBJ_NEW(ompi_info_component_map_t);
     map->type = strdup("grpcomm");
     map->components = &orte_grpcomm_base.components_available;
+    opal_pointer_array_add(&component_map, map);
+    
+    if (ORTE_SUCCESS != orte_state_base_open()) {
+        goto error;
+    }
+    map = OBJ_NEW(ompi_info_component_map_t);
+    map->type = strdup("state");
+    map->components = &orte_state_base_components_available;
     opal_pointer_array_add(&component_map, map);
     
     if (ORTE_SUCCESS != orte_ess_base_open()) {
@@ -639,6 +649,7 @@ void ompi_info_close_components()
         (void) mca_allocator_base_close();
         (void) ompi_osc_base_close();
         (void) orte_grpcomm_base_close();
+        (void) orte_state_base_close();
         (void) orte_notifier_base_close();
         (void) orte_ess_base_close();
         (void) orte_show_help_finalize();

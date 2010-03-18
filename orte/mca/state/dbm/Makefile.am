@@ -26,9 +26,13 @@ endif
 
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
+mca_state_dbm_la_CPPFLAGS = $(state_dbm_CPPFLAGS)
 mca_state_dbm_la_SOURCES = $(sources)
-mca_state_dbm_la_LDFLAGS = -module -avoid-version
+mca_state_dbm_la_LDFLAGS = -module -avoid-version $(state_dbm_LDFLAGS)
+mca_state_dbm_la_LIBADD = $(state_dbm_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)
+libmca_state_dbm_la_CPPFLAGS = $(state_dbm_CPPFLAGS)
 libmca_state_dbm_la_SOURCES =$(sources)
-libmca_state_dbm_la_LDFLAGS = -module -avoid-version
+libmca_state_dbm_la_LDFLAGS = -module -avoid-version $(state_dbm_LDFLAGS)
+libmca_state_dbm_la_LIBADD = $(state_dbm_LIBS)

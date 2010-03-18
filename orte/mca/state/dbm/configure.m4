@@ -21,4 +21,8 @@ AC_DEFUN([MCA_state_dbm_CONFIG], [
                        [],
                        [$1],
                        [$2])])
+
+    AC_SUBST(state_dbm_CPPFLAGS)
+    AC_SUBST(state_dbm_LDFLAGS)
+    AC_SUBST(state_dbm_LIBS)
 ])dnl
