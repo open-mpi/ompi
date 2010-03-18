@@ -26,7 +26,7 @@
 #include "state_dbm.h"
 
 extern orte_state_base_module_t orte_state_dbm_module;
-char *orte_state_dbm_filename;
+char *orte_state_dbm_directory;
 
 /*
  * Instantiate the public struct with all of our public information
@@ -80,7 +80,7 @@ int orte_state_dbm_component_query(mca_base_module_t **module, int *priority)
                                    true,
                                    &is_required);
     
-    if( is_required || NULL != orte_state_dbm_directory) {
+    if (is_required && NULL != orte_state_dbm_directory) {
         *priority = 1000;
         *module = (mca_base_module_t*)&orte_state_dbm_module;
         return ORTE_SUCCESS;
