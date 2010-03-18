@@ -195,9 +195,11 @@ OMPI_DEF_OPT(OPAL_ENABLE_MEM_PROFILE "Whether we want the memory profiling or no
 
 OMPI_DEF_OPT(OMPI_ENABLE_MPI_PROFILING "Whether we want MPI profiling or not." ON)
 
-OMPI_DEF_OPT(OPAL_ENABLE_MPI_THREADS "Whether we should enable support for multiple user threads." OFF)
+OMPI_DEF_OPT(OMPI_ENABLE_THREAD_MULTIPLE "Enable MPI Thread Multiple." OFF)
 
-OMPI_DEF_OPT(OPAL_ENABLE_PROGRESS_THREADS "Whether we should use progress threads rather than polling." OFF)
+OMPI_DEF(OPAL_ENABLE_PROGRESS_THREADS 0 "Hardcode the OPAL progress thread to be off." 0 1)
+
+OMPI_DEF_OPT(OPAL_ENABLE_MULTI_THREADS "Whether we should enable support for multiple user threads" OFF)
 
 OMPI_DEF_OPT(OPAL_ENABLE_PTY_SUPPORT "Whether we should use progress threads rather than polling." OFF)
 
