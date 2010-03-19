@@ -29,6 +29,8 @@
 #include "opal/mca/paffinity/paffinity.h"
 #include "opal/mca/sysinfo/sysinfo.h"
 #include "opal/mca/sysinfo/base/base.h"
+#include "opal/threads/mutex.h"
+#include "opal/threads/condition.h"
 
 #include "orte/mca/rmcast/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -73,7 +75,14 @@ orte_ess_base_module_t orte_ess_cm_module = {
     NULL /* ft_event */
 };
 
+
+/* support for setting name */
+static bool arrived = false;
+static bool name_success = false;
+static opal_mutex_t lock;
+static opal_condition_t cond;
 static int cm_set_name(void);
+
 
 static int rte_init(void)
 {
@@ -81,73 +90,82 @@ static int rte_init(void)
     char *error = NULL;
     char **hosts = NULL;
     char *nodelist;
-
-    /* only daemons that are bootstrapping should
-     * be calling this module
-     */
-
+    char *tmp=NULL;
+    orte_vpid_t vpid;
+    int32_t jfam;
+    
+    /* construct the thread support */
+    OBJ_CONSTRUCT(&lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&cond, opal_condition_t);
+    
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
         error = "orte_ess_base_std_prolog";
         goto error;
     }
     
+    /* open the reliable multicast framework */
+    if (ORTE_SUCCESS != (ret = orte_rmcast_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rmcast_base_open";
+        goto error;
+    }
+    
+    if (ORTE_SUCCESS != (ret = orte_rmcast_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rmcast_base_select";
+        goto error;
+    }
+    
     if (ORTE_PROC_IS_DAEMON) {
+        /* open and setup the local resource discovery framework */
+        if (ORTE_SUCCESS != (ret = opal_sysinfo_base_open())) {
+            ORTE_ERROR_LOG(ret);
+            error = "opal_sysinfo_base_open";
+            goto error;
+        }
+        if (ORTE_SUCCESS != (ret = opal_sysinfo_base_select())) {
+            ORTE_ERROR_LOG(ret);
+            error = "opal_sysinfo_base_select";
+            goto error;
+        }
         /* if we do not know the HNP, then we have to
          * use the multicast system to find it
          */
         if (NULL == orte_process_info.my_hnp_uri) {
-            /* Runtime Messaging Layer - this opens/selects the OOB as well
-             * so we can get our url
-             */
-            if (ORTE_SUCCESS != (ret = orte_rml_base_open())) {
-                ORTE_ERROR_LOG(ret);
-                error = "orte_rml_base_open";
-                goto error;
+            /* if we were given a job family to join, get it */
+            mca_base_param_reg_string_name("orte", "ess_job_family", "Job family",
+                                           true, false, NULL, &tmp);
+            if (NULL != tmp) {
+                jfam = strtol(tmp, NULL, 10);
+                ORTE_PROC_MY_NAME->jobid = ORTE_CONSTRUCT_JOB_FAMILY(jfam);
+                ORTE_PROC_MY_NAME->vpid = ORTE_VPID_INVALID;
             }
-            if (ORTE_SUCCESS != (ret = orte_rml_base_select())) {
-                ORTE_ERROR_LOG(ret);
-                error = "orte_rml_base_select";
-                goto error;
-            }
-            
-            /* open the reliable multicast framework */
-            if (ORTE_SUCCESS != (ret = orte_rmcast_base_open())) {
-                ORTE_ERROR_LOG(ret);
-                error = "orte_rmcast_base_open";
-                goto error;
-            }
-            
-            if (ORTE_SUCCESS != (ret = orte_rmcast_base_select())) {
-                ORTE_ERROR_LOG(ret);
-                error = "orte_rmcast_base_select";
-                goto error;
-            }
-
-            /* open and setup the local resource discovery framework */
-            if (ORTE_SUCCESS != (ret = opal_sysinfo_base_open())) {
-                ORTE_ERROR_LOG(ret);
-                error = "opal_sysinfo_base_open";
-                goto error;
-            }
-            if (ORTE_SUCCESS != (ret = opal_sysinfo_base_select())) {
-                ORTE_ERROR_LOG(ret);
-                error = "opal_sysinfo_base_select";
-                goto error;
-            }
-
             /* get a name for ourselves */
             if (ORTE_SUCCESS != (ret = cm_set_name())) {
                 error = "set_name";
                 goto error;
             }
         } else {
-            /* if we were given an HNP, then we must have also
-             * been given a vpid - we can get the jobid from
-             * the HNP's name
+            /* if we were given an HNP, we can get the jobid from
+             * the HNP's name - this is decoded in proc_info.c during
+             * the prolog
              */
             ORTE_PROC_MY_NAME->jobid = orte_process_info.my_hnp.jobid;
-            
+            /* get vpid from environ */
+            mca_base_param_reg_string_name("orte", "ess_vpid", "Process vpid",
+                                           true, false, NULL, &tmp);
+            if (NULL == tmp) {
+                ret = ORTE_ERR_NOT_FOUND;
+                error = "get_ess_vpid";
+                goto error;
+            }
+            if (ORTE_SUCCESS != (ret = orte_util_convert_string_to_vpid(&vpid, tmp))) {
+                error = "convert_string_to_vpid";
+                goto error;
+            }
+            free(tmp);
+            ORTE_PROC_MY_NAME->vpid = vpid;
         }
         
         /* get the list of nodes used for this job */
@@ -164,48 +182,41 @@ static int rte_init(void)
         }
         opal_argv_free(hosts);
     } else if (ORTE_PROC_IS_TOOL) {
-        if (ORTE_SUCCESS != (ret = orte_plm_base_open())) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_plm_base_open";
-            goto error;
-        }
-        
-        if (ORTE_SUCCESS != (ret = orte_plm_base_select())) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_plm_base_select";
-            goto error;
-        }
-        if (ORTE_SUCCESS != (ret = orte_plm.set_hnp_name())) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_plm_set_hnp_name";
-            goto error;
-        }
-        /* close the plm since we opened it to set our
-         * name, but have no further use for it
-         */
-        orte_plm_base_close();
-
-        /* if we do not know the HNP, then we have to use
-         * the multicast system to find it
-         */
-        if (NULL == orte_process_info.my_hnp_uri) {
-            /* open the reliable multicast framework */
-            if (ORTE_SUCCESS != (ret = orte_rmcast_base_open())) {
+        /* if we were given a job family to join, get it */
+        mca_base_param_reg_string_name("orte", "ess_job_family", "Job family",
+                                       true, false, NULL, &tmp);
+        if (NULL != tmp) {
+            jfam = strtol(tmp, NULL, 10);
+            ORTE_PROC_MY_NAME->jobid = ORTE_CONSTRUCT_LOCAL_JOBID((jfam << 16), ORTE_JOBID_INVALID);
+            ORTE_PROC_MY_NAME->vpid = ORTE_VPID_INVALID;
+        } else {
+            /* create our own name */
+            if (ORTE_SUCCESS != (ret = orte_plm_base_open())) {
                 ORTE_ERROR_LOG(ret);
-                error = "orte_rmcast_base_open";
+                error = "orte_plm_base_open";
                 goto error;
             }
             
-            if (ORTE_SUCCESS != (ret = orte_rmcast_base_select())) {
+            if (ORTE_SUCCESS != (ret = orte_plm_base_select())) {
                 ORTE_ERROR_LOG(ret);
-                error = "orte_rmcast_base_select";
+                error = "orte_plm_base_select";
                 goto error;
             }
-            /* checkin with the HNP */
-            if (ORTE_SUCCESS != (ret = cm_set_name())) {
-                error = "set_name";
+            if (ORTE_SUCCESS != (ret = orte_plm.set_hnp_name())) {
+                ORTE_ERROR_LOG(ret);
+                error = "orte_plm_set_hnp_name";
                 goto error;
-            }            
+            }
+            /* close the plm since we opened it to set our
+             * name, but have no further use for it
+             */
+            orte_plm_base_close();
+        }
+
+        /* checkin with the HNP to get a name or just make contact */
+        if (ORTE_SUCCESS != (ret = cm_set_name())) {
+            error = "set_name";
+            goto error;
         }
         
         /* do the rest of the standard tool init */
@@ -215,6 +226,11 @@ static int rte_init(void)
             goto error;
         }
     }
+    
+    /* destruct the thread support */
+    OBJ_DESTRUCT(&lock);
+    OBJ_DESTRUCT(&cond);
+    
     return ORTE_SUCCESS;
     
 error:
@@ -222,6 +238,9 @@ error:
                    "orte_init:startup:internal-failure",
                    true, error, ORTE_ERROR_NAME(ret), ret);
     
+    /* destruct the thread support */
+    OBJ_DESTRUCT(&lock);
+    OBJ_DESTRUCT(&cond);
     return ret;
 }
 
@@ -409,10 +428,6 @@ static int update_nidmap(opal_byte_object_t *bo)
     return rc;
 }
 
-/* support for setting name */
-static bool arrived = false;
-static bool name_success = false;
-
 static void cbfunc(int status,
                    int channel, orte_rmcast_tag_t tag,
                    orte_process_name_t *sender,
@@ -425,6 +440,8 @@ static void cbfunc(int status,
     char *uri;
     char *host;
     
+    OPAL_THREAD_LOCK(&lock);
+    
     /* ensure we default to failure */
     name_success = false;
     
@@ -432,38 +449,38 @@ static void cbfunc(int status,
     n = 1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &cmd, &n, ORTE_DAEMON_CMD_T))) {
         ORTE_ERROR_LOG(rc);
-        arrived = true;
-        return;
+        goto cleanup;
     }
 
-    if (ORTE_DAEMON_NAME_REQ_CMD == cmd) {
-        /* unpack the intended recipient's hostname */
-        n=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &host, &n, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            arrived = true;
-            return;
-        }
-        
-        /* is this intended for me? */
-        if (0 != strcmp(host, orte_process_info.nodename)) {
-            /* nope - ignore it */
-            return;
-        }
-        
-        /* unpack the name */
-        n = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &name, &n, ORTE_NAME))) {
-            ORTE_ERROR_LOG(rc);
-            arrived = true;
-            return;
-        }
-        /* if we got an invalid name, then declare failure */
-        if (ORTE_JOBID_INVALID == name.jobid &&
-            ORTE_VPID_INVALID == name.vpid) {
-            arrived = true;
-            return;
-        }
+    /* unpack the intended recipient's hostname */
+    n=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &host, &n, OPAL_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+    
+    /* is this intended for me? */
+    if (0 != strcmp(host, orte_process_info.nodename)) {
+        /* nope - ignore it */
+        goto cleanup;
+    }
+    
+    /* unpack the name */
+    n = 1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &name, &n, ORTE_NAME))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+    /* if we got an invalid name, then declare failure */
+    if (ORTE_JOBID_INVALID == name.jobid &&
+        ORTE_VPID_INVALID == name.vpid) {
+        arrived = true;
+        name_success = false;
+        goto cleanup;
+    }
+    
+    /* if I didn't already have a name, set it */
+    if (ORTE_VPID_INVALID == ORTE_PROC_MY_NAME->vpid) {
         ORTE_PROC_MY_NAME->jobid = name.jobid;
         ORTE_PROC_MY_NAME->vpid = name.vpid;
         OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
@@ -474,28 +491,29 @@ static void cbfunc(int status,
     n = 1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &uri, &n, OPAL_STRING))) {
         ORTE_ERROR_LOG(rc);
-        arrived = true;
-        return;
+        goto cleanup;
     }
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                          "%s got hnp uri %s",
                          ORTE_NAME_PRINT(&name), uri));
     orte_process_info.my_hnp_uri = uri;
     
-    if (ORTE_DAEMON_NAME_REQ_CMD == cmd ||
-        ORTE_DAEMON_CHECKIN_CMD == cmd) {
+    if (ORTE_DAEMON_CHECKIN_CMD == cmd) {
         /* unpack the number of daemons */
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &np, &n, OPAL_INT32))) {
             ORTE_ERROR_LOG(rc);
-            arrived = true;
-            return;
+            goto cleanup;
         }
         orte_process_info.num_procs = np;
     }
     
     name_success = true;
     arrived = true;
+
+cleanup:
+    opal_condition_signal(&cond);
+    OPAL_THREAD_UNLOCK(&lock);
 }
 
 static int cm_set_name(void)
@@ -514,33 +532,21 @@ static int cm_set_name(void)
     opal_list_item_t *item;
     opal_sysinfo_value_t *info;
     int32_t num_values;
-    char *rml_uri;
     
     /* setup the query */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
 
     if (ORTE_PROC_IS_DAEMON) {
-        /* use the reliable multicast system to contact the HNP and
-         * get a name
-         */
-        cmd = ORTE_DAEMON_NAME_REQ_CMD;
-        opal_dss.pack(&buf, &cmd, 1, ORTE_DAEMON_CMD_T);
+        cmd = ORTE_DAEMON_CHECKIN_CMD;
     } else if (ORTE_PROC_IS_TOOL) {
         cmd = ORTE_TOOL_CHECKIN_CMD;
-        opal_dss.pack(&buf, &cmd, 1, ORTE_DAEMON_CMD_T);
     }
+    opal_dss.pack(&buf, &cmd, 1, ORTE_DAEMON_CMD_T);
 
     /* always include our node name */
     opal_dss.pack(&buf, &orte_process_info.nodename, 1, OPAL_STRING);
 
     if (ORTE_PROC_IS_DAEMON) {
-        /* get and send our url */
-        if (NULL == (rml_uri = orte_rml.get_contact_info())) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return ORTE_ERR_NOT_FOUND;
-        }
-        opal_dss.pack(&buf, &rml_uri, 1, OPAL_STRING);
-        free(rml_uri);
         /* get our local resources */
         OBJ_CONSTRUCT(&resources, opal_list_t);
         opal_sysinfo.query(keys, &resources);
@@ -587,7 +593,11 @@ static int cm_set_name(void)
     OBJ_DESTRUCT(&buf);
 
     /* wait for response */
-    ORTE_PROGRESSED_WAIT(arrived, 0, 1);
+    OPAL_THREAD_LOCK(&lock);
+    while (!arrived) {
+        opal_condition_wait(&cond, &lock);
+    }
+    OPAL_THREAD_UNLOCK(&lock);
     
     /* cancel the recv */
     orte_rmcast.cancel_recv(ORTE_RMCAST_SYS_CHANNEL,
