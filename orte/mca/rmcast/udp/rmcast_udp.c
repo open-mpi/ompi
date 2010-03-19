@@ -301,11 +301,11 @@ static int queue_xmit(rmcast_base_send_t *snd,
 process:    
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                          "%s rmcast:udp: send of %d %s"
-                         " called on multicast channel %03d.%03d.%03d.%03d %0x",
+                         " called on multicast channel %03d.%03d.%03d.%03d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == snd->iovec_array) ? (int)snd->buf->bytes_used : (int)snd->iovec_count,
                          (NULL == snd->iovec_array) ? "bytes" : "iovecs",
-                         OPAL_IF_FORMAT_ADDR(ch->network), ch->network));
+                         OPAL_IF_FORMAT_ADDR(ch->network)));
     
     /* add it to this channel's pending sends */
     OPAL_THREAD_LOCK(&ch->send_lock);
@@ -1031,6 +1031,9 @@ static void process_recv(int fd, short event, void *cbdata)
                     ptr->iovec_array[i].iov_len = iovec_array[i].iov_len;
                     memcpy(ptr->iovec_array[i].iov_base, iovec_array[i].iov_base, iovec_array[i].iov_len);
                 }
+                /* copy the sender's name */
+                ptr->name.jobid = name.jobid;
+                ptr->name.vpid = name.vpid;
                 /* flag it as recvd to release blocking recv */
                 ptr->recvd = true;
             }
@@ -1054,6 +1057,9 @@ static void process_recv(int fd, short event, void *cbdata)
                     ORTE_ERROR_LOG(rc);
                     goto cleanup;
                 }                    
+                /* copy the sender's name */
+                ptr->name.jobid = name.jobid;
+                ptr->name.vpid = name.vpid;
                 /* flag it as recvd to release blocking recv */
                 ptr->recvd = true;
             }
