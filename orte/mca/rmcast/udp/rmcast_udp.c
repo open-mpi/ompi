@@ -869,8 +869,8 @@ static void process_recv(int fd, short event, void *cbdata)
                                  ORTE_NAME_PRINT(&name)));
             goto cleanup;
         }
-        /* if I am other than the HNP, ignore it */
-        if (!ORTE_PROC_IS_HNP) {
+        /* if I am other than the HNP or a tool, ignore it */
+        if (!ORTE_PROC_IS_HNP && !ORTE_PROC_IS_TOOL) {
             OPAL_OUTPUT_VERBOSE((10, orte_rmcast_base.rmcast_output,
                                  "%s rmcast:udp:recv from a different job family: %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
