@@ -101,14 +101,16 @@ do {                                    \
 /*
  * define invalid values
  */
-#define ORTE_JOBID_INVALID      (ORTE_JOBID_MAX + 2)
-#define ORTE_VPID_INVALID       (ORTE_VPID_MAX + 2)
+#define ORTE_JOBID_INVALID          (ORTE_JOBID_MAX + 2)
+#define ORTE_VPID_INVALID           (ORTE_VPID_MAX + 2)
+#define ORTE_LOCAL_JOBID_INVALID    (ORTE_JOBID_INVALID & 0x0000FFFF)
 
 /*
  * define wildcard values
  */
-#define ORTE_JOBID_WILDCARD      (ORTE_JOBID_MAX + 1)
-#define ORTE_VPID_WILDCARD       (ORTE_VPID_MAX + 1)
+#define ORTE_JOBID_WILDCARD         (ORTE_JOBID_MAX + 1)
+#define ORTE_VPID_WILDCARD          (ORTE_VPID_MAX + 1)
+#define ORTE_LOCAL_JOBID_WILDCARD   (ORTE_JOBID_WILDCARD & 0x0000FFFF)
 
 /*
  * define the process name structure
