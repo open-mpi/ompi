@@ -691,13 +691,23 @@ static int open_channel(orte_rmcast_channel_t *channel, char *name,
     }
     
     /* see if this name has already been assigned a channel on the specified network */
+    OPAL_OUTPUT_VERBOSE((7, orte_rmcast_base.rmcast_output,
+                         "%s open_channel: searching for %s:%d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), name, *channel));
+                        
     chan = NULL;
     for (item = opal_list_get_first(&channels);
          item != opal_list_get_end(&channels);
          item = opal_list_get_next(item)) {
         nchan = (rmcast_base_channel_t*)item;
         
-        if (0 == strcasecmp(nchan->name, name)) {
+        OPAL_OUTPUT_VERBOSE((7, orte_rmcast_base.rmcast_output,
+                             "%s open_channel: channel %s:%d",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             nchan->name, *channel));
+
+        if (nchan->channel == *channel ||
+            0 == strcasecmp(nchan->name, name)) {
             /* check the network, if one was specified */
             if (0 != netaddr && netaddr != (nchan->network & netmask)) {
                 continue;
@@ -717,8 +727,9 @@ static int open_channel(orte_rmcast_channel_t *channel, char *name,
          * sockets are setup
          */
         OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
-                             "%s rmcast:udp using existing channel network %03d.%03d.%03d.%03d port %d",
+                             "%s rmcast:udp using existing channel %s:%d network %03d.%03d.%03d.%03d port %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             chan->name, chan->channel,
                              OPAL_IF_FORMAT_ADDR(chan->network),
                              (int)chan->port));
         
@@ -762,8 +773,9 @@ static int open_channel(orte_rmcast_channel_t *channel, char *name,
     OPAL_THREAD_UNLOCK(&lock);
     
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
-                         "%s rmcast:udp opening new channel network %03d.%03d.%03d.%03d port %d for%s%s",
+                         "%s rmcast:udp opening new channel %s:%d network %03d.%03d.%03d.%03d port %d for%s%s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         chan->name, chan->channel,
                          OPAL_IF_FORMAT_ADDR(chan->network),
                          (int)chan->port,
                          (ORTE_RMCAST_RECV & direction) ? " RECV" : " ",
@@ -1114,6 +1126,15 @@ static int setup_channel(rmcast_base_channel_t *chan, uint8_t direction)
 {
     int rc;
     int xmitsd, recvsd;
+    
+    if (0 <= chan->xmit && 0 <= chan->recv) {
+        /* already setup */
+        OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
+                             "%s setup:channel %d already setup",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             chan->channel));
+        return ORTE_SUCCESS;
+    }
     
     /* setup the IPv4 addr info */
     chan->addr.sin_family = AF_INET;
