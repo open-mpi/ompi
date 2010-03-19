@@ -1,4 +1,5 @@
 enable_multicast=yes
+enable_opal_multi_threads=yes
 with_memory_manager=no
 enable_mem_debug=yes
 enable_mem_profile=no
