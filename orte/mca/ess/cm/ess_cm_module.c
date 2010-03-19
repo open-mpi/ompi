@@ -456,12 +456,14 @@ static void cbfunc(int status,
     n=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &host, &n, OPAL_STRING))) {
         ORTE_ERROR_LOG(rc);
-        return;
+        goto cleanup;
     }
     
     /* is this intended for me? */
     if (0 != strcmp(host, orte_process_info.nodename)) {
         /* nope - ignore it */
+        OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
+                             "message for %s - not for me", host));
         goto cleanup;
     }
     
@@ -469,7 +471,7 @@ static void cbfunc(int status,
     n = 1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &name, &n, ORTE_NAME))) {
         ORTE_ERROR_LOG(rc);
-        return;
+        goto cleanup;
     }
     /* if we got an invalid name, then declare failure */
     if (ORTE_JOBID_INVALID == name.jobid &&
