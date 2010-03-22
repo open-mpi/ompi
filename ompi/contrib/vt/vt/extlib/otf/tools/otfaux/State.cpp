@@ -3,6 +3,8 @@
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
+#include "OTF_Platform.h"
+
 #include "State.h"
 
 
@@ -167,17 +169,13 @@ int ProcessState::closeFile( uint64_t handleid ) {
 
 
     if( it == openfiles.end() ) {
-/*
+
 #       ifdef OTF_VERBOSE
-            fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
-                "Trying to close not yet opened file. aborting\n",
-            __FUNCTION__, __FILE__, __LINE__ );
-#       endif
-*/
             fprintf( stderr, "WARNING in function %s, file: %s, line: %i:\n "
                 "Trying to close a file that is not open with handle %llu. "
                 "This might be caused by a VT error, please check! Ignore this for now.\n",
             __FUNCTION__, __FILE__, __LINE__, (long long unsigned) handleid );
+#       endif
 
         /* make it a warning that cannot be disabled because I suspect an error in VT ! */
         /* return OTF_RETURN_ABORT; */
