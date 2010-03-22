@@ -60,7 +60,7 @@ Init(int& argc, char**& argv);
 void
 Init();
 
-void
+OMPI_DECLSPEC void
 InitializeIntercepts();
 
 void
