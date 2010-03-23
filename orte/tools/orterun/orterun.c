@@ -562,9 +562,8 @@ int orterun(int argc, char *argv[])
                 "1",
                 true, &environ);
     free(tmp_env_var);
-#else
-    tmp_env_var = NULL; /* Silence compiler warning */
 #endif
+    tmp_env_var = NULL; /* Silence compiler warning */
 
     /* Intialize our Open RTE environment
      * Set the flag telling orte_init that I am NOT a
