@@ -104,7 +104,7 @@ typedef orte_local_rank_t (*orte_ess_base_module_proc_get_local_rank_fn_t)(orte_
 typedef orte_node_rank_t (*orte_ess_base_module_proc_get_node_rank_fn_t)(orte_process_name_t *proc);
 
 /**
- * Update thr pidmap
+ * Update the pidmap
  *
  * When a job is dynamically launched via comm_spawn, the pre-existing daemons need to
  * update their knowledge of the process map within the job so they can properly do
@@ -122,7 +122,14 @@ typedef int (*orte_ess_base_module_update_pidmap_fn_t)(opal_byte_object_t *bo);
  */
 typedef int (*orte_ess_base_module_update_nidmap_fn_t)(opal_byte_object_t *bo);
 
-    
+/**
+ * Query node configuration info
+ *
+ * Request information on the system capabilities of a specific node. A NULL nodename
+ * indicates that the local node info is requested. An empty list of results is
+ * returned on systems that do not support this functionality.
+ */
+typedef int (*orte_ess_base_module_query_sys_info_t)(char *node, char **keys, opal_list_t *values);
     
 /**
  * Handle fault tolerance updates
@@ -148,6 +155,7 @@ struct orte_ess_base_module_1_0_0_t {
     orte_ess_base_module_proc_get_node_rank_fn_t    get_node_rank;
     orte_ess_base_module_update_pidmap_fn_t         update_pidmap;
     orte_ess_base_module_update_nidmap_fn_t         update_nidmap;
+    orte_ess_base_module_query_sys_info_t           query_sys_info;
     orte_ess_base_module_ft_event_fn_t              ft_event;
 };
 typedef struct orte_ess_base_module_1_0_0_t orte_ess_base_module_1_0_0_t;

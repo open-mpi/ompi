@@ -865,6 +865,7 @@ static void orte_nid_construct(orte_nid_t *ptr)
     ptr->name = NULL;
     ptr->daemon = ORTE_VPID_INVALID;
     OBJ_CONSTRUCT(&ptr->attrs, opal_list_t);
+    OBJ_CONSTRUCT(&ptr->sysinfo, opal_list_t);
 }
 
 static void orte_nid_destruct(orte_nid_t *ptr)
@@ -879,6 +880,10 @@ static void orte_nid_destruct(orte_nid_t *ptr)
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&ptr->attrs);
+    while (NULL != (item = opal_list_remove_first(&ptr->sysinfo))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&ptr->sysinfo);
 }
 
 OBJ_CLASS_INSTANCE(orte_nid_t,

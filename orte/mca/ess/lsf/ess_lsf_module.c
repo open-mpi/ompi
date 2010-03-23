@@ -69,6 +69,7 @@ orte_ess_base_module_t orte_ess_lsf_module = {
     proc_get_node_rank,
     update_pidmap,
     update_nidmap,
+    orte_ess_base_query_sys_info,
     NULL /* ft_event */
 };
 

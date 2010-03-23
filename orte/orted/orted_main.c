@@ -65,6 +65,7 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/nidmap.h"
 #include "orte/runtime/orte_locks.h"
 #include "orte/mca/rml/base/rml_contact.h"
 
@@ -73,6 +74,7 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/odls/odls.h"
+#include "orte/mca/odls/base/odls_private.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/ras/ras.h"
 #include "orte/mca/routed/routed.h"
@@ -725,15 +727,6 @@ int orte_daemon(int argc, char *argv[])
                 goto DONE;
             }
         } else {
-            /* get our local resources */
-            char *keys[] = {
-                OPAL_SYSINFO_CPU_TYPE,
-                OPAL_SYSINFO_CPU_MODEL,
-                OPAL_SYSINFO_NUM_CPUS,
-                OPAL_SYSINFO_MEM_SIZE,
-                NULL
-            };
-            opal_list_t resources;
             opal_list_item_t *item;
             opal_sysinfo_value_t *info;
             int32_t num_values;
@@ -741,13 +734,13 @@ int orte_daemon(int argc, char *argv[])
             /* include our node name */
             opal_dss.pack(buffer, &orte_process_info.nodename, 1, OPAL_STRING);
 
-            OBJ_CONSTRUCT(&resources, opal_list_t);
-            opal_sysinfo.query(keys, &resources);
-            /* add number of values to the buffer */
-            num_values = opal_list_get_size(&resources);
+            /* add number of sysinfo values to the buffer */
+            num_values = opal_list_get_size(&orte_odls_globals.sysinfo);
             opal_dss.pack(buffer, &num_values, 1, OPAL_INT32);
             /* add them to the buffer */
-            while (NULL != (item = opal_list_remove_first(&resources))) {
+            for (item = opal_list_get_first(&orte_odls_globals.sysinfo);
+                 item != opal_list_get_end(&orte_odls_globals.sysinfo);
+                 item = opal_list_get_next(item)) {
                 info = (opal_sysinfo_value_t*)item;
                 opal_dss.pack(buffer, &info->key, 1, OPAL_STRING);
                 opal_dss.pack(buffer, &info->type, 1, OPAL_DATA_TYPE_T);
@@ -756,13 +749,7 @@ int orte_daemon(int argc, char *argv[])
                 } else if (OPAL_STRING == info->type) {
                     opal_dss.pack(buffer, &(info->data.str), 1, OPAL_STRING);
                 }
-                /* if this is the cpu model, save it for later use */
-                if (0 == strcmp(info->key, OPAL_SYSINFO_CPU_MODEL)) {
-                    orte_local_cpu_model = strdup(info->data.str);
-                }
-                OBJ_RELEASE(info);
             }
-            OBJ_DESTRUCT(&resources);                
             
             if (orte_daemon_bootstrap) {
                 /* send to a different callback location as the

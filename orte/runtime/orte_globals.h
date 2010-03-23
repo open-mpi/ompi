@@ -469,8 +469,10 @@ typedef struct {
     char *name;
     /* vpid of this job family's daemon on this node */
     orte_vpid_t daemon;
-    /* list of attributes */
+    /* list of interface attributes */
     opal_list_t attrs;
+    /* list of system info */
+    opal_list_t sysinfo;
 } orte_nid_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_nid_t);
 

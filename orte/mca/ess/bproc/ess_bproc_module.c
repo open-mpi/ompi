@@ -55,6 +55,7 @@ orte_ess_base_module_t orte_ess_bproc_module = {
     proc_get_node_rank,
     NULL,  /* update_pidmap */
     NULL,  /* update_nidmap */
+    orte_ess_base_query_sys_info,
     NULL  /* no FT support for Bproc */
 };
 

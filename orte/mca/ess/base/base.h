@@ -77,6 +77,8 @@ ORTE_DECLSPEC int orte_ess_base_tool_finalize(void);
 ORTE_DECLSPEC int orte_ess_base_orted_setup(char **hosts);
 ORTE_DECLSPEC int orte_ess_base_orted_finalize(void);
 
+ORTE_DECLSPEC int orte_ess_base_query_sys_info(char *node, char **keys, opal_list_t *values);
+
 /*
  * Put functions
  */
