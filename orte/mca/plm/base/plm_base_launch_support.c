@@ -47,7 +47,7 @@
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/odls/odls.h"
 #if OPAL_ENABLE_FT_CR == 1
-#include "orte/mca/snapc/snapc.h"
+#include "orte/mca/snapc/base/base.h"
 #endif
 #include "orte/mca/filem/filem.h"
 #include "orte/mca/filem/base/base.h"
@@ -217,12 +217,15 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
      ***/
     
 #if OPAL_ENABLE_FT_CR == 1
+    /* JJH: Would it be useful to let the errmgr know what we are doing here? */
     /*
      * Notify the Global SnapC component regarding new job
      */
-    if( ORTE_SUCCESS != (rc = orte_snapc.setup_job(jdata->jobid) ) ) {
-        /* Silent Failure :/ JJH */
-        ORTE_ERROR_LOG(rc);
+    if (ORTE_JOB_STATE_RESTART != jdata->state) {
+        if( ORTE_SUCCESS != (rc = orte_snapc.setup_job(jdata->jobid) ) ) {
+            /* Silent Failure :/ JJH */
+            ORTE_ERROR_LOG(rc);
+        }
     }
 #endif
     
@@ -1388,7 +1391,8 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
      * an error unless it was specifically commanded
      */
     if (jdata->state < ORTE_JOB_STATE_TERMINATED ||
-        jdata->controls & ORTE_JOB_CONTROL_CONTINUOUS_OP) {
+        jdata->controls & ORTE_JOB_CONTROL_CONTINUOUS_OP ||
+        jdata->controls & ORTE_JOB_CONTROL_RECOVERABLE) {
         for (i=0; i < jdata->procs->size; i++) {
             if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
                 /* the proc array may no longer be left justified, so
@@ -1396,6 +1400,10 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
                  */
                 continue;
             }
+
+            /*
+             * Determine how the process state affects the job state
+             */
             if (ORTE_PROC_STATE_FAILED_TO_START == proc->state) {
                 jdata->state = ORTE_JOB_STATE_FAILED_TO_START;
                 if (!jdata->abort) {
@@ -1406,7 +1414,6 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
                     jdata->abort = true;
                     ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
                 }
-                break;
             } else if (ORTE_PROC_STATE_ABORTED == proc->state) {
                 jdata->state = ORTE_JOB_STATE_ABORTED;
                 if (!jdata->abort) {
@@ -1417,7 +1424,6 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
                     jdata->abort = true;
                     ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
                 }
-                break;
             } else if (ORTE_PROC_STATE_ABORTED_BY_SIG == proc->state) {
                 jdata->state = ORTE_JOB_STATE_ABORTED_BY_SIG;
                 if (!jdata->abort) {
@@ -1428,7 +1434,6 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
                     jdata->abort = true;
                     ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
                 }
-                break;
             } else if (ORTE_PROC_STATE_TERM_WO_SYNC == proc->state) {
                 jdata->state = ORTE_JOB_STATE_ABORTED_WO_SYNC;
                 if (!jdata->abort) {
@@ -1445,7 +1450,6 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
                      */
                     ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
                 }
-                break;
             } else if (ORTE_PROC_STATE_KILLED_BY_CMD == proc->state) {
                 /* we ordered this proc to die, so it isn't an abnormal termination
                  * and we don't flag it as such - just check the remaining jobs to
@@ -1471,6 +1475,30 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
                     ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
                 }
             }
+
+            /*
+             * Call the errmgr for this process, if necessary
+             */
+            if (ORTE_PROC_STATE_ABORTED        == proc->state ||
+                ORTE_PROC_STATE_ABORTED_BY_SIG == proc->state ||
+                ORTE_PROC_STATE_TERM_WO_SYNC   == proc->state ||
+                ORTE_PROC_STATE_KILLED_BY_CMD  == proc->state ) {
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                     "%s plm:base:check_job_completed "
+                                     "Declared job %s %s by proc %s with code %d (0x%x vs 0x%x)",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_JOBID_PRINT(jdata->jobid),
+                                     (jdata->state == ORTE_JOB_STATE_KILLED_BY_CMD ?
+                                      "killed by cmd" : "aborted"),
+                                     ORTE_NAME_PRINT(&(proc->name)),
+                                     proc->exit_code,
+                                     proc->last_errmgr_state, proc->state));
+                /* Only report escalations in the fault state */
+                if( proc->last_errmgr_state < proc->state ) {
+                    proc->last_errmgr_state = proc->state;
+                    orte_errmgr.proc_aborted(&(proc->name), proc->exit_code);
+                }
+            }
         }
     }
 
@@ -1490,21 +1518,16 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
             orte_errmgr.incomplete_start(jdata->jobid, jdata->aborted_proc->exit_code);
         }
         goto CHECK_ALL_JOBS;
-    } else if (ORTE_JOB_STATE_ABORTED == jdata->state ||
-               ORTE_JOB_STATE_ABORTED_BY_SIG == jdata->state ||
-               ORTE_JOB_STATE_ABORTED_WO_SYNC == jdata->state) {
-        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                             "%s plm:base:check_job_completed declared job %s aborted by proc %s with code %d",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(jdata->jobid),
-                             (NULL == jdata->aborted_proc) ? "unknown" : ORTE_NAME_PRINT(&(jdata->aborted_proc->name)),
-                             (NULL == jdata->aborted_proc) ? ORTE_ERROR_DEFAULT_EXIT_CODE : jdata->aborted_proc->exit_code));
-        /* report this to the errmgr */
+    } else if (ORTE_JOB_STATE_ABORTED         == jdata->state ||
+               ORTE_JOB_STATE_ABORTED_BY_SIG  == jdata->state ||
+               ORTE_JOB_STATE_ABORTED_WO_SYNC == jdata->state ||
+               ORTE_JOB_STATE_KILLED_BY_CMD   == jdata->state ) {
+        /* report this to the errmgr
+         * (if we know which process caused this, then it was reported above)
+         */
         if (NULL == jdata->aborted_proc) {
             /* we don't know who caused us to abort */
             orte_errmgr.proc_aborted(ORTE_NAME_INVALID, ORTE_ERROR_DEFAULT_EXIT_CODE);
-        } else {
-            orte_errmgr.proc_aborted(&(jdata->aborted_proc->name), jdata->aborted_proc->exit_code);
         }
         goto CHECK_ALL_JOBS;
     } else if (jdata->num_terminated >= jdata->num_procs) {
@@ -1521,7 +1544,9 @@ CHECK_ALL_JOBS:
         /* if this job is a continuously operating one, then don't do
          * anything further - just return here
          */
-        if (NULL != jdata && ORTE_JOB_CONTROL_CONTINUOUS_OP & jdata->controls) {
+        if (NULL != jdata &&
+            (ORTE_JOB_CONTROL_CONTINUOUS_OP & jdata->controls ||
+             ORTE_JOB_CONTROL_RECOVERABLE   & jdata->controls) ) {
             goto CHECK_ALIVE;
         }
 
@@ -1633,6 +1658,13 @@ CHECK_ALIVE:
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_JOBID_PRINT(job->jobid)));
                 one_still_alive = true;
+            }
+            else {
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                     "%s plm:base:check_job_completed job %s is terminated (%d vs %d [0x%x])",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_JOBID_PRINT(job->jobid),
+                                     job->num_terminated, job->num_procs, jdata->state ));
             }
         }
         /* if a job is still alive, we just return */

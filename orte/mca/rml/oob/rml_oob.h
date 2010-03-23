@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -178,6 +178,8 @@ int orte_rml_oob_del_exception(orte_rml_exception_callback_t cbfunc);
 void orte_rml_oob_exception_callback(const orte_process_name_t *peer,
                                     orte_rml_exception_t exception);
 
+
+int orte_rml_oob_purge(orte_process_name_t *peer);
 
 END_C_DECLS
 

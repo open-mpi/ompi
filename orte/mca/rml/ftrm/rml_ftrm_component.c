@@ -81,7 +81,9 @@ orte_rml_module_t orte_rml_ftrm_module = {
     orte_rml_ftrm_add_exception_handler,
     orte_rml_ftrm_del_exception_handler,
 
-    orte_rml_ftrm_ft_event
+    orte_rml_ftrm_ft_event,
+    
+    orte_rml_ftrm_purge
 };
 
 int rml_ftrm_output_handle;

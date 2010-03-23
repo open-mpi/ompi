@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -100,10 +100,14 @@ orte_rml_oob_module_t orte_rml_oob_module = {
         orte_rml_oob_add_exception,
         orte_rml_oob_del_exception,
 
-        orte_rml_oob_ft_event
+        orte_rml_oob_ft_event,
+        
+        orte_rml_oob_purge
     }
 };
 
+/* Local variables */
+static bool init_done = false;
 
 static int
 rml_oob_open(void)
@@ -134,6 +138,11 @@ rml_oob_close(void)
 static orte_rml_module_t*
 rml_oob_init(int* priority)
 {
+    if (init_done) {
+        *priority = 1;
+        return &orte_rml_oob_module.super;
+    }
+    
     if (mca_oob_base_init() != ORTE_SUCCESS)
         return NULL;
     *priority = 1;
@@ -155,7 +164,8 @@ rml_oob_init(int* priority)
     orte_rml_oob_module.active_oob = &mca_oob;
     orte_rml_oob_module.active_oob->oob_exception_callback = 
         orte_rml_oob_exception_callback;
-
+    
+    init_done = true;
     return &orte_rml_oob_module.super;
 }
 

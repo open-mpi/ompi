@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -532,7 +532,9 @@ static void mca_oob_tcp_peer_complete_connect(mca_oob_tcp_peer_t* peer, int sd)
                         so_error);
         }
         mca_oob_tcp_peer_shutdown(peer);
-        opal_evtimer_add(&peer->peer_timer_event, &tv);
+        if( MCA_OOB_TCP_FAILED != peer->peer_state ) {
+            opal_evtimer_add(&peer->peer_timer_event, &tv);
+        }
         return;
     } else if(so_error != 0) {
         /* No need to worry about the return code here - we return regardless
@@ -595,6 +597,8 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
             peer->peer_state);
     }
 
+    mca_oob_tcp_peer_shutdown(peer);
+
     /* inform the routed framework that we have lost a connection so
      * it can decide if this is important, what to do about it, etc.
      */
@@ -606,8 +610,6 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
         OPAL_THREAD_UNLOCK(&peer->peer_lock);
         orte_errmgr.abort(1, NULL);        
     }
-    
-    mca_oob_tcp_peer_shutdown(peer);
 }
 
 void mca_oob_tcp_peer_shutdown(mca_oob_tcp_peer_t* peer)
@@ -646,18 +648,6 @@ void mca_oob_tcp_peer_shutdown(mca_oob_tcp_peer_t* peer)
            not likely to suddenly become successful, so abort the
            whole thing */
         peer->peer_state = MCA_OOB_TCP_FAILED;
-        
-        /* since we cannot communicate, and the system obviously needed
-         * to do so, let's abort so we don't just hang here
-         */
-        if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
-            /* just wake us up */
-            ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-            orte_abnormal_term_ordered = true;
-            orte_trigger_event(&orte_exit);
-        } else {
-            orte_errmgr.abort(1, NULL);
-        }
     }
 
     if (peer->peer_sd >= 0) {
@@ -669,7 +659,9 @@ void mca_oob_tcp_peer_shutdown(mca_oob_tcp_peer_t* peer)
     } 
       
     opal_event_del(&peer->peer_timer_event);
-    peer->peer_state = MCA_OOB_TCP_CLOSED;
+    if( MCA_OOB_TCP_FAILED != peer->peer_state ) {
+        peer->peer_state = MCA_OOB_TCP_CLOSED;
+    }
 }
 
 /*

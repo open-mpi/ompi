@@ -447,6 +447,10 @@ static int rte_ft_event(int state)
     }
     /******** Continue Recovery ********/
     else if (OPAL_CRS_CONTINUE == state ) {
+        OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
+                             "ess:env ft_event(%2d) - %s is Continuing",
+                             state, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
         /*
          * Notify RML -> OOB
          */
@@ -476,6 +480,10 @@ static int rte_ft_event(int state)
     }
     /******** Restart Recovery ********/
     else if (OPAL_CRS_RESTART == state ) {
+        OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
+                             "ess:env ft_event(%2d) - %s is Restarting",
+                             state, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
         /*
          * This should follow the ess init() function
          */
@@ -583,6 +591,13 @@ static int rte_ft_event(int state)
             goto cleanup;
         }
 
+        /* if one was provided, build my nidmap */
+        if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(orte_process_info.sync_buf))) {
+            ORTE_ERROR_LOG(ret);
+            exit_status = ret;
+            goto cleanup;
+        }
+
         /*
          * Notify SnapC
          */
@@ -592,12 +607,6 @@ static int rte_ft_event(int state)
             goto cleanup;
         }
 
-        /* if one was provided, build my nidmap */
-        if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(orte_process_info.sync_buf))) {
-            ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
-        }
     }
     else if (OPAL_CRS_TERM == state ) {
         /* Nothing */

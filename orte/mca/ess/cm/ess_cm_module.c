@@ -3,6 +3,9 @@
  * Copyright (c) 2009      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2010      The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -72,7 +75,6 @@ orte_ess_base_module_t orte_ess_cm_module = {
     proc_get_node_rank,
     update_pidmap,
     update_nidmap,
-    orte_ess_base_query_sys_info,
     NULL /* ft_event */
 };
 

@@ -1,4 +1,7 @@
 /*
+ * Copyright (c)      2010 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -12,6 +15,7 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/base/rml_contact.h"
+#include "orte/mca/routed/routed.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 
@@ -74,4 +78,38 @@ orte_rml_oob_get_new_name(orte_process_name_t *name)
 
     return orte_rml_oob_module.active_oob->oob_get_new_name(name);
 
+}
+
+int
+orte_rml_oob_purge(orte_process_name_t *peer)
+{
+    opal_list_item_t *item, *next;
+    orte_rml_oob_queued_msg_t *qmsg;
+    orte_rml_oob_msg_header_t *hdr;
+    orte_process_name_t step;
+    
+    /* clear the oob contact info and pending messages */
+    orte_rml_oob_module.active_oob->oob_set_addr(peer, NULL);
+    
+    /* clear our message queue */
+    OPAL_THREAD_LOCK(&orte_rml_oob_module.queued_lock);
+    item = opal_list_get_first(&orte_rml_oob_module.queued_routing_messages);
+    while (item != opal_list_get_end(&orte_rml_oob_module.queued_routing_messages)) {
+        next = opal_list_get_next(item);
+        qmsg = (orte_rml_oob_queued_msg_t*)item;
+        hdr = (orte_rml_oob_msg_header_t*) qmsg->payload[0].iov_base;
+        step = orte_routed.get_route(&hdr->destination);
+        if (peer->jobid == hdr->destination.jobid &&
+            peer->vpid == hdr->destination.vpid) {
+            opal_list_remove_item(&orte_rml_oob_module.queued_routing_messages, item);
+            OBJ_RELEASE(item);
+        } else if (step.jobid == hdr->destination.jobid &&
+                   step.vpid == hdr->destination.vpid) {
+            opal_list_remove_item(&orte_rml_oob_module.queued_routing_messages, item);
+            OBJ_RELEASE(item);
+        }            
+        item = next;
+    }
+    OPAL_THREAD_UNLOCK(&orte_rml_oob_module.queued_lock);
+    return ORTE_SUCCESS;
 }
