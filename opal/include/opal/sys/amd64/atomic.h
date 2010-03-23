@@ -84,11 +84,11 @@ static inline int opal_atomic_cmpset_32( volatile int32_t *addr,
 {
    unsigned char ret;
    __asm__ __volatile__ (
-                       SMPLOCK "cmpxchgl %3,%4   \n\t"
+                       SMPLOCK "cmpxchgl %3,%2   \n\t"
                                "sete     %0      \n\t"
-                       : "=qm" (ret), "=a" (oldval), "=m" (*addr)
-                       : "q"(newval), "m"(*addr), "1"(oldval)
-                       );
+                       : "=qm" (ret), "+a" (oldval), "+m" (*addr)
+                       : "q"(newval)
+                       : "memory", "cc");
 
    return (int)ret;
 }
@@ -105,10 +105,11 @@ static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
 {
    unsigned char ret;
    __asm__ __volatile__ (
-                       SMPLOCK "cmpxchgq %3,%4   \n\t"
+                       SMPLOCK "cmpxchgq %3,%2   \n\t"
                                "sete     %0      \n\t"
-                       : "=qm" (ret), "=a" (oldval), "=m" (*((volatile long*)addr))
-                       : "q"(newval), "m"(*((volatile long*)addr)), "1"(oldval)
+                       : "=qm" (ret), "+a" (oldval), "+m" (*((volatile long*)addr))
+                       : "q"(newval)
+                       : "memory", "cc"
                        );
 
    return (int)ret;
