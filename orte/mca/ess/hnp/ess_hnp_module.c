@@ -29,10 +29,12 @@
 #include <unistd.h>
 #endif
 
+#include "opal/class/opal_list.h"
 #include "opal/event/event.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
 
+#include "opal/util/if.h"
 #include "opal/util/os_path.h"
 #include "opal/util/output.h"
 #include "opal/util/malloc.h"
@@ -88,7 +90,6 @@ static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc);
 static int update_pidmap(opal_byte_object_t *bo);
 static int update_nidmap(opal_byte_object_t *bo);
 
-
 orte_ess_base_module_t orte_ess_hnp_module = {
     rte_init,
     rte_finalize,
@@ -100,9 +101,9 @@ orte_ess_base_module_t orte_ess_hnp_module = {
     proc_get_node_rank,
     update_pidmap,
     update_nidmap,
+    orte_ess_base_query_sys_info,
     NULL /* ft_event */
 };
-
 
 static int rte_init(void)
 {
@@ -113,15 +114,6 @@ static int rte_init(void)
     orte_node_t *node;
     orte_proc_t *proc;
     int value;
-    char *keys[] = {
-        OPAL_SYSINFO_CPU_TYPE,
-        OPAL_SYSINFO_CPU_MODEL,
-        OPAL_SYSINFO_NUM_CPUS,
-        OPAL_SYSINFO_MEM_SIZE,
-        NULL
-    };
-    opal_list_item_t *item;
-    opal_sysinfo_value_t *info;
 
     /* initialize the global list of local children and job data */
     OBJ_CONSTRUCT(&orte_local_children, opal_list_t);
@@ -428,20 +420,6 @@ static int rte_init(void)
     node->name = strdup(orte_process_info.nodename);
     node->index = opal_pointer_array_add(orte_node_pool, node);
 
-    /* get and store our local resources */
-    opal_sysinfo.query(keys, &node->resources);
-    /* find our cpu model and save it for later */
-    for (item = opal_list_get_first(&node->resources);
-         item != opal_list_get_end(&node->resources);
-         item = opal_list_get_next(item)) {
-        info = (opal_sysinfo_value_t*)item;
-        
-        if (0 == strcmp(info->key, OPAL_SYSINFO_CPU_MODEL)) {
-            orte_local_cpu_model = strdup(info->data.str);
-            break;
-        }
-    }
-    
     /* create and store a proc object for us */
     proc = OBJ_NEW(orte_proc_t);
     proc->name.jobid = ORTE_PROC_MY_NAME->jobid;

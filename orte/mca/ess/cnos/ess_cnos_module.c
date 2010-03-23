@@ -28,7 +28,7 @@
 
 #include "opal/mca/paffinity/paffinity.h"
 #include "opal/util/output.h"
-
+#include "opal/class/opal_list.h"
 
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/util/proc_info.h"
@@ -47,6 +47,7 @@ static uint8_t proc_get_locality(orte_process_name_t *proc);
 static char* proc_get_hostname(orte_process_name_t *proc);
 static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc);
 static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc);
+static int query_sys_info(char *node, char **keys, opal_list_t *values);
 
 orte_ess_base_module_t orte_ess_cnos_module = {
     rte_init,
@@ -59,6 +60,7 @@ orte_ess_base_module_t orte_ess_cnos_module = {
     proc_get_node_rank,
     NULL,   /* add_pidmap is only used in ORTE */
     NULL,   /* update_nidmap is only used in ORTE */
+    query_sys_info,
     NULL /* ft_event */
 };
 
@@ -156,4 +158,9 @@ static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc)
      * fix this to return the correct value
      */
     return 0;
+}
+
+static int query_sys_info(char *node, char **keys, opal_list_t *values)
+{
+    return ORTE_SUCCESS;
 }

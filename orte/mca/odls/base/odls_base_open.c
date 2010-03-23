@@ -29,6 +29,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/paffinity/base/base.h"
+#include "opal/mca/sysinfo/sysinfo.h"
 #include "opal/util/output.h"
 #include "opal/util/path.h"
 #include "opal/util/argv.h"
@@ -181,6 +182,15 @@ int orte_odls_base_open(void)
     int i, rank, sock, core;
     orte_namelist_t *nm;
     bool xterm_hold;
+    char *keys[] = {
+        OPAL_SYSINFO_CPU_TYPE,
+        OPAL_SYSINFO_CPU_MODEL,
+        OPAL_SYSINFO_NUM_CPUS,
+        OPAL_SYSINFO_MEM_SIZE,
+        NULL
+    };
+    opal_list_item_t *item;
+    opal_sysinfo_value_t *info;
     
     /* Debugging / verbose output.  Always have stream open, with
         verbose set by the mca open system... */
@@ -198,6 +208,7 @@ int orte_odls_base_open(void)
     orte_odls_globals.dmap = NULL;
     orte_odls_globals.debugger = NULL;
     orte_odls_globals.debugger_launched = false;
+    OBJ_CONSTRUCT(&orte_odls_globals.sysinfo, opal_list_t);
     
     /* get any external processor bindings */
     OPAL_PAFFINITY_CPU_ZERO(orte_odls_globals.my_cores);
@@ -282,14 +293,30 @@ int orte_odls_base_open(void)
         opal_argv_append_nosize(&orte_odls_globals.xtermcmd, "-e");
     }
     
+    /* collect the system info */
+    if (NULL != opal_sysinfo.query) {
+        /* get and store our local resources */
+        opal_sysinfo.query(keys, &orte_odls_globals.sysinfo);
+        /* find our cpu model and save it for later */
+        for (item = opal_list_get_first(&orte_odls_globals.sysinfo);
+             item != opal_list_get_end(&orte_odls_globals.sysinfo);
+             item = opal_list_get_next(item)) {
+            info = (opal_sysinfo_value_t*)item;
+            
+            if (0 == strcmp(info->key, OPAL_SYSINFO_CPU_MODEL)) {
+                orte_local_cpu_model = strdup(info->data.str);
+                break;
+            }
+        }
+    }
+    
     /* Open up all available components */
-
     if (ORTE_SUCCESS != 
         mca_base_components_open("odls", orte_odls_globals.output,
-                                    mca_odls_base_static_components, 
-                                    &orte_odls_base.available_components, true)) {
-        return ORTE_ERROR;
-    }
+                                 mca_odls_base_static_components, 
+                                 &orte_odls_base.available_components, true)) {
+            return ORTE_ERROR;
+        }
 
     /* are there components available for use ?  - 
      * orte_odls_base.available_components is always initialized */

@@ -46,6 +46,12 @@ int orte_odls_base_close(void)
         free(orte_odls_globals.dmap);
     }
     
+    /* cleanup the sysinfo data */
+    while (NULL != (item = opal_list_remove_first(&orte_odls_globals.sysinfo))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&orte_odls_globals.sysinfo);
+
     /* if no components are available, then punt */
     if (!orte_odls_base.components_available) {
         return ORTE_SUCCESS;

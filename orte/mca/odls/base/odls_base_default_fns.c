@@ -2381,6 +2381,8 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
             opal_dss.pack(&buffer, &flag, 1, OPAL_INT8);
             opal_dss.pack(&buffer, &orte_odls_globals.dmap, 1, OPAL_BYTE_OBJECT);
             opal_dss.pack(&buffer, &jobdat->pmap, 1, OPAL_BYTE_OBJECT);
+            /* add the local system info */
+            orte_util_encode_sysinfo(&buffer, &orte_odls_globals.sysinfo);
         }
     }
     
