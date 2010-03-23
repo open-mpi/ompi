@@ -131,6 +131,16 @@ void ADIOI_Datatype_iscontig(MPI_Datatype datatype, int *flag)
      * Open MPI contiguous check return true for datatype with
      * gaps in the beginning and at the end. We have to provide
      * a count of 2 in order to get these gaps taken into acount.
+     * In addition, if the data is contiguous but true_lb differes
+     * from zero, ROMIO will ignore the displacement. Thus, lie!
      */
     *flag = ompi_datatype_is_contiguous_memory_layout(datatype, 2);
+    if (*flag) {
+        MPI_Aint true_extent, true_lb;
+
+        ompi_datatype_get_true_extent(datatype, &true_lb, &true_extent);
+
+        if (true_lb > 0)
+            *flag = 0;
+    }
 }
