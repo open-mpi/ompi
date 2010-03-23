@@ -23,7 +23,7 @@
 
 BEGIN_C_DECLS
 
-OPAL_DECLSPEC int opal_mem_free_ptmalloc2_munmap(void *start, size_t length, int from_alloc);
+OPAL_DECLSPEC int opal_mem_free_ptmalloc2_munmap(void *start, size_t length, int from_alloc, int call_hooks);
 
 OPAL_DECLSPEC int munmap(void* addr, size_t len);
 
