@@ -1,4 +1,7 @@
 /********************** BEGIN OMPI CHANGES *****************************/
+/* Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ */
+
 #define OPAL_DISABLE_ENABLE_MEM_DEBUG 1
 #include "opal_config.h"
 
