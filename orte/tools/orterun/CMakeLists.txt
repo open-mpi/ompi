@@ -23,11 +23,16 @@ ADD_CUSTOM_COMMAND (TARGET orterun
   COMMAND ${CMAKE_COMMAND} -E copy
   ${OpenMPI_BINARY_DIR}/${CMAKE_CFG_INTDIR}/orterun.exe
   ${PROJECT_BINARY_DIR}/mpirun.exe
+  COMMAND ${CMAKE_COMMAND} -E copy
+  ${OpenMPI_BINARY_DIR}/${CMAKE_CFG_INTDIR}/orterun.exe
+  ${PROJECT_BINARY_DIR}/mpiexec.exe
   COMMENT "Copying renamed executables...")
 
 INSTALL(TARGETS orterun
   DESTINATION bin)
 INSTALL(FILES help-orterun.txt DESTINATION share/openmpi)
 INSTALL(FILES ${PROJECT_BINARY_DIR}/mpirun.exe
+  DESTINATION bin)
+INSTALL(FILES ${PROJECT_BINARY_DIR}/mpiexec.exe
   DESTINATION bin)
 

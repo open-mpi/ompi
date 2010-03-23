@@ -23,9 +23,6 @@ ADD_CUSTOM_COMMAND (TARGET opal-wrapper
   COMMAND ${CMAKE_COMMAND} -E copy
   ${OpenMPI_BINARY_DIR}/${CMAKE_CFG_INTDIR}/opal-wrapper.exe
   ${PROJECT_BINARY_DIR}/mpicc.exe
-  COMMAND ${CMAKE_COMMAND} -E copy
-  ${OpenMPI_BINARY_DIR}/${CMAKE_CFG_INTDIR}/opal-wrapper.exe
-  ${PROJECT_BINARY_DIR}/mpiexec.exe
   COMMENT "Copying C compiler wrappers...")
 
 IF(OMPI_WANT_CXX_BINDINGS)
@@ -62,7 +59,6 @@ INSTALL(FILES help-opal-wrapper.txt
   DESTINATION share/openmpi
   RENAME help-opal-wrapper.exe.txt)
 INSTALL(FILES ${PROJECT_BINARY_DIR}/mpicc.exe
-  ${PROJECT_BINARY_DIR}/mpiexec.exe
   DESTINATION bin)
 
 IF(WANT_INSTALL_HEADERS)
