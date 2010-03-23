@@ -285,6 +285,7 @@ typedef uint8_t orte_job_controls_t;
 #define ORTE_JOB_CONTROL_DO_NOT_MONITOR     0x10
 #define ORTE_JOB_CONTROL_FORWARD_COMM       0x20
 #define ORTE_JOB_CONTROL_CONTINUOUS_OP      0x40
+#define ORTE_JOB_CONTROL_RECOVERABLE        0x80
 
 #define ORTE_MAPPING_POLICY OPAL_UINT16
 /* put the rank assignment method in the upper 8 bits */
@@ -419,6 +420,8 @@ struct orte_proc_t {
      * know which static IP port to use
      */
     orte_node_rank_t node_rank;
+    /* Last state used to trigger the errmgr for this proc */
+    orte_proc_state_t last_errmgr_state;
     /* process state */
     orte_proc_state_t state;
     /* exit code */

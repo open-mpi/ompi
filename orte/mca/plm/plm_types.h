@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2008 The University of Tennessee and The University
@@ -58,6 +58,7 @@ typedef uint16_t orte_proc_state_t;
 #define ORTE_PROC_STATE_ABORTED_BY_SIG      0x0400  /* process aborted by signal */
 #define ORTE_PROC_STATE_TERM_WO_SYNC        0x0800  /* process exit'd w/o required sync */
 #define ORTE_PROC_STATE_KILLED_BY_CMD       0x1000  /* process was killed by ORTE cmd */
+#define ORTE_PROC_STATE_COMM_FAILED         0x2000  /* process communication has failed */
 
 
 /*

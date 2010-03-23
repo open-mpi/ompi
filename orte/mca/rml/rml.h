@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -575,6 +575,12 @@ typedef int (*orte_rml_module_exception_fn_t)(orte_rml_exception_callback_t cbfu
  */
 typedef int  (*orte_rml_module_ft_event_fn_t)(int state);
 
+/**
+ * Purge the RML/OOB of contact info and pending messages
+ * to/from a specified process. Used when a process aborts
+ * and is to be restarted
+ */
+typedef int (*orte_rml_module_purge_fn_t)(struct orte_process_name_t *peer);
 
 /* ******************************************************************** */
 
@@ -629,6 +635,9 @@ struct orte_rml_module_t {
 
     /** Fault tolerance handler */
     orte_rml_module_ft_event_fn_t                ft_event;
+    
+    /** Purge information */
+    orte_rml_module_purge_fn_t                   purge;
 };
 /** Convienence typedef */
 typedef struct orte_rml_module_t orte_rml_module_t;

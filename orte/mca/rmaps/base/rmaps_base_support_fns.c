@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2008 The University of Tennessee and The University
@@ -19,6 +19,10 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
+#include <sys/types.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif  /* HAVE_UNISTD_H */
 #include <string.h>
 
 #include "opal/util/if.h"
@@ -649,7 +653,7 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
     orte_job_t *daemons;
     int i;
     int rc;
-    
+
     OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
                          "%s rmaps:base:define_daemons",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -708,7 +712,55 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
             if (ORTE_VPID_INVALID == map->daemon_vpid_start) {
                 map->daemon_vpid_start = proc->name.vpid;
             }
-        } else {
+        }
+        /*
+         * If we are launching on a node where there used to be a daemon, but
+         * it had previously failed, try to relaunch it. (Daemon Recovery) Do
+         * this ONLY if there are procs mapped to that daemon!
+         */
+        else if(node->daemon->state > ORTE_PROC_STATE_UNTERMINATED ) {
+            /* If no processes are to be launched on this node, then exclude it */
+            if( 0 >= node->num_procs ) {
+                OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                                     "%s rmaps:base:define_daemons Skipping the Recovery of daemon %s [0x%x] Launched: %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&node->daemon->name),
+                                     node->daemon->state,
+                                     (node->daemon_launched ? "T" : "F")
+                                     ));
+                /* since this daemon exists but is not needed, then flag it
+                 * as "launched" to avoid relaunching it for no reason
+                 */
+                node->daemon_launched = true;
+                continue;
+            }
+
+            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                                 "%s rmaps:base:define_daemons RECOVERING daemon %s [0x%x] Launched: %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&node->daemon->name),
+                                 node->daemon->state,
+                                 (node->daemon_launched ? "T" : "F")
+                                 ));
+
+            /* flag that the daemon is no longer launched */
+            node->daemon_launched = false;
+
+            /* set the state to indicate launch is in progress */
+            node->daemon->state = ORTE_PROC_STATE_RESTART;
+
+            free(node->daemon->rml_uri);
+            node->daemon->rml_uri = NULL;
+            
+            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                                 "%s rmaps:base:define_daemons add new daemon %s (Recovering old daemon)",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&node->daemon->name)));
+
+            /* track number of daemons to be launched */
+            ++map->num_new_daemons;
+        }
+        else {
             /* this daemon was previously defined - flag it */
             node->daemon_launched = true;
             OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,

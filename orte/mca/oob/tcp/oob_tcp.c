@@ -1873,7 +1873,37 @@ int mca_oob_tcp_set_addr(const orte_process_name_t* name, const char* uri)
     struct sockaddr_storage inaddr;
     mca_oob_tcp_addr_t* addr = NULL;
     mca_oob_tcp_peer_t* peer = NULL;
+    opal_list_item_t *item;
     int rc;
+    
+    if (NULL == uri) {
+        /* purge the hash table entry for this proc */
+        OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+        /* get the peer object */
+        opal_hash_table_get_value_uint64(&mca_oob_tcp_component.tcp_peers,
+                                         orte_util_hash_name(name), 
+                                         (void**)&peer);
+        if (NULL != peer) {
+            OPAL_THREAD_LOCK(&peer->peer_lock);
+            /* flag the state as closed */
+            peer->peer_state = MCA_OOB_TCP_CLOSED;
+            /* clear any pending sends */
+            while (NULL != (item = opal_list_remove_first(&peer->peer_send_queue))) {
+                OBJ_RELEASE(item);
+            }
+            peer->peer_send_msg = NULL;
+            /* clear any pending recvs */
+            peer->peer_recv_msg = NULL;
+            OPAL_THREAD_UNLOCK(&peer->peer_lock);
+        }
+        /* delete the entry from the hash table */
+        opal_hash_table_set_value_uint64(&mca_oob_tcp_component.tcp_peer_names,
+                                         orte_util_hash_name(name), NULL);
+        /* all done */
+        OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+        return ORTE_SUCCESS;
+    }
+    
     if((rc = mca_oob_tcp_parse_uri(uri, (struct sockaddr*) &inaddr)) != ORTE_SUCCESS) {
         return rc;
     }

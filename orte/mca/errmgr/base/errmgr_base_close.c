@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -32,17 +32,31 @@
 
 int orte_errmgr_base_close(void)
 {
+    orte_errmgr_base_module_t *module = NULL;
+    int i;
+
     OPAL_TRACE(5);
-    
+
+    /* Close all selected components */
+    for(i = 0; i < orte_errmgr_base_modules.size; ++i) {
+        module = (orte_errmgr_base_module_t*)opal_pointer_array_get_item(&orte_errmgr_base_modules, i);
+        if( NULL == module ) {
+            continue;
+        }
+        if( NULL != module->internal_errmgr_finalize ) {
+            module->internal_errmgr_finalize();
+        }
+    }
+
     /* Close all remaining available components (may be one if this is a
         OMPI RTE program, or [possibly] multiple if this is ompi_info) */
-    
     mca_base_components_close(orte_errmgr_base_output, 
-                              &orte_errmgr_base_components_available, NULL);
-    
+                              &orte_errmgr_base_components_available,
+                              NULL);
+
+    OBJ_DESTRUCT(&orte_errmgr_base_modules);
+
     orte_errmgr_initialized = false;
-    
-    /* All done */
     
     return ORTE_SUCCESS;
 }

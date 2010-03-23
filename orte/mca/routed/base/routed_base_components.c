@@ -2,7 +2,7 @@
  * Copyright (c) 2007      Los Alamos National Security, LLC.
  *                         All rights reserved. 
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2004-2008 The Trustees of Indiana University.
+ * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -58,12 +58,19 @@ opal_list_t orte_routed_base_components;
 
 static orte_routed_component_t *active_component = NULL;
 static bool component_open_called = false;
+static bool opened = false;
+static bool selected = false;
 
 int
 orte_routed_base_open(void)
 {
     int ret;
 
+    if (opened) {
+        return ORTE_SUCCESS;
+    }
+    opened = true;
+    
     /* setup the output stream */
     orte_routed_base_output = opal_output_open(NULL);
 
@@ -88,6 +95,11 @@ orte_routed_base_select(void)
     orte_routed_component_t *best_component = NULL;
     orte_routed_module_t *best_module = NULL;
 
+    if (selected) {
+        return ORTE_SUCCESS;
+    }
+    selected = true;
+    
     /*
      * Select the best component
      */
@@ -133,6 +145,9 @@ orte_routed_base_close(void)
     }
 
     OBJ_DESTRUCT(&orte_routed_base_components);
+
+    opened   = false;
+    selected = false;
 
     return ORTE_SUCCESS;
 }

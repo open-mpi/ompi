@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2007      Los Alamos National Security, LLC.
  *                         All rights reserved. 
+ * Copyright (c) 2009-2010 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -184,6 +187,8 @@ static int delete_route(orte_process_name_t *proc)
      * the routing tree
      */
     
+    /* remove any entries in the RML for this process */
+    rc = orte_rml.purge(proc);
     return ORTE_SUCCESS;
 }
 
@@ -279,6 +284,9 @@ static orte_process_name_t get_route(orte_process_name_t *target)
 {
     orte_process_name_t *ret, daemon;
     int rc;
+    int32_t i;
+    orte_job_t *jdata;
+    orte_proc_t *proc;
 
     if (target->jobid == ORTE_JOBID_INVALID ||
         target->vpid == ORTE_VPID_INVALID) {
@@ -342,7 +350,37 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     } else {
         /* otherwise, if I am the HNP, send to the daemon */
         if (ORTE_PROC_IS_HNP) {
-            ret = &daemon;
+            /*
+             * Check to make sure the daemon is active, if not then return an INVALID name
+             * JJH: There should be a faster way to do this check, but for now just iterate...
+             */
+            if (NULL == (jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
+                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                ret = ORTE_NAME_INVALID;
+                goto found;
+            }
+
+            for(i = 0; i < jdata->procs->size; ++i) {
+                if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
+                    continue;
+                }
+                if( proc->name.vpid != daemon.vpid) {
+                    continue;
+                }
+
+                OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
+                                     "%s routed_cm_get: Checking process %15s state 0x%x",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&(proc->name)),
+                                     proc->state));
+
+                if( proc->state <= ORTE_PROC_STATE_UNTERMINATED ) {
+                    ret = &daemon;
+                } else {
+                    ret = ORTE_NAME_INVALID;
+                }
+                goto found;
+            }
         } else {
             /* send to the HNP for routing */
             ret = ORTE_PROC_MY_HNP;
@@ -727,7 +765,9 @@ static int update_routing_tree(void)
 static orte_vpid_t get_routing_tree(opal_list_t *children)
 {
     orte_routed_tree_t *nm;
-    orte_vpid_t i;
+    int32_t i;
+    orte_job_t *jdata;
+    orte_proc_t *proc;
     
     /* if I am anything other than a daemon or the HNP, this
      * is a meaningless command as I am not allowed to route
@@ -741,12 +781,41 @@ static orte_vpid_t get_routing_tree(opal_list_t *children)
         return ORTE_PROC_MY_HNP->vpid;
     }
     
-    /* for the HNP, the cm routing tree is direct to all known daemons */
+    /* for the HNP, the cm routing tree is direct to all known alive daemons */
     if (NULL != children) {
-        for (i=1; i < orte_process_info.num_procs; i++) {
-            nm = OBJ_NEW(orte_routed_tree_t);
-            nm->vpid = i;
-            opal_list_append(children, &nm->super);
+        if (NULL == (jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return ORTE_ERR_NOT_FOUND;
+        }
+
+        for(i = 0; i < jdata->procs->size; ++i) {
+            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
+                continue;
+            }
+            if( proc->name.vpid == 0) {
+                continue;
+            }
+
+            if( proc->state <= ORTE_PROC_STATE_UNTERMINATED &&
+                NULL != proc->rml_uri ) {
+                OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
+                                     "%s get_routing_tree: Adding process %15s state 0x%x",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&(proc->name)),
+                                     proc->state));
+
+                nm = OBJ_NEW(orte_routed_tree_t);
+                nm->vpid = proc->name.vpid;
+                opal_bitmap_clear_all_bits(&nm->relatives);
+                opal_list_append(children, &nm->super);
+            }
+            else {
+                OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
+                                     "%s get_routing_tree: Skipped process %15s state 0x%x (non functional daemon)",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&(proc->name)),
+                                     proc->state));
+            }
         }
     }
     

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -33,32 +33,37 @@
 #include "orte/mca/errmgr/errmgr.h"
 
 
-/*
- * Global functions for MCA overall collective open and close
- */
 BEGIN_C_DECLS
 
 /*
- * Internal definitions
- */
-/*
- * function definitions
+ * MCA Framework functions
  */
 ORTE_DECLSPEC    int orte_errmgr_base_open(void);
 ORTE_DECLSPEC    int orte_errmgr_base_select(void);
 ORTE_DECLSPEC    int orte_errmgr_base_close(void);
 
-/*
- * globals that might be needed
+/**
+ * Composite Stack states
  */
+#define ORTE_ERRMGR_STACK_STATE_NONE       0x00 /* No actions have been performed */
+#define ORTE_ERRMGR_STACK_STATE_STABLIZED  0x01 /* Stabalized the runtime */
+#define ORTE_ERRMGR_STACK_STATE_CONTINUE   0x02 /* Continue running without this process */
+#define ORTE_ERRMGR_STACK_STATE_RECOVERED  0x04 /* Process has been recovered */
+#define ORTE_ERRMGR_STACK_STATE_JOB_ABORT  0x08 /* Abort this job, cannot recover */
 
-extern bool orte_errmgr_base_selected;
-extern bool orte_errmgr_initialized;
+/**
+ * Output and component variables
+ */
 ORTE_DECLSPEC extern opal_list_t orte_errmgr_base_components_available;
-ORTE_DECLSPEC extern mca_errmgr_base_component_t orte_errmgr_base_selected_component;
+ORTE_DECLSPEC extern int  orte_errmgr_base_output;
+ORTE_DECLSPEC extern bool orte_errmgr_base_shutting_down;
+ORTE_DECLSPEC extern bool orte_errmgr_base_enable_recovery;
+
+extern opal_pointer_array_t orte_errmgr_base_modules;
+extern bool orte_errmgr_initialized;
 
 /*
- * external API functions will be documented in the mca/errmgr/errmgr.h file
+ * Additional External API function declared in errmgr.h
  */
 
 END_C_DECLS

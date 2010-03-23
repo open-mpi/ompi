@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -1343,7 +1343,9 @@ void orte_plm_base_reset_job(orte_job_t *jdata)
     int n, i, j;
     orte_proc_t *proc, *proc_from_node;
     orte_node_t *node_from_map, *node;
-    
+    orte_odls_job_t *jobdat = NULL;
+    opal_list_item_t *item = NULL;
+
     /* set the state to restart */
     jdata->state = ORTE_JOB_STATE_RESTART;
     /* cycle through the procs */
@@ -1354,6 +1356,7 @@ void orte_plm_base_reset_job(orte_job_t *jdata)
         if (ORTE_PROC_STATE_TERMINATED < proc->state) {
             /* this proc abnormally terminated */
             proc->state = ORTE_PROC_STATE_RESTART;
+            proc->last_errmgr_state = ORTE_PROC_STATE_UNDEF;
             proc->pid = 0;
             /* remove the proc from the node upon which it was mapped
              *
@@ -1394,7 +1397,13 @@ void orte_plm_base_reset_job(orte_job_t *jdata)
                 }
             }
             /* adjust job accounting */
-            jdata->num_terminated--;
+            if( jdata->num_terminated > 0 ) {
+                jdata->num_terminated--;
+            }
+            else {
+                OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                                     "plm:base:reset_job() WARNING: Prevented num_terminated from becoming < 0!"));
+            }
         }
     }
     /* clear the info on who aborted */
@@ -1406,6 +1415,18 @@ void orte_plm_base_reset_job(orte_job_t *jdata)
     /* since every daemon will be reporting status for every proc, reset these to zero */
     jdata->num_launched = 0;
     jdata->num_reported = 0;
+
+    /* Clean up the orte_odls_job_t structure for this job */
+    jobdat = NULL;
+    for (item  = opal_list_get_first(&orte_local_jobdata);
+         item != opal_list_get_end(&orte_local_jobdata);
+         item  = opal_list_get_next(item)) {
+        jobdat = (orte_odls_job_t*)item;
+        if (jobdat->jobid == jdata->jobid) {
+            jobdat->num_participating = -1;
+        }
+    }
+
     /* since we are restarting the failed proc, reset the exit status */
     ORTE_RESET_EXIT_STATUS();
 }

@@ -1,5 +1,8 @@
 /*
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2009-2010 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -116,7 +119,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
     int rc;
     float avgload, minload;
     orte_node_t *node, *nd=NULL, *oldnode;
-    orte_rmaps_res_ftgrp_t *ftgrp, *target;
+    orte_rmaps_res_ftgrp_t *ftgrp, *target = NULL;
     orte_vpid_t totprocs, lowprocs, num_assigned;
     FILE *fp;
     char *ftinput;
@@ -195,6 +198,11 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
             oldnode = proc->node;
             /* point to the app */
             app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, proc->app_idx);
+            if( NULL == app ) {
+                ORTE_ERROR_LOG(ORTE_ERROR);
+                goto error;
+            }
+
             OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
                                  "%s rmaps:resilient: proc %s from node %s is to be restarted",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -257,18 +265,39 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
              * and -host options
              */
             if (NULL == target) {
-                nd = oldnode;  /* put it back where it was if nothing else is found */
-                totprocs = 1000000;
+                nd = NULL;
+
+                /*
+                 * Get a list of all nodes
+                 */
                 OBJ_CONSTRUCT(&node_list, opal_list_t);
                 map = jdata->map;
-                if (ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&node_list, &num_slots, app, map->policy))) {
+                if (ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&node_list,
+                                                                           &num_slots,
+                                                                           app,
+                                                                           map->policy))) {
                     ORTE_ERROR_LOG(rc);
-                    return rc;
+                    goto error;
                 }
+
+                /* Ask the ErrMgr components if they have a suggestion for this process */
+                orte_errmgr_base_suggest_map_targets(proc, proc->node, &node_list);
+
+                nd = (orte_node_t*)opal_list_get_first(&node_list);
+                if( NULL == nd ) {
+                    ORTE_ERROR_LOG(ORTE_ERROR);
+                    goto error;
+                }
+
+                /*
+                 * Look though the list for the least loaded machine.
+                 */
+                nd = oldnode;  /* Put it back where it was if nothing else is found */
+                totprocs = 1000000;
                 /* find the lightest loaded node while deconstructing the list */
                 while (NULL != (item = opal_list_remove_first(&node_list))) {
                     node = (orte_node_t*)item;
-                    if (node->num_procs < totprocs) {
+                    if( node->num_procs < totprocs) {
                         nd = node;
                         totprocs = node->num_procs;
                     }
@@ -280,9 +309,18 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                                      "%s rmaps:resilient: no avail fault groups found - placing proc on node %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      nd->name));
-                /* put proc on the found node */
-                if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, nd, jdata->map->cpus_per_rank, proc->app_idx,
-                                                                     NULL, jdata->map->oversubscribe, false, &proc))) {
+
+                /*
+                 * Put the process on the found node (add it if not already in the map)
+                 */
+                if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata,
+                                                                     nd,
+                                                                     jdata->map->cpus_per_rank,
+                                                                     proc->app_idx,
+                                                                     NULL,
+                                                                     jdata->map->oversubscribe,
+                                                                     false,
+                                                                     &proc))) {
                     /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
                      * really isn't an error
                      */
@@ -291,12 +329,15 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                         goto error;
                     }
                 }
+
                 /* flag the proc state as non-launched so we'll know to launch it */
                 proc->state = ORTE_PROC_STATE_INIT;
+
                 /* update the node and local ranks so static ports can
                  * be properly selected if active
                  */
                 orte_rmaps_base_update_local_ranks(jdata, oldnode, nd, proc);
+
                 continue;
             }
             /* if we did find a target, re-map the proc to the lightest loaded
