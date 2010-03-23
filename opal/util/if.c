@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,9 +39,6 @@
 #endif
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
-#if defined(__DragonFly__)
-#define IN_LINKLOCAL(i)        (((u_int32_t)(i) & 0xffff0000) == 0xa9fe0000)
-#endif
 #endif
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
@@ -96,7 +94,7 @@
 #define INADDR_NONE -1
 #endif
 
-struct opal_if_t {
+typedef struct opal_if_t {
     opal_list_item_t     super;
     char                if_name[IF_NAMESIZE];
     int                 if_index;
@@ -113,9 +111,9 @@ struct opal_if_t {
     struct sockaddr_in  if_bcast;
 #endif
     uint32_t            if_bandwidth;
-};
-typedef struct opal_if_t opal_if_t;
+} opal_if_t;
 
+static OBJ_CLASS_INSTANCE(opal_if_t, opal_list_item_t, NULL, NULL);
 static opal_list_t opal_if_list;
 static bool already_done = false;
 static bool do_not_resolve = false;
@@ -167,12 +165,12 @@ static int opal_ifinit(void)
                                 false, false, (int)false, &sd);
     do_not_resolve = OPAL_INT_TO_BOOL(sd);
 
+    OBJ_CONSTRUCT(&opal_if_list, opal_list_t);
+
 #if defined(__NetBSD__) || defined(__FreeBSD__) || \
     defined(__OpenBSD__) || defined(__DragonFly__)
     /* configure using getifaddrs(3) */
     {
-        OBJ_CONSTRUCT(&opal_if_list, opal_list_t);
-
         struct ifaddrs **ifadd_list;
         struct ifaddrs *cur_ifaddrs;
         struct sockaddr_in* sin_addr;
@@ -193,9 +191,7 @@ static int opal_ifinit(void)
 
         for(cur_ifaddrs = *ifadd_list; NULL != cur_ifaddrs; 
                 cur_ifaddrs = cur_ifaddrs->ifa_next) {
-
-            opal_if_t intf;
-            opal_if_t *intf_ptr;
+            opal_if_t *intf;
             struct in_addr a4;
 
             /* skip non- af_inet interface addresses */
@@ -211,78 +207,51 @@ static int opal_ifinit(void)
             /* skip interface if it is a loopback device (IFF_LOOPBACK set) */
             /* or if it is a point-to-point interface */
             /* TODO: do we really skip p2p? */
-            if(0 != (cur_ifaddrs->ifa_flags & IFF_LOOPBACK)
-                    || 0!= (cur_ifaddrs->ifa_flags & IFF_POINTOPOINT)) {
+            if (0 != (cur_ifaddrs->ifa_flags & IFF_LOOPBACK) ||
+                0 != (cur_ifaddrs->ifa_flags & IFF_POINTOPOINT)) {
                 continue;
             }
 
             sin_addr = (struct sockaddr_in *) cur_ifaddrs->ifa_addr;
 
-	    /* Do we really need to skip link-local addresses? */
-#if 0
-            /* skip link local address: */
-            if(IN_LINKLOCAL (htonl(((struct sockaddr_in*)cur_ifaddrs->ifa_addr)->sin_addr.s_addr))) {
-#if 0
-                opal_output(0, "opal_ifinit: skipping link-local ip address on interface %s.\n",
-                        cur_ifaddrs->ifa_name);
-#endif
-                continue;
+            intf = OBJ_NEW(opal_list_item_t);
+            if (NULL == intf) {
+                opal_output(0, "opal_ifinit: unable to allocate %lu bytes\n",
+                            sizeof(opal_if_t));
+                return OPAL_ERR_OUT_OF_RESOURCE;
             }
-#endif
-
-            memset(&intf, 0, sizeof(intf));
-            OBJ_CONSTRUCT(&intf, opal_list_item_t);
-#if 0 
-            char *addr_name = (char *) malloc(48*sizeof(char));
-            inet_ntop(AF_INET, &sin_addr->sin_addr, addr_name, 48*sizeof(char));
-            opal_output(0, "inet capable interface %s discovered, address %s.\n", 
-                    cur_ifaddrs->ifa_name, addr_name);
-            free(addr_name);
-#endif
 
             /* fill values into the opal_if_t */
             memcpy(&a4, &(sin_addr->sin_addr), sizeof(struct in_addr));
             
-            strncpy(intf.if_name, cur_ifaddrs->ifa_name, IF_NAMESIZE);
-            intf.if_index = opal_list_get_size(&opal_if_list) + 1;
-            ((struct sockaddr_in*) &intf.if_addr)->sin_addr = a4;
-            ((struct sockaddr_in*) &intf.if_addr)->sin_family = AF_INET;
-            ((struct sockaddr_in*) &intf.if_addr)->sin_len =  cur_ifaddrs->ifa_addr->sa_len;
+            strncpy(intf->if_name, cur_ifaddrs->ifa_name, IF_NAMESIZE);
+            intf->if_index = opal_list_get_size(&opal_if_list) + 1;
+            ((struct sockaddr_in*) &intf->if_addr)->sin_addr = a4;
+            ((struct sockaddr_in*) &intf->if_addr)->sin_family = AF_INET;
+            ((struct sockaddr_in*) &intf->if_addr)->sin_len =  cur_ifaddrs->ifa_addr->sa_len;
 
             /* since every scope != 0 is ignored, we just set the scope to 0 */
             /* There's no scope_id in the non-ipv6 stuff 
-	    ((struct sockaddr_in6*) &intf.if_addr)->sin6_scope_id = 0; 
+	    ((struct sockaddr_in6*) &intf->if_addr)->sin6_scope_id = 0; 
 	    */
 
             /*
              * hardcoded netmask, adrian says that's ok
              */
-	    /* Non-NetBSD uses intf.if_mask = prefix(((struct sockaddr_in*) &ifr->ifr_addr)->sin_addr.s_addr); */
-            /* intf.if_mask = 64; */
-	    intf.if_mask = prefix( sin_addr->sin_addr.s_addr);
-            intf.if_flags = cur_ifaddrs->ifa_flags;
+	    /* Non-NetBSD uses intf->if_mask = prefix(((struct sockaddr_in*) &ifr->ifr_addr)->sin_addr.s_addr); */
+            /* intf->if_mask = 64; */
+	    intf->if_mask = prefix( sin_addr->sin_addr.s_addr);
+            intf->if_flags = cur_ifaddrs->ifa_flags;
 
             /*
              * FIXME: figure out how to gain access to the kernel index
              * (or create our own), getifaddrs() does not contain such
              * data
              */
+            intf->if_kernel_index = 
+                (uint16_t) if_nametoindex(cur_ifaddrs->ifa_name);
 
-            intf.if_kernel_index = (uint16_t) if_nametoindex(cur_ifaddrs->ifa_name);
-
-            intf_ptr = (opal_if_t*) calloc(1, sizeof(opal_if_t));
-            if(NULL == intf_ptr) {
-                opal_output(0, "opal_ifinit: unable to allocate %lu bytes\n",
-                            sizeof(opal_if_t));
-                OBJ_DESTRUCT(&intf);
-                return OPAL_ERR_OUT_OF_RESOURCE;
-            }
-            memcpy(intf_ptr, &intf, sizeof(intf));
-
-	    /* opal_list_append(&opal_if_list, &intf_ptr->super); */
-            opal_list_append(&opal_if_list, (opal_list_item_t*) intf_ptr);
-
-            OBJ_DESTRUCT(&intf);
+            opal_list_append(&opal_if_list, &(intf->super));
         }   /*  of for loop over ifaddrs list */
 
     }
@@ -370,7 +339,6 @@ static int opal_ifinit(void)
     /* 
      * Setup indexes 
      */
-    OBJ_CONSTRUCT(&opal_if_list, opal_list_t);
     ptr = (char*) ifconf.ifc_req;
     rem = ifconf.ifc_len;
     num = 0;
@@ -378,12 +346,16 @@ static int opal_ifinit(void)
     /* loop through all interfaces */
     while (rem > 0) {
         struct ifreq* ifr = (struct ifreq*) ptr;
-        opal_if_t intf;
-        opal_if_t *intf_ptr;
+        opal_if_t *intf;
         int length;
 
-        memset(&intf, 0, sizeof(intf));
-        OBJ_CONSTRUCT(&intf, opal_list_item_t);
+        intf = OBJ_NEW(opal_if_t);
+        if (NULL == intf) {
+            opal_output(0, "opal_ifinit: unable to allocated %lu bytes\n", (unsigned long)sizeof(opal_if_t));
+            free(ifconf.ifc_req);
+            close(sd);
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
 
         /* compute offset for entries */
 #ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
@@ -424,26 +396,26 @@ static int opal_ifinit(void)
 #endif
 
         /* copy entry over into our data structure */
-        strcpy(intf.if_name, ifr->ifr_name);
-        intf.if_flags = ifr->ifr_flags;
+        strcpy(intf->if_name, ifr->ifr_name);
+        intf->if_flags = ifr->ifr_flags;
 
         /* every new address gets its own internal if_index */
-        intf.if_index = opal_list_get_size(&opal_if_list)+1;
+        intf->if_index = opal_list_get_size(&opal_if_list)+1;
 
         /* assign the kernel index to distinguish different NICs */
 #ifndef SIOCGIFINDEX
-        intf.if_kernel_index = intf.if_index;
+        intf->if_kernel_index = intf->if_index;
 #else
         if(ioctl(sd, SIOCGIFINDEX, ifr) < 0) {
             opal_output(0,"opal_ifinit: ioctl(SIOCGIFINDEX) failed with errno=%d", errno);
             continue;
         }
 #if defined(ifr_ifindex)
-        intf.if_kernel_index = ifr->ifr_ifindex;
+        intf->if_kernel_index = ifr->ifr_ifindex;
 #elif defined(ifr_index)
-        intf.if_kernel_index = ifr->ifr_index;
+        intf->if_kernel_index = ifr->ifr_index;
 #else
-        intf.if_kernel_index = -1;
+        intf->if_kernel_index = -1;
 #endif
 #endif /* SIOCGIFINDEX */
 
@@ -457,7 +429,7 @@ static int opal_ifinit(void)
         }
 
         /* based on above, we know this is an IPv4 address... */
-        memcpy(&intf.if_addr, &ifr->ifr_addr, sizeof(struct sockaddr_in));
+        memcpy(&intf->if_addr, &ifr->ifr_addr, sizeof(struct sockaddr_in));
 
         if(ioctl(sd, SIOCGIFNETMASK, ifr) < 0) {
             opal_output(0, "opal_ifinit: ioctl(SIOCGIFNETMASK) failed with errno=%d", errno);
@@ -465,17 +437,9 @@ static int opal_ifinit(void)
         }
 
         /* generate CIDR and assign to netmask */
-        intf.if_mask = prefix(((struct sockaddr_in*) &ifr->ifr_addr)->sin_addr.s_addr);
+        intf->if_mask = prefix(((struct sockaddr_in*) &ifr->ifr_addr)->sin_addr.s_addr);
 
-        intf_ptr = (opal_if_t*) calloc(1, sizeof(opal_if_t));
-        if(intf_ptr == 0) {
-            opal_output(0, "opal_ifinit: unable to allocated %lu bytes\n", (unsigned long)sizeof(opal_if_t));
-            free(ifconf.ifc_req);
-            close(sd);
-            return OPAL_ERR_OUT_OF_RESOURCE;
-        }
-        memcpy(intf_ptr, &intf, sizeof(intf));
-        opal_list_append(&opal_if_list, (opal_list_item_t*)intf_ptr);
+        opal_list_append(&opal_if_list, &(intf->super));
     }
     free(ifconf.ifc_req);
     close(sd);
@@ -502,48 +466,42 @@ static int opal_ifinit(void)
                       &addrbyte[8], &addrbyte[9], &addrbyte[10], &addrbyte[11],
                       &addrbyte[12], &addrbyte[13], &addrbyte[14], &addrbyte[15],
                       &idx, &pfxlen, &scope, &dadstat, ifname) != EOF) {
-                opal_if_t intf;
-                opal_if_t *intf_ptr;
+                opal_if_t *intf;
 
                 /* we don't want any other scope than global */
                 if (scope != 0) {
                    continue;
                 }
 
-                memset(&intf, 0, sizeof(intf));
-                OBJ_CONSTRUCT(&intf, opal_list_item_t);
+                intf = OBJ_NEW(opal_if_t);
+                if (NULL == intf) {
+                    opal_output(0, "opal_ifinit: unable to allocate %lu bytes\n",
+                                    (unsigned long)sizeof(opal_if_t));
+                    fclose(f);
+                    return OPAL_ERR_OUT_OF_RESOURCE;
+                }
         
                 for (iter = 0; iter < 16; iter++) {
                     a6.s6_addr[iter] = addrbyte[iter];
                 }
 
                 /* now construct the opal_if_t */
-                strncpy(intf.if_name, ifname, IF_NAMESIZE);
-                intf.if_index = opal_list_get_size(&opal_if_list)+1;
-                intf.if_kernel_index = (uint16_t) idx;
-                ((struct sockaddr_in6*) &intf.if_addr)->sin6_addr = a6;
-                ((struct sockaddr_in6*) &intf.if_addr)->sin6_family = AF_INET6;
-                ((struct sockaddr_in6*) &intf.if_addr)->sin6_scope_id = scope;
-                intf.if_mask = pfxlen;
+                strncpy(intf->if_name, ifname, IF_NAMESIZE);
+                intf->if_index = opal_list_get_size(&opal_if_list)+1;
+                intf->if_kernel_index = (uint16_t) idx;
+                ((struct sockaddr_in6*) &intf->if_addr)->sin6_addr = a6;
+                ((struct sockaddr_in6*) &intf->if_addr)->sin6_family = AF_INET6;
+                ((struct sockaddr_in6*) &intf->if_addr)->sin6_scope_id = scope;
+                intf->if_mask = pfxlen;
                 if (OPAL_SUCCESS == opal_ifindextoflags(opal_ifnametoindex (ifname), &flag)) {
-                    intf.if_flags = flag;
+                    intf->if_flags = flag;
                 } else {
-                    intf.if_flags = IFF_UP;
+                    intf->if_flags = IFF_UP;
                 }
                 
                 /* copy new interface information to heap and append
-                   to list
-                */
-                intf_ptr = (opal_if_t*) calloc(1, sizeof(opal_if_t));
-                if(NULL == intf_ptr) {
-                    opal_output(0, "opal_ifinit: unable to allocate %lu bytes\n",
-                                    (unsigned long)sizeof(opal_if_t));
-                    OBJ_DESTRUCT(&intf);
-                    fclose(f);
-                    return OPAL_ERR_OUT_OF_RESOURCE;
-                }
-                memcpy(intf_ptr, &intf, sizeof(intf));
-                opal_list_append(&opal_if_list, (opal_list_item_t*)intf_ptr);
+                   to list */
+                opal_list_append(&opal_if_list, &(intf->super));
             } /* of while */
             fclose(f);
         }
@@ -589,9 +547,7 @@ static int opal_ifinit(void)
 
         for(cur_ifaddrs = *ifadd_list; NULL != cur_ifaddrs; 
                 cur_ifaddrs = cur_ifaddrs->ifa_next) {
-
-            opal_if_t intf;
-            opal_if_t *intf_ptr;
+            opal_if_t *intf;
             struct in6_addr a6;
 
             /* skip non-ipv6 interface addresses */
@@ -622,6 +578,12 @@ static int opal_ifinit(void)
             }
 
             sin_addr = (struct sockaddr_in6 *) cur_ifaddrs->ifa_addr;
+            intf = OBJ_NEW(opal_if_t);
+            if (NULL == intf) {
+                opal_output(0, "opal_ifinit: unable to allocate %lu bytes\n",
+                            sizeof(opal_if_t));
+                return OPAL_ERR_OUT_OF_RESOURCE;
+            }
 
             /* 
              * skip IPv6 address starting with fe80:, as this is supposed to be
@@ -643,8 +605,6 @@ static int opal_ifinit(void)
                 continue;
             }
 
-            memset(&intf, 0, sizeof(intf));
-            OBJ_CONSTRUCT(&intf, opal_list_item_t);
 #if 0
             char *addr_name = (char *) malloc(48*sizeof(char));
             inet_ntop(AF_INET6, &sin_addr->sin6_addr, addr_name, 48*sizeof(char));
@@ -656,38 +616,28 @@ static int opal_ifinit(void)
             /* fill values into the opal_if_t */
             memcpy(&a6, &(sin_addr->sin6_addr), sizeof(struct in6_addr));
             
-            strncpy(intf.if_name, cur_ifaddrs->ifa_name, IF_NAMESIZE);
-            intf.if_index = opal_list_get_size(&opal_if_list) + 1;
-            ((struct sockaddr_in6*) &intf.if_addr)->sin6_addr = a6;
-            ((struct sockaddr_in6*) &intf.if_addr)->sin6_family = AF_INET6;
+            strncpy(intf->if_name, cur_ifaddrs->ifa_name, IF_NAMESIZE);
+            intf->if_index = opal_list_get_size(&opal_if_list) + 1;
+            ((struct sockaddr_in6*) &intf->if_addr)->sin6_addr = a6;
+            ((struct sockaddr_in6*) &intf->if_addr)->sin6_family = AF_INET6;
 
             /* since every scope != 0 is ignored, we just set the scope to 0 */
-            ((struct sockaddr_in6*) &intf.if_addr)->sin6_scope_id = 0;
+            ((struct sockaddr_in6*) &intf->if_addr)->sin6_scope_id = 0;
 
             /*
              * hardcoded netmask, adrian says that's ok
              */
-            intf.if_mask = 64;
-            intf.if_flags = cur_ifaddrs->ifa_flags;
+            intf->if_mask = 64;
+            intf->if_flags = cur_ifaddrs->ifa_flags;
 
             /*
              * FIXME: figure out how to gain access to the kernel index
              * (or create our own), getifaddrs() does not contain such
              * data
              */
-
-            intf.if_kernel_index = (uint16_t) if_nametoindex(cur_ifaddrs->ifa_name);
-
-            intf_ptr = (opal_if_t*) calloc(1, sizeof(opal_if_t));
-            if(NULL == intf_ptr) {
-                opal_output(0, "opal_ifinit: unable to allocate %lu bytes\n",
-                            sizeof(opal_if_t));
-                OBJ_DESTRUCT(&intf);
-                return OPAL_ERR_OUT_OF_RESOURCE;
-            }
-            memcpy(intf_ptr, &intf, sizeof(intf));
-            opal_list_append(&opal_if_list, (opal_list_item_t*) intf_ptr);
-            OBJ_DESTRUCT(&intf);
+            intf->if_kernel_index = 
+                (uint16_t) if_nametoindex(cur_ifaddrs->ifa_name);
+            opal_list_append(&opal_if_list, &(intf->super));
         }   /*  of for loop over ifaddrs list */
 
     }
@@ -780,30 +730,26 @@ static int opal_ifinit(void)
                 if ( (! IN6_IS_ADDR_LOOPBACK (&my_addr->sin6_addr)) &&
                      (! IN6_IS_ADDR_LINKLOCAL (&my_addr->sin6_addr))) {
                     /* create interface for newly found address */
-                    opal_if_t intf, *intf_ptr;
+                    opal_if_t *intf;
 
-                    memset(&intf, 0, sizeof(intf));
-                    OBJ_CONSTRUCT(&intf, opal_list_item_t);
-
-                    strncpy (intf.if_name, lifreq->lifr_name, IF_NAMESIZE);
-                    intf.if_index = opal_list_get_size(&opal_if_list)+1;
-                    memcpy (&intf.if_addr, my_addr, sizeof (*my_addr));
-                    intf.if_mask = 64;
-                    /* lifrq flags are uint64_t */
-                    intf.if_flags = (uint32_t)(0x00000000ffffffff) & lifquery.lifr_flags;
-
-                    /* copy new interface to heap and append to list */
-                    intf_ptr = (opal_if_t*) calloc(1, sizeof (opal_if_t));
-                    if (NULL == intf_ptr) {
+                    intf = OBJ_NEW(opal_if_t);
+                    if (NULL == intf) {
                         opal_output (0,
                                      "opal_ifinit: unable to allocate %d bytes\n",
                                      sizeof (opal_if_t));
-                        OBJ_DESTRUCT(&intf);
                         return OPAL_ERR_OUT_OF_RESOURCE;
                     }
-                    memcpy (intf_ptr, &intf, sizeof (intf));
-                    opal_list_append (&opal_if_list, (opal_list_item_t*) intf_ptr);
-                    OBJ_DESTRUCT(&intf);
+
+                    strncpy (intf->if_name, lifreq->lifr_name, IF_NAMESIZE);
+                    intf->if_index = opal_list_get_size(&opal_if_list)+1;
+                    memcpy(&intf->if_addr, my_addr, sizeof (*my_addr));
+                    intf->if_mask = 64;
+                    /* lifrq flags are uint64_t */
+                    intf->if_flags =
+                        (uint32_t)(0x00000000ffffffff) & lifquery.lifr_flags;
+
+                    /* append to list */
+                    opal_list_append (&opal_if_list, &(intf->super));
                 }
             }
         } /* for */
@@ -834,8 +780,7 @@ static int opal_ifinit(void)
         unsigned long num_bytes_returned;
         int i;
         unsigned int interface_counter = 0;
-        opal_if_t intf;
-        opal_if_t *intf_ptr;
+        opal_if_t *intf;
 
         /* return if this has been done before */
         if (already_done) {
@@ -874,40 +819,38 @@ static int opal_ifinit(void)
             if (0 != (if_list[i].iiFlags & IFF_UP)
                 && 0 == (if_list[i].iiFlags & IFF_LOOPBACK)) {
 
-                OBJ_CONSTRUCT (&intf, opal_list_item_t);
-        
-                /* fill in the interface address */ 
-                memcpy (&intf.if_addr, &(if_list[i].iiAddress), sizeof(intf.if_addr));
-
-                /* fill in the netmask information */
-                memcpy (&intf.if_mask, &(if_list[i].iiNetmask), sizeof(intf.if_mask));
-
-                /* fill in the bcast address */
-                memcpy (&intf.if_bcast, &(if_list[i].iiBroadcastAddress), sizeof(intf.if_bcast));
-
-                /* fill in the flags */
-                intf.if_flags = if_list[i].iiFlags;
-
-                /* fill in the index in the table */
-                intf.if_index = opal_list_get_size(&opal_if_list)+1;
-
-                /* fill in the kernel index */
-                intf.if_kernel_index = intf.if_index;
-
-                /* generate the interface name, e.g. eth0, eth1, ..... */
-                sprintf (intf.if_name, "eth%u", interface_counter++);
-
-                /* copy all this into a persistent form and store it in the list */
-                intf_ptr = (opal_if_t *) malloc(sizeof(opal_if_t));
-                if (NULL == intf_ptr) {
+                intf = OBJ_NEW(opal_if_t);
+                if (NULL == intf) {
                     opal_output (0,"opal_ifinit: Unable to malloc %d bytes",sizeof(opal_list_t));
-                    OBJ_DESTRUCT(&intf);
                     return OPAL_ERR_OUT_OF_RESOURCE;
                 }
+        
+                /* fill in the interface address */ 
+                memcpy(&intf->if_addr, &(if_list[i].iiAddress),
+                       sizeof(intf->if_addr));
 
-                memcpy (intf_ptr, &intf, sizeof(intf));
-                opal_list_append(&opal_if_list, (opal_list_item_t *)intf_ptr);
-                OBJ_DESTRUCT(&intf);
+                /* fill in the netmask information */
+                memcpy(&intf->if_mask, &(if_list[i].iiNetmask),
+                       sizeof(intf->if_mask));
+
+                /* fill in the bcast address */
+                memcpy(&intf->if_bcast, &(if_list[i].iiBroadcastAddress),
+                       sizeof(intf->if_bcast));
+
+                /* fill in the flags */
+                intf->if_flags = if_list[i].iiFlags;
+
+                /* fill in the index in the table */
+                intf->if_index = opal_list_get_size(&opal_if_list)+1;
+
+                /* fill in the kernel index */
+                intf->if_kernel_index = intf->if_index;
+
+                /* generate the interface name, e.g. eth0, eth1, ..... */
+                sprintf(intf->if_name, "eth%u", interface_counter++);
+
+                /* copy all this into a persistent form and store it in the list */
+                opal_list_append(&opal_if_list, &(intf->super));
             }
         }
     }
