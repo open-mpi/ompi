@@ -18,7 +18,9 @@
    write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
    Boston, MA 02111-1307, USA.  */
 
-/* Copyright (c) 2009-2010      IBM Corporation.  All rights reserved. */
+/* Copyright (c) 2009-2010      IBM Corporation.  All rights reserved. 
+ * Copyright (c) 2010           Cisco Systems, Inc.  All rights reserved. 
+ */
 
 /* $Id: arena.c,v 1.9 2004/11/05 14:42:23 wg Exp $ */
 
