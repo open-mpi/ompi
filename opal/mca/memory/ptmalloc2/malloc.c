@@ -30,14 +30,14 @@ opal_mem_free_ptmalloc2_sbrk(int inc)
   return sbrk(inc);
 }
 
-extern int opal_mem_free_ptmalloc2_munmap(void *start, size_t length, int from_alloc);
+extern int opal_mem_free_ptmalloc2_munmap(void *start, size_t length, int from_alloc, int run_hooks);
 
 /* if we are trying to catch only allocations from and releases to the
    operating system, intercept sbrk, mmap, and munmap.  If we want to
    intercept every call to malloc/realloc/free/etc., don't do this, as
    we need to add something into each of those calls anyway. */
 #define MORECORE opal_mem_free_ptmalloc2_sbrk
-#define munmap(a,b) opal_mem_free_ptmalloc2_munmap(a,b,1)
+#define munmap(a,b) opal_mem_free_ptmalloc2_munmap(a,b,1,1)
 
 /* make some non-GCC compilers happy */
 #ifndef __GNUC__
