@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2009 QLogic Corporation. All rights reserved.
+ * Copyright (c) 2006-2010 QLogic Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,9 +30,13 @@
 #include "mtl_psm_request.h"
 
 #include "psm.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>.
 
 static int ompi_mtl_psm_component_open(void);
 static int ompi_mtl_psm_component_close(void);
+static int ompi_mtl_psm_component_register(void);
 
 static mca_mtl_base_module_t* ompi_mtl_psm_component_init( bool enable_progress_threads, 
                                                           bool enable_mpi_threads );
@@ -51,7 +55,9 @@ mca_mtl_psm_component_t mca_mtl_psm_component = {
             OMPI_MINOR_VERSION,  /* MCA component minor version */
             OMPI_RELEASE_VERSION,  /* MCA component release version */
             ompi_mtl_psm_component_open,  /* component open */
-            ompi_mtl_psm_component_close  /* component close */
+            ompi_mtl_psm_component_close,  /* component close */
+	    NULL,
+	    ompi_mtl_psm_component_register
         },
         {
             /* The component is not checkpoint ready */
@@ -64,13 +70,13 @@ mca_mtl_psm_component_t mca_mtl_psm_component = {
 
     
 static int
-ompi_mtl_psm_component_open(void)
+ompi_mtl_psm_component_register(void)
 {
     
     mca_base_param_reg_int(&mca_mtl_psm_component.super.mtl_version, 
 			   "connect_timeout",
 			   "PSM connection timeout value in seconds",
-			   false, false, 30, &ompi_mtl_psm.connect_timeout);
+			   false, false, 180, &ompi_mtl_psm.connect_timeout);
   
     mca_base_param_reg_int(&mca_mtl_psm_component.super.mtl_version, 
 			   "debug",
@@ -113,6 +119,19 @@ ompi_mtl_psm_component_open(void)
     
 }
 
+static int
+ompi_mtl_psm_component_open(void)
+{
+  struct stat st;
+  
+  /* Component is available only if Truescale hardware is present */
+  if (0 == stat("/dev/ipath", &st)) {
+    return OMPI_SUCCESS;
+  }
+  else {
+    return OPAL_ERR_NOT_AVAILABLE;
+  }
+}
 
 static int
 ompi_mtl_psm_component_close(void)
