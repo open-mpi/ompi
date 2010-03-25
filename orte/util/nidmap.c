@@ -619,6 +619,12 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr)
         if (NULL == (jdata = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, j))) {
             continue;
         }
+        /* if this job doesn't have a map, then it is a tool
+         * and doesn't need to be included
+         */
+        if (NULL == jdata->map) {
+            continue;
+        }
         /* pack the jobid */
         if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &jdata->jobid, 1, ORTE_JOBID))) {
             ORTE_ERROR_LOG(rc);
