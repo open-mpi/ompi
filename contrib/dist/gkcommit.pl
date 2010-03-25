@@ -21,10 +21,26 @@ my $base_trac_url = "https://svn.open-mpi.org/trac/ompi/ticket/%d?format=csv";
 # Command line parsing
 my @cmr_arg;
 my @r_arg;
+my $svn_up = 1;
+my $help_arg = 0;
 
 &Getopt::Long::Configure("bundling");
 my $ok = Getopt::Long::GetOptions("cmr|c=s" => \@cmr_arg,
-                                  "r|r=s" => \@r_arg);
+                                  "r|r=s" => \@r_arg,
+                                  "svn-up|s!" => \$svn_up,
+                                  "help|h!" => \$help_arg);
+
+if (!$ok || $help_arg) {
+    print "$0 [--cmr=<list>] [--r=<list>] [--[no-]svn-up]
+
+<list> is a comma-delimited list of integers.
+
+If --cmr is not specified on the command line, you will be prompted
+interactively.  Ditto for --r.
+
+--no-svn-up inhibits running \"svn up\" before doing the commit.\n";
+    exit(0);
+}
 
 # Parse the -cmr argument
 my @cmrs;
@@ -189,6 +205,12 @@ if ($#rs >= 0) {
     $x->parse($xml);
 }
 
+# Run "svn up" just to get the tree consistent
+if (!$svn_up) {
+    print "Running 'svn up'...\n";
+    system("svn up");
+}
+
 ###########################################################################
 
 # Create a SVN commit message for the gatekeeper
@@ -221,7 +243,7 @@ if (! -f $commit_file) {
 }
 
 # Finally, run the commit
-my $cmd = "bogus svn commit --file $commit_file " . join(' ', @ARGV);
+my $cmd = "svn commit --file $commit_file " . join(' ', @ARGV);
 print "Running: $cmd\n";
 if (0 == system($cmd)) {
     unlink($commit_file);
