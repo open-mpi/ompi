@@ -19,7 +19,7 @@
 # -----------------------------------------------------------
 AC_DEFUN([MCA_pml_crcpw_CONFIG],[
     # If we don't want FT, don't compile this component
-    AS_IF([test "$ompi_want_ft_cr" = "1"],
+    AS_IF([test "$opal_want_ft_cr" = "1"],
         [$1],
         [$2])
 ])dnl

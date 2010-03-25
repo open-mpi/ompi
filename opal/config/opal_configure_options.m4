@@ -346,6 +346,7 @@ fi
 #  TYPE:
 #    - LAM (synonym for 'cr' currently)
 #    - cr
+#    - orcm
 #  /* General FT sections */
 #  #if OPAL_ENABLE_FT == 0 /* FT Disabled globaly */
 #  #if OPAL_ENABLE_FT == 1 /* FT Enabled globaly */
@@ -356,17 +357,17 @@ fi
 AC_MSG_CHECKING([if want fault tolerance])
 AC_ARG_WITH(ft,
     [AC_HELP_STRING([--with-ft=TYPE],
-            [Specify the type of fault tolerance to enable. Options: LAM (LAM/MPI-like), cr (Checkpoint/Restart) (default: disabled)])],
-        [ompi_want_ft=1],
-        [ompi_want_ft=0])
-if test "$with_ft" = "no" -o "$ompi_want_ft" = "0"; then
-    ompi_want_ft=0
-    ompi_want_ft_cr=0
+            [Specify the type of fault tolerance to enable. Options: LAM (LAM/MPI-like), cr (Checkpoint/Restart), orcm (OpenRCM) (default: disabled)])],
+        [opal_want_ft=1],
+        [opal_want_ft=0])
+if test "$with_ft" = "no" -o "$opal_want_ft" = "0"; then
+    opal_want_ft=0
+    opal_want_ft_cr=0
     AC_MSG_RESULT([Disabled fault tolerance])
 else
-    ompi_want_ft=1
-    ompi_want_ft_cr=0
-    ompi_want_ft_type=none
+    opal_want_ft=1
+    opal_want_ft_cr=0
+    opal_want_ft_type=none
 
     as_save_IFS=$IFS
     IFS=","
@@ -375,36 +376,42 @@ else
 
         # Default value
         if test "$opt" = "" -o "$opt" = "yes"; then
-            ompi_want_ft_cr=1
+            opal_want_ft_cr=1
         elif test "$opt" = "LAM"; then
-            ompi_want_ft_cr=1
+            opal_want_ft_cr=1
         elif test "$opt" = "lam"; then
-            ompi_want_ft_cr=1
+            opal_want_ft_cr=1
         elif test "$opt" = "CR"; then
-            ompi_want_ft_cr=1
+            opal_want_ft_cr=1
         elif test "$opt" = "cr"; then
-            ompi_want_ft_cr=1
+            opal_want_ft_cr=1
+        elif test "$opt" = "orcm"; then
+            opal_want_ft_orcm=1
+        elif test "$opt" = "ORCM"; then
+            opal_want_ft_orcm=1
         else
             AC_MSG_RESULT([Unrecognized FT TYPE: $opt])
             AC_MSG_ERROR([Cannot continue])
         fi
     done
-    if test "$ompi_want_ft_cr" = 1; then
-        ompi_want_ft_type="cr"
+    if test "$opal_want_ft_cr" = 1; then
+        opal_want_ft_type="cr"
+    elif test "$opal_want_ft_orcm" = 1; then
+        opal_want_ft_type="orcm"
     fi
 
-    AC_MSG_RESULT([Enabled $ompi_want_ft_type (Specified $with_ft)])
+    AC_MSG_RESULT([Enabled $opal_want_ft_type (Specified $with_ft)])
     AC_MSG_WARN([**************************************************])
     AC_MSG_WARN([*** Fault Tolerance Integration into Open MPI is *])
     AC_MSG_WARN([*** a research quality implementation, and care  *])
     AC_MSG_WARN([*** should be used when choosing to enable it.   *])
     AC_MSG_WARN([**************************************************])
 fi
-AC_DEFINE_UNQUOTED([OPAL_ENABLE_FT], [$ompi_want_ft],
+AC_DEFINE_UNQUOTED([OPAL_ENABLE_FT], [$opal_want_ft],
                    [Enable fault tolerance general components and logic])
-AC_DEFINE_UNQUOTED([OPAL_ENABLE_FT_CR], [$ompi_want_ft_cr],
+AC_DEFINE_UNQUOTED([OPAL_ENABLE_FT_CR], [$opal_want_ft_cr],
                    [Enable fault tolerance checkpoint/restart components and logic])
-AM_CONDITIONAL(WANT_FT, test "$ompi_want_ft" = "1")
+AM_CONDITIONAL(WANT_FT, test "$opal_want_ft" = "1")
 
 #
 # Do we want to install binaries?
