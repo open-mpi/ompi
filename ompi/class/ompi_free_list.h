@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -220,6 +221,7 @@ OMPI_DECLSPEC int ompi_free_list_parse( ompi_free_list_t* list,
         item = (ompi_free_list_item_t*) opal_atomic_lifo_pop(&((fl)->super)); \
         if( OPAL_UNLIKELY(NULL == item) ) rc = OMPI_ERR_TEMP_OUT_OF_RESOURCE; \
     }  \
+    opal_atomic_rmb(); \
 } 
 
 /**
@@ -274,6 +276,7 @@ static inline int __ompi_free_list_wait( ompi_free_list_t* fl,
         OPAL_THREAD_UNLOCK(&((fl)->fl_lock));
         *item = (ompi_free_list_item_t*)opal_atomic_lifo_pop(&((fl)->super));
     }
+    opal_atomic_rmb();
     return OMPI_SUCCESS;
 } 
 
@@ -289,6 +292,7 @@ static inline int __ompi_free_list_wait( ompi_free_list_t* fl,
     do {                                                                \
         opal_list_item_t* original;                                     \
                                                                         \
+	opal_atomic_wmb();                                              \
         original = opal_atomic_lifo_push( &(fl)->super,                 \
                                           &(item)->super);              \
         if( &(fl)->super.opal_lifo_ghost == original ) {                \
