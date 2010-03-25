@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies, Inc.  All rights reserved.
- * Copyright (c) 2009      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
