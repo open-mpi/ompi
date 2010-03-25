@@ -12,8 +12,8 @@
 # MCA_errmgr_orcm_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
 AC_DEFUN([MCA_errmgr_orcm_CONFIG],[
-    # If we don't want FT, don't compile this component
-    AS_IF([test "$ompi_want_ft" = "1"],
+    # If we don't want orcm FT, don't compile this component
+    AS_IF([test "$opal_want_ft_orcm" = "1"],
         [$1],
         [$2])
 ])dnl

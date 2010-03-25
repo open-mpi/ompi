@@ -75,24 +75,11 @@ static int errmgr_orcm_close(void)
 
 static int errmgr_orcm_component_query(mca_base_module_t **module, int *priority)
 {
-    /*
-     * This component is selected only when requested - and if so, then
-     * it MUST be used exclusively
+    /* if we built, then we should probably be the
+     * default module
      */
-    bool is_required = false;
-
-    mca_base_is_component_required(&orte_errmgr_base_components_available,
-                                   &mca_errmgr_orcm_component.base_version,
-                                   true,
-                                   &is_required);
     
-    if( !is_required ) {
-        *priority = 0;
-        *module = NULL;
-        return ORTE_ERROR;
-    }
-    
-    *priority = 1000;
+    *priority = 100;
     *module = (mca_base_module_t *)&orte_errmgr_orcm_module;
     return ORTE_SUCCESS;
 }

@@ -228,44 +228,43 @@ AC_MSG_RESULT([$enable_opal_multi_threads])
 AC_MSG_CHECKING([if want fault tolerance thread])
 AC_ARG_ENABLE([ft_thread],
     [AC_HELP_STRING([--disable-ft-thread],
-                    [Disable fault tolerance thread running inside all processes. Requires progress and/or MPI threads (default: enabled)])],
+                    [Disable fault tolerance thread running inside all processes. Requires OPAL thread support (default: enabled)])],
     [enable_ft_thread="$enableval"],
     [enable_ft_thread="undef"])
 
 # if they do not want FT support, then they do not want this thread either
-if test "$ompi_want_ft" = "0"; then
-    ompi_want_ft_thread=0
+if test "$opal_want_ft" = "0"; then
+    opal_want_ft_thread=0
     AC_MSG_RESULT([Disabled (fault tolerance disabled --without-ft)])
 # if --disable-ft-thread
 elif test "$enable_ft_thread" = "no"; then
-    ompi_want_ft_thread=0
+    opal_want_ft_thread=0
     AC_MSG_RESULT([Disabled])
 # if default, and no progress or MPI threads
-elif test "$enable_ft_thread" = "undef" -a "$enable_opal_progress_threads" = "no"  -a "$enable_opal_multi_threads" = "no" ; then
-    ompi_want_ft_thread=0
+elif test "$enable_ft_thread" = "undef" -a "$enable_opal_multi_threads" = "no" ; then
+    opal_want_ft_thread=0
     AC_MSG_RESULT([Disabled (OPAL Thread Support Disabled)])
 # if default, and MPI threads enabled
 else
     # Default: Enable
     # Make sure we have OPAL Threads enabled 
     if "$enable_opal_multi_threads" = "no"; then
-        AC_MSG_RESULT([Must enable OPALbasic thread support to use this option])
+        AC_MSG_RESULT([Must enable OPAL basic thread support to use this option])
         AC_MSG_ERROR([Cannot continue])
     else
         AC_MSG_RESULT([yes])
-        ompi_want_ft_thread=1
+        opal_want_ft_thread=1
         AC_MSG_WARN([**************************************************])
         AC_MSG_WARN([*** Fault Tolerance with a thread in Open MPI    *])
         AC_MSG_WARN([*** is an experimental, research quality option. *])
-        AC_MSG_WARN([*** It requires OPAL thread support or progress  *])
-        AC_MSG_WARN([*** and care should be used when enabling these  *])
-        AC_MSG_WARN([*** options.                                     *])
+        AC_MSG_WARN([*** It requires OPAL thread support and care     *])
+        AC_MSG_WARN([*** should be used when enabling these options.  *])
         AC_MSG_WARN([**************************************************])
     fi
 fi
-AC_DEFINE_UNQUOTED([OPAL_ENABLE_FT_THREAD], [$ompi_want_ft_thread],
+AC_DEFINE_UNQUOTED([OPAL_ENABLE_FT_THREAD], [$opal_want_ft_thread],
                    [Enable fault tolerance thread in Open PAL])
-AM_CONDITIONAL(WANT_FT_THREAD, test "$ompi_want_ft_thread" = "1")
+AM_CONDITIONAL(WANT_FT_THREAD, test "$opal_want_ft_thread" = "1")
 
 ])dnl
 
