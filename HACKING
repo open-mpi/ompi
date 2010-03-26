@@ -20,7 +20,7 @@ Overview
 
 This file is here for those who are building/exploring OMPI in its
 source code form, most likely through a developer's tree (i.e., a
-Subversion checkout).
+Subversion or Mercurial checkout).
 
 
 Debugging vs. Optimized Builds
@@ -31,8 +31,10 @@ build includes a lot of debugging features.  This happens
 automatically when when configure detects the hidden ".svn" Subversion
 meta directory (that is present in all Subversion checkouts) in your
 source tree, and therefore activates a number of developer-only
-debugging features in the Open MPI code base.  The same is true if you
-have a Mercurial checkout (with the hidden .hg meta directory).
+debugging features in the Open MPI code base.  
+
+The same debugging features are activated if you build in a Mercurial
+clone (with the hidden ".hg" meta directory).
 
 By definition, debugging builds will perform [much] slower than
 optimized builds of Open MPI.  You should *NOT* conduct timing tests
@@ -105,10 +107,11 @@ shell$ automake --version
 shell$ libtoolize --version
 
 To strengthen the above point: the core Open MPI developers typically
-use very, very recent versions of the GNU tools.  Little checking is
-done to ensure that the code base is compatible with older versions of
-these tools.  If you have a problem, try upgrading your GNU tools to
-the latest versions and try again.
+use very, very recent versions of the GNU tools.  There are known bugs
+in older versions of the GNU tools that Open MPI no longer compensates
+for (it seemed senseless to indefinitely support patches for ancient
+versions of Autoconf, for example).  You *WILL* have problems if you
+do not use recent versions of the GNU tools.
 
 If you need newer versions, you are *strongly* encouraged to heed the
 following advice:
@@ -157,7 +160,7 @@ NOTE: On MacOS/X, the default "libtool" program is different than the
 4. All four packages require two simple commands to build and
    install (where PREFIX is the prefix discussed in 3, above).
 
-      shell$ cd m4-1.4.11
+      shell$ cd m4-1.4.13
       shell$ ./configure --prefix=PREFIX
       shell$ make; make install
 
@@ -167,14 +170,14 @@ NOTE: On MacOS/X, the default "libtool" program is different than the
       --> If you are using the csh or tcsh shells, be sure to run the
           "rehash" command after you install each package.
 
-      shell$ cd ../autoconf-2.63
+      shell$ cd ../autoconf-2.65
       shell$ ./configure --prefix=PREFIX
       shell$ make; make install
 
       --> If you are using the csh or tcsh shells, be sure to run the
           "rehash" command after you install each package.
 
-      shell$ cd ../automake-1.10.1
+      shell$ cd ../automake-1.11.1
       shell$ ./configure --prefix=PREFIX
       shell$ make; make install
 
@@ -217,35 +220,6 @@ NOTE: On MacOS/X, the default "libtool" program is different than the
 
    5b. You do *NOT* need to re-run autogen.sh if you modify a
        Makefile.am.
-
-   5c. Note that "autogen.sh" automatically traverses the entire OMPI
-       tree, running the GNU tools in all MCA component directories.
-       This is not always necessary.  As you become more familiar with
-       the OMPI sources, you will come to understand the when you only
-       need to re-generate the top-level configure script, and when
-       you need to re-generate *all* configure scripts (it's
-       complicated -- not described here -- when in doubt, do them
-       all).
-
-       If you only need to re-generate the top-level configure script,
-       you can run:
-
-          shell$ autogen.sh -l
-
-       (i.e., "local" mode) which will prevent autogen.sh from
-       traversing all the MCA component directories.
-
-   5d. Similarly, if you only need to regenerate the configure script
-       in a single MCA component directory (and that component has a
-       "configure.stub" file), cd into that component's directory and
-       run autogen.sh in there directly:
-
-          shell$ cd src/mca/pml/teg
-          shell$ ../../../../autogen.sh
-
-       This does *not* work if the component has a "configure.m4"
-       file.  If a component's configure.m4 file changes, you will
-       need to run "autogen.sh" from the top-level directory.
 
 Use of Flex
 ===========
