@@ -17,6 +17,7 @@ use LWP;
 use File::Temp qw/ :POSIX /;
 
 my $base_trac_url = "https://svn.open-mpi.org/trac/ompi/ticket/%d?format=csv";
+my $base_svn_url = "https://svn.open-mpi.org/svn/ompi/trunk";
 
 ###########################################################################
 
@@ -35,7 +36,7 @@ my $ok = Getopt::Long::GetOptions("cmr|c=s" => \@cmr_arg,
                                   "help|h!" => \$help_arg);
 
 if (!$ok || $help_arg) {
-    print "$0 [--cmr=<list>|-c=<list>] [--r=<list>|-r=<list>] 
+    print "$0 [--cmr=<list>|-c <list>] [--r=<list>|-r <list>] 
      [--[no-]svn-up|-s] [--dry-run|-d]
 
 <list> is a comma-delimited list of integers.
@@ -167,7 +168,7 @@ foreach my $cmr (@cmrs) {
     my $res = $ua->get($url);
     if (!$res->is_success()) {
         print("Failed to download Trac ticket #" . $cmr . "\n");
-        print $res->reason;
+        print $res->status_line . "\n";
         exit(1);
     }
     my @lines = split('\n', $res->content);
@@ -198,7 +199,7 @@ my $logentry;
 my $chars;
 if ($#rs >= 0) {
     print "Retrieving SVN log messages...\n";
-    my $cmd = "svn log --xml ";
+    my $cmd = "svn log $base_svn_url --xml ";
     foreach my $r (@rs) {
         $cmd .= "-r $r ";
     }
