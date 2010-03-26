@@ -11,7 +11,7 @@
 # this file contains 
 #    1. several wrappers for CMake macros, so that they will
 #       do the job and write the configure temeplate file too.
-#    2. a few macros that checks the 
+#    2. a macro that checks the data types
 
 # check include file
 MACRO(OMPI_CHECK_INCLUDE_FILE FILE_NAME VAR_NAME)
