@@ -1,4 +1,4 @@
-# Copyright (c) 2008-2009 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2008-2010 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 #
 # $COPYRIGHT$
@@ -18,6 +18,10 @@ include(CMakeDetermineFortranCompiler)
 include(CMakeFortranInformation)
 
 IF(OMPI_WANT_F77_BINDINGS AND NOT F77_SETUP_DONE)
+
+  SET(OMPI_MPI_INTEGER_KIND 0 CACHE INTERNAL "MPI_INTEGER_KIND")
+  SET(OMPI_MPI_ADDRESS_KIND 0 CACHE INTERNAL "MPI_ADDRESS_KIND")
+  SET(OMPI_MPI_OFFSET_KIND 0 CACHE INTERNAL "MPI_OFFSET_KIND")
 
   GET_FILENAME_COMPONENT(F77_NAME ${CMAKE_Fortran_COMPILER} NAME)
   GET_FILENAME_COMPONENT(F77_PATH ${CMAKE_Fortran_COMPILER} PATH)
