@@ -59,9 +59,9 @@ if test ! -z "$AUTOMAKE"; then
     ompi_automake_search="$AUTOMAKE"
 fi
 
-ompi_automake_version="1.9.6"
-ompi_autoconf_version="2.59"
-ompi_libtool_version="1.5.22"
+ompi_automake_version="1.11.1"
+ompi_autoconf_version="2.65"
+ompi_libtool_version="2.2.6b"
 
 
 ##############################################################################
@@ -442,88 +442,10 @@ EOF
 
 	echo "** Adjusting libltdl for OMPI :-("
 
-	echo "   ++ patching for argz bugfix in libtool 1.5"
-	cd opal/libltdl
-        if test "`grep 'while ((before >= *pargz) && (before[-1] != LT_EOS_CHAR))' ltdl.c`" != ""; then
-            patch -N -p0 <<EOF
---- ltdl.c.old  2003-11-26 16:42:17.000000000 -0500
-+++ ltdl.c      2003-12-03 17:06:27.000000000 -0500
-@@ -682,7 +682,7 @@
-   /* This probably indicates a programmer error, but to preserve
-      semantics, scan back to the start of an entry if BEFORE points
-      into the middle of it.  */
--  while ((before >= *pargz) && (before[-1] != LT_EOS_CHAR))
-+  while ((before > *pargz) && (before[-1] != LT_EOS_CHAR))
-     --before;
-
-   {
-EOF
-#'
-            rm -f ltdl.c.orig
-            rm -f ltdl.c.rej
-        else
-            echo "      -- your libtool doesn't need this! yay!"
-        fi
-	cd ../..
-        echo "   ++ patching 64-bit OS X bug in ltmain.sh"
-        if test ! -z "`grep otool config/ltmain.sh`" -a \
-              -z "`grep otool64 config/ltmain.sh`"; then
-            patch -N -p0 < config/ltmain_otool.diff
-            rm -f config/ltmain.sh.orig
-            rm -f config/ltmain.sh.rej
-        else
-            echo "      -- your libtool doesn't need this! yay!"
-        fi
-
-        echo "   ++ RTLD_GLOBAL in libltdl"
-        if test -r opal/libltdl/loaders/dlopen.c && \
-            test ! -z "`grep 'filename, LT_LAZY_OR_NOW' opal/libltdl/loaders/dlopen.c`"; then
-            patch -N -p0 < config/libltdl_dlopen_global.diff
-            rm -f opal/libltdl/loaders/dlopen.c.rej
-        else
-            echo "      -- your libltdl doesn't need this! yay!"
-        fi
-        if grep 'chmod -w \.' configure ; then
-            echo "   ++ patching configure for broken -c/-o compiler test"
-            sed -e 's/chmod -w \./#OMPI\/MPI FIX: chmod -w ./' \
-                configure > configure.new
-            mv configure.new configure
-            chmod a+x configure
-        fi
         echo "   ++ preopen error masking ib libltdl"
         if test -r opal/libltdl/loaders/preopen.c; then
             patch -N -p0 < config/libltdl-preopen-error.diff
             rm -f opal/libltdl/loaders/preopen.c.rej
-        fi
-
-        # See
-        # http://lists.gnu.org/archive/html/bug-libtool/2008-05/msg00045.html.
-        # Note that this issue was fixed in LT 2.2.6, so don't patch if
-        # you have a version after that (because this patch changes
-        # the timestamp on opal/libltdl/m4/libtool.m4, which should be
-        # avoided if possible...).
-        echo "   ++ patching for ifort (LT 2.2.0-4)"
-        patched=0
-        if check_version "2.1.9999" $ompi_libtoolize_found_version; then
-            if ! check_version "2.2.6" $ompi_libtoolize_found_version; then
-                cd opal/libltdl/m4
-                patch -N -p0 < ../../../config/lt224-icc.diff > /dev/null 2>&1
-                rm -f libtool.m4.orig
-                rm -f libtool.m4.rej
-
-                # We must touch aclocal.m4 here, because it must be
-                # newer than libtool.m4, otherwise a whole bunch of
-                # Automake-mandated timestamps may be off (depending
-                # on the resolution of timestamps on your
-                # filesystem).
-                touch -r ../aclocal.m4 libtool.m4
-
-                cd ../../..
-                patched=1
-            fi
-        fi
-        if test "$patched" != "1"; then
-            echo "     -- your libltdl doesn't need this! yay!"
         fi
     else
 	run_and_check $ompi_libtoolize --automake --copy
@@ -545,72 +467,6 @@ EOF
     if test "`grep AC_CONFIG_HEADER $file`" != "" -o \
 	"`grep AM_CONFIG_HEADER $file`" != ""; then
 	run_and_check $ompi_autoheader
-    fi
-
-    # We only need to patch the top-level aclocal.m4 for libtool stuff
-    # because this only affects creating C++ libraries (with pathCC).
-    # This must be done before we run autoconf.
-
-    if test -f $topdir_file; then 
-        echo "** Adjusting libtool for OMPI :-("
-        if ! check_version "2.0.0" $ompi_libtoolize_found_version ; then
-            echo "   ++ patching for pathscale multi-line output (LT 1.5.x)"
-            patch -N -p0 < config/lt1522-pathCC.diff > /dev/null 2>&1
-        else
-            echo "   ++ patching for pathscale multi-line output (LT 2.x)"
-            patch -N -p0 < config/lt21a-pathCC.diff > /dev/null 2>&1
-        fi
-        rm -f aclocal.m4.orig
-        rm -f aclocal.m4.rej
-
-        # See note above about lt224-icc.diff
-        echo "   ++ patching for ifort (LT 2.2.0-4)"
-        patched=0
-        if check_version "2.1.9999" $ompi_libtoolize_found_version; then
-            if ! check_version "2.2.6" $ompi_libtoolize_found_version; then
-                cd config
-                patch -N -p0 < lt224-icc.diff > /dev/null 2>&1
-                rm -f libtool.m4.orig
-                rm -f libtool.m4.rej
-                # We'll touch aclocal.m4 below (see comment below).
-                cd ..
-                patched=1
-            fi
-        fi
-        if test "$patched" != "1"; then
-            echo "     -- your libltdl doesn't need this! yay!"
-        fi
-
-        # Libtool 1.5.2x and 2.1x automatically link in the "Cstd" STL library
-        # when using the Sun compilers on Linux or Solaris, even if the
-        # application does not use the STL (as of Feb 2008, Open MPI does not
-        # use any C++ STL). The problem is that Solaris has two different STL
-        # libraries: Cstd and stlport. Having Libtool choose that OMPI (and its
-        # wrapper compilers) use Cstd is problematic for users who want to
-        # compile their MPI applications with the other STL library. So we
-        # currently hack aclocal's LT macros to *not* add the Cstd library to
-        # any of OMPI's CXXFLAGS; the OMPI wrapper compilers can then therefore
-        # be used with any STL library -- it's the user's choice.
-
-        echo "   ++ patching to remove solaris Cstd"
-        sed -e 's/-lCstd -lCrun//' \
-            -e 's/-library=Cstd -library=Crun//' \
-            aclocal.m4 > aclocal.m4.new
-        cp aclocal.m4.new aclocal.m4
-        rm -f aclocal.m4.new
-
-        # This patch fixes a bug in Libtool's detection of the Sun Studio
-        # Fortran compiler. See the below e-mail thread for more details:
-        #   http://www.open-mpi.org/community/lists/devel/2008/11/4920.php
-        echo "   ++ patching for Sun Studio Fortran compilers"
-        patch -N -p0 < config/lt-sun-fortran.diff > /dev/null 2>&1
-        rm -f libtool.m4.orig
-        rm -f libtool.m4.rej
-        # We must touch aclocal.m4 here, because it must be newer than
-        # libtool.m4, otherwise a whole bunch of Automake-mandated
-        # timestamps may be off (depending on the resolution of
-        # timestamps on your filesystem).
-        touch -r aclocal.m4 config/libtool.m4
     fi
 
     run_and_check $ompi_autoconf
