@@ -1,5 +1,7 @@
 #!/usr/bin/env perl
 #
+# Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
+#
 # Helper script for gatekeepers: it marshals together a GK-worthy SVN
 # commit message containing the CMR number(s) being closed and SVN
 # commit log messages for the SVN r numbers referenced.
@@ -21,19 +23,24 @@ my $base_trac_url = "https://svn.open-mpi.org/trac/ompi/ticket/%d?format=csv";
 # Command line parsing
 my @cmr_arg;
 my @r_arg;
-my $svn_up = 1;
+my $svn_up_arg = 1;
 my $help_arg = 0;
+my $dry_run_arg = 0;
 
 &Getopt::Long::Configure("bundling");
 my $ok = Getopt::Long::GetOptions("cmr|c=s" => \@cmr_arg,
                                   "r|r=s" => \@r_arg,
-                                  "svn-up|s!" => \$svn_up,
+                                  "svn-up|s!" => \$svn_up_arg,
+                                  "dry-run|d!" => \$dry_run_arg,
                                   "help|h!" => \$help_arg);
 
 if (!$ok || $help_arg) {
-    print "$0 [--cmr=<list>] [--r=<list>] [--[no-]svn-up]
+    print "$0 [--cmr=<list>|-c=<list>] [--r=<list>|-r=<list>] 
+     [--[no-]svn-up|-s] [--dry-run|-d]
 
 <list> is a comma-delimited list of integers.
+
+If --dry-run is specified, 'svn up' and 'svn commit' will not be executed.
 
 If --cmr is not specified on the command line, you will be prompted
 interactively.  Ditto for --r.
@@ -41,6 +48,9 @@ interactively.  Ditto for --r.
 --no-svn-up inhibits running \"svn up\" before doing the commit.\n";
     exit(0);
 }
+
+print "DRY RUN: no svn state-changing commands will be run\n"
+    if ($dry_run_arg);
 
 # Parse the -cmr argument
 my @cmrs;
@@ -206,9 +216,13 @@ if ($#rs >= 0) {
 }
 
 # Run "svn up" just to get the tree consistent
-if (!$svn_up) {
+if ($dry_run_arg) {
+    print "DRY RUN: skipping 'svn up' step\n";
+} elsif ($svn_up_arg) {
     print "Running 'svn up'...\n";
     system("svn up");
+} else {
+    print "Skipping 'svn up' step\n";
 }
 
 ###########################################################################
@@ -230,28 +244,42 @@ $logentries->{$r}->{msg}\n\n";
 close(FILE);
 
 # Now allow the gk to edit the file
-if ($ENV{SVN_EDITOR}) {
-    system("$ENV{SVN_EDITOR} $commit_file");
-} elsif ($ENV{EDITOR}) {
-    system("$ENV{EDITOR} $commit_file");
+if ($dry_run_arg) {
+    print "DRY RUN: skipping edit of this commit message:
+----------------------------------------------------------------------------\n";
+    my $pager = "more";
+    $pager = $ENV{PAGER}
+        if ($ENV{PAGER});
+    system("$pager $commit_file");
+    print("----------------------------------------------------------------------------\n");
 } else {
-    system("vi $commit_file");
-}
-if (! -f $commit_file) {
-    print "Commit file no longer exists!  Aborting.\n";
-    exit(1);
+    if ($ENV{SVN_EDITOR}) {
+        system("$ENV{SVN_EDITOR} $commit_file");
+    } elsif ($ENV{EDITOR}) {
+        system("$ENV{EDITOR} $commit_file");
+    } else {
+        system("vi $commit_file");
+    }
+    if (! -f $commit_file) {
+        print "Commit file no longer exists!  Aborting.\n";
+        exit(1);
+    }
 }
 
 # Finally, run the commit
 my $cmd = "svn commit --file $commit_file " . join(' ', @ARGV);
-print "Running: $cmd\n";
-if (0 == system($cmd)) {
-    unlink($commit_file);
-    exit(0);
+if ($dry_run_arg) {
+    print "DRY RUN: skipping '$cmd' step\n";
 } else {
-    print "Error during SVN commit!\n";
-    print "GK commit message left in: $commit_file\n";
-    exit(1);
+    print "Running: $cmd\n";
+    if (0 == system($cmd)) {
+        unlink($commit_file);
+        exit(0);
+    } else {
+        print "Error during SVN commit!\n";
+        print "GK commit message left in: $commit_file\n";
+        exit(1);
+    }
 }
 
 ###########################################################################
