@@ -20,13 +20,7 @@
 EXTRA_DIST = \
         distscript.csh \
 	ompi_get_version.m4sh \
-	libltdl_dlopen_global.diff \
-	libltdl-preopen-error.diff \
-        lt-sun-fortran.diff \
-	lt1522-pathCC.diff \
-	lt21a-pathCC.diff \
-	ltmain_otool.diff \
-	lt-sun-fortran.diff
+	libltdl-preopen-error.diff
 
 maintainer-clean-local:
 	rm -f ompi_get_version.sh
