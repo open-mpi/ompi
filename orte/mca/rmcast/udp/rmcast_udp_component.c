@@ -36,7 +36,7 @@ static int orte_rmcast_udp_query(mca_base_module_t **module, int *priority);
 static bool initialized = false;
 
 /*
- * Public string showing the iof hnp component version number
+ * Public string showing the rmcast udp component version number
  */
 const char *mca_rmcast_udp_component_version_string =
     "Open MPI udp rmcast MCA component version " ORTE_VERSION;

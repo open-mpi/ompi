@@ -960,6 +960,13 @@ static void process_recv(int fd, short event, void *cbdata)
             }                    
         }
         
+        /* if the sender's vpid is invalid, then this is a request for
+         * assignment of a name - so don't log the message
+         */
+        if (ORTE_VPID_INVALID == name.vpid) {
+            goto MATCH;
+        }
+        
         /* look up the message log for this sender */
         log = NULL;
         for (n=0; n < msg_log.size;  n++) {
