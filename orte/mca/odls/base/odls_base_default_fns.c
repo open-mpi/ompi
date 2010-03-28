@@ -106,6 +106,10 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     
     /* get a pointer to the job map */
     map = jdata->map;
+    /* if there is no map, just return */
+    if (NULL == map) {
+        return ORTE_SUCCESS;
+    }
     
     /* are we passing a regexp? */
     if (orte_use_regexp && jdata->num_apps < 2 && NULL == orte_debugger_daemon) {
@@ -2971,13 +2975,13 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
 {
     orte_odls_child_t *child;
     opal_list_item_t *item;
-    int rc = ORTE_SUCCESS, exit_status = 0;
+    int rc = ORTE_SUCCESS;
     opal_list_t procs_killed;
     orte_proc_t *proc, proctmp;
     int i;
     opal_pointer_array_t procarray, *procptr;
     bool do_cleanup;
-
+    
     OBJ_CONSTRUCT(&procs_killed, opal_list_t);
 
     /* since we are going to be working with the global list of
@@ -3092,6 +3096,11 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
              */
             orte_iof.close(child->name, ORTE_IOF_STDIN);
 
+            /* cancel the waitpid callback as this induces unmanageable race
+             * conditions when we are deliberately killing the process
+             */
+            orte_wait_cb_cancel(child->pid);
+            
             /* First send a SIGCONT in case the process is in stopped state.
              If it is in a stopped state and we do not first change it to
              running, then SIGTERM will not get delivered.  Ignore return
@@ -3104,11 +3113,11 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
             /* check to see if it died - the child_died function will continue
              * to check every microsecond until we reach the timeout
              */
-            if (!child_died(child->pid, orte_odls_globals.timeout_before_sigkill, &exit_status)) {
+            if (!child_died(child)) {
                 /* if it still isn't dead, try killing it one more time */
                 kill_local(child->pid, SIGKILL);
                 /* Double check that it actually died this time */
-                if (!child_died(child->pid, orte_odls_globals.timeout_before_sigkill, &exit_status)) {
+                if (!child_died(child)) {
                     orte_show_help("help-odls-default.txt",
                                    "odls-default:could-not-kill",
                                    true, orte_process_info.nodename, child->pid);
@@ -3119,13 +3128,19 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(child->name)));
 
-            /* set the process to "not alive" */
+            /* indicate the waitpid fired as this is effectively what
+             * has happened
+             */
+            child->waitpid_recvd = true;
+            /* ensure the process is flagged as "not alive" */
             child->alive = false;
             
         CLEANUP:
             /* ensure the child's session directory is cleaned up */
             orte_session_dir_finalize(child->name);
-            /* check for everything complete */
+            /* check for everything complete - this will remove
+             * the child object from our local list
+             */
             check_proc_complete(child);
         }
     }

@@ -50,12 +50,11 @@
 static void set_handler_default(int sig);
 
 
-static bool odls_process_child_died( pid_t pid, unsigned int timeout,
-									 int* exit_status )
+static bool odls_process_child_died( orte_odls_child_t *child )
 {
     int error;
     HANDLE handle = OpenProcess( PROCESS_TERMINATE | SYNCHRONIZE, FALSE,
-                                 (DWORD)pid );
+                                 (DWORD)(child->pid) );
     if( INVALID_HANDLE_VALUE == handle ) {
         error = GetLastError();
         /* Let's suppose that the process dissapear ... by now */

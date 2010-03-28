@@ -125,7 +125,7 @@ orte_odls_base_module_t orte_odls_default_module = {
         }                                                           \
     } while(0);
 
-static bool odls_default_child_died(pid_t pid, unsigned int timeout, int *exit_status)
+static bool odls_default_child_died(orte_odls_child_t *child)
 {
     time_t end;
     pid_t ret;
@@ -134,13 +134,13 @@ static bool odls_default_child_died(pid_t pid, unsigned int timeout, int *exit_s
     fd_set bogus;
 #endif
         
-    end = time(NULL) + timeout;
+    end = time(NULL) + orte_odls_globals.timeout_before_sigkill;
     do {
-        ret = waitpid(pid, exit_status, WNOHANG);
-        if (pid == ret) {
+        ret = waitpid(child->pid, &child->exit_code, WNOHANG);
+        if (child->pid == ret) {
             OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                                  "%s odls:default:WAITPID INDICATES PROC %d IS DEAD",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)pid));
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)(child->pid)));
             /* It died -- return success */
             return true;
         } else if (0 == ret) {
@@ -154,14 +154,14 @@ static bool odls_default_child_died(pid_t pid, unsigned int timeout, int *exit_s
              */
             OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                                  "%s odls:default:WAITPID INDICATES PROC %d HAS ALREADY EXITED",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)pid));
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)(child->pid)));
             return true;
         } else if (-1 == ret && ECHILD == errno) {
             /* The pid no longer exists, so we'll call this "good
                enough for government work" */
             OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                                  "%s odls:default:WAITPID INDICATES PID %d NO LONGER EXISTS",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)pid));
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)(child->pid)));
             return true;
         }
         
