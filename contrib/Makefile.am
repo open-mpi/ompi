@@ -100,11 +100,17 @@ EXTRA_DIST = \
         platform/win32/ConfigFiles/revision.in \
 	platform/cisco/macosx-dynamic \
 	platform/cisco/macosx-dynamic.conf \
+	platform/cisco/macosx-dynamic-spread \
+	platform/cisco/macosx-dynamic-spread.conf \
 	platform/cisco/macosx-dynamic-optimized \
 	platform/cisco/macosx-dynamic-optimized.conf \
 	platform/cisco/ebuild/hlfr \
 	platform/cisco/ebuild/hlfr.conf \
+	platform/cisco/ebuild/hlfr-spread \
+	platform/cisco/ebuild/hlfr-spread.conf \
 	platform/cisco/ebuild/native \
-	platform/cisco/ebuild/native.conf
+	platform/cisco/ebuild/native.conf \
+	platform/cisco/ebuild/native-spread \
+	platform/cisco/ebuild/native-spread.conf
 
 dist_pkgdata_DATA = openmpi-valgrind.supp
