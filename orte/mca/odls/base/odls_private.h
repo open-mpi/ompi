@@ -127,7 +127,7 @@ orte_odls_base_default_signal_local_procs(const orte_process_name_t *proc, int32
 typedef int (*orte_odls_base_kill_local_fn_t)(pid_t pid, int signum);
 
 /* define a function type to detect that a child died */
-typedef bool (*orte_odls_base_child_died_fn_t)(pid_t pid, unsigned int timeout, int *exit_status);
+typedef bool (*orte_odls_base_child_died_fn_t)(orte_odls_child_t *child);
 
 ORTE_DECLSPEC int
 orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
