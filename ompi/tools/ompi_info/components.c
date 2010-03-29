@@ -305,7 +305,7 @@ void ompi_info_open_components(void)
     if (OPAL_SUCCESS != opal_sysinfo_base_open()) {
         goto error;
     }
-    map = OBJ_NEW(orte_info_component_map_t);
+    map = OBJ_NEW(ompi_info_component_map_t);
     map->type = strdup("sysinfo");
     map->components = &opal_sysinfo_base_components_opened;
     opal_pointer_array_add(&component_map, map);
