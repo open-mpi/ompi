@@ -192,6 +192,7 @@ int main(int argc, char *argv[])
     opal_pointer_array_add(&mca_types, "maffinity");
     opal_pointer_array_add(&mca_types, "timer");
     opal_pointer_array_add(&mca_types, "installdirs");
+    opal_pointer_array_add(&mca_types, "sysinfo");
 #if OPAL_ENABLE_FT_CR == 1
     opal_pointer_array_add(&mca_types, "crs");
 #endif
