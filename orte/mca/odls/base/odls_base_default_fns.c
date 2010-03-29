@@ -2774,91 +2774,93 @@ GOTCHILD:
          * of an "abort" file in this process' session directory. If
          * we find it, then we know that this was an abnormal termination.
          */
-        if (ORTE_SUCCESS != (rc = orte_util_convert_jobid_to_string(&job, child->name->jobid))) {
-            ORTE_ERROR_LOG(rc);
-            goto MOVEON;
-        }
-        if (ORTE_SUCCESS != (rc = orte_util_convert_vpid_to_string(&vpid, child->name->vpid))) {
-            ORTE_ERROR_LOG(rc);
-            free(job);
-            goto MOVEON;
-        }
-        abort_file = opal_os_path(false, orte_process_info.tmpdir_base,
-                                  orte_process_info.top_session_dir,
-                                  job, vpid, "abort", NULL );
-        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                             "%s odls:waitpid_fired checking abort file %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), abort_file));
-        
-        free(job);
-        free(vpid);       
-        if (0 == stat(abort_file, &buf)) {
-            /* the abort file must exist - there is nothing in it we need. It's
-             * meer existence indicates that an abnormal termination occurred
-             */
-            
+        if (orte_create_session_dirs) {
+            if (ORTE_SUCCESS != (rc = orte_util_convert_jobid_to_string(&job, child->name->jobid))) {
+                ORTE_ERROR_LOG(rc);
+                goto MOVEON;
+            }
+            if (ORTE_SUCCESS != (rc = orte_util_convert_vpid_to_string(&vpid, child->name->vpid))) {
+                ORTE_ERROR_LOG(rc);
+                free(job);
+                goto MOVEON;
+            }
+            abort_file = opal_os_path(false, orte_process_info.tmpdir_base,
+                                      orte_process_info.top_session_dir,
+                                      job, vpid, "abort", NULL );
             OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                 "%s odls:waitpid_fired child %s died by abort",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(child->name)));
+                                 "%s odls:waitpid_fired checking abort file %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), abort_file));
             
-            child->state = ORTE_PROC_STATE_ABORTED;
+            free(job);
+            free(vpid);
+            if (0 == stat(abort_file, &buf)) {
+                /* the abort file must exist - there is nothing in it we need. It's
+                 * meer existence indicates that an abnormal termination occurred
+                 */
+                
+                OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                     "%s odls:waitpid_fired child %s died by abort",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(child->name)));
+                
+                child->state = ORTE_PROC_STATE_ABORTED;
+                free(abort_file);
+                goto MOVEON;
+            }
             free(abort_file);
+        }
+        
+        /* check to see if a sync was required and if it was received */
+        if (child->init_recvd) {
+            if (!child->fini_recvd) {
+                /* we required a finalizing sync and didn't get it, so this
+                 * is considered an abnormal termination and treated accordingly
+                 */
+                child->state = ORTE_PROC_STATE_TERM_WO_SYNC;
+                
+                OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                     "%s odls:waitpid_fired child process %s terminated normally "
+                                     "but did not provide a required finalize sync - it "
+                                     "will be treated as an abnormal termination",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(child->name)));
+                
+                goto MOVEON;
+            }
+            /* if we did recv a finalize sync, then it terminated normally */
+            child->state = ORTE_PROC_STATE_TERMINATED;
         } else {
-            /* okay, it terminated normally - check to see if a sync was required and
-             * if it was received
-             */
-            if (child->init_recvd) {
-                if (!child->fini_recvd) {
-                    /* we required a finalizing sync and didn't get it, so this
-                     * is considered an abnormal termination and treated accordingly
+            /* has any child in this job already registered? */
+            for (item = opal_list_get_first(&orte_local_children);
+                 item != opal_list_get_end(&orte_local_children);
+                 item = opal_list_get_next(item)) {
+                chd = (orte_odls_child_t*)item;
+                
+                if (chd->init_recvd) {
+                    /* someone has registered, and we didn't before
+                     * terminating - this is an abnormal termination
                      */
                     child->state = ORTE_PROC_STATE_TERM_WO_SYNC;
-                    
                     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                          "%s odls:waitpid_fired child process %s terminated normally "
-                                         "but did not provide a required finalize sync - it "
+                                         "but did not provide a required init sync - it "
                                          "will be treated as an abnormal termination",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                          ORTE_NAME_PRINT(child->name)));
                     
                     goto MOVEON;
                 }
-                /* if we did recv a finalize sync, then it terminated normally */
-                child->state = ORTE_PROC_STATE_TERMINATED;
-            } else {
-                /* has any child in this job already registered? */
-                for (item = opal_list_get_first(&orte_local_children);
-                     item != opal_list_get_end(&orte_local_children);
-                     item = opal_list_get_next(item)) {
-                    chd = (orte_odls_child_t*)item;
-                    
-                    if (chd->init_recvd) {
-                        /* someone has registered, and we didn't before
-                         * terminating - this is an abnormal termination
-                         */
-                        child->state = ORTE_PROC_STATE_TERM_WO_SYNC;
-                        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                             "%s odls:waitpid_fired child process %s terminated normally "
-                                             "but did not provide a required init sync - it "
-                                             "will be treated as an abnormal termination",
-                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                             ORTE_NAME_PRINT(child->name)));
-                        
-                        goto MOVEON;
-                    }
-                }
-                /* if no child has registered, then it is possible that
-                 * none of them will. This is considered acceptable
-                 */
-                child->state = ORTE_PROC_STATE_TERMINATED;
             }
-            
-            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                 "%s odls:waitpid_fired child process %s terminated normally",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(child->name)));
+            /* if no child has registered, then it is possible that
+             * none of them will. This is considered acceptable
+             */
+            child->state = ORTE_PROC_STATE_TERMINATED;
         }
+        
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                             "%s odls:waitpid_fired child process %s terminated normally",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(child->name)));
     } else {
         /* the process was terminated with a signal! That's definitely
          * abnormal, so indicate that condition

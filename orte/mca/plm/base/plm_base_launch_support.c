@@ -1405,6 +1405,10 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
              * Determine how the process state affects the job state
              */
             if (ORTE_PROC_STATE_FAILED_TO_START == proc->state) {
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                     "%s plm:base:check_job_completed proc %s failed to start",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&proc->name)));
                 jdata->state = ORTE_JOB_STATE_FAILED_TO_START;
                 if (!jdata->abort) {
                     /* point to the lowest rank to cause the problem */
@@ -1415,6 +1419,10 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
                     ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
                 }
             } else if (ORTE_PROC_STATE_ABORTED == proc->state) {
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                     "%s plm:base:check_job_completed proc %s aborted",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&proc->name)));
                 jdata->state = ORTE_JOB_STATE_ABORTED;
                 if (!jdata->abort) {
                     /* point to the lowest rank to cause the problem */
@@ -1425,6 +1433,10 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
                     ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
                 }
             } else if (ORTE_PROC_STATE_ABORTED_BY_SIG == proc->state) {
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                     "%s plm:base:check_job_completed proc %s aborted by signal",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&proc->name)));
                 jdata->state = ORTE_JOB_STATE_ABORTED_BY_SIG;
                 if (!jdata->abort) {
                     /* point to the lowest rank to cause the problem */
@@ -1435,6 +1447,10 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
                     ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
                 }
             } else if (ORTE_PROC_STATE_TERM_WO_SYNC == proc->state) {
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                     "%s plm:base:check_job_completed proc %s terminated without sync",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&proc->name)));
                 jdata->state = ORTE_JOB_STATE_ABORTED_WO_SYNC;
                 if (!jdata->abort) {
                     /* point to the lowest rank to cause the problem */
@@ -1451,6 +1467,10 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
                     ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
                 }
             } else if (ORTE_PROC_STATE_KILLED_BY_CMD == proc->state) {
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                     "%s plm:base:check_job_completed proc %s killed by cmd",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&proc->name)));
                 /* we ordered this proc to die, so it isn't an abnormal termination
                  * and we don't flag it as such - just check the remaining jobs to
                  * see if anyone is still alive
@@ -1464,6 +1484,10 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
                 goto CHECK_ALL_JOBS;
             } else if (ORTE_PROC_STATE_UNTERMINATED < proc->state &&
                        jdata->controls & ORTE_JOB_CONTROL_CONTINUOUS_OP) {
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                     "%s plm:base:check_job_completed proc %s terminated and continuous",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&proc->name)));
                 proc->state = ORTE_PROC_STATE_ABORTED;
                 jdata->state = ORTE_JOB_STATE_ABORTED;
                 if (!jdata->abort) {
