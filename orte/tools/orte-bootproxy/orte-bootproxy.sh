@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 # Copyright (c) 2009      Los Alamos National Security, LLC. All rights reserved
 # Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
@@ -13,10 +13,10 @@ fi
 var=$1
 
 # if the var is CLEANUP, then we are in cleanup mode
-if [ "${var}" == "CLEANUP" ]; then
+if [ "${var}" = "CLEANUP" ]; then
     shift 1
     var=$1
-    if [ -n "${var}" ] && [ "${var}" == "APPS" ]; then
+    if [ -n "${var}" ] && [ "${var}" = "APPS" ]; then
         # kill specified apps
         shift 1
         var=$1

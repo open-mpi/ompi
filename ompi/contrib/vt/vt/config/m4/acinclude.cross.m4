@@ -46,7 +46,7 @@ Set \`CXX_FOR_BUILD' to the C++ compiler of build system.])
 		AS_IF([test x"$CC_FOR_BUILD" = x -a x"$CXX_FOR_BUILD" = x],
 		[
 			AC_MSG_NOTICE([no C/C++ compiler command for build system given
-In cross compile mode, it's recommended to build the compiler wrappers and OPARI for the build system. Set \`CC_FOR_BUILD' and `CXX_FOR_BUILD' to the C/C++ compiler of build system.])
+In cross compile mode, it's recommended to build the compiler wrappers and OPARI for the build system. Set \`CC_FOR_BUILD' and \`CXX_FOR_BUILD' to the C/C++ compiler of build system.])
 			CC_FOR_BUILD=$CC
 			CXX_FOR_BUILD=$CXX
 		])
