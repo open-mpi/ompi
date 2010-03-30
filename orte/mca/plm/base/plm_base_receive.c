@@ -232,14 +232,18 @@ static void process_msg(int fd, short event, void *data)
                         goto ANSWER_LAUNCH;
                     }
                     
-                    /* find the sender's node in the job map */
-                    if (NULL != (proc = (orte_proc_t*)opal_pointer_array_get_item(parent->procs, msgpkt->sender.vpid))) {
-                        /* set the bookmark so the child starts from that place - this means
-                         * that the first child process could be co-located with the proc
-                         * that called comm_spawn, assuming slots remain on that node. Otherwise,
-                         * the procs will start on the next available node
-                         */
-                        jdata->bookmark = proc->node;
+                    if( NULL == parent->bookmark ) {
+                        /* find the sender's node in the job map */
+                        if (NULL != (proc = (orte_proc_t*)opal_pointer_array_get_item(parent->procs, msgpkt->sender.vpid))) {
+                            /* set the bookmark so the child starts from that place - this means
+                             * that the first child process could be co-located with the proc
+                             * that called comm_spawn, assuming slots remain on that node. Otherwise,
+                             * the procs will start on the next available node
+                             */
+                            jdata->bookmark = proc->node;
+                        }
+                    } else {
+                        jdata->bookmark = parent->bookmark;
                     }
                     
                     /* launch it */
