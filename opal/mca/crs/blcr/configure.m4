@@ -31,7 +31,7 @@ AC_DEFUN([MCA_crs_blcr_CONFIG],[
     check_crs_blcr_good="no"
 
     # If we do not want FT, don't compile this component
-    AS_IF([test "$ompi_want_ft_cr" = "0"],
+    AS_IF([test "$opal_want_ft_cr" = "0"],
           [$2
            check_crs_blcr_good="no"],
           [check_crs_blcr_good="yes"])
