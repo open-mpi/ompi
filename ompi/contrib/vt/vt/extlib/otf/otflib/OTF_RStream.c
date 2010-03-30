@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -270,20 +270,27 @@ OTF_RBuffer* OTF_RStream_getEventBuffer( OTF_RStream* rstream ) {
 		if( NULL == filename ) {
 			
 			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
-					"OTF_getFilename() failed.\n",
-					__FUNCTION__, __FILE__, __LINE__ );
+					"OTF_getFilename() failed for event file with name stub '%s' and ID %u.\n",
+					__FUNCTION__, __FILE__, __LINE__, rstream->namestub, rstream->id );
 
 			return NULL;
 		}
 
 		rstream->eventBuffer= OTF_RBuffer_open( filename, rstream->manager );
+		if ( NULL == rstream->eventBuffer ) {
+
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+					"OTF_RBuffer_open() failed for filename '%s'.\n",
+					__FUNCTION__, __FILE__, __LINE__, filename );
+
+			free( filename );
+			filename = NULL;
+			return NULL;
+		}
+
 		free( filename );
 		filename = NULL;
 
-		if ( NULL == rstream->eventBuffer ) {
-
-			return NULL;
-		}
 
 		OTF_RBuffer_setSize( rstream->eventBuffer, rstream->buffersizes );
 #ifdef HAVE_ZLIB

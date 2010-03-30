@@ -757,11 +757,22 @@ void vt_close()
 
 #if (defined(VT_LIBCWRAP) && defined(VT_FORK))
 
-  /* if unifying local traces desired,
-     wait until all child processes are terminated */
-  if (vt_env_do_unify() && vt_env_libctrace())
+  if (vt_env_libctrace())
   {
+    /* wait until all child processes are terminated */
     vt_fork_waitchilds();
+
+    /* get total number of child processes */
+    vt_num_traces = 1 + vt_fork_get_num_childs_tot();
+
+    /* the master process removes the temp. trace-id file */
+    if (vt_my_trace == 0)
+    {
+      char* trcid_filename = vt_fork_get_trcid_filename();
+      remove(trcid_filename);
+      free(trcid_filename);
+    }
+
     vt_fork_finalize();
   }
 
@@ -843,18 +854,6 @@ void vt_close()
         sprintf(fprefix, "%s_%u",  vt_env_fprefix(), vt_my_funique);
       else
         strcpy(fprefix, vt_env_fprefix());
-
-#if (defined(VT_LIBCWRAP) && defined(VT_FORK))
-      if (vt_env_libctrace())
-        {
-          char* trcid_filename = vt_fork_get_trcid_filename();
-          /* get total number of child processes */
-          vt_num_traces = 1 + vt_fork_get_num_childs_tot();
-          /* remove temp. trace-id file */
-          remove(trcid_filename);
-          free(trcid_filename);
-        }
-#endif /* VT_LIBCWRAP && VT_FORK */
 
       /*- wait for files to be ready -*/
       for (i = 0; i < vt_num_traces; i++)
@@ -1946,7 +1945,7 @@ void vt_exit(uint64_t* time) {
       VT_TRACE_OFF_PERMANENT) return;
 
   do_trace = ((VTTHRD_TRACE_STATUS(VTThrdv[VT_MY_THREAD]) == VT_TRACE_ON) &&
-	      (VTTHRD_STACK_LEVEL(VTThrdv[VT_MY_THREAD]) <= max_stack_depth));
+	      (VTTHRD_STACK_LEVEL(VTThrdv[VT_MY_THREAD])+1 < max_stack_depth));
 
 #if !defined(VT_DISABLE_RFG)
   if (!RFG_Regions_stackPop(VTTHRD_RFGREGIONS(VTThrdv[VT_MY_THREAD]),

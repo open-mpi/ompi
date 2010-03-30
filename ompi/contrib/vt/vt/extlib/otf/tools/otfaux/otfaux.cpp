@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2009.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -101,8 +101,8 @@ int main ( int argc, const char** argv ) {
 	bool showprogress= false;
 	bool listonly= false;
 
-	bool doSnapshots= true;
-    	bool doStatistics= true;
+    bool doSnapshots= true;
+    bool doStatistics= true;
 
 	uint64_t read;
 
@@ -143,7 +143,7 @@ int main ( int argc, const char** argv ) {
 
 		} else if ( 0 == strcmp( "-V", argv[i] ) ) {
 		
-			printf( "%u.%u.%u \"%s\"\n", OTF_VERSION_MAYOR, OTF_VERSION_MINOR,
+			printf( "%u.%u.%u \"%s\"\n", OTF_VERSION_MAJOR, OTF_VERSION_MINOR,
 				OTF_VERSION_SUB, OTF_VERSION_STRING);
 			exit( 0 );
 
@@ -466,12 +466,12 @@ int main ( int argc, const char** argv ) {
 	OTF_HandlerArray_setFirstHandlerArg( handlers, (void*) control,
 		OTF_ENDPROCESS_RECORD );
 
-        OTF_HandlerArray_setHandler( handlers, 
-    		(OTF_FunctionPointer*) handleCollectiveOperation,
-    		OTF_COLLOP_RECORD );
-    	OTF_HandlerArray_setFirstHandlerArg( handlers, (void*) control, 
-    		OTF_COLLOP_RECORD );
-		
+    OTF_HandlerArray_setHandler( handlers, 
+        (OTF_FunctionPointer*) handleCollectiveOperation,
+        OTF_COLLOP_RECORD );
+    OTF_HandlerArray_setFirstHandlerArg( handlers, (void*) control, 
+        OTF_COLLOP_RECORD );
+
 	OTF_HandlerArray_setHandler( handlers, 
 		(OTF_FunctionPointer*) handleEventComment,
 		OTF_EVENTCOMMENT_RECORD );
@@ -498,7 +498,7 @@ int main ( int argc, const char** argv ) {
 	uint64_t tcur= 0;
 	uint64_t tmax= (uint64_t) -1;
 
-	/* init read operation but do not start to read records yet. this ensures the
+	/* init read operation but do not start to read records yet. this ensures the
 	time interval of the trace is extracted */
 	OTF_Reader_setRecordLimit( reader, 0 );
 	read = OTF_Reader_readEvents( reader, handlers );
@@ -511,6 +511,10 @@ int main ( int argc, const char** argv ) {
 	OTF_Reader_setRecordLimit( reader, OTF_READ_MAXRECORDS );
 
 	OTF_Reader_eventProgress( reader, &tmin, &tcur, &tmax );
+    
+    /* increase in order to place final statistics after the very last record */
+    tmax += 1;
+
 	/*
 	cout << "total time " << 
 		(unsigned long long) tmin << " - " << 
@@ -521,10 +525,13 @@ int main ( int argc, const char** argv ) {
 	d= ( d <= (double) summary_distance ) ? d : (double) summary_distance;
 	d= ( 1.0 < d ) ? d : 1.0;
 
-	for ( double t= (double) tmin; t < tmax; t += d ) {
-	
-		control->addTime( (uint64_t) t );
-	}
+    /*
+     * generated sample points, but don't include t_min,
+     * it is defined as 0-point
+     */
+    for ( double t= (double) tmin + d; t < tmax; t += d ) {
+        control->addTime( (uint64_t) t );
+    }
 
 
 	/* append user defined time stamps */
@@ -535,13 +542,14 @@ int main ( int argc, const char** argv ) {
 
 		control->addTime( *it );
 	}
-	
-	
-	if ( control->getLastTime() < tmax ) {
-	
-		control->addTime( tmax );
-	}
-	
+
+    /* place very last statistics _after_ the last record but not right before it.
+    Needs to be triggered explictily in the end. */
+    if ( control->getLastTime() < tmax ) {
+
+        control->addTime( tmax );
+    }
+
 
 	/* restrict streams resp. processes to be read */
 
@@ -609,6 +617,10 @@ int main ( int argc, const char** argv ) {
 		}
 		/* cout << "read " << read << " events" << endl; */
 	}
+
+    /* explicitly trigger writing for the very last timestamp +1 such that 
+    the very last event is included in the final statistics */
+    control->checkTime( tmax );
 
 	OTF_Reader_close( reader );
 

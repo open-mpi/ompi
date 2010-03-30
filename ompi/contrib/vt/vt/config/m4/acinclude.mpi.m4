@@ -182,6 +182,7 @@ AC_DEFUN([ACVT_MPI],
 			check_mpi2_thread="no"; have_mpi2_thread="yes"
 			check_mpi2_1sided="no"; have_mpi2_1sided="yes"
 			check_mpi2_extcoll="no"; have_mpi2_extcoll="yes"
+			ac_cv_have_decl_MPI_IN_PLACE="yes"
 		])
 	])
 
@@ -213,6 +214,7 @@ AC_DEFUN([ACVT_MPI],
 			check_mpi2_thread="no"; have_mpi2_thread="yes"
 			check_mpi2_1sided="no"; have_mpi2_1sided="yes"
 			check_mpi2_extcoll="no"; have_mpi2_extcoll="yes"
+			ac_cv_have_decl_MPI_IN_PLACE="yes"
 		])
 	])
 
@@ -244,6 +246,7 @@ AC_DEFUN([ACVT_MPI],
 			check_mpi2_thread="no"; have_mpi2_thread="yes"
 			check_mpi2_1sided="no"; have_mpi2_1sided="yes"
 			check_mpi2_extcoll="no"; have_mpi2_extcoll="yes"
+			ac_cv_have_decl_MPI_IN_PLACE="yes"
 		])
 	])
 
@@ -291,6 +294,12 @@ AC_DEFUN([ACVT_MPI],
 			check_mpi2_thread="no"; have_mpi2_thread="yes"
 			check_mpi2_1sided="no"; have_mpi2_1sided="yes"
 			check_mpi2_extcoll="no"; have_mpi2_extcoll="yes"
+			ac_cv_func_PMPI_Win_test="yes"
+			ac_cv_func_PMPI_Win_lock="yes"
+			ac_cv_func_PMPI_Win_unlock="yes"
+			AS_IF([test x"$inside_openmpi" = "xyes" -a x"$have_mpi2_io" = "xyes"],
+			[ac_cv_func_MPI_Register_datarep="yes"])
+			ac_cv_have_decl_MPI_IN_PLACE="yes"
 		])
 	])
 
@@ -356,6 +365,7 @@ AC_DEFUN([ACVT_MPI],
 			check_mpi2_thread="no"; have_mpi2_thread="yes"
 			check_mpi2_1sided="no"; have_mpi2_1sided="yes"
 			check_mpi2_extcoll="no"; have_mpi2_extcoll="yes"
+			ac_cv_have_decl_MPI_IN_PLACE="yes"
 		])
 	])
 

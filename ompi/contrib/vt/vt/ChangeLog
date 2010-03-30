@@ -12,6 +12,8 @@
 	- added support for "re-locate" an existing VampirTrace installation
 	  without re-build it from source
 	- fixed configure's version detection for PAPI to support version 4.x
+	- added configure tests for a few pthread functions which do not exist
+	  on some platforms
 	- added configure tests to detect Bull MPICH2
 	- use Open MPI provided Fortran wrapper library 'libmpi_f77'
 	- added functions 'MPI_Group_range_<incl|excl>' to Fortran MPI wrappers
@@ -23,9 +25,8 @@
 	  segmentation fault
 	- fixed detection of unique node id on MacOS platforms
 	- fixed support for LAM/MPI
-	- fixed build error: do not add objects from the static version of the
-	  BFD library to the shared VT libraries, because the BFD objects might
-	  be built without position independent code (PIC)
+	- fixed potential segmentation fault in vtunify-mpi which might occur
+	  on 32bit platforms using MPICH2
 	- patched libtool to avoid a bug in detection of the PGI 10 compilers
 
 5.8openmpi

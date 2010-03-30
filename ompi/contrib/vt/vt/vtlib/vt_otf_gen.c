@@ -1388,11 +1388,14 @@ void VTGen_delete(VTGen* gen)
 
 void VTGen_destroy(VTGen* gen)
 {
-  /* close writer stream */
-  OTF_WStream_close(gen->filestream);
+  if(gen->fileprefix)
+  {
+    /* close writer stream */
+    OTF_WStream_close(gen->filestream);
 
-  /* close file manager of writer stream */
-  OTF_FileManager_close(gen->filemanager);
+    /* close file manager of writer stream */
+    OTF_FileManager_close(gen->filemanager);
+  }
 
   /* destroy sum record */
   if (VTGEN_IS_SUM_ON(gen)) VTSum_destroy(gen->sum);
