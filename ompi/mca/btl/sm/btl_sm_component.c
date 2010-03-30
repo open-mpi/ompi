@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2009 The University of Tennessee and The University
@@ -51,7 +51,7 @@
 #include "ompi/mca/common/sm/common_sm_mmap.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 
-#if OPAL_ENABLE_FT    == 1
+#if OPAL_ENABLE_FT_CR    == 1
 #include "opal/runtime/opal_cr.h"
 #endif
 
@@ -277,7 +277,7 @@ int mca_btl_sm_component_close(void)
          * to it are gone - no error checking, since we want all procs
          * to call this, so that in an abnormal termination scenario,
          * this file will still get cleaned up */
-#if OPAL_ENABLE_FT    == 1
+#if OPAL_ENABLE_FT_CR    == 1
         /* Only unlink the file if we are *not* restarting
          * If we are restarting the file will be unlinked at a later time.
          */

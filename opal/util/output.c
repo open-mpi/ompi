@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2008 The University of Tennessee and The University
@@ -216,6 +216,23 @@ bool opal_output_switch(int output_id, bool enable)
  */
 void opal_output_reopen_all(void)
 {
+    char *str;
+    char hostname[32];
+
+    str = getenv("OPAL_OUTPUT_STDERR_FD");
+    if (NULL != str) {
+        default_stderr_fd = atoi(str);
+    } else {
+        default_stderr_fd = -1;
+    }
+
+    gethostname(hostname, sizeof(hostname));
+    if( NULL != verbose.lds_prefix ) {
+        free(verbose.lds_prefix);
+        verbose.lds_prefix = NULL;
+    }
+    asprintf(&verbose.lds_prefix, "[%s:%05d] ", hostname, getpid());
+#if 0
     int i;
     opal_output_stream_t lds;
 
@@ -255,6 +272,7 @@ void opal_output_reopen_all(void)
          */
         opal_output_open(&lds);
     }
+#endif
 }
 
 

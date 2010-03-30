@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -352,7 +352,7 @@ int opal_cr_init(void )
      * the tools that this is not a checkpointable job.
      * We don't need the CRS framework to be initalized.
      */
-#if OPAL_ENABLE_FT    == 1
+#if OPAL_ENABLE_FT_CR    == 1
     /*
      * Open the checkpoint / restart service components
      */
@@ -441,7 +441,7 @@ int opal_cr_finalize(void)
         opal_cr_pipe_dir = NULL;
     }
 
-#if OPAL_ENABLE_FT    == 1
+#if OPAL_ENABLE_FT_CR    == 1
     /*
      * Close the checkpoint / restart service components
      */
@@ -676,6 +676,7 @@ int opal_cr_coord(int state)
          * functions will call it when needed. Just make sure we
          * finalized this code so we don't get old socket addrs.
          */
+        opal_output_reopen_all();
     }
     else if (OPAL_CRS_TERM == state ) {
         /* Do Continue Phase work in prep to terminate the application */

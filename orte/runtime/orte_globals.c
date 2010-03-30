@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2008 The University of Tennessee and The University
@@ -605,7 +605,7 @@ static void orte_job_construct(orte_job_t* job)
     job->err_cbdata = NULL;
     job->max_restarts = INT32_MAX;
     
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     job->ckpt_state = 0;
     job->ckpt_snapshot_ref = NULL;
     job->ckpt_snapshot_loc = NULL;
@@ -650,7 +650,7 @@ static void orte_job_destruct(orte_job_t* job)
     }
     OBJ_RELEASE(job->procs);
     
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     if (NULL != job->ckpt_snapshot_ref) {
         free(job->ckpt_snapshot_ref);
         job->ckpt_snapshot_ref = NULL;
@@ -787,7 +787,7 @@ static void orte_proc_construct(orte_proc_t* proc)
     proc->rml_uri = NULL;
     proc->beat = 0;
     proc->restarts = 0;
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     proc->ckpt_state = 0;
     proc->ckpt_snapshot_ref = NULL;
     proc->ckpt_snapshot_loc = NULL;
@@ -817,7 +817,7 @@ static void orte_proc_destruct(orte_proc_t* proc)
         proc->rml_uri = NULL;
     }
     
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     if (NULL != proc->ckpt_snapshot_ref) {
         free(proc->ckpt_snapshot_ref);
         proc->ckpt_snapshot_ref = NULL;

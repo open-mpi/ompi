@@ -396,7 +396,7 @@ static int parse_args(int argc, char *argv[])
      * Now start parsing our specific arguments
      */
 
-#if OPAL_ENABLE_FT == 0
+#if OPAL_ENABLE_FT_CR == 0
     /* Warn and exit if not configured with Checkpoint/Restart */
     {
         char *args = NULL;

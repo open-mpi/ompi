@@ -384,7 +384,7 @@ static int parse_args(int argc, char *argv[]) {
         goto cleanup;
     }
 
-#if OPAL_ENABLE_FT == 0
+#if OPAL_ENABLE_FT_CR == 0
     /* Warn and exit if not configured with Checkpoint/Restart */
     {
         char *args = NULL;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2009 The University of Tennessee and The University
@@ -60,7 +60,7 @@
 #endif
 
 #include "orte/mca/rmaps/base/base.h"
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
 #include "orte/mca/snapc/base/base.h"
 #endif
 #include "orte/mca/filem/base/base.h"
@@ -511,7 +511,7 @@ static int rte_init(void)
         goto error;
     }
 
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     /*
      * Setup the SnapC
      */
@@ -620,7 +620,7 @@ static int rte_finalize(void)
     
     orte_cr_finalize();
     
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     orte_snapc_base_close();
 #endif
     orte_filem_base_close();

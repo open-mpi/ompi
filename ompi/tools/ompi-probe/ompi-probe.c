@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
     
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
     /* Disable the checkpoint notification routine for this
      * tool. As we will never need to checkpoint this tool.
      * Note: This must happen before opal_init().
@@ -80,8 +80,9 @@ int main(int argc, char *argv[])
                 "1",
                 true, &environ);
     free(tmp_env_var);
-#endif
+#else
     tmp_env_var = NULL; /* Silence compiler warning */
+#endif
 
     /* open up and select all the frameworks - this will generate the
      * profiled output

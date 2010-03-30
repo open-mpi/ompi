@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -149,7 +149,7 @@ typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
     /* 
      * If not using FT then make the #defines noops
      */
-#if OPAL_ENABLE_FT == 0
+#if OPAL_ENABLE_FT == 0 || OPAL_ENABLE_FT_CR == 0
 #define OPAL_CR_TEST_CHECKPOINT_READY() ;
 #define OPAL_CR_TEST_CHECKPOINT_READY_STALL() ;
 #define OPAL_CR_INIT_LIBRARY() ;
@@ -158,12 +158,12 @@ typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
 #define OPAL_CR_ENTER_LIBRARY() ;
 #define OPAL_CR_EXIT_LIBRARY() ;
 #define OPAL_CR_NOOP_PROGRESS() ;
-#endif /* #if OPAL_ENABLE_FT == 0 */
+#endif /* #if OPAL_ENABLE_FT == 0 || OPAL_ENABLE_FT_CR == 0 */
 
     /*
      * If using FT
      */
-#if OPAL_ENABLE_FT == 1
+#if OPAL_ENABLE_FT_CR == 1
 #define OPAL_CR_TEST_CHECKPOINT_READY()      \
   {                                          \
     if(OPAL_UNLIKELY(opal_cr_is_enabled) ) { \
@@ -216,7 +216,7 @@ typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
  }
 #endif /* OPAL_ENABLE_FT_THREAD == 1 */
 
-#endif /* OPAL_ENABLE_FT == 1 */
+#endif /* OPAL_ENABLE_FT_CR == 1 */
 
     /*******************************
      * Notification Routines
