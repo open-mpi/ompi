@@ -19,7 +19,7 @@
 # -----------------------------------------------------------
 AC_DEFUN([MCA_crs_self_CONFIG],[
     # If we don't want FT, don't compile this component
-    AS_IF([test "$ompi_want_ft_cr" = "1"],
+    AS_IF([test "$opal_want_ft_cr" = "1"],
         [crs_self_good="yes"],
         [crs_self_good="no"])
 
