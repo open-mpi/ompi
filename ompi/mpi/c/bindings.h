@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -67,7 +68,6 @@ BEGIN_C_DECLS
         else if( (COUNT) < 0 ) (RC) = MPI_ERR_COUNT;                                 \
         else if( !opal_datatype_is_committed(&((DDT)->super)) ) (RC) = MPI_ERR_TYPE; \
         else if( opal_datatype_is_overlapped(&((DDT)->super)) ) (RC) = MPI_ERR_TYPE; \
-        else if( !ompi_datatype_is_acceptable_for_one_sided(DDT)) (RC) = MPI_ERR_TYPE; \
         else if( !opal_datatype_is_valid(&((DDT)->super)) ) (RC) = MPI_ERR_TYPE;     \
     } while(0)
 

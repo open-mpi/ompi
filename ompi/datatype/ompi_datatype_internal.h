@@ -4,6 +4,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -300,7 +301,6 @@ extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX
     { /*ompi_predefined_datatype_t*/                                                 \
         { /* ompi_datatype_t */                                                      \
             OMPI_DATATYPE_INITIALIZER_ ## TYPE (OMPI_DATATYPE_FLAG_PREDEFINED |      \
-                                                OMPI_DATATYPE_FLAG_ONE_SIDED |       \
                                                 (FLAGS)) /*super*/,                  \
             OMPI_DATATYPE_EMPTY_DATA(NAME) /*id,d_f_to_c_index,d_keyhash,args,packed_description,name*/ \
         },                                                                           \
@@ -350,7 +350,6 @@ extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX
         OPAL_OBJ_STATIC_INIT(opal_datatype_t),                                       \
         OPAL_DATATYPE_FLAG_BASIC |                                                   \
             OMPI_DATATYPE_FLAG_PREDEFINED |                                          \
-            OMPI_DATATYPE_FLAG_ONE_SIDED |                                           \
             OMPI_DATATYPE_FLAG_DATA_FORTRAN | (FLAGS) /*flag*/,                      \
         OPAL_DATATYPE_ ## TYPE ## SIZE /*id*/,                                       \
         (((uint32_t)1)<<(OPAL_DATATYPE_ ## TYPE ## SIZE)) /*bdt_used*/,              \

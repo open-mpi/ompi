@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
@@ -356,7 +356,7 @@ opal_pointer_array_t ompi_datatype_f_to_c_table;
         ompi_datatype_commit( &ptype );                                              \
         COPY_DATA_DESC( PDATA, ptype );                                              \
         (PDATA)->super.flags &= ~OPAL_DATATYPE_FLAG_PREDEFINED;                      \
-        (PDATA)->super.flags |= (OMPI_DATATYPE_FLAG_PREDEFINED|OMPI_DATATYPE_FLAG_ONE_SIDED); \
+        (PDATA)->super.flags |= OMPI_DATATYPE_FLAG_PREDEFINED;                       \
         ptype->super.desc.desc = NULL;                                               \
         ptype->super.opt_desc.desc = NULL;                                           \
         OBJ_RELEASE( ptype );                                                        \

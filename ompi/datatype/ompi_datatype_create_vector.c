@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -91,11 +92,6 @@ int32_t ompi_datatype_create_hvector( int count, int bLength, OPAL_PTRDIFF_TYPE 
             OBJ_RELEASE( pTempData );
         }
     }
-    /*
-     * A datatype based on bytes displacements is not suitable for
-     * one sided communications.
-     */
-    pData->super.flags &= ~OMPI_DATATYPE_FLAG_ONE_SIDED;
      *newType = pData;
     return OMPI_SUCCESS;
 }

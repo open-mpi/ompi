@@ -4,6 +4,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,8 +45,6 @@ BEGIN_C_DECLS
 /* These flags are on top of the flags in opal_datatype.h */
 /* Is the datatype predefined as MPI type (not necessarily as OPAL type, e.g. struct/block types) */
 #define OMPI_DATATYPE_FLAG_PREDEFINED    0x0200
-/* Is the datatype suitable for one sided operations */
-#define OMPI_DATATYPE_FLAG_ONE_SIDED     0x0400
 /* Keep trace of the type of the predefined datatypes */
 #define OMPI_DATATYPE_FLAG_DATA_INT      0x1000
 #define OMPI_DATATYPE_FLAG_DATA_FLOAT    0x2000
@@ -133,12 +132,6 @@ static inline int32_t
 ompi_datatype_is_overlapped( const ompi_datatype_t* type )
 {
     return opal_datatype_is_overlapped(&type->super);
-}
-
-static inline int32_t
-ompi_datatype_is_acceptable_for_one_sided( const ompi_datatype_t* type )
-{
-    return (type->super.flags & OMPI_DATATYPE_FLAG_ONE_SIDED);
 }
 
 static inline int32_t
