@@ -68,6 +68,7 @@ my @rs;
 if (@r_arg) {
     foreach my $r (@r_arg) {
         foreach my $rr (split(/,/, $r)) {
+            $rr =~ s/^r?//;
             push(@rs, $rr);
         }
     }
