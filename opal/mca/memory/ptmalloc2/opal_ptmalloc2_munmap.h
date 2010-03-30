@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -23,7 +24,7 @@
 
 BEGIN_C_DECLS
 
-OPAL_DECLSPEC int opal_mem_free_ptmalloc2_munmap(void *start, size_t length, int from_alloc);
+OPAL_DECLSPEC int opal_mem_free_ptmalloc2_munmap(void *start, size_t length, int from_alloc, int call_hooks);
 
 OPAL_DECLSPEC int munmap(void* addr, size_t len);
 
