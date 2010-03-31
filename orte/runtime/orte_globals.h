@@ -381,12 +381,6 @@ typedef struct {
     bool abort;
     /* proc that caused that to happen */
     struct orte_proc_t *aborted_proc;
-    /* errmgr callback function for this job, if any */
-    orte_err_cb_fn_t err_cbfunc;
-    /* states that will trigger callback */
-    orte_proc_state_t err_cbstates;
-    /* errmgr callback data */
-    void *err_cbdata;
     /* max number of times a process can be restarted */
     int32_t max_restarts;
 #if OPAL_ENABLE_FT_CR == 1
@@ -440,7 +434,7 @@ struct orte_proc_t {
     /* RML contact info */
     char *rml_uri;
     /* seconds when last heartbeat was detected */
-    int beat;
+    time_t beat;
     /* number of times this process has been restarted */
     int32_t restarts;
 #if OPAL_ENABLE_FT_CR == 1

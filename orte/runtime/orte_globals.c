@@ -457,8 +457,8 @@ orte_job_t* orte_get_job_data_object(orte_jobid_t job)
 {
     int32_t ljob;
     
-    /* if I am not an HNP, I cannot provide this object */
-    if (!ORTE_PROC_IS_HNP && !ORTE_PROC_IS_CM) {
+    /* if the job data wasn't setup, we cannot provide the data */
+    if (NULL == orte_job_data) {
         return NULL;
     }
     
@@ -602,9 +602,6 @@ static void orte_job_construct(orte_job_t* job)
     job->abort = false;
     job->aborted_proc = NULL;
     
-    job->err_cbfunc = NULL;
-    job->err_cbstates = ORTE_PROC_STATE_UNDEF;
-    job->err_cbdata = NULL;
     job->max_restarts = INT32_MAX;
     
 #if OPAL_ENABLE_FT_CR == 1
