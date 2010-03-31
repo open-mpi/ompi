@@ -46,27 +46,48 @@ PREFIX=${PREFIX:-${INSTALL_ROOT}/${VERSION}/${SVER}_${CVER}}
 
 case "$COMPILER" in
     "cray" )
-        ADD_COMPILER="CC=craycc CXX=crayc++ F77=crayftn FC=crayftn"
+        COMPILER_FLAGS="CC=craycc CXX=crayc++ F77=crayftn FC=crayftn"
+        CFLAGS="-O2 -h cpu=istanbul -h negmsgs ${CFLAGS}"
+        CXXFLAGS="-O2 -h cpu=istanbul -h negmsgs ${CXXFLAGS}"
+        LDFLAGS="${LDFLAGS}"
         # Static compilation is the default, there is not even a flag...
-        ADD_WRAPPER_LDFLAGS=""
+        WRAPPER_LDFLAGS=""
         ;;
     "gnu" )
-        ADD_WRAPPER_LDFLAGS="-static "
+        # No need to specify compiler
+        CFLAGS="-O2 -fomit-frame-pointer ${CFLAGS}"
+        CXXFLAGS="-O2 -fomit-frame-pointer ${CXXFLAGS}"
+        LDFLAGS="${LDFLAGS}"
+        # REQUIRED
+        WRAPPER_LDFLAGS="-static"
         ;;
     "intel" )
-        ADD_COMPILER="CC=icc CXX=icpc F77=ifort FC=ifort"
-        ADD_WRAPPER_LDFLAGS="-static "
+        COMPILER_FLAGS="CC=icc CXX=icpc F77=ifort FC=ifort"
+        CFLAGS="-O2 ${CFLAGS}"
+        CXXFLAGS="-O2 ${CXXFLAGS}"
+        FFLAGS="-O2 ${FFLAGS}"
+        FCFLAGS="-O2 ${FCFLAGS}"
+        LDFLAGS="${LDFLAGS}"
+        # REQUIRED
+        WRAPPER_LDFLAGS="-static"
         ;;
     "pathscale" )
-        ADD_COMPILER="CC=pathcc CXX=pathCC F77=pathf90 FC=pathf90"
-        ADD_WRAPPER_LDFLAGS="-static "
+        COMPILER_FLAGS="CC=pathcc CXX=pathCC F77=pathf90 FC=pathf90"
+        CFLAGS="-O2 -TARG:processor=barcelona -TARG:sse2=on -TARG:sse3=on ${CFLAGS}"
+        CXXFLAGS="-O2 -TARG:processor=barcelona -TARG:sse2=on -TARG:sse3=on ${CXXFLAGS}"
+        # REQUIRED
+        LDFLAGS="${LDFLAGS}"
+        WRAPPER_LDFLAGS="-static"
         ;;
     "pgi" )
-        ADD_COMPILER="CC=pgcc CXX=pgCC F77=pgf77 FC=pgf90"
-        ADD_FFLAGS="-Mnomain $PGI/linux86-64/default/lib/pgfmain.o "
-        ADD_FCFLAGS="-Mnomain $PGI/linux86-64/default/lib/pgfmain.o "
-        ADD_LDFLAGS="-L$PGI/linux86-64/default/lib "
-        ADD_WRAPPER_LDFLAGS="-Bstatic "
+        COMPILER_FLAGS="CC=pgcc CXX=pgCC F77=pgf77 FC=pgf90"
+        CFLAGS="-O2 -tp istanbul-64 ${CFLAGS}"
+        CXXFLAGS="-O2 -tp istanbul-64 ${CXXFLAGS}"
+        # REQUIRED
+        FFLAGS="-Mnomain $PGI/linux86-64/default/lib/pgfmain.o ${FFLAGS}"
+        FCFLAGS="-Mnomain $PGI/linux86-64/default/lib/pgfmain.o ${FCFLAGS}"
+        LDFLAGS="-L$PGI/linux86-64/default/lib ${LDFLAGS}"
+        WRAPPER_LDFLAGS="-Bstatic"
         ;;
     * )
         echo "Error: Unknown Compiler: $COMPILER"
@@ -74,20 +95,27 @@ case "$COMPILER" in
         ;;
 esac
 
+
+# If further packages should be disabled, insert
+#   --enable-contrib-no-build=vt --disable-mpi-cxx --disable-io-romio \
+
 $SRCDIR/configure \
    --prefix=$PREFIX \
    --enable-static --disable-shared --disable-dlopen --disable-pretty-print-stacktrace --disable-pty-support \
    --with-threads --with-memory-manager=none \
    --without-tm --with-alps --with-portals --with-portals-config=xt3-modex \
-   --enable-mca-no-build=maffinity-first_use,maffinity-libnuma,ess-cnos,filem-rsh,grpcomm-cnos,pml-dr \
-   --with-wrapper-ldflags="${ADD_WRAPPER_LDFLAGS}-L${PE_DIR}/lib/snos64 -L${SE_DIR}/lib/snos64 -L${MPT_DIR}/util/lib" \
+   --enable-mca-no-build=maffinity-first_use,maffinity-libnuma,ess-cnos,ess-slurm,ess-slurmd,filem-rsh,grpcomm-cnos,plm-rsh,plm-rshd,plm-slurm,pml-dr,btl-tcp,notifier-twitter,notifier-smtp,pml-csum,pml-v,vprotocol-pessimist,dpm-orte \
+   --with-wrapper-ldflags="-L${PE_DIR}/lib/snos64 -L${SE_DIR}/lib/snos64 -L${MPT_DIR}/util/lib ${WRAPPER_LDFLAGS}" \
    --with-wrapper-libs="-lpct -lalpslli -lalpsutil -lportals -lpthread -lm" \
-   ${ADD_COMPILER} \
-   CPPFLAGS="${ADD_CPPFLAGS}-I${PE_DIR}/include" \
-   FFLAGS="${ADD_FFLAGS}-I${PE_DIR}/include" \
-   FCFLAGS="${ADD_FCFLAGS}-I${PE_DIR}/include" \
-   LDFLAGS="${ADD_LDFLAGS}-L${PE_DIR}/lib/snos64 -L${SE_DIR}/lib/snos64 -L${MPT_DIR}/util/lib" \
-   LIBS="${ADD_LIBS}-lpct -lalpslli -lalpsutil -lportals -lpthread -lrt -lm" | tee build.log
+   --enable-contrib-no-build=vt \
+   ${COMPILER_FLAGS} \
+   CPPFLAGS="-DNDEBUG -I${PE_DIR}/include ${CPPFLAGS}" \
+   CFLAGS="${CFLAGS}" \
+   CXXFLAGS="${CXXFLAGS}" \
+   FFLAGS="-I${PE_DIR}/include ${FFLAGS}" \
+   FCFLAGS="-I${PE_DIR}/include ${FCFLAGS}" \
+   LDFLAGS="-L${PE_DIR}/lib/snos64 -L${SE_DIR}/lib/snos64 -L${MPT_DIR}/util/lib ${LDFLAGS}" \
+   LIBS="${LIBS} -lpct -lalpslli -lalpsutil -lportals -lpthread -lrt -lm" $* | tee build.log
 
 #
 # To build orted static, use the libtool-flag -all-static
