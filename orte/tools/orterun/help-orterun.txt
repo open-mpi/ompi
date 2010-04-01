@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007      Cisco Systems, Inc. All rights reserved.
+# Copyright (c) 2007-2010 Cisco Systems, Inc. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -223,8 +223,8 @@ Node: %s
 while attempting to start process rank %lu.
 #
 [orterun:wdir-not-found]
-%s was unable to launch the specified application as it could not change to the
-specified working directory:
+%s was unable to launch the specified application as it could not
+change to the specified working directory:
 
 Working directory: %s
 Node: %s
@@ -232,12 +232,16 @@ Node: %s
 while attempting to start process rank %lu.
 #
 [orterun:exe-not-found]
-%s was unable to launch the specified application as it could not find an executable:
+%s was unable to find the specified executable file, and therefore
+did not launch the job.  This error was first reported for process
+rank %lu; it may have occurred for other processes as well.
 
+NOTE: A common cause for this error is misspelling a %s command
+      line parameter option (remember that %s interprets the first
+      unrecognized command line token as the executable).
+
+Node:       %s
 Executable: %s
-Node: %s
-
-while attempting to start process rank %lu.
 #
 [orterun:exe-not-accessible]
 %s was unable to launch the specified application as it could not access
