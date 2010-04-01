@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2006-2010 Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
@@ -1030,8 +1030,12 @@ static void dump_aborted_procs(void)
                                    proc->node->name, (unsigned long)proc->name.vpid);
                 } else if (ORTE_ERR_EXE_NOT_FOUND == proc->exit_code) {
                     orte_show_help("help-orterun.txt", "orterun:exe-not-found", true,
-                                   orterun_basename, apps[proc->app_idx]->app,
-                                   proc->node->name, (unsigned long)proc->name.vpid);
+                                   orterun_basename, 
+                                   (unsigned long)proc->name.vpid,
+                                   orterun_basename, 
+                                   orterun_basename, 
+                                   proc->node->name, 
+                                   apps[proc->app_idx]->app);
                 } else if (ORTE_ERR_EXE_NOT_ACCESSIBLE == proc->exit_code) {
                     orte_show_help("help-orterun.txt", "orterun:exe-not-accessible", true,
                                    orterun_basename, apps[proc->app_idx]->app, proc->node->name,
