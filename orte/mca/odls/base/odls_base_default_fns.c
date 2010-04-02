@@ -1212,7 +1212,7 @@ static int pack_state_for_proc(opal_buffer_t *alert, bool include_startup_info, 
 static int pack_state_update(opal_buffer_t *alert, bool include_startup_info, orte_odls_job_t *jobdat)
 {
     int rc;
-    opal_list_item_t *item;
+    opal_list_item_t *item, *next;
     orte_odls_child_t *child;
     orte_vpid_t null=ORTE_VPID_INVALID;
     
@@ -1237,8 +1237,9 @@ static int pack_state_update(opal_buffer_t *alert, bool include_startup_info, or
     }
     for (item = opal_list_get_first(&orte_local_children);
          item != opal_list_get_end(&orte_local_children);
-         item = opal_list_get_next(item)) {
+         item = next) {
         child = (orte_odls_child_t*)item;
+        next = opal_list_get_next(item);
         /* if this child is part of the job... */
         if (child->name->jobid == jobdat->jobid) {
             if (ORTE_SUCCESS != (rc = pack_state_for_proc(alert, include_startup_info, child))) {
@@ -2603,7 +2604,6 @@ static void check_proc_complete(orte_odls_child_t *child)
                  item != opal_list_get_end(&orte_local_children);
                  item = next) {
                 child = (orte_odls_child_t*)item;
-                
                 next = opal_list_get_next(item);
                 
                 if (jdat->jobid == child->name->jobid) {
@@ -2902,7 +2902,7 @@ MOVEON:
 void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
 {
     orte_odls_child_t *child;
-    opal_list_item_t *item;
+    opal_list_item_t *item, *next;
     int rc;
     opal_buffer_t cmdbuf;
     orte_daemon_cmd_flag_t command;
@@ -2923,8 +2923,9 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
     /* find this child */
     for (item = opal_list_get_first(&orte_local_children);
          item != opal_list_get_end(&orte_local_children);
-         item = opal_list_get_next(item)) {
+         item = next) {
         child = (orte_odls_child_t*)item;
+        next = opal_list_get_next(item);
         
         if (pid == child->pid) { /* found it */
             /* this is an independent entry point from the event library. To avoid
@@ -2976,7 +2977,7 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
                                             orte_odls_base_child_died_fn_t child_died)
 {
     orte_odls_child_t *child;
-    opal_list_item_t *item;
+    opal_list_item_t *item, *next;
     int rc = ORTE_SUCCESS;
     opal_list_t procs_killed;
     orte_proc_t *proc, proctmp;
@@ -3020,8 +3021,9 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
         }
         for (item = opal_list_get_first(&orte_local_children);
              item != opal_list_get_end(&orte_local_children);
-             item = opal_list_get_next(item)) {
+             item = next) {
             child = (orte_odls_child_t*)item;
+            next = opal_list_get_next(item);
             
             OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:kill_local_proc checking child process %s",
@@ -3167,7 +3169,7 @@ int orte_odls_base_get_proc_stats(opal_buffer_t *answer,
 {
     int rc;
     orte_odls_child_t *child;
-    opal_list_item_t *item;
+    opal_list_item_t *item, *next;
     opal_pstats_t stats, *statsptr;
     int j;
     
@@ -3179,8 +3181,9 @@ int orte_odls_base_get_proc_stats(opal_buffer_t *answer,
     /* find this child */
     for (item = opal_list_get_first(&orte_local_children);
          item != opal_list_get_end(&orte_local_children);
-         item = opal_list_get_next(item)) {
+         item = next) {
         child = (orte_odls_child_t*)item;
+        next = opal_list_get_next(item);
         
         if (proc->jobid == child->name->jobid &&
             (proc->vpid == child->name->vpid ||
