@@ -142,7 +142,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, 'v', NULL, "verbose", 0,
       &orterun_globals.verbose, OPAL_CMD_LINE_TYPE_BOOL,
       "Be verbose" },
-    { NULL, NULL, NULL, 'q', NULL, "quiet", 0,
+    { "orte", "execute", "quiet", 'q', NULL, "quiet", 0,
       &orterun_globals.quiet, OPAL_CMD_LINE_TYPE_BOOL,
       "Suppress helpful messages" },
     { NULL, NULL, NULL, '\0', "report-pid", "report-pid", 1,

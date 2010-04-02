@@ -174,6 +174,7 @@ bool orte_debug_daemons_flag = false;
 bool orte_xml_output = false;
 FILE *orte_xml_fp = NULL;
 char *orte_job_ident = NULL;
+bool orte_execute_quiet = false;
 
 /* See comment in orte/tools/orterun/debuggers.c about this MCA
    param */
