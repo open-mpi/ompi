@@ -842,7 +842,7 @@ static void job_completed(int trigpipe, short event, void *arg)
         goto DONE;
     }
     
-    if (0 != orte_exit_status) {
+    if (0 != orte_exit_status && !orterun_globals.quiet) {
         /* abnormal termination of some kind */
         dump_aborted_procs();
         /* If we showed more abort messages than were allowed,
