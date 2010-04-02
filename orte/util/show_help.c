@@ -62,6 +62,10 @@ int orte_show_help(const char *filename, const char *topic,
     va_list arglist;
     char *output;
     
+    if (orte_execute_quiet) {
+        return ORTE_SUCCESS;
+    }
+    
     va_start(arglist, want_error_header);
     output = opal_show_help_vstring(filename, topic, want_error_header, 
                                     arglist);
@@ -536,6 +540,10 @@ int orte_show_help(const char *filename, const char *topic,
     int rc = ORTE_SUCCESS;
     va_list arglist;
     char *output;
+    
+    if (orte_execute_quiet) {
+        return ORTE_SUCCESS;
+    }
     
     va_start(arglist, want_error_header);
     output = opal_show_help_vstring(filename, topic, want_error_header, 

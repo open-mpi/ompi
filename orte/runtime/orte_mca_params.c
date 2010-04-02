@@ -73,6 +73,13 @@ int orte_register_params(void)
                                 false, false, (int) true, &value);
     orte_create_session_dirs = OPAL_INT_TO_BOOL(value);
     
+    
+    mca_base_param_reg_int_name("orte", "execute_quiet",
+                                "Do not output error and help messages",
+                                false, false, (int) false, &value);
+    orte_execute_quiet = OPAL_INT_TO_BOOL(value);
+    
+    
 #if !ORTE_DISABLE_FULL_SUPPORT
     
     mca_base_param_reg_int_name("orte", "send_profile",
