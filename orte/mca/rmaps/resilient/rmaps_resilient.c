@@ -542,6 +542,9 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
         }
         
     cleanup:
+        /* track number of procs */
+        jdata->num_procs += app->num_procs;
+        
         /* compute vpids and add proc objects to the job - this has to be
          * done after each app_context is mapped in order to keep the
          * vpids contiguous within an app_context
@@ -550,9 +553,6 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-
-        /* track number of procs */
-        jdata->num_procs += app->num_procs;
 
         /* cleanup the node list - it can differ from one app_context
          * to another, so we have to get it every time
