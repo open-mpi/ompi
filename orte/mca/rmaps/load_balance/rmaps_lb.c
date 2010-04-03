@@ -186,7 +186,7 @@ static int nperboard(orte_job_t *jdata)
     orte_std_cntr_t num_slots;
     orte_node_t *node;
     int np, nprocs;
-    int num_boards;
+    int num_boards=orte_default_num_boards;
 
     /* setup the node list */
     OBJ_CONSTRUCT(&node_list, opal_list_t);
@@ -280,7 +280,7 @@ static int npersocket(orte_job_t *jdata)
     orte_std_cntr_t num_slots;
     orte_node_t *node;
     int np, nprocs;
-    int num_sockets;
+    int num_sockets=orte_default_num_sockets_per_board;
 
     /* setup the node list */
     OBJ_CONSTRUCT(&node_list, opal_list_t);

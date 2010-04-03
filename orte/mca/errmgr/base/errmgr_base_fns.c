@@ -561,7 +561,7 @@ static int orte_errmgr_base_stabalize_runtime(orte_job_t *jdata,
                                               orte_process_name_t *proc,
                                               orte_proc_state_t state)
 {
-    orte_proc_t *loc_proc, *child_proc;
+    orte_proc_t *loc_proc=NULL, *child_proc;
     orte_std_cntr_t i_proc;
     int32_t i;
 
@@ -598,6 +598,15 @@ static int orte_errmgr_base_stabalize_runtime(orte_job_t *jdata,
 
         break;
     }
+    
+    /*
+     * RHC: Since we do not handle the recovery from such errors yet, just
+     *      skip processing, and go to the abort sequence.
+     */
+    if (NULL == loc_proc) {
+        return ORTE_SUCCESS;
+    }
+    
     /*
      * If this is a part of the control plane (HNP/orted)
      */

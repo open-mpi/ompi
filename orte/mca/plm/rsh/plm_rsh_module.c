@@ -960,7 +960,7 @@ plm_rsh_report_orted_launch(int status, orte_process_name_t* sender,
     orte_process_name_t peer;
     char *rml_uri = NULL;
     int rc, idx;
-    orte_proc_t *daemon;
+    orte_proc_t *daemon=NULL;
     orte_job_t *jdatorted;
     
     orted_failed_launch = true;
@@ -1024,7 +1024,8 @@ CLEANUP:
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          orted_failed_launch ? "failed" : "completed",
                          ORTE_NAME_PRINT(&peer),
-                         ORTE_NAME_PRINT(sender), daemon->rml_uri));
+                         ORTE_NAME_PRINT(sender),
+                         (NULL == daemon) ? "UNKNOWN" : daemon->rml_uri));
 
     if (orted_failed_launch) {
         if( NULL != rml_uri ) free(rml_uri);

@@ -116,7 +116,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
     opal_list_t node_list;
     opal_list_item_t *item;
     orte_std_cntr_t num_slots;
-    int rc;
+    int rc=ORTE_SUCCESS;
     float avgload, minload;
     orte_node_t *node, *nd=NULL, *oldnode;
     orte_rmaps_res_ftgrp_t *ftgrp, *target = NULL;
@@ -200,6 +200,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
             app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, proc->app_idx);
             if( NULL == app ) {
                 ORTE_ERROR_LOG(ORTE_ERROR);
+                rc = ORTE_ERROR;
                 goto error;
             }
 
@@ -286,6 +287,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                 nd = (orte_node_t*)opal_list_get_first(&node_list);
                 if( NULL == nd ) {
                     ORTE_ERROR_LOG(ORTE_ERROR);
+                    rc = ORTE_ERROR;
                     goto error;
                 }
 
