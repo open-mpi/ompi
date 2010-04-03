@@ -157,7 +157,7 @@ cleanup:
 static int parse_dash_host(char ***mapped_nodes, char** host_argv)
 {
     orte_std_cntr_t j, k;
-    int rc;
+    int rc=ORTE_SUCCESS;
     char **mini_map, *cptr;
     int nodeidx;
     orte_node_t *node;
