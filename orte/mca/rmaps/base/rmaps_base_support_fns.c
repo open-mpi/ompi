@@ -210,9 +210,15 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
             /** save the next pointer in case we remove this node */
             next  = opal_list_get_next(item);
             
-            /** already have a daemon? - remove if so */
+            /** already have a daemon? */
             node = (orte_node_t*)item;
             if (NULL != node->daemon) {
+                /* if this is the local node, keep it if requested */
+                if (node->daemon->name.vpid == ORTE_PROC_MY_NAME->vpid &&
+                    !(policy & ORTE_MAPPING_NO_USE_LOCAL)) {
+                    item = next;
+                    continue;
+                }
                 opal_list_remove_item(allocated_nodes, item);
                 OBJ_RELEASE(item);  /* "un-retain" it */
             }
@@ -718,7 +724,7 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
          * it had previously failed, try to relaunch it. (Daemon Recovery) Do
          * this ONLY if there are procs mapped to that daemon!
          */
-        else if(node->daemon->state > ORTE_PROC_STATE_UNTERMINATED ) {
+        else if (node->daemon->state > ORTE_PROC_STATE_UNTERMINATED) {
             /* If no processes are to be launched on this node, then exclude it */
             if( 0 >= node->num_procs ) {
                 OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
@@ -776,6 +782,8 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
 int orte_rmaps_base_setup_virtual_machine(orte_job_t *jdata)
 {
     orte_node_t *node;
+    orte_proc_t *proc;
+    orte_job_map_t *map;
     opal_list_t node_list;
     opal_list_item_t *item;
     orte_app_context_t *app;
@@ -787,12 +795,14 @@ int orte_rmaps_base_setup_virtual_machine(orte_job_t *jdata)
      */
     app = (orte_app_context_t *) opal_pointer_array_get_item(jdata->apps, 0);
     
+    map = jdata->map;
+    
     /* get the list of all available nodes that do not already
      * have a daemon on them
      */
     OBJ_CONSTRUCT(&node_list, opal_list_t);
     if (ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&node_list, &num_slots,
-                                                               app, jdata->map->policy))) {
+                                                               app, map->policy))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&node_list);
         return rc;
@@ -800,15 +810,51 @@ int orte_rmaps_base_setup_virtual_machine(orte_job_t *jdata)
     /* add all these nodes to the map */
     while (NULL != (item = opal_list_remove_first(&node_list))) {
         node = (orte_node_t*)item;
-        opal_pointer_array_add(jdata->map->nodes, (void*)node);
-        ++(jdata->map->num_nodes);
+        opal_pointer_array_add(map->nodes, (void*)node);
+        ++(map->num_nodes);
+        /* if this node already has a daemon, release that object
+         * to maintain bookkeeping
+         */
+        if (NULL != node->daemon) {
+            OBJ_RELEASE(node->daemon);
+        }
+        /* create a new daemon object for this node */
+        proc = OBJ_NEW(orte_proc_t);
+        if (NULL == proc) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        proc->name.jobid = ORTE_PROC_MY_NAME->jobid;
+        if (ORTE_VPID_MAX-1 <= jdata->num_procs) {
+            /* no more daemons available */
+            orte_show_help("help-orte-rmaps-base.txt", "out-of-vpids", true);
+            OBJ_RELEASE(proc);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        proc->name.vpid = jdata->num_procs;  /* take the next available vpid */
+        proc->node = node;
+        proc->nodename = node->name;
+        OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                             "%s rmaps:base:setup_vm add new daemon %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&proc->name)));
+        /* add the daemon to the daemon job object */
+        if (0 > (rc = opal_pointer_array_add(jdata->procs, (void*)proc))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        ++jdata->num_procs;
+        /* point the node to the daemon */
+        node->daemon = proc;
+        OBJ_RETAIN(proc);  /* maintain accounting */
+        /* track number of daemons to be launched */
+        ++map->num_new_daemons;
+        /* and their starting vpid */
+        if (ORTE_VPID_INVALID == map->daemon_vpid_start) {
+            map->daemon_vpid_start = proc->name.vpid;
+        }
     }
     OBJ_DESTRUCT(&node_list);
-    /* define the missing daemons */
-    if (ORTE_SUCCESS != (rc = orte_rmaps_base_define_daemons(jdata->map))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
     
     return ORTE_SUCCESS;
 }
