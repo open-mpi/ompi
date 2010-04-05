@@ -43,8 +43,8 @@ int orte_errmgr_base_close(void)
         if( NULL == module ) {
             continue;
         }
-        if( NULL != module->internal_errmgr_finalize ) {
-            module->internal_errmgr_finalize();
+        if( NULL != module->finalize ) {
+            module->finalize();
         }
     }
 

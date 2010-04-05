@@ -54,19 +54,14 @@ bool orte_errmgr_initialized = false;
 opal_list_t orte_errmgr_base_components_available;
 
 /* Public module provides a wrapper around previous functions */
-orte_errmgr_base_module_t orte_errmgr = {
+orte_errmgr_API_t orte_errmgr = {
+    orte_errmgr_base_log,
     orte_errmgr_base_proc_aborted,
     orte_errmgr_base_incomplete_start,
     orte_errmgr_base_comm_failed,
-    orte_errmgr_base_abort,
-
-    /* Internal Interfaces */
-    NULL, /* internal_errmgr_init         */
-    NULL, /* internal_errmgr_finalize     */
-    NULL, /* internal_predicted_fault     */
-    NULL, /* internal_process_fault       */
-    NULL, /* internal_suggest_map_targets */
-    NULL  /* internal_ft_event            */
+    orte_errmgr_base_predicted_fault,
+    orte_errmgr_base_suggest_map_targets,
+    orte_errmgr_base_abort
 };
 
 /**

@@ -60,13 +60,13 @@ ORTE_DECLSPEC int orte_errmgr_base_abort(int error_code, char *fmt, ...)
     __opal_attribute_format__(__printf__, 2, 3)
 #   endif
     ;
-ORTE_DECLSPEC int orte_recos_base_predicted_fault(char ***proc_list,
-                                                  char ***node_list,
-                                                  char ***suggested_nodes);
-ORTE_DECLSPEC int orte_recos_base_suggest_map_targets(orte_proc_t *proc,
-                                                      orte_node_t *oldnode,
-                                                      opal_list_t *node_list);
-ORTE_DECLSPEC int orte_recos_base_ft_event(int state);
+ORTE_DECLSPEC int orte_errmgr_base_predicted_fault(char ***proc_list,
+                                                   char ***node_list,
+                                                   char ***suggested_nodes);
+ORTE_DECLSPEC int orte_errmgr_base_suggest_map_targets(orte_proc_t *proc,
+                                                       orte_node_t *oldnode,
+                                                       opal_list_t *node_list);
+ORTE_DECLSPEC int orte_errmgr_base_ft_event(int state);
 
 /*
  * Additional External API function declared in errmgr.h
