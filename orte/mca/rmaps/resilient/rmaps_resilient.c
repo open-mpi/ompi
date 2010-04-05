@@ -282,7 +282,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                 }
 
                 /* Ask the ErrMgr components if they have a suggestion for this process */
-                orte_errmgr_base_suggest_map_targets(proc, proc->node, &node_list);
+                orte_errmgr.suggest_map_targets(proc, proc->node, &node_list);
 
                 nd = (orte_node_t*)opal_list_get_first(&node_list);
                 if( NULL == nd ) {

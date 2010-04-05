@@ -145,8 +145,8 @@ int orte_errmgr_base_proc_aborted(orte_process_name_t *name, int exit_code)
             if( NULL == module ) {
                 continue;
             }
-            if( NULL != module->internal_process_fault ) {
-                module->internal_process_fault(jdata, name, state, &stack_state);
+            if( NULL != module->process_fault ) {
+                module->process_fault(jdata, name, state, &stack_state);
             }
         }
     }
@@ -284,8 +284,8 @@ int orte_errmgr_base_incomplete_start(orte_jobid_t job, int exit_code)
             if( NULL == module ) {
                 continue;
             }
-            if( NULL != module->internal_process_fault ) {
-                module->internal_process_fault(jdata, NULL, state, &stack_state);
+            if( NULL != module->process_fault ) {
+                module->process_fault(jdata, NULL, state, &stack_state);
             }
         }
     }
@@ -390,8 +390,8 @@ int orte_errmgr_base_comm_failed(orte_process_name_t *name, int exit_code)
             if( NULL == module ) {
                 continue;
             }
-            if( NULL != module->internal_process_fault ) {
-                module->internal_process_fault(jdata, name, state, &stack_state);
+            if( NULL != module->process_fault ) {
+                module->process_fault(jdata, name, state, &stack_state);
             }
         }
     }
@@ -462,6 +462,7 @@ int orte_errmgr_base_predicted_fault(char ***proc_list,
 {
     orte_errmgr_base_module_t *module = NULL;
     int i;
+    int stack_state = ORTE_ERRMGR_STACK_STATE_NONE;
 
     /*
      * If the user did not ask for recovery, then do not process recovery events
@@ -485,8 +486,8 @@ int orte_errmgr_base_predicted_fault(char ***proc_list,
         if( NULL == module ) {
             continue;
         }
-        if( NULL != module->internal_predicted_fault ) {
-            module->internal_predicted_fault(proc_list, node_list, suggested_nodes);
+        if( NULL != module->predicted_fault ) {
+            module->predicted_fault(proc_list, node_list, suggested_nodes, &stack_state);
         }
     }
 
@@ -499,6 +500,7 @@ int orte_errmgr_base_suggest_map_targets(orte_proc_t *proc,
 {
     orte_errmgr_base_module_t *module = NULL;
     int i;
+    int stack_state = ORTE_ERRMGR_STACK_STATE_NONE;
 
     /*
      * If the user did not ask for recovery, then do not process recovery events
@@ -522,8 +524,8 @@ int orte_errmgr_base_suggest_map_targets(orte_proc_t *proc,
         if( NULL == module ) {
             continue;
         }
-        if( NULL != module->internal_suggest_map_targets ) {
-            module->internal_suggest_map_targets(proc, oldnode, node_list);
+        if( NULL != module->suggest_map_targets ) {
+            module->suggest_map_targets(proc, oldnode, node_list, &stack_state);
         }
     }
 
@@ -546,8 +548,8 @@ int orte_errmgr_base_ft_event(int state)
         if( NULL == module ) {
             continue;
         }
-        if( NULL != module->internal_ft_event ) {
-            module->internal_ft_event(state);
+        if( NULL != module->ft_event ) {
+            module->ft_event(state);
         }
     }
 

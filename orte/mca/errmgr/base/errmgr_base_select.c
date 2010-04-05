@@ -171,8 +171,8 @@ int orte_errmgr_base_select(void)
         if( NULL == i_module ) {
             continue;
         }
-        if( NULL != i_module->internal_errmgr_init ) {
-            i_module->internal_errmgr_init();
+        if( NULL != i_module->init ) {
+            i_module->init();
         }
     }
 
