@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -111,6 +112,10 @@ EXTRA_DIST = \
 	platform/cisco/ebuild/native \
 	platform/cisco/ebuild/native.conf \
 	platform/cisco/ebuild/native-spread \
-	platform/cisco/ebuild/native-spread.conf
+	platform/cisco/ebuild/native-spread.conf \
+	platform/ibm/debug-ppc32-gcc \
+	platform/ibm/debug-ppc64-gcc \
+	platform/ibm/optimized-ppc32-gcc \
+	platform/ibm/optimized-ppc64-gcc
 
 dist_pkgdata_DATA = openmpi-valgrind.supp
