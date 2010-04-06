@@ -94,9 +94,10 @@ static int rte_init(void)
     char **hosts = NULL;
     char *nodelist;
     char *tmp=NULL;
-    orte_vpid_t vpid;
+    orte_jobid_t jobid=ORTE_JOBID_INVALID;
+    orte_vpid_t vpid=ORTE_VPID_INVALID;
     int32_t jfam;
-    
+
     /* construct the thread support */
     OBJ_CONSTRUCT(&lock, opal_mutex_t);
     OBJ_CONSTRUCT(&cond, opal_condition_t);
@@ -131,6 +132,36 @@ static int rte_init(void)
             ORTE_ERROR_LOG(ret);
             error = "opal_sysinfo_base_select";
             goto error;
+        }
+        /* if we were given a jobid, use it */
+        mca_base_param_reg_string_name("orte", "ess_jobid", "Process jobid",
+                                       true, false, NULL, &tmp);
+        if (NULL != tmp) {
+            if (ORTE_SUCCESS != (ret = orte_util_convert_string_to_jobid(&jobid, tmp))) {
+                ORTE_ERROR_LOG(ret);
+                error = "convert_jobid";
+                goto error;
+            }
+            free(tmp);
+            ORTE_PROC_MY_NAME->jobid = jobid;
+        }
+        /* if we were given a vpid, use it */
+        mca_base_param_reg_string_name("orte", "ess_vpid", "Process vpid",
+                                       true, false, NULL, &tmp);
+        if (NULL != tmp) {
+            if (ORTE_SUCCESS != (ret = orte_util_convert_string_to_vpid(&vpid, tmp))) {
+                ORTE_ERROR_LOG(ret);
+                error = "convert_jobid";
+                goto error;
+            }
+            free(tmp);
+            ORTE_PROC_MY_NAME->vpid = vpid;
+        }
+        
+        /* if both were given, then we are done */
+        if (ORTE_JOBID_INVALID != jobid &&
+            ORTE_VPID_INVALID != vpid) {
+            goto complete;
         }
         /* if we do not know the HNP, then we have to
          * use the multicast system to find it
@@ -171,6 +202,7 @@ static int rte_init(void)
             ORTE_PROC_MY_NAME->vpid = vpid;
         }
         
+    complete:
         /* get the list of nodes used for this job */
         nodelist = getenv("OMPI_MCA_orte_nodelist");
         
