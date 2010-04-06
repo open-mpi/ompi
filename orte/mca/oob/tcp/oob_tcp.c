@@ -513,7 +513,7 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
         addrlen = res->ai_addrlen;
         freeaddrinfo (res);
         
-#ifdef IPV6_V6ONLY
+#if defined(IPV6_V6ONLY) && !defined(__OpenBSD__)
         /* in case of AF_INET6, disable v4-mapped addresses */
         if (AF_INET6 == af_family) {
             int flg = 0;
