@@ -76,6 +76,12 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_thread_t);
         OPAL_THREAD_UNLOCK((lck));              \
     } while(0);
 
+#define OPAL_WAKEUP_THREAD(cnd, act)        \
+    do {                                    \
+        *(act) = false;                     \
+        opal_condition_broadcast((cnd));    \
+    } while(0);
+
 
 OPAL_DECLSPEC int  opal_thread_start(opal_thread_t *);
 OPAL_DECLSPEC int  opal_thread_join(opal_thread_t *, void **thread_return);
