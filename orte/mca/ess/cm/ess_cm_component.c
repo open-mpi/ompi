@@ -70,18 +70,15 @@ orte_ess_cm_component_open(void)
 
 int orte_ess_cm_component_query(mca_base_module_t **module, int *priority)
 {
-    char *spec;
-    
-    /* only select us if specified */
-    spec = getenv("OMPI_MCA_ess");
-    if (NULL == spec || 0 != strcmp("cm", spec)) {
-        *priority = 0;
-        *module = NULL;
-        return ORTE_ERROR;
+    /* if we are a CM program, then select us */
+    if (ORTE_PROC_IS_CM && !ORTE_PROC_IS_HNP) {
+        *priority = 1000;
+        *module = (mca_base_module_t *)&orte_ess_cm_module;
+        return ORTE_SUCCESS;
     }
-    *priority = 1000;
-    *module = (mca_base_module_t *)&orte_ess_cm_module;
-    return ORTE_SUCCESS;
+    *priority = 0;
+    *module = NULL;
+    return ORTE_ERROR;
 }
 
 
