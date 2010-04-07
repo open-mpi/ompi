@@ -260,6 +260,11 @@ static int rte_init(void)
             error = "orte_ess_base_tool_setup";
             goto error;
         }
+        
+        /* the tool setup unfortunately forces us to be a non-mpi app. This
+         * doesn't work for CM systems, so remove that flag
+         */
+        orte_process_info.proc_type &= ~ORTE_PROC_NON_MPI;
     }
     
     /* destruct the thread support */
@@ -284,6 +289,8 @@ static int rte_finalize(void)
     int ret = ORTE_SUCCESS;
     
     if (ORTE_PROC_IS_DAEMON) {
+        /* set this flag to avoid doing a barrier */
+        orte_abnormal_term_ordered = true;
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_finalize())) {
             ORTE_ERROR_LOG(ret);
         }
