@@ -276,6 +276,7 @@ static int queue_xmit(rmcast_base_send_t *snd,
      */
     if (ORTE_RMCAST_GROUP_OUTPUT_CHANNEL == channel) {
         if (NULL == my_group_channel) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return ORTE_ERR_NOT_FOUND;
         }
         ch = my_group_channel;
@@ -295,6 +296,7 @@ static int queue_xmit(rmcast_base_send_t *snd,
     }
     if (NULL == ch) {
         /* didn't find it */
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
     
