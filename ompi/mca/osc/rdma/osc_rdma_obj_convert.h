@@ -30,9 +30,11 @@ ompi_osc_rdma_windx_to_module(uint32_t windx)
     ompi_osc_rdma_module_t *module;
 
     /* find the right module and dispatch */
+    OPAL_THREAD_LOCK(&mca_osc_rdma_component.c_lock);
     ret = opal_hash_table_get_value_uint32(&mca_osc_rdma_component.c_modules,
                                            windx,
                                            (void**) (&module));
+    OPAL_THREAD_UNLOCK(&mca_osc_rdma_component.c_lock);
     if (OMPI_SUCCESS != ret) {
         opal_output(0, "Could not translate windx %d to a local MPI_Win instance",
                     windx);
