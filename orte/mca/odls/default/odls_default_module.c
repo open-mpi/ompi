@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
  * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
@@ -527,13 +527,23 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                              * to us, so index into the node's array to get the
                              * physical cpu
                              */
-                            phys_cpu = opal_paffinity_base_get_physical_processor_id(logical_cpu);
-                            if (0 > phys_cpu) {
-                                ORTE_ODLS_IF_BIND_NOT_REQD("bind-to-core");
-                                orte_show_help("help-odls-default.txt",
-                                               "odls-default:invalid-phys-cpu", true);
-                                ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
-                            }
+			    if (logical_cpu < orte_odls_globals.num_processors) {
+				/* We have a processor to bind to */
+				phys_cpu = opal_paffinity_base_get_physical_processor_id(logical_cpu);
+				if (0 > phys_cpu) {
+				    ORTE_ODLS_IF_BIND_NOT_REQD("bind-to-core");
+				    orte_show_help("help-odls-default.txt",
+						   "odls-default:invalid-phys-cpu", true);
+				    ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+				}
+			    } else {
+				/* No processor to bind to so error out */
+				orte_show_help("help-odls-default.txt",
+					       "odls-default:not-enough-resources", true,
+					       "processors", orte_process_info.nodename,
+					       "bind-to-core", context->app);
+				ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+			    }
                         }
                         OPAL_PAFFINITY_CPU_SET(phys_cpu, mask);
                         /* increment logical cpu */
