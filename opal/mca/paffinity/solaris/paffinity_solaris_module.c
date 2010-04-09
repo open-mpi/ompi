@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2010 Oracle and/or its affiliates.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -197,13 +197,17 @@ static int solaris_module_get_core_info(int socket, int *num_cores)
 
 static int solaris_module_get_physical_processor_id(int logical_processor_id)
 {
-    processorid_t currid, cpuid_max, cpuid_log=0;
+    processorid_t currid, retid, cpuid_max, cpuid_log=0;
     processor_info_t pinfo;
 
     /* cpuid_max is the max number available for a system arch. It is
      * an inclusive list. e.g. If cpuid_max=31, cpuid would be 0-31 */
-    cpuid_max = sysconf(_SC_CPUID_MAX);
+    if ( 0 > (cpuid_max = sysconf(_SC_CPUID_MAX))) {
+	return OPAL_ERR_NOT_SUPPORTED;
+    }
 
+    /* set retid to OPAL_ERROR to reflect no processor found to match logical proc */
+    retid = OPAL_ERROR;
     /* Because not all CPU ID in cpuid_max are actually valid,
      * and CPU ID may also not be contiguous. Therefore we
      * need to run through processor_info to ensure the validity.
@@ -212,13 +216,15 @@ static int solaris_module_get_physical_processor_id(int logical_processor_id)
         if (0 == processor_info(currid, &pinfo)) {
             if (P_ONLINE == pinfo.pi_state || P_NOINTR == pinfo.pi_state) {
                  if (cpuid_log == logical_processor_id) {
+		     retid = currid;
                      break;
                  } 
                  cpuid_log++;
             }
         }
     }
-    return currid;
+    
+    return retid;
 }
 
 static int solaris_module_get_physical_socket_id(int logical_socket_id)
