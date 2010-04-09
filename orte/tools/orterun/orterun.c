@@ -1108,9 +1108,7 @@ static void abort_exit_callback(int fd, short ign, void *arg)
 {
     int ret;
 
-    if (!orterun_globals.quiet){
-        fprintf(stderr, "%s: killing job...\n\n", orterun_basename);
-    }
+    fprintf(stderr, "%s: killing job...\n\n", orterun_basename);
     
     /* since we are being terminated by a user's signal, be
      * sure to exit with a non-zero exit code - but don't
@@ -1206,6 +1204,11 @@ static void abort_signal_callback(int fd, short flags, void *arg)
     /* ensure that the forwarding of stdin stops */
     orte_job_term_ordered = true;
 
+    /* tell us to be quiet - hey, the user killed us with a ctrl-c,
+     * so need to tell them that!
+     */
+    orterun_globals.quiet = true;
+    
     /* We are in an event handler; the job completed procedure
        will delete the signal handler that is currently running
        (which is a Bad Thing), so we can't call it directly.
