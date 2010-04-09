@@ -209,6 +209,7 @@ int orte_odls_base_open(void)
     orte_odls_globals.debugger = NULL;
     orte_odls_globals.debugger_launched = false;
     OBJ_CONSTRUCT(&orte_odls_globals.sysinfo, opal_list_t);
+    orte_odls_base.comm = orte_odls_base_comm;
     
     /* get any external processor bindings */
     OPAL_PAFFINITY_CPU_ZERO(orte_odls_globals.my_cores);

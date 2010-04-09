@@ -39,8 +39,11 @@ ORTE_DECLSPEC void orte_daemon_recv(int status, orte_process_name_t* sender,
                       opal_buffer_t *buffer, orte_rml_tag_t tag,
                       void* cbdata);
 
-/* direct cmd processing entry point - used by HNP */
+/* direct cmd processing entry points */
 ORTE_DECLSPEC void orte_daemon_cmd_processor(int fd, short event, void *data);
+ORTE_DECLSPEC int orte_daemon_process_commands(orte_process_name_t* sender,
+                                               opal_buffer_t *buffer,
+                                               orte_rml_tag_t tag);
 
 /* a time flag that needs to be visible elsewhere */
 ORTE_DECLSPEC extern struct timeval orte_daemon_msg_recvd;
