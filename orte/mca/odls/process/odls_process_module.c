@@ -55,7 +55,7 @@ static bool odls_process_child_died( orte_odls_child_t *child )
     int error;
     HANDLE handle = OpenProcess( PROCESS_TERMINATE | SYNCHRONIZE, FALSE,
                                  (DWORD)(child->pid) );
-    if( INVALID_HANDLE_VALUE == handle ) {
+    if( 0 == child->pid || INVALID_HANDLE_VALUE == handle ) {
         error = GetLastError();
         /* Let's suppose that the process dissapear ... by now */
         return true;
@@ -67,7 +67,7 @@ static bool odls_process_child_died( orte_odls_child_t *child )
 
 static int odls_process_kill_local( pid_t pid, int sig_num )
 {
-    if( false == TerminateProcess( (HANDLE)pid, 1 ) ) {
+    if( 0 != pid && false == TerminateProcess( (HANDLE)pid, 1 ) ) {
         return (int)GetLastError();
     }
     return 0;

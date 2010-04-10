@@ -53,11 +53,18 @@ IF(OMPI_WANT_F77_BINDINGS)
     DESTINATION bin)
 ENDIF(OMPI_WANT_F77_BINDINGS)
 
+ADD_CUSTOM_COMMAND (TARGET opal-wrapper
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy
+  ${PROJECT_SOURCE_DIR}/tools/wrappers/help-opal-wrapper.txt
+  ${PROJECT_BINARY_DIR}/help-opal-wrapper.exe.txt
+  COMMENT "Copying wrapper help files...")
+
 INSTALL(TARGETS opal-wrapper
   DESTINATION bin)
 INSTALL(FILES help-opal-wrapper.txt
-  DESTINATION share/openmpi
-  RENAME help-opal-wrapper.exe.txt)
+  ${PROJECT_BINARY_DIR}/help-opal-wrapper.exe.txt
+  DESTINATION share/openmpi)
 INSTALL(FILES ${PROJECT_BINARY_DIR}/mpicc.exe
   DESTINATION bin)
 
