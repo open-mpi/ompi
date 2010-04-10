@@ -198,7 +198,7 @@ static int fork_hnp(void)
     int rc;
     
     /* A pipe is used to communicate between the parent and child to
-        indicate whether the exec ultiimately succeeded or failed.  The
+        indicate whether the exec ultimately succeeded or failed.  The
         child sets the pipe to be close-on-exec; the child only ever
         writes anything to the pipe if there is an error (e.g.,
         executable not found, exec() fails, etc.).  The parent does a
@@ -376,10 +376,134 @@ static int fork_hnp(void)
         return ORTE_SUCCESS;
     }
 #else
-    /* someone will have to devise a Windows equivalent */
-#endif    
-    
+    int p[2], death_pipe[2];
+    char *cmd;
+    char **argv = NULL;
+    int argc;
+    char *param;
+    int buffer_length, num_chars_read, chunk;
+    char *orted_uri;
+    int rc;
+
+    /* Use socket to communicate between the parent and child to
+       indicate whether the spawn  succeeded or failed.*/
+    if (evutil_socketpair(AF_UNIX, SOCK_STREAM, 0, p) == -1) {
+        return ORTE_ERROR;
+    }
+
+    /* Set another pair socket to watch if we terminated. */
+    if (evutil_socketpair(AF_UNIX, SOCK_STREAM, 0, death_pipe) == -1) {
+        return ORTE_ERROR;
+    }
+
+    /* find the orted binary using the install_dirs support - this also
+     * checks to ensure that we can see this executable and it *is* executable by us
+     */
+    cmd = opal_path_access("orted.exe", opal_install_dirs.bindir, X_OK);
+    if (NULL == cmd) {
+        /* guess we couldn't do it - best to abort */
+        ORTE_ERROR_LOG(ORTE_ERR_FILE_NOT_EXECUTABLE);
+
+        closesocket(p[0]);
+        closesocket(p[1]);
+        return ORTE_ERR_FILE_NOT_EXECUTABLE;
+    }
+
+    /* okay, setup an appropriate argv */
+    opal_argv_append(&argc, &argv, "orted.exe");
+
+    /* tell the daemon it is to be the HNP */
+    opal_argv_append(&argc, &argv, "--hnp");
+
+    /* tell the daemon to get out of our process group */
+    opal_argv_append(&argc, &argv, "--set-sid");
+
+    /* tell the daemon to report back its uri so we can connect to it */
+    opal_argv_append(&argc, &argv, "--report-uri");
+    asprintf(&param, "%d", p[1]);
+    opal_argv_append(&argc, &argv, param);
+    free(param);
+
+    /* give the daemon a socket number it can watch to tell when we have died */
+    opal_argv_append(&argc, &argv, "--singleton-died-pipe");
+    asprintf(&param, "%d", death_pipe[0]);
+    opal_argv_append(&argc, &argv, param);
+    free(param);
+
+    /* add any debug flags */
+    if (orte_debug_flag) {
+        opal_argv_append(&argc, &argv, "--debug");
+    }
+
+    if (orte_debug_daemons_flag) {
+        opal_argv_append(&argc, &argv, "--debug-daemons");
+    }
+
+    if (orte_debug_daemons_file_flag) {
+        if (!orte_debug_daemons_flag) {
+            opal_argv_append(&argc, &argv, "--debug-daemons");
+        }
+        opal_argv_append(&argc, &argv, "--debug-daemons-file");
+    }
+
+    /* spawn the daemon. */
+    orte_process_info.hnp_pid = (int) _spawnvp( _P_NOWAIT, cmd, argv );
+
+    closesocket(p[1]);  /* parent closes the write - orted will write its contact info to it*/
+    closesocket(death_pipe[0]);  /* parent closes the death_pipe's read */
+
+    /* setup the buffer to read the name + uri */
+    buffer_length = ORTE_URI_MSG_LGTH;
+    chunk = ORTE_URI_MSG_LGTH-1;
+    num_chars_read = 0;
+    orted_uri = (char*)malloc(buffer_length);
+
+    while (chunk == (rc = recv(p[0], &orted_uri[num_chars_read], chunk, 0))) {
+        /* we read an entire buffer - better get more */
+        num_chars_read += chunk;
+        buffer_length += ORTE_URI_MSG_LGTH;
+        orted_uri = (char *) realloc((void*)orted_uri, buffer_length);
+    }
+    num_chars_read += rc;
+
+    if (num_chars_read <= 0) {
+        /* we didn't get anything back - this is bad */
+        ORTE_ERROR_LOG(ORTE_ERR_HNP_COULD_NOT_START);
+        free(orted_uri);
+        return ORTE_ERR_HNP_COULD_NOT_START;
+    }
+
+    /* parse the name from the returned info */
+    if (']' != orted_uri[strlen(orted_uri)-1]) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        free(orted_uri);
+        return ORTE_ERR_COMM_FAILURE;
+    }
+    orted_uri[strlen(orted_uri)-1] = '\0';
+    if (NULL == (param = strrchr(orted_uri, '['))) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        free(orted_uri);
+        return ORTE_ERR_COMM_FAILURE;
+    }
+    *param = '\0';  /* terminate the string */
+    param++;
+    if (ORTE_SUCCESS != (rc = orte_util_convert_string_to_process_name(ORTE_PROC_MY_NAME, param))) {
+        ORTE_ERROR_LOG(rc);
+        free(orted_uri);
+        return rc;
+    }
+    /* save the daemon uri - we will process it later */
+    orte_process_info.my_daemon_uri = strdup(orted_uri);
+
+    /* likewise, since this is also the HNP, set that uri too */
+    orte_process_info.my_hnp_uri = strdup(orted_uri);
+
+   /* indicate we are a singleton so orte_init knows what to do */
+    orte_process_info.proc_type |= ORTE_PROC_SINGLETON;
+    /* all done - report success */
+    free(orted_uri);
     return ORTE_SUCCESS;
+#endif
 }
 
 static uint8_t proc_get_locality(orte_process_name_t *proc)

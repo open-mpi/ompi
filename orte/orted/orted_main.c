@@ -599,7 +599,11 @@ int orte_daemon(int argc, char *argv[])
         free(nptr);
 
         /* pass that info to the singleton */
+#ifndef __WINDOWS__
         write(orted_globals.uri_pipe, tmp, strlen(tmp)+1); /* need to add 1 to get the NULL */
+#else
+        send(orted_globals.uri_pipe, tmp, strlen(tmp)+1, 0); /* need to add 1 to get the NULL */
+#endif
 
         /* cleanup */
         free(tmp);
