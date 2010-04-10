@@ -230,6 +230,29 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         return ORTE_SUCCESS;
     }
     
+    /* if we are mapping an application, check to see if we are to
+     * use a virtual machine
+     */
+    if (policy & ORTE_MAPPING_USE_VM) {
+        /* remove all nodes that do NOT have an "alive" daemon on them */
+        item  = opal_list_get_first(allocated_nodes);
+        while (item != opal_list_get_end(allocated_nodes)) {
+            
+            /** save the next pointer in case we remove this node */
+            next  = opal_list_get_next(item);
+            
+            /** already have a daemon? */
+            node = (orte_node_t*)item;
+            if (NULL == node->daemon || NULL == node->daemon->rml_uri) {
+                opal_list_remove_item(allocated_nodes, item);
+                OBJ_RELEASE(item);  /* "un-retain" it */
+            }
+            
+            /** go on to next item */
+            item = next;
+        }
+    }
+    
     /* remove all nodes that are already at max usage, and
      * compute the total number of allocated slots while
      * we do so
