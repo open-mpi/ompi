@@ -290,7 +290,7 @@ typedef uint8_t orte_job_controls_t;
 
 #define ORTE_MAPPING_POLICY OPAL_UINT16
 /* put the rank assignment method in the upper 8 bits */
-#define ORTE_MAPPING_NOPOL          0x0100
+#define ORTE_MAPPING_USE_VM         0x0100
 #define ORTE_MAPPING_BYNODE         0x0200
 #define ORTE_MAPPING_BYSLOT         0x0400
 #define ORTE_MAPPING_BYSOCKET       0x0800
