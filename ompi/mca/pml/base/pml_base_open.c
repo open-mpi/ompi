@@ -143,22 +143,24 @@ int mca_pml_base_open(void)
      */
 
 #if MCA_pml_DIRECT_CALL
-    opal_pointer_array_add(&mca_pml_base_pml, 
+    opal_pointer_array_add(&mca_pml_base_pml,
                            stringify(MCA_pml_DIRECT_CALL_COMPONENT));
 #else
     {
         char* default_pml = NULL;
 
-        mca_base_param_reg_string_name("pml", NULL, 
-                                       "Specify a specific PML to use", 
+        mca_base_param_reg_string_name("pml", NULL,
+                                       "Specify a specific PML to use",
                                        false, false, "", &default_pml);
-        
-        if( (0 == strlen(default_pml)) || (default_pml[0] == '^') ) { 
+
+        if( (0 == strlen(default_pml)) || (default_pml[0] == '^') ) {
             opal_pointer_array_add(&mca_pml_base_pml, strdup("ob1")); 
             opal_pointer_array_add(&mca_pml_base_pml, strdup("cm"));
-        } else { 
+        } else {
             opal_pointer_array_add(&mca_pml_base_pml, strdup(default_pml));
         }
+
+        free (default_pml);
     }
 #if OPAL_ENABLE_FT_CR == 1
     /* 
