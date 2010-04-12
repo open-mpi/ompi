@@ -79,14 +79,6 @@ orte_ess_base_module_t orte_ess_cm_module = {
 };
 
 
-/* support for setting name */
-static bool arrived = false;
-static bool name_success = false;
-static opal_mutex_t lock;
-static opal_condition_t cond;
-static int cm_set_name(void);
-
-
 static int rte_init(void)
 {
     int ret;
@@ -98,10 +90,6 @@ static int rte_init(void)
     orte_vpid_t vpid=ORTE_VPID_INVALID;
     int32_t jfam;
 
-    /* construct the thread support */
-    OBJ_CONSTRUCT(&lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&cond, opal_condition_t);
-    
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
         error = "orte_ess_base_std_prolog";
@@ -144,14 +132,23 @@ static int rte_init(void)
             }
             free(tmp);
             ORTE_PROC_MY_NAME->jobid = jobid;
+        } else {
+            /* if we were given a job family to join, get it */
+            mca_base_param_reg_string_name("orte", "ess_job_family", "Job family",
+                                           true, false, NULL, &tmp);
+            if (NULL != tmp) {
+                jfam = strtol(tmp, NULL, 10);
+                ORTE_PROC_MY_NAME->jobid = ORTE_CONSTRUCT_JOB_FAMILY(jfam);
+            }
         }
+        
         /* if we were given a vpid, use it */
         mca_base_param_reg_string_name("orte", "ess_vpid", "Process vpid",
                                        true, false, NULL, &tmp);
         if (NULL != tmp) {
             if (ORTE_SUCCESS != (ret = orte_util_convert_string_to_vpid(&vpid, tmp))) {
                 ORTE_ERROR_LOG(ret);
-                error = "convert_jobid";
+                error = "convert_vpid";
                 goto error;
             }
             free(tmp);
@@ -163,45 +160,27 @@ static int rte_init(void)
             ORTE_VPID_INVALID != vpid) {
             goto complete;
         }
-        /* if we do not know the HNP, then we have to
-         * use the multicast system to find it
+
+        /* if we were given an HNP, we can get the jobid from
+         * the HNP's name - this is decoded in proc_info.c during
+         * the prolog
          */
-        if (NULL == orte_process_info.my_hnp_uri) {
-            /* if we were given a job family to join, get it */
-            mca_base_param_reg_string_name("orte", "ess_job_family", "Job family",
-                                           true, false, NULL, &tmp);
-            if (NULL != tmp) {
-                jfam = strtol(tmp, NULL, 10);
-                ORTE_PROC_MY_NAME->jobid = ORTE_CONSTRUCT_JOB_FAMILY(jfam);
-                ORTE_PROC_MY_NAME->vpid = ORTE_VPID_INVALID;
-            }
-            /* get a name for ourselves */
-            if (ORTE_SUCCESS != (ret = cm_set_name())) {
-                error = "set_name";
-                goto error;
-            }
-        } else {
-            /* if we were given an HNP, we can get the jobid from
-             * the HNP's name - this is decoded in proc_info.c during
-             * the prolog
-             */
-            ORTE_PROC_MY_NAME->jobid = orte_process_info.my_hnp.jobid;
-            /* get vpid from environ */
-            mca_base_param_reg_string_name("orte", "ess_vpid", "Process vpid",
-                                           true, false, NULL, &tmp);
-            if (NULL == tmp) {
-                ret = ORTE_ERR_NOT_FOUND;
-                error = "get_ess_vpid";
-                goto error;
-            }
-            if (ORTE_SUCCESS != (ret = orte_util_convert_string_to_vpid(&vpid, tmp))) {
-                error = "convert_string_to_vpid";
-                goto error;
-            }
-            free(tmp);
-            ORTE_PROC_MY_NAME->vpid = vpid;
+        ORTE_PROC_MY_NAME->jobid = orte_process_info.my_hnp.jobid;
+        /* get vpid from environ */
+        mca_base_param_reg_string_name("orte", "ess_vpid", "Process vpid",
+                                       true, false, NULL, &tmp);
+        if (NULL == tmp) {
+            ret = ORTE_ERR_NOT_FOUND;
+            error = "get_ess_vpid";
+            goto error;
         }
-        
+        if (ORTE_SUCCESS != (ret = orte_util_convert_string_to_vpid(&vpid, tmp))) {
+            error = "convert_string_to_vpid";
+            goto error;
+        }
+        free(tmp);
+        ORTE_PROC_MY_NAME->vpid = vpid;
+    
     complete:
         /* get the list of nodes used for this job */
         nodelist = getenv("OMPI_MCA_orte_nodelist");
@@ -217,42 +196,27 @@ static int rte_init(void)
         }
         opal_argv_free(hosts);
     } else if (ORTE_PROC_IS_TOOL) {
-        /* if we were given a job family to join, get it */
-        mca_base_param_reg_string_name("orte", "ess_job_family", "Job family",
-                                       true, false, NULL, &tmp);
-        if (NULL != tmp) {
-            jfam = strtol(tmp, NULL, 10);
-            ORTE_PROC_MY_NAME->jobid = ORTE_CONSTRUCT_LOCAL_JOBID((jfam << 16), ORTE_JOBID_INVALID);
-            ORTE_PROC_MY_NAME->vpid = ORTE_VPID_INVALID;
-        } else {
-            /* create our own name */
-            if (ORTE_SUCCESS != (ret = orte_plm_base_open())) {
-                ORTE_ERROR_LOG(ret);
-                error = "orte_plm_base_open";
-                goto error;
-            }
-            
-            if (ORTE_SUCCESS != (ret = orte_plm_base_select())) {
-                ORTE_ERROR_LOG(ret);
-                error = "orte_plm_base_select";
-                goto error;
-            }
-            if (ORTE_SUCCESS != (ret = orte_plm.set_hnp_name())) {
-                ORTE_ERROR_LOG(ret);
-                error = "orte_plm_set_hnp_name";
-                goto error;
-            }
-            /* close the plm since we opened it to set our
-             * name, but have no further use for it
-             */
-            orte_plm_base_close();
-        }
-
-        /* checkin with the HNP to get a name or just make contact */
-        if (ORTE_SUCCESS != (ret = cm_set_name())) {
-            error = "set_name";
+        /* create our own name */
+        if (ORTE_SUCCESS != (ret = orte_plm_base_open())) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_plm_base_open";
             goto error;
         }
+        
+        if (ORTE_SUCCESS != (ret = orte_plm_base_select())) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_plm_base_select";
+            goto error;
+        }
+        if (ORTE_SUCCESS != (ret = orte_plm.set_hnp_name())) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_plm_set_hnp_name";
+            goto error;
+        }
+        /* close the plm since we opened it to set our
+         * name, but have no further use for it
+         */
+        orte_plm_base_close();
         
         /* do the rest of the standard tool init */
         if (ORTE_SUCCESS != (ret = orte_ess_base_tool_setup())) {
@@ -267,10 +231,6 @@ static int rte_init(void)
         orte_process_info.proc_type &= ~ORTE_PROC_NON_MPI;
     }
     
-    /* destruct the thread support */
-    OBJ_DESTRUCT(&lock);
-    OBJ_DESTRUCT(&cond);
-    
     return ORTE_SUCCESS;
     
 error:
@@ -278,9 +238,6 @@ error:
                    "orte_init:startup:internal-failure",
                    true, error, ORTE_ERROR_NAME(ret), ret);
     
-    /* destruct the thread support */
-    OBJ_DESTRUCT(&lock);
-    OBJ_DESTRUCT(&cond);
     return ret;
 }
 
@@ -468,189 +425,4 @@ static int update_nidmap(opal_byte_object_t *bo)
         ORTE_ERROR_LOG(rc);
     }    
     return rc;
-}
-
-static void cbfunc(int status,
-                   int channel, orte_rmcast_tag_t tag,
-                   orte_process_name_t *sender,
-                   opal_buffer_t *buf, void *cbdata)
-{
-    int32_t n, np;
-    orte_daemon_cmd_flag_t cmd;
-    orte_process_name_t name;
-    int rc;
-    char *uri;
-    char *host;
-    
-    OPAL_THREAD_LOCK(&lock);
-    
-    /* ensure we default to failure */
-    name_success = false;
-    
-    /* unpack the cmd */
-    n = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &cmd, &n, ORTE_DAEMON_CMD_T))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-
-    /* unpack the intended recipient's hostname */
-    n=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &host, &n, OPAL_STRING))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
-    /* is this intended for me? */
-    if (0 != strcmp(host, orte_process_info.nodename)) {
-        /* nope - ignore it */
-        OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
-                             "message for %s - not for me", host));
-        goto cleanup;
-    }
-    
-    /* unpack the name */
-    n = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &name, &n, ORTE_NAME))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    /* if we got an invalid name, then declare failure */
-    if (ORTE_JOBID_INVALID == name.jobid &&
-        ORTE_VPID_INVALID == name.vpid) {
-        arrived = true;
-        name_success = false;
-        goto cleanup;
-    }
-    
-    /* if I didn't already have a name, set it */
-    if (ORTE_VPID_INVALID == ORTE_PROC_MY_NAME->vpid) {
-        ORTE_PROC_MY_NAME->jobid = name.jobid;
-        ORTE_PROC_MY_NAME->vpid = name.vpid;
-        OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
-                             "set my name to %s", ORTE_NAME_PRINT(&name)));
-    }
-
-    /* unpack the HNP uri */
-    n = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &uri, &n, OPAL_STRING))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
-                         "%s got hnp uri %s",
-                         ORTE_NAME_PRINT(&name), uri));
-    orte_process_info.my_hnp_uri = uri;
-    
-    if (ORTE_DAEMON_CHECKIN_CMD == cmd) {
-        /* unpack the number of daemons */
-        n = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &np, &n, OPAL_INT32))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        orte_process_info.num_procs = np;
-    }
-    
-    name_success = true;
-    arrived = true;
-
-cleanup:
-    opal_condition_signal(&cond);
-    OPAL_THREAD_UNLOCK(&lock);
-}
-
-static int cm_set_name(void)
-{
-    int rc;
-    opal_buffer_t buf;
-    orte_daemon_cmd_flag_t cmd;
-    char *keys[] = {
-        OPAL_SYSINFO_CPU_TYPE,
-        OPAL_SYSINFO_CPU_MODEL,
-        OPAL_SYSINFO_NUM_CPUS,
-        OPAL_SYSINFO_MEM_SIZE,
-        NULL
-    };
-    opal_list_t resources;
-    opal_list_item_t *item;
-    opal_sysinfo_value_t *info;
-    int32_t num_values;
-    
-    /* setup the query */
-    OBJ_CONSTRUCT(&buf, opal_buffer_t);
-
-    if (ORTE_PROC_IS_DAEMON) {
-        cmd = ORTE_DAEMON_CHECKIN_CMD;
-    } else if (ORTE_PROC_IS_TOOL) {
-        cmd = ORTE_TOOL_CHECKIN_CMD;
-    }
-    opal_dss.pack(&buf, &cmd, 1, ORTE_DAEMON_CMD_T);
-
-    /* always include our node name */
-    opal_dss.pack(&buf, &orte_process_info.nodename, 1, OPAL_STRING);
-
-    if (ORTE_PROC_IS_DAEMON) {
-        /* get our local resources */
-        OBJ_CONSTRUCT(&resources, opal_list_t);
-        opal_sysinfo.query(keys, &resources);
-        /* add number of values to the buffer */
-        num_values = opal_list_get_size(&resources);
-        opal_dss.pack(&buf, &num_values, 1, OPAL_INT32);
-        /* add them to the buffer */
-        while (NULL != (item = opal_list_remove_first(&resources))) {
-            info = (opal_sysinfo_value_t*)item;
-            opal_dss.pack(&buf, &info->key, 1, OPAL_STRING);
-            opal_dss.pack(&buf, &info->type, 1, OPAL_DATA_TYPE_T);
-            if (OPAL_INT64 == info->type) {
-                opal_dss.pack(&buf, &(info->data.i64), 1, OPAL_INT64);
-            } else if (OPAL_STRING == info->type) {
-                opal_dss.pack(&buf, &(info->data.str), 1, OPAL_STRING);
-            }
-            /* if this is the cpu model, save it for later use */
-            if (0 == strcmp(info->key, OPAL_SYSINFO_CPU_MODEL)) {
-                orte_local_cpu_model = strdup(info->data.str);
-            }
-            OBJ_RELEASE(info);
-        }
-        OBJ_DESTRUCT(&resources);
-    }
-    
-    /* set the recv to get the answer */
-    if (ORTE_SUCCESS != (rc = orte_rmcast.recv_buffer_nb(ORTE_RMCAST_SYS_CHANNEL,
-                                                         ORTE_RMCAST_TAG_BOOTSTRAP,
-                                                         ORTE_RMCAST_PERSISTENT,
-                                                         cbfunc, NULL))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&buf);
-        return rc;
-    }
-    
-    /* send the request */
-    if (ORTE_SUCCESS != (rc = orte_rmcast.send_buffer(ORTE_RMCAST_SYS_CHANNEL,
-                                                      ORTE_RMCAST_TAG_BOOTSTRAP,
-                                                      &buf))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&buf);
-        return rc;
-    }
-    OBJ_DESTRUCT(&buf);
-
-    /* wait for response */
-    OPAL_THREAD_LOCK(&lock);
-    while (!arrived) {
-        opal_condition_wait(&cond, &lock);
-    }
-    OPAL_THREAD_UNLOCK(&lock);
-    
-    /* cancel the recv */
-    orte_rmcast.cancel_recv(ORTE_RMCAST_SYS_CHANNEL,
-                            ORTE_RMCAST_TAG_BOOTSTRAP);
-    
-    /* if we got a valid name, return success */
-    if (name_success) {
-        return ORTE_SUCCESS;
-    }
-
-    return ORTE_ERR_NOT_FOUND;
 }

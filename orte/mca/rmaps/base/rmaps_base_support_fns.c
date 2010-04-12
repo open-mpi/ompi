@@ -214,7 +214,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
             node = (orte_node_t*)item;
             if (NULL != node->daemon) {
                 /* if this is the local node, keep it if requested */
-                if (node->daemon->name.vpid == ORTE_PROC_MY_NAME->vpid &&
+                if (node->daemon->name.vpid == ORTE_PROC_MY_HNP->vpid &&
                     !(policy & ORTE_MAPPING_NO_USE_LOCAL)) {
                     item = next;
                     continue;
@@ -243,7 +243,8 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
             
             /** already have a daemon? */
             node = (orte_node_t*)item;
-            if (NULL == node->daemon || NULL == node->daemon->rml_uri) {
+            if (NULL == node->daemon ||
+                ORTE_PROC_STATE_RUNNING != node->daemon->state) {
                 opal_list_remove_item(allocated_nodes, item);
                 OBJ_RELEASE(item);  /* "un-retain" it */
             }
@@ -688,7 +689,7 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     /* get the daemon job data struct */
-    if (NULL == (daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
+    if (NULL == (daemons = orte_get_job_data_object(ORTE_PROC_MY_HNP->jobid))) {
         /* bad news */
         ORTE_ERROR_LOG(ORTE_ERR_FATAL);
         return ORTE_ERR_FATAL;
@@ -712,7 +713,7 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
-            proc->name.jobid = ORTE_PROC_MY_NAME->jobid;
+            proc->name.jobid = ORTE_PROC_MY_HNP->jobid;
             if (ORTE_VPID_MAX-1 <= daemons->num_procs) {
                 /* no more daemons available */
                 orte_show_help("help-orte-rmaps-base.txt", "out-of-vpids", true);
@@ -847,7 +848,7 @@ int orte_rmaps_base_setup_virtual_machine(orte_job_t *jdata)
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
-        proc->name.jobid = ORTE_PROC_MY_NAME->jobid;
+        proc->name.jobid = ORTE_PROC_MY_HNP->jobid;
         if (ORTE_VPID_MAX-1 <= jdata->num_procs) {
             /* no more daemons available */
             orte_show_help("help-orte-rmaps-base.txt", "out-of-vpids", true);

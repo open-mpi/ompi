@@ -111,6 +111,11 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
         return ORTE_SUCCESS;
     }
     
+    /* if the mapping policy is to use a vm, skip to the add_procs part */
+    if (ORTE_MAPPING_USE_VM & map->policy) {
+        goto pack_add_procs;
+    }
+    
     /* are we passing a regexp? */
     if (orte_use_regexp && jdata->num_apps < 2 && NULL == orte_debugger_daemon) {
         char *regexp;
@@ -252,6 +257,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
         opal_dss.pack(data, &flag, 1, OPAL_INT8);
     }
 
+pack_add_procs:
     /* insert an "add-procs" command here so we can cleanly process it on the
      * other end
      */

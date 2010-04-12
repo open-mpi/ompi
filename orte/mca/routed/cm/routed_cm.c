@@ -832,7 +832,7 @@ static int get_wireup_info(opal_buffer_t *buf)
      * the requested info
      */
     if (!ORTE_PROC_IS_HNP) {
-        return ORTE_ERR_NOT_SUPPORTED;
+        return ORTE_SUCCESS;
     }
     
     /* if we are not using static ports, then we need to share the
