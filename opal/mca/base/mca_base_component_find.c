@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -156,7 +156,8 @@ int mca_base_component_find(const char *directory, const char *type,
 
     /* Find all the components that were statically linked in */
     OBJ_CONSTRUCT(found_components, opal_list_t);
-    for (i = 0; NULL != static_components[i]; ++i) {
+    for (i = 0; NULL != static_components &&
+             NULL != static_components[i]; ++i) {
         if ( use_component(include_mode,
                            (const char**)requested_component_names,
                            static_components[i]->mca_component_name) ) {
