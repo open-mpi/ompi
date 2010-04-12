@@ -244,7 +244,7 @@ static int check_if_device_support_modify_srq(mca_btl_openib_module_t *openib_bt
     dummy_srq = ibv_create_srq(openib_btl->device->ib_pd, &init_attr);
     if(NULL == dummy_srq) {
         rc = OMPI_ERROR;
-        goto destroy_dummy_srq;
+        return rc;
     }
 
     sge_elem.addr = (uint64_t) &buff;
