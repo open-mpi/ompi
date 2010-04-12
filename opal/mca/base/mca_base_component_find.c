@@ -127,6 +127,7 @@ static const char *key_dependency = "dependency=";
 static const char component_template[] = "mca_%s_";
 static opal_list_t found_files;
 static char **found_filenames = NULL;
+static char *last_path_to_use = NULL;
 #endif /* OPAL_WANT_LIBLTDL */
 
 static bool use_component(const bool include_mode,
@@ -225,6 +226,10 @@ int mca_base_component_find_finalize(void)
         opal_argv_free(found_filenames);
         found_filenames = NULL;
     }
+    if (NULL != last_path_to_use) {
+        free(last_path_to_use);
+        last_path_to_use = NULL;
+    }
 #endif
     return OPAL_SUCCESS;
 }
@@ -271,8 +276,21 @@ static void find_dyn_components(const char *path, const char *type_name,
     /* If we haven't done so already, iterate over all the files in
        the directories in the path and make a master array of all the
        matching filenames that we find.  Save the filenames in an
-       argv-style array. */
-    if (NULL == found_filenames) {
+       argv-style array.  Re-scan do this if the mca_component_path
+       has changed. */
+    if (NULL == found_filenames || 
+        (NULL != last_path_to_use && 
+         0 != strcmp(path_to_use, last_path_to_use))) {
+        if (NULL != found_filenames) {
+            opal_argv_free(found_filenames);
+            found_filenames = NULL;
+            free(last_path_to_use);
+            last_path_to_use = NULL;
+        }
+        if (NULL == last_path_to_use) {
+            last_path_to_use = strdup(path_to_use);
+        }
+
         dir = path_to_use;
         if (NULL != dir) {
             do {
