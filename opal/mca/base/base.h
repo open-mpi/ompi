@@ -163,17 +163,6 @@ OPAL_DECLSPEC int mca_base_components_open(const char *type_name, int output_id,
 OPAL_DECLSPEC int mca_base_components_close(int output_id, opal_list_t *components_available, 
                                             const mca_base_component_t *skip);
 
-#if 0
-/* JMS Not implemented yet */
-int mca_base_init_callback(mca_base_init_cb_t func);
-int mca_base_init_callbacks_invoke(void);
-int mca_base_component_select(int requested);
-
-int mca_base_param_associate(int index, int keyval);
-int mca_base_param_lookup_int(int index, MPI_Comm comm);
-char *mca_base_param_lookup_string(int index, MPI_Comm comm);
-#endif
-
 END_C_DECLS
 
 #endif /* MCA_BASE_H */
