@@ -144,7 +144,7 @@ int orte_plm_base_open(void)
     orte_plm_globals.spawn_in_progress = false;
     
     /* init the next jobid */
-    orte_plm_globals.next_jobid = 0;
+    orte_plm_globals.next_jobid = 1;
     
     /* init the rsh support */
     orte_plm_globals.rsh_agent_argv = NULL;

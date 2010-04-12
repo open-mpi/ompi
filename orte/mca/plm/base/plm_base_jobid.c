@@ -63,8 +63,6 @@ int orte_plm_base_set_hnp_name(void)
     ORTE_PROC_MY_NAME->jobid = 0xffff0000 & ((uint32_t)jobfam << 16);
     ORTE_PROC_MY_NAME->vpid = 0;
     
-    orte_plm_globals.next_jobid = 1;
-    
     /* copy it to the HNP field */
     ORTE_PROC_MY_HNP->jobid = ORTE_PROC_MY_NAME->jobid;
     ORTE_PROC_MY_HNP->vpid = ORTE_PROC_MY_NAME->vpid;
