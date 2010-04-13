@@ -39,11 +39,22 @@ AC_DEFUN([ACVT_UNIMCI],
 
 	AS_IF([test x"$check_unimci" = "xyes"],
 	[
-		AC_CHECK_PROG(unimci_config_cmd, unimci-config, unimci-config)
-		AS_IF([test x"$unimci_config_cmd" = x],
+		AS_IF([test x"$inside_openmpi" = "xyes"],
 		[
-			AC_MSG_NOTICE([error: no unimci-config found; check path for UniMCI package first...])
+			AC_MSG_NOTICE([error: MPI Correctness Checking support cannot be built inside Open MPI])
 			unimci_error="yes"
+		])
+
+dnl		check for unimci-config
+
+		AS_IF([test x"$unimci_error" = "xno"],
+		[
+			AC_CHECK_PROG(unimci_config_cmd, unimci-config, unimci-config)
+			AS_IF([test x"$unimci_config_cmd" = x],
+			[
+				AC_MSG_NOTICE([error: no unimci-config found; check path for UniMCI package first...])
+				unimci_error="yes"
+			])
 		])
 
 dnl		check for version
