@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -18,17 +19,12 @@
  */
 /* Much of the code in this file is taken from the file ll_get_machine_list.c, 
  * which is provided by IBM as part of their sample programs for LoadLeveler
- * in the samples/llmpich directory. The documentation has the following license:
- * COPYRIGHT LICENSE:
- * This information contains sample application programs in source language, which 
- * illustrate programming techniques on various operating platforms. You may copy,
- * modify, and distribute these sample programs in any form without payment to 
- * IBM, for the purposes of developing, using, marketing or distributing 
- * application programs conforming to the application programming interface for 
- * the operating platform for which the sample programs are written. These 
- * examples have not been thoroughly tested under all conditions. IBM, 
- * therefore, cannot guarantee or imply reliability, serviceability, or
- * function of these programs.
+ * in the samples/llmpich directory.
+ * 
+ * IBM has approved the release of the sample code for Loadleveler under the 
+ * BSD license.  Consequently, a more restrictive licensing clause that was
+ * originally associated with the sample code and replicated here has been
+ * removed.
  */
  
 #include "orte_config.h"
