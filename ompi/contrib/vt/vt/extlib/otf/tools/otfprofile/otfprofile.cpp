@@ -554,7 +554,9 @@ int main( int argc, const char** argv )
 			}
 
 #			ifdef _OPENMP
+			if(status) {
 #				pragma omp barrier
+			}
 #			endif
 			if( (read <= 0) && (ready == false) ) {
 #				ifdef _OPENMP
@@ -585,11 +587,10 @@ int main( int argc, const char** argv )
 					}
 				}
 			}
-#			ifdef _OPENMP
-#				pragma omp barrier
-#			endif
+
 			if(status && ready == false) {
 #				ifdef _OPENMP
+#					pragma omp barrier
 #					pragma omp single nowait
 #				endif
 				{
@@ -599,6 +600,7 @@ int main( int argc, const char** argv )
 				}
 			}
 		}
+
 		OTF_Reader_setRecordLimit( reader, (uint64_t) OTF_READ_MAXRECORDS );
 			
 		OTF_Reader_close(reader);

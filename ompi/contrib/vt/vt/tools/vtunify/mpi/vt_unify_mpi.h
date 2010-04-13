@@ -95,7 +95,7 @@ EXTERN VT_MPI_INT VTUnify_MPI_Type_free( VTUnify_MPI_Datatype * utype );
 
 EXTERN VT_MPI_INT VTUnify_MPI_Type_struct( VT_MPI_INT count,
                                            VT_MPI_INT * array_of_blocklengths,
-                                           VTUnify_MPI_Aint * array_of_displacements,
+                                           VTUnify_MPI_Aint * array_of_udisplacements,
                                            VTUnify_MPI_Datatype * array_of_utypes,
                                            VTUnify_MPI_Datatype * newutype );
 

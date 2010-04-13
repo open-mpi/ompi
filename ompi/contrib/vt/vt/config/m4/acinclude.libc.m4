@@ -4,6 +4,8 @@ AC_DEFUN([ACVT_LIBC],
 
 	libc_pathname=
 
+	AC_REQUIRE([ACVT_PLATFORM])
+
 	AC_ARG_WITH(libc,
 		AC_HELP_STRING([--with-libc=NAME],
 		[give the pathname for LIBC, default: automatically by configure]),
@@ -17,24 +19,30 @@ AC_DEFUN([ACVT_LIBC],
 
 	AS_IF([test x"$libc_pathname" = x],
 	[
-		rm -f conftest
-		AC_TRY_LINK([], [],
+		AS_IF([test "$PLATFORM" = "bgp"],
 		[
-			AS_IF([test -r "conftest"],
+			libc_pathname="/lib/libc.so.6"
+		],
+		[
+			rm -f conftest
+			AC_TRY_LINK([], [],
 			[
-				libc_pathname=`ldd conftest 2>/dev/null | grep "libc\." | \
-				               sed -e "s/.*=>//"                          \
-				                   -e "s/[[\(].*[\)]]//"                  \
-				                   -e "s/[[	 ]]//g"                   \
-				                   -e "s%^[[^/]].*%%"                   | \
-				               head -n1`
+				AS_IF([test -r "conftest"],
+				[
+					libc_pathname=`ldd conftest 2>/dev/null | grep "libc\." | \
+					               sed -e "s/.*=>//"                          \
+					                   -e "s/[[\(].*[\)]]//"                  \
+					                   -e "s/[[	 ]]//g"                   \
+					                   -e "s%^[[^/]].*%%"                   | \
+					               head -n1`
+				],
+				[
+					libc_error="yes"
+				])
 			],
 			[
 				libc_error="yes"
 			])
-		],
-		[
-			libc_error="yes"
 		])
 	])
 

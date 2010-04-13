@@ -119,7 +119,18 @@ int handleDefProcess(void* firsthandlerarg, uint32_t streamid,
 	}
 	else
 	{
-		gd_ptr->sum_container.adddef_Proc(p_def_key, strdup(name));
+
+		char* dup= strdup( name );
+		char* p= dup;
+		while ( '\0' != *p ) {
+
+			if ( '_' == *p ) *p= ' ';
+			if ( '\\' == *p ) *p= ' ';
+
+			p++;
+		}
+
+		gd_ptr->sum_container.adddef_Proc(p_def_key, dup );
 	}
 	Process p;
 

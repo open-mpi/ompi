@@ -3,6 +3,8 @@
 	  (see extlib/otf/ChangeLog)
 	- added support for tracing functions in shared libraries instrumented
 	  by the GNU, Intel, PathScale, or PGI 9 compiler
+	- extended support for BlueGene/P in terms of tracing libraries
+	  (e.g. libc I/O) and tracing of multi-threaded applications
 	- added support for PAPI-C counters which belong to different components
 	- added environment variable VT_METRICS_SEP to specify a string which
 	  separate the counter names in VT_METRICS
@@ -20,13 +22,15 @@
 	- use more portable 'nm' command instead of the BFD library to collect
 	  symbol information for instrumentation with the GNU, Intel, PathScale,
 	  and PGI 9 compiler
-	- fixed stack shutdown if maximum number of buffer flushes was reached
+	- do not shutdown call stack if maximum number of buffer flushes was
+	  reached, because the additional leaves suggest a wrong application
+	  flow
 	- fixed potential stack underflow in vtfilter which might be cause a
 	  segmentation fault
 	- fixed detection of unique node id on MacOS platforms
 	- fixed support for LAM/MPI
 	- fixed potential segmentation fault in vtunify-mpi which might occur
-	  on 32bit platforms using MPICH2
+	  on 32bit platforms
 	- patched libtool to avoid a bug in detection of the PGI 10 compilers
 
 5.8openmpi

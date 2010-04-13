@@ -5,6 +5,8 @@ AC_DEFUN([ACVT_JAVA],
 	force_java="no"
 	have_java="no"
 
+	AC_REQUIRE([ACVT_PLATFORM])
+
 	AC_ARG_ENABLE(java, 
 		AC_HELP_STRING([--enable-java],
 		[enable Java support, default: enable if JVMTI found by configure]),
@@ -12,9 +14,18 @@ AC_DEFUN([ACVT_JAVA],
 
 	AS_IF([test x"$check_java" = "xyes"],
 	[
-		AC_MSG_CHECKING([whether we can build shared libraries])
-		AS_IF([test x"$enable_shared" = "xyes"],
-		[AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no]); java_error="yes"])
+		AS_IF([test "$PLATFORM" = "bgp"],
+		[
+			AC_MSG_NOTICE([error: Java tracing not supported on this platform])
+			java_error="yes"
+		])
+
+		AS_IF([test x"$java_error" = "xno"],
+		[
+			AC_MSG_CHECKING([whether we can build shared libraries])
+			AS_IF([test x"$enable_shared" = "xyes"],
+			[AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no]); java_error="yes"])
+		])
 
 		AS_IF([test x"$java_error" = "xno"],
 		[
