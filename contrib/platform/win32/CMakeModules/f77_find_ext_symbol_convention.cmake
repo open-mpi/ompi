@@ -102,9 +102,9 @@ MACRO(OMPI_F77_FIND_EXT_SYMBOL_CONVENTION)
     FILE(WRITE ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/CMakeLists.txt
       "CMAKE_MINIMUM_REQUIRED(VERSION 2.4.6 FATAL_ERROR)\n"
       "PROJECT(conftest_c C)\n"
-      "IF(NOT \"${F77_LIB_PATH}\" STREQUAL \"\"n"
+      "IF(NOT \"\${F77_LIB_PATH}\" STREQUAL \"\")\n"
       "  LINK_DIRECTORIES(\"${F77_LIB_PATH}\")\n"
-      "ENDIF(NOT \"${F77_LIB_PATH}\" STREQUAL \"\")\n"
+      "ENDIF(NOT \"\${F77_LIB_PATH}\" STREQUAL \"\")\n"
       "ADD_EXECUTABLE(conftest_c conftest_c.c)\n"
       "TARGET_LINK_LIBRARIES(conftest_c ${OUTPUT_OBJ_FILE})\n")
 
