@@ -24,6 +24,7 @@ AC_DEFUN([ACVT_COMPWRAP],
 	VT_WRAPPER_AVAIL_INST="manual"
 	VT_WRAPPER_DEFAULT_INST=manual
 
+	AC_REQUIRE([ACVT_PLATFORM])
 	AC_REQUIRE([ACVT_COMPINST])
 	AC_REQUIRE([ACVT_DYNINST])
 	AC_REQUIRE([ACVT_THREADS])
@@ -77,6 +78,11 @@ AC_DEFUN([ACVT_COMPWRAP],
 		AC_HELP_STRING([--with-wrapper-libs],
 		[extra flags to add to LIBS when using wrapper compilers]),
 	[VT_WRAPPER_EXTRA_LIBS=$withval])
+
+	AS_IF([test "$PLATFORM" = "bgp" -a x"$enable_shared" = "xyes"],
+	[
+		VT_WRAPPER_EXTRA_LDFLAGS="$VT_WRAPPER_EXTRA_LDFLAGS -Wl,-dy"
+	])
 
 	VT_WRAPPER_VTLIB="-lvt"
 	VT_WRAPPER_VTMPILIB="-lvt-mpi"

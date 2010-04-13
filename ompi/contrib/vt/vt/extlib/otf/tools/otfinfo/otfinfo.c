@@ -11,6 +11,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #define PROGRESSBARLEN 20
 
@@ -42,10 +45,12 @@ int main(int argc, char **argv)
   uint64_t          size           = 0;    /*size of the event files*/
   uint64_t          minRead        = 0;    /*variable for progress*/
   uint64_t          currRead       = 0;    /*count of current read bytes*/
+  uint32_t          numStreams     = 0;
   char*             parameter      = NULL; /*reference to the parameters*/
   char*             fileLocation   = NULL; /*path to the tracefiles*/
   OTF_FileManager  *manager        = NULL;
   OTF_Reader       *reader         = NULL;
+  OTF_MasterControl* master        = NULL;
   OTF_HandlerArray *handles        = NULL;
   int showProgress                 = 0;
   int infoLevel                    = 1;    /*level for the output of information (local)*/
@@ -167,18 +172,44 @@ int main(int argc, char **argv)
   /*read definition file*/
   checkVal = OTF_Reader_readDefinitions( reader, handles );
   otfinfo_assert( checkVal != OTF_READ_ERROR );
-
   checkVal = OTF_Reader_readMarkers( reader, handles );
   otfinfo_assert( checkVal != OTF_READ_ERROR );
 
   /*getting the size of the event files*/
-  OTF_Reader_setRecordLimit( reader, 0 );
-  checkVal = OTF_Reader_readEvents( reader, handles );
-  otfinfo_assert(checkVal != OTF_READ_ERROR);
-  checkVal = OTF_Reader_eventBytesProgress( reader, &minRead,
-                                            &currRead, &size);
-  otfinfo_assert( checkVal != OTF_READ_ERROR );
-  info.traceFileSize = size;
+  master = OTF_Reader_getMasterControl( reader );
+  otfinfo_assert( master );
+
+  numStreams = OTF_MasterControl_getCount( master );
+  otfinfo_assert( numStreams > 0 );
+
+  info.traceFileSize = 0;
+  for( i = 0; i < (int)numStreams; i++ )
+  {
+    static char filename[1024];
+    static uint32_t filecomp = OTF_FILECOMPRESSION_COMPRESSED;
+    static struct stat filestat;
+
+    /*get event file name of stream*/
+    OTF_getFilename( fileLocation, i+1, OTF_FILETYPE_EVENT | filecomp,
+                     sizeof(filename), filename );
+
+    /*if stat succeeds, compute total file size*/
+    if( stat( filename, &filestat ) == 0 )
+    {
+      info.traceFileSize += (uint64_t)filestat.st_size;
+    }
+    /*otherwise, re-try with uncompressed file*/
+    else
+    {
+      if( filecomp == OTF_FILECOMPRESSION_COMPRESSED )
+      {
+        filecomp = OTF_FILECOMPRESSION_UNCOMPRESSED;
+        i--; continue;
+      }
+    }
+
+    filecomp = OTF_FILECOMPRESSION_COMPRESSED;
+  }
 
   /*printing the results and cleanup*/
   if( 0 < infoLevel )
@@ -339,15 +370,15 @@ static void show_info_level_1( definitionInfoT *info )
   }
   switch( i )
   {
-    case 0: unitTimer = "s";break;
-    case 1: unitTimer = "ms";break;
-    case 2: unitTimer = "µs";break;
-    default: unitTimer = "ns";break;
+    case 0: unitTimer = "Hz";break;
+    case 1: unitTimer = "KHz";break;
+    case 2: unitTimer = "MHz";break;
+    default: unitTimer = "GHz";break;
   }
 
   /*formating the size of the event files*/
   i = 0;
-  while( (fileSize / 1024 >= 1.0) && (i < 4) )
+  while( (fileSize / 1024 >= 1.0) && (i < 5) )
   {
     fileSize /= 1024;
     i++;
@@ -357,6 +388,7 @@ static void show_info_level_1( definitionInfoT *info )
     case 0: unitFileSize = "Bytes"; break;
     case 1: unitFileSize = "KB"; break;
     case 2: unitFileSize = "MB"; break;
+    case 3: unitFileSize = "GB"; break;
     default: unitFileSize = "TB";break;
   }
 

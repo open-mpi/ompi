@@ -37,23 +37,23 @@ AC_DEFUN([ACVT_CTOOL],
 	sav_LDFLAGS=$LDFLAGS; LDFLAGS=$LDFLAGS_FOR_BUILD
 	sav_LIBS=$LIBS; LIBS=$LIBS_FOR_BUILD
 
-	sav_CPPFLAGS=$CPPFLAGS
+	sav2_CPPFLAGS=$CPPFLAGS
 	CPPFLAGS="$CPPFLAGS $CTOOLINCDIR"
         AC_CHECK_HEADER([ctool/ctool.h], [],
 	[
 		AC_MSG_NOTICE([error: no ctool/ctool.h found; check path for CTool package first...])
 		ctool_error="yes"
 	])
-	CPPFLAGS=$sav_CPPFLAGS
+	CPPFLAGS=$sav2_CPPFLAGS
 
 	AS_IF([test x"$CTOOLLIB" = x -a x"$ctool_error" = "xno"],
 	[
-		sav_LIBS=$LIBS
+		sav2_LIBS=$LIBS
 		LIBS="$LIBS $CTOOLLIBDIR -lctool"
 		AC_MSG_CHECKING([whether linking with -lctool works])
 		AC_TRY_LINK([],[],
 		[AC_MSG_RESULT([yes]); CTOOLLIB=-lctool],[AC_MSG_RESULT([no])])
-		LIBS=$sav_LIBS
+		LIBS=$sav2_LIBS
 	])
 
 	CXX=$sav_CXX

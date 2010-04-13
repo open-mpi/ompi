@@ -79,6 +79,12 @@ AC_DEFUN([ACVT_PLATFORM],
 		BITMODE=$withval
         ])
 
+
+	AS_IF([test "$PLATFORM" = "bgp"],
+	[
+		CPPFLAGS="$CPPFLAGS -I/bgsys/drivers/ppcfloor/arch/include"
+	])
+
 	AC_SUBST(PLATFORM)
 	AC_SUBST(BITMODE)
 ])

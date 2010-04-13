@@ -942,38 +942,28 @@ void vt_trace_off(uint8_t mark, uint8_t permanent)
   if ( vt_is_alive &&
        VTTHRD_TRACE_STATUS(VTThrdv[VT_MY_THREAD]) != VT_TRACE_OFF_PERMANENT )
   {
-    uint64_t time;
+    if ( mark )
+    {
+      uint64_t time;
+      time = vt_pform_wtime();
+      vt_enter(&time, vt_trc_regid[VT__TRC_OFF]);
+    }
 
     if ( permanent )
     {
-      /* shutdown call stack */
-      while(VTTHRD_STACK_LEVEL(VTThrdv[VT_MY_THREAD]) > 0) {
-	time = vt_pform_wtime();
-	vt_exit(&time);
-      }
-
       VTTHRD_TRACE_STATUS(VTThrdv[VT_MY_THREAD]) = VT_TRACE_OFF_PERMANENT;
 
       vt_cntl_msg(1, "Tracing switched off permanently");
     }
-    else
+    else if ( VTTHRD_TRACE_STATUS(VTThrdv[VT_MY_THREAD]) == VT_TRACE_ON )
     {
-      if ( VTTHRD_TRACE_STATUS(VTThrdv[VT_MY_THREAD]) == VT_TRACE_ON )
-      {
-	if ( mark )
-	{
-	  time = vt_pform_wtime();
-	  vt_enter(&time, vt_trc_regid[VT__TRC_OFF]);
-	}
+      /* store current call stack level */
+      VTTHRD_TRACE_STATUS(VTThrdv[VT_MY_THREAD]) = VT_TRACE_OFF;
+      VTTHRD_STACK_LEVEL_AT_OFF(VTThrdv[VT_MY_THREAD]) =
+      VTTHRD_STACK_LEVEL(VTThrdv[VT_MY_THREAD]);
 
-	/* store current call stack level */
-	VTTHRD_TRACE_STATUS(VTThrdv[VT_MY_THREAD]) = VT_TRACE_OFF;
-	VTTHRD_STACK_LEVEL_AT_OFF(VTThrdv[VT_MY_THREAD]) =
-	  VTTHRD_STACK_LEVEL(VTThrdv[VT_MY_THREAD]);
-
-	vt_cntl_msg(2, "Tracing switched off at call stack level (%i)",
-		    VTTHRD_STACK_LEVEL_AT_OFF(VTThrdv[VT_MY_THREAD]));
-      }
+      vt_cntl_msg(2, "Tracing switched off at call stack level (%i)",
+      VTTHRD_STACK_LEVEL_AT_OFF(VTThrdv[VT_MY_THREAD]));
     }
   }
 }
@@ -1465,7 +1455,7 @@ static void vt_write_def_header()
 
 #if defined(VT_THRD_PTHREAD)
   /* VT_PTHREAD_REUSE */
-  vt_def_comment("__VT_COMMENT__ VT_PTHREAD_REUSE: %s",
+  vt_def_comment("__VT_COMMENT__  VT_PTHREAD_REUSE: %s",
                  vt_env_pthread_reuse() ? "yes" : "no");
 #endif /* VT_THRD_PTHREAD */
 
@@ -1834,8 +1824,10 @@ uint8_t vt_enter(uint64_t* time, uint32_t rid) {
   if (VTTHRD_TRACE_STATUS(VTThrdv[VT_MY_THREAD]) ==
       VT_TRACE_OFF_PERMANENT) return 0;
 
+  VTTHRD_STACK_PUSH(VTThrdv[VT_MY_THREAD]);
+
   do_trace = ((VTTHRD_TRACE_STATUS(VTThrdv[VT_MY_THREAD]) == VT_TRACE_ON) &&
-	      (VTTHRD_STACK_LEVEL(VTThrdv[VT_MY_THREAD]) < max_stack_depth));
+	      (VTTHRD_STACK_LEVEL(VTThrdv[VT_MY_THREAD]) <= max_stack_depth));
 
 #if !defined(VT_DISABLE_RFG)
   if( !RFG_Regions_stackPush(VTTHRD_RFGREGIONS(VTThrdv[VT_MY_THREAD]),
@@ -1924,11 +1916,6 @@ uint8_t vt_enter(uint64_t* time, uint32_t rid) {
     UPDATE_RUSAGE(time);
   }
 
-  /* push call stack, if tracing was not disabled by this event
-     (max buffer flushes reached) */
-  if (VTTHRD_TRACE_STATUS(VTThrdv[VT_MY_THREAD]) != VT_TRACE_OFF_PERMANENT)
-    VTTHRD_STACK_PUSH(VTThrdv[VT_MY_THREAD]);
-
   return do_trace;
 }
 
@@ -1944,8 +1931,10 @@ void vt_exit(uint64_t* time) {
   if (VTTHRD_TRACE_STATUS(VTThrdv[VT_MY_THREAD]) ==
       VT_TRACE_OFF_PERMANENT) return;
 
+  VTTHRD_STACK_POP(VTThrdv[VT_MY_THREAD]);
+
   do_trace = ((VTTHRD_TRACE_STATUS(VTThrdv[VT_MY_THREAD]) == VT_TRACE_ON) &&
-	      (VTTHRD_STACK_LEVEL(VTThrdv[VT_MY_THREAD])+1 < max_stack_depth));
+	      (VTTHRD_STACK_LEVEL(VTThrdv[VT_MY_THREAD])+1 <= max_stack_depth));
 
 #if !defined(VT_DISABLE_RFG)
   if (!RFG_Regions_stackPop(VTTHRD_RFGREGIONS(VTThrdv[VT_MY_THREAD]),
@@ -1995,11 +1984,6 @@ void vt_exit(uint64_t* time) {
 			0, NULL);
 #   endif /* VT_METR */
   }
-
-  /* pop call stack, if tracing was not disabled by this event
-     (max buffer flushes reached) */
-  if (VTTHRD_TRACE_STATUS(VTThrdv[VT_MY_THREAD]) != VT_TRACE_OFF_PERMANENT)
-    VTTHRD_STACK_POP(VTThrdv[VT_MY_THREAD]);
 }
 
 /* -- File I/O -- */
