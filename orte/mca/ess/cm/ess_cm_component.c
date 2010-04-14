@@ -70,9 +70,9 @@ orte_ess_cm_component_open(void)
 
 int orte_ess_cm_component_query(mca_base_module_t **module, int *priority)
 {
-    /* if we are a CM program, then select us */
-    if (ORTE_PROC_IS_CM && !ORTE_PROC_IS_HNP) {
-        *priority = 1000;
+    /* if we are a CM program, then we are available */
+    if (ORTE_PROC_IS_CM) {
+        *priority = 50;
         *module = (mca_base_module_t *)&orte_ess_cm_module;
         return ORTE_SUCCESS;
     }
