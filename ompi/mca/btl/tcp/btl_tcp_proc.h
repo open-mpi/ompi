@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -64,6 +65,12 @@ OBJ_CLASS_DECLARATION(mca_btl_tcp_proc_t);
 
 /*	the maximum number of kernel interfaces we can handle */
 #define MAX_KERNEL_INTERFACES 8
+
+/* The maximum number of interfaces that we can have and use the
+ * recursion code for determining the best set of connections.  When
+ * the number is greater than this, we switch to a simpler algorithm
+ * to speed things up. */
+#define MAX_PERMUTATION_INTERFACES 8
 
 /*
  * FIXME: this should probably be part of an ompi list, so we need the
