@@ -22,6 +22,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
+#include "orte/util/proc_info.h"
 
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"
@@ -33,7 +34,6 @@
  */
 int orte_iof_base_select(void)
 {
-    int exit_status = ORTE_SUCCESS;
     orte_iof_base_component_t *best_component = NULL;
     orte_iof_base_module_t *best_module = NULL;
     
@@ -44,21 +44,17 @@ int orte_iof_base_select(void)
                                         &orte_iof_base.iof_components_opened,
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component) ) {
-        /* This will only happen if no component was selected, which
-         * is an error.
-         *
-         * NOTE: processes do not open/select the IOF - only daemons,
-         * the HNP, and tools do. 
-         */
-        exit_status = ORTE_ERR_NOT_FOUND;
-        goto cleanup;
+        /* it is okay to not find a module if we are a CM process */
+        if (ORTE_PROC_IS_CM) {
+            return ORTE_SUCCESS;
+        }
+        /* otherwise, this is a problem */
+        return ORTE_ERR_NOT_FOUND;
     }
     
     /* Save the winner */
     orte_iof = *best_module;
 
-cleanup:
-    return exit_status;
-    
+    return ORTE_SUCCESS;
 }
 
