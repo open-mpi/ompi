@@ -555,6 +555,9 @@ int orterun(int argc, char *argv[])
      */
     orte_launch_environ = opal_argv_copy(environ);
     
+    /* purge an ess flag set externally */
+    opal_unsetenv("OMPI_MCA_ess", &orte_launch_environ);
+    
 #if OPAL_ENABLE_FT_CR == 1
     /* Disable OPAL CR notifications for this tool */
     opal_cr_set_enabled(false);

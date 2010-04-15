@@ -196,6 +196,38 @@ static int rte_init(void)
         }
         opal_argv_free(hosts);
     } else if (ORTE_PROC_IS_TOOL) {
+        /* if we were given a jobid, use it */
+        mca_base_param_reg_string_name("orte", "ess_jobid", "Process jobid",
+                                       true, false, NULL, &tmp);
+        if (NULL != tmp) {
+            if (ORTE_SUCCESS != (ret = orte_util_convert_string_to_jobid(&jobid, tmp))) {
+                ORTE_ERROR_LOG(ret);
+                error = "convert_jobid";
+                goto error;
+            }
+            free(tmp);
+            ORTE_PROC_MY_NAME->jobid = jobid;
+        }
+        
+        /* if we were given a vpid, use it */
+        mca_base_param_reg_string_name("orte", "ess_vpid", "Process vpid",
+                                       true, false, NULL, &tmp);
+        if (NULL != tmp) {
+            if (ORTE_SUCCESS != (ret = orte_util_convert_string_to_vpid(&vpid, tmp))) {
+                ORTE_ERROR_LOG(ret);
+                error = "convert_vpid";
+                goto error;
+            }
+            free(tmp);
+            ORTE_PROC_MY_NAME->vpid = vpid;
+        }
+        
+        /* if both were given, then we are done */
+        if (ORTE_JOBID_INVALID != jobid &&
+            ORTE_VPID_INVALID != vpid) {
+            goto tool_done;
+        }
+        
         /* create our own name */
         if (ORTE_SUCCESS != (ret = orte_plm_base_open())) {
             ORTE_ERROR_LOG(ret);
@@ -218,6 +250,7 @@ static int rte_init(void)
          */
         orte_plm_base_close();
         
+    tool_done:
         /* do the rest of the standard tool init */
         if (ORTE_SUCCESS != (ret = orte_ess_base_tool_setup())) {
             ORTE_ERROR_LOG(ret);
