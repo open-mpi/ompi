@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -106,7 +108,7 @@ static mca_common_sm_mmap_t* create_map(int fd, size_t size, char *file_name,
     seg = (mca_common_sm_file_header_t*)
         mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
     if (MAP_FAILED == seg) {
-        orte_show_help("help-mpi-common-sm.txt", "sys call fail",
+        orte_show_help("help-mpi-common-sm.txt", "sys call fail", 1,
                        orte_process_info.nodename,
                        "mmap(2)", "", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                        strerror(errno), errno);
@@ -131,7 +133,7 @@ static mca_common_sm_mmap_t* create_map(int fd, size_t size, char *file_name,
 
         /* is addr past end of file ? */
         if((unsigned char*)seg + size < addr) {
-            orte_show_help("help-mpi-common-sm.txt", "mmap too small",
+            orte_show_help("help-mpi-common-sm.txt", "mmap too small", 1,
                            orte_process_info.nodename,
                            (unsigned long) size, 
                            (unsigned long) size_ctl_structure,
