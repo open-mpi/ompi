@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -194,8 +194,12 @@ mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority)
 	return NULL;
     }
 
-    /* All is good -- return a module */
     sm_module = OBJ_NEW(mca_coll_sm_module_t);
+    if (NULL == sm_module) {
+        return NULL;
+    }
+
+    /* All is good -- return a module */
     sm_module->super.coll_module_enable = sm_module_enable;
     sm_module->super.ft_event        = mca_coll_sm_ft_event;
     sm_module->super.coll_allgather  = NULL;
