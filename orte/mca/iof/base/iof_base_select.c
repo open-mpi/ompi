@@ -23,12 +23,13 @@
 #include "opal/mca/base/base.h"
 
 #include "orte/util/proc_info.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"
 
 /**
- * Call the init function on all available components to find out if
+ * Call the query function on all available components to find out if
  * they want to run.  Select the single component with the highest 
  * priority.
  */
@@ -36,6 +37,7 @@ int orte_iof_base_select(void)
 {
     orte_iof_base_component_t *best_component = NULL;
     orte_iof_base_module_t *best_module = NULL;
+    int rc;
     
     /*
      * Select the best component
@@ -54,6 +56,13 @@ int orte_iof_base_select(void)
     
     /* Save the winner */
     orte_iof = *best_module;
+    /* init it */
+    if (NULL != orte_iof.init) {
+        if (ORTE_SUCCESS != (rc = orte_iof.init())) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
 
     return ORTE_SUCCESS;
 }

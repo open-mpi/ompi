@@ -22,11 +22,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 
-#include "orte/mca/rml/rml.h"
-#include "orte/mca/rml/rml_types.h"
 #include "orte/util/proc_info.h"
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/runtime/orte_globals.h"
 
 #include "iof_orted.h"
 
@@ -37,11 +33,6 @@ static int orte_iof_orted_open(void);
 static int orte_iof_orted_close(void);
 static int orte_iof_orted_query(mca_base_module_t **module, int *priority);
 
-
-/*
- * Local variables
- */
-static bool initialized = false;
 
 /*
  * Public string showing the iof orted component version number
@@ -83,63 +74,21 @@ static int orte_iof_orted_open(void)
 
 static int orte_iof_orted_close(void)
 {
-    int rc = ORTE_SUCCESS;
-    opal_list_item_t *item;
-    
-    if (initialized) {
-        OPAL_THREAD_LOCK(&mca_iof_orted_component.lock);
-        while ((item = opal_list_remove_first(&mca_iof_orted_component.sinks)) != NULL) {
-            OBJ_RELEASE(item);
-        }
-        OBJ_DESTRUCT(&mca_iof_orted_component.sinks);
-        while ((item = opal_list_remove_first(&mca_iof_orted_component.procs)) != NULL) {
-            OBJ_RELEASE(item);
-        }
-        OBJ_DESTRUCT(&mca_iof_orted_component.procs);
-        /* Cancel the RML receive */
-        rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_PROXY);
-        OPAL_THREAD_UNLOCK(&mca_iof_orted_component.lock);
-        OBJ_DESTRUCT(&mca_iof_orted_component.lock);
-    }
-    return rc;
+    return ORTE_SUCCESS;
 }
 
 
 static int orte_iof_orted_query(mca_base_module_t **module, int *priority)
 {
-    int rc;
-
-    /* set default */
-    *module = NULL;
-    *priority = -1;
-
     /* if we are not a daemon, then don't use this module */
     if (!ORTE_PROC_IS_DAEMON) {
+        *module = NULL;
+        *priority = -1;
         return ORTE_ERROR;
     }
 
-    /* post a non-blocking RML receive to get messages
-       from the HNP IOF component */
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                      ORTE_RML_TAG_IOF_PROXY,
-                                                      ORTE_RML_NON_PERSISTENT,
-                                                      orte_iof_orted_recv,
-                                                      NULL))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-        
-    }
-
-    /* setup the local global variables */
-    OBJ_CONSTRUCT(&mca_iof_orted_component.lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&mca_iof_orted_component.sinks, opal_list_t);
-    OBJ_CONSTRUCT(&mca_iof_orted_component.procs, opal_list_t);
-    mca_iof_orted_component.xoff = false;
-    
-    /* we must be selected */
     *priority = 100;
     *module = (mca_base_module_t *) &orte_iof_orted_module;
-    initialized = true;
     
     return ORTE_SUCCESS;
 }
