@@ -1141,9 +1141,12 @@ static int setup_channel(rmcast_base_channel_t *chan, uint8_t direction)
     chan->addr.sin_port = htons(chan->port);
     
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
-                         "%s setup:channel addr %03d.%03d.%03d.%03d port %d",
+                         "%s setup:channel addr %03d.%03d.%03d.%03d port %d for %s:%s msg-size: %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         OPAL_IF_FORMAT_ADDR(chan->network), (int)chan->port));
+                         OPAL_IF_FORMAT_ADDR(chan->network), (int)chan->port,
+                         (ORTE_RMCAST_RECV & direction) ? " RECV" : " ",
+                         (ORTE_RMCAST_XMIT & direction) ? " XMIT" : " ",
+                         mca_rmcast_udp_component.max_msg_size));
     
     if (0 > chan->xmit && ORTE_RMCAST_XMIT & direction) {
         /* create a xmit socket */
