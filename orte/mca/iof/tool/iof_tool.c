@@ -41,6 +41,7 @@
 
 #include "iof_tool.h"
 
+static int init(void);
 
 static int tool_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag, int fd);
 
@@ -51,15 +52,41 @@ static int tool_pull(const orte_process_name_t* src_name,
 static int tool_close(const orte_process_name_t* peer,
                        orte_iof_tag_t source_tag);
 
+static int finalize(void);
+
 static int tool_ft_event(int state);
 
 orte_iof_base_module_t orte_iof_tool_module = {
+    init,
     tool_push,
     tool_pull,
     tool_close,
+    finalize,
     tool_ft_event
 };
 
+
+static int init(void)
+{
+    int rc;
+    
+    /* post a non-blocking RML receive to get messages
+     from the HNP IOF component */
+    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                                                      ORTE_RML_TAG_IOF_PROXY,
+                                                      ORTE_RML_NON_PERSISTENT,
+                                                      orte_iof_tool_recv,
+                                                      NULL))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+        
+    }
+    
+    OBJ_CONSTRUCT(&mca_iof_tool_component.lock, opal_mutex_t);
+    mca_iof_tool_component.closed = false;
+    
+    return ORTE_SUCCESS;
+}
 
 /**
  * Push data from the specified file descriptor
@@ -197,6 +224,65 @@ static int tool_close(const orte_process_name_t* src_name,
     return ORTE_SUCCESS;
 }
 
+static int finalize(void)
+{
+    int rc;
+    opal_list_item_t* item;
+    orte_iof_write_output_t *output;
+    orte_iof_write_event_t *wev;
+    int num_written;
+    bool dump;
+    
+    OPAL_THREAD_LOCK(&mca_iof_tool_component.lock);
+
+    OPAL_THREAD_LOCK(&orte_iof_base.iof_write_output_lock);
+    /* check if anything is still trying to be written out */
+    wev = orte_iof_base.iof_write_stdout->wev;
+    if (!opal_list_is_empty(&wev->outputs)) {
+        dump = false;
+        /* make one last attempt to write this out */
+        while (NULL != (item = opal_list_remove_first(&wev->outputs))) {
+            output = (orte_iof_write_output_t*)item;
+            if (!dump) {
+                num_written = write(wev->fd, output->data, output->numbytes);
+                if (num_written < output->numbytes) {
+                    /* don't retry - just cleanout the list and dump it */
+                    dump = true;
+                }
+            }
+            OBJ_RELEASE(output);
+        }
+    }
+    OBJ_RELEASE(orte_iof_base.iof_write_stdout);
+    if (!orte_xml_output) {
+        /* we only opened stderr channel if we are NOT doing xml output */
+        wev = orte_iof_base.iof_write_stderr->wev;
+        if (!opal_list_is_empty(&wev->outputs)) {
+            dump = false;
+            /* make one last attempt to write this out */
+            while (NULL != (item = opal_list_remove_first(&wev->outputs))) {
+                output = (orte_iof_write_output_t*)item;
+                if (!dump) {
+                    num_written = write(wev->fd, output->data, output->numbytes);
+                    if (num_written < output->numbytes) {
+                        /* don't retry - just cleanout the list and dump it */
+                        dump = true;
+                    }
+                }
+                OBJ_RELEASE(output);
+            }
+        }
+        OBJ_RELEASE(orte_iof_base.iof_write_stderr);
+    }
+    OPAL_THREAD_UNLOCK(&orte_iof_base.iof_write_output_lock);
+    
+    /* Cancel the RML receive */
+    rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_PROXY);
+    OPAL_THREAD_UNLOCK(&mca_iof_tool_component.lock);
+    OBJ_DESTRUCT(&mca_iof_tool_component.lock);
+    
+    return rc;
+}
 
 /*
  * FT event

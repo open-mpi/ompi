@@ -42,6 +42,7 @@
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/odls/odls_types.h"
+#include "orte/mca/rml/rml.h"
 
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"
@@ -54,6 +55,8 @@ static void stdin_write_handler(int fd, short event, void *cbdata);
 
 
 /* API FUNCTIONS */
+static int init(void);
+
 static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag, int fd);
 
 static int orted_pull(const orte_process_name_t* src_name,
@@ -62,6 +65,8 @@ static int orted_pull(const orte_process_name_t* src_name,
 
 static int orted_close(const orte_process_name_t* peer,
                        orte_iof_tag_t source_tag);
+
+static int finalize(void);
 
 static int orted_ft_event(int state);
 
@@ -74,12 +79,38 @@ static int orted_ft_event(int state);
  */
 
 orte_iof_base_module_t orte_iof_orted_module = {
+    init,
     orted_push,
     orted_pull,
     orted_close,
+    finalize,
     orted_ft_event
 };
 
+static int init(void)
+{
+    int rc;
+
+    /* post a non-blocking RML receive to get messages
+     from the HNP IOF component */
+    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                                                      ORTE_RML_TAG_IOF_PROXY,
+                                                      ORTE_RML_NON_PERSISTENT,
+                                                      orte_iof_orted_recv,
+                                                      NULL))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+        
+    }
+    
+    /* setup the local global variables */
+    OBJ_CONSTRUCT(&mca_iof_orted_component.lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&mca_iof_orted_component.sinks, opal_list_t);
+    OBJ_CONSTRUCT(&mca_iof_orted_component.procs, opal_list_t);
+    mca_iof_orted_component.xoff = false;
+    
+    return ORTE_SUCCESS;
+}
 
 /**
  * Push data from the specified file descriptor
@@ -278,6 +309,26 @@ static int orted_close(const orte_process_name_t* peer,
     return ORTE_SUCCESS;
 }
 
+static int finalize(void)
+{
+    int rc;
+    opal_list_item_t *item;
+    
+    OPAL_THREAD_LOCK(&mca_iof_orted_component.lock);
+    while ((item = opal_list_remove_first(&mca_iof_orted_component.sinks)) != NULL) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&mca_iof_orted_component.sinks);
+    while ((item = opal_list_remove_first(&mca_iof_orted_component.procs)) != NULL) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&mca_iof_orted_component.procs);
+    /* Cancel the RML receive */
+    rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_PROXY);
+    OPAL_THREAD_UNLOCK(&mca_iof_orted_component.lock);
+    OBJ_DESTRUCT(&mca_iof_orted_component.lock);
+    return rc;
+}
 
 /*
  * FT event
