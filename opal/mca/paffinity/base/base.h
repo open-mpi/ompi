@@ -262,6 +262,11 @@ OPAL_DECLSPEC extern bool opal_paffinity_alone;
 
 OPAL_DECLSPEC extern char *opal_paffinity_base_slot_list;
 
+/* Indicator that process affinity has been set for this process - i.e.,
+ * that OPAL set it either directly or when launched
+ */
+OPAL_DECLSPEC extern bool opal_paffinity_base_bound;
+
 END_C_DECLS
 
 #endif /* OPAL_BASE_PAFFINITY_H */

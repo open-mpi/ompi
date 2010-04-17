@@ -29,15 +29,21 @@
 #endif
 
 #include "opal/constants.h"
+#include "opal/util/output.h"
 #include "opal/mca/paffinity/paffinity.h"
 #include "opal/mca/paffinity/base/base.h"
 
 int opal_paffinity_base_set(opal_paffinity_base_cpu_set_t cpumask)
 {
+    int rc;
+    
     if (!opal_paffinity_base_selected) {
         return OPAL_ERR_NOT_FOUND;
     }
-    return opal_paffinity_base_module->paff_module_set(cpumask);
+    if (OPAL_SUCCESS == (rc = opal_paffinity_base_module->paff_module_set(cpumask))) {
+        opal_paffinity_base_bound = true;
+    }
+    return rc;
 }
 
 int opal_paffinity_base_get(opal_paffinity_base_cpu_set_t *cpumask)

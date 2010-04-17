@@ -426,7 +426,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     if (OPAL_SUCCESS == ret) {
         /* paffinity is supported - check for binding */
         OPAL_PAFFINITY_PROCESS_IS_BOUND(mask, &proc_bound);
-        if (proc_bound) {
+        if (proc_bound || opal_paffinity_base_bound) {
             /* someone external set it - indicate it is set
              * so that we know
              */

@@ -45,6 +45,7 @@ bool opal_paffinity_base_components_opened_valid = false;
 opal_list_t opal_paffinity_base_components_opened;
 bool opal_paffinity_alone = false;
 char *opal_paffinity_base_slot_list;
+bool opal_paffinity_base_bound;
 
 /*
  * Register some paffinity-wide MCA params
@@ -79,6 +80,12 @@ int opal_paffinity_base_register_params(void)
     mca_base_param_lookup_int(id, &value);
     opal_paffinity_alone = OPAL_INT_TO_BOOL(value);
 
+    mca_base_param_reg_int_name("paffinity", "base_bound", 
+                                "Process affinity was set by an external entity",
+                                true, false,
+                                false, &value);
+    opal_paffinity_base_bound = OPAL_INT_TO_BOOL(value);
+    
     return OPAL_SUCCESS;
 }
 

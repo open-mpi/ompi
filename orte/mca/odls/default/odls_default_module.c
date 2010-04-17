@@ -72,6 +72,7 @@
 #include "opal/mca/maffinity/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/class/opal_pointer_array.h"
+#include "opal/util/opal_environ.h"
 
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_wait.h"
@@ -243,6 +244,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
     orte_local_rank_t lrank;
     int target_socket, npersocket, logical_skt;
     int logical_cpu, phys_core, phys_cpu, ncpu;
+    char *param;
     
     if (NULL != child) {
         /* should pull this information from MPIRUN instead of going with
@@ -814,6 +816,13 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
         }
         
 LAUNCH_PROCS:
+        /* if we are bound, report it */
+        if (opal_paffinity_base_bound) {
+            param = mca_base_param_environ_variable("paffinity","base","bound");
+            opal_setenv(param, "1", true, &environ_copy);
+            free(param);
+        }
+        
         /* close all file descriptors w/ exception of
          * stdin/stdout/stderr and the pipe used for the IOF INTERNAL
          * messages
