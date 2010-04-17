@@ -247,7 +247,8 @@ OPAL_DECLSPEC extern opal_list_t opal_paffinity_base_components_opened;
 /**
  * Assigning slot_list to process 
  */
-OPAL_DECLSPEC int opal_paffinity_base_slot_list_set(long rank, char *slot_str);
+OPAL_DECLSPEC int opal_paffinity_base_slot_list_set(long rank, char *slot_str,
+                                                    opal_paffinity_base_cpu_set_t *cpumask);
 
 /**
  * Debugging output stream

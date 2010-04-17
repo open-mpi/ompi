@@ -54,7 +54,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/show_help.h"
 #include "orte/mca/ess/ess.h"
-
+#include "orte/mca/odls/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
 
@@ -442,10 +442,20 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                     error = "Multiple processor affinity schemes specified (can only specify one)";
                     goto error;
                 }
-                ret = opal_paffinity_base_slot_list_set((long)ORTE_PROC_MY_NAME->vpid, opal_paffinity_base_slot_list);
+                ret = opal_paffinity_base_slot_list_set((long)ORTE_PROC_MY_NAME->vpid, opal_paffinity_base_slot_list, &mask);
                 if (OPAL_SUCCESS != ret && OPAL_ERR_NOT_FOUND != ret) {
                     error = "opal_paffinity_base_slot_list_set() returned an error";
                     goto error;
+                }
+                /* print out a warning if result is no-op, if not suppressed */
+                OPAL_PAFFINITY_PROCESS_IS_BOUND(mask, &proc_bound);
+                if (!proc_bound && orte_odls_base.warn_if_not_bound) {
+                    orte_show_help("help-orte-odls-base.txt",
+                                   "orte-odls-base:warn-not-bound",
+                                   true, "slot-list",
+                                   "Request resulted in binding to all available processors",
+                                   orte_process_info.nodename,
+                                   "bind-to-slot-list", opal_paffinity_base_slot_list, argv[0]);
                 }
                 paffinity_enabled = true;
             } else if (opal_paffinity_alone) {
@@ -469,6 +479,16 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                 if (OPAL_SUCCESS != ret) {
                     error = "Setting processor affinity failed";
                     goto error;
+                }
+                /* print out a warning if result is no-op, if not suppressed */
+                OPAL_PAFFINITY_PROCESS_IS_BOUND(mask, &proc_bound);
+                if (!proc_bound && orte_odls_base.warn_if_not_bound) {
+                    orte_show_help("help-orte-odls-base.txt",
+                                   "orte-odls-base:warn-not-bound",
+                                   true, "cpu",
+                                   "Request resulted in binding to all available processors",
+                                   orte_process_info.nodename,
+                                   "[opal|mpi]_paffinity_alone set non-zero", "n/a", argv[0]);
                 }
                 paffinity_enabled = true;
             }

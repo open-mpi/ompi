@@ -62,6 +62,8 @@ typedef struct orte_odls_base_t {
     orte_odls_base_component_t selected_component;
     /* comm fn for updating state */
     orte_odls_base_comm_fn_t comm;
+    /* warn if binding no-op */
+    bool warn_if_not_bound;
 } orte_odls_base_t;
 
 /**
