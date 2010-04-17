@@ -41,3 +41,23 @@ Rank:     %d
 
 Note that ranks start with 0, not 1, and must be specified
 accordingly.
+#
+[orte-odls-base:show-bindings]
+System has detected external process binding to cores %04lx
+
+#
+[orte-odls-base:warn-not-bound]
+A request to bind the processes to a %s was made, but the operation
+resulted in the processes being unbound. This was most likely caused
+by the following:
+
+%s
+
+This is only a warning that can be suppressed in the future by
+setting the odls_warn_if_not_bound MCA parameter to 0. Execution
+will continue.
+
+  Local host:        %s
+  Action requested:  %s
+  Slot list:         %s
+  Application name:  %s

@@ -31,12 +31,13 @@
 #endif
 #include <ctype.h>
 
+#include "opal/mca/mca.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_param.h"
+
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/odls/base/odls_private.h"
 #include "orte/mca/odls/default/odls_default.h"
-
-/* instantiate a module-global variable */
-bool orte_odls_default_report_bindings;
 
 /*
  * Instantiate the public struct with all of our public information
@@ -57,7 +58,7 @@ orte_odls_base_component_t mca_odls_default_component = {
         /* Component open and close functions */
         orte_odls_default_component_open,
         orte_odls_default_component_close,
-        orte_odls_default_component_query
+        orte_odls_default_component_query,
     },
     {
         /* The component is checkpoint ready */
@@ -71,7 +72,6 @@ int orte_odls_default_component_open(void)
 {
     return ORTE_SUCCESS;
 }
-
 
 int orte_odls_default_component_query(mca_base_module_t **module, int *priority)
 {
