@@ -200,22 +200,22 @@ typedef struct opal_paffinity_base_cpu_set_t {
 /**
  * Public macro to test if a process is bound anywhere
  */
-#define OPAL_PAFFINITY_PROCESS_IS_BOUND(cpuset, bound)              \
-    do {                                                            \
-        int i, num_processors, num_bound;                           \
-        *(bound) = false;                                           \
-        if (OPAL_SUCCESS ==                                         \
-            opal_paffinity_base_get_processor_info(&num_processors)) {\
-            num_bound = 0;                                          \
-            for (i = 0; i < OPAL_PAFFINITY_BITMASK_CPU_MAX; i++) {  \
-                if (OPAL_PAFFINITY_CPU_ISSET(i, (cpuset))) {        \
-                    num_bound++;                                    \
-                }                                                   \
-            }                                                       \
-            if (0 < num_bound && num_bound < num_processors) {      \
-                *(bound) = true;                                    \
-            }                                                       \
-        }                                                           \
+#define OPAL_PAFFINITY_PROCESS_IS_BOUND(cpuset, bound)                  \
+    do {                                                                \
+        int i, num_processors, num_bound;                               \
+        *(bound) = false;                                               \
+        if (OPAL_SUCCESS ==                                             \
+            opal_paffinity_base_get_processor_info(&num_processors)) {  \
+            num_bound = 0;                                              \
+            for (i = 0; i < OPAL_PAFFINITY_BITMASK_CPU_MAX; i++) {      \
+                if (OPAL_PAFFINITY_CPU_ISSET(i, (cpuset))) {            \
+                    num_bound++;                                        \
+                }                                                       \
+            }                                                           \
+            if (0 < num_bound && num_bound < num_processors) {          \
+                *(bound) = true;                                        \
+            }                                                           \
+        }                                                               \
     } while(0);
 
 /***************************************************************************/
