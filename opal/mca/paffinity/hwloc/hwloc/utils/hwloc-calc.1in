@@ -1,0 +1,132 @@
+.\" -*- nroff -*-
+.TH HWLOC-CALC "1" "#HWLOC_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+hwloc-calc \- Operate on cpu mask strings and objects
+.
+.\" **************************
+.\"    Synopsis Section
+.\" **************************
+.SH SYNOPSIS
+.
+.B hwloc-calc
+[\fIoptions\fR] \fI<location1> [<location2> [...] ]
+.
+.\" **************************
+.\"    Options Section
+.\" **************************
+.SH OPTIONS
+.
+.TP 10
+\fB\-p\fR \fB\-\-physical\fR
+Use OS/physical indexes instead of logical indexes for both input and output.
+.TP
+\fB\-l\fR \fB\-\-logical\fR
+Use logical indexes instead of physical/OS indexes for both input and output (default).
+.TP
+\fB\--pi\fR \fB\-\-physical-input\fR
+Use OS/physical indexes instead of logical indexes for input.
+.TP
+\fB\--li\fR \fB\-\-logical-input\fR
+Use logical indexes instead of physical/OS indexes for input (default).
+.TP
+\fB\--po\fR \fB\-\-physical-input\fR
+Use OS/physical indexes instead of logical indexes for output.
+.TP
+\fB\--lo\fR \fB\-\-logical-output\fR
+Use logical indexes instead of physical/OS indexes for output (default).
+.TP
+\fB\-\-proclist\fR
+Report the comma-separated list of processors' indexes instead of the cpu mask string.
+When combined with \fB\-\-physical\fR, the list is convenient to pass to external
+tools such as taskset or numactl \fB\-\-physcpubind\fR.
+.TP
+\fB\-\-nodelist\fR
+Report the comma-separated list of memory nodes' indexes instead of the cpu mask string.
+When combined with \fB\-\-physical\fR, the list is convenient to pass to external
+tools such as numactl \fB\-\-membind\fR.
+.TP
+\fB\-\-objects\fR
+Report the list of highest objects instead of the cpu mask string.
+.TP
+\fB\-v\fR
+Verbose output.
+.TP
+\fB\-\-version\fR
+Report version and exit.
+.
+.
+.\" **************************
+.\"    Description Section
+.\" **************************
+.SH DESCRIPTION
+.
+hwloc-calc generates and manipulates CPU mask strings or objects.
+Both input and output may be either objects (with physical or logical
+indexes) or CPU mask strings (no logical or physical index involved).
+.
+.PP
+.B NOTE:
+It is highly recommended that you read the hwloc(7) overview page
+before reading this man page.  Most of the concepts described in
+hwloc(7) directly apply to the hwloc-calc utility.
+.
+.
+.\" **************************
+.\"    Examples Section
+.\" **************************
+.SH EXAMPLES
+.PP
+hwloc-calc's operation is best described through several examples.
+.
+.PP
+To display the CPU mask corresponding to the second socket:
+
+    hwloc-calc socket:1
+
+To display the CPU mask corresponding to the third socket, excluding
+its even numbered logical priocessors:
+
+    hwloc-calc socket:2 ~proc:even
+
+To combine two CPU masks:
+
+    hwloc-calc 0x0000ffff 0xff000000
+
+To display the list of logical processors included in the second
+socket:
+
+    hwloc-calc --proclist socket:1
+
+To display the list of NUMA nodes, by physical indexes, that intersect a given CPU mask:
+
+   hwloc-calc --physical --nodelist 0xf0f0f0f0
+
+To display the physical index of a processor given by its logical index:
+
+   hwloc-calc proc:2 --physical-output --proclist
+
+To combine both physical and logical indexes as input:
+
+   hwloc-calc proc:2 --physical-input proc:3
+
+.
+.\" **************************
+.\"    Return value section
+.\" **************************
+.SH RETURN VALUE
+Upon successful execution, hwloc-calc displays the CPU mask string.
+The return value is 0.
+.
+.
+.PP
+hwloc-calc will return nonzero if any kind of error occurs, such as
+(but not limited to): failure to parse the command line.
+.
+.\" **************************
+.\"    See also section
+.\" **************************
+.SH SEE ALSO
+.
+.ft R
+hwloc(7)
+.sp

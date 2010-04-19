@@ -1,0 +1,38 @@
+.TH "Finding a single Object covering at least CPU set" 3 "17 Apr 2010" "Version 1.0rc1" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+Finding a single Object covering at least CPU set \- 
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure \fBhwloc_get_child_covering_cpuset\fP (\fBhwloc_topology_t\fP topology __hwloc_attribute_unused, \fBhwloc_const_cpuset_t\fP set, \fBhwloc_obj_t\fP parent)"
+.br
+.RI "\fIGet the child covering at least CPU set \fCset\fP. \fP"
+.ti -1c
+.RI "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure \fBhwloc_get_obj_covering_cpuset\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set)"
+.br
+.RI "\fIGet the lowest object covering at least CPU set \fCset\fP. \fP"
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure hwloc_get_child_covering_cpuset (\fBhwloc_topology_t\fP topology __hwloc_attribute_unused, \fBhwloc_const_cpuset_t\fP set, \fBhwloc_obj_t\fP parent)\fC [static]\fP"
+.PP
+Get the child covering at least CPU set \fCset\fP. \fBReturns:\fP
+.RS 4
+\fCNULL\fP if no child matches or if \fCset\fP is empty. 
+.RE
+.PP
+
+.SS "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure hwloc_get_obj_covering_cpuset (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set)\fC [static]\fP"
+.PP
+Get the lowest object covering at least CPU set \fCset\fP. \fBReturns:\fP
+.RS 4
+\fCNULL\fP if no object matches or if \fCset\fP is empty. 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code.

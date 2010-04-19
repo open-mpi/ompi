@@ -1,0 +1,108 @@
+body {
+	font-size: 13px;
+/*	margin-top: 0px; */
+}
+
+div.menu {
+	text-align: center;
+	margin-top: 12px;
+	margin-bottom: 3px;
+	background: #eeeeff;
+	font-variant: small-caps;
+/*	position: fixed;*/
+	width: 100%;
+}
+div.menu a {
+	text-decoration: none;
+	color: #0020a0;
+}
+div.menu hr.menu {
+	height: 4px;
+	background: #fe0;
+	border: 0px;
+	margin-top: 0px;
+	margin-bottom: 0px;
+}
+
+h1 {
+	font: bold normal 2.5em sans-serif ;
+	margin: 0px;
+	color: #0020a0;
+}
+h1.sub {
+	font: bold normal 2em sans-serif ;
+	text-align: right ;
+	color: #0020a0;
+}
+h1 a {
+	color: #0020a0;
+	text-decoration: none;
+}
+
+h2 {
+	font: bold normal small-caps 1.5em sans-serif ;
+	color: #0020a0;
+	margin-top: 8px;
+	margin-bottom: 8px;
+}
+
+h4 {
+	font: bold normal small-caps 1em sans-serif ;
+	color: #0020a0;
+	margin-top: 8px;
+	margin-bottom: 4px;
+}
+
+h6.mirrors {
+	text-align: right;
+	margin: 0px;
+	font-size: 10px;
+}
+
+div.section {
+	background: #eeeeff;
+	padding-left: 2px;
+	padding-bottom: 2px;
+	margin-top: 12px;
+	margin-bottom: 12px;
+}
+
+p {
+	margin-top: 8px;
+	margin-bottom: 4px;
+	margin-left: 6px;
+	margin-right: 6px;
+}
+
+hr {
+	height: 8px;
+	background: #fe0;
+	border: 0px;
+	margin-top: 6px;
+	margin-bottom: 6px;
+}
+
+pre {
+	font-size: 12px;
+	background: #dddddd;
+	padding: 3px;
+	padding-left: 0px;
+	margin-left: 12px;
+}
+
+a {
+	font-weight: bold;
+}
+
+div.publis-desc {
+	text-align: right;
+	font-style: italic;
+	font-size: 12px;
+	padding-left: 15%;
+}
+
+p.updated {
+	text-align: right;
+	font-size: 10px;
+	font-style: italic;
+}

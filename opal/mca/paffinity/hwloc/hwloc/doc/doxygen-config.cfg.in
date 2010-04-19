@@ -1,0 +1,21 @@
+# Copyright © 2009 Cisco Systems, Inc.  All rights reserved.
+
+# See big comments in doxygen.cfg about the purpose of this file.
+
+PROJECT_NUMBER = @PACKAGE_VERSION@
+
+INPUT          = \
+		@top_srcdir@/doc/hwloc.doxy \
+		@top_srcdir@/include/hwloc.h \
+		@top_srcdir@/include/hwloc/helper.h \
+		@top_srcdir@/include/hwloc/cpuset.h \
+		@top_srcdir@/include/hwloc/glibc-sched.h \
+		@top_srcdir@/include/hwloc/linux.h \
+		@top_srcdir@/include/hwloc/linux-libnuma.h \
+		@top_srcdir@/include/hwloc/openfabrics-verbs.h
+
+EXAMPLE_PATH   = @top_srcdir@/doc
+
+IMAGE_PATH     = @top_srcdir@/doc/images images
+
+INCLUDE_PATH   = @top_srcdir@/doc

@@ -1,0 +1,8 @@
+Machine (phys=0 local=1025408KB total=1025408KB)
+  Socket #0
+    PU #0 (phys=0)
+    PU #1 (phys=1)
+depth 0:	1 Machine (type #1)
+ depth 1:	1 Socket (type #3)
+  depth 2:	2 PUs (type #6)
+Topology not from this system

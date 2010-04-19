@@ -1,0 +1,49 @@
+#!/bin/sh
+#-*-sh-*-
+
+#
+# Copyright © 2009 CNRS, INRIA, Université Bordeaux 1
+# Copyright © 2010 Cisco Systems, Inc.  All rights reserved.
+# See COPYING in top-level directory.
+#
+
+# Check the conformance of `lstopo' for all the XML
+# hierarchies available here.  Return true on success.
+
+HWLOC_top_builddir="@HWLOC_top_builddir@"
+HWLOC_top_srcdir="@HWLOC_top_srcdir@"
+lstopo="@HWLOC_top_builddir@/utils/lstopo"
+
+error()
+{
+    echo $@ 2>&1
+}
+
+if [ ! -x "$lstopo" ]
+then
+    error "Could not find executable file \`$lstopo'."
+    exit 1
+fi
+
+
+: ${TMPDIR=/tmp}
+{
+  tmp=`
+    (umask 077 && mktemp -d "$TMPDIR/fooXXXXXX") 2>/dev/null
+  ` &&
+  test -n "$tmp" && test -d "$tmp"
+} || {
+  tmp=$TMPDIR/foo$$-$RANDOM
+  (umask 077 && mkdir "$tmp")
+} || exit $?
+file="$tmp/lstopo_xml.output.xml"
+
+set -e
+$lstopo --xml "$srcdir"/"$1" "$file"
+diff @HWLOC_DIFF_U@ "$srcdir"/"$1" "$file"
+if [ -n "@XMLLINT@" ]
+then
+  cp "$HWLOC_top_srcdir"/src/hwloc.dtd "$tmp/"
+  @XMLLINT@ --valid "$file" > /dev/null
+fi
+rm -rf "$tmp"

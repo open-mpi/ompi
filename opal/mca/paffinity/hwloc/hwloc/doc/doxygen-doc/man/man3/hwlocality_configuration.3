@@ -1,0 +1,156 @@
+.TH "Configure Topology Detection" 3 "17 Apr 2010" "Version 1.0rc1" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+Configure Topology Detection \- 
+.SS "Data Structures"
+
+.in +1c
+.ti -1c
+.RI "struct \fBhwloc_topology_discovery_support\fP"
+.br
+.RI "\fIFlags describing actual discovery support for this topology. \fP"
+.ti -1c
+.RI "struct \fBhwloc_topology_cpubind_support\fP"
+.br
+.RI "\fIFlags describing actual binding support for this topology. \fP"
+.ti -1c
+.RI "struct \fBhwloc_topology_support\fP"
+.br
+.RI "\fISet of flags describing actual support for this topology. \fP"
+.in -1c
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBhwloc_topology_flags_e\fP { \fBHWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM\fP, \fBHWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM\fP }"
+.br
+.RI "\fIFlags to be set onto a topology context before load. \fP"
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "HWLOC_DECLSPEC int \fBhwloc_topology_ignore_type\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type)"
+.br
+.RI "\fIIgnore an object type. \fP"
+.ti -1c
+.RI "HWLOC_DECLSPEC int \fBhwloc_topology_ignore_type_keep_structure\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type)"
+.br
+.RI "\fIIgnore an object type if it does not bring any structure. \fP"
+.ti -1c
+.RI "HWLOC_DECLSPEC int \fBhwloc_topology_ignore_all_keep_structure\fP (\fBhwloc_topology_t\fP topology)"
+.br
+.RI "\fIIgnore all objects that do not bring any structure. \fP"
+.ti -1c
+.RI "HWLOC_DECLSPEC int \fBhwloc_topology_set_flags\fP (\fBhwloc_topology_t\fP topology, unsigned long flags)"
+.br
+.RI "\fISet OR'ed flags to non-yet-loaded topology. \fP"
+.ti -1c
+.RI "HWLOC_DECLSPEC int \fBhwloc_topology_set_fsroot\fP (\fBhwloc_topology_t\fP __hwloc_restrict topology, const char *__hwloc_restrict fsroot_path)"
+.br
+.RI "\fIChange the file-system root path when building the topology from sysfs/procfs. \fP"
+.ti -1c
+.RI "HWLOC_DECLSPEC int \fBhwloc_topology_set_pid\fP (\fBhwloc_topology_t\fP __hwloc_restrict topology, hwloc_pid_t pid)"
+.br
+.RI "\fIChange which pid the topology is viewed from. \fP"
+.ti -1c
+.RI "HWLOC_DECLSPEC int \fBhwloc_topology_set_synthetic\fP (\fBhwloc_topology_t\fP __hwloc_restrict topology, const char *__hwloc_restrict description)"
+.br
+.RI "\fIEnable synthetic topology. \fP"
+.ti -1c
+.RI "HWLOC_DECLSPEC int \fBhwloc_topology_set_xml\fP (\fBhwloc_topology_t\fP __hwloc_restrict topology, const char *__hwloc_restrict xmlpath)"
+.br
+.RI "\fIEnable XML-file based topology. \fP"
+.ti -1c
+.RI "HWLOC_DECLSPEC struct \fBhwloc_topology_support\fP * \fBhwloc_topology_get_support\fP (\fBhwloc_topology_t\fP __hwloc_restrict topology)"
+.br
+.RI "\fIRetrieve the topology support. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+These functions can optionally be called between \fBhwloc_topology_init()\fP and \fBhwloc_topology_load()\fP to configure how the detection should be performed, e.g. to ignore some objects types, define a synthetic topology, etc.
+.PP
+If none of them is called, the default is to detect all the objects of the machine that the caller is allowed to access.
+.PP
+This default behavior may also be modified through environment variables if the application did not modify it already. Setting HWLOC_XMLFILE in the environment enforces the discovery from a XML file as if \fBhwloc_topology_set_xml()\fP had been called. HWLOC_FSROOT switches to reading the topology from the specified Linux filesystem root as if \fBhwloc_topology_set_fsroot()\fP had been called. Finally, HWLOC_THISSYSTEM enforces the return value of \fBhwloc_topology_is_thissystem()\fP. 
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBhwloc_topology_flags_e\fP"
+.PP
+Flags to be set onto a topology context before load. Flags should be given to \fBhwloc_topology_set_flags()\fP. 
+.PP
+\fBEnumerator: \fP
+.in +1c
+.TP
+\fB\fIHWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM \fP\fP
+Detect the whole system, ignore reservations and offline settings. Gather all resources, even if some were disabled by the administrator. For instance, ignore Linux Cpusets and gather all processors and memory nodes, and ignore the fact that some resources may be offline. 
+.TP
+\fB\fIHWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM \fP\fP
+Assume that the selected backend provides the topology for the system on which we are running. This forces hwloc_topology_is_thissystem to return 1, i.e. makes hwloc assume that the selected backend provides the topology for the system on which we are running, even if it is not the OS-specific backend but the XML backend for instance. This means making the binding functions actually call the OS-specific system calls and really do binding, while the XML backend would otherwise provide empty hooks just returning success.
+.PP
+Setting the environment variable HWLOC_THISSYSTEM may also result in the same behavior.
+.PP
+This can be used for efficiency reasons to first detect the topology once, save it to an XML file, and quickly reload it later through the XML backend, but still having binding functions actually do bind. 
+.SH "Function Documentation"
+.PP 
+.SS "HWLOC_DECLSPEC struct \fBhwloc_topology_support\fP* hwloc_topology_get_support (\fBhwloc_topology_t\fP __hwloc_restrict topology)\fC [read]\fP"
+.PP
+Retrieve the topology support. 
+.SS "HWLOC_DECLSPEC int hwloc_topology_ignore_all_keep_structure (\fBhwloc_topology_t\fP topology)"
+.PP
+Ignore all objects that do not bring any structure. Ignore all objects that do not bring any structure: Each ignored object should have a single children or be the only child of its parent. 
+.SS "HWLOC_DECLSPEC int hwloc_topology_ignore_type (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type)"
+.PP
+Ignore an object type. Ignore all objects from the given type. The bottom-level type HWLOC_OBJ_PU may not be ignored. The top-level object of the hierarchy will never be ignored, even if this function succeeds. 
+.SS "HWLOC_DECLSPEC int hwloc_topology_ignore_type_keep_structure (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type)"
+.PP
+Ignore an object type if it does not bring any structure. Ignore all objects from the given type as long as they do not bring any structure: Each ignored object should have a single children or be the only child of its parent. The bottom-level type HWLOC_OBJ_PU may not be ignored. 
+.SS "HWLOC_DECLSPEC int hwloc_topology_set_flags (\fBhwloc_topology_t\fP topology, unsigned long flags)"
+.PP
+Set OR'ed flags to non-yet-loaded topology. Set a OR'ed set of hwloc_topology_flags_e onto a topology that was not yet loaded. 
+.SS "HWLOC_DECLSPEC int hwloc_topology_set_fsroot (\fBhwloc_topology_t\fP __hwloc_restrict topology, const char *__hwloc_restrict fsroot_path)"
+.PP
+Change the file-system root path when building the topology from sysfs/procfs. On Linux system, use sysfs and procfs files as if they were mounted on the given \fCfsroot_path\fP instead of the main file-system root. Setting the environment variable HWLOC_FSROOT may also result in this behavior. Not using the main file-system root causes \fBhwloc_topology_is_thissystem()\fP to return 0.
+.PP
+\fBNote:\fP
+.RS 4
+For conveniency, this backend provides empty binding hooks which just return success. To have hwloc still actually call OS-specific hooks, the HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM has to be set to assert that the loaded file is really the underlying system. 
+.RE
+.PP
+
+.SS "HWLOC_DECLSPEC int hwloc_topology_set_pid (\fBhwloc_topology_t\fP __hwloc_restrict topology, hwloc_pid_t pid)"
+.PP
+Change which pid the topology is viewed from. On some systems, processes may have different views of the machine, for instance the set of allowed CPUs. By default, hwloc exposes the view from the current process. Calling \fBhwloc_topology_set_pid()\fP permits to make it expose the topology of the machine from the point of view of another process.
+.PP
+\fBNote:\fP
+.RS 4
+hwloc_pid_t is pid_t on unix platforms, and HANDLE on native Windows platforms 
+.PP
+The ENOSYS error is returned on platforms that does not support this feature. 
+.RE
+.PP
+
+.SS "HWLOC_DECLSPEC int hwloc_topology_set_synthetic (\fBhwloc_topology_t\fP __hwloc_restrict topology, const char *__hwloc_restrict description)"
+.PP
+Enable synthetic topology. Gather topology information from the given \fCdescription\fP which should be a comma separated string of numbers describing the arity of each level. Each number may be prefixed with a type and a colon to enforce the type of a level. If only some level types are enforced, hwloc will try to choose the other types according to usual topologies, but it may fail and you may have to specify more level types manually.
+.PP
+\fBNote:\fP
+.RS 4
+For conveniency, this backend provides empty binding hooks which just return success. 
+.RE
+.PP
+
+.SS "HWLOC_DECLSPEC int hwloc_topology_set_xml (\fBhwloc_topology_t\fP __hwloc_restrict topology, const char *__hwloc_restrict xmlpath)"
+.PP
+Enable XML-file based topology. Gather topology information the XML file given at \fCxmlpath\fP. Setting the environment variable HWLOC_XMLFILE may also result in this behavior. This file may have been generated earlier with lstopo file.xml.
+.PP
+\fBNote:\fP
+.RS 4
+For conveniency, this backend provides empty binding hooks which just return success. To have hwloc still actually call OS-specific hooks, the HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM has to be set to assert that the loaded file is really the underlying system. 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code.

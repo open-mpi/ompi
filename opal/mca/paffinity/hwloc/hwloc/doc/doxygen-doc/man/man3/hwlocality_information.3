@@ -1,0 +1,89 @@
+.TH "Get some Topology Information" 3 "17 Apr 2010" "Version 1.0rc1" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+Get some Topology Information \- 
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBhwloc_get_type_depth_e\fP { \fBHWLOC_TYPE_DEPTH_UNKNOWN\fP, \fBHWLOC_TYPE_DEPTH_MULTIPLE\fP }"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "HWLOC_DECLSPEC unsigned \fBhwloc_topology_get_depth\fP (\fBhwloc_topology_t\fP __hwloc_restrict topology) __hwloc_attribute_pure"
+.br
+.RI "\fIGet the depth of the hierachical tree of objects. \fP"
+.ti -1c
+.RI "HWLOC_DECLSPEC int \fBhwloc_get_type_depth\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type)"
+.br
+.RI "\fIReturns the depth of objects of type \fCtype\fP. \fP"
+.ti -1c
+.RI "HWLOC_DECLSPEC \fBhwloc_obj_type_t\fP \fBhwloc_get_depth_type\fP (\fBhwloc_topology_t\fP topology, unsigned depth) __hwloc_attribute_pure"
+.br
+.RI "\fIReturns the type of objects at depth \fCdepth\fP. \fP"
+.ti -1c
+.RI "HWLOC_DECLSPEC unsigned \fBhwloc_get_nbobjs_by_depth\fP (\fBhwloc_topology_t\fP topology, unsigned depth) __hwloc_attribute_pure"
+.br
+.RI "\fIReturns the width of level at depth \fCdepth\fP. \fP"
+.ti -1c
+.RI "static __inline int __hwloc_attribute_pure \fBhwloc_get_nbobjs_by_type\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type)"
+.br
+.RI "\fIReturns the width of level type \fCtype\fP. \fP"
+.ti -1c
+.RI "HWLOC_DECLSPEC int \fBhwloc_topology_is_thissystem\fP (\fBhwloc_topology_t\fP __hwloc_restrict topology) __hwloc_attribute_pure"
+.br
+.RI "\fIDoes the topology context come from this system? \fP"
+.in -1c
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBhwloc_get_type_depth_e\fP"
+.PP
+\fBEnumerator: \fP
+.in +1c
+.TP
+\fB\fIHWLOC_TYPE_DEPTH_UNKNOWN \fP\fP
+No object of given type exists in the topology. 
+.TP
+\fB\fIHWLOC_TYPE_DEPTH_MULTIPLE \fP\fP
+Objects of given type exist at different depth in the topology. 
+.SH "Function Documentation"
+.PP 
+.SS "HWLOC_DECLSPEC \fBhwloc_obj_type_t\fP hwloc_get_depth_type (\fBhwloc_topology_t\fP topology, unsigned depth)"
+.PP
+Returns the type of objects at depth \fCdepth\fP. \fBReturns:\fP
+.RS 4
+-1 if depth \fCdepth\fP does not exist. 
+.RE
+.PP
+
+.SS "HWLOC_DECLSPEC unsigned hwloc_get_nbobjs_by_depth (\fBhwloc_topology_t\fP topology, unsigned depth)"
+.PP
+Returns the width of level at depth \fCdepth\fP. 
+.SS "static __inline int __hwloc_attribute_pure hwloc_get_nbobjs_by_type (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type)\fC [static]\fP"
+.PP
+Returns the width of level type \fCtype\fP. If no object for that type exists, 0 is returned. If there are several levels with objects of that type, -1 is returned. 
+.SS "HWLOC_DECLSPEC int hwloc_get_type_depth (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type)"
+.PP
+Returns the depth of objects of type \fCtype\fP. If no object of this type is present on the underlying architecture, or if the OS doesn't provide this kind of information, the function returns HWLOC_TYPE_DEPTH_UNKNOWN.
+.PP
+If type is absent but a similar type is acceptable, see also \fBhwloc_get_type_or_below_depth()\fP and \fBhwloc_get_type_or_above_depth()\fP. 
+.SS "HWLOC_DECLSPEC unsigned hwloc_topology_get_depth (\fBhwloc_topology_t\fP __hwloc_restrict topology)"
+.PP
+Get the depth of the hierachical tree of objects. This is the depth of HWLOC_OBJ_PU objects plus one. 
+.SS "HWLOC_DECLSPEC int hwloc_topology_is_thissystem (\fBhwloc_topology_t\fP __hwloc_restrict topology)"
+.PP
+Does the topology context come from this system? \fBReturns:\fP
+.RS 4
+1 if this topology context was built using the system running this program. 
+.PP
+0 instead (for instance if using another file-system root, a XML topology file, or a synthetic topology). 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code.

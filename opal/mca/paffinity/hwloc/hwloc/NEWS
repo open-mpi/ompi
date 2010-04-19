@@ -1,0 +1,137 @@
+Copyright © 2009 CNRS, INRIA, Université Bordeaux 1
+Copyright © 2009 Cisco Systems, Inc.  All rights reserved.
+
+$COPYRIGHT$
+
+Additional copyrights may follow
+
+$HEADER$
+
+===========================================================================
+
+This file contains the main features as well as overviews of specific
+bug fixes (and other actions) for each version of hwloc since version
+0.9 (as initially released as "libtopology", then re-branded to "hwloc"
+in v0.9.1).
+
+Version 1.0.0
+-------------
+
+* The ABI of the library has changed.
+* Backend updates
+  + Add FreeBSD support.
+  + Add x86 cpuid based backend.
+  + Add Linux cgroup support to the Linux cpuset code.
+  + Support binding of entire multithreaded process on Linux.
+  + Cleanup XML export/import.
+* Objects
+  + HWLOC_OBJ_PROC is renamed into HWLOC_OBJ_PU for "Processing Unit",
+    its stringified type name is now "PU".
+  + Use new HWLOC_OBJ_GROUP objects instead of MISC when grouping
+    objects according to NUMA distances or arbitrary OS aggregation.
+  + Rework memory attributes.
+  + Add different cpusets in each object to specify processors that
+    are offline, unavailable, ...
+  + Cleanup the storage of object names and DMI infos.
+* Features
+  + Add support for looking up specific PID topology information.
+  + Add hwloc_topology_export_xml() to export the topology in a XML file.
+  + Add hwloc_topology_get_support() to retrieve the supported features
+    for the current topology context.
+  + Support non-SYSTEM object as the root of the tree, use MACHINE in
+    most common cases.
+  + Add hwloc_get_*cpubind() routines to retrieve the current binding
+    of processes and threads.
+* API
+  + Add HWLOC_API_VERSION to help detect the currently used API version.
+  + Add missing ending "e" to *compare* functions.
+  + Add several routines to emulate PLPA functions.
+  + Rename and rework the cpuset and/or/xor/not/clear operators to output
+    their result in a dedicated argument instead of modifying one input.
+  + Deprecate hwloc_obj_snprintf() in favor of hwloc_obj_type/attr_snprintf().
+  + Clarify the use of parent and ancestor in the API, do not use father.
+  + Replace hwloc_get_system_obj() with hwloc_get_root_obj().
+  + Return -1 instead of HWLOC_OBJ_TYPE_MAX in the API since the latter
+    isn't public.
+  + Relax constraints in hwloc_obj_type_of_string().
+  + Improve displaying of memory sizes.
+  + Add 0x prefix to cpuset strings.
+* Tools
+  + lstopo now displays logical indexes by default, use --physical to
+    revert back to OS/physical indexes.
+  + Add colors in the lstopo graphical outputs to distinguish between online,
+    offline, reserved, ... objects.
+  + Extend lstopo to show cpusets, filter objects by type, ...
+  + Renamed hwloc-mask into hwloc-calc which supports many new options.
+* Documentation
+  + Add a hwloc(7) manpage containing general information.
+  + Add documentation about how to switch from PLPA to hwloc.
+  + Cleanup the distributed documentation files.
+* Miscellaneous
+  + Many compilers warning fixes.
+  + Cleanup the ABI by using the visibility attribute.
+  + Add project embedding support.
+
+
+Version 0.9.4 (unreleased)
+--------------------------
+
+* Fix reseting colors to normal in lstopo -.txt output.
+* Fix Linux pthread_t binding error report.
+
+
+Version 0.9.3
+-------------
+
+* Fix autogen.sh to work with Autoconf 2.63.
+* Fix various crashes in particular conditions:
+  - xml files with root attributes
+  - offline CPUs
+  - partial sysfs support
+  - unparseable /proc/cpuinfo
+  - ignoring NUMA level while Misc level have been generated
+* Tweak documentation a bit
+* Do not require the pthread library for binding the current thread on Linux
+* Do not erroneously consider the sched_setaffinity prototype is the old version
+  when there is actually none.
+* Fix _syscall3 compilation on archs for which we do not have the
+  sched_setaffinity system call number.
+* Fix AIX binding.
+* Fix libraries dependencies: now only lstopo depends on libtermcap, fix
+  binutils-gold link
+* Have make check always build and run hwloc-hello.c
+* Do not limit size of a cpuset.
+
+
+Version 0.9.2
+-------------
+
+* Trivial documentation changes.
+
+
+Version 0.9.1
+-------------
+
+* Re-branded to "hwloc" and moved to the Open MPI project, relicensed under the
+  BSD license.
+* The prefix of all functions and tools is now hwloc, and some public
+  functions were also renamed for real.
+* Group NUMA nodes into Misc objects according to their physical distance
+  that may be reported by the OS/BIOS.
+  May be ignored by setting HWLOC_IGNORE_DISTANCES=1 in the environment.
+* Ignore offline CPUs on Solaris.
+* Improved binding support on AIX.
+* Add HP-UX support.
+* CPU sets are now allocated/freed dynamically.
+* Add command line options to tune the lstopo graphic output, add
+  semi-graphical text output
+* Extend topobind to support multiple cpusets or objects on the command
+  line as topomask does.
+* Add an Infiniband-specific helper hwloc/openfabrics-verbs.h to retrieve
+  the physical location of IB devices.
+
+
+Version 0.9 (libtopology)
+-------------------------
+
+* First release.

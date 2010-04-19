@@ -1,0 +1,36 @@
+#!/bin/sh
+#-*-sh-*-
+
+#
+# Copyright © 2009 CNRS, INRIA, Université Bordeaux 1
+# See COPYING in top-level directory.
+#
+
+: ${TMPDIR=/tmp}
+{
+  tmp=`
+    (umask 077 && mktemp -d "$TMPDIR/fooXXXXXX") 2>/dev/null
+  ` &&
+  test -n "$tmp" && test -d "$tmp"
+} || {
+  tmp=$TMPDIR/foo$$-$RANDOM
+  (umask 077 && mkdir "$tmp")
+} || exit $?
+file="$tmp/test-hwloc-distrib.output"
+
+set -e
+(
+  ./hwloc-distrib --synthetic "2 2 2" 2
+  echo
+  ./hwloc-distrib --synthetic "2 2 2" 4
+  echo
+  ./hwloc-distrib --synthetic "2 2 2" 8
+  echo
+  ./hwloc-distrib --synthetic "2 2 2" 13
+  echo
+  ./hwloc-distrib --synthetic "2 2 2" 16
+  echo
+  ./hwloc-distrib --synthetic "3 3 3" 4
+) > "$file"
+diff @HWLOC_DIFF_U@ $srcdir/test-hwloc-distrib.output "$file"
+rm -rf "$tmp"
