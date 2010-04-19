@@ -1,0 +1,290 @@
+.\" -*- nroff -*-
+.\" Copyright © 2009-2010 Cisco Systems, Inc.  All rights reserved.
+.TH HWLOC "1" "Apr 17, 2010" "1.0rc1" "hwloc"
+.SH NAME
+hwloc - General information about hwloc ("hardware locality").
+.
+.\" **************************
+.\"    Description Section
+.\" **************************
+.SH DESCRIPTION
+.
+hwloc provides command line tools and a C API to obtain the
+hierarchical map of key computing elements, such as: NUMA memory
+nodes, shared caches, processor sockets, processor cores, and
+processor "threads".  hwloc also gathers various attributes such as
+cache and memory information, and is portable across a variety of
+different operating systems and platforms.
+.
+.
+.SS Definitions
+Hwloc has some specific definitions for terms that are used in this
+man page and other hwloc documentation.
+.
+.TP 5
+.B Hwloc CPU set:
+A set of processors included in an hwloc object, expressed as a bitmask
+indexed by the physical numbers of the CPUs (as announced by the OS).
+The hwloc definition
+of "CPU set" does not carry any the same connotations as Linux's "CPU
+set" (e.g., process affinity, etc.).
+.
+.TP
+.B Linux CPU set:
+See http://www.mjmwired.net/kernel/Documentation/cpusets.txt for a
+discussion of Linux CPU sets.  A
+super-short-ignoring-many-details description (taken from that page)
+is:
+.
+.\" Force a paragraph break, but keep the indentation
+.TP
+\ 
+.
+ "Cpusets provide a mechanism for assigning a set of CPUs and Memory
+Nodes to a set of tasks."
+.
+.TP
+.B Linux Cgroup:
+See http://www.mjmwired.net/kernel/Documentation/cgroups.txt for a
+discussion of Linux control groups.  A
+super-short-ignoring-many-details description (taken from that page)
+is:
+.
+.\" Force a paragraph break, but keep the indentation
+.TP
+\ 
+ "Control Groups provide a mechanism for aggregating/partitioning sets
+of tasks, and all their future children, into hierarchical groups
+with specialized behaviour."
+.
+.PP
+To be clear, hwloc supports all of the above concepts.  It is simply
+worth noting that they are 3 different things.
+.
+.SS Location Specification
+.
+Locations refer to specific regions within a topology.  Before reading
+the rest of this man page, it may be useful to read lstopo(1) and/or
+run lstopo on your machine to see the reported topology tree.  Seeing
+and understanding a topology tree will definitely help in
+understanding the concepts that are discussed below.
+.
+.PP
+Locations can be specified in multiple ways:
+.
+.TP 10
+.B Tuples:
+Tuples of hwloc "objects" and associated indexes can be specified in
+the form
+.IR object:index .
+Hwloc objects represent types of mapped items (e.g., sockets, cores,
+etc.) in a topology tree; indexes are non-negative integers that
+specify a unique physical object in a topology tree.  Both concepts
+are described in detail, below.  
+.\" Force a paragraph break, but keep the indentation.
+.TP
+\ 
+Chaining multiple tuples together in the more general form
+.I object1:index[.object2:index2[...]]
+is permissable.  While the first tuple's object may appear anywhere in
+the topology, the Nth tuple's object must have a shallower topology
+depth than the (N+1)th tuple's object.  Put simply: as you move right
+in a tuple chain, objects must go deeper in the topology tree.
+When using logical indexes (default),
+indexes specified in chained tuples are relative to the scope of the
+parent object.  For example, "socket:0.core:1" refers to the second
+core in the first socket.
+When using OS/physical indexes, the first object matching the given
+index is used.
+.
+.TP
+.B Hex:
+Locations can also be specified as hexidecimal bitmasks prefixed 
+.
+with "0x".  Commas must be used to separate the hex digits into blocks
+of 8, such as "0xffc0140,0x00020110".
+.
+Leading zeros in each block do not need to be specified.  
+.
+For example, "0xffc0140,0x20110" is equivalent to the prior example,
+and "0x0000000f" is exactly equivalent to "0xf".  Intermediate blocks
+of 8 digits that are all zeoro can be left empty; "0xff0,,0x13" is
+equivalent to "0xff0,0x00000000,0x13".
+.
+.PP
+Multiple locations can be specified on the hwloc-bind command line
+(delimited by whitespace); the first token of the execution command is
+assumed to either follow "--" (if specified) or the first token that
+is unrecognized as a location.
+.
+By default, multiple locations are added, meaning that the binding
+will be wider in the sense that the process may run on more objects.
+If prefixed with "~", the given location will be cleared instead of
+added to the current list of locations.
+If prefixed with "x", the given location will be and'ed instead of
+added to the current list.
+If prefixed with "^", the given location will be xor'ed.
+.
+More complex operations may be performed by using
+.R hwloc-calc
+to compute intermediate values.
+.
+.SS Hwloc Objects
+.
+.PP
+Objects can be any of the following strings
+.
+(listed from "biggest" to "smallest"):
+.
+.TP 10
+.B machine
+A set of processors and memory.
+.
+.TP
+.B node
+A NUMA node; a set of processors around memory which the processors
+can directly access.
+.
+.TP
+.B socket
+Typically a physical package or chip, it is a grouping of one or more
+processors.
+.
+.TP
+.B core
+A single, physical processing unit which may still contain multiple
+logical processors, such as hardware threads.
+.
+.TP
+.B proc
+Short for 
+.I processor 
+(not 
+.IR process !).  
+The smallest physical execution unit that hwloc recognizes.  For
+example, there may be multiple procs on a core (e.g.,
+hardware threads).
+.PP
+The additional
+.B system
+type can be used when several machines form an overall single system image
+(SSI), such as Kerrighed.
+.
+.PP
+Finally, note that an object can be denoted by its numeric "depth" in
+the topology graph.  See the Examples section for more information.
+.
+.SS Hwloc Indexes
+Indexes are integer values that uniquely specify a given object of a
+specific type.  Indexes can be expressed either as
+.I logical
+values or
+.I physical 
+values.  
+While
+.B hwloc-bind accepts logical indexes as
+.BR input
+by default.
+Passing
+.B --physical
+switches to physical/OS indexes.
+Both logical and physical indexes are described on this man page.
+.
+.PP
+.I Logical
+indexes are relative to the object order in the output from the
+lstopo command.  They always start with 0 and increment by 1 for each
+successive object.
+.
+.PP
+.I Physical 
+indexes are how the operating system refers to objects.  Note that
+while physical indexes are non-negative integer values, the hardware
+and/or operating system may choose arbitrary values -- they may not
+start with 0, and successive objects may not have consecutive values.
+.
+.PP
+For example, if the first few lines of lstopo -p output are the
+following:
+.
+
+  System(32GB)
+    Node#0(16GB)
+      Socket#0 + L2(4MB)
+        L1(32KB) + Core#16 + P#0
+        L1(32KB) + Core#18 + P#2
+      Socket#1 + L2(4MB)
+	L1(32KB) + Core#16 + P#1
+	L1(32KB) + Core#18 + P#3
+
+The first core on the second socket is logically number 2 (i.e.,
+logically the 3rd core, starting from 0).  Its physical index is
+16, but note that another core
+.I also 
+has a physical index of 16.  Hence, physical indexes may only be
+relevant within the scope of their parent (or set of grandparents).
+In this example, to uniquely identify logical core 2 with
+physical indexes, you must specify (at a minimum) both a socket and a
+core: socket 1, core 16.
+.PP
+Index values, regardless of whether they are logical or physical, can
+be expressed in several different forms (where X, Y, and N are
+positive integers):
+.
+.TP 10
+.B X
+The object with index value X.
+.
+.TP
+.B X-Y
+All the objects with index values >= X and <= Y.
+.
+.TP
+.B X-
+All the objects with index values >= X.
+.
+.TP
+.B X:N
+N objects starting with index X, possibly wrapping around the end of
+the level.
+.
+.TP
+.B all
+A special index value indicating all valid index values.
+.
+.TP
+.B odd
+A special index value indicating all valid odd index values.
+.
+.TP
+.B even
+A special index value indicating all valid even index values.
+.
+.PP
+.IR REMEMBER :
+hwloc's command line tools accept
+.I logical 
+indexes for location values by default.
+Use
+.BR --physical " and " --logical
+to switch from one mode to another.
+.
+.\" **************************
+.\"    See also section
+.\" **************************
+.SH SEE ALSO
+.
+Hwloc's command line tool documentation: lstopo(1), hwloc-bind(1),
+hwloc-calc(1), hwloc-distrib(1).
+.
+.PP
+Hwloc has many C API functions, each of which have their own man page.
+Some top-level man pages are also provided, grouping similar functions
+together.  A few good places to start might include:
+hwlocality_objects(3), hwlocality_types(3), hwlocality_creation(3),
+hwlocality_cpuset(3), hwlocality_information(3), and
+hwlocality_binding(3).
+.
+.PP
+For a listing of all available hwloc man pages, look at all "hwloc*"
+files in the man1 and man3 directories.

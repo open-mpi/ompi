@@ -1,0 +1,148 @@
+.\" -*- nroff -*-
+.\" Copyright © 2009 Cisco Systems, Inc.  All rights reserved.
+.TH HWLOC-BIND "1" "#HWLOC_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+hwloc-bind \- Launch a command that is bound to specific processors
+and/or memory.
+.
+.\" **************************
+.\"    Synopsis Section
+.\" **************************
+.SH SYNOPSIS
+.
+.B hwloc-bind
+[\fIoptions\fR] \fI<location1> [<location2> [...] ] [--] <command> \fR...
+.
+.\" **************************
+.\"    Options Section
+.\" **************************
+.SH OPTIONS
+.
+See below for a description of valid <location> formats.
+.TP 10
+\fB\-\-get\fR
+Report the current bindings.
+.TP
+\fB\-\-single\fR
+Bind on a single CPU to prevent migration.
+.TP
+\fB\-\-strict\fR
+Require strict binding.
+.TP
+\fB\-\-get\fR
+Retrieve the current process binding
+.TP
+\fB\-\-pid\fR <pid>
+Operate on pid <pid>
+.TP
+\fB\-p\fR \fB\-\-physical\fR
+take OS/physical indexes instead of logical indexes
+.TP
+\fB\-l\fR \fB\-\-logical\fR
+take logical indexes instead of physical/OS indexes (default)
+.TP
+\fB\-v\fR
+Verbose output.
+.TP
+\fB\-\-version\fR
+Report version and exit.
+.
+.\" **************************
+.\"    Description Section
+.\" **************************
+.SH DESCRIPTION
+.
+hwloc-bind execs an executable (with optional command line arguments)
+that is bound to the specified location (or list of locations).  Upon
+successful execution, hwloc-bind simply sets bindings and then execs
+the executable over itself.
+.
+.PP
+.B NOTE:
+It is highly recommended that you read the hwloc(7) overview page
+before reading this man page.  Most of the concepts described in
+hwloc(7) directly apply to the hwloc-bind utility.
+.
+.
+.\" **************************
+.\"    Examples Section
+.\" **************************
+.SH EXAMPLES
+.PP
+hwloc-bind's operation is best described through several examples.
+.
+.PP
+To run the echo command on the first logical processor of the second
+socket:
+
+    hwloc-bind socket:1.pu:0 -- echo hello
+
+which is exactly equivalent to
+
+    hwloc-bind socket:1.pu:0 echo hello
+
+To bind the "echo" command to the first core of the second socket and
+the second core of the first socket:
+
+    hwloc-bind socket:1.core:0 socket:0.core:1 echo hello
+
+Note that binding the "echo" command to multiple processors is
+probably meaningless (because "echo" is likely implemented as a
+single-threaded application); these examples just serve to show what
+hwloc-bind can do.
+.
+.PP
+To run on the three first sockets on the second and third nodes:
+
+    hwloc-bind node:1-2.socket:0:3 echo hello
+
+To run on processor with physical index 2 in socket with physical index 1:
+
+    hwloc-bind --physical socket:1.core:2 echo hello
+
+To run on odd cores within even sockets:
+
+    hwloc-bind socket:even.core:odd echo hello
+
+To run on the first socket, except on its second and fifth cores:
+
+    hwloc-bind socket:0 ~socket:0.core:1 ~socket:0.core:4 echo hello
+
+The --get option can report current bindings.  This example shows
+nesting hwloc-bind invocations to set a binding and then report it:
+
+    hwloc-bind node:1.socket:2 hwloc-bind --get
+
+On one of the hwloc developer's machines, this example
+.
+reports "0x00004444,0x44000000".  The mask reported on your machine
+may be different.
+.
+.PP
+Locations may also be specified as a hex bit mask (typically generated
+by hwloc-calc).  For example:
+
+    hwloc-bind 0x00004444,0x44000000 echo hello
+    hwloc-bind `hwloc-calc node:1.socket:2` echo hello
+.
+.\" **************************
+.\"    Return value section
+.\" **************************
+.SH RETURN VALUE
+Upon successful execution, hwloc-bind execs the command over itself.
+The return value is therefore whatever the return value of the command
+is.
+.
+.PP
+hwloc-bind will return nonzero if any kind of error occurs, such as
+(but not limited to): failure to parse the command line, failure to
+retrieve process bindings, or lack of a command to execute.
+.
+.\" **************************
+.\"    See also section
+.\" **************************
+.SH SEE ALSO
+.
+.ft R
+hwloc(7), lstopo(1), hwloc-calc(1), hwloc-distrib(1)
+.sp

@@ -1,0 +1,98 @@
+.TH "Object/String Conversion" 3 "17 Apr 2010" "Version 1.0rc1" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+Object/String Conversion \- 
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "HWLOC_DECLSPEC const char * \fBhwloc_obj_type_string\fP (\fBhwloc_obj_type_t\fP type) __hwloc_attribute_const"
+.br
+.RI "\fIReturn a stringified topology object type. \fP"
+.ti -1c
+.RI "HWLOC_DECLSPEC \fBhwloc_obj_type_t\fP \fBhwloc_obj_type_of_string\fP (const char *string) __hwloc_attribute_pure"
+.br
+.RI "\fIReturn an object type from the string. \fP"
+.ti -1c
+.RI "HWLOC_DECLSPEC int \fBhwloc_obj_type_snprintf\fP (char *__hwloc_restrict string, size_t size, \fBhwloc_obj_t\fP obj, int verbose)"
+.br
+.RI "\fIStringify the type of a given topology object into a human-readable form. \fP"
+.ti -1c
+.RI "HWLOC_DECLSPEC int \fBhwloc_obj_attr_snprintf\fP (char *__hwloc_restrict string, size_t size, \fBhwloc_obj_t\fP obj, const char *__hwloc_restrict separator, int verbose)"
+.br
+.RI "\fIStringify the attributes of a given topology object into a human-readable form. \fP"
+.ti -1c
+.RI "HWLOC_DECLSPEC int \fBhwloc_obj_snprintf\fP (char *__hwloc_restrict string, size_t size, \fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP obj, const char *__hwloc_restrict indexprefix, int verbose)"
+.br
+.RI "\fIStringify a given topology object into a human-readable form. \fP"
+.ti -1c
+.RI "HWLOC_DECLSPEC int \fBhwloc_obj_cpuset_snprintf\fP (char *__hwloc_restrict str, size_t size, size_t nobj, const \fBhwloc_obj_t\fP *__hwloc_restrict objs)"
+.br
+.RI "\fIStringify the cpuset containing a set of objects. \fP"
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "HWLOC_DECLSPEC int hwloc_obj_attr_snprintf (char *__hwloc_restrict string, size_t size, \fBhwloc_obj_t\fP obj, const char *__hwloc_restrict separator, int verbose)"
+.PP
+Stringify the attributes of a given topology object into a human-readable form. Attribute values are separated by \fCseparator\fP.
+.PP
+Only the major attributes are printed in non-verbose mode.
+.PP
+\fBReturns:\fP
+.RS 4
+how many characters were actually written (not including the ending \\0). 
+.RE
+.PP
+
+.SS "HWLOC_DECLSPEC int hwloc_obj_cpuset_snprintf (char *__hwloc_restrict str, size_t size, size_t nobj, const \fBhwloc_obj_t\fP *__hwloc_restrict objs)"
+.PP
+Stringify the cpuset containing a set of objects. \fBReturns:\fP
+.RS 4
+how many characters were actually written (not including the ending \\0). 
+.RE
+.PP
+
+.SS "HWLOC_DECLSPEC int hwloc_obj_snprintf (char *__hwloc_restrict string, size_t size, \fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP obj, const char *__hwloc_restrict indexprefix, int verbose)"
+.PP
+Stringify a given topology object into a human-readable form. \fBNote:\fP
+.RS 4
+This function is deprecated in favor of \fBhwloc_obj_type_snprintf()\fP and \fBhwloc_obj_attr_snprintf()\fP since it is not very flexible and only prints physical/OS indexes.
+.RE
+.PP
+Fill string \fCstring\fP up to \fCsize\fP characters with the description of topology object \fCobj\fP in topology \fCtopology\fP.
+.PP
+If \fCverbose\fP is set, a longer description is used. Otherwise a short description is used.
+.PP
+\fCindexprefix\fP is used to prefix the \fCos_index\fP attribute number of the object in the description. If \fCNULL\fP, the \fC#\fP character is used.
+.PP
+\fBReturns:\fP
+.RS 4
+how many characters were actually written (not including the ending \\0). 
+.RE
+.PP
+
+.SS "HWLOC_DECLSPEC \fBhwloc_obj_type_t\fP hwloc_obj_type_of_string (const char * string)"
+.PP
+Return an object type from the string. \fBReturns:\fP
+.RS 4
+-1 if unrecognized. 
+.RE
+.PP
+
+.SS "HWLOC_DECLSPEC int hwloc_obj_type_snprintf (char *__hwloc_restrict string, size_t size, \fBhwloc_obj_t\fP obj, int verbose)"
+.PP
+Stringify the type of a given topology object into a human-readable form. It differs from \fBhwloc_obj_type_string()\fP because it prints type attributes such as cache depth.
+.PP
+\fBReturns:\fP
+.RS 4
+how many characters were actually written (not including the ending \\0). 
+.RE
+.PP
+
+.SS "HWLOC_DECLSPEC const char* hwloc_obj_type_string (\fBhwloc_obj_type_t\fP type) const"
+.PP
+Return a stringified topology object type. 
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code.

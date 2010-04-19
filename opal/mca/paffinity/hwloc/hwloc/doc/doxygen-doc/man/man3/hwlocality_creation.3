@@ -1,0 +1,79 @@
+.TH "Create and Destroy Topologies" 3 "17 Apr 2010" "Version 1.0rc1" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+Create and Destroy Topologies \- 
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "HWLOC_DECLSPEC int \fBhwloc_topology_init\fP (\fBhwloc_topology_t\fP *topologyp)"
+.br
+.RI "\fIAllocate a topology context. \fP"
+.ti -1c
+.RI "HWLOC_DECLSPEC int \fBhwloc_topology_load\fP (\fBhwloc_topology_t\fP topology)"
+.br
+.RI "\fIBuild the actual topology. \fP"
+.ti -1c
+.RI "HWLOC_DECLSPEC void \fBhwloc_topology_destroy\fP (\fBhwloc_topology_t\fP topology)"
+.br
+.RI "\fITerminate and free a topology context. \fP"
+.ti -1c
+.RI "HWLOC_DECLSPEC void \fBhwloc_topology_check\fP (\fBhwloc_topology_t\fP topology)"
+.br
+.RI "\fIRun internal checks on a topology structure. \fP"
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "HWLOC_DECLSPEC void hwloc_topology_check (\fBhwloc_topology_t\fP topology)"
+.PP
+Run internal checks on a topology structure. \fBParameters:\fP
+.RS 4
+\fItopology\fP is the topology to be checked 
+.RE
+.PP
+
+.SS "HWLOC_DECLSPEC void hwloc_topology_destroy (\fBhwloc_topology_t\fP topology)"
+.PP
+Terminate and free a topology context. \fBParameters:\fP
+.RS 4
+\fItopology\fP is the topology to be freed 
+.RE
+.PP
+
+.SS "HWLOC_DECLSPEC int hwloc_topology_init (\fBhwloc_topology_t\fP * topologyp)"
+.PP
+Allocate a topology context. \fBParameters:\fP
+.RS 4
+\fItopologyp\fP is assigned a pointer to the new allocated context.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success, -1 on error. 
+.RE
+.PP
+
+.SS "HWLOC_DECLSPEC int hwloc_topology_load (\fBhwloc_topology_t\fP topology)"
+.PP
+Build the actual topology. Build the actual topology once initialized with \fBhwloc_topology_init()\fP and tuned with hwlocality_configuration routine. No other routine may be called earlier using this topology context.
+.PP
+\fBParameters:\fP
+.RS 4
+\fItopology\fP is the topology to be loaded with objects.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success, -1 on error.
+.RE
+.PP
+\fBSee also:\fP
+.RS 4
+\fBConfigure Topology Detection\fP 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code.

@@ -1,0 +1,58 @@
+.TH "hwloc_topology_cpubind_support" 3 "17 Apr 2010" "Version 1.0rc1" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwloc_topology_cpubind_support \- 
+.PP
+Flags describing actual binding support for this topology.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <hwloc.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "unsigned char \fBset_thisproc_cpubind\fP"
+.br
+.ti -1c
+.RI "unsigned char \fBget_thisproc_cpubind\fP"
+.br
+.ti -1c
+.RI "unsigned char \fBset_proc_cpubind\fP"
+.br
+.ti -1c
+.RI "unsigned char \fBget_proc_cpubind\fP"
+.br
+.ti -1c
+.RI "unsigned char \fBset_thisthread_cpubind\fP"
+.br
+.ti -1c
+.RI "unsigned char \fBget_thisthread_cpubind\fP"
+.br
+.ti -1c
+.RI "unsigned char \fBset_thread_cpubind\fP"
+.br
+.ti -1c
+.RI "unsigned char \fBget_thread_cpubind\fP"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Flags describing actual binding support for this topology. 
+.SH "Field Documentation"
+.PP 
+.SS "unsigned char \fBhwloc_topology_cpubind_support::get_proc_cpubind\fP"Getting the binding of a whole given process is supported. 
+.SS "unsigned char \fBhwloc_topology_cpubind_support::get_thisproc_cpubind\fP"Getting the binding of the whole current process is supported. 
+.SS "unsigned char \fBhwloc_topology_cpubind_support::get_thisthread_cpubind\fP"Getting the binding of the current thread only is supported. 
+.SS "unsigned char \fBhwloc_topology_cpubind_support::get_thread_cpubind\fP"Getting the binding of a given thread only is supported. 
+.SS "unsigned char \fBhwloc_topology_cpubind_support::set_proc_cpubind\fP"Binding a whole given process is supported. 
+.SS "unsigned char \fBhwloc_topology_cpubind_support::set_thisproc_cpubind\fP"Binding the whole current process is supported. 
+.SS "unsigned char \fBhwloc_topology_cpubind_support::set_thisthread_cpubind\fP"Binding the current thread only is supported. 
+.SS "unsigned char \fBhwloc_topology_cpubind_support::set_thread_cpubind\fP"Binding a given thread only is supported. 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code.

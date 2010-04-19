@@ -1,0 +1,36 @@
+.TH "hwloc_topology_support" 3 "17 Apr 2010" "Version 1.0rc1" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+hwloc_topology_support \- 
+.PP
+Set of flags describing actual support for this topology.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <hwloc.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "struct \fBhwloc_topology_discovery_support\fP * \fBdiscovery\fP"
+.br
+.ti -1c
+.RI "struct \fBhwloc_topology_cpubind_support\fP * \fBcpubind\fP"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Set of flags describing actual support for this topology. 
+
+This is retrieved with \fBhwloc_topology_get_support()\fP and will be valid until the topology object is destroyed. Note: the values are correct only after discovery. 
+.SH "Field Documentation"
+.PP 
+.SS "struct \fBhwloc_topology_cpubind_support\fP* \fBhwloc_topology_support::cpubind\fP"
+.SS "struct \fBhwloc_topology_discovery_support\fP* \fBhwloc_topology_support::discovery\fP"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code.

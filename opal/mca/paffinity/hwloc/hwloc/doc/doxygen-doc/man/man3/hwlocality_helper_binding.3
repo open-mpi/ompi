@@ -1,0 +1,25 @@
+.TH "Binding Helpers" 3 "17 Apr 2010" "Version 1.0rc1" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+Binding Helpers \- 
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static __inline void \fBhwloc_distribute\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP root, \fBhwloc_cpuset_t\fP *cpuset, unsigned n)"
+.br
+.RI "\fIDistribute \fCn\fP items over the topology under \fCroot\fP. \fP"
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "static __inline void hwloc_distribute (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_t\fP root, \fBhwloc_cpuset_t\fP * cpuset, unsigned n)\fC [static]\fP"
+.PP
+Distribute \fCn\fP items over the topology under \fCroot\fP. Array \fCcpuset\fP will be filled with \fCn\fP cpusets distributed linearly over the topology under \fCroot\fP .
+.PP
+This is typically useful when an application wants to distribute \fCn\fP threads over a machine, giving each of them as much private cache as possible and keeping them locally in number order.
+.PP
+The caller may typically want to also call \fBhwloc_cpuset_singlify()\fP before binding a thread so that it does not move at all. 
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hardware Locality (hwloc) from the source code.

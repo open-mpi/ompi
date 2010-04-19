@@ -1,0 +1,62 @@
+.\" -*- nroff -*-
+.TH HWLOC-DISTRIB "1" "#HWLOC_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+hwloc-distrib \- Build a number of cpu masks distributed on the system
+.
+.\" **************************
+.\"    Synopsis Section
+.\" **************************
+.SH SYNOPSIS
+.B topodistrib
+[\fIoptions\fR] \fI<integer>\fR
+.
+.\" **************************
+.\"    Options Section
+.\" **************************
+.SH OPTIONS
+.TP
+\fB\-v\fR
+verbose messages
+.TP
+\fB\-\-synthetic\fR "2 2"
+simulate a fake hierarchy
+.TP
+\fB\-\-version\fR
+report version and exit
+.
+.\" **************************
+.\"    Description Section
+.\" **************************
+.SH DESCRIPTION
+.
+hwloc-distrib generates a series of CPU masks in an attempt to
+distribute a set of processes around multiple processors in a single
+server.  These masks can be used with hwloc-bind(1).
+.
+.PP
+.B NOTE:
+It is highly recommended that you read the hwloc(7) overview page
+before reading this man page.  Most of the concepts described in
+hwloc(7) directly apply to the hwloc-bind utility.
+.
+.
+.\" **************************
+.\"    Return value section
+.\" **************************
+.SH RETURN VALUE
+Upon successful execution, hwloc-distrib displays one or more CPU mask
+strings.  The return value is 0.
+.
+.
+.PP
+hwloc-distrib will return nonzero if any kind of error occurs, such as
+(but not limited to) failure to parse the command line.
+.
+.\" **************************
+.\"    See also section
+.\" **************************
+.SH SEE ALSO
+.
+.ft R
+hwloc(7)
+.sp
