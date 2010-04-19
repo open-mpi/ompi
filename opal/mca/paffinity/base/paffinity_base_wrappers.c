@@ -129,3 +129,79 @@ int opal_paffinity_base_get_physical_core_id(int physical_socket_id, int logical
     return opal_paffinity_base_module->paff_get_physical_core_id(physical_socket_id, logical_core_id);
 }
 
+char *opal_paffinity_base_print_binding(opal_paffinity_base_cpu_set_t cpumask)
+{
+    char *tmp;
+    size_t i, j, masksize, save;
+    
+    /* get space for element separators and trailing NULL */
+    tmp = (char*)malloc(OPAL_PAFFINITY_CPU_SET_NUM_BYTES+OPAL_PAFFINITY_BITMASK_NUM_ELEMENTS + 1);
+    if (NULL == tmp) {
+        return NULL;
+    }
+    memset(tmp, 0, OPAL_PAFFINITY_CPU_SET_NUM_BYTES+OPAL_PAFFINITY_BITMASK_NUM_ELEMENTS + 1);
+    masksize = sizeof(opal_paffinity_base_bitmask_t);
+    
+    if (4 == masksize) {
+        for (i=0, j=0; i < OPAL_PAFFINITY_BITMASK_NUM_ELEMENTS; i++) {
+            sprintf(&tmp[j], "%04lx", cpumask.bitmask[i]);
+            j += 4;
+            tmp[j] = ':';
+            j++;
+        }
+    } else if (8 == masksize) {
+        for (i=0, j=0; i < OPAL_PAFFINITY_BITMASK_NUM_ELEMENTS; i++) {
+            sprintf(&tmp[j], "%08lx", cpumask.bitmask[i]);
+            j += 8;
+            tmp[j] = ':';
+            j++;
+        }
+    }
+    
+    /* find the last non-zero entry */
+    save = OPAL_PAFFINITY_CPU_SET_NUM_BYTES+OPAL_PAFFINITY_BITMASK_NUM_ELEMENTS;
+    for (i=OPAL_PAFFINITY_CPU_SET_NUM_BYTES+OPAL_PAFFINITY_BITMASK_NUM_ELEMENTS-1; 0 <= i; i--) {
+        if ('0' != tmp[i] && ':' != tmp[i]) {
+            tmp[save] = '\0';
+            break;
+        } else if (':' == tmp[i]) {
+            save = i;
+        }
+    }
+    if ('\0' == tmp[0]) {
+        /* there was nothing in the mask */
+        free(tmp);
+        tmp = NULL;
+    }
+    
+    return tmp;
+}
+
+int opal_paffinity_base_parse_binding(char *binding, opal_paffinity_base_cpu_set_t cpumask)
+{
+    size_t i, masksize;
+    char *tmp, *save;
+    
+    if (NULL == binding || 0 == strlen(binding)) {
+        return OPAL_SUCCESS;
+    }
+    
+    OPAL_PAFFINITY_CPU_ZERO(cpumask);
+    masksize = sizeof(opal_paffinity_base_bitmask_t);
+    
+    tmp = binding;
+    for (i=0; i < OPAL_PAFFINITY_BITMASK_NUM_ELEMENTS; i++) {
+        cpumask.bitmask[i] = strtoul(tmp, &save, 16);
+        tmp = save;
+        if (NULL == tmp) {
+            /* end of the line */
+            break;
+        }
+        tmp++;
+        if (NULL == tmp || 0 == strlen(tmp)) {
+            return OPAL_SUCCESS;
+        }
+    }
+    
+    return OPAL_SUCCESS;
+}

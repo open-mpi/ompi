@@ -244,7 +244,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
     orte_local_rank_t lrank;
     int target_socket, npersocket, logical_skt;
     int logical_cpu, phys_core, phys_cpu, ncpu;
-    char *param;
+    char *param, *tmp;
     
     if (NULL != child) {
         /* should pull this information from MPIRUN instead of going with
@@ -505,9 +505,11 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                         logical_cpu += jobdat->stride;
                     }
                     if (orte_report_bindings) {
-                        opal_output(0, "%s odls:default:fork binding child %s to socket %d cpus %04lx",
+                        tmp = opal_paffinity_base_print_binding(mask);
+                        opal_output(0, "%s odls:default:fork binding child %s to socket %d cpus %s",
                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                    ORTE_NAME_PRINT(child->name), target_socket, mask.bitmask[0]);
+                                    ORTE_NAME_PRINT(child->name), target_socket, tmp);
+                        free(tmp);
                     }
                 } else {
                     /* my starting core has to be offset by cpus_per_rank */
@@ -560,9 +562,11 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                         logical_cpu += jobdat->stride;
                     }
                     if (orte_report_bindings) {
-                        opal_output(0, "%s odls:default:fork binding child %s to cpus %04lx",
+                        tmp = opal_paffinity_base_print_binding(mask);
+                        opal_output(0, "%s odls:default:fork binding child %s to cpus %s",
                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                    ORTE_NAME_PRINT(child->name), mask.bitmask[0]);
+                                    ORTE_NAME_PRINT(child->name), tmp);
+                        free(tmp);
                     }
                 }
                 if (ORTE_SUCCESS != (rc = opal_paffinity_base_set(mask))) {
@@ -769,9 +773,11 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                 /* if this resulted in no binding, generate warning if not suppressed */
                 ORTE_ODLS_WARN_NOT_BOUND(mask, 3);
                 if (orte_report_bindings) {
-                    opal_output(0, "%s odls:default:fork binding child %s to socket %d cpus %04lx",
+                    tmp = opal_paffinity_base_print_binding(mask);
+                    opal_output(0, "%s odls:default:fork binding child %s to socket %d cpus %s",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                ORTE_NAME_PRINT(child->name), target_socket, mask.bitmask[0]);
+                                ORTE_NAME_PRINT(child->name), target_socket, tmp);
+                    free(tmp);
                 }
                 if (ORTE_SUCCESS != (rc = opal_paffinity_base_set(mask))) {
                     ORTE_ODLS_IF_BIND_NOT_REQD(6);
@@ -821,6 +827,13 @@ LAUNCH_PROCS:
             param = mca_base_param_environ_variable("paffinity","base","bound");
             opal_setenv(param, "1", true, &environ_copy);
             free(param);
+            /* and provide a char representation of what we did */
+            tmp = opal_paffinity_base_print_binding(mask);
+            if (NULL != tmp) {
+                param = mca_base_param_environ_variable("paffinity","base","applied_binding");
+                opal_setenv(param, tmp, true, &environ_copy);
+                free(tmp);                
+            }
         }
         
         /* close all file descriptors w/ exception of
