@@ -17,6 +17,7 @@ EXTRA_DIST = \
 	VERSION \
 	config/defaults/bgl \
 	config/defaults/bgp \
+	config/defaults/crayxt \
 	config/defaults/ibm \
 	config/defaults/ibm-64 \
 	config/defaults/sicortex \
