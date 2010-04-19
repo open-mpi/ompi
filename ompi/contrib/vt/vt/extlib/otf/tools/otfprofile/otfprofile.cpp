@@ -588,9 +588,14 @@ int main( int argc, const char** argv )
 				}
 			}
 
-			if(status && ready == false) {
+			if ( status ) {
 #				ifdef _OPENMP
 #					pragma omp barrier
+#				endif
+			}
+
+			if ( status && ready == false ) {
+#				ifdef _OPENMP
 #					pragma omp single nowait
 #				endif
 				{
