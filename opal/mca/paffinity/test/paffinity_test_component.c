@@ -102,7 +102,7 @@ static int test_open(void)
 static int test_query(mca_base_module_t **module, int *priority)
 {
     /* set this priority so I can only be selected if directed */
-    *priority = 00;
+    *priority = 5;
     *module = (mca_base_module_t *)&opal_paffinity_test_module;
     
     return OPAL_SUCCESS;

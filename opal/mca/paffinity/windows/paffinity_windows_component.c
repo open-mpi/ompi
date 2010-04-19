@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -75,7 +76,7 @@ static int windows_open(void)
     mca_base_param_reg_int(&mca_paffinity_windows_component.base_version,
                            "priority",
                            "Priority of the windows paffinity component",
-                           false, false, 10, NULL);
+                           false, false, 20, NULL);
 
     return OPAL_SUCCESS;
 }

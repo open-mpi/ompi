@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -79,5 +79,10 @@ const opal_paffinity_base_component_2_0_0_t mca_paffinity_darwin_component = {
 
 static int darwin_open(void)
 {
+    mca_base_param_reg_int(&mca_paffinity_darwin_component.base_version,
+                           "priority",
+                           "Priority of the darwin paffinity component",
+                           false, false, 20, NULL);
+
     return OPAL_SUCCESS;
 }
