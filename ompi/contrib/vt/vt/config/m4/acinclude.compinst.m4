@@ -45,6 +45,8 @@ AC_DEFUN([ACVT_COMPINST],
 	compinst_openuh_fflags="$compinst_openuh_cflags"
 	compinst_openuh_fcflags="$compinst_openuh_cflags"
 
+	AC_REQUIRE([ACVT_PLATFORM])
+
 	AC_ARG_ENABLE(compinst,
 		AC_HELP_STRING([--enable-compinst=TYPE],
 			[enable support for compiler instrumentation (gnu,intel,pathscale,pgi,pgi9,sun,xl,nec,openuh), default: automatically by configure]),
@@ -150,11 +152,37 @@ AC_DEFUN([ACVT_COMPINST],
 					AC_MSG_RESULT([sun])
 					;;
 				cc*)
-					compver=`$CC -V 2>&1 | grep "Sun C"`
-					AS_IF([test "$?" = "0"],
+					AS_IF([test "$PLATFORM" = "crayxt"],
 					[
-						compinst_type="sun"
-						AC_MSG_RESULT([sun])
+						for f in "-V --version"; do
+							case `$CC $f 2>&1` in
+								*pgcc\ [1-8].*)
+									compinst_type="pgi"
+									AC_MSG_RESULT([pgi])
+									;;
+								*pgcc\ *)
+									compinst_type="pgi9"
+									AC_MSG_RESULT([pgi9])
+									;;
+								*gcc\ *)
+									compinst_type="gnu"
+									AC_MSG_RESULT([gnu])
+									;;
+								*PathScale*)
+									compinst_type="gnu"
+									AC_MSG_RESULT([gnu (pathscale)])
+									;;
+							esac
+							AS_IF([test x"$compinst_type" != x], [break])
+						done
+					],
+					[
+						compver=`$CC -V 2>&1 | grep "Sun C"`
+						AS_IF([test "$?" = "0"],
+						[
+							compinst_type="sun"
+							AC_MSG_RESULT([sun])
+						])
 					])
 					;;
 				uhcc* | opencc*)

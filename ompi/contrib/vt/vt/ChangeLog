@@ -5,6 +5,7 @@
 	  by the GNU, Intel, PathScale, or PGI 9 compiler
 	- extended support for BlueGene/P in terms of tracing libraries
 	  (e.g. libc I/O) and tracing of multi-threaded applications
+	- added default option file for CrayXT platforms
 	- added support for PAPI-C counters which belong to different components
 	- added environment variable VT_METRICS_SEP to specify a string which
 	  separate the counter names in VT_METRICS
