@@ -12,6 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 #                         reserved. 
+# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -20,9 +21,3 @@
 #
 
 PARAM_CONFIG_FILES="Makefile"
-
-#
-# Set the config priority so that we only build
-# if nobody else can
-
-PARAM_CONFIG_PRIORITY=10

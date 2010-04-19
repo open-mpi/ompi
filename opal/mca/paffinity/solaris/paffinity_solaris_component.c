@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -77,7 +77,7 @@ static int solaris_register(void)
     mca_base_param_reg_int(&mca_paffinity_solaris_component.base_version,
                            "priority",
                            "Priority of the solaris paffinity component",
-                           false, false, 10, NULL);
+                           false, false, 30, NULL);
 
     return OPAL_SUCCESS;
 }

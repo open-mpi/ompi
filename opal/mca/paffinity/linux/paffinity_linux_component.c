@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2008 Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2007-2010 Cisco Systems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -79,7 +79,7 @@ static int linux_register(void)
     mca_base_param_reg_int(&mca_paffinity_linux_component.base_version,
                            "priority",
                            "Priority of the linux paffinity component",
-                           false, false, 10, NULL);
+                           false, false, 20, NULL);
     mca_base_param_reg_string(&mca_paffinity_linux_component.base_version,
                               "plpa_version",
                               "Version of PLPA that is embedded in Open MPI",
