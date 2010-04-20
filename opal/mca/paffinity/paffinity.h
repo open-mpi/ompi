@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -26,15 +26,14 @@
  *
  * Intent
  *
- * This is an extremely simple framework that is used to support the
- * OS-specific API for placement of processes on processors.  It does
- * *not* decide scheduling issues -- it is simply for assigning the
- * current process it to a specific processor set.  As such, the
- * components are likely to be extremely short/simple -- there will
- * likely be one component for each OS/API that we support (e.g.,
- * Linux, IRIX, etc.).  As a direct consequence, there will likely
- * only be one component that is useable on a given platform (making
- * selection easy).
+ * This framework is used to support the OS-specific API for placement
+ * of processes on processors.  It does *not* decide scheduling issues
+ * -- it is simply for assigning the current process it to a specific
+ * processor set.  As such, the components are likely to be extremely
+ * short/simple -- there will likely be one component for each OS/API
+ * that we support (e.g., Linux, IRIX, etc.).  As a direct
+ * consequence, there will likely only be one component that is
+ * useable on a given platform (making selection easy).
  *
  * It is *not* an error if there is no paffinity component available;
  * processor affinity services are simply not available.  Hence,
@@ -284,11 +283,10 @@ typedef int (*opal_paffinity_base_module_get_processor_info_fn_t)(int *num_proce
 typedef int (*opal_paffinity_base_module_get_socket_info_fn_t)(int *num_sockets);
 
 /**
- * Provides the number of LOGICAL cores in a PHYSICAL socket. currently supported
- * only in Linux hosts
+ * Provides the number of LOGICAL cores in a PHYSICAL socket. 
  * 
- * return OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
- * supporeted (solaris, windows, etc...)
+ * Returns OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
+ * supporeted.
  */
 typedef int (*opal_paffinity_base_module_get_core_info_fn_t)(int physical_socket, int *num_cores);
 
