@@ -135,24 +135,25 @@ char *opal_paffinity_base_print_binding(opal_paffinity_base_cpu_set_t cpumask)
     size_t i, j, masksize, save;
     
     /* get space for element separators and trailing NULL */
-    tmp = (char*)malloc(OPAL_PAFFINITY_CPU_SET_NUM_BYTES+OPAL_PAFFINITY_BITMASK_NUM_ELEMENTS + 1);
+    masksize = (2*OPAL_PAFFINITY_CPU_SET_NUM_BYTES)+OPAL_PAFFINITY_BITMASK_NUM_ELEMENTS + 1;
+    tmp = (char*)malloc(masksize);
     if (NULL == tmp) {
         return NULL;
     }
-    memset(tmp, 0, OPAL_PAFFINITY_CPU_SET_NUM_BYTES+OPAL_PAFFINITY_BITMASK_NUM_ELEMENTS + 1);
+    memset(tmp, 0, masksize);
     masksize = sizeof(opal_paffinity_base_bitmask_t);
     
     if (4 == masksize) {
         for (i=0, j=0; i < OPAL_PAFFINITY_BITMASK_NUM_ELEMENTS; i++) {
-            sprintf(&tmp[j], "%04lx", cpumask.bitmask[i]);
-            j += 4;
+            sprintf(&tmp[j], "%08lx", cpumask.bitmask[i]);
+            j += 8;
             tmp[j] = ':';
             j++;
         }
     } else if (8 == masksize) {
         for (i=0, j=0; i < OPAL_PAFFINITY_BITMASK_NUM_ELEMENTS; i++) {
-            sprintf(&tmp[j], "%08lx", cpumask.bitmask[i]);
-            j += 8;
+            sprintf(&tmp[j], "%016lx", cpumask.bitmask[i]);
+            j += 16;
             tmp[j] = ':';
             j++;
         }
