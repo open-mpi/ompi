@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -206,7 +207,7 @@ typedef struct opal_paffinity_base_cpu_set_t {
         if (OPAL_SUCCESS ==                                         \
             opal_paffinity_base_get_processor_info(&num_processors)) {\
             num_bound = 0;                                          \
-            for (i = 0; i < num_processors; i++) {                  \
+            for (i = 0; i < OPAL_PAFFINITY_BITMASK_CPU_MAX; i++) {  \
                 if (OPAL_PAFFINITY_CPU_ISSET(i, (cpuset))) {        \
                     num_bound++;                                    \
                 }                                                   \
