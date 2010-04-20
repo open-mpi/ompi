@@ -9,15 +9,13 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- *
+ * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
  * 
  * $HEADER$
  */
-
 
 #include "opal_config.h"
 
@@ -178,21 +176,19 @@ char *opal_paffinity_base_print_binding(opal_paffinity_base_cpu_set_t cpumask)
     return tmp;
 }
 
-int opal_paffinity_base_parse_binding(char *binding, opal_paffinity_base_cpu_set_t cpumask)
+int opal_paffinity_base_parse_binding(char *binding, opal_paffinity_base_cpu_set_t *cpumask)
 {
-    size_t i, masksize;
+    size_t i;
     char *tmp, *save;
     
     if (NULL == binding || 0 == strlen(binding)) {
         return OPAL_SUCCESS;
     }
     
-    OPAL_PAFFINITY_CPU_ZERO(cpumask);
-    masksize = sizeof(opal_paffinity_base_bitmask_t);
-    
+    OPAL_PAFFINITY_CPU_ZERO(*cpumask);
     tmp = binding;
     for (i=0; i < OPAL_PAFFINITY_BITMASK_NUM_ELEMENTS; i++) {
-        cpumask.bitmask[i] = strtoul(tmp, &save, 16);
+        cpumask->bitmask[i] = strtoul(tmp, &save, 16);
         tmp = save;
         if (NULL == tmp) {
             /* end of the line */

@@ -15,7 +15,6 @@
  * Additional copyrights may follow
  * 
  * $HEADER$
- *
  */
 
 #ifndef OPAL_PAFFINITY_BASE_H
@@ -220,7 +219,7 @@ OPAL_DECLSPEC int opal_paffinity_base_get_physical_core_id(int physical_socket_i
 OPAL_DECLSPEC char *opal_paffinity_base_print_binding(opal_paffinity_base_cpu_set_t cpumask);
 
 /* Parse the binding string created by above function back into a cpu set */
-OPAL_DECLSPEC int opal_paffinity_base_parse_binding(char *binding, opal_paffinity_base_cpu_set_t cpumask);
+OPAL_DECLSPEC int opal_paffinity_base_parse_binding(char *binding, opal_paffinity_base_cpu_set_t *cpumask);
 
 /**
  * Indication of whether a component was successfully selected or
