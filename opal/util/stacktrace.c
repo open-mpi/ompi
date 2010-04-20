@@ -266,8 +266,12 @@ static void show_stackframe (int signo, siginfo_t * info, void * p)
             case SI_KERNEL: si_code_str = "Kernel signal"; break;
 #endif
 /* Dragonfly defines SI_USER and SI_UNDEFINED both as zero: */
-#if defined(SI_UNDEFINED) && (SI_UNDEFINED != SI_USER)
+/* For some reason, the PGI compiler will not let us combine these two
+   #if tests into a single statement.  Sigh. */
+#if defined(SI_UNDEFINED)
+#if SI_UNDEFINED != SI_USER
             case SI_UNDEFINED: si_code_str = "Undefined code"; break;
+#endif
 #endif
             }
         }
