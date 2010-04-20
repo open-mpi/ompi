@@ -154,9 +154,9 @@ AC_DEFUN([ACVT_COMPINST],
 				cc*)
 					AS_IF([test "$PLATFORM" = "crayxt"],
 					[
-						for f in "-V --version"; do
+						for f in -V --version; do
 							case `$CC $f 2>&1` in
-								*pgcc\ [1-8].*)
+								*pgcc\ [[1-8]].*)
 									compinst_type="pgi"
 									AC_MSG_RESULT([pgi])
 									;;
@@ -164,13 +164,17 @@ AC_DEFUN([ACVT_COMPINST],
 									compinst_type="pgi9"
 									AC_MSG_RESULT([pgi9])
 									;;
-								*gcc\ *)
-									compinst_type="gnu"
-									AC_MSG_RESULT([gnu])
-									;;
 								*PathScale*)
 									compinst_type="gnu"
 									AC_MSG_RESULT([gnu (pathscale)])
+									;;
+								*Intel*)
+									compinst_type="gnu"
+									AC_MSG_RESULT([gnu (intel)])
+									;;
+								*gcc\ *)
+									compinst_type="gnu"
+									AC_MSG_RESULT([gnu])
 									;;
 							esac
 							AS_IF([test x"$compinst_type" != x], [break])
