@@ -111,7 +111,9 @@ FOREACH (MCA_FRAMEWORK ${MCA_FRAMEWORK_LIST})
 
         # Install help files if they are here.
         INSTALL(DIRECTORY ${CURRENT_PATH}/ DESTINATION share/openmpi/
-          FILES_MATCHING PATTERN "*.txt" PATTERN ".svn" EXCLUDE)
+          FILES_MATCHING PATTERN "*.txt"
+          PATTERN ".svn" EXCLUDE
+          PATTERN ".hg" EXCLUDE)
 
       ELSEIF(EXISTS "${PROJECT_SOURCE_DIR}/mca/${MCA_FRAMEWORK}/${MCA_COMPONENT}/.windows")
 
@@ -265,7 +267,9 @@ ENDIF (OMPI_DEBUG_BUILD)
 
           # Install help files if they are here.
           INSTALL(DIRECTORY ${CURRENT_PATH}/ DESTINATION share/openmpi/
-            FILES_MATCHING PATTERN "*.txt" PATTERN ".svn" EXCLUDE)
+            FILES_MATCHING PATTERN "*.txt"
+            PATTERN ".svn" EXCLUDE
+            PATTERN ".hg" EXCLUDE)
 
         ENDIF(BUILD_COMPONENT)        
       ENDIF(${MCA_COMPONENT} STREQUAL "base")

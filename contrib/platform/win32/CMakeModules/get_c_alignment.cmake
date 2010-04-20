@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2007-2008 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2010 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -11,7 +11,7 @@
 
 MACRO(C_GET_ALIGNMENT TYPE LANG NAME)
 
-  IF(NOT ${NAME}_ALIGNMENT)
+  IF(NOT OPAL_ALIGNMENT_${NAME})
 
     #
     # Try to compile and run a foo grogram. 
@@ -32,10 +32,11 @@ MACRO(C_GET_ALIGNMENT TYPE LANG NAME)
        return diff;}
     ")
 
-    TRY_RUN(${NAME}_ALIGNMENT COMPILE_RESULT "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/"
+    TRY_RUN(OPAL_ALIGNMENT_${NAME} COMPILE_RESULT "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/"
       "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/c_get_${NAME}_alignment.${LANG}")
 
-    MESSAGE( STATUS "Check alignment of ${TYPE} in ${LANG}...${${NAME}_ALIGNMENT}")
+    MESSAGE( STATUS "Check alignment of ${TYPE} in ${LANG}...${OPAL_ALIGNMENT_${NAME}}")
 
-  ENDIF(NOT ${NAME}_ALIGNMENT)
+  ENDIF(NOT OPAL_ALIGNMENT_${NAME})
+
 ENDMACRO(C_GET_ALIGNMENT TYPE TYPE_ALIGNMENT LANG )

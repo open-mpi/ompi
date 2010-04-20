@@ -136,7 +136,9 @@ CONFIGURE_FILE(${OpenMPI_SOURCE_DIR}/ompi/include/ompi_config.h.in  ${OpenMPI_BI
 # generate mpi_portable_platform.h
 CONFIGURE_FILE(${OpenMPI_SOURCE_DIR}/ompi/include/mpi_portable_platform.h.in  ${OpenMPI_BINARY_DIR}/ompi/include/mpi_portable_platform.h)
 
-INCLUDE(generate_version_file)
+# generate version.h
+CONFIGURE_FILE(${OpenMPI_SOURCE_DIR}/ompi/include/ompi/version.h.in  ${OpenMPI_BINARY_DIR}/ompi/include/ompi/version.h)
+
 
 ADD_SUBDIRECTORY(mpi)
 ADD_SUBDIRECTORY(tools)
@@ -147,7 +149,7 @@ INSTALL(TARGETS libmpi
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib)
-INSTALL(FILES ${PROJECT_BINARY_DIR}/include/mpi.h ${PROJECT_BINARY_DIR}/include/mpi_portable_platform.h
+INSTALL(FILES ${PROJECT_BINARY_DIR}/include/mpi.h ${PROJECT_SOURCE_DIR}/include/mpi_portable_platform.h
   DESTINATION include)
 
 INSTALL(FILES errhandler/help-mpi-errors.txt
