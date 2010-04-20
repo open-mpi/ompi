@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2007-2009 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -658,6 +659,7 @@ static mca_btl_openib_endpoint_t* xoob_find_endpoint(orte_process_name_t* proces
                 "jobid %d, vpid %d, sid %" PRIx64 ", lid %d",
                 process_name->jobid, process_name->vpid, subnet_id, lid));
     /* find ibproc */
+    OPAL_THREAD_LOCK(&mca_btl_openib_component.ib_lock);
     for (ib_proc = (mca_btl_openib_proc_t*)
             opal_list_get_first(&mca_btl_openib_component.ib_procs);
             ib_proc != (mca_btl_openib_proc_t*)
@@ -696,6 +698,7 @@ static mca_btl_openib_endpoint_t* xoob_find_endpoint(orte_process_name_t* proces
     } else {
             BTL_ERROR(("can't find suitable endpoint for this peer\n"));
     }
+    OPAL_THREAD_UNLOCK(&mca_btl_openib_component.ib_lock);
     return ib_endpoint;
 }
 

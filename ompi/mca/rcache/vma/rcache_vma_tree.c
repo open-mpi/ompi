@@ -13,6 +13,7 @@
   *
   * Copyright (c) 2006      Voltaire. All rights reserved.
   * Copyright (c) 2007      Mellanox Technologies. All rights reserved.
+  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
   *
   * $COPYRIGHT$
   * 
@@ -36,12 +37,14 @@ static void mca_rcache_vma_construct(opal_object_t *object)
 {
     mca_rcache_vma_t *vma = (mca_rcache_vma_t*)object;
     OBJ_CONSTRUCT(&vma->reg_list, opal_list_t);
+    OBJ_CONSTRUCT(&vma->reg_delete_list, opal_list_t);
 }
 
 static void mca_rcache_vma_destruct(opal_object_t *object)
 {
     mca_rcache_vma_t *vma = (mca_rcache_vma_t*)object;
     OBJ_DESTRUCT(&vma->reg_list);
+    OBJ_DESTRUCT(&vma->reg_delete_list);
 }
 
 OBJ_CLASS_INSTANCE(mca_rcache_vma_t, ompi_free_list_item_t,
@@ -120,13 +123,16 @@ static inline mca_rcache_vma_t *mca_rcache_vma_new(
     return vma;
 }
 
-static inline void mca_rcache_vma_destroy(mca_rcache_vma_t *vma)
+void mca_rcache_vma_destroy(mca_rcache_vma_t *vma)
 {
     opal_list_item_t *item;
 
     while ((item = opal_list_remove_first(&vma->reg_list)))
         OBJ_RELEASE(item);
 
+     while ((item = opal_list_remove_first(&vma->reg_delete_list)))
+         OBJ_RELEASE(item);
+ 
     OBJ_RELEASE(vma);
 }
 
@@ -191,7 +197,7 @@ static inline void mca_rcache_vma_remove_reg(mca_rcache_vma_t *vma,
 
         if(item->reg == reg) {
             opal_list_remove_item(&vma->reg_list, &item->super);
-            OBJ_RELEASE(item);
+	    opal_list_append(&vma->reg_delete_list, &item->super);
             break;
         }
     }
@@ -254,6 +260,7 @@ int mca_rcache_vma_tree_init(mca_rcache_vma_module_t* rcache)
 { 
     OBJ_CONSTRUCT(&rcache->rb_tree, ompi_rb_tree_t);
     OBJ_CONSTRUCT(&rcache->vma_list, opal_list_t); 
+    OBJ_CONSTRUCT(&rcache->vma_delete_list, opal_list_t); 
     rcache->reg_cur_cache_size = 0;
     return ompi_rb_tree_init(&rcache->rb_tree, 
                              mca_rcache_vma_tree_node_compare);
@@ -487,7 +494,7 @@ int mca_rcache_vma_tree_delete(mca_rcache_vma_module_t* vma_rcache,
             mca_rcache_vma_update_byte_count(vma_rcache,
                     vma->start - vma->end - 1);
             opal_list_remove_item(&vma_rcache->vma_list, &vma->super);
-            mca_rcache_vma_destroy(vma);
+	    opal_list_append(&vma_rcache->vma_delete_list, &vma->super);
             vma = next;
         } else {
             int merged;
@@ -504,7 +511,7 @@ int mca_rcache_vma_tree_delete(mca_rcache_vma_module_t* vma_rcache,
                     prev->end = vma->end;
                     opal_list_remove_item(&vma_rcache->vma_list, &vma->super);
                     ompi_rb_tree_delete(&vma_rcache->rb_tree, vma);
-                    mca_rcache_vma_destroy(vma);
+		    opal_list_append(&vma_rcache->vma_delete_list, &vma->super);
                     vma = prev;
                     merged = 1;
                 }
@@ -517,7 +524,7 @@ int mca_rcache_vma_tree_delete(mca_rcache_vma_module_t* vma_rcache,
                     vma->end = next->end;
                     opal_list_remove_item(&vma_rcache->vma_list, &next->super);
                     ompi_rb_tree_delete(&vma_rcache->rb_tree, next);
-                    mca_rcache_vma_destroy(next);
+		    opal_list_append(&vma_rcache->vma_delete_list, &next->super);
                     merged = 1;
                 }
             } while(merged);

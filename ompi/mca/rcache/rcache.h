@@ -10,6 +10,7 @@
   *                         University of Stuttgart.  All rights reserved.
   * Copyright (c) 2004-2005 The Regents of the University of California.
   *                         All rights reserved.
+  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
   * $COPYRIGHT$
   * 
   * Additional copyrights may follow
@@ -49,6 +50,11 @@ typedef int (*mca_rcache_base_module_delete_fn_t)(
         struct mca_rcache_base_module_t* rcache,
         mca_mpool_base_registration_t* registration);
 
+/* Do not call the clean function with the rcache lock held */
+typedef int (*mca_rcache_base_module_clean_fn_t)(
+        struct mca_rcache_base_module_t* rcache);
+
+
 /**
   * finalize
   */
@@ -80,6 +86,7 @@ struct mca_rcache_base_module_t {
     mca_rcache_base_module_find_all_fn_t rcache_find_all;
     mca_rcache_base_module_insert_fn_t rcache_insert;
     mca_rcache_base_module_delete_fn_t rcache_delete;
+    mca_rcache_base_module_clean_fn_t rcache_clean;
     mca_rcache_base_module_finalize_fn_t rcache_finalize;
     opal_mutex_t lock;
 };

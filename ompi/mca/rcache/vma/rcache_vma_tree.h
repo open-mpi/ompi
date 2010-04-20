@@ -12,6 +12,7 @@
   *                         All rights reserved.
   *
   * Copyright (c) 2006      Voltaire. All rights reserved.
+  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
   *
   * $COPYRIGHT$
   * 
@@ -49,6 +50,7 @@ struct mca_rcache_vma_t
     uintptr_t start;                 /**< the base of the memory range */
     uintptr_t end;                   /**< the bound of the memory range */
     opal_list_t reg_list;            /**< list of regs on this vma */
+    opal_list_t reg_delete_list;     /**< delayed deletions list for regs on this vma */
     mca_rcache_vma_module_t *rcache; /**< pointer to rcache vma belongs to */
 };
 typedef struct mca_rcache_vma_t mca_rcache_vma_t;
@@ -91,6 +93,11 @@ int mca_rcache_vma_tree_delete(
                               mca_mpool_base_registration_t* reg
                               ); 
 
+/* 
+ * Destroy a vma
+ * Do not call this function with rcache lock as it can deadlock 
+ */
+void mca_rcache_vma_destroy(mca_rcache_vma_t *vma);
 
 #endif /* MCA_RCACHE_VMA_TREE_H */
 

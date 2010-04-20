@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -1816,6 +1817,7 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
     /* JMS: optimization target -- can we send something in private
        data to find the proc directly instead of having to search
        through *all* procs? */
+    OPAL_THREAD_LOCK(&mca_btl_openib_component.ib_lock);
     for (found = false, ib_proc = (mca_btl_openib_proc_t*)
              opal_list_get_first(&mca_btl_openib_component.ib_procs);
          !found && 
@@ -1850,6 +1852,7 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
             }
         }
     }
+    OPAL_THREAD_UNLOCK(&mca_btl_openib_component.ib_lock);
     if (!found) {
         BTL_VERBOSE(("could not find match for calling endpoint!"));
         rc = OMPI_ERR_NOT_FOUND;
