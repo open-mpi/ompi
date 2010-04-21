@@ -1,0 +1,88 @@
+.\"Copyright 2007-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
+.TH OMPI_Affinity_str 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+\fBOMPI_Affinity_str\fP \- Obtain prettyprint strings of processor affinity information for this process
+
+.SH SYNTAX
+.ft R
+.SH C Syntax
+.nf
+#include <mpi.h>
+#include <mpi-ext.h>
+
+int OMPI_Affinity_str(char \fIompi_bound\fP[OMPI_AFFINITY_STRING_MAX],
+                      char \fIcurrent_binding\fP[OMPI_AFFINITY_STRING_MAX],
+                      char \fIexists\fP[OMPI_AFFINITY_STRING_MAX])
+.
+.SH Fortran Syntax
+.nf
+There is no Fortran binding for this function.
+.
+.SH C++ Syntax
+.nf
+There is no C++ binding for this function.
+.
+.SH OUTPUT PARAMETERS
+.ft R
+.TP 1i
+ompi_bound
+A prettyprint string describing what processor(s) Open MPI bound this
+process to, or a string indicating that Open MPI did not bind this
+process.
+.
+.TP 1i
+current_binding
+A prettyprint string describing what processor(s) this process is
+currently bound to, or a string indicating that the process is bound
+to all available processors (and is therefore considered "unbound").
+.
+.TP 1i
+exists
+A prettyprint string describing the available sockets and sockets on
+this host.
+
+.SH DESCRIPTION
+.ft R
+Open MPI may bind a process to specific sockets and/or cores at
+process launch time.  This non-standard Open MPI function call returns
+prettyprint information about three things:
+.
+.TP
+Where Open MPI bound this process.
+The string returned in 
+.B
+ompi_bound
+will either indicate that Open MPI did not bind this process to
+anything, or it will contain a prettyprint description of the
+processor(s) to which Open MPI bound this process.
+.
+.TP
+Where this process is currently bound.
+Regardless of whether Open MPI bound this process or not, another
+entity may have bound it.  The string returned in
+.B current_binding
+will indicate what the
+.I
+current
+binding is of this process, regardless of what Open MPI may have done
+earlier.  The string returned will either indicate that the process is
+unbound (meaning that it is bound to all available processors) or it
+will contain a prettyprint description of the sockets and cores to
+which the process is currently bound.
+.
+.TP
+What processors exist.
+As a convenience to the user, the
+.B
+exists
+string will contain a prettyprint description of the sockets and cores
+that this process can see (which is
+.I usually
+all processors in the system).
+
+.SH SEE ALSO
+.ft R
+.nf
+mpirun(1)
