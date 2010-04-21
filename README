@@ -790,6 +790,12 @@ for a full list); a summary of the more commonly used ones follows:
   generates these bindings at compile time with a maximum number of
   dimensions as specified by this parameter.  The default value is 4.
 
+--enable-mpi-ext(=<list>)
+  Enable Open MPI's non-portable API extensions.  If no <list> is
+  specified, all of the extensions are enabled.
+
+  See "Open MPI API Extensions", below, for more details.
+
 --enable-mpirun-prefix-by-default
   This option forces the "mpirun" command to always behave as if
   "--prefix $prefix" was present on the command line (where $prefix is
@@ -1157,6 +1163,67 @@ The following options may be helpful:
 
 Changing the values of these parameters is explained in the "The
 Modular Component Architecture (MCA)" section, below.
+
+===========================================================================
+
+Open MPI API Extensions
+-----------------------
+
+Open MPI contains a framework for extending the MPI API that is
+available to applications.  Each extension is usually a standalone set of
+functionality that is distinct from other extensions (similar to how
+Open MPI's plugins are usually unrelated to wach other).  These
+extensions provide new functions and/or constants that are available
+to MPI applications.
+
+WARNING: These extensions are neither standard nor portable to other
+MPI implementations!
+
+Compiling the extensions
+------------------------
+
+Open MPI extensions are not enabled by default; they must be enabled
+by Open MPI's configure script.  The --enable-mpi-ext command line
+switch accepts a comma-delimited list of extensions to enable, or, if
+it is specified without a list, all extensions are enabled.
+
+Since extensions are meant to be used by advanced users only, this
+file does not document which extensions are available or what they
+do.  Look in the ompi/mpiext/ directory to see the extensions; each
+subdirectory off that directory contains an extension.  Each has a
+README file that describes what it does.
+
+Using the extensions
+--------------------
+
+To reinforce the fact that thse extensions are non-standard, you must
+include a separate header file after <mpi.h> to obtain the function
+prototypes, constant declarations, etc.  For example:
+
+#include <mpi.h>
+#include <mpi-ext.h>
+
+int main() {
+    MPI_Init(NULL, NULL);
+#if defined(OPEN_MPI) && OPEN_MPI
+    {
+        char ompi_bound[OMPI_AFFINITY_STRING_MAX];
+        char current_binding[OMPI_AFFINITY_STRING_MAX];
+        char exists[OMPI_AFFINITY_STRING_MAX];
+        OMPI_Affinity_str(ompi_bound, current_bindings, exists);
+    }
+#endif
+    MPI_Finalize();
+    return 0;
+}
+
+Notice that the Open MPI-specific code is surrounded by the #if
+statement to ensure that it is only ever compiled by Open MPI.  
+
+The Open MPI wrapper compilers (mpicc and friends) should
+automatically insert all relevant compiler and linker flags necessary
+to use the extensions.  No special flags or steps should be necessary
+compared to "normal" MPI applications.
 
 ===========================================================================
 
