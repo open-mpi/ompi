@@ -9,8 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- *
+ * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Voltaire. All rights reserved
  *
  * $COPYRIGHT$
@@ -574,3 +573,70 @@ int opal_paffinity_base_slot_list_set(long rank, char *slot_str, opal_paffinity_
     opal_argv_free(item);
     return OPAL_SUCCESS;
 }
+
+
+/**
+ * Make a prettyprint string for a cset.
+ */
+int opal_paffinity_base_cset2str(char *str, int len, 
+                                 opal_paffinity_base_cpu_set_t *cset)
+{
+    int ret, i, j, k, num_sockets, num_cores, flag, count, 
+        range_first, range_last;
+    char tmp[BUFSIZ];
+    const int stmp = sizeof(tmp) - 1;
+
+    str[0] = tmp[stmp] = '\0';
+
+    /* Loop over the number of sockets in this machine */
+    ret = opal_paffinity_base_get_socket_info(&num_sockets);
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+    for (i = 0; i < num_sockets; ++i) {
+        /* Loop over the number of cores in this socket */
+        ret = opal_paffinity_base_get_core_info(i, &num_cores);
+        if (OPAL_SUCCESS != ret) {
+            return ret;
+        }
+        /* Must initially set range_last to a low number -- smaller
+           than -1, so that the comparisons below work out
+           properly. */
+        for (range_last = -5, count = j = 0; j < num_cores; ++j) {
+            ret = opal_paffinity_base_get_map_to_processor_id(i, j, &k);
+            if (OPAL_SUCCESS != ret) {
+                return ret;
+            }
+
+            /* Prettyprint the cores that we're actually bound to */
+            flag = OPAL_PAFFINITY_CPU_ISSET(k, *cset);
+            if (flag) {
+                if (0 == count) {
+                    snprintf(tmp, stmp, "socket %d[core %d", i, j);
+                    strncat(str, tmp, len - strlen(str));
+                    range_first = range_last = j;
+                } else {
+                    if (j - 1 == range_last) {
+                        range_last = j;
+                    } else {
+                        snprintf(tmp, stmp, "-%d,%d", range_last, j);
+                        strncat(str, tmp, len - strlen(str));
+                        range_first = range_last = j;
+                    }
+                }
+                ++count;
+            }
+        }
+        if (count > 0) {
+            if (range_first != range_last) {
+                snprintf(tmp, stmp, "-%d", range_last);
+                strncat(str, tmp, len - strlen(str));
+            }
+            strncat(str, "] ", len - strlen(str));
+        }
+    }
+
+    return OPAL_SUCCESS;
+}
+
+

@@ -255,6 +255,12 @@ OPAL_DECLSPEC int opal_paffinity_base_slot_list_set(long rank, char *slot_str,
                                                     opal_paffinity_base_cpu_set_t *cpumask);
 
 /**
+ * Make a prettyprint string for a cset.
+ */
+OPAL_DECLSPEC int opal_paffinity_base_cset2str(char *str, int len, 
+                                               opal_paffinity_base_cpu_set_t *cset);
+
+/**
  * Debugging output stream
  */
 OPAL_DECLSPEC extern int opal_paffinity_base_output;
