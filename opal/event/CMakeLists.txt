@@ -20,7 +20,8 @@ ENDFOREACH (FILE)
 IF(WIN32)
   # include special path for these files
   SET_SOURCE_FILES_PROPERTIES(event/event.c event/log.c event/signal.c event/select.c event/evutil.c event/WIN32-Code/win32.c 
-    PROPERTIES COMPILE_FLAGS "/I \"${PROJECT_SOURCE_DIR}/event/compat\" /I \"${PROJECT_SOURCE_DIR}/event/WIN32-Code\"")
+    PROPERTIES COMPILE_FLAGS "${OMPI_C_INCLUDE_DIR}\"${PROJECT_SOURCE_DIR}/event/compat\"
+                              ${OMPI_C_INCLUDE_DIR}\"${PROJECT_SOURCE_DIR}/event/WIN32-Code\"")
   SET(EVENT_FILES
     ${EVENT_FILES}
     event-internal.h
