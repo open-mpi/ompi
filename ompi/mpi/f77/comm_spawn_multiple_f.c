@@ -106,7 +106,7 @@ void mpi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
     
     ompi_fortran_argv_f2c(array_commands, cmd_len, &c_array_commands);
 	
-    c_info = malloc (array_size * sizeof(MPI_Info));
+    c_info = (MPI_Info *) malloc (array_size * sizeof(MPI_Info));
     for (i = 0; i < array_size; ++i) {
 	c_info[i] = MPI_Info_f2c(array_info[i]);
     }

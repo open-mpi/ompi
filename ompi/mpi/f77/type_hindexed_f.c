@@ -72,7 +72,7 @@ void mpi_type_hindexed_f(MPI_Fint *count, MPI_Fint *array_of_blocklengths,
     int i;
     OMPI_ARRAY_NAME_DECL(array_of_blocklengths);
 
-    c_disp_array = malloc(*count * sizeof(MPI_Aint));
+    c_disp_array = (MPI_Aint *) malloc(*count * sizeof(MPI_Aint));
     if (NULL == c_disp_array) {
         *ierr = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM,
                                        FUNC_NAME);

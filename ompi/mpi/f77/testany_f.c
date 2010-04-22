@@ -71,7 +71,7 @@ void mpi_testany_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index
     OMPI_LOGICAL_NAME_DECL(flag);
     OMPI_SINGLE_NAME_DECL(index);
 
-    c_req = malloc(OMPI_FINT_2_INT(*count) * sizeof(MPI_Request));
+    c_req = (MPI_Request *) malloc(OMPI_FINT_2_INT(*count) * sizeof(MPI_Request));
     if (c_req == NULL) {
         *ierr = OMPI_INT_2_FINT(OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, 
                                                        MPI_ERR_NO_MEM,
