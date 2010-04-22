@@ -1190,13 +1190,13 @@ it is specified without a list, all extensions are enabled.
 Since extensions are meant to be used by advanced users only, this
 file does not document which extensions are available or what they
 do.  Look in the ompi/mpiext/ directory to see the extensions; each
-subdirectory off that directory contains an extension.  Each has a
+subdirectory of that directory contains an extension.  Each has a
 README file that describes what it does.
 
 Using the extensions
 --------------------
 
-To reinforce the fact that thse extensions are non-standard, you must
+To reinforce the fact that these extensions are non-standard, you must
 include a separate header file after <mpi.h> to obtain the function
 prototypes, constant declarations, etc.  For example:
 
