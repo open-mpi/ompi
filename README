@@ -1172,7 +1172,7 @@ Open MPI API Extensions
 Open MPI contains a framework for extending the MPI API that is
 available to applications.  Each extension is usually a standalone set of
 functionality that is distinct from other extensions (similar to how
-Open MPI's plugins are usually unrelated to wach other).  These
+Open MPI's plugins are usually unrelated to each other).  These
 extensions provide new functions and/or constants that are available
 to MPI applications.
 
@@ -1201,7 +1201,9 @@ include a separate header file after <mpi.h> to obtain the function
 prototypes, constant declarations, etc.  For example:
 
 #include <mpi.h>
+#if defined(OPEN_MPI) && OPEN_MPI
 #include <mpi-ext.h>
+#endif
 
 int main() {
     MPI_Init(NULL, NULL);
