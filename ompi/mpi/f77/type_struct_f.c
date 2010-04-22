@@ -73,7 +73,7 @@ void mpi_type_struct_f(MPI_Fint *count, MPI_Fint *array_of_blocklengths,
     int i, c_err;
     OMPI_ARRAY_NAME_DECL(array_of_blocklengths);
 
-    c_type_old_array = malloc(*count * (sizeof(MPI_Datatype) + 
+    c_type_old_array = (MPI_Datatype *) malloc(*count * (sizeof(MPI_Datatype) + 
                                         sizeof(MPI_Aint)));
     if (NULL == c_type_old_array) {
         c_err = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM,

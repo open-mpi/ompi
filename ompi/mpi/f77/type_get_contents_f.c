@@ -75,7 +75,7 @@ void mpi_type_get_contents_f(MPI_Fint *mtype, MPI_Fint *max_integers,
     OMPI_ARRAY_NAME_DECL(array_of_integers);
 
     if (*max_datatypes) {
-        c_datatype_array = malloc(*max_datatypes * sizeof(MPI_Datatype));
+        c_datatype_array = (MPI_Datatype *) malloc(*max_datatypes * sizeof(MPI_Datatype));
         if (NULL == c_datatype_array) {
             *ierr = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM,
                                            FUNC_NAME);
@@ -84,7 +84,7 @@ void mpi_type_get_contents_f(MPI_Fint *mtype, MPI_Fint *max_integers,
     }
 
     if (*max_addresses) {
-        c_address_array = malloc(*max_addresses * sizeof(MPI_Aint));
+        c_address_array = (MPI_Aint *) malloc(*max_addresses * sizeof(MPI_Aint));
         if (NULL == c_address_array) {
             if (NULL != c_datatype_array) {
               free(c_datatype_array);

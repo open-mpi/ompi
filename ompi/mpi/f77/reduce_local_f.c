@@ -68,8 +68,8 @@ void mpi_reduce_local_f(char *inbuf, char *inoutbuf, MPI_Fint *count,
     c_type = MPI_Type_f2c(*datatype);
     c_op = MPI_Op_f2c(*op);
 
-    inbuf = OMPI_F2C_BOTTOM(inbuf);
-    inoutbuf = OMPI_F2C_BOTTOM(inoutbuf);
+    inbuf = (char *) OMPI_F2C_BOTTOM(inbuf);
+    inoutbuf = (char *) OMPI_F2C_BOTTOM(inoutbuf);
 
     *ierr = OMPI_INT_2_FINT(MPI_Reduce_local(inbuf, inoutbuf,
                                              OMPI_FINT_2_INT(*count),
