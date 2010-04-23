@@ -1,3 +1,4 @@
+enable_opal_multi_threads=yes
 enable_multicast=yes
 enable_dlopen=no
 enable_pty_support=no
