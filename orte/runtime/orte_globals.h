@@ -36,8 +36,10 @@
 
 #include "opal/class/opal_pointer_array.h"
 #include "opal/class/opal_value_array.h"
+#include "opal/threads/threads.h"
 
 #include "orte/mca/plm/plm_types.h"
+#include "orte/mca/rml/rml_types.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/runtime.h"
@@ -378,12 +380,22 @@ typedef struct {
     orte_vpid_t num_reported;
     /* number of procs terminated */
     orte_vpid_t num_terminated;
+    /* number of daemons reported launched so we can track progress */
+    orte_vpid_t num_daemons_reported;
+    /* lock/cond/flag for tracking when all procs reported */
+    opal_mutex_t reported_lock;
+    opal_condition_t reported_cond;
+    bool not_reported;
     /* did this job abort? */
     bool abort;
     /* proc that caused that to happen */
     struct orte_proc_t *aborted_proc;
     /* max number of times a process can be restarted */
     int32_t max_restarts;
+    /* time launch message was sent */
+    struct timeval launch_msg_sent;
+    /* max time for launch msg to be received */
+    struct timeval max_launch_msg_recvd;
 #if OPAL_ENABLE_FT_CR == 1
     /* ckpt state */
     size_t ckpt_state;
@@ -595,8 +607,14 @@ ORTE_DECLSPEC extern char *orted_launch_cmd;
 
 /* list of local children on a daemon */
 ORTE_DECLSPEC extern opal_list_t orte_local_children;
+ORTE_DECLSPEC extern opal_mutex_t orte_local_children_lock;
+ORTE_DECLSPEC extern opal_condition_t orte_local_children_cond;
+
 /* list of job data for local children on a daemon */
 ORTE_DECLSPEC extern opal_list_t orte_local_jobdata;
+ORTE_DECLSPEC extern opal_mutex_t orte_local_jobdata_lock;
+ORTE_DECLSPEC extern opal_condition_t orte_local_jobdata_cond;
+
 /* whether or not to forward SIGTSTP and SIGCONT signals */
 ORTE_DECLSPEC extern bool orte_forward_job_control;
 
@@ -642,6 +660,20 @@ ORTE_DECLSPEC extern bool orte_report_bindings;
 
 /* barrier control */
 ORTE_DECLSPEC extern bool orte_do_not_barrier;
+
+/* comm interface */
+typedef void (*orte_default_cbfunc_t)(int fd, short event, void *data);
+
+typedef int (*orte_default_comm_fn_t)(orte_process_name_t *recipient,
+                                      opal_buffer_t *buf,
+                                      orte_rml_tag_t tag,
+                                      orte_default_cbfunc_t cbfunc);
+/* comm fn for updating state */
+ORTE_DECLSPEC extern orte_default_comm_fn_t orte_comm;
+ORTE_DECLSPEC int orte_global_comm(orte_process_name_t *recipient,
+                                   opal_buffer_t *buf, orte_rml_tag_t tag,
+                                   orte_default_cbfunc_t cbfunc);
+
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 

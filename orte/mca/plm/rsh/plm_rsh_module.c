@@ -325,7 +325,8 @@ static void orte_plm_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
             jdata->num_terminated++;
 #if 0
             /* report that the daemon has failed so we can exit */
-            orte_plm_base_launch_failed(ORTE_PROC_MY_NAME->jobid, pid, status, ORTE_JOB_STATE_FAILED_TO_START);
+            orte_errmgr.update_state(ORTE_PROC_MY_NAME->jobid, ORTE_JOB_STATE_FAILED_TO_START,
+                                     NULL, ORTE_PROC_STATE_UNDEF, status);
 #else
             /* JJH: Look into a better way of doing this. If we let the daemon
              *      know, then it kills the job when we are trying to restart.. */
@@ -1029,7 +1030,9 @@ CLEANUP:
 
     if (orted_failed_launch) {
         if( NULL != rml_uri ) free(rml_uri);
-        orte_errmgr.incomplete_start(peer.jobid, ORTE_ERROR_DEFAULT_EXIT_CODE);
+        orte_errmgr.update_state(peer.jobid, ORTE_JOB_STATE_FAILED_TO_START,
+                                 NULL, ORTE_PROC_STATE_FAILED_TO_START,
+                                 ORTE_ERROR_DEFAULT_EXIT_CODE);
     } else {
         orted_num_callback++;
     }
@@ -1058,7 +1061,7 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
     orte_node_t *node;
     orte_std_cntr_t nnode;
     orte_jobid_t failed_job;
-    orte_job_state_t job_state = ORTE_JOB_NEVER_LAUNCHED;
+    orte_job_state_t job_state = ORTE_JOB_STATE_NEVER_LAUNCHED;
     bool recv_issued = false;
     
     /* wait for the launch to complete */
@@ -1414,7 +1417,9 @@ launch_apps:
 
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
-        orte_plm_base_launch_failed(failed_job, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, job_state);
+        orte_errmgr.update_state(failed_job, job_state,
+                                 NULL, ORTE_PROC_STATE_UNDEF,
+                                 ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
 
     /* cancel the lingering recv */

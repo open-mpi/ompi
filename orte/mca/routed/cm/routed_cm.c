@@ -117,11 +117,6 @@ static int finalize(void)
         }
     }
     
-    /* if I am the HNP, I need to stop the comm recv */
-    if (ORTE_PROC_IS_HNP) {
-        orte_routed_base_comm_stop();
-    }
-    
 cleanup:
     OBJ_DESTRUCT(&jobfam_list);
     /* destruct the global condition and lock */
@@ -524,13 +519,6 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                              ORTE_JOBID_PRINT(job)));
         
         if (NULL == ndat) {
-            /* if ndat is NULL, then this is being called during init, so just
-             * make myself available to catch any reported contact info
-             */
-            if (ORTE_SUCCESS != (rc = orte_routed_base_comm_start())) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
             /* the HNP has no lifeline */
             lifeline = NULL;
         } else {
@@ -708,7 +696,9 @@ static int route_lost(const orte_process_name_t *route)
             opal_output(0, "%s routed:cm: daemon %s has died",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_VPID_PRINT(route->vpid));
-            orte_errmgr.proc_aborted((orte_process_name_t*)route, 1);
+            orte_errmgr.update_state(route->jobid, ORTE_JOB_STATE_COMM_FAILED,
+                                     (orte_process_name_t*)route,
+                                     ORTE_PROC_STATE_COMM_FAILED, 1);
         }
         /* either way, take no further action */
         return ORTE_SUCCESS;

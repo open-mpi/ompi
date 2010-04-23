@@ -550,3 +550,24 @@ uint64_t  orte_util_hash_name(const orte_process_name_t * name) {
     
     return hash;
 }
+
+char *orte_pretty_print_timing(int64_t secs, int64_t usecs)
+{
+    unsigned long minutes, seconds;
+    float fsecs;
+    char *timestring;
+    
+    seconds = secs + (usecs / 1000000l);
+    minutes = seconds / 60l;
+    seconds = seconds % 60l;
+    if (0 == minutes && 0 == seconds) {
+        fsecs = ((float)(secs)*1000000.0 + (float)usecs) / 1000.0;
+        asprintf(&timestring, "%8.2f millisecs", fsecs);
+    } else {
+        asprintf(&timestring, "%3lu:%02lu min:sec", minutes, seconds);
+    }
+    
+    return timestring;
+}
+
+

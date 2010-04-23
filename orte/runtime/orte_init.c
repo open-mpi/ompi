@@ -40,6 +40,7 @@
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/proc_info.h"
+#include "orte/util/error_strings.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"

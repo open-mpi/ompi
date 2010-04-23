@@ -66,6 +66,7 @@ ORTE_DECLSPEC char* orte_util_print_local_jobid(const orte_jobid_t job);
 #define ORTE_LOCAL_JOBID_PRINT(n) \
     orte_util_print_local_jobid(n)
 
+ORTE_DECLSPEC char *orte_pretty_print_timing(int64_t secs, int64_t usecs);
 
 /* a macro for identifying the job family - i.e., for
  * extracting the mpirun-specific id field of the jobid

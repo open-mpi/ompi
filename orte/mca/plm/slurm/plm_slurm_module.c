@@ -427,6 +427,7 @@ launch_apps:
         ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &launch, ORTE_RML_TAG_DAEMON, orte_daemon_cmd_processor);
         OBJ_DESTRUCT(&launch);
 
+#if 0
         if (ORTE_SUCCESS != (rc = orte_plm_base_report_launched(jdata->jobid))) {
             OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                  "%s plm:slurm:launch failed for job %s on error %s",
@@ -434,6 +435,7 @@ launch_apps:
                                  ORTE_JOBID_PRINT(jdata->jobid), ORTE_ERROR_NAME(rc)));
             goto cleanup;
         }
+#endif
     } else {
         if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(active_job))) {
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
@@ -476,7 +478,9 @@ cleanup:
     
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
-        orte_plm_base_launch_failed(failed_job, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, ORTE_JOB_STATE_FAILED_TO_START);
+        orte_errmgr.update_state(failed_job, ORTE_JOB_STATE_FAILED_TO_START,
+                                 NULL, ORTE_PROC_STATE_UNDEF,
+                                 ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
     
     return rc;
@@ -576,7 +580,8 @@ static void srun_wait_cb(pid_t pid, int status, void* cbdata){
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:slurm: daemon failed during launch",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        orte_plm_base_launch_failed(ORTE_PROC_MY_NAME->jobid, -1, status, ORTE_JOB_STATE_FAILED_TO_START);
+        orte_errmgr.update_state(ORTE_PROC_MY_NAME->jobid, ORTE_JOB_STATE_FAILED_TO_START,
+                                 NULL, ORTE_PROC_STATE_UNDEF, status);
     } else {
         /* if this is after launch, then we need to abort only if the status
          * returned is non-zero - i.e., if the orteds exited with an error
@@ -588,7 +593,8 @@ static void srun_wait_cb(pid_t pid, int status, void* cbdata){
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:slurm: daemon failed while running",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-            orte_plm_base_launch_failed(ORTE_PROC_MY_NAME->jobid, -1, status, ORTE_JOB_STATE_ABORTED);
+            orte_errmgr.update_state(ORTE_PROC_MY_NAME->jobid, ORTE_JOB_STATE_ABORTED,
+                                     NULL, ORTE_PROC_STATE_UNDEF, status);
         }
         /* otherwise, check to see if this is the primary pid */
         if (primary_srun_pid == pid) {

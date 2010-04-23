@@ -1,0 +1,14 @@
+ -*- text -*-
+#
+# Copyright (c) 2009-2010 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+#
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English general help file for ORTE RecoS IGNORE framework.
+#

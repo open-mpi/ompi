@@ -45,21 +45,21 @@ typedef uint16_t orte_proc_state_t;
 #define ORTE_PROC_STATE_RESTART             0x0002  /* the proc is ready for restart */
 #define ORTE_PROC_STATE_LAUNCHED            0x0004  /* process has been launched */
 #define ORTE_PROC_STATE_RUNNING             0x0010  /* daemon has locally fork'd process */
+#define ORTE_PROC_STATE_REGISTERED          0x0020  /* process has registered for sync */
 /*
  * Define a "boundary" so we can easily and quickly determine
  * if a proc is still running or not - any value less than
  * this one means that we are not terminated
  */
-#define ORTE_PROC_STATE_UNTERMINATED        0x0020
+#define ORTE_PROC_STATE_UNTERMINATED        0x0040
 
 #define ORTE_PROC_STATE_TERMINATED          0x0080  /* process has terminated and is no longer running */
-#define ORTE_PROC_STATE_ABORTED             0x0100  /* process aborted */
-#define ORTE_PROC_STATE_FAILED_TO_START     0x0200  /* process failed to start */
-#define ORTE_PROC_STATE_ABORTED_BY_SIG      0x0400  /* process aborted by signal */
-#define ORTE_PROC_STATE_TERM_WO_SYNC        0x0800  /* process exit'd w/o required sync */
-#define ORTE_PROC_STATE_KILLED_BY_CMD       0x1000  /* process was killed by ORTE cmd */
+#define ORTE_PROC_STATE_KILLED_BY_CMD       0x0100  /* process was killed by ORTE cmd */
+#define ORTE_PROC_STATE_ABORTED             0x0200  /* process aborted */
+#define ORTE_PROC_STATE_FAILED_TO_START     0x0400  /* process failed to start */
+#define ORTE_PROC_STATE_ABORTED_BY_SIG      0x0800  /* process aborted by signal */
+#define ORTE_PROC_STATE_TERM_WO_SYNC        0x1000  /* process exit'd w/o required sync */
 #define ORTE_PROC_STATE_COMM_FAILED         0x2000  /* process communication has failed */
-
 
 /*
  * Job state codes
@@ -72,8 +72,9 @@ typedef uint16_t orte_job_state_t;
 #define ORTE_JOB_STATE_INIT                 0x0001  /* job entry has been created by rmaps */
 #define ORTE_JOB_STATE_RESTART              0x0002  /* the job is ready for restart after one or more procs failed */
 #define ORTE_JOB_STATE_LAUNCHED             0x0004  /* job has been launched by plm */
-#define ORTE_JOB_STATE_RUNNING              0x0010  /* all process have been fork'd */
-#define ORTE_JOB_STATE_SUSPENDED            0x0020  /* job has been suspended */
+#define ORTE_JOB_STATE_RUNNING              0x0008  /* all process have been fork'd */
+#define ORTE_JOB_STATE_SUSPENDED            0x0010  /* job has been suspended */
+#define ORTE_JOB_STATE_REGISTERED           0x0020  /* all procs registered for sync */
 /*
  * Define a "boundary" so we can easily and quickly determine
  * if a job is still running or not - any value less than
@@ -87,11 +88,12 @@ typedef uint16_t orte_job_state_t;
 #define ORTE_JOB_STATE_ABORTED_BY_SIG       0x0400  /* job was killed by a signal */
 #define ORTE_JOB_STATE_ABORTED_WO_SYNC      0x0800  /* job was aborted because proc exit'd w/o required sync */
 #define ORTE_JOB_STATE_KILLED_BY_CMD        0x1000  /* job was killed by ORTE cmd */
+#define ORTE_JOB_STATE_COMM_FAILED          0x2000  /* communication has failed */
 
 /* the job never even attempted to launch due to an error earlier in the
  * launch procedure
  */
-#define ORTE_JOB_NEVER_LAUNCHED             0x2000
+#define ORTE_JOB_STATE_NEVER_LAUNCHED       0x4000
 
 /* the processes in this job have been ordered to "die", but may not have completed it yet. Don't order it again */
 #define ORTE_JOB_STATE_ABORT_ORDERED        0x8000
@@ -126,7 +128,7 @@ typedef uint8_t orte_plm_cmd_flag_t;
 #define ORTE_PLM_LAUNCH_JOB_CMD         1
 #define ORTE_PLM_UPDATE_PROC_STATE      2
 #define ORTE_PLM_HEARTBEAT_CMD          3
-
+#define ORTE_PLM_INIT_ROUTES_CMD        4
 
 END_C_DECLS
 

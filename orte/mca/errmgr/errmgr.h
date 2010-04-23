@@ -75,6 +75,8 @@
 #include "orte/mca/plm/plm_types.h"
 
 BEGIN_C_DECLS
+/* type definition */
+typedef uint8_t orte_errmgr_stack_state_t;
 
 /*
  * Macro definitions
@@ -109,36 +111,12 @@ typedef void (*orte_errmgr_base_API_log_fn_t)(int error_code, char *filename, in
  * @retval ORTE_SUCCESS Whatever action that was taken was successful
  * @retval ORTE_ERROR Appropriate error code
  */
-typedef int (*orte_errmgr_base_API_proc_aborted_fn_t)(orte_process_name_t *name, int exit_code);
+typedef int (*orte_errmgr_base_API_update_state_fn_t)(orte_jobid_t job,
+                                                      orte_job_state_t jobstate,
+                                                      orte_process_name_t *proc_name,
+                                                      orte_proc_state_t state,
+                                                      orte_exit_code_t exit_code);
 
-/**
- * Alert - incomplete start of a job
- * This function is called by the PLM when an attempted launch of a job encounters failure of
- * one or more processes to start. The strategy for dealing
- * with this "incomplete start" situation varies across the various errmgr components.
- *
- * This function is only called by the respective process launcher, which is responsible
- * for detecting incomplete starts. If on a daemon, the function simply updates the
- * process state to indicate failure to launch - this initiates a trigger that goes to
- * the respective HNP for response.
- *
- * NOTE: Errmgr components on non-HNP and non-daemon processes are expressly forbidden
- * from taking any action to this function call. Instead, they are restricted to simply
- * returning.
- *
- * @param job Job that failed to start
- *
- * @retval ORTE_SUCCESS Whatever action that was taken was successful
- * @retval ORTE_ERROR Appropriate error code
- */
-typedef int (*orte_errmgr_base_API_incomplete_start_fn_t)(orte_jobid_t job, int exit_code);
-
-/**
- * If the communication link failed to a peer.
- * This gives us a chance to recover from this error, or abort.
- */
-typedef int (*orte_errmgr_base_API_comm_failed_fn_t)(orte_process_name_t *name,
-                                                     int exit_code);
 /**
  * Predicted process/node failure notification
  * Composite interface. Called in priority order.
@@ -153,7 +131,6 @@ typedef int (*orte_errmgr_base_API_comm_failed_fn_t)(orte_process_name_t *name,
 typedef int (*orte_errmgr_base_API_predicted_fault_fn_t)(char ***proc_list,
                                                          char ***node_list,
                                                          char ***suggested_nodes);
-
 /**
  * Suggest a node to map a restarting process onto
  *
@@ -185,9 +162,7 @@ __opal_attribute_format__(__printf__, 2, 3)
 /* global structure for accessing ERRMGR FRAMEWORK API's */
 typedef struct {
     orte_errmgr_base_API_log_fn_t                   log;
-    orte_errmgr_base_API_proc_aborted_fn_t          proc_aborted;
-    orte_errmgr_base_API_incomplete_start_fn_t      incomplete_start;
-    orte_errmgr_base_API_comm_failed_fn_t           comm_failed;
+    orte_errmgr_base_API_update_state_fn_t          update_state;
     orte_errmgr_base_API_predicted_fault_fn_t       predicted_fault;
     orte_errmgr_base_API_suggest_map_targets_fn_t   suggest_map_targets;
     orte_errmgr_base_API_abort_fn_t                 abort;
@@ -224,18 +199,20 @@ typedef int (*orte_errmgr_base_module_finalize_fn_t)
 /*
  * Internal Composite Interfaces corresponding to API interfaces
  */
-typedef int (*orte_errmgr_base_module_process_fault_fn_t)(orte_job_t *jdata,
-                                                          orte_process_name_t *proc_name,
-                                                          orte_proc_state_t state,
-                                                          int *stack_state);
+typedef int (*orte_errmgr_base_module_update_state_fn_t)(orte_jobid_t job,
+                                                         orte_job_state_t jobstate,
+                                                         orte_process_name_t *proc_name,
+                                                         orte_proc_state_t state,
+                                                         orte_exit_code_t exit_code,
+                                                         orte_errmgr_stack_state_t *stack_state);
 typedef int (*orte_errmgr_base_module_predicted_fault_fn_t)(char ***proc_list,
                                                             char ***node_list,
                                                             char ***suggested_nodes,
-                                                            int *stack_state);
+                                                            orte_errmgr_stack_state_t *stack_state);
 typedef int (*orte_errmgr_base_module_suggest_map_targets_fn_t)(orte_proc_t *proc,
                                                                 orte_node_t *oldnode,
                                                                 opal_list_t *node_list,
-                                                                int *stack_state);
+                                                                orte_errmgr_stack_state_t *stack_state);
 
 /**
  * Handle fault tolerance updates
@@ -258,10 +235,10 @@ struct orte_errmgr_base_module_2_3_0_t {
     orte_errmgr_base_module_finalize_fn_t               finalize;
 
     /* -------------- Internal Composite Interfaces -- */
+    /** Actual process failure notification */
+    orte_errmgr_base_module_update_state_fn_t           update_state;
     /** Predicted process/node failure notification */
     orte_errmgr_base_module_predicted_fault_fn_t        predicted_fault;
-    /** Actual process failure notification */
-    orte_errmgr_base_module_process_fault_fn_t          process_fault;
     /** Suggest a node to map a restarting process onto */
     orte_errmgr_base_module_suggest_map_targets_fn_t    suggest_map_targets;
 

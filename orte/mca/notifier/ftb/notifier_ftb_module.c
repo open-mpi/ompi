@@ -30,6 +30,7 @@
 
 #include "opal/util/show_help.h"
 
+#include "orte/util/error_strings.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/notifier/base/base.h"
 #include "notifier_ftb.h"

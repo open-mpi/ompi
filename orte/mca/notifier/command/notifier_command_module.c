@@ -46,6 +46,7 @@
 
 #include "orte/constants.h"
 #include "orte/mca/ess/ess.h"
+#include "orte/util/error_strings.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"

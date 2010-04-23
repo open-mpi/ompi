@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -56,13 +57,6 @@ int orte_errmgr_base_select(void)
     orte_errmgr_base_select_module_t *tmp_module = NULL, *tmp_module_sw = NULL;
     opal_pointer_array_t tmp_array;
     orte_errmgr_base_module_t *i_module = NULL;
-
-    /*
-     * If the user does not want the recovery features, then do not select any.
-     */
-    if( !orte_errmgr_base_enable_recovery ) {
-        goto INIT;
-    }
 
     OBJ_CONSTRUCT(&tmp_array, opal_pointer_array_t);
 
@@ -162,7 +156,6 @@ int orte_errmgr_base_select(void)
     }
     OBJ_DESTRUCT(&tmp_array);
 
- INIT:
     /*
      * Initialize each of the Errmgr Modules
      */

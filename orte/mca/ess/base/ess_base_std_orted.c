@@ -57,6 +57,7 @@
 #include "orte/util/nidmap.h"
 #include "orte/util/regex.h"
 #include "orte/util/show_help.h"
+#include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/notifier/base/base.h"
 #include "orte/mca/rmcast/base/base.h"
 #include "orte/mca/state/base/base.h"
@@ -225,6 +226,21 @@ int orte_ess_base_orted_setup(char **hosts)
         goto error;
     }
     
+    /* set the communication function */
+    orte_comm = orte_global_comm;
+    
+    /* open/select the errmgr */
+    if (ORTE_SUCCESS != (ret = orte_errmgr_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_errmgr_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_errmgr_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_errmgr_base_select";
+        goto error;
+    }
+
     /* initialize the nidmaps */
     if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(NULL))) {
         ORTE_ERROR_LOG(ret);
@@ -408,17 +424,11 @@ error:
                    "orte_init:startup:internal-failure",
                    true, error, ORTE_ERROR_NAME(ret), ret);
     
-    /* cleanup the global list of local children and job data */
-    OBJ_DESTRUCT(&orte_local_children);
-    OBJ_DESTRUCT(&orte_local_jobdata);
-    
     return ret;
 }
 
 int orte_ess_base_orted_finalize(void)
 {
-    opal_list_item_t *item;
-    
     /* ensure all the orteds depart together */
     if (!orte_abnormal_term_ordered) {
         /* if we are abnormally terminating, don't attempt
@@ -455,16 +465,6 @@ int orte_ess_base_orted_finalize(void)
     orte_routed_base_close();
     orte_rml_base_close();
 
-    /* cleanup the global list of local children and job data */
-    while (NULL != (item = opal_list_remove_first(&orte_local_children))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&orte_local_children);
-    while (NULL != (item = opal_list_remove_first(&orte_local_jobdata))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&orte_local_jobdata);
-    
     /* cleanup any lingering session directories */
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
     

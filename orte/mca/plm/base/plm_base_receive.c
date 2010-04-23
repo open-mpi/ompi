@@ -35,6 +35,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/dss/dss.h"
+#include "opal/threads/threads.h"
 
 #include "orte/constants.h"
 #include "orte/types.h"
@@ -55,6 +56,7 @@
 
 static bool recv_issued=false;
 static opal_mutex_t lock;
+static opal_condition_t cond;
 static opal_list_t recvs;
 static opal_event_t ready;
 static int ready_fd[2];
@@ -76,6 +78,7 @@ int orte_plm_base_comm_start(void)
     
     processing = false;
     OBJ_CONSTRUCT(&lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&cond, opal_condition_t);
     OBJ_CONSTRUCT(&recvs, opal_list_t);
 #ifndef __WINDOWS__
     pipe(ready_fd);
@@ -146,15 +149,15 @@ static void process_msg(int fd, short event, void *data)
     orte_app_context_t *app, *child_app;
     opal_list_item_t *item;
     int dump[128];
+    orte_process_name_t name;
+    pid_t pid;
+    bool running;
     
-    OPAL_THREAD_LOCK(&lock);
+    OPAL_ACQUIRE_THREAD(&lock, &cond, &processing);
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:receive processing msg",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-
-    /* tag that we are processing the list */
-    processing = true;
 
     /* clear the file descriptor to stop the event from refiring */
 #ifndef __WINDOWS__
@@ -162,6 +165,9 @@ static void process_msg(int fd, short event, void *data)
 #else
     recv(fd, (char *) &dump, sizeof(dump), 0);
 #endif
+    
+    /* reset the event for the next message */
+    opal_event_add(&ready, 0);
     
     while (NULL != (item = opal_list_remove_first(&recvs))) {
         msgpkt = (orte_msg_packet_t*)item;
@@ -191,6 +197,9 @@ static void process_msg(int fd, short event, void *data)
                 
                 /* if is a LOCAL slave cmd */
                 if (jdata->controls & ORTE_JOB_CONTROL_LOCAL_SLAVE) {
+                    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                         "%s plm:base:receive local launch",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                     /* In this case, I cannot lookup job info. All I do is pass
                      * this along to the local launcher, IF it is available
                      */
@@ -226,6 +235,10 @@ static void process_msg(int fd, short event, void *data)
                         child_app->prefix_dir = strdup(app->prefix_dir);
                     }
                     
+                    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                         "%s plm:base:receive adding hosts",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                    
                     /* process any add-hostfile and add-host options that were provided */
                     if (ORTE_SUCCESS != (rc = orte_ras_base_add_hosts(jdata))) {
                         ORTE_ERROR_LOG(rc);
@@ -247,10 +260,16 @@ static void process_msg(int fd, short event, void *data)
                     }
                     
                     /* launch it */
+                    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                         "%s plm:base:receive calling spawn",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                    OPAL_RELEASE_THREAD(&lock, &cond, &processing);
                     if (ORTE_SUCCESS != (rc = orte_plm.spawn(jdata))) {
                         ORTE_ERROR_LOG(rc);
                         goto ANSWER_LAUNCH;
                     }
+                    OPAL_ACQUIRE_THREAD(&lock, &cond, &processing);
+
                     job = jdata->jobid;
                     
                     /* output debugger proctable, if requested */
@@ -272,7 +291,18 @@ static void process_msg(int fd, short event, void *data)
                 
                 /* if the child is an ORTE job, wait for the procs to report they are alive */
                 if (!(jdata->controls & ORTE_JOB_CONTROL_NON_ORTE_JOB)) {
-                    ORTE_PROGRESSED_WAIT(false, jdata->num_reported, jdata->num_procs);
+                    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                         "%s plm:base:receive waiting for procs to report",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                    OPAL_RELEASE_THREAD(&lock, &cond, &processing);
+                    /* we will wait here until the thread is released,
+                     * indicating that all procs have reported
+                     */
+                    OPAL_ACQUIRE_THREAD(&jdata->reported_lock,
+                                        &jdata->reported_cond,
+                                        &jdata->not_reported);
+                    OPAL_THREAD_UNLOCK(&jdata->reported_lock);
+                    OPAL_ACQUIRE_THREAD(&lock, &cond, &processing);
                 }
                 
             ANSWER_LAUNCH:
@@ -298,7 +328,6 @@ static void process_msg(int fd, short event, void *data)
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&(msgpkt->sender)) ));
                 count = 1;
-                jdata = NULL;
                 while (ORTE_SUCCESS == (rc = opal_dss.unpack(msgpkt->buffer, &job, &count, ORTE_JOBID))) {
                     
                     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
@@ -306,12 +335,48 @@ static void process_msg(int fd, short event, void *data)
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                          ORTE_JOBID_PRINT(job)));
                     
-                    /* lookup the job object */
-                    if (NULL == (jdata = orte_get_job_data_object(job))) {
-                        /* this job may already have been removed from the array, so just cleanly
-                         * ignore this request
-                         */
-                        goto CLEANUP;
+                    name.jobid = job;
+                    running = true;
+                    /* if we are timing, the daemon will have included the time it
+                     * recvd the launch msg - the maximum time between when we sent
+                     * that message and a daemon recvd it tells us the time reqd
+                     * to wireup the daemon comm network
+                     */
+                    if (orte_timing) {
+                        int64_t tmpsec, tmpusec;
+                        /* get the job object */
+                        if (NULL == (jdata = orte_get_job_data_object(name.jobid))) {
+                            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                            goto CLEANUP;
+                        }
+                        count = 1;
+                        if (ORTE_SUCCESS != (rc = opal_dss.unpack(msgpkt->buffer, &tmpsec, &count, OPAL_INT64))) {
+                            ORTE_ERROR_LOG(rc);
+                            goto CLEANUP;
+                        }
+                        count = 1;
+                        if (ORTE_SUCCESS != (rc = opal_dss.unpack(msgpkt->buffer, &tmpusec, &count, OPAL_INT64))) {
+                            ORTE_ERROR_LOG(rc);
+                            goto CLEANUP;
+                        }
+                        /* keep the maximum time */
+                        if (tmpsec > jdata->max_launch_msg_recvd.tv_sec) {
+                            jdata->max_launch_msg_recvd.tv_sec = tmpsec;
+                            jdata->max_launch_msg_recvd.tv_usec = tmpusec;
+                        } else if (tmpsec == jdata->max_launch_msg_recvd.tv_sec &&
+                                   tmpusec > jdata->max_launch_msg_recvd.tv_usec) {
+                            jdata->max_launch_msg_recvd.tv_usec = tmpusec;
+                        }
+                        if (orte_timing_details) {
+                            int64_t sec, usec;
+                            char *timestr;
+                            ORTE_COMPUTE_TIME_DIFF(sec, usec, jdata->launch_msg_sent.tv_sec, jdata->launch_msg_sent.tv_usec,
+                                                   tmpsec, tmpusec);
+                            timestr = orte_pretty_print_timing(sec, usec);
+                            fprintf(orte_timing_output, "Time for launch msg to reach daemon %s: %s\n",
+                                    ORTE_VPID_PRINT(msgpkt->sender.vpid), timestr);
+                            free(timestr);
+                        }
                     }
                     count = 1;
                     while (ORTE_SUCCESS == (rc = opal_dss.unpack(msgpkt->buffer, &vpid, &count, ORTE_VPID))) {
@@ -319,11 +384,45 @@ static void process_msg(int fd, short event, void *data)
                             /* flag indicates that this job is complete - move on */
                             break;
                         }
+                        name.vpid = vpid;
+                        /* unpack the pid */
+                        count = 1;
+                        if (ORTE_SUCCESS != (rc = opal_dss.unpack(msgpkt->buffer, &pid, &count, OPAL_PID))) {
+                            ORTE_ERROR_LOG(rc);
+                            goto CLEANUP;
+                        }
+                        /* if we are timing things, unpack the time this proc was started */
+                        if (orte_timing) {
+                            int64_t tmpsec, tmpusec;
+                            count = 1;
+                            if (ORTE_SUCCESS != (rc = opal_dss.unpack(msgpkt->buffer, &tmpsec, &count, OPAL_INT64))) {
+                                ORTE_ERROR_LOG(rc);
+                                goto CLEANUP;
+                            }
+                            count = 1;
+                            if (ORTE_SUCCESS != (rc = opal_dss.unpack(msgpkt->buffer, &tmpusec, &count, OPAL_INT64))) {
+                                ORTE_ERROR_LOG(rc);
+                                goto CLEANUP;
+                            }
+                            if (orte_timing_details) {
+                                time_t tmptime;
+                                char *tmpstr;
+                                tmptime = tmpsec;
+                                tmpstr = ctime(&tmptime);
+                                /* remove the newline and the year at the end */
+                                tmpstr[strlen(tmpstr)-6] = '\0';
+                                fprintf(orte_timing_output, "Time rank %s was launched: %s.%3lu\n",
+                                        ORTE_VPID_PRINT(vpid), tmpstr, (unsigned long)(tmpusec/1000));
+                            }
+                        }
                         /* unpack the state */
                         count = 1;
                         if (ORTE_SUCCESS != (rc = opal_dss.unpack(msgpkt->buffer, &state, &count, ORTE_PROC_STATE))) {
                             ORTE_ERROR_LOG(rc);
                             goto CLEANUP;
+                        }
+                        if (ORTE_PROC_STATE_RUNNING != state) {
+                            running = false;
                         }
                         /* unpack the exit code */
                         count = 1;
@@ -337,36 +436,9 @@ static void process_msg(int fd, short event, void *data)
                                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                              (unsigned long)vpid, (unsigned int)state, (int)exit_code));
                         
-                        /* retrieve the proc object */
-                        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, vpid))) {
-                            /* this proc is no longer in table - skip it */
-                            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                                                 "%s plm:base:receive proc %s is not in proc table",
-                                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                                 ORTE_VPID_PRINT(vpid)));
-                            continue;
-                        }
-                        
-                        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                                             "%s plm:base:receive updating state for proc %s current state %x new state %x",
-                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                             ORTE_NAME_PRINT(&proc->name),
-                                             (unsigned int)proc->state, (unsigned int)state));
-                        
-                        /* update the termination counter IFF the state is changing to something
-                         * indicating terminated
-                         */
-                        if (ORTE_PROC_STATE_UNTERMINATED < state &&
-                            ORTE_PROC_STATE_UNTERMINATED > proc->state) {
-                            ++jdata->num_terminated;
-                        }
-                        /* update the data */
-                        proc->state = state;
-                        proc->exit_code = exit_code;
-                        
-                        /* update orte's exit status if it is non-zero */
-                        ORTE_UPDATE_EXIT_STATUS(exit_code);
-                        
+                        /* update the state */
+                        orte_errmgr.update_state(job, ORTE_JOB_STATE_UNDEF,
+                                                 &name, state, exit_code);
                     }
                     count = 1;
                 }
@@ -375,14 +447,14 @@ static void process_msg(int fd, short event, void *data)
                 } else {
                     rc = ORTE_SUCCESS;
                 }
-                /* NOTE: jdata CAN BE NULL. This is caused by an orted
-                 * being ordered to kill all its procs, but there are no
-                 * procs left alive on that node. This can happen, for example,
-                 * when a proc aborts somewhere, but the procs on this node
-                 * have completed.
-                 * So check job has to know how to handle a NULL pointer
-                 */
-                orte_plm_base_check_job_completed(jdata);
+                if (orte_report_launch_progress && running) {
+                    jdata->num_daemons_reported++;
+                    if (0 == jdata->num_daemons_reported % 100 || jdata->num_daemons_reported == orte_process_info.num_procs) {
+                        opal_output(orte_clean_output, "Reported: %d (out of %d) daemons - %d (out of %d) procs",
+                                    (int)jdata->num_daemons_reported, (int)orte_process_info.num_procs,
+                                    (int)jdata->num_launched, (int)jdata->num_procs);
+                    }
+                }
                 break;
                 
             case ORTE_PLM_HEARTBEAT_CMD:
@@ -408,6 +480,33 @@ static void process_msg(int fd, short event, void *data)
                 proc->beat = beat.tv_sec; 
                 break;
                 
+            case ORTE_PLM_INIT_ROUTES_CMD:
+                count=1;
+                if (ORTE_SUCCESS != (rc = opal_dss.unpack(msgpkt->buffer, &job, &count, ORTE_JOBID))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto CLEANUP;
+                }
+                name.jobid = job;
+                count=1;
+                while (ORTE_SUCCESS == opal_dss.unpack(msgpkt->buffer, &vpid, &count, ORTE_VPID)) {
+                    if (ORTE_VPID_INVALID == vpid) {
+                        break;
+                    }
+                    name.vpid = vpid;
+                    /* update the errmgr state */
+                    orte_errmgr.update_state(job, ORTE_JOB_STATE_REGISTERED,
+                                             &name, ORTE_PROC_STATE_REGISTERED,
+                                             ORTE_ERROR_DEFAULT_EXIT_CODE);
+                    count=1;
+                }
+                /* pass the remainder of the buffer to the active module's
+                 * init_routes API
+                 */
+                if (ORTE_SUCCESS != (rc = orte_routed.init_routes(job, msgpkt->buffer))) {
+                    ORTE_ERROR_LOG(rc);
+                }
+                break;
+
             default:
                 ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
                 rc = ORTE_ERR_VALUE_OUT_OF_BOUNDS;
@@ -423,13 +522,9 @@ static void process_msg(int fd, short event, void *data)
         }
     }
         
-    /* reset the event */
-    processing = false;
-    opal_event_add(&ready, 0);
-    
 DEPART:
     /* release the thread */
-    OPAL_THREAD_UNLOCK(&lock);
+    OPAL_RELEASE_THREAD(&lock, &cond, &processing);
     
     /* see if an error occurred - if so, wakeup the HNP so we can exit */
     if (ORTE_PROC_IS_HNP && ORTE_SUCCESS != rc) {

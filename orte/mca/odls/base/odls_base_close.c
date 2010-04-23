@@ -24,6 +24,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/class/opal_list.h"
+#include "opal/threads/threads.h"
 
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/odls/base/base.h"
@@ -45,6 +46,20 @@ int orte_odls_base_close(void)
         free(orte_odls_globals.dmap->bytes);
         free(orte_odls_globals.dmap);
     }
+    
+    /* cleanup the global list of local children and job data */
+    while (NULL != (item = opal_list_remove_first(&orte_local_children))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&orte_local_children);
+    OBJ_DESTRUCT(&orte_local_children_lock);
+    OBJ_DESTRUCT(&orte_local_children_cond);
+    while (NULL != (item = opal_list_remove_first(&orte_local_jobdata))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&orte_local_jobdata);
+    OBJ_DESTRUCT(&orte_local_jobdata_lock);
+    OBJ_DESTRUCT(&orte_local_jobdata_cond);
     
     /* cleanup the sysinfo data */
     while (NULL != (item = opal_list_remove_first(&orte_odls_globals.sysinfo))) {

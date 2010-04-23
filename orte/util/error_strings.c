@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,8 +24,9 @@
 
 #include <stdio.h>
 
-const char *
-orte_err2str(int errnum)
+#include "orte/util/error_strings.h"
+
+const char *orte_err2str(int errnum)
 {
     const char *retval;
     switch (errnum) {
@@ -130,3 +132,82 @@ orte_err2str(int errnum)
 
     return retval;
 }
+
+const char *orte_job_state_to_str(orte_job_state_t state)
+{
+    switch(state) {
+        case ORTE_JOB_STATE_UNDEF:
+            return strdup("UNDEFINED");
+        case ORTE_JOB_STATE_INIT:
+            return strdup("INITIALIZED");
+        case ORTE_JOB_STATE_RESTART:
+            return strdup("RESTARTING");
+        case ORTE_JOB_STATE_LAUNCHED:
+            return strdup("LAUNCHED");
+        case ORTE_JOB_STATE_RUNNING:
+            return strdup("RUNNING");
+        case ORTE_JOB_STATE_SUSPENDED:
+            return strdup("SUSPENDED");
+        case ORTE_JOB_STATE_REGISTERED:
+            return strdup("SYNC REGISTERED");
+        case ORTE_JOB_STATE_UNTERMINATED:
+            return strdup("UNTERMINATED");
+        case ORTE_JOB_STATE_TERMINATED:
+            return strdup("NORMALLY TERMINATED");
+        case ORTE_JOB_STATE_ABORTED:
+            return strdup("ABORTED");
+        case ORTE_JOB_STATE_FAILED_TO_START:
+            return strdup("FAILED TO START");
+        case ORTE_JOB_STATE_ABORTED_BY_SIG:
+            return strdup("ABORTED BY SIGNAL");
+        case ORTE_JOB_STATE_ABORTED_WO_SYNC:
+            return strdup("TERMINATED WITHOUT SYNC");
+        case ORTE_JOB_STATE_KILLED_BY_CMD:
+            return strdup("KILLED BY INTERNAL COMMAND");
+        case ORTE_JOB_STATE_COMM_FAILED:
+            return strdup("COMMUNICATION FAILURE");
+        case ORTE_JOB_STATE_NEVER_LAUNCHED:
+            return strdup("NEVER LAUNCHED");
+        case ORTE_JOB_STATE_ABORT_ORDERED:
+            return strdup("ABORT IN PROGRESS");
+        default:
+            return strdup("UNKNOWN STATE!");
+    }
+}
+
+const char *orte_proc_state_to_str(orte_proc_state_t state)
+{
+    switch(state) {
+        case ORTE_PROC_STATE_UNDEF:
+            return strdup("UNDEFINED");
+        case ORTE_PROC_STATE_INIT:
+            return strdup("INITIALIZED");
+        case ORTE_PROC_STATE_RESTART:
+            return strdup("RESTARTING");
+        case ORTE_PROC_STATE_LAUNCHED:
+            return strdup("LAUNCHED");
+        case ORTE_PROC_STATE_RUNNING:
+            return strdup("RUNNING");
+        case ORTE_PROC_STATE_REGISTERED:
+            return strdup("SYNC REGISTERED");
+        case ORTE_PROC_STATE_UNTERMINATED:
+            return strdup("UNTERMINATED");
+        case ORTE_PROC_STATE_TERMINATED:
+            return strdup("NORMALLY TERMINATED");
+        case ORTE_PROC_STATE_ABORTED:
+            return strdup("ABORTED");
+        case ORTE_PROC_STATE_FAILED_TO_START:
+            return strdup("FAILED TO START");
+        case ORTE_PROC_STATE_ABORTED_BY_SIG:
+            return strdup("ABORTED BY SIGNAL");
+        case ORTE_PROC_STATE_TERM_WO_SYNC:
+            return strdup("TERMINATED WITHOUT SYNC");
+        case ORTE_PROC_STATE_KILLED_BY_CMD:
+            return strdup("KILLED BY INTERNAL COMMAND");
+        case ORTE_PROC_STATE_COMM_FAILED:
+            return strdup("COMMUNICATION FAILURE");
+        default:
+            return strdup("UNKNOWN STATE!");
+    }
+}
+

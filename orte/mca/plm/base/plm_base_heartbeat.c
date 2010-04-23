@@ -125,8 +125,8 @@ static void check_heartbeat(int fd, short dummy, void *arg)
     
     /* if any daemon died, abort */
     if (died) {
-        orte_plm_base_launch_failed(ORTE_PROC_MY_NAME->jobid, -1,
-                                    ORTE_ERROR_DEFAULT_EXIT_CODE, ORTE_JOB_STATE_ABORTED);
+        orte_errmgr.update_state(ORTE_PROC_MY_NAME->jobid, ORTE_JOB_STATE_ABORTED,
+                                 NULL, ORTE_PROC_STATE_UNDEF, ORTE_ERROR_DEFAULT_EXIT_CODE);
         return;
     }
     

@@ -52,9 +52,11 @@ typedef uint8_t orte_errmgr_cmd_flag_t;
  */
 ORTE_DECLSPEC void orte_errmgr_base_log(int error_code, char *filename, int line);
 
-ORTE_DECLSPEC int orte_errmgr_base_proc_aborted(orte_process_name_t *name, int exit_code);
-ORTE_DECLSPEC int orte_errmgr_base_incomplete_start(orte_jobid_t job, int exit_code);
-ORTE_DECLSPEC int orte_errmgr_base_comm_failed(orte_process_name_t *name, int exit_code);
+ORTE_DECLSPEC int orte_errmgr_base_update_state(orte_jobid_t job,
+                                                orte_job_state_t jobstate,
+                                                orte_process_name_t *proc_name,
+                                                orte_proc_state_t state,
+                                                orte_exit_code_t exit_code);
 ORTE_DECLSPEC int orte_errmgr_base_abort(int error_code, char *fmt, ...)
 #   if OPAL_HAVE_ATTRIBUTE_FORMAT_FUNCPTR
     __opal_attribute_format__(__printf__, 2, 3)
@@ -67,6 +69,11 @@ ORTE_DECLSPEC int orte_errmgr_base_suggest_map_targets(orte_proc_t *proc,
                                                        orte_node_t *oldnode,
                                                        opal_list_t *node_list);
 ORTE_DECLSPEC int orte_errmgr_base_ft_event(int state);
+
+ORTE_DECLSPEC void orte_errmgr_base_update_runtime(orte_job_t *jdata,
+                                                   orte_process_name_t *proc,
+                                                   orte_proc_state_t state,
+                                                   orte_errmgr_stack_state_t *stack_state);
 
 /*
  * Additional External API function declared in errmgr.h

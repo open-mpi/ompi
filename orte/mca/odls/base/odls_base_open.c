@@ -33,8 +33,7 @@
 #include "opal/util/output.h"
 #include "opal/util/path.h"
 #include "opal/util/argv.h"
-#include "opal/threads/mutex.h"
-#include "opal/threads/condition.h"
+#include "opal/threads/threads.h"
 
 #include "orte/mca/plm/plm_types.h"
 #include "orte/util/name_fns.h"
@@ -207,6 +206,14 @@ int orte_odls_base_open(void)
                                 false, false, 1, &i);
     orte_odls_base.warn_if_not_bound = OPAL_INT_TO_BOOL(i);
     
+    /* initialize the global list of local children and job data */
+    OBJ_CONSTRUCT(&orte_local_children, opal_list_t);
+    OBJ_CONSTRUCT(&orte_local_children_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&orte_local_children_cond, opal_condition_t);
+    OBJ_CONSTRUCT(&orte_local_jobdata, opal_list_t);
+    OBJ_CONSTRUCT(&orte_local_jobdata_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&orte_local_jobdata_cond, opal_condition_t);
+
     /* initialize ODLS globals */
     OBJ_CONSTRUCT(&orte_odls_globals.mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&orte_odls_globals.cond, opal_condition_t);
@@ -216,7 +223,6 @@ int orte_odls_base_open(void)
     orte_odls_globals.debugger = NULL;
     orte_odls_globals.debugger_launched = false;
     OBJ_CONSTRUCT(&orte_odls_globals.sysinfo, opal_list_t);
-    orte_odls_base.comm = orte_odls_base_comm;
     
     /* get any external processor bindings */
     OPAL_PAFFINITY_CPU_ZERO(orte_odls_globals.my_cores);

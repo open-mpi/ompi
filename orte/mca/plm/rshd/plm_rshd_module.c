@@ -147,15 +147,11 @@ static void wait_cb(pid_t pid, int status, void* cbdata)
                              "%s proc %d failed with status %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              (int)proc->name.vpid, WEXITSTATUS(status)));
-        /* note that this daemon failed */
-        proc->state = ORTE_PROC_STATE_ABORTED;
     }
-    /* increment the #procs terminated so we will exit properly */
-    jdata->num_terminated++;
+    /* note that this daemon failed */
+    orte_errmgr.update_state(proc->name.jobid, ORTE_JOB_STATE_FAILED_TO_START,
+                             NULL, ORTE_PROC_STATE_FAILED_TO_START, status);
 
-    /* check for job completion */
-    orte_plm_base_check_job_completed(jdata);
-    
     /* release any waiting threads */
     OPAL_THREAD_LOCK(&mca_plm_rshd_component.lock);
 
@@ -252,7 +248,7 @@ int orte_plm_rshd_launch(orte_job_t *jdata)
     orte_node_t *node;
     orte_proc_t *proc;
     orte_jobid_t failed_job = ORTE_JOBID_INVALID;
-    orte_job_state_t job_state = ORTE_JOB_NEVER_LAUNCHED;
+    orte_job_state_t job_state = ORTE_JOB_STATE_NEVER_LAUNCHED;
     pid_t pid;
     
     if (jdata->controls & ORTE_JOB_CONTROL_LOCAL_SLAVE) {
@@ -378,7 +374,9 @@ cleanup:
     
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
-        orte_plm_base_launch_failed(failed_job, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, job_state);
+        orte_errmgr.update_state(failed_job, job_state,
+                                 NULL, ORTE_PROC_STATE_UNDEF,
+                                 ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
 
     /* setup a "heartbeat" timer to periodically check on
