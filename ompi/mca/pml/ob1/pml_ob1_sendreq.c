@@ -1102,7 +1102,7 @@ static void mca_pml_ob1_put_completion( mca_btl_base_module_t* btl,
 
     mca_pml_ob1_send_fin(sendreq->req_send.req_base.req_proc, 
                          bml_btl,
-                         frag->rdma_hdr.hdr_rdma.hdr_des.pval,
+                         frag->rdma_hdr.hdr_rdma.hdr_des,
                          des->order, 0);
     
     /* check for request completion */
@@ -1147,7 +1147,7 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t* frag )
 
             /* tell receiver to unregister memory */
             mca_pml_ob1_send_fin(sendreq->req_send.req_base.req_proc,
-                    bml_btl, frag->rdma_hdr.hdr_rdma.hdr_des.pval,
+                    bml_btl, frag->rdma_hdr.hdr_rdma.hdr_des,
                     MCA_BTL_NO_ORDER, 1);
 
             /* send fragment by copy in/out */

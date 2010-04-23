@@ -197,7 +197,7 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
 
     for( i = 0; i < comm->c_remote_group->grp_proc_count; i++ ) {
         pml_comm->procs[i].ompi_proc = ompi_group_peer_lookup(comm->c_remote_group,i);
-	OBJ_RETAIN(pml_comm->procs[i].ompi_proc);
+        OBJ_RETAIN(pml_comm->procs[i].ompi_proc);
     }
     /* Grab all related messages from the non_existing_communicator pending queue */
     for( item = opal_list_get_first(&mca_pml_ob1.non_existing_communicator_pending);
@@ -471,7 +471,7 @@ static void mca_pml_ob1_fin_completion( mca_btl_base_module_t* btl,
  */
 int mca_pml_ob1_send_fin( ompi_proc_t* proc,
                           mca_bml_base_btl_t* bml_btl,
-                          void *hdr_des,
+                          ompi_ptr_t hdr_des,
                           uint8_t order,
                           uint32_t status )
 {
@@ -493,7 +493,7 @@ int mca_pml_ob1_send_fin( ompi_proc_t* proc,
     hdr = (mca_pml_ob1_fin_hdr_t*)fin->des_src->seg_addr.pval;
     hdr->hdr_common.hdr_flags = 0;
     hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_FIN;
-    hdr->hdr_des.pval = hdr_des;
+    hdr->hdr_des = hdr_des;
     hdr->hdr_fail = status;
 
     ob1_hdr_hton(hdr, MCA_PML_OB1_HDR_TYPE_FIN, proc);
@@ -559,7 +559,7 @@ void mca_pml_ob1_process_pending_packets(mca_bml_base_btl_t* bml_btl)
                 break;
             case MCA_PML_OB1_HDR_TYPE_FIN:
                 rc = mca_pml_ob1_send_fin(pckt->proc, send_dst,
-                                          pckt->hdr.hdr_fin.hdr_des.pval,
+                                          pckt->hdr.hdr_fin.hdr_des,
                                           pckt->order,
                                           pckt->hdr.hdr_fin.hdr_fail);
                 if( OPAL_UNLIKELY(OMPI_ERR_OUT_OF_RESOURCE == rc) ) {

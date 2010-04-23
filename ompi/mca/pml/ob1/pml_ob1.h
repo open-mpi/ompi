@@ -212,7 +212,7 @@ do {                                                            \
                                                                     \
         MCA_PML_OB1_PCKT_PENDING_ALLOC(_pckt,_rc);                  \
         _pckt->hdr.hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_FIN;  \
-        _pckt->hdr.hdr_fin.hdr_des.pval = (D);                      \
+        _pckt->hdr.hdr_fin.hdr_des = (D);                           \
         _pckt->hdr.hdr_fin.hdr_fail = (S);                          \
         _pckt->proc = (P);                                          \
         _pckt->bml_btl = (B);                                       \
@@ -225,7 +225,7 @@ do {                                                            \
 
 
 int mca_pml_ob1_send_fin(ompi_proc_t* proc, mca_bml_base_btl_t* bml_btl, 
-        void *hdr_des, uint8_t order, uint32_t status);
+        ompi_ptr_t hdr_des, uint8_t order, uint32_t status);
 
 /* This function tries to resend FIN/ACK packets from pckt_pending queue.
  * Packets are added to the queue when sending of FIN or ACK is failed due to
