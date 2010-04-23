@@ -59,7 +59,6 @@ AC_DEFUN([ACVT_TIMER],
 		timer=TIMER_RTS_GET_TIMEBASE
 		;;
 	bgp)
-		CPPFLAGS="$CPPFLAGS -I/bgsys/drivers/ppcfloor/arch/include"
 		AC_DEFINE([TIMER_BGP_GET_TIMEBASE], [1], [Use `_bgp_GetTimeBase' function])
 		timer=TIMER_BGP_GET_TIMEBASE
 		;;

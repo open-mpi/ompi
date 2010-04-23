@@ -164,7 +164,7 @@ char* vt_pform_ldir() {
 #ifdef DEFAULT_PFORM_LDIR
   return DEFAULT_PFORM_LDIR;
 #else
-  return "/tmp";
+  return ".";
 #endif
 }
 

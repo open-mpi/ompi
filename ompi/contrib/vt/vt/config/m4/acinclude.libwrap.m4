@@ -10,6 +10,8 @@ AC_DEFUN([ACVT_LIBWRAP],
 	force_libcwrap="no"
 	force_iowrap="no"
 
+	AC_REQUIRE([ACVT_PLATFORM])
+
 	AC_ARG_ENABLE(libtrace,
 		AC_HELP_STRING([--enable-libtrace=LIST],
 			[enable library tracing support (gen,libc,io), default: automatically by configure]),
@@ -42,8 +44,17 @@ AC_DEFUN([ACVT_LIBWRAP],
 
 	AS_IF([test x"$check_libwrap" != "xno"],
 	[
-		ACVT_DL
-		AS_IF([test x"$have_dl" = "xno"], [libwrap_error="yes"])
+		AS_IF([test "$PLATFORM" = "bgp" -a x"$enable_shared" = "xno"],
+		[
+			AC_MSG_NOTICE([error: library tracing requires building of shared libraries on this platform; re-configure with \`--enable-shared'])
+			libwrap_error="yes"
+		])
+
+		AS_IF([test x"$libwrap_error" = "xno"],
+		[
+			ACVT_DL
+			AS_IF([test x"$have_dl" = "xno"], [libwrap_error="yes"])
+		])
 
 		AS_IF([test x"$libwrap_error" = "xno"],
 		[

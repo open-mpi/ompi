@@ -981,7 +981,8 @@ Wrapper::run()
                std::cout << "+++ rename " << m_pConfig->m_vecOpari_ModObjFiles[i]
                          << " to " << target << std::endl;
 
-            if( rename( m_pConfig->m_vecOpari_ModObjFiles[i].c_str(),
+            if( m_pConfig->m_bCompOnly &&
+                rename( m_pConfig->m_vecOpari_ModObjFiles[i].c_str(),
                         target.c_str() ) == -1 )
             {
                std::cerr << ExeName << ": could not rename "

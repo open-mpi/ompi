@@ -147,13 +147,19 @@ AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf strdup])
 
 # Check for libtool
 ACVT_CONF_TITLE([Libtool])
-AS_IF([test "$PLATFORM" = "bgl" -o "$PLATFORM" = "bgp"],
-[
-	AS_IF([test x"$enable_shared" = "xyes"],
-	[AC_MSG_WARN([VampirTrace does not support shared libraries on IBM BlueGene; build static libraries])])
-	enable_shared="no"; enable_static="yes"
-])
+
+# Override the configure options '--enable-static' and '--enable-shared' to
+# enforce building only static libraries on CrayXT and BlueGene/L platforms.
+AS_IF([test "$PLATFORM" = "crayxt" -o "$PLATFORM" = "bgl"],
+[enable_static="yes"; enable_shared="no"])
+
 AC_PROG_LIBTOOL
+
+# If building of shared libraries is desired on BlueGene/P, add '-Wl,-dy'
+# to linker flags on BlueGene/P platforms to lead libtool to believe that
+# dynamic linking is the default behaviour of the linker.
+AS_IF([test "$PLATFORM" = "bgp" -a x"$enable_shared" = "xyes"],
+[export LDFLAGS="$LDFLAGS -Wl,-dy"])
 
 # Check for OTF
 ACVT_CONF_TITLE([Open Trace Format (OTF)])

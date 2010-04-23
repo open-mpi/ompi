@@ -248,13 +248,19 @@ VT_MPI_INT VTUnify_MPI_Type_free( VTUnify_MPI_Datatype * utype )
 
 VT_MPI_INT VTUnify_MPI_Type_struct( VT_MPI_INT count,
                                     VT_MPI_INT * array_of_blocklengths,
-                                    VTUnify_MPI_Aint * array_of_displacements,
+                                    VTUnify_MPI_Aint * array_of_udisplacements,
                                     VTUnify_MPI_Datatype * array_of_utypes,
                                     VTUnify_MPI_Datatype * newutype )
 {
    VT_MPI_INT error, i;
+   MPI_Aint * array_of_displacements;
    MPI_Datatype * array_of_types;
    MPI_Datatype newtype;
+
+   array_of_displacements = (MPI_Aint*)malloc( count * sizeof( MPI_Aint ));
+   assert( array_of_displacements );
+   for( i = 0; i < count; i++ )
+      array_of_displacements[i] = (MPI_Aint)array_of_udisplacements[i];
 
    array_of_types = (MPI_Datatype*)malloc( count * sizeof( MPI_Datatype ));
    assert( array_of_types );
@@ -262,9 +268,10 @@ VT_MPI_INT VTUnify_MPI_Type_struct( VT_MPI_INT count,
       array_of_types[i] = get_mpi_type( array_of_utypes[i] );
 
    error = MPI_Type_struct( count, array_of_blocklengths,
-                            (MPI_Aint*)array_of_displacements, array_of_types,
+                            array_of_displacements, array_of_types,
                             &newtype );
 
+   free( array_of_displacements );
    free( array_of_types );
 
    if( error == MPI_SUCCESS )
