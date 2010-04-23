@@ -296,7 +296,6 @@ static inline int32_t opal_atomic_add_32(volatile int32_t* v, int inc)
                         "     add     %0, %2, %0   \n\t"
                         "     stwcx.  %0, 0, %3    \n\t"
                         "     bne-    1b           \n\t"
-                        "     mr      %3, %0       \n\t"
                         : "=&r" (t), "=m" (*v)
                         : "r" (inc), "r" (v), "m" (*v)
                         : "cc");
@@ -314,7 +313,6 @@ static inline int32_t opal_atomic_sub_32(volatile int32_t* v, int dec)
                         "     subf    %0,%2,%0     \n\t"
                         "     stwcx.  %0,0,%3      \n\t"
                         "     bne-    1b           \n\t"
-                        "     mr      %3, %0       \n\t"
                         : "=&r" (t), "=m" (*v)
                         : "r" (dec), "r" (v), "m" (*v)
                         : "cc");
