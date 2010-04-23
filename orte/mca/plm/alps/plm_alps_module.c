@@ -386,8 +386,6 @@ launch_apps:
         goto cleanup;
     }
 
-    /* JMS: should we stash the alps pid in the gpr somewhere for cleanup? */
-
 cleanup:
     if (NULL != argv) {
         opal_argv_free(argv);
@@ -402,7 +400,9 @@ cleanup:
     
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
-        orte_plm_base_launch_failed(failed_job, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, job_state);
+        orte_errmgr.update_state(failed_job, job_state,
+                                 NULL, ORTE_PROC_STATE_UNDEF,
+                                 ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
     
     return rc;

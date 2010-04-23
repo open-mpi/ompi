@@ -22,12 +22,12 @@
 #include "orte/types.h"
 
 #include "opal/dss/dss.h"
+#include "opal/threads/threads.h"
+
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/runtime/orte_wait.h"
-#include "orte/mca/plm/base/base.h"
 
 #include "orte/mca/routed/base/base.h"
 
@@ -138,25 +138,14 @@ int orte_routed_base_process_callback(orte_jobid_t job, opal_buffer_t *buffer)
                              (NULL == rml_uri) ? "NULL" : rml_uri,
                              ORTE_JOBID_PRINT(job), ORTE_VPID_PRINT(vpid)));
         
-        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, vpid))) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            continue;
+        if (NULL == rml_uri) {
+            /* should not happen */
+            ORTE_ERROR_LOG(ORTE_ERR_FATAL);
+            return ORTE_ERR_FATAL;
         }
         
-        if (rml_uri == NULL) {
-            /* if the rml_uri is NULL, then that means this process
-             * terminated without calling orte_init. However, the only
-             * reason we would be getting called here is if other
-             * processes local to that daemon -did- call orte_init.
-             * This is considered an "abnormal termination" mode per
-             * community discussion, and must generate a corresponding
-             * response, so declare the proc abnormally terminated
-             */
-            proc->state = ORTE_PROC_STATE_TERM_WO_SYNC;
-            /* increment the number of procs that have terminated */
-            jdata->num_terminated++;
-            /* let the normal code path declare the job aborted */
-            orte_plm_base_check_job_completed(jdata);
+        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, vpid))) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             continue;
         }
         
@@ -165,25 +154,14 @@ int orte_routed_base_process_callback(orte_jobid_t job, opal_buffer_t *buffer)
         free(rml_uri);
         
         /* update the proc state */
-        if (proc->state < ORTE_PROC_STATE_RUNNING) {
-            proc->state = ORTE_PROC_STATE_RUNNING;
-        }
-        
-        ++jdata->num_reported;
+        orte_errmgr.update_state(job, ORTE_JOB_STATE_UNDEF,
+                                 &proc->name, ORTE_PROC_STATE_RUNNING, 0);
         cnt = 1;
     }
     if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }    
-    
-    /* if all procs have reported, update our job state */
-    if (jdata->num_reported == jdata->num_procs) {
-        /* update the job state */
-        if (jdata->state < ORTE_JOB_STATE_RUNNING) {
-            jdata->state = ORTE_JOB_STATE_RUNNING;
-        }
-    }
-    
+
     return ORTE_SUCCESS;    
 }

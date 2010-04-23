@@ -41,13 +41,6 @@ ORTE_DECLSPEC int orte_odls_base_open(void);
 
 #if !ORTE_DISABLE_FULL_SUPPORT
 
-typedef void (*orte_odls_base_cbfunc_t)(int fd, short event, void *data);
-
-typedef int (*orte_odls_base_comm_fn_t)(orte_process_name_t *recipient,
-                                        opal_buffer_t *buf,
-                                        orte_rml_tag_t tag,
-                                        orte_odls_base_cbfunc_t cbfunc);
-
 /**
  * Struct to hold globals for the odls framework
  */
@@ -60,8 +53,6 @@ typedef struct orte_odls_base_t {
     opal_list_t available_components;
     /** selected component */
     orte_odls_base_component_t selected_component;
-    /* comm fn for updating state */
-    orte_odls_base_comm_fn_t comm;
     /* warn if binding no-op */
     bool warn_if_not_bound;
 } orte_odls_base_t;
@@ -92,10 +83,6 @@ ORTE_DECLSPEC void orte_base_default_waitpid_fired(orte_process_name_t *proc, in
 
 /* setup singleton job data */
 ORTE_DECLSPEC void orte_odls_base_setup_singleton_jobdat(orte_jobid_t jobid);
-
-ORTE_DECLSPEC int orte_odls_base_comm(orte_process_name_t *recipient,
-                                      opal_buffer_t *buf, orte_rml_tag_t tag,
-                                      orte_odls_base_cbfunc_t cbfunc);
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 

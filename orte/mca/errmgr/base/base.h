@@ -46,11 +46,11 @@ ORTE_DECLSPEC    int orte_errmgr_base_close(void);
  * Composite Stack states
  */
 #define ORTE_ERRMGR_STACK_STATE_NONE       0x00 /* No actions have been performed */
-#define ORTE_ERRMGR_STACK_STATE_STABLIZED  0x01 /* Stabalized the runtime */
+#define ORTE_ERRMGR_STACK_STATE_UPDATED    0x01 /* Updated the runtime */
 #define ORTE_ERRMGR_STACK_STATE_CONTINUE   0x02 /* Continue running without this process */
 #define ORTE_ERRMGR_STACK_STATE_RECOVERED  0x04 /* Process has been recovered */
 #define ORTE_ERRMGR_STACK_STATE_JOB_ABORT  0x08 /* Abort this job, cannot recover */
-
+#define ORTE_ERRMGR_STACK_STATE_COMPLETE   0x10 /* done processing this command */
 /**
  * Output and component variables
  */

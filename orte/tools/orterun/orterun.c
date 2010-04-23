@@ -1094,7 +1094,7 @@ static void dump_aborted_procs(void)
                 } else {
                     orte_show_help("help-orterun.txt", "orterun:proc-exit-no-sync", true,
                                    orterun_basename, (unsigned long)proc->name.vpid, (unsigned long)proc->pid,
-                                   proc->node->name, orterun_basename);
+                                   proc->node->name, orterun_basename, orterun_basename);
                 }
             }
             return;

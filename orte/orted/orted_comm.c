@@ -121,7 +121,7 @@ static void send_relay(opal_buffer_t *buf)
                              ORTE_VPID_PRINT(nm->vpid)));
         
         target.vpid = nm->vpid;
-        if (ORTE_SUCCESS != (ret = orte_odls_base.comm(&target,
+        if (ORTE_SUCCESS != (ret = orte_comm(&target,
                                                       buf, ORTE_RML_TAG_DAEMON,
                                                       orte_daemon_cmd_processor))) {
             ORTE_ERROR_LOG(ret);
@@ -688,7 +688,7 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
                 goto CLEANUP;
             }
             /* return response */
-            if (ORTE_SUCCESS != (ret = orte_odls_base.comm(sender, answer,
+            if (ORTE_SUCCESS != (ret = orte_comm(sender, answer,
                                                            ORTE_RML_TAG_TOOL, NULL))) {
                 ORTE_ERROR_LOG(ret);
             }
@@ -718,7 +718,7 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
                 goto CLEANUP;
             }
             
-            if (ORTE_SUCCESS != (ret = orte_odls_base.comm(sender, answer, tag, NULL))) {
+            if (ORTE_SUCCESS != (ret = orte_comm(sender, answer, tag, NULL))) {
                 ORTE_ERROR_LOG(ret);
             }
             OBJ_RELEASE(answer);
@@ -742,7 +742,7 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
                     OBJ_RELEASE(answer);
                     goto CLEANUP;
                 }
-                if (ORTE_SUCCESS != (ret = orte_odls_base.comm(sender, answer, ORTE_RML_TAG_TOOL, NULL))) {
+                if (ORTE_SUCCESS != (ret = orte_comm(sender, answer, ORTE_RML_TAG_TOOL, NULL))) {
                     ORTE_ERROR_LOG(ret);
                 }
                 OBJ_RELEASE(answer);
@@ -813,7 +813,7 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
                         }
                     }
                 }
-                if (ORTE_SUCCESS != (ret = orte_odls_base.comm(sender, answer, ORTE_RML_TAG_TOOL, NULL))) {
+                if (ORTE_SUCCESS != (ret = orte_comm(sender, answer, ORTE_RML_TAG_TOOL, NULL))) {
                     ORTE_ERROR_LOG(ret);
                 }
                 OBJ_RELEASE(answer);
@@ -838,7 +838,7 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
                     OBJ_RELEASE(answer);
                     goto CLEANUP;
                 }
-                if (ORTE_SUCCESS != (ret = orte_odls_base.comm(sender, answer, ORTE_RML_TAG_TOOL, NULL))) {
+                if (ORTE_SUCCESS != (ret = orte_comm(sender, answer, ORTE_RML_TAG_TOOL, NULL))) {
                     ORTE_ERROR_LOG(ret);
                 }
                 OBJ_RELEASE(answer);
@@ -906,7 +906,7 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
                     }
                 }
                 /* send the info */
-                if (ORTE_SUCCESS != (ret = orte_odls_base.comm(sender, answer, ORTE_RML_TAG_TOOL, NULL))) {
+                if (ORTE_SUCCESS != (ret = orte_comm(sender, answer, ORTE_RML_TAG_TOOL, NULL))) {
                     ORTE_ERROR_LOG(ret);
                 }
                 OBJ_RELEASE(answer);
@@ -931,7 +931,7 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
                     OBJ_RELEASE(answer);
                     goto CLEANUP;
                 }
-                if (ORTE_SUCCESS != (ret = orte_odls_base.comm(sender, answer, ORTE_RML_TAG_TOOL, NULL))) {
+                if (ORTE_SUCCESS != (ret = orte_comm(sender, answer, ORTE_RML_TAG_TOOL, NULL))) {
                     ORTE_ERROR_LOG(ret);
                 }
                 OBJ_RELEASE(answer);
@@ -1012,7 +1012,7 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
                     }
                 }
                 /* send the info */
-                if (ORTE_SUCCESS != (ret = orte_odls_base.comm(sender, answer, ORTE_RML_TAG_TOOL, NULL))) {
+                if (ORTE_SUCCESS != (ret = orte_comm(sender, answer, ORTE_RML_TAG_TOOL, NULL))) {
                     ORTE_ERROR_LOG(ret);
                 }
                 OBJ_RELEASE(answer);
@@ -1205,7 +1205,7 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
                 ret = ORTE_ERR_COMM_FAILURE;
                 break;
             }
-            if (ORTE_SUCCESS != (ret = orte_odls_base.comm(return_addr, answer, ORTE_RML_TAG_TOOL, NULL))) {
+            if (ORTE_SUCCESS != (ret = orte_comm(return_addr, answer, ORTE_RML_TAG_TOOL, NULL))) {
                 ORTE_ERROR_LOG(ret);
             }
             OBJ_RELEASE(answer);

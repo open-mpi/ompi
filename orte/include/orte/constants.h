@@ -105,9 +105,6 @@ enum {
 
 #define ORTE_ERR_MAX                      (ORTE_ERR_BASE - 100)
 
-/* include the prototype for the error-to-string converter */
-ORTE_DECLSPEC const char* orte_err2str(int errnum);
-
 END_C_DECLS
 
 #endif /* ORTE_CONSTANTS_H */

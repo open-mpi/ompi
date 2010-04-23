@@ -117,7 +117,6 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_msg_packet_t);
 #define ORTE_RML_TAG_WIREUP                  8
 #define ORTE_RML_TAG_RML_INFO_UPDATE         9
 #define ORTE_RML_TAG_ORTED_CALLBACK         10
-#define ORTE_RML_TAG_APP_LAUNCH_CALLBACK    11
 #define ORTE_RML_TAG_REPORT_REMOTE_LAUNCH   12
 
 #define ORTE_RML_TAG_CKPT                   13
@@ -128,7 +127,6 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_msg_packet_t);
 #define ORTE_RML_TAG_ALLGATHER_LIST         16
 #define ORTE_RML_TAG_BARRIER                17
 
-#define ORTE_RML_TAG_INIT_ROUTES            18
 #define ORTE_RML_TAG_UPDATE_ROUTE_ACK       19
 #define ORTE_RML_TAG_SYNC                   20
 

@@ -82,11 +82,6 @@ static int finalize(void)
 {
     int rc;
     
-    /* if I am the HNP, I need to stop the comm recv */
-    if (ORTE_PROC_IS_HNP) {
-        orte_routed_base_comm_stop();
-    }
-    
     if (ORTE_PROC_IS_MPI && NULL != orte_process_info.my_daemon_uri) {
         /* if a daemon launched me, register that I am leaving */
         if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync(false))) {
@@ -222,15 +217,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(job)));
         
-        if (NULL == ndat) {
-            /* if ndat is NULL, then this is being called during init, so just
-             * make myself available to catch any reported contact info
-             */
-            if (ORTE_SUCCESS != (rc = orte_routed_base_comm_start())) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-        } else {
+        if (NULL != ndat) {
             /* if this is for my own jobid, then I am getting an update of RML info
              * for the daemons - so update our contact info and routes
              */

@@ -55,6 +55,9 @@ OBJ_CLASS_INSTANCE(orte_routed_tree_t, opal_list_item_t,
 int orte_routed_base_output = -1;
 orte_routed_module_t orte_routed = {0};
 opal_list_t orte_routed_base_components;
+opal_mutex_t orte_routed_base_lock;
+opal_condition_t orte_routed_base_cond;
+bool orte_routed_base_wait_sync;
 
 static orte_routed_component_t *active_component = NULL;
 static bool component_open_called = false;
@@ -73,7 +76,10 @@ orte_routed_base_open(void)
     
     /* setup the output stream */
     orte_routed_base_output = opal_output_open(NULL);
-
+    OBJ_CONSTRUCT(&orte_routed_base_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&orte_routed_base_cond, opal_condition_t);
+    orte_routed_base_wait_sync = false;
+    
     /* Initialize globals */
     OBJ_CONSTRUCT(&orte_routed_base_components, opal_list_t);
     
@@ -145,7 +151,9 @@ orte_routed_base_close(void)
     }
 
     OBJ_DESTRUCT(&orte_routed_base_components);
-
+    OBJ_DESTRUCT(&orte_routed_base_lock);
+    OBJ_DESTRUCT(&orte_routed_base_cond);
+    
     opened   = false;
     selected = false;
 

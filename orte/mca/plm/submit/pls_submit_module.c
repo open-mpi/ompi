@@ -299,7 +299,8 @@ static void orte_plm_submit_wait_daemon(pid_t pid, int status, void* cbdata)
             Set the job state to indicate we failed to launch so orterun's exit status
             will be non-zero and forcibly terminate the job so orterun can exit
         */
-        orte_plm_base_launch_failed(active_job, true, pid, status, ORTE_JOB_STATE_FAILED_TO_START);
+        orte_errmgr.update_state(active_job, ORTE_JOB_STATE_FAILED_TO_START,
+                                 NULL, ORTE_PROC_STATE_UNDEF, status);
         
     } /* if abnormal exit */
 
@@ -928,7 +929,9 @@ launch_apps:
 
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
-        orte_plm_base_launch_failed(jdata->jobid, false, -1, 0, ORTE_JOB_STATE_FAILED_TO_START);
+        orte_errmgr.update_state(jdata->jobid, ORTE_JOB_STATE_FAILED_TO_START,
+                                 NULL, ORTE_PROC_STATE_UNDEF,
+                                 ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
 
     return rc;

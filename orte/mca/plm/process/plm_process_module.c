@@ -924,7 +924,9 @@ static void orte_plm_process_wait_daemon(pid_t pid, int status, void* cbdata)
         /* report that the daemon has failed so we break out of the daemon
          * callback receive and can exit
          */
-        orte_plm_base_launch_failed(active_job, pid, status, ORTE_JOB_STATE_FAILED_TO_START);
+        orte_errmgr.update_state(active_job, ORTE_JOB_STATE_FAILED_TO_START,
+                                 NULL, ORTE_PROC_STATE_UNDEF,
+                                 status);
     } /* if abnormal exit */
 
     /* release any waiting threads */
@@ -1364,7 +1366,9 @@ launch_apps:
 
     /* check for failed launch - if so, force terminate */
     if( failed_launch ) {
-        orte_plm_base_launch_failed(jdata->jobid, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, job_state);
+        orte_errmgr.update_state(jdata->jobid, job_state,
+                                 NULL, ORTE_PROC_STATE_UNDEF,
+                                 ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
 
     return rc;

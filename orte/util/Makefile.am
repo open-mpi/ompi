@@ -42,7 +42,8 @@ headers += \
 	util/name_fns.h \
         util/proc_info.h \
         util/session_dir.h \
-        util/show_help.h
+        util/show_help.h \
+        util/error_strings.h
 
 libopen_rte_la_SOURCES += \
         util/error_strings.c \

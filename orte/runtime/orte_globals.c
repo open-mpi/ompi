@@ -33,8 +33,10 @@
 #include "opal/class/opal_pointer_array.h"
 #include "opal/class/opal_value_array.h"
 #include "opal/dss/dss.h"
+#include "opal/threads/threads.h"
 
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/rml/rml.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
 
@@ -118,8 +120,13 @@ char *orted_launch_cmd = NULL;
 
 /* list of local children on a daemon */
 opal_list_t orte_local_children;
+opal_mutex_t orte_local_children_lock;
+opal_condition_t orte_local_children_cond;
+
 /* list of job data for local children on a daemon */
 opal_list_t orte_local_jobdata;
+opal_mutex_t orte_local_jobdata_lock;
+opal_condition_t orte_local_jobdata_cond;
 
 /* IOF controls */
 bool orte_tag_output;
@@ -166,6 +173,9 @@ bool orte_report_bindings = false;
 
 /* barrier control */
 bool orte_do_not_barrier = false;
+
+/* comm fn for updating state */
+orte_default_comm_fn_t orte_comm;
 
 #endif /* !ORTE_DISABLE_FULL_RTE */
 
@@ -474,6 +484,28 @@ orte_job_t* orte_get_job_data_object(orte_jobid_t job)
     return (orte_job_t*)opal_pointer_array_get_item(orte_job_data, ljob);
 }
 
+int orte_global_comm(orte_process_name_t *recipient,
+                     opal_buffer_t *buf, orte_rml_tag_t tag,
+                     orte_default_cbfunc_t cbfunc)
+{
+    int ret;
+    
+    if (recipient->jobid == ORTE_PROC_MY_NAME->jobid &&
+        recipient->vpid == ORTE_PROC_MY_NAME->vpid &&
+        NULL != cbfunc) {
+        /* if I am the recipient and a direct fn is provided, use a message event */
+        ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, buf, tag, cbfunc);
+        ret = ORTE_SUCCESS;
+    } else {
+        /* go ahead and send it */
+        if (0 > (ret = orte_rml.send_buffer(recipient, buf, tag, 0))) {
+            ORTE_ERROR_LOG(ret);
+        } else {
+            ret = ORTE_SUCCESS;
+        }
+    }
+    return ret;
+}
 
 /*
  * CONSTRUCTORS, DESTRUCTORS, AND CLASS INSTANTIATIONS
@@ -600,10 +632,20 @@ static void orte_job_construct(orte_job_t* job)
     job->num_launched = 0;
     job->num_reported = 0;
     job->num_terminated = 0;
+    job->num_daemons_reported = 0;
     job->abort = false;
     job->aborted_proc = NULL;
     
+    OBJ_CONSTRUCT(&job->reported_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&job->reported_cond, opal_condition_t);
+    job->not_reported = true;
+    
     job->max_restarts = INT32_MAX;
+    
+    job->launch_msg_sent.tv_sec = 0;
+    job->launch_msg_sent.tv_usec = 0;
+    job->max_launch_msg_recvd.tv_sec = 0;
+    job->max_launch_msg_recvd.tv_usec = 0;
     
 #if OPAL_ENABLE_FT_CR == 1
     job->ckpt_state = 0;
@@ -649,6 +691,9 @@ static void orte_job_destruct(orte_job_t* job)
         OBJ_RELEASE(proc);
     }
     OBJ_RELEASE(job->procs);
+    
+    OBJ_DESTRUCT(&job->reported_lock);
+    OBJ_DESTRUCT(&job->reported_cond);
     
 #if OPAL_ENABLE_FT_CR == 1
     if (NULL != job->ckpt_snapshot_ref) {

@@ -106,8 +106,6 @@ ORTE_DECLSPEC int orte_plm_base_set_progress_sched(int sched);
  */
 ORTE_DECLSPEC int orte_plm_base_setup_job(orte_job_t *jdata);
 ORTE_DECLSPEC int orte_plm_base_launch_apps(orte_jobid_t job);
-ORTE_DECLSPEC void orte_plm_base_launch_failed(orte_jobid_t job, pid_t pid, int status, orte_job_state_t state);
-ORTE_DECLSPEC int orte_plm_base_report_launched(orte_jobid_t job);
 
 ORTE_DECLSPEC int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons);
 

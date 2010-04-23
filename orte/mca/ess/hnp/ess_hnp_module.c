@@ -115,10 +115,6 @@ static int rte_init(void)
     orte_proc_t *proc;
     int value;
 
-    /* initialize the global list of local children and job data */
-    OBJ_CONSTRUCT(&orte_local_children, opal_list_t);
-    OBJ_CONSTRUCT(&orte_local_jobdata, opal_list_t);
-    
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
         error = "orte_ess_base_std_prolog";
@@ -324,6 +320,9 @@ static int rte_init(void)
         error = "orte_rml.enable_comm";
         goto error;
     }
+
+    /* set the communication function */
+    orte_comm = orte_global_comm;
 
     /* we are an hnp, so update the contact info field for later use */
     orte_process_info.my_hnp_uri = orte_rml.get_contact_info();
@@ -577,17 +576,12 @@ error:
                        true, error, ORTE_ERROR_NAME(ret), ret);
     }
     
-    /* cleanup the global list of local children and job data */
-    OBJ_DESTRUCT(&orte_local_children);
-    OBJ_DESTRUCT(&orte_local_jobdata);
-    
     return ret;
 }
 
 static int rte_finalize(void)
 {
     char *contact_path;
-    opal_list_item_t *item;
     orte_node_t *node;
     orte_job_t *job;
     int i;
@@ -636,16 +630,6 @@ static int rte_finalize(void)
             fclose(orte_timing_output);
         }
     }
-    
-    /* cleanup the global list of local children and job data */
-    while (NULL != (item = opal_list_remove_first(&orte_local_children))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&orte_local_children);
-    while (NULL != (item = opal_list_remove_first(&orte_local_jobdata))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&orte_local_jobdata);
     
     /* cleanup the job and node info arrays */
     if (NULL != orte_node_pool) {
