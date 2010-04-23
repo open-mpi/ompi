@@ -337,6 +337,11 @@ static void process_msg(int fd, short event, void *data)
                     
                     name.jobid = job;
                     running = true;
+                    /* get the job object */
+                    if (NULL == (jdata = orte_get_job_data_object(job))) {
+                        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                        goto CLEANUP;
+                    }
                     /* if we are timing, the daemon will have included the time it
                      * recvd the launch msg - the maximum time between when we sent
                      * that message and a daemon recvd it tells us the time reqd
@@ -344,11 +349,6 @@ static void process_msg(int fd, short event, void *data)
                      */
                     if (orte_timing) {
                         int64_t tmpsec, tmpusec;
-                        /* get the job object */
-                        if (NULL == (jdata = orte_get_job_data_object(name.jobid))) {
-                            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                            goto CLEANUP;
-                        }
                         count = 1;
                         if (ORTE_SUCCESS != (rc = opal_dss.unpack(msgpkt->buffer, &tmpsec, &count, OPAL_INT64))) {
                             ORTE_ERROR_LOG(rc);
