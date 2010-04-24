@@ -57,7 +57,8 @@ int orte_errmgr_base_select(void)
     orte_errmgr_base_select_module_t *tmp_module = NULL, *tmp_module_sw = NULL;
     opal_pointer_array_t tmp_array;
     orte_errmgr_base_module_t *i_module = NULL;
-
+    bool none_found;
+    
     OBJ_CONSTRUCT(&tmp_array, opal_pointer_array_t);
 
     opal_output_verbose(10, orte_errmgr_base_output,
@@ -67,6 +68,7 @@ int orte_errmgr_base_select(void)
      * Traverse the list of available components.
      * For each call their 'query' functions to determine relative priority.
      */
+    none_found = true;
     for (item  = opal_list_get_first(&orte_errmgr_base_components_available);
          item != opal_list_get_end(&orte_errmgr_base_components_available);
          item  = opal_list_get_next(item) ) {
@@ -114,8 +116,14 @@ int orte_errmgr_base_select(void)
         tmp_module->priority  = priority;
 
         opal_pointer_array_add(&tmp_array, (void*)tmp_module);
+        none_found = false;
     }
 
+    if (none_found) {
+        /* must have at least one module */
+        return ORTE_ERR_MODULE_NOT_FOUND;
+    }
+    
     /*
      * Sort the list by decending priority
      */
