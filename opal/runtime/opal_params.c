@@ -36,8 +36,6 @@
 
 int opal_register_params(void)
 {
-    int ret;
-
     /*
      * This string is going to be used in opal/util/stacktrace.c
      */
