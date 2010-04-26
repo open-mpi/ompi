@@ -1,5 +1,6 @@
 enable_dlopen=no
 enable_multicast=yes
+enable_sensors=yes
 enable_mem_debug=no
 enable_mem_profile=no
 with_memory_manager=no
