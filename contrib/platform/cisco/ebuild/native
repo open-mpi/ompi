@@ -1,5 +1,6 @@
 enable_dlopen=no
 enable_multicast=yes
+enable_sensors=yes
 enable_opal_multi_threads=yes
 enable_ft_thread=no
 enable_mem_debug=no
