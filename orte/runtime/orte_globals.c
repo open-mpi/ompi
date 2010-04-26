@@ -640,7 +640,8 @@ static void orte_job_construct(orte_job_t* job)
     OBJ_CONSTRUCT(&job->reported_cond, opal_condition_t);
     job->not_reported = true;
     
-    job->max_restarts = INT32_MAX;
+    job->max_local_restarts = 0;
+    job->max_global_restarts = 0;
     
     job->launch_msg_sent.tv_sec = 0;
     job->launch_msg_sent.tv_usec = 0;
@@ -833,6 +834,7 @@ static void orte_proc_construct(orte_proc_t* proc)
     proc->rml_uri = NULL;
     proc->beat = 0;
     proc->restarts = 0;
+    proc->relocates = 0;
 #if OPAL_ENABLE_FT_CR == 1
     proc->ckpt_state = 0;
     proc->ckpt_snapshot_ref = NULL;

@@ -115,6 +115,10 @@
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
 #endif
+#if ORTE_ENABLE_SENSORS
+#include "orte/mca/sensor/sensor.h"
+#include "orte/mca/sensor/base/base.h"
+#endif
 #include "orte/mca/filem/filem.h"
 #include "orte/mca/filem/base/base.h"
 #endif
@@ -462,6 +466,16 @@ void ompi_info_open_components(void)
     map = OBJ_NEW(ompi_info_component_map_t);
     map->type = strdup("snapc");
     map->components = &orte_snapc_base_components_available;
+    opal_pointer_array_add(&component_map, map);
+#endif
+    
+#if ORTE_ENABLE_SENSORS
+    if (ORTE_SUCCESS != orte_sensor_base_open()) {
+        goto error;
+    }
+    map = OBJ_NEW(orte_info_component_map_t);
+    map->type = strdup("sensor");
+    map->components = &mca_sensor_base_components_available;
     opal_pointer_array_add(&component_map, map);
 #endif
     

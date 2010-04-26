@@ -93,6 +93,7 @@
 static int orte_odls_default_launch_local_procs(opal_buffer_t *data);
 static int orte_odls_default_kill_local_procs(opal_pointer_array_t *procs);
 static int orte_odls_default_signal_local_procs(const orte_process_name_t *proc, int32_t signal);
+static int orte_odls_default_restart_proc(orte_odls_child_t *child);
 
 static void set_handler_default(int sig);
 
@@ -102,7 +103,8 @@ orte_odls_base_module_t orte_odls_default_module = {
     orte_odls_default_kill_local_procs,
     orte_odls_default_signal_local_procs,
     orte_odls_base_default_deliver_message,
-    orte_odls_base_default_require_sync
+    orte_odls_base_default_require_sync,
+    orte_odls_default_restart_proc
 };
 
 /* convenience macro for erroring out */
@@ -1101,3 +1103,17 @@ static int orte_odls_default_signal_local_procs(const orte_process_name_t *proc,
     }
     return ORTE_SUCCESS;
 }
+
+static int orte_odls_default_restart_proc(orte_odls_child_t *child)
+{
+    int rc;
+    
+    /* restart the local proc */
+    if (ORTE_SUCCESS != (rc = orte_odls_base_default_restart_proc(child, odls_default_fork_local_proc))) {
+        OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+                             "%s odls:default:restart_proc failed to launch on error %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
+    }
+    return rc;
+}
+

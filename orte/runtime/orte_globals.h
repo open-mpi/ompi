@@ -390,8 +390,10 @@ typedef struct {
     bool abort;
     /* proc that caused that to happen */
     struct orte_proc_t *aborted_proc;
-    /* max number of times a process can be restarted */
-    int32_t max_restarts;
+    /* max number of times a process can be restarted locally */
+    int32_t max_local_restarts;
+    /* max number of times a process can be relocated to another node */
+    int32_t max_global_restarts;
     /* time launch message was sent */
     struct timeval launch_msg_sent;
     /* max time for launch msg to be received */
@@ -450,6 +452,8 @@ struct orte_proc_t {
     time_t beat;
     /* number of times this process has been restarted */
     int32_t restarts;
+    /* number of times this process has been relocated */
+    int32_t relocates;
 #if OPAL_ENABLE_FT_CR == 1
     /* ckpt state */
     size_t ckpt_state;

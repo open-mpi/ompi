@@ -39,6 +39,19 @@
  */
 BEGIN_C_DECLS
 
+/* define a struct to hold framework-global values */
+typedef struct {
+    int output;
+    bool shutting_down;
+    bool enable_recovery;
+    opal_pointer_array_t modules;
+    bool initialized;
+    int max_global_restarts;
+    int max_local_restarts;
+} orte_errmgr_base_t;
+
+ORTE_DECLSPEC extern orte_errmgr_base_t orte_errmgr_base;
+
 /* Define the ERRMGR command flag */
 typedef uint8_t orte_errmgr_cmd_flag_t;
 #define ORTE_ERRMGR_CMD	OPAL_UINT8
@@ -46,7 +59,7 @@ typedef uint8_t orte_errmgr_cmd_flag_t;
 /* define some commands */
 #define ORTE_ERRMGR_ABORT_PROCS_REQUEST_CMD     0x01
 #define ORTE_ERRMGR_REGISTER_CALLBACK_CMD       0x02
- 
+
 /*
  * Base functions
  */
@@ -69,11 +82,6 @@ ORTE_DECLSPEC int orte_errmgr_base_suggest_map_targets(orte_proc_t *proc,
                                                        orte_node_t *oldnode,
                                                        opal_list_t *node_list);
 ORTE_DECLSPEC int orte_errmgr_base_ft_event(int state);
-
-ORTE_DECLSPEC void orte_errmgr_base_update_runtime(orte_job_t *jdata,
-                                                   orte_process_name_t *proc,
-                                                   orte_proc_state_t state,
-                                                   orte_errmgr_stack_state_t *stack_state);
 
 /*
  * Additional External API function declared in errmgr.h

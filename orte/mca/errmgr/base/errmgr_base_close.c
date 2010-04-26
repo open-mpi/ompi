@@ -38,8 +38,8 @@ int orte_errmgr_base_close(void)
     OPAL_TRACE(5);
 
     /* Close all selected components */
-    for(i = 0; i < orte_errmgr_base_modules.size; ++i) {
-        module = (orte_errmgr_base_module_t*)opal_pointer_array_get_item(&orte_errmgr_base_modules, i);
+    for(i = 0; i < orte_errmgr_base.modules.size; ++i) {
+        module = (orte_errmgr_base_module_t*)opal_pointer_array_get_item(&orte_errmgr_base.modules, i);
         if( NULL == module ) {
             continue;
         }
@@ -50,13 +50,13 @@ int orte_errmgr_base_close(void)
 
     /* Close all remaining available components (may be one if this is a
         OMPI RTE program, or [possibly] multiple if this is ompi_info) */
-    mca_base_components_close(orte_errmgr_base_output, 
+    mca_base_components_close(orte_errmgr_base.output, 
                               &orte_errmgr_base_components_available,
                               NULL);
 
-    OBJ_DESTRUCT(&orte_errmgr_base_modules);
+    OBJ_DESTRUCT(&orte_errmgr_base.modules);
 
-    orte_errmgr_initialized = false;
+    orte_errmgr_base.initialized = false;
     
     return ORTE_SUCCESS;
 }

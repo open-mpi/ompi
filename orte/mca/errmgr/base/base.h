@@ -55,12 +55,6 @@ ORTE_DECLSPEC    int orte_errmgr_base_close(void);
  * Output and component variables
  */
 ORTE_DECLSPEC extern opal_list_t orte_errmgr_base_components_available;
-ORTE_DECLSPEC extern int  orte_errmgr_base_output;
-ORTE_DECLSPEC extern bool orte_errmgr_base_shutting_down;
-ORTE_DECLSPEC extern bool orte_errmgr_base_enable_recovery;
-
-extern opal_pointer_array_t orte_errmgr_base_modules;
-extern bool orte_errmgr_initialized;
 
 /*
  * Additional External API function declared in errmgr.h

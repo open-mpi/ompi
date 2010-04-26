@@ -61,7 +61,9 @@
 #include "orte/mca/notifier/base/base.h"
 #include "orte/mca/rmcast/base/base.h"
 #include "orte/mca/state/base/base.h"
-
+#if ORTE_ENABLE_SENSORS
+#include "orte/mca/sensor/base/base.h"
+#endif
 #include "orte/runtime/orte_cr.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_globals.h"
@@ -417,6 +419,20 @@ int orte_ess_base_orted_setup(char **hosts)
         goto error;
     }
     
+#if ORTE_ENABLE_SENSORS
+    /* setup the SENSOR framework */
+    if (ORTE_SUCCESS != (ret = orte_sensor_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_sensor_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_sensor_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "ortesensor_select";
+        goto error;
+    }
+#endif
+    
     return ORTE_SUCCESS;
     
 error:
@@ -438,6 +454,9 @@ int orte_ess_base_orted_finalize(void)
         orte_grpcomm.onesided_barrier();
     }
     
+#if ORTE_ENABLE_SENSORS
+    orte_sensor_base_close();
+#endif
     orte_state_base_close();
     orte_notifier_base_close();
     

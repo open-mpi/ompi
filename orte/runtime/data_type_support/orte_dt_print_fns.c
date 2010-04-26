@@ -27,6 +27,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "opal/dss/dss.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/error_strings.h"
 #include "orte/runtime/orte_globals.h"
 
 #include "orte/runtime/data_type_support/orte_dt_support.h"
@@ -214,11 +215,10 @@ int orte_dt_print_job(char **output, char *prefix, orte_job_t *src, opal_data_ty
         asprintf(&pfx2, "%s", prefix);
     }
 
-    asprintf(&tmp, "\n%sData for job: %s\tNum apps: %ld\tControls: %0x\tStdin target: %s\tState: %0x\tAbort: %s", pfx2,
+    asprintf(&tmp, "\n%sData for job: %s\tNum apps: %ld\tControls: %0x\tStdin target: %s\tState: %s\tAbort: %s", pfx2,
              ORTE_JOBID_PRINT(src->jobid),
              (long)src->num_apps, src->controls, ORTE_VPID_PRINT(src->stdin_target),
-             src->state, src->abort ? "True" : "False");
-
+             orte_job_state_to_str(src->state), src->abort ? "True" : "False");
     asprintf(&pfx, "%s\t", pfx2);
     free(pfx2);
     
@@ -248,7 +248,8 @@ int orte_dt_print_job(char **output, char *prefix, orte_job_t *src, opal_data_ty
         tmp = tmp2;
     }
     
-    asprintf(&tmp2, "%s\n%sNum procs: %ld\tMax Restarts: %d", tmp, pfx, (long)src->num_procs, src->max_restarts);
+    asprintf(&tmp2, "%s\n%sNum procs: %ld\tMax Local Restarts: %d\tMax Global Restarts", tmp, pfx,
+             (long)src->num_procs, src->max_local_restarts, src->max_global_restarts);
     free(tmp);
     tmp = tmp2;
 
@@ -448,30 +449,6 @@ PRINT_PROCS:
 /*
  * PROC
  */
-static char* orte_dt_print_proc_state(orte_proc_state_t state)
-{
-    switch(state) {
-        case ORTE_PROC_STATE_INIT:
-            return "init";
-        case ORTE_PROC_STATE_LAUNCHED:
-            return "launched";
-        case ORTE_PROC_STATE_RUNNING:
-            return "running";
-        case ORTE_PROC_STATE_TERMINATED:
-            return "terminated";
-        case ORTE_PROC_STATE_ABORTED:
-            return "aborted";
-        case ORTE_PROC_STATE_FAILED_TO_START:
-            return "failed-to-start";
-        case ORTE_PROC_STATE_ABORTED_BY_SIG:
-            return "aborted-by-signal";
-        case ORTE_PROC_STATE_TERM_WO_SYNC:
-            return "terminated-without-sync";
-        default:
-            return NULL;
-    }
-}
-
 int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_type_t type)
 {
     char *tmp, *tmp2, *pfx2;
@@ -488,22 +465,12 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
     
     if (orte_xml_output) {
         /* need to create the output in XML format */
-        tmp = orte_dt_print_proc_state(src->state);
-        if (NULL == tmp) {
-            if (0 == src->pid) {
-                asprintf(output, "%s<process rank=\"%s\"/>\n", pfx2, ORTE_VPID_PRINT(src->name.vpid));
-            } else {
-                asprintf(output, "%s<process rank=\"%s\" pid=\"%d\"/>\n", pfx2,
-                         ORTE_VPID_PRINT(src->name.vpid), (int)src->pid);
-            }
+        if (0 == src->pid) {
+            asprintf(output, "%s<process rank=\"%s\" status=\"%s\"/>\n", pfx2,
+                     ORTE_VPID_PRINT(src->name.vpid), orte_proc_state_to_str(src->state));
         } else {
-            if (0 == src->pid) {
-                asprintf(output, "%s<process rank=\"%s\" status=\"%s\"/>\n", pfx2,
-                         ORTE_VPID_PRINT(src->name.vpid), tmp);
-            } else {
-                asprintf(output, "%s<process rank=\"%s\" pid=\"%d\" status=\"%s\"/>\n", pfx2,
-                         ORTE_VPID_PRINT(src->name.vpid), (int)src->pid, tmp);
-            }
+            asprintf(output, "%s<process rank=\"%s\" pid=\"%d\" status=\"%s\"/>\n", pfx2,
+                     ORTE_VPID_PRINT(src->name.vpid), (int)src->pid, orte_proc_state_to_str(src->state));
         }
         free(pfx2);
         return ORTE_SUCCESS;
@@ -527,8 +494,8 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
     free(tmp);
     tmp = tmp2;
     
-    asprintf(&tmp2, "%s\n%s\tState: %0x\tRestarts: %d\tApp_context: %ld\tSlot list: %s", tmp, pfx2,
-             src->state, src->restarts, (long)src->app_idx,
+    asprintf(&tmp2, "%s\n%s\tState: %s\tRestarts: %d\tRelocates: %d\tApp_context: %ld\tSlot list: %s", tmp, pfx2,
+             orte_proc_state_to_str(src->state), src->restarts, src->relocates, (long)src->app_idx,
              (NULL == src->slot_list) ? "NULL" : src->slot_list);
     free(tmp);
     

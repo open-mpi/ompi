@@ -138,6 +138,9 @@ ORTE_DECLSPEC int orte_odls_base_default_require_sync(orte_process_name_t *proc,
                                                       opal_buffer_t *buffer,
                                                       bool drop_nidmap);
 
+ORTE_DECLSPEC int orte_odls_base_default_restart_proc(orte_odls_child_t *child,
+                                                      orte_odls_base_fork_local_proc_fn_t fork_local);
+
 /*
  * Preload binary/files functions
  */

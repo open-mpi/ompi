@@ -73,8 +73,8 @@ int orte_errmgr_base_update_state(orte_jobid_t job,
         return ORTE_SUCCESS;
     }
 
-    if( !orte_errmgr_base_shutting_down ) {
-        OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base_output,
+    if( !orte_errmgr_base.shutting_down ) {
+        OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output,
                              "errmgr:base:update_state() %s) "
                              "------- %s state updated for process %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -88,8 +88,8 @@ int orte_errmgr_base_update_state(orte_jobid_t job,
     /********************************
      * Call the active modules
      ********************************/
-    for (i = 0; i < orte_errmgr_base_modules.size; ++i) {
-        module = (orte_errmgr_base_module_t*)opal_pointer_array_get_item(&orte_errmgr_base_modules, i);
+    for (i = 0; i < orte_errmgr_base.modules.size; ++i) {
+        module = (orte_errmgr_base_module_t*)opal_pointer_array_get_item(&orte_errmgr_base.modules, i);
         if( NULL == module ) {
             continue;
         }
@@ -143,14 +143,14 @@ int orte_errmgr_base_predicted_fault(char ***proc_list,
     int i, rc;
     orte_errmgr_stack_state_t stack_state = ORTE_ERRMGR_STACK_STATE_NONE;
 
-    OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base_output,
+    OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output,
                          "errmgr:base:predicted_fault() %s) "
                          "------- Notifying components... (%3d active components)",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         orte_errmgr_base_modules.size));
+                         orte_errmgr_base.modules.size));
 
-    for(i = 0; i < orte_errmgr_base_modules.size; ++i) {
-        module = (orte_errmgr_base_module_t*)opal_pointer_array_get_item(&orte_errmgr_base_modules, i);
+    for(i = 0; i < orte_errmgr_base.modules.size; ++i) {
+        module = (orte_errmgr_base_module_t*)opal_pointer_array_get_item(&orte_errmgr_base.modules, i);
         if( NULL == module ) {
             continue;
         }
@@ -176,22 +176,22 @@ int orte_errmgr_base_suggest_map_targets(orte_proc_t *proc,
     /*
      * If the user did not ask for recovery, then do not process recovery events
      */
-    if( !orte_errmgr_base_enable_recovery ) {
-        OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base_output,
+    if( !orte_errmgr_base.enable_recovery ) {
+        OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output,
                              "errmgr:base:suggest_map_targets() %s) "
                              "------- Recovery currently disabled! Skipping...",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME) ));
         return ORTE_SUCCESS;
     }
 
-    OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base_output,
+    OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output,
                          "errmgr:base:suggest_map_targets() %s) "
                          "------- Notifying components... (%3d active components)",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         orte_errmgr_base_modules.size));
+                         orte_errmgr_base.modules.size));
 
-    for(i = 0; i < orte_errmgr_base_modules.size; ++i) {
-        module = (orte_errmgr_base_module_t*)opal_pointer_array_get_item(&orte_errmgr_base_modules, i);
+    for(i = 0; i < orte_errmgr_base.modules.size; ++i) {
+        module = (orte_errmgr_base_module_t*)opal_pointer_array_get_item(&orte_errmgr_base.modules, i);
         if( NULL == module ) {
             continue;
         }
@@ -211,14 +211,14 @@ int orte_errmgr_base_ft_event(int state)
     orte_errmgr_base_module_t *module = NULL;
     int i;
 
-    OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base_output,
+    OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output,
                          "errmgr:base:ft_event() %s) "
                          "------- Notifying components... (%3d active components)",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         orte_errmgr_base_modules.size));
+                         orte_errmgr_base.modules.size));
 
-    for(i = 0; i < orte_errmgr_base_modules.size; ++i) {
-        module = (orte_errmgr_base_module_t*)opal_pointer_array_get_item(&orte_errmgr_base_modules, i);
+    for(i = 0; i < orte_errmgr_base.modules.size; ++i) {
+        module = (orte_errmgr_base_module_t*)opal_pointer_array_get_item(&orte_errmgr_base.modules, i);
         if( NULL == module ) {
             continue;
         }
@@ -228,61 +228,4 @@ int orte_errmgr_base_ft_event(int state)
     }
 
     return ORTE_SUCCESS;
-}
-
-void orte_errmgr_base_update_runtime(orte_job_t *jdata,
-                                     orte_process_name_t *proc,
-                                     orte_proc_state_t state,
-                                     orte_errmgr_stack_state_t *stack_state)
-{
-    orte_proc_t *loc_proc;
-    int32_t i;
-    
-    /* has this already been done */
-    if (ORTE_ERRMGR_STACK_STATE_UPDATED & *stack_state) {
-        return;
-    }
-    *stack_state |= ORTE_ERRMGR_STACK_STATE_UPDATED;
-    
-    /*
-     * orterun is trying to shutdown, so just let it
-     */
-    if (orte_errmgr_base_shutting_down) {
-        return;
-    }
-    
-    /*
-     * orte_errmgr_base_incomplete_start() will pass a NULL since all processes
-     * are effected by this fault.
-     * JJH: Since we do not handle the recovery from such errors yet, just
-     *      skip processing, and go to the abort sequence.
-     */
-    if (NULL == proc) {
-        return;
-    }
-    
-    /*
-     * Remove the route to this process
-     */
-    orte_routed.delete_route(proc);
-
-    /*
-     * Set the process state in the job data structure
-     */
-    loc_proc = NULL;
-    for (i = 0; i < jdata->procs->size; ++i) {
-        if (NULL == (loc_proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
-            continue;
-        }
-        
-        if (loc_proc->name.vpid != proc->vpid) {
-            continue;
-        }
-        
-        loc_proc->state = state;
-        if (ORTE_PROC_STATE_UNTERMINATED < state) {
-            jdata->num_terminated++;
-        }
-        break;
-    }
 }

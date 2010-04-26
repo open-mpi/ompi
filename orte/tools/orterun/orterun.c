@@ -81,7 +81,7 @@
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/errmgr/base/base.h"
+#include "orte/mca/errmgr/base/errmgr_private.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 
 #include "orte/runtime/runtime.h"
@@ -1139,8 +1139,8 @@ static void abort_exit_callback(int fd, short ign, void *arg)
          * This keeps the errmgr from trying to recover from the shutdown
          * procedure.
          */
-        orte_errmgr_base_enable_recovery = false;
-        orte_errmgr_base_shutting_down   = true;
+        orte_errmgr_base.enable_recovery = false;
+        orte_errmgr_base.shutting_down   = true;
 
         /* terminate the orteds - they will automatically kill
          * their local procs
