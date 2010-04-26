@@ -19,6 +19,8 @@
 # endif
 #endif
 
+#undef __hwloc_inline
+
 /*
  * Note: this is public.  We can not assume anything from the compiler used
  * by the application and thus the HWLOC_HAVE_* macros below are not

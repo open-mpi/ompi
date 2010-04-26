@@ -35,7 +35,7 @@
  * This function is currently only implemented in a meaningful way for
  * Linux; other systems will simply get a full cpuset.
  */
-static __inline int
+static __hwloc_inline int
 hwloc_ibv_get_device_cpuset(hwloc_topology_t topology __hwloc_attribute_unused,
 			    struct ibv_device *ibdev, hwloc_cpuset_t set)
 {

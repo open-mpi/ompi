@@ -1,4 +1,4 @@
-.TH "Cache-specific Finding Helpers" 3 "17 Apr 2010" "Version 1.0rc1" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.TH "Cache-specific Finding Helpers" 3 "26 Apr 2010" "Version 1.0rc2" "Hardware Locality (hwloc)" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -7,17 +7,17 @@ Cache-specific Finding Helpers \-
 
 .in +1c
 .ti -1c
-.RI "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure \fBhwloc_get_cache_covering_cpuset\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set)"
+.RI "static __hwloc_inline \fBhwloc_obj_t\fP __hwloc_attribute_pure \fBhwloc_get_cache_covering_cpuset\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set)"
 .br
 .RI "\fIGet the first cache covering a cpuset \fCset\fP. \fP"
 .ti -1c
-.RI "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure \fBhwloc_get_shared_cache_covering_obj\fP (\fBhwloc_topology_t\fP topology __hwloc_attribute_unused, \fBhwloc_obj_t\fP obj)"
+.RI "static __hwloc_inline \fBhwloc_obj_t\fP __hwloc_attribute_pure \fBhwloc_get_shared_cache_covering_obj\fP (\fBhwloc_topology_t\fP topology __hwloc_attribute_unused, \fBhwloc_obj_t\fP obj)"
 .br
 .RI "\fIGet the first cache shared between an object and somebody else. \fP"
 .in -1c
 .SH "Function Documentation"
 .PP 
-.SS "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure hwloc_get_cache_covering_cpuset (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set)\fC [static]\fP"
+.SS "static __hwloc_inline \fBhwloc_obj_t\fP __hwloc_attribute_pure hwloc_get_cache_covering_cpuset (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set)\fC [static]\fP"
 .PP
 Get the first cache covering a cpuset \fCset\fP. \fBReturns:\fP
 .RS 4
@@ -25,7 +25,7 @@ Get the first cache covering a cpuset \fCset\fP. \fBReturns:\fP
 .RE
 .PP
 
-.SS "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure hwloc_get_shared_cache_covering_obj (\fBhwloc_topology_t\fP topology __hwloc_attribute_unused, \fBhwloc_obj_t\fP obj)\fC [static]\fP"
+.SS "static __hwloc_inline \fBhwloc_obj_t\fP __hwloc_attribute_pure hwloc_get_shared_cache_covering_obj (\fBhwloc_topology_t\fP topology __hwloc_attribute_unused, \fBhwloc_obj_t\fP obj)\fC [static]\fP"
 .PP
 Get the first cache shared between an object and somebody else. \fBReturns:\fP
 .RS 4

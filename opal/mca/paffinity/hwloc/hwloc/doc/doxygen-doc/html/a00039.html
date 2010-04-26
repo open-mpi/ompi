@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
-<title>Hardware Locality (hwloc): Finding a single Object covering at least CPU set</title>
+<title>Hardware Locality (hwloc): Finding Objects Inside a CPU set</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <link href="doxygen.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -20,66 +20,46 @@
   </div>
 </div>
 <div class="contents">
-<h1>Finding a single Object covering at least CPU set</h1><table border="0" cellpadding="0" cellspacing="0">
+<h1>Finding Objects Inside a CPU set</h1><table border="0" cellpadding="0" cellspacing="0">
 <tr><td colspan="2"><h2>Functions</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">static __inline <a class="el" href="a00010.html">hwloc_obj_t</a> <br class="typebreak"/>
-__hwloc_attribute_pure&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00039.html#gaa6d0c687617638dae76058c00832d936">hwloc_get_child_covering_cpuset</a> (<a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology __hwloc_attribute_unused, <a class="el" href="a00045.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set, <a class="el" href="a00010.html">hwloc_obj_t</a> parent)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Get the child covering at least CPU set <code>set</code>.  <a href="#gaa6d0c687617638dae76058c00832d936"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">static __inline <a class="el" href="a00010.html">hwloc_obj_t</a> <br class="typebreak"/>
-__hwloc_attribute_pure&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00039.html#ga5967ce4cd1c3194b46d57d25598e697a">hwloc_get_obj_covering_cpuset</a> (<a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology, <a class="el" href="a00045.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Get the lowest object covering at least CPU set <code>set</code>.  <a href="#ga5967ce4cd1c3194b46d57d25598e697a"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">static __hwloc_inline <a class="el" href="a00011.html">hwloc_obj_t</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00039.html#gabcd5fa81a95fa5335950cae092277d5b">hwloc_get_first_largest_obj_inside_cpuset</a> (<a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology, <a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Get the first largest object included in the given cpuset <code>set</code>.  <a href="#gabcd5fa81a95fa5335950cae092277d5b"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00039.html#gaab04c89623662e63a48ed2cd48eb601c">hwloc_get_largest_objs_inside_cpuset</a> (<a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology, <a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set, <a class="el" href="a00011.html">hwloc_obj_t</a> *__hwloc_restrict objs, int max)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Get the set of largest objects covering exactly a given cpuset <code>set</code>.  <a href="#gaab04c89623662e63a48ed2cd48eb601c"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">static __hwloc_inline <a class="el" href="a00011.html">hwloc_obj_t</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00039.html#ga8af256c2572f16520f95440b884c1bd6">hwloc_get_next_obj_inside_cpuset_by_depth</a> (<a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology, <a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set, unsigned depth, <a class="el" href="a00011.html">hwloc_obj_t</a> prev)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Return the next object at depth <code>depth</code> included in CPU set <code>set</code>.  <a href="#ga8af256c2572f16520f95440b884c1bd6"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">static __hwloc_inline <a class="el" href="a00011.html">hwloc_obj_t</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00039.html#ga934e7ecd68b33403e0c0be779d9ed1e6">hwloc_get_next_obj_inside_cpuset_by_type</a> (<a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology, <a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set, <a class="el" href="a00028.html#gacd37bb612667dc437d66bfb175a8dc55">hwloc_obj_type_t</a> type, <a class="el" href="a00011.html">hwloc_obj_t</a> prev)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Return the next object of type <code>type</code> included in CPU set <code>set</code>.  <a href="#ga934e7ecd68b33403e0c0be779d9ed1e6"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">static __hwloc_inline <br class="typebreak"/>
+<a class="el" href="a00011.html">hwloc_obj_t</a> <br class="typebreak"/>
+__hwloc_attribute_pure&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00039.html#ga20703980008f82379f98f56857611a1a">hwloc_get_obj_inside_cpuset_by_depth</a> (<a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology, <a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set, unsigned depth, unsigned idx)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Return the <code>index</code> -th object at depth <code>depth</code> included in CPU set <code>set</code>.  <a href="#ga20703980008f82379f98f56857611a1a"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">static __hwloc_inline <br class="typebreak"/>
+<a class="el" href="a00011.html">hwloc_obj_t</a> <br class="typebreak"/>
+__hwloc_attribute_pure&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00039.html#ga50a80a0021e5843d968c3b97aebaad9b">hwloc_get_obj_inside_cpuset_by_type</a> (<a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology, <a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set, <a class="el" href="a00028.html#gacd37bb612667dc437d66bfb175a8dc55">hwloc_obj_type_t</a> type, unsigned idx)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Return the <code>idx</code> -th object of type <code>type</code> included in CPU set <code>set</code>.  <a href="#ga50a80a0021e5843d968c3b97aebaad9b"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">static __hwloc_inline unsigned <br class="typebreak"/>
+__hwloc_attribute_pure&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00039.html#ga6807db0012369efe19b8d3dcee235493">hwloc_get_nbobjs_inside_cpuset_by_depth</a> (<a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology, <a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set, unsigned depth)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Return the number of objects at depth <code>depth</code> included in CPU set <code>set</code>.  <a href="#ga6807db0012369efe19b8d3dcee235493"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">static __hwloc_inline int <br class="typebreak"/>
+__hwloc_attribute_pure&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00039.html#ga72c5bc4317a4c3938e32447b769813a0">hwloc_get_nbobjs_inside_cpuset_by_type</a> (<a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology, <a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set, <a class="el" href="a00028.html#gacd37bb612667dc437d66bfb175a8dc55">hwloc_obj_type_t</a> type)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Return the number of objects of type <code>type</code> included in CPU set <code>set</code>.  <a href="#ga72c5bc4317a4c3938e32447b769813a0"></a><br/></td></tr>
 </table>
 <hr/><h2>Function Documentation</h2>
-<a class="anchor" id="gaa6d0c687617638dae76058c00832d936"></a><!-- doxytag: member="helper.h::hwloc_get_child_covering_cpuset" ref="gaa6d0c687617638dae76058c00832d936" args="(hwloc_topology_t topology __hwloc_attribute_unused, hwloc_const_cpuset_t set, hwloc_obj_t parent)" -->
+<a class="anchor" id="gabcd5fa81a95fa5335950cae092277d5b"></a><!-- doxytag: member="helper.h::hwloc_get_first_largest_obj_inside_cpuset" ref="gabcd5fa81a95fa5335950cae092277d5b" args="(hwloc_topology_t topology, hwloc_const_cpuset_t set)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">static __inline <a class="el" href="a00010.html">hwloc_obj_t</a> __hwloc_attribute_pure hwloc_get_child_covering_cpuset </td>
+          <td class="memname">static __hwloc_inline <a class="el" href="a00011.html">hwloc_obj_t</a> hwloc_get_first_largest_obj_inside_cpuset </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology&nbsp;</td>
-          <td class="paramname"> <em>__hwloc_attribute_unused</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="a00045.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
-          <td class="paramname"> <em>set</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="a00010.html">hwloc_obj_t</a>&nbsp;</td>
-          <td class="paramname"> <em>parent</em></td><td>&nbsp;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td><td><code> [static]</code></td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
-
-<p>Get the child covering at least CPU set <code>set</code>. </p>
-<dl class="return"><dt><b>Returns:</b></dt><dd><code>NULL</code> if no child matches or if <code>set</code> is empty. </dd></dl>
-
-</div>
-</div>
-<a class="anchor" id="ga5967ce4cd1c3194b46d57d25598e697a"></a><!-- doxytag: member="helper.h::hwloc_get_obj_covering_cpuset" ref="ga5967ce4cd1c3194b46d57d25598e697a" args="(hwloc_topology_t topology, hwloc_const_cpuset_t set)" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">static __inline <a class="el" href="a00010.html">hwloc_obj_t</a> __hwloc_attribute_pure hwloc_get_obj_covering_cpuset </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
+          <td class="paramtype"><a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
           <td class="paramname"> <em>topology</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="a00045.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
           <td class="paramname"> <em>set</em></td><td>&nbsp;</td>
         </tr>
         <tr>
@@ -91,8 +71,289 @@ __hwloc_attribute_pure&nbsp;</td><td class="memItemRight" valign="bottom"><a cla
 </div>
 <div class="memdoc">
 
-<p>Get the lowest object covering at least CPU set <code>set</code>. </p>
-<dl class="return"><dt><b>Returns:</b></dt><dd><code>NULL</code> if no object matches or if <code>set</code> is empty. </dd></dl>
+<p>Get the first largest object included in the given cpuset <code>set</code>. </p>
+<dl class="return"><dt><b>Returns:</b></dt><dd>the first object that is included in <code>set</code> and whose parent is not.</dd></dl>
+<p>This is convenient for iterating over all largest objects within a CPU set by doing a loop getting the first largest object and clearing its CPU set from the remaining CPU set. </p>
+
+</div>
+</div>
+<a class="anchor" id="gaab04c89623662e63a48ed2cd48eb601c"></a><!-- doxytag: member="helper.h::hwloc_get_largest_objs_inside_cpuset" ref="gaab04c89623662e63a48ed2cd48eb601c" args="(hwloc_topology_t topology, hwloc_const_cpuset_t set, hwloc_obj_t *__hwloc_restrict objs, int max)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC int hwloc_get_largest_objs_inside_cpuset </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
+          <td class="paramname"> <em>topology</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00011.html">hwloc_obj_t</a> *__hwloc_restrict&nbsp;</td>
+          <td class="paramname"> <em>objs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&nbsp;</td>
+          <td class="paramname"> <em>max</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Get the set of largest objects covering exactly a given cpuset <code>set</code>. </p>
+<dl class="return"><dt><b>Returns:</b></dt><dd>the number of objects returned in <code>objs</code>. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga6807db0012369efe19b8d3dcee235493"></a><!-- doxytag: member="helper.h::hwloc_get_nbobjs_inside_cpuset_by_depth" ref="ga6807db0012369efe19b8d3dcee235493" args="(hwloc_topology_t topology, hwloc_const_cpuset_t set, unsigned depth)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">static __hwloc_inline unsigned __hwloc_attribute_pure hwloc_get_nbobjs_inside_cpuset_by_depth </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
+          <td class="paramname"> <em>topology</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&nbsp;</td>
+          <td class="paramname"> <em>depth</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td><code> [static]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Return the number of objects at depth <code>depth</code> included in CPU set <code>set</code>. </p>
+
+</div>
+</div>
+<a class="anchor" id="ga72c5bc4317a4c3938e32447b769813a0"></a><!-- doxytag: member="helper.h::hwloc_get_nbobjs_inside_cpuset_by_type" ref="ga72c5bc4317a4c3938e32447b769813a0" args="(hwloc_topology_t topology, hwloc_const_cpuset_t set, hwloc_obj_type_t type)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">static __hwloc_inline int __hwloc_attribute_pure hwloc_get_nbobjs_inside_cpuset_by_type </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
+          <td class="paramname"> <em>topology</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00028.html#gacd37bb612667dc437d66bfb175a8dc55">hwloc_obj_type_t</a>&nbsp;</td>
+          <td class="paramname"> <em>type</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td><code> [static]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Return the number of objects of type <code>type</code> included in CPU set <code>set</code>. </p>
+<p>If no object for that type exists inside CPU set <code>set</code>, 0 is returned. If there are several levels with objects of that type inside CPU set <code>set</code>, -1 is returned. </p>
+
+</div>
+</div>
+<a class="anchor" id="ga8af256c2572f16520f95440b884c1bd6"></a><!-- doxytag: member="helper.h::hwloc_get_next_obj_inside_cpuset_by_depth" ref="ga8af256c2572f16520f95440b884c1bd6" args="(hwloc_topology_t topology, hwloc_const_cpuset_t set, unsigned depth, hwloc_obj_t prev)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">static __hwloc_inline <a class="el" href="a00011.html">hwloc_obj_t</a> hwloc_get_next_obj_inside_cpuset_by_depth </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
+          <td class="paramname"> <em>topology</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&nbsp;</td>
+          <td class="paramname"> <em>depth</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00011.html">hwloc_obj_t</a>&nbsp;</td>
+          <td class="paramname"> <em>prev</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td><code> [static]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Return the next object at depth <code>depth</code> included in CPU set <code>set</code>. </p>
+<p>If <code>prev</code> is <code>NULL</code>, return the first object at depth <code>depth</code> included in <code>set</code>. The next invokation should pass the previous return value in <code>prev</code> so as to obtain the next object in <code>set</code>. </p>
+
+</div>
+</div>
+<a class="anchor" id="ga934e7ecd68b33403e0c0be779d9ed1e6"></a><!-- doxytag: member="helper.h::hwloc_get_next_obj_inside_cpuset_by_type" ref="ga934e7ecd68b33403e0c0be779d9ed1e6" args="(hwloc_topology_t topology, hwloc_const_cpuset_t set, hwloc_obj_type_t type, hwloc_obj_t prev)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">static __hwloc_inline <a class="el" href="a00011.html">hwloc_obj_t</a> hwloc_get_next_obj_inside_cpuset_by_type </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
+          <td class="paramname"> <em>topology</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00028.html#gacd37bb612667dc437d66bfb175a8dc55">hwloc_obj_type_t</a>&nbsp;</td>
+          <td class="paramname"> <em>type</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00011.html">hwloc_obj_t</a>&nbsp;</td>
+          <td class="paramname"> <em>prev</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td><code> [static]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Return the next object of type <code>type</code> included in CPU set <code>set</code>. </p>
+<p>If there are multiple or no depth for given type, return <code>NULL</code> and let the caller fallback to <a class="el" href="a00039.html#ga8af256c2572f16520f95440b884c1bd6" title="Return the next object at depth depth included in CPU set set.">hwloc_get_next_obj_inside_cpuset_by_depth()</a>. </p>
+
+</div>
+</div>
+<a class="anchor" id="ga20703980008f82379f98f56857611a1a"></a><!-- doxytag: member="helper.h::hwloc_get_obj_inside_cpuset_by_depth" ref="ga20703980008f82379f98f56857611a1a" args="(hwloc_topology_t topology, hwloc_const_cpuset_t set, unsigned depth, unsigned idx)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">static __hwloc_inline <a class="el" href="a00011.html">hwloc_obj_t</a> __hwloc_attribute_pure hwloc_get_obj_inside_cpuset_by_depth </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
+          <td class="paramname"> <em>topology</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&nbsp;</td>
+          <td class="paramname"> <em>depth</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&nbsp;</td>
+          <td class="paramname"> <em>idx</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td><code> [static]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Return the <code>index</code> -th object at depth <code>depth</code> included in CPU set <code>set</code>. </p>
+
+</div>
+</div>
+<a class="anchor" id="ga50a80a0021e5843d968c3b97aebaad9b"></a><!-- doxytag: member="helper.h::hwloc_get_obj_inside_cpuset_by_type" ref="ga50a80a0021e5843d968c3b97aebaad9b" args="(hwloc_topology_t topology, hwloc_const_cpuset_t set, hwloc_obj_type_t type, unsigned idx)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">static __hwloc_inline <a class="el" href="a00011.html">hwloc_obj_t</a> __hwloc_attribute_pure hwloc_get_obj_inside_cpuset_by_type </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
+          <td class="paramname"> <em>topology</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00028.html#gacd37bb612667dc437d66bfb175a8dc55">hwloc_obj_type_t</a>&nbsp;</td>
+          <td class="paramname"> <em>type</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&nbsp;</td>
+          <td class="paramname"> <em>idx</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td><code> [static]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Return the <code>idx</code> -th object of type <code>type</code> included in CPU set <code>set</code>. </p>
+<p>If there are multiple or no depth for given type, return <code>NULL</code> and let the caller fallback to <a class="el" href="a00039.html#ga20703980008f82379f98f56857611a1a" title="Return the index -th object at depth depth included in CPU set set.">hwloc_get_obj_inside_cpuset_by_depth()</a>. </p>
 
 </div>
 </div>

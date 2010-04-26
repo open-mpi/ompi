@@ -497,6 +497,10 @@
 /* Define to 1 if you need to in order for `stat' and other things to work. */
 #undef _POSIX_SOURCE
 
+/* Define this to a keyword that can safely replace inline in installed
+   headers */
+#undef __hwloc_inline
+
 /* Define this to the process ID type */
 #undef hwloc_pid_t
 

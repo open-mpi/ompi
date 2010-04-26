@@ -1,4 +1,4 @@
-.TH "Helpers for manipulating Linux libnuma unsigned long masks" 3 "17 Apr 2010" "Version 1.0rc1" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.TH "Helpers for manipulating Linux libnuma unsigned long masks" 3 "26 Apr 2010" "Version 1.0rc2" "Hardware Locality (hwloc)" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -7,22 +7,22 @@ Helpers for manipulating Linux libnuma unsigned long masks \-
 
 .in +1c
 .ti -1c
-.RI "static __inline int \fBhwloc_cpuset_to_linux_libnuma_ulongs\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP cpuset, unsigned long *mask, unsigned long *maxnode)"
+.RI "static __hwloc_inline int \fBhwloc_cpuset_to_linux_libnuma_ulongs\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP cpuset, unsigned long *mask, unsigned long *maxnode)"
 .br
 .RI "\fIConvert hwloc CPU set \fCcpuset\fP into the array of unsigned long \fCmask\fP. \fP"
 .ti -1c
-.RI "static __inline int \fBhwloc_cpuset_from_linux_libnuma_ulongs\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_cpuset_t\fP cpuset, const unsigned long *mask, unsigned long maxnode)"
+.RI "static __hwloc_inline int \fBhwloc_cpuset_from_linux_libnuma_ulongs\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_cpuset_t\fP cpuset, const unsigned long *mask, unsigned long maxnode)"
 .br
 .RI "\fIConvert the array of unsigned long \fCmask\fP into hwloc CPU set. \fP"
 .in -1c
 .SH "Function Documentation"
 .PP 
-.SS "static __inline int hwloc_cpuset_from_linux_libnuma_ulongs (\fBhwloc_topology_t\fP topology, \fBhwloc_cpuset_t\fP cpuset, const unsigned long * mask, unsigned long maxnode)\fC [static]\fP"
+.SS "static __hwloc_inline int hwloc_cpuset_from_linux_libnuma_ulongs (\fBhwloc_topology_t\fP topology, \fBhwloc_cpuset_t\fP cpuset, const unsigned long * mask, unsigned long maxnode)\fC [static]\fP"
 .PP
 Convert the array of unsigned long \fCmask\fP into hwloc CPU set. \fCmask\fP is a array of unsigned long that will be read. \fCmaxnode\fP contains the maximal node number that may be read in \fCmask\fP.
 .PP
 This function may be used after calling get_mempolicy or any other function that takes an array of unsigned long as output parameter (and possibly a maximal node number as input parameter). 
-.SS "static __inline int hwloc_cpuset_to_linux_libnuma_ulongs (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP cpuset, unsigned long * mask, unsigned long * maxnode)\fC [static]\fP"
+.SS "static __hwloc_inline int hwloc_cpuset_to_linux_libnuma_ulongs (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP cpuset, unsigned long * mask, unsigned long * maxnode)\fC [static]\fP"
 .PP
 Convert hwloc CPU set \fCcpuset\fP into the array of unsigned long \fCmask\fP. \fCmask\fP is the array of unsigned long that will be filled. \fCmaxnode\fP contains the maximal node number that may be stored in \fCmask\fP. \fCmaxnode\fP will be set to the maximal node number that was found, plus one.
 .PP

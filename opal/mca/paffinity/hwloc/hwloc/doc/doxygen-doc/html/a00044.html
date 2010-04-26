@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
-<title>Hardware Locality (hwloc): Cpuset Helpers</title>
+<title>Hardware Locality (hwloc): Binding Helpers</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <link href="doxygen.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -20,101 +20,53 @@
   </div>
 </div>
 <div class="contents">
-<h1>Cpuset Helpers</h1><table border="0" cellpadding="0" cellspacing="0">
+<h1>Binding Helpers</h1><table border="0" cellpadding="0" cellspacing="0">
 <tr><td colspan="2"><h2>Functions</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">static __inline <br class="typebreak"/>
-<a class="el" href="a00045.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> <br class="typebreak"/>
-__hwloc_attribute_pure&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00044.html#ga0361003cb1e41f6f3e9fc485135a0950">hwloc_topology_get_complete_cpuset</a> (<a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">static __inline <br class="typebreak"/>
-<a class="el" href="a00045.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> <br class="typebreak"/>
-__hwloc_attribute_pure&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00044.html#gaa1305cd39c6afd68652f2c6e68759381">hwloc_topology_get_topology_cpuset</a> (<a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">static __inline <br class="typebreak"/>
-<a class="el" href="a00045.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> <br class="typebreak"/>
-__hwloc_attribute_pure&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00044.html#gac3626396192ce01ad6a4811d9d29306b">hwloc_topology_get_online_cpuset</a> (<a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Get online CPU set.  <a href="#gac3626396192ce01ad6a4811d9d29306b"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">static __inline <br class="typebreak"/>
-<a class="el" href="a00045.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> <br class="typebreak"/>
-__hwloc_attribute_pure&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00044.html#ga3374bb25a01c5cd447b097eaa6f77c6f">hwloc_topology_get_allowed_cpuset</a> (<a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Get allowed CPU set.  <a href="#ga3374bb25a01c5cd447b097eaa6f77c6f"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">static __hwloc_inline void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00044.html#gaa03a77c4c210a95989ef803ebd9c4524">hwloc_distribute</a> (<a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology, <a class="el" href="a00011.html">hwloc_obj_t</a> root, <a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> *cpuset, unsigned n)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Distribute <code>n</code> items over the topology under <code>root</code>.  <a href="#gaa03a77c4c210a95989ef803ebd9c4524"></a><br/></td></tr>
 </table>
 <hr/><h2>Function Documentation</h2>
-<a class="anchor" id="ga3374bb25a01c5cd447b097eaa6f77c6f"></a><!-- doxytag: member="helper.h::hwloc_topology_get_allowed_cpuset" ref="ga3374bb25a01c5cd447b097eaa6f77c6f" args="(hwloc_topology_t topology)" -->
+<a class="anchor" id="gaa03a77c4c210a95989ef803ebd9c4524"></a><!-- doxytag: member="helper.h::hwloc_distribute" ref="gaa03a77c4c210a95989ef803ebd9c4524" args="(hwloc_topology_t topology, hwloc_obj_t root, hwloc_cpuset_t *cpuset, unsigned n)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">static __inline <a class="el" href="a00045.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> __hwloc_attribute_pure hwloc_topology_get_allowed_cpuset </td>
+          <td class="memname">static __hwloc_inline void hwloc_distribute </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
-          <td class="paramname"> <em>topology</em></td>
-          <td>&nbsp;)&nbsp;</td>
-          <td><code> [static]</code></td>
+          <td class="paramtype"><a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
+          <td class="paramname"> <em>topology</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00011.html">hwloc_obj_t</a>&nbsp;</td>
+          <td class="paramname"> <em>root</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> *&nbsp;</td>
+          <td class="paramname"> <em>cpuset</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&nbsp;</td>
+          <td class="paramname"> <em>n</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td><code> [static]</code></td>
         </tr>
       </table>
 </div>
 <div class="memdoc">
 
-<p>Get allowed CPU set. </p>
-<dl class="return"><dt><b>Returns:</b></dt><dd>the CPU set of allowed logical processors of the system. If the topology is the result of a combination of several systems, NULL is returned.</dd></dl>
-<dl class="note"><dt><b>Note:</b></dt><dd>The returned cpuset is not newly allocated and should thus not be changed or freed, hwloc_cpuset_dup must be used to obtain a local copy. </dd></dl>
-
-</div>
-</div>
-<a class="anchor" id="ga0361003cb1e41f6f3e9fc485135a0950"></a><!-- doxytag: member="helper.h::hwloc_topology_get_complete_cpuset" ref="ga0361003cb1e41f6f3e9fc485135a0950" args="(hwloc_topology_t topology)" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">static __inline <a class="el" href="a00045.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> __hwloc_attribute_pure hwloc_topology_get_complete_cpuset </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
-          <td class="paramname"> <em>topology</em></td>
-          <td>&nbsp;)&nbsp;</td>
-          <td><code> [static]</code></td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
-
-</div>
-</div>
-<a class="anchor" id="gac3626396192ce01ad6a4811d9d29306b"></a><!-- doxytag: member="helper.h::hwloc_topology_get_online_cpuset" ref="gac3626396192ce01ad6a4811d9d29306b" args="(hwloc_topology_t topology)" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">static __inline <a class="el" href="a00045.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> __hwloc_attribute_pure hwloc_topology_get_online_cpuset </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
-          <td class="paramname"> <em>topology</em></td>
-          <td>&nbsp;)&nbsp;</td>
-          <td><code> [static]</code></td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
-
-<p>Get online CPU set. </p>
-<dl class="return"><dt><b>Returns:</b></dt><dd>the CPU set of online logical processors of the system. If the topology is the result of a combination of several systems, NULL is returned.</dd></dl>
-<dl class="note"><dt><b>Note:</b></dt><dd>The returned cpuset is not newly allocated and should thus not be changed or freed; hwloc_cpuset_dup must be used to obtain a local copy. </dd></dl>
-
-</div>
-</div>
-<a class="anchor" id="gaa1305cd39c6afd68652f2c6e68759381"></a><!-- doxytag: member="helper.h::hwloc_topology_get_topology_cpuset" ref="gaa1305cd39c6afd68652f2c6e68759381" args="(hwloc_topology_t topology)" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">static __inline <a class="el" href="a00045.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> __hwloc_attribute_pure hwloc_topology_get_topology_cpuset </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
-          <td class="paramname"> <em>topology</em></td>
-          <td>&nbsp;)&nbsp;</td>
-          <td><code> [static]</code></td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
+<p>Distribute <code>n</code> items over the topology under <code>root</code>. </p>
+<p>Array <code>cpuset</code> will be filled with <code>n</code> cpusets distributed linearly over the topology under <code>root</code> .</p>
+<p>This is typically useful when an application wants to distribute <code>n</code> threads over a machine, giving each of them as much private cache as possible and keeping them locally in number order.</p>
+<p>The caller may typically want to also call <a class="el" href="a00046.html#gace7ad3d2a71d9884e7a28311228931af" title="Keep a single CPU among those set in CPU set set.">hwloc_cpuset_singlify()</a> before binding a thread so that it does not move at all. </p>
 
 </div>
 </div>

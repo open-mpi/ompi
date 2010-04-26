@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
-<title>Hardware Locality (hwloc): hwloc_obj_attr_u::hwloc_cache_attr_s Struct Reference</title>
+<title>Hardware Locality (hwloc): Switching from PLPA to hwloc</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <link href="doxygen.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -12,70 +12,39 @@
   <div class="tabs">
     <ul>
       <li><a href="index.html"><span>Main&nbsp;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&nbsp;Pages</span></a></li>
+      <li class="current"><a href="pages.html"><span>Related&nbsp;Pages</span></a></li>
       <li><a href="modules.html"><span>Modules</span></a></li>
-      <li class="current"><a href="annotated.html"><span>Data&nbsp;Structures</span></a></li>
+      <li><a href="annotated.html"><span>Data&nbsp;Structures</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
     </ul>
   </div>
-  <div class="tabs">
-    <ul>
-      <li><a href="annotated.html"><span>Data&nbsp;Structures</span></a></li>
-      <li><a href="functions.html"><span>Data&nbsp;Fields</span></a></li>
-    </ul>
-  </div>
-  <div class="navpath"><a class="el" href="a00011.html">hwloc_obj_attr_u</a>::<a class="el" href="a00007.html">hwloc_cache_attr_s</a>
-  </div>
 </div>
 <div class="contents">
-<h1>hwloc_obj_attr_u::hwloc_cache_attr_s Struct Reference</h1><!-- doxytag: class="hwloc_obj_attr_u::hwloc_cache_attr_s" -->
-<p>Cache-specific Object Attributes.  
-<a href="#_details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="a00021_source.html">hwloc.h</a>&gt;</code></p>
-<table border="0" cellpadding="0" cellspacing="0">
-<tr><td colspan="2"><h2>Data Fields</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">uint64_t&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00007.html#a3c68235220554308f89768f281ad1e62">size</a></td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Size of cache in bytes.  <a href="#a3c68235220554308f89768f281ad1e62"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">unsigned&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00007.html#a5c8f7f39193736c2187ed626940835d5">depth</a></td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Depth of cache.  <a href="#a5c8f7f39193736c2187ed626940835d5"></a><br/></td></tr>
-</table>
-<hr/><a name="_details"></a><h2>Detailed Description</h2>
-<p>Cache-specific Object Attributes. </p>
-<hr/><h2>Field Documentation</h2>
-<a class="anchor" id="a5c8f7f39193736c2187ed626940835d5"></a><!-- doxytag: member="hwloc_obj_attr_u::hwloc_cache_attr_s::depth" ref="a5c8f7f39193736c2187ed626940835d5" args="" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">unsigned <a class="el" href="a00007.html#a5c8f7f39193736c2187ed626940835d5">hwloc_obj_attr_u::hwloc_cache_attr_s::depth</a></td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
 
-<p>Depth of cache. </p>
-
-</div>
-</div>
-<a class="anchor" id="a3c68235220554308f89768f281ad1e62"></a><!-- doxytag: member="hwloc_obj_attr_u::hwloc_cache_attr_s::size" ref="a3c68235220554308f89768f281ad1e62" args="" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">uint64_t <a class="el" href="a00007.html#a3c68235220554308f89768f281ad1e62">hwloc_obj_attr_u::hwloc_cache_attr_s::size</a></td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
-
-<p>Size of cache in bytes. </p>
-
-</div>
-</div>
-<hr/>The documentation for this struct was generated from the following file:<ul>
-<li><a class="el" href="a00021_source.html">hwloc.h</a></li>
-</ul>
+<h1><a class="anchor" id="switchfromplpa">Switching from PLPA to hwloc </a></h1><p>Although PLPA and hwloc share some of the same ideas, their programming interfaces are quite different. After much debate, it was decided <em>not</em> to emulate the PLPA API with hwloc's API because hwloc's API is already far more rich than PLPA's.</p>
+<p>More specifically, exploiting modern computing architecture <em>requires</em> the flexible functionality provided by the hwloc API -- the PLPA API is too rigid in its definitions and practices to handle the evolving server hardware landscape (e.g., PLPA only understands cores and sockets; hwloc understands a much larger set of hardware objects).</p>
+<p>As such, even though it is fully possible to emulate the PLPA API with hwloc (e.g., only deal with sockets and cores), and while the documentation below describes how to do this, we encourage any existing PLPA application authors to actually re-think their application in terms of more than just sockets and cores. In short, we encourage you to use the full hwloc API to exploit <em>all</em> the hardware.</p>
+<h2><a class="anchor" id="switchfromplpa_caching">
+Topology context vs. caching</a></h2>
+<p>First, all hwloc functions take a <code>topology</code> parameter. This parameter serves as an internal storage for the result of the topology discovery. It replaces PLPA's caching abilities and even lets you manipulate multiple topologies as the same time, if needed.</p>
+<p>Thus, all programs should first run <a class="el" href="a00030.html#ga5c2d6f476af87005c7bd0811d4548b9f" title="Allocate a topology context.">hwloc_topology_init()</a> and <a class="el" href="a00030.html#ga6040925d3ee4bbb2647f2a321aca5f4b" title="Terminate and free a topology context.">hwloc_topology_destroy()</a> as they did plpa_init() and plpa_finalize() in the past.</p>
+<h2><a class="anchor" id="switchfromplpa_hierarchy">
+Hierarchy vs. Core@Socket</a></h2>
+<p>PLPA was designed to understand only cores and sockets. hwloc offers many more different types of objects (e.g., cores, sockets, hardware threads, NUMA nodes, and others) and stores them within a tree of resources.</p>
+<p>To emulate the PLPA model, it is possible to find sockets using functions such as <a class="el" href="a00034.html#ga701f83b2cf0cb8e0acd58cd2dc1c67a2" title="Returns the topology object at index index with type type.">hwloc_get_obj_by_type()</a>. Iterating over sockets is also possible using <a class="el" href="a00038.html#ga5f08ceb69375341e73563cfe2e77534e" title="Returns the next object of type type.">hwloc_get_next_obj_by_type()</a>. Then, finding a core within a socket may be done using <a class="el" href="a00039.html#ga50a80a0021e5843d968c3b97aebaad9b" title="Return the idx -th object of type type included in CPU set set.">hwloc_get_obj_inside_cpuset_by_type()</a> or <a class="el" href="a00039.html#ga934e7ecd68b33403e0c0be779d9ed1e6" title="Return the next object of type type included in CPU set set.">hwloc_get_next_obj_inside_cpuset_by_type()</a>.</p>
+<p>It is also possible to directly find an object "below" another object using <a class="el" href="a00043.html#ga3d32c128aa36b5c9d56f6bf9e70d0e78" title="Find an object below another object, both specified by types and indexes.">hwloc_get_obj_below_by_type()</a> (or <a class="el" href="a00043.html#ga340bb7021204078c30382ea77d38bde9" title="Find an object below a chain of objects specified by types and indexes.">hwloc_get_obj_below_array_by_type()</a>).</p>
+<h2><a class="anchor" id="switchfromplpa_indexes">
+Logical vs. Physical/OS indexes</a></h2>
+<p>hwloc manipulates logical indexes, meaning indexes specified with regard to the ordering of objects in the hwloc-provided hierarchical tree. Physical or OS indexes may be entirely hidden if not strictly required. The reason for this is that physical/OS indexes may change with the OS or with the BIOS version. They may be non-consecutive, multiple objects may have the same physical/OS indexes, making their manipulation tricky and highly non-portable.</p>
+<p>Note that hwloc tries very hard to always present a hierarchical tree with the same logical ordering, regardless of physical or OS index ordering.</p>
+<p>It is still possible to retrieve physical/OS indexes through the <code>os_index</code> field of objects, but such practice should be avoided as much as possible for the reasons described above (except perhaps for prettyprinting / debugging purposes).</p>
+<p><a class="el" href="a00028.html#ggacd37bb612667dc437d66bfb175a8dc55abca6887e80cb291353b0a0c1da83f661" title="Processing Unit, or (Logical) Processor. An execution unit (may share a core with...">HWLOC_OBJ_PU</a> objects are supposed to have different physical/OS indexes since the OS uses them for binding. The <code>os_index</code> field of these objects provides the identifier that may be used for such binding, and hwloc_get_proc_obj_by_os_index() finds the object associated with a specific OS index.</p>
+<p>But as mentioned above, we discourage the use of these conversion methods for actual binding. Instead, hwloc offers its own binding model using the <code>cpuset</code> field of objects. These cpusets may be duplicated, modified, combined, etc. (see <a class="el" href="a00018_source.html" title="The Cpuset API, for use in hwloc itself.">hwloc/cpuset.h</a> for details) and then passed to <a class="el" href="a00036.html#ga42f02baaf7dc0c0f5a6bbeca731fd144" title="Bind current process or thread on cpus given in cpuset set.">hwloc_set_cpubind()</a> for binding.</p>
+<h2><a class="anchor" id="switchfromplpa_counting">
+Counting specification</a></h2>
+<p>PLPA offers a countspec parameter to specify whether counting all CPUs, only the online ones or only the offline ones. However, some operating systems do not expose the topology of offline CPUs (i.e., offline CPUs are not reported at all by the OS). Also, some processors may not be visible to the current application due to administrative restrictions. Finally, some processors let you shutdown a single hardware thread in a core, making some of the PLPA features irrelevant.</p>
+<p>hwloc stores in the hierarchical tree of objects all CPUs that have known topology information. It then provides the applications with several cpusets that contain the list of CPUs that are actually known, that have topology information, that are online, or that are available to the application. These cpusets may be retrieved with <a class="el" href="a00045.html#gad00abc77f1670049a5b2139471d0c8db" title="Get online CPU set.">hwloc_topology_get_online_cpuset()</a> and other similar functions to filter the object that are relevant or not. </p>
 </div>
 <hr size="1"/><address style="text-align: right;"><small>Generated by&nbsp;
 <a href="http://www.doxygen.org/index.html">

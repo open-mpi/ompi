@@ -37,7 +37,7 @@
  *
  * \p schedsetsize should be sizeof(cpu_set_t) unless \p schedset was dynamically allocated with CPU_ALLOC
  */
-static __inline int
+static __hwloc_inline int
 hwloc_cpuset_to_glibc_sched_affinity(hwloc_topology_t topology __hwloc_attribute_unused, hwloc_const_cpuset_t hwlocset,
 				    cpu_set_t *schedset, size_t schedsetsize)
 {
@@ -65,7 +65,7 @@ hwloc_cpuset_to_glibc_sched_affinity(hwloc_topology_t topology __hwloc_attribute
  *
  * \p schedsetsize should be sizeof(cpu_set_t) unless \p schedset was dynamically allocated with CPU_ALLOC
  */
-static __inline int
+static __hwloc_inline int
 hwloc_cpuset_from_glibc_sched_affinity(hwloc_topology_t topology __hwloc_attribute_unused, hwloc_cpuset_t hwlocset,
                                        const cpu_set_t *schedset, size_t schedsetsize)
 {

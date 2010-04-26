@@ -212,7 +212,7 @@ HWLOC_DECLSPEC int hwloc_cpuset_weight(hwloc_const_cpuset_t set) __hwloc_attribu
 #define hwloc_cpuset_foreach_begin(cpu, set) \
 do { \
         for (cpu = hwloc_cpuset_first(set); \
-             cpu != (__typeof__(cpu)) -1; \
+             (unsigned) cpu != (unsigned) -1; \
              cpu = hwloc_cpuset_next(set, cpu)) { \
 /** \brief End of loop. Needs a terminating ';'.
  * \hideinitializer

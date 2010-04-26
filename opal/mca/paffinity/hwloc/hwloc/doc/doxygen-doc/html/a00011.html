@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
-<title>Hardware Locality (hwloc): hwloc_obj_attr_u Union Reference</title>
+<title>Hardware Locality (hwloc): hwloc_obj Struct Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <link href="doxygen.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -26,83 +26,481 @@
   </div>
 </div>
 <div class="contents">
-<h1>hwloc_obj_attr_u Union Reference<br/>
+<h1>hwloc_obj Struct Reference<br/>
 <small>
-[<a class="el" href="a00028.html">Topology Objects</a>]</small>
-</h1><!-- doxytag: class="hwloc_obj_attr_u" -->
-<p>Object type-specific Attributes.  
+[<a class="el" href="a00029.html">Topology Objects</a>]</small>
+</h1><!-- doxytag: class="hwloc_obj" -->
+<p>Structure of a topology object.  
 <a href="#_details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="a00021_source.html">hwloc.h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="a00022_source.html">hwloc.h</a>&gt;</code></p>
 <table border="0" cellpadding="0" cellspacing="0">
-<tr><td colspan="2"><h2>Data Structures</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">struct &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00007.html">hwloc_cache_attr_s</a></td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Cache-specific Object Attributes.  <a href="a00007.html#_details">More...</a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">struct &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00008.html">hwloc_group_attr_s</a></td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Group-specific Object Attributes.  <a href="a00008.html#_details">More...</a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">struct &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00009.html">hwloc_machine_attr_s</a></td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Machine-specific Object Attributes.  <a href="a00009.html#_details">More...</a><br/></td></tr>
 <tr><td colspan="2"><h2>Data Fields</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">struct <br class="typebreak"/>
-<a class="el" href="a00007.html">hwloc_obj_attr_u::hwloc_cache_attr_s</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00011.html#ab5a8ae3bf490e6b1071fea53f7382836">cache</a></td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Cache-specific Object Attributes.  <a href="#ab5a8ae3bf490e6b1071fea53f7382836"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">struct <br class="typebreak"/>
-<a class="el" href="a00009.html">hwloc_obj_attr_u::hwloc_machine_attr_s</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00011.html#a5b42966df7c5bfdc36891e414cc31607">machine</a></td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Machine-specific Object Attributes.  <a href="#a5b42966df7c5bfdc36891e414cc31607"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">struct <br class="typebreak"/>
-<a class="el" href="a00008.html">hwloc_obj_attr_u::hwloc_group_attr_s</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00011.html#ae4ba157cc313e2cdd9a82f1c1df7aaa6">group</a></td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Group-specific Object Attributes.  <a href="#ae4ba157cc313e2cdd9a82f1c1df7aaa6"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="a00028.html#gacd37bb612667dc437d66bfb175a8dc55">hwloc_obj_type_t</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00011.html#acc4f0803f244867e68fe0036800be5de">type</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Type of object.  <a href="#acc4f0803f244867e68fe0036800be5de"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">unsigned&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00011.html#a61a7a80a68eaccbaaa28269e678c81a9">os_index</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OS-provided physical index number.  <a href="#a61a7a80a68eaccbaaa28269e678c81a9"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">char *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00011.html#abb709ec38f2970677e4e57d1d30be96d">name</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Object description if any.  <a href="#abb709ec38f2970677e4e57d1d30be96d"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">struct <a class="el" href="a00014.html">hwloc_obj_memory_s</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00011.html#a1dc830816716213b5f797e4052487864">memory</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Memory attributes.  <a href="#a1dc830816716213b5f797e4052487864"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">union <a class="el" href="a00012.html">hwloc_obj_attr_u</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00011.html#accd40e29f71f19e88db62ea3df02adc8">attr</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Object type-specific Attributes.  <a href="#accd40e29f71f19e88db62ea3df02adc8"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">unsigned&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00011.html#a9d82690370275d42d652eccdea5d3ee5">depth</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Vertical index in the hierarchy.  <a href="#a9d82690370275d42d652eccdea5d3ee5"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">unsigned&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00011.html#a0d07fb7b8935e137c94d75a3eb492ae9">logical_index</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Horizontal index in the whole list of similar objects, could be a "cousin_rank" since it's the rank within the "cousin" list below.  <a href="#a0d07fb7b8935e137c94d75a3eb492ae9"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">signed&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00011.html#a68766f0b1c4d61b5bad87e3b81dacfde">os_level</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OS-provided physical level, -1 if unknown or meaningless.  <a href="#a68766f0b1c4d61b5bad87e3b81dacfde"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">struct <a class="el" href="a00011.html">hwloc_obj</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00011.html#a85a788017457129589318b6c39451acf">next_cousin</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Next object of same type.  <a href="#a85a788017457129589318b6c39451acf"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">struct <a class="el" href="a00011.html">hwloc_obj</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00011.html#ac715989f55ff5a0eb6be2969ee477ec0">prev_cousin</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Previous object of same type.  <a href="#ac715989f55ff5a0eb6be2969ee477ec0"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">struct <a class="el" href="a00011.html">hwloc_obj</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00011.html#adc494f6aed939992be1c55cca5822900">parent</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Parent, <code>NULL</code> if root (system object).  <a href="#adc494f6aed939992be1c55cca5822900"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">unsigned&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00011.html#aaa6043eee6f55869933c1d974efd9acd">sibling_rank</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Index in parent's <code>children</code>[] array.  <a href="#aaa6043eee6f55869933c1d974efd9acd"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">struct <a class="el" href="a00011.html">hwloc_obj</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00011.html#a7f2343ed476fe4942e6fffd4cade1b40">next_sibling</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Next object below the same parent.  <a href="#a7f2343ed476fe4942e6fffd4cade1b40"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">struct <a class="el" href="a00011.html">hwloc_obj</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00011.html#a7b89e8c189876c0158a9282aaaf17f50">prev_sibling</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Previous object below the same parent.  <a href="#a7b89e8c189876c0158a9282aaaf17f50"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">unsigned&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00011.html#aac3f6da35c9b57599909a44ce2b716c1">arity</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Number of children.  <a href="#aac3f6da35c9b57599909a44ce2b716c1"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">struct <a class="el" href="a00011.html">hwloc_obj</a> **&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00011.html#a04d05403da37bfe17cd63b7c7dd07b1f">children</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Children, <code>children</code>[0 .. arity -1].  <a href="#a04d05403da37bfe17cd63b7c7dd07b1f"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">struct <a class="el" href="a00011.html">hwloc_obj</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00011.html#af51d08a0a79dba517c06c5afedc8d2dc">first_child</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">First child.  <a href="#af51d08a0a79dba517c06c5afedc8d2dc"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">struct <a class="el" href="a00011.html">hwloc_obj</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00011.html#a84bd65634dbc55f4158b74443a9bd04f">last_child</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Last child.  <a href="#a84bd65634dbc55f4158b74443a9bd04f"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00011.html#a76fd3ac94401cf32dfccc3a3a8de68a5">userdata</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Application-given private data pointer, initialized to <code>NULL</code>, use it as you wish.  <a href="#a76fd3ac94401cf32dfccc3a3a8de68a5"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00011.html#a67925e0f2c47f50408fbdb9bddd0790f">cpuset</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">CPUs covered by this object.  <a href="#a67925e0f2c47f50408fbdb9bddd0790f"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00011.html#a91788a9da687beb7224cc1fd7b75208c">complete_cpuset</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The complete CPU set of logical processors of this object,.  <a href="#a91788a9da687beb7224cc1fd7b75208c"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00011.html#a8842d56c2975380f327ea401c5f53564">online_cpuset</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The CPU set of online logical processors.  <a href="#a8842d56c2975380f327ea401c5f53564"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00011.html#afa3c59a6dd3da8ffa48710780a1bfb34">allowed_cpuset</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The CPU set of allowed logical processors.  <a href="#afa3c59a6dd3da8ffa48710780a1bfb34"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00011.html#a79982ede313c2190505fc5e3714a16fb">nodeset</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">NUMA nodes covered by this object or containing this object.  <a href="#a79982ede313c2190505fc5e3714a16fb"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00011.html#adc473a52c071d7fd49e659ac90467a0f">complete_nodeset</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The complete NUMA node set of this object,.  <a href="#adc473a52c071d7fd49e659ac90467a0f"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00011.html#a9c1af614e0978a65ce309f921a822c8b">allowed_nodeset</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The set of allowed NUMA memory nodes.  <a href="#a9c1af614e0978a65ce309f921a822c8b"></a><br/></td></tr>
 </table>
 <hr/><a name="_details"></a><h2>Detailed Description</h2>
-<p>Object type-specific Attributes. </p>
+<p>Structure of a topology object. </p>
+<p>Applications mustn't modify any field except userdata . </p>
 <hr/><h2>Field Documentation</h2>
-<a class="anchor" id="ab5a8ae3bf490e6b1071fea53f7382836"></a><!-- doxytag: member="hwloc_obj_attr_u::cache" ref="ab5a8ae3bf490e6b1071fea53f7382836" args="" -->
+<a class="anchor" id="afa3c59a6dd3da8ffa48710780a1bfb34"></a><!-- doxytag: member="hwloc_obj::allowed_cpuset" ref="afa3c59a6dd3da8ffa48710780a1bfb34" args="" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">struct <a class="el" href="a00007.html">hwloc_obj_attr_u::hwloc_cache_attr_s</a>  <a class="el" href="a00011.html#ab5a8ae3bf490e6b1071fea53f7382836">hwloc_obj_attr_u::cache</a></td>
+          <td class="memname"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> <a class="el" href="a00011.html#afa3c59a6dd3da8ffa48710780a1bfb34">hwloc_obj::allowed_cpuset</a></td>
         </tr>
       </table>
 </div>
 <div class="memdoc">
 
-<p>Cache-specific Object Attributes. </p>
+<p>The CPU set of allowed logical processors. </p>
+<p>This includes the CPUs contained in this object which are allowed for binding, i.e. passing them to the hwloc binding functions should not return permission errors. This is usually restricted by administration rules. Some of them may however be offline so binding to them may still not be possible, see online_cpuset.</p>
+<dl class="note"><dt><b>Note:</b></dt><dd>Its value must not be changed, hwloc_cpuset_dup must be used instead. </dd></dl>
 
 </div>
 </div>
-<a class="anchor" id="ae4ba157cc313e2cdd9a82f1c1df7aaa6"></a><!-- doxytag: member="hwloc_obj_attr_u::group" ref="ae4ba157cc313e2cdd9a82f1c1df7aaa6" args="" -->
+<a class="anchor" id="a9c1af614e0978a65ce309f921a822c8b"></a><!-- doxytag: member="hwloc_obj::allowed_nodeset" ref="a9c1af614e0978a65ce309f921a822c8b" args="" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">struct <a class="el" href="a00008.html">hwloc_obj_attr_u::hwloc_group_attr_s</a>  <a class="el" href="a00011.html#ae4ba157cc313e2cdd9a82f1c1df7aaa6">hwloc_obj_attr_u::group</a></td>
+          <td class="memname"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> <a class="el" href="a00011.html#a9c1af614e0978a65ce309f921a822c8b">hwloc_obj::allowed_nodeset</a></td>
         </tr>
       </table>
 </div>
 <div class="memdoc">
 
-<p>Group-specific Object Attributes. </p>
+<p>The set of allowed NUMA memory nodes. </p>
+<p>This includes the NUMA memory nodes contained in this object which are allowed for memory allocation, i.e. passing them to NUMA node-directed memory allocation should not return permission errors. This is usually restricted by administration rules.</p>
+<dl class="note"><dt><b>Note:</b></dt><dd>Its value must not be changed, hwloc_cpuset_dup must be used instead. </dd></dl>
 
 </div>
 </div>
-<a class="anchor" id="a5b42966df7c5bfdc36891e414cc31607"></a><!-- doxytag: member="hwloc_obj_attr_u::machine" ref="a5b42966df7c5bfdc36891e414cc31607" args="" -->
+<a class="anchor" id="aac3f6da35c9b57599909a44ce2b716c1"></a><!-- doxytag: member="hwloc_obj::arity" ref="aac3f6da35c9b57599909a44ce2b716c1" args="" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">struct <a class="el" href="a00009.html">hwloc_obj_attr_u::hwloc_machine_attr_s</a>  <a class="el" href="a00011.html#a5b42966df7c5bfdc36891e414cc31607">hwloc_obj_attr_u::machine</a></td>
+          <td class="memname">unsigned <a class="el" href="a00011.html#aac3f6da35c9b57599909a44ce2b716c1">hwloc_obj::arity</a></td>
         </tr>
       </table>
 </div>
 <div class="memdoc">
 
-<p>Machine-specific Object Attributes. </p>
+<p>Number of children. </p>
 
 </div>
 </div>
-<hr/>The documentation for this union was generated from the following file:<ul>
-<li><a class="el" href="a00021_source.html">hwloc.h</a></li>
+<a class="anchor" id="accd40e29f71f19e88db62ea3df02adc8"></a><!-- doxytag: member="hwloc_obj::attr" ref="accd40e29f71f19e88db62ea3df02adc8" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">union <a class="el" href="a00012.html">hwloc_obj_attr_u</a>* <a class="el" href="a00011.html#accd40e29f71f19e88db62ea3df02adc8">hwloc_obj::attr</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Object type-specific Attributes. </p>
+
+</div>
+</div>
+<a class="anchor" id="a04d05403da37bfe17cd63b7c7dd07b1f"></a><!-- doxytag: member="hwloc_obj::children" ref="a04d05403da37bfe17cd63b7c7dd07b1f" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">struct <a class="el" href="a00011.html">hwloc_obj</a>** <a class="el" href="a00011.html#a04d05403da37bfe17cd63b7c7dd07b1f">hwloc_obj::children</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Children, <code>children</code>[0 .. arity -1]. </p>
+
+</div>
+</div>
+<a class="anchor" id="a91788a9da687beb7224cc1fd7b75208c"></a><!-- doxytag: member="hwloc_obj::complete_cpuset" ref="a91788a9da687beb7224cc1fd7b75208c" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> <a class="el" href="a00011.html#a91788a9da687beb7224cc1fd7b75208c">hwloc_obj::complete_cpuset</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>The complete CPU set of logical processors of this object,. </p>
+<p>This includes not only the same as the cpuset field, but also the CPUs for which topology information is unknown or incomplete, and the CPUs that are ignored when the HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM flag is not set. Thus no corresponding PU object may be found in the topology, because the precise position is undefined. It is however known that it would be somewhere under this object.</p>
+<dl class="note"><dt><b>Note:</b></dt><dd>Its value must not be changed, hwloc_cpuset_dup must be used instead. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="adc473a52c071d7fd49e659ac90467a0f"></a><!-- doxytag: member="hwloc_obj::complete_nodeset" ref="adc473a52c071d7fd49e659ac90467a0f" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> <a class="el" href="a00011.html#adc473a52c071d7fd49e659ac90467a0f">hwloc_obj::complete_nodeset</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>The complete NUMA node set of this object,. </p>
+<p>This includes not only the same as the nodeset field, but also the NUMA nodes for which topology information is unknown or incomplete, and the nodes that are ignored when the HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM flag is not set. Thus no corresponding NODE object may be found in the topology, because the precise position is undefined. It is however known that it would be somewhere under this object.</p>
+<dl class="note"><dt><b>Note:</b></dt><dd>Its value must not be changed, hwloc_cpuset_dup must be used instead. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a67925e0f2c47f50408fbdb9bddd0790f"></a><!-- doxytag: member="hwloc_obj::cpuset" ref="a67925e0f2c47f50408fbdb9bddd0790f" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> <a class="el" href="a00011.html#a67925e0f2c47f50408fbdb9bddd0790f">hwloc_obj::cpuset</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>CPUs covered by this object. </p>
+<p>This is the set of CPUs for which there are PU objects in the topology under this object, i.e. which are known to be physically contained in this object and known how (the children path between this object and the PU objects).</p>
+<p>If the HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM configuration flag is set, some of these CPUs may be offline, or not allowed for binding, see online_cpuset and allowed_cpuset.</p>
+<dl class="note"><dt><b>Note:</b></dt><dd>Its value must not be changed, hwloc_cpuset_dup must be used instead. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a9d82690370275d42d652eccdea5d3ee5"></a><!-- doxytag: member="hwloc_obj::depth" ref="a9d82690370275d42d652eccdea5d3ee5" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned <a class="el" href="a00011.html#a9d82690370275d42d652eccdea5d3ee5">hwloc_obj::depth</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Vertical index in the hierarchy. </p>
+
+</div>
+</div>
+<a class="anchor" id="af51d08a0a79dba517c06c5afedc8d2dc"></a><!-- doxytag: member="hwloc_obj::first_child" ref="af51d08a0a79dba517c06c5afedc8d2dc" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">struct <a class="el" href="a00011.html">hwloc_obj</a>* <a class="el" href="a00011.html#af51d08a0a79dba517c06c5afedc8d2dc">hwloc_obj::first_child</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>First child. </p>
+
+</div>
+</div>
+<a class="anchor" id="a84bd65634dbc55f4158b74443a9bd04f"></a><!-- doxytag: member="hwloc_obj::last_child" ref="a84bd65634dbc55f4158b74443a9bd04f" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">struct <a class="el" href="a00011.html">hwloc_obj</a>* <a class="el" href="a00011.html#a84bd65634dbc55f4158b74443a9bd04f">hwloc_obj::last_child</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Last child. </p>
+
+</div>
+</div>
+<a class="anchor" id="a0d07fb7b8935e137c94d75a3eb492ae9"></a><!-- doxytag: member="hwloc_obj::logical_index" ref="a0d07fb7b8935e137c94d75a3eb492ae9" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned <a class="el" href="a00011.html#a0d07fb7b8935e137c94d75a3eb492ae9">hwloc_obj::logical_index</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Horizontal index in the whole list of similar objects, could be a "cousin_rank" since it's the rank within the "cousin" list below. </p>
+
+</div>
+</div>
+<a class="anchor" id="a1dc830816716213b5f797e4052487864"></a><!-- doxytag: member="hwloc_obj::memory" ref="a1dc830816716213b5f797e4052487864" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">struct <a class="el" href="a00014.html">hwloc_obj_memory_s</a> <a class="el" href="a00011.html#a1dc830816716213b5f797e4052487864">hwloc_obj::memory</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Memory attributes. </p>
+
+</div>
+</div>
+<a class="anchor" id="abb709ec38f2970677e4e57d1d30be96d"></a><!-- doxytag: member="hwloc_obj::name" ref="abb709ec38f2970677e4e57d1d30be96d" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">char* <a class="el" href="a00011.html#abb709ec38f2970677e4e57d1d30be96d">hwloc_obj::name</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Object description if any. </p>
+
+</div>
+</div>
+<a class="anchor" id="a85a788017457129589318b6c39451acf"></a><!-- doxytag: member="hwloc_obj::next_cousin" ref="a85a788017457129589318b6c39451acf" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">struct <a class="el" href="a00011.html">hwloc_obj</a>* <a class="el" href="a00011.html#a85a788017457129589318b6c39451acf">hwloc_obj::next_cousin</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Next object of same type. </p>
+
+</div>
+</div>
+<a class="anchor" id="a7f2343ed476fe4942e6fffd4cade1b40"></a><!-- doxytag: member="hwloc_obj::next_sibling" ref="a7f2343ed476fe4942e6fffd4cade1b40" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">struct <a class="el" href="a00011.html">hwloc_obj</a>* <a class="el" href="a00011.html#a7f2343ed476fe4942e6fffd4cade1b40">hwloc_obj::next_sibling</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Next object below the same parent. </p>
+
+</div>
+</div>
+<a class="anchor" id="a79982ede313c2190505fc5e3714a16fb"></a><!-- doxytag: member="hwloc_obj::nodeset" ref="a79982ede313c2190505fc5e3714a16fb" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> <a class="el" href="a00011.html#a79982ede313c2190505fc5e3714a16fb">hwloc_obj::nodeset</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>NUMA nodes covered by this object or containing this object. </p>
+<p>This is the set of NUMA nodes for which there are NODE objects in the topology under or above this object, i.e. which are known to be physically contained in this object or containing it and known how (the children path between this object and the NODE objects).</p>
+<p>If the HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM configuration flag is set, some of these nodes may not be allowed for allocation, see allowed_nodeset.</p>
+<dl class="note"><dt><b>Note:</b></dt><dd>Its value must not be changed, hwloc_cpuset_dup must be used instead. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a8842d56c2975380f327ea401c5f53564"></a><!-- doxytag: member="hwloc_obj::online_cpuset" ref="a8842d56c2975380f327ea401c5f53564" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> <a class="el" href="a00011.html#a8842d56c2975380f327ea401c5f53564">hwloc_obj::online_cpuset</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>The CPU set of online logical processors. </p>
+<p>This includes the CPUs contained in this object that are online, i.e. draw power and can execute threads. It may however not be allowed to bind to them due to administration rules, see allowed_cpuset.</p>
+<dl class="note"><dt><b>Note:</b></dt><dd>Its value must not be changed, hwloc_cpuset_dup must be used instead. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a61a7a80a68eaccbaaa28269e678c81a9"></a><!-- doxytag: member="hwloc_obj::os_index" ref="a61a7a80a68eaccbaaa28269e678c81a9" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned <a class="el" href="a00011.html#a61a7a80a68eaccbaaa28269e678c81a9">hwloc_obj::os_index</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>OS-provided physical index number. </p>
+
+</div>
+</div>
+<a class="anchor" id="a68766f0b1c4d61b5bad87e3b81dacfde"></a><!-- doxytag: member="hwloc_obj::os_level" ref="a68766f0b1c4d61b5bad87e3b81dacfde" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">signed <a class="el" href="a00011.html#a68766f0b1c4d61b5bad87e3b81dacfde">hwloc_obj::os_level</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>OS-provided physical level, -1 if unknown or meaningless. </p>
+
+</div>
+</div>
+<a class="anchor" id="adc494f6aed939992be1c55cca5822900"></a><!-- doxytag: member="hwloc_obj::parent" ref="adc494f6aed939992be1c55cca5822900" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">struct <a class="el" href="a00011.html">hwloc_obj</a>* <a class="el" href="a00011.html#adc494f6aed939992be1c55cca5822900">hwloc_obj::parent</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Parent, <code>NULL</code> if root (system object). </p>
+
+</div>
+</div>
+<a class="anchor" id="ac715989f55ff5a0eb6be2969ee477ec0"></a><!-- doxytag: member="hwloc_obj::prev_cousin" ref="ac715989f55ff5a0eb6be2969ee477ec0" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">struct <a class="el" href="a00011.html">hwloc_obj</a>* <a class="el" href="a00011.html#ac715989f55ff5a0eb6be2969ee477ec0">hwloc_obj::prev_cousin</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Previous object of same type. </p>
+
+</div>
+</div>
+<a class="anchor" id="a7b89e8c189876c0158a9282aaaf17f50"></a><!-- doxytag: member="hwloc_obj::prev_sibling" ref="a7b89e8c189876c0158a9282aaaf17f50" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">struct <a class="el" href="a00011.html">hwloc_obj</a>* <a class="el" href="a00011.html#a7b89e8c189876c0158a9282aaaf17f50">hwloc_obj::prev_sibling</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Previous object below the same parent. </p>
+
+</div>
+</div>
+<a class="anchor" id="aaa6043eee6f55869933c1d974efd9acd"></a><!-- doxytag: member="hwloc_obj::sibling_rank" ref="aaa6043eee6f55869933c1d974efd9acd" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned <a class="el" href="a00011.html#aaa6043eee6f55869933c1d974efd9acd">hwloc_obj::sibling_rank</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Index in parent's <code>children</code>[] array. </p>
+
+</div>
+</div>
+<a class="anchor" id="acc4f0803f244867e68fe0036800be5de"></a><!-- doxytag: member="hwloc_obj::type" ref="acc4f0803f244867e68fe0036800be5de" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="a00028.html#gacd37bb612667dc437d66bfb175a8dc55">hwloc_obj_type_t</a> <a class="el" href="a00011.html#acc4f0803f244867e68fe0036800be5de">hwloc_obj::type</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Type of object. </p>
+
+</div>
+</div>
+<a class="anchor" id="a76fd3ac94401cf32dfccc3a3a8de68a5"></a><!-- doxytag: member="hwloc_obj::userdata" ref="a76fd3ac94401cf32dfccc3a3a8de68a5" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void* <a class="el" href="a00011.html#a76fd3ac94401cf32dfccc3a3a8de68a5">hwloc_obj::userdata</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Application-given private data pointer, initialized to <code>NULL</code>, use it as you wish. </p>
+
+</div>
+</div>
+<hr/>The documentation for this struct was generated from the following file:<ul>
+<li><a class="el" href="a00022_source.html">hwloc.h</a></li>
 </ul>
 </div>
 <hr size="1"/><address style="text-align: right;"><small>Generated by&nbsp;

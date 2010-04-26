@@ -266,14 +266,14 @@ AC_DEFUN([_HWLOC_CHECK_ATTRIBUTES], [
         [])
 
 
-    ATTRIBUTE_CFLAGS=
+    HWLOC_ATTRIBUTE_CFLAGS=
     case "$hwloc_c_vendor" in
         gnu)
-            ATTRIBUTE_CFLAGS="-Wall"
+            HWLOC_ATTRIBUTE_CFLAGS="-Wall"
             ;;
         intel)
             # we want specifically the warning on format string conversion
-            ATTRIBUTE_CFLAGS="-we181"
+            HWLOC_ATTRIBUTE_CFLAGS="-we181"
             ;;
     esac
     _HWLOC_CHECK_SPECIFIC_ATTRIBUTE([format],
@@ -290,7 +290,7 @@ AC_DEFUN([_HWLOC_CHECK_ATTRIBUTES], [
          /* The autoconf-generated main-function is int main(), which produces a warning by itself */
          int main(void);
         ],
-        [$ATTRIBUTE_CFLAGS])
+        [$HWLOC_ATTRIBUTE_CFLAGS])
 
     _HWLOC_CHECK_SPECIFIC_ATTRIBUTE([hot],
         [
@@ -334,14 +334,14 @@ AC_DEFUN([_HWLOC_CHECK_ATTRIBUTES], [
     # Ignored by intel-compiler 9.1.045 -- recognized by cross-check
     # Ignored by PGI-6.2.5 (pgCC) -- recognized by cross-check
     #
-    ATTRIBUTE_CFLAGS=
+    HWLOC_ATTRIBUTE_CFLAGS=
     case "$hwloc_c_vendor" in
         gnu)
-            ATTRIBUTE_CFLAGS="-Wall"
+            HWLOC_ATTRIBUTE_CFLAGS="-Wall"
             ;;
         intel)
             # we do not want to get ignored attributes warnings, but rather real warnings
-            ATTRIBUTE_CFLAGS="-wd1292"
+            HWLOC_ATTRIBUTE_CFLAGS="-wd1292"
             ;;
     esac
     _HWLOC_CHECK_SPECIFIC_ATTRIBUTE([nonnull],
@@ -360,7 +360,7 @@ AC_DEFUN([_HWLOC_CHECK_ATTRIBUTES], [
          /* The autoconf-generated main-function is int main(), which produces a warning by itself */
          int main(void);
         ],
-        [$ATTRIBUTE_CFLAGS])
+        [$HWLOC_ATTRIBUTE_CFLAGS])
 
 
     _HWLOC_CHECK_SPECIFIC_ATTRIBUTE([noreturn],
@@ -402,14 +402,14 @@ AC_DEFUN([_HWLOC_CHECK_ATTRIBUTES], [
     # Ignored by PGI-6.2.5 (pgCC) -- recognized by output-parser and cross-check
     # Ignored by pathcc-2.2.1 -- recognized by cross-check (through grep ignore)
     #
-    ATTRIBUTE_CFLAGS=
+    HWLOC_ATTRIBUTE_CFLAGS=
     case "$hwloc_c_vendor" in
         gnu)
-            ATTRIBUTE_CFLAGS="-Wall"
+            HWLOC_ATTRIBUTE_CFLAGS="-Wall"
             ;;
         intel)
             # we do not want to get ignored attributes warnings
-            ATTRIBUTE_CFLAGS="-wd1292"
+            HWLOC_ATTRIBUTE_CFLAGS="-wd1292"
             ;;
     esac
     _HWLOC_CHECK_SPECIFIC_ATTRIBUTE([sentinel],
@@ -427,7 +427,7 @@ AC_DEFUN([_HWLOC_CHECK_ATTRIBUTES], [
          /* The autoconf-generated main-function is int main(), which produces a warning by itself */
          int main(void);
         ],
-        [$ATTRIBUTE_CFLAGS])
+        [$HWLOC_ATTRIBUTE_CFLAGS])
 
     _HWLOC_CHECK_SPECIFIC_ATTRIBUTE([unused],
         [
@@ -443,14 +443,14 @@ AC_DEFUN([_HWLOC_CHECK_ATTRIBUTES], [
     # Ignored by the intel-compiler 9.1.045 -- recognized by cross-check
     # Ignored by pathcc-2.2.1 -- recognized by cross-check (through grep ignore)
     #
-    ATTRIBUTE_CFLAGS=
+    HWLOC_ATTRIBUTE_CFLAGS=
     case "$hwloc_c_vendor" in
         gnu)
-            ATTRIBUTE_CFLAGS="-Wall"
+            HWLOC_ATTRIBUTE_CFLAGS="-Wall"
             ;;
         intel)
             # we do not want to get ignored attributes warnings
-            ATTRIBUTE_CFLAGS="-wd1292"
+            HWLOC_ATTRIBUTE_CFLAGS="-wd1292"
             ;;
     esac
     _HWLOC_CHECK_SPECIFIC_ATTRIBUTE([warn_unused_result],
@@ -471,7 +471,7 @@ AC_DEFUN([_HWLOC_CHECK_ATTRIBUTES], [
          /* The autoconf-generated main-function is int main(), which produces a warning by itself */
          int main(void);
         ],
-        [$ATTRIBUTE_CFLAGS])
+        [$HWLOC_ATTRIBUTE_CFLAGS])
 
 
     _HWLOC_CHECK_SPECIFIC_ATTRIBUTE([weak_alias],

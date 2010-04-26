@@ -16,13 +16,16 @@ hwloc-distrib \- Build a number of cpu masks distributed on the system
 .SH OPTIONS
 .TP
 \fB\-v\fR
-verbose messages
+Singlify each output to a single CPU.
+.TP
+\fB\-v\fR
+Verbose messages.
 .TP
 \fB\-\-synthetic\fR "2 2"
-simulate a fake hierarchy
+Simulate a fake hierarchy.
 .TP
 \fB\-\-version\fR
-report version and exit
+Report version and exit.
 .
 .\" **************************
 .\"    Description Section
@@ -38,6 +41,39 @@ server.  These masks can be used with hwloc-bind(1).
 It is highly recommended that you read the hwloc(7) overview page
 before reading this man page.  Most of the concepts described in
 hwloc(7) directly apply to the hwloc-bind utility.
+.
+.
+.\" **************************
+.\"    Examples Section
+.\" **************************
+.SH EXAMPLES
+.PP
+hwloc-distrib's operation is best described through several examples.
+.
+.PP
+If 4 processes have to be distributed across a machine, their CPU masks
+may be obtained with:
+
+    $ hwloc-distrib 4
+    0000000f
+    00000f00
+    000000f0
+    0000f000
+
+To get a single processor of each CPU masks (prevent migration in case
+of binding)
+
+    $ hwloc-distrib 4 --single
+    00000001
+    00000100
+    00000010
+    00001000
+
+To convert the output into a list of processors that may be passed to
+dplace -c inside a mpirun command line:
+
+    $ hwloc-distrib 4 --single | xargs hwloc-calc --pulist
+    0,8,4,16
 .
 .
 .\" **************************

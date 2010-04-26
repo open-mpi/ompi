@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
-<title>Hardware Locality (hwloc): Binding Helpers</title>
+<title>Hardware Locality (hwloc): Advanced Traversal Helpers</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <link href="doxygen.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -20,39 +20,90 @@
   </div>
 </div>
 <div class="contents">
-<h1>Binding Helpers</h1><table border="0" cellpadding="0" cellspacing="0">
+<h1>Advanced Traversal Helpers</h1><table border="0" cellpadding="0" cellspacing="0">
 <tr><td colspan="2"><h2>Functions</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">static __inline void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00043.html#gadbea5d9e892dfb5f1fcacd00ba14def9">hwloc_distribute</a> (<a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology, <a class="el" href="a00010.html">hwloc_obj_t</a> root, <a class="el" href="a00045.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> *cpuset, unsigned n)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Distribute <code>n</code> items over the topology under <code>root</code>.  <a href="#gadbea5d9e892dfb5f1fcacd00ba14def9"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC unsigned&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00043.html#ga26c2ac4f25b1ed293249c88e232f1bea">hwloc_get_closest_objs</a> (<a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology, <a class="el" href="a00011.html">hwloc_obj_t</a> src, <a class="el" href="a00011.html">hwloc_obj_t</a> *__hwloc_restrict objs, unsigned max)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Do a depth-first traversal of the topology to find and sort.  <a href="#ga26c2ac4f25b1ed293249c88e232f1bea"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">static __hwloc_inline <br class="typebreak"/>
+<a class="el" href="a00011.html">hwloc_obj_t</a> <br class="typebreak"/>
+__hwloc_attribute_pure&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00043.html#ga3d32c128aa36b5c9d56f6bf9e70d0e78">hwloc_get_obj_below_by_type</a> (<a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology, <a class="el" href="a00028.html#gacd37bb612667dc437d66bfb175a8dc55">hwloc_obj_type_t</a> type1, unsigned idx1, <a class="el" href="a00028.html#gacd37bb612667dc437d66bfb175a8dc55">hwloc_obj_type_t</a> type2, unsigned idx2)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Find an object below another object, both specified by types and indexes.  <a href="#ga3d32c128aa36b5c9d56f6bf9e70d0e78"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">static __hwloc_inline <br class="typebreak"/>
+<a class="el" href="a00011.html">hwloc_obj_t</a> <br class="typebreak"/>
+__hwloc_attribute_pure&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00043.html#ga340bb7021204078c30382ea77d38bde9">hwloc_get_obj_below_array_by_type</a> (<a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology, int nr, <a class="el" href="a00028.html#gacd37bb612667dc437d66bfb175a8dc55">hwloc_obj_type_t</a> *typev, unsigned *idxv)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Find an object below a chain of objects specified by types and indexes.  <a href="#ga340bb7021204078c30382ea77d38bde9"></a><br/></td></tr>
 </table>
 <hr/><h2>Function Documentation</h2>
-<a class="anchor" id="gadbea5d9e892dfb5f1fcacd00ba14def9"></a><!-- doxytag: member="helper.h::hwloc_distribute" ref="gadbea5d9e892dfb5f1fcacd00ba14def9" args="(hwloc_topology_t topology, hwloc_obj_t root, hwloc_cpuset_t *cpuset, unsigned n)" -->
+<a class="anchor" id="ga26c2ac4f25b1ed293249c88e232f1bea"></a><!-- doxytag: member="helper.h::hwloc_get_closest_objs" ref="ga26c2ac4f25b1ed293249c88e232f1bea" args="(hwloc_topology_t topology, hwloc_obj_t src, hwloc_obj_t *__hwloc_restrict objs, unsigned max)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">static __inline void hwloc_distribute </td>
+          <td class="memname">HWLOC_DECLSPEC unsigned hwloc_get_closest_objs </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
+          <td class="paramtype"><a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
           <td class="paramname"> <em>topology</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="a00010.html">hwloc_obj_t</a>&nbsp;</td>
-          <td class="paramname"> <em>root</em>, </td>
+          <td class="paramtype"><a class="el" href="a00011.html">hwloc_obj_t</a>&nbsp;</td>
+          <td class="paramname"> <em>src</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="a00045.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> *&nbsp;</td>
-          <td class="paramname"> <em>cpuset</em>, </td>
+          <td class="paramtype"><a class="el" href="a00011.html">hwloc_obj_t</a> *__hwloc_restrict&nbsp;</td>
+          <td class="paramname"> <em>objs</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">unsigned&nbsp;</td>
-          <td class="paramname"> <em>n</em></td><td>&nbsp;</td>
+          <td class="paramname"> <em>max</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Do a depth-first traversal of the topology to find and sort. </p>
+<p>all objects that are at the same depth than <code>src</code>. Report in <code>objs</code> up to <code>max</code> physically closest ones to <code>src</code>.</p>
+<dl class="return"><dt><b>Returns:</b></dt><dd>the number of objects returned in <code>objs</code>. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga340bb7021204078c30382ea77d38bde9"></a><!-- doxytag: member="helper.h::hwloc_get_obj_below_array_by_type" ref="ga340bb7021204078c30382ea77d38bde9" args="(hwloc_topology_t topology, int nr, hwloc_obj_type_t *typev, unsigned *idxv)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">static __hwloc_inline <a class="el" href="a00011.html">hwloc_obj_t</a> __hwloc_attribute_pure hwloc_get_obj_below_array_by_type </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
+          <td class="paramname"> <em>topology</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&nbsp;</td>
+          <td class="paramname"> <em>nr</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00028.html#gacd37bb612667dc437d66bfb175a8dc55">hwloc_obj_type_t</a> *&nbsp;</td>
+          <td class="paramname"> <em>typev</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned *&nbsp;</td>
+          <td class="paramname"> <em>idxv</em></td><td>&nbsp;</td>
         </tr>
         <tr>
           <td></td>
@@ -63,10 +114,60 @@
 </div>
 <div class="memdoc">
 
-<p>Distribute <code>n</code> items over the topology under <code>root</code>. </p>
-<p>Array <code>cpuset</code> will be filled with <code>n</code> cpusets distributed linearly over the topology under <code>root</code> .</p>
-<p>This is typically useful when an application wants to distribute <code>n</code> threads over a machine, giving each of them as much private cache as possible and keeping them locally in number order.</p>
-<p>The caller may typically want to also call <a class="el" href="a00045.html#gace7ad3d2a71d9884e7a28311228931af" title="Keep a single CPU among those set in CPU set set.">hwloc_cpuset_singlify()</a> before binding a thread so that it does not move at all. </p>
+<p>Find an object below a chain of objects specified by types and indexes. </p>
+<p>This is a generalized version of <a class="el" href="a00043.html#ga3d32c128aa36b5c9d56f6bf9e70d0e78" title="Find an object below another object, both specified by types and indexes.">hwloc_get_obj_below_by_type()</a>.</p>
+<p>Arrays <code>typev</code> and <code>idxv</code> must contain <code>nr</code> types and indexes.</p>
+<p>Start from the top system object and walk the arrays <code>typev</code> and <code>idxv</code>. For each type and index couple in the arrays, look under the previously found object to find the index-th object of the given type. Indexes are specified within the parent, not withing the entire system.</p>
+<p>For instance, if nr is 3, typev contains NODE, SOCKET and CORE, and idxv contains 0, 1 and 2, return the third core object below the second socket below the first NUMA node. </p>
+
+</div>
+</div>
+<a class="anchor" id="ga3d32c128aa36b5c9d56f6bf9e70d0e78"></a><!-- doxytag: member="helper.h::hwloc_get_obj_below_by_type" ref="ga3d32c128aa36b5c9d56f6bf9e70d0e78" args="(hwloc_topology_t topology, hwloc_obj_type_t type1, unsigned idx1, hwloc_obj_type_t type2, unsigned idx2)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">static __hwloc_inline <a class="el" href="a00011.html">hwloc_obj_t</a> __hwloc_attribute_pure hwloc_get_obj_below_by_type </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
+          <td class="paramname"> <em>topology</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00028.html#gacd37bb612667dc437d66bfb175a8dc55">hwloc_obj_type_t</a>&nbsp;</td>
+          <td class="paramname"> <em>type1</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&nbsp;</td>
+          <td class="paramname"> <em>idx1</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00028.html#gacd37bb612667dc437d66bfb175a8dc55">hwloc_obj_type_t</a>&nbsp;</td>
+          <td class="paramname"> <em>type2</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&nbsp;</td>
+          <td class="paramname"> <em>idx2</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td><code> [static]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Find an object below another object, both specified by types and indexes. </p>
+<p>Start from the top system object and find object of type <code>type1</code> and index <code>idx1</code>. Then look below this object and find another object of type <code>type2</code> and index <code>idx2</code>. Indexes are specified within the parent, not withing the entire system.</p>
+<p>For instance, if type1 is SOCKET, idx1 is 2, type2 is CORE and idx2 is 3, return the fourth core object below the third socket. </p>
 
 </div>
 </div>

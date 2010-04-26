@@ -1,4 +1,4 @@
-.TH "Helpers for manipulating Linux libnuma bitmask" 3 "17 Apr 2010" "Version 1.0rc1" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.TH "Helpers for manipulating Linux libnuma bitmask" 3 "26 Apr 2010" "Version 1.0rc2" "Hardware Locality (hwloc)" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -7,20 +7,20 @@ Helpers for manipulating Linux libnuma bitmask \-
 
 .in +1c
 .ti -1c
-.RI "static __inline struct bitmask *__hwloc_attribute_malloc \fBhwloc_cpuset_to_linux_libnuma_bitmask\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP cpuset)"
+.RI "static __hwloc_inline struct bitmask *__hwloc_attribute_malloc \fBhwloc_cpuset_to_linux_libnuma_bitmask\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP cpuset)"
 .br
 .RI "\fIConvert hwloc CPU set \fCcpuset\fP into the returned libnuma bitmask. \fP"
 .ti -1c
-.RI "static __inline int \fBhwloc_cpuset_from_linux_libnuma_bitmask\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_cpuset_t\fP cpuset, const struct bitmask *bitmask)"
+.RI "static __hwloc_inline int \fBhwloc_cpuset_from_linux_libnuma_bitmask\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_cpuset_t\fP cpuset, const struct bitmask *bitmask)"
 .br
 .RI "\fIConvert libnuma bitmask \fCbitmask\fP into hwloc CPU set \fCcpuset\fP. \fP"
 .in -1c
 .SH "Function Documentation"
 .PP 
-.SS "static __inline int hwloc_cpuset_from_linux_libnuma_bitmask (\fBhwloc_topology_t\fP topology, \fBhwloc_cpuset_t\fP cpuset, const struct bitmask * bitmask)\fC [static]\fP"
+.SS "static __hwloc_inline int hwloc_cpuset_from_linux_libnuma_bitmask (\fBhwloc_topology_t\fP topology, \fBhwloc_cpuset_t\fP cpuset, const struct bitmask * bitmask)\fC [static]\fP"
 .PP
 Convert libnuma bitmask \fCbitmask\fP into hwloc CPU set \fCcpuset\fP. This function may be used after calling many numa_ functions that use a struct bitmask as an output parameter. 
-.SS "static __inline struct bitmask* __hwloc_attribute_malloc hwloc_cpuset_to_linux_libnuma_bitmask (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP cpuset)\fC [static, read]\fP"
+.SS "static __hwloc_inline struct bitmask* __hwloc_attribute_malloc hwloc_cpuset_to_linux_libnuma_bitmask (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP cpuset)\fC [static, read]\fP"
 .PP
 Convert hwloc CPU set \fCcpuset\fP into the returned libnuma bitmask. The returned bitmask should later be freed with numa_bitmask_free.
 .PP

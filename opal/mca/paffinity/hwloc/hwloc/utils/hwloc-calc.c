@@ -27,6 +27,7 @@ static void usage(FILE *where)
   fprintf(where, "  --PUlist\treport the list of processing units' indexes in the CPU set\n");
   fprintf(where, "  --nodelist\treport the list of memory nodes' indexes near the CPU set\n");
   fprintf(where, "  --objects\treport the list of largest objects in the CPU set\n");
+  fprintf(where, "  --single\tsinglify the output to a single CPU\n");
   fprintf(where, "  -v\t\tverbose messages\n");
   fprintf(where, "  --version\treport version and exit\n");
 }
@@ -42,6 +43,7 @@ int main(int argc, char *argv[])
   int nodelist = 0;
   int pulist = 0;
   int showobjs = 0;
+  int singlify = 0;
   char **orig_argv = argv;
 
   set = hwloc_cpuset_alloc();
@@ -102,6 +104,10 @@ int main(int argc, char *argv[])
 	logicalo = 0;
 	goto next;
       }
+      if (!strcmp(argv[1], "--single")) {
+	singlify = 1;
+	goto next;
+      }
       usage(stderr);
       return EXIT_FAILURE;
     }
@@ -116,16 +122,19 @@ int main(int argc, char *argv[])
     argv++;
   }
 
+  if (singlify)
+   hwloc_cpuset_singlify(set);
+
   if (showobjs) {
     hwloc_cpuset_t remaining = hwloc_cpuset_dup(set);
     int first = 1;
     while (!hwloc_cpuset_iszero(remaining)) {
       char type[64];
-      unsigned index;
+      unsigned idx;
       hwloc_obj_t obj = hwloc_get_first_largest_obj_inside_cpuset(topology, remaining);
       hwloc_obj_type_snprintf(type, sizeof(type), obj, 1);
-      index = logicalo ? obj->logical_index : obj->os_index;
-      printf("%s%s:%u", first ? "" : " ", type, index);
+      idx = logicalo ? obj->logical_index : obj->os_index;
+      printf("%s%s:%u", first ? "" : " ", type, idx);
       hwloc_cpuset_andnot(remaining, remaining, obj->cpuset);
       first = 0;
     }

@@ -11,8 +11,9 @@
 
 static void usage(FILE *where)
 {
-  fprintf(where, "Usage: topodistrib [options] number\n");
+  fprintf(where, "Usage: hwloc-distrib [options] number\n");
   fprintf(where, "Options:\n");
+  fprintf(where, "  --single\tsinglify each output to a single CPU\n");
   fprintf(where, "   -v\t\t\tverbose messages\n");
   fprintf(where, "   --synthetic \"2 2\"\tsimulate a fake hierarchy\n");
 #ifdef HWLOC_HAVE_XML
@@ -26,6 +27,7 @@ int main(int argc, char *argv[])
   long n = -1;
   char * synthetic = NULL;
   const char * xmlpath = NULL;
+  int singlify = 0;
   int verbose = 0;
   char **orig_argv = argv;
 
@@ -41,6 +43,10 @@ int main(int argc, char *argv[])
     }
 
     if (*argv[0] == '-') {
+      if (!strcmp(argv[0], "--single")) {
+	singlify = 1;
+	goto next;
+      }
       if (!strcmp(argv[0], "-v")) {
 	verbose = 1;
 	goto next;
@@ -118,6 +124,8 @@ int main(int argc, char *argv[])
     hwloc_distribute(topology, hwloc_get_root_obj(topology), cpuset, n);
     for (i = 0; i < n; i++) {
       char *str = NULL;
+      if (singlify)
+	hwloc_cpuset_singlify(cpuset[i]);
       hwloc_cpuset_asprintf(&str, cpuset[i]);
       printf("%s\n", str);
       free(str);

@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
-<title>Hardware Locality (hwloc): hwloc_topology_discovery_support Struct Reference</title>
+<title>Hardware Locality (hwloc): hwloc_topology_cpubind_support Struct Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <link href="doxygen.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -26,39 +26,142 @@
   </div>
 </div>
 <div class="contents">
-<h1>hwloc_topology_discovery_support Struct Reference<br/>
+<h1>hwloc_topology_cpubind_support Struct Reference<br/>
 <small>
-[<a class="el" href="a00030.html">Configure Topology Detection</a>]</small>
-</h1><!-- doxytag: class="hwloc_topology_discovery_support" -->
-<p>Flags describing actual discovery support for this topology.  
+[<a class="el" href="a00031.html">Configure Topology Detection</a>]</small>
+</h1><!-- doxytag: class="hwloc_topology_cpubind_support" -->
+<p>Flags describing actual binding support for this topology.  
 <a href="#_details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="a00021_source.html">hwloc.h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="a00022_source.html">hwloc.h</a>&gt;</code></p>
 <table border="0" cellpadding="0" cellspacing="0">
 <tr><td colspan="2"><h2>Data Fields</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">unsigned char&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00015.html#ad7bb4ecf7a82f5a04fc632e9592ad3ab">pu</a></td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Detecting the number of PU objects is supported.  <a href="#ad7bb4ecf7a82f5a04fc632e9592ad3ab"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">unsigned char&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00015.html#a9403d51657a4d546b3ea9553a2973a27">set_thisproc_cpubind</a></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">unsigned char&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00015.html#a77a09ddd78ee3e9ff5f532a6ac74f7eb">get_thisproc_cpubind</a></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">unsigned char&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00015.html#aa166223d1c2a6de7256ab2d8b675a87e">set_proc_cpubind</a></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">unsigned char&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00015.html#aae705bc447adc163ead377362c4dfe9f">get_proc_cpubind</a></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">unsigned char&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00015.html#a57a89a4b5f1f74fa6cfe176f1e8b0798">set_thisthread_cpubind</a></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">unsigned char&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00015.html#a80d762e532d677dff262d83cc7bb1c60">get_thisthread_cpubind</a></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">unsigned char&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00015.html#a46fba33e307909ce256624687799dd6d">set_thread_cpubind</a></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">unsigned char&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00015.html#a8dd4d8531ed2eebdce1507e7d104154e">get_thread_cpubind</a></td></tr>
 </table>
 <hr/><a name="_details"></a><h2>Detailed Description</h2>
-<p>Flags describing actual discovery support for this topology. </p>
+<p>Flags describing actual binding support for this topology. </p>
 <hr/><h2>Field Documentation</h2>
-<a class="anchor" id="ad7bb4ecf7a82f5a04fc632e9592ad3ab"></a><!-- doxytag: member="hwloc_topology_discovery_support::pu" ref="ad7bb4ecf7a82f5a04fc632e9592ad3ab" args="" -->
+<a class="anchor" id="aae705bc447adc163ead377362c4dfe9f"></a><!-- doxytag: member="hwloc_topology_cpubind_support::get_proc_cpubind" ref="aae705bc447adc163ead377362c4dfe9f" args="" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">unsigned char <a class="el" href="a00015.html#ad7bb4ecf7a82f5a04fc632e9592ad3ab">hwloc_topology_discovery_support::pu</a></td>
+          <td class="memname">unsigned char <a class="el" href="a00015.html#aae705bc447adc163ead377362c4dfe9f">hwloc_topology_cpubind_support::get_proc_cpubind</a></td>
         </tr>
       </table>
 </div>
 <div class="memdoc">
+<p>Getting the binding of a whole given process is supported. </p>
 
-<p>Detecting the number of PU objects is supported. </p>
+</div>
+</div>
+<a class="anchor" id="a77a09ddd78ee3e9ff5f532a6ac74f7eb"></a><!-- doxytag: member="hwloc_topology_cpubind_support::get_thisproc_cpubind" ref="a77a09ddd78ee3e9ff5f532a6ac74f7eb" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned char <a class="el" href="a00015.html#a77a09ddd78ee3e9ff5f532a6ac74f7eb">hwloc_topology_cpubind_support::get_thisproc_cpubind</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+<p>Getting the binding of the whole current process is supported. </p>
+
+</div>
+</div>
+<a class="anchor" id="a80d762e532d677dff262d83cc7bb1c60"></a><!-- doxytag: member="hwloc_topology_cpubind_support::get_thisthread_cpubind" ref="a80d762e532d677dff262d83cc7bb1c60" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned char <a class="el" href="a00015.html#a80d762e532d677dff262d83cc7bb1c60">hwloc_topology_cpubind_support::get_thisthread_cpubind</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+<p>Getting the binding of the current thread only is supported. </p>
+
+</div>
+</div>
+<a class="anchor" id="a8dd4d8531ed2eebdce1507e7d104154e"></a><!-- doxytag: member="hwloc_topology_cpubind_support::get_thread_cpubind" ref="a8dd4d8531ed2eebdce1507e7d104154e" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned char <a class="el" href="a00015.html#a8dd4d8531ed2eebdce1507e7d104154e">hwloc_topology_cpubind_support::get_thread_cpubind</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+<p>Getting the binding of a given thread only is supported. </p>
+
+</div>
+</div>
+<a class="anchor" id="aa166223d1c2a6de7256ab2d8b675a87e"></a><!-- doxytag: member="hwloc_topology_cpubind_support::set_proc_cpubind" ref="aa166223d1c2a6de7256ab2d8b675a87e" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned char <a class="el" href="a00015.html#aa166223d1c2a6de7256ab2d8b675a87e">hwloc_topology_cpubind_support::set_proc_cpubind</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+<p>Binding a whole given process is supported. </p>
+
+</div>
+</div>
+<a class="anchor" id="a9403d51657a4d546b3ea9553a2973a27"></a><!-- doxytag: member="hwloc_topology_cpubind_support::set_thisproc_cpubind" ref="a9403d51657a4d546b3ea9553a2973a27" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned char <a class="el" href="a00015.html#a9403d51657a4d546b3ea9553a2973a27">hwloc_topology_cpubind_support::set_thisproc_cpubind</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+<p>Binding the whole current process is supported. </p>
+
+</div>
+</div>
+<a class="anchor" id="a57a89a4b5f1f74fa6cfe176f1e8b0798"></a><!-- doxytag: member="hwloc_topology_cpubind_support::set_thisthread_cpubind" ref="a57a89a4b5f1f74fa6cfe176f1e8b0798" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned char <a class="el" href="a00015.html#a57a89a4b5f1f74fa6cfe176f1e8b0798">hwloc_topology_cpubind_support::set_thisthread_cpubind</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+<p>Binding the current thread only is supported. </p>
+
+</div>
+</div>
+<a class="anchor" id="a46fba33e307909ce256624687799dd6d"></a><!-- doxytag: member="hwloc_topology_cpubind_support::set_thread_cpubind" ref="a46fba33e307909ce256624687799dd6d" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned char <a class="el" href="a00015.html#a46fba33e307909ce256624687799dd6d">hwloc_topology_cpubind_support::set_thread_cpubind</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+<p>Binding a given thread only is supported. </p>
 
 </div>
 </div>
 <hr/>The documentation for this struct was generated from the following file:<ul>
-<li><a class="el" href="a00021_source.html">hwloc.h</a></li>
+<li><a class="el" href="a00022_source.html">hwloc.h</a></li>
 </ul>
 </div>
 <hr size="1"/><address style="text-align: right;"><small>Generated by&nbsp;

@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
-<title>Hardware Locality (hwloc): Get some Topology Information</title>
+<title>Hardware Locality (hwloc): Tinker with topologies.</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <link href="doxygen.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -20,66 +20,31 @@
   </div>
 </div>
 <div class="contents">
-<h1>Get some Topology Information</h1><table border="0" cellpadding="0" cellspacing="0">
-<tr><td colspan="2"><h2>Enumerations</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">enum &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00032.html#gaf4e663cf42bbe20756b849c6293ef575">hwloc_get_type_depth_e</a> { <a class="el" href="a00032.html#ggaf4e663cf42bbe20756b849c6293ef575a0565ab92ab72cb0cec91e23003294aad">HWLOC_TYPE_DEPTH_UNKNOWN</a>, 
-<a class="el" href="a00032.html#ggaf4e663cf42bbe20756b849c6293ef575ae99465995cacde6c210d5fc2e409798c">HWLOC_TYPE_DEPTH_MULTIPLE</a>
- }</td></tr>
+<h1>Tinker with topologies.</h1><table border="0" cellpadding="0" cellspacing="0">
 <tr><td colspan="2"><h2>Functions</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC unsigned&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00032.html#ga8c30b0cec55074eb3ed34e4f2a1a9937">hwloc_topology_get_depth</a> (<a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> __hwloc_restrict topology) __hwloc_attribute_pure</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Get the depth of the hierachical tree of objects.  <a href="#ga8c30b0cec55074eb3ed34e4f2a1a9937"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00032.html#gaea7c64dd59467f5201ba87712710b14d">hwloc_get_type_depth</a> (<a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology, <a class="el" href="a00027.html#gacd37bb612667dc437d66bfb175a8dc55">hwloc_obj_type_t</a> type)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns the depth of objects of type <code>type</code>.  <a href="#gaea7c64dd59467f5201ba87712710b14d"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC <a class="el" href="a00027.html#gacd37bb612667dc437d66bfb175a8dc55">hwloc_obj_type_t</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00032.html#gadd4964764ae7e49231065d58a553fd31">hwloc_get_depth_type</a> (<a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology, unsigned depth) __hwloc_attribute_pure</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns the type of objects at depth <code>depth</code>.  <a href="#gadd4964764ae7e49231065d58a553fd31"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC unsigned&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00032.html#ga20cfe2456f4cfdd789c9aca6d2fdd69f">hwloc_get_nbobjs_by_depth</a> (<a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology, unsigned depth) __hwloc_attribute_pure</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns the width of level at depth <code>depth</code>.  <a href="#ga20cfe2456f4cfdd789c9aca6d2fdd69f"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">static __inline int <br class="typebreak"/>
-__hwloc_attribute_pure&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00032.html#ga4c23019de0a7679306059e490dceccd2">hwloc_get_nbobjs_by_type</a> (<a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology, <a class="el" href="a00027.html#gacd37bb612667dc437d66bfb175a8dc55">hwloc_obj_type_t</a> type)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns the width of level type <code>type</code>.  <a href="#ga4c23019de0a7679306059e490dceccd2"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00032.html#ga0d109e33fc7990f62f665d336e5e5111">hwloc_topology_is_thissystem</a> (<a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> __hwloc_restrict topology) __hwloc_attribute_pure</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Does the topology context come from this system?  <a href="#ga0d109e33fc7990f62f665d336e5e5111"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00032.html#ga1c9d8e608232206ce2142fe806a6835b">hwloc_topology_export_xml</a> (<a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology, const char *xmlpath)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Export the topology into an XML file.  <a href="#ga1c9d8e608232206ce2142fe806a6835b"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC <a class="el" href="a00011.html">hwloc_obj_t</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00032.html#ga017a9ba16d554326c6e3812d545d7230">hwloc_topology_insert_misc_object_by_cpuset</a> (<a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology, <a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> cpuset, const char *name)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Add a MISC object to the topology.  <a href="#ga017a9ba16d554326c6e3812d545d7230"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC <a class="el" href="a00011.html">hwloc_obj_t</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00032.html#gadacd7a3d21220fbb30c3256d8b22a294">hwloc_topology_insert_misc_object_by_parent</a> (<a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology, <a class="el" href="a00011.html">hwloc_obj_t</a> parent, const char *name)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Add a MISC object to the topology.  <a href="#gadacd7a3d21220fbb30c3256d8b22a294"></a><br/></td></tr>
 </table>
-<hr/><h2>Enumeration Type Documentation</h2>
-<a class="anchor" id="gaf4e663cf42bbe20756b849c6293ef575"></a><!-- doxytag: member="hwloc.h::hwloc_get_type_depth_e" ref="gaf4e663cf42bbe20756b849c6293ef575" args="" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">enum <a class="el" href="a00032.html#gaf4e663cf42bbe20756b849c6293ef575">hwloc_get_type_depth_e</a></td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
-<dl><dt><b>Enumerator: </b></dt><dd><table border="0" cellspacing="2" cellpadding="0">
-<tr><td valign="top"><em><a class="anchor" id="ggaf4e663cf42bbe20756b849c6293ef575a0565ab92ab72cb0cec91e23003294aad"></a><!-- doxytag: member="HWLOC_TYPE_DEPTH_UNKNOWN" ref="ggaf4e663cf42bbe20756b849c6293ef575a0565ab92ab72cb0cec91e23003294aad" args="" -->HWLOC_TYPE_DEPTH_UNKNOWN</em>&nbsp;</td><td>
-<p>No object of given type exists in the topology. </p>
-</td></tr>
-<tr><td valign="top"><em><a class="anchor" id="ggaf4e663cf42bbe20756b849c6293ef575ae99465995cacde6c210d5fc2e409798c"></a><!-- doxytag: member="HWLOC_TYPE_DEPTH_MULTIPLE" ref="ggaf4e663cf42bbe20756b849c6293ef575ae99465995cacde6c210d5fc2e409798c" args="" -->HWLOC_TYPE_DEPTH_MULTIPLE</em>&nbsp;</td><td>
-<p>Objects of given type exist at different depth in the topology. </p>
-</td></tr>
-</table>
-</dd>
-</dl>
-
-</div>
-</div>
 <hr/><h2>Function Documentation</h2>
-<a class="anchor" id="gadd4964764ae7e49231065d58a553fd31"></a><!-- doxytag: member="hwloc.h::hwloc_get_depth_type" ref="gadd4964764ae7e49231065d58a553fd31" args="(hwloc_topology_t topology, unsigned depth) __hwloc_attribute_pure" -->
+<a class="anchor" id="ga1c9d8e608232206ce2142fe806a6835b"></a><!-- doxytag: member="hwloc.h::hwloc_topology_export_xml" ref="ga1c9d8e608232206ce2142fe806a6835b" args="(hwloc_topology_t topology, const char *xmlpath)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">HWLOC_DECLSPEC <a class="el" href="a00027.html#gacd37bb612667dc437d66bfb175a8dc55">hwloc_obj_type_t</a> hwloc_get_depth_type </td>
+          <td class="memname">HWLOC_DECLSPEC void hwloc_topology_export_xml </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
+          <td class="paramtype"><a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
           <td class="paramname"> <em>topology</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">unsigned&nbsp;</td>
-          <td class="paramname"> <em>depth</em></td><td>&nbsp;</td>
+          <td class="paramtype">const char *&nbsp;</td>
+          <td class="paramname"> <em>xmlpath</em></td><td>&nbsp;</td>
         </tr>
         <tr>
           <td></td>
@@ -90,26 +55,32 @@ __hwloc_attribute_pure&nbsp;</td><td class="memItemRight" valign="bottom"><a cla
 </div>
 <div class="memdoc">
 
-<p>Returns the type of objects at depth <code>depth</code>. </p>
-<dl class="return"><dt><b>Returns:</b></dt><dd>-1 if depth <code>depth</code> does not exist. </dd></dl>
+<p>Export the topology into an XML file. </p>
+<p>This file may be loaded later through <a class="el" href="a00031.html#ga93efcc8a962afe1ed23393700682173f" title="Enable XML-file based topology.">hwloc_topology_set_xml()</a>. </p>
 
 </div>
 </div>
-<a class="anchor" id="ga20cfe2456f4cfdd789c9aca6d2fdd69f"></a><!-- doxytag: member="hwloc.h::hwloc_get_nbobjs_by_depth" ref="ga20cfe2456f4cfdd789c9aca6d2fdd69f" args="(hwloc_topology_t topology, unsigned depth) __hwloc_attribute_pure" -->
+<a class="anchor" id="ga017a9ba16d554326c6e3812d545d7230"></a><!-- doxytag: member="hwloc.h::hwloc_topology_insert_misc_object_by_cpuset" ref="ga017a9ba16d554326c6e3812d545d7230" args="(hwloc_topology_t topology, hwloc_const_cpuset_t cpuset, const char *name)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">HWLOC_DECLSPEC unsigned hwloc_get_nbobjs_by_depth </td>
+          <td class="memname">HWLOC_DECLSPEC <a class="el" href="a00011.html">hwloc_obj_t</a> hwloc_topology_insert_misc_object_by_cpuset </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
+          <td class="paramtype"><a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
           <td class="paramname"> <em>topology</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">unsigned&nbsp;</td>
-          <td class="paramname"> <em>depth</em></td><td>&nbsp;</td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>cpuset</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *&nbsp;</td>
+          <td class="paramname"> <em>name</em></td><td>&nbsp;</td>
         </tr>
         <tr>
           <td></td>
@@ -120,55 +91,34 @@ __hwloc_attribute_pure&nbsp;</td><td class="memItemRight" valign="bottom"><a cla
 </div>
 <div class="memdoc">
 
-<p>Returns the width of level at depth <code>depth</code>. </p>
+<p>Add a MISC object to the topology. </p>
+<p>A new MISC object will be created and inserted into the topology at the position given by cpuset.</p>
+<p>cpuset and name will be copied.</p>
+<dl class="return"><dt><b>Returns:</b></dt><dd>the newly-created object </dd></dl>
 
 </div>
 </div>
-<a class="anchor" id="ga4c23019de0a7679306059e490dceccd2"></a><!-- doxytag: member="hwloc.h::hwloc_get_nbobjs_by_type" ref="ga4c23019de0a7679306059e490dceccd2" args="(hwloc_topology_t topology, hwloc_obj_type_t type)" -->
+<a class="anchor" id="gadacd7a3d21220fbb30c3256d8b22a294"></a><!-- doxytag: member="hwloc.h::hwloc_topology_insert_misc_object_by_parent" ref="gadacd7a3d21220fbb30c3256d8b22a294" args="(hwloc_topology_t topology, hwloc_obj_t parent, const char *name)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">static __inline int __hwloc_attribute_pure hwloc_get_nbobjs_by_type </td>
+          <td class="memname">HWLOC_DECLSPEC <a class="el" href="a00011.html">hwloc_obj_t</a> hwloc_topology_insert_misc_object_by_parent </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
+          <td class="paramtype"><a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
           <td class="paramname"> <em>topology</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="a00027.html#gacd37bb612667dc437d66bfb175a8dc55">hwloc_obj_type_t</a>&nbsp;</td>
-          <td class="paramname"> <em>type</em></td><td>&nbsp;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td><td><code> [static]</code></td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
-
-<p>Returns the width of level type <code>type</code>. </p>
-<p>If no object for that type exists, 0 is returned. If there are several levels with objects of that type, -1 is returned. </p>
-
-</div>
-</div>
-<a class="anchor" id="gaea7c64dd59467f5201ba87712710b14d"></a><!-- doxytag: member="hwloc.h::hwloc_get_type_depth" ref="gaea7c64dd59467f5201ba87712710b14d" args="(hwloc_topology_t topology, hwloc_obj_type_t type)" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">HWLOC_DECLSPEC int hwloc_get_type_depth </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
-          <td class="paramname"> <em>topology</em>, </td>
+          <td class="paramtype"><a class="el" href="a00011.html">hwloc_obj_t</a>&nbsp;</td>
+          <td class="paramname"> <em>parent</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="a00027.html#gacd37bb612667dc437d66bfb175a8dc55">hwloc_obj_type_t</a>&nbsp;</td>
-          <td class="paramname"> <em>type</em></td><td>&nbsp;</td>
+          <td class="paramtype">const char *&nbsp;</td>
+          <td class="paramname"> <em>name</em></td><td>&nbsp;</td>
         </tr>
         <tr>
           <td></td>
@@ -179,53 +129,10 @@ __hwloc_attribute_pure&nbsp;</td><td class="memItemRight" valign="bottom"><a cla
 </div>
 <div class="memdoc">
 
-<p>Returns the depth of objects of type <code>type</code>. </p>
-<p>If no object of this type is present on the underlying architecture, or if the OS doesn't provide this kind of information, the function returns HWLOC_TYPE_DEPTH_UNKNOWN.</p>
-<p>If type is absent but a similar type is acceptable, see also <a class="el" href="a00036.html#gaf324fdd1fcb895c32cc6540c92e9245a" title="Returns the depth of objects of type type or below.">hwloc_get_type_or_below_depth()</a> and <a class="el" href="a00036.html#ga4451dffe0bb068f597ec55403e8ed5b8" title="Returns the depth of objects of type type or above.">hwloc_get_type_or_above_depth()</a>. </p>
-
-</div>
-</div>
-<a class="anchor" id="ga8c30b0cec55074eb3ed34e4f2a1a9937"></a><!-- doxytag: member="hwloc.h::hwloc_topology_get_depth" ref="ga8c30b0cec55074eb3ed34e4f2a1a9937" args="(hwloc_topology_t __hwloc_restrict topology) __hwloc_attribute_pure" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">HWLOC_DECLSPEC unsigned hwloc_topology_get_depth </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> __hwloc_restrict&nbsp;</td>
-          <td class="paramname"> <em>topology</em></td>
-          <td>&nbsp;)&nbsp;</td>
-          <td></td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
-
-<p>Get the depth of the hierachical tree of objects. </p>
-<p>This is the depth of HWLOC_OBJ_PU objects plus one. </p>
-
-</div>
-</div>
-<a class="anchor" id="ga0d109e33fc7990f62f665d336e5e5111"></a><!-- doxytag: member="hwloc.h::hwloc_topology_is_thissystem" ref="ga0d109e33fc7990f62f665d336e5e5111" args="(hwloc_topology_t __hwloc_restrict topology) __hwloc_attribute_pure" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">HWLOC_DECLSPEC int hwloc_topology_is_thissystem </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> __hwloc_restrict&nbsp;</td>
-          <td class="paramname"> <em>topology</em></td>
-          <td>&nbsp;)&nbsp;</td>
-          <td></td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
-
-<p>Does the topology context come from this system? </p>
-<dl class="return"><dt><b>Returns:</b></dt><dd>1 if this topology context was built using the system running this program. </dd>
-<dd>
-0 instead (for instance if using another file-system root, a XML topology file, or a synthetic topology). </dd></dl>
+<p>Add a MISC object to the topology. </p>
+<p>A new MISC object will be created and inserted into the topology at the position given by parent.</p>
+<p>name will be copied.</p>
+<dl class="return"><dt><b>Returns:</b></dt><dd>the newly-created object </dd></dl>
 
 </div>
 </div>

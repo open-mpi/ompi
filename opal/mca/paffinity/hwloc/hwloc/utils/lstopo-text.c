@@ -42,7 +42,7 @@ static void
 output_console_obj (hwloc_obj_t l, FILE *output, int logical, int verbose_mode)
 {
   char type[32], attr[256], phys[32] = "";
-  unsigned index = logical ? l->logical_index : l->os_index;
+  unsigned idx = logical ? l->logical_index : l->os_index;
   const char *indexprefix = logical ? " #" :  " p#";
   if (show_cpuset < 2) {
     if (l->type == HWLOC_OBJ_MISC && l->name)
@@ -51,8 +51,8 @@ output_console_obj (hwloc_obj_t l, FILE *output, int logical, int verbose_mode)
       hwloc_obj_type_snprintf (type, sizeof(type), l, verbose_mode-1);
       fprintf(output, "%s", type);
     }
-    if (l->depth != 0 && index != (unsigned)-1)
-      fprintf(output, "%s%u", indexprefix, index);
+    if (l->depth != 0 && idx != (unsigned)-1)
+      fprintf(output, "%s%u", indexprefix, idx);
     if (logical && l->os_index != (unsigned) -1 &&
 	(verbose_mode >= 2 || l->type == HWLOC_OBJ_PU || l->type == HWLOC_OBJ_NODE))
       snprintf(phys, sizeof(phys), "phys=%u", l->os_index);
@@ -606,6 +606,7 @@ void output_text(hwloc_topology_t topology, const char *filename, int logical, i
 #ifdef HWLOC_HAVE_LIBTERMCAP
   int term = 0;
 #endif
+  char *tmp;
 
   if (!filename || !strcmp(filename, "-"))
     output = stdout;
@@ -641,10 +642,15 @@ void output_text(hwloc_topology_t topology, const char *filename, int logical, i
 	  if (can_change)
             initc = initialize_color;
       }
-      if (tgetflag("lhs"))
+      /* Prevent a trivial compiler warning because the param of
+         tgetflag is (char*), not (const char*). */
+      tmp = strdup("lhs");
+      if (tgetflag(tmp)) {
 	/* Sorry, I'm lazy to convert colors and I don't know any terminal
 	 * using LHS anyway */
 	initc = initp = 0;
+      }
+      free(tmp);
     }
   }
 #endif /* HWLOC_HAVE_LIBTERMCAP */

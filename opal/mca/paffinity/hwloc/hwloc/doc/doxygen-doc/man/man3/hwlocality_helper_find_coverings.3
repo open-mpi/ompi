@@ -1,4 +1,4 @@
-.TH "Finding a set of similar Objects covering at least a CPU set" 3 "17 Apr 2010" "Version 1.0rc1" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.TH "Finding a set of similar Objects covering at least a CPU set" 3 "26 Apr 2010" "Version 1.0rc2" "Hardware Locality (hwloc)" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -7,20 +7,20 @@ Finding a set of similar Objects covering at least a CPU set \-
 
 .in +1c
 .ti -1c
-.RI "static __inline \fBhwloc_obj_t\fP \fBhwloc_get_next_obj_covering_cpuset_by_depth\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, unsigned depth, \fBhwloc_obj_t\fP prev)"
+.RI "static __hwloc_inline \fBhwloc_obj_t\fP \fBhwloc_get_next_obj_covering_cpuset_by_depth\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, unsigned depth, \fBhwloc_obj_t\fP prev)"
 .br
 .RI "\fIIterate through same-depth objects covering at least CPU set \fCset\fP. \fP"
 .ti -1c
-.RI "static __inline \fBhwloc_obj_t\fP \fBhwloc_get_next_obj_covering_cpuset_by_type\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, \fBhwloc_obj_type_t\fP type, \fBhwloc_obj_t\fP prev)"
+.RI "static __hwloc_inline \fBhwloc_obj_t\fP \fBhwloc_get_next_obj_covering_cpuset_by_type\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, \fBhwloc_obj_type_t\fP type, \fBhwloc_obj_t\fP prev)"
 .br
 .RI "\fIIterate through same-type objects covering at least CPU set \fCset\fP. \fP"
 .in -1c
 .SH "Function Documentation"
 .PP 
-.SS "static __inline \fBhwloc_obj_t\fP hwloc_get_next_obj_covering_cpuset_by_depth (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, unsigned depth, \fBhwloc_obj_t\fP prev)\fC [static]\fP"
+.SS "static __hwloc_inline \fBhwloc_obj_t\fP hwloc_get_next_obj_covering_cpuset_by_depth (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, unsigned depth, \fBhwloc_obj_t\fP prev)\fC [static]\fP"
 .PP
 Iterate through same-depth objects covering at least CPU set \fCset\fP. If object \fCprev\fP is \fCNULL\fP, return the first object at depth \fCdepth\fP covering at least part of CPU set \fCset\fP. The next invokation should pass the previous return value in \fCprev\fP so as to obtain the next object covering at least another part of \fCset\fP. 
-.SS "static __inline \fBhwloc_obj_t\fP hwloc_get_next_obj_covering_cpuset_by_type (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, \fBhwloc_obj_type_t\fP type, \fBhwloc_obj_t\fP prev)\fC [static]\fP"
+.SS "static __hwloc_inline \fBhwloc_obj_t\fP hwloc_get_next_obj_covering_cpuset_by_type (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, \fBhwloc_obj_type_t\fP type, \fBhwloc_obj_t\fP prev)\fC [static]\fP"
 .PP
 Iterate through same-type objects covering at least CPU set \fCset\fP. If object \fCprev\fP is \fCNULL\fP, return the first object of type \fCtype\fP covering at least part of CPU set \fCset\fP. The next invokation should pass the previous return value in \fCprev\fP so as to obtain the next object of type \fCtype\fP covering at least another part of \fCset\fP.
 .PP

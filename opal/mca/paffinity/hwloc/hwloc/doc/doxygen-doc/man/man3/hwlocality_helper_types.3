@@ -1,4 +1,4 @@
-.TH "Object Type Helpers" 3 "17 Apr 2010" "Version 1.0rc1" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.TH "Object Type Helpers" 3 "26 Apr 2010" "Version 1.0rc2" "Hardware Locality (hwloc)" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -7,20 +7,20 @@ Object Type Helpers \-
 
 .in +1c
 .ti -1c
-.RI "static __inline int __hwloc_attribute_pure \fBhwloc_get_type_or_below_depth\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type)"
+.RI "static __hwloc_inline int __hwloc_attribute_pure \fBhwloc_get_type_or_below_depth\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type)"
 .br
 .RI "\fIReturns the depth of objects of type \fCtype\fP or below. \fP"
 .ti -1c
-.RI "static __inline int __hwloc_attribute_pure \fBhwloc_get_type_or_above_depth\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type)"
+.RI "static __hwloc_inline int __hwloc_attribute_pure \fBhwloc_get_type_or_above_depth\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type)"
 .br
 .RI "\fIReturns the depth of objects of type \fCtype\fP or above. \fP"
 .in -1c
 .SH "Function Documentation"
 .PP 
-.SS "static __inline int __hwloc_attribute_pure hwloc_get_type_or_above_depth (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type)\fC [static]\fP"
+.SS "static __hwloc_inline int __hwloc_attribute_pure hwloc_get_type_or_above_depth (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type)\fC [static]\fP"
 .PP
 Returns the depth of objects of type \fCtype\fP or above. If no object of this type is present on the underlying architecture, the function returns the depth of the first 'present' object typically containing \fCtype\fP. 
-.SS "static __inline int __hwloc_attribute_pure hwloc_get_type_or_below_depth (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type)\fC [static]\fP"
+.SS "static __hwloc_inline int __hwloc_attribute_pure hwloc_get_type_or_below_depth (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type)\fC [static]\fP"
 .PP
 Returns the depth of objects of type \fCtype\fP or below. If no object of this type is present on the underlying architecture, the function returns the depth of the first 'present' object typically found inside \fCtype\fP. 
 .SH "Author"

@@ -1,4 +1,4 @@
-.TH "Advanced Traversal Helpers" 3 "17 Apr 2010" "Version 1.0rc1" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.TH "Advanced Traversal Helpers" 3 "26 Apr 2010" "Version 1.0rc2" "Hardware Locality (hwloc)" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -11,11 +11,11 @@ Advanced Traversal Helpers \-
 .br
 .RI "\fIDo a depth-first traversal of the topology to find and sort. \fP"
 .ti -1c
-.RI "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure \fBhwloc_get_obj_below_by_type\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type1, unsigned idx1, \fBhwloc_obj_type_t\fP type2, unsigned idx2)"
+.RI "static __hwloc_inline \fBhwloc_obj_t\fP __hwloc_attribute_pure \fBhwloc_get_obj_below_by_type\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type1, unsigned idx1, \fBhwloc_obj_type_t\fP type2, unsigned idx2)"
 .br
 .RI "\fIFind an object below another object, both specified by types and indexes. \fP"
 .ti -1c
-.RI "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure \fBhwloc_get_obj_below_array_by_type\fP (\fBhwloc_topology_t\fP topology, int nr, \fBhwloc_obj_type_t\fP *typev, unsigned *idxv)"
+.RI "static __hwloc_inline \fBhwloc_obj_t\fP __hwloc_attribute_pure \fBhwloc_get_obj_below_array_by_type\fP (\fBhwloc_topology_t\fP topology, int nr, \fBhwloc_obj_type_t\fP *typev, unsigned *idxv)"
 .br
 .RI "\fIFind an object below a chain of objects specified by types and indexes. \fP"
 .in -1c
@@ -31,7 +31,7 @@ the number of objects returned in \fCobjs\fP.
 .RE
 .PP
 
-.SS "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure hwloc_get_obj_below_array_by_type (\fBhwloc_topology_t\fP topology, int nr, \fBhwloc_obj_type_t\fP * typev, unsigned * idxv)\fC [static]\fP"
+.SS "static __hwloc_inline \fBhwloc_obj_t\fP __hwloc_attribute_pure hwloc_get_obj_below_array_by_type (\fBhwloc_topology_t\fP topology, int nr, \fBhwloc_obj_type_t\fP * typev, unsigned * idxv)\fC [static]\fP"
 .PP
 Find an object below a chain of objects specified by types and indexes. This is a generalized version of \fBhwloc_get_obj_below_by_type()\fP.
 .PP
@@ -40,7 +40,7 @@ Arrays \fCtypev\fP and \fCidxv\fP must contain \fCnr\fP types and indexes.
 Start from the top system object and walk the arrays \fCtypev\fP and \fCidxv\fP. For each type and index couple in the arrays, look under the previously found object to find the index-th object of the given type. Indexes are specified within the parent, not withing the entire system.
 .PP
 For instance, if nr is 3, typev contains NODE, SOCKET and CORE, and idxv contains 0, 1 and 2, return the third core object below the second socket below the first NUMA node. 
-.SS "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure hwloc_get_obj_below_by_type (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type1, unsigned idx1, \fBhwloc_obj_type_t\fP type2, unsigned idx2)\fC [static]\fP"
+.SS "static __hwloc_inline \fBhwloc_obj_t\fP __hwloc_attribute_pure hwloc_get_obj_below_by_type (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type1, unsigned idx1, \fBhwloc_obj_type_t\fP type2, unsigned idx2)\fC [static]\fP"
 .PP
 Find an object below another object, both specified by types and indexes. Start from the top system object and find object of type \fCtype1\fP and index \fCidx1\fP. Then look below this object and find another object of type \fCtype2\fP and index \fCidx2\fP. Indexes are specified within the parent, not withing the entire system.
 .PP

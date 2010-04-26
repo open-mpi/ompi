@@ -1,30 +1,29 @@
 Introduction
 
-hwloc provides command line tools and a C API to obtain the
-hierarchical map of key computing elements, such as: NUMA memory nodes,
-shared caches, processor sockets, processor cores, and processing units
-(logical processors or "threads"). hwloc also gathers various
-attributes such as cache and memory information, and is portable across
-a variety of different operating systems and platforms.
+hwloc provides command line tools and a C API to obtain the hierarchical map of
+key computing elements, such as: NUMA memory nodes, shared caches, processor
+sockets, processor cores, and processing units (logical processors or
+"threads"). hwloc also gathers various attributes such as cache and memory
+information, and is portable across a variety of different operating systems
+and platforms.
 
-hwloc primarily aims at helping high-performance computing (HPC)
-applications, but is also applicable to any project seeking to exploit
-code and/or data locality on modern computing platforms.
+hwloc primarily aims at helping high-performance computing (HPC) applications,
+but is also applicable to any project seeking to exploit code and/or data
+locality on modern computing platforms.
 
-Note that the hwloc project represents the merger of the libtopology
-project from INRIA and the Portable Linux Processor Affinity (PLPA)
-sub-project from Open MPI. Both of these prior projects are now
-deprecated. The first hwloc release is essentially a "re-branding" of
-the libtopology code base, but with both a few genuinely new features
-and a few PLPA-like features added in. More new features and more
-PLPA-like features will be added to hwloc over time. See Switching from
-PLPA to hwloc for more details about converting your application from
-PLPA to hwloc.
+Note that the hwloc project represents the merger of the libtopology project
+from INRIA and the Portable Linux Processor Affinity (PLPA) sub-project from
+Open MPI. Both of these prior projects are now deprecated. The first hwloc
+release is essentially a "re-branding" of the libtopology code base, but with
+both a few genuinely new features and a few PLPA-like features added in. More
+new features and more PLPA-like features will be added to hwloc over time. See
+Switching from PLPA to hwloc for more details about converting your application
+from PLPA to hwloc.
 
 hwloc supports the following operating systems:
-  * Linux (including old kernels not having sysfs topology information,
-    with knowledge of cpusets, offline cpus, ScaleMP vSMP, and
-    Kerrighed support)
+
+  * Linux (including old kernels not having sysfs topology information, with
+ knowledge of cpusets, offline cpus, ScaleMP vSMP, and Kerrighed support)
   * Solaris
   * AIX
   * Darwin / OS X
@@ -33,66 +32,64 @@ hwloc supports the following operating systems:
   * HP-UX
   * Microsoft Windows
 
-hwloc only reports the number of processors on unsupported operating
-systems; no topology information is available.
+hwloc only reports the number of processors on unsupported operating systems;
+no topology information is available.
 
-For development and debugging purposes, hwloc also offers the ability
-to work on "fake" topologies:
-  * Symmetrical tree of resources generated from a list of level
-    arities
-  * Remote machine simulation through the gathering of Linux sysfs
-    topology files
+For development and debugging purposes, hwloc also offers the ability to work
+on "fake" topologies:
 
-hwloc can display the topology in a human-readable format, either in
-graphical mode (X11), or by exporting in one of several different
-formats, including: plain text, PDF, PNG, and FIG (see Examples below).
-Note that some of the export formats require additional support
-libraries.
+  * Symmetrical tree of resources generated from a list of level arities
+  * Remote machine simulation through the gathering of Linux sysfs topology
+ files
 
-hwloc offers a programming interface for manipulating topologies and
-objects. It also brings a powerful CPU bitmap API that is used to
-describe topology objects location on physical/logical processors. See
-the Programming interface below. It may also be used to binding
-applications onto certain cores or memory nodes. Several utility
-programs are also provided to ease command-line manipulation of
-topology objects, binding of processes, and so on.
+hwloc can display the topology in a human-readable format, either in graphical
+mode (X11), or by exporting in one of several different formats, including:
+plain text, PDF, PNG, and FIG (see Examples below). Note that some of the
+export formats require additional support libraries.
+
+hwloc offers a programming interface for manipulating topologies and objects.
+It also brings a powerful CPU bitmap API that is used to describe topology
+objects location on physical/logical processors. See the Programming interface
+below. It may also be used to binding applications onto certain cores or memory
+nodes. Several utility programs are also provided to ease command-line
+manipulation of topology objects, binding of processes, and so on.
 
 Installation
 
-hwloc (http://www.open-mpi.org/projects/hwloc/) is available under the
-BSD license. It is hosted as a sub-project of the overall Open MPI
-project (http://www.open-mpi.org/). Note that hwloc does not require
-any functionality from Open MPI -- it is a wholly separate (and much
-smaller!) project and code base. It just happens to be hosted as part
-of the overall Open MPI project.
+hwloc (http://www.open-mpi.org/projects/hwloc/) is available under the BSD
+license. It is hosted as a sub-project of the overall Open MPI project (http://
+www.open-mpi.org/). Note that hwloc does not require any functionality from
+Open MPI -- it is a wholly separate (and much smaller!) project and code base.
+It just happens to be hosted as part of the overall Open MPI project.
 
-Nightly development snapshots are available on the web site.
-Additionally, the code can be directly checked out of Subversion:
+Nightly development snapshots are available on the web site. Additionally, the
+code can be directly checked out of Subversion:
+
 shell$ svn checkout http://svn.open-mpi.org/svn/hwloc/trunk hwloc-trunk
 shell$ cd hwloc-trunk
 shell$ ./autogen.sh
 
-Note that GNU Autoconf >=2.63, Automake >=1.10 and Libtool >=2.2.6 are
-required when building from a Subversion checkout.
+Note that GNU Autoconf >=2.63, Automake >=1.10 and Libtool >=2.2.6 are required
+when building from a Subversion checkout.
 
 Installation by itself is the fairly common GNU-based process:
+
 shell$ ./configure --prefix=...
 shell$ make
 shell$ make install
 
-The hwloc command-line tool "lstopo" produces human-readable topology
-maps, as mentioned above. It can also export maps to the "fig" file
-format. Support for PDF, Postscript, and PNG exporting is provided if
-the "Cairo" development package can be found when hwloc is configured
-and build. Similarly, lstopo's XML support requires the libxml2
-development package.
+The hwloc command-line tool "lstopo" produces human-readable topology maps, as
+mentioned above. It can also export maps to the "fig" file format. Support for
+PDF, Postscript, and PNG exporting is provided if the "Cairo" development
+package can be found when hwloc is configured and build. Similarly, lstopo's
+XML support requires the libxml2 development package.
 
 Examples
 
-On a 4-socket 2-core machine with hyperthreading, the lstopo tool may
-show the following outputs:
+On a 4-socket 2-core machine with hyperthreading, the lstopo tool may show the
+following outputs:
 
-                              dudley.png
+                               dudley.png
 
 Machine (16GB)
   Socket #0 + L3 #0 (4096KB)
@@ -127,7 +124,7 @@ Machine (16GB)
 On a 4-socket 2-core Opteron NUMA machine, the lstopo tool may show the
 following outputs:
 
-                              hagrid.png
+                               hagrid.png
 
 Machine (64GB)
   NUMANode #0 (phys=0 8190MB) + Socket #0
@@ -155,10 +152,10 @@ Machine (64GB)
  L2 #14 (1024KB) + L1 #14 (64KB) + Core #14 + PU #14 (phys=14)
  L2 #15 (1024KB) + L1 #15 (64KB) + Core #15 + PU #15 (phys=15)
 
-On a 2-socket quad-core Xeon (pre-Nehalem, with 2 dual-core dies into
-each socket):
+On a 2-socket quad-core Xeon (pre-Nehalem, with 2 dual-core dies into each
+socket):
 
-                              emmett.png
+                               emmett.png
 
 Machine (16GB)
   Socket #0
@@ -178,48 +175,42 @@ Machine (16GB)
 
 Programming interface
 
-The basic interface is available in hwloc.h. It mostly offers low-level
-routines for advanced programmers that want to manually manipulate
-objects and follow links between them. Developers should look at
-hwloc/helper.h, which provides good higher-level topology traversal
-examples.
+The basic interface is available in hwloc.h. It essentially offers low-level
+routines for advanced programmers that want to manually manipulate objects and
+follow links between them. Developers should also look at hwloc/helper.h, which
+provides good higher-level topology traversal examples.
 
-Each object contains a cpuset describing the list of processing units
-that it contains. These cpusets may be used for Binding. hwloc offers
-an extensive cpuset manipulation interface in hwloc/cpuset.h.
+Each object contains a cpuset describing the list of processing units that it
+contains. These cpusets may be used for Binding. hwloc offers an extensive
+cpuset manipulation interface in hwloc/cpuset.h.
 
-Moreover, hwloc also comes with additional helpers for interoperability
-with several commonly used environments. For Linux, some specific
-helpers are available in hwloc/linux.h, and hwloc/linux-libnuma.h if
-using libnuma. On glibc-based systems, additional helpers are available
-in hwloc/glibc-sched.h. For Linux systems with the OpenFabrics verbs
-library, some dedicated helpers are provided in
-hwloc/openfabrics-verbs.h (this helper file is not yet useful on
-non-Linux systems with the OpenFabrics verbs library).
+Moreover, hwloc also comes with additional helpers for interoperability with
+several commonly used environments. See the Interoperability with other
+software section for details.
 
-To precisely define the vocabulary used by hwloc, a Terms and
-Definitions section is available and should probably be read first.
+To precisely define the vocabulary used by hwloc, a Terms and Definitions
+section is available and should probably be read first.
 
-Further documentation is available in a full set of HTML pages, man
-pages, and self-contained PDF files (formatted for both both US letter
-and A4 formats) in the source tarball in doc/doxygen-doc/. If you are
-building from a Subversion checkout, you will need to have Doxygen and
-pdflatex installed -- the documentation will be built during the normal
-"make" process. The documentation is installed during "make install" to
-$prefix/share/doc/hwloc/ and your systems default man page tree (under
-$prefix, of course).
+Further documentation is available in a full set of HTML pages, man pages, and
+self-contained PDF files (formatted for both both US letter and A4 formats) in
+the source tarball in doc/doxygen-doc/. If you are building from a Subversion
+checkout, you will need to have Doxygen and pdflatex installed -- the
+documentation will be built during the normal "make" process. The documentation
+is installed during "make install" to $prefix/share/doc/hwloc/ and your systems
+default man page tree (under $prefix, of course).
 
 The following section presents an example of API usage.
 
 API example
 
-The following small C example (named ``hwloc-hello.c'') prints the
-topology of the machine and bring the process to the first logical
-processor of the second core of the machine.
+The following small C example (named ``hwloc-hello.c'') prints the topology of
+the machine and bring the process to the first logical processor of the second
+core of the machine.
+
 /* Example hwloc API program.
  *
- * Copyright © 2009 INRIA, Université Bordeaux 1
- * Copyright © 2009-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright ? 2009 INRIA, Universit? Bordeaux 1
+ * Copyright ? 2009-2010 Cisco Systems, Inc.  All rights reserved.
  *
  * hwloc-hello.c
  */
@@ -358,16 +349,18 @@ int main(void)
  return 0;
 }
 
-hwloc provides a pkg-config executable to obtain relevant compiler and
-linker flags. For example, it can be used thusly to compile
-applications that utilize the hwloc library (assuming GNU Make):
+hwloc provides a pkg-config executable to obtain relevant compiler and linker
+flags. For example, it can be used thusly to compile applications that utilize
+the hwloc library (assuming GNU Make):
+
 CFLAGS += $(pkg-config --cflags hwloc)
 LDLIBS += $(pkg-config --libs hwloc)
 cc hwloc-hello.c $(CFLAGS) -o hwloc-hello $(LDLIBS)
 
-On a machine with 4GB of RAM and 2 processor sockets -- each socket of
-which has two processing cores -- the output from running hwloc-hello
-could be something like the following:
+On a machine with 4GB of RAM and 2 processor sockets -- each socket of which
+has two processing cores -- the output from running hwloc-hello could be
+something like the following:
+
 shell$ ./hwloc-hello
 *** Objects at level 0
 Index 0: Machine(3938MB)
@@ -401,25 +394,24 @@ shell$
 
 Questions and bugs
 
-Questions should be sent to the devel mailing list
-(http://www.open-mpi.org/community/lists/hwloc.php). Bug reports should
-be reported in the tracker (https://svn.open-mpi.org/trac/hwloc/).
+Questions should be sent to the devel mailing list (http://www.open-mpi.org/
+community/lists/hwloc.php). Bug reports should be reported in the tracker (
+https://svn.open-mpi.org/trac/hwloc/).
 
 History / credits
 
-hwloc is the evolution and merger of the libtopology
-(http://runtime.bordeaux.inria.fr/libtopology/) project and the
-Portable Linux Processor Affinity (PLPA)
-(http://www.open-mpi.org/projects/plpa/) project. Because of functional
-and ideological overlap, these two code bases and ideas were merged and
-released under the name "hwloc" as an Open MPI sub-project.
+hwloc is the evolution and merger of the libtopology (http://
+runtime.bordeaux.inria.fr/libtopology/) project and the Portable Linux
+Processor Affinity (PLPA) (http://www.open-mpi.org/projects/plpa/) project.
+Because of functional and ideological overlap, these two code bases and ideas
+were merged and released under the name "hwloc" as an Open MPI sub-project.
 
-libtopology was initially developed by the INRIA Runtime Team-Project
-(http://runtime.bordeaux.inria.fr/) (headed by Raymond Namyst
-(http://dept-info.labri.fr/~namyst/). PLPA was initially developed by
-the Open MPI development team as a sub-project. Both are now deprecated
-in favor of hwloc, which is distributed as an Open MPI sub-project.
-  __________________________________________________________________
+libtopology was initially developed by the INRIA Runtime Team-Project (http://
+runtime.bordeaux.inria.fr/) (headed by Raymond Namyst (http://
+dept-info.labri.fr/~namyst/). PLPA was initially developed by the Open MPI
+development team as a sub-project. Both are now deprecated in favor of hwloc,
+which is distributed as an Open MPI sub-project.
 
+-------------------------------------------------------------------------------
 
- Generated by  doxygen 1.6.2
+Generated by  doxygen 1.6.2

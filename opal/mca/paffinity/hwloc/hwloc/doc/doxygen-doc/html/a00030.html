@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
-<title>Hardware Locality (hwloc): Configure Topology Detection</title>
+<title>Hardware Locality (hwloc): Create and Destroy Topologies</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <link href="doxygen.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -20,105 +20,52 @@
   </div>
 </div>
 <div class="contents">
-<h1>Configure Topology Detection</h1><table border="0" cellpadding="0" cellspacing="0">
-<tr><td colspan="2"><h2>Data Structures</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">struct &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00015.html">hwloc_topology_discovery_support</a></td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Flags describing actual discovery support for this topology.  <a href="a00015.html#_details">More...</a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">struct &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00014.html">hwloc_topology_cpubind_support</a></td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Flags describing actual binding support for this topology.  <a href="a00014.html#_details">More...</a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">struct &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00016.html">hwloc_topology_support</a></td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Set of flags describing actual support for this topology.  <a href="a00016.html#_details">More...</a><br/></td></tr>
-<tr><td colspan="2"><h2>Enumerations</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">enum &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00030.html#gada025d3ec20b4b420f8038d23d6e7bde">hwloc_topology_flags_e</a> { <a class="el" href="a00030.html#ggada025d3ec20b4b420f8038d23d6e7bdea129b4fea1300be22bbaf0bb0958994c8">HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM</a>, 
-<a class="el" href="a00030.html#ggada025d3ec20b4b420f8038d23d6e7bdea6ecb6abc6a0bb75e81564f8bca85783b">HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM</a>
- }</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight"><p>Flags to be set onto a topology context before load. </p>
- <a href="a00030.html#gada025d3ec20b4b420f8038d23d6e7bde">More...</a><br/></td></tr>
+<h1>Create and Destroy Topologies</h1><table border="0" cellpadding="0" cellspacing="0">
 <tr><td colspan="2"><h2>Functions</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00030.html#gaf2071c8621fddc53649c245d87835b47">hwloc_topology_ignore_type</a> (<a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology, <a class="el" href="a00027.html#gacd37bb612667dc437d66bfb175a8dc55">hwloc_obj_type_t</a> type)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Ignore an object type.  <a href="#gaf2071c8621fddc53649c245d87835b47"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00030.html#ga6ddd4213d95bd1c30555b294a60efa6b">hwloc_topology_ignore_type_keep_structure</a> (<a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology, <a class="el" href="a00027.html#gacd37bb612667dc437d66bfb175a8dc55">hwloc_obj_type_t</a> type)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Ignore an object type if it does not bring any structure.  <a href="#ga6ddd4213d95bd1c30555b294a60efa6b"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00030.html#gaec6fb00050f50cd41007f1ae580d2106">hwloc_topology_ignore_all_keep_structure</a> (<a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Ignore all objects that do not bring any structure.  <a href="#gaec6fb00050f50cd41007f1ae580d2106"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00030.html#ga6d11e53db143ac39c32cdb3912b71f99">hwloc_topology_set_flags</a> (<a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology, unsigned long flags)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Set OR'ed flags to non-yet-loaded topology.  <a href="#ga6d11e53db143ac39c32cdb3912b71f99"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00030.html#ga2f6bfb6958d8b508ea1d7d5bb266432c">hwloc_topology_set_fsroot</a> (<a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> __hwloc_restrict topology, const char *__hwloc_restrict fsroot_path)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Change the file-system root path when building the topology from sysfs/procfs.  <a href="#ga2f6bfb6958d8b508ea1d7d5bb266432c"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00030.html#gae1100de0162b3c6a9db750ac14629c05">hwloc_topology_set_pid</a> (<a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> __hwloc_restrict topology, hwloc_pid_t pid)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Change which pid the topology is viewed from.  <a href="#gae1100de0162b3c6a9db750ac14629c05"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00030.html#ga2fcb52181b586c20f001b7a999550324">hwloc_topology_set_synthetic</a> (<a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> __hwloc_restrict topology, const char *__hwloc_restrict description)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Enable synthetic topology.  <a href="#ga2fcb52181b586c20f001b7a999550324"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00030.html#ga93efcc8a962afe1ed23393700682173f">hwloc_topology_set_xml</a> (<a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> __hwloc_restrict topology, const char *__hwloc_restrict xmlpath)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Enable XML-file based topology.  <a href="#ga93efcc8a962afe1ed23393700682173f"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC struct <br class="typebreak"/>
-<a class="el" href="a00016.html">hwloc_topology_support</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00030.html#gac2126e105f3ae708efca2e90d612625a">hwloc_topology_get_support</a> (<a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> __hwloc_restrict topology)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Retrieve the topology support.  <a href="#gac2126e105f3ae708efca2e90d612625a"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00030.html#ga5c2d6f476af87005c7bd0811d4548b9f">hwloc_topology_init</a> (<a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> *topologyp)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Allocate a topology context.  <a href="#ga5c2d6f476af87005c7bd0811d4548b9f"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00030.html#ga91e2e6427b95fb7339c99dbbef996e71">hwloc_topology_load</a> (<a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Build the actual topology.  <a href="#ga91e2e6427b95fb7339c99dbbef996e71"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00030.html#ga6040925d3ee4bbb2647f2a321aca5f4b">hwloc_topology_destroy</a> (<a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Terminate and free a topology context.  <a href="#ga6040925d3ee4bbb2647f2a321aca5f4b"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00030.html#gab3628b2a540a5a08e8cf724ef829e70a">hwloc_topology_check</a> (<a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Run internal checks on a topology structure.  <a href="#gab3628b2a540a5a08e8cf724ef829e70a"></a><br/></td></tr>
 </table>
-<hr/><a name="_details"></a><h2>Detailed Description</h2>
-<p>These functions can optionally be called between <a class="el" href="a00029.html#ga5c2d6f476af87005c7bd0811d4548b9f" title="Allocate a topology context.">hwloc_topology_init()</a> and <a class="el" href="a00029.html#ga91e2e6427b95fb7339c99dbbef996e71" title="Build the actual topology.">hwloc_topology_load()</a> to configure how the detection should be performed, e.g. to ignore some objects types, define a synthetic topology, etc.</p>
-<p>If none of them is called, the default is to detect all the objects of the machine that the caller is allowed to access.</p>
-<p>This default behavior may also be modified through environment variables if the application did not modify it already. Setting HWLOC_XMLFILE in the environment enforces the discovery from a XML file as if <a class="el" href="a00030.html#ga93efcc8a962afe1ed23393700682173f" title="Enable XML-file based topology.">hwloc_topology_set_xml()</a> had been called. HWLOC_FSROOT switches to reading the topology from the specified Linux filesystem root as if <a class="el" href="a00030.html#ga2f6bfb6958d8b508ea1d7d5bb266432c" title="Change the file-system root path when building the topology from sysfs/procfs.">hwloc_topology_set_fsroot()</a> had been called. Finally, HWLOC_THISSYSTEM enforces the return value of <a class="el" href="a00032.html#ga0d109e33fc7990f62f665d336e5e5111" title="Does the topology context come from this system?">hwloc_topology_is_thissystem()</a>. </p>
-<hr/><h2>Enumeration Type Documentation</h2>
-<a class="anchor" id="gada025d3ec20b4b420f8038d23d6e7bde"></a><!-- doxytag: member="hwloc.h::hwloc_topology_flags_e" ref="gada025d3ec20b4b420f8038d23d6e7bde" args="" -->
+<hr/><h2>Function Documentation</h2>
+<a class="anchor" id="gab3628b2a540a5a08e8cf724ef829e70a"></a><!-- doxytag: member="hwloc.h::hwloc_topology_check" ref="gab3628b2a540a5a08e8cf724ef829e70a" args="(hwloc_topology_t topology)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">enum <a class="el" href="a00030.html#gada025d3ec20b4b420f8038d23d6e7bde">hwloc_topology_flags_e</a></td>
+          <td class="memname">HWLOC_DECLSPEC void hwloc_topology_check </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
+          <td class="paramname"> <em>topology</em></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
         </tr>
       </table>
 </div>
 <div class="memdoc">
 
-<p>Flags to be set onto a topology context before load. </p>
-<p>Flags should be given to <a class="el" href="a00030.html#ga6d11e53db143ac39c32cdb3912b71f99" title="Set OR&#39;ed flags to non-yet-loaded topology.">hwloc_topology_set_flags()</a>. </p>
-<dl><dt><b>Enumerator: </b></dt><dd><table border="0" cellspacing="2" cellpadding="0">
-<tr><td valign="top"><em><a class="anchor" id="ggada025d3ec20b4b420f8038d23d6e7bdea129b4fea1300be22bbaf0bb0958994c8"></a><!-- doxytag: member="HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM" ref="ggada025d3ec20b4b420f8038d23d6e7bdea129b4fea1300be22bbaf0bb0958994c8" args="" -->HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM</em>&nbsp;</td><td>
-<p>Detect the whole system, ignore reservations and offline settings. </p>
-<p>Gather all resources, even if some were disabled by the administrator. For instance, ignore Linux Cpusets and gather all processors and memory nodes, and ignore the fact that some resources may be offline. </p>
-</td></tr>
-<tr><td valign="top"><em><a class="anchor" id="ggada025d3ec20b4b420f8038d23d6e7bdea6ecb6abc6a0bb75e81564f8bca85783b"></a><!-- doxytag: member="HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM" ref="ggada025d3ec20b4b420f8038d23d6e7bdea6ecb6abc6a0bb75e81564f8bca85783b" args="" -->HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM</em>&nbsp;</td><td>
-<p>Assume that the selected backend provides the topology for the system on which we are running. </p>
-<p>This forces hwloc_topology_is_thissystem to return 1, i.e. makes hwloc assume that the selected backend provides the topology for the system on which we are running, even if it is not the OS-specific backend but the XML backend for instance. This means making the binding functions actually call the OS-specific system calls and really do binding, while the XML backend would otherwise provide empty hooks just returning success.</p>
-<p>Setting the environment variable HWLOC_THISSYSTEM may also result in the same behavior.</p>
-<p>This can be used for efficiency reasons to first detect the topology once, save it to an XML file, and quickly reload it later through the XML backend, but still having binding functions actually do bind. </p>
-</td></tr>
-</table>
-</dd>
+<p>Run internal checks on a topology structure. </p>
+<dl><dt><b>Parameters:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>topology</em>&nbsp;</td><td>is the topology to be checked </td></tr>
+  </table>
+  </dd>
 </dl>
 
 </div>
 </div>
-<hr/><h2>Function Documentation</h2>
-<a class="anchor" id="gac2126e105f3ae708efca2e90d612625a"></a><!-- doxytag: member="hwloc.h::hwloc_topology_get_support" ref="gac2126e105f3ae708efca2e90d612625a" args="(hwloc_topology_t __hwloc_restrict topology)" -->
+<a class="anchor" id="ga6040925d3ee4bbb2647f2a321aca5f4b"></a><!-- doxytag: member="hwloc.h::hwloc_topology_destroy" ref="ga6040925d3ee4bbb2647f2a321aca5f4b" args="(hwloc_topology_t topology)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">HWLOC_DECLSPEC struct <a class="el" href="a00016.html">hwloc_topology_support</a>* hwloc_topology_get_support </td>
+          <td class="memname">HWLOC_DECLSPEC void hwloc_topology_destroy </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> __hwloc_restrict&nbsp;</td>
-          <td class="paramname"> <em>topology</em></td>
-          <td>&nbsp;)&nbsp;</td>
-          <td><code> [read]</code></td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
-
-<p>Retrieve the topology support. </p>
-
-</div>
-</div>
-<a class="anchor" id="gaec6fb00050f50cd41007f1ae580d2106"></a><!-- doxytag: member="hwloc.h::hwloc_topology_ignore_all_keep_structure" ref="gaec6fb00050f50cd41007f1ae580d2106" args="(hwloc_topology_t topology)" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">HWLOC_DECLSPEC int hwloc_topology_ignore_all_keep_structure </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
+          <td class="paramtype"><a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
           <td class="paramname"> <em>topology</em></td>
           <td>&nbsp;)&nbsp;</td>
           <td></td>
@@ -127,224 +74,69 @@
 </div>
 <div class="memdoc">
 
-<p>Ignore all objects that do not bring any structure. </p>
-<p>Ignore all objects that do not bring any structure: Each ignored object should have a single children or be the only child of its parent. </p>
+<p>Terminate and free a topology context. </p>
+<dl><dt><b>Parameters:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>topology</em>&nbsp;</td><td>is the topology to be freed </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
-<a class="anchor" id="gaf2071c8621fddc53649c245d87835b47"></a><!-- doxytag: member="hwloc.h::hwloc_topology_ignore_type" ref="gaf2071c8621fddc53649c245d87835b47" args="(hwloc_topology_t topology, hwloc_obj_type_t type)" -->
+<a class="anchor" id="ga5c2d6f476af87005c7bd0811d4548b9f"></a><!-- doxytag: member="hwloc.h::hwloc_topology_init" ref="ga5c2d6f476af87005c7bd0811d4548b9f" args="(hwloc_topology_t *topologyp)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">HWLOC_DECLSPEC int hwloc_topology_ignore_type </td>
+          <td class="memname">HWLOC_DECLSPEC int hwloc_topology_init </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
-          <td class="paramname"> <em>topology</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
+          <td class="paramtype"><a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> *&nbsp;</td>
+          <td class="paramname"> <em>topologyp</em></td>
+          <td>&nbsp;)&nbsp;</td>
           <td></td>
-          <td class="paramtype"><a class="el" href="a00027.html#gacd37bb612667dc437d66bfb175a8dc55">hwloc_obj_type_t</a>&nbsp;</td>
-          <td class="paramname"> <em>type</em></td><td>&nbsp;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td><td></td>
         </tr>
       </table>
 </div>
 <div class="memdoc">
 
-<p>Ignore an object type. </p>
-<p>Ignore all objects from the given type. The bottom-level type HWLOC_OBJ_PU may not be ignored. The top-level object of the hierarchy will never be ignored, even if this function succeeds. </p>
+<p>Allocate a topology context. </p>
+<dl><dt><b>Parameters:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"><tt>[out]</tt>&nbsp;</td><td valign="top"><em>topologyp</em>&nbsp;</td><td>is assigned a pointer to the new allocated context.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="return"><dt><b>Returns:</b></dt><dd>0 on success, -1 on error. </dd></dl>
 
 </div>
 </div>
-<a class="anchor" id="ga6ddd4213d95bd1c30555b294a60efa6b"></a><!-- doxytag: member="hwloc.h::hwloc_topology_ignore_type_keep_structure" ref="ga6ddd4213d95bd1c30555b294a60efa6b" args="(hwloc_topology_t topology, hwloc_obj_type_t type)" -->
+<a class="anchor" id="ga91e2e6427b95fb7339c99dbbef996e71"></a><!-- doxytag: member="hwloc.h::hwloc_topology_load" ref="ga91e2e6427b95fb7339c99dbbef996e71" args="(hwloc_topology_t topology)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">HWLOC_DECLSPEC int hwloc_topology_ignore_type_keep_structure </td>
+          <td class="memname">HWLOC_DECLSPEC int hwloc_topology_load </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
-          <td class="paramname"> <em>topology</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
+          <td class="paramtype"><a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
+          <td class="paramname"> <em>topology</em></td>
+          <td>&nbsp;)&nbsp;</td>
           <td></td>
-          <td class="paramtype"><a class="el" href="a00027.html#gacd37bb612667dc437d66bfb175a8dc55">hwloc_obj_type_t</a>&nbsp;</td>
-          <td class="paramname"> <em>type</em></td><td>&nbsp;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td><td></td>
         </tr>
       </table>
 </div>
 <div class="memdoc">
 
-<p>Ignore an object type if it does not bring any structure. </p>
-<p>Ignore all objects from the given type as long as they do not bring any structure: Each ignored object should have a single children or be the only child of its parent. The bottom-level type HWLOC_OBJ_PU may not be ignored. </p>
-
-</div>
-</div>
-<a class="anchor" id="ga6d11e53db143ac39c32cdb3912b71f99"></a><!-- doxytag: member="hwloc.h::hwloc_topology_set_flags" ref="ga6d11e53db143ac39c32cdb3912b71f99" args="(hwloc_topology_t topology, unsigned long flags)" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">HWLOC_DECLSPEC int hwloc_topology_set_flags </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
-          <td class="paramname"> <em>topology</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">unsigned long&nbsp;</td>
-          <td class="paramname"> <em>flags</em></td><td>&nbsp;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td><td></td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
-
-<p>Set OR'ed flags to non-yet-loaded topology. </p>
-<p>Set a OR'ed set of hwloc_topology_flags_e onto a topology that was not yet loaded. </p>
-
-</div>
-</div>
-<a class="anchor" id="ga2f6bfb6958d8b508ea1d7d5bb266432c"></a><!-- doxytag: member="hwloc.h::hwloc_topology_set_fsroot" ref="ga2f6bfb6958d8b508ea1d7d5bb266432c" args="(hwloc_topology_t __hwloc_restrict topology, const char *__hwloc_restrict fsroot_path)" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">HWLOC_DECLSPEC int hwloc_topology_set_fsroot </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> __hwloc_restrict&nbsp;</td>
-          <td class="paramname"> <em>topology</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const char *__hwloc_restrict&nbsp;</td>
-          <td class="paramname"> <em>fsroot_path</em></td><td>&nbsp;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td><td></td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
-
-<p>Change the file-system root path when building the topology from sysfs/procfs. </p>
-<p>On Linux system, use sysfs and procfs files as if they were mounted on the given <code>fsroot_path</code> instead of the main file-system root. Setting the environment variable HWLOC_FSROOT may also result in this behavior. Not using the main file-system root causes <a class="el" href="a00032.html#ga0d109e33fc7990f62f665d336e5e5111" title="Does the topology context come from this system?">hwloc_topology_is_thissystem()</a> to return 0.</p>
-<dl class="note"><dt><b>Note:</b></dt><dd>For conveniency, this backend provides empty binding hooks which just return success. To have hwloc still actually call OS-specific hooks, the HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM has to be set to assert that the loaded file is really the underlying system. </dd></dl>
-
-</div>
-</div>
-<a class="anchor" id="gae1100de0162b3c6a9db750ac14629c05"></a><!-- doxytag: member="hwloc.h::hwloc_topology_set_pid" ref="gae1100de0162b3c6a9db750ac14629c05" args="(hwloc_topology_t __hwloc_restrict topology, hwloc_pid_t pid)" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">HWLOC_DECLSPEC int hwloc_topology_set_pid </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> __hwloc_restrict&nbsp;</td>
-          <td class="paramname"> <em>topology</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">hwloc_pid_t&nbsp;</td>
-          <td class="paramname"> <em>pid</em></td><td>&nbsp;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td><td></td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
-
-<p>Change which pid the topology is viewed from. </p>
-<p>On some systems, processes may have different views of the machine, for instance the set of allowed CPUs. By default, hwloc exposes the view from the current process. Calling <a class="el" href="a00030.html#gae1100de0162b3c6a9db750ac14629c05" title="Change which pid the topology is viewed from.">hwloc_topology_set_pid()</a> permits to make it expose the topology of the machine from the point of view of another process.</p>
-<dl class="note"><dt><b>Note:</b></dt><dd>hwloc_pid_t is pid_t on unix platforms, and HANDLE on native Windows platforms </dd>
-<dd>
-The ENOSYS error is returned on platforms that does not support this feature. </dd></dl>
-
-</div>
-</div>
-<a class="anchor" id="ga2fcb52181b586c20f001b7a999550324"></a><!-- doxytag: member="hwloc.h::hwloc_topology_set_synthetic" ref="ga2fcb52181b586c20f001b7a999550324" args="(hwloc_topology_t __hwloc_restrict topology, const char *__hwloc_restrict description)" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">HWLOC_DECLSPEC int hwloc_topology_set_synthetic </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> __hwloc_restrict&nbsp;</td>
-          <td class="paramname"> <em>topology</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const char *__hwloc_restrict&nbsp;</td>
-          <td class="paramname"> <em>description</em></td><td>&nbsp;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td><td></td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
-
-<p>Enable synthetic topology. </p>
-<p>Gather topology information from the given <code>description</code> which should be a comma separated string of numbers describing the arity of each level. Each number may be prefixed with a type and a colon to enforce the type of a level. If only some level types are enforced, hwloc will try to choose the other types according to usual topologies, but it may fail and you may have to specify more level types manually.</p>
-<dl class="note"><dt><b>Note:</b></dt><dd>For conveniency, this backend provides empty binding hooks which just return success. </dd></dl>
-
-</div>
-</div>
-<a class="anchor" id="ga93efcc8a962afe1ed23393700682173f"></a><!-- doxytag: member="hwloc.h::hwloc_topology_set_xml" ref="ga93efcc8a962afe1ed23393700682173f" args="(hwloc_topology_t __hwloc_restrict topology, const char *__hwloc_restrict xmlpath)" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">HWLOC_DECLSPEC int hwloc_topology_set_xml </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> __hwloc_restrict&nbsp;</td>
-          <td class="paramname"> <em>topology</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const char *__hwloc_restrict&nbsp;</td>
-          <td class="paramname"> <em>xmlpath</em></td><td>&nbsp;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td><td></td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
-
-<p>Enable XML-file based topology. </p>
-<p>Gather topology information the XML file given at <code>xmlpath</code>. Setting the environment variable HWLOC_XMLFILE may also result in this behavior. This file may have been generated earlier with lstopo file.xml.</p>
-<dl class="note"><dt><b>Note:</b></dt><dd>For conveniency, this backend provides empty binding hooks which just return success. To have hwloc still actually call OS-specific hooks, the HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM has to be set to assert that the loaded file is really the underlying system. </dd></dl>
+<p>Build the actual topology. </p>
+<p>Build the actual topology once initialized with <a class="el" href="a00030.html#ga5c2d6f476af87005c7bd0811d4548b9f" title="Allocate a topology context.">hwloc_topology_init()</a> and tuned with hwlocality_configuration routine. No other routine may be called earlier using this topology context.</p>
+<dl><dt><b>Parameters:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>topology</em>&nbsp;</td><td>is the topology to be loaded with objects.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="return"><dt><b>Returns:</b></dt><dd>0 on success, -1 on error.</dd></dl>
+<dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="a00031.html">Configure Topology Detection</a> </dd></dl>
 
 </div>
 </div>

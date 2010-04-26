@@ -16,7 +16,7 @@ release=0
 # requirement is that it must be entirely printable ASCII characters
 # and have no white space.
 
-greek=rc1
+greek=rc2
 
 # If want_svn=1, then the SVN r number will be included in the overall
 # hwloc version number in some form.
@@ -33,11 +33,11 @@ want_svn=0
 # distribution tarball is being made from an SVN checkout, the value
 # of svn_r in this file is replaced with the output of "svnversion".
 
-svn_r=r1955
+svn_r=r2008
 
 # The date when this release was created
 
-date="Apr 17, 2010"
+date="Apr 26, 2010"
 
 # The shared library version of hwloc's public library.  This version
 # is maintained in accordance with the "Library Interface Versions"
