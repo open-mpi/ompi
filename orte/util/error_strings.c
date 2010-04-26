@@ -170,6 +170,10 @@ const char *orte_job_state_to_str(orte_job_state_t state)
             return strdup("KILLED BY INTERNAL COMMAND");
         case ORTE_JOB_STATE_COMM_FAILED:
             return strdup("COMMUNICATION FAILURE");
+        case ORTE_JOB_STATE_SENSOR_BOUND_EXCEEDED:
+            return strdup("SENSOR BOUND EXCEEDED");
+            break;
+
         case ORTE_JOB_STATE_NEVER_LAUNCHED:
             return strdup("NEVER LAUNCHED");
         case ORTE_JOB_STATE_ABORT_ORDERED:
@@ -210,6 +214,10 @@ const char *orte_proc_state_to_str(orte_proc_state_t state)
             return strdup("KILLED BY INTERNAL COMMAND");
         case ORTE_PROC_STATE_COMM_FAILED:
             return strdup("COMMUNICATION FAILURE");
+        case ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED:
+            return strdup("SENSOR BOUND EXCEEDED");
+            break;
+
         default:
             return strdup("UNKNOWN STATE!");
     }
