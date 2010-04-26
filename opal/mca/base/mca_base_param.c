@@ -2191,3 +2191,98 @@ static void syn_info_destructor(syn_info_t *si)
 
     syn_info_constructor(si);
 }
+
+int mca_base_param_find_int(const mca_base_component_t *component,
+                            const char *param_name,
+                            char **env,
+                            int *current_value)
+{
+    char *tmp, *ptr;
+    int len, i;
+    int rc=OPAL_ERR_NOT_FOUND;
+    
+    asprintf(&tmp, "%s_%s_%s_%s", mca_prefix, component->mca_type_name,
+             component->mca_component_name, param_name);
+    len = strlen(tmp);
+    for (i=0; NULL != env[i]; i++) {
+        if (0 == strncmp(tmp, env[i], len)) {
+            ptr = &env[i][len];
+            *current_value = strtol(ptr, NULL, 10);
+            rc = OPAL_SUCCESS;
+            break;
+        }
+    }
+    free(tmp);
+    return rc;
+}
+
+int mca_base_param_find_int_name(const char *type,
+                                 const char *param_name,
+                                 char **env,
+                                 int *current_value)
+{
+    char *tmp, *ptr;
+    int len, i;
+    int rc=OPAL_ERR_NOT_FOUND;
+    
+    asprintf(&tmp, "%s_%s_%s", mca_prefix, type, param_name);
+    len = strlen(tmp);
+    for (i=0; NULL != env[i]; i++) {
+        if (0 == strncmp(tmp, env[i], len)) {
+            ptr = &env[i][len];
+            *current_value = strtol(ptr, NULL, 10);
+            rc = OPAL_SUCCESS;
+            break;
+        }
+    }
+    free(tmp);
+    return rc;
+}
+
+int mca_base_param_find_string(const mca_base_component_t *component,
+                               const char *param_name,
+                               char **env,
+                               char **current_value)
+{
+    char *tmp, *ptr;
+    int len, i;
+    int rc=OPAL_ERR_NOT_FOUND;
+    
+    asprintf(&tmp, "%s_%s_%s_%s", mca_prefix, component->mca_type_name,
+             component->mca_component_name, param_name);
+    len = strlen(tmp);
+    for (i=0; NULL != env[i]; i++) {
+        if (0 == strncmp(tmp, env[i], len)) {
+            ptr = &env[i][len];
+            *current_value = ptr;
+            rc = OPAL_SUCCESS;
+            break;
+        }
+    }
+    free(tmp);
+    return rc;
+}
+
+int mca_base_param_find_string_name(const char *type,
+                                    const char *param_name,
+                                    char **env,
+                                    char **current_value)
+{
+    char *tmp, *ptr;
+    int len, i;
+    int rc=OPAL_ERR_NOT_FOUND;
+    
+    asprintf(&tmp, "%s_%s_%s", mca_prefix, type, param_name);
+    len = strlen(tmp);
+    for (i=0; NULL != env[i]; i++) {
+        if (0 == strncmp(tmp, env[i], len)) {
+            ptr = &env[i][len];
+            *current_value = ptr;
+            rc = OPAL_SUCCESS;
+            break;
+        }
+    }
+    free(tmp);
+    return rc;
+}
+
