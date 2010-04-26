@@ -367,6 +367,12 @@ pack_add_procs:
         return rc;
     }
     
+    /* pack the max number of local restarts allowed for this job */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->max_local_restarts, 1, ORTE_VPID))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
     /* pack the number of app_contexts for this job */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->num_apps, 1, ORTE_APP_IDX))) {
         ORTE_ERROR_LOG(rc);
@@ -810,6 +816,12 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     /* unpack the stdin target for the job */
     cnt=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->stdin_target, &cnt, ORTE_VPID))) {
+        ORTE_ERROR_LOG(rc);
+        goto REPORT_ERROR;
+    }
+    /* unpack the max number of local restarts allowed for this job */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->max_local_restarts, &cnt, ORTE_VPID))) {
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
     }
@@ -2839,5 +2851,11 @@ int orte_odls_base_get_proc_stats(opal_buffer_t *answer,
         }
     }
 
+    return ORTE_SUCCESS;
+}
+
+int orte_odls_base_default_restart_proc(orte_odls_child_t *child,
+                                        orte_odls_base_fork_local_proc_fn_t fork_local)
+{
     return ORTE_SUCCESS;
 }

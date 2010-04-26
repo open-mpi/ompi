@@ -210,6 +210,9 @@ int main(int argc, char *argv[])
 #if OPAL_ENABLE_FT_CR == 1
     opal_pointer_array_add(&mca_types, "snapc");
 #endif
+#if ORTE_ENABLE_SENSORS
+    opal_pointer_array_add(&mca_types, "sensor");
+#endif
     opal_pointer_array_add(&mca_types, "filem");
 #endif
     /* these are always included */

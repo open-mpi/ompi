@@ -52,6 +52,9 @@
 #include "orte/mca/filem/filem.h"
 #include "orte/mca/filem/base/base.h"
 #include "orte/mca/rml/base/rml_contact.h"
+#if ORTE_ENABLE_SENSORS
+#include "orte/mca/sensor/sensor.h"
+#endif
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_locks.h"
@@ -353,6 +356,11 @@ int orte_plm_base_launch_apps(orte_jobid_t job)
         ORTE_ERROR_LOG(rc);
         goto WAKEUP;
     }
+    
+#if ORTE_ENABLE_SENSORS
+    /* start any sensor monitoring of this job */
+    orte_sensor.start(job);
+#endif
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:launch completed for job %s",

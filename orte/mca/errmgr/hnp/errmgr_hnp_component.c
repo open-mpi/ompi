@@ -53,14 +53,7 @@ orte_errmgr_base_component_t mca_errmgr_hnp_component =
     {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-    },
-
-    /* Verbosity level */
-    0,
-    /* opal_output handler */
-    -1,
-    /* Default priority */
-    1
+    }
 };
 
 static int errmgr_hnp_open(void) 
@@ -88,4 +81,3 @@ static int errmgr_hnp_component_query(mca_base_module_t **module, int *priority)
     *module = NULL;
     return ORTE_ERROR;
 }
-

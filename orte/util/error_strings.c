@@ -141,45 +141,45 @@ const char *orte_job_state_to_str(orte_job_state_t state)
 {
     switch(state) {
         case ORTE_JOB_STATE_UNDEF:
-            return strdup("UNDEFINED");
+            return "UNDEFINED";
         case ORTE_JOB_STATE_INIT:
-            return strdup("INITIALIZED");
+            return "INITIALIZED";
         case ORTE_JOB_STATE_RESTART:
-            return strdup("RESTARTING");
+            return "RESTARTING";
         case ORTE_JOB_STATE_LAUNCHED:
-            return strdup("LAUNCHED");
+            return "LAUNCHED";
         case ORTE_JOB_STATE_RUNNING:
-            return strdup("RUNNING");
+            return "RUNNING";
         case ORTE_JOB_STATE_SUSPENDED:
-            return strdup("SUSPENDED");
+            return "SUSPENDED";
         case ORTE_JOB_STATE_REGISTERED:
-            return strdup("SYNC REGISTERED");
+            return "SYNC REGISTERED";
         case ORTE_JOB_STATE_UNTERMINATED:
-            return strdup("UNTERMINATED");
+            return "UNTERMINATED";
         case ORTE_JOB_STATE_TERMINATED:
-            return strdup("NORMALLY TERMINATED");
+            return "NORMALLY TERMINATED";
         case ORTE_JOB_STATE_ABORTED:
-            return strdup("ABORTED");
+            return "ABORTED";
         case ORTE_JOB_STATE_FAILED_TO_START:
-            return strdup("FAILED TO START");
+            return "FAILED TO START";
         case ORTE_JOB_STATE_ABORTED_BY_SIG:
-            return strdup("ABORTED BY SIGNAL");
+            return "ABORTED BY SIGNAL";
         case ORTE_JOB_STATE_ABORTED_WO_SYNC:
-            return strdup("TERMINATED WITHOUT SYNC");
+            return "TERMINATED WITHOUT SYNC";
         case ORTE_JOB_STATE_KILLED_BY_CMD:
-            return strdup("KILLED BY INTERNAL COMMAND");
+            return "KILLED BY INTERNAL COMMAND";
         case ORTE_JOB_STATE_COMM_FAILED:
-            return strdup("COMMUNICATION FAILURE");
+            return "COMMUNICATION FAILURE";
         case ORTE_JOB_STATE_SENSOR_BOUND_EXCEEDED:
-            return strdup("SENSOR BOUND EXCEEDED");
+            return "SENSOR BOUND EXCEEDED";
             break;
 
         case ORTE_JOB_STATE_NEVER_LAUNCHED:
-            return strdup("NEVER LAUNCHED");
+            return "NEVER LAUNCHED";
         case ORTE_JOB_STATE_ABORT_ORDERED:
-            return strdup("ABORT IN PROGRESS");
+            return "ABORT IN PROGRESS";
         default:
-            return strdup("UNKNOWN STATE!");
+            return "UNKNOWN STATE!";
     }
 }
 
@@ -187,39 +187,39 @@ const char *orte_proc_state_to_str(orte_proc_state_t state)
 {
     switch(state) {
         case ORTE_PROC_STATE_UNDEF:
-            return strdup("UNDEFINED");
+            return "UNDEFINED";
         case ORTE_PROC_STATE_INIT:
-            return strdup("INITIALIZED");
+            return "INITIALIZED";
         case ORTE_PROC_STATE_RESTART:
-            return strdup("RESTARTING");
+            return "RESTARTING";
         case ORTE_PROC_STATE_LAUNCHED:
-            return strdup("LAUNCHED");
+            return "LAUNCHED";
         case ORTE_PROC_STATE_RUNNING:
-            return strdup("RUNNING");
+            return "RUNNING";
         case ORTE_PROC_STATE_REGISTERED:
-            return strdup("SYNC REGISTERED");
+            return "SYNC REGISTERED";
         case ORTE_PROC_STATE_UNTERMINATED:
-            return strdup("UNTERMINATED");
+            return "UNTERMINATED";
         case ORTE_PROC_STATE_TERMINATED:
-            return strdup("NORMALLY TERMINATED");
+            return "NORMALLY TERMINATED";
         case ORTE_PROC_STATE_ABORTED:
-            return strdup("ABORTED");
+            return "ABORTED";
         case ORTE_PROC_STATE_FAILED_TO_START:
-            return strdup("FAILED TO START");
+            return "FAILED TO START";
         case ORTE_PROC_STATE_ABORTED_BY_SIG:
-            return strdup("ABORTED BY SIGNAL");
+            return "ABORTED BY SIGNAL";
         case ORTE_PROC_STATE_TERM_WO_SYNC:
-            return strdup("TERMINATED WITHOUT SYNC");
+            return "TERMINATED WITHOUT SYNC";
         case ORTE_PROC_STATE_KILLED_BY_CMD:
-            return strdup("KILLED BY INTERNAL COMMAND");
+            return "KILLED BY INTERNAL COMMAND";
         case ORTE_PROC_STATE_COMM_FAILED:
-            return strdup("COMMUNICATION FAILURE");
+            return "COMMUNICATION FAILURE";
         case ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED:
-            return strdup("SENSOR BOUND EXCEEDED");
+            return "SENSOR BOUND EXCEEDED";
             break;
 
         default:
-            return strdup("UNKNOWN STATE!");
+            return "UNKNOWN STATE!";
     }
 }
 

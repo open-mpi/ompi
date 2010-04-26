@@ -305,6 +305,20 @@ int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
             return rc;
         }
 
+        /* pack the max local restarts */
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
+                         (void*)(&(jobs[i]->max_local_restarts)), 1, OPAL_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /* pack the max global restarts */
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
+                            (void*)(&(jobs[i]->max_global_restarts)), 1, OPAL_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
 #if OPAL_ENABLE_FT_CR == 1
         /* pack the ckpt state */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
@@ -487,6 +501,13 @@ int orte_dt_pack_proc(opal_buffer_t *buffer, const void *src,
         /* pack the number of restarts */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
                          (void*)&(procs[i]->restarts), 1, OPAL_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /* pack the number of relocates */
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
+                         (void*)&(procs[i]->relocates), 1, OPAL_INT32))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

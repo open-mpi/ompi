@@ -93,4 +93,22 @@ else
     orte_want_multicast=0
 fi
 
+#
+# Do we want sensors enabled?
+
+AC_MSG_CHECKING([if want sensors])
+AC_ARG_ENABLE([sensors],
+    [AC_HELP_STRING([--enable-sensors],
+                    [Enable internal sensors (default: disabled)])])
+if test "$enable_sensors" = "yes"; then
+    AC_MSG_RESULT([yes])
+    orte_want_sensors=1
+else
+    AC_MSG_RESULT([no])
+    orte_want_sensors=0
+fi
+AC_DEFINE_UNQUOTED([ORTE_ENABLE_SENSORS],
+                   [$orte_want_sensors],
+                   [Whether we want sensors enabled])
+
 ])dnl

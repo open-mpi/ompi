@@ -57,6 +57,9 @@
 #include "orte/mca/notifier/base/base.h"
 #include "orte/mca/rmcast/base/base.h"
 #include "orte/mca/state/base/base.h"
+#if ORTE_ENABLE_SENSORS
+#include "orte/mca/sensor/base/base.h"
+#endif
 
 #include "orte/mca/rmaps/base/base.h"
 #if OPAL_ENABLE_FT_CR == 1
@@ -537,6 +540,20 @@ static int rte_init(void)
         goto error;
     }
     
+#if ORTE_ENABLE_SENSORS
+    /* setup the SENSOR framework */
+    if (ORTE_SUCCESS != (ret = orte_sensor_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_sensor_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_sensor_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "ortesensor_select";
+        goto error;
+    }
+#endif
+
     /* if a tool has launched us and is requesting event reports,
      * then set its contact info into the comm system
      */
@@ -592,6 +609,9 @@ static int rte_finalize(void)
     unlink(contact_path);
     free(contact_path);
     
+#if ORTE_ENABLE_SENSORS
+    orte_sensor_base_close();
+#endif
     orte_state_base_close();
     orte_notifier_base_close();
     

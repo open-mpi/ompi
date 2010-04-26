@@ -132,6 +132,7 @@ static void orte_odls_job_constructor(orte_odls_job_t *ptr)
     ptr->num_contributors = 0;
     ptr->num_participating = -1;
     ptr->num_collected = 0;
+    ptr->max_local_restarts = 0;
 }
 static void orte_odls_job_destructor(orte_odls_job_t *ptr)
 {

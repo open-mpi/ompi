@@ -220,6 +220,19 @@ static int odls_process_signal_local_proc(const orte_process_name_t *proc, int32
 	return rc;
 }
 
+static int orte_odls_process_restart_proc(orte_odls_child_t *child)
+{
+    int rc;
+    
+    /* restart the local proc */
+    if (ORTE_SUCCESS != (rc = orte_odls_base_default_restart_proc(child, odls_process_fork_local_proc))) {
+        OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+                             "%s odls:process:restart_proc failed to launch on error %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
+    }
+    return rc;
+}
+
 
 orte_odls_base_module_t orte_odls_process_module = {
     orte_odls_base_default_get_add_procs_data,    
@@ -227,5 +240,6 @@ orte_odls_base_module_t orte_odls_process_module = {
     odls_process_kill_local_procs,
     odls_process_signal_local_proc,
     orte_odls_base_default_deliver_message,
-    orte_odls_base_default_require_sync
+    orte_odls_base_default_require_sync,
+    orte_odls_process_restart_proc
 };

@@ -53,6 +53,8 @@ bool orte_errmgr_base_shutting_down = false;
 bool orte_errmgr_initialized = false;
 opal_list_t orte_errmgr_base_components_available;
 
+orte_errmgr_base_t orte_errmgr_base;
+
 /* Public module provides a wrapper around previous functions */
 orte_errmgr_API_t orte_errmgr = {
     orte_errmgr_base_log,
@@ -73,13 +75,14 @@ int orte_errmgr_base_open(void)
     OPAL_TRACE(5);
 
     /* Only pass this way once */
-    if( orte_errmgr_initialized ) {
+    if( orte_errmgr_base.initialized ) {
         return ORTE_SUCCESS;
     }
 
-    OBJ_CONSTRUCT(&orte_errmgr_base_modules, opal_pointer_array_t);
-
-    orte_errmgr_base_output = opal_output_open(NULL);
+    OBJ_CONSTRUCT(&orte_errmgr_base.modules, opal_pointer_array_t);
+    opal_pointer_array_init(&orte_errmgr_base.modules, 3, INT_MAX, 1);
+    
+    orte_errmgr_base.output = opal_output_open(NULL);
 
     mca_base_param_reg_int_name("errmgr",
                                 "base_enable_recovery",
@@ -87,27 +90,53 @@ int orte_errmgr_base_open(void)
                                 " [Default = disabled]",
                                 false, false,
                                 0, &value);
-    orte_errmgr_base_enable_recovery = OPAL_INT_TO_BOOL(value);
+    orte_errmgr_base.enable_recovery = OPAL_INT_TO_BOOL(value);
 
+    mca_base_param_reg_int_name("errmgr",
+                                "max_global_restarts",
+                                "Max number of times to relocate a failed process to a new node",
+                                false, false,
+                                -1, &orte_errmgr_base.max_global_restarts);
+    
+    mca_base_param_reg_int_name("errmgr",
+                                "max_local_restarts",
+                                "Max number of times to locally restart a failed process before relocating it to a new node",
+                                false, false,
+                                -1, &orte_errmgr_base.max_local_restarts);
+    
+    if (orte_errmgr_base.enable_recovery) {
+        if (orte_errmgr_base.max_global_restarts < 0 ) {
+            orte_errmgr_base.max_global_restarts = 3;
+        }
+        if (orte_errmgr_base.max_local_restarts < 0) {
+            orte_errmgr_base.max_local_restarts = 3;
+        }
+    } else {
+        if (orte_errmgr_base.max_local_restarts > 0 ||
+            orte_errmgr_base.max_global_restarts > 0) {
+            orte_errmgr_base.enable_recovery = true;
+        }
+    }
+    
     /*
      * A flag to indicate that orterun is shutting down, so skip the recovery
      * logic.
      */
-    orte_errmgr_base_shutting_down = false;
+    orte_errmgr_base.shutting_down = false;
 
     /*
      * Open up all available components
      */
     if (ORTE_SUCCESS != 
         mca_base_components_open("errmgr",
-                                 orte_errmgr_base_output,
+                                 orte_errmgr_base.output,
                                  mca_errmgr_base_static_components, 
                                  &orte_errmgr_base_components_available,
                                  true)) {
         return ORTE_ERROR;
     }
     
-    orte_errmgr_initialized = true;
+    orte_errmgr_base.initialized = true;
     
     return ORTE_SUCCESS;
 }
