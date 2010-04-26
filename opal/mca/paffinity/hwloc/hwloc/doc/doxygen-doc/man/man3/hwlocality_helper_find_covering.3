@@ -1,4 +1,4 @@
-.TH "Finding a single Object covering at least CPU set" 3 "17 Apr 2010" "Version 1.0rc1" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.TH "Finding a single Object covering at least CPU set" 3 "26 Apr 2010" "Version 1.0rc2" "Hardware Locality (hwloc)" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -7,17 +7,17 @@ Finding a single Object covering at least CPU set \-
 
 .in +1c
 .ti -1c
-.RI "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure \fBhwloc_get_child_covering_cpuset\fP (\fBhwloc_topology_t\fP topology __hwloc_attribute_unused, \fBhwloc_const_cpuset_t\fP set, \fBhwloc_obj_t\fP parent)"
+.RI "static __hwloc_inline \fBhwloc_obj_t\fP __hwloc_attribute_pure \fBhwloc_get_child_covering_cpuset\fP (\fBhwloc_topology_t\fP topology __hwloc_attribute_unused, \fBhwloc_const_cpuset_t\fP set, \fBhwloc_obj_t\fP parent)"
 .br
 .RI "\fIGet the child covering at least CPU set \fCset\fP. \fP"
 .ti -1c
-.RI "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure \fBhwloc_get_obj_covering_cpuset\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set)"
+.RI "static __hwloc_inline \fBhwloc_obj_t\fP __hwloc_attribute_pure \fBhwloc_get_obj_covering_cpuset\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set)"
 .br
 .RI "\fIGet the lowest object covering at least CPU set \fCset\fP. \fP"
 .in -1c
 .SH "Function Documentation"
 .PP 
-.SS "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure hwloc_get_child_covering_cpuset (\fBhwloc_topology_t\fP topology __hwloc_attribute_unused, \fBhwloc_const_cpuset_t\fP set, \fBhwloc_obj_t\fP parent)\fC [static]\fP"
+.SS "static __hwloc_inline \fBhwloc_obj_t\fP __hwloc_attribute_pure hwloc_get_child_covering_cpuset (\fBhwloc_topology_t\fP topology __hwloc_attribute_unused, \fBhwloc_const_cpuset_t\fP set, \fBhwloc_obj_t\fP parent)\fC [static]\fP"
 .PP
 Get the child covering at least CPU set \fCset\fP. \fBReturns:\fP
 .RS 4
@@ -25,7 +25,7 @@ Get the child covering at least CPU set \fCset\fP. \fBReturns:\fP
 .RE
 .PP
 
-.SS "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure hwloc_get_obj_covering_cpuset (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set)\fC [static]\fP"
+.SS "static __hwloc_inline \fBhwloc_obj_t\fP __hwloc_attribute_pure hwloc_get_obj_covering_cpuset (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set)\fC [static]\fP"
 .PP
 Get the lowest object covering at least CPU set \fCset\fP. \fBReturns:\fP
 .RS 4

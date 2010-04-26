@@ -56,6 +56,8 @@ hwloc_backend_synthetic_init(struct hwloc_topology *topology, const char *descri
 	type = HWLOC_OBJ_MISC;
       else if (!hwloc_namecoloncmp(pos, "group", 2))
 	type = HWLOC_OBJ_GROUP;
+      else
+        fprintf(stderr, "Unknown object type `%s'\n", pos);
 
       next_pos = strchr(pos, ':');
       if (!next_pos) {

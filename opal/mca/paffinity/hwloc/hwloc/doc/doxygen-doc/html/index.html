@@ -20,7 +20,7 @@
   </div>
 </div>
 <div class="contents">
-<h1>Hardware Locality </h1><h3 class="version">1.0rc1 </h3><h1 class="sub">Portable abstraction of hierarchical architectures for high-performance computing</h1>
+<h1>Hardware Locality </h1><h3 class="version">1.0rc2 </h3><h1 class="sub">Portable abstraction of hierarchical architectures for high-performance computing</h1>
 <hr/>
  
 <div class="section" id="introduction">
@@ -28,7 +28,7 @@
 Introduction</a></h2>
 <p>hwloc provides command line tools and a C API to obtain the hierarchical map of key computing elements, such as: NUMA memory nodes, shared caches, processor sockets, processor cores, and processing units (logical processors or "threads"). hwloc also gathers various attributes such as cache and memory information, and is portable across a variety of different operating systems and platforms.</p>
 <p>hwloc primarily aims at helping high-performance computing (HPC) applications, but is also applicable to any project seeking to exploit code and/or data locality on modern computing platforms.</p>
-<p>Note that the hwloc project represents the merger of the libtopology project from INRIA and the Portable Linux Processor Affinity (PLPA) sub-project from Open MPI. <em>Both of these prior projects are now deprecated.</em> The first hwloc release is essentially a "re-branding" of the libtopology code base, but with both a few genuinely new features and a few PLPA-like features added in. More new features and more PLPA-like features will be added to hwloc over time. See <a class="el" href="a00006.html">Switching from PLPA to hwloc</a> for more details about converting your application from PLPA to hwloc.</p>
+<p>Note that the hwloc project represents the merger of the libtopology project from INRIA and the Portable Linux Processor Affinity (PLPA) sub-project from Open MPI. <em>Both of these prior projects are now deprecated.</em> The first hwloc release is essentially a "re-branding" of the libtopology code base, but with both a few genuinely new features and a few PLPA-like features added in. More new features and more PLPA-like features will be added to hwloc over time. See <a class="el" href="a00007.html">Switching from PLPA to hwloc</a> for more details about converting your application from PLPA to hwloc.</p>
 <p>hwloc supports the following operating systems:</p>
 <ul>
 <li>
@@ -165,9 +165,9 @@ Machine (16GB)
 </div><div class="section" id="interface">
 <h2><a class="anchor" id="interface">
 Programming interface</a></h2>
-<p>The basic interface is available in <a class="el" href="a00021_source.html" title="The hwloc API.">hwloc.h</a>. It mostly offers low-level routines for advanced programmers that want to manually manipulate objects and follow links between them. Developers should look at <a class="el" href="a00019_source.html" title="High-level hwloc traversal helpers.">hwloc/helper.h</a>, which provides good higher-level topology traversal examples.</p>
-<p>Each object contains a cpuset describing the list of processing units that it contains. These cpusets may be used for <a class="el" href="a00035.html">Binding</a>. hwloc offers an extensive cpuset manipulation interface in <a class="el" href="a00017_source.html" title="The Cpuset API, for use in hwloc itself.">hwloc/cpuset.h</a>.</p>
-<p>Moreover, hwloc also comes with additional helpers for interoperability with several commonly used environments. For Linux, some specific helpers are available in <a class="el" href="a00023_source.html" title="Macros to help interaction between hwloc and Linux.">hwloc/linux.h</a>, and <a class="el" href="a00022_source.html" title="Macros to help interaction between hwloc and Linux libnuma.">hwloc/linux-libnuma.h</a> if using libnuma. On glibc-based systems, additional helpers are available in <a class="el" href="a00018_source.html" title="Macros to help interaction between hwloc and glibc scheduling routines.">hwloc/glibc-sched.h</a>. For Linux systems with the OpenFabrics verbs library, some dedicated helpers are provided in <a class="el" href="a00024_source.html" title="Macros to help interaction between hwloc and OpenFabrics verbs.">hwloc/openfabrics-verbs.h</a> (this helper file is not yet useful on non-Linux systems with the OpenFabrics verbs library).</p>
+<p>The basic interface is available in <a class="el" href="a00022_source.html" title="The hwloc API.">hwloc.h</a>. It essentially offers low-level routines for advanced programmers that want to manually manipulate objects and follow links between them. Developers should also look at <a class="el" href="a00020_source.html" title="High-level hwloc traversal helpers.">hwloc/helper.h</a>, which provides good higher-level topology traversal examples.</p>
+<p>Each object contains a cpuset describing the list of processing units that it contains. These cpusets may be used for <a class="el" href="a00036.html">Binding</a>. hwloc offers an extensive cpuset manipulation interface in <a class="el" href="a00018_source.html" title="The Cpuset API, for use in hwloc itself.">hwloc/cpuset.h</a>.</p>
+<p>Moreover, hwloc also comes with additional helpers for interoperability with several commonly used environments. See the <a class="el" href="a00004.html">Interoperability with other software</a> section for details.</p>
 <p>To precisely define the vocabulary used by hwloc, a <a class="el" href="a00001.html">Terms and Definitions</a> section is available and should probably be read first.</p>
 <p>Further documentation is available in a full set of HTML pages, man pages, and self-contained PDF files (formatted for both both US letter and A4 formats) in the source tarball in doc/doxygen-doc/. If you are building from a Subversion checkout, you will need to have Doxygen and pdflatex installed -- the documentation will be built during the normal "make" process. The documentation is installed during "make
 install" to $prefix/share/doc/hwloc/ and your systems default man page tree (under $prefix, of course).</p>
@@ -185,16 +185,16 @@ API example</a></h2>
 
 <span class="preprocessor">#include &lt;hwloc.h&gt;</span>
 
-<span class="keyword">static</span> <span class="keywordtype">void</span> print_children(<a class="code" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38" title="Topology context.">hwloc_topology_t</a> topology, <a class="code" href="a00010.html" title="Structure of a topology object.">hwloc_obj_t</a> obj, 
+<span class="keyword">static</span> <span class="keywordtype">void</span> print_children(<a class="code" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38" title="Topology context.">hwloc_topology_t</a> topology, <a class="code" href="a00011.html" title="Structure of a topology object.">hwloc_obj_t</a> obj, 
                            <span class="keywordtype">int</span> depth)
 {
     <span class="keywordtype">char</span> <span class="keywordtype">string</span>[128];
     <span class="keywordtype">unsigned</span> i;
 
-    <a class="code" href="a00034.html#ga5c6a61a83f4790b421e2f62e9088446f" title="Stringify a given topology object into a human-readable form.">hwloc_obj_snprintf</a>(<span class="keywordtype">string</span>, <span class="keyword">sizeof</span>(<span class="keywordtype">string</span>), topology, obj, <span class="stringliteral">&quot;#&quot;</span>, 0);
+    <a class="code" href="a00035.html#ga5c6a61a83f4790b421e2f62e9088446f" title="Stringify a given topology object into a human-readable form.">hwloc_obj_snprintf</a>(<span class="keywordtype">string</span>, <span class="keyword">sizeof</span>(<span class="keywordtype">string</span>), topology, obj, <span class="stringliteral">&quot;#&quot;</span>, 0);
     printf(<span class="stringliteral">&quot;%*s%s\n&quot;</span>, 2*depth, <span class="stringliteral">&quot;&quot;</span>, <span class="keywordtype">string</span>);
-    <span class="keywordflow">for</span> (i = 0; i &lt; obj-&gt;<a class="code" href="a00010.html#aac3f6da35c9b57599909a44ce2b716c1" title="Number of children.">arity</a>; i++) {
-        print_children(topology, obj-&gt;<a class="code" href="a00010.html#a04d05403da37bfe17cd63b7c7dd07b1f" title="Children, children[0 .. arity -1].">children</a>[i], depth + 1);
+    <span class="keywordflow">for</span> (i = 0; i &lt; obj-&gt;<a class="code" href="a00011.html#aac3f6da35c9b57599909a44ce2b716c1" title="Number of children.">arity</a>; i++) {
+        print_children(topology, obj-&gt;<a class="code" href="a00011.html#a04d05403da37bfe17cd63b7c7dd07b1f" title="Children, children[0 .. arity -1].">children</a>[i], depth + 1);
     }
 }
 
@@ -206,12 +206,12 @@ API example</a></h2>
     <span class="keywordtype">int</span> levels;
     <span class="keywordtype">char</span> <span class="keywordtype">string</span>[128];
     <span class="keywordtype">int</span> topodepth;
-    <a class="code" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38" title="Topology context.">hwloc_topology_t</a> topology;
-    <a class="code" href="a00045.html#ga7366332f7090f5b54d4b25a0c2c4b411" title="Set of CPUs represented as an opaque pointer to an internal bitmask.">hwloc_cpuset_t</a> cpuset;
-    <a class="code" href="a00010.html" title="Structure of a topology object.">hwloc_obj_t</a> obj;
+    <a class="code" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38" title="Topology context.">hwloc_topology_t</a> topology;
+    <a class="code" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411" title="Set of CPUs represented as an opaque pointer to an internal bitmask.">hwloc_cpuset_t</a> cpuset;
+    <a class="code" href="a00011.html" title="Structure of a topology object.">hwloc_obj_t</a> obj;
 
     <span class="comment">/* Allocate and initialize topology object. */</span>
-    <a class="code" href="a00029.html#ga5c2d6f476af87005c7bd0811d4548b9f" title="Allocate a topology context.">hwloc_topology_init</a>(&amp;topology);
+    <a class="code" href="a00030.html#ga5c2d6f476af87005c7bd0811d4548b9f" title="Allocate a topology context.">hwloc_topology_init</a>(&amp;topology);
 
     <span class="comment">/* ... Optionally, put detection configuration here to ignore</span>
 <span class="comment">       some objects types, define a synthetic topology, etc....  </span>
@@ -221,11 +221,11 @@ API example</a></h2>
 <span class="comment">       Detection. */</span>
 
     <span class="comment">/* Perform the topology detection. */</span>
-    <a class="code" href="a00029.html#ga91e2e6427b95fb7339c99dbbef996e71" title="Build the actual topology.">hwloc_topology_load</a>(topology);
+    <a class="code" href="a00030.html#ga91e2e6427b95fb7339c99dbbef996e71" title="Build the actual topology.">hwloc_topology_load</a>(topology);
 
     <span class="comment">/* Optionally, get some additional topology information</span>
 <span class="comment">       in case we need the topology depth later. */</span>
-    topodepth = <a class="code" href="a00032.html#ga8c30b0cec55074eb3ed34e4f2a1a9937" title="Get the depth of the hierachical tree of objects.">hwloc_topology_get_depth</a>(topology);
+    topodepth = <a class="code" href="a00033.html#ga8c30b0cec55074eb3ed34e4f2a1a9937" title="Get the depth of the hierachical tree of objects.">hwloc_topology_get_depth</a>(topology);
 
     <span class="comment">/*****************************************************************</span>
 <span class="comment">     * First example:</span>
@@ -234,10 +234,10 @@ API example</a></h2>
 <span class="comment">     *****************************************************************/</span>
     <span class="keywordflow">for</span> (depth = 0; depth &lt; topodepth; depth++) {
         printf(<span class="stringliteral">&quot;*** Objects at level %d\n&quot;</span>, depth);
-        <span class="keywordflow">for</span> (i = 0; i &lt; <a class="code" href="a00032.html#ga20cfe2456f4cfdd789c9aca6d2fdd69f" title="Returns the width of level at depth depth.">hwloc_get_nbobjs_by_depth</a>(topology, depth); 
+        <span class="keywordflow">for</span> (i = 0; i &lt; <a class="code" href="a00033.html#ga20cfe2456f4cfdd789c9aca6d2fdd69f" title="Returns the width of level at depth depth.">hwloc_get_nbobjs_by_depth</a>(topology, depth); 
              i++) {
-            <a class="code" href="a00034.html#ga5c6a61a83f4790b421e2f62e9088446f" title="Stringify a given topology object into a human-readable form.">hwloc_obj_snprintf</a>(<span class="keywordtype">string</span>, <span class="keyword">sizeof</span>(<span class="keywordtype">string</span>), topology,
-                       <a class="code" href="a00033.html#gaedd78240b0c1108355586a268ec5a697" title="Returns the topology object at index index from depth depth.">hwloc_get_obj_by_depth</a>(topology, depth, i),
+            <a class="code" href="a00035.html#ga5c6a61a83f4790b421e2f62e9088446f" title="Stringify a given topology object into a human-readable form.">hwloc_obj_snprintf</a>(<span class="keywordtype">string</span>, <span class="keyword">sizeof</span>(<span class="keywordtype">string</span>), topology,
+                       <a class="code" href="a00034.html#gaedd78240b0c1108355586a268ec5a697" title="Returns the topology object at index index from depth depth.">hwloc_get_obj_by_depth</a>(topology, depth, i),
                        <span class="stringliteral">&quot;#&quot;</span>, 0);
             printf(<span class="stringliteral">&quot;Index %u: %s\n&quot;</span>, i, <span class="keywordtype">string</span>);
         }
@@ -248,18 +248,18 @@ API example</a></h2>
 <span class="comment">     * Walk the topology with a tree style.</span>
 <span class="comment">     *****************************************************************/</span>
     printf(<span class="stringliteral">&quot;*** Printing overall tree\n&quot;</span>);
-    print_children(topology, <a class="code" href="a00037.html#ga643d25c9fa7e0ca3ac7e0c74f1b0bdc6" title="Returns the top-object of the topology-tree.">hwloc_get_root_obj</a>(topology), 0);
+    print_children(topology, <a class="code" href="a00038.html#ga632edae4a651996895ebde85ea2c1264" title="Returns the top-object of the topology-tree.">hwloc_get_root_obj</a>(topology), 0);
 
     <span class="comment">/*****************************************************************</span>
 <span class="comment">     * Third example:</span>
 <span class="comment">     * Print the number of sockets.</span>
 <span class="comment">     *****************************************************************/</span>
-    depth = <a class="code" href="a00032.html#gaea7c64dd59467f5201ba87712710b14d" title="Returns the depth of objects of type type.">hwloc_get_type_depth</a>(topology, <a class="code" href="a00027.html#ggacd37bb612667dc437d66bfb175a8dc55a1ac6e07775ae4324b3fe9dbd72c785ec" title="Socket, physical package, or chip. In the physical meaning, i.e. that you can add...">HWLOC_OBJ_SOCKET</a>);
-    <span class="keywordflow">if</span> (depth == <a class="code" href="a00032.html#ggaf4e663cf42bbe20756b849c6293ef575a0565ab92ab72cb0cec91e23003294aad" title="No object of given type exists in the topology.">HWLOC_TYPE_DEPTH_UNKNOWN</a>) {
+    depth = <a class="code" href="a00033.html#gaea7c64dd59467f5201ba87712710b14d" title="Returns the depth of objects of type type.">hwloc_get_type_depth</a>(topology, <a class="code" href="a00028.html#ggacd37bb612667dc437d66bfb175a8dc55a1ac6e07775ae4324b3fe9dbd72c785ec" title="Socket, physical package, or chip. In the physical meaning, i.e. that you can add...">HWLOC_OBJ_SOCKET</a>);
+    <span class="keywordflow">if</span> (depth == <a class="code" href="a00033.html#ggaf4e663cf42bbe20756b849c6293ef575a0565ab92ab72cb0cec91e23003294aad" title="No object of given type exists in the topology.">HWLOC_TYPE_DEPTH_UNKNOWN</a>) {
         printf(<span class="stringliteral">&quot;*** The number of sockets is unknown\n&quot;</span>);
     } <span class="keywordflow">else</span> {
         printf(<span class="stringliteral">&quot;*** %u socket(s)\n&quot;</span>, 
-               <a class="code" href="a00032.html#ga20cfe2456f4cfdd789c9aca6d2fdd69f" title="Returns the width of level at depth depth.">hwloc_get_nbobjs_by_depth</a>(topology, depth));
+               <a class="code" href="a00033.html#ga20cfe2456f4cfdd789c9aca6d2fdd69f" title="Returns the width of level at depth depth.">hwloc_get_nbobjs_by_depth</a>(topology, depth));
     }
 
     <span class="comment">/*****************************************************************</span>
@@ -269,12 +269,12 @@ API example</a></h2>
 <span class="comment">     *****************************************************************/</span>
     levels = 0;
     size = 0;
-    <span class="keywordflow">for</span> (obj = <a class="code" href="a00033.html#gaabd26357fea30ceb7754ad970b9a0aaa" title="Returns the topology object at index index with type type.">hwloc_get_obj_by_type</a>(topology, <a class="code" href="a00027.html#ggacd37bb612667dc437d66bfb175a8dc55abca6887e80cb291353b0a0c1da83f661" title="Processing Unit, or (Logical) Processor. An execution unit (may share a core with...">HWLOC_OBJ_PU</a>, 0);
+    <span class="keywordflow">for</span> (obj = <a class="code" href="a00034.html#ga701f83b2cf0cb8e0acd58cd2dc1c67a2" title="Returns the topology object at index index with type type.">hwloc_get_obj_by_type</a>(topology, <a class="code" href="a00028.html#ggacd37bb612667dc437d66bfb175a8dc55abca6887e80cb291353b0a0c1da83f661" title="Processing Unit, or (Logical) Processor. An execution unit (may share a core with...">HWLOC_OBJ_PU</a>, 0);
          obj;
-         obj = obj-&gt;<a class="code" href="a00010.html#adc494f6aed939992be1c55cca5822900" title="Parent, NULL if root (system object).">parent</a>)
-      <span class="keywordflow">if</span> (obj-&gt;<a class="code" href="a00010.html#acc4f0803f244867e68fe0036800be5de" title="Type of object.">type</a> == <a class="code" href="a00027.html#ggacd37bb612667dc437d66bfb175a8dc55a56ee0b7eca88f363b75b34fdde8c9ddc" title="Data cache. Can be L1, L2, L3, ...">HWLOC_OBJ_CACHE</a>) {
+         obj = obj-&gt;<a class="code" href="a00011.html#adc494f6aed939992be1c55cca5822900" title="Parent, NULL if root (system object).">parent</a>)
+      <span class="keywordflow">if</span> (obj-&gt;<a class="code" href="a00011.html#acc4f0803f244867e68fe0036800be5de" title="Type of object.">type</a> == <a class="code" href="a00028.html#ggacd37bb612667dc437d66bfb175a8dc55a56ee0b7eca88f363b75b34fdde8c9ddc" title="Data cache. Can be L1, L2, L3, ...">HWLOC_OBJ_CACHE</a>) {
         levels++;
-        size += obj-&gt;<a class="code" href="a00010.html#accd40e29f71f19e88db62ea3df02adc8" title="Object type-specific Attributes.">attr</a>-&gt;<a class="code" href="a00011.html#ab5a8ae3bf490e6b1071fea53f7382836" title="Cache-specific Object Attributes.">cache</a>.<a class="code" href="a00007.html#a3c68235220554308f89768f281ad1e62" title="Size of cache in bytes.">size</a>;
+        size += obj-&gt;<a class="code" href="a00011.html#accd40e29f71f19e88db62ea3df02adc8" title="Object type-specific Attributes.">attr</a>-&gt;<a class="code" href="a00012.html#ab5a8ae3bf490e6b1071fea53f7382836" title="Cache-specific Object Attributes.">cache</a>.<a class="code" href="a00008.html#a3c68235220554308f89768f281ad1e62" title="Size of cache in bytes.">size</a>;
       }
     printf(<span class="stringliteral">&quot;*** Logical processor 0 has %u caches totaling %luKB\n&quot;</span>, 
            levels, size / 1024);
@@ -286,33 +286,33 @@ API example</a></h2>
 <span class="comment">     * First find out where cores are, or else smaller sets of CPUs if</span>
 <span class="comment">     * the OS doesn&#39;t have the notion of a &quot;core&quot;.</span>
 <span class="comment">     *****************************************************************/</span>
-    depth = <a class="code" href="a00036.html#gaf324fdd1fcb895c32cc6540c92e9245a" title="Returns the depth of objects of type type or below.">hwloc_get_type_or_below_depth</a>(topology, <a class="code" href="a00027.html#ggacd37bb612667dc437d66bfb175a8dc55ac793958f330bca371aa1535de8aff45f" title="Core. A computation unit (may be shared by several logical processors).">HWLOC_OBJ_CORE</a>);
+    depth = <a class="code" href="a00037.html#ga0ffafb4c0ae13b9a7541ca820ca34883" title="Returns the depth of objects of type type or below.">hwloc_get_type_or_below_depth</a>(topology, <a class="code" href="a00028.html#ggacd37bb612667dc437d66bfb175a8dc55ac793958f330bca371aa1535de8aff45f" title="Core. A computation unit (may be shared by several logical processors).">HWLOC_OBJ_CORE</a>);
 
     <span class="comment">/* Get last core. */</span>
-    obj = <a class="code" href="a00033.html#gaedd78240b0c1108355586a268ec5a697" title="Returns the topology object at index index from depth depth.">hwloc_get_obj_by_depth</a>(topology, depth,
-                   <a class="code" href="a00032.html#ga20cfe2456f4cfdd789c9aca6d2fdd69f" title="Returns the width of level at depth depth.">hwloc_get_nbobjs_by_depth</a>(topology, depth) - 1);
+    obj = <a class="code" href="a00034.html#gaedd78240b0c1108355586a268ec5a697" title="Returns the topology object at index index from depth depth.">hwloc_get_obj_by_depth</a>(topology, depth,
+                   <a class="code" href="a00033.html#ga20cfe2456f4cfdd789c9aca6d2fdd69f" title="Returns the width of level at depth depth.">hwloc_get_nbobjs_by_depth</a>(topology, depth) - 1);
     <span class="keywordflow">if</span> (obj) {
         <span class="comment">/* Get a copy of its cpuset that we may modify. */</span>
-        cpuset = <a class="code" href="a00045.html#ga468c6e3fd92a9d0db1fb56634a851be3" title="Duplicate CPU set set by allocating a new CPU set and copying set&amp;#39;s contents...">hwloc_cpuset_dup</a>(obj-&gt;<a class="code" href="a00010.html#a67925e0f2c47f50408fbdb9bddd0790f" title="CPUs covered by this object.">cpuset</a>);
+        cpuset = <a class="code" href="a00046.html#ga468c6e3fd92a9d0db1fb56634a851be3" title="Duplicate CPU set set by allocating a new CPU set and copying set&amp;#39;s contents...">hwloc_cpuset_dup</a>(obj-&gt;<a class="code" href="a00011.html#a67925e0f2c47f50408fbdb9bddd0790f" title="CPUs covered by this object.">cpuset</a>);
 
         <span class="comment">/* Get only one logical processor (in case the core is</span>
 <span class="comment">           SMT/hyperthreaded). */</span>
-        <a class="code" href="a00045.html#gace7ad3d2a71d9884e7a28311228931af" title="Keep a single CPU among those set in CPU set set.">hwloc_cpuset_singlify</a>(cpuset);
+        <a class="code" href="a00046.html#gace7ad3d2a71d9884e7a28311228931af" title="Keep a single CPU among those set in CPU set set.">hwloc_cpuset_singlify</a>(cpuset);
 
         <span class="comment">/* And try to bind ourself there. */</span>
-        <span class="keywordflow">if</span> (<a class="code" href="a00035.html#ga42f02baaf7dc0c0f5a6bbeca731fd144" title="Bind current process or thread on cpus given in cpuset set.">hwloc_set_cpubind</a>(topology, cpuset, 0)) {
+        <span class="keywordflow">if</span> (<a class="code" href="a00036.html#ga42f02baaf7dc0c0f5a6bbeca731fd144" title="Bind current process or thread on cpus given in cpuset set.">hwloc_set_cpubind</a>(topology, cpuset, 0)) {
             <span class="keywordtype">char</span> *str;
-            <a class="code" href="a00045.html#ga7a89398cbc58c9095aa094b9aeacbf00" title="Stringify a cpuset into a newly allocated string.">hwloc_cpuset_asprintf</a>(&amp;str, obj-&gt;<a class="code" href="a00010.html#a67925e0f2c47f50408fbdb9bddd0790f" title="CPUs covered by this object.">cpuset</a>);
+            <a class="code" href="a00046.html#ga7a89398cbc58c9095aa094b9aeacbf00" title="Stringify a cpuset into a newly allocated string.">hwloc_cpuset_asprintf</a>(&amp;str, obj-&gt;<a class="code" href="a00011.html#a67925e0f2c47f50408fbdb9bddd0790f" title="CPUs covered by this object.">cpuset</a>);
             printf(<span class="stringliteral">&quot;Couldn&#39;t bind to cpuset %s\n&quot;</span>, str);
             free(str);
         }
 
         <span class="comment">/* Free our cpuset copy */</span>
-        <a class="code" href="a00045.html#gaaac6c1536cdcc35f1a1a3a9ab84da80d" title="Free CPU set set.">hwloc_cpuset_free</a>(cpuset);
+        <a class="code" href="a00046.html#gaaac6c1536cdcc35f1a1a3a9ab84da80d" title="Free CPU set set.">hwloc_cpuset_free</a>(cpuset);
     }
 
     <span class="comment">/* Destroy topology object. */</span>
-    <a class="code" href="a00029.html#ga6040925d3ee4bbb2647f2a321aca5f4b" title="Terminate and free a topology context.">hwloc_topology_destroy</a>(topology);
+    <a class="code" href="a00030.html#ga6040925d3ee4bbb2647f2a321aca5f4b" title="Terminate and free a topology context.">hwloc_topology_destroy</a>(topology);
 
     <span class="keywordflow">return</span> 0;
 }

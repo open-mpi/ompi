@@ -113,8 +113,8 @@ $(DOX_TAG): $(BUILT_SOURCES) $(dox_inputs) $(PREBUILT_IMAGES)
 		-e 's/\\_\\-\\_\\-hwloc\\_\\-attribute\\_\\-deprecated//g' \
 		-e 's/HWLOC_DECLSPEC//g' \
 		-e 's/HWLOC\\_\\-DECLSPEC//g' \
-		-e 's/__inline/inline/g' \
-		-e 's/\\_\\-\\_\\-inline/inline/g' \
+		-e 's/__hwloc_inline/inline/g' \
+		-e 's/\\_\\-\\_\\-hwloc\\_\\-inline/inline/g' \
 		$(DOX_DIR)/html/*.html $(DOX_DIR)/latex/*.tex $(DOX_DIR)/man/man3/*.3
 	@echo "Work-around spurious leading _ in doxygen filenames..."
 	(cd $(DOX_DIR)/man/man3 ; \
@@ -134,12 +134,14 @@ if HWLOC_DOXYGEN_BROKEN_SHORT_NAMES
 	-@mv -f $(DOX_DIR)/latex/tools.tex $(DOX_DIR)/latex/a00002.tex
 	-@mv -f $(DOX_DIR)/html/envvar.html $(DOX_DIR)/html/a00003.html
 	-@mv -f $(DOX_DIR)/latex/envvar.tex $(DOX_DIR)/latex/a00003.tex
-	-@mv -f $(DOX_DIR)/html/threadsafety.html $(DOX_DIR)/html/a00004.html
-	-@mv -f $(DOX_DIR)/latex/threadsafety.tex $(DOX_DIR)/latex/a00004.tex
-	-@mv -f $(DOX_DIR)/html/embed.html $(DOX_DIR)/html/a00005.html
-	-@mv -f $(DOX_DIR)/latex/embed.tex $(DOX_DIR)/latex/a00005.tex
-	-@mv -f $(DOX_DIR)/html/switchfromplpa.html $(DOX_DIR)/html/a00006.html
-	-@mv -f $(DOX_DIR)/latex/switchfromplpa.tex $(DOX_DIR)/latex/a00006.tex
+	-@mv -f $(DOX_DIR)/html/interoperability.html $(DOX_DIR)/html/a00004.html
+	-@mv -f $(DOX_DIR)/latex/interoperability.tex $(DOX_DIR)/latex/a00004.tex
+	-@mv -f $(DOX_DIR)/html/threadsafety.html $(DOX_DIR)/html/a00005.html
+	-@mv -f $(DOX_DIR)/latex/threadsafety.tex $(DOX_DIR)/latex/a00005.tex
+	-@mv -f $(DOX_DIR)/html/embed.html $(DOX_DIR)/html/a00006.html
+	-@mv -f $(DOX_DIR)/latex/embed.tex $(DOX_DIR)/latex/a00006.tex
+	-@mv -f $(DOX_DIR)/html/switchfromplpa.html $(DOX_DIR)/html/a00007.html
+	-@mv -f $(DOX_DIR)/latex/switchfromplpa.tex $(DOX_DIR)/latex/a00007.tex
 endif
 endif
 

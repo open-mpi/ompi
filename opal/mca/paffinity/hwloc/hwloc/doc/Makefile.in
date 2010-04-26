@@ -1051,8 +1051,8 @@ uninstall-man: uninstall-man3
 @HWLOC_BUILD_DOXYGEN_TRUE@		-e 's/\\_\\-\\_\\-hwloc\\_\\-attribute\\_\\-deprecated//g' \
 @HWLOC_BUILD_DOXYGEN_TRUE@		-e 's/HWLOC_DECLSPEC//g' \
 @HWLOC_BUILD_DOXYGEN_TRUE@		-e 's/HWLOC\\_\\-DECLSPEC//g' \
-@HWLOC_BUILD_DOXYGEN_TRUE@		-e 's/__inline/inline/g' \
-@HWLOC_BUILD_DOXYGEN_TRUE@		-e 's/\\_\\-\\_\\-inline/inline/g' \
+@HWLOC_BUILD_DOXYGEN_TRUE@		-e 's/__hwloc_inline/inline/g' \
+@HWLOC_BUILD_DOXYGEN_TRUE@		-e 's/\\_\\-\\_\\-hwloc\\_\\-inline/inline/g' \
 @HWLOC_BUILD_DOXYGEN_TRUE@		$(DOX_DIR)/html/*.html $(DOX_DIR)/latex/*.tex $(DOX_DIR)/man/man3/*.3
 @HWLOC_BUILD_DOXYGEN_TRUE@	@echo "Work-around spurious leading _ in doxygen filenames..."
 @HWLOC_BUILD_DOXYGEN_TRUE@	(cd $(DOX_DIR)/man/man3 ; \
@@ -1071,12 +1071,14 @@ uninstall-man: uninstall-man3
 @HWLOC_BUILD_DOXYGEN_TRUE@@HWLOC_DOXYGEN_BROKEN_SHORT_NAMES_TRUE@	-@mv -f $(DOX_DIR)/latex/tools.tex $(DOX_DIR)/latex/a00002.tex
 @HWLOC_BUILD_DOXYGEN_TRUE@@HWLOC_DOXYGEN_BROKEN_SHORT_NAMES_TRUE@	-@mv -f $(DOX_DIR)/html/envvar.html $(DOX_DIR)/html/a00003.html
 @HWLOC_BUILD_DOXYGEN_TRUE@@HWLOC_DOXYGEN_BROKEN_SHORT_NAMES_TRUE@	-@mv -f $(DOX_DIR)/latex/envvar.tex $(DOX_DIR)/latex/a00003.tex
-@HWLOC_BUILD_DOXYGEN_TRUE@@HWLOC_DOXYGEN_BROKEN_SHORT_NAMES_TRUE@	-@mv -f $(DOX_DIR)/html/threadsafety.html $(DOX_DIR)/html/a00004.html
-@HWLOC_BUILD_DOXYGEN_TRUE@@HWLOC_DOXYGEN_BROKEN_SHORT_NAMES_TRUE@	-@mv -f $(DOX_DIR)/latex/threadsafety.tex $(DOX_DIR)/latex/a00004.tex
-@HWLOC_BUILD_DOXYGEN_TRUE@@HWLOC_DOXYGEN_BROKEN_SHORT_NAMES_TRUE@	-@mv -f $(DOX_DIR)/html/embed.html $(DOX_DIR)/html/a00005.html
-@HWLOC_BUILD_DOXYGEN_TRUE@@HWLOC_DOXYGEN_BROKEN_SHORT_NAMES_TRUE@	-@mv -f $(DOX_DIR)/latex/embed.tex $(DOX_DIR)/latex/a00005.tex
-@HWLOC_BUILD_DOXYGEN_TRUE@@HWLOC_DOXYGEN_BROKEN_SHORT_NAMES_TRUE@	-@mv -f $(DOX_DIR)/html/switchfromplpa.html $(DOX_DIR)/html/a00006.html
-@HWLOC_BUILD_DOXYGEN_TRUE@@HWLOC_DOXYGEN_BROKEN_SHORT_NAMES_TRUE@	-@mv -f $(DOX_DIR)/latex/switchfromplpa.tex $(DOX_DIR)/latex/a00006.tex
+@HWLOC_BUILD_DOXYGEN_TRUE@@HWLOC_DOXYGEN_BROKEN_SHORT_NAMES_TRUE@	-@mv -f $(DOX_DIR)/html/interoperability.html $(DOX_DIR)/html/a00004.html
+@HWLOC_BUILD_DOXYGEN_TRUE@@HWLOC_DOXYGEN_BROKEN_SHORT_NAMES_TRUE@	-@mv -f $(DOX_DIR)/latex/interoperability.tex $(DOX_DIR)/latex/a00004.tex
+@HWLOC_BUILD_DOXYGEN_TRUE@@HWLOC_DOXYGEN_BROKEN_SHORT_NAMES_TRUE@	-@mv -f $(DOX_DIR)/html/threadsafety.html $(DOX_DIR)/html/a00005.html
+@HWLOC_BUILD_DOXYGEN_TRUE@@HWLOC_DOXYGEN_BROKEN_SHORT_NAMES_TRUE@	-@mv -f $(DOX_DIR)/latex/threadsafety.tex $(DOX_DIR)/latex/a00005.tex
+@HWLOC_BUILD_DOXYGEN_TRUE@@HWLOC_DOXYGEN_BROKEN_SHORT_NAMES_TRUE@	-@mv -f $(DOX_DIR)/html/embed.html $(DOX_DIR)/html/a00006.html
+@HWLOC_BUILD_DOXYGEN_TRUE@@HWLOC_DOXYGEN_BROKEN_SHORT_NAMES_TRUE@	-@mv -f $(DOX_DIR)/latex/embed.tex $(DOX_DIR)/latex/a00006.tex
+@HWLOC_BUILD_DOXYGEN_TRUE@@HWLOC_DOXYGEN_BROKEN_SHORT_NAMES_TRUE@	-@mv -f $(DOX_DIR)/html/switchfromplpa.html $(DOX_DIR)/html/a00007.html
+@HWLOC_BUILD_DOXYGEN_TRUE@@HWLOC_DOXYGEN_BROKEN_SHORT_NAMES_TRUE@	-@mv -f $(DOX_DIR)/latex/switchfromplpa.tex $(DOX_DIR)/latex/a00007.tex
 
 #
 # Rules for building the PDF

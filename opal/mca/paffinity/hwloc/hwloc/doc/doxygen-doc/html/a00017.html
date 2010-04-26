@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
-<title>Hardware Locality (hwloc): hwloc_obj_attr_u::hwloc_cache_attr_s Struct Reference</title>
+<title>Hardware Locality (hwloc): hwloc_topology_support Struct Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <link href="doxygen.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -24,52 +24,50 @@
       <li><a href="functions.html"><span>Data&nbsp;Fields</span></a></li>
     </ul>
   </div>
-  <div class="navpath"><a class="el" href="a00012.html">hwloc_obj_attr_u</a>::<a class="el" href="a00008.html">hwloc_cache_attr_s</a>
-  </div>
 </div>
 <div class="contents">
-<h1>hwloc_obj_attr_u::hwloc_cache_attr_s Struct Reference</h1><!-- doxytag: class="hwloc_obj_attr_u::hwloc_cache_attr_s" -->
-<p>Cache-specific Object Attributes.  
+<h1>hwloc_topology_support Struct Reference<br/>
+<small>
+[<a class="el" href="a00031.html">Configure Topology Detection</a>]</small>
+</h1><!-- doxytag: class="hwloc_topology_support" -->
+<p>Set of flags describing actual support for this topology.  
 <a href="#_details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="a00022_source.html">hwloc.h</a>&gt;</code></p>
 <table border="0" cellpadding="0" cellspacing="0">
 <tr><td colspan="2"><h2>Data Fields</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">uint64_t&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00008.html#a3c68235220554308f89768f281ad1e62">size</a></td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Size of cache in bytes.  <a href="#a3c68235220554308f89768f281ad1e62"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">unsigned&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00008.html#a5c8f7f39193736c2187ed626940835d5">depth</a></td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Depth of cache.  <a href="#a5c8f7f39193736c2187ed626940835d5"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">struct <br class="typebreak"/>
+<a class="el" href="a00016.html">hwloc_topology_discovery_support</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00017.html#aea3fbd7653d987d81f848636c420504d">discovery</a></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">struct <br class="typebreak"/>
+<a class="el" href="a00015.html">hwloc_topology_cpubind_support</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00017.html#adef2bb91f74c3e70a2a071393caf5f56">cpubind</a></td></tr>
 </table>
 <hr/><a name="_details"></a><h2>Detailed Description</h2>
-<p>Cache-specific Object Attributes. </p>
+<p>Set of flags describing actual support for this topology. </p>
+<p>This is retrieved with <a class="el" href="a00031.html#gac2126e105f3ae708efca2e90d612625a" title="Retrieve the topology support.">hwloc_topology_get_support()</a> and will be valid until the topology object is destroyed. Note: the values are correct only after discovery. </p>
 <hr/><h2>Field Documentation</h2>
-<a class="anchor" id="a5c8f7f39193736c2187ed626940835d5"></a><!-- doxytag: member="hwloc_obj_attr_u::hwloc_cache_attr_s::depth" ref="a5c8f7f39193736c2187ed626940835d5" args="" -->
+<a class="anchor" id="adef2bb91f74c3e70a2a071393caf5f56"></a><!-- doxytag: member="hwloc_topology_support::cpubind" ref="adef2bb91f74c3e70a2a071393caf5f56" args="" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">unsigned <a class="el" href="a00008.html#a5c8f7f39193736c2187ed626940835d5">hwloc_obj_attr_u::hwloc_cache_attr_s::depth</a></td>
+          <td class="memname">struct <a class="el" href="a00015.html">hwloc_topology_cpubind_support</a>* <a class="el" href="a00017.html#adef2bb91f74c3e70a2a071393caf5f56">hwloc_topology_support::cpubind</a></td>
         </tr>
       </table>
 </div>
 <div class="memdoc">
 
-<p>Depth of cache. </p>
-
 </div>
 </div>
-<a class="anchor" id="a3c68235220554308f89768f281ad1e62"></a><!-- doxytag: member="hwloc_obj_attr_u::hwloc_cache_attr_s::size" ref="a3c68235220554308f89768f281ad1e62" args="" -->
+<a class="anchor" id="aea3fbd7653d987d81f848636c420504d"></a><!-- doxytag: member="hwloc_topology_support::discovery" ref="aea3fbd7653d987d81f848636c420504d" args="" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">uint64_t <a class="el" href="a00008.html#a3c68235220554308f89768f281ad1e62">hwloc_obj_attr_u::hwloc_cache_attr_s::size</a></td>
+          <td class="memname">struct <a class="el" href="a00016.html">hwloc_topology_discovery_support</a>* <a class="el" href="a00017.html#aea3fbd7653d987d81f848636c420504d">hwloc_topology_support::discovery</a></td>
         </tr>
       </table>
 </div>
 <div class="memdoc">
-
-<p>Size of cache in bytes. </p>
 
 </div>
 </div>

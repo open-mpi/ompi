@@ -1,4 +1,4 @@
-.TH "Retrieve Objects" 3 "17 Apr 2010" "Version 1.0rc1" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.TH "Retrieve Objects" 3 "26 Apr 2010" "Version 1.0rc2" "Hardware Locality (hwloc)" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -11,7 +11,7 @@ Retrieve Objects \-
 .br
 .RI "\fIReturns the topology object at index \fCindex\fP from depth \fCdepth\fP. \fP"
 .ti -1c
-.RI "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure \fBhwloc_get_obj_by_type\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type, unsigned idx)"
+.RI "static __hwloc_inline \fBhwloc_obj_t\fP __hwloc_attribute_pure \fBhwloc_get_obj_by_type\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type, unsigned idx)"
 .br
 .RI "\fIReturns the topology object at index \fCindex\fP with type \fCtype\fP. \fP"
 .in -1c
@@ -20,7 +20,7 @@ Retrieve Objects \-
 .SS "HWLOC_DECLSPEC \fBhwloc_obj_t\fP hwloc_get_obj_by_depth (\fBhwloc_topology_t\fP topology, unsigned depth, unsigned idx)"
 .PP
 Returns the topology object at index \fCindex\fP from depth \fCdepth\fP. 
-.SS "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure hwloc_get_obj_by_type (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type, unsigned idx)\fC [static]\fP"
+.SS "static __hwloc_inline \fBhwloc_obj_t\fP __hwloc_attribute_pure hwloc_get_obj_by_type (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type, unsigned idx)\fC [static]\fP"
 .PP
 Returns the topology object at index \fCindex\fP with type \fCtype\fP. If no object for that type exists, \fCNULL\fP is returned. If there are several levels with objects of that type, \fCNULL\fP is returned and ther caller may fallback to \fBhwloc_get_obj_by_depth()\fP. 
 .SH "Author"

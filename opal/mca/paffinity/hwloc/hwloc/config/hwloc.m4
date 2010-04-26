@@ -258,6 +258,23 @@ EOF])
     #
     _HWLOC_CHECK_ATTRIBUTES
     _HWLOC_CHECK_VISIBILITY
+    HWLOC_CFLAGS="$HWLOC_FLAGS $HWLOC_VISIBILITY_CFLAGS"
+    AS_IF([test "$HWLOC_VISIBILITY_CFLAGS" != ""],
+          [AC_MSG_WARN(["$HWLOC_VISIBILITY_CFLAGS" has been added to hwloc's CFLAGS])])
+
+    #
+    # Check for inline compatibility support
+    #
+    AC_MSG_CHECKING([for inline compatibility keyword])
+    AC_TRY_COMPILE([static void __inline__ f(void) { }], [],
+      [__hwloc_inline=__inline__],
+      [AC_TRY_COMPILE([static void __inline f(void) {}], [],
+        [__hwloc_inline=__inline],
+        [__hwloc_inline=]
+      )]
+    )
+    AC_MSG_RESULT([$__hwloc_inline])
+    AC_DEFINE_UNQUOTED(__hwloc_inline, $__hwloc_inline, [Define this to a keyword that can safely replace inline in installed headers])
     
     #
     # Now detect support
@@ -285,7 +302,7 @@ EOF])
     LIBS=
     AC_CHECK_HEADERS([curses.h], [
       AC_CHECK_HEADERS([term.h], [
-        AC_SEARCH_LIBS([tparm], [termcap curses], [
+        AC_SEARCH_LIBS([tparm], [termcap ncursesw ncurses curses], [
             AC_SUBST([HWLOC_TERMCAP_LIBS], ["$LIBS"])
             AC_DEFINE([HWLOC_HAVE_LIBTERMCAP], [1],
                       [Define to 1 if you have a library providing the termcap interface])
@@ -379,7 +396,10 @@ EOF])
         AC_MSG_RESULT([yes]),
         AC_MSG_RESULT([no])
       )
-    ])
+    ], , [[
+#define _GNU_SOURCE
+#include <sched.h>
+]])
     
     AC_MSG_CHECKING([for working CPU_SET])
     AC_LINK_IFELSE(

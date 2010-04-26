@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
-<title>Hardware Locality (hwloc): Helpers for manipulating Linux libnuma bitmask</title>
+<title>Hardware Locality (hwloc): Helpers for manipulating Linux libnuma unsigned long masks</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <link href="doxygen.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -20,36 +20,41 @@
   </div>
 </div>
 <div class="contents">
-<h1>Helpers for manipulating Linux libnuma bitmask</h1><table border="0" cellpadding="0" cellspacing="0">
+<h1>Helpers for manipulating Linux libnuma unsigned long masks</h1><table border="0" cellpadding="0" cellspacing="0">
 <tr><td colspan="2"><h2>Functions</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">static __inline struct bitmask <br class="typebreak"/>
-*__hwloc_attribute_malloc&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00049.html#ga80bea6f05af929fbaf50557225ddd927">hwloc_cpuset_to_linux_libnuma_bitmask</a> (<a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology, <a class="el" href="a00045.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> cpuset)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Convert hwloc CPU set <code>cpuset</code> into the returned libnuma bitmask.  <a href="#ga80bea6f05af929fbaf50557225ddd927"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">static __inline int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00049.html#gaa92103c3051e8ee3aa4a8a483143e85e">hwloc_cpuset_from_linux_libnuma_bitmask</a> (<a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology, <a class="el" href="a00045.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> cpuset, const struct bitmask *bitmask)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Convert libnuma bitmask <code>bitmask</code> into hwloc CPU set <code>cpuset</code>.  <a href="#gaa92103c3051e8ee3aa4a8a483143e85e"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">static __hwloc_inline int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00049.html#ga018e57a42a780ce2ba2e35ef975d8888">hwloc_cpuset_to_linux_libnuma_ulongs</a> (<a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology, <a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> cpuset, unsigned long *mask, unsigned long *maxnode)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Convert hwloc CPU set <code>cpuset</code> into the array of unsigned long <code>mask</code>.  <a href="#ga018e57a42a780ce2ba2e35ef975d8888"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">static __hwloc_inline int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00049.html#gafa60816dde33d69149497bcf6c7818e0">hwloc_cpuset_from_linux_libnuma_ulongs</a> (<a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology, <a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> cpuset, const unsigned long *mask, unsigned long maxnode)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Convert the array of unsigned long <code>mask</code> into hwloc CPU set.  <a href="#gafa60816dde33d69149497bcf6c7818e0"></a><br/></td></tr>
 </table>
 <hr/><h2>Function Documentation</h2>
-<a class="anchor" id="gaa92103c3051e8ee3aa4a8a483143e85e"></a><!-- doxytag: member="linux&#45;libnuma.h::hwloc_cpuset_from_linux_libnuma_bitmask" ref="gaa92103c3051e8ee3aa4a8a483143e85e" args="(hwloc_topology_t topology, hwloc_cpuset_t cpuset, const struct bitmask *bitmask)" -->
+<a class="anchor" id="gafa60816dde33d69149497bcf6c7818e0"></a><!-- doxytag: member="linux&#45;libnuma.h::hwloc_cpuset_from_linux_libnuma_ulongs" ref="gafa60816dde33d69149497bcf6c7818e0" args="(hwloc_topology_t topology, hwloc_cpuset_t cpuset, const unsigned long *mask, unsigned long maxnode)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">static __inline int hwloc_cpuset_from_linux_libnuma_bitmask </td>
+          <td class="memname">static __hwloc_inline int hwloc_cpuset_from_linux_libnuma_ulongs </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
+          <td class="paramtype"><a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
           <td class="paramname"> <em>topology</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="a00045.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td>
+          <td class="paramtype"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td>
           <td class="paramname"> <em>cpuset</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const struct bitmask *&nbsp;</td>
-          <td class="paramname"> <em>bitmask</em></td><td>&nbsp;</td>
+          <td class="paramtype">const unsigned long *&nbsp;</td>
+          <td class="paramname"> <em>mask</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned long&nbsp;</td>
+          <td class="paramname"> <em>maxnode</em></td><td>&nbsp;</td>
         </tr>
         <tr>
           <td></td>
@@ -60,40 +65,52 @@
 </div>
 <div class="memdoc">
 
-<p>Convert libnuma bitmask <code>bitmask</code> into hwloc CPU set <code>cpuset</code>. </p>
-<p>This function may be used after calling many numa_ functions that use a struct bitmask as an output parameter. </p>
+<p>Convert the array of unsigned long <code>mask</code> into hwloc CPU set. </p>
+<p><code>mask</code> is a array of unsigned long that will be read. <code>maxnode</code> contains the maximal node number that may be read in <code>mask</code>.</p>
+<p>This function may be used after calling get_mempolicy or any other function that takes an array of unsigned long as output parameter (and possibly a maximal node number as input parameter). </p>
 
 </div>
 </div>
-<a class="anchor" id="ga80bea6f05af929fbaf50557225ddd927"></a><!-- doxytag: member="linux&#45;libnuma.h::hwloc_cpuset_to_linux_libnuma_bitmask" ref="ga80bea6f05af929fbaf50557225ddd927" args="(hwloc_topology_t topology, hwloc_const_cpuset_t cpuset)" -->
+<a class="anchor" id="ga018e57a42a780ce2ba2e35ef975d8888"></a><!-- doxytag: member="linux&#45;libnuma.h::hwloc_cpuset_to_linux_libnuma_ulongs" ref="ga018e57a42a780ce2ba2e35ef975d8888" args="(hwloc_topology_t topology, hwloc_const_cpuset_t cpuset, unsigned long *mask, unsigned long *maxnode)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">static __inline struct bitmask* __hwloc_attribute_malloc hwloc_cpuset_to_linux_libnuma_bitmask </td>
+          <td class="memname">static __hwloc_inline int hwloc_cpuset_to_linux_libnuma_ulongs </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
+          <td class="paramtype"><a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a>&nbsp;</td>
           <td class="paramname"> <em>topology</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="a00045.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
-          <td class="paramname"> <em>cpuset</em></td><td>&nbsp;</td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>cpuset</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned long *&nbsp;</td>
+          <td class="paramname"> <em>mask</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned long *&nbsp;</td>
+          <td class="paramname"> <em>maxnode</em></td><td>&nbsp;</td>
         </tr>
         <tr>
           <td></td>
           <td>)</td>
-          <td></td><td></td><td><code> [static, read]</code></td>
+          <td></td><td></td><td><code> [static]</code></td>
         </tr>
       </table>
 </div>
 <div class="memdoc">
 
-<p>Convert hwloc CPU set <code>cpuset</code> into the returned libnuma bitmask. </p>
-<p>The returned bitmask should later be freed with numa_bitmask_free.</p>
-<p>This function may be used before calling many numa_ functions that use a struct bitmask as an input parameter.</p>
-<dl class="return"><dt><b>Returns:</b></dt><dd>newly allocated struct bitmask. </dd></dl>
+<p>Convert hwloc CPU set <code>cpuset</code> into the array of unsigned long <code>mask</code>. </p>
+<p><code>mask</code> is the array of unsigned long that will be filled. <code>maxnode</code> contains the maximal node number that may be stored in <code>mask</code>. <code>maxnode</code> will be set to the maximal node number that was found, plus one.</p>
+<p>This function may be used before calling set_mempolicy, mbind, migrate_pages or any other function that takes an array of unsigned long and a maximal node number as input parameter. </p>
 
 </div>
 </div>

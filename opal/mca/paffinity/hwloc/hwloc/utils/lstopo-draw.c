@@ -84,7 +84,7 @@ static int prefer_ratio(float ratio1, float ratio2) {
 static void* null_start(void *output, int width __hwloc_attribute_unused, int height __hwloc_attribute_unused) { return output; }
 static void null_declare_color(void *output __hwloc_attribute_unused, int r __hwloc_attribute_unused, int g __hwloc_attribute_unused, int b __hwloc_attribute_unused) { }
 static void null_box(void *output __hwloc_attribute_unused, int r __hwloc_attribute_unused, int g __hwloc_attribute_unused, int b __hwloc_attribute_unused, unsigned depth __hwloc_attribute_unused, unsigned x __hwloc_attribute_unused, unsigned width __hwloc_attribute_unused, unsigned y __hwloc_attribute_unused, unsigned height __hwloc_attribute_unused) { }
-static void null_line(void *output __hwloc_attribute_unused, int r __hwloc_attribute_unused, int g __hwloc_attribute_unused, int b __hwloc_attribute_unused, unsigned depth __hwloc_attribute_unused, unsigned x1 __hwloc_attribute_unused, unsigned y1 __hwloc_attribute_unused, unsigned x2 __hwloc_attribute_unused, unsigned y2 __hwloc_attribute_unused) { }
+static void null_line(void *output __hwloc_attribute_unused, int r __hwloc_attribute_unused, int g __hwloc_attribute_unused, int b __hwloc_attribute_unused, unsigned depth __hwloc_attribute_unused, unsigned x1 __hwloc_attribute_unused, unsigned y1_arg __hwloc_attribute_unused, unsigned x2 __hwloc_attribute_unused, unsigned y2 __hwloc_attribute_unused) { }
 static void null_text(void *output __hwloc_attribute_unused, int r __hwloc_attribute_unused, int g __hwloc_attribute_unused, int b __hwloc_attribute_unused, int size __hwloc_attribute_unused, unsigned depth __hwloc_attribute_unused, unsigned x __hwloc_attribute_unused, unsigned y __hwloc_attribute_unused, const char *text __hwloc_attribute_unused) { }
 
 static struct draw_methods null_draw_methods = {
@@ -333,15 +333,15 @@ prefer_vert(hwloc_topology_t topology, int logical, hwloc_obj_t level, void *out
 static int
 lstopo_obj_snprintf(char *text, size_t textlen, hwloc_obj_t obj, int logical)
 {
-  unsigned index = logical ? obj->logical_index : obj->os_index;
+  unsigned idx = logical ? obj->logical_index : obj->os_index;
   const char *indexprefix = logical ? " #" : " p#";
   char typestr[32];
   char indexstr[32]= "";
   char attrstr[256];
   size_t attrlen;
   hwloc_obj_type_snprintf(typestr, sizeof(typestr), obj, 0);
-  if (index != (unsigned)-1 && obj->depth != 0)
-    snprintf(indexstr, sizeof(indexstr), "%s%u", indexprefix, index);
+  if (idx != (unsigned)-1 && obj->depth != 0)
+    snprintf(indexstr, sizeof(indexstr), "%s%u", indexprefix, idx);
   attrlen = hwloc_obj_attr_snprintf(attrstr, sizeof(attrstr), obj, " ", 0);
   if (attrlen)
     return snprintf(text, textlen, "%s%s (%s)", typestr, indexstr, attrstr);
@@ -706,18 +706,18 @@ getmax_box(void *output, int r __hwloc_attribute_unused, int g __hwloc_attribute
 }
 
 static void
-getmax_line(void *output, int r __hwloc_attribute_unused, int g __hwloc_attribute_unused, int b __hwloc_attribute_unused, unsigned depth __hwloc_attribute_unused, unsigned x1, unsigned y1, unsigned x2, unsigned y2)
+getmax_line(void *output, int r __hwloc_attribute_unused, int g __hwloc_attribute_unused, int b __hwloc_attribute_unused, unsigned depth __hwloc_attribute_unused, unsigned x1_arg, unsigned y1_arg, unsigned x2_arg, unsigned y2_arg)
 {
   struct coords *coords = output;
 
-  if (x1 > coords->x)
-    coords->x = x1;
-  if (x2 > coords->x)
-    coords->x = x2;
-  if (y1 > coords->y)
-    coords->y = y1;
-  if (y2 > coords->y)
-    coords->y = y2;
+  if (x1_arg > coords->x)
+    coords->x = x1_arg;
+  if (x2_arg > coords->x)
+    coords->x = x2_arg;
+  if (y1_arg > coords->y)
+    coords->y = y1_arg;
+  if (y2_arg > coords->y)
+    coords->y = y2_arg;
 }
 
 static struct draw_methods getmax_draw_methods = {

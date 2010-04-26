@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
-<title>Hardware Locality (hwloc): Helpers for manipulating glibc sched affinity</title>
+<title>Hardware Locality (hwloc): The Cpuset API</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <link href="doxygen.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -20,97 +20,1196 @@
   </div>
 </div>
 <div class="contents">
-<h1>Helpers for manipulating glibc sched affinity</h1><table border="0" cellpadding="0" cellspacing="0">
+<h1>The Cpuset API</h1><table border="0" cellpadding="0" cellspacing="0">
+<tr><td colspan="2"><h2>Defines</h2></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#ga8f896ce703ad1740fdf9ce8ac6361359">hwloc_cpuset_foreach_begin</a>(cpu, set)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Loop macro iterating on CPU set <code>set</code>.  <a href="#ga8f896ce703ad1740fdf9ce8ac6361359"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#gae2974be78a7d7cddbd38cb23fcc6240a">hwloc_cpuset_foreach_end</a>()</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">End of loop. Needs a terminating ';'.  <a href="#gae2974be78a7d7cddbd38cb23fcc6240a"></a><br/></td></tr>
+<tr><td colspan="2"><h2>Typedefs</h2></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">typedef struct hwloc_cpuset_s *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Set of CPUs represented as an opaque pointer to an internal bitmask.  <a href="#ga7366332f7090f5b54d4b25a0c2c4b411"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">typedef struct hwloc_cpuset_s *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a></td></tr>
 <tr><td colspan="2"><h2>Functions</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">static __inline int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#gab6bf9c8614d0336c2a358e23e71dbaa9">hwloc_cpuset_to_glibc_sched_affinity</a> (<a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology __hwloc_attribute_unused, <a class="el" href="a00045.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> hwlocset, cpu_set_t *schedset, size_t schedsetsize)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Convert hwloc CPU set <code>toposet</code> into glibc sched affinity CPU set <code>schedset</code>.  <a href="#gab6bf9c8614d0336c2a358e23e71dbaa9"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">static __inline int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#gac8de46372b7bf4dbc3c68ee04eefb841">hwloc_cpuset_from_glibc_sched_affinity</a> (<a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology __hwloc_attribute_unused, <a class="el" href="a00045.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> hwlocset, const cpu_set_t *schedset, size_t schedsetsize)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Convert glibc sched affinity CPU set <code>schedset</code> into hwloc CPU set.  <a href="#gac8de46372b7bf4dbc3c68ee04eefb841"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC <a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#gaf270165b6a08e8418fcfb68f5793ff7f">hwloc_cpuset_alloc</a> (void) __hwloc_attribute_malloc</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Allocate a new empty CPU set.  <a href="#gaf270165b6a08e8418fcfb68f5793ff7f"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#gaaac6c1536cdcc35f1a1a3a9ab84da80d">hwloc_cpuset_free</a> (<a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> set)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Free CPU set <code>set</code>.  <a href="#gaaac6c1536cdcc35f1a1a3a9ab84da80d"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC <a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#ga468c6e3fd92a9d0db1fb56634a851be3">hwloc_cpuset_dup</a> (<a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set) __hwloc_attribute_malloc</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Duplicate CPU set <code>set</code> by allocating a new CPU set and copying <code>set's</code> contents.  <a href="#ga468c6e3fd92a9d0db1fb56634a851be3"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#ga27a3b6994bd6f20c1f26d10bdb29ac0b">hwloc_cpuset_copy</a> (<a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> dst, <a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> src)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Copy the contents of CPU set <code>src</code> into the already allocated CPU set <code>dst</code>.  <a href="#ga27a3b6994bd6f20c1f26d10bdb29ac0b"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#ga4ed0a2badc6ff03f4d91a8d3c505b3e6">hwloc_cpuset_snprintf</a> (char *__hwloc_restrict buf, size_t buflen, <a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Stringify a cpuset.  <a href="#ga4ed0a2badc6ff03f4d91a8d3c505b3e6"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#ga7a89398cbc58c9095aa094b9aeacbf00">hwloc_cpuset_asprintf</a> (char **strp, <a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Stringify a cpuset into a newly allocated string.  <a href="#ga7a89398cbc58c9095aa094b9aeacbf00"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#gab6fb26149e25d4e5719a787ee01bacaa">hwloc_cpuset_from_string</a> (<a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> set, const char *__hwloc_restrict string)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Parse a cpuset string and stores it in CPU set <code>set</code>.  <a href="#gab6fb26149e25d4e5719a787ee01bacaa"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#gacabf3491be3ab41b4ad1ee28f72db89e">hwloc_cpuset_zero</a> (<a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> set)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Empty the CPU set <code>set</code>.  <a href="#gacabf3491be3ab41b4ad1ee28f72db89e"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#gacdc29003a0663e9b8b3a9d405a94fb70">hwloc_cpuset_fill</a> (<a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> set)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Fill CPU set <code>set</code> with all possible CPUs (even if those CPUs don't exist or are otherwise unavailable).  <a href="#gacdc29003a0663e9b8b3a9d405a94fb70"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#ga81218f1945e8fa25bbbc4e6277019122">hwloc_cpuset_from_ulong</a> (<a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> set, unsigned long mask)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Setup CPU set <code>set</code> from unsigned long <code>mask</code>.  <a href="#ga81218f1945e8fa25bbbc4e6277019122"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#gac473267f1aa161c3e3e2a26ef25a477c">hwloc_cpuset_from_ith_ulong</a> (<a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> set, unsigned i, unsigned long mask)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Setup CPU set <code>set</code> from unsigned long <code>mask</code> used as <code>i</code> -th subset.  <a href="#gac473267f1aa161c3e3e2a26ef25a477c"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC unsigned long&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#ga5eb912bf1d0572127c3eed1b8a47e6ac">hwloc_cpuset_to_ulong</a> (<a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set) __hwloc_attribute_pure</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Convert the beginning part of CPU set <code>set</code> into unsigned long <code>mask</code>.  <a href="#ga5eb912bf1d0572127c3eed1b8a47e6ac"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC unsigned long&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#ga7576f6a70291feafe9e538942c8b7ee5">hwloc_cpuset_to_ith_ulong</a> (<a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set, unsigned i) __hwloc_attribute_pure</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Convert the <code>i</code> -th subset of CPU set <code>set</code> into unsigned long mask.  <a href="#ga7576f6a70291feafe9e538942c8b7ee5"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#ga8ee7aa4827fb49af47eac9b66c74fd78">hwloc_cpuset_cpu</a> (<a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> set, unsigned cpu)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Empty the CPU set <code>set</code> and add CPU <code>cpu</code>.  <a href="#ga8ee7aa4827fb49af47eac9b66c74fd78"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#ga02d86bba61be473bfdceb336c9087736">hwloc_cpuset_all_but_cpu</a> (<a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> set, unsigned cpu)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Empty the CPU set <code>set</code> and add all but the CPU <code>cpu</code>.  <a href="#ga02d86bba61be473bfdceb336c9087736"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#ga793d0c31b524337355ddce1c6568a866">hwloc_cpuset_set</a> (<a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> set, unsigned cpu)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Add CPU <code>cpu</code> in CPU set <code>set</code>.  <a href="#ga793d0c31b524337355ddce1c6568a866"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#ga2f15dc90a98d14db8022f76a38c39727">hwloc_cpuset_set_range</a> (<a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> set, unsigned begincpu, unsigned endcpu)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Add CPUs from <code>begincpu</code> to <code>endcpu</code> in CPU set <code>set</code>.  <a href="#ga2f15dc90a98d14db8022f76a38c39727"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#ga59f2a65f5260581ee642b0a8375be564">hwloc_cpuset_clr</a> (<a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> set, unsigned cpu)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Remove CPU <code>cpu</code> from CPU set <code>set</code>.  <a href="#ga59f2a65f5260581ee642b0a8375be564"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#ga214d599ff5b66073460b7ee9a75016a8">hwloc_cpuset_clr_range</a> (<a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> set, unsigned begincpu, unsigned endcpu)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Remove CPUs from <code>begincpu</code> to <code>endcpu</code> in CPU set <code>set</code>.  <a href="#ga214d599ff5b66073460b7ee9a75016a8"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#ga7236a9cf8be3ded29a912790e35065f7">hwloc_cpuset_isset</a> (<a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set, unsigned cpu) __hwloc_attribute_pure</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Test whether CPU <code>cpu</code> is part of set <code>set</code>.  <a href="#ga7236a9cf8be3ded29a912790e35065f7"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#gac5b8ad0c32e9d14c587eabde188182a9">hwloc_cpuset_iszero</a> (<a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set) __hwloc_attribute_pure</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Test whether set <code>set</code> is empty.  <a href="#gac5b8ad0c32e9d14c587eabde188182a9"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#gab8703a0f28053bd3981852548e3182d1">hwloc_cpuset_isfull</a> (<a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set) __hwloc_attribute_pure</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Test whether set <code>set</code> is completely full.  <a href="#gab8703a0f28053bd3981852548e3182d1"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#ga9534d84820beade1e6155a1e734307a2">hwloc_cpuset_isequal</a> (<a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set1, <a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set2) __hwloc_attribute_pure</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Test whether set <code>set1</code> is equal to set <code>set2</code>.  <a href="#ga9534d84820beade1e6155a1e734307a2"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#gad7cbab558a9a80652c3ad0b30d488f04">hwloc_cpuset_intersects</a> (<a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set1, <a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set2) __hwloc_attribute_pure</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Test whether sets <code>set1</code> and <code>set2</code> intersects.  <a href="#gad7cbab558a9a80652c3ad0b30d488f04"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#ga135bbe4177fbfe8b14bcbe6aad765801">hwloc_cpuset_isincluded</a> (<a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> sub_set, <a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> super_set) __hwloc_attribute_pure</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Test whether set <code>sub_set</code> is part of set <code>super_set</code>.  <a href="#ga135bbe4177fbfe8b14bcbe6aad765801"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#ga9654f87331e6f33090bed3d326346e85">hwloc_cpuset_or</a> (<a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> res, <a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set1, <a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set2)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Or sets <code>set1</code> and <code>set2</code> and store the result in set <code>res</code>.  <a href="#ga9654f87331e6f33090bed3d326346e85"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#gacd5a399d475b7d75e71489177650b6df">hwloc_cpuset_and</a> (<a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> res, <a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set1, <a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set2)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">And sets <code>set1</code> and <code>set2</code> and store the result in set <code>res</code>.  <a href="#gacd5a399d475b7d75e71489177650b6df"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#ga338fa981505cb2c87e3e9dc543a698b9">hwloc_cpuset_andnot</a> (<a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> res, <a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set1, <a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set2)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">And set <code>set1</code> and the negation of <code>set2</code> and store the result in set <code>res</code>.  <a href="#ga338fa981505cb2c87e3e9dc543a698b9"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#ga82f8b81aa98c3a488e21838620da8852">hwloc_cpuset_xor</a> (<a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> res, <a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set1, <a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set2)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Xor sets <code>set1</code> and <code>set2</code> and store the result in set <code>res</code>.  <a href="#ga82f8b81aa98c3a488e21838620da8852"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#ga9494650a8cb93e1dc77590e2393519a5">hwloc_cpuset_not</a> (<a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> res, <a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Negate set <code>set</code> and store the result in set <code>res</code>.  <a href="#ga9494650a8cb93e1dc77590e2393519a5"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#gaec614784aab4c1bd4d279fc548f4aa40">hwloc_cpuset_first</a> (<a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set) __hwloc_attribute_pure</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Compute the first CPU (least significant bit) in CPU set <code>set</code>.  <a href="#gaec614784aab4c1bd4d279fc548f4aa40"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#gaf4fb6d1ca812633f2e5eaa8ae98b1aef">hwloc_cpuset_last</a> (<a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set) __hwloc_attribute_pure</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Compute the last CPU (most significant bit) in CPU set <code>set</code>.  <a href="#gaf4fb6d1ca812633f2e5eaa8ae98b1aef"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#ga6bf3fd9ea7b0d0fcb5656bab8b68c1bf">hwloc_cpuset_next</a> (<a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set, unsigned prev_cpu) __hwloc_attribute_pure</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Compute the next CPU in CPU set <code>set</code> which is after CPU <code>prev_cpu</code>.  <a href="#ga6bf3fd9ea7b0d0fcb5656bab8b68c1bf"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#gace7ad3d2a71d9884e7a28311228931af">hwloc_cpuset_singlify</a> (<a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> set)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Keep a single CPU among those set in CPU set <code>set</code>.  <a href="#gace7ad3d2a71d9884e7a28311228931af"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#ga6d54e9fa190351368ea08d02b6b09d32">hwloc_cpuset_compare_first</a> (<a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set1, <a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set2) __hwloc_attribute_pure</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Compare CPU sets <code>set1</code> and <code>set2</code> using their lowest index CPU.  <a href="#ga6d54e9fa190351368ea08d02b6b09d32"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#gad3ec83a8f86764d87676a7a48c837d70">hwloc_cpuset_compare</a> (<a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set1, <a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set2) __hwloc_attribute_pure</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Compare CPU sets <code>set1</code> and <code>set2</code> using their highest index CPU.  <a href="#gad3ec83a8f86764d87676a7a48c837d70"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">HWLOC_DECLSPEC int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00046.html#ga432291e25ca6e91ab689b08cdc26d3fa">hwloc_cpuset_weight</a> (<a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a> set) __hwloc_attribute_pure</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Compute the "weight" of CPU set <code>set</code> (i.e., number of CPUs that are in the set).  <a href="#ga432291e25ca6e91ab689b08cdc26d3fa"></a><br/></td></tr>
 </table>
+<hr/><a name="_details"></a><h2>Detailed Description</h2>
+<p>For use in hwloc itself, a hwloc_cpuset_t represents a set of logical processors.</p>
+<dl class="note"><dt><b>Note:</b></dt><dd>cpusets are indexed by OS logical processor number. </dd></dl>
+<hr/><h2>Define Documentation</h2>
+<a class="anchor" id="ga8f896ce703ad1740fdf9ce8ac6361359"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_foreach_begin" ref="ga8f896ce703ad1740fdf9ce8ac6361359" args="(cpu, set)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define hwloc_cpuset_foreach_begin</td>
+          <td>(</td>
+          <td class="paramtype">cpu, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">set&nbsp;</td>
+          <td class="paramname"></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Loop macro iterating on CPU set <code>set</code>. </p>
+<p><code>cpu</code> is the loop variable; it should be an unsigned int. The first iteration will set <code>cpu</code> to the lowest index CPU in the set. Successive iterations will iterate through, in order, all remaining CPUs that in the set. To be specific: each iteration will return a value for <code>cpu</code> such that hwloc_cpuset_isset(set, cpu) is true. </p>
+
+</div>
+</div>
+<a class="anchor" id="gae2974be78a7d7cddbd38cb23fcc6240a"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_foreach_end" ref="gae2974be78a7d7cddbd38cb23fcc6240a" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define hwloc_cpuset_foreach_end</td>
+          <td>(</td>
+&nbsp;</td>
+          <td class="paramname"></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>End of loop. Needs a terminating ';'. </p>
+<dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="a00046.html#ga8f896ce703ad1740fdf9ce8ac6361359" title="Loop macro iterating on CPU set set.">hwloc_cpuset_foreach_begin</a> </dd></dl>
+
+</div>
+</div>
+<hr/><h2>Typedef Documentation</h2>
+<a class="anchor" id="gad2f7833583d020af31e01554251dbe11"></a><!-- doxytag: member="cpuset.h::hwloc_const_cpuset_t" ref="gad2f7833583d020af31e01554251dbe11" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef struct hwloc_cpuset_s* <a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="ga7366332f7090f5b54d4b25a0c2c4b411"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_t" ref="ga7366332f7090f5b54d4b25a0c2c4b411" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef struct hwloc_cpuset_s* <a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Set of CPUs represented as an opaque pointer to an internal bitmask. </p>
+
+</div>
+</div>
 <hr/><h2>Function Documentation</h2>
-<a class="anchor" id="gac8de46372b7bf4dbc3c68ee04eefb841"></a><!-- doxytag: member="glibc&#45;sched.h::hwloc_cpuset_from_glibc_sched_affinity" ref="gac8de46372b7bf4dbc3c68ee04eefb841" args="(hwloc_topology_t topology __hwloc_attribute_unused, hwloc_cpuset_t hwlocset, const cpu_set_t *schedset, size_t schedsetsize)" -->
+<a class="anchor" id="ga02d86bba61be473bfdceb336c9087736"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_all_but_cpu" ref="ga02d86bba61be473bfdceb336c9087736" args="(hwloc_cpuset_t set, unsigned cpu)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">static __inline int hwloc_cpuset_from_glibc_sched_affinity </td>
+          <td class="memname">HWLOC_DECLSPEC void hwloc_cpuset_all_but_cpu </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology&nbsp;</td>
-          <td class="paramname"> <em>__hwloc_attribute_unused</em>, </td>
+          <td class="paramtype"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="a00045.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td>
-          <td class="paramname"> <em>hwlocset</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const cpu_set_t *&nbsp;</td>
-          <td class="paramname"> <em>schedset</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">size_t&nbsp;</td>
-          <td class="paramname"> <em>schedsetsize</em></td><td>&nbsp;</td>
+          <td class="paramtype">unsigned&nbsp;</td>
+          <td class="paramname"> <em>cpu</em></td><td>&nbsp;</td>
         </tr>
         <tr>
           <td></td>
           <td>)</td>
-          <td></td><td></td><td><code> [static]</code></td>
+          <td></td><td></td><td></td>
         </tr>
       </table>
 </div>
 <div class="memdoc">
 
-<p>Convert glibc sched affinity CPU set <code>schedset</code> into hwloc CPU set. </p>
-<p>This function may be used before calling sched_setaffinity or any other function that takes a cpu_set_t as input parameter.</p>
-<p><code>schedsetsize</code> should be sizeof(cpu_set_t) unless <code>schedset</code> was dynamically allocated with CPU_ALLOC </p>
+<p>Empty the CPU set <code>set</code> and add all but the CPU <code>cpu</code>. </p>
 
 </div>
 </div>
-<a class="anchor" id="gab6bf9c8614d0336c2a358e23e71dbaa9"></a><!-- doxytag: member="glibc&#45;sched.h::hwloc_cpuset_to_glibc_sched_affinity" ref="gab6bf9c8614d0336c2a358e23e71dbaa9" args="(hwloc_topology_t topology __hwloc_attribute_unused, hwloc_const_cpuset_t hwlocset, cpu_set_t *schedset, size_t schedsetsize)" -->
+<a class="anchor" id="gaf270165b6a08e8418fcfb68f5793ff7f"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_alloc" ref="gaf270165b6a08e8418fcfb68f5793ff7f" args="(void) __hwloc_attribute_malloc" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">static __inline int hwloc_cpuset_to_glibc_sched_affinity </td>
+          <td class="memname">HWLOC_DECLSPEC <a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> hwloc_cpuset_alloc </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> topology&nbsp;</td>
-          <td class="paramname"> <em>__hwloc_attribute_unused</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
+          <td class="paramtype">void&nbsp;</td>
+          <td class="paramname"></td>
+          <td>&nbsp;)&nbsp;</td>
           <td></td>
-          <td class="paramtype"><a class="el" href="a00045.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
-          <td class="paramname"> <em>hwlocset</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">cpu_set_t *&nbsp;</td>
-          <td class="paramname"> <em>schedset</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">size_t&nbsp;</td>
-          <td class="paramname"> <em>schedsetsize</em></td><td>&nbsp;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td><td><code> [static]</code></td>
         </tr>
       </table>
 </div>
 <div class="memdoc">
 
-<p>Convert hwloc CPU set <code>toposet</code> into glibc sched affinity CPU set <code>schedset</code>. </p>
-<p>This function may be used before calling sched_setaffinity or any other function that takes a cpu_set_t as input parameter.</p>
-<p><code>schedsetsize</code> should be sizeof(cpu_set_t) unless <code>schedset</code> was dynamically allocated with CPU_ALLOC </p>
+<p>Allocate a new empty CPU set. </p>
+<dl class="return"><dt><b>Returns:</b></dt><dd>A valid CPU set or NULL.</dd></dl>
+<p>The CPU set should be freed by a corresponding call to <a class="el" href="a00046.html#gaaac6c1536cdcc35f1a1a3a9ab84da80d" title="Free CPU set set.">hwloc_cpuset_free()</a>. </p>
+
+</div>
+</div>
+<a class="anchor" id="gacd5a399d475b7d75e71489177650b6df"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_and" ref="gacd5a399d475b7d75e71489177650b6df" args="(hwloc_cpuset_t res, hwloc_const_cpuset_t set1, hwloc_const_cpuset_t set2)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC void hwloc_cpuset_and </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>res</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set1</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set2</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>And sets <code>set1</code> and <code>set2</code> and store the result in set <code>res</code>. </p>
+
+</div>
+</div>
+<a class="anchor" id="ga338fa981505cb2c87e3e9dc543a698b9"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_andnot" ref="ga338fa981505cb2c87e3e9dc543a698b9" args="(hwloc_cpuset_t res, hwloc_const_cpuset_t set1, hwloc_const_cpuset_t set2)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC void hwloc_cpuset_andnot </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>res</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set1</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set2</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>And set <code>set1</code> and the negation of <code>set2</code> and store the result in set <code>res</code>. </p>
+
+</div>
+</div>
+<a class="anchor" id="ga7a89398cbc58c9095aa094b9aeacbf00"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_asprintf" ref="ga7a89398cbc58c9095aa094b9aeacbf00" args="(char **strp, hwloc_const_cpuset_t set)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC int hwloc_cpuset_asprintf </td>
+          <td>(</td>
+          <td class="paramtype">char **&nbsp;</td>
+          <td class="paramname"> <em>strp</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Stringify a cpuset into a newly allocated string. </p>
+<dl class="return"><dt><b>Returns:</b></dt><dd>the number of character that were actually written (not including the ending \0). </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga59f2a65f5260581ee642b0a8375be564"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_clr" ref="ga59f2a65f5260581ee642b0a8375be564" args="(hwloc_cpuset_t set, unsigned cpu)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC void hwloc_cpuset_clr </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&nbsp;</td>
+          <td class="paramname"> <em>cpu</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Remove CPU <code>cpu</code> from CPU set <code>set</code>. </p>
+
+</div>
+</div>
+<a class="anchor" id="ga214d599ff5b66073460b7ee9a75016a8"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_clr_range" ref="ga214d599ff5b66073460b7ee9a75016a8" args="(hwloc_cpuset_t set, unsigned begincpu, unsigned endcpu)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC void hwloc_cpuset_clr_range </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&nbsp;</td>
+          <td class="paramname"> <em>begincpu</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&nbsp;</td>
+          <td class="paramname"> <em>endcpu</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Remove CPUs from <code>begincpu</code> to <code>endcpu</code> in CPU set <code>set</code>. </p>
+
+</div>
+</div>
+<a class="anchor" id="gad3ec83a8f86764d87676a7a48c837d70"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_compare" ref="gad3ec83a8f86764d87676a7a48c837d70" args="(hwloc_const_cpuset_t set1, hwloc_const_cpuset_t set2) __hwloc_attribute_pure" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC int hwloc_cpuset_compare </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set1</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set2</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Compare CPU sets <code>set1</code> and <code>set2</code> using their highest index CPU. </p>
+<p>Higher most significant bit is higher. The empty CPU set is considered lower than anything. </p>
+
+</div>
+</div>
+<a class="anchor" id="ga6d54e9fa190351368ea08d02b6b09d32"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_compare_first" ref="ga6d54e9fa190351368ea08d02b6b09d32" args="(hwloc_const_cpuset_t set1, hwloc_const_cpuset_t set2) __hwloc_attribute_pure" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC int hwloc_cpuset_compare_first </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set1</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set2</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Compare CPU sets <code>set1</code> and <code>set2</code> using their lowest index CPU. </p>
+<p>Smaller least significant bit is smaller. The empty CPU set is considered higher than anything. </p>
+
+</div>
+</div>
+<a class="anchor" id="ga27a3b6994bd6f20c1f26d10bdb29ac0b"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_copy" ref="ga27a3b6994bd6f20c1f26d10bdb29ac0b" args="(hwloc_cpuset_t dst, hwloc_const_cpuset_t src)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC void hwloc_cpuset_copy </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>dst</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>src</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Copy the contents of CPU set <code>src</code> into the already allocated CPU set <code>dst</code>. </p>
+
+</div>
+</div>
+<a class="anchor" id="ga8ee7aa4827fb49af47eac9b66c74fd78"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_cpu" ref="ga8ee7aa4827fb49af47eac9b66c74fd78" args="(hwloc_cpuset_t set, unsigned cpu)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC void hwloc_cpuset_cpu </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&nbsp;</td>
+          <td class="paramname"> <em>cpu</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Empty the CPU set <code>set</code> and add CPU <code>cpu</code>. </p>
+
+</div>
+</div>
+<a class="anchor" id="ga468c6e3fd92a9d0db1fb56634a851be3"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_dup" ref="ga468c6e3fd92a9d0db1fb56634a851be3" args="(hwloc_const_cpuset_t set) __hwloc_attribute_malloc" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC <a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a> hwloc_cpuset_dup </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Duplicate CPU set <code>set</code> by allocating a new CPU set and copying <code>set's</code> contents. </p>
+
+</div>
+</div>
+<a class="anchor" id="gacdc29003a0663e9b8b3a9d405a94fb70"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_fill" ref="gacdc29003a0663e9b8b3a9d405a94fb70" args="(hwloc_cpuset_t set)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC void hwloc_cpuset_fill </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Fill CPU set <code>set</code> with all possible CPUs (even if those CPUs don't exist or are otherwise unavailable). </p>
+
+</div>
+</div>
+<a class="anchor" id="gaec614784aab4c1bd4d279fc548f4aa40"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_first" ref="gaec614784aab4c1bd4d279fc548f4aa40" args="(hwloc_const_cpuset_t set) __hwloc_attribute_pure" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC int hwloc_cpuset_first </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Compute the first CPU (least significant bit) in CPU set <code>set</code>. </p>
+<dl class="return"><dt><b>Returns:</b></dt><dd>-1 if no CPU is set. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="gaaac6c1536cdcc35f1a1a3a9ab84da80d"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_free" ref="gaaac6c1536cdcc35f1a1a3a9ab84da80d" args="(hwloc_cpuset_t set)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC void hwloc_cpuset_free </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Free CPU set <code>set</code>. </p>
+
+</div>
+</div>
+<a class="anchor" id="gac473267f1aa161c3e3e2a26ef25a477c"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_from_ith_ulong" ref="gac473267f1aa161c3e3e2a26ef25a477c" args="(hwloc_cpuset_t set, unsigned i, unsigned long mask)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC void hwloc_cpuset_from_ith_ulong </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&nbsp;</td>
+          <td class="paramname"> <em>i</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned long&nbsp;</td>
+          <td class="paramname"> <em>mask</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Setup CPU set <code>set</code> from unsigned long <code>mask</code> used as <code>i</code> -th subset. </p>
+
+</div>
+</div>
+<a class="anchor" id="gab6fb26149e25d4e5719a787ee01bacaa"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_from_string" ref="gab6fb26149e25d4e5719a787ee01bacaa" args="(hwloc_cpuset_t set, const char *__hwloc_restrict string)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC int hwloc_cpuset_from_string </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *__hwloc_restrict&nbsp;</td>
+          <td class="paramname"> <em>string</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Parse a cpuset string and stores it in CPU set <code>set</code>. </p>
+<p>Must start and end with a digit. </p>
+
+</div>
+</div>
+<a class="anchor" id="ga81218f1945e8fa25bbbc4e6277019122"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_from_ulong" ref="ga81218f1945e8fa25bbbc4e6277019122" args="(hwloc_cpuset_t set, unsigned long mask)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC void hwloc_cpuset_from_ulong </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned long&nbsp;</td>
+          <td class="paramname"> <em>mask</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Setup CPU set <code>set</code> from unsigned long <code>mask</code>. </p>
+
+</div>
+</div>
+<a class="anchor" id="gad7cbab558a9a80652c3ad0b30d488f04"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_intersects" ref="gad7cbab558a9a80652c3ad0b30d488f04" args="(hwloc_const_cpuset_t set1, hwloc_const_cpuset_t set2) __hwloc_attribute_pure" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC int hwloc_cpuset_intersects </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set1</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set2</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Test whether sets <code>set1</code> and <code>set2</code> intersects. </p>
+
+</div>
+</div>
+<a class="anchor" id="ga9534d84820beade1e6155a1e734307a2"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_isequal" ref="ga9534d84820beade1e6155a1e734307a2" args="(hwloc_const_cpuset_t set1, hwloc_const_cpuset_t set2) __hwloc_attribute_pure" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC int hwloc_cpuset_isequal </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set1</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set2</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Test whether set <code>set1</code> is equal to set <code>set2</code>. </p>
+
+</div>
+</div>
+<a class="anchor" id="gab8703a0f28053bd3981852548e3182d1"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_isfull" ref="gab8703a0f28053bd3981852548e3182d1" args="(hwloc_const_cpuset_t set) __hwloc_attribute_pure" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC int hwloc_cpuset_isfull </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Test whether set <code>set</code> is completely full. </p>
+
+</div>
+</div>
+<a class="anchor" id="ga135bbe4177fbfe8b14bcbe6aad765801"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_isincluded" ref="ga135bbe4177fbfe8b14bcbe6aad765801" args="(hwloc_const_cpuset_t sub_set, hwloc_const_cpuset_t super_set) __hwloc_attribute_pure" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC int hwloc_cpuset_isincluded </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>sub_set</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>super_set</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Test whether set <code>sub_set</code> is part of set <code>super_set</code>. </p>
+
+</div>
+</div>
+<a class="anchor" id="ga7236a9cf8be3ded29a912790e35065f7"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_isset" ref="ga7236a9cf8be3ded29a912790e35065f7" args="(hwloc_const_cpuset_t set, unsigned cpu) __hwloc_attribute_pure" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC int hwloc_cpuset_isset </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&nbsp;</td>
+          <td class="paramname"> <em>cpu</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Test whether CPU <code>cpu</code> is part of set <code>set</code>. </p>
+
+</div>
+</div>
+<a class="anchor" id="gac5b8ad0c32e9d14c587eabde188182a9"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_iszero" ref="gac5b8ad0c32e9d14c587eabde188182a9" args="(hwloc_const_cpuset_t set) __hwloc_attribute_pure" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC int hwloc_cpuset_iszero </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Test whether set <code>set</code> is empty. </p>
+
+</div>
+</div>
+<a class="anchor" id="gaf4fb6d1ca812633f2e5eaa8ae98b1aef"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_last" ref="gaf4fb6d1ca812633f2e5eaa8ae98b1aef" args="(hwloc_const_cpuset_t set) __hwloc_attribute_pure" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC int hwloc_cpuset_last </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Compute the last CPU (most significant bit) in CPU set <code>set</code>. </p>
+<dl class="return"><dt><b>Returns:</b></dt><dd>-1 if no CPU is set. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga6bf3fd9ea7b0d0fcb5656bab8b68c1bf"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_next" ref="ga6bf3fd9ea7b0d0fcb5656bab8b68c1bf" args="(hwloc_const_cpuset_t set, unsigned prev_cpu) __hwloc_attribute_pure" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC int hwloc_cpuset_next </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&nbsp;</td>
+          <td class="paramname"> <em>prev_cpu</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Compute the next CPU in CPU set <code>set</code> which is after CPU <code>prev_cpu</code>. </p>
+<dl class="return"><dt><b>Returns:</b></dt><dd>-1 if no CPU with higher index is set. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga9494650a8cb93e1dc77590e2393519a5"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_not" ref="ga9494650a8cb93e1dc77590e2393519a5" args="(hwloc_cpuset_t res, hwloc_const_cpuset_t set)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC void hwloc_cpuset_not </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>res</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Negate set <code>set</code> and store the result in set <code>res</code>. </p>
+
+</div>
+</div>
+<a class="anchor" id="ga9654f87331e6f33090bed3d326346e85"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_or" ref="ga9654f87331e6f33090bed3d326346e85" args="(hwloc_cpuset_t res, hwloc_const_cpuset_t set1, hwloc_const_cpuset_t set2)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC void hwloc_cpuset_or </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>res</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set1</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set2</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Or sets <code>set1</code> and <code>set2</code> and store the result in set <code>res</code>. </p>
+
+</div>
+</div>
+<a class="anchor" id="ga793d0c31b524337355ddce1c6568a866"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_set" ref="ga793d0c31b524337355ddce1c6568a866" args="(hwloc_cpuset_t set, unsigned cpu)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC void hwloc_cpuset_set </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&nbsp;</td>
+          <td class="paramname"> <em>cpu</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Add CPU <code>cpu</code> in CPU set <code>set</code>. </p>
+
+</div>
+</div>
+<a class="anchor" id="ga2f15dc90a98d14db8022f76a38c39727"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_set_range" ref="ga2f15dc90a98d14db8022f76a38c39727" args="(hwloc_cpuset_t set, unsigned begincpu, unsigned endcpu)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC void hwloc_cpuset_set_range </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&nbsp;</td>
+          <td class="paramname"> <em>begincpu</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&nbsp;</td>
+          <td class="paramname"> <em>endcpu</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Add CPUs from <code>begincpu</code> to <code>endcpu</code> in CPU set <code>set</code>. </p>
+
+</div>
+</div>
+<a class="anchor" id="gace7ad3d2a71d9884e7a28311228931af"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_singlify" ref="gace7ad3d2a71d9884e7a28311228931af" args="(hwloc_cpuset_t set)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC void hwloc_cpuset_singlify </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Keep a single CPU among those set in CPU set <code>set</code>. </p>
+<p>May be useful before binding so that the process does not have a chance of migrating between multiple logical CPUs in the original mask. </p>
+
+</div>
+</div>
+<a class="anchor" id="ga4ed0a2badc6ff03f4d91a8d3c505b3e6"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_snprintf" ref="ga4ed0a2badc6ff03f4d91a8d3c505b3e6" args="(char *__hwloc_restrict buf, size_t buflen, hwloc_const_cpuset_t set)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC int hwloc_cpuset_snprintf </td>
+          <td>(</td>
+          <td class="paramtype">char *__hwloc_restrict&nbsp;</td>
+          <td class="paramname"> <em>buf</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&nbsp;</td>
+          <td class="paramname"> <em>buflen</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Stringify a cpuset. </p>
+<p>Up to <code>buflen</code> characters may be written in buffer <code>buf</code>.</p>
+<dl class="return"><dt><b>Returns:</b></dt><dd>the number of character that were actually written if not truncating, or that would have been written (not including the ending \0). </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga7576f6a70291feafe9e538942c8b7ee5"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_to_ith_ulong" ref="ga7576f6a70291feafe9e538942c8b7ee5" args="(hwloc_const_cpuset_t set, unsigned i) __hwloc_attribute_pure" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC unsigned long hwloc_cpuset_to_ith_ulong </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&nbsp;</td>
+          <td class="paramname"> <em>i</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Convert the <code>i</code> -th subset of CPU set <code>set</code> into unsigned long mask. </p>
+
+</div>
+</div>
+<a class="anchor" id="ga5eb912bf1d0572127c3eed1b8a47e6ac"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_to_ulong" ref="ga5eb912bf1d0572127c3eed1b8a47e6ac" args="(hwloc_const_cpuset_t set) __hwloc_attribute_pure" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC unsigned long hwloc_cpuset_to_ulong </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Convert the beginning part of CPU set <code>set</code> into unsigned long <code>mask</code>. </p>
+
+</div>
+</div>
+<a class="anchor" id="ga432291e25ca6e91ab689b08cdc26d3fa"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_weight" ref="ga432291e25ca6e91ab689b08cdc26d3fa" args="(hwloc_const_cpuset_t set) __hwloc_attribute_pure" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC int hwloc_cpuset_weight </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Compute the "weight" of CPU set <code>set</code> (i.e., number of CPUs that are in the set). </p>
+<dl class="return"><dt><b>Returns:</b></dt><dd>the number of CPUs that are in the set. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga82f8b81aa98c3a488e21838620da8852"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_xor" ref="ga82f8b81aa98c3a488e21838620da8852" args="(hwloc_cpuset_t res, hwloc_const_cpuset_t set1, hwloc_const_cpuset_t set2)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC void hwloc_cpuset_xor </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>res</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set1</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="a00046.html#gad2f7833583d020af31e01554251dbe11">hwloc_const_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set2</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Xor sets <code>set1</code> and <code>set2</code> and store the result in set <code>res</code>. </p>
+
+</div>
+</div>
+<a class="anchor" id="gacabf3491be3ab41b4ad1ee28f72db89e"></a><!-- doxytag: member="cpuset.h::hwloc_cpuset_zero" ref="gacabf3491be3ab41b4ad1ee28f72db89e" args="(hwloc_cpuset_t set)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">HWLOC_DECLSPEC void hwloc_cpuset_zero </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="a00046.html#ga7366332f7090f5b54d4b25a0c2c4b411">hwloc_cpuset_t</a>&nbsp;</td>
+          <td class="paramname"> <em>set</em></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Empty the CPU set <code>set</code>. </p>
 
 </div>
 </div>

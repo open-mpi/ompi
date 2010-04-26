@@ -1,4 +1,4 @@
-.TH "Finding Objects Inside a CPU set" 3 "17 Apr 2010" "Version 1.0rc1" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.TH "Finding Objects Inside a CPU set" 3 "26 Apr 2010" "Version 1.0rc2" "Hardware Locality (hwloc)" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -7,7 +7,7 @@ Finding Objects Inside a CPU set \-
 
 .in +1c
 .ti -1c
-.RI "static __inline \fBhwloc_obj_t\fP \fBhwloc_get_first_largest_obj_inside_cpuset\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set)"
+.RI "static __hwloc_inline \fBhwloc_obj_t\fP \fBhwloc_get_first_largest_obj_inside_cpuset\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set)"
 .br
 .RI "\fIGet the first largest object included in the given cpuset \fCset\fP. \fP"
 .ti -1c
@@ -15,33 +15,33 @@ Finding Objects Inside a CPU set \-
 .br
 .RI "\fIGet the set of largest objects covering exactly a given cpuset \fCset\fP. \fP"
 .ti -1c
-.RI "static __inline \fBhwloc_obj_t\fP \fBhwloc_get_next_obj_inside_cpuset_by_depth\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, unsigned depth, \fBhwloc_obj_t\fP prev)"
+.RI "static __hwloc_inline \fBhwloc_obj_t\fP \fBhwloc_get_next_obj_inside_cpuset_by_depth\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, unsigned depth, \fBhwloc_obj_t\fP prev)"
 .br
 .RI "\fIReturn the next object at depth \fCdepth\fP included in CPU set \fCset\fP. \fP"
 .ti -1c
-.RI "static __inline \fBhwloc_obj_t\fP \fBhwloc_get_next_obj_inside_cpuset_by_type\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, \fBhwloc_obj_type_t\fP type, \fBhwloc_obj_t\fP prev)"
+.RI "static __hwloc_inline \fBhwloc_obj_t\fP \fBhwloc_get_next_obj_inside_cpuset_by_type\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, \fBhwloc_obj_type_t\fP type, \fBhwloc_obj_t\fP prev)"
 .br
 .RI "\fIReturn the next object of type \fCtype\fP included in CPU set \fCset\fP. \fP"
 .ti -1c
-.RI "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure \fBhwloc_get_obj_inside_cpuset_by_depth\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, unsigned depth, unsigned idx)"
+.RI "static __hwloc_inline \fBhwloc_obj_t\fP __hwloc_attribute_pure \fBhwloc_get_obj_inside_cpuset_by_depth\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, unsigned depth, unsigned idx)"
 .br
 .RI "\fIReturn the \fCindex\fP -th object at depth \fCdepth\fP included in CPU set \fCset\fP. \fP"
 .ti -1c
-.RI "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure \fBhwloc_get_obj_inside_cpuset_by_type\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, \fBhwloc_obj_type_t\fP type, unsigned idx)"
+.RI "static __hwloc_inline \fBhwloc_obj_t\fP __hwloc_attribute_pure \fBhwloc_get_obj_inside_cpuset_by_type\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, \fBhwloc_obj_type_t\fP type, unsigned idx)"
 .br
 .RI "\fIReturn the \fCidx\fP -th object of type \fCtype\fP included in CPU set \fCset\fP. \fP"
 .ti -1c
-.RI "static __inline unsigned __hwloc_attribute_pure \fBhwloc_get_nbobjs_inside_cpuset_by_depth\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, unsigned depth)"
+.RI "static __hwloc_inline unsigned __hwloc_attribute_pure \fBhwloc_get_nbobjs_inside_cpuset_by_depth\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, unsigned depth)"
 .br
 .RI "\fIReturn the number of objects at depth \fCdepth\fP included in CPU set \fCset\fP. \fP"
 .ti -1c
-.RI "static __inline int __hwloc_attribute_pure \fBhwloc_get_nbobjs_inside_cpuset_by_type\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, \fBhwloc_obj_type_t\fP type)"
+.RI "static __hwloc_inline int __hwloc_attribute_pure \fBhwloc_get_nbobjs_inside_cpuset_by_type\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, \fBhwloc_obj_type_t\fP type)"
 .br
 .RI "\fIReturn the number of objects of type \fCtype\fP included in CPU set \fCset\fP. \fP"
 .in -1c
 .SH "Function Documentation"
 .PP 
-.SS "static __inline \fBhwloc_obj_t\fP hwloc_get_first_largest_obj_inside_cpuset (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set)\fC [static]\fP"
+.SS "static __hwloc_inline \fBhwloc_obj_t\fP hwloc_get_first_largest_obj_inside_cpuset (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set)\fC [static]\fP"
 .PP
 Get the first largest object included in the given cpuset \fCset\fP. \fBReturns:\fP
 .RS 4
@@ -57,22 +57,22 @@ the number of objects returned in \fCobjs\fP.
 .RE
 .PP
 
-.SS "static __inline unsigned __hwloc_attribute_pure hwloc_get_nbobjs_inside_cpuset_by_depth (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, unsigned depth)\fC [static]\fP"
+.SS "static __hwloc_inline unsigned __hwloc_attribute_pure hwloc_get_nbobjs_inside_cpuset_by_depth (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, unsigned depth)\fC [static]\fP"
 .PP
 Return the number of objects at depth \fCdepth\fP included in CPU set \fCset\fP. 
-.SS "static __inline int __hwloc_attribute_pure hwloc_get_nbobjs_inside_cpuset_by_type (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, \fBhwloc_obj_type_t\fP type)\fC [static]\fP"
+.SS "static __hwloc_inline int __hwloc_attribute_pure hwloc_get_nbobjs_inside_cpuset_by_type (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, \fBhwloc_obj_type_t\fP type)\fC [static]\fP"
 .PP
 Return the number of objects of type \fCtype\fP included in CPU set \fCset\fP. If no object for that type exists inside CPU set \fCset\fP, 0 is returned. If there are several levels with objects of that type inside CPU set \fCset\fP, -1 is returned. 
-.SS "static __inline \fBhwloc_obj_t\fP hwloc_get_next_obj_inside_cpuset_by_depth (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, unsigned depth, \fBhwloc_obj_t\fP prev)\fC [static]\fP"
+.SS "static __hwloc_inline \fBhwloc_obj_t\fP hwloc_get_next_obj_inside_cpuset_by_depth (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, unsigned depth, \fBhwloc_obj_t\fP prev)\fC [static]\fP"
 .PP
 Return the next object at depth \fCdepth\fP included in CPU set \fCset\fP. If \fCprev\fP is \fCNULL\fP, return the first object at depth \fCdepth\fP included in \fCset\fP. The next invokation should pass the previous return value in \fCprev\fP so as to obtain the next object in \fCset\fP. 
-.SS "static __inline \fBhwloc_obj_t\fP hwloc_get_next_obj_inside_cpuset_by_type (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, \fBhwloc_obj_type_t\fP type, \fBhwloc_obj_t\fP prev)\fC [static]\fP"
+.SS "static __hwloc_inline \fBhwloc_obj_t\fP hwloc_get_next_obj_inside_cpuset_by_type (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, \fBhwloc_obj_type_t\fP type, \fBhwloc_obj_t\fP prev)\fC [static]\fP"
 .PP
 Return the next object of type \fCtype\fP included in CPU set \fCset\fP. If there are multiple or no depth for given type, return \fCNULL\fP and let the caller fallback to \fBhwloc_get_next_obj_inside_cpuset_by_depth()\fP. 
-.SS "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure hwloc_get_obj_inside_cpuset_by_depth (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, unsigned depth, unsigned idx)\fC [static]\fP"
+.SS "static __hwloc_inline \fBhwloc_obj_t\fP __hwloc_attribute_pure hwloc_get_obj_inside_cpuset_by_depth (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, unsigned depth, unsigned idx)\fC [static]\fP"
 .PP
 Return the \fCindex\fP -th object at depth \fCdepth\fP included in CPU set \fCset\fP. 
-.SS "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure hwloc_get_obj_inside_cpuset_by_type (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, \fBhwloc_obj_type_t\fP type, unsigned idx)\fC [static]\fP"
+.SS "static __hwloc_inline \fBhwloc_obj_t\fP __hwloc_attribute_pure hwloc_get_obj_inside_cpuset_by_type (\fBhwloc_topology_t\fP topology, \fBhwloc_const_cpuset_t\fP set, \fBhwloc_obj_type_t\fP type, unsigned idx)\fC [static]\fP"
 .PP
 Return the \fCidx\fP -th object of type \fCtype\fP included in CPU set \fCset\fP. If there are multiple or no depth for given type, return \fCNULL\fP and let the caller fallback to \fBhwloc_get_obj_inside_cpuset_by_depth()\fP. 
 .SH "Author"

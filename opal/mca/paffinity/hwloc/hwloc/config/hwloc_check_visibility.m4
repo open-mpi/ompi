@@ -67,7 +67,7 @@ AC_DEFUN([_HWLOC_CHECK_VISIBILITY],[
     else
         CFLAGS_orig="$CFLAGS"
         CFLAGS="$CFLAGS_orig -fvisibility=hidden"
-        add=
+        hwloc_add=
         AC_CACHE_CHECK([if $CC supports -fvisibility],
             [hwloc_cv_cc_fvisibility],
             [AC_TRY_LINK([
@@ -89,11 +89,10 @@ AC_DEFUN([_HWLOC_CHECK_VISIBILITY],[
                 ])
 
         if test "$hwloc_cv_cc_fvisibility" = "yes" ; then
-            add=" -fvisibility=hidden"
+            hwloc_add=" -fvisibility=hidden"
             have_visibility=1
             AC_MSG_CHECKING([enable symbol visibility])
             AC_MSG_RESULT([yes]) 
-            AC_MSG_WARN([$add has been added to CFLAGS])
         elif test "$enable_visibility" = "yes"; then
             AC_MSG_ERROR([Symbol visibility support requested but compiler does not seem to support it.  Aborting])
         else 
@@ -101,9 +100,9 @@ AC_DEFUN([_HWLOC_CHECK_VISIBILITY],[
             AC_MSG_RESULT([no]) 
             have_visibility=0
         fi
-        CFLAGS="$CFLAGS_orig$add"
-        HWLOC_VISIBILITY_CFLAGS="$add"
-        unset add 
+        CFLAGS=$CFLAGS_orig
+        HWLOC_VISIBILITY_CFLAGS=$hwloc_add
+        unset hwloc_add 
     fi
     AC_DEFINE_UNQUOTED([HWLOC_C_HAVE_VISIBILITY], [$have_visibility],
             [Whether C compiler supports -fvisibility])

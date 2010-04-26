@@ -1,4 +1,4 @@
-.TH "Basic Traversal Helpers" 3 "17 Apr 2010" "Version 1.0rc1" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.TH "Basic Traversal Helpers" 3 "26 Apr 2010" "Version 1.0rc2" "Hardware Locality (hwloc)" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -7,66 +7,63 @@ Basic Traversal Helpers \-
 
 .in +1c
 .ti -1c
-.RI "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure \fBhwloc_get_root_obj\fP (\fBhwloc_topology_t\fP topology)"
+.RI "static __hwloc_inline \fBhwloc_obj_t\fP __hwloc_attribute_pure \fBhwloc_get_root_obj\fP (\fBhwloc_topology_t\fP topology)"
 .br
 .RI "\fIReturns the top-object of the topology-tree. \fP"
 .ti -1c
-.RI "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_deprecated \fBhwloc_get_system_obj\fP (\fBhwloc_topology_t\fP topology)"
-.br
-.ti -1c
-.RI "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure \fBhwloc_get_ancestor_obj_by_depth\fP (\fBhwloc_topology_t\fP topology __hwloc_attribute_unused, unsigned depth, \fBhwloc_obj_t\fP obj)"
+.RI "static __hwloc_inline \fBhwloc_obj_t\fP __hwloc_attribute_pure \fBhwloc_get_ancestor_obj_by_depth\fP (\fBhwloc_topology_t\fP topology __hwloc_attribute_unused, unsigned depth, \fBhwloc_obj_t\fP obj)"
 .br
 .RI "\fIReturns the ancestor object of \fCobj\fP at depth \fCdepth\fP. \fP"
 .ti -1c
-.RI "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure \fBhwloc_get_ancestor_obj_by_type\fP (\fBhwloc_topology_t\fP topology __hwloc_attribute_unused, \fBhwloc_obj_type_t\fP type, \fBhwloc_obj_t\fP obj)"
+.RI "static __hwloc_inline \fBhwloc_obj_t\fP __hwloc_attribute_pure \fBhwloc_get_ancestor_obj_by_type\fP (\fBhwloc_topology_t\fP topology __hwloc_attribute_unused, \fBhwloc_obj_type_t\fP type, \fBhwloc_obj_t\fP obj)"
 .br
 .RI "\fIReturns the ancestor object of \fCobj\fP with type \fCtype\fP. \fP"
 .ti -1c
-.RI "static __inline \fBhwloc_obj_t\fP \fBhwloc_get_next_obj_by_depth\fP (\fBhwloc_topology_t\fP topology, unsigned depth, \fBhwloc_obj_t\fP prev)"
+.RI "static __hwloc_inline \fBhwloc_obj_t\fP \fBhwloc_get_next_obj_by_depth\fP (\fBhwloc_topology_t\fP topology, unsigned depth, \fBhwloc_obj_t\fP prev)"
 .br
 .RI "\fIReturns the next object at depth \fCdepth\fP. \fP"
 .ti -1c
-.RI "static __inline \fBhwloc_obj_t\fP \fBhwloc_get_next_obj_by_type\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type, \fBhwloc_obj_t\fP prev)"
+.RI "static __hwloc_inline \fBhwloc_obj_t\fP \fBhwloc_get_next_obj_by_type\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type, \fBhwloc_obj_t\fP prev)"
 .br
 .RI "\fIReturns the next object of type \fCtype\fP. \fP"
 .ti -1c
-.RI "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure \fBhwloc_get_pu_obj_by_os_index\fP (\fBhwloc_topology_t\fP topology, unsigned os_index)"
+.RI "static __hwloc_inline \fBhwloc_obj_t\fP __hwloc_attribute_pure \fBhwloc_get_pu_obj_by_os_index\fP (\fBhwloc_topology_t\fP topology, unsigned os_index)"
 .br
 .RI "\fIReturns the object of type \fBHWLOC_OBJ_PU\fP with \fCos_index\fP. \fP"
 .ti -1c
-.RI "static __inline \fBhwloc_obj_t\fP \fBhwloc_get_next_child\fP (\fBhwloc_topology_t\fP topology __hwloc_attribute_unused, \fBhwloc_obj_t\fP parent, \fBhwloc_obj_t\fP prev)"
+.RI "static __hwloc_inline \fBhwloc_obj_t\fP \fBhwloc_get_next_child\fP (\fBhwloc_topology_t\fP topology __hwloc_attribute_unused, \fBhwloc_obj_t\fP parent, \fBhwloc_obj_t\fP prev)"
 .br
 .RI "\fIReturn the next child. \fP"
 .ti -1c
-.RI "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure \fBhwloc_get_common_ancestor_obj\fP (\fBhwloc_topology_t\fP topology __hwloc_attribute_unused, \fBhwloc_obj_t\fP obj1, \fBhwloc_obj_t\fP obj2)"
+.RI "static __hwloc_inline \fBhwloc_obj_t\fP __hwloc_attribute_pure \fBhwloc_get_common_ancestor_obj\fP (\fBhwloc_topology_t\fP topology __hwloc_attribute_unused, \fBhwloc_obj_t\fP obj1, \fBhwloc_obj_t\fP obj2)"
 .br
 .RI "\fIReturns the common parent object to objects lvl1 and lvl2. \fP"
 .ti -1c
-.RI "static __inline int __hwloc_attribute_pure \fBhwloc_obj_is_in_subtree\fP (\fBhwloc_topology_t\fP topology __hwloc_attribute_unused, \fBhwloc_obj_t\fP obj, \fBhwloc_obj_t\fP subtree_root)"
+.RI "static __hwloc_inline int __hwloc_attribute_pure \fBhwloc_obj_is_in_subtree\fP (\fBhwloc_topology_t\fP topology __hwloc_attribute_unused, \fBhwloc_obj_t\fP obj, \fBhwloc_obj_t\fP subtree_root)"
 .br
 .RI "\fIReturns true if _obj_ is inside the subtree beginning with \fCsubtree_root\fP. \fP"
 .in -1c
 .SH "Function Documentation"
 .PP 
-.SS "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure hwloc_get_ancestor_obj_by_depth (\fBhwloc_topology_t\fP topology __hwloc_attribute_unused, unsigned depth, \fBhwloc_obj_t\fP obj)\fC [static]\fP"
+.SS "static __hwloc_inline \fBhwloc_obj_t\fP __hwloc_attribute_pure hwloc_get_ancestor_obj_by_depth (\fBhwloc_topology_t\fP topology __hwloc_attribute_unused, unsigned depth, \fBhwloc_obj_t\fP obj)\fC [static]\fP"
 .PP
 Returns the ancestor object of \fCobj\fP at depth \fCdepth\fP. 
-.SS "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure hwloc_get_ancestor_obj_by_type (\fBhwloc_topology_t\fP topology __hwloc_attribute_unused, \fBhwloc_obj_type_t\fP type, \fBhwloc_obj_t\fP obj)\fC [static]\fP"
+.SS "static __hwloc_inline \fBhwloc_obj_t\fP __hwloc_attribute_pure hwloc_get_ancestor_obj_by_type (\fBhwloc_topology_t\fP topology __hwloc_attribute_unused, \fBhwloc_obj_type_t\fP type, \fBhwloc_obj_t\fP obj)\fC [static]\fP"
 .PP
 Returns the ancestor object of \fCobj\fP with type \fCtype\fP. 
-.SS "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure hwloc_get_common_ancestor_obj (\fBhwloc_topology_t\fP topology __hwloc_attribute_unused, \fBhwloc_obj_t\fP obj1, \fBhwloc_obj_t\fP obj2)\fC [static]\fP"
+.SS "static __hwloc_inline \fBhwloc_obj_t\fP __hwloc_attribute_pure hwloc_get_common_ancestor_obj (\fBhwloc_topology_t\fP topology __hwloc_attribute_unused, \fBhwloc_obj_t\fP obj1, \fBhwloc_obj_t\fP obj2)\fC [static]\fP"
 .PP
 Returns the common parent object to objects lvl1 and lvl2. 
-.SS "static __inline \fBhwloc_obj_t\fP hwloc_get_next_child (\fBhwloc_topology_t\fP topology __hwloc_attribute_unused, \fBhwloc_obj_t\fP parent, \fBhwloc_obj_t\fP prev)\fC [static]\fP"
+.SS "static __hwloc_inline \fBhwloc_obj_t\fP hwloc_get_next_child (\fBhwloc_topology_t\fP topology __hwloc_attribute_unused, \fBhwloc_obj_t\fP parent, \fBhwloc_obj_t\fP prev)\fC [static]\fP"
 .PP
 Return the next child. If \fCprev\fP is \fCNULL\fP, return the first child. 
-.SS "static __inline \fBhwloc_obj_t\fP hwloc_get_next_obj_by_depth (\fBhwloc_topology_t\fP topology, unsigned depth, \fBhwloc_obj_t\fP prev)\fC [static]\fP"
+.SS "static __hwloc_inline \fBhwloc_obj_t\fP hwloc_get_next_obj_by_depth (\fBhwloc_topology_t\fP topology, unsigned depth, \fBhwloc_obj_t\fP prev)\fC [static]\fP"
 .PP
 Returns the next object at depth \fCdepth\fP. If \fCprev\fP is \fCNULL\fP, return the first object at depth \fCdepth\fP. 
-.SS "static __inline \fBhwloc_obj_t\fP hwloc_get_next_obj_by_type (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type, \fBhwloc_obj_t\fP prev)\fC [static]\fP"
+.SS "static __hwloc_inline \fBhwloc_obj_t\fP hwloc_get_next_obj_by_type (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type, \fBhwloc_obj_t\fP prev)\fC [static]\fP"
 .PP
 Returns the next object of type \fCtype\fP. If \fCprev\fP is \fCNULL\fP, return the first object at type \fCtype\fP. If there are multiple or no depth for given type, return \fCNULL\fP and let the caller fallback to \fBhwloc_get_next_obj_by_depth()\fP. 
-.SS "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure hwloc_get_pu_obj_by_os_index (\fBhwloc_topology_t\fP topology, unsigned os_index)\fC [static]\fP"
+.SS "static __hwloc_inline \fBhwloc_obj_t\fP __hwloc_attribute_pure hwloc_get_pu_obj_by_os_index (\fBhwloc_topology_t\fP topology, unsigned os_index)\fC [static]\fP"
 .PP
 Returns the object of type \fBHWLOC_OBJ_PU\fP with \fCos_index\fP. \fBNote:\fP
 .RS 4
@@ -74,11 +71,10 @@ The \fCos_index\fP field of object should most of the times only be used for pre
 .RE
 .PP
 
-.SS "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_pure hwloc_get_root_obj (\fBhwloc_topology_t\fP topology)\fC [static]\fP"
+.SS "static __hwloc_inline \fBhwloc_obj_t\fP __hwloc_attribute_pure hwloc_get_root_obj (\fBhwloc_topology_t\fP topology)\fC [static]\fP"
 .PP
-Returns the top-object of the topology-tree. Its type is typically \fBHWLOC_OBJ_MACHINE\fP but it could be different for complex topologies. This function replaces the old deprecated \fBhwloc_get_system_obj()\fP. 
-.SS "static __inline \fBhwloc_obj_t\fP __hwloc_attribute_deprecated hwloc_get_system_obj (\fBhwloc_topology_t\fP topology)\fC [static]\fP"
-.SS "static __inline int __hwloc_attribute_pure hwloc_obj_is_in_subtree (\fBhwloc_topology_t\fP topology __hwloc_attribute_unused, \fBhwloc_obj_t\fP obj, \fBhwloc_obj_t\fP subtree_root)\fC [static]\fP"
+Returns the top-object of the topology-tree. Its type is typically \fBHWLOC_OBJ_MACHINE\fP but it could be different for complex topologies. This function replaces the old deprecated hwloc_get_system_obj(). 
+.SS "static __hwloc_inline int __hwloc_attribute_pure hwloc_obj_is_in_subtree (\fBhwloc_topology_t\fP topology __hwloc_attribute_unused, \fBhwloc_obj_t\fP obj, \fBhwloc_obj_t\fP subtree_root)\fC [static]\fP"
 .PP
 Returns true if _obj_ is inside the subtree beginning with \fCsubtree_root\fP. 
 .SH "Author"

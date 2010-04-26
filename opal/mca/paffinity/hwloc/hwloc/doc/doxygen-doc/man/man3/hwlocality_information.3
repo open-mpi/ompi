@@ -1,4 +1,4 @@
-.TH "Get some Topology Information" 3 "17 Apr 2010" "Version 1.0rc1" "Hardware Locality (hwloc)" \" -*- nroff -*-
+.TH "Get some Topology Information" 3 "26 Apr 2010" "Version 1.0rc2" "Hardware Locality (hwloc)" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -30,7 +30,7 @@ Get some Topology Information \-
 .br
 .RI "\fIReturns the width of level at depth \fCdepth\fP. \fP"
 .ti -1c
-.RI "static __inline int __hwloc_attribute_pure \fBhwloc_get_nbobjs_by_type\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type)"
+.RI "static __hwloc_inline int __hwloc_attribute_pure \fBhwloc_get_nbobjs_by_type\fP (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type)"
 .br
 .RI "\fIReturns the width of level type \fCtype\fP. \fP"
 .ti -1c
@@ -63,7 +63,7 @@ Returns the type of objects at depth \fCdepth\fP. \fBReturns:\fP
 .SS "HWLOC_DECLSPEC unsigned hwloc_get_nbobjs_by_depth (\fBhwloc_topology_t\fP topology, unsigned depth)"
 .PP
 Returns the width of level at depth \fCdepth\fP. 
-.SS "static __inline int __hwloc_attribute_pure hwloc_get_nbobjs_by_type (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type)\fC [static]\fP"
+.SS "static __hwloc_inline int __hwloc_attribute_pure hwloc_get_nbobjs_by_type (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type)\fC [static]\fP"
 .PP
 Returns the width of level type \fCtype\fP. If no object for that type exists, 0 is returned. If there are several levels with objects of that type, -1 is returned. 
 .SS "HWLOC_DECLSPEC int hwloc_get_type_depth (\fBhwloc_topology_t\fP topology, \fBhwloc_obj_type_t\fP type)"

@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
-<title>Hardware Locality (hwloc): Thread safety</title>
+<title>Hardware Locality (hwloc): Interoperability with other software</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <link href="doxygen.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -22,23 +22,23 @@
 <div class="contents">
 
 
-<h1><a class="anchor" id="threadsafety">Thread safety </a></h1><p>Like most libraries that mainly fill data structures, hwloc is not thread safe but rather reentrant: all state is held in a <a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> instance without mutex protection. That means, for example, that two threads can safely operate on and modify two different <a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> instances, but they should not simultaneously invoke functions that modify the <em>same</em> instance. Similarly, one thread should not modify a <a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> instance while another thread is reading or traversing it. However, two threads can safely read or traverse the same <a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> instance concurrently.</p>
-<p>When running in multiprocessor environments, be aware that proper thread synchronization and/or memory coherency protection is needed to pass hwloc data (such as <a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> pointers) from one processor to another (e.g., a mutex, semaphore, or a memory barrier). Note that this is not a hwloc-specific requirement, but it is worth mentioning.</p>
-<p>For reference, <a class="el" href="a00026.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> modification operations include (but may not be limited to):</p>
+<h1><a class="anchor" id="interoperability">Interoperability with other software </a></h1><p>Although hwloc offers its own portable interface, it still may have to interoperate with specific or non-portable libraries that manipulate similar kinds of objects. hwloc therefore offers several specific "helpers" to assist converting between those specific interfaces and hwloc.</p>
+<p>Some external libraries may be specific to a particular OS; others may not always be available. The hwloc core therefore generally does not explicitly depend on these types of libraries. However, when a custom application uses or otherwise depends on such a library, it may optionally include the corresponding hwloc helper to extend the hwloc interface with dedicated helpers.</p>
 <dl>
-<dt>Creation and destruction </dt>
-<dd><p class="startdd"><code><a class="el" href="a00029.html#ga5c2d6f476af87005c7bd0811d4548b9f" title="Allocate a topology context.">hwloc_topology_init()</a>, <a class="el" href="a00029.html#ga91e2e6427b95fb7339c99dbbef996e71" title="Build the actual topology.">hwloc_topology_load()</a>, <a class="el" href="a00029.html#ga6040925d3ee4bbb2647f2a321aca5f4b" title="Terminate and free a topology context.">hwloc_topology_destroy()</a></code> (see <a class="el" href="a00029.html">Create and Destroy Topologies</a>) imply major modifications of the structure, including freeing some objects. No other thread cannot access the topology or any of its objects at the same time.</p>
-<p>Also references to objects inside the topology are not valid anymore after these functions return. </p>
+<dt>Linux specific features </dt>
+<dd><p class="startdd"><a class="el" href="a00024_source.html" title="Macros to help interaction between hwloc and Linux.">hwloc/linux.h</a> offers Linux-specific helpers that utilize some non-portable features of the Linux system, such as binding threads through their thread ID ("tid") or parsing kernel CPU mask files. </p>
 <p class="enddd"></p>
 </dd>
-<dt>Runtime topology modifications </dt>
-<dd><p class="startdd"><code>hwloc_topology_insert_misc_object_by_*</code> (see <a class="el" href="a00031.html">Tinker with topologies.</a>) may modify the topology significantly by adding objects inside the tree, changing the topology depth, etc.</p>
-<p>Although references to former objects <em>may</em> still be valid after insertion, it is strongly advised to not rely on any such guarantee and always re-consult the topology to reacquire new instances of objects. </p>
+<dt>Linux libnuma </dt>
+<dd><p class="startdd"><a class="el" href="a00023_source.html" title="Macros to help interaction between hwloc and Linux libnuma.">hwloc/linux-libnuma.h</a> provides conversion helpers between hwloc CPU sets and libnuma-specific types, such as nodemasks and bitmasks. It helps you use libnuma memory-binding functions with hwloc CPU sets. </p>
 <p class="enddd"></p>
 </dd>
-<dt>Locating topologies  </dt>
-<dd><p class="startdd"><code>hwloc_topology_ignore*</code>, <code>hwloc_topology_set*</code> (see <a class="el" href="a00030.html">Configure Topology Detection</a>) do not modify the topology directly, but they do modify internal structures describing the behavior of the next invocation of <code><a class="el" href="a00029.html#ga91e2e6427b95fb7339c99dbbef996e71" title="Build the actual topology.">hwloc_topology_load()</a></code>. Hence, all of these functions should not be used concurrently.</p>
-<p>Note that these functions do not modify the current topology until it is actually reloaded; it is possible to use them while other threads are only read the current topology. </p>
+<dt>Glibc </dt>
+<dd><p class="startdd"><a class="el" href="a00019_source.html" title="Macros to help interaction between hwloc and glibc scheduling routines.">hwloc/glibc-sched.h</a> offers conversion routines between Glibc and hwloc CPU sets in order to use hwloc with functions such as sched_setaffinity(). </p>
+<p class="enddd"></p>
+</dd>
+<dt>OpenFabrics Verbs </dt>
+<dd><p class="startdd"><a class="el" href="a00025_source.html" title="Macros to help interaction between hwloc and OpenFabrics verbs.">hwloc/openfabrics-verbs.h</a> helps interoperability with the OpenFabrics Verbs interface. For example, it can return a list of processors near an OpenFabrics device. </p>
 <p class="enddd"></p>
 </dd>
 </dl>

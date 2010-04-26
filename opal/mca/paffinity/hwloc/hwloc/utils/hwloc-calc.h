@@ -25,7 +25,7 @@ typedef enum hwloc_mask_append_mode_e {
   HWLOC_MASK_APPEND_XOR,
 } hwloc_mask_append_mode_t;
 
-static __inline int
+static inline int
 hwloc_mask_append_cpuset(hwloc_cpuset_t set, hwloc_const_cpuset_t newset,
 		       hwloc_mask_append_mode_t mode, int verbose)
 {
@@ -64,7 +64,7 @@ hwloc_mask_append_cpuset(hwloc_cpuset_t set, hwloc_const_cpuset_t newset,
   return 0;
 }
 
-static __inline hwloc_obj_t __hwloc_attribute_pure
+static inline hwloc_obj_t __hwloc_attribute_pure
 hwloc_mask_get_obj_inside_cpuset_by_depth(hwloc_topology_t topology, hwloc_const_cpuset_t rootset,
 					 unsigned depth, unsigned i, int logical)
 {
@@ -80,7 +80,7 @@ hwloc_mask_get_obj_inside_cpuset_by_depth(hwloc_topology_t topology, hwloc_const
   }
 }
 
-static __inline int
+static inline int
 hwloc_mask_append_object(hwloc_topology_t topology, unsigned topodepth,
 		       hwloc_const_cpuset_t rootset, const char *string, int logical,
 		       hwloc_cpuset_t set, int verbose)
@@ -191,7 +191,7 @@ hwloc_mask_append_object(hwloc_topology_t topology, unsigned topodepth,
   return 0;
 }
 
-static __inline int
+static inline int
 hwloc_mask_process_arg(hwloc_topology_t topology, unsigned topodepth,
 		     const char *arg, int logical, hwloc_cpuset_t set,
 		     int verbose)

@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
-<title>Hardware Locality (hwloc): Embedding hwloc in other software</title>
+<title>Hardware Locality (hwloc): Thread safety</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <link href="doxygen.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -22,54 +22,26 @@
 <div class="contents">
 
 
-<h1><a class="anchor" id="embed">Embedding hwloc in other software </a></h1><p>It can be desirable to include hwloc in a larger software package (be sure to check out the LICENSE file) so that users don't have to separately download and install it before installing your software. This can be advantageous to ensure that your software uses a known-tested/good version of hwloc, or for use on systems that do not have hwloc pre-installed.</p>
-<p>When used in "embedded" mode, hwloc will:</p>
-<ul>
-<li>not install any header files</li>
-<li>not build any documentation files</li>
-<li>not build or install any executables or tests</li>
-<li>not build <code>libhwloc.*</code> -- instead, it will build <code>libhwloc_embedded.*</code></li>
-</ul>
-<p>There are two ways to put hwloc into "embedded" mode. The first is directly from the configure command line:</p>
-<div class="fragment"><pre class="fragment">
-shell$ ./configure --enable-embedded-mode ...
-</pre></div><p>The second requires that your software project uses the GNU Autoconf / Automake / Libtool tool chain to build your software. If you do this, you can directly integrate hwloc's m4 configure macro into your configure script. You can then invoke hwloc's configuration tests and build setup by calling an m4 macro (see below).</p>
-<h2><a class="anchor" id="embedding_m4">
-Using hwloc's m4 embedding capabilities</a></h2>
-<p>Every project is different, and there are many different ways of integrating hwloc into yours. What follows is <em>one</em> example of how to do it.</p>
-<p>If your project uses recent versions Autoconf, Automake, and Libtool to build, you can use hwloc's embedded m4 capabilities. We have tested the embedded m4 with projects that use Autoconf 2.65, Automake 1.11.1, and Libtool 2.2.6b. Slightly earlier versions of may also work but are untested. Autoconf versions prior to 2.63 are almost certain to not work because hwloc uses macros that were introduced in 2.63.</p>
-<p>You can either copy all the config/hwloc*m4 files from the hwloc source tree to the directory where your project's m4 files reside, or you can tell aclocal to find more m4 files in the embedded hwloc's "config" subdirectory (e.g., add "-Ipath/to/embedded/hwloc/config" to your Makefile.am's ACLOCAL_AMFLAGS).</p>
-<p>The following macros can then be used from your configure script (only HWLOC_INIT <em>must</em> be invoked if using the m4 macros):</p>
-<ul>
-<li>HWLOC_INIT(config-dir-prefix, action-upon-success, action-upon-failure): Invoke the hwloc configuration tests and setup the hwloc tree to build. The first argument is the prefix to use for AC_OUTPUT files -- it's where the hwloc tree is located relative to <code>$top_srcdir</code>. Hence, if your embedded hwloc is located in the source tree at contrib/hwloc, you should pass <code>[contrib/hwloc]</code> as the first argument. If HWLOC_INIT and the rest of <code>configure</code> completes successfully, then "make" traversals of the hwloc tree with standard Automake targets (all, clean, install, etc.) should behave as expected. For example, it is safe to list the hwloc directory in the SUBDIRS of a higher-level Makefile.am. <b>NOTE: If the HWLOC_SET_SYMBOL_PREFIX macro is used, it must be invoked <em>before</em> HWLOC_INIT.</b></li>
-</ul>
-<ul>
-<li>HWLOC_SET_SYMBOL_PREFIX(foo_): Tells the hwloc to prefix all of hwloc's types and public symbols with "foo_"; meaning that function hwloc_init() becomes foo_hwloc_init(). Enum values are prefixed with an upper-case translation if the prefix supplied; HWLOC_OBJ_SYSTEM becomes FOO_HWLOC_OBJ_SYSTEM. This is recommended behavior if you are including hwloc in middleware -- it is possible that your software will be combined with other software that links to another copy of hwloc. If both uses of hwloc utilize different symbol prefixes, there will be no type/symbol clashes, and everything will compile, link, and run successfully. If you both embed hwloc without changing the symbol prefix and also link against an external hwloc, you may get multiple symbol definitions when linking your final library or application.</li>
-</ul>
-<ul>
-<li>HWLOC_DO_AM_CONDITIONALS: If you embed hwloc in a larger project and build it conditionally (e.g., if HWLOC_INIT is invoked conditionally), you must unconditionally invoke HWLOC_DO_AM_CONDITIONALS to avoid warnings from Automake (for the cases where hwloc is not selected to be built). This macro is necessary because hwloc uses some AM_CONDITIONALs to build itself, and AM_CONDITIONALs cannot be defined conditionally. Note that it is safe (but unnecessary) to call HWLOC_DO_AM_CONDITIONALS even if HWLOC_INIT is invoked unconditionally.</li>
-</ul>
-<p>NOTE: When using the HWLOC_INIT m4 macro, it may be necessary to explicitly invoke AC_CANONICAL_TARGET and/or AC_USE_SYSTEM_EXTENSIONS macros early in the configure script (e.g., after AC_INIT but before AM_INIT_AUTOMAKE). See the Autoconf documentation for further information.</p>
-<h2><a class="anchor" id="embedding_example">
-Example embedding hwloc</a></h2>
-<p>Here's an example of integrating with a larger project named sandbox that already uses Autoconf, Automake, and Libtool to build itself:</p>
-<div class="fragment"><pre class="fragment">
-# First, cd into the sandbox project source tree
-shell$ cd sandbox
-shell$ cp -r /somewhere/else/hwloc-&lt;version&gt; my-embedded-hwloc
-shell$ edit Makefile.am
-  1. Add "-Imy-embedded-hwloc/config" to ACLOCAL_AMFLAGS
-  2. Add "my-embedded-hwloc" to SUBDIRS
-  3. Add "$(HWLOC_EMBEDDED_LDADD)" to sandbox's executable's LDADD line
-  4. Add "$(HWLOC_EMBEDDED_CPPFLAGS)" to AM_CPPFLAGS
-shell$ edit configure.ac
-  1. Add "HWLOC_SET_SYMBOL_PREFIX(sandbox_hwloc_)" line
-  2. Add "HWLOC_INIT([my-embedded-hwloc], [happy=yes], [happy=no])" line
-  3. Add error checking for happy=no case
-shell$ edit sandbox.c
-  1. Add #include &lt;hwloc.h&gt;
-  2. Add calls to sandbox_hwloc_init() and other hwloc API functions
-</pre></div><p>Now you can bootstrap, configure, build, and run the sandbox as normal -- all calls to "sandbox_hwloc_*" will use the embedded hwloc rather than any system-provided copy of hwloc. </p>
+<h1><a class="anchor" id="threadsafety">Thread safety </a></h1><p>Like most libraries that mainly fill data structures, hwloc is not thread safe but rather reentrant: all state is held in a <a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> instance without mutex protection. That means, for example, that two threads can safely operate on and modify two different <a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> instances, but they should not simultaneously invoke functions that modify the <em>same</em> instance. Similarly, one thread should not modify a <a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> instance while another thread is reading or traversing it. However, two threads can safely read or traverse the same <a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> instance concurrently.</p>
+<p>When running in multiprocessor environments, be aware that proper thread synchronization and/or memory coherency protection is needed to pass hwloc data (such as <a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> pointers) from one processor to another (e.g., a mutex, semaphore, or a memory barrier). Note that this is not a hwloc-specific requirement, but it is worth mentioning.</p>
+<p>For reference, <a class="el" href="a00027.html#ga9d1e76ee15a7dee158b786c30b6a6e38">hwloc_topology_t</a> modification operations include (but may not be limited to):</p>
+<dl>
+<dt>Creation and destruction </dt>
+<dd><p class="startdd"><code><a class="el" href="a00030.html#ga5c2d6f476af87005c7bd0811d4548b9f" title="Allocate a topology context.">hwloc_topology_init()</a>, <a class="el" href="a00030.html#ga91e2e6427b95fb7339c99dbbef996e71" title="Build the actual topology.">hwloc_topology_load()</a>, <a class="el" href="a00030.html#ga6040925d3ee4bbb2647f2a321aca5f4b" title="Terminate and free a topology context.">hwloc_topology_destroy()</a></code> (see <a class="el" href="a00030.html">Create and Destroy Topologies</a>) imply major modifications of the structure, including freeing some objects. No other thread cannot access the topology or any of its objects at the same time.</p>
+<p>Also references to objects inside the topology are not valid anymore after these functions return. </p>
+<p class="enddd"></p>
+</dd>
+<dt>Runtime topology modifications </dt>
+<dd><p class="startdd"><code>hwloc_topology_insert_misc_object_by_*</code> (see <a class="el" href="a00032.html">Tinker with topologies.</a>) may modify the topology significantly by adding objects inside the tree, changing the topology depth, etc.</p>
+<p>Although references to former objects <em>may</em> still be valid after insertion, it is strongly advised to not rely on any such guarantee and always re-consult the topology to reacquire new instances of objects. </p>
+<p class="enddd"></p>
+</dd>
+<dt>Locating topologies  </dt>
+<dd><p class="startdd"><code>hwloc_topology_ignore*</code>, <code>hwloc_topology_set*</code> (see <a class="el" href="a00031.html">Configure Topology Detection</a>) do not modify the topology directly, but they do modify internal structures describing the behavior of the next invocation of <code><a class="el" href="a00030.html#ga91e2e6427b95fb7339c99dbbef996e71" title="Build the actual topology.">hwloc_topology_load()</a></code>. Hence, all of these functions should not be used concurrently.</p>
+<p>Note that these functions do not modify the current topology until it is actually reloaded; it is possible to use them while other threads are only read the current topology. </p>
+<p class="enddd"></p>
+</dd>
+</dl>
 </div>
 <hr size="1"/><address style="text-align: right;"><small>Generated by&nbsp;
 <a href="http://www.doxygen.org/index.html">

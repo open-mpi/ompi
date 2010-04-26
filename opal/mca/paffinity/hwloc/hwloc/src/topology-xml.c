@@ -330,10 +330,10 @@ hwloc__xml_import_node(struct hwloc_topology *topology, struct hwloc_obj *parent
 	hwloc__xml_import_object_node(topology, parent, obj, node, depth);
 
       } else if (!strcmp((const char*) node->name, "page_type")) {
-	int index = parent->memory.page_types_len;
-	parent->memory.page_types = realloc(parent->memory.page_types, (index+1)*sizeof(*parent->memory.page_types));
-	hwloc__xml_import_pagetype_node(topology, &parent->memory.page_types[index], node);
-	parent->memory.page_types_len = index+1;
+	int idx = parent->memory.page_types_len;
+	parent->memory.page_types = realloc(parent->memory.page_types, (idx+1)*sizeof(*parent->memory.page_types));
+	hwloc__xml_import_pagetype_node(topology, &parent->memory.page_types[idx], node);
+	parent->memory.page_types_len = idx+1;
 
       } else {
 	/* unknown class */

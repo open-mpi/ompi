@@ -39,8 +39,8 @@ fi
 file="$tmp/lstopo_xml.output.xml"
 
 set -e
-$lstopo --xml "$srcdir"/"$1" "$file"
-diff @HWLOC_DIFF_U@ "$srcdir"/"$1" "$file"
+$lstopo --xml "$1" "$file"
+diff @HWLOC_DIFF_U@ "$1" "$file"
 if [ -n "@XMLLINT@" ]
 then
   cp "$HWLOC_top_srcdir"/src/hwloc.dtd "$tmp/"

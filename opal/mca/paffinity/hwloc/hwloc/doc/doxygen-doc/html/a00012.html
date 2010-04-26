@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
-<title>Hardware Locality (hwloc): hwloc_obj_memory_s::hwloc_obj_memory_page_type_s Struct Reference</title>
+<title>Hardware Locality (hwloc): hwloc_obj_attr_u Union Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <link href="doxygen.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -24,58 +24,85 @@
       <li><a href="functions.html"><span>Data&nbsp;Fields</span></a></li>
     </ul>
   </div>
-  <div class="navpath"><a class="el" href="a00013.html">hwloc_obj_memory_s</a>::<a class="el" href="a00012.html">hwloc_obj_memory_page_type_s</a>
-  </div>
 </div>
 <div class="contents">
-<h1>hwloc_obj_memory_s::hwloc_obj_memory_page_type_s Struct Reference</h1><!-- doxytag: class="hwloc_obj_memory_s::hwloc_obj_memory_page_type_s" -->
-<p>Array of local memory page types, <code>NULL</code> if no local memory and <code>page_types</code> is 0.  
+<h1>hwloc_obj_attr_u Union Reference<br/>
+<small>
+[<a class="el" href="a00029.html">Topology Objects</a>]</small>
+</h1><!-- doxytag: class="hwloc_obj_attr_u" -->
+<p>Object type-specific Attributes.  
 <a href="#_details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="a00021_source.html">hwloc.h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="a00022_source.html">hwloc.h</a>&gt;</code></p>
 <table border="0" cellpadding="0" cellspacing="0">
+<tr><td colspan="2"><h2>Data Structures</h2></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">struct &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00008.html">hwloc_cache_attr_s</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Cache-specific Object Attributes.  <a href="a00008.html#_details">More...</a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">struct &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00009.html">hwloc_group_attr_s</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Group-specific Object Attributes.  <a href="a00009.html#_details">More...</a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">struct &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00010.html">hwloc_machine_attr_s</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Machine-specific Object Attributes.  <a href="a00010.html#_details">More...</a><br/></td></tr>
 <tr><td colspan="2"><h2>Data Fields</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">uint64_t&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00012.html#af0619463fb5d10052b7fe3495a66d74b">size</a></td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Size of pages.  <a href="#af0619463fb5d10052b7fe3495a66d74b"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">uint64_t&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00012.html#ab5d01db7b26177a6b5361107cad152c3">count</a></td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Number of pages of this size.  <a href="#ab5d01db7b26177a6b5361107cad152c3"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">struct <br class="typebreak"/>
+<a class="el" href="a00008.html">hwloc_obj_attr_u::hwloc_cache_attr_s</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00012.html#ab5a8ae3bf490e6b1071fea53f7382836">cache</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Cache-specific Object Attributes.  <a href="#ab5a8ae3bf490e6b1071fea53f7382836"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">struct <br class="typebreak"/>
+<a class="el" href="a00010.html">hwloc_obj_attr_u::hwloc_machine_attr_s</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00012.html#a5b42966df7c5bfdc36891e414cc31607">machine</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Machine-specific Object Attributes.  <a href="#a5b42966df7c5bfdc36891e414cc31607"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">struct <br class="typebreak"/>
+<a class="el" href="a00009.html">hwloc_obj_attr_u::hwloc_group_attr_s</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00012.html#ae4ba157cc313e2cdd9a82f1c1df7aaa6">group</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Group-specific Object Attributes.  <a href="#ae4ba157cc313e2cdd9a82f1c1df7aaa6"></a><br/></td></tr>
 </table>
 <hr/><a name="_details"></a><h2>Detailed Description</h2>
-<p>Array of local memory page types, <code>NULL</code> if no local memory and <code>page_types</code> is 0. </p>
-<p>The array is sorted by increasing <code>size</code> fields. It contains <code>page_types_len</code> slots. </p>
+<p>Object type-specific Attributes. </p>
 <hr/><h2>Field Documentation</h2>
-<a class="anchor" id="ab5d01db7b26177a6b5361107cad152c3"></a><!-- doxytag: member="hwloc_obj_memory_s::hwloc_obj_memory_page_type_s::count" ref="ab5d01db7b26177a6b5361107cad152c3" args="" -->
+<a class="anchor" id="ab5a8ae3bf490e6b1071fea53f7382836"></a><!-- doxytag: member="hwloc_obj_attr_u::cache" ref="ab5a8ae3bf490e6b1071fea53f7382836" args="" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">uint64_t <a class="el" href="a00012.html#ab5d01db7b26177a6b5361107cad152c3">hwloc_obj_memory_s::hwloc_obj_memory_page_type_s::count</a></td>
+          <td class="memname">struct <a class="el" href="a00008.html">hwloc_obj_attr_u::hwloc_cache_attr_s</a>  <a class="el" href="a00012.html#ab5a8ae3bf490e6b1071fea53f7382836">hwloc_obj_attr_u::cache</a></td>
         </tr>
       </table>
 </div>
 <div class="memdoc">
 
-<p>Number of pages of this size. </p>
+<p>Cache-specific Object Attributes. </p>
 
 </div>
 </div>
-<a class="anchor" id="af0619463fb5d10052b7fe3495a66d74b"></a><!-- doxytag: member="hwloc_obj_memory_s::hwloc_obj_memory_page_type_s::size" ref="af0619463fb5d10052b7fe3495a66d74b" args="" -->
+<a class="anchor" id="ae4ba157cc313e2cdd9a82f1c1df7aaa6"></a><!-- doxytag: member="hwloc_obj_attr_u::group" ref="ae4ba157cc313e2cdd9a82f1c1df7aaa6" args="" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">uint64_t <a class="el" href="a00012.html#af0619463fb5d10052b7fe3495a66d74b">hwloc_obj_memory_s::hwloc_obj_memory_page_type_s::size</a></td>
+          <td class="memname">struct <a class="el" href="a00009.html">hwloc_obj_attr_u::hwloc_group_attr_s</a>  <a class="el" href="a00012.html#ae4ba157cc313e2cdd9a82f1c1df7aaa6">hwloc_obj_attr_u::group</a></td>
         </tr>
       </table>
 </div>
 <div class="memdoc">
 
-<p>Size of pages. </p>
+<p>Group-specific Object Attributes. </p>
 
 </div>
 </div>
-<hr/>The documentation for this struct was generated from the following file:<ul>
-<li><a class="el" href="a00021_source.html">hwloc.h</a></li>
+<a class="anchor" id="a5b42966df7c5bfdc36891e414cc31607"></a><!-- doxytag: member="hwloc_obj_attr_u::machine" ref="a5b42966df7c5bfdc36891e414cc31607" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">struct <a class="el" href="a00010.html">hwloc_obj_attr_u::hwloc_machine_attr_s</a>  <a class="el" href="a00012.html#a5b42966df7c5bfdc36891e414cc31607">hwloc_obj_attr_u::machine</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Machine-specific Object Attributes. </p>
+
+</div>
+</div>
+<hr/>The documentation for this union was generated from the following file:<ul>
+<li><a class="el" href="a00022_source.html">hwloc.h</a></li>
 </ul>
 </div>
 <hr size="1"/><address style="text-align: right;"><small>Generated by&nbsp;

@@ -32,7 +32,7 @@
  * or any other function that takes an array of unsigned long and a maximal
  * node number as input parameter.
  */
-static __inline int
+static __hwloc_inline int
 hwloc_cpuset_to_linux_libnuma_ulongs(hwloc_topology_t topology, hwloc_const_cpuset_t cpuset,
 				    unsigned long *mask, unsigned long *maxnode)
 {
@@ -73,7 +73,7 @@ hwloc_cpuset_to_linux_libnuma_ulongs(hwloc_topology_t topology, hwloc_const_cpus
  * that takes an array of unsigned long as output parameter (and possibly
  * a maximal node number as input parameter).
  */
-static __inline int
+static __hwloc_inline int
 hwloc_cpuset_from_linux_libnuma_ulongs(hwloc_topology_t topology, hwloc_cpuset_t cpuset,
 				      const unsigned long *mask, unsigned long maxnode)
 {
@@ -122,7 +122,7 @@ hwloc_cpuset_from_linux_libnuma_ulongs(hwloc_topology_t topology, hwloc_cpuset_t
  *
  * \return newly allocated struct bitmask.
  */
-static __inline struct bitmask * __hwloc_attribute_malloc
+static __hwloc_inline struct bitmask * __hwloc_attribute_malloc
 hwloc_cpuset_to_linux_libnuma_bitmask(hwloc_topology_t topology, hwloc_const_cpuset_t cpuset)
 {
   struct bitmask *bitmask;
@@ -153,7 +153,7 @@ hwloc_cpuset_to_linux_libnuma_bitmask(hwloc_topology_t topology, hwloc_const_cpu
  * This function may be used after calling many numa_ functions
  * that use a struct bitmask as an output parameter.
  */
-static __inline int
+static __hwloc_inline int
 hwloc_cpuset_from_linux_libnuma_bitmask(hwloc_topology_t topology, hwloc_cpuset_t cpuset,
 				       const struct bitmask *bitmask)
 {
@@ -199,7 +199,7 @@ hwloc_cpuset_from_linux_libnuma_bitmask(hwloc_topology_t topology, hwloc_cpuset_
  * This function may be used before calling some old libnuma functions
  * that use a nodemask_t as an input parameter.
  */
-static __inline int
+static __hwloc_inline int
 hwloc_cpuset_to_linux_libnuma_nodemask(hwloc_topology_t topology, hwloc_const_cpuset_t cpuset,
 				      nodemask_t *nodemask)
 {
@@ -225,7 +225,7 @@ hwloc_cpuset_to_linux_libnuma_nodemask(hwloc_topology_t topology, hwloc_const_cp
  * This function may be used before calling some old libnuma functions
  * that use a nodemask_t as an output parameter.
  */
-static __inline int
+static __hwloc_inline int
 hwloc_cpuset_from_linux_libnuma_nodemask(hwloc_topology_t topology, hwloc_cpuset_t cpuset,
 					const nodemask_t *nodemask)
 {
