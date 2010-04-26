@@ -2201,12 +2201,13 @@ int mca_base_param_find_int(const mca_base_component_t *component,
     int len, i;
     int rc=OPAL_ERR_NOT_FOUND;
     
-    asprintf(&tmp, "%s_%s_%s_%s", mca_prefix, component->mca_type_name,
+    asprintf(&tmp, "%s%s_%s_%s", mca_prefix, component->mca_type_name,
              component->mca_component_name, param_name);
     len = strlen(tmp);
     for (i=0; NULL != env[i]; i++) {
         if (0 == strncmp(tmp, env[i], len)) {
-            ptr = &env[i][len];
+            ptr = strchr(env[i], '=');
+            ptr++;
             *current_value = strtol(ptr, NULL, 10);
             rc = OPAL_SUCCESS;
             break;
@@ -2225,11 +2226,12 @@ int mca_base_param_find_int_name(const char *type,
     int len, i;
     int rc=OPAL_ERR_NOT_FOUND;
     
-    asprintf(&tmp, "%s_%s_%s", mca_prefix, type, param_name);
+    asprintf(&tmp, "%s%s_%s", mca_prefix, type, param_name);
     len = strlen(tmp);
     for (i=0; NULL != env[i]; i++) {
         if (0 == strncmp(tmp, env[i], len)) {
-            ptr = &env[i][len];
+            ptr = strchr(env[i], '=');
+            ptr++;
             *current_value = strtol(ptr, NULL, 10);
             rc = OPAL_SUCCESS;
             break;
@@ -2248,12 +2250,13 @@ int mca_base_param_find_string(const mca_base_component_t *component,
     int len, i;
     int rc=OPAL_ERR_NOT_FOUND;
     
-    asprintf(&tmp, "%s_%s_%s_%s", mca_prefix, component->mca_type_name,
+    asprintf(&tmp, "%s%s_%s_%s", mca_prefix, component->mca_type_name,
              component->mca_component_name, param_name);
     len = strlen(tmp);
     for (i=0; NULL != env[i]; i++) {
         if (0 == strncmp(tmp, env[i], len)) {
-            ptr = &env[i][len];
+            ptr = strchr(env[i], '=');
+            ptr++;
             *current_value = ptr;
             rc = OPAL_SUCCESS;
             break;
@@ -2272,11 +2275,12 @@ int mca_base_param_find_string_name(const char *type,
     int len, i;
     int rc=OPAL_ERR_NOT_FOUND;
     
-    asprintf(&tmp, "%s_%s_%s", mca_prefix, type, param_name);
+    asprintf(&tmp, "%s%s_%s", mca_prefix, type, param_name);
     len = strlen(tmp);
     for (i=0; NULL != env[i]; i++) {
         if (0 == strncmp(tmp, env[i], len)) {
-            ptr = &env[i][len];
+            ptr = strchr(env[i], '=');
+            ptr++;
             *current_value = ptr;
             rc = OPAL_SUCCESS;
             break;
