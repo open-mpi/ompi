@@ -636,6 +636,85 @@ BEGIN_C_DECLS
                                           const char *component, 
                                           const char *param);
 
+/**
+ * Find an MCA parameter in an env array based on its names.
+ *
+ * @param component [in] Pointer to the component for which the
+ * parameter was registered.
+ * @param param_name [in] The name of the parameter being
+ * registered (string).
+ * @param env [in] NULL-terminated list of strings (e.g., from an environment).
+ * @param current_value [out] Return the current value (if found).
+ *
+ * @retval OPAL_ERROR If the parameter was not found.
+ *
+ * Look for a specific MCA parameter in an environment and return its value
+ */
+OPAL_DECLSPEC int mca_base_param_find_int(const mca_base_component_t *component,
+                                          const char *param_name,
+                                          char **env,
+                                          int *current_value);
+
+/**
+ * Find an MCA parameter (in an env array) that is not associated with a
+ * component.
+ *
+ * @param type [in] Although this parameter is not associated with
+ * a component, it still must have a string type name that will
+ * act as a prefix (string).
+ * @param param_name [in] The name of the parameter being
+ * registered (string).
+ * @param env [in] NULL-terminated list of strings (e.g., from an environment).
+ * @param current_value [out] Return the current value (if found).
+ *
+ * @retval OPAL_ERROR If the parameter was not found.
+ *
+ * Look for a specific MCA parameter in an environment and return its value
+ */
+OPAL_DECLSPEC int mca_base_param_find_int_name(const char *type,
+                                               const char *param_name,
+                                               char **env,
+                                               int *current_value);
+/**
+ * Find a string MCA parameter in an env array based on its names.
+ *
+ * @param component [in] Pointer to the component for which the
+ * parameter was registered.
+ * @param param_name [in] The name of the parameter being
+ * registered (string).
+ * @param env [in] NULL-terminated list of strings (e.g., from an environment).
+ * @param current_value [out] Return the current value (if found).
+ *
+ * @retval OPAL_ERROR If the parameter was not found.
+ *
+ * Look for a specific MCA parameter in an environment and return its value
+ */
+OPAL_DECLSPEC int mca_base_param_find_string(const mca_base_component_t *component,
+                                             const char *param_name,
+                                             char **env,
+                                             char **current_value);
+
+/**
+ * Find a string MCA parameter (in an env array) that is not associated with a
+ * component.
+ *
+ * @param type [in] Although this parameter is not associated with
+ * a component, it still must have a string type name that will
+ * act as a prefix (string).
+ * @param param_name [in] The name of the parameter being
+ * registered (string).
+ * @param env [in] NULL-terminated list of strings (e.g., from an environment).
+ * @param current_value [out] Return the current value (if found).
+ *
+ * @retval OPAL_ERROR If the parameter was not found.
+ *
+ * Look for a specific MCA parameter in an environment and return its value
+ */
+OPAL_DECLSPEC int mca_base_param_find_string_name(const char *type,
+                                                  const char *param_name,
+                                                  char **env,
+                                                  char **current_value);
+
     /**
      * Set the "internal" flag on an MCA parameter to true or false.
      *
