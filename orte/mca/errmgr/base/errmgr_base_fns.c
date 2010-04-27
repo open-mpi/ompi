@@ -130,7 +130,7 @@ int orte_errmgr_base_abort(int error_code, char *fmt, ...)
     }
     
     /* abnormal exit */
-    orte_ess.abort(error_code, false);
+    orte_ess.abort(error_code, true);
 
     return ORTE_SUCCESS;
 }

@@ -2294,12 +2294,46 @@ GOTCHILD:
     OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
 }
 
+void orte_odls_base_default_report_abort(orte_process_name_t *proc)
+{
+    orte_odls_child_t *child;
+    opal_list_item_t *item;
+    opal_buffer_t buffer;
+    int rc;
+
+    /* since we are going to be working with the global list of
+     * children, we need to protect that list from modification
+     * by other threads. This will also be used to protect us
+     * from race conditions on any abort situation
+     */
+    OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
+    
+    /* find this child */
+    for (item = opal_list_get_first(&orte_local_children);
+         item != opal_list_get_end(&orte_local_children);
+         item = opal_list_get_next(item)) {
+        child = (orte_odls_child_t*)item;
+        
+        if (proc->jobid == child->name->jobid &&
+            proc->vpid == child->name->vpid) { /* found it */
+            child->state = ORTE_PROC_STATE_CALLED_ABORT;
+            /* send ack */
+            OBJ_CONSTRUCT(&buffer, opal_buffer_t);
+            if (0 > (rc = orte_rml.send_buffer(proc, &buffer, ORTE_RML_TAG_ABORT, 0))) {
+                ORTE_ERROR_LOG(rc);
+            }
+            OBJ_DESTRUCT(&buffer);
+            break;
+        }
+    }
+    opal_condition_signal(&orte_odls_globals.cond);
+    OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
+}
+
 void orte_base_default_waitpid_fired(orte_process_name_t *proc, int32_t status)
 {
     orte_odls_child_t *child, *chd;
     opal_list_item_t *item;
-    char *job, *vpid, *abort_file;
-    struct stat buf;
     int rc;
 
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
@@ -2368,50 +2402,16 @@ GOTCHILD:
         /* set the exit status appropriately */
         child->exit_code = WEXITSTATUS(status);
         
-        /* even though the process exited "normally", it is quite
-         * possible that this happened via an orte_abort call - in
-         * which case, we need to indicate this was an "abnormal"
-         * termination. See the note in "orte_abort.c" for
-         * an explanation of this process.
-         *
-         * For our purposes here, we need to check for the existence
-         * of an "abort" file in this process' session directory. If
-         * we find it, then we know that this was an abnormal termination.
-         */
-        if (orte_create_session_dirs) {
-            if (ORTE_SUCCESS != (rc = orte_util_convert_jobid_to_string(&job, child->name->jobid))) {
-                ORTE_ERROR_LOG(rc);
-                goto MOVEON;
-            }
-            if (ORTE_SUCCESS != (rc = orte_util_convert_vpid_to_string(&vpid, child->name->vpid))) {
-                ORTE_ERROR_LOG(rc);
-                free(job);
-                goto MOVEON;
-            }
-            abort_file = opal_os_path(false, orte_process_info.tmpdir_base,
-                                      orte_process_info.top_session_dir,
-                                      job, vpid, "abort", NULL );
+        if (ORTE_PROC_STATE_CALLED_ABORT == child->state) {
+            /* even though the process exited "normally", it happened
+             * via an orte_abort call, so we need to indicate this was
+             * an "abnormal" termination.
+             */
             OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                 "%s odls:waitpid_fired checking abort file %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), abort_file));
-            
-            free(job);
-            free(vpid);
-            if (0 == stat(abort_file, &buf)) {
-                /* the abort file must exist - there is nothing in it we need. It's
-                 * meer existence indicates that an abnormal termination occurred
-                 */
-                
-                OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                     "%s odls:waitpid_fired child %s died by abort",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(child->name)));
-                
-                child->state = ORTE_PROC_STATE_ABORTED;
-                free(abort_file);
-                goto MOVEON;
-            }
-            free(abort_file);
+                                 "%s odls:waitpid_fired child %s died by call to abort",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(child->name)));
+            goto MOVEON;
         }
         
         /* check to see if a sync was required and if it was received */

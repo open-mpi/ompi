@@ -40,6 +40,8 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/rmcast/base/base.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/odls/odls_types.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/filem/base/base.h"
 #if OPAL_ENABLE_FT_CR == 1
@@ -290,10 +292,20 @@ int orte_ess_base_app_finalize(void)
  * to prevent the abort file from being created. This allows the
  * session directory tree to cleanly be eliminated.
  */
+static bool sync_recvd;
+
+static void report_sync(int status, orte_process_name_t* sender,
+                        opal_buffer_t *buffer,
+                        orte_rml_tag_t tag, void *cbdata)
+{
+    /* flag as complete */
+    sync_recvd = true;
+}
+
 void orte_ess_base_app_abort(int status, bool report)
 {
-    char *abort_file;
-    int fd;
+    orte_daemon_cmd_flag_t cmd=ORTE_DAEMON_ABORT_CALLED;
+    opal_buffer_t buf;
     
     /* Exit - do NOT do a normal finalize as this will very likely
      * hang the process. We are aborting due to an abnormal condition
@@ -307,30 +319,27 @@ void orte_ess_base_app_abort(int status, bool report)
     /* CRS cleanup since it may have a named pipe and thread active */
     orte_cr_finalize();
     
-    /* If we were asked to report this termination,
-     * write an "abort" file into our session directory if we have one
-     */
+    /* If we were asked to report this termination, do so */
     if (report) {
-        if (orte_create_session_dirs) {
-            abort_file = opal_os_path(false, orte_process_info.proc_session_dir, "abort", NULL);
-            if (NULL == abort_file) {
-                /* got a problem */
-                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                goto CLEANUP;
-            }
-            OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
-                                 "%s orte_ess_app_abort: dropping abort file %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), abort_file));
-            fd = open(abort_file, O_CREAT, 0600);
-            if (0 < fd) close(fd);        
-        } else {
-            OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
-                                 "%s cannot create abort file as no session dir was created",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        OBJ_CONSTRUCT(&buf, opal_buffer_t);
+        opal_dss.pack(&buf, &cmd, 1, ORTE_DAEMON_CMD);
+        orte_rml.send_buffer(ORTE_PROC_MY_DAEMON, &buf, ORTE_RML_TAG_DAEMON, 0);
+        OBJ_DESTRUCT(&buf);
+        OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
+                             "%s orte_ess_app_abort: sent abort msg to %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_DAEMON)));
+        /* get the ack - need this to ensure that the sync communication
+         * gets serviced by the event library on the orted prior to the
+         * process exiting
+         */
+        sync_recvd = false;
+        if (ORTE_SUCCESS == orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ABORT,
+                                     ORTE_RML_NON_PERSISTENT, report_sync, NULL)) {
+            ORTE_PROGRESSED_WAIT(sync_recvd, 0, 1);
         }
     }
     
-CLEANUP:
     /* - Clean out the global structures 
      * (not really necessary, but good practice) */
     orte_proc_info_finalize();

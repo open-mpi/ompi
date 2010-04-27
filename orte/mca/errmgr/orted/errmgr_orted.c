@@ -212,7 +212,10 @@ static int update_state(orte_jobid_t job,
             child = (orte_odls_child_t*)item;
             if (child->name->jobid == proc->jobid &&
                 child->name->vpid == proc->vpid) {
-                child->state = state;
+                if (ORTE_PROC_STATE_UNTERMINATED > child->state) {
+                    child->state = state;
+                    child->exit_code = exit_code;
+                }
             }
         }
         killprocs(proc->jobid, proc->vpid);
@@ -289,6 +292,7 @@ static int update_state(orte_jobid_t job,
                 child->name->vpid == proc->vpid) {
                 if (ORTE_PROC_STATE_UNTERMINATED > child->state) {
                     child->state = state;
+                    child->exit_code = exit_code;
                 }
                 /* now pack the child's info */
                 if (ORTE_SUCCESS != (rc = pack_state_for_proc(&alert, child))) {
@@ -329,6 +333,7 @@ static int update_state(orte_jobid_t job,
             child->name->vpid == proc->vpid) {
             if (ORTE_PROC_STATE_UNTERMINATED > child->state) {
                 child->state = state;
+                child->exit_code = exit_code;
             }
             /* done with loop */
             break;

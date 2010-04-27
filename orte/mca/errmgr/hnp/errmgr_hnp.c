@@ -251,6 +251,7 @@ static int update_state(orte_jobid_t job,
         case ORTE_PROC_STATE_ABORTED_BY_SIG:
         case ORTE_PROC_STATE_TERM_WO_SYNC:
         case ORTE_PROC_STATE_COMM_FAILED:
+        case ORTE_PROC_STATE_CALLED_ABORT:
             update_proc(jdata, proc, state, exit_code);
             check_job_complete(jdata);  /* need to set the job state */
             /* the job object for this job will have been NULL'd
@@ -580,6 +581,7 @@ static void check_job_complete(orte_job_t *jdata)
                 OBJ_RETAIN(proc);
                 jdata->abort = true;
                 ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
+                break;
             }
         } else if (ORTE_PROC_STATE_ABORTED == proc->state) {
             OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
@@ -594,6 +596,7 @@ static void check_job_complete(orte_job_t *jdata)
                 OBJ_RETAIN(proc);
                 jdata->abort = true;
                 ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
+                break;
             }
         } else if (ORTE_PROC_STATE_ABORTED_BY_SIG == proc->state) {
             OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
@@ -608,6 +611,7 @@ static void check_job_complete(orte_job_t *jdata)
                 OBJ_RETAIN(proc);
                 jdata->abort = true;
                 ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
+                break;
             }
         } else if (ORTE_PROC_STATE_TERM_WO_SYNC == proc->state) {
             OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
@@ -628,6 +632,7 @@ static void check_job_complete(orte_job_t *jdata)
                  * we overwrite the process' exit code with the default error code
                  */
                 ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                break;
             }
         } else if (ORTE_PROC_STATE_KILLED_BY_CMD == proc->state) {
             OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
@@ -647,6 +652,17 @@ static void check_job_complete(orte_job_t *jdata)
                 }
             }
             goto CHECK_ALIVE;
+        } else if (ORTE_PROC_STATE_CALLED_ABORT == proc->state) {
+            if (!jdata->abort) {
+                jdata->state = ORTE_JOB_STATE_CALLED_ABORT;
+                /* point to the first proc to cause the problem */
+                jdata->aborted_proc = proc;
+                /* retain the object so it doesn't get free'd */
+                OBJ_RETAIN(proc);
+                jdata->abort = true;
+                ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
+                break;
+           }
         } else if (ORTE_PROC_STATE_UNTERMINATED < proc->state &&
                    jdata->controls & ORTE_JOB_CONTROL_CONTINUOUS_OP) {
             OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
@@ -662,6 +678,7 @@ static void check_job_complete(orte_job_t *jdata)
                 OBJ_RETAIN(proc);
                 jdata->abort = true;
                 ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
+                break;
             }
         }
     }
