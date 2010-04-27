@@ -248,7 +248,7 @@ int orte_dt_print_job(char **output, char *prefix, orte_job_t *src, opal_data_ty
         tmp = tmp2;
     }
     
-    asprintf(&tmp2, "%s\n%sNum procs: %ld\tMax Local Restarts: %d\tMax Global Restarts", tmp, pfx,
+    asprintf(&tmp2, "%s\n%sNum procs: %ld\tMax Local Restarts: %d\tMax Global Restarts %d", tmp, pfx,
              (long)src->num_procs, src->max_local_restarts, src->max_global_restarts);
     free(tmp);
     tmp = tmp2;
