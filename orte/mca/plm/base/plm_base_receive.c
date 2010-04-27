@@ -40,6 +40,7 @@
 #include "orte/constants.h"
 #include "orte/types.h"
 #include "orte/util/proc_info.h"
+#include "orte/util/error_strings.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
@@ -432,9 +433,9 @@ static void process_msg(int fd, short event, void *data)
                         }
                         
                         OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                                             "%s plm:base:receive got update_proc_state for vpid %lu state %x exit_code %d",
+                                             "%s plm:base:receive got update_proc_state for vpid %lu state %s exit_code %d",
                                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                             (unsigned long)vpid, (unsigned int)state, (int)exit_code));
+                                             (unsigned long)vpid, orte_proc_state_to_str(state), (int)exit_code));
                         
                         /* update the state */
                         orte_errmgr.update_state(job, ORTE_JOB_STATE_UNDEF,
