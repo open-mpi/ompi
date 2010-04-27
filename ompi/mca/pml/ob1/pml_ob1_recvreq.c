@@ -304,11 +304,11 @@ static int mca_pml_ob1_recv_request_ack(
     /* let know to shedule function there is no need to put ACK flag */
     recvreq->req_ack_sent = true;
     return mca_pml_ob1_recv_request_ack_send(proc, hdr->hdr_src_req.lval,
-            recvreq, recvreq->req_send_offset,
-            recvreq->req_send_offset == bytes_received);
+                                             recvreq, recvreq->req_send_offset,
+                                             recvreq->req_send_offset == bytes_received);
 }
 
-                                                                                                            
+
 /**
  * Return resources used by the RDMA
  */
@@ -331,7 +331,7 @@ static void mca_pml_ob1_rget_completion( mca_btl_base_module_t* btl,
 
     mca_pml_ob1_send_fin(recvreq->req_recv.req_base.req_proc,
                          bml_btl,
-                         frag->rdma_hdr.hdr_rget.hdr_des.pval,
+                         frag->rdma_hdr.hdr_rget.hdr_des,
                          des->order, 0); 
 
     /* is receive request complete */
