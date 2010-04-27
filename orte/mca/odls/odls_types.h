@@ -82,6 +82,8 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 /* process msg command */
 #define ORTE_DAEMON_PROCESS_CMD             (orte_daemon_cmd_flag_t) 26
 
+/* process called "errmgr.abort" */
+#define ORTE_DAEMON_ABORT_CALLED            (orte_daemon_cmd_flag_t) 27
 
 /*
  * List object to locally store the process names and pids of

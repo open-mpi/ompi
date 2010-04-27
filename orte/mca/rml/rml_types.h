@@ -174,6 +174,8 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_msg_packet_t);
 /* multicast messages sent direct */
 #define ORTE_RML_TAG_MULTICAST_DIRECT       37
 
+/* tag for receiving ack of abort msg */
+#define ORTE_RML_TAG_ABORT                  38
 
 #define ORTE_RML_TAG_MAX                   100
 
