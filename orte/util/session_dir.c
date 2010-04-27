@@ -129,6 +129,7 @@ orte_session_dir_get_name(char **fulldirpath,
         *vpidstr = NULL;
     bool prefix_provided = false;
     int exit_status = ORTE_SUCCESS;
+    size_t len;
 #ifndef __WINDOWS__
     int uid;
 	struct passwd *pwdent;
@@ -294,6 +295,11 @@ orte_session_dir_get_name(char **fulldirpath,
     }
     else { /* General Environment var */
         prefix = strdup(opal_tmp_directory());
+    }
+    len = strlen(prefix);
+    /* check for a trailing path separator */
+    if (OPAL_PATH_SEP[0] == prefix[len-1]) {
+        prefix[len-1] = '\0';
     }
     
     /* BEFORE doing anything else, check to see if this prefix is
