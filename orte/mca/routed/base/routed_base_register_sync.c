@@ -27,6 +27,7 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
+#include "orte/util/name_fns.h"
 
 #include "orte/mca/routed/base/base.h"
 
@@ -48,6 +49,11 @@ int orte_routed_base_register_sync(bool setup)
     int rc;
     orte_daemon_cmd_flag_t command=ORTE_DAEMON_SYNC_BY_PROC;
     char *rml_uri;
+    
+    OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
+                         "%s registering sync to daemon %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_DAEMON)));
     
     /* we need to get the oob to establish
      * the connection - the oob will leave the connection "alive"
@@ -93,6 +99,9 @@ int orte_routed_base_register_sync(bool setup)
      * gets serviced by the event library on the orted prior to the
      * process exiting
      */
+    OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
+                         "%s registering sync waiting for ack",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     sync_recvd = false;
     rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SYNC,
                                  ORTE_RML_NON_PERSISTENT, report_sync, NULL);
@@ -103,5 +112,8 @@ int orte_routed_base_register_sync(bool setup)
     
     ORTE_PROGRESSED_WAIT(sync_recvd, 0, 1);
     
+    OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
+                         "%s registering sync ack recvd",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     return ORTE_SUCCESS;
 }
