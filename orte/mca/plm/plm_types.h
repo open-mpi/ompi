@@ -38,7 +38,7 @@ typedef int32_t orte_exit_code_t;
  */
 
 typedef uint32_t orte_proc_state_t;
-#define ORTE_PROC_STATE_T   OPAL_UINT16
+#define ORTE_PROC_STATE_T   OPAL_UINT32
 
 #define ORTE_PROC_STATE_UNDEF                   0x00000000  /* undefined process state */
 #define ORTE_PROC_STATE_INIT                    0x00000001  /* process entry has been created by rmaps */
