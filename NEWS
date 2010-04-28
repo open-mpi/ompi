@@ -59,10 +59,64 @@ Trunk (not on release branches yet)
 1.4.2 (expected)
 ----------------
 
+- Fixed problem when running in heterogeneous environments.  Thanks to
+  Timur Magomedov for helping to track down this issue.
+- Update LSF support to ensure that the path is passed correctly.
+  Thanks to Teng Lin for submitting a patch.
+- Fixed some miscellaneous oversubscription detection bugs.
+- IBM re-licensed its LoadLeveler code to be BSD-compliant.
+- Various OpenBSD and NetBSD build and run-time fixes.  Many thanks to
+  the OpenBSD community for their time, expertise, and patience
+  getting these fixes incorporated into Open MPI's main line.
+- Various fixes for multithreading deadlocks, race conditions, and
+  other nefarious things.
+- Fixed ROMIO's handling of "nearly" contiguous issues (e.g., with
+  non-zero true_lb).  Thanks for Pascal Deveze for the patch.
+- Bunches of Windows build fixes.  Many thanks to several Windows
+  users for their help in improving our support on Windows.
+- Now allow the graceful failover from MTLs to BTLs if no MTLs can
+  initialize successfully.
+- Added "clobber" information to various atomic operations, fixing
+  erroneous behavior in some newer versions of the GNU compiler suite.
+- Update various iWARP and InfiniBand device specifications in the
+  OpenFabrics .ini support file.
+- Fix the use of hostfiles when a username is supplied.
+- Various fixes for rankfile support.
+- Updated the internal version of VampirTrace to 5.4.12.
+- Fixed OS X TCP wireup issues having to do with IPv4/IPv6 confusion
+  (see https://svn.open-mpi.org/trac/ompi/changeset/22788 for more
+  details).
+- Fixed some problems in processor affinity support, including when
+  there are "holes" in the processor namespace (e.g., offline
+  processors). 
+- Ensure that Open MPI's "session directory" (usually located in /tmp)
+  is cleaned up after process termination.
+- Fixed some problems with the collective "hierarch" implementation
+  that could occur in some obscure conditions.
+- Various MPI_REQUEST_NULL, API parameter checking, and attribute
+  error handling fixes.  Thanks to Lisandro Dalcín for reporting the
+  issues.
+- Fix case where MPI_GATHER erroneously used datatypes on non-root
+  nodes.  Thanks to Michael Hofmann for investigating the issue.
+- Patched ROMIO support for PVFS2 > v2.7 (patch taken from MPICH2
+  version of ROMIO).
 - Fixed "mpirun --report-bindings" behavior when used with
   mpi_paffinity_alone=1.  Also fixed mpi_paffinity_alone=1 behavior
   with non-MPI applications.  Thanks to Brice Goglin for noticing the
   problem.
+- Ensure that all OpenFabrics devices have compatible receive_queues
+  specifications before allowing them to communicate.  See the lengthy
+  comment in https://svn.open-mpi.org/trac/ompi/changeset/22592 for
+  more details.
+- Fix some issues with checkpoint/restart.
+- Improve the pre-MPI_INIT/post-MPI_FINALIZE error messages.
+- Ensure that loopback addresses are never advertised to peer
+  processes for RDMA/OpenFabrics support.
+- Fixed a CSUM PML false positive.
+- Various fixes for Catamount support.
+- Minor update to wrapper compilers in how user-specific argv is
+  ordered on the final command line.  Thanks to Jed Brown for the
+  suggestions. 
 - Removed flex.exe binary from Open MPI tarballs; now generate flex
   code from a newer (Windows-friendly) flex when we make official
   tarballs.
