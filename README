@@ -158,7 +158,7 @@ Known issues
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (14 January 2010):
+base as of this writing (28 April 2010):
 
 General notes
 -------------
@@ -362,6 +362,10 @@ General Run-Time Support Notes
   post on the Open MPI user's mailing list for more information:
 
   http://www.open-mpi.org/community/lists/users/2006/01/0539.php
+
+  *** NOTE: Open MPI's XGrid support is known to be broken in the 1.3
+      and 1.4 series.  Are you an OS X developer?  We'd love to have
+      someone join us to fix this stuff.
 
 - Open MPI's run-time behavior can be customized via MCA ("MPI
   Component Architecture") parameters (see below for more information
