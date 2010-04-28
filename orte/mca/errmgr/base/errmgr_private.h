@@ -43,11 +43,8 @@ BEGIN_C_DECLS
 typedef struct {
     int output;
     bool shutting_down;
-    bool enable_recovery;
     opal_pointer_array_t modules;
     bool initialized;
-    int max_global_restarts;
-    int max_local_restarts;
 } orte_errmgr_base_t;
 
 ORTE_DECLSPEC extern orte_errmgr_base_t orte_errmgr_base;

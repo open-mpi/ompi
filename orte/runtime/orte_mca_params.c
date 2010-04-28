@@ -54,6 +54,20 @@ int orte_register_params(void)
     }
     passed_thru = true;
     
+#if !ORTE_DISABLE_FULL_SUPPORT
+    /* get a clean output channel too - need to do this here because
+     * we use it below, and orterun and some other tools call this
+     * function prior to calling orte_init
+     */
+    {
+        opal_output_stream_t lds;
+        OBJ_CONSTRUCT(&lds, opal_output_stream_t);
+        lds.lds_want_stdout = true;
+        orte_clean_output = opal_output_open(&lds);
+        OBJ_DESTRUCT(&lds);
+    }
+#endif /* !ORTE_DISABLE_FULL_SUPPORT */
+
     mca_base_param_reg_int_name("orte", "base_help_aggregate",
                                 "If orte_base_help_aggregate is true, duplicate help messages will be aggregated rather than displayed individually.  This can be helpful for parallel jobs that experience multiple identical failures; rather than print out the same help/failure message N times, display it once with a count of how many processes sent the same message.",
                                 false, false,
@@ -448,6 +462,58 @@ int orte_register_params(void)
                                 (int) false, &value);
     orte_do_not_barrier = OPAL_INT_TO_BOOL(value);
 
+    mca_base_param_reg_int_name("orte", "enable_recovery",
+                                "Enable recovery from process failure [Default = disabled]",
+                                false, false,
+                                (int)false, &value);
+    orte_enable_recovery = OPAL_INT_TO_BOOL(value);
+
+    mca_base_param_reg_int_name("orte", "max_global_restarts",
+                                "Max number of times to relocate a failed process to a new node",
+                                false, false,
+                                -1, &orte_max_global_restarts);
+    
+    mca_base_param_reg_int_name("orte", "max_local_restarts",
+                                "Max number of times to locally restart a failed process before relocating it to a new node",
+                                false, false,
+                                -1, &orte_max_local_restarts);
+    if (orte_enable_recovery) {
+        if (orte_max_global_restarts <= 0 &&
+            orte_max_local_restarts <= 0) {
+            if (ORTE_PROC_IS_HNP) {
+                opal_output(orte_clean_output,
+                            "------------------------------------------------------------\n"
+                            "Although the MCA param orte_enable_recovery was set to true,\n"
+                            "values for the max number of restarts was not provided:\n\n"
+                            "Max global restarts: %d\n"
+                            "Max local restarts:  %d\n\n"
+                            "At least one of these must be a positive value. We are disabling\n"
+                            "process recovery, but continuing execution.\n"
+                            "------------------------------------------------------------",
+                            orte_max_global_restarts, orte_max_local_restarts);
+            }
+            orte_enable_recovery = false;
+        }
+    } else if (orte_max_global_restarts > 0 ||
+               orte_max_local_restarts > 0) {
+        if (ORTE_PROC_IS_HNP) {
+            opal_output(orte_clean_output,
+                        "------------------------------------------------------------------\n"
+                        "The MCA param errmgr_base_enable_recovery was not set to true, but\n"
+                        "positive value(s) were provided for the number of restarts:\n\n"
+                        "Max global restarts: %d\n"
+                        "Max local restarts:  %d\n\n"
+                        "We are enabling process recovery and continuing execution. To avoid\n"
+                        "this warning in the future, please set the errmgr_base_enable_recovery\n"
+                        "param to non-zero.\n"
+                        "------------------------------------------------------------------",
+                        orte_max_global_restarts, orte_max_local_restarts);            
+        }
+        orte_enable_recovery = true;
+    }
+    
+    
+    
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
     
     return ORTE_SUCCESS;

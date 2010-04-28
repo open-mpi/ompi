@@ -174,6 +174,11 @@ bool orte_report_bindings = false;
 /* barrier control */
 bool orte_do_not_barrier = false;
 
+/* process recovery */
+bool orte_enable_recovery;
+int32_t orte_max_global_restarts;
+int32_t orte_max_local_restarts;
+
 /* comm fn for updating state */
 orte_default_comm_fn_t orte_comm;
 
@@ -266,16 +271,6 @@ int orte_dt_init(void)
     }
 
 #if !ORTE_DISABLE_FULL_SUPPORT
-    /* get a clean output channel too */
-    {
-        opal_output_stream_t lds;
-        OBJ_CONSTRUCT(&lds, opal_output_stream_t);
-        lds.lds_want_stdout = true;
-        orte_clean_output = opal_output_open(&lds);
-        OBJ_DESTRUCT(&lds);
-        
-    }
-
     tmp = ORTE_JOB;
     if (ORTE_SUCCESS != (rc = opal_dss.register_type(orte_dt_pack_job,
                                                      orte_dt_unpack_job,
@@ -640,8 +635,9 @@ static void orte_job_construct(orte_job_t* job)
     OBJ_CONSTRUCT(&job->reported_cond, opal_condition_t);
     job->not_reported = true;
     
-    job->max_local_restarts = 0;
-    job->max_global_restarts = 0;
+    job->enable_recovery = false;
+    job->max_local_restarts = -1;
+    job->max_global_restarts = -1;
     
     job->launch_msg_sent.tv_sec = 0;
     job->launch_msg_sent.tv_usec = 0;

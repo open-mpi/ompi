@@ -1166,6 +1166,111 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     return ORTE_SUCCESS;
 }
 
+static int setup_child(orte_odls_child_t *child, orte_odls_job_t *jobdat, char ***env)
+{
+    char *vpid_str, *param, *value;
+    orte_node_rank_t node_rank;
+    orte_local_rank_t local_rank;
+    int rc;
+    
+    if (ORTE_SUCCESS != (rc = orte_util_convert_vpid_to_string(&vpid_str, child->name->vpid))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    if (NULL == (param = mca_base_param_environ_variable("orte","ess","vpid"))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        rc = ORTE_ERR_OUT_OF_RESOURCE;
+        return rc;
+    }
+    opal_setenv(param, vpid_str, true, env);
+    free(param);
+
+    /* although the vpid IS the process' rank within the job, users
+     * would appreciate being given a public environmental variable
+     * that also represents this value - something MPI specific - so
+     * do that here.
+     *
+     * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
+     * We know - just live with it
+     */
+    opal_setenv("OMPI_COMM_WORLD_RANK", vpid_str, true, env);
+    free(vpid_str);  /* done with this now */
+    
+    /* users would appreciate being given a public environmental variable
+     * that also represents the local rank value - something MPI specific - so
+     * do that here.
+     *
+     * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
+     * We know - just live with it
+     */
+    if (ORTE_LOCAL_RANK_INVALID == (local_rank = orte_ess.get_local_rank(child->name))) {
+        ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
+        rc = ORTE_ERR_VALUE_OUT_OF_BOUNDS;
+        return rc;
+    }
+    asprintf(&value, "%lu", (unsigned long) local_rank);
+    opal_setenv("OMPI_COMM_WORLD_LOCAL_RANK", value, true, env);
+    free(value);
+    
+    /* users would appreciate being given a public environmental variable
+     * that also represents the node rank value - something MPI specific - so
+     * do that here.
+     *
+     * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
+     * We know - just live with it
+     */
+    if (ORTE_NODE_RANK_INVALID == (node_rank = orte_ess.get_node_rank(child->name))) {
+        ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
+        rc = ORTE_ERR_VALUE_OUT_OF_BOUNDS;
+        return rc;
+    }
+    asprintf(&value, "%lu", (unsigned long) node_rank);
+    opal_setenv("OMPI_COMM_WORLD_NODE_RANK", value, true, env);
+    /* set an mca param for it too */
+    if(NULL == (param = mca_base_param_environ_variable("orte","ess","node_rank"))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        rc = ORTE_ERR_OUT_OF_RESOURCE;
+        return rc;
+    }
+    opal_setenv(param, value, true, env);
+    free(param);
+    free(value);
+    
+    /* pass the number of restarts for this proc - will be zero for
+     * an initial start, but procs would like to know if they are being
+     * restarted so they can take appropriate action
+     */
+    if (NULL == (param = mca_base_param_environ_variable("orte","num","restarts"))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        rc = ORTE_ERR_OUT_OF_RESOURCE;
+        return rc;
+    }
+    asprintf(&value, "%d", child->restarts);
+    opal_setenv(param, value, true, env);
+    free(param);
+    free(value);
+    
+    /* if the proc should not barrier in orte_init, tell it */
+    if (child->do_not_barrier || 0 < child->restarts) {
+        if (NULL == (param = mca_base_param_environ_variable("orte","do_not","barrier"))) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            rc = ORTE_ERR_OUT_OF_RESOURCE;
+            return rc;
+        }
+        opal_setenv(param, "1", true, env);
+        free(param);
+    }
+    
+    /* if the proc isn't going to forward IO, then we need to flag that
+     * it has "completed" iof termination as otherwise it will never fire
+     */
+    if (!(ORTE_JOB_CONTROL_FORWARD_OUTPUT & jobdat->controls)) {
+        child->iof_complete = true;
+    }
+
+    return ORTE_SUCCESS;
+}
+
 /* define a timer release point so that we can wait for
  * file descriptors to come available, if necessary
  */
@@ -1186,7 +1291,7 @@ static void timer_cb(int fd, short event, void *cbdata)
 int orte_odls_base_default_launch_local(orte_jobid_t job,
                                         orte_odls_base_fork_local_proc_fn_t fork_local)
 {
-    char *job_str, *vpid_str, *param, *value;
+    char *job_str, *param;
     opal_list_item_t *item;
     orte_app_context_t *app, **apps;
     orte_app_idx_t i, num_apps;
@@ -1198,8 +1303,6 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     opal_buffer_t alert;
     orte_std_cntr_t proc_rank;
     orte_odls_job_t *jobdat;
-    orte_local_rank_t local_rank;
-    orte_node_rank_t node_rank;
     char *pathenv = NULL, *mpiexec_pathenv = NULL;
     char basedir[MAXPATHLEN];
     char dir[MAXPATHLEN];
@@ -1639,10 +1742,6 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                 ORTE_ERROR_LOG(rc);
                 goto CLEANUP;
             }
-            if (ORTE_SUCCESS != (rc = orte_util_convert_vpid_to_string(&vpid_str, child->name->vpid))) {
-                ORTE_ERROR_LOG(rc);
-                goto CLEANUP;
-            }
             if (NULL == (param = mca_base_param_environ_variable("orte","ess","jobid"))) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 rc = ORTE_ERR_OUT_OF_RESOURCE;
@@ -1652,97 +1751,11 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
             free(param);
             free(job_str);
             
-            if (NULL == (param = mca_base_param_environ_variable("orte","ess","vpid"))) {
-                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                rc = ORTE_ERR_OUT_OF_RESOURCE;
+            if (ORTE_SUCCESS != (rc = setup_child(child, jobdat, &app->env))) {
+                ORTE_ERROR_LOG(rc);
                 goto CLEANUP;
             }
-            opal_setenv(param, vpid_str, true, &app->env);
-            free(param);
 
-            /* although the vpid IS the process' rank within the job, users
-             * would appreciate being given a public environmental variable
-             * that also represents this value - something MPI specific - so
-             * do that here.
-             *
-             * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
-             * We know - just live with it
-             */
-            opal_setenv("OMPI_COMM_WORLD_RANK", vpid_str, true, &app->env);
-            free(vpid_str);  /* done with this now */
-            
-           /* users would appreciate being given a public environmental variable
-             * that also represents the local rank value - something MPI specific - so
-             * do that here.
-             *
-             * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
-             * We know - just live with it
-             */
-            if (ORTE_LOCAL_RANK_INVALID == (local_rank = orte_ess.get_local_rank(child->name))) {
-                ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
-                rc = ORTE_ERR_VALUE_OUT_OF_BOUNDS;
-                goto CLEANUP;
-            }
-            asprintf(&value, "%lu", (unsigned long) local_rank);
-            opal_setenv("OMPI_COMM_WORLD_LOCAL_RANK", value, true, &app->env);
-            free(value);
-            
-            /* users would appreciate being given a public environmental variable
-             * that also represents the node rank value - something MPI specific - so
-             * do that here.
-             *
-             * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
-             * We know - just live with it
-             */
-            if (ORTE_NODE_RANK_INVALID == (node_rank = orte_ess.get_node_rank(child->name))) {
-                ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
-                rc = ORTE_ERR_VALUE_OUT_OF_BOUNDS;
-                goto CLEANUP;
-            }
-            asprintf(&value, "%lu", (unsigned long) node_rank);
-            opal_setenv("OMPI_COMM_WORLD_NODE_RANK", value, true, &app->env);
-            /* set an mca param for it too */
-            if(NULL == (param = mca_base_param_environ_variable("orte","ess","node_rank"))) {
-                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                rc = ORTE_ERR_OUT_OF_RESOURCE;
-                goto CLEANUP;
-            }
-            opal_setenv(param, value, true, &app->env);
-            free(param);
-            free(value);
-            
-            /* pass the number of restarts for this proc - will be zero for
-             * an initial start, but procs would like to know if they are being
-             * restarted so they can take appropriate action
-             */
-            if (NULL == (param = mca_base_param_environ_variable("orte","num","restarts"))) {
-                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                rc = ORTE_ERR_OUT_OF_RESOURCE;
-                goto CLEANUP;
-            }
-            asprintf(&value, "%d", child->restarts);
-            opal_setenv(param, value, true, &app->env);
-            free(param);
-            free(value);
-            
-            /* if the proc should not barrier in orte_init, tell it */
-            if (child->do_not_barrier || 0 < child->restarts) {
-                if (NULL == (param = mca_base_param_environ_variable("orte","do_not","barrier"))) {
-                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                    rc = ORTE_ERR_OUT_OF_RESOURCE;
-                    goto CLEANUP;
-                }
-                opal_setenv(param, "1", true, &app->env);
-                free(param);
-            }
-            
-            /* if the proc isn't going to forward IO, then we need to flag that
-             * it has "completed" iof termination as otherwise it will never fire
-             */
-            if (!(ORTE_JOB_CONTROL_FORWARD_OUTPUT & jobdat->controls)) {
-                child->iof_complete = true;
-            }
-            
             /* if we are timing things, record when we are going to launch this proc */
             if (orte_timing) {
                 gettimeofday(&child->starttime, NULL);
@@ -2857,5 +2870,63 @@ int orte_odls_base_get_proc_stats(opal_buffer_t *answer,
 int orte_odls_base_default_restart_proc(orte_odls_child_t *child,
                                         orte_odls_base_fork_local_proc_fn_t fork_local)
 {
-    return ORTE_SUCCESS;
+    int rc;
+    orte_app_context_t *app;
+    opal_list_item_t *item;
+    orte_odls_job_t *jobdat;
+    
+    /* protect operations involving the global list of children */
+    OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
+
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                         "%s odls:restart_proc for proc %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(child->name)));
+    
+    /* find this child's jobdat */
+    for (item = opal_list_get_first(&orte_local_jobdata);
+         item != opal_list_get_end(&orte_local_jobdata);
+         item = opal_list_get_next(item)) {
+        jobdat = (orte_odls_job_t*)item;
+        if (jobdat->jobid == child->name->jobid) {
+            break;
+        }
+    }
+    child->state = ORTE_PROC_STATE_FAILED_TO_START;
+    child->exit_code = 0;
+    child->waitpid_recvd = false;
+    child->iof_complete = false;
+    child->coll_recvd = false;
+    child->pid = 0;
+    child->init_recvd = false;
+    child->fini_recvd = false;
+    if (NULL != child->rml_uri) {
+        free(child->rml_uri);
+        child->rml_uri = NULL;
+    }
+    app = jobdat->apps[child->app_idx];
+    /* reset envars to match this child */
+    
+    if (ORTE_SUCCESS != (rc = setup_child(child, jobdat, &app->env))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+    rc = fork_local(app, child, app->env, jobdat);
+    if (ORTE_SUCCESS == rc) {
+        OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
+        orte_wait_cb(child->pid, odls_base_default_wait_local_proc, NULL);
+        OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
+        
+    }
+    
+CLEANUP:
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                         "%s odls:restart of proc %s %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(child->name),
+                         (ORTE_SUCCESS == rc) ? "succeeded" : "failed"));
+
+    opal_condition_signal(&orte_odls_globals.cond);
+    OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
+    return rc;
 }

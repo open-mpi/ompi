@@ -91,6 +91,23 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
         /* store it on the global job data pool */
         ljob = ORTE_LOCAL_JOBID(jdata->jobid);
         opal_pointer_array_set_item(orte_job_data, ljob, jdata);
+        
+        /* if its restart limits have not been set, set them to the defaults */
+        if (jdata->max_global_restarts < 0) {
+            jdata->max_global_restarts = orte_max_global_restarts;
+        }
+        if (jdata->max_local_restarts < 0) {
+            jdata->max_local_restarts = orte_max_local_restarts;
+        }
+        /* consistency check */
+        if (jdata->max_global_restarts <= 0 &&
+            jdata->max_local_restarts <= 0) {
+            jdata->enable_recovery = false;
+
+        } else {
+            jdata->enable_recovery = true;
+        }
+
     }
     
     /* get the allocation */

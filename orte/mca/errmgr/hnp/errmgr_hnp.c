@@ -113,6 +113,9 @@ static int update_state(orte_jobid_t job,
 {
     orte_job_t *jdata;
     orte_exit_code_t sts;
+    orte_odls_child_t *child;
+    opal_list_item_t *item;
+    int rc;
     
     /* indicate that this is the end of the line */
     *stack_state |= ORTE_ERRMGR_STACK_STATE_COMPLETE;
@@ -251,7 +254,29 @@ static int update_state(orte_jobid_t job,
         case ORTE_PROC_STATE_ABORTED_BY_SIG:
         case ORTE_PROC_STATE_TERM_WO_SYNC:
         case ORTE_PROC_STATE_COMM_FAILED:
-        case ORTE_PROC_STATE_CALLED_ABORT:
+            if (jdata->enable_recovery) {
+                /* is this a local proc */
+                child = NULL;
+                for (item = opal_list_get_first(&orte_local_children);
+                     item != opal_list_get_end(&orte_local_children);
+                     item = opal_list_get_next(item)) {
+                    child = (orte_odls_child_t*)item;
+                    if (child->name->jobid == proc->jobid &&
+                        child->name->vpid == proc->vpid) {
+                        break;
+                    }
+                }
+                if (NULL != child) {
+                    /* see if this child has reached its local restart limit */
+                    if (child->restarts < jdata->max_local_restarts) {
+                        child->restarts++;
+                        if (ORTE_SUCCESS == (rc = orte_odls.restart_proc(child))) {
+                            return ORTE_SUCCESS;
+                        }
+                        /* let it fall thru to abort */
+                    }
+                }
+            }
             update_proc(jdata, proc, state, exit_code);
             check_job_complete(jdata);  /* need to set the job state */
             /* the job object for this job will have been NULL'd
@@ -264,6 +289,7 @@ static int update_state(orte_jobid_t job,
             break;
 
         case ORTE_PROC_STATE_FAILED_TO_START:
+        case ORTE_PROC_STATE_CALLED_ABORT:
             update_proc(jdata, proc, state, exit_code);
             check_job_complete(jdata);
             /* the job object for this job will have been NULL'd
@@ -466,7 +492,8 @@ static void update_local_procs_in_job(orte_job_t *jdata, orte_job_state_t jobsta
     }
 }
 
-static void update_proc(orte_job_t *jdata, orte_process_name_t *proc,
+static void update_proc(orte_job_t *jdata,
+                        orte_process_name_t *proc,
                         orte_proc_state_t state,
                         orte_exit_code_t exit_code)
 {
@@ -489,8 +516,11 @@ static void update_proc(orte_job_t *jdata, orte_process_name_t *proc,
                 proct->state = state;
                 proct->exit_code = exit_code;
                 if (ORTE_PROC_STATE_UNTERMINATED < state) {
-                    opal_list_remove_item(&orte_local_children, &child->super);
-                    OBJ_RELEASE(child);
+                    if (!jdata->enable_recovery) {
+                        opal_output(0, "JDATA NOT ENABLED FOR RECOVERY");
+                        opal_list_remove_item(&orte_local_children, &child->super);
+                        OBJ_RELEASE(child);
+                    }
                     jdata->num_terminated++;
                 } else if (ORTE_PROC_STATE_RUNNING == state) {
                     jdata->num_launched++;
