@@ -39,6 +39,7 @@
 #include "opal/util/trace.h"
 #include "opal/util/output.h"
 
+#include "orte/util/show_help.h"
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/errmgr/base/errmgr_private.h"
 
@@ -47,10 +48,6 @@
 /*
  * Globals
  */
-int  orte_errmgr_base_output  = -1;
-bool orte_errmgr_base_enable_recovery = false;
-bool orte_errmgr_base_shutting_down = false;
-bool orte_errmgr_initialized = false;
 opal_list_t orte_errmgr_base_components_available;
 
 orte_errmgr_base_t orte_errmgr_base;
@@ -70,8 +67,6 @@ orte_errmgr_API_t orte_errmgr = {
  */
 int orte_errmgr_base_open(void)
 {
-    int value;
-
     OPAL_TRACE(5);
 
     /* Only pass this way once */
@@ -84,40 +79,6 @@ int orte_errmgr_base_open(void)
     
     orte_errmgr_base.output = opal_output_open(NULL);
 
-    mca_base_param_reg_int_name("errmgr",
-                                "base_enable_recovery",
-                                "If the ErrMgr recovery components should be enabled."
-                                " [Default = disabled]",
-                                false, false,
-                                0, &value);
-    orte_errmgr_base.enable_recovery = OPAL_INT_TO_BOOL(value);
-
-    mca_base_param_reg_int_name("errmgr",
-                                "max_global_restarts",
-                                "Max number of times to relocate a failed process to a new node",
-                                false, false,
-                                -1, &orte_errmgr_base.max_global_restarts);
-    
-    mca_base_param_reg_int_name("errmgr",
-                                "max_local_restarts",
-                                "Max number of times to locally restart a failed process before relocating it to a new node",
-                                false, false,
-                                -1, &orte_errmgr_base.max_local_restarts);
-    
-    if (orte_errmgr_base.enable_recovery) {
-        if (orte_errmgr_base.max_global_restarts < 0 ) {
-            orte_errmgr_base.max_global_restarts = 3;
-        }
-        if (orte_errmgr_base.max_local_restarts < 0) {
-            orte_errmgr_base.max_local_restarts = 3;
-        }
-    } else {
-        if (orte_errmgr_base.max_local_restarts > 0 ||
-            orte_errmgr_base.max_global_restarts > 0) {
-            orte_errmgr_base.enable_recovery = true;
-        }
-    }
-    
     /*
      * A flag to indicate that orterun is shutting down, so skip the recovery
      * logic.

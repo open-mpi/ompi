@@ -173,17 +173,6 @@ int orte_errmgr_base_suggest_map_targets(orte_proc_t *proc,
     int i, rc;
     orte_errmgr_stack_state_t stack_state = ORTE_ERRMGR_STACK_STATE_NONE;
 
-    /*
-     * If the user did not ask for recovery, then do not process recovery events
-     */
-    if( !orte_errmgr_base.enable_recovery ) {
-        OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output,
-                             "errmgr:base:suggest_map_targets() %s) "
-                             "------- Recovery currently disabled! Skipping...",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME) ));
-        return ORTE_SUCCESS;
-    }
-
     OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output,
                          "errmgr:base:suggest_map_targets() %s) "
                          "------- Notifying components... (%3d active components)",

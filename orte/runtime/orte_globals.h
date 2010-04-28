@@ -390,6 +390,8 @@ typedef struct {
     bool abort;
     /* proc that caused that to happen */
     struct orte_proc_t *aborted_proc;
+    /* enable recovery of these processes */
+    bool enable_recovery;
     /* max number of times a process can be restarted locally */
     int32_t max_local_restarts;
     /* max number of times a process can be relocated to another node */
@@ -664,6 +666,11 @@ ORTE_DECLSPEC extern bool orte_report_bindings;
 
 /* barrier control */
 ORTE_DECLSPEC extern bool orte_do_not_barrier;
+
+/* process recovery */
+ORTE_DECLSPEC extern bool orte_enable_recovery;
+ORTE_DECLSPEC extern int32_t orte_max_global_restarts;
+ORTE_DECLSPEC extern int32_t orte_max_local_restarts;
 
 /* comm interface */
 typedef void (*orte_default_cbfunc_t)(int fd, short event, void *data);

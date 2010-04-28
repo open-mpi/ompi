@@ -425,6 +425,18 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Report events to a tool listening at the specified URI" },
 
+    { "orte", "enable", "recovery", '\0', "enable-recovery", "enable-recovery", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Enable recovery from process failure [Default = disabled]" },
+
+    { "orte", "max", "global_restarts", '\0', "max-global-restarts", "max-global-restarts", 1,
+      NULL, OPAL_CMD_LINE_TYPE_INT,
+      "Max number of times to relocate a failed process to a new node" },
+
+    { "orte", "max", "local_restarts", '\0', "max-local-restarts", "max-local-restarts", 1,
+      NULL, OPAL_CMD_LINE_TYPE_INT,
+        "Max number of times to locally restart a failed process before relocating it to a new node" },
+
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
@@ -1135,11 +1147,11 @@ static void abort_exit_callback(int fd, short ign, void *arg)
         orte_debugger_finalize();
 
         /*
-         * Turn off the errmgr recovery functionality, if it was enabled.
+         * Turn off the process recovery functionality, if it was enabled.
          * This keeps the errmgr from trying to recover from the shutdown
          * procedure.
          */
-        orte_errmgr_base.enable_recovery = false;
+        orte_enable_recovery             = false;
         orte_errmgr_base.shutting_down   = true;
 
         /* terminate the orteds - they will automatically kill
