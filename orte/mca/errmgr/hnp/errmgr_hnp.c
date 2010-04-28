@@ -517,7 +517,6 @@ static void update_proc(orte_job_t *jdata,
                 proct->exit_code = exit_code;
                 if (ORTE_PROC_STATE_UNTERMINATED < state) {
                     if (!jdata->enable_recovery) {
-                        opal_output(0, "JDATA NOT ENABLED FOR RECOVERY");
                         opal_list_remove_item(&orte_local_children, &child->super);
                         OBJ_RELEASE(child);
                     }
