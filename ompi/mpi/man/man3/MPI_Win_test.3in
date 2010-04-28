@@ -42,11 +42,11 @@ The returning state of the test for epoch closure.
 .SH DESCRIPTION
 .ft R
 MPI_Win_test is a one-sided MPI communication synchronization call, a 
-nonblocking version of MPI_Win_wait. It returns \fIag = true\fP if
-MPI_Win_wait would return, \fIag = false\fP otherwise. The effect of return of MPI_Win_test with \fIflag = true\fP is the same as the effect of a return of MPI_Win_wait. If \fIag = false\fP is returned, then the call has no visible effect.
+nonblocking version of MPI_Win_wait. It returns \fIflag = true\fP if
+MPI_Win_wait would return, \fIflag = false\fP otherwise. The effect of return of MPI_Win_test with \fIflag = true\fP is the same as the effect of a return of MPI_Win_wait. If \fIflag = false\fP is returned, then the call has no visible effect.
 .sp
 Invoke MPI_Win_test only where MPI_Win_wait can be invoked. Once
-the call has returned \fIag = true\fP, it must not be invoked anew, until the window is posted anew.
+the call has returned \fIflag = true\fP, it must not be invoked anew, until the window is posted anew.
 
 
 .SH ERRORS
