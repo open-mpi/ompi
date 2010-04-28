@@ -1043,8 +1043,19 @@ scheme with the release of v1.3.2.
 NOTE: Only official releases of Open MPI adhere to this versioning
       scheme. "Beta" releases, release candidates, and nightly
       tarballs, developer snapshots, and Subversion/Mercurial snapshot
-      tarballs likely will all have meaningless shared library version
-      numbers.
+      tarballs likely will all have arbitrary/meaningless shared
+      library version numbers.
+
+For deep voodoo technical reasons, only the MPI API libraries were
+versioned until Open MPI v1.5 was released (i.e., libmpi*so --
+libopen-rte.so or libopen-pal.so were not versioned until v1.5).
+Please see https://svn.open-mpi.org/trac/ompi/ticket/2092 for more
+details.
+
+NOTE: This policy change will cause an ABI incompatibility between MPI
+      applications compiled/linked against the Open MPI v1.4 series;
+      such applications will not be able to upgrade to the Open MPI
+      v1.5 series without re-linking.  Sorry folks!
 
 The GNU Libtool official documentation details how the versioning
 scheme works.  The quick version is that the shared library versions
