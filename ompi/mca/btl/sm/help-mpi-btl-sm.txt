@@ -3,7 +3,7 @@
 # Copyright (c) 2004-2009 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -13,7 +13,7 @@
 # This is the US/English help file for Open MPI's shared memory support.
 #
 [knem requested but not supported]
-WARNING: Linux kernel kenm support was requested for the shared memory
+WARNING: Linux kernel knem support was requested for the shared memory
 (sm) BTL, but it is not supported.  Deactivating the shared memory
 BTL.
 
