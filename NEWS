@@ -34,7 +34,14 @@ Trunk (not on release branches yet)
   http://www.open-mpi.org/community/lists/devel/2010/03/7589.php
 - Add pkg-config(1) configuration files for ompi, ompi-c, ompi-cxx,
   ompi-f77, ompi-f90.  See the README for more details.
-
+- Add new sensor framework to ORTE that includes modules for detecting
+  stalled applications and processes that consume too much memory.
+- Add new state framework to ORTE for saving and retrieving state
+  information (both application and system) to/from a database.
+- Add new "orte-info" tool that provides MCA params for only ORTE and
+  OPAL levels - intended for use when configuring without MPI support
+- Modified paffinity system to provide warning when bindings result in
+  being "bound to all", which is equivalent to "not bound"
 
 1.5
 ---
