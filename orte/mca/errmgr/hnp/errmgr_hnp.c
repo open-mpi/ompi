@@ -580,6 +580,7 @@ static void check_job_complete(orte_job_t *jdata)
     orte_job_map_t *map;
     orte_std_cntr_t index;
     bool one_still_alive;
+    orte_exit_code_t first_non_zero=0;
     
 #if 0
     /* Check if FileM is active. If so then keep processing. */
@@ -592,6 +593,10 @@ static void check_job_complete(orte_job_t *jdata)
              * we need to check everything
              */
             continue;
+        }
+        
+        if (0 == first_non_zero && 0 != proc->exit_code) {
+            first_non_zero = proc->exit_code;
         }
         
         /*
@@ -727,6 +732,8 @@ static void check_job_complete(orte_job_t *jdata)
         /* turn off any sensor monitors on this job */
         orte_sensor.stop(jdata->jobid);
 #endif
+        /* update our exit code */
+        ORTE_UPDATE_EXIT_STATUS(first_non_zero);
         OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
                              "%s errmgr:hnp:check_job_completed declared job %s normally terminated - checking all jobs",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
