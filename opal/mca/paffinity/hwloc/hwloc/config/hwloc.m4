@@ -541,14 +541,8 @@ EOF])
     # Always generate these files
     AC_CONFIG_FILES(
         hwloc_config_prefix[Makefile]
-        hwloc_config_prefix[doc/Makefile]
         hwloc_config_prefix[include/Makefile]
         hwloc_config_prefix[src/Makefile ]
-        hwloc_config_prefix[tests/Makefile ]
-        hwloc_config_prefix[tests/linux/Makefile]
-        hwloc_config_prefix[tests/xml/Makefile]
-        hwloc_config_prefix[tests/ports/Makefile]
-        hwloc_config_prefix[utils/Makefile]
     )
 
     # Cleanup

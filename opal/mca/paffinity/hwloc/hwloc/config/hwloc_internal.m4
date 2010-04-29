@@ -166,7 +166,9 @@ EOF
     fi
 
     # Generate some files for the docs
-    AC_CONFIG_FILES(hwloc_config_prefix[doc/doxygen-config.cfg])
+    AC_CONFIG_FILES(
+        hwloc_config_prefix[doc/Makefile]
+        hwloc_config_prefix[doc/doxygen-config.cfg])
 ])
 
 #-----------------------------------------------------------------------
@@ -233,7 +235,9 @@ EOF
     HWLOC_CFLAGS="$HWLOC_CFLAGS $HWLOC_XML_CFLAGS"
 
     # Only generate this if we're building the utilities
-    AC_CONFIG_FILES(hwloc_config_prefix[hwloc.pc])
+    AC_CONFIG_FILES(
+        hwloc_config_prefix[utils/Makefile]
+        hwloc_config_prefix[hwloc.pc])
 ])dnl
 
 #-----------------------------------------------------------------------
@@ -251,10 +255,14 @@ EOF
 
     # Only generate these files if we're making the tests
     AC_CONFIG_FILES(
-        hwloc_config_prefix[utils/test-hwloc-distrib.sh]
+        hwloc_config_prefix[tests/Makefile ]
+        hwloc_config_prefix[tests/linux/Makefile]
+        hwloc_config_prefix[tests/xml/Makefile]
+        hwloc_config_prefix[tests/ports/Makefile]
         hwloc_config_prefix[tests/linux/gather-topology.sh]
         hwloc_config_prefix[tests/linux/test-topology.sh]
-        hwloc_config_prefix[tests/xml/test-topology.sh])
+        hwloc_config_prefix[tests/xml/test-topology.sh]
+        hwloc_config_prefix[utils/test-hwloc-distrib.sh])
 
     AC_CONFIG_COMMANDS([chmoding-scripts], [chmod +x ]hwloc_config_prefix[tests/linux/test-topology.sh ]hwloc_config_prefix[tests/xml/test-topology.sh ]hwloc_config_prefix[tests/linux/gather-topology.sh ]hwloc_config_prefix[utils/test-hwloc-distrib.sh])
 

@@ -116,7 +116,12 @@ AS_IF([test "$hwloc_debug" = "1"],
 # If the user didn't specifically ask for embedding mode, default to
 # standalone mode
 AS_IF([test "$enable_embedded_mode" != "yes"],
-      [HWLOC_BUILD_STANDALONE])
+      [AS_IF([test ! -d "$srcdir/doc"],
+             [AC_MSG_WARN([The hwloc source tree looks incomplete for a standalobe])
+              AC_MSG_WARN([build.  Perhaps this hwloc tree is intended for an embedded])
+              AC_MSG_WARN([build?  Try using the --enable-embedded-mode switch.])
+              AC_MSG_ERROR([Cannot continue])],
+             [HWLOC_BUILD_STANDALONE])])
 
 # Setup the hwloc core
 HWLOC_SETUP_CORE([], [], [hwloc_setup=unhappy], [1])

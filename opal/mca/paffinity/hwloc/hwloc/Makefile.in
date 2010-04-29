@@ -38,6 +38,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
+@HWLOC_BUILD_STANDALONE_TRUE@am__append_1 = utils tests doc
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(srcdir)/hwloc.pc.in \
@@ -112,7 +113,6 @@ AM_RECURSIVE_TARGETS = $(RECURSIVE_TARGETS:-recursive=) \
 	distdir dist dist-all distcheck
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = $(SUBDIRS)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -311,7 +311,11 @@ top_srcdir = @top_srcdir@
 # Note that the -I directory must *exactly* match what was specified
 # via AC_CONFIG_MACRO_DIR in configure.ac.
 ACLOCAL_AMFLAGS = -I ./config
-SUBDIRS = src utils tests include doc
+SUBDIRS = src include $(am__append_1)
+
+# Do not let automake automatically add the non-standalone dirs to the
+# distribution tarball if we're building in embedded mode.
+DIST_SUBDIRS = $(SUBDIRS)
 
 # Only install the pkg file if we're building in standalone mode
 @HWLOC_BUILD_STANDALONE_TRUE@pkgconfigdir = $(libdir)/pkgconfig
@@ -556,6 +560,7 @@ GTAGS:
 
 distclean-tags:
 	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags
+@HWLOC_BUILD_STANDALONE_FALSE@dist-hook:
 
 distdir: $(DISTFILES)
 	$(am__remove_distdir)
@@ -863,20 +868,19 @@ uninstall-am: uninstall-pkgconfigDATA
 # Double check that we generated both the doxygen docs and a new copy
 # of the top-level README file.
 #
-
-cannot-dist:
-	@echo "ERROR: Did not build both of the doxygen docs and README."
-	@echo "ERROR: This tarball is not complete!"
-	@echo "ERROR: Cowardly refusing to complete successfully..."
-	@exit 1
+@HWLOC_BUILD_STANDALONE_TRUE@cannot-dist:
+@HWLOC_BUILD_STANDALONE_TRUE@	@echo "ERROR: Did not build both of the doxygen docs and README."
+@HWLOC_BUILD_STANDALONE_TRUE@	@echo "ERROR: This tarball is not complete!"
+@HWLOC_BUILD_STANDALONE_TRUE@	@echo "ERROR: Cowardly refusing to complete successfully..."
+@HWLOC_BUILD_STANDALONE_TRUE@	@exit 1
 
 # Refuse to make dist if we can't make the doxygen stuff (note that
 # BUILD_DOXYGEN will automatically be false if we're not building
 # standalone).
-@HWLOC_BUILD_DOXYGEN_FALSE@dist-hook: cannot-dist
-@HWLOC_BUILD_DOXYGEN_TRUE@@HWLOC_BUILD_README_FALSE@dist-hook: cannot-dist
-@HWLOC_BUILD_DOXYGEN_TRUE@@HWLOC_BUILD_README_TRUE@dist-hook:
-@HWLOC_BUILD_DOXYGEN_TRUE@@HWLOC_BUILD_README_TRUE@	csh "$(top_srcdir)/config/distscript.csh" "$(top_srcdir)" "$(distdir)" "$(HWLOC_VERSION)" "$(HWLOC_SVN_R)"
+@HWLOC_BUILD_DOXYGEN_FALSE@@HWLOC_BUILD_STANDALONE_TRUE@dist-hook: cannot-dist
+@HWLOC_BUILD_DOXYGEN_TRUE@@HWLOC_BUILD_README_FALSE@@HWLOC_BUILD_STANDALONE_TRUE@dist-hook: cannot-dist
+@HWLOC_BUILD_DOXYGEN_TRUE@@HWLOC_BUILD_README_TRUE@@HWLOC_BUILD_STANDALONE_TRUE@dist-hook:
+@HWLOC_BUILD_DOXYGEN_TRUE@@HWLOC_BUILD_README_TRUE@@HWLOC_BUILD_STANDALONE_TRUE@	csh "$(top_srcdir)/config/distscript.csh" "$(top_srcdir)" "$(distdir)" "$(HWLOC_VERSION)" "$(HWLOC_SVN_R)"
 
 #
 # Build the top-level README file
