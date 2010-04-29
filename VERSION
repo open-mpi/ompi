@@ -20,7 +20,7 @@ release=2
 # only requirement is that it must be entirely printable ASCII 
 # characters and have no white space.
 
-greek=rc2
+greek=rc3
 
 # If want_svn=1, then the SVN r number will be included in the overall
 # Open MPI version number in some form.
@@ -70,17 +70,19 @@ date="Release candidate"
 # be affected by changes to inlined functions in OMPI's
 # header-file-based C++ bindings implementation.
 
-# 5. The ORTE and OPAL libraries will change versions when their
-# public interfaces change (as relative to the layer(s) above them).
-# None of the ORTE and OPAL interfaces are public to MPI applications,
-# but they are "public" within the OMPI code base and select 3rd party
-# software packages.
+# 5. For the v1.4 series, we have decided not to change the version
+# numbers for libopen-rte.so and libopen-pal.so because of deep voodo
+# linker reasons. This policy is only in effect for the v1.4 series;
+# the v1.5 series will update libopen-rte.so/libopen-pal.so version
+# numbers as appropriate. This policy change will unfortunately cause
+# an ABI breakage for MPI applications between the v1.4 and v1.5
+# series -- sorry folks! :-(
 
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-libmpi_so_version=0:1:0
-libmpi_cxx_so_version=0:0:0
+libmpi_so_version=0:2:0
+libmpi_cxx_so_version=0:1:0
 libmpi_f77_so_version=0:0:0
 libmpi_f90_so_version=0:0:0
 libopen_rte_so_version=0:0:0
