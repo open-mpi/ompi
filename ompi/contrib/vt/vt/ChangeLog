@@ -1,3 +1,9 @@
+5.8.2openmpi
+	- fixed buffer overflow which occurred if marker or event comment
+	  records generated
+	- fixed bug in MPI-I/O tracing: tracking MPI file handles even if
+	  MPI_File_open isn't recorded
+
 5.8.1openmpi
 	- updated version of internal OTF to 1.6.5openmpi
 	  (see extlib/otf/ChangeLog)

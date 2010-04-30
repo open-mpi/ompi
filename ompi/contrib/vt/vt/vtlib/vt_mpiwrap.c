@@ -4201,15 +4201,18 @@ VT_MPI_INT MPI_File_open( MPI_Comm comm,
 
   if (IS_MPI_TRACE_ON)
     {
+      uint32_t fid;
+
       MPIIO_ENTER_IO_W_HANDLE(VT__MPI_FILE_OPEN);
 
       CALL_PMPI_5(MPI_File_open, comm, filename, amode, info, fh, result,
                   0, was_recorded, &time);
 
       time = vt_pform_wtime();
+      fid = vt_mpifile_create(*fh, filename);
+
       if (was_recorded)
         {
-          uint32_t fid = vt_mpifile_create(*fh, filename);
           if (result == MPI_SUCCESS)
             {
               vt_ioend(&time, fid, handleid, VT_IOOP_OPEN, 0);
