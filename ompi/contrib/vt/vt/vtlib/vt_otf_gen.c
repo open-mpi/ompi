@@ -40,28 +40,28 @@
   if (gen == NULL) vt_error_msg("Abort: Uninitialized trace buffer")
 
 #define VTGEN_ALLOC_DEF(gen, bytes)                                 \
-  if ((uint64_t)(gen->buf->pos - gen->buf->mem) >                   \
-      (uint64_t)(gen->buf->size - (bytes)))                         \
-    VTGen_flush(gen, 0, vt_pform_wtime(), NULL);
+  if ((uint64_t)((gen)->buf->pos - (gen)->buf->mem) >               \
+      (uint64_t)((gen)->buf->size - (bytes)))                       \
+    VTGen_flush((gen), 0, vt_pform_wtime(), NULL);
 
 #define VTGEN_ALLOC_EVENT(gen, bytes)                               \
-  if ((uint64_t)(gen->buf->pos - gen->buf->mem) >                   \
-      (uint64_t)(gen->buf->size - (bytes))) {                       \
-    VTGen_flush(gen, 0, *time, time);                               \
-    if(gen->flushcntr == 0) return;                                 \
+  if ((uint64_t)((gen)->buf->pos - (gen)->buf->mem) >               \
+      (uint64_t)((gen)->buf->size - (bytes))) {                     \
+    VTGen_flush((gen), 0, *time, time);                             \
+    if((gen)->flushcntr == 0) return;                               \
   }
 
 #define VTGEN_ALIGN_LENGTH(bytes)                                   \
-  ( bytes % SIZEOF_VOIDP ) ?                                        \
-    ( bytes / SIZEOF_VOIDP + 1 ) * SIZEOF_VOIDP : bytes
+  ( (bytes) % SIZEOF_VOIDP ) ?                                      \
+    ( (bytes) / SIZEOF_VOIDP + 1 ) * SIZEOF_VOIDP : (bytes)
 
 #define VTGEN_JUMP(gen, bytes)                                      \
-  gen->buf->pos += length
+  gen->buf->pos += (bytes)
 
-#define VTGEN_IS_TRACE_ON(gen) (gen->mode & VT_MODE_TRACE) != 0
-#define VTGEN_IS_SUM_ON(gen) (gen->mode & VT_MODE_STAT) != 0
+#define VTGEN_IS_TRACE_ON(gen) ((gen)->mode & VT_MODE_TRACE) != 0
+#define VTGEN_IS_SUM_ON(gen) ((gen)->mode & VT_MODE_STAT) != 0
 #define VTGEN_IS_SUM_PROP_ON(gen, prop) \
-  (VTGEN_IS_SUM_ON(gen) && (gen->sum_props & prop) != 0)
+  (VTGEN_IS_SUM_ON((gen)) && ((gen)->sum_props & (prop)) != 0)
 
 /*
  *-----------------------------------------------------------------------------
@@ -1993,7 +1993,8 @@ void VTGen_write_COMMENT(VTGen* gen, uint64_t* time,
     VTBuf_Entry_Comment* new_entry;
 
     uint32_t length =
-      VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_Comment));
+      VTGEN_ALIGN_LENGTH((sizeof(VTBuf_Entry_Comment) +
+                          (strlen(comment) * sizeof(char))));
 
     VTGEN_ALLOC_EVENT(gen, length);
 
@@ -2020,7 +2021,8 @@ void VTGen_write_MARKER(VTGen* gen, uint64_t* time, uint32_t mid,
     VTBuf_Entry_Marker* new_entry;
 
     uint32_t length =
-      VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_Marker));
+      VTGEN_ALIGN_LENGTH((sizeof(VTBuf_Entry_Marker) +
+                          (strlen(mtext) * sizeof(char))));
 
     VTGEN_ALLOC_EVENT(gen, length);
 
