@@ -103,6 +103,7 @@ typedef struct {
     orte_rmcast_callback_fn_t cbfunc_iovec;
     orte_rmcast_callback_buffer_fn_t cbfunc_buffer;
     void *cbdata;
+    bool send_complete;
 } rmcast_base_send_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(rmcast_base_send_t);
 
