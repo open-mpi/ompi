@@ -74,7 +74,7 @@ void mpi_waitsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests,
     OMPI_SINGLE_NAME_DECL(outcount);
     OMPI_ARRAY_NAME_DECL(array_of_indices);
 
-    c_req = malloc(OMPI_FINT_2_INT(*incount) *
+    c_req = (MPI_Request *) malloc(OMPI_FINT_2_INT(*incount) *
                    (sizeof(MPI_Request) + sizeof(MPI_Status)));
     if (NULL == c_req) {
         *ierr = OMPI_INT_2_FINT(OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,

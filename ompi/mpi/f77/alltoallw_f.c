@@ -75,8 +75,8 @@ void mpi_alltoallw_f(char *sendbuf, MPI_Fint *sendcounts,
     c_comm = MPI_Comm_f2c(*comm);
     MPI_Comm_size(c_comm, &size);
 
-    c_sendtypes = malloc(size * sizeof(MPI_Datatype));
-    c_recvtypes = malloc(size * sizeof(MPI_Datatype));
+    c_sendtypes = (MPI_Datatype *) malloc(size * sizeof(MPI_Datatype));
+    c_recvtypes = (MPI_Datatype *) malloc(size * sizeof(MPI_Datatype));
 
     OMPI_ARRAY_FINT_2_INT(sendcounts, size);
     OMPI_ARRAY_FINT_2_INT(sdispls, size);
@@ -90,8 +90,8 @@ void mpi_alltoallw_f(char *sendbuf, MPI_Fint *sendcounts,
     }
 
     /* Alltoallw does not support MPI_IN_PLACE */
-    sendbuf = OMPI_F2C_BOTTOM(sendbuf);
-    recvbuf = OMPI_F2C_BOTTOM(recvbuf);
+    sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
+    recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
     *ierr = OMPI_INT_2_FINT(MPI_Alltoallw(sendbuf, 
 					  OMPI_ARRAY_NAME_CONVERT(sendcounts),

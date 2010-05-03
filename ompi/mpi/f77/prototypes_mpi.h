@@ -49,6 +49,8 @@
 #include "ompi/request/grequest.h"
 #include "ompi/mpi/f77/datarep.h"
 
+BEGIN_C_DECLS
+
 /* These are the prototypes for the "real" back-end fortran functions. */
 #define PN(ret, lower_name, upper_name, args) \
   OMPI_DECLSPEC ret lower_name##_f args;    \
@@ -362,5 +364,7 @@ PN(void, mpi_dup_fn, MPI_DUP_FN, (MPI_Fint* comm, MPI_Fint* comm_keyval, MPI_Fin
 PN(void, mpi_comm_null_delete_fn, MPI_COMM_NULL_DELETE_FN, (MPI_Fint* comm, MPI_Fint* comm_keyval, MPI_Aint* attribute_val_out, MPI_Aint* extra_state, MPI_Fint* ierr));
 PN(void, mpi_comm_null_copy_fn, MPI_COMM_NULL_COPY_FN, (MPI_Fint* comm, MPI_Fint* comm_keyval, MPI_Aint* extra_state, MPI_Aint* attribute_val_in, MPI_Aint* attribute_val_out, ompi_fortran_logical_t * flag, MPI_Fint* ierr));
 PN(void, mpi_comm_dup_fn, MPI_COMM_DUP_FN, (MPI_Fint* comm, MPI_Fint* comm_keyval, MPI_Aint* extra_state, MPI_Aint* attribute_val_in, MPI_Aint* attribute_val_out, ompi_fortran_logical_t * flag, MPI_Fint* ierr));
+
+END_C_DECLS
 
 #endif

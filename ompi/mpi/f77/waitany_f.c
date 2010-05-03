@@ -71,7 +71,7 @@ void mpi_waitany_f(MPI_Fint *count, MPI_Fint *array_of_requests,
     int i, c_err;
     OMPI_SINGLE_NAME_DECL(index);
 
-    c_req = malloc(OMPI_FINT_2_INT(*count) * sizeof(MPI_Request));
+    c_req = (MPI_Request *) malloc(OMPI_FINT_2_INT(*count) * sizeof(MPI_Request));
     if (NULL == c_req) {
         c_err = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM,
                                      FUNC_NAME);

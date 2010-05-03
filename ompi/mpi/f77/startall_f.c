@@ -68,7 +68,7 @@ void mpi_startall_f(MPI_Fint *count, MPI_Fint *array_of_requests,
     MPI_Request *c_req;
     int i;
 
-    c_req = malloc(*count * sizeof(MPI_Request));
+    c_req = (MPI_Request *) malloc(*count * sizeof(MPI_Request));
     if (NULL == c_req) {
         *ierr = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM,
                                        FUNC_NAME);
