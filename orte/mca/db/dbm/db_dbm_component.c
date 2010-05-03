@@ -21,20 +21,20 @@
 
 #include "orte/util/proc_info.h"
 
-#include "orte/mca/state/state.h"
-#include "orte/mca/state/base/base.h"
-#include "state_dbm.h"
+#include "orte/mca/db/db.h"
+#include "orte/mca/db/base/base.h"
+#include "db_dbm.h"
 
-extern orte_state_base_module_t orte_state_dbm_module;
-char *orte_state_dbm_directory;
+extern orte_db_base_module_t orte_db_dbm_module;
+char *orte_db_dbm_directory;
 
 /*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
  */
-orte_state_base_component_t mca_state_dbm_component = {
+orte_db_base_component_t mca_db_dbm_component = {
     {
-        ORTE_STATE_BASE_VERSION_1_0_0,
+        ORTE_DB_BASE_VERSION_1_0_0,
 
         /* Component name and version */
         "dbm",
@@ -43,9 +43,9 @@ orte_state_base_component_t mca_state_dbm_component = {
         ORTE_RELEASE_VERSION,
 
         /* Component open and close functions */
-        orte_state_dbm_component_open,
-        orte_state_dbm_component_close,
-        orte_state_dbm_component_query
+        orte_db_dbm_component_open,
+        orte_db_dbm_component_close,
+        orte_db_dbm_component_query
     },
     {
         /* The component is checkpoint ready */
@@ -55,34 +55,24 @@ orte_state_base_component_t mca_state_dbm_component = {
 
 
 int
-orte_state_dbm_component_open(void)
+orte_db_dbm_component_open(void)
 {
     return ORTE_SUCCESS;
 }
 
 
-int orte_state_dbm_component_query(mca_base_module_t **module, int *priority)
+int orte_db_dbm_component_query(mca_base_module_t **module, int *priority)
 {
-
-    /* we are the file module - we need to be selected
-     * IFF we are requested
-     */
-    bool is_required = false;
-    mca_base_component_t *c = &mca_state_dbm_component.base_version;
+    mca_base_component_t *c = &mca_db_dbm_component.base_version;
 
     /* retrieve the name of the file to be used */
     mca_base_param_reg_string(c, "dir",
-                              "Name of directory to be used for storing and recovering state information",
-                              false, false, NULL, &orte_state_dbm_directory);
+                              "Name of directory to be used for storing and recovering db information",
+                              false, false, NULL, &orte_db_dbm_directory);
     
-    mca_base_is_component_required(&orte_state_base_components_available,
-                                   &mca_state_dbm_component.base_version,
-                                   true,
-                                   &is_required);
-    
-    if (is_required && NULL != orte_state_dbm_directory) {
-        *priority = 1000;
-        *module = (mca_base_module_t*)&orte_state_dbm_module;
+    if (NULL != orte_db_dbm_directory) {
+        *priority = 50;
+        *module = (mca_base_module_t*)&orte_db_dbm_module;
         return ORTE_SUCCESS;
     }
     
@@ -94,7 +84,7 @@ int orte_state_dbm_component_query(mca_base_module_t **module, int *priority)
 
 
 int
-orte_state_dbm_component_close(void)
+orte_db_dbm_component_close(void)
 {
     return ORTE_SUCCESS;
 }

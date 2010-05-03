@@ -7,10 +7,12 @@
 # $HEADER$
 #
 
+dist_pkgdata_DATA += base/help-db-base.txt
+
 headers += \
 	base/base.h
 
-libmca_state_la_SOURCES += \
-	base/state_base_open.c \
-	base/state_base_close.c \
-	base/state_base_select.c
+libmca_db_la_SOURCES += \
+	base/db_base_open.c \
+	base/db_base_close.c \
+	base/db_base_select.c
