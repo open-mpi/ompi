@@ -102,7 +102,7 @@ int mca_rcache_vma_delete(struct mca_rcache_base_module_t* rcache,
     return mca_rcache_vma_tree_delete(vma_rcache, reg);
 }
 
-void mca_rcache_vma_clean(struct mca_rcache_base_module_t* rcache)
+int mca_rcache_vma_clean(struct mca_rcache_base_module_t* rcache)
 {
     mca_rcache_vma_module_t *vma_rcache = (mca_rcache_vma_module_t*)rcache;
     mca_rcache_vma_t *vma;
@@ -124,6 +124,7 @@ void mca_rcache_vma_clean(struct mca_rcache_base_module_t* rcache)
 	    mca_rcache_vma_destroy(vma);
 	}
     } while (NULL != vma);
+    return OMPI_SUCCESS;
 }
 
 /**

@@ -66,7 +66,7 @@ int mca_rcache_vma_delete(struct mca_rcache_base_module_t* rcache,
         mca_mpool_base_registration_t* registration);
 
 /* It is not safe to call mca_rcache_vma_clean with the rcache lock held */
-void mca_rcache_vma_clean(struct mca_rcache_base_module_t* rcache);
+int mca_rcache_vma_clean(struct mca_rcache_base_module_t* rcache);
 /* Destroy vma objects which are on the deferred delete list. These were placed
    on the list earlier when the rcache lock was held and it was not safe to
    destory them. They should not be linked into any other structure anymore except
