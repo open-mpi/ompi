@@ -52,6 +52,7 @@
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
 #include "orte/mca/notifier/base/base.h"
+#include "orte/mca/db/base/base.h"
 
 #include "orte/runtime/orte_cr.h"
 #include "orte/runtime/orte_globals.h"
@@ -208,6 +209,18 @@ int orte_ess_base_app_setup(void)
     if (ORTE_SUCCESS != (ret = orte_notifier_base_select())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_notifer_select";
+        goto error;
+    }
+    
+    /* setup the db system */
+    if (ORTE_SUCCESS != (ret = orte_db_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_db_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_db_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_db_select";
         goto error;
     }
     

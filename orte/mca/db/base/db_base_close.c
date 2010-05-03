@@ -17,34 +17,34 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
 
-#include "orte/mca/state/base/base.h"
+#include "orte/mca/db/base/base.h"
 
-extern opal_list_t orte_state_base_components_available;
+extern opal_list_t orte_db_base_components_available;
 
 int
-orte_state_base_close(void)
+orte_db_base_close(void)
 {
     opal_list_item_t *item;
     mca_base_component_list_item_t *cli;
 
-    if (NULL != orte_state.finalize) {
-        orte_state.finalize();
+    if (NULL != orte_db.finalize) {
+        orte_db.finalize();
     }
     
     /* unload all remaining components */
-    while (NULL != (item = opal_list_remove_first(&orte_state_base_components_available))) {
-        orte_state_base_component_t* component;
+    while (NULL != (item = opal_list_remove_first(&orte_db_base_components_available))) {
+        orte_db_base_component_t* component;
         cli = (mca_base_component_list_item_t *) item;
-        component = (orte_state_base_component_t*) cli->cli_component;
+        component = (orte_db_base_component_t*) cli->cli_component;
         opal_output_verbose(10, 0,
-                            "orte_state_base_close: module %s unloaded",
+                            "orte_db_base_close: module %s unloaded",
                             component->base_version.mca_component_name);
         mca_base_component_repository_release((mca_base_component_t *) component);
         OBJ_RELEASE(item);
     }
     
-    OBJ_DESTRUCT(&orte_state_base_components_available);
-    opal_output_close(orte_state_base_output);
+    OBJ_DESTRUCT(&orte_db_base_components_available);
+    opal_output_close(orte_db_base_output);
     return ORTE_SUCCESS;
 }
 

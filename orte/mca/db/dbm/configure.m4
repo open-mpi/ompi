@@ -8,21 +8,21 @@ dnl
 dnl $HEADER$
 dnl
 
-# MCA_state_db_CONFIG([action-if-found], [action-if-not-found])
+# MCA_db_dbm_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([MCA_state_db_CONFIG], [
-    # only build if db.h and its corresponding library are found
-    OMPI_CHECK_PACKAGE([state_db],
-                       [db.h],
-                       [db],
-                       [dbopen],
+AC_DEFUN([MCA_db_dbm_CONFIG], [
+    # only build if ndbm.h and its library are found
+    OMPI_CHECK_PACKAGE([db_dbm],
+                       [ndbm.h],
+                       [dbm],
+                       [dbm_open],
                        [],
                        [],
                        [],
                        [$1],
                        [$2])])
 
-    AC_SUBST(state_db_CPPFLAGS)
-    AC_SUBST(state_db_LDFLAGS)
-    AC_SUBST(state_db_LIBS)
+    AC_SUBST(db_dbm_CPPFLAGS)
+    AC_SUBST(db_dbm_LDFLAGS)
+    AC_SUBST(db_dbm_LIBS)
 ])dnl

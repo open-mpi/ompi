@@ -56,7 +56,7 @@
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/notifier/base/base.h"
 #include "orte/mca/rmcast/base/base.h"
-#include "orte/mca/state/base/base.h"
+#include "orte/mca/db/base/base.h"
 #if ORTE_ENABLE_SENSORS
 #include "orte/mca/sensor/base/base.h"
 #endif
@@ -528,15 +528,15 @@ static int rte_init(void)
         goto error;
     }
 
-    /* setup the state framework */
-    if (ORTE_SUCCESS != (ret = orte_state_base_open())) {
+    /* setup the db framework */
+    if (ORTE_SUCCESS != (ret = orte_db_base_open())) {
         ORTE_ERROR_LOG(ret);
-        error = "orte_state_open";
+        error = "orte_db_open";
         goto error;
     }
-    if (ORTE_SUCCESS != (ret = orte_state_base_select())) {
+    if (ORTE_SUCCESS != (ret = orte_db_base_select())) {
         ORTE_ERROR_LOG(ret);
-        error = "orte_state_select";
+        error = "orte_db_select";
         goto error;
     }
     
@@ -612,7 +612,7 @@ static int rte_finalize(void)
 #if ORTE_ENABLE_SENSORS
     orte_sensor_base_close();
 #endif
-    orte_state_base_close();
+    orte_db_base_close();
     orte_notifier_base_close();
     
     orte_cr_finalize();
