@@ -174,21 +174,43 @@ static int init(void)
     opal_pointer_array_init(&msg_log, 8, INT_MAX, 8);
     
     /* setup the respective public address channel */
-    if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_TOOL) {
+    if (ORTE_PROC_IS_TOOL) {
+        /* tools only open the sys channel */
         channel = ORTE_RMCAST_SYS_CHANNEL;
         if (ORTE_SUCCESS != (rc = open_channel(&channel, "system",
                                                NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
+    } else if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
+        /* daemons and hnp open the sys and data server channels */
+        channel = ORTE_RMCAST_SYS_CHANNEL;
+        if (ORTE_SUCCESS != (rc = open_channel(&channel, "system",
+                                               NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }        
+        channel = ORTE_RMCAST_DATA_SERVER_CHANNEL;
+        if (ORTE_SUCCESS != (rc = open_channel(&channel, "data-server",
+                                               NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     } else if (ORTE_PROC_IS_APP) {
+        /* apps open the app public and data server channels */
         channel = ORTE_RMCAST_APP_PUBLIC_CHANNEL;
         if (ORTE_SUCCESS != (rc = open_channel(&channel, "app-announce",
                                                NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        /* setup our grp channel, if one was given */
+        channel = ORTE_RMCAST_DATA_SERVER_CHANNEL;
+        if (ORTE_SUCCESS != (rc = open_channel(&channel, "data-server",
+                                               NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        /* also setup our grp channel, if one was given */
         if (NULL != orte_rmcast_base.my_group_name) {
             channel = orte_rmcast_base.my_group_number;
             if (ORTE_SUCCESS != (rc = open_channel(&channel, orte_rmcast_base.my_group_name,
@@ -274,7 +296,7 @@ static int queue_xmit(rmcast_base_send_t *snd,
     /* if we were asked to send this on our group output
      * channel, substitute it
      */
-    if (ORTE_RMCAST_GROUP_OUTPUT_CHANNEL == channel) {
+    if (ORTE_RMCAST_GROUP_CHANNEL == channel) {
         if (NULL == my_group_channel) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return ORTE_ERR_NOT_FOUND;
@@ -497,19 +519,23 @@ static int queue_recv(rmcast_base_recv_t *recvptr,
 }
 
 static int udp_recv(orte_process_name_t *name,
-                      orte_rmcast_channel_t channel,
-                      orte_rmcast_tag_t tag,
-                      struct iovec **msg, int *count)
+                    orte_rmcast_channel_t channel,
+                    orte_rmcast_tag_t tag,
+                    struct iovec **msg, int *count)
 {
     rmcast_base_recv_t *recvptr;
     int ret;
     
     recvptr = OBJ_NEW(rmcast_base_recv_t);
     recvptr->iovecs_requested = true;
-    recvptr->channel = channel;
+    if (ORTE_RMCAST_GROUP_CHANNEL == channel) {
+        recvptr->channel = orte_rmcast_base.my_group_number;
+    } else {
+        recvptr->channel = channel;
+    }
     recvptr->tag = tag;
     
-    if (ORTE_SUCCESS != (ret = queue_recv(recvptr, channel, tag, NULL, NULL, true))) {
+    if (ORTE_SUCCESS != (ret = queue_recv(recvptr, recvptr->channel, tag, NULL, NULL, true))) {
         ORTE_ERROR_LOG(ret);
         OBJ_RELEASE(recvptr);
         return ret;
@@ -548,13 +574,17 @@ static int udp_recv_nb(orte_rmcast_channel_t channel,
     
     recvptr = OBJ_NEW(rmcast_base_recv_t);
     recvptr->iovecs_requested = true;
-    recvptr->channel = channel;
+    if (ORTE_RMCAST_GROUP_CHANNEL == channel) {
+        recvptr->channel = orte_rmcast_base.my_group_number;
+    } else {
+        recvptr->channel = channel;
+    }
     recvptr->tag = tag;
     recvptr->flags = flags;
     recvptr->cbfunc_iovec = cbfunc;
     recvptr->cbdata = cbdata;
     
-    if (ORTE_SUCCESS != (ret = queue_recv(recvptr, channel, tag, cbfunc, NULL, false))) {
+    if (ORTE_SUCCESS != (ret = queue_recv(recvptr, recvptr->channel, tag, cbfunc, NULL, false))) {
         if (ORTE_EXISTS == ret) {
             /* this recv already exists - just release the copy */
             OBJ_RELEASE(recvptr);
@@ -581,10 +611,14 @@ static int udp_recv_buffer(orte_process_name_t *name,
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), channel));
 
     recvptr = OBJ_NEW(rmcast_base_recv_t);
-    recvptr->channel = channel;
+    if (ORTE_RMCAST_GROUP_CHANNEL == channel) {
+        recvptr->channel = orte_rmcast_base.my_group_number;
+    } else {
+        recvptr->channel = channel;
+    }
     recvptr->tag = tag;
     
-    if (ORTE_SUCCESS != (ret = queue_recv(recvptr, channel, tag, NULL, NULL, true))) {
+    if (ORTE_SUCCESS != (ret = queue_recv(recvptr, recvptr->channel, tag, NULL, NULL, true))) {
         ORTE_ERROR_LOG(ret);
         goto cleanup;
     }
@@ -625,13 +659,17 @@ static int udp_recv_buffer_nb(orte_rmcast_channel_t channel,
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), channel, tag));
     
     recvptr = OBJ_NEW(rmcast_base_recv_t);
-    recvptr->channel = channel;
+    if (ORTE_RMCAST_GROUP_CHANNEL == channel) {
+        recvptr->channel = orte_rmcast_base.my_group_number;
+    } else {
+        recvptr->channel = channel;
+    }
     recvptr->tag = tag;
     recvptr->flags = flags;
     recvptr->cbfunc_buffer = cbfunc;
     recvptr->cbdata = cbdata;
     
-    if (ORTE_SUCCESS != (ret = queue_recv(recvptr, channel, tag, NULL, cbfunc, false))) {
+    if (ORTE_SUCCESS != (ret = queue_recv(recvptr, recvptr->channel, tag, NULL, cbfunc, false))) {
         if (ORTE_EXISTS == ret) {
             /* this recv already exists - just release the copy */
             OBJ_RELEASE(recvptr);
@@ -650,6 +688,13 @@ static void cancel_recv(orte_rmcast_channel_t channel,
 {
     opal_list_item_t *item, *next;
     rmcast_base_recv_t *ptr;
+    orte_rmcast_channel_t ch;
+    
+    if (ORTE_RMCAST_GROUP_CHANNEL == channel) {
+        ch = orte_rmcast_base.my_group_number;
+    } else {
+        ch = channel;
+    }    
     
     /* find all recv's for this channel and tag */
     item = opal_list_get_first(&recvs);
@@ -657,8 +702,7 @@ static void cancel_recv(orte_rmcast_channel_t channel,
         next = opal_list_get_next(item);
         
         ptr = (rmcast_base_recv_t*)item;
-        if (channel == ptr->channel &&
-            tag == ptr->tag) {
+        if (ch == ptr->channel && tag == ptr->tag) {
             OPAL_THREAD_LOCK(&lock);
             opal_list_remove_item(&recvs, &ptr->item);
             OBJ_RELEASE(ptr);
