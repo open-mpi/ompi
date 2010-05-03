@@ -34,6 +34,7 @@
 #include "opal/runtime/opal_progress.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/dss/dss.h"
+#include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/sysinfo/sysinfo.h"
 
 #include "orte/util/show_help.h"
@@ -72,7 +73,8 @@
 int orte_plm_base_setup_job(orte_job_t *jdata)
 {
     orte_job_t *jdatorted;
-    int rc;
+    orte_app_context_t *app;
+    int rc, tmp;
     int32_t ljob;
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
@@ -92,13 +94,29 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
         ljob = ORTE_LOCAL_JOBID(jdata->jobid);
         opal_pointer_array_set_item(orte_job_data, ljob, jdata);
         
-        /* if its restart limits have not been set, set them to the defaults */
-        if (jdata->max_global_restarts < 0) {
+        /* see if recovery was set in the app */
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, 0))) {
+            /* big problem! */
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return ORTE_ERR_NOT_FOUND;
+        }
+        if (ORTE_SUCCESS == mca_base_param_find_int_name("orte", "enable_recovery", app->env, &tmp)) {
+            jdata->enable_recovery = OPAL_INT_TO_BOOL(tmp);
+        } else {
+            jdata->enable_recovery = orte_enable_recovery;
+        }
+        if (ORTE_SUCCESS == mca_base_param_find_int_name("orte", "max_global_restarts", app->env, &tmp)) {
+            jdata->max_global_restarts = tmp;
+        } else {
             jdata->max_global_restarts = orte_max_global_restarts;
         }
-        if (jdata->max_local_restarts < 0) {
+        if (ORTE_SUCCESS == mca_base_param_find_int_name("orte", "max_local_restarts", app->env, &tmp)) {
+            jdata->max_local_restarts = tmp;
+        } else {
             jdata->max_local_restarts = orte_max_local_restarts;
+
         }
+
         /* consistency check */
         if (jdata->max_global_restarts <= 0 &&
             jdata->max_local_restarts <= 0) {
@@ -107,7 +125,6 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
         } else {
             jdata->enable_recovery = true;
         }
-
     }
     
     /* get the allocation */
