@@ -876,6 +876,17 @@ LAUNCH_PROCS:
         
         /* Exec the new executable */
         
+        if (10 < opal_output_get_verbosity(orte_odls_globals.output)) {
+            int jout;
+            opal_output(0, "%s STARTING %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), context->app);
+            for (jout=0; NULL != context->argv[jout]; jout++) {
+                opal_output(0, "%s\tARGV[%d]: %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), jout, context->argv[jout]);
+            }
+            for (jout=0; NULL != environ_copy[jout]; jout++) {
+                opal_output(0, "%s\tENVIRON[%d]: %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), jout, environ_copy[jout]);
+            }
+        }
+
         execve(context->app, context->argv, environ_copy);
         orte_show_help("help-odls-default.txt", "orte-odls-default:execv-error",
                        true, context->app, strerror(errno));
