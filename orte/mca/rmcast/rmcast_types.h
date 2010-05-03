@@ -26,13 +26,14 @@ typedef int32_t orte_rmcast_channel_t;
 #define ORTE_RMCAST_CHANNEL_T   OPAL_INT32
 
 /* ORTE IP multicast channels */
-#define ORTE_RMCAST_GROUP_OUTPUT_CHANNEL   -2
+#define ORTE_RMCAST_GROUP_CHANNEL          -2
 #define ORTE_RMCAST_WILDCARD_CHANNEL       -1
 #define ORTE_RMCAST_INVALID_CHANNEL         0
 #define ORTE_RMCAST_SYS_CHANNEL             1
 #define ORTE_RMCAST_APP_PUBLIC_CHANNEL      2
+#define ORTE_RMCAST_DATA_SERVER_CHANNEL     3
 
-#define ORTE_RMCAST_DYNAMIC_CHANNELS        3
+#define ORTE_RMCAST_DYNAMIC_CHANNELS        4
 
 
 /* define channel directions */
@@ -54,8 +55,8 @@ typedef int32_t orte_rmcast_tag_t;
 #define ORTE_RMCAST_TAG_MSG          6
 #define ORTE_RMCAST_TAG_TOOL         7
 #define ORTE_RMCAST_TAG_IOF          8
-#define ORTE_RMCAST_TAG_STATE        9
-#define ORTE_RMCAST_TAG_STATE_ACK   10
+#define ORTE_RMCAST_TAG_DATA         9
+#define ORTE_RMCAST_TAG_CMD_ACK     10
 
 /* starting value for dynamically assignable tags */
 #define ORTE_RMCAST_TAG_DYNAMIC     100

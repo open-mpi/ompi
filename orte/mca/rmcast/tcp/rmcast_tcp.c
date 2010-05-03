@@ -292,7 +292,7 @@ static int queue_xmit(rmcast_base_send_t *snd,
     /* if we were asked to send this on our group output
      * channel, substitute it
      */
-    if (ORTE_RMCAST_GROUP_OUTPUT_CHANNEL == channel) {
+    if (ORTE_RMCAST_GROUP_CHANNEL == channel) {
         if (NULL == my_group_channel) {
             return ORTE_ERR_NOT_FOUND;
         }

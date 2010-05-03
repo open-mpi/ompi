@@ -28,9 +28,9 @@
 #include "opal/class/opal_ring_buffer.h"
 
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/util/name_fns.h"
 #include "orte/util/parse_options.h"
 #include "orte/util/show_help.h"
-#include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/rmcast/base/private.h"
 
@@ -155,7 +155,12 @@ int orte_rmcast_base_open(void)
             return ORTE_ERR_SILENT;
         }
         orte_rmcast_base.my_group_number = value;
+    } else {
+        /* since nothing was given, use our local jobid */
+        orte_rmcast_base.my_group_name = strdup(ORTE_LOCAL_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
+        orte_rmcast_base.my_group_number = ORTE_RMCAST_DYNAMIC_CHANNELS + ORTE_LOCAL_JOBID(ORTE_PROC_MY_NAME->jobid);
     }
+
 
     /* multicast interfaces */
     mca_base_param_reg_string_name("rmcast", "base_if_include",
