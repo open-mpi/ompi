@@ -367,6 +367,12 @@ pack_add_procs:
         return rc;
     }
     
+    /* pack whether or not process recovery is allowed for this job */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->enable_recovery, 1, OPAL_BOOL))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
     /* pack the max number of local restarts allowed for this job */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->max_local_restarts, 1, ORTE_VPID))) {
         ORTE_ERROR_LOG(rc);
@@ -816,6 +822,12 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     /* unpack the stdin target for the job */
     cnt=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->stdin_target, &cnt, ORTE_VPID))) {
+        ORTE_ERROR_LOG(rc);
+        goto REPORT_ERROR;
+    }
+    /* unpack whether or not process recovery is allowed for this job */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->enable_recovery, &cnt, OPAL_BOOL))) {
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
     }
@@ -2911,6 +2923,7 @@ int orte_odls_base_default_restart_proc(orte_odls_child_t *child,
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
+    opal_output(0, "%s restarting app %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), app->app);
     rc = fork_local(app, child, app->env, jobdat);
     if (ORTE_SUCCESS == rc) {
         OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);

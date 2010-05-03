@@ -73,99 +73,6 @@ int orte_odls_base_open(void)
  */
 orte_odls_base_module_t orte_odls;
 
-/* instance the child list object */
-static void orte_odls_child_constructor(orte_odls_child_t *ptr)
-{
-    ptr->name = NULL;
-    ptr->restarts = 0;
-    ptr->pid = 0;
-    ptr->app_idx = 0;
-    ptr->alive = false;
-    ptr->coll_recvd = false;
-    /* set the default state to "failed to start" so
-     * we can correctly report should something
-     * go wrong during launch
-     */
-    ptr->state = ORTE_PROC_STATE_FAILED_TO_START;
-    ptr->exit_code = 0;
-    ptr->init_recvd = false;
-    ptr->fini_recvd = false;
-    ptr->rml_uri = NULL;
-    ptr->slot_list = NULL;
-    ptr->waitpid_recvd = false;
-    ptr->iof_complete = false;
-    ptr->do_not_barrier = false;
-}
-static void orte_odls_child_destructor(orte_odls_child_t *ptr)
-{
-    if (NULL != ptr->name) free(ptr->name);
-    if (NULL != ptr->rml_uri) free(ptr->rml_uri);
-    if (NULL != ptr->slot_list) free(ptr->slot_list);
-}
-OBJ_CLASS_INSTANCE(orte_odls_child_t,
-                   opal_list_item_t,
-                   orte_odls_child_constructor,
-                   orte_odls_child_destructor);
-
-static void orte_odls_job_constructor(orte_odls_job_t *ptr)
-{
-    OBJ_CONSTRUCT(&ptr->lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&ptr->cond, opal_condition_t);
-    ptr->jobid = ORTE_JOBID_INVALID;
-    ptr->state = ORTE_JOB_STATE_UNDEF;
-    ptr->launch_msg_processed = false;
-    ptr->apps = NULL;
-    ptr->num_apps = 0;
-    ptr->policy = 0;
-    ptr->cpus_per_rank = 1;
-    ptr->stride = 1;
-    ptr->controls = 0;
-    ptr->stdin_target = ORTE_VPID_INVALID;
-    ptr->total_slots_alloc = 0;
-    ptr->num_procs = 0;
-    ptr->num_local_procs = 0;
-    ptr->regexp = NULL;
-    ptr->pmap = NULL;
-    OBJ_CONSTRUCT(&ptr->collection_bucket, opal_buffer_t);
-    OBJ_CONSTRUCT(&ptr->local_collection, opal_buffer_t);
-    ptr->collective_type = ORTE_GRPCOMM_COLL_NONE;
-    ptr->num_contributors = 0;
-    ptr->num_participating = -1;
-    ptr->num_collected = 0;
-    ptr->max_local_restarts = 0;
-}
-static void orte_odls_job_destructor(orte_odls_job_t *ptr)
-{
-    orte_app_idx_t i;
-    
-    OBJ_DESTRUCT(&ptr->lock);
-    OBJ_DESTRUCT(&ptr->cond);
-    if (NULL != ptr->apps) {
-        for (i=0; i < ptr->num_apps; i++) {
-            OBJ_RELEASE(ptr->apps[i]);
-        }
-        if (NULL != ptr->apps) {
-            free(ptr->apps);
-        }
-    }
-    
-    if (NULL != ptr->regexp) {
-        free(ptr->regexp);
-    }
-    
-    if (NULL != ptr->pmap && NULL != ptr->pmap->bytes) {
-        free(ptr->pmap->bytes);
-        free(ptr->pmap);
-    }
-    
-    OBJ_DESTRUCT(&ptr->collection_bucket);
-    OBJ_DESTRUCT(&ptr->local_collection);
-}
-OBJ_CLASS_INSTANCE(orte_odls_job_t,
-                   opal_list_item_t,
-                   orte_odls_job_constructor,
-                   orte_odls_job_destructor);
-
 /*
  * Framework global variables
  */
@@ -346,4 +253,99 @@ int orte_odls_base_open(void)
     
     return ORTE_SUCCESS;
 }
+
+/* instance the child list object */
+static void orte_odls_child_constructor(orte_odls_child_t *ptr)
+{
+    ptr->name = NULL;
+    ptr->restarts = 0;
+    ptr->pid = 0;
+    ptr->app_idx = 0;
+    ptr->alive = false;
+    ptr->coll_recvd = false;
+    /* set the default state to "failed to start" so
+     * we can correctly report should something
+     * go wrong during launch
+     */
+    ptr->state = ORTE_PROC_STATE_FAILED_TO_START;
+    ptr->exit_code = 0;
+    ptr->init_recvd = false;
+    ptr->fini_recvd = false;
+    ptr->rml_uri = NULL;
+    ptr->slot_list = NULL;
+    ptr->waitpid_recvd = false;
+    ptr->iof_complete = false;
+    ptr->do_not_barrier = false;
+}
+static void orte_odls_child_destructor(orte_odls_child_t *ptr)
+{
+    if (NULL != ptr->name) free(ptr->name);
+    if (NULL != ptr->rml_uri) free(ptr->rml_uri);
+    if (NULL != ptr->slot_list) free(ptr->slot_list);
+}
+OBJ_CLASS_INSTANCE(orte_odls_child_t,
+                   opal_list_item_t,
+                   orte_odls_child_constructor,
+                   orte_odls_child_destructor);
+
+static void orte_odls_job_constructor(orte_odls_job_t *ptr)
+{
+    OBJ_CONSTRUCT(&ptr->lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&ptr->cond, opal_condition_t);
+    ptr->jobid = ORTE_JOBID_INVALID;
+    ptr->state = ORTE_JOB_STATE_UNDEF;
+    ptr->launch_msg_processed = false;
+    ptr->apps = NULL;
+    ptr->num_apps = 0;
+    ptr->policy = 0;
+    ptr->cpus_per_rank = 1;
+    ptr->stride = 1;
+    ptr->controls = 0;
+    ptr->stdin_target = ORTE_VPID_INVALID;
+    ptr->total_slots_alloc = 0;
+    ptr->num_procs = 0;
+    ptr->num_local_procs = 0;
+    ptr->regexp = NULL;
+    ptr->pmap = NULL;
+    OBJ_CONSTRUCT(&ptr->collection_bucket, opal_buffer_t);
+    OBJ_CONSTRUCT(&ptr->local_collection, opal_buffer_t);
+    ptr->collective_type = ORTE_GRPCOMM_COLL_NONE;
+    ptr->num_contributors = 0;
+    ptr->num_participating = -1;
+    ptr->num_collected = 0;
+    ptr->enable_recovery = false;
+    ptr->max_local_restarts = 0;
+}
+static void orte_odls_job_destructor(orte_odls_job_t *ptr)
+{
+    orte_app_idx_t i;
+    
+    OBJ_DESTRUCT(&ptr->lock);
+    OBJ_DESTRUCT(&ptr->cond);
+    if (NULL != ptr->apps) {
+        for (i=0; i < ptr->num_apps; i++) {
+            OBJ_RELEASE(ptr->apps[i]);
+        }
+        if (NULL != ptr->apps) {
+            free(ptr->apps);
+        }
+    }
+    
+    if (NULL != ptr->regexp) {
+        free(ptr->regexp);
+    }
+    
+    if (NULL != ptr->pmap && NULL != ptr->pmap->bytes) {
+        free(ptr->pmap->bytes);
+        free(ptr->pmap);
+    }
+    
+    OBJ_DESTRUCT(&ptr->collection_bucket);
+    OBJ_DESTRUCT(&ptr->local_collection);
+}
+OBJ_CLASS_INSTANCE(orte_odls_job_t,
+                   opal_list_item_t,
+                   orte_odls_job_constructor,
+                   orte_odls_job_destructor);
+
 #endif
