@@ -120,6 +120,13 @@ static int update_state(orte_jobid_t job,
     /* indicate that this is the end of the line */
     *stack_state |= ORTE_ERRMGR_STACK_STATE_COMPLETE;
     
+    /*
+     * if orte is trying to shutdown, just let it
+     */
+    if (orte_errmgr_base.shutting_down) {
+        return ORTE_SUCCESS;
+    }
+    
     /***   UPDATE COMMAND FOR A JOB   ***/
     if (NULL == proc) {
         /* this is an update for an entire job */
@@ -203,6 +210,29 @@ static int update_state(orte_jobid_t job,
         return rc;
     }
 
+    /* lookup the local jobdat for this job */
+    jobdat = NULL;
+    for (item = opal_list_get_first(&orte_local_jobdata);
+         item != opal_list_get_end(&orte_local_jobdata);
+         item = opal_list_get_next(item)) {
+        jobdat = (orte_odls_job_t*)item;
+        
+        /* is this the specified job? */
+        if (jobdat->jobid == proc->jobid) {
+            break;
+        }
+    }
+    if (NULL == jobdat) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return ORTE_ERR_NOT_FOUND;
+    }
+    
+    OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+                         "%s errmgr:orted got state %s for proc %s ",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         orte_proc_state_to_str(state),
+                         ORTE_NAME_PRINT(proc)));
+ 
     /***  UPDATE COMMAND FOR A SPECIFIC PROCESS ***/
     if (ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED == state) {
         /* find this proc in the local children */
@@ -218,31 +248,28 @@ static int update_state(orte_jobid_t job,
                 }
             }
         }
+        if (jobdat->enable_recovery && child->restarts < jobdat->max_local_restarts) {
+            child->restarts++;
+            OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+                                 "%s errmgr:orted restarting proc %s for the %d time",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(proc), child->restarts));
+            if (ORTE_SUCCESS == (rc = orte_odls.restart_proc(child))) {
+                return ORTE_SUCCESS;
+            }
+            /* let it fall thru to abort */
+        }
+        /* Decrement the number of local procs */
+        jobdat->num_local_procs--;
+        /* kill this proc */
         killprocs(proc->jobid, proc->vpid);
         /* let the proc be reported back when terminated */
         return ORTE_SUCCESS;
     }
     
     if (ORTE_PROC_STATE_TERMINATED < state) {
-#if 0
-        if (orte_errmgr_base.enable_recovery) {
-            /* lookup the local jobdat for this job */
-            jobdat = NULL;
-            for (item = opal_list_get_first(&orte_local_jobdata);
-                 item != opal_list_get_end(&orte_local_jobdata);
-                 item = opal_list_get_next(item)) {
-                jobdat = (orte_odls_job_t*)item;
-                
-                /* is this the specified job? */
-                if (jobdat->jobid == proc->jobid) {
-                    break;
-                }
-            }
-            if (NULL == jobdat) {
-                /* race condition - may not have been formed yet */
-                return ORTE_SUCCESS;
-            }
-            /* find this proc in the local children */
+        if (jobdat->enable_recovery) {
+           /* find this proc in the local children */
             for (item = opal_list_get_first(&orte_local_children);
                  item != opal_list_get_end(&orte_local_children);
                  item = opal_list_get_next(item)) {
@@ -255,6 +282,10 @@ static int update_state(orte_jobid_t job,
                     }
                     /* otherwise, attempt to restart it locally */
                     child->restarts++;
+                    OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+                                         "%s errmgr:orted restarting proc %s for the %d time",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         ORTE_NAME_PRINT(child->name), child->restarts));
                     if (ORTE_SUCCESS != (rc = orte_odls.restart_proc(child))) {
                         ORTE_ERROR_LOG(rc);
                         goto REPORT_ABORT;
@@ -265,7 +296,6 @@ static int update_state(orte_jobid_t job,
         }
         
     REPORT_ABORT:
-#endif
         /* if the job hasn't completed and the state is abnormally
          * terminated, then we need to alert the HNP right away
          */
@@ -301,6 +331,8 @@ static int update_state(orte_jobid_t job,
                 }
                 /* remove the child from our local list as it is no longer alive */
                 opal_list_remove_item(&orte_local_children, &child->super);
+                /* Decrement the number of local procs */
+                jobdat->num_local_procs--;
                 
                 OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
                                      "%s errmgr:orted reporting proc %s aborted to HNP",
@@ -449,7 +481,7 @@ static int update_state(orte_jobid_t job,
                 OBJ_RELEASE(child);
             }
         }
-        
+
         /* ensure the job's local session directory tree is removed */
         orte_session_dir_cleanup(jobdat->jobid);
         
