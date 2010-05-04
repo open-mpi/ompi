@@ -101,7 +101,8 @@ enum {
     ORTE_ERR_SYS_LIMITS_SOCKETS             = (ORTE_ERR_BASE - 29),
     ORTE_ERR_SOCKET_NOT_AVAILABLE           = (ORTE_ERR_BASE - 30),
     ORTE_ERR_SYSTEM_WILL_BOOTSTRAP          = (ORTE_ERR_BASE - 31),
-    ORTE_ERR_MODULE_NOT_FOUND               = (ORTE_ERR_BASE - 32)
+    ORTE_ERR_MODULE_NOT_FOUND               = (ORTE_ERR_BASE - 32),
+    ORTE_ERR_RELOCATE_LIMIT_EXCEEDED        = (ORTE_ERR_BASE - 33)
 };
 
 #define ORTE_ERR_MAX                      (ORTE_ERR_BASE - 100)
