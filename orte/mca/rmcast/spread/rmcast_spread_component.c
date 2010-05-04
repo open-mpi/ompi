@@ -16,6 +16,8 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
+#include <sp.h>
+
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 
@@ -77,7 +79,16 @@ orte_rmcast_spread_component_open(void)
 
 int orte_rmcast_spread_component_query(mca_base_module_t **module, int *priority)
 {
-    /* if we built, then we probably want to be selected */
+    int major, minor, patch;
+    
+    if (0 != SP_version(&major, &minor, &patch)) {
+        /* spread is not running, so we cannot be selected */
+        *priority = 0;
+        *module = NULL;
+        return ORTE_ERROR;
+    }
+    
+    /* otherwise, we want to be selected */
     *priority = 1000;
     *module = (mca_base_module_t*)&orte_rmcast_spread_module;
     return ORTE_SUCCESS;
