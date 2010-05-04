@@ -45,6 +45,7 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .hnp_pid =              */   0,
     /*  .app_num =              */   0,
     /*  .num_procs =            */   1,
+    /*  .num_daemons =          */   1,
     /*  .num_nodes =            */   1,
     /*  .nodename =             */   NULL,
     /*  .pid =                  */   0,
