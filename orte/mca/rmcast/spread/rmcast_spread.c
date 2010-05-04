@@ -53,7 +53,6 @@ static opal_list_t channels;
 static bool init_completed = false;
 static orte_rmcast_channel_t next_channel;
 static opal_pointer_array_t msg_log;
-static char groups[256][MAX_GROUP_NAME];
 
 static  char    private_group[MAX_GROUP_NAME];
 static  mailbox Mbox;
@@ -1383,27 +1382,36 @@ cleanup:
 }
 
 
+static inline char * get_group_name(char groups[][MAX_GROUP_NAME], int indx)
+{
+    return groups[indx];
+}
+
 static void recv_handler(int sd, short flags, void* cbdata)
 {
     uint8_t *data;
-    int sz;
+    int  sz;
     rmcast_base_channel_t *chan = (rmcast_base_channel_t*)cbdata;
     service srvc;
     char sender[MAX_GROUP_NAME];
-    int num_groups, size_data;
+    static void * groups;
+    static int size_groups;
+    int   num_groups, size_data;
     int16 mess_type;
     int endian_mismatch;
-
+    
+    if (!groups) {
+        size_groups = 1;
+        groups = malloc(size_groups*MAX_GROUP_NAME);
+    }
     /* Read all available spread messages. */
     while (SP_poll(sd) > 0) {
-        
         size_data = mca_rmcast_spread_component.max_msg_size;
         data = (uint8_t*)malloc(size_data * sizeof(uint8_t));
         
         srvc = 0;
         do {
-            sz = SP_receive(sd, &srvc, sender, 256, &num_groups, groups, &mess_type, &endian_mismatch, size_data, (char *)data);
-            
+            sz = SP_receive(sd, &srvc, sender, size_groups, &num_groups, groups, &mess_type, &endian_mismatch, size_data, (char *)data);
             if (sz < 0) {
                 char error_string[1024];
                 
@@ -1411,13 +1419,18 @@ static void recv_handler(int sd, short flags, void* cbdata)
                 /* this shouldn't happen - report the errno */
                 opal_output(0, "%s Error on multicast recv spread event: %s(%d:%d:%d)",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), error_string, sz, num_groups, endian_mismatch);
+                
                 switch (sz) {
+                        
                     case GROUPS_TOO_SHORT:
                         /*
-                         * Just error out
+                         * Number of groups required is "-num_groups" so we
+                         * free the old groups array and malloc a new one of
+                         * the right size (-num_groups)*MAX_GROUP_NAME.
                          */
-                        ORTE_ERROR_LOG(ORTE_ERR_TEMP_OUT_OF_RESOURCE);
-                        exit(-1);
+                        size_groups = -num_groups;
+                        free(groups);
+                        groups = malloc(size_groups*MAX_GROUP_NAME);
                         break;
                     case BUFFER_TOO_SHORT:
                         /*
@@ -1443,16 +1456,17 @@ static void recv_handler(int sd, short flags, void* cbdata)
             
         } while (sz < 0);
         
+        
         OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                              "%s rmcast:spread recvd %d bytes from channel %d(%s)",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             (int)sz, num_groups, groups[num_groups]));
+                             (int)sz, num_groups, get_group_name(groups,0)));
         
         if (Is_regular_mess(srvc)) {
             int i;
             
             for (i=0;i<num_groups;i++) {
-                chan = get_chan_from_name(groups[i]);
+                chan = get_chan_from_name(get_group_name(groups,i));
                 if (chan) {
                     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                                          "%s rmcast:spread recvd %d bytes from channel %d(%s)",
@@ -1470,12 +1484,12 @@ static void recv_handler(int sd, short flags, void* cbdata)
                     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                                          "%s rmcast:spread recvd %d bytes from unknown channel named (%s)",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                         (int)sz, groups[i]));
+                                         (int)sz, get_group_name(groups,i)));
                     free(data);
                 }
             }
         } else {
-            /* 
+            /*
              * We ignore all membership change messages for now.
              */
             free(data);

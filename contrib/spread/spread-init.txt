@@ -1,0 +1,20 @@
+#!/bin/bash
+
+case "$1" in
+'start')
+	mkdir -p /var/run/spread
+	cd /var/run/spread
+
+	spread&
+	;;
+
+'stop')
+	killall spread 2>/dev/null
+	;;
+
+*)
+	echo "Usage: $0 { start | stop }"
+	exit 1
+	;;
+esac
+exit 0
