@@ -32,7 +32,8 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/odls/base/base.h"
-#include "orte/mca/plm/base/base.h"
+#include "orte/mca/plm/base/plm_private.h"
+#include "orte/mca/plm/plm.h"
 #include "orte/mca/rmaps/rmaps_types.h"
 #if ORTE_ENABLE_SENSORS
 #include "orte/mca/sensor/sensor.h"
@@ -51,6 +52,8 @@ static void update_proc(orte_job_t *jdata, orte_process_name_t *proc,
                         orte_exit_code_t exit_code);
 static void check_job_complete(orte_job_t *jdata);
 static void killprocs(orte_jobid_t job, orte_vpid_t vpid);
+static int hnp_relocate(orte_job_t *jdata, orte_process_name_t *proc);
+static orte_odls_child_t* proc_is_local(orte_process_name_t *proc);
 
 /*
  * Module functions: Global
@@ -80,7 +83,7 @@ static int ft_event(int state);
 
 
 /******************
- * ORCM module
+ * HNP module
  ******************/
 orte_errmgr_base_module_t orte_errmgr_hnp_module = {
     init,
@@ -114,7 +117,6 @@ static int update_state(orte_jobid_t job,
     orte_job_t *jdata;
     orte_exit_code_t sts;
     orte_odls_child_t *child;
-    opal_list_item_t *item;
     int rc;
     
     /* indicate that this is the end of the line */
@@ -256,25 +258,27 @@ static int update_state(orte_jobid_t job,
         case ORTE_PROC_STATE_COMM_FAILED:
             if (jdata->enable_recovery) {
                 /* is this a local proc */
-                child = NULL;
-                for (item = opal_list_get_first(&orte_local_children);
-                     item != opal_list_get_end(&orte_local_children);
-                     item = opal_list_get_next(item)) {
-                    child = (orte_odls_child_t*)item;
-                    if (child->name->jobid == proc->jobid &&
-                        child->name->vpid == proc->vpid) {
-                        break;
-                    }
-                }
-                if (NULL != child) {
-                    /* see if this child has reached its local restart limit */
+                if (NULL != (child = proc_is_local(proc))) {
+                    /* local proc - see if it has reached its local restart limit */
                     if (child->restarts < jdata->max_local_restarts) {
                         child->restarts++;
                         if (ORTE_SUCCESS == (rc = orte_odls.restart_proc(child))) {
                             return ORTE_SUCCESS;
                         }
                         /* let it fall thru to abort */
+                    } else {
+                        /* see if we can relocate it somewhere else */
+                        if (ORTE_SUCCESS == hnp_relocate(jdata, proc)) {
+                            return ORTE_SUCCESS;
+                        }
+                        /* let it fall thru to abort */
                     }
+                } else {
+                    /* this is a remote process - see if we can relocate it */
+                    if (ORTE_SUCCESS == hnp_relocate(jdata, proc)) {
+                        return ORTE_SUCCESS;
+                    }
+                    /* guess not - let it fall thru to abort */
                 }
             }
             update_proc(jdata, proc, state, exit_code);
@@ -910,3 +914,67 @@ static void killprocs(orte_jobid_t job, orte_vpid_t vpid)
     OBJ_DESTRUCT(&proc);
 }
 
+static int hnp_relocate(orte_job_t *jdata, orte_process_name_t *proc)
+{
+    orte_proc_t *pdata;
+    orte_node_t *node, *newnode;
+    orte_app_context_t *app;
+    int rc;
+    
+    /* get the proc_t object for this process */
+    pdata = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, proc->vpid);
+    if (NULL == pdata) {
+        opal_output(0, "Data for proc %s could not be found", ORTE_NAME_PRINT(proc));
+        return ORTE_ERR_NOT_FOUND;
+    }
+    /* track that we are attempting to relocate */
+    pdata->relocates++;
+    /* have we exceeded the number of relocates for this proc? */
+    if (jdata->max_global_restarts < pdata->relocates) {
+        return ORTE_ERR_RELOCATE_LIMIT_EXCEEDED;
+    }
+    /* proc just died - save the node where this proc was located */
+    node = pdata->node;
+    /* reset the job params for restart */
+    orte_plm_base_reset_job(jdata);
+    
+    /* restart the job - the spawn function will remap and
+     * launch the replacement proc(s)
+     */
+    OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base.output,
+                         "%s RESTARTING APP: %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc)));
+    
+    if (ORTE_SUCCESS != (rc = orte_plm.spawn(jdata))) {
+        opal_output(0, "FAILED TO RESTART APP %s on error %s", app->app, ORTE_ERROR_NAME(rc));
+        return rc;
+    }
+    /* get the new node */
+    newnode = pdata->node;
+    /* report what we did */
+    OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base.output,
+                         "%s Proc %s:%s aborted on node %s and was restarted on node %s\n\n",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         app->app, ORTE_NAME_PRINT(proc), node->name, newnode->name));
+
+    return ORTE_SUCCESS;
+}
+
+static orte_odls_child_t* proc_is_local(orte_process_name_t *proc)
+{
+    orte_odls_child_t *child;
+    opal_list_item_t *item;
+    
+    child = NULL;
+    for (item = opal_list_get_first(&orte_local_children);
+         item != opal_list_get_end(&orte_local_children);
+         item = opal_list_get_next(item)) {
+        child = (orte_odls_child_t*)item;
+        if (child->name->jobid == proc->jobid &&
+            child->name->vpid == proc->vpid) {
+            return child;
+        }
+    }
+    return NULL;
+}
