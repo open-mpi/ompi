@@ -507,6 +507,8 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo)
     if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
         orte_process_info.num_procs = num_daemons;
     }
+    /* update num_daemons */
+    orte_process_info.num_daemons = num_daemons;
     
     /* unpack any attributes that may have been included */
     n = 1;
