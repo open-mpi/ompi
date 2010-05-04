@@ -5,7 +5,7 @@
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2006 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -1667,7 +1667,7 @@ output_49() {
     cat <<EOF
 
 subroutine ${procedure}(comm, errhandler, ierr)
-  integer, intent(inout) :: comm
+  integer, intent(in) :: comm
   integer, intent(in) :: errhandler
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -9121,7 +9121,7 @@ output_267() {
     cat <<EOF
 
 subroutine ${procedure}(win, errhandler, ierr)
-  integer, intent(inout) :: win
+  integer, intent(in) :: win
   integer, intent(in) :: errhandler
   integer, intent(out) :: ierr
 end subroutine ${procedure}
