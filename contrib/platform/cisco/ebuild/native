@@ -33,3 +33,4 @@ with_slurm=no
 with_portals=no
 with_valgrind=no
 with_ft=orcm
+with_spread=yes

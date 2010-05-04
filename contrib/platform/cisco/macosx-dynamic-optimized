@@ -23,3 +23,4 @@ with_memory_manager=no
 with_devel_headers=yes
 with_xgrid=no
 with_ft=orcm
+with_spread=/opt/local
