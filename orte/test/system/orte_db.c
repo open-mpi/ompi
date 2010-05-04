@@ -41,6 +41,12 @@ int main(int argc, char* argv[])
     if (ORTE_SUCCESS != (rc = orte_db.fetch("test-insert", &proc, ORTE_PROC))) {
         ORTE_ERROR_LOG(rc);
     }
+    if (ORTE_SUCCESS != (rc = orte_db.store("test-insert2", &proc, ORTE_PROC))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    if (ORTE_SUCCESS != (rc = orte_db.fetch("test-insert2", &proc, ORTE_PROC))) {
+        ORTE_ERROR_LOG(rc);
+    }
     OBJ_DESTRUCT(&proc);
 
     orte_finalize();

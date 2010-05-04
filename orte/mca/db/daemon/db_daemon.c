@@ -48,34 +48,36 @@ orte_db_base_module_t orte_db_daemon_module = {
 /* local types */
 typedef struct {
     opal_object_t super;
+    orte_process_name_t name;
     char *key;
-    char *dptr;
-    int size;
+    int32_t size;
+    uint8_t *bytes;
 } orte_db_data_t;
-static void constructor(orte_db_data_t *dt)
+static void dtconstructor(orte_db_data_t *dt)
 {
     dt->key = NULL;
-    dt->dptr = NULL;
+    dt->bytes = NULL;
     dt->size = 0;
 }
-static void destructor(orte_db_data_t *dt)
+static void dtdestructor(orte_db_data_t *dt)
 {
     if (NULL != dt->key) {
         free(dt->key);
     }
-    if (NULL != dt->dptr) {
-        free(dt->dptr);
+    if (NULL != dt->bytes) {
+        free(dt->bytes);
     }
 }
 OBJ_CLASS_INSTANCE(orte_db_data_t,
                    opal_object_t,
-                   constructor,
-                   destructor);
+                   dtconstructor,
+                   dtdestructor);
 
 /* local variables */
 static orte_vpid_t num_recvd;
 static bool ack_reqd;
 static opal_pointer_array_t datastore;
+static orte_rmcast_channel_t my_group_channel;
 
 /* local functions */
 static void callback_fn(int status,
@@ -89,12 +91,6 @@ static void recv_cmd(int status,
                      orte_rmcast_tag_t tag,
                      orte_process_name_t *sender,
                      opal_buffer_t *buf, void* cbdata);
-
-static void recv_data(int status,
-                      orte_rmcast_channel_t channel,
-                      orte_rmcast_tag_t tag,
-                      orte_process_name_t *sender,
-                      opal_buffer_t *buf, void* cbdata);
 
 static void recv_ack(int status,
                      orte_rmcast_channel_t channel,
@@ -135,15 +131,10 @@ static int init(void)
         OBJ_CONSTRUCT(&datastore, opal_pointer_array_t);
         opal_pointer_array_init(&datastore, 16, INT_MAX, 16);
     } else if (ORTE_PROC_IS_APP) {
-        /* recv data back */
-        if (ORTE_SUCCESS != (rc = orte_rmcast.recv_buffer_nb(ORTE_RMCAST_GROUP_CHANNEL,
-                                                             ORTE_RMCAST_TAG_DATA,
-                                                             ORTE_RMCAST_PERSISTENT,
-                                                             recv_data, NULL))) {
-            ORTE_ERROR_LOG(rc);
-        }
+        /* get my multicast group */
+        my_group_channel = orte_rmcast.query_channel();
         
-        /* recv cmd acks */
+        /* recv responses */
         if (ORTE_SUCCESS != (rc = orte_rmcast.recv_buffer_nb(ORTE_RMCAST_GROUP_CHANNEL,
                                                              ORTE_RMCAST_TAG_CMD_ACK,
                                                              ORTE_RMCAST_PERSISTENT,
@@ -178,44 +169,54 @@ static int finalize(void)
 
 static int send_data(orte_db_cmd_t cmd, char *key, void *object, opal_data_type_t type)
 {
-    opal_buffer_t *buf;
+    opal_buffer_t *buf, dat;
     orte_job_t *jdata;
     orte_proc_t *proc;
     orte_job_state_t *job_state;
     orte_proc_state_t *proc_state;
     int rc;
     bool got_response;
+    opal_byte_object_t bo;
     
     /* construct the buffer we will use for packing the data */
     buf = OBJ_NEW(opal_buffer_t);
     opal_dss.pack(buf, &cmd, 1, ORTE_DB_CMD_T); /* add cmd */
+    opal_dss.pack(buf, &my_group_channel, 1, ORTE_RMCAST_CHANNEL_T);  /* tell the server my channel */
     opal_dss.pack(buf, &key, 1, OPAL_STRING);  /* pack the key */
     
-    /* pack the data */
-    switch (type) {
-        case ORTE_JOB:
-            jdata = (orte_job_t*)object;
-            opal_dss.pack(buf, &jdata, 1, ORTE_JOB);
-            break;
-        case ORTE_JOB_STATE:
-            job_state = (orte_job_state_t*)object;
-            opal_dss.pack(buf, job_state, 1, ORTE_JOB_STATE);
-            break;
-            
-        case ORTE_PROC:
-            proc = (orte_proc_t*)object;
-            opal_dss.pack(buf, &proc, 1, ORTE_PROC);
-            break;
-        case ORTE_PROC_STATE:
-            proc_state = (orte_proc_state_t*)object;
-            opal_dss.pack(buf, proc_state, 1, ORTE_PROC_STATE);
-            break;
-            
-        default:
-            orte_show_help("help-db-base.txt", "unrecognized-type", true, type);
-            rc = ORTE_ERR_BAD_PARAM;
-            goto cleanup;
-            break;
+    if (NULL != object) {
+        OBJ_CONSTRUCT(&dat, opal_buffer_t);
+        /* pack the data */
+        switch (type) {
+            case ORTE_JOB:
+                jdata = (orte_job_t*)object;
+                opal_dss.pack(&dat, &jdata, 1, ORTE_JOB);
+                break;
+            case ORTE_JOB_STATE:
+                job_state = (orte_job_state_t*)object;
+                opal_dss.pack(&dat, job_state, 1, ORTE_JOB_STATE);
+                break;
+                
+            case ORTE_PROC:
+                proc = (orte_proc_t*)object;
+                opal_dss.pack(&dat, &proc, 1, ORTE_PROC);
+                break;
+            case ORTE_PROC_STATE:
+                proc_state = (orte_proc_state_t*)object;
+                opal_dss.pack(&dat, proc_state, 1, ORTE_PROC_STATE);
+                break;
+                
+            default:
+                orte_show_help("help-db-base.txt", "unrecognized-type", true, type);
+                rc = ORTE_ERR_BAD_PARAM;
+                goto cleanup;
+                break;
+        }
+        opal_dss.unload(&dat, (void**)&bo.bytes, &bo.size);
+        opal_dss.pack(buf, &bo.size, 1, OPAL_INT32);
+        opal_dss.pack(buf, &bo.bytes, bo.size, OPAL_UINT8);
+        OBJ_DESTRUCT(&dat);
+        free(bo.bytes);
     }
     
     got_response = false;
@@ -229,7 +230,7 @@ static int send_data(orte_db_cmd_t cmd, char *key, void *object, opal_data_type_
         ORTE_ERROR_LOG(rc);
     }
     /* wait for all daemons to ack the request */
-    ORTE_PROGRESSED_WAIT(got_response, num_recvd, orte_process_info.num_procs-1);
+    ORTE_PROGRESSED_WAIT(got_response, num_recvd, orte_process_info.num_daemons);
     ack_reqd = false;
     
 cleanup:
@@ -263,33 +264,14 @@ static int set_source(orte_process_name_t *name)
 
 static int fetch(char *key, void *object, opal_data_type_t type)
 {
-    opal_buffer_t *buf;
     int rc;
-    bool got_response;
     double cpu_time_used, start;
-    orte_db_cmd_t cmd=ORTE_DB_FETCH_CMD;
     
     TIMER_START(start);
     
-    /* construct the buffer we will use for packing the data */
-    buf = OBJ_NEW(opal_buffer_t);
-    opal_dss.pack(buf, &cmd, 1, ORTE_DB_CMD_T); /* add cmd */
-    opal_dss.pack(buf, &key, 1, OPAL_STRING);  /* pack the key */
-
-    got_response = false;
-    num_recvd = 0;
-    ack_reqd = true;
-    
-    /* send the cmd to all the daemons */
-    if (ORTE_SUCCESS != (rc = orte_rmcast.send_buffer_nb(ORTE_RMCAST_DATA_SERVER_CHANNEL,
-                                                         ORTE_RMCAST_TAG_DATA, buf,
-                                                         callback_fn, NULL))) {
+    if (ORTE_SUCCESS != (rc = send_data(ORTE_DB_FETCH_CMD, key, NULL, OPAL_INT32))) {
         ORTE_ERROR_LOG(rc);
     }
-
-    /* wait for all daemons to respond */
-    ORTE_PROGRESSED_WAIT(got_response, num_recvd, orte_process_info.num_procs-1);
-    ack_reqd = false;
     
     TIMER_STOP(cpu_time_used, start);
     opal_output(0, "%s TOOK %g usecs TO FETCH",
@@ -321,33 +303,15 @@ static int update(char *key, void *object, opal_data_type_t type)
 
 static int remove_data(char *key)
 {
-    opal_buffer_t *buf;
     int rc;
-    bool got_response;
     double start;
     double cpu_time_used;
-    orte_db_cmd_t cmd=ORTE_DB_REMOVE_CMD;
 
     TIMER_START(start);
     
-    /* construct the buffer we will use for packing the data */
-    buf = OBJ_NEW(opal_buffer_t);
-    opal_dss.pack(buf, &cmd, 1, ORTE_DB_CMD_T); /* add cmd */
-    opal_dss.pack(buf, &key, 1, OPAL_STRING);  /* pack the key */
-    
-    got_response = false;
-    num_recvd = 0;
-    ack_reqd = true;
-    
-    /* send the data to all the daemons */
-    if (ORTE_SUCCESS != (rc = orte_rmcast.send_buffer_nb(ORTE_RMCAST_DATA_SERVER_CHANNEL,
-                                                         ORTE_RMCAST_TAG_DATA, buf,
-                                                         callback_fn, NULL))) {
+    if (ORTE_SUCCESS != (rc = send_data(ORTE_DB_REMOVE_CMD, key, NULL, OPAL_INT32))) {
         ORTE_ERROR_LOG(rc);
     }
-    /* wait for all daemons to ack the request */
-    ORTE_PROGRESSED_WAIT(got_response, num_recvd, orte_process_info.num_procs-1);
-    ack_reqd = false;
     
     TIMER_STOP(cpu_time_used, start);
     opal_output(0, "%s TOOK %g usecs TO REMOVE",
@@ -384,11 +348,12 @@ static void recv_cmd(int status,
                      opal_buffer_t *buf, void* cbdata)
 {
     orte_db_cmd_t cmd;
-    opal_buffer_t *ans, xfer;
+    opal_buffer_t *ans;
     int count, i;
-    int32_t rc;
+    int32_t rc, ret;
     char *key;
     orte_db_data_t *dat;
+    orte_rmcast_channel_t ch;
     
     OPAL_OUTPUT_VERBOSE((2, orte_db_base_output,
                          "%s db:daemon: cmd recvd from %s",
@@ -398,6 +363,8 @@ static void recv_cmd(int status,
     count=1;
     opal_dss.unpack(buf, &cmd, &count, ORTE_DB_CMD_T);
     count=1;
+    opal_dss.unpack(buf, &ch, &count, ORTE_RMCAST_CHANNEL_T);
+    count=1;
     opal_dss.unpack(buf, &key, &count, OPAL_STRING);
     
     ans = OBJ_NEW(opal_buffer_t);
@@ -406,8 +373,13 @@ static void recv_cmd(int status,
     switch (cmd) {
         case ORTE_DB_STORE_CMD:
             dat = OBJ_NEW(orte_db_data_t);
+            dat->name.jobid = sender->jobid;
+            dat->name.vpid = sender->vpid;
             dat->key = key;
-            opal_dss.unload(buf, (void**)&dat->dptr, &dat->size);
+            count=1;
+            opal_dss.unpack(buf, &dat->size, &count, OPAL_INT32);
+            dat->bytes = (uint8_t*)malloc(dat->size);
+            opal_dss.unpack(buf, dat->bytes, &dat->size, OPAL_UINT8);
             opal_pointer_array_add(&datastore, dat);
             OPAL_OUTPUT_VERBOSE((2, orte_db_base_output,
                                  "%s db:daemon: data from %s stored: key %s",
@@ -428,10 +400,8 @@ static void recv_cmd(int status,
                 /* found the data - return it */
                 rc = ORTE_SUCCESS;
                 opal_dss.pack(ans, &rc, 1, OPAL_INT32);
-                OBJ_CONSTRUCT(&xfer, opal_buffer_t);
-                opal_dss.load(&xfer, dat->dptr, dat->size);
-                opal_dss.copy_payload(ans, &xfer);
-                OBJ_DESTRUCT(&xfer);
+                opal_dss.pack(ans, &dat->size, 1, OPAL_INT32);
+                opal_dss.pack(ans, dat->bytes, dat->size, OPAL_UINT8);
                 OPAL_OUTPUT_VERBOSE((2, orte_db_base_output,
                                      "%s db:daemon: data fetched for %s: key %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -450,15 +420,11 @@ static void recv_cmd(int status,
             rc = ORTE_ERR_NOT_FOUND;
             break;
     }
-    
-    orte_rmcast.send_buffer(channel, ORTE_RMCAST_TAG_CMD_ACK, ans);
-}
-
-static void recv_data(int status,
-                      orte_rmcast_channel_t channel,
-                      orte_rmcast_tag_t tag,
-                      orte_process_name_t *sender,
-                      opal_buffer_t *buf, void* cbdata)
-{
-    
+    /* open a channel back to the sender */
+    if (ORTE_SUCCESS != (ret = orte_rmcast.open_channel(&ch, ORTE_NAME_PRINT(sender),
+                                                        NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
+        ORTE_ERROR_LOG(ret);
+        return;
+    }
+    orte_rmcast.send_buffer_nb(ch, ORTE_RMCAST_TAG_CMD_ACK, ans, callback_fn, NULL);
 }
