@@ -157,7 +157,7 @@ static int plm_ccp_launch_job(orte_job_t *jdata)
     JobPriority job_priority = JobPriority_Normal;
 
  	orte_jobid_t failed_job; 
-    orte_job_state_t job_state = ORTE_JOB_NEVER_LAUNCHED;
+    orte_job_state_t job_state = ORTE_JOB_STATE_NEVER_LAUNCHED;
 
  	/* default to declaring the daemon launch failed */ 
  	failed_job = ORTE_PROC_MY_NAME->jobid; 

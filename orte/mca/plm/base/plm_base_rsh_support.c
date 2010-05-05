@@ -59,6 +59,7 @@
 
 #include "orte/mca/plm/base/plm_private.h"
 
+#ifndef __WINDOWS__
 static char **search(const char* agent_list);
 
 int orte_plm_base_rsh_launch_agent_setup(void)
@@ -1337,6 +1338,8 @@ int orte_plm_base_append_bootproxy_args(orte_app_context_t *app, char ***argv,
     
     return ORTE_SUCCESS;
 }
+
+#endif /* __WINDOWS__ */
 
 void orte_plm_base_reset_job(orte_job_t *jdata)
 {
