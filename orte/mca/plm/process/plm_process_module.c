@@ -977,7 +977,7 @@ int orte_plm_process_launch(orte_job_t *jdata)
     orte_app_context_t **apps;
     orte_node_t **nodes;
     orte_std_cntr_t nnode;
-    orte_job_state_t job_state = ORTE_JOB_NEVER_LAUNCHED;
+    orte_job_state_t job_state = ORTE_JOB_STATE_NEVER_LAUNCHED;
 
     if (orte_timing) {
         if (0 != gettimeofday(&joblaunchstart, NULL)) {
