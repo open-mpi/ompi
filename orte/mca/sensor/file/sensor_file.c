@@ -139,6 +139,11 @@ static void start(orte_jobid_t jobid)
     char *filename;
     file_tracker_t *ft;
 
+    /* cannot monitor my own job */
+    if (jobid == ORTE_PROC_MY_NAME->jobid) {
+        return;
+    }
+    
     OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
                          "%s starting file monitoring for job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -251,6 +256,11 @@ static void stop(orte_jobid_t jobid)
 {
     opal_list_item_t *item;
     file_tracker_t *ft;
+    
+    /* cannot monitor my own job */
+    if (jobid == ORTE_PROC_MY_NAME->jobid) {
+        return;
+    }
     
     for (item = opal_list_get_first(&jobs);
          item != opal_list_get_end(&jobs);

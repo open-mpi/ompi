@@ -61,9 +61,8 @@
 #include "orte/mca/notifier/base/base.h"
 #include "orte/mca/rmcast/base/base.h"
 #include "orte/mca/db/base/base.h"
-#if ORTE_ENABLE_SENSORS
 #include "orte/mca/sensor/base/base.h"
-#endif
+#include "orte/mca/sensor/sensor.h"
 #include "orte/runtime/orte_cr.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_globals.h"
@@ -419,7 +418,6 @@ int orte_ess_base_orted_setup(char **hosts)
         goto error;
     }
     
-#if ORTE_ENABLE_SENSORS
     /* setup the SENSOR framework */
     if (ORTE_SUCCESS != (ret = orte_sensor_base_open())) {
         ORTE_ERROR_LOG(ret);
@@ -431,8 +429,9 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "ortesensor_select";
         goto error;
     }
-#endif
-    
+    /* start the local sensors */
+    orte_sensor.start(ORTE_PROC_MY_NAME->jobid);
+
     return ORTE_SUCCESS;
     
 error:
@@ -445,6 +444,9 @@ error:
 
 int orte_ess_base_orted_finalize(void)
 {
+    /* stop the local sensors */
+    orte_sensor.stop(ORTE_PROC_MY_NAME->jobid);
+
     /* ensure all the orteds depart together */
     if (!orte_abnormal_term_ordered) {
         /* if we are abnormally terminating, don't attempt
@@ -454,9 +456,7 @@ int orte_ess_base_orted_finalize(void)
         orte_grpcomm.onesided_barrier();
     }
     
-#if ORTE_ENABLE_SENSORS
     orte_sensor_base_close();
-#endif
     orte_db_base_close();
     orte_notifier_base_close();
     

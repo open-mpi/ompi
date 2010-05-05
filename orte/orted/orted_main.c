@@ -125,7 +125,6 @@ static struct {
     int fail;
     int fail_delay;
     bool abort;
-    int heartbeat;
 } orted_globals;
 
 /*
@@ -148,10 +147,6 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
     { NULL, NULL, NULL, '\0', NULL, "debug-failure-delay", 1,
       &orted_globals.fail_delay, OPAL_CMD_LINE_TYPE_INT,
       "Have the orted specified for failure delay for the provided number of seconds before failing" },
-    
-    { NULL, NULL, NULL, '\0', NULL, "heartbeat", 1,
-      &orted_globals.heartbeat, OPAL_CMD_LINE_TYPE_INT,
-      "Seconds between orted heartbeat messages to be sent to HNP (default: 0 => no heartbeat)" },
     
     { "orte", "debug", NULL, 'd', NULL, "debug", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
@@ -785,11 +780,6 @@ int orte_daemon(int argc, char *argv[])
         opal_output(0, "%s orted: up and running - waiting for commands!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     }
 
-    /* if we were told to do a heartbeat, then setup to do so */
-    if (0 < orted_globals.heartbeat) {
-        ORTE_TIMER_EVENT(orted_globals.heartbeat, 0, orte_plm_base_heartbeat);
-    }
-    
     /* if we were given a launch string, then process it */
     if (NULL != orted_launch_cmd) {
         opal_buffer_t launch;

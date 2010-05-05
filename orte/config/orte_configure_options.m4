@@ -92,6 +92,9 @@ else
     AC_MSG_RESULT([no])
     orte_want_multicast=0
 fi
+AC_DEFINE_UNQUOTED([ORTE_ENABLE_MULTICAST],
+                   [$orte_want_multicast],
+                   [Whether we want multicast messaging enabled])
 
 #
 # Do we want sensors enabled?
@@ -110,5 +113,23 @@ fi
 AC_DEFINE_UNQUOTED([ORTE_ENABLE_SENSORS],
                    [$orte_want_sensors],
                    [Whether we want sensors enabled])
+
+#
+# Do we want daemon heartbeats enabled?
+
+AC_MSG_CHECKING([if want daemon heartbeats])
+AC_ARG_ENABLE([heartbeat],
+    [AC_HELP_STRING([--enable-heartbeat],
+                    [Enable heartbeat monitoring of daemons (default: disabled)])])
+if test "$enable_heartbeat" = "yes"; then
+    AC_MSG_RESULT([yes])
+    orte_want_heartbeats=1
+else
+    AC_MSG_RESULT([no])
+    orte_want_heartbeats=0
+fi
+AC_DEFINE_UNQUOTED([ORTE_ENABLE_HEARTBEAT],
+                   [$orte_want_heartbeats],
+                   [Whether we want daemon heartbeat monitoring enabled])
 
 ])dnl

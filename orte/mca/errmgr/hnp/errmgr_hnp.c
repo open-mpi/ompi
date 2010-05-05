@@ -35,9 +35,7 @@
 #include "orte/mca/plm/base/plm_private.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/rmaps/rmaps_types.h"
-#if ORTE_ENABLE_SENSORS
 #include "orte/mca/sensor/sensor.h"
-#endif
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/errmgr/base/errmgr_private.h"
@@ -721,21 +719,19 @@ static void check_job_complete(orte_job_t *jdata)
         }
     }
 
-#if ORTE_ENABLE_SENSORS
     if (jdata->abort) {
         /* the job aborted - turn off any sensors on this job */
         orte_sensor.stop(jdata->jobid);
     }
-#endif
 
     if (ORTE_JOB_STATE_UNTERMINATED > jdata->state &&
         jdata->num_terminated >= jdata->num_procs) {
         /* this job has terminated */
         jdata->state = ORTE_JOB_STATE_TERMINATED;
-#if ORTE_ENABLE_SENSORS
+
         /* turn off any sensor monitors on this job */
         orte_sensor.stop(jdata->jobid);
-#endif
+
         if (0 < non_zero) {
             /* warn user */
             opal_output(orte_clean_output,
@@ -901,6 +897,11 @@ static void killprocs(orte_jobid_t job, orte_vpid_t vpid)
     opal_pointer_array_t cmd;
     orte_proc_t proc;
     int rc;
+    
+    /* stop local sensors for this job */
+    if (ORTE_VPID_WILDCARD == vpid) {
+        orte_sensor.stop(job);
+    }
     
     OBJ_CONSTRUCT(&cmd, opal_pointer_array_t);
     OBJ_CONSTRUCT(&proc, orte_proc_t);

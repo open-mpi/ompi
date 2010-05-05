@@ -132,12 +132,6 @@ ORTE_DECLSPEC int orte_plm_base_append_bootproxy_args(orte_app_context_t *app, c
                                                       orte_vpid_t nlocal, int nslots, bool overwrite);
 
 /**
- * Heartbeat support
- */
-ORTE_DECLSPEC void orte_plm_base_heartbeat(int fd, short event, void *data);
-ORTE_DECLSPEC void orte_plm_base_start_heart(void);
-
-/**
  * Utilities for plm components that use proxy daemons
  */
 ORTE_DECLSPEC int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command);
@@ -161,7 +155,7 @@ ORTE_DECLSPEC void orte_plm_base_recv(int status, orte_process_name_t* sender,
 ORTE_DECLSPEC int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
                                                         char *ess_module,
                                                         int *proc_vpid_index,
-                                                        bool heartbeat, char *nodes);
+                                                        char *nodes);
 
 /*
  * Proxy functions for use by daemons and application procs

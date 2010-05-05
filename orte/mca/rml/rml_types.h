@@ -177,6 +177,9 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_msg_packet_t);
 /* tag for receiving ack of abort msg */
 #define ORTE_RML_TAG_ABORT                  38
 
+/* tag for receiving heartbeats */
+#define ORTE_RML_TAG_HEARTBEAT              39
+
 #define ORTE_RML_TAG_MAX                   100
 
 

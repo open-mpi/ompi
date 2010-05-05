@@ -185,10 +185,6 @@ int orte_register_params(void)
                                 "Have the specified orted fail after specified number of seconds (default: 0 => no delay)",
                                 false, false, 0, &orted_debug_failure_delay);
 
-    mca_base_param_reg_int_name("orte", "heartbeat_rate",
-                                "Seconds between checks for daemon state-of-health (default: 0 => do not check)",
-                                false, false, 0, &orte_heartbeat_rate);
-    
     mca_base_param_reg_int_name("orte", "startup_timeout",
                                 "Milliseconds/daemon to wait for startup before declaring failed_to_start (default: 0 => do not check)",
                                 false, false, 0, &orte_startup_timeout);

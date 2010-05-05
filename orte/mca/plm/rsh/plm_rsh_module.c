@@ -665,7 +665,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
     orte_plm_base_orted_append_basic_args(&argc, &argv,
                                           "env",
                                           proc_vpid_index,
-                                          true, NULL);
+                                          NULL);
     
     /* ensure that only the ssh plm is selected on the remote daemon */
     opal_argv_append_nosize(&argv, "-mca");
@@ -1429,14 +1429,6 @@ launch_apps:
             return rc;
         }
         recv_issued = false;
-    }
-    
-    /* setup a "heartbeat" timer to periodically check on
-     * the state-of-health of the orteds, if requested AND
-     * we actually launched some daemons!
-     */
-    if ((NULL != map) && (0 < map->num_new_daemons)) {
-        orte_plm_base_start_heart();
     }
     
     return rc;

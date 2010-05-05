@@ -40,6 +40,5 @@ libmca_plm_la_SOURCES += \
 	base/plm_base_jobid.c \
 	base/plm_base_proxy.c \
 	base/plm_base_orted_cmds.c \
-        base/plm_base_rsh_support.c \
-        base/plm_base_heartbeat.c
+        base/plm_base_rsh_support.c
 endif
