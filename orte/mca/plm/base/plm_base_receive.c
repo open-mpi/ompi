@@ -146,7 +146,6 @@ static void process_msg(int fd, short event, void *data)
     orte_proc_state_t state;
     orte_exit_code_t exit_code;
     int rc=ORTE_SUCCESS, ret;
-    struct timeval beat;
     orte_app_context_t *app, *child_app;
     opal_list_item_t *item;
     int dump[128];
@@ -456,29 +455,6 @@ static void process_msg(int fd, short event, void *data)
                                     (int)jdata->num_launched, (int)jdata->num_procs);
                     }
                 }
-                break;
-                
-            case ORTE_PLM_HEARTBEAT_CMD:
-                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                                     "%s plm:base:receive got heartbeat from %s",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(&msgpkt->sender)));
-                /* lookup the daemon object */
-                if (NULL == (jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
-                    /* this job can not possibly have been removed, so this is an error */
-                    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                    goto CLEANUP;
-                }
-                gettimeofday(&beat, NULL);
-                if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, msgpkt->sender.vpid))) {
-                    /* this proc is no longer in table - skip it */
-                    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                                         "%s plm:base:receive daemon %s is not in proc table",
-                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                         ORTE_VPID_PRINT(msgpkt->sender.vpid)));
-                    break;
-                }
-                proc->beat = beat.tv_sec; 
                 break;
                 
             case ORTE_PLM_INIT_ROUTES_CMD:

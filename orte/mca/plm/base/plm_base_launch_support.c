@@ -53,9 +53,6 @@
 #include "orte/mca/filem/filem.h"
 #include "orte/mca/filem/base/base.h"
 #include "orte/mca/rml/base/rml_contact.h"
-#if ORTE_ENABLE_SENSORS
-#include "orte/mca/sensor/sensor.h"
-#endif
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_locks.h"
@@ -390,11 +387,6 @@ int orte_plm_base_launch_apps(orte_jobid_t job)
         ORTE_ERROR_LOG(rc);
         goto WAKEUP;
     }
-    
-#if ORTE_ENABLE_SENSORS
-    /* start any sensor monitoring of this job */
-    orte_sensor.start(job);
-#endif
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:launch completed for job %s",
@@ -742,7 +734,7 @@ int orte_plm_base_setup_orted_cmd(int *argc, char ***argv)
 int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
                                           char *ess,
                                           int *proc_vpid_index,
-                                          bool heartbeat, char *nodes)
+                                          char *nodes)
 {
     char *param = NULL;
     int loc_id;
@@ -785,13 +777,6 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     if (0 < orted_debug_failure_delay) {
         opal_argv_append(argc, argv, "--debug-failure-delay");
         asprintf(&param, "%d", orted_debug_failure_delay);
-        opal_argv_append(argc, argv, param);
-        free(param);
-    }
-    if (heartbeat && 0 < orte_heartbeat_rate) {
-        /* tell the daemon to do a heartbeat */
-        opal_argv_append(argc, argv, "--heartbeat");
-        asprintf(&param, "%d", orte_heartbeat_rate);
         opal_argv_append(argc, argv, param);
         free(param);
     }

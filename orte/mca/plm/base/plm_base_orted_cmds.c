@@ -100,9 +100,6 @@ int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command)
                          "%s plm:base:orted_cmd sending orted_exit commands",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
-    /* stop all heartbeats */
-    orte_heartbeat_rate = 0;
-    
     OBJ_CONSTRUCT(&cmd, opal_buffer_t);
     
     /* since the orteds are being ordered to exit, and we are

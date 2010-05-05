@@ -244,7 +244,7 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     /* Add basic orted command line options */
     orte_plm_base_orted_append_basic_args(&argc, &argv, "tm",
                                           &proc_vpid_index,
-                                          true, nodelist);
+                                          nodelist);
     free(nodelist);
     
     if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
@@ -465,14 +465,6 @@ launch_apps:
                                  ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
         
-    /* setup a "heartbeat" timer to periodically check on
-     * the state-of-health of the orteds, if requested AND
-     * we actually launched some daemons!
-     */
-    if (0 < map->num_new_daemons) {
-        orte_plm_base_start_heart();
-    }
-    
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:tm:launch: finished",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));

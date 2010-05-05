@@ -239,7 +239,6 @@ static void ssh_child(char *cmd, char **argv)
  */
 int orte_plm_rshd_launch(orte_job_t *jdata)
 {
-    orte_job_map_t *map = NULL;
     char **argv = NULL;
     char *cmd, *param;
     int rc, i;
@@ -379,14 +378,6 @@ cleanup:
                                  ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
 
-    /* setup a "heartbeat" timer to periodically check on
-     * the state-of-health of the orteds, if requested AND
-     * we actually launched some daemons!
-     */
-    if ((NULL != map) && (0 < map->num_new_daemons)) {
-        orte_plm_base_start_heart();
-    }
-    
     return rc;
 }
 

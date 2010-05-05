@@ -450,8 +450,6 @@ struct orte_proc_t {
     char *nodename;
     /* RML contact info */
     char *rml_uri;
-    /* seconds when last heartbeat was detected */
-    time_t beat;
     /* number of times this process has been restarted */
     int32_t restarts;
     /* number of times this process has been relocated */
@@ -489,6 +487,12 @@ typedef struct {
     opal_list_t attrs;
     /* list of system info */
     opal_list_t sysinfo;
+#if ORTE_ENABLE_HEARTBEAT
+    /* seconds when last heartbeat was detected */
+    double beat;
+    /* number of missed heartbeats */
+    int missed;
+#endif
 } orte_nid_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_nid_t);
 
@@ -587,7 +591,6 @@ ORTE_DECLSPEC extern bool orte_abnormal_term_ordered;
 ORTE_DECLSPEC extern bool orte_routing_is_enabled;
 ORTE_DECLSPEC extern bool orte_job_term_ordered;
 
-ORTE_DECLSPEC extern int orte_heartbeat_rate;
 ORTE_DECLSPEC extern int orte_startup_timeout;
 
 ORTE_DECLSPEC extern int orte_timeout_usec_per_proc;

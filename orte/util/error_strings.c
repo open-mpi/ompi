@@ -176,11 +176,12 @@ const char *orte_job_state_to_str(orte_job_state_t state)
         case ORTE_JOB_STATE_SENSOR_BOUND_EXCEEDED:
             return "SENSOR BOUND EXCEEDED";
             break;
-
         case ORTE_JOB_STATE_NEVER_LAUNCHED:
             return "NEVER LAUNCHED";
         case ORTE_JOB_STATE_ABORT_ORDERED:
             return "ABORT IN PROGRESS";
+        case ORTE_JOB_STATE_HEARTBEAT_FAILED:
+            return "HEARTBEAT FAILED";
         default:
             return "UNKNOWN STATE!";
     }
@@ -220,7 +221,9 @@ const char *orte_proc_state_to_str(orte_proc_state_t state)
         case ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED:
             return "SENSOR BOUND EXCEEDED";
             break;
-
+        case ORTE_PROC_STATE_HEARTBEAT_FAILED:
+            return "HEARTBEAT FAILED";
+            break;
         default:
             return "UNKNOWN STATE!";
     }

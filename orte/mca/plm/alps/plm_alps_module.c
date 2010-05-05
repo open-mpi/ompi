@@ -272,7 +272,7 @@ static int plm_alps_launch_job(orte_job_t *jdata)
     orte_plm_base_orted_append_basic_args(&argc, &argv,
                                           "alps",
                                           &proc_vpid_index,
-                                          false, nodelist_flat);
+                                          nodelist_flat);
     free(nodelist_flat);
 
     /* tell the new daemons the base of the name list so they can compute

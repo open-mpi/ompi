@@ -62,7 +62,7 @@ typedef uint32_t orte_proc_state_t;
 #define ORTE_PROC_STATE_COMM_FAILED             0x00002000  /* process communication has failed */
 #define ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED   0x00004000  /* process exceeded a sensor limit */
 #define ORTE_PROC_STATE_CALLED_ABORT            0x00008000  /* process called "errmgr.abort" */
-
+#define ORTE_PROC_STATE_HEARTBEAT_FAILED        0x00010000  /* heartbeat failed to arrive */
 /*
  * Job state codes
  */
@@ -93,6 +93,7 @@ typedef uint32_t orte_job_state_t;
 #define ORTE_JOB_STATE_COMM_FAILED              0x00002000  /* communication has failed */
 #define ORTE_JOB_STATE_SENSOR_BOUND_EXCEEDED    0x00004000  /* job had a process that exceeded a sensor limit */
 #define ORTE_JOB_STATE_CALLED_ABORT             0x00008000  /* at least one process called "errmgr.abort" */
+#define ORTE_JOB_STATE_HEARTBEAT_FAILED         0x00010000  /* heartbeat failed to arrive */
 
 /* the job never even attempted to launch due to an error earlier in the
  * launch procedure
@@ -131,8 +132,7 @@ typedef uint8_t orte_plm_cmd_flag_t;
 #define ORTE_PLM_CMD    OPAL_UINT8
 #define ORTE_PLM_LAUNCH_JOB_CMD         1
 #define ORTE_PLM_UPDATE_PROC_STATE      2
-#define ORTE_PLM_HEARTBEAT_CMD          3
-#define ORTE_PLM_INIT_ROUTES_CMD        4
+#define ORTE_PLM_INIT_ROUTES_CMD        3
 
 END_C_DECLS
 

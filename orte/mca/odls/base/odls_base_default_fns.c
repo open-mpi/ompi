@@ -55,6 +55,7 @@
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/rmaps/rmaps_types.h"
+#include "orte/mca/sensor/sensor.h"
 
 #include "orte/util/context_fns.h"
 #include "orte/util/name_fns.h"
@@ -1899,6 +1900,9 @@ CLEANUP:
         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls:launch setting waitpids",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        
+        /* start the sensors for this job (if any) */
+        orte_sensor.start(ORTE_PROC_MY_NAME->jobid);
         
         /* if the launch didn't fail, setup the waitpids on the children */
         for (item = opal_list_get_first(&orte_local_children);

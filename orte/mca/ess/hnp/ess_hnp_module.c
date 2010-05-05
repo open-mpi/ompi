@@ -57,9 +57,8 @@
 #include "orte/mca/notifier/base/base.h"
 #include "orte/mca/rmcast/base/base.h"
 #include "orte/mca/db/base/base.h"
-#if ORTE_ENABLE_SENSORS
 #include "orte/mca/sensor/base/base.h"
-#endif
+#include "orte/mca/sensor/sensor.h"
 
 #include "orte/mca/rmaps/base/base.h"
 #if OPAL_ENABLE_FT_CR == 1
@@ -540,7 +539,6 @@ static int rte_init(void)
         goto error;
     }
     
-#if ORTE_ENABLE_SENSORS
     /* setup the SENSOR framework */
     if (ORTE_SUCCESS != (ret = orte_sensor_base_open())) {
         ORTE_ERROR_LOG(ret);
@@ -549,11 +547,12 @@ static int rte_init(void)
     }
     if (ORTE_SUCCESS != (ret = orte_sensor_base_select())) {
         ORTE_ERROR_LOG(ret);
-        error = "ortesensor_select";
+        error = "orte_sensor_select";
         goto error;
     }
-#endif
-
+    /* start the local sensors */
+    orte_sensor.start(ORTE_PROC_MY_NAME->jobid);
+    
     /* if a tool has launched us and is requesting event reports,
      * then set its contact info into the comm system
      */
@@ -603,15 +602,16 @@ static int rte_finalize(void)
     orte_job_t *job;
     int i;
 
+    /* stop the local sensors */
+    orte_sensor.stop(ORTE_PROC_MY_NAME->jobid);
+
     /* remove my contact info file */
     contact_path = opal_os_path(false, orte_process_info.top_session_dir,
                                 "contact.txt", NULL);
     unlink(contact_path);
     free(contact_path);
     
-#if ORTE_ENABLE_SENSORS
     orte_sensor_base_close();
-#endif
     orte_db_base_close();
     orte_notifier_base_close();
     

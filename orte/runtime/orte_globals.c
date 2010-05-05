@@ -94,7 +94,6 @@ bool orte_abnormal_term_ordered = false;
 bool orte_routing_is_enabled = false;
 bool orte_job_term_ordered = false;
 
-int orte_heartbeat_rate;
 int orte_startup_timeout;
 
 int orte_timeout_usec_per_proc;
@@ -828,7 +827,6 @@ static void orte_proc_construct(orte_proc_t* proc)
     proc->node = NULL;
     proc->nodename = NULL;
     proc->rml_uri = NULL;
-    proc->beat = 0;
     proc->restarts = 0;
     proc->relocates = 0;
 #if OPAL_ENABLE_FT_CR == 1
@@ -908,6 +906,10 @@ static void orte_nid_construct(orte_nid_t *ptr)
     ptr->daemon = ORTE_VPID_INVALID;
     OBJ_CONSTRUCT(&ptr->attrs, opal_list_t);
     OBJ_CONSTRUCT(&ptr->sysinfo, opal_list_t);
+#if ORTE_ENABLE_HEARTBEAT
+    ptr->beat = 0;
+    ptr->missed = 0;
+#endif
 }
 
 static void orte_nid_destruct(orte_nid_t *ptr)

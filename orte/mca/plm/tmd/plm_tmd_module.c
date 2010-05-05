@@ -552,14 +552,6 @@ launch_apps:
                                  ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
         
-    /* setup a "heartbeat" timer to periodically check on
-     * the state-of-health of the orteds, if requested AND
-     * we actually launched some daemons!
-     */
-    if (0 < map->num_new_daemons) {
-        orte_plm_base_start_heart();
-    }
-    
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:tm:launch: finished",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
