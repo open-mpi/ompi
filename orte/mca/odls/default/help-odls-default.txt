@@ -47,16 +47,6 @@ have the necessary permissions.  Please ensure that the executable is able to be
 found and executed.
 
 #
-[nodeid-out-of-range]
-The id of a node is out of the allowed range.
-
-Value given: %ld
-Max value allowed: %ld
-
-This may be resolved by increasing the number of available node id's by
-re-configuring Open MPI with the --enable-jumbo-clusters option, and then
-re-running the application
-#
 [odls-default:multiple-paffinity-schemes]
 Multiple processor affinity schemes were specified (can only specify one):
 
@@ -130,3 +120,27 @@ binding action:
   Application name:  %s
 
 Please revise the request and try again.
+#
+[odls-default:paffinity-missing-module]
+A request to bind processes was made, but no paffinity module
+was found:
+
+  Local host:        %s
+
+This is potentially a configuration. You can rerun your job without
+requesting binding, or check the configuration.
+#
+[odls-default:invalid-slot-list-range]
+A slot list was provided that exceeds the boundaries on available
+resources:
+
+  Local host: %s
+  Slot list:  %s
+
+Please check your boundaries and try again.
+#
+[odls-default:affinity-not-supported]
+A request was made to bind processes, but process affinity is
+not supported on this node:
+
+  Local host: %s

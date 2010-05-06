@@ -126,9 +126,6 @@ const char *orte_err2str(int errnum)
     case ORTE_ERR_SYSTEM_WILL_BOOTSTRAP:
         retval = "System will determine resources during bootstrap of daemons";
         break;
-    case ORTE_ERR_MODULE_NOT_FOUND:
-        retval = "Framework requires at least one active module, but none found";
-        break;
     case ORTE_ERR_RELOCATE_LIMIT_EXCEEDED:
         retval = "Limit on number of process relocations was exceeded";
         break;

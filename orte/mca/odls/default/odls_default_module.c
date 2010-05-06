@@ -294,7 +294,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
         child->pid = pid;
     }
     
-    if(pid < 0) {
+    if (pid < 0) {
         ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_CHILDREN);
         if (NULL != child) {
             child->state = ORTE_PROC_STATE_FAILED_TO_START;
@@ -344,10 +344,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      child->slot_list, ORTE_NAME_PRINT(child->name)));
                 if (opal_paffinity_alone) {
-                    /* It's an error if multiple paffinity schemes were specified */
-                    orte_show_help("help-odls-default.txt",
-                                   "odls-default:multiple-paffinity-schemes", true, child->slot_list);
-                    ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                    ORTE_ODLS_ERROR_OUT(ORTE_ERR_MULTIPLE_AFFINITIES);
                 }
                 if (orte_report_bindings) {
                     opal_output(0, "%s odls:default:fork binding child %s to slot_list %s",
@@ -355,17 +352,6 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                                 ORTE_NAME_PRINT(child->name), child->slot_list);
                 }
                 if (ORTE_SUCCESS != (rc = opal_paffinity_base_slot_list_set((long)child->name->vpid, child->slot_list, &mask))) {
-                    if (ORTE_ERR_NOT_SUPPORTED == rc) {
-                        /* OS doesn't support providing topology information */
-                        orte_show_help("help-odls-default.txt",
-                                       "odls-default:topo-not-supported", 
-                                       true, orte_process_info.nodename,  "rankfile containing a slot_list of ", 
-                                       child->slot_list, context->app);
-                        ORTE_ODLS_ERROR_OUT(rc);
-                    }
-                    
-                    orte_show_help("help-odls-default.txt",
-                                   "odls-default:slot-list-failed", true, child->slot_list, ORTE_ERROR_NAME(rc));
                     ORTE_ODLS_ERROR_OUT(rc);
                 }
                 /* if we didn't wind up bound, then generate a warning unless suppressed */
@@ -381,15 +367,11 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                                      (int)jobdat->cpus_per_rank, (int)jobdat->stride));
                 /* get the node rank */
                 if (ORTE_NODE_RANK_INVALID == (nrank = orte_ess.get_node_rank(child->name))) {
-                    orte_show_help("help-odls-default.txt",
-                                   "odls-default:invalid-node-rank", true);
-                    ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                    ORTE_ODLS_ERROR_OUT(ORTE_ERR_INVALID_NODE_RANK);
                 }
                 /* get the local rank */
                 if (ORTE_LOCAL_RANK_INVALID == (lrank = orte_ess.get_local_rank(child->name))) {
-                    orte_show_help("help-odls-default.txt",
-                                   "odls-default:invalid-local-rank", true);
-                    ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                    ORTE_ODLS_ERROR_OUT(ORTE_ERR_INVALID_LOCAL_RANK);
                 }
                 /* init the mask */
                 OPAL_PAFFINITY_CPU_ZERO(mask);
@@ -417,22 +399,14 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                         /* if we don't have enough sockets, that is an error */
                         if (n < logical_skt) {
                             ORTE_ODLS_IF_BIND_NOT_REQD(5);
-                            orte_show_help("help-odls-default.txt",
-                                           "odls-default:not-enough-resources", true,
-                                           "sockets", orte_process_info.nodename,
-                                           "bind-to-core", context->app);
-                            ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                            ORTE_ODLS_ERROR_OUT(ORTE_ERR_NOT_ENOUGH_SOCKETS);
                         }
                     } else {
                         target_socket = opal_paffinity_base_get_physical_socket_id(logical_skt);
-                        if (ORTE_ERR_NOT_SUPPORTED == target_socket) {
+                        if (target_socket < 0) {
                             /* OS doesn't support providing topology information */
                             ORTE_ODLS_IF_BIND_NOT_REQD(5);
-                            orte_show_help("help-odls-default.txt",
-                                           "odls-default:topo-not-supported", 
-                                           true, orte_process_info.nodename,  "bind-to-core", "",
-                                           context->app);
-                            ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                            ORTE_ODLS_ERROR_OUT(target_socket);
                         }
                     }
                     OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
@@ -453,14 +427,10 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                      * from when we initialized
                      */
                     target_socket = opal_paffinity_base_get_physical_socket_id(lrank % orte_odls_globals.num_sockets);
-                    if (ORTE_ERR_NOT_SUPPORTED == target_socket) {
+                    if (target_socket < 0) {
                         /* OS does not support providing topology information */
                         ORTE_ODLS_IF_BIND_NOT_REQD(5);
-                        orte_show_help("help-odls-default.txt",
-                                       "odls-default:topo-not-supported", 
-                                       true, orte_process_info.nodename,  "bind-to-core", "",
-                                       context->app);
-                        ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                        ORTE_ODLS_ERROR_OUT(target_socket);
                     }
                     OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                                          "bysocket lrank %d numsocks %d logical socket %d target socket %d", (int)lrank,
@@ -477,18 +447,12 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                         phys_core = opal_paffinity_base_get_physical_core_id(target_socket, logical_cpu);
                         if (0 > phys_core) {
                             ORTE_ODLS_IF_BIND_NOT_REQD(5);
-                            orte_show_help("help-odls-default.txt",
-                                           "odls-default:invalid-phys-cpu", true);
-                            ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                            ORTE_ODLS_ERROR_OUT(phys_core);
                         }
                         /* map this to a physical cpu on this node */
-                        if (ORTE_SUCCESS != opal_paffinity_base_get_map_to_processor_id(target_socket, phys_core, &phys_cpu)) {
+                        if (ORTE_SUCCESS != (rc = opal_paffinity_base_get_map_to_processor_id(target_socket, phys_core, &phys_cpu))) {
                             ORTE_ODLS_IF_BIND_NOT_REQD(5);
-                            orte_show_help("help-odls-default.txt",
-                                           "odls-default:not-enough-resources", true,
-                                           "processors", orte_process_info.nodename,
-                                           "bind-to-core", context->app);
-                            ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                            ORTE_ODLS_ERROR_OUT(rc);
                         }
                         /* are we bound? */
                         if (orte_odls_globals.bound) {
@@ -532,11 +496,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                             /* if we don't have enough processors, that is an error */
                             if (ncpu <= logical_cpu) {
                                 ORTE_ODLS_IF_BIND_NOT_REQD(5);
-                                orte_show_help("help-odls-default.txt",
-                                               "odls-default:not-enough-resources", true,
-                                               "processors", orte_process_info.nodename,
-                                               "bind-to-core", context->app);
-                                ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);                            
+                                ORTE_ODLS_ERROR_OUT(ORTE_ERR_NOT_ENOUGH_CORES);                            
                             }
                         } else {
                             /* if we are not bound, then all processors are available
@@ -544,19 +504,9 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                              * physical cpu
                              */
                             phys_cpu = opal_paffinity_base_get_physical_processor_id(logical_cpu);
-                            if (OPAL_ERROR == phys_cpu){
-                                /* No processor to bind to so error out */
+                            if (0 > phys_cpu) {
                                 ORTE_ODLS_IF_BIND_NOT_REQD(5);
-                                orte_show_help("help-odls-default.txt",
-                                               "odls-default:not-enough-resources", true,
-                                               "processors", orte_process_info.nodename,
-                                               "bind-to-core", context->app);
-                                ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
-                            } else if (0 > phys_cpu) {
-                                ORTE_ODLS_IF_BIND_NOT_REQD(5);
-                                orte_show_help("help-odls-default.txt",
-                                               "odls-default:invalid-phys-cpu", true);
-                                ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                                ORTE_ODLS_ERROR_OUT(phys_cpu);
                             }
                         }
                         OPAL_PAFFINITY_CPU_SET(phys_cpu, mask);
@@ -573,8 +523,6 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                 }
                 if (ORTE_SUCCESS != (rc = opal_paffinity_base_set(mask))) {
                     ORTE_ODLS_IF_BIND_NOT_REQD(5);
-                    orte_show_help("help-odls-default.txt",
-                                   "odls-default:failed-set-paff", true);
                     ORTE_ODLS_ERROR_OUT(rc);                            
                 }
                 paffinity_enabled = true;
@@ -590,9 +538,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                  * the provided mapping policy
                  */
                 if (ORTE_LOCAL_RANK_INVALID == (lrank = orte_ess.get_local_rank(child->name))) {
-                    orte_show_help("help-odls-default.txt",
-                                   "odls-default:invalid-local-rank", true);
-                    ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                    ORTE_ODLS_ERROR_OUT(ORTE_ERR_INVALID_LOCAL_RANK);
                 }
                 if (ORTE_MAPPING_NPERXXX & jobdat->policy) {
                     /* we need to balance the children from this job across the available sockets */
@@ -618,22 +564,14 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                         /* if we don't have enough sockets, that is an error */
                         if (n < logical_skt) {
                             ORTE_ODLS_IF_BIND_NOT_REQD(6);
-                            orte_show_help("help-odls-default.txt",
-                                           "odls-default:not-enough-resources", true,
-                                           "sockets", orte_process_info.nodename,
-                                           "bind-to-socket", context->app);
-                            ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                            ORTE_ODLS_ERROR_OUT(ORTE_ERR_NOT_ENOUGH_SOCKETS);
                         }
                     } else {
                         target_socket = opal_paffinity_base_get_physical_socket_id(logical_skt);
-                        if (ORTE_ERR_NOT_SUPPORTED == target_socket) {
+                        if (target_socket < 0) {
                             /* OS doesn't support providing topology information */
                             ORTE_ODLS_IF_BIND_NOT_REQD(6);
-                            orte_show_help("help-odls-default.txt",
-                                           "odls-default:topo-not-supported", 
-                                           true, orte_process_info.nodename,  "bind-to-socket", "",
-                                           context->app);
-                            ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                            ORTE_ODLS_ERROR_OUT(target_socket);
                         }
                     }
                     OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
@@ -650,14 +588,10 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                      * from when we initialized
                      */
                     target_socket = opal_paffinity_base_get_physical_socket_id(lrank % orte_odls_globals.num_sockets);
-                    if (ORTE_ERR_NOT_SUPPORTED == target_socket) {
+                    if (target_socket < 0) {
                         /* OS does not support providing topology information */
                         ORTE_ODLS_IF_BIND_NOT_REQD(6);
-                        orte_show_help("help-odls-default.txt",
-                                       "odls-default:topo-not-supported", 
-                                       true, orte_process_info.nodename,  "bind-to-socket", "",
-                                       context->app);
-                        ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                        ORTE_ODLS_ERROR_OUT(target_socket);
                     }
                     OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                                          "bysocket lrank %d numsocks %d logical socket %d target socket %d", (int)lrank,
@@ -687,36 +621,24 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                         /* if we don't have enough processors, that is an error */
                         if (ncpu < logical_cpu) {
                             ORTE_ODLS_IF_BIND_NOT_REQD(6);
-                            orte_show_help("help-odls-default.txt",
-                                           "odls-default:not-enough-resources", true,
-                                           "processors", orte_process_info.nodename,
-                                           "bind-to-socket", context->app);
-                            ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                            ORTE_ODLS_ERROR_OUT(ORTE_ERR_NOT_ENOUGH_SOCKETS);
                         }
                         /* get the physical socket of that cpu */
-                        if (ORTE_SUCCESS != opal_paffinity_base_get_map_to_socket_core(phys_cpu, &target_socket, &phys_core)) {
+                        if (ORTE_SUCCESS != (rc = opal_paffinity_base_get_map_to_socket_core(phys_cpu, &target_socket, &phys_core))) {
                             if (ORTE_BINDING_NOT_REQUIRED(jobdat->policy)) {
                                 goto LAUNCH_PROCS;
                             }
-                            orte_show_help("help-odls-default.txt",
-                                           "odls-default:topo-not-supported", 
-                                           true, orte_process_info.nodename,  "bind-to-socket", "",
-                                           context->app);
-                            ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                            ORTE_ODLS_ERROR_OUT(rc);
                         }
                     } else {
                         /* if we are not bound, then just use all sockets */
                         if (1 == orte_odls_globals.num_sockets) {
                             /* if we only have one socket, then just put it there */
                             target_socket = opal_paffinity_base_get_physical_socket_id(0);
-                            if (ORTE_ERR_NOT_SUPPORTED == target_socket) {
+                            if (target_socket < 0) {
                                 /* OS doesn't support providing topology information */
                                 ORTE_ODLS_IF_BIND_NOT_REQD(6);
-                                orte_show_help("help-odls-default.txt",
-                                               "odls-default:topo-not-supported", 
-                                               true, orte_process_info.nodename,  "bind-to-socket", "",
-                                               context->app);
-                                ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                                ORTE_ODLS_ERROR_OUT(target_socket);
                             }
                         } else {
                             /* compute the logical socket, compensating for the number of cpus_per_rank */
@@ -725,14 +647,10 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                             logical_skt = logical_skt % orte_odls_globals.num_sockets;
                             /* now get the target physical socket */
                             target_socket = opal_paffinity_base_get_physical_socket_id(logical_skt);
-                            if (ORTE_ERR_NOT_SUPPORTED == target_socket) {
+                            if (target_socket < 0) {
                                 /* OS doesn't support providing topology information */
                                 ORTE_ODLS_IF_BIND_NOT_REQD(6);
-                                orte_show_help("help-odls-default.txt",
-                                               "odls-default:topo-not-supported", 
-                                               true, orte_process_info.nodename,  "bind-to-socket", "",
-                                               context->app);
-                                ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                                ORTE_ODLS_ERROR_OUT(target_socket);
                             }
                         }
                         OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
@@ -745,18 +663,14 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                 for (n=0; n < orte_default_num_cores_per_socket; n++) {
                     /* get the physical core within this target socket */
                     phys_core = opal_paffinity_base_get_physical_core_id(target_socket, n);
-                    if (0 > phys_core) {
+                    if (phys_core < 0) {
                         ORTE_ODLS_IF_BIND_NOT_REQD(6);
-                        orte_show_help("help-odls-default.txt",
-                                       "odls-default:invalid-phys-cpu", true);
-                        ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                        ORTE_ODLS_ERROR_OUT(phys_core);
                     }
                     /* map this to a physical cpu on this node */
-                    if (ORTE_SUCCESS != opal_paffinity_base_get_map_to_processor_id(target_socket, phys_core, &phys_cpu)) {
+                    if (ORTE_SUCCESS != (rc = opal_paffinity_base_get_map_to_processor_id(target_socket, phys_core, &phys_cpu))) {
                         ORTE_ODLS_IF_BIND_NOT_REQD(6);
-                        orte_show_help("help-odls-default.txt",
-                                       "odls-default:invalid-phys-cpu", true);
-                        ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                        ORTE_ODLS_ERROR_OUT(rc);
                     }
                     /* are we bound? */
                     if (orte_odls_globals.bound) {
@@ -783,8 +697,6 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                 }
                 if (ORTE_SUCCESS != (rc = opal_paffinity_base_set(mask))) {
                     ORTE_ODLS_IF_BIND_NOT_REQD(6);
-                    orte_show_help("help-odls-default.txt",
-                                   "odls-default:failed-set-paff", true);
                     ORTE_ODLS_ERROR_OUT(rc);
                 }
                 paffinity_enabled = true;
@@ -932,12 +844,64 @@ LAUNCH_PROCS:
                     know about the failure.  The actual exit status of child proc
                     cannot be found here - all we can do is report the ORTE error
                     code that was reported back to us. The calling func needs to report the
-                    failure to launch this process through the SMR or else
+                    failure to launch this process through the errmgr or else
                     everyone else will hang.
                 */
                 if (NULL != child) {
                     child->state = ORTE_PROC_STATE_FAILED_TO_START;
                     child->exit_code = i;
+                    if (ORTE_ERR_MULTIPLE_AFFINITIES == i) {
+                        /* It's an error if multiple paffinity schemes were specified */
+                        orte_show_help("help-odls-default.txt",
+                                       "odls-default:multiple-paffinity-schemes", true, child->slot_list);
+                    } else if (ORTE_ERR_TOPO_SLOT_LIST_NOT_SUPPORTED == i) {
+                        /* OS doesn't support providing topology information */
+                        orte_show_help("help-odls-default.txt",
+                                       "odls-default:topo-not-supported", 
+                                       true, orte_process_info.nodename,  "rankfile containing a slot_list of ", 
+                                       child->slot_list, context->app);
+                    } else if (ORTE_ERR_INVALID_NODE_RANK == i) {
+                        orte_show_help("help-odls-default.txt",
+                                       "odls-default:invalid-node-rank", true);
+                    } else if (ORTE_ERR_INVALID_LOCAL_RANK == i) {
+                        orte_show_help("help-odls-default.txt",
+                                       "odls-default:invalid-local-rank", true);
+                    } else if (ORTE_ERR_NOT_ENOUGH_CORES == i) {
+                        orte_show_help("help-odls-default.txt",
+                                       "odls-default:not-enough-resources", true,
+                                       "sockets", orte_process_info.nodename,
+                                       "bind-to-core", context->app);
+                    } else if (ORTE_ERR_TOPO_CORE_NOT_SUPPORTED == i) {
+                        orte_show_help("help-odls-default.txt",
+                                       "odls-default:topo-not-supported", 
+                                       true, orte_process_info.nodename,  "bind-to-core", "",
+                                       context->app);
+                    } else if (ORTE_ERR_INVALID_PHYS_CPU == i) {
+                        orte_show_help("help-odls-default.txt",
+                                       "odls-default:invalid-phys-cpu", true);
+                    } else if (ORTE_ERR_NOT_ENOUGH_SOCKETS == i) {
+                        orte_show_help("help-odls-default.txt",
+                                       "odls-default:not-enough-resources", true,
+                                       "sockets", orte_process_info.nodename,
+                                       "bind-to-socket", context->app);
+                    } else if (ORTE_ERR_TOPO_SOCKET_NOT_SUPPORTED == i) {
+                        orte_show_help("help-odls-default.txt",
+                                       "odls-default:topo-not-supported", 
+                                       true, orte_process_info.nodename,  "bind-to-socket", "",
+                                       context->app);
+                    } else if (ORTE_ERR_MODULE_NOT_FOUND == i) {
+                        orte_show_help("help-odls-default.txt",
+                                       "odls-default:paffinity-missing-module", 
+                                       true, orte_process_info.nodename);
+                    } else if (ORTE_ERR_SLOT_LIST_RANGE == i) {
+                        orte_show_help("help-odls-default.txt",
+                                       "odls-default:invalid-slot-list-range", 
+                                       true, orte_process_info.nodename, child->slot_list);
+                    } else if (ORTE_ERR_NOT_SUPPORTED == i) {
+                        orte_show_help("help-odls-default.txt",
+                                       "odls-default:affinity-not-supported", 
+                                       true, orte_process_info.nodename);
+                    }
                 }
                 
                 OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
