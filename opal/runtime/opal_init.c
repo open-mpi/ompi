@@ -168,11 +168,39 @@ opal_err2str(int errnum)
     case OPAL_ERR_DATA_OVERWRITE_ATTEMPT:
         retval = "Attempt to overwrite a data value";
         break;
+    case OPAL_ERR_MODULE_NOT_FOUND:
+        retval = "Framework requires at least one active module, but none found";
+        break;
+    case OPAL_ERR_TOPO_SLOT_LIST_NOT_SUPPORTED:
+        retval = "OS topology does not support slot_list process affinity";
+        break;
+    case OPAL_ERR_TOPO_SOCKET_NOT_SUPPORTED:
+        retval = "Could not obtain socket topology information";
+        break;
+    case OPAL_ERR_TOPO_CORE_NOT_SUPPORTED:
+        retval = "Could not obtain core topology information";
+        break;
+    case OPAL_ERR_NOT_ENOUGH_SOCKETS:
+        retval = "Not enough sockets to meet request";
+        break;
+    case OPAL_ERR_NOT_ENOUGH_CORES:
+        retval = "Not enough cores to meet request";
+        break;
+    case OPAL_ERR_INVALID_PHYS_CPU:
+        retval = "Invalid physical cpu number returned";
+        break;
+    case OPAL_ERR_MULTIPLE_AFFINITIES:
+        retval = "Multiple methods for assigning process affinity were specified";
+        break;
+    case OPAL_ERR_SLOT_LIST_RANGE:
+        retval = "Provided slot_list range is invalid";
+        break;
+
     default:
         retval = NULL;
-    }
+}
 
-    return retval;
+return retval;
 }
 
 
