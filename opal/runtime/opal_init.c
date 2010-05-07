@@ -195,6 +195,9 @@ opal_err2str(int errnum)
     case OPAL_ERR_SLOT_LIST_RANGE:
         retval = "Provided slot_list range is invalid";
         break;
+    case OPAL_ERR_PAFFINITY_NOT_SUPPORTED:
+        retval = "Process affinity is not supported";
+        break;
 
     default:
         retval = NULL;
