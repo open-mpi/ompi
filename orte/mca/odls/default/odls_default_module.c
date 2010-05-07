@@ -850,58 +850,6 @@ LAUNCH_PROCS:
                 if (NULL != child) {
                     child->state = ORTE_PROC_STATE_FAILED_TO_START;
                     child->exit_code = i;
-                    if (ORTE_ERR_MULTIPLE_AFFINITIES == i) {
-                        /* It's an error if multiple paffinity schemes were specified */
-                        orte_show_help("help-odls-default.txt",
-                                       "odls-default:multiple-paffinity-schemes", true, child->slot_list);
-                    } else if (ORTE_ERR_TOPO_SLOT_LIST_NOT_SUPPORTED == i) {
-                        /* OS doesn't support providing topology information */
-                        orte_show_help("help-odls-default.txt",
-                                       "odls-default:topo-not-supported", 
-                                       true, orte_process_info.nodename,  "rankfile containing a slot_list of ", 
-                                       child->slot_list, context->app);
-                    } else if (ORTE_ERR_INVALID_NODE_RANK == i) {
-                        orte_show_help("help-odls-default.txt",
-                                       "odls-default:invalid-node-rank", true);
-                    } else if (ORTE_ERR_INVALID_LOCAL_RANK == i) {
-                        orte_show_help("help-odls-default.txt",
-                                       "odls-default:invalid-local-rank", true);
-                    } else if (ORTE_ERR_NOT_ENOUGH_CORES == i) {
-                        orte_show_help("help-odls-default.txt",
-                                       "odls-default:not-enough-resources", true,
-                                       "sockets", orte_process_info.nodename,
-                                       "bind-to-core", context->app);
-                    } else if (ORTE_ERR_TOPO_CORE_NOT_SUPPORTED == i) {
-                        orte_show_help("help-odls-default.txt",
-                                       "odls-default:topo-not-supported", 
-                                       true, orte_process_info.nodename,  "bind-to-core", "",
-                                       context->app);
-                    } else if (ORTE_ERR_INVALID_PHYS_CPU == i) {
-                        orte_show_help("help-odls-default.txt",
-                                       "odls-default:invalid-phys-cpu", true);
-                    } else if (ORTE_ERR_NOT_ENOUGH_SOCKETS == i) {
-                        orte_show_help("help-odls-default.txt",
-                                       "odls-default:not-enough-resources", true,
-                                       "sockets", orte_process_info.nodename,
-                                       "bind-to-socket", context->app);
-                    } else if (ORTE_ERR_TOPO_SOCKET_NOT_SUPPORTED == i) {
-                        orte_show_help("help-odls-default.txt",
-                                       "odls-default:topo-not-supported", 
-                                       true, orte_process_info.nodename,  "bind-to-socket", "",
-                                       context->app);
-                    } else if (ORTE_ERR_MODULE_NOT_FOUND == i) {
-                        orte_show_help("help-odls-default.txt",
-                                       "odls-default:paffinity-missing-module", 
-                                       true, orte_process_info.nodename);
-                    } else if (ORTE_ERR_SLOT_LIST_RANGE == i) {
-                        orte_show_help("help-odls-default.txt",
-                                       "odls-default:invalid-slot-list-range", 
-                                       true, orte_process_info.nodename, child->slot_list);
-                    } else if (ORTE_ERR_NOT_SUPPORTED == i) {
-                        orte_show_help("help-odls-default.txt",
-                                       "odls-default:affinity-not-supported", 
-                                       true, orte_process_info.nodename);
-                    }
                 }
                 
                 OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,

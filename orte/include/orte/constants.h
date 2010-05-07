@@ -74,6 +74,7 @@ enum {
     ORTE_ERR_INVALID_PHYS_CPU               = OPAL_ERR_INVALID_PHYS_CPU,
     ORTE_ERR_MULTIPLE_AFFINITIES            = OPAL_ERR_MULTIPLE_AFFINITIES,
     ORTE_ERR_SLOT_LIST_RANGE                = OPAL_ERR_SLOT_LIST_RANGE,
+    ORTE_ERR_PAFFINITY_NOT_SUPPORTED        = OPAL_ERR_PAFFINITY_NOT_SUPPORTED,
     
 /* error codes specific to ORTE - don't forget to update
     orte/util/error_strings.c when adding new error codes!!
