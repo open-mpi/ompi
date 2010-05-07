@@ -868,10 +868,11 @@ CHECK_ALIVE:
         }
         else {
             OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
-                                 "%s errmgr:hnp:check_job_completed job %s is terminated (%d vs %d [0x%x])",
+                                 "%s errmgr:hnp:check_job_completed job %s is terminated (%d vs %d [%s])",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_JOBID_PRINT(job->jobid),
-                                 job->num_terminated, job->num_procs, jdata->state ));
+                                 job->num_terminated, job->num_procs,
+                                 (NULL == jdata) ? "UNKNOWN" : orte_proc_state_to_str(jdata->state) ));
         }
     }
     /* if a job is still alive, we just return */
