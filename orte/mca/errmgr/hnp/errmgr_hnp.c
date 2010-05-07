@@ -872,7 +872,7 @@ CHECK_ALIVE:
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_JOBID_PRINT(job->jobid),
                                  job->num_terminated, job->num_procs,
-                                 (NULL == jdata) ? "UNKNOWN" : orte_proc_state_to_str(jdata->state) ));
+                                 (NULL == jdata) ? "UNKNOWN" : orte_job_state_to_str(jdata->state) ));
         }
     }
     /* if a job is still alive, we just return */
