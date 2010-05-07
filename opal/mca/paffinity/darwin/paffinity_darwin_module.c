@@ -94,24 +94,24 @@ static int init(void)
 /* this gives us a cpumask which tells which CPU to bind */
 static int set(opal_paffinity_base_cpu_set_t cpumask)
 {
-    return OPAL_ERR_NOT_SUPPORTED;
+    return OPAL_ERR_PAFFINITY_NOT_SUPPORTED;
 }
 
 /* This get function returns the CPU id that's currently binded,
  * and then sets the cpumask. */
 static int get(opal_paffinity_base_cpu_set_t *cpumask) 
 {
-    return OPAL_ERR_NOT_SUPPORTED;
+    return OPAL_ERR_PAFFINITY_NOT_SUPPORTED;
 }
 
 static int map_to_processor_id(int socket, int core, int *processor_id)
 {
-    return OPAL_ERR_NOT_SUPPORTED;
+    return OPAL_ERR_PAFFINITY_NOT_SUPPORTED;
 }
 
 static int map_to_socket_core(int processor_id, int *socket, int *core)
 {
-    return OPAL_ERR_NOT_SUPPORTED;
+    return OPAL_ERR_PAFFINITY_NOT_SUPPORTED;
 }
 
 static int get_processor_info(int *num_processors)
@@ -156,17 +156,17 @@ static int get_processor_info(int *num_processors)
 
 static int get_socket_info(int *num_sockets)
 {
-    return OPAL_ERR_NOT_SUPPORTED;
+    return OPAL_ERR_PAFFINITY_NOT_SUPPORTED;
 }
 
 static int get_core_info(int socket, int *num_cores)
 {
-    return OPAL_ERR_NOT_SUPPORTED;
+    return OPAL_ERR_PAFFINITY_NOT_SUPPORTED;
 }
 
 static int get_physical_processor_id(int logical_processor_id)
 {
-    return logical_processor_id;
+    return OPAL_ERR_PAFFINITY_NOT_SUPPORTED;
 }
 
 static int get_physical_socket_id(int logical_socket_id)

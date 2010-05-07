@@ -1822,7 +1822,6 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                  * across the entire cluster. Instead, we let orterun
                  * output a consolidated error message for us
                  */
-                child->exit_code = rc;
                 goto CLEANUP;
             } else {
                 child->alive = true;

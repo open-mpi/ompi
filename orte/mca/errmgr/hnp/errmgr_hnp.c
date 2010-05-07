@@ -43,7 +43,7 @@
 
 /* Local functions */
 static void hnp_abort(orte_jobid_t job, orte_exit_code_t exit_code);
-static void failed_start(orte_job_t *jdata, orte_exit_code_t exit_code);
+static void failed_start(orte_job_t *jdata);
 static void update_local_procs_in_job(orte_job_t *jdata, orte_job_state_t jobstate, orte_proc_state_t state);
 static void update_proc(orte_job_t *jdata, orte_process_name_t *proc,
                         orte_proc_state_t state,
@@ -167,7 +167,7 @@ static int update_state(orte_jobid_t job,
 
         switch (jobstate) {
             case ORTE_JOB_STATE_FAILED_TO_START:
-                failed_start(jdata, exit_code);
+                failed_start(jdata);
                 check_job_complete(jdata);  /* set the local proc states */
                 /* the job object for this job will have been NULL'd
                  * in the array if the job was solely local. If it isn't
@@ -390,7 +390,7 @@ static void hnp_abort(orte_jobid_t job, orte_exit_code_t exit_code)
     ORTE_UPDATE_EXIT_STATUS(exit_code);    
 }
 
-static void failed_start(orte_job_t *jdata, orte_exit_code_t exit_code)
+static void failed_start(orte_job_t *jdata)
 {
     opal_list_item_t *item, *next;
     orte_odls_job_t *jobdat;
@@ -426,7 +426,7 @@ static void failed_start(orte_job_t *jdata, orte_exit_code_t exit_code)
                 /* get the master proc object */
                 proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, child->name->vpid);
                 proc->state = child->state;
-                proc->exit_code = exit_code;
+                proc->exit_code = child->exit_code;
                 /* update the counter so we can terminate */
                 jdata->num_terminated++;
                 /* remove the child from our list */
