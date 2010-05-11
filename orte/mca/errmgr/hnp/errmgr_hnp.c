@@ -132,7 +132,7 @@ static int update_state(orte_jobid_t job,
     /*
      * if orte is trying to shutdown, just let it
      */
-    if (orte_errmgr_base.shutting_down) {
+    if (orte_finalizing) {
         return ORTE_SUCCESS;
     }
 
@@ -235,6 +235,18 @@ static int update_state(orte_jobid_t job,
                     hnp_abort(jdata->jobid, exit_code);
                 }
                 break;
+            case ORTE_JOB_STATE_COMM_FAILED:
+                /* order all local procs for this job to be killed */
+                killprocs(jdata->jobid, ORTE_VPID_WILDCARD);
+                check_job_complete(jdata);  /* set the local proc states */
+                /* the job object for this job will have been NULL'd
+                 * in the array if the job was solely local. If it isn't
+                 * NULL, then we need to tell everyone else to die
+                 */
+                if (NULL != (jdata = orte_get_job_data_object(job))) {
+                    hnp_abort(jdata->jobid, exit_code);
+                }
+                break;
 
             default:
                 break;
@@ -253,7 +265,6 @@ static int update_state(orte_jobid_t job,
         case ORTE_PROC_STATE_ABORTED:
         case ORTE_PROC_STATE_ABORTED_BY_SIG:
         case ORTE_PROC_STATE_TERM_WO_SYNC:
-        case ORTE_PROC_STATE_COMM_FAILED:
             if (jdata->enable_recovery) {
                 /* is this a local proc */
                 if (NULL != (child = proc_is_local(proc))) {
@@ -327,6 +338,12 @@ static int update_state(orte_jobid_t job,
             }
             break;
             
+        case ORTE_PROC_STATE_COMM_FAILED:
+            /* is this to a daemon? */
+            /* relocate its processes */
+            /* attempt to restart? */
+            break;
+
         default:
             break;
     }

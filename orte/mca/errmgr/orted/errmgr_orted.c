@@ -78,7 +78,7 @@ static int ft_event(int state);
 
 
 /******************
- * ORCM module
+ * ORTED module
  ******************/
 orte_errmgr_base_module_t orte_errmgr_orted_module = {
     init,
@@ -123,7 +123,13 @@ static int update_state(orte_jobid_t job,
     /*
      * if orte is trying to shutdown, just let it
      */
-    if (orte_errmgr_base.shutting_down) {
+    if (orte_finalizing) {
+        return ORTE_SUCCESS;
+    }
+    
+    /* if this is a heartbeat failure, let the HNP handle it */
+    if (ORTE_JOB_STATE_HEARTBEAT_FAILED == jobstate ||
+        ORTE_PROC_STATE_HEARTBEAT_FAILED == state) {
         return ORTE_SUCCESS;
     }
     

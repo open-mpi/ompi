@@ -129,6 +129,10 @@ const char *orte_err2str(int errnum)
     case ORTE_ERR_RELOCATE_LIMIT_EXCEEDED:
         retval = "Limit on number of process relocations was exceeded";
         break;
+    case ORTE_ERR_UNRECOVERABLE:
+        retval = "Unrecoverable error";
+        break;
+
             
     default:
         retval = NULL;

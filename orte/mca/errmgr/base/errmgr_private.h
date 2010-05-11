@@ -42,7 +42,6 @@ BEGIN_C_DECLS
 /* define a struct to hold framework-global values */
 typedef struct {
     int output;
-    bool shutting_down;
     opal_pointer_array_t modules;
     bool initialized;
 } orte_errmgr_base_t;

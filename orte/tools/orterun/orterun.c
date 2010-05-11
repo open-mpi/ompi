@@ -1228,8 +1228,7 @@ static void abort_exit_callback(int fd, short ign, void *arg)
          * procedure.
          */
         orte_enable_recovery             = false;
-        orte_errmgr_base.shutting_down   = true;
-
+        
         /* terminate the orteds - they will automatically kill
          * their local procs
          */

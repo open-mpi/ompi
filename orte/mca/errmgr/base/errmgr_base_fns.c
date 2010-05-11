@@ -68,19 +68,13 @@ int orte_errmgr_base_update_state(orte_jobid_t job,
     int i;
     orte_errmgr_stack_state_t stack_state;
     orte_errmgr_base_module_t *module;
-
-    if( ORTE_PROC_IS_APP ) {
-        return ORTE_SUCCESS;
-    }
-
-    if( !orte_errmgr_base.shutting_down ) {
-        OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output,
-                             "errmgr:base:update_state() %s) "
-                             "------- %s state updated for process %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             (NULL == name) ? "App. Process" : (name->jobid == ORTE_PROC_MY_HNP->jobid ? "Daemon" : "App. Process"),
-                             (NULL == name) ? "NULL" : ORTE_NAME_PRINT(name)));
-    }
+    
+    OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output,
+                         "errmgr:base:update_state() %s) "
+                         "------- %s state updated for process %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (NULL == name) ? "App. Process" : (name->jobid == ORTE_PROC_MY_HNP->jobid ? "Daemon" : "App. Process"),
+                         (NULL == name) ? "NULL" : ORTE_NAME_PRINT(name)));
     
     stack_state  = ORTE_ERRMGR_STACK_STATE_NONE;
     stack_state |= ORTE_ERRMGR_STACK_STATE_JOB_ABORT;
@@ -101,7 +95,7 @@ int orte_errmgr_base_update_state(orte_jobid_t job,
         }
     }
     
-    return ORTE_SUCCESS;
+    return rc;
 }
 
 int orte_errmgr_base_abort(int error_code, char *fmt, ...)
