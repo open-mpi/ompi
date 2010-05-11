@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -36,52 +37,60 @@ AM_CPPFLAGS += -I$(srcdir)/sysdeps/generic
 # copyright notices.
 
 docdir      = $(datadir)/openmpi/doc
-doc_DATA    = ptmalloc2-COPYRIGHT
-
-# These are the files from ptmalloc2 that we care about
-ptmalloc2_sources = \
-   malloc.c \
-   malloc-stats.c \
-   malloc.h
+doc_DATA    = COPYRIGHT-ptmalloc2.txt
 
 # Help file
-dist_pkgdata_DATA = help-opal-memory-ptmalloc2.txt
+dist_pkgdata_DATA = help-opal-memory-linux.txt
 
 # This component is only ever built statically (i.e., slurped into
 # libopen-pal) -- it is never built as a DSO.
-noinst_LTLIBRARIES = libmca_memory_ptmalloc2.la
-libmca_memory_ptmalloc2_la_SOURCES = \
-   opal_ptmalloc2_component.c \
-   opal_ptmalloc2_munmap.c \
-   rename.h \
-   $(ptmalloc2_sources)
-libmca_memory_ptmalloc2_la_LDFLAGS = \
-   -module -avoid-version $(memory_ptmalloc2_LDFLAGS)
-libmca_memory_ptmalloc2_la_LIBADD = $(memory_ptmalloc2_LIBS)
+noinst_LTLIBRARIES = libmca_memory_linux.la
+libmca_memory_linux_la_SOURCES = \
+    memory_linux.h \
+    memory_linux_component.c
+libmca_memory_linux_la_LDFLAGS = \
+   -module -avoid-version $(memory_linux_LDFLAGS)
+libmca_memory_linux_la_LIBADD = $(memory_linux_LIBS)
+
+# Do we have ptmalloc2 support?
+if MEMORY_LINUX_PTMALLOC2
+libmca_memory_linux_la_SOURCES += \
+    memory_linux_ptmalloc2.c \
+    memory_linux_munmap.c \
+    rename.h \
+    malloc.c \
+    malloc-stats.c \
+    malloc.h
+endif
+
+# Do we have ummunotify support?
+if MEMORY_LINUX_UMMUNOTIFY
+libmca_memory_linux_la_SOURCES += memory_linux_ummunotify.c public.h
+endif
 
 # these are included directly and shouldn't be built solo
-EXTRA_libmca_memory_ptmalloc2_la_SOURCES = \
+EXTRA_libmca_memory_linux_la_SOURCES = \
     arena.c \
     hooks.c
 
 EXTRA_DIST = \
-    ChangeLog \
-    README \
-    ChangeLog \
+    README-open-mpi.txt \
+    README-ptmalloc2.txt \
+    ChangeLog-ptmalloc2.txt \
+    COPYRIGHT-ptmalloc2.txt \
     lran2.h \
-    opal_ptmalloc2_munmap.h \
     t-test.h \
     t-test1.c \
     t-test2.c \
     tst-mallocstate.c \
     tst-mstats.c \
-        sysdeps/sproc/malloc-machine.h \
-        sysdeps/sproc/thread-st.h \
-        sysdeps/pthread/malloc-machine.h \
-        sysdeps/pthread/thread-st.h \
-        sysdeps/solaris/malloc-machine.h \
-        sysdeps/solaris/thread-st.h \
-        sysdeps/generic/malloc-machine.h \
-        sysdeps/generic/thread-st.h \
-        sysdeps/generic/atomic.h \
-        $(doc_DATA)
+    sysdeps/sproc/malloc-machine.h \
+    sysdeps/sproc/thread-st.h \
+    sysdeps/pthread/malloc-machine.h \
+    sysdeps/pthread/thread-st.h \
+    sysdeps/solaris/malloc-machine.h \
+    sysdeps/solaris/thread-st.h \
+    sysdeps/generic/malloc-machine.h \
+    sysdeps/generic/thread-st.h \
+    sysdeps/generic/atomic.h \
+    $(doc_DATA)

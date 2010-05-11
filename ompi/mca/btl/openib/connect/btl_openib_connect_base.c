@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007 Mellanox Technologies, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -430,6 +430,10 @@ int ompi_btl_openib_connect_base_alloc_cts(mca_btl_base_endpoint_t *endpoint)
         BTL_ERROR(("Failed to reg mr!"));
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
+    /* NOTE: We do not need to register this memory with the
+       opal_memory subsystem, because this is OMPI-controlled memory
+       -- we do not need to worry about this memory being freed out
+       from underneath us. */
 
     /* Copy the lkey where it needs to go */
     endpoint->endpoint_cts_frag.super.sg_entry.lkey = 
@@ -453,6 +457,9 @@ int ompi_btl_openib_connect_base_alloc_cts(mca_btl_base_endpoint_t *endpoint)
 
 int ompi_btl_openib_connect_base_free_cts(mca_btl_base_endpoint_t *endpoint)
 {
+    /* NOTE: We don't need to deregister this memory with opal_memory
+       because it was not registered there in the first place (see
+       comment above, near call to ibv_reg_mr). */
     if (NULL != endpoint->endpoint_cts_mr) {
         ibv_dereg_mr(endpoint->endpoint_cts_mr);
         endpoint->endpoint_cts_mr = NULL;

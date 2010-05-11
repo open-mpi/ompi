@@ -18,10 +18,6 @@
    write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
    Boston, MA 02111-1307, USA.  */
 
-/* Copyright (c) 2009-2010      IBM Corporation.  All rights reserved. 
- * Copyright (c) 2010           Cisco Systems, Inc.  All rights reserved. 
- */
-
 /* $Id: arena.c,v 1.9 2004/11/05 14:42:23 wg Exp $ */
 
 /* Compile-time constants.  */
@@ -294,7 +290,6 @@ ptmalloc_unlock_all2 __MALLOC_P((void))
 
 #endif /* !defined NO_THREADS */
 
-
 /* Initialization routine. */
 #ifdef _LIBC
 #include <string.h>
@@ -520,10 +515,6 @@ dump_heap(heap) heap_info *heap;
 
 #endif /* MALLOC_DEBUG > 1 */
 
-
-extern int opal_mem_free_ptmalloc2_munmap(void *start, size_t length, int from_alloc, int run_hooks);
-
-
 /* Create a new heap.  size is automatically rounded up to a multiple
    of the page size. */
 
@@ -558,9 +549,8 @@ new_heap(size, top_pad) size_t size, top_pad;
   if(p1 != MAP_FAILED) {
     p2 = (char *)(((unsigned long)p1 + (HEAP_MAX_SIZE-1)) & ~(HEAP_MAX_SIZE-1));
     ul = p2 - p1;
-    opal_mem_free_ptmalloc2_munmap(p1, ul, 1, 0);
-    opal_mem_free_ptmalloc2_munmap(p2 + HEAP_MAX_SIZE, HEAP_MAX_SIZE - ul, 
-                                   1, 0);
+    munmap(p1, ul);
+    munmap(p2 + HEAP_MAX_SIZE, HEAP_MAX_SIZE - ul);
   } else {
     /* Try to take the chance that an allocation of only HEAP_MAX_SIZE
        is already aligned. */
@@ -568,12 +558,12 @@ new_heap(size, top_pad) size_t size, top_pad;
     if(p2 == MAP_FAILED)
       return 0;
     if((unsigned long)p2 & (HEAP_MAX_SIZE-1)) {
-      opal_mem_free_ptmalloc2_munmap(p2, HEAP_MAX_SIZE, 1, 0);
+      munmap(p2, HEAP_MAX_SIZE);
       return 0;
     }
   }
   if(mprotect(p2, size, PROT_READ|PROT_WRITE) != 0) {
-    opal_mem_free_ptmalloc2_munmap(p2, HEAP_MAX_SIZE, 1, 0);
+    munmap(p2, HEAP_MAX_SIZE);
     return 0;
   }
   h = (heap_info *)p2;

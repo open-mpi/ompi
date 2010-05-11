@@ -1,4 +1,3 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -18,6 +18,9 @@
  */
 
 #include "ompi_config.h"
+
+#include MCA_memory_IMPLEMENTATION_HEADER
+#include "opal/mca/memory/memory.h"
 #include "ompi/mca/rcache/rcache.h"
 #include "rcache_rb.h"
 #include "rcache_rb_tree.h"
@@ -54,6 +57,13 @@ int mca_rcache_rb_find( struct mca_rcache_base_module_t* rcache,
     }
     OPAL_THREAD_LOCK(&rcache->lock);
     *cnt = 0;
+
+    /* Check to ensure that the cache is valid */
+    if (OPAL_UNLIKELY(opal_memory_changed() && 
+                      NULL != opal_memory->memoryc_process &&
+                      OPAL_SUCCESS != (rc = opal_memory->memoryc_process()))) {
+        return rc;
+    }
 
     if(ompi_rb_tree_size(&((mca_rcache_rb_module_t*)rcache)->rb_tree) == 0) {
        OPAL_THREAD_UNLOCK(&rcache->lock);
@@ -100,6 +110,14 @@ int mca_rcache_rb_insert (
 
     OPAL_THREAD_LOCK(&rcache->lock); 
     reg->flags = flags;
+
+    /* Check to ensure that the cache is valid */
+    if (OPAL_UNLIKELY(opal_memory_changed() &&
+                      NULL != opal_memory->memoryc_process &&
+                      OPAL_SUCCESS != (rc = opal_memory->memoryc_process()))) {
+        return rc;
+    }
+
     if(flags & MCA_MPOOL_FLAGS_CACHE) { 
         rc = mca_rcache_rb_mru_insert( (mca_rcache_rb_module_t*) rcache, reg); 
         if(OMPI_SUCCESS != rc) { 
@@ -119,6 +137,15 @@ int mca_rcache_rb_insert (
     }
     rc = mca_rcache_rb_tree_insert((mca_rcache_rb_module_t*)rcache, reg);
     OPAL_THREAD_ADD32((int32_t*) &reg->ref_count, 1); 
+
+    if (OPAL_LIKELY(OMPI_SUCCESS == rc)) {
+        /* If we successfully registered, then tell the memory manager
+           to start monitoring this region */
+        opal_memory->memoryc_register(reg->base, 
+                                      (uint64_t) reg->bound - reg->base + 1,
+                                      (uint64_t) reg);
+    }
+
     OPAL_THREAD_UNLOCK(&rcache->lock); 
     return rc;
 }
@@ -133,6 +160,11 @@ int mca_rcache_rb_delete (
 
     assert(reg->ref_count >= 1); 
     OPAL_THREAD_LOCK(&rcache->lock); 
+    /* Tell the memory manager that we no longer care about this
+       region */
+    opal_memory->memoryc_deregister(reg->base,
+                                    (uint64_t) (reg->bound - reg->base),
+                                    (uint64_t) reg);
     if(flags & MCA_MPOOL_FLAGS_CACHE) { 
         assert(reg->ref_count >= 2);
         OPAL_THREAD_ADD32((int32_t*)&reg->ref_count, -1);

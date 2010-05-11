@@ -19,5 +19,5 @@
 
 # Specific to this module
 
-PARAM_CONFIG_PRIORITY=20
+PARAM_CONFIG_PRIORITY=40
 PARAM_CONFIG_FILES="Makefile"
