@@ -45,7 +45,6 @@ const char *ibv_get_sysfs_path(void);
 #include <malloc.h>
 #include <stddef.h>
 
-#include "ompi/constants.h"
 #include "opal/event/event.h"
 #include "opal/align.h"
 #include "opal/util/output.h"
@@ -66,6 +65,7 @@ const char *ibv_get_sysfs_path(void);
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/notifier/notifier.h"
 
+#include "ompi/constants.h"
 #include "ompi/proc/proc.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/mpool/base/base.h"
@@ -518,8 +518,9 @@ static int openib_reg_mr(void *reg_data, void *base, size_t size,
     openib_reg->mr = ibv_reg_mr(device->ib_pd, base, size, IBV_ACCESS_LOCAL_WRITE |
             IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ);
 
-    if(NULL == openib_reg->mr)
+    if (NULL == openib_reg->mr) {
         return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     return OMPI_SUCCESS;
 }

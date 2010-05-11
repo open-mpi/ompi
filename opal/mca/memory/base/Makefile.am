@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -17,8 +18,10 @@
 #
 
 headers += \
-        base/base.h
+        base/base.h \
+        base/empty.h
 
 libmca_memory_la_SOURCES += \
         base/memory_base_close.c \
-        base/memory_base_open.c
+        base/memory_base_open.c \
+        base/memory_base_empty.c

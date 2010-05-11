@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+ *
+ * Additional copyrights may follow.
+ */
 /* Malloc implementation for multiple threads; statistics printing.
    Copyright (C) 2004 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
@@ -21,7 +26,7 @@
 /* $Id: $ */
 
 /* OMPI change: Name-shift all the internal symbols */
-#include "opal/mca/memory/ptmalloc2/rename.h"
+#include "opal/mca/memory/linux/rename.h"
 
 #include <stdio.h>    /* needed for malloc_stats */
 

@@ -1,4 +1,3 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,8 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- *
  * Copyright (c) 2006      Voltaire. All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -23,6 +22,8 @@
 
 #include "ompi_config.h"
 
+#include MCA_memory_IMPLEMENTATION_HEADER
+#include "opal/mca/memory/memory.h"
 #include "ompi/mca/rcache/rcache.h"
 #include "rcache_vma.h"
 #include "rcache_vma_tree.h"
@@ -46,6 +47,7 @@ void mca_rcache_vma_module_init( mca_rcache_vma_module_t* rcache ) {
 int mca_rcache_vma_find(struct mca_rcache_base_module_t* rcache,
         void* addr, size_t size, mca_mpool_base_registration_t **reg)
 {
+    int rc;
     void* base_addr; 
     void* bound_addr; 
 
@@ -56,6 +58,13 @@ int mca_rcache_vma_find(struct mca_rcache_base_module_t* rcache,
     base_addr = down_align_addr(addr, mca_mpool_base_page_size_log);
     bound_addr = up_align_addr((void*) ((unsigned long) addr + size - 1), mca_mpool_base_page_size_log);
         
+    /* Check to ensure that the cache is valid */
+    if (OPAL_UNLIKELY(opal_memory_changed() && 
+                      NULL != opal_memory->memoryc_process &&
+                      OPAL_SUCCESS != (rc = opal_memory->memoryc_process()))) {
+        return rc;
+    }
+
     *reg = mca_rcache_vma_tree_find((mca_rcache_vma_module_t*)rcache, (unsigned char*)base_addr,
             (unsigned char*)bound_addr); 
 
@@ -66,6 +75,7 @@ int mca_rcache_vma_find_all(struct mca_rcache_base_module_t* rcache,
         void* addr, size_t size, mca_mpool_base_registration_t **regs,
         int reg_cnt)
 {
+    int rc;
     void *base_addr, *bound_addr;
 
     if(size == 0) {
@@ -75,6 +85,13 @@ int mca_rcache_vma_find_all(struct mca_rcache_base_module_t* rcache,
     base_addr = down_align_addr(addr, mca_mpool_base_page_size_log);
     bound_addr = up_align_addr((void*) ((unsigned long) addr + size - 1), mca_mpool_base_page_size_log);
 
+    /* Check to ensure that the cache is valid */
+    if (OPAL_UNLIKELY(opal_memory_changed() && 
+                      NULL != opal_memory->memoryc_process &&
+                      OPAL_SUCCESS != (rc = opal_memory->memoryc_process()))) {
+        return rc;
+    }
+
     return mca_rcache_vma_tree_find_all((mca_rcache_vma_module_t*)rcache,
             (unsigned char*)base_addr, (unsigned char*)bound_addr, regs,
             reg_cnt);
@@ -83,6 +100,7 @@ int mca_rcache_vma_find_all(struct mca_rcache_base_module_t* rcache,
 int mca_rcache_vma_insert(struct mca_rcache_base_module_t* rcache,
         mca_mpool_base_registration_t* reg, size_t limit)
 {
+    int rc;
     size_t reg_size = reg->bound - reg->base + 1;
     mca_rcache_vma_module_t *vma_rcache = (mca_rcache_vma_module_t*)rcache;
 
@@ -92,13 +110,33 @@ int mca_rcache_vma_insert(struct mca_rcache_base_module_t* rcache,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    return mca_rcache_vma_tree_insert(vma_rcache, reg, limit);
+    /* Check to ensure that the cache is valid */
+    if (OPAL_UNLIKELY(opal_memory_changed() &&
+                      NULL != opal_memory->memoryc_process &&
+                      OPAL_SUCCESS != (rc = opal_memory->memoryc_process()))) {
+        return rc;
+    }
+
+    rc = mca_rcache_vma_tree_insert(vma_rcache, reg, limit);
+    if (OPAL_LIKELY(OMPI_SUCCESS == rc)) {
+        /* If we successfully registered, then tell the memory manager
+           to start monitoring this region */
+        opal_memory->memoryc_register(reg->base, 
+                                      (uint64_t) reg_size, (uint64_t) reg);
+    }
+
+    return rc;
 }
 
 int mca_rcache_vma_delete(struct mca_rcache_base_module_t* rcache,
         mca_mpool_base_registration_t* reg)
 {
     mca_rcache_vma_module_t *vma_rcache = (mca_rcache_vma_module_t*)rcache;
+    /* Tell the memory manager that we no longer care about this
+       region */
+    opal_memory->memoryc_deregister(reg->base,
+                                    (uint64_t) (reg->bound - reg->base),
+                                    (uint64_t) reg);
     return mca_rcache_vma_tree_delete(vma_rcache, reg);
 }
 

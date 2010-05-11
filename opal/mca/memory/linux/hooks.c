@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+ *
+ * Additional copyrights may follow.
+ */
 /* Malloc implementation for multiple threads without lock contention.
    Copyright (C) 2001, 2002, 2003 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
@@ -28,7 +33,7 @@
 #include "opal/util/show_help.h"
 #include "opal/constants.h"
 
-extern opal_memory_base_component_2_0_0_t mca_memory_ptmalloc2_component;
+#include "opal/mca/memory/linux/memory_linux.h"
 
 #ifndef DEFAULT_CHECK_ACTION
 #define DEFAULT_CHECK_ACTION 1
@@ -671,26 +676,26 @@ public_sET_STATe(Void_t* msptr)
    So we can basically have some hard-coded tests for things to see if
    we want to setup to use our internal ptmalloc2 or not. */
 
-static void *opal_memory_ptmalloc2_malloc_hook(size_t sz, 
-                                               const __malloc_ptr_t caller)
+static void *opal_memory_linux_malloc_hook(size_t sz, 
+                                           const __malloc_ptr_t caller)
 {
     return public_mALLOc(sz);
 }
 
-static void *opal_memory_ptmalloc2_realloc_hook(Void_t* ptr, size_t sz, 
-                                                const __malloc_ptr_t caller)
+static void *opal_memory_linux_realloc_hook(Void_t* ptr, size_t sz, 
+                                            const __malloc_ptr_t caller)
 {
     return public_rEALLOc(ptr, sz);
 }
 
-static void *opal_memory_ptmalloc2_memalign_hook(size_t alignment, size_t sz, 
-                                                 const __malloc_ptr_t caller)
+static void *opal_memory_linux_memalign_hook(size_t alignment, size_t sz, 
+                                             const __malloc_ptr_t caller)
 {
     return public_mEMALIGn(alignment, sz);
 }
 
-static void opal_memory_ptmalloc2_free_hook(__malloc_ptr_t __ptr,
-                                             const __malloc_ptr_t caller)
+static void opal_memory_linux_free_hook(__malloc_ptr_t __ptr,
+                                        const __malloc_ptr_t caller)
 {
     public_fREe(__ptr);
 }
@@ -722,7 +727,7 @@ static check_result_t check(const char *name)
 }
 
 /* OMPI's init function */
-static void opal_memory_ptmalloc2_malloc_init_hook(void)
+static void opal_memory_linux_malloc_init_hook(void)
 {
     /* Yes, checking for an MPI MCA parameter here is an abstraction
        violation.  Cope.  Yes, even checking for *any* MCA parameter
@@ -742,7 +747,7 @@ static void opal_memory_ptmalloc2_malloc_init_hook(void)
        causing Badness (see http://bugs.debian.org/531522).
        $FAKEROOTKEY is set by Debian's "fakeroot" build environment;
        check for that explicitly. */
-    r1 = check("OMPI_MCA_memory_ptmalloc2_disable");
+    r1 = check("OMPI_MCA_memory_linux_disable");
     r2 = check("FAKEROOTKEY");
     if ((RESULT_NOT_FOUND != r1 && RESULT_NO != r1) ||
         (RESULT_NOT_FOUND != r2 && RESULT_NO != r2)) {
@@ -798,10 +803,10 @@ static void opal_memory_ptmalloc2_malloc_init_hook(void)
         ptmalloc_init();
 
         /* Now set the hooks to point to our functions */
-        __free_hook = opal_memory_ptmalloc2_free_hook;
-        __malloc_hook = opal_memory_ptmalloc2_malloc_hook;
-        __memalign_hook = opal_memory_ptmalloc2_memalign_hook;
-        __realloc_hook = opal_memory_ptmalloc2_realloc_hook;
+        __free_hook = opal_memory_linux_free_hook;
+        __malloc_hook = opal_memory_linux_malloc_hook;
+        __memalign_hook = opal_memory_linux_memalign_hook;
+        __realloc_hook = opal_memory_linux_realloc_hook;
     }
 }
 
@@ -814,10 +819,10 @@ static void opal_memory_ptmalloc2_malloc_init_hook(void)
    libopen-pal).  This declaration is not in malloc.h because this
    function only exists as a horrid workaround to force linkers to
    pull in this .o file (see explanation below).  */
-void *opal_memory_ptmalloc2_hook_pull(void);
+void opal_memory_linux_hook_pull(bool *want_hooks);
 
 /* OMPI change: add a dummy function here that will be called by the
-   ptmalloc2 component open() function.  This dummy function is
+   linux component open() function.  This dummy function is
    necessary for when OMPI is built as --disable-shared
    --enable-static --disable-dlopen, because we won't use
    -Wl,--export-dynamic when building OMPI.  So we need to ensure that
@@ -825,8 +830,7 @@ void *opal_memory_ptmalloc2_hook_pull(void);
    but they also end up in the final exectuable (so that
    __malloc_initialize_hook is there, overrides the weak symbol in
    glibc, ....etc.). */
-static int bogus = 37;
-void *opal_memory_ptmalloc2_hook_pull(void)
+void opal_memory_linux_hook_pull(bool *want_hooks)
 {
     int val;
 
@@ -840,24 +844,26 @@ void *opal_memory_ptmalloc2_hook_pull(void)
        _malloc_init_hook(). */
     mca_base_param_source_t source;
     char *file;
-    int p = mca_base_param_reg_int(&mca_memory_ptmalloc2_component.memoryc_version,
+    int p = mca_base_param_reg_int(&mca_memory_linux_component.super.memoryc_version,
                                    "disable",
-                                   "If this MCA parameter is set to 1 **VIA ENVIRONMENT VARIABLE ONLY*** (this MCA parameter *CANNOT* be set in a file or on the mpirun command line!), the ptmalloc2 hooks will be disabled",
+                                   "If this MCA parameter is set to 1 **VIA ENVIRONMENT VARIABLE ONLY*** (this MCA parameter *CANNOT* be set in a file or on the mpirun command line!), this component will be disabled and will not attempt to use either ummunotify or memory hook support",
                                    false, false, 0, &val);
-    /* We can at least warn if someone tried to set this in a file */
-    if (p >= 0 &&
-        OPAL_SUCCESS == mca_base_param_lookup_source(p, &source, &file) &&
-        (MCA_BASE_PARAM_SOURCE_DEFAULT != source &&
-         MCA_BASE_PARAM_SOURCE_ENV != source)) {
-        opal_show_help("help-opal-memory-ptmalloc2.txt",
-                       "disable incorrectly set", true,
-                       "opal_ptmalloc2_disable",
-                       "opal_ptmalloc2_disable", val,
-                       MCA_BASE_PARAM_SOURCE_FILE == source ?
-                       file : "override");
-    }
 
-    return &bogus;
+    /* We can at least warn if someone tried to set this in a file */
+    if (p >= 0) {
+        if (OPAL_SUCCESS == mca_base_param_lookup_source(p, &source, &file) &&
+            (MCA_BASE_PARAM_SOURCE_DEFAULT != source &&
+             MCA_BASE_PARAM_SOURCE_ENV != source)) {
+            opal_show_help("help-opal-memory-linux.txt",
+                           "disable incorrectly set", true,
+                           "opal_linux_disable",
+                           "opal_linux_disable", val,
+                           MCA_BASE_PARAM_SOURCE_FILE == source ?
+                           file : "override");
+        } else {
+            *want_hooks = OPAL_INT_TO_BOOL(!val);
+        }
+    }
 }
 
 
@@ -865,7 +871,7 @@ void *opal_memory_ptmalloc2_hook_pull(void)
 /* OMPI change: This is the symbol to override to make the above
    function get fired during malloc initialization time. */
 void (*__malloc_initialize_hook) (void) = 
-    opal_memory_ptmalloc2_malloc_init_hook;
+    opal_memory_linux_malloc_init_hook;
 
 /*
  * Local variables:
