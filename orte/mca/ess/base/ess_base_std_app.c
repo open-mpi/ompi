@@ -44,6 +44,7 @@
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/filem/base/base.h"
+#include "orte/mca/errmgr/base/base.h"
 #if OPAL_ENABLE_FT_CR == 1
 #include "orte/mca/snapc/base/base.h"
 #endif
@@ -65,6 +66,18 @@ int orte_ess_base_app_setup(void)
     int ret;
     char *error = NULL;
 
+    /* setup the errmgr */
+    if (ORTE_SUCCESS != (ret = orte_errmgr_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_errmgr_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_errmgr_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_errmgr_base_select";
+        goto error;
+    }
+    
     /* Setup the communication infrastructure */
     
     /* Runtime Messaging Layer */

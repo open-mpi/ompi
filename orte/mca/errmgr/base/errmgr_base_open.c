@@ -80,12 +80,6 @@ int orte_errmgr_base_open(void)
     orte_errmgr_base.output = opal_output_open(NULL);
 
     /*
-     * A flag to indicate that orterun is shutting down, so skip the recovery
-     * logic.
-     */
-    orte_errmgr_base.shutting_down = false;
-
-    /*
      * Open up all available components
      */
     if (ORTE_SUCCESS != 

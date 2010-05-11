@@ -60,7 +60,6 @@
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/routed/routed.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/notifier/notifier.h"
 #include "orte/runtime/orte_wait.h"
@@ -597,12 +596,12 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
             peer->peer_state);
     }
 
-    mca_oob_tcp_peer_shutdown(peer);
-
-    /* inform the routed framework that we have lost a connection so
+    /* inform the ERRMGR framework that we have lost a connection so
      * it can decide if this is important, what to do about it, etc.
      */
-    if (ORTE_SUCCESS != orte_routed.route_lost(&peer->peer_name)) {
+    if (ORTE_ERR_UNRECOVERABLE == orte_errmgr.update_state(peer->peer_name.jobid, ORTE_JOB_STATE_COMM_FAILED,
+                                                           &peer->peer_name, ORTE_PROC_STATE_COMM_FAILED,
+                                                           ORTE_ERROR_DEFAULT_EXIT_CODE)) {
         /* Should free the peer lock before we abort so we don't 
          * get stuck in the orte_wait_kill when receiving messages in the 
          * tcp OOB
