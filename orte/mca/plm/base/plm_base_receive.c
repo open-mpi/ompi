@@ -336,7 +336,7 @@ static void process_msg(int fd, short event, void *data)
                                          ORTE_JOBID_PRINT(job)));
                     
                     name.jobid = job;
-                    running = true;
+                    running = false;
                     /* get the job object */
                     if (NULL == (jdata = orte_get_job_data_object(job))) {
                         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -421,8 +421,8 @@ static void process_msg(int fd, short event, void *data)
                             ORTE_ERROR_LOG(rc);
                             goto CLEANUP;
                         }
-                        if (ORTE_PROC_STATE_RUNNING != state) {
-                            running = false;
+                        if (ORTE_PROC_STATE_RUNNING == state) {
+                            running = true;
                         }
                         /* unpack the exit code */
                         count = 1;
@@ -447,8 +447,8 @@ static void process_msg(int fd, short event, void *data)
                 } else {
                     rc = ORTE_SUCCESS;
                 }
+                jdata->num_daemons_reported++;
                 if (orte_report_launch_progress && running) {
-                    jdata->num_daemons_reported++;
                     if (0 == jdata->num_daemons_reported % 100 || jdata->num_daemons_reported == orte_process_info.num_procs) {
                         opal_output(orte_clean_output, "Reported: %d (out of %d) daemons - %d (out of %d) procs",
                                     (int)jdata->num_daemons_reported, (int)orte_process_info.num_procs,

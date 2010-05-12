@@ -211,6 +211,16 @@ static int update_state(orte_jobid_t job,
             case ORTE_JOB_STATE_RUNNING:
                 /* update all procs in job */
                 update_local_procs_in_job(jdata, jobstate, ORTE_PROC_STATE_RUNNING, 0);
+                /* record that we reported */
+                jdata->num_daemons_reported++;
+                /* report if requested */
+                if (orte_report_launch_progress) {
+                    if (0 == jdata->num_daemons_reported % 100 || jdata->num_daemons_reported == orte_process_info.num_procs) {
+                        opal_output(orte_clean_output, "Reported: %d (out of %d) daemons - %d (out of %d) procs",
+                                    (int)jdata->num_daemons_reported, (int)orte_process_info.num_procs,
+                                    (int)jdata->num_launched, (int)jdata->num_procs);
+                    }
+                }
                 break;
             case ORTE_JOB_STATE_NEVER_LAUNCHED:
                 orte_never_launched = true;
