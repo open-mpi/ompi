@@ -23,6 +23,7 @@ Version 1.0.0
   + Add x86 cpuid based backend.
   + Add Linux cgroup support to the Linux cpuset code.
   + Support binding of entire multithreaded process on Linux.
+  + Fix and enable Group support in Windows.
   + Cleanup XML export/import.
 * Objects
   + HWLOC_OBJ_PROC is renamed into HWLOC_OBJ_PU for "Processing Unit",

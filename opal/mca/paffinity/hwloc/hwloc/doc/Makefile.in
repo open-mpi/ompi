@@ -1148,7 +1148,9 @@ uninstall-man: uninstall-man3
 #
 
 @HWLOC_BUILD_DOXYGEN_TRUE@$(man3_MANS): $(DOX_TAG)
-@HWLOC_BUILD_DOXYGEN_TRUE@$(DOX_A4PDF): $(DOX_TAG)
+# Enforce some ordering so that "make -j X" works properly (i.e.,
+# doesn't try to build both PDFs at the same time)
+@HWLOC_BUILD_DOXYGEN_TRUE@$(DOX_A4PDF): $(DOX_TAG) $(DOX_LETTERPDF)
 @HWLOC_BUILD_DOXYGEN_TRUE@$(DOX_LETTERPDF): $(DOX_TAG)
 @HWLOC_BUILD_DOXYGEN_TRUE@$(DOX_HTML_DIR): $(DOX_TAG)
 @HWLOC_BUILD_DOXYGEN_TRUE@$(DOX_LATEX_DIR): $(DOX_TAG)

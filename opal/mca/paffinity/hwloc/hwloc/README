@@ -308,7 +308,7 @@ int main(void)
      levels++;
      size += obj->attr->cache.size;
    }
- printf("*** Logical processor 0 has %u caches totaling %luKB\n",
+ printf("*** Logical processor 0 has %d caches totaling %luKB\n",
         levels, size / 1024);
 
  /*****************************************************************
@@ -397,6 +397,16 @@ Questions and bugs
 Questions should be sent to the devel mailing list (http://www.open-mpi.org/
 community/lists/hwloc.php). Bug reports should be reported in the tracker (
 https://svn.open-mpi.org/trac/hwloc/).
+
+If hwloc discovers an incorrect topology for your machine, the very first thing
+you should check is to ensure that you have the most recent updates installed
+for your operating system. Indeed, most of hwloc topology discovery relies on
+hardware information retrieved through the operation system (e.g., via the /sys
+virtual filesystem of the Linux kernel). If upgrading your OS or Linux kernel
+does not solve your problem, you may also want to ensure that you are running
+the most recent version of the BIOS for your machine.
+
+If those things fail, contact us on the mailing list for additional help.
 
 History / credits
 

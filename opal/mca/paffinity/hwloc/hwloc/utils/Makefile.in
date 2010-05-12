@@ -45,7 +45,7 @@ target_triplet = @target@
 @HWLOC_HAVE_CAIRO_TRUE@am__append_1 = lstopo-cairo.c
 @HWLOC_HAVE_XML_TRUE@am__append_2 = lstopo-xml.c
 @HWLOC_HAVE_WINDOWS_TRUE@am__append_3 = lstopo-windows.c
-@HWLOC_BUILD_UTILS_TRUE@am__append_4 = $(man_pages:.1=.1in)
+@HWLOC_BUILD_UTILS_TRUE@am__append_4 = $(man1_pages:.1=.1in) $(man7_pages:.7=.7in)
 subdir = utils
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/test-hwloc-distrib.sh.in
@@ -334,7 +334,9 @@ hwloc_calc_SOURCES = hwloc-calc.c hwloc-calc.h
 @HWLOC_BUILD_TESTS_TRUE@@HWLOC_HAVE_MINGW32_FALSE@TESTS = test-hwloc-distrib.sh
 
 # Only install man pages if we're building in standalone mode
-@HWLOC_BUILD_UTILS_TRUE@man_pages = hwloc.7 lstopo.1 hwloc-bind.1 hwloc-distrib.1 hwloc-calc.1
+@HWLOC_BUILD_UTILS_TRUE@man1_pages = lstopo.1 hwloc-bind.1 hwloc-distrib.1 hwloc-calc.1
+@HWLOC_BUILD_UTILS_TRUE@man7_pages = hwloc.7
+@HWLOC_BUILD_UTILS_TRUE@man_pages = $(man7_pages) $(man1_pages)
 @HWLOC_BUILD_UTILS_TRUE@nodist_man_MANS = $(man_pages)
 all: all-am
 

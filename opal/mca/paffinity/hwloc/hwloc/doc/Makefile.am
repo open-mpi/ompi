@@ -408,7 +408,9 @@ endif
 
 if HWLOC_BUILD_DOXYGEN
 $(man3_MANS): $(DOX_TAG)
-$(DOX_A4PDF): $(DOX_TAG)
+# Enforce some ordering so that "make -j X" works properly (i.e.,
+# doesn't try to build both PDFs at the same time)
+$(DOX_A4PDF): $(DOX_TAG) $(DOX_LETTERPDF)
 $(DOX_LETTERPDF): $(DOX_TAG)
 $(DOX_HTML_DIR): $(DOX_TAG)
 $(DOX_LATEX_DIR): $(DOX_TAG)

@@ -265,7 +265,7 @@ hwloc_obj_snprintf(char *string, size_t size,
   hwloc_obj_type_snprintf(type, sizeof(type), l, verbose);
   attrlen = hwloc_obj_attr_snprintf(attr, sizeof(attr), l, " ", verbose);
 
-  if (attrlen)
+  if (attrlen > 0)
     return hwloc_snprintf(string, size, "%s%s(%s)", type, os_index, attr);
   else
     return hwloc_snprintf(string, size, "%s%s", type, os_index);

@@ -214,6 +214,16 @@ running lstopo in one context may show a specific CPU as red, but
 running lstopo in a different context may show the same CPU as white).
 .
 .\" **************************
+.\"    Layout Section
+.\" **************************
+.SH LAYOUT
+In its graphical output, lstopo uses simple rectangular heuristics
+to try to achieve a 4/3 ratio between width and height. However,
+in the particular case of NUMA nodes, the layout is always a flat
+rectangle, to avoid letting the user believe any particular NUMA
+topology (lstopo is not able to render that yet).
+.
+.\" **************************
 .\"    Examples Section
 .\" **************************
 .SH EXAMPLES

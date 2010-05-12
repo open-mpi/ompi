@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\" Copyright © 2009-2010 Cisco Systems, Inc.  All rights reserved.
-.TH HWLOC "1" "Apr 16, 2010" "1.0rc1" "hwloc"
+.TH HWLOC "1" "#HWLOC_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 hwloc - General information about hwloc ("hardware locality").
 .

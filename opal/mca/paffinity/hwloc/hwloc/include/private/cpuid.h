@@ -31,14 +31,14 @@ static inline int hwloc_have_cpuid(void)
       "pushfl   \n\t"                                           \
       "pop %1   \n\t"                                           \
       "cmp %1,%2\n\t"   /* Compare with expected value */       \
-      "jnz L1   \n\t"   /* Unexpected, failure */               \
+      "jnz Lhwloc1\n\t"   /* Unexpected, failure */               \
 
       TRY_TOGGLE        /* Try to set/clear */
       TRY_TOGGLE        /* Try to clear/set */
 
       "mov $1,%0\n\t"   /* Passed the test! */
 
-      "L1:      \n\t"
+      "Lhwloc1: \n\t"
       "popfl    \n\t"   /* Restore flags */
 
       : "=r" (ret), "=&r" (tmp), "=&r" (tmp2));

@@ -99,7 +99,7 @@ int main(void)
         levels++;
         size += obj->attr->cache.size;
       }
-    printf("*** Logical processor 0 has %u caches totaling %luKB\n", 
+    printf("*** Logical processor 0 has %d caches totaling %luKB\n", 
            levels, size / 1024);
 
     /*****************************************************************
