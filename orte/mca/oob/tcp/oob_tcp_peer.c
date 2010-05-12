@@ -596,6 +596,8 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
             peer->peer_state);
     }
 
+    mca_oob_tcp_peer_shutdown(peer);
+
     /* inform the ERRMGR framework that we have lost a connection so
      * it can decide if this is important, what to do about it, etc.
      */
@@ -607,7 +609,7 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
          * tcp OOB
          */
         OPAL_THREAD_UNLOCK(&peer->peer_lock);
-        orte_errmgr.abort(1, NULL);        
+        orte_errmgr.abort(1, NULL);
     }
 }
 
