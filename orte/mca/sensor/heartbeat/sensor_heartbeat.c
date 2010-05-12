@@ -157,7 +157,7 @@ static void start(orte_jobid_t jobid)
 {
     uint64_t time;
     
-    if (jobid != ORTE_PROC_MY_NAME->jobid) {
+    if (jobid != ORTE_PROC_MY_NAME->jobid && ORTE_JOBID_WILDCARD != jobid) {
         /* heartbeats are only for daemons and HNPs */
         return;
     }
@@ -185,7 +185,7 @@ static void start(orte_jobid_t jobid)
 
 static void stop(orte_jobid_t jobid)
 {
-    if (jobid != ORTE_PROC_MY_NAME->jobid) {
+    if (jobid != ORTE_PROC_MY_NAME->jobid && ORTE_JOBID_WILDCARD != jobid) {
         /* heartbeats are only for daemons and HNPs */
         return;
     }
@@ -285,7 +285,7 @@ static void check_heartbeat(int fd, short dummy, void *arg)
                 name.vpid = v;
                 orte_errmgr.update_state(ORTE_PROC_MY_NAME->jobid, ORTE_JOB_STATE_HEARTBEAT_FAILED,
                                          &name, ORTE_PROC_STATE_HEARTBEAT_FAILED,
-                                         ORTE_ERROR_DEFAULT_EXIT_CODE);
+                                         ORTE_ERR_HEARTBEAT_LOST);
             }
         }
     }

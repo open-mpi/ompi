@@ -508,7 +508,18 @@ int orte_register_params(void)
         orte_enable_recovery = true;
     }
     
+    mca_base_param_reg_int_name("orte", "report_child_jobs_separately",
+                                "Return the exit status of the primary job only",
+                                false, false,
+                                (int)false, &value);
+    orte_report_child_jobs_separately = OPAL_INT_TO_BOOL(value);
     
+    mca_base_param_reg_int_name("orte", "child_time_to_exit",
+                                "Max time a spawned child job is allowed to run after the primary job has terminated (seconds)",
+                                false, false,
+                                INT_MAX, &value);
+    orte_child_time_to_exit.tv_sec = value;
+    orte_child_time_to_exit.tv_usec = 0;
     
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
     

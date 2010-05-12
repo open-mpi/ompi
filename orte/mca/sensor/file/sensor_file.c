@@ -140,7 +140,7 @@ static void start(orte_jobid_t jobid)
     file_tracker_t *ft;
 
     /* cannot monitor my own job */
-    if (jobid == ORTE_PROC_MY_NAME->jobid) {
+    if (jobid == ORTE_PROC_MY_NAME->jobid && ORTE_JOBID_WILDCARD != jobid) {
         return;
     }
     
@@ -150,95 +150,83 @@ static void start(orte_jobid_t jobid)
                          ORTE_JOBID_PRINT(jobid)));
     
     /* get the local jobdat for this job */
-    jobdat = NULL;
     for (item = opal_list_get_first(&orte_local_jobdata);
          item != opal_list_get_end(&orte_local_jobdata);
          item = opal_list_get_end(&orte_local_jobdata)) {
         jobdat = (orte_odls_job_t*)item;
-        if (jobid == jobdat->jobid) {
-            break;
-        }
-    }
-    if (NULL == jobdat) {
-        /* no local procs for this job */
-        OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
-                             "%s sensor:file no local procs for job %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(jobid)));
-        return;
-    }
-    
-    /* must be at least one app_context, so use the first */
-    if (NULL == (app = jobdat->apps[0])) {
-        /* got a problem */
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return;
-    }
-    
-    /* search the environ to get the filename */
-    if (ORTE_SUCCESS != (rc = mca_base_param_find_string(c, "filename", app->env, &filename))) {
-        /* was a default file given */
-        if (NULL == mca_sensor_file_component.file) {
-            /* can't do anything without a file */
+        if (jobid == jobdat->jobid || ORTE_JOBID_WILDCARD == jobid) {
+            /* must be at least one app_context, so use the first */
+            if (NULL == (app = jobdat->apps[0])) {
+                /* got a problem */
+                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                continue;
+            }
+            
+            /* search the environ to get the filename */
+            if (ORTE_SUCCESS != (rc = mca_base_param_find_string(c, "filename", app->env, &filename))) {
+                /* was a default file given */
+                if (NULL == mca_sensor_file_component.file) {
+                    /* can't do anything without a file */
+                    OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+                                         "%s sensor:file no file for job %s",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         ORTE_JOBID_PRINT(jobid)));
+                    continue;
+                }
+                filename = mca_sensor_file_component.file;
+            }
+            
+            /* create the tracking object */
+            ft = OBJ_NEW(file_tracker_t);
+            ft->jobid = jobid;
+            ft->file = strdup(filename);
+            
+            /* search the environ to see what we are checking */
+            tmp = 0;
+            if (ORTE_SUCCESS != (rc = mca_base_param_find_int(c, "check_size", app->env, &tmp))) {
+                /* was a default value given */
+                if (0 < mca_sensor_file_component.check_size) {
+                    ft->check_size = OPAL_INT_TO_BOOL(mca_sensor_file_component.check_size);
+                }
+            } else {
+                ft->check_size = OPAL_INT_TO_BOOL(tmp);
+            }
+            tmp = 0;
+            if (ORTE_SUCCESS != (rc = mca_base_param_find_int(c, "check_access", app->env, &tmp))) {
+                /* was a default value given */
+                if (0 < mca_sensor_file_component.check_access) {
+                    ft->check_access = OPAL_INT_TO_BOOL(mca_sensor_file_component.check_access);
+                }
+            } else {
+                ft->check_access = OPAL_INT_TO_BOOL(tmp);
+            }
+            tmp = 0;
+            if (ORTE_SUCCESS != (rc = mca_base_param_find_int(c, "check_mod", app->env, &tmp))) {
+                /* was a default value given */
+                if (0 < mca_sensor_file_component.check_mod) {
+                    ft->check_mod = OPAL_INT_TO_BOOL(mca_sensor_file_component.check_mod);
+                }
+            } else {
+                ft->check_mod = OPAL_INT_TO_BOOL(tmp);
+            }
+            tmp = 0;
+            if (ORTE_SUCCESS != (rc = mca_base_param_find_int(c, "limit", app->env, &tmp))) {
+                ft->limit = mca_sensor_file_component.limit;
+            } else {
+                ft->limit = tmp;
+            }
+            opal_list_append(&jobs, &ft->super);
             OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
-                                 "%s sensor:file no file for job %s",
+                                 "%s file %s monitored for %s%s%s with limit %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_JOBID_PRINT(jobid)));
-            return;
+                                 ft->file, ft->check_size ? "SIZE:" : " ",
+                                 ft->check_access ? "ACCESS TIME:" : " ",
+                                 ft->check_mod ? "MOD TIME" : " ", ft->limit));
         }
-        filename = mca_sensor_file_component.file;
     }
-    
-    /* create the tracking object */
-    ft = OBJ_NEW(file_tracker_t);
-    ft->jobid = jobid;
-    ft->file = strdup(filename);
-    
-    /* search the environ to see what we are checking */
-    tmp = 0;
-    if (ORTE_SUCCESS != (rc = mca_base_param_find_int(c, "check_size", app->env, &tmp))) {
-        /* was a default value given */
-        if (0 < mca_sensor_file_component.check_size) {
-            ft->check_size = OPAL_INT_TO_BOOL(mca_sensor_file_component.check_size);
-        }
-    } else {
-        ft->check_size = OPAL_INT_TO_BOOL(tmp);
-    }
-    tmp = 0;
-    if (ORTE_SUCCESS != (rc = mca_base_param_find_int(c, "check_access", app->env, &tmp))) {
-        /* was a default value given */
-        if (0 < mca_sensor_file_component.check_access) {
-            ft->check_access = OPAL_INT_TO_BOOL(mca_sensor_file_component.check_access);
-        }
-    } else {
-        ft->check_access = OPAL_INT_TO_BOOL(tmp);
-    }
-    tmp = 0;
-    if (ORTE_SUCCESS != (rc = mca_base_param_find_int(c, "check_mod", app->env, &tmp))) {
-        /* was a default value given */
-        if (0 < mca_sensor_file_component.check_mod) {
-            ft->check_mod = OPAL_INT_TO_BOOL(mca_sensor_file_component.check_mod);
-        }
-    } else {
-        ft->check_mod = OPAL_INT_TO_BOOL(tmp);
-    }
-    tmp = 0;
-    if (ORTE_SUCCESS != (rc = mca_base_param_find_int(c, "limit", app->env, &tmp))) {
-        ft->limit = mca_sensor_file_component.limit;
-    } else {
-        ft->limit = tmp;
-    }
-    opal_list_append(&jobs, &ft->super);
-    
-    OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
-                         "%s file %s monitored for %s%s%s with limit %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ft->file, ft->check_size ? "SIZE:" : " ",
-                         ft->check_access ? "ACCESS TIME:" : " ",
-                         ft->check_mod ? "MOD TIME" : " ", ft->limit));
     
     /* start sampling */
-    if (NULL == sample_ev) {
+    if (NULL == sample_ev && !opal_list_is_empty(&jobs)) {
         /* startup a timer to wake us up periodically
          * for a data sample
          */
@@ -258,7 +246,7 @@ static void stop(orte_jobid_t jobid)
     file_tracker_t *ft;
     
     /* cannot monitor my own job */
-    if (jobid == ORTE_PROC_MY_NAME->jobid) {
+    if (jobid == ORTE_PROC_MY_NAME->jobid && ORTE_JOBID_WILDCARD != jobid) {
         return;
     }
     
@@ -266,10 +254,9 @@ static void stop(orte_jobid_t jobid)
          item != opal_list_get_end(&jobs);
          item = opal_list_get_next(item)) {
         ft = (file_tracker_t*)item;
-        if (jobid == ft->jobid) {
+        if (jobid == ft->jobid || ORTE_JOBID_WILDCARD == jobid) {
             opal_list_remove_item(&jobs, item);
             OBJ_RELEASE(item);
-            break;
         }
     }
     /* if no jobs remain, stop the sampling */
@@ -355,7 +342,7 @@ static void sample(int fd, short event, void *arg)
                            ft->file, ft->file_size, ctime(&ft->last_access), ctime(&ft->last_mod));
             orte_errmgr.update_state(ft->jobid, ORTE_JOB_STATE_SENSOR_BOUND_EXCEEDED,
                                      NULL, ORTE_PROC_STATE_UNDEF,
-                                     ORTE_ERROR_DEFAULT_EXIT_CODE);
+                                     ORTE_ERR_PROC_STALLED);
         }
     }
         

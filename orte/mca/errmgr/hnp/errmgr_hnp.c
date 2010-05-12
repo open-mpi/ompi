@@ -36,6 +36,8 @@
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/sensor/sensor.h"
+#include "orte/mca/routed/routed.h"
+
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/errmgr/base/errmgr_private.h"
@@ -44,7 +46,8 @@
 /* Local functions */
 static void hnp_abort(orte_jobid_t job, orte_exit_code_t exit_code);
 static void failed_start(orte_job_t *jdata);
-static void update_local_procs_in_job(orte_job_t *jdata, orte_job_state_t jobstate, orte_proc_state_t state);
+static void update_local_procs_in_job(orte_job_t *jdata, orte_job_state_t jobstate,
+                                      orte_proc_state_t state, orte_exit_code_t exit_code);
 static void update_proc(orte_job_t *jdata, orte_process_name_t *proc,
                         orte_proc_state_t state,
                         orte_exit_code_t exit_code);
@@ -207,7 +210,7 @@ static int update_state(orte_jobid_t job,
                 break;
             case ORTE_JOB_STATE_RUNNING:
                 /* update all procs in job */
-                update_local_procs_in_job(jdata, jobstate, ORTE_PROC_STATE_RUNNING);
+                update_local_procs_in_job(jdata, jobstate, ORTE_PROC_STATE_RUNNING, 0);
                 break;
             case ORTE_JOB_STATE_NEVER_LAUNCHED:
                 orte_never_launched = true;
@@ -223,7 +226,9 @@ static int update_state(orte_jobid_t job,
                 break;
             case ORTE_JOB_STATE_SENSOR_BOUND_EXCEEDED:
                 /* update all procs in job */
-                update_local_procs_in_job(jdata, jobstate, ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED);
+                update_local_procs_in_job(jdata, jobstate,
+                                          ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED,
+                                          exit_code);
                 /* order all local procs for this job to be killed */
                 killprocs(jdata->jobid, ORTE_VPID_WILDCARD);
                 check_job_complete(jdata);  /* set the local proc states */
@@ -236,6 +241,18 @@ static int update_state(orte_jobid_t job,
                 }
                 break;
             case ORTE_JOB_STATE_COMM_FAILED:
+                /* order all local procs for this job to be killed */
+                killprocs(jdata->jobid, ORTE_VPID_WILDCARD);
+                check_job_complete(jdata);  /* set the local proc states */
+                /* the job object for this job will have been NULL'd
+                 * in the array if the job was solely local. If it isn't
+                 * NULL, then we need to tell everyone else to die
+                 */
+                if (NULL != (jdata = orte_get_job_data_object(job))) {
+                    hnp_abort(jdata->jobid, exit_code);
+                }
+                break;
+            case ORTE_JOB_STATE_HEARTBEAT_FAILED:
                 /* order all local procs for this job to be killed */
                 killprocs(jdata->jobid, ORTE_VPID_WILDCARD);
                 check_job_complete(jdata);  /* set the local proc states */
@@ -340,8 +357,39 @@ static int update_state(orte_jobid_t job,
             
         case ORTE_PROC_STATE_COMM_FAILED:
             /* is this to a daemon? */
-            /* relocate its processes */
-            /* attempt to restart? */
+            if (ORTE_PROC_MY_NAME->jobid == proc->jobid) {
+                if (orte_enable_recovery) {
+                    /* relocate its processes */
+                    if (ORTE_SUCCESS != (rc = hnp_relocate(jdata, proc))) {
+                        /* kill all local procs */
+                        killprocs(ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD);
+                        /* kill all jobs */
+                        hnp_abort(ORTE_JOBID_WILDCARD, exit_code);
+                    }
+                } else {
+                    update_proc(jdata, proc, state, ORTE_ERR_COMM_FAILURE);
+                    /* kill all local procs */
+                    killprocs(ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD);
+                    /* kill all jobs */
+                    hnp_abort(ORTE_JOBID_WILDCARD, exit_code);
+                }
+            } else {
+                /* delete the route */
+                orte_routed.delete_route(proc);
+            }
+            break;
+
+        case ORTE_PROC_STATE_HEARTBEAT_FAILED:
+            /* heartbeats are only from daemons */
+            if (orte_enable_recovery) {
+                /* relocate its processes */
+            } else {
+                /* kill all local procs */
+                killprocs(ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD);
+                /* kill all jobs */
+                hnp_abort(ORTE_JOBID_WILDCARD, exit_code);
+                return ORTE_ERR_UNRECOVERABLE;
+            }
             break;
 
         default:
@@ -459,7 +507,8 @@ static void failed_start(orte_job_t *jdata)
                          ORTE_JOBID_PRINT(jdata->jobid)));
 }
 
-static void update_local_procs_in_job(orte_job_t *jdata, orte_job_state_t jobstate, orte_proc_state_t state)
+static void update_local_procs_in_job(orte_job_t *jdata, orte_job_state_t jobstate,
+                                      orte_proc_state_t state, orte_exit_code_t exit_code)
 {
     opal_list_item_t *item, *next;
     orte_odls_job_t *jobdat;
@@ -493,6 +542,9 @@ static void update_local_procs_in_job(orte_job_t *jdata, orte_job_state_t jobsta
             child->state = state;
             proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, child->name->vpid);
             proc->state = state;
+            if (proc->exit_code < exit_code) {
+                proc->exit_code = exit_code;
+            }
             if (ORTE_PROC_STATE_UNTERMINATED < state) {
                 opal_list_remove_item(&orte_local_children, &child->super);
                 OBJ_RELEASE(child);
@@ -599,14 +651,14 @@ static void check_job_complete(orte_job_t *jdata)
     orte_job_map_t *map;
     orte_std_cntr_t index;
     bool one_still_alive;
-    orte_vpid_t non_zero=0;
+    orte_vpid_t non_zero=0, lowest=0;
     
 #if 0
     /* Check if FileM is active. If so then keep processing. */
     OPAL_ACQUIRE_THREAD(&orte_filem_base_lock, &orte_filem_base_cond, &orte_filem_base_is_active);
 #endif
     
-    for (i=0; i < jdata->procs->size; i++) {
+    for (i=0; i < jdata->procs->size && !jdata->abort; i++) {
         if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
             /* the proc array may no longer be left justified, so
              * we need to check everything
@@ -616,123 +668,161 @@ static void check_job_complete(orte_job_t *jdata)
         
         if (0 != proc->exit_code) {
             non_zero++;
+            if (0 == lowest) {
+                lowest = proc->exit_code;
+            }
         }
         
-        /*
-         * Determine how the process state affects the job state
-         */
-        if (ORTE_PROC_STATE_FAILED_TO_START == proc->state) {
-            OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
-                                 "%s errmgr_hnp:check_job_completed proc %s failed to start",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&proc->name)));
-            if (!jdata->abort) {
-                jdata->state = ORTE_JOB_STATE_FAILED_TO_START;
-               /* point to the lowest rank to cause the problem */
-                jdata->aborted_proc = proc;
-                /* retain the object so it doesn't get free'd */
-                OBJ_RETAIN(proc);
-                jdata->abort = true;
-                ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
-                break;
-            }
-        } else if (ORTE_PROC_STATE_ABORTED == proc->state) {
-            OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
-                                 "%s errmgr:hnp:check_job_completed proc %s aborted",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&proc->name)));
-            if (!jdata->abort) {
-                jdata->state = ORTE_JOB_STATE_ABORTED;
-                /* point to the lowest rank to cause the problem */
-                jdata->aborted_proc = proc;
-                /* retain the object so it doesn't get free'd */
-                OBJ_RETAIN(proc);
-                jdata->abort = true;
-                ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
-                break;
-            }
-        } else if (ORTE_PROC_STATE_ABORTED_BY_SIG == proc->state) {
-            OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
-                                 "%s errmgr:hnp:check_job_completed proc %s aborted by signal",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&proc->name)));
-            if (!jdata->abort) {
-                jdata->state = ORTE_JOB_STATE_ABORTED_BY_SIG;
-                /* point to the lowest rank to cause the problem */
-                jdata->aborted_proc = proc;
-                /* retain the object so it doesn't get free'd */
-                OBJ_RETAIN(proc);
-                jdata->abort = true;
-                ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
-                break;
-            }
-        } else if (ORTE_PROC_STATE_TERM_WO_SYNC == proc->state) {
-            OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
-                                 "%s errmgr:hnp:check_job_completed proc %s terminated without sync",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&proc->name)));
-            if (!jdata->abort) {
-                jdata->state = ORTE_JOB_STATE_ABORTED_WO_SYNC;
-                /* point to the lowest rank to cause the problem */
-                jdata->aborted_proc = proc;
-                /* retain the object so it doesn't get free'd */
-                OBJ_RETAIN(proc);
-                jdata->abort = true;
-                ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
-                /* now treat a special case - if the proc exit'd without a required
-                 * sync, it may have done so with a zero exit code. We want to ensure
-                 * that the user realizes there was an error, so in this -one- case,
-                 * we overwrite the process' exit code with the default error code
+        switch (proc->state) {
+            case ORTE_PROC_STATE_KILLED_BY_CMD:
+                OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+                                     "%s errmgr:hnp:check_job_completed proc %s killed by cmd",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&proc->name)));
+                /* we ordered this proc to die, so it isn't an abnormal termination
+                 * and we don't flag it as such - just check the remaining jobs to
+                 * see if anyone is still alive
                  */
-                ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-                break;
-            }
-        } else if (ORTE_PROC_STATE_KILLED_BY_CMD == proc->state) {
-            OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
-                                 "%s errmgr:hnp:check_job_completed proc %s killed by cmd",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&proc->name)));
-            /* we ordered this proc to die, so it isn't an abnormal termination
-             * and we don't flag it as such - just check the remaining jobs to
-             * see if anyone is still alive
-             */
-            if (jdata->num_terminated >= jdata->num_procs) {
-                /* this job has terminated - now we need to check to see if ALL
-                 * the other jobs have also completed and wakeup if that is true
-                 */
-                if (!jdata->abort) {
-                    jdata->state = ORTE_JOB_STATE_KILLED_BY_CMD;
+                if (jdata->num_terminated >= jdata->num_procs) {
+                    /* this job has terminated - now we need to check to see if ALL
+                     * the other jobs have also completed and wakeup if that is true
+                     */
+                    if (!jdata->abort) {
+                        jdata->state = ORTE_JOB_STATE_KILLED_BY_CMD;
+                    }
                 }
-            }
-            goto CHECK_ALIVE;
-        } else if (ORTE_PROC_STATE_CALLED_ABORT == proc->state) {
-            if (!jdata->abort) {
-                jdata->state = ORTE_JOB_STATE_CALLED_ABORT;
-                /* point to the first proc to cause the problem */
-                jdata->aborted_proc = proc;
-                /* retain the object so it doesn't get free'd */
-                OBJ_RETAIN(proc);
-                jdata->abort = true;
-                ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
+                goto CHECK_ALIVE;
                 break;
-           }
-        } else if (ORTE_PROC_STATE_UNTERMINATED < proc->state &&
-                   jdata->controls & ORTE_JOB_CONTROL_CONTINUOUS_OP) {
-            OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
-                                 "%s errmgr:hnp:check_job_completed proc %s terminated and continuous",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&proc->name)));
-            if (!jdata->abort) {
-                proc->state = ORTE_PROC_STATE_ABORTED;
-                jdata->state = ORTE_JOB_STATE_ABORTED;
-                /* point to the lowest rank to cause the problem */
-                jdata->aborted_proc = proc;
-                /* retain the object so it doesn't get free'd */
-                OBJ_RETAIN(proc);
-                jdata->abort = true;
-                ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
+            case ORTE_PROC_STATE_ABORTED:
+                OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+                                     "%s errmgr:hnp:check_job_completed proc %s aborted",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&proc->name)));
+                if (!jdata->abort) {
+                    jdata->state = ORTE_JOB_STATE_ABORTED;
+                    /* point to the lowest rank to cause the problem */
+                    jdata->aborted_proc = proc;
+                    /* retain the object so it doesn't get free'd */
+                    OBJ_RETAIN(proc);
+                    jdata->abort = true;
+                    ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
+                }
                 break;
-            }
+            case ORTE_PROC_STATE_FAILED_TO_START:
+                OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+                                     "%s errmgr_hnp:check_job_completed proc %s failed to start",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&proc->name)));
+                if (!jdata->abort) {
+                    jdata->state = ORTE_JOB_STATE_FAILED_TO_START;
+                    /* point to the lowest rank to cause the problem */
+                    jdata->aborted_proc = proc;
+                    /* retain the object so it doesn't get free'd */
+                    OBJ_RETAIN(proc);
+                    jdata->abort = true;
+                    ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
+                }
+                break;
+            case ORTE_PROC_STATE_ABORTED_BY_SIG:
+                OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+                                     "%s errmgr:hnp:check_job_completed proc %s aborted by signal",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&proc->name)));
+                if (!jdata->abort) {
+                    jdata->state = ORTE_JOB_STATE_ABORTED_BY_SIG;
+                    /* point to the lowest rank to cause the problem */
+                    jdata->aborted_proc = proc;
+                    /* retain the object so it doesn't get free'd */
+                    OBJ_RETAIN(proc);
+                    jdata->abort = true;
+                    ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
+                }
+                break;
+            case ORTE_PROC_STATE_TERM_WO_SYNC:
+                OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+                                     "%s errmgr:hnp:check_job_completed proc %s terminated without sync",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&proc->name)));
+                if (!jdata->abort) {
+                    jdata->state = ORTE_JOB_STATE_ABORTED_WO_SYNC;
+                    /* point to the lowest rank to cause the problem */
+                    jdata->aborted_proc = proc;
+                    /* retain the object so it doesn't get free'd */
+                    OBJ_RETAIN(proc);
+                    jdata->abort = true;
+                    ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
+                    /* now treat a special case - if the proc exit'd without a required
+                     * sync, it may have done so with a zero exit code. We want to ensure
+                     * that the user realizes there was an error, so in this -one- case,
+                     * we overwrite the process' exit code with the default error code
+                     */
+                    ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                }
+                break;
+            case ORTE_PROC_STATE_COMM_FAILED:
+                if (!jdata->abort) {
+                    jdata->state = ORTE_JOB_STATE_COMM_FAILED;
+                    /* point to the lowest rank to cause the problem */
+                    jdata->aborted_proc = proc;
+                    /* retain the object so it doesn't get free'd */
+                    OBJ_RETAIN(proc);
+                    jdata->abort = true;
+                    ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
+                }
+                break;
+            case ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED:
+                if (!jdata->abort) {
+                    jdata->state = ORTE_JOB_STATE_SENSOR_BOUND_EXCEEDED;
+                    /* point to the lowest rank to cause the problem */
+                    jdata->aborted_proc = proc;
+                    /* retain the object so it doesn't get free'd */
+                    OBJ_RETAIN(proc);
+                    jdata->abort = true;
+                    ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
+                }
+                break;
+            case ORTE_PROC_STATE_CALLED_ABORT:
+                if (!jdata->abort) {
+                    jdata->state = ORTE_JOB_STATE_CALLED_ABORT;
+                    /* point to the first proc to cause the problem */
+                    jdata->aborted_proc = proc;
+                    /* retain the object so it doesn't get free'd */
+                    OBJ_RETAIN(proc);
+                    jdata->abort = true;
+                    ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
+                }
+                break;
+            case ORTE_PROC_STATE_HEARTBEAT_FAILED:
+                if (!jdata->abort) {
+                    jdata->state = ORTE_JOB_STATE_HEARTBEAT_FAILED;
+                    /* point to the lowest rank to cause the problem */
+                    jdata->aborted_proc = proc;
+                    /* retain the object so it doesn't get free'd */
+                    OBJ_RETAIN(proc);
+                    jdata->abort = true;
+                    ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
+                }
+                break;
+
+            default:
+                if (ORTE_PROC_STATE_UNTERMINATED < proc->state &&
+                    jdata->controls & ORTE_JOB_CONTROL_CONTINUOUS_OP) {
+                    OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+                                         "%s errmgr:hnp:check_job_completed proc %s terminated and continuous",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         ORTE_NAME_PRINT(&proc->name)));
+                    if (!jdata->abort) {
+                        proc->state = ORTE_PROC_STATE_ABORTED;
+                        jdata->state = ORTE_JOB_STATE_ABORTED;
+                        /* point to the lowest rank to cause the problem */
+                        jdata->aborted_proc = proc;
+                        /* retain the object so it doesn't get free'd */
+                        OBJ_RETAIN(proc);
+                        jdata->abort = true;
+                        ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
+                    }
+                }
+                break;
         }
     }
 
@@ -750,13 +840,20 @@ static void check_job_complete(orte_job_t *jdata)
         orte_sensor.stop(jdata->jobid);
 
         if (0 < non_zero) {
+            if (!orte_report_child_jobs_separately || 1 == ORTE_LOCAL_JOBID(jdata->jobid)) {
+                /* update the exit code */
+                ORTE_UPDATE_EXIT_STATUS(lowest);
+            }
+
             /* warn user */
             opal_output(orte_clean_output,
-                        "-----------------------------------------------------\n\n"
-                        "While job %s terminated normally, %s processes returned\n"
-                        "non-zero exit codes. Further examination may be required.\n\n"
-                        "-----------------------------------------------------",
-                        ORTE_JOBID_PRINT(jdata->jobid), ORTE_VPID_PRINT(non_zero));
+                        "-------------------------------------------------------\n"
+                        "While %s job %s terminated normally, %s processes returned\n"
+                        "non-zero exit codes. Further examination may be required.\n"
+                        "-------------------------------------------------------",
+                        (1 == ORTE_LOCAL_JOBID(jdata->jobid)) ? "the primary" : "child",
+                        (1 == ORTE_LOCAL_JOBID(jdata->jobid)) ? "" : ORTE_LOCAL_JOBID_PRINT(jdata->jobid),
+                        ORTE_VPID_PRINT(non_zero));
         }
         OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
                              "%s errmgr:hnp:check_job_completed declared job %s normally terminated - checking all jobs",
@@ -921,6 +1018,13 @@ static void killprocs(orte_jobid_t job, orte_vpid_t vpid)
         orte_sensor.stop(job);
     }
     
+    if (ORTE_JOBID_WILDCARD == job && ORTE_VPID_WILDCARD == vpid) {
+        if (ORTE_SUCCESS != (rc = orte_odls.kill_local_procs(NULL))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        return;
+    }
+    
     OBJ_CONSTRUCT(&cmd, opal_pointer_array_t);
     OBJ_CONSTRUCT(&proc, orte_proc_t);
     proc.name.jobid = job;
@@ -935,10 +1039,11 @@ static void killprocs(orte_jobid_t job, orte_vpid_t vpid)
 
 static int hnp_relocate(orte_job_t *jdata, orte_process_name_t *proc)
 {
-    orte_proc_t *pdata;
-    orte_node_t *node, *newnode;
+    orte_proc_t *pdata, *pdt;
+    orte_node_t *node;
     orte_app_context_t *app;
-    int rc;
+    orte_job_map_t *map;
+    int rc, i, n;
     
     /* get the proc_t object for this process */
     pdata = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, proc->vpid);
@@ -952,8 +1057,44 @@ static int hnp_relocate(orte_job_t *jdata, orte_process_name_t *proc)
     if (jdata->max_global_restarts < pdata->relocates) {
         return ORTE_ERR_RELOCATE_LIMIT_EXCEEDED;
     }
-    /* proc just died - save the node where this proc was located */
-    node = pdata->node;
+    
+    /* if it is a daemon that died, we need to flag all of its procs
+     * to be relocated
+     */
+    if (ORTE_PROC_MY_NAME->jobid == proc->jobid) {
+        map = jdata->map;
+        for (n=0; n < map->nodes->size; n++) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, n))) {
+                continue;
+            }
+            if (node->daemon->name.vpid != proc->vpid) {
+                continue;
+            }
+            /* found the node - now flag the procs */
+            for (i=0; i < node->procs->size; i++) {
+                if (NULL == (pdt = (orte_proc_t*)opal_pointer_array_get_item(node->procs, i))) {
+                    continue;
+                }
+                if (ORTE_PROC_STATE_TERMINATED < pdt->state) {
+                    continue;
+                }
+                /* if the proc hasn't already terminated, then mark
+                 * it as aborted so it will be restarted
+                 */
+                pdt->state = ORTE_PROC_STATE_ABORTED;
+            }
+            /* mark the node as "down" */
+            node->state = ORTE_NODE_STATE_DOWN;
+            /* remove it from the map */
+            opal_pointer_array_set_item(map->nodes, n, NULL);
+            /* do a release to maintain accounting - won't actually
+             * remove the node object from memory
+             */
+            OBJ_RELEASE(node);
+            break;
+        }
+    }
+    
     /* reset the job params for restart */
     orte_plm_base_reset_job(jdata);
     
@@ -969,13 +1110,6 @@ static int hnp_relocate(orte_job_t *jdata, orte_process_name_t *proc)
         opal_output(0, "FAILED TO RESTART APP %s on error %s", app->app, ORTE_ERROR_NAME(rc));
         return rc;
     }
-    /* get the new node */
-    newnode = pdata->node;
-    /* report what we did */
-    OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base.output,
-                         "%s Proc %s:%s aborted on node %s and was restarted on node %s\n\n",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         app->app, ORTE_NAME_PRINT(proc), node->name, newnode->name));
 
     return ORTE_SUCCESS;
 }

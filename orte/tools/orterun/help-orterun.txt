@@ -562,3 +562,34 @@ A request was made to bind processes, but process affinity is
 not supported on this node:
 
   Local host: %s
+#
+[orterun:proc-comm-failed]
+A critical communication path was lost to:
+
+  Process name: %s
+  Node:         %s
+#
+[orterun:proc-mem-exceeded]
+A process exceeded memory limits:
+
+  Process name: %s
+  Node:         %s
+#
+[orterun:proc-stalled]
+One or more processes appear to have stalled - a monitored file
+failed to show the required activity.
+#
+[orterun:proc-sensor-exceeded]
+One or more processes have exceeded a specified sensor limit, but
+no further info is available.
+#
+[orterun:proc-called-abort]
+%s detected that one or more processes called %s_abort, thus causing
+the job to be terminated.
+#
+[orterun:proc-heartbeat-failed]
+%s failed to receive scheduled heartbeat communications from a remote process:
+
+  Process name: %s
+  Node:         %s
+
