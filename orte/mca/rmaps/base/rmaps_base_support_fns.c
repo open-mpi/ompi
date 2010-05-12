@@ -66,6 +66,10 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     /* add everything in the node pool */
     for (i=1; i < orte_node_pool->size; i++) {
         if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+            /* ignore nodes that are "down" */
+            if (ORTE_NODE_STATE_DOWN == node->state) {
+                continue;
+            }
             /* retain a copy for our use in case the item gets
              * destructed along the way
              */
