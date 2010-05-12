@@ -32,6 +32,8 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/plm/plm_types.h"
+#include "orte/mca/routed/routed.h"
+#include "orte/mca/sensor/sensor.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/errmgr/base/base.h"
@@ -192,6 +194,17 @@ static int update_state(orte_jobid_t job,
                 update_local_children(jobdat, jobstate, ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED);
                 /* order all local procs for this job to be killed */
                 killprocs(jobdat->jobid, ORTE_VPID_WILDCARD);
+            case ORTE_JOB_STATE_COMM_FAILED:
+                /* kill all local procs */
+                killprocs(ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD);
+                /* tell the caller we can't recover */
+                return ORTE_ERR_UNRECOVERABLE;
+                break;
+            case ORTE_JOB_STATE_HEARTBEAT_FAILED:
+                /* let the HNP handle this */
+                return ORTE_SUCCESS;
+                break;
+
             default:
                 break;
         }
@@ -216,6 +229,23 @@ static int update_state(orte_jobid_t job,
         return rc;
     }
 
+    /* if this was a failed comm, then see if it was to our
+     * lifeline
+     */
+    if (ORTE_PROC_STATE_COMM_FAILED == state) {
+        /* delete the route */
+        orte_routed.delete_route(proc);
+        /* see is this was a lifeline */
+        if (ORTE_SUCCESS != orte_routed.route_lost(proc)) {
+            /* kill our children */
+            killprocs(ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD);
+            /* tell the caller we can't recover */
+            return ORTE_ERR_UNRECOVERABLE;
+        }
+        /* if not, then indicate we can continue */
+        return ORTE_SUCCESS;
+    }
+    
     /* lookup the local jobdat for this job */
     jobdat = NULL;
     for (item = opal_list_get_first(&orte_local_jobdata);
@@ -776,6 +806,18 @@ static void killprocs(orte_jobid_t job, orte_vpid_t vpid)
     opal_pointer_array_t cmd;
     orte_proc_t proc;
     int rc;
+    
+    /* stop local sensors for this job */
+    if (ORTE_VPID_WILDCARD == vpid) {
+        orte_sensor.stop(job);
+    }
+    
+    if (ORTE_JOBID_WILDCARD == job && ORTE_VPID_WILDCARD == vpid) {
+        if (ORTE_SUCCESS != (rc = orte_odls.kill_local_procs(NULL))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        return;
+    }
     
     OBJ_CONSTRUCT(&cmd, opal_pointer_array_t);
     OBJ_CONSTRUCT(&proc, orte_proc_t);

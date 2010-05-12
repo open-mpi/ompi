@@ -110,7 +110,7 @@ static void start(orte_jobid_t jobid)
     int rc, tmp;
     
     /* cannot monitor my own job */
-    if (jobid == ORTE_PROC_MY_NAME->jobid) {
+    if (jobid == ORTE_PROC_MY_NAME->jobid && ORTE_JOBID_WILDCARD != jobid) {
         return;
     }
     
@@ -120,50 +120,43 @@ static void start(orte_jobid_t jobid)
                          ORTE_JOBID_PRINT(jobid)));
 
     /* get the local jobdat for this job */
-    jobdat = NULL;
     for (item = opal_list_get_first(&orte_local_jobdata);
          item != opal_list_get_end(&orte_local_jobdata);
          item = opal_list_get_end(&orte_local_jobdata)) {
         jobdat = (orte_odls_job_t*)item;
-        if (jobid == jobdat->jobid) {
-            break;
+        if (jobid == jobdat->jobid || ORTE_JOBID_WILDCARD == jobid) {
+            /* must be at least one app_context, so use the first */
+            if (NULL == (app = jobdat->apps[0])) {
+                /* got a problem */
+                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                continue;
+            }
+            
+            /* search the environ to get memory limit */
+            tmp = 0;
+            if (ORTE_SUCCESS != (rc = mca_base_param_find_int(c, "memory_limit", app->env, &tmp))) {
+                /* was a default value given */
+                if (0 < mca_sensor_memusage_component.memory_limit) {
+                    tmp = mca_sensor_memusage_component.memory_limit;
+                }
+            }
+            if (tmp <= 0) {
+                /* we don't want to monitor this job */
+                OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+                                     "%s memory monitoring for job %s is not requested",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_JOBID_PRINT(jobid)));
+                continue;
+            }
+            
+            job = OBJ_NEW(memusage_tracker_t);
+            job->jobid = jobid;
+            job->memory_limit = tmp;
+            opal_list_append(&jobs, &job->super);
         }
     }
-    if (NULL == jobdat) {
-        /* no local procs for this job */
-        return;
-    }
     
-    /* must be at least one app_context, so use the first */
-    if (NULL == (app = jobdat->apps[0])) {
-        /* got a problem */
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return;
-    }
-
-    /* search the environ to get memory limit */
-    tmp = 0;
-    if (ORTE_SUCCESS != (rc = mca_base_param_find_int(c, "memory_limit", app->env, &tmp))) {
-        /* was a default value given */
-        if (0 < mca_sensor_memusage_component.memory_limit) {
-            tmp = mca_sensor_memusage_component.memory_limit;
-        }
-    }
-    if (tmp <= 0) {
-        /* we don't want to monitor this job */
-        OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
-                             "%s memory monitoring for job %s is not requested",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(jobid)));
-        return;
-    }
-
-    job = OBJ_NEW(memusage_tracker_t);
-    job->jobid = jobid;
-    job->memory_limit = tmp;
-    opal_list_append(&jobs, &job->super);
-    
-    if (NULL == sample_ev) {
+    if (NULL == sample_ev && !opal_list_is_empty(&jobs)) {
         /* startup a timer to wake us up periodically
          * for a data sample
          */
@@ -183,7 +176,7 @@ static void stop(orte_jobid_t jobid)
     memusage_tracker_t *job;
 
     /* cannot monitor my own job */
-    if (jobid == ORTE_PROC_MY_NAME->jobid) {
+    if (jobid == ORTE_PROC_MY_NAME->jobid && ORTE_JOBID_WILDCARD != jobid) {
         return;
     }
     
@@ -191,10 +184,9 @@ static void stop(orte_jobid_t jobid)
          item != opal_list_get_end(&jobs);
          item = opal_list_get_next(item)) {
         job = (memusage_tracker_t*)item;
-        if (jobid == job->jobid) {
+        if (jobid == job->jobid || ORTE_JOBID_WILDCARD == jobid) {
             opal_list_remove_item(&jobs, item);
             OBJ_RELEASE(item);
-            break;
         }
     }
     /* if no jobs remain, stop the sampling */
@@ -264,7 +256,7 @@ static void sample(int fd, short event, void *arg)
                            (unsigned long)stats.vsize/1000000, (unsigned long)job->memory_limit);
             orte_errmgr.update_state(child->name->jobid, ORTE_JOB_STATE_SENSOR_BOUND_EXCEEDED,
                                      child->name, ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED,
-                                     ORTE_ERROR_DEFAULT_EXIT_CODE);
+                                     ORTE_ERR_MEM_LIMIT_EXCEEDED);
         }
         OBJ_DESTRUCT(&stats);
     }

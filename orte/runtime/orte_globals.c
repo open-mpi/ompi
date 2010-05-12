@@ -181,6 +181,10 @@ int32_t orte_max_local_restarts;
 /* comm fn for updating state */
 orte_default_comm_fn_t orte_comm;
 
+/* exit status reporting */
+bool orte_report_child_jobs_separately;
+struct timeval orte_child_time_to_exit;
+
 #endif /* !ORTE_DISABLE_FULL_RTE */
 
 int orte_debug_output = -1;

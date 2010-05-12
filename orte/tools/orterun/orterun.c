@@ -152,6 +152,10 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       &orterun_globals.report_uri, OPAL_CMD_LINE_TYPE_STRING,
       "Printout URI on stdout [-], stderr [+], or a file [anything else]" },
     
+    /* exit status reporting */
+    { "orte", "report", "child_jobs_separately", '\0', "report-child-jobs-separately", "report-child-jobs-separately", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Return the exit status of the primary job only" },
     
     /* hetero apps */
     { "orte", "hetero", "apps", '\0', NULL, "hetero", 0,
@@ -979,7 +983,6 @@ static void dump_aborted_procs(void)
     orte_app_context_t *app, *approc;
     orte_job_t *job;
     orte_node_t *node;
-    bool found=false;
     
     /* find the job that caused the problem - be sure to start the loop
      * at 1 as the daemons are in 0 and will clearly be "running", so no
@@ -1000,8 +1003,6 @@ static void dump_aborted_procs(void)
             proc = job->aborted_proc;
             /* always must be at least one app */
             app = (orte_app_context_t*)opal_pointer_array_get_item(job->apps, 0);
-            /* flag that we found at least one job that failed */
-            found = true;
             /* cycle through and count the number that were killed or aborted */
             for (i=0; i < job->procs->size; i++) {
                 if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(job->procs, i))) {
@@ -1184,15 +1185,34 @@ static void dump_aborted_procs(void)
                                    orterun_basename, (unsigned long)proc->name.vpid, (unsigned long)proc->pid,
                                    node->name, orterun_basename, orterun_basename);
                 }
+            } else if (ORTE_JOB_STATE_COMM_FAILED == job->state) {
+                orte_show_help("help-orterun.txt", "orterun:proc-comm-failed", true,
+                               ORTE_NAME_PRINT(&proc->name), node->name);
+            } else if (ORTE_JOB_STATE_SENSOR_BOUND_EXCEEDED == job->state) {
+                switch (proc->exit_code) {
+                    case ORTE_ERR_MEM_LIMIT_EXCEEDED:
+                        orte_show_help("help-orterun.txt", "orterun:proc-mem-exceeded", true,
+                                       ORTE_NAME_PRINT(&proc->name), node->name);
+                        break;
+                    case ORTE_ERR_PROC_STALLED:
+                        orte_show_help("help-orterun.txt", "orterun:proc-stalled", true);
+                        break;
+
+                    default:
+                        orte_show_help("help-orterun.txt", "orterun:proc-sensor-exceeded", true);
+                        break;
+                }
+            } else if (ORTE_JOB_STATE_CALLED_ABORT == job->state) {
+                orte_show_help("help-orterun.txt", "orterun:proc-called-abort", true,
+                               orterun_basename,
+                               (0 == strncmp("orte", orterun_basename, 4)) ? "orte" : "MPI");
+            } else if (ORTE_JOB_STATE_HEARTBEAT_FAILED == job->state) {
+                orte_show_help("help-orterun.txt", "orterun:proc-heartbeat-failed", true,
+                               orterun_basename, ORTE_NAME_PRINT(&proc->name), node->name);
             }
             return;
         }
     }
-    
-    /* if we got here, then we couldn't find the job that aborted -
-     * report that fact and give up
-     */
-    orte_show_help("help-orterun.txt", "orterun:proc-aborted-unknown", true, orterun_basename);
 }
 
 static void abort_exit_callback(int fd, short ign, void *arg)

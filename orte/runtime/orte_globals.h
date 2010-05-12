@@ -688,6 +688,9 @@ ORTE_DECLSPEC int orte_global_comm(orte_process_name_t *recipient,
                                    opal_buffer_t *buf, orte_rml_tag_t tag,
                                    orte_default_cbfunc_t cbfunc);
 
+/* exit status reporting */
+ORTE_DECLSPEC extern bool orte_report_child_jobs_separately;
+ORTE_DECLSPEC extern struct timeval orte_child_time_to_exit;
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 

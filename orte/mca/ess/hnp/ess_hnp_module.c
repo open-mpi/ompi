@@ -694,19 +694,6 @@ static int rte_finalize(void)
     return ORTE_SUCCESS;    
 }
 
-/*
- * For application procs, we do NOT call the regular
- * C-library "abort" function, even though that would have
- * alerted us to the fact that this is an abnormal termination,
- * because it would automatically cause  a core file to be
- * generated. On large systems, that can be overwhelming
- * (imagine a few thousand Gbyte-sized files hitting
- * a shared file system simultaneously...ouch!).
- *
- * However, the HNP is only ONE process, so we can do it
- * here as the core file might prove useful. Do so -only-
- * if indicated by the report flag!
- */
 static void rte_abort(int status, bool report)
 {
     /* do NOT do a normal finalize as this will very likely
@@ -726,12 +713,7 @@ static void rte_abort(int status, bool report)
      */
     orte_proc_info_finalize();
     
-    /* Now exit/abort */
-    if (report) {
-        abort();
-    }
-    
-    /* otherwise, just exit */
+    /* just exit */
     exit(status);
 }
 

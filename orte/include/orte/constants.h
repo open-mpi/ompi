@@ -115,7 +115,10 @@ enum {
     ORTE_ERR_RELOCATE_LIMIT_EXCEEDED        = (ORTE_ERR_BASE - 32),
     ORTE_ERR_INVALID_NODE_RANK              = (ORTE_ERR_BASE - 33),
     ORTE_ERR_INVALID_LOCAL_RANK             = (ORTE_ERR_BASE - 34),
-    ORTE_ERR_UNRECOVERABLE                  = (ORTE_ERR_BASE - 35)
+    ORTE_ERR_UNRECOVERABLE                  = (ORTE_ERR_BASE - 35),
+    ORTE_ERR_MEM_LIMIT_EXCEEDED             = (ORTE_ERR_BASE - 36),
+    ORTE_ERR_HEARTBEAT_LOST                 = (ORTE_ERR_BASE - 37),
+    ORTE_ERR_PROC_STALLED                   = (ORTE_ERR_BASE - 38)
 };
 
 #define ORTE_ERR_MAX                      (ORTE_ERR_BASE - 100)
