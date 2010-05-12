@@ -27,7 +27,7 @@ unsigned int gridsize = 10;
 unsigned int force_horiz = 0;
 unsigned int force_vert = 0;
 unsigned int top = 0;
-hwloc_pid_t pid = -1;
+hwloc_pid_t pid = (hwloc_pid_t) -1;
 
 FILE *open_file(const char *filename, const char *mode)
 {
@@ -341,7 +341,7 @@ main (int argc, char *argv[])
       return EXIT_FAILURE;
     }
   }
-  if (pid > 0) {
+  if (pid != (hwloc_pid_t) -1 && pid != 0) {
     if (hwloc_topology_set_pid(topology, pid)) {
       perror("Setting target pid");
       return EXIT_FAILURE;

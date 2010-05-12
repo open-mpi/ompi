@@ -41,6 +41,9 @@
 #include <windows.h>
 #endif
 
+static void
+hwloc_topology_clear (struct hwloc_topology *topology);
+
 #if defined(HAVE_SYSCTLBYNAME)
 int hwloc_get_sysctlbyname(const char *name, int *ret)
 {
@@ -698,13 +701,14 @@ hwloc__insert_object_by_cpuset(struct hwloc_topology *topology, hwloc_obj_t cur,
 	    /* if both objects have a page_types array, just keep the biggest one for now */
 	    if (obj->memory.page_types_len && child->memory.page_types_len)
 	      hwloc_debug("%s", "merging page_types by keeping the biggest one only\n");
-	    if (obj->memory.page_types_len > child->memory.page_types_len) {
-	      free(child->memory.page_types);
-	    } else {
+	    if (obj->memory.page_types_len < child->memory.page_types_len) {
 	      free(obj->memory.page_types);
-	      obj->memory.page_types_len = child->memory.page_types_len;
-	      obj->memory.page_types = child->memory.page_types;
-	      child->memory.page_types = NULL;
+	    } else {
+	      free(child->memory.page_types);
+	      child->memory.page_types_len = obj->memory.page_types_len;
+	      child->memory.page_types = obj->memory.page_types;
+	      obj->memory.page_types = NULL;
+	      obj->memory.page_types_len = 0;
 	    }
 	    break;
 	  case HWLOC_OBJ_CACHE:
@@ -1376,7 +1380,7 @@ static void alloc_cpusets(hwloc_obj_t obj)
 }
 
 /* Main discovery loop */
-static void
+static int
 hwloc_discover(struct hwloc_topology *topology)
 {
   unsigned l, i=0, taken_i, new_i, j;
@@ -1514,7 +1518,7 @@ hwloc_discover(struct hwloc_topology *topology)
 
   print_objects(topology, 0, topology->levels[0][0]);
 
-  if (!topology->flags & HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM) {
+  if (!(topology->flags & HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM)) {
     hwloc_debug("%s", "\nRemoving unauthorized and offline cpusets from all cpusets\n");
     remove_unused_cpusets(topology->levels[0][0]);
 
@@ -1558,6 +1562,11 @@ hwloc_discover(struct hwloc_topology *topology)
   l = 0;
   n_objs = topology->levels[0][0]->arity;
   objs = malloc(n_objs * sizeof(objs[0]));
+  if (!objs) {
+    errno = ENOMEM;
+    hwloc_topology_clear(topology);
+    return -1;
+  }
   memcpy(objs, topology->levels[0][0]->children, n_objs * sizeof(objs[0]));
 
   /* Keep building levels while there are objects left in OBJS.  */
@@ -1722,6 +1731,8 @@ hwloc_discover(struct hwloc_topology *topology)
     DO(set_thread_cpubind);
     DO(get_thread_cpubind);
   }
+
+  return 0;
 }
 
 /* To be before discovery is actually launched,
@@ -1958,6 +1969,7 @@ int
 hwloc_topology_load (struct hwloc_topology *topology)
 {
   char *local_env;
+  int err;
 
   if (topology->is_loaded) {
     hwloc_topology_clear(topology);
@@ -2015,7 +2027,9 @@ hwloc_topology_load (struct hwloc_topology *topology)
   }
 
   /* actual topology discovery */
-  hwloc_discover(topology);
+  err = hwloc_discover(topology);
+  if (err < 0)
+    return err;
 
   /* enforce THISSYSTEM if given in a FORCE variable */
   local_env = getenv("HWLOC_FORCE_THISSYSTEM");

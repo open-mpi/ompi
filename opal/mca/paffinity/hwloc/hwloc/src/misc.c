@@ -1,6 +1,6 @@
 /*
  * Copyright © 2009 CNRS, INRIA, Université Bordeaux 1
- * Copyright © 2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright © 2009-2010 Cisco Systems, Inc.  All rights reserved.
  * See COPYING in top-level directory.
  */
 
@@ -39,6 +39,8 @@ int hwloc_snprintf(char *str, size_t size, const char *format, ...)
   do {
     size *= 2;
     str = malloc(size);
+    if (NULL == str)
+      return -1;
     va_start(ap, format);
     errno = 0;
     ret = vsnprintf(str, size, format, ap);

@@ -319,13 +319,24 @@ hwloc_linux_get_proc_tids(DIR *taskdir, unsigned *nr_tidsp, pid_t ** tidsp)
     max_tids = sb.st_nlink;
 
   tids = malloc(max_tids*sizeof(pid_t));
+  if (!tids) {
+    errno = ENOMEM;
+    return -1;
+  }
 
   rewinddir(taskdir);
 
   while ((dirent = readdir(taskdir)) != NULL) {
     if (nr_tids == max_tids) {
+      pid_t *newtids;
       max_tids += 8;
-      tids = realloc(tids, max_tids*sizeof(pid_t));
+      newtids = realloc(tids, max_tids*sizeof(pid_t));
+      if (!newtids) {
+        free(tids);
+        errno = ENOMEM;
+        return -1;
+      }
+      tids = newtids;
     }
     if (!strcmp(dirent->d_name, ".") || !strcmp(dirent->d_name, ".."))
       continue;
@@ -495,7 +506,7 @@ static int
 hwloc_linux_set_thisthread_cpubind(hwloc_topology_t topology, hwloc_const_cpuset_t hwloc_set, int policy __hwloc_attribute_unused)
 {
   if (topology->pid) {
-    errno = -ENOSYS;
+    errno = ENOSYS;
     return -1;
   }
   return hwloc_linux_set_tid_cpubind(topology, 0, hwloc_set);
@@ -505,7 +516,7 @@ static int
 hwloc_linux_get_thisthread_cpubind(hwloc_topology_t topology, hwloc_cpuset_t hwloc_set, int policy __hwloc_attribute_unused)
 {
   if (topology->pid) {
-    errno = -ENOSYS;
+    errno = ENOSYS;
     return -1;
   }
   return hwloc_linux_get_tid_cpubind(topology, 0, hwloc_set);
@@ -520,7 +531,7 @@ hwloc_linux_set_thread_cpubind(hwloc_topology_t topology, pthread_t tid, hwloc_c
   int err;
 
   if (topology->pid) {
-    errno = -ENOSYS;
+    errno = ENOSYS;
     return -1;
   }
 
@@ -587,7 +598,7 @@ hwloc_linux_get_thread_cpubind(hwloc_topology_t topology, pthread_t tid, hwloc_c
   int err;
 
   if (topology->pid) {
-    errno = -ENOSYS;
+    errno = ENOSYS;
     return -1;
   }
 

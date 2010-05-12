@@ -224,7 +224,15 @@ EOF])
     hwloc_CC_save=$CC
     hwloc_CFLAGS_save=$CFLAGS
     AC_PROG_CC_C99
-    hwloc_CC_c99_flags=`echo $CC | sed -e s/^$hwloc_CC_save//`
+    AS_IF([test x"$ac_cv_prog_cc_c99" = xno],
+          [AC_WARN([C99 support is required by hwloc])
+           $3],
+          [HWLOC_SETUP_CORE_AFTER_C99($1, $2, $3, $4)])
+])
+
+dnl Same order of parameters form HWLOC-SETUP-CORE
+AC_DEFUN([HWLOC_SETUP_CORE_AFTER_C99],[
+    hwloc_CC_c99_flags=`echo $CC | sed -e "s/^$hwloc_CC_save//"`
     CC=$hwloc_CC_save
     CFLAGS=$hwloc_CFLAGS_save
 
@@ -546,7 +554,6 @@ EOF])
     )
 
     # Cleanup
-    unset hwloc_config_happy
     AC_LANG_POP
 
     # Success

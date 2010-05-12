@@ -338,12 +338,12 @@ lstopo_obj_snprintf(char *text, size_t textlen, hwloc_obj_t obj, int logical)
   char typestr[32];
   char indexstr[32]= "";
   char attrstr[256];
-  size_t attrlen;
+  int attrlen;
   hwloc_obj_type_snprintf(typestr, sizeof(typestr), obj, 0);
   if (idx != (unsigned)-1 && obj->depth != 0)
     snprintf(indexstr, sizeof(indexstr), "%s%u", indexprefix, idx);
   attrlen = hwloc_obj_attr_snprintf(attrstr, sizeof(attrstr), obj, " ", 0);
-  if (attrlen)
+  if (attrlen > 0)
     return snprintf(text, textlen, "%s%s (%s)", typestr, indexstr, attrstr);
   else
     return snprintf(text, textlen, "%s%s", typestr, indexstr);
@@ -365,7 +365,7 @@ pu_draw(hwloc_topology_t topology, struct draw_methods *methods, int logical, hw
       methods->box(output, FORBIDDEN_R_COLOR, FORBIDDEN_G_COLOR, FORBIDDEN_B_COLOR, depth, x, *retwidth, y, *retheight);
     else {
       hwloc_cpuset_t bind = hwloc_cpuset_alloc();
-      if (pid > 0)
+      if (pid != (hwloc_pid_t) -1 && pid != 0)
         hwloc_get_proc_cpubind(topology, pid, bind, 0);
       else if (pid == 0)
         hwloc_get_cpubind(topology, bind, 0);
@@ -398,12 +398,12 @@ cache_draw(hwloc_topology_t topology, struct draw_methods *methods, int logical,
   unsigned myheight = gridsize + (fontsize ? (fontsize + gridsize) : 0) + gridsize, totheight;
   unsigned mywidth = 0, totwidth;
   unsigned textwidth = fontsize ? ((logical ? level->logical_index : level->os_index) == (unsigned) -1 ? 7*fontsize : 9*fontsize) : 0;
+  /* Do not separate objects when in L1 (SMT) */
   unsigned separator = level->attr->cache.depth > 1 ? gridsize : 0;
 
   DYNA_CHECK();
 
-  /* Do not separate objects when in L1 (SMT) */
-  RECURSE_HORIZ(level, &null_draw_methods, separator, 0);
+  RECURSE_RECT(level, &null_draw_methods, separator, 0);
 
   methods->box(output, CACHE_R_COLOR, CACHE_G_COLOR, CACHE_B_COLOR, depth, x, totwidth, y, myheight - gridsize);
 
@@ -414,7 +414,7 @@ cache_draw(hwloc_topology_t topology, struct draw_methods *methods, int logical,
     methods->text(output, 0, 0, 0, fontsize, depth-1, x + gridsize, y + gridsize, text);
   }
 
-  RECURSE_HORIZ(level, methods, separator, 0);
+  RECURSE_RECT(level, methods, separator, 0);
 
   DYNA_SAVE();
 }
@@ -428,7 +428,7 @@ core_draw(hwloc_topology_t topology, struct draw_methods *methods, int logical, 
 
   DYNA_CHECK();
 
-  RECURSE_HORIZ(level, &null_draw_methods, 0, gridsize);
+  RECURSE_RECT(level, &null_draw_methods, 0, gridsize);
 
   methods->box(output, CORE_R_COLOR, CORE_G_COLOR, CORE_B_COLOR, depth, x, totwidth, y, totheight);
 
@@ -438,7 +438,7 @@ core_draw(hwloc_topology_t topology, struct draw_methods *methods, int logical, 
     methods->text(output, 0, 0, 0, fontsize, depth-1, x + gridsize, y + gridsize, text);
   }
 
-  RECURSE_HORIZ(level, methods, 0, gridsize);
+  RECURSE_RECT(level, methods, 0, gridsize);
 
   DYNA_SAVE();
 }
@@ -485,7 +485,7 @@ node_draw(hwloc_topology_t topology, struct draw_methods *methods, int logical, 
   DYNA_CHECK();
 
   /* Compute the size needed by sublevels */
-  RECURSE_HORIZ(level, &null_draw_methods, gridsize, gridsize);
+  RECURSE_RECT(level, &null_draw_methods, gridsize, gridsize);
 
   /* Draw the epoxy box */
   methods->box(output, NODE_R_COLOR, NODE_G_COLOR, NODE_B_COLOR, depth, x, totwidth, y, totheight);
@@ -500,7 +500,7 @@ node_draw(hwloc_topology_t topology, struct draw_methods *methods, int logical, 
   }
 
   /* Restart, now really drawing sublevels */
-  RECURSE_HORIZ(level, methods, gridsize, gridsize);
+  RECURSE_RECT(level, methods, gridsize, gridsize);
 
   /* Save result for dynamic programming */
   DYNA_SAVE();
