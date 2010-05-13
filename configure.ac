@@ -30,6 +30,8 @@
 # Load project list and names
 m4_include([config/project_list.m4])
 
+m4_pattern_allow([m4_ifval])
+
 # Init autoconf
 
 # We don't have the version number to put in here yet, and we can't
@@ -44,6 +46,27 @@ AC_PREREQ(2.60)
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
 
+#
+# Start it up
+#
+
+OMPI_CONFIGURE_SETUP
+ompi_show_title "Configuring project_name_long"
+
+#
+# Setup some things that must be done before AM-INIT-AUTOMAKE
+#
+
+ompi_show_subtitle "Startup tests"
+AC_CANONICAL_HOST
+AC_CANONICAL_TARGET
+AC_DEFINE_UNQUOTED(OPAL_ARCH, "$target", [OMPI architecture string])
+AS_IF([test "$host" != "$target"],
+      [AC_MSG_WARN([Cross-compile detected])
+       AC_MSG_WARN([Cross-compiling is only partially supported])
+       AC_MSG_WARN([Proceed at your own risk!])])
+AC_USE_SYSTEM_EXTENSIONS
+
 # Get our platform support file.  This has to be done very, very early
 # because it twiddles random bits of autoconf
 OMPI_LOAD_PLATFORM
@@ -52,8 +75,6 @@ OMPI_LOAD_PLATFORM
 # Init automake
 #
 AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects no-define 1.10 tar-ustar])
-
-m4_pattern_allow([m4_ifval])
 
 # If Automake supports silent rules, enable them.
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
@@ -64,13 +85,6 @@ AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/VERSION'])
 # Set up project specific AM_CONDITIONALs
 AM_CONDITIONAL([PROJECT_OMPI], m4_ifdef([project_ompi], [true], [false]))
 AM_CONDITIONAL([PROJECT_ORTE], m4_ifdef([project_orte], [true], [false]))
-
-#
-# Start it up
-#
-
-OMPI_CONFIGURE_SETUP
-ompi_show_title "Configuring project_name_long"
 
 ompi_show_subtitle "Checking versions"
 

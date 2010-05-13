@@ -110,13 +110,6 @@ CLEANFILES="*~ .\#*"
 AC_SUBST(CLEANFILES)
 
 #
-# This is useful later (ompi_info, and therefore mpiexec)
-#
-
-AC_CANONICAL_HOST
-AC_DEFINE_UNQUOTED(OPAL_ARCH, "$host", [OMPI architecture string])
-
-#
 # See if we can find an old installation of OMPI to overwrite
 #
 
