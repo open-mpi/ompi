@@ -584,6 +584,24 @@ for a full list); a summary of the more commonly used ones follows:
   look in <gm directory>/lib and <gm directory>/lib64, which covers
   most cases.  This option is only needed for special configurations.
 
+--with-hwloc=<location>
+  Build hwloc support.  If <location> is "internal", Open MPI's
+  internal copy of hwloc is used.  If <location> is "external", Open
+  MPI will search in default locations for an hwloc installation.
+  Finally, if <location> is a directory, that directory will be
+  searched for a valid hwloc installation, just like other
+  --with-FOO=<directory> configure options.
+
+  hwloc is a support library that provides processor and memory
+  affinity information for NUMA platforms.
+
+--with-hwloc-libdir=<directory>
+
+  Look in directory for the hwloc libraries.  This option is only
+  usable when building Open MPI against an external hwloc
+  installation.  Just like other --with-FOO-libdir configure options,
+  this option is only needed for special configurations.
+
 --with-knem=<directory>
   Specify the directory where the knem libraries and header files are
   located.  This option is generally only necessary if the kenm headers
