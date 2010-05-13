@@ -582,7 +582,9 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
 
     /* Can only find the best set of connections when the number of
      * interfaces is not too big.  When it gets larger, we fall back
-     * to a simpler and faster (and not as optimal) algorithm. */
+     * to a simpler and faster (and not as optimal) algorithm. 
+     * See ticket https://svn.open-mpi.org/trac/ompi/ticket/2031 
+     * for more details about this issue.  */
     if (perm_size <= MAX_PERMUTATION_INTERFACES) {
        memset(a, 0, perm_size * sizeof(int));
        max_assignment_cardinality = -1;
