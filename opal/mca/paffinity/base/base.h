@@ -143,33 +143,33 @@ OPAL_DECLSPEC int opal_paffinity_base_get(opal_paffinity_base_cpu_set_t *cpumask
 OPAL_DECLSPEC int opal_paffinity_base_close(void);
 
 /**
- * Get map of (socket,core) tuple to virtual processor ID
+ * Returns mapping of PHYSICAL socket:core -> PHYSICAL processor id.
  * 
- * @param socket
- * @param core
- * @param processor_id
+ * @param physical_socket
+ * @param pyshical_core
+ * @param physical_processor_id
  * 
  * @return int - OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
  *         supported
  */
-OPAL_DECLSPEC int opal_paffinity_base_get_map_to_processor_id(int socket, int core, int *processor_id);
+OPAL_DECLSPEC int opal_paffinity_base_get_map_to_processor_id(int physical_socket, int physical_core, int *physical_processor_id);
 
 /**
- * Get map of processor_id to (socket,core) tuple
+ * Provides mapping of PHYSICAL processor id -> PHYSICAL socket:core.
  * 
- * @param processor_id
- * @param socket
- * @param core
+ * @param physical_processor_id
+ * @param physical_socket
+ * @param physical_core
  * 
  * @return int - OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
  *         supported
  */
-OPAL_DECLSPEC int opal_paffinity_base_get_map_to_socket_core(int processor_id, int *socket, int *core);
+OPAL_DECLSPEC int opal_paffinity_base_get_map_to_socket_core(int physical_processor_id, int *physical_socket, int *physical_core);
 
 /**
  * Return the number of LOGICAL processors
  * 
- * @param max_processor_id
+ * @param num_logical_processors
  * 
  * @return int - OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
  *         supported
@@ -179,7 +179,7 @@ OPAL_DECLSPEC int opal_paffinity_base_get_processor_info(int *num_logical_proces
 /**
  * Return the number of LOGICAL sockets
  * 
- * @param max_socket
+ * @param num_logical_sockets
  * 
  * @return int - OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
  *         supported
@@ -189,8 +189,8 @@ OPAL_DECLSPEC int opal_paffinity_base_get_socket_info(int *num_logical_sockets);
 /**
  * Return the number of LOGICAL cores for a given PHYSICAL socket
  * 
- * @param socket
- * @param max_core
+ * @param physical_socket
+ * @param num_logical_cores
  * 
  * @return int - OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
  *         supported
@@ -204,14 +204,14 @@ OPAL_DECLSPEC int opal_paffinity_base_get_core_info(int physical_socket, int *nu
 OPAL_DECLSPEC int opal_paffinity_base_get_physical_processor_id(int logical_processor_id);
 
 /**
- * Return the PHYSICAL socket id that corresponds to the given
- * LOGICAL socket id
+ * Return the PHYSICAL socket ID that corresponds to the given
+ * LOGICAL socket ID.
  */
 OPAL_DECLSPEC int opal_paffinity_base_get_physical_socket_id(int logical_socket_id);
 
 /**
- * Return the PHYSICAL core id that corresponds to the given LOGICAL
- * core id on the given PHYSICAL socket id
+ * Return the PHYSICAL core ID that corresponds to the given LOGICAL
+ * core id on the given PHYSICAL socket ID.
  */
 OPAL_DECLSPEC int opal_paffinity_base_get_physical_core_id(int physical_socket_id, int logical_core_id);
 
