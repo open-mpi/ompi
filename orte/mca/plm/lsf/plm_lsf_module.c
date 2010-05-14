@@ -301,7 +301,7 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
      * orterun can do the rest of its stuff. Instead, we'll catch any
      * failures and deal with them elsewhere
      */
-    if (lsb_launch(nodelist_argv, argv, LSF_DJOB_NOWAIT, env) < 0) {
+    if (lsb_launch(nodelist_argv, argv, LSF_DJOB_REPLACE_ENV | LSF_DJOB_NOWAIT, env) < 0) {
         ORTE_ERROR_LOG(ORTE_ERR_FAILED_TO_START);
         opal_output(0, "lsb_launch failed: %d", rc);
         rc = ORTE_ERR_FAILED_TO_START;
