@@ -56,7 +56,7 @@ static bool odls_process_child_died( pid_t pid, unsigned int timeout,
     int error;
     HANDLE handle = OpenProcess( PROCESS_TERMINATE | SYNCHRONIZE, FALSE,
                                  (DWORD)pid );
-    if( 0 == child->pid || INVALID_HANDLE_VALUE == handle ) {
+    if( 0 == pid || INVALID_HANDLE_VALUE == handle ) {
         error = GetLastError();
         /* Let's suppose that the process dissapear ... by now */
         return true;
