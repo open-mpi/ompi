@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -53,6 +53,9 @@ endif # CASE_SENSITIVE_FS
 else # OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 
 if OMPI_INSTALL_BINARIES
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = orte.pc
 
 #man_MANS = $(man_pages)
 
