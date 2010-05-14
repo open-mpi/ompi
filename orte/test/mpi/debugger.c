@@ -12,7 +12,7 @@
 int main(int argc, char* argv[])
 {
 
-    int i, j=0;
+    int i, rc, j=0;
     double pi;
     pid_t pid;
 

@@ -627,6 +627,10 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr)
         if (NULL == jdata->map) {
             continue;
         }
+        /* if this is a debugger job, ignore it */
+        if (jdata->controls & ORTE_JOB_CONTROL_DEBUGGER_DAEMON) {
+            continue;
+        }
         /* pack the jobid */
         if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &jdata->jobid, 1, ORTE_JOBID))) {
             ORTE_ERROR_LOG(rc);

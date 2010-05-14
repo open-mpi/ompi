@@ -28,7 +28,7 @@ BEGIN_C_DECLS
 
 void orte_run_debugger(char *basename, opal_cmd_line_t *cmd_line,
                        int argc, char *argv[], int num_procs) __opal_attribute_noreturn__;
-void orte_debugger_init_before_spawn(orte_job_t *jdata);
+int orte_debugger_init_before_spawn(orte_job_t *jdata);
 void orte_debugger_init_after_spawn(orte_job_t *jdata);
 void orte_debugger_finalize(void);
 

@@ -156,8 +156,15 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     tm_event_t event;
     bool failed_launch = true;
     mode_t current_umask;
-    orte_jobid_t failed_job;
+    orte_jobid_t failed_job, active_job;
     char *nodelist;
+    
+    if (NULL == jdata) {
+        /* just launching debugger daemons */
+        active_job = ORTE_JOBID_INVALID;
+        goto launch_apps;
+    }
+    active_job = jdata->jobid;
     
     if (jdata->controls & ORTE_JOB_CONTROL_LOCAL_SLAVE) {
         /* if this is a request to launch a local slave,
@@ -420,12 +427,12 @@ launch_apps:
     /* since the daemons have launched, any failures now will be for the
      * application job
      */
-    failed_job = jdata->jobid;
-    if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(jdata->jobid))) {
+    failed_job = active_job;
+    if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(active_job))) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:tm: launch of apps failed for job %s on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(jdata->jobid), ORTE_ERROR_NAME(rc)));
+                             ORTE_JOBID_PRINT(active_job), ORTE_ERROR_NAME(rc)));
         goto cleanup;
     }
     
