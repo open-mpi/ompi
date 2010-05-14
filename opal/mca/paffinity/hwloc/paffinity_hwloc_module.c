@@ -488,27 +488,6 @@ static int module_get_physical_core_id(int physical_socket_id,
     if (NULL == obj) {
         return OPAL_ERR_NOT_FOUND;
     }
-
-    /* Found the right core.  Now find the processor ID of the first
-       PU available in that core. */
-    good = hwloc_cpuset_alloc();
-    if (NULL == good) {
-        return OPAL_ERR_OUT_OF_RESOURCE;
-    }
-    hwloc_cpuset_and(good, obj->online_cpuset, 
-                     obj->allowed_cpuset);
-    
-    for (i = 0;
-         (int) i < mca_paffinity_hwloc_component.cpuset_max_size; 
-         ++i) {
-        if (hwloc_cpuset_isset(good, i)) {
-            hwloc_cpuset_free(good);
-            return i;
-        }
-    }
-    
-    /* Huh.  This shouldn't happen. */
-    hwloc_cpuset_free(good);
-    return OPAL_ERR_NOT_FOUND;
+    return obj->os_index;
 }
 
