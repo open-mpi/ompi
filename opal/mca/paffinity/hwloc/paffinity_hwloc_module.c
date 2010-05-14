@@ -225,7 +225,6 @@ static int module_map_to_processor_id(int socket, int core, int *processor_id)
     hwloc_topology_t *t = &mca_paffinity_hwloc_component.topology;
     hwloc_obj_t obj;
 
-    opal_output(0, "map_to_proc_id: looking for socket %d, core %d\n", socket, core);
     /* Traverse all sockets, looking for the right physical ID number.
        Once we find it, traverse all that socket's cores looking for
        the right physial ID number.  Once we find it, return the
