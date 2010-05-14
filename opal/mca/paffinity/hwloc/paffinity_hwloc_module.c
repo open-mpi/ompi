@@ -416,7 +416,6 @@ static int module_get_physical_processor_id(int logical_processor_id)
     hwloc_cpuset_t good;
     hwloc_topology_t *t = &mca_paffinity_hwloc_component.topology;
 
-    opal_output(0, "get phsy proc id: %d\n", logical_processor_id);
     obj = hwloc_get_obj_by_type(*t, HWLOC_OBJ_CORE, logical_processor_id);
     if (NULL == obj) {
         return OPAL_ERR_NOT_FOUND;
