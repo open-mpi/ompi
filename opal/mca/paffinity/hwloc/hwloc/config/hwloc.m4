@@ -50,7 +50,7 @@ EOF])
     # mode).
     HWLOC_startdir=`pwd`
     if test x"hwloc_config_prefix" != "x" -a ! -d "hwloc_config_prefix"; then
-        mkdir "hwloc_config_prefix"
+        mkdir -p "hwloc_config_prefix"
     fi
     if test x"hwloc_config_prefix" != "x"; then
         cd "hwloc_config_prefix"
