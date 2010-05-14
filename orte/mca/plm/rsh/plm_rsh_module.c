@@ -1074,6 +1074,12 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
     orte_plm_globals.spawn_status = ORTE_ERR_FATAL;
     OPAL_THREAD_UNLOCK(&orte_plm_globals.spawn_lock);
     
+    if (NULL == jdata) {
+        /* just launching debugger daemons */
+        active_job = ORTE_JOBID_INVALID;
+        goto launch_apps;
+    }
+    
     if (jdata->controls & ORTE_JOB_CONTROL_LOCAL_SLAVE) {
         /* if this is a request to launch a local slave,
          * then we will not be launching an orted - we will

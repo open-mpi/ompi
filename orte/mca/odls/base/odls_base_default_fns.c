@@ -97,6 +97,11 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     int j;
     orte_daemon_cmd_flag_t command;
 
+    if (NULL != orte_debugger_daemon && ORTE_JOBID_INVALID == job) {
+        /* all we are doing is launching debugger daemons */
+        goto nodemap;
+    }
+    
     /* get the job data pointer */
     if (NULL == (jdata = orte_get_job_data_object(job))) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
@@ -191,6 +196,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
         return ORTE_SUCCESS;
     }
     
+nodemap:
     /* if we are not passing a regexp, then pass the nodemap */
     flag = 0;
     opal_dss.pack(data, &flag, 1, OPAL_INT8);
@@ -306,6 +312,11 @@ pack_add_procs:
             ORTE_ERROR_LOG(rc);
             return rc;
         }
+    }
+    
+    if (NULL != orte_debugger_daemon && ORTE_JOBID_INVALID == job) {
+        /* all we are doing is launching debugger daemons, so we are done */
+        return ORTE_SUCCESS;
     }
     
     /* pack the jobid so it can be extracted later */
@@ -724,6 +735,12 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     /* unpack the jobid we are to launch */
     cnt=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, job, &cnt, ORTE_JOBID))) {
+        /* if the buffer was empty, then we know that all we are doing is
+         * launching debugger daemons
+         */
+        if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER == rc) {
+            goto done;
+        }
         *job = ORTE_JOBID_INVALID;
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
@@ -1013,6 +1030,7 @@ find_my_procs:
     opal_condition_broadcast(&jobdat->cond);
     OPAL_THREAD_UNLOCK(&jobdat->lock);
     
+done:
     if (NULL != app_idx) {
         free(app_idx);
         app_idx = NULL;

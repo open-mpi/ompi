@@ -304,12 +304,16 @@ int orte_plm_base_launch_apps(orte_jobid_t job)
         gettimeofday(&app_launch_start, NULL);
     }
     
-    /* find the job's data record */
-    if (NULL == (jdata = orte_get_job_data_object(job))) {
-        /* bad jobid */
-        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-        rc = ORTE_ERR_BAD_PARAM;
-        goto WAKEUP;
+    if (ORTE_JOBID_INVALID == job) {
+        /* we are only launching debugger daemons */
+        jdata = orte_debugger_daemon;
+    } else {
+        if (NULL == (jdata = orte_get_job_data_object(job))) {
+            /* bad jobid */
+            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+            rc = ORTE_ERR_BAD_PARAM;
+            goto WAKEUP;
+        }
     }
 
     /* setup the buffer */

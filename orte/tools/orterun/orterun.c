@@ -809,7 +809,9 @@ int orterun(int argc, char *argv[])
     }
     
     /* setup for debugging */
-    orte_debugger_init_before_spawn(jdata);
+    if (ORTE_SUCCESS != orte_debugger_init_before_spawn(jdata)) {
+        goto DONE;
+    }
     
     /* Spawn the job */
     rc = orte_plm.spawn(jdata);
