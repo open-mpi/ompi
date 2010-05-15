@@ -63,8 +63,16 @@ Trunk (not on release branches yet)
   - command to execute arbitrary commands (e.g., run a script).
 
 
-1.4.2 (expected)
+1.4.3 (expected)
 ----------------
+
+- Fixed a problem with the Fortran binding for
+  MPI_FILE_CREATE_ERRHANDLER.  Thanks to Secretan Yves for identifying
+  the issue.
+
+
+1.4.2
+-----
 
 - Fixed problem when running in heterogeneous environments.  Thanks to
   Timur Magomedov for helping to track down this issue.
