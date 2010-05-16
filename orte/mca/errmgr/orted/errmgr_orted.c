@@ -116,7 +116,7 @@ static int update_state(orte_jobid_t job,
     orte_odls_child_t *child;
     opal_buffer_t alert;
     orte_plm_cmd_flag_t cmd;
-    int rc;
+    int rc=ORTE_SUCCESS;
     orte_vpid_t null=ORTE_VPID_INVALID;
 
     /* indicate that this is the end of the line */
@@ -281,26 +281,22 @@ static int update_state(orte_jobid_t job,
                 if (ORTE_PROC_STATE_UNTERMINATED > child->state) {
                     child->state = state;
                     child->exit_code = exit_code;
+                    /* Decrement the number of local procs */
+                    jobdat->num_local_procs--;
+                    /* kill this proc */
+                    killprocs(proc->jobid, proc->vpid);
                 }
+                if (jobdat->enable_recovery && child->restarts < jobdat->max_local_restarts) {
+                    child->restarts++;
+                    OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+                                         "%s errmgr:orted restarting proc %s for the %d time",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         ORTE_NAME_PRINT(proc), child->restarts));
+                    rc = orte_odls.restart_proc(child);
+                }
+                return rc;
             }
         }
-        if (jobdat->enable_recovery && child->restarts < jobdat->max_local_restarts) {
-            child->restarts++;
-            OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
-                                 "%s errmgr:orted restarting proc %s for the %d time",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(proc), child->restarts));
-            if (ORTE_SUCCESS == (rc = orte_odls.restart_proc(child))) {
-                return ORTE_SUCCESS;
-            }
-            /* let it fall thru to abort */
-        }
-        /* Decrement the number of local procs */
-        jobdat->num_local_procs--;
-        /* kill this proc */
-        killprocs(proc->jobid, proc->vpid);
-        /* let the proc be reported back when terminated */
-        return ORTE_SUCCESS;
     }
     
     if (ORTE_PROC_STATE_TERMINATED < state) {
