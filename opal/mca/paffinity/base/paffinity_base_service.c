@@ -546,7 +546,7 @@ int opal_paffinity_base_cset2str(char *str, int len,
                                  opal_paffinity_base_cpu_set_t *cset)
 {
     int ret, i, j, k, num_sockets, num_cores, flag, count, 
-        range_first, range_last;
+        range_first=0, range_last;
     char tmp[BUFSIZ];
     const int stmp = sizeof(tmp) - 1;
 
