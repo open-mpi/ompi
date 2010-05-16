@@ -328,6 +328,7 @@ static void process_msg(int fd, short event, void *data)
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&(msgpkt->sender)) ));
                 count = 1;
+                running = false;
                 while (ORTE_SUCCESS == (rc = opal_dss.unpack(msgpkt->buffer, &job, &count, ORTE_JOBID))) {
                     
                     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
