@@ -85,9 +85,9 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
                                               orte_jobid_t job)
 {
     int rc;
-    orte_job_t *jdata;
+    orte_job_t *jdata=NULL;
     orte_proc_t *proc;
-    orte_job_map_t *map;
+    orte_job_map_t *map=NULL;
     opal_buffer_t *wireup;
     opal_byte_object_t bo, *boptr;
     int32_t numbytes, *restarts;
@@ -2917,6 +2917,7 @@ int orte_odls_base_default_restart_proc(orte_odls_child_t *child,
                          ORTE_NAME_PRINT(child->name)));
     
     /* find this child's jobdat */
+    jobdat = NULL;
     for (item = opal_list_get_first(&orte_local_jobdata);
          item != opal_list_get_end(&orte_local_jobdata);
          item = opal_list_get_next(item)) {
@@ -2925,6 +2926,12 @@ int orte_odls_base_default_restart_proc(orte_odls_child_t *child,
             break;
         }
     }
+    if (NULL == jobdat) {
+        /* not found */
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return ORTE_ERR_NOT_FOUND;
+    }
+    
     child->state = ORTE_PROC_STATE_FAILED_TO_START;
     child->exit_code = 0;
     child->waitpid_recvd = false;

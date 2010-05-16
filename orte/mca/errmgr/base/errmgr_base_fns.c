@@ -64,7 +64,7 @@ int orte_errmgr_base_update_state(orte_jobid_t job,
                                   orte_proc_state_t state,
                                   orte_exit_code_t exit_code)
 {
-    int rc;
+    int rc=ORTE_SUCCESS;
     int i;
     orte_errmgr_stack_state_t stack_state;
     orte_errmgr_base_module_t *module;

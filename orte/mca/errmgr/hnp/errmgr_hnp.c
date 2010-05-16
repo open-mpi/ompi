@@ -1053,6 +1053,7 @@ static int hnp_relocate(orte_job_t *jdata, orte_process_name_t *proc)
     orte_node_t *node;
     orte_app_context_t *app;
     orte_job_map_t *map;
+    char *app_name;
     int rc, i, n;
     
     /* get the proc_t object for this process */
@@ -1067,12 +1068,13 @@ static int hnp_relocate(orte_job_t *jdata, orte_process_name_t *proc)
     if (jdata->max_global_restarts < pdata->relocates) {
         return ORTE_ERR_RELOCATE_LIMIT_EXCEEDED;
     }
-    
+
     /* if it is a daemon that died, we need to flag all of its procs
      * to be relocated
      */
     if (ORTE_PROC_MY_NAME->jobid == proc->jobid) {
         map = jdata->map;
+        app_name = "orted";
         for (n=0; n < map->nodes->size; n++) {
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, n))) {
                 continue;
@@ -1103,7 +1105,11 @@ static int hnp_relocate(orte_job_t *jdata, orte_process_name_t *proc)
             OBJ_RELEASE(node);
             break;
         }
+    } else {
+        app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, pdata->app_idx);
+        app_name = app->app;
     }
+
     
     /* reset the job params for restart */
     orte_plm_base_reset_job(jdata);
@@ -1117,7 +1123,7 @@ static int hnp_relocate(orte_job_t *jdata, orte_process_name_t *proc)
                          ORTE_NAME_PRINT(proc)));
     
     if (ORTE_SUCCESS != (rc = orte_plm.spawn(jdata))) {
-        opal_output(0, "FAILED TO RESTART APP %s on error %s", app->app, ORTE_ERROR_NAME(rc));
+        opal_output(0, "FAILED TO RESTART APP %s on error %s", app_name, ORTE_ERROR_NAME(rc));
         return rc;
     }
 
