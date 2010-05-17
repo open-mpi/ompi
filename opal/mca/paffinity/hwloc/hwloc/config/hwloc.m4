@@ -79,12 +79,19 @@ EOF])
     # Debug mode?
     AC_MSG_CHECKING([if want hwloc maintainer support])
     hwloc_debug=
-    AS_IF([test "$enable_debug" = "yes"],
-          [hwloc_debug=1
-           hwloc_debug_msg="enabled"])
-    AS_IF([test "$hwloc_debug" = "" -a "$hwloc_mode" = "embedded" -a "$enable_debug" = ""],
+
+    # Unconditionally disable debug mode in embedded mode; if someone
+    # asks, we can add a configure-time option for it.  Disable it
+    # now, however, because --enable-debug is not even added as an
+    # option when configuring in embedded mode, and we wouldn't want
+    # to hijack the enclosing application's --enable-debug configure
+    # switch.
+    AS_IF([test "$hwloc_mode" = "embedded"],
           [hwloc_debug=0
            hwloc_debug_msg="disabled (embedded mode)"])
+    AS_IF([test "$hwloc_debug" = "" -a "$enable_debug" = "yes"],
+          [hwloc_debug=1
+           hwloc_debug_msg="enabled"])
     AS_IF([test "$hwloc_debug" = "" -a "$enable_debug" = "" -a -d .svn],
           [hwloc_debug=1
            hwloc_debug_msg="enabled (SVN checkout default)"])

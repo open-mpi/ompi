@@ -466,10 +466,8 @@ static int module_get_physical_socket_id(int logical_socket_id)
 static int module_get_physical_core_id(int physical_socket_id, 
                                        int logical_core_id)
 {
-    int i;
     unsigned count = 0;
     hwloc_obj_t obj;
-    hwloc_cpuset_t good;
     hwloc_topology_t *t = &mca_paffinity_hwloc_component.topology;
 
     obj = hwloc_get_root_obj(*t);
