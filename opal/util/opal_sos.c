@@ -426,7 +426,7 @@ int opal_sos_prettify_error(const char *error, char **pretty_error)
 {
     char *str, *token, *saveptr, *errdup;
     const char *prefix = "\n| |  ";
-    int len, plen, left;
+    int len = 0, plen, left;
 
     if (NULL == error) {
         return OPAL_ERROR;
