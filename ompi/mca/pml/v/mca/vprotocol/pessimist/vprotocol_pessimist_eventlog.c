@@ -10,6 +10,7 @@
 
 #include "ompi_config.h"
 #include "vprotocol_pessimist_eventlog.h"
+#include "opal/util/opal_sos.h"
 
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/rml_contact.h"

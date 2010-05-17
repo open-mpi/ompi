@@ -27,6 +27,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
+#include "opal/util/opal_sos.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
@@ -296,7 +297,7 @@ static int parse_requested(int mca_param, bool *include_mode,
 
   /* See if the user requested anything */
 
-  if (OPAL_ERROR == mca_base_param_lookup_string(mca_param, &requested)) {
+  if (OPAL_SUCCESS != mca_base_param_lookup_string(mca_param, &requested)) {
     return OPAL_ERROR;
   }
   if (NULL == requested || 0 == strlen(requested)) {
@@ -391,7 +392,7 @@ static int open_components(const char *type_name, int output_id,
                                     "mca: base: components_open: "
                                     "component %s register function successful",
                                     component->mca_component_name);
-            } else if (OPAL_ERR_NOT_AVAILABLE != ret) {
+            } else if (OPAL_ERR_NOT_AVAILABLE != OPAL_SOS_GET_ERROR_CODE(ret)) {
                 /* If the component returns OPAL_ERR_NOT_AVAILABLE,
                    it's a cue to "silently ignore me" -- it's not a
                    failure, it's just a way for the component to say
@@ -431,7 +432,7 @@ static int open_components(const char *type_name, int output_id,
                                     "mca: base: components_open: "
                                     "component %s open function successful",
                                     component->mca_component_name);
-            } else if (OPAL_ERR_NOT_AVAILABLE != ret) {
+            } else if (OPAL_ERR_NOT_AVAILABLE != OPAL_SOS_GET_ERROR_CODE(ret)) {
                 /* If the component returns OPAL_ERR_NOT_AVAILABLE,
                    it's a cue to "silently ignore me" -- it's not a
                    failure, it's just a way for the component to say
@@ -482,7 +483,7 @@ static int open_components(const char *type_name, int output_id,
            opened_components list */
         
         else {
-            if (OPAL_ERROR == mca_base_param_find(type_name, 
+            if (OPAL_SUCCESS != mca_base_param_find(type_name, 
                                                   component->mca_component_name,
                                                   "priority")) {
                 mca_base_param_register_int(type_name,

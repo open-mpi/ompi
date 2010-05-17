@@ -62,6 +62,7 @@
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/output.h"
+#include "opal/util/opal_sos.h"
 #include "opal/event/event.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
@@ -1257,7 +1258,7 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
     orted_failed_launch = false;
     rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ORTED_CALLBACK,
                                  ORTE_RML_PERSISTENT, plm_rsh_report_orted_launch, NULL);
-    if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
+    if (rc != ORTE_SUCCESS && OPAL_SOS_GET_ERROR_CODE(rc) != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

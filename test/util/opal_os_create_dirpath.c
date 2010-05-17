@@ -89,7 +89,7 @@ static bool test1(void)
 
     /* Test trivial functionality. Program should return OPAL_ERROR when called with NULL path. */
 
-    if (OPAL_ERROR != opal_os_dirpath_create(NULL, S_IRWXU))
+    if (OPAL_SUCCESS == opal_os_dirpath_create(NULL, S_IRWXU))
             return(false);
 
     return true;
@@ -111,14 +111,14 @@ static bool test2(void)
         return(false);
     }
 
-    if (OPAL_ERROR == opal_os_dirpath_create(tmp, S_IRWXU)) {
+    if (OPAL_SUCCESS != opal_os_dirpath_create(tmp, S_IRWXU)) {
         rmdir(tmp);
         return(false);
     }
 
     chmod(tmp, S_IRUSR);
 
-    if (OPAL_ERROR == opal_os_dirpath_create(tmp, S_IRWXU)) {
+    if (OPAL_SUCCESS != opal_os_dirpath_create(tmp, S_IRWXU)) {
         rmdir(tmp);
         return(false);
     }
@@ -148,7 +148,7 @@ static bool test3(void)
     }
 
     out = opal_os_path(true, a[0], a[1], a[2], NULL);
-    if (OPAL_ERROR == opal_os_dirpath_create(out, S_IRWXU)) {
+    if (OPAL_SUCCESS != opal_os_dirpath_create(out, S_IRWXU)) {
         out = opal_os_path(true, a[0], a[1], a[2], NULL);
         if (0 == stat(out, &buf))
             rmdir(out);

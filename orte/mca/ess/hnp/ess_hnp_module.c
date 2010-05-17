@@ -336,7 +336,7 @@ static int rte_init(void)
     /* setup the orte_show_help system to recv remote output */
     ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SHOW_HELP,
                                  ORTE_RML_NON_PERSISTENT, orte_show_help_recv, NULL);
-    if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
+    if (ret != ORTE_SUCCESS && OPAL_SOS_GET_ERROR_CODE(ret) != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(ret);
         error = "setup receive for orte_show_help";
         goto error;
@@ -586,7 +586,7 @@ static int rte_init(void)
     return ORTE_SUCCESS;
 
 error:
-    if (ORTE_ERR_SILENT != ret) {
+    if (ORTE_ERR_SILENT != OPAL_SOS_GET_ERROR_CODE(ret)) {
         orte_show_help("help-orte-runtime.txt",
                        "orte_init:startup:internal-failure",
                        true, error, ORTE_ERROR_NAME(ret), ret);

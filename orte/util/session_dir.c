@@ -47,6 +47,7 @@
 
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
+#include "opal/util/opal_sos.h"
 #include "opal/util/os_path.h"
 #include "opal/util/os_dirpath.h"
 #include "opal/util/basename.h"
@@ -89,7 +90,8 @@ static int orte_create_dir(char *directory)
 
     /* Sanity check before creating the directory with the proper mode,
      * Make sure it doesn't exist already */
-    if( ORTE_ERR_NOT_FOUND != (ret = opal_os_dirpath_access(directory, my_mode)) ) {
+    if( ORTE_ERR_NOT_FOUND !=
+        (ret = OPAL_SOS_GET_ERROR_CODE(opal_os_dirpath_access(directory, my_mode))) ) {
         /* Failure because opal_os_dirpath_access() indicated that either:
          * - The directory exists and we can access it (no need to create it again), 
          *    return OPAL_SUCCESS, or
@@ -387,7 +389,7 @@ int orte_session_dir(bool create,
                                                          &frontend,
                                                          hostid, 
                                                          batchid, proc) ) ) {
-        if (ORTE_ERR_FATAL == rc) {
+        if (ORTE_ERR_FATAL == OPAL_SOS_GET_ERROR_CODE(rc)) {
             /* this indicates we should abort quietly */
             rc = ORTE_ERR_SILENT;
             goto cleanup;
@@ -414,7 +416,7 @@ int orte_session_dir(bool create,
             /* it is okay for the path not to be found - don't error
              * log that case, but do error log others
              */
-            if (ORTE_ERR_NOT_FOUND != rc) {
+            if (ORTE_ERR_NOT_FOUND != OPAL_SOS_GET_ERROR_CODE(rc)) {
                 ORTE_ERROR_LOG(rc);
             }
             goto cleanup;

@@ -35,6 +35,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/argv.h"
 #include "opal/util/if.h"
+#include "opal/util/opal_sos.h"
 #include "opal/class/opal_pointer_array.h"
 
 #include "orte/mca/errmgr/errmgr.h"
@@ -126,7 +127,7 @@ static int map_app_by_node(orte_app_context_t* app,
              * since the node is fully used up. For now, just don't report
              * an error
              */
-            if (ORTE_ERR_NODE_FULLY_USED != rc) {
+            if (ORTE_ERR_NODE_FULLY_USED != OPAL_SOS_GET_ERROR_CODE(rc)) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
@@ -236,7 +237,7 @@ static int map_app_by_slot(orte_app_context_t* app,
                  * since the node is fully used up. For now, just don't report
                  * an error
                  */
-                if (ORTE_ERR_NODE_FULLY_USED != rc) {
+                if (ORTE_ERR_NODE_FULLY_USED != OPAL_SOS_GET_ERROR_CODE(rc)) {
                     ORTE_ERROR_LOG(rc);
                     return rc;
                 }
@@ -252,7 +253,8 @@ static int map_app_by_slot(orte_app_context_t* app,
             /** if all the procs have been mapped OR we have fully used up this node, then
              * break from the loop
              */
-            if(num_alloc == app->num_procs || ORTE_ERR_NODE_FULLY_USED == rc) {
+            if(num_alloc == app->num_procs ||
+               ORTE_ERR_NODE_FULLY_USED == OPAL_SOS_GET_ERROR_CODE(rc)) {
                 break;
             }
         }
@@ -262,7 +264,8 @@ static int map_app_by_slot(orte_app_context_t* app,
          * node is NOT max'd out
          *
          */
-        if (i < (num_slots_to_take-1) && ORTE_ERR_NODE_FULLY_USED != rc) {
+        if (i < (num_slots_to_take-1) &&
+            ORTE_ERR_NODE_FULLY_USED != OPAL_SOS_GET_ERROR_CODE(rc)) {
             continue;
         }
         cur_node_item = next;
@@ -460,7 +463,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
             proc = NULL;
             if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, 1, app->idx,
                                                                  &node_list, jdata->map->oversubscribe, true, &proc))) {
-                if (ORTE_ERR_NODE_FULLY_USED != rc) {
+                if (ORTE_ERR_NODE_FULLY_USED != OPAL_SOS_GET_ERROR_CODE(rc)) {
                     /* if this is a true error and not the node just being
                      * full, then report the error and abort
                      */

@@ -580,7 +580,7 @@ void mca_pml_csum_process_pending_packets(mca_bml_base_btl_t* bml_btl)
                         pckt->hdr.hdr_ack.hdr_dst_req.pval,
                         pckt->hdr.hdr_ack.hdr_send_offset,
                         pckt->hdr.hdr_common.hdr_flags & MCA_PML_CSUM_HDR_FLAGS_NORDMA);
-                if( OPAL_UNLIKELY(OMPI_ERR_OUT_OF_RESOURCE == rc) ) {
+                if( OPAL_UNLIKELY(OMPI_ERR_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc)) ) {
                     OPAL_THREAD_LOCK(&mca_pml_csum.lock);
                     opal_list_append(&mca_pml_csum.pckt_pending,
                                      (opal_list_item_t*)pckt);
@@ -593,7 +593,7 @@ void mca_pml_csum_process_pending_packets(mca_bml_base_btl_t* bml_btl)
                                           pckt->hdr.hdr_fin.hdr_des.pval,
                                           pckt->order,
                                           pckt->hdr.hdr_fin.hdr_fail);
-                if( OPAL_UNLIKELY(OMPI_ERR_OUT_OF_RESOURCE == rc) ) {
+                if( OPAL_UNLIKELY(OMPI_ERR_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc)) ) {
                     return;
                 }
                 break;
@@ -625,7 +625,7 @@ void mca_pml_csum_process_pending_rdma(void)
         } else {
             rc = mca_pml_csum_recv_request_get_frag(frag);
         }
-        if(OMPI_ERR_OUT_OF_RESOURCE == rc)
+        if(OMPI_ERR_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc))
             break;
     }
 }

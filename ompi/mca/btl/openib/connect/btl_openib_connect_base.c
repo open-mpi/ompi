@@ -28,6 +28,7 @@
 #include "orte/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
+#include "opal/util/opal_sos.h"
 
 /*
  * Array of all possible connection functions
@@ -218,7 +219,7 @@ int ompi_btl_openib_connect_base_init(void)
             opal_output(-1, "found available cpc (SUCCESS init): %s",
                         all[i]->cbc_name);
             continue;
-        } else if (OMPI_ERR_NOT_SUPPORTED == rc) {
+        } else if (OMPI_ERR_NOT_SUPPORTED == OPAL_SOS_GET_ERROR_CODE(rc)) {
             continue;
         } else {
             return rc;
@@ -264,7 +265,8 @@ int ompi_btl_openib_connect_base_select_for_local_port(mca_btl_openib_module_t *
         strcat(msg, available[i]->cbc_name);
 
         rc = available[i]->cbc_query(btl, &cpcs[cpc_index]);
-        if (OMPI_ERR_NOT_SUPPORTED == rc || OMPI_ERR_UNREACH == rc) {
+        if (OMPI_ERR_NOT_SUPPORTED == OPAL_SOS_GET_ERROR_CODE(rc) ||
+	    OMPI_ERR_UNREACH == OPAL_SOS_GET_ERROR_CODE(rc)) {
             continue;
         } else if (OMPI_SUCCESS != rc) {
             free(cpcs);

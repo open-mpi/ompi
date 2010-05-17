@@ -195,6 +195,8 @@
 #include "ompi/attribute/attribute.h"
 #include "opal/class/opal_bitmap.h"
 #include "opal/threads/mutex.h"
+#include "opal/util/opal_sos.h"
+
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/communicator/communicator.h"  /* ompi_communicator_t generated in [COPY|DELETE]_ATTR_CALLBACKS */
@@ -1176,7 +1178,7 @@ static int get_value(opal_hash_table_t *attr_hash, int key,
     ret = opal_hash_table_get_value_uint32(keyval_hash, key, 
                                            (void**) &keyval);
 
-    if (OMPI_ERR_NOT_FOUND == ret) {
+    if (OMPI_ERR_NOT_FOUND == OPAL_SOS_GET_ERROR_CODE(ret)) {
         OPAL_THREAD_UNLOCK(&alock);
         return MPI_KEYVAL_INVALID;
     }

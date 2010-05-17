@@ -53,6 +53,7 @@
 #include "opal/util/stacktrace.h"
 #include "opal/util/keyval_parse.h"
 #include "opal/util/sys_limits.h"
+#include "opal/util/opal_sos.h"
 
 #if OPAL_CC_USE_PRAGMA_IDENT
 #pragma ident OPAL_IDENT_STRING
@@ -71,7 +72,7 @@ opal_err2str(int errnum)
 {
     const char *retval;
 
-    switch (errnum) {
+    switch (OPAL_SOS_GET_ERROR_CODE(errnum)) {
     case OPAL_SUCCESS:
         retval = "Success";
         break;
@@ -222,6 +223,9 @@ opal_init_util(int* pargc, char*** pargv)
 
     /* initialize the memory allocator */
     opal_malloc_init();
+
+    /* initialize the OPAL SOS system */
+    opal_sos_init();
 
     /* initialize the output system */
     opal_output_init();

@@ -404,7 +404,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
     }
 
     if (mca_bml_r2.show_unreach_errors && 
-        OMPI_ERR_UNREACH == ret) {
+        OMPI_ERR_UNREACH == OPAL_SOS_GET_ERROR_CODE(ret)) {
         orte_show_help("help-mca-bml-r2.txt",
                        "unreachable proc",
                        true, 

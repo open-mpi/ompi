@@ -348,7 +348,7 @@ void orte_info_open_components(void)
     }
     map = OBJ_NEW(orte_info_component_map_t);
     map->type = strdup("notifier");
-    map->components = &mca_notifier_base_components_available;
+    map->components = &orte_notifier_base_components_available;
     opal_pointer_array_add(&component_map, map);
     
 #if !ORTE_DISABLE_FULL_SUPPORT

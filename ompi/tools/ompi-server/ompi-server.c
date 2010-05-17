@@ -46,6 +46,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/util/cmd_line.h"
 #include "opal/util/output.h"
+#include "opal/util/opal_sos.h"
 #include "orte/util/show_help.h"
 #include "opal/util/daemon_init.h"
 #include "opal/runtime/opal.h"

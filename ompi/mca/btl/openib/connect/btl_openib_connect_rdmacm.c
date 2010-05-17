@@ -32,6 +32,7 @@
 
 #include "opal/util/output.h"
 #include "opal/util/error.h"
+#include "opal/util/opal_sos.h"
 #include "orte/util/show_help.h"
 
 #include "btl_openib_fd.h"
@@ -1912,7 +1913,7 @@ out3:
 out1:
     free(*cpc);
 out:
-    if (OMPI_ERR_NOT_SUPPORTED == rc) {
+    if (OMPI_ERR_NOT_SUPPORTED == OPAL_SOS_GET_ERROR_CODE(rc)) {
         opal_output_verbose(5, mca_btl_base_output,
                             "openib BTL: rdmacm CPC unavailable for use on %s:%d; skipped",
                             ibv_get_device_name(openib_btl->device->ib_dev),

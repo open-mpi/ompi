@@ -32,6 +32,7 @@
 #include "opal/class/opal_bitmap.h"
 #include "opal/util/output.h"
 #include "opal/util/arch.h"
+#include "opal/util/opal_sos.h"
 
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
@@ -291,7 +292,7 @@ static int create_srq(mca_btl_openib_module_t *openib_btl)
 
     /* Check if our device supports modify srq ability */
     rc = check_if_device_support_modify_srq(openib_btl);
-    if(OMPI_ERR_NOT_SUPPORTED == rc) {
+    if(OMPI_ERR_NOT_SUPPORTED == OPAL_SOS_GET_ERROR_CODE(rc)) {
         device_support_modify_srq = false;
     } else if(OMPI_SUCCESS != rc) {
         mca_btl_openib_show_init_error(__FILE__, __LINE__,
@@ -481,7 +482,8 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
     ret = ompi_btl_openib_ini_query(endpoint->rem_info.rem_vendor_id,
                           endpoint->rem_info.rem_vendor_part_id, &values);
 
-    if (OMPI_SUCCESS != ret && OMPI_ERR_NOT_FOUND != ret) {
+    if (OMPI_SUCCESS != ret &&
+        OMPI_ERR_NOT_FOUND != OPAL_SOS_GET_ERROR_CODE(ret)) {
         orte_show_help("help-mpi-btl-openib.txt",
                        "error in device init", true,
                        orte_process_info.nodename,
@@ -1586,7 +1588,7 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
         OPAL_THREAD_LOCK(&ep->endpoint_lock);
         rc = check_endpoint_state(ep, descriptor, &ep->pending_put_frags);
         OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
-        if(OMPI_ERR_RESOURCE_BUSY == rc)
+        if(OMPI_ERR_RESOURCE_BUSY == OPAL_SOS_GET_ERROR_CODE(rc))
             return OMPI_SUCCESS;
         if(OMPI_SUCCESS != rc)
             return rc;
@@ -1657,7 +1659,7 @@ int mca_btl_openib_get(mca_btl_base_module_t* btl,
         OPAL_THREAD_LOCK(&ep->endpoint_lock);
         rc = check_endpoint_state(ep, descriptor, &ep->pending_get_frags);
         OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
-        if(OMPI_ERR_RESOURCE_BUSY == rc)
+        if(OMPI_ERR_RESOURCE_BUSY == OPAL_SOS_GET_ERROR_CODE(rc))
             return OMPI_SUCCESS;
         if(OMPI_SUCCESS != rc)
             return rc;

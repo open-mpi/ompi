@@ -630,7 +630,7 @@ char *mca_base_param_environ_variable(const char *type,
     }
 
     id = mca_base_param_find(type, component, param);
-    if (OPAL_ERROR != id) {
+    if (OPAL_SUCCESS == id) {
         array = OPAL_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
         ret = strdup(array[id].mbp_env_var_name);
     } else {

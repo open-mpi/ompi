@@ -46,7 +46,7 @@ void mca_pml_ob1_recv_request_process_pending(void)
         if( OPAL_UNLIKELY(NULL == recvreq) )
             break;
         recvreq->req_pending = false;
-        if(mca_pml_ob1_recv_request_schedule_exclusive(recvreq, NULL) == 
+        if(OPAL_SOS_GET_ERROR_CODE(mca_pml_ob1_recv_request_schedule_exclusive(recvreq, NULL)) == 
                 OMPI_ERR_OUT_OF_RESOURCE)
             break;
     }
@@ -384,7 +384,7 @@ int mca_pml_ob1_recv_request_get_frag( mca_pml_ob1_rdma_frag_t* frag )
     /* queue up get request */
     rc = mca_bml_base_get(bml_btl,descriptor);
     if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
-        if(OMPI_ERR_OUT_OF_RESOURCE == rc) {
+        if(OMPI_ERR_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc)) {
             mca_bml_base_free(bml_btl, descriptor);
             OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
             opal_list_append(&mca_pml_ob1.rdma_pending,

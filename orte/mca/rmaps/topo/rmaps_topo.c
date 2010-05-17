@@ -31,6 +31,7 @@
 
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/trace.h"
+#include "opal/util/opal_sos.h"
 #include "opal/mca/carto/base/base.h"
 
 #include "orte/util/show_help.h"
@@ -117,7 +118,7 @@ static int map_app_by_node(
              * since the node is fully used up. For now, just don't report
              * an error
              */
-            if (ORTE_ERR_NODE_FULLY_USED != rc) {
+            if (ORTE_ERR_NODE_FULLY_USED != OPAL_SOS_GET_ERROR_CODE(rc)) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
@@ -224,7 +225,7 @@ static int map_app_by_slot(
                  * since the node is fully used up. For now, just don't report
                  * an error
                  */
-                if (ORTE_ERR_NODE_FULLY_USED != rc) {
+                if (ORTE_ERR_NODE_FULLY_USED != OPAL_SOS_GET_ERROR_CODE(rc)) {
                     ORTE_ERROR_LOG(rc);
                     return rc;
                 }
@@ -241,7 +242,7 @@ static int map_app_by_slot(
             /* if we have fully used up this node
              * OR we are at our ppn and loadbalancing, then break from the loop 
              */
-            if (ORTE_ERR_NODE_FULLY_USED == rc ||
+            if (ORTE_ERR_NODE_FULLY_USED == OPAL_SOS_GET_ERROR_CODE(rc) ||
                 (orte_rmaps_base.loadbalance && (int)node->num_procs >= ppn)) {
                 break;
             }
@@ -253,7 +254,7 @@ static int map_app_by_slot(
          *
          */
         if (i < (num_slots_to_take-1) &&
-            ORTE_ERR_NODE_FULLY_USED != rc &&
+            ORTE_ERR_NODE_FULLY_USED != OPAL_SOS_GET_ERROR_CODE(rc) &&
             (orte_rmaps_base.loadbalance && (int)node->num_procs < ppn)) {
             continue;
         }

@@ -33,6 +33,7 @@
 
 #include "opal/util/error.h"
 #include "opal/util/output.h"
+#include "opal/util/opal_sos.h"
 #include "opal/runtime/opal.h"
 
 #include "orte/util/show_help.h"
@@ -137,7 +138,7 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
     return ORTE_SUCCESS;
     
 error:
-    if (ORTE_ERR_SILENT != ret) {
+    if (ORTE_ERR_SILENT != OPAL_SOS_GET_ERROR_CODE(ret)) {
         orte_show_help("help-orte-runtime",
                        "orte_init:startup:internal-failure",
                        true, error, ORTE_ERROR_NAME(ret), ret);

@@ -29,7 +29,7 @@
 #endif
 
 #include "opal/event/event.h"
-#include "orte/util/show_help.h"
+#include "opal/util/opal_sos.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
 

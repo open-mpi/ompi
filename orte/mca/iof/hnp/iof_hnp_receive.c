@@ -35,6 +35,7 @@
 #endif
 #endif
 
+#include "opal/util/opal_sos.h"
 
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"

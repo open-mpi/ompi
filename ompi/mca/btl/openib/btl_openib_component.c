@@ -1035,8 +1035,8 @@ static int prepare_device_for_use(mca_btl_openib_device_t *device)
     if (OMPI_SUCCESS != rc) {
         /* If we're "out of memory", this usually means that we ran
            out of registered memory, so show that error message */
-        if (OMPI_ERR_OUT_OF_RESOURCE == rc ||
-            OMPI_ERR_TEMP_OUT_OF_RESOURCE == rc) {
+        if (OMPI_ERR_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc) ||
+            OMPI_ERR_TEMP_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc)) {
             errno = ENOMEM;
             mca_btl_openib_show_init_error(__FILE__, __LINE__,
                                            "ompi_free_list_init_ex_new",
@@ -1071,8 +1071,8 @@ static int prepare_device_for_use(mca_btl_openib_device_t *device)
             /* If we're "out of memory", this usually means that we
                ran out of registered memory, so show that error
                message */
-            if (OMPI_ERR_OUT_OF_RESOURCE == rc ||
-                OMPI_ERR_TEMP_OUT_OF_RESOURCE == rc) {
+            if (OMPI_ERR_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc) ||
+                OMPI_ERR_TEMP_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc)) {
                 errno = ENOMEM;
                 mca_btl_openib_show_init_error(__FILE__, __LINE__,
                                                "ompi_free_list_init_ex_new",
@@ -1567,11 +1567,12 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
     ret = ompi_btl_openib_ini_query(device->ib_dev_attr.vendor_id,
                                     device->ib_dev_attr.vendor_part_id,
                                     &values);
-    if (OMPI_SUCCESS != ret && OMPI_ERR_NOT_FOUND != ret) {
+    if (OMPI_SUCCESS != ret &&
+        OMPI_ERR_NOT_FOUND != OPAL_SOS_GET_ERROR_CODE(ret)) {
         /* If we get a serious error, propagate it upwards */
         goto error;
     }
-    if (OMPI_ERR_NOT_FOUND == ret) {
+    if (OMPI_ERR_NOT_FOUND == OPAL_SOS_GET_ERROR_CODE(ret)) {
         /* If we didn't find a matching device in the INI files, output a
            warning that we're using default values (unless overridden
            that we don't want to see these warnings) */
@@ -1587,7 +1588,8 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
     /* Note that even if we don't find default values, "values" will
        be set indicating that it does not have good values */
     ret = ompi_btl_openib_ini_query(0, 0, &default_values);
-    if (OMPI_SUCCESS != ret && OMPI_ERR_NOT_FOUND != ret) {
+    if (OMPI_SUCCESS != ret &&
+        OMPI_ERR_NOT_FOUND != OPAL_SOS_GET_ERROR_CODE(ret)) {
         /* If we get a serious error, propagate it upwards */
         goto error;
     }
@@ -1807,7 +1809,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
             if (OMPI_SUCCESS != ret) {
                 /* Out of bounds error indicates that we hit max btl number
                  * don't propagate the error to the caller */
-                if (OMPI_ERR_VALUE_OUT_OF_BOUNDS == ret) {
+                if (OMPI_ERR_VALUE_OUT_OF_BOUNDS == OPAL_SOS_GET_ERROR_CODE(ret)) {
                     ret = OMPI_SUCCESS;
                 }
                 break;
@@ -2722,7 +2724,7 @@ btl_openib_component_init(int *num_btl_modules,
         /* If we get NOT_SUPPORTED, then no CPC was found for this
            port.  But that's not a fatal error -- just keep going;
            let's see if we find any usable openib modules or not. */
-        if (OMPI_ERR_NOT_SUPPORTED == ret) {
+        if (OMPI_ERR_NOT_SUPPORTED == OPAL_SOS_GET_ERROR_CODE(ret)) {
             continue;
         } else if (OMPI_SUCCESS != ret) {
             /* All others *are* fatal.  Note that we already did a
@@ -2877,8 +2879,8 @@ static int progress_no_credits_pending_frags(mca_btl_base_endpoint_t *ep)
                    If it fails because of another error, return the
                    error upward. */
                 rc = mca_btl_openib_endpoint_post_send(ep, to_send_frag(frag));
-                if (OPAL_UNLIKELY(OMPI_SUCCESS != rc && 
-                                  OMPI_ERR_RESOURCE_BUSY != rc)) {
+                if (OPAL_UNLIKELY(OMPI_SUCCESS != rc &&
+                                  OMPI_ERR_RESOURCE_BUSY != OPAL_SOS_GET_ERROR_CODE(rc))) {
                     OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
                     return rc;
                 }
@@ -2904,8 +2906,8 @@ void mca_btl_openib_frag_progress_pending_put_get(mca_btl_base_endpoint_t *ep,
         OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
         if(NULL == frag)
             break;
-        if(mca_btl_openib_get((mca_btl_base_module_t *)openib_btl, ep,
-                    &to_base_frag(frag)->base) == OMPI_ERR_OUT_OF_RESOURCE)
+        if(OPAL_SOS_GET_ERROR_CODE(mca_btl_openib_get((mca_btl_base_module_t *)openib_btl, ep,
+                 &to_base_frag(frag)->base)) == OMPI_ERR_OUT_OF_RESOURCE)
             break;
     }
 
@@ -2916,8 +2918,8 @@ void mca_btl_openib_frag_progress_pending_put_get(mca_btl_base_endpoint_t *ep,
         OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
         if(NULL == frag)
             break;
-        if(mca_btl_openib_put((mca_btl_base_module_t*)openib_btl, ep,
-                    &to_base_frag(frag)->base) == OMPI_ERR_OUT_OF_RESOURCE)
+        if(OPAL_SOS_GET_ERROR_CODE(mca_btl_openib_put((mca_btl_base_module_t*)openib_btl, ep,
+                 &to_base_frag(frag)->base)) == OMPI_ERR_OUT_OF_RESOURCE)
             break;
     }
 }
@@ -3293,14 +3295,13 @@ error:
                     cq_name[cq], btl_openib_component_status_to_string(wc->status),
                     wc->status, wc->wr_id, 
                     wc->opcode, wc->vendor_err, qp));
-        orte_notifier.peer(ORTE_NOTIFIER_INFRA, ORTE_ERR_COMM_FAILURE,
-                           remote_proc ? &remote_proc->proc_name : NULL,
-                           "\n\tIB polling %s with status %s "
-                           "status number %d for wr_id %" PRIx64 " opcode %d vendor error %d qp_idx %d",
-                           cq_name[cq], 
-                           btl_openib_component_status_to_string(wc->status),
-                           wc->status, wc->wr_id, 
-                           wc->opcode, wc->vendor_err, qp);
+        orte_notifier.log_peer(ORTE_NOTIFIER_CRIT, ORTE_ERR_COMM_FAILURE,
+                               remote_proc ? &remote_proc->proc_name : NULL,
+                               "\n\tIB polling %s with status %s "
+                               "status number %d for wr_id %llu opcode %d vendor error %d qp_idx %d",
+                               cq_name[cq], btl_openib_component_status_to_string(wc->status),
+                               wc->status, wc->wr_id, 
+			       wc->opcode, wc->vendor_err, qp);
     }
 
     if (IBV_WC_RNR_RETRY_EXC_ERR == wc->status ||
@@ -3319,23 +3320,23 @@ error:
                            "srq rnr retry exceeded", true,
                            orte_process_info.nodename, device_name,
                            peer_hostname);
-            orte_notifier.help(ORTE_NOTIFIER_INFRA, ORTE_ERR_COMM_FAILURE,
-                                   "help-mpi-btl-openib.txt",
-                                   BTL_OPENIB_QP_TYPE_PP(qp) ? 
-                                   "pp rnr retry exceeded" : 
-                                   "srq rnr retry exceeded",
-                                   orte_process_info.nodename, device_name,
-                                   peer_hostname);
+            orte_notifier.show_help(ORTE_NOTIFIER_CRIT, ORTE_ERR_COMM_FAILURE,
+                                    "help-mpi-btl-openib.txt",
+                                    BTL_OPENIB_QP_TYPE_PP(qp) ? 
+                                    "pp rnr retry exceeded" : 
+                                    "srq rnr retry exceeded",
+                                    orte_process_info.nodename, device_name,
+                                    peer_hostname);
         } else if (IBV_WC_RETRY_EXC_ERR == wc->status) {
             orte_show_help("help-mpi-btl-openib.txt", 
                            "pp retry exceeded", true,
                            orte_process_info.nodename,
                            device_name, peer_hostname);
-            orte_notifier.help(ORTE_NOTIFIER_INFRA, ORTE_ERR_COMM_FAILURE,
-                                   "help-mpi-btl-openib.txt", 
-                                   "pp retry exceeded",
-                                   orte_process_info.nodename,
-                                   device_name, peer_hostname);
+            orte_notifier.show_help(ORTE_NOTIFIER_CRIT, ORTE_ERR_COMM_FAILURE,
+                                    "help-mpi-btl-openib.txt", 
+                                    "pp retry exceeded",
+                                    orte_process_info.nodename,
+                                    device_name, peer_hostname);
         }
     }
 

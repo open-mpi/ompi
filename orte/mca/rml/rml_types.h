@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -179,6 +180,9 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_msg_packet_t);
 
 /* tag for receiving heartbeats */
 #define ORTE_RML_TAG_HEARTBEAT              39
+
+/* notifier data */
+#define ORTE_RML_TAG_NOTIFIER_HNP           40
 
 #define ORTE_RML_TAG_MAX                   100
 

@@ -102,7 +102,7 @@ static void mca_pml_dr_error_completion(
     mca_pml_dr_vfrag_t* vfrag = (mca_pml_dr_vfrag_t*)descriptor->des_cbdata;
     mca_pml_dr_send_request_t* sendreq = (mca_pml_dr_send_request_t*)vfrag->vf_send.pval;
 
-    switch(status) {
+    switch(OPAL_SOS_GET_ERROR_CODE(status)) {
         case OMPI_ERR_UNREACH:
         case OMPI_ERR_CONNECTION_FAILED:
         case OMPI_ERR_CONNECTION_REFUSED:

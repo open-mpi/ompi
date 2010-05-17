@@ -47,6 +47,7 @@
 #include "opal/runtime/opal.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/util/output.h"
+#include "opal/util/opal_sos.h"
 #include "opal/util/argv.h"
 #include "opal/mca/sysinfo/sysinfo_types.h"
 
@@ -854,7 +855,7 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
         /* setup for next cycle */
         n = 1;
     }
-    if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER == rc) {
+    if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER == OPAL_SOS_GET_ERROR_CODE(rc)) {
         rc = ORTE_SUCCESS;
     }
     

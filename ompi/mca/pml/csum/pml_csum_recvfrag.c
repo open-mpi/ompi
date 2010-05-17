@@ -14,6 +14,7 @@
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -167,7 +168,7 @@ void mca_pml_csum_recv_frag_callback_match(mca_btl_base_module_t* btl,
     if (csum_received != csum) {
         opal_output(0, "%s:%s:%d: Invalid \'match header\' - received csum:0x%04x  != computed csum:0x%04x\n",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, csum_received, csum);
-        orte_notifier.log(ORTE_NOTIFIER_INFRA, 1,
+        orte_notifier.log(ORTE_NOTIFIER_CRIT, 1,
                           "Checksum header violation: job %s file %s line %d",
                           (NULL == orte_job_ident) ? "UNKNOWN" : orte_job_ident,
                           __FILE__, __LINE__);
@@ -298,7 +299,7 @@ void mca_pml_csum_recv_frag_callback_match(mca_btl_base_module_t* btl,
             if (csum_data != hdr->hdr_csum) {
                 opal_output(0, "%s:%s:%d: Invalid \'match data\' - received csum:0x%x  != computed csum:0x%x\n",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, hdr->hdr_csum, csum_data);
-                orte_notifier.log(ORTE_NOTIFIER_INFRA, 1,
+                orte_notifier.log(ORTE_NOTIFIER_CRIT, 1,
                                   "Checksum data violation: job %s file %s line %d",
                                   (NULL == orte_job_ident) ? "UNKNOWN" : orte_job_ident,
                                   __FILE__, __LINE__);
@@ -347,7 +348,7 @@ void mca_pml_csum_recv_frag_callback_rndv(mca_btl_base_module_t* btl,
     if (csum_received != csum) {
         opal_output(0, "%s:%s:%d: Invalid \'rndv header\' - received csum:0x%04x  != computed csum:0x%04x\n",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, csum_received, csum);
-        orte_notifier.log(ORTE_NOTIFIER_INFRA, 1,
+        orte_notifier.log(ORTE_NOTIFIER_CRIT, 1,
                           "Checksum header violation: job %s file %s line %d",
                           (NULL == orte_job_ident) ? "UNKNOWN" : orte_job_ident,
                           __FILE__, __LINE__);
@@ -405,7 +406,7 @@ void mca_pml_csum_recv_frag_callback_ack(mca_btl_base_module_t* btl,
     if (csum_received != csum) {
         opal_output(0, "%s:%s:%d: Invalid \'ACK header\' - received csum:0x%04x  != computed csum:0x%04x\n",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, csum_received, csum);
-        orte_notifier.log(ORTE_NOTIFIER_INFRA, 1,
+        orte_notifier.log(ORTE_NOTIFIER_CRIT, 1,
                           "Checksum header violation: job %s file %s line %d",
                           (NULL == orte_job_ident) ? "UNKNOWN" : orte_job_ident,
                           __FILE__, __LINE__);
@@ -458,7 +459,7 @@ void mca_pml_csum_recv_frag_callback_frag(mca_btl_base_module_t* btl,
     if(csum_received != csum) {
         opal_output(0, "%s:%s:%d: Invalid \'frag header\' - received csum:0x%04x  != computed csum:0x%04x\n",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, csum_received, csum);
-        orte_notifier.log(ORTE_NOTIFIER_INFRA, 1,
+        orte_notifier.log(ORTE_NOTIFIER_CRIT, 1,
                           "Checksum header violation: job %s file %s line %d",
                           (NULL == orte_job_ident) ? "UNKNOWN" : orte_job_ident,
                           __FILE__, __LINE__);
@@ -500,7 +501,7 @@ void mca_pml_csum_recv_frag_callback_put(mca_btl_base_module_t* btl,
     if(csum_received != csum) {
         opal_output(0, "%s:%s:%d: Invalid \'PUT header\' - received csum:0x%04x  != computed csum:0x%04x\n",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, csum_received, csum);
-        orte_notifier.log(ORTE_NOTIFIER_INFRA, 1,
+        orte_notifier.log(ORTE_NOTIFIER_CRIT, 1,
                           "Checksum header violation: job %s file %s line %d",
                           (NULL == orte_job_ident) ? "UNKNOWN" : orte_job_ident,
                           __FILE__, __LINE__);
@@ -542,7 +543,7 @@ void mca_pml_csum_recv_frag_callback_fin(mca_btl_base_module_t* btl,
     if(csum_received != csum) {
         opal_output(0, "%s:%s:%d: Invalid \'FIN header\' - received csum:0x%04x  != computed csum:0x%04x\n",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, csum_received, csum);
-        orte_notifier.log(ORTE_NOTIFIER_INFRA, 1,
+        orte_notifier.log(ORTE_NOTIFIER_CRIT, 1,
                           "Checksum header violation: job %s file %s line %d",
                           (NULL == orte_job_ident) ? "UNKNOWN" : orte_job_ident,
                           __FILE__, __LINE__);

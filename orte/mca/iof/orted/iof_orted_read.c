@@ -29,6 +29,7 @@
 #endif  /* HAVE_STRING_H */
 
 #include "opal/dss/dss.h"
+#include "opal/util/opal_sos.h"
 
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"

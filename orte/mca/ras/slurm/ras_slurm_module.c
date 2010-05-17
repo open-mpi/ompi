@@ -25,6 +25,7 @@
 
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
+#include "opal/util/opal_sos.h"
 
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"

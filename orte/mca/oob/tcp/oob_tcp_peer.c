@@ -179,7 +179,7 @@ int mca_oob_tcp_peer_send(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg)
                append to the peer_send_queue. */
             OPAL_THREAD_UNLOCK(&peer->peer_lock);
             rc = mca_oob_tcp_resolve(peer);
-            if (ORTE_ERR_ADDRESSEE_UNKNOWN != rc) {
+            if (ORTE_ERR_ADDRESSEE_UNKNOWN != OPAL_SOS_GET_ERROR_CODE(rc)) {
                 OPAL_THREAD_LOCK(&peer->peer_lock);
                 opal_list_append(&peer->peer_send_queue,
                                  (opal_list_item_t*)msg);
@@ -626,7 +626,7 @@ void mca_oob_tcp_peer_shutdown(mca_oob_tcp_peer_t* peer)
                     ORTE_NAME_PRINT(&(peer->peer_name)),
                     (NULL == host) ? "NULL" : host);
         /* provide a notifier message */
-        orte_notifier.peer(ORTE_NOTIFIER_INFRA, ORTE_ERR_COMM_FAILURE, &(peer->peer_name),
+        orte_notifier.log_peer(ORTE_NOTIFIER_CRIT, ORTE_ERR_COMM_FAILURE, &(peer->peer_name),
                            "OOB Connection retries exceeded.  Can not communicate with peer");
         
         /* There are cases during the initial connection setup where

@@ -30,6 +30,7 @@
 #endif  /* HAVE_STRING_H */
 
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/util/opal_sos.h"
 
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -135,7 +136,7 @@ static int npernode(orte_job_t *jdata)
                 /** if the code is ORTE_ERR_NODE_FULLY_USED, and we still have
                  * more procs to place, then that is an error
                  */
-                if (ORTE_ERR_NODE_FULLY_USED != rc ||
+                if (ORTE_ERR_NODE_FULLY_USED != OPAL_SOS_GET_ERROR_CODE(rc) ||
                     j < orte_rmaps_base.npernode-1) {
                     ORTE_ERROR_LOG(rc);
                     OBJ_RELEASE(node);
@@ -227,7 +228,7 @@ static int nperboard(orte_job_t *jdata)
                     /** if the code is ORTE_ERR_NODE_FULLY_USED, and we still have
                      * more procs to place, then that is an error
                      */
-                    if (ORTE_ERR_NODE_FULLY_USED != rc ||
+                    if (ORTE_ERR_NODE_FULLY_USED != OPAL_SOS_GET_ERROR_CODE(rc) ||
                         j < orte_rmaps_base.nperboard-1) {
                         ORTE_ERROR_LOG(rc);
                         OBJ_RELEASE(node);
@@ -323,7 +324,7 @@ static int npersocket(orte_job_t *jdata)
                         /** if the code is ORTE_ERR_NODE_FULLY_USED, and we still have
                          * more procs to place, then that is an error
                          */
-                        if (ORTE_ERR_NODE_FULLY_USED != rc ||
+                        if (ORTE_ERR_NODE_FULLY_USED != OPAL_SOS_GET_ERROR_CODE(rc) ||
                             j < orte_rmaps_base.npersocket-1) {
                             ORTE_ERROR_LOG(rc);
                             OBJ_RELEASE(node);
@@ -425,7 +426,7 @@ static int loadbalance(orte_job_t *jdata)
                     /** if the code is ORTE_ERR_NODE_FULLY_USED, and we still have
                      * more procs to place, then that is an error
                      */
-                    if (ORTE_ERR_NODE_FULLY_USED != rc ||
+                    if (ORTE_ERR_NODE_FULLY_USED != OPAL_SOS_GET_ERROR_CODE(rc) ||
                         j < ppn-1) {
                         ORTE_ERROR_LOG(rc);
                         goto error;
@@ -456,7 +457,7 @@ static int loadbalance(orte_job_t *jdata)
                                                                  &node_list, jdata->map->oversubscribe,
                                                                  false, NULL))) {
                 /* if the code is not ORTE_ERR_NODE_FULLY_USED, then that is an error */
-                if (ORTE_ERR_NODE_FULLY_USED != rc) {
+                if (ORTE_ERR_NODE_FULLY_USED != OPAL_SOS_GET_ERROR_CODE(rc)) {
                     ORTE_ERROR_LOG(rc);
                     goto error;
                 }

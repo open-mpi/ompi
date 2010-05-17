@@ -34,6 +34,7 @@
 
 #include "opal/util/argv.h"
 #include "opal/util/path.h"
+#include "opal/util/opal_sos.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/paffinity/paffinity.h"

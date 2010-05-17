@@ -26,6 +26,7 @@
 
 #include "orte/util/proc_info.h"
 #include "opal/dss/dss.h"
+#include "opal/util/opal_sos.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/odls/odls_types.h"

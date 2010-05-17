@@ -48,6 +48,7 @@
 #include "opal/util/path.h"
 #include "opal/align.h"
 #include "opal/threads/mutex.h"
+#include "opal/util/opal_sos.h"
 
 #include "orte/mca/rml/rml.h"
 #include "orte/util/name_fns.h"

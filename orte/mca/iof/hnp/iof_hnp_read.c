@@ -28,6 +28,7 @@
 #include <string.h>
 #endif  /* HAVE_STRING_H */
 
+#include "opal/util/opal_sos.h"
 #include "opal/dss/dss.h"
 
 #include "orte/mca/rml/rml_types.h"
@@ -184,7 +185,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                  */
                 if( ORTE_SUCCESS != (rc = orte_iof_hnp_send_data_to_endpoint(&sink->daemon, &sink->name, ORTE_IOF_STDIN, data, numbytes))) {
                     /* if the addressee is unknown, remove the sink from the list */
-                    if( ORTE_ERR_ADDRESSEE_UNKNOWN == rc ) {
+                    if( ORTE_ERR_ADDRESSEE_UNKNOWN == OPAL_SOS_GET_ERROR_CODE(rc) ) {
                         prev_item = opal_list_get_prev(item);
                         opal_list_remove_item(&mca_iof_hnp_component.sinks, item);
                         OBJ_RELEASE(item);

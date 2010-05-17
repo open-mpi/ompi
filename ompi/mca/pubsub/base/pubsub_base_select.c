@@ -18,6 +18,7 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/util/opal_sos.h"
 
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/base/mca_base_component_repository.h"
@@ -40,7 +41,7 @@ int ompi_pubsub_base_select(void)
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component))) {
         /* it is okay not to find any executable components */
-        if (OMPI_ERR_NOT_FOUND == ret) {
+        if (OMPI_ERR_NOT_FOUND == OPAL_SOS_GET_ERROR_CODE(ret)) {
             ret = OPAL_SUCCESS;
         }
         goto cleanup;

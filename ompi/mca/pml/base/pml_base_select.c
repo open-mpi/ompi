@@ -25,6 +25,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/util/output.h"
+#include "opal/util/opal_sos.h"
 #include "orte/util/show_help.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/mca.h"
@@ -357,7 +358,7 @@ mca_pml_base_pml_check_selected(const char *my_pml,
                           (void**) &remote_pml, &size);
     
     /* if modex isn't implemented, then just assume all is well... */
-    if (OMPI_ERR_NOT_IMPLEMENTED == ret) {
+    if (OMPI_ERR_NOT_IMPLEMENTED == OPAL_SOS_GET_ERROR_CODE(ret)) {
         opal_output_verbose( 10, mca_pml_base_output,
                             "check:select: modex not implemented");
         return OMPI_SUCCESS;

@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "opal/util/printf.h"
+#include "opal/util/opal_sos.h"
 #include "opal/threads/tsd.h"
 
 #include "orte/mca/errmgr/errmgr.h"

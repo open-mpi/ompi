@@ -38,6 +38,7 @@
 
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
+#include "opal/util/opal_sos.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/argv.h"
 #include "opal/class/opal_pointer_array.h"
@@ -400,7 +401,8 @@ static int rte_finalize(void)
 
 static void rte_abort(int error_code, bool report)
 {
-    if (ORTE_ERR_SOCKET_NOT_AVAILABLE == error_code && slurm20) {
+    if (ORTE_ERR_SOCKET_NOT_AVAILABLE == OPAL_SOS_GET_ERROR_CODE(error_code) &&
+        slurm20) {
         /* exit silently with a special error code for slurm 2.0 */
         orte_ess_base_app_abort(108, false);
     } else {

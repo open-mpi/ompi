@@ -43,6 +43,7 @@
 #endif
 
 #include "opal/util/argv.h"
+#include "opal/util/opal_sos.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/odls/odls_types.h"
