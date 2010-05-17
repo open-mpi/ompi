@@ -87,8 +87,12 @@ typedef uint8_t orte_errmgr_stack_state_t;
  */
 
 #define ORTE_ERROR_NAME(n)  opal_strerror(n)
-#define ORTE_ERROR_LOG(n) \
-    orte_errmgr.log(n, __FILE__, __LINE__)
+#define ORTE_ERROR_LOG(n)                       \
+    if (true == OPAL_SOS_IS_NATIVE(n)) {        \
+        orte_errmgr.log(n, __FILE__, __LINE__); \
+    } else {                                    \
+        OPAL_SOS_LOG(n);                        \
+    }
 
 /****   FRAMEWORK API FUNCTIONS   ****/
 
