@@ -2201,6 +2201,10 @@ int mca_base_param_find_int(const mca_base_component_t *component,
     int len, i;
     int rc=OPAL_ERR_NOT_FOUND;
     
+    if (NULL == env) {
+        return OPAL_ERR_NOT_FOUND;
+    }
+    
     asprintf(&tmp, "%s%s_%s_%s", mca_prefix, component->mca_type_name,
              component->mca_component_name, param_name);
     len = strlen(tmp);
@@ -2226,6 +2230,10 @@ int mca_base_param_find_int_name(const char *type,
     int len, i;
     int rc=OPAL_ERR_NOT_FOUND;
     
+    if (NULL == env) {
+        return OPAL_ERR_NOT_FOUND;
+    }
+    
     asprintf(&tmp, "%s%s_%s", mca_prefix, type, param_name);
     len = strlen(tmp);
     for (i=0; NULL != env[i]; i++) {
@@ -2249,6 +2257,10 @@ int mca_base_param_find_string(const mca_base_component_t *component,
     char *tmp, *ptr;
     int len, i;
     int rc=OPAL_ERR_NOT_FOUND;
+    
+    if (NULL == env) {
+        return OPAL_ERR_NOT_FOUND;
+    }
     
     asprintf(&tmp, "%s%s_%s_%s", mca_prefix, component->mca_type_name,
              component->mca_component_name, param_name);
@@ -2274,6 +2286,10 @@ int mca_base_param_find_string_name(const char *type,
     char *tmp, *ptr;
     int len, i;
     int rc=OPAL_ERR_NOT_FOUND;
+    
+    if (NULL == env) {
+        return OPAL_ERR_NOT_FOUND;
+    }
     
     asprintf(&tmp, "%s%s_%s", mca_prefix, type, param_name);
     len = strlen(tmp);
