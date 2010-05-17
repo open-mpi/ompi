@@ -39,6 +39,7 @@
 #include "opal/constants.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
+#include "opal/util/argv.h"
 
 #ifndef _NSIG
 #define _NSIG 32
@@ -399,6 +400,43 @@ void opal_stackframe_output(int stream)
     } else {
         opal_backtrace_print(stderr);
     }
+}
+
+char *opal_stackframe_output_string(void)
+{
+    int traces_size, i;
+    size_t len;
+    char *output, **traces;
+    
+    len = 0;
+    if (OPAL_SUCCESS != opal_backtrace_buffer(&traces, &traces_size)) {
+        return NULL;
+    }
+    
+    /* Calculate the space needed for the string */
+    for (i = 3; i < traces_size; i++) {
+	    if (NULL == traces[i]) {
+            break;
+        }
+        len += strlen(traces[i]) + 1;
+    }
+    
+    output = (char *) malloc(len + 1);
+    if (NULL == output) {
+        return NULL;
+    }
+    
+    *output = '\0';
+    for (i = 3; i < traces_size; i++) {
+        if (NULL == traces[i]) {
+            break;
+        }
+        strcat(output, traces[i]);
+        strcat(output, "\n");
+    }
+
+    free(traces);
+    return output;
 }
 
 #endif /* OPAL_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__) */
