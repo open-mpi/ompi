@@ -33,6 +33,7 @@
 
 #include "opal_stdint.h"
 #include "opal/util/output.h"
+#include "opal/util/opal_sos.h"
 
 #include "orte/util/show_help.h"
 
@@ -678,7 +679,7 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
         frag = to_send_frag(frag_item);
         /* We need to post this one */
 
-        if(OMPI_ERROR == mca_btl_openib_endpoint_post_send(endpoint, frag))
+        if(OMPI_SUCCESS != mca_btl_openib_endpoint_post_send(endpoint, frag))
             BTL_ERROR(("Error posting send"));
     }
     OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
@@ -706,7 +707,7 @@ int mca_btl_openib_endpoint_send(mca_btl_base_endpoint_t* ep,
         rc = mca_btl_openib_endpoint_post_send(ep, frag);
     }
     OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
-    if (OPAL_UNLIKELY(OMPI_ERR_RESOURCE_BUSY == rc)) {
+    if (OPAL_UNLIKELY(OMPI_ERR_RESOURCE_BUSY == OPAL_SOS_GET_ERROR_CODE(rc))) {
         rc = OMPI_SUCCESS;
     }
 
@@ -890,7 +891,7 @@ static int mca_btl_openib_endpoint_send_eager_rdma(
                      ));
     }
     rc = mca_btl_openib_endpoint_send(endpoint, frag);
-    if (OMPI_SUCCESS == rc ||OMPI_ERR_RESOURCE_BUSY == rc)
+    if (OMPI_SUCCESS == rc || OMPI_ERR_RESOURCE_BUSY == OPAL_SOS_GET_ERROR_CODE(rc))
         return OMPI_SUCCESS;
 
     MCA_BTL_IB_FRAG_RETURN(frag);

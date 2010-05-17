@@ -37,6 +37,7 @@
 #endif
 #endif
 
+#include "opal/util/opal_sos.h"
 
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"

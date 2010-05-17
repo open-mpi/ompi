@@ -27,6 +27,7 @@
 #endif  /* HAVE_SYS_TIME_H */
 
 #include "opal/util/output.h"
+#include "opal/util/opal_sos.h"
 
 #include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -67,7 +68,7 @@ static void allgather_server_recv(int status, orte_process_name_t* sender,
     /* reissue the recv */
     rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ALLGATHER_LIST,
                                  ORTE_RML_NON_PERSISTENT, allgather_server_recv, NULL);
-    if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
+    if (rc != ORTE_SUCCESS && OPAL_SOS_GET_ERROR_CODE(rc) != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(rc);
         allgather_failed = true;
     }
@@ -147,7 +148,7 @@ int orte_grpcomm_base_allgather_list(opal_list_t *names, opal_buffer_t *sbuf, op
         allgather_failed = false;
         rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ALLGATHER_LIST,
                                      ORTE_RML_NON_PERSISTENT, allgather_client_recv, NULL);
-        if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
+        if (rc != ORTE_SUCCESS && OPAL_SOS_GET_ERROR_CODE(rc) != ORTE_ERR_NOT_IMPLEMENTED) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -208,7 +209,7 @@ int orte_grpcomm_base_allgather_list(opal_list_t *names, opal_buffer_t *sbuf, op
     /* post the non-blocking recv */
     rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ALLGATHER_LIST,
                                  ORTE_RML_NON_PERSISTENT, allgather_server_recv, NULL);
-    if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
+    if (rc != ORTE_SUCCESS && OPAL_SOS_GET_ERROR_CODE(rc) != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

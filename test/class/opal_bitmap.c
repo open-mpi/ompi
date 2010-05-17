@@ -8,6 +8,7 @@
 #include "support.h"
 
 #include "opal/class/opal_bitmap.h"
+#include "opal/util/opal_sos.h"
 #include "opal/constants.h"
 
 #define BSIZE 26
@@ -62,12 +63,12 @@ int main(int argc, char *argv[])
 
     PRINT_VALID_ERR;
     err = opal_bitmap_init(NULL, 2);
-    if (err == OPAL_ERR_BAD_PARAM)
+    if (OPAL_SOS_GET_ERROR_CODE(err) == OPAL_ERR_BAD_PARAM)
 	fprintf(error_out, "ERROR: Initialization of bitmap failed\n\n");
 
     PRINT_VALID_ERR;
     err = opal_bitmap_init(&bm, -1);
-    if (err == OPAL_ERR_BAD_PARAM)
+    if (OPAL_SOS_GET_ERROR_CODE(err) == OPAL_ERR_BAD_PARAM)
 	fprintf(error_out, "ERROR: Initialization of bitmap failed \n\n");
 
     err = opal_bitmap_init(&bm, BSIZE);

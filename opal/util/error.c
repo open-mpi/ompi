@@ -30,6 +30,7 @@
 #endif
 
 #include "opal/util/error.h"
+#include "opal/util/opal_sos.h"
 #include "opal/constants.h"
 
 #define MAX_CONVERTERS 5
@@ -94,12 +95,12 @@ opal_perror(int errnum, const char *msg)
 {
     const char* errmsg = opal_strerror_int(errnum);
 
-    if (NULL != msg && errnum != OPAL_ERR_IN_ERRNO) {
+    if (NULL != msg && OPAL_SOS_GET_ERROR_CODE(errnum) != OPAL_ERR_IN_ERRNO) {
         fprintf(stderr, "%s: ", msg);
     }
 
     if (NULL == errmsg) {
-        if (errnum == OPAL_ERR_IN_ERRNO) {
+        if (OPAL_SOS_GET_ERROR_CODE(errnum) == OPAL_ERR_IN_ERRNO) {
             perror(msg);
         } else {
             char *ue_msg = opal_strerror_unknown(errnum);
@@ -147,7 +148,7 @@ opal_strerror_r(int errnum, char *strerrbuf, size_t buflen)
     int ret;
 
     if (NULL == errmsg) {
-        if (errnum == OPAL_ERR_IN_ERRNO) {
+        if (OPAL_SOS_GET_ERROR_CODE(errnum) == OPAL_ERR_IN_ERRNO) {
             char *tmp = strerror(errno);
             strncpy(strerrbuf, tmp, buflen);
             return OPAL_SUCCESS;

@@ -21,6 +21,8 @@
 
 #include <string.h>
 
+#include "opal/util/opal_sos.h"
+
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
 

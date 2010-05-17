@@ -29,6 +29,7 @@
 
 #include "opal/util/argv.h"
 #include "opal/util/if.h"
+#include "opal/util/opal_sos.h"
 #include "opal/mca/paffinity/paffinity.h"
 #include "opal/mca/sysinfo/sysinfo.h"
 #include "opal/mca/sysinfo/base/base.h"

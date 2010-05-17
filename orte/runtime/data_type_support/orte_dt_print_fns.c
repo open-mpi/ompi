@@ -22,6 +22,7 @@
 #include <sys/types.h>
 
 #include "opal/util/argv.h"
+#include "opal/util/opal_sos.h"
 #include "opal/mca/sysinfo/sysinfo.h"
 
 #include "orte/mca/errmgr/errmgr.h"

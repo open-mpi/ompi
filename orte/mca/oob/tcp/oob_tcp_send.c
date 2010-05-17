@@ -21,6 +21,8 @@
 #include "orte/types.h"
 #include "opal/types.h"
 
+#include "opal/util/opal_sos.h"
+
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 
@@ -166,7 +168,7 @@ int mca_oob_tcp_send_nb(
     MCA_OOB_TCP_HDR_HTON(&msg->msg_hdr);
     rc = mca_oob_tcp_peer_send(peer, msg);
     if(rc != ORTE_SUCCESS) {
-        if (rc != ORTE_ERR_ADDRESSEE_UNKNOWN) {
+        if (OPAL_SOS_GET_ERROR_CODE(rc) != ORTE_ERR_ADDRESSEE_UNKNOWN) {
             MCA_OOB_TCP_MSG_RETURN(msg);
         }
         return rc;

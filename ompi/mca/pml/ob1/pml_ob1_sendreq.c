@@ -52,7 +52,7 @@ void mca_pml_ob1_send_request_process_pending(mca_bml_base_btl_t *bml_btl)
 
         switch(pending_type) {
         case MCA_PML_OB1_SEND_PENDING_SCHEDULE:
-            if(mca_pml_ob1_send_request_schedule_exclusive(sendreq) ==
+            if(OPAL_SOS_GET_ERROR_CODE(mca_pml_ob1_send_request_schedule_exclusive(sendreq)) ==
                     OMPI_ERR_OUT_OF_RESOURCE) {
                 return;
             }
@@ -61,8 +61,8 @@ void mca_pml_ob1_send_request_process_pending(mca_bml_base_btl_t *bml_btl)
             send_dst = mca_bml_base_btl_array_find(
                     &sendreq->req_endpoint->btl_eager, bml_btl->btl);
             if( (NULL == send_dst) ||
-                (mca_pml_ob1_send_request_start_btl(sendreq, send_dst) ==
-                 OMPI_ERR_OUT_OF_RESOURCE) ) {
+                (OPAL_SOS_GET_ERROR_CODE(mca_pml_ob1_send_request_start_btl(sendreq, send_dst)) ==
+                      OMPI_ERR_OUT_OF_RESOURCE) ) {
                 /* prepend to the pending list to minimize reordering in case
                  * send_dst != 0 */
                 add_request_to_send_pending(sendreq,
@@ -541,7 +541,7 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
         }
         return OMPI_SUCCESS;
     }
-    switch(rc) {
+    switch(OPAL_SOS_GET_ERROR_CODE(rc)) {
         case OMPI_ERR_RESOURCE_BUSY:
             /* No more resources. Allow the upper level to queue the send */
             rc = OMPI_ERR_OUT_OF_RESOURCE;
@@ -1173,7 +1173,7 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t* frag )
     if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
         mca_bml_base_free(bml_btl, des);
         frag->rdma_length = save_size;
-        if(OMPI_ERR_OUT_OF_RESOURCE == rc) {
+        if(OMPI_ERR_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc)) {
             OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
             opal_list_append(&mca_pml_ob1.rdma_pending, (opal_list_item_t*)frag);
             OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);

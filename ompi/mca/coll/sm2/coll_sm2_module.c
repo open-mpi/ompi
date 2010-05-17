@@ -1174,7 +1174,7 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
         /* get process affinity mask */
         OPAL_PAFFINITY_CPU_ZERO(my_cpu_set);
         ret=opal_paffinity_base_get(&my_cpu_set);
-        if( OPAL_ERR_NOT_FOUND == ret ) {
+        if( OPAL_ERR_NOT_FOUND == OPAL_SOS_GET_ERROR_CODE(ret) ) {
 
             /* pa affinity not set, so socket index will be set to -1 */
             my_socket_index=-1;

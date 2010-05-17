@@ -34,7 +34,7 @@ ompi_init_preconnect_mpi(void)
     char inbuf[1], outbuf[1];
 
     param = mca_base_param_find("mpi", NULL, "preconnect_mpi");
-    if (OMPI_ERROR == param) return OMPI_SUCCESS;
+    if (OMPI_SUCCESS != param) return OMPI_SUCCESS;
     ret = mca_base_param_lookup_int(param, &value);
     if (OMPI_SUCCESS != ret || 0 == value) {
         return OMPI_SUCCESS;

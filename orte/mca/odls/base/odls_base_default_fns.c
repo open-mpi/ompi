@@ -40,6 +40,7 @@
 
 #include "opal/util/opal_environ.h"
 #include "opal/util/argv.h"
+#include "opal/util/opal_sos.h"
 #include "opal/util/os_path.h"
 #include "opal/util/sys_limits.h"
 #include "opal/dss/dss.h"
@@ -738,7 +739,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         /* if the buffer was empty, then we know that all we are doing is
          * launching debugger daemons
          */
-        if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER == rc) {
+        if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER == OPAL_SOS_GET_ERROR_CODE(rc)) {
             goto done;
         }
         *job = ORTE_JOBID_INVALID;
@@ -1970,7 +1971,7 @@ int orte_odls_base_default_deliver_message(orte_jobid_t job, opal_buffer_t *buff
         
         /* if so, send the message */
         rc = orte_rml.send_buffer(child->name, buffer, tag, 0);
-        if (rc < 0 && rc != ORTE_ERR_ADDRESSEE_UNKNOWN) {
+        if (rc < 0 && OPAL_SOS_GET_ERROR_CODE(rc) != ORTE_ERR_ADDRESSEE_UNKNOWN) {
             /* ignore if the addressee is unknown as a race condition could
              * have allowed the child to exit before we send it a barrier
              * due to the vagaries of the event library
@@ -2817,9 +2818,10 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
              * the child object from our local list
              */
             if (child->iof_complete && child->waitpid_recvd) {
-                if (ORTE_ERR_SILENT == orte_errmgr.update_state(ORTE_JOBID_INVALID, ORTE_JOB_STATE_UNDEF,
-                                                                child->name, child->state,
-                                                                child->exit_code)) {
+                rc = orte_errmgr.update_state(ORTE_JOBID_INVALID, ORTE_JOB_STATE_UNDEF,
+                                              child->name, child->state,
+                                              child->exit_code);
+                if (ORTE_ERR_SILENT == OPAL_SOS_GET_ERROR_CODE(rc)) {
                     /* all procs are complete - we are done */
                     break;
                 }
@@ -2839,7 +2841,7 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
     opal_condition_signal(&orte_odls_globals.cond);
     OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
     
-    return rc;    
+    return ORTE_SUCCESS;
 }
 
 int orte_odls_base_get_proc_stats(opal_buffer_t *answer,

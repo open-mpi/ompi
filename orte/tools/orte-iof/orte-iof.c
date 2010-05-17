@@ -60,6 +60,7 @@
 #include "opal/util/cmd_line.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/opal_sos.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/runtime/opal.h"

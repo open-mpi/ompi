@@ -73,6 +73,7 @@
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/opal_sos.h"
 
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_wait.h"
@@ -352,6 +353,17 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                                 ORTE_NAME_PRINT(child->name), child->slot_list);
                 }
                 if (ORTE_SUCCESS != (rc = opal_paffinity_base_slot_list_set((long)child->name->vpid, child->slot_list, &mask))) {
+                    if (ORTE_ERR_NOT_SUPPORTED == OPAL_SOS_GET_ERROR_CODE(rc)) {
+                        /* OS doesn't support providing topology information */
+                        orte_show_help("help-odls-default.txt",
+                                       "odls-default:topo-not-supported", 
+                                       true, orte_process_info.nodename,  "rankfile containing a slot_list of ", 
+                                       child->slot_list, context->app);
+                        ORTE_ODLS_ERROR_OUT(rc);
+                    }
+                    
+                    orte_show_help("help-odls-default.txt",
+                                   "odls-default:slot-list-failed", true, child->slot_list, ORTE_ERROR_NAME(rc));
                     ORTE_ODLS_ERROR_OUT(rc);
                 }
                 /* if we didn't wind up bound, then generate a warning unless suppressed */
@@ -403,7 +415,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                         }
                     } else {
                         target_socket = opal_paffinity_base_get_physical_socket_id(logical_skt);
-                        if (target_socket < 0) {
+                        if (ORTE_ERR_NOT_SUPPORTED == OPAL_SOS_GET_ERROR_CODE(target_socket)) {
                             /* OS doesn't support providing topology information */
                             ORTE_ODLS_IF_BIND_NOT_REQD(5);
                             ORTE_ODLS_ERROR_OUT(target_socket);
@@ -427,7 +439,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                      * from when we initialized
                      */
                     target_socket = opal_paffinity_base_get_physical_socket_id(lrank % orte_odls_globals.num_sockets);
-                    if (target_socket < 0) {
+                    if (ORTE_ERR_NOT_SUPPORTED == OPAL_SOS_GET_ERROR_CODE(target_socket)) {
                         /* OS does not support providing topology information */
                         ORTE_ODLS_IF_BIND_NOT_REQD(5);
                         ORTE_ODLS_ERROR_OUT(target_socket);
@@ -504,7 +516,8 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                              * physical cpu
                              */
                             phys_cpu = opal_paffinity_base_get_physical_processor_id(logical_cpu);
-                            if (0 > phys_cpu) {
+                            if (OPAL_SUCCESS != phys_cpu){
+                                /* No processor to bind to so error out */
                                 ORTE_ODLS_IF_BIND_NOT_REQD(5);
                                 ORTE_ODLS_ERROR_OUT(phys_cpu);
                             }
@@ -568,7 +581,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                         }
                     } else {
                         target_socket = opal_paffinity_base_get_physical_socket_id(logical_skt);
-                        if (target_socket < 0) {
+                        if (ORTE_ERR_NOT_SUPPORTED == OPAL_SOS_GET_ERROR_CODE(target_socket)) {
                             /* OS doesn't support providing topology information */
                             ORTE_ODLS_IF_BIND_NOT_REQD(6);
                             ORTE_ODLS_ERROR_OUT(target_socket);
@@ -588,7 +601,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                      * from when we initialized
                      */
                     target_socket = opal_paffinity_base_get_physical_socket_id(lrank % orte_odls_globals.num_sockets);
-                    if (target_socket < 0) {
+                    if (ORTE_ERR_NOT_SUPPORTED == OPAL_SOS_GET_ERROR_CODE(target_socket)) {
                         /* OS does not support providing topology information */
                         ORTE_ODLS_IF_BIND_NOT_REQD(6);
                         ORTE_ODLS_ERROR_OUT(target_socket);
@@ -635,7 +648,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                         if (1 == orte_odls_globals.num_sockets) {
                             /* if we only have one socket, then just put it there */
                             target_socket = opal_paffinity_base_get_physical_socket_id(0);
-                            if (target_socket < 0) {
+                            if (ORTE_ERR_NOT_SUPPORTED == OPAL_SOS_GET_ERROR_CODE(target_socket)) {
                                 /* OS doesn't support providing topology information */
                                 ORTE_ODLS_IF_BIND_NOT_REQD(6);
                                 ORTE_ODLS_ERROR_OUT(target_socket);
@@ -647,7 +660,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                             logical_skt = logical_skt % orte_odls_globals.num_sockets;
                             /* now get the target physical socket */
                             target_socket = opal_paffinity_base_get_physical_socket_id(logical_skt);
-                            if (target_socket < 0) {
+                            if (ORTE_ERR_NOT_SUPPORTED == OPAL_SOS_GET_ERROR_CODE(target_socket)) {
                                 /* OS doesn't support providing topology information */
                                 ORTE_ODLS_IF_BIND_NOT_REQD(6);
                                 ORTE_ODLS_ERROR_OUT(target_socket);

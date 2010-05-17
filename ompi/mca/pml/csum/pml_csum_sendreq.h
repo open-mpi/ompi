@@ -284,7 +284,7 @@ mca_pml_csum_send_request_schedule_exclusive(mca_pml_csum_send_request_t* sendre
     int rc;
     do {
         rc = mca_pml_csum_send_request_schedule_once(sendreq);
-        if(rc == OMPI_ERR_OUT_OF_RESOURCE)
+        if(OPAL_SOS_GET_ERROR_CODE(rc) == OMPI_ERR_OUT_OF_RESOURCE)
             break;
     } while(!unlock_send_request(sendreq));
 
@@ -432,7 +432,7 @@ mca_pml_csum_send_request_start( mca_pml_csum_send_request_t* sendreq )
         /* select a btl */
         bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
         rc = mca_pml_csum_send_request_start_btl(sendreq, bml_btl);
-        if( OPAL_LIKELY(OMPI_ERR_OUT_OF_RESOURCE != rc) )
+        if( OPAL_LIKELY(OMPI_ERR_OUT_OF_RESOURCE != OPAL_SOS_GET_ERROR_CODE(rc)) )
             return rc;
     }
     add_request_to_send_pending(sendreq, MCA_PML_CSUM_SEND_PENDING_START, true);

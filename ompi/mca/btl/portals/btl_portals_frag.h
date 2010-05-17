@@ -67,7 +67,7 @@ OBJ_CLASS_DECLARATION(mca_btl_portals_frag_recv_t);
     ompi_free_list_item_t *item;                                        \
     OMPI_FREE_LIST_GET(&((mca_btl_portals_module_t*)btl_macro)->portals_frag_eager, item, rc); \
     frag = (mca_btl_portals_frag_t*) item;                         \
-    if (rc == OMPI_ERR_TEMP_OUT_OF_RESOURCE) {                     \
+    if (OPAL_SOS_GET_ERROR_CODE(rc) == OMPI_ERR_TEMP_OUT_OF_RESOURCE) { \
         OMPI_BTL_PORTALS_FRAG_ALLOC_MAX(btl_macro, frag, rc);      \
     }                                                              \
 }

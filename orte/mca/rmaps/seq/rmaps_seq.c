@@ -31,6 +31,7 @@
 
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/if.h"
+#include "opal/util/opal_sos.h"
 
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -187,7 +188,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                                                                  node_list,
                                                                  jdata->map->oversubscribe,
                                                                  false, &proc))) {
-                if (ORTE_ERR_NODE_FULLY_USED != rc) {
+                if (ORTE_ERR_NODE_FULLY_USED != OPAL_SOS_GET_ERROR_CODE(rc)) {
                     ORTE_ERROR_LOG(rc);
                     goto error;
                 }

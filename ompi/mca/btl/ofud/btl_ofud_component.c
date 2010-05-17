@@ -34,6 +34,7 @@
 #include "ompi/mca/btl/btl.h"
 #include "opal/sys/timer.h"
 #include "opal/util/argv.h"
+#include "opal/util/opal_sos.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "ompi/mca/btl/base/base.h"

@@ -48,6 +48,7 @@
 #include "opal/util/show_help.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
+#include "opal/util/opal_sos.h"
 #include "opal/opal_socket_errno.h"
 #include "opal/util/if.h"
 #include "opal/util/net.h"
@@ -2032,7 +2033,7 @@ mca_oob_tcp_get_new_name(orte_process_name_t* name)
     MCA_OOB_TCP_HDR_HTON(&msg->msg_hdr);
     rc = mca_oob_tcp_peer_send(peer, msg);
     if(rc != ORTE_SUCCESS) {
-        if (rc != ORTE_ERR_ADDRESSEE_UNKNOWN) {
+        if (OPAL_SOS_GET_ERROR_CODE(rc) != ORTE_ERR_ADDRESSEE_UNKNOWN) {
             MCA_OOB_TCP_MSG_RETURN(msg);
         }
         return rc;

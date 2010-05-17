@@ -500,6 +500,7 @@ void ompi_info_do_config(bool want_all)
     char *memprofile;
     char *memdebug;
     char *debug;
+    char *log_event;
     char *mpi_interface_warning;
     char *cprofiling;
     char *cxxprofiling;
@@ -545,6 +546,7 @@ void ompi_info_do_config(bool want_all)
     memprofile = OPAL_ENABLE_MEM_PROFILE ? "yes" : "no";
     memdebug = OPAL_ENABLE_MEM_DEBUG ? "yes" : "no";
     debug = OPAL_ENABLE_DEBUG ? "yes" : "no";
+    log_event = ORTE_WANT_NOTIFIER_LOG_EVENT ? "yes" : "no";
     mpi_interface_warning = OMPI_WANT_MPI_INTERFACE_WARNING ? "yes" : "no";
     cprofiling = OMPI_ENABLE_MPI_PROFILING ? "yes" : "no";
     cxxprofiling = (OMPI_WANT_CXX_BINDINGS && OMPI_ENABLE_MPI_PROFILING) ? "yes" : "no";
@@ -818,6 +820,7 @@ void ompi_info_do_config(bool want_all)
     ompi_info_out("MPI parameter check", "option:mpi-param-check", paramcheck);
     ompi_info_out("Memory profiling support", "option:mem-profile", memprofile);
     ompi_info_out("Memory debugging support", "option:mem-debug", memdebug);
+    ompi_info_out("Unusual events notif.", "option:log-event", log_event);
     ompi_info_out("libltdl support", "option:dlopen", want_libltdl);
     ompi_info_out("Heterogeneous support", "options:heterogeneous", heterogeneous);
     ompi_info_out("mpirun default --prefix", "mpirun:prefix_by_default", 

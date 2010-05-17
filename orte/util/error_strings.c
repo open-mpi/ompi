@@ -24,12 +24,13 @@
 
 #include <stdio.h>
 
+#include "opal/util/opal_sos.h"
 #include "orte/util/error_strings.h"
 
 const char *orte_err2str(int errnum)
 {
     const char *retval;
-    switch (errnum) {
+    switch (OPAL_SOS_GET_ERROR_CODE(errnum)) {
     case ORTE_ERR_RECV_LESS_THAN_POSTED:
         retval = "Receive was less than posted size";
         break;

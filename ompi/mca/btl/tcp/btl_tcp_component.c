@@ -959,7 +959,8 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
     }
 #if OPAL_WANT_IPV6
     if((ret = mca_btl_tcp_component_create_listen(AF_INET6)) != OMPI_SUCCESS) {
-        if (!(OMPI_ERR_IN_ERRNO == ret && EAFNOSUPPORT == opal_socket_errno)) {
+        if (!(OMPI_ERR_IN_ERRNO == OPAL_SOS_GET_ERROR_CODE(ret) &&
+              EAFNOSUPPORT == opal_socket_errno)) {
             opal_output (0, "mca_btl_tcp_component: IPv6 listening socket failed\n");
             return 0;
         }

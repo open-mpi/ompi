@@ -24,6 +24,7 @@
 
 #include "opal/util/if.h"
 #include "opal/util/output.h"
+#include "opal/util/opal_sos.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -225,7 +226,7 @@ int orte_rmaps_base_map_byslot(orte_job_t *jdata, orte_app_context_t *app,
                  * since the node is fully used up. For now, just don't report
                  * an error
                  */
-                if (ORTE_ERR_NODE_FULLY_USED != rc) {
+                if (ORTE_ERR_NODE_FULLY_USED != OPAL_SOS_GET_ERROR_CODE(rc)) {
                     ORTE_ERROR_LOG(rc);
                     return rc;
                 }
@@ -243,7 +244,7 @@ int orte_rmaps_base_map_byslot(orte_job_t *jdata, orte_app_context_t *app,
             }
             
             /* if we have fully used up this node, then break from the loop */
-            if (ORTE_ERR_NODE_FULLY_USED == rc) {
+            if (ORTE_ERR_NODE_FULLY_USED == OPAL_SOS_GET_ERROR_CODE(rc)) {
                 break;
             }
         }
@@ -253,7 +254,8 @@ int orte_rmaps_base_map_byslot(orte_job_t *jdata, orte_app_context_t *app,
          * node is NOT max'd out
          *
          */
-        if (i < (num_procs_to_assign-1) && ORTE_ERR_NODE_FULLY_USED != rc) {
+        if (i < (num_procs_to_assign-1) &&
+            ORTE_ERR_NODE_FULLY_USED != OPAL_SOS_GET_ERROR_CODE(rc)) {
             continue;
         }
         cur_node_item = next;
@@ -327,7 +329,7 @@ int orte_rmaps_base_map_bynode(orte_job_t *jdata, orte_app_context_t *app,
              * since the node is fully used up. For now, just don't report
              * an error
              */
-            if (ORTE_ERR_NODE_FULLY_USED != rc) {
+            if (ORTE_ERR_NODE_FULLY_USED != OPAL_SOS_GET_ERROR_CODE(rc)) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }

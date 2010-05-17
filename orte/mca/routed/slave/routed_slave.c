@@ -13,6 +13,7 @@
 
 #include "opal/threads/condition.h"
 #include "opal/util/output.h"
+#include "opal/util/opal_sos.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"

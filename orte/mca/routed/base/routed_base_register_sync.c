@@ -21,6 +21,7 @@
 #include "orte/constants.h"
 #include "orte/types.h"
 
+#include "opal/util/opal_sos.h"
 #include "opal/dss/dss.h"
 #include "opal/threads/threads.h"
 
@@ -97,7 +98,7 @@ int orte_routed_base_register_sync(bool setup)
     sync_recvd = false;
     rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SYNC,
                                  ORTE_RML_NON_PERSISTENT, report_sync, NULL);
-    if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
+    if (rc != ORTE_SUCCESS && OPAL_SOS_GET_ERROR_CODE(rc) != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -158,7 +159,7 @@ int orte_routed_base_process_callback(orte_jobid_t job, opal_buffer_t *buffer)
                                  &proc->name, ORTE_PROC_STATE_RUNNING, 0);
         cnt = 1;
     }
-    if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
+    if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != OPAL_SOS_GET_ERROR_CODE(rc)) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }    

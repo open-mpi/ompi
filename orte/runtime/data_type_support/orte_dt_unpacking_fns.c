@@ -24,6 +24,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "opal/dss/dss.h"
 #include "opal/dss/dss_internal.h"
+#include "opal/util/opal_sos.h"
 #include "orte/runtime/data_type_support/orte_dt_support.h"
 
 /*

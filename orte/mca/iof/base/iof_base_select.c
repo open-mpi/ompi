@@ -21,6 +21,7 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/util/opal_sos.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"

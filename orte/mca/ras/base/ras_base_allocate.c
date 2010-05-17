@@ -29,6 +29,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/class/opal_list.h"
 #include "opal/util/output.h"
+#include "opal/util/opal_sos.h"
 
 #include "orte/util/show_help.h"
 #include "opal/dss/dss.h"
@@ -137,7 +138,7 @@ int orte_ras_base_allocate(orte_job_t *jdata)
     if (NULL != orte_ras_base.active_module)  {
         /* read the allocation */
         if (ORTE_SUCCESS != (rc = orte_ras_base.active_module->allocate(&nodes))) {
-            if (ORTE_ERR_SYSTEM_WILL_BOOTSTRAP == rc) {
+            if (ORTE_ERR_SYSTEM_WILL_BOOTSTRAP == OPAL_SOS_GET_ERROR_CODE(rc)) {
                 /* this module indicates that nodes will be discovered
                  * on a bootstrap basis, so all we do here is add our
                  * own node to the list

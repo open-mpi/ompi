@@ -13,6 +13,7 @@
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -80,7 +81,7 @@ void mca_pml_csum_recv_request_process_pending(void)
         if( OPAL_UNLIKELY(NULL == recvreq) )
             break;
         recvreq->req_pending = false;
-        if(mca_pml_csum_recv_request_schedule_exclusive(recvreq, NULL) == 
+        if(OPAL_SOS_GET_ERROR_CODE(mca_pml_csum_recv_request_schedule_exclusive(recvreq, NULL)) == 
                 OMPI_ERR_OUT_OF_RESOURCE)
             break;
     }
@@ -423,7 +424,7 @@ int mca_pml_csum_recv_request_get_frag( mca_pml_csum_rdma_frag_t* frag )
     /* queue up get request */
     rc = mca_bml_base_get(bml_btl,descriptor);
     if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
-        if(OMPI_ERR_OUT_OF_RESOURCE == rc) {
+        if(OMPI_ERR_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc)) {
             mca_bml_base_free(bml_btl, descriptor);
             OPAL_THREAD_LOCK(&mca_pml_csum.lock);
             opal_list_append(&mca_pml_csum.rdma_pending,
@@ -496,7 +497,7 @@ void mca_pml_csum_recv_request_progress_frag( mca_pml_csum_recv_request_t* recvr
         if(csum != hdr->hdr_frag.hdr_csum) {
             opal_output(0, "%s:%s:%d: Invalid \'frag data\' - received csum:0x%x  != computed csum:0x%x\n",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, hdr->hdr_frag.hdr_csum, csum);
-            orte_notifier.log(ORTE_NOTIFIER_INFRA, 1,
+            orte_notifier.log(ORTE_NOTIFIER_CRIT, 1,
                               "Checksum data violation: job %s file %s line %d",
                               (NULL == orte_job_ident) ? "UNKNOWN" : orte_job_ident,
                               __FILE__, __LINE__);
@@ -642,7 +643,7 @@ void mca_pml_csum_recv_request_progress_rndv( mca_pml_csum_recv_request_t* recvr
         if (csum != hdr->hdr_match.hdr_csum) {
             opal_output(0, "%s:%s:%d: Invalid \'rndv data\' - received csum:0x%x  != computed csum:0x%x\n",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, hdr->hdr_match.hdr_csum, csum);
-            orte_notifier.log(ORTE_NOTIFIER_INFRA, 1,
+            orte_notifier.log(ORTE_NOTIFIER_CRIT, 1,
                               "Checksum data violation: job %s file %s line %d",
                               (NULL == orte_job_ident) ? "UNKNOWN" : orte_job_ident,
                               __FILE__, __LINE__);
@@ -704,7 +705,7 @@ void mca_pml_csum_recv_request_progress_match( mca_pml_csum_recv_request_t* recv
         if (csum != hdr->hdr_match.hdr_csum) {
             opal_output(0, "%s:%s:%d: Invalid \'match data\' - received csum:0x%x  != computed csum:0x%x\n",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, hdr->hdr_match.hdr_csum, csum);
-            orte_notifier.log(ORTE_NOTIFIER_INFRA, 1,
+            orte_notifier.log(ORTE_NOTIFIER_CRIT, 1,
                               "Checksum data violation: job %s file %s line %d",
                               (NULL == orte_job_ident) ? "UNKNOWN" : orte_job_ident,
                               __FILE__, __LINE__);

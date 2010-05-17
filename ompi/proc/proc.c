@@ -26,6 +26,7 @@
 #include "opal/threads/mutex.h"
 #include "opal/dss/dss.h"
 #include "opal/util/arch.h"
+#include "opal/util/opal_sos.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
@@ -168,7 +169,7 @@ int ompi_proc_set_arch(void)
                     return OMPI_ERR_NOT_SUPPORTED;
 #endif
                 }
-            } else if (OMPI_ERR_NOT_IMPLEMENTED == ret) {
+            } else if (OMPI_ERR_NOT_IMPLEMENTED == OPAL_SOS_GET_ERROR_CODE(ret)) {
                 proc->proc_arch = opal_local_arch;
             } else {
                 OPAL_THREAD_UNLOCK(&ompi_proc_lock);

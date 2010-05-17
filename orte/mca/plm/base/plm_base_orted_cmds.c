@@ -29,6 +29,7 @@
 
 
 #include "opal/dss/dss.h"
+#include "opal/util/opal_sos.h"
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/errmgr/errmgr.h"

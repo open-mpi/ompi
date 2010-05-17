@@ -26,6 +26,7 @@
 
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/argv.h"
+#include "opal/util/opal_sos.h"
 #include "opal/class/opal_pointer_array.h"
 
 #include "orte/util/show_help.h"
@@ -326,7 +327,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                     /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
                      * really isn't an error
                      */
-                    if (ORTE_ERR_NODE_FULLY_USED != rc) {
+                    if (ORTE_ERR_NODE_FULLY_USED != OPAL_SOS_GET_ERROR_CODE(rc)) {
                         ORTE_ERROR_LOG(rc);
                         goto error;
                     }
@@ -369,7 +370,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                 /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
                  * really isn't an error
                  */
-                if (ORTE_ERR_NODE_FULLY_USED != rc) {
+                if (ORTE_ERR_NODE_FULLY_USED != OPAL_SOS_GET_ERROR_CODE(rc)) {
                     ORTE_ERROR_LOG(rc);
                     goto error;
                 }
@@ -520,7 +521,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                     /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
                      * really isn't an error
                      */
-                    if (ORTE_ERR_NODE_FULLY_USED != rc) {
+                    if (ORTE_ERR_NODE_FULLY_USED != OPAL_SOS_GET_ERROR_CODE(rc)) {
                         ORTE_ERROR_LOG(rc);
                         goto error;
                     }

@@ -57,7 +57,6 @@
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
-
 #include "orte/mca/notifier/notifier.h"
 
 #include "ompi/constants.h"
@@ -443,7 +442,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                     goto error;
                 }
                 ret = opal_paffinity_base_slot_list_set((long)ORTE_PROC_MY_NAME->vpid, opal_paffinity_base_slot_list, &mask);
-                if (OPAL_SUCCESS != ret && OPAL_ERR_NOT_FOUND != ret) {
+                if (OPAL_SUCCESS != ret && OPAL_ERR_NOT_FOUND != OPAL_SOS_GET_ERROR_CODE(ret)) {
                     error = "opal_paffinity_base_slot_list_set() returned an error";
                     goto error;
                 }
@@ -746,7 +745,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* If we got "unreachable", then print a specific error message.
        Otherwise, if we got some other failure, fall through to print
        a generic message. */
-    if (OMPI_ERR_UNREACH == ret) {
+    if (OMPI_ERR_UNREACH == OPAL_SOS_GET_ERROR_CODE(ret)) {
         orte_show_help("help-mpi-runtime",
                        "mpi_init:startup:pml-add-procs-fail", true);
         error = NULL;

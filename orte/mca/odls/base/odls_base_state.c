@@ -35,6 +35,7 @@
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
 #include "opal/util/basename.h"
+#include "opal/util/opal_sos.h"
 
 #include "orte/util/name_fns.h"
 #include "orte/util/proc_info.h"

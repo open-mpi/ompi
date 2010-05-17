@@ -28,6 +28,7 @@
 #include <string.h>
 #endif  /* HAVE_STRING_H */
 
+#include "opal/util/opal_sos.h"
 
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"

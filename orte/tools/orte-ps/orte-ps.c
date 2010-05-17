@@ -56,6 +56,7 @@
 #include "opal/util/cmd_line.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/opal_sos.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/runtime/opal.h"
@@ -254,7 +255,7 @@ main(int argc, char *argv[])
             /* this could be due to a stale session directory - if so,
              * just skip this entry, but don't abort
              */
-            if (ORTE_ERR_SILENT == ret) {
+            if (ORTE_ERR_SILENT == OPAL_SOS_GET_ERROR_CODE(ret)) {
                 orte_show_help("help-orte-ps.txt", "stale-hnp", true,
                                ORTE_NAME_PRINT(&(hnpinfo.hnp->name)));
                 continue;

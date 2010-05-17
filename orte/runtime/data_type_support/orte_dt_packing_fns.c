@@ -22,6 +22,7 @@
 #include <sys/types.h>
 
 #include "opal/util/argv.h"
+#include "opal/util/opal_sos.h"
 #include "opal/class/opal_pointer_array.h"
 
 #include "orte/mca/errmgr/errmgr.h"

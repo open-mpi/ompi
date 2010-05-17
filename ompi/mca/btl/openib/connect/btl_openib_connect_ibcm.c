@@ -857,7 +857,7 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
 
  error:
     ibcm_module_finalize(btl, (ompi_btl_openib_connect_base_module_t *) m);
-    if (OMPI_ERR_NOT_SUPPORTED == rc) {
+    if (OMPI_ERR_NOT_SUPPORTED == OPAL_SOS_GET_ERROR_CODE(rc)) {
         BTL_VERBOSE(("unavailable for use on %s:%d; skipped",
                      ibv_get_device_name(btl->device->ib_dev),
                      btl->port_num));

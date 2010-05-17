@@ -31,6 +31,7 @@
 #endif  /* HAVE_SYS_TIME_H */
 
 #include "opal/util/argv.h"
+#include "opal/util/opal_sos.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/dss/dss.h"
@@ -644,7 +645,7 @@ static void orted_report_launch(int status, orte_process_name_t* sender,
     /* reissue the recv */
     rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ORTED_CALLBACK,
                                  ORTE_RML_NON_PERSISTENT, orted_report_launch, NULL);
-    if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
+    if (rc != ORTE_SUCCESS && OPAL_SOS_GET_ERROR_CODE(rc) != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(rc);
         orted_failed_launch = true;
     }
@@ -669,7 +670,7 @@ int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons)
 
     rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ORTED_CALLBACK,
                                  ORTE_RML_NON_PERSISTENT, orted_report_launch, NULL);
-    if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
+    if (rc != ORTE_SUCCESS && OPAL_SOS_GET_ERROR_CODE(rc) != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

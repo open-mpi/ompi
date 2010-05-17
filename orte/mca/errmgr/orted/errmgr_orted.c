@@ -21,6 +21,7 @@
 #endif
 
 #include "opal/util/output.h"
+#include "opal/util/opal_sos.h"
 #include "opal/dss/dss.h"
 
 #include "orte/util/error_strings.h"

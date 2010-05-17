@@ -24,6 +24,7 @@
 #endif
 
 #include "opal/util/argv.h"
+#include "opal/util/opal_sos.h"
 
 #include "opal/dss/dss.h"
 #include "orte/constants.h"

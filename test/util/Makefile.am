@@ -31,6 +31,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/test/support
 
 
 check_PROGRAMS = \
+	opal_sos \
 	opal_path_nfs
 
 TESTS = \
@@ -71,6 +72,12 @@ opal_path_nfs_LDADD = \
         $(top_builddir)/opal/libopen-pal.la \
         $(top_builddir)/test/support/libsupport.a
 opal_path_nfs_DEPENDENCIES = $(opal_path_nfs_LDADD)
+
+opal_sos_SOURCES = opal_sos.c
+opal_sos_LDADD = \
+        $(top_builddir)/opal/libopen-pal.la \
+        $(top_builddir)/test/support/libsupport.a 
+opal_sos_DEPENDENCIES = $(opal_error_LDADD)
 
 #opal_os_path_SOURCES = opal_os_path.c
 #opal_os_path_LDADD = \

@@ -29,6 +29,7 @@
 
 #include "opal/util/trace.h"
 #include "opal/util/output.h"
+#include "opal/util/opal_sos.h"
 
 #include "orte/util/name_fns.h"
 #include "orte/util/session_dir.h"
@@ -48,7 +49,7 @@ void orte_errmgr_base_log(int error_code, char *filename, int line)
 {
     OPAL_TRACE(1);
     
-    if (ORTE_ERR_SILENT == error_code) {
+    if (ORTE_ERR_SILENT == OPAL_SOS_GET_ERROR_CODE(error_code)) {
         /* if the error is silent, say nothing */
         return;
     }

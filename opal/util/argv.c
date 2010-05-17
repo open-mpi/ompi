@@ -161,7 +161,7 @@ static char **opal_argv_split_inter(const char *src_string, int delimiter,
     if (src_string == p) {
       if (include_empty) {
         arg[0] = '\0';
-        if (OPAL_ERROR == opal_argv_append(&argc, &argv, arg))
+        if (OPAL_SUCCESS != opal_argv_append(&argc, &argv, arg))
           return NULL;
       }
     }
@@ -169,7 +169,7 @@ static char **opal_argv_split_inter(const char *src_string, int delimiter,
     /* tail argument, add straight from the original string */
 
     else if ('\0' == *p) {
-      if (OPAL_ERROR == opal_argv_append(&argc, &argv, src_string))
+      if (OPAL_SUCCESS != opal_argv_append(&argc, &argv, src_string))
 	return NULL;
       src_string = p;
       continue;
@@ -185,7 +185,7 @@ static char **opal_argv_split_inter(const char *src_string, int delimiter,
       strncpy(argtemp, src_string, arglen);
       argtemp[arglen] = '\0';
 
-      if (OPAL_ERROR == opal_argv_append(&argc, &argv, argtemp)) {
+      if (OPAL_SUCCESS != opal_argv_append(&argc, &argv, argtemp)) {
 	free(argtemp);
 	return NULL;
       }
@@ -199,7 +199,7 @@ static char **opal_argv_split_inter(const char *src_string, int delimiter,
       strncpy(arg, src_string, arglen);
       arg[arglen] = '\0';
 
-      if (OPAL_ERROR == opal_argv_append(&argc, &argv, arg))
+      if (OPAL_SUCCESS != opal_argv_append(&argc, &argv, arg))
 	return NULL;
     }
 
@@ -389,7 +389,7 @@ char **opal_argv_copy(char **argv)
   dupv[0] = NULL;
 
   while (NULL != *argv) {
-    if (OPAL_ERROR == opal_argv_append(&dupc, &dupv, *argv)) {
+    if (OPAL_SUCCESS != opal_argv_append(&dupc, &dupv, *argv)) {
       opal_argv_free(dupv);
       return NULL;
     }
