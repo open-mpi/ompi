@@ -31,6 +31,12 @@
 OPAL_DECLSPEC void opal_stackframe_output(int stream);
 
 /**
+ * Return the current stack trace (not including the call to this
+ * function) as a string (which must be freed by the caller).
+ */
+OPAL_DECLSPEC char *opal_stackframe_output_string(void);
+
+/**
  * Here we register the opal_show_stackframe function for signals
  * passed to OpenMPI by the mpi_signal-parameter passed to mpirun
  * by the user.
