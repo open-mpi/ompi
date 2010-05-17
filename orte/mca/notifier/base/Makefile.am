@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -22,4 +23,6 @@ headers += \
 libmca_notifier_la_SOURCES += \
         base/notifier_base_close.c \
         base/notifier_base_select.c \
+        base/notifier_base_wrappers.c \
+        base/notifier_base_events.c \
         base/notifier_base_open.c

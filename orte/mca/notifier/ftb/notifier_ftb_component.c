@@ -10,6 +10,7 @@
 *                         University of Stuttgart.  All rights reserved.
 * Copyright (c) 2004-2005 The Regents of the University of California.
 *                         All rights reserved.
+* Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 * $COPYRIGHT$
 *
 * Additional copyrights may follow
@@ -21,7 +22,7 @@
 * This component proxies notification events to the Fault Tolerant
 * Backplane (See http://www.mcs.anl.gov/research/cifts/).
 * The ORTE notifier severity is translated to the corresponding
-* FTB severity before the event is published to the FTB.  
+* FTB severity before the event is published to the FTB.
 */
 
 /*
@@ -48,7 +49,7 @@ orte_notifier_ftb_component_t mca_notifier_ftb_component = {
     {
         {
             ORTE_NOTIFIER_BASE_VERSION_1_0_0,
-
+        
             "ftb", /* MCA module name */
             ORTE_MAJOR_VERSION,  /* MCA module major version */
             ORTE_MINOR_VERSION,  /* MCA module minor version */
@@ -87,7 +88,8 @@ static int orte_notifier_ftb_close(void)
     return ORTE_SUCCESS;
 }
 
-static int orte_notifier_ftb_component_query(mca_base_module_t **module, int *priority)
+static int orte_notifier_ftb_component_query(mca_base_module_t **module, 
+                                             int *priority)
 {
     int ret;
     *priority = 0;
@@ -100,8 +102,7 @@ static int orte_notifier_ftb_component_query(mca_base_module_t **module, int *pr
     /* We represent each client with a client name of the form
        openmpi/<hostname>/<PID> as a unique identifier in the
        FTB client namespace */
-    sprintf(ftb_client_info.client_name, "openmpi/%s/%u",
-            orte_process_info.nodename, orte_process_info.pid);
+    sprintf(ftb_client_info.client_name, "ompi%u", orte_process_info.pid);
 
     sprintf(ftb_client_info.client_jobid, "%u", ORTE_PROC_MY_NAME->jobid);
 
@@ -117,18 +118,20 @@ static int orte_notifier_ftb_component_query(mca_base_module_t **module, int *pr
             orte_show_help("help-orte-notifier-ftb.txt",
                            "invalid subscription style",
                            true, ftb_client_info.client_subscription_style);
+            break;
 
         case FTB_ERR_INVALID_VALUE:
             orte_show_help("help-orte-notifier-ftb.txt",
                            "invalid value",
                            true);
+            break;
 
         default:
             orte_show_help("help-orte-notifier-ftb.txt",
-                           "unable to connect",
+                           "ftb connect failed",
                            true);
         }
-        
+
         return ORTE_ERR_NOT_FOUND;
     }
 
@@ -154,7 +157,7 @@ static int orte_notifier_ftb_register(void)
     mca_base_param_reg_int(&mca_notifier_ftb_component.super.base_version,
                            "priority",
                            "Priority of this component",
-                           false, false, 
+                           false, false,
                            mca_notifier_ftb_component.priority,
                            &mca_notifier_ftb_component.priority);
 

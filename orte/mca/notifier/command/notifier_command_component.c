@@ -46,10 +46,10 @@
 
 #include "notifier_command.h"
 
-static int command_open(void);
 static int command_component_query(mca_base_module_t **module, int *priority);
 static int command_close(void);
 static int command_register(void);
+
 
 /*
  * Struct of function pointers that need to be initialized
@@ -65,7 +65,7 @@ orte_notifier_command_component_t mca_notifier_command_component = {
             ORTE_MINOR_VERSION,
             ORTE_RELEASE_VERSION,
             
-            command_open,
+            NULL,
             command_close,
             command_component_query,
             command_register,
@@ -93,6 +93,9 @@ orte_notifier_command_component_t mca_notifier_command_component = {
 
     /* To-parent pipe FDs */
     { -1, -1 },
+
+    /* Pass via stdin? */
+    true,
 };
 
 /* Safety to ensure we don't try to write down a dead pipe */
@@ -107,6 +110,8 @@ static void child_death_cb(pid_t pid, int status, void *data)
 
 static int command_register(void)
 {
+    int val;
+
     mca_base_param_reg_string(&mca_notifier_command_component.super.base_version,
                               "cmd",
                               "Command to execute, with substitution.  $s = integer severity; $S = string severity; $e = integer error code; $m = string message",
@@ -121,6 +126,14 @@ static int command_register(void)
                            mca_notifier_command_component.timeout,
                            &mca_notifier_command_component.timeout);
 
+    mca_base_param_reg_int(&mca_notifier_command_component.super.base_version,
+                           "use_stdin",
+                           "If true, pass parameters to the command via stdin, formatted with trivial XML",
+                           false, false,
+                           (int) mca_notifier_command_component.pass_via_stdin,
+                           &val);
+    mca_notifier_command_component.pass_via_stdin = OPAL_INT_TO_BOOL(val);
+
     /* Priority */
     mca_base_param_reg_int(&mca_notifier_command_component.super.base_version,
                            "priority",
@@ -132,11 +145,6 @@ static int command_register(void)
     return ORTE_SUCCESS;
 }
 
-static int command_open(void)
-{
-    /* Nothing to do */
-    return ORTE_SUCCESS;
-}
 
 static int command_close(void)
 {

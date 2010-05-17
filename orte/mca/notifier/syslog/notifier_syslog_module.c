@@ -33,10 +33,9 @@
 
 #include "opal/util/show_help.h"
 
-#include "orte/mca/ess/ess.h"
 #include "orte/util/error_strings.h"
 #include "orte/util/name_fns.h"
-#include "orte/runtime/orte_globals.h"
+
 #include "orte/mca/notifier/base/base.h"
 #include "notifier_syslog.h"
 
@@ -44,9 +43,14 @@
 /* Static API's */
 static int init(void);
 static void finalize(void);
-static void mylog(int severity, int errcode, const char *msg, ...);
-static void myhelplog(int severity, int errcode, const char *filename, const char *topic, ...);
-static void mypeerlog(int severity, int errcode, orte_process_name_t *peer_proc, const char *msg, ...);
+static void mylog(orte_notifier_base_severity_t severity, int errcode, 
+                  const char *msg, va_list ap);
+static void myhelplog(orte_notifier_base_severity_t severity, int errcode, 
+                      const char *filename, const char *topic, va_list ap);
+static void mypeerlog(orte_notifier_base_severity_t severity, int errcode, 
+                      orte_process_name_t *peer_proc, const char *msg, 
+                      va_list ap);
+static void myeventlog(const char *msg);
 
 /* Module def */
 orte_notifier_base_module_t orte_notifier_syslog_module = {
@@ -54,11 +58,13 @@ orte_notifier_base_module_t orte_notifier_syslog_module = {
     finalize,
     mylog,
     myhelplog,
-    mypeerlog
+    mypeerlog,
+    myeventlog
 };
 
 
-static int init(void) {
+static int init(void) 
+{
     int opts;
     
     opts = LOG_CONS | LOG_PID | LOG_SYSLOG;
@@ -67,44 +73,22 @@ static int init(void) {
     return ORTE_SUCCESS;
 }
 
-static void finalize(void) {
+static void finalize(void) 
+{
     closelog();
 }
 
-static void mylog(int severity, int errcode, const char *msg, ...)
+static void mylog(orte_notifier_base_severity_t severity, int errcode, 
+                  const char *msg, va_list ap)
 {
-    va_list arglist;
-    
-    /* is the severity value above the threshold - I know
-     * this seems backward, but lower severity values are
-     * considered "more severe"
-     */
-    if (severity > orte_notifier_threshold_severity) {
-        return;
-    }
-
     /* If there was a message, output it */
-    va_start(arglist, msg);
-    vsyslog(severity, msg, arglist);
-    va_end(arglist);
+    vsyslog(severity, msg, ap);
 }
 
-static void myhelplog(int severity, int errcode, const char *filename, const char *topic, ...)
+static void myhelplog(orte_notifier_base_severity_t severity, int errcode, 
+                      const char *filename, const char *topic, va_list ap)
 {
-    va_list arglist;
-    char *output;
-    
-    /* is the severity value above the threshold - I know
-     * this seems backward, but lower severity values are
-     * considered "more severe"
-     */
-    if (severity > orte_notifier_threshold_severity) {
-        return;
-    }
-
-    va_start(arglist, topic);
-    output = opal_show_help_vstring(filename, topic, false, arglist);
-    va_end(arglist);
+    char *output = opal_show_help_vstring(filename, topic, false, ap);
     
     /* if nothing came  back, then nothing to do */
     if (NULL == output) {
@@ -116,54 +100,21 @@ static void myhelplog(int severity, int errcode, const char *filename, const cha
     free(output);
 }
 
-static void mypeerlog(int severity, int errcode, orte_process_name_t *peer_proc, const char *msg, ...)
+static void mypeerlog(orte_notifier_base_severity_t severity, int errcode, 
+                      orte_process_name_t *peer_proc, const char *msg, 
+                      va_list ap)
 {
-    va_list arglist;
-    char buf[ORTE_NOTIFIER_MAX_BUF + 1];
-    char *peer_host = NULL, *peer_name = NULL;
-    char *pos = buf;
-    char *errstr = (char*)orte_err2str(errcode);
-    int len, space = ORTE_NOTIFIER_MAX_BUF;
+    char *buf = orte_notifier_base_peer_log(errcode, peer_proc, msg, ap);
 
-    /* is the severity value above the threshold - I know
-     * this seems backward, but lower severity values are
-     * considered "more severe"
-     */
-    if (severity > orte_notifier_threshold_severity) {
-        return;
+    if (NULL != buf) {
+        syslog(severity, buf);
+        free(buf);
     }
-
-    if (peer_proc) {
-        peer_host = orte_ess.proc_get_hostname(peer_proc);
-        peer_name = ORTE_NAME_PRINT(peer_proc);
-    }
-
-    len = snprintf(pos, space,
-                   "While communicating to proc %s on node %s,"
-                   " proc %s on node %s encountered an error ",
-                   peer_name ? peer_name : "UNKNOWN",
-                   peer_host ? peer_host : "UNKNOWN",
-                   ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                   orte_process_info.nodename);
-    space -= len;
-    pos += len;
-    
-    if (0 < space) {
-        if (errstr) {
-            len = snprintf(pos, space, "'%s':", errstr);
-        } else {
-            len = snprintf(pos, space, "(%d):", errcode);
-        }
-        space -= len;
-        pos += len;
-    }
-
-    if (0 < space) {
-        va_start(arglist, msg);
-        vsnprintf(pos, space, msg, arglist);
-        va_end(arglist);
-    }
-
-    buf[ORTE_NOTIFIER_MAX_BUF] = '\0'; /* not needed? */
-    syslog(severity, buf);
 }
+
+static void myeventlog(const char *msg)
+{
+    /* If there was a message, output it */
+    syslog(LOG_LOCAL0 | LOG_NOTICE, msg);
+}
+

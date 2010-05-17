@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,6 +21,7 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
+#include <stdio.h>
 #include <string.h>
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
@@ -32,6 +34,7 @@
 
 #include "orte/util/error_strings.h"
 #include "orte/mca/ess/ess.h"
+#include "orte/util/show_help.h"
 #include "orte/mca/notifier/base/base.h"
 #include "notifier_ftb.h"
 
@@ -39,17 +42,22 @@
 /* Static API's */
 static int init(void);
 static void finalize(void);
-static void mylog(int severity, int errcode, const char *msg, ...);
-static void myhelplog(int severity, int errcode, const char *filename, const char *topic, ...);
-static void mypeerlog(int severity, int errcode, orte_process_name_t *peer_proc, const char *msg, ...);
+static void ftb_log(orte_notifier_base_severity_t severity, int errcode, 
+                  const char *msg, va_list ap);
+static void ftb_help(orte_notifier_base_severity_t severity, int errcode, 
+                      const char *filename, const char *topic, va_list ap);
+static void ftb_peer(orte_notifier_base_severity_t severity, int errcode, 
+                      orte_process_name_t *peer_proc, const char *msg, 
+                      va_list ap);
 
 /* Module def */
 orte_notifier_base_module_t orte_notifier_ftb_module = {
     init,
     finalize,
-    mylog,
-    myhelplog,
-    mypeerlog
+    ftb_log,
+    ftb_help,
+    ftb_peer,
+    NULL
 };
 
 /* FTB client information */
@@ -71,7 +79,7 @@ static int orte_err2ftb(int errnum)
 {
     int retval;
 
-    switch (errnum) {
+    switch (OPAL_SOS_GET_ERROR_CODE(errnum)) {
     case ORTE_ERR_OUT_OF_RESOURCE:
     case ORTE_ERR_TEMP_OUT_OF_RESOURCE:
         retval =  1;
@@ -102,8 +110,10 @@ static int init(void) {
 
     ret = FTB_Declare_publishable_events(ftb_client_handle, 0, ftb_event_info, ftb_event_info_count);
     if (FTB_SUCCESS != ret) {
-        opal_output(orte_notifier_base_output,
-            "notifier:ftb:init FTB_Declare_publishable_events failed ret=%d\n", ret);
+        orte_show_help("help-orte-notifier-ftb.txt",
+                       "declare events failed",
+                       true, "FTB_Declare_publishable_events() failed", ret);
+
         FTB_Disconnect(ftb_client_handle);
         return ORTE_ERROR;
     }
@@ -115,7 +125,7 @@ static void finalize(void) {
     FTB_Disconnect(ftb_client_handle);
 }
 
-static void convert2ftb(int errcode, char *payload)
+static void send_to_ftb(int errcode, char *payload)
 {
     int ret, event_id;
     FTB_event_handle_t ehandle;
@@ -126,72 +136,47 @@ static void convert2ftb(int errcode, char *payload)
     event_id = orte_err2ftb(errcode);
     ret = FTB_Publish(ftb_client_handle, ftb_event_info[event_id].event_name, &eprop, &ehandle);
     if (FTB_SUCCESS != ret) {
-        opal_output(orte_notifier_base_output,
-            "notifier:ftb:convert2ftb(%d,'%s') FTB_Publish failed ret=%d\n", errcode, eprop.event_payload, ret);
+        orte_show_help("help-orte-notifier-ftb.txt",
+                       "publish failed",
+                       true, "FTB_Publish() failed", ret,
+                       ftb_event_info[event_id].severity,
+                       ftb_event_info[event_id].event_name,
+                       eprop.event_payload, errcode);
     }
 }
 
-static void mylog(int severity, int errcode, const char *msg, ...)
+static void ftb_log(orte_notifier_base_severity_t severity, int errcode, const char *msg,
+                  va_list ap)
 {
-    va_list arglist;
-    char payload[FTB_MAX_PAYLOAD_DATA + 1];
-
-    /* is the severity value above the threshold - I know
-     * this seems backward, but lower severity values are
-     * considered "more severe"
-     */
-    if (severity > orte_notifier_threshold_severity) {
-        return;
-    }
+    char *payload;
 
     /* If there was a message, output it */
-    va_start(arglist, msg);
-    vsnprintf(payload, FTB_MAX_PAYLOAD_DATA, msg, arglist);
-    payload[FTB_MAX_PAYLOAD_DATA] = '\0'; /* not needed? */
-    va_end(arglist);
-
-    convert2ftb(errcode, payload);
+    vasprintf(&payload, msg, ap);
+    if (NULL != payload) {
+        send_to_ftb(errcode, payload);
+        free(payload);
+    }
 }
 
-static void myhelplog(int severity, int errcode, const char *filename, const char *topic, ...)
+static void ftb_help(orte_notifier_base_severity_t severity, int errcode,
+                      const char *filename, const char *topic, va_list ap)
 {
-    va_list arglist;
-    char *output;
+    char *output = opal_show_help_vstring(filename, topic, false, ap);
     
-    /* is the severity value above the threshold - I know
-     * this seems backward, but lower severity values are
-     * considered "more severe"
-     */
-    if (severity > orte_notifier_threshold_severity) {
-        return;
-    }
-
-    va_start(arglist, topic);
-    output = opal_show_help_vstring(filename, topic, false, arglist);
-    va_end(arglist);
-    
-    convert2ftb(errcode, output);
-
     if (NULL != output) {
+        send_to_ftb(errcode, output);
         free(output);
     }
 }
 
-static void mypeerlog(int severity, int errcode, orte_process_name_t *peer_proc, const char *msg, ...)
+static void ftb_peer(orte_notifier_base_severity_t severity, int errcode,
+                      orte_process_name_t *peer_proc, const char *msg,
+                      va_list ap)
 {
-    va_list arglist;
     char payload[FTB_MAX_PAYLOAD_DATA + 1];
     char *peer_host = NULL;
     char *pos = payload;
     int len, space = FTB_MAX_PAYLOAD_DATA;
-
-    /* is the severity value above the threshold - I know
-     * this seems backward, but lower severity values are
-     * considered "more severe"
-     */
-    if (severity > orte_notifier_threshold_severity) {
-        return;
-    }
 
     if (peer_proc) {
         peer_host = orte_ess.proc_get_hostname(peer_proc);
@@ -202,11 +187,9 @@ static void mypeerlog(int severity, int errcode, orte_process_name_t *peer_proc,
 
     /* If there was a message, and space left, output it */
     if (0 < space) {
-        va_start(arglist, msg);
-        vsnprintf(pos, space, msg, arglist);
-        va_end(arglist);
+        vsnprintf(pos, space, msg, ap);
     }
 
-    payload[FTB_MAX_PAYLOAD_DATA] = '\0'; /* not needed? */
-    convert2ftb(errcode, payload);
+    payload[FTB_MAX_PAYLOAD_DATA] = '\0';
+    send_to_ftb(errcode, payload);
 }

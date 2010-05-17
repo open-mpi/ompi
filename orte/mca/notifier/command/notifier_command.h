@@ -51,6 +51,9 @@ typedef struct {
 
     /* Pipe to the parent */
     int to_parent[2];
+
+    /* Do we want data sent to child via stdin? */
+    bool pass_via_stdin;
 } orte_notifier_command_component_t;
 
 

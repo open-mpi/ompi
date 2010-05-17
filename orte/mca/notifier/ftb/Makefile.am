@@ -18,6 +18,9 @@
 
 AM_CPPFLAGS = $(notifier_ftb_CPPFLAGS)
 
+dist_pkgdata_DATA = \
+	help-orte-notifier-ftb.txt
+
 sources = \
         notifier_ftb.h \
 	notifier_ftb_module.c \

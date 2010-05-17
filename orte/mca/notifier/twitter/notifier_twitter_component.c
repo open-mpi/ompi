@@ -35,7 +35,6 @@
 
 #include "notifier_twitter.h"
 
-static int twitter_open(void);
 static int twitter_component_query(mca_base_module_t **module, int *priority);
 static int twitter_close(void);
 static int twitter_register(void);
@@ -54,7 +53,7 @@ orte_notifier_twitter_component_t mca_notifier_twitter_component = {
             ORTE_MINOR_VERSION,
             ORTE_RELEASE_VERSION,
             
-            twitter_open,
+            NULL,
             twitter_close,
             twitter_component_query,
             twitter_register,
@@ -108,12 +107,6 @@ static int twitter_register(void)
     return ORTE_SUCCESS;
 }
 
-static int twitter_open(void)
-{
-    /* Nothing to do */
-    return ORTE_SUCCESS;
-}
-
 static int twitter_close(void)
 {
     if (NULL != mca_notifier_twitter_component.url) {
@@ -133,9 +126,6 @@ static int twitter_component_query(mca_base_module_t **module,
                                    int *priority)
 {
     char *str;
-
-    *priority = 10;
-    *module = (mca_base_module_t *)&orte_notifier_twitter_module;
 
     /* If we have no username or password, there's no love */
     if (NULL == mca_notifier_twitter_component.username ||
@@ -195,5 +185,7 @@ static int twitter_component_query(mca_base_module_t **module,
         return ORTE_ERR_NOT_FOUND;
     }
 
+    *priority = 10;
+    *module = (mca_base_module_t *)&orte_notifier_twitter_module;
     return ORTE_SUCCESS;    
 }
