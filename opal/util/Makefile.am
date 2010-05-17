@@ -19,7 +19,7 @@
 
 SUBDIRS = keyval
 
-dist_pkgdata_DATA = help-opal-util.txt
+dist_pkgdata_DATA = help-opal-util.txt opal_sos_reporter.txt
 
 AM_LFLAGS = -Popal_show_help_yy
 LEX_OUTPUT_ROOT = lex.opal_show_help_yy
@@ -40,13 +40,14 @@ headers = \
         error.h \
         few.h \
         if.h \
-	keyval_parse.h \
+        keyval_parse.h \
         malloc.h \
-	net.h \
+        net.h \
         numtostr.h \
         opal_environ.h \
         opal_getcwd.h \
-	opal_pty.h \
+        opal_pty.h \
+        opal_sos.h \
         os_dirpath.h \
         os_path.h \
         output.h \
@@ -72,13 +73,14 @@ libopalutil_la_SOURCES = \
         error.c \
         few.c \
         if.c \
-	keyval_parse.c \
+        keyval_parse.c \
         malloc.c \
-	net.c \
+        net.c \
         numtostr.c \
         opal_environ.c \
         opal_getcwd.c \
-	opal_pty.c \
+        opal_pty.c \
+        opal_sos.c \
         os_dirpath.c \
         os_path.c \
         output.c \
@@ -92,9 +94,9 @@ libopalutil_la_SOURCES = \
         sys_limits.c \
         trace.c
 libopalutil_la_LIBADD = \
-	keyval/libopalutilkeyval.la
+        keyval/libopalutilkeyval.la
 libopalutil_la_DEPENDENCIES = \
-	keyval/libopalutilkeyval.la
+        keyval/libopalutilkeyval.la
 
 # Conditionally install the header files
 
