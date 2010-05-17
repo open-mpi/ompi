@@ -24,7 +24,7 @@ libmca_notifier_la_SOURCES =
 nobase_orte_HEADERS =
 
 # local files
-headers = notifier.h
+headers = notifier.h notifier_event_types.h notifier_event_calls.h
 
 libmca_notifier_la_SOURCES += $(headers)
 

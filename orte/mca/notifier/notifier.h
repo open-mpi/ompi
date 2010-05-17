@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All Rights Reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,14 +34,18 @@
  */
 
 #include "orte_config.h"
+
+#ifdef HAVE_STDARG_H
+#include <stdarg.h>
+#endif
+
+#include "opal/mca/mca.h"
+#include "opal/util/opal_sos.h"
+
 #include "orte/constants.h"
 #include "orte/types.h"
 
-#ifdef HAVE_SYSLOG_H
-#include <syslog.h>
-#endif /* HAVE_SYSLOG_H */
-
-#include "opal/mca/mca.h"
+#include "notifier_event_types.h"
 
 BEGIN_C_DECLS
 
@@ -51,13 +56,17 @@ BEGIN_C_DECLS
  */
 #define ORTE_NOTIFIER_MAX_BUF	512
 
-/* define severities - this will eventually be replaced by OPAL_SOS
-   priorities */
-enum {
-    ORTE_NOTIFIER_INFRA = LOG_CRIT,
-    ORTE_NOTIFIER_WARNING = LOG_WARNING,
-    ORTE_NOTIFIER_NOTICE = LOG_NOTICE
-};
+/* Severities, based on OPAL SOS */
+typedef enum {
+    ORTE_NOTIFIER_EMERG = OPAL_SOS_SEVERITY_EMERG,
+    ORTE_NOTIFIER_ALERT = OPAL_SOS_SEVERITY_ALERT,
+    ORTE_NOTIFIER_CRIT = OPAL_SOS_SEVERITY_CRIT,
+    ORTE_NOTIFIER_ERROR = OPAL_SOS_SEVERITY_ERROR,
+    ORTE_NOTIFIER_WARN = OPAL_SOS_SEVERITY_WARN,
+    ORTE_NOTIFIER_NOTICE = OPAL_SOS_SEVERITY_NOTICE,
+    ORTE_NOTIFIER_INFO = OPAL_SOS_SEVERITY_INFO,
+    ORTE_NOTIFIER_DEBUG = OPAL_SOS_SEVERITY_DEBUG
+} orte_notifier_base_severity_t;
 
 /*
  * Component functions - all MUST be provided!
@@ -70,21 +79,24 @@ typedef int (*orte_notifier_base_module_init_fn_t)(void);
 typedef void (*orte_notifier_base_module_finalize_fn_t)(void);
 
 /* Log a failure message */
-typedef void (*orte_notifier_base_module_log_fn_t)(int severity, int errcode, const char *msg, ...)
+typedef void (*orte_notifier_base_module_log_fn_t)(orte_notifier_base_severity_t severity, int errcode, const char *msg, va_list ap)
 #   if OPAL_HAVE_ATTRIBUTE_FORMAT_FUNCPTR
-    __opal_attribute_format__(__printf__, 3, 4)
+    __opal_attribute_format__(__printf__, 3, 0)
 #   endif
     ;
 
 /* Log a failure that is based upon a show_help message */
-typedef void (*orte_notifier_base_module_log_show_help_fn_t)(int severity, int errcode, const char *file, const char *topic, ...);
+typedef void (*orte_notifier_base_module_log_show_help_fn_t)(orte_notifier_base_severity_t severity, int errcode, const char *file, const char *topic, va_list ap);
 
 /* Log a failure related to a peer */
-typedef void (*orte_notifier_base_module_log_peer_fn_t)(int severity, int errcode, orte_process_name_t *peer_proc, const char *msg, ...)
+typedef void (*orte_notifier_base_module_log_peer_fn_t)(orte_notifier_base_severity_t severity, int errcode, orte_process_name_t *peer_proc, const char *msg, va_list ap)
 #   if OPAL_HAVE_ATTRIBUTE_FORMAT_FUNCPTR
-    __opal_attribute_format__(__printf__, 4, 5)
+    __opal_attribute_format__(__printf__, 4, 0)
 #   endif
     ;
+
+/* Log an unusual event message */
+typedef void (*orte_notifier_base_module_log_event_fn_t)(const char *msg);
 
 /*
  * Ver 1.0
@@ -95,10 +107,36 @@ struct orte_notifier_base_module_1_0_0_t {
     orte_notifier_base_module_log_fn_t              log;
     orte_notifier_base_module_log_show_help_fn_t    help;
     orte_notifier_base_module_log_peer_fn_t         peer;
+    orte_notifier_base_module_log_event_fn_t        log_event;
 };
 
 typedef struct orte_notifier_base_module_1_0_0_t orte_notifier_base_module_1_0_0_t;
 typedef orte_notifier_base_module_1_0_0_t orte_notifier_base_module_t;
+
+/*
+ * API functions
+ */
+/* Log a failure message */
+typedef void (*orte_notifier_base_API_log_fn_t)(orte_notifier_base_severity_t severity, int errcode, const char *msg, ...);
+
+/* Log a failure that is based upon a show_help message */
+typedef void (*orte_notifier_base_API_log_show_help_fn_t)(orte_notifier_base_severity_t severity, int errcode, const char *file, const char *topic, ...);
+
+/* Log a failure related to a peer */
+typedef void (*orte_notifier_base_API_log_peer_fn_t)(orte_notifier_base_severity_t severity, int errcode, orte_process_name_t *peer_proc, const char *msg, ...);
+    
+/*
+ * Define a struct to hold the API functions that users will call
+ */
+struct orte_notifier_API_module_1_0_0_t {
+    orte_notifier_base_API_log_fn_t              log;
+    orte_notifier_base_API_log_show_help_fn_t    show_help;
+    orte_notifier_base_API_log_peer_fn_t         log_peer;
+};
+typedef struct orte_notifier_API_module_1_0_0_t orte_notifier_API_module_1_0_0_t;
+typedef orte_notifier_API_module_1_0_0_t orte_notifier_API_module_t;
+
+ORTE_DECLSPEC extern orte_notifier_API_module_t orte_notifier;
 
 /*
  * the standard component data structure
@@ -111,7 +149,6 @@ typedef struct orte_notifier_base_component_1_0_0_t orte_notifier_base_component
 typedef orte_notifier_base_component_1_0_0_t orte_notifier_base_component_t;
 
 
-
 /*
  * Macro for use in components that are of type notifier v1.0.0
  */
@@ -121,9 +158,21 @@ typedef orte_notifier_base_component_1_0_0_t orte_notifier_base_component_t;
   /* notifier v1.0 */ \
   "notifier", 1, 0, 0
 
-/* Global structure for accessing notifier functions
+/*
+ * To manage unusual events notifications
+ * Set to noop if not wanted
  */
-ORTE_DECLSPEC extern orte_notifier_base_module_t orte_notifier;  /* holds selected module's function pointers */
+
+#if ORTE_WANT_NOTIFIER_LOG_EVENT
+
+#include "notifier_event_calls.h"
+
+#else /* ORTE_WANT_NOTIFIER_LOG_EVENT */
+
+#define ORTE_NOTIFIER_DEFINE_EVENT(i, m)
+#define ORTE_NOTIFIER_LOG_EVENT(i, c, t) do {} while (0)
+
+#endif /* ORTE_WANT_NOTIFIER_LOG_EVENT */
 
 END_C_DECLS
 

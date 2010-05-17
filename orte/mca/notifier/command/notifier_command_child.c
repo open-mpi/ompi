@@ -42,10 +42,20 @@
 #include <signal.h>
 
 #include "opal/util/argv.h"
+#include "opal/threads/threads.h"
 
 #include "orte/constants.h"
+#include "orte/mca/notifier/base/base.h"
 
 #include "notifier_command.h"
+
+/* Structre for holding the argument to stdin_main() */
+typedef struct {
+    int sat_pipe_fd;
+    int sat_severity;
+    int sat_errcode;
+    char *sat_msg;
+} stdin_arg_t;
 
 
 int orte_notifier_command_split(const char *cmd_arg, char ***argv_arg)
@@ -172,6 +182,30 @@ static void diediedie(int status)
 }
 
 /*
+ * Main entry point for stdin thread
+ */
+static void *stdin_main(opal_object_t *obj)
+{
+    char *data;
+    opal_thread_t *t = (opal_thread_t*) obj;
+    stdin_arg_t *arg = (stdin_arg_t*) t->t_arg;
+
+    asprintf(&data, "<stdin>\n<notifier severity_int=\"%d\" severity_str=\"%s\" errcode=\"%d\">\n<message>%s</message>\n</notifier>\n</stdin>\n",
+             arg->sat_severity,
+             orte_notifier_base_sev2str(arg->sat_severity),
+             arg->sat_errcode,
+             arg->sat_msg);
+    if (NULL != data) {
+        orte_notifier_command_write_fd(arg->sat_pipe_fd,
+                                       strlen(data) + 1, data);
+        free(data);
+        close(arg->sat_pipe_fd);
+    }
+
+    return NULL;
+}
+
+/*
  * Loop over waiting for a child to die
  */
 static int do_wait(pid_t pid, int timeout, int *status, bool *exited)
@@ -212,8 +246,11 @@ static void do_exec(void)
     pid_t pid;
     bool exited, killed;
     int sel[3], status;
+    int pipe_to_stdin[2];
     char *msg, *p, *cmd, **argv = NULL;
     orte_notifier_command_component_t *c = &mca_notifier_command_component;
+    opal_thread_t stdin_thread;
+    stdin_arg_t arg;
 
     /* First three items on the pipe are: severity, errcode, and
        string length (sel = Severity, Errcode, string Length. */
@@ -250,10 +287,7 @@ static void do_exec(void)
         while (NULL != (p = strstr(cmd, "$S"))) {
             *p = '\0';
             asprintf(&temp, "%s%s%s", cmd, 
-                     ((ORTE_NOTIFIER_INFRA == sel[0]) ? "INFRA" :
-                      ((ORTE_NOTIFIER_WARNING == sel[0]) ? "WARNING" : 
-                       ((ORTE_NOTIFIER_NOTICE == sel[0]) ? "NOTICE" : 
-                        "UNKNOWN"))), p + 2);
+                     orte_notifier_base_sev2str(sel[0]), p + 2);
             free(cmd);
             cmd = temp;
         }
@@ -279,6 +313,13 @@ static void do_exec(void)
         /* What else can we do? */
     }
 
+    /* Do we need a stdin pipe? */
+    if (mca_notifier_command_component.pass_via_stdin) {
+        if (0 != pipe(pipe_to_stdin)) {
+            diediedie(8);
+        }
+    }
+
     /* Fork off the child and run the command */
     pid = fork();
     if (pid < 0) {
@@ -286,8 +327,23 @@ static void do_exec(void)
     } else if (pid == 0) {
         int i;
         int fdmax = sysconf(_SC_OPEN_MAX);
+        close(0);
         for (i = 3; i < fdmax; ++i) {
-            close(i);
+            if (!mca_notifier_command_component.pass_via_stdin ||
+                pipe_to_stdin[0] != i) {
+                close(i);
+            }
+        }
+
+        /* If we have a pipe to stdin, dup it */
+        if (mca_notifier_command_component.pass_via_stdin) {
+            close(pipe_to_stdin[1]);
+            if (0 != pipe_to_stdin[0]) {
+                if (dup2(pipe_to_stdin[0], 0) < 0) {
+                    diediedie(13);
+                }
+                close(pipe_to_stdin[0]);
+            }
         }
 
         /* Run it! */
@@ -295,14 +351,28 @@ static void do_exec(void)
         /* If we get here, bad */
         diediedie(9);
     }
-    free(cmd);
-    free(msg);
-    opal_argv_free(argv);
+
+    /* Write down stdin.  Start a thread because this has to run in
+       parallel to the timer to kill the grandchild if it runs too
+       long. */
+    if (mca_notifier_command_component.pass_via_stdin) {
+        close(pipe_to_stdin[0]);
+        OBJ_CONSTRUCT(&stdin_thread, opal_thread_t);
+        stdin_thread.t_run = stdin_main;
+        arg.sat_pipe_fd = pipe_to_stdin[1];
+        arg.sat_severity = sel[0];
+        arg.sat_errcode = sel[1];
+        arg.sat_msg = msg;
+        stdin_thread.t_arg = (void *) &arg;
+        if (OPAL_SUCCESS != opal_thread_start(&stdin_thread)) {
+            diediedie(9);
+        }
+    }
 
     /* Parent: wait for / reap the child. */
     do_wait(pid, mca_notifier_command_component.timeout, &status, &exited);
 
-    /* If it didn't die, try killing it nicely.  If that fails, kill
+    /* If the child didn't die, try killing it nicely.  If that fails, kill
        it dead. */
     killed = false;
     if (!exited) {
@@ -315,6 +385,20 @@ static void do_exec(void)
                     &exited);
         }
     }
+
+    /* Wait for the thread to complete */
+    if (mca_notifier_command_component.pass_via_stdin) {
+        void *ret;
+
+        close(pipe_to_stdin[1]);
+        opal_thread_join(&stdin_thread, &ret);
+        OBJ_DESTRUCT(&stdin_thread);
+    }
+
+    /* Free stuff */
+    free(cmd);
+    free(msg);
+    opal_argv_free(argv);
 
     /* Handshake back up to the parent: just send the status value
        back up to the parent and let all interpretation occur up

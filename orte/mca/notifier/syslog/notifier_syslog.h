@@ -10,6 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -25,14 +26,6 @@
 #include "orte/mca/notifier/notifier.h"
 
 BEGIN_C_DECLS
-
-/*
- * Component open / close
- */
-int orte_notifier_syslog_open(void);
-int orte_notifier_syslog_close(void);
-int orte_notifier_syslog_component_query(mca_base_module_t **module, int *priority);
-
 
 /*
  * Notifier interfaces

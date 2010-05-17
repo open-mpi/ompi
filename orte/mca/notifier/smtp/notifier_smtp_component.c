@@ -31,7 +31,6 @@
 
 #include "notifier_smtp.h"
 
-static int smtp_open(void);
 static int smtp_component_query(mca_base_module_t **module, int *priority);
 static int smtp_close(void);
 static int smtp_register(void);
@@ -50,7 +49,7 @@ orte_notifier_smtp_component_t mca_notifier_smtp_component = {
             ORTE_MINOR_VERSION,
             ORTE_RELEASE_VERSION,
             
-            smtp_open,
+            NULL,
             smtp_close,
             smtp_component_query,
             smtp_register,
@@ -157,12 +156,6 @@ static int smtp_register(void)
                               "Version of libesmtp that this component is linked against",
                               false, true, version, NULL);
 
-    return ORTE_SUCCESS;
-}
-
-static int smtp_open(void)
-{
-    /* Nothing to do */
     return ORTE_SUCCESS;
 }
 
