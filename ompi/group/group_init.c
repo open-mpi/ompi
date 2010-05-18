@@ -62,7 +62,7 @@ ompi_group_t *ompi_group_allocate(int group_size)
     if (NULL == new_group)
       goto error_exit;
 
-    if (OMPI_SUCCESS != new_group->grp_f_to_c_index) {
+    if (0 > new_group->grp_f_to_c_index) {
         OBJ_RELEASE (new_group);
         new_group = NULL;
         goto error_exit;
@@ -106,7 +106,7 @@ ompi_group_t *ompi_group_allocate_sporadic(int group_size)
     if( NULL == new_group) {
         goto error_exit;
     }
-    if (OMPI_SUCCESS != new_group->grp_f_to_c_index) {
+    if (0 > new_group->grp_f_to_c_index) {
         OBJ_RELEASE(new_group);
         new_group = NULL;
         goto error_exit;
@@ -148,7 +148,7 @@ ompi_group_t *ompi_group_allocate_strided(void)
     if( NULL == new_group ) {
         goto error_exit;
     }
-    if (OMPI_SUCCESS != new_group->grp_f_to_c_index) {
+    if (0 > new_group->grp_f_to_c_index) {
         OBJ_RELEASE(new_group);
         new_group = NULL;
         goto error_exit;
@@ -175,7 +175,7 @@ ompi_group_t *ompi_group_allocate_bmap(int orig_group_size , int group_size)
     if( NULL == new_group) {
         goto error_exit;
     }
-    if (OMPI_SUCCESS != new_group->grp_f_to_c_index) {
+    if (0 > new_group->grp_f_to_c_index) {
         OBJ_RELEASE(new_group);
         new_group = NULL;
         goto error_exit;

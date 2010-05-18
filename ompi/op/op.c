@@ -235,7 +235,7 @@ ompi_op_t *ompi_op_create_user(bool commute,
         goto error;
     }
 
-    if (OMPI_SUCCESS != new_op->o_f_to_c_index) {
+    if (0 > new_op->o_f_to_c_index) {
         OBJ_RELEASE(new_op);
         new_op = NULL;
         goto error;
