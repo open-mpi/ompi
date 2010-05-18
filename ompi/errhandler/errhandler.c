@@ -199,7 +199,7 @@ ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
 
   new_errhandler = OBJ_NEW(ompi_errhandler_t);
   if (NULL != new_errhandler) {
-    if (OMPI_SUCCESS != new_errhandler->eh_f_to_c_index) {
+    if (0 > new_errhandler->eh_f_to_c_index) {
       OBJ_RELEASE(new_errhandler);
       new_errhandler = NULL;
     } else {

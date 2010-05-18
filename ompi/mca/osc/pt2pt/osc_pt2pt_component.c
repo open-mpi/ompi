@@ -121,7 +121,7 @@ check_config_value_bool(char *key, ompi_info_t *info)
 
  info_not_found:
     param = mca_base_param_find("osc", "pt2pt", key);
-    if (param != OPAL_SUCCESS) return false;
+    if (0 > param) return false;
 
     ret = mca_base_param_lookup_int(param, &flag);
     if (OMPI_SUCCESS != ret) return false;
