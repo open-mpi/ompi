@@ -13,7 +13,7 @@
  * Copyright (c) 2007      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -142,7 +142,7 @@ struct MPIR_PROCDESC {
 
 struct MPIR_PROCDESC *MPIR_proctable = NULL;
 int MPIR_proctable_size = 0;
-int MPIR_being_debugged = 0;
+volatile int MPIR_being_debugged = 0;
 volatile int MPIR_debug_state = 0;
 volatile int MPIR_i_am_starter = 0;
 volatile int MPIR_partial_attach_ok = 1;
