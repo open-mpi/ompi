@@ -73,6 +73,8 @@ ldflags += -no-undefined
 endif HWLOC_HAVE_GCC
 
 if HWLOC_HAVE_WINDOWS
+LC_MESSAGES=C
+export LC_MESSAGES
 ldflags += -Xlinker --output-def -Xlinker .libs/libhwloc.def
 
 if HWLOC_HAVE_MS_LIB
