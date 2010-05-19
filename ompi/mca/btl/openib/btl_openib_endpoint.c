@@ -16,6 +16,7 @@
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies, Inc.  All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved
  *
  * $COPYRIGHT$
  *
@@ -1029,7 +1030,7 @@ void *mca_btl_openib_endpoint_invoke_error(void *context)
     }
 
     /* Invoke the callback to the upper layer */
-    btl->error_cb(&(btl->super), MCA_BTL_ERROR_FLAGS_FATAL);
+    btl->error_cb(&(btl->super), MCA_BTL_ERROR_FLAGS_FATAL, NULL, NULL);
 
     /* Will likely never get here */
     return NULL;

@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -503,13 +504,17 @@ typedef int (*mca_btl_base_module_register_fn_t)(
  * Callback function that is called asynchronously on receipt
  * of an error from the transport layer 
  *
- * @param[IN] btl    BTL module
- * @param[IN] flags  type of error 
+ * @param[IN] btl     BTL module
+ * @param[IN] flags   type of error 
+ * @param[IN] errproc process that had an error
+ * @param[IN] btlinfo descriptive string from the BTL
  */
 
 typedef void (*mca_btl_base_module_error_cb_fn_t)(
         struct mca_btl_base_module_t* btl,
-        int32_t flags                             
+        int32_t flags,
+        struct ompi_proc_t* errproc,
+        char* btlinfo
 );
 
 
