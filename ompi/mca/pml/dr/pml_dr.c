@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -66,7 +66,8 @@ mca_pml_dr_t mca_pml_dr = {
 };
 
 void mca_pml_dr_error_handler( struct mca_btl_base_module_t* btl,
-                               int32_t flags );
+                               int32_t flags, ompi_proc_t* errproc,
+                               char* btlinfo );
 
 int mca_pml_dr_enable(bool enable)
 {
@@ -317,8 +318,8 @@ int mca_pml_dr_dump(
 
 
 void mca_pml_dr_error_handler(
-        struct mca_btl_base_module_t* btl,
-        int32_t flags) { 
+        struct mca_btl_base_module_t* btl, int32_t flags,
+        ompi_proc_t* errproc, char* btlinfo) { 
     /* try failover ! */
     opal_output(0, "%s:%d:%s: failing BTL: %s", __FILE__, __LINE__, __func__,
                    btl->btl_component->btl_version.mca_component_name);
