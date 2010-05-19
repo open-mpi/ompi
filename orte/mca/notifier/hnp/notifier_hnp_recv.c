@@ -31,7 +31,8 @@
 #include "notifier_hnp.h"
 
 /*
- * This function is called back *after* the RML receive callback to avoid 
+ * This function is called back *after* the RML receive callback to
+ * avoid the RRD ("receive recursion of death").
  */
 static void process_msg(int fd, short event, void *cbdata)
 {
@@ -42,9 +43,6 @@ static void process_msg(int fd, short event, void *cbdata)
     orte_notifier_base_severity_t severity;
     int errcode;
     char *msg;
-
-    /* JMS: As an example, we packed the severity, errcode, and string
-       in notifier_hnp_module.c.  We'll unpack it here. */
 
     /* Unpack the severity */
     count = 1;
@@ -80,6 +78,12 @@ CLEAN_RETURN:
     return;
 }
 
+#if 0
+/** 
+ * Function to unpack a single SOS error entry.
+ *
+ * @return OPAL_SUCCESS Upon success
+ */
 static int opal_dss_unpack_sos_error(opal_buffer_t *buf, opal_sos_error_t *error)
 {
     int count, rc;
@@ -139,6 +143,9 @@ static int opal_dss_unpack_sos_error(opal_buffer_t *buf, opal_sos_error_t *error
     return ORTE_SUCCESS;
 }
 
+/*
+ * Function to unpack the entire SOS table on the HNP.
+ */
 static void process_sos_table_msg(int fd, short event, void *cbdata)
 {
     orte_message_event_t *mev = (orte_message_event_t*)cbdata;
@@ -213,6 +220,7 @@ error:
     OBJ_DESTRUCT(sos_table);
     return;
 }
+#endif
 
 void orte_notifier_hnp_recv_cb(int status, orte_process_name_t* sender,
                                opal_buffer_t* buffer, orte_rml_tag_t tag,
