@@ -276,7 +276,6 @@ int ompi_coll_tuned_alltoall_intra_linear_sync(void *sbuf, int scount,
     OPAL_OUTPUT((ompi_coll_tuned_stream,
                  "ompi_coll_tuned_alltoall_intra_linear_sync rank %d", rank));
 
-
     error = ompi_datatype_get_extent(sdtype, &slb, &sext);
     if (OMPI_SUCCESS != error) {
         return error;
@@ -311,7 +310,7 @@ int ompi_coll_tuned_alltoall_intra_linear_sync(void *sbuf, int scount,
                    (size - 1) : (max_outstanding_reqs));
     reqs = (ompi_request_t**) malloc( 2 * total_reqs * 
                                       sizeof(ompi_request_t*));
-    if (NULL == reqs) { error = -1; goto error_hndl; }
+    if (NULL == reqs) { error = -1; line = __LINE__; goto error_hndl; }
     
     prcv = (char *) rbuf;
     psnd = (char *) sbuf;
