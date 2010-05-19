@@ -70,6 +70,7 @@
 #include "opal/class/opal_object.h"
 #include "opal/util/output.h"
 #include "opal/util/error.h"
+#include "opal/util/opal_sos.h"
 
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/plm/plm_types.h"
