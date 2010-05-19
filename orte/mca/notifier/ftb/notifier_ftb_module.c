@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -30,14 +30,14 @@
 #include <stdarg.h>
 #endif
 
+#include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/show_help.h"
+#include "opal/util/os_path.h"
 
-#include "orte/util/error_strings.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/util/show_help.h"
 #include "orte/mca/notifier/base/base.h"
 #include "notifier_ftb.h"
-
 
 /* Static API's */
 static int init(void);
@@ -66,53 +66,23 @@ FTB_client_t ftb_client_info;
 /* FTB client handle */
 FTB_client_handle_t ftb_client_handle;
 
-static FTB_event_info_t ftb_event_info[] = {
-/* 0 */    {"UNKNOWN_ERROR",	"error"},
-/* 1 */    {"OUT_OF_RESOURCES",	"error"},
-/* 2 */    {"UNREACHABLE",	"error"},
-/* 3 */    {"COMM_FAILURE",	"error"},
-/* 4 */    {"FATAL",		"fatal"},
-};
-static const int ftb_event_info_count = sizeof(ftb_event_info)/sizeof(FTB_event_info_t);
-
-static int orte_err2ftb(int errnum)
-{
-    int retval;
-
-    switch (OPAL_SOS_GET_ERROR_CODE(errnum)) {
-    case ORTE_ERR_OUT_OF_RESOURCE:
-    case ORTE_ERR_TEMP_OUT_OF_RESOURCE:
-        retval =  1;
-        break;
-    case ORTE_ERR_CONNECTION_REFUSED:
-    case ORTE_ERR_CONNECTION_FAILED:
-    case ORTE_ERR_UNREACH:
-        retval =  2;
-        break;
-    case ORTE_ERR_COMM_FAILURE:
-        retval =  3;
-        break;
-    case ORTE_ERR_FATAL:
-        retval =  4;
-        break;
-    default:
-        retval = 0;
-    }
-
-    if ((ftb_event_info_count <= retval) || (0 > retval)) {
-        retval = 0;
-    }
-    return retval;
-}
-
 static int init(void) {
     int ret;
+    char *schema_file;
 
-    ret = FTB_Declare_publishable_events(ftb_client_handle, 0, ftb_event_info, ftb_event_info_count);
+    /* Locate the FTB events schema file */
+    if (NULL == (schema_file = opal_os_path(false, opal_install_dirs.pkgdatadir,
+                                            "help-ftb-event-schema.txt", NULL))) {
+        schema_file = strdup("help-ftb-event-schema.txt");
+    }
+
+    /* Declare the Open MPI publishable events to the FTB */
+    ret = FTB_Declare_publishable_events(ftb_client_handle, schema_file, NULL, 0);
+    free(schema_file);
+
     if (FTB_SUCCESS != ret) {
-        orte_show_help("help-orte-notifier-ftb.txt",
-                       "declare events failed",
-                       true, "FTB_Declare_publishable_events() failed", ret);
+        orte_show_help("help-orte-notifier-ftb.txt", "declare events failed", true, 
+                       "FTB_Declare_publishable_events() failed", ret);
 
         FTB_Disconnect(ftb_client_handle);
         return ORTE_ERROR;
@@ -125,53 +95,109 @@ static void finalize(void) {
     FTB_Disconnect(ftb_client_handle);
 }
 
-static void send_to_ftb(int errcode, char *payload)
+static const char* get_ftb_event_severity(orte_notifier_base_severity_t severity)
 {
-    int ret, event_id;
+    switch (severity) {
+    case ORTE_NOTIFIER_EMERG:
+    case ORTE_NOTIFIER_ALERT:
+        return "ALL";
+    case ORTE_NOTIFIER_CRIT:
+        return "FATAL";
+    case ORTE_NOTIFIER_ERROR:
+        return "ERROR";
+    case ORTE_NOTIFIER_WARN:
+    case ORTE_NOTIFIER_NOTICE:
+        return "WARNING";
+    case ORTE_NOTIFIER_INFO:
+    case ORTE_NOTIFIER_DEBUG:
+        return "INFO";
+    default:
+        return "UNKNOWN";
+    }
+}
+
+static const char* get_ftb_event_name(int errnum)
+{
+    /* If it an OMPI error, translate it to an equivalent FTB event */
+    if (OPAL_SUCCESS > errnum) {
+        switch (errnum) {
+        case ORTE_ERR_OUT_OF_RESOURCE:
+        case ORTE_ERR_TEMP_OUT_OF_RESOURCE:
+            return FTB_ERROR(MPI_OUT_OF_RESOURCE);
+
+        case ORTE_ERR_CONNECTION_REFUSED:
+        case ORTE_ERR_CONNECTION_FAILED:
+        case ORTE_ERR_UNREACH:
+            return FTB_ERROR(MPI_NODE_DEAD);
+
+        case ORTE_ERR_COMM_FAILURE:
+            return FTB_ERROR(MPI_COMM_FAILURE);
+
+        case ORTE_ERR_PROC_DEAD:
+            return FTB_ERROR(MPI_RANK_DEAD);
+
+        case ORTE_ERR_FATAL:
+        default:
+            return FTB_ERROR(MPI_UNKNOWN_ERROR);
+        }
+    }
+
+    return FTB_ERROR(MPI_UNKNOWN_ERROR);
+}
+
+static void publish_ftb_event(orte_notifier_base_severity_t severity, int errcode, char *payload)
+{
+    int ret;
+    const char *event_name;
     FTB_event_handle_t ehandle;
     FTB_event_properties_t eprop;
-    eprop.event_type = 1;
-    snprintf(eprop.event_payload, FTB_MAX_PAYLOAD_DATA, "%s", (payload != NULL) ? payload : "");
 
-    event_id = orte_err2ftb(errcode);
-    ret = FTB_Publish(ftb_client_handle, ftb_event_info[event_id].event_name, &eprop, &ehandle);
+    /* Only normal FTB events are supported currently. */
+    eprop.event_type = (int) FTB_EVENT_NORMAL;
+
+    /* Copy the event payload, if we have one */ 
+    if (NULL != payload) {
+        strncpy(eprop.event_payload, payload, FTB_MAX_PAYLOAD_DATA);
+    }
+
+    /* Publish the event to the Fault Tolerant Backplane */
+    event_name = get_ftb_event_name(errcode);
+    ret = FTB_Publish(ftb_client_handle, event_name, &eprop, &ehandle);
     if (FTB_SUCCESS != ret) {
-        orte_show_help("help-orte-notifier-ftb.txt",
-                       "publish failed",
-                       true, "FTB_Publish() failed", ret,
-                       ftb_event_info[event_id].severity,
-                       ftb_event_info[event_id].event_name,
-                       eprop.event_payload, errcode);
+        orte_show_help("help-orte-notifier-ftb.txt", "publish failed", true,
+                       "FTB_Publish() failed", ret, get_ftb_event_severity(severity),
+                       event_name, payload, errcode);
     }
 }
 
 static void ftb_log(orte_notifier_base_severity_t severity, int errcode, const char *msg,
-                  va_list ap)
+                    va_list ap)
 {
     char *payload;
 
     /* If there was a message, output it */
     vasprintf(&payload, msg, ap);
     if (NULL != payload) {
-        send_to_ftb(errcode, payload);
+        publish_ftb_event(severity, errcode, payload);
         free(payload);
     }
 }
 
 static void ftb_help(orte_notifier_base_severity_t severity, int errcode,
-                      const char *filename, const char *topic, va_list ap)
+                     const char *filename, const char *topic, va_list ap)
 {
-    char *output = opal_show_help_vstring(filename, topic, false, ap);
-    
-    if (NULL != output) {
-        send_to_ftb(errcode, output);
-        free(output);
+    char *payload;
+
+    payload = opal_show_help_vstring(filename, topic, false, ap);
+    if (NULL != payload) {
+        publish_ftb_event(severity, errcode, payload);
+        free(payload);
     }
 }
 
 static void ftb_peer(orte_notifier_base_severity_t severity, int errcode,
-                      orte_process_name_t *peer_proc, const char *msg,
-                      va_list ap)
+                     orte_process_name_t *peer_proc, const char *msg,
+                     va_list ap)
 {
     char payload[FTB_MAX_PAYLOAD_DATA + 1];
     char *peer_host = NULL;
@@ -191,5 +217,5 @@ static void ftb_peer(orte_notifier_base_severity_t severity, int errcode,
     }
 
     payload[FTB_MAX_PAYLOAD_DATA] = '\0';
-    send_to_ftb(errcode, payload);
+    publish_ftb_event(severity, errcode, payload);
 }

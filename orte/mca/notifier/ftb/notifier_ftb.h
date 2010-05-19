@@ -39,19 +39,22 @@ typedef struct {
     int priority;
 } orte_notifier_ftb_component_t;
 
-/*
- * Notifier interfaces
- */
-
+/* Notifier interfaces */
 ORTE_MODULE_DECLSPEC extern orte_notifier_ftb_component_t mca_notifier_ftb_component;
 extern orte_notifier_base_module_t orte_notifier_ftb_module;
 
-/*
- * FTB client information
- */
-
+/* FTB client information */
 extern FTB_client_t ftb_client_info;
 extern FTB_client_handle_t ftb_client_handle;
+
+/* FTB event types */
+typedef enum {
+    FTB_EVENT_NORMAL   = 1,
+    FTB_EVENT_RESPONSE = 2
+} ftb_event_type_t;
+
+/* Macro that returns FTB event name given the FTB event code */
+#define FTB_ERROR(errnum) #errnum
 
 END_C_DECLS
 
