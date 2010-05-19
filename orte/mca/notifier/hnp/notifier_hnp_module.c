@@ -71,9 +71,6 @@ orte_notifier_base_module_t orte_notifier_hnp_module = {
 static int send_command(orte_notifier_base_severity_t severity, int errcode,
                         char *msg)
 {
-    /* JMS: As an example, I'll pack up the severity, errcode, and
-       string message.  I assume you'll want to pack up the whole
-       corresponding OPAL SOS table. */
     opal_buffer_t *buf;
     int rc;
     uint8_t u8 = (uint8_t) severity;
@@ -117,6 +114,12 @@ static int send_command(orte_notifier_base_severity_t severity, int errcode,
     return ORTE_SUCCESS;
 }
 
+#if 0
+/** 
+ * Function to pack a single SOS error entry.
+ *
+ * @return OPAL_SUCCESS Upon success
+ */
 static int opal_dss_pack_sos_error(opal_buffer_t *buf, opal_sos_error_t *error)
 {
     int rc;
@@ -163,6 +166,16 @@ static int opal_dss_pack_sos_error(opal_buffer_t *buf, opal_sos_error_t *error)
     return ORTE_SUCCESS;
 }
 
+/** 
+ * Function to pack all the entries in the SOS table and send it
+ * over to the HNP.
+ *
+ * @return OPAL_SUCCESS Upon success
+ * @return OPAL_FAILURE Upon failure
+ *
+ * ADK: Presently, we simply rely on orte_show_help to do the aggregation on
+ * a per-error basis.
+ */
 static int opal_sos_send_table(void)
 {
     opal_sos_error_t *opal_error;
@@ -227,6 +240,7 @@ error:
     OBJ_RELEASE(buf);
     return rc;
 }
+#endif
 
 static int init(void)
 {
@@ -244,11 +258,18 @@ static int init(void)
             return rc;
         }
 
+	/* Construct a list of SOS tables, one for each process.
+	   ADK: Since we are not doing proper error trace analysis
+	   and/or aggregation, each process maintains a separate SOS
+	   table and individually sends each entry in the table to 
+	   the HNP. */
+	/*
 	OBJ_CONSTRUCT(&orte_notifier_hnp_tables, opal_pointer_array_t);
 	opal_pointer_array_init(&orte_notifier_hnp_tables,
 				orte_process_info.num_procs,
 				INT32_MAX, 8);
 	OBJ_CONSTRUCT(&orte_notifier_hnp_tables_lock, opal_mutex_t);
+	*/
 
 #if OPAL_ENABLE_DEBUG
         /* If we're debugging, also add an exception handler -- just to

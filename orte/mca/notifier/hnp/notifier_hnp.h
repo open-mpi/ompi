@@ -38,8 +38,10 @@ void orte_notifier_hnp_exception_cb(const orte_process_name_t* peer,
                                     orte_rml_exception_t reason);
 #endif
 
+/*
 extern opal_pointer_array_t orte_notifier_hnp_tables;
 extern opal_mutex_t         orte_notifier_hnp_tables_lock;
+*/
 
 /*
  * Notifier interfaces
