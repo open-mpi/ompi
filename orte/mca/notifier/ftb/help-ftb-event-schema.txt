@@ -1,0 +1,37 @@
+# -*- text -*-
+#
+# Copyright (c) 2010 The Trustees of Indiana University and Indiana
+#                    University Research and Technology Corporation.
+#                    All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+# This is the FTB event schema file for Open MPI's FTB notifier
+#
+start
+
+ftb.mpi.openmpi
+
+MPI_INIT INFO
+MPI_FINALIZE INFO
+MPI_NODE_DEAD ERROR
+MPI_NODE_RESTORED INFO
+MPI_RANK_DEAD ERROR
+MPI_RANK_RESTORED INFO
+MPI_NODE_MIGRATE_DONE INFO
+MPI_JOB_ABORT_CMD ERROR
+MPI_JOB_RESUME_CMD INFO
+MPI_JOB_ABORTED ERROR
+MPI_JOB_RESUMED INFO
+MPI_MSG_CORRUPT ERROR
+MPI_IFACE_DEAD ERROR
+MPI_IFACE_RESTORED ERROR
+MPI_UNKNOWN_ERROR ERROR
+MPI_OUT_OF_RESOURCE ERROR
+MPI_NODE_UNREACHABLE ERROR
+MPI_COMM_FAILURE ERROR
+
+end
