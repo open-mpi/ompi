@@ -19,7 +19,7 @@
 
 #include "orte/util/show_help.h"
 #include "orte/util/name_fns.h"
-#include "orte/mca/errmgr/base/base.h"
+#include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmcast/rmcast.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
