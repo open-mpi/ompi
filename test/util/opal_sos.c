@@ -50,7 +50,7 @@ static bool opal_sos_test(void);
 int
 main(int argc, char *argv[])
 {
-    opal_init(&argc, &argv);
+    opal_init_util(&argc, &argv);
     test_init("opal_sos test suite");
     opal_sos_test();
     opal_finalize();
