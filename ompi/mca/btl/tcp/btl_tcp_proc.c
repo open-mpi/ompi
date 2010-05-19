@@ -514,10 +514,10 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
 
                     /* No connection is possible on these interfaces */
                 
-                /*  check for RFC1918 */
+                    /*  check for RFC1918 */
                 } else if(opal_net_addr_isipv4public((struct sockaddr*) local_interfaces[i]->ipv4_address)
-                   && opal_net_addr_isipv4public((struct sockaddr*) 
-                                                 peer_interfaces[j]->ipv4_address)) {
+                          && opal_net_addr_isipv4public((struct sockaddr*) 
+                                                        peer_interfaces[j]->ipv4_address)) {
                     if(opal_net_samenetwork((struct sockaddr*) local_interfaces[i]->ipv4_address,
                                             (struct sockaddr*) peer_interfaces[j]->ipv4_address,
                                             local_interfaces[i]->ipv4_netmask)) {
@@ -556,8 +556,8 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
                     /* No connection is possible on these interfaces */
 
                 } else if(opal_net_samenetwork((struct sockaddr*) local_interfaces[i]->ipv6_address,
-                                        (struct sockaddr*) peer_interfaces[j]->ipv6_address,
-                                        local_interfaces[i]->ipv6_netmask)) {
+                                               (struct sockaddr*) peer_interfaces[j]->ipv6_address,
+                                               local_interfaces[i]->ipv6_netmask)) {
                     weights[i][j] = CQ_PUBLIC_SAME_NETWORK;
                 } else {
                     weights[i][j] = CQ_PUBLIC_DIFFERENT_NETWORK;
@@ -586,50 +586,50 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
      * See ticket https://svn.open-mpi.org/trac/ompi/ticket/2031 
      * for more details about this issue.  */
     if (perm_size <= MAX_PERMUTATION_INTERFACES) {
-       memset(a, 0, perm_size * sizeof(int));
-       max_assignment_cardinality = -1;
-       max_assignment_weight = -1;
-       visit(0, -1, perm_size, a);
+        memset(a, 0, perm_size * sizeof(int));
+        max_assignment_cardinality = -1;
+        max_assignment_weight = -1;
+        visit(0, -1, perm_size, a);
 
-       rc = OMPI_ERR_UNREACH;
-       for(i = 0; i < perm_size; ++i) {
-	   if(best_assignment[i] > num_peer_interfaces
-	      || weights[i][best_assignment[i]] == CQ_NO_CONNECTION
-	      || peer_interfaces[best_assignment[i]]->inuse 
-	      || NULL == peer_interfaces[best_assignment[i]]) {
-	       continue;
-	   } 
-	   peer_interfaces[best_assignment[i]]->inuse++;
-	   btl_endpoint->endpoint_addr = best_addr[i][best_assignment[i]];
-	   btl_endpoint->endpoint_addr->addr_inuse++;
-	   rc = OMPI_SUCCESS;
-	   break;
-       }
+        rc = OMPI_ERR_UNREACH;
+        for(i = 0; i < perm_size; ++i) {
+            if(best_assignment[i] > num_peer_interfaces
+               || weights[i][best_assignment[i]] == CQ_NO_CONNECTION
+               || peer_interfaces[best_assignment[i]]->inuse 
+               || NULL == peer_interfaces[best_assignment[i]]) {
+                continue;
+            } 
+            peer_interfaces[best_assignment[i]]->inuse++;
+            btl_endpoint->endpoint_addr = best_addr[i][best_assignment[i]];
+            btl_endpoint->endpoint_addr->addr_inuse++;
+            rc = OMPI_SUCCESS;
+            break;
+        }
     } else {
-	enum mca_btl_tcp_connection_quality max;
-	int i_max, j_max;
-	/* Find the best connection that is not in use.  Save away
-	 * the indices of the best location. */
-	max = CQ_NO_CONNECTION;
-	for(i=0; i<num_local_interfaces; ++i) {
-	    for(j=0; j<num_peer_interfaces; ++j) {
-		if (!peer_interfaces[j]->inuse) {
-		    if (weights[i][j] > max) {
-			max = weights[i][j];
-			i_max = i;
-			j_max = j;
-		    }
-		}
-	    }
-	}
-	/* Now see if there is a some type of connection available. */
-	rc = OMPI_ERR_UNREACH;
-	if (CQ_NO_CONNECTION != max) {
-	    peer_interfaces[j_max]->inuse++;
-	    btl_endpoint->endpoint_addr = best_addr[i_max][j_max];
-	    btl_endpoint->endpoint_addr->addr_inuse++;
-	    rc = OMPI_SUCCESS;
-	}
+        enum mca_btl_tcp_connection_quality max;
+        int i_max = 0, j_max = 0;
+        /* Find the best connection that is not in use.  Save away
+         * the indices of the best location. */
+        max = CQ_NO_CONNECTION;
+        for(i=0; i<num_local_interfaces; ++i) {
+            for(j=0; j<num_peer_interfaces; ++j) {
+                if (!peer_interfaces[j]->inuse) {
+                    if (weights[i][j] > max) {
+                        max = weights[i][j];
+                        i_max = i;
+                        j_max = j;
+                    }
+                }
+            }
+        }
+        /* Now see if there is a some type of connection available. */
+        rc = OMPI_ERR_UNREACH;
+        if (CQ_NO_CONNECTION != max) {
+            peer_interfaces[j_max]->inuse++;
+            btl_endpoint->endpoint_addr = best_addr[i_max][j_max];
+            btl_endpoint->endpoint_addr->addr_inuse++;
+            rc = OMPI_SUCCESS;
+        }
     }
 
     for(i = 0; i < perm_size; ++i) {
