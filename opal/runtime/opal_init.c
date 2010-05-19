@@ -224,9 +224,6 @@ opal_init_util(int* pargc, char*** pargv)
     /* initialize the memory allocator */
     opal_malloc_init();
 
-    /* initialize the OPAL SOS system */
-    opal_sos_init();
-
     /* initialize the output system */
     opal_output_init();
 
@@ -239,6 +236,9 @@ opal_init_util(int* pargc, char*** pargv)
     
     /* initialize the help system */
     opal_show_help_init();
+
+    /* initialize the OPAL SOS system */
+    opal_sos_init();
 
     /* register handler for errnum -> string converstion */
     if (OPAL_SUCCESS != 
