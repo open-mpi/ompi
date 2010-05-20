@@ -369,6 +369,10 @@ static int update_state(orte_jobid_t job,
         case ORTE_PROC_STATE_COMM_FAILED:
             /* is this to a daemon? */
             if (ORTE_PROC_MY_NAME->jobid == proc->jobid) {
+                /* if we have ordered jobs to terminate, ignore this */
+                if (orte_job_term_ordered) {
+                    break;
+                }
                 /* if this is my own connection, ignore it */
                 if (ORTE_PROC_MY_NAME->vpid == proc->vpid) {
                     break;
