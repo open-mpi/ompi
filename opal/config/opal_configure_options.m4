@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
@@ -537,4 +537,8 @@ OPAL_WITH_OPTION_MIN_MAX_VALUE(port_name,      1024, 255, 2048)
 # Min length accroding to MPI-2.1, p. 418
 OPAL_WITH_OPTION_MIN_MAX_VALUE(datarep_string,  128,  64,  256)
 
+# How to build libltdl
+AC_ARG_WITH([libltdl],
+    [AC_HELP_STRING([--with-libltdl(=DIR)],
+         [Where to find libltdl (this option is ignored if --disable-dlopen is used).  DIR can take one of three values: "internal", "external", or a valid directory name.  "internal" (or no DIR value) forces Open MPI to use its internal copy of libltdl.  "external" forces Open MPI to use an external installation of libltdl.  Supplying a valid directory name also forces Open MPI to use an external installation of libltdl, and adds DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries.])])
 ])dnl
