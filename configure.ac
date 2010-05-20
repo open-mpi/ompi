@@ -71,7 +71,7 @@ AC_USE_SYSTEM_EXTENSIONS
 # AC_USE_SYSTEM_EXTENSIONS will modify CFLAGS if nothing was in there
 # beforehand.  We don't want that.  So if there was nothing in
 # CFLAGS, put nothing back in there.
-AS_IF([test -z "$CFLAGS_save"], [CFLAGS=$CFLAGS_save])
+AS_IF([test -z "$CFLAGS_save"], [CFLAGS=])
 CFLAGS_save=
 
 # Get our platform support file.  This has to be done very, very early
