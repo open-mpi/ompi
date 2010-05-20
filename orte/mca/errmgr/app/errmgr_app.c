@@ -97,6 +97,12 @@ static int update_state(orte_jobid_t job,
     }
 
     if (ORTE_PROC_STATE_COMM_FAILED == state) {
+        /* if it is our own connection, ignore it */
+        if (ORTE_PROC_MY_NAME->jobid == proc->vpid &&
+            ORTE_PROC_MY_NAME->vpid == proc->vpid) {
+            return ORTE_SUCCESS;
+        }
+        
         /* delete the route */
         orte_routed.delete_route(proc);
         /* see is this was a lifeline */

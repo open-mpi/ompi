@@ -369,6 +369,10 @@ static int update_state(orte_jobid_t job,
         case ORTE_PROC_STATE_COMM_FAILED:
             /* is this to a daemon? */
             if (ORTE_PROC_MY_NAME->jobid == proc->jobid) {
+                /* if this is my own connection, ignore it */
+                if (ORTE_PROC_MY_NAME->vpid == proc->vpid) {
+                    break;
+                }
                 if (orte_enable_recovery) {
                     /* relocate its processes */
                     if (ORTE_SUCCESS != (rc = hnp_relocate(jdata, proc))) {
