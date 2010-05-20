@@ -29,6 +29,8 @@ version 1.0.
 Trunk (not on release branches yet)
 -----------------------------------
 
+- Added --with-libltdl[=VALUE] option to allow using a libltdl
+  installation from outside of the Open MPI source tree.
 - ErrMgr framework redesigned to better support fault tolerance development
   activities. See the following RFC for details:
   http://www.open-mpi.org/community/lists/devel/2010/03/7589.php

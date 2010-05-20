@@ -868,6 +868,28 @@ for a full list); a summary of the more commonly used ones follows:
   are build as static or dynamic via --enable|disable-static and
   --enable|disable-shared.
 
+--with-libltdl[=VALUE]
+  This option specifies where to find the GNU Libtool libltdl support
+  library.  The following VALUEs are permitted:
+
+    internal:    Use Open MPI's internal copy of libltdl.
+    external:    Use an external libltdl installation (rely on default
+                 compiler and linker paths to find it)
+    <no value>:  Same as "internal".
+    <directory>: Specify the localtion of a specific libltdl
+                 installation to use
+
+  By default (or if --with-libltdl is specified with no VALUE), Open
+  MPI will build and use the copy of libltdl that it has in its source
+  tree.  However, if the VALUE is "external", Open MPI will look for
+  the relevant libltdl header file and library in default compiler /
+  linker locations.  Or, VALUE can be a directory tree where the
+  libltdl header file can library can be found.  This option allows
+  operating systems to include Open MPI and use their default libltdl
+  installation instead of Open MPI's bundled libltdl.
+
+  Note that this option is ignored if --disable-dlopen is specified.
+
 --enable-heterogeneous
   Enable support for running on heterogeneous clusters (e.g., machines
   with different endian representations).  Heterogeneous support is

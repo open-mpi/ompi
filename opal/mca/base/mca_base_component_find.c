@@ -42,7 +42,11 @@
 
 #if OPAL_WANT_LIBLTDL
   #ifndef __WINDOWS__
-    #include "opal/libltdl/ltdl.h"
+    #if OPAL_LIBLTDL_INTERNAL
+      #include "opal/libltdl/ltdl.h"
+    #else
+      #include "ltdl.h"
+    #endif
   #else
     #include "ltdl.h"
   #endif
