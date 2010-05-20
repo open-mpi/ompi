@@ -65,7 +65,14 @@ AS_IF([test "$host" != "$target"],
       [AC_MSG_WARN([Cross-compile detected])
        AC_MSG_WARN([Cross-compiling is only partially supported])
        AC_MSG_WARN([Proceed at your own risk!])])
+# AC_USE_SYSTEM_EXTENSIONS alters CFLAGS (e.g., adds -g -O2)
+CFLAGS_save=$CFLAGS
 AC_USE_SYSTEM_EXTENSIONS
+# AC_USE_SYSTEM_EXTENSIONS will modify CFLAGS if nothing was in there
+# beforehand.  We don't want that.  So if there was nothing in
+# CFLAGS, put nothing back in there.
+AS_IF([test -z "$CFLAGS_save"], [CFLAGS=$CFLAGS_save])
+CFLAGS_save=
 
 # Get our platform support file.  This has to be done very, very early
 # because it twiddles random bits of autoconf
