@@ -12,6 +12,7 @@
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  *
  * Copyright (c) 2008      Voltaire. All rights reserved
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  *  
  * $COPYRIGHT$
  * 
@@ -620,6 +621,7 @@ static int orte_rmaps_rank_file_parse(const char *rankfile)
     orte_node_t *hnp_node;
     orte_rmaps_rank_file_map_t *rfmap=NULL;
     opal_pointer_array_t *assigned_ranks_array;
+    char tmp_rank_assignment[64];
     
     OPAL_THREAD_LOCK(&orte_rmaps_rank_file_mutex);
     
@@ -742,11 +744,13 @@ static int orte_rmaps_rank_file_parse(const char *rankfile)
 
                 /* check for a duplicate rank assignment */
                 if (NULL != opal_pointer_array_get_item(assigned_ranks_array, rank)) {
-                    orte_show_help("help-rmaps_rank_file.txt", "bad-assign", true, rank, opal_pointer_array_get_item(assigned_ranks_array, rank), rankfile);
-                    return ORTE_ERR_SILENT;
+                    orte_show_help("help-rmaps_rank_file.txt", "bad-assign", true, rank, 
+                                   opal_pointer_array_get_item(assigned_ranks_array, rank), rankfile);
+                    rc = ORTE_ERR_BAD_PARAM;
+                    goto unlock;
                 } else {
-                    char tmp_rank_assignment[64];
-                    sprintf(tmp_rank_assignment, "%s:%s", node_name, value);
+                    /* prepare rank assignment string for the help message in case of a bad-assign */
+                    sprintf(tmp_rank_assignment, "%s slot=%s", node_name, value);
                     opal_pointer_array_set_item(assigned_ranks_array, 0, tmp_rank_assignment);
                 }
 
@@ -770,6 +774,7 @@ unlock:
     if (NULL != node_name) {
         free(node_name);
     }
+    OBJ_RELEASE(assigned_ranks_array);
     orte_rmaps_rank_file_name_cur = NULL;
     OPAL_THREAD_UNLOCK(&orte_rmaps_rank_file_mutex);
     return rc;
