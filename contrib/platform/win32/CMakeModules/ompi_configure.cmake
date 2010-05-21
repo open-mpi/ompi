@@ -243,6 +243,8 @@ OMPI_DEF_OPT(OPAL_WANT_LIBLTDL "Whether we want to enable DSO build for Windows.
 
 OMPI_DEF_OPT(OMPI_WANT_NETWORK_DIRECT "Whether we want to enable Network Direct support." ON)
 
+OMPI_DEF_OPT(ORTE_WANT_NOTIFIER_LOG_EVENT "if the notifier_log_event should be enabled" OFF)
+
 
 IF (NOT MSVC)
 
