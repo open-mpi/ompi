@@ -34,7 +34,6 @@ AC_DEFUN([OPAL_SETUP_LIBLTDL],[
     # $enable_shared and $enable_static and pass down the corresponding
     # flags.
 
-    LIBLTDL=
     LIBLTDL_SUBDIR=
     OPAL_HAVE_LTDL_ADVISE=0
     OPAL_LIBLTDL_INTERNAL=0
@@ -68,6 +67,7 @@ AC_DEFUN([OPAL_SETUP_LIBLTDL],[
               # If we're using an extern libltdl, then reset the
               # LTDLINCL that was set earlier (ie., there's no need to
               # -I into our internal libltdl tree).
+              LIBLTDL=
               LDTLINCL=
               libltdl_location=
               libltdl_need_external=1
@@ -79,6 +79,7 @@ AC_DEFUN([OPAL_SETUP_LIBLTDL],[
               # If we're using an extern libltdl, then reset the
               # LTDLINCL that was set earlier (ie., there's no need to
               # -I into our internal libltdl tree).
+              LIBLTDL=
               LDTLINCL=
               libltdl_need_external=1
               ;;
