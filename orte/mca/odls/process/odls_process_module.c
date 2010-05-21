@@ -36,6 +36,7 @@
 #include "orte/util/show_help.h"
 #include "opal/util/sys_limits.h"
 #include "opal/class/opal_pointer_array.h"
+#include "opal/util/opal_sos.h"
 
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_globals.h"

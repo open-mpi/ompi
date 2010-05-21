@@ -54,6 +54,7 @@
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/util/net.h"
+#include "opal/util/opal_sos.h"
 
 #include "orte/types.h"
 #include "orte/util/show_help.h"

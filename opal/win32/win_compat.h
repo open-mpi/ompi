@@ -150,6 +150,7 @@ typedef unsigned int uint;
 #define umask                     _umask
 #define getch                     _getch
 #define random                    rand
+#define strtok_r                  strtok_s
 
 #ifndef UINT32_MAX
 #define UINT32_MAX            _UI32_MAX
@@ -220,10 +221,15 @@ typedef unsigned int uint;
  * No syslog.h on Windows, but these have to be defined somehow.
  * There could also be a notifier component later for Windows.
  */
-
+#define LOG_EMERG   0
+#define LOG_ALERT   1
 #define LOG_CRIT    2
+#define LOG_ERR     3
 #define LOG_WARNING 4
 #define LOG_NOTICE  5
+#define LOG_INFO    6
+#define LOG_DEBUG   7
+
 
 /*
  * Mask these to Windows equivalents
