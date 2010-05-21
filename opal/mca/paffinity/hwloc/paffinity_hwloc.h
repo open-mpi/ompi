@@ -32,7 +32,7 @@ BEGIN_C_DECLS
 
 typedef struct {
     /* Base paffinity component */
-    opal_paffinity_base_component_2_0_0_t super;
+    opal_paffinity_base_component_t super;
 
     /* This component's data */
     hwloc_topology_t topology;

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -56,7 +56,7 @@ opal_paffinity_test_component_t mca_paffinity_test_component = {
             /* Indicate that we are a paffinity v1.1.0 component (which also
              implies a specific MCA version) */
 
-            OPAL_PAFFINITY_BASE_VERSION_2_0_0,
+            OPAL_PAFFINITY_BASE_VERSION_2_0_1,
 
             /* Component name and version */
 

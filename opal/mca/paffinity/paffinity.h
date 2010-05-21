@@ -291,28 +291,28 @@ typedef int (*opal_paffinity_base_module_get_socket_info_fn_t)(int *num_sockets)
 typedef int (*opal_paffinity_base_module_get_core_info_fn_t)(int physical_socket, int *num_cores);
 
 /**
- * Return the PHYSICAL processor ID that corresponds to the
+ * Provide the PHYSICAL processor ID that corresponds to the
  * given LOGICAL processor ID.
  *
  * Return OPAL_ERR_NOT_SUPPORTED if not supported.
  */
-typedef int (*opal_paffinity_base_module_get_physical_processor_id_fn_t)(int logical_processor_id);
+typedef int (*opal_paffinity_base_module_get_physical_processor_id_fn_t)(int logical_processor_id, int *physical_processor_id);
 
 /**
- * Return the PHYSICAL socket ID that corresponds to the given
+ * Provide the PHYSICAL socket ID that corresponds to the given
  * LOGICAL socket ID.
  * 
  * Return OPAL_ERR_NOT_SUPPORTED if not supported.
  */
-typedef int (*opal_paffinity_base_module_get_physical_socket_id_fn_t)(int logical_socket_id);
+typedef int (*opal_paffinity_base_module_get_physical_socket_id_fn_t)(int logical_socket_id, int *physical_socket_id);
 
 /**
- * Return the PHYSICAL core ID that corresponds to the given LOGICAL
+ * Provide the PHYSICAL core ID that corresponds to the given LOGICAL
  * core ID on the given PHYSICAL socket ID.
  * 
  * Return OPAL_ERR_NOT_SUPPORTED if not supported.
  */
-typedef int (*opal_paffinity_base_module_get_physical_core_id_fn_t)(int physical_socket_id, int logical_core_id);
+typedef int (*opal_paffinity_base_module_get_physical_core_id_fn_t)(int physical_socket_id, int logical_core_id, int *physical_core_id);
 
 
 /**
@@ -325,7 +325,7 @@ typedef int (*opal_paffinity_base_module_finalize_fn_t)(void);
 /**
  * Structure for paffinity components.
  */
-struct opal_paffinity_base_component_2_0_0_t {
+struct opal_paffinity_base_component_2_0_1_t {
     /** MCA base component */
     mca_base_component_t base_version;
     /** MCA base data */
@@ -334,8 +334,8 @@ struct opal_paffinity_base_component_2_0_0_t {
 /**
  * Convenience typedef
  */
-typedef struct opal_paffinity_base_component_2_0_0_t opal_paffinity_base_component_2_0_0_t;
-typedef struct opal_paffinity_base_component_2_0_0_t opal_paffinity_base_component_t;
+typedef struct opal_paffinity_base_component_2_0_1_t opal_paffinity_base_component_2_0_1_t;
+typedef struct opal_paffinity_base_component_2_0_1_t opal_paffinity_base_component_t;
 
 
 /**
@@ -388,8 +388,8 @@ typedef struct opal_paffinity_base_module_1_1_0_t opal_paffinity_base_module_t;
 /*
  * Macro for use in components that are of type paffinity
  */
-#define OPAL_PAFFINITY_BASE_VERSION_2_0_0 \
+#define OPAL_PAFFINITY_BASE_VERSION_2_0_1 \
     MCA_BASE_VERSION_2_0_0, \
-    "paffinity", 2, 0, 0
+    "paffinity", 2, 0, 1
 
 #endif /* OPAL_PAFFINITY_H */

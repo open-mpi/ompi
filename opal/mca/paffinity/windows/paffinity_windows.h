@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -50,7 +51,7 @@ BEGIN_C_DECLS
     /**
      * Globally exported variable
      */
-    OPAL_MODULE_DECLSPEC extern const opal_paffinity_base_component_2_0_0_t
+    OPAL_MODULE_DECLSPEC extern const opal_paffinity_base_component_2_0_1_t
         mca_paffinity_windows_component;
 
 

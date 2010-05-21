@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008-2010 Oracle and/or its affiliates.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -49,9 +49,13 @@ static int solaris_module_map_to_socket_core(int processor_id, int *socket, int 
 static int solaris_module_get_processor_info(int *num_processors);
 static int solaris_module_get_socket_info(int *num_sockets);
 static int solaris_module_get_core_info(int socket, int *num_cores);
-static int solaris_module_get_physical_processor_id(int logical_processor_id);
-static int solaris_module_get_physical_socket_id(int logical_socket_id);
-static int solaris_module_get_physical_core_id(int physical_socket_id, int logical_core_id);
+static int solaris_module_get_physical_processor_id(int logical_processor_id,
+                                                    int *physical_processor_id);
+static int solaris_module_get_physical_socket_id(int logical_socket_id,
+                                                 int *physical_socket_id);
+static int solaris_module_get_physical_core_id(int physical_socket_id, 
+                                               int logical_core_id,
+                                               int *physical_core_id);
 
 /*
  * Solaris paffinity module
@@ -195,9 +199,10 @@ static int solaris_module_get_core_info(int socket, int *num_cores)
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int solaris_module_get_physical_processor_id(int logical_processor_id)
+static int solaris_module_get_physical_processor_id(int logical_processor_id,
+                                                    int *physical_processor_id)
 {
-    processorid_t currid, retid, cpuid_max, cpuid_log=0;
+    processorid_t currid, cpuid_max, cpuid_log=0;
     processor_info_t pinfo;
 
     /* cpuid_max is the max number available for a system arch. It is
@@ -206,8 +211,6 @@ static int solaris_module_get_physical_processor_id(int logical_processor_id)
 	return OPAL_ERR_NOT_SUPPORTED;
     }
 
-    /* set retid to OPAL_ERROR to reflect no processor found to match logical proc */
-    retid = OPAL_ERROR;
     /* Because not all CPU ID in cpuid_max are actually valid,
      * and CPU ID may also not be contiguous. Therefore we
      * need to run through processor_info to ensure the validity.
@@ -216,23 +219,26 @@ static int solaris_module_get_physical_processor_id(int logical_processor_id)
         if (0 == processor_info(currid, &pinfo)) {
             if (P_ONLINE == pinfo.pi_state || P_NOINTR == pinfo.pi_state) {
                  if (cpuid_log == logical_processor_id) {
-		     retid = currid;
-                     break;
+		     *physical_processor_id = currid;
+                     return OPAL_SUCCESS;
                  } 
                  cpuid_log++;
             }
         }
     }
     
-    return retid;
+    return OPAL_ERR_NOT_FOUND;
 }
 
-static int solaris_module_get_physical_socket_id(int logical_socket_id)
+static int solaris_module_get_physical_socket_id(int logical_socket_id,
+                                                 int *physical_socket_id)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int solaris_module_get_physical_core_id(int physical_socket_id, int logical_core_id)
+static int solaris_module_get_physical_core_id(int physical_socket_id, 
+                                               int logical_core_id,
+                                               int *physical_core_id)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }

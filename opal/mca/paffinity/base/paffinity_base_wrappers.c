@@ -103,28 +103,30 @@ int opal_paffinity_base_get_core_info(int socket, int *num_cores)
     return opal_paffinity_base_module->paff_get_core_info(socket, num_cores);
 }
 
-int opal_paffinity_base_get_physical_processor_id(int logical_processor_id)
+int opal_paffinity_base_get_physical_processor_id(int logical_processor_id,
+                                                  int *physical_processor_id)
 {
     if (!opal_paffinity_base_selected) {
         return OPAL_ERR_MODULE_NOT_FOUND;
     }
-    return opal_paffinity_base_module->paff_get_physical_processor_id(logical_processor_id);
+    return opal_paffinity_base_module->paff_get_physical_processor_id(logical_processor_id, physical_processor_id);
 }
 
-int opal_paffinity_base_get_physical_socket_id(int logical_socket_id)
+int opal_paffinity_base_get_physical_socket_id(int logical_socket_id, 
+                                               int *physical_socket_id)
 {
     if (!opal_paffinity_base_selected) {
         return OPAL_ERR_MODULE_NOT_FOUND;
     }
-    return opal_paffinity_base_module->paff_get_physical_socket_id(logical_socket_id);
+    return opal_paffinity_base_module->paff_get_physical_socket_id(logical_socket_id, physical_socket_id);
 }
 
-int opal_paffinity_base_get_physical_core_id(int physical_socket_id, int logical_core_id)
+int opal_paffinity_base_get_physical_core_id(int physical_socket_id, int logical_core_id, int *physical_core_id)
 {
     if (!opal_paffinity_base_selected) {
         return OPAL_ERR_MODULE_NOT_FOUND;
     }
-    return opal_paffinity_base_module->paff_get_physical_core_id(physical_socket_id, logical_core_id);
+    return opal_paffinity_base_module->paff_get_physical_core_id(physical_socket_id, logical_core_id, physical_core_id);
 }
 
 char *opal_paffinity_base_print_binding(opal_paffinity_base_cpu_set_t cpumask)

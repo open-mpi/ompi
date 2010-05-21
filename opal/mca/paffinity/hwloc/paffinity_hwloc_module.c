@@ -47,9 +47,13 @@ static int module_map_to_socket_core(int processor_id, int *socket, int *core);
 static int module_get_processor_info(int *num_processors);
 static int module_get_socket_info(int *num_sockets);
 static int module_get_core_info(int socket, int *num_cores);
-static int module_get_physical_processor_id(int logical_processor_id);
-static int module_get_physical_socket_id(int logical_socket_id);
-static int module_get_physical_core_id(int physical_socket_id, int logical_core_id);
+static int module_get_physical_processor_id(int logical_processor_id,
+                                            int *physical_processor_id);
+static int module_get_physical_socket_id(int logical_socket_id,
+                                         int *physical_socket_id);
+static int module_get_physical_core_id(int physical_socket_id, 
+                                       int logical_core_id,
+                                       int *physical_core_id);
 
 /*
  * Hwloc paffinity module
@@ -404,11 +408,12 @@ static int module_get_core_info(int socket, int *num_cores)
 }
 
 /*
- * Return the PHYSICAL processor id that corresponds to the given
+ * Provide the PHYSICAL processor id that corresponds to the given
  * LOGICAL processor id (remember: paffinity does not understand
  * hardware threads, so "processor" here means "core").
  */
-static int module_get_physical_processor_id(int logical_processor_id)
+static int module_get_physical_processor_id(int logical_processor_id,
+                                            int *physical_processor_id)
 {
     int i;
     hwloc_obj_t obj;
@@ -434,7 +439,8 @@ static int module_get_physical_processor_id(int logical_processor_id)
          ++i) {
         if (hwloc_cpuset_isset(good, i)) {
             hwloc_cpuset_free(good);
-            return i;
+            *physical_processor_id = i;
+            return OPAL_SUCCESS;
         }
     }
     
@@ -444,10 +450,11 @@ static int module_get_physical_processor_id(int logical_processor_id)
 }
 
 /*
- * Return the PHYSICAL socket id that corresponds to the given
+ * Provide the PHYSICAL socket id that corresponds to the given
  * LOGICAL socket id
  */
-static int module_get_physical_socket_id(int logical_socket_id)
+static int module_get_physical_socket_id(int logical_socket_id,
+                                         int *physical_socket_id)
 {
     hwloc_obj_t obj;
     hwloc_topology_t *t = &mca_paffinity_hwloc_component.topology;
@@ -456,15 +463,17 @@ static int module_get_physical_socket_id(int logical_socket_id)
     if (NULL == obj) {
         return OPAL_ERR_NOT_FOUND;
     }
-    return obj->os_index;
+    *physical_socket_id = obj->os_index;
+    return OPAL_SUCCESS;
 }
 
 /*
- * Return the PHYSICAL core id that corresponds to the given LOGICAL
+ * Provide the PHYSICAL core id that corresponds to the given LOGICAL
  * core id on the given PHYSICAL socket id
  */
 static int module_get_physical_core_id(int physical_socket_id, 
-                                       int logical_core_id)
+                                       int logical_core_id,
+                                       int *physical_core_id)
 {
     unsigned count = 0;
     hwloc_obj_t obj;
@@ -486,6 +495,7 @@ static int module_get_physical_core_id(int physical_socket_id,
     if (NULL == obj) {
         return OPAL_ERR_NOT_FOUND;
     }
-    return obj->os_index;
+    *physical_core_id = obj->os_index;
+    return OPAL_SUCCESS;
 }
 
