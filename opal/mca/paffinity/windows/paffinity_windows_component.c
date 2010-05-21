@@ -45,13 +45,13 @@ static int windows_open(void);
  * and pointers to our public functions in it
  */
 
-const opal_paffinity_base_component_2_0_0_t mca_paffinity_windows_component = {
+const opal_paffinity_base_component_2_0_1_t mca_paffinity_windows_component = {
 
     /* First, the mca_component_t struct containing meta information
        about the component itself */
 
     {
-        OPAL_PAFFINITY_BASE_VERSION_2_0_0,
+        OPAL_PAFFINITY_BASE_VERSION_2_0_1,
 
         /* Component name and version */
         "windows",

@@ -48,7 +48,7 @@ opal_paffinity_hwloc_component_t mca_paffinity_hwloc_component = {
         /* First, the mca_component_t struct containing meta information
            about the component itself */
         {
-            OPAL_PAFFINITY_BASE_VERSION_2_0_0,
+            OPAL_PAFFINITY_BASE_VERSION_2_0_1,
             
             /* Component name and version */
             "hwloc",

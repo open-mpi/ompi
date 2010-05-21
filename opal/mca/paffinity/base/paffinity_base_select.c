@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2007-2010 Cisco Systems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,14 +31,14 @@
  * Globals
  */
 bool opal_paffinity_base_selected = false;
-const opal_paffinity_base_component_2_0_0_t *opal_paffinity_base_component = NULL;
+const opal_paffinity_base_component_2_0_1_t *opal_paffinity_base_component = NULL;
 const opal_paffinity_base_module_1_1_0_t *opal_paffinity_base_module = NULL;
 
 
 int opal_paffinity_base_select(void)
 {
     int ret = OPAL_SUCCESS;
-    opal_paffinity_base_component_2_0_0_t *best_component = NULL;
+    opal_paffinity_base_component_2_0_1_t *best_component = NULL;
     opal_paffinity_base_module_1_1_0_t *best_module = NULL;
 
     /*

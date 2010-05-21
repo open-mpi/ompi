@@ -414,11 +414,11 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                             ORTE_ODLS_ERROR_OUT(ORTE_ERR_NOT_ENOUGH_SOCKETS);
                         }
                     } else {
-                        target_socket = opal_paffinity_base_get_physical_socket_id(logical_skt);
-                        if (ORTE_ERR_NOT_SUPPORTED == OPAL_SOS_GET_ERROR_CODE(target_socket)) {
+                        rc = opal_paffinity_base_get_physical_socket_id(logical_skt, &target_socket);
+                        if (ORTE_ERR_NOT_SUPPORTED == OPAL_SOS_GET_ERROR_CODE(rc)) {
                             /* OS doesn't support providing topology information */
                             ORTE_ODLS_IF_BIND_NOT_REQD(5);
-                            ORTE_ODLS_ERROR_OUT(target_socket);
+                            ORTE_ODLS_ERROR_OUT(rc);
                         }
                     }
                     OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
@@ -438,11 +438,11 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                      * NOTE: we already know our number of sockets
                      * from when we initialized
                      */
-                    target_socket = opal_paffinity_base_get_physical_socket_id(lrank % orte_odls_globals.num_sockets);
-                    if (ORTE_ERR_NOT_SUPPORTED == OPAL_SOS_GET_ERROR_CODE(target_socket)) {
+                    rc = opal_paffinity_base_get_physical_socket_id(lrank % orte_odls_globals.num_sockets, &target_socket);
+                    if (ORTE_ERR_NOT_SUPPORTED == OPAL_SOS_GET_ERROR_CODE(rc)) {
                         /* OS does not support providing topology information */
                         ORTE_ODLS_IF_BIND_NOT_REQD(5);
-                        ORTE_ODLS_ERROR_OUT(target_socket);
+                        ORTE_ODLS_ERROR_OUT(rc);
                     }
                     OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                                          "bysocket lrank %d numsocks %d logical socket %d target socket %d", (int)lrank,
@@ -456,10 +456,10 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                     /* cycle across the cpus_per_rank */
                     for (n=0; n < jobdat->cpus_per_rank; n++) {
                         /* get the physical core within this target socket */
-                        phys_core = opal_paffinity_base_get_physical_core_id(target_socket, logical_cpu);
-                        if (0 > phys_core) {
+                        rc = opal_paffinity_base_get_physical_core_id(target_socket, logical_cpu, &phys_core);
+                        if (OPAL_SUCCESS != rc) {
                             ORTE_ODLS_IF_BIND_NOT_REQD(5);
-                            ORTE_ODLS_ERROR_OUT(phys_core);
+                            ORTE_ODLS_ERROR_OUT(rc);
                         }
                         /* map this to a physical cpu on this node */
                         if (ORTE_SUCCESS != (rc = opal_paffinity_base_get_map_to_processor_id(target_socket, phys_core, &phys_cpu))) {
@@ -515,11 +515,11 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                              * to us, so index into the node's array to get the
                              * physical cpu
                              */
-                            phys_cpu = opal_paffinity_base_get_physical_processor_id(logical_cpu);
-                            if (OPAL_SUCCESS != phys_cpu){
+                            rc = opal_paffinity_base_get_physical_processor_id(logical_cpu, &phys_cpu);
+                            if (OPAL_SUCCESS != rc){
                                 /* No processor to bind to so error out */
                                 ORTE_ODLS_IF_BIND_NOT_REQD(5);
-                                ORTE_ODLS_ERROR_OUT(phys_cpu);
+                                ORTE_ODLS_ERROR_OUT(rc);
                             }
                         }
                         OPAL_PAFFINITY_CPU_SET(phys_cpu, mask);
@@ -580,11 +580,11 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                             ORTE_ODLS_ERROR_OUT(ORTE_ERR_NOT_ENOUGH_SOCKETS);
                         }
                     } else {
-                        target_socket = opal_paffinity_base_get_physical_socket_id(logical_skt);
-                        if (ORTE_ERR_NOT_SUPPORTED == OPAL_SOS_GET_ERROR_CODE(target_socket)) {
+                        rc = opal_paffinity_base_get_physical_socket_id(logical_skt, &target_socket);
+                        if (ORTE_ERR_NOT_SUPPORTED == OPAL_SOS_GET_ERROR_CODE(rc)) {
                             /* OS doesn't support providing topology information */
                             ORTE_ODLS_IF_BIND_NOT_REQD(6);
-                            ORTE_ODLS_ERROR_OUT(target_socket);
+                            ORTE_ODLS_ERROR_OUT(rc);
                         }
                     }
                     OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
@@ -600,11 +600,11 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                      * NOTE: we already know our number of sockets
                      * from when we initialized
                      */
-                    target_socket = opal_paffinity_base_get_physical_socket_id(lrank % orte_odls_globals.num_sockets);
-                    if (ORTE_ERR_NOT_SUPPORTED == OPAL_SOS_GET_ERROR_CODE(target_socket)) {
+                    rc = opal_paffinity_base_get_physical_socket_id(lrank % orte_odls_globals.num_sockets, &target_socket);
+                    if (ORTE_ERR_NOT_SUPPORTED == OPAL_SOS_GET_ERROR_CODE(rc)) {
                         /* OS does not support providing topology information */
                         ORTE_ODLS_IF_BIND_NOT_REQD(6);
-                        ORTE_ODLS_ERROR_OUT(target_socket);
+                        ORTE_ODLS_ERROR_OUT(rc);
                     }
                     OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                                          "bysocket lrank %d numsocks %d logical socket %d target socket %d", (int)lrank,
@@ -647,11 +647,11 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                         /* if we are not bound, then just use all sockets */
                         if (1 == orte_odls_globals.num_sockets) {
                             /* if we only have one socket, then just put it there */
-                            target_socket = opal_paffinity_base_get_physical_socket_id(0);
-                            if (ORTE_ERR_NOT_SUPPORTED == OPAL_SOS_GET_ERROR_CODE(target_socket)) {
+                            rc = opal_paffinity_base_get_physical_socket_id(0, &target_socket);
+                            if (ORTE_ERR_NOT_SUPPORTED == OPAL_SOS_GET_ERROR_CODE(rc)) {
                                 /* OS doesn't support providing topology information */
                                 ORTE_ODLS_IF_BIND_NOT_REQD(6);
-                                ORTE_ODLS_ERROR_OUT(target_socket);
+                                ORTE_ODLS_ERROR_OUT(rc);
                             }
                         } else {
                             /* compute the logical socket, compensating for the number of cpus_per_rank */
@@ -659,11 +659,11 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                             /* wrap that around the number of sockets so we round-robin */
                             logical_skt = logical_skt % orte_odls_globals.num_sockets;
                             /* now get the target physical socket */
-                            target_socket = opal_paffinity_base_get_physical_socket_id(logical_skt);
-                            if (ORTE_ERR_NOT_SUPPORTED == OPAL_SOS_GET_ERROR_CODE(target_socket)) {
+                            rc = opal_paffinity_base_get_physical_socket_id(logical_skt, &target_socket);
+                            if (ORTE_ERR_NOT_SUPPORTED == OPAL_SOS_GET_ERROR_CODE(rc)) {
                                 /* OS doesn't support providing topology information */
                                 ORTE_ODLS_IF_BIND_NOT_REQD(6);
-                                ORTE_ODLS_ERROR_OUT(target_socket);
+                                ORTE_ODLS_ERROR_OUT(rc);
                             }
                         }
                         OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
@@ -675,10 +675,10 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                 
                 for (n=0; n < orte_default_num_cores_per_socket; n++) {
                     /* get the physical core within this target socket */
-                    phys_core = opal_paffinity_base_get_physical_core_id(target_socket, n);
-                    if (phys_core < 0) {
+                    rc = opal_paffinity_base_get_physical_core_id(target_socket, n, &phys_core);
+                    if (OPAL_SUCCESS != rc) {
                         ORTE_ODLS_IF_BIND_NOT_REQD(6);
-                        ORTE_ODLS_ERROR_OUT(phys_core);
+                        ORTE_ODLS_ERROR_OUT(rc);
                     }
                     /* map this to a physical cpu on this node */
                     if (ORTE_SUCCESS != (rc = opal_paffinity_base_get_map_to_processor_id(target_socket, phys_core, &phys_cpu))) {

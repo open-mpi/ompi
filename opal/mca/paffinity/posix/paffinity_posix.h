@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,7 +31,7 @@ BEGIN_C_DECLS
  * Globally exported variable
  */
 
-OPAL_DECLSPEC extern const opal_paffinity_base_component_2_0_0_t mca_paffinity_posix_component;
+OPAL_DECLSPEC extern const opal_paffinity_base_component_2_0_1_t mca_paffinity_posix_component;
 
 /* query function */
 int opal_paffinity_posix_component_query(mca_base_module_t **module, int *priority);

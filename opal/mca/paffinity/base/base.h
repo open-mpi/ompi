@@ -200,20 +200,36 @@ OPAL_DECLSPEC int opal_paffinity_base_get_core_info(int physical_socket, int *nu
 /**
  * Return the PHYSICAL processor id that corresponds to the
  * given LOGICAL processor id
+ *
+ * @param logical_processor_id
+ * @param physical_processor_id
+ *
+ * @return int - OPAL_SUCCESS or OPAL_ERR_*
  */
-OPAL_DECLSPEC int opal_paffinity_base_get_physical_processor_id(int logical_processor_id);
+OPAL_DECLSPEC int opal_paffinity_base_get_physical_processor_id(int logical_processor_id, int *physical_processor_id);
 
 /**
  * Return the PHYSICAL socket ID that corresponds to the given
  * LOGICAL socket ID.
+ *
+ * @param logical_socket_id
+ * @param physical_socket_id
+ *
+ * @return int - OPAL_SUCCESS or OPAL_ERR_*
  */
-OPAL_DECLSPEC int opal_paffinity_base_get_physical_socket_id(int logical_socket_id);
+OPAL_DECLSPEC int opal_paffinity_base_get_physical_socket_id(int logical_socket_id, int *physical_socket_id);
 
 /**
  * Return the PHYSICAL core ID that corresponds to the given LOGICAL
  * core id on the given PHYSICAL socket ID.
+ *
+ * @param physical_socket_id
+ * @param_logical_core_id
+ * @param physical_core_id
+ *
+ * @return int - OPAL_SUCCESS or OPAL_ERR_*
  */
-OPAL_DECLSPEC int opal_paffinity_base_get_physical_core_id(int physical_socket_id, int logical_core_id);
+OPAL_DECLSPEC int opal_paffinity_base_get_physical_core_id(int physical_socket_id, int logical_core_id, int *physical_core_id);
 
 /* Print a char string representation of a cpu set */
 OPAL_DECLSPEC char *opal_paffinity_base_print_binding(opal_paffinity_base_cpu_set_t cpumask);
@@ -230,7 +246,7 @@ OPAL_DECLSPEC extern bool opal_paffinity_base_selected;
 /**
  * Global component struct for the selected component
  */
-OPAL_DECLSPEC extern const opal_paffinity_base_component_2_0_0_t 
+OPAL_DECLSPEC extern const opal_paffinity_base_component_2_0_1_t 
 *opal_paffinity_base_component;
 /**
  * Global module struct for the selected module

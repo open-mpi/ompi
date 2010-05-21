@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -46,9 +46,12 @@ static int posix_module_map_to_socket_core(int processor_id, int *socket, int *c
 static int posix_module_get_processor_info(int *num_processors);
 static int posix_module_get_socket_info(int *num_sockets);
 static int posix_module_get_core_info(int socket, int *num_cores);
-static int get_physical_processor_id(int logical_processor_id);
-static int get_physical_socket_id(int logical_socket_id);
-static int get_physical_core_id(int physical_socket_id, int logical_core_id);
+static int get_physical_processor_id(int logical_processor_id, 
+                                     int *physical_processor_id);
+static int get_physical_socket_id(int logical_socket_id, 
+                                  int *physical_socket_id);
+static int get_physical_core_id(int physical_socket_id, int logical_core_id, 
+                                int *physical_core_id);
 
 /*
  * Solaris paffinity module
@@ -142,17 +145,20 @@ static int posix_module_get_core_info(int socket, int *num_cores)
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int get_physical_processor_id(int logical_processor_id)
+static int get_physical_processor_id(int logical_processor_id, 
+                                     int *physical_processor_id)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int get_physical_socket_id(int logical_socket_id)
+static int get_physical_socket_id(int logical_socket_id, 
+                                  int *physical_socket_id)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int get_physical_core_id(int physical_socket_id, int logical_core_id)
+static int get_physical_core_id(int physical_socket_id, int logical_core_id, 
+                                int *physical_core_id)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
