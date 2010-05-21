@@ -40,6 +40,8 @@ AC_DEFUN([OPAL_SETUP_LIBLTDL],[
 
     AS_IF([test "$OPAL_ENABLE_DLOPEN_SUPPORT" = "0"],
           [AC_MSG_WARN([libltdl support disabled (by --disable-dlopen)])
+           LIBLTDL=
+           LDTLINCL=
            WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS $LIBS"],
           [
            # Default to building the internal copy.  After this,
