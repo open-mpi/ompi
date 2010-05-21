@@ -146,7 +146,7 @@ const char* orte_notifier_base_sev2str(orte_notifier_base_severity_t severity)
 char *orte_notifier_base_peer_log(int errcode, orte_process_name_t *peer_proc, 
                                   const char *msg, va_list ap)
 {
-    char *buf = malloc(ORTE_NOTIFIER_MAX_BUF + 1);
+    char *buf = (char *) malloc(ORTE_NOTIFIER_MAX_BUF + 1);
     char *peer_host = NULL, *peer_name = NULL;
     char *pos = buf;
     char *errstr = (char*)orte_err2str(errcode);

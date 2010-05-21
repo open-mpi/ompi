@@ -78,6 +78,7 @@
 #include "opal/util/trace.h"
 #include "opal/util/basename.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/opal_sos.h"
 
 #include "orte/util/name_fns.h"
 

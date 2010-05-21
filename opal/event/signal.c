@@ -48,7 +48,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <errno.h>
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>

@@ -382,7 +382,7 @@ static void show_stackframe (int signo, siginfo_t * info, void * p)
 #endif /* OPAL_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__) */
 
 
-#if OPAL_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__)
+#if OPAL_WANT_PRETTY_PRINT_STACKTRACE
 void opal_stackframe_output(int stream)
 {   
     int traces_size;
@@ -439,7 +439,7 @@ char *opal_stackframe_output_string(void)
     return output;
 }
 
-#endif /* OPAL_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__) */
+#endif /* OPAL_WANT_PRETTY_PRINT_STACKTRACE */
 
 /**
  * Here we register the show_stackframe function for signals
