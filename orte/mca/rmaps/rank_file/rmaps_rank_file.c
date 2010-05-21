@@ -619,11 +619,11 @@ static int orte_rmaps_rank_file_parse(const char *rankfile)
     int i;
     orte_node_t *hnp_node;
     orte_rmaps_rank_file_map_t *rfmap=NULL;
-
+    opal_pointer_array_t *assigned_ranks_array;
+    
     OPAL_THREAD_LOCK(&orte_rmaps_rank_file_mutex);
     
     /* keep track of rank assignments */
-    opal_pointer_array_t *assigned_ranks_array;
     assigned_ranks_array = OBJ_NEW(opal_pointer_array_t);
 
     /* get the hnp node's info */
@@ -741,13 +741,12 @@ static int orte_rmaps_rank_file_parse(const char *rankfile)
                 }
 
                 /* check for a duplicate rank assignment */
-                int slot = value;
                 if (NULL != opal_pointer_array_get_item(assigned_ranks_array, rank)) {
                     orte_show_help("help-rmaps_rank_file.txt", "bad-assign", true, rank, opal_pointer_array_get_item(assigned_ranks_array, rank), rankfile);
                     return ORTE_ERR_SILENT;
                 } else {
                     char tmp_rank_assignment[64];
-                    sprintf(tmp_rank_assignment, "%s:%s", node_name, slot);
+                    sprintf(tmp_rank_assignment, "%s:%s", node_name, value);
                     opal_pointer_array_set_item(assigned_ranks_array, 0, tmp_rank_assignment);
                 }
 
