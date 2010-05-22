@@ -609,7 +609,7 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
          * tcp OOB
          */
         OPAL_THREAD_UNLOCK(&peer->peer_lock);
-        orte_errmgr.abort(1, NULL);
+        orte_errmgr.abort(ORTE_ERR_CONNECTION_FAILED, NULL);
     }
 }
 

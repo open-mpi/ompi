@@ -124,8 +124,12 @@ int orte_errmgr_base_abort(int error_code, char *fmt, ...)
         orte_session_dir_finalize(ORTE_PROC_MY_NAME);
     }
     
-    /* abnormal exit */
-    orte_ess.abort(error_code, true);
+    /* if a critical connection failed, exit without dropping a core */
+    if (ORTE_ERR_CONNECTION_FAILED == error_code) {
+        orte_ess.abort(error_code, false);
+    } else {
+        orte_ess.abort(error_code, true);
+    }
 
     return ORTE_SUCCESS;
 }
