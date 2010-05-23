@@ -125,7 +125,7 @@ int orte_errmgr_base_abort(int error_code, char *fmt, ...)
     }
     
     /* if a critical connection failed, exit without dropping a core */
-    if (ORTE_ERR_CONNECTION_FAILED == error_code) {
+    if (ORTE_ERR_CONNECTION_FAILED == OPAL_SOS_GET_ERROR_CODE(error_code)) {
         orte_ess.abort(error_code, false);
     } else {
         orte_ess.abort(error_code, true);
