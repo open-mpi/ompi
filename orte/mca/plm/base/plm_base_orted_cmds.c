@@ -103,12 +103,8 @@ int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command)
 
     OBJ_CONSTRUCT(&cmd, opal_buffer_t);
     
-    /* since the orteds are being ordered to exit, and we are
-     * technically a member of that "job", first update our
-     * information to indicate we are "terminated". This will
-     * ensure that we can exit correctly when all daemons report
-     * in as "terminated"
-     */
+    /* flag that orteds are being terminated */
+    orte_orteds_term_ordered = true;
     
     /* get the job object for the daemons */
     if (NULL == (daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
