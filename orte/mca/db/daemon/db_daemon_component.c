@@ -60,14 +60,22 @@ orte_db_daemon_component_open(void)
     return ORTE_SUCCESS;
 }
 
-
+/* only select us if specifically requested */
 int orte_db_daemon_component_query(mca_base_module_t **module, int *priority)
 {
+    char *req;
     
-    /* if we built, then we are available */
-    *priority = 100;
-    *module = (mca_base_module_t*)&orte_db_daemon_module;
-    return ORTE_SUCCESS;
+    if (NULL != (req = getenv("OMPI_MCA_db"))) {
+        if (0 == strcasecmp(req, "daemon")) {
+            *priority = 100;
+            *module = (mca_base_module_t*)&orte_db_daemon_module;
+            return ORTE_SUCCESS;
+        }
+    }
+    
+    *priority = 0;
+    *module = NULL;
+    return ORTE_ERROR;
 }
 
 
