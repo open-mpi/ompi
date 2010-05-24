@@ -15,6 +15,7 @@
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
+ * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -223,7 +224,7 @@ struct mca_btl_openib_component_t {
     int32_t apm_ports;
     uint32_t buffer_alignment;    /**< Preferred communication buffer alignment in Bytes (must be power of two) */
 #if OPAL_HAVE_THREADS
-    int32_t fatal_counter;           /**< Counts number on fatal events that we got on all devices */
+    int32_t error_counter;           /**< Counts number on error events that we got on all devices */
     int async_pipe[2];               /**< Pipe for comunication with async event thread */
     int async_comp_pipe[2];          /**< Pipe for async thread comunication with main thread */
     pthread_t   async_thread;        /**< Async thread that will handle fatal errors */
@@ -356,6 +357,7 @@ typedef struct mca_btl_openib_device_t {
     bool pollme;
 #if OPAL_HAVE_THREADS
     volatile bool got_fatal_event;
+    volatile bool got_port_event;
 #endif
 #if HAVE_XRC
     struct ibv_xrc_domain *xrc_domain;

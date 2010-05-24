@@ -551,8 +551,8 @@ static inline int param_register_int(const char* param_name, int default_value)
 #if OPAL_HAVE_THREADS
 static int start_async_event_thread(void)
 {
-    /* Set the fatal counter to zero */
-    mca_btl_openib_component.fatal_counter = 0;
+    /* Set the error counter to zero */
+    mca_btl_openib_component.error_counter = 0;
 
     /* Create pipe for communication with async event thread */
     if(pipe(mca_btl_openib_component.async_pipe)) {
@@ -959,6 +959,7 @@ static int prepare_device_for_use(mca_btl_openib_device_t *device)
                 return OMPI_ERROR;
         }
         device->got_fatal_event = false;
+        device->got_port_event = false;
         if (write(mca_btl_openib_component.async_pipe[1],
                     &device->ib_dev_context->async_fd, sizeof(int))<0){
             BTL_ERROR(("Failed to write to pipe [%d]",errno));
@@ -3503,7 +3504,7 @@ static int btl_openib_component_progress(void)
 
 #if OPAL_HAVE_THREADS
     if(OPAL_UNLIKELY(mca_btl_openib_component.use_async_event_thread &&
-            mca_btl_openib_component.fatal_counter)) {
+            mca_btl_openib_component.error_counter)) {
         goto error;
     }
 #endif
@@ -3519,14 +3520,18 @@ static int btl_openib_component_progress(void)
 #if OPAL_HAVE_THREADS
 error:
     /* Set the fatal counter to zero */
-    mca_btl_openib_component.fatal_counter = 0;
-    /* Lets found all fatal events */
+    mca_btl_openib_component.error_counter = 0;
+    /* Lets find all error events */
     for(i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
         mca_btl_openib_module_t* openib_btl =
             mca_btl_openib_component.openib_btls[i];
         if(openib_btl->device->got_fatal_event) {
             openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL,
                                  NULL, NULL);
+        }
+        if(openib_btl->device->got_port_event) {
+            /* These are non-fatal so just ignore it. */
+            openib_btl->device->got_port_event = false;
         }
     }
     return count;
