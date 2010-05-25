@@ -105,6 +105,8 @@ EXTRA_DIST = \
 	platform/cisco/macosx-dynamic-optimized.conf \
 	platform/cisco/ebuild/hlfr \
 	platform/cisco/ebuild/hlfr.conf \
+	platform/cisco/ebuild/ludd \
+	platform/cisco/ebuild/ludd.conf \
 	platform/cisco/ebuild/native \
 	platform/cisco/ebuild/native.conf \
 	platform/ibm/debug-ppc32-gcc \
