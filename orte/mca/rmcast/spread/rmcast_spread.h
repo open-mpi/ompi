@@ -19,14 +19,6 @@
 
 BEGIN_C_DECLS
 
-#define ORTE_RMCAST_SPREAD_MAX_MSG_SIZE  1500
-
-typedef struct {
-    orte_rmcast_base_component_t super;
-    int max_msg_size;
-} orte_rmcast_spread_component_t;
-
-
 /*
  * Module open / close
  */
@@ -35,7 +27,7 @@ int orte_rmcast_spread_component_close(void);
 int orte_rmcast_spread_component_query(mca_base_module_t **module, int *priority);
 
 
-ORTE_MODULE_DECLSPEC extern orte_rmcast_spread_component_t mca_rmcast_spread_component;
+ORTE_MODULE_DECLSPEC extern orte_rmcast_base_component_t mca_rmcast_spread_component;
 ORTE_DECLSPEC extern orte_rmcast_module_t orte_rmcast_spread_module;
 
 END_C_DECLS

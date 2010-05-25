@@ -122,8 +122,8 @@ typedef int (*orte_rmcast_base_module_recv_nb_fn_t)(orte_rmcast_channel_t channe
 typedef void (*orte_rmcast_base_module_cancel_recv_fn_t)(orte_rmcast_channel_t channel,
                                                          orte_rmcast_tag_t tag);
 
-/* open the next available channel */
-typedef int (*orte_rmcast_base_module_open_channel_fn_t)(orte_rmcast_channel_t *channel, char *name,
+/* open the specified channel */
+typedef int (*orte_rmcast_base_module_open_channel_fn_t)(orte_rmcast_channel_t channel, char *name,
                                                          char *network, int port, char *interface, uint8_t direction);
 
 /* close the channel */

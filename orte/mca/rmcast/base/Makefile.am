@@ -20,6 +20,7 @@ if !ORTE_DISABLE_FULL_SUPPORT
 
 libmca_rmcast_la_SOURCES += \
         base/rmcast_base_close.c \
-	base/rmcast_base_select.c
+	base/rmcast_base_select.c \
+	base/rmcast_base_fns.c
 
 endif

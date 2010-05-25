@@ -20,6 +20,10 @@
 
 int orte_rmcast_base_close(void)
 {
+    if (!orte_rmcast_base.opened) {
+        return ORTE_SUCCESS;
+    }
+    
     /* finalize the active module */
     if (NULL != orte_rmcast.finalize) {
         orte_rmcast.finalize();
@@ -31,5 +35,8 @@ int orte_rmcast_base_close(void)
         mca_base_components_close(orte_rmcast_base.rmcast_output, 
                                   &orte_rmcast_base.rmcast_opened, NULL);
   
+    orte_rmcast_base.opened = false;
+    OBJ_DESTRUCT(&orte_rmcast_base.lock);
+    OBJ_DESTRUCT(&orte_rmcast_base.cond);
     return ORTE_SUCCESS;
 }

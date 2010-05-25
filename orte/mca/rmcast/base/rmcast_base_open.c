@@ -27,6 +27,7 @@
 #include "opal/util/if.h"
 #include "opal/util/opal_sos.h"
 #include "opal/class/opal_ring_buffer.h"
+#include "opal/class/opal_list.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
@@ -79,8 +80,7 @@ orte_rmcast_module_t orte_rmcast = {
     NULL
 };
 orte_rmcast_base_t orte_rmcast_base;
-
-static bool opened = false;
+static bool opened=false;
 
 /**
  * Function for finding and opening either all MCA components, or the one
@@ -101,8 +101,15 @@ int orte_rmcast_base_open(void)
         return ORTE_SUCCESS;
     }
     opened = true;
+    orte_rmcast_base.opened = true;
     
     /* ensure all global values are initialized */
+    OBJ_CONSTRUCT(&orte_rmcast_base.lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&orte_rmcast_base.cond, opal_condition_t);
+    orte_rmcast_base.active = false;
+    OBJ_CONSTRUCT(&orte_rmcast_base.recvs, opal_list_t);
+    OBJ_CONSTRUCT(&orte_rmcast_base.channels, opal_list_t);
+
     orte_rmcast_base.xmit_network = 0;
     orte_rmcast_base.my_group_name = NULL;
     orte_rmcast_base.my_group_number = 0;
@@ -291,16 +298,12 @@ int orte_rmcast_base_open(void)
 static void mcast_event_constructor(orte_mcast_msg_event_t *ev)
 {
     ev->ev = (opal_event_t*)malloc(sizeof(opal_event_t));
-    ev->data = NULL;
 }
 static void mcast_event_destructor(orte_mcast_msg_event_t *ev)
 {
     if (NULL != ev->ev) { 
         free(ev->ev); 
     } 
-    if (NULL != ev->data) {
-        free(ev->data);
-    }
 }
 OBJ_CLASS_INSTANCE(orte_mcast_msg_event_t, 
                    opal_object_t, 
@@ -329,7 +332,6 @@ static void recv_construct(rmcast_base_recv_t *ptr)
     ptr->name.vpid = ORTE_VPID_INVALID;
     ptr->channel = ORTE_RMCAST_INVALID_CHANNEL;
     ptr->recvd = false;
-    ptr->iovecs_requested = false;
     ptr->tag = ORTE_RMCAST_TAG_INVALID;
     ptr->flags = ORTE_RMCAST_NON_PERSISTENT;  /* default */
     ptr->iovec_array = NULL;

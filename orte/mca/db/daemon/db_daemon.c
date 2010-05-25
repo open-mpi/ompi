@@ -350,10 +350,11 @@ static void recv_cmd(int status,
     orte_db_cmd_t cmd;
     opal_buffer_t *ans;
     int count, i;
-    int32_t rc, ret;
+    int32_t rc;
     char *key;
     orte_db_data_t *dat;
     orte_rmcast_channel_t ch;
+    char *ch_name;
     
     OPAL_OUTPUT_VERBOSE((2, orte_db_base_output,
                          "%s db:daemon: cmd recvd from %s",
@@ -364,6 +365,8 @@ static void recv_cmd(int status,
     opal_dss.unpack(buf, &cmd, &count, ORTE_DB_CMD_T);
     count=1;
     opal_dss.unpack(buf, &ch, &count, ORTE_RMCAST_CHANNEL_T);
+    count=1;
+    opal_dss.unpack(buf, &ch_name, &count, OPAL_STRING);
     count=1;
     opal_dss.unpack(buf, &key, &count, OPAL_STRING);
     
@@ -420,11 +423,9 @@ static void recv_cmd(int status,
             rc = ORTE_ERR_NOT_FOUND;
             break;
     }
-    /* open a channel back to the sender */
-    if (ORTE_SUCCESS != (ret = orte_rmcast.open_channel(&ch, ORTE_NAME_PRINT(sender),
-                                                        NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
-        ORTE_ERROR_LOG(ret);
-        return;
-    }
+    
+    /* ensure the return channel is open */
+    orte_rmcast.open_channel(ch, ch_name, NULL, -1, NULL, ORTE_RMCAST_XMIT);
+    
     orte_rmcast.send_buffer_nb(ch, ORTE_RMCAST_TAG_CMD_ACK, ans, callback_fn, NULL);
 }
