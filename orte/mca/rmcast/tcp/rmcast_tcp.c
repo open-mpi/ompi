@@ -35,25 +35,25 @@
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/rml_contact.h"
+#include "orte/mca/odls/odls_types.h"
 
 #include "orte/mca/rmcast/base/private.h"
 #include "orte/mca/rmcast/base/base.h"
 #include "rmcast_tcp.h"
 
 /* LOCAL DATA */
-static opal_mutex_t lock;
-static opal_list_t recvs;
-static opal_list_t channels;
 static bool init_completed = false;
-static orte_rmcast_channel_t next_channel;
+static orte_job_t *daemons=NULL;
 
 /* LOCAL FUNCTIONS */
 static void recv_handler(int status, orte_process_name_t* sender,
                          opal_buffer_t* buffer, orte_rml_tag_t tag,
                          void* cbdata);
 
-/* LOCAL STRUCTURE VALUES */
-static rmcast_base_channel_t *my_group_channel=NULL;
+static void relay_handler(int status, orte_process_name_t* sender,
+                          opal_buffer_t* buffer, orte_rml_tag_t tag,
+                          void* cbdata);
+static void relay(int fd, short event, void *cbdata);
 
 /* API FUNCTIONS */
 static int init(void);
@@ -102,15 +102,8 @@ static int tcp_recv_nb(orte_rmcast_channel_t channel,
                        orte_rmcast_callback_fn_t cbfunc,
                        void *cbdata);
 
-static void cancel_recv(orte_rmcast_channel_t channel,
-                        orte_rmcast_tag_t tag);
-
-static int open_channel(orte_rmcast_channel_t *channel, char *name,
+static int open_channel(orte_rmcast_channel_t channel, char *name,
                         char *network, int port, char *interface, uint8_t direction);
-
-static int close_channel(orte_rmcast_channel_t channel);
-
-static orte_rmcast_channel_t query(void);
 
 /* Define the module */
 
@@ -125,10 +118,10 @@ orte_rmcast_module_t orte_rmcast_tcp_module = {
     tcp_recv_nb,
     tcp_recv_buffer,
     tcp_recv_buffer_nb,
-    cancel_recv,
+    orte_rmcast_base_cancel_recv,
     open_channel,
-    close_channel,
-    query
+    orte_rmcast_base_close_channel,
+    orte_rmcast_base_query
 };
 
 /* during init, we setup two channels for both xmit and recv:
@@ -153,7 +146,6 @@ orte_rmcast_module_t orte_rmcast_tcp_module = {
 static int init(void)
 {
     int rc;
-    orte_rmcast_channel_t channel;
     
     if (init_completed) {
         return ORTE_SUCCESS;
@@ -164,43 +156,64 @@ static int init(void)
                          "%s rmcast:tcp: init called",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    /* setup the globals */
-    OBJ_CONSTRUCT(&lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&recvs, opal_list_t);
-    OBJ_CONSTRUCT(&channels, opal_list_t);
-    next_channel = ORTE_RMCAST_DYNAMIC_CHANNELS;
-    
     /* setup the respective public address channel */
-    if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_TOOL) {
-        channel = ORTE_RMCAST_SYS_CHANNEL;
-        if (ORTE_SUCCESS != (rc = open_channel(&channel, "system",
+    if (ORTE_PROC_IS_TOOL) {
+        /* tools only open the sys channel */
+        if (ORTE_SUCCESS != (rc = open_channel(ORTE_RMCAST_SYS_CHANNEL, "system",
                                                NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-    } else if (ORTE_PROC_IS_APP) {
-        channel = ORTE_RMCAST_APP_PUBLIC_CHANNEL;
-        if (ORTE_SUCCESS != (rc = open_channel(&channel, "app-announce",
+        orte_rmcast_base.my_group_channel = (rmcast_base_channel_t*)opal_list_get_last(&orte_rmcast_base.channels);
+    } else if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
+        /* daemons and hnp open the sys and data server channels */
+        if (ORTE_SUCCESS != (rc = open_channel(ORTE_RMCAST_SYS_CHANNEL, "system",
                                                NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
+        }
+        orte_rmcast_base.my_group_channel = (rmcast_base_channel_t*)opal_list_get_last(&orte_rmcast_base.channels);
+        if (ORTE_SUCCESS != (rc = open_channel(ORTE_RMCAST_DATA_SERVER_CHANNEL, "data-server",
+                                               NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        /* activate a recv to catch relays */
+        if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                                                          ORTE_RML_TAG_MULTICAST_RELAY,
+                                                          ORTE_RML_NON_PERSISTENT,
+                                                          relay_handler,
+                                                          NULL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    } else if (ORTE_PROC_IS_APP) {
+        /* apps open the app public and data server channels */
+        if (ORTE_SUCCESS != (rc = open_channel(ORTE_RMCAST_APP_PUBLIC_CHANNEL, "app-announce",
+                                               NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        if (ORTE_SUCCESS != (rc = open_channel(ORTE_RMCAST_DATA_SERVER_CHANNEL, "data-server",
+                                               NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        /* finally, if we are an app, setup our grp channel, if one was given */
+        if (ORTE_PROC_IS_APP && NULL != orte_rmcast_base.my_group_name) {
+            if (ORTE_SUCCESS != (rc = open_channel(orte_rmcast_base.my_group_number,
+                                                   orte_rmcast_base.my_group_name,
+                                                   NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            orte_rmcast_base.my_group_channel = (rmcast_base_channel_t*)opal_list_get_last(&orte_rmcast_base.channels);
         }
     } else {
         opal_output(0, "rmcast:tcp:init - unknown process type");
         return ORTE_ERR_SILENT;
     }
     
-    /* finally, if we are an app, setup our grp channel, if one was given */
-    if (ORTE_PROC_IS_APP && NULL != orte_rmcast_base.my_group_name) {
-        channel = orte_rmcast_base.my_group_number;
-        if (ORTE_SUCCESS != (rc = open_channel(&channel, orte_rmcast_base.my_group_name,
-                                               NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        my_group_channel = (rmcast_base_channel_t*)opal_list_get_last(&channels);
-    }
-
     if (ORTE_JOBID_WILDCARD == orte_process_info.my_hnp.jobid) {
         /* set the HNP info in our contact table */
         if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(orte_process_info.my_hnp_uri))) {
@@ -230,29 +243,10 @@ static int init(void)
 
 static void finalize(void)
 {
-    opal_list_item_t *item;
-    
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                          "%s rmcast:tcp: finalize called",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    /* cancel the recv */
-    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_MULTICAST);
 
-    /* deconstruct the globals */
-    OPAL_THREAD_LOCK(&lock);
-    while (NULL != (item = opal_list_remove_first(&recvs))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&recvs);
-    while (NULL != (item = opal_list_remove_first(&channels))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&channels);
-    OPAL_THREAD_UNLOCK(&lock);
-
-    OBJ_DESTRUCT(&lock);
-    
     return;
 }
 
@@ -278,32 +272,39 @@ static void internal_snd_buf_cb(int status,
 }
 
 static int queue_xmit(rmcast_base_send_t *snd,
-                      orte_rmcast_channel_t channel,
-                      orte_rmcast_tag_t tag)
+                      orte_rmcast_channel_t channel)
 {
     opal_list_item_t *item;
-    rmcast_base_channel_t *chptr, *ch;
-    int32_t sz;
-    int rc;
-    int8_t flag;
-    opal_buffer_t buf;
-    int32_t tmp32;
+    rmcast_base_channel_t *ch, *chptr;
+    orte_proc_t *proc;
+    orte_odls_child_t *child;
+    int rc, v;
+    opal_buffer_t *buf;
+    
+    OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
+                         "%s rmcast:tcp: send of %d %s"
+                         " called on multicast channel %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (NULL == snd->iovec_array) ? (int)snd->buf->bytes_used : (int)snd->iovec_count,
+                         (NULL == snd->iovec_array) ? "bytes" : "iovecs",
+                         (int)channel));
     
     /* if we were asked to send this on our group output
      * channel, substitute it
      */
     if (ORTE_RMCAST_GROUP_CHANNEL == channel) {
-        if (NULL == my_group_channel) {
+        if (NULL == orte_rmcast_base.my_group_channel) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return ORTE_ERR_NOT_FOUND;
         }
-        ch = my_group_channel;
+        ch = orte_rmcast_base.my_group_channel;
         goto process;
     }
     
     /* find the channel */
     ch = NULL;
-    for (item = opal_list_get_first(&channels);
-         item != opal_list_get_end(&channels);
+    for (item = opal_list_get_first(&orte_rmcast_base.channels);
+         item != opal_list_get_end(&orte_rmcast_base.channels);
          item = opal_list_get_next(item)) {
         chptr = (rmcast_base_channel_t*)item;
         if (channel == chptr->channel) {
@@ -313,120 +314,77 @@ static int queue_xmit(rmcast_base_send_t *snd,
     }
     if (NULL == ch) {
         /* didn't find it */
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
     
 process:    
-    OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
-                         "%s rmcast:tcp: send of %d %s"
-                         " called on multicast channel %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (NULL == snd->iovec_array) ? (int)snd->buf->bytes_used : (int)snd->iovec_count,
-                         (NULL == snd->iovec_array) ? "bytes" : "iovecs",
-                         (int)ch->channel));
-    
+    /* setup the message for xmission */
+    if (ORTE_SUCCESS != (rc = orte_rmcast_base_build_msg(ch, &buf, snd))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
 
     OPAL_THREAD_LOCK(&ch->send_lock);
-    /* setup a buffer */
-    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+
+    OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
+                         "%s rmcast:tcp multicasting %d bytes to channel %d tag %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)buf->bytes_used,
+                         (int)ch->channel, (int)snd->tag));
     
-    /* pack our name */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
-    /* pack the channel */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &ch->channel, 1, ORTE_RMCAST_CHANNEL_T))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
-    /* pack the tag */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &tag, 1, ORTE_RMCAST_TAG_T))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
-    /* pack the sequence number */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &ch->seq_num, 1, ORTE_RMCAST_SEQ_T))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
-    /* are we sending a buffer? */
-    if (NULL == snd->buf) {
-        /* no, flag the buffer as containing iovecs */
-        flag = 0;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &flag, 1, OPAL_INT8))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
+    if (ORTE_PROC_IS_HNP) {
+        /* if we don't already have it, get the daemon object */
+        if (NULL == daemons) {
+            daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
         }
-        
-        /* pack the number of iovecs */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &snd->iovec_count, 1, OPAL_INT32))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        
-        /* pack each iovec into a buffer in prep for sending
-         * so we can recreate the array at the other end
-         */
-        for (sz=0; sz < snd->iovec_count; sz++) {
-            /* pack the size */
-            tmp32 = snd->iovec_array[sz].iov_len;
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &tmp32, 1, OPAL_INT32))) {
+        /* send it to each daemon */
+        for (v=1; v < daemons->procs->size; v++) {
+            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, v))) {
+                continue;
+            }
+            if (0 > (rc = orte_rml.send_buffer(&proc->name, buf, ORTE_RML_TAG_MULTICAST, 0))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
-            if (0 < tmp32) {
-                /* pack the bytes */
-                if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, snd->iovec_array[sz].iov_base, tmp32, OPAL_UINT8))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto cleanup;
-                }
+        }
+        /* send the message to my children */
+        for (item = opal_list_get_first(&orte_local_children);
+             item != opal_list_get_end(&orte_local_children);
+             item = opal_list_get_next(item)) {
+            child = (orte_odls_child_t*)item;
+            if (0 > (rc = orte_rml.send_buffer(child->name, buf, ORTE_RML_TAG_MULTICAST, 0))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
             }
         }
-        
+        rc = ORTE_SUCCESS;
     } else {
-        /* flag it as being a buffer */
-        flag = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &flag, 1, OPAL_INT8))) {
+        /* send it to the HNP */
+        OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
+                             "%s rmcast:tcp sending multicast to HNP %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_HNP)));        
+        if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_MULTICAST_RELAY, 0))) {
             ORTE_ERROR_LOG(rc);
+            /* didn't get the message out */
+            opal_output(0, "%s failed to send message to multicast channel %d",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)ch->channel);
             goto cleanup;
         }
-        
-        /* copy the payload */
-        if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(&buf, snd->buf))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
+        rc = ORTE_SUCCESS;
     }
-    
-    OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
-                         "%s rmcast:tcp multicasting %d bytes to channel %d tag %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)buf.bytes_used,
-                         (int)ch->channel, (int)tag));
-    
-    if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(ORTE_JOBID_WILDCARD,
-                                                 &buf, ORTE_RML_TAG_MULTICAST))) {
-        /* didn't get the message out */
-        opal_output(0, "%s failed to send message to multicast channel %d",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)ch->channel);
-        goto cleanup;
-    }
-    
-    if (1 == flag) {
+
+    if (NULL != snd->buf) {
         /* call the cbfunc if required */
         if (NULL != snd->cbfunc_buffer) {
-            snd->cbfunc_buffer(rc, channel, tag,
+            snd->cbfunc_buffer(rc, channel, snd->tag,
                                ORTE_PROC_MY_NAME,
                                snd->buf, snd->cbdata);
         }
     } else {
         /* call the cbfunc if required */
         if (NULL != snd->cbfunc_iovec) {
-            snd->cbfunc_iovec(rc, channel, tag,
+            snd->cbfunc_iovec(rc, channel, snd->tag,
                               ORTE_PROC_MY_NAME,
                               snd->iovec_array, snd->iovec_count, snd->cbdata);
         }
@@ -436,11 +394,11 @@ process:
     ORTE_MULTICAST_NEXT_SEQUENCE_NUM(ch->seq_num);
     
 cleanup:
-    OBJ_DESTRUCT(&buf);
+    OBJ_RELEASE(buf);
 
     OPAL_THREAD_UNLOCK(&ch->send_lock);
     
-    return ORTE_SUCCESS;
+    return rc;
 }
 
 static int tcp_send(orte_rmcast_channel_t channel,
@@ -458,7 +416,7 @@ static int tcp_send(orte_rmcast_channel_t channel,
     snd.cbfunc_iovec = internal_snd_cb;
     send_complete = false;
     
-    if (ORTE_SUCCESS != (ret = queue_xmit(&snd, channel, tag))) {
+    if (ORTE_SUCCESS != (ret = queue_xmit(&snd, channel))) {
         ORTE_ERROR_LOG(ret);
         OBJ_DESTRUCT(&snd);
         return ret;
@@ -488,7 +446,7 @@ static int tcp_send_nb(orte_rmcast_channel_t channel,
     snd.cbfunc_iovec = cbfunc;
     snd.cbdata = cbdata;
     
-    if (ORTE_SUCCESS != (ret = queue_xmit(&snd, channel, tag))) {
+    if (ORTE_SUCCESS != (ret = queue_xmit(&snd, channel))) {
         ORTE_ERROR_LOG(ret);
         OBJ_DESTRUCT(&snd);
         return ret;
@@ -512,7 +470,7 @@ static int tcp_send_buffer(orte_rmcast_channel_t channel,
     snd.cbfunc_buffer = internal_snd_buf_cb;
     send_buf_complete = false;
 
-    if (ORTE_SUCCESS != (ret = queue_xmit(&snd, channel, tag))) {
+    if (ORTE_SUCCESS != (ret = queue_xmit(&snd, channel))) {
         ORTE_ERROR_LOG(ret);
         OBJ_DESTRUCT(&snd);
         return ret;
@@ -541,81 +499,12 @@ static int tcp_send_buffer_nb(orte_rmcast_channel_t channel,
     snd.cbfunc_buffer = cbfunc;
     snd.cbdata = cbdata;
     
-    if (ORTE_SUCCESS != (ret = queue_xmit(&snd, channel, tag))) {
+    if (ORTE_SUCCESS != (ret = queue_xmit(&snd, channel))) {
         ORTE_ERROR_LOG(ret);
         OBJ_DESTRUCT(&snd);
         return ret;
     }
     OBJ_DESTRUCT(&snd);
-
-    return ORTE_SUCCESS;
-}
-
-static int queue_recv(rmcast_base_recv_t *recvptr,
-                      orte_rmcast_channel_t channel,
-                      orte_rmcast_tag_t tag,
-                      orte_rmcast_callback_fn_t cbfunc_iovec,
-                      orte_rmcast_callback_buffer_fn_t cbfunc_buffer,
-                      bool blocking)
-{
-    opal_list_item_t *item;
-    rmcast_base_channel_t *ch, *chptr;
-    rmcast_base_recv_t *rptr;
-    
-    /* find the channel */
-    ch = NULL;
-    for (item = opal_list_get_first(&channels);
-         item != opal_list_get_end(&channels);
-         item = opal_list_get_next(item)) {
-        chptr = (rmcast_base_channel_t*)item;
-        if (channel == chptr->channel) {
-            ch = chptr;
-            break;
-        }
-    }
-    if (NULL == ch) {
-        /* didn't find it */
-        return ORTE_ERR_NOT_FOUND;
-    }
-    
-    OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
-                         "%s rmcast:tcp: queue_recv called on multicast channel %03d.%03d.%03d.%03d tag %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), OPAL_IF_FORMAT_ADDR(ch->network), tag));
-    
-    if (!blocking) {
-        /* do we already have a recv for this channel/tag/cbfunc? */
-        OPAL_THREAD_LOCK(&lock);
-        for (item = opal_list_get_first(&recvs);
-             item != opal_list_get_end(&recvs);
-             item = opal_list_get_next(item)) {
-            rptr = (rmcast_base_recv_t*)item;
-            if (channel != rptr->channel) {
-                /* different channel */
-                continue;
-            }
-            if (tag != rptr->tag) {
-                /* different tag */
-                continue;
-            }
-            if ((NULL != cbfunc_iovec && NULL != rptr->cbfunc_iovec) ||
-                (NULL != cbfunc_buffer && NULL != rptr->cbfunc_buffer)) {
-                /* matching type - recv already in place */
-                OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
-                                     "%s rmcast:tcp: matching recv already active on multicast channel %03d.%03d.%03d.%03d tag %d",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), OPAL_IF_FORMAT_ADDR(ch->network), tag));
-                OPAL_THREAD_UNLOCK(&lock);
-                return ORTE_EXISTS;
-            }
-        }
-        OPAL_THREAD_UNLOCK(&lock);
-    }
-    
-    OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
-                         "%s rmcast:tcp: adding non-blocking recv on multicast channel %d tag %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ch->channel, tag));
-    OPAL_THREAD_LOCK(&lock);
-    opal_list_append(&recvs, &recvptr->item);
-    OPAL_THREAD_UNLOCK(&lock);
 
     return ORTE_SUCCESS;
 }
@@ -627,14 +516,18 @@ static int tcp_recv(orte_process_name_t *name,
 {
     rmcast_base_recv_t *recvptr;
     int ret;
+    orte_rmcast_channel_t chan;
+
+    if (ORTE_RMCAST_GROUP_CHANNEL == channel) {
+        chan = orte_rmcast_base.my_group_number;
+    } else {
+        chan = channel;
+    }
     
-    recvptr = OBJ_NEW(rmcast_base_recv_t);
-    recvptr->channel = channel;
-    recvptr->tag = tag;
-    
-    if (ORTE_SUCCESS != (ret = queue_recv(recvptr, channel, tag, NULL, NULL, true))) {
+    if (ORTE_SUCCESS != (ret = orte_rmcast_base_queue_recv(&recvptr, chan, tag,
+                                                           ORTE_RMCAST_NON_PERSISTENT,
+                                                           NULL, NULL, NULL, true))) {
         ORTE_ERROR_LOG(ret);
-        OBJ_RELEASE(recvptr);
         return ret;
     }
     
@@ -650,9 +543,9 @@ static int tcp_recv(orte_process_name_t *name,
     *count = recvptr->iovec_count;
     
     /* remove the recv */
-    OPAL_THREAD_LOCK(&lock);
-    opal_list_remove_item(&recvs, &recvptr->item);
-    OPAL_THREAD_UNLOCK(&lock);
+    OPAL_THREAD_LOCK(&orte_rmcast_base.lock);
+    opal_list_remove_item(&orte_rmcast_base.recvs, &recvptr->item);
+    OPAL_THREAD_UNLOCK(&orte_rmcast_base.lock);
     OBJ_RELEASE(recvptr);
     
     return ORTE_SUCCESS;
@@ -663,31 +556,25 @@ static int tcp_recv_nb(orte_rmcast_channel_t channel,
                          orte_rmcast_flag_t flags,
                          orte_rmcast_callback_fn_t cbfunc, void *cbdata)
 {
-    rmcast_base_recv_t *recvptr;
     int ret;
+    orte_rmcast_channel_t chan;
+    
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                          "%s rmcast:tcp: recv_nb called on channel %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), channel));
     
-    recvptr = OBJ_NEW(rmcast_base_recv_t);
-    recvptr->channel = channel;
-    recvptr->tag = tag;
-    recvptr->flags = flags;
-    recvptr->cbfunc_iovec = cbfunc;
-    recvptr->cbdata = cbdata;
-    
-    if (ORTE_SUCCESS != (ret = queue_recv(recvptr, channel, tag, cbfunc, NULL, false))) {
-        if (ORTE_EXISTS == ret) {
-            /* this recv already exists - just release the copy */
-            OBJ_RELEASE(recvptr);
-            return ORTE_SUCCESS;
-        }
-        ORTE_ERROR_LOG(ret);
-        OBJ_RELEASE(recvptr);
-        return ret;
+    if (ORTE_RMCAST_GROUP_CHANNEL == channel) {
+        chan = orte_rmcast_base.my_group_number;
+    } else {
+        chan = channel;
     }
     
-    return ORTE_SUCCESS;
+    if (ORTE_SUCCESS != (ret = orte_rmcast_base_queue_recv(NULL, chan, tag, flags,
+                                                           cbfunc, NULL, cbdata, false))) {
+        ORTE_ERROR_LOG(ret);
+    }
+    
+    return ret;
 }
 
 static int tcp_recv_buffer(orte_process_name_t *name,
@@ -697,18 +584,23 @@ static int tcp_recv_buffer(orte_process_name_t *name,
 {
     rmcast_base_recv_t *recvptr;
     int ret;
-    
+    orte_rmcast_channel_t chan;
+
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                          "%s rmcast:tcp: recv_buffer called on multicast channel %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), channel));
 
-    recvptr = OBJ_NEW(rmcast_base_recv_t);
-    recvptr->channel = channel;
-    recvptr->tag = tag;
+    if (ORTE_RMCAST_GROUP_CHANNEL == channel) {
+        chan = orte_rmcast_base.my_group_number;
+    } else {
+        chan = channel;
+    }
     
-    if (ORTE_SUCCESS != (ret = queue_recv(recvptr, channel, tag, NULL, NULL, true))) {
+    if (ORTE_SUCCESS != (ret = orte_rmcast_base_queue_recv(&recvptr, chan, tag,
+                                                           ORTE_RMCAST_NON_PERSISTENT,
+                                                           NULL, NULL, NULL, true))) {
         ORTE_ERROR_LOG(ret);
-        goto cleanup;
+        return ret;
     }
     
     ORTE_PROGRESSED_WAIT(recvptr->recvd, 0, 1);
@@ -725,10 +617,9 @@ static int tcp_recv_buffer(orte_process_name_t *name,
     /* release the data */
     OBJ_RELEASE(recvptr->buf);
     
-cleanup:
-    OPAL_THREAD_LOCK(&lock);
-    opal_list_remove_item(&recvs, &recvptr->item);
-    OPAL_THREAD_UNLOCK(&lock);
+    OPAL_THREAD_LOCK(&orte_rmcast_base.lock);
+    opal_list_remove_item(&orte_rmcast_base.recvs, &recvptr->item);
+    OPAL_THREAD_UNLOCK(&orte_rmcast_base.lock);
     OBJ_RELEASE(recvptr);
     
     return ret;
@@ -739,55 +630,26 @@ static int tcp_recv_buffer_nb(orte_rmcast_channel_t channel,
                               orte_rmcast_flag_t flags,
                               orte_rmcast_callback_buffer_fn_t cbfunc, void *cbdata)
 {
-    rmcast_base_recv_t *recvptr;
     int ret;
+    orte_rmcast_channel_t chan;
     
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                          "%s rmcast:tcp: recv_buffer_nb called on multicast channel %d tag %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), channel, tag));
     
-    recvptr = OBJ_NEW(rmcast_base_recv_t);
-    recvptr->channel = channel;
-    recvptr->tag = tag;
-    recvptr->flags = flags;
-    recvptr->cbfunc_buffer = cbfunc;
-    recvptr->cbdata = cbdata;
+    if (ORTE_RMCAST_GROUP_CHANNEL == channel) {
+        chan = orte_rmcast_base.my_group_number;
+    } else {
+        chan = channel;
+    }
     
-    if (ORTE_SUCCESS != (ret = queue_recv(recvptr, channel, tag, NULL, cbfunc, false))) {
-        if (ORTE_EXISTS == ret) {
-            /* this recv already exists - just release the copy */
-            OBJ_RELEASE(recvptr);
-            return ORTE_SUCCESS;
-        }
+    if (ORTE_SUCCESS != (ret = orte_rmcast_base_queue_recv(NULL, chan, tag, flags,
+                                                           NULL, cbfunc, cbdata, false))) {
         ORTE_ERROR_LOG(ret);
-        OBJ_RELEASE(recvptr);
         return ret;
     }
     
     return ORTE_SUCCESS;
-}
-
-static void cancel_recv(orte_rmcast_channel_t channel,
-                        orte_rmcast_tag_t tag)
-{
-    opal_list_item_t *item, *next;
-    rmcast_base_recv_t *ptr;
-    
-    /* find all recv's for this channel and tag */
-    item = opal_list_get_first(&recvs);
-    while (item != opal_list_get_end(&recvs)) {
-        next = opal_list_get_next(item);
-        
-        ptr = (rmcast_base_recv_t*)item;
-        if (channel == ptr->channel &&
-            tag == ptr->tag) {
-            OPAL_THREAD_LOCK(&lock);
-            opal_list_remove_item(&recvs, &ptr->item);
-            OBJ_RELEASE(ptr);
-            OPAL_THREAD_UNLOCK(&lock);
-        }
-        item = next;
-    }
 }
 
 /* for the tcp module, we will be using the RML to "fake" a
@@ -796,24 +658,23 @@ static void cancel_recv(orte_rmcast_channel_t channel,
  * combination as it gets auto-picked well before us, so we
  * ignore that info here
  */
-static int open_channel(orte_rmcast_channel_t *channel, char *name,
+static int open_channel(orte_rmcast_channel_t channel, char *name,
                         char *network, int port, char *interface, uint8_t direction)
 {
     opal_list_item_t *item;
-    rmcast_base_channel_t *nchan, *chan;
+    rmcast_base_channel_t *chan;
     
     /* see if this name has already been assigned a channel on the specified network */
-    chan = NULL;
-    for (item = opal_list_get_first(&channels);
-         item != opal_list_get_end(&channels);
+    for (item = opal_list_get_first(&orte_rmcast_base.channels);
+         item != opal_list_get_end(&orte_rmcast_base.channels);
          item = opal_list_get_next(item)) {
-        nchan = (rmcast_base_channel_t*)item;
+        chan = (rmcast_base_channel_t*)item;
         
-        if (0 == strcasecmp(nchan->name, name)) {
+        if (0 == strcasecmp(chan->name, name)) {
             /* check the channel, if one was given */
-            if (ORTE_RMCAST_INVALID_CHANNEL != *channel &&
-                nchan->channel != *channel) {
-                continue;
+            if (ORTE_RMCAST_INVALID_CHANNEL != channel &&
+                ORTE_RMCAST_INVALID_CHANNEL == chan->channel) {
+                chan->channel = channel;
             }
             /* all setup - nothing to do */
             OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
@@ -826,17 +687,11 @@ static int open_channel(orte_rmcast_channel_t *channel, char *name,
     /* we didn't find an existing match, so create a new channel */
     chan = OBJ_NEW(rmcast_base_channel_t);
     chan->name = strdup(name);
-    /* if we were given a channel, then just use it */
-    if (ORTE_RMCAST_INVALID_CHANNEL != *channel) {
-        chan->channel = *channel;
-    } else {
-        chan->channel = next_channel++;
-        *channel = chan->channel;
-    }
+    chan->channel = channel;
     /* add to list of known channels */
-    OPAL_THREAD_LOCK(&lock);
-    opal_list_append(&channels, &chan->item);
-    OPAL_THREAD_UNLOCK(&lock);
+    OPAL_THREAD_LOCK(&orte_rmcast_base.lock);
+    opal_list_append(&orte_rmcast_base.channels, &chan->item);
+    OPAL_THREAD_UNLOCK(&orte_rmcast_base.lock);
     
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                          "%s rmcast:tcp opening new channel for%s%s",
@@ -847,240 +702,38 @@ static int open_channel(orte_rmcast_channel_t *channel, char *name,
     return ORTE_SUCCESS;
 }
 
-static int close_channel(orte_rmcast_channel_t channel)
-{
-    opal_list_item_t *item;
-    rmcast_base_channel_t *chan;
-
-    OPAL_THREAD_LOCK(&lock);
-    for (item = opal_list_get_first(&channels);
-         item != opal_list_get_end(&channels);
-         item = opal_list_get_next(item)) {
-        chan = (rmcast_base_channel_t*)item;
-        
-        if (channel == chan->channel) {
-            opal_list_remove_item(&channels, item);
-            OBJ_RELEASE(chan);
-            OPAL_THREAD_UNLOCK(&lock);
-            return ORTE_SUCCESS;
-        }
-    }
-    
-    OPAL_THREAD_UNLOCK(&lock);
-    return ORTE_ERR_NOT_FOUND;
-}
-
-static orte_rmcast_channel_t query(void)
-{
-    return orte_rmcast_base.my_group_number;
-}
-
 
 /****    LOCAL FUNCTIONS    ****/
 
 static void process_recv(int fd, short event, void *cbdata)
 {
-    orte_message_event_t *mev = (orte_message_event_t*)cbdata;
-    opal_buffer_t *buf = mev->buffer;
-    orte_rmcast_channel_t channel;
+    orte_mcast_msg_event_t *mev = (orte_mcast_msg_event_t*)cbdata;
     opal_list_item_t *item;
-    rmcast_base_recv_t *ptr;
-    orte_process_name_t name;
-    orte_rmcast_tag_t tag;
-    int8_t flag;
-    struct iovec *iovec_array=NULL;
-    int32_t iovec_count=0, i, sz, n;
-    opal_buffer_t *recvd_buf=NULL;
+    orte_odls_child_t *child;
     int rc;
-    orte_rmcast_seq_t recvd_seq_num;
     
-    /* extract the name of the original sender */
-    n=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &name, &n, ORTE_NAME))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
-    /* if this message is from myself, ignore it */
-    if (name.jobid == ORTE_PROC_MY_NAME->jobid && name.vpid == ORTE_PROC_MY_NAME->vpid) {
-        OPAL_OUTPUT_VERBOSE((10, orte_rmcast_base.rmcast_output,
-                             "%s rmcast:tcp:recv sent from myself: %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&name)));
-        goto cleanup;
-    }
-
-    /* extract the "channel" */
-    n=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &channel, &n, ORTE_RMCAST_CHANNEL_T))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-
-    /* extract the tag */
-    n=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &tag, &n, ORTE_RMCAST_TAG_T))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
-    /* extract the sequence number */
-    n=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &recvd_seq_num, &n, ORTE_RMCAST_SEQ_T))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
-    OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
-                         "%s rmcast:tcp:recv sender: %s tag: %d seq_num: %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&name), (int)tag, recvd_seq_num));
-    
-    
-    /* unpack the iovec vs buf flag */
-    n=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &flag, &n, OPAL_INT8))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
-    /* find the recv for this channel, tag, and type */
-    for (item = opal_list_get_first(&recvs);
-         item != opal_list_get_end(&recvs);
-         item = opal_list_get_next(item)) {
-        ptr = (rmcast_base_recv_t*)item;
-        
-        OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
-                             "%s rmcast:tcp:recv checking channel %d tag %d",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             (int)ptr->channel, (int)ptr->tag));
-        
-        if (channel != ptr->channel) {
-            continue;
-        }
-        
-        if (tag != ptr->tag && ORTE_RMCAST_TAG_WILDCARD != ptr->tag) {
-            continue;
-        }
-        
-        if (0 == flag && !ptr->iovecs_requested) {
-            /* it's an iovec and this recv is for buffers */
-            continue;
-        }
-        
-        if (1 == flag && ptr->iovecs_requested) {
-            /* it's a buffer and this recv is for iovecs */
-            continue;
-        }
-        
-        /* we have a recv - unpack the data */
-        if (0 == flag) {
-            /* get the number of iovecs in the buffer */
-            n=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &iovec_count, &n, OPAL_INT32))) {
+    /* if I am a daemon, I need to relay this to my children first */
+    if (ORTE_PROC_IS_DAEMON) {
+        for (item = opal_list_get_first(&orte_local_children);
+             item != opal_list_get_end(&orte_local_children);
+             item = opal_list_get_next(item)) {
+            child = (orte_odls_child_t*)item;
+            OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
+                                 "%s relaying multicast to %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(child->name)));
+            if (0 > (rc = orte_rml.send_buffer(child->name, mev->buf, ORTE_RML_TAG_MULTICAST, 0))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
-            /* malloc the required space */
-            iovec_array = (struct iovec *)malloc(iovec_count * sizeof(struct iovec));
-            /* unpack the iovecs */
-            for (i=0; i < iovec_count; i++) {
-                /* unpack the number of bytes in this iovec */
-                n=1;
-                if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &sz, &n, OPAL_INT32))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto cleanup;
-                }
-                iovec_array[i].iov_base = NULL;
-                iovec_array[i].iov_len = sz;
-                if (0 < sz) {
-                    /* allocate the space */
-                    iovec_array[i].iov_base = (uint8_t*)malloc(sz);
-                    /* unpack the data */
-                    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, iovec_array[i].iov_base, &sz, OPAL_UINT8))) {
-                        ORTE_ERROR_LOG(rc);
-                        goto cleanup;
-                    }                    
-                }
-            }
-        } else {
-            /* buffer was included */
-            recvd_buf = OBJ_NEW(opal_buffer_t);
-            if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(recvd_buf, buf))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }                    
         }
-        
-        OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
-                             "%s rmcast:tcp:recv delivering message to channel %d tag %d",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ptr->channel, (int)tag));
-        
-        if (0 == flag) {
-            /* dealing with iovecs */
-            if (NULL != ptr->cbfunc_iovec) {
-                ptr->cbfunc_iovec(ORTE_SUCCESS, ptr->channel, tag,
-                                  &name, iovec_array, iovec_count, ptr->cbdata);
-                /* if it isn't persistent, remove it */
-                if (!(ORTE_RMCAST_PERSISTENT & ptr->flags)) {
-                    OPAL_THREAD_LOCK(&lock);
-                    opal_list_remove_item(&recvs, &ptr->item);
-                    OPAL_THREAD_UNLOCK(&lock);
-                    OBJ_RELEASE(ptr);
-                }
-            } else {
-                /* copy over the iovec array since it will be released by
-                 * the blocking recv
-                 */
-                ptr->iovec_array = (struct iovec *)malloc(iovec_count * sizeof(struct iovec));
-                ptr->iovec_count = iovec_count;
-                for (i=0; i < iovec_count; i++) {
-                    ptr->iovec_array[i].iov_base = (uint8_t*)malloc(iovec_array[i].iov_len);
-                    ptr->iovec_array[i].iov_len = iovec_array[i].iov_len;
-                    memcpy(ptr->iovec_array[i].iov_base, iovec_array[i].iov_base, iovec_array[i].iov_len);
-                }
-                /* flag it as recvd to release blocking recv */
-                ptr->recvd = true;
-            }
-        } else {
-            if (NULL != ptr->cbfunc_buffer) {
-                ptr->cbfunc_buffer(ORTE_SUCCESS, ptr->channel, tag,
-                                   &name, recvd_buf, ptr->cbdata);
-                /* if it isn't persistent, remove it */
-                if (!(ORTE_RMCAST_PERSISTENT & ptr->flags)) {
-                    OPAL_THREAD_LOCK(&lock);
-                    opal_list_remove_item(&recvs, &ptr->item);
-                    OPAL_THREAD_UNLOCK(&lock);
-                    OBJ_RELEASE(ptr);
-                }
-            } else {
-                /* copy the buffer across since it will be released
-                 * by the blocking recv
-                 */
-                ptr->buf = OBJ_NEW(opal_buffer_t);
-                if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(ptr->buf, recvd_buf))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto cleanup;
-                }                    
-                /* flag it as recvd to release blocking recv */
-                ptr->recvd = true;
-            }
-        }
-        /* we are done - only one recv can match */
-        break;
     }
-
+    
+    /* process the receive */
+    orte_rmcast_base_process_recv(mev);
+    
 cleanup:
     OBJ_RELEASE(mev);
-    if (NULL != iovec_array) {
-        for (i=0; i < iovec_count; i++) {
-            free(iovec_array[i].iov_base);
-        }
-        free(iovec_array);
-    }
-    if (NULL != recvd_buf) {
-        OBJ_RELEASE(recvd_buf);
-    }
     return;
 }
 
@@ -1089,19 +742,94 @@ static void recv_handler(int status, orte_process_name_t* sender,
                          void* cbdata)
 {
     int rc;
+    opal_buffer_t *buf;
     
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                          "%s rmcast:tcp recvd multicast msg",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     /* clear the way for the next message */
-    ORTE_MESSAGE_EVENT(sender, buffer, tag, process_recv);
+    buf = OBJ_NEW(opal_buffer_t);
+    opal_dss.copy_payload(buf, buffer);
+    ORTE_MULTICAST_MESSAGE_EVENT(buf, process_recv);
     
     /* reissue the recv */
     if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                                       ORTE_RML_TAG_MULTICAST,
                                                       ORTE_RML_NON_PERSISTENT,
                                                       recv_handler,
+                                                      NULL))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    return;
+}
+
+static void relay(int fd, short event, void *cbdata)
+{
+    orte_message_event_t *msg = (orte_message_event_t*)cbdata;
+    orte_proc_t *proc;
+    opal_list_item_t *item;
+    orte_odls_child_t *child;
+    int rc, v;
+    
+    OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
+                         "%s rmcast:tcp relaying multicast msg from %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(&msg->sender)));
+    
+    /* if we don't already have it, get the daemon object */
+    if (NULL == daemons) {
+        daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+    }
+    /* send it to each daemon other than the one that sent it to me */
+    for (v=1; v < daemons->procs->size; v++) {
+        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, v))) {
+            continue;
+        }
+        if (proc->name.vpid == msg->sender.vpid) {
+            continue;
+        }
+        if (0 > (rc = orte_rml.send_buffer(&proc->name, msg->buffer, ORTE_RML_TAG_MULTICAST, 0))) {
+            ORTE_ERROR_LOG(rc);
+        }
+    }
+    
+    /* send the message to my children */
+    for (item = opal_list_get_first(&orte_local_children);
+         item != opal_list_get_end(&orte_local_children);
+         item = opal_list_get_next(item)) {
+        child = (orte_odls_child_t*)item;
+        if (0 > (rc = orte_rml.send_buffer(child->name, msg->buffer, ORTE_RML_TAG_MULTICAST, 0))) {
+            ORTE_ERROR_LOG(rc);
+        }
+    }
+
+    /* now process it myself */
+    ORTE_MULTICAST_MESSAGE_EVENT(msg->buffer, process_recv);
+    /* protect the buffer */
+    msg->buffer = NULL;
+    OBJ_RELEASE(msg);
+}
+
+static void relay_handler(int status, orte_process_name_t* sender,
+                          opal_buffer_t* buffer, orte_rml_tag_t tag,
+                          void* cbdata)
+{
+    int rc;
+    
+    OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
+                         "%s rmcast:tcp relay multicast msg from %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(sender)));
+    
+    /* clear the way for the next message */
+    ORTE_MESSAGE_EVENT(sender, buffer, tag, relay);
+    
+    /* reissue the recv */
+    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                                                      ORTE_RML_TAG_MULTICAST_RELAY,
+                                                      ORTE_RML_NON_PERSISTENT,
+                                                      relay_handler,
                                                       NULL))) {
         ORTE_ERROR_LOG(rc);
     }

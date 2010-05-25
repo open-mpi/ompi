@@ -80,9 +80,9 @@ static int orte_rmcast_tcp_query(mca_base_module_t **module, int *priority)
         *module = NULL;
         return ORTE_ERROR;
     }
-    
+
     /* selected by choice */
-    *priority = 0;
+    *priority = 50;
     *module = (mca_base_module_t *) &orte_rmcast_tcp_module;
     initialized = true;
     

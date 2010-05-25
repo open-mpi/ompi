@@ -36,7 +36,7 @@ static void cbfunc_iovec(int status,
                          orte_process_name_t *sender,
                          struct iovec *msg, int count, void* cbdata);
 
-orte_rmcast_channel_t chan=4;
+static int datasize=1024;
 
 static void send_data(int fd, short flags, void *arg)
 {
@@ -49,8 +49,8 @@ static void send_data(int fd, short flags, void *arg)
 
     bfptr = OBJ_NEW(opal_buffer_t);
     i32 = -1;
-    opal_dss.pack(bfptr, &i32, 1, OPAL_INT32);
-    if (ORTE_SUCCESS != (rc = orte_rmcast.send_buffer_nb(chan,
+    opal_dss.pack(bfptr, &i32, datasize, OPAL_INT32);
+    if (ORTE_SUCCESS != (rc = orte_rmcast.send_buffer_nb(ORTE_RMCAST_GROUP_CHANNEL,
                                                          ORTE_RMCAST_TAG_OUTPUT, bfptr,
                                                          cbfunc_buf_snt, NULL))) {
         ORTE_ERROR_LOG(rc);
@@ -59,11 +59,11 @@ static void send_data(int fd, short flags, void *arg)
     }        
     /* create an iovec array */
     for (i=0; i < 3; i++) {
-        iovec_array[i].iov_base = (uint8_t*)malloc(30);
-        iovec_array[i].iov_len = 30;
+        iovec_array[i].iov_base = (uint8_t*)malloc(datasize);
+        iovec_array[i].iov_len = datasize;
     }
     /* send it out */
-    if (ORTE_SUCCESS != (rc = orte_rmcast.send(chan,
+    if (ORTE_SUCCESS != (rc = orte_rmcast.send(ORTE_RMCAST_GROUP_CHANNEL,
                                                ORTE_RMCAST_TAG_OUTPUT,
                                                iovec_array, 3))) {
         ORTE_ERROR_LOG(rc);
@@ -85,46 +85,39 @@ int main(int argc, char* argv[])
     struct iovec iovec_array[3];
     
     if (0 > (rc = orte_init(&argc, &argv, ORTE_PROC_NON_MPI))) {
-        fprintf(stderr, "orte_nodename: couldn't init orte - error code %d\n", rc);
+        fprintf(stderr, "orte_mcast: couldn't init orte - error code %d\n", rc);
         return rc;
     }
     
     gethostname(hostname, 512);
     pid = getpid();
     
-    printf("orte_mcast: Node %s Name %s Pid %ld\n",
-           hostname, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)pid);
+    if (1 < argc) {
+        datasize = strtol(argv[1], NULL, 10);
+    }
+    
+    printf("orte_mcast: Node %s Name %s Pid %ld datasize %d\n",
+           hostname, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)pid, datasize);
     
 
     
     if (0 == ORTE_PROC_MY_NAME->vpid) {
         orte_grpcomm.barrier();
 
-        /* open a new channel */
-        if (ORTE_SUCCESS != (rc = orte_rmcast.open_channel(&chan, "orte_mcast", NULL, -1, NULL, ORTE_RMCAST_XMIT))) {
-            ORTE_ERROR_LOG(rc);
-            goto blast;
-        }
-        
-        OBJ_CONSTRUCT(&buf, opal_buffer_t);
-        /* pass the new channel number */
-        i32 = chan;
-        opal_dss.pack(&buf, &i32, 1, OPAL_INT32);
-        if (ORTE_SUCCESS != (rc = orte_rmcast.send_buffer(ORTE_RMCAST_APP_PUBLIC_CHANNEL,
-                                                          ORTE_RMCAST_TAG_ANNOUNCE, &buf))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_DESTRUCT(&buf);
-            goto blast;
-        }
-        OBJ_DESTRUCT(&buf);
-        
         /* wake up every 5 seconds and send something */
         ORTE_TIMER_EVENT(5, 0, send_data);
     } else {
-        if (ORTE_SUCCESS != (rc = orte_rmcast.recv_buffer_nb(ORTE_RMCAST_APP_PUBLIC_CHANNEL,
-                                                             ORTE_RMCAST_TAG_WILDCARD,
+        /* setup to recv data on our channel */
+        if (ORTE_SUCCESS != (rc = orte_rmcast.recv_buffer_nb(ORTE_RMCAST_GROUP_CHANNEL,
+                                                             ORTE_RMCAST_TAG_OUTPUT,
                                                              ORTE_RMCAST_PERSISTENT,
                                                              cbfunc, NULL))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        if (ORTE_SUCCESS != (rc = orte_rmcast.recv_nb(ORTE_RMCAST_GROUP_CHANNEL,
+                                                      ORTE_RMCAST_TAG_OUTPUT,
+                                                      ORTE_RMCAST_PERSISTENT,
+                                                      cbfunc_iovec, NULL))) {
             ORTE_ERROR_LOG(rc);
         }
         orte_grpcomm.barrier();  /* ensure the public recv is ready */
@@ -152,29 +145,6 @@ static void cbfunc(int status,
             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
             ORTE_NAME_PRINT(sender), channel, tag, i32);
 
-    if (i32 < 0) {
-        return;
-    }
-    
-    /* open a new channel */
-    chan = i32;
-    if (ORTE_SUCCESS != (rc = orte_rmcast.open_channel(&chan, "orte_mcast", NULL, -1, NULL, ORTE_RMCAST_RECV))) {
-        ORTE_ERROR_LOG(rc);
-    }
-    
-    /* setup to recv data on it */
-    if (ORTE_SUCCESS != (rc = orte_rmcast.recv_buffer_nb(chan,
-                                                         ORTE_RMCAST_TAG_OUTPUT,
-                                                         ORTE_RMCAST_PERSISTENT,
-                                                         cbfunc, NULL))) {
-        ORTE_ERROR_LOG(rc);
-    }
-    if (ORTE_SUCCESS != (rc = orte_rmcast.recv_nb(chan,
-                                                  ORTE_RMCAST_TAG_OUTPUT,
-                                                  ORTE_RMCAST_PERSISTENT,
-                                                  cbfunc_iovec, NULL))) {
-        ORTE_ERROR_LOG(rc);
-    }
 }
 
 static void cbfunc_iovec(int status,

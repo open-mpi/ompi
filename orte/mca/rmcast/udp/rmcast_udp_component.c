@@ -41,25 +41,23 @@ static bool initialized = false;
 const char *mca_rmcast_udp_component_version_string =
     "Open MPI udp rmcast MCA component version " ORTE_VERSION;
 
-orte_rmcast_udp_component_t mca_rmcast_udp_component = {
+orte_rmcast_base_component_t mca_rmcast_udp_component = {
     {
-        {
-            ORTE_RMCAST_BASE_VERSION_1_0_0,
-            
-            "udp", /* MCA component name */
-            ORTE_MAJOR_VERSION,  /* MCA component major version */
-            ORTE_MINOR_VERSION,  /* MCA component minor version */
-            ORTE_RELEASE_VERSION,  /* MCA component release version */
-            
-            /* Component open, close, and query functions */
-            orte_rmcast_udp_open,
-            orte_rmcast_udp_close,
-            orte_rmcast_udp_query 
-        },
-        {
-            /* The component is checkpoint ready */
-            MCA_BASE_METADATA_PARAM_CHECKPOINT
-        }
+        ORTE_RMCAST_BASE_VERSION_1_0_0,
+        
+        "udp", /* MCA component name */
+        ORTE_MAJOR_VERSION,  /* MCA component major version */
+        ORTE_MINOR_VERSION,  /* MCA component minor version */
+        ORTE_RELEASE_VERSION,  /* MCA component release version */
+        
+        /* Component open, close, and query functions */
+        orte_rmcast_udp_open,
+        orte_rmcast_udp_close,
+        orte_rmcast_udp_query 
+    },
+    {
+        /* The component is checkpoint ready */
+        MCA_BASE_METADATA_PARAM_CHECKPOINT
     }
 };
 
@@ -68,14 +66,6 @@ orte_rmcast_udp_component_t mca_rmcast_udp_component = {
   */
 static int orte_rmcast_udp_open(void)
 {
-    mca_base_component_t *c = &mca_rmcast_udp_component.super.version;
-    
-    mca_base_param_reg_int(c, "max_msg_size",
-                           "Max #bytes in a single msg (must be > 0)",
-                           false, false,
-                           ORTE_RMCAST_UDP_MAX_MSG_SIZE,
-                           &mca_rmcast_udp_component.max_msg_size);
-    
     return ORTE_SUCCESS;
 }
 
