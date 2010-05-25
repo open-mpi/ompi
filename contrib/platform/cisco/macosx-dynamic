@@ -1,6 +1,6 @@
-enable_heartbeat=yes
+enable_heartbeat=no
 enable_multicast=yes
-enable_sensors=yes
+enable_sensors=no
 enable_opal_multi_threads=yes
 enable_ft_thread=no
 enable_mem_debug=yes
@@ -24,5 +24,3 @@ enable_mca_no_build=carto,crs,memchecker,filem,plm-slurm,plm-xgrid,snapc
 with_memory_manager=no
 with_devel_headers=yes
 with_xgrid=no
-with_ft=orcm
-with_spread=/opt/local
