@@ -571,7 +571,11 @@ static int tcp_recv_nb(orte_rmcast_channel_t channel,
     
     if (ORTE_SUCCESS != (ret = orte_rmcast_base_queue_recv(NULL, chan, tag, flags,
                                                            cbfunc, NULL, cbdata, false))) {
-        ORTE_ERROR_LOG(ret);
+        if (ORTE_EXISTS == ret) {
+            ret = ORTE_SUCCESS;
+        } else {
+            ORTE_ERROR_LOG(ret);
+        }
     }
     
     return ret;
@@ -645,8 +649,10 @@ static int tcp_recv_buffer_nb(orte_rmcast_channel_t channel,
     
     if (ORTE_SUCCESS != (ret = orte_rmcast_base_queue_recv(NULL, chan, tag, flags,
                                                            NULL, cbfunc, cbdata, false))) {
-        ORTE_ERROR_LOG(ret);
-        return ret;
+        if (ORTE_EXISTS != ret) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
     }
     
     return ORTE_SUCCESS;
