@@ -34,6 +34,8 @@ static int orte_rmcast_udp_query(mca_base_module_t **module, int *priority);
  * Local variables
  */
 static bool initialized = false;
+int orte_rmcast_udp_sndbuf_size;
+int orte_rmcast_udp_rcvbuf_size;
 
 /*
  * Public string showing the rmcast udp component version number
@@ -66,6 +68,24 @@ orte_rmcast_base_component_t mca_rmcast_udp_component = {
   */
 static int orte_rmcast_udp_open(void)
 {
+    mca_base_component_t *c = &mca_rmcast_udp_component.version;
+    int value;
+    
+    mca_base_param_reg_int(c, "sndbuf_size", 
+                           "Size of send buffer in Kbytes (must be > 0)", 
+                           false, false, 
+                           ORTE_RMCAST_UDP_DEFAULT_SNDBUF_SIZE, &value);
+    orte_rmcast_udp_sndbuf_size = 1024*value;
+    
+    orte_rmcast_udp_rcvbuf_size = 16 * orte_rmcast_udp_sndbuf_size;
+    mca_base_param_reg_int(c, "rcvbuf_size", 
+                           "Size of recv buffer in Kbytes (default: 16xsndbuf)", 
+                           false, false, 
+                           orte_rmcast_udp_rcvbuf_size, &value);
+    if (value != orte_rmcast_udp_rcvbuf_size) {
+        orte_rmcast_udp_rcvbuf_size = 1024 * value;
+    }
+    
     return ORTE_SUCCESS;
 }
 

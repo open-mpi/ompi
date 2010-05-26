@@ -24,11 +24,13 @@
 
 BEGIN_C_DECLS
 
-#define ORTE_RMCAST_UDP_MTU 65536
+#define ORTE_RMCAST_UDP_DEFAULT_SNDBUF_SIZE 65536
 
 ORTE_MODULE_DECLSPEC extern orte_rmcast_base_component_t mca_rmcast_udp_component;
 extern orte_rmcast_module_t orte_rmcast_udp_module;
 
+ORTE_MODULE_DECLSPEC extern int orte_rmcast_udp_sndbuf_size;
+ORTE_MODULE_DECLSPEC extern int orte_rmcast_udp_rcvbuf_size;
 END_C_DECLS
     
 #endif

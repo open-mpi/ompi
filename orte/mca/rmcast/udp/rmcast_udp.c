@@ -465,7 +465,10 @@ static int udp_recv_nb(orte_rmcast_channel_t channel,
     
     if (ORTE_SUCCESS != (ret = orte_rmcast_base_queue_recv(NULL, chan, tag, flags,
                                                            cbfunc, NULL, cbdata, false))) {
-        ORTE_ERROR_LOG(ret);
+        if (ORTE_EXISTS != ret) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
     }
     
     return ORTE_SUCCESS;
@@ -539,8 +542,10 @@ static int udp_recv_buffer_nb(orte_rmcast_channel_t channel,
     
     if (ORTE_SUCCESS != (ret = orte_rmcast_base_queue_recv(NULL, chan, tag, flags,
                                                            NULL, cbfunc, cbdata, false))) {
-        ORTE_ERROR_LOG(ret);
-        return ret;
+        if (ORTE_EXISTS != ret) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
     }
     
     return ORTE_SUCCESS;
@@ -677,8 +682,8 @@ static void recv_handler(int sd, short flags, void* cbdata)
     opal_buffer_t *buf;
     
     /* read the data */
-    data = (uint8_t*)malloc(ORTE_RMCAST_UDP_MTU * sizeof(uint8_t));
-    sz = read(sd, data, ORTE_RMCAST_UDP_MTU);
+    data = (uint8_t*)malloc(orte_rmcast_udp_sndbuf_size * sizeof(uint8_t));
+    sz = read(sd, data, orte_rmcast_udp_sndbuf_size);
     
     if (sz <= 0) {
         /* this shouldn't happen - report the errno */
@@ -733,7 +738,7 @@ static int setup_channel(rmcast_base_channel_t *chan, uint8_t direction)
             return rc;
         }
         chan->xmit = xmitsd;
-        chan->send_data = (uint8_t*)malloc(ORTE_RMCAST_UDP_MTU);
+        chan->send_data = (uint8_t*)malloc(orte_rmcast_udp_sndbuf_size);
         /* setup the event to xmit messages, but don't activate it */
         opal_event_set(&chan->send_ev, chan->xmit, OPAL_EV_WRITE, xmit_data, chan);        
     }
@@ -834,8 +839,8 @@ static int setup_socket(int *sd, rmcast_base_channel_t *chan, bool recvsocket)
             return ORTE_ERROR;
         }
         /* set the recvbuf size */
-        flags = 10*ORTE_RMCAST_UDP_MTU;
-        if ((setsockopt(target_sd, SOL_SOCKET, SO_RCVBUF, &flags, sizeof(flags))) < 0) {
+        if ((setsockopt(target_sd, SOL_SOCKET, SO_RCVBUF,
+                        &orte_rmcast_udp_rcvbuf_size, sizeof(orte_rmcast_udp_rcvbuf_size))) < 0) {
             opal_output(0, "%s rmcast:init: setsockopt() failed on SO_RCVBUF\n"
                         "\tfor multicast network %03d.%03d.%03d.%03d interface %03d.%03d.%03d.%03d\n\tError: %s (%d)",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -865,8 +870,8 @@ static int setup_socket(int *sd, rmcast_base_channel_t *chan, bool recvsocket)
             return ORTE_ERROR;
         }
         /* set the sendbuf size */
-        flags = ORTE_RMCAST_UDP_MTU;
-        if ((setsockopt(target_sd, SOL_SOCKET, SO_SNDBUF, &flags, sizeof(flags))) < 0) {
+        if ((setsockopt(target_sd, SOL_SOCKET, SO_SNDBUF,
+                        &orte_rmcast_udp_sndbuf_size, sizeof(orte_rmcast_udp_sndbuf_size))) < 0) {
             opal_output(0, "%s rmcast:init: setsockopt() failed on SO_SNDBUF\n"
                         "\tfor multicast network %03d.%03d.%03d.%03d interface %03d.%03d.%03d.%03d\n\tError: %s (%d)",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
