@@ -49,7 +49,7 @@ else
 lib = libmca_btl_tcp.la
 lib_sources = $(sources)
 component =
-ponent_sources =
+component_sources =
 endif
 
 mcacomponentdir = $(pkglibdir)
