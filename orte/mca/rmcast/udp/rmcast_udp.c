@@ -145,7 +145,6 @@ static int init(void)
     if (init_completed) {
         return ORTE_SUCCESS;
     }
-    init_completed = true;
     
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output, "%s rmcast:udp: init called",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -202,6 +201,7 @@ static int init(void)
         opal_output(0, "rmcast:udp:init - unknown process type");
         return ORTE_ERR_SILENT;
     }
+    init_completed = true;
 
     return ORTE_SUCCESS;
 }
@@ -221,6 +221,7 @@ static void finalize(void)
     }
     OBJ_DESTRUCT(&msg_log);
     
+    init_completed = false;
     return;
 }
 
@@ -908,7 +909,7 @@ static void xmit_data(int sd, short flags, void* send_req)
     rmcast_base_send_t *snd;
     opal_list_item_t *item;
     char *bytes;
-    int32_t sz, outbound;
+    int32_t sz;
     int rc;
     opal_buffer_t *buf;
     rmcast_send_log_t *log, *lg;
@@ -954,7 +955,7 @@ static void xmit_data(int sd, short flags, void* send_req)
 
         OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                              "%s rmcast:udp multicasting %d bytes to network %03d.%03d.%03d.%03d port %d tag %d",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), outbound,
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), sz,
                              OPAL_IF_FORMAT_ADDR(chan->network), (int)chan->port, (int)snd->tag));
                 
         if (sz != (rc = sendto(chan->xmit, bytes, sz, 0,
