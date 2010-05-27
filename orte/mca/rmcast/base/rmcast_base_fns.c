@@ -169,7 +169,7 @@ int orte_rmcast_base_queue_recv(rmcast_base_recv_t **recvptr,
                     OPAL_THREAD_UNLOCK(&orte_rmcast_base.lock);
                     return ORTE_EXISTS;
                 }
-                rptr->cbfunc_iovec = cbfunc_iovec;
+                rptr->cbfunc_buffer = cbfunc_buffer;
             }
             if (NULL != recvptr) {
                 *recvptr = rptr;
@@ -313,6 +313,10 @@ void orte_rmcast_base_process_recv(orte_mcast_msg_event_t *msg)
                 }
             }
             if (NULL != ptr->cbfunc_iovec) {
+                OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
+                                     "%s rmcast:tcp:recv delivering iovecs to channel %d tag %d",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ptr->channel, (int)tag));
+                
                 ptr->cbfunc_iovec(ORTE_SUCCESS, ptr->channel, tag,
                                   &name, iovec_array, iovec_count, ptr->cbdata);
                 /* if it isn't persistent, remove it */
@@ -351,6 +355,10 @@ void orte_rmcast_base_process_recv(orte_mcast_msg_event_t *msg)
                 goto cleanup;
             }                    
             if (NULL != ptr->cbfunc_buffer) {
+                OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
+                                     "%s rmcast:tcp:recv delivering buffer to channel %d tag %d",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ptr->channel, (int)tag));
+                
                 ptr->cbfunc_buffer(ORTE_SUCCESS, ptr->channel, tag,
                                    &name, recvd_buf, ptr->cbdata);
                 /* if it isn't persistent, remove it */
@@ -368,6 +376,10 @@ void orte_rmcast_base_process_recv(orte_mcast_msg_event_t *msg)
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                     goto cleanup;
                 }
+                OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
+                                     "%s rmcast:tcp:recv copying buffer for blocking recv",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                
                 /* copy the buffer across since it will be released
                  * by the blocking recv
                  */

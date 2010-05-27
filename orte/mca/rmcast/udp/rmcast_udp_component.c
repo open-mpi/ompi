@@ -75,7 +75,12 @@ static int orte_rmcast_udp_open(void)
                            "Size of send buffer in Kbytes (must be > 0)", 
                            false, false, 
                            ORTE_RMCAST_UDP_DEFAULT_SNDBUF_SIZE, &value);
-    orte_rmcast_udp_sndbuf_size = 1024*value;
+    if (ORTE_RMCAST_UDP_DEFAULT_SNDBUF_SIZE != value) {
+        orte_rmcast_udp_sndbuf_size = 1024*value;
+    } else {
+        orte_rmcast_udp_sndbuf_size = ORTE_RMCAST_UDP_DEFAULT_SNDBUF_SIZE;
+    }
+
     
     orte_rmcast_udp_rcvbuf_size = 16 * orte_rmcast_udp_sndbuf_size;
     mca_base_param_reg_int(c, "rcvbuf_size", 
@@ -85,7 +90,7 @@ static int orte_rmcast_udp_open(void)
     if (value != orte_rmcast_udp_rcvbuf_size) {
         orte_rmcast_udp_rcvbuf_size = 1024 * value;
     }
-    
+
     return ORTE_SUCCESS;
 }
 
