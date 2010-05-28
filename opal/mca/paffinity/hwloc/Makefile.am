@@ -22,6 +22,13 @@ if OPAL_PAFFINITY_HWLOC_INTERNAL
 SUBDIRS += hwloc
 endif
 
+# Need to include these files so that these directories are carried in
+# the tarball (in case someone invokes autogen.sh on a dist tarball).
+EXTRA_DIST = \
+        hwloc/doc/README.txt \
+        hwloc/tests/README.txt \
+        hwloc/utils/README.txt
+
 # To find hwloc_bottom.h.  EMBEDDED flags are for if we OMPI's
 # internal hwloc is used; paffinity_hwloc_CPPFLAGS is if we are using
 # an external install.
