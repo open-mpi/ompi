@@ -1,3 +1,4 @@
+.\" Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
 .\"Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Comm_spawn_multiple 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
@@ -75,7 +76,16 @@ Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
-MPI_Comm_spawn_multiple is identical to MPI_Comm_spawn except that it can specify multiple executables. The first argument, \fIcount\fP, indicates the number of executables. The next three arguments are arrays of the corresponding arguments in MPI_Comm_spawn. The next argument, \fIarray_of_info\fP, is an array of \fIinfo\fP arguments; however, only the first argument in that array is used.  Any subsequent arguments in the array are ignored because an \fIinfo\fP argument applies to the entire job that is spawned, and cannot be different for each executable in the job.  See the INFO ARGUMENTS section for more information.
+MPI_Comm_spawn_multiple is identical to MPI_Comm_spawn(3) except that
+it can specify multiple executables. The first argument, \fIcount\fP,
+indicates the number of executables. The next three arguments are
+arrays of the corresponding arguments in MPI_Comm_spawn(3). The next
+argument, \fIarray_of_info\fP, is an array of \fIinfo\fP arguments;
+however, only the first argument in that array is used.  Any
+subsequent arguments in the array are ignored because an \fIinfo\fP
+argument applies to the entire job that is spawned, and cannot be
+different for each executable in the job.  See the INFO ARGUMENTS
+section for more information.
 .sp
 For the Fortran version of \fIarray_of_argv\fP, the element \fIarray_of_argv\fP(i,j) is the jth argument to command number i. 
 .sp
@@ -101,7 +111,7 @@ where i is the ith element of \fIarray_of_maxprocs\fP. Command number \fIi\fP co
                      |_              _| 
 .fi 
 .sp
-Error codes are treated as for MPI_Comm_spawn. 
+Error codes are treated as for MPI_Comm_spawn(3). 
 
  
 .SH INFO ARGUMENTS
@@ -190,7 +200,28 @@ Note that in "#PACKAGE_NAME#", the first array location in \fIarray_of_info\fP i
 .SH NOTES
 The argument \fIcount\fP is interpreted by MPI only at the root, as is \fIarray_of_argv\fP. Since the leading dimension of \fIarray_of_argv\fP is \fIcount\fP, a nonpositive value of \fIcount\fP at a nonroot node could theoretically cause a runtime bounds check error, even though \fIarray_of_argv\fP should be ignored by the subroutine. If this happens, you should explicitly supply a reasonable value of \fIcount\fP on the nonroot nodes. 
 .sp
-Calling MPI_Comm_spawn many times would create many sets of children with different MPI_COMM_WORLDs, whereas MPI_Comm_spawn_multiple creates children with a single MPI_COMM_WORLD, so the two methods are not completely equivalent. Also  if you need to spawn multiple executables, you may get better performance by using MPI_Comm_spawn_multiple instead of calling MPI_Comm_spawn several times.   
+Similar to MPI_Comm_spawn(3), it is the application's responsibility
+to terminate each individual set of argv in the
+.I array_of_argv
+argument.  In C, each argv array is terminated by a NULL pointer.  In
+Fortran, each argv array is terminated by an empty string (note that
+compilers will not automatically insert this blank string; the
+application must ensure to have enough space for an empty string entry
+as the last element of the array).
+.sp
+Other restrictions apply to the 
+.I array_of_argv
+parameter; see MPI_Comm_spawn(3)'s description of the
+.I argv
+parameter for more details.
+.sp
+Calling MPI_Comm_spawn(3) many times would create many sets of
+children with different MPI_COMM_WORLDs, whereas
+MPI_Comm_spawn_multiple creates children with a single MPI_COMM_WORLD,
+so the two methods are not completely equivalent. Also if you need to
+spawn multiple executables, you may get better performance by using
+MPI_Comm_spawn_multiple instead of calling MPI_Comm_spawn(3) several
+times.
 
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI:Exception object.
@@ -205,4 +236,3 @@ called. By default, this error handler aborts the MPI job, except for I/O functi
 MPI_Comm_spawn(3)
 MPI_Comm_get_parent(3)
 mpirun(1)
-
