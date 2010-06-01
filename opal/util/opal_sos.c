@@ -416,7 +416,7 @@ void opal_sos_print_error(opal_sos_severity_t severity, int errnum, const char *
     va_end(arglist);
 }
 
-inline void opal_sos_log(int errnum)
+void opal_sos_log(int errnum)
 {
     opal_sos_print(errnum, false);
     opal_sos_free(&errnum);
