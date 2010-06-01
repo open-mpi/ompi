@@ -304,7 +304,7 @@ void orte_rmcast_base_process_recv(orte_mcast_msg_event_t *msg)
                 iovec_array[i].iov_len = isz;
                 if (0 < isz) {
                     /* allocate the space */
-                    iovec_array[i].iov_base = (uint8_t*)malloc(isz);
+                    iovec_array[i].iov_base = (IOVBASE_TYPE*)malloc(isz);
                     /* unpack the data */
                     if (ORTE_SUCCESS != (rc = opal_dss.unpack(msg->buf, iovec_array[i].iov_base, &isz, OPAL_UINT8))) {
                         ORTE_ERROR_LOG(rc);
@@ -340,7 +340,7 @@ void orte_rmcast_base_process_recv(orte_mcast_msg_event_t *msg)
                 ptr->iovec_array = (struct iovec *)malloc(iovec_count * sizeof(struct iovec));
                 ptr->iovec_count = iovec_count;
                 for (i=0; i < iovec_count; i++) {
-                    ptr->iovec_array[i].iov_base = (uint8_t*)malloc(iovec_array[i].iov_len);
+                    ptr->iovec_array[i].iov_base = (IOVBASE_TYPE*)malloc(iovec_array[i].iov_len);
                     ptr->iovec_array[i].iov_len = iovec_array[i].iov_len;
                     memcpy(ptr->iovec_array[i].iov_base, iovec_array[i].iov_base, iovec_array[i].iov_len);
                 }
