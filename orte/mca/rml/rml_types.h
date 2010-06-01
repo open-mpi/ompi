@@ -174,15 +174,17 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_msg_packet_t);
 #define ORTE_RML_TAG_MULTICAST              36
 /* multicast messages sent direct */
 #define ORTE_RML_TAG_MULTICAST_DIRECT       37
+/* multicast messages to be relayed */
+#define ORTE_RML_TAG_MULTICAST_RELAY        38
 
 /* tag for receiving ack of abort msg */
-#define ORTE_RML_TAG_ABORT                  38
+#define ORTE_RML_TAG_ABORT                  39
 
 /* tag for receiving heartbeats */
-#define ORTE_RML_TAG_HEARTBEAT              39
+#define ORTE_RML_TAG_HEARTBEAT              40
 
 /* notifier data */
-#define ORTE_RML_TAG_NOTIFIER_HNP           40
+#define ORTE_RML_TAG_NOTIFIER_HNP           41
 
 #define ORTE_RML_TAG_MAX                   100
 
