@@ -1354,6 +1354,25 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
      */
     getcwd(basedir, sizeof(basedir));
 
+    /* if the job is INVALID, then we are only launching
+     * debugger daemons - so do that
+     */
+    if (ORTE_JOBID_INVALID == job) {
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                             "%s odls:launch forking debugger with %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             (ORTE_JOB_CONTROL_FORWARD_OUTPUT & orte_odls_globals.debugger->controls) ? "output forwarded" : "no output"));
+        fork_local(orte_odls_globals.debugger->apps[0], NULL, NULL, orte_odls_globals.debugger);
+        orte_odls_globals.debugger_launched = true;
+        if (ORTE_SUCCESS != (rc = orte_errmgr.update_state(orte_odls_globals.debugger->jobid,
+                                                           ORTE_JOB_STATE_RUNNING,
+                                                           NULL, ORTE_PROC_STATE_UNDEF,
+                                                           ORTE_ERROR_DEFAULT_EXIT_CODE))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        goto done;
+    }
+    
     /* compute the number of local procs alive */
     num_procs_alive = 0;
     for (item = opal_list_get_first(&orte_local_children);
@@ -1907,6 +1926,12 @@ CLEANUP:
             
             fork_local(orte_odls_globals.debugger->apps[0], NULL, NULL, orte_odls_globals.debugger);
             orte_odls_globals.debugger_launched = true;
+            if (ORTE_SUCCESS != (rc = orte_errmgr.update_state(orte_odls_globals.debugger->jobid,
+                                                               ORTE_JOB_STATE_RUNNING,
+                                                               NULL, ORTE_PROC_STATE_UNDEF,
+                                                               ORTE_ERROR_DEFAULT_EXIT_CODE))) {
+                ORTE_ERROR_LOG(rc);
+            }
         }
         
         if (ORTE_SUCCESS != (rc = orte_errmgr.update_state(jobdat->jobid, ORTE_JOB_STATE_RUNNING,
@@ -1936,6 +1961,7 @@ CLEANUP:
         }
     }
 
+done:
     opal_condition_signal(&orte_odls_globals.cond);
     OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
     return rc;
