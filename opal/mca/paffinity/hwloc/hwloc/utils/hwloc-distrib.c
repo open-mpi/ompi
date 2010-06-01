@@ -13,7 +13,7 @@ static void usage(FILE *where)
 {
   fprintf(where, "Usage: hwloc-distrib [options] number\n");
   fprintf(where, "Options:\n");
-  fprintf(where, "  --single\tsinglify each output to a single CPU\n");
+  fprintf(where, "   --single\tsinglify each output to a single CPU\n");
   fprintf(where, "   -v\t\t\tverbose messages\n");
   fprintf(where, "   --synthetic \"2 2\"\tsimulate a fake hierarchy\n");
 #ifdef HWLOC_HAVE_XML

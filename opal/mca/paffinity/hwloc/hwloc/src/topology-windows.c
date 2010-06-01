@@ -323,9 +323,9 @@ hwloc_look_windows(struct hwloc_topology *topology)
         GROUP_AFFINITY *GroupMask;
 
         /* Ignore non-data caches */
-	if (procInfo->Relationship == RelationCache &&
-		  (procInfo->Cache.Type == CacheUnified
-		|| procInfo->Cache.Type == CacheData))
+	if (procInfo->Relationship == RelationCache
+		&& procInfo->Cache.Type != CacheUnified
+		&& procInfo->Cache.Type != CacheData)
 	  continue;
 
 	id = -1;
@@ -366,6 +366,7 @@ hwloc_look_windows(struct hwloc_topology *topology)
 	    continue;
 	  default:
 	    /* Don't know how to get the mask.  */
+            hwloc_debug("unknown relation %d\n", procInfo->Relationship);
 	    continue;
 	}
 
