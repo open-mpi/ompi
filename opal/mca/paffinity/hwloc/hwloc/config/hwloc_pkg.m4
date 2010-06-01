@@ -123,6 +123,7 @@ AC_DEFUN([HWLOC_PKG_CHECK_MODULES],[
 and HWLOC_[]$1[]_LIBS to avoid the need to call pkg-config.
 See the pkg-config man page for more details.])
 
+    # Check for failure of pkg-config
     if test $HWLOC_pkg_failed = yes; then
         _HWLOC_PKG_SHORT_ERRORS_SUPPORTED
         if test $HWLOC_pkg_short_errors_supported = yes; then
@@ -133,7 +134,7 @@ See the pkg-config man page for more details.])
         # Put the nasty error message in config.log where it belongs
 	echo "$HWLOC_[]$1[]_PKG_ERRORS" >&AS_MESSAGE_LOG_FD
 
-	ifelse([$4], , [AC_MSG_ERROR(dnl
+	ifelse([$5], , [AC_MSG_ERROR(dnl
 [Package requirements ($2) were not met:
 
 $HWLOCC_$1_PKG_ERRORS
@@ -144,9 +145,9 @@ installed software in a non-standard prefix.
 _HWLOC_PKG_TEXT
 ])],
 		[AC_MSG_RESULT([no])
-                $4])
+                $5])
     elif test $HWLOC_pkg_failed = untried; then
-        ifelse([$4], , [AC_MSG_FAILURE(dnl
+        ifelse([$5], , [AC_MSG_FAILURE(dnl
 [The pkg-config script could not be found or is too old.  Make sure it
 is in your PATH or set the HWLOC_PKG_CONFIG environment variable to the full
 path to pkg-config.
@@ -154,11 +155,32 @@ path to pkg-config.
 _HWLOC_PKG_TEXT
 
 To get pkg-config, see <http://pkg-config.freedesktop.org/>.])],
-		[$4])
+		[$5])
     else
-	HWLOC_[]$1[]_CFLAGS=$HWLOC_pkg_cv_HWLOC_[]$1[]_CFLAGS
-	HWLOC_[]$1[]_LIBS=$HWLOC_pkg_cv_HWLOC_[]$1[]_LIBS
         AC_MSG_RESULT([yes])
-	ifelse([$3], , :, [$3])
+
+        # If we got good results from pkg-config, check that they
+        # actually work (i.e., that we can link against the resulting
+        # $LIBS).  The canonical example why we do this is if
+        # pkg-config returns 64 bit libraries but ./configure was run
+        # with CFLAGS=-m32 LDFLAGS=-m32.  pkg-config gave us valid
+        # results, but we'll fail if we try to link.  So detect that
+        # failure now.
+        hwloc_cflags_save=$CFLAGS
+        hwloc_libs_save=$LIBS
+        CFLAGS="$CFLAGS $HWLOC_pkg_cv_HWLOC_[]$1[]_CFLAGS"
+        LIBS="$LIBS $HWLOC_pkg_cv_HWLOC_[]$1[]_LIBS"
+        AC_CHECK_FUNC([$3], [hwloc_result=yes], [hwloc_result=no])
+        CFLAGS=$hwloc_cflags_save
+        LIBS=$hwloc_libs_save
+
+        AC_MSG_CHECKING([for final $1 support])
+        AS_IF([test "$hwloc_result" = "yes"],
+              [HWLOC_[]$1[]_CFLAGS=$HWLOC_pkg_cv_HWLOC_[]$1[]_CFLAGS
+               HWLOC_[]$1[]_LIBS=$HWLOC_pkg_cv_HWLOC_[]$1[]_LIBS
+               AC_MSG_RESULT([yes])            
+               ifelse([$4], , :, [$4])],
+              [AC_MSG_RESULT([no])
+               ifelse([$5], , :, [$5])])
     fi[]dnl
 ])# HWLOC_PKG_CHECK_MODULES

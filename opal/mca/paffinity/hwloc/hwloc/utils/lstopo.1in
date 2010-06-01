@@ -39,7 +39,7 @@ These indexes are prefixed with "p#" instead of "#".
 \fB\-c\fR \fB\-\-cpuset\fR
 Display the cpuset of each object.
 .TP
-\fB\-C\fR \fB\-\-cpuset-only\fR
+\fB\-C\fR \fB\-\-cpuset\-only\fR
 Only display the cpuset of each object; do not display anything else
 about the object.
 .TP
@@ -67,7 +67,7 @@ topology on the local machine).  If <path> is "\-", the standard input
 is used.  XML support must have been compiled in to hwloc for this
 option to be usable.
 .TP
-\fB\-\-fsys-root\fR <path>
+\fB\-\-fsys\-root\fR <path>
 Read topology from the chroot specified by <path> (instead of
 discovering the topology on the local machine).  This option is
 generally only available on Linux.
@@ -77,7 +77,7 @@ Detect topology as seen by process <pid>, i.e. as if process <pid> did the
 discovery itself, and show its current binding. Note that this can for instance
 change the set of allowed processors. If 0 is given as pid, the current binding for the lstopo process will be shown.
 .TP
-\fB\-\-top\fR <pid>
+\fB\-\-top\fR
 Show existing processes as misc objects in the output. To avoid uselessly
 cluttering the output, only processes that are restricted to some part of the
 machine are shown.  On Linux, kernel threads are not shown.

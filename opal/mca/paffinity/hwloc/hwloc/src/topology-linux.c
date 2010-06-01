@@ -1303,18 +1303,20 @@ look_sysfscpu(struct hwloc_topology *topology, const char *path)
       sprintf(str, "%s/cpu%d/topology/physical_package_id", path, i);
       hwloc_parse_sysfs_unsigned(str, &mysocketid, topology->backend_params.sysfs.root_fd);
 
-      sprintf(str, "%s/cpu%d/topology/core_siblings", path, i);
-      socketset = hwloc_parse_cpumap(str, topology->backend_params.sysfs.root_fd);
-      if (socketset && hwloc_cpuset_weight(socketset) >= 1) {
-        if (hwloc_cpuset_first(socketset) == i) {
-          /* first cpu in this socket, add the socket */
-          socket = hwloc_alloc_setup_object(HWLOC_OBJ_SOCKET, mysocketid);
-          socket->cpuset = socketset;
-          hwloc_debug_1arg_cpuset("os socket %u has cpuset %s\n",
-                     mysocketid, socketset);
-          hwloc_insert_object_by_cpuset(topology, socket);
-        } else
-          hwloc_cpuset_free(socketset);
+      if (mysocketid != (unsigned) -1) {
+        sprintf(str, "%s/cpu%d/topology/core_siblings", path, i);
+        socketset = hwloc_parse_cpumap(str, topology->backend_params.sysfs.root_fd);
+        if (socketset && hwloc_cpuset_weight(socketset) >= 1) {
+          if (hwloc_cpuset_first(socketset) == i) {
+            /* first cpu in this socket, add the socket */
+            socket = hwloc_alloc_setup_object(HWLOC_OBJ_SOCKET, mysocketid);
+            socket->cpuset = socketset;
+            hwloc_debug_1arg_cpuset("os socket %u has cpuset %s\n",
+                       mysocketid, socketset);
+            hwloc_insert_object_by_cpuset(topology, socket);
+          } else
+            hwloc_cpuset_free(socketset);
+        }
       }
 
       /* look at the core */
