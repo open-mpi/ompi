@@ -1096,20 +1096,13 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
         return rc;
     }
 
-    /* if we are timing, record the start time */
-    if (orte_timing) {
-        gettimeofday(&orte_plm_globals.daemonlaunchstart, NULL);
-    }
-
     /* default to declaring the daemon launch as having failed */
     failed_job = ORTE_PROC_MY_NAME->jobid;
     
+    /* if we are timing, record the start time */
     if (orte_timing) {
-        if (0 != gettimeofday(&joblaunchstart, NULL)) {
-            opal_output(0, "plm_rsh: could not obtain start time");
-            joblaunchstart.tv_sec = 0;
-            joblaunchstart.tv_usec = 0;
-        }        
+        gettimeofday(&orte_plm_globals.daemonlaunchstart, NULL);
+        joblaunchstart = orte_plm_globals.daemonlaunchstart;
     }
     
     /* setup the job */
