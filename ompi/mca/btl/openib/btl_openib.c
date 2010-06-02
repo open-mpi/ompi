@@ -143,7 +143,7 @@ void mca_btl_openib_show_init_error(const char *file, int line,
     }
 }
 
-static inline struct ibv_cq *ibv_create_cq_compat(struct ibv_context *context,
+static inline struct ibv_cq *create_cq_compat(struct ibv_context *context,
         int cqe, void *cq_context, struct ibv_comp_channel *channel,
         int comp_vector)
 {
@@ -168,7 +168,7 @@ static int adjust_cq(mca_btl_openib_device_t *device, const int cq)
         cq_size = device->ib_dev_attr.max_cqe;
 
     if(NULL == device->ib_cq[cq]) {
-        device->ib_cq[cq] = ibv_create_cq_compat(device->ib_dev_context, cq_size,
+        device->ib_cq[cq] = create_cq_compat(device->ib_dev_context, cq_size,
 #if OPAL_ENABLE_PROGRESS_THREADS == 1
                 device, device->ib_channel,
 #else
