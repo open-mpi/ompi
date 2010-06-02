@@ -91,6 +91,8 @@ ompi_common_mx_initialize(void)
             opal_output(0,
                         "Error in mx_init (error %s)\n",
                         mx_strerror(mx_return));
+            /* We did not succeed to initialize the MX device */
+            ompi_common_mx_initialize_ref_cnt = 0;
             return OMPI_ERR_NOT_AVAILABLE;
         }
         
