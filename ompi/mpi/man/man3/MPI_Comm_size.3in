@@ -40,9 +40,15 @@ Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
-This function indicates the number of processes
-involved in a communicator. For MPI_COMM_WORLD, it indicates the total number of processes available. This function is equivalent to accessing the
-communicator's group with MPI_Comm_group, computing the size using MPI_Group_size, and then freeing the temporary group via MPI_Group_free. If the communicator is an intra-communicator (enables communication between two groups), this function returns the size of the local group.  To return the size of the remote group, use the MPI_Comm_remote_size function.
+This function indicates the number of processes involved in a
+communicator. For MPI_COMM_WORLD, it indicates the total number of
+processes available. This function is equivalent to accessing the
+communicator's group with MPI_Comm_group, computing the size using
+MPI_Group_size, and then freeing the temporary group via
+MPI_Group_free. If the communicator is an inter-communicator (enables
+communication between two groups), this function returns the size of
+the local group.  To return the size of the remote group, use the
+MPI_Comm_remote_size function.
 .sp
 This call is often used with MPI_Comm_rank to determine the amount of concurrency available for a specific library or program. MPI_Comm_rank indicates the rank of the process that calls it in the range from  0 . . . size-1, where size is the return value of MPI_Comm_size. 
 
