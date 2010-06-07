@@ -120,6 +120,7 @@ static int update_state(orte_jobid_t job,
     orte_exit_code_t sts;
     orte_odls_child_t *child;
     int rc;
+    orte_app_context_t *app;
     
     /* indicate that this is the end of the line */
     *stack_state |= ORTE_ERRMGR_STACK_STATE_COMPLETE;
@@ -297,7 +298,8 @@ static int update_state(orte_jobid_t job,
                 /* is this a local proc */
                 if (NULL != (child = proc_is_local(proc))) {
                     /* local proc - see if it has reached its local restart limit */
-                    if (child->restarts < jdata->max_local_restarts) {
+                    app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, child->app_idx);
+                    if (child->restarts < app->max_local_restarts) {
                         child->restarts++;
                         if (ORTE_SUCCESS == (rc = orte_odls.restart_proc(child))) {
                             return ORTE_SUCCESS;
@@ -1074,7 +1076,8 @@ static int hnp_relocate(orte_job_t *jdata, orte_process_name_t *proc)
     /* track that we are attempting to relocate */
     pdata->relocates++;
     /* have we exceeded the number of relocates for this proc? */
-    if (jdata->max_global_restarts < pdata->relocates) {
+    app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, pdata->app_idx);
+    if (app->max_global_restarts < pdata->relocates) {
         return ORTE_ERR_RELOCATE_LIMIT_EXCEEDED;
     }
 

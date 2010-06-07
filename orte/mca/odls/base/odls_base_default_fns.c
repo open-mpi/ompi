@@ -386,12 +386,6 @@ pack_add_procs:
         return rc;
     }
     
-    /* pack the max number of local restarts allowed for this job */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->max_local_restarts, 1, ORTE_VPID))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
     /* pack the number of app_contexts for this job */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->num_apps, 1, ORTE_APP_IDX))) {
         ORTE_ERROR_LOG(rc);
@@ -847,12 +841,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     /* unpack whether or not process recovery is allowed for this job */
     cnt=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->enable_recovery, &cnt, OPAL_BOOL))) {
-        ORTE_ERROR_LOG(rc);
-        goto REPORT_ERROR;
-    }
-    /* unpack the max number of local restarts allowed for this job */
-    cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->max_local_restarts, &cnt, ORTE_VPID))) {
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
     }
@@ -2247,7 +2235,8 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
             flag = 1;
             opal_dss.pack(&buffer, &flag, 1, OPAL_INT8);
             opal_dss.pack(&buffer, &jobdat->regexp, 1, OPAL_STRING);
-        } else {
+        } else if (NULL != orte_odls_globals.dmap &&
+                   NULL != jobdat->pmap) {
             /* the data is in the local byte objects - send them */
             OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:sync sending byte object",
