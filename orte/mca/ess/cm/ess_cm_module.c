@@ -97,31 +97,7 @@ static int rte_init(void)
         goto error;
     }
     
-    /* open the reliable multicast framework */
-    if (ORTE_SUCCESS != (ret = orte_rmcast_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rmcast_base_open";
-        goto error;
-    }
-    
-    if (ORTE_SUCCESS != (ret = orte_rmcast_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rmcast_base_select";
-        goto error;
-    }
-    
     if (ORTE_PROC_IS_DAEMON) {
-        /* open and setup the local resource discovery framework */
-        if (ORTE_SUCCESS != (ret = opal_sysinfo_base_open())) {
-            ORTE_ERROR_LOG(ret);
-            error = "opal_sysinfo_base_open";
-            goto error;
-        }
-        if (ORTE_SUCCESS != (ret = opal_sysinfo_base_select())) {
-            ORTE_ERROR_LOG(ret);
-            error = "opal_sysinfo_base_select";
-            goto error;
-        }
         /* if we were given a jobid, use it */
         mca_base_param_reg_string_name("orte", "ess_jobid", "Process jobid",
                                        true, false, NULL, &tmp);
@@ -133,16 +109,7 @@ static int rte_init(void)
             }
             free(tmp);
             ORTE_PROC_MY_NAME->jobid = jobid;
-        } else {
-            /* if we were given a job family to join, get it */
-            mca_base_param_reg_string_name("orte", "ess_job_family", "Job family",
-                                           true, false, NULL, &tmp);
-            if (NULL != tmp) {
-                jfam = strtol(tmp, NULL, 10);
-                ORTE_PROC_MY_NAME->jobid = ORTE_CONSTRUCT_JOB_FAMILY(jfam);
-            }
         }
-        
         /* if we were given a vpid, use it */
         mca_base_param_reg_string_name("orte", "ess_vpid", "Process vpid",
                                        true, false, NULL, &tmp);
@@ -161,27 +128,60 @@ static int rte_init(void)
             ORTE_VPID_INVALID != vpid) {
             goto complete;
         }
-
+        
         /* if we were given an HNP, we can get the jobid from
          * the HNP's name - this is decoded in proc_info.c during
          * the prolog
          */
-        ORTE_PROC_MY_NAME->jobid = orte_process_info.my_hnp.jobid;
-        /* get vpid from environ */
-        mca_base_param_reg_string_name("orte", "ess_vpid", "Process vpid",
+        if (ORTE_JOBID_INVALID != ORTE_PROC_MY_HNP->jobid) {
+            ORTE_PROC_MY_NAME->jobid = orte_process_info.my_hnp.jobid;
+            /* get vpid from environ */
+            mca_base_param_reg_string_name("orte", "ess_vpid", "Process vpid",
+                                           true, false, NULL, &tmp);
+            if (NULL != tmp) {
+                if (ORTE_SUCCESS != (ret = orte_util_convert_string_to_vpid(&vpid, tmp))) {
+                    error = "convert_string_to_vpid";
+                    goto error;
+                }
+                free(tmp);
+                ORTE_PROC_MY_NAME->vpid = vpid;
+                goto complete;
+            }
+        }
+        
+        /* if we were given a job family to join, get it */
+        mca_base_param_reg_string_name("orte", "ess_job_family", "Job family",
                                        true, false, NULL, &tmp);
-        if (NULL == tmp) {
-            ret = ORTE_ERR_NOT_FOUND;
-            error = "get_ess_vpid";
+        if (NULL != tmp) {
+            jfam = strtol(tmp, NULL, 10);
+            ORTE_PROC_MY_NAME->jobid = ORTE_CONSTRUCT_JOB_FAMILY(jfam);
+        }
+
+        /* open the reliable multicast framework */
+        if (ORTE_SUCCESS != (ret = orte_rmcast_base_open())) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_rmcast_base_open";
             goto error;
         }
-        if (ORTE_SUCCESS != (ret = orte_util_convert_string_to_vpid(&vpid, tmp))) {
-            error = "convert_string_to_vpid";
+        
+        if (ORTE_SUCCESS != (ret = orte_rmcast_base_select())) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_rmcast_base_select";
             goto error;
         }
-        free(tmp);
-        ORTE_PROC_MY_NAME->vpid = vpid;
-    
+        
+        /* open and setup the local resource discovery framework */
+        if (ORTE_SUCCESS != (ret = opal_sysinfo_base_open())) {
+            ORTE_ERROR_LOG(ret);
+            error = "opal_sysinfo_base_open";
+            goto error;
+        }
+        if (ORTE_SUCCESS != (ret = opal_sysinfo_base_select())) {
+            ORTE_ERROR_LOG(ret);
+            error = "opal_sysinfo_base_select";
+            goto error;
+        }
+        
     complete:
         /* get the list of nodes used for this job */
         nodelist = getenv("OMPI_MCA_orte_nodelist");
@@ -263,6 +263,53 @@ static int rte_init(void)
          * doesn't work for CM systems, so remove that flag
          */
         orte_process_info.proc_type &= ~ORTE_PROC_NON_MPI;
+    } else if (ORTE_PROC_IS_APP) {
+        /* if we were given a jobid, use it */
+        mca_base_param_reg_string_name("orte", "ess_jobid", "Process jobid",
+                                       true, false, NULL, &tmp);
+        if (NULL != tmp) {
+            if (ORTE_SUCCESS != (ret = orte_util_convert_string_to_jobid(&jobid, tmp))) {
+                ORTE_ERROR_LOG(ret);
+                error = "convert_jobid";
+                goto error;
+            }
+            free(tmp);
+            ORTE_PROC_MY_NAME->jobid = jobid;
+        }
+        
+        /* if we were given a vpid, use it */
+        mca_base_param_reg_string_name("orte", "ess_vpid", "Process vpid",
+                                       true, false, NULL, &tmp);
+        if (NULL != tmp) {
+            if (ORTE_SUCCESS != (ret = orte_util_convert_string_to_vpid(&vpid, tmp))) {
+                ORTE_ERROR_LOG(ret);
+                error = "convert_vpid";
+                goto error;
+            }
+            free(tmp);
+            ORTE_PROC_MY_NAME->vpid = vpid;
+        }
+        
+        /* if either are missing, that is wrong */
+        if (ORTE_JOBID_INVALID == jobid ||
+            ORTE_VPID_INVALID == vpid) {
+            error = "missing name info";
+            goto error;
+        }
+        
+        /* do the rest of the standard tool init */
+        if (ORTE_SUCCESS != (ret = orte_ess_base_app_setup())) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_ess_base_tool_setup";
+            goto error;
+        }
+
+        /* if one was provided, build my nidmap */
+        if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(orte_process_info.sync_buf))) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_util_nidmap_init";
+            goto error;
+        }
     }
     
     return ORTE_SUCCESS;
