@@ -296,9 +296,15 @@ static orte_process_name_t get_route(orte_process_name_t *target)
         goto found;
     }
     
-    /* if I am a tool without a daemon, the route is direct */
-    if (ORTE_PROC_IS_TOOL && NULL == orte_process_info.my_daemon_uri) {
-        ret = target;
+    /* if I am a tool */
+    if (ORTE_PROC_IS_TOOL) {
+        /* without a daemon, the route is direct */
+        if (NULL == orte_process_info.my_daemon_uri) {
+            ret = target;
+        } else {
+            /* otherwise, we go thru the local daemon */
+            ret = ORTE_PROC_MY_DAEMON;
+        }
         goto found;
     }
     
@@ -330,7 +336,6 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     }
      
     /* THIS CAME FROM OUR OWN JOB FAMILY... */
-
     daemon.jobid = ORTE_PROC_MY_NAME->jobid;
     /* find out what daemon hosts this proc */
     if (ORTE_VPID_INVALID == (daemon.vpid = orte_ess.proc_get_daemon(target))) {
@@ -385,7 +390,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     }
     
  found:
-    OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+    OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
                          "%s routed_cm_get(%s) --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(target), 
@@ -436,6 +441,41 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
      * setup the HNP info
      */
     if (ORTE_PROC_IS_TOOL) {
+        OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
+                             "%s routed_cm: init routes for TOOL job %s\n\thnp_uri %s\n\tdaemon uri %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(job),
+                             (NULL == orte_process_info.my_hnp_uri) ? "NULL" : orte_process_info.my_hnp_uri,
+                             (NULL == orte_process_info.my_daemon_uri) ? "NULL" : orte_process_info.my_daemon_uri));
+        
+
+        if (NULL != orte_process_info.my_daemon_uri) {
+            /* set the contact info into the hash table */
+            if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(orte_process_info.my_daemon_uri))) {
+                ORTE_ERROR_LOG(rc);
+                return(rc);
+            }
+            
+            /* extract the hnp name and store it */
+            if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_daemon_uri,
+                                                               ORTE_PROC_MY_DAEMON, NULL))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            
+            /* set our lifeline to the HNP - we will abort if that connection is lost */
+            lifeline = ORTE_PROC_MY_DAEMON;
+            
+            if (NULL != orte_process_info.my_hnp_uri) {
+                /* extract the hnp name and store it */
+                if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_hnp_uri,
+                                                                   ORTE_PROC_MY_HNP, NULL))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+            }
+            return ORTE_SUCCESS;
+        }
+        
         if (NULL == orte_process_info.my_hnp_uri) {
             return ORTE_SUCCESS;
         }
@@ -631,6 +671,14 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
             return ORTE_ERR_FATAL;
         }
             
+        /* Set the contact info in the RML - this won't actually establish
+         * the connection, but just tells the RML how to reach the HNP
+         * if/when we attempt to send to it
+         */
+        if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(orte_process_info.my_hnp_uri))) {
+            ORTE_ERROR_LOG(rc);
+            return(rc);
+        }
         /* we have to set the HNP's name, even though we won't route messages directly
          * to it. This is required to ensure that we -do- send messages to the correct
          * HNP name
@@ -674,7 +722,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
          *     is attempted until the overall ORTE system knows how to talk to everyone -
          *     otherwise, the system can just hang.
          */
-        if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync(true))) {
+        if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync(false))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
