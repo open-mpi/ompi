@@ -170,6 +170,11 @@ struct orte_job_map_t;
 typedef struct {
     /** Parent object */
     opal_object_t super;
+  /** unique name for this application - has
+   * nothing to do with argv[0], but has meaning
+   * to the user, if provided
+   */
+  char *name;
     /** Unique index when multiple apps per job */
     orte_app_idx_t idx;
     /** Absolute pathname of argv[0] */
@@ -208,6 +213,10 @@ typedef struct {
     char *preload_files_src_dir;
     /* is being used on the local node */
     bool used_on_node;
+    /* max number of times a process can be restarted locally */
+    int32_t max_local_restarts;
+    /* max number of times a process can be relocated to another node */
+    int32_t max_global_restarts;
 } orte_app_context_t;
 
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_app_context_t);
@@ -341,6 +350,8 @@ typedef uint8_t orte_job_controls_t;
 typedef struct {
     /** Base object so this can be put on a list */
     opal_list_item_t super;
+    /* a name for this job */
+    char *name;
     /* jobid for this job */
     orte_jobid_t jobid;
     /* app_context array for this job */
@@ -392,14 +403,14 @@ typedef struct {
     struct orte_proc_t *aborted_proc;
     /* enable recovery of these processes */
     bool enable_recovery;
-    /* max number of times a process can be restarted locally */
-    int32_t max_local_restarts;
-    /* max number of times a process can be relocated to another node */
-    int32_t max_global_restarts;
     /* time launch message was sent */
     struct timeval launch_msg_sent;
     /* max time for launch msg to be received */
     struct timeval max_launch_msg_recvd;
+    /* uid under which to run the job */
+    int32_t uid;
+    /* gid under which to run the job */
+    int32_t gid;
 #if OPAL_ENABLE_FT_CR == 1
     /* ckpt state */
     size_t ckpt_state;

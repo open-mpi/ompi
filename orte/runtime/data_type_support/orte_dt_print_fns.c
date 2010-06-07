@@ -216,8 +216,8 @@ int orte_dt_print_job(char **output, char *prefix, orte_job_t *src, opal_data_ty
         asprintf(&pfx2, "%s", prefix);
     }
 
-    asprintf(&tmp, "\n%sData for job: %s\tNum apps: %ld\tControls: %0x\tStdin target: %s\tState: %s\tAbort: %s", pfx2,
-             ORTE_JOBID_PRINT(src->jobid),
+    asprintf(&tmp, "\n%sData for job: %s\tName: %s\n%s\tNum apps: %ld\tControls: %0x\tStdin target: %s\tState: %s\tAbort: %s", pfx2,
+             ORTE_JOBID_PRINT(src->jobid), src->name, pfx2,
              (long)src->num_apps, src->controls, ORTE_VPID_PRINT(src->stdin_target),
              orte_job_state_to_str(src->state), src->abort ? "True" : "False");
     asprintf(&pfx, "%s\t", pfx2);
@@ -249,8 +249,7 @@ int orte_dt_print_job(char **output, char *prefix, orte_job_t *src, opal_data_ty
         tmp = tmp2;
     }
     
-    asprintf(&tmp2, "%s\n%sNum procs: %ld\tMax Local Restarts: %d\tMax Global Restarts %d", tmp, pfx,
-             (long)src->num_procs, src->max_local_restarts, src->max_global_restarts);
+    asprintf(&tmp2, "%s\n%sNum procs: %ld", tmp, pfx, (long)src->num_procs);
     free(tmp);
     tmp = tmp2;
 
@@ -525,9 +524,9 @@ int orte_dt_print_app_context(char **output, char *prefix, orte_app_context_t *s
         asprintf(&pfx2, "%s", prefix);
     }
     
-    asprintf(&tmp, "\n%sData for app_context: index %lu\tapp: %s\n%s\tNum procs: %lu",
-             pfx2, (unsigned long)src->idx, src->app,
-             pfx2, (unsigned long)src->num_procs);
+    asprintf(&tmp, "\n%sData for app_context: name: %s\t index %lu\tapp: %s\n%s\tNum procs: %lu\tMax Local Restarts: %d\tMax Global Restarts %d",
+             pfx2, src->name, (unsigned long)src->idx, src->app,
+             pfx2, (unsigned long)src->num_procs, src->max_local_restarts, src->max_global_restarts);
     
     count = opal_argv_count(src->argv);
     for (i=0; i < count; i++) {

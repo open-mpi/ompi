@@ -119,7 +119,8 @@ static int update_state(orte_jobid_t job,
     orte_plm_cmd_flag_t cmd;
     int rc=ORTE_SUCCESS;
     orte_vpid_t null=ORTE_VPID_INVALID;
-
+    orte_app_context_t *app;
+    
     /* indicate that this is the end of the line */
     *stack_state |= ORTE_ERRMGR_STACK_STATE_COMPLETE;
     
@@ -292,7 +293,8 @@ static int update_state(orte_jobid_t job,
                     /* kill this proc */
                     killprocs(proc->jobid, proc->vpid);
                 }
-                if (jobdat->enable_recovery && child->restarts < jobdat->max_local_restarts) {
+                app = jobdat->apps[child->app_idx];
+                if (jobdat->enable_recovery && child->restarts < app->max_local_restarts) {
                     child->restarts++;
                     OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
                                          "%s errmgr:orted restarting proc %s for the %d time",
@@ -315,7 +317,8 @@ static int update_state(orte_jobid_t job,
                 if (child->name->jobid == proc->jobid &&
                     child->name->vpid == proc->vpid) {
                     /* see if this child has reached its local restart limit */
-                    if (child->restarts == jobdat->max_local_restarts ) {
+                    app = jobdat->apps[child->app_idx];
+                    if (child->restarts == app->max_local_restarts ) {
                         goto REPORT_ABORT;
                     }
                     /* otherwise, attempt to restart it locally */

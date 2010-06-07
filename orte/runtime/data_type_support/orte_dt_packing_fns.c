@@ -306,20 +306,6 @@ int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
             return rc;
         }
 
-        /* pack the max local restarts */
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                         (void*)(&(jobs[i]->max_local_restarts)), 1, OPAL_INT32))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
-        /* pack the max global restarts */
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                            (void*)(&(jobs[i]->max_global_restarts)), 1, OPAL_INT32))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
 #if OPAL_ENABLE_FT_CR == 1
         /* pack the ckpt state */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
@@ -555,6 +541,13 @@ int orte_dt_pack_app_context(opal_buffer_t *buffer, const void *src,
     app_context = (orte_app_context_t**) src;
 
     for (i=0; i < num_vals; i++) {
+      /* pack the user's name for this app */
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
+                        (void*)(&(app_context[i]->name)), 1, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
         /* pack the application index (for multiapp jobs) */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
                         (void*)(&(app_context[i]->idx)), 1, ORTE_STD_CNTR))) {
@@ -770,6 +763,19 @@ int orte_dt_pack_app_context(opal_buffer_t *buffer, const void *src,
                 return rc;
             }
         }
+        
+        /* pack the restart limits */
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
+                                                       (void*)(&(app_context[i]->max_local_restarts)), 1, OPAL_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
+                                                       (void*)(&(app_context[i]->max_global_restarts)), 1, OPAL_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
     }
     
     return ORTE_SUCCESS;

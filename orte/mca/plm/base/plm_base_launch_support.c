@@ -74,6 +74,7 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
     orte_app_context_t *app;
     int rc, tmp;
     int32_t ljob;
+    orte_app_idx_t i;
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:setup_job for job %s",
@@ -93,35 +94,34 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
         opal_pointer_array_set_item(orte_job_data, ljob, jdata);
         
         /* see if recovery was set in the app */
-        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, 0))) {
-            /* big problem! */
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return ORTE_ERR_NOT_FOUND;
-        }
-        if (ORTE_SUCCESS == mca_base_param_find_int_name("orte", "enable_recovery", app->env, &tmp)) {
-            jdata->enable_recovery = OPAL_INT_TO_BOOL(tmp);
-        } else {
-            jdata->enable_recovery = orte_enable_recovery;
-        }
-        if (ORTE_SUCCESS == mca_base_param_find_int_name("orte", "max_global_restarts", app->env, &tmp)) {
-            jdata->max_global_restarts = tmp;
-        } else {
-            jdata->max_global_restarts = orte_max_global_restarts;
-        }
-        if (ORTE_SUCCESS == mca_base_param_find_int_name("orte", "max_local_restarts", app->env, &tmp)) {
-            jdata->max_local_restarts = tmp;
-        } else {
-            jdata->max_local_restarts = orte_max_local_restarts;
-
-        }
-
-        /* consistency check */
-        if (jdata->max_global_restarts <= 0 &&
-            jdata->max_local_restarts <= 0) {
-            jdata->enable_recovery = false;
-
-        } else {
-            jdata->enable_recovery = true;
+        for (i=0; i < jdata->num_apps; i++) {
+            if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+                /* big problem! */
+                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                return ORTE_ERR_NOT_FOUND;
+            }
+            if (ORTE_SUCCESS == mca_base_param_find_int_name("orte", "enable_recovery", app->env, &tmp)) {
+                jdata->enable_recovery = OPAL_INT_TO_BOOL(tmp);
+            } else {
+                jdata->enable_recovery = orte_enable_recovery;
+            }
+            if (ORTE_SUCCESS == mca_base_param_find_int_name("orte", "max_global_restarts", app->env, &tmp)) {
+                app->max_global_restarts = tmp;
+            } else {
+                app->max_global_restarts = orte_max_global_restarts;
+            }
+            if (ORTE_SUCCESS == mca_base_param_find_int_name("orte", "max_local_restarts", app->env, &tmp)) {
+                app->max_local_restarts = tmp;
+            } else {
+                app->max_local_restarts = orte_max_local_restarts;
+                
+            }
+            /* consistency check */
+            if (app->max_global_restarts > 0 ||
+                app->max_local_restarts > 0) {
+                jdata->enable_recovery = true;
+                
+            }
         }
     }
     

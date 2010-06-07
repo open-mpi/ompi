@@ -144,7 +144,6 @@ typedef struct orte_odls_job_t {
     int                     num_collected;
     struct timeval          launch_msg_recvd;       /* when the launch msg for this job was recvd - for timing purposes only */
     bool                    enable_recovery;        /* enable recovery of failed processes */
-    int32_t                 max_local_restarts;     /* max number of times a local proc can be restarted */
 } orte_odls_job_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_odls_job_t);
 

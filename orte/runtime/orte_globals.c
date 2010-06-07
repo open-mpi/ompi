@@ -517,6 +517,7 @@ int orte_global_comm(orte_process_name_t *recipient,
 
 static void orte_app_context_construct(orte_app_context_t* app_context)
 {
+  app_context->name = NULL;
     app_context->idx=0;
     app_context->app=NULL;
     app_context->num_procs=0;
@@ -534,10 +535,16 @@ static void orte_app_context_construct(orte_app_context_t* app_context)
     app_context->preload_files_dest_dir  = NULL;
     app_context->preload_files_src_dir  = NULL;
     app_context->used_on_node = false;
+    app_context->max_local_restarts = -1;
+    app_context->max_global_restarts = -1;
 }
 
 static void orte_app_context_destructor(orte_app_context_t* app_context)
 {
+  if (NULL != app_context->name) {
+    free(app_context->name);
+  }
+
     if (NULL != app_context->app) {
         free (app_context->app);
         app_context->app = NULL;
@@ -610,6 +617,7 @@ OBJ_CLASS_INSTANCE(orte_app_context_t,
 
 static void orte_job_construct(orte_job_t* job)
 {
+    job->name = NULL;
     job->jobid = ORTE_JOBID_INVALID;
     job->apps = OBJ_NEW(opal_pointer_array_t);
     opal_pointer_array_init(job->apps,
@@ -644,8 +652,6 @@ static void orte_job_construct(orte_job_t* job)
     job->not_reported = true;
     
     job->enable_recovery = false;
-    job->max_local_restarts = -1;
-    job->max_global_restarts = -1;
     
     job->launch_msg_sent.tv_sec = 0;
     job->launch_msg_sent.tv_usec = 0;
