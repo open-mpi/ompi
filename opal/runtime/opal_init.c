@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
@@ -195,9 +195,6 @@ opal_err2str(int errnum)
         break;
     case OPAL_ERR_SLOT_LIST_RANGE:
         retval = "Provided slot_list range is invalid";
-        break;
-    case OPAL_ERR_PAFFINITY_NOT_SUPPORTED:
-        retval = "Process affinity is not supported";
         break;
 
     default:

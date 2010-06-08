@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -62,12 +62,26 @@ ORTE_DECLSPEC int orte_show_help_init(void);
 ORTE_DECLSPEC void orte_show_help_finalize(void);
 
 /**
- * Show help
+ * Show help.
  *
- * Sends show help messages to the HNP if on a backend node
+ * Sends show help messages to the HNP if on a backend node.  Note
+ * that aggregation is not currently supported on HNP-less systems
+ * (e.g., cray).
  */
 ORTE_DECLSPEC int orte_show_help(const char *filename, const char *topic, 
                                  bool want_error_header, ...);
+
+/**
+ * Pretend that this message has already been shown.
+ *
+ * Sends a control message to the HNP that will effecitvely suppress
+ * this message from being shown.  Primitive *-wildcarding is
+ * possible.
+ *
+ * Not currently supported on HNP-less systems (e.g., cray).
+ */
+ORTE_DECLSPEC int orte_show_help_suppress(const char *filename, 
+                                          const char *topic);
 
 #if !ORTE_DISABLE_FULL_SUPPORT
 
