@@ -1124,11 +1124,6 @@ static void dump_aborted_procs(void)
                                        "orterun:invalid-slot-list-range", 
                                        true, node->name, proc->slot_list);
                         break;
-                    case ORTE_ERR_PAFFINITY_NOT_SUPPORTED:
-                        orte_show_help("help-orterun.txt",
-                                       "orterun:affinity-not-supported", 
-                                       true, node->name);
-                        break;
                     case ORTE_ERR_PIPE_READ_FAILURE:
                         orte_show_help("help-orterun.txt", "orterun:pipe-read-failure", true,
                                        orterun_basename, node->name, (unsigned long)proc->name.vpid);
