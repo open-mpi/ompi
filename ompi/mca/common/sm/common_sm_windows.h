@@ -19,8 +19,8 @@
  * $HEADER$
  */
 
-#ifndef _COMMON_SM_MMAP_H_
-#define _COMMON_SM_MMAP_H_
+#ifndef _COMMON_SM_WINDOWS_H_
+#define _COMMON_SM_WINDOWS_H_
 
 #include "ompi_config.h"
 
@@ -36,12 +36,13 @@ BEGIN_C_DECLS
 
 struct mca_mpool_base_module_t;
 
-typedef struct mca_common_sm_module_mmap_t 
+typedef struct mca_common_sm_module_windows_t 
 {
     mca_common_sm_module_t super;
-} mca_common_sm_module_mmap_t;
+    HANDLE hMappedObject;
+} mca_common_sm_module_windows_t;
 
-OBJ_CLASS_DECLARATION(mca_common_sm_module_mmap_t);
+OBJ_CLASS_DECLARATION(mca_common_sm_module_windows_t);
 
 /**
  *  This routine is used to set up a shared memory file, backed
@@ -75,7 +76,7 @@ OBJ_CLASS_DECLARATION(mca_common_sm_module_mmap_t);
  *  @return value pointer to control structure at head of file.
  */
 OMPI_DECLSPEC extern mca_common_sm_module_t *
-mca_common_sm_mmap_init(ompi_proc_t **procs,
+mca_common_sm_windows_init(ompi_proc_t **procs,
                         size_t num_procs,
                         size_t size, 
                         char *file_name,
@@ -88,14 +89,14 @@ mca_common_sm_mmap_init(ompi_proc_t **procs,
  *  exist before any of the current set of processes try and open
  *  it.
  *
- * This routine is the same as mca_common_sm_mmap_init() except that
+ * This routine is the same as mca_common_sm_windows_init() except that
  * it takes an (ompi_group_t*) parameter to specify the peers rather
- * than an array of procs.  Unlike mca_common_sm_mmap_init(), the
+ * than an array of procs.  Unlike mca_common_sm_windows_init(), the
  * group must contain *only* local peers, or this function will return
  * NULL and not create any shared memory segment.
  */
 OMPI_DECLSPEC extern mca_common_sm_module_t * 
-mca_common_sm_mmap_init_group(ompi_group_t *group,
+mca_common_sm_windows_init_group(ompi_group_t *group,
                               size_t size, 
                               char *file_name,
                               size_t size_ctl_structure, 
@@ -105,7 +106,7 @@ mca_common_sm_mmap_init_group(ompi_group_t *group,
  * Callback from the sm mpool
  */
 OMPI_DECLSPEC extern void *
-mca_common_sm_mmap_seg_alloc(struct mca_mpool_base_module_t *mpool, 
+mca_common_sm_windows_seg_alloc(struct mca_mpool_base_module_t *mpool, 
                              size_t *size, 
                              mca_mpool_base_registration_t **registration);
 
@@ -114,19 +115,19 @@ mca_common_sm_mmap_seg_alloc(struct mca_mpool_base_module_t *mpool,
  * mmapped file. We assume that the operating system will destroy the
  * file when the last process release it.
  *
- * @param sm_mmap - the control structure at head of file.
+ * @param sm_windows - the control structure at head of file.
  *
  * @returnvalue 0 if everything was OK, otherwise a negative value.
  */
 
 OMPI_DECLSPEC extern int 
-mca_common_sm_mmap_fini(mca_common_sm_module_t *mca_common_sm_module);
+mca_common_sm_windows_fini(mca_common_sm_module_t *mca_common_sm_module);
 
 /**
  * component query routine
  */
 OMPI_DECLSPEC extern int 
-mca_common_sm_mmap_component_query(void);
+mca_common_sm_windows_component_query(void);
 
 END_C_DECLS
 

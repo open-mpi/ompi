@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Los Alamos National Security, LLC.  
+ *                         All rights reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,7 +35,7 @@
 
 #include "ompi/mca/allocator/base/base.h"
 #include "mpool_sm.h"
-#include "ompi/mca/common/sm/common_sm_mmap.h"
+#include "ompi/mca/common/sm/common_sm.h"
 #include "ompi/proc/proc.h"
 
 #if OPAL_ENABLE_FT_CR    == 1
@@ -172,7 +174,7 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
     }
 
     /* add something for the control structure */
-    mpool_module->sm_size += sizeof(mca_common_sm_mmap_t);
+    mpool_module->sm_size += sizeof(mca_common_sm_module_t);
 
     allocator_component = mca_allocator_component_lookup(
         mca_mpool_sm_component.sm_allocator_name);
@@ -209,11 +211,11 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
                 "mca_mpool_sm_init: shared memory size used: (%ld)",
                 mpool_module->sm_size);
 
-    if (NULL == (mpool_module->sm_common_mmap = 
-                 mca_common_sm_mmap_init(procs, num_all_procs,
-                                         mpool_module->sm_size,
-                                         file_name,
-                                         sizeof(mca_common_sm_mmap_t), 8))) {
+    if (NULL == (mpool_module->sm_common_module = 
+                 mca_common_sm_init(procs, num_all_procs,
+                                    mpool_module->sm_size,
+                                    file_name,
+                                    sizeof(mca_common_sm_module_t), 8))) {
         opal_output(mca_mpool_sm_component.verbose, 
                     "mca_mpool_sm_init: unable to create shared memory mapping (%s)", file_name);
         free(file_name);
@@ -227,7 +229,7 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
     /* setup allocator */
     mpool_module->sm_allocator = 
       allocator_component->allocator_init(true,
-                                          mca_common_sm_mmap_seg_alloc, 
+                                          mca_common_sm_seg_alloc, 
                                           NULL, &(mpool_module->super));
     if(NULL == mpool_module->sm_allocator) {
         opal_output(0, "mca_mpool_sm_init: unable to initialize allocator");

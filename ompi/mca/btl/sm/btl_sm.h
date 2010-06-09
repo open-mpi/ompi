@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,7 +10,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Los Alamos National Security, LLC.  
+ *                         All rights reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -67,7 +68,7 @@
 #include "ompi/mca/btl/base/base.h"
 
 #include "ompi/mca/mpool/mpool.h"
-#include "ompi/mca/common/sm/common_sm_mmap.h"
+#include "ompi/mca/common/sm/common_sm.h"
 
 BEGIN_C_DECLS
 
@@ -151,8 +152,8 @@ struct mca_btl_sm_component_t {
     size_t eager_limit;                /**< first fragment size */
     size_t max_frag_size;              /**< maximum (second and beyone) fragment size */
     opal_mutex_t sm_lock;
-    mca_common_sm_mmap_t *mmap_file;   /**< description of mmap'ed file */
-    mca_common_sm_file_header_t *sm_ctl_header;  /* control header in
+    mca_common_sm_module_t *sm_seg;   /**< description of shared memory segment */
+    mca_common_sm_seg_header_t *sm_ctl_header;  /* control header in
                                                     shared memory */
     volatile sm_fifo_t **shm_fifo;     /**< pointer to fifo 2D array in shared memory */
     char **shm_bases;                  /**< pointer to base pointers in shared memory */
@@ -364,30 +365,6 @@ static inline void *sm_fifo_read(sm_fifo_t *fifo)
 
     return value;
 }
-
-/**
- * Register shared memory module parameters with the MCA framework
- */
-extern int mca_btl_sm_component_open(void);
-
-/**
- * Any final cleanup before being unloaded.
- */
-extern int mca_btl_sm_component_close(void);
-
-/**
- * SM module initialization.
- *
- * @param num_btls (OUT)                  Number of BTLs returned in BTL array.
- * @param enable_progress_threads (IN)    Flag indicating whether BTL is allowed to have progress threads
- * @param enable_mpi_threads (IN)         Flag indicating whether BTL must support multilple simultaneous invocations from different threads
- *
- */
-extern mca_btl_base_module_t** mca_btl_sm_component_init(
-    int *num_btls,
-    bool enable_progress_threads,
-    bool enable_mpi_threads
-);
 
 /**
  * shared memory component progress.

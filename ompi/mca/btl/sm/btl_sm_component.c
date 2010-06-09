@@ -10,7 +10,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Los Alamos National Security, LLC.  
+ *                         All rights reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,7 +50,7 @@
 
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/mpool/base/base.h"
-#include "ompi/mca/common/sm/common_sm_mmap.h"
+#include "ompi/mca/common/sm/common_sm.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 
 #if OPAL_ENABLE_FT_CR    == 1
@@ -58,6 +60,16 @@
 #include "btl_sm.h"
 #include "btl_sm_frag.h"
 #include "btl_sm_fifo.h"
+
+static int mca_btl_sm_component_open(void);
+static int mca_btl_sm_component_close(void);
+static int sm_register(void);
+static mca_btl_base_module_t** mca_btl_sm_component_init(
+    int *num_btls,
+    bool enable_progress_threads,
+    bool enable_mpi_threads
+);
+
 
 /*
  * Shared Memory (SM) component instance.
@@ -74,7 +86,9 @@ mca_btl_sm_component_t mca_btl_sm_component = {
             OMPI_MINOR_VERSION,  /* MCA component minor version */
             OMPI_RELEASE_VERSION,  /* MCA component release version */
             mca_btl_sm_component_open,  /* component open */
-            mca_btl_sm_component_close  /* component close */
+            mca_btl_sm_component_close,  /* component close */
+            NULL,
+            sm_register,
         },
         {
             /* The component is checkpoint ready */
@@ -112,12 +126,7 @@ static inline int mca_btl_sm_param_register_int(
 }
 
 
-/*
- *  Called by MCA framework to open the component, registers
- *  component parameters.
- */
-
-int mca_btl_sm_component_open(void)
+static int sm_register(void)
 {
     int i;
 
@@ -162,7 +171,6 @@ int mca_btl_sm_component_open(void)
                            false, false, 0,
                            &mca_btl_sm_component.knem_max_simultaneous);
 
-    mca_btl_sm_component.sm_max_btls = 1;
     /* register SM component parameters */
     mca_btl_sm_component.sm_free_list_num =
         mca_btl_sm_param_register_int("free_list_num", 8);
@@ -178,6 +186,32 @@ int mca_btl_sm_component_open(void)
         mca_btl_sm_param_register_int("fifo_size", 4096);
     mca_btl_sm_component.nfifos =
         mca_btl_sm_param_register_int("num_fifos", 1);
+
+    mca_btl_sm_component.fifo_lazy_free =
+        mca_btl_sm_param_register_int("fifo_lazy_free", 120);
+
+    /* default number of extra procs to allow for future growth */
+    mca_btl_sm_component.sm_extra_procs =
+        mca_btl_sm_param_register_int("sm_extra_procs", 0);
+
+    /* Call the BTL based to register its MCA params */
+    mca_btl_base_param_register(&mca_btl_sm_component.super.btl_version,
+                                &mca_btl_sm.super);
+
+    /* Call down to sm common to register its MCA params */
+    mca_common_sm_param_register(&mca_btl_sm_component.super.btl_version);
+
+    return OMPI_SUCCESS;
+}
+
+/*
+ *  Called by MCA framework to open the component, registers
+ *  component parameters.
+ */
+
+static int mca_btl_sm_component_open(void)
+{
+    mca_btl_sm_component.sm_max_btls = 1;
     /* make sure the number of fifos is a power of 2 */
     {
         int i = 1;
@@ -185,8 +219,6 @@ int mca_btl_sm_component_open(void)
             i <<= 1;
         mca_btl_sm_component.nfifos = i;
     }
-    mca_btl_sm_component.fifo_lazy_free =
-        mca_btl_sm_param_register_int("fifo_lazy_free", 120);
 
     /* make sure that queue size and lazy free parameter are compatible */
     if (mca_btl_sm_component.fifo_lazy_free >= (mca_btl_sm_component.fifo_size >> 1) )
@@ -194,9 +226,6 @@ int mca_btl_sm_component_open(void)
     if (mca_btl_sm_component.fifo_lazy_free <= 0)
         mca_btl_sm_component.fifo_lazy_free  = 1;
 
-    /* default number of extra procs to allow for future growth */
-    mca_btl_sm_component.sm_extra_procs =
-        mca_btl_sm_param_register_int("sm_extra_procs", 0);
 
     mca_btl_sm.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH-1;
     mca_btl_sm.super.btl_eager_limit = 4*1024;
@@ -214,8 +243,6 @@ int mca_btl_sm_component_open(void)
     mca_btl_sm.super.btl_bandwidth = 9000;  /* Mbs */
     mca_btl_sm.super.btl_latency   = 1;     /* Microsecs */
 
-    mca_btl_base_param_register(&mca_btl_sm_component.super.btl_version,
-                                &mca_btl_sm.super);
     mca_btl_sm_component.max_frag_size = mca_btl_sm.super.btl_max_send_size;
     mca_btl_sm_component.eager_limit = mca_btl_sm.super.btl_eager_limit;
 
@@ -233,7 +260,7 @@ int mca_btl_sm_component_open(void)
  * component cleanup - sanity checking of queue lengths
  */
 
-int mca_btl_sm_component_close(void)
+static int mca_btl_sm_component_close(void)
 {
     int return_value = OMPI_SUCCESS;
 
@@ -263,12 +290,12 @@ int mca_btl_sm_component_close(void)
     /*OBJ_DESTRUCT(&mca_btl_sm_component.sm_frags_max);*/
 
     /* unmap the shared memory control structure */
-    if(mca_btl_sm_component.mmap_file != NULL) {
-        return_value = mca_common_sm_mmap_fini( mca_btl_sm_component.mmap_file );
+    if(mca_btl_sm_component.sm_seg != NULL) {
+        return_value = mca_common_sm_fini( mca_btl_sm_component.sm_seg );
         if( OMPI_SUCCESS != return_value ) {
             return_value=OMPI_ERROR;
             opal_output(0," munmap failed :: file - %s :: errno - %d \n",
-                    mca_btl_sm_component.mmap_file->map_addr,
+                    mca_btl_sm_component.sm_seg->module_seg_addr,
                     errno);
             goto CLEANUP;
         }
@@ -283,12 +310,12 @@ int mca_btl_sm_component_close(void)
          */
         if(OPAL_CR_STATUS_RESTART_PRE  != opal_cr_checkpointing_state &&
            OPAL_CR_STATUS_RESTART_POST != opal_cr_checkpointing_state ) {
-            unlink(mca_btl_sm_component.mmap_file->map_path);
+            unlink(mca_btl_sm_component.sm_seg->module_seg_path);
         }
 #else
-        unlink(mca_btl_sm_component.mmap_file->map_path);
+        unlink(mca_btl_sm_component.sm_seg->module_seg_path);
 #endif
-        OBJ_RELEASE(mca_btl_sm_component.mmap_file);
+        OBJ_RELEASE(mca_btl_sm_component.sm_seg);
     }
 
 #if OPAL_ENABLE_PROGRESS_THREADS == 1
@@ -320,7 +347,7 @@ CLEANUP:
 /*
  *  SM component initialization
  */
-mca_btl_base_module_t** mca_btl_sm_component_init(
+static mca_btl_base_module_t** mca_btl_sm_component_init(
     int *num_btls,
     bool enable_progress_threads,
     bool enable_mpi_threads)

@@ -1,6 +1,8 @@
 # -*- text -*-
 #
 # Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010      Los Alamos National Security, LLC.
+#                         All rights reserved.
 #
 # $COPYRIGHT$
 # 
@@ -19,6 +21,19 @@ experience performance degradation.
   System call: %s %s
   Process:     %s
   Error:       %s (errno %d)
+#
+[shmget call fail]
+A shmget call failed during shared memory initialization that should
+not have.  It is likely that your MPI job will now either abort or
+experience performance degradation.
+
+  Local host:  %s
+  System call: %s
+  Process:     %s
+  Error:       %s (errno %d)
+
+Please verify that your system's shmax limit, or equivalent, is larger than
+%d. On some Unix-like systems this can be done via: "sysctl -a | grep shm"
 #
 [mmap too small]
 Open MPI requested a shared memory segment that was too small to do
@@ -49,3 +64,11 @@ the MCA parameter "orte_no_session_dir".
 
   Local host: %s
   Fileame:    %s
+#
+[sm support]
+WARNING: "%s" not recognized - ignoring option.  Suppressing additional 
+unrecognized option warnings.
+#
+[sysv rt test fail]
+WARNING: It appears as if your system does not provide the run-time behavior
+that we rely on to safely provide System V shared memory support.

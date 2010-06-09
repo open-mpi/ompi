@@ -28,7 +28,7 @@
 #include "opal/datatype/opal_convertor.h"
 #include "orte/types.h"
 #include "ompi/mca/coll/coll.h"
-#include "ompi/mca/common/sm/common_sm_mmap.h"
+#include "ompi/mca/common/sm/common_sm.h"
 
 BEGIN_C_DECLS
 
@@ -142,7 +142,7 @@ BEGIN_C_DECLS
     typedef struct mca_coll_sm_comm_t {
         /* Meta data that we get back from the common mmap allocation
            function */
-        mca_common_sm_mmap_t *mcb_mmap;
+        mca_common_sm_module_t *sm_bootstrap_meta;
 
         /** Pointer to my barrier control pages (odd index pages are
             "in", even index pages are "out") */
