@@ -108,13 +108,16 @@
 /* Define to 1 if you have the <langinfo.h> header file. */
 #undef HAVE_LANGINFO_H
 
-/* Define to 1 if you have the `gdi32' library (-lgdi32). */
+/* Define to 1 if we have -lgdi32 */
 #undef HAVE_LIBGDI32
 
-/* Define to 1 if you have the `kstat' library (-lkstat). */
+/* Define to 1 if we have -libverbs */
+#undef HAVE_LIBIBVERBS
+
+/* Define to 1 if we have -lkstat */
 #undef HAVE_LIBKSTAT
 
-/* Define to 1 if you have the `lgrp' library (-llgrp). */
+/* Define to 1 if we have -llgrp */
 #undef HAVE_LIBLGRP
 
 /* Define to 1 if you have the <locale.h> header file. */
@@ -352,6 +355,9 @@
 
 /* Define to 1 if glibc provides the old prototype of sched_setaffinity() */
 #undef HWLOC_HAVE_OLD_SCHED_SETAFFINITY
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HWLOC_HAVE_STDINT_H
 
 /* Define to 1 if you have the `windows.h' header. */
 #undef HWLOC_HAVE_WINDOWS_H

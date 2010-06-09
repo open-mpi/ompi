@@ -89,16 +89,22 @@
 # define HWLOC_DECLSPEC
 #endif
 
-/* Define to 1 on Linux */
+/* Defined to 1 on Linux */
 #undef HWLOC_LINUX_SYS
 
-/* Define to 1 if the CPU_SET macro works */
+/* Defined to 1 if the CPU_SET macro works */
 #undef HWLOC_HAVE_CPU_SET
 
 #define HWLOC_NBMAXCPUS	1024
 
+/* The size of `unsigned long', as computed by sizeof */
 #undef HWLOC_SIZEOF_UNSIGNED_LONG
+
+/* The size of `unsigned int', as computed by sizeof */
 #undef HWLOC_SIZEOF_UNSIGNED_INT
+
+/* Defined to 1 if you have the <stdint.h> header file. */
+#undef HWLOC_HAVE_STDINT_H
 
 #define HWLOC_BITS_PER_LONG (HWLOC_SIZEOF_UNSIGNED_LONG * 8)
 #define HWLOC_BITS_PER_INT (HWLOC_SIZEOF_UNSIGNED_INT * 8)
@@ -114,6 +120,7 @@
 
 #include <unistd.h>
 
+/* Defined to 1 if you have the `windows.h' header. */
 #undef HWLOC_HAVE_WINDOWS_H
 #undef hwloc_pid_t
 #undef hwloc_thread_t
@@ -126,11 +133,13 @@
 #  endif /* hwloc_thread_t */
 #endif /* HWLOC_HAVE_WINDOWS_H */
 
-/* Do we need to transform all the hwloc public symbol names? */
+/* Whether we need to re-define all the hwloc public symbols or not */
 #undef HWLOC_SYM_TRANSFORM
 
-/* If we are transforming, what are the prefixes? */
+/* The hwloc symbol prefix */
 #undef HWLOC_SYM_PREFIX
+
+/* The hwloc symbol prefix in all caps */
 #undef HWLOC_SYM_PREFIX_CAPS
 
 #endif /* HWLOC_CONFIG_H */

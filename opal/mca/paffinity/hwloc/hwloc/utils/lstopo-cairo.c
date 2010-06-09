@@ -215,7 +215,7 @@ output_x11(hwloc_topology_t topology, const char *filename __hwloc_attribute_unu
 
   while (!finish) {
     XEvent e;
-    if (!XEventsQueued(disp->dpy, QueuedAlready)) {
+    if (!XEventsQueued(disp->dpy, QueuedAfterFlush)) {
       /* No pending event, flush moving windows before waiting for next event */
       if (disp->x != lastx || disp->y != lasty) {
 	XMoveWindow(disp->dpy, disp->win, -disp->x, -disp->y);

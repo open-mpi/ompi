@@ -23,12 +23,15 @@
 void
 hwloc_look_darwin(struct hwloc_topology *topology)
 {
-  int _nprocs;
+  int64_t _nprocs;
   unsigned nprocs;
-  int _npackages;
+  int64_t _npackages;
   unsigned i, j, cpu;
   struct hwloc_obj *obj;
   size_t size;
+  int64_t l1cachesize;
+  int64_t l2cachesize;
+  int64_t memsize;
 
   if (hwloc_get_sysctlbyname("hw.ncpu", &_nprocs) || _nprocs <= 0)
     return;
@@ -39,8 +42,8 @@ hwloc_look_darwin(struct hwloc_topology *topology)
 
   if (!hwloc_get_sysctlbyname("hw.packages", &_npackages) && _npackages > 0) {
     unsigned npackages = _npackages;
-    int _cores_per_package;
-    int _logical_per_package;
+    int64_t _cores_per_package;
+    int64_t _logical_per_package;
     unsigned logical_per_package;
 
     hwloc_debug("%u packages\n", npackages);
@@ -86,25 +89,54 @@ hwloc_look_darwin(struct hwloc_topology *topology)
     }
   }
 
+  if (hwloc_get_sysctlbyname("hw.l1dcachesize", &l1cachesize))
+    l1cachesize = 0;
+
+  if (hwloc_get_sysctlbyname("hw.l2cachesize", &l2cachesize))
+    l2cachesize = 0;
+
+  if (hwloc_get_sysctlbyname("hw.memsize", &memsize))
+    memsize = 0;
+
   if (!sysctlbyname("hw.cacheconfig", NULL, &size, NULL, 0)) {
-    unsigned n = size / sizeof(uint64_t);
+    unsigned n = size / sizeof(uint32_t);
     uint64_t cacheconfig[n];
+    uint32_t cacheconfig32[n];
     uint64_t cachesize[n];
 
     if ((!sysctlbyname("hw.cacheconfig", cacheconfig, &size, NULL, 0))) {
+      /* Yeech. Darwin seemingly has changed from 32bit to 64bit integers for
+       * cacheconfig, with apparently no way for detection. Assume the machine
+       * won't have more than 4 billion cpus */
+      if (cacheconfig[0] > 0xFFFFFFFFUL) {
+        memcpy(cacheconfig32, cacheconfig, size);
+        for (i = 0 ; i < size / sizeof(uint32_t); i++)
+          cacheconfig[i] = cacheconfig32[i];
+      }
+
       memset(cachesize, 0, sizeof(cachesize));
       size = sizeof(cachesize);
-      sysctlbyname("hw.cachesize", cachesize, &size, NULL, 0);
+      if (sysctlbyname("hw.cachesize", cachesize, &size, NULL, 0)) {
+        if (n > 0)
+          cachesize[0] = memsize;
+        if (n > 1)
+          cachesize[1] = l1cachesize;
+        if (n > 2)
+          cachesize[2] = l2cachesize;
+      }
 
       hwloc_debug("%s", "caches");
       for (i = 0; i < n && cacheconfig[i]; i++)
         hwloc_debug(" %"PRIu64"(%"PRIu64"kB)", cacheconfig[i], cachesize[i] / 1024);
 
+      cacheconfig[i] = cacheconfig32[i];
       /* Now we know how many caches there are */
       n = i;
       hwloc_debug("\n%u cache levels\n", n - 1);
 
+      /* For each cache level (0 is memory) */
       for (i = 0; i < n; i++) {
+        /* cacheconfig tells us how many cpus share it, let's iterate on each cache */
         for (j = 0; j < (nprocs / cacheconfig[i]); j++) {
           obj = hwloc_alloc_setup_object(i?HWLOC_OBJ_CACHE:HWLOC_OBJ_NODE, j);
           if (!i) {
