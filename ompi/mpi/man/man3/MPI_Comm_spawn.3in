@@ -1,3 +1,4 @@
+.\" Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
 .\"Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Comm_spawn 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
@@ -79,7 +80,19 @@ The \fIcommand\fP argument is a string containing the name of a program to be sp
 .sp
 The \fIargv\fP Argument
 .sp
-\fIargv\fP is an array of strings containing arguments that are passed to the program. The first element of \fIargv\fP is the first argument passed to \fIcommand\fP, not, as is conventional in some contexts, the command itself. The argument list is terminated by NULL in C and C++ and an empty string in Fortran. In Fortran, leading and trailing spaces are always stripped, so that a string consisting of all spaces is considered an empty string. The constant MPI_ARGV_NULL may be used in C, C++ and Fortran to indicate an empty argument list. In C and C++, this constant is the same as NULL. 
+\fIargv\fP is an array of strings containing arguments that are passed
+to the program. The first element of \fIargv\fP is the first argument
+passed to \fIcommand\fP, not, as is conventional in some contexts, the
+command itself. The argument list is terminated by NULL in C and C++
+and an empty string in Fortran (note that it is the MPI application's
+responsibility to ensure that the last entry of the 
+.I argv 
+array is an empty string; the compiler will not automatically insert
+it). In Fortran, leading and trailing spaces are always stripped, so
+that a string consisting of all spaces is considered an empty
+string. The constant MPI_ARGV_NULL may be used in C, C++ and Fortran
+to indicate an empty argument list. In C and C++, this constant is the
+same as NULL.
 .sp
 In C, the MPI_Comm_spawn argument \fIargv\fP differs from the \fIargv\fP argument of \fImain\fP in two respects. First, it is shifted by one element. Specifically, \fIargv\fP[0] of \fImain\fP  contains the name of the program (given by \fIcommand\fP). \fIargv\fP[1] of \fImain\fP corresponds to \fIargv\fP[0] in MPI_Comm_spawn, \fIargv\fP[2] of \fImain\fP to \fIargv\fP[1] of MPI_Comm_spawn, and so on. Second, \fIargv\fP of MPI_Comm_spawn must be null-terminated, so that its length can be determined. Passing an \fIargv\fP of MPI_ARGV_NULL to MPI_Comm_spawn results in \fImain\fP receiving \fIargc\fP of 1 and an \fIargv\fP whose element 0 is the name of the program. 
 .sp

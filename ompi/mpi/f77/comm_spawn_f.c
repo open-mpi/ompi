@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,8 +35,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SPAWN,
                             pmpi_comm_spawn_,
                             pmpi_comm_spawn__,
                             pmpi_comm_spawn_f,
-                            (char *command, char *argv, MPI_Fint *maxprocs, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_len, int argv_len),
-                            (command, argv, maxprocs, info, root, comm, intercomm, array_of_errcodes, ierr, cmd_len, argv_len) )
+                            (char *command, char *argv, MPI_Fint *maxprocs, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_len, int string_len),
+                            (command, argv, maxprocs, info, root, comm, intercomm, array_of_errcodes, ierr, cmd_len, string_len) )
 #endif
 
 #if OMPI_HAVE_WEAK_SYMBOLS
@@ -51,8 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SPAWN,
                             mpi_comm_spawn_,
                             mpi_comm_spawn__,
                             mpi_comm_spawn_f,
-                            (char *command, char *argv, MPI_Fint *maxprocs, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_len, int argv_len),
-                            (command, argv, maxprocs, info, root, comm, intercomm, array_of_errcodes, ierr, cmd_len, argv_len) )
+                            (char *command, char *argv, MPI_Fint *maxprocs, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_len, int string_len),
+                            (command, argv, maxprocs, info, root, comm, intercomm, array_of_errcodes, ierr, cmd_len, string_len) )
 #endif
 
 
@@ -63,7 +64,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SPAWN,
 void mpi_comm_spawn_f(char *command, char *argv, MPI_Fint *maxprocs, 
 		      MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, 
 		      MPI_Fint *intercomm, MPI_Fint *array_of_errcodes,
-		      MPI_Fint *ierr, int cmd_len, int argv_len)
+		      MPI_Fint *ierr, int cmd_len, int string_len)
 {
     MPI_Comm c_comm, c_new_comm;
     MPI_Info c_info;
@@ -92,7 +93,7 @@ void mpi_comm_spawn_f(char *command, char *argv, MPI_Fint *maxprocs,
     if (OMPI_IS_FORTRAN_ARGV_NULL(argv)) {
         c_argv = MPI_ARGV_NULL;
     } else {
-        ompi_fortran_argv_f2c(argv, argv_len, &c_argv);
+        ompi_fortran_argv_f2c(argv, string_len, string_len, &c_argv);
     }
 
     *ierr = OMPI_INT_2_FINT(MPI_Comm_spawn(c_command, c_argv, 

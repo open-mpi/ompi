@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -63,7 +64,8 @@ extern "C" {
      * strings.
      *
      * @param farray Array of fortran strings
-     * @param len Length of fortran array
+     * @param string_len Length of each fortran string in the array
+     * @param advance Number of bytes to advance to get to the next string
      * @param cargv Returned argv-style array of C strings
      *
      * @retval OMPI_SUCCESS upon success
@@ -74,8 +76,20 @@ extern "C" {
      * strings.  The argv array will be allocated and returned; it is
      * the caller's responsibility to invoke opal_argv_free() to free
      * it later (or equivalent).
+     *
+     * For 1D Fortran string arrays, advance will == string_len.
+     *
+     * However, when this function is used (indirectly) for
+     * MPI_COMM_SPAWN_MULTIPLE, a 2D array of Fortran strings is
+     * converted to individual C-style argv vectors.  In this case,
+     * Fortran will intertwine the strings of the different argv
+     * vectors in memory; the displacement between the beginning of 2
+     * strings in a single argv vector is (string_len *
+     * number_of_argv_arrays).  Hence, the advance parameter is used
+     * to specify this displacement.
      */
-    OMPI_DECLSPEC int ompi_fortran_argv_f2c(char *farray, int len, char ***cargv);
+    OMPI_DECLSPEC int ompi_fortran_argv_f2c(char *farray, int string_len, 
+                                            int advancex, char ***cargv);
 
     /**
      * Convert an array of argvs to a C style array of argvs

@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -35,8 +36,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SPAWN_MULTIPLE,
                            pmpi_comm_spawn_multiple_,
                            pmpi_comm_spawn_multiple__,
                            pmpi_comm_spawn_multiple_f,
-                           (MPI_Fint *count, char *array_of_commands, char *array_of_argv, MPI_Fint *array_of_maxprocs, MPI_Fint *array_of_info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_len, int argv_len),
-                           (count, array_of_commands, array_of_argv, array_of_maxprocs, array_of_info, root, comm, intercomm, array_of_errcodes, ierr, cmd_len, argv_len) )
+                           (MPI_Fint *count, char *array_of_commands, char *array_of_argv, MPI_Fint *array_of_maxprocs, MPI_Fint *array_of_info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_string_len, int argv_string_len),
+                           (count, array_of_commands, array_of_argv, array_of_maxprocs, array_of_info, root, comm, intercomm, array_of_errcodes, ierr, cmd_string_len, argv_string_len) )
 #endif
 
 #if OMPI_HAVE_WEAK_SYMBOLS
@@ -52,8 +53,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SPAWN_MULTIPLE,
                            mpi_comm_spawn_multiple_,
                            mpi_comm_spawn_multiple__,
                            mpi_comm_spawn_multiple_f,
-                           (MPI_Fint *count, char *array_of_commands, char *array_of_argv, MPI_Fint *array_of_maxprocs, MPI_Fint *array_of_info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_len, int argv_len),
-                           (count, array_of_commands, array_of_argv, array_of_maxprocs, array_of_info, root, comm, intercomm, array_of_errcodes, ierr, cmd_len, argv_len) )
+                           (MPI_Fint *count, char *array_of_commands, char *array_of_argv, MPI_Fint *array_of_maxprocs, MPI_Fint *array_of_info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_string_len, int argv_string_len),
+                           (count, array_of_commands, array_of_argv, array_of_maxprocs, array_of_info, root, comm, intercomm, array_of_errcodes, ierr, cmd_string_len, argv_string_len) )
 #endif
 
 
@@ -67,7 +68,7 @@ void mpi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
 			       MPI_Fint *array_info, MPI_Fint *root,
 			       MPI_Fint *comm, MPI_Fint *intercomm,
 			       MPI_Fint *array_errcds, MPI_Fint *ierr,
-			       int cmd_len, int argv_len)
+			       int cmd_string_len, int argv_string_len)
 {
     MPI_Comm c_comm, c_new_comm;
     MPI_Info *c_info;
@@ -99,12 +100,13 @@ void mpi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
         c_array_argv = MPI_ARGVS_NULL;
     } else {
 	ompi_fortran_multiple_argvs_f2c(OMPI_FINT_2_INT(*count), array_argv, 
-					argv_len, &c_array_argv);
+					argv_string_len, &c_array_argv);
     }
 
     OMPI_ARRAY_FINT_2_INT(array_maxprocs, array_size);
     
-    ompi_fortran_argv_f2c(array_commands, cmd_len, &c_array_commands);
+    ompi_fortran_argv_f2c(array_commands, cmd_string_len, 
+                          cmd_string_len, &c_array_commands);
 	
     c_info = malloc (array_size * sizeof(MPI_Info));
     for (i = 0; i < array_size; ++i) {

@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -101,7 +102,8 @@ int ompi_fortran_string_c2f(char *cstr, char *fstr, int len)
  * creates a C argument vector from an F77 array of strings
  * (terminated by a blank string)
  */
-int ompi_fortran_argv_f2c(char *array, int len, char ***argv)
+int ompi_fortran_argv_f2c(char *array, int string_len, int advance, 
+                          char ***argv)
 {
     int err, argc = 0;
     char *cstr;
@@ -111,7 +113,7 @@ int ompi_fortran_argv_f2c(char *array, int len, char ***argv)
 
     *argv = NULL;
     while (1) {
-	if (OMPI_SUCCESS != (err = ompi_fortran_string_f2c(array, len, 
+	if (OMPI_SUCCESS != (err = ompi_fortran_string_f2c(array, string_len, 
                                                            &cstr))) {
 	    opal_argv_free(*argv);
 	    return err;
@@ -127,7 +129,7 @@ int ompi_fortran_argv_f2c(char *array, int len, char ***argv)
 	}
 
 	free(cstr);
-	array += len;
+	array += advance;
     }
 
     return OMPI_SUCCESS;
@@ -135,25 +137,27 @@ int ompi_fortran_argv_f2c(char *array, int len, char ***argv)
 
 
 /*
- * creates a C argument vector from an F77 array of argvs. The
- * returned array needs to be freed by the caller
+ * Creates a set of C argv arrays from an F77 array of argv's.  The
+ * returned arrays need to be freed by the caller.
  */
-int ompi_fortran_multiple_argvs_f2c(int count, char *array, int len,
-				    char ****argv)
+int ompi_fortran_multiple_argvs_f2c(int num_argv_arrays, char *array, 
+                                    int string_len, char ****argv)
 {
     char ***argv_array;
     int i;
     char *current_array = array;
     int ret;
 
-    argv_array = (char ***) malloc (count * sizeof(char **));
+    argv_array = (char ***) malloc (num_argv_arrays * sizeof(char **));
 
-    for (i = 0; i < count; ++i) {
-        ret = ompi_fortran_argv_f2c(current_array, len, &argv_array[i]);
+    for (i = 0; i < num_argv_arrays; ++i) {
+        ret = ompi_fortran_argv_f2c(current_array, string_len, 
+                                    string_len * num_argv_arrays,
+                                    &argv_array[i]);
         if (OMPI_SUCCESS != ret) {
             return ret;
         }
-        current_array += len * i;
+        current_array += string_len;
     }
     *argv = argv_array;
     return OMPI_SUCCESS;
