@@ -1,5 +1,5 @@
 Copyright © 2009 CNRS, INRIA, Université Bordeaux 1
-Copyright © 2009 Cisco Systems, Inc.  All rights reserved.
+Copyright © 2009-2010 Cisco Systems, Inc.  All rights reserved.
 
 $COPYRIGHT$
 
@@ -13,6 +13,28 @@ This file contains the main features as well as overviews of specific
 bug fixes (and other actions) for each version of hwloc since version
 0.9 (as initially released as "libtopology", then re-branded to "hwloc"
 in v0.9.1).
+
+Version 1.0.2
+-------------
+
+* Solaris fix for non-contiguous cpu numbers.  Thanks to Rolf vandeVaart for
+  reporting the issue.
+* Darwin 10.4 fix.  Thanks to Olivier Cessenat for reporting the issue.
+
+Version 1.0.1
+-------------
+
+* Various Solaris fixes.  Thanks to Yannick Martin for reporting the issue.
+* Fix "non-native" builds on x86 platforms (e.g., when building 32
+  bit executables with compilers that natively build 64 bit).
+* Ignore sockets with unknown ID values (which fixes issues on POWER7
+  machines).  Thanks to Greg Bauer for reporting the issue.
+* Various man page clarifications and minor updates.
+* Fixed memory leaks in hwloc_setup_group_from_min_distance_clique().
+* Fix cache type filtering on MS Windows 7.  Thanks to Αλέξανδρος
+  Παπαδογιαννάκ for reporting the issue.
+* Fixed warnings when compiling with -DNDEBUG.
+
 
 Version 1.0.0
 -------------

@@ -327,7 +327,9 @@ solve your problem, you may also want to ensure that you are running
 the most recent version of the BIOS for your machine.
 
 If those things fail, contact us on the mailing list for additional
-help.
+help.  Please attach the output of lstopo after having given the
+--enable-debug option to ./configure and rebuilt completely, to get
+debugging output.
 
 \htmlonly
 </div><div class="section" id="credits">
@@ -759,7 +761,11 @@ shell$ cp -r /somewhere/else/hwloc-<version> my-embedded-hwloc
 shell$ edit Makefile.am
   1. Add "-Imy-embedded-hwloc/config" to ACLOCAL_AMFLAGS
   2. Add "my-embedded-hwloc" to SUBDIRS
-  3. Add "$(HWLOC_EMBEDDED_LDADD)" to sandbox's executable's LDADD line
+  3. Add "$(HWLOC_EMBEDDED_LDADD)" and "$(HWLOC_EMBEDDED_LIBS)" to 
+     sandbox's executable's LDADD line.  The former is the name of the 
+     Libtool convenience library that hwloc will generate.  The latter 
+     is any dependent support libraries that may be needed by 
+     $(HWLOC_EMBEDDED_LDADD).
   4. Add "$(HWLOC_EMBEDDED_CPPFLAGS)" to AM_CPPFLAGS
 shell$ edit configure.ac
   1. Add "HWLOC_SET_SYMBOL_PREFIX(sandbox_hwloc_)" line

@@ -407,6 +407,8 @@ does not solve your problem, you may also want to ensure that you are running
 the most recent version of the BIOS for your machine.
 
 If those things fail, contact us on the mailing list for additional help.
+Please attach the output of lstopo after having given the --enable-debug option
+to ./configure and rebuilt completely, to get debugging output.
 
 History / credits
 

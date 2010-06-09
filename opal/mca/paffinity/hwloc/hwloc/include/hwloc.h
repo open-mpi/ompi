@@ -14,10 +14,13 @@
 #ifndef HWLOC_H
 #define HWLOC_H
 
+#include <hwloc/config.h>
 #include <sys/types.h>
 #include <stdio.h>
 #include <limits.h>
+#ifdef HWLOC_HAVE_STDINT_H
 #include <stdint.h>
+#endif
 
 /*
  * Symbol transforms

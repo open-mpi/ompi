@@ -175,6 +175,9 @@ support, lstopo outputs an SVG representation of the map.
 .B <filename>.xml
 If the filename ends in ".xml" and lstopo was compiled with the proper
 support, lstopo outputs an XML representation of the map.
+It may be reused later, even on another machine, with lstopo \-\-xml,
+the HWLOC_XMLFILE environment variable, or the hwloc_topology_set_xml()
+function.
 .
 .PP
 See the output of "lstopo \-\-help" for a specific list of what
@@ -240,6 +243,13 @@ variable is set to a relevant value):
 To export the topology to a PNG file:
 
     lstopo file.png
+
+To export a XML file on a machine and later display the corresponding
+graphic output on another machine:
+
+    machine1$ lstopo file.xml
+    <transfer file.xml from machine1 to machine2>
+    machine2$ lstopo --xml file.xml
 
 To display a summary of the topology:
 

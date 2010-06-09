@@ -217,7 +217,7 @@ RECURSE_BEGIN(obj, border) \
     /* Total area for subobjects */ \
     area = (obj_maxwidth + (separator)) * (obj_maxheight + (separator)) * numsubobjs; \
     /* Ideal total height for spreading that area with RATIO */ \
-    idealtotheight = sqrtf(area/RATIO); \
+    idealtotheight = (float) sqrt(area/RATIO); \
     /* Underestimated number of rows */ \
     rows = idealtotheight / (obj_maxheight + (separator)); \
     columns = rows ? (numsubobjs + rows - 1) / rows : 1; \

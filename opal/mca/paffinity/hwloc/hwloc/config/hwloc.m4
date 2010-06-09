@@ -320,6 +320,10 @@ AC_DEFUN([HWLOC_SETUP_CORE_AFTER_C99],[
     ])
     AC_DEFINE_UNQUOTED(hwloc_strncasecmp, $hwloc_strncasecmp, [Define this to either strncasecmp or strncmp])
     
+    AC_CHECK_HEADER([stdint.h], [
+      AC_DEFINE([HWLOC_HAVE_STDINT_H], [1], [Define to 1 if you have the <stdint.h> header file.])
+    ])
+    
     AC_CHECK_TYPES([wchar_t], [
       AC_CHECK_FUNCS([putwc])
     ], [], [[#include <wchar.h>]])
@@ -330,7 +334,7 @@ AC_DEFUN([HWLOC_SETUP_CORE_AFTER_C99],[
     AC_CHECK_HEADERS([langinfo.h], [
       AC_CHECK_FUNCS([nl_langinfo])
     ])
-    old_LIBS="$LIBS"
+    hwloc_old_LIBS="$LIBS"
     LIBS=
     AC_CHECK_HEADERS([curses.h], [
       AC_CHECK_HEADERS([term.h], [
@@ -341,7 +345,8 @@ AC_DEFUN([HWLOC_SETUP_CORE_AFTER_C99],[
           ])
       ], [], [[#include <curses.h>]])
     ])
-    LIBS="$old_LIBS"
+    LIBS="$hwloc_old_LIBS"
+    unset hwloc_old_LIBS
 
     AC_CHECK_TYPES([KAFFINITY,
                     PROCESSOR_CACHE_TYPE,
@@ -356,21 +361,29 @@ AC_DEFUN([HWLOC_SETUP_CORE_AFTER_C99],[
                     GROUP_RELATIONSHIP,
                     SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX],
                     [],[],[[#include <windows.h>]])
-    AC_HAVE_LIBRARY(gdi32)
+    AC_CHECK_LIB([gdi32], [main],
+                 [HWLOC_LIBS="-lgdi32 $HWLOC_LIBS"
+                  AC_DEFINE([HAVE_LIBGDI32], 1, [Define to 1 if we have -lgdi32])])
     
     AC_CHECK_HEADER([windows.h], [
       AC_DEFINE([HWLOC_HAVE_WINDOWS_H], [1], [Define to 1 if you have the `windows.h' header.])
     ])
     
     AC_CHECK_HEADERS([sys/lgrp_user.h], [
-      AC_HAVE_LIBRARY([lgrp])
+      AC_CHECK_LIB([lgrp], [lgrp_latency_cookie],
+                   [HWLOC_LIBS="-llgrp $HWLOC_LIBS"
+                    AC_DEFINE([HAVE_LIBLGRP], 1, [Define to 1 if we have -llgrp])])
     ])
     AC_CHECK_HEADERS([kstat.h], [
-      AC_HAVE_LIBRARY([kstat])
+      AC_CHECK_LIB([kstat], [main], 
+                   [HWLOC_LIBS="-lkstat $HWLOC_LIBS"
+                    AC_DEFINE([HAVE_LIBKSTAT], 1, [Define to 1 if we have -lkstat])])
     ])
     
     AC_CHECK_HEADERS([infiniband/verbs.h], [
-      AC_HAVE_LIBRARY([ibverbs], [hwloc_have_libibverbs=yes])
+      AC_CHECK_LIB([ibverbs], [ibv_open_device], 
+                   [HWLOC_LIBS="-libverbs $HWLOC_LIBS"
+                    AC_DEFINE([HAVE_LIBIBVERBS], 1, [Define to 1 if we have -libverbs])])
     ])
     
     AC_CHECK_DECLS([_SC_NPROCESSORS_ONLN,
@@ -529,13 +542,14 @@ AC_DEFUN([HWLOC_SETUP_CORE_AFTER_C99],[
     AC_CHECK_FUNC([sched_setaffinity], [hwloc_have_sched_setaffinity=yes])
     AC_CHECK_HEADERS([sys/cpuset.h],,,[[#include <sys/param.h>]])
     
-    # Setup HWLOC's C, CPP, and LD flags
+    # Setup HWLOC's C, CPP, and LD flags, and LIBS
     HWLOC_CFLAGS="$hwloc_CC_c99_flags $HWLOC_CFLAGS"
     AC_SUBST(HWLOC_CFLAGS)
     HWLOC_CPPFLAGS='-I$(HWLOC_top_srcdir)/include -I$(HWLOC_top_builddir)/include'
     AC_SUBST(HWLOC_CPPFLAGS)
     HWLOC_LDFLAGS='-L$(HWLOC_top_builddir)/src'
     AC_SUBST(HWLOC_LDFLAGS)
+    AC_SUBST(HWLOC_LIBS)
 
     # Set these values explicitly for embedded builds.  Exporting
     # these values through *_EMBEDDED_* values gives us the freedom to
@@ -546,6 +560,8 @@ AC_DEFUN([HWLOC_SETUP_CORE_AFTER_C99],[
     AC_SUBST(HWLOC_EMBEDDED_CPPFLAGS)
     HWLOC_EMBEDDED_LDADD='$(HWLOC_top_builddir)/src/libhwloc_embedded.la'
     AC_SUBST(HWLOC_EMBEDDED_LDADD)
+    HWLOC_EMBEDDED_LIBS=$HWLOC_LIBS
+    AC_SUBST(HWLOC_EMBEDDED_LIBS)
 
     # Try to compile the cpuid inlines
     AC_MSG_CHECKING([for cpuid])
