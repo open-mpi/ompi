@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -67,7 +67,7 @@ void mpi_file_create_errhandler_f(ompi_errhandler_fortran_handler_fn_t* function
 				  MPI_Fint *errhandler, MPI_Fint *ierr)
 {
     MPI_Errhandler c_errhandler = 
-        ompi_errhandler_create(OMPI_ERRHANDLER_TYPE_COMM,
+        ompi_errhandler_create(OMPI_ERRHANDLER_TYPE_FILE,
                                (ompi_errhandler_generic_handler_fn_t*) function,
                                OMPI_ERRHANDLER_LANG_FORTRAN);
     if (MPI_ERRHANDLER_NULL != c_errhandler) {
