@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Los Alamos National Security, LLC.  
+ *                         All rights reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -96,10 +98,10 @@ static void mca_coll_sm_module_destruct(mca_coll_sm_module_t *module)
 
     if (NULL != c) {
         /* Munmap the per-communicator shmem data segment */
-        if (NULL != c->mcb_mmap) {
+        if (NULL != c->sm_bootstrap_meta) {
             /* Ignore any errors -- what are we going to do about
                them? */
-            mca_common_sm_mmap_fini(c->mcb_mmap);
+            mca_common_sm_fini(c->sm_bootstrap_meta);
         }
         free(c);
     }
@@ -376,7 +378,7 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
        children are contiguous, so having the first pointer and the
        num_children from the mcb_tree data is sufficient). */
     control_size = c->sm_control_size;
-    base = data->mcb_mmap->data_addr;
+    base = data->sm_bootstrap_meta->module_data_addr;
     data->mcb_barrier_control_me = (uint32_t*)
         (base + (rank * control_size * num_barrier_buffers * 2));
     if (data->mcb_tree[rank].mcstn_parent) {
@@ -472,20 +474,20 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
     OBJ_RETAIN(sm_module->previous_reduce_module);
 
     /* Indicate that we have successfully attached and setup */
-    opal_atomic_add(&(data->mcb_mmap->map_seg->seg_inited), 1);
+    opal_atomic_add(&(data->sm_bootstrap_meta->module_seg->seg_inited), 1);
 
     /* Wait for everyone in this communicator to attach and setup */
     opal_output_verbose(10, mca_coll_base_output,
                         "coll:sm:enable (%d/%s): waiting for peers to attach",
                         comm->c_contextid, comm->c_name);
-    SPIN_CONDITION(size == data->mcb_mmap->map_seg->seg_inited, seg_init_exit);
+    SPIN_CONDITION(size == data->sm_bootstrap_meta->module_seg->seg_inited, seg_init_exit);
 
     /* Once we're all here, remove the mmap file; it's not needed anymore */
     if (0 == rank) {
-        unlink(data->mcb_mmap->map_path);
+        unlink(data->sm_bootstrap_meta->module_seg_path);
         opal_output_verbose(10, mca_coll_base_output,
                             "coll:sm:enable (%d/%s): removed mmap file %s", 
-                            comm->c_contextid, comm->c_name, data->mcb_mmap->map_path);
+                            comm->c_contextid, comm->c_name, data->sm_bootstrap_meta->module_seg_path);
     }
 
     /* All done */
@@ -589,13 +591,13 @@ static int bootstrap_comm(ompi_communicator_t *comm,
     opal_output_verbose(10, mca_coll_base_output,
                         "coll:sm:enable:bootstrap comm (%d/%s): attaching to %" PRIsize_t " byte mmap: %s",
                         comm->c_contextid, comm->c_name, size, fullpath);
-    data->mcb_mmap =
-        mca_common_sm_mmap_init_group(comm->c_local_group, size, fullpath,
-                                sizeof(mca_common_sm_file_header_t),
-                                sizeof(void*));
-    if (NULL == data->mcb_mmap) {
+    data->sm_bootstrap_meta =
+        mca_common_sm_init_group(comm->c_local_group, size, fullpath,
+                                 sizeof(mca_common_sm_seg_header_t),
+                                 sizeof(void*));
+    if (NULL == data->sm_bootstrap_meta) {
         opal_output_verbose(10, mca_coll_base_output,
-                            "coll:sm:enable:bootstrap comm (%d/%s): common_sm_mmap_init_group failed", 
+                            "coll:sm:enable:bootstrap comm (%d/%s): mca_common_sm_init_group failed", 
                             comm->c_contextid, comm->c_name);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }

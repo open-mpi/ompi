@@ -44,12 +44,30 @@ EXTRA_DIST = .windows
 # Header files
 
 headers = \
+        common_sm.h \
         common_sm_mmap.h
 
 # Source files
 
 sources = \
+        common_sm.c \
         common_sm_mmap.c
+
+# Only build the Windows support if we're building on windows, but
+# always include the files in the tarball.
+
+if MCA_common_sm_windows
+headers += common_sm_windows.h
+sources += common_sm_windows.c
+endif
+
+# Only build the SYSV support if we have the right stuff, but
+# always include the files in the tarball.
+
+if MCA_common_sm_sysv
+headers += common_sm_sysv.h
+sources += common_sm_sysv.c
+endif
 
 # Help file
 

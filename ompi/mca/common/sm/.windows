@@ -9,4 +9,4 @@
 #
 
 # Specific to this module
-
+exclude_list=common_sm_mmap.c;common_sm_mmap.h;common_sm_sysv.c;common_sm_sysv.h

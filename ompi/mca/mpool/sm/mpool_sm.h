@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Los Alamos National Security, LLC.  
+ *                         All rights reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,7 +29,7 @@
 
 #include "opal/event/event.h"
 
-#include "ompi/mca/common/sm/common_sm_mmap.h"
+#include "ompi/mca/common/sm/common_sm.h"
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/allocator/allocator.h"
 
@@ -54,7 +56,7 @@ typedef struct mca_mpool_sm_module_t {
     long sm_size;
     mca_allocator_base_module_t * sm_allocator;
     struct mca_mpool_sm_mmap_t *sm_mmap;
-    mca_common_sm_mmap_t *sm_common_mmap;
+    mca_common_sm_module_t *sm_common_module;
     int32_t mem_node;
 } mca_mpool_sm_module_t;
 

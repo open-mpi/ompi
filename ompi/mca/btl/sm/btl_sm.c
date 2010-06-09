@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Los Alamos National Security, LLC.  
+ *                         All rights reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -230,7 +232,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
         /* before we multiply by n, make sure the result won't overflow */
         /* Stick that little pad in, particularly since we'll eventually
          * need a little extra space.  E.g., in mca_mpool_sm_init() in
-         * mpool_sm_component.c when sizeof(mca_common_sm_mmap_t) is
+         * mpool_sm_component.c when sizeof(mca_common_sm_module_t) is
          * added.
          */
         if ( ((double) res.size) * n > LONG_MAX - 4096 )
@@ -270,13 +272,13 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
 
     /* Pass in a data segment alignment of 0 to get no data
        segment (only the shared control structure) */
-    size = sizeof(mca_common_sm_file_header_t) +
+    size = sizeof(mca_common_sm_seg_header_t) +
         n * (sizeof(sm_fifo_t*) + sizeof(char *) + sizeof(uint16_t)) + CACHE_LINE_SIZE;
     procs = ompi_proc_world(&num_procs);
-    if (!(mca_btl_sm_component.mmap_file =
-          mca_common_sm_mmap_init(procs, num_procs, size, sm_ctl_file,
-                                  sizeof(mca_common_sm_file_header_t),
-                                  CACHE_LINE_SIZE))) {
+    if (!(mca_btl_sm_component.sm_seg =
+          mca_common_sm_init(procs, num_procs, size, sm_ctl_file,
+                             sizeof(mca_common_sm_seg_header_t),
+                             CACHE_LINE_SIZE))) {
         opal_output(0, "mca_btl_sm_add_procs: unable to create shared memory "
                     "BTL coordinating strucure :: size %lu \n",
                     (unsigned long)size);
@@ -289,7 +291,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
 
     /* set the pointer to the shared memory control structure */
     mca_btl_sm_component.sm_ctl_header =
-        (mca_common_sm_file_header_t*)mca_btl_sm_component.mmap_file->map_seg;
+        (mca_common_sm_seg_header_t*)mca_btl_sm_component.sm_seg->module_seg;
 
 
     /* check to make sure number of local procs is within the
@@ -300,7 +302,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
         return OMPI_ERROR;
     }
 
-    mca_btl_sm_component.shm_fifo = (volatile sm_fifo_t **)mca_btl_sm_component.mmap_file->data_addr;
+    mca_btl_sm_component.shm_fifo = (volatile sm_fifo_t **)mca_btl_sm_component.sm_seg->module_data_addr;
     mca_btl_sm_component.shm_bases = (char**)(mca_btl_sm_component.shm_fifo + n);
     mca_btl_sm_component.shm_mem_nodes = (uint16_t*)(mca_btl_sm_component.shm_bases + n);
 
@@ -538,9 +540,9 @@ int mca_btl_sm_add_procs(
     /* Sync with other local procs. Force the FIFO initialization to always
      * happens before the readers access it.
      */
-    opal_atomic_add_32( &mca_btl_sm_component.mmap_file->map_seg->seg_inited, 1);
+    opal_atomic_add_32( &mca_btl_sm_component.sm_seg->module_seg->seg_inited, 1);
     while( n_local_procs >
-           mca_btl_sm_component.mmap_file->map_seg->seg_inited) {
+           mca_btl_sm_component.sm_seg->module_seg->seg_inited) {
         opal_progress();
         opal_atomic_rmb();
     }
@@ -1106,13 +1108,13 @@ int mca_btl_sm_ft_event(int state) {
     }
 
     if(OPAL_CRS_CHECKPOINT == state) {
-        if( NULL != mca_btl_sm_component.mmap_file ) {
+        if( NULL != mca_btl_sm_component.sm_seg ) {
             /* On restart we need the old file names to exist (not necessarily
              * contain content) so the CRS component does not fail when searching
              * for these old file handles. The restart procedure will make sure
              * these files get cleaned up appropriately.
              */
-            opal_crs_base_metadata_write_token(NULL, CRS_METADATA_TOUCH, mca_btl_sm_component.mmap_file->map_path);
+            opal_crs_base_metadata_write_token(NULL, CRS_METADATA_TOUCH, mca_btl_sm_component.sm_seg->map_path);
 
             /* Record the job session directory */
             opal_crs_base_metadata_write_token(NULL, CRS_METADATA_MKDIR, orte_process_info.job_session_dir);
@@ -1120,11 +1122,11 @@ int mca_btl_sm_ft_event(int state) {
     }
     else if(OPAL_CRS_CONTINUE == state) {
         if( ompi_cr_continue_like_restart ) {
-            if( NULL != mca_btl_sm_component.mmap_file ) {
+            if( NULL != mca_btl_sm_component.sm_seg ) {
                 /* Do not Add session directory on continue */
 
                 /* Add shared memory file */
-                opal_crs_base_cleanup_append(mca_btl_sm_component.mmap_file->map_path, false);
+                opal_crs_base_cleanup_append(mca_btl_sm_component.sm_seg->map_path, false);
             }
 
             /* Clear this so we force the module to re-init the sm files */
@@ -1133,7 +1135,7 @@ int mca_btl_sm_ft_event(int state) {
     }
     else if(OPAL_CRS_RESTART == state ||
             OPAL_CRS_RESTART_PRE == state) {
-        if( NULL != mca_btl_sm_component.mmap_file ) {
+        if( NULL != mca_btl_sm_component.sm_seg ) {
             /* Add session directory */
             opal_crs_base_cleanup_append(orte_process_info.job_session_dir, true);
             tmp_dir = opal_dirname(orte_process_info.job_session_dir);
@@ -1143,7 +1145,7 @@ int mca_btl_sm_ft_event(int state) {
                 tmp_dir = NULL;
             }
             /* Add shared memory file */
-            opal_crs_base_cleanup_append(mca_btl_sm_component.mmap_file->map_path, false);
+            opal_crs_base_cleanup_append(mca_btl_sm_component.sm_seg->map_path, false);
         }
 
         /* Clear this so we force the module to re-init the sm files */
