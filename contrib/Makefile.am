@@ -100,9 +100,9 @@ EXTRA_DIST = \
         platform/win32/ConfigFiles/mpif77-wrapper-data.txt.cmake \
         platform/win32/ConfigFiles/opal_config.h.cmake \
         platform/win32/ConfigFiles/revision.in \
-        platform/ibm/debug-ppc32-gcc \ 
-        platform/ibm/debug-ppc64-gcc \ 
-        platform/ibm/optimized-ppc32-gcc \ 
-        platform/ibm/optimized-ppc64-gcc 
+        platform/ibm/debug-ppc32-gcc \
+        platform/ibm/debug-ppc64-gcc \
+        platform/ibm/optimized-ppc32-gcc \
+        platform/ibm/optimized-ppc64-gcc
 
 dist_pkgdata_DATA = openmpi-valgrind.supp
