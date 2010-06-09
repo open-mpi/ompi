@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 University of Houston. All rights reserved.
+ * Copyright (c) 2006-2010 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -79,9 +79,11 @@ mca_coll_inter_scatterv_inter(void *sbuf, int *scounts,
 	    for (i = 0; i < size_local; i++) {
 		incr = incr + extent*counts[i];
 	    }
-	    ptmp = (char*)malloc(incr); 
-	    if (NULL == ptmp) {
-		return OMPI_ERR_OUT_OF_RESOURCE;
+	    if ( incr > 0 ) {
+		ptmp = (char*)malloc(incr); 
+		if (NULL == ptmp) {
+		    return OMPI_ERR_OUT_OF_RESOURCE;
+		}
 	    }
 	    total = 0;
 	    for (i = 0; i < size_local; i++) {
