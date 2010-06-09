@@ -137,8 +137,8 @@ static int plm_tm_init(void)
 static int plm_tm_launch_job(orte_job_t *jdata)
 {
     orte_job_map_t *map = NULL;
-    orte_app_context_t **apps;
-    orte_node_t **nodes;
+    orte_app_context_t *app;
+    orte_node_t *node;
     int proc_vpid_index;
     char *param;
     char **env = NULL;
@@ -158,13 +158,13 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     mode_t current_umask;
     orte_jobid_t failed_job, active_job;
     char *nodelist;
-    
+    char* vpid_string;
+
     if (NULL == jdata) {
         /* just launching debugger daemons */
         active_job = ORTE_JOBID_INVALID;
         goto launch_apps;
     }
-    active_job = jdata->jobid;
     
     if (jdata->controls & ORTE_JOB_CONTROL_LOCAL_SLAVE) {
         /* if this is a request to launch a local slave,
@@ -195,7 +195,8 @@ static int plm_tm_launch_job(orte_job_t *jdata)
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-    
+    active_job = jdata->jobid;
+
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:tm: launching job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -207,8 +208,6 @@ static int plm_tm_launch_job(orte_job_t *jdata)
         rc = ORTE_ERR_NOT_FOUND;
         goto cleanup;
     }
-    apps = (orte_app_context_t**)jdata->apps->addr;
-    nodes = (orte_node_t**)map->nodes->addr;
 
     if (0 == map->num_new_daemons) {
         /* have all the daemons we need - launch app */
@@ -235,7 +234,9 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     /* create a list of nodes in this launch */
     nodeargv = NULL;
     for (i = 0; i < map->num_nodes; i++) {
-        orte_node_t* node = nodes[i];
+        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
+            continue;
+        }
         
         /* if this daemon already exists, don't launch it! */
         if (node->daemon_launched) {
@@ -296,14 +297,15 @@ static int plm_tm_launch_job(orte_job_t *jdata)
         always be at least one app_context, we take it from
         there
     */
-    if (NULL != apps[0]->prefix_dir) {
+    app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, 0);
+    if (NULL != app->prefix_dir) {
         char *newenv;
         
         for (i = 0; NULL != env && NULL != env[i]; ++i) {
             /* Reset PATH */
             if (0 == strncmp("PATH=", env[i], 5)) {
                 asprintf(&newenv, "%s/%s:%s", 
-                            apps[0]->prefix_dir, bin_base, env[i] + 5);
+                            app->prefix_dir, bin_base, env[i] + 5);
                 OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                      "%s plm:tm: resetting PATH: %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -315,7 +317,7 @@ static int plm_tm_launch_job(orte_job_t *jdata)
             /* Reset LD_LIBRARY_PATH */
             else if (0 == strncmp("LD_LIBRARY_PATH=", env[i], 16)) {
                 asprintf(&newenv, "%s/%s:%s", 
-                            apps[0]->prefix_dir, lib_base, env[i] + 16);
+                            app->prefix_dir, lib_base, env[i] + 16);
                 OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                      "%s plm:tm: resetting LD_LIBRARY_PATH: %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -330,9 +332,9 @@ static int plm_tm_launch_job(orte_job_t *jdata)
      * up a daemon.
      */
     for (i = 0; i < map->num_nodes; i++) {
-        orte_node_t* node = nodes[i];
-        char* vpid_string;
-        
+        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
+            continue;
+        }
         /* if this daemon already exists, don't launch it! */
         if (node->daemon_launched) {
             continue;
@@ -344,7 +346,7 @@ static int plm_tm_launch_job(orte_job_t *jdata)
                              node->name));
         
         /* setup process name */
-        rc = orte_util_convert_vpid_to_string(&vpid_string, nodes[i]->daemon->name.vpid);
+        rc = orte_util_convert_vpid_to_string(&vpid_string, node->daemon->name.vpid);
         if (ORTE_SUCCESS != rc) {
             opal_output(0, "plm:tm: unable to get daemon vpid as string");
             exit(-1);
