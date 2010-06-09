@@ -92,6 +92,15 @@ AC_SUBST(libmca_common_portals_so_version)
 AC_SUBST(libopen_rte_so_version)
 AC_SUBST(libopen_pal_so_version)
 
+#
+# Hardwire OPAL progress threads to be off
+#
+OMPI_ENABLE_PROGRESS_THREADS=0
+enable_progress_threads="no"
+AC_DEFINE_UNQUOTED([OMPI_ENABLE_PROGRESS_THREADS], [$OMPI_ENABLE_PROGRESS_THREADS],
+                   [Hardcode the OPAL progress thread to be off])
+
+
 # List header files to generate
 
 AM_CONFIG_HEADER([opal/include/opal_config.h orte/include/orte_config.h ompi/include/ompi_config.h ompi/include/mpi.h])

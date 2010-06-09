@@ -216,32 +216,6 @@ AC_DEFINE_UNQUOTED([OMPI_ENABLE_MPI_THREADS], [$OMPI_ENABLE_MPI_THREADS],
 AC_MSG_RESULT([$enable_mpi_threads])
 
 
-AC_MSG_CHECKING([if want asynchronous progress thread support])
-AC_ARG_ENABLE([progress-threads],
-    AC_HELP_STRING([--enable-progress-threads],
-        [Enable threads asynchronous communication progress (default: disabled)]),
-    [enable_progress_threads="$enableval"])
-
-if test "$enable_progress_threads" = "" ; then
-    # no argument given either way.  Default to no.
-    OMPI_ENABLE_PROGRESS_THREADS=0
-    enable_progress_threads="no"
-elif test "$enable_progress_threads" = "no" ; then
-    OMPI_ENABLE_PROGRESS_THREADS=0
-    enable_progress_threads="no"
-else
-    # they want threaded progress
-    if test "$THREAD_TYPE" != "none" ; then
-        OMPI_ENABLE_PROGRESS_THREADS=1
-        enable_progress_threads="yes"
-    else
-        AC_MSG_ERROR([User requested progress threads, but no threading model supported])
-    fi
-fi
-AC_DEFINE_UNQUOTED([OMPI_ENABLE_PROGRESS_THREADS], [$OMPI_ENABLE_PROGRESS_THREADS],
-                   [Whether we should use progress threads rather than polling])
-AC_MSG_RESULT([$enable_progress_threads])
-
 #
 # Fault Tolerance Thread
 #
