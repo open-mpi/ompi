@@ -59,8 +59,15 @@ mca_paffinity_hwloc_la_SOURCES = $(sources)
 mca_paffinity_hwloc_la_LDFLAGS = -module -avoid-version
 mca_paffinity_hwloc_la_LIBADD =
 if OPAL_PAFFINITY_HWLOC_INTERNAL
+# In most circumstances, the .la file should contain all relevant
+# LDFLAGS and LIBS that we need.  However, hwloc's embedding takes
+# pains to not add anything to the upper-level package LDFLAGS and
+# LIBS, so hwloc_embedded.la won't contain what it needs.  Instead, we
+# have to add HWLOC_EMBEDDED_LDFLAGS and _LIBS here manually.
+mca_paffinity_hwloc_la_LDFLAGS += $(HWLOC_EMBEDDED_LDFLAGS)
 mca_paffinity_hwloc_la_LIBADD += \
-        $(top_ompi_builddir)/opal/mca/paffinity/hwloc/hwloc/src/libhwloc_embedded.la
+        $(top_ompi_builddir)/opal/mca/paffinity/hwloc/hwloc/src/libhwloc_embedded.la \
+        $(HWLOC_EMBEDDED_LIBS)
 else
 mca_paffinity_hwloc_la_LDFLAGS += $(paffinity_hwloc_LDFLAGS)
 mca_paffinity_hwloc_la_LIBADD += $(paffinity_hwloc_LIBS)
@@ -71,8 +78,11 @@ libmca_paffinity_hwloc_la_SOURCES =$(sources)
 libmca_paffinity_hwloc_la_LDFLAGS = -module -avoid-version
 libmca_paffinity_hwloc_la_LIBADD =
 if OPAL_PAFFINITY_HWLOC_INTERNAL
+# See note about above HWLOC_EMBEDDED_LDFLAGS and _LIBS.
+libmca_paffinity_hwloc_la_LDFLAGS += $(HWLOC_EMBEDDED_LDFLAGS)
 libmca_paffinity_hwloc_la_LIBADD += \
-        $(top_ompi_builddir)/opal/mca/paffinity/hwloc/hwloc/src/libhwloc_embedded.la
+        $(top_ompi_builddir)/opal/mca/paffinity/hwloc/hwloc/src/libhwloc_embedded.la \
+        $(HWLOC_EMBEDDED_LIBS)
 else
 libmca_paffinity_hwloc_la_LDFLAGS += $(paffinity_hwloc_LDFLAGS)
 libmca_paffinity_hwloc_la_LIBADD += $(paffinity_hwloc_LIBS)

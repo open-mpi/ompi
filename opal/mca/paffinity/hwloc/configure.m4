@@ -85,10 +85,13 @@ AC_DEFUN([MCA_paffinity_hwloc_CONFIG],[
                      [AC_MSG_CHECKING([whether hwloc configure succeeded])
                       AC_MSG_RESULT([yes])
                       HWLOC_VERSION="internal v`$srcdir/opal/mca/paffinity/hwloc/hwloc/config/hwloc_get_version.sh $srcdir/opal/mca/paffinity/hwloc/hwloc/VERSION`"
-                     opal_check_hwloc_happy=yes], 
-                    [AC_MSG_CHECKING([whether hwloc configure succeeded])
-                     AC_MSG_RESULT([no])
-                     opal_check_hwloc_happy=no])
+                      # Add flags to the wrappers for static builds
+                      paffinity_hwloc_WRAPPER_EXTRA_LDFLAGS=$HWLOC_EMBEDDED_LDFLAGS
+                      paffinity_hwloc_WRAPPER_EXTRA_LIBS=$HWLOC_EMBEDDED_LIBS
+                      opal_check_hwloc_happy=yes], 
+                     [AC_MSG_CHECKING([whether hwloc configure succeeded])
+                      AC_MSG_RESULT([no])
+                      opal_check_hwloc_happy=no])
           ])
 
     # If we are not building internal, then run all the normal checks
