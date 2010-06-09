@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Voltaire All rights reserved.
+ * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -70,6 +71,7 @@ static inline opal_list_item_t* opal_atomic_lifo_push( opal_atomic_lifo_t* lifo,
 #if OMPI_HAVE_THREAD_SUPPORT
     do {
         item->opal_list_next = lifo->opal_lifo_head;
+	opal_atomic_wmb();
         if( opal_atomic_cmpset_ptr( &(lifo->opal_lifo_head),
                                     (void*)item->opal_list_next,
                                     item ) ) {
@@ -94,6 +96,7 @@ static inline opal_list_item_t* opal_atomic_lifo_pop( opal_atomic_lifo_t* lifo )
 #if OMPI_HAVE_THREAD_SUPPORT
     while((item = lifo->opal_lifo_head) != &(lifo->opal_lifo_ghost))
     {
+	opal_atomic_rmb();
         if(!opal_atomic_cmpset_32((volatile int32_t*)&item->item_free, 0, 1))
             continue;
         if( opal_atomic_cmpset_ptr( &(lifo->opal_lifo_head),
