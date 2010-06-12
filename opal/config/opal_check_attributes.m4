@@ -11,6 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -24,7 +25,7 @@
 #   Intel: ignore
 #   Sun C++: skip
 #
-AC_DEFUN([_OMPI_ATTRIBUTE_FAIL_SEARCH],[
+AC_DEFUN([_OPAL_ATTRIBUTE_FAIL_SEARCH],[
     AC_REQUIRE([AC_PROG_GREP])
     if test -s conftest.err ; then
         # icc uses 'invalid attribute' and 'attribute "__XXX__"  ignored'
@@ -51,7 +52,7 @@ AC_DEFUN([_OMPI_ATTRIBUTE_FAIL_SEARCH],[
 # for the compiler to generate a warning on the cross-check.
 # This may need adaption for future compilers / CFLAG-settings.
 #
-AC_DEFUN([_OMPI_CHECK_SPECIFIC_ATTRIBUTE], [
+AC_DEFUN([_OPAL_CHECK_SPECIFIC_ATTRIBUTE], [
     AC_MSG_CHECKING([for __attribute__([$1])])
     AC_CACHE_VAL(opal_cv___attribute__[$1], [
         #
@@ -65,21 +66,26 @@ AC_DEFUN([_OMPI_CHECK_SPECIFIC_ATTRIBUTE], [
                         # and if found, reset the ompi_cv__attribute__var=0
                         #
                         opal_cv___attribute__[$1]=1
-                        _OMPI_ATTRIBUTE_FAIL_SEARCH([$1])
+                        _OPAL_ATTRIBUTE_FAIL_SEARCH([$1])
                        ],
                        [opal_cv___attribute__[$1]=0])
-        if test "$opal_cv___attribute__[$1]" = "1" ; then
-            AC_LANG_PUSH(C++)
-            AC_TRY_COMPILE([
+
+        # Only test C++ if we're building Open MPI (i.e.,
+        # project_ompi).  OPAL and ORTE do not use C++ at all, so
+        # let's not add a C++ compiler into their requirement list.
+        m4_ifdef([project_ompi],
+                 [if test "$opal_cv___attribute__[$1]" = "1" ; then
+                      AC_LANG_PUSH(C++)
+                      AC_TRY_COMPILE([
                            extern "C" {
                            $2
                            }],[],
                            [
                             opal_cv___attribute__[$1]=1
-                            _OMPI_ATTRIBUTE_FAIL_SEARCH([$1])
+                            _OPAL_ATTRIBUTE_FAIL_SEARCH([$1])
                            ],[opal_cv___attribute__[$1]=0])
-            AC_LANG_POP(C++)
-        fi
+                      AC_LANG_POP(C++)
+                  fi])
 
         #
         # If the attribute is supported by both compilers,
@@ -104,7 +110,7 @@ AC_DEFUN([_OMPI_CHECK_SPECIFIC_ATTRIBUTE], [
                  # and if found, reset the ompi_cv__attribute__var=0
                  #
                  opal_cv___attribute__[$1]=1
-                 _OMPI_ATTRIBUTE_FAIL_SEARCH([$1])
+                 _OPAL_ATTRIBUTE_FAIL_SEARCH([$1])
                 ])
 
             ac_c_werror_flag=$ac_c_werror_flag_safe
@@ -122,16 +128,16 @@ AC_DEFUN([_OMPI_CHECK_SPECIFIC_ATTRIBUTE], [
 
 #
 # Test the availability of __attribute__ and with the help
-# of _OMPI_CHECK_SPECIFIC_ATTRIBUTE for the support of
+# of _OPAL_CHECK_SPECIFIC_ATTRIBUTE for the support of
 # particular attributes. Compilers, that do not support an
 # attribute most often fail with a warning (when the warning
 # level is set).
-# The compilers output is parsed in _OMPI_ATTRIBUTE_FAIL_SEARCH
+# The compilers output is parsed in _OPAL_ATTRIBUTE_FAIL_SEARCH
 # 
 # To add a new attributes __NAME__ add the
 #   opal_cv___attribute__NAME
-# add a new check with _OMPI_CHECK_SPECIFIC_ATTRIBUTE (possibly with a cross-check)
-#   _OMPI_CHECK_SPECIFIC_ATTRIBUTE([name], [int foo (int arg) __attribute__ ((__name__));], [], [])
+# add a new check with _OPAL_CHECK_SPECIFIC_ATTRIBUTE (possibly with a cross-check)
+#   _OPAL_CHECK_SPECIFIC_ATTRIBUTE([name], [int foo (int arg) __attribute__ ((__name__));], [], [])
 # and define the corresponding
 #   AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_NAME, [$opal_cv___attribute__NAME],
 #                      [Whether your compiler has __attribute__ NAME or not])
@@ -144,7 +150,7 @@ AC_DEFUN([_OMPI_CHECK_SPECIFIC_ATTRIBUTE], [
 #
 
 
-AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
+AC_DEFUN([OPAL_CHECK_ATTRIBUTES], [
   AC_LANG(C)
   AC_MSG_CHECKING(for __attribute__)
 
@@ -210,7 +216,7 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
   else
     AC_MSG_RESULT([yes])
 
-    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([aligned],
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([aligned],
         [struct foo { char text[4]; }  __attribute__ ((__aligned__(8)));],
         [],
         [])
@@ -218,12 +224,12 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
     #
     # Ignored by PGI-6.2.5; -- recognized by output-parser
     #
-    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([always_inline],
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([always_inline],
         [int foo (int arg) __attribute__ ((__always_inline__));],
         [],
         [])
 
-    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([cold],
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([cold],
         [
          int foo(int arg1, int arg2) __attribute__ ((__cold__));
          int foo(int arg1, int arg2) { return arg1 * arg2 + arg1; }
@@ -231,7 +237,7 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
         [],
         [])
 
-    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([const],
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([const],
         [
          int foo(int arg1, int arg2) __attribute__ ((__const__));
          int foo(int arg1, int arg2) { return arg1 * arg2 + arg1; }
@@ -239,7 +245,7 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
         [],
         [])
 
-    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([deprecated],
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([deprecated],
         [
          int foo(int arg1, int arg2) __attribute__ ((__deprecated__));
          int foo(int arg1, int arg2) { return arg1 * arg2 + arg1; }
@@ -247,7 +253,7 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
         [],
         [])
 
-    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([deprecated_argument],
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([deprecated_argument],
         [
          int foo(int arg1, int arg2) __attribute__ ((__deprecated__("compiler allows argument")));
          int foo(int arg1, int arg2) { return arg1 * arg2 + arg1; }
@@ -265,7 +271,7 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
             ATTRIBUTE_CFLAGS="-we181"
             ;;
     esac
-    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([format],
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([format],
         [
          int this_printf (void *my_object, const char *my_format, ...) __attribute__ ((__format__ (__printf__, 2, 3)));
         ],
@@ -291,7 +297,7 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
             ATTRIBUTE_CFLAGS="-we181"
             ;;
     esac
-    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([format_funcptr],
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([format_funcptr],
         [
          int (*this_printf)(void *my_object, const char *my_format, ...) __attribute__ ((__format__ (__printf__, 2, 3)));
         ],
@@ -307,7 +313,7 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
         ],
         [$ATTRIBUTE_CFLAGS])
 
-    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([hot],
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([hot],
         [
          int foo(int arg1, int arg2) __attribute__ ((__hot__));
          int foo(int arg1, int arg2) { return arg1 * arg2 + arg1; }
@@ -315,7 +321,7 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
         [],
         [])
 
-    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([malloc],
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([malloc],
         [
 #ifdef HAVE_STDLIB_H
 #  include <stdlib.h>
@@ -332,13 +338,13 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
     # Ignored by intel-9.1.045 -- turn off with -wd1292
     # Ignored by PGI-6.2.5; ignore not detected due to missing cross-check
     #
-    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([may_alias],
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([may_alias],
         [int * p_value __attribute__ ((__may_alias__));],
         [],
         [])
 
 
-    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([no_instrument_function],
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([no_instrument_function],
         [int * foo(int arg1) __attribute__ ((__no_instrument_function__));],
         [],
         [])
@@ -359,7 +365,7 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
             ATTRIBUTE_CFLAGS="-wd1292"
             ;;
     esac
-    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([nonnull],
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([nonnull],
         [
          int square(int *arg) __attribute__ ((__nonnull__));
          int square(int *arg) { return *arg; }
@@ -378,7 +384,7 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
         [$ATTRIBUTE_CFLAGS])
 
 
-    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([noreturn],
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([noreturn],
         [
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
@@ -392,7 +398,7 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
         [],
         [])
 
-    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([packed],
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([packed],
         [
          struct foo {
              char a;
@@ -402,7 +408,7 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
         [],
         [])
 
-    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([pure],
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([pure],
         [
          int square(int arg) __attribute__ ((__pure__));
          int square(int arg) { return arg * arg; }
@@ -427,7 +433,7 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
             ATTRIBUTE_CFLAGS="-wd1292"
             ;;
     esac
-    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([sentinel],
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([sentinel],
         [
          int my_execlp(const char * file, const char *arg, ...) __attribute__ ((__sentinel__));
         ],
@@ -444,7 +450,7 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
         ],
         [$ATTRIBUTE_CFLAGS])
 
-    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([unused],
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([unused],
         [
          int square(int arg1 __attribute__ ((__unused__)), int arg2);
          int square(int arg1, int arg2) { return arg2; }
@@ -456,7 +462,7 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
     #
     # Ignored by PGI-6.2.5 (pgCC) -- recognized by the output-parser
     #
-    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([visibility],
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([visibility],
         [
          int square(int arg1) __attribute__ ((__visibility__("hidden")));
         ],
@@ -479,7 +485,7 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
             ATTRIBUTE_CFLAGS="-wd1292"
             ;;
     esac
-    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([warn_unused_result],
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([warn_unused_result],
         [
          int foo(int arg) __attribute__ ((__warn_unused_result__));
          int foo(int arg) { return arg + 3; }
@@ -500,7 +506,7 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
         [$ATTRIBUTE_CFLAGS])
 
 
-    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([weak_alias],
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([weak_alias],
         [
          int foo(int arg);
          int foo(int arg) { return arg + 3; }

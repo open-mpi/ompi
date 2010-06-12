@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 #                         reserved. 
@@ -496,9 +496,15 @@ m4_ifdef([project_ompi], [OMPI_SETUP_MPI_PROFILING],
 # C++ compiler characteristics
 ##################################
 
-OPAL_SETUP_CXX
-# The MPI project has a boatload more C++ tests (ORTE does not).
-m4_ifdef([project_ompi], [OMPI_SETUP_CXX])
+# We don't need C++ unless we're building Open MPI; ORTE and OPAL do
+# not use C++ at all.  The OPAL macro name appears to be a bit of a
+# misnomer; I'm not sure why it was split into a second macro and put
+# into OPAL...?  All it does is setup the C++ compiler (the OMPI macro
+# sets up the C++ MPI bindings, etc.).  Perhaps it was moved to OPAL
+# just on the rationale that all compiler setup should be done in
+# OPAL...?  Shrug.
+m4_ifdef([project_ompi], [OPAL_SETUP_CXX
+                          OMPI_SETUP_CXX])
 
 ##################################
 # Only after setting up both
@@ -507,8 +513,7 @@ m4_ifdef([project_ompi], [OMPI_SETUP_CXX])
 
 ompi_show_subtitle "Compiler characteristics"
 
-OMPI_CHECK_ATTRIBUTES
-
+OPAL_CHECK_ATTRIBUTES
 OPAL_CHECK_COMPILER_VERSION_ID
 
 
