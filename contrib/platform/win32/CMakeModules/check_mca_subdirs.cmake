@@ -87,7 +87,7 @@ FOREACH (MCA_FRAMEWORK ${MCA_FRAMEWORK_LIST})
         IF(EXISTS "${CURRENT_PATH}/.windows")
 
           #MESSAGE("MCA_FRAMEWORK_BASE_FILES:${MCA_FRAMEWORK_BASE_FILES}")
-          SET(EXCLUDE_LIST"")
+          SET(EXCLUDE_LIST "")
           FILE(STRINGS ${CURRENT_PATH}/.windows EXCLUDE_LIST REGEX "^exclude_list=")
 
           IF(NOT EXCLUDE_LIST STREQUAL "")
@@ -123,7 +123,7 @@ FOREACH (MCA_FRAMEWORK ${MCA_FRAMEWORK_LIST})
           "${CURRENT_PATH}/*.cc" "${CURRENT_PATH}/*.cpp")
 
         #check exclude list
-        SET(EXCLUDE_LIST"")
+        SET(EXCLUDE_LIST "")
         FILE(STRINGS ${CURRENT_PATH}/.windows EXCLUDE_LIST REGEX "^exclude_list=")
 
         IF(NOT EXCLUDE_LIST STREQUAL "")

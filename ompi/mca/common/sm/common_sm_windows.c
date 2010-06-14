@@ -179,7 +179,7 @@ mca_common_sm_windows_init(ompi_proc_t **procs,
         seg->seg_size = size - mem_offset;
     }
 
-    map->hMappedObject = hMapObject;
+    map->super.hMappedObject = hMapObject;
 
     return (mca_common_sm_module_t *)map;
 
