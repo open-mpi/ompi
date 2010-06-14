@@ -39,7 +39,6 @@ struct mca_mpool_base_module_t;
 typedef struct mca_common_sm_module_windows_t 
 {
     mca_common_sm_module_t super;
-    HANDLE hMappedObject;
 } mca_common_sm_module_windows_t;
 
 OBJ_CLASS_DECLARATION(mca_common_sm_module_windows_t);
