@@ -7,6 +7,19 @@
 #include "config.h"
 #endif
 
+/* Workaround for PGI compiler bug (see Technical Problem Report 4337):
+   Disable OpenMP if compiler version is less than 9.0-3. */
+#if defined(_OPENMP) && defined(__PGI)
+#	undef _OPENMP
+#	if defined(__PGIC__) && defined(__PGIC_MINOR__) && defined(__PGIC_PATCHLEVEL__)
+#		if (__PGIC__ >  9                                                ) || \
+		   (__PGIC__ == 9 && __PGIC_MINOR__ >  0                         ) || \
+		   (__PGIC__ == 9 && __PGIC_MINOR__ == 0 && __PGIC_PATCHLEVEL__ > 2)
+#			define _OPENMP
+#		endif
+#	endif
+#endif
+
 #ifdef _OPENMP
 #	include <omp.h>
 #else
