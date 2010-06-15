@@ -48,7 +48,7 @@ static int setup_channel(rmcast_base_channel_t *chan, uint8_t direction);
 
 static int setup_socket(int *sd, rmcast_base_channel_t *chan, bool recvsocket);
 
-static void xmit_data(int sd, short flags, void* send_req);
+static int xmit_data(rmcast_base_channel_t *chan, rmcast_base_send_t *snd);
 
 /* API FUNCTIONS */
 static int init(void);
@@ -161,7 +161,8 @@ static int init(void)
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        orte_rmcast_base.my_group_channel = (rmcast_base_channel_t*)opal_list_get_last(&orte_rmcast_base.channels);
+        orte_rmcast_base.my_output_channel = (rmcast_base_channel_t*)opal_list_get_last(&orte_rmcast_base.channels);
+        orte_rmcast_base.my_input_channel = NULL;
     } else if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
         /* daemons and hnp open the sys and data server channels */
         if (ORTE_SUCCESS != (rc = open_channel(ORTE_RMCAST_SYS_CHANNEL, "system",
@@ -169,12 +170,13 @@ static int init(void)
             ORTE_ERROR_LOG(rc);
             return rc;
         }        
+        orte_rmcast_base.my_output_channel = (rmcast_base_channel_t*)opal_list_get_last(&orte_rmcast_base.channels);
+        orte_rmcast_base.my_input_channel = NULL;
         if (ORTE_SUCCESS != (rc = open_channel(ORTE_RMCAST_DATA_SERVER_CHANNEL, "data-server",
                                                NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        orte_rmcast_base.my_group_channel = (rmcast_base_channel_t*)opal_list_get_last(&orte_rmcast_base.channels);
     } else if (ORTE_PROC_IS_APP) {
         /* apps open the app public and data server channels */
         if (ORTE_SUCCESS != (rc = open_channel(ORTE_RMCAST_APP_PUBLIC_CHANNEL, "app-announce",
@@ -187,15 +189,22 @@ static int init(void)
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        /* also setup our grp channel, if one was given */
-        if (NULL != orte_rmcast_base.my_group_name) {
+         /* finally, if we are an app, setup our grp xmit/recv channels, if given */
+        if (ORTE_PROC_IS_APP && NULL != orte_rmcast_base.my_group_name) {
             if (ORTE_SUCCESS != (rc = open_channel(orte_rmcast_base.my_group_number,
                                                    orte_rmcast_base.my_group_name,
-                                                   NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
+                                                   NULL, -1, NULL, ORTE_RMCAST_RECV))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
-            orte_rmcast_base.my_group_channel = (rmcast_base_channel_t*)opal_list_get_last(&orte_rmcast_base.channels);
+            orte_rmcast_base.my_input_channel = (rmcast_base_channel_t*)opal_list_get_last(&orte_rmcast_base.channels);
+            if (ORTE_SUCCESS != (rc = open_channel(orte_rmcast_base.my_group_number+1,
+                                                   orte_rmcast_base.my_group_name,
+                                                   NULL, -1, NULL, ORTE_RMCAST_XMIT))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            orte_rmcast_base.my_output_channel = (rmcast_base_channel_t*)opal_list_get_last(&orte_rmcast_base.channels);
         }
     } else {
         opal_output(0, "rmcast:udp:init - unknown process type");
@@ -253,12 +262,12 @@ static int queue_xmit(rmcast_base_send_t *snd,
     /* if we were asked to send this on our group output
      * channel, substitute it
      */
-    if (ORTE_RMCAST_GROUP_CHANNEL == channel) {
-        if (NULL == orte_rmcast_base.my_group_channel) {
+    if (ORTE_RMCAST_GROUP_OUTPUT_CHANNEL == channel) {
+        if (NULL == orte_rmcast_base.my_output_channel) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return ORTE_ERR_NOT_FOUND;
         }
-        ch = orte_rmcast_base.my_group_channel;
+        ch = orte_rmcast_base.my_output_channel;
         goto process;
     }
     
@@ -288,18 +297,7 @@ process:
                          (NULL == snd->iovec_array) ? "bytes" : "iovecs",
                          OPAL_IF_FORMAT_ADDR(ch->network)));
     
-    /* add it to this channel's pending sends */
-    OPAL_THREAD_LOCK(&ch->send_lock);
-    opal_list_append(&ch->pending_sends, &snd->item);
-    
-    /* do we need to start the send event? */
-    if (!ch->sends_in_progress) {
-        opal_event_add(&ch->send_ev, 0);
-        ch->sends_in_progress = true;
-    }
-    OPAL_THREAD_UNLOCK(&ch->send_lock);
-    
-    return ORTE_SUCCESS;
+    return xmit_data(ch, snd);
 }
 
 static int udp_send(orte_rmcast_channel_t channel,
@@ -413,8 +411,10 @@ static int udp_recv(orte_process_name_t *name,
     int ret;
     orte_rmcast_channel_t chan;
 
-    if (ORTE_RMCAST_GROUP_CHANNEL == channel) {
-        chan = orte_rmcast_base.my_group_number;
+    if (ORTE_RMCAST_GROUP_INPUT_CHANNEL == channel) {
+        chan = orte_rmcast_base.my_input_channel->channel;
+    } else if (ORTE_RMCAST_GROUP_OUTPUT_CHANNEL == channel) {
+        chan = orte_rmcast_base.my_output_channel->channel;
     } else {
         chan = channel;
     }
@@ -458,8 +458,10 @@ static int udp_recv_nb(orte_rmcast_channel_t channel,
                          "%s rmcast:udp: recv_nb called on channel %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), channel));
     
-    if (ORTE_RMCAST_GROUP_CHANNEL == channel) {
-        chan = orte_rmcast_base.my_group_number;
+    if (ORTE_RMCAST_GROUP_INPUT_CHANNEL == channel) {
+        chan = orte_rmcast_base.my_input_channel->channel;
+    } else if (ORTE_RMCAST_GROUP_OUTPUT_CHANNEL == channel) {
+        chan = orte_rmcast_base.my_output_channel->channel;
     } else {
         chan = channel;
     }
@@ -488,8 +490,10 @@ static int udp_recv_buffer(orte_process_name_t *name,
                          "%s rmcast:udp: recv_buffer called on multicast channel %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), channel));
 
-    if (ORTE_RMCAST_GROUP_CHANNEL == channel) {
-        chan = orte_rmcast_base.my_group_number;
+    if (ORTE_RMCAST_GROUP_INPUT_CHANNEL == channel) {
+        chan = orte_rmcast_base.my_input_channel->channel;
+    } else if (ORTE_RMCAST_GROUP_OUTPUT_CHANNEL == channel) {
+        chan = orte_rmcast_base.my_output_channel->channel;
     } else {
         chan = channel;
     }
@@ -535,8 +539,10 @@ static int udp_recv_buffer_nb(orte_rmcast_channel_t channel,
                          "%s rmcast:udp: recv_buffer_nb called on multicast channel %d tag %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), channel, tag));
     
-    if (ORTE_RMCAST_GROUP_CHANNEL == channel) {
-        chan = orte_rmcast_base.my_group_number;
+    if (ORTE_RMCAST_GROUP_INPUT_CHANNEL == channel) {
+        chan = orte_rmcast_base.my_input_channel->channel;
+    } else if (ORTE_RMCAST_GROUP_OUTPUT_CHANNEL == channel) {
+        chan = orte_rmcast_base.my_output_channel->channel;
     } else {
         chan = channel;
     }
@@ -740,8 +746,6 @@ static int setup_channel(rmcast_base_channel_t *chan, uint8_t direction)
         }
         chan->xmit = xmitsd;
         chan->send_data = (uint8_t*)malloc(orte_rmcast_udp_sndbuf_size);
-        /* setup the event to xmit messages, but don't activate it */
-        opal_event_set(&chan->send_ev, chan->xmit, OPAL_EV_WRITE, xmit_data, chan);        
     }
     
     if (0 > chan->recv && ORTE_RMCAST_RECV & direction) {
@@ -903,31 +907,24 @@ static int setup_socket(int *sd, rmcast_base_channel_t *chan, bool recvsocket)
     return ORTE_SUCCESS;
 }
 
-static void xmit_data(int sd, short flags, void* send_req)
+static int xmit_data(rmcast_base_channel_t *chan, rmcast_base_send_t *snd)
 {
-    rmcast_base_channel_t *chan = (rmcast_base_channel_t*)send_req;
-    rmcast_base_send_t *snd;
-    opal_list_item_t *item;
     char *bytes;
     int32_t sz;
     int rc;
     opal_buffer_t *buf;
-    rmcast_send_log_t *log, *lg;
     
-    OPAL_THREAD_LOCK(&chan->send_lock);
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                          "%s transmitting data for channel %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), chan->channel));
-    
-    while (NULL != (item = opal_list_remove_first(&chan->pending_sends))) {
-        snd = (rmcast_base_send_t*)item;
-        
+
         /* setup the message for xmission */
         if (ORTE_SUCCESS != (rc = orte_rmcast_base_build_msg(chan, &buf, snd))) {
             ORTE_ERROR_LOG(rc);
             goto CLEANUP;
         }
         
+#if 0
         /* store the working buf in the send ring buffer in case we
          * need to retransmit it later
          */
@@ -943,7 +940,8 @@ static void xmit_data(int sd, short flags, void* send_req)
                                  lg->seq_num, lg->channel));
             OBJ_RELEASE(lg);
         }
-        
+#endif
+
         /* unload the working buf to obtain the payload */
         if (ORTE_SUCCESS != (rc = opal_dss.unload(buf, (void**)&bytes, &sz))) {
             ORTE_ERROR_LOG(rc);
@@ -965,6 +963,8 @@ static void xmit_data(int sd, short flags, void* send_req)
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), OPAL_IF_FORMAT_ADDR(chan->network),
                         strerror(errno), errno);
             rc = errno;
+        } else {
+            rc = ORTE_SUCCESS;
         }
         
         if (NULL != snd->buf) {
@@ -983,14 +983,6 @@ static void xmit_data(int sd, short flags, void* send_req)
 
         /* roll to next message sequence number */
         ORTE_MULTICAST_NEXT_SEQUENCE_NUM(chan->seq_num);
-CLEANUP:        
-        /* cleanup */
-        OBJ_RELEASE(item);
-    }
-    
-    /* cleanup */
-    opal_event_del(&chan->send_ev);
-    chan->sends_in_progress = false;
-
-    OPAL_THREAD_UNLOCK(&chan->send_lock);
+CLEANUP:
+        return rc;    
 }

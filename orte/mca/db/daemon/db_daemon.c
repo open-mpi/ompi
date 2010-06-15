@@ -131,11 +131,11 @@ static int init(void)
         OBJ_CONSTRUCT(&datastore, opal_pointer_array_t);
         opal_pointer_array_init(&datastore, 16, INT_MAX, 16);
     } else if (ORTE_PROC_IS_APP) {
-        /* get my multicast group */
-        my_group_channel = orte_rmcast.query_channel();
+        /* get my multicast output group */
+        orte_rmcast.query_channel(&my_group_channel, NULL);
         
         /* recv responses */
-        if (ORTE_SUCCESS != (rc = orte_rmcast.recv_buffer_nb(ORTE_RMCAST_GROUP_CHANNEL,
+        if (ORTE_SUCCESS != (rc = orte_rmcast.recv_buffer_nb(my_group_channel,
                                                              ORTE_RMCAST_TAG_CMD_ACK,
                                                              ORTE_RMCAST_PERSISTENT,
                                                              recv_ack, NULL))) {
@@ -160,8 +160,7 @@ static int finalize(void)
         }
         OBJ_DESTRUCT(&datastore);
     } else if (ORTE_PROC_IS_APP) {
-        orte_rmcast.cancel_recv(ORTE_RMCAST_GROUP_CHANNEL, ORTE_RMCAST_TAG_DATA);
-        orte_rmcast.cancel_recv(ORTE_RMCAST_GROUP_CHANNEL, ORTE_RMCAST_TAG_CMD_ACK);
+        orte_rmcast.cancel_recv(my_group_channel, ORTE_RMCAST_TAG_WILDCARD);
     }
 
     return ORTE_SUCCESS;

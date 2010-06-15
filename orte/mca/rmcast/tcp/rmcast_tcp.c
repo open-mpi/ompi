@@ -164,7 +164,8 @@ static int init(void)
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        orte_rmcast_base.my_group_channel = (rmcast_base_channel_t*)opal_list_get_last(&orte_rmcast_base.channels);
+        orte_rmcast_base.my_output_channel = (rmcast_base_channel_t*)opal_list_get_last(&orte_rmcast_base.channels);
+        orte_rmcast_base.my_input_channel = NULL;
     } else if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
         /* daemons and hnp open the sys and data server channels */
         if (ORTE_SUCCESS != (rc = open_channel(ORTE_RMCAST_SYS_CHANNEL, "system",
@@ -172,7 +173,8 @@ static int init(void)
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        orte_rmcast_base.my_group_channel = (rmcast_base_channel_t*)opal_list_get_last(&orte_rmcast_base.channels);
+        orte_rmcast_base.my_output_channel = (rmcast_base_channel_t*)opal_list_get_last(&orte_rmcast_base.channels);
+        orte_rmcast_base.my_input_channel = NULL;
         if (ORTE_SUCCESS != (rc = open_channel(ORTE_RMCAST_DATA_SERVER_CHANNEL, "data-server",
                                                NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
             ORTE_ERROR_LOG(rc);
@@ -199,15 +201,22 @@ static int init(void)
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        /* finally, if we are an app, setup our grp channel, if one was given */
+        /* finally, if we are an app, setup our grp xmit/recv channels, if given */
         if (ORTE_PROC_IS_APP && NULL != orte_rmcast_base.my_group_name) {
             if (ORTE_SUCCESS != (rc = open_channel(orte_rmcast_base.my_group_number,
                                                    orte_rmcast_base.my_group_name,
-                                                   NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
+                                                   NULL, -1, NULL, ORTE_RMCAST_RECV))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
-            orte_rmcast_base.my_group_channel = (rmcast_base_channel_t*)opal_list_get_last(&orte_rmcast_base.channels);
+            orte_rmcast_base.my_input_channel = (rmcast_base_channel_t*)opal_list_get_last(&orte_rmcast_base.channels);
+            if (ORTE_SUCCESS != (rc = open_channel(orte_rmcast_base.my_group_number+1,
+                                                   orte_rmcast_base.my_group_name,
+                                                   NULL, -1, NULL, ORTE_RMCAST_XMIT))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            orte_rmcast_base.my_output_channel = (rmcast_base_channel_t*)opal_list_get_last(&orte_rmcast_base.channels);
         }
     } else {
         opal_output(0, "rmcast:tcp:init - unknown process type");
@@ -292,12 +301,12 @@ static int queue_xmit(rmcast_base_send_t *snd,
     /* if we were asked to send this on our group output
      * channel, substitute it
      */
-    if (ORTE_RMCAST_GROUP_CHANNEL == channel) {
-        if (NULL == orte_rmcast_base.my_group_channel) {
+    if (ORTE_RMCAST_GROUP_OUTPUT_CHANNEL == channel) {
+        if (NULL == orte_rmcast_base.my_output_channel) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return ORTE_ERR_NOT_FOUND;
         }
-        ch = orte_rmcast_base.my_group_channel;
+        ch = orte_rmcast_base.my_output_channel;
         goto process;
     }
     
@@ -518,8 +527,10 @@ static int tcp_recv(orte_process_name_t *name,
     int ret;
     orte_rmcast_channel_t chan;
 
-    if (ORTE_RMCAST_GROUP_CHANNEL == channel) {
-        chan = orte_rmcast_base.my_group_number;
+    if (ORTE_RMCAST_GROUP_INPUT_CHANNEL == channel) {
+        chan = orte_rmcast_base.my_input_channel->channel;
+    } else if (ORTE_RMCAST_GROUP_OUTPUT_CHANNEL == channel) {
+        chan = orte_rmcast_base.my_output_channel->channel;
     } else {
         chan = channel;
     }
@@ -563,8 +574,10 @@ static int tcp_recv_nb(orte_rmcast_channel_t channel,
                          "%s rmcast:tcp: recv_nb called on channel %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), channel));
     
-    if (ORTE_RMCAST_GROUP_CHANNEL == channel) {
-        chan = orte_rmcast_base.my_group_number;
+    if (ORTE_RMCAST_GROUP_INPUT_CHANNEL == channel) {
+        chan = orte_rmcast_base.my_input_channel->channel;
+    } else if (ORTE_RMCAST_GROUP_OUTPUT_CHANNEL == channel) {
+        chan = orte_rmcast_base.my_output_channel->channel;
     } else {
         chan = channel;
     }
@@ -594,8 +607,10 @@ static int tcp_recv_buffer(orte_process_name_t *name,
                          "%s rmcast:tcp: recv_buffer called on multicast channel %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), channel));
 
-    if (ORTE_RMCAST_GROUP_CHANNEL == channel) {
-        chan = orte_rmcast_base.my_group_number;
+    if (ORTE_RMCAST_GROUP_INPUT_CHANNEL == channel) {
+        chan = orte_rmcast_base.my_input_channel->channel;
+    } else if (ORTE_RMCAST_GROUP_OUTPUT_CHANNEL == channel) {
+        chan = orte_rmcast_base.my_output_channel->channel;
     } else {
         chan = channel;
     }
@@ -641,8 +656,10 @@ static int tcp_recv_buffer_nb(orte_rmcast_channel_t channel,
                          "%s rmcast:tcp: recv_buffer_nb called on multicast channel %d tag %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), channel, tag));
     
-    if (ORTE_RMCAST_GROUP_CHANNEL == channel) {
-        chan = orte_rmcast_base.my_group_number;
+    if (ORTE_RMCAST_GROUP_INPUT_CHANNEL == channel) {
+        chan = orte_rmcast_base.my_input_channel->channel;
+    } else if (ORTE_RMCAST_GROUP_OUTPUT_CHANNEL == channel) {
+        chan = orte_rmcast_base.my_output_channel->channel;
     } else {
         chan = channel;
     }

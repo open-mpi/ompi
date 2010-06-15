@@ -53,7 +53,8 @@ typedef struct {
     bool active;
     opal_list_t recvs;
     opal_list_t channels;
-    rmcast_base_channel_t *my_group_channel;
+    rmcast_base_channel_t *my_output_channel;
+    rmcast_base_channel_t *my_input_channel;
 } orte_rmcast_base_t;
 
 ORTE_DECLSPEC extern orte_rmcast_base_t orte_rmcast_base;

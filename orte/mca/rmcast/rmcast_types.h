@@ -26,7 +26,8 @@ typedef int32_t orte_rmcast_channel_t;
 #define ORTE_RMCAST_CHANNEL_T   OPAL_INT32
 
 /* ORTE IP multicast channels */
-#define ORTE_RMCAST_GROUP_CHANNEL          -2
+#define ORTE_RMCAST_GROUP_INPUT_CHANNEL    -3
+#define ORTE_RMCAST_GROUP_OUTPUT_CHANNEL   -2
 #define ORTE_RMCAST_WILDCARD_CHANNEL       -1
 #define ORTE_RMCAST_INVALID_CHANNEL         0
 #define ORTE_RMCAST_SYS_CHANNEL             1

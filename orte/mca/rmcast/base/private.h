@@ -186,7 +186,8 @@ ORTE_DECLSPEC void orte_rmcast_base_cancel_recv(orte_rmcast_channel_t channel,
 
 ORTE_DECLSPEC int orte_rmcast_base_close_channel(orte_rmcast_channel_t channel);
 
-ORTE_DECLSPEC orte_rmcast_channel_t orte_rmcast_base_query(void);
+ORTE_DECLSPEC int orte_rmcast_base_query(orte_rmcast_channel_t *output,
+                                         orte_rmcast_channel_t *input);
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 

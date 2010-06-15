@@ -129,8 +129,9 @@ typedef int (*orte_rmcast_base_module_open_channel_fn_t)(orte_rmcast_channel_t c
 /* close the channel */
 typedef int (*orte_rmcast_base_module_close_channel_fn_t)(orte_rmcast_channel_t channel);
 
-/* return my group's channel */
-typedef orte_rmcast_channel_t (*orte_rmcast_base_module_query_channel_fn_t)(void);
+/* return my group's channels */
+typedef int (*orte_rmcast_base_module_query_channel_fn_t)(orte_rmcast_channel_t *output,
+                                                          orte_rmcast_channel_t *input);
 
 /*
  * rmcast component
