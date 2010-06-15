@@ -41,20 +41,22 @@ static int datasize=1024;
 static void send_data(int fd, short flags, void *arg)
 {
     opal_buffer_t buf, *bfptr;
-    int32_t i32;
+    int32_t *i32;
     struct iovec iovec_array[3];
     int rc, i;
     opal_event_t *tmp = (opal_event_t*)arg;
     struct timeval now;
 
     bfptr = OBJ_NEW(opal_buffer_t);
-    i32 = -1;
-    opal_dss.pack(bfptr, &i32, datasize, OPAL_INT32);
-    if (ORTE_SUCCESS != (rc = orte_rmcast.send_buffer_nb(ORTE_RMCAST_GROUP_CHANNEL,
+    i32 = (int32_t*)malloc(datasize*sizeof(int32_t));
+    for (i=0; i < datasize; i++) {
+        i32[i] = -1;
+    }
+    opal_dss.pack(bfptr, i32, datasize, OPAL_INT32);
+    if (ORTE_SUCCESS != (rc = orte_rmcast.send_buffer_nb(ORTE_RMCAST_GROUP_OUTPUT_CHANNEL,
                                                          ORTE_RMCAST_TAG_OUTPUT, bfptr,
                                                          cbfunc_buf_snt, NULL))) {
         ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(bfptr);
         return;
     }        
     /* create an iovec array */
@@ -63,7 +65,7 @@ static void send_data(int fd, short flags, void *arg)
         iovec_array[i].iov_len = datasize;
     }
     /* send it out */
-    if (ORTE_SUCCESS != (rc = orte_rmcast.send(ORTE_RMCAST_GROUP_CHANNEL,
+    if (ORTE_SUCCESS != (rc = orte_rmcast.send(ORTE_RMCAST_GROUP_OUTPUT_CHANNEL,
                                                ORTE_RMCAST_TAG_OUTPUT,
                                                iovec_array, 3))) {
         ORTE_ERROR_LOG(rc);
@@ -108,13 +110,13 @@ int main(int argc, char* argv[])
         ORTE_TIMER_EVENT(5, 0, send_data);
     } else {
         /* setup to recv data on our channel */
-        if (ORTE_SUCCESS != (rc = orte_rmcast.recv_buffer_nb(ORTE_RMCAST_GROUP_CHANNEL,
+        if (ORTE_SUCCESS != (rc = orte_rmcast.recv_buffer_nb(ORTE_RMCAST_GROUP_OUTPUT_CHANNEL,
                                                              ORTE_RMCAST_TAG_OUTPUT,
                                                              ORTE_RMCAST_PERSISTENT,
                                                              cbfunc, NULL))) {
             ORTE_ERROR_LOG(rc);
         }
-        if (ORTE_SUCCESS != (rc = orte_rmcast.recv_nb(ORTE_RMCAST_GROUP_CHANNEL,
+        if (ORTE_SUCCESS != (rc = orte_rmcast.recv_nb(ORTE_RMCAST_GROUP_OUTPUT_CHANNEL,
                                                       ORTE_RMCAST_TAG_OUTPUT,
                                                       ORTE_RMCAST_PERSISTENT,
                                                       cbfunc_iovec, NULL))) {

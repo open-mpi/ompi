@@ -117,7 +117,9 @@ int orte_rmcast_base_open(void)
     for (i=0; i < 255; i++) {
         orte_rmcast_base.ports[i] = 0;
     }
-    
+    orte_rmcast_base.my_output_channel = NULL;
+    orte_rmcast_base.my_input_channel = NULL;
+
     /* public multicast channel for this job */
     mca_base_param_reg_string_name("rmcast", "base_multicast_network",
                                 "Network to use for multicast xmissions [link (default) | site | org | global | tuple-addr]",
