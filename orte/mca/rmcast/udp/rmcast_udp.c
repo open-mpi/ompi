@@ -192,14 +192,14 @@ static int init(void)
          /* finally, if we are an app, setup our grp xmit/recv channels, if given */
         if (ORTE_PROC_IS_APP && NULL != orte_rmcast_base.my_group_name) {
             if (ORTE_SUCCESS != (rc = open_channel(orte_rmcast_base.my_group_number,
-                                                   orte_rmcast_base.my_group_name,
+                                                   "recv",
                                                    NULL, -1, NULL, ORTE_RMCAST_RECV))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
             orte_rmcast_base.my_input_channel = (rmcast_base_channel_t*)opal_list_get_last(&orte_rmcast_base.channels);
             if (ORTE_SUCCESS != (rc = open_channel(orte_rmcast_base.my_group_number+1,
-                                                   orte_rmcast_base.my_group_name,
+                                                   "xmit",
                                                    NULL, -1, NULL, ORTE_RMCAST_XMIT))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
@@ -566,6 +566,10 @@ static int open_channel(orte_rmcast_channel_t channel, char *name,
     uint32_t netaddr=0, netmask=0, intr=0;
     int rc;
     
+    OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
+                         "%s opening channel %d for %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), channel, name));
+
     /* parse the network, if provided */
     if (NULL != network) {
         if (ORTE_SUCCESS != (rc = opal_iftupletoaddr(network, &netaddr, &netmask))) {
@@ -628,6 +632,10 @@ static int open_channel(orte_rmcast_channel_t channel, char *name,
     }
     
     /* we didn't find an existing match, so create a new channel */
+    OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
+                         "%s creating new channel %d for %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), channel, name));
+
     chan = OBJ_NEW(rmcast_base_channel_t);
     chan->name = strdup(name);
     chan->channel = channel;

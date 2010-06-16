@@ -204,15 +204,13 @@ static int init(void)
         /* finally, if we are an app, setup our grp xmit/recv channels, if given */
         if (ORTE_PROC_IS_APP && NULL != orte_rmcast_base.my_group_name) {
             if (ORTE_SUCCESS != (rc = open_channel(orte_rmcast_base.my_group_number,
-                                                   orte_rmcast_base.my_group_name,
-                                                   NULL, -1, NULL, ORTE_RMCAST_RECV))) {
+                                                   "recv", NULL, -1, NULL, ORTE_RMCAST_RECV))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
             orte_rmcast_base.my_input_channel = (rmcast_base_channel_t*)opal_list_get_last(&orte_rmcast_base.channels);
             if (ORTE_SUCCESS != (rc = open_channel(orte_rmcast_base.my_group_number+1,
-                                                   orte_rmcast_base.my_group_name,
-                                                   NULL, -1, NULL, ORTE_RMCAST_XMIT))) {
+                                                   "xmit", NULL, -1, NULL, ORTE_RMCAST_XMIT))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
@@ -687,6 +685,10 @@ static int open_channel(orte_rmcast_channel_t channel, char *name,
     opal_list_item_t *item;
     rmcast_base_channel_t *chan;
     
+    OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
+                         "%s opening channel %d for %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), channel, name));
+
     /* see if this name has already been assigned a channel on the specified network */
     for (item = opal_list_get_first(&orte_rmcast_base.channels);
          item != opal_list_get_end(&orte_rmcast_base.channels);
@@ -708,6 +710,10 @@ static int open_channel(orte_rmcast_channel_t channel, char *name,
     }
     
     /* we didn't find an existing match, so create a new channel */
+    OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
+                         "%s creating new channel %d for %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), channel, name));
+
     chan = OBJ_NEW(rmcast_base_channel_t);
     chan->name = strdup(name);
     chan->channel = channel;
@@ -840,6 +846,12 @@ static void relay_handler(int status, orte_process_name_t* sender,
 {
     int rc;
     
+    /* if the message is from myself, ignore it */
+    if (sender->jobid == ORTE_PROC_MY_NAME->jobid &&
+        sender->vpid == ORTE_PROC_MY_NAME->vpid) {
+        return;
+    }
+
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                          "%s rmcast:tcp relay multicast msg from %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
