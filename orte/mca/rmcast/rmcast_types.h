@@ -22,19 +22,19 @@
 BEGIN_C_DECLS
 
 /* channel type */
-typedef int32_t orte_rmcast_channel_t;
-#define ORTE_RMCAST_CHANNEL_T   OPAL_INT32
+typedef uint32_t orte_rmcast_channel_t;
+#define ORTE_RMCAST_CHANNEL_T   OPAL_UINT32
 
 /* ORTE IP multicast channels */
-#define ORTE_RMCAST_GROUP_INPUT_CHANNEL    -3
-#define ORTE_RMCAST_GROUP_OUTPUT_CHANNEL   -2
-#define ORTE_RMCAST_WILDCARD_CHANNEL       -1
-#define ORTE_RMCAST_INVALID_CHANNEL         0
-#define ORTE_RMCAST_SYS_CHANNEL             1
-#define ORTE_RMCAST_APP_PUBLIC_CHANNEL      2
-#define ORTE_RMCAST_DATA_SERVER_CHANNEL     3
+#define ORTE_RMCAST_GROUP_INPUT_CHANNEL     0
+#define ORTE_RMCAST_GROUP_OUTPUT_CHANNEL    1
+#define ORTE_RMCAST_WILDCARD_CHANNEL        2
+#define ORTE_RMCAST_INVALID_CHANNEL         3
+#define ORTE_RMCAST_SYS_CHANNEL             4
+#define ORTE_RMCAST_APP_PUBLIC_CHANNEL      5
+#define ORTE_RMCAST_DATA_SERVER_CHANNEL     6
 
-#define ORTE_RMCAST_DYNAMIC_CHANNELS        4
+#define ORTE_RMCAST_DYNAMIC_CHANNELS        7
 
 
 /* define channel directions */
