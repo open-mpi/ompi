@@ -390,6 +390,11 @@ static int rte_finalize(void)
         }
     }
     
+    /* remove the envars that we pushed into environ
+     * so we leave that structure intact
+     */
+    unsetenv("OMPI_MCA_grpcomm");
+    unsetenv("OMPI_MCA_routed");
     /* deconstruct my nidmap and jobmap arrays - this
      * function protects itself from being called
      * before things were initialized
