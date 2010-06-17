@@ -129,7 +129,7 @@ int orte_plm_rshd_component_query(mca_base_module_t **module, int *priority)
                              "%s plm:rshd: unable to be used: cannot find path "
                              "for launching agent \"%s\"\n", 
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             orte_plm_globals.rsh_agent_argv[0]));
+                             orte_rsh_agent));
         *module = NULL;
         return ORTE_ERROR;
     }
