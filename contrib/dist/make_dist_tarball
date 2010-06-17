@@ -360,4 +360,8 @@ if test "$greekonly" = "0"; then
 fi
 
 # Put the VERSION file back the way it was
-svn revert VERSION
+if test -d .svn; then
+    svn revert VERSION
+elif test -d .hg; then
+    hg revert VERSION
+fi
