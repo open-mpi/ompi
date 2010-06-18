@@ -59,7 +59,7 @@ static int do_test(void)
         if (0 == fgets(line, sizeof(line) - 1, fp)) {
             break;
         }
-        if (0 == strncmp(line, "dlopen=", 6)) {
+        if (0 == strncmp(line, "dlname=", 6)) {
             if (0 == strncmp(line + 7, "''", 2)) {
                 happy = 0;
             } else {
