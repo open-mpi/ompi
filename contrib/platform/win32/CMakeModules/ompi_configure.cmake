@@ -313,9 +313,7 @@ OMPI_CHECK_INCLUDE_FILE (stdbool.h HAVE_STDBOOL_H)
 
 OMPI_CHECK_INCLUDE_FILE (stdint.h HAVE_STDINT_H)
 
-
 OMPI_CHECK_INCLUDE_FILE (strings.h HAVE_STRINGS_H)
-
 
 OMPI_CHECK_INCLUDE_FILE (stropts.h HAVE_STROPTS_H)
 
@@ -359,7 +357,6 @@ OMPI_CHECK_INCLUDE_FILE (sys/time.h HAVE_SYS_TIME_H)
 
 OMPI_CHECK_INCLUDE_FILE (sys/tree.h HAVE_SYS_TREE_H)
 
-
 OMPI_CHECK_INCLUDE_FILE (sys/uio.h HAVE_SYS_UIO_H)
 
 OMPI_CHECK_INCLUDE_FILE (sys/utsname.h HAVE_SYS_UTSNAME_H)
@@ -391,7 +388,6 @@ OMPI_CHECK_INCLUDE_FILE (mx_extension.h MX_HAVE_EXTENSIONS_H)
 OMPI_CHECK_FUNCTION_EXISTS (asprintf HAVE_ASPRINTF)
 
 OMPI_CHECK_FUNCTION_EXISTS (backtrace HAVE_BACKTRACE)
- 
 
 OMPI_CHECK_FUNCTION_EXISTS (cnos_pm_barrier HAVE_CNOS_PM_BARRIER)
 
@@ -595,11 +591,8 @@ OMPI_CHECK_TYPES (uintptr_t UINTPTR_T none c)
 INCLUDE(setup_F77)
 INCLUDE(f77_check)
 INCLUDE(f77_check_real16_c_equiv)
-
-OMPI_DEF_VAR(OMPI_F77_DOUBLE_UNDERSCORE "Whether fortran symbols have a trailing double underscore or not." 0 1)
-OMPI_DEF_VAR(OMPI_F77_SINGLE_UNDERSCORE "Whether fortran symbols have a trailing single underscore or not." 0 1)
-OMPI_DEF_VAR(OMPI_F77_CAPS "Whether fortran symbols are all caps or not." 0 1)
-OMPI_DEF_VAR(OMPI_F77_PLAIN "Whether fortran symbols have no trailing underscore or not." 0 1)
+INCLUDE(f77_get_value_true)
+INCLUDE(f77_get_fortran_handle_max)
 
 IF(WIN32)
   OMPI_DEF(ompi_fortran_bogus_type_t "int" "A bogus type that allows us to have sentinel type values that are still valid." 0 1)
@@ -649,13 +642,13 @@ OMPI_F77_CHECK_REAL16_C_EQUIV()
 # compiler, get the max value for a fortran MPI handle (this macro
 # handles the case where we don't have a fortran compiler).
 
-#OMPI_F77_GET_FORTRAN_HANDLE_MAX
+OMPI_F77_GET_FORTRAN_HANDLE_MAX()
 
 #
 # Check for Fortran compilers value of TRUE and for the correct assumption
 # on LOGICAL for conversion into what C considers to be a true value
 #
-#OMPI_F77_GET_VALUE_TRUE
+OMPI_F77_GET_VALUE_TRUE()
 #OMPI_F77_CHECK_LOGICAL_ARRAY
 
 #
@@ -696,11 +689,6 @@ IF(WIN32)
   OMPI_DEF(OMPI_HAVE_CXX_EXCEPTION_SUPPORT 0 "Whether or not we have compiled with C++ exceptions support" 0 1)
 
   OMPI_DEF(OPAL_C_HAVE_VISIBILITY 1 "Whether C compiler supports -fvisibility." 0 1)
-
-  OMPI_DEF(OMPI_FORTRAN_HANDLE_MAX "2147483647"
-    "Max handle value for fortran MPI handles,\n   effectively min(INT_MAX, max fortran INTEGER value)." 0 1)
-
-  OMPI_DEF(OMPI_FORTRAN_VALUE_TRUE 0 "Fortran value for LOGICAL .TRUE. value." 0 1)
 
   OMPI_DEF(restrict " " "Define to equivalent of C99 restrict keyword, or to nothing if this is not supported.\n   Do not define if restrict is supported directly." 0 1)
 
