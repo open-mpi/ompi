@@ -481,6 +481,7 @@ static void check_debugger(int fd, short event, void *arg)
     orte_app_context_t *app;
     int rc;
     int32_t ljob;
+    orte_job_t *jdata;
 
     if (MPIR_being_debugged || orte_debugger_test_attach) {
         if (orte_debug_flag) {
@@ -504,21 +505,21 @@ static void check_debugger(int fd, short event, void *arg)
              * so we do not use the global orte_debugger_daemon
              * as this is reserved for co-location upon startup
              */
-            orte_debugger_daemon = OBJ_NEW(orte_job_t);
+            jdata = OBJ_NEW(orte_job_t);
             /* create a jobid for these daemons - this is done solely
              * to avoid confusing the rest of the system's bookkeeping
              */
-            orte_plm_base_create_jobid(orte_debugger_daemon);
+            orte_plm_base_create_jobid(jdata);
             /* flag the job as being debugger daemons */
-            orte_debugger_daemon->controls |= ORTE_JOB_CONTROL_DEBUGGER_DAEMON;
+            jdata->controls |= ORTE_JOB_CONTROL_DEBUGGER_DAEMON;
             /* unless directed, we do not forward output */
             if (!MPIR_forward_output) {
-                orte_debugger_daemon->controls &= ~ORTE_JOB_CONTROL_FORWARD_OUTPUT;
+                jdata->controls &= ~ORTE_JOB_CONTROL_FORWARD_OUTPUT;
             }
-            orte_debugger_daemon->num_procs = orte_process_info.num_procs;
+            jdata->num_procs = orte_process_info.num_procs;
             /* add it to the global job pool */
-            ljob = ORTE_LOCAL_JOBID(orte_debugger_daemon->jobid);
-            opal_pointer_array_set_item(orte_job_data, ljob, orte_debugger_daemon);
+            ljob = ORTE_LOCAL_JOBID(jdata->jobid);
+            opal_pointer_array_set_item(orte_job_data, ljob, jdata);
             /* create an app_context for the debugger daemon */
             app = OBJ_NEW(orte_app_context_t);
             if (NULL != orte_debugger_test_daemon) {
@@ -528,10 +529,15 @@ static void check_debugger(int fd, short event, void *arg)
             }
             opal_argv_append_nosize(&app->argv, app->app);
             build_debugger_args(app);
-            opal_pointer_array_add(orte_debugger_daemon->apps, &app->super);
-            orte_debugger_daemon->num_apps = 1;
+            opal_pointer_array_add(jdata->apps, &app->super);
+            jdata->num_apps = 1;
+            /* setup the mapping policy to bynode so we get one
+             * daemon on each node
+             */
+            jdata->map = OBJ_NEW(orte_job_map_t);
+            jdata->map->policy = ORTE_MAPPING_BYNODE;
             /* now go ahead and spawn this job */
-            if (ORTE_SUCCESS != (rc = orte_plm.spawn(NULL))) {
+            if (ORTE_SUCCESS != (rc = orte_plm.spawn(jdata))) {
                 ORTE_ERROR_LOG(rc);
             }
         }
