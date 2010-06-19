@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -292,15 +293,15 @@ static inline int32_t opal_atomic_add_32(volatile int32_t* v, int inc)
    int32_t t;
 
    __asm__ __volatile__(
-                        "1:   lwarx %0, 0, %3 \n\t"
-                        "     add  %0, %2, %0                \n\t"
-                        "     stwcx.   %0, 0, %3              \n\t"
-                        "     bne-  1b                      \n\t"
+                        "1:   lwarx   %0, 0, %3    \n\t"
+                        "     add     %0, %2, %0   \n\t"
+                        "     stwcx.  %0, 0, %3    \n\t"
+                        "     bne-    1b           \n\t"
                         : "=&r" (t), "=m" (*v)
                         : "r" (inc), "r" (v), "m" (*v)
                         : "cc");
 
-   return *v;
+   return t;
 }
 
 
@@ -309,15 +310,15 @@ static inline int32_t opal_atomic_sub_32(volatile int32_t* v, int dec)
    int32_t t;
 
    __asm__ __volatile__(
-                        "1:   lwarx %0,0,%3\n\t"
-                        "     subf  %0,%2,%0                \n\t"
-                        "     stwcx.   %0,0,%3              \n\t"
-                        "     bne-  1b                      \n\t"
+                        "1:   lwarx   %0,0,%3      \n\t"
+                        "     subf    %0,%2,%0     \n\t"
+                        "     stwcx.  %0,0,%3      \n\t"
+                        "     bne-    1b           \n\t"
                         : "=&r" (t), "=m" (*v)
                         : "r" (dec), "r" (v), "m" (*v)
                         : "cc");
 
-   return *v;
+   return t;
 }
 
 

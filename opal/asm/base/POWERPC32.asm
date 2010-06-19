@@ -139,8 +139,7 @@ START_FUNC(opal_atomic_add_32)
 	     add  r0, r4, r0                
 	     stwcx.   r0, 0, r3              
 	     bne-  REFLSYM(13)
-	
-	lwz r3,0(r3)
+	mr	r3,r0
 	blr
 END_FUNC(opal_atomic_add_32)
 
@@ -150,8 +149,7 @@ START_FUNC(opal_atomic_sub_32)
 	     subf  r0,r4,r0                
 	     stwcx.   r0,0,r3              
 	     bne-  REFLSYM(14)             
-	
-	lwz r3,0(r3)
+	mr	r3,r0
 	blr
 END_FUNC(opal_atomic_sub_32)
 
