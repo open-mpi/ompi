@@ -37,7 +37,7 @@
 int orte_util_encode_nodemap(opal_byte_object_t *boptr)
 {
     orte_vpid_t *vpids;
-    orte_node_t **nodes;
+    orte_node_t *node, *nd0;
     char prefix[ORTE_MAX_NODE_PREFIX], *tmp;
     int32_t i, len, firstnode, lastnode, nodenum, num_nodes;
     uint8_t command = ORTE_CONTIG_NODE_CMD;
@@ -54,17 +54,22 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
 
     /* determine the number of nodes in the global node array */
     num_nodes = 0;
-    nodes = (orte_node_t**)orte_node_pool->addr;
-    while (num_nodes < orte_node_pool->size &&
-           NULL != nodes[num_nodes]) {
-        ++num_nodes;
+    for (i=0; i <  orte_node_pool->size; i++) {
+        if (NULL != opal_pointer_array_get_item(orte_node_pool, i)) {
+            ++num_nodes;
+        }
     }
+
     /* pack number of nodes */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &num_nodes, 1, OPAL_INT32))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     
+    if (NULL == (nd0 = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0))) {
+          return ORTE_ERR_FATAL;
+    }
+
     /* pack the HNP's node name - don't mess with
      * trying to encode it - it could be different
      */
@@ -73,7 +78,7 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
      */
     if (!orte_keep_fqdn_hostnames) {
         char *ptr;
-        nodename = strdup(nodes[0]->name);
+        nodename = strdup(nd0->name);
         if (NULL != (ptr = strchr(nodename, '.'))) {
             *ptr = '\0';
         }
@@ -83,7 +88,7 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
         }
         free(nodename);
     } else {
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &nodes[0]->name, 1, OPAL_STRING))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &nd0->name, 1, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -94,13 +99,16 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
      */
     if (orte_contiguous_nodes < num_nodes) {
         /* discover the prefix - find first non-alpha character */
-        len = strlen(nodes[1]->name);
+        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 1))) {
+            return ORTE_ERR_FATAL;
+        }
+        len = strlen(node->name);
         memset(prefix, 0, ORTE_MAX_NODE_PREFIX);
-        prefix[0] = nodes[1]->name[0];  /* must start with alpha */
+        prefix[0] = node->name[0];  /* must start with alpha */
         for (i=1; i < len; i++) {
-            if (!isalpha(nodes[1]->name[i])) {
+            if (!isalpha(node->name[i])) {
                 /* found a non-alpha char */
-                if (!isdigit(nodes[1]->name[i])) {
+                if (!isdigit(node->name[i])) {
                     /* if it is anything but a digit,
                      * then that's not good
                      */
@@ -111,12 +119,12 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
                 /* okay, this defines end of the prefix.
                  * convert rest of name to an offset
                  */
-                firstnode = strtol(&(nodes[1]->name[i]), NULL, 10);
+                firstnode = strtol(&(node->name[i]), NULL, 10);
                 /* figure out how many digits are in the index */
-                for (num_digs=0; isdigit(nodes[1]->name[i+num_digs]); num_digs++);
+                for (num_digs=0; isdigit(node->name[i+num_digs]); num_digs++);
                 goto PACK;
             }
-            prefix[i] = nodes[1]->name[i];
+            prefix[i] = node->name[i];
         }
 
     PACK:
@@ -152,7 +160,10 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
                              "%s encode:nidmap:contig_nodes prefix %s num_digits %d offset %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), prefix, num_digs, firstnode));
         
-        lastnode = strtol(&(nodes[2]->name[i]), NULL, 10);
+        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 2))) {
+            return ORTE_ERR_FATAL;
+        }
+        lastnode = strtol(&(node->name[i]), NULL, 10);
         if ((lastnode - firstnode) < 0) {
             /* we are decrementing */
             incdec = 0;
@@ -174,7 +185,10 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
          * and total number of nodes in each contiguous range
          */
         for (i=2; i < num_nodes; i++) {
-            nodenum = strtol(&(nodes[i]->name[len]), NULL, 10);
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                return ORTE_ERR_FATAL;
+            }
+            nodenum = strtol(&(node->name[len]), NULL, 10);
             step = nodenum -lastnode;
             if (step < 0) {
                 /* we are decrementing */
@@ -225,9 +239,12 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
            return rc;
        }
         for (i=1; i < num_nodes; i++) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                return ORTE_ERR_FATAL;
+            }
             if (!orte_keep_fqdn_hostnames) {
                 char *ptr;
-                nodename = strdup(nodes[i]->name);
+                nodename = strdup(node->name);
                 if (NULL != (ptr = strchr(nodename, '.'))) {
                     *ptr = '\0';
                 }
@@ -237,7 +254,7 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
                 }
                 free(nodename);
             } else {
-                if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &nodes[i]->name, 1, OPAL_STRING))) {
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &node->name, 1, OPAL_STRING))) {
                     ORTE_ERROR_LOG(rc);
                     return rc;
                 }
@@ -259,12 +276,15 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
     /* allocate space for the daemon vpids */
     vpids = (orte_vpid_t*)malloc(num_nodes * sizeof(orte_vpid_t));
     for (i=0; i < num_nodes; i++) {
-        if (NULL == nodes[i]->daemon) {
+        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+            return ORTE_ERR_FATAL;
+        }
+        if (NULL == node->daemon) {
             /* some nodes may not have daemons on them */
             vpids[i] = ORTE_VPID_INVALID;
             continue;
         }
-        vpids[i] = nodes[i]->daemon->name.vpid;
+        vpids[i] = node->daemon->name.vpid;
     }
     if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, vpids, num_nodes, ORTE_VPID))) {
         ORTE_ERROR_LOG(rc);
@@ -276,7 +296,10 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
         /* check to see if all reported archs are the same */
         orte_homogeneous_nodes = true;
         for (i=1; i < num_nodes; i++) {
-            if (nodes[i]->arch != nodes[0]->arch) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                return ORTE_ERR_FATAL;
+            }
+            if (node->arch != nd0->arch) {
                 orte_homogeneous_nodes = false;
                 break;
             }
@@ -303,7 +326,10 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
             arch = (int32_t*)malloc(num_nodes * 4);
             /* transfer the data from the nodes */
             for (i=0; i < num_nodes; i++) {
-                arch[i] = nodes[i]->arch;
+                if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                    return ORTE_ERR_FATAL;
+                }
+                arch[i] = node->arch;
             }
             /* pack the values */
             if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, arch, num_nodes, OPAL_INT32))) {
@@ -336,7 +362,6 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo, opal_pointer_array_t *nodes
     orte_nid_t *node;
     orte_vpid_t *vpids;
     uint8_t command, num_digs;
-    orte_nid_t **nd;
     uint8_t incdec;
     int32_t index, step;
     int32_t *arch;
@@ -353,9 +378,11 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo, opal_pointer_array_t *nodes
          * the memory pointed to by the elements in the array, so we need
          * to release those first
          */
-        nd = (orte_nid_t**)nodes->addr;
-        for (i=0; i < nodes->size && NULL != nd[i]; i++) {
-            OBJ_RELEASE(nd[i]);
+        for (i=0; i < nodes->size; i++) {
+            if (NULL == (node = (orte_nid_t*)opal_pointer_array_get_item(nodes, i))) {
+                continue;
+            }
+            OBJ_RELEASE(node);
         }
         /* now use the opal function to reset the internal pointers */
         opal_pointer_array_remove_all(nodes);
@@ -524,9 +551,11 @@ process_daemons:
      * daemons in the system
      */
     num_daemons = 0;
-    nd = (orte_nid_t**)nodes->addr;
     for (i=0; i < num_nodes; i++) {
-        nd[i]->daemon = vpids[i];
+            if (NULL == (node = (orte_nid_t*)opal_pointer_array_get_item(nodes, i))) {
+                continue;
+            }
+        node->daemon = vpids[i];
         if (ORTE_VPID_INVALID != vpids[i]) {
             ++num_daemons;
         }
@@ -562,21 +591,25 @@ process_daemons:
             return rc;
         }
         /* transfer the data to the nodes */
-        nd = (orte_nid_t**)nodes->addr;
         for (i=0; i < num_nodes; i++) {
-            nd[i]->arch = arch[i];
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(nodes, i))) {
+                continue;
+            }
+            node->arch = arch[i];
         }
         free(arch);
     }
  
     if (0 < opal_output_get_verbosity(orte_debug_output)) {
-        nd = (orte_nid_t**)nodes->addr;
         for (i=0; i < num_nodes; i++) {
-            opal_output(0, "%s node[%d].name %s daemon %s arch %0x",
+             if (NULL == (node = (orte_nid_t*)opal_pointer_array_get_item(nodes, i))) {
+                continue;
+            }
+           opal_output(0, "%s node[%d].name %s daemon %s arch %0x",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), i,
-                        (NULL == nd[i]) ? "NULL" : nd[i]->name,
-                        ORTE_VPID_PRINT(nd[i]->daemon),
-                        (NULL == nd[i]) ? 0 : nd[i]->arch);
+                        node->name,
+                        ORTE_VPID_PRINT(node->daemon),
+                        node->arch);
         }
     }
 
@@ -587,7 +620,7 @@ process_daemons:
 int orte_util_encode_pidmap(orte_job_t *jdata, opal_byte_object_t *boptr)
 {
     int32_t *nodes;
-    orte_proc_t **procs;
+    orte_proc_t *proc;
     orte_vpid_t i;
     int8_t *tmp;
     opal_buffer_t buf;
@@ -608,9 +641,11 @@ int orte_util_encode_pidmap(orte_job_t *jdata, opal_byte_object_t *boptr)
     nodes = (int32_t*)malloc(jdata->num_procs * 4);
     
     /* transfer and pack the node info in one pack */
-    procs = (orte_proc_t**)jdata->procs->addr;
     for (i=0; i < jdata->num_procs; i++) {
-        nodes[i] = procs[i]->node->index;
+        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
+            continue;
+        }
+        nodes[i] = proc->node->index;
     }
     if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, nodes, jdata->num_procs, OPAL_INT32))) {
         ORTE_ERROR_LOG(rc);
@@ -625,7 +660,10 @@ int orte_util_encode_pidmap(orte_job_t *jdata, opal_byte_object_t *boptr)
     
    /* transfer and pack them in one pack */
     for (i=0; i < jdata->num_procs; i++) {
-        lrank[i] = procs[i]->local_rank;
+        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
+            continue;
+        }
+        lrank[i] = proc->local_rank;
     }
     if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, lrank, jdata->num_procs, ORTE_LOCAL_RANK))) {
         ORTE_ERROR_LOG(rc);
@@ -636,7 +674,10 @@ int orte_util_encode_pidmap(orte_job_t *jdata, opal_byte_object_t *boptr)
     /* transfer and pack the node ranks in one pack */
     nrank = (orte_node_rank_t*)malloc(jdata->num_procs*sizeof(orte_node_rank_t));
     for (i=0; i < jdata->num_procs; i++) {
-        nrank[i] = procs[i]->node_rank;
+        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
+            continue;
+        }
+        nrank[i] = proc->node_rank;
     }
     if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, nrank, jdata->num_procs, ORTE_NODE_RANK))) {
         ORTE_ERROR_LOG(rc);
@@ -647,7 +688,10 @@ int orte_util_encode_pidmap(orte_job_t *jdata, opal_byte_object_t *boptr)
     /* transfer and pack the app_idx in one pack */
     tmp = (int8_t*)malloc(jdata->num_procs);
     for (i=0; i < jdata->num_procs; i++) {
-        tmp[i] = procs[i]->app_idx;
+        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
+            continue;
+        }
+        tmp[i] = proc->app_idx;
     }
     if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, tmp, jdata->num_procs, OPAL_INT8))) {
         ORTE_ERROR_LOG(rc);
