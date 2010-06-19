@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2006-2010 Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
@@ -1490,6 +1490,17 @@ static int parse_locals(int argc, char* argv[])
                 if (made_app) {
                     app->idx = app_num;
                     ++app_num;
+                    /* The v1.3/v1.4 series does not support more than 127
+                       app contexts.  v1.5 and beyond does support more
+                       than 127 contexts, but back-porting the fix would
+                       be a gigantic pain.  See
+                       https://svn.open-mpi.org/trac/ompi/ticket/2430 for
+                       more details. */
+                    if (app_num > 127) {
+                        orte_show_help("help-orterun.txt", "too many app contexts",
+                                       true, orte_cmd_basename);
+                        exit(1);
+                    }
                     opal_pointer_array_add(jdata->apps, app);
                     ++jdata->num_apps;
                 }
@@ -1516,6 +1527,17 @@ static int parse_locals(int argc, char* argv[])
         if (made_app) {
             app->idx = app_num;
             ++app_num;
+            /* The v1.3/v1.4 series does not support more than 127 app
+               contexts.  v1.5 and beyond does support more than 127
+               contexts, but back-porting the fix would be a gigantic
+               pain.  See
+               https://svn.open-mpi.org/trac/ompi/ticket/2430 for more
+               details. */
+            if (app_num > 127) {
+                orte_show_help("help-orterun.txt", "too many app contexts",
+                               true, orte_cmd_basename);
+                exit(1);
+            }
             opal_pointer_array_add(jdata->apps, app);
             ++jdata->num_apps;
         }
@@ -2141,7 +2163,9 @@ static int parse_appfile(char *filename, char ***env)
             rc = create_app(argc, argv, &app, &made_app, &tmp_env);
             if (ORTE_SUCCESS != rc) {
                 /* Assume that the error message has already been
-                   printed; no need to cleanup -- we can just exit */
+                   printed */
+                fclose(fp);
+                orte_finalize();
                 exit(1);
             }
             if (NULL != tmp_env) {
@@ -2150,6 +2174,19 @@ static int parse_appfile(char *filename, char ***env)
             if (made_app) {
                 app->idx = app_num;
                 ++app_num;
+                /* The v1.3/v1.4 series does not support more than 127
+                   app contexts.  v1.5 and beyond does support more
+                   than 127 contexts, but back-porting the fix would
+                   be a gigantic pain.  See
+                   https://svn.open-mpi.org/trac/ompi/ticket/2430 for
+                   more details. */
+                if (app_num > 127) {
+                    orte_show_help("help-orterun.txt", "too many app contexts",
+                                   true, orte_cmd_basename);
+                    fclose(fp);
+                    orte_finalize();
+                    exit(1);
+                }
                 opal_pointer_array_add(jdata->apps, app);
                 ++jdata->num_apps;
             }
