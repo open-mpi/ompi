@@ -199,7 +199,7 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
         orte_never_launched = true;
         ORTE_UPDATE_EXIT_STATUS(0);
         orte_trigger_event(&orte_exit);
-        return ORTE_ERROR;
+        return ORTE_ERR_SILENT;
     }
     
     /* quick sanity check - is the stdin target within range
