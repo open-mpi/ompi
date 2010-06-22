@@ -16,6 +16,8 @@
 # $HEADER$
 #
 
+EXTRA_DIST = .windows
+
 sources = \
         ess_slave.h \
         ess_slave_component.c \
