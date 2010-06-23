@@ -176,7 +176,7 @@ static int module_set(opal_paffinity_base_cpu_set_t mask)
     for (i = 0; ((unsigned int) i) < OPAL_PAFFINITY_BITMASK_T_NUM_BITS; ++i) {
         if (OPAL_PAFFINITY_CPU_ISSET(i, mask) && 
             i < mca_paffinity_hwloc_component.cpuset_max_size) {
-            hwloc_cpuset_cpu(set, i);
+            hwloc_cpuset_set(set, i);
         }
     }
 
