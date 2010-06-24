@@ -352,6 +352,8 @@ typedef struct {
     opal_list_item_t super;
     /* a name for this job */
     char *name;
+    /* a name for this instance of the job */
+    char *instance;
     /* jobid for this job */
     orte_jobid_t jobid;
     /* app_context array for this job */
