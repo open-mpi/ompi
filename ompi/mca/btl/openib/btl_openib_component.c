@@ -3554,6 +3554,11 @@ int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl, const int qp)
     }
     num_post = rd_curr_num - openib_btl->qps[qp].u.srq_qp.rd_posted;
 
+    if (0 == num_post) {
+        OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
+        return OMPI_SUCCESS;
+    }
+
     for(i = 0; i < num_post; i++) {
         ompi_free_list_item_t* item;
         OMPI_FREE_LIST_WAIT(&openib_btl->device->qps[qp].recv_free, item, rc);
