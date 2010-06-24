@@ -516,7 +516,6 @@ static void check_debugger(int fd, short event, void *arg)
             if (!MPIR_forward_output) {
                 jdata->controls &= ~ORTE_JOB_CONTROL_FORWARD_OUTPUT;
             }
-            jdata->num_procs = orte_process_info.num_procs;
             /* add it to the global job pool */
             ljob = ORTE_LOCAL_JOBID(jdata->jobid);
             opal_pointer_array_set_item(orte_job_data, ljob, jdata);
@@ -526,6 +525,11 @@ static void check_debugger(int fd, short event, void *arg)
                 app->app = strdup(orte_debugger_test_daemon);
             } else {
                 app->app = strdup((char*)MPIR_executable_path);
+            }
+            if (orte_hnp_is_allocated) {
+                app->num_procs = orte_process_info.num_procs;
+            } else {
+                app->num_procs = orte_process_info.num_procs - 1;
             }
             opal_argv_append_nosize(&app->argv, app->app);
             build_debugger_args(app);
@@ -688,6 +692,10 @@ void orte_debugger_init_after_spawn(orte_job_t *jdata)
         return;
     }
     
+    if (orte_output_debugger_proctable) {
+        opal_output(orte_clean_output, "MPIR Proctable for job %s", ORTE_JOBID_PRINT(jdata->jobid));
+    }
+
     /* initialize MPIR_proctable */
     for (j=0; j < jdata->num_procs; j++) {
         if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, j))) {
@@ -710,6 +718,11 @@ void orte_debugger_init_after_spawn(orte_job_t *jdata)
             opal_os_path( false, appctx->cwd, appctx->app, NULL ); 
         } 
         MPIR_proctable[i].pid = proc->pid;
+        if (orte_output_debugger_proctable) {
+            opal_output(orte_clean_output, "%s: Host %s Exe %s Pid %d",
+                        ORTE_VPID_PRINT(i), MPIR_proctable[i].host_name,
+                        MPIR_proctable[i].executable_name, MPIR_proctable[i].pid);
+        }
     }
 
     if (orte_debug_flag) {

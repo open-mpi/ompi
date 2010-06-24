@@ -603,7 +603,7 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
      */
     if (ORTE_ERR_UNRECOVERABLE == orte_errmgr.update_state(peer->peer_name.jobid, ORTE_JOB_STATE_COMM_FAILED,
                                                            &peer->peer_name, ORTE_PROC_STATE_COMM_FAILED,
-                                                           ORTE_ERROR_DEFAULT_EXIT_CODE)) {
+                                                           0, ORTE_ERROR_DEFAULT_EXIT_CODE)) {
         /* Should free the peer lock before we abort so we don't 
          * get stuck in the orte_wait_kill when receiving messages in the 
          * tcp OOB

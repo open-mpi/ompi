@@ -817,19 +817,6 @@ int orterun(int argc, char *argv[])
     /* Spawn the job */
     rc = orte_plm.spawn(jdata);
     
-    /* output debugger proctable, if requested */
-    if (orte_output_debugger_proctable) {
-        char *output;
-        opal_dss.print(&output, NULL, jdata->map, ORTE_JOB_MAP);
-        if (orte_xml_output) {
-            fprintf(orte_xml_fp, "%s\n", output);
-            fflush(orte_xml_fp);
-        } else {
-            opal_output(orte_clean_output, "%s", output);
-        }
-        free(output);
-    }
-    
     /* complete debugger interface */
     orte_debugger_init_after_spawn(jdata);
     

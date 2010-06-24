@@ -440,7 +440,7 @@ static void process_msg(int fd, short event, void *data)
                         
                         /* update the state */
                         orte_errmgr.update_state(job, ORTE_JOB_STATE_UNDEF,
-                                                 &name, state, exit_code);
+                                                 &name, state, pid, exit_code);
                     }
                     count = 1;
                 }
@@ -475,7 +475,7 @@ static void process_msg(int fd, short event, void *data)
                     /* update the errmgr state */
                     orte_errmgr.update_state(job, ORTE_JOB_STATE_REGISTERED,
                                              &name, ORTE_PROC_STATE_REGISTERED,
-                                             ORTE_ERROR_DEFAULT_EXIT_CODE);
+                                             0, ORTE_ERROR_DEFAULT_EXIT_CODE);
                     count=1;
                 }
                 /* pass the remainder of the buffer to the active module's

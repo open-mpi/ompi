@@ -256,7 +256,7 @@ static void sample(int fd, short event, void *arg)
                            (unsigned long)stats.vsize/1000000, (unsigned long)job->memory_limit);
             orte_errmgr.update_state(child->name->jobid, ORTE_JOB_STATE_SENSOR_BOUND_EXCEEDED,
                                      child->name, ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED,
-                                     ORTE_ERR_MEM_LIMIT_EXCEEDED);
+                                     0, ORTE_ERR_MEM_LIMIT_EXCEEDED);
         }
         OBJ_DESTRUCT(&stats);
     }

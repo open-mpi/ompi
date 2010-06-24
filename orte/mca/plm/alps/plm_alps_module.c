@@ -402,7 +402,7 @@ cleanup:
     if (failed_launch) {
         orte_errmgr.update_state(failed_job, job_state,
                                  NULL, ORTE_PROC_STATE_UNDEF,
-                                 ORTE_ERROR_DEFAULT_EXIT_CODE);
+                                 0, ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
     
     return rc;
@@ -488,14 +488,14 @@ static void alps_wait_cb(pid_t pid, int status, void* cbdata){
              * callback receive and exit
              */
             orte_errmgr.update_state(ORTE_PROC_MY_NAME->jobid, ORTE_JOB_STATE_FAILED_TO_START,
-                                     NULL, ORTE_PROC_STATE_UNDEF, status);
+                                     NULL, ORTE_PROC_STATE_UNDEF, 0, status);
             
         } else {
             /* an orted must have died unexpectedly after launch - report
              * that the daemon has failed so we exit
              */
             orte_errmgr.update_state(ORTE_PROC_MY_NAME->jobid, ORTE_JOB_STATE_ABORTED,
-                                     NULL, ORTE_PROC_STATE_UNDEF, status);
+                                     NULL, ORTE_PROC_STATE_UNDEF, 0, status);
         }
     }
     

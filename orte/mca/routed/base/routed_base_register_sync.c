@@ -156,7 +156,7 @@ int orte_routed_base_process_callback(orte_jobid_t job, opal_buffer_t *buffer)
         
         /* update the proc state */
         orte_errmgr.update_state(job, ORTE_JOB_STATE_UNDEF,
-                                 &proc->name, ORTE_PROC_STATE_RUNNING, 0);
+                                 &proc->name, ORTE_PROC_STATE_RUNNING, 0, 0);
         cnt = 1;
     }
     if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != OPAL_SOS_GET_ERROR_CODE(rc)) {

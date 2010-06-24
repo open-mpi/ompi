@@ -747,7 +747,7 @@ static int route_lost(const orte_process_name_t *route)
                         ORTE_VPID_PRINT(route->vpid));
             orte_errmgr.update_state(route->jobid, ORTE_JOB_STATE_COMM_FAILED,
                                      (orte_process_name_t*)route,
-                                     ORTE_PROC_STATE_COMM_FAILED, 1);
+                                     ORTE_PROC_STATE_COMM_FAILED, 0, 1);
         }
         /* either way, take no further action */
         return ORTE_SUCCESS;

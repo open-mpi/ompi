@@ -63,6 +63,7 @@ int orte_errmgr_base_update_state(orte_jobid_t job,
                                   orte_job_state_t jobstate,
                                   orte_process_name_t *name,
                                   orte_proc_state_t state,
+                                  pid_t pid,
                                   orte_exit_code_t exit_code)
 {
     int rc=ORTE_SUCCESS;
@@ -89,7 +90,7 @@ int orte_errmgr_base_update_state(orte_jobid_t job,
             continue;
         }
         if( NULL != module->update_state ) {
-            rc = module->update_state(job, jobstate, name, state, exit_code, &stack_state);
+            rc = module->update_state(job, jobstate, name, state, pid, exit_code, &stack_state);
             if (ORTE_SUCCESS != rc || ORTE_ERRMGR_STACK_STATE_COMPLETE & stack_state) {
                 break;
             }

@@ -300,7 +300,7 @@ static void orte_plm_submit_wait_daemon(pid_t pid, int status, void* cbdata)
             will be non-zero and forcibly terminate the job so orterun can exit
         */
         orte_errmgr.update_state(active_job, ORTE_JOB_STATE_FAILED_TO_START,
-                                 NULL, ORTE_PROC_STATE_UNDEF, status);
+                                 NULL, ORTE_PROC_STATE_UNDEF, 0, status);
         
     } /* if abnormal exit */
 
@@ -931,7 +931,7 @@ launch_apps:
     if (failed_launch) {
         orte_errmgr.update_state(jdata->jobid, ORTE_JOB_STATE_FAILED_TO_START,
                                  NULL, ORTE_PROC_STATE_UNDEF,
-                                 ORTE_ERROR_DEFAULT_EXIT_CODE);
+                                 0, ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
 
     return rc;

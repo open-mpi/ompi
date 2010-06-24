@@ -151,7 +151,7 @@ static void wait_cb(pid_t pid, int status, void* cbdata)
     }
     /* note that this daemon failed */
     orte_errmgr.update_state(proc->name.jobid, ORTE_JOB_STATE_FAILED_TO_START,
-                             NULL, ORTE_PROC_STATE_FAILED_TO_START, status);
+                             NULL, ORTE_PROC_STATE_FAILED_TO_START, 0, status);
 
     /* release any waiting threads */
     OPAL_THREAD_LOCK(&mca_plm_rshd_component.lock);
@@ -376,7 +376,7 @@ cleanup:
     if (failed_launch) {
         orte_errmgr.update_state(failed_job, job_state,
                                  NULL, ORTE_PROC_STATE_UNDEF,
-                                 ORTE_ERROR_DEFAULT_EXIT_CODE);
+                                 0, ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
 
     return rc;
