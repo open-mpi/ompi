@@ -592,7 +592,7 @@ process_daemons:
         }
         /* transfer the data to the nodes */
         for (i=0; i < num_nodes; i++) {
-            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(nodes, i))) {
+            if (NULL == (node = (orte_nid_t*)opal_pointer_array_get_item(nodes, i))) {
                 continue;
             }
             node->arch = arch[i];
