@@ -216,8 +216,10 @@ int orte_dt_print_job(char **output, char *prefix, orte_job_t *src, opal_data_ty
         asprintf(&pfx2, "%s", prefix);
     }
 
-    asprintf(&tmp, "\n%sData for job: %s\tName: %s\n%s\tNum apps: %ld\tControls: %0x\tStdin target: %s\tState: %s\tAbort: %s", pfx2,
-             ORTE_JOBID_PRINT(src->jobid), src->name, pfx2,
+    asprintf(&tmp, "\n%sData for job: %s\tName: %s\tInstance: %s\n%s\tNum apps: %ld\tControls: %0x\tStdin target: %s\tState: %s\tAbort: %s", pfx2,
+             ORTE_JOBID_PRINT(src->jobid),
+             (NULL != src->name) ? src->name : "NULL",
+             (NULL != src->instance) ? src->instance : "NULL", pfx2,
              (long)src->num_apps, src->controls, ORTE_VPID_PRINT(src->stdin_target),
              orte_job_state_to_str(src->state), src->abort ? "True" : "False");
     asprintf(&pfx, "%s\t", pfx2);
