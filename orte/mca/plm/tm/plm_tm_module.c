@@ -471,7 +471,7 @@ launch_apps:
     if (failed_launch) {
         orte_errmgr.update_state(failed_job, ORTE_JOB_STATE_FAILED_TO_START,
                                  NULL, ORTE_PROC_STATE_UNDEF,
-                                 ORTE_ERROR_DEFAULT_EXIT_CODE);
+                                 0, ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
         
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
@@ -578,5 +578,5 @@ static void failed_start(int fd, short dummy, void *arg)
     
     orte_errmgr.update_state(ORTE_PROC_MY_NAME->jobid, ORTE_JOB_STATE_FAILED_TO_START,
                              NULL, ORTE_PROC_STATE_UNDEF,
-                             ORTE_ERROR_DEFAULT_EXIT_CODE);
+                             0, ORTE_ERROR_DEFAULT_EXIT_CODE);
 }

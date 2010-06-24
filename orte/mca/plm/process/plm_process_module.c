@@ -927,7 +927,7 @@ static void orte_plm_process_wait_daemon(pid_t pid, int status, void* cbdata)
          */
         orte_errmgr.update_state(active_job, ORTE_JOB_STATE_FAILED_TO_START,
                                  NULL, ORTE_PROC_STATE_UNDEF,
-                                 status);
+                                 0, status);
     } /* if abnormal exit */
 
     /* release any waiting threads */
@@ -1369,7 +1369,7 @@ launch_apps:
     if( failed_launch ) {
         orte_errmgr.update_state(jdata->jobid, job_state,
                                  NULL, ORTE_PROC_STATE_UNDEF,
-                                 ORTE_ERROR_DEFAULT_EXIT_CODE);
+                                 0, ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
 
     return rc;

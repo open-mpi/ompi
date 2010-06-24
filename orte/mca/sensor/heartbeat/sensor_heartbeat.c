@@ -285,7 +285,7 @@ static void check_heartbeat(int fd, short dummy, void *arg)
                 name.vpid = v;
                 orte_errmgr.update_state(ORTE_PROC_MY_NAME->jobid, ORTE_JOB_STATE_HEARTBEAT_FAILED,
                                          &name, ORTE_PROC_STATE_HEARTBEAT_FAILED,
-                                         ORTE_ERR_HEARTBEAT_LOST);
+                                         0, ORTE_ERR_HEARTBEAT_LOST);
             }
         }
     }

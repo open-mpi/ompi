@@ -49,7 +49,9 @@ static int pack_state_for_proc(opal_buffer_t *alert, orte_odls_child_t *child);
 static bool all_children_registered(orte_jobid_t job);
 static int pack_child_contact_info(orte_jobid_t job, opal_buffer_t *buf);
 static void failed_start(orte_odls_job_t *jobdat, orte_exit_code_t exit_code);
-static void update_local_children(orte_odls_job_t *jobdat, orte_job_state_t jobstate, orte_proc_state_t state);
+static void update_local_children(orte_odls_job_t *jobdat,
+                                  orte_job_state_t jobstate,
+                                  orte_proc_state_t state);
 static void killprocs(orte_jobid_t job, orte_vpid_t vpid);
 
 
@@ -68,6 +70,7 @@ static int update_state(orte_jobid_t job,
                         orte_job_state_t jobstate,
                         orte_process_name_t *proc,
                         orte_proc_state_t state,
+                        pid_t pid,
                         orte_exit_code_t exit_code,
                         orte_errmgr_stack_state_t *stack_state);
 
@@ -109,6 +112,7 @@ static int update_state(orte_jobid_t job,
                         orte_job_state_t jobstate,
                         orte_process_name_t *proc,
                         orte_proc_state_t state,
+                        pid_t pid,
                         orte_exit_code_t exit_code,
                         orte_errmgr_stack_state_t *stack_state)
 {
@@ -271,10 +275,10 @@ static int update_state(orte_jobid_t job,
     }
     
     OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
-                         "%s errmgr:orted got state %s for proc %s ",
+                         "%s errmgr:orted got state %s for proc %s pid %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          orte_proc_state_to_str(state),
-                         ORTE_NAME_PRINT(proc)));
+                         ORTE_NAME_PRINT(proc), pid));
  
     /***  UPDATE COMMAND FOR A SPECIFIC PROCESS ***/
     if (ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED == state) {
@@ -406,6 +410,9 @@ static int update_state(orte_jobid_t job,
             child->name->vpid == proc->vpid) {
             if (ORTE_PROC_STATE_UNTERMINATED > child->state) {
                 child->state = state;
+                if (0 < pid) {
+                    child->pid = pid;
+                }
                 child->exit_code = exit_code;
             }
             /* done with loop */

@@ -65,6 +65,7 @@ ORTE_DECLSPEC int orte_errmgr_base_update_state(orte_jobid_t job,
                                                 orte_job_state_t jobstate,
                                                 orte_process_name_t *proc_name,
                                                 orte_proc_state_t state,
+                                                pid_t pid,
                                                 orte_exit_code_t exit_code);
 ORTE_DECLSPEC int orte_errmgr_base_abort(int error_code, char *fmt, ...)
 #   if OPAL_HAVE_ATTRIBUTE_FORMAT_FUNCPTR

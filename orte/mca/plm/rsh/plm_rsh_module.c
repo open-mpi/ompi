@@ -1033,7 +1033,7 @@ CLEANUP:
         if( NULL != rml_uri ) free(rml_uri);
         orte_errmgr.update_state(peer.jobid, ORTE_JOB_STATE_FAILED_TO_START,
                                  NULL, ORTE_PROC_STATE_FAILED_TO_START,
-                                 ORTE_ERROR_DEFAULT_EXIT_CODE);
+                                 0, ORTE_ERROR_DEFAULT_EXIT_CODE);
     } else {
         orted_num_callback++;
     }
@@ -1419,7 +1419,7 @@ launch_apps:
     if (failed_launch) {
         orte_errmgr.update_state(failed_job, job_state,
                                  NULL, ORTE_PROC_STATE_UNDEF,
-                                 ORTE_ERROR_DEFAULT_EXIT_CODE);
+                                 0, ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
 
     /* cancel the lingering recv */

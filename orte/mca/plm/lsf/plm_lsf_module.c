@@ -364,7 +364,7 @@ cleanup:
     if (failed_launch) {
         orte_errmgr.update_state(failed_job, job_state,
                                  NULL, ORTE_PROC_STATE_UNDEF,
-                                 ORTE_ERROR_DEFAULT_EXIT_CODE);
+                                 0, ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
 
     return rc;

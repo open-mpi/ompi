@@ -342,7 +342,7 @@ static void sample(int fd, short event, void *arg)
                            ft->file, ft->file_size, ctime(&ft->last_access), ctime(&ft->last_mod));
             orte_errmgr.update_state(ft->jobid, ORTE_JOB_STATE_SENSOR_BOUND_EXCEEDED,
                                      NULL, ORTE_PROC_STATE_UNDEF,
-                                     ORTE_ERR_PROC_STALLED);
+                                     0, ORTE_ERR_PROC_STALLED);
         }
     }
         

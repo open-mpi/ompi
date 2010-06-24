@@ -51,6 +51,7 @@ static void update_local_procs_in_job(orte_job_t *jdata, orte_job_state_t jobsta
                                       orte_proc_state_t state, orte_exit_code_t exit_code);
 static void update_proc(orte_job_t *jdata, orte_process_name_t *proc,
                         orte_proc_state_t state,
+                        pid_t pid,
                         orte_exit_code_t exit_code);
 static void check_job_complete(orte_job_t *jdata);
 static void killprocs(orte_jobid_t job, orte_vpid_t vpid);
@@ -67,6 +68,7 @@ static int update_state(orte_jobid_t job,
                         orte_job_state_t jobstate,
                         orte_process_name_t *proc_name,
                         orte_proc_state_t state,
+                        pid_t pid,
                         orte_exit_code_t exit_code,
                         orte_errmgr_stack_state_t *stack_state);
 
@@ -113,6 +115,7 @@ static int update_state(orte_jobid_t job,
                         orte_job_state_t jobstate,
                         orte_process_name_t *proc,
                         orte_proc_state_t state,
+                        pid_t pid,
                         orte_exit_code_t exit_code,
                         orte_errmgr_stack_state_t *stack_state)
 {
@@ -127,12 +130,12 @@ static int update_state(orte_jobid_t job,
     
     OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base.output,
                          "%s errmgr:hnp: job %s reported state %s"
-                         " for proc %s state %s exit_code %d",
+                         " for proc %s state %s pid %d exit_code %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(job),
                          orte_job_state_to_str(jobstate),
                          (NULL == proc) ? "NULL" : ORTE_NAME_PRINT(proc),
-                         orte_proc_state_to_str(state), exit_code));
+                         orte_proc_state_to_str(state), pid, exit_code));
     
     /*
      * if orte is trying to shutdown, just let it
@@ -320,7 +323,7 @@ static int update_state(orte_jobid_t job,
                     /* guess not - let it fall thru to abort */
                 }
             }
-            update_proc(jdata, proc, state, exit_code);
+            update_proc(jdata, proc, state, pid, exit_code);
             check_job_complete(jdata);  /* need to set the job state */
             /* the job object for this job will have been NULL'd
              * in the array if the job was solely local. If it isn't
@@ -333,7 +336,7 @@ static int update_state(orte_jobid_t job,
 
         case ORTE_PROC_STATE_FAILED_TO_START:
         case ORTE_PROC_STATE_CALLED_ABORT:
-            update_proc(jdata, proc, state, exit_code);
+            update_proc(jdata, proc, state, pid, exit_code);
             check_job_complete(jdata);
             /* the job object for this job will have been NULL'd
              * in the array if the job was solely local. If it isn't
@@ -346,17 +349,22 @@ static int update_state(orte_jobid_t job,
         
         case ORTE_PROC_STATE_REGISTERED:
         case ORTE_PROC_STATE_RUNNING:
-            update_proc(jdata, proc, state, exit_code);
+            update_proc(jdata, proc, state, pid, exit_code);
+            break;
+
+        case ORTE_PROC_STATE_LAUNCHED:
+            /* record the pid for this child */
+            update_proc(jdata, proc, state, pid, exit_code);
             break;
 
         case ORTE_PROC_STATE_TERMINATED:
         case ORTE_PROC_STATE_KILLED_BY_CMD:
-            update_proc(jdata, proc, state, exit_code);
+            update_proc(jdata, proc, state, pid, exit_code);
             check_job_complete(jdata);
             break;
 
         case ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED:
-            update_proc(jdata, proc, state, exit_code);
+            update_proc(jdata, proc, state, pid, exit_code);
             killprocs(proc->jobid, proc->vpid);
             check_job_complete(jdata);  /* need to set the job state */
             /* the job object for this job will have been NULL'd
@@ -388,7 +396,7 @@ static int update_state(orte_jobid_t job,
                         hnp_abort(ORTE_JOBID_WILDCARD, exit_code);
                     }
                 } else {
-                    update_proc(jdata, proc, state, ORTE_ERR_COMM_FAILURE);
+                    update_proc(jdata, proc, state, pid, ORTE_ERR_COMM_FAILURE);
                     /* kill all local procs */
                     killprocs(ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD);
                     /* kill all jobs */
@@ -587,6 +595,7 @@ static void update_local_procs_in_job(orte_job_t *jdata, orte_job_state_t jobsta
 static void update_proc(orte_job_t *jdata,
                         orte_process_name_t *proc,
                         orte_proc_state_t state,
+                        pid_t pid,
                         orte_exit_code_t exit_code)
 {
     opal_list_item_t *item, *next;
@@ -603,9 +612,15 @@ static void update_proc(orte_job_t *jdata,
         if (child->name->jobid == proc->jobid) {
             if (child->name->vpid == proc->vpid) {
                 child->state = state;
+                if (0 < pid) {
+                    child->pid = pid;
+                }
                 child->exit_code = exit_code;
                 proct = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, child->name->vpid);
                 proct->state = state;
+                if (0 < pid) {
+                    proct->pid = pid;
+                }
                 proct->exit_code = exit_code;
                 if (ORTE_PROC_STATE_UNTERMINATED < state) {
                     if (!jdata->enable_recovery) {
@@ -641,6 +656,9 @@ static void update_proc(orte_job_t *jdata,
             continue;
         }
         proct->state = state;
+        if (0 < pid) {
+            proct->pid = pid;
+        }
         proct->exit_code = exit_code;
         if (ORTE_PROC_STATE_REGISTERED == state) {
             jdata->num_reported++;

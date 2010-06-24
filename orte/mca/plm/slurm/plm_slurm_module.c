@@ -487,7 +487,7 @@ cleanup:
     if (failed_launch) {
         orte_errmgr.update_state(failed_job, ORTE_JOB_STATE_FAILED_TO_START,
                                  NULL, ORTE_PROC_STATE_UNDEF,
-                                 ORTE_ERROR_DEFAULT_EXIT_CODE);
+                                 0, ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
     
     return rc;
@@ -588,7 +588,7 @@ static void srun_wait_cb(pid_t pid, int status, void* cbdata){
                              "%s plm:slurm: daemon failed during launch",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         orte_errmgr.update_state(ORTE_PROC_MY_NAME->jobid, ORTE_JOB_STATE_FAILED_TO_START,
-                                 NULL, ORTE_PROC_STATE_UNDEF, status);
+                                 NULL, ORTE_PROC_STATE_UNDEF, 0, status);
     } else {
         /* if this is after launch, then we need to abort only if the status
          * returned is non-zero - i.e., if the orteds exited with an error
@@ -601,7 +601,7 @@ static void srun_wait_cb(pid_t pid, int status, void* cbdata){
                                  "%s plm:slurm: daemon failed while running",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             orte_errmgr.update_state(ORTE_PROC_MY_NAME->jobid, ORTE_JOB_STATE_ABORTED,
-                                     NULL, ORTE_PROC_STATE_UNDEF, status);
+                                     NULL, ORTE_PROC_STATE_UNDEF, 0, status);
         }
         /* otherwise, check to see if this is the primary pid */
         if (primary_srun_pid == pid) {

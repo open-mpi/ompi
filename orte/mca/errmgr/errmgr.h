@@ -120,6 +120,7 @@ typedef int (*orte_errmgr_base_API_update_state_fn_t)(orte_jobid_t job,
                                                       orte_job_state_t jobstate,
                                                       orte_process_name_t *proc_name,
                                                       orte_proc_state_t state,
+                                                      pid_t pid,
                                                       orte_exit_code_t exit_code);
 
 /**
@@ -208,6 +209,7 @@ typedef int (*orte_errmgr_base_module_update_state_fn_t)(orte_jobid_t job,
                                                          orte_job_state_t jobstate,
                                                          orte_process_name_t *proc_name,
                                                          orte_proc_state_t state,
+                                                         pid_t pid,
                                                          orte_exit_code_t exit_code,
                                                          orte_errmgr_stack_state_t *stack_state);
 typedef int (*orte_errmgr_base_module_predicted_fault_fn_t)(char ***proc_list,
