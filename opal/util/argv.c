@@ -89,6 +89,40 @@ int opal_argv_append_nosize(char ***argv, const char *arg)
     return OPAL_SUCCESS;
 }
 
+int opal_argv_prepend_nosize(char ***argv, const char *arg)
+{
+    int argc;
+    int i;
+
+    /* Create new argv. */
+
+    if (NULL == *argv) {
+        *argv = (char**) malloc(2 * sizeof(char *));
+        if (NULL == *argv) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+        (*argv)[0] = strdup(arg);
+        (*argv)[1] = NULL;
+    } else {
+        /* count how many entries currently exist */
+        argc = opal_argv_count(*argv);
+        
+        *argv = (char**) realloc(*argv, (argc + 2) * sizeof(char *));
+        if (NULL == *argv) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+        (*argv)[argc+1] = NULL;
+
+        /* shift all existing elements down 1 */
+        for (i=argc; 0 < i; i--) {
+            (*argv)[i] = (*argv)[i-1];
+        }
+        (*argv)[0] = strdup(arg);
+    }
+
+    return OPAL_SUCCESS;
+}
+
 int opal_argv_append_unique_nosize(char ***argv, const char *arg, bool overwrite)
 {
     int i;
