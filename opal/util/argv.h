@@ -86,6 +86,17 @@ OPAL_DECLSPEC  int opal_argv_append(int *argc, char ***argv, const char *arg) __
 OPAL_DECLSPEC  int opal_argv_append_nosize(char ***argv, const char *arg);
 
 /**
+ * Insert the provided arg at the beginning of the array
+ *
+ * @param argv Pointer to an argv array
+ * @param str Pointer to the string to prepend
+ *
+ * @retval OPAL_SUCCESS On success
+ * @retval OPAL_ERROR On failure
+ */
+OPAL_DECLSPEC int opal_argv_prepend_nosize(char ***argv, const char *arg);
+
+/**
  * Append to an argv-style array, but only if the provided argument
  * doesn't already exist somewhere in the array. Ignore the size of the array.
  *
