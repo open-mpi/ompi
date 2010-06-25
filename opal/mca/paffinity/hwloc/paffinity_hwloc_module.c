@@ -409,8 +409,11 @@ static int module_get_core_info(int socket, int *num_cores)
 
 /*
  * Provide the PHYSICAL processor id that corresponds to the given
- * LOGICAL processor id (remember: paffinity does not understand
- * hardware threads, so "processor" here means "core").
+ * LOGICAL processor id.  Remember: paffinity does not understand
+ * hardware threads, so "processor" here [usually] means "core" --
+ * except that on some platforms, hwloc won't find any cores; it'll
+ * only find PUs (!).  On such platforms, then do the same calculation
+ * but with PUs instead of COREs.
  */
 static int module_get_physical_processor_id(int logical_processor_id,
                                             int *physical_processor_id)
@@ -420,13 +423,19 @@ static int module_get_physical_processor_id(int logical_processor_id,
     hwloc_cpuset_t good;
     hwloc_topology_t *t = &mca_paffinity_hwloc_component.topology;
 
+    /* hwloc isn't able to find cores on all platforms.  Example:
+       PPC64 running RHEL 5.4 (linux kernel 2.6.18) only reports NUMA
+       nodes and PU's.  Fine.  So just use PUs in that situation. */
     obj = hwloc_get_obj_by_type(*t, HWLOC_OBJ_CORE, logical_processor_id);
     if (NULL == obj) {
-        return OPAL_ERR_NOT_FOUND;
+        obj = hwloc_get_obj_by_type(*t, HWLOC_OBJ_PU, logical_processor_id);
+        if (NULL == obj) {
+            return OPAL_ERR_NOT_FOUND;
+        }
     }
 
-    /* Found the right core.  Now find the processor ID of the first
-       PU available in that core. */
+    /* Found the right core (or PU).  Now find the processor ID of the
+       first PU available in that core. */
     good = hwloc_cpuset_alloc();
     if (NULL == good) {
         return OPAL_ERR_OUT_OF_RESOURCE;
