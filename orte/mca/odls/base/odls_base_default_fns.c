@@ -1655,7 +1655,14 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
             child->state = ORTE_PROC_STATE_FAILED_TO_START;
             child->exit_code = 0;
             child->waitpid_recvd = false;
-            child->iof_complete = false;
+            /* if we are not forwarding output for this job, then
+             * flag iof as complete
+             */
+            if (ORTE_JOB_CONTROL_FORWARD_OUTPUT & jobdat->controls) {
+                child->iof_complete = false;
+            } else {
+                child->iof_complete = true;
+            }
             child->coll_recvd = false;
             child->pid = 0;
             if (NULL != child->rml_uri) {
@@ -1924,7 +1931,7 @@ CLEANUP:
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
         /* start the sensors for this job (if any) */
-        orte_sensor.start(ORTE_PROC_MY_NAME->jobid);
+        orte_sensor.start(jobdat->jobid);
         
         /* if the launch didn't fail, setup the waitpids on the children */
         for (item = opal_list_get_first(&orte_local_children);
@@ -2386,6 +2393,7 @@ void orte_odls_base_default_report_abort(orte_process_name_t *proc)
 void orte_base_default_waitpid_fired(orte_process_name_t *proc, int32_t status)
 {
     orte_odls_child_t *child, *chd;
+    orte_odls_job_t *jobdat, *jdat;
     opal_list_item_t *item;
     int rc;
 
@@ -2427,7 +2435,7 @@ void orte_base_default_waitpid_fired(orte_process_name_t *proc, int32_t status)
     OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
     return;
     
-GOTCHILD:
+ GOTCHILD:
     /* if the child was previously flagged as dead, then just
      * ensure that its exit state gets reported to avoid hanging
      */
@@ -2438,7 +2446,30 @@ GOTCHILD:
                              ORTE_NAME_PRINT(child->name)));
         goto MOVEON;
     }
-    
+
+    /* get the jobdat for this child */
+    jobdat = NULL;
+    for (item = opal_list_get_first(&orte_local_jobdata);
+         item != opal_list_get_end(&orte_local_jobdata);
+         item = opal_list_get_next(item)) {
+        jdat = (orte_odls_job_t*)item;
+        if (jdat->jobid == child->name->jobid) {
+            jobdat = jdat;
+            break;
+        }
+    }
+    if (NULL == jobdat) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        goto MOVEON;
+    }
+    /* if this is a debugger daemon, then just report the state
+     * and return as we aren't monitoring it
+     */
+    if (ORTE_JOB_CONTROL_DEBUGGER_DAEMON & jobdat->controls)  {
+        child->state = ORTE_PROC_STATE_TERMINATED;
+        goto MOVEON;
+    }
+
     /* if this child was ordered to die, then just pass that along
      * so we don't hang
      */
@@ -2540,7 +2571,7 @@ GOTCHILD:
                              ORTE_NAME_PRINT(child->name)));
     }
     
-MOVEON:
+ MOVEON:
     /* indicate the waitpid fired */
     child->waitpid_recvd = true;
     
