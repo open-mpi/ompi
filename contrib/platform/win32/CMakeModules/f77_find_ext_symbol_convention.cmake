@@ -123,7 +123,7 @@ MACRO(OMPI_F77_FIND_EXT_SYMBOL_CONVENTION)
       UNSET(SYMBOL_CONVENTION_CHECK_DONE CACHE)
       MESSAGE(STATUS "${MY_OUTPUT}")
       MESSAGE(STATUS "*** Probably you have to setup the library path of the Fortran compiler.")
-      MESSAGE(FATAL_ERROR "C and Fortran 77 compilers are not link compatible.  Can not continue.")
+      MESSAGE(FATAL_ERROR "C and Fortran 77 compilers are not link compatible.  Cannot continue.")
     ENDIF(NOT TEST_OK)
 
   ENDIF(NOT SYMBOL_CONVENTION_CHECK_DONE)

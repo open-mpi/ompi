@@ -90,6 +90,20 @@ IF(NOT MICROSOFT_CHECK_DONE)
     "C compiler option for setting object file name.")
   SET(OMPI_C_OUTPUT_EXE "/Fe" CACHE INTERNAL
     "C compiler option for setting executable file name.")
+  SET(OMPI_C_LAN_FLAG "/TC" CACHE INTERNAL
+    "C compiler option for compiling source as C.")
+  SET(OMPI_CXX_LAN_FLAG "/TP" CACHE INTERNAL
+    "C compiler option for compiling source as C++.")
+  SET(OMPI_C_DEF_PRE "/D" CACHE INTERNAL
+    "C compiler option for preprocessor definition.")
+  SET(OMPI_C_MD_DEBUG "/MDd" CACHE INTERNAL
+    "C compiler option for Multi-thread Debug DLL.")
+  SET(OMPI_C_MD "/MD" CACHE INTERNAL
+    "C compiler option for Multi-thread DLL.")
+  SET(OMPI_CXX_EXCEPTION "/EHsc" CACHE INTERNAL
+    "C compiler option for C++ exceptions.")
+  SET(OMPI_C_INCLUDE_DIR "/I" CACHE INTERNAL
+    "C compiler option for including directory.")
 
   SET(DUMP_UTIL "${VC_BIN_PATH}/dumpbin.exe" CACHE INTERNAL "the dumpbin application.")
 

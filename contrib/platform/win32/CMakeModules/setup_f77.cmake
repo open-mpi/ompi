@@ -136,3 +136,10 @@ ELSEIF(NOT OMPI_WANT_F77_BINDINGS)
     UNSET(F77_IFCONSOL_LIB CACHE)
     UNSET(F77_SETUP_DONE CACHE)
 ENDIF(OMPI_WANT_F77_BINDINGS AND NOT F77_SETUP_DONE)
+
+# a few definitions needed by OMPI_F77_FIND_EXT_SYMBOL_CONVENTION check.
+OMPI_DEF_VAR(OMPI_F77_DOUBLE_UNDERSCORE "Whether fortran symbols have a trailing double underscore or not." 0 1)
+OMPI_DEF_VAR(OMPI_F77_SINGLE_UNDERSCORE "Whether fortran symbols have a trailing single underscore or not." 0 1)
+OMPI_DEF_VAR(OMPI_F77_CAPS "Whether fortran symbols are all caps or not." 0 1)
+OMPI_DEF_VAR(OMPI_F77_PLAIN "Whether fortran symbols have no trailing underscore or not." 0 1)
+

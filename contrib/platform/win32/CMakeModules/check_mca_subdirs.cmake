@@ -122,6 +122,19 @@ FOREACH (MCA_FRAMEWORK ${MCA_FRAMEWORK_LIST})
         FILE(GLOB COMPONENT_FILES "${CURRENT_PATH}/*.C" "${CURRENT_PATH}/*.h"
           "${CURRENT_PATH}/*.cc" "${CURRENT_PATH}/*.cpp")
 
+        #check exclude list
+        SET(EXCLUDE_LIST "")
+        FILE(STRINGS ${CURRENT_PATH}/.windows EXCLUDE_LIST REGEX "^exclude_list=")
+
+        IF(NOT EXCLUDE_LIST STREQUAL "")
+          STRING(REPLACE "exclude_list=" "" EXCLUDE_LIST ${EXCLUDE_LIST})
+        ENDIF(NOT EXCLUDE_LIST STREQUAL "")
+
+        # remove the files in the exclude list
+        FOREACH(FILE ${EXCLUDE_LIST})
+          LIST(REMOVE_ITEM MCA_FRAMEWORK_BASE_FILES "${CURRENT_PATH}/${FILE}")
+        ENDFOREACH(FILE)
+
         # by default, build this component.
         SET(BUILD_COMPONENT TRUE)
 
