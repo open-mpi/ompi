@@ -17,3 +17,17 @@ except due to an internal ORTE error.
 Job state: %s
 
 This information should probably be reported to the OMPI developers.
+#
+[errmgr-hnp:daemon-died]
+The system has lost communication with the following daemon:
+
+Daemon: %s
+Node:   %s
+
+The reason for the lost communication channel is unknown. Possible
+reasons include failure of the daemon itself, failure of the
+connecting fabric/switch, and loss of the host node. Please
+check with your system administrator to try and determine the
+source of the problem.
+
+Your job is being terminated as a result.

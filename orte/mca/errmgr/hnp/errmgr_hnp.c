@@ -124,6 +124,7 @@ static int update_state(orte_jobid_t job,
     orte_odls_child_t *child;
     int rc;
     orte_app_context_t *app;
+    orte_proc_t *pdat;
     
     /* indicate that this is the end of the line */
     *stack_state |= ORTE_ERRMGR_STACK_STATE_COMPLETE;
@@ -174,114 +175,114 @@ static int update_state(orte_jobid_t job,
                              orte_job_state_to_str(jobstate)));
 
         switch (jobstate) {
-            case ORTE_JOB_STATE_FAILED_TO_START:
-                failed_start(jdata);
-                check_job_complete(jdata);  /* set the local proc states */
-                /* the job object for this job will have been NULL'd
-                 * in the array if the job was solely local. If it isn't
-                 * NULL, then we need to tell everyone else to die
-                 */
-                if (NULL != (jdata = orte_get_job_data_object(job))) {
-                    sts = exit_code;
-                    if (ORTE_PROC_MY_NAME->jobid == job && !orte_abnormal_term_ordered) {
-                        /* set the flag indicating that a daemon failed so we use the proper
-                         * methods for attempting to shutdown the rest of the system
-                         */
-                        orte_abnormal_term_ordered = true;
-                        if (WIFSIGNALED(exit_code)) { /* died on signal */
+        case ORTE_JOB_STATE_FAILED_TO_START:
+            failed_start(jdata);
+            check_job_complete(jdata);  /* set the local proc states */
+            /* the job object for this job will have been NULL'd
+             * in the array if the job was solely local. If it isn't
+             * NULL, then we need to tell everyone else to die
+             */
+            if (NULL != (jdata = orte_get_job_data_object(job))) {
+                sts = exit_code;
+                if (ORTE_PROC_MY_NAME->jobid == job && !orte_abnormal_term_ordered) {
+                    /* set the flag indicating that a daemon failed so we use the proper
+                     * methods for attempting to shutdown the rest of the system
+                     */
+                    orte_abnormal_term_ordered = true;
+                    if (WIFSIGNALED(exit_code)) { /* died on signal */
 #ifdef WCOREDUMP
-                            if (WCOREDUMP(exit_code)) {
-                                orte_show_help("help-plm-base.txt", "daemon-died-signal-core", true,
-                                               WTERMSIG(exit_code));
-                                sts = WTERMSIG(exit_code);
-                            } else {
-                                orte_show_help("help-plm-base.txt", "daemon-died-signal", true,
-                                               WTERMSIG(exit_code));
-                                sts = WTERMSIG(exit_code);
-                            }
-#else
+                        if (WCOREDUMP(exit_code)) {
+                            orte_show_help("help-plm-base.txt", "daemon-died-signal-core", true,
+                                           WTERMSIG(exit_code));
+                            sts = WTERMSIG(exit_code);
+                        } else {
                             orte_show_help("help-plm-base.txt", "daemon-died-signal", true,
                                            WTERMSIG(exit_code));
                             sts = WTERMSIG(exit_code);
-#endif /* WCOREDUMP */
-                        } else {
-                            orte_show_help("help-plm-base.txt", "daemon-died-no-signal", true,
-                                           WEXITSTATUS(exit_code));
-                            sts = WEXITSTATUS(exit_code);
                         }
-                    }
-                    hnp_abort(jdata->jobid, sts);
-                }
-                break;
-            case ORTE_JOB_STATE_RUNNING:
-                /* update all procs in job */
-                update_local_procs_in_job(jdata, jobstate, ORTE_PROC_STATE_RUNNING, 0);
-                /* record that we reported */
-                jdata->num_daemons_reported++;
-                /* report if requested */
-                if (orte_report_launch_progress) {
-                    if (0 == jdata->num_daemons_reported % 100 || jdata->num_daemons_reported == orte_process_info.num_procs) {
-                        opal_output(orte_clean_output, "Reported: %d (out of %d) daemons - %d (out of %d) procs",
-                                    (int)jdata->num_daemons_reported, (int)orte_process_info.num_procs,
-                                    (int)jdata->num_launched, (int)jdata->num_procs);
+#else
+                        orte_show_help("help-plm-base.txt", "daemon-died-signal", true,
+                                       WTERMSIG(exit_code));
+                        sts = WTERMSIG(exit_code);
+#endif /* WCOREDUMP */
+                    } else {
+                        orte_show_help("help-plm-base.txt", "daemon-died-no-signal", true,
+                                       WEXITSTATUS(exit_code));
+                        sts = WEXITSTATUS(exit_code);
                     }
                 }
-                break;
-            case ORTE_JOB_STATE_NEVER_LAUNCHED:
-                orte_never_launched = true;
-                jdata->num_terminated = jdata->num_procs;
-                check_job_complete(jdata);  /* set the local proc states */
-                /* the job object for this job will have been NULL'd
-                 * in the array if the job was solely local. If it isn't
-                 * NULL, then we need to tell everyone else to die
-                 */
-                if (NULL != (jdata = orte_get_job_data_object(job))) {
-                    hnp_abort(jdata->jobid, exit_code);
+                hnp_abort(jdata->jobid, sts);
+            }
+            break;
+        case ORTE_JOB_STATE_RUNNING:
+            /* update all procs in job */
+            update_local_procs_in_job(jdata, jobstate, ORTE_PROC_STATE_RUNNING, 0);
+            /* record that we reported */
+            jdata->num_daemons_reported++;
+            /* report if requested */
+            if (orte_report_launch_progress) {
+                if (0 == jdata->num_daemons_reported % 100 || jdata->num_daemons_reported == orte_process_info.num_procs) {
+                    opal_output(orte_clean_output, "Reported: %d (out of %d) daemons - %d (out of %d) procs",
+                                (int)jdata->num_daemons_reported, (int)orte_process_info.num_procs,
+                                (int)jdata->num_launched, (int)jdata->num_procs);
                 }
-                break;
-            case ORTE_JOB_STATE_SENSOR_BOUND_EXCEEDED:
-                /* update all procs in job */
-                update_local_procs_in_job(jdata, jobstate,
-                                          ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED,
-                                          exit_code);
-                /* order all local procs for this job to be killed */
-                killprocs(jdata->jobid, ORTE_VPID_WILDCARD);
-                check_job_complete(jdata);  /* set the local proc states */
-                /* the job object for this job will have been NULL'd
-                 * in the array if the job was solely local. If it isn't
-                 * NULL, then we need to tell everyone else to die
-                 */
-                if (NULL != (jdata = orte_get_job_data_object(job))) {
-                    hnp_abort(jdata->jobid, exit_code);
-                }
-                break;
-            case ORTE_JOB_STATE_COMM_FAILED:
-                /* order all local procs for this job to be killed */
-                killprocs(jdata->jobid, ORTE_VPID_WILDCARD);
-                check_job_complete(jdata);  /* set the local proc states */
-                /* the job object for this job will have been NULL'd
-                 * in the array if the job was solely local. If it isn't
-                 * NULL, then we need to tell everyone else to die
-                 */
-                if (NULL != (jdata = orte_get_job_data_object(job))) {
-                    hnp_abort(jdata->jobid, exit_code);
-                }
-                break;
-            case ORTE_JOB_STATE_HEARTBEAT_FAILED:
-                /* order all local procs for this job to be killed */
-                killprocs(jdata->jobid, ORTE_VPID_WILDCARD);
-                check_job_complete(jdata);  /* set the local proc states */
-                /* the job object for this job will have been NULL'd
-                 * in the array if the job was solely local. If it isn't
-                 * NULL, then we need to tell everyone else to die
-                 */
-                if (NULL != (jdata = orte_get_job_data_object(job))) {
-                    hnp_abort(jdata->jobid, exit_code);
-                }
-                break;
+            }
+            break;
+        case ORTE_JOB_STATE_NEVER_LAUNCHED:
+            orte_never_launched = true;
+            jdata->num_terminated = jdata->num_procs;
+            check_job_complete(jdata);  /* set the local proc states */
+            /* the job object for this job will have been NULL'd
+             * in the array if the job was solely local. If it isn't
+             * NULL, then we need to tell everyone else to die
+             */
+            if (NULL != (jdata = orte_get_job_data_object(job))) {
+                hnp_abort(jdata->jobid, exit_code);
+            }
+            break;
+        case ORTE_JOB_STATE_SENSOR_BOUND_EXCEEDED:
+            /* update all procs in job */
+            update_local_procs_in_job(jdata, jobstate,
+                                      ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED,
+                                      exit_code);
+            /* order all local procs for this job to be killed */
+            killprocs(jdata->jobid, ORTE_VPID_WILDCARD);
+            check_job_complete(jdata);  /* set the local proc states */
+            /* the job object for this job will have been NULL'd
+             * in the array if the job was solely local. If it isn't
+             * NULL, then we need to tell everyone else to die
+             */
+            if (NULL != (jdata = orte_get_job_data_object(job))) {
+                hnp_abort(jdata->jobid, exit_code);
+            }
+            break;
+        case ORTE_JOB_STATE_COMM_FAILED:
+            /* order all local procs for this job to be killed */
+            killprocs(jdata->jobid, ORTE_VPID_WILDCARD);
+            check_job_complete(jdata);  /* set the local proc states */
+            /* the job object for this job will have been NULL'd
+             * in the array if the job was solely local. If it isn't
+             * NULL, then we need to tell everyone else to die
+             */
+            if (NULL != (jdata = orte_get_job_data_object(job))) {
+                hnp_abort(jdata->jobid, exit_code);
+            }
+            break;
+        case ORTE_JOB_STATE_HEARTBEAT_FAILED:
+            /* order all local procs for this job to be killed */
+            killprocs(jdata->jobid, ORTE_VPID_WILDCARD);
+            check_job_complete(jdata);  /* set the local proc states */
+            /* the job object for this job will have been NULL'd
+             * in the array if the job was solely local. If it isn't
+             * NULL, then we need to tell everyone else to die
+             */
+            if (NULL != (jdata = orte_get_job_data_object(job))) {
+                hnp_abort(jdata->jobid, exit_code);
+            }
+            break;
 
-            default:
-                break;
+        default:
+            break;
         }
         return ORTE_SUCCESS;
     }
@@ -294,135 +295,146 @@ static int update_state(orte_jobid_t job,
 
     /* update is for a specific proc */
     switch (state) {
-        case ORTE_PROC_STATE_ABORTED:
-        case ORTE_PROC_STATE_ABORTED_BY_SIG:
-        case ORTE_PROC_STATE_TERM_WO_SYNC:
-            if (jdata->enable_recovery) {
-                /* is this a local proc */
-                if (NULL != (child = proc_is_local(proc))) {
-                    /* local proc - see if it has reached its local restart limit */
-                    app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, child->app_idx);
-                    if (child->restarts < app->max_local_restarts) {
-                        child->restarts++;
-                        if (ORTE_SUCCESS == (rc = orte_odls.restart_proc(child))) {
-                            return ORTE_SUCCESS;
-                        }
-                        /* let it fall thru to abort */
-                    } else {
-                        /* see if we can relocate it somewhere else */
-                        if (ORTE_SUCCESS == hnp_relocate(jdata, proc)) {
-                            return ORTE_SUCCESS;
-                        }
-                        /* let it fall thru to abort */
+    case ORTE_PROC_STATE_ABORTED:
+    case ORTE_PROC_STATE_ABORTED_BY_SIG:
+    case ORTE_PROC_STATE_TERM_WO_SYNC:
+        if (jdata->enable_recovery) {
+            /* is this a local proc */
+            if (NULL != (child = proc_is_local(proc))) {
+                /* local proc - see if it has reached its local restart limit */
+                app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, child->app_idx);
+                if (child->restarts < app->max_local_restarts) {
+                    child->restarts++;
+                    if (ORTE_SUCCESS == (rc = orte_odls.restart_proc(child))) {
+                        return ORTE_SUCCESS;
                     }
+                    /* let it fall thru to abort */
                 } else {
-                    /* this is a remote process - see if we can relocate it */
+                    /* see if we can relocate it somewhere else */
                     if (ORTE_SUCCESS == hnp_relocate(jdata, proc)) {
                         return ORTE_SUCCESS;
                     }
-                    /* guess not - let it fall thru to abort */
+                    /* let it fall thru to abort */
                 }
+            } else {
+                /* this is a remote process - see if we can relocate it */
+                if (ORTE_SUCCESS == hnp_relocate(jdata, proc)) {
+                    return ORTE_SUCCESS;
+                }
+                /* guess not - let it fall thru to abort */
             }
-            update_proc(jdata, proc, state, pid, exit_code);
-            check_job_complete(jdata);  /* need to set the job state */
-            /* the job object for this job will have been NULL'd
-             * in the array if the job was solely local. If it isn't
-             * NULL, then we need to tell everyone else to die
-             */
-            if (NULL != (jdata = orte_get_job_data_object(proc->jobid))) {
-                hnp_abort(jdata->jobid, exit_code);
-            }
-            break;
+        }
+        update_proc(jdata, proc, state, pid, exit_code);
+        check_job_complete(jdata);  /* need to set the job state */
+        /* the job object for this job will have been NULL'd
+         * in the array if the job was solely local. If it isn't
+         * NULL, then we need to tell everyone else to die
+         */
+        if (NULL != (jdata = orte_get_job_data_object(proc->jobid))) {
+            hnp_abort(jdata->jobid, exit_code);
+        }
+        break;
 
-        case ORTE_PROC_STATE_FAILED_TO_START:
-        case ORTE_PROC_STATE_CALLED_ABORT:
-            update_proc(jdata, proc, state, pid, exit_code);
-            check_job_complete(jdata);
-            /* the job object for this job will have been NULL'd
-             * in the array if the job was solely local. If it isn't
-             * NULL, then we need to tell everyone else to die
-             */
-            if (NULL != (jdata = orte_get_job_data_object(proc->jobid))) {
-                hnp_abort(jdata->jobid, exit_code);
-            }
-            break;
+    case ORTE_PROC_STATE_FAILED_TO_START:
+    case ORTE_PROC_STATE_CALLED_ABORT:
+        update_proc(jdata, proc, state, pid, exit_code);
+        check_job_complete(jdata);
+        /* the job object for this job will have been NULL'd
+         * in the array if the job was solely local. If it isn't
+         * NULL, then we need to tell everyone else to die
+         */
+        if (NULL != (jdata = orte_get_job_data_object(proc->jobid))) {
+            hnp_abort(jdata->jobid, exit_code);
+        }
+        break;
         
-        case ORTE_PROC_STATE_REGISTERED:
-        case ORTE_PROC_STATE_RUNNING:
-            update_proc(jdata, proc, state, pid, exit_code);
-            break;
+    case ORTE_PROC_STATE_REGISTERED:
+    case ORTE_PROC_STATE_RUNNING:
+        update_proc(jdata, proc, state, pid, exit_code);
+        break;
 
-        case ORTE_PROC_STATE_LAUNCHED:
-            /* record the pid for this child */
-            update_proc(jdata, proc, state, pid, exit_code);
-            break;
+    case ORTE_PROC_STATE_LAUNCHED:
+        /* record the pid for this child */
+        update_proc(jdata, proc, state, pid, exit_code);
+        break;
 
-        case ORTE_PROC_STATE_TERMINATED:
-        case ORTE_PROC_STATE_KILLED_BY_CMD:
-            update_proc(jdata, proc, state, pid, exit_code);
-            check_job_complete(jdata);
-            break;
+    case ORTE_PROC_STATE_TERMINATED:
+    case ORTE_PROC_STATE_KILLED_BY_CMD:
+        update_proc(jdata, proc, state, pid, exit_code);
+        check_job_complete(jdata);
+        break;
 
-        case ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED:
-            update_proc(jdata, proc, state, pid, exit_code);
-            killprocs(proc->jobid, proc->vpid);
-            check_job_complete(jdata);  /* need to set the job state */
-            /* the job object for this job will have been NULL'd
-             * in the array if the job was solely local. If it isn't
-             * NULL, then we need to tell everyone else to die
-             */
-            if (NULL != (jdata = orte_get_job_data_object(proc->jobid))) {
-                hnp_abort(jdata->jobid, exit_code);
-            }
-            break;
+    case ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED:
+        update_proc(jdata, proc, state, pid, exit_code);
+        killprocs(proc->jobid, proc->vpid);
+        check_job_complete(jdata);  /* need to set the job state */
+        /* the job object for this job will have been NULL'd
+         * in the array if the job was solely local. If it isn't
+         * NULL, then we need to tell everyone else to die
+         */
+        if (NULL != (jdata = orte_get_job_data_object(proc->jobid))) {
+            hnp_abort(jdata->jobid, exit_code);
+        }
+        break;
             
-        case ORTE_PROC_STATE_COMM_FAILED:
-            /* is this to a daemon? */
-            if (ORTE_PROC_MY_NAME->jobid == proc->jobid) {
-                /* if we have ordered orteds to terminate, ignore this */
-                if (orte_orteds_term_ordered) {
-                    break;
-                }
-                /* if this is my own connection, ignore it */
-                if (ORTE_PROC_MY_NAME->vpid == proc->vpid) {
-                    break;
-                }
-                if (orte_enable_recovery) {
-                    /* relocate its processes */
-                    if (ORTE_SUCCESS != (rc = hnp_relocate(jdata, proc))) {
-                        /* kill all local procs */
-                        killprocs(ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD);
-                        /* kill all jobs */
-                        hnp_abort(ORTE_JOBID_WILDCARD, exit_code);
-                    }
-                } else {
-                    update_proc(jdata, proc, state, pid, ORTE_ERR_COMM_FAILURE);
+    case ORTE_PROC_STATE_COMM_FAILED:
+        /* is this to a daemon? */
+        if (ORTE_PROC_MY_NAME->jobid == proc->jobid) {
+            /* if we have ordered orteds to terminate, ignore this */
+            if (orte_orteds_term_ordered) {
+                break;
+            }
+            /* if this is my own connection, ignore it */
+            if (ORTE_PROC_MY_NAME->vpid == proc->vpid) {
+                break;
+            }
+            if (orte_enable_recovery) {
+                /* relocate its processes */
+                if (ORTE_SUCCESS != (rc = hnp_relocate(jdata, proc))) {
                     /* kill all local procs */
                     killprocs(ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD);
                     /* kill all jobs */
                     hnp_abort(ORTE_JOBID_WILDCARD, exit_code);
                 }
             } else {
-                /* delete the route */
-                orte_routed.delete_route(proc);
-            }
-            break;
-
-        case ORTE_PROC_STATE_HEARTBEAT_FAILED:
-            /* heartbeats are only from daemons */
-            if (orte_enable_recovery) {
-                /* relocate its processes */
-            } else {
+                if (NULL == (pdat = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, proc->vpid))) {
+                    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                    orte_show_help("help-orte-errmgr-hnp.txt", "errmgr-hnp:daemon-died",
+                                   ORTE_VPID_PRINT(proc->vpid), "Unknown");
+                } else {
+                    orte_show_help("help-orte-errmgr-hnp.txt", "errmgr-hnp:daemon-died",
+                                   ORTE_VPID_PRINT(proc->vpid),
+                                   (NULL == pdat->node) ? "Unknown" : 
+                                   ((NULL == pdat->node->name) ? "Unknown" : pdat->node->name));
+                }
+                ORTE_UPDATE_EXIT_STATUS(ORTE_ERR_COMM_FAILURE);
+                update_proc(jdata, proc, state, pid, ORTE_ERR_COMM_FAILURE);
                 /* kill all local procs */
                 killprocs(ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD);
                 /* kill all jobs */
                 hnp_abort(ORTE_JOBID_WILDCARD, exit_code);
-                return ORTE_ERR_UNRECOVERABLE;
             }
-            break;
+        } else {
+            /* delete the route */
+            orte_routed.delete_route(proc);
+        }
+        break;
 
-        default:
-            break;
+    case ORTE_PROC_STATE_HEARTBEAT_FAILED:
+        /* heartbeats are only from daemons */
+        if (orte_enable_recovery) {
+            /* relocate its processes */
+        } else {
+            /* kill all local procs */
+            killprocs(ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD);
+            /* kill all jobs */
+            hnp_abort(ORTE_JOBID_WILDCARD, exit_code);
+            return ORTE_ERR_UNRECOVERABLE;
+        }
+        break;
+
+    default:
+        break;
     }
 
     return ORTE_SUCCESS;
