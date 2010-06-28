@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -10,6 +10,9 @@
 #include "opal_config.h"
 
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
 #include "opal/libltdl/ltdl.h"
 
 static int do_test(void);
