@@ -10,6 +10,8 @@
 #include "opal_config.h"
 
 #include <stdio.h>
+#include <string.h>
+
 #include "opal/libltdl/ltdl.h"
 
 static int do_test(void);
