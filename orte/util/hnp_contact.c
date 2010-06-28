@@ -236,7 +236,10 @@ int orte_list_local_hnps(opal_list_t *hnps, bool connect)
      * should end with the "*". Otherwise we will only open the directory
      * structure (and not the content).
      */
-    hFind = FindFirstFile( headdir, &file_data );
+    char *subdirs = opal_os_path(false, orte_process_info.tmpdir_base, orte_process_info.top_session_dir, "*", NULL);
+    headdir = opal_os_path(false, orte_process_info.tmpdir_base, orte_process_info.top_session_dir, NULL);
+
+    hFind = FindFirstFile( subdirs, &file_data );
     if( INVALID_HANDLE_VALUE == hFind ) {
         goto cleanup;
     }
@@ -257,7 +260,7 @@ int orte_list_local_hnps(opal_list_t *hnps, bool connect)
          * See if a contact file exists in this directory and read it
          */
         contact_filename = opal_os_path( false, headdir,
-                                         file_data, "contact.txt", NULL );
+                                         file_data.cFileName, "contact.txt", NULL );
         
         hnp = OBJ_NEW(orte_hnp_contact_t);
         if (ORTE_SUCCESS == (ret = orte_read_hnp_contact_file(contact_filename, hnp, connect))) {
