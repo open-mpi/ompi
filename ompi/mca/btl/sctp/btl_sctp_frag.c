@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,6 +35,7 @@
 #endif  /* HAVE_UNISTD_H */
 
 #include "opal/opal_socket_errno.h"
+#include "opal/include/opal_stdint.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "btl_sctp_frag.h" 
 #include "btl_sctp_endpoint.h"
@@ -176,7 +178,7 @@ bool mca_btl_sctp_frag_large_send(mca_btl_sctp_frag_t* frag, int sd, int iov_fra
                 cnt=0;
                 break;
             case EFAULT:
-                BTL_ERROR(("sctp_sendmsg error (%p, %d)\n\t%s(%d)\n",
+                BTL_ERROR(("sctp_sendmsg error (%p, %" PRIsize_t ")\n\t%s(%" PRIsize_t ")\n",
                            frag->iov_ptr[0].iov_base, frag->iov_ptr[0].iov_len,
                            strerror(opal_socket_errno), frag->iov_cnt));
             default:
@@ -300,7 +302,7 @@ bool mca_btl_sctp_frag_send(mca_btl_sctp_frag_t* frag, int sd)
                 case EWOULDBLOCK:
                     return false;
                 case EFAULT:
-                    BTL_ERROR(("mca_btl_sctp_utils_writev error (%p, %d)\n\t%s(%d)\n",
+                    BTL_ERROR(("mca_btl_sctp_utils_writev error (%p, %" PRIsize_t ")\n\t%s(%" PRIsize_t ")\n",
                                frag->iov_ptr[0].iov_base, frag->iov_ptr[0].iov_len,
                                strerror(opal_socket_errno), frag->iov_cnt));
                 default:
