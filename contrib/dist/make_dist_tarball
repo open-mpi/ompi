@@ -29,6 +29,16 @@ LT_TARGET_VERSION=2.2.6b
 FLEX_TARGET_VERSION=2.5.35
 
 #
+# When running "make distcheck", use these parallelization flags.  Can
+# significantly decrease the time required for "make distcheck" because
+# that target includes multiple builds of the entire code base.
+#
+
+DISTCHECK_MAKE_FLAGS=-j4
+
+#########################################################################
+
+#
 # Check command line flags
 #
 
@@ -36,8 +46,10 @@ FLEX_TARGET_VERSION=2.5.35
 # tarballs; but higher-than-expected versions are ok for
 # non-distribution tarballs.
 dist_target=distcheck
+distcheck_flags="AM_MAKEFLAGS=$DISTCHECK_MAKE_FLAGS"
 if test "`basename $0`" = "make_tarball"; then
     dist_target=dist
+    distcheck_flags=
     highok=1
 else
     highok=0
@@ -243,7 +255,8 @@ make_tarball() {
     save_LD=$LD_LIBRARY_PATH
     LD_LIBRARY_PATH=
     rm -f success
-    (make $dist_target 2>&1 && touch success) | tee dist.out
+    # Force the use of -j4 here to (greatly) speed up the process.
+    (make $distcheck_flags $dist_target 2>&1 && touch success) | tee dist.out
     if test ! -f success; then
         echo "Make $dist_target failed.  Aborting"
         exit 1
@@ -263,6 +276,9 @@ make_tarball() {
 #########################################################################
 # main
 #########################################################################
+
+start=`date`
+echo "*** Start time: $start"
 
 echo "*** Checking tools versions..."
 check_gnu_version m4 $M4_TARGET_VERSION
@@ -365,3 +381,7 @@ if test -d .svn; then
 elif test -d .hg; then
     hg revert VERSION
 fi
+
+echo " "
+echo "*** Start time:  $start"
+echo "*** Finish time: `date`"
