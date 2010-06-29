@@ -103,8 +103,8 @@ EXTRA_DIST = \
         platform/win32/ConfigFiles/revision.in \
 	platform/cisco/macosx-dynamic \
 	platform/cisco/macosx-dynamic.conf \
-	platform/cisco/macosx-dynamic-optimized \
-	platform/cisco/macosx-dynamic-optimized.conf \
+	platform/cisco/linux \
+	platform/cisco/linux.conf \
 	platform/cisco/ebuild/hlfr \
 	platform/cisco/ebuild/hlfr.conf \
 	platform/cisco/ebuild/ludd \
