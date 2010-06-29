@@ -255,7 +255,6 @@ make_tarball() {
     save_LD=$LD_LIBRARY_PATH
     LD_LIBRARY_PATH=
     rm -f success
-    # Force the use of -j4 here to (greatly) speed up the process.
     (make $distcheck_flags $dist_target 2>&1 && touch success) | tee dist.out
     if test ! -f success; then
         echo "Make $dist_target failed.  Aborting"
