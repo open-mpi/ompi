@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -27,6 +28,7 @@
 
 #include "opal/class/opal_hash_table.h"
 #include "opal/util/arch.h"
+#include "opal/include/opal_stdint.h"
 
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "ompi/runtime/ompi_module_exchange.h"
@@ -144,7 +146,7 @@ mca_btl_sctp_proc_t* mca_btl_sctp_proc_create(ompi_proc_t* ompi_proc)
         return NULL;
     }
     if(0 != (size % sizeof(mca_btl_sctp_addr_t))) {
-        BTL_ERROR(("mca_base_modex_recv: invalid size %d\n", size));
+        BTL_ERROR(("mca_base_modex_recv: invalid size %" PRIsize_t "\n", size));
         return NULL;
     }
     btl_proc->proc_addr_count = size / sizeof(mca_btl_sctp_addr_t);
