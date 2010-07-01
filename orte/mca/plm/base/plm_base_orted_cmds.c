@@ -154,17 +154,13 @@ int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command)
             /* if we don't have contact info for this daemon,
              * then we know we can't reach it - so don't try
              */
-            if (NULL == proc->rml_uri) {
+            if (NULL == proc->rml_uri || proc->state > ORTE_PROC_STATE_UNTERMINATED) {
                 --num_being_sent;
+                /* maintain accounting so orterun will exit */
+                daemons->num_terminated++;
                 continue;
             }
             peer.vpid = v;
-            /* check to see if this daemon is known to be "dead" */
-            if (proc->state > ORTE_PROC_STATE_UNTERMINATED) {
-                /* don't try to send this */
-                --num_being_sent;
-                continue;
-            }
             /* don't worry about errors on the send here - just
              * issue it and keep going
              */
@@ -172,8 +168,13 @@ int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command)
                                  "%s plm:base:orted_cmd:orted_exit sending cmd to %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&peer)));
-            orte_rml.send_buffer_nb(&peer, &cmd, ORTE_RML_TAG_DAEMON, 0,
-                                    send_callback, 0);
+            if (0 > (rc = orte_rml.send_buffer_nb(&peer, &cmd, ORTE_RML_TAG_DAEMON, 0,
+                                                  send_callback, 0))) {
+                ORTE_ERROR_LOG(rc);
+                --num_being_sent;
+                /* maintain accounting so orterun will exit */
+                daemons->num_terminated++;
+            }
         }
         
         /* since we cannot know which daemons may/may not be alive,
@@ -368,8 +369,11 @@ int orte_plm_base_orted_kill_local_procs(opal_pointer_array_t *procs)
                                  "%s plm:base:orted_cmd:kill_local_procs sending cmd to %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&peer)));
-            orte_rml.send_buffer_nb(&peer, &cmd, ORTE_RML_TAG_DAEMON, 0,
-                                    send_callback, 0);
+            if (0 > (rc = orte_rml.send_buffer_nb(&peer, &cmd, ORTE_RML_TAG_DAEMON, 0,
+                                                  send_callback, 0))) {
+                ORTE_ERROR_LOG(rc);
+                --num_being_sent;
+            }
         }
         OBJ_DESTRUCT(&cmd); /* done with this */
         
