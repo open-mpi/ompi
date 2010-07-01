@@ -57,18 +57,29 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     /** set default answer */
     *total_num_slots = 0;
     
-    /* if the hnp was allocated, include it */
+    /* if the hnp was allocated, include it unless flagged not to */
     if (orte_hnp_is_allocated) {
         node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
-        OBJ_RETAIN(node);
-        opal_list_append(allocated_nodes, &node->super);
+        if (ORTE_NODE_STATE_UP == node->state) {
+            OBJ_RETAIN(node);
+            opal_list_append(allocated_nodes, &node->super);
+        } else if (ORTE_NODE_STATE_DO_NOT_USE == node->state) {
+            /* clear this for future use */
+            node->state = ORTE_NODE_STATE_UP;
+        }
     }
     
-    /* add everything in the node pool */
+    /* add everything in the node pool that can be used */
     for (i=1; i < orte_node_pool->size; i++) {
         if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
             /* ignore nodes that are "down" */
             if (ORTE_NODE_STATE_DOWN == node->state) {
+                continue;
+            }
+            /* ignore nodes that are marked as do-not-use for this mapping */
+            if (ORTE_NODE_STATE_DO_NOT_USE == node->state) {
+                /* reset the state so it can be used another time */
+                node->state = ORTE_NODE_STATE_UP;
                 continue;
             }
             /* retain a copy for our use in case the item gets

@@ -49,7 +49,10 @@ no nodes were found or all the available nodes were already used.
 Note that since the -nolocal option was given no processes can be 
 launched on the local node.
 [orte-rmaps-base:no-available-resources]
-There are no nodes allocated to this job.
+No nodes are available for this job, either due to a failure to
+allocate nodes to the job, or allocated nodes being marked
+as unavailable (e.g., down, rebooting, or a process attempting
+to be relocated to another node when none are available).
 [orte-rmaps-base:all-available-resources-used]
 All nodes which are allocated for this job are already filled.
 #
