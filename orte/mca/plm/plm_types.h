@@ -116,14 +116,16 @@ typedef int8_t orte_node_state_t;
 #define ORTE_NODE_STATE_T OPAL_INT8
 
 /** Node is in an unknown state (see orte_node_state_t) */
-#define ORTE_NODE_STATE_UNKNOWN  0x00
+#define ORTE_NODE_STATE_UNKNOWN        0
 /** Node is down (see orte_node_state_t) */
-#define ORTE_NODE_STATE_DOWN     0x01
+#define ORTE_NODE_STATE_DOWN           1
 /** Node is up / available for use (see orte_node_state_t) */
-#define ORTE_NODE_STATE_UP       0x02
+#define ORTE_NODE_STATE_UP             2
 /** Node is rebooting (only some systems will support this; see
 orte_node_state_t) */
-#define ORTE_NODE_STATE_REBOOT   0x03
+#define ORTE_NODE_STATE_REBOOT         3
+/** Node is up, but not available for use for the next mapping */
+#define ORTE_NODE_STATE_DO_NOT_USE     4
 
 /*
  * PLM commands
