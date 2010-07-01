@@ -883,9 +883,15 @@ LAUNCH_PROCS:
         }
 
         execve(context->app, context->argv, environ_copy);
-        orte_show_help("help-odls-default.txt", "orte-odls-default:execv-error",
-                       true, context->app, strerror(errno));
-        exit(1);
+        opal_output(orte_clean_output,
+                    "\n------------------------------------------------------------------\n"
+                    "Could not execute the executable %s: %s on node %s\n"
+                    "This could mean that your PATH or executable name is wrong, or that\n"
+                    "you do not have the necessary permissions.\n"
+                    "Please ensure that the executable is able to be found and executed.\n"
+                    "-------------------------------------------------------------------",
+                    context->app, strerror(errno), orte_process_info.nodename);
+        ORTE_ODLS_ERROR_OUT(ORTE_ERR_FAILED_TO_START);
     } else {
 
         if (NULL != child && (ORTE_JOB_CONTROL_FORWARD_OUTPUT & jobdat->controls)) {
