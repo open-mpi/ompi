@@ -442,6 +442,10 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_INT,
         "Max number of times to locally restart a failed process before relocating it to a new node" },
 
+    { NULL, NULL, NULL, '\0', "disable-recovery", "disable-recovery", 0,
+      &orterun_globals.disable_recovery, OPAL_CMD_LINE_TYPE_BOOL,
+      "Disable recovery (resets all recovery options to off)" },
+
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
@@ -1361,6 +1365,7 @@ static int init_globals(void)
         orterun_globals.stdin_target = "0";
         orterun_globals.report_pid        = NULL;
         orterun_globals.report_uri        = NULL;
+        orterun_globals.disable_recovery = false;
     }
 
     /* Reset the other fields every time */
@@ -1495,6 +1500,13 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
      * by mca param
      */
     
+    /* if recovery was disabled on the cmd line, do so */
+    if (orterun_globals.disable_recovery) {
+        orte_enable_recovery = false;
+        orte_max_local_restarts = 0;
+        orte_max_global_restarts = 0;
+    }
+
     return ORTE_SUCCESS;
 }
 
