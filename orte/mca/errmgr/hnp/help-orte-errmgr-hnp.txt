@@ -31,3 +31,12 @@ check with your system administrator to try and determine the
 source of the problem.
 
 Your job is being terminated as a result.
+#
+[errmgr-hnp:cannot-relocate]
+The system is unable to relocate the specified process:
+
+Process: %s
+
+because the application for that process could not be found. This
+appears to be a system error. Please report it to the ORTE
+developers.

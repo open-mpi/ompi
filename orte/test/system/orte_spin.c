@@ -5,36 +5,24 @@
  * A program that just spins - provides mechanism for testing user-driven
  * abnormal program termination
  */
-#include "opal_config.h"
+#include "orte_config.h"
+#include "orte/constants.h"
 
 #include <stdio.h>
 
-#include "opal/runtime/opal_progress.h"
-
+#include "orte/runtime/orte_globals.h"
+#include "orte/util/name_fns.h"
 #include "orte/runtime/runtime.h"
 
 int main(int argc, char* argv[])
 {
-
-    int i;
-    double pi;
-
-    orte_init(&argc, &argv, ORTE_PROC_NON_MPI);
-
-    i = 0;
-    while (1) {
-        i++;
-        pi = i / 3.14159256;
-        if (i > 100) {
-            /* need to progress so we can
-             * wake up if our daemon goes
-             * away!
-             */
-            opal_progress();
-            /* reset the counter so we loop */
-            i = 0;
-        }
+    if (ORTE_SUCCESS != orte_init(&argc, &argv, ORTE_PROC_NON_MPI)) {
+        fprintf(stderr, "ORTE_INIT FAILED\n");
+        exit(1);
     }
+    opal_output(0, "%s RUNNING", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+
+    opal_event_dispatch();
 
     orte_finalize();
 
