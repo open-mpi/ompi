@@ -39,9 +39,9 @@
 
 int orte_rml_base_get_contact_info(orte_jobid_t job, opal_buffer_t *data)
 {
-    orte_vpid_t i;
+    int i;
     orte_job_t *jdata;
-    orte_proc_t **procs;
+    orte_proc_t *proc;
     int rc;
     
     /* lookup the job */
@@ -52,13 +52,15 @@ int orte_rml_base_get_contact_info(orte_jobid_t job, opal_buffer_t *data)
     }
 
     /* cycle through all procs in the job, adding their contact info to the buffer */
-    procs = (orte_proc_t**)jdata->procs->addr;
-    for (i=0; i < jdata->num_procs; i++) {
-        /* if this proc doesn't have any contact info, ignore it */
-        if (NULL == procs[i]->rml_uri) {
+    for (i=0; i < jdata->procs->size; i++) {
+        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
             continue;
         }
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &procs[i]->rml_uri, 1, OPAL_STRING))) {
+        /* if this proc doesn't have any contact info, ignore it */
+        if (NULL == proc->rml_uri) {
+            continue;
+        }
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &proc->rml_uri, 1, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
