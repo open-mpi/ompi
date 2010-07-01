@@ -38,13 +38,6 @@ Errno: %d
 
 This process may still be running and/or consuming resources.
 #
-[orte-odls-default:execv-error]
-Could not execute the executable "%s": %s
-
-This could mean that your PATH or executable name is wrong, or that
-you do not have the necessary permissions.  Please ensure that the
-executable is able to be found and executed.
-#
 [binding not supported]
 Open MPI tried to bind a new process, but process binding is not
 supported on the host where it was launched.  The process was killed
