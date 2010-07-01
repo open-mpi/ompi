@@ -35,6 +35,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/grpcomm/grpcomm.h"
+#include "orte/util/name_fns.h"
 
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"
@@ -60,6 +61,16 @@ int orte_iof_hnp_send_data_to_endpoint(orte_process_name_t *host,
     opal_buffer_t *buf;
     int rc;
     
+    /* if the host is a daemon and we are in the process of aborting,
+     * then ignore this request. We leave it alone if the host is not
+     * a daemon because it might be a tool that wants to watch the
+     * output from an abort procedure
+     */
+    if (ORTE_JOB_FAMILY(host->jobid) == ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)
+        && orte_job_term_ordered) {
+        return ORTE_SUCCESS;
+    }
+
     buf = OBJ_NEW(opal_buffer_t);
     
     /* pack the tag - we do this first so that flow control messages can
@@ -102,8 +113,8 @@ int orte_iof_hnp_send_data_to_endpoint(orte_process_name_t *host,
     /* send the buffer to the host - this is either a daemon or
      * a tool that requested IOF
      */
-    if( ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(host, buf, ORTE_RML_TAG_IOF_PROXY,
-                                                      0, send_cb, NULL))) {
+    if (0 > (rc = orte_rml.send_buffer_nb(host, buf, ORTE_RML_TAG_IOF_PROXY,
+                                          0, send_cb, NULL))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
