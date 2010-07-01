@@ -64,6 +64,7 @@ struct orterun_globals_t {
     bool wait_for_server;
     int server_wait_timeout;
     char *stdin_target;
+    bool disable_recovery;
 };
 
 /**
