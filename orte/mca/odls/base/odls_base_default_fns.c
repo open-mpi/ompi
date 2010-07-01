@@ -1188,12 +1188,27 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
 
 static int setup_child(orte_odls_child_t *child, orte_odls_job_t *jobdat, char ***env)
 {
-    char *vpid_str, *param, *value;
+    char *param, *value;
     orte_node_rank_t node_rank;
     orte_local_rank_t local_rank;
     int rc;
     
-    if (ORTE_SUCCESS != (rc = orte_util_convert_vpid_to_string(&vpid_str, child->name->vpid))) {
+    /* setup the jobid */
+    if (ORTE_SUCCESS != (rc = orte_util_convert_jobid_to_string(&value, child->name->jobid))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    if (NULL == (param = mca_base_param_environ_variable("orte","ess","jobid"))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        rc = ORTE_ERR_OUT_OF_RESOURCE;
+        return rc;
+    }
+    opal_setenv(param, value, true, env);
+    free(param);
+    free(value);
+
+    /* setup the vpid */
+    if (ORTE_SUCCESS != (rc = orte_util_convert_vpid_to_string(&value, child->name->vpid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -1202,7 +1217,7 @@ static int setup_child(orte_odls_child_t *child, orte_odls_job_t *jobdat, char *
         rc = ORTE_ERR_OUT_OF_RESOURCE;
         return rc;
     }
-    opal_setenv(param, vpid_str, true, env);
+    opal_setenv(param, value, true, env);
     free(param);
 
     /* although the vpid IS the process' rank within the job, users
@@ -1213,8 +1228,8 @@ static int setup_child(orte_odls_child_t *child, orte_odls_job_t *jobdat, char *
      * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
      * We know - just live with it
      */
-    opal_setenv("OMPI_COMM_WORLD_RANK", vpid_str, true, env);
-    free(vpid_str);  /* done with this now */
+    opal_setenv("OMPI_COMM_WORLD_RANK", value, true, env);
+    free(value);  /* done with this now */
     
     /* users would appreciate being given a public environmental variable
      * that also represents the local rank value - something MPI specific - so
@@ -1291,6 +1306,78 @@ static int setup_child(orte_odls_child_t *child, orte_odls_job_t *jobdat, char *
     return ORTE_SUCCESS;
 }
 
+static int setup_path(orte_app_context_t *app)
+{
+    int rc;
+    char dir[MAXPATHLEN];
+    char **argvptr;
+    char *pathenv = NULL, *mpiexec_pathenv = NULL;
+    char *full_search;
+
+    /* Try to change to the app's cwd and check that the app
+       exists and is executable The function will
+       take care of outputting a pretty error message, if required
+    */
+    if (ORTE_SUCCESS != (rc = orte_util_check_context_cwd(app, true))) {
+        /* do not ERROR_LOG - it will be reported elsewhere */
+        goto CLEANUP;
+    }
+        
+    /* The prior function will have done a chdir() to jump us to
+     * wherever the app is to be executed. This could be either where
+     * the user specified (via -wdir), or to the user's home directory
+     * on this node if nothing was provided. It seems that chdir doesn't
+     * adjust the $PWD enviro variable when it changes the directory. This
+     * can cause a user to get a different response when doing getcwd vs
+     * looking at the enviro variable. To keep this consistent, we explicitly
+     * ensure that the PWD enviro variable matches the CWD we moved to.
+     *
+     * NOTE: if a user's program does a chdir(), then $PWD will once
+     * again not match getcwd! This is beyond our control - we are only
+     * ensuring they start out matching.
+     */
+    getcwd(dir, sizeof(dir));
+    opal_setenv("PWD", dir, true, &app->env);
+        
+    /* Search for the OMPI_exec_path and PATH settings in the environment. */
+    for (argvptr = app->env; *argvptr != NULL; argvptr++) { 
+        if (0 == strncmp("OMPI_exec_path=", *argvptr, 15)) {
+            mpiexec_pathenv = *argvptr + 15;
+        }
+        if (0 == strncmp("PATH=", *argvptr, 5)) {
+            pathenv = *argvptr + 5;
+        }
+    }
+        
+    /* If OMPI_exec_path is set (meaning --path was used), then create a
+       temporary environment to be used in the search for the executable.
+       The PATH setting in this temporary environment is a combination of
+       the OMPI_exec_path and PATH values.  If OMPI_exec_path is not set,
+       then just use existing environment with PATH in it.  */
+    if (NULL != mpiexec_pathenv) {
+        argvptr = NULL;
+        if (pathenv != NULL) {
+            asprintf(&full_search, "%s:%s", mpiexec_pathenv, pathenv);
+        } else {
+            asprintf(&full_search, "%s", mpiexec_pathenv);
+        }
+        opal_setenv("PATH", full_search, true, &argvptr);
+        free(full_search);
+    } else {
+        argvptr = app->env;
+    }
+        
+    rc = orte_util_check_context_app(app, argvptr);
+    /* do not ERROR_LOG - it will be reported elsewhere */
+    if (NULL != mpiexec_pathenv) {
+        opal_argv_free(argvptr);
+    }
+
+ CLEANUP:
+    return rc;
+}
+
+
 /* define a timer release point so that we can wait for
  * file descriptors to come available, if necessary
  */
@@ -1311,7 +1398,6 @@ static void timer_cb(int fd, short event, void *cbdata)
 int orte_odls_base_default_launch_local(orte_jobid_t job,
                                         orte_odls_base_fork_local_proc_fn_t fork_local)
 {
-    char *job_str, *param;
     opal_list_item_t *item;
     orte_app_context_t *app, **apps;
     orte_app_idx_t i, num_apps;
@@ -1323,11 +1409,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     opal_buffer_t alert;
     orte_std_cntr_t proc_rank;
     orte_odls_job_t *jobdat;
-    char *pathenv = NULL, *mpiexec_pathenv = NULL;
     char basedir[MAXPATHLEN];
-    char dir[MAXPATHLEN];
-    char **argvptr;
-    char *full_search;
     char **argvsav=NULL;
     int inm;
     opal_event_t *delay;
@@ -1518,75 +1600,21 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
             goto CLEANUP;
         }
         
-        
-        /* Try to change to the app's cwd and check that the app
-         exists and is executable The function will
-         take care of outputting a pretty error message, if required
+        /* setup the working directory for this app - will jump us
+         * to that directory
          */
-        if (ORTE_SUCCESS != (rc = orte_util_check_context_cwd(app, true))) {
-            /* do not ERROR_LOG - it will be reported elsewhere */
-            /* cycle through children to find those for this jobid */
-            for (item = opal_list_get_first(&orte_local_children);
-                 item != opal_list_get_end(&orte_local_children);
-                 item = opal_list_get_next(item)) {
-                child = (orte_odls_child_t*)item;
-                if (OPAL_EQUAL == opal_dss.compare(&job, &(child->name->jobid), ORTE_JOBID) &&
-                    i == child->app_idx) {
-                    child->exit_code = rc;
-                }
-            }
-            goto CLEANUP;
-        }
-        
-        /* The prior function will have done a chdir() to jump us to
-         * wherever the app is to be executed. This could be either where
-         * the user specified (via -wdir), or to the user's home directory
-         * on this node if nothing was provided. It seems that chdir doesn't
-         * adjust the $PWD enviro variable when it changes the directory. This
-         * can cause a user to get a different response when doing getcwd vs
-         * looking at the enviro variable. To keep this consistent, we explicitly
-         * ensure that the PWD enviro variable matches the CWD we moved to.
-         *
-         * NOTE: if a user's program does a chdir(), then $PWD will once
-         * again not match getcwd! This is beyond our control - we are only
-         * ensuring they start out matching.
-         */
-        getcwd(dir, sizeof(dir));
-        opal_setenv("PWD", dir, true, &app->env);
-        
-        /* Search for the OMPI_exec_path and PATH settings in the environment. */
-        for (argvptr = app->env; *argvptr != NULL; argvptr++) { 
-            if (0 == strncmp("OMPI_exec_path=", *argvptr, 15)) {
-                mpiexec_pathenv = *argvptr + 15;
-            }
-            if (0 == strncmp("PATH=", *argvptr, 5)) {
-                pathenv = *argvptr + 5;
-            }
-        }
-        
-        /* If OMPI_exec_path is set (meaning --path was used), then create a
-         temporary environment to be used in the search for the executable.
-         The PATH setting in this temporary environment is a combination of
-         the OMPI_exec_path and PATH values.  If OMPI_exec_path is not set,
-         then just use existing environment with PATH in it.  */
-        if (NULL != mpiexec_pathenv) {
-            argvptr = NULL;
-            if (pathenv != NULL) {
-                asprintf(&full_search, "%s:%s", mpiexec_pathenv, pathenv);
-            } else {
-                asprintf(&full_search, "%s", mpiexec_pathenv);
-            }
-            opal_setenv("PATH", full_search, true, &argvptr);
-            free(full_search);
-        } else {
-            argvptr = app->env;
-        }
-        
-        if (ORTE_SUCCESS != (rc = orte_util_check_context_app(app, argvptr))) {
-            /* do not ERROR_LOG - it will be reported elsewhere */
-            if (NULL != mpiexec_pathenv) {
-                opal_argv_free(argvptr);
-            }
+        if (ORTE_SUCCESS != (rc = setup_path(app))) {
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                 "%s odls:launch:setup_path failed with error %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_ERROR_NAME(rc)));
+            /* do not ERROR_LOG this failure - it will be reported
+             * elsewhere. The launch is going to fail. Since we could have
+             * multiple app_contexts, we need to ensure that we flag only
+             * the correct one that caused this operation to fail. We then have
+             * to flag all the other procs from the app_context as having "not failed"
+             * so we can report things out correctly
+             */
             /* cycle through children to find those for this jobid */
             for (item = opal_list_get_first(&orte_local_children);
                  item != opal_list_get_end(&orte_local_children);
@@ -1600,10 +1628,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
             /* okay, now tell the HNP we couldn't do it */
             goto CLEANUP;
         }
-        if (NULL != mpiexec_pathenv) {
-            opal_argv_free(argvptr);
-        }
-        
+
         /* okay, now let's launch all the local procs for this app using the provided fork_local fn */
         for (proc_rank = 0, item = opal_list_get_first(&orte_local_children);
              item != opal_list_get_end(&orte_local_children);
@@ -1765,19 +1790,6 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
             /* setup the rest of the environment with the proc-specific items - these
              * will be overwritten for each child
              */
-            if (ORTE_SUCCESS != (rc = orte_util_convert_jobid_to_string(&job_str, child->name->jobid))) {
-                ORTE_ERROR_LOG(rc);
-                goto CLEANUP;
-            }
-            if (NULL == (param = mca_base_param_environ_variable("orte","ess","jobid"))) {
-                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                rc = ORTE_ERR_OUT_OF_RESOURCE;
-                goto CLEANUP;
-            }
-            opal_setenv(param, job_str, true, &app->env);
-            free(param);
-            free(job_str);
-            
             if (ORTE_SUCCESS != (rc = setup_child(child, jobdat, &app->env))) {
                 ORTE_ERROR_LOG(rc);
                 goto CLEANUP;
@@ -1870,7 +1882,10 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     }
     launch_failed = false;
 
-CLEANUP:
+ CLEANUP:
+    /* ensure we reset our working directory back to our default location  */
+    chdir(basedir);
+
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:launch reporting job %s launch status",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -2947,7 +2962,8 @@ int orte_odls_base_default_restart_proc(orte_odls_child_t *child,
     orte_app_context_t *app;
     opal_list_item_t *item;
     orte_odls_job_t *jobdat;
-    
+    char basedir[MAXPATHLEN];
+
     /* protect operations involving the global list of children */
     OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
 
@@ -2956,6 +2972,12 @@ int orte_odls_base_default_restart_proc(orte_odls_child_t *child,
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(child->name)));
     
+    /* establish our baseline working directory - we will be potentially
+     * bouncing around as we execute this app, but we will always return
+     * to this place as our default directory
+     */
+    getcwd(basedir, sizeof(basedir));
+
     /* find this child's jobdat */
     jobdat = NULL;
     for (item = opal_list_get_first(&orte_local_jobdata);
@@ -2985,29 +3007,53 @@ int orte_odls_base_default_restart_proc(orte_odls_child_t *child,
         child->rml_uri = NULL;
     }
     app = jobdat->apps[child->app_idx];
-    /* reset envars to match this child */
-    
+
+    /* reset envars to match this child */    
     if (ORTE_SUCCESS != (rc = setup_child(child, jobdat, &app->env))) {
         ORTE_ERROR_LOG(rc);
+        opal_condition_signal(&orte_odls_globals.cond);
+        OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
         goto CLEANUP;
     }
-    opal_output(0, "%s restarting app %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), app->app);
+
+    /* setup the path */
+    if (ORTE_SUCCESS != (rc = setup_path(app))) {
+        ORTE_ERROR_LOG(rc);
+        opal_condition_signal(&orte_odls_globals.cond);
+        OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
+        goto CLEANUP;
+    }
+
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                         "%s restarting app %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), app->app));
+
+    /* must unlock prior to fork to keep things clean in the
+     * event library
+     */
+    opal_condition_signal(&orte_odls_globals.cond);
+    OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
+
     rc = fork_local(app, child, app->env, jobdat);
     if (ORTE_SUCCESS == rc) {
-        OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
         orte_wait_cb(child->pid, odls_base_default_wait_local_proc, NULL);
-        OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
-        
     }
     
-CLEANUP:
+ CLEANUP:
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:restart of proc %s %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(child->name),
                          (ORTE_SUCCESS == rc) ? "succeeded" : "failed"));
 
-    opal_condition_signal(&orte_odls_globals.cond);
-    OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
+    /* reset our working directory back to our default location - if we
+     * don't do this, then we will be looking for relative paths starting
+     * from the last wdir option specified by the user. Thus, we would
+     * be requiring that the user keep track on the cmd line of where
+     * each app was located relative to the prior app, instead of relative
+     * to their current location
+     */
+    chdir(basedir);
+
     return rc;
 }
