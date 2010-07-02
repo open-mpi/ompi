@@ -1,5 +1,7 @@
+. -*- nroff -*-
 .\" Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 .\" Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
 .\"
 .\" Man page for ORTE's orterun command
 .\" 
@@ -1031,13 +1033,16 @@ signal), \fImpirun\fP will print out an error message and kill the rest of the
 MPI application.
 .PP
 User signal handlers should probably avoid trying to cleanup MPI state
-(Open MPI is, currently, neither thread-safe nor async-signal-safe).
-For example, if a segmentation fault occurs in \fIMPI_SEND\fP (perhaps because
-a bad buffer was passed in) and a user signal handler is invoked, if this user
-handler attempts to invoke \fIMPI_FINALIZE\fP, Bad Things could happen since
-Open MPI was already "in" MPI when the error occurred.  Since \fImpirun\fP
-will notice that the process died due to a signal, it is probably not
-necessary (and safest) for the user to only clean up non-MPI state.
+(Open MPI is currently not async-signal-safe; see MPI_Init_thread(3)
+for details about 
+.I MPI_THREAD_MULTIPLE 
+and thread safety).  For example, if a segmentation fault occurs in
+\fIMPI_SEND\fP (perhaps because a bad buffer was passed in) and a user
+signal handler is invoked, if this user handler attempts to invoke
+\fIMPI_FINALIZE\fP, Bad Things could happen since Open MPI was already
+"in" MPI when the error occurred.  Since \fImpirun\fP will notice that
+the process died due to a signal, it is probably not necessary (and
+safest) for the user to only clean up non-MPI state.
 .
 .
 .
@@ -1202,18 +1207,19 @@ Be sure also to see the examples throughout the sections above.
 .
 .TP 4
 mpirun -np 4 -mca btl ib,tcp,self prog1
-Run 4 copies of prog1 using the "ib", "tcp", and "self" BTL's for the transport
-of MPI messages.
+Run 4 copies of prog1 using the "ib", "tcp", and "self" BTL's for the
+transport of MPI messages.
 .
 .
 .TP 4
 mpirun -np 4 -mca btl tcp,sm,self 
 .br
---mca btl_tcp_if_include ce0 prog1
+--mca btl_tcp_if_include eth0 prog1
 .br
-Run 4 copies of prog1 using the "tcp", "sm" and "self" BTLs for the transport of 
-MPI messages, with TCP using only the ce0 interface to communicate.  Note that 
-other BTLs have similar if_include MCA parameters.
+Run 4 copies of prog1 using the "tcp", "sm" and "self" BTLs for the
+transport of MPI messages, with TCP using only the eth0 interface to
+communicate.  Note that other BTLs have similar if_include MCA
+parameters.
 .
 .\" **************************
 .\"    Diagnostics Section
@@ -1243,5 +1249,5 @@ be the first rank that died but is not guaranteed to be so.
 .\"    See Also Section
 .\" **************************
 .
-.\" .SH SEE ALSO
-.\" orted(1), ompi-server(1)
+.SH SEE ALSO
+MPI_Init_thread(3)
