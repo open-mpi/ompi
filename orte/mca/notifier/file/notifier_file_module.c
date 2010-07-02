@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Bull SAS.  All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,6 +34,9 @@
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif /* HAVE_FCNTL_H */
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
 
 #include "opal/util/os_path.h"
 #include "opal/util/show_help.h"
