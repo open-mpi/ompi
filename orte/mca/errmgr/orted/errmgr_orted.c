@@ -315,6 +315,9 @@ static int update_state(orte_jobid_t job,
     
     if (ORTE_PROC_STATE_TERMINATED < state) {
         if (jobdat->enable_recovery) {
+            OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+                                 "%s RECOVERY ENABLED",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             /* find this proc in the local children */
             for (item = opal_list_get_first(&orte_local_children);
                  item != opal_list_get_end(&orte_local_children);
@@ -324,6 +327,10 @@ static int update_state(orte_jobid_t job,
                     child->name->vpid == proc->vpid) {
                     /* see if this child has reached its local restart limit */
                     app = jobdat->apps[child->app_idx];
+                    OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+                                         "%s CHECKING RESTARTS %d VS MAX %d",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         child->restarts, app->max_local_restarts));
                     if (child->restarts < app->max_local_restarts ) {
                         /*  attempt to restart it locally */
                         child->restarts++;
