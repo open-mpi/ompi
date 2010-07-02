@@ -884,7 +884,7 @@ for a full list); a summary of the more commonly used ones follows:
   tree.  However, if the VALUE is "external", Open MPI will look for
   the relevant libltdl header file and library in default compiler /
   linker locations.  Or, VALUE can be a directory tree where the
-  libltdl header file can library can be found.  This option allows
+  libltdl header file and library can be found.  This option allows
   operating systems to include Open MPI and use their default libltdl
   installation instead of Open MPI's bundled libltdl.
 
