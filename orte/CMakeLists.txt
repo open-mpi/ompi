@@ -37,6 +37,11 @@ FOREACH(ORTE_SUBDIR ${ORTE_SUBDIRS})
 
 ENDFOREACH(ORTE_SUBDIR ${ORTE_SUBDIRS})
 
+#add orterun debugger files into source list
+SET (ORTERUN_DEBUGGER_FILES ${PROJECT_SOURCE_DIR}/tools/orterun/debuggers.c ${PROJECT_SOURCE_DIR}/tools/orterun/debuggers.h)
+SET (ORTE_SOURCE_FILES ${ORTE_SOURCE_FILES} ${ORTERUN_DEBUGGER_FILES})
+SOURCE_GROUP(debuggers FILES ${ORTERUN_DEBUGGER_FILES})
+
 #only generate if it's not a tarball
 IF(NOT EXISTS ${PROJECT_SOURCE_DIR}/util/hostfile/hostfile_lex.c)
   ADD_FLEX_FILE(ORTE_SOURCE_FILES ./util/hostfile/hostfile_lex.l "orte_util_hostfile_"
