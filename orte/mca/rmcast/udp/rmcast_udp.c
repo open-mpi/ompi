@@ -193,14 +193,14 @@ static int init(void)
         if (ORTE_PROC_IS_APP && NULL != orte_rmcast_base.my_group_name) {
             if (ORTE_SUCCESS != (rc = open_channel(orte_rmcast_base.my_group_number,
                                                    "recv",
-                                                   NULL, -1, NULL, ORTE_RMCAST_RECV))) {
+                                                   NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
             orte_rmcast_base.my_input_channel = (rmcast_base_channel_t*)opal_list_get_last(&orte_rmcast_base.channels);
             if (ORTE_SUCCESS != (rc = open_channel(orte_rmcast_base.my_group_number+1,
                                                    "xmit",
-                                                   NULL, -1, NULL, ORTE_RMCAST_XMIT))) {
+                                                   NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
