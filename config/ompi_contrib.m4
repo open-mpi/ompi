@@ -43,7 +43,7 @@ AC_DEFUN([OMPI_CONTRIB],[
     # Option to not build some of the contributed software packages
     AC_ARG_ENABLE([contrib-no-build],
         AC_HELP_STRING([--enable-contrib-no-build=LIST],
-                        [Comma-separated list of contributed package NAMEs that will not be built.  Possible values: contrib_software_list. Example: "--enable-contrib-no-build=libtrace,vt" will disable building both the "libtrace" and "vt" contributed software packages.]))
+                        [Comma-separated list of contributed package NAMEs that will not be built.  Possible values: contrib_software_list. Example: "--enable-contrib-no-build=libompitrace,vt" will disable building both the "libompitrace" and "vt" contributed software packages.]))
 
     # Parse the list to see what we should not build
     ompi_show_subtitle "Configuring contributed software packages"
