@@ -57,9 +57,9 @@ mca_pml_cm_enable(bool enable)
        maybe? */
     ompi_free_list_init_new(&mca_pml_base_send_requests,
                         sizeof(mca_pml_cm_hvy_send_request_t) + ompi_mtl->mtl_request_size,
-                        CACHE_LINE_SIZE,
+                        opal_cache_line_size,
                         OBJ_CLASS(mca_pml_cm_hvy_send_request_t),
-                        0,CACHE_LINE_SIZE,
+                        0,opal_cache_line_size,
                         ompi_pml_cm.free_list_num,
                         ompi_pml_cm.free_list_max,
                         ompi_pml_cm.free_list_inc,
@@ -67,9 +67,9 @@ mca_pml_cm_enable(bool enable)
 
     ompi_free_list_init_new(&mca_pml_base_recv_requests,
                         sizeof(mca_pml_cm_hvy_recv_request_t) + ompi_mtl->mtl_request_size,
-                        CACHE_LINE_SIZE,
+                        opal_cache_line_size,
                         OBJ_CLASS(mca_pml_cm_hvy_recv_request_t),
-                        0,CACHE_LINE_SIZE,
+                        0,opal_cache_line_size,
                         ompi_pml_cm.free_list_num,
                         ompi_pml_cm.free_list_max,
                         ompi_pml_cm.free_list_inc,

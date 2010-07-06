@@ -115,7 +115,7 @@ static void *mpool_calloc(size_t nmemb, size_t size)
     size_t bsize = nmemb * size;
     mca_mpool_base_module_t *mpool = mca_btl_sm_component.sm_mpool;
 
-    buf = mpool->mpool_alloc(mpool, bsize, CACHE_LINE_SIZE, 0, NULL);
+    buf = mpool->mpool_alloc(mpool, bsize, opal_cache_line_size, 0, NULL);
 
     if (NULL == buf)
         return NULL;
@@ -220,14 +220,14 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
          * - eager fragments (2*n of them, allocated in sm_free_list_inc chunks)
          * - max fragments (sm_free_list_num of them)
          *
-         * On top of all that, we sprinkle in some number of "CACHE_LINE_SIZE"
+         * On top of all that, we sprinkle in some number of "opal_cache_line_size"
          * additions to account for some padding and edge effects that may lie
          * in the allocator.
          */
         res.size =
-            FIFO_MAP_NUM(n) * ( sizeof(sm_fifo_t) + sizeof(void *) * m->fifo_size + 4 * CACHE_LINE_SIZE )
-            + ( 2 * n + m->sm_free_list_inc ) * ( m->eager_limit   + 2 * CACHE_LINE_SIZE )
-            +           m->sm_free_list_num   * ( m->max_frag_size + 2 * CACHE_LINE_SIZE );
+            FIFO_MAP_NUM(n) * ( sizeof(sm_fifo_t) + sizeof(void *) * m->fifo_size + 4 * opal_cache_line_size )
+            + ( 2 * n + m->sm_free_list_inc ) * ( m->eager_limit   + 2 * opal_cache_line_size )
+            +           m->sm_free_list_num   * ( m->max_frag_size + 2 * opal_cache_line_size );
 
         /* before we multiply by n, make sure the result won't overflow */
         /* Stick that little pad in, particularly since we'll eventually
@@ -273,12 +273,12 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     /* Pass in a data segment alignment of 0 to get no data
        segment (only the shared control structure) */
     size = sizeof(mca_common_sm_seg_header_t) +
-        n * (sizeof(sm_fifo_t*) + sizeof(char *) + sizeof(uint16_t)) + CACHE_LINE_SIZE;
+        n * (sizeof(sm_fifo_t*) + sizeof(char *) + sizeof(uint16_t)) + opal_cache_line_size;
     procs = ompi_proc_world(&num_procs);
     if (!(mca_btl_sm_component.sm_seg =
           mca_common_sm_init(procs, num_procs, size, sm_ctl_file,
                              sizeof(mca_common_sm_seg_header_t),
-                             CACHE_LINE_SIZE))) {
+                             opal_cache_line_size))) {
         opal_output(0, "mca_btl_sm_add_procs: unable to create shared memory "
                     "BTL coordinating strucure :: size %lu \n",
                     (unsigned long)size);
@@ -338,8 +338,8 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     length_payload =
         sizeof(mca_btl_sm_hdr_t) + mca_btl_sm_component.eager_limit;
     i = ompi_free_list_init_new(&mca_btl_sm_component.sm_frags_eager, length,
-                                CACHE_LINE_SIZE, OBJ_CLASS(mca_btl_sm_frag1_t),
-                                length_payload, CACHE_LINE_SIZE,
+                                opal_cache_line_size, OBJ_CLASS(mca_btl_sm_frag1_t),
+                                length_payload, opal_cache_line_size,
                                 mca_btl_sm_component.sm_free_list_num,
                                 mca_btl_sm_component.sm_free_list_max,
                                 mca_btl_sm_component.sm_free_list_inc,
@@ -351,8 +351,8 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     length_payload =
         sizeof(mca_btl_sm_hdr_t) + mca_btl_sm_component.max_frag_size;
     i = ompi_free_list_init_new(&mca_btl_sm_component.sm_frags_max, length,
-                                CACHE_LINE_SIZE, OBJ_CLASS(mca_btl_sm_frag2_t),
-                                length_payload, CACHE_LINE_SIZE,
+                                opal_cache_line_size, OBJ_CLASS(mca_btl_sm_frag2_t),
+                                length_payload, opal_cache_line_size,
                                 mca_btl_sm_component.sm_free_list_num,
                                 mca_btl_sm_component.sm_free_list_max,
                                 mca_btl_sm_component.sm_free_list_inc,
@@ -362,8 +362,8 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
 
     i = ompi_free_list_init_new(&mca_btl_sm_component.sm_frags_user, 
 		    sizeof(mca_btl_sm_user_t),
-		    CACHE_LINE_SIZE, OBJ_CLASS(mca_btl_sm_user_t),
-		    sizeof(mca_btl_sm_hdr_t), CACHE_LINE_SIZE,
+		    opal_cache_line_size, OBJ_CLASS(mca_btl_sm_user_t),
+		    sizeof(mca_btl_sm_hdr_t), opal_cache_line_size,
 		    mca_btl_sm_component.sm_free_list_num,
 		    mca_btl_sm_component.sm_free_list_max,
 		    mca_btl_sm_component.sm_free_list_inc,

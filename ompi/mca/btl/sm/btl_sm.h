@@ -101,24 +101,35 @@ BEGIN_C_DECLS
  */
 
 #define SM_FIFO_FREE  (void *) (-2)
+/* We can't use opal_cache_line_size here because we need a
+   compile-time constant for padding the struct.  We can't really have
+   a compile-time constant that is portable, either (e.g., compile on
+   one machine and run on another).  So just use a big enough cache
+   line that should hopefully be good in most places. */
+#define SM_CACHE_LINE_PAD 128
 
 struct sm_fifo_t {
     /* This queue pointer is used only by the heads. */
-    volatile void **queue;           char pad0[CACHE_LINE_SIZE - sizeof(void **)           ];
+    volatile void **queue;           
+    char pad0[SM_CACHE_LINE_PAD - sizeof(void **)];
     /* This lock is used by the heads. */
-    opal_atomic_lock_t head_lock;    char pad1[CACHE_LINE_SIZE - sizeof(opal_atomic_lock_t)];
+    opal_atomic_lock_t head_lock;    
+    char pad1[SM_CACHE_LINE_PAD - sizeof(opal_atomic_lock_t)];
     /* This index is used by the head holding the head lock. */
-    volatile int head;               char pad2[CACHE_LINE_SIZE - sizeof(int)               ];
+    volatile int head;               
+    char pad2[SM_CACHE_LINE_PAD - sizeof(int)];
     /* This mask is used "read only" by all processes. */
-    unsigned int mask;               char pad3[CACHE_LINE_SIZE - sizeof(int)               ];
+    unsigned int mask;               
+    char pad3[SM_CACHE_LINE_PAD - sizeof(int)];
     /* The following are used only by the tail. */
     volatile void **queue_recv;
     opal_atomic_lock_t tail_lock;
     volatile int tail;
     int num_to_clear;
-    int lazy_free;                   char pad4[CACHE_LINE_SIZE - sizeof(void **)
-                                                               - sizeof(opal_atomic_lock_t)
-                                                               - sizeof(int) * 3           ];
+    int lazy_free;                   
+    char pad4[SM_CACHE_LINE_PAD - sizeof(void **) -
+              sizeof(opal_atomic_lock_t) -
+              sizeof(int) * 3];
 };
 typedef struct sm_fifo_t sm_fifo_t;
 
@@ -289,7 +300,7 @@ static inline int sm_fifo_init(int fifo_size, mca_mpool_base_module_t *mpool,
 
     /* allocate the queue in the receiver's address space */
     fifo->queue_recv = (volatile void **)mpool->mpool_alloc(
-            mpool, sizeof(void *) * qsize, CACHE_LINE_SIZE, 0, NULL);
+            mpool, sizeof(void *) * qsize, opal_cache_line_size, 0, NULL);
     if(NULL == fifo->queue_recv) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }

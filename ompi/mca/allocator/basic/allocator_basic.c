@@ -96,9 +96,9 @@ mca_allocator_base_module_t* mca_allocator_basic_component_init(
  
     ompi_free_list_init_new(&module->seg_descriptors,
         sizeof(mca_allocator_basic_segment_t),
-        CACHE_LINE_SIZE,
+        opal_cache_line_size,
         OBJ_CLASS(mca_allocator_basic_segment_t),
-        0,CACHE_LINE_SIZE,
+        0,opal_cache_line_size,
         0,  /* initial size */
         -1, /* maximum size */
         16, /* increment to grow by */

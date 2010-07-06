@@ -98,9 +98,9 @@ static mca_vprotocol_base_module_t *mca_vprotocol_pessimist_component_init( int*
     OBJ_CONSTRUCT(&mca_vprotocol_pessimist.events_pool, ompi_free_list_t);
     ompi_free_list_init_new(&mca_vprotocol_pessimist.events_pool,
                         sizeof(mca_vprotocol_pessimist_event_t),
-                        CACHE_LINE_SIZE,
+                        opal_cache_line_size,
                         OBJ_CLASS(mca_vprotocol_pessimist_event_t),
-                        0,CACHE_LINE_SIZE,
+                        0,opal_cache_line_size,
                         _free_list_num,
                         _free_list_max,
                         _free_list_inc,

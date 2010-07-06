@@ -630,7 +630,7 @@ static int init_sm2_barrier(struct ompi_communicator_t *comm,
                 (mca_coll_sm2_nb_request_process_shared_mem_t *)
                 (module->shared_memory_region + 
                  /* there are 2 barrier structs per bank */
-                 (2*i+j)*CACHE_LINE_SIZE);
+                 (2*i+j)*opal_cache_line_size);
             /* initialize per-process flags */
             for(k=0 ; k < comm_size ; k++ ) {
                 sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
@@ -943,7 +943,7 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
      *   manage the memory resources.
      */
     /* for each bank, 2 sets of barrier buffers */
-    mem_management_per_proc_per_block= 2 * CACHE_LINE_SIZE ;
+    mem_management_per_proc_per_block= 2 * opal_cache_line_size ;
     /* add in number of banks */
     mem_management_per_proc= mem_management_per_proc_per_block *
         mca_coll_sm2_component.sm2_num_mem_banks;

@@ -13,7 +13,7 @@
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -22,7 +22,6 @@
  */
 
 #include "ompi_config.h"
-#include "opal/sys/cache.h"
 #include "opal/event/event.h"
 #include "mpi.h"
 #include "ompi/runtime/params.h"

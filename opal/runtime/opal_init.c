@@ -66,6 +66,7 @@ int opal_initialized = 0;
 int opal_util_initialized = 0;
 bool opal_profile = false;
 char *opal_profile_file = NULL;
+int opal_cache_line_size;
 
 static const char *
 opal_err2str(int errnum)
@@ -217,6 +218,12 @@ opal_init_util(int* pargc, char*** pargv)
         }
         return OPAL_SUCCESS;
     }
+
+    /* JMS See note in runtime/opal.h -- this is temporary; to be
+       replaced with real hwloc information soon (in trunk/v1.5 and
+       beyond, only).  This *used* to be a #define, so it's important
+       to define it very early.  */
+    opal_cache_line_size = 128;
 
     /* initialize the memory allocator */
     opal_malloc_init();

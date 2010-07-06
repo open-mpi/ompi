@@ -36,9 +36,9 @@ int mca_rcache_rb_tree_init(mca_rcache_rb_module_t* rcache) {
     OBJ_CONSTRUCT(&rcache->rb_tree_item_list, ompi_free_list_t);
     ompi_free_list_init_new(&rcache->rb_tree_item_list, 
             sizeof(mca_rcache_rb_tree_item_t), 
-            CACHE_LINE_SIZE,
+            opal_cache_line_size,
             OBJ_CLASS(mca_rcache_rb_tree_item_t), 
-            0,CACHE_LINE_SIZE,
+            0,opal_cache_line_size,
             0, -1, 32, NULL); 
     
     return ompi_rb_tree_init(&rcache->rb_tree, 
