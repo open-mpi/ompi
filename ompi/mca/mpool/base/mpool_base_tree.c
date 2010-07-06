@@ -80,9 +80,9 @@ int mca_mpool_base_tree_init(void) {
     OBJ_CONSTRUCT(&tree_lock, opal_mutex_t);
     rc = ompi_free_list_init_new(&mca_mpool_base_tree_item_free_list, 
             sizeof(mca_mpool_base_tree_item_t), 
-            CACHE_LINE_SIZE,
+            opal_cache_line_size,
             OBJ_CLASS(mca_mpool_base_tree_item_t), 
-            0,CACHE_LINE_SIZE,
+            0,opal_cache_line_size,
             0, -1 , 4, NULL);
     if(OMPI_SUCCESS == rc) { 
         rc = ompi_rb_tree_init(&mca_mpool_base_tree, mca_mpool_base_tree_node_compare);

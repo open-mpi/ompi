@@ -59,9 +59,9 @@ void mca_mpool_rdma_module_init(mca_mpool_rdma_module_t* mpool)
 
     OBJ_CONSTRUCT(&mpool->reg_list, ompi_free_list_t);
     ompi_free_list_init_new(&mpool->reg_list, mpool->resources.sizeof_reg,
-            CACHE_LINE_SIZE,
+            opal_cache_line_size,
             OBJ_CLASS(mca_mpool_base_registration_t), 
-            0,CACHE_LINE_SIZE,
+            0,opal_cache_line_size,
             0, -1, 32, NULL);
     OBJ_CONSTRUCT(&mpool->mru_list, opal_list_t);
     OBJ_CONSTRUCT(&mpool->gc_list, opal_list_t);

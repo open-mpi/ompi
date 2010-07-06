@@ -1101,9 +1101,9 @@ int ompi_crcp_bkmrk_pml_init(void) {
     OBJ_CONSTRUCT(&coord_state_free_list, ompi_free_list_t);
     ompi_free_list_init_new( &coord_state_free_list,
                              sizeof(ompi_crcp_bkmrk_pml_state_t),
-                             CACHE_LINE_SIZE,
+                             opal_cache_line_size,
                              OBJ_CLASS(ompi_crcp_bkmrk_pml_state_t),
-                             0,CACHE_LINE_SIZE,
+                             0,opal_cache_line_size,
                              4,  /* Initial number */
                              -1, /* Max = Unlimited */
                              4,  /* Increment by */
@@ -1112,9 +1112,9 @@ int ompi_crcp_bkmrk_pml_init(void) {
     OBJ_CONSTRUCT(&content_ref_free_list, ompi_free_list_t);
     ompi_free_list_init_new( &content_ref_free_list,
                              sizeof(ompi_crcp_bkmrk_pml_message_content_ref_t),
-                             CACHE_LINE_SIZE,
+                             opal_cache_line_size,
                              OBJ_CLASS(ompi_crcp_bkmrk_pml_message_content_ref_t),
-                             0,CACHE_LINE_SIZE,
+                             0,opal_cache_line_size,
                              80, /* Initial number */
                              -1, /* Max = Unlimited */
                              32, /* Increment by */
@@ -1123,9 +1123,9 @@ int ompi_crcp_bkmrk_pml_init(void) {
     OBJ_CONSTRUCT(&peer_ref_free_list, ompi_free_list_t);
     ompi_free_list_init_new( &peer_ref_free_list,
                              sizeof(ompi_crcp_bkmrk_pml_peer_ref_t),
-                             CACHE_LINE_SIZE,
+                             opal_cache_line_size,
                              OBJ_CLASS(ompi_crcp_bkmrk_pml_peer_ref_t),
-                             0,CACHE_LINE_SIZE,
+                             0,opal_cache_line_size,
                              16, /* Initial number */
                              -1, /* Max = Unlimited */
                              16, /* Increment by */
@@ -1134,9 +1134,9 @@ int ompi_crcp_bkmrk_pml_init(void) {
     OBJ_CONSTRUCT(&traffic_msg_ref_free_list, ompi_free_list_t);
     ompi_free_list_init_new( &traffic_msg_ref_free_list,
                              sizeof(ompi_crcp_bkmrk_pml_traffic_message_ref_t),
-                             CACHE_LINE_SIZE,
+                             opal_cache_line_size,
                              OBJ_CLASS(ompi_crcp_bkmrk_pml_traffic_message_ref_t),
-                             0,CACHE_LINE_SIZE,
+                             0,opal_cache_line_size,
                              32, /* Initial number */
                              -1, /* Max = Unlimited */
                              64, /* Increment by */
@@ -1145,9 +1145,9 @@ int ompi_crcp_bkmrk_pml_init(void) {
     OBJ_CONSTRUCT(&drain_msg_ref_free_list, ompi_free_list_t);
     ompi_free_list_init_new( &drain_msg_ref_free_list,
                              sizeof(ompi_crcp_bkmrk_pml_drain_message_ref_t),
-                             CACHE_LINE_SIZE,
+                             opal_cache_line_size,
                              OBJ_CLASS(ompi_crcp_bkmrk_pml_drain_message_ref_t),
-                             0,CACHE_LINE_SIZE,
+                             0,opal_cache_line_size,
                              32, /* Initial number */
                              -1, /* Max = Unlimited */
                              64, /* Increment by */
@@ -1156,9 +1156,9 @@ int ompi_crcp_bkmrk_pml_init(void) {
     OBJ_CONSTRUCT(&drain_ack_msg_ref_free_list, ompi_free_list_t);
     ompi_free_list_init_new( &drain_ack_msg_ref_free_list,
                              sizeof(ompi_crcp_bkmrk_pml_drain_message_ack_ref_t),
-                             CACHE_LINE_SIZE,
+                             opal_cache_line_size,
                              OBJ_CLASS(ompi_crcp_bkmrk_pml_drain_message_ack_ref_t),
-                             0,CACHE_LINE_SIZE,
+                             0,opal_cache_line_size,
                              16, /* Initial number */
                              -1, /* Max = Unlimited */
                              16, /* Increment by */

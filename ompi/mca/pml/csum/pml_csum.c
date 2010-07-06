@@ -97,9 +97,9 @@ int mca_pml_csum_enable(bool enable)
     OBJ_CONSTRUCT(&mca_pml_csum.rdma_frags, ompi_free_list_t);
     ompi_free_list_init_new( &mca_pml_csum.rdma_frags,
                          sizeof(mca_pml_csum_rdma_frag_t),
-                         CACHE_LINE_SIZE,
+                         opal_cache_line_size,
                          OBJ_CLASS(mca_pml_csum_rdma_frag_t),
-                         0,CACHE_LINE_SIZE,
+                         0,opal_cache_line_size,
                          mca_pml_csum.free_list_num,
                          mca_pml_csum.free_list_max,
                          mca_pml_csum.free_list_inc,
@@ -109,9 +109,9 @@ int mca_pml_csum_enable(bool enable)
 
     ompi_free_list_init_new( &mca_pml_csum.recv_frags,
                          sizeof(mca_pml_csum_recv_frag_t) + mca_pml_csum.unexpected_limit,
-                         CACHE_LINE_SIZE,
+                         opal_cache_line_size,
                          OBJ_CLASS(mca_pml_csum_recv_frag_t),
-                         0,CACHE_LINE_SIZE,
+                         0,opal_cache_line_size,
                          mca_pml_csum.free_list_num,
                          mca_pml_csum.free_list_max,
                          mca_pml_csum.free_list_inc,
@@ -120,9 +120,9 @@ int mca_pml_csum_enable(bool enable)
     OBJ_CONSTRUCT(&mca_pml_csum.pending_pckts, ompi_free_list_t);
     ompi_free_list_init_new( &mca_pml_csum.pending_pckts,
                          sizeof(mca_pml_csum_pckt_pending_t),
-                         CACHE_LINE_SIZE,
+                         opal_cache_line_size,
                          OBJ_CLASS(mca_pml_csum_pckt_pending_t),
-                         0,CACHE_LINE_SIZE,
+                         0,opal_cache_line_size,
                          mca_pml_csum.free_list_num,
                          mca_pml_csum.free_list_max,
                          mca_pml_csum.free_list_inc,
@@ -134,9 +134,9 @@ int mca_pml_csum_enable(bool enable)
     ompi_free_list_init_new( &mca_pml_csum.send_ranges,
                          sizeof(mca_pml_csum_send_range_t) +
                          (mca_pml_csum.max_send_per_range - 1) * sizeof(mca_pml_csum_com_btl_t),
-                         CACHE_LINE_SIZE,
+                         opal_cache_line_size,
                          OBJ_CLASS(mca_pml_csum_send_range_t),
-                         0,CACHE_LINE_SIZE,
+                         0,opal_cache_line_size,
                          mca_pml_csum.free_list_num,
                          mca_pml_csum.free_list_max,
                          mca_pml_csum.free_list_inc,
@@ -159,9 +159,9 @@ int mca_pml_csum_enable(bool enable)
                          sizeof(mca_pml_csum_send_request_t) +
                          (mca_pml_csum.max_rdma_per_request - 1) *
                          sizeof(mca_pml_csum_com_btl_t),
-                         CACHE_LINE_SIZE,
+                         opal_cache_line_size,
                          OBJ_CLASS(mca_pml_csum_send_request_t),
-                         0,CACHE_LINE_SIZE,
+                         0,opal_cache_line_size,
                          mca_pml_csum.free_list_num,
                          mca_pml_csum.free_list_max,
                          mca_pml_csum.free_list_inc,
@@ -171,9 +171,9 @@ int mca_pml_csum_enable(bool enable)
                          sizeof(mca_pml_csum_recv_request_t) +
                          (mca_pml_csum.max_rdma_per_request - 1) *
                          sizeof(mca_pml_csum_com_btl_t),
-                         CACHE_LINE_SIZE,
+                         opal_cache_line_size,
                          OBJ_CLASS(mca_pml_csum_recv_request_t),
-                         0,CACHE_LINE_SIZE,
+                         0,opal_cache_line_size,
                          mca_pml_csum.free_list_num,
                          mca_pml_csum.free_list_max,
                          mca_pml_csum.free_list_inc,

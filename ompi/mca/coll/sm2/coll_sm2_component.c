@@ -140,7 +140,7 @@ static int sm2_open(void)
 
     /* Data region alignment (bytes) - per proc */
     cs->sm2_data_alignment=
-        mca_coll_sm2_param_register_int("sm2_data_alignment",CACHE_LINE_SIZE);
+        mca_coll_sm2_param_register_int("sm2_data_alignment",opal_cache_line_size);
 
     /* Number of memory banks */
     cs->sm2_num_mem_banks=

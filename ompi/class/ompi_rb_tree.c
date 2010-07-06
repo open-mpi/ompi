@@ -51,8 +51,8 @@ void ompi_rb_tree_construct(opal_object_t * object)
     tree->root_ptr = NULL;
     OBJ_CONSTRUCT(&(tree->free_list), ompi_free_list_t);
     ompi_free_list_init_new(&(tree->free_list), sizeof(ompi_rb_tree_node_t),
-            CACHE_LINE_SIZE, OBJ_CLASS(ompi_rb_tree_node_t),
-            0,CACHE_LINE_SIZE,
+            opal_cache_line_size, OBJ_CLASS(ompi_rb_tree_node_t),
+            0,opal_cache_line_size,
             0, -1 , 128, NULL);
 }
 

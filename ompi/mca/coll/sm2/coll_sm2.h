@@ -260,7 +260,7 @@ BEGIN_C_DECLS
 
         /* pading */
         /* Note: need to change this so it takes less memory */
-        char padding[2*CACHE_LINE_SIZE-2*sizeof(long long)];
+        char padding[2*opal_cache_line_size-2*sizeof(long long)];
     };
 
     typedef struct mca_coll_sm2_nb_request_process_shared_mem_t

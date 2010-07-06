@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -25,7 +26,7 @@
 #include "opal/prefetch.h"
 #include "opal/threads/condition.h"
 #include "ompi/constants.h"
-#include "opal/sys/cache.h"
+#include "opal/runtime/opal.h"
 
 BEGIN_C_DECLS
 
@@ -101,7 +102,7 @@ static inline int ompi_free_list_init(
     int num_elements_per_alloc,
     struct mca_mpool_base_module_t* mpool)
 {
-    return ompi_free_list_init_ex(free_list, element_size, CACHE_LINE_SIZE,
+    return ompi_free_list_init_ex(free_list, element_size, opal_cache_line_size,
             element_class, num_elements_to_alloc, max_elements_to_alloc,
                                   num_elements_per_alloc, mpool, NULL, NULL);
 }

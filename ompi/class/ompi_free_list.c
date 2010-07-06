@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -23,7 +24,6 @@
 #include "ompi/class/ompi_free_list.h"
 #include "opal/align.h"
 #include "opal/util/output.h"
-#include "opal/sys/cache.h"
 #include "ompi/mca/mpool/mpool.h"
 
 static void ompi_free_list_construct(ompi_free_list_t* fl);
