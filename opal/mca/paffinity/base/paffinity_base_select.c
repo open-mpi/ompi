@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco, Inc. All rights reserved.
+ * Copyright (c) 2007-2010 Cisco Systems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -21,7 +21,6 @@
 #include "opal_config.h"
 
 #include "opal/constants.h"
-#include "opal/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -38,7 +37,7 @@ const opal_paffinity_base_module_1_1_0_t *opal_paffinity_base_module = NULL;
 
 int opal_paffinity_base_select(void)
 {
-    int ret, exit_status = OPAL_SUCCESS;
+    int ret = OPAL_SUCCESS;
     opal_paffinity_base_component_2_0_0_t *best_component = NULL;
     opal_paffinity_base_module_1_1_0_t *best_module = NULL;
 
@@ -49,9 +48,10 @@ int opal_paffinity_base_select(void)
                                         &opal_paffinity_base_components_opened,
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component) ) {
-        /* This will only happen if no component was selected */
-        exit_status = OPAL_ERR_NOT_FOUND;
-        goto cleanup;
+        /* It is okay if we don't find a module - we will report an
+         * error if/when someone tries to actually use affinity
+         */
+        return OPAL_SUCCESS;
     }
 
     /* Save the winner */
@@ -61,12 +61,8 @@ int opal_paffinity_base_select(void)
 
     /* Initialize the winner */
     if (NULL != opal_paffinity_base_module) {
-        if (OPAL_SUCCESS != (ret = opal_paffinity_base_module->paff_module_init()) ) {
-            exit_status = ret;
-            goto cleanup;
-        }
+        ret = opal_paffinity_base_module->paff_module_init();
     }
 
- cleanup:
-    return exit_status;
+    return ret;
 }
