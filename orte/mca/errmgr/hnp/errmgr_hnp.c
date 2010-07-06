@@ -41,7 +41,7 @@
 #include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/sensor/sensor.h"
 #include "orte/mca/routed/routed.h"
-#include "orte/tools/orterun/debuggers.h"
+#include "orte/mca/debugger/base/base.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/errmgr/base/base.h"
@@ -516,7 +516,7 @@ static void hnp_abort(orte_jobid_t job, orte_exit_code_t exit_code)
                          ORTE_JOBID_PRINT(job), exit_code));
     
     /* if debuggers are running, clean up */
-    orte_debugger_finalize();
+    orte_debugger.finalize();
 
     /* set control params to indicate we are terminating */
     orte_job_term_ordered = true;

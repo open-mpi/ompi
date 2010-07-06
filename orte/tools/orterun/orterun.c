@@ -76,6 +76,8 @@
 #include "orte/util/session_dir.h"
 #include "orte/util/hnp_contact.h"
 
+#include "orte/mca/debugger/debugger.h"
+#include "orte/mca/debugger/base/base.h"
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/rml/rml.h"
@@ -94,7 +96,6 @@
 /* ensure I can behave like a daemon */
 #include "orte/orted/orted.h"
 
-#include "debuggers.h"
 #include "orterun.h"
 
 /*
@@ -468,6 +469,8 @@ static int parse_appfile(char *filename, char ***env);
 static void dump_aborted_procs(void);
 static void just_quit(int fd, short ign, void *arg);
 
+static void run_debugger(char *basename, opal_cmd_line_t *cmd_line,
+                         int argc, char *argv[], int num_procs);
 
 int orterun(int argc, char *argv[])
 {
@@ -814,15 +817,13 @@ int orterun(int argc, char *argv[])
     }
     
     /* setup for debugging */
-    if (ORTE_SUCCESS != orte_debugger_init_before_spawn(jdata)) {
-        goto DONE;
-    }
+    orte_debugger.init_before_spawn(jdata);
     
     /* Spawn the job */
     rc = orte_plm.spawn(jdata);
     
     /* complete debugger interface */
-    orte_debugger_init_after_spawn(jdata);
+    orte_debugger.init_after_spawn(jdata);
     
     /* now wait until the termination event fires */
     opal_event_dispatch();
@@ -896,7 +897,7 @@ static void job_completed(int trigpipe, short event, void *arg)
     }
     
     /* if the debuggers were run, clean up */
-    orte_debugger_finalize();
+    orte_debugger.finalize();
 
     if (ORTE_SUCCESS != (rc = orte_plm.terminate_orteds())) {        
         /* since we know that the sends didn't completely go out,
@@ -1229,7 +1230,7 @@ static void abort_exit_callback(int fd, short ign, void *arg)
         jdata->jobid != ORTE_JOBID_INVALID &&
         !orte_never_launched) {
         /* if the debuggers were run, clean up */
-        orte_debugger_finalize();
+        orte_debugger.finalize();
 
         /*
          * Turn off the process recovery functionality, if it was enabled.
@@ -1469,7 +1470,7 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
     /* Do we want a user-level debugger? */
 
     if (orterun_globals.debugger) {
-        orte_run_debugger(orterun_basename, cmd_line, argc, argv, orterun_globals.num_procs);
+        run_debugger(orterun_basename, cmd_line, argc, argv, orterun_globals.num_procs);
     }
 
     /* extract any rank assignment policy directives */
@@ -2336,4 +2337,269 @@ static int parse_appfile(char *filename, char ***env)
 
     free(filename);
     return ORTE_SUCCESS;
+}
+/*
+ * Process one line from the orte_base_user_debugger MCA param and
+ * look for that debugger in the path.  If we find it, fill in
+ * new_argv.
+ */
+static int process(char *orig_line, char *basename, opal_cmd_line_t *cmd_line,
+                   int argc, char **argv, char ***new_argv, int num_procs) 
+{
+    int i;
+    char *line, *full_line = strdup(orig_line);
+    char *user_argv, *tmp, *tmp2, **tmp_argv, **executable;
+    char cwd[OPAL_PATH_MAX];
+    bool used_num_procs = false;
+    bool single_app = false;
+    bool fail_needed_executable = false;
+
+    line = full_line;
+    if (NULL == line) {
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* Trim off whitespace at the beginning and ending of line */
+
+    for (i = 0; '\0' != line[i] && isspace(line[i]); ++line) {
+        continue;
+    }
+    for (i = strlen(line) - 2; i > 0 && isspace(line[i]); ++i) {
+        line[i] = '\0';
+    }
+    if (strlen(line) <= 0) {
+        return ORTE_ERROR;
+    }
+
+    /* Get the tail of the command line (i.e., the user executable /
+       argv) */
+
+    opal_cmd_line_get_tail(cmd_line, &i, &executable);
+
+    /* Remove --debug, --debugger, and -tv from the user command line
+       params */
+
+    if (1 == argc) {
+        user_argv = strdup("");
+    } else {
+        tmp_argv = opal_argv_copy(argv);
+        for (i = 0; NULL != tmp_argv[i]; ++i) {
+            if (0 == strcmp(tmp_argv[i], "-debug") ||
+                0 == strcmp(tmp_argv[i], "--debug")) {
+                free(tmp_argv[i]);
+                tmp_argv[i] = strdup("");
+            } else if (0 == strcmp(tmp_argv[i], "-tv") ||
+                0 == strcmp(tmp_argv[i], "--tv")) {
+                free(tmp_argv[i]);
+                tmp_argv[i] = strdup("");
+            } else if (0 == strcmp(tmp_argv[i], "--debugger") ||
+                       0 == strcmp(tmp_argv[i], "-debugger")) {
+                free(tmp_argv[i]);
+                tmp_argv[i] = strdup("");
+                if (NULL != tmp_argv[i + 1]) {
+                    ++i;
+                    free(tmp_argv[i]);
+                    tmp_argv[i] = strdup("");
+                }
+            }
+        }
+        user_argv = opal_argv_join(tmp_argv + 1, ' ');
+        opal_argv_free(tmp_argv);
+    }
+
+    /* Replace @@ tokens - line should never realistically be bigger
+       than MAX_INT, so just cast to int to remove compiler warning */
+
+    for (i = 0; i < (int) strlen(line); ++i) {
+        tmp = NULL;
+        if (0 == strncmp(line + i, "@mpirun@", 8)) {
+            line[i] = '\0';
+            asprintf(&tmp, "%s%s%s", line, argv[0], line + i + 8);
+        } else if (0 == strncmp(line + i, "@orterun@", 9)) {
+            line[i] = '\0';
+            asprintf(&tmp, "%s%s%s", line, argv[0], line + i + 9);
+        } else if (0 == strncmp(line + i, "@mpirun_args@", 13)) {
+            line[i] = '\0';
+            asprintf(&tmp, "%s%s%s", line, user_argv, line + i + 13);
+        } else if (0 == strncmp(line + i, "@orterun_args@", 14)) {
+            line[i] = '\0';
+            asprintf(&tmp, "%s%s%s", line, user_argv, line + i + 14);
+        } else if (0 == strncmp(line + i, "@np@", 4)) {
+            line[i] = '\0';
+            asprintf(&tmp, "%s%d%s", line, num_procs,
+                     line + i + 4);
+            used_num_procs = true;
+        } else if (0 == strncmp(line + i, "@single_app@", 12)) {
+            line[i] = '\0';
+            /* This token is only a flag; it is not replaced with any
+               alternate text */
+            asprintf(&tmp, "%s%s", line, line + i + 12);
+            single_app = true;
+        } else if (0 == strncmp(line + i, "@executable@", 12)) {
+            line[i] = '\0';
+            /* If we found the executable, paste it in.  Otherwise,
+               this is a possible error. */
+            if (NULL != executable) {
+                asprintf(&tmp, "%s%s%s", line, executable[0], line + i + 12);
+            } else {
+                fail_needed_executable = true;
+            }
+        } else if (0 == strncmp(line + i, "@executable_argv@", 17)) {
+            line[i] = '\0';
+            /* If we found the tail, paste in the argv.  Otherwise,
+               this is a possible error. */
+            if (NULL != executable) {
+                if (NULL != executable[1]) {
+                    /* Put in the argv */
+                    tmp2 = opal_argv_join(executable + 1, ' ');
+                    asprintf(&tmp, "%s%s%s", line, tmp2, line + i + 17);
+                    free(tmp2);
+                } else {
+                    /* There is no argv; just paste the front and back
+                       together, removing the @token@ */
+                    asprintf(&tmp, "%s%s", line, line + i + 17);
+                }
+            } else {
+                fail_needed_executable = true;
+            }
+        }
+
+        if (NULL != tmp) {
+            free(full_line);
+            full_line = line = tmp;
+            --i;
+        }
+    }
+
+    /* Split up into argv */
+
+    *new_argv = opal_argv_split(line, ' ');
+    free(full_line);
+
+    /* Can we find argv[0] in the path? */
+
+    getcwd(cwd, OPAL_PATH_MAX);
+    tmp = opal_path_findv((*new_argv)[0], X_OK, environ, cwd);
+    if (NULL != tmp) {
+        free(tmp);
+
+        /* Ok, we found a good debugger.  Check for some error
+           conditions. */
+        tmp = opal_argv_join(argv, ' ');
+
+        /* We do not support launching a debugger that requires the
+           -np value if the user did not specify -np on the command
+           line. */
+        if (used_num_procs && 0 == num_procs) {
+            orte_show_help("help-orterun.txt", "debugger requires -np",
+                           true, (*new_argv)[0], argv[0], user_argv, 
+                           (*new_argv)[0]);
+            /* Fall through to free / fail, below */
+        } 
+
+        /* Some debuggers do not support launching MPMD */
+        else if (single_app && NULL != strchr(tmp, ':')) {
+            orte_show_help("help-orterun.txt", 
+                           "debugger only accepts single app", true,
+                           (*new_argv)[0], (*new_argv)[0]);
+            /* Fall through to free / fail, below */
+        }
+
+        /* Some debuggers do not use orterun/mpirun, and therefore
+           must have an executable to run (e.g., cannot use mpirun's
+           app context file feature). */
+        else if (fail_needed_executable) {
+            orte_show_help("help-orterun.txt", 
+                           "debugger requires executable", true,
+                           (*new_argv)[0], argv[0], (*new_argv)[0], argv[0],
+                           (*new_argv)[0]);
+            /* Fall through to free / fail, below */
+        }
+
+        /* Otherwise, we succeeded.  Return happiness. */
+        else {
+            free(tmp);
+            return ORTE_SUCCESS;
+        }
+        free(tmp);
+    }
+
+    /* All done -- didn't find it */
+
+    opal_argv_free(*new_argv);
+    *new_argv = NULL;
+    return ORTE_ERR_NOT_FOUND;
+}
+
+/**
+ * Run a user-level debugger
+ */
+static void run_debugger(char *basename, opal_cmd_line_t *cmd_line,
+                         int argc, char *argv[], int num_procs)
+{
+    int i, id;
+    char **new_argv = NULL;
+    char *value, **lines, *env_name;
+
+    /* Get the orte_base_debug MCA parameter and search for a debugger
+       that can run */
+    
+    id = mca_base_param_find("orte", NULL, "base_user_debugger");
+    if (id < 0) {
+        orte_show_help("help-orterun.txt", "debugger-mca-param-not-found", 
+                       true);
+        exit(1);
+    }
+    value = NULL;
+    mca_base_param_lookup_string(id, &value);
+    if (NULL == value) {
+        orte_show_help("help-orterun.txt", "debugger-orte_base_user_debugger-empty",
+                       true);
+        exit(1);
+    }
+
+    /* Look through all the values in the MCA param */
+
+    lines = opal_argv_split(value, ':');
+    free(value);
+    for (i = 0; NULL != lines[i]; ++i) {
+        if (ORTE_SUCCESS == process(lines[i], basename, cmd_line, argc, argv, 
+                                    &new_argv, num_procs)) {
+            break;
+        }
+    }
+
+    /* If we didn't find one, abort */
+
+    if (NULL == lines[i]) {
+        orte_show_help("help-orterun.txt", "debugger-not-found", true);
+        exit(1);
+    }
+    opal_argv_free(lines);
+
+    /* We found one */
+    
+    /* cleanup the MPIR arrays in case the debugger doesn't set them */
+    memset((char*)MPIR_executable_path, 0, MPIR_MAX_PATH_LENGTH);
+    memset((char*)MPIR_server_arguments, 0, MPIR_MAX_ARG_LENGTH);
+    
+    /* Set an MCA param so that everyone knows that they are being
+       launched under a debugger; not all debuggers are consistent
+       about setting MPIR_being_debugged in both the launcher and the
+       MPI processes */
+    env_name = mca_base_param_environ_variable("orte", 
+                                               "in_parallel_debugger", NULL);
+    if (NULL != env_name) {
+        opal_setenv(env_name, "1", true, &environ);
+        free(env_name);
+    }
+
+    /* Launch the debugger */
+    execvp(new_argv[0], new_argv);
+    value = opal_argv_join(new_argv, ' ');
+    orte_show_help("help-orterun.txt", "debugger-exec-failed",
+                   true, basename, value, new_argv[0]);
+    free(value);
+    opal_argv_free(new_argv);
+    exit(1);
 }

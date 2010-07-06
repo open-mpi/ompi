@@ -149,19 +149,6 @@ int orte_register_params(void)
     orte_in_parallel_debugger = OPAL_INT_TO_BOOL(value);
 
     mca_base_param_reg_int_name("orte",
-                                "enable_debug_cospawn_while_running",
-                                "Whether a debugger can attach to the job "
-                                "while it is running and request it co-locate debugger daemons (default: false)",
-                                false, false, (int)false, &value);
-    orte_enable_debug_cospawn_while_running = OPAL_INT_TO_BOOL(value);
-    
-    mca_base_param_reg_int_name("orte",
-                                "debugger_check_rate",
-                                "How often (in seconds) to check if a debugger "
-                                "has attached to a running job and requested cospawn support (default: 2 sec)",
-                                false, false, 2, &orte_debugger_check_rate);
-    
-    mca_base_param_reg_int_name("orte",
                                 "output_debugger_proctable",
                                 "Whether or not to output the debugger proctable after launch (default: false)",
                                 true, false, 0, &value);

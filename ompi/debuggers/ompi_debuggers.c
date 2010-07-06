@@ -74,6 +74,7 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/debugger/base/base.h"
 #include "orte/runtime/orte_globals.h"
 
 #if defined(OMPI_MSGQ_DLL)
@@ -125,8 +126,8 @@ OMPI_DECLSPEC opal_datatype_t* opal_datatype_t_type_force_inclusion = NULL;
 OMPI_DECLSPEC ompi_datatype_t* ompi_datatype_t_type_force_inclusion = NULL;
 
 OMPI_DECLSPEC volatile int MPIR_debug_gate = 0;
-OMPI_DECLSPEC volatile int MPIR_being_debugged = 0;
-OMPI_DECLSPEC volatile int MPIR_debug_state = 0;
+extern volatile int MPIR_being_debugged;
+extern volatile int MPIR_debug_state;
 OMPI_DECLSPEC char *MPIR_debug_abort_string = "";
 
 /* Check for a file in few direct ways for portability */
@@ -258,16 +259,6 @@ void ompi_wait_for_debugger(void)
         }
     }
 }    
-
-/*
- * Breakpoint function for parallel debuggers.  This function is also
- * defined in orterun for the starter.  It should never conflict with
- * this one.
- */
-void *MPIR_Breakpoint(void)
-{
-    return NULL;
-}
 
 /*
  * Tell the debugger that we are about to abort

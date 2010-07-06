@@ -85,8 +85,6 @@ char **orted_cmd_line=NULL;
 
 /* debugger flags */
 orte_job_t *orte_debugger_daemon=NULL;
-bool orte_enable_debug_cospawn_while_running;
-int orte_debugger_check_rate;
 bool orte_output_debugger_proctable=false;
 char *orte_debugger_test_daemon=NULL;
 bool orte_debugger_test_attach=false;

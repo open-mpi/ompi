@@ -43,7 +43,7 @@ BEGIN_C_DECLS
     /**
      * Breakpoint function for parallel debuggers.
      */
-    OMPI_DECLSPEC void *MPIR_Breakpoint(void);
+    extern void *MPIR_Breakpoint(void);
 
 END_C_DECLS
 
