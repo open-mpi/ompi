@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
@@ -38,7 +38,7 @@ AC_DEFUN([OMPI_CONTRIB],[
     # May someday be expanded to have autogen find the packages
     # instead of this hard-coded list
     # (https://svn.open-mpi.org/trac/ompi/ticket/1162).
-    m4_define([contrib_software_list], [libtrace, vt])
+    m4_define([contrib_software_list], [libompitrace, vt])
 
     # Option to not build some of the contributed software packages
     AC_ARG_ENABLE([contrib-no-build],
