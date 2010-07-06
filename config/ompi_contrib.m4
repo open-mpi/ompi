@@ -35,10 +35,15 @@ AC_DEFUN([OMPI_CONTRIB],[
     dnl for OMPI_CONFIGURE_USER env variable
     AC_REQUIRE([OMPI_CONFIGURE_SETUP])
 
+    # May someday be expanded to have autogen find the packages
+    # instead of this hard-coded list
+    # (https://svn.open-mpi.org/trac/ompi/ticket/1162).
+    m4_define([contrib_software_list], [libtrace, vt])
+
     # Option to not build some of the contributed software packages
     AC_ARG_ENABLE([contrib-no-build],
-        [AC_HELP_STRING([--enable-contrib-no-build=LIST],
-                        [Comma-separated list of contributed package NAMEs that will not be built.  Example: "--enable-contrib-no-build=libnbc,vt" will disable building both the "libnbc" and "vt" contributed software packages.])])
+        AC_HELP_STRING([--enable-contrib-no-build=LIST],
+                        [Comma-separated list of contributed package NAMEs that will not be built.  Possible values: contrib_software_list. Example: "--enable-contrib-no-build=libtrace,vt" will disable building both the "libtrace" and "vt" contributed software packages.]))
 
     # Parse the list to see what we should not build
     ompi_show_subtitle "Configuring contributed software packages"
@@ -65,12 +70,8 @@ AC_DEFUN([OMPI_CONTRIB],[
     OMPI_CONTRIB_SUBDIRS=
     OMPI_CONTRIB_DIST_SUBDIRS=
 
-    # Cycle through each of the hard-coded software packages and
-    # configure them if not disabled.  May someday be expanded to have
-    # autogen find the packages instead of this hard-coded list
-    # (https://svn.open-mpi.org/trac/ompi/ticket/1162).
-    # m4_define([contrib_software_list], [libnbc, vt])
-    m4_define([contrib_software_list], [libtrace, vt])
+    # Cycle through each of the software packages and
+    # configure them if not disabled.  
     m4_foreach(software, [contrib_software_list],
               [m4_include([ompi/contrib/]software[/configure.m4])
               _OMPI_CONTRIB_CONFIGURE(software)])
