@@ -1114,7 +1114,7 @@ int mca_btl_sm_ft_event(int state) {
              * for these old file handles. The restart procedure will make sure
              * these files get cleaned up appropriately.
              */
-            opal_crs_base_metadata_write_token(NULL, CRS_METADATA_TOUCH, mca_btl_sm_component.sm_seg->map_path);
+            opal_crs_base_metadata_write_token(NULL, CRS_METADATA_TOUCH, mca_btl_sm_component.sm_seg->module_seg_path);
 
             /* Record the job session directory */
             opal_crs_base_metadata_write_token(NULL, CRS_METADATA_MKDIR, orte_process_info.job_session_dir);
@@ -1126,7 +1126,7 @@ int mca_btl_sm_ft_event(int state) {
                 /* Do not Add session directory on continue */
 
                 /* Add shared memory file */
-                opal_crs_base_cleanup_append(mca_btl_sm_component.sm_seg->map_path, false);
+                opal_crs_base_cleanup_append(mca_btl_sm_component.sm_seg->module_seg_path, false);
             }
 
             /* Clear this so we force the module to re-init the sm files */
@@ -1145,7 +1145,7 @@ int mca_btl_sm_ft_event(int state) {
                 tmp_dir = NULL;
             }
             /* Add shared memory file */
-            opal_crs_base_cleanup_append(mca_btl_sm_component.sm_seg->map_path, false);
+            opal_crs_base_cleanup_append(mca_btl_sm_component.sm_seg->module_seg_path, false);
         }
 
         /* Clear this so we force the module to re-init the sm files */
