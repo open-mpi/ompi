@@ -26,6 +26,27 @@ This file contains the main features as well as overviews of specific
 bug fixes (and other actions) for each version of Open MPI since
 version 1.0.
 
+As more fully described in the "Software Version Number" section in
+the README file, Open MPI typically releases two separate version
+series simultaneously.  Since these series have different goals and
+are semi-independent of each other, a single NEWS-worthy item may be
+introduced into different series at different times.  For example,
+feature F was introduced in the vA.B series at version vA.B.C, and was
+later introduced into the vX.Y series at vX.Y.Z.
+
+The first time feature F is released, the item will be listed in the
+vA.B.C section, denoted as:
+
+   (** also to appear: X.Y.Z) -- indicating that this item is also
+                                 likely to be included in future release
+                                 version vX.Y.Z.
+
+When vX.Y.Z is later released, the same NEWS-worthy item will also be
+included in the vX.Y.Z section and be denoted as:
+
+   (** also appeared: A.B.C)  -- indicating that this item was previously
+                                 included in release version vA.B.C.
+
 Trunk (not on release branches yet)
 -----------------------------------
 
@@ -34,8 +55,6 @@ Trunk (not on release branches yet)
 - ErrMgr framework redesigned to better support fault tolerance development
   activities. See the following RFC for details:
   http://www.open-mpi.org/community/lists/devel/2010/03/7589.php
-- Add pkg-config(1) configuration files for ompi, ompi-c, ompi-cxx,
-  ompi-f77, ompi-f90.  See the README for more details.
 - Add new sensor framework to ORTE that includes modules for detecting
   stalled applications and processes that consume too much memory.
 - Add new state framework to ORTE for saving and retrieving state
@@ -49,8 +68,61 @@ Trunk (not on release branches yet)
 ---
 
 - Updated shared library versioning scheme and linking style of MPI
-  applications.  ABI has been broken from the v1.4 series; see the
+  applications.  The MPI application ABI has been broken from the
+  v1.3/v1.4 series.  MPI applications compiled against any prior
+  version of Open MPI will need to, at a minimum, re-link.  See the
   README file for more details.
+- Made the openib BTL safer if extremely low SRQ settings are used.
+- Fixed handling of the array_of_argv parameter in the Fortran
+  binding of MPI_COMM_SPAWN_MULTIPLE (** also to appear: 1.4.3).
+- Fixed mallox(0) warnings in some collectives.
+- Fixed a problem with the Fortran binding for
+  MPI_FILE_CREATE_ERRHANDLER.  Thanks to Secretan Yves for identifying
+  the issue (** also to appear: 1.4.3).
+- Updates to the LSF PLM to ensure that the path is correctly passed.
+  Thanks to Teng Lin for the patch (** also to appear: 1.4.3).
+- Fixes for the F90 MPI_COMM_SET_ERRHANDLER and MPI_WIN_SET_ERRHANDLER
+  bindings.  Thanks to Paul Kapinos for pointing out the issue
+  (** also to appear: 1.4.3).
+- Fixes for Solaris oversubscription detection.
+- If the PML determines it can't reach a peer process, print a
+  slightly more helpful message.  Thanks to Nick Edmonds for the
+  suggestion. 
+- Make btl_openib_if_include/exclude function the same what
+  btl_tcp_if_include/exclude work (i.e., supplying an _include list
+  overrides supplying an _exclude list).
+- Apply more scalable reachability algorithm on platforms with more
+  than 8 TCP interfaces.
+- Various assembly code updates for more modern platforms / compilers.
+- Relax restrictions on using certain kinds of MPI datatypes with
+  one-sided operations.  Users beware; not all MPI datatypes are valid
+  for use with one-sided operations!
+- Improve behavior of MPI_COMM_SPAWN with regards to --bynode.
+- Various threading fixes in the openib BTL and other core pieces of
+  Open MPI.
+- Various help file and man pages updates.
+- Various FreeBSD and NetBSD updates and fixes.  Thanks to Kevin
+  Buckley and Aleksej Saushev for their work.
+- Fix case where freeing communicators in MPI_FINALIZE could cause
+  process failures.
+- Print warnings if shared memory state files are opened on what look
+  like networked filesystems.
+- Update libevent to v1.4.13.
+- Allow propagating signals to processes that call fork().
+- Fix bug where MPI_GATHER was sometimes incorrectly examining the
+  datatype on non-root processes.  Thanks to Michael Hofmann for
+  investigating the issue.
+- Various Microsoft Windows fixes.
+- Various Catamount fixes.
+- Various checkpoint / restart fixes.
+- Xgrid support has been removed until it can be fixed (patches
+  would be welcome).
+- Added simplistic "libompitrace" contrib package.  Using the MPI
+  profiling interface, it essentially prints out to stderr when select
+  MPI functions are invoked.
+- Update bundled VampirTrace to v5.8.2.
+- Add pkg-config(1) configuration files for ompi, ompi-c, ompi-cxx,
+  ompi-f77, ompi-f90.  See the README for more details.
 - Added "knem" support (direct process-to-process copying for shared
   memory message passing).  See http://runtime.bordeaux.inria.fr/knem/
   and the README file for more details.
@@ -60,17 +132,28 @@ Trunk (not on release branches yet)
   system/network administrator-worthy problems); each have their own
   MCA parameters to govern their usage.  See "ompi_info --param
   notifier <name>" for more details.
-  - twitter (yes, that Twitter) to send a Tweet.
-  - smtp (requires libesmtp) to send an email.
   - command to execute arbitrary commands (e.g., run a script).
+  - file to send output to a file.
+  - ftb to send output to the Fault Tolerant Backplane (see
+    http://wiki.mcs.anl.gov/cifts/index.php/CIFTS)
+  - hnp to send the output to mpirun.
+  - smtp (requires libesmtp) to send an email.
+  - twitter (yes, that Twitter) to send a Tweet.
 
 
 1.4.3 (expected)
 ----------------
 
+- Fixed handling of the array_of_argv parameter in the Fortran
+  binding of MPI_COMM_SPAWN_MULTIPLE (** also appeared: 1.5).
 - Fixed a problem with the Fortran binding for
   MPI_FILE_CREATE_ERRHANDLER.  Thanks to Secretan Yves for identifying
-  the issue.
+  the issue (** also appeared: 1.5).
+- Updates to the LSF PLM to ensure that the path is correctly passed.
+  Thanks to Teng Lin for the patch (** also appeared: 1.5).
+- Fixes for the F90 MPI_COMM_SET_ERRHANDLER and MPI_WIN_SET_ERRHANDLER
+  bindings.  Thanks to Paul Kapinos for pointing out the issue
+  (** also appeared: 1.5).
 
 
 1.4.2
