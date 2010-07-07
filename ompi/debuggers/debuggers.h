@@ -27,6 +27,7 @@
 #define OMPI_DEBUGGERS_H
 
 #include "ompi_config.h"
+#include "orte/mca/debugger/base/base.h"
 
 BEGIN_C_DECLS
 
@@ -43,7 +44,7 @@ BEGIN_C_DECLS
     /**
      * Breakpoint function for parallel debuggers.
      */
-    extern void *MPIR_Breakpoint(void);
+    ORTE_DECLSPEC extern void *MPIR_Breakpoint(void);
 
 END_C_DECLS
 
