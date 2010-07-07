@@ -146,6 +146,7 @@ ompi_coll_tuned_forced_getvalues( enum COLLTYPE type,
     {                                                                   \
         int need_dynamic_decision = 0;                                  \
         ompi_coll_tuned_forced_getvalues( (TYPE), &((DATA)->user_forced[(TYPE)]) ); \
+        (DATA)->com_rules[(TYPE)] = NULL;                               \
         if( 0 != (DATA)->user_forced[(TYPE)].algorithm ) {              \
             need_dynamic_decision = 1;                                  \
             EXECUTE;                                                    \
