@@ -306,6 +306,13 @@ static int queue_xmit(rmcast_base_send_t *snd,
         }
         ch = orte_rmcast_base.my_output_channel;
         goto process;
+    } else if (ORTE_RMCAST_GROUP_INPUT_CHANNEL == channel) {
+        if (NULL == orte_rmcast_base.my_input_channel) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return ORTE_ERR_NOT_FOUND;
+        }
+        ch = orte_rmcast_base.my_input_channel;
+        goto process;
     }
     
     /* find the channel */
