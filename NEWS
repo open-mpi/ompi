@@ -67,6 +67,9 @@ Trunk (not on release branches yet)
 1.5
 ---
 
+- Added "knem" support: direct process-to-process copying for shared
+  memory message passing.  See http://runtime.bordeaux.inria.fr/knem/
+  and the README file for more details.
 - Updated shared library versioning scheme and linking style of MPI
   applications.  The MPI application ABI has been broken from the
   v1.3/v1.4 series.  MPI applications compiled against any prior
@@ -123,9 +126,6 @@ Trunk (not on release branches yet)
 - Update bundled VampirTrace to v5.8.2.
 - Add pkg-config(1) configuration files for ompi, ompi-c, ompi-cxx,
   ompi-f77, ompi-f90.  See the README for more details.
-- Added "knem" support (direct process-to-process copying for shared
-  memory message passing).  See http://runtime.bordeaux.inria.fr/knem/
-  and the README file for more details.
 - Removed the libopenmpi_malloc library (added in the v1.3 series)
   since it is no longer necessary
 - Add several notifier plugins (generally used when Open MPI detects
