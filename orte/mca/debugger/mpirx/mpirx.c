@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,11 +22,12 @@
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
 #ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h"
+#include <sys/types.h>
 #endif
 #include <sys/stat.h>
 #include <ctype.h>
 #include <sys/fcntl.h>
+#include <errno.h>
 
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
