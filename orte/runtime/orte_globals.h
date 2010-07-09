@@ -604,6 +604,7 @@ ORTE_DECLSPEC extern bool orte_abnormal_term_ordered;
 ORTE_DECLSPEC extern bool orte_routing_is_enabled;
 ORTE_DECLSPEC extern bool orte_job_term_ordered;
 ORTE_DECLSPEC extern bool orte_orteds_term_ordered;
+ORTE_DECLSPEC extern bool orte_orteds_openend_term_ordered;
 
 ORTE_DECLSPEC extern int orte_startup_timeout;
 

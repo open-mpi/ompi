@@ -505,6 +505,7 @@ static int plm_slurm_terminate_orteds(void)
     /* tell them to die without sending a reply - we will rely on the
      * waitpid to tell us when they have exited!
      */
+    orte_orteds_openend_term_ordered = true;
     if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_EXIT_CMD))) {
         ORTE_ERROR_LOG(rc);
     }
