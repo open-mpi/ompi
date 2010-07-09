@@ -399,7 +399,11 @@ static int update_state(orte_jobid_t job,
             /* if we have ordered orteds to terminate, see if this one failed to tell
              * us it had terminated
              */
-            if (orte_orteds_term_ordered) {
+            if (orte_orteds_openend_term_ordered) {
+                record_dead_daemon(jdata, proc->vpid, state, 0);
+                check_job_complete(jdata);
+                break;
+            } else if (orte_orteds_term_ordered) {
                 record_dead_daemon(jdata, proc->vpid, state, exit_code);
                 check_job_complete(jdata);
                 break;
