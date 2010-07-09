@@ -537,6 +537,21 @@ int orterun(int argc, char *argv[])
     /* Setup MCA params */
     orte_register_params();
 
+    /* force the debugger symbols to be included in orterun.
+     * this is required since the symbols are instantiated in
+     * the orte library, yet they need to be accessed
+     * prior to orte_init when a debugger wants to launch
+     * us
+     */
+    MPIR_proctable = NULL;
+    if (0 == MPIR_being_debugged);
+    if (0 == MPIR_debug_state);
+    if (0 == MPIR_i_am_starter);
+    if (1 == MPIR_partial_attach_ok);
+    if (0 == MPIR_forward_output);
+    if (0 == MPIR_forward_comm);
+    memset((char*)MPIR_attach_fifo, 0, MPIR_MAX_PATH_LENGTH);
+
     /* Check for some "global" command line params */
     parse_globals(argc, argv, &cmd_line);
     OBJ_DESTRUCT(&cmd_line);

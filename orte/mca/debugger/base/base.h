@@ -9,8 +9,8 @@
 /** @file:
  */
 
-#ifndef MCA_ALARM_BASE_H
-#define MCA_ALARM_BASE_H
+#ifndef MCA_DEBUGGER_BASE_H
+#define MCA_DEBUGGER_BASE_H
 
 /*
  * includes
