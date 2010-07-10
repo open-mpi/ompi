@@ -96,7 +96,6 @@ bool orte_abnormal_term_ordered = false;
 bool orte_routing_is_enabled = false;
 bool orte_job_term_ordered = false;
 bool orte_orteds_term_ordered = false;
-bool orte_orteds_openend_term_ordered = false;
 
 int orte_startup_timeout;
 
