@@ -70,9 +70,12 @@ static int orte_ras_alps_allocate(opal_list_t *nodes)
     char        *alps_config_str;
     
     alps_batch_id = getenv("OMPI_ALPS_RESID");
+    /* BASIL_RESERVATION_ID is the equivalent of OMPI_ALPS_RESID
+     * on some systems
+     */
+    if (NULL == alps_batch_id) alps_batch_id = getenv("BASIL_RESERVATION_ID");
     if (NULL == alps_batch_id) {
-        orte_show_help("help-ras-alps.txt", "alps-env-var-not-found", 1,
-                       "OMPI_ALPS_RESID");
+        orte_show_help("help-ras-alps.txt", "alps-env-var-not-found", 1);
         return ORTE_ERR_NOT_FOUND;
     }
 
