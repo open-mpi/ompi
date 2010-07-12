@@ -156,7 +156,7 @@ static int oob_component_query(mca_btl_openib_module_t *btl,
         rml_recv_posted = true;
     }
 
-    *cpc = malloc(sizeof(ompi_btl_openib_connect_base_module_t));
+    *cpc = (ompi_btl_openib_connect_base_module_t *) malloc(sizeof(ompi_btl_openib_connect_base_module_t));
     if (NULL == *cpc) {
         orte_rml.recv_cancel(ORTE_NAME_WILDCARD, OMPI_RML_TAG_OPENIB);
         rml_recv_posted = false;
@@ -289,8 +289,8 @@ static int qp_connect_all(mca_btl_openib_endpoint_t *endpoint)
     for (i = 0; i < mca_btl_openib_component.num_qps; i++) {
         struct ibv_qp_attr attr;
         struct ibv_qp* qp = endpoint->qps[i].qp->lcl_qp;
-        enum ibv_mtu mtu = (openib_btl->device->mtu < endpoint->rem_info.rem_mtu) ?
-            openib_btl->device->mtu : endpoint->rem_info.rem_mtu;
+        enum ibv_mtu mtu = (ibv_mtu) ((openib_btl->device->mtu < endpoint->rem_info.rem_mtu) ?
+            openib_btl->device->mtu : endpoint->rem_info.rem_mtu) ;
 
         memset(&attr, 0, sizeof(attr));
         attr.qp_state           = IBV_QPS_RTR;

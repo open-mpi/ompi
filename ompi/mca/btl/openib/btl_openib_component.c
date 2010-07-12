@@ -39,7 +39,9 @@ const char *ibv_get_sysfs_path(void);
 #endif
 #include <errno.h>
 #include <string.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <malloc.h>
@@ -203,7 +205,9 @@ static int btl_openib_component_close(void)
 #endif
 
     ompi_btl_openib_connect_base_finalize();
+#ifndef __WINDOWS__
     ompi_btl_openib_fd_finalize();
+#endif
     ompi_btl_openib_ini_finalize();
     if (NULL != mca_btl_openib_component.receive_queues) {
         free(mca_btl_openib_component.receive_queues);
@@ -304,7 +308,7 @@ static int btl_openib_modex_send(void)
                 mca_btl_openib_component.openib_btls[i]->cpcs[j]->data.cbm_modex_message_len;
         }
     }
-    message = malloc(msg_size);
+    message = (char *) malloc(msg_size);
     if (NULL == message) {
         BTL_ERROR(("Failed malloc"));
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -413,7 +417,7 @@ static void btl_openib_control(mca_btl_base_module_t* btl,
     mca_btl_openib_module_t *obtl = (mca_btl_openib_module_t*)btl;
     mca_btl_openib_endpoint_t* ep = to_com_frag(des)->endpoint;
     mca_btl_openib_control_header_t *ctl_hdr =
-        to_base_frag(des)->segment.seg_addr.pval;
+        (mca_btl_openib_control_header_t *) to_base_frag(des)->segment.seg_addr.pval;
     mca_btl_openib_eager_rdma_header_t *rdma_hdr;
     mca_btl_openib_header_coalesced_t *clsc_hdr =
         (mca_btl_openib_header_coalesced_t*)(ctl_hdr + 1);
@@ -673,7 +677,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
         for(i = 0; i < mca_btl_openib_component.btls_per_lid; i++){
             char param[40];
 
-            openib_btl = malloc(sizeof(mca_btl_openib_module_t));
+            openib_btl = (mca_btl_openib_module_t *) malloc(sizeof(mca_btl_openib_module_t));
             if(NULL == openib_btl) {
                 BTL_ERROR(("Failed malloc: %s:%d", __FILE__, __LINE__));
                 return OMPI_ERR_OUT_OF_RESOURCE;
@@ -1009,15 +1013,15 @@ static int prepare_device_for_use(mca_btl_openib_device_t *device)
     if (mca_btl_openib_component.max_eager_rdma > 0 &&
         device->use_eager_rdma) {
         device->eager_rdma_buffers =
-            calloc(mca_btl_openib_component.max_eager_rdma * device->btls,
-                    sizeof(mca_btl_openib_endpoint_t*));
+            (mca_btl_base_endpoint_t **) calloc(mca_btl_openib_component.max_eager_rdma * device->btls,
+                                            sizeof(mca_btl_openib_endpoint_t*));
         if(NULL == device->eager_rdma_buffers) {
             BTL_ERROR(("Memory allocation fails"));
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
     }
 
-    init_data = malloc(sizeof(mca_btl_openib_frag_init_data_t));
+    init_data = (mca_btl_openib_frag_init_data_t *) malloc(sizeof(mca_btl_openib_frag_init_data_t));
     length = sizeof(mca_btl_openib_header_t) +
         sizeof(mca_btl_openib_footer_t) +
         sizeof(mca_btl_openib_eager_rdma_header_t);
@@ -1048,7 +1052,7 @@ static int prepare_device_for_use(mca_btl_openib_device_t *device)
 
     /* setup all the qps */
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
-        init_data = malloc(sizeof(mca_btl_openib_frag_init_data_t));
+        init_data = (mca_btl_openib_frag_init_data_t *) malloc(sizeof(mca_btl_openib_frag_init_data_t));
         /* Initialize pool of send fragments */
         length = sizeof(mca_btl_openib_header_t) +
             sizeof(mca_btl_openib_header_coalesced_t) +
@@ -1082,7 +1086,7 @@ static int prepare_device_for_use(mca_btl_openib_device_t *device)
             return OMPI_ERROR;
         }
 
-        init_data = malloc(sizeof(mca_btl_openib_frag_init_data_t));
+        init_data = (mca_btl_openib_frag_init_data_t *) malloc(sizeof(mca_btl_openib_frag_init_data_t));
         length = sizeof(mca_btl_openib_header_t) +
             sizeof(mca_btl_openib_header_coalesced_t) +
             sizeof(mca_btl_openib_control_header_t) +
@@ -1248,7 +1252,7 @@ static void merge_values(ompi_btl_openib_ini_values_t *target,
 static bool inline is_credit_message(const mca_btl_openib_recv_frag_t *frag)
 {
     mca_btl_openib_control_header_t* chdr =
-        to_base_frag(frag)->segment.seg_addr.pval;
+        (mca_btl_openib_control_header_t *) to_base_frag(frag)->segment.seg_addr.pval;
     return (MCA_BTL_TAG_BTL == frag->hdr->tag) &&
         (MCA_BTL_OPENIB_CONTROL_CREDITS == chdr->type);
 }
@@ -1256,7 +1260,7 @@ static bool inline is_credit_message(const mca_btl_openib_recv_frag_t *frag)
 static bool inline is_cts_message(const mca_btl_openib_recv_frag_t *frag)
 {
     mca_btl_openib_control_header_t* chdr =
-        to_base_frag(frag)->segment.seg_addr.pval;
+        (mca_btl_openib_control_header_t *) to_base_frag(frag)->segment.seg_addr.pval;
     return (MCA_BTL_TAG_BTL == frag->hdr->tag) &&
         (MCA_BTL_OPENIB_CONTROL_CTS == chdr->type);
 }
@@ -1275,7 +1279,7 @@ static void init_apm_port(mca_btl_openib_device_t *device, int port, uint16_t li
     int index;
     struct mca_btl_openib_module_t *btl;
     for(index = 0; index < device->btls; index++) {
-        btl = opal_pointer_array_get_item(device->device_btls, index);
+        btl = (mca_btl_openib_module_t *) opal_pointer_array_get_item(device->device_btls, index);
         /* Ok, we already have btl for the fist port,
          * second one will be used for APM */
         btl->apm_port = port;
@@ -2307,8 +2311,8 @@ struct dev_distance {
 
 static int compare_distance(const void *p1, const void *p2)
 {
-    const struct dev_distance *d1 = p1;
-    const struct dev_distance *d2 = p2;
+    const struct dev_distance *d1 = (const dev_distance *) p1;
+    const struct dev_distance *d2 = (const dev_distance *) p2;
 
     return d1->distance - d2->distance;
 }
@@ -2317,7 +2321,7 @@ static struct dev_distance *
 sort_devs_by_distance(struct ibv_device **ib_devs, int count)
 {
     int i;
-    struct dev_distance *devs = malloc(count * sizeof(struct dev_distance));
+    struct dev_distance *devs = (dev_distance *) malloc(count * sizeof(struct dev_distance));
 
     opal_carto_base_get_host_graph(&host_topo, "Infiniband");
 
@@ -2381,20 +2385,24 @@ btl_openib_component_init(int *num_btl_modules,
         goto no_btls;
     }
 
+#ifndef __WINDOWS__
     seedv[0] = ORTE_PROC_MY_NAME->vpid;
     seedv[1] = opal_sys_timer_get_cycles();
     seedv[2] = opal_sys_timer_get_cycles();
     seed48(seedv);
+#endif
 
     /* Read in INI files with device-specific parameters */
     if (OMPI_SUCCESS != (ret = ompi_btl_openib_ini_init())) {
         goto no_btls;
     }
 
+#ifndef __WINDOWS__
     /* Initialize FD listening */
     if (OMPI_SUCCESS != ompi_btl_openib_fd_init()) {
         goto no_btls;
     }
+#endif
 
     /* Init CPC components */
     if (OMPI_SUCCESS != (ret = ompi_btl_openib_connect_base_init())) {
@@ -2467,7 +2475,7 @@ btl_openib_component_init(int *num_btl_modules,
     OBJ_CONSTRUCT(&mca_btl_openib_component.send_user_free, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_openib_component.recv_user_free, ompi_free_list_t);
 
-    init_data = malloc(sizeof(mca_btl_openib_frag_init_data_t));
+    init_data = (mca_btl_openib_frag_init_data_t *) malloc(sizeof(mca_btl_openib_frag_init_data_t));
 
     init_data->order = mca_btl_openib_component.rdma_qp;
     init_data->list = &mca_btl_openib_component.send_user_free;
@@ -2484,7 +2492,7 @@ btl_openib_component_init(int *num_btl_modules,
         goto no_btls;
     }
 
-    init_data = malloc(sizeof(mca_btl_openib_frag_init_data_t));
+    init_data = (mca_btl_openib_frag_init_data_t *) malloc(sizeof(mca_btl_openib_frag_init_data_t));
 
     init_data->order = mca_btl_openib_component.rdma_qp;
     init_data->list = &mca_btl_openib_component.recv_user_free;
@@ -2501,7 +2509,7 @@ btl_openib_component_init(int *num_btl_modules,
         goto no_btls;
     }
 
-    init_data = malloc(sizeof(mca_btl_openib_frag_init_data_t));
+    init_data = (mca_btl_openib_frag_init_data_t *) malloc(sizeof(mca_btl_openib_frag_init_data_t));
     length = sizeof(mca_btl_openib_coalesced_frag_t);
 
     init_data->list = &mca_btl_openib_component.send_free_coalesced;
@@ -2695,7 +2703,7 @@ btl_openib_component_init(int *num_btl_modules,
 
     /* Allocate space for btl modules */
     mca_btl_openib_component.openib_btls =
-        malloc(sizeof(mca_btl_openib_module_t*) *
+        (mca_btl_openib_module_t **) malloc(sizeof(mca_btl_openib_module_t*) *
                 mca_btl_openib_component.ib_num_btls);
     if(NULL == mca_btl_openib_component.openib_btls) {
         BTL_ERROR(("Failed malloc: %s:%d", __FILE__, __LINE__));
@@ -2806,8 +2814,10 @@ btl_openib_component_init(int *num_btl_modules,
     /* If we fail early enough in the setup, we just modex around that
        there are no openib BTL's in this process and return NULL. */
 
+#ifndef __WINDOWS__
     /* Be sure to shut down the fd listener */
     ompi_btl_openib_fd_finalize();
+#endif
 
     mca_btl_openib_component.ib_num_btls = 0;
     btl_openib_modex_send();
@@ -2960,7 +2970,8 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
             hdr->credits = 0;
         }
     } else {
-        mca_btl_openib_rdma_credits_header_t *chdr=des->des_dst->seg_addr.pval;
+        mca_btl_openib_rdma_credits_header_t *chdr =
+            (mca_btl_openib_rdma_credits_header_t *) des->des_dst->seg_addr.pval;
         if(ep->nbo) {
             BTL_OPENIB_RDMA_CREDITS_HEADER_NTOH(*chdr);
         }
@@ -3049,9 +3060,6 @@ static char* btl_openib_component_status_to_string(enum ibv_wc_status status)
         break;
     case IBV_WC_LOC_QP_OP_ERR:
         return "LOCAL QP OPERATION ERROR";
-        break;
-    case IBV_WC_LOC_EEC_OP_ERR:
-        return "LOCAL EEC OPERATION ERROR";
         break;
     case IBV_WC_LOC_PROT_ERR:
         return "LOCAL PROTOCOL ERROR";
@@ -3511,7 +3519,7 @@ static int btl_openib_component_progress(void)
 
     for(i = 0; i < mca_btl_openib_component.devices_count; i++) {
         mca_btl_openib_device_t *device =
-            opal_pointer_array_get_item(&mca_btl_openib_component.devices, i);
+            (mca_btl_openib_device_t *) opal_pointer_array_get_item(&mca_btl_openib_component.devices, i);
         count += progress_one_device(device);
     }
 

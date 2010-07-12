@@ -171,7 +171,7 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
     modex_message_size = ((char *) &(dummy.end)) - ((char*) &dummy);
 
     /* Unpack the number of modules in the message */
-    offset = message;
+    offset = (char *) message;
     unpack8(&offset, &(module_proc->proc_port_count));
     BTL_VERBOSE(("unpack: %d btls", module_proc->proc_port_count));
     if (module_proc->proc_port_count > 0) {
@@ -200,7 +200,7 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
         BTL_VERBOSE(("unpacked btl %d: number of cpcs to follow %d (offset now %d)",
                      i, module_proc->proc_ports[i].pm_cpc_data_count, 
                      (int)(offset-((char*)message))));
-        module_proc->proc_ports[i].pm_cpc_data = 
+        module_proc->proc_ports[i].pm_cpc_data = (ompi_btl_openib_connect_base_module_data_t *)
             calloc(module_proc->proc_ports[i].pm_cpc_data_count,
                    sizeof(ompi_btl_openib_connect_base_module_data_t));
         if (NULL == module_proc->proc_ports[i].pm_cpc_data) {

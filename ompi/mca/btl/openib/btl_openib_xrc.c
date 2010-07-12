@@ -15,7 +15,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 #include "ompi/mca/btl/base/base.h"
 #include "btl_openib_xrc.h"

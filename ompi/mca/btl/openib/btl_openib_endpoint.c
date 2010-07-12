@@ -27,7 +27,9 @@
 
 #include "ompi_config.h"
 
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
 #include <time.h>
 #include <errno.h>
 #include <string.h>
@@ -195,7 +197,7 @@ OBJ_CLASS_INSTANCE(mca_btl_openib_endpoint_t,
  */
 static mca_btl_openib_qp_t *endpoint_alloc_qp(void)
 {
-    mca_btl_openib_qp_t *qp = calloc(1, sizeof(mca_btl_openib_qp_t));
+    mca_btl_openib_qp_t *qp = (mca_btl_openib_qp_t *) calloc(1, sizeof(mca_btl_openib_qp_t));
     if(!qp) {
         BTL_ERROR(("Failed to allocate memory for qp"));
         return NULL;
@@ -316,7 +318,8 @@ void mca_btl_openib_endpoint_init(mca_btl_openib_module_t *btl,
     ep->rem_info.rem_vendor_id = (remote_proc_info->pm_port_info).vendor_id;
     ep->rem_info.rem_vendor_part_id = (remote_proc_info->pm_port_info).vendor_part_id;
 
-    ep->rem_info.rem_transport_type = (remote_proc_info->pm_port_info).transport_type;
+    ep->rem_info.rem_transport_type =
+         (mca_btl_openib_transport_type_t) (remote_proc_info->pm_port_info).transport_type;
 
     for (qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
         endpoint_init_qp(ep, qp);
@@ -922,7 +925,7 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
     if(NULL == headers_buf)
        goto unlock_rdma_local;
 
-    buf = openib_btl->super.btl_mpool->mpool_alloc(openib_btl->super.btl_mpool,
+    buf = (char *) openib_btl->super.btl_mpool->mpool_alloc(openib_btl->super.btl_mpool,
             openib_btl->eager_rdma_frag_size *
             mca_btl_openib_component.eager_rdma_num,
             mca_btl_openib_component.buffer_alignment,
@@ -942,7 +945,7 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
         mca_btl_openib_frag_init_data_t init_data;
 
         item = (ompi_free_list_item_t*)&headers_buf[i];
-        item->registration = (void*)endpoint->eager_rdma_local.reg;
+        item->registration = (mca_mpool_base_registration_t *)endpoint->eager_rdma_local.reg;
         item->ptr = buf + i * openib_btl->eager_rdma_frag_size;
         OBJ_CONSTRUCT(item, mca_btl_openib_recv_frag_t);
 

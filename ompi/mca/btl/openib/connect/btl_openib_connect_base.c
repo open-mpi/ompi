@@ -103,7 +103,7 @@ int ompi_btl_openib_connect_base_register(void)
 
     /* Parse the if_[in|ex]clude paramters to come up with a list of
        CPCs that are available */
-    available = calloc(1, sizeof(all));
+    available = (ompi_btl_openib_connect_base_component_t **) calloc(1, sizeof(all));
 
     /* If we have an "include" list, then find all those CPCs and put
        them in available[] */
@@ -241,7 +241,7 @@ int ompi_btl_openib_connect_base_select_for_local_port(mca_btl_openib_module_t *
     int i, rc, cpc_index, len;
     ompi_btl_openib_connect_base_module_t **cpcs;
 
-    cpcs = calloc(num_available, 
+    cpcs = (ompi_btl_openib_connect_base_module_t **) calloc(num_available, 
                   sizeof(ompi_btl_openib_connect_base_module_t *));
     if (NULL == cpcs) {
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -253,7 +253,7 @@ int ompi_btl_openib_connect_base_select_for_local_port(mca_btl_openib_module_t *
     for (len = 1, i = 0; NULL != available[i]; ++i) {
         len += strlen(available[i]->cbc_name) + 2;
     }
-    msg = malloc(len);
+    msg = (char *) malloc(len);
     if (NULL == msg) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
