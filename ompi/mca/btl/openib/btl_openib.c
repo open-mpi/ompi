@@ -26,7 +26,9 @@
 
 #include "ompi_config.h"
 #include <string.h>
+#ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
+#endif
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
 #include "opal/class/opal_bitmap.h"
@@ -56,7 +58,6 @@
 #include <errno.h>
 #include <string.h>
 #include <math.h>
-#include <inttypes.h>
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -66,7 +67,9 @@
 #ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
 #endif
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 mca_btl_openib_module_t mca_btl_openib_module = {
     {
@@ -115,7 +118,9 @@ void mca_btl_openib_show_init_error(const char *file, int line,
 {
     if (ENOMEM == errno) {
         int ret;
+#ifndef __WINDOWS__
         struct rlimit limit;
+#endif
         char *str_limit = NULL;
 
 #if HAVE_DECL_RLIMIT_MEMLOCK
@@ -123,6 +128,7 @@ void mca_btl_openib_show_init_error(const char *file, int line,
 #else
         ret = -1;
 #endif
+#ifndef __WINDOWS__
         if (0 != ret) {
             asprintf(&str_limit, "Unknown");
         } else if (limit.rlim_cur == RLIM_INFINITY) {
@@ -130,6 +136,7 @@ void mca_btl_openib_show_init_error(const char *file, int line,
         } else {
             asprintf(&str_limit, "%ld", (long)limit.rlim_cur);
         }
+#endif
 
         orte_show_help("help-mpi-btl-openib.txt", "init-fail-no-mem",
                        true, orte_process_info.nodename,
@@ -803,7 +810,7 @@ int mca_btl_openib_del_procs(struct mca_btl_base_module_t* btl,
         for(ep_index=0;
             ep_index < opal_pointer_array_get_size(openib_btl->device->endpoints);
             ep_index++) {
-            endpoint =
+            endpoint = (mca_btl_openib_endpoint_t *)
                 opal_pointer_array_get_item(openib_btl->device->endpoints,
                         ep_index);
             if(!endpoint || endpoint->endpoint_btl != openib_btl) {
@@ -1151,7 +1158,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
         return NULL;
 
     iov.iov_len = max_data;
-    iov.iov_base = (unsigned char*)to_base_frag(frag)->segment.seg_addr.pval +
+    iov.iov_base = (IOVBASE_TYPE *)to_base_frag(frag)->segment.seg_addr.pval +
         reserve;
     rc = opal_convertor_pack(convertor, &iov, &iov_count, &max_data);
 
@@ -1253,8 +1260,8 @@ static int mca_btl_openib_finalize_resources(struct mca_btl_base_module_t* btl) 
     for (ep_index=0;
          ep_index < opal_pointer_array_get_size(openib_btl->device->endpoints);
          ep_index++) {
-        endpoint=opal_pointer_array_get_item(openib_btl->device->endpoints,
-                                             ep_index);
+        endpoint=(mca_btl_openib_endpoint_t *)opal_pointer_array_get_item(openib_btl->device->endpoints,
+                                                  ep_index);
         if(!endpoint) {
             BTL_VERBOSE(("In finalize, got another null endpoint"));
             continue;

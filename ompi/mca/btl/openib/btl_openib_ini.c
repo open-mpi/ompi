@@ -24,7 +24,9 @@
 #include <ctype.h>
 #include <stdlib.h>
 
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 #include "orte/util/show_help.h"
 #include "opal/util/opal_sos.h"
@@ -319,7 +321,7 @@ static int parse_line(parsed_section_values_t *sv)
     if (key_buffer_len < strlen(btl_openib_ini_yytext) + 1) {
         char *tmp;
         key_buffer_len = strlen(btl_openib_ini_yytext) + 1;
-        tmp = realloc(key_buffer, key_buffer_len);
+        tmp = (char *) realloc(key_buffer, key_buffer_len);
         if (NULL == tmp) {
             free(key_buffer);
             key_buffer_len = 0;
@@ -632,7 +634,7 @@ int ompi_btl_openib_ini_intify_list(char *value, uint32_t **values, int *len)
     if (NULL == comma) {
         /* If we only got one value (i.e., no comma found), then
            just make an array of one value and save it */
-        *values = malloc(sizeof(uint32_t));
+        *values = (uint32_t *) malloc(sizeof(uint32_t));
         if (NULL == *values) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
@@ -648,7 +650,7 @@ int ompi_btl_openib_ini_intify_list(char *value, uint32_t **values, int *len)
             str = comma + 1;
             comma = strchr(str, ',');
         }
-        *values = malloc(sizeof(uint32_t) * newsize);
+        *values = (uint32_t *) malloc(sizeof(uint32_t) * newsize);
         if (NULL == *values) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }

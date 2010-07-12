@@ -25,7 +25,7 @@
 
 void mca_btl_openib_frag_init(ompi_free_list_item_t* item, void* ctx)
 {
-    mca_btl_openib_frag_init_data_t* init_data = ctx;
+    mca_btl_openib_frag_init_data_t* init_data = (mca_btl_openib_frag_init_data_t *) ctx;
     mca_btl_openib_frag_t *frag = to_base_frag(item);
 
     if(MCA_BTL_OPENIB_FRAG_RECV == frag->type) {

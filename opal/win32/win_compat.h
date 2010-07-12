@@ -151,6 +151,8 @@ typedef unsigned int uint;
 #define getch                     _getch
 #define random                    rand
 #define strtok_r                  strtok_s
+#define srand48                   srand
+#define lrand48                   rand
 
 #ifndef UINT32_MAX
 #define UINT32_MAX            _UI32_MAX

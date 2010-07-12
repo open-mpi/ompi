@@ -14,19 +14,33 @@
 #include "ompi_config.h"
 
 #include <rdma/rdma_cma.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
+#endif
+#ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
+#endif
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
+#ifdef HAVE_NET_IF_H
 #include <net/if.h>
+#endif
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#ifdef HAVE_DIRENT_H
 #include <dirent.h>
+#endif
 #include <malloc.h>
 #include <stddef.h>
 
@@ -273,7 +287,7 @@ static void rdmacm_component_register(void)
  */
 static char *stringify(uint32_t addr)
 {
-    char *line = malloc(64);
+    char *line = (char *) malloc(64);
     asprintf(&line, "%d.%d.%d.%d (0x%x)", 
 #if defined(WORDS_BIGENDIAN)
              (addr >> 24),
@@ -321,12 +335,12 @@ static mca_btl_openib_endpoint_t *rdmacm_find_endpoint(rdmacm_contents_t *conten
         mca_btl_openib_endpoint_t *endpoint;
         modex_message_t *message;
 
-        endpoint = opal_pointer_array_get_item(endpoints, i);
+        endpoint = (mca_btl_openib_endpoint_t *) opal_pointer_array_get_item(endpoints, i);
         if (NULL == endpoint) {
             continue;
         }
 
-        message = endpoint->endpoint_remote_cpc_data->cbm_modex_message;
+        message = (modex_message_t *) endpoint->endpoint_remote_cpc_data->cbm_modex_message;
         OPAL_OUTPUT((-1, "message ipaddr = %s port %d",
                      a = stringify(message->ipaddr), message->tcp_port));
 #if OPAL_ENABLE_DEBUG
@@ -793,7 +807,7 @@ static int handle_connect_request(struct rdma_cm_event *event)
     endpoint = rdmacm_find_endpoint(contents, event->id, rem_port);
     if (NULL == endpoint) {
         struct sockaddr *peeraddr = rdma_get_peer_addr(event->id);
-        cant_find_endpoint_context_t *c = calloc(1, sizeof(*c));
+        cant_find_endpoint_context_t *c = (cant_find_endpoint_context_t *) calloc(1, sizeof(*c));
         if (NULL != c) {
             snprintf(c->device_name, sizeof(c->device_name) - 1,
                      "%s:%d",
@@ -807,7 +821,7 @@ static int handle_connect_request(struct rdma_cm_event *event)
         goto out;
     }
 
-    message = endpoint->endpoint_remote_cpc_data->cbm_modex_message;
+    message = (modex_message_t *) endpoint->endpoint_remote_cpc_data->cbm_modex_message;
     endpoint->endpoint_initiator = 
         i_initiate(contents->ipaddr, contents->tcp_port,
                    message->ipaddr, rem_port);
@@ -1039,8 +1053,10 @@ static int rdmacm_endpoint_finalize(struct mca_btl_base_endpoint_t *endpoint)
                 OPAL_OUTPUT((-1, "MAIN Main thread calling disconnect on ID %p",
                              (void*) ((id_context_t*) item2)->id));
                 ++num_to_wait_for;
+#ifndef __WINDOWS__
                 ompi_btl_openib_fd_run_in_service(call_disconnect_callback,
                                                   item2);
+#endif
             }
 	    /* remove_item returns the item before the item removed,
 	       meaning that the for list is still safe */
@@ -1056,8 +1072,10 @@ static int rdmacm_endpoint_finalize(struct mca_btl_base_endpoint_t *endpoint)
 
     /* Now wait for all the disconnect callbacks to occur */
     while (num_to_wait_for != disconnect_callbacks) {
+#ifndef __WINDOWS__
         ompi_btl_openib_fd_main_thread_drain();
         sched_yield();
+#endif
     }
 
     OPAL_OUTPUT((-1, "MAIN Endpoint finished finalizing"));
@@ -1124,7 +1142,7 @@ static int rdmacm_connect_endpoint(id_context_t *context,
         return OMPI_SUCCESS;
     }
 
-    message = endpoint->endpoint_remote_cpc_data->cbm_modex_message;
+    message = (modex_message_t *) endpoint->endpoint_remote_cpc_data->cbm_modex_message;
     BTL_VERBOSE(("%s connected!!! local %x remote %x state = %d",
                  contents->server?"server":"client",
                  contents->ipaddr,
@@ -1756,7 +1774,7 @@ static int create_message(rdmacm_contents_t *server,
     char *a;
 #endif
 
-    message = malloc(sizeof(modex_message_t));
+    message = (modex_message_t *) malloc(sizeof(modex_message_t));
     if (NULL == message) {
         BTL_ERROR(("malloc failed"));
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -1804,7 +1822,7 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, ompi_btl_
 
     BTL_VERBOSE(("rdmacm_component_query"));
 
-    *cpc = malloc(sizeof(ompi_btl_openib_connect_base_module_t));
+    *cpc = (ompi_btl_openib_connect_base_module_t *) malloc(sizeof(ompi_btl_openib_connect_base_module_t));
     if (NULL == *cpc) {
         rc = OMPI_ERR_OUT_OF_RESOURCE;
         goto out;
@@ -1948,8 +1966,10 @@ static int rdmacm_component_finalize(void)
     }
 
     if (NULL != event_channel) {
+#ifndef __WINDOWS__
         rc = ompi_btl_openib_fd_unmonitor(event_channel->fd, 
                                           rdmacm_unmonitor, (void*) &barrier);
+#endif
         if (OMPI_SUCCESS != rc) {
             BTL_ERROR(("Error disabling fd monitor"));
         }
@@ -1957,7 +1977,9 @@ static int rdmacm_component_finalize(void)
         /* Wait for the service thread to stop monitoring the fd */
         OPAL_OUTPUT((-1, "MAIN rdmacm_component_finalize: waiting for thread to finish"));
         while (0 == barrier) {
+#ifndef __WINDOWS__
             sched_yield();
+#endif
         }
         OPAL_OUTPUT((-1, "MAIN rdmacm_component_finalize: thread finished"));
     }
@@ -2017,9 +2039,11 @@ static int rdmacm_component_init(void)
         return OMPI_ERR_UNREACH;
     }
 
+#ifndef __WINDOWS__
     /* Start monitoring the fd associated with the cm_device */
     ompi_btl_openib_fd_monitor(event_channel->fd, OPAL_EV_READ,
                                rdmacm_event_dispatch, NULL);
+#endif
     
     rdmacm_component_initialized = true;
     return OMPI_SUCCESS;
