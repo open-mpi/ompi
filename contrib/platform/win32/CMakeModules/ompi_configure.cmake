@@ -245,6 +245,7 @@ OMPI_DEF_OPT(OMPI_WANT_NETWORK_DIRECT "Whether we want to enable Network Direct 
 
 OMPI_DEF_OPT(ORTE_WANT_NOTIFIER_LOG_EVENT "if the notifier_log_event should be enabled" OFF)
 
+OMPI_DEF_OPT(OMPI_WANT_OFED "Whether we want to enable OFED support." OFF)
 
 IF (NOT MSVC)
 
