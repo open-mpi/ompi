@@ -259,20 +259,20 @@ void ompi_dpm_base_mark_dyncomm (ompi_communicator_t *comm)
     for (i=1; i< size; i++) {
         proc = ompi_group_peer_lookup(grp,i);
         if (thisjobid != proc->proc_name.jobid) {
+            /* at least one is different */
             found = true;
             goto complete;
         }
     }
 
     /* if inter-comm, loop over all processes in remote_group
-     * and perform the same check
+     * and see if any are different from thisjobid
      */
     grp = comm->c_remote_group;
-    proc = ompi_group_peer_lookup(grp,0);
-    thisjobid = proc->proc_name.jobid;
-    for (i=1; i< rsize; i++) {
+    for (i=0; i< rsize; i++) {
         proc = ompi_group_peer_lookup(grp,i);
         if (thisjobid != proc->proc_name.jobid) {
+            /* at least one is different */
             found = true;
             break;
         }
