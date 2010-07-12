@@ -119,7 +119,7 @@ FOREACH (MCA_FRAMEWORK ${MCA_FRAMEWORK_LIST})
 
         SET(COMPONENT_FILES "")
         SET(CURRENT_PATH ${PROJECT_SOURCE_DIR}/mca/${MCA_FRAMEWORK}/${MCA_COMPONENT})
-        FILE(GLOB COMPONENT_FILES "${CURRENT_PATH}/*.C" "${CURRENT_PATH}/*.h"
+        FILE(GLOB_RECURSE COMPONENT_FILES "${CURRENT_PATH}/*.C" "${CURRENT_PATH}/*.h"
           "${CURRENT_PATH}/*.cc" "${CURRENT_PATH}/*.cpp")
 
         #check exclude list
@@ -132,7 +132,7 @@ FOREACH (MCA_FRAMEWORK ${MCA_FRAMEWORK_LIST})
 
         # remove the files in the exclude list
         FOREACH(FILE ${EXCLUDE_LIST})
-          LIST(REMOVE_ITEM MCA_FRAMEWORK_BASE_FILES "${CURRENT_PATH}/${FILE}")
+          LIST(REMOVE_ITEM COMPONENT_FILES "${CURRENT_PATH}/${FILE}")
         ENDFOREACH(FILE)
 
         # by default, build this component.
@@ -141,14 +141,18 @@ FOREACH (MCA_FRAMEWORK ${MCA_FRAMEWORK_LIST})
         # do we have to run a check module first?
         SET(REQUIRED_CHECK "")
         FILE(STRINGS ${CURRENT_PATH}/.windows REQUIRED_CHECK REGEX "^required_check=")
-        
+
         SET(EXTRA_INCLUDE_PATH "")
         IF(NOT REQUIRED_CHECK STREQUAL "")
           STRING(REPLACE "required_check=" "" REQUIRED_CHECK ${REQUIRED_CHECK})
           UNSET(RESULT_INCLUDE_PATH)
+          UNSET(RESULT_LINK_LIBRARIES)
           INCLUDE(${REQUIRED_CHECK})
           IF(RESULT)
+            SET(COMPONENT_FILES ${COMPONENT_FILES} ${RESULT_SOURCE_FILES})
             SET(EXTRA_INCLUDE_PATH ${RESULT_INCLUDE_PATH})
+            # these extra libraries will be set up in up layer, e.g. ompi
+            SET(EXTRA_LINK_LIBRARIES ${EXTRA_LINK_LIBRARIES} ${RESULT_LINK_LIBRARIES})
           ELSE(RESULT)
             # Required check failed, don't build this component.
             SET(BUILD_COMPONENT FALSE)
@@ -163,19 +167,6 @@ FOREACH (MCA_FRAMEWORK ${MCA_FRAMEWORK_LIST})
           IF(NOT VALUE STREQUAL "")
             STRING(REPLACE "not_single_shared_lib=" "" NOT_SINGLE_SHARED_LIB ${VALUE})
           ENDIF(NOT VALUE STREQUAL "")
-
-          # check out if we have to exclude some source files.
-          SET(EXCLUDE_LIST "")
-          FILE(STRINGS ${CURRENT_PATH}/.windows EXCLUDE_LIST REGEX "^exclude_list=")
-        
-          IF(NOT EXCLUDE_LIST STREQUAL "")
-            STRING(REPLACE "exclude_list=" "" EXCLUDE_LIST ${EXCLUDE_LIST})
-          ENDIF(NOT EXCLUDE_LIST STREQUAL "")
-        
-          # remove the files in the exclude list
-          FOREACH(FILE ${EXCLUDE_LIST})
-            LIST(REMOVE_ITEM COMPONENT_FILES "${CURRENT_PATH}/${FILE}")
-          ENDFOREACH(FILE)
 
           IF(NOT OPAL_WANT_LIBLTDL OR NOT_SINGLE_SHARED_LIB STREQUAL "1")
             SET(NOT_SINGLE_SHARED_LIB "")
@@ -266,7 +257,7 @@ SET_TARGET_PROPERTIES(${LIB_NAME_PREFIX}mca_${MCA_FRAMEWORK}_${MCA_COMPONENT}
                       PROPERTIES COMPILE_FLAGS \"-D_USRDLL -DOPAL_IMPORTS -DOMPI_IMPORTS -DORTE_IMPORTS /TP\")
 
 TARGET_LINK_LIBRARIES (${LIB_NAME_PREFIX}mca_${MCA_FRAMEWORK}_${MCA_COMPONENT}
-  libopen-pal ${MCA_LINK_LIBRARIES})
+  libopen-pal ${MCA_LINK_LIBRARIES} ${EXTRA_LINK_LIBRARIES})
 
 INSTALL(TARGETS ${LIB_NAME_PREFIX}mca_${MCA_FRAMEWORK}_${MCA_COMPONENT} ${INSTALL_DEST})
 IF (OMPI_DEBUG_BUILD)
@@ -275,8 +266,13 @@ IF (OMPI_DEBUG_BUILD)
 ENDIF (OMPI_DEBUG_BUILD)
           ")
 
-            ADD_SUBDIRECTORY (${PROJECT_BINARY_DIR}/mca/${MCA_FRAMEWORK}/${MCA_COMPONENT} mca/${MCA_FRAMEWORK}/${MCA_COMPONENT})
-          ENDIF(NOT OPAL_WANT_LIBLTDL OR NOT_SINGLE_SHARED_LIB STREQUAL "1")
+              ADD_SUBDIRECTORY (${PROJECT_BINARY_DIR}/mca/${MCA_FRAMEWORK}/${MCA_COMPONENT} mca/${MCA_FRAMEWORK}/${MCA_COMPONENT})
+
+              # for single dll, reset these two variables for the next component.
+              UNSET(EXTRA_INCLUDE_PATH)
+              UNSET(EXTRA_LINK_LIBRARIES)
+
+              ENDIF(NOT OPAL_WANT_LIBLTDL OR NOT_SINGLE_SHARED_LIB STREQUAL "1")
 
           # Install help files if they are here.
           INSTALL(DIRECTORY ${CURRENT_PATH}/ DESTINATION share/openmpi/
