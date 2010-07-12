@@ -245,7 +245,7 @@ OMPI_DEF_OPT(OMPI_WANT_NETWORK_DIRECT "Whether we want to enable Network Direct 
 
 OMPI_DEF_OPT(ORTE_WANT_NOTIFIER_LOG_EVENT "if the notifier_log_event should be enabled" OFF)
 
-OMPI_DEF_OPT(OMPI_WANT_OFED "Whether we want to enable OFED support." OFF)
+OMPI_DEF_OPT(OMPI_WANT_OFED "Whether we want to enable OFED support." ON)
 
 IF (NOT MSVC)
 
@@ -699,7 +699,7 @@ IF(WIN32)
 
   OMPI_DEF(OPAL_HAVE_POSIX_THREADS 0 "Do we have POSIX threads." 0 1)
 
-  OMPI_DEF(OPAL_HAVE_WEAK_SYMBOLS 0 "Wehther we have weak symbols or not" 0 1)
+  OMPI_DEF(OPAL_HAVE_WEAK_SYMBOLS 0 "Whether we have weak symbols or not" 0 1)
 
   OMPI_DEF(OPAL_HAVE_SOLARIS_THREADS 0 "Do we have native Solaris threads." 0 1)
 
@@ -718,6 +718,10 @@ IF(WIN32)
   OMPI_DEF_CACHE(MCA_pml_DIRECT_CALL_HEADER " " STRING "Header pml includes to be direct called." 1 1)
 
   CHECK_C_INLINE()
+  
+  IF(OMPI_WANT_OFED)
+    OMPI_DEF(HAVE_IBV_GET_DEVICE_LIST 1 "Whether the infiniband verbs have ibv_get_device_list function." 0 0)
+  ENDIF(OMPI_WANT_OFED)
 
 ENDIF(WIN32)
 
