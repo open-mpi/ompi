@@ -20,18 +20,19 @@
 #
 [alps-env-var-not-found]
 While trying to determine what resources are available, the ALPS
-resource allocator expects to find the following environment variables:
+resource allocator expects to find one of the following environment
+variables:
 
 	 OMPI_ALPS_RESID
+	 BASIL_RESERVATION_ID
     
-However, it was unable to find the following environment variable:
-
-    %s
+However, it was unable to find either one of these variables.
 
 #This is a fatal error.
 [alps-env-var-invalid]
 While trying to determine what resources are available, the ALPS
-resource allocator uses the OMPI_ALPS_RESID environment variable.
+resource allocator uses either the OMPI_ALPS_RESID or the
+BASIL_RESERVATION_ID environment variable.
 
 However, an error was encountered when trying to parse the variable:
 
