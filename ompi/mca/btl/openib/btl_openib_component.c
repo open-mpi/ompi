@@ -15,7 +15,7 @@
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
- * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved
+ * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -2311,8 +2311,8 @@ struct dev_distance {
 
 static int compare_distance(const void *p1, const void *p2)
 {
-    const struct dev_distance *d1 = (const dev_distance *) p1;
-    const struct dev_distance *d2 = (const dev_distance *) p2;
+    const struct dev_distance *d1 = (const struct dev_distance *) p1;
+    const struct dev_distance *d2 = (const struct dev_distance *) p2;
 
     return d1->distance - d2->distance;
 }
@@ -2321,7 +2321,7 @@ static struct dev_distance *
 sort_devs_by_distance(struct ibv_device **ib_devs, int count)
 {
     int i;
-    struct dev_distance *devs = (dev_distance *) malloc(count * sizeof(struct dev_distance));
+    struct dev_distance *devs = (struct dev_distance *) malloc(count * sizeof(struct dev_distance));
 
     opal_carto_base_get_host_graph(&host_topo, "Infiniband");
 
