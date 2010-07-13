@@ -289,7 +289,7 @@ static int qp_connect_all(mca_btl_openib_endpoint_t *endpoint)
     for (i = 0; i < mca_btl_openib_component.num_qps; i++) {
         struct ibv_qp_attr attr;
         struct ibv_qp* qp = endpoint->qps[i].qp->lcl_qp;
-        enum ibv_mtu mtu = (ibv_mtu) ((openib_btl->device->mtu < endpoint->rem_info.rem_mtu) ?
+        enum ibv_mtu mtu = (enum ibv_mtu) ((openib_btl->device->mtu < endpoint->rem_info.rem_mtu) ?
             openib_btl->device->mtu : endpoint->rem_info.rem_mtu) ;
 
         memset(&attr, 0, sizeof(attr));
