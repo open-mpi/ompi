@@ -87,6 +87,7 @@ SET(LIB_OLD "$ENV{LIB}")
 SET(INCLUDE_OLD "$ENV{INCLUDE}")
 
 INCLUDE(ompi_configure)
+BEGIN_CONFIGURE()
 
 # find flex command
 INCLUDE (find_flex)
@@ -95,6 +96,8 @@ FIND_FLEX()
 ADD_SUBDIRECTORY(opal)
 ADD_SUBDIRECTORY(ompi)
 ADD_SUBDIRECTORY(orte)
+
+END_CONFIGURE()
 
 #restore environment variables
 SET(ENV{PATH} "${PATH_OLD}")
