@@ -12,6 +12,9 @@
 #
 
 
+
+MACRO(BEGIN_CONFIGURE)
+
 INCLUDE (CheckIncludeFileCXX)
 INCLUDE (CheckIncludeFile)
 INCLUDE (CheckFunctionExists)
@@ -718,10 +721,6 @@ IF(WIN32)
   OMPI_DEF_CACHE(MCA_pml_DIRECT_CALL_HEADER " " STRING "Header pml includes to be direct called." 1 1)
 
   CHECK_C_INLINE()
-  
-  IF(OMPI_WANT_OFED)
-    OMPI_DEF(HAVE_IBV_GET_DEVICE_LIST 1 "Whether the infiniband verbs have ibv_get_device_list function." 0 0)
-  ENDIF(OMPI_WANT_OFED)
 
 ENDIF(WIN32)
 
@@ -812,6 +811,12 @@ ELSE(NOT HAVE_INT64_T AND SIZEOF_INT EQUAL 8)
 ENDIF(NOT HAVE_INT64_T AND SIZEOF_INT EQUAL 8)
 
 
+ENDMACRO(BEGIN_CONFIGURE)
+
+
+
+MACRO(END_CONFIGURE)
+
 IF(NOT WRITE_CONFIG_DONE)
   FILE(APPEND ${OpenMPI_BINARY_DIR}/opal/include/opal_config.h.cmake
     "#include \"opal_config_bottom.h\"\n#endif /* OPAL_CONFIG_H */\n")
@@ -819,3 +824,5 @@ IF(NOT WRITE_CONFIG_DONE)
 ENDIF(NOT WRITE_CONFIG_DONE)
 
 CONFIGURE_FILE(${OpenMPI_BINARY_DIR}/opal/include/opal_config.h.cmake ${OpenMPI_BINARY_DIR}/opal/include/opal_config.h)
+
+ENDMACRO(END_CONFIGURE)

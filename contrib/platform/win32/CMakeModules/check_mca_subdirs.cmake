@@ -36,7 +36,10 @@ INCLUDE(list_subdirs)
 #       exclude_list:       files that need to be excluded from the solution.
 #
 #       required_check:     a CMake module has to be run to check the libraries/headers
-#                           that needed by this component.
+#                           that needed by this component. The check might return two 
+#                           variables: RESULT_INCLUDE_PATH and RESULT_LINK_LIBRARIES. 
+#                           RESULT_INCLUDE_PATH is handled in this macro, and RESULT_LINK_LIBRARIES
+#                           is handled in upper layer.
 #
 #       not_single_shared_lib:   this component should not be built separately, it's not 
 #                                a single mca shared library.
