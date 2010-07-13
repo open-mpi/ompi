@@ -32,6 +32,7 @@
 #include <signal.h>
 #include <errno.h>
 
+#include "opal/hash_string.h"
 #include "opal/util/argv.h"
 #include "opal/util/path.h"
 #include "opal/util/opal_sos.h"
@@ -94,51 +95,137 @@ orte_ess_base_module_t orte_ess_singleton_module = {
 static int rte_init(void)
 {
     int rc;
-    
+    char *server_uri, *param;
+    uint16_t jobfam;
+    uint32_t hash32;
+    uint32_t bias;
+
     /* run the prolog */
     if (ORTE_SUCCESS != (rc = orte_ess_base_std_prolog())) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     
-    /*
-     * If we are the selected module, then we must be a singleton
-     * as it means that no other method for discovering a name
-     * could be found. In this case, we need to start a daemon that
-     * can support our operation. We must do this for two reasons:
-     *
-     * (1) if we try to play the role of the HNP, then any child processes
-     * we might start via comm_spawn will rely on us for all ORTE-level
-     * support. However, we can only progress those requests when the
-     * the application calls into the OMPI/ORTE library! Thus, if this
-     * singleton just does computation, the other processes will "hang"
-     * in any calls into the ORTE layer that communicate with the HNP -
-     * and most calls on application procs *do*.
-     *
-     * (2) daemons are used to communicate messages for administrative
-     * purposes in a broadcast-like manner. Thus, daemons are expected
-     * to be able to interpret specific commands. Our application process
-     * doesn't have any idea how to handle those commands, thus causing
-     * the entire ORTE administrative system to break down.
-     *
-     * For those reasons, we choose to fork/exec a daemon at this time
-     * and then reconnect ourselves to it. We could just "fork" and declare
-     * the child to be a daemon, but that would require we place *all* of the
-     * daemon command processing code in the ORTE library, do some strange
-     * mojo in a few places, etc. This doesn't seem worth it, so we'll just
-     * do the old fork/exec here
-     *
-     * Note that Windows-based systems have to do their own special trick as
-     * they don't support fork/exec. So we have to use a giant "if" here to
-     * protect the Windows world. To make the results more readable, we put
-     * the whole mess in a separate function below
-     */
-    if (ORTE_SUCCESS != (rc= fork_hnp())) {
-        /* if this didn't work, then we cannot support operation any further.
-        * Abort the system and tell orte_init to exit
-        */
-        ORTE_ERROR_LOG(rc);
-        return rc;
+    /* look for the ompi-server MCA param */
+    mca_base_param_reg_string_name("orte", "server",
+                                   "Server to be used as HNP - [file|FILE]:<filename> or just uri",
+                                   false, false, NULL, &server_uri);
+
+    if (NULL != server_uri) {
+        /* we are going to connect to a server HNP */
+        if (0 == strncmp(server_uri, "file", strlen("file")) ||
+            0 == strncmp(server_uri, "FILE", strlen("FILE"))) {
+            char input[1024], *filename;
+            FILE *fp;
+            
+            /* it is a file - get the filename */
+            filename = strchr(server_uri, ':');
+            if (NULL == filename) {
+                /* filename is not correctly formatted */
+                orte_show_help("help-orterun.txt", "orterun:ompi-server-filename-bad", true,
+                               "singleton", server_uri);
+                return ORTE_ERROR;
+            }
+            ++filename; /* space past the : */
+            
+            if (0 >= strlen(filename)) {
+                /* they forgot to give us the name! */
+                orte_show_help("help-orterun.txt", "orterun:ompi-server-filename-missing", true,
+                               "singleton", server_uri);
+                return ORTE_ERROR;
+            }
+            
+            /* open the file and extract the uri */
+            fp = fopen(filename, "r");
+            if (NULL == fp) { /* can't find or read file! */
+                orte_show_help("help-orterun.txt", "orterun:ompi-server-filename-access", true,
+                               "singleton", server_uri);
+                return ORTE_ERROR;
+            }
+            if (NULL == fgets(input, 1024, fp)) {
+                /* something malformed about file */
+                fclose(fp);
+                orte_show_help("help-orterun.txt", "orterun:ompi-server-file-bad", true,
+                               "singleton", server_uri, "singleton");
+                return ORTE_ERROR;
+            }
+            fclose(fp);
+            input[strlen(input)-1] = '\0';  /* remove newline */
+            orte_process_info.my_hnp_uri = strdup(input);
+        } else {
+            orte_process_info.my_hnp_uri = strdup(server_uri);
+        }
+        /* save the daemon uri - we will process it later */
+        orte_process_info.my_daemon_uri = strdup(orte_process_info.my_hnp_uri);
+        /* indicate we are a singleton so orte_init knows what to do */
+        orte_process_info.proc_type |= ORTE_PROC_SINGLETON;
+        /* for convenience, push the pubsub version of this param into the environ */
+        asprintf(&param,"OMPI_MCA_pubsub_orte_server=%s",orte_process_info.my_hnp_uri);
+        putenv(param);
+        /* now define my own name */
+        /* hash the nodename */
+        OPAL_HASH_STR(orte_process_info.nodename, hash32);
+        
+        bias = (uint32_t)orte_process_info.pid;
+        
+        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
+                             "ess:singleton: initial bias %ld nodename hash %lu",
+                             (long)bias, (unsigned long)hash32));
+        
+        /* fold in the bias */
+        hash32 = hash32 ^ bias;
+        
+        /* now compress to 16-bits */
+        jobfam = (uint16_t)(((0x0000ffff & (0xffff0000 & hash32) >> 16)) ^ (0x0000ffff & hash32));
+        
+        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
+                             "ess:singleton:: final jobfam %lu",
+                             (unsigned long)jobfam));
+        
+        /* set the name */
+        ORTE_PROC_MY_NAME->jobid = 0xffff0000 & ((uint32_t)jobfam << 16);
+        ORTE_PROC_MY_NAME->vpid = 0;
+        
+    } else {
+        /*
+         * If we are the selected module, then we must be a singleton
+         * as it means that no other method for discovering a name
+         * could be found. In this case, we need to start a daemon that
+         * can support our operation. We must do this for two reasons:
+         *
+         * (1) if we try to play the role of the HNP, then any child processes
+         * we might start via comm_spawn will rely on us for all ORTE-level
+         * support. However, we can only progress those requests when the
+         * the application calls into the OMPI/ORTE library! Thus, if this
+         * singleton just does computation, the other processes will "hang"
+         * in any calls into the ORTE layer that communicate with the HNP -
+         * and most calls on application procs *do*.
+         *
+         * (2) daemons are used to communicate messages for administrative
+         * purposes in a broadcast-like manner. Thus, daemons are expected
+         * to be able to interpret specific commands. Our application process
+         * doesn't have any idea how to handle those commands, thus causing
+         * the entire ORTE administrative system to break down.
+         *
+         * For those reasons, we choose to fork/exec a daemon at this time
+         * and then reconnect ourselves to it. We could just "fork" and declare
+         * the child to be a daemon, but that would require we place *all* of the
+         * daemon command processing code in the ORTE library, do some strange
+         * mojo in a few places, etc. This doesn't seem worth it, so we'll just
+         * do the old fork/exec here
+         *
+         * Note that Windows-based systems have to do their own special trick as
+         * they don't support fork/exec. So we have to use a giant "if" here to
+         * protect the Windows world. To make the results more readable, we put
+         * the whole mess in a separate function below
+         */
+        if (ORTE_SUCCESS != (rc= fork_hnp())) {
+            /* if this didn't work, then we cannot support operation any further.
+             * Abort the system and tell orte_init to exit
+             */
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     }
 
     orte_process_info.num_procs = 1;
@@ -199,14 +286,14 @@ static int fork_hnp(void)
     int rc;
     
     /* A pipe is used to communicate between the parent and child to
-        indicate whether the exec ultimately succeeded or failed.  The
-        child sets the pipe to be close-on-exec; the child only ever
-        writes anything to the pipe if there is an error (e.g.,
-        executable not found, exec() fails, etc.).  The parent does a
-        blocking read on the pipe; if the pipe closed with no data,
-        then the exec() succeeded.  If the parent reads something from
-        the pipe, then the child was letting us know that it failed.
-        */
+       indicate whether the exec ultimately succeeded or failed.  The
+       child sets the pipe to be close-on-exec; the child only ever
+       writes anything to the pipe if there is an error (e.g.,
+       executable not found, exec() fails, etc.).  The parent does a
+       blocking read on the pipe; if the pipe closed with no data,
+       then the exec() succeeded.  If the parent reads something from
+       the pipe, then the child was letting us know that it failed.
+    */
     if (pipe(p) < 0) {
         ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_PIPES);
         return ORTE_ERR_SYS_LIMITS_PIPES;
@@ -318,7 +405,7 @@ static int fork_hnp(void)
         exit(1);
         
     } else {
-       /* I am the parent - wait to hear something back and
+        /* I am the parent - wait to hear something back and
          * report results
          */
         close(p[1]);  /* parent closes the write - orted will write its contact info to it*/
@@ -370,7 +457,7 @@ static int fork_hnp(void)
         /* likewise, since this is also the HNP, set that uri too */
         orte_process_info.my_hnp_uri = strdup(orted_uri);
         
-       /* indicate we are a singleton so orte_init knows what to do */
+        /* indicate we are a singleton so orte_init knows what to do */
         orte_process_info.proc_type |= ORTE_PROC_SINGLETON;
         /* all done - report success */
         free(orted_uri);
@@ -499,7 +586,7 @@ static int fork_hnp(void)
     /* likewise, since this is also the HNP, set that uri too */
     orte_process_info.my_hnp_uri = strdup(orted_uri);
 
-   /* indicate we are a singleton so orte_init knows what to do */
+    /* indicate we are a singleton so orte_init knows what to do */
     orte_process_info.proc_type |= ORTE_PROC_SINGLETON;
     /* all done - report success */
     free(orted_uri);

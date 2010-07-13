@@ -51,6 +51,11 @@ int orte_routed_base_register_sync(bool setup)
     orte_daemon_cmd_flag_t command=ORTE_DAEMON_SYNC_BY_PROC;
     char *rml_uri;
     
+    OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
+                         "%s registering sync to daemon %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_DAEMON)));
+    
     /* we need to get the oob to establish
      * the connection - the oob will leave the connection "alive"
      * thereafter so we can communicate readily
@@ -95,6 +100,9 @@ int orte_routed_base_register_sync(bool setup)
      * gets serviced by the event library on the orted prior to the
      * process exiting
      */
+    OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
+                         "%s registering sync waiting for ack",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     sync_recvd = false;
     rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SYNC,
                                  ORTE_RML_NON_PERSISTENT, report_sync, NULL);
@@ -105,6 +113,10 @@ int orte_routed_base_register_sync(bool setup)
     
     ORTE_PROGRESSED_WAIT(sync_recvd, 0, 1);
     
+    OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
+                         "%s registering sync ack recvd",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
     return ORTE_SUCCESS;
 }
 
@@ -116,9 +128,15 @@ int orte_routed_base_process_callback(orte_jobid_t job, opal_buffer_t *buffer)
     char *rml_uri;
     orte_vpid_t vpid;
     int rc;
-    
+
+    if (ORTE_JOB_FAMILY(job) == ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
+        /* came from singleton - don't process it */
+        return ORTE_SUCCESS;
+    }
+
     /* lookup the job object for this process */
     if (NULL == (jdata = orte_get_job_data_object(job))) {
+        /* came from my job family - this is an error */
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }

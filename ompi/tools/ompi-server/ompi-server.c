@@ -58,6 +58,7 @@
 #include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/orted/orted.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
@@ -186,11 +187,11 @@ int main(int argc, char *argv[])
     tmp_env_var = NULL; /* Silence compiler warning */
 #endif
 
-    /* Perform the standard init, but flag that we are a tool
-     * so that we only open up the communications infrastructure. No
-     * session directories will be created.
-     */
-    if (ORTE_SUCCESS != (ret = orte_init(&argc, &argv, ORTE_PROC_TOOL))) {
+    /* don't want session directories */
+    orte_create_session_dirs = false;
+
+    /* Perform the standard init, but flag that we are an HNP */
+    if (ORTE_SUCCESS != (ret = orte_init(&argc, &argv, ORTE_PROC_HNP))) {
         fprintf(stderr, "ompi-server: failed to initialize -- aborting\n");
         exit(1);
     }
@@ -228,6 +229,15 @@ int main(int argc, char *argv[])
         exit(1);
     }
     
+    /* setup to listen for commands sent specifically to me */
+    ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON,
+                                  ORTE_RML_NON_PERSISTENT, orte_daemon_recv, NULL);
+    if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
+        ORTE_ERROR_LOG(ret);
+        orte_finalize();
+        exit(1);
+    }
+
     /* Set signal handlers to catch kill signals so we can properly clean up
      * after ourselves. 
      */
