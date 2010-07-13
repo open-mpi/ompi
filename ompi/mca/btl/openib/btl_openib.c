@@ -1158,8 +1158,8 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
         return NULL;
 
     iov.iov_len = max_data;
-    iov.iov_base = (IOVBASE_TYPE *)to_base_frag(frag)->segment.seg_addr.pval +
-        reserve;
+    iov.iov_base = (IOVBASE_TYPE *) ( (unsigned char*)to_base_frag(frag)->segment.seg_addr.pval +
+        reserve );
     rc = opal_convertor_pack(convertor, &iov, &iov_count, &max_data);
 
     *size = max_data;
