@@ -240,13 +240,13 @@ mca_pml_bfo_rndv_completion( mca_btl_base_module_t* btl,
          * field to see if it has been acked.  If it has, then again we 
          * do not restart everything because obviously the RNDV message 
          * has made it to the other side. */
-        assert((mca_pml_bfo_hdr_t*)(des->des_src->seg_addr.pval)->hdr_match.hdr_ctx ==
-               sendreq->req_send.req_base.req_comm->c_contextid); 
-        assert((mca_pml_bfo_hdr_t*)(des->des_src->seg_addr.pval)->hdr_match.hdr_src ==
-               sendreq->req_send.req_base.req_comm->c_my_rank); 
-        assert((mca_pml_bfo_hdr_t*)(des->des_src->seg_addr.pval)->hdr_match.hdr_seq ==
-               (uint16_t)sendreq->req_send.req_base.req_sequence); 
- 
+        assert(((mca_pml_bfo_hdr_t*)(des->des_src->seg_addr.pval))->hdr_match.hdr_ctx ==
+               sendreq->req_send.req_base.req_comm->c_contextid);
+        assert(((mca_pml_bfo_hdr_t*)(des->des_src->seg_addr.pval))->hdr_match.hdr_src ==
+               sendreq->req_send.req_base.req_comm->c_my_rank);
+        assert(((mca_pml_bfo_hdr_t*)(des->des_src->seg_addr.pval))->hdr_match.hdr_seq ==
+               (uint16_t)sendreq->req_send.req_base.req_sequence);
+
         if ((!sendreq->req_error) && (!sendreq->req_acked)) { 
             sendreq->req_events--; 
             /* Assume RNDV did not make it, so restart from the beginning. */ 
