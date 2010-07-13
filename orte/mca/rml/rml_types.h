@@ -186,6 +186,9 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_msg_packet_t);
 /* notifier data */
 #define ORTE_RML_TAG_NOTIFIER_HNP           41
 
+/* comm leader failed */
+#define ORTE_RML_TAG_LEADER                 42
+
 #define ORTE_RML_TAG_MAX                   100
 
 
