@@ -151,9 +151,8 @@ int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
                        int32_t *num_vals, opal_data_type_t type)
 {
     int rc;
-    int32_t i, n, np, nprocs;
+    int32_t i, n;
     orte_job_t **jobs;
-    orte_proc_t *proc;
     orte_app_idx_t j;
     
     /* unpack into array of orte_job_t objects */
@@ -165,6 +164,22 @@ int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
         if (NULL == jobs[i]) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+
+        /* unpack the name of this job - may be null */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
+                                &(jobs[i]->name), &n, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* unpack the instance name of this job - may be null */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
+                                &(jobs[i]->instance), &n, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
         }
 
         /* unpack the jobid */
@@ -219,32 +234,6 @@ int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
                          (&(jobs[i]->total_slots_alloc)), &n, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
-        }
-        
-        /* unpack the number of procs */
-        n = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
-                         (void*)(&(jobs[i]->num_procs)), &n, ORTE_VPID))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
-        /* unpack the actual number of proc entries in the message */
-        n = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, (void*)&nprocs, &n, OPAL_INT32))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        if (0 < nprocs) {
-            for (np=0; np < nprocs; np++) {
-                n = 1;
-                if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
-                                 (void**)&proc, &n, ORTE_PROC))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-                }
-                opal_pointer_array_set_item(jobs[i]->procs, proc->name.vpid, proc);
-            }
         }
         
         /* if the map is NULL, then we din't pack it as there was
