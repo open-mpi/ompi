@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -191,6 +191,9 @@ typedef uint8_t mca_btl_base_tag_t;
  /* btl can do heterogeneous rdma operations on byte buffers */
 #define MCA_BTL_FLAGS_HETEROGENEOUS_RDMA 0x0100
 
+/* btl can support failover if enabled */
+#define MCA_BTL_FLAGS_FAILOVER_SUPPORT 0x0200
+
 /* Default exclusivity levels */
 #define MCA_BTL_EXCLUSIVITY_HIGH     (64*1024) /* internal loopback */
 #define MCA_BTL_EXCLUSIVITY_DEFAULT  1024      /* GM/IB/etc. */
@@ -198,6 +201,7 @@ typedef uint8_t mca_btl_base_tag_t;
 
 /* error callback flags */
 #define MCA_BTL_ERROR_FLAGS_FATAL 0x1
+#define MCA_BTL_ERROR_FLAGS_NONFATAL 0x2
 
 /**
  * Asynchronous callback function on completion of an operation.

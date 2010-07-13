@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -47,7 +48,7 @@ int mca_btl_base_param_register(mca_base_component_t *version,
     REG_INT("exclusivity", "BTL exclusivity (must be >= 0)",
             module->btl_exclusivity, 0, uint32_t);
 
-    asprintf(&msg, "BTL bit flags (general flags: SEND=%d, PUT=%d, GET=%d, SEND_INPLACE=%d, RDMA_MATCHED=%d, HETEROGENEOUS_RDMA=%d; flags only used by the \"dr\" PML (ignored by others): ACK=%d, CHECKSUM=%d, RDMA_COMPLETION=%d)",
+    asprintf(&msg, "BTL bit flags (general flags: SEND=%d, PUT=%d, GET=%d, SEND_INPLACE=%d, RDMA_MATCHED=%d, HETEROGENEOUS_RDMA=%d; flags only used by the \"dr\" PML (ignored by others): ACK=%d, CHECKSUM=%d, RDMA_COMPLETION=%d; flags only used by the \"bfo\" PML (ignored by others): FAILOVER_SUPPORT=%d)",
              MCA_BTL_FLAGS_SEND,
              MCA_BTL_FLAGS_PUT,
              MCA_BTL_FLAGS_GET,
@@ -56,7 +57,8 @@ int mca_btl_base_param_register(mca_base_component_t *version,
              MCA_BTL_FLAGS_HETEROGENEOUS_RDMA,
              MCA_BTL_FLAGS_NEED_ACK,
              MCA_BTL_FLAGS_NEED_CSUM,
-             MCA_BTL_FLAGS_RDMA_COMPLETION);
+             MCA_BTL_FLAGS_RDMA_COMPLETION,
+             MCA_BTL_FLAGS_FAILOVER_SUPPORT);
     REG_INT("flags", msg,
             module->btl_flags,
             0, uint32_t);
