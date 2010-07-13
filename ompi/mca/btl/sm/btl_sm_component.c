@@ -39,7 +39,6 @@
 #endif  /* HAVE_SYS_STAT_H */
 
 #include "ompi/constants.h"
-#include "opal/sys/cache.h"
 #include "opal/event/event.h"
 #include "opal/util/output.h"
 #include "orte/util/proc_info.h"

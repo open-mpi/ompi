@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -27,7 +28,7 @@
 #endif  /* HAVE_SYS_TYPES_H */
 
 #include "ompi/constants.h"
-#include "opal/sys/cache.h"
+#include "opal/runtime/opal.h"
 #include "opal/event/event.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "btl_self.h"
@@ -137,27 +138,27 @@ mca_btl_base_module_t** mca_btl_self_component_init( int *num_btls,
     /* initialize free lists */
     ompi_free_list_init_new( &mca_btl_self_component.self_frags_eager, 
                          sizeof(mca_btl_self_frag_eager_t) + mca_btl_self.btl_eager_limit,
-                         CACHE_LINE_SIZE,
+                         opal_cache_line_size,
                          OBJ_CLASS(mca_btl_self_frag_eager_t),
-                         0,CACHE_LINE_SIZE,
+                         0,opal_cache_line_size,
                          mca_btl_self_component.free_list_num,
                          mca_btl_self_component.free_list_max,
                          mca_btl_self_component.free_list_inc,
                          NULL );
     ompi_free_list_init_new( &mca_btl_self_component.self_frags_send, 
                          sizeof(mca_btl_self_frag_send_t) + mca_btl_self.btl_max_send_size,
-                         CACHE_LINE_SIZE,
+                         opal_cache_line_size,
                          OBJ_CLASS(mca_btl_self_frag_send_t),
-                         0,CACHE_LINE_SIZE,
+                         0,opal_cache_line_size,
                          mca_btl_self_component.free_list_num,
                          mca_btl_self_component.free_list_max,
                          mca_btl_self_component.free_list_inc,
                          NULL );
     ompi_free_list_init_new( &mca_btl_self_component.self_frags_rdma, 
                          sizeof(mca_btl_self_frag_rdma_t),
-                         CACHE_LINE_SIZE,
+                         opal_cache_line_size,
                          OBJ_CLASS(mca_btl_self_frag_rdma_t),
-                         0,CACHE_LINE_SIZE,
+                         0,opal_cache_line_size,
                          mca_btl_self_component.free_list_num,
                          mca_btl_self_component.free_list_max,
                          mca_btl_self_component.free_list_inc,

@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -17,7 +18,7 @@
  */
 
 #include "ompi_config.h"
-#include "opal/sys/cache.h"
+#include "opal/runtime/opal.h"
 #include "opal/util/output.h"
 #include "opal/event/event.h"
 
@@ -142,9 +143,9 @@ mca_pml_base_module_t* mca_pml_crcpw_component_init(int* priority,
         OBJ_CONSTRUCT(&pml_state_list, ompi_free_list_t);
         ompi_free_list_init_new( &pml_state_list,
                              sizeof(ompi_crcp_base_pml_state_t),
-                             CACHE_LINE_SIZE,
+                             opal_cache_line_size,
                              OBJ_CLASS(ompi_crcp_base_pml_state_t),
-                             0,CACHE_LINE_SIZE,
+                             0,opal_cache_line_size,
                              5,  /* Initial number */
                              -1, /* Max = Unlimited */
                              64, /* Increment by */

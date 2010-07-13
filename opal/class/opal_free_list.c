@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -19,8 +20,7 @@
 #include "opal_config.h"
 
 #include "opal/class/opal_free_list.h"
-#include "opal/sys/cache.h"
-
+#include "opal/runtime/opal.h"
 
 static void opal_free_list_construct(opal_free_list_t* fl);
 static void opal_free_list_destruct(opal_free_list_t* fl);
@@ -92,7 +92,7 @@ int opal_free_list_grow(opal_free_list_t* flist, size_t num_elements)
 
     alloc_ptr = (unsigned char *)malloc((num_elements * flist->fl_elem_size) + 
                                         sizeof(opal_list_item_t) +
-                                        CACHE_LINE_SIZE);
+                                        opal_cache_line_size);
     if(NULL == alloc_ptr)
         return OPAL_ERR_TEMP_OUT_OF_RESOURCE;
 
@@ -102,9 +102,9 @@ int opal_free_list_grow(opal_free_list_t* flist, size_t num_elements)
     opal_list_append(&(flist->fl_allocations), (opal_list_item_t*) alloc_ptr);
     ptr = alloc_ptr + sizeof(opal_list_item_t);
 
-    mod = (uintptr_t)ptr % CACHE_LINE_SIZE;
+    mod = (uintptr_t)ptr % opal_cache_line_size;
     if(mod != 0) {
-        ptr += (CACHE_LINE_SIZE - mod);
+        ptr += (opal_cache_line_size - mod);
     }
 
     if (NULL != flist->fl_elem_class) {

@@ -1024,7 +1024,7 @@ static int prepare_device_for_use(mca_btl_openib_device_t *device)
     init_data->list = &device->send_free_control;
 
     rc = ompi_free_list_init_ex_new(&device->send_free_control,
-                sizeof(mca_btl_openib_send_control_frag_t), CACHE_LINE_SIZE,
+                sizeof(mca_btl_openib_send_control_frag_t), opal_cache_line_size,
                 OBJ_CLASS(mca_btl_openib_send_control_frag_t), length,
                 mca_btl_openib_component.buffer_alignment,
                 mca_btl_openib_component.ib_free_list_num, -1,
@@ -1058,7 +1058,7 @@ static int prepare_device_for_use(mca_btl_openib_device_t *device)
         init_data->list = &device->qps[qp].send_free;
 
         rc = ompi_free_list_init_ex_new(init_data->list,
-                    sizeof(mca_btl_openib_send_frag_t), CACHE_LINE_SIZE,
+                    sizeof(mca_btl_openib_send_frag_t), opal_cache_line_size,
                     OBJ_CLASS(mca_btl_openib_send_frag_t), length,
                     mca_btl_openib_component.buffer_alignment,
                     mca_btl_openib_component.ib_free_list_num,
@@ -1091,7 +1091,7 @@ static int prepare_device_for_use(mca_btl_openib_device_t *device)
         init_data->list = &device->qps[qp].recv_free;
 
         if(OMPI_SUCCESS != ompi_free_list_init_ex_new(init_data->list,
-                    sizeof(mca_btl_openib_recv_frag_t), CACHE_LINE_SIZE,
+                    sizeof(mca_btl_openib_recv_frag_t), opal_cache_line_size,
                     OBJ_CLASS(mca_btl_openib_recv_frag_t),
                     length, mca_btl_openib_component.buffer_alignment,
                     mca_btl_openib_component.ib_free_list_num,
