@@ -1,4 +1,4 @@
-# -*- makefile -*-
+# -*- shell-script -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -18,26 +18,9 @@
 # $HEADER$
 #
 
-lib_LTLIBRARIES = libtrace.la
-
-libtrace_la_SOURCES = \
-        abort.c \
-        accumulate.c \
-        add_error_class.c \
-        add_error_code.c \
-        add_error_string.c \
-        address.c \
-        allgather.c \
-        allgatherv.c \
-        alloc_mem.c \
-        allreduce.c \
-        barrier.c \
-        bcast.c \
-        finalize.c \
-        init.c \
-        isend.c \
-        recv.c \
-        reduce.c \
-        request_free.c \
-        send.c \
-        sendrecv.c
+# OMPI_contrib_libompitrace_CONFIG([action-if-can-compile], 
+#                                  [action-if-cant-compile])
+# ------------------------------------------------
+AC_DEFUN([OMPI_contrib_libompitrace_CONFIG],[
+    $1
+])dnl
