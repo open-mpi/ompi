@@ -189,7 +189,7 @@ orte_plm_xgrid_spawn(orte_job_t *jdata)
     if (failed_launch) {
         orte_errmgr.update_state(jdata->jobid, ORTE_JOB_STATE_FAILED_TO_START,
                                  NULL, ORTE_PROC_STATE_UNDEF,
-                                 ORTE_ERROR_DEFAULT_EXIT_CODE);
+                                 0, ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
 
     return rc;
