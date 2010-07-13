@@ -2178,6 +2178,10 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
      * come from a singleton
      */
     if (!found) {
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                             "%s odls: registering sync on singleton %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(proc)));
         child = OBJ_NEW(orte_odls_child_t);
         if (ORTE_SUCCESS != (rc = opal_dss.copy((void**)&child->name, proc, ORTE_NAME))) {
             ORTE_ERROR_LOG(rc);
