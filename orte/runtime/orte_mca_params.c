@@ -84,7 +84,7 @@ int orte_register_params(void)
 
     mca_base_param_reg_int_name("orte", "create_session_dirs",
                                 "Create session directories",
-                                false, false, (int) true, &value);
+                                false, false, orte_create_session_dirs, &value);
     orte_create_session_dirs = OPAL_INT_TO_BOOL(value);
     
     
