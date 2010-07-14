@@ -32,6 +32,8 @@
 #include "ompi/class/ompi_rb_tree.h"
 #include "ompi/mca/rcache/rcache.h"
 
+BEGIN_C_DECLS
+
 struct mca_rcache_vma_module_t { 
     mca_rcache_base_module_t base;
     ompi_rb_tree_t rb_tree;
@@ -79,6 +81,8 @@ int mca_rcache_vma_clean(struct mca_rcache_base_module_t* rcache);
 void mca_rcache_vma_module_init(mca_rcache_vma_module_t *rcache);
 
 void mca_rcache_vma_finalize(struct mca_rcache_base_module_t*);
+
+END_C_DECLS
 
 #endif /* MCA_RCACHE_VMA_H */
 

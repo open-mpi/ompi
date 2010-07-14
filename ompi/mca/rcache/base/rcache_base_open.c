@@ -32,11 +32,7 @@
  * component's public mca_base_component_t struct.
  */
 
-#ifdef __WINDOWS__
-    const mca_base_component_t *mca_rcache_base_static_components[] = {NULL};
-#else 
 #include "ompi/mca/rcache/base/static-components.h"
-#endif
 
 
 /*
