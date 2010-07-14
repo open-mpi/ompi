@@ -28,13 +28,13 @@ MACRO(CONFIGURE_WRAPPER_DATA_FILE APP_NAME)
 
   # create a temporary input file, for "write file" command only
   # replace the variables in the first level. :(
-  FILE(WRITE ${CMAKE_FILES_DIRECTORY}/CMakeTmp/${APP_NAME}-wrapper-data.txt.in "${OUTPUT}")
+  FILE(WRITE ${OMPI_BINARY_DIR}/tools/wrappers/${APP_NAME}-wrapper-data.txt.in "${OUTPUT}")
 
-  CONFIGURE_FILE(${CMAKE_FILES_DIRECTORY}/CMakeTmp/${APP_NAME}-wrapper-data.txt.in
+  CONFIGURE_FILE(${OMPI_BINARY_DIR}/tools/wrappers/${APP_NAME}-wrapper-data.txt.in
                  ${OMPI_BINARY_DIR}/tools/wrappers/${APP_NAME}-wrapper-data.txt @ONLY)
   INSTALL(FILES ${OMPI_BINARY_DIR}/tools/wrappers/${APP_NAME}-wrapper-data.txt
           DESTINATION share/openmpi)
-  CONFIGURE_FILE(${CMAKE_FILES_DIRECTORY}/CMakeTmp/${APP_NAME}-wrapper-data.txt.in
+  CONFIGURE_FILE(${OMPI_BINARY_DIR}/tools/wrappers/${APP_NAME}-wrapper-data.txt.in
                  ${OMPI_BINARY_DIR}/tools/wrappers/${APP_NAME}.exe-wrapper-data.txt @ONLY)
   INSTALL(FILES ${OMPI_BINARY_DIR}/tools/wrappers/${APP_NAME}.exe-wrapper-data.txt
           DESTINATION share/openmpi)
