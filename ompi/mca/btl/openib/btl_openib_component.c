@@ -86,6 +86,9 @@ const char *ibv_get_sysfs_path(void);
 #include "btl_openib_mca.h"
 #include "btl_openib_xrc.h"
 #include "btl_openib_fd.h"
+#if OMPI_OPENIB_FAILOVER_ENABLED
+#include "btl_openib_failover.h"
+#endif
 #if OPAL_HAVE_THREADS
 #include "btl_openib_async.h"
 #endif
@@ -507,6 +510,12 @@ static void btl_openib_control(mca_btl_base_module_t* btl,
             mca_btl_openib_endpoint_connected(ep);
         }
         break;
+#if OMPI_OPENIB_FAILOVER_ENABLED
+    case MCA_BTL_OPENIB_CONTROL_EP_BROKEN:
+    case MCA_BTL_OPENIB_CONTROL_EP_EAGER_RDMA_ERROR:
+	btl_openib_handle_failover_control_messages(ctl_hdr);
+	break;
+#endif
     default:
         BTL_ERROR(("Unknown message type received by BTL"));
        break;
@@ -3209,8 +3218,14 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
                 opal_list_item_t *i;
                 while((i = opal_list_remove_first(&to_send_frag(des)->coalesced_frags))) {
                     btl_ownership = (to_base_frag(i)->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
-                    to_base_frag(i)->base.des_cbfunc(&openib_btl->super, endpoint,
-                            &to_base_frag(i)->base, OMPI_SUCCESS);
+#if OMPI_OPENIB_FAILOVER_ENABLED
+                    if (des->des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
+#endif
+                        to_base_frag(i)->base.des_cbfunc(&openib_btl->super, endpoint,
+                                &to_base_frag(i)->base, OMPI_SUCCESS);
+#if OMPI_OPENIB_FAILOVER_ENABLED
+                    }
+#endif
                     if( btl_ownership ) {
                         mca_btl_openib_free(&openib_btl->super, &to_base_frag(i)->base);
                     }
@@ -3351,9 +3366,14 @@ error:
         }
     }
 
+#if OMPI_OPENIB_FAILOVER_ENABLED
+    mca_btl_openib_handle_endpoint_error(openib_btl, des, qp,
+                                         remote_proc, endpoint);
+#else
     if(openib_btl)
         openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL,
                              NULL, NULL);
+#endif
 }
 
 static int poll_device(mca_btl_openib_device_t* device, int count)
@@ -3540,6 +3560,9 @@ error:
         if(openib_btl->device->got_port_event) {
             /* These are non-fatal so just ignore it. */
             openib_btl->device->got_port_event = false;
+#if OMPI_OPENIB_FAILOVER_ENABLED
+            mca_btl_openib_handle_btl_error(openib_btl);
+#endif
         }
     }
     return count;

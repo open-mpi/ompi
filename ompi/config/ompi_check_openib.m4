@@ -14,6 +14,7 @@
 # Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
+# Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -265,6 +266,21 @@ dnl           fi
     else
         AC_MSG_RESULT([no])
     fi
+
+    # Enable openib device failover.  It is disabled by default.
+    AC_ARG_ENABLE([openib-failover],
+       [AC_HELP_STRING([--enable-openib-failover],
+           [enable openib BTL failover (default: disabled)])])
+    if test "$enable_openib_failover" = "yes"; then
+        AC_MSG_RESULT([yes])
+        ompi_openib_failover_enabled=1
+    else
+        AC_MSG_RESULT([no])
+        ompi_openib_failover_enabled=0
+    fi
+    AC_DEFINE_UNQUOTED([OMPI_OPENIB_FAILOVER_ENABLED], [$ompi_openib_failover_enabled],
+                       [enable openib BTL failover])
+    AM_CONDITIONAL([MCA_btl_openib_enable_failover], [test "x$ompi_openib_failover_enabled" = "x1"])
 
     CPPFLAGS="$ompi_check_openib_$1_save_CPPFLAGS"
     LDFLAGS="$ompi_check_openib_$1_save_LDFLAGS"

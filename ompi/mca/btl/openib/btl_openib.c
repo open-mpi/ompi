@@ -15,7 +15,7 @@
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
- * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -1504,6 +1504,10 @@ int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
     ib_rc = post_send(ep, to_send_frag(item), do_rdma);
 
     if(!ib_rc) {
+#if OMPI_OPENIB_FAILOVER_ENABLED
+        /* Return up in case needed for failover */
+        *descriptor = (struct mca_btl_base_descriptor_t *) frag;
+#endif
         OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
         return OMPI_SUCCESS;
     }

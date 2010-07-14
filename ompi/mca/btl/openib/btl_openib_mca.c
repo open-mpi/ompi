@@ -14,7 +14,7 @@
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
- * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -451,6 +451,20 @@ int btl_openib_register_mca_params(void)
                 1, &ival, 0));
     mca_btl_openib_component.use_async_event_thread = (0 != ival);
 
+#if OMPI_OPENIB_FAILOVER_ENABLED
+    /* failover specific output */
+    CHECK(reg_int("verbose_failover", NULL,
+                  "Output some verbose OpenIB BTL failover information "
+                  "(0 = no output, nonzero = output)", 0, &ival, 0));
+    mca_btl_openib_component.verbose_failover = opal_output_open(NULL);
+    opal_output_set_verbosity(mca_btl_openib_component.verbose_failover, ival);
+
+    CHECK(reg_int("port_error_failover", NULL,
+                  "If nonzero, asynchronous port errors will trigger failover ",
+                  0, &ival, 0));
+    mca_btl_openib_component.port_error_failover = (0 != ival);
+#endif
+
     CHECK(reg_int("enable_srq_resize", NULL,
                   "Enable/Disable on demand SRQ resize. "
                   "(0 = without resizing, nonzero = with resizing)", 1, &ival, 0));
@@ -507,6 +521,9 @@ int btl_openib_register_mca_params(void)
     mca_btl_openib_module.super.btl_min_rdma_pipeline_size = 256 * 1024;
     mca_btl_openib_module.super.btl_flags = MCA_BTL_FLAGS_RDMA |
         MCA_BTL_FLAGS_NEED_ACK | MCA_BTL_FLAGS_NEED_CSUM | MCA_BTL_FLAGS_HETEROGENEOUS_RDMA;
+#if OMPI_OPENIB_FAILOVER_ENABLED
+    mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_FAILOVER_SUPPORT;
+#endif
     mca_btl_openib_module.super.btl_bandwidth = 800;
     mca_btl_openib_module.super.btl_latency = 10;
     CHECK(mca_btl_base_param_register(

@@ -13,6 +13,7 @@
  * Copyright (c) 2006-2009 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -116,6 +117,10 @@ typedef struct mca_btl_openib_footer_t mca_btl_openib_footer_t;
 #define MCA_BTL_OPENIB_CONTROL_RDMA         1
 #define MCA_BTL_OPENIB_CONTROL_COALESCED    2
 #define MCA_BTL_OPENIB_CONTROL_CTS          3
+#if OMPI_OPENIB_FAILOVER_ENABLED
+#define MCA_BTL_OPENIB_CONTROL_EP_BROKEN    4
+#define MCA_BTL_OPENIB_CONTROL_EP_EAGER_RDMA_ERROR 5
+#endif
 
 struct mca_btl_openib_control_header_t {
     uint8_t  type;
@@ -163,6 +168,17 @@ do {                                               \
     (h).rdma_credits = ntohs((h).rdma_credits);    \
 } while (0)
 
+#if OMPI_OPENIB_FAILOVER_ENABLED
+struct mca_btl_openib_broken_connection_header_t {
+    mca_btl_openib_control_header_t control;
+    uint8_t padding[3];
+    uint32_t lid;
+    uint64_t subnet_id;
+    uint32_t vpid;
+    uint32_t index; /* for eager RDMA only */
+};
+typedef struct mca_btl_openib_broken_connection_header_t mca_btl_openib_broken_connection_header_t;
+#endif
 enum mca_btl_openib_frag_type_t {
     MCA_BTL_OPENIB_FRAG_RECV,
     MCA_BTL_OPENIB_FRAG_RECV_USER,
