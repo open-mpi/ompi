@@ -107,9 +107,17 @@ int ompi_btl_openib_ini_init(void)
     int ret = OMPI_ERR_NOT_FOUND;
     char *colon;
 
+#ifndef __WINDOWS__
+    char separator = ':';
+#else
+    /* ':' is part of the path on Windows, 
+       so use ';' instead. */
+    char separator = ';';
+#endif
+
     OBJ_CONSTRUCT(&devices, opal_list_t);
 
-    colon = strchr(mca_btl_openib_component.device_params_file_names, ':');
+    colon = strchr(mca_btl_openib_component.device_params_file_names, separator);
     if (NULL == colon) {
         /* If we've only got 1 file (i.e., no colons found), parse it
            and be done */
