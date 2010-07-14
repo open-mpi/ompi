@@ -1,8 +1,9 @@
 /*
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Sun Microsystem, Inc.  All rights reserved.
+ * Copyright (c) 2010      Sandia National Laboratories. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,18 +35,64 @@
     } while (0)
 
 
-
-char *
-opal_install_dirs_expand(const char* input)
+/*
+ * Read the lengthy comment below to understand the value of the
+ * is_setup parameter.
+ */
+static char *
+opal_install_dirs_expand_internal(const char* input, bool is_setup)
 {
     size_t len, i;
     bool needs_expand = false;
     char *retval = NULL;
-    char *destdir = getenv("OPAL_DESTDIR");
+    char *destdir = NULL;
     size_t destdir_offset = 0;
 
-    if (NULL != destdir && strlen(destdir) > 0) {
-        destdir_offset = strlen(destdir);
+    /* This is subtle, and worth explaining.  
+
+       If we substitute in any ${FIELD} values, we need to prepend it
+       with the value of the $OPAL_DESTDIR environment variable -- if
+       it is set.  
+
+       We need to handle at least three cases properly (assume that
+       configure was invoked with --prefix=/opt/openmpi and no other
+       directory specifications, and OPAL_DESTDIR is set to
+       /tmp/buildroot):
+
+       1. Individual directories, such as libdir.  These need to be
+          prepended with DESTDIR.  I.e., return
+          /tmp/buildroot/opt/openmpi/lib.
+
+       2. Compiler flags that have ${FIELD} values embedded in them.
+          For example, consider if a wrapper compiler data file
+          contains the line:
+
+          preprocessor_flags=-DMYFLAG="${prefix}/share/randomthingy/"
+
+          The value we should return is:
+
+          -DMYFLAG="/tmp/buildroot/opt/openmpi/share/randomthingy/"
+
+       3. Compiler flags that do not have any ${FIELD} values.
+          For example, consider if a wrapper compiler data file
+          contains the line:
+
+          preprocessor_flags=-pthread
+
+          The value we should return is:
+
+          -pthread
+
+       Note, too, that this OPAL_DESTDIR futzing only needs to occur
+       during opal_init().  By the time opal_init() has completed, all
+       values should be substituted in that need substituting.  Hence,
+       we take an extra parameter (is_setup) to know whether we should
+       do this futzing or not. */
+    if (is_setup) {
+        destdir = getenv("OPAL_DESTDIR");
+        if (NULL != destdir && strlen(destdir) > 0) {
+            destdir_offset = strlen(destdir);
+        }
     }
 
     len = strlen(input);
@@ -92,4 +139,20 @@ opal_install_dirs_expand(const char* input)
     }
 
     return retval;
+}
+
+
+char *
+opal_install_dirs_expand(const char* input)
+{
+    /* We do NOT want OPAL_DESTDIR expansion in this case. */
+    return opal_install_dirs_expand_internal(input, false);
+}
+
+
+char *
+opal_install_dirs_expand_setup(const char* input)
+{
+    /* We DO want OPAL_DESTDIR expansion in this case. */
+    return opal_install_dirs_expand_internal(input, true);
 }
