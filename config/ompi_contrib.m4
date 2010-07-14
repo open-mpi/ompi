@@ -38,7 +38,7 @@ AC_DEFUN([OMPI_CONTRIB],[
     # May someday be expanded to have autogen find the packages
     # instead of this hard-coded list
     # (https://svn.open-mpi.org/trac/ompi/ticket/1162).
-    m4_define([contrib_software_list], [libtrace, vt])
+    m4_define([contrib_software_list], [vt])
 
     # Option to not build some of the contributed software packages
     AC_ARG_ENABLE([contrib-no-build],
@@ -72,7 +72,6 @@ AC_DEFUN([OMPI_CONTRIB],[
 
     # Cycle through each of the software packages and
     # configure them if not disabled.  
-    m4_define([contrib_software_list], [vt]) 
     m4_foreach(software, [contrib_software_list],
               [m4_include([ompi/contrib/]software[/configure.m4])
               _OMPI_CONTRIB_CONFIGURE(software)])
