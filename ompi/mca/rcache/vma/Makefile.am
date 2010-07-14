@@ -16,6 +16,8 @@
 # $HEADER$
 #
 
+EXTRA_DIST = .windows
+
 sources = \
     rcache_vma.c \
     rcache_vma.h \
