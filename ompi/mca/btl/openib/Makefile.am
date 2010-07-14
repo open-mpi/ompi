@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -63,6 +64,13 @@ sources = \
     connect/btl_openib_connect_empty.c \
     connect/btl_openib_connect_empty.h \
     connect/connect.h
+
+# If we have failover support, build that file
+if MCA_btl_openib_enable_failover
+sources += \
+    btl_openib_failover.c \
+    btl_openib_failover.h
+endif
 
 # If we have XRC support, build that CPC
 if MCA_btl_openib_have_xrc
