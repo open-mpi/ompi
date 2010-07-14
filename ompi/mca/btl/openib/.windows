@@ -10,5 +10,5 @@
 
 # Specific to this module
 mca_link_libraries=libopen-rte Ws2_32.lib
-exclude_list=btl_openib_fd.c;btl_openib_fd.h;connect/btl_openib_connect_ibcm.h;connect/btl_openib_connect_ibcm.c;connect/btl_openib_connect_xoob.h;connect/btl_openib_connect_xoob.c
+exclude_list=btl_openib_failover.c;btl_openib_failover.h;btl_openib_fd.c;btl_openib_fd.h;connect/btl_openib_connect_ibcm.h;connect/btl_openib_connect_ibcm.c;connect/btl_openib_connect_xoob.h;connect/btl_openib_connect_xoob.c
 required_check=find_ofed_sdk
