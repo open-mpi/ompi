@@ -10,7 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 #
 # $COPYRIGHT$
 # 
@@ -22,7 +22,7 @@
 dist_pkgdata_DATA = \
 	help-mpi-pml-bfo.txt
 
-EXTRA_DIST = post_configure.sh .windows
+EXTRA_DIST = post_configure.sh
 
 bfo_sources  = \
 	pml_bfo.c \
