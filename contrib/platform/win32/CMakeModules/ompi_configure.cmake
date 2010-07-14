@@ -698,6 +698,8 @@ IF(WIN32)
 
   OMPI_DEF(MCA_timer_IMPLEMENTATION_HEADER "opal/mca/timer/windows/timer_windows.h" "Header to include for timer implementation." 1 1)
 
+  OMPI_DEF(MCA_memory_IMPLEMENTATION_HEADER "opal/mca/memory/base/empty.h" "Header to include for memory implementation." 1 1)
+
   OMPI_DEF(OPAL_ASSEMBLY_ARCH "OMPI_WINDOWS" "Architecture type of assembly to use for atomic operations." 0 1)
 
   OMPI_DEF(OPAL_HAVE_POSIX_THREADS 0 "Do we have POSIX threads." 0 1)
