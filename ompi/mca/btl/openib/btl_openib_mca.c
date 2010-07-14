@@ -189,7 +189,7 @@ int btl_openib_register_mca_params(void)
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     CHECK(reg_string("device_param_files", "hca_param_files",
-                     "Colon-delimited list of INI-style files that contain device vendor/part-specific parameters",
+                     "Colon-delimited list of INI-style files that contain device vendor/part-specific parameters (use semicolon for Windows)",
                      str, &mca_btl_openib_component.device_params_file_names, 
                      0));
     free(str);
