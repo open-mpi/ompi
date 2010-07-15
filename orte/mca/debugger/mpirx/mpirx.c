@@ -262,6 +262,9 @@ static void attach_debugger(int fd, short event, void *arg)
     }
         
  RELEASE:
+    /* reset the read event */
+    opal_event_add(&attach, 0);
+
     /* notify the debugger that all is ready */
     MPIR_Breakpoint();
 
