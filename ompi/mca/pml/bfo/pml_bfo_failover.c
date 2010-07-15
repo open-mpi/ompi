@@ -1312,13 +1312,11 @@ void mca_pml_bfo_recv_restart_completion( mca_btl_base_module_t* btl,
         mca_pml_bfo_common_hdr_t* common = des->des_src->seg_addr.pval;
         mca_pml_bfo_restart_hdr_t* restart;  /* RESTART header */
         mca_pml_bfo_recv_request_t* recvreq;
-        int peer;
 
         switch (common->hdr_type) {
         case MCA_PML_BFO_HDR_TYPE_RNDVRESTARTACK:
             restart = (mca_pml_bfo_restart_hdr_t*)des->des_src->seg_addr.pval;
             recvreq = (mca_pml_bfo_recv_request_t*) restart->hdr_dst_req.pval;
-            peer = recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE;
             opal_output_verbose(30, mca_pml_bfo_output,
                                 "RNDVRESTARTACK: completion failed: try again "
                                 "PML:req=%d,hdr=%d RQS:req=%d,hdr=%d CTX:req=%d,hdr=%d "
@@ -1328,7 +1326,8 @@ void mca_pml_bfo_recv_restart_completion( mca_btl_base_module_t* btl,
                                 recvreq->req_recv.req_base.req_comm->c_contextid,
                                 restart->hdr_match.hdr_ctx,
                                 recvreq->remote_req_send.pval,
-                                (void *)recvreq, peer);
+                                (void *)recvreq,
+                                recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE);
 
             /* Adjust the states back to avoid assert errors */
             recvreq->req_errstate &= ~RECVREQ_RNDVRESTART_ACKED;
@@ -1344,6 +1343,8 @@ void mca_pml_bfo_recv_restart_completion( mca_btl_base_module_t* btl,
             mca_pml_bfo_recv_request_rndvrestartnack(des, NULL, true);
             break;
         case MCA_PML_BFO_HDR_TYPE_RECVERRNOTIFY:
+            restart = (mca_pml_bfo_restart_hdr_t*)des->des_src->seg_addr.pval;
+            recvreq = (mca_pml_bfo_recv_request_t*) restart->hdr_dst_req.pval;
             /* With just two BTLs, this should never happen as we are
              * typically sending the RECVERRNOTIFY message on the
              * working BTL.  But, just in case, if we get an error,
