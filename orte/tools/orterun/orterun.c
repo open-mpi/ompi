@@ -110,7 +110,7 @@ static struct opal_event sigusr2_handler;
 static struct opal_event sigtstp_handler;
 static struct opal_event sigcont_handler;
 #endif  /* __WINDOWS__ */
-static orte_job_t *jdata;
+static orte_job_t *jdata=NULL;
 static char *orterun_basename = NULL;
 static int num_aborted = 0;
 static int num_killed = 0;
@@ -119,7 +119,7 @@ static char **global_mca_env = NULL;
 static bool have_zero_np = false;
 static orte_std_cntr_t total_num_apps = 0;
 static bool want_prefix_by_default = (bool) ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT;
-static opal_event_t *orterun_event, *orteds_exit_event;
+static opal_event_t *orterun_event=NULL, *orteds_exit_event=NULL;
 static char *ompi_server=NULL;
 static opal_event_t *abort_exit_event=NULL;
 static bool forcibly_die = false;
