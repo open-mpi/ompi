@@ -73,6 +73,11 @@ ELSE(NOT OMPI_WANT_OFED)
       OMPI_CHECK_FUNCTION_EXISTS(ibv_get_device_list HAVE_IBV_GET_DEVICE_LIST)
       OMPI_CHECK_FUNCTION_EXISTS(ibv_resize_cq HAVE_IBV_RESIZE_CQ)
       OMPI_CHECK_SYMBOL_EXISTS(IBV_EVENT_CLIENT_REREGISTER "" HAVE_DECL_IBV_EVENT_CLIENT_REREGISTER)
+
+      INSTALL(FILES ${PROJECT_SOURCE_DIR}/mca/btl/openib/mca-btl-openib-device-params.ini
+        ${PROJECT_SOURCE_DIR}/mca/btl/openib/help-mpi-btl-openib.txt
+        DESTINATION share/openmpi)
+
     ELSE(OFED_SDK_INCLUDE_PATH AND OFED_SDK_LIBIBVERBS)
       SET(OFED_SDK_FOUND FALSE CACHE INTERNAL "find result of OFED SDK.")
       MESSAGE(STATUS "looking for OFED SDK...failed.")
