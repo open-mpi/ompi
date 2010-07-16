@@ -54,7 +54,7 @@ Much, much more information is also available in the Open MPI FAQ:
 
 ===========================================================================
 
-Detailed Open MPI v1.3 / v1.4 Feature List:
+Detailed Open MPI v1.5 Feature List:
 
   o Open MPI RunTime Environment (ORTE) improvements
     - General robustness improvements
@@ -142,15 +142,8 @@ Detailed Open MPI v1.3 / v1.4 Feature List:
 Known issues
 ------------
 
-  o XGrid support is currently broken.
-    https://svn.open-mpi.org/trac/ompi/ticket/1777
-
   o MPI_REDUCE_SCATTER does not work with counts of 0.
     https://svn.open-mpi.org/trac/ompi/ticket/1559
-
-  o Processes that were spawned via MPI_COMM_SPAWN[_MULTIPLE] cannot
-    themselves invoke MPI_COMM_SPAWN[_MULTIPLE].  This has been fixed
-    in the Open MPI v1.5 series.
 
   o Please also see the Open MPI bug tracker for bugs beyond this release.
     https://svn.open-mpi.org/trac/ompi/report
@@ -158,7 +151,7 @@ Known issues
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (28 April 2010):
+base as of this writing (6 July 2010):
 
 General notes
 -------------
@@ -411,6 +404,29 @@ MPI Functionality and Features
   portable C datatype can be found that matches the Fortran type
   REAL*16, both in size and bit representation.
 
+- The "libompitrace" library is bundled in Open MPI and is installed
+  by default (it can be disabled via the --disable-libompitrace
+  flag).  This library provides a simplistic tracing of select MPI
+  function calls via the MPI profiling interface.  Linking it in to
+  your appliation via (e.g., via -lompitrace) will automatically
+  output to stderr when some MPI functions are invoked:
+
+  $ mpicc hello_world.c -o hello_world -lompitrace
+  $ mpirun -np 1 hello_world.c
+  MPI_INIT: argc 1
+  Hello, world, I am 0 of 1
+  MPI_BARRIER[0]: comm MPI_COMM_WORLD
+  MPI_FINALIZE[0]
+  $
+
+  Keep in mind that the output from the trace library is going to
+  stderr, so it may output in a slightly different order than the
+  stdout from your application.
+
+  This library is being offered as a "proof of concept" / convenience
+  from Open MPI.  If there is interest, it is trivially easy to extend
+  it to printf for other MPI functions.  Patches and/or suggestions
+  would be greatfully appreciated on the Open MPI developer's list.
 
 Collectives
 -----------
@@ -894,6 +910,21 @@ for a full list); a summary of the more commonly used ones follows:
   Enable support for running on heterogeneous clusters (e.g., machines
   with different endian representations).  Heterogeneous support is
   disabled by default because it imposes a minor performance penalty.
+
+--disable-libompitrace
+  Disable building the simple "libompitrace" library (see note above
+  about libompitrace)
+
+--disable-vt
+  Disable building VampirTrace.
+
+--enable-contrib-no-build=<list>
+  <list> is a comma-delimited list of the Open MPI contributed
+  software packages (e.g., libompitrace, VampirTrace) to disable.
+
+  Using this form is exactly equivalent to the contributed packages'
+  --disable-<name> form; this form may be slightly more compact if
+  disabling multiple packages.
 
 --enable-sysv
   Enable System V (sysv) shared memory support.  By default, System V
