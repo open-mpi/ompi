@@ -14,6 +14,7 @@
  *                         reserved. 
  * Copyright (c) 2008-2009 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved
  *
  * $COPYRIGHT$
  * 
@@ -764,6 +765,8 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
                slave try to find  endpoint in closed state and
                initiate connection back */
             mca_btl_openib_endpoint_t *ib_endpoint_found = NULL;
+            int master_first_closed = -1;
+
             for (i = 0; i < ib_proc->proc_endpoint_count; i++) { 
                 ib_endpoint = ib_proc->proc_endpoints[i];
                 if (ib_endpoint->subnet_id != rem_info.rem_subnet_id ||
@@ -772,6 +775,13 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
                     continue;
                 found = true;
                 ib_endpoint_found = ib_endpoint;
+
+                if (master && -1 == master_first_closed &&
+                    MCA_BTL_IB_CLOSED == ib_endpoint->endpoint_state ) {
+                    /* capture in case no endpoint in connecting state */
+                    master_first_closed = i;
+                }
+
                 if ((master &&
                      MCA_BTL_IB_CONNECTING == ib_endpoint->endpoint_state) ||
                     (!master &&
@@ -780,6 +790,14 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
             }
             ib_endpoint = ib_endpoint_found;
             
+            if (found && master &&
+                MCA_BTL_IB_CLOSED == ib_endpoint->endpoint_state ) {
+                /* since this is master and no endpoints found in
+                 * connecting state use the first endpoint found
+                 * in closed state */
+                ib_endpoint = ib_proc->proc_endpoints[master_first_closed];
+            }
+
             /* if this is slave and there is no endpoints in closed
                state then all connection are already in progress so
                just ignore this connection request */
