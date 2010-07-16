@@ -100,6 +100,15 @@ AC_DEFUN([_OMPI_CONTRIB_CONFIGURE],[
 
     ompi_show_subsubsubtitle "$1 (m4 configuration macro)"
 
+    # Put in a convenient enable/disable switch (it's a little more
+    # user friendly than
+    # --enable-contrib-no-build=<comma_delimited_list>, although each
+    # works just as well as the other).
+    AC_ARG_ENABLE([$1],
+            [AS_HELP_STRING([--disable-$1],
+                            [disable support for contributed package $1 (default: enabled)])])
+    AS_IF([test "x$enable_$1" = xno], [DISABLE_contrib_$1=yes])
+
     OMPI_CONTRIB_HAPPY=0
     if test "$DISABLE_contrib_$1" = "" -a "$DISABLE_contrib_all" = ""; then
         OMPI_contrib_$1_CONFIG([OMPI_CONTRIB_HAPPY=1], [])
