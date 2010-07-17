@@ -37,7 +37,6 @@ struct orterun_globals_t {
     bool help;
     bool version;
     bool verbose;
-    bool quiet;
     char *report_pid;
     char *report_uri;
     bool exit;

@@ -35,6 +35,7 @@
 #include "orte/mca/plm/plm_types.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/sensor/sensor.h"
+#include "orte/runtime/orte_quit.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/errmgr/base/base.h"
@@ -244,16 +245,23 @@ static int update_state(orte_jobid_t job,
             ORTE_PROC_MY_NAME->vpid == proc->vpid) {
             return ORTE_SUCCESS;
         }
-        /* delete the route */
-        orte_routed.delete_route(proc);
-        /* purge the oob */
-        orte_rml.purge(proc);
         /* see if this was a lifeline */
         if (ORTE_SUCCESS != orte_routed.route_lost(proc)) {
             /* kill our children */
             killprocs(ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD);
-            /* tell the caller we can't recover */
-            return ORTE_ERR_UNRECOVERABLE;
+            /* terminate - our routed children will see
+             * us leave and automatically die
+             */
+            orte_quit();
+        }
+        /* purge the oob */
+        orte_rml.purge(proc);
+        /* was it a daemon that failed? */
+        if (proc->jobid == ORTE_PROC_MY_NAME->jobid) {
+            /* if all my routes are gone, then terminate ourselves */
+            if (0 == orte_routed.num_routes()) {
+                orte_quit();
+            }
         }
         /* if not, then indicate we can continue */
         return ORTE_SUCCESS;
@@ -272,10 +280,17 @@ static int update_state(orte_jobid_t job,
         }
     }
     if (NULL == jobdat) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return ORTE_ERR_NOT_FOUND;
+        /* must already be complete */
+        return ORTE_SUCCESS;
     }
     
+    /* if there are no local procs for this job, we can
+     * ignore this call
+     */
+    if (0 == jobdat->num_local_procs) {
+        return ORTE_SUCCESS;
+    }
+
     OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
                          "%s errmgr:orted got state %s for proc %s pid %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

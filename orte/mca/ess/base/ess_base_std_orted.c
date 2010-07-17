@@ -37,6 +37,7 @@
 #include "opal/mca/pstat/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/mca/sysinfo/base/base.h"
+#include "opal/util/os_path.h"
 
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/routed/base/base.h"
@@ -66,18 +67,61 @@
 #include "orte/runtime/orte_cr.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/runtime/orte_quit.h"
 
 #include "orte/mca/ess/base/base.h"
 
-static bool plm_in_use;
+/* local globals */
+static bool plm_in_use=false;
+static bool signals_set=false;
+static struct opal_event term_handler;
+static struct opal_event int_handler;
+static struct opal_event epipe_handler;
+#ifndef __WINDOWS__
+static struct opal_event sigusr1_handler;
+static struct opal_event sigusr2_handler;
+#endif  /* __WINDOWS__ */
+char *log_path = NULL;
+static void shutdown_signal(int fd, short flags, void *arg);
+static void signal_callback(int fd, short flags, void *arg);
+static void epipe_signal_callback(int fd, short flags, void *arg);
 
 int orte_ess_base_orted_setup(char **hosts)
 {
     int ret;
+    int fd;
+    char log_file[PATH_MAX];
+    char *jobidstring;
     char *error = NULL;
     char *plm_to_use;
     int value;
 
+#ifndef __WINDOWS__
+    /* setup callback for SIGPIPE */
+    opal_signal_set(&epipe_handler, SIGPIPE,
+                    epipe_signal_callback, &epipe_handler);
+    opal_signal_add(&epipe_handler, NULL);
+    /* Set signal handlers to catch kill signals so we can properly clean up
+     * after ourselves. 
+     */
+    opal_event_set(&term_handler, SIGTERM, OPAL_EV_SIGNAL,
+                   shutdown_signal, NULL);
+    opal_event_add(&term_handler, NULL);
+    opal_event_set(&int_handler, SIGINT, OPAL_EV_SIGNAL,
+                   shutdown_signal, NULL);
+    opal_event_add(&int_handler, NULL);
+
+    /** setup callbacks for signals we should ignore */
+    opal_signal_set(&sigusr1_handler, SIGUSR1,
+                    signal_callback, &sigusr1_handler);
+    opal_signal_add(&sigusr1_handler, NULL);
+    opal_signal_set(&sigusr2_handler, SIGUSR2,
+                    signal_callback, &sigusr2_handler);
+    opal_signal_add(&sigusr2_handler, NULL);
+#endif  /* __WINDOWS__ */
+
+    signals_set = true;
+    
     /* initialize the global list of local children and job data */
     OBJ_CONSTRUCT(&orte_local_children, opal_list_t);
     OBJ_CONSTRUCT(&orte_local_jobdata, opal_list_t);
@@ -321,10 +365,48 @@ int orte_ess_base_orted_setup(char **hosts)
             goto error;
         }
         /* Once the session directory location has been established, set
-         the opal_output env file location to be in the
-         proc-specific session directory. */
+           the opal_output env file location to be in the
+           proc-specific session directory. */
         opal_output_set_output_file_info(orte_process_info.proc_session_dir,
                                          "output-", NULL, NULL);
+
+        /* setup stdout/stderr */
+        if (orte_debug_daemons_file_flag) {
+            /* if we are debugging to a file, then send stdout/stderr to
+             * the orted log file
+             */
+
+            /* get my jobid */
+            if (ORTE_SUCCESS != (ret = orte_util_convert_jobid_to_string(&jobidstring,
+                                                                         ORTE_PROC_MY_NAME->jobid))) {
+                ORTE_ERROR_LOG(ret);
+                error = "convert_jobid";
+                goto error;
+            }
+
+            /* define a log file name in the session directory */
+            snprintf(log_file, PATH_MAX, "output-orted-%s-%s.log",
+                     jobidstring, orte_process_info.nodename);
+            log_path = opal_os_path(false,
+                                    orte_process_info.tmpdir_base,
+                                    orte_process_info.top_session_dir,
+                                    log_file,
+                                    NULL);
+
+            fd = open(log_path, O_RDWR|O_CREAT|O_TRUNC, 0640);
+            if (fd < 0) {
+                /* couldn't open the file for some reason, so
+                 * just connect everything to /dev/null
+                 */
+                fd = open("/dev/null", O_RDWR|O_CREAT|O_TRUNC, 0666);
+            } else {
+                dup2(fd, STDOUT_FILENO);
+                dup2(fd, STDERR_FILENO);
+                if(fd != STDOUT_FILENO && fd != STDERR_FILENO) {
+                    close(fd);
+                }
+            }
+        }
     }
     
     /* setup the routed info - the selected routed component
@@ -434,7 +516,7 @@ int orte_ess_base_orted_setup(char **hosts)
 
     return ORTE_SUCCESS;
     
-error:
+ error:
     orte_show_help("help-orte-runtime.txt",
                    "orte_init:startup:internal-failure",
                    true, error, ORTE_ERROR_NAME(ret), ret);
@@ -447,14 +529,27 @@ int orte_ess_base_orted_finalize(void)
     /* stop the local sensors */
     orte_sensor.stop(ORTE_PROC_MY_NAME->jobid);
 
-    /* ensure all the orteds depart together */
-    if (!orte_abnormal_term_ordered) {
-        /* if we are abnormally terminating, don't attempt
-         * to do a barrier as nobody else will be entering
-         * that call
-         */
-        orte_grpcomm.onesided_barrier();
+    if (signals_set) {
+        /* Release all local signal handlers */
+        opal_event_del(&epipe_handler);
+        opal_event_del(&term_handler);
+        opal_event_del(&int_handler);
+#ifndef __WINDOWS__
+        opal_signal_del(&sigusr1_handler);
+        opal_signal_del(&sigusr2_handler);
+#endif  /* __WINDOWS__ */
     }
+
+    /* cleanup */
+    if (NULL != log_path) {
+        unlink(log_path);
+    }
+    
+    /* make sure our local procs are dead */
+    orte_odls.kill_local_procs(NULL);
+    
+    /* whack any lingering session directory files from our jobs */
+    orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
     
     orte_sensor_base_close();
     orte_db_base_close();
@@ -492,4 +587,30 @@ int orte_ess_base_orted_finalize(void)
     opal_pstat_base_close();
     
     return ORTE_SUCCESS;    
+}
+
+static void shutdown_signal(int fd, short flags, void *arg)
+{
+    /* trigger the call to shutdown callback to protect
+     * against race conditions - the trigger event will
+     * check the one-time lock
+     */
+    ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+    orte_quit();
+}
+
+/**
+ * Deal with sigpipe errors
+ */
+static void epipe_signal_callback(int fd, short flags, void *arg)
+{
+    /* for now, we just announce and ignore them */
+    opal_output(0, "%s reports a SIGPIPE error on fd %d",
+                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), fd);
+    return;
+}
+
+static void signal_callback(int fd, short event, void *arg)
+{
+    /* just ignore these signals */
 }

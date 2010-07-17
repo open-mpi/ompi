@@ -75,7 +75,6 @@ orte_grpcomm_base_module_t orte_grpcomm_cnos_module = {
     allgather,
     allgather_list,
     orte_grpcomm_cnos_barrier,
-    orte_grpcomm_cnos_barrier,
     set_proc_attr,
     get_proc_attr,
     modex,

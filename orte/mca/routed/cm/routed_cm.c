@@ -49,6 +49,7 @@ static int update_routing_tree(void);
 static orte_vpid_t get_routing_tree(opal_list_t *children);
 static int get_wireup_info(opal_buffer_t *buf);
 static int set_lifeline(orte_process_name_t *proc);
+static size_t num_routes(void);
 
 #if OPAL_ENABLE_FT_CR == 1
 static int cm_ft_event(int state);
@@ -67,6 +68,7 @@ orte_routed_module_t orte_routed_cm_module = {
     update_routing_tree,
     get_routing_tree,
     get_wireup_info,
+    num_routes,
 #if OPAL_ENABLE_FT_CR == 1
     cm_ft_event
 #else
@@ -734,22 +736,8 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
 
 static int route_lost(const orte_process_name_t *route)
 {
-    /* if we are the HNP and lose a route, check to see if it is
-     * to a daemon
-     */
     if (ORTE_PROC_IS_HNP) {
-        if (ORTE_PROC_MY_NAME->jobid == route->jobid) {
-            /* this was a daemon - notify the errmgr
-             * so we can take appropriate recovery, if desired
-             */
-            opal_output(0, "%s routed:cm: daemon %s has died",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_VPID_PRINT(route->vpid));
-            orte_errmgr.update_state(route->jobid, ORTE_JOB_STATE_COMM_FAILED,
-                                     (orte_process_name_t*)route,
-                                     ORTE_PROC_STATE_COMM_FAILED, 0, 1);
-        }
-        /* either way, take no further action */
+        /* take no further action */
         return ORTE_SUCCESS;
     }
 
@@ -890,6 +878,23 @@ static int get_wireup_info(opal_buffer_t *buf)
     return ORTE_SUCCESS;
 }
 
+static size_t num_routes(void)
+{
+    orte_job_t *jdata;
+
+    if (!ORTE_PROC_IS_HNP) {
+        return 0;
+    }
+
+    /* if I am the HNP, then the number of routes is
+     * the number of daemons (other than me) still alive
+     */
+    if (NULL == (jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return 0;
+    }
+    return (jdata->num_procs - jdata->num_terminated - 1);
+}
 
 #if OPAL_ENABLE_FT_CR == 1
 static int cm_ft_event(int state)

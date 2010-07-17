@@ -27,12 +27,6 @@
 #include "opal/util/opal_sos.h"
 #include "opal/dss/dss.h"
 
-#include "orte/util/error_strings.h"
-#include "orte/util/name_fns.h"
-#include "orte/util/proc_info.h"
-#include "orte/util/show_help.h"
-#include "orte/runtime/orte_globals.h"
-#include "orte/runtime/orte_locks.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/odls/base/base.h"
@@ -42,6 +36,15 @@
 #include "orte/mca/sensor/sensor.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/debugger/base/base.h"
+
+#include "orte/util/error_strings.h"
+#include "orte/util/name_fns.h"
+#include "orte/util/proc_info.h"
+#include "orte/util/show_help.h"
+
+#include "orte/runtime/orte_globals.h"
+#include "orte/runtime/orte_locks.h"
+#include "orte/runtime/orte_quit.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/errmgr/base/base.h"
@@ -296,8 +299,15 @@ static int update_state(orte_jobid_t job,
     
     /* get the job object */
     if (NULL == (jdata = orte_get_job_data_object(proc->jobid))) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return ORTE_ERR_NOT_FOUND;
+        /* if the orteds are terminating, check job complete */
+        if (orte_orteds_term_ordered) {
+            opal_output(0, "TERM ORDERED - CHECKING COMPLETE");
+            check_job_complete(NULL);
+            return ORTE_SUCCESS;
+        } else {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return ORTE_ERR_NOT_FOUND;
+        }
     }
 
     /* update is for a specific proc */
@@ -390,38 +400,48 @@ static int update_state(orte_jobid_t job,
         break;
             
     case ORTE_PROC_STATE_COMM_FAILED:
-        /* delete the route */
-        orte_routed.delete_route(proc);
-        /* purge the oob */
-        orte_rml.purge(proc);
         /* is this to a daemon? */
         if (ORTE_PROC_MY_NAME->jobid == proc->jobid) {
-            /* if we have ordered orteds to terminate, see if this one failed to tell
-             * us it had terminated
-             */
+            /* if this is my own connection, ignore it */
+            if (ORTE_PROC_MY_NAME->vpid == proc->vpid) {
+                OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+                                     "%s My own connection - ignoring it",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                break;
+            }
+            /* if we have ordered orteds to terminate, record it */
             if (orte_orteds_term_ordered) {
-                if (orte_orted_exit_with_barrier) {
-                    record_dead_daemon(jdata, proc->vpid, state, exit_code);
-                    check_job_complete(jdata);
-                    break;
-                } else {
-                    record_dead_daemon(jdata, proc->vpid, state, 0);
-                    check_job_complete(jdata);
-                    break;
-                }
+                OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+                                     "%s Daemons terminating - recording daemon %s as gone",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(proc)));
+                /* remove from dependent routes, if it is one */
+                orte_routed.route_lost(proc);
+                /* update daemon job */
+                record_dead_daemon(jdata, proc->vpid, state, 0);
+                /* check for complete */
+                check_job_complete(jdata);
+                break;
             }
             /* if abort is in progress, see if this one failed to tell
              * us it had terminated
              */
             if (orte_abnormal_term_ordered) {
+                OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+                                     "%s Abort in progress - recording daemon %s as gone",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(proc)));
+                /* remove from dependent routes, if it is one */
+                orte_routed.route_lost(proc);
+                /* update daemon job */
                 record_dead_daemon(jdata, proc->vpid, state, exit_code);
+                /* check for complete */
                 check_job_complete(jdata);
                 break;
             }
-            /* if this is my own connection, ignore it */
-            if (ORTE_PROC_MY_NAME->vpid == proc->vpid) {
-                break;
-            }
+            /* delete the route */
+            orte_routed.delete_route(proc);
+            /* purge the oob */
+            orte_rml.purge(proc);
+
             if (orte_enable_recovery) {
                 /* relocate its processes */
                 if (ORTE_SUCCESS != (rc = hnp_relocate(jdata, proc, state, exit_code))) {
@@ -755,7 +775,14 @@ static void check_job_complete(orte_job_t *jdata)
     /* Check if FileM is active. If so then keep processing. */
     OPAL_ACQUIRE_THREAD(&orte_filem_base_lock, &orte_filem_base_cond, &orte_filem_base_is_active);
 #endif
-    
+    if (NULL == jdata) {
+        /* just check to see if the daemons are complete */
+        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+                             "%s errmgr:hnp:check_job_complete - received NULL job, checking daemons",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        goto CHECK_DAEMONS;
+    }
+
     for (i=0; i < jdata->procs->size && !jdata->abort; i++) {
         if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
             /* the proc array may no longer be left justified, so
@@ -978,14 +1005,21 @@ static void check_job_complete(orte_job_t *jdata)
      * This can happen if a ctrl-c hits in the "wrong" place
      * while launching
      */
+CHECK_DAEMONS:
     if (jdata == NULL || jdata->jobid == ORTE_PROC_MY_NAME->jobid) {
-        jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
-        if (jdata->num_terminated >= jdata->num_procs) {
+        if (0 == orte_routed.num_routes()) {
             /* orteds are done! */
+            OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+                                 "%s orteds complete - exiting",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            if (NULL == jdata) {
+                jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+            }
             jdata->state = ORTE_JOB_STATE_TERMINATED;
-            orte_trigger_event(&orteds_exit);
+            orte_quit();
             return;
         }
+        return;
     }
     
     /* Release the resources used by this job. Since some errmgrs may want
@@ -1094,15 +1128,22 @@ static void check_job_complete(orte_job_t *jdata)
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         return;
     }
-    /* if we get here, then all jobs are done, so wakeup */
+    /* if we get here, then all jobs are done, so terminate */
     OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
-                         "%s errmgr:hnp:check_job_completed all jobs terminated - waking up",
+                         "%s errmgr:hnp:check_job_completed all jobs terminated",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     /* set the exit status to 0 - this will only happen if it
      * wasn't already set by an error condition
      */
     ORTE_UPDATE_EXIT_STATUS(0);
-    orte_trigger_event(&orte_exit);
+    orte_jobs_complete();
+    /* if I am the only daemon alive, then I can exit now */
+    if (0 == orte_routed.num_routes()) {
+        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+                             "%s orteds complete - exiting",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        orte_quit();
+    }
 }
 
 static void killprocs(orte_jobid_t job, orte_vpid_t vpid)

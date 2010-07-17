@@ -46,6 +46,7 @@ static int update_routing_tree(void);
 static orte_vpid_t get_routing_tree(opal_list_t *children);
 static int get_wireup_info(opal_buffer_t *buf);
 static int set_lifeline(orte_process_name_t *proc);
+static size_t num_routes(void);
 
 #if OPAL_ENABLE_FT_CR == 1
 static int binomial_ft_event(int state);
@@ -64,6 +65,7 @@ orte_routed_module_t orte_routed_binomial_module = {
     update_routing_tree,
     get_routing_tree,
     get_wireup_info,
+    num_routes,
 #if OPAL_ENABLE_FT_CR == 1
     binomial_ft_event
 #else
@@ -698,6 +700,14 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
 
 static int route_lost(const orte_process_name_t *route)
 {
+    opal_list_item_t *item;
+    orte_routed_tree_t *child;
+
+    OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
+                         "%s route to %s lost",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(route)));
+
     /* if we lose the connection to the lifeline and we are NOT already,
      * in finalize, tell the OOB to abort.
      * NOTE: we cannot call abort from here as the OOB needs to first
@@ -710,6 +720,23 @@ static int route_lost(const orte_process_name_t *route)
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     ORTE_NAME_PRINT(lifeline));
         return ORTE_ERR_FATAL;
+    }
+
+    /* if we are the HNP or a daemon, is it a daemon, and one of my children? if so, then
+     * remove it from the child list
+     */
+    if ((ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) &&
+        route->jobid == ORTE_PROC_MY_NAME->jobid) {
+        for (item = opal_list_get_first(&my_children);
+             item != opal_list_get_end(&my_children);
+             item = opal_list_get_next(item)) {
+            child = (orte_routed_tree_t*)item;
+            if (child->vpid == route->vpid) {
+                opal_list_remove_item(&my_children, item);
+                OBJ_RELEASE(item);
+                return ORTE_SUCCESS;
+            }
+        }
     }
 
     /* we don't care about this one, so return success */
@@ -904,6 +931,14 @@ static int get_wireup_info(opal_buffer_t *buf)
     return ORTE_SUCCESS;
 }
 
+static size_t num_routes(void)
+{
+    OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
+                         "%s num routes %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (int)opal_list_get_size(&my_children)));
+    return opal_list_get_size(&my_children);
+}
 
 #if OPAL_ENABLE_FT_CR == 1
 static int binomial_ft_event(int state)

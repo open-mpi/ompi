@@ -60,6 +60,7 @@ bool orte_do_not_launch = false;
 bool orted_spin_flag = false;
 bool orte_daemon_bootstrap = false;
 char *orte_local_cpu_model = NULL;
+char *orte_basename = NULL;
 
 /* ORTE OOB port flags */
 bool orte_static_ports = false;
@@ -89,8 +90,7 @@ bool orte_output_debugger_proctable=false;
 char *orte_debugger_test_daemon=NULL;
 bool orte_debugger_test_attach=false;
 
-/* exit triggers and flags */
-orte_trigger_event_t orte_exit, orteds_exit;
+/* exit flags */
 int orte_exit_status = 0;
 bool orte_abnormal_term_ordered = false;
 bool orte_routing_is_enabled = false;
@@ -143,9 +143,6 @@ bool orte_forward_job_control;
 /* rsh support */
 char *orte_rsh_agent = NULL;
 bool orte_assume_same_shell = true;
-
-/* orted exit with barrier */
-bool orte_orted_exit_with_barrier = true;
 
 /* report launch progress */
 bool orte_report_launch_progress = false;
@@ -535,6 +532,7 @@ static void orte_app_context_construct(orte_app_context_t* app_context)
     app_context->used_on_node = false;
     app_context->max_local_restarts = -1;
     app_context->max_global_restarts = -1;
+    app_context->constrain = true;
 }
 
 static void orte_app_context_destructor(orte_app_context_t* app_context)

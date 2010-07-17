@@ -215,6 +215,13 @@ typedef orte_vpid_t (*orte_routed_module_get_routing_tree_fn_t)(opal_list_t *chi
  */
 typedef int (*orte_routed_module_set_lifeline_fn_t)(orte_process_name_t *proc);
 
+/*
+ * Get the number of routes supported by this process
+ *
+ * Returns the size of the routing tree using an O(1) function
+ */
+typedef size_t (*orte_routed_module_num_routes_fn_t)(void);
+
 /**
  * Handle fault tolerance updates
  *
@@ -251,6 +258,7 @@ struct orte_routed_module_t {
     orte_routed_module_update_routing_tree_fn_t     update_routing_tree;
     orte_routed_module_get_routing_tree_fn_t        get_routing_tree;
     orte_routed_module_get_wireup_info_fn_t         get_wireup_info;
+    orte_routed_module_num_routes_fn_t              num_routes;
     /* FT Notification */
     orte_routed_module_ft_event_fn_t                ft_event;
 };

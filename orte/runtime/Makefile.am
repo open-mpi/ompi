@@ -26,6 +26,7 @@ headers += \
         runtime/runtime.h \
 	runtime/orte_locks.h \
         runtime/orte_globals.h \
+        runtime/orte_quit.h \
         runtime/runtime_internals.h \
         runtime/data_type_support/orte_dt_support.h
 
@@ -34,6 +35,7 @@ libopen_rte_la_SOURCES += \
         runtime/orte_init.c \
         runtime/orte_locks.c \
         runtime/orte_globals.c \
+        runtime/orte_quit.c \
         runtime/data_type_support/orte_dt_compare_fns.c \
         runtime/data_type_support/orte_dt_copy_fns.c \
         runtime/data_type_support/orte_dt_print_fns.c \

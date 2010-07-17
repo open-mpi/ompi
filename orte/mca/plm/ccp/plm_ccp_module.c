@@ -114,9 +114,6 @@ static int plm_ccp_init(void)
         ORTE_ERROR_LOG(rc);
     }
 
-    /* we don't need a barrier to exit */
-    orte_orted_exit_with_barrier = false;
-
     return rc;
 }
 

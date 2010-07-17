@@ -41,6 +41,7 @@ static int update_routing_tree(void);
 static orte_vpid_t get_routing_tree(opal_list_t *children);
 static int get_wireup_info(opal_buffer_t *buf);
 static int set_lifeline(orte_process_name_t *proc);
+static size_t num_routes(void);
 
 #if OPAL_ENABLE_FT_CR == 1
 static int slave_ft_event(int state);
@@ -59,6 +60,7 @@ orte_routed_module_t orte_routed_slave_module = {
     update_routing_tree,
     get_routing_tree,
     get_wireup_info,
+    num_routes,
 #if OPAL_ENABLE_FT_CR == 1
     slave_ft_event
 #else
@@ -288,6 +290,10 @@ static int get_wireup_info(opal_buffer_t *buf)
     return ORTE_ERR_NOT_SUPPORTED;
 }
 
+static size_t num_routes(void)
+{
+    return 0;
+}
 
 #if OPAL_ENABLE_FT_CR == 1
 static int slave_ft_event(int state)

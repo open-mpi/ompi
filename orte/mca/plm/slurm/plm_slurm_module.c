@@ -67,6 +67,7 @@
 #include "orte/util/regex.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
+#include "orte/runtime/orte_quit.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmaps/rmaps.h"
 
@@ -129,9 +130,6 @@ static int plm_slurm_init(void)
         local_launch_available = true;
     }
     
-    /* we don't need a barrier to exit */
-    orte_orted_exit_with_barrier = false;
-
     return rc;
 }
 
@@ -522,7 +520,7 @@ static int plm_slurm_terminate_orteds(void)
         jdata->state = ORTE_JOB_STATE_TERMINATED;
         /* need to set the #terminated value to avoid an incorrect error msg */
         jdata->num_terminated = jdata->num_procs;
-        orte_trigger_event(&orteds_exit);
+        orte_quit();
     }
     
     return rc;
@@ -615,7 +613,7 @@ static void srun_wait_cb(pid_t pid, int status, void* cbdata){
             jdata->state = ORTE_JOB_STATE_TERMINATED;
             /* need to set the #terminated value to avoid an incorrect error msg */
             jdata->num_terminated = jdata->num_procs;
-            orte_trigger_event(&orteds_exit);
+            orte_quit();
         }
     }
 }
