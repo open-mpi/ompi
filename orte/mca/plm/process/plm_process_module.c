@@ -227,9 +227,6 @@ int orte_plm_process_init(void)
     SecureZeroMemory(user_name, sizeof(user_name));
     SecureZeroMemory(user_password, sizeof(user_password));
     
-    /* we don't need a barrier to exit */ 
-    orte_orted_exit_with_barrier = false;
-
     return rc;
 }
 

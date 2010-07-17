@@ -526,9 +526,10 @@ int orte_dt_print_app_context(char **output, char *prefix, orte_app_context_t *s
         asprintf(&pfx2, "%s", prefix);
     }
     
-    asprintf(&tmp, "\n%sData for app_context: name: %s\t index %lu\tapp: %s\n%s\tNum procs: %lu\tMax Local Restarts: %d\tMax Global Restarts %d",
+    asprintf(&tmp, "\n%sData for app_context: name: %s\t index %lu\tapp: %s\n%s\tNum procs: %lu\tMax Local Restarts: %d\tMax Global Restarts %d\tConstrain: %s",
              pfx2, src->name, (unsigned long)src->idx, src->app,
-             pfx2, (unsigned long)src->num_procs, src->max_local_restarts, src->max_global_restarts);
+             pfx2, (unsigned long)src->num_procs, src->max_local_restarts, src->max_global_restarts,
+             src->constrain ? "TRUE" : "FALSE");
     
     count = opal_argv_count(src->argv);
     for (i=0; i < count; i++) {

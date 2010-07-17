@@ -753,6 +753,13 @@ int orte_dt_pack_app_context(opal_buffer_t *buffer, const void *src,
             ORTE_ERROR_LOG(rc);
             return rc;
         }
+
+        /* pack the constrain flag */
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
+                                                       (void*)(&(app_context[i]->constrain)), 1, OPAL_BOOL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
         
     }
     

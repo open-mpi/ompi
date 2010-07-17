@@ -72,6 +72,7 @@
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/runtime/orte_quit.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/nidmap.h"
 #include "orte/util/proc_info.h"
@@ -396,7 +397,7 @@ int orte_plm_rshd_terminate_job(orte_jobid_t jobid)
  */
 int orte_plm_rshd_terminate_orteds(void)
 {    
-    orte_trigger_event(&orteds_exit);
+    orte_quit();
     return ORTE_SUCCESS;
 }
 

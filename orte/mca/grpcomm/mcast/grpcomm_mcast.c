@@ -48,7 +48,6 @@ static int xcast(orte_jobid_t job,
                  orte_rml_tag_t tag);
 static int mcast_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf);
 static int mcast_barrier(void);
-static int mcast_onesided_barrier(void);
 static int modex(opal_list_t *procs);
 static int get_proc_attr(const orte_process_name_t proc,
                          const char * attribute_name, void **val, 
@@ -62,7 +61,6 @@ orte_grpcomm_base_module_t orte_grpcomm_mcast_module = {
     mcast_allgather,
     orte_grpcomm_base_allgather_list,
     mcast_barrier,
-    mcast_onesided_barrier,
     orte_grpcomm_base_set_proc_attr,
     get_proc_attr,
     modex,
@@ -77,7 +75,7 @@ static void daemon_recv(int status,
                         opal_buffer_t *buf, void* cbdata);
 
 /* Local variables */
-static orte_grpcomm_collective_t barrier, allgather, onesided_barrier;
+static orte_grpcomm_collective_t barrier, allgather;
 
 /**
  * Initialize the module
@@ -93,7 +91,6 @@ static int init(void)
     /* setup global variables */
     OBJ_CONSTRUCT(&barrier, orte_grpcomm_collective_t);
     OBJ_CONSTRUCT(&allgather, orte_grpcomm_collective_t);
-    OBJ_CONSTRUCT(&onesided_barrier, orte_grpcomm_collective_t);
     
     /* point to our collective function */
     orte_grpcomm_base.daemon_coll = orte_grpcomm_mcast_daemon_coll;
@@ -130,7 +127,6 @@ static void finalize(void)
     /* destruct the globals */
     OBJ_DESTRUCT(&barrier);
     OBJ_DESTRUCT(&allgather);
-    OBJ_DESTRUCT(&onesided_barrier);
 }
 
 /**
@@ -283,73 +279,6 @@ static int mcast_barrier(void)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     return rc;
-}
-
-
-/* quick timeout loop */
-static bool timer_fired;
-
-static void quicktime_cb(int fd, short event, void *cbdata)
-{
-    /* declare it fired */
-    timer_fired = true;
-}
-
-static int mcast_onesided_barrier(void)
-{
-    opal_event_t *quicktime=NULL;
-    struct timeval quicktimeval;
-    int rc;
-    
-    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                         "%s grpcomm:mcast: onesided barrier called",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    /* if I am alone, just return */
-    if (1 == orte_process_info.num_procs) {
-        return ORTE_SUCCESS;
-    }
-    
-    /* if we are not to use the barrier, then just return */
-    if (!orte_orted_exit_with_barrier) {
-        if (ORTE_PROC_IS_HNP) {
-            /* if we are the HNP, we need to do a little delay to give
-             * the orteds a chance to exit before we leave
-             */
-            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                                 "%s grpcomm:mcast: onesided barrier adding delay timer",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-            quicktimeval.tv_sec = 0;
-            quicktimeval.tv_usec = 100;
-            timer_fired = false;
-            ORTE_DETECT_TIMEOUT(&quicktime, orte_process_info.num_procs, 1000, 10000, quicktime_cb);
-            ORTE_PROGRESSED_WAIT(timer_fired, 0, 1);
-        }
-        return ORTE_SUCCESS;
-    }
-    
-    /* if we are not the HNP, just send and leave */
-    if (!ORTE_PROC_IS_HNP) {
-        if (ORTE_SUCCESS != (rc = xcast(ORTE_PROC_MY_NAME->jobid, NULL, ORTE_RML_TAG_ONESIDED_BARRIER))) {
-            ORTE_ERROR_LOG(rc);
-        }
-        return rc;
-    }
-    
-    /* initialize things */
-    OPAL_THREAD_LOCK(&onesided_barrier.lock);
-    onesided_barrier.recvd += 1; /* account for me */
-    OPAL_THREAD_UNLOCK(&onesided_barrier.lock);
-    
-    /* wait to complete */
-    OPAL_THREAD_LOCK(&onesided_barrier.lock);
-    while (orte_process_info.num_procs <= onesided_barrier.recvd) {
-        opal_condition_wait(&onesided_barrier.cond, &onesided_barrier.lock);
-    }
-    /* reset the collective */
-    onesided_barrier.recvd = 0;
-    OPAL_THREAD_UNLOCK(&onesided_barrier.lock);
-    return ORTE_SUCCESS;
 }
 
 static void allgather_recv(int status, orte_process_name_t* sender,
@@ -549,16 +478,6 @@ static void daemon_recv(int status,
         case ORTE_RML_TAG_DAEMON:
             /* this is a cmd, so deliver it */
             ORTE_MESSAGE_EVENT(sender, buf, ORTE_RML_TAG_DAEMON, orte_daemon_cmd_processor);
-            break;
-            
-        case ORTE_RML_TAG_ONESIDED_BARRIER:
-            OPAL_THREAD_LOCK(&onesided_barrier.lock);
-            onesided_barrier.recvd += 1;
-            /* check for completion */
-            if (orte_process_info.num_procs <= onesided_barrier.recvd) {
-                opal_condition_broadcast(&onesided_barrier.cond);
-            }
-            OPAL_THREAD_UNLOCK(&onesided_barrier.lock);            
             break;
             
         case ORTE_RML_TAG_BARRIER:

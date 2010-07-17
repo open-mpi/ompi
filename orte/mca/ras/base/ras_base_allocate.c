@@ -41,6 +41,7 @@
 #include "orte/util/dash_host/dash_host.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/comm/comm.h"
+#include "orte/runtime/orte_quit.h"
 
 #include "orte/mca/ras/base/ras_private.h"
 
@@ -169,7 +170,7 @@ int orte_ras_base_allocate(orte_job_t *jdata)
         OBJ_DESTRUCT(&nodes);
         orte_show_help("help-ras-base.txt", "ras-base:no-allocation", true);
         ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-        orte_trigger_event(&orte_exit);
+        orte_jobs_complete();
         return ORTE_ERROR;
     }
     

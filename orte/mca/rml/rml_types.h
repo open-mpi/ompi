@@ -164,30 +164,27 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_msg_packet_t);
 /* profile data */
 #define ORTE_RML_TAG_GRPCOMM_PROFILE        33
 
-/* onesided barrier */
-#define ORTE_RML_TAG_ONESIDED_BARRIER       34
-
 /* bootstrap */
-#define ORTE_RML_TAG_BOOTSTRAP              35
+#define ORTE_RML_TAG_BOOTSTRAP              34
 
 /* TCP "fake" multicast */
-#define ORTE_RML_TAG_MULTICAST              36
+#define ORTE_RML_TAG_MULTICAST              35
 /* multicast messages sent direct */
-#define ORTE_RML_TAG_MULTICAST_DIRECT       37
+#define ORTE_RML_TAG_MULTICAST_DIRECT       36
 /* multicast messages to be relayed */
-#define ORTE_RML_TAG_MULTICAST_RELAY        38
+#define ORTE_RML_TAG_MULTICAST_RELAY        37
 
 /* tag for receiving ack of abort msg */
-#define ORTE_RML_TAG_ABORT                  39
+#define ORTE_RML_TAG_ABORT                  38
 
 /* tag for receiving heartbeats */
-#define ORTE_RML_TAG_HEARTBEAT              40
+#define ORTE_RML_TAG_HEARTBEAT              39
 
 /* notifier data */
-#define ORTE_RML_TAG_NOTIFIER_HNP           41
+#define ORTE_RML_TAG_NOTIFIER_HNP           40
 
 /* comm leader failed */
-#define ORTE_RML_TAG_LEADER                 42
+#define ORTE_RML_TAG_LEADER                 41
 
 #define ORTE_RML_TAG_MAX                   100
 

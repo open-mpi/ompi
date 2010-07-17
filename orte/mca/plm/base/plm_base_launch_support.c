@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
  * $COPYRIGHT$
@@ -57,7 +57,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_locks.h"
-#include "orte/runtime/orte_wait.h"
+#include "orte/runtime/orte_quit.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/nidmap.h"
 #include "orte/util/proc_info.h"
@@ -149,7 +149,7 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
         if (NULL == crud) {
             orte_never_launched = true;
             ORTE_UPDATE_EXIT_STATUS(0);
-            orte_trigger_event(&orte_exit);
+            orte_jobs_complete();
             return ORTE_ERROR;
         }
         orte_util_nidmap_init(NULL);
@@ -173,7 +173,7 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
         free(crud);
         orte_never_launched = true;
         ORTE_UPDATE_EXIT_STATUS(0);
-        orte_trigger_event(&orte_exit);
+        orte_jobs_complete();
         return ORTE_ERROR;
     }
 
@@ -198,7 +198,7 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
     if (orte_do_not_launch) {
         orte_never_launched = true;
         ORTE_UPDATE_EXIT_STATUS(0);
-        orte_trigger_event(&orte_exit);
+        orte_jobs_complete();
         return ORTE_ERR_SILENT;
     }
     
@@ -214,7 +214,7 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
                        ORTE_VPID_PRINT(jdata->num_procs));
         orte_never_launched = true;
         ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-        orte_trigger_event(&orte_exit);
+        orte_jobs_complete();
         return ORTE_ERROR;
     }
     

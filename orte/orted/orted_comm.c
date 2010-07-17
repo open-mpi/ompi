@@ -73,6 +73,7 @@
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
+#include "orte/runtime/orte_quit.h"
 
 #include "orte/orted/orted.h"
 
@@ -638,16 +639,12 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
                 opal_output(0, "%s orted_cmd: received exit cmd",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             }
-            /* if we are the HNP, just kill our local procs */
-            if (ORTE_PROC_IS_HNP) {
-                orte_odls.kill_local_procs(NULL);
-                return ORTE_SUCCESS;
+            /* kill the local procs */
+            orte_odls.kill_local_procs(NULL);
+            /* if all our dependent routes are gone, exit */
+            if (0 == orte_routed.num_routes()) {
+                orte_quit();
             }
-            
-            /* else we are a daemon, trigger our exit - we will kill our
-             * local procs on our way out
-             */
-            orte_trigger_event(&orte_exit);
             return ORTE_SUCCESS;
             break;
             
@@ -661,7 +658,7 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
              * NOTE: this event will fire -after- any zero-time events
              * so any pending relays -do- get sent first
              */
-            orte_trigger_event(&orte_exit);
+            orte_quit();
             return ORTE_SUCCESS;
             break;
             

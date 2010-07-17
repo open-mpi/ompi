@@ -56,6 +56,7 @@
 #include "orte/util/proc_info.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/mca/rml/base/rml_contact.h"
+#include "orte/runtime/orte_quit.h"
 
 /*
  * Local variables & functions
@@ -68,7 +69,6 @@ static bool all_recvd;
 static int32_t num_replies;
 static int32_t num_recvd;
 static opal_buffer_t cmdbuf;
-static opal_event_t *my_exit_event;
 static FILE *fp = NULL;
 static bool help;
 static char *hnppidstr;
@@ -181,7 +181,7 @@ static void send_cmd(int fd, short dummy, void *arg)
     num_recvd = 0;
     if (0 > (ret = orte_rml.send_buffer(&(target_hnp->name), &cmdbuf, ORTE_RML_TAG_DAEMON, 0))) {
         ORTE_ERROR_LOG(ret);
-        orte_trigger_event(&orteds_exit);
+        orte_quit();
         return;
     }
     
@@ -197,7 +197,7 @@ static void send_cmd(int fd, short dummy, void *arg)
     if (0 < update_rate) {
         ORTE_TIMER_EVENT(update_rate, 0, send_cmd);
     } else {
-        orte_trigger_event(&orte_exit);
+        orte_quit();
     }
 }
 
@@ -263,14 +263,7 @@ main(int argc, char *argv[])
         return 1;
     }
     
-    OBJ_CONSTRUCT(&orte_exit, orte_trigger_event_t);
-    
-    if (ORTE_SUCCESS != orte_wait_event(&my_exit_event, &orte_exit, "job_complete", abort_exit_callback)) {
-        orte_finalize();
-        exit(1);
-    }
-    
-    /* setup the list for recvd stats */
+   /* setup the list for recvd stats */
     OBJ_CONSTRUCT(&recvd_stats, opal_list_t);
     
     /** setup callbacks for abort signals - from this point
@@ -567,8 +560,8 @@ static void abort_exit_callback(int fd, short ign, void *arg)
     if (NULL != fp && fp != stdout) {
         fclose(fp);
     }
-    orte_finalize();
-    exit(1);
+    ORTE_UPDATE_EXIT_STATUS(1);
+    orte_quit();
 }
 
 static void process_stats(int fd, short event, void *data)

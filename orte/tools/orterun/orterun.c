@@ -92,6 +92,7 @@
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_data_server.h"
 #include "orte/runtime/orte_locks.h"
+#include "orte/runtime/orte_quit.h"
 
 /* ensure I can behave like a daemon */
 #include "orte/orted/orted.h"
@@ -101,31 +102,13 @@
 /*
  * Globals
  */
-static struct opal_event term_handler;
-static struct opal_event int_handler;
-static struct opal_event epipe_handler;
-#ifndef __WINDOWS__
-static struct opal_event sigusr1_handler;
-static struct opal_event sigusr2_handler;
-static struct opal_event sigtstp_handler;
-static struct opal_event sigcont_handler;
-#endif  /* __WINDOWS__ */
 static orte_job_t *jdata=NULL;
-static char *orterun_basename = NULL;
-static int num_aborted = 0;
-static int num_killed = 0;
-static int num_failed_start = 0;
 static char **global_mca_env = NULL;
 static bool have_zero_np = false;
 static orte_std_cntr_t total_num_apps = 0;
 static bool want_prefix_by_default = (bool) ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT;
-static opal_event_t *orterun_event=NULL, *orteds_exit_event=NULL;
 static char *ompi_server=NULL;
-static opal_event_t *abort_exit_event=NULL;
-static bool forcibly_die = false;
-static opal_event_t *timeout_ev=NULL;
 static bool profile_is_set = false;
-static bool signals_set=false;
 
 /*
  * Globals
@@ -145,7 +128,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       &orterun_globals.verbose, OPAL_CMD_LINE_TYPE_BOOL,
       "Be verbose" },
     { "orte", "execute", "quiet", 'q', NULL, "quiet", 0,
-      &orterun_globals.quiet, OPAL_CMD_LINE_TYPE_BOOL,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Suppress helpful messages" },
     { NULL, NULL, NULL, '\0', "report-pid", "report-pid", 1,
       &orterun_globals.report_pid, OPAL_CMD_LINE_TYPE_STRING,
@@ -455,20 +438,12 @@ static opal_cmd_line_init_t cmd_line_init[] = {
 /*
  * Local functions
  */
-static void job_completed(int trigpipe, short event, void *arg);
-static void abort_signal_callback(int fd, short flags, void *arg);
-static void abort_exit_callback(int fd, short event, void *arg);
-static void epipe_signal_callback(int fd, short flags, void *arg);
-static void signal_forward_callback(int fd, short event, void *arg);
 static int create_app(int argc, char* argv[], orte_app_context_t **app,
                       bool *made_app, char ***app_env);
 static int init_globals(void);
 static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line);
 static int parse_locals(int argc, char* argv[]);
 static int parse_appfile(char *filename, char ***env);
-static void dump_aborted_procs(void);
-static void just_quit(int fd, short ign, void *arg);
-
 static void run_debugger(char *basename, opal_cmd_line_t *cmd_line,
                          int argc, char *argv[], int num_procs);
 
@@ -480,7 +455,7 @@ int orterun(int argc, char *argv[])
 
     /* find our basename (the name of the executable) so that we can
        use it in pretty-print error messages */
-    orterun_basename = opal_basename(argv[0]);
+    orte_basename = opal_basename(argv[0]);
 
     /* Setup and parse the command line */
     init_globals();
@@ -524,10 +499,6 @@ int orterun(int argc, char *argv[])
     if (OPAL_SUCCESS != opal_init_util(&argc, &argv)) {
         exit(1);
     }
-    
-    /* setup the exit triggers */
-    OBJ_CONSTRUCT(&orte_exit, orte_trigger_event_t);
-    OBJ_CONSTRUCT(&orteds_exit, orte_trigger_event_t);
     
     /* flag that I am the HNP - needs to be done prior to
      * registering params
@@ -582,7 +553,7 @@ int orterun(int argc, char *argv[])
         /* This should never happen -- this case should be caught in
         create_app(), but let's just double check... */
         orte_show_help("help-orterun.txt", "orterun:nothing-to-do",
-                       true, orterun_basename);
+                       true, orte_basename);
         exit(ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
 
@@ -634,7 +605,7 @@ int orterun(int argc, char *argv[])
             fp = fopen(orterun_globals.report_uri, "w");
             if (NULL == fp) {
                 orte_show_help("help-orterun.txt", "orterun:write_file", false,
-                               orterun_basename, "uri", orterun_globals.report_uri);
+                               orte_basename, "uri", orterun_globals.report_uri);
                 exit(0);
             }
             fprintf(fp, "%s\n", (NULL == rml_uri) ? "NULL" : rml_uri);
@@ -654,68 +625,6 @@ int orterun(int argc, char *argv[])
      happen will happen in libevent).  This is a minor optimization,
      but what the heck... :-) */
     opal_progress_set_event_flag(OPAL_EVLOOP_ONCE);
-    
-    /* setup an event we can wait for that will tell
-     * us to terminate - both normal and abnormal
-     * termination will call us here. Use the
-     * same exit fd as the daemon does so that orted_comm
-     * can cause either of us to exit since we share that code
-     */
-    if (ORTE_SUCCESS != (rc = orte_wait_event(&orterun_event, &orte_exit, "job_complete", job_completed))) {
-        orte_show_help("help-orterun.txt", "orterun:event-def-failed", true,
-                       orterun_basename, ORTE_ERROR_NAME(rc));
-        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-        goto DONE;
-    }
-    
-    /* setup an event that will
-     * trigger when the orteds are gone and tell the orteds that it is
-     * okay to finalize and exit, we are done with them.
-     * We set this up here in order to provide a way for us to
-     * wakeup and terminate should the daemons themselves fail to launch,
-     * and before we define signal handlers since they will call the
-     * exit event trigger!
-     */
-    if (ORTE_SUCCESS != (rc = orte_wait_event(&orteds_exit_event, &orteds_exit, "orted_exit", just_quit))) {
-        orte_show_help("help-orterun.txt", "orterun:event-def-failed", true,
-                       orterun_basename, ORTE_ERROR_NAME(rc));
-        goto DONE;
-    }
-
-#ifndef __WINDOWS__
-    /* setup callback for SIGPIPE */
-    opal_signal_set(&epipe_handler, SIGPIPE,
-                    epipe_signal_callback, &epipe_handler);
-    opal_signal_add(&epipe_handler, NULL);
-    /** setup callbacks for abort signals - from this point
-     * forward, we need to abort in a manner that allows us
-     * to cleanup
-     */
-    opal_signal_set(&term_handler, SIGTERM,
-                    abort_signal_callback, &term_handler);
-    opal_signal_add(&term_handler, NULL);
-    opal_signal_set(&int_handler, SIGINT,
-                    abort_signal_callback, &int_handler);
-    opal_signal_add(&int_handler, NULL);
-
-    /** setup callbacks for signals we should foward */
-    opal_signal_set(&sigusr1_handler, SIGUSR1,
-                    signal_forward_callback, &sigusr1_handler);
-    opal_signal_add(&sigusr1_handler, NULL);
-    opal_signal_set(&sigusr2_handler, SIGUSR2,
-                    signal_forward_callback, &sigusr2_handler);
-    opal_signal_add(&sigusr2_handler, NULL);
-    if (orte_forward_job_control) {
-        opal_signal_set(&sigtstp_handler, SIGTSTP,
-                        signal_forward_callback, &sigtstp_handler);
-        opal_signal_add(&sigtstp_handler, NULL);
-        opal_signal_set(&sigcont_handler, SIGCONT,
-                        signal_forward_callback, &sigcont_handler);
-        opal_signal_add(&sigcont_handler, NULL);
-    }
-#endif  /* __WINDOWS__ */
-    
-    signals_set = true;
     
     /* If we have a prefix, then modify the PATH and
         LD_LIBRARY_PATH environment variables in our copy. This
@@ -743,7 +652,7 @@ int orterun(int argc, char *argv[])
         }
         opal_setenv("PATH", newenv, true, &orte_launch_environ);
         if (orte_debug_flag) {
-            opal_output(0, "%s: reset PATH: %s", orterun_basename, newenv);
+            opal_output(0, "%s: reset PATH: %s", orte_basename, newenv);
         }
         free(newenv);
         free(bin_base);
@@ -760,7 +669,7 @@ int orterun(int argc, char *argv[])
         opal_setenv("LD_LIBRARY_PATH", newenv, true, &orte_launch_environ);
         if (orte_debug_flag) {
             opal_output(0, "%s: reset LD_LIBRARY_PATH: %s",
-                        orterun_basename, newenv);
+                        orte_basename, newenv);
         }
         free(newenv);
         free(lib_base);
@@ -770,7 +679,7 @@ int orterun(int argc, char *argv[])
     if (ORTE_SUCCESS != (rc = orte_pre_condition_transports(jdata))) {
         ORTE_ERROR_LOG(rc);
         orte_show_help("help-orterun.txt", "orterun:precondition", false,
-                       orterun_basename, NULL, NULL, rc);
+                       orte_basename, NULL, NULL, rc);
         ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
         goto DONE;
     }
@@ -821,7 +730,7 @@ int orterun(int argc, char *argv[])
                 if (ORTE_SUCCESS != (rc = orte_rml.ping(ompi_server, &timeout))) {
                     /* okay give up */
                     orte_show_help("help-orterun.txt", "orterun:server-not-found", true,
-                                   orterun_basename, ompi_server,
+                                   orte_basename, ompi_server,
                                    (long)orterun_globals.server_wait_timeout,
                                    ORTE_ERROR_NAME(rc));
                     ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
@@ -848,523 +757,9 @@ int orterun(int argc, char *argv[])
      */
 DONE:
     ORTE_UPDATE_EXIT_STATUS(orte_exit_status);
-    just_quit(0,0,NULL);
+    orte_quit();
     return orte_exit_status;
 }
-
-static void job_completed(int trigpipe, short event, void *arg)
-{
-    int rc;
-    orte_job_t *daemons;
-    
-    /* if the abort exit event is set, delete it */
-    if (NULL != abort_exit_event) {
-        opal_evtimer_del(abort_exit_event);
-        free(abort_exit_event);
-    }
-    
-    /* if we never launched, just skip this part to avoid
-     * meaningless error messages
-     */
-    if (orte_never_launched) {
-        rc = orte_exit_status;
-        goto DONE;
-    }
-    
-    if (0 != orte_exit_status && !orterun_globals.quiet) {
-        /* abnormal termination of some kind */
-        dump_aborted_procs();
-        /* If we showed more abort messages than were allowed,
-        show a followup message here */
-        if (num_failed_start > 1) {
-            if (orte_xml_output) {
-                fprintf(orte_xml_fp, "<stderr>");
-            }
-            fprintf(orte_xml_fp, "%d total process%s failed to start",
-                   num_failed_start, ((num_failed_start > 1) ? "es" : ""));
-            if (orte_xml_output) {
-                fprintf(orte_xml_fp, "&#010;</stderr>");
-            }
-            fprintf(orte_xml_fp, "\n");
-        }
-        if (num_aborted > 1) {
-            if (orte_xml_output) {
-                fprintf(orte_xml_fp, "<stderr>");
-            }
-            fprintf(orte_xml_fp, "%d total process%s aborted",
-                   num_aborted, ((num_aborted > 1) ? "es" : ""));
-            if (orte_xml_output) {
-                fprintf(orte_xml_fp, "&#010;</stderr>");
-            }
-            fprintf(orte_xml_fp, "\n");
-        }
-        if (num_killed > 1) {
-            if (orte_xml_output) {
-                fprintf(orte_xml_fp, "<stderr>");
-            }
-            fprintf(orte_xml_fp, "%d total process%s killed (some possibly by %s during cleanup)",
-                   num_killed, ((num_killed > 1) ? "es" : ""), orterun_basename);
-            if (orte_xml_output) {
-                fprintf(orte_xml_fp, "&#010;</stderr>");
-            }
-            fprintf(orte_xml_fp, "\n");
-        }
-    }
-    
-    /* if the debuggers were run, clean up */
-    orte_debugger.finalize();
-
-    if (ORTE_SUCCESS != (rc = orte_plm.terminate_orteds())) {        
-        /* since we know that the sends didn't completely go out,
-         * we know that the barrier will never complete. Add a timeout so
-         * that those daemons that can respond have a chance to do
-         * so
-         */
-        /* get the orted job data object */
-        if (NULL == (daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
-            /* we are totally hozed */
-            goto DONE;
-        }
-        ORTE_DETECT_TIMEOUT(&timeout_ev, daemons->num_procs,
-                            orte_timeout_usec_per_proc,
-                            orte_max_timeout, just_quit);
-    }
-    
-    /* ensure all the orteds depart together */
-    orte_grpcomm.onesided_barrier();
-
-DONE:
-    ORTE_UPDATE_EXIT_STATUS(rc);
-    just_quit(0, 0, NULL);
-}
-
-static void just_quit(int fd, short ign, void *arg)
-{
-    /* if the orted exit event is set, delete it */
-    if (NULL != orteds_exit_event) {
-        opal_evtimer_del(orteds_exit_event);
-        free(orteds_exit_event);
-    }
-    
-    if (signals_set) {
-        /* Remove the epipe handler */
-        opal_signal_del(&epipe_handler);
-        /* Remove the TERM and INT signal handlers */
-        opal_signal_del(&term_handler);
-        opal_signal_del(&int_handler);
-#ifndef __WINDOWS__
-        /** Remove the USR signal handlers */
-        opal_signal_del(&sigusr1_handler);
-        opal_signal_del(&sigusr2_handler);
-        if (orte_forward_job_control) {
-            opal_signal_del(&sigtstp_handler);
-            opal_signal_del(&sigcont_handler);
-        }
-#endif  /* __WINDOWS__ */
-        signals_set = false;
-    }
-
-    /* whack any lingering session directory files from our jobs */
-    orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
-    
-    /* cleanup our data server */
-    orte_data_server_finalize();
-    
-    /* cleanup and leave */
-    orte_finalize();
-    
-    free(orterun_basename);
-    if (orte_debug_flag) {
-        fprintf(stderr, "orterun: exiting with status %d\n", orte_exit_status);
-    }
-    exit(orte_exit_status);
-}
-
-
-/*
- * On abnormal termination - dump the
- * exit status of the aborted procs.
- */
-
-static void dump_aborted_procs(void)
-{
-    orte_std_cntr_t i, n;
-    orte_proc_t *proc, *pptr;
-    orte_app_context_t *app, *approc;
-    orte_job_t *job;
-    orte_node_t *node;
-    
-    /* find the job that caused the problem - be sure to start the loop
-     * at 1 as the daemons are in 0 and will clearly be "running", so no
-     * point in checking them
-     */
-    for (n=1; n < orte_job_data->size; n++) {
-        if (NULL == (job = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, n))) {
-            /* the array is no longer left-justified, so we have to continue */
-            continue;
-        }
-        if (ORTE_JOB_STATE_UNDEF != job->state &&
-            ORTE_JOB_STATE_INIT != job->state &&
-            ORTE_JOB_STATE_LAUNCHED != job->state &&
-            ORTE_JOB_STATE_RUNNING != job->state &&
-            ORTE_JOB_STATE_TERMINATED != job->state &&
-            ORTE_JOB_STATE_ABORT_ORDERED != job->state) {
-            /* this is a guilty party */
-            proc = job->aborted_proc;
-            /* always must be at least one app */
-            app = (orte_app_context_t*)opal_pointer_array_get_item(job->apps, 0);
-            /* cycle through and count the number that were killed or aborted */
-            for (i=0; i < job->procs->size; i++) {
-                if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(job->procs, i))) {
-                    /* array is left-justfied - we are done */
-                    continue;
-                }
-                if (ORTE_PROC_STATE_FAILED_TO_START == pptr->state) {
-                    ++num_failed_start;
-                } else if (ORTE_PROC_STATE_ABORTED == pptr->state) {
-                    ++num_aborted;
-                } else if (ORTE_PROC_STATE_ABORTED_BY_SIG == pptr->state) {
-                    ++num_killed;
-                }
-            }
-            approc = (orte_app_context_t*)opal_pointer_array_get_item(job->apps, proc->app_idx);
-            node = proc->node;
-            if (ORTE_JOB_STATE_FAILED_TO_START == job->state) {
-                if (NULL == proc) {
-                    orte_show_help("help-orterun.txt", "orterun:proc-failed-to-start-no-status-no-node", true,
-                                   orterun_basename);
-                    return;
-                }
-                switch (OPAL_SOS_GET_ERROR_CODE(proc->exit_code)) {
-                    case ORTE_ERR_SYS_LIMITS_PIPES:
-                        orte_show_help("help-orterun.txt", "orterun:sys-limit-pipe", true,
-                                       orterun_basename, proc->node->name,
-                                       (unsigned long)proc->name.vpid);
-                        break;
-                        case ORTE_ERR_PIPE_SETUP_FAILURE:
-                        orte_show_help("help-orterun.txt", "orterun:pipe-setup-failure", true,
-                                       orterun_basename, proc->node->name,
-                                       (unsigned long)proc->name.vpid);
-                        break;
-                    case ORTE_ERR_SYS_LIMITS_CHILDREN:
-                        orte_show_help("help-orterun.txt", "orterun:sys-limit-children", true,
-                                       orterun_basename, proc->node->name,
-                                       (unsigned long)proc->name.vpid);
-                        break;
-                    case ORTE_ERR_FAILED_GET_TERM_ATTRS:
-                        orte_show_help("help-orterun.txt", "orterun:failed-term-attrs", true,
-                                       orterun_basename, proc->node->name,
-                                       (unsigned long)proc->name.vpid);
-                        break;
-                    case ORTE_ERR_WDIR_NOT_FOUND:
-                        orte_show_help("help-orterun.txt", "orterun:wdir-not-found", true,
-                                       orterun_basename, approc->cwd,
-                                       proc->node->name, (unsigned long)proc->name.vpid);
-                        break;
-                    case ORTE_ERR_EXE_NOT_FOUND:
-                        orte_show_help("help-orterun.txt", "orterun:exe-not-found", true,
-                                       orterun_basename, 
-                                       (unsigned long)proc->name.vpid,
-                                       orterun_basename, 
-                                       orterun_basename, 
-                                       proc->node->name, 
-                                       approc->app);
-                        break;
-                    case ORTE_ERR_EXE_NOT_ACCESSIBLE:
-                        orte_show_help("help-orterun.txt", "orterun:exe-not-accessible", true,
-                                       orterun_basename, approc->app, proc->node->name,
-                                       (unsigned long)proc->name.vpid);
-                        break;
-                    case ORTE_ERR_MULTIPLE_AFFINITIES:
-                        orte_show_help("help-orterun.txt",
-                                       "orterun:multiple-paffinity-schemes", true, proc->slot_list);
-                        break;
-                    case ORTE_ERR_TOPO_SLOT_LIST_NOT_SUPPORTED:
-                        orte_show_help("help-orterun.txt",
-                                       "orterun:topo-not-supported", 
-                                       true, orte_process_info.nodename, "rankfile containing a slot_list of ", 
-                                       proc->slot_list, approc->app);
-                        break;
-                    case ORTE_ERR_INVALID_NODE_RANK:
-                        orte_show_help("help-orterun.txt",
-                                       "orterun:invalid-node-rank", true);
-                        break;
-                    case ORTE_ERR_INVALID_LOCAL_RANK:
-                        orte_show_help("help-orterun.txt",
-                                       "orterun:invalid-local-rank", true);
-                        break;
-                    case ORTE_ERR_NOT_ENOUGH_CORES:
-                        orte_show_help("help-orterun.txt",
-                                       "orterun:not-enough-resources", true,
-                                       "sockets", node->name,
-                                       "bind-to-core", approc->app);
-                        break;
-                    case ORTE_ERR_TOPO_CORE_NOT_SUPPORTED:
-                        orte_show_help("help-orterun.txt",
-                                       "orterun:topo-not-supported", 
-                                       true, node->name, "bind-to-core", "",
-                                       approc->app);
-                        break;
-                    case ORTE_ERR_INVALID_PHYS_CPU:
-                        orte_show_help("help-orterun.txt",
-                                       "orterun:invalid-phys-cpu", true);
-                        break;
-                    case ORTE_ERR_NOT_ENOUGH_SOCKETS:
-                        orte_show_help("help-orterun.txt",
-                                       "orterun:not-enough-resources", true,
-                                       "sockets", node->name,
-                                       "bind-to-socket", approc->app);
-                        break;
-                    case ORTE_ERR_TOPO_SOCKET_NOT_SUPPORTED:
-                        orte_show_help("help-orterun.txt",
-                                       "orterun:topo-not-supported", 
-                                       true, node->name, "bind-to-socket", "",
-                                       approc->app);
-                        break;
-                    case ORTE_ERR_MODULE_NOT_FOUND:
-                        orte_show_help("help-orterun.txt",
-                                       "orterun:paffinity-missing-module", 
-                                       true, node->name);
-                        break;
-                    case ORTE_ERR_SLOT_LIST_RANGE:
-                        orte_show_help("help-orterun.txt",
-                                       "orterun:invalid-slot-list-range", 
-                                       true, node->name, proc->slot_list);
-                        break;
-                    case ORTE_ERR_PIPE_READ_FAILURE:
-                        orte_show_help("help-orterun.txt", "orterun:pipe-read-failure", true,
-                                       orterun_basename, node->name, (unsigned long)proc->name.vpid);
-                        break;
-                    case ORTE_ERR_SOCKET_NOT_AVAILABLE:
-                        orte_show_help("help-orterun.txt", "orterun:proc-socket-not-avail", true,
-                                       orterun_basename, ORTE_ERROR_NAME(proc->exit_code), node->name,
-                                       (unsigned long)proc->name.vpid);
-                        break;
-
-                    default:
-                        if (0 != proc->exit_code) {
-                            orte_show_help("help-orterun.txt", "orterun:proc-failed-to-start", true,
-                                           orterun_basename, ORTE_ERROR_NAME(proc->exit_code), node->name,
-                                           (unsigned long)proc->name.vpid);
-                        } else {
-                            orte_show_help("help-orterun.txt", "orterun:proc-failed-to-start-no-status", true,
-                                           orterun_basename, node->name);
-                        }
-                        break;
-                }
-            } else if (ORTE_JOB_STATE_ABORTED == job->state) {
-                if (NULL == proc) {
-                    orte_show_help("help-orterun.txt", "orterun:proc-aborted-unknown", true,
-                                   orterun_basename);
-                } else {
-                    orte_show_help("help-orterun.txt", "orterun:proc-ordered-abort", true,
-                                   orterun_basename, (unsigned long)proc->name.vpid, (unsigned long)proc->pid,
-                                   node->name, orterun_basename);
-                }
-            } else if (ORTE_JOB_STATE_ABORTED_BY_SIG == job->state) {  /* aborted by signal */
-                if (NULL == proc) {
-                    orte_show_help("help-orterun.txt", "orterun:proc-aborted-signal-unknown", true,
-                                   orterun_basename);
-                } else {
-#ifdef HAVE_STRSIGNAL
-                    if (NULL != strsignal(WTERMSIG(proc->exit_code))) {
-                        orte_show_help("help-orterun.txt", "orterun:proc-aborted-strsignal", true,
-                                       orterun_basename, (unsigned long)proc->name.vpid, (unsigned long)proc->pid,
-                                       node->name, WTERMSIG(proc->exit_code), 
-                                       strsignal(WTERMSIG(proc->exit_code)));
-                    } else {
-#endif
-                        orte_show_help("help-orterun.txt", "orterun:proc-aborted", true,
-                                       orterun_basename, (unsigned long)proc->name.vpid, (unsigned long)proc->pid,
-                                       node->name, WTERMSIG(proc->exit_code));
-#ifdef HAVE_STRSIGNAL
-                    }
-#endif
-                }
-            } else if (ORTE_JOB_STATE_ABORTED_WO_SYNC == job->state) { /* proc exited w/o finalize */
-                if (NULL == proc) {
-                    orte_show_help("help-orterun.txt", "orterun:proc-exit-no-sync-unknown", true,
-                                   orterun_basename, orterun_basename);
-                } else {
-                    orte_show_help("help-orterun.txt", "orterun:proc-exit-no-sync", true,
-                                   orterun_basename, (unsigned long)proc->name.vpid, (unsigned long)proc->pid,
-                                   node->name, orterun_basename, orterun_basename);
-                }
-            } else if (ORTE_JOB_STATE_COMM_FAILED == job->state) {
-                orte_show_help("help-orterun.txt", "orterun:proc-comm-failed", true,
-                               ORTE_NAME_PRINT(&proc->name), node->name);
-            } else if (ORTE_JOB_STATE_SENSOR_BOUND_EXCEEDED == job->state) {
-                switch (proc->exit_code) {
-                    case ORTE_ERR_MEM_LIMIT_EXCEEDED:
-                        orte_show_help("help-orterun.txt", "orterun:proc-mem-exceeded", true,
-                                       ORTE_NAME_PRINT(&proc->name), node->name);
-                        break;
-                    case ORTE_ERR_PROC_STALLED:
-                        orte_show_help("help-orterun.txt", "orterun:proc-stalled", true);
-                        break;
-
-                    default:
-                        orte_show_help("help-orterun.txt", "orterun:proc-sensor-exceeded", true);
-                        break;
-                }
-            } else if (ORTE_JOB_STATE_CALLED_ABORT == job->state) {
-                orte_show_help("help-orterun.txt", "orterun:proc-called-abort", true,
-                               orterun_basename,
-                               (0 == strncmp("orte", orterun_basename, 4)) ? "orte" : "MPI");
-            } else if (ORTE_JOB_STATE_HEARTBEAT_FAILED == job->state) {
-                orte_show_help("help-orterun.txt", "orterun:proc-heartbeat-failed", true,
-                               orterun_basename, ORTE_NAME_PRINT(&proc->name), node->name);
-            }
-            return;
-        }
-    }
-}
-
-static void abort_exit_callback(int fd, short ign, void *arg)
-{
-    int ret;
-
-    fprintf(stderr, "%s: killing job...\n\n", orterun_basename);
-    
-    /* since we are being terminated by a user's signal, be
-     * sure to exit with a non-zero exit code - but don't
-     * overwrite any error code from a proc that might have
-     * failed, in case that is why the user ordered us
-     * to terminate
-     */
-    ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-
-    /* terminate the job - this will also wakeup orterun so
-     * it can report to the user and kill all the orteds.
-     * Check the jobid, though, just in case the user
-     * hit ctrl-c before we had a chance to setup the
-     * job in the system - in which case there is nothing
-     * to terminate!
-     */
-    if (NULL != jdata &&
-        jdata->jobid != ORTE_JOBID_INVALID &&
-        !orte_never_launched) {
-        /* if the debuggers were run, clean up */
-        orte_debugger.finalize();
-
-        /*
-         * Turn off the process recovery functionality, if it was enabled.
-         * This keeps the errmgr from trying to recover from the shutdown
-         * procedure.
-         */
-        orte_enable_recovery             = false;
-        
-        /* terminate the orteds - they will automatically kill
-         * their local procs
-         */
-        ret = orte_plm.terminate_orteds();
-        if (ORTE_SUCCESS != ret) {
-            /* If we failed the terminate_orteds() above, then we
-             * need to just die
-             */
-            just_quit(fd, ign, arg);
-        }
-        /* give ourselves a time limit on how long to wait
-         * for the job to die, just in case we can't make it go
-         * away for some reason. Don't send us directly back
-         * to job_completed, though, as that function may be
-         * what has failed
-         */
-        ORTE_DETECT_TIMEOUT(&abort_exit_event, jdata->num_procs,
-                            orte_timeout_usec_per_proc,
-                            orte_max_timeout, 
-                            just_quit);
-        
-    } else {
-        /* if the jobid is invalid or we never launched,
-         * there is nothing to do but just clean ourselves
-         * up and exit
-         */
-        just_quit(fd, ign, arg);
-    }
-}
-
-/*
- * Attempt to terminate the job and wait for callback indicating
- * the job has been aborted.
- */
-static void abort_signal_callback(int fd, short flags, void *arg)
-{
-    /* if we have already ordered this once, don't keep
-     * doing it to avoid race conditions
-     */
-    if (!opal_atomic_trylock(&orte_abort_inprogress_lock)) { /* returns 1 if already locked */
-        if (forcibly_die) {
-            /* kill any local procs */
-            orte_odls.kill_local_procs(NULL);
-            
-            /* whack any lingering session directory files from our jobs */
-            orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
-            
-            /* cleanup our data server */
-            orte_data_server_finalize();
-            
-            /* exit with a non-zero status */
-            exit(ORTE_ERROR_DEFAULT_EXIT_CODE);
-        }
-        fprintf(stderr, "%s: abort is already in progress...hit ctrl-c again to forcibly terminate\n\n", orterun_basename);
-        forcibly_die = true;
-        return;
-    }
-
-    /* set the global abnormal exit flag so we know not to
-     * use the standard xcast for terminating orteds
-     */
-    orte_abnormal_term_ordered = true;
-    /* ensure that the forwarding of stdin stops */
-    orte_job_term_ordered = true;
-
-    /* tell us to be quiet - hey, the user killed us with a ctrl-c,
-     * so need to tell them that!
-     */
-    orterun_globals.quiet = true;
-    
-    /* We are in an event handler; the job completed procedure
-       will delete the signal handler that is currently running
-       (which is a Bad Thing), so we can't call it directly.
-       Instead, we have to exit this handler and setup to call
-       job_completed() after this. */
-    ORTE_TIMER_EVENT(0, 0, abort_exit_callback);
-}
-
-/**
- * Deal with sigpipe errors
- */
-static void epipe_signal_callback(int fd, short flags, void *arg)
-{
-    /* for now, we just announce and ignore them */
-    OPAL_OUTPUT_VERBOSE((1, orte_debug_verbosity,
-                         "%s reports a SIGPIPE error on fd %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), fd));
-    return;
-}
-
-/**
- * Pass user signals to the remote application processes
- */
-static void  signal_forward_callback(int fd, short event, void *arg)
-{
-    struct opal_event *signal = (struct opal_event*)arg;
-    int signum, ret;
-
-    signum = OPAL_EVENT_SIGNAL(signal);
-    if (!orterun_globals.quiet){
-        fprintf(stderr, "%s: Forwarding signal %d to job\n",
-                orterun_basename, signum);
-    }
-
-    /** send the signal out to the processes, including any descendants */
-    if (ORTE_SUCCESS != (ret = orte_plm.signal_job(jdata->jobid, signum))) {
-        fprintf(stderr, "Signal %d could not be sent to the job (returned %d)",
-                signum, ret);
-    }
-}
-
 
 static int init_globals(void)
 {
@@ -1389,7 +784,6 @@ static int init_globals(void)
     orterun_globals.help                       = false;
     orterun_globals.version                    = false;
     orterun_globals.verbose                    = false;
-    orterun_globals.quiet                      = false;
     orterun_globals.by_node                    = false;
     orterun_globals.by_slot                    = false;
     orterun_globals.by_board                   = false;
@@ -1429,13 +823,13 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
     if (orterun_globals.version && 
         !(1 == argc || orterun_globals.help)) {
         char *project_name = NULL;
-        if (0 == strcmp(orterun_basename, "mpirun")) {
+        if (0 == strcmp(orte_basename, "mpirun")) {
             project_name = "Open MPI";
         } else {
             project_name = "OpenRTE";
         }
         orte_show_help("help-orterun.txt", "orterun:version", false,
-                       orterun_basename, project_name, OPAL_VERSION,
+                       orte_basename, project_name, OPAL_VERSION,
                        PACKAGE_BUGREPORT);
         /* if we were the only argument, exit */
         if (2 == argc) exit(0);
@@ -1445,15 +839,15 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
     if (1 == argc || orterun_globals.help) {
         char *args = NULL;
         char *project_name = NULL;
-        if (0 == strcmp(orterun_basename, "mpirun")) {
+        if (0 == strcmp(orte_basename, "mpirun")) {
             project_name = "Open MPI";
         } else {
             project_name = "OpenRTE";
         }
         args = opal_cmd_line_get_usage_msg(cmd_line);
         orte_show_help("help-orterun.txt", "orterun:usage", false,
-                       orterun_basename, project_name, OPAL_VERSION,
-                       orterun_basename, args,
+                       orte_basename, project_name, OPAL_VERSION,
+                       orte_basename, args,
                        PACKAGE_BUGREPORT);
         free(args);
 
@@ -1474,7 +868,7 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
             fp = fopen(orterun_globals.report_pid, "w");
             if (NULL == fp) {
                 orte_show_help("help-orterun.txt", "orterun:write_file", false,
-                               orterun_basename, "pid", orterun_globals.report_pid);
+                               orte_basename, "pid", orterun_globals.report_pid);
                 exit(0);
             }
             fprintf(fp, "%d\n", (int)getpid());
@@ -1485,7 +879,7 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
     /* Do we want a user-level debugger? */
 
     if (orterun_globals.debugger) {
-        run_debugger(orterun_basename, cmd_line, argc, argv, orterun_globals.num_procs);
+        run_debugger(orte_basename, cmd_line, argc, argv, orterun_globals.num_procs);
     }
 
     /* extract any rank assignment policy directives */
@@ -1555,7 +949,7 @@ static int parse_locals(int argc, char* argv[])
             if (NULL == filename) {
                 /* filename is not correctly formatted */
                 orte_show_help("help-orterun.txt", "orterun:ompi-server-filename-bad", true,
-                               orterun_basename, orterun_globals.ompi_server);
+                               orte_basename, orterun_globals.ompi_server);
                 exit(1);
             }
             ++filename; /* space past the : */
@@ -1563,7 +957,7 @@ static int parse_locals(int argc, char* argv[])
             if (0 >= strlen(filename)) {
                 /* they forgot to give us the name! */
                 orte_show_help("help-orterun.txt", "orterun:ompi-server-filename-missing", true,
-                               orterun_basename, orterun_globals.ompi_server);
+                               orte_basename, orterun_globals.ompi_server);
                 exit(1);
             }
             
@@ -1571,15 +965,15 @@ static int parse_locals(int argc, char* argv[])
             fp = fopen(filename, "r");
             if (NULL == fp) { /* can't find or read file! */
                 orte_show_help("help-orterun.txt", "orterun:ompi-server-filename-access", true,
-                               orterun_basename, orterun_globals.ompi_server);
+                               orte_basename, orterun_globals.ompi_server);
                 exit(1);
             }
             if (NULL == fgets(input, 1024, fp)) {
                 /* something malformed about file */
                 fclose(fp);
                 orte_show_help("help-orterun.txt", "orterun:ompi-server-file-bad", true,
-                               orterun_basename, orterun_globals.ompi_server,
-                               orterun_basename);
+                               orte_basename, orterun_globals.ompi_server,
+                               orte_basename);
                 exit(1);
             }
             fclose(fp);
@@ -1597,8 +991,8 @@ static int parse_locals(int argc, char* argv[])
             if (NULL == ptr) {
                 /* pid is not correctly formatted */
                 orte_show_help("help-orterun.txt", "orterun:ompi-server-pid-bad", true,
-                               orterun_basename, orterun_basename,
-                               orterun_globals.ompi_server, orterun_basename);
+                               orte_basename, orte_basename,
+                               orterun_globals.ompi_server, orte_basename);
                 exit(1);
             }
             ++ptr; /* space past the : */
@@ -1606,8 +1000,8 @@ static int parse_locals(int argc, char* argv[])
             if (0 >= strlen(ptr)) {
                 /* they forgot to give us the pid! */
                 orte_show_help("help-orterun.txt", "orterun:ompi-server-pid-bad", true,
-                               orterun_basename, orterun_basename,
-                               orterun_globals.ompi_server, orterun_basename);
+                               orte_basename, orte_basename,
+                               orterun_globals.ompi_server, orte_basename);
                 exit(1);
             }
             
@@ -1621,7 +1015,7 @@ static int parse_locals(int argc, char* argv[])
                                                                 &orte_process_info.top_session_dir,
                                                                 NULL, NULL, NULL))) {
                 orte_show_help("help-orterun.txt", "orterun:ompi-server-could-not-get-hnp-list", true,
-                               orterun_basename, orterun_basename);
+                               orte_basename, orte_basename);
                 exit(1);
             }
             
@@ -1630,7 +1024,7 @@ static int parse_locals(int argc, char* argv[])
             /* get the list of HNPs, but do -not- setup contact info to them in the RML */
             if (ORTE_SUCCESS != (rc = orte_list_local_hnps(&hnp_list, false))) {
                 orte_show_help("help-orterun.txt", "orterun:ompi-server-could-not-get-hnp-list", true,
-                               orterun_basename, orterun_basename);
+                               orte_basename, orte_basename);
                 exit(1);
             }
             
@@ -1645,8 +1039,8 @@ static int parse_locals(int argc, char* argv[])
             }
             /* if we got here, it wasn't found */
             orte_show_help("help-orterun.txt", "orterun:ompi-server-pid-not-found", true,
-                           orterun_basename, orterun_basename, pid, orterun_globals.ompi_server,
-                           orterun_basename);
+                           orte_basename, orte_basename, pid, orterun_globals.ompi_server,
+                           orte_basename);
             OBJ_DESTRUCT(&hnp_list);
             exit(1);
         hnp_found:
@@ -1843,7 +1237,7 @@ static int capture_cmd_line_params(int argc, int start, char **argv)
                                      * and abort as we cannot know which one is correct
                                      */
                                     orte_show_help("help-orterun.txt", "orterun:conflicting-params",
-                                                   true, orterun_basename, argv[i+1],
+                                                   true, orte_basename, argv[i+1],
                                                    argv[i+2], orted_cmd_line[j+1]);
                                     return ORTE_ERR_BAD_PARAM;
                                 }
@@ -1945,7 +1339,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
 
     if (0 == count) {
         orte_show_help("help-orterun.txt", "orterun:executable-not-specified",
-                       true, orterun_basename, orterun_basename);
+                       true, orte_basename, orte_basename);
         rc = ORTE_ERR_NOT_FOUND;
         goto cleanup;
     }
@@ -2102,7 +1496,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
                 param_len--;
                 if (0 == param_len) {
                     orte_show_help("help-orterun.txt", "orterun:empty-prefix",
-                                   true, orterun_basename, orterun_basename);
+                                   true, orte_basename, orte_basename);
                     return ORTE_ERR_FATAL;
                 }
             }
@@ -2118,7 +1512,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     if (0 < (j = opal_cmd_line_get_ninsts(&cmd_line, "hostfile"))) {
         if(1 < j) {
             orte_show_help("help-orterun.txt", "orterun:multiple-hostfiles",
-                           true, orterun_basename, NULL);
+                           true, orte_basename, NULL);
             return ORTE_ERR_FATAL;
         } else {
             value = opal_cmd_line_get_param(&cmd_line, "hostfile", 0, 0);
@@ -2128,7 +1522,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     if (0 < (j = opal_cmd_line_get_ninsts(&cmd_line, "machinefile"))) {
         if(1 < j || NULL != app->hostfile) {
             orte_show_help("help-orterun.txt", "orterun:multiple-hostfiles",
-                           true, orterun_basename, NULL);
+                           true, orte_basename, NULL);
             return ORTE_ERR_FATAL;
         } else {
             value = opal_cmd_line_get_param(&cmd_line, "machinefile", 0, 0);
@@ -2169,7 +1563,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
          * then give us another application.
          */
         orte_show_help("help-orterun.txt", "orterun:multi-apps-and-zero-np",
-                       true, orterun_basename, NULL);
+                       true, orte_basename, NULL);
         return ORTE_ERR_FATAL;
     }
     
@@ -2195,7 +1589,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     app->app = strdup(app->argv[0]);
     if (NULL == app->app) {
         orte_show_help("help-orterun.txt", "orterun:call-failed",
-                       true, orterun_basename, "library", "strdup returned NULL", errno);
+                       true, orte_basename, "library", "strdup returned NULL", errno);
         rc = ORTE_ERR_NOT_FOUND;
         goto cleanup;
     }

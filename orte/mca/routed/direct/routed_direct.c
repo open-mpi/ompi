@@ -40,6 +40,7 @@ static int update_routing_tree(void);
 static orte_vpid_t get_routing_tree(opal_list_t *children);
 static int get_wireup_info(opal_buffer_t *buf);
 static int set_lifeline(orte_process_name_t *proc);
+static size_t num_routes(void);
 
 #if OPAL_ENABLE_FT_CR == 1
 static int direct_ft_event(int state);
@@ -58,6 +59,7 @@ orte_routed_module_t orte_routed_direct_module = {
     update_routing_tree,
     get_routing_tree,
     get_wireup_info,
+    num_routes,
 #if OPAL_ENABLE_FT_CR == 1
     direct_ft_event
 #else
@@ -336,6 +338,24 @@ static int get_wireup_info(opal_buffer_t *buf)
     return ORTE_SUCCESS;
 }
 
+static size_t num_routes(void)
+{
+    orte_job_t *jdata;
+
+    if (!ORTE_PROC_IS_HNP) {
+        return 0;
+    }
+
+    /* if I am the HNP, then the number of routes is
+     * the number of daemons still alive (other than me)
+     */
+    if (NULL == (jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return 0;
+    }
+
+    return (jdata->num_procs - jdata->num_terminated - 1);
+}
 
 #if OPAL_ENABLE_FT_CR == 1
 static int direct_ft_event(int state)

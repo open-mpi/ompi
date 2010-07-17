@@ -51,7 +51,6 @@ static int xcast(orte_jobid_t job,
                  orte_rml_tag_t tag);
 static int bad_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf);
 static int bad_barrier(void);
-static int bad_onesided_barrier(void);
 static int modex(opal_list_t *procs);
 
 /* Module def */
@@ -62,7 +61,6 @@ orte_grpcomm_base_module_t orte_grpcomm_bad_module = {
     bad_allgather,
     orte_grpcomm_base_allgather_list,
     bad_barrier,
-    bad_onesided_barrier,
     orte_grpcomm_base_set_proc_attr,
     orte_grpcomm_base_get_proc_attr,
     modex,
@@ -70,7 +68,7 @@ orte_grpcomm_base_module_t orte_grpcomm_bad_module = {
 };
 
 /* Local variables */
-static orte_grpcomm_collective_t barrier, allgather, onesided_barrier;
+static orte_grpcomm_collective_t barrier, allgather;
 
 /**
  * Initialize the module
@@ -87,7 +85,6 @@ static int init(void)
     /* setup global variables */
     OBJ_CONSTRUCT(&barrier, orte_grpcomm_collective_t);
     OBJ_CONSTRUCT(&allgather, orte_grpcomm_collective_t);
-    OBJ_CONSTRUCT(&onesided_barrier, orte_grpcomm_collective_t);
 
     /* if we are a daemon or the hnp, we need to post a
      * recv to catch any collective operations
@@ -115,7 +112,6 @@ static void finalize(void)
     /* destruct the globals */
     OBJ_DESTRUCT(&barrier);
     OBJ_DESTRUCT(&allgather);
-    OBJ_DESTRUCT(&onesided_barrier);
 
     /* if we are a daemon or the hnp, we need to cancel the
      * recv we posted
@@ -227,124 +223,6 @@ static int bad_barrier(void)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     return rc;
-}
-
-static void onesided_barrier_recv(int status, orte_process_name_t* sender,
-                                  opal_buffer_t* buffer, orte_rml_tag_t tag,
-                                  void* cbdata)
-{
-    orte_grpcomm_collective_t *coll = (orte_grpcomm_collective_t*)cbdata;
-    
-    OPAL_THREAD_LOCK(&coll->lock);
-    /* flag as recvd */
-    coll->recvd += 1;
-    if (orte_process_info.num_procs == coll->recvd) {
-        opal_condition_broadcast(&coll->cond);
-    }
-    OPAL_THREAD_UNLOCK(&coll->lock);
-}
-
-/* quick timeout loop */
-static bool timer_fired;
-
-static void quicktime_cb(int fd, short event, void *cbdata)
-{
-    /* declare it fired */
-    timer_fired = true;
-}
-
-static int bad_onesided_barrier(void)
-{
-    opal_list_t daemon_tree;
-    opal_list_item_t *item;
-    opal_buffer_t buf;
-    orte_process_name_t my_parent;
-    opal_event_t *quicktime=NULL;
-    struct timeval quicktimeval;
-    int rc;
-    
-    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                         "%s grpcomm:bad: onesided barrier called",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    /* if we are not to use the barrier, then just return */
-    if (!orte_orted_exit_with_barrier) {
-        if (ORTE_PROC_IS_HNP) {
-            /* if we are the HNP, we need to do a little delay to give
-             * the orteds a chance to exit before we leave
-             */
-            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                                 "%s grpcomm:bad: onesided barrier adding delay timer",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-            quicktimeval.tv_sec = 0;
-            quicktimeval.tv_usec = 100;
-            timer_fired = false;
-            ORTE_DETECT_TIMEOUT(&quicktime, orte_process_info.num_procs, 1000, 10000, quicktime_cb);
-            ORTE_PROGRESSED_WAIT(timer_fired, 0, 1);
-        }
-        return ORTE_SUCCESS;
-    }
-    
-    /* figure out how many participants we should be expecting */
-    OBJ_CONSTRUCT(&daemon_tree, opal_list_t);
-    my_parent.jobid = ORTE_PROC_MY_NAME->jobid;
-    my_parent.vpid = orte_routed.get_routing_tree(&daemon_tree);
-    OPAL_THREAD_LOCK(&onesided_barrier.lock);
-    onesided_barrier.recvd += orte_process_info.num_procs - opal_list_get_size(&daemon_tree);
-    OPAL_THREAD_UNLOCK(&onesided_barrier.lock);
-    
-    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                         "%s grpcomm:bad: onesided barrier num_participating %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (int)(orte_process_info.num_procs - opal_list_get_size(&daemon_tree))));
-
-    /* disassemble the daemon tree */
-    while (NULL != (item = opal_list_remove_first(&daemon_tree))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&daemon_tree);
-    
-    /* set the recv */
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                      ORTE_RML_TAG_ONESIDED_BARRIER,
-                                                      ORTE_RML_PERSISTENT,
-                                                      onesided_barrier_recv,
-                                                      &onesided_barrier))) {
-        ORTE_ERROR_LOG(rc);
-    }
-    
-    /* wait to get all my inputs */
-    OPAL_THREAD_LOCK(&onesided_barrier.lock);
-    while (onesided_barrier.recvd < orte_process_info.num_procs) {
-        opal_condition_wait(&onesided_barrier.cond, &onesided_barrier.lock);
-    }
-    /* reset the collective */
-    onesided_barrier.recvd = 0;
-    OPAL_THREAD_UNLOCK(&onesided_barrier.lock);
-    
-    /* cancel the recv */
-    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ONESIDED_BARRIER);
-
-    /* if I am the HNP, then we are done */
-    if (ORTE_PROC_IS_HNP) {
-        return ORTE_SUCCESS;
-    }
-    
-    /* send a zero-byte msg to my parent */
-    OBJ_CONSTRUCT(&buf, opal_buffer_t);
-    /* send it */
-    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                         "%s grpcomm:bad:onsided:barrier not the HNP - sending to parent %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&my_parent)));
-    if (0 > (rc = orte_rml.send_buffer(&my_parent, &buf, ORTE_RML_TAG_ONESIDED_BARRIER, 0))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&buf);
-        return rc;
-    }
-    OBJ_DESTRUCT(&buf);
-    
-    return ORTE_SUCCESS;
 }
 
 static void allgather_recv(int status, orte_process_name_t* sender,

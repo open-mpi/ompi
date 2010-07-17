@@ -68,6 +68,7 @@
 #include "orte/runtime/orte_wait.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmaps/rmaps.h"
+#include "orte/runtime/orte_quit.h"
 
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/plm_private.h"
@@ -716,7 +717,7 @@ int plm_tmd_terminate_orteds(void)
     } else {
         jdata->state = ORTE_JOB_STATE_TERMINATED;
     }
-    orte_trigger_event(&orteds_exit);
+    orte_quit();
     return rc;
 }
 

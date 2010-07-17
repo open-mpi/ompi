@@ -49,7 +49,7 @@
 #include "orte/mca/ras/base/base.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/runtime/orte_wait.h"
+#include "orte/runtime/orte_quit.h"
 
 #include "orte/mca/plm/plm_types.h"
 #include "orte/mca/plm/plm.h"
@@ -509,7 +509,7 @@ static void process_msg(int fd, short event, void *data)
     
     /* see if an error occurred - if so, wakeup the HNP so we can exit */
     if (ORTE_PROC_IS_HNP && ORTE_SUCCESS != rc) {
-        orte_trigger_event(&orte_exit);
+        orte_jobs_complete();
     }
 
 }

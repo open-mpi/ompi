@@ -217,6 +217,11 @@ typedef struct {
     int32_t max_local_restarts;
     /* max number of times a process can be relocated to another node */
     int32_t max_global_restarts;
+    /* whether or not the procs in this app are constrained to stay
+     * on the specified nodes when restarted, or can move to any
+     * known node
+     */
+    bool constrain;
 } orte_app_context_t;
 
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_app_context_t);
@@ -287,17 +292,18 @@ typedef struct {
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_node_t);
 
 /* define a set of flags to control the launch of a job */
-typedef uint8_t orte_job_controls_t;
-#define ORTE_JOB_CONTROL    OPAL_UINT8
+typedef uint16_t orte_job_controls_t;
+#define ORTE_JOB_CONTROL    OPAL_UINT16
 
-#define ORTE_JOB_CONTROL_LOCAL_SLAVE        0x01
-#define ORTE_JOB_CONTROL_NON_ORTE_JOB       0x02
-#define ORTE_JOB_CONTROL_DEBUGGER_DAEMON    0x14
-#define ORTE_JOB_CONTROL_FORWARD_OUTPUT     0x08
-#define ORTE_JOB_CONTROL_DO_NOT_MONITOR     0x10
-#define ORTE_JOB_CONTROL_FORWARD_COMM       0x20
-#define ORTE_JOB_CONTROL_CONTINUOUS_OP      0x40
-#define ORTE_JOB_CONTROL_RECOVERABLE        0x80
+#define ORTE_JOB_CONTROL_LOCAL_SLAVE        0x0001
+#define ORTE_JOB_CONTROL_NON_ORTE_JOB       0x0002
+#define ORTE_JOB_CONTROL_DEBUGGER_DAEMON    0x0014
+#define ORTE_JOB_CONTROL_FORWARD_OUTPUT     0x0008
+#define ORTE_JOB_CONTROL_DO_NOT_MONITOR     0x0010
+#define ORTE_JOB_CONTROL_FORWARD_COMM       0x0020
+#define ORTE_JOB_CONTROL_CONTINUOUS_OP      0x0040
+#define ORTE_JOB_CONTROL_RECOVERABLE        0x0080
+#define ORTE_JOB_CONTROL_SPIN_FOR_DEBUG     0x0100
 
 #define ORTE_MAPPING_POLICY OPAL_UINT16
 /* put the rank assignment method in the upper 8 bits */
@@ -567,6 +573,7 @@ ORTE_DECLSPEC extern bool orte_do_not_launch;
 ORTE_DECLSPEC extern bool orted_spin_flag;
 ORTE_DECLSPEC extern bool orte_daemon_bootstrap;
 ORTE_DECLSPEC extern char *orte_local_cpu_model;
+ORTE_DECLSPEC extern char *orte_basename;
 
 /* ORTE OOB port flags */
 ORTE_DECLSPEC extern bool orte_static_ports;
@@ -596,9 +603,7 @@ ORTE_DECLSPEC extern bool orte_output_debugger_proctable;
 ORTE_DECLSPEC extern char *orte_debugger_test_daemon;
 ORTE_DECLSPEC extern bool orte_debugger_test_attach;
 
-/* exit triggers and flags */
-ORTE_DECLSPEC extern orte_trigger_event_t orte_exit;
-ORTE_DECLSPEC extern orte_trigger_event_t orteds_exit;
+/* exit flags */
 ORTE_DECLSPEC extern int orte_exit_status;
 ORTE_DECLSPEC extern bool orte_abnormal_term_ordered;
 ORTE_DECLSPEC extern bool orte_routing_is_enabled;
@@ -651,9 +656,6 @@ ORTE_DECLSPEC extern char *orte_xterm;
 /* rsh support */
 ORTE_DECLSPEC extern char *orte_rsh_agent;
 ORTE_DECLSPEC extern bool orte_assume_same_shell;
-
-/* whether or not to barrier the orteds upon exit */
-ORTE_DECLSPEC extern bool orte_orted_exit_with_barrier;
 
 /* whether or not to report launch progress */
 ORTE_DECLSPEC extern bool orte_report_launch_progress;
