@@ -78,6 +78,7 @@
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/ras/ras.h"
 #include "orte/mca/routed/routed.h"
+#include "orte/mca/rmaps/rmaps_types.h"
 
 /* need access to the create_jobid fn used by plm components
 * so we can set singleton name, if necessary
@@ -462,6 +463,13 @@ int orte_daemon(int argc, char *argv[])
         ljob = ORTE_LOCAL_JOBID(jdata->jobid);
         opal_pointer_array_set_item(orte_job_data, ljob, jdata);
         
+        /* must create a map for it (even though it has no
+         * info in it) so that the job info will be picked
+         * up in subsequent pidmaps or other daemons won't
+         * know how to route
+         */
+        jdata->map = OBJ_NEW(orte_job_map_t);
+
         /* setup an app_context for the singleton */
         app = OBJ_NEW(orte_app_context_t);
         app->app = strdup("singleton");
