@@ -37,6 +37,7 @@
 int mx__regcache_clean(void *ptr, size_t size);
 
 static int ompi_common_mx_initialize_ref_cnt = 0;
+static int ompi_common_mx_available = 0;
 static mca_mpool_base_module_t *ompi_common_mx_fake_mpool = 0;
 
 int
@@ -44,7 +45,7 @@ ompi_common_mx_initialize(void)
 {
     mx_return_t mx_return;
     struct mca_mpool_base_resources_t mpool_resources;
-    int index, value;
+    int index, value, ret = OMPI_SUCCESS;
     
     ompi_common_mx_initialize_ref_cnt++;
     
@@ -72,7 +73,6 @@ ompi_common_mx_initialize(void)
 	      
 	      ompi_mpi_leave_pinned = 1;
 	      setenv("MX_RCACHE", "2", 1);
-	      mpool_resources.regcache_clean = mx__regcache_clean;
 	      ompi_common_mx_fake_mpool = 
 		mca_mpool_base_module_create("fake", NULL, &mpool_resources);
 	      if (!ompi_common_mx_fake_mpool) {
@@ -88,6 +88,10 @@ ompi_common_mx_initialize(void)
         mx_return = mx_init(); 
         
         if(MX_SUCCESS != mx_return) {
+            ompi_common_mx_available = -1;
+            if (ompi_common_mx_fake_mpool) {
+                mca_mpool_base_module_destroy(ompi_common_mx_fake_mpool);
+            }
             opal_output(0,
                         "Error in mx_init (error %s)\n",
                         mx_strerror(mx_return));
@@ -95,11 +99,14 @@ ompi_common_mx_initialize(void)
             ompi_common_mx_initialize_ref_cnt = 0;
             return OMPI_ERR_NOT_AVAILABLE;
         }
-        
-    } 
-    return OMPI_SUCCESS;
-}
+        ompi_common_mx_available = 1;
+        mpool_resources.regcache_clean = mx__regcache_clean;
+    } else if (ompi_common_mx_available < 0) {
+        ret = OMPI_ERR_NOT_AVAILABLE;
+    }
 
+    return ret;
+} 
 
 int
 ompi_common_mx_finalize(void)
