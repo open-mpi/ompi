@@ -87,7 +87,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
     }
     
     /* get the hnp node's info */
-    hnp_node = (orte_node_t*)(orte_node_pool->addr[0]);
+    hnp_node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
     
     /* cycle through the list */
     while (NULL != (item = opal_list_remove_first(nodes))) {
@@ -97,8 +97,8 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
          * first position since it is the first one entered. We need to check to see
          * if this node is the same as the HNP's node so we don't double-enter it
          */
-        if (0 == strcmp(node->name, hnp_node->name) ||
-            opal_ifislocal(node->name)) {
+        if (NULL != hnp_node &&
+            (0 == strcmp(node->name, hnp_node->name) || opal_ifislocal(node->name))) {
             OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
                                  "%s ras:base:node_insert updating HNP info to %ld slots",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
