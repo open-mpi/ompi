@@ -59,13 +59,14 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     
     /* if the hnp was allocated, include it unless flagged not to */
     if (orte_hnp_is_allocated) {
-        node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
-        if (ORTE_NODE_STATE_UP == node->state) {
-            OBJ_RETAIN(node);
-            opal_list_append(allocated_nodes, &node->super);
-        } else if (ORTE_NODE_STATE_DO_NOT_USE == node->state) {
-            /* clear this for future use */
-            node->state = ORTE_NODE_STATE_UP;
+        if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0))) {
+            if (ORTE_NODE_STATE_UP == node->state) {
+                OBJ_RETAIN(node);
+                opal_list_append(allocated_nodes, &node->super);
+            } else if (ORTE_NODE_STATE_DO_NOT_USE == node->state) {
+                /* clear this for future use */
+                node->state = ORTE_NODE_STATE_UP;
+            }
         }
     }
     
@@ -268,6 +269,12 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
             /** go on to next item */
             item = next;
         }
+        /** check that anything is left! */
+        if (0 == opal_list_get_size(allocated_nodes)) {
+            orte_show_help("help-orte-rmaps-base.txt",
+                           "orte-rmaps-base:nolocal-no-available-resources", true);
+            return ORTE_ERR_SILENT;
+        }
     }
     
     /* remove all nodes that are already at max usage, and
@@ -277,7 +284,6 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     num_slots = 0;
     item  = opal_list_get_first(allocated_nodes);
     while (item != opal_list_get_end(allocated_nodes)) {
-
         /** save the next pointer in case we remove this node */
         next  = opal_list_get_next(item);
 
