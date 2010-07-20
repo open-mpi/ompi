@@ -185,9 +185,6 @@ orte_default_comm_fn_t orte_comm;
 bool orte_report_child_jobs_separately;
 struct timeval orte_child_time_to_exit;
 
-/* record uri's of remote hnps */
-opal_buffer_t orte_remote_hnps;
-
 #endif /* !ORTE_DISABLE_FULL_RTE */
 
 int orte_debug_output = -1;

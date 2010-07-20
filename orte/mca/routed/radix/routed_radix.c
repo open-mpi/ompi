@@ -76,7 +76,6 @@ orte_routed_module_t orte_routed_radix_module = {
 };
 
 /* local globals */
-static opal_pointer_array_t     jobfams;
 static opal_condition_t         cond;
 static opal_mutex_t             lock;
 static orte_process_name_t      *lifeline=NULL;
@@ -89,9 +88,6 @@ static bool                     ack_recvd;
 
 static int init(void)
 {
-    OBJ_CONSTRUCT(&jobfams, opal_pointer_array_t);
-    opal_pointer_array_init(&jobfams, 16, UINT16_MAX, 32);
-    
     /* setup the global condition and lock */
     OBJ_CONSTRUCT(&cond, opal_condition_t);
     OBJ_CONSTRUCT(&lock, opal_mutex_t);
@@ -108,9 +104,8 @@ static int init(void)
 
 static int finalize(void)
 {
-    int rc, i;
+    int rc;
     opal_list_item_t *item;
-    orte_routed_jobfam_t *jfam;
 
     /* if I am an application process, indicate that I am
         * truly finalizing prior to departure
@@ -124,13 +119,6 @@ static int finalize(void)
         }
     }
     
-    for (i=0; i < jobfams.size; i++) {
-        if (NULL != (jfam = (orte_routed_jobfam_t*)opal_pointer_array_get_item(&jobfams, i))) {
-            OBJ_RELEASE(jfam);
-        }
-    }
-    OBJ_DESTRUCT(&jobfams);
-
     /* destruct the global condition and lock */
     OBJ_DESTRUCT(&cond);
     OBJ_DESTRUCT(&lock);
@@ -188,8 +176,8 @@ static int delete_route(orte_process_name_t *proc)
         
         /* see if this job family is present */
         jfamily = ORTE_JOB_FAMILY(proc->jobid);
-        for (i=0; i < jobfams.size; i++) {
-            if (NULL == (jfam = (orte_routed_jobfam_t*)opal_pointer_array_get_item(&jobfams, i))) {
+        for (i=0; i < orte_routed_jobfams.size; i++) {
+            if (NULL == (jfam = (orte_routed_jobfam_t*)opal_pointer_array_get_item(&orte_routed_jobfams, i))) {
                 continue;
             }
             if (jfam->job_family == jfamily) {
@@ -197,7 +185,7 @@ static int delete_route(orte_process_name_t *proc)
                                      "%s routed_binomial: deleting route to %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_JOB_FAMILY_PRINT(proc->jobid)));
-                opal_pointer_array_set_item(&jobfams, i, NULL);
+                opal_pointer_array_set_item(&orte_routed_jobfams, i, NULL);
                 OBJ_RELEASE(jfam);
                 return ORTE_SUCCESS;
             }
@@ -268,8 +256,8 @@ static int update_route(orte_process_name_t *target,
         
         /* see if this target is already present */
         jfamily = ORTE_JOB_FAMILY(target->jobid);
-        for (i=0; i < jobfams.size; i++) {
-            if (NULL == (jfam = (orte_routed_jobfam_t*)opal_pointer_array_get_item(&jobfams, i))) {
+        for (i=0; i < orte_routed_jobfams.size; i++) {
+            if (NULL == (jfam = (orte_routed_jobfam_t*)opal_pointer_array_get_item(&orte_routed_jobfams, i))) {
                 continue;
             }
             if (jfam->job_family == jfamily) {
@@ -293,7 +281,7 @@ static int update_route(orte_process_name_t *target,
         jfam->job_family = jfamily;
         jfam->route.jobid = route->jobid;
         jfam->route.vpid = route->vpid;
-        opal_pointer_array_add(&jobfams, jfam);
+        opal_pointer_array_add(&orte_routed_jobfams, jfam);
         return ORTE_SUCCESS;
     }
     
@@ -354,8 +342,8 @@ static orte_process_name_t get_route(orte_process_name_t *target)
          * this job family, so look it up
          */
         jfamily = ORTE_JOB_FAMILY(target->jobid);
-        for (i=0; i < jobfams.size; i++) {
-            if (NULL == (jfam = (orte_routed_jobfam_t*)opal_pointer_array_get_item(&jobfams, i))) {
+        for (i=0; i < orte_routed_jobfams.size; i++) {
+            if (NULL == (jfam = (orte_routed_jobfam_t*)opal_pointer_array_get_item(&orte_routed_jobfams, i))) {
                 continue;
             }
             if (jfam->job_family == jfamily) {
@@ -579,12 +567,9 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
          * the server - we need to pass the routing info to our HNP
          */
         if (NULL != ndat) {
-            int rc, n;
+            int rc;
             opal_buffer_t xfer;
             orte_rml_cmd_flag_t cmd=ORTE_RML_UPDATE_CMD;
-            ptrdiff_t unpack_rel;
-            bool found;
-            char *uri, *hnps;
             
             OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                                  "%s routed_radix: init routes w/non-NULL data",
@@ -615,40 +600,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                 opal_dss.copy_payload(&xfer, ndat);
 
                 /* save any new connections for use in subsequent connect_accept calls */
-                unpack_rel = orte_remote_hnps.unpack_ptr - orte_remote_hnps.base_ptr;
-                found = false;
-                n = 1;
-                while (ORTE_SUCCESS == opal_dss.unpack(ndat, &uri, &n, OPAL_STRING)) {
-                    while (ORTE_SUCCESS == opal_dss.unpack(&orte_remote_hnps, &hnps, &n, OPAL_STRING)) {
-                        /* check if we already have the incoming one */
-                        if (0 == strcmp(uri, hnps)) {
-                            found = true;
-                            free(hnps);
-                            break;
-                        }
-                        free(hnps);
-                    }
-                    if (!found) {
-                        opal_dss.pack(&orte_remote_hnps, &uri, 1, OPAL_STRING);
-                    }
-                    free(uri);
-                    found = false;
-                    orte_remote_hnps.unpack_ptr = orte_remote_hnps.base_ptr + unpack_rel;
-                }
-
-                if (9 < opal_output_get_verbosity(orte_routed_base_output)) {
-                    opal_buffer_t dng;
-                    char *dmn;
-                    int grr;
-                    OBJ_CONSTRUCT(&dng, opal_buffer_t);
-                    opal_dss.copy_payload(&dng, &orte_remote_hnps);
-                    grr = 1;
-                    while (ORTE_SUCCESS == opal_dss.unpack(&dng, &dmn, &grr, OPAL_STRING)) {
-                        opal_output(0, "%s REMOTE: %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), dmn);
-                        free(dmn);
-                    }
-                    OBJ_DESTRUCT(&dng);
-                }
+                orte_routed_base_update_hnps(ndat);
 
                 if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &xfer,
                                                    ORTE_RML_TAG_RML_INFO_UPDATE, 0))) {
@@ -962,7 +914,9 @@ static orte_vpid_t get_routing_tree(opal_list_t *children)
 static int get_wireup_info(opal_buffer_t *buf)
 {
     int rc;
-    
+    int i;
+    orte_routed_jobfam_t *jfam;
+
     if (ORTE_PROC_IS_HNP) {
         /* if we are not using static ports, then we need to share the
          * comm info - otherwise, just return
@@ -982,10 +936,12 @@ static int get_wireup_info(opal_buffer_t *buf)
      * know about, if any
      */
     if (ORTE_PROC_IS_APP) {
-         if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(buf, &orte_remote_hnps))) {
-            ORTE_ERROR_LOG(rc);
+        for (i=0; i < orte_routed_jobfams.size; i++) {
+            if (NULL != (jfam = (orte_routed_jobfam_t*)opal_pointer_array_get_item(&orte_routed_jobfams, i))) {
+                opal_dss.pack(buf, &(jfam->hnp_uri), 1, OPAL_STRING);
+            }
         }
-        return rc;
+        return ORTE_SUCCESS;
     }
 
     return ORTE_SUCCESS;

@@ -15,6 +15,7 @@
 
 #include "opal/mca/mca.h"
 
+#include "opal/class/opal_pointer_array.h"
 #include "opal/dss/dss_types.h"
 #include "opal/threads/threads.h"
 
@@ -39,10 +40,12 @@ ORTE_DECLSPEC extern opal_list_t orte_routed_base_components;
 ORTE_DECLSPEC extern opal_mutex_t orte_routed_base_lock;
 ORTE_DECLSPEC extern opal_condition_t orte_routed_base_cond;
 ORTE_DECLSPEC extern bool orte_routed_base_wait_sync;
+ORTE_DECLSPEC extern opal_pointer_array_t orte_routed_jobfams;
 
-ORTE_DECLSPEC extern int orte_routed_base_register_sync(bool setup);
-ORTE_DECLSPEC extern int orte_routed_base_process_callback(orte_jobid_t job,
-                                                           opal_buffer_t *buffer);
+ORTE_DECLSPEC int orte_routed_base_register_sync(bool setup);
+ORTE_DECLSPEC int orte_routed_base_process_callback(orte_jobid_t job,
+                                                    opal_buffer_t *buffer);
+ORTE_DECLSPEC void orte_routed_base_update_hnps(opal_buffer_t *buf);
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 
