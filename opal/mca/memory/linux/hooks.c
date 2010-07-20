@@ -39,6 +39,11 @@
 #define DEFAULT_CHECK_ACTION 1
 #endif
 
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>  /* for stat */
+#endif  /* HAVE_SYS_STAT_H */
+
+
 /* What to do if the standard debugging hooks are in place and a
    corrupt pointer is detected: do nothing (0), print an error message
    (1), or call abort() (2). */
