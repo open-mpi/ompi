@@ -43,6 +43,7 @@ typedef struct {
     opal_object_t super;
     uint16_t job_family;
     orte_process_name_t route;
+    char *hnp_uri;
 } orte_routed_jobfam_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_routed_jobfam_t);
 
