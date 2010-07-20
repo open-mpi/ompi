@@ -13,8 +13,8 @@
 .\" **************************
 .SH NAME
 .
-Open RTE MCA File Management (FileM) Framework \- Overview of Open RTE's FileM 
-framework, and selected modules.  #PACKAGE_NAME# #PACKAGE_VERSION#
+ORTE_FILEM \- Open RTE MCA File Management (FileM) Framework: Overview of Open RTE's
+FileM framework, and selected modules.  #PACKAGE_NAME# #PACKAGE_VERSION#
 .
 .\" **************************
 .\"    Description Section

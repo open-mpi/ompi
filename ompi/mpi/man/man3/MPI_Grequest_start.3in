@@ -135,7 +135,7 @@ In C++, the cancel function is
                bool \fIcomplete\fP);
 .fi
 .sp
-The \fIcancel_fn\fP function is invoked to start the cancelation of a generalized request. It is called by MPI_Request_cancel(request). MPI passes to the callback function complete=true if MPI_Grequest_complete has already been called on the request, and complete=false otherwise. 
+The \fIcancel_fn\fP function is invoked to start the cancellation of a generalized request. It is called by MPI_Request_cancel(request). MPI passes to the callback function complete=true if MPI_Grequest_complete has already been called on the request, and complete=false otherwise.
 
 .SH FORTRAN 77 NOTES
 .ft R
