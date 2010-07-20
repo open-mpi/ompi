@@ -14,8 +14,8 @@
 .\" **************************
 .SH NAME
 .
-Open PAL MCA Checkpoint/Restart Service (CRS) \- Overview of Open PAL's CRS 
-framework, and selected modules.  #PACKAGE_NAME# #PACKAGE_VERSION#. 
+OPAL_CRS \- Open PAL MCA Checkpoint/Restart Service (CRS): Overview of Open PAL's
+CRS framework, and selected modules.  #PACKAGE_NAME# #PACKAGE_VERSION#.
 .
 .\" **************************
 .\"    Description Section

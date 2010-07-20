@@ -76,7 +76,7 @@ Fortran; MPI_NULL_COPY_FN is a function that does nothing other than return flag
 .SH NOTES
 Key values are global (available for any and all communicators).
 .sp
-There are subtle differences between C and Fortran that require that the copy_fn be written in the same language that MPI_Keyval_create is called from. This should not be a problem for most users; only programers using both Fortran and C in the same program need to be sure that they follow this rule. 
+There are subtle differences between C and Fortran that require that the copy_fn be written in the same language that MPI_Keyval_create is called from. This should not be a problem for most users; only programmers using both Fortran and C in the same program need to be sure that they follow this rule.
 .sp
 Even though both formal arguments attribute_val_in
 and attribute_val_out are of type void*, their usage differs. The C copy function is passed by MPI in attribute_val_in the value of the attribute, and in attribute_val_out the address of the attribute, so as to allow the function to return the (new) attribute value. The use of type void* for both is to avoid messy type casts.  

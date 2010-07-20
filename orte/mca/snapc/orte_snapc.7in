@@ -13,8 +13,8 @@
 .\" **************************
 .SH NAME
 .
-Open RTE MCA Snapshot Coordination (SnapC) Framework \- Overview of Open RTE's SnapC 
-framework, and selected modules.  #PACKAGE_NAME# #PACKAGE_VERSION#
+ORTE_SNAPC \- Open RTE MCA Snapshot Coordination (SnapC) Framework: Overview of
+Open RTE's SnapC framework, and selected modules.  #PACKAGE_NAME# #PACKAGE_VERSION#
 .
 .\" **************************
 .\"    Description Section

@@ -11,7 +11,8 @@
 .\" **************************
 .SH NAME
 .
-OpenRTE Hostfile and HOST Behavior \- Overview of OpenRTE's support for user-supplied hostfiles and comma-delimited lists of hosts
+ORTE_HOSTS \- OpenRTE Hostfile and HOST Behavior: Overview of OpenRTE's support for user-supplied
+hostfiles and comma-delimited lists of hosts
 .
 .\" **************************
 .\"    Description Section
