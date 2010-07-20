@@ -1,3 +1,7 @@
+5.4.13
+	- fixed a bug in vtfilter: strip the '.otf'-suffix from input/output
+	  trace file names, if necessary
+
 5.4.12
 	- added support for "re-locate" an existing VampirTrace installation
 	  without re-build it from source

@@ -42,6 +42,7 @@
 
 #include <fstream>
 #include <assert.h>
+#include <stdlib.h>
 #include <string.h>
 
 using namespace std;
@@ -285,6 +286,18 @@ int main( int argc, char** argv ) {
 
 	if( err == true ) exit(1);
 
+	/* *** cut the ".otf"-suffix from input/output trace file name *** */
+	char* tmp;
+
+	tmp = OTF_stripFilename(intrace.c_str());
+	intrace = tmp;
+	free(tmp);
+	
+	if(!outtrace.empty()) {
+		tmp = OTF_stripFilename(outtrace.c_str());
+		outtrace = tmp;
+		free(tmp);
+	}
 
 	/* *** read the exclude symbols file, if there is one *** */
 	char* tfef = getenv("TRACEFILTER_EXCLUDEFILE");
@@ -320,7 +333,10 @@ int main( int argc, char** argv ) {
 		pmanager= OTF_FileManager_open( nfiles );
 		assert( pmanager );
 		preader = OTF_Reader_open( intrace.c_str(), pmanager );
-		assert( preader );
+		if( !preader ) {
+			cerr << "Could not open input trace file \"" << intrace << "\". Aborting" << endl;
+			abort();
+		}
 		phandlers = OTF_HandlerArray_open();
 		assert( phandlers );
 		OTF_MasterControl* pmc = OTF_Reader_getMasterControl( preader );
@@ -381,7 +397,7 @@ int main( int argc, char** argv ) {
 		OTF_MasterControl* mc = OTF_MasterControl_new(mcmanager);
 		assert(mc);
 		if( 0 == OTF_MasterControl_read( mc, intrace.c_str() ) ) {
-			cerr << "Could not read Master Control File. Aborting" << endl;
+			cerr << "Could not read OTF Master Control File \"" << intrace << ".otf\". Aborting" << endl;
 			abort();
 		}
 		
@@ -588,7 +604,7 @@ int main( int argc, char** argv ) {
 			
 		} else {
 		
-			cerr << "Could not open outputfile \"" << outtrace << "\". Aborting" << endl;
+			cerr << "Could not open output file \"" << outtrace << "\". Aborting" << endl;
 
 		}
 
@@ -606,11 +622,11 @@ int main( int argc, char** argv ) {
 		assert(fha.mc);
 		if( 1 == OTF_MasterControl_read( fha.mc, intrace.c_str() ) ) {
 			if( 0 == OTF_MasterControl_write( fha.mc, outtrace.c_str() ) ) {
-				cerr << "Could not write Master Control File. Aborting" << endl;
+				cerr << "Could not write OTF Master Control File \"" << outtrace << ".otf\". Aborting" << endl;
 				abort();
 			}
 		} else {
-			cerr << "Could not read Master Control File. Aborting" << endl;
+			cerr << "Could not read OTF Master Control File \"" << intrace << ".otf\". Aborting" << endl;
 			abort();
 		}
 		
