@@ -254,28 +254,11 @@ int orte_plm_base_orted_kill_local_procs(opal_pointer_array_t *procs)
     orte_process_name_t peer;
     orte_job_t *daemons;
     orte_proc_t *proc;
-    int32_t num_procs;
+    int32_t num_procs=0;
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:orted_cmd sending kill_local_procs cmds",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    /* count the number of procs */
-    num_procs = 0;
-    for (v=0; v < procs->size; v++) {
-        if (NULL == opal_pointer_array_get_item(procs, v)) {
-            continue;
-        }
-        num_procs++;
-    }
-    
-    /* bozo check */
-    if (0 == num_procs) {
-        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                             "%s plm:base:orted_cmd:kill_local_procs no procs given",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        return ORTE_SUCCESS;
-    }
     
     OBJ_CONSTRUCT(&cmd, opal_buffer_t);
     
@@ -286,6 +269,24 @@ int orte_plm_base_orted_kill_local_procs(opal_pointer_array_t *procs)
         return rc;
     }
     
+    if (NULL != procs) {
+        /* count the number of procs */
+        for (v=0; v < procs->size; v++) {
+            if (NULL == opal_pointer_array_get_item(procs, v)) {
+                continue;
+            }
+            num_procs++;
+        }
+    
+        /* bozo check */
+        if (0 == num_procs) {
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                 "%s plm:base:orted_cmd:kill_local_procs no procs given",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            return ORTE_SUCCESS;
+        }
+    }
+    
     /* pack the number of procs */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(&cmd, &num_procs, 1, OPAL_INT32))) {
         ORTE_ERROR_LOG(rc);
@@ -294,14 +295,16 @@ int orte_plm_base_orted_kill_local_procs(opal_pointer_array_t *procs)
     }
     
     /* pack the proc names */
-    for (v=0; v < procs->size; v++) {
-        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(procs, v))) {
-            continue;
-        }
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&cmd, &(proc->name), 1, ORTE_NAME))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_DESTRUCT(&cmd);
-            return rc;
+    if (NULL != procs) {
+        for (v=0; v < procs->size; v++) {
+            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(procs, v))) {
+                continue;
+            }
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(&cmd, &(proc->name), 1, ORTE_NAME))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_DESTRUCT(&cmd);
+                return rc;
+            }
         }
     }
     
