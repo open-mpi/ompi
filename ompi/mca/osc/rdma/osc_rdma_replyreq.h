@@ -9,6 +9,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -60,7 +61,7 @@ int
 ompi_osc_rdma_replyreq_alloc_init(ompi_osc_rdma_module_t *module,
                                 int origin,
                                 ompi_ptr_t origin_request,
-                                int target_displacement,
+                                OPAL_PTRDIFF_TYPE target_displacement,
                                 int target_count,
                                 struct ompi_datatype_t *datatype,
                                 ompi_osc_rdma_replyreq_t **replyreq);
