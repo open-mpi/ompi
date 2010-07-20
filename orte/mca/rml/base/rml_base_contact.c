@@ -75,13 +75,11 @@ int orte_rml_base_update_contact_info(opal_buffer_t* data)
     orte_vpid_t num_procs;
     char *rml_uri;
     orte_process_name_t name;
-    bool got_name;
     int rc;
 
     /* unpack the data for each entry */
     num_procs = 0;
     name.jobid = ORTE_JOBID_INVALID;
-    got_name = false;
     cnt = 1;
     while (ORTE_SUCCESS == (rc = opal_dss.unpack(data, &rml_uri, &cnt, OPAL_STRING))) {
         
@@ -97,24 +95,23 @@ int orte_rml_base_update_contact_info(opal_buffer_t* data)
                 free(rml_uri);
                 return(rc);
             }
-            if (!got_name) {
-                /* we only get an update from a single jobid - the command
-                 * that creates these doesn't cross jobid boundaries - so
-                 * record it here
-                 */
-                if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(rml_uri, &name, NULL))) {
-                    ORTE_ERROR_LOG(rc);
-                    free(rml_uri);
-                    return rc;
-                }
-                got_name = true;
-                /* if this is for a different job family, update the route to this proc */
-                if (ORTE_JOB_FAMILY(name.jobid) != ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
+            /* update the routing table */
+            if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(rml_uri, &name, NULL))) {
+                ORTE_ERROR_LOG(rc);
+                free(rml_uri);
+                return rc;
+            }
+            /* if this is for a different job family */
+            if (ORTE_JOB_FAMILY(name.jobid) != ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
+                if (!orte_routed.route_is_defined(&name)) {
+                    /* update the route to this proc */
                     if (ORTE_SUCCESS != (rc = orte_routed.update_route(&name, &name))) {
                         ORTE_ERROR_LOG(rc);
                         free(rml_uri);
                         return rc;
                     }
+                    /* and store the uri */
+                    opal_dss.pack(&orte_remote_hnps, &rml_uri, 1, OPAL_STRING);
                 }
             }
             free(rml_uri);

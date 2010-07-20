@@ -180,7 +180,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
 
     if ( rank == root ) {
         /* Generate the message buffer containing the number of processes and the list of
-         participating processes */
+           participating processes */
         nbuf = OBJ_NEW(opal_buffer_t);
         if (NULL == nbuf) {
             return OMPI_ERROR;
@@ -206,6 +206,19 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
             ompi_proc_pack(proc_list, size, nbuf);
         }
         
+        /* pack wireup info - this is required so that all involved parties can
+         * discover how to talk to each other. For example, consider the case
+         * where we connect_accept to one independent job (B), and then connect_accept
+         * to another one (C) to wire all three of us together. Job B will not know
+         * how to talk to job C at the OOB level because the two of them didn't
+         * directly connect_accept to each other. Hence, we include the required
+         * wireup info at this first exchange
+         */
+        if (ORTE_SUCCESS != (rc = orte_routed.get_wireup_info(nbuf))) {
+            ORTE_ERROR_LOG(rc);
+            goto exit;
+        }
+
         if (NULL != cabuf) {
             OBJ_RELEASE(cabuf);
         }
@@ -332,6 +345,15 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
         opal_list_t all_procs;
         orte_namelist_t *name;
 
+        /* we first need to give the wireup info to our routed module.
+         * Not every routed module will need it, but some do require
+         * this info before we can do any comm
+         */
+        if (ORTE_SUCCESS != (rc = orte_routed.init_routes(rprocs[0]->proc_name.jobid, nrbuf))) {
+            ORTE_ERROR_LOG(rc);
+            goto exit;
+        }
+
         OBJ_CONSTRUCT(&all_procs, opal_list_t);
 
         if (send_first) {
@@ -376,25 +398,45 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
 
         }
 
+        OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                             "%s dpm:orte:connect_accept executing modex",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
         if (OMPI_SUCCESS != (rc = orte_grpcomm.modex(&all_procs))) {
             ORTE_ERROR_LOG(rc);
             goto exit;
         }
 
+        OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                             "%s dpm:orte:connect_accept modex complete",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
         /*
-        while (NULL != (item = opal_list_remove_first(&all_procs))) {
-            OBJ_RELEASE(item);
-        }
-        OBJ_DESTRUCT(&all_procs);
+          while (NULL != (item = opal_list_remove_first(&all_procs))) {
+          OBJ_RELEASE(item);
+          }
+          OBJ_DESTRUCT(&all_procs);
         */
 
+        OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                             "%s dpm:orte:connect_accept adding procs",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
         MCA_PML_CALL(add_procs(new_proc_list, new_proc_len));
+
+        OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                             "%s dpm:orte:connect_accept new procs added",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     }
 
     OBJ_RELEASE(nrbuf);
     if ( rank == root ) {
         OBJ_RELEASE(nbuf);
     }
+
+    OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                         "%s dpm:orte:connect_accept allocating group size %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), rsize));
 
     new_group_pointer=ompi_group_allocate(rsize);
     if( NULL == new_group_pointer ) {
@@ -410,6 +452,10 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
     /* increment proc reference counters */
     ompi_group_increment_proc_count(new_group_pointer);
     
+    OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                         "%s dpm:orte:connect_accept setting up communicator",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
     /* set up communicator structure */
     rc = ompi_comm_set ( &newcomp,                 /* new comm */
                          comm,                     /* old comm */
@@ -432,6 +478,10 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
     OBJ_RELEASE(new_group_pointer);
     new_group_pointer = MPI_GROUP_NULL;
 
+    OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                         "%s dpm:orte:connect_accept allocate comm_cid",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
     /* allocate comm_cid */
     rc = ompi_comm_nextcid ( newcomp,                 /* new communicator */
                              comm,                    /* old communicator */
@@ -444,14 +494,18 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
         goto exit;
     }
 
+    OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                         "%s dpm:orte:connect_accept activate comm",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
     /* activate comm and init coll-component */
     rc = ompi_comm_activate ( &newcomp,               /* new communicator */
-                             comm,                    /* old communicator */
-                             NULL,                    /* bridge comm */
-                             &root,                   /* local leader */
-                             &carport,                /* remote leader */
-                             OMPI_COMM_CID_INTRA_OOB, /* mode */
-                             send_first );            /* send or recv first */
+                              comm,                    /* old communicator */
+                              NULL,                    /* bridge comm */
+                              &root,                   /* local leader */
+                              &carport,                /* remote leader */
+                              OMPI_COMM_CID_INTRA_OOB, /* mode */
+                              send_first );            /* send or recv first */
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -480,6 +534,10 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
     }
 
     *newcomm = newcomp;
+    OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                         "%s dpm:orte:connect_accept complete",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
     return rc;
 }
 
@@ -869,7 +927,6 @@ cleanup:
 static int route_to_port(char *rml_uri, orte_process_name_t *rproc)
 {    
     opal_buffer_t route;
-    orte_rml_cmd_flag_t cmd = ORTE_RML_UPDATE_CMD;    
     int rc;
     
     /* We need to ask the routed module to init_routes so it can do the
@@ -880,7 +937,6 @@ static int route_to_port(char *rml_uri, orte_process_name_t *rproc)
      */
     /* pack a cmd so the buffer can be unpacked correctly */
     OBJ_CONSTRUCT(&route, opal_buffer_t);
-    opal_dss.pack(&route, &cmd, 1, ORTE_RML_CMD);
     
     /* pack the provided uri */
     opal_dss.pack(&route, &rml_uri, 1, OPAL_STRING);

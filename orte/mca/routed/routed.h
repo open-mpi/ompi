@@ -180,7 +180,7 @@ typedef bool (*orte_routed_module_route_is_defined_fn_t)(const orte_process_name
  * Get wireup data for daemons
  *
  * Add whatever routing data
- * this module requires to allow inter-process messaging. Only callable by HNP.
+ * this module requires to allow inter-process messaging.
  */
 typedef int (*orte_routed_module_get_wireup_info_fn_t)(opal_buffer_t *buf);
 

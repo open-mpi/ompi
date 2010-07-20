@@ -16,8 +16,12 @@
 
 #include "opal/mca/mca.h"
 #include "opal/class/opal_bitmap.h"
+#include "opal/dss/dss.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/mca_base_component_repository.h"
+
+#include "orte/util/proc_info.h"
+#include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/routed/base/base.h"
@@ -52,6 +56,9 @@ static void destruct(orte_routed_tree_t *rt)
 OBJ_CLASS_INSTANCE(orte_routed_tree_t, opal_list_item_t,
                    construct, destruct);
 
+OBJ_CLASS_INSTANCE(orte_routed_jobfam_t, opal_object_t,
+                   NULL, NULL);
+
 int orte_routed_base_output = -1;
 orte_routed_module_t orte_routed = {0};
 opal_list_t orte_routed_base_components;
@@ -83,6 +90,11 @@ orte_routed_base_open(void)
     /* Initialize globals */
     OBJ_CONSTRUCT(&orte_routed_base_components, opal_list_t);
     
+    /* Initialize storage of remote hnp uris */
+    OBJ_CONSTRUCT(&orte_remote_hnps, opal_buffer_t);
+    /* prime it with our HNP uri */
+    opal_dss.pack(&orte_remote_hnps, &orte_process_info.my_hnp_uri, 1, OPAL_STRING);
+
     /* Open up all available components */
     ret = mca_base_components_open("routed",
                                    orte_routed_base_output,
@@ -144,6 +156,8 @@ orte_routed_base_close(void)
         orte_routed.finalize();
     }
     
+    OBJ_DESTRUCT(&orte_remote_hnps);
+
     /* shutdown any remaining opened components */
     if (component_open_called) {
         mca_base_components_close(orte_routed_base_output, 

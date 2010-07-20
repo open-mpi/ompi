@@ -14,6 +14,8 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
+#include <stddef.h>
+
 #include "opal/threads/condition.h"
 #include "opal/dss/dss.h"
 #include "opal/class/opal_hash_table.h"
@@ -597,7 +599,12 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
          * the server - we need to pass the routing info to our HNP
          */
         if (NULL != ndat) {
-            int rc;
+            int rc, n;
+            opal_buffer_t xfer;
+            orte_rml_cmd_flag_t cmd=ORTE_RML_UPDATE_CMD;
+            ptrdiff_t unpack_rel;
+            bool found;
+            char *uri, *hnps;
             
             OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                                  "%s routed_cm: init routes w/non-NULL data",
@@ -622,11 +629,54 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_HNP)));
                 
-                if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, ndat,
+                /* prep the buffer for transmission to the HNP */
+                OBJ_CONSTRUCT(&xfer, opal_buffer_t);
+                opal_dss.pack(&xfer, &cmd, 1, ORTE_RML_CMD);
+                opal_dss.copy_payload(&xfer, ndat);
+
+                /* save any new connections for use in subsequent connect_accept calls */
+                unpack_rel = orte_remote_hnps.unpack_ptr - orte_remote_hnps.base_ptr;
+                found = false;
+                n = 1;
+                while (ORTE_SUCCESS == opal_dss.unpack(ndat, &uri, &n, OPAL_STRING)) {
+                    while (ORTE_SUCCESS == opal_dss.unpack(&orte_remote_hnps, &hnps, &n, OPAL_STRING)) {
+                        /* check if we already have the incoming one */
+                        if (0 == strcmp(uri, hnps)) {
+                            found = true;
+                            free(hnps);
+                            break;
+                        }
+                        free(hnps);
+                    }
+                    if (!found) {
+                        opal_dss.pack(&orte_remote_hnps, &uri, 1, OPAL_STRING);
+                    }
+                    free(uri);
+                    found = false;
+                    orte_remote_hnps.unpack_ptr = orte_remote_hnps.base_ptr + unpack_rel;
+                }
+
+                if (9 < opal_output_get_verbosity(orte_routed_base_output)) {
+                    opal_buffer_t dng;
+                    char *dmn;
+                    int grr;
+                    OBJ_CONSTRUCT(&dng, opal_buffer_t);
+                    opal_dss.copy_payload(&dng, &orte_remote_hnps);
+                    grr = 1;
+                    while (ORTE_SUCCESS == opal_dss.unpack(&dng, &dmn, &grr, OPAL_STRING)) {
+                        opal_output(0, "%s REMOTE: %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), dmn);
+                        free(dmn);
+                    }
+                    OBJ_DESTRUCT(&dng);
+                }
+
+                if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &xfer,
                                                    ORTE_RML_TAG_RML_INFO_UPDATE, 0))) {
                     ORTE_ERROR_LOG(rc);
+                    OBJ_DESTRUCT(&xfer);
                     return rc;
                 }
+                OBJ_DESTRUCT(&xfer);
                 
                 /* wait right here until the HNP acks the update to ensure that
                  * any subsequent messaging can succeed
@@ -854,24 +904,28 @@ static int get_wireup_info(opal_buffer_t *buf)
 {
     int rc;
     
-    /* if I am anything other than the HNP, this
-     * is a meaningless command as I cannot get
-     * the requested info
-     */
-    if (!ORTE_PROC_IS_HNP) {
-        return ORTE_SUCCESS;
+    if (ORTE_PROC_IS_HNP) {
+        /* if we are not using static ports, then we need to share the
+         * comm info - otherwise, just return
+         */
+        if (orte_static_ports) {
+            return ORTE_SUCCESS;
+        }
+    
+        if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(ORTE_PROC_MY_NAME->jobid, buf))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        return rc;
     }
     
-    /* if we are not using static ports, then we need to share the
-     * comm info - otherwise, just return
+    /* if I am an application, this is occurring during connect_accept.
+     * We need to return the stored information of other HNPs we
+     * know about, if any
      */
-    if (orte_static_ports) {
-        return ORTE_SUCCESS;
-    }
-    
-    if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(ORTE_PROC_MY_NAME->jobid, buf))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(buf);
+    if (ORTE_PROC_IS_APP) {
+         if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(buf, &orte_remote_hnps))) {
+            ORTE_ERROR_LOG(rc);
+        }
         return rc;
     }
 
