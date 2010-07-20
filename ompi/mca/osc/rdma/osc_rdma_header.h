@@ -9,6 +9,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -60,7 +61,7 @@ struct ompi_osc_rdma_send_header_t {
     ompi_ptr_t hdr_origin_sendreq;
     int32_t hdr_origin_tag;
 
-    int32_t hdr_target_disp;
+    uint64_t hdr_target_disp;
     int32_t hdr_target_count;
     int32_t hdr_target_op;
 
@@ -74,7 +75,7 @@ typedef struct ompi_osc_rdma_send_header_t ompi_osc_rdma_send_header_t;
         (hdr).hdr_windx = htons((hdr).hdr_windx); \
         (hdr).hdr_origin = htonl((hdr).hdr_origin); \
         (hdr).hdr_origin_tag = htonl((hdr).hdr_origin_tag); \
-        (hdr).hdr_target_disp = htonl((hdr).hdr_target_disp); \
+        (hdr).hdr_target_disp = htonll((hdr).hdr_target_disp); \
         (hdr).hdr_target_count = htonl((hdr).hdr_target_count); \
         (hdr).hdr_target_op = htonl((hdr).hdr_target_op); \
         (hdr).hdr_msg_length = htonl((hdr).hdr_msg_length); \
@@ -86,7 +87,7 @@ typedef struct ompi_osc_rdma_send_header_t ompi_osc_rdma_send_header_t;
         (hdr).hdr_windx = ntohs((hdr).hdr_windx); \
         (hdr).hdr_origin = ntohl((hdr).hdr_origin); \
         (hdr).hdr_origin_tag = ntohl((hdr).hdr_origin_tag); \
-        (hdr).hdr_target_disp = ntohl((hdr).hdr_target_disp); \
+        (hdr).hdr_target_disp = ntohll((hdr).hdr_target_disp); \
         (hdr).hdr_target_count = ntohl((hdr).hdr_target_count); \
         (hdr).hdr_target_op = ntohl((hdr).hdr_target_op); \
         (hdr).hdr_msg_length = ntohl((hdr).hdr_msg_length); \
