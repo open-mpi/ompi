@@ -215,13 +215,17 @@ void ompi_dpm_base_disconnect_waitall (int count, ompi_dpm_base_disconnect_obj *
 /**********************************************************************/
 /**********************************************************************/
 /**********************************************************************/
-#define OMPI_DPM_BASE_MAXJOBIDS 64
+/* All we want to do in this function is determine if the number of
+ * jobids in the local and/or remote group is > 1. This tells us to
+ * set the disconnect flag. We don't actually care what the true
+ * number -is-, only that it is > 1
+ */
 void ompi_dpm_base_mark_dyncomm (ompi_communicator_t *comm)
 {
-    int i, j, numjobids=0;
+    int i;
     int size, rsize;
-    int found;
-    orte_jobid_t jobids[OMPI_DPM_BASE_MAXJOBIDS], thisjobid;
+    bool found=false;
+    orte_jobid_t thisjobid;
     ompi_group_t *grp=NULL;
     ompi_proc_t *proc = NULL;
 
@@ -233,44 +237,38 @@ void ompi_dpm_base_mark_dyncomm (ompi_communicator_t *comm)
     size  = ompi_comm_size (comm);
     rsize = ompi_comm_remote_size(comm);
 
-    /* loop over all processes in local group and count number
-       of different jobids.  */
+    /* loop over all processes in local group and check for
+     * a different jobid
+     */
     grp = comm->c_local_group;
-    for (i=0; i< size; i++) {
+    proc = ompi_group_peer_lookup(grp,0);
+    thisjobid = proc->proc_name.jobid;
+
+    for (i=1; i< size; i++) {
         proc = ompi_group_peer_lookup(grp,i);
-        thisjobid = proc->proc_name.jobid;
-        found = 0;
-        for ( j=0; j<numjobids; j++) {
-            if (thisjobid == jobids[j]) {
-                found = 1;
-                break;
-            }
-        }
-        if (!found ) {
-            jobids[numjobids++] = thisjobid;
+        if (thisjobid != proc->proc_name.jobid) {
+            found = true;
+            goto complete;
         }
     }
 
     /* if inter-comm, loop over all processes in remote_group
-       and count number of different jobids */
+     * and perform the same check
+     */
     grp = comm->c_remote_group;
-    for (i=0; i< rsize; i++) {
+    proc = ompi_group_peer_lookup(grp,0);
+    thisjobid = proc->proc_name.jobid;
+    for (i=1; i< rsize; i++) {
         proc = ompi_group_peer_lookup(grp,i);
-        thisjobid = proc->proc_name.jobid;
-        found = 0;
-        for ( j=0; j<numjobids; j++) {
-            if ( thisjobid == jobids[j]) {
-                found = 1;
-                break;
-            }
-        }
-        if (!found ) {
-            jobids[numjobids++] = thisjobid;
+        if (thisjobid != proc->proc_name.jobid) {
+            found = true;
+            break;
         }
     }
 
-    /* if number of joibds larger than one, set the disconnect flag*/
-    if ( numjobids > 1 ) {
+ complete:
+    /* if a different jobid was found, set the disconnect flag*/
+    if (found) {
         ompi_comm_num_dyncomm++;
         OMPI_COMM_SET_DYNAMIC(comm);
     }
