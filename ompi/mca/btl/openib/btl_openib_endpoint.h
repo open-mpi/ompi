@@ -503,8 +503,9 @@ static inline int post_send(mca_btl_openib_endpoint_t *ep,
 #if OPAL_ENABLE_DEBUG
 	do {
 	  ftr->seq = ep->eager_rdma_remote.seq;
-	} while (!OPAL_ATOMIC_CMPSET_32((int32_t*)&ep->eager_rdma_remote.seq, 
-					(int32_t)ftr->seq, (int32_t)ftr->seq+1));
+	} while (!OPAL_ATOMIC_CMPSET_32((int32_t*) &ep->eager_rdma_remote.seq, 
+					(int32_t) ftr->seq, 
+                                        (int32_t) (ftr->seq+1)));
 #endif
         if(ep->nbo)
             BTL_OPENIB_FOOTER_HTON(*ftr);
