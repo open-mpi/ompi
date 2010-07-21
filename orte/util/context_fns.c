@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -55,10 +55,6 @@ int orte_util_check_context_cwd(orte_app_context_t *context,
 {
     bool good = true;
     const char *tmp;
-    char hostname[MAXHOSTNAMELEN];
-    
-    /* Use hostname in a few messages below */
-    gethostname(hostname, sizeof(hostname));
     
     /* If we want to chdir and the chdir fails (for any reason -- such
        as if the dir doesn't exist, it isn't a dir, we don't have
