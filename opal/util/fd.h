@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009 Sandia National Laboratories. All rights reserved.
  *
  * $COPYRIGHT$
@@ -15,6 +15,8 @@
 #define OPAL_UTIL_FD_H_
 
 #include "opal_config.h"
+
+BEGIN_C_DECLS
 
 /**
  * Read a complete buffer from a file descriptor.
@@ -45,5 +47,7 @@ OPAL_DECLSPEC int opal_fd_read(int fd, int len, void *buffer);
  * occurs.  EAGAIN and EINTR are transparently handled.
  */
 OPAL_DECLSPEC int opal_fd_write(int fd, int len, const void *buffer);
+
+END_C_DECLS
 
 #endif
