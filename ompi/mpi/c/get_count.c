@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
@@ -17,6 +17,7 @@
  */
 #include "ompi_config.h"
 #include <stdio.h>
+#include <limits.h>
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
@@ -38,38 +39,48 @@ static const char FUNC_NAME[] = "MPI_Get_count";
 
 int MPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count) 
 {
-   size_t size = 0;
-   int rc      = MPI_SUCCESS;
+    size_t size = 0, internal_count;
+    int rc      = MPI_SUCCESS;
 
-   OPAL_CR_NOOP_PROGRESS();
+    OPAL_CR_NOOP_PROGRESS();
 
     MEMCHECKER(
-        if (status != MPI_STATUSES_IGNORE) {
-            /*
-             * Before checking the complete status, we need to reset the definedness
-             * of the MPI_ERROR-field (single-completion calls wait/test).
-             */
-            opal_memchecker_base_mem_defined(&status->MPI_ERROR, sizeof(int));
-            memchecker_status(status);
-            memchecker_datatype(datatype);
+               if (status != MPI_STATUSES_IGNORE) {
+                   /*
+                    * Before checking the complete status, we need to reset the definedness
+                    * of the MPI_ERROR-field (single-completion calls wait/test).
+                    */
+                   opal_memchecker_base_mem_defined(&status->MPI_ERROR, sizeof(int));
+                   memchecker_status(status);
+                   memchecker_datatype(datatype);
+               }
+               );
+
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        OMPI_CHECK_DATATYPE_FOR_RECV(rc, datatype, 1);
+
+        OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
+    }
+
+    if( ompi_datatype_type_size( datatype, &size ) == MPI_SUCCESS ) {
+        if( size == 0 ) {
+            *count = 0;
+        } else {
+            internal_count = status->_ucount / size; /* count the number of complete datatypes */
+            if( (internal_count * status->_ucount) != status->_ucount ) {
+                *count = MPI_UNDEFINED;
+            } else if( internal_count > ((size_t)INT_MAX) ) {
+                /* We have more elements that we can represent with a signed int, and therefore
+                 * we're outside the standard here. I don't see what should we report back
+                 * here to make it useful. So, let's return an untouched *count and trigger
+                 * an MPI_ERR_TRUNCATE.
+                 */
+                return MPI_ERR_TRUNCATE;
+            } else {
+                *count = (int)internal_count;
+            }
         }
-    );
-
-   if (MPI_PARAM_CHECK) {
-      OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-      OMPI_CHECK_DATATYPE_FOR_RECV(rc, datatype, 1);
-
-      OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
-   }
-
-   if( ompi_datatype_type_size( datatype, &size ) == MPI_SUCCESS ) {
-      if( size == 0 ) {
-         *count = 0;
-      } else {
-         *count = (int)(status->_count / size);
-         if( (int)((*count) * size) != status->_count )
-            *count = MPI_UNDEFINED;
-      }
-   }
-   return MPI_SUCCESS;
+    }
+    return MPI_SUCCESS;
 }

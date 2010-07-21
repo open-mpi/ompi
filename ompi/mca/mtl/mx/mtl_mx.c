@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -227,7 +227,7 @@ int ompi_mtl_mx_progress( void ) {
                            mtl_mx_request->super.ompi_req->req_status.MPI_SOURCE);
                 MX_GET_TAG(mx_status.match_info,
                            mtl_mx_request->super.ompi_req->req_status.MPI_TAG); 
-                mtl_mx_request->super.ompi_req->req_status._count = 
+                mtl_mx_request->super.ompi_req->req_status._ucount = 
                     mx_status.xfer_length;
             }
             /* suppose everything went just fine ... */
