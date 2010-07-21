@@ -10,6 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -27,6 +28,7 @@
 #include "ompi/constants.h"
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_pointer_array.h"
+#include "opal/util/opal_sos.h"
 
 #define OMPI_MAX_ERROR_STRING 64
 
@@ -48,13 +50,17 @@ OMPI_DECLSPEC extern opal_pointer_array_t ompi_errcodes_intern;
 OMPI_DECLSPEC extern int ompi_errcode_intern_lastused;
 
 /** 
- * Return the MPI errcode for a given internal error code
+ * Return the MPI errcode for a given internal error code.  This
+ * function guarantees to return a non-OPAL_SOS-encoded error code.
  */
 static inline int ompi_errcode_get_mpi_code(int errcode)
 {
-    int __ret = MPI_ERR_UNKNOWN;
-    int __i;
-    ompi_errcode_intern_t *__errc;
+    int ret = MPI_ERR_UNKNOWN;
+    int i;
+    ompi_errcode_intern_t *errc;
+
+    /* Transmorgify, if necessary */
+    errcode = OPAL_SOS_GET_ERROR_CODE(errcode);
 
     /* If the errcode is >= 0, then it's already an MPI error code, so
        just return it. */
@@ -64,14 +70,14 @@ static inline int ompi_errcode_get_mpi_code(int errcode)
 
     /* Otherwise, it's an internal OMPI code and we need to translate
        it */
-    for ( __i=0; __i<ompi_errcode_intern_lastused; __i++) {
-        __errc = (ompi_errcode_intern_t *)opal_pointer_array_get_item(&ompi_errcodes_intern, __i);
-        if ( __errc->code == errcode ) {
-            __ret = __errc->mpi_code;
+    for (i = 0; i < ompi_errcode_intern_lastused; i++) {
+        errc = (ompi_errcode_intern_t *)opal_pointer_array_get_item(&ompi_errcodes_intern, i);
+        if (errc->code == errcode) {
+            ret = errc->mpi_code;
             break;
         }
     }
-    return __ret;
+    return ret;
 }
 
 /**
