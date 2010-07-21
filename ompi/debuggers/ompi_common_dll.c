@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
@@ -378,8 +378,8 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
                           qh_type, ompi_status_public_t, MPI_TAG);
         ompi_field_offset(i_info->ompi_status_public_t.offset.MPI_ERROR,
                           qh_type, ompi_status_public_t, MPI_ERROR);
-        ompi_field_offset(i_info->ompi_status_public_t.offset._count,
-                          qh_type, ompi_status_public_t, _count);
+        ompi_field_offset(i_info->ompi_status_public_t.offset._ucount,
+                          qh_type, ompi_status_public_t, _ucount);
         ompi_field_offset(i_info->ompi_status_public_t.offset._cancelled,
                           qh_type, ompi_status_public_t, _cancelled);
     }

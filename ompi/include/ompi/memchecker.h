@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2010      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -289,8 +292,8 @@ static inline int memchecker_request(MPI_Request *request)
     opal_memchecker_base_isdefined (&(*request)->req_status.MPI_SOURCE, sizeof(int));
     opal_memchecker_base_isdefined (&(*request)->req_status.MPI_TAG, sizeof(int));
     opal_memchecker_base_isdefined (&(*request)->req_status.MPI_ERROR, sizeof(int));
-    opal_memchecker_base_isdefined (&(*request)->req_status._count, sizeof(int));
     opal_memchecker_base_isdefined (&(*request)->req_status._cancelled, sizeof(int));
+    opal_memchecker_base_isdefined (&(*request)->req_status._ucount, sizeof(size_t));
 #endif
 
     opal_memchecker_base_isdefined ((void*)&(*request)->req_complete, sizeof(volatile _Bool));
@@ -324,8 +327,8 @@ static inline int memchecker_status(MPI_Status *status)
     opal_memchecker_base_isdefined (&status->MPI_SOURCE, sizeof(int));
     opal_memchecker_base_isdefined (&status->MPI_TAG, sizeof(int));
     opal_memchecker_base_isdefined (&status->MPI_ERROR, sizeof(int));
-    opal_memchecker_base_isdefined (&status->_count, sizeof(int));
     opal_memchecker_base_isdefined (&status->_cancelled, sizeof(int));
+    opal_memchecker_base_isdefined (&status->_ucount, sizeof(size_t));
 
     return OMPI_SUCCESS;
 }

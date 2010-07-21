@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -45,7 +45,7 @@ int ompi_mtl_psm_iprobe(struct mca_mtl_base_module_t* mtl,
 	if(MPI_STATUS_IGNORE != status) { 
             status->MPI_SOURCE = PSM_GET_MQRANK(mqstat.msg_tag);
             status->MPI_TAG = PSM_GET_MQUTAG(mqstat.msg_tag);
-            status->_count = mqstat.nbytes;
+            status->_ucount = mqstat.nbytes;
 
             switch (mqstat.error_code) {
 	    case PSM_OK:

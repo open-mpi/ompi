@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -464,7 +464,7 @@ component_fragment_cb(ompi_osc_pt2pt_mpireq_t *mpireq)
         (ompi_osc_pt2pt_module_t*) mpireq->cbdata;
 
 
-    assert(mpireq->status._count >= (int) sizeof(ompi_osc_pt2pt_base_header_t));
+    assert(mpireq->status._ucount >= sizeof(ompi_osc_pt2pt_base_header_t));
 
     /* handle message */
     switch (((ompi_osc_pt2pt_base_header_t*) buffer->payload)->hdr_type) {

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -185,15 +185,15 @@ static inline void mca_pml_csum_free_rdma_resources(mca_pml_csum_send_request_t*
  * Mark a send request as completed at the MPI level.
  */
 
-#define MCA_PML_CSUM_SEND_REQUEST_MPI_COMPLETE(sendreq, with_signal)                  \
+#define MCA_PML_CSUM_SEND_REQUEST_MPI_COMPLETE(sendreq, with_signal)                 \
 do {                                                                                 \
    (sendreq)->req_send.req_base.req_ompi.req_status.MPI_SOURCE =                     \
        (sendreq)->req_send.req_base.req_comm->c_my_rank;                             \
    (sendreq)->req_send.req_base.req_ompi.req_status.MPI_TAG =                        \
         (sendreq)->req_send.req_base.req_tag;                                        \
    (sendreq)->req_send.req_base.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;        \
-   (sendreq)->req_send.req_base.req_ompi.req_status._count =                         \
-        (int)(sendreq)->req_send.req_bytes_packed;                                   \
+   (sendreq)->req_send.req_base.req_ompi.req_status._ucount =                        \
+        (sendreq)->req_send.req_bytes_packed;                                        \
    ompi_request_complete( &((sendreq)->req_send.req_base.req_ompi), (with_signal) ); \
                                                                                      \
    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_COMPLETE,                                \
