@@ -9,6 +9,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -63,7 +64,7 @@ struct ompi_osc_rdma_sendreq_t {
     ompi_proc_t *req_target_proc;
 
     /** displacement on target */
-    int req_target_disp;
+    OMPI_PTRDIFF_TYPE req_target_disp;
     /** datatype count on target */
     int req_target_count;
     /** datatype on target */
@@ -84,7 +85,8 @@ int
 ompi_osc_rdma_sendreq_alloc_init(ompi_osc_rdma_req_type_t req_type,
                                   void *origin_addr, int origin_count,
                                   struct ompi_datatype_t *origin_dt,
-                                  int target, int target_disp, int target_count,
+                                  int target, OMPI_PTRDIFF_TYPE target_disp, 
+				  int target_count,
                                   struct ompi_datatype_t *target_datatype,
                                   ompi_osc_rdma_module_t *module,
                                   ompi_osc_rdma_sendreq_t **sendreq);
@@ -152,7 +154,7 @@ ompi_osc_rdma_sendreq_init_origin(ompi_osc_rdma_sendreq_t *sendreq,
 
 static inline int
 ompi_osc_rdma_sendreq_init_target(ompi_osc_rdma_sendreq_t *sendreq,
-                                   int target_disp,
+                                   OMPI_PTRDIFF_TYPE target_disp,
                                    int target_count,
                                    struct ompi_datatype_t *target_datatype)
 {

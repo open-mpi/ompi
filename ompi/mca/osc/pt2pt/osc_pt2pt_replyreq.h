@@ -7,6 +7,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -59,12 +60,12 @@ OBJ_CLASS_DECLARATION(ompi_osc_pt2pt_replyreq_t);
     RETAINed for the life of the replyreq */
 int
 ompi_osc_pt2pt_replyreq_alloc_init(ompi_osc_pt2pt_module_t *module,
-                                int origin,
-                                ompi_ptr_t origin_request,
-                                int target_displacement,
-                                int target_count,
-                                struct ompi_datatype_t *datatype,
-                                ompi_osc_pt2pt_replyreq_t **replyreq);
+                                   int origin,
+                                   ompi_ptr_t origin_request,
+                                   OMPI_PTRDIFF_TYPE target_displacement,
+                                   int target_count,
+                                   struct ompi_datatype_t *datatype,
+                                   ompi_osc_pt2pt_replyreq_t **replyreq);
 
 
 static inline int

@@ -9,6 +9,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -247,7 +248,7 @@ int ompi_osc_rdma_module_put(void *origin_addr,
                              int origin_count,
                              struct ompi_datatype_t *origin_dt,
                              int target,
-                             int target_disp,
+                             OMPI_PTRDIFF_TYPE target_disp,
                              int target_count,
                              struct ompi_datatype_t *target_dt,
                              struct ompi_win_t *win);
@@ -256,7 +257,7 @@ int ompi_osc_rdma_module_accumulate(void *origin_addr,
                                     int origin_count,
                                     struct ompi_datatype_t *origin_dt,
                                     int target,
-                                    int target_disp,
+                                    OMPI_PTRDIFF_TYPE target_disp,
                                     int target_count,
                                     struct ompi_datatype_t *target_dt,
                                     struct ompi_op_t *op,
@@ -266,7 +267,7 @@ int ompi_osc_rdma_module_get(void *origin_addr,
                              int origin_count,
                              struct ompi_datatype_t *origin_dt,
                              int target,
-                             int target_disp,
+                             OMPI_PTRDIFF_TYPE target_disp,
                              int target_count,
                              struct ompi_datatype_t *target_dt,
                              struct ompi_win_t *win);

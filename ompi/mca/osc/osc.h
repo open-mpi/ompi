@@ -9,6 +9,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -27,6 +28,12 @@
 
 #ifndef OMPI_MCA_OSC_OSC_H
 #define OMPI_MCA_OSC_OSC_H
+
+#include "opal_config.h"
+
+#ifdef HAVE_STDDEF_H
+#include <stddef.h>
+#endif
 
 #include "opal/mca/mca.h"
 
@@ -187,7 +194,7 @@ typedef int (*ompi_osc_base_module_put_fn_t)(void *origin_addr,
                                             int origin_count,
                                             struct ompi_datatype_t *origin_dt,
                                             int target,
-                                            int target_disp,
+                                            OMPI_PTRDIFF_TYPE target_disp,
                                             int target_count,
                                             struct ompi_datatype_t *target_dt,
                                             struct ompi_win_t *win);
@@ -197,7 +204,7 @@ typedef int (*ompi_osc_base_module_get_fn_t)(void *origin_addr,
                                             int origin_count,
                                             struct ompi_datatype_t *origin_dt,
                                             int target,
-                                            int target_disp,
+                                            OMPI_PTRDIFF_TYPE target_disp,
                                             int target_count,
                                             struct ompi_datatype_t *target_dt,
                                             struct ompi_win_t *win);
@@ -207,7 +214,7 @@ typedef int (*ompi_osc_base_module_accumulate_fn_t)(void *origin_addr,
                                                    int origin_count,
                                                    struct ompi_datatype_t *origin_dt,
                                                    int target,
-                                                   int target_disp,
+                                                   OMPI_PTRDIFF_TYPE target_disp,
                                                    int target_count,
                                                    struct ompi_datatype_t *target_dt,
                                                    struct ompi_op_t *op,
