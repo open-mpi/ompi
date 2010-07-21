@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -26,9 +26,11 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
+
 #include "opal/prefetch.h"
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_pointer_array.h"
+
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/errhandler/errhandler_predefined.h"
 #include "ompi/errhandler/errcode-internal.h"
@@ -208,7 +210,7 @@ struct ompi_request_t;
   ompi_errhandler_invoke((mpi_object)->error_handler, \
 			 (mpi_object), \
                          (int)(mpi_object)->errhandler_type, \
-                         (err_code < 0 ? (ompi_errcode_get_mpi_code(err_code)) : err_code), \
+                         ompi_errcode_get_mpi_code(err_code), \
 			 (message));
 
 /**
@@ -226,7 +228,7 @@ struct ompi_request_t;
  */
 #define OMPI_ERRHANDLER_CHECK(rc, mpi_object, err_code, message) \
   if( OPAL_UNLIKELY(rc != OMPI_SUCCESS) ) { \
-    int __mpi_err_code = (err_code < 0 ? (ompi_errcode_get_mpi_code(err_code)) : err_code); \
+    int __mpi_err_code = ompi_errcode_get_mpi_code(err_code);         \
     OPAL_CR_EXIT_LIBRARY() \
     ompi_errhandler_invoke((mpi_object)->error_handler, \
 			   (mpi_object), \
@@ -254,7 +256,7 @@ struct ompi_request_t;
 #define OMPI_ERRHANDLER_RETURN(rc, mpi_object, err_code, message) \
   OPAL_CR_EXIT_LIBRARY() \
   if ( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) { \
-    int __mpi_err_code = (err_code < 0 ? (ompi_errcode_get_mpi_code(err_code)) : err_code); \
+    int __mpi_err_code = ompi_errcode_get_mpi_code(err_code);         \
     ompi_errhandler_invoke((mpi_object)->error_handler, \
                            (mpi_object), \
                            (int)(mpi_object)->errhandler_type, \
