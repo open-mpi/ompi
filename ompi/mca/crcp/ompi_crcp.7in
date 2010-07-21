@@ -8,8 +8,8 @@
 .\" **************************
 .SH NAME
 .
-Open MPI MCA Checkpoint/Restart Coordination Protocol (CRCP) Framework \- Overview of Open MPI's CRCP 
-framework, and selected modules.  #PACKAGE_NAME# #PACKAGE_VERSION#
+OMPI_CRCP \- Open MPI MCA Checkpoint/Restart Coordination Protocol (CRCP) Framework:
+Overview of Open MPI's CRCP framework, and selected modules.  #PACKAGE_NAME# #PACKAGE_VERSION#
 .
 .\" **************************
 .\"    Description Section
