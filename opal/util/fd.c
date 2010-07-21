@@ -44,10 +44,10 @@ int opal_fd_read(int fd, int len, void *buffer)
 /*
  * Simple loop over writing to an fd
  */
-int opal_fd_write(int fd, int len, void *buffer)
+int opal_fd_write(int fd, int len, const void *buffer)
 {
     int rc;
-    char *b = buffer;
+    const char *b = buffer;
 
     while (len > 0) {
         rc = write(fd, b, len);

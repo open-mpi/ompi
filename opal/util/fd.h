@@ -44,6 +44,6 @@ OPAL_DECLSPEC int opal_fd_read(int fd, int len, void *buffer);
  * Loop over writing to the fd until len bytes are written or an error
  * occurs.  EAGAIN and EINTR are transparently handled.
  */
-OPAL_DECLSPEC int opal_fd_write(int fd, int len, void *buffer);
+OPAL_DECLSPEC int opal_fd_write(int fd, int len, const void *buffer);
 
 #endif
