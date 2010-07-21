@@ -883,9 +883,13 @@ void mca_pml_bfo_repost_match_fragment(struct mca_btl_base_descriptor_t* des)
     bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
 
     if (des->des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
-        /* Reset the converter to the beginning */
-        opal_convertor_set_position(&sendreq->req_send.req_base.req_convertor,
-                                    &offset);
+        /* Reset the converter to the beginning if the message is
+         * not a zero-length message.  In the case of zero-length
+         * message, the convertor is not being used. */
+        if (0 != sendreq->req_send.req_bytes_packed) {
+            opal_convertor_set_position(&sendreq->req_send.req_base.req_convertor,
+                                        &offset);
+        }
         rc = mca_pml_bfo_send_request_start_btl(sendreq, bml_btl);
         if (OMPI_SUCCESS == rc) {
             return;
