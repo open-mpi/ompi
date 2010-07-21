@@ -89,7 +89,13 @@
 # OMPI suppressions
 #
 ###############################################################
-
+{
+  tcp_send
+  Memcheck:Param
+  fun:writev
+  fun:mca_btl_tcp_frag_send
+  fun:mca_btl_tcp_endpoint_send
+}
 
 ###############################################################
 #
