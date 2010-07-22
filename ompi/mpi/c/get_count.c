@@ -69,7 +69,7 @@ int MPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count)
             *count = 0;
         } else {
             internal_count = status->_ucount / size; /* count the number of complete datatypes */
-            if( (internal_count * status->_ucount) != status->_ucount ) {
+            if( (internal_count * size) != status->_ucount ) {
                 *count = MPI_UNDEFINED;
             } else if( internal_count > ((size_t)INT_MAX) ) {
                 /* We have more elements that we can represent with a
