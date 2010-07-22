@@ -1,3 +1,4 @@
+.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\"Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Scatter 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
@@ -135,7 +136,7 @@ Because the in-place option converts the receive buffer into a send-and-receive 
 When the communicator is an inter-communicator, the root process in the first group sends data to all processes in the second group.  The first group defines the root process.  That process uses MPI_ROOT as the value of its \fIroot\fR argument.  The remaining processes use MPI_PROC_NULL as the value of their \fIroot\fR argument.  All processes in the second group use the rank of that root process in the first group as the value of their \fIroot\fR argument.   The receive buffer argument of the root process in the first group must be consistent with the receive buffer argument of the processes in the second group.   
 .sp  
 .SH ERRORS
-Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI:Exception object.
+Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
 .sp
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.  
