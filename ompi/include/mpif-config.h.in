@@ -10,7 +10,7 @@
 !                         University of Stuttgart.  All rights reserved.
 ! Copyright (c) 2004-2005 The Regents of the University of California.
 !                         All rights reserved.
-! Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -88,7 +88,7 @@
 !     Miscellaneous constants
 !
       integer MPI_STATUS_SIZE
-      parameter (MPI_STATUS_SIZE=5)
+      parameter (MPI_STATUS_SIZE=@OMPI_FORTRAN_STATUS_SIZE@)
 !
 !     Configurable length constants
 !

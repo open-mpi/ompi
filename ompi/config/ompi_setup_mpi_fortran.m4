@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 #                         reserved. 
@@ -114,6 +114,30 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     OMPI_F77_GET_VALUE_TRUE
     OMPI_F77_CHECK_LOGICAL_ARRAY
     
+    # How big should MPI_STATUS_SIZE be?  (i.e., the size of
+    # MPI_STATUS, expressed in units of Fortran INTEGERs).  The C
+    # equivalent of MPI_Status contains 4 C ints and a size_t.
+
+    AC_MSG_CHECKING([for the value of MPI_STATUS_SIZE])
+    OMPI_FORTRAN_STATUS_SIZE=0
+    if test $OMPI_WANT_F77_BINDINGS -eq 0; then
+        AC_MSG_RESULT([skipped (no Fortran bindings)])
+    else
+        bytes=`expr 4 \* $ac_cv_sizeof_int + $ac_cv_sizeof_size_t`
+        num_integers=`expr $bytes / $OMPI_SIZEOF_FORTRAN_INTEGER`
+        sanity=`expr $num_integers \* $OMPI_SIZEOF_FORTRAN_INTEGER`
+        AS_IF([test "$sanity" != "$bytes"],
+              [AC_MSG_RESULT([unknown!])
+               AC_MSG_WARN([WARNING: Size of C int: $ac_cv_sizeof_int])
+               AC_MSG_WARN([WARNING: Size of C size_t: $ac_cv_sizeof_size_t])
+               AC_MSG_WARN([WARNING: Size of Fortran INTEGER: $OMPI_SIZEOF_FORTRAN_INTEGER])
+               AC_MSG_WARN([Could not make this work out evenly...!])
+               AC_MSG_ERROR([Cannot continue])])
+        OMPI_FORTRAN_STATUS_SIZE=$num_integers
+        AC_MSG_RESULT([$OMPI_FORTRAN_STATUS_SIZE Fortran INTEGERs])
+    fi
+    AC_SUBST(OMPI_FORTRAN_STATUS_SIZE)
+
     #
     # There are 2 layers to the MPI f77 layer. The only extra thing that
     # determine f77 bindings is that fortran can be disabled by user. In
