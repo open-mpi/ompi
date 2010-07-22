@@ -96,7 +96,7 @@ AC_DEFUN([MCA_paffinity_hwloc_CONFIG],[
 
     # If we are not building internal, then run all the normal checks
     AS_IF([test "$paffinity_hwloc_location" != "internal" -a "$paffinity_hwloc_location" != "no"],
-          [AS_IF([test ! -z "$paffinity_hwloc_location" -a "$paffinity_hwloc_location" != "yes"],
+          [AS_IF([test ! -z "$paffinity_hwloc_location" -a "$paffinity_hwloc_location" != "yes" -a "$paffinity_hwloc_location" != "external"],
                  [opal_check_hwloc_dir=$paffinity_hwloc_location
                   AC_MSG_RESULT([external install ($paffinity_hwloc_location)])],
                  [AC_MSG_RESULT([external install (default search paths)])])
