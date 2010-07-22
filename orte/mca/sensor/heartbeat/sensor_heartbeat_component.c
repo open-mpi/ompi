@@ -82,11 +82,18 @@ static int orte_sensor_heartbeat_open(void)
 
 
 static int orte_sensor_heartbeat_query(mca_base_module_t **module, int *priority)
-{    
-    *priority = 10;  /* use if we were built */
-    *module = (mca_base_module_t *)&orte_sensor_heartbeat_module;
+{
+    /* only usable by daemons and HNPs */
+    if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
+        *priority = 10;  /* use if we were built */
+        *module = (mca_base_module_t *)&orte_sensor_heartbeat_module;
+        return ORTE_SUCCESS;
+    }
     
-    return ORTE_SUCCESS;
+    /* otherwise, we are not available */
+    *priority = 0;
+    *module = NULL;
+    return ORTE_ERROR;
 }
 
 /**
