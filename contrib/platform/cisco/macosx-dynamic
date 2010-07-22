@@ -1,4 +1,4 @@
-enable_heartbeat=no
+enable_heartbeat=yes
 enable_multicast=yes
 enable_sensors=yes
 enable_opal_multi_threads=yes
