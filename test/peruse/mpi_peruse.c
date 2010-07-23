@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -92,8 +96,8 @@ static int collective_dump_events_trace( void )
             MPI_Status status;
 
             MPI_Probe( i, 1111, comm_result, &status );
-            MPI_Recv( array_of_comm_spec, status._count, MPI_BYTE, i, 1111, comm_result, &status );
-            current_array_of_comm_spec_index = status._count / sizeof(peruse_timed_events_t);
+            MPI_Recv( array_of_comm_spec, status._ucount, MPI_BYTE, i, 1111, comm_result, &status );
+            current_array_of_comm_spec_index = status._ucount / sizeof(peruse_timed_events_t);
             print_generated_events( i, array_of_comm_spec, current_array_of_comm_spec_index );
         }
         printf( "\n\n\n\n\n" );
