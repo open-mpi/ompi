@@ -210,9 +210,13 @@ static void send_heartbeat(int fd, short event, void *arg)
     int rc;
     
     /* if we are aborting or shutting down, ignore this */
-    if (orte_abnormal_term_ordered || orte_finalizing) {
+    if (orte_abnormal_term_ordered || orte_finalizing || !orte_initialized) {
         return;
     }
+
+    OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+                         "%s sending heartbeat",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     /* setup the buffer - nothing to pack as receipt alone is the "beat" */
     buf = OBJ_NEW(opal_buffer_t);
@@ -257,7 +261,7 @@ static void check_heartbeat(int fd, short dummy, void *arg)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* if we are aborting or shutting down, ignore this */
-    if (orte_abnormal_term_ordered || orte_finalizing) {
+    if (orte_abnormal_term_ordered || orte_finalizing || !orte_initialized) {
         return;
     }
     
@@ -304,14 +308,19 @@ static void recv_rmcast_beats(int status,
     orte_nid_t *nid;
     
     /* if we are aborting or shutting down, ignore this */
-    if (orte_abnormal_term_ordered || orte_finalizing) {
+    if (orte_abnormal_term_ordered || orte_finalizing || !orte_initialized) {
         return;
     }
     
+    OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+                         "%s recvd heartbeat from %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(sender)));
+
     /* get this daemon's nid */
     if (NULL == (nid = orte_util_lookup_nid(sender))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return;
+        exit(1);
     }
     
     /* update its time */
@@ -335,10 +344,15 @@ static void recv_rml_beats(int status, orte_process_name_t* sender,
     orte_nid_t *nid;
     
     /* if we are aborting or shutting down, ignore this */
-    if (orte_abnormal_term_ordered || orte_finalizing) {
+    if (orte_abnormal_term_ordered || orte_finalizing || !orte_intialized) {
         return;
     }
-    
+
+    OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+                         "%s recvd heartbeat from %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(sender)));
+
     /* get this daemon's nid */
     if (NULL == (nid = orte_util_lookup_nid(sender))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
