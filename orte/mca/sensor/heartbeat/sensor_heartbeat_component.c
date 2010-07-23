@@ -59,13 +59,13 @@ static int orte_sensor_heartbeat_open(void)
 
     /* lookup parameters */
     mca_base_param_reg_int(c, "beat",
-                           "Heartbeat rate in milliseconds (default=1)",
-                           false, false, 1,  &tmp);
+                           "Heartbeat rate in milliseconds (default=100)",
+                           false, false, 100,  &tmp);
     mca_sensor_heartbeat_component.beat = tmp;
     
     mca_base_param_reg_int(c, "check",
-                           "Check for failure rate in milliseconds (default=5)",
-                           false, false, 5,  &tmp);
+                           "Check for failure rate in milliseconds (default=500)",
+                           false, false, 500,  &tmp);
     mca_sensor_heartbeat_component.check = tmp;
     
     mca_base_param_reg_int(c, "missed",
