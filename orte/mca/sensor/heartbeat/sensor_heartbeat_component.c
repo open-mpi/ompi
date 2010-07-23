@@ -61,10 +61,6 @@ static int orte_sensor_heartbeat_open(void)
     mca_base_param_reg_int(c, "beat",
                            "Heartbeat rate in milliseconds (default=1)",
                            false, false, 1,  &tmp);
-    if (tmp < 0) {
-        opal_output(0, "Illegal value %d - must be > 0", tmp);
-        return ORTE_ERR_FATAL;
-    }
     mca_sensor_heartbeat_component.beat = tmp;
     
     mca_base_param_reg_int(c, "check",
@@ -84,7 +80,8 @@ static int orte_sensor_heartbeat_open(void)
 static int orte_sensor_heartbeat_query(mca_base_module_t **module, int *priority)
 {
     /* only usable by daemons and HNPs */
-    if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
+    if (0 < mca_sensor_heartbeat_component.beat &&
+        (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP)) {
         *priority = 10;  /* use if we were built */
         *module = (mca_base_module_t *)&orte_sensor_heartbeat_module;
         return ORTE_SUCCESS;
