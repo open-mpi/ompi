@@ -356,6 +356,10 @@ process:
             if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, v))) {
                 continue;
             }
+            if (NULL == proc->rml_uri) {
+                /* not ready yet - don't know contact info */
+                continue;
+            }
             if (0 > (rc = orte_rml.send_buffer(&proc->name, buf, ORTE_RML_TAG_MULTICAST, 0))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
@@ -366,6 +370,10 @@ process:
              item != opal_list_get_end(&orte_local_children);
              item = opal_list_get_next(item)) {
             child = (orte_odls_child_t*)item;
+            if (NULL == child->rml_uri) {
+                /* race condition - hasn't reported in yet */
+                continue;
+            }
             if (0 > (rc = orte_rml.send_buffer(child->name, buf, ORTE_RML_TAG_MULTICAST, 0))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
