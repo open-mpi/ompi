@@ -35,7 +35,7 @@
 */
 
 #if !defined(__linux__)
-/* This test currently only works on Linux
+/* This test currently only works on Linux */
 int main(int argc, char* argv[])
 {
     return 77;
