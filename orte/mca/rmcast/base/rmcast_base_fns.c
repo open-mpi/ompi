@@ -194,7 +194,15 @@ int orte_rmcast_base_queue_recv(rmcast_base_recv_t **recvptr,
     if (NULL != recvptr) {
         *recvptr = rptr;
     }
-    opal_list_append(&orte_rmcast_base.recvs, &rptr->item);
+
+    /* wildcard tag recvs get pushed to the end of the list so
+     * that specific tag recvs take precedence
+     */
+    if (ORTE_RMCAST_TAG_WILDCARD == tag) {
+        opal_list_append(&orte_rmcast_base.recvs, &rptr->item);
+    } else {
+        opal_list_prepend(&orte_rmcast_base.recvs, &rptr->item);
+    }
     OPAL_THREAD_UNLOCK(&orte_rmcast_base.lock);
     
     return ORTE_SUCCESS;
