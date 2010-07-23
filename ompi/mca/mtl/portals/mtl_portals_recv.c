@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -112,7 +112,7 @@ ompi_mtl_portals_recv_progress(ptl_event_t *ev,
         ptl_request->super.ompi_req->req_status.MPI_ERROR = 
             (ev->rlength > ev->mlength) ?
             MPI_ERR_TRUNCATE : MPI_SUCCESS;
-        ptl_request->super.ompi_req->req_status._count = 
+        ptl_request->super.ompi_req->req_status._ucount =
             ev->mlength;
 
         OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
@@ -129,7 +129,7 @@ ompi_mtl_portals_recv_progress(ptl_event_t *ev,
 
         /* set the status - most of this filled in right after issuing
            the PtlGet*/
-        ptl_request->super.ompi_req->req_status._count = 
+        ptl_request->super.ompi_req->req_status._ucount = 
             ev->mlength;
 
         OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
@@ -231,7 +231,7 @@ ompi_mtl_portals_get_data(ompi_mtl_portals_event_t *recv_event,
         ptl_request->super.ompi_req->req_status.MPI_ERROR = 
             (recv_event->ev.rlength > buflen) ?
             MPI_ERR_TRUNCATE : MPI_SUCCESS;
-        ptl_request->super.ompi_req->req_status._count = 
+        ptl_request->super.ompi_req->req_status._ucount = 
             recv_event->ev.mlength;
 
         OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
@@ -51,7 +51,7 @@ int ompi_request_default_wait(
            3.2.5, p.22 */
         status->MPI_TAG    = req->req_status.MPI_TAG;
         status->MPI_SOURCE = req->req_status.MPI_SOURCE;
-        status->_count     = req->req_status._count;
+        status->_ucount    = req->req_status._ucount;
         status->_cancelled = req->req_status._cancelled;
     }
     if( req->req_persistent ) {

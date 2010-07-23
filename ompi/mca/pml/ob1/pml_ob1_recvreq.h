@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
@@ -163,11 +163,11 @@ recv_request_pml_complete(mca_pml_ob1_recv_request_t *recvreq)
     } else {
         /* initialize request status */
         recvreq->req_recv.req_base.req_pml_complete = true;
-        recvreq->req_recv.req_base.req_ompi.req_status._count =
-            (int)recvreq->req_bytes_received;
+        recvreq->req_recv.req_base.req_ompi.req_status._ucount =
+            recvreq->req_bytes_received;
         if (recvreq->req_recv.req_bytes_packed > recvreq->req_bytes_expected) {
-            recvreq->req_recv.req_base.req_ompi.req_status._count =
-                (int)recvreq->req_recv.req_bytes_packed;
+            recvreq->req_recv.req_base.req_ompi.req_status._ucount =
+                recvreq->req_recv.req_bytes_packed;
             recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR =
                 MPI_ERR_TRUNCATE;
         }

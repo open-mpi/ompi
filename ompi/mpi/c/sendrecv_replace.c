@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
@@ -119,9 +119,9 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
         }
 
         /* unpack into users buffer */
-        iov.iov_len = recv_status._count;
+        iov.iov_len = recv_status._ucount;
         iov_count = 1;
-        max_data = recv_status._count;
+        max_data = recv_status._ucount;
         opal_convertor_unpack(&convertor, &iov, &iov_count, &max_data );
 
         /* return status to user */

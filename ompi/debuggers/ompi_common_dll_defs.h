@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -220,8 +220,8 @@ typedef struct
             int MPI_SOURCE;
             int MPI_TAG;
             int MPI_ERROR;
-            int _count;
             int _cancelled;
+            int _ucount;  /* size_t */
         } offset;
     } ompi_status_public_t;
     /* datatype structure */

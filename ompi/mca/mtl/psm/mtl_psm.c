@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -393,8 +393,8 @@ int ompi_mtl_psm_progress( void ) {
 		    PSM_GET_MQRANK(psm_status.msg_tag);
 	    mtl_psm_request->super.ompi_req->req_status.MPI_TAG =
 		    PSM_GET_MQUTAG(psm_status.msg_tag);
-            mtl_psm_request->super.ompi_req->req_status._count = 
-                    psm_status.nbytes;
+        mtl_psm_request->super.ompi_req->req_status._ucount = 
+            psm_status.nbytes;
 	}
 	
 	if(mtl_psm_request->type == OMPI_MTL_PSM_ISEND) { 
