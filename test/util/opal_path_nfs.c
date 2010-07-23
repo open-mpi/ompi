@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010      Oak Ridge National Laboratory.  
  *                         All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -32,6 +33,15 @@
 /*
 #define DEBUG
 */
+
+#if !defined(__linux__)
+/* This test currently only works on Linux
+int main(int argc, char* argv[])
+{
+    return 77;
+}
+
+#else /* __linux__ */
 
 static void test(char* file, bool expect);
 static void get_mounts (int * num_dirs, char ** dirs[], bool ** nfs);
@@ -57,15 +67,10 @@ int main(int argc, char* argv[])
                     i, argv[i], opal_path_nfs (argv[i]) ? "Yes": "No");
     }
 
-#ifdef __linux__
     get_mounts (&num_dirs, &dirs, &nfs);
     while (num_dirs--) {
         test (dirs[num_dirs], nfs[num_dirs]);
     }
-#endif
-
-#ifdef __WINDOWS__
-#endif
 
     /* All done */
     return test_finalize();
@@ -167,3 +172,4 @@ out:
     *nfs = nfs_tmp;
 }
 
+#endif /* __linux__ */
