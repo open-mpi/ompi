@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2007      Sandia National Laboratories. All rights reserved.
+# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow

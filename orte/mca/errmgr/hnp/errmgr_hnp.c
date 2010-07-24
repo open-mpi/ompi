@@ -185,6 +185,19 @@ static int update_state(orte_jobid_t job,
                              orte_job_state_to_str(jobstate)));
 
         switch (jobstate) {
+        case ORTE_JOB_STATE_TERMINATED:
+            /* support batch-operated jobs */
+            update_local_procs_in_job(jdata, jobstate, ORTE_PROC_STATE_TERMINATED, 0);
+            jdata->num_terminated = jdata->num_procs;
+            check_job_complete(jdata);
+            break;
+
+        case ORTE_JOB_STATE_ABORTED:
+            /* support batch-operated jobs */
+            update_local_procs_in_job(jdata, jobstate, ORTE_PROC_STATE_ABORTED, exit_code);
+            jdata->num_terminated = jdata->num_procs;
+            check_job_complete(jdata);
+
         case ORTE_JOB_STATE_FAILED_TO_START:
             failed_start(jdata);
             check_job_complete(jdata);  /* set the local proc states */
