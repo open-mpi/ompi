@@ -5,7 +5,7 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2009 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
@@ -17,28 +17,31 @@
 # $HEADER$
 #
 
+# Use the top-level Makefile.options
+
+
 sources = \
-        ess_generic.h \
-        ess_generic_component.c \
-        ess_generic_module.c
+        plm_poe.h \
+        plm_poe_component.c \
+        plm_poe.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_ess_generic_DSO
+if OMPI_BUILD_plm_poe_DSO
 component_noinst =
-component_install = mca_ess_generic.la
+component_install = mca_plm_poe.la
 else
-component_noinst = libmca_ess_generic.la
+component_noinst = libmca_plm_poe.la
 component_install =
 endif
 
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
-mca_ess_generic_la_SOURCES = $(sources)
-mca_ess_generic_la_LDFLAGS = -module -avoid-version
+mca_plm_poe_la_SOURCES = $(sources)
+mca_plm_poe_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
-libmca_ess_generic_la_SOURCES =$(sources)
-libmca_ess_generic_la_LDFLAGS = -module -avoid-version
+libmca_plm_poe_la_SOURCES =$(sources)
+libmca_plm_poe_la_LDFLAGS = -module -avoid-version

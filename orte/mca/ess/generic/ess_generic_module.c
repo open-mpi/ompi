@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -103,14 +104,15 @@ static int rte_init(void)
 {
     int ret;
     char *error = NULL;
-    char **nodes = NULL;
+    char **nodes = NULL, **ppnlist = NULL;
     char *envar;
     int32_t jobfam;
-    int i, j, ppn;
+    int i, j, *ppn;
     orte_nid_t *node;
     orte_jmap_t *jmap;
     orte_pmap_t *pmap;
     orte_vpid_t vpid;
+    bool byslot;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -123,6 +125,15 @@ static int rte_init(void)
      * our own global info so we can startup.
      */
     
+    /* ensure that static ports were assigned - otherwise, we cant
+     * work since we won't know how to talk to anyone else
+     */
+    if (NULL == getenv("OMPI_MCA_oob_tcp_static_ports") &&
+        NULL == getenv("OMPI_MCA_oob_tcp_static_ports_v6")) {
+        error = "static ports were not assigned";
+        goto error;
+    }
+
     /* declare ourselves to be standalone - i.e., not launched by orted */
     orte_standalone_operation = true;
     
@@ -171,7 +182,27 @@ static int rte_init(void)
         error = "could not get ppn";
         goto error;
     }
-    ppn = strtol(envar, NULL, 10);
+    ppnlist = opal_argv_split(envar, ',');
+    ppn = (int*)malloc(orte_process_info.num_nodes * sizeof(int));
+    if (1 == opal_argv_count(ppnlist)) {
+        /* constant ppn */
+        j = strtol(ppnlist[0], NULL, 10);
+        for (i=0; i < orte_process_info.num_nodes; i++) {
+            ppn[i] = j;
+        }
+    } else {
+        for (i=0; i < orte_process_info.num_nodes; i++) {
+            ppn[i] = strtol(ppnlist[i], NULL, 10);
+        }
+    }
+    opal_argv_free(ppnlist);
+
+    /* get the mapping mode - default to byslot */
+    byslot = true;
+    if (NULL != (envar = getenv("OMPI_MCA_mapping")) &&
+        0 == strcmp(envar, "bynode")) {
+        byslot = false;
+    }
 
     /* setup the nidmap arrays */
     if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(NULL))) {
@@ -186,6 +217,16 @@ static int rte_init(void)
         goto error;
     }
     
+    /* construct the nidmap */
+    for (i=0; i < orte_process_info.num_nodes; i++) {
+        node = OBJ_NEW(orte_nid_t);
+        node->name = strdup(nodes[i]);
+        node->daemon = i;
+        node->index = i;
+        opal_pointer_array_set_item(&orte_nidmap, i, node);
+    }
+    opal_argv_free(nodes);
+
     /* create a job map for this job */
     jmap = OBJ_NEW(orte_jmap_t);
     jmap->job = ORTE_PROC_MY_NAME->jobid;
@@ -199,33 +240,56 @@ static int rte_init(void)
         goto error;
     }
 
-    /* construct the nidmap and pidmap */
-    vpid = 0;
-    for (i=0; NULL != nodes[i]; i++) {
-        node = OBJ_NEW(orte_nid_t);
-        node->name = strdup(nodes[i]);
-        node->daemon = i;
-        node->index = i;
-        opal_pointer_array_set_item(&orte_nidmap, i, node);
-        /* for each node, cycle through the ppn */
-        for (j=0; j < ppn; j++) {
-            pmap = OBJ_NEW(orte_pmap_t);
-            pmap->node = node->index;
-            pmap->local_rank = j;
-            pmap->node_rank = j;
-            if (ORTE_SUCCESS != (ret = opal_pointer_array_set_item(&jmap->pmap, vpid, pmap))) {
-                ORTE_ERROR_LOG(ret);
-                error = "could not set pmap values";
-                goto error;
+    /* construct the pidmap */
+    if (byslot) {
+        vpid = 0;
+        for (i=0; i < orte_process_info.num_nodes; i++) {
+            node = (orte_nid_t*)opal_pointer_array_get_item(&orte_nidmap, i);
+            /* for each node, cycle through the ppn */
+            for (j=0; j < ppn[i]; j++) {
+                pmap = OBJ_NEW(orte_pmap_t);
+                pmap->node = i;
+                pmap->local_rank = j;
+                pmap->node_rank = j;
+                if (ORTE_SUCCESS != (ret = opal_pointer_array_set_item(&jmap->pmap, vpid, pmap))) {
+                    ORTE_ERROR_LOG(ret);
+                    error = "could not set pmap values";
+                    goto error;
+                }
+                OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
+                                     "%s node %d name %s rank %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     (int) node->index, node->name, ORTE_VPID_PRINT(vpid)));
+                vpid++;
             }
-            OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
-                                 "%s node %d name %s rank %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 (int) node->index, node->name, ORTE_VPID_PRINT(vpid)));
-            vpid++;
+        }
+    } else {
+        /* cycle across the nodes */
+        vpid = 0;
+        while (vpid < orte_process_info.num_procs) {
+            for (i=0; i < orte_process_info.num_nodes && vpid < orte_process_info.num_procs; i++) {
+                node = (orte_nid_t*)opal_pointer_array_get_item(&orte_nidmap, i);
+                if (0 < ppn[i]) {
+                    pmap = OBJ_NEW(orte_pmap_t);
+                    pmap->node = i;
+                    pmap->local_rank = ppn[i]-1;
+                    pmap->node_rank = ppn[i]-1;
+                    if (ORTE_SUCCESS != (ret = opal_pointer_array_set_item(&jmap->pmap, vpid, pmap))) {
+                        ORTE_ERROR_LOG(ret);
+                        error = "could not set pmap values";
+                        goto error;
+                    }
+                    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
+                                         "%s node %d name %s rank %d",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         (int) node->index, node->name, (int)vpid));
+                    vpid++;
+                    --ppn[i];
+                }
+            }
         }
     }
-    opal_argv_free(nodes);
+    free(ppn);
 
     /* ensure we pick the correct critical components */
     putenv("OMPI_MCA_grpcomm=hier");
