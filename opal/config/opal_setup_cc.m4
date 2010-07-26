@@ -215,6 +215,24 @@ AC_DEFUN([OMPI_SETUP_CC],[
         unset add
     fi
 
+    # If we're on OS X and -g is in CFLAGS, then see if the -gstabs+
+    # compiler flag works.  If it does, then add it to CFLAGS.
+    case "$host" in
+        *apple-darwin*)
+            dashg=`echo $CFLAGS | grep -- -g`
+            AS_IF([test "$dashg" != ""],
+                  [CFLAGS_save=$CFLAGS
+                   CFLAGS="$CFLAGS -gstabs+"
+                   AC_MSG_CHECKING([if compiler supports -gstabs+])
+                   AC_COMPILE_IFELSE([[int i;]], 
+                                     [AC_MSG_RESULT([yes])
+                                      OMPI_UNIQ(CFLAGS)
+                                      AC_MSG_WARN([-gstabs+ has been added to CFLAGS (found -g)])], 
+                                     [AC_MSG_RESULT([no]) 
+                                      CFLAGS=$CFLAGS_save])])
+           ;;
+    esac
+
     # see if the C compiler supports __builtin_expect
     AC_CACHE_CHECK([if $CC supports __builtin_expect],
         [ompi_cv_cc_supports___builtin_expect],
