@@ -279,7 +279,7 @@ ompi_show_title "Compiler and preprocessor tests"
 # C compiler characteristics
 ##################################
 
-OMPI_SETUP_CC
+OPAL_SETUP_CC
 
 # If we build on a windows environment with the windows compiler and linker
 # then we need some translation functions from the opal/win32 directory.

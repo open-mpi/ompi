@@ -11,7 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
-dnl Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -19,11 +19,11 @@ dnl
 dnl $HEADER$
 dnl
 
-# OMPI_SETUP_CC()
+# OPAL_SETUP_CC()
 # ---------------
 # Do everything required to setup the C compiler.  Safe to AC_REQUIRE
 # this macro.
-AC_DEFUN([OMPI_SETUP_CC],[
+AC_DEFUN([OPAL_SETUP_CC],[
     # AM_PROG_CC_C_O AC_REQUIREs AC_PROG_CC, so we have to be a little
     # careful about ordering here, and AC_REQUIRE these things so that
     # they get stamped out in the right order.
