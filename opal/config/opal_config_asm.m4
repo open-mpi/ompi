@@ -790,7 +790,7 @@ AC_DEFUN([OMPI_CHECK_INLINE_CXX_XLC],[
 
 dnl #################################################################
 dnl
-dnl OMPI_CONFIG_ASM
+dnl OPAL_CONFIG_ASM
 dnl
 dnl DEFINE OPAL_ASSEMBLY_ARCH to something in sys/architecture.h
 dnl DEFINE OPAL_ASSEMBLY_FORMAT to string containing correct
@@ -799,10 +799,10 @@ dnl SUBST OPAL_ASSEMBLY_FORMAT to string containing correct
 dnl                             format for assembly (not user friendly)
 dnl
 dnl #################################################################
-AC_DEFUN([OMPI_CONFIG_ASM],[
-    AC_REQUIRE([OMPI_SETUP_CC])
+AC_DEFUN([OPAL_CONFIG_ASM],[
+    AC_REQUIRE([OPAL_SETUP_CC])
     # Only require C++ if we're building the OMPI project
-    m4_ifdef([project_ompi], [AC_REQUIRE([OMPI_SETUP_CXX])])
+    m4_ifdef([project_ompi], [AC_REQUIRE([OPAL_SETUP_CXX])])
     AC_REQUIRE([AM_PROG_AS])
 
     # OS X Leopard ld bus errors if you have "-g" or "-gX" in the link line
