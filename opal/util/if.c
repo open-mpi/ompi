@@ -211,7 +211,7 @@ static int opal_ifinit(void)
             intf = OBJ_NEW(opal_if_t);
             if (NULL == intf) {
                 opal_output(0, "opal_ifinit: unable to allocate %lu bytes\n",
-                            sizeof(opal_if_t));
+                            (int) sizeof(opal_if_t));
                 return OPAL_ERR_OUT_OF_RESOURCE;
             }
 
