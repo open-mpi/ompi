@@ -2,6 +2,7 @@
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Sandia National Laboratories. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -90,39 +91,39 @@ opal_installdirs_base_open(void)
 
     /* expand out all the fields */
     opal_install_dirs.prefix = 
-        opal_install_dirs_expand(opal_install_dirs.prefix);
+        opal_install_dirs_expand_setup(opal_install_dirs.prefix);
     opal_install_dirs.exec_prefix = 
-        opal_install_dirs_expand(opal_install_dirs.exec_prefix);
+        opal_install_dirs_expand_setup(opal_install_dirs.exec_prefix);
     opal_install_dirs.bindir = 
-        opal_install_dirs_expand(opal_install_dirs.bindir);
+        opal_install_dirs_expand_setup(opal_install_dirs.bindir);
     opal_install_dirs.sbindir = 
-        opal_install_dirs_expand(opal_install_dirs.sbindir);
+        opal_install_dirs_expand_setup(opal_install_dirs.sbindir);
     opal_install_dirs.libexecdir = 
-        opal_install_dirs_expand(opal_install_dirs.libexecdir);
+        opal_install_dirs_expand_setup(opal_install_dirs.libexecdir);
     opal_install_dirs.datarootdir = 
-        opal_install_dirs_expand(opal_install_dirs.datarootdir);
+        opal_install_dirs_expand_setup(opal_install_dirs.datarootdir);
     opal_install_dirs.datadir = 
-        opal_install_dirs_expand(opal_install_dirs.datadir);
+        opal_install_dirs_expand_setup(opal_install_dirs.datadir);
     opal_install_dirs.sysconfdir = 
-        opal_install_dirs_expand(opal_install_dirs.sysconfdir);
+        opal_install_dirs_expand_setup(opal_install_dirs.sysconfdir);
     opal_install_dirs.sharedstatedir = 
-        opal_install_dirs_expand(opal_install_dirs.sharedstatedir);
+        opal_install_dirs_expand_setup(opal_install_dirs.sharedstatedir);
     opal_install_dirs.localstatedir = 
-        opal_install_dirs_expand(opal_install_dirs.localstatedir);
+        opal_install_dirs_expand_setup(opal_install_dirs.localstatedir);
     opal_install_dirs.libdir = 
-        opal_install_dirs_expand(opal_install_dirs.libdir);
+        opal_install_dirs_expand_setup(opal_install_dirs.libdir);
     opal_install_dirs.includedir = 
-        opal_install_dirs_expand(opal_install_dirs.includedir);
+        opal_install_dirs_expand_setup(opal_install_dirs.includedir);
     opal_install_dirs.infodir = 
-        opal_install_dirs_expand(opal_install_dirs.infodir);
+        opal_install_dirs_expand_setup(opal_install_dirs.infodir);
     opal_install_dirs.mandir = 
-        opal_install_dirs_expand(opal_install_dirs.mandir);
+        opal_install_dirs_expand_setup(opal_install_dirs.mandir);
     opal_install_dirs.pkgdatadir = 
-        opal_install_dirs_expand(opal_install_dirs.pkgdatadir);
+        opal_install_dirs_expand_setup(opal_install_dirs.pkgdatadir);
     opal_install_dirs.pkglibdir = 
-        opal_install_dirs_expand(opal_install_dirs.pkglibdir);
+        opal_install_dirs_expand_setup(opal_install_dirs.pkglibdir);
     opal_install_dirs.pkgincludedir = 
-        opal_install_dirs_expand(opal_install_dirs.pkgincludedir);
+        opal_install_dirs_expand_setup(opal_install_dirs.pkgincludedir);
 
 #if 0
     fprintf(stderr, "prefix:         %s\n", opal_install_dirs.prefix);
