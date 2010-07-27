@@ -767,6 +767,10 @@ static void process_recv(int fd, short event, void *cbdata)
              item != opal_list_get_end(&orte_local_children);
              item = opal_list_get_next(item)) {
             child = (orte_odls_child_t*)item;
+            if (NULL == child->rml_uri) {
+                /* race condition */
+                continue;
+            }
             OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                                  "%s relaying multicast to %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -838,6 +842,10 @@ static void relay(int fd, short event, void *cbdata)
         if (proc->name.vpid == msg->sender.vpid) {
             continue;
         }
+        if (NULL == proc->rml_uri) {
+            /* race condition */
+            continue;
+        }
         if (0 > (rc = orte_rml.send_buffer(&proc->name, msg->buffer, ORTE_RML_TAG_MULTICAST, 0))) {
             ORTE_ERROR_LOG(rc);
         }
@@ -848,6 +856,10 @@ static void relay(int fd, short event, void *cbdata)
          item != opal_list_get_end(&orte_local_children);
          item = opal_list_get_next(item)) {
         child = (orte_odls_child_t*)item;
+        if (NULL == child->rml_uri) {
+            /* race condition */
+            continue;
+        }
         if (0 > (rc = orte_rml.send_buffer(child->name, msg->buffer, ORTE_RML_TAG_MULTICAST, 0))) {
             ORTE_ERROR_LOG(rc);
         }
