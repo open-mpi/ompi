@@ -76,7 +76,7 @@ int orte_ess_generic_component_query(mca_base_module_t **module, int *priority)
     char *pick;
 
     /* only pick us if directed to do so */
-    if (NULL != (pick = getenv("OMPI_MCA_env")) &&
+    if (NULL != (pick = getenv("OMPI_MCA_ess")) &&
                  0 == strcmp(pick, "generic")) {
         *priority = 1000;
         *module = (mca_base_module_t *)&orte_ess_generic_module;
