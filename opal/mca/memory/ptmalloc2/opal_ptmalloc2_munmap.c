@@ -92,7 +92,6 @@ opal_mem_free_ptmalloc2_munmap(void *start, size_t length, int from_alloc,
         
             tmp.munmap_p = dlsym(RTLD_NEXT, "munmap");
             realmunmap = tmp.munmap_fp;
-            ++count;
         }
 
         return realmunmap(start, length);
