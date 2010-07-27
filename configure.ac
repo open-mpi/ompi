@@ -524,7 +524,7 @@ OPAL_CHECK_COMPILER_VERSION_ID
 ompi_show_subtitle "Assembler"
 
 AM_PROG_AS
-OMPI_CONFIG_ASM
+OPAL_CONFIG_ASM
 
 
 ##################################
