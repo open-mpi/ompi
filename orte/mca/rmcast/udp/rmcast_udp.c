@@ -259,7 +259,15 @@ static int queue_xmit(rmcast_base_send_t *snd,
     rmcast_base_channel_t *ch, *chptr;
     opal_list_item_t *item;
     
-    /* if we were asked to send this on our group output
+     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
+                         "%s rmcast:udp: send of %d %s"
+                         " called on multicast channel %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (NULL == snd->iovec_array) ? (int)snd->buf->bytes_used : (int)snd->iovec_count,
+                         (NULL == snd->iovec_array) ? "bytes" : "iovecs",
+                         (int)channel));
+    
+   /* if we were asked to send this on our group output
      * channel, substitute it
      */
     if (ORTE_RMCAST_GROUP_OUTPUT_CHANNEL == channel) {
