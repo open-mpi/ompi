@@ -509,13 +509,21 @@ static int process_callback(orte_jobid_t job, opal_buffer_t *buffer)
     char *rml_uri;
     orte_process_name_t name;
     int rc;
+    bool singleton=false;
     
     /* lookup the job object for this process */
     if (NULL == (jdata = orte_get_job_data_object(job))) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return ORTE_ERR_NOT_FOUND;
+        if (ORTE_JOB_FAMILY(job) == ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
+            /* came from my job family - this is an error */
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return ORTE_ERR_NOT_FOUND;
+        }
+        /* must be from a singleton that is connecting to us - just add the contact info */
+        singleton = true;
+    } else {
+        procs = (orte_proc_t**)jdata->procs->addr;
+
     }
-    procs = (orte_proc_t**)jdata->procs->addr;
     
     /* unpack the data for each entry */
     cnt = 1;
@@ -538,16 +546,20 @@ static int process_callback(orte_jobid_t job, opal_buffer_t *buffer)
             free(rml_uri);
             continue;
         }
-        /* the procs are stored in vpid order, so update the record */
-        procs[name.vpid]->rml_uri = strdup(rml_uri);
-        free(rml_uri);
         
-        /* update the proc state */
-        if (procs[name.vpid]->state < ORTE_PROC_STATE_RUNNING) {
-            procs[name.vpid]->state = ORTE_PROC_STATE_RUNNING;
+        if (!singleton) {
+            /* the procs are stored in vpid order, so update the record */
+            procs[name.vpid]->rml_uri = strdup(rml_uri);
+            
+            /* update the proc state */
+            if (procs[name.vpid]->state < ORTE_PROC_STATE_RUNNING) {
+                procs[name.vpid]->state = ORTE_PROC_STATE_RUNNING;
+            }
+            
+            ++jdata->num_reported;
         }
-        
-        ++jdata->num_reported;
+        free(rml_uri);
+
         cnt = 1;
     }
     if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
@@ -555,11 +567,13 @@ static int process_callback(orte_jobid_t job, opal_buffer_t *buffer)
         return rc;
     }    
     
-    /* if all procs have reported, update our job state */
-    if (jdata->num_reported == jdata->num_procs) {
-        /* update the job state */
-        if (jdata->state < ORTE_JOB_STATE_RUNNING) {
-            jdata->state = ORTE_JOB_STATE_RUNNING;
+    if (!singleton) {
+        /* if all procs have reported, update our job state */
+        if (jdata->num_reported == jdata->num_procs) {
+            /* update the job state */
+            if (jdata->state < ORTE_JOB_STATE_RUNNING) {
+                jdata->state = ORTE_JOB_STATE_RUNNING;
+            }
         }
     }
     
@@ -872,6 +886,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
          *     is attempted until the overall ORTE system knows how to talk to everyone -
          *     otherwise, the system can just hang.
          */
+        
         if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync(true))) {
             ORTE_ERROR_LOG(rc);
             return rc;
