@@ -369,6 +369,11 @@ static void recv_rml_beats(int status, orte_process_name_t* sender,
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(sender)));
         nid->beat = gettime();
+    } else {
+        OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+                             "%s no nidmap entry for %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(sender)));
     }
     
     /* reissue the recv */
