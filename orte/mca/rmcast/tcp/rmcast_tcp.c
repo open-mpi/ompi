@@ -712,9 +712,13 @@ static int open_channel(orte_rmcast_channel_t channel, char *name,
         
         if (0 == strcasecmp(chan->name, name)) {
             /* check the channel, if one was given */
-            if (ORTE_RMCAST_INVALID_CHANNEL != channel &&
-                ORTE_RMCAST_INVALID_CHANNEL == chan->channel) {
-                chan->channel = channel;
+            if (ORTE_RMCAST_INVALID_CHANNEL != channel) {
+                if (ORTE_RMCAST_INVALID_CHANNEL == chan->channel) {
+                    chan->channel = channel;
+                } else if (chan->channel != channel) {
+                    /* another channel for this name */
+                    goto newchan;
+                }
             }
             /* all setup - nothing to do */
             OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
@@ -724,6 +728,7 @@ static int open_channel(orte_rmcast_channel_t channel, char *name,
         }
     }
     
+ newchan:
     /* we didn't find an existing match, so create a new channel */
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                          "%s creating new channel %d for %s",
@@ -740,14 +745,14 @@ static int open_channel(orte_rmcast_channel_t channel, char *name,
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                          "%s rmcast:tcp opening new channel for%s%s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                          (ORTE_RMCAST_RECV & direction) ? " RECV" : " ",
+                         (ORTE_RMCAST_RECV & direction) ? " RECV" : " ",
                          (ORTE_RMCAST_XMIT & direction) ? " XMIT" : " "));
 
     return ORTE_SUCCESS;
 }
 
 
-/****    LOCAL FUNCTIONS    ****/
+    /****    LOCAL FUNCTIONS    ****/
 
 static void process_recv(int fd, short event, void *cbdata)
 {
@@ -776,7 +781,7 @@ static void process_recv(int fd, short event, void *cbdata)
     /* process the receive */
     orte_rmcast_base_process_recv(mev);
     
-cleanup:
+ cleanup:
     OBJ_RELEASE(mev);
     return;
 }
