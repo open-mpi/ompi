@@ -105,6 +105,11 @@ static int init(void)
 {
     int rc;
     
+    OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+                         "%s initializing heartbeat recvs",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
+
 #if ORTE_ENABLE_MULTICAST
     /* setup multicast recv for heartbeats */
     if (ORTE_SUCCESS != (rc = orte_rmcast.recv_buffer_nb(ORTE_RMCAST_SYS_CHANNEL,
@@ -317,14 +322,16 @@ static void recv_rmcast_beats(int status,
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(sender)));
 
-    /* get this daemon's nid */
-    if (NULL == (nid = orte_util_lookup_nid(sender))) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        exit(1);
+    /* get this daemon's nid - if it isn't here, just ignore
+     * as this is caused by a race condition at startup
+     */
+    if (NULL != (nid = orte_util_lookup_nid(sender))) {
+        OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+                             "%s updating beat time for %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(sender)));
+        nid->beat = gettime();
     }
-    
-    /* update its time */
-    nid->beat = gettime();
 }
 
 static void rmcast_callback_fn(int status,
@@ -353,11 +360,14 @@ static void recv_rml_beats(int status, orte_process_name_t* sender,
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(sender)));
 
-    /* get this daemon's nid */
-    if (NULL == (nid = orte_util_lookup_nid(sender))) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-    } else {
-        /* update its time */
+    /* get this daemon's nid - if it isn't here, just ignore
+     * as this is caused by a race condition at startup
+     */
+    if (NULL != (nid = orte_util_lookup_nid(sender))) {
+        OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+                             "%s updating beat time for %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(sender)));
         nid->beat = gettime();
     }
     
