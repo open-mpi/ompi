@@ -480,27 +480,33 @@ static int open_component(component_file_item_t *target_file,
   component_handle = lt_dlopenext(target_file->filename);
 #endif
   if (NULL == component_handle) {
-    err = strdup(lt_dlerror());
-    /* Because libltdl erroneously says "file not found" for any type
-       of error -- which is especially misleading when the file is
-       actually there but cannot be opened for some other reason
-       (e.g., missing symbol) -- do some simple huersitics and if the
-       file [probably] does exist, print a slightly better error
-       message. */
-    if (0 == strcmp("file not found", err) &&
-        (file_exists(target_file->filename, "lo") ||
-         file_exists(target_file->filename, "so") ||
-         file_exists(target_file->filename, "dylib") ||
-         file_exists(target_file->filename, "dll"))) {
-        free(err);
-        err = strdup("perhaps a missing symbol, or compiled for a different version of Open MPI?");
-    }
-    opal_output_verbose(vl, 0, "mca: base: component_find: unable to open %s: %s (ignored)", 
-                        target_file->filename, err);
-    free(err);
-    target_file->status = FAILED_TO_LOAD;
-    free_dependency_list(&dependencies);
-    return OPAL_ERR_BAD_PARAM;
+      /* Apparently lt_dlerror() sometimes returns NULL! */
+      const char *str = lt_dlerror();
+      if (NULL != str) {
+          err = strdup(str);
+      } else {
+          err = strdup("lt_dlerror() returned NULL!");
+      }
+      /* Because libltdl erroneously says "file not found" for any
+         type of error -- which is especially misleading when the file
+         is actually there but cannot be opened for some other reason
+         (e.g., missing symbol) -- do some simple huersitics and if
+         the file [probably] does exist, print a slightly better error
+         message. */
+      if (0 == strcmp("file not found", err) &&
+          (file_exists(target_file->filename, "lo") ||
+           file_exists(target_file->filename, "so") ||
+           file_exists(target_file->filename, "dylib") ||
+           file_exists(target_file->filename, "dll"))) {
+          free(err);
+          err = strdup("perhaps a missing symbol, or compiled for a different version of Open MPI?");
+      }
+      opal_output_verbose(vl, 0, "mca: base: component_find: unable to open %s: %s (ignored)", 
+                          target_file->filename, err);
+      free(err);
+      target_file->status = FAILED_TO_LOAD;
+      free_dependency_list(&dependencies);
+      return OPAL_ERR_BAD_PARAM;
   }
 
   /* Successfully opened the component; now find the public struct.
@@ -528,15 +534,20 @@ static int open_component(component_file_item_t *target_file,
 
   component_struct = (mca_base_component_t*)lt_dlsym(component_handle, struct_name);
   if (NULL == component_struct) {
-    opal_output_verbose(vl, 0, "mca: base: component_find: \"%s\" does not appear to be a valid "
-                        "%s MCA dynamic component (ignored)", 
-                        target_file->basename, target_file->type);
-    free(mitem);
-    free(struct_name);
-    lt_dlclose(component_handle);
-    target_file->status = FAILED_TO_LOAD;
-    free_dependency_list(&dependencies);
-    return OPAL_ERR_BAD_PARAM;
+      /* Apparently lt_dlerror() sometimes returns NULL! */
+      const char *str = lt_dlerror();
+      if (NULL == str) {
+          str = "lt_dlerror() returned NULL!";
+      }
+      opal_output_verbose(vl, 0, "mca: base: component_find: \"%s\" does not appear to be a valid "
+			  "%s MCA dynamic component (ignored): %s", 
+			  target_file->basename, target_file->type, str);
+      free(mitem);
+      free(struct_name);
+      lt_dlclose(component_handle);
+      target_file->status = FAILED_TO_LOAD;
+      free_dependency_list(&dependencies);
+      return OPAL_ERR_BAD_PARAM;
   }
 
   /* We found the public struct.  Make sure its MCA major.minor
