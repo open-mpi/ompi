@@ -185,9 +185,9 @@ int main(int argc, char *argv[])
     /* flag that I am the HNP */
     orte_process_info.hnp = true;
 
-    /* Perform the standard init, but flag that we are a tool
-     * so that we only open up the communications infrastructure. No
-     * session directories will be created.
+    /* Perform the standard init, but flag that we are a non-tool
+     * so that we get the infrastructure required to support
+     * singletons that want to use us as their HNP
      */
     if (ORTE_SUCCESS != (ret = orte_init(ORTE_NON_TOOL))) {
         fprintf(stderr, "ompi-server: failed to initialize -- aborting\n");
