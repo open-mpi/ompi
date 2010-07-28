@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -19,13 +20,16 @@
 
 AM_CPPFLAGS="-I$(top_srcdir)/test/support"
 
+if PROJECT_OMPI
+  REQUIRES_OMPI = ompi_rb_tree
+endif
+
 check_PROGRAMS = \
-	opal_bitmap \
+	$(REQUIRES_OMPI) opal_bitmap \
 	opal_hash_table \
 	opal_list \
 	opal_value_array \
-	opal_pointer_array \
-	ompi_rb_tree
+	opal_pointer_array
 
 # The tests are built, but since they're not actively maintained, they
 # are not run during "make check".
@@ -51,8 +55,6 @@ opal_hash_table_DEPENDENCIES = $(opal_hash_table_LDADD)
 
 opal_pointer_array_SOURCES = opal_pointer_array.c
 opal_pointer_array_LDADD = \
-        $(top_builddir)/ompi/libmpi.la \
-        $(top_builddir)/orte/libopen-rte.la \
         $(top_builddir)/opal/libopen-pal.la \
         $(top_builddir)/test/support/libsupport.a
 opal_pointer_array_DEPENDENCIES = $(opal_pointer_array_LDADD)
@@ -66,8 +68,6 @@ opal_value_array_DEPENDENCIES = $(opal_value_array_LDADD)
 ompi_rb_tree_SOURCES = ompi_rb_tree.c
 ompi_rb_tree_LDADD = \
         $(top_builddir)/ompi/libmpi.la \
-        $(top_builddir)/orte/libopen-rte.la \
-        $(top_builddir)/opal/libopen-pal.la \
 	$(top_builddir)/test/support/libsupport.a
 ompi_rb_tree_DEPENDENCIES = $(ompi_rb_tree_LDADD)
 
