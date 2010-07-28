@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -16,7 +17,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -43,7 +44,6 @@
 #include "opal/util/output.h"
 #include "orte/runtime/runtime.h"
 #include "orte/constants.h"
-#include "ompi/constants.h"
 
 static bool opal_sos_test(void);
 
@@ -66,30 +66,30 @@ static bool opal_sos_test(void)
 
     /* Checking for the correctness of GET_ and SET_ error code
      * operations */
-    errnum1 = OPAL_SOS_GET_ERROR_CODE(OMPI_ERR_OUT_OF_RESOURCE);
-    test_verify("failed", OMPI_ERR_OUT_OF_RESOURCE == errnum1);
+    errnum1 = OPAL_SOS_GET_ERROR_CODE(OPAL_ERR_OUT_OF_RESOURCE);
+    test_verify("failed", OPAL_ERR_OUT_OF_RESOURCE == errnum1);
 
-    OPAL_SOS_SET_ERROR_CODE(errnum1, OMPI_ERR_IN_ERRNO);
-    test_verify("failed", OMPI_ERR_IN_ERRNO ==
+    OPAL_SOS_SET_ERROR_CODE(errnum1, OPAL_ERR_IN_ERRNO);
+    test_verify("failed", OPAL_ERR_IN_ERRNO ==
                 OPAL_SOS_GET_ERROR_CODE(errnum1));
 
-    /* Check if OMPI_ERR_OUT_OF_RESOURCE is a native error code or
-     * not. Since OMPI_ERR_OUT_OF_RESOURCE is native, this should
+    /* Check if OPAL_ERR_OUT_OF_RESOURCE is a native error code or
+     * not. Since OPAL_ERR_OUT_OF_RESOURCE is native, this should
      * return true. */
     test_verify("failed", true ==
-                OPAL_SOS_IS_NATIVE(OMPI_ERR_OUT_OF_RESOURCE));
+                OPAL_SOS_IS_NATIVE(OPAL_ERR_OUT_OF_RESOURCE));
 
     test_verify("failed", true == OPAL_SOS_IS_NATIVE(errnum1));
 
-    /* Encode a native error (OMPI_ERR_OUT_OF_RESOURCE) by
+    /* Encode a native error (OPAL_ERR_OUT_OF_RESOURCE) by
      * logging it in the SOS framework using one of the SOS
      * reporter macros. This returns an encoded error code
      * (errnum1) with information about the native error such
      * as the severity, the native error code, the attached
      * error index etc. */
-    errnum1 = OPAL_SOS_INFO((OMPI_ERR_OUT_OF_RESOURCE, false,
+    errnum1 = OPAL_SOS_INFO((OPAL_ERR_OUT_OF_RESOURCE, false,
                              "Error %d: out of resource",
-                             OMPI_ERR_OUT_OF_RESOURCE));
+                             OPAL_ERR_OUT_OF_RESOURCE));
 
     /* Check if errnum1 is native or not. This should return false */
     test_verify("failed", false == OPAL_SOS_IS_NATIVE(errnum1));
@@ -98,8 +98,8 @@ static bool opal_sos_test(void)
 
     /* Extract the native error code out of errnum1. This should
      * return the encoded native error code associated with errnum1
-     * (i.e. OMPI_ERR_OUT_OF_RESOURCE). */
-    test_verify("failed", OMPI_ERR_OUT_OF_RESOURCE ==
+     * (i.e. OPAL_ERR_OUT_OF_RESOURCE). */
+    test_verify("failed", OPAL_ERR_OUT_OF_RESOURCE ==
                 OPAL_SOS_GET_ERROR_CODE(errnum1));
 
     /* We log another error event as a child of the previous error
@@ -110,26 +110,32 @@ static bool opal_sos_test(void)
     test_verify("failed",
                 OPAL_SOS_SEVERITY_WARN == OPAL_SOS_GET_SEVERITY(errnum1));
 
-    test_verify("failed", OMPI_ERR_OUT_OF_RESOURCE ==
+    test_verify("failed", OPAL_ERR_OUT_OF_RESOURCE ==
                 OPAL_SOS_GET_ERROR_CODE(errnum1));
     free(err_str);
 
 	/* Let's report another event with severity ERROR using
 	 * OPAL_SOS_ERROR() and in effect promote errnum1 to
-     * severity 'ERROR'. */
+         * severity 'ERROR'. */
     err_str = opal_show_help_string("help-opal-util.txt",
                                     "stacktrace signal override",
                                     false, 10, 10, 10, "15");
+    /* If OMPI isn't installed yet (which is quite likely/possible if
+       we're running "make check"!), then the show_help_string will
+       return NULL.  So just put in any old string. */
+    if (NULL == err_str) {
+        err_str = strdup("Open MPI does not appear to be installed, so we'll just substitue in a random message to show during the opal_sos test.  You can ignore the above warning about not finding the help message about 'stacktrace signal override'.");
+    }
     errnum1 = OPAL_SOS_ERROR((errnum1, false, err_str));
     test_verify("failed",
                 OPAL_SOS_SEVERITY_ERROR == OPAL_SOS_GET_SEVERITY(errnum1));
     free(err_str);
 
     /* Check the native code associated with the previously encoded
-     * error. This should still return (OMPI_ERR_OUT_OF_RESOURCE)
+     * error. This should still return (OPAL_ERR_OUT_OF_RESOURCE)
      * since the entire error history originates from the native 
-     * error OMPI_ERR_OUT_OF_RESOURCE */
-    test_verify("failed", OMPI_ERR_OUT_OF_RESOURCE ==
+     * error OPAL_ERR_OUT_OF_RESOURCE */
+    test_verify("failed", OPAL_ERR_OUT_OF_RESOURCE ==
                 OPAL_SOS_GET_ERROR_CODE(errnum1));
 
     /* We start off another error history stack originating with a 
@@ -139,7 +145,7 @@ static bool opal_sos_test(void)
     free(err_str);
     test_verify("failed",
                 OPAL_SOS_SEVERITY_ERROR == OPAL_SOS_GET_SEVERITY(errnum2));
-    test_verify("failed", OMPI_ERR_FATAL ==
+    test_verify("failed", OPAL_ERR_FATAL ==
                 OPAL_SOS_GET_ERROR_CODE(errnum2));
 
 	/* Registering another error with severity ERROR.
@@ -147,7 +153,7 @@ static bool opal_sos_test(void)
     errnum2 = OPAL_SOS_WARN((errnum2, false, "this process must die."));
     test_verify("failed",
                 OPAL_SOS_SEVERITY_WARN == OPAL_SOS_GET_SEVERITY(errnum2));
-    test_verify("failed", OMPI_ERR_FATAL ==
+    test_verify("failed", OPAL_ERR_FATAL ==
                 OPAL_SOS_GET_ERROR_CODE(errnum2));
 
 	/* We attach the two error traces originating from errnum1
