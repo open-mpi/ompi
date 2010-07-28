@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -19,10 +19,10 @@
 
 noinst_LTLIBRARIES = libdebuggers.la libompi_debugger_canary.la
 pkglib_LTLIBRARIES = libompi_dbg_msgq.la
+
+check_PROGRAMS = predefined_gap_test
 if OPAL_HAVE_DLOPEN
-check_PROGRAMS = dlopen_test
-else
-check_PROGRAMS = 
+check_PROGRAMS += dlopen_test
 endif
 
 TESTS = $(check_PROGRAMS)
@@ -48,6 +48,11 @@ headers = \
 dlopen_test_SOURCES = dlopen_test.c
 dlopen_test_CPPFLAGS = -I$(top_srcdir)/opal/libltdl
 dlopen_test_LDADD = $(top_builddir)/opal/libltdl/libltdlc.la
+
+predefined_gap_test_SOURCES = predefined_gap_test.c
+predefined_gap_test_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
+predefined_gap_test_LDADD = $(top_builddir)/ompi/libmpi.la
+predefined_gap_test_DEPENDENCIES = $(ompi_predefined_LDADD)
 
 libdebuggers_la_SOURCES = \
         $(headers) \
