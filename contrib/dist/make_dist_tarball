@@ -302,17 +302,21 @@ fi
 #
 # Do svn up and all that
 #
-echo "*** Removing old VERSION file..."
-rm -f VERSION
 
 if test -d .svn; then
+    echo "*** Removing old VERSION file..."
+    rm -f VERSION
     echo "*** Running svn up..."
     svn up
     if test ! "$?" = "0"; then
         echo "SVN update failed.  Aborting"
         exit 1
     fi
+    echo "*** Getting svn r number..."
+    svn_r="r`svnversion .`"
 elif test -d .hg; then
+    echo "*** Removing old VERSION file..."
+    rm -f VERSION
     echo "*** Running hg up..."
     hg revert VERSION
     hg up
@@ -320,13 +324,14 @@ elif test -d .hg; then
         echo "HG update failed.  Aborting"
         exit 1
     fi
+    echo "*** Getting hg version number..."
+    svn_r="r`svnversion .`"
 fi
 
 #
 # Ditch "svn/hg" from all version numbers
 #
 echo "*** Removing svn version numbers..."
-svn_r="r`svnversion .`"
 version_files=VERSION
 release_date=`date '+%b %d, %Y'`
 for file in $version_files; do
