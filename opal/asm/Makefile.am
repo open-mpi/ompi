@@ -74,7 +74,7 @@ EXTRA_DIST	= \
 clean-local:
 	rm -f atomic-asm.S
 
-maintainer-clean-local:
+distclean-local:
 	rm -f generated/atomic-local.s
 
 ######################################################################
