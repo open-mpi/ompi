@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -59,7 +60,7 @@ static inline int ompi_errcode_get_mpi_code(int errcode)
     int i;
     ompi_errcode_intern_t *errc;
 
-    /* Transmorgify, if necessary */
+    /* Transmogrify, if necessary */
     errcode = OPAL_SOS_GET_ERROR_CODE(errcode);
 
     /* If the errcode is >= 0, then it's already an MPI error code, so

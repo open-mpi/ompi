@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -165,7 +166,8 @@
  * Returns the native error code for the given encoded error code \c
  * errnum. \c errnum can be a native error code itself.
  */
-#define OPAL_SOS_GET_ERROR_CODE(errnum) ((int) -(-errnum & 0x3FFL))
+#define OPAL_SOS_GET_ERROR_CODE(errnum)                                 \
+    ((errnum >= 0) ? errnum : (int) -(-errnum & 0x3FFL))
 
 /**
  * Sets the native error code for the potentially encoded error code.
