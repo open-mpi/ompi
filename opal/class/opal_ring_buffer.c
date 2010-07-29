@@ -41,6 +41,8 @@ OBJ_CLASS_INSTANCE(opal_ring_buffer_t, opal_object_t,
 static void opal_ring_buffer_construct(opal_ring_buffer_t *ring)
 {
     OBJ_CONSTRUCT(&ring->lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&ring->cond, opal_condition_t);
+    ring->in_use = false;
     ring->head = NULL;
     ring->tail = NULL;
     ring->size = 0;
@@ -60,6 +62,7 @@ static void opal_ring_buffer_destruct(opal_ring_buffer_t *ring)
     ring->size = 0;
 
     OBJ_DESTRUCT(&ring->lock);
+    OBJ_DESTRUCT(&ring->cond);
 }
 
 /**
