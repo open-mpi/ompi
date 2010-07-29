@@ -26,7 +26,7 @@
 
 #include "opal_config.h"
 
-#include "opal/threads/mutex.h"
+#include "opal/threads/threads.h"
 #include "opal/class/opal_object.h"
 #include "opal/util/output.h"
 
@@ -40,6 +40,8 @@ struct opal_ring_buffer_t {
     opal_object_t super;
     /** synchronization object */
     opal_mutex_t lock;
+    opal_condition_t cond;
+    bool in_use;
     /* head/tail indices */
     char **head;
     char **tail;
@@ -81,7 +83,7 @@ static inline void* opal_ring_buffer_push(opal_ring_buffer_t *ring, void *ptr)
 {
     char *p=NULL;
     
-    OPAL_THREAD_LOCK(&(ring->lock));
+    OPAL_ACQUIRE_THREAD(&(ring->lock), &(ring->cond), &(ring->in_use));
     if (NULL != *ring->head) {
         p = *ring->head;
         if (ring->head == ring->tail) {
@@ -99,7 +101,7 @@ static inline void* opal_ring_buffer_push(opal_ring_buffer_t *ring, void *ptr)
     } else {
         ring->head++;
     }
-    OPAL_THREAD_UNLOCK(&(ring->lock));
+    OPAL_RELEASE_THREAD(&(ring->lock), &(ring->cond), &(ring->in_use));
     return (void*)p;
 }
 
@@ -117,7 +119,7 @@ static inline void* opal_ring_buffer_pop(opal_ring_buffer_t *ring)
 {
     char *p;
 
-    OPAL_THREAD_LOCK(&(ring->lock));
+    OPAL_ACQUIRE_THREAD(&(ring->lock), &(ring->cond), &(ring->in_use));
     if (NULL == ring->tail || ring->head == ring->tail) {
         p = NULL;
     } else {
@@ -129,7 +131,7 @@ static inline void* opal_ring_buffer_pop(opal_ring_buffer_t *ring)
             ring->tail++;
         }
     }
-    OPAL_THREAD_UNLOCK(&(ring->lock));
+    OPAL_RELEASE_THREAD(&(ring->lock), &(ring->cond), &(ring->in_use));
     return (void*)p;
 }
 
