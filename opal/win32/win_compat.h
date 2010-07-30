@@ -71,6 +71,9 @@
 #include <signal.h>
 #include <conio.h>
 #include <fcntl.h>
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
 
 /**
  * For all file io operations
@@ -217,7 +220,7 @@ typedef unsigned int uint;
 
 #define sigset_t int
 #define in_addr_t uint32_t
-#define _Bool BOOL
+#define _Bool bool
 
 /*
  * No syslog.h on Windows, but these have to be defined somehow.
