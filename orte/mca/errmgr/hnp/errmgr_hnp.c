@@ -148,6 +148,18 @@ static int update_state(orte_jobid_t job,
                          (NULL == proc) ? "NULL" : ORTE_NAME_PRINT(proc),
                          orte_proc_state_to_str(state), pid, exit_code));
     
+    /********************************
+     * If the modules before us recovered from this error, then do not abort.
+     ********************************/
+    if( !(ORTE_ERRMGR_STACK_STATE_JOB_ABORT & (*stack_state)) ) {
+        OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output,
+                             "errmgr:hnp:update_proc() %s) "
+                             "------- A previous component successfully recovered from the process fault of %s! Continuing...",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(proc)));
+        return ORTE_SUCCESS;
+    }
+
     /*
      * if orte is trying to shutdown, just let it
      */
@@ -328,7 +340,7 @@ static int update_state(orte_jobid_t job,
     case ORTE_PROC_STATE_ABORTED:
     case ORTE_PROC_STATE_ABORTED_BY_SIG:
     case ORTE_PROC_STATE_TERM_WO_SYNC:
-        if (jdata->enable_recovery) {
+        if (!(ORTE_ERRMGR_STACK_STATE_RECOVERED & (*stack_state)) && jdata->enable_recovery) {
             /* is this a local proc */
             if (NULL != (child = proc_is_local(proc))) {
                 /* local proc - see if it has reached its local restart limit */
@@ -455,7 +467,7 @@ static int update_state(orte_jobid_t job,
             /* purge the oob */
             orte_rml.purge(proc);
 
-            if (orte_enable_recovery) {
+            if (!(ORTE_ERRMGR_STACK_STATE_RECOVERED & (*stack_state)) && orte_enable_recovery) {
                 /* relocate its processes */
                 if (ORTE_SUCCESS != (rc = hnp_relocate(jdata, proc, state, exit_code))) {
                     /* unable to relocate for some reason */
@@ -493,7 +505,7 @@ static int update_state(orte_jobid_t job,
 
     case ORTE_PROC_STATE_HEARTBEAT_FAILED:
         /* heartbeats are only from daemons */
-        if (orte_enable_recovery) {
+        if (!(ORTE_ERRMGR_STACK_STATE_RECOVERED & (*stack_state)) && orte_enable_recovery) {
             /* relocate its processes */
         } else {
             record_dead_daemon(jdata, proc->vpid, state, exit_code);

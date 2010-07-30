@@ -1,5 +1,5 @@
 dnl
-dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+dnl Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -248,7 +248,7 @@ elif test "$enable_ft_thread" = "undef" -a "$enable_opal_multi_threads" = "no" ;
 else
     # Default: Enable
     # Make sure we have OPAL Threads enabled 
-    if "$enable_opal_multi_threads" = "no"; then
+    if test "$enable_opal_multi_threads" = "no"; then
         AC_MSG_RESULT([Must enable OPAL basic thread support to use this option])
         AC_MSG_ERROR([Cannot continue])
     else

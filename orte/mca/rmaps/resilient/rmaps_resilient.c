@@ -117,7 +117,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
     opal_list_t node_list;
     opal_list_item_t *item;
     orte_std_cntr_t num_slots;
-    int rc=ORTE_SUCCESS;
+    int rc = ORTE_SUCCESS;
     float avgload, minload;
     orte_node_t *node, *nd=NULL, *oldnode;
     orte_rmaps_res_ftgrp_t *ftgrp, *target = NULL;
@@ -297,19 +297,27 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                  */
                 nd = oldnode;  /* Put it back where it was if nothing else is found */
                 totprocs = 1000000;
+                found = false;
                 /* find the lightest loaded node while deconstructing the list */
                 while (NULL != (item = opal_list_remove_first(&node_list))) {
                     node = (orte_node_t*)item;
-                    if( node->num_procs < totprocs) {
-                        nd = node;
-                        totprocs = node->num_procs;
+                    if( !found ) {
+                        if( ((int)node->num_procs) < orte_rmaps_base.npernode ) {
+                            nd = node;
+                            totprocs = 0;
+                            found = true;
+                        }
+                        else if( node->num_procs < totprocs) {
+                            nd = node;
+                            totprocs = node->num_procs;
+                        }
                     }
                     OBJ_RELEASE(item);
                 }
                 OBJ_DESTRUCT(&node_list);
 
                 OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
-                                     "%s rmaps:resilient: no avail fault groups found - placing proc on node %s",
+                                     "%s rmaps:resilient: Placing process on node %s (no ftgrp)",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      nd->name));
 

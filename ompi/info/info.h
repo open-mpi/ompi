@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2007 The University of Tennessee and The University
@@ -148,7 +148,7 @@ int ompi_info_dup (ompi_info_t *info, ompi_info_t **newinfo);
  * @retval MPI_SUCCESS upon success
  * @retval MPI_ERR_NO_MEM if out of memory
  */
-int ompi_info_set (ompi_info_t *info, char *key, char *value);
+OMPI_DECLSPEC int ompi_info_set (ompi_info_t *info, char *key, char *value);
 
 /**
  * ompi_info_free - Free an 'MPI_Info' object.

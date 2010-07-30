@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2008 The University of Tennessee and The University
@@ -492,12 +492,12 @@ int orte_register_params(void)
         if (ORTE_PROC_IS_HNP) {
             opal_output(orte_clean_output,
                         "------------------------------------------------------------------\n"
-                        "The MCA param errmgr_base_enable_recovery was not set to true, but\n"
+                        "The MCA param orte_enable_recovery was not set to true, but\n"
                         "positive value(s) were provided for the number of restarts:\n\n"
                         "Max global restarts: %d\n"
                         "Max local restarts:  %d\n\n"
                         "We are enabling process recovery and continuing execution. To avoid\n"
-                        "this warning in the future, please set the errmgr_base_enable_recovery\n"
+                        "this warning in the future, please set the orte_enable_recovery\n"
                         "param to non-zero.\n"
                         "------------------------------------------------------------------",
                         orte_max_global_restarts, orte_max_local_restarts);            
