@@ -20,10 +20,16 @@ MACRO(C_GET_ALIGNMENT TYPE LANG NAME)
 
     MESSAGE( STATUS "Check alignment of ${TYPE} in ${LANG}...")
     
-    FILE (WRITE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/c_get_${NAME}_alignment.${LANG}"
-      "#include <stddef.h>
+    SET(INCLUDE_HEADERS "#include <stddef.h>
        #include <stdio.h>
-       #include <stdlib.h>
+       #include <stdlib.h>")
+
+    IF(HAVE_STDINT_H)
+        SET(INCLUDE_HEADERS "${INCLUDE_HEADERS}\n#include <stdint.h>\n")
+    ENDIF(HAVE_STDINT_H)
+
+    FILE (WRITE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/c_get_${NAME}_alignment.${LANG}"
+      "${INCLUDE_HEADERS}
        int main(){
        char diff;
        struct foo {char a; ${TYPE} b;};
