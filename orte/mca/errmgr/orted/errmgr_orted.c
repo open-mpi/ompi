@@ -118,7 +118,7 @@ static int update_state(orte_jobid_t job,
                         orte_errmgr_stack_state_t *stack_state)
 {
     opal_list_item_t *item, *next;
-    orte_odls_job_t *jobdat;
+    orte_odls_job_t *jobdat = NULL;
     orte_odls_child_t *child;
     opal_buffer_t alert;
     orte_plm_cmd_flag_t cmd;
@@ -315,7 +315,8 @@ static int update_state(orte_jobid_t job,
                     killprocs(proc->jobid, proc->vpid);
                 }
                 app = jobdat->apps[child->app_idx];
-                if (jobdat->enable_recovery && child->restarts < app->max_local_restarts) {
+                if (!(ORTE_ERRMGR_STACK_STATE_RECOVERED & (*stack_state)) &&
+                    jobdat->enable_recovery && child->restarts < app->max_local_restarts) {
                     child->restarts++;
                     OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
                                          "%s errmgr:orted restarting proc %s for the %d time",
@@ -329,7 +330,7 @@ static int update_state(orte_jobid_t job,
     }
     
     if (ORTE_PROC_STATE_TERMINATED < state) {
-        if (jobdat->enable_recovery) {
+        if (!(ORTE_ERRMGR_STACK_STATE_RECOVERED & (*stack_state)) && jobdat->enable_recovery) {
             OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
                                  "%s RECOVERY ENABLED",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
