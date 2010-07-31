@@ -744,7 +744,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
          *     is attempted until the overall ORTE system knows how to talk to everyone -
          *     otherwise, the system can just hang.
          */
-        if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync(false))) {
+        if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync(true))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
