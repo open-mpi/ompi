@@ -306,10 +306,10 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     /* binding options */
     { NULL, NULL, NULL, '\0', "bind-to-none", "bind-to-none", 0,
       &orterun_globals.bind_to_none, OPAL_CMD_LINE_TYPE_BOOL,
-      "Do not bind processes to cores or sockets" },
+      "Do not bind processes to cores or sockets (default)" },
     { NULL, NULL, NULL, '\0', "bind-to-core", "bind-to-core", 0,
       &orterun_globals.bind_to_core, OPAL_CMD_LINE_TYPE_BOOL,
-      "Whether to bind processes to specific cores (the default)" },
+      "Whether to bind processes to specific cores" },
     { NULL, NULL, NULL, '\0', "bind-to-board", "bind-to-board", 0,
       &orterun_globals.bind_to_board, OPAL_CMD_LINE_TYPE_BOOL,
       "Whether to bind processes to specific boards (meaningless on 1 board/node)" },
