@@ -120,6 +120,7 @@ Detailed Open MPI v1.5 Feature List:
     - Performance improvements
     - Support for hierarchical collectives (must be activated
       manually; see below)
+	- Support for Voltaire FCA (Fabric Collective Accelerator) technology
 
   o Miscellaneous
     - MPI 2.1 compliant 
@@ -448,6 +449,13 @@ Collectives
 
   We would appreciate feedback from the user community about how well
   hierarch works for your applications.
+
+- The "fca" coll component: Voltaire Fabric Collective Accelerator (FCA) 
+  is a solution for offloading collective operations from the MPI process 
+  onto Voltaire QDR InfiniBand switch CPUs. 
+
+  See http://www.voltaire.com/Products/Application_Acceleration_Software/voltaire_fabric_collective_accelerator_fca
+  for details.
 
 
 Network Support
@@ -788,6 +796,13 @@ for a full list); a summary of the more commonly used ones follows:
   Allows the MPI thread level MPI_THREAD_MULTIPLE.  See
   --with-threads; this is currently disabled by default. Enabling
   this feature will automatically --enable-opal-multi-threads.
+
+--with-fca=<directory>
+  Specify the directory where the Voltaire FCA library and
+  header files are located.  
+
+  FCA is the support library for Voltaire QDR switches.
+
 
 --enable-opal-multi-threads
   Enables thread lock support in the OPAL and ORTE layers. Does
