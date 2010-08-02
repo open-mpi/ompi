@@ -33,10 +33,14 @@ IF(NOT MICROSOFT_CHECK_DONE)
       "C:/Program Files (x86)/Microsoft Visual Studio 8/VC/bin/amd64"
       "C:/Program Files/Microsoft Visual Studio .NET 2003/VC7/bin/amd64"
       "C:/Program Files (x86)/Microsoft Visual Studio .NET 2003/VC7/bin/amd64"
-      "$ENV{VS90COMNTOOLS}../../VC/bin/amd64"
-      "$ENV{VS80COMNTOOLS}../../VC/bin//amd64"
+      "C:/Program Files/Microsoft Visual Studio 10.0/VC/bin/amd64"
+      "C:/Program Files (x86)/Microsoft Visual Studio 10.0/VC/bin/amd64"
+      "$ENV{VS80COMNTOOLS}../../VC/bin/ia64"
+      "$ENV{VS80COMNTOOLS}../../VC/bin/amd64"
       "$ENV{VS90COMNTOOLS}../../VC/bin/ia64"
-      "$ENV{VS80COMNTOOLS}../../VC/bin//ia64")
+      "$ENV{VS90COMNTOOLS}../../VC/bin/amd64"
+      "$ENV{VS100COMNTOOLS}../../VC/bin/ia64"
+      "$ENV{VS100COMNTOOLS}../../VC/bin/amd64")
   ELSE(CMAKE_CL_64)
     SET(CHECK_PATHS ${CHECK_PATHS}
       "C:/Program Files/Microsoft Visual Studio 9.0/VC/bin"
@@ -45,8 +49,11 @@ IF(NOT MICROSOFT_CHECK_DONE)
       "C:/Program Files (x86)/Microsoft Visual Studio 8/VC/bin"
       "C:/Program Files/Microsoft Visual Studio .NET 2003/VC7/bin"
       "C:/Program Files (x86)/Microsoft Visual Studio .NET 2003/VC7/bin"
+      "C:/Program Files/Microsoft Visual Studio 10.0/VC/bin"
+      "C:/Program Files (x86)/Microsoft Visual Studio 10.0/VC/bin"
       "$ENV{VS90COMNTOOLS}../../VC/bin"
-      "$ENV{VS80COMNTOOLS}../../VC/bin")
+      "$ENV{VS80COMNTOOLS}../../VC/bin"
+      "$ENV{VS100COMNTOOLS}../../VC/bin/")
   ENDIF(CMAKE_CL_64)
 
   FIND_PROGRAM(CL_EXE cl PATHS ${CHECK_PATHS})
