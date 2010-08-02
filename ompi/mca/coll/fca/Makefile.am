@@ -10,7 +10,6 @@
 #
 #
 
-EXTRA_DIST = .windows
 AM_CPPFLAGS = $(coll_fca_CPPFLAGS) -DCOLL_FCA_HOME=\"$(coll_fca_HOME)\"
 
 #dist_pkgdata_DATA = help-coll-fca.txt
