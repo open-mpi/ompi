@@ -24,6 +24,7 @@
 
 #include "ompi/constants.h"
 #include "opal/datatype/opal_convertor.h"
+#include "opal/util/opal_sos.h"
 
 #include "btl_portals.h"
 #include "btl_portals_send.h"

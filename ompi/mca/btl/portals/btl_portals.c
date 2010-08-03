@@ -29,6 +29,7 @@
 #include "ompi/constants.h"
 #include "ompi/mca/btl/btl.h"
 #include "opal/datatype/opal_convertor.h"
+#include "opal/util/opal_sos.h"
 
 #include "btl_portals.h"
 #include "btl_portals_endpoint.h"
