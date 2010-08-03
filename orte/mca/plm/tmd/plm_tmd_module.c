@@ -167,7 +167,7 @@ static int plm_tmd_launch_job(orte_job_t *jdata)
     bool failed_launch = true;
     mode_t current_umask;
     orte_jobid_t failed_job;
-    orte_job_state_t job_state = ORTE_JOB_NEVER_LAUNCHED;
+    orte_job_state_t job_state = ORTE_JOB_STATE_NEVER_LAUNCHED;
     int offset;
     tm_event_t eventpolled;
     orte_std_cntr_t num_daemons;
