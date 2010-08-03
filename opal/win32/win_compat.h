@@ -220,7 +220,15 @@ typedef unsigned int uint;
 
 #define sigset_t int
 #define in_addr_t uint32_t
+
+/* Need to define _Bool here for different version of VS. 
+   The definition in opal_config_bottom.h won't help, 
+   as long as we have a mixed C and C++ projects in one solution. */
+#if defined(_MSC_VER) && _MSC_VER < 1600
+#define _Bool BOOL
+#else
 #define _Bool bool
+#endif
 
 /*
  * No syslog.h on Windows, but these have to be defined somehow.
