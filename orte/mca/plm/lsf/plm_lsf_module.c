@@ -142,7 +142,7 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
     orte_node_t **nodes;
     orte_std_cntr_t nnode;
     orte_jobid_t failed_job;
-    orte_job_state_t job_state = ORTE_JOB_NEVER_LAUNCHED;
+    orte_job_state_t job_state = ORTE_JOB_STATE_NEVER_LAUNCHED;
 
     /* default to declaring the daemons failed*/
     failed_job = ORTE_PROC_MY_NAME->jobid;
