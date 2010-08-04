@@ -4,6 +4,7 @@
  * Copyright (c) 2010      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -5178,7 +5179,7 @@ static int coord_request_wait( ompi_request_t * req,
         status->MPI_TAG    = req->req_status.MPI_TAG;
         status->MPI_SOURCE = req->req_status.MPI_SOURCE;
         status->_cancelled = req->req_status._cancelled;
-        status->_ucount    = req->req_status._ucount;
+        OMPI_STATUS_SET_COUNT(&status->_ucount, &req->req_status._ucount);
     }
 
     return OMPI_SUCCESS;

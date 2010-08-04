@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -126,7 +127,7 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
 
         /* return status to user */
         if(status != MPI_STATUS_IGNORE) {
-            *status = recv_status;
+            OMPI_STATUS_SET(status, &recv_status);
         }
 
         /* release resources */

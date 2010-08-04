@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
+ * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,7 +39,7 @@ int mca_pml_csum_iprobe(int src,
 
     if( recvreq.req_recv.req_base.req_ompi.req_complete == true ) {
         if( NULL != status ) {
-            *status = recvreq.req_recv.req_base.req_ompi.req_status;
+            OMPI_STATUS_SET(status, &recvreq.req_recv.req_base.req_ompi.req_status);
         }
         *matched = 1;
     } else {
@@ -68,7 +68,7 @@ int mca_pml_csum_probe(int src,
     ompi_request_wait_completion(&recvreq.req_recv.req_base.req_ompi);
 
     if (NULL != status) {
-        *status = recvreq.req_recv.req_base.req_ompi.req_status;
+        OMPI_STATUS_SET(status, &recvreq.req_recv.req_base.req_ompi.req_status);
     }
     MCA_PML_BASE_RECV_REQUEST_FINI( &recvreq.req_recv );
     return OMPI_SUCCESS;
