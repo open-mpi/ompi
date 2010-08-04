@@ -29,8 +29,12 @@
 
 #ifdef OMPI_DATATYPE_MAX_PREDEFINED
 #define FCA_DT_MAX_PREDEFINED OMPI_DATATYPE_MAX_PREDEFINED
+#define FCA_DT_GET_TRUE_EXTENT	ompi_datatype_get_true_extent
+#define FCA_DT_IS_CONTIGUOUS_MEMORY_LAYOUT ompi_datatype_is_contiguous_memory_layout
 #else
 #define FCA_DT_MAX_PREDEFINED DT_MAX_PREDEFINED
+#define FCA_DT_GET_TRUE_EXTENT	ompi_ddt_get_true_extent
+#define FCA_DT_IS_CONTIGUOUS_MEMORY_LAYOUT ompi_ddt_is_contiguous_memory_layout
 #endif
 
 
