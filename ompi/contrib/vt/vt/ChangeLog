@@ -3,6 +3,8 @@
 	  records generated
 	- fixed bug in MPI-I/O tracing: tracking MPI file handles even if
 	  MPI_File_open isn't recorded
+	- fixed bug in vtunify: do only write active streams/process ids to the
+	  OTF master control file (*.otf)
 
 5.8.1openmpi
 	- updated version of internal OTF to 1.6.5openmpi
