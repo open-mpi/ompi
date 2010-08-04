@@ -839,7 +839,12 @@ static void relay(int fd, short event, void *cbdata)
         if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, v))) {
             continue;
         }
-        if (proc->name.vpid == msg->sender.vpid) {
+        /* if this message came from a daemon, then we don't want
+         * to send it back to the same one as it will enter an
+         * infinite loop
+         */
+        if (ORTE_PROC_MY_NAME->jobid == msg->sender.jobid &&
+            proc->name.vpid == msg->sender.vpid) {
             continue;
         }
         if (NULL == proc->rml_uri) {
@@ -858,8 +863,17 @@ static void relay(int fd, short event, void *cbdata)
         child = (orte_odls_child_t*)item;
         if (NULL == child->rml_uri) {
             /* race condition */
+            OPAL_OUTPUT_VERBOSE((7, orte_rmcast_base.rmcast_output,
+                                 "%s child %s has not checked in",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(child->name)));
             continue;
         }
+        OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
+                             "%s relaying multicast msg from %s to %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&msg->sender),
+                             ORTE_NAME_PRINT(child->name)));
         if (0 > (rc = orte_rml.send_buffer(child->name, msg->buffer, ORTE_RML_TAG_MULTICAST, 0))) {
             ORTE_ERROR_LOG(rc);
         }
