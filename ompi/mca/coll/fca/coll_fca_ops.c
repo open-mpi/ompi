@@ -46,7 +46,7 @@ static mca_coll_fca_dtype_info_t* mca_coll_fca_get_dtype(ompi_datatype_t *dtype)
     if (fca_dtype < 0)
         return NULL;
 
-    ompi_ddt_get_true_extent(dtype, &lb, &extent);
+    FCA_DT_GET_TRUE_EXTENT(dtype, &lb, &extent);
     dtype_info->mpi_dtype = dtype;
     dtype_info->mpi_dtype_extent = extent;
     dtype_info->fca_dtype = fca_dtype;
@@ -90,13 +90,13 @@ static int mca_coll_fca_get_buf_size(ompi_datatype_t *dtype, int count)
 {
     ptrdiff_t true_lb, true_extent;
 
-    ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
+    FCA_DT_GET_TRUE_EXTENT(dtype, &true_lb, &true_extent);
 
     /* If the datatype is the same packed as it is unpacked, we
       can save a memory copy and just do the reduction operation
       directly.  However, if the representation is not the same, then we need to get a
       receive convertor and a temporary buffer to receive into. */
-   if (!ompi_ddt_is_contiguous_memory_layout(dtype, count)) {
+   if (!FCA_DT_IS_CONTIGUOUS_MEMORY_LAYOUT(dtype, count)) {
        FCA_VERBOSE(5, "Unsupported datatype layout, only contiguous is supported now");
        return OMPI_ERROR;
    }
