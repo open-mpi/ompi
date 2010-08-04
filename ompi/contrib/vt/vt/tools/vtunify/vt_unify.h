@@ -77,20 +77,20 @@ struct UnifyControl_struct
 {
 #ifndef VT_ETIMESYNC
    UnifyControl_struct()
-      : streamid(0)
+      : streamid(0), has_data(false)
       {
 	 ltime[0] = ltime[1] = offset[0] = offset[1] = 0;
       }
    UnifyControl_struct(uint32_t _streamid,
 		       int64_t * _ltime, int64_t * _offset)
-      : streamid(_streamid)
+      : streamid(_streamid), has_data(false)
       {
 	 ltime[0] = _ltime[0]; ltime[1] = _ltime[1];
 	 offset[0] = _offset[0]; offset[1] = _offset[1];
       }
 #else // VT_ETIMESYNC
    UnifyControl_struct()
-      : streamid(0), sync_offset(0), sync_drift(0.0),
+      : streamid(0), has_data(false), sync_offset(0), sync_drift(0.0),
    p_vec_sync_phases(0), p_vec_sync_times(0), p_vec_sync_pairs(0)
       {
 	 ltime[0] = ltime[1] = offset[0] = offset[1] = 0;
@@ -100,7 +100,7 @@ struct UnifyControl_struct
 		       std::vector<Synchronization::SyncPhase_struct> * _p_vec_sync_phases,
 		       std::vector<Synchronization::SyncTime_struct> * _p_vec_sync_times,
 		       std::vector<std::pair<uint32_t, uint32_t> > * _p_vec_sync_pairs)
-      : streamid(_streamid), sync_offset(0), sync_drift(1.0),
+      : streamid(_streamid), has_data(false), sync_offset(0), sync_drift(1.0),
    p_vec_sync_phases(_p_vec_sync_phases), p_vec_sync_times(_p_vec_sync_times),
    p_vec_sync_pairs(_p_vec_sync_pairs)
       {
@@ -112,6 +112,7 @@ struct UnifyControl_struct
    uint32_t    streamid;   // id of input stream
    int64_t     ltime[2];   // local times ...
    int64_t     offset[2];  // ... and chronological offsets to global time
+   bool        has_data;
 #ifdef VT_ETIMESYNC
    uint64_t    sync_offset;
    double      sync_drift;

@@ -77,6 +77,9 @@ Statistics::run()
       }
       else
       {
+	 // notice that this stream have data
+	 g_vecUnifyCtls[i]->has_data = true;
+
 	 // close statistics buffer
 	 OTF_RStream_closeStatsBuffer( p_org_stats_rstream );
 
@@ -95,7 +98,7 @@ Statistics::run()
 	 VPrint( 2, " Opened OTF writer stream [namestub %s id %x]\n",
 		 tmp_out_file_prefix.c_str(),
 		 g_vecUnifyCtls[i]->streamid );
-      
+
 	 // create record handler
 	 OTF_HandlerArray * p_handler_array =
 	    OTF_HandlerArray_open();
