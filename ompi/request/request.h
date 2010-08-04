@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -405,6 +405,34 @@ static inline int ompi_request_complete(ompi_request_t* request, bool with_signa
     }
     return OMPI_SUCCESS;
 }
+
+/* In a 64-bit library with strict alignment requirements (like 64-bit
+ * SPARC), the _ucount field of a C status is a long and requires 8
+ * byte alignment.  Unfortunately a Fortran status is an array of 6
+ * integers which only requires 4 byte alignment.  When storing the
+ * length into a status we don't know whether it is a C or Fortran
+ * status.  Therefore, we just copy the entire status as an integer
+ * array to avoid any issues.  We supply one macro for doing the entire
+ * status and another for just the _ucount field.  As this is only an
+ * issue for 64-bit SPARC, we conditionalize the macros accordingly.
+ */
+#if defined(__sparc) && SIZEOF_SIZE_T == 8
+#define OMPI_STATUS_SET(outstat, instat)                                      \
+    do {                                                                      \
+        int _i;                                                               \
+        for(_i=0; _i<(int)(sizeof(ompi_status_public_t)/sizeof(int)); _i++) { \
+            ((int *)(outstat))[_i] = ((int *)(instat))[_i];                   \
+        }                                                                     \
+    } while(0)
+#define OMPI_STATUS_SET_COUNT(outcount, incount)        \
+    do {                                                 \
+        ((int *)(outcount))[0] = ((int *)(incount))[0];  \
+        ((int *)(outcount))[1] = ((int *)(incount))[1];  \
+    } while(0)
+#else
+#define OMPI_STATUS_SET(outstat, instat) (*(outstat) = *(instat))
+#define OMPI_STATUS_SET_COUNT(outcount, incount) (*(outcount) = *(incount))
+#endif
 
 END_C_DECLS
 
