@@ -17,6 +17,8 @@ FILE(READ ${OpenMPI_SOURCE_DIR}/ompi/include/mpi.h.in MPI_H_IN)
 # change the syntax of the copy into CMake understandable
 STRING(REGEX REPLACE "#undef ([-_a-zA-Z0-9]+)[ ]*\n" "#cmakedefine \\1 \${\\1}\n" MPI_H_OUT "${MPI_H_IN}")
 STRING(REPLACE "#cmakedefine OMPI_HAVE_FORTRAN_" "#define OMPI_HAVE_FORTRAN_"  MPI_H_OUT "${MPI_H_OUT}")
+STRING(REPLACE "{OMPI_PROVIDE_MPI_FILE_INTERFACE}"
+ "{OMPI_PROVIDE_MPI_FILE_INTERFACE_VAL}" MPI_H_OUT "${MPI_H_OUT}")
 
 FILE(WRITE ${OpenMPI_BINARY_DIR}/ompi/include/mpi.h.in "${MPI_H_OUT}")
 
