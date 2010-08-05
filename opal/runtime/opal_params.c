@@ -32,6 +32,7 @@
 #include "opal/datatype/opal_datatype.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/threads/mutex.h"
+#include "opal/threads/threads.h"
 #include "opal/mca/paffinity/base/base.h"
 
 int opal_register_params(void)
@@ -104,6 +105,12 @@ int opal_register_params(void)
                                     "warning messages when double-locks are detected.",
                                     false, false, 0, &value);
         if (value) opal_mutex_check_locks = true;
+
+        mca_base_param_reg_int_name("opal", "debug_threads",
+                                    "Debug thread usage within OPAL. Reports out "
+                                    "when threads are acquired and released.",
+                                    false, false, 0, &value);
+        if (value) opal_debug_threads = true;
     }
 #endif
     /* The ddt engine has a few parameters */
