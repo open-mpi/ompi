@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -28,6 +29,10 @@
 #endif
 
 #include "opal/class/opal_object.h"
+#if OPAL_ENABLE_DEBUG
+#include "opal/util/output.h"
+#endif
+
 #include "mutex.h"
 #include "condition.h"
 
@@ -58,23 +63,62 @@ struct opal_thread_t {
 
 typedef struct opal_thread_t opal_thread_t;
 
+#if OPAL_ENABLE_DEBUG
+OPAL_DECLSPEC extern bool opal_debug_threads;
+#endif
+
+
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_thread_t);
 
-#define OPAL_ACQUIRE_THREAD(lck, cnd, act)      \
-    do {                                        \
-        OPAL_THREAD_LOCK((lck));                \
-        while (*(act)) {                        \
-            opal_condition_wait((cnd), (lck));  \
-        }                                       \
-        *(act) = true;                          \
+#if OPAL_ENABLE_DEBUG
+#define OPAL_ACQUIRE_THREAD(lck, cnd, act)               \
+    do {                                                 \
+        OPAL_THREAD_LOCK((lck));                         \
+        if (opal_debug_threads) {                        \
+            opal_output(0, "Waiting for thread %s:%d",   \
+                        __FILE__, __LINE__);             \
+        }                                                \
+        while (*(act)) {                                 \
+            opal_condition_wait((cnd), (lck));           \
+        }                                                \
+        if (opal_debug_threads) {                        \
+            opal_output(0, "Thread obtained %s:%d",      \
+                        __FILE__, __LINE__);             \
+        }                                                \
+        *(act) = true;                                   \
     } while(0);
+#else
+#define OPAL_ACQUIRE_THREAD(lck, cnd, act)               \
+    do {                                                 \
+        OPAL_THREAD_LOCK((lck));                         \
+        while (*(act)) {                                 \
+            opal_condition_wait((cnd), (lck));           \
+        }                                                \
+        *(act) = true;                                   \
+    } while(0);
+#endif
 
-#define OPAL_RELEASE_THREAD(lck, cnd, act)      \
-    do {                                        \
-        *(act) = false;                         \
-        opal_condition_broadcast((cnd));        \
-        OPAL_THREAD_UNLOCK((lck));              \
+
+#if OPAL_ENABLE_DEBUG
+#define OPAL_RELEASE_THREAD(lck, cnd, act)              \
+    do {                                                \
+        if (opal_debug_threads) {                       \
+            opal_output(0, "Releasing thread %s:%d",    \
+                        __FILE__, __LINE__);            \
+        }                                               \
+        *(act) = false;                                 \
+        opal_condition_broadcast((cnd));                \
+        OPAL_THREAD_UNLOCK((lck));                      \
     } while(0);
+#else
+#define OPAL_RELEASE_THREAD(lck, cnd, act)              \
+    do {                                                \
+        *(act) = false;                                 \
+        opal_condition_broadcast((cnd));                \
+        OPAL_THREAD_UNLOCK((lck));                      \
+    } while(0);
+#endif
+
 
 #define OPAL_WAKEUP_THREAD(cnd, act)        \
     do {                                    \
