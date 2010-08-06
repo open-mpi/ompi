@@ -77,9 +77,6 @@ Statistics::run()
       }
       else
       {
-	 // notice that this stream have data
-	 g_vecUnifyCtls[i]->has_data = true;
-
 	 // close statistics buffer
 	 OTF_RStream_closeStatsBuffer( p_org_stats_rstream );
 

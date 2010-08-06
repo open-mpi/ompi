@@ -7,18 +7,19 @@
 #include "config.h"
 #endif
 
-/* Workaround for PGI compiler bug (see Technical Problem Report 4337):
-   Disable OpenMP if compiler version is less than 9.0-3. */
+/* Disable OpenMP if the PGI compiler is used to work around the following errors:
+
+compiler version  compiler error
+< 9.0-3           PGCC-S-0000-Internal compiler error. calc_dw_tag:no tag
+(see Technical Problem Report 4337 at http://www.pgroup.com/support/release_tprs_90.htm)
+
+10.1 - 10.6       this kind of pragma may not be used here
+                  #pargma omp barrier
+*/
 #if defined(_OPENMP) && defined(__PGI)
 #	undef _OPENMP
-#	if defined(__PGIC__) && defined(__PGIC_MINOR__) && defined(__PGIC_PATCHLEVEL__)
-#		if (__PGIC__ >  9                                                ) || \
-		   (__PGIC__ == 9 && __PGIC_MINOR__ >  0                         ) || \
-		   (__PGIC__ == 9 && __PGIC_MINOR__ == 0 && __PGIC_PATCHLEVEL__ > 2)
-#			define _OPENMP
-#		endif
-#	endif
 #endif
+
 
 #ifdef _OPENMP
 #	include <omp.h>
