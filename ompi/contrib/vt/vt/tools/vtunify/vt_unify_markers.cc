@@ -169,9 +169,6 @@ Markers::readLocalMarkerDefs( std::vector<DefRec_Marker_struct*> * p_vecMarkerDe
       }
       else
       {
-	 // notice that this stream have data
-	 g_vecUnifyCtls[i]->has_data = true;
-
 	 // close marker buffer
 	 OTF_RStream_closeMarkerBuffer( p_loc_defmarkers_rstream );
 

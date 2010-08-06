@@ -417,9 +417,6 @@ Definitions::readLocal( std::vector<DefRec_Base_struct*> * p_vecLocDefs )
       }
       else
       {
-	 // notice that this stream have data
-	 g_vecUnifyCtls[i]->has_data = true;
-
 	 // close definitions buffer
 	 OTF_RStream_closeDefBuffer( p_loc_def_rstream );
 

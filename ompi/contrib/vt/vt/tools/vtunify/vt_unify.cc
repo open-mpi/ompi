@@ -782,21 +782,18 @@ writeMasterControl()
    {
       // do only add streams which have datatype
       //
-      if( g_vecUnifyCtls[i]->has_data )
+      if( OTF_MasterControl_append( p_uni_mastercontrol,
+				    g_vecUnifyCtls[i]->streamid,
+				    g_vecUnifyCtls[i]->streamid ) == 0 )
       {
-	 if( OTF_MasterControl_append( p_uni_mastercontrol,
-				       g_vecUnifyCtls[i]->streamid,
-				       g_vecUnifyCtls[i]->streamid ) == 0 )
-	 {
-	    std::cerr << ExeName << ": Error: "
-		      << "Could not append "
-		      << g_vecUnifyCtls[i]->streamid << ":"
-		      << std::hex << g_vecUnifyCtls[i]->streamid
-		      << " to OTF master control"
-		      << std::dec << std::endl;
-	    error = true;
-	    break;
-	 }
+	 std::cerr << ExeName << ": Error: "
+		   << "Could not append "
+		   << g_vecUnifyCtls[i]->streamid << ":"
+		   << std::hex << g_vecUnifyCtls[i]->streamid
+		   << " to OTF master control"
+		   << std::dec << std::endl;
+	 error = true;
+	 break;
       }
    }
 

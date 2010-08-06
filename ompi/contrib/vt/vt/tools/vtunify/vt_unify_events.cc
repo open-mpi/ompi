@@ -111,9 +111,6 @@ Events::run()
 	 }
 	 else
 	 {
-	    // notice that this stream have data
-	    g_vecUnifyCtls[i]->has_data = true;
-
 	    // close event buffer
 	    OTF_RStream_closeEventBuffer( p_org_events_rstream );
 
