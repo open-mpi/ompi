@@ -10,11 +10,7 @@
 #ifndef MCA_COLL_FCA_H
 #define MCA_COLL_FCA_H
 
-#include <fca_core/fca_api.h>
-#ifdef FCA_PROF
-#include <fca_core/fca_prof.h>
-#endif
-
+#include <fca_api.h>
 
 #include "ompi_config.h"
 #include "mpi.h"
@@ -35,6 +31,12 @@
 #define FCA_DT_MAX_PREDEFINED DT_MAX_PREDEFINED
 #define FCA_DT_GET_TRUE_EXTENT	ompi_ddt_get_true_extent
 #define FCA_DT_IS_CONTIGUOUS_MEMORY_LAYOUT ompi_ddt_is_contiguous_memory_layout
+#endif
+
+#ifdef OMPI_PROC_FLAG_LOCAL
+#define FCA_IS_LOCAL_PROCESS(n) ((n) & OMPI_PROC_FLAG_LOCAL)
+#else
+#define FCA_IS_LOCAL_PROCESS(n) OPAL_PROC_ON_LOCAL_NODE(n)
 #endif
 
 

@@ -29,7 +29,7 @@ static int have_remote_peers(ompi_group_t *group, size_t size, int *local_peers)
     ret = 0;
     for (i = 0; i < size; ++i) {
         proc = ompi_group_peer_lookup(group, i);
-        if (OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags)) {
+        if (FCA_IS_LOCAL_PROCESS(proc->proc_flags)) {
             ++*local_peers;
         } else {
             ret = 1;
@@ -56,8 +56,13 @@ static int __get_local_ranks(mca_coll_fca_module_t *fca_module)
     fca_module->num_local_procs = 0;
     for (rank = 0; rank < ompi_comm_size(comm); ++rank) {
         proc = __local_rank_lookup(comm, rank);
-        if (OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags))
+        if (FCA_IS_LOCAL_PROCESS(proc->proc_flags))
             ++fca_module->num_local_procs;
+
+		FCA_MODULE_VERBOSE(fca_module, 4, "rank %d flags 0x%x host %s", rank,
+				proc->proc_flags,
+				proc->proc_hostname);
+
     }        
     fca_module->local_ranks = calloc(fca_module->num_local_procs, sizeof *fca_module->local_ranks);
 
@@ -65,7 +70,7 @@ static int __get_local_ranks(mca_coll_fca_module_t *fca_module)
     index = 0;
     for (rank = 0; rank< ompi_comm_size(comm); ++rank) {
         proc = __local_rank_lookup(comm, rank);
-        if (!OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags))
+        if (!FCA_IS_LOCAL_PROCESS(proc->proc_flags))
             continue;
 
         if (rank == fca_module->rank)

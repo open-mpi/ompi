@@ -51,7 +51,7 @@ static mca_coll_fca_dtype_info_t* mca_coll_fca_get_dtype(ompi_datatype_t *dtype)
     dtype_info->mpi_dtype_extent = extent;
     dtype_info->fca_dtype = fca_dtype;
     dtype_info->fca_dtype_extent = mca_coll_fca_component.fca_ops.get_dtype_size(fca_dtype);
-    FCA_VERBOSE(2, "Added new dtype[%d]: %s fca id: %d, mpi sizet: %d, fca size: %d",
+    FCA_VERBOSE(2, "Added new dtype[%d]: %s fca id: %d, mpi size: %d, fca size: %d",
                 id, dtype->name, dtype_info->fca_dtype, dtype_info->mpi_dtype_extent,
                 dtype_info->fca_dtype_extent);
     return dtype_info;
@@ -127,7 +127,7 @@ static int mca_coll_fca_fill_reduce_spec(int count, ompi_datatype_t *dtype,
 
     /* Check operation */
     op_info = mca_coll_fca_get_op(op);
-    if (!op) {
+    if (!op_info) {
         FCA_VERBOSE(10, "Unsupported op: %s", op->o_name);
         return OMPI_ERROR;
     }
