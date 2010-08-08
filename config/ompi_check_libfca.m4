@@ -18,7 +18,7 @@ AC_DEFUN([OMPI_CHECK_FCA],[
     AC_ARG_WITH([fca],
         [AC_HELP_STRING([--with-fca(=DIR)],
              [Build fca (Voltaire Fabric Collective Accelerator) support, searching for libraries in DIR])])
-    OMPI_CHECK_WITHDIR([fca], [$with_fca], [include/fca_core/fca_api.h])
+    OMPI_CHECK_WITHDIR([fca], [$with_fca], [lib/libfca.so])
 
     AS_IF([test "$with_fca" != "no"],
           [AS_IF([test ! -z "$with_fca" -a "$with_fca" != "yes"],
@@ -30,13 +30,14 @@ AC_DEFUN([OMPI_CHECK_FCA],[
 			   CPPFLAGS_save="$CPPFLAGS"
 			   LDFLAGS_save="$LDFLAGS"
 			   LIBS_save="$LIBS"
+			   CPPFLAGS="$CPPFLAGS -I$ompi_check_fca_dir/include/fca -I$ompi_check_fca_dir/include/fca_core"
 
 			   OMPI_LOG_MSG([$1_CPPFLAGS : $$1_CPPFLAGS], 1)
 			   OMPI_LOG_MSG([$1_LDFLAGS  : $$1_LDFLAGS], 1)
 			   OMPI_LOG_MSG([$1_LIBS     : $$1_LIBS], 1)
 
 			   OMPI_CHECK_PACKAGE([$1],
-				   [fca_core/fca_api.h],
+				   [fca_api.h],
 				   [$ompi_check_fca_libs],
 				   [fca_get_version],
 				   [],
