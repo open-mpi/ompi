@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -550,6 +551,77 @@ uint64_t  orte_util_hash_name(const orte_process_name_t * name) {
     hash += name->vpid;
     
     return hash;
+}
+
+/* sysinfo conversion to and from string */
+int orte_util_convert_string_to_sysinfo(char **cpu_type, char **cpu_model,
+					const char* sysinfo_string)
+{
+    char *temp, *token;
+    int return_code=ORTE_SUCCESS;
+    
+    /* check for NULL string - error */
+    if (NULL == sysinfo_string) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
+    }
+
+    temp = strdup(sysinfo_string);  /** copy input string as the strtok process is destructive */
+    token = strtok(temp, ORTE_SCHEMA_DELIMITER_STRING); /** get first field -> cpu_type */
+    
+    /* check for error */
+    if (NULL == token) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
+    } 
+    
+    /* If type is a valid string get the value otherwise leave cpu_type untouched.
+     */
+    if (0 != strcmp(token, ORTE_SCHEMA_INVALID_STRING)) {
+        *cpu_type = strdup(token);
+    } 
+
+    token = strtok(NULL, ORTE_SCHEMA_DELIMITER_STRING);  /** get next field -> cpu_model */
+    
+    /* check for error */
+    if (NULL == token) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
+    }
+    
+    /* If type is a valid string get the value otherwise leave cpu_type untouched.
+     */
+    if (0 != strcmp(token, ORTE_SCHEMA_INVALID_STRING)) {
+        *cpu_model = strdup(token);
+    } 
+
+    free(temp);
+
+    return return_code;
+}
+
+int orte_util_convert_sysinfo_to_string(char **sysinfo_string,
+					const char *cpu_type, const char *cpu_model)
+{
+    char *tmp;
+    
+    /* check for no sysinfo values (like empty cpu_type) - where encountered, insert the
+     * invalid string so we can correctly parse the name string when
+     * it is passed back to us later
+     */
+    if (NULL == cpu_type) {
+        asprintf(&tmp, "%s", ORTE_SCHEMA_INVALID_STRING);
+    } else {
+        asprintf(&tmp, "%s", cpu_type);
+    }
+
+    if (NULL == cpu_model) {
+        asprintf(sysinfo_string, "%s%c%s", tmp, ORTE_SCHEMA_DELIMITER_CHAR, ORTE_SCHEMA_INVALID_STRING);
+    } else {
+        asprintf(sysinfo_string, "%s%c%s", tmp, ORTE_SCHEMA_DELIMITER_CHAR, cpu_model);
+    }
+    free(tmp);
+    return ORTE_SUCCESS;
 }
 
 char *orte_pretty_print_timing(int64_t secs, int64_t usecs)

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2010 Oracle and/or its affiliates.  All rights reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -1165,13 +1165,17 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     free(param);
     free(param2);
 
-    /* pass a param telling the child what model of cpu we are on,
+    /* pass a param telling the child what type and model of cpu we are on,
      * if we know it
      */
+    if (NULL != orte_local_cpu_type) {
+        param = mca_base_param_environ_variable("orte","cpu","type");
+        opal_setenv(param, orte_local_cpu_type, true, environ_copy);
+        free(param);
+    }
     if (NULL != orte_local_cpu_model) {
-        param = mca_base_param_environ_variable("cpu", NULL,"model");
-        /* do not overwrite what the user may have provided */
-        opal_setenv(param, orte_local_cpu_model, false, environ_copy);
+        param = mca_base_param_environ_variable("orte","cpu","model");
+        opal_setenv(param, orte_local_cpu_model, true, environ_copy);
         free(param);
     }
     

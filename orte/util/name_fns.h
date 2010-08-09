@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -122,6 +123,10 @@ ORTE_DECLSPEC int orte_util_compare_name_fields(orte_ns_cmp_bitmask_t fields,
                                   const orte_process_name_t* name2);
 /** This funtion returns a guaranteed unique hash value for the passed process name */
 ORTE_DECLSPEC uint64_t orte_util_hash_name(const orte_process_name_t * name);
+ORTE_DECLSPEC int orte_util_convert_string_to_sysinfo(char **cpu_type, char **cpu_model,
+                                             const char* sysinfo_string);
+ORTE_DECLSPEC int orte_util_convert_sysinfo_to_string(char** sysinfo_string,
+						      const char *cpu_model, const char *cpu_type);
 
 END_C_DECLS
 #endif

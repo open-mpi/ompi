@@ -14,6 +14,7 @@
  *                         reserved. 
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -453,7 +454,7 @@ int orte_daemon(int argc, char *argv[])
         orte_proc_t *proc;
         orte_node_t **nodes;
         orte_app_context_t *app;
-        char *tmp, *nptr;
+        char *tmp, *nptr, *sysinfo;
         int rc;
         int32_t ljob;
 
@@ -504,10 +505,12 @@ int orte_daemon(int argc, char *argv[])
         opal_pointer_array_add(jdata->procs, proc);
         jdata->num_procs = 1;
         
-        /* create a string that contains our uri + the singleton's name */
+        /* create a string that contains our uri + the singleton's name + sysinfo */
         orte_util_convert_process_name_to_string(&nptr, &proc->name);
-        asprintf(&tmp, "%s[%s]", orte_process_info.my_daemon_uri, nptr);
+        orte_util_convert_sysinfo_to_string(&sysinfo, orte_local_cpu_type, orte_local_cpu_model);
+        asprintf(&tmp, "%s[%s][%s]", orte_process_info.my_daemon_uri, nptr, sysinfo);
         free(nptr);
+	free(sysinfo);
 
         /* pass that info to the singleton */
 #ifndef __WINDOWS__
