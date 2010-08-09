@@ -76,7 +76,7 @@ AS_IF([test x"$inside_openmpi" = "xyes" -o "$includedir" = "\${prefix}/include"]
 [includedir="$includedir/vampirtrace"])
 AS_IF([test x"$inside_openmpi" = "xyes" -o "$datarootdir" = "\${prefix}/share"],
 [datarootdir="$datarootdir/vampirtrace"])
-AS_IF([test x"$docdir" = "\${datarootdir}/doc/\${PACKAGE_TARNAME}"],
+AS_IF([test "$docdir" = "\${datarootdir}/doc/\${PACKAGE_TARNAME}"],
 [docdir="\${datarootdir}/doc"])
 
 ACVT_CONF_TITLE([Compiler, preprocessor, and programs])
