@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,6 +38,7 @@
 #include "opal/util/path.h"
 #include "opal/util/opal_sos.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/sysinfo/sysinfo.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/paffinity/paffinity.h"
 
@@ -432,13 +434,29 @@ static int fork_hnp(void)
             return ORTE_ERR_HNP_COULD_NOT_START;
         }
         
-        /* parse the name from the returned info */
         if (']' != orted_uri[strlen(orted_uri)-1]) {
             ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
             free(orted_uri);
             return ORTE_ERR_COMM_FAILURE;
         }
         orted_uri[strlen(orted_uri)-1] = '\0';
+
+	/* parse the sysinfo from the returned info */
+        if (NULL == (param = strrchr(orted_uri, '['))) {
+            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+            free(orted_uri);
+            return ORTE_ERR_COMM_FAILURE;
+        }
+        param[-1] = '\0'; /* terminate the string */
+
+        if (ORTE_SUCCESS != (rc = orte_util_convert_string_to_sysinfo(&orte_local_cpu_type,
+								      &orte_local_cpu_model, ++param))) {
+            ORTE_ERROR_LOG(rc);
+            free(orted_uri);
+            return rc;
+        }
+
+	/* parse the name from the returned info */
         if (NULL == (param = strrchr(orted_uri, '['))) {
             ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
             free(orted_uri);
@@ -446,11 +464,13 @@ static int fork_hnp(void)
         }
         *param = '\0';  /* terminate the string */
         param++;
+
         if (ORTE_SUCCESS != (rc = orte_util_convert_string_to_process_name(ORTE_PROC_MY_NAME, param))) {
             ORTE_ERROR_LOG(rc);
             free(orted_uri);
             return rc;
         }
+
         /* save the daemon uri - we will process it later */
         orte_process_info.my_daemon_uri = strdup(orted_uri);
         
@@ -459,6 +479,7 @@ static int fork_hnp(void)
         
         /* indicate we are a singleton so orte_init knows what to do */
         orte_process_info.proc_type |= ORTE_PROC_SINGLETON;
+
         /* all done - report success */
         free(orted_uri);
         return ORTE_SUCCESS;
@@ -561,13 +582,30 @@ static int fork_hnp(void)
         return ORTE_ERR_HNP_COULD_NOT_START;
     }
 
-    /* parse the name from the returned info */
     if (']' != orted_uri[strlen(orted_uri)-1]) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         free(orted_uri);
         return ORTE_ERR_COMM_FAILURE;
     }
     orted_uri[strlen(orted_uri)-1] = '\0';
+
+    /* parse the sysinfo from the returned info */
+    if (NULL == (param = strrchr(orted_uri, '['))) {
+	ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+	free(orted_uri);
+	return ORTE_ERR_COMM_FAILURE;
+    }
+    param[-1] = '\0'; /* terminate the string */
+
+    /* save the cpu model */
+    if (ORTE_SUCCESS != (rc = orte_util_convert_string_to_sysinfo(&orte_local_cpu_type,
+								  &orte_local_cpu_model, ++param))) {
+	ORTE_ERROR_LOG(rc);
+	free(orted_uri);
+	return rc;
+    }
+
+    /* parse the name from the returned info */
     if (NULL == (param = strrchr(orted_uri, '['))) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         free(orted_uri);

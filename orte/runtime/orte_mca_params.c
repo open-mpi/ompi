@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
+ * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -375,6 +375,15 @@ int orte_register_params(void)
         }
     }
     
+    /* cluster hardware info detected by orte only */
+    mca_base_param_reg_string_name("orte", "cpu_type",
+                                   "cpu model detected in node",
+                                   true, false, NULL, &orte_local_cpu_type);
+
+    mca_base_param_reg_string_name("orte", "cpu_model",
+                                   "cpu model detected in node",
+                                   true, false, NULL, &orte_local_cpu_model);
+
     /* cluster hardware info */
     mca_base_param_reg_int_name("orte", "num_boards",
                                 "Number of processor boards/node (1-256) [default: 1]",

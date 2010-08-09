@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -572,6 +572,7 @@ ORTE_DECLSPEC extern bool orte_leave_session_attached;
 ORTE_DECLSPEC extern bool orte_do_not_launch;
 ORTE_DECLSPEC extern bool orted_spin_flag;
 ORTE_DECLSPEC extern bool orte_daemon_bootstrap;
+ORTE_DECLSPEC extern char *orte_local_cpu_type;
 ORTE_DECLSPEC extern char *orte_local_cpu_model;
 ORTE_DECLSPEC extern char *orte_basename;
 

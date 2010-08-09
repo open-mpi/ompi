@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
+ * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -59,6 +59,7 @@ bool orte_leave_session_attached;
 bool orte_do_not_launch = false;
 bool orted_spin_flag = false;
 bool orte_daemon_bootstrap = false;
+char *orte_local_cpu_type = NULL;
 char *orte_local_cpu_model = NULL;
 char *orte_basename = NULL;
 
