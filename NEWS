@@ -29,6 +29,24 @@ version 1.0.
 Trunk (not on release branches yet)
 -----------------------------------
 
+- Added --with-libltdl[=VALUE] option to allow using a libltdl
+  installation from outside of the Open MPI source tree.
+- ErrMgr framework redesigned to better support fault tolerance development
+  activities. See the following RFC for details:
+  http://www.open-mpi.org/community/lists/devel/2010/03/7589.php
+- Add new sensor framework to ORTE that includes modules for detecting
+  stalled applications and processes that consume too much memory.
+- Add new state framework to ORTE for saving and retrieving state
+  information (both application and system) to/from a database.
+- Add new "orte-info" tool that provides MCA params for only ORTE and
+  OPAL levels - intended for use when configuring without MPI support
+- Modified paffinity system to provide warning when bindings result in
+  being "bound to all", which is equivalent to "not bound"
+- Added "fca" collective component which enables Voltaire switches to
+  offload significant parts of collective communication onto the switching fabric 
+  See http://www.voltaire.com/Products/Application_Acceleration_Software/voltaire_fabric_collective_accelerator_fca
+  for details.
+
 1.5
 ---
 
