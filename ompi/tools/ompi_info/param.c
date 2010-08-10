@@ -713,7 +713,7 @@ void ompi_info_do_config(bool want_all)
                           OMPI_SIZEOF_FORTRAN_COMPLEX);
             ompi_info_out_int("Fort dbl cplx size",
                           "compiler:fortran:sizeof:double_complex", 
-                          OMPI_SIZEOF_FORTRAN_COMPLEX * 2);
+                          OMPI_HAVE_FORTRAN_DOUBLE_COMPLEX ? OMPI_SIZEOF_FORTRAN_DOUBLE_COMPLEX : -1);
             ompi_info_out_int("Fort cplx8 size", "compiler:fortran:sizeof:complex8", 
                           OMPI_HAVE_FORTRAN_COMPLEX8 ? OMPI_SIZEOF_FORTRAN_COMPLEX8 : -1);
             ompi_info_out_int("Fort cplx16 size", "compiler:fortran:sizeof:complex16", 
@@ -751,7 +751,7 @@ void ompi_info_do_config(bool want_all)
                           OMPI_ALIGNMENT_FORTRAN_COMPLEX);
             ompi_info_out_int("Fort dbl cplx align",
                           "compiler:fortran:align:double_complex", 
-                          OMPI_ALIGNMENT_FORTRAN_COMPLEX);
+                          OMPI_HAVE_FORTRAN_DOUBLE_COMPLEX ? OMPI_ALIGNMENT_FORTRAN_DOUBLE_COMPLEX : -1);
             ompi_info_out_int("Fort cplx8 align", "compiler:fortran:align:complex8", 
                           OMPI_HAVE_FORTRAN_COMPLEX8 ? OMPI_ALIGNMENT_FORTRAN_COMPLEX8 : -1);
             ompi_info_out_int("Fort cplx16 align", "compiler:fortran:align:complex16", 
