@@ -189,7 +189,7 @@ Markers::readLocalMarkerDefs( std::vector<DefRec_Marker_struct*> * p_vecMarkerDe
       OTF_RStream_close( p_loc_defmarkers_rstream );
       // close file manager for reader stream
       OTF_FileManager_close( p_loc_defmarkers_manager );
-      
+
       VPrint( 2, "  Closed OTF reader stream [namestub %s id %x]\n",
 	      Params.in_file_prefix.c_str(),
 	      g_vecUnifyCtls[i]->streamid );

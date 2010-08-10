@@ -95,7 +95,7 @@ Statistics::run()
 	 VPrint( 2, " Opened OTF writer stream [namestub %s id %x]\n",
 		 tmp_out_file_prefix.c_str(),
 		 g_vecUnifyCtls[i]->streamid );
-      
+
 	 // create record handler
 	 OTF_HandlerArray * p_handler_array =
 	    OTF_HandlerArray_open();

@@ -776,10 +776,12 @@ writeMasterControl()
       OTF_MasterControl_new( p_uni_mastercontrol_manager );
    assert( p_uni_mastercontrol );
 
-   // put stream/process matching to master control
+   // add stream/process matching to master control
    //
    for( uint32_t i = 0; i < g_vecUnifyCtls.size(); i++ )
    {
+      // do only add streams which have datatype
+      //
       if( OTF_MasterControl_append( p_uni_mastercontrol,
 				    g_vecUnifyCtls[i]->streamid,
 				    g_vecUnifyCtls[i]->streamid ) == 0 )

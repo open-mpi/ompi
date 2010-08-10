@@ -583,9 +583,6 @@ void VTGen_flush(VTGen* gen, uint8_t lastFlush,
   buffer_t p;
   int i;
 
-  /* buffer empty? */
-  if(gen->buf->pos == gen->buf->mem) return;
-
   /* intermediate flush and max. buffer flushes reached? */
   if(!lastFlush && gen->flushcntr == 0) return;
 
@@ -1170,6 +1167,26 @@ void VTGen_flush(VTGen* gen, uint8_t lastFlush,
      p += ((VTBuf_Entry_Base*)p)->length;
   }
 
+  /* if it's the last flush write event/summary comment record, in order that
+     all event/summary files will exist */
+  if(lastFlush)
+  {
+    if(VTGEN_IS_TRACE_ON(gen))
+    {
+      OTF_WStream_writeEventComment(gen->filestream,
+        vt_pform_wtime(),
+        65536 * gen->tid + vt_my_trace + 1,
+        "");
+    }
+    else /* VTGEN_IS_SUM_ON(gen) */
+    {
+      OTF_WStream_writeSummaryComment(gen->filestream,
+        vt_pform_wtime(),
+        65536 * gen->tid + vt_my_trace + 1,
+        "");
+    }
+  }
+
   /* reset buffer */
   gen->buf->pos = gen->buf->mem;
 
@@ -1203,8 +1220,7 @@ void VTGen_close(VTGen* gen)
     VTSum_close(gen->sum);
 
   /* flush buffer if necessary */
-  if(gen->buf->pos > gen->buf->mem)
-    VTGen_flush(gen, 1, 0, NULL);
+  VTGen_flush(gen, 1, 0, NULL);
 
   if(gen->fileprefix)
   {
