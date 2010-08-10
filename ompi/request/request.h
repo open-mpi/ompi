@@ -413,21 +413,33 @@ static inline int ompi_request_complete(ompi_request_t* request, bool with_signa
  * length into a status we don't know whether it is a C or Fortran
  * status.  Therefore, we just copy the entire status as an integer
  * array to avoid any issues.  We supply one macro for doing the entire
- * status and another for just the _ucount field.  As this is only an
- * issue for 64-bit SPARC, we conditionalize the macros accordingly.
+ * status and another for just the _ucount field.  Note that these
+ * macros are enabled on 64-bit SPARC platforms only.  This is because
+ * an investigation into performance effects showed that keeping the
+ * structure assignment code wherever possible resulted in the best
+ * performance.  Details of the investigation into this issue are at
+ * https://svn.open-mpi.org/trac/ompi/ticket/2526
  */
 #if defined(__sparc) && SIZEOF_SIZE_T == 8
-#define OMPI_STATUS_SET(outstat, instat)                                      \
-    do {                                                                      \
-        int _i;                                                               \
-        for(_i=0; _i<(int)(sizeof(ompi_status_public_t)/sizeof(int)); _i++) { \
-            ((int *)(outstat))[_i] = ((int *)(instat))[_i];                   \
-        }                                                                     \
+#define OMPI_STATUS_SET(outstat, instat)                                          \
+    do {                                                                          \
+        if (((ulong)(outstat)) & 0x7) {                                           \
+            int _i;                                                               \
+            for(_i=0; _i<(int)(sizeof(ompi_status_public_t)/sizeof(int)); _i++) { \
+                ((int *)(outstat))[_i] = ((int *)(instat))[_i];                   \
+            }                                                                     \
+        } else {                                                                  \
+            *(outstat) = *(instat);                                               \
+        }                                                                         \
     } while(0)
-#define OMPI_STATUS_SET_COUNT(outcount, incount)        \
-    do {                                                 \
-        ((int *)(outcount))[0] = ((int *)(incount))[0];  \
-        ((int *)(outcount))[1] = ((int *)(incount))[1];  \
+#define OMPI_STATUS_SET_COUNT(outcount, incount)             \
+    do {                                                     \
+        if (((ulong)(outcount)) & 0x7) {                     \
+            ((int *)(outcount))[0] = ((int *)(incount))[0];  \
+            ((int *)(outcount))[1] = ((int *)(incount))[1];  \
+        } else {                                             \
+            *(outcount) = *(incount);                        \
+        }                                                    \
     } while(0)
 #else
 #define OMPI_STATUS_SET(outstat, instat) (*(outstat) = *(instat))
