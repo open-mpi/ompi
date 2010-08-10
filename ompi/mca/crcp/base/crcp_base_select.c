@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2008 The Trustees of Indiana University.
+ * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -62,6 +62,10 @@ static ompi_crcp_base_module_t none_module = {
     ompi_crcp_base_module_init,
     /** Finalization Function */
     ompi_crcp_base_module_finalize,
+
+    /** Quiesce interface */
+    ompi_crcp_base_none_quiesce_start,
+    ompi_crcp_base_none_quiesce_end,
 
     /** PML Wrapper */
     ompi_crcp_base_none_pml_enable,

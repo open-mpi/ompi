@@ -1,0 +1,19 @@
+ -*- text -*-
+#
+# Copyright (c)      2010 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English general help file for ORTE SStore framework.
+#
+[fail_path_create]
+Error: Failed to create the following directory.
+       Check to make sure this process/node can access the specified directory.
+Process  : %s
+Node     : %s
+Directory: %s

@@ -1,6 +1,6 @@
  -*- text -*-
 #
-# Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -23,3 +23,9 @@ Warning: waitpid(%d) failed with ret = %d while waiting on process
          %s. Typically this means that you are stopping a restarted
          process. We skip the rest of the checks, since this is normally
          not a problem.
+
+[amca_param_not_found]
+Warning: Unable to determine the AMCA parameter from the environment.
+         This is the option supplied to mpirun as '-am '.
+         Restart may not be able to correctly determine the correct AMCA/MCA
+         parameters to use when restarting.

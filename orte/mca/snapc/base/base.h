@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -53,6 +53,7 @@ typedef uint8_t orte_snapc_cmd_flag_t;
 #define ORTE_SNAPC_GLOBAL_TERM_CMD    2
 #define ORTE_SNAPC_GLOBAL_UPDATE_CMD  3
 #define ORTE_SNAPC_LOCAL_UPDATE_CMD   4
+#define ORTE_SNAPC_LOCAL_FINISH_CMD   5
 
 /**
  * There are 3 types of Coordinators, and any process may be once or more type.
@@ -104,6 +105,9 @@ ORTE_DECLSPEC extern orte_snapc_coord_type_t orte_snapc_coord_type;
     void orte_snapc_base_quiesce_construct(orte_snapc_base_quiesce_t *obj);
     void orte_snapc_base_quiesce_destruct( orte_snapc_base_quiesce_t *obj);
 
+    void orte_snapc_base_request_op_construct(orte_snapc_base_request_op_t *op);
+    void orte_snapc_base_request_op_destruct(orte_snapc_base_request_op_t *op);
+
     /**
      * 'None' component functions
      * These are to be used when no component is selected.
@@ -129,39 +133,14 @@ ORTE_DECLSPEC extern orte_snapc_coord_type_t orte_snapc_coord_type;
     /**
      * Globals
      */
-#define orte_snapc_base_metadata_filename (strdup("global_snapshot_meta.data"))
-
-    ORTE_DECLSPEC extern char * orte_snapc_base_global_snapshot_dir;
-    ORTE_DECLSPEC extern char * orte_snapc_base_global_snapshot_ref;
-    ORTE_DECLSPEC extern char * orte_snapc_base_global_snapshot_loc;
-    ORTE_DECLSPEC extern bool   orte_snapc_base_store_in_place;
     ORTE_DECLSPEC extern bool   orte_snapc_base_store_only_one_seq;
-    ORTE_DECLSPEC extern bool   orte_snapc_base_establish_global_snapshot_dir;
-    ORTE_DECLSPEC extern bool   orte_snapc_base_is_global_dir_shared;
     ORTE_DECLSPEC extern size_t orte_snapc_base_snapshot_seq_number;
-
+    ORTE_DECLSPEC extern bool   orte_snapc_base_has_recovered;
 
     /**
      * Some utility functions
      */
     ORTE_DECLSPEC int orte_snapc_ckpt_state_str(char ** state_str, int state);
-
-    ORTE_DECLSPEC int orte_snapc_base_unique_global_snapshot_name(char **name_str, pid_t pid);
-    ORTE_DECLSPEC int orte_snapc_base_get_global_snapshot_metadata_file(char **file_name, char *uniq_snapshot_name);
-    ORTE_DECLSPEC int orte_snapc_base_get_global_snapshot_directory(char **dir_name, char *uniq_global_snapshot_name);
-    ORTE_DECLSPEC int orte_snapc_base_init_global_snapshot_directory(char *uniq_global_snapshot_name,
-                                                                        bool empty_metadata);
-    ORTE_DECLSPEC int orte_snapc_base_add_timestamp(char * global_snapshot_ref);
-    ORTE_DECLSPEC int orte_snapc_base_add_vpid_metadata(orte_process_name_t *proc,
-                                                        char * global_snapshot_ref,
-                                                        char *snapshot_ref,
-                                                        char *snapshot_location,
-                                                        char *crs_agent);
-    ORTE_DECLSPEC int orte_snapc_base_finalize_metadata(char * global_snapshot_ref);
-    ORTE_DECLSPEC int orte_snapc_base_extract_metadata(orte_snapc_base_global_snapshot_t *snapshot);
-
-    ORTE_DECLSPEC int orte_snapc_base_get_all_snapshot_refs(char *base_dir, int *num_refs, char ***snapshot_refs);
-    ORTE_DECLSPEC int orte_snapc_base_get_all_snapshot_ref_seqs(char *base_dir, char *snapshot_name, int *num_seqs, int **snapshot_ref_seqs);
 
     /*******************************
      * Global Coordinator functions
@@ -172,8 +151,7 @@ ORTE_DECLSPEC extern orte_snapc_coord_type_t orte_snapc_coord_type;
                                                                  opal_crs_base_ckpt_options_t *options,
                                                                  orte_jobid_t *jobid);
     ORTE_DECLSPEC int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
-                                                                   char *global_snapshot_handle,
-                                                                   int seq_num,
+                                                                   orte_sstore_base_handle_t handle,
                                                                    int ckpt_status);
 
     ORTE_DECLSPEC int orte_snapc_base_unpack_options(opal_buffer_t* buffer,

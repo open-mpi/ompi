@@ -61,6 +61,7 @@
 #include "opal/util/show_help.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/basename.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 
@@ -70,14 +71,17 @@
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 
+#include "opal/mca/compress/compress.h"
+#include "opal/mca/compress/base/base.h"
+
 /******************
  * Local Functions
  ******************/
 static int initialize(int argc, char *argv[]);
 static int finalize(void);
 static int parse_args(int argc, char *argv[]);
-static int check_file(char *given_filename);
-static int post_env_vars(int prev_pid, char *location);
+static int check_file(void);
+static int post_env_vars(int prev_pid, opal_crs_base_snapshot_t *snapshot);
 
 /*****************************************
  * Global Vars for Command line Arguments
@@ -86,10 +90,13 @@ static char *expected_crs_comp = NULL;
 
 typedef struct {
     bool help;
-    char *filename;
     bool verbose;
-    bool forked;
+    char *snapshot_ref;
     char *snapshot_loc;
+    char *snapshot_metadata;
+    char *snapshot_cache;
+    char *snapshot_compress;
+    char *snapshot_compress_postfix;
     int  output;
 } opal_restart_globals_t;
 
@@ -108,20 +115,41 @@ opal_cmd_line_init_t cmd_line_opts[] = {
       &opal_restart_globals.verbose, OPAL_CMD_LINE_TYPE_BOOL,
       "Be Verbose" },
 
-    { NULL, NULL, NULL, 
-      '\0', NULL, "fork", 
-      0,
-      &opal_restart_globals.forked, OPAL_CMD_LINE_TYPE_BOOL,
-      "Fork off a new process which is the restarted process instead of "
-      "replacing opal_restart" },
-
-    { "crs", "base", "snapshot_dir",
-      'w', NULL, "where",
+    { NULL, NULL, NULL,
+      'l', NULL, "location",
       1,
       &opal_restart_globals.snapshot_loc, OPAL_CMD_LINE_TYPE_STRING,
-      "Where to find the checkpoint files. In most cases this is automatically "
-      "detected, however if a custom location was specified to opal-checkpoint "
-      "then this argument is meant to match it."},
+      "Full path to the location of the local snapshot."},
+
+    { NULL, NULL, NULL,
+      'm', NULL, "metadata",
+      1,
+      &opal_restart_globals.snapshot_metadata, OPAL_CMD_LINE_TYPE_STRING,
+      "Relative path (with respect to --location) to the metadata file."},
+
+    { NULL, NULL, NULL,
+      'r', NULL, "reference",
+      1,
+      &opal_restart_globals.snapshot_ref, OPAL_CMD_LINE_TYPE_STRING,
+      "Local snapshot reference."},
+
+    { NULL, NULL, NULL,
+      'c', NULL, "cache",
+      1,
+      &opal_restart_globals.snapshot_cache, OPAL_CMD_LINE_TYPE_STRING,
+      "Possible local cache of the snapshot reference."},
+
+    { NULL, NULL, NULL,
+      'd', NULL, "decompress",
+      1,
+      &opal_restart_globals.snapshot_compress, OPAL_CMD_LINE_TYPE_STRING,
+      "Decompression component to use."},
+
+    { NULL, NULL, NULL,
+      'p', NULL, "decompress_postfix",
+      1,
+      &opal_restart_globals.snapshot_compress_postfix, OPAL_CMD_LINE_TYPE_STRING,
+      "Decompression component postfix."},
 
     /* End of list */
     { NULL, NULL, NULL, 
@@ -151,9 +179,9 @@ main(int argc, char *argv[])
     /* 
      * Check for existence of the file, or program in the case of self
      */
-    if( OPAL_SUCCESS != (ret = check_file(opal_restart_globals.filename) )) {
+    if( OPAL_SUCCESS != (ret = check_file() )) {
         opal_show_help("help-opal-restart.txt", "invalid_filename", true,
-                       opal_restart_globals.filename);
+                       opal_restart_globals.snapshot_ref);
         exit_status = ret;
         goto cleanup;
     }
@@ -170,19 +198,35 @@ main(int argc, char *argv[])
      * Make sure we are using the correct checkpointer
      */
     if(NULL == expected_crs_comp) {
-        char * base = NULL;
+        char * full_metadata_path = NULL;
+        FILE * metadata = NULL;
 
-        base = opal_crs_base_get_snapshot_directory(opal_restart_globals.filename);
-        if( OPAL_SUCCESS != (ret = opal_crs_base_extract_expected_component(base,
+        asprintf(&full_metadata_path, "%s/%s/%s",
+                 opal_restart_globals.snapshot_loc,
+                 opal_restart_globals.snapshot_ref,
+                 opal_restart_globals.snapshot_metadata);
+        if( NULL == (metadata = fopen(full_metadata_path, "r")) ) {
+            opal_show_help("help-opal-restart.txt", "invalid_metadata", true,
+                           opal_restart_globals.snapshot_metadata,
+                           full_metadata_path);
+            exit_status = OPAL_ERROR;
+            goto cleanup;
+        }
+        if( OPAL_SUCCESS != (ret = opal_crs_base_extract_expected_component(metadata,
                                                                             &expected_crs_comp,
                                                                             &prev_pid)) ) {
             opal_show_help("help-opal-restart.txt", "invalid_metadata", true,
-                           opal_crs_base_metadata_filename, base);
+                           opal_restart_globals.snapshot_metadata,
+                           full_metadata_path);
             exit_status = ret;
             goto cleanup;
         }
 
-        free(base);
+        free(full_metadata_path);
+        full_metadata_path = NULL;
+
+        fclose(metadata);
+        metadata = NULL;
     }
     
     opal_output_verbose(10, opal_restart_globals.output,
@@ -235,21 +279,17 @@ main(int argc, char *argv[])
      * Restart in this process
      ******************************/
     opal_output_verbose(10, opal_restart_globals.output,
-                        "Restarting from file (%s)",
-                        opal_restart_globals.filename);
-    if( opal_restart_globals.forked ) {
-        opal_output_verbose(10, opal_restart_globals.output,
-                            "\t Forking off a child");
-    } else {
-        opal_output_verbose(10, opal_restart_globals.output,
-                            "\t Exec in self");
-    }
+                        "Restarting from file (%s)\n",
+                        opal_restart_globals.snapshot_ref);
 
     snapshot = OBJ_NEW(opal_crs_base_snapshot_t);
-    snapshot->cold_start      = true;
-    snapshot->reference_name  = strdup(opal_restart_globals.filename);
-    snapshot->local_location  = opal_crs_base_get_snapshot_directory(snapshot->reference_name);
-    snapshot->remote_location = strdup(snapshot->local_location);
+    snapshot->cold_start         = true;
+    asprintf(&(snapshot->snapshot_directory), "%s/%s",
+             opal_restart_globals.snapshot_loc,
+             opal_restart_globals.snapshot_ref);
+    asprintf(&(snapshot->metadata_filename), "%s/%s",
+             snapshot->snapshot_directory,
+             opal_restart_globals.snapshot_metadata);
 
     /* Since some checkpoint/restart systems don't pass along env vars to the
      * restarted app, we need to take care of that.
@@ -257,7 +297,7 @@ main(int argc, char *argv[])
      * Included here is the creation of any files or directories that need to be
      * created before the process is restarted.
      */
-    if(OPAL_SUCCESS != (ret = post_env_vars(prev_pid, snapshot->local_location) ) ) {
+    if(OPAL_SUCCESS != (ret = post_env_vars(prev_pid, snapshot) ) ) {
         exit_status = ret;
         goto cleanup;
     }
@@ -266,27 +306,16 @@ main(int argc, char *argv[])
      * Do the actual restart
      */
     ret = opal_crs.crs_restart(snapshot, 
-                               opal_restart_globals.forked,
+                               false,
                                &child_pid);
 
     if (OPAL_SUCCESS != ret) {
         opal_show_help("help-opal-restart.txt", "restart_cmd_failure", true,
-                       opal_restart_globals.filename, ret);
+                       opal_restart_globals.snapshot_ref, ret);
         exit_status = ret;
         goto cleanup;
     }
-
-    /* If we required it to exec in self, then fail if this function returns. */
-    if(!opal_restart_globals.forked) {
-        opal_show_help("help-opal-restart.txt", "failed-to-exec", true,
-                       expected_crs_comp,
-                       opal_crs_base_selected_component.base_version.mca_component_name);
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    opal_output_verbose(10, opal_restart_globals.output,
-                        "opal_restart: Restarted Child with PID = %d\n", child_pid);
+    /* Should never get here, since crs_restart calls exec */
 
     /***************
      * Cleanup
@@ -320,8 +349,8 @@ static int initialize(int argc, char *argv[])
      * Parse Command line arguments
      */
     if (OPAL_SUCCESS != (ret = parse_args(argc, argv))) {
-        goto cleanup;
         exit_status = ret;
+        goto cleanup;
     }
 
     /*
@@ -346,11 +375,89 @@ static int initialize(int argc, char *argv[])
     tmp_env_var = NULL;
 
     /*
+     * Make sure we select the proper compress component.
+     */
+    if( NULL != opal_restart_globals.snapshot_compress ) {
+        tmp_env_var = mca_base_param_env_var("compress");
+        opal_setenv(tmp_env_var,
+                    opal_restart_globals.snapshot_compress,
+                    true, &environ);
+        free(tmp_env_var);
+        tmp_env_var = NULL;
+    }
+
+    /*
      * Initialize the OPAL layer
      */
     if (OPAL_SUCCESS != (ret = opal_init(&argc, &argv))) {
         exit_status = ret;
         goto cleanup;
+    }
+
+    /*
+     * If the checkpoint was compressed, then decompress it before continuing
+     */
+    if( NULL != opal_restart_globals.snapshot_compress ) {
+        char * zip_dir = NULL;
+        char * tmp_str = NULL;
+
+        /* Make sure to clear the selection for the restart,
+         * this way the user can swich compression mechanism
+         * across restart
+         */
+        tmp_env_var = mca_base_param_env_var("compress");
+        opal_unsetenv(tmp_env_var, &environ);
+        free(tmp_env_var);
+        tmp_env_var = NULL;
+
+        asprintf(&zip_dir, "%s/%s%s",
+                 opal_restart_globals.snapshot_loc,
+                 opal_restart_globals.snapshot_ref,
+                 opal_restart_globals.snapshot_compress_postfix);
+
+        if (0 >  (ret = access(zip_dir, F_OK)) ) {
+            opal_output(opal_restart_globals.output,
+                        "Error: Unable to access the file [%s]!",
+                        zip_dir);
+            exit_status = OPAL_ERROR;
+            goto cleanup;
+        }
+
+        opal_output_verbose(10, opal_restart_globals.output,
+                            "Decompressing (%s)",
+                            zip_dir);
+
+        opal_compress.decompress(zip_dir, &tmp_str);
+
+        if( NULL != zip_dir ) {
+            free(zip_dir);
+            zip_dir = NULL;
+        }
+        if( NULL != tmp_str ) {
+            free(tmp_str);
+            tmp_str = NULL;
+        }
+    }
+
+    /*
+     * If a cache directory has been suggested, see if it exists
+     */
+    if( NULL != opal_restart_globals.snapshot_cache ) {
+        if(0 == (ret = access(opal_restart_globals.snapshot_cache, F_OK)) ) {
+            opal_output_verbose(10, opal_restart_globals.output,
+                                "Using the cached snapshot (%s) instead of (%s)",
+                                opal_restart_globals.snapshot_cache,
+                                opal_restart_globals.snapshot_loc);
+            if( NULL != opal_restart_globals.snapshot_loc ) {
+                free(opal_restart_globals.snapshot_loc);
+                opal_restart_globals.snapshot_loc = NULL;
+            }
+            opal_restart_globals.snapshot_loc = opal_dirname(opal_restart_globals.snapshot_cache);
+        } else {
+            opal_show_help("help-opal-restart.txt", "cache_not_avail", true,
+                           opal_restart_globals.snapshot_cache,
+                           opal_restart_globals.snapshot_loc);
+        }
     }
 
     /*
@@ -380,10 +487,13 @@ static int parse_args(int argc, char *argv[])
     char **app_env = NULL, **global_env = NULL;
 
     opal_restart_globals.help = false;
-    opal_restart_globals.filename = NULL;
     opal_restart_globals.verbose = false;
-    opal_restart_globals.forked = false;
+    opal_restart_globals.snapshot_ref = NULL;
     opal_restart_globals.snapshot_loc = NULL;
+    opal_restart_globals.snapshot_metadata = NULL;
+    opal_restart_globals.snapshot_cache = NULL;
+    opal_restart_globals.snapshot_compress = NULL;
+    opal_restart_globals.snapshot_compress_postfix = NULL;
     opal_restart_globals.output = 0;
 
     /* Parse the command line options */
@@ -412,8 +522,7 @@ static int parse_args(int argc, char *argv[])
      * Now start parsing our specific arguments
      */
     if (OPAL_SUCCESS != ret || 
-        opal_restart_globals.help ||
-        1 >= argc) {
+        opal_restart_globals.help ) {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(&cmd_line);
         opal_show_help("help-opal-restart.txt", "usage", true,
@@ -424,20 +533,11 @@ static int parse_args(int argc, char *argv[])
 
     /* get the remaining bits */
     opal_cmd_line_get_tail(&cmd_line, &argc, &argv);
-    if ( 1 > argc ) {
-        char *args = NULL;
-        args = opal_cmd_line_get_usage_msg(&cmd_line);
-        opal_show_help("help-opal-restart.txt", "usage", true,
-                       args);
-        free(args);
-        return OPAL_ERROR;
-    }
 
-    opal_restart_globals.filename = strdup(argv[0]);
-    if ( NULL == opal_restart_globals.filename || 
-         0 >= strlen(opal_restart_globals.filename) ) {
+    if ( NULL == opal_restart_globals.snapshot_ref || 
+         0 >= strlen(opal_restart_globals.snapshot_ref) ) {
         opal_show_help("help-opal-restart.txt", "invalid_filename", true,
-                       opal_restart_globals.filename);
+                       opal_restart_globals.snapshot_ref);
         return OPAL_ERROR;
     }
 
@@ -445,21 +545,20 @@ static int parse_args(int argc, char *argv[])
      * need to be grouped together.
      * Useful in the 'mca crs self' instance.
      */
-    if(argc > 1) {
-        opal_restart_globals.filename = strdup(opal_argv_join(argv, ' '));
+    if(argc > 0) {
+        opal_restart_globals.snapshot_ref = strdup(opal_argv_join(argv, ' '));
     }
 
     return OPAL_SUCCESS;
 }
 
-static int check_file(char *given_filename)
+static int check_file(void)
 {
     int exit_status = OPAL_SUCCESS;
     int ret;
     char * path_to_check = NULL;
-    char **argv = NULL;
 
-    if(NULL == given_filename) {
+    if(NULL == opal_restart_globals.snapshot_ref) {
         opal_output(opal_restart_globals.output,
                     "Error: No filename provided!");
         exit_status = OPAL_ERROR;
@@ -469,9 +568,10 @@ static int check_file(char *given_filename)
     /*
      * Check for the existance of the snapshot handle in the snapshot directory
      */
-    path_to_check = opal_crs_base_get_snapshot_directory(given_filename);
+    asprintf(&path_to_check, "%s/%s",
+             opal_restart_globals.snapshot_loc,
+             opal_restart_globals.snapshot_ref);
 
-    /* Do the check */
     opal_output_verbose(10, opal_restart_globals.output,
                         "Checking for the existence of (%s)",
                         path_to_check);
@@ -485,15 +585,15 @@ static int check_file(char *given_filename)
     }
 
  cleanup:
-    if( NULL != path_to_check) 
+    if( NULL != path_to_check) {
         free(path_to_check);
-    if( NULL != argv)
-        opal_argv_free(argv);
+        path_to_check = NULL;
+    }
 
     return exit_status;
 }
 
-static int post_env_vars(int prev_pid, char *location)
+static int post_env_vars(int prev_pid, opal_crs_base_snapshot_t *snapshot)
 {
     int ret, exit_status = OPAL_SUCCESS;
     char *command = NULL;
@@ -511,11 +611,10 @@ static int post_env_vars(int prev_pid, char *location)
     }
 
     /*
-     * JJH: Hardcode /tmp to match opal/runtime/opal_cr.c in the application.
      * This is needed so we can pass the previous environment to the restarted 
      * application process.
      */
-    asprintf(&proc_file, "/tmp/%s-%d", OPAL_CR_BASE_ENV_NAME, prev_pid);
+    asprintf(&proc_file, "%s/%s-%d", opal_tmp_directory(), OPAL_CR_BASE_ENV_NAME, prev_pid);
     asprintf(&command, "env | grep OMPI_ > %s", proc_file);
 
     opal_output_verbose(5, opal_restart_globals.output,
@@ -530,7 +629,14 @@ static int post_env_vars(int prev_pid, char *location)
     /*
      * Any directories that need to be created
      */
-    opal_crs_base_metadata_read_token(location, CRS_METADATA_MKDIR, &loc_mkdir);
+    if( NULL == (snapshot->metadata = fopen(snapshot->metadata_filename, "r")) ) {
+        opal_show_help("help-opal-restart.txt", "invalid_metadata", true,
+                       opal_restart_globals.snapshot_metadata,
+                       snapshot->metadata_filename);
+        exit_status = OPAL_ERROR;
+        goto cleanup;
+    }
+    opal_crs_base_metadata_read_token(snapshot->metadata, CRS_METADATA_MKDIR, &loc_mkdir);
     argc = opal_argv_count(loc_mkdir);
     for( i = 0; i < argc; ++i ) {
         if( NULL != command ) {
@@ -555,7 +661,7 @@ static int post_env_vars(int prev_pid, char *location)
     /*
      * Any files that need to exist
      */
-    opal_crs_base_metadata_read_token(location, CRS_METADATA_TOUCH, &loc_touch);
+    opal_crs_base_metadata_read_token(snapshot->metadata, CRS_METADATA_TOUCH, &loc_touch);
     argc = opal_argv_count(loc_touch);
     for( i = 0; i < argc; ++i ) {
         if( NULL != command ) {
@@ -594,6 +700,11 @@ static int post_env_vars(int prev_pid, char *location)
         opal_argv_free(loc_touch);
         loc_touch = NULL;
     }
-    
+
+    if( NULL != snapshot->metadata ) {
+        fclose(snapshot->metadata);
+        snapshot->metadata = NULL;
+    }
+
     return exit_status;
 }

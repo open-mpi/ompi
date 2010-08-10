@@ -1,5 +1,5 @@
 .\"
-.\" Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+.\" Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
 .\"                         University Research and Technology
 .\"                         Corporation.  All rights reserved.
 .\" Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
@@ -88,10 +88,6 @@ The following MCA parameters apply to all components:
 .TP 4
 crs_base_verbose
 Set the verbosity level for all components. Default is 0, or silent except on error.
-.
-.TP 
-crs_base_snapshot_dir
-The directory to store the checkpoint snapshots. Default is \fB/tmp\fP.
 .
 .\"   Self Component
 .\" ******************

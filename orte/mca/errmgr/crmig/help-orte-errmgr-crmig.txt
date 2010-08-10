@@ -1,0 +1,27 @@
+ -*- text -*-
+#
+# Copyright (c) 2009-2010 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+#
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English general help file for ORTE ErrMgr CRMig framework.
+#
+[migrating_job]
+Notice: A migration of this job has been requested.
+        The processes below will be migrated.
+        Please standby.
+%s
+[migrated_job]
+Notice: The processes have been successfully migrated to/from the specified
+        machines.
+[no_migrating_procs]
+Warning: Could not find any processes to migrate on the nodes specified.
+         You provided the following:
+Nodes: %s
+Procs: %s

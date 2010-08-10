@@ -51,7 +51,7 @@ ORTE_DECLSPEC extern orte_errmgr_base_t orte_errmgr_base;
 /* Define the ERRMGR command flag */
 typedef uint8_t orte_errmgr_cmd_flag_t;
 #define ORTE_ERRMGR_CMD	OPAL_UINT8
-    
+
 /* define some commands */
 #define ORTE_ERRMGR_ABORT_PROCS_REQUEST_CMD     0x01
 #define ORTE_ERRMGR_REGISTER_CALLBACK_CMD       0x02
@@ -72,9 +72,10 @@ ORTE_DECLSPEC int orte_errmgr_base_abort(int error_code, char *fmt, ...)
     __opal_attribute_format__(__printf__, 2, 3)
 #   endif
     ;
-ORTE_DECLSPEC int orte_errmgr_base_predicted_fault(char ***proc_list,
-                                                   char ***node_list,
-                                                   char ***suggested_nodes);
+
+ORTE_DECLSPEC int orte_errmgr_base_predicted_fault(opal_list_t *proc_list,
+                                                   opal_list_t *node_list,
+                                                   opal_list_t *suggested_map);
 ORTE_DECLSPEC int orte_errmgr_base_suggest_map_targets(orte_proc_t *proc,
                                                        orte_node_t *oldnode,
                                                        opal_list_t *node_list);

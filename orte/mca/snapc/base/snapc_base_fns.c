@@ -57,25 +57,15 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
 
+#include "orte/mca/sstore/sstore.h"
+#include "orte/mca/sstore/base/base.h"
+
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
 
 /******************
  * Local Functions
  ******************/
-/* Some local strings to use genericly with the global metadata file */
-#define SNAPC_METADATA_SEQ      ("# Seq: ")
-#define SNAPC_METADATA_DONE_SEQ ("# Finished Seq: ")
-#define SNAPC_METADATA_TIME     ("# Timestamp: ")
-#define SNAPC_METADATA_PROCESS  ("# Process: ")
-#define SNAPC_METADATA_CRS_COMP ("# OPAL CRS Component: ")
-#define SNAPC_METADATA_SNAP_REF ("# Snapshot Reference: ")
-#define SNAPC_METADATA_SNAP_LOC ("# Snapshot Location: ")
-
-static int get_next_seq_number(FILE *file);
-static int get_next_valid_seq_number(FILE *file);
-static int metadata_extract_next_token(FILE *file, char **token, char **value);
-
 size_t orte_snapc_base_snapshot_seq_number = 0;
 
 /******************
@@ -93,11 +83,7 @@ void orte_snapc_base_local_snapshot_construct(orte_snapc_base_local_snapshot_t *
 
     snapshot->state = ORTE_SNAPC_CKPT_STATE_NONE;
 
-    snapshot->reference_name  = NULL;
-    snapshot->local_location  = NULL;
-    snapshot->remote_location = NULL;
-
-    snapshot->opal_crs      = NULL;
+    snapshot->ss_handle  = ORTE_SSTORE_HANDLE_INVALID;
 }
 
 void orte_snapc_base_local_snapshot_destruct( orte_snapc_base_local_snapshot_t *snapshot)
@@ -107,25 +93,7 @@ void orte_snapc_base_local_snapshot_destruct( orte_snapc_base_local_snapshot_t *
 
     snapshot->state = ORTE_SNAPC_CKPT_STATE_NONE;
 
-    if( NULL != snapshot->reference_name ) {
-        free(snapshot->reference_name);
-        snapshot->reference_name = NULL;
-    }
-
-    if( NULL != snapshot->local_location ) {
-        free(snapshot->local_location);
-        snapshot->local_location = NULL;
-    }
-
-    if( NULL != snapshot->remote_location ) {
-        free(snapshot->remote_location);
-        snapshot->remote_location = NULL;
-    }
-
-    if( NULL != snapshot->opal_crs ) {
-        free(snapshot->opal_crs);
-        snapshot->opal_crs = NULL;
-    }
+    snapshot->ss_handle  = ORTE_SSTORE_HANDLE_INVALID;
 }
 
 /****/
@@ -136,20 +104,11 @@ OBJ_CLASS_INSTANCE(orte_snapc_base_global_snapshot_t,
 
 void orte_snapc_base_global_snapshot_construct(orte_snapc_base_global_snapshot_t *snapshot)
 {
-    char *tmp_dir = NULL;
-
     OBJ_CONSTRUCT(&(snapshot->local_snapshots), opal_list_t);
 
-    orte_snapc_base_unique_global_snapshot_name(&(snapshot->reference_name), getpid());
+    snapshot->options = OBJ_NEW(opal_crs_base_ckpt_options_t);
 
-    orte_snapc_base_get_global_snapshot_directory(&tmp_dir, snapshot->reference_name);
-    snapshot->local_location = opal_dirname(tmp_dir);
-    free(tmp_dir);
-    
-    snapshot->seq_num    = 0;
-
-    snapshot->start_time = NULL;
-    snapshot->end_time   = NULL;
+    snapshot->ss_handle  = ORTE_SSTORE_HANDLE_INVALID;
 }
 
 void orte_snapc_base_global_snapshot_destruct( orte_snapc_base_global_snapshot_t *snapshot)
@@ -161,27 +120,12 @@ void orte_snapc_base_global_snapshot_destruct( orte_snapc_base_global_snapshot_t
     }
     OBJ_DESTRUCT(&(snapshot->local_snapshots));
 
-    if(NULL != snapshot->reference_name) {
-        free(snapshot->reference_name);
-        snapshot->reference_name = NULL;
+    if( NULL != snapshot->options ) {
+        OBJ_RELEASE(snapshot->options);
+        snapshot->options = NULL;
     }
 
-    if(NULL != snapshot->local_location) {
-        free(snapshot->local_location);
-        snapshot->local_location = NULL;
-    }
-
-    if(NULL != snapshot->start_time) {
-        free(snapshot->start_time);
-        snapshot->start_time = NULL;
-    }
-
-    if(NULL != snapshot->end_time) {
-        free(snapshot->end_time);
-        snapshot->end_time = NULL;
-    }
-
-    snapshot->seq_num = 0;
+    snapshot->ss_handle  = ORTE_SSTORE_HANDLE_INVALID;
 }
 
 OBJ_CLASS_INSTANCE(orte_snapc_base_quiesce_t,
@@ -193,6 +137,8 @@ void orte_snapc_base_quiesce_construct(orte_snapc_base_quiesce_t *quiesce)
 {
     quiesce->epoch         = -1;
     quiesce->snapshot      = NULL;
+    quiesce->ss_handle     = ORTE_SSTORE_HANDLE_INVALID;
+    quiesce->ss_snapshot   = NULL;
     quiesce->handle        = NULL;
     quiesce->target_dir    = NULL;
     quiesce->crs_name      = NULL;
@@ -201,15 +147,28 @@ void orte_snapc_base_quiesce_construct(orte_snapc_base_quiesce_t *quiesce)
     quiesce->checkpointing = false;
     quiesce->restarting    = false;
 
+    quiesce->migrating     = false;
+    quiesce->num_migrating = 0;
+    OBJ_CONSTRUCT(&(quiesce->migrating_procs), opal_pointer_array_t);
+    opal_pointer_array_init(&(quiesce->migrating_procs), 8, INT32_MAX, 8);
 }
 
 void orte_snapc_base_quiesce_destruct( orte_snapc_base_quiesce_t *quiesce)
 {
+    int i;
+    void *item = NULL;
+
     quiesce->epoch = -1;
 
     if( NULL != quiesce->snapshot ) {
         OBJ_RELEASE(quiesce->snapshot);
         quiesce->snapshot      = NULL;
+    }
+
+    quiesce->ss_handle     = ORTE_SSTORE_HANDLE_INVALID;
+    if( NULL != quiesce->ss_snapshot ) {
+        OBJ_RELEASE(quiesce->ss_snapshot);
+        quiesce->ss_snapshot   = NULL;
     }
 
     if( NULL != quiesce->handle ) {
@@ -233,6 +192,75 @@ void orte_snapc_base_quiesce_destruct( orte_snapc_base_quiesce_t *quiesce)
     quiesce->checkpointing = false;
     quiesce->restarting    = false;
 
+    quiesce->migrating     = false;
+    quiesce->num_migrating = 0;
+    for( i = 0; i < quiesce->migrating_procs.size; ++i) {
+        item = opal_pointer_array_get_item(&(quiesce->migrating_procs), i);
+        if( NULL != item ) {
+            OBJ_RELEASE(item);
+        }
+    }
+    OBJ_DESTRUCT(&(quiesce->migrating_procs));
+}
+
+OBJ_CLASS_INSTANCE(orte_snapc_base_request_op_t,
+                   opal_object_t,
+                   orte_snapc_base_request_op_construct,
+                   orte_snapc_base_request_op_destruct);
+
+void orte_snapc_base_request_op_construct(orte_snapc_base_request_op_t *op)
+{
+    op->event     = ORTE_SNAPC_OP_NONE;
+    op->is_active = false;
+    op->leader    = -1;
+
+    op->seq_num       = -1;
+    op->global_handle = NULL;
+    op->ss_handle     = ORTE_SSTORE_HANDLE_INVALID;
+
+    op->mig_num       = -1;
+    op->mig_vpids     = NULL;
+    /*op->mig_host_pref = NULL;*/
+    op->mig_vpid_pref = NULL;
+    op->mig_off_node  = NULL;
+}
+
+void orte_snapc_base_request_op_destruct( orte_snapc_base_request_op_t *op)
+{
+    op->event     = ORTE_SNAPC_OP_NONE;
+    op->is_active = false;
+    op->leader    = -1;
+
+    op->seq_num       = -1;
+    if(NULL != op->global_handle ) {
+        free(op->global_handle);
+        op->global_handle = NULL;
+    }
+
+    op->ss_handle     = ORTE_SSTORE_HANDLE_INVALID;
+
+    op->mig_num       = -1;
+    /*
+    if( NULL != op->mig_vpids ) {
+        free( op->mig_vpids );
+        op->mig_vpids = NULL;
+    }
+
+    if( NULL != op->mig_host_pref ) {
+        free( op->mig_host_pref );
+        op->mig_host_pref = NULL;
+    }
+
+    if( NULL != op->mig_vpid_pref ) {
+        free( op->mig_vpid_pref );
+        op->mig_vpid_pref = NULL;
+    }
+
+    if( NULL != op->mig_off_node ) {
+        free( op->mig_off_node );
+        op->mig_off_node = NULL;
+    }
+    */
 }
 
 
@@ -363,7 +391,7 @@ static void snapc_none_global_cmdline_request(int status,
         /*
          * Respond with an invalid response
          */
-        if( ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_ckpt_update_cmd(sender, NULL, -1, ORTE_SNAPC_CKPT_STATE_NO_CKPT)) ) {
+        if( ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_ckpt_update_cmd(sender, 0, ORTE_SNAPC_CKPT_STATE_NO_CKPT)) ) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
@@ -473,7 +501,49 @@ int orte_snapc_base_unpack_options(opal_buffer_t* buffer,
         exit_status = ret;
         goto cleanup;
     }
-    
+
+    count = 1;
+    if ( ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &(options->inc_prep_only), &count, OPAL_BOOL)) ) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base:unpack_options: Error: Unpack (inc_prep_only) Failure (ret = %d)\n",
+                    ret);
+        ORTE_ERROR_LOG(ret);
+        exit_status = ret;
+        goto cleanup;
+    }
+
+    count = 1;
+    if ( ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &(options->inc_recover_only), &count, OPAL_BOOL)) ) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base:unpack_options: Error: Unpack (inc_recover_only) Failure (ret = %d)\n",
+                    ret);
+        ORTE_ERROR_LOG(ret);
+        exit_status = ret;
+        goto cleanup;
+    }
+
+#if OPAL_ENABLE_CRDEBUG == 1
+    count = 1;
+    if ( ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &(options->attach_debugger), &count, OPAL_BOOL)) ) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base:unpack_options: Error: Unpack (attach_debugger) Failure (ret = %d)\n",
+                    ret);
+        ORTE_ERROR_LOG(ret);
+        exit_status = ret;
+        goto cleanup;
+    }
+
+    count = 1;
+    if ( ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &(options->detach_debugger), &count, OPAL_BOOL)) ) {
+        opal_output(orte_snapc_base_output,
+                    "snapc:base:unpack_options: Error: Unpack (detach_debugger) Failure (ret = %d)\n",
+                    ret);
+        ORTE_ERROR_LOG(ret);
+        exit_status = ret;
+        goto cleanup;
+    }
+#endif
+
  cleanup:
     return exit_status;
 }
@@ -495,18 +565,46 @@ int orte_snapc_base_pack_options(opal_buffer_t* buffer,
         goto cleanup;
     }
 
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &(options->inc_prep_only), 1, OPAL_BOOL))) {
+        ORTE_ERROR_LOG(ret);
+        exit_status = ret;
+        goto cleanup;
+    }
+
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &(options->inc_recover_only), 1, OPAL_BOOL))) {
+        ORTE_ERROR_LOG(ret);
+        exit_status = ret;
+        goto cleanup;
+    }
+
+#if OPAL_ENABLE_CRDEBUG == 1
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &(options->attach_debugger), 1, OPAL_BOOL))) {
+        ORTE_ERROR_LOG(ret);
+        exit_status = ret;
+        goto cleanup;
+    }
+
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &(options->detach_debugger), 1, OPAL_BOOL))) {
+        ORTE_ERROR_LOG(ret);
+        exit_status = ret;
+        goto cleanup;
+    }
+#endif
+
  cleanup:
     return exit_status;
 }
 
 int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
-                                                 char *global_snapshot_handle,
-                                                 int seq_num,
+                                                 orte_sstore_base_handle_t ss_handle,
                                                  int ckpt_status)
 {
     int ret, exit_status = ORTE_SUCCESS;
     opal_buffer_t *loc_buffer = NULL;
     orte_snapc_cmd_flag_t command = ORTE_SNAPC_GLOBAL_UPDATE_CMD;
+    char *global_snapshot_handle = NULL;
+    char *tmp_str = NULL;
+    int seq_num;
 
     /*
      * Noop if invalid peer, or peer not specified (JJH Double check this)
@@ -529,9 +627,9 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
     }
 
     OPAL_OUTPUT_VERBOSE((10, orte_snapc_base_output,
-                         "%s) base:ckpt_update_cmd: Sending update command <%s> <seq %d> <status %d>\n",
+                         "%s) base:ckpt_update_cmd: Sending update command <status %d>\n",
                          ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
-                         global_snapshot_handle, seq_num, ckpt_status));
+                         ckpt_status));
 
     /********************
      * Send over the status of the checkpoint
@@ -560,9 +658,24 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
         goto cleanup;
     }
 
-    if( ORTE_SNAPC_CKPT_STATE_FINISHED == ckpt_status ||
-        ORTE_SNAPC_CKPT_STATE_STOPPED  == ckpt_status ||
-        ORTE_SNAPC_CKPT_STATE_ERROR    == ckpt_status ) {
+    if( ORTE_SNAPC_CKPT_STATE_RECOVERED == ckpt_status ||
+        ORTE_SNAPC_CKPT_STATE_ESTABLISHED  == ckpt_status ||
+        ORTE_SNAPC_CKPT_STATE_STOPPED   == ckpt_status ||
+        ORTE_SNAPC_CKPT_STATE_ERROR     == ckpt_status ) {
+        orte_sstore.get_attr(ss_handle,
+                             SSTORE_METADATA_GLOBAL_SNAP_REF,
+                             &global_snapshot_handle);
+
+        orte_sstore.get_attr(ss_handle,
+                             SSTORE_METADATA_GLOBAL_SNAP_SEQ,
+                             &tmp_str);
+        seq_num = atoi(tmp_str);
+
+        OPAL_OUTPUT_VERBOSE((10, orte_snapc_base_output,
+                             "%s) base:ckpt_update_cmd: Sending update command <status %d> + <ref %s> <seq %d>\n",
+                             ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
+                             ckpt_status, global_snapshot_handle, seq_num));
+
         if (ORTE_SUCCESS != (ret = opal_dss.pack(loc_buffer, &global_snapshot_handle, 1, OPAL_STRING))) {
             opal_output(orte_snapc_base_output,
                         "%s) base:ckpt_update_cmd: Error: DSS Pack (snapshot handle) Failure (ret = %d) (LINE = %d)\n",
@@ -572,6 +685,7 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
             exit_status = ret;
             goto cleanup;
         }
+
         if (ORTE_SUCCESS != (ret = opal_dss.pack(loc_buffer, &seq_num, 1, OPAL_INT))) {
             opal_output(orte_snapc_base_output,
                         "%s) base:ckpt_update_cmd: Error: DSS Pack (seq number) Failure (ret = %d) (LINE = %d)\n",
@@ -593,11 +707,18 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
         goto cleanup;
     }
 
-
  cleanup:
     if(NULL != loc_buffer) {
         OBJ_RELEASE(loc_buffer);
         loc_buffer = NULL;
+    }
+    if( NULL != global_snapshot_handle ){
+        free(global_snapshot_handle);
+        global_snapshot_handle = NULL;
+    }
+    if( NULL != tmp_str ) {
+        free(tmp_str);
+        tmp_str = NULL;
     }
 
     return exit_status;
@@ -611,682 +732,6 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
 /*****************************
  * Snapshot metadata functions
  *****************************/
-int orte_snapc_base_get_all_snapshot_refs(char *base_dir, int *num_refs, char ***snapshot_refs)
-{
-#ifndef HAVE_DIRENT_H
-    return ORTE_ERR_NOT_SUPPORTED;
-#else
-    int ret, exit_status = ORTE_SUCCESS;
-    char * tmp_str = NULL, * metadata_file = NULL;
-    DIR *dirp = NULL;
-    struct dirent *dir_entp = NULL;
-    struct stat file_status;
-
-    if( NULL == base_dir ) {
-        if( NULL == orte_snapc_base_global_snapshot_dir ) {
-            exit_status = ORTE_ERROR;
-            goto cleanup;
-        }
-        base_dir = strdup(orte_snapc_base_global_snapshot_dir);
-    }
-
-    /*
-     * Get all subdirectories under the base directory
-     */
-    dirp = opendir(base_dir);
-    while( NULL != (dir_entp = readdir(dirp))) {
-        /* Skip "." and ".." if they are in the list */
-        if( 0 == strncmp("..", dir_entp->d_name, strlen("..") ) ||
-            0 == strncmp(".",  dir_entp->d_name, strlen(".")  ) ) {
-            continue;
-        }
-
-        /* Add the full path */
-        asprintf(&tmp_str, "%s/%s", base_dir, dir_entp->d_name);
-        if(0 != (ret = stat(tmp_str, &file_status) ) ){
-            free( tmp_str);
-            tmp_str = NULL;
-            continue;
-        } else {
-            /* Is it a directory? */
-            if(S_ISDIR(file_status.st_mode) ) {
-                asprintf(&metadata_file, "%s/%s",
-                         tmp_str,
-                         orte_snapc_base_metadata_filename);
-                if(0 != (ret = stat(metadata_file, &file_status) ) ){
-                    free( tmp_str);
-                    tmp_str = NULL;
-                    free( metadata_file);
-                    metadata_file = NULL;
-                    continue;
-                } else {
-                    if(S_ISREG(file_status.st_mode) ) {
-                        opal_argv_append(num_refs, snapshot_refs, dir_entp->d_name);
-                    }
-                }
-                free( metadata_file);
-                metadata_file = NULL;
-            }
-        }
-
-        free( tmp_str);
-        tmp_str = NULL;
-    }
-    
-    closedir(dirp);
-
- cleanup:
-    if( NULL != tmp_str) {
-        free( tmp_str);
-        tmp_str = NULL;
-    }
-
-    return exit_status;
-#endif /* HAVE_DIRENT_H */
-}
-
-int orte_snapc_base_get_all_snapshot_ref_seqs(char *base_dir, char *snapshot_name, int *num_seqs, int **snapshot_ref_seqs)
-{
-    int exit_status = ORTE_SUCCESS;
-    char * metadata_file = NULL;
-    FILE * meta_data = NULL;
-    int s, next_seq_int;
-
-    if( NULL == base_dir ) {
-        if( NULL == orte_snapc_base_global_snapshot_dir ) {
-            exit_status = ORTE_ERROR;
-            goto cleanup;
-        }
-        base_dir = strdup(orte_snapc_base_global_snapshot_dir);
-    }
-
-    asprintf(&metadata_file, "%s/%s/%s",
-             base_dir,
-             snapshot_name,
-             orte_snapc_base_metadata_filename);
-
-
-    if (NULL == (meta_data = fopen(metadata_file, "r")) ) {
-        opal_output(0, "Error: Unable to open the file <%s>\n", metadata_file);
-        exit_status = ORTE_ERROR;
-        goto cleanup;
-    }
-
-    /* First pass to count the number of sequence numbers */
-    *num_seqs = 0;
-    while(0 <= (next_seq_int = get_next_valid_seq_number(meta_data)) ){
-        *num_seqs += 1;
-    }
-
-    /* If there are no valid seq numbers then just return here */
-    if( 0 == *num_seqs ) {
-        exit_status = ORTE_SUCCESS;
-        goto cleanup;
-    }
-
-    rewind(meta_data);
-
-    /* Second pass to add them to the list */
-    (*snapshot_ref_seqs) = (int *) malloc(sizeof(int) * (*num_seqs));
-    s = 0;
-    while(0 <= (next_seq_int = get_next_valid_seq_number(meta_data)) ){
-        (*snapshot_ref_seqs)[s] = next_seq_int;
-        ++s;
-    }
-
- cleanup:
-    if(NULL != meta_data) {
-        fclose(meta_data);
-        meta_data = NULL;
-    }
-    if(NULL != metadata_file) {
-        free(metadata_file);
-        metadata_file = NULL;
-    }
-
-    return exit_status;
-}
-
-int orte_snapc_base_unique_global_snapshot_name(char **name_str, pid_t pid)
-{
-    if( NULL == orte_snapc_base_global_snapshot_ref ) {
-        asprintf(name_str, "ompi_global_snapshot_%d.ckpt", pid);
-    }
-    else {
-        *name_str = strdup(orte_snapc_base_global_snapshot_ref);
-    }
-    
-    return ORTE_SUCCESS;
-}
-
-int orte_snapc_base_get_global_snapshot_metadata_file(char **file_name, char *uniq_snapshot_name)
-{
-    asprintf(file_name, "%s/%s/%s",
-             orte_snapc_base_global_snapshot_dir,
-             uniq_snapshot_name,
-             orte_snapc_base_metadata_filename);
-    
-    return ORTE_SUCCESS;
-}
-
-int orte_snapc_base_get_global_snapshot_directory(char **dir_name, char *uniq_snapshot_name)
-{
-    asprintf(dir_name, "%s/%s/%d", 
-             orte_snapc_base_global_snapshot_dir, 
-             uniq_snapshot_name,
-             (int)orte_snapc_base_snapshot_seq_number);
-
-    return ORTE_SUCCESS;
-}
-
-int orte_snapc_base_init_global_snapshot_directory(char *uniq_global_snapshot_name, bool empty_metadata)
-{
-    char * dir_name = NULL, *meta_data_fname = NULL;
-    mode_t my_mode = S_IRWXU;
-    int ret;
-    int exit_status = ORTE_SUCCESS;
-    FILE * meta_data = NULL;
-
-    /*
-     * Make the snapshot directory from the uniq_global_snapshot_name
-     */
-    orte_snapc_base_get_global_snapshot_directory(&dir_name, uniq_global_snapshot_name);
-    if(OPAL_SUCCESS != (ret = opal_os_dirpath_create(dir_name, my_mode)) ) {
-        ORTE_ERROR_LOG(ret);
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    /*
-     * Initialize the metadata file at the top of that directory.
-     */
-    orte_snapc_base_get_global_snapshot_metadata_file(&meta_data_fname, uniq_global_snapshot_name);
-
-    if (NULL == (meta_data = fopen(meta_data_fname, "a")) ) {
-        opal_output(orte_snapc_base_output,
-                    "%s) base:init_global_snapshot_directory: Error: Unable to open the file (%s)\n",
-                    ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
-                    meta_data_fname);
-        ORTE_ERROR_LOG(ORTE_ERROR);
-        exit_status = ORTE_ERROR;
-        goto cleanup;
-    }
-    
-    /*
-     * Put in the checkpoint sequence number
-     */
-    if( empty_metadata ) {
-        fprintf(meta_data, "#\n");
-    }
-    else {
-        /*
-         * Put in the checkpoint sequence number
-         */
-        fprintf(meta_data, "#\n%s%d\n", SNAPC_METADATA_SEQ, (int)orte_snapc_base_snapshot_seq_number);
-
-        fclose(meta_data);
-        meta_data = NULL;
-
-        /* Add timestamp */
-        orte_snapc_base_add_timestamp(uniq_global_snapshot_name);
-    }
-
- cleanup:
-    if(NULL != meta_data)
-        fclose(meta_data);
-    if(NULL != dir_name)
-        free(dir_name);
-    if(NULL != meta_data_fname)
-        free(meta_data_fname);
-
-    return ORTE_SUCCESS;
-}
-
-/*
- * Metadata file handling functions
- * File is of the form:
- *
- * #
- * # Checkpoint Sequence #
- * # Begin Timestamp
- * # Process ID
- * # OPAL CRS
- * opal_restart ----mca crs_base_snapshot_dir SNAPSHOT_LOC SNAPSHOT_REF
- * ...
- * # End Timestamp
- *
- * E.g.,
- #
- # Seq: 0
- # Timestamp:          Mon Jun  5 18:32:08 2006
- # Process:            0.1.0
- # OPAL CRS Component: blcr
- opal_restart --mca crs_base_snapshot_dir /tmp/ompi_global_snapshot_32535.ckpt/0 opal_snapshot_0.ckpt
- # Process:            0.1.1
- # OPAL CRS Component: blcr
- opal_restart --mca crs_base_snapshot_dir /tmp/ompi_global_snapshot_32535.ckpt/0 opal_snapshot_1.ckpt
- # Timestamp:          Mon Jun  5 18:32:10 2006
- #
- # Seq: 1
- # Timestamp:          Mon Jun  5 18:32:12 2006
- # Process:            0.1.0
- # OPAL CRS Component: blcr
- opal_restart --mca crs_base_snapshot_dir /tmp/ompi_global_snapshot_32535.ckpt/1 opal_snapshot_0.ckpt
- # Process:            0.1.1
- # OPAL CRS Component: blcr
- opal_restart --mca crs_base_snapshot_dir /tmp/ompi_global_snapshot_32535.ckpt/1 opal_snapshot_1.ckpt
- # Timestamp:          Mon Jun  5 18:32:13 2006
- *
- */
-int orte_snapc_base_add_timestamp(char * global_snapshot_ref)
-{
-    int exit_status = ORTE_SUCCESS;
-    FILE * meta_data = NULL;
-    char * meta_data_fname = NULL;
-    time_t timestamp;
-
-    orte_snapc_base_get_global_snapshot_metadata_file(&meta_data_fname, global_snapshot_ref);
-
-    if (NULL == (meta_data = fopen(meta_data_fname, "a")) ) {
-        opal_output(orte_snapc_base_output,
-                    "%s) base:add_timestamp: Error: Unable to open the file (%s)\n",
-                    ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
-                    meta_data_fname);
-        ORTE_ERROR_LOG(ORTE_ERROR);
-        exit_status = ORTE_ERROR;
-        goto cleanup;
-    }
-    
-    timestamp = time(NULL);
-    fprintf(meta_data, "%s%s", SNAPC_METADATA_TIME, ctime(&timestamp));
-
- cleanup:
-    if( NULL != meta_data )
-        fclose(meta_data);
-    if( NULL != meta_data_fname)
-        free(meta_data_fname);
-    
-    return exit_status;
-}
-
-int orte_snapc_base_finalize_metadata(char * global_snapshot_ref)
-{
-    int exit_status = ORTE_SUCCESS;
-    FILE * meta_data = NULL;
-    char * meta_data_fname = NULL;
-
-    /* Add the final timestamp */
-    orte_snapc_base_add_timestamp(global_snapshot_ref);
-
-    orte_snapc_base_get_global_snapshot_metadata_file(&meta_data_fname, global_snapshot_ref);
-
-    if (NULL == (meta_data = fopen(meta_data_fname, "a")) ) {
-        opal_output(orte_snapc_base_output,
-                    "%s) base:add_timestamp: Error: Unable to open the file (%s)\n",
-                    ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
-                    meta_data_fname);
-        ORTE_ERROR_LOG(ORTE_ERROR);
-        exit_status = ORTE_ERROR;
-        goto cleanup;
-    }
-    
-    fprintf(meta_data, "%s%d\n", SNAPC_METADATA_DONE_SEQ, (int)orte_snapc_base_snapshot_seq_number);
-
- cleanup:
-    if( NULL != meta_data )
-        fclose(meta_data);
-    if( NULL != meta_data_fname)
-        free(meta_data_fname);
-    
-    return exit_status;
-}
-
-
-int orte_snapc_base_add_vpid_metadata( orte_process_name_t *proc,
-                                       char * global_snapshot_ref,
-                                       char *snapshot_ref,
-                                       char *snapshot_location,
-                                       char *crs_agent)
-{
-    int ret, exit_status = ORTE_SUCCESS;
-    FILE * meta_data = NULL;
-    char * meta_data_fname = NULL;
-    char * crs_comp = NULL;
-    char * proc_name = NULL;
-    char * local_snapshot = NULL;
-    int prev_pid = 0;
-
-    if( NULL == snapshot_location ) {
-        return ORTE_ERROR;
-    }
-
-    orte_snapc_base_get_global_snapshot_metadata_file(&meta_data_fname, global_snapshot_ref);
-
-    if (NULL == (meta_data = fopen(meta_data_fname, "a")) ) {
-        opal_output(orte_snapc_base_output,
-                    "%s) base:add_metadata: Error: Unable to open the file (%s)\n",
-                    ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
-                    meta_data_fname);
-        ORTE_ERROR_LOG(ORTE_ERROR);
-        exit_status = ORTE_ERROR;
-        goto cleanup;
-    }
-    
-    /* 
-     * Something of the form:
-     * 0.1.0 opal_snapshot_0.ckpt /tmp/ompi_global_snapshot_8827.ckpt/1/opal_snapshot_0.ckpt BLCR 
-     * or better yet start to create the proper app schema:
-     * orte_restart --mca crs_base_snapshot_dir /tmp/ompi_global_snapshot_8827.ckpt/1 opal_snapshot_0.ckpt
-     */
-    orte_util_convert_process_name_to_string(&proc_name, proc);
-
-    /* Extract the checkpointer */
-    if( NULL == crs_agent ) {
-        asprintf(&local_snapshot, "%s/%s", snapshot_location, snapshot_ref);
-        if( OPAL_SUCCESS != (ret = opal_crs_base_extract_expected_component(local_snapshot, &crs_comp, &prev_pid)) ) {
-            opal_show_help("help-orte-snapc-base.txt", "invalid_metadata", true,
-                           proc_name, opal_crs_base_metadata_filename, local_snapshot);
-            exit_status = ret;
-            goto cleanup;
-        }
-    } else {
-        crs_comp = strdup(crs_agent);
-    }
-
-    /* Write the string */
-    fprintf(meta_data, "%s%s\n", SNAPC_METADATA_PROCESS,   proc_name);
-    fprintf(meta_data, "%s%s\n", SNAPC_METADATA_CRS_COMP,  crs_comp);
-    fprintf(meta_data, "%s%s\n", SNAPC_METADATA_SNAP_REF,  snapshot_ref);
-    fprintf(meta_data, "%s%s\n", SNAPC_METADATA_SNAP_LOC,  snapshot_location);
-
- cleanup:
-    if( NULL != meta_data ) {
-        fclose(meta_data);
-        meta_data = NULL;
-    }
-    if( NULL != meta_data_fname) {
-        free(meta_data_fname);
-        meta_data_fname = NULL;
-    }
-    if( NULL != local_snapshot ) {
-        free( local_snapshot );
-        local_snapshot = NULL;
-    }
-    
-    return exit_status;
-}
-
-int orte_snapc_base_extract_metadata(orte_snapc_base_global_snapshot_t *global_snapshot)
-{
-    int exit_status = ORTE_SUCCESS;
-    FILE * meta_data = NULL;
-    char * meta_data_fname = NULL;
-    int    next_seq_int;
-    char * token = NULL;
-    char * value = NULL;
-    orte_snapc_base_local_snapshot_t *vpid_snapshot = NULL;
-
-    /*
-     * Open the metadata file
-     */
-    orte_snapc_base_get_global_snapshot_metadata_file(&meta_data_fname, global_snapshot->reference_name);
-    if (NULL == (meta_data = fopen(meta_data_fname, "r")) ) {
-        ORTE_ERROR_LOG(ORTE_ERROR);
-        exit_status = ORTE_ERROR;
-        goto cleanup;
-    }
-
-    /* 
-     * If we were not given a sequence number, first find the largest valid seq number
-     */
-    if(0 > global_snapshot->seq_num ) {
-        while(0 <= (next_seq_int = get_next_valid_seq_number(meta_data)) ){
-            global_snapshot->seq_num = next_seq_int;
-        }
-        rewind(meta_data);
-    }
-
-    /*
-     * Find the requested sequence number, 
-     */
-    while( global_snapshot->seq_num != (next_seq_int = get_next_seq_number(meta_data)) ) {
-        /* We didn't find the requested seq */
-        if(0 > next_seq_int) {
-            exit_status = ORTE_ERROR;
-            goto cleanup;
-        }
-    }
-
-    /*
-     * Extract each token and make the records
-     */
-    do {
-        if( ORTE_SUCCESS != metadata_extract_next_token(meta_data, &token, &value) ) {
-            break;
-        }
-        
-        if(0 == strncmp(SNAPC_METADATA_SEQ, token, strlen(SNAPC_METADATA_SEQ)) ) {
-            break;
-        }
-        else if(0 == strncmp(SNAPC_METADATA_TIME, token, strlen(SNAPC_METADATA_TIME)) ) {
-            if( NULL == global_snapshot->start_time) {
-                global_snapshot->start_time = strdup(value);
-            }
-            else {
-                global_snapshot->end_time = strdup(value);
-            }
-        }
-        else if(0 == strncmp(SNAPC_METADATA_PROCESS, token, strlen(SNAPC_METADATA_PROCESS)) ) {
-            orte_process_name_t proc;
-
-            orte_util_convert_string_to_process_name(&proc, value);
-
-            /* Not the first process, so append it to the list */
-            if( NULL != vpid_snapshot) {
-                opal_list_append(&global_snapshot->local_snapshots, &(vpid_snapshot->super));
-            }
-
-            vpid_snapshot = OBJ_NEW(orte_snapc_base_local_snapshot_t);
-
-            vpid_snapshot->process_name.jobid  = proc.jobid;
-            vpid_snapshot->process_name.vpid   = proc.vpid;
-        }
-        else if(0 == strncmp(SNAPC_METADATA_CRS_COMP, token, strlen(SNAPC_METADATA_CRS_COMP)) ) {
-            vpid_snapshot->opal_crs = strdup(value);
-        }
-        else if(0 == strncmp(SNAPC_METADATA_SNAP_REF, token, strlen(SNAPC_METADATA_SNAP_REF)) ) {
-            vpid_snapshot->reference_name = strdup(value);
-        }
-        else if(0 == strncmp(SNAPC_METADATA_SNAP_LOC, token, strlen(SNAPC_METADATA_SNAP_LOC)) ) {
-            vpid_snapshot->local_location  = strdup(value);
-            vpid_snapshot->remote_location = strdup(value);
-        }
-    } while(0 == feof(meta_data) );
-    
-    /* Append the last item */
-    if( NULL != vpid_snapshot) {
-        opal_list_append(&global_snapshot->local_snapshots, &(vpid_snapshot->super));
-    }
-    
- cleanup:
-    if(NULL != meta_data)
-        fclose(meta_data);
-    if(NULL != meta_data_fname)
-        free(meta_data_fname);
-
-    return exit_status;
-}
-
-/*
- * Extract the next sequence number from the file
- */
-static int get_next_seq_number(FILE *file)
-{
-    char *token = NULL;
-    char *value = NULL;
-    int seq_int = -1;
-
-    do {
-        if( ORTE_SUCCESS != metadata_extract_next_token(file, &token, &value) ) {
-            seq_int = -1;
-            goto cleanup;
-        }
-    } while(0 != strncmp(token, SNAPC_METADATA_SEQ, strlen(SNAPC_METADATA_SEQ)) );
-
-    seq_int = atoi(value);
-
- cleanup:
-    if( NULL != token)
-        free(token);
-    if( NULL != value)
-        free(value);
-
-    return seq_int;
-}
-
-/*
- * Extract the next Valid sequence number from the file
- */
-static int get_next_valid_seq_number(FILE *file)
-{
-    char *token = NULL;
-    char *value = NULL;
-    int seq_int = -1;
-
-    do {
-        if( ORTE_SUCCESS != metadata_extract_next_token(file, &token, &value) ) {
-            seq_int = -1;
-            goto cleanup;
-        }
-    } while(0 != strncmp(token, SNAPC_METADATA_DONE_SEQ, strlen(SNAPC_METADATA_DONE_SEQ)) );
-
-    seq_int = atoi(value);
-
- cleanup:
-    if( NULL != token)
-        free(token);
-    if( NULL != value)
-        free(value);
-
-    return seq_int;
-}
-
-static int metadata_extract_next_token(FILE *file, char **token, char **value)
-{
-    int exit_status = ORTE_SUCCESS;
-    int max_len = 256;
-    char * line = NULL;
-    int line_len = 0;
-    int c = 0, s = 0, v = 0;
-    char *local_token = NULL;
-    char *local_value = NULL;
-    bool end_of_line = false;
-
-    line = (char *) malloc(sizeof(char) * max_len);
-
- try_again:
-    /*
-     * If we are at the end of the file, then just return
-     */
-    if(0 != feof(file) ) {
-        exit_status = ORTE_ERROR;
-        goto cleanup;
-    }
-
-    /*
-     * Other wise grab the next token/value pair
-     */
-    if (NULL == fgets(line, max_len, file) ) {
-        exit_status = ORTE_ERROR;
-        goto cleanup;
-    }
-    line_len = strlen(line);
-    /* Strip off the new line if it it there */
-    if('\n' == line[line_len-1]) {
-        line[line_len-1] = '\0';
-        line_len--;
-        end_of_line = true;
-    }
-    else {
-        end_of_line = false;
-    }
-
-    /* Ignore lines with just '#' too */
-    if(2 >= line_len)
-        goto try_again;
-    
-    /*
-     * Extract the token from the set
-     */
-    for(c = 0; 
-        line[c] != ':' && 
-            c < line_len;
-        ++c) {
-        ;
-    }
-    c += 2; /* For the ' ' and the '\0' */
-    local_token = (char *)malloc(sizeof(char) * (c + 1));
-
-    for(s = 0; s < c; ++s) {
-        local_token[s] = line[s];
-    }
-
-    local_token[s] = '\0';
-    *token = strdup(local_token);
-
-    if( NULL != local_token) {
-        free(local_token);
-        local_token = NULL;
-    }
-
-    /*
-     * Extract the value from the set
-     */
-    local_value = (char *)malloc(sizeof(char) * (line_len - c + 1));
-    for(v = 0, s = c; 
-        s < line_len;
-        ++s, ++v) {
-        local_value[v] = line[s];
-    }
-
-    while(!end_of_line) {
-        if (NULL == fgets(line, max_len, file) ) {
-            exit_status = ORTE_ERROR;
-            goto cleanup;
-        }
-        line_len = strlen(line);
-        /* Strip off the new line if it it there */
-        if('\n' == line[line_len-1]) {
-            line[line_len-1] = '\0';
-            line_len--;
-            end_of_line = true;
-        }
-        else {
-            end_of_line = false;
-        }
-        
-        local_value = (char *)realloc(local_value, sizeof(char) * line_len);
-        for(s = 0;
-            s < line_len;
-            ++s, ++v) {
-            local_value[v] = line[s];
-        }
-    }
-
-    local_value[v] = '\0';
-    *value = strdup(local_value);
-
- cleanup:
-    if( NULL != local_token)
-        free(local_token);
-    if( NULL != local_value)
-        free(local_value);
-    if( NULL != line)
-        free(line);
-
-    return exit_status;
-}
-
 int orte_snapc_ckpt_state_str(char ** state_str, int state)
 {
     switch(state) {
@@ -1305,11 +750,14 @@ int orte_snapc_ckpt_state_str(char ** state_str, int state)
     case ORTE_SNAPC_CKPT_STATE_STOPPED:
         *state_str = strdup("Stopped");
         break;
-    case ORTE_SNAPC_CKPT_STATE_FILE_XFER:
-        *state_str = strdup("File Transfer");
+    case ORTE_SNAPC_CKPT_STATE_MIGRATING:
+        *state_str = strdup("Migrating");
         break;
-    case ORTE_SNAPC_CKPT_STATE_FINISHED:
-        *state_str = strdup("Finished");
+    case ORTE_SNAPC_CKPT_STATE_ESTABLISHED:
+        *state_str = strdup("Checkpoint Established");
+        break;
+    case ORTE_SNAPC_CKPT_STATE_RECOVERED:
+        *state_str = strdup("Continuing/Recovered");
         break;
     case ORTE_SNAPC_CKPT_STATE_FINISHED_LOCAL:
         *state_str = strdup("Locally Finished");

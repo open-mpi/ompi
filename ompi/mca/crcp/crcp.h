@@ -61,6 +61,23 @@ typedef int (*ompi_crcp_base_module_init_fn_t)
 typedef int (*ompi_crcp_base_module_finalize_fn_t)
      (void);
 
+
+/************************
+ * MPI Quiesce Interface
+ ************************/
+/**
+ * MPI_Quiesce_start component interface
+ */
+typedef int (*ompi_crcp_base_quiesce_start_fn_t)
+    (MPI_Info *info);
+
+/**
+ * MPI_Quiesce_end component interface
+ */
+typedef int (*ompi_crcp_base_quiesce_end_fn_t)
+    (MPI_Info *info);
+
+
 /************************
  * PML Wrapper hooks
  * PML Wrapper is the CRCPW PML component
@@ -282,6 +299,10 @@ struct ompi_crcp_base_module_1_0_0_t {
     ompi_crcp_base_module_init_fn_t           crcp_init;
     /** Finalization Function */
     ompi_crcp_base_module_finalize_fn_t       crcp_finalize;
+
+    /**< MPI_Quiesce Interface Functions ******************/
+    ompi_crcp_base_quiesce_start_fn_t         quiesce_start;
+    ompi_crcp_base_quiesce_end_fn_t           quiesce_end;
 
     /**< PML Wrapper Functions ****************************/
     ompi_crcp_base_pml_enable_fn_t            pml_enable;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2008 The Trustees of Indiana University.
+ * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -36,6 +36,12 @@ int opal_crs_base_select(void)
     opal_crs_base_component_t *best_component = NULL;
     opal_crs_base_module_t *best_module = NULL;
     int int_value = 0;
+
+    if( !opal_cr_is_enabled ) {
+        opal_output_verbose(10, opal_crs_base_output,
+                            "crs:select: FT is not enabled, skipping!");
+        return OPAL_SUCCESS;
+    }
 
     /*
      * Note: If we are a tool, then we will manually run the selection routine 

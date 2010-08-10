@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -26,6 +26,7 @@
 #define OMPI_CR_H
 
 #include "ompi_config.h"
+#include "orte/runtime/orte_cr.h"
 
 BEGIN_C_DECLS
 
@@ -49,11 +50,13 @@ BEGIN_C_DECLS
      */
     OMPI_DECLSPEC extern int ompi_cr_output;
 
-    /*
-     * If one of the BTLs that shutdown require a full, clean rebuild of the
-     * point-to-point stack on 'continue' as well as 'restart'.
-     */
-    OPAL_DECLSPEC extern bool ompi_cr_continue_like_restart;
+#if OPAL_ENABLE_CRDEBUG == 1
+    OMPI_DECLSPEC extern int    MPIR_checkpointable;
+    OMPI_DECLSPEC extern char * MPIR_controller_hostname;
+    OMPI_DECLSPEC extern char * MPIR_checkpoint_command;
+    OMPI_DECLSPEC extern char * MPIR_restart_command;
+    OMPI_DECLSPEC extern char * MPIR_checkpoint_listing_command;
+#endif
 
 END_C_DECLS
 

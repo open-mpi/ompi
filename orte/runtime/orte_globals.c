@@ -531,6 +531,9 @@ static void orte_app_context_construct(orte_app_context_t* app_context)
     app_context->preload_files_dest_dir  = NULL;
     app_context->preload_files_src_dir  = NULL;
     app_context->used_on_node = false;
+#if OPAL_ENABLE_FT_CR == 1
+    app_context->sstore_load = NULL;
+#endif
     app_context->max_local_restarts = -1;
     app_context->max_global_restarts = -1;
     app_context->constrain = true;
@@ -605,6 +608,13 @@ static void orte_app_context_destructor(orte_app_context_t* app_context)
         free(app_context->preload_files_src_dir);
         app_context->preload_files_src_dir = NULL;
     }
+
+#if OPAL_ENABLE_FT_CR == 1
+    if( NULL != app_context->sstore_load ) {
+        free(app_context->sstore_load);
+        app_context->sstore_load = NULL;
+    }
+#endif
 }
 
 OBJ_CLASS_INSTANCE(orte_app_context_t,

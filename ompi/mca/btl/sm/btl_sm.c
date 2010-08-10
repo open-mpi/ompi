@@ -52,6 +52,7 @@
 #if OPAL_ENABLE_FT_CR    == 1
 #include "opal/mca/crs/base/base.h"
 #include "opal/util/basename.h"
+#include "orte/mca/sstore/sstore.h"
 #include "ompi/runtime/ompi_cr.h"
 #endif
 
@@ -1099,8 +1100,6 @@ int mca_btl_sm_ft_event(int state) {
 }
 #else
 int mca_btl_sm_ft_event(int state) {
-    char * tmp_dir = NULL;
-
     /* Notify mpool */
     if( NULL != mca_btl_sm_component.sm_mpool &&
         NULL != mca_btl_sm_component.sm_mpool->mpool_ft_event) {
@@ -1114,17 +1113,14 @@ int mca_btl_sm_ft_event(int state) {
              * for these old file handles. The restart procedure will make sure
              * these files get cleaned up appropriately.
              */
-            opal_crs_base_metadata_write_token(NULL, CRS_METADATA_TOUCH, mca_btl_sm_component.sm_seg->module_seg_path);
-
-            /* Record the job session directory */
-            opal_crs_base_metadata_write_token(NULL, CRS_METADATA_MKDIR, orte_process_info.job_session_dir);
+            orte_sstore.set_attr(orte_sstore_handle_current,
+                                 SSTORE_METADATA_LOCAL_TOUCH,
+                                 mca_btl_sm_component.sm_seg->module_seg_path);
         }
     }
     else if(OPAL_CRS_CONTINUE == state) {
-        if( ompi_cr_continue_like_restart ) {
+        if( orte_cr_continue_like_restart ) {
             if( NULL != mca_btl_sm_component.sm_seg ) {
-                /* Do not Add session directory on continue */
-
                 /* Add shared memory file */
                 opal_crs_base_cleanup_append(mca_btl_sm_component.sm_seg->module_seg_path, false);
             }
@@ -1136,14 +1132,6 @@ int mca_btl_sm_ft_event(int state) {
     else if(OPAL_CRS_RESTART == state ||
             OPAL_CRS_RESTART_PRE == state) {
         if( NULL != mca_btl_sm_component.sm_seg ) {
-            /* Add session directory */
-            opal_crs_base_cleanup_append(orte_process_info.job_session_dir, true);
-            tmp_dir = opal_dirname(orte_process_info.job_session_dir);
-            if( NULL != tmp_dir ) {
-                opal_crs_base_cleanup_append(tmp_dir, true);
-                free(tmp_dir);
-                tmp_dir = NULL;
-            }
             /* Add shared memory file */
             opal_crs_base_cleanup_append(mca_btl_sm_component.sm_seg->module_seg_path, false);
         }

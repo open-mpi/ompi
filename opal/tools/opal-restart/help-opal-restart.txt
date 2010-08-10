@@ -21,7 +21,7 @@
 # This is the US/English help file for Open MPI checkpoint tool
 #
 [usage]
-opal-restart FILENAME
+opal-restart -r FILENAME
   Open PAL Single Process Restart Tool
 
 %s
@@ -70,3 +70,10 @@ Error: The restart command failed to properly exec the process per
 
 Expected Component: %s
 Selected Component: %s
+
+[cache_not_avail]
+Warning: Recommended cache directory could not be accessed. Falling back
+         to the snapshot location.
+Cache Dir   : %s
+Snapshot Dir: %s
+

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -79,6 +79,19 @@ struct opal_crs_base_ckpt_options_1_0_0_t {
     bool term;
     /** Send SIGSTOP after checkpoint */
     bool stop;
+
+    /** INC Prep Only */
+    bool inc_prep_only;
+
+    /** INC Recover Only */
+    bool inc_recover_only;
+
+#if OPAL_ENABLE_CRDEBUG == 1
+    /** Wait for debugger to attach after checkpoint */
+    bool attach_debugger;
+    /** Do not wait for debugger to reattach after checkpoint */
+    bool detach_debugger;
+#endif
 };
 typedef struct opal_crs_base_ckpt_options_1_0_0_t opal_crs_base_ckpt_options_1_0_0_t;
 typedef struct opal_crs_base_ckpt_options_1_0_0_t opal_crs_base_ckpt_options_t;
@@ -96,12 +109,14 @@ struct opal_crs_base_snapshot_1_0_0_t {
     /** MCA Component name */
     char * component_name;
 
-    /** Unique name of snapshot */
-    char * reference_name;
+    /** Metadata filename */
+    char * metadata_filename;
+
+    /** Metadata fd */
+    FILE * metadata;
 
     /** Absolute path the the snapshot directory */
-    char * local_location;
-    char * remote_location;
+    char * snapshot_directory;
 
     /** Cold Start: 
      * If we are restarting cold, then we need to recreate this structure 

@@ -285,17 +285,11 @@ int opal_crs_self_checkpoint(pid_t pid,
     /*
      * Setup for snapshot directory creation
      */
-    if(NULL != snapshot->super.reference_name)
-        free(snapshot->super.reference_name);
-    snapshot->super.reference_name = strdup(base_snapshot->reference_name);
-
-    if(NULL != snapshot->super.local_location)
-        free(snapshot->super.local_location);
-    snapshot->super.local_location  = strdup(base_snapshot->local_location);
-
-    if(NULL != snapshot->super.remote_location)
-        free(snapshot->super.remote_location);
-    snapshot->super.remote_location  = strdup(base_snapshot->remote_location);
+    snapshot->super = *base_snapshot;
+#if 0
+    snapshot->super.snapshot_directory = strdup(base_snapshot->snapshot_directory);
+    snapshot->super.metadata_filename  = strdup(base_snapshot->metadata_filename);
+#endif
 
     opal_output_verbose(10, mca_crs_self_component.super.output_handle,
                         "crs:self: checkpoint(%d, ---)", pid);
@@ -310,13 +304,16 @@ int opal_crs_self_checkpoint(pid_t pid,
      * Update the snapshot metadata
      */
     snapshot->super.component_name = strdup(mca_crs_self_component.super.base_version.mca_component_name);
-    if( OPAL_SUCCESS != (ret = opal_crs_base_metadata_write_token(NULL, CRS_METADATA_COMP, snapshot->super.component_name) ) ) {
-        opal_output(mca_crs_self_component.super.output_handle,
-                    "crs:self: checkpoint(): Error: Unable to write component name to the directory for (%s).",
-                    snapshot->super.reference_name);
-        exit_status = ret;
-        goto cleanup;
+    if( NULL == snapshot->super.metadata ) {
+        if (NULL == (snapshot->super.metadata = fopen(snapshot->super.metadata_filename, "a")) ) {
+            opal_output(mca_crs_self_component.super.output_handle,
+                        "crs:self: checkpoint(): Error: Unable to open the file (%s)",
+                        snapshot->super.metadata_filename);
+            exit_status = OPAL_ERROR;
+            goto cleanup;
+        }
     }
+    fprintf(snapshot->super.metadata, "%s%s\n", CRS_METADATA_COMP, snapshot->super.component_name);
 
     /*
      * Call the user callback function
@@ -350,7 +347,7 @@ int opal_crs_self_checkpoint(pid_t pid,
         *state = OPAL_CRS_ERROR;
         opal_output(mca_crs_self_component.super.output_handle,
                     "crs:self: checkpoint(): Error: Unable to update metadata for snapshot (%s).",
-                    snapshot->super.reference_name);
+                    snapshot->super.metadata_filename);
         exit_status = ret;
         goto cleanup;
     }
@@ -392,7 +389,7 @@ int opal_crs_self_restart(opal_crs_base_snapshot_t *base_snapshot, bool spawn_ch
     snapshot->super = *base_snapshot;
 
     opal_output_verbose(10, mca_crs_self_component.super.output_handle,
-                        "crs:self: restart(%s, %d)", snapshot->super.reference_name, spawn_child);
+                        "crs:self: restart(%d)", spawn_child);
 
     /*
      * If we need to reconstruct the snapshot
@@ -675,16 +672,25 @@ static int self_cold_start(opal_crs_self_snapshot_t *snapshot) {
     int prev_pid;
 
     opal_output_verbose(10, mca_crs_self_component.super.output_handle,
-                        "crs:self: cold_start(%s)", snapshot->super.reference_name);
+                        "crs:self: cold_start()");
 
     /*
      * Find the snapshot directory, read the metadata file
      */
-    if( OPAL_SUCCESS != (ret = opal_crs_base_extract_expected_component(snapshot->super.local_location, 
+    if( NULL == snapshot->super.metadata ) {
+        if (NULL == (snapshot->super.metadata = fopen(snapshot->super.metadata_filename, "a")) ) {
+            opal_output(mca_crs_self_component.super.output_handle,
+                        "crs:self: checkpoint(): Error: Unable to open the file (%s)",
+                        snapshot->super.metadata_filename);
+            exit_status = OPAL_ERROR;
+            goto cleanup;
+        }
+    }
+    if( OPAL_SUCCESS != (ret = opal_crs_base_extract_expected_component(snapshot->super.metadata,
                                                                         &component_name, &prev_pid) ) ) {
         opal_output(mca_crs_self_component.super.output_handle,
                     "crs:self: self_cold_start: Error: Failed to extract the metadata from the local snapshot (%s). Returned %d.",
-                    snapshot->super.local_location, ret);
+                    snapshot->super.metadata_filename, ret);
         exit_status = ret;
         goto cleanup;
     }
@@ -705,11 +711,11 @@ static int self_cold_start(opal_crs_self_snapshot_t *snapshot) {
      * Restart command
      * JJH: Command lines limited to 256 chars.
      */
-    opal_crs_base_metadata_read_token(snapshot->super.local_location, CRS_METADATA_CONTEXT, &tmp_argv);
+    opal_crs_base_metadata_read_token(snapshot->super.metadata, CRS_METADATA_CONTEXT, &tmp_argv);
     if( NULL == tmp_argv ) {
         opal_output(mca_crs_self_component.super.output_handle,
                     "crs:self: self_cold_start: Error: Failed to read the %s token from the local checkpoint in %s",
-                    CRS_METADATA_CONTEXT, snapshot->super.local_location);
+                    CRS_METADATA_CONTEXT, snapshot->super.snapshot_directory);
         exit_status = OPAL_ERROR;
         goto cleanup;
     }
@@ -742,13 +748,13 @@ static int self_update_snapshot_metadata(opal_crs_self_snapshot_t *snapshot) {
 
     opal_output_verbose(10, mca_crs_self_component.super.output_handle,
                         "crs:self: update_snapshot_metadata(%s)",
-                        snapshot->super.reference_name);
+                        snapshot->super.metadata_filename);
     
     /*
      * Append to the metadata file the command line to restart with
      *  - How user wants us to restart
      */
-    opal_crs_base_metadata_write_token(snapshot->super.local_location, CRS_METADATA_CONTEXT, snapshot->cmd_line);
+    fprintf(snapshot->super.metadata, "%s%s\n", CRS_METADATA_CONTEXT, snapshot->cmd_line);
 
  cleanup:
     return exit_status;

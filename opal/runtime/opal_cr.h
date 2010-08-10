@@ -91,6 +91,44 @@ typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
     /* The current state of a checkpoint operation */
     OPAL_DECLSPEC extern int opal_cr_checkpointing_state;
 
+#if OPAL_ENABLE_CRDEBUG == 1
+    /* Whether or not C/R Debugging is enabled for this process */
+    OPAL_DECLSPEC extern int MPIR_debug_with_checkpoint;
+
+    /*
+     * Set/clear the current thread id for the checkpointing thread
+     */
+    OPAL_DECLSPEC int opal_cr_debug_set_current_ckpt_thread_self(void);
+    OPAL_DECLSPEC int opal_cr_debug_clear_current_ckpt_thread(void);
+
+    /*
+     * This MPI Debugger function needs to be accessed here and have a specific
+     * name. Thus we are breaking the traditional naming conventions to provide this functionality.
+     */
+    OPAL_DECLSPEC int MPIR_checkpoint_debugger_detach(void);
+
+    /**
+     * A tight loop to wait for debugger to release this process from the
+     * breakpoint.
+     */
+    OPAL_DECLSPEC void *MPIR_checkpoint_debugger_breakpoint(void);
+
+    /**
+     * A function for the debugger or CRS to force all threads into
+     */
+    OPAL_DECLSPEC void *MPIR_checkpoint_debugger_waitpoint(void);
+
+    /**
+     * A signal handler to force all threads to wait when debugger detaches
+     */
+    OPAL_DECLSPEC void MPIR_checkpoint_debugger_signal_handler(int signo);
+#endif
+
+    /*
+     * Refresh environment variables after a restart
+     */
+    OPAL_DECLSPEC int opal_cr_refresh_environ(int prev_pid);
+
     /*
      * If this is an application that doesn't want to have
      * a notification callback installed, set this to false.
@@ -252,6 +290,42 @@ typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
                                             opal_crs_base_ckpt_options_t *options,
                                             int *state);
     OPAL_DECLSPEC int opal_cr_inc_core_recover(int state);
+
+
+    /*******************************
+     * User Coordination Routines
+     *******************************/
+    typedef enum {
+        OMPI_CR_INC_PRE_CRS_PRE_MPI   = 0,
+        OMPI_CR_INC_PRE_CRS_POST_MPI  = 1,
+        OMPI_CR_INC_CRS_PRE_CKPT      = 2,
+        OMPI_CR_INC_CRS_POST_CKPT     = 3,
+        OMPI_CR_INC_POST_CRS_PRE_MPI  = 4,
+        OMPI_CR_INC_POST_CRS_POST_MPI = 5,
+        OMPI_CR_INC_MAX               = 6
+    } opal_cr_user_inc_callback_event_t;
+
+    typedef enum {
+        OMPI_CR_INC_STATE_PREPARE  = 0,
+        OMPI_CR_INC_STATE_CONTINUE = 1,
+        OMPI_CR_INC_STATE_RESTART  = 2,
+        OMPI_CR_INC_STATE_ERROR    = 3
+    } opal_cr_user_inc_callback_state_t;
+
+    /**
+     * User coordination callback routine
+     */
+    typedef int (*opal_cr_user_inc_callback_fn_t)(opal_cr_user_inc_callback_event_t event,
+                                                  opal_cr_user_inc_callback_state_t state);
+
+    OPAL_DECLSPEC int opal_cr_user_inc_register_callback
+                      (opal_cr_user_inc_callback_event_t event,
+                       opal_cr_user_inc_callback_fn_t  function,
+                       opal_cr_user_inc_callback_fn_t  *prev_function);
+
+    OPAL_DECLSPEC int trigger_user_inc_callback(opal_cr_user_inc_callback_event_t event,
+                                                opal_cr_user_inc_callback_state_t state);
+
 
     /*******************************
      * Coordination Routines

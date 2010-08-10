@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -82,7 +82,10 @@
 #include "opal/mca/crs/base/base.h"
 
 #include "opal/class/opal_object.h"
+#include "opal/class/opal_pointer_array.h"
 #include "opal/util/output.h"
+
+#include "orte/mca/sstore/sstore.h"
 
 BEGIN_C_DECLS
 
@@ -100,17 +103,21 @@ BEGIN_C_DECLS
 #define ORTE_SNAPC_CKPT_STATE_PENDING         3
 /* Running the checkpoint */
 #define ORTE_SNAPC_CKPT_STATE_RUNNING         4
+/* INC Prep Finished */
+#define ORTE_SNAPC_CKPT_STATE_INC_PREPED      5
 /* All Processes have been stopped */
-#define ORTE_SNAPC_CKPT_STATE_STOPPED         5
+#define ORTE_SNAPC_CKPT_STATE_STOPPED         6
 /* Finished the checkpoint locally */
-#define ORTE_SNAPC_CKPT_STATE_FINISHED_LOCAL  6
-/* File Transfer in progress */
-#define ORTE_SNAPC_CKPT_STATE_FILE_XFER       7
-/* Finished the checkpoint */
-#define ORTE_SNAPC_CKPT_STATE_FINISHED        8
+#define ORTE_SNAPC_CKPT_STATE_FINISHED_LOCAL  7
+/* Migrating */
+#define ORTE_SNAPC_CKPT_STATE_MIGRATING       8
+/* Finished establishing the checkpoint */
+#define ORTE_SNAPC_CKPT_STATE_ESTABLISHED     9
+/* Processes continuing or have been recovered (finished post-INC) */
+#define ORTE_SNAPC_CKPT_STATE_RECOVERED      10
 /* Unable to checkpoint this job */
-#define ORTE_SNAPC_CKPT_STATE_NO_CKPT         9
-#define ORTE_SNAPC_CKPT_MAX                  10
+#define ORTE_SNAPC_CKPT_STATE_NO_CKPT        11
+#define ORTE_SNAPC_CKPT_MAX                  12
 
 /**
  * Definition of a orte local snapshot.
@@ -127,18 +134,8 @@ struct orte_snapc_base_local_snapshot_1_0_0_t {
     /** State of the checkpoint */
     int state;
 
-    /** Unique name of the local snapshot */
-    char * reference_name;
-    
-    /** Local location of the local snapshot Absolute path */
-    char * local_location;
-
-    /** Remote location of the local snapshot Absolute path */
-    char * remote_location;
-
-    /** CRS agent */
-    char * opal_crs;
-
+    /** Stable Storage Handle (must equal the global version) */
+    orte_sstore_base_handle_t ss_handle;
 };
 typedef struct orte_snapc_base_local_snapshot_1_0_0_t orte_snapc_base_local_snapshot_1_0_0_t;
 typedef struct orte_snapc_base_local_snapshot_1_0_0_t orte_snapc_base_local_snapshot_t;
@@ -156,21 +153,12 @@ struct orte_snapc_base_global_snapshot_1_0_0_t {
 
     /** A list of orte_snapc_base_snapshot_t's */
     opal_list_t local_snapshots;
-    
-    /** Unique name of the global snapshot */
-    char * reference_name;
-    
-    /** Location of the global snapshot Absolute path */
-    char * local_location;
-    
-    /** Sequence Number */
-    int seq_num;
 
-    /** Start Timestamp */
-    char * start_time;
+    /** Checkpoint Options */
+    opal_crs_base_ckpt_options_t *options;
 
-    /** End Timestamp */
-    char * end_time;
+    /** Stable Storage Handle */
+    orte_sstore_base_handle_t ss_handle;
 };
 typedef struct orte_snapc_base_global_snapshot_1_0_0_t orte_snapc_base_global_snapshot_1_0_0_t;
 typedef struct orte_snapc_base_global_snapshot_1_0_0_t orte_snapc_base_global_snapshot_t;
@@ -190,6 +178,11 @@ struct orte_snapc_base_quiesce_1_0_0_t {
     /** snapshot list */
     orte_snapc_base_global_snapshot_t *snapshot;
 
+    /** Stable Storage Handle */
+    orte_sstore_base_handle_t ss_handle;
+    /** Stable Storage Snapshot list */
+    orte_sstore_base_global_snapshot_info_t *ss_snapshot;
+
     /** Target Directory */
     char * target_dir;
     /** Command Line */
@@ -200,11 +193,73 @@ struct orte_snapc_base_quiesce_1_0_0_t {
     bool checkpointing;
     /** Restarting? */
     bool restarting;
+
+    /** Migrating? */
+    bool migrating;
+    /** List of migrating processes */
+    int num_migrating;
+    opal_pointer_array_t migrating_procs;
 };
 typedef struct orte_snapc_base_quiesce_1_0_0_t orte_snapc_base_quiesce_1_0_0_t;
 typedef struct orte_snapc_base_quiesce_1_0_0_t orte_snapc_base_quiesce_t;
 
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_snapc_base_quiesce_t);
+
+/**
+ * Application request for a global checkpoint related operation
+ */
+typedef enum {
+    ORTE_SNAPC_OP_NONE = 0,
+    ORTE_SNAPC_OP_INIT,
+    ORTE_SNAPC_OP_FIN,
+    ORTE_SNAPC_OP_FIN_ACK,
+    ORTE_SNAPC_OP_CHECKPOINT,
+    ORTE_SNAPC_OP_RESTART,
+    ORTE_SNAPC_OP_MIGRATE,
+    ORTE_SNAPC_OP_QUIESCE_START,
+    ORTE_SNAPC_OP_QUIESCE_CHECKPOINT,
+    ORTE_SNAPC_OP_QUIESCE_END
+} orte_snapc_base_request_op_event_t;
+
+struct orte_snapc_base_request_op_1_0_0_t {
+    /** Parent is an object type */
+    opal_object_t super;
+
+    /** Event to request */
+    orte_snapc_base_request_op_event_t event;
+
+    /** Is this request still active */
+    bool is_active;
+
+    /** Leader of the operation */
+    int leader;
+
+    /** Sequence Number */
+    int seq_num;
+
+    /** Global Handle */
+    char * global_handle;
+
+    /** Stable Storage Handle */
+    orte_sstore_base_handle_t ss_handle;
+
+    /** Migrating vpid list of participants */
+    int mig_num;
+    int *mig_vpids;
+
+    /** Migrating hostname preference list */
+    char (*mig_host_pref)[OPAL_MAX_PROCESSOR_NAME];
+
+    /** Migrating vpid preference list */
+    int *mig_vpid_pref;
+
+    /** Info key */
+    int *mig_off_node;
+};
+typedef struct orte_snapc_base_request_op_1_0_0_t orte_snapc_base_request_op_1_0_0_t;
+typedef struct orte_snapc_base_request_op_1_0_0_t orte_snapc_base_request_op_t;
+
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_snapc_base_request_op_t);
 
 /**
  * Module initialization function.
@@ -268,6 +323,12 @@ typedef int (*orte_snapc_base_end_checkpoint_fn_t)
     (orte_snapc_base_quiesce_t *datum);
 
 /**
+ * Request a checkpoint related operation to take place
+ */
+typedef int (*orte_snapc_base_request_op_fn_t)
+    (orte_snapc_base_request_op_t *datum);
+
+/**
  * Structure for SNAPC components.
  */
 struct orte_snapc_base_component_2_0_0_t {
@@ -303,6 +364,8 @@ struct orte_snapc_base_module_1_0_0_t {
     /** Handle internal request for checkpoint */
     orte_snapc_base_start_checkpoint_fn_t      start_ckpt;
     orte_snapc_base_end_checkpoint_fn_t        end_ckpt;
+    /** Handle a checkpoint related request */
+    orte_snapc_base_request_op_fn_t            request_op;
 };
 typedef struct orte_snapc_base_module_1_0_0_t orte_snapc_base_module_1_0_0_t;
 typedef struct orte_snapc_base_module_1_0_0_t orte_snapc_base_module_t;

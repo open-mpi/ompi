@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
- * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2007 The University of Tennessee and The University
@@ -43,6 +43,7 @@
 #include "opal/util/output.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
+#include "opal/mca/installdirs/installdirs.h"
 #include "opal/runtime/opal_cr.h"
 
 #include "orte/mca/snapc/snapc.h"
@@ -56,6 +57,18 @@
 #include "ompi/mca/crcp/base/base.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/runtime/ompi_cr.h"
+#if OPAL_ENABLE_CRDEBUG == 1
+#include "orte/runtime/orte_globals.h"
+#include "ompi/debuggers/debuggers.h"
+#endif
+
+#if OPAL_ENABLE_CRDEBUG == 1
+OMPI_DECLSPEC int MPIR_checkpointable = 0;
+OMPI_DECLSPEC char * MPIR_controller_hostname = NULL;
+OMPI_DECLSPEC char * MPIR_checkpoint_command  = NULL;
+OMPI_DECLSPEC char * MPIR_restart_command     = NULL;
+OMPI_DECLSPEC char * MPIR_checkpoint_listing_command  = NULL;
+#endif
 
 /*************
  * Local functions
@@ -67,8 +80,6 @@ static int ompi_cr_coord_pre_continue(void);
 static int ompi_cr_coord_post_ckpt(void);
 static int ompi_cr_coord_post_restart(void);
 static int ompi_cr_coord_post_continue(void);
-
-bool ompi_cr_continue_like_restart = false;
 
 /*************
  * Local vars
@@ -157,15 +168,59 @@ int ompi_cr_init(void)
         ompi_cr_output = opal_cr_output;
     }
 
-    /* Typically this is not needed. Individual BTLs will set this as needed */
-    ompi_cr_continue_like_restart = false;
-
     opal_output_verbose(10, ompi_cr_output,
                         "ompi_cr: init: ompi_cr_init()");
     
     /* Register the OMPI interlevel coordination callback */
     opal_cr_reg_coord_callback(ompi_cr_coord, &prev_coord_callback);
-    
+
+#if OPAL_ENABLE_CRDEBUG == 1
+    /* Check for C/R enabled debugging */
+    if( MPIR_debug_with_checkpoint ) {
+        char *uri = NULL;
+        char *sep = NULL;
+        char *hostname = NULL;
+
+        /* Mark as debuggable with C/R */
+        MPIR_checkpointable = 1;
+
+        /* Set the checkpoint and restart commands */
+        /* Add the full path to the binary */
+        asprintf(&MPIR_checkpoint_command,
+                 "%s/ompi-checkpoint --crdebug --hnp-jobid %u",
+                 opal_install_dirs.bindir,
+                 ORTE_PROC_MY_HNP->jobid);
+        asprintf(&MPIR_restart_command,
+                 "%s/ompi-restart --crdebug ",
+                 opal_install_dirs.bindir);
+        asprintf(&MPIR_checkpoint_listing_command,
+                 "%s/ompi-checkpoint -l --crdebug ",
+                 opal_install_dirs.bindir);
+
+        /* Set contact information for HNP */
+        uri = strdup(orte_process_info.my_hnp_uri);
+        hostname = strchr(uri, ';') + 1;
+        sep = strchr(hostname, ';');
+        if (sep) {
+            *sep = 0;
+        }
+        if (strncmp(hostname, "tcp://", 6) == 0) {
+            hostname += 6;
+            sep = strchr(hostname, ':');
+            *sep = 0;
+            MPIR_controller_hostname = strdup(hostname);
+        } else {
+            MPIR_controller_hostname = strdup("localhost");
+        }
+
+        /* Cleanup */
+        if( NULL != uri ) {
+            free(uri);
+            uri = NULL;
+        }
+    }
+#endif
+
     return OMPI_SUCCESS;
 }
 
@@ -196,9 +251,6 @@ int ompi_cr_coord(int state)
      * take action given the state.
      */
     if(OPAL_CRS_CHECKPOINT == state) {
-        /* Default: use the fast way */
-        ompi_cr_continue_like_restart = false;
-
         /* Do Checkpoint Phase work */
         ret = ompi_cr_coord_pre_ckpt();
         if( ret == OMPI_EXISTS) {
@@ -245,10 +297,30 @@ int ompi_cr_coord(int state)
     else if (OPAL_CRS_CONTINUE == state ) {
         /* Do Continue Phase work */
         ompi_cr_coord_post_continue();
+
+#if OPAL_ENABLE_CRDEBUG == 1
+        /*
+         * If C/R enabled debugging,
+         * wait here for debugger to attach
+         */
+        if( MPIR_debug_with_checkpoint ) {
+            MPIR_checkpoint_debugger_breakpoint();
+        }
+#endif
     }
     else if (OPAL_CRS_RESTART == state ) {
         /* Do Restart Phase work */
         ompi_cr_coord_post_restart();
+
+#if OPAL_ENABLE_CRDEBUG == 1
+        /*
+         * If C/R enabled debugging,
+         * wait here for debugger to attach
+         */
+        if( MPIR_debug_with_checkpoint ) {
+            MPIR_checkpoint_debugger_breakpoint();
+        }
+#endif
     }
     else if (OPAL_CRS_TERM == state ) {
         /* Do Continue Phase work in prep to terminate the application */
@@ -330,7 +402,7 @@ static int ompi_cr_coord_pre_continue(void) {
     opal_output_verbose(10, ompi_cr_output,
                         "ompi_cr: coord_pre_continue: ompi_cr_coord_pre_continue()");
 
-    if( ompi_cr_continue_like_restart ) {
+    if( orte_cr_continue_like_restart ) {
         /* Mimic ompi_cr_coord_pre_restart(); */
         if( ORTE_SUCCESS != (ret = mca_pml.pml_ft_event(OPAL_CRS_CONTINUE))) {
             exit_status = ret;

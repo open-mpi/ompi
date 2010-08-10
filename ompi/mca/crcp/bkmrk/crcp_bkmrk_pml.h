@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University.
+ * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -115,6 +115,18 @@ BEGIN_C_DECLS
     
     ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event
     (int state, ompi_crcp_base_pml_state_t* pml_state);
+
+    enum ompi_crcp_bkmrk_pml_quiesce_tag_type_t {
+        QUIESCE_TAG_NONE = 0, /* 0 No tag specified */
+        QUIESCE_TAG_CKPT,     /* 1 Prepare for checkpoint */
+        QUIESCE_TAG_CONTINUE, /* 2 Continue after a checkpoint */
+        QUIESCE_TAG_RESTART,  /* 3 Restart from a checkpoint */
+        QUIESCE_TAG_UNKNOWN   /* 4 Unknown */
+    };
+    typedef enum ompi_crcp_bkmrk_pml_quiesce_tag_type_t ompi_crcp_bkmrk_pml_quiesce_tag_type_t;
+
+    int ompi_crcp_bkmrk_pml_quiesce_start(ompi_crcp_bkmrk_pml_quiesce_tag_type_t tag );
+    int ompi_crcp_bkmrk_pml_quiesce_end(ompi_crcp_bkmrk_pml_quiesce_tag_type_t tag );
 
     /*
      * Request function

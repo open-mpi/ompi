@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2009 The Trustees of Indiana University.
+ * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2008 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -35,6 +35,9 @@
 #include "opal/util/output.h"
 
 #include "orte/constants.h"
+#include "orte/mca/sstore/sstore.h"
+#include "orte/mca/sstore/base/base.h"
+
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
 
@@ -68,13 +71,8 @@ opal_list_t orte_snapc_base_components_available;
 orte_snapc_base_component_t orte_snapc_base_selected_component;
 orte_snapc_coord_type_t orte_snapc_coord_type = ORTE_SNAPC_UNASSIGN_TYPE;
 
-char * orte_snapc_base_global_snapshot_dir = NULL;
-char * orte_snapc_base_global_snapshot_loc = NULL;
-char * orte_snapc_base_global_snapshot_ref = NULL;
-bool orte_snapc_base_store_in_place = true;
 bool orte_snapc_base_store_only_one_seq = false;
-bool orte_snapc_base_establish_global_snapshot_dir = false;
-bool orte_snapc_base_is_global_dir_shared = false;
+bool   orte_snapc_base_has_recovered = false;
 
 /**
  * Function for finding and opening either all MCA components,
@@ -89,48 +87,6 @@ int orte_snapc_base_open(void)
                          "snapc:base: open()"));
 
     orte_snapc_base_output = opal_output_open(NULL);
-
-    /* Global Snapshot directory */
-    mca_base_param_reg_string_name("snapc",
-                                   "base_global_snapshot_dir",
-                                   "The base directory to use when storing global snapshots",
-                                   false, false,
-                                   opal_home_directory(),
-                                   &orte_snapc_base_global_snapshot_dir);
-
-    mca_base_param_reg_int_name("snapc",
-                                "base_global_shared",
-                                "If the global_snapshot_dir is on a shared file system all nodes can access, "
-                                "then the checkpoint files can be copied more efficiently when FileM is used."
-                                " [Default = disabled]",
-                                false, false,
-                                0,
-                                &value);
-    orte_snapc_base_is_global_dir_shared = OPAL_INT_TO_BOOL(value);
-
-    OPAL_OUTPUT_VERBOSE((20, orte_snapc_base_output,
-                         "snapc:base: open: base_global_snapshot_dir    = %s (%s)",
-                         orte_snapc_base_global_snapshot_dir,
-                         (orte_snapc_base_is_global_dir_shared ? "Shared" : "Local") ));
-
-    /*
-     * Store the checkpoint files in their final location.
-     * This assumes that the storage place is on a shared file 
-     * system that all nodes can access uniformly.
-     * Default = enabled
-     */
-    mca_base_param_reg_int_name("snapc",
-                                "base_store_in_place",
-                                "If global_snapshot_dir is on a shared file system all nodes can access, "
-                                "then the checkpoint files can be stored in place instead of incurring a "
-                                "remote copy. [Default = enabled]",
-                                false, false,
-                                1,
-                                &value);
-    orte_snapc_base_store_in_place = OPAL_INT_TO_BOOL(value);
-    OPAL_OUTPUT_VERBOSE((20, orte_snapc_base_output,
-                         "snapc:base: open: base_store_in_place    = %d",
-                         orte_snapc_base_store_in_place));
 
     /*
      * Reuse sequence numbers
@@ -149,49 +105,9 @@ int orte_snapc_base_open(void)
                          "snapc:base: open: base_only_one_seq    = %d",
                          orte_snapc_base_store_only_one_seq));
 
-    /*
-     * Pre-establish the global snapshot directory upon job registration
-     */
-    mca_base_param_reg_int_name("snapc_base",
-                                "establish_global_snapshot_dir",
-                                "Establish the global snapshot directory on job startup. [Default = disabled]",
-                                false, false,
-                                0,
-                                &value);
-    orte_snapc_base_establish_global_snapshot_dir = OPAL_INT_TO_BOOL(value);
-
-    OPAL_OUTPUT_VERBOSE((20, orte_snapc_base_output,
-                         "snapc:base: open: base_establish_global_snapshot_dir    = %d",
-                         orte_snapc_base_establish_global_snapshot_dir));
-
-    /*
-     * User defined global snapshot directory name for this job
-     */
-    mca_base_param_reg_string_name("snapc_base",
-                                   "global_snapshot_ref",
-                                   "The global snapshot reference to be used for this job. "
-                                   " [Default = ompi_global_snapshot_MPIRUNPID.ckpt]",
-                                   false, false,
-                                   NULL,
-                                   &orte_snapc_base_global_snapshot_ref);
-
-    OPAL_OUTPUT_VERBOSE((20, orte_snapc_base_output,
-                         "snapc:base: open: base_global_snapshot_ref    = %s",
-                         orte_snapc_base_global_snapshot_ref));
 
     /* Init the sequence (interval) number */
     orte_snapc_base_snapshot_seq_number = 0;
-
-    if( NULL == orte_snapc_base_global_snapshot_loc ) {
-        char *t1 = NULL;
-        char *t2 = NULL;
-        orte_snapc_base_unique_global_snapshot_name(&t1, getpid() );
-        orte_snapc_base_get_global_snapshot_directory(&t2, t1 );
-        orte_snapc_base_global_snapshot_loc = strdup(t2);
-        free(t1);
-        free(t2);
-    }
-
 
     /* 
      * Which SnapC component to open
@@ -218,7 +134,12 @@ int orte_snapc_base_open(void)
                                  true)) {
         return ORTE_ERROR;
     }
-    
+
+    /*
+     * Open up the SStore framework
+     */
+    orte_sstore_base_open();
+
     return ORTE_SUCCESS;
 }
 

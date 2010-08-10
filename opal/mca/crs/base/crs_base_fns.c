@@ -44,13 +44,15 @@
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 
+opal_crs_base_self_checkpoint_fn_t crs_base_self_checkpoint_fn;
+opal_crs_base_self_restart_fn_t    crs_base_self_restart_fn;
+opal_crs_base_self_continue_fn_t   crs_base_self_continue_fn;
+
 /******************
  * Local Functions
  ******************/
 static int metadata_extract_next_token(FILE *file, char **token, char **value);
-static int opal_crs_base_metadata_open(FILE ** meta_data, char * location, char * mode);
 
-static char *last_metadata_file = NULL;
 static char **cleanup_file_argv = NULL;
 static char **cleanup_dir_argv = NULL;
 
@@ -59,30 +61,30 @@ static char **cleanup_dir_argv = NULL;
  ******************/
 static void opal_crs_base_construct(opal_crs_base_snapshot_t *snapshot)
 {
-    snapshot->component_name  = NULL;
-    snapshot->reference_name  = opal_crs_base_unique_snapshot_name(getpid());
-    snapshot->local_location  = opal_crs_base_get_snapshot_directory(snapshot->reference_name);
-    snapshot->remote_location = strdup(snapshot->local_location);
+    snapshot->component_name     = NULL;
+
+    snapshot->metadata_filename  = NULL;
+    snapshot->metadata           = NULL;
+    snapshot->snapshot_directory = NULL;
+
     snapshot->cold_start      = false;
 }
 
 static void opal_crs_base_destruct( opal_crs_base_snapshot_t *snapshot)
 {
-    if(NULL != snapshot->reference_name) {
-        free(snapshot->reference_name);
-        snapshot->reference_name = NULL;
+    if(NULL != snapshot->metadata_filename ) {
+        free(snapshot->metadata_filename);
+        snapshot->metadata_filename = NULL;
     }
-    if(NULL != snapshot->local_location) {
-        free(snapshot->local_location);
-        snapshot->local_location = NULL;
+
+    if(NULL != snapshot->metadata) {
+        fclose(snapshot->metadata);
+        snapshot->metadata = NULL;
     }
-    if(NULL != snapshot->remote_location) {
-       free(snapshot->remote_location);
-       snapshot->remote_location = NULL;
-    }
-    if(NULL != snapshot->component_name) {
-        free(snapshot->component_name);
-        snapshot->component_name = NULL;
+
+    if(NULL != snapshot->snapshot_directory ) {
+       free(snapshot->snapshot_directory);
+       snapshot->snapshot_directory = NULL;
     }
 }
 
@@ -107,43 +109,29 @@ OBJ_CLASS_INSTANCE(opal_crs_base_ckpt_options_t,
 /*
  * Utility functions
  */
-char * opal_crs_base_unique_snapshot_name(pid_t pid)
-{
-    char * loc_str = NULL;
-    
-    asprintf(&loc_str, "opal_snapshot_%d.ckpt", pid);
-    
-    return loc_str;
-}
-
-int opal_crs_base_metadata_read_token(char *snapshot_loc, char * token, char ***value) {
-    int ret, exit_status = OPAL_SUCCESS;
-    FILE * meta_data = NULL;
+int opal_crs_base_metadata_read_token(FILE *metadata, char * token, char ***value) {
+    int exit_status = OPAL_SUCCESS;
     char * loc_token = NULL;
     char * loc_value = NULL;
     int argc = 0;
 
     /* Dummy check */
     if( NULL == token ) {
+        exit_status = OPAL_ERROR;
         goto cleanup;
     }
-
-    /*
-     * Open the metadata file
-     */
-    if( OPAL_SUCCESS != (ret = opal_crs_base_metadata_open(&meta_data, snapshot_loc, "r")) ) {
-        opal_output(opal_crs_base_output,
-                    "opal:crs:base: opal_crs_base_metadata_read_token: Error: Unable to open the metadata file\n");
-        exit_status = ret;
+    if( NULL == metadata ) {
+        exit_status = OPAL_ERROR;
         goto cleanup;
     }
 
     /*
      * Extract each token and make the records
      */
+    rewind(metadata);
     do {
         /* Get next token */
-        if( OPAL_SUCCESS != metadata_extract_next_token(meta_data, &loc_token, &loc_value) ) {
+        if( OPAL_SUCCESS != metadata_extract_next_token(metadata, &loc_token, &loc_value) ) {
             break;
         }
 
@@ -151,54 +139,26 @@ int opal_crs_base_metadata_read_token(char *snapshot_loc, char * token, char ***
         if(0 == strncmp(token, loc_token, strlen(loc_token)) ) {
             opal_argv_append(&argc, value, loc_value);
         }
-    } while(0 == feof(meta_data) );
+    } while(0 == feof(metadata) );
     
  cleanup:
-    if(NULL != meta_data) {
-        fclose(meta_data);
-        meta_data = NULL;
-    }
-
+    rewind(metadata);
     return exit_status;
 }
 
-int opal_crs_base_metadata_write_token(char *snapshot_loc, char * token, char *value) {
-    int ret, exit_status = OPAL_SUCCESS;
-    FILE * meta_data = NULL;
-
-    /* Dummy check */
-    if( NULL == token || NULL == value) {
-        goto cleanup;
-    }
-
-    /*
-     * Open the metadata file
-     */
-    if( OPAL_SUCCESS != (ret = opal_crs_base_metadata_open(&meta_data, snapshot_loc, "a")) ) {
-        opal_output(opal_crs_base_output,
-                    "opal:crs:base: opal_crs_base_metadata_write_token: Error: Unable to open the metadata file\n");
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    fprintf(meta_data, "%s%s\n", token, value);
-
- cleanup:
-    if(NULL != meta_data) {
-        fclose(meta_data);
-        meta_data = NULL;
-    }
-
-    return exit_status;
-}
-
-int opal_crs_base_extract_expected_component(char *snapshot_loc, char ** component_name, int *prev_pid)
+int opal_crs_base_extract_expected_component(FILE *metadata, char ** component_name, int *prev_pid)
 {
     int exit_status = OPAL_SUCCESS;
     char **pid_argv = NULL;
     char **name_argv = NULL;
 
-    opal_crs_base_metadata_read_token(snapshot_loc, CRS_METADATA_PID, &pid_argv);
+    /* Dummy check */
+    if( NULL == metadata ) {
+        exit_status = OPAL_ERROR;
+        goto cleanup;
+    }
+
+    opal_crs_base_metadata_read_token(metadata, CRS_METADATA_PID, &pid_argv);
     if( NULL != pid_argv && NULL != pid_argv[0] ) {
         *prev_pid = atoi(pid_argv[0]);
     } else {
@@ -207,7 +167,7 @@ int opal_crs_base_extract_expected_component(char *snapshot_loc, char ** compone
         goto cleanup;
     }
 
-    opal_crs_base_metadata_read_token(snapshot_loc, CRS_METADATA_COMP, &name_argv);
+    opal_crs_base_metadata_read_token(metadata, CRS_METADATA_COMP, &name_argv);
     if( NULL != name_argv && NULL != name_argv[0] ) {
         *component_name = strdup(name_argv[0]);
     } else {
@@ -228,68 +188,6 @@ int opal_crs_base_extract_expected_component(char *snapshot_loc, char ** compone
     }
 
     return exit_status;
-}
-
-char * opal_crs_base_get_snapshot_directory(char *uniq_snapshot_name)
-{
-    char * dir_name = NULL;
-
-    asprintf(&dir_name, "%s/%s", opal_crs_base_snapshot_dir, uniq_snapshot_name);
-
-    return dir_name;
-}
-
-int    opal_crs_base_init_snapshot_directory(opal_crs_base_snapshot_t *snapshot)
-{
-    int ret, exit_status = OPAL_SUCCESS;
-    mode_t my_mode = S_IRWXU; 
-    char * pid_str = NULL;
-
-    /*
-     * Make the snapshot directory from the uniq_snapshot_name
-     */
-    if(OPAL_SUCCESS != (ret = opal_os_dirpath_create(snapshot->local_location, my_mode)) ) {
-        opal_output(opal_crs_base_output,
-                    "opal:crs:base: init_snapshot_directory: Error: Unable to create directory (%s)\n",
-                    snapshot->local_location);
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    /*
-     * Initialize the metadata file at the top of that directory.
-     * Add 'BASE' and 'PID'
-     */
-    if( NULL != last_metadata_file ) {
-        free(last_metadata_file);
-        last_metadata_file = NULL;
-    }
-    last_metadata_file = strdup(snapshot->local_location);
-
-    if( OPAL_SUCCESS != (ret = opal_crs_base_metadata_write_token(NULL, CRS_METADATA_BASE, "") ) ) {
-        opal_output(opal_crs_base_output,
-                    "opal:crs:base: init_snapshot_directory: Error: Unable to write BASE to the file (%s/%s)\n",
-                    snapshot->local_location, opal_crs_base_metadata_filename);
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    asprintf(&pid_str, "%d", getpid());
-    if( OPAL_SUCCESS != (ret = opal_crs_base_metadata_write_token(NULL, CRS_METADATA_PID, pid_str) ) ) {
-        opal_output(opal_crs_base_output,
-                    "opal:crs:base: init_snapshot_directory: Error: Unable to write PID (%s) to the file (%s/%s)\n",
-                    pid_str, snapshot->local_location, opal_crs_base_metadata_filename);
-        exit_status = ret;
-        goto cleanup;
-    }   
-
- cleanup:
-    if( NULL != pid_str) {
-        free(pid_str);
-        pid_str = NULL;
-    }
-
-    return OPAL_SUCCESS;
 }
 
 int opal_crs_base_cleanup_append(char* filename, bool is_dir)
@@ -399,6 +297,14 @@ int opal_crs_base_copy_options(opal_crs_base_ckpt_options_t *from,
     to->term = from->term;
     to->stop = from->stop;
 
+    to->inc_prep_only    = from->inc_prep_only;
+    to->inc_recover_only = from->inc_recover_only;
+
+#if OPAL_ENABLE_CRDEBUG == 1
+    to->attach_debugger = from->attach_debugger;
+    to->detach_debugger = from->detach_debugger;
+#endif
+
     return OPAL_SUCCESS;
 }
 
@@ -413,6 +319,32 @@ int opal_crs_base_clear_options(opal_crs_base_ckpt_options_t *target)
     target->term = false;
     target->stop = false;
 
+    target->inc_prep_only = false;
+    target->inc_recover_only = false;
+
+#if OPAL_ENABLE_CRDEBUG == 1
+    target->attach_debugger = false;
+    target->detach_debugger = false;
+#endif
+
+    return OPAL_SUCCESS;
+}
+
+int opal_crs_base_self_register_checkpoint_callback(opal_crs_base_self_checkpoint_fn_t  function)
+{
+    crs_base_self_checkpoint_fn = function;
+    return OPAL_SUCCESS;
+}
+
+int opal_crs_base_self_register_restart_callback(opal_crs_base_self_restart_fn_t  function)
+{
+    crs_base_self_restart_fn = function;
+    return OPAL_SUCCESS;
+}
+
+int opal_crs_base_self_register_continue_callback(opal_crs_base_self_continue_fn_t  function)
+{
+    crs_base_self_continue_fn = function;
     return OPAL_SUCCESS;
 }
 
@@ -420,38 +352,6 @@ int opal_crs_base_clear_options(opal_crs_base_ckpt_options_t *target)
 /******************
  * Local Functions
  ******************/
-static int opal_crs_base_metadata_open(FILE **meta_data, char * location, char * mode)
-{
-    int exit_status = OPAL_SUCCESS;
-    char * dir_name = NULL;
-
-    if( NULL == location ) {
-        if( NULL == last_metadata_file ) {
-            opal_output(0, "Error: No metadata filename specified!");
-            exit_status = OPAL_ERROR;
-            goto cleanup;
-        } else {
-            location = last_metadata_file;
-        }
-    }
-
-    /*
-     * Find the snapshot directory, read the metadata file
-     */
-    asprintf(&dir_name, "%s/%s", location, opal_crs_base_metadata_filename);
-    if (NULL == (*meta_data = fopen(dir_name, mode)) ) {
-        exit_status = OPAL_ERROR;
-        goto cleanup;
-    }
-
- cleanup:
-    if( NULL != dir_name ) {
-        free(dir_name);
-        dir_name = NULL;
-    }
-    return exit_status;
-}
-
 static int metadata_extract_next_token(FILE *file, char **token, char **value)
 {
     int exit_status = OPAL_SUCCESS;
@@ -558,12 +458,20 @@ static int metadata_extract_next_token(FILE *file, char **token, char **value)
     *value = strdup(local_value);
 
  cleanup:
-    if( NULL != local_token)
+    if( NULL != local_token) {
         free(local_token);
-    if( NULL != local_value)
+        local_token = NULL;
+    }
+
+    if( NULL != local_value) {
         free(local_value);
-    if( NULL != line)
+        local_value = NULL;
+    }
+
+    if( NULL != line) {
         free(line);
+        line = NULL;
+    }
 
     return exit_status;
 }

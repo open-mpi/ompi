@@ -1,0 +1,66 @@
+.\"
+.\" Copyright (c)      2010 The Trustees of Indiana University and Indiana
+.\"                         University Research and Technology
+.\"                         Corporation.  All rights reserved.
+.\"
+.\" Man page for ORTE's SStore Functionality
+.\" 
+.\" .TH name     section center-footer   left-footer  center-header
+.TH ORTE_SSTORE 7 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.\" **************************
+.\"    Name Section
+.\" **************************
+.SH NAME
+.
+Open RTE MCA File Management (SStore) Framework \- Overview of Open RTE's SStore 
+framework, and selected modules.  #PACKAGE_NAME# #PACKAGE_VERSION#
+.
+.\" **************************
+.\"    Description Section
+.\" **************************
+.SH DESCRIPTION
+.
+.PP
+SStore is a utility framework used by OpenRTE for a variety of purposes, including
+the transport of checkpoint files, preloading user binaries, and preloading of user files.
+.
+.\" **********************************
+.\"    Available Components Section
+.\" **********************************
+.SH AVAILABLE COMPONENTS
+.PP
+The following MCA parameters apply to all components:
+.
+.TP 4
+sstore_base_verbose
+Set the verbosity level for all components. Default is 0, or silent except on
+error.
+.
+.
+.\"   central Component
+.\" ******************
+.SS central SStore Component
+.PP
+The \fIcentral\fR component implements a fully centralized stable storage
+mechanism that requires a shared storage medium (e.g., NFS).
+.
+.PP
+The \fIcentral\fR component has the following MCA parameters:
+.
+.TP 4
+sstore_central_priority
+The component's priority to use when selecting the most appropriate component
+for a run.
+.
+.TP 4
+sstore_central_verbose
+Set the verbosity level for this component. Default is 0, or silent except on
+error.
+.
+.\" **************************
+.\"    See Also Section
+.\" **************************
+.
+.SH SEE ALSO
+  orte-checkpoint(1), orte-restart(1), opal-checkpoint(1), opal-restart(1), orte_snapc(7), opal_crs(7)
+.

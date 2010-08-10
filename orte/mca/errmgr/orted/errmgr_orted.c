@@ -62,9 +62,9 @@ static void killprocs(orte_jobid_t job, orte_vpid_t vpid);
 static int init(void);
 static int finalize(void);
 
-static int predicted_fault(char ***proc_list,
-                           char ***node_list,
-                           char ***suggested_nodes,
+static int predicted_fault(opal_list_t *proc_list,
+                           opal_list_t *node_list,
+                           opal_list_t *suggested_map,
                            orte_errmgr_stack_state_t *stack_state);
 
 static int update_state(orte_jobid_t job,
@@ -408,9 +408,10 @@ static int update_state(orte_jobid_t job,
                 jobdat->num_local_procs--;
                 
                 OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
-                                     "%s errmgr:orted reporting proc %s aborted to HNP",
+                                     "%s errmgr:orted reporting proc %s aborted to HNP (local procs = %d)",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(child->name)));
+                                     ORTE_NAME_PRINT(child->name),
+                                     jobdat->num_local_procs));
                 
                 /* release the child object */
                 OBJ_RELEASE(child);
@@ -578,9 +579,9 @@ static int update_state(orte_jobid_t job,
     return ORTE_SUCCESS;
 }
 
-static int predicted_fault(char ***proc_list,
-                           char ***node_list,
-                           char ***suggested_nodes,
+static int predicted_fault(opal_list_t *proc_list,
+                           opal_list_t *node_list,
+                           opal_list_t *suggested_map,
                            orte_errmgr_stack_state_t *stack_state)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;

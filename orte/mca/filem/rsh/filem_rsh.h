@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2009 The Trustees of Indiana University.
+ * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -56,6 +56,7 @@ BEGIN_C_DECLS
 
     extern int orte_filem_rsh_max_incomming;
     extern int orte_filem_rsh_max_outgoing;
+    extern int orte_filem_rsh_progress_meter;
 
     int orte_filem_rsh_component_query(mca_base_module_t **module, int *priority);
 

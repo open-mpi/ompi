@@ -478,6 +478,26 @@ static int rte_ft_event(int state)
             exit_status = ret;
             goto cleanup;
         }
+
+        if( orte_cr_continue_like_restart ) {
+            /*
+             * Barrier to make all processes have been successfully restarted before
+             * we try to remove some restart only files.
+             */
+            if (ORTE_SUCCESS != (ret = orte_grpcomm.barrier())) {
+                opal_output(0, "ess:env: ft_event(%2d): Failed in orte_grpcomm.barrier (%d)",
+                            state, ret);
+                return ret;
+            }
+
+            if( orte_cr_flush_restart_files ) {
+                OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
+                                     "ess:env ft_event(%2d): %s "
+                                     "Cleanup restart files...",
+                                     state, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                opal_crs_base_cleanup_flush();
+            }
+        }
     }
     /******** Restart Recovery ********/
     else if (OPAL_CRS_RESTART == state ) {
@@ -568,22 +588,6 @@ static int rte_ft_event(int state)
         }
 
         /*
-         * Session directory re-init
-         */
-        if (orte_create_session_dirs) {
-            if (ORTE_SUCCESS != (ret = orte_session_dir(true,
-                                                        orte_process_info.tmpdir_base,
-                                                        orte_process_info.nodename,
-                                                        NULL, /* Batch ID -- Not used */
-                                                        ORTE_PROC_MY_NAME))) {
-                exit_status = ret;
-            }
-            
-            opal_output_set_output_file_info(orte_process_info.proc_session_dir,
-                                             "output-", NULL, NULL);
-        }
-
-        /*
          * Notify Routed
          */
         if( ORTE_SUCCESS != (ret = orte_routed.ft_event(OPAL_CRS_RESTART))) {
@@ -600,6 +604,40 @@ static int rte_ft_event(int state)
         }
 
         /*
+         * Barrier to make all processes have been successfully restarted before
+         * we try to remove some restart only files.
+         */
+        if (ORTE_SUCCESS != (ret = orte_grpcomm.barrier())) {
+            opal_output(0, "ess:env ft_event(%2d): Failed in orte_grpcomm.barrier (%d)",
+                        state, ret);
+            return ret;
+        }
+        if( orte_cr_flush_restart_files ) {
+            OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
+                                 "ess:env ft_event(%2d): %s "
+                                 "Cleanup restart files...",
+                                 state, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
+            opal_crs_base_cleanup_flush();
+        }
+
+        /*
+         * Session directory re-init
+         */
+        if (orte_create_session_dirs) {
+            if (ORTE_SUCCESS != (ret = orte_session_dir(true,
+                                                        orte_process_info.tmpdir_base,
+                                                        orte_process_info.nodename,
+                                                        NULL, /* Batch ID -- Not used */
+                                                        ORTE_PROC_MY_NAME))) {
+                exit_status = ret;
+            }
+            
+            opal_output_set_output_file_info(orte_process_info.proc_session_dir,
+                                             "output-", NULL, NULL);
+        }
+
+        /*
          * Notify SnapC
          */
         if( ORTE_SUCCESS != (ret = orte_snapc.ft_event(OPAL_CRS_RESTART))) {
@@ -607,7 +645,6 @@ static int rte_ft_event(int state)
             exit_status = ret;
             goto cleanup;
         }
-
     }
     else if (OPAL_CRS_TERM == state ) {
         /* Nothing */

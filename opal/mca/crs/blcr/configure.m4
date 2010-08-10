@@ -168,6 +168,14 @@ AC_DEFUN([MCA_crs_blcr_CONFIG],[
            $1])
 
     #
+    # Require either a working cr_request_file() or cr_request_checkpoint() function
+    #
+    AS_IF([test "$crs_blcr_have_working_cr_request" = "0" -a "$crs_blcr_have_cr_request_checkpoint" = "0"],
+        [$2
+         check_crs_blcr_good="no"
+         AC_MSG_WARN([The BLCR CRS component requires either the cr_request_checkpoint() or cr_request_file() functions])])
+
+    #
     # Reset the flags
     #
     CFLAGS="$crs_blcr_save_CFLAGS"

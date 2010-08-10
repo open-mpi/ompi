@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -43,6 +43,9 @@
 #include "opal/event/event.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/carto/base/base.h"
+#if OPAL_ENABLE_FT_CR    == 1
+#include "opal/mca/compress/base/base.h"
+#endif
 
 #include "opal/runtime/opal_cr.h"
 #include "opal/mca/crs/base/base.h"
@@ -111,6 +114,10 @@ opal_finalize(void)
 
     /* close the checkpoint and restart service */
     opal_cr_finalize();
+
+#if OPAL_ENABLE_FT_CR    == 1
+    opal_compress_base_close();
+#endif
 
     opal_progress_finalize();
 

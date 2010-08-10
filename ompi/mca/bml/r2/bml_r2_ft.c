@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2007 The University of Tennessee and The University
@@ -54,7 +54,7 @@ int mca_bml_r2_ft_event(int state)
         first_continue_pass = !first_continue_pass;
 
         /* Since nothing in Checkpoint, we are fine here (unless required by BTL) */
-        if( ompi_cr_continue_like_restart && !first_continue_pass) {
+        if( orte_cr_continue_like_restart && !first_continue_pass) {
             procs = ompi_proc_all(&num_procs);
             if(NULL == procs) {
                 return OMPI_ERR_OUT_OF_RESOURCE;
@@ -136,7 +136,7 @@ int mca_bml_r2_ft_event(int state)
     }
     else if(OPAL_CRS_CONTINUE == state) {
         /* Matches OPAL_CRS_RESTART_PRE */
-        if( ompi_cr_continue_like_restart && first_continue_pass) {
+        if( orte_cr_continue_like_restart && first_continue_pass) {
             if( OMPI_SUCCESS != (ret = mca_bml_r2_finalize()) ) {
                 opal_output(0, "bml:r2: ft_event(Restart): Failed to finalize BML framework\n");
                 return ret;
@@ -147,7 +147,7 @@ int mca_bml_r2_ft_event(int state)
             }
         }
         /* Matches OPAL_CRS_RESTART */
-        else if( ompi_cr_continue_like_restart && !first_continue_pass ) {
+        else if( orte_cr_continue_like_restart && !first_continue_pass ) {
             /*
              * Barrier to make all processes have been successfully restarted before
              * we try to remove some restart only files.
@@ -156,10 +156,6 @@ int mca_bml_r2_ft_event(int state)
                 opal_output(0, "bml:r2: ft_event(Restart): Failed in orte_grpcomm.barrier (%d)", ret);
                 return ret;
             }
-
-            opal_output_verbose(10, ompi_cr_output,
-                                "bml:r2: ft_event(Restart): Cleanup restart files\n");
-            opal_crs_base_cleanup_flush();
 
             /*
              * Re-open the BTL framework to get the full list of components.
@@ -233,10 +229,6 @@ int mca_bml_r2_ft_event(int state)
             opal_output(0, "bml:r2: ft_event(Restart): Failed in orte_grpcomm.barrier (%d)", ret);
             return ret;
         }
-
-        opal_output_verbose(10, ompi_cr_output,
-                            "bml:r2: ft_event(Restart): Cleanup restart files\n");
-        opal_crs_base_cleanup_flush();
 
         /*
          * Re-open the BTL framework to get the full list of components.

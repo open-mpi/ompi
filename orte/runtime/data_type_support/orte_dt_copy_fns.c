@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -192,6 +192,12 @@ int orte_dt_copy_app_context(orte_app_context_t **dest, orte_app_context_t *src,
     if( NULL != src->preload_files_src_dir) {
         (*dest)->preload_files_src_dir  = strdup(src->preload_files_src_dir);
     }
+
+#if OPAL_ENABLE_FT_CR == 1
+    if( NULL != src->sstore_load) {
+        (*dest)->sstore_load  = strdup(src->sstore_load);
+    }
+#endif
     
     return ORTE_SUCCESS;
 }

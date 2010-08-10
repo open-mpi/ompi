@@ -194,6 +194,13 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       &orterun_globals.preload_files_dest_dir, OPAL_CMD_LINE_TYPE_STRING,
       "The destination directory to use in conjunction with --preload-files. By default the absolute and relative paths provided by --preload-files are used." },
 
+#if OPAL_ENABLE_FT_CR == 1
+    /* Tell SStore to preload a snapshot before launch */
+    { NULL, NULL, NULL, '\0', NULL, "sstore-load", 1,
+      &orterun_globals.sstore_load, OPAL_CMD_LINE_TYPE_STRING,
+      "Internal Use Only! Tell SStore to preload a snapshot before launch." },
+#endif
+
     /* Use an appfile */
     { NULL, NULL, NULL, '\0', NULL, "app", 1,
       &orterun_globals.appfile, OPAL_CMD_LINE_TYPE_STRING,
@@ -425,6 +432,12 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { "orte", "max", "local_restarts", '\0', "max-local-restarts", "max-local-restarts", 1,
       NULL, OPAL_CMD_LINE_TYPE_INT,
         "Max number of times to locally restart a failed process before relocating it to a new node" },
+
+#if OPAL_ENABLE_CRDEBUG == 1
+    { "opal", "cr", "enable_crdebug", '\0', "crdebug", "crdebug", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Enable C/R Debugging" },
+#endif
 
     { NULL, NULL, NULL, '\0', "disable-recovery", "disable-recovery", 0,
       &orterun_globals.disable_recovery, OPAL_CMD_LINE_TYPE_BOOL,
@@ -809,6 +822,10 @@ static int init_globals(void)
     orterun_globals.preload_binary = false;
     orterun_globals.preload_files  = NULL;
     orterun_globals.preload_files_dest_dir = NULL;
+
+#if OPAL_ENABLE_FT_CR == 1
+    orterun_globals.sstore_load = NULL;
+#endif
 
     /* All done */
     globals_init = true;
@@ -1580,6 +1597,13 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     else 
         app->preload_files_dest_dir = NULL;
 
+#if OPAL_ENABLE_FT_CR == 1
+    if( NULL != orterun_globals.sstore_load ) {
+        app->sstore_load = strdup(orterun_globals.sstore_load);
+    } else {
+        app->sstore_load = NULL;
+    }
+#endif
 
     /* Do not try to find argv[0] here -- the starter is responsible
        for that because it may not be relevant to try to find it on

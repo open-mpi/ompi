@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -182,6 +182,13 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_msg_packet_t);
 
 /* notifier data */
 #define ORTE_RML_TAG_NOTIFIER_HNP           40
+
+/* Process Migration Tool Tag */
+#define ORTE_RML_TAG_MIGRATE                43
+
+/* For SStore Framework */
+#define ORTE_RML_TAG_SSTORE                 44
+#define ORTE_RML_TAG_SSTORE_INTERNAL        45
 
 #define ORTE_RML_TAG_MAX                   100
 

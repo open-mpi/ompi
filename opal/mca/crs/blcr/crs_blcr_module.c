@@ -34,6 +34,7 @@
 
 #include "opal/mca/base/mca_base_param.h"
 
+#include "opal/threads/threads.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 
@@ -94,20 +95,26 @@ OBJ_CLASS_INSTANCE(opal_crs_blcr_snapshot_t,
 /******************
  * Local Functions
  ******************/
-static int blcr_checkpoint_peer(pid_t pid, char * local_dir, char ** fname);
 static int blcr_get_checkpoint_filename(char **fname, pid_t pid);
 static int opal_crs_blcr_thread_callback(void *arg);
 static int opal_crs_blcr_signal_callback(void *arg);
 
-static int opal_crs_blcr_checkpoint_cmd(pid_t pid, char * local_dir, char **fname, char **cmd);
 static int opal_crs_blcr_restart_cmd(char *fname, char **cmd);
 
-static int blcr_update_snapshot_metadata(opal_crs_blcr_snapshot_t *snapshot);
 static int blcr_cold_start(opal_crs_blcr_snapshot_t *snapshot);
+
+#if OPAL_ENABLE_CRDEBUG == 1
+static void MPIR_checkpoint_debugger_crs_hook(cr_hook_event_t event);
+#endif
 
 /*************************
  * Local Global Variables
  *************************/
+#if OPAL_ENABLE_CRDEBUG == 1
+static opal_thread_t *checkpoint_thread_id = NULL;
+static bool blcr_crdebug_refreshed_env = false;
+#endif
+
 static cr_client_id_t client_id;
 static cr_callback_id_t cr_thread_callback_id;
 static cr_callback_id_t cr_signal_callback_id;
@@ -127,8 +134,10 @@ void opal_crs_blcr_construct(opal_crs_blcr_snapshot_t *snapshot) {
 }
 
 void opal_crs_blcr_destruct( opal_crs_blcr_snapshot_t *snapshot) {
-    if(NULL != snapshot->context_filename)
+    if(NULL != snapshot->context_filename) {
         free(snapshot->context_filename);
+        snapshot->context_filename = NULL;
+    }
 }
 
 /*****************
@@ -167,6 +176,10 @@ int opal_crs_blcr_module_init(void)
         }
     }
 
+#if OPAL_ENABLE_CRDEBUG == 1
+    blcr_crdebug_refreshed_env = false;
+#endif
+
     blcr_restart_cmd    = strdup("cr_restart");
     blcr_checkpoint_cmd = strdup("cr_checkpoint");
     
@@ -190,6 +203,20 @@ int opal_crs_blcr_module_init(void)
         cr_signal_callback_id = cr_register_callback(opal_crs_blcr_signal_callback,
                                                      crs_blcr_signal_callback_arg,
                                                      CR_SIGNAL_CONTEXT);
+
+#if OPAL_ENABLE_CRDEBUG == 1
+        /*
+         * Checkpoint/restart enabled debugging hooks
+         *  "NO_CALLBACKS"   -> non-MPI threads
+         *  "SIGNAL_CONTEXT" -> MPI threads
+         *  "THREAD_CONTEXT" -> BLCR threads
+         */
+        cr_register_hook(CR_HOOK_CONT_NO_CALLBACKS,   MPIR_checkpoint_debugger_crs_hook);
+        cr_register_hook(CR_HOOK_CONT_SIGNAL_CONTEXT, MPIR_checkpoint_debugger_crs_hook);
+
+        cr_register_hook(CR_HOOK_RSTRT_NO_CALLBACKS,   MPIR_checkpoint_debugger_crs_hook);
+        cr_register_hook(CR_HOOK_RSTRT_SIGNAL_CONTEXT, MPIR_checkpoint_debugger_crs_hook);
+#endif
     }
 
     /*
@@ -262,6 +289,17 @@ int opal_crs_blcr_module_finalize(void)
         cr_replace_callback(cr_thread_callback_id, NULL, NULL, CR_THREAD_CONTEXT);
         /* Unload the signal callback */
         cr_replace_callback(cr_signal_callback_id, NULL, NULL, CR_SIGNAL_CONTEXT);
+
+#if OPAL_ENABLE_CRDEBUG == 1
+        /*
+         * Checkpoint/restart enabled debugging hooks
+         */
+        cr_register_hook(CR_HOOK_CONT_NO_CALLBACKS,   NULL);
+        cr_register_hook(CR_HOOK_CONT_SIGNAL_CONTEXT, NULL);
+
+        cr_register_hook(CR_HOOK_RSTRT_NO_CALLBACKS,   NULL);
+        cr_register_hook(CR_HOOK_RSTRT_SIGNAL_CONTEXT, NULL);
+#endif
     }
 
     /* BLCR does not have a finalization routine */
@@ -275,175 +313,158 @@ int opal_crs_blcr_checkpoint(pid_t pid,
                              opal_crs_state_type_t *state)
 {
     int ret, exit_status = OPAL_SUCCESS;
-    opal_crs_blcr_snapshot_t *snapshot = OBJ_NEW(opal_crs_blcr_snapshot_t);
+    opal_crs_blcr_snapshot_t *snapshot = NULL;
 #if CRS_BLCR_HAVE_CR_REQUEST_CHECKPOINT == 1
     cr_checkpoint_args_t cr_args;
     static cr_checkpoint_handle_t cr_handle = (cr_checkpoint_handle_t)(-1);
 #endif
+    int fd = 0;
+    char *loc_fname = NULL;
+
+    if( pid != my_pid ) {
+        opal_output(0, "crs:blcr: checkpoint(%d, ---): Checkpointing of peers not allowed!", pid);
+        exit_status = OPAL_ERROR;
+        goto cleanup;
+    }
 
     opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
                         "crs:blcr: checkpoint(%d, ---)", pid);
 
-    if(NULL != snapshot->super.reference_name)
-        free(snapshot->super.reference_name);
-    snapshot->super.reference_name = strdup(base_snapshot->reference_name);
-
-    if(NULL != snapshot->super.local_location)
-        free(snapshot->super.local_location);
-    snapshot->super.local_location  = strdup(base_snapshot->local_location);
-
-    if(NULL != snapshot->super.remote_location)
-        free(snapshot->super.remote_location);
-    snapshot->super.remote_location  = strdup(base_snapshot->remote_location);
+    snapshot = (opal_crs_blcr_snapshot_t *)base_snapshot;
 
     /*
      * Update the snapshot metadata
      */
     snapshot->super.component_name = strdup(mca_crs_blcr_component.super.base_version.mca_component_name);
-    if( OPAL_SUCCESS != (ret = opal_crs_base_metadata_write_token(NULL, CRS_METADATA_COMP, snapshot->super.component_name) ) ) {
-        opal_output(mca_crs_blcr_component.super.output_handle,
-                    "crs:blcr: checkpoint(): Error: Unable to write component name to the directory for (%s).",
-                    snapshot->super.reference_name);
-        exit_status = ret;
-        goto cleanup;
+    blcr_get_checkpoint_filename(&(snapshot->context_filename), pid);
+
+    if( NULL == snapshot->super.metadata ) {
+        if (NULL == (snapshot->super.metadata = fopen(snapshot->super.metadata_filename, "a")) ) {
+            opal_output(mca_crs_blcr_component.super.output_handle,
+                        "crs:blcr: checkpoint(): Error: Unable to open the file (%s)",
+                        snapshot->super.metadata_filename);
+            exit_status = OPAL_ERROR;
+            goto cleanup;
+        }
     }
+    fprintf(snapshot->super.metadata, "%s%s\n", CRS_METADATA_COMP,    snapshot->super.component_name);
+    fprintf(snapshot->super.metadata, "%s%s\n", CRS_METADATA_CONTEXT, snapshot->context_filename);
+
+    fclose(snapshot->super.metadata );
+    snapshot->super.metadata = NULL;
 
     /*
      * If we can checkpointing ourselves do so:
      * use cr_request_checkpoint() if available, and cr_request_file() if not
      */
-#if CRS_BLCR_HAVE_CR_REQUEST_CHECKPOINT == 1 || CRS_BLCR_HAVE_CR_REQUEST == 1
-    if( pid == my_pid ) {
-        char *loc_fname = NULL;
+    if( opal_crs_blcr_dev_null ) {
+        loc_fname = strdup("/dev/null");
+    } else {
+        asprintf(&loc_fname, "%s/%s", snapshot->super.snapshot_directory, snapshot->context_filename);
+    }
 
-        blcr_get_checkpoint_filename(&(snapshot->context_filename), pid);
-        if( opal_crs_blcr_dev_null ) {
-            loc_fname = strdup("/dev/null");
-        } else {
-            asprintf(&loc_fname, "%s/%s", snapshot->super.local_location, snapshot->context_filename);
-        }
+#if OPAL_ENABLE_CRDEBUG == 1
+    /* Make sure to identify the checkpointing thread, so that it is not
+     * prevented from requesting the checkpoint after the debugger detaches
+     */
+    opal_cr_debug_set_current_ckpt_thread_self();
+    checkpoint_thread_id = opal_thread_get_self();
+    blcr_crdebug_refreshed_env = false;
 
+    /* If checkpoint/restart enabled debugging  then mark detachment place */
+    if( MPIR_debug_with_checkpoint ) {
         opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
-                            "crs:blcr: checkpoint SELF <%s>",
-                            loc_fname);
+                            "crs:blcr: checkpoint(): Detaching debugger...");
+        MPIR_checkpoint_debugger_detach();
+    }
+#endif
 
+    opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
+                        "crs:blcr: checkpoint SELF <%s>",
+                        loc_fname);
+
+#if CRS_BLCR_HAVE_CR_REQUEST_CHECKPOINT == 1 || CRS_BLCR_HAVE_CR_REQUEST == 1
 #if CRS_BLCR_HAVE_CR_REQUEST_CHECKPOINT == 1
-        {
-            int fd = 0;
-            fd = open(loc_fname,
-                       O_WRONLY | O_CREAT | O_TRUNC | O_LARGEFILE,
-                       S_IRUSR | S_IWUSR);
-            if( fd < 0 ) {
+    fd = open(loc_fname,
+              O_WRONLY | O_CREAT | O_TRUNC | O_LARGEFILE,
+              S_IRUSR | S_IWUSR);
+    if( fd < 0 ) {
+        *state = OPAL_CRS_ERROR;
+        opal_output(mca_crs_blcr_component.super.output_handle,
+                    "crs:blcr: checkpoint(): Error: Unable to open checkpoint file (%s) for pid (%d)",
+                    loc_fname, pid);
+        exit_status = OPAL_ERROR;
+        goto cleanup;
+    }
+
+    cr_initialize_checkpoint_args_t(&cr_args);
+    cr_args.cr_scope = CR_SCOPE_PROC;
+    cr_args.cr_fd    = fd;
+    if( options->stop ) {
+        cr_args.cr_signal = SIGSTOP;
+    }
+
+    ret = cr_request_checkpoint(&cr_args, &cr_handle);
+    if( ret < 0 ) {
+        close(cr_args.cr_fd);
+        *state = OPAL_CRS_ERROR;
+        opal_output(mca_crs_blcr_component.super.output_handle,
+                    "crs:blcr: checkpoint(): Error: Unable to checkpoint pid (%d) to file (%s)",
+                    pid, loc_fname);
+        exit_status = ret;
+        goto cleanup;
+    }
+
+    /* Wait for checkpoint to finish */
+    do {
+        ret = cr_poll_checkpoint(&cr_handle, NULL);
+        if( ret < 0 ) {
+            /* Check if restarting. This is not an error. */
+            if( (ret == CR_POLL_CHKPT_ERR_POST) && (errno == CR_ERESTARTED) ) {
+                ret = 0;
+                break;
+            }
+            /* If Call was interrupted by a signal, retry the call */
+            else if (errno == EINTR) {
+                ;
+            }
+            /* Otherwise this is a real error that we need to deal with */
+            else {
                 *state = OPAL_CRS_ERROR;
                 opal_output(mca_crs_blcr_component.super.output_handle,
-                            "crs:blcr: checkpoint(): Error: Unable to open checkpoint file (%s) for pid (%d)",
-                            loc_fname, pid);
-                exit_status = OPAL_ERROR;
-                goto cleanup;
-            }
-
-            cr_initialize_checkpoint_args_t(&cr_args);
-            cr_args.cr_scope = CR_SCOPE_PROC;
-            cr_args.cr_fd    = fd;
-            if( options->stop ) {
-                cr_args.cr_signal = SIGSTOP;
-            }
-
-            ret = cr_request_checkpoint(&cr_args, &cr_handle);
-            if( ret < 0 ) {
-                close(cr_args.cr_fd);
-                *state = OPAL_CRS_ERROR;
-                opal_output(mca_crs_blcr_component.super.output_handle,
-                            "crs:blcr: checkpoint(): Error: Unable to checkpoint pid (%d) to file (%s)",
-                            pid, loc_fname);
+                            "crs:blcr: checkpoint(): Error: Unable to checkpoint pid (%d) to file (%s) - poll failed with (%d)",
+                            pid, loc_fname, ret);
                 exit_status = ret;
                 goto cleanup;
             }
-
-            /* Wait for checkpoint to finish */
-            do {
-                ret = cr_poll_checkpoint(&cr_handle, NULL);
-                if( ret < 0 ) {
-                    /* Check if restarting. This is not an error. */
-                    if( (ret == CR_POLL_CHKPT_ERR_POST) && (errno == CR_ERESTARTED) ) {
-                        ret = 0;
-                        break;
-                    }
-                    /* If Call was interrupted by a signal, retry the call */
-                    else if (errno == EINTR) {
-                        ;
-                    }
-                    /* Otherwise this is a real error that we need to deal with */
-                    else {
-                        *state = OPAL_CRS_ERROR;
-                        opal_output(mca_crs_blcr_component.super.output_handle,
-                                    "crs:blcr: checkpoint(): Error: Unable to checkpoint pid (%d) to file (%s) - poll failed with (%d)",
-                                    pid, loc_fname, ret);
-                        exit_status = ret;
-                        goto cleanup;
-                    }
-                }
-            } while( ret < 0 );
-
-            /* Close the file */
-            close(cr_args.cr_fd);
         }
+    } while( ret < 0 );
+
+    /* Close the file */
+    close(cr_args.cr_fd);
 #else
-        /* Request a checkpoint be taken of the current process.
-         * Since we are not guaranteed to finish the checkpoint before this
-         * returns, we also need to wait for it.
-         */
-        cr_request_file(loc_fname);
+    /* Request a checkpoint be taken of the current process.
+     * Since we are not guaranteed to finish the checkpoint before this
+     * returns, we also need to wait for it.
+     */
+    cr_request_file(loc_fname);
         
-        /* Wait for checkpoint to finish */
-        do {
-            usleep(1000); /* JJH Do we really want to sleep? */
-        } while(CR_STATE_IDLE != cr_status());
+    /* Wait for checkpoint to finish */
+    do {
+        usleep(1000); /* JJH Do we really want to sleep? */
+    } while(CR_STATE_IDLE != cr_status());
+#endif
 #endif
 
-        *state = blcr_current_state;
-        free(loc_fname);
-    }
-    /*
-     * Checkpointing another process
-     */
-    else 
-#endif
-    {
-        ret = blcr_checkpoint_peer(pid, snapshot->super.local_location, &(snapshot->context_filename));
-
-        if(OPAL_SUCCESS != ret) {
-            *state = OPAL_CRS_ERROR;
-            opal_output(mca_crs_blcr_component.super.output_handle,
-                        "crs:blcr: checkpoint(): Error: Unable to checkpoint pid (%d)",
-                        pid);
-            exit_status = ret;
-            goto cleanup;
-        }
-
-        *state = blcr_current_state;
-    }
+    *state = blcr_current_state;
+    free(loc_fname);
     
-    if(*state == OPAL_CRS_CONTINUE) {
-        /*
-         * Update the metadata file
-         */
-        if( OPAL_SUCCESS != (ret = blcr_update_snapshot_metadata(snapshot)) ) {
-            *state = OPAL_CRS_ERROR;
-            opal_output(mca_crs_blcr_component.super.output_handle,
-                        "crs:blcr: checkpoint(): Error: Unable to update metadata for snapshot (%s).", 
-                        snapshot->super.reference_name);
-            exit_status = ret;
-            goto cleanup;
-        }
+ cleanup:
+    if( NULL != snapshot->super.metadata ) {
+        fclose(snapshot->super.metadata );
+        snapshot->super.metadata = NULL;
     }
 
-    /*
-     * Return to the caller
-     */
-    base_snapshot = &(snapshot->super);
-
- cleanup:
     return exit_status;
 }
 
@@ -459,7 +480,7 @@ int opal_crs_blcr_restart(opal_crs_base_snapshot_t *base_snapshot, bool spawn_ch
     snapshot->super = *base_snapshot;
 
     opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
-                        "crs:blcr: restart(%s, %d)", snapshot->super.reference_name, spawn_child);
+                        "crs:blcr: restart(--, %d)",  spawn_child);
 
     /*
      * If we need to reconstruct the snapshot,
@@ -486,10 +507,6 @@ int opal_crs_blcr_restart(opal_crs_base_snapshot_t *base_snapshot, bool spawn_ch
         goto cleanup;
     }
 
-
-    /*
-     * Restart by replacing this process
-     */
     /* Need to shutdown the event engine before this.
      * for some reason the BLCR checkpointer and our event engine don't get
      * along very well.
@@ -586,94 +603,6 @@ int opal_crs_blcr_enable_checkpoint(void)
 /*****************************
  * Local Function Definitions
  *****************************/
-static int blcr_checkpoint_peer(pid_t pid, char * local_dir, char ** fname) 
-{
-    char **cr_argv = NULL;
-    char *cr_cmd = NULL;
-    int ret;
-    pid_t child_pid;
-    int exit_status = OPAL_SUCCESS;
-    int status, child_status;
-
-    opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
-                        "crs:blcr: checkpoint_peer(%d, --)", pid);
-
-    /*
-     * Get the checkpoint command
-     */
-    if ( OPAL_SUCCESS != (ret = opal_crs_blcr_checkpoint_cmd(pid, local_dir, fname, &cr_cmd)) ) {
-        opal_output(mca_crs_blcr_component.super.output_handle,
-                    "crs:blcr: checkpoint_peer: Failed to generate checkpoint command :(%d):", ret);
-        exit_status = ret;
-        goto cleanup;
-    }
-    if ( NULL == (cr_argv = opal_argv_split(cr_cmd, ' ')) ) {
-        opal_output(mca_crs_blcr_component.super.output_handle,
-                    "crs:blcr: checkpoint_peer: Failed to opal_argv_split :(%d):", ret);
-        exit_status = OPAL_ERROR;
-        goto cleanup;
-    }
-
-    /*
-     * Fork a child to do the checkpoint
-     */
-    blcr_current_state = OPAL_CRS_CHECKPOINT;
- 
-    child_pid = fork();
-
-    if(0 == child_pid) {
-        /* Child Process */
-        opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
-                            "crs:blcr: blcr_checkpoint_peer: exec :(%s, %s):", 
-                            strdup(blcr_checkpoint_cmd),
-                            opal_argv_join(cr_argv, ' '));
-        
-        status = execvp(strdup(blcr_checkpoint_cmd), cr_argv);
-
-        if(status < 0) {
-            opal_output(mca_crs_blcr_component.super.output_handle,
-                        "crs:blcr: blcr_checkpoint_peer: Child failed to execute :(%d):", status);
-        }
-        opal_output(mca_crs_blcr_component.super.output_handle,
-                    "crs:blcr: blcr_checkpoint_peer: execvp returned %d", status);
-    }
-    else if(child_pid > 0) {
-        /* Don't waitpid here since we don't really want to restart from inside waitpid ;) */
-        while(OPAL_CRS_RESTART  != blcr_current_state  &&
-              OPAL_CRS_CONTINUE != blcr_current_state ) {
-            OPAL_THREAD_LOCK(&blcr_lock);
-            opal_condition_wait(&blcr_cond, &blcr_lock);
-            OPAL_THREAD_UNLOCK(&blcr_lock);
-        }
-
-        opal_output(mca_crs_blcr_component.super.output_handle,
-                    "crs:blcr: blcr_checkpoint_peer: Thread finished with status %d", blcr_current_state);
-
-        if(OPAL_CRS_CONTINUE == blcr_current_state) {
-            /* Wait for the child only if we are continuing */
-            if( 0 > waitpid(child_pid, &child_status, 0) ) {
-                opal_output(mca_crs_blcr_component.super.output_handle,
-                    "crs:blcr: blcr_checkpoint_peer: waitpid returned %d", child_status);
-            }
-        }
-    }
-    else {
-        opal_output(mca_crs_blcr_component.super.output_handle,
-                    "crs:blcr: blcr_checkpoint_peer: fork failed :(%d):", child_pid);
-    }
-
-    /*
-     * Cleanup
-     */
-cleanup:
-    if(NULL != cr_cmd)
-        free(cr_cmd);
-    if(NULL != cr_argv)
-        opal_argv_free(cr_argv);
-
-    return exit_status;
-}
-
 static int opal_crs_blcr_thread_callback(void *arg) {
     const struct cr_checkpoint_info *ckpt_info = cr_get_checkpoint_info();
     int ret;
@@ -700,6 +629,11 @@ static int opal_crs_blcr_thread_callback(void *arg) {
     else
 #endif
     {
+        if(OPAL_SUCCESS != (ret = trigger_user_inc_callback(OMPI_CR_INC_CRS_PRE_CKPT,
+                                                            OMPI_CR_INC_STATE_PREPARE)) ) {
+            ;
+        }
+
         ret = cr_checkpoint(0);
     }
     
@@ -718,6 +652,13 @@ static int opal_crs_blcr_thread_callback(void *arg) {
         opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
                             "crs:blcr: thread_callback: Continue.");
         blcr_current_state = OPAL_CRS_CONTINUE;
+    }
+
+    if( OPAL_SUCCESS != (ret = trigger_user_inc_callback(OMPI_CR_INC_CRS_POST_CKPT,
+                                                         (blcr_current_state == OPAL_CRS_CONTINUE ?
+                                                          OMPI_CR_INC_STATE_CONTINUE :
+                                                          OMPI_CR_INC_STATE_RESTART))) ) {
+        ;
     }
 
     OPAL_THREAD_UNLOCK(&blcr_lock);
@@ -747,66 +688,6 @@ static int opal_crs_blcr_signal_callback(void *arg) {
     return 0;
 }
 
-static int opal_crs_blcr_checkpoint_cmd(pid_t pid, char * local_dir, char **fname, char **cmd)
-{
-    char **cr_argv = NULL;
-    int argc = 0, ret;
-    char * pid_str;
-    int exit_status = OPAL_SUCCESS;
-    char * loc_fname = NULL;
-
-    blcr_get_checkpoint_filename(fname, pid);
-
-    opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
-                        "crs:blcr: checkpoint_cmd(%d)", pid);
-
-    asprintf(&loc_fname, "%s/%s", local_dir, *fname);
-
-    /*
-     * Build the command
-     */
-    if (OPAL_SUCCESS != (ret = opal_argv_append(&argc, &cr_argv, strdup(blcr_checkpoint_cmd)))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    if (OPAL_SUCCESS != (ret = opal_argv_append(&argc, &cr_argv, strdup("--pid")))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    asprintf(&pid_str, "%d", pid);
-    if (OPAL_SUCCESS != (ret = opal_argv_append(&argc, &cr_argv, strdup(pid_str)))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    if (OPAL_SUCCESS != (ret = opal_argv_append(&argc, &cr_argv, strdup("--file")))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    if (OPAL_SUCCESS != (ret = opal_argv_append(&argc, &cr_argv, strdup(loc_fname)))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
- cleanup:
-    if(exit_status != OPAL_SUCCESS)
-        *cmd = NULL;
-    else 
-        *cmd = opal_argv_join(cr_argv, ' ');
-    
-    if(NULL != pid_str) 
-        free(pid_str);
-    if( NULL != cr_argv)
-        opal_argv_free(cr_argv);
-    if(NULL != loc_fname) 
-        free(loc_fname);
-
-    return exit_status;
-}
-
 static int opal_crs_blcr_restart_cmd(char *fname, char **cmd)
 {
     opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
@@ -833,32 +714,6 @@ static int blcr_get_checkpoint_filename(char **fname, pid_t pid)
     return OPAL_SUCCESS;
 }
 
-static int blcr_update_snapshot_metadata(opal_crs_blcr_snapshot_t *snapshot) {
-    int exit_status  = OPAL_SUCCESS;
-
-    opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
-                        "crs:blcr: update_snapshot_metadata(%s)", snapshot->super.reference_name);
-
-    /* Bozo check to make sure this snapshot is ours */
-    if ( 0 != strncmp(mca_crs_blcr_component.super.base_version.mca_component_name, 
-                      snapshot->super.component_name, 
-                      strlen(snapshot->super.component_name)) ) {
-        exit_status = OPAL_ERROR;
-        opal_output(mca_crs_blcr_component.super.output_handle,
-                    "crs:blcr: blcr_update_snapshot_metadata: Error: This snapshot (%s) is not intended for us (%s)\n", 
-                    snapshot->super.component_name, mca_crs_blcr_component.super.base_version.mca_component_name);
-        goto cleanup;
-    }
-
-    /*
-     * Append to the metadata file the context filename
-     */
-    opal_crs_base_metadata_write_token(snapshot->super.local_location, CRS_METADATA_CONTEXT, snapshot->context_filename);
-    
- cleanup:
-    return exit_status;
-}
-
 static int blcr_cold_start(opal_crs_blcr_snapshot_t *snapshot) {
     int ret, exit_status = OPAL_SUCCESS;
     char **tmp_argv = NULL;
@@ -866,16 +721,25 @@ static int blcr_cold_start(opal_crs_blcr_snapshot_t *snapshot) {
     int prev_pid;
 
     opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
-                        "crs:blcr: cold_start(%s)", snapshot->super.reference_name);
+                        "crs:blcr: cold_start()");
 
     /*
      * Find the snapshot directory, read the metadata file
      */
-    if( OPAL_SUCCESS != (ret = opal_crs_base_extract_expected_component(snapshot->super.local_location, 
+    if( NULL == snapshot->super.metadata ) {
+        if (NULL == (snapshot->super.metadata = fopen(snapshot->super.metadata_filename, "r")) ) {
+            opal_output(mca_crs_blcr_component.super.output_handle,
+                        "crs:blcr: checkpoint(): Error: Unable to open the file (%s)",
+                        snapshot->super.metadata_filename);
+            exit_status = OPAL_ERROR;
+            goto cleanup;
+        }
+    }
+    if( OPAL_SUCCESS != (ret = opal_crs_base_extract_expected_component(snapshot->super.metadata,
                                                                         &component_name, &prev_pid) ) ) {
         opal_output(mca_crs_blcr_component.super.output_handle,
                     "crs:blcr: blcr_cold_start: Error: Failed to extract the metadata from the local snapshot (%s). Returned %d.",
-                    snapshot->super.local_location, ret);
+                    snapshot->super.metadata_filename, ret);
         exit_status = ret;
         goto cleanup;
     }
@@ -895,15 +759,15 @@ static int blcr_cold_start(opal_crs_blcr_snapshot_t *snapshot) {
     /*
      * Context Filename
      */
-    opal_crs_base_metadata_read_token(snapshot->super.local_location, CRS_METADATA_CONTEXT, &tmp_argv);
+    opal_crs_base_metadata_read_token(snapshot->super.metadata, CRS_METADATA_CONTEXT, &tmp_argv);
     if( NULL == tmp_argv ) {
         opal_output(mca_crs_blcr_component.super.output_handle,
                     "crs:blcr: blcr_cold_start: Error: Failed to read the %s token from the local checkpoint in %s",
-                    CRS_METADATA_CONTEXT, snapshot->super.local_location);
+                    CRS_METADATA_CONTEXT, snapshot->super.snapshot_directory);
         exit_status = OPAL_ERROR;
         goto cleanup;
     }
-    asprintf(&snapshot->context_filename, "%s/%s", snapshot->super.local_location, tmp_argv[0]);
+    asprintf(&snapshot->context_filename, "%s/%s", snapshot->super.snapshot_directory, tmp_argv[0]);
 
     /*
      * Reset the cold_start flag
@@ -916,5 +780,75 @@ static int blcr_cold_start(opal_crs_blcr_snapshot_t *snapshot) {
         tmp_argv = NULL;
     }
 
+    if( NULL != snapshot->super.metadata ) {
+        fclose(snapshot->super.metadata);
+        snapshot->super.metadata = NULL;
+    }
+
     return exit_status;
 }
+
+#if OPAL_ENABLE_CRDEBUG == 1
+static void MPIR_checkpoint_debugger_crs_hook(cr_hook_event_t event) {
+    opal_thread_t *my_thread_id = NULL;
+    my_thread_id = opal_thread_get_self();
+
+    /* Non-MPI threads */
+    if(event == CR_HOOK_RSTRT_NO_CALLBACKS ) {
+        /* wait for the MPI thread to refresh the environment for us */
+        while(!blcr_crdebug_refreshed_env) {
+            sched_yield();
+        }
+    }
+    /* MPI threads */
+    else if(event == CR_HOOK_RSTRT_SIGNAL_CONTEXT ) {
+        if( opal_thread_self_compare(checkpoint_thread_id) ) {
+            opal_cr_refresh_environ(my_pid);
+            blcr_crdebug_refreshed_env = true;
+        } else {
+            while(!blcr_crdebug_refreshed_env) {
+                sched_yield();
+            }
+        }
+    }
+
+    /*
+     * Some debugging output
+     */
+    /* Non-MPI threads */
+    if( event == CR_HOOK_CONT_NO_CALLBACKS ) {
+        opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
+                            "crs:blcr: MPIR_checkpoint_debugger_crs_hook: Waiting in Continue (Non-MPI). (%d)",
+                            (int)my_thread_id->t_handle);
+    }
+    else if(event == CR_HOOK_RSTRT_NO_CALLBACKS ) {
+        opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
+                            "crs:blcr: MPIR_checkpoint_debugger_crs_hook: Waiting in Restart (Non-MPI). (%d)",
+                            (int)my_thread_id->t_handle);
+    }
+    /* MPI Threads */
+    else if( event == CR_HOOK_CONT_SIGNAL_CONTEXT ) {
+        opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
+                            "crs:blcr: MPIR_checkpoint_debugger_crs_hook: Waiting in Continue (MPI).");
+    }
+    else if(event == CR_HOOK_RSTRT_SIGNAL_CONTEXT ) {
+        opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
+                            "crs:blcr: MPIR_checkpoint_debugger_crs_hook: Waiting in Restart (MPI).");
+    }
+
+    /*
+     * Enter the breakpoint function.
+     * If no debugger intends on attaching, then this function is expected to
+     * return immediately.
+     *
+     * If this is an MPI thread then odds are that this is the checkpointing
+     * thread, in which case this function will return immediately allowing
+     * it to prepare the MPI library before signaling to the debugger that
+     * it is safe to attach, if necessary.
+     */
+    MPIR_checkpoint_debugger_waitpoint();
+
+    opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
+                        "crs:blcr: MPIR_checkpoint_debugger_crs_hook: Finished...");
+ }
+#endif

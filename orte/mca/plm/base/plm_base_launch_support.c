@@ -248,15 +248,12 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
      ***/
     
 #if OPAL_ENABLE_FT_CR == 1
-    /* JJH: Would it be useful to let the errmgr know what we are doing here? */
     /*
-     * Notify the Global SnapC component regarding new job
+     * Notify the Global SnapC component regarding new job (even if it was restarted)
      */
-    if (ORTE_JOB_STATE_RESTART != jdata->state) {
-        if( ORTE_SUCCESS != (rc = orte_snapc.setup_job(jdata->jobid) ) ) {
-            /* Silent Failure :/ JJH */
-            ORTE_ERROR_LOG(rc);
-        }
+    if( ORTE_SUCCESS != (rc = orte_snapc.setup_job(jdata->jobid) ) ) {
+        /* Silent Failure :/ JJH */
+        ORTE_ERROR_LOG(rc);
     }
 #endif
     
