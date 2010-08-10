@@ -132,7 +132,7 @@ ompi_predefined_datatype_t ompi_mpi_integer =        OMPI_DATATYPE_INIT_PREDEFIN
 ompi_predefined_datatype_t ompi_mpi_real =           OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE_FORTRAN (FLOAT, REAL, OMPI_SIZEOF_FORTRAN_REAL, OMPI_ALIGNMENT_FORTRAN_REAL, OMPI_DATATYPE_FLAG_DATA_FLOAT );
 ompi_predefined_datatype_t ompi_mpi_dblprec =        OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE_FORTRAN (FLOAT, DOUBLE_PRECISION, OMPI_SIZEOF_FORTRAN_DOUBLE_PRECISION, OMPI_ALIGNMENT_FORTRAN_DOUBLE_PRECISION, OMPI_DATATYPE_FLAG_DATA_FLOAT );
 ompi_predefined_datatype_t ompi_mpi_cplex =          OMPI_DATATYPE_INIT_DEFER (COMPLEX, OMPI_DATATYPE_FLAG_DATA_FORTRAN | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
-#if OMPI_HAVE_F90_DOUBLE_COMPLEX
+#if OMPI_HAVE_F90_DOUBLE_COMPLEX || OMPI_HAVE_FORTRAN_DOUBLE_COMPLEX
 /* We do not configure-check for alignment of F90 types ... Alignment of F77 OMPI_ALIGNMENT_FORTRAN_COMPLEX has to suffice */
 ompi_predefined_datatype_t ompi_mpi_dblcplex =       OMPI_DATATYPE_INIT_DEFER (DOUBLE_COMPLEX, OMPI_DATATYPE_FLAG_DATA_FORTRAN | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
 #else
@@ -140,7 +140,7 @@ ompi_predefined_datatype_t ompi_mpi_dblcplex =       OMPI_DATATYPE_INIT_UNAVAILA
 #endif
 
 /* In Fortran, there does not exist a type LONG DOUBLE COMPLEX, but DOUBLE COMPLEX(KIND=8) may require this */
-#if HAVE_LONG_DOUBLE && OMPI_HAVE_F90_DOUBLE_COMPLEX
+#if HAVE_LONG_DOUBLE && ( OMPI_HAVE_F90_DOUBLE_COMPLEX || OMPI_HAVE_FORTRAN_DOUBLE_COMPLEX )
 /* We do not configure-check for alignment of F90 types ... Alignment of F77 OMPI_ALIGNMENT_FORTRAN_COMPLEX has to suffice */
 ompi_predefined_datatype_t ompi_mpi_ldblcplex =      OMPI_DATATYPE_INIT_DEFER (LONG_DOUBLE_COMPLEX, OMPI_DATATYPE_FLAG_DATA_FORTRAN | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
 #else

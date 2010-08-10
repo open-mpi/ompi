@@ -85,6 +85,9 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
                    [float, double, long double], [-1])
     
     OMPI_F77_CHECK([COMPLEX], [yes], [], [-1])
+    # Double precision complex types are not standard, but many compilers support it.
+    # Code should be wrapped with #ifdef OMPI_HAVE_FORTRAN_DOUBLE_COMPLEX
+    OMPI_F77_CHECK([DOUBLE COMPLEX], [yes], [], [-1])
     
     # The complex*N tests are a bit different (note: the complex tests are
     # the same as all the rest, because complex is a composite of two
