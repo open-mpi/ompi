@@ -816,7 +816,7 @@ int orte_dt_unpack_app_context(opal_buffer_t *buffer, void *dest,
         } else {
             app_context[i]->preload_files_src_dir = NULL;
         }
-        
+
         /* unpack the restart limits */
         max_n=1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &app_context[i]->max_local_restarts,
@@ -830,7 +830,7 @@ int orte_dt_unpack_app_context(opal_buffer_t *buffer, void *dest,
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        
+
         /* unpack the constrain flag */
         max_n=1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &app_context[i]->constrain,
@@ -838,6 +838,24 @@ int orte_dt_unpack_app_context(opal_buffer_t *buffer, void *dest,
             ORTE_ERROR_LOG(rc);
             return rc;
         }
+
+#if OPAL_ENABLE_FT_CR == 1
+        /* Unpack the sstore_load */
+        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &have_preload_files_dest_dir,
+                                                         &max_n, OPAL_INT8))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        if (have_preload_files_dest_dir) {
+            if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &app_context[i]->sstore_load,
+                                                             &max_n, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        } else {
+            app_context[i]->sstore_load = NULL;
+        }
+#endif
     }
 
     return ORTE_SUCCESS;

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2008-2009 The Trustees of Indiana University and Indiana
+# Copyright (c) 2008-2010 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 #
@@ -37,7 +37,6 @@ opal_cr_use_thread=1
 #
 rml_wrapper=ftrm
 snapc=full
-#filem=rsh
 
 #
 # OMPI Parameters

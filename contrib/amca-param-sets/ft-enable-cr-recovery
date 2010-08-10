@@ -1,0 +1,82 @@
+#
+# Copyright (c) 2009-2010 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+# An Aggregate MCA Parameter Set to enable checkpoint/restart capabilities
+# for a job.
+#
+# Usage:
+#   shell$ mpirun -am ft-enable-cr ./app
+#
+
+#
+# OPAL Parameters
+# - Turn off OPAL only checkpointing
+# - Select only checkpoint ready components
+# - Enable Additional FT infrastructure
+# - Auto-select OPAL CRS component
+# - If available, use the FT Thread (Default)
+#
+opal_cr_allow_opal_only=0
+mca_base_component_distill_checkpoint_ready=1
+ft_cr_enabled=1
+crs=
+opal_cr_use_thread=1
+
+#
+# ORTE Parameters
+# - Wrap the RML
+# - Use the 'full' Snapshot Coordinator
+# - Use the 'cm' routed component. It is the only one that is currently able to
+#   handle process and daemon loss.
+#
+rml_wrapper=ftrm
+snapc=full
+routed=cm
+
+#
+# OMPI Parameters
+# - Wrap the PML
+# - Use a Bookmark Exchange Fully Coordinated Checkpoint/Restart Coordination Protocol
+#
+pml_wrapper=crcpw
+crcp=bkmrk
+
+#
+# Temporary fix to force the event engine to use poll to behave well with BLCR
+#
+opal_event_include=poll
+
+#
+# We currently only support the following options to the OpenIB BTL
+# Future development will attempt to eliminate many of these restrictions
+#
+btl_openib_want_fork_support=1
+btl_openib_use_async_event_thread=0
+btl_openib_use_eager_rdma=0
+btl_openib_cpc_include=oob
+
+# Enable SIGTSTP/SIGCONT capability
+#  killall -TSTP mpirun
+#  killall -CONT mpirun
+orte_forward_job_control=1
+
+#
+# Use the C/R Error Management and Recovery Service
+#
+orte_enable_recovery=1
+orte_max_global_restarts=10
+errmgr_crmig_enable=1
+errmgr_autor_enable=1
+
+#
+# Additional constraints to be lifted in the future
+#
+plm=rsh
+rmaps=resilient

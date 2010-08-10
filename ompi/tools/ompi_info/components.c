@@ -51,6 +51,8 @@
 #if OPAL_ENABLE_FT_CR == 1
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
+#include "opal/mca/compress/compress.h"
+#include "opal/mca/compress/base/base.h"
 #endif
 #include "opal/runtime/opal.h"
 #include "opal/dss/dss.h"
@@ -114,6 +116,8 @@
 #if OPAL_ENABLE_FT_CR == 1
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
+#include "orte/mca/sstore/sstore.h"
+#include "orte/mca/sstore/base/base.h"
 #endif
 #if ORTE_ENABLE_SENSORS
 #include "orte/mca/sensor/sensor.h"
@@ -330,6 +334,14 @@ void ompi_info_open_components(void)
     map->type = strdup("crs");
     map->components = &opal_crs_base_components_available;
     opal_pointer_array_add(&component_map, map);
+
+    if (OPAL_SUCCESS != opal_compress_base_open()) {
+        goto error;
+    }
+    map = OBJ_NEW(ompi_info_component_map_t);
+    map->type = strdup("compress");
+    map->components = &opal_compress_base_components_available;
+    opal_pointer_array_add(&component_map, map);
 #endif
     
     /* OPAL's installdirs base open has already been called as part of
@@ -460,6 +472,14 @@ void ompi_info_open_components(void)
     opal_pointer_array_add(&component_map, map);
 
 #if OPAL_ENABLE_FT_CR == 1
+    if (ORTE_SUCCESS != orte_sstore_base_open()) {
+        goto error;
+    }
+    map = OBJ_NEW(ompi_info_component_map_t);
+    map->type = strdup("sstore");
+    map->components = &orte_sstore_base_components_available;
+    opal_pointer_array_add(&component_map, map);
+
     if (ORTE_SUCCESS != orte_snapc_base_open()) {
         goto error;
     }
@@ -680,6 +700,7 @@ void ompi_info_close_components()
 #if !ORTE_DISABLE_FULL_SUPPORT
 #if OPAL_ENABLE_FT_CR == 1
         (void) orte_snapc_base_close();
+        (void) orte_sstore_base_close();
 #endif
         (void) orte_filem_base_close();
         (void) orte_iof_base_close();

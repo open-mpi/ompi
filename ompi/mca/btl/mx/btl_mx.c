@@ -641,7 +641,7 @@ int mca_btl_mx_ft_event(int state) {
          *   kernel: blcr: thaw_threads returned error, aborting. -1
          * JJH: It may be possible to, instead of restarting the entire driver, just reconnect endpoints
          */
-        ompi_cr_continue_like_restart = true;
+        orte_cr_continue_like_restart = true;
 
         for( i = 0; i < mca_btl_mx_component.mx_num_btls; i++ ) {
             mx_btl = mca_btl_mx_component.mx_btls[i];

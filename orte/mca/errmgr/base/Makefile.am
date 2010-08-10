@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -24,4 +24,5 @@ libmca_errmgr_la_SOURCES += \
         base/errmgr_base_close.c \
         base/errmgr_base_select.c \
         base/errmgr_base_open.c \
-        base/errmgr_base_fns.c
+        base/errmgr_base_fns.c \
+        base/errmgr_base_tool.c

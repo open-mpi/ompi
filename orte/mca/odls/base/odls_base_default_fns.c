@@ -72,6 +72,8 @@
 #if OPAL_ENABLE_FT_CR == 1
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
+#include "orte/mca/sstore/sstore.h"
+#include "orte/mca/sstore/base/base.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 #endif
@@ -1489,7 +1491,14 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
             }
         }
     }
-    
+
+#if OPAL_ENABLE_FT_CR == 1
+    for (i=0; i < num_apps; i++) {
+        orte_sstore.fetch_app_deps(apps[i]);
+    }
+    orte_sstore.wait_all_deps();
+#endif
+
     if (ORTE_SUCCESS != (rc = opal_paffinity_base_get_processor_info(&num_processors))) {
         /* if we cannot find the number of local processors, we have no choice
          * but to default to conservative settings
@@ -1821,7 +1830,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
              */
             if( NULL != opal_crs.crs_prelaunch ) {
                 if( OPAL_SUCCESS != (rc = opal_crs.crs_prelaunch(child->name->vpid,
-                                                                 orte_snapc_base_global_snapshot_loc,
+                                                                 orte_sstore_base_prelaunch_location,
                                                                  &(app->app),
                                                                  &(app->cwd),
                                                                  &(app->argv),
@@ -1831,7 +1840,6 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                 }
             }
 #endif
-
             if (5 < opal_output_get_verbosity(orte_odls_globals.output)) {
                 opal_output(orte_odls_globals.output, "%s odls:launch: spawning child %s",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -2157,6 +2165,11 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
     int8_t flag;
     orte_odls_job_t *jobdat, *jdat;
 
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                         "%s odls: require sync on child %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc)));
+ 
     /* protect operations involving the global list of children */
     OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
     
@@ -2207,10 +2220,18 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
         free(child->rml_uri);
         child->rml_uri = NULL;
         child->fini_recvd = true;
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                             "%s odls: require sync deregistering child %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(child->name)));
     } else {
         /* if the contact info is not set, then we are registering the child so
          * unpack the contact info from the buffer and store it
          */
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                             "%s odls: require sync registering child %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(child->name)));
         child->init_recvd = true;
         registering = true;
         cnt = 1;
@@ -2508,7 +2529,7 @@ void orte_base_default_waitpid_fired(orte_process_name_t *proc, int32_t status)
     if(WIFEXITED(status)) {
         /* set the exit status appropriately */
         child->exit_code = WEXITSTATUS(status);
-        
+
         if (ORTE_PROC_STATE_CALLED_ABORT == child->state) {
             /* even though the process exited "normally", it happened
              * via an orte_abort call, so we need to indicate this was
@@ -2587,11 +2608,14 @@ void orte_base_default_waitpid_fired(orte_process_name_t *proc, int32_t status)
          * same way
          */
         child->exit_code = WTERMSIG(status) + 128;
-        
+
         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls:waitpid_fired child process %s terminated with signal",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(child->name)));
+                             ORTE_NAME_PRINT(child->name) ));
+        /* JJH: Should we decrement the number of local procs on this node here?
+         * jobdat->num_local_procs--;
+         */
     }
     
  MOVEON:
@@ -2822,7 +2846,7 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
                 child->waitpid_recvd = true;
                 goto CLEANUP;
             }
-            
+
             /* mark the child as "killed" since the waitpid will
              * fire as soon as we kill it
              */

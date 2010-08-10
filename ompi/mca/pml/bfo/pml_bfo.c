@@ -691,7 +691,7 @@ int mca_pml_bfo_ft_event( int state )
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P2);
         }
 
-        if( ompi_cr_continue_like_restart && !first_continue_pass ) {
+        if( orte_cr_continue_like_restart && !first_continue_pass ) {
             /*
              * Get a list of processes
              */
@@ -791,7 +791,7 @@ int mca_pml_bfo_ft_event( int state )
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P3);
         }
 
-        if( ompi_cr_continue_like_restart && !first_continue_pass ) {
+        if( orte_cr_continue_like_restart && !first_continue_pass ) {
             /*
              * Exchange the modex information once again.
              * BTLs will have republished their modex information.

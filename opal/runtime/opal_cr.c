@@ -74,9 +74,21 @@
 /******************
  * Global Var Decls
  ******************/
+#if OPAL_ENABLE_CRDEBUG == 1
+static opal_thread_t **opal_cr_debug_free_threads = NULL;
+static int opal_cr_debug_num_free_threads = 0;
+static int opal_cr_debug_threads_already_waiting = false;
+
+int MPIR_debug_with_checkpoint = 0;
+static volatile int MPIR_checkpoint_debug_gate = 0;
+
+int    opal_cr_debug_signal     = 0;
+#endif
+
 bool opal_cr_stall_check       = false;
 bool opal_cr_currently_stalled = false;
 int  opal_cr_output;
+int opal_cr_initalized = 0;
 
 static double opal_cr_get_time(void);
 static void display_indv_timer_core(double diff, char *str);
@@ -89,10 +101,11 @@ int  opal_cr_timing_target_rank = 0;
 /******************
  * Local Functions & Var Decls
  ******************/
-static int extract_env_vars(int prev_pid);
+static int extract_env_vars(int prev_pid, char * file_name);
 
 static void opal_cr_sigpipe_debug_signal_handler (int signo);
 
+static opal_cr_user_inc_callback_fn_t cur_user_coord_callback[OMPI_CR_INC_MAX] = {NULL};
 static opal_cr_coord_callback_fn_t  cur_coord_callback = NULL;
 static opal_cr_notify_callback_fn_t cur_notify_callback = NULL;
 
@@ -179,13 +192,11 @@ int opal_cr_set_enabled(bool en)
     return OPAL_SUCCESS;
 }
 
-int opal_cr_initalized = 0;
-
 int opal_cr_init(void )
 {
     int ret, exit_status = OPAL_SUCCESS;
     opal_cr_coord_callback_fn_t prev_coord_func;
-    int val;
+    int val, t;
 
     if( ++opal_cr_initalized != 1 ) {
         if( opal_cr_initalized < 1 ) {
@@ -265,9 +276,9 @@ int opal_cr_init(void )
     opal_cr_thread_sleep_check = val;
 
     mca_base_param_reg_int_name("opal_cr", "thread_sleep_wait",
-                                "Time to sleep waiting for process to exit MPI library (Default: 0)",
+                                "Time to sleep waiting for process to exit MPI library (Default: 1000)",
                                 false, false,
-                                0, &val);
+                                1000, &val);
     opal_cr_thread_sleep_wait = val;
 
     opal_output_verbose(10, opal_cr_output,
@@ -285,6 +296,19 @@ int opal_cr_init(void )
     opal_output_verbose(10, opal_cr_output,
                         "opal_cr: init: Is a tool program: %d",
                         val);
+#if OPAL_ENABLE_CRDEBUG == 1
+    mca_base_param_reg_int_name("opal_cr", "enable_crdebug",
+                                "Enable checkpoint/restart debugging",
+                                false, false,
+                                0,
+                                &val);
+    MPIR_debug_with_checkpoint = OPAL_INT_TO_BOOL(val);
+
+    opal_output_verbose(10, opal_cr_output,
+                        "opal_cr: init: C/R Debugging Enabled [%s]\n",
+                        (MPIR_debug_with_checkpoint ? "True": "False"));
+#endif
+
 #ifndef __WINDOWS__
     mca_base_param_reg_int_name("opal_cr", "signal",
                                 "Checkpoint/Restart signal used to initialize an OPAL Only checkpoint of a program",
@@ -327,10 +351,36 @@ int opal_cr_init(void )
     opal_cr_is_tool = true;  /* no support for CR on Windows yet */ 
 #endif  /* __WINDOWS__ */
 
+#if OPAL_ENABLE_CRDEBUG == 1
+    opal_cr_debug_num_free_threads = 3;
+    opal_cr_debug_free_threads = (opal_thread_t **)malloc(sizeof(opal_thread_t *) * opal_cr_debug_num_free_threads );
+    for(t = 0; t < opal_cr_debug_num_free_threads; ++t ) {
+        opal_cr_debug_free_threads[t] = NULL;
+    }
+ 
+    mca_base_param_reg_int_name("opal_cr", "crdebug_signal",
+                                "Checkpoint/Restart signal used to hold threads when debugging",
+                                false, false,
+                                SIGTSTP,
+                                &opal_cr_debug_signal);
+
+    opal_output_verbose(10, opal_cr_output,
+                        "opal_cr: init: Checkpoint Signal (Debug): %d",
+                        opal_cr_debug_signal);
+    if( SIG_ERR == signal(opal_cr_debug_signal, MPIR_checkpoint_debugger_signal_handler) ) {
+        opal_output(opal_cr_output,
+                    "opal_cr: init: Failed to register C/R debug signal (%d)",
+                    opal_cr_debug_signal);
+    }
+#else
+    /* Silence a compiler warning */
+    t = 0;
+#endif
+
     mca_base_param_reg_string_name("opal_cr", "tmp_dir",
                                    "Temporary directory to place rendezvous files for a checkpoint",
                                    false, false,
-                                   "/tmp",
+                                   opal_tmp_directory(),
                                    &opal_cr_pipe_dir);
 
     opal_output_verbose(10, opal_cr_output,
@@ -436,6 +486,14 @@ int opal_cr_finalize(void)
         opal_cr_checkpoint_request  = OPAL_CR_STATUS_TERM;
     }
 
+#if OPAL_ENABLE_CRDEBUG == 1
+    if( NULL != opal_cr_debug_free_threads ) {
+        free( opal_cr_debug_free_threads );
+        opal_cr_debug_free_threads = NULL;
+    }
+    opal_cr_debug_num_free_threads = 0;
+#endif
+
     if (NULL != opal_cr_pipe_dir) {
         free(opal_cr_pipe_dir);
         opal_cr_pipe_dir = NULL;
@@ -524,6 +582,14 @@ int opal_cr_inc_core_prep(void)
     int ret;
 
     /*
+     * Call User Level INC
+     */
+    if(OPAL_SUCCESS != (ret = trigger_user_inc_callback(OMPI_CR_INC_PRE_CRS_PRE_MPI,
+                                                        OMPI_CR_INC_STATE_PREPARE)) ) {
+        return ret;
+    }
+
+    /*
      * Use the registered coordination routine
      */
     if(OPAL_SUCCESS != (ret = cur_coord_callback(OPAL_CRS_CHECKPOINT)) ) {
@@ -532,6 +598,14 @@ int opal_cr_inc_core_prep(void)
                         "opal_cr: inc_core: Error: cur_coord_callback(%d) failed! %d\n",
                         OPAL_CRS_CHECKPOINT, ret);
         }
+        return ret;
+    }
+
+    /*
+     * Call User Level INC
+     */
+    if(OPAL_SUCCESS != (ret = trigger_user_inc_callback(OMPI_CR_INC_PRE_CRS_POST_MPI,
+                                                        OMPI_CR_INC_STATE_PREPARE)) ) {
         return ret;
     }
 
@@ -575,7 +649,7 @@ int opal_cr_inc_core_ckpt(pid_t pid,
      * If restarting read environment stuff that opal-restart left us.
      */
     if(*state == OPAL_CRS_RESTART) {
-        extract_env_vars(core_prev_pid);
+        opal_cr_refresh_environ(core_prev_pid);
         opal_cr_checkpointing_state  = OPAL_CR_STATUS_RESTART_PRE;
     }
 
@@ -585,6 +659,7 @@ int opal_cr_inc_core_ckpt(pid_t pid,
 int opal_cr_inc_core_recover(int state)
 {
     int ret;
+    opal_cr_user_inc_callback_state_t cb_state;
 
     if( opal_cr_checkpointing_state != OPAL_CR_STATUS_TERM && 
         opal_cr_checkpointing_state != OPAL_CR_STATUS_CONTINUE && 
@@ -599,9 +674,27 @@ int opal_cr_inc_core_recover(int state)
          * If restarting read environment stuff that opal-restart left us.
          */
         else if(state == OPAL_CRS_RESTART) {
-            extract_env_vars(core_prev_pid);
+            opal_cr_refresh_environ(core_prev_pid);
             opal_cr_checkpointing_state  = OPAL_CR_STATUS_RESTART_PRE;
         }
+    }
+
+    /*
+     * Call User Level INC
+     */
+    if( OPAL_CRS_CONTINUE == state ) {
+        cb_state = OMPI_CR_INC_STATE_CONTINUE;
+    }
+    else if( OPAL_CRS_RESTART == state ) {
+        cb_state = OMPI_CR_INC_STATE_RESTART;
+    }
+    else {
+        cb_state = OMPI_CR_INC_STATE_ERROR;
+    }
+
+    if(OPAL_SUCCESS != (ret = trigger_user_inc_callback(OMPI_CR_INC_POST_CRS_PRE_MPI,
+                                                        cb_state)) ) {
+        return ret;
     }
 
     /*
@@ -615,6 +708,15 @@ int opal_cr_inc_core_recover(int state)
         }
         return ret;
     }
+
+    if(OPAL_SUCCESS != (ret = trigger_user_inc_callback(OMPI_CR_INC_POST_CRS_POST_MPI,
+                                                        cb_state)) ) {
+        return ret;
+    }
+
+#if OPAL_ENABLE_CRDEBUG == 1
+    opal_cr_debug_clear_current_ckpt_thread();
+#endif
 
     return OPAL_SUCCESS;
 }
@@ -717,6 +819,39 @@ int opal_cr_reg_notify_callback(opal_cr_notify_callback_fn_t  new_func,
     return OPAL_SUCCESS;
 }
 
+int opal_cr_user_inc_register_callback(opal_cr_user_inc_callback_event_t event,
+                                       opal_cr_user_inc_callback_fn_t  function,
+                                       opal_cr_user_inc_callback_fn_t  *prev_function)
+{
+    if( event < 0 || event >= OMPI_CR_INC_MAX ) {
+        return OPAL_ERROR;
+    }
+
+    if( NULL != cur_user_coord_callback[event] ) {
+        *prev_function = cur_user_coord_callback[event];
+    } else {
+        *prev_function = NULL;
+    }
+
+    cur_user_coord_callback[event] = function;
+
+    return OPAL_SUCCESS;
+}
+
+int trigger_user_inc_callback(opal_cr_user_inc_callback_event_t event,
+                              opal_cr_user_inc_callback_state_t state)
+{
+    if( NULL == cur_user_coord_callback[event] ) {
+        return OPAL_SUCCESS;
+    }
+
+    if( event < 0 || event >= OMPI_CR_INC_MAX ) {
+        return OPAL_ERROR;
+    }
+
+    return ((cur_user_coord_callback[event])(event, state));
+}
+
 int opal_cr_reg_coord_callback(opal_cr_coord_callback_fn_t  new_func,
                                opal_cr_coord_callback_fn_t *prev_func)
 {
@@ -738,14 +873,61 @@ int opal_cr_reg_coord_callback(opal_cr_coord_callback_fn_t  new_func,
     return OPAL_SUCCESS;
 }
 
+int opal_cr_refresh_environ(int prev_pid) {
+    int val;
+    char *file_name = NULL;
+    struct stat file_status;
+
+    if( 0 >= prev_pid ) {
+        prev_pid = getpid();
+    }
+
+    /*
+     * Make sure the file exists. If it doesn't then this means 2 things:
+     *  1) We have already executed this function, and
+     *  2) The file has been deleted on the previous round.
+     */
+    asprintf(&file_name, "%s/%s-%d", opal_tmp_directory(), OPAL_CR_BASE_ENV_NAME, prev_pid);
+    if(0 != stat(file_name, &file_status) ){
+        return OPAL_SUCCESS;
+    }
+
+#if OPAL_ENABLE_CRDEBUG == 1
+    opal_unsetenv(mca_base_param_env_var("opal_cr_enable_crdebug"), &environ);
+#endif
+
+    extract_env_vars(prev_pid, file_name);
+
+#if OPAL_ENABLE_CRDEBUG == 1
+    mca_base_param_reg_int_name("opal_cr", "enable_crdebug",
+                                "Enable checkpoint/restart debugging",
+                                false, false,
+                                0,
+                                &val);
+    MPIR_debug_with_checkpoint = OPAL_INT_TO_BOOL(val);
+
+    opal_output_verbose(10, opal_cr_output,
+                        "opal_cr: init: C/R Debugging Enabled [%s] (refresh)\n",
+                        (MPIR_debug_with_checkpoint ? "True": "False"));
+#else
+    val = 0; /* Silence Compiler warning */
+#endif
+
+    if( NULL != file_name ){
+        free(file_name);
+        file_name = NULL;
+    }
+
+    return OPAL_SUCCESS;
+}
+
 /*
  * Extract environment variables from a saved file
  * and place them in the environment.
  */
-static int extract_env_vars(int prev_pid)
+static int extract_env_vars(int prev_pid, char * file_name)
 {
     int exit_status = OPAL_SUCCESS;
-    char *file_name = NULL;
     FILE *env_data = NULL;
     int len = OPAL_PATH_MAX;
     char * tmp_str = NULL;
@@ -757,12 +939,6 @@ static int extract_env_vars(int prev_pid)
         exit_status = OPAL_ERROR;
         goto cleanup;
     }
-
-    /*
-     * JJH: Hardcode /tmp here, really only need an agreed upon file to 
-     * transfer the environment variables.
-     */
-    asprintf(&file_name, "/tmp/%s-%d", OPAL_CR_BASE_ENV_NAME, prev_pid);
 
     if (NULL == (env_data = fopen(file_name, "r")) ) {
         exit_status = OPAL_ERROR;
@@ -805,16 +981,11 @@ static int extract_env_vars(int prev_pid)
         tmp_str = NULL;
     }
 
-    
  cleanup:
     if( NULL != env_data ) {
         fclose(env_data);
     }
     unlink(file_name);
-
-    if( NULL != file_name ){
-        free(file_name);
-    }
 
     if( NULL != tmp_str ){
         free(tmp_str);
@@ -870,6 +1041,10 @@ static void* opal_cr_thread_fn(opal_object_t *obj)
             return NULL;
         }
     }
+
+#if OPAL_ENABLE_CRDEBUG == 1
+    opal_cr_debug_free_threads[1] = opal_thread_get_self();
+#endif
 
     /*
      * Wait to become active
@@ -1106,3 +1281,129 @@ void opal_cr_display_all_timers(void)
 
     opal_output(0, "OPAL CR Timing: ******************** Summary End\n");
 }
+
+#if OPAL_ENABLE_CRDEBUG == 1
+int opal_cr_debug_set_current_ckpt_thread_self(void)
+{
+    int t;
+
+    if( NULL == opal_cr_debug_free_threads ) {
+        opal_cr_debug_num_free_threads = 3;
+        opal_cr_debug_free_threads = (opal_thread_t **)malloc(sizeof(opal_thread_t *) * opal_cr_debug_num_free_threads );
+        for(t = 0; t < opal_cr_debug_num_free_threads; ++t ) {
+            opal_cr_debug_free_threads[t] = NULL;
+        }
+    }
+
+    opal_cr_debug_free_threads[0] = opal_thread_get_self();
+
+    return OPAL_SUCCESS;
+}
+
+int opal_cr_debug_clear_current_ckpt_thread(void)
+{
+    opal_cr_debug_free_threads[0] = NULL;
+
+    return OPAL_SUCCESS;
+}
+
+int MPIR_checkpoint_debugger_detach(void) {
+    /* This function is meant to be a noop function for checkpoint/restart
+     * enabled debugging functionality */
+#if 0
+    /* Once the debugger can successfully force threads into the function below,
+     * then we can uncomment this line */ 
+    if( MPIR_debug_with_checkpoint ) {
+        opal_cr_debug_threads_already_waiting = true;
+    }
+#endif
+    return OPAL_SUCCESS;
+}
+
+void MPIR_checkpoint_debugger_signal_handler(int signo)
+{
+    opal_output_verbose(1, opal_cr_output,
+                        "crs: MPIR_checkpoint_debugger_signal_handler(): Enter Debug signal handler...");
+
+    MPIR_checkpoint_debugger_waitpoint();
+
+    opal_output_verbose(1, opal_cr_output,
+                        "crs: MPIR_checkpoint_debugger_signal_handler(): Leave Debug signal handler...");
+}
+
+void *MPIR_checkpoint_debugger_waitpoint(void)
+{
+    int t;
+    opal_thread_t *thr = NULL;
+
+    thr = opal_thread_get_self();
+
+    /*
+     * Sanity check, if the debugger is not going to attach, then do not wait
+     * Make sure to open the debug gate, so that threads can get out
+     */
+    if( !MPIR_debug_with_checkpoint ) {
+        opal_output_verbose(1, opal_cr_output,
+                            "crs: MPIR_checkpoint_debugger_waitpoint(): Debugger is not attaching... (%d)",
+                            (int)thr->t_handle);
+        MPIR_checkpoint_debug_gate = 1;
+        return NULL;
+    }
+    else {
+        opal_output_verbose(1, opal_cr_output,
+                            "crs: MPIR_checkpoint_debugger_waitpoint(): Waiting for the Debugger to attach... (%d)",
+                            (int)thr->t_handle);
+        MPIR_checkpoint_debug_gate = 0;
+    }
+
+    /*
+     * Let special threads escape without waiting, they will wait later
+     */
+    for(t = 0; t < opal_cr_debug_num_free_threads; ++t) {
+        if( opal_cr_debug_free_threads[t] != NULL &&
+            opal_thread_self_compare(opal_cr_debug_free_threads[t]) ) {
+            opal_output_verbose(1, opal_cr_output,
+                                "crs: MPIR_checkpoint_debugger_waitpoint(): Checkpointing thread does not wait here... (%d)",
+                                (int)thr->t_handle);
+            return NULL;
+        }
+    }
+
+    /*
+     * Force all other threads into the waiting function,
+     * unless they are already in there, then just return so we do not nest
+     * calls into this wait function and potentially confuse the debugger.
+     */
+    if( opal_cr_debug_threads_already_waiting ) {
+        opal_output_verbose(1, opal_cr_output,
+                            "crs: MPIR_checkpoint_debugger_waitpoint(): Threads are already waiting from debugger detach, do not wait here... (%d)",
+                            (int)thr->t_handle);
+        return NULL;
+    } else {
+        opal_output_verbose(1, opal_cr_output,
+                            "crs: MPIR_checkpoint_debugger_waitpoint(): Wait... (%d)",
+                            (int)thr->t_handle);
+        return MPIR_checkpoint_debugger_breakpoint();
+    }
+}
+
+/*
+ * A tight loop to wait for debugger to release this process from the
+ * breakpoint.
+ */
+void *MPIR_checkpoint_debugger_breakpoint(void)
+{
+    /* spin until debugger attaches and releases us */
+    while (MPIR_checkpoint_debug_gate == 0) {
+#if defined(__WINDOWS__)
+        Sleep(100);     /* milliseconds */
+#elif defined(HAVE_USLEEP)
+        usleep(100000); /* microseconds */
+#else
+        sleep(1);       /* seconds */
+#endif
+    }
+    opal_cr_debug_threads_already_waiting = false;
+    return NULL;
+}
+#endif

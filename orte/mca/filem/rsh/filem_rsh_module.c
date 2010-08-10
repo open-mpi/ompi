@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2009 The Trustees of Indiana University.
+ * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -82,7 +82,7 @@ static int  orte_filem_rsh_query_remote_path(char **remote_ref,
 static void filem_rsh_waitpid_cb(pid_t pid, int status, void* cbdata);
 
 /* Permission to send functionality */
-static int orte_filem_rsh_permission_listener_init(orte_rml_buffer_callback_fn_t rml_cbfunc);
+static int orte_filem_rsh_permission_listener_init(void);
 static int orte_filem_rsh_permission_listener_cancel(void);
 static void orte_filem_rsh_permission_callback(int status,
                                                orte_process_name_t* sender,
@@ -252,8 +252,8 @@ int orte_filem_rsh_module_init(void)
 
     /*
      * Start the listener for permission
-     */ 
-    if( ORTE_SUCCESS != (ret = orte_filem_rsh_permission_listener_init(orte_filem_rsh_permission_callback) ) ) {
+     */
+    if( ORTE_SUCCESS != (ret = orte_filem_rsh_permission_listener_init())) {
         opal_output(mca_filem_rsh_component.super.output_handle,
                     "filem:rsh:init Failed to start listener\n");
         return ret;
@@ -645,6 +645,11 @@ int orte_filem_rsh_wait_all(opal_list_t * request_list)
 {
     int ret = ORTE_SUCCESS, exit_status = ORTE_SUCCESS;
     opal_list_item_t *item = NULL;
+    double perc_done, last_reported = 0.0;
+    int total, done;
+
+    total = opal_list_get_size(request_list);
+    done  = 0;
 
     for (item  = opal_list_get_first( request_list);
          item != opal_list_get_end(   request_list);
@@ -656,6 +661,18 @@ int orte_filem_rsh_wait_all(opal_list_t * request_list)
                         "filem:rsh: wait_all(): Wait failed (%d)", ret);
             exit_status = ret;
             goto cleanup;
+        }
+
+        /* Progress Meter */
+        if( OPAL_UNLIKELY(orte_filem_rsh_progress_meter > 0) ) {
+            ++done;
+            perc_done = (total - done) / (1.0 * total);
+            perc_done = (perc_done-1)*(-100.0);
+            if( perc_done >= (last_reported + orte_filem_rsh_progress_meter) || last_reported == 0.0 ) {
+                last_reported = perc_done;
+                opal_output(0, "filem:rsh: progress:    %10.2f %c Finished\n",
+                            perc_done, '%');
+            }
         }
     }
 
@@ -859,17 +876,6 @@ static int orte_filem_rsh_start_copy(orte_filem_base_request_t *request) {
                              remote_machine, 
                              remote_file);
                 }
-                OPAL_OUTPUT_VERBOSE((17, mca_filem_rsh_component.super.output_handle,
-                                     "filem:rsh:put about to execute [%s]", command));
-
-                if( ORTE_SUCCESS != (ret = orte_filem_rsh_start_command(p_set,
-                                                                        f_set,
-                                                                        command,
-                                                                        request,
-                                                                        cur_index)) ) {
-                    exit_status = ret;
-                    goto cleanup;
-                }
             }
             /*
              * ow it is the get() routine
@@ -892,18 +898,22 @@ static int orte_filem_rsh_start_copy(orte_filem_base_request_t *request) {
                              remote_file,
                              f_set->local_target);
                 }
+            }
 
-                OPAL_OUTPUT_VERBOSE((17, mca_filem_rsh_component.super.output_handle,
-                                     "filem:rsh:get about to execute [%s]", command));
-                
-                if( ORTE_SUCCESS != (ret = orte_filem_rsh_start_command(p_set,
-                                                                        f_set,
-                                                                        command,
-                                                                        request,
-                                                                        cur_index)) ) {
-                    exit_status = ret;
-                    goto cleanup;
-                }
+            /*
+             * Start the command
+             */
+            OPAL_OUTPUT_VERBOSE((17, mca_filem_rsh_component.super.output_handle,
+                                 "filem:rsh:%s about to execute [%s]",
+                                 (request->movement_type == ORTE_FILEM_MOVE_TYPE_PUT ? "put" : "get"),
+                                 command));
+            if( ORTE_SUCCESS != (ret = orte_filem_rsh_start_command(p_set,
+                                                                    f_set,
+                                                                    command,
+                                                                    request,
+                                                                    cur_index)) ) {
+                exit_status = ret;
+                goto cleanup;
             }
 
         continue_set:
@@ -1121,6 +1131,8 @@ static int  orte_filem_rsh_start_command(orte_filem_base_process_set_t *proc_set
 
         /*
          * Ask for permission to send this file so we do not overwhelm the peer
+         * Allow only one file request at a time.
+         * JJH: Look into permission for multiple file permissions at a time
          */
         OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
                              "filem:rsh: start_command(): Ask permission to send from proc %s (%d of %d)",
@@ -1263,16 +1275,18 @@ static void filem_rsh_waitpid_cb(pid_t pid, int status, void* cbdata)
 static int orte_filem_rsh_query_remote_path(char **remote_ref, orte_process_name_t *peer, int *flag) {
     int ret;
 
-#if 0
-    /* An optimization if we are guarenteed that this remote files exists.
-     * Then the 'scp -r' option will work with both files and directories.
-     * JJH: For general correctness disable this piece of code.
+    /*
+     * If we are given an absolute path for the remote side, then there is
+     * nothing to do. If the remote directory does not exist, then scp will
+     * error out, which is caught by the filem_rsh_waitpid_cb() function.
+     *
+     * Assume the remote path is a directory, since if it is just a file then
+     * the command will still work as normal.
      */
     if( *remote_ref[0] == '/' ) {
         *flag = ORTE_FILEM_TYPE_DIR;
         return ORTE_SUCCESS;
     }
-#endif
 
     /* Call the base function */
     if( ORTE_SUCCESS != (ret = orte_filem_base_get_remote_path(remote_ref, peer, flag) ) ) {
@@ -1285,14 +1299,14 @@ static int orte_filem_rsh_query_remote_path(char **remote_ref, orte_process_name
 /******************************
  * Permission functions
  ******************************/
-static int orte_filem_rsh_permission_listener_init(orte_rml_buffer_callback_fn_t rml_cbfunc)
+static int orte_filem_rsh_permission_listener_init(void)
 {
     int ret;
 
     if( ORTE_SUCCESS != (ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                                        ORTE_RML_TAG_FILEM_RSH,
                                                        ORTE_RML_PERSISTENT,
-                                                       rml_cbfunc,
+                                                       orte_filem_rsh_permission_callback,
                                                        NULL)) ) {
         opal_output(mca_filem_rsh_component.super.output_handle,
                     "filem:rsh: listener_init: Failed to register the receive callback (%d)",
@@ -1383,6 +1397,11 @@ static void orte_filem_rsh_permission_callback(int status,
         }
         /* Start the transfer immediately */
         else {
+            /*
+             * Allow only one file request at a time.
+             * orte_filem_rsh_start_command() only asks for one anyway.
+             * JJH: Look into permission for multiple file permissions at a time
+             */
             num_allowed = 1;
             cur_num_incomming += 1;
 
@@ -1403,7 +1422,7 @@ static void orte_filem_rsh_permission_callback(int status,
          * Receive the allowed transmit amount
          */
         n = 1;
-        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &num_req, &n, OPAL_INT))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &num_allowed, &n, OPAL_INT))) {
             goto cleanup;
         }
 
@@ -1412,7 +1431,7 @@ static void orte_filem_rsh_permission_callback(int status,
          * - Get a pending request directed at this peer
          * - Start the pending request
          */
-        for(i = 0; i < num_req; ++i ) {
+        for(i = 0; i < num_allowed; ++i ) {
             if( 0 >= opal_list_get_size(&work_pool_pending) ) {
                 OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
                                      "filem:rsh: permission_callback(ALLOW): No more pending sends to peer %s...",
@@ -1641,4 +1660,3 @@ static int permission_send_num_allowed(orte_process_name_t* peer, int num_allowe
 
     return exit_status;
 }
-

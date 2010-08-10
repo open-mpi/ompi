@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -515,6 +515,7 @@ void ompi_info_do_config(bool want_all)
     char *wtime_support;
     char *symbol_visibility;
     char *ft_support;
+    char *crdebug_support;
     /* Do a little preprocessor trickery here to figure ompi_info_out the
      * tri-state of MPI_PARAM_CHECK (which will be either 0, 1, or
      * ompi_mpi_param_check).  The preprocessor will only allow
@@ -582,7 +583,10 @@ void ompi_info_do_config(bool want_all)
     
     asprintf(&ft_support, "%s (checkpoint thread: %s)", 
              OPAL_ENABLE_FT ? "yes" : "no", OPAL_ENABLE_FT_THREAD ? "yes" : "no");;
-    
+
+    asprintf(&crdebug_support, "%s",
+             OPAL_ENABLE_CRDEBUG ? "yes" : "no");
+
     /* output values */
     ompi_info_out("Configured by", "config:user", OMPI_CONFIGURE_USER);
     ompi_info_out("Configured on", "config:timestamp", OMPI_CONFIGURE_DATE);
@@ -833,7 +837,10 @@ void ompi_info_do_config(bool want_all)
     
     ompi_info_out("FT Checkpoint support", "options:ft_support", ft_support);
     free(ft_support);
-    
+
+    ompi_info_out("C/R Enabled Debugging", "options:crdebug_support", crdebug_support);
+    free(crdebug_support);
+
     ompi_info_out_int("MPI_MAX_PROCESSOR_NAME", "options:mpi-max-processor-name", 
                   MPI_MAX_PROCESSOR_NAME);
     ompi_info_out_int("MPI_MAX_ERROR_STRING",   "options:mpi-max-error-string",   

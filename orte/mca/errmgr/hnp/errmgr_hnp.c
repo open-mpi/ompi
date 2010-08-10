@@ -82,9 +82,9 @@ static int update_state(orte_jobid_t job,
                         orte_exit_code_t exit_code,
                         orte_errmgr_stack_state_t *stack_state);
 
-static int predicted_fault(char ***proc_list,
-                           char ***node_list,
-                           char ***suggested_nodes,
+static int predicted_fault(opal_list_t *proc_list,
+                           opal_list_t *node_list,
+                           opal_list_t *suggested_map,
                            orte_errmgr_stack_state_t *stack_state);
 
 static int suggest_map_targets(orte_proc_t *proc,
@@ -462,6 +462,7 @@ static int update_state(orte_jobid_t job,
                 check_job_complete(jdata);
                 break;
             }
+
             /* delete the route */
             orte_routed.delete_route(proc);
             /* purge the oob */
@@ -524,9 +525,9 @@ static int update_state(orte_jobid_t job,
     return ORTE_SUCCESS;
 }
 
-static int predicted_fault(char ***proc_list,
-                           char ***node_list,
-                           char ***suggested_nodes,
+static int predicted_fault(opal_list_t *proc_list,
+                           opal_list_t *node_list,
+                           opal_list_t *suggested_map,
                            orte_errmgr_stack_state_t *stack_state)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;

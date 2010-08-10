@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -40,6 +40,9 @@
 #include "opal/mca/memchecker/base/base.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/carto/base/base.h"
+#if OPAL_ENABLE_FT_CR    == 1
+#include "opal/mca/compress/base/base.h"
+#endif
 
 #include "opal/runtime/opal_cr.h"
 #include "opal/mca/crs/base/base.h"
@@ -424,6 +427,23 @@ opal_init(int* pargc, char*** pargv)
     }
     /* we want to tick the event library whenever possible */
     opal_progress_event_users_increment();
+
+#if OPAL_ENABLE_FT_CR    == 1
+    /*
+     * Initialize the compression framework
+     * Note: Currently only used in C/R so it has been marked to only
+     *       initialize when C/R is enabled. If other places in the code
+     *       wish to use this framework, it is safe to remove the protection.
+     */
+    if( OPAL_SUCCESS != (ret = opal_compress_base_open()) ) {
+        error = "opal_compress_base_open() failed";
+        goto return_error;
+    }
+    if( OPAL_SUCCESS != (ret = opal_compress_base_select()) ) {
+        error = "opal_compress_base_select() failed";
+        goto return_error;
+    }
+#endif
 
     /*
      * Initalize the checkpoint/restart functionality

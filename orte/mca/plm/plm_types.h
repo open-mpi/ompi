@@ -63,6 +63,8 @@ typedef uint32_t orte_proc_state_t;
 #define ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED   0x00004000  /* process exceeded a sensor limit */
 #define ORTE_PROC_STATE_CALLED_ABORT            0x00008000  /* process called "errmgr.abort" */
 #define ORTE_PROC_STATE_HEARTBEAT_FAILED        0x00010000  /* heartbeat failed to arrive */
+#define ORTE_PROC_STATE_MIGRATING               0x00020000  /* process is migrating */
+
 /*
  * Job state codes
  */

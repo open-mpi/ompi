@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University.
+ * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -21,12 +21,19 @@
 #include "opal/mca/base/base.h"
 
 #include "opal/mca/base/mca_base_param.h"
+#include "orte/mca/sstore/sstore.h"
+#include "orte/mca/sstore/base/base.h"
 
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
 
 int orte_snapc_base_close(void)
 {
+
+    /*
+     * Close on the SStore framework
+     */
+    orte_sstore_base_close();
 
     /* Close the selected component */
     if( NULL != orte_snapc.snapc_finalize ) {

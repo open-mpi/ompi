@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -35,9 +35,14 @@ ompi-restart GLOBAL_SNAPSHOT_REF
 %s
 
 [invalid_filename]
-Error: The filename (%s) is invalid because either you have not provided a filename
-       or provided an invalid filename.
+Error: The filename provided (referenced below) could not be used for
+       restarting the job. This could be for a variety of reasons:
+       - The filename/handle is invalid,
+       - The snapshot directory no longer exisits, or
+       - There are no stable checkpoint sequences in this global snapshot.
        Please see --help for usage.
+
+Filename: %s
 
 [restart_cmd_failure]
 Error: Unable to obtain the proper restart command to restart from the 
@@ -60,4 +65,7 @@ Error: The filename (%s) and sequence number (%d) could not be used.
        This may be caused by an invalid sequence number. Try using the
        '-i' option to determine a correct value.
 
-
+[amca_param_not_found]
+Warning: Unable to find the AMCA parameter in the checkpoint metadata.
+         This is the option supplied to mpirun as '-am '. Restart will
+         assume this value to be '%s'.

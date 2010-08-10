@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2009 The Trustees of Indiana University.
+ * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -43,6 +43,10 @@ static ompi_crcp_base_module_t loc_module = {
     ompi_crcp_bkmrk_module_init,
     /** Finalization Function */
     ompi_crcp_bkmrk_module_finalize,
+
+    /** Quiesce interface */
+    ompi_crcp_bkmrk_quiesce_start,
+    ompi_crcp_bkmrk_quiesce_end,
 
     /** PML Wrapper */
     NULL, /* ompi_crcp_bkmrk_pml_enable, */
@@ -129,6 +133,34 @@ int ompi_crcp_bkmrk_module_finalize(void)
     ompi_crcp_bkmrk_pml_finalize();
 
     return OMPI_SUCCESS;
+}
+
+int ompi_crcp_bkmrk_quiesce_start(MPI_Info *info)
+{
+    OPAL_OUTPUT_VERBOSE((10, mca_crcp_bkmrk_component.super.output_handle,
+                         "crcp:bkmrk: quiesce_start(--)"));
+#if 0
+    if( OMPI_SUCCESS != (ret = ompi_crcp_bkmrk_pml_quiesce_start(QUIESCE_TAG_CKPT)) ) {
+        ;
+    }
+    return OMPI_SUCCESS;
+#else
+    return OMPI_ERR_NOT_IMPLEMENTED;
+#endif
+}
+
+int ompi_crcp_bkmrk_quiesce_end(MPI_Info *info)
+{
+    OPAL_OUTPUT_VERBOSE((10, mca_crcp_bkmrk_component.super.output_handle,
+                         "crcp:bkmrk: quiesce_end(--)"));
+#if 0
+    if( OMPI_SUCCESS != (ret = ompi_crcp_bkmrk_pml_quiesce_end(QUIESCE_TAG_CONTINUE) ) ) {
+        ;
+    }
+    return OMPI_SUCCESS;
+#else
+    return OMPI_ERR_NOT_IMPLEMENTED;
+#endif
 }
 
 /******************

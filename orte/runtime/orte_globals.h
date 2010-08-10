@@ -213,6 +213,10 @@ typedef struct {
     char *preload_files_src_dir;
     /* is being used on the local node */
     bool used_on_node;
+#if OPAL_ENABLE_FT_CR == 1
+    /** What files SStore should load before local launch, if any */
+    char *sstore_load;
+#endif
     /* max number of times a process can be restarted locally */
     int32_t max_local_restarts;
     /* max number of times a process can be relocated to another node */

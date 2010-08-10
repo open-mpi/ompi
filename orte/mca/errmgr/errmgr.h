@@ -80,6 +80,70 @@ BEGIN_C_DECLS
 typedef uint8_t orte_errmgr_stack_state_t;
 
 /*
+ * Structure to describe a predicted process fault.
+ *
+ * This can be expanded in the future to support assurance levels, and
+ * additional information that may wish to be conveyed.
+ */
+struct orte_errmgr_predicted_proc_t {
+    /** This is an object, so must have a super */
+    opal_list_item_t super;
+
+    /** Process Name */
+    orte_process_name_t proc_name;
+};
+typedef struct orte_errmgr_predicted_proc_t orte_errmgr_predicted_proc_t;
+OBJ_CLASS_DECLARATION(orte_errmgr_predicted_proc_t);
+
+/*
+ * Structure to describe a predicted node fault.
+ *
+ * This can be expanded in the future to support assurance levels, and
+ * additional information that may wish to be conveyed.
+ */
+struct orte_errmgr_predicted_node_t {
+    /** This is an object, so must have a super */
+    opal_list_item_t super;
+
+    /** Node Name */
+    char * node_name;
+};
+typedef struct orte_errmgr_predicted_node_t orte_errmgr_predicted_node_t;
+OBJ_CLASS_DECLARATION(orte_errmgr_predicted_node_t);
+
+/*
+ * Structure to describe a suggested remapping element for a predicted fault.
+ *
+ * This can be expanded in the future to support weights , and
+ * additional information that may wish to be conveyed.
+ */
+struct orte_errmgr_predicted_map_t {
+    /** This is an object, so must have a super */
+    opal_list_item_t super;
+
+    /** Process Name (predicted to fail) */
+    orte_process_name_t proc_name;
+
+    /** Node Name (predicted to fail) */
+    char * node_name;
+
+    /** Process Name (Map to) */
+    orte_process_name_t map_proc_name;
+
+    /** Node Name (Map to) */
+    char * map_node_name;
+
+    /** Just off current node */
+    bool off_current_node;
+
+    /** Pre-map fixed node assignment */
+    char * pre_map_fixed_node;
+};
+typedef struct orte_errmgr_predicted_map_t orte_errmgr_predicted_map_t;
+OBJ_CLASS_DECLARATION(orte_errmgr_predicted_map_t);
+
+
+/*
  * Macro definitions
  */
 /*
@@ -129,14 +193,15 @@ typedef int (*orte_errmgr_base_API_update_state_fn_t)(orte_jobid_t job,
  *
  * @param[in] proc_list List of processes (or NULL if none)
  * @param[in] node_list List of nodes (or NULL if none)
- * @param[in] suggested_nodes List of suggested nodes to use on recovery (or NULL if none)
+ * @param[in] suggested_map List of mapping suggestions to use on recovery (or NULL if none)
  *
  * @retval ORTE_SUCCESS The operation completed successfully
  * @retval ORTE_ERROR   An unspecifed error occurred
  */
-typedef int (*orte_errmgr_base_API_predicted_fault_fn_t)(char ***proc_list,
-                                                         char ***node_list,
-                                                         char ***suggested_nodes);
+typedef int (*orte_errmgr_base_API_predicted_fault_fn_t)(opal_list_t *proc_list,
+                                                         opal_list_t *node_list,
+                                                         opal_list_t *suggested_map);
+
 /**
  * Suggest a node to map a restarting process onto
  *
@@ -212,9 +277,9 @@ typedef int (*orte_errmgr_base_module_update_state_fn_t)(orte_jobid_t job,
                                                          pid_t pid,
                                                          orte_exit_code_t exit_code,
                                                          orte_errmgr_stack_state_t *stack_state);
-typedef int (*orte_errmgr_base_module_predicted_fault_fn_t)(char ***proc_list,
-                                                            char ***node_list,
-                                                            char ***suggested_nodes,
+typedef int (*orte_errmgr_base_module_predicted_fault_fn_t)(opal_list_t *proc_list,
+                                                            opal_list_t *node_list,
+                                                            opal_list_t *suggested_map,
                                                             orte_errmgr_stack_state_t *stack_state);
 typedef int (*orte_errmgr_base_module_suggest_map_targets_fn_t)(orte_proc_t *proc,
                                                                 orte_node_t *oldnode,

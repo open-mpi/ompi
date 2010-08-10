@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2008 The Trustees of Indiana University.
+ * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -56,6 +56,12 @@ BEGIN_C_DECLS
 
     int ompi_crcp_bkmrk_pml_init(void);
     int ompi_crcp_bkmrk_pml_finalize(void);
+
+    /*
+     * Quiesce Interface
+     */
+    int ompi_crcp_bkmrk_quiesce_start(MPI_Info *info);
+    int ompi_crcp_bkmrk_quiesce_end(MPI_Info *info);
 
 END_C_DECLS
 

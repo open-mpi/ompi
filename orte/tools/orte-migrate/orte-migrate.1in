@@ -1,0 +1,81 @@
+.\"
+.\" Copyright (c) 2009-2010 The Trustees of Indiana University and Indiana
+.\"                         University Research and Technology
+.\"                         Corporation.  All rights reserved.
+.\"
+.\" Man page for OMPI's ompi-migrate command
+.\" 
+.\" .TH name     section center-footer   left-footer  center-header
+.TH     OMPI-MIGRATE  1 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.\" **************************
+.\"    Name Section
+.\" **************************
+.SH NAME
+.
+ompi-migrate, orte-migrate \- Migrate processes among resources in Open MPI.
+.
+.PP
+.
+\fBNOTE:\fP \fIompi-migrate\fP, and \fIorte-migrate\fP are all exact
+synonyms for each other. Using any of the names will result in exactly
+identical behavior.
+.
+.\" **************************
+.\"    Synopsis Section
+.\" **************************
+.SH SYNOPSIS
+.
+.B ompi-migrate
+.R [ options ]
+.B <PID_OF_MPIRUN>
+.
+.\" **************************
+.\"    Options Section
+.\" **************************
+.SH Options
+.
+\fIorte-migrate\fR will attempt to notify a running parallel job (identified
+by \fImpirun\fP) that a migration has been requeted.
+.
+.TP 10
+.B <PID_OF_MPIRUN>
+Process ID of the \fImpirun\fP process.
+.
+.
+.TP
+.B -h | --help
+Display help for this command
+.
+.
+.TP
+.B -v | --verbose
+Enable verbose output for debugging.
+.
+.
+.TP
+.B -gmca | --gmca \fR<key> <value>\fP
+Pass global MCA parameters that are applicable to all contexts. \fI<key>\fP is
+the parameter name; \fI<value>\fP is the parameter value.
+.
+.
+.TP
+.B -mca | --mca <key> <value>
+Send arguments to various MCA modules.
+.
+.
+.\" **************************
+.\"    Description Section
+.\" **************************
+.SH DESCRIPTION
+.
+.PP
+\fIorte-migrate\fR can be invoked multiple, non-overlapping times.
+.
+.
+.\" **************************
+.\"    See Also Section
+.\" **************************
+.
+.SH SEE ALSO
+  orte-ps(1), orte-clean(1), ompi-restart(1), ompi-checkpoint(1), opal-checkpoint(1), opal-restart(1), opal_crs(7)
+.

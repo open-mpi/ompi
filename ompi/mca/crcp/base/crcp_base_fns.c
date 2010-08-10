@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2008 The Trustees of Indiana University.
+ * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -38,6 +38,7 @@
 #include "ompi/mca/crcp/crcp.h"
 #include "ompi/mca/crcp/base/base.h"
 #include "ompi/mca/bml/base/base.h"
+#include "ompi/info/info.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
@@ -88,6 +89,19 @@ int ompi_crcp_base_module_init(void)
 }
 
 int ompi_crcp_base_module_finalize(void)
+{
+    return OMPI_SUCCESS;
+}
+
+/****************
+ * MPI Quiesce Interface
+ ****************/
+int ompi_crcp_base_none_quiesce_start(MPI_Info *info)
+{
+    return OMPI_SUCCESS;
+}
+
+int ompi_crcp_base_none_quiesce_end(MPI_Info *info)
 {
     return OMPI_SUCCESS;
 }
@@ -397,3 +411,24 @@ ompi_crcp_base_none_btl_ft_event(int state,
 /********************
  * Utility functions
  ********************/
+
+/******************
+ * MPI Interface Functions
+ ******************/
+int ompi_crcp_base_quiesce_start(MPI_Info *info)
+{
+    if( NULL != ompi_crcp.quiesce_start ) {
+        return ompi_crcp.quiesce_start(info);
+    } else {
+        return OMPI_SUCCESS;
+    }
+}
+
+int ompi_crcp_base_quiesce_end(MPI_Info *info)
+{
+    if( NULL != ompi_crcp.quiesce_end ) {
+        return ompi_crcp.quiesce_end(info);
+    } else {
+        return OMPI_SUCCESS;
+    }
+}

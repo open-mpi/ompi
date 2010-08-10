@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2009 The Trustees of Indiana University.
+ * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2010      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -2986,6 +2986,26 @@ int ompi_crcp_bkmrk_request_complete(struct ompi_request_t *request)
 }
 
 /**************** FT Event *****************/
+int ompi_crcp_bkmrk_pml_quiesce_start(ompi_crcp_bkmrk_pml_quiesce_tag_type_t tag ) {
+    int ret, exit_status = OMPI_SUCCESS;
+
+    if( OMPI_SUCCESS != (ret = ft_event_coordinate_peers()) ) {
+        exit_status = ret;
+    }
+
+    return exit_status;
+}
+
+int ompi_crcp_bkmrk_pml_quiesce_end(ompi_crcp_bkmrk_pml_quiesce_tag_type_t tag ) {
+    int ret, exit_status = OMPI_SUCCESS;
+
+    if( OMPI_SUCCESS != (ret = ft_event_finalize_exchange() ) ) {
+        exit_status = ret;
+    }
+
+    return exit_status;
+}
+
 ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event(
                                   int state, 
                                   ompi_crcp_base_pml_state_t* pml_state)
@@ -3027,7 +3047,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event(
          * When we return from this function we know that all of our
          * channels have been flushed.
          */
-        if( OMPI_SUCCESS != (ret = ft_event_coordinate_peers()) ) {
+        if( OMPI_SUCCESS != (ret = ompi_crcp_bkmrk_pml_quiesce_start(QUIESCE_TAG_CKPT)) ) {
             opal_output(mca_crcp_bkmrk_component.super.output_handle,
                         "crcp:bkmrk: %s ft_event: Checkpoint Coordination Failed %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -3060,7 +3080,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event(
         first_continue_pass = !first_continue_pass;
 
         /* Only finalize the Protocol after the PML has been rebuilt */
-        if( ompi_cr_continue_like_restart && first_continue_pass ) {
+        if( orte_cr_continue_like_restart && first_continue_pass ) {
             goto DONE;
         }
 
@@ -3069,7 +3089,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event(
         /*
          * Finish the coord protocol
          */
-        if( OMPI_SUCCESS != (ret = ft_event_finalize_exchange() ) ) {
+        if( OMPI_SUCCESS != (ret = ompi_crcp_bkmrk_pml_quiesce_end(QUIESCE_TAG_CONTINUE) ) ) {
             opal_output(mca_crcp_bkmrk_component.super.output_handle,
                         "crcp:bkmrk: pml_ft_event: Checkpoint Finalization Failed %d",
                         ret);

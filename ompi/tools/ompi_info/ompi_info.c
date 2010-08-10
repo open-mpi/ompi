@@ -37,6 +37,9 @@
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/runtime/opal.h"
+#if OPAL_ENABLE_FT_CR == 1
+#include "opal/runtime/opal_cr.h"
+#endif
 #include "opal/util/cmd_line.h"
 #include "opal/util/argv.h"
 #include "opal/mca/base/base.h"
@@ -196,7 +199,9 @@ int main(int argc, char *argv[])
     opal_pointer_array_add(&mca_types, "installdirs");
     opal_pointer_array_add(&mca_types, "sysinfo");
 #if OPAL_ENABLE_FT_CR == 1
+    opal_cr_set_enabled(true);
     opal_pointer_array_add(&mca_types, "crs");
+    opal_pointer_array_add(&mca_types, "compress");
 #endif
     opal_pointer_array_add(&mca_types, "dpm");
     opal_pointer_array_add(&mca_types, "pubsub");
@@ -228,6 +233,7 @@ int main(int argc, char *argv[])
     opal_pointer_array_add(&mca_types, "routed");
     opal_pointer_array_add(&mca_types, "plm");
 #if OPAL_ENABLE_FT_CR == 1
+    opal_pointer_array_add(&mca_types, "sstore");
     opal_pointer_array_add(&mca_types, "snapc");
 #endif
 #if ORTE_ENABLE_SENSORS

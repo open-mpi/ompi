@@ -32,6 +32,7 @@
 #include "orte/util/proc_info.h"
 
 #if OPAL_ENABLE_FT_CR    == 1
+#include "orte/mca/sstore/sstore.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/runtime/ompi_cr.h"
 #endif
@@ -169,12 +170,12 @@ int mca_mpool_sm_ft_event(int state) {
         asprintf( &file_name, "%s"OPAL_PATH_SEP"shared_mem_pool.%s",
                   orte_process_info.job_session_dir,
                   orte_process_info.nodename );
-        opal_crs_base_metadata_write_token(NULL, CRS_METADATA_TOUCH, file_name);
+        orte_sstore.set_attr(orte_sstore_handle_current, SSTORE_METADATA_LOCAL_TOUCH, file_name);
         free(file_name);
         file_name = NULL;
     }
     else if(OPAL_CRS_CONTINUE == state) {
-        if(ompi_cr_continue_like_restart) {
+        if(orte_cr_continue_like_restart) {
             /* Find the sm module */
             self_module = mca_mpool_base_module_lookup("sm");
             self_sm_module = (mca_mpool_sm_module_t*) self_module;

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -22,7 +22,9 @@ amca_paramdir = $(AMCA_PARAM_SETS_DIR)
 dist_amca_param_DATA = amca-param-sets/example.conf
 
 if WANT_FT
-dist_amca_param_DATA += amca-param-sets/ft-enable-cr
+dist_amca_param_DATA += \
+	amca-param-sets/ft-enable-cr \
+	amca-param-sets/ft-enable-cr-recovery
 endif
 
 EXTRA_DIST = \

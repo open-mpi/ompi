@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University.
+ * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -24,6 +24,12 @@
 
 int opal_crs_base_close(void)
 {
+    if( !opal_cr_is_enabled ) {
+        opal_output_verbose(10, opal_crs_base_output,
+                            "crs:close: FT is not enabled, skipping!");
+        return OPAL_SUCCESS;
+    }
+
     /* Call the component's finalize routine */
     if( NULL != opal_crs.crs_finalize ) {
         opal_crs.crs_finalize();

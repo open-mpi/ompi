@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -574,7 +574,14 @@ int orte_dt_print_app_context(char **output, char *prefix, orte_app_context_t *s
              pfx2, (NULL == src->preload_files_src_dir) ? "NULL" : src->preload_files_src_dir);
     free(tmp);
     tmp = tmp2;
-    
+
+#if OPAL_ENABLE_FT_CR == 1
+    asprintf(&tmp2, "%s\n%s\tSStore Load: %s", tmp,
+             pfx2, src->sstore_load);
+    free(tmp);
+    tmp = tmp2;
+#endif
+
     /* set the return */
     *output = tmp;
     

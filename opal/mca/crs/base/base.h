@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -23,6 +23,7 @@
 #include "opal_config.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/util/opal_environ.h"
+#include "opal/runtime/opal_cr.h"
 
 /*
  * Global functions for MCA overall CRS
@@ -32,7 +33,7 @@ BEGIN_C_DECLS
 
 /* Some local strings to use genericly with the local metadata file */
 #define CRS_METADATA_BASE       ("# ")
-#define CRS_METADATA_COMP       ("# Component: ")
+#define CRS_METADATA_COMP       ("# OPAL CRS Component: ")
 #define CRS_METADATA_PID        ("# PID: ")
 #define CRS_METADATA_CONTEXT    ("# CONTEXT: ")
 #define CRS_METADATA_MKDIR      ("# MKDIR: ")
@@ -71,35 +72,25 @@ BEGIN_C_DECLS
     /**
      * Globals
      */
-#define opal_crs_base_metadata_filename (strdup("snapshot_meta.data"))
-
     OPAL_DECLSPEC extern int  opal_crs_base_output;
     OPAL_DECLSPEC extern opal_list_t opal_crs_base_components_available;
     OPAL_DECLSPEC extern opal_crs_base_component_t opal_crs_base_selected_component;
     OPAL_DECLSPEC extern opal_crs_base_module_t opal_crs;
-    OPAL_DECLSPEC extern char * opal_crs_base_snapshot_dir;
 
     /**
      * Some utility functions
      */
     OPAL_DECLSPEC char * opal_crs_base_state_str(opal_crs_state_type_t state);
 
-    OPAL_DECLSPEC char * opal_crs_base_unique_snapshot_name(pid_t pid);
-    OPAL_DECLSPEC int    opal_crs_base_extract_expected_component(char *snapshot_loc, char ** component_name, int *prev_pid);
-    OPAL_DECLSPEC int    opal_crs_base_init_snapshot_directory(opal_crs_base_snapshot_t *snapshot);
-    OPAL_DECLSPEC char * opal_crs_base_get_snapshot_directory(char *uniq_snapshot_name);
+    /*
+     * Extract the expected component and pid from the metadata
+     */
+    OPAL_DECLSPEC int opal_crs_base_extract_expected_component(FILE *metadata, char ** component_name, int *prev_pid);
 
     /*
      * Read a token to the metadata file
-     * NULL can be passed for snapshot_loc if nit_snapshot_directory has been called.
      */
-    OPAL_DECLSPEC int opal_crs_base_metadata_read_token(char *snapshot_loc, char * token, char ***value);
-
-    /*
-     * Write a token to the metadata file
-     * NULL can be passed for snapshot_loc if nit_snapshot_directory has been called.
-     */
-    OPAL_DECLSPEC int opal_crs_base_metadata_write_token(char *snapshot_loc, char * token, char *value);
+    OPAL_DECLSPEC int opal_crs_base_metadata_read_token(FILE *metadata, char * token, char ***value);
 
     /*
      * Register a file for cleanup.
@@ -121,6 +112,24 @@ BEGIN_C_DECLS
      * Clear the options structure
      */
     OPAL_DECLSPEC int opal_crs_base_clear_options(opal_crs_base_ckpt_options_t *target);
+
+    /*
+     * CRS self application interface functions
+     */
+    typedef int (*opal_crs_base_self_checkpoint_fn_t)(char **restart_cmd);
+    typedef int (*opal_crs_base_self_restart_fn_t)(void);
+    typedef int (*opal_crs_base_self_continue_fn_t)(void);
+
+    extern opal_crs_base_self_checkpoint_fn_t crs_base_self_checkpoint_fn;
+    extern opal_crs_base_self_restart_fn_t    crs_base_self_restart_fn;
+    extern opal_crs_base_self_continue_fn_t   crs_base_self_continue_fn;
+
+    OPAL_DECLSPEC int opal_crs_base_self_register_checkpoint_callback
+                      (opal_crs_base_self_checkpoint_fn_t  function);
+    OPAL_DECLSPEC int opal_crs_base_self_register_restart_callback
+                      (opal_crs_base_self_restart_fn_t  function);
+    OPAL_DECLSPEC int opal_crs_base_self_register_continue_callback
+                      (opal_crs_base_self_continue_fn_t  function);
 
 END_C_DECLS
 

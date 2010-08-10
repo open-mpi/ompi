@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -61,6 +61,12 @@ BEGIN_C_DECLS
     OMPI_DECLSPEC int ompi_crcp_base_close(void);
 
     /**
+     * Quiesce Interface (For MPI Ext.)
+     */
+    OMPI_DECLSPEC int ompi_crcp_base_quiesce_start(MPI_Info *info);
+    OMPI_DECLSPEC int ompi_crcp_base_quiesce_end(MPI_Info *info);
+
+    /**
      * 'None' component functions
      * These are to be used when no component is selected.
      * They just return success, and empty strings as necessary.
@@ -71,6 +77,10 @@ BEGIN_C_DECLS
 
     int ompi_crcp_base_module_init(void);
     int ompi_crcp_base_module_finalize(void);
+
+    /* Quiesce Interface */
+    int ompi_crcp_base_none_quiesce_start(MPI_Info *info);
+    int ompi_crcp_base_none_quiesce_end(MPI_Info *info);
 
     /* PML Interface */
     ompi_crcp_base_pml_state_t* ompi_crcp_base_none_pml_enable( bool enable, ompi_crcp_base_pml_state_t* );
