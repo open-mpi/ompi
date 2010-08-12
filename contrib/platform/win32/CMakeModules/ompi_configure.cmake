@@ -251,6 +251,8 @@ OMPI_DEF_OPT(ORTE_WANT_NOTIFIER_LOG_EVENT "if the notifier_log_event should be e
 
 OMPI_DEF_OPT(OMPI_WANT_OFED "Whether we want to enable OFED support." ON)
 
+OMPI_DEF_OPT(OPAL_ENABLE_CRDEBUG "Whether we want checkpoint/restart enabled debugging functionality or not." OFF)
+
 IF (NOT MSVC)
 
 ###################################################################
@@ -625,6 +627,7 @@ OMPI_F77_CHECK("REAL*16" "no" "float;double;long double" "16")
 OMPI_F77_CHECK("DOUBLE PRECISION" "yes" "float;double;long double" "-1")
 
 OMPI_F77_CHECK("COMPLEX" "yes" "" "-1")
+OMPI_F77_CHECK("DOUBLE COMPLEX" "yes" "" "-1")
 
 # The complex*N tests are a bit different (note: the complex tests are
 # the same as all the rest, because complex is a composite of two
