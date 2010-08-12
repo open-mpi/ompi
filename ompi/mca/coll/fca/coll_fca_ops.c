@@ -57,10 +57,23 @@ static mca_coll_fca_dtype_info_t* mca_coll_fca_get_dtype(ompi_datatype_t *dtype)
     return dtype_info;
 }
 
+static void mca_coll_fca_get_op_name(ompi_op_t *op, char *name, int maxlen)
+{
+    const char *ompi_op_prefix = "MPI_OP_";
+    const char *fca_op_prefix = "MPI_";
+
+    memset(name, 0, maxlen);
+    if (!strncmp(op->o_name, ompi_op_prefix, strlen(ompi_op_prefix)))
+        snprintf(name, maxlen, "%s%s", fca_op_prefix, op->o_name + strlen(ompi_op_prefix));
+    else
+        strncpy(name, op->o_name, maxlen);
+}
+
 static mca_coll_fca_op_info_t *mca_coll_fca_get_op(ompi_op_t *op)
 {
     mca_coll_fca_op_info_t *op_info;
     int i, fca_op;
+    char opname[MPI_MAX_OBJECT_NAME + 1];
 
     /*
      * Find 'op' in the array by exhaustive search. We assume all valid ops are
@@ -72,7 +85,8 @@ static mca_coll_fca_op_info_t *mca_coll_fca_get_op(ompi_op_t *op)
         if (op_info->mpi_op == op) {
             return op_info;
         } else if (op_info->mpi_op == MPI_OP_NULL) {
-            fca_op = mca_coll_fca_component.fca_ops.translate_mpi_op(op->o_name);
+            mca_coll_fca_get_op_name(op, opname, MPI_MAX_OBJECT_NAME);
+            fca_op = mca_coll_fca_component.fca_ops.translate_mpi_op(opname);
             if (fca_op < 0)
                 return NULL;
             op_info->mpi_op = op;
