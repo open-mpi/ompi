@@ -65,10 +65,10 @@ int OMPI_CR_Migrate(MPI_Comm comm, char *hostname, int rank, MPI_Info *info)
 
     if( 0 == my_rank ) {
         datum->mig_num = my_size;
-        datum->mig_vpids = malloc(sizeof(int) * my_size);
-        datum->mig_host_pref = malloc(sizeof(char) * my_size * MPI_MAX_PROCESSOR_NAME);
-        datum->mig_vpid_pref = malloc(sizeof(int) * my_size);
-        datum->mig_off_node  = malloc(sizeof(int) * my_size);
+        datum->mig_vpids = (int *) malloc(sizeof(int) * my_size);
+        datum->mig_host_pref = (char (*)[OPAL_MAX_PROCESSOR_NAME]) malloc(sizeof(char) * my_size * MPI_MAX_PROCESSOR_NAME);
+        datum->mig_vpid_pref = (int *) malloc(sizeof(int) * my_size);
+        datum->mig_off_node  = (int *) malloc(sizeof(int) * my_size);
 
         for( i = 0; i < my_size; ++i ) {
             (datum->mig_vpids)[i] = 0;
