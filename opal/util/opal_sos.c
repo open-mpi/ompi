@@ -218,7 +218,7 @@ opal_sos_build_error(int errnum, bool show_stack, const char *errmsg, ...)
     va_start(arglist, errmsg);
     len = vsnprintf(msg, OPAL_SOS_MAX_ERR_LEN, errmsg, arglist);
     va_end(arglist);
-
+#if OPAL_WANT_PRETTY_PRINT_STACKTRACE
     if ((true == show_stack) &&
         (NULL != (stackframe = opal_stackframe_output_string()))) {
         len += strlen(stackhdr) + strlen(stackframe) + 2;
@@ -233,6 +233,9 @@ opal_sos_build_error(int errnum, bool show_stack, const char *errmsg, ...)
     } else {
         opal_error->msg = strdup(msg);
     }
+#else
+    opal_error->msg = strdup ("OPAL_WANT_PRETTY_PRINT_STACKTRACE disabled");
+#endif
 
     /* Check if errnum is a native error code and encode it into
        the encoded error code if it is native */
