@@ -211,7 +211,7 @@ static int plm_alps_launch_job(orte_job_t *jdata)
      */
 
     /* add the aprun command */
-    opal_argv_append(&argc, &argv, "aprun");
+    opal_argv_append(&argc, &argv, mca_plm_alps_component.aprun_cmd);
 
     /* Append user defined arguments to aprun */
     if ( NULL != mca_plm_alps_component.custom_args ) {
