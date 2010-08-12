@@ -30,6 +30,7 @@ int mca_coll_fca_output = -1;
 static int fca_open(void);
 //static int fca_query(void);
 static int fca_close(void);
+static int fca_register(void);
 
 mca_coll_fca_component_t mca_coll_fca_component = {
 
@@ -47,7 +48,9 @@ mca_coll_fca_component_t mca_coll_fca_component = {
 
             /* Component open and close functions */
             fca_open,
-            fca_close     
+            fca_close,
+            NULL,
+            fca_register     
         },
         {
             /* The component is not checkpoint ready */
@@ -195,7 +198,7 @@ static void mca_coll_fca_close_fca_lib(void)
     mca_coll_fca_component.fca_lib_handle = NULL;
 }
 
-static int fca_open(void)
+static int fca_register(void)
 {
     FCA_VERBOSE(2, "==>");
 
@@ -236,6 +239,15 @@ static int fca_open(void)
                            false, false,
                            64,
                            &mca_coll_fca_component.fca_np);
+
+    return OMPI_SUCCESS;
+}
+
+static int fca_open(void)
+{
+    FCA_VERBOSE(2, "==>");
+
+    const mca_base_component_t *c = &mca_coll_fca_component.super.collm_version;
 
     mca_coll_fca_output = opal_output_open(NULL);
     opal_output_set_verbosity(mca_coll_fca_output, mca_coll_fca_component.fca_verbose);
