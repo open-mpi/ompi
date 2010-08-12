@@ -1,4 +1,3 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -142,46 +141,46 @@ int ompi_op_init(void)
 
     if (OMPI_SUCCESS != 
         add_intrinsic(&ompi_mpi_op_null.op, OMPI_OP_BASE_FORTRAN_NULL,
-                      FLAGS, "MPI_OP_NULL") ||
+                      FLAGS, "MPI_NULL") ||
         OMPI_SUCCESS != 
         add_intrinsic(&ompi_mpi_op_max.op, OMPI_OP_BASE_FORTRAN_MAX,
-                      FLAGS, "MPI_OP_MAX") ||
+                      FLAGS, "MPI_MAX") ||
         OMPI_SUCCESS != 
         add_intrinsic(&ompi_mpi_op_min.op, OMPI_OP_BASE_FORTRAN_MIN,
-                      FLAGS, "MPI_OP_MIN") ||
+                      FLAGS, "MPI_MIN") ||
         OMPI_SUCCESS != 
         add_intrinsic(&ompi_mpi_op_sum.op, OMPI_OP_BASE_FORTRAN_SUM,
-                      FLAGS_NO_FLOAT, "MPI_OP_SUM") ||
+                      FLAGS_NO_FLOAT, "MPI_SUM") ||
         OMPI_SUCCESS != 
         add_intrinsic(&ompi_mpi_op_prod.op, OMPI_OP_BASE_FORTRAN_PROD,
-                      FLAGS_NO_FLOAT, "MPI_OP_PROD") ||
+                      FLAGS_NO_FLOAT, "MPI_PROD") ||
         OMPI_SUCCESS != 
         add_intrinsic(&ompi_mpi_op_land.op, OMPI_OP_BASE_FORTRAN_LAND,
-                      FLAGS, "MPI_OP_LAND") ||
+                      FLAGS, "MPI_LAND") ||
         OMPI_SUCCESS != 
         add_intrinsic(&ompi_mpi_op_band.op, OMPI_OP_BASE_FORTRAN_BAND,
-                      FLAGS, "MPI_OP_BAND") ||
+                      FLAGS, "MPI_BAND") ||
         OMPI_SUCCESS != 
         add_intrinsic(&ompi_mpi_op_lor.op, OMPI_OP_BASE_FORTRAN_LOR,
-                      FLAGS, "MPI_OP_LOR") ||
+                      FLAGS, "MPI_LOR") ||
         OMPI_SUCCESS != 
         add_intrinsic(&ompi_mpi_op_bor.op, OMPI_OP_BASE_FORTRAN_BOR,
-                      FLAGS, "MPI_OP_BOR") ||
+                      FLAGS, "MPI_BOR") ||
         OMPI_SUCCESS != 
         add_intrinsic(&ompi_mpi_op_lxor.op, OMPI_OP_BASE_FORTRAN_LXOR,
-                      FLAGS, "MPI_OP_LXOR") ||
+                      FLAGS, "MPI_LXOR") ||
         OMPI_SUCCESS != 
         add_intrinsic(&ompi_mpi_op_bxor.op, OMPI_OP_BASE_FORTRAN_BXOR,
-                      FLAGS, "MPI_OP_BXOR") ||
+                      FLAGS, "MPI_BXOR") ||
         OMPI_SUCCESS != 
         add_intrinsic(&ompi_mpi_op_maxloc.op, OMPI_OP_BASE_FORTRAN_MAXLOC,
-                      FLAGS, "MPI_OP_MAXLOC") ||
+                      FLAGS, "MPI_MAXLOC") ||
         OMPI_SUCCESS != 
         add_intrinsic(&ompi_mpi_op_minloc.op, OMPI_OP_BASE_FORTRAN_MINLOC,
-                      FLAGS, "MPI_OP_MINLOC") ||
+                      FLAGS, "MPI_MINLOC") ||
         OMPI_SUCCESS != 
         add_intrinsic(&ompi_mpi_op_replace.op, OMPI_OP_BASE_FORTRAN_REPLACE,
-                      FLAGS, "MPI_OP_REPLACE")) {
+                      FLAGS, "MPI_REPLACE")) {
         return OMPI_ERROR;
     }
 
