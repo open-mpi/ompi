@@ -61,79 +61,39 @@ mca_coll_fca_component_t mca_coll_fca_component = {
     }
 };
 
+#define FCA_MINOR_BIT   (16UL)
+#define FCA_MAJOR_BIT   (24UL)
 
-static int fca_open(void)
-{   
-    FCA_VERBOSE(2, "==>");
-    
-    const mca_base_component_t *c = &mca_coll_fca_component.super.collm_version;
- 
-    mca_base_param_reg_int(c, "priority", 
-                           "Priority of the fca coll component",
-                           false, false, 
-                           80,
-                           &mca_coll_fca_component.fca_priority);
-
-    mca_base_param_reg_int(c, "verbose", 
-                           "Verbose level of the fca coll component",
-                           false, false, 
-                           0,
-                           &mca_coll_fca_component.fca_verbose);
-
-    mca_base_param_reg_int(c, "enable", 
-                           "[1|0|] Enable/Disable Fabric Collective Accelerator",
-                           false, false, 
-                           1,
-                           &mca_coll_fca_component.fca_enable);
-  
-    mca_base_param_reg_string(c, "spec_file", 
-                           "Path to the FCA configuration file fca_mpi_spec.ini",
-                           false, false, 
-                           ""COLL_FCA_HOME"/etc/fca_mpi_spec.ini",
-                           &mca_coll_fca_component.fca_spec_file);
-
-    mca_base_param_reg_string(c, "library_path", 
-                           "FCA /path/to/libfca.so",
-                           false, false, 
-                           ""COLL_FCA_HOME"/lib/libfca.so",
-                           &mca_coll_fca_component.fca_lib_path);
-
-    mca_base_param_reg_int(c, "np", 
-                           "[integer] Minimal allowed job's NP to activate FCA",
-                           false, false, 
-                           64,
-                           &mca_coll_fca_component.fca_np);
-
-    mca_coll_fca_output = opal_output_open(NULL);
-    opal_output_set_verbosity(mca_coll_fca_output, mca_coll_fca_component.fca_verbose);
-    mca_coll_fca_component.fca_lib_handle = NULL;
-    mca_coll_fca_component.fca_context = NULL;
-    return OMPI_SUCCESS;    
-}
-
-static int fca_close(void)
-{
-    FCA_VERBOSE(2, "==>");
-
-    if (!mca_coll_fca_component.fca_lib_handle || !mca_coll_fca_component.fca_context)
-        return OMPI_SUCCESS;
-
-    mca_coll_fca_component.fca_ops.cleanup(mca_coll_fca_component.fca_context);
-    dlclose(mca_coll_fca_component.fca_lib_handle);
-    return OMPI_SUCCESS;
-}
+#define FCA_API_CLEAR_MICRO(__x) ((__x>>FCA_MINOR_BIT)<<FCA_MINOR_BIT)
+#define FCA_API_VER(__major,__minor) (__major<<FCA_MAJOR_BIT | __minor<<FCA_MINOR_BIT)
 
 #define GET_FCA_SYM(__name) \
 { \
 	mca_coll_fca_component.fca_ops.__name = dlsym(mca_coll_fca_component.fca_lib_handle, "fca_" #__name);\
 	if (!mca_coll_fca_component.fca_ops.__name) { \
 	    FCA_ERROR("Symbol %s not found", "fca_" #__name); \
+	    return OMPI_ERROR; \
     } \
 }
 
+/**
+ * Called from FCA blocking functions to progress MPI
+ */
 static void mca_coll_fca_progress_cb(void *arg)
 {
     opal_progress();
+}
+
+/**
+ * Called from MPI blocking functions to progress FCA
+ */
+static int mca_coll_fca_mpi_progress_cb(void)
+{
+    if (!mca_coll_fca_component.fca_context)
+        return 0;
+
+    mca_coll_fca_component.fca_ops.progress(mca_coll_fca_component.fca_context);
+    return 0;
 }
 
 /**
@@ -159,6 +119,7 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
 {
     struct fca_init_spec *spec;
     int ret;
+    unsigned long fca_ver;
 
     if (mca_coll_fca_component.fca_lib_handle)
         return OMPI_SUCCESS;
@@ -169,7 +130,12 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
         return OMPI_ERROR;
     }
 
+    memset(&mca_coll_fca_component.fca_ops, 0, sizeof(mca_coll_fca_component.fca_ops));
+
     FCA_VERBOSE(1, "FCA Loaded from: %s", mca_coll_fca_component.fca_lib_path);
+    GET_FCA_SYM(get_version);
+    fca_ver = FCA_API_CLEAR_MICRO(mca_coll_fca_component.fca_ops.get_version());
+
     GET_FCA_SYM(init);
     GET_FCA_SYM(cleanup);
     GET_FCA_SYM(comm_new);
@@ -210,5 +176,81 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
 
     mca_coll_fca_component.fca_ops.free_init_spec(spec);
     mca_coll_fca_init_fca_translations();
+
+    if (fca_ver > FCA_API_VER(1,2)) {
+        GET_FCA_SYM(progress);
+        opal_progress_register(mca_coll_fca_mpi_progress_cb);
+    }
+    return OMPI_SUCCESS;
+}
+
+static void mca_coll_fca_close_fca_lib(void)
+{
+    if (NULL != mca_coll_fca_component.fca_ops.progress) {
+        opal_progress_unregister(mca_coll_fca_mpi_progress_cb);
+    }
+    mca_coll_fca_component.fca_ops.cleanup(mca_coll_fca_component.fca_context);
+    mca_coll_fca_component.fca_context = NULL;
+    dlclose(mca_coll_fca_component.fca_lib_handle);
+    mca_coll_fca_component.fca_lib_handle = NULL;
+}
+
+static int fca_open(void)
+{
+    FCA_VERBOSE(2, "==>");
+
+    const mca_base_component_t *c = &mca_coll_fca_component.super.collm_version;
+
+    mca_base_param_reg_int(c, "priority",
+                           "Priority of the fca coll component",
+                           false, false,
+                           80,
+                           &mca_coll_fca_component.fca_priority);
+
+    mca_base_param_reg_int(c, "verbose",
+                           "Verbose level of the fca coll component",
+                           false, false,
+                           0,
+                           &mca_coll_fca_component.fca_verbose);
+
+    mca_base_param_reg_int(c, "enable",
+                           "[1|0|] Enable/Disable Fabric Collective Accelerator",
+                           false, false,
+                           1,
+                           &mca_coll_fca_component.fca_enable);
+
+    mca_base_param_reg_string(c, "spec_file",
+                           "Path to the FCA configuration file fca_mpi_spec.ini",
+                           false, false,
+                           ""COLL_FCA_HOME"/etc/fca_mpi_spec.ini",
+                           &mca_coll_fca_component.fca_spec_file);
+
+    mca_base_param_reg_string(c, "library_path",
+                           "FCA /path/to/libfca.so",
+                           false, false,
+                           ""COLL_FCA_HOME"/lib/libfca.so",
+                           &mca_coll_fca_component.fca_lib_path);
+
+    mca_base_param_reg_int(c, "np",
+                           "[integer] Minimal allowed job's NP to activate FCA",
+                           false, false,
+                           64,
+                           &mca_coll_fca_component.fca_np);
+
+    mca_coll_fca_output = opal_output_open(NULL);
+    opal_output_set_verbosity(mca_coll_fca_output, mca_coll_fca_component.fca_verbose);
+    mca_coll_fca_component.fca_lib_handle = NULL;
+    mca_coll_fca_component.fca_context = NULL;
+    return OMPI_SUCCESS;
+}
+
+static int fca_close(void)
+{
+    FCA_VERBOSE(2, "==>");
+
+    if (!mca_coll_fca_component.fca_lib_handle || !mca_coll_fca_component.fca_context)
+        return OMPI_SUCCESS;
+
+    mca_coll_fca_close_fca_lib();
     return OMPI_SUCCESS;
 }
