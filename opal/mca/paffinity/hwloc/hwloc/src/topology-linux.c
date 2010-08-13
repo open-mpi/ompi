@@ -811,7 +811,7 @@ hwloc_strdup_mntpath(const char *escapedpath, size_t length)
 static void
 hwloc_find_linux_cpuset_mntpnt(char **cgroup_mntpnt, char **cpuset_mntpnt, int fsroot_fd)
 {
-#define PROC_MOUNT_LINE_LEN 128
+#define PROC_MOUNT_LINE_LEN 512
   char line[PROC_MOUNT_LINE_LEN];
   FILE *fd;
 
@@ -830,6 +830,13 @@ hwloc_find_linux_cpuset_mntpnt(char **cgroup_mntpnt, char **cpuset_mntpnt, int f
     char *path;
     char *type;
     char *tmp;
+
+    /* remove the ending " 0 0\n" that the kernel always adds */
+    tmp = line + strlen(line) - 5;
+    if (tmp < line || strcmp(tmp, " 0 0\n"))
+      fprintf(stderr, "Unexpected end of /proc/mounts line `%s'\n", line);
+    else
+      *tmp = '\0';
 
     /* path is after first field and a space */
     tmp = strchr(line, ' ');
@@ -851,9 +858,12 @@ hwloc_find_linux_cpuset_mntpnt(char **cgroup_mntpnt, char **cpuset_mntpnt, int f
       hwloc_debug("Found cpuset mount point on %s\n", path);
       *cpuset_mntpnt = hwloc_strdup_mntpath(path, type-path);
       break;
+
     } else if (!strncmp(type, "cgroup ", 7)) {
       /* found a cgroup mntpnt */
       char *opt, *opts;
+      int cpuset_opt = 0;
+      int noprefix_opt = 0;
 
       /* find options */
       tmp = strchr(type, ' ');
@@ -861,14 +871,23 @@ hwloc_find_linux_cpuset_mntpnt(char **cgroup_mntpnt, char **cpuset_mntpnt, int f
 	continue;
       opts = tmp+1;
 
-      /* find "cpuset" option */
-      while ((opt = strsep(&opts, ",")) && strcmp(opt, "cpuset"))
-        ; /* continue */
-      if (!opt)
+      /* look at options */
+      while ((opt = strsep(&opts, ",")) != NULL) {
+	if (!strcmp(opt, "cpuset"))
+	  cpuset_opt = 1;
+	else if (!strcmp(opt, "noprefix"))
+	  noprefix_opt = 1;
+      }
+      if (!cpuset_opt)
 	continue;
 
-      hwloc_debug("Found cgroup/cpuset mount point on %s\n", path);
-      *cgroup_mntpnt = hwloc_strdup_mntpath(path, type-path);
+      if (noprefix_opt) {
+	hwloc_debug("Found cgroup emulating a cpuset mount point on %s\n", path);
+	*cpuset_mntpnt = hwloc_strdup_mntpath(path, type-path);
+      } else {
+	hwloc_debug("Found cgroup/cpuset mount point on %s\n", path);
+	*cgroup_mntpnt = hwloc_strdup_mntpath(path, type-path);
+      }
       break;
     }
   }
@@ -1303,20 +1322,18 @@ look_sysfscpu(struct hwloc_topology *topology, const char *path)
       sprintf(str, "%s/cpu%d/topology/physical_package_id", path, i);
       hwloc_parse_sysfs_unsigned(str, &mysocketid, topology->backend_params.sysfs.root_fd);
 
-      if (mysocketid != (unsigned) -1) {
-        sprintf(str, "%s/cpu%d/topology/core_siblings", path, i);
-        socketset = hwloc_parse_cpumap(str, topology->backend_params.sysfs.root_fd);
-        if (socketset && hwloc_cpuset_weight(socketset) >= 1) {
-          if (hwloc_cpuset_first(socketset) == i) {
-            /* first cpu in this socket, add the socket */
-            socket = hwloc_alloc_setup_object(HWLOC_OBJ_SOCKET, mysocketid);
-            socket->cpuset = socketset;
-            hwloc_debug_1arg_cpuset("os socket %u has cpuset %s\n",
-                       mysocketid, socketset);
-            hwloc_insert_object_by_cpuset(topology, socket);
-          } else
-            hwloc_cpuset_free(socketset);
-        }
+      sprintf(str, "%s/cpu%d/topology/core_siblings", path, i);
+      socketset = hwloc_parse_cpumap(str, topology->backend_params.sysfs.root_fd);
+      if (socketset && hwloc_cpuset_weight(socketset) >= 1) {
+        if (hwloc_cpuset_first(socketset) == i) {
+          /* first cpu in this socket, add the socket */
+          socket = hwloc_alloc_setup_object(HWLOC_OBJ_SOCKET, mysocketid);
+          socket->cpuset = socketset;
+          hwloc_debug_1arg_cpuset("os socket %u has cpuset %s\n",
+                     mysocketid, socketset);
+          hwloc_insert_object_by_cpuset(topology, socket);
+        } else
+          hwloc_cpuset_free(socketset);
       }
 
       /* look at the core */
@@ -1444,6 +1461,8 @@ look_cpuinfo(struct hwloc_topology *topology, const char *path,
   unsigned numcores=0;
   unsigned long physid;
   unsigned long coreid;
+  unsigned missingsocket;
+  unsigned missingcore;
   unsigned long processor = (unsigned long) -1;
   unsigned i;
   hwloc_cpuset_t cpuset;
@@ -1552,12 +1571,26 @@ look_cpuinfo(struct hwloc_topology *topology, const char *path,
   hwloc_debug("%s", "\n * Topology summary *\n");
   hwloc_debug("%u processors (%u max id)\n", numprocs, procid_max);
 
-  hwloc_debug("%u sockets\n", numsockets);
-  if (numsockets>0)
+  /* Some buggy Linuxes don't provide numbers for processor 0, which makes us
+   * provide bogus information. We should rather drop it. */
+  missingsocket=0;
+  missingcore=0;
+  hwloc_cpuset_foreach_begin(processor, online_cpuset)
+    if (proc_physids[processor] == (unsigned) -1)
+      missingsocket=1;
+    if (proc_coreids[processor] == (unsigned) -1)
+      missingcore=1;
+    if (missingcore && missingsocket)
+      /* No usable information, no need to continue */
+      break;
+  hwloc_cpuset_foreach_end();
+
+  hwloc_debug("%u sockets%s\n", numsockets, missingsocket ? ", but some missing socket" : "");
+  if (!missingsocket && numsockets>0)
     hwloc_setup_level(procid_max, numsockets, osphysids, proc_physids, topology, HWLOC_OBJ_SOCKET);
 
-  hwloc_debug("%u cores\n", numcores);
-  if (numcores>0)
+  hwloc_debug("%u cores%s\n", numcores, missingcore ? ", but some missing core" : "");
+  if (!missingcore && numcores>0)
     hwloc_setup_level(procid_max, numcores, oscoreids, proc_coreids, topology, HWLOC_OBJ_CORE);
 
   return 0;

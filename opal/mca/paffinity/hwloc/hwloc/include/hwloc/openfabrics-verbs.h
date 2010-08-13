@@ -23,6 +23,12 @@
 
 #include <infiniband/verbs.h>
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 /** \defgroup hwloc_openfabrics OpenFabrics-Specific Functions
  * @{
  */
@@ -63,5 +69,11 @@ hwloc_ibv_get_device_cpuset(hwloc_topology_t topology __hwloc_attribute_unused,
 }
 
 /** @} */
+
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
+
 
 #endif /* HWLOC_OPENFABRICS_VERBS_H */

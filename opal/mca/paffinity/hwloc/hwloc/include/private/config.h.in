@@ -356,6 +356,9 @@
 /* Define to 1 if glibc provides the old prototype of sched_setaffinity() */
 #undef HWLOC_HAVE_OLD_SCHED_SETAFFINITY
 
+/* `Define to 1 if you have pthread_getthrds_np' */
+#undef HWLOC_HAVE_PTHREAD_GETTHRDS_NP
+
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HWLOC_HAVE_STDINT_H
 

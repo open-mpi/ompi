@@ -1,8 +1,0 @@
-Machine (phys=0)
-  PU #0 (phys=0)
-  PU #1 (phys=1)
-  PU #2 (phys=2)
-  PU #3 (phys=3)
-depth 0:	1 Machine (type #1)
- depth 1:	4 PUs (type #6)
-Topology not from this system

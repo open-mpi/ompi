@@ -14,6 +14,11 @@
 #include <hwloc/config.h>
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 /** \defgroup hwlocality_cpuset The Cpuset API
  *
  * For use in hwloc itself, a hwloc_cpuset_t represents a set of logical
@@ -223,5 +228,11 @@ do { \
 } while (0)
 
 /** @} */
+
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
+
 
 #endif /* HWLOC_CPUSET_H */

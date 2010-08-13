@@ -19,6 +19,11 @@
 #include <errno.h>
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 /** \defgroup hwlocality_helper_types Object Type Helpers
  * @{
  */
@@ -177,13 +182,20 @@ hwloc_get_next_child (hwloc_topology_t topology __hwloc_attribute_unused, hwloc_
 static __hwloc_inline hwloc_obj_t __hwloc_attribute_pure
 hwloc_get_common_ancestor_obj (hwloc_topology_t topology __hwloc_attribute_unused, hwloc_obj_t obj1, hwloc_obj_t obj2)
 {
-  while (obj1->depth > obj2->depth)
-    obj1 = obj1->parent;
-  while (obj2->depth > obj1->depth)
-    obj2 = obj2->parent;
+  /* the loop isn't so easy since intermediate ancestors may have
+   * different depth, causing us to alternate between using obj1->parent
+   * and obj2->parent. Also, even if at some point we find ancestors of
+   * of the same depth, their ancestors may have different depth again.
+   */
   while (obj1 != obj2) {
-    obj1 = obj1->parent;
-    obj2 = obj2->parent;
+    while (obj1->depth > obj2->depth)
+      obj1 = obj1->parent;
+    while (obj2->depth > obj1->depth)
+      obj2 = obj2->parent;
+    if (obj1 != obj2 && obj1->depth == obj2->depth) {
+      obj1 = obj1->parent;
+      obj2 = obj2->parent;
+    }
   }
   return obj1;
 }
@@ -678,5 +690,11 @@ hwloc_topology_get_allowed_cpuset(hwloc_topology_t topology)
 
 
 /** @} */
+
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
+
 
 #endif /* HWLOC_HELPER_H */

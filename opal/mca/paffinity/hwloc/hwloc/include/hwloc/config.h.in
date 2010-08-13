@@ -97,26 +97,8 @@
 
 #define HWLOC_NBMAXCPUS	1024
 
-/* The size of `unsigned long', as computed by sizeof */
-#undef HWLOC_SIZEOF_UNSIGNED_LONG
-
-/* The size of `unsigned int', as computed by sizeof */
-#undef HWLOC_SIZEOF_UNSIGNED_INT
-
 /* Defined to 1 if you have the <stdint.h> header file. */
 #undef HWLOC_HAVE_STDINT_H
-
-#define HWLOC_BITS_PER_LONG (HWLOC_SIZEOF_UNSIGNED_LONG * 8)
-#define HWLOC_BITS_PER_INT (HWLOC_SIZEOF_UNSIGNED_INT * 8)
-
-
-#if (HWLOC_BITS_PER_LONG != 32) && (HWLOC_BITS_PER_LONG != 64)
-#error "unknown size for unsigned long."
-#endif
-
-#if (HWLOC_BITS_PER_INT != 16) && (HWLOC_BITS_PER_INT != 32) && (HWLOC_BITS_PER_INT != 64)
-#error "unknown size for unsigned int."
-#endif
 
 #include <unistd.h>
 

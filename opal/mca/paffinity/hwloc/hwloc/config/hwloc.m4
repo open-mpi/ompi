@@ -159,7 +159,7 @@ EOF])
 
 dnl Same order of parameters form HWLOC-SETUP-CORE
 AC_DEFUN([HWLOC_SETUP_CORE_AFTER_C99],[
-    hwloc_CC_c99_flags=`echo $CC | sed -e "s/^$hwloc_CC_save//"`
+    hwloc_CC_c99_flags=`echo $CC | sed -e "s;^$hwloc_CC_save;;"`
     CC=$hwloc_CC_save
     CFLAGS=$hwloc_CFLAGS_save
 
@@ -382,8 +382,8 @@ AC_DEFUN([HWLOC_SETUP_CORE_AFTER_C99],[
     
     AC_CHECK_HEADERS([infiniband/verbs.h], [
       AC_CHECK_LIB([ibverbs], [ibv_open_device], 
-                   [HWLOC_LIBS="-libverbs $HWLOC_LIBS"
-                    AC_DEFINE([HAVE_LIBIBVERBS], 1, [Define to 1 if we have -libverbs])])
+                   [AC_DEFINE([HAVE_LIBIBVERBS], 1, [Define to 1 if we have -libverbs])
+                    hwloc_have_libibverbs=yes])
     ])
     
     AC_CHECK_DECLS([_SC_NPROCESSORS_ONLN,
@@ -541,6 +541,9 @@ AC_DEFUN([HWLOC_SETUP_CORE_AFTER_C99],[
     ]])
     AC_CHECK_FUNC([sched_setaffinity], [hwloc_have_sched_setaffinity=yes])
     AC_CHECK_HEADERS([sys/cpuset.h],,,[[#include <sys/param.h>]])
+    AC_SEARCH_LIBS([pthread_getthrds_np], [pthread],
+      AC_DEFINE([HWLOC_HAVE_PTHREAD_GETTHRDS_NP], 1, `Define to 1 if you have pthread_getthrds_np')
+    )
     
     # Setup HWLOC's C, CPP, and LD flags, and LIBS
     HWLOC_CFLAGS="$hwloc_CC_c99_flags $HWLOC_CFLAGS"
