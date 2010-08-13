@@ -16,6 +16,12 @@
 #include <hwloc.h>
 #include <stdio.h>
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 /** \defgroup hwlocality_linux Linux-only helpers
  *
  * This includes helpers for manipulating linux kernel cpumap files, and hwloc
@@ -46,5 +52,11 @@ HWLOC_DECLSPEC int hwloc_linux_set_tid_cpubind(hwloc_topology_t topology, pid_t 
 HWLOC_DECLSPEC int hwloc_linux_get_tid_cpubind(hwloc_topology_t topology, pid_t tid, hwloc_cpuset_t set);
 
 /** @} */
+
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
+
 
 #endif /* HWLOC_GLIBC_SCHED_H */

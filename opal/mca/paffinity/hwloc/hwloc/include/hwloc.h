@@ -34,6 +34,10 @@
 #include <hwloc/cpuset.h>
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /** \defgroup hwlocality_api_version API version
  * @{
@@ -786,7 +790,7 @@ HWLOC_DECLSPEC int hwloc_obj_cpuset_snprintf(char * __hwloc_restrict str, size_t
  */
 typedef enum {
   HWLOC_CPUBIND_PROCESS = (1<<0), /**< \brief Bind all threads of the current multithreaded process.
-                                   * This may not be supported by some OSes (e.g. Linux).
+                                   * This may not be supported by some OSes.
                                    * \hideinitializer */
   HWLOC_CPUBIND_THREAD = (1<<1),  /**< \brief Bind current thread of current process.
                                    * \hideinitializer */
@@ -850,6 +854,7 @@ HWLOC_DECLSPEC int hwloc_set_proc_cpubind(hwloc_topology_t topology, hwloc_pid_t
  */
 HWLOC_DECLSPEC int hwloc_get_proc_cpubind(hwloc_topology_t topology, hwloc_pid_t pid, hwloc_cpuset_t set, int policy);
 
+#ifdef hwloc_thread_t
 /** \brief Bind a thread \p tid on cpus given in cpuset \p set
  *
  * \note hwloc_thread_t is pthread_t on unix platforms, and HANDLE on native
@@ -857,10 +862,10 @@ HWLOC_DECLSPEC int hwloc_get_proc_cpubind(hwloc_topology_t topology, hwloc_pid_t
  *
  * \note HWLOC_CPUBIND_PROCESS can not be used in \p policy.
  */
-#ifdef hwloc_thread_t
 HWLOC_DECLSPEC int hwloc_set_thread_cpubind(hwloc_topology_t topology, hwloc_thread_t tid, hwloc_const_cpuset_t set, int policy);
 #endif
 
+#ifdef hwloc_thread_t
 /** \brief Get the current binding of thread \p tid
  *
  * \note hwloc_thread_t is pthread_t on unix platforms, and HANDLE on native
@@ -868,11 +873,15 @@ HWLOC_DECLSPEC int hwloc_set_thread_cpubind(hwloc_topology_t topology, hwloc_thr
  *
  * \note HWLOC_CPUBIND_PROCESS can not be used in \p policy.
  */
-#ifdef hwloc_thread_t
 HWLOC_DECLSPEC int hwloc_get_thread_cpubind(hwloc_topology_t topology, hwloc_thread_t tid, hwloc_cpuset_t set, int policy);
 #endif
 
 /** @} */
+
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 
 /* high-level helpers */

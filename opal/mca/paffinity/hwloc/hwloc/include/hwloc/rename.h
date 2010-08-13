@@ -8,6 +8,12 @@
 
 #include <hwloc/config.h>
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 /* Only enact these defines if we're actually renaming the symbols
    (i.e., avoid trying to have no-op defines if we're *not*
    renaming). */
@@ -313,5 +319,11 @@
 #define hwloc_setup_level HWLOC_NAME(setup_level)
 
 #endif /* HWLOC_SYM_TRANSFORM */
+
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
+
 
 #endif /* HWLOC_RENAME_H */

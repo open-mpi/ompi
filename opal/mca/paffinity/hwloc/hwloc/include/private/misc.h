@@ -26,6 +26,19 @@ int hwloc_namecoloncmp(const char *haystack, const char *needle, size_t n);
 #define HWLOC_BUILD_ASSERT(condition) ((void)sizeof(char[1 - 2*!(condition)]))
 
 
+
+#define HWLOC_BITS_PER_LONG (HWLOC_SIZEOF_UNSIGNED_LONG * 8)
+#define HWLOC_BITS_PER_INT (HWLOC_SIZEOF_UNSIGNED_INT * 8)
+
+#if (HWLOC_BITS_PER_LONG != 32) && (HWLOC_BITS_PER_LONG != 64)
+#error "unknown size for unsigned long."
+#endif
+
+#if (HWLOC_BITS_PER_INT != 16) && (HWLOC_BITS_PER_INT != 32) && (HWLOC_BITS_PER_INT != 64)
+#error "unknown size for unsigned int."
+#endif
+
+
 /**
  * ffsl helpers.
  */

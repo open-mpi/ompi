@@ -209,7 +209,6 @@ libexecdir = @libexecdir@
 libhwloc_so_version = @libhwloc_so_version@
 localedir = @localedir@
 localstatedir = @localstatedir@
-lt_ECHO = @lt_ECHO@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@

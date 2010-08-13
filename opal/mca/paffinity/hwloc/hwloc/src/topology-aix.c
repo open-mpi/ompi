@@ -140,12 +140,13 @@ hwloc_aix_get_proc_cpubind(hwloc_topology_t topology, hwloc_pid_t pid, hwloc_cpu
   return hwloc_aix_get_sth_cpubind(topology, R_PROCESS, who, hwloc_set, policy);
 }
 
+#ifdef HWLOC_HAVE_PTHREAD_GETTHRDS_NP
 static int
 hwloc_aix_set_thread_cpubind(hwloc_topology_t topology, hwloc_thread_t pthread, hwloc_const_cpuset_t hwloc_set, int policy)
 {
   struct __pthrdsinfo info;
   int size;
-  if (pthread_getthrds_np(&pthread, PTHRDSINFO_QUERY_TID, &info, sizeof(info), NULL, &size))
+  if ((errno = pthread_getthrds_np(&pthread, PTHRDSINFO_QUERY_TID, &info, sizeof(info), NULL, &size)))
     return -1;
   {
     rsid_t who = { .at_tid = info.__pi_tid };
@@ -165,6 +166,7 @@ hwloc_aix_get_thread_cpubind(hwloc_topology_t topology, hwloc_thread_t pthread, 
     return hwloc_aix_get_sth_cpubind(topology, R_THREAD, who, hwloc_set, policy);
   }
 }
+#endif /* HWLOC_HAVE_PTHREAD_GETTHRDS_NP */
 
 static void
 look_rset(int sdl, hwloc_obj_type_t type, struct hwloc_topology *topology, int level)
@@ -301,8 +303,10 @@ hwloc_set_aix_hooks(struct hwloc_topology *topology)
 {
   topology->set_proc_cpubind = hwloc_aix_set_proc_cpubind;
   topology->get_proc_cpubind = hwloc_aix_get_proc_cpubind;
+#ifdef HWLOC_HAVE_PTHREAD_GETTHRDS_NP
   topology->set_thread_cpubind = hwloc_aix_set_thread_cpubind;
   topology->get_thread_cpubind = hwloc_aix_get_thread_cpubind;
+#endif /* HWLOC_HAVE_PTHREAD_GETTHRDS_NP */
   topology->set_thisproc_cpubind = hwloc_aix_set_thisproc_cpubind;
   topology->get_thisproc_cpubind = hwloc_aix_get_thisproc_cpubind;
   topology->set_thisthread_cpubind = hwloc_aix_set_thisthread_cpubind;
