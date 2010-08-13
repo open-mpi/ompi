@@ -180,7 +180,13 @@ static int init(void)
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        /* activate a recv to catch relays */
+        /* open the error reporting channel */
+         if (ORTE_SUCCESS != (rc = open_channel(ORTE_RMCAST_ERROR_CHANNEL, "error",
+                                               NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+       /* activate a recv to catch relays */
         if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                                           ORTE_RML_TAG_MULTICAST_RELAY,
                                                           ORTE_RML_NON_PERSISTENT,
@@ -201,7 +207,13 @@ static int init(void)
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        /* finally, if we are an app, setup our grp xmit/recv channels, if given */
+         /* open the error reporting channel */
+         if (ORTE_SUCCESS != (rc = open_channel(ORTE_RMCAST_ERROR_CHANNEL, "error",
+                                               NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+       /* finally, if we are an app, setup our grp xmit/recv channels, if given */
         if (ORTE_PROC_IS_APP && NULL != orte_rmcast_base.my_group_name) {
             if (ORTE_SUCCESS != (rc = open_channel(orte_rmcast_base.my_group_number,
                                                    "recv", NULL, -1, NULL, ORTE_RMCAST_RECV))) {
@@ -332,7 +344,7 @@ static int queue_xmit(rmcast_base_send_t *snd,
         return ORTE_ERR_NOT_FOUND;
     }
     
-process:    
+ process:    
     /* setup the message for xmission */
     if (ORTE_SUCCESS != (rc = orte_rmcast_base_build_msg(ch, &buf, snd))) {
         ORTE_ERROR_LOG(rc);
@@ -381,6 +393,27 @@ process:
         }
         rc = ORTE_SUCCESS;
     } else {
+        /* if I am a daemon, I need to relay this to my children first */
+        if (ORTE_PROC_IS_DAEMON) {
+            for (item = opal_list_get_first(&orte_local_children);
+                 item != opal_list_get_end(&orte_local_children);
+                 item = opal_list_get_next(item)) {
+                child = (orte_odls_child_t*)item;
+                if (NULL == child->rml_uri) {
+                    /* race condition */
+                    continue;
+                }
+                OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
+                                     "%s relaying multicast to %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(child->name)));
+                if (0 > (rc = orte_rml.send_buffer(child->name, buf, ORTE_RML_TAG_MULTICAST, 0))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
+                }
+            }
+        }
+
         /* send it to the HNP */
         OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                              "%s rmcast:tcp sending multicast to HNP %s",
@@ -415,7 +448,7 @@ process:
     /* roll to next message sequence number */
     ORTE_MULTICAST_NEXT_SEQUENCE_NUM(ch->seq_num);
     
-cleanup:
+ cleanup:
     OBJ_RELEASE(buf);
 
     OPAL_THREAD_UNLOCK(&ch->send_lock);
