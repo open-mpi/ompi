@@ -168,7 +168,7 @@ static void start(orte_jobid_t jobid)
     }
     
     /* setup the send */
-    time = mca_sensor_heartbeat_component.beat * 1000; /* convert to microsecs */
+    time = mca_sensor_heartbeat_component.rate * 1000; /* convert to microsecs */
     send_ev = (opal_event_t*)malloc(sizeof(opal_event_t));
     opal_evtimer_set(send_ev, send_heartbeat, send_ev);
     send_time.tv_sec = time / 1000000;

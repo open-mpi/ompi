@@ -58,10 +58,10 @@ static int orte_sensor_heartbeat_open(void)
     int tmp;
 
     /* lookup parameters */
-    mca_base_param_reg_int(c, "beat",
-                           "Heartbeat rate in milliseconds (default=100)",
-                           false, false, 100,  &tmp);
-    mca_sensor_heartbeat_component.beat = tmp;
+    mca_base_param_reg_int(c, "rate",
+                           "Heartbeat rate in milliseconds (default=0)",
+                           false, false, 0,  &tmp);
+    mca_sensor_heartbeat_component.rate = tmp;
     
     mca_base_param_reg_int(c, "check",
                            "Check for failure rate in milliseconds (default=500)",
@@ -80,7 +80,7 @@ static int orte_sensor_heartbeat_open(void)
 static int orte_sensor_heartbeat_query(mca_base_module_t **module, int *priority)
 {
     /* only usable by daemons and HNPs */
-    if (0 < mca_sensor_heartbeat_component.beat &&
+    if (0 < mca_sensor_heartbeat_component.rate &&
         (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP)) {
         *priority = 10;  /* use if we were built */
         *module = (mca_base_module_t *)&orte_sensor_heartbeat_module;

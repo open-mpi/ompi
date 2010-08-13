@@ -23,7 +23,7 @@ BEGIN_C_DECLS
 
 struct orte_sensor_heartbeat_component_t {
     orte_sensor_base_component_t super;
-    int beat;
+    int rate;
     int check;
     int missed;
 };
