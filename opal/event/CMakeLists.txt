@@ -18,9 +18,8 @@ FOREACH (FILE ${COMPAT_SYS_FILES})
 ENDFOREACH (FILE)
 
 IF(WIN32)
-  # include special path for these files
-  SET_SOURCE_FILES_PROPERTIES(event/event.c event/log.c event/signal.c event/select.c event/evutil.c event/WIN32-Code/win32.c 
-    PROPERTIES COMPILE_FLAGS "/I \"${PROJECT_SOURCE_DIR}/event/compat\" /I \"${PROJECT_SOURCE_DIR}/event/WIN32-Code\"")
+  INCLUDE_DIRECTORIES ("${PROJECT_SOURCE_DIR}/event/compat"
+    "${PROJECT_SOURCE_DIR}/event/WIN32-Code")
   SET(EVENT_FILES
     ${EVENT_FILES}
     event-internal.h
