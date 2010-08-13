@@ -1,4 +1,9 @@
-#include "ompi_config.h"
+/*
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * $COPYRIGHT$
+ */
+
+#include "opal_config.h"
 
 #include <stdio.h>
 

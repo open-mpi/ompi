@@ -45,7 +45,6 @@ TESTS = \
 #opal_error_SOURCES = opal_error.c
 #opal_error_LDADD = \
 #        $(top_builddir)/orte/libopen-rte.la \
-#        $(top_builddir)/opal/libopen-pal.la
 #opal_error_DEPENDENCIES = $(opal_error_LDADD)
 
 #opal_if_SOURCES = opal_if.c
@@ -88,7 +87,6 @@ opal_path_nfs_DEPENDENCIES = $(opal_path_nfs_LDADD)
 #orte_sys_info_SOURCES = orte_sys_info.c
 #orte_sys_info_LDADD = \
 #        $(top_builddir)/orte/libopen-rte.la \
-#        $(top_builddir)/opal/libopen-pal.la \
 #        $(top_builddir)/test/support/libsupport.a 
 #orte_sys_info_DEPENDENCIES = $(orte_sys_info_LDADD)
 
@@ -101,14 +99,12 @@ opal_path_nfs_DEPENDENCIES = $(opal_path_nfs_LDADD)
 #orte_session_dir_SOURCES = orte_session_dir.c
 #orte_session_dir_LDADD = \
 #        $(top_builddir)/orte/libopen-rte.la \
-#        $(top_builddir)/opal/libopen-pal.la \
 #        $(top_builddir)/test/support/libsupport.a 
 #orte_session_dir_DEPENDENCIES = $(orte_session_dir_LDADD)
 
 #orte_universe_setup_file_io_SOURCES = orte_universe_setup_file_io.c
 #orte_universe_setup_file_io_LDADD = \
 #        $(top_builddir)/orte/libopen-rte.la \
-#        $(top_builddir)/opal/libopen-pal.la \
 #        $(top_builddir)/test/support/libsupport.a 
 #orte_universe_setup_file_io_DEPENDENCIES = $(orte_universe_setup_file_io_LDADD)
 

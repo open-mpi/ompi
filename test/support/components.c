@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -17,12 +17,12 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <string.h>
 #include <stdio.h>
 
-#include "ompi/constants.h"
+#include "opal/constants.h"
 #include "opal/mca/mca.h"
 #include "opal/libltdl/ltdl.h"
 
@@ -46,7 +46,7 @@ int test_component_open(const char *framework, const char *component,
 
     if (NULL == framework || NULL == component || NULL == comp_handle ||
         NULL == mca) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
     comp_handle->tch_handle = NULL;
     sym.tcs_variable = NULL;
@@ -70,8 +70,8 @@ int test_component_open(const char *framework, const char *component,
         *mca = (mca_base_component_t*) sym.tcs_variable;
         if (NULL == (*mca)->mca_open_component ||
             (NULL != (*mca)->mca_open_component &&
-             OMPI_SUCCESS == (*mca)->mca_open_component())) {
-            return OMPI_SUCCESS;
+             OPAL_SUCCESS == (*mca)->mca_open_component())) {
+            return OPAL_SUCCESS;
         }
 
         /* Badness occurred, so dlclose the component */
@@ -81,7 +81,7 @@ int test_component_open(const char *framework, const char *component,
 
     /* Didn't find it / unable to open it */
 
-    return OMPI_ERROR;
+    return OPAL_ERROR;
 }
 
 
@@ -100,12 +100,12 @@ int test_component_find_symbol(const char *name,
     } value;
 
     if (NULL == handle || NULL == sym) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
 
     value.vvalue = lt_dlsym(handle->tch_handle, name);
     sym->tcs_function = value.fvalue;
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
@@ -121,7 +121,7 @@ int test_component_close(test_component_handle_t *handle)
         handle->tch_handle = NULL;
     }
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 
