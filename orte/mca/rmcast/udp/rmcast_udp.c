@@ -177,6 +177,12 @@ static int init(void)
             ORTE_ERROR_LOG(rc);
             return rc;
         }
+        /* open the error reporting channel */
+         if (ORTE_SUCCESS != (rc = open_channel(ORTE_RMCAST_ERROR_CHANNEL, "error",
+                                               NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     } else if (ORTE_PROC_IS_APP) {
         /* apps open the app public and data server channels */
         if (ORTE_SUCCESS != (rc = open_channel(ORTE_RMCAST_APP_PUBLIC_CHANNEL, "app-announce",
@@ -185,6 +191,12 @@ static int init(void)
             return rc;
         }
         if (ORTE_SUCCESS != (rc = open_channel(ORTE_RMCAST_DATA_SERVER_CHANNEL, "data-server",
+                                               NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        /* open the error reporting channel */
+         if (ORTE_SUCCESS != (rc = open_channel(ORTE_RMCAST_ERROR_CHANNEL, "error",
                                                NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
