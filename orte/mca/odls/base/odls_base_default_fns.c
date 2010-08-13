@@ -1858,8 +1858,12 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
             } else {
                 child->alive = true;
                 child->state = ORTE_PROC_STATE_LAUNCHED;
-                orte_errmgr.update_state(child->name->jobid, ORTE_JOB_STATE_LAUNCHED,
-                                         child->name, child->state, child->pid, child->exit_code);
+                if (ORTE_SUCCESS != (rc = orte_errmgr.update_state(child->name->jobid, ORTE_JOB_STATE_LAUNCHED,
+                                                                   child->name, child->state,
+                                                                   child->pid, child->exit_code))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto CLEANUP;
+                }
             }
             /* move to next processor */
             proc_rank++;
