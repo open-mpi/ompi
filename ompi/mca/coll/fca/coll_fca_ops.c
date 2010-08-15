@@ -57,6 +57,7 @@ static mca_coll_fca_dtype_info_t* mca_coll_fca_get_dtype(ompi_datatype_t *dtype)
     return dtype_info;
 }
 
+#if 0
 static void mca_coll_fca_get_op_name(ompi_op_t *op, char *name, int maxlen)
 {
     const char *ompi_op_prefix = "MPI_OP_";
@@ -68,12 +69,13 @@ static void mca_coll_fca_get_op_name(ompi_op_t *op, char *name, int maxlen)
     else
         strncpy(name, op->o_name, maxlen);
 }
+#endif
 
 static mca_coll_fca_op_info_t *mca_coll_fca_get_op(ompi_op_t *op)
 {
     mca_coll_fca_op_info_t *op_info;
     int i, fca_op;
-    char opname[MPI_MAX_OBJECT_NAME + 1];
+    //char opname[MPI_MAX_OBJECT_NAME + 1];
 
     /*
      * Find 'op' in the array by exhaustive search. We assume all valid ops are
@@ -85,8 +87,8 @@ static mca_coll_fca_op_info_t *mca_coll_fca_get_op(ompi_op_t *op)
         if (op_info->mpi_op == op) {
             return op_info;
         } else if (op_info->mpi_op == MPI_OP_NULL) {
-            mca_coll_fca_get_op_name(op, opname, MPI_MAX_OBJECT_NAME);
-            fca_op = mca_coll_fca_component.fca_ops.translate_mpi_op(opname);
+            //mca_coll_fca_get_op_name(op, opname, MPI_MAX_OBJECT_NAME);
+            fca_op = mca_coll_fca_component.fca_ops.translate_mpi_op(op->o_name);
             if (fca_op < 0)
                 return NULL;
             op_info->mpi_op = op;
@@ -237,7 +239,7 @@ int mca_coll_fca_reduce(void *sbuf, void *rbuf, int count,
     spec.rbuf      = rbuf;
     if (mca_coll_fca_fill_reduce_spec(count, dtype, op, &spec, fca_module->fca_comm_caps.max_payload)
             != OMPI_SUCCESS) {
-        FCA_VERBOSE(5, "Unsupported reduce operation, using fallback\n");
+        FCA_VERBOSE(5, "Unsupported reduce operation %s, using fallback\n", op->o_name);
         return fca_module->previous_reduce(sbuf, rbuf, count, dtype, op, root,
                                            comm, fca_module->previous_reduce_module);
     }
@@ -271,7 +273,7 @@ int mca_coll_fca_allreduce(void *sbuf, void *rbuf, int count,
     spec.rbuf      = rbuf;
     if (mca_coll_fca_fill_reduce_spec(count, dtype, op, &spec, fca_module->fca_comm_caps.max_payload)
             != OMPI_SUCCESS) {
-        FCA_VERBOSE(5, "Unsupported allreduce operation, using fallback\n");
+        FCA_VERBOSE(5, "Unsupported allreduce operation %s, using fallback\n", op->o_name);
         return fca_module->previous_allreduce(sbuf, rbuf, count, dtype, op,
                                            comm, fca_module->previous_allreduce_module);
     }
