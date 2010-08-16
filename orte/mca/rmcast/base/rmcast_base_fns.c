@@ -241,15 +241,19 @@ void orte_rmcast_base_process_recv(orte_mcast_msg_event_t *msg)
      * it is on the system channel. We ignore these messages to avoid
      * confusion between different jobs since we all may be sharing
      * multicast channels. The system channel is left open to support
-     * cross-job communications via the HNP.
+     * cross-job communications for detecting multiple conflicting DVMs.
      */
     if (ORTE_JOB_FAMILY(name.jobid) != ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid) &&
         (ORTE_RMCAST_SYS_CHANNEL != channel)) {
-        OPAL_OUTPUT_VERBOSE((10, orte_rmcast_base.rmcast_output,
-                             "%s rmcast:base:process_recv from a different job family: %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&name)));
-        goto cleanup;
+        /* if we are not the HNP or a daemon, then we ignore this */
+        if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
+            OPAL_OUTPUT_VERBOSE((10, orte_rmcast_base.rmcast_output,
+                                 "%s rmcast:base:process_recv from a different job family: %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&name)));
+        } else {
+            goto cleanup;
+        }
     }
     
     /* unpack the iovec vs buf flag */
@@ -403,7 +407,7 @@ void orte_rmcast_base_process_recv(orte_mcast_msg_event_t *msg)
         break;
     }
     
-cleanup:
+ cleanup:
     if (NULL != iovec_array) {
         for (i=0; i < iovec_count; i++) {
             free(iovec_array[i].iov_base);
