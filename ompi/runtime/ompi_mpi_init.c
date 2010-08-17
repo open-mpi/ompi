@@ -447,6 +447,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                     error = "opal_paffinity_base_slot_list_set() returned an error";
                     goto error;
                 }
+#if !ORTE_DISABLE_FULL_SUPPORT
                 /* print out a warning if result is no-op, if not suppressed */
                 OPAL_PAFFINITY_PROCESS_IS_BOUND(mask, &proc_bound);
                 if (!proc_bound && orte_odls_base.warn_if_not_bound) {
@@ -457,6 +458,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                                    orte_process_info.nodename,
                                    "bind-to-slot-list", opal_paffinity_base_slot_list, argv[0]);
                 }
+#endif
                 paffinity_enabled = true;
             } else if (opal_paffinity_alone) {
                 /* no slot_list, but they asked for paffinity */
@@ -479,6 +481,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                     error = "Setting processor affinity failed";
                     goto error;
                 }
+#if !ORTE_DISABLE_FULL_SUPPORT
                 /* print out a warning if result is no-op, if not suppressed */
                 OPAL_PAFFINITY_PROCESS_IS_BOUND(mask, &proc_bound);
                 if (!proc_bound && orte_odls_base.warn_if_not_bound) {
@@ -489,6 +492,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                                    orte_process_info.nodename,
                                    "[opal|mpi]_paffinity_alone set non-zero", "n/a", argv[0]);
                 }
+#endif
                 paffinity_enabled = true;
             }
         }

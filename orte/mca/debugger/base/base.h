@@ -27,10 +27,8 @@ BEGIN_C_DECLS
  * function definitions
  */
 ORTE_DECLSPEC int orte_debugger_base_open(void);
-
-#if !ORTE_DISABLE_FULL_SUPPORT
-
 ORTE_DECLSPEC int orte_debugger_base_close(void);
+
 ORTE_DECLSPEC int orte_debugger_base_select(void);
 ORTE_DECLSPEC void orte_debugger_base_run_debugger(char *basename, opal_cmd_line_t *cmd_line,
                                                    int argc, char *argv[], int num_procs);
@@ -66,8 +64,6 @@ ORTE_DECLSPEC extern char MPIR_attach_fifo[MPIR_MAX_PATH_LENGTH];
 ORTE_DECLSPEC void *MPIR_Breakpoint(void);
 
 /* --- end MPICH/TotalView std debugger interface definitions */
-
-#endif /* !ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 #endif

@@ -23,6 +23,7 @@
 
 int orte_debugger_base_select(void)
 {
+#if !ORTE_DISABLE_FULL_SUPPORT
     orte_debugger_base_module_t *best_module=NULL;
     orte_debugger_base_component_t *best_component=NULL;
     int ret;
@@ -47,4 +48,7 @@ int orte_debugger_base_select(void)
 
  cleanup:
     return ret;
+#else
+    return ORTE_ERR_NOT_IMPLEMENTED;
+#endif
 }

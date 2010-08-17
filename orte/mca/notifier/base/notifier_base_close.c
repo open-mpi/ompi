@@ -28,6 +28,7 @@
 
 int orte_notifier_base_close(void)
 {
+#if !ORTE_DISABLE_FULL_SUPPORT
     opal_list_item_t *item;
     orte_notifier_base_selected_pair_t *pair;
 
@@ -58,6 +59,7 @@ int orte_notifier_base_close(void)
     /* Close all remaining available components */
     mca_base_components_close(orte_notifier_base_output, 
                               &orte_notifier_base_components_available, NULL);
+#endif
     
     /* All done */
     return ORTE_SUCCESS;

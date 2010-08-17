@@ -43,6 +43,8 @@
 
 #define DUMP_INT(X) fprintf(stderr, "  %s = %d\n", # X, X);
 
+#if !ORTE_DISABLE_FULL_SUPPORT
+
 void orte_debugger_base_dump(void)
 {
     int i;
@@ -171,6 +173,8 @@ void orte_debugger_base_init_after_spawn(orte_job_t *jdata)
         OBJ_DESTRUCT(&buf);
     }
 }
+
+#endif
 
 /*
  * Breakpoint function for parallel debuggers

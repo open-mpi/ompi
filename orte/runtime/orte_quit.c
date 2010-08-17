@@ -73,6 +73,7 @@ static void dump_aborted_procs(void);
 
 void orte_jobs_complete(void)
 {
+#if !ORTE_DISABLE_FULL_SUPPORT
     /* check one-time lock to protect against multiple calls */
     if (!opal_atomic_trylock(&orte_jobs_complete_lock)) { /* returns 1 if already locked */
         return;
@@ -132,6 +133,7 @@ void orte_jobs_complete(void)
     if (0 < orte_routed.num_routes()) {
         orte_plm.terminate_orteds();
     }
+#endif
 }
 
 void orte_quit(void)
@@ -149,11 +151,13 @@ void orte_quit(void)
     
     /* cleanup and leave */
     orte_finalize();
-    
-    if (NULL != orte_basename) {
+
+#if !ORTE_DISABLE_FULL_SUPPORT
+        if (NULL != orte_basename) {
         free(orte_basename);
     }
-
+#endif
+        
     if (orte_debug_flag) {
         fprintf(stderr, "orterun: exiting with status %d\n", orte_exit_status);
     }
@@ -161,6 +165,8 @@ void orte_quit(void)
 }
 
 
+
+#if !ORTE_DISABLE_FULL_SUPPORT
 /*
  * On abnormal termination - dump the
  * exit status of the aborted procs.
@@ -399,3 +405,4 @@ static void dump_aborted_procs(void)
         }
     }
 }
+#endif

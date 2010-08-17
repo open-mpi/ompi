@@ -1,5 +1,7 @@
 #include "ompi_config.h"
 
+#include <stdlib.h>
+
 #include "ompi/constants.h"
 #include "ompi/mpiext/mpiext.h"
 #include "ompi/mpiext/static-components.h"
