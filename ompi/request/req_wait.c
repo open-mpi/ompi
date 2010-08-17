@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -51,7 +52,7 @@ int ompi_request_default_wait(
            3.2.5, p.22 */
         status->MPI_TAG    = req->req_status.MPI_TAG;
         status->MPI_SOURCE = req->req_status.MPI_SOURCE;
-        status->_ucount    = req->req_status._ucount;
+        OMPI_STATUS_SET_COUNT(&status->_ucount, &req->req_status._ucount);
         status->_cancelled = req->req_status._cancelled;
     }
     if( req->req_persistent ) {
@@ -164,7 +165,7 @@ finished:
     if(num_requests_null_inactive == count) {
         *index = MPI_UNDEFINED;
         if (MPI_STATUS_IGNORE != status) {
-            *status = ompi_status_empty;
+            OMPI_STATUS_SET(status, &ompi_status_empty);
         }
     } else {
         assert( true == request->req_complete );
@@ -177,7 +178,7 @@ finished:
             /* Do *NOT* set status->MPI_ERROR here!  See MPI-1.1 doc,
                sec 3.2.5, p.22 */
             int old_error = status->MPI_ERROR;
-            *status = request->req_status;
+            OMPI_STATUS_SET(status, &request->req_status);
             status->MPI_ERROR = old_error;
         }
         rc = request->req_status.MPI_ERROR;
@@ -298,7 +299,7 @@ int ompi_request_default_wait_all( size_t count,
                 ompi_grequest_invoke_query(request, &request->req_status);
             }
 
-            statuses[i] = request->req_status;
+            OMPI_STATUS_SET(&statuses[i], &request->req_status);
 
             if( request->req_persistent ) {
                 request->req_state = OMPI_REQUEST_INACTIVE;
@@ -478,7 +479,7 @@ finished:
                 ompi_grequest_invoke_query(request, &request->req_status);
             }
             if (MPI_STATUSES_IGNORE != statuses) {
-                statuses[i] = request->req_status;
+                OMPI_STATUS_SET(&statuses[i], &request->req_status);
             }
 
             if (MPI_SUCCESS != request->req_status.MPI_ERROR) {
