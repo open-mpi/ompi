@@ -88,6 +88,7 @@
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "ompi/mca/dpm/base/base.h"
 #include "ompi/mca/pubsub/base/base.h"
+#include "ompi/mpiext/mpiext.h"
 
 #if OPAL_ENABLE_FT_CR == 1
 #include "ompi/mca/crcp/crcp.h"
@@ -909,6 +910,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
        the user's code.  Setup the connections between procs and warm
        them up with simple sends, if requested */
 
+    if (OMPI_SUCCESS != ompi_mpiext_init()) {
+        error = "ompi_mpiext_init";
+        goto error;
+    }
+    
+
  error:
     if (ret != OMPI_SUCCESS) {
         /* Only print a message if one was not already printed */
@@ -942,7 +949,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     OBJ_CONSTRUCT( &ompi_mpi_f90_complex_hashtable, opal_hash_table_t);
     opal_hash_table_init(&ompi_mpi_f90_complex_hashtable, FLT_MAX_10_EXP);
-    
+
     /* All done.  Wasn't that simple? */
 
     ompi_mpi_initialized = true;

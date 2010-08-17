@@ -833,7 +833,7 @@ void ompi_info_do_config(bool want_all)
     ompi_info_out("MPI_WTIME support", "options:mpi-wtime", wtime_support);
     ompi_info_out("Symbol vis. support", "options:visibility", symbol_visibility);
     
-    ompi_info_out("MPI extensions", "options:mpi_ext", OMPI_EXT_COMPONENTS);
+    ompi_info_out("MPI extensions", "options:mpi_ext", OMPI_MPIEXT_COMPONENTS);
     
     ompi_info_out("FT Checkpoint support", "options:ft_support", ft_support);
     free(ft_support);

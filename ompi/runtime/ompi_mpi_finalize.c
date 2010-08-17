@@ -77,6 +77,7 @@
 #include "ompi/runtime/params.h"
 #include "ompi/mca/dpm/base/base.h"
 #include "ompi/mca/pubsub/base/base.h"
+#include "ompi/mpiext/mpiext.h"
 
 #if OPAL_ENABLE_FT_CR == 1
 #include "ompi/mca/crcp/crcp.h"
@@ -110,6 +111,8 @@ int ompi_mpi_finalize(void)
                        true, hostname, pid);
         return MPI_ERR_OTHER;
     }
+
+    ompi_mpiext_fini();
 
     /* As finalize is the last legal MPI call, we are allowed to force the release
      * of the user buffer used for bsend, before going anywhere further.

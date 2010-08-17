@@ -72,8 +72,7 @@ SUBDIRS = \
 	debuggers \
 	etc \
 	mpi/c \
-	$(EXT_ompi_FRAMEWORKS_SUBDIRS) \
-	$(EXT_ompi_FRAMEWORK_COMPONENT_STATIC_SUBDIRS) \
+	$(OMPI_MPIEXT_SUBDIRS) \
 	$(MCA_ompi_FRAMEWORKS_SUBDIRS) \
 	$(MCA_ompi_FRAMEWORK_COMPONENT_STATIC_SUBDIRS) \
 	. \
@@ -92,8 +91,7 @@ DIST_SUBDIRS = \
 	mpi/cxx \
 	mpi/f77 \
 	mpi/f90 \
-	$(EXT_ompi_FRAMEWORKS_SUBDIRS) \
-	$(EXT_ompi_FRAMEWORK_COMPONENT_ALL_SUBDIRS) \
+	$(OMPI_MPIEXT_ALL_SUBDIRS) \
 	$(MCA_ompi_FRAMEWORKS_SUBDIRS) \
 	$(MCA_ompi_FRAMEWORK_COMPONENT_ALL_SUBDIRS) \
 	$(OMPI_CONTRIB_DIST_SUBDIRS)
@@ -110,7 +108,7 @@ libmpi_la_LIBADD = \
 	$(c_pmpi_lib) \
 	$(f77_base_lib) \
 	$(MCA_ompi_FRAMEWORK_LIBS) \
-	$(EXT_ompi_FRAMEWORK_LIBS) \
+	$(OMPI_MPIEXT_LIBS) \
 	$(OMPI_LIBMPI_EXTRA_LIBS) \
 	$(top_ompi_builddir)/orte/libopen-rte-lt.la
 libmpi_la_DEPENDENCIES = \
@@ -121,7 +119,7 @@ libmpi_la_DEPENDENCIES = \
 	$(c_pmpi_lib) \
 	$(f77_base_lib) \
 	$(MCA_ompi_FRAMEWORK_LIBS) \
-	$(EXT_ompi_FRAMEWORK_LIBS) \
+	$(OMPI_MPIEXT_LIBS) \
 	$(top_ompi_builddir)/orte/libopen-rte-lt.la
 libmpi_la_LDFLAGS = \
         -version-info $(libmpi_so_version) \
@@ -162,6 +160,7 @@ include tools/Makefile.am
 include mpi/Makefile.am
 include mpi/f77/base/Makefile.include
 include mpi/man/man3/Makefile.extra
+include mpiext/Makefile.am
 
 # Ensure that the man page directory exists before we try to make man
 # page files (because ompi/mpi/man/man3 has no config.status-generated

@@ -1196,13 +1196,6 @@ process_ext_framework() {
     if test -d "$framework_path" ; then
         framework_ext_list="$framework_ext_list $framework"
 
-        # Add the framework's configure file into configure,
-        # if there is one
-        if test -r "${framework_path}/configure.m4" ; then
-            echo "m4_include(${framework_path}/configure.m4)" >> "$ext_m4_include_file"
-        fi
-        echo "AC_CONFIG_FILES(${framework_path}/Makefile)" >> "$ext_no_config_list_file"
-
         rm -f "$ext_no_config_env_file" "$ext_m4_config_env_file"
         touch "$ext_no_config_env_file" "$ext_m4_config_env_file"
 
