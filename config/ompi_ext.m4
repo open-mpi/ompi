@@ -137,6 +137,7 @@ EOF
     outfile_real=ompi/mpiext/static-components.h
     outfile=$outfile_real.new
     rm -f $outfile $outfile.struct $outfile.extern
+    $MKDIR_P ompi/mpiext
     touch $outfile.struct $outfile.extern
 
     m4_foreach(extension, [ompi_mpiext_list],
