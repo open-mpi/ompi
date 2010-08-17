@@ -39,7 +39,11 @@ AC_DEFUN([OMPI_EXT],[
                         built (default: none).]))
 
 
-    AC_MSG_CHECKING([which extension components should be enabled])
+    # print some nice messages about what we're about to do...
+    AC_MSG_CHECKING([for available MPI Extensions])
+    AC_MSG_RESULT([ompi_mpiext_list])
+
+    AC_MSG_CHECKING([which MPI extension should be enabled])
     if test "$enable_mpi_ext" = "yes"; then
         msg="All Extensions"
         str="`echo ENABLE_EXT_ALL=1`"
@@ -62,23 +66,16 @@ AC_DEFUN([OMPI_EXT],[
     AC_MSG_RESULT([$msg])
     unset msg
 
-    AC_MSG_CHECKING([for projects containing EXT frameworks])
-    AC_MSG_RESULT([ext_project_list])
+    dnl - temporary hacks while autogen is rewriten.  These can probably be removed some day
+    m4_if(ext_mpiext_no_config_component_list, [], [], 
+             [m4_fatal([No configure MPI extensions no longer supported, but one found])])
+    m4_define([ompi_mpiext_list], [ext_mpiext_m4_config_component_list])
 
-    # if there isn't a project list, abort
-    m4_ifdef([ext_project_list], [],
-             [m4_fatal([Could not find project list - rerun autogen.sh without -l])])
+    m4_ifdef([ompi_mpiext_list], [],
+             [m4_fatal([Could not find MPI Extensions list.  Aborting.])])
 
-    # now configre all the projects, frameworks, and components.  Most
-    # of the hard stuff is in here
-    EXT_PROJECT_SUBDIRS=
-    m4_foreach(ext_project, [ext_project_list], 
-               [EXT_PROJECT_SUBDIRS="$EXT_PROJECT_SUBDIRS ext_project"
-                EXT_CONFIGURE_PROJECT(ext_project) ])
-
-    # make all the config output statements for the no configure
-    # components
     EXT_NO_CONFIG_CONFIG_FILES()
+    EXT_CONFIGURE()
 
     AC_SUBST(EXT_C_HEADERS)
     AC_SUBST(EXT_CXX_HEADERS)
@@ -88,113 +85,25 @@ AC_DEFUN([OMPI_EXT],[
     AC_SUBST(EXT_CXX_LIBS)
     AC_SUBST(EXT_F77_LIBS)
     AC_SUBST(EXT_F90_LIBS)
-
-    AC_SUBST(EXT_PROJECT_SUBDIRS)
 ])
 
 
 ######################################################################
 #
-# EXT_CONFIGURE_PROJECT
-#
-# Configure all frameworks inside the given project name.  Assumes that
-# the frameworks are located in [project_name]/[frameworks] and that
-# there is an m4_defined list named ext_[project]_framework_list with
-# the list of frameworks.
+# EXT_CONFIGURE
 #
 # USAGE:
-#   EXT_CONFIGURE_PROJECT(project_name)
+#   EXT_CONFIGURE()
 #
 ######################################################################
-AC_DEFUN([EXT_CONFIGURE_PROJECT],[
-    # can't use a variable rename here because these need to be evaled
-    # at auto* time.
-
-    ompi_show_subtitle "Configuring EXT for $1"
-
-    AC_MSG_CHECKING([for frameworks for $1])
-    AC_MSG_RESULT([ext_$1_framework_list])
-
-    # iterate through the list of frameworks.  There is something
-    # funky with m4 foreach if the list is defined, but empty.  It
-    # will call the 3rd argument once with an empty value for the
-    # first argument.  Protect against calling EXT_CONFIGURE_FRAMEWORK
-    # with an empty second argument.  Grrr....
-    # if there isn't a project list, abort
-    #
-    # Also setup two variables for Makefiles:
-    #  EXT_project_FRAMEWORKS     - list of frameworks in that project
-    #  EXT_project_FRAMEWORK_LIBS - list of libraries (or variables pointing
-    #                               to more libraries) that must be included
-    #                               in the project's main library
-    m4_ifdef([ext_$1_framework_list],
-             [_EXT_CONFIGURE_PROJECT($1)],
-             [echo No EXT frameworks for $1 - skipped])
-])dnl
-
-######################################################################
-#
-# _EXT_CONFIGURE_PROJECT
-#
-# Back end for EXT_CONFIGURE_PROJECT
-#
-# USAGE:
-#   _EXT_CONFIGURE_PROJECT(project_name)
-#
-######################################################################
-AC_DEFUN([_EXT_CONFIGURE_PROJECT],[
-    EXT_$1_FRAMEWORKS=
-    EXT_$1_FRAMEWORKS_SUBDIRS=
-    EXT_$1_FRAMEWORK_COMPONENT_ALL_SUBDIRS=
-    EXT_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS=
-    EXT_$1_FRAMEWORK_LIBS=
-    
-    m4_foreach(ext_framework, [ext_$1_framework_list],
-               [m4_ifval(ext_framework, 
-                       [
-                           EXT_$1_FRAMEWORKS="$EXT_$1_FRAMEWORKS ext_framework"
-                           EXT_$1_FRAMEWORKS_SUBDIRS="$EXT_$1_FRAMEWORKS_SUBDIRS ext_framework"
-                           EXT_$1_FRAMEWORK_COMPONENT_ALL_SUBDIRS="$EXT_$1_FRAMEWORK_COMPONENT_ALL_SUBDIRS [\$(EXT_]ext_framework[_ALL_SUBDIRS)]"
-                           EXT_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS="$EXT_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS [\$(EXT_]ext_framework[_STATIC_SUBDIRS)]"
-                           EXT_$1_FRAMEWORK_LIBS="$EXT_$1_FRAMEWORK_LIBS [\$(EXT_]ext_framework[_STATIC_LTLIBS)]"
-                           m4_ifdef([EXT_]ext_framework[_CONFIG],
-                                    [EXT_]ext_framework[_CONFIG]($1, ext_framework),
-                                    [EXT_CONFIGURE_FRAMEWORK($1, ext_framework, 1)])])])
-
-    AC_SUBST(EXT_$1_FRAMEWORKS)
-    AC_SUBST(EXT_$1_FRAMEWORKS_SUBDIRS)
-    AC_SUBST(EXT_$1_FRAMEWORK_COMPONENT_ALL_SUBDIRS)
-    AC_SUBST(EXT_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS)
-    AC_SUBST(EXT_$1_FRAMEWORK_LIBS)
-])
-
-######################################################################
-#
-# EXT_CONFIGURE_FRAMEWORK
-#
-# Configure the given framework and all components inside the
-# framework.  Assumes that the framework is located in
-# [project_name]/[framework], and that all components are
-# available under the framework directory.  Will configure all
-# no-configure and builtin components, then search for components with
-# configure scripts.  Assumes that no component is marked as builtin
-# AND has a configure script.
-#
-# USAGE:
-#   EXT_CONFIGURE_PROJECT(project_name, framework_name, allow_succeed)
-#
-######################################################################
-AC_DEFUN([EXT_CONFIGURE_FRAMEWORK],[
-    ompi_show_subsubtitle "Configuring EXT framework $2"
-
+AC_DEFUN([EXT_CONFIGURE],[
     OMPI_VAR_SCOPE_PUSH([all_components outfile outfile_real])
 
-    # setup for framework
     all_components=
     static_components=
     static_ltlibs=
 
-    outdir=$1/include
+    outdir=ompi/include
 
     # first create the output include directory
     mkdir -p $outdir
@@ -224,79 +133,18 @@ EOF
     # XXX: Left todo: Add header files for other languages
     #
 
-    # print some nice messages about what we're about to do...
-    AC_MSG_CHECKING([for no configure components in framework $2])
-    AC_MSG_RESULT([ext_$2_no_config_component_list])
-    AC_MSG_CHECKING([for m4 configure components in framework $2])
-    AC_MSG_RESULT([ext_$2_m4_config_component_list])
+    # remove any previously generated #include files
+    outfile_real=ompi/mpiext/static-components.h
+    outfile=$outfile_real.new
+    rm -f $outfile $outfile.struct $outfile.extern
+    touch $outfile.struct $outfile.extern
 
-    # configure components that don't have any component-specific
-    # configuration.  See comment in CONFIGURE_PROJECT about the
-    # m4_ifval in the m4_foreach.  If there isn't a component list,
-    # abort with a reasonable message.  If there are components in the
-    # list, but we're doing one of the "special" selection logics,
-    # abort with a reasonable message.
-    m4_ifdef([ext_$2_no_config_component_list], [], 
-             [m4_fatal([Could not find ext_$2_no_config_component_list - rerun autogen.sh without -l])])
-    # make sure priority stuff set right
-    m4_if(OMPI_EVAL_ARG([EXT_]ext_framework[_CONFIGURE_MODE]), [STOP_AT_FIRST],
-          [m4_ifval(ext_$2_no_config_component_list,
-                   [m4_fatal([Framework $2 using STOP_AT_FIRST but at least one component has no configure.m4])])])
-    m4_if(OMPI_EVAL_ARG([EXT_]ext_framework[_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY],
-          [m4_ifval(ext_$2_no_config_component_list,
-                   [m4_fatal([Framework $2 using STOP_AT_FIRST_PRIORITY but at least one component has no configure.m4])])])
-    m4_foreach(ext_component, [ext_$2_no_config_component_list],
-               [m4_ifval(ext_component,
-                  [EXT_CONFIGURE_NO_CONFIG_COMPONENT($1, $2, ext_component, 
-                                                     [all_components],
-                                                     [static_components],
-                                                     [static_ltlibs],
-                                                     [$3])])])
-
-    # configure components that use built-in configuration scripts see
-    # comment in CONFIGURE_PROJECT about the m4_ifval in the
-    # m4_foreach.  if there isn't a component list, abort
-    m4_ifdef([ext_$2_m4_config_component_list], [], 
-             [m4_fatal([Could not find ext_$2_m4_config_component_list - rerun autogen.sh without -l])])
-    best_ext_component_priority=0
-    components_looking_for_succeed=$3
-    components_last_result=0
-    m4_foreach(ext_component, [ext_$2_m4_config_component_list],
-               [m4_ifval(ext_component,
-                  [m4_if(OMPI_EVAL_ARG([EXT_]ext_framework[_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY],
-                         [ # get the component's priority...
-                          infile="$srcdir/$1/$2/ext_component/configure.params"
-                          ext_component_priority="`$GREP PARAM_CONFIG_PRIORITY= $infile | cut -d= -f2-`"
-                          AS_IF([test -z "$ext_component_priority"], [ext_component_priority=0])
-                          AS_IF([test $best_ext_component_priority -gt $ext_component_priority], [components_looking_for_succeed=0])])
-                   EXT_CONFIGURE_M4_CONFIG_COMPONENT($1, $2, ext_component, 
-                                                     [all_components],
-                                                     [static_components],
-                                                     [static_ltlibs],
-                                                     [$components_looking_for_succeed],
-                                                     [components_last_result=1],
-                                                     [components_last_result=0])
-                   m4_if(OMPI_EVAL_ARG([EXT_]ext_framework[_CONFIGURE_MODE]), [STOP_AT_FIRST],
-                         [AS_IF([test $components_last_result -eq 1], [components_looking_for_succeed=0])])
-                   m4_if(OMPI_EVAL_ARG([EXT_]ext_framework[_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY],
-                         [AS_IF([test $components_last_result -eq 1], [best_ext_component_priority=$ext_component_priority])])])])
-
-    # configure components that provide their own configure script.
-    # It would be really hard to run these for "find first that
-    # works", so we don't :)
-    m4_if(OMPI_EVAL_ARG([EXT_]ext_framework[_CONFIGURE_MODE]), [STOP_AT_FIRST], [],
-          [m4_if(OMPI_EVAL_ARG([EXT_]ext_framework[_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY], [],
-                 [AS_IF([test "$3" != "0"],
-                        [EXT_CONFIGURE_ALL_CONFIG_COMPONENTS($1, $2, [all_components],
-                                               [static_ltlibs])])])])
-
-    EXT_$2_ALL_COMPONENTS="$all_components"
-    EXT_$2_STATIC_COMPONENTS="$static_components"
-    EXT_$2_STATIC_LTLIBS="$static_ltlibs"
-
-    AC_SUBST(EXT_$2_ALL_COMPONENTS)
-    AC_SUBST(EXT_$2_STATIC_COMPONENTS)
-    AC_SUBST(EXT_$2_STATIC_LTLIBS)
+    m4_foreach(extension, [ompi_mpiext_list],
+               [m4_ifval(extension,
+               [EXT_CONFIGURE_M4_CONFIG_COMPONENT(extension,
+                                                  [all_components],
+                                                  [static_components],
+                                                  [static_ltlibs])])])
 
     # Create the final mpi-ext.h file.
     cat >> $mpi_ext_h <<EOF
@@ -313,50 +161,55 @@ EOF
     # XXX: Left todo: Close header files for other languages
     #
 
-    OMPI_EXT_MAKE_DIR_LIST(EXT_$2_ALL_SUBDIRS, $2, [$all_components])
-    OMPI_EXT_MAKE_DIR_LIST(EXT_$2_STATIC_SUBDIRS, $2, [$static_components])
+
+    # Create the final .h file that will be included in the type's
+    # top-level glue.  This lists all the static components.  We don't
+    # need to do this for "common".
+    if test "$2" != "common"; then
+        cat > $outfile <<EOF
+/*
+ * \$HEADER\$
+ */
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
+`cat $outfile.extern`
+
+const ompi_mpiext_component_t *ompi_mpiext_components[[]] = {
+`cat $outfile.struct`
+  NULL
+};
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
+
+EOF
+        # Only replace the header file if a) it doesn't previously
+        # exist, or b) the contents are different.  Do this to not
+        # trigger recompilation of certain .c files just because the
+        # timestamp changed on $outfile_real (similar to the way AC
+        # handles AC_CONFIG_HEADER files).
+        diff $outfile $outfile_real > /dev/null 2>&1
+        if test "$?" != "0"; then
+            mv $outfile $outfile_real
+        else
+            rm -f $outfile
+        fi
+    fi
+    rm -f $outfile.struct $outfile.extern 
+
+    OMPI_EXT_MAKE_DIR_LIST(OMPI_MPIEXT_ALL_SUBDIRS, [$all_components])
+    OMPI_EXT_MAKE_DIR_LIST(OMPI_MPIEXT_SUBDIRS, [$static_components])
+
+    comps=`echo $static_components | sed -e 's/^[ \t]*//;s/[ \t]*$//;s/ /, /g'`
+    AC_DEFINE_UNQUOTED([OMPI_MPIEXT_COMPONENTS], ["$comps"], [MPI Extensions included in libmpi])
+
+    OMPI_MPIEXT_LIBS="${static_ltlibs}"
+    AC_SUBST(OMPI_MPIEXT_LIBS)
 
     OMPI_VAR_SCOPE_POP
-])
-
-
-######################################################################
-#
-# EXT_CONFIGURE_NO_CONFIG_COMPONENT
-#
-# Configure the given framework and all components inside the framework.
-# Assumes that the framework is located in [project_name]/[framework],
-# and that all components are available under the framework directory.
-# Will configure all builtin components, then search for components with
-# configure scripts.  Assumes that no component is marked as builtin
-# AND has a configure script.
-#
-# USAGE:
-#   EXT_CONFIGURE_NO_CONFIG_COMPONENT(project_name, framework_name, component_name
-#                         all_components_variable, 
-#                         static_components_variable, 
-#                         static_ltlibs_variable,
-#                         allowed_to_succeed)
-#
-######################################################################
-AC_DEFUN([EXT_CONFIGURE_NO_CONFIG_COMPONENT],[
-    ompi_show_subsubsubtitle "EXT component $2:$3 (no configuration)"
-
-    EXT_COMPONENT_BUILD_CHECK($1, $2, $3, 
-                              [should_build=$7], [should_build=0])
-    EXT_COMPONENT_COMPILE_MODE($1, $2, $3, compile_mode)
-
-    if test "$should_build" = "1" ; then
-        EXT_PROCESS_COMPONENT($1, $2, $3, $4, $6, $compile_mode)
-        # add component to static component list
-        $5="$$5 $3"
-    else
-        EXT_PROCESS_DEAD_COMPONENT($1, $2, $3)
-        # add component to all component list
-        $4="$$4 $3"
-    fi
-
-    unset compile_mode
 ])
 
 
@@ -366,122 +219,33 @@ AC_DEFUN([EXT_CONFIGURE_NO_CONFIG_COMPONENT],[
 #
 #
 # USAGE:
-#   EXT_CONFIGURE_PROJECT(project_name, framework_name, component_name
+#   EXT_CONFIGURE_PROJECT(component_name
 #                         all_components_variable, 
 #                         static_components_variable, 
-#                         static_ltlibs_variable,
-#                         allowed_to_succeed,
-#                         [eval if should build], 
-#                         [eval if should not build])
-#
-######################################################################
-AC_DEFUN([EXT_CONFIGURE_M4_CONFIG_COMPONENT],[
-    ompi_show_subsubsubtitle "EXT component $2:$3 (m4 configuration macro)"
-
-    EXT_COMPONENT_BUILD_CHECK($1, $2, $3, [should_build=$7], [should_build=0])
-    # Allow the component to override the build mode if it really wants to.
-    # It is, of course, free to end up calling EXT_COMPONENT_COMPILE_MODE
-    m4_ifdef([EXT_$2_$3_COMPILE_MODE],
-             [EXT_$2_$3_COMPILE_MODE($1, $2, $3, compile_mode)],
-             [EXT_COMPONENT_COMPILE_MODE($1, $2, $3, compile_mode)])
-
-    # try to configure the component.  pay no attention to
-    # --enable-dist, since we'll always have makefiles.
-    AS_IF([test "$should_build" = "1"],
-          [m4_ifdef([EXT_]$2[_]$3[_CONFIG],
-                    [EXT_$2_$3_CONFIG([should_build=1], 
-                                      [should_build=0])],
-                    # If they forgot to define an EXT_<fw>_<comp>_CONFIG 
-                    # macro, print a friendly warning and abort.
-                    [AC_MSG_WARN([*** The $2:$3 did not define an])
-                     AC_MSG_WARN([*** EXT_$2_$3_CONFIG macro in the])
-                     AC_MSG_WARN([*** $1/$2/$3/configure.m4 file])
-                     AC_MSG_ERROR([Cannot continue])])
-          ])
-
-    AS_IF([test "$should_build" = "1"],
-          [EXT_PROCESS_COMPONENT($1, $2, $3, $4, $6, $compile_mode)
-           # add component to static component list
-           $5="$$5 $3" ],
-          [EXT_PROCESS_DEAD_COMPONENT($1, $2, $3)
-           # add component to all component list
-           $4="$$4 $3"])
-
-    m4_ifdef([EXT_$2_$3_POST_CONFIG],
-             [EXT_$2_$3_POST_CONFIG($should_build)])
-
-    AS_IF([test "$should_build" = "1"],[$8], [$9])
-
-    unset compile_mode
-])
-
-
-######################################################################
-#
-# EXT_CONFIGURE_ALL_CONFIG_COMPONENTS
-#
-# configure all components in the given framework that have configure
-# scripts and should be configured according to the usual rules...
-#
-# USAGE:
-#   EXT_CONFIGURE_ALL_CONFIG_COMPONENTS(project_name, 
-#                         framework_name,
-#                         all_components_variable, 
 #                         static_ltlibs_variable)
 #
 ######################################################################
-AC_DEFUN([EXT_CONFIGURE_ALL_CONFIG_COMPONENTS],[
-    for component_path in $srcdir/$1/$2/* ; do
-        component="`basename $component_path`"
-        if test -d $component_path -a -x $component_path/configure ; then
-            ompi_show_subsubsubtitle "EXT component $2:$component (need to configure)"
+AC_DEFUN([EXT_CONFIGURE_M4_CONFIG_COMPONENT],[
+    ompi_show_subsubsubtitle "MPI Extension $1"
 
-            EXT_COMPONENT_BUILD_CHECK($1, $2, $component, 
-                                      [should_build=1], [should_build=0])
-            EXT_COMPONENT_COMPILE_MODE($1, $2, $component, compile_mode)
+    EXT_COMPONENT_BUILD_CHECK($1, [should_build=1], [should_build=0])
 
-            if test "$should_build" = "1" ; then
-                OMPI_CONFIG_SUBDIR([$1/$2/$component],
-                                   [$ompi_subdir_args],
-                                   [should_build=1], [should_build=2])
-            fi
+    # try to configure the component.  pay no attention to
+    # --enable-dist, since we'll always have makefiles.
+    m4_ifdef([OMPI_MPIEXT_$1_CONFIG], [],
+             [m4_fatal([Could not find OMPI_MPIEXT_]$1[_CONFIG macro for ]$1[ component])])
 
-            if test "$should_build" = "1" ; then
-                EXT_PROCESS_COMPONENT($1, $2, $component, $3, $4, $compile_mode)
-            else
-                EXT_PROCESS_DEAD_COMPONENT($1, $2, $component)
-            fi
-        fi
-    done
+    OMPI_MPIEXT_$1_CONFIG([should_build=${should_build}], 
+                          [should_build=0])
+
+    AS_IF([test "$should_build" = "1"],
+          [EXT_PROCESS_COMPONENT($1, $2, $4)
+           # add component to static component list
+           $3="$$3 $1" ],
+          [EXT_PROCESS_DEAD_COMPONENT($1)
+           # add component to all component list
+           $2="$$2 $1"])
 ])
-
-
-######################################################################
-#
-# EXT_COMPONENT_COMPILE_MODE
-#
-# set compile_mode_variable to the compile mode for the given component
-#
-# USAGE:
-#   EXT_COMPONENT_COMPILE_MODE(project_name, 
-#                              framework_name, component_name
-#                              compile_mode_variable)
-#
-#   NOTE: component_name may not be determined until runtime....
-#
-######################################################################
-AC_DEFUN([EXT_COMPONENT_COMPILE_MODE],[
-    project=$1
-    framework=$2
-    component=$3
-
-    # Extensions are always static, no need for further checks
-    $4="static"
-
-    #AC_MSG_CHECKING([for EXT component $framework:$component compile mode])
-    #AC_MSG_RESULT([$$4])
-])
-
 
 ######################################################################
 #
@@ -491,11 +255,10 @@ AC_DEFUN([EXT_COMPONENT_COMPILE_MODE],[
 # calling that this component can build properly (and exists)
 #
 # USAGE:
-#   EXT_CONFIGURE_ALL_CONFIG_COMPONENTS(project_name, 
-#                         framework_name, component_name
-#                         all_components_variable (4), 
-#                         static_ltlibs_variable (5),
-#                         compile_mode_variable (6))
+#   EXT_CONFIGURE_ALL_CONFIG_COMPONENTS(component_name
+#                         all_components_variable (2), 
+#                         static_ltlibs_variable (3),
+#                         compile_mode_variable (4))
 #
 #   NOTE: component_name may not be determined until runtime....
 #
@@ -510,21 +273,19 @@ AC_DEFUN([EXT_COMPONENT_COMPILE_MODE],[
 AC_DEFUN([EXT_PROCESS_COMPONENT],[
     AC_REQUIRE([AC_PROG_GREP])
 
-    project=$1
-    framework=$2
-    component=$3
+    component=$1
 
     # Output pretty results
-    AC_MSG_CHECKING([if EXT component $framework:$component can compile])
+    AC_MSG_CHECKING([if MPI extension $component can compile])
     AC_MSG_RESULT([yes])
 
     # Save the list of headers and convenience libraries that this component will output
     # There *must* be C bindings
-    EXT_C_HEADERS="$EXT_C_HEADERS $framework/$component/${framework}_${component}_c.h"
-    EXT_C_LIBS="$EXT_C_LIBS $framework/$component/libext_${framework}_${component}.la"
+    EXT_C_HEADERS="$EXT_C_HEADERS mpiext/$component/mpiext_${component}_c.h"
+    EXT_C_LIBS="$EXT_C_LIBS mpiext/$component/libext_mpiext_${component}.la"
 
-    component_header="${framework}_${component}_c.h"
-    tmp[=]m4_translit([$3],[a-z],[A-Z])
+    component_header="mpiext_${component}_c.h"
+    tmp[=]m4_translit([$1],[a-z],[A-Z])
     component_define="OMPI_HAVE_MPI_EXT_${tmp}"
 
     cat >> $mpi_ext_h <<EOF
@@ -540,46 +301,22 @@ EOF
     # XXX: did provide those bindings, then add the header file to the relevant
     # XXX: language binding's header file.
     #
-    EXT_CXX_HEADERS="$EXT_CXX_HEADERS $framework/$component/${framework}_${component}_cxx.h"
-    EXT_CXX_LIBS="$EXT_CXX_LIBS $framework/$component/libext_${framework}_${component}_cxx.la"
+    EXT_CXX_HEADERS="$EXT_CXX_HEADERS mpiext/$component/mpiext_${component}_cxx.h"
+    EXT_CXX_LIBS="$EXT_CXX_LIBS mpiext/$component/libext_mpiext_${component}_cxx.la"
 
-    EXT_F77_HEADERS="$EXT_F77_HEADERS $framework/$component/${framework}_${component}_f77.h"
-    EXT_F77_LIBS="$EXT_F77_LIBS $framework/$component/libext_${framework}_${component}_f77.la"
+    EXT_F77_HEADERS="$EXT_F77_HEADERS mpiext/$component/mpiext_${component}_f77.h"
+    EXT_F77_LIBS="$EXT_F77_LIBS mpiext/$component/libext_mpiext_${component}_f77.la"
 
-    EXT_F90_HEADERS="$EXT_F90_HEADERS $framework/$component/${framework}_${component}_f90.h"
-    EXT_F90_LIBS="$EXT_F90_LIBS $framework/$component/libext_${framework}_${component}_f90.la"
-
-    # See if it dropped an output file for us to pick up some
-    # shell variables in.  
-    infile="$srcdir/$project/$framework/$component/post_configure.sh"
+    EXT_F90_HEADERS="$EXT_F90_HEADERS mpiext/$component/mpiext_${component}_f90.h"
+    EXT_F90_LIBS="$EXT_F90_LIBS mpiext/$component/libext_mpiext_${component}_f90.la"
 
     # Add this subdir to the mast list of all EXT component subdirs
-    $4="$$4 $component"
+    $2="$$2 ${component}"
+    $3="mpiext/${component}/libext_mpiext_${component}.la $$3"
 
-    $5="$framework/$component/libext_${framework}_${component}.la $$5"
-
-    # If there's an output file, add the values to
-    # scope_EXTRA_flags.
-    if test -f $infile; then
-
-        # First check for the ABORT tag
-        line="`$GREP ABORT= $infile | cut -d= -f2-`"
-        if test -n "$line" -a "$line" != "no"; then
-            AC_MSG_WARN([EXT component configure script told me to abort])
-            AC_MSG_ERROR([cannot continue])
-        fi
-
-        # Check for flags passed up from the component.  If we're
-        # compiling statically, then take all flags passed up from the
-        # component.
-        m4_foreach(flags, [LDFLAGS, LIBS],
-           [[line="`$GREP WRAPPER_EXTRA_]flags[= $infile | cut -d= -f2-`"]
-            eval "line=$line"
-            if test -n "$line"; then
-                $1[_WRAPPER_EXTRA_]flags[="$]$1[_WRAPPER_EXTRA_]flags[ $line"]
-            fi
-        ])dnl
-    fi
+    m4_ifdef([OMPI_MPIEXT_]$1[_NEED_INIT],
+             [echo "extern const ompi_mpiext_component_t ompi_mpiext_${component};" >> $outfile.extern
+              echo "  &ompi_mpiext_${component}, " >> $outfile.struct])
 
     # now add the flags that were set in the environment variables
     # framework_component_FOO (for example, the flags set by
@@ -589,7 +326,7 @@ EOF
     # compiling statically, then take all flags passed up from the
     # component.
     m4_foreach(flags, [LDFLAGS, LIBS],
-        [[str="line=\$${framework}_${component}_WRAPPER_EXTRA_]flags["]
+        [[str="line=\$mpiext_${component}_WRAPPER_EXTRA_]flags["]
           eval "$str"
           if test -n "$line" ; then
              $1[_WRAPPER_EXTRA_]flags[="$]$1[_WRAPPER_EXTRA_]flags[ $line"]
@@ -606,24 +343,14 @@ EOF
 # to make sure the user isn't doing something stupid.
 #
 # USAGE:
-#   EXT_PROCESS_DEAD_COMPONENT(project_name, 
-#                         framework_name, component_name)
+#   EXT_PROCESS_DEAD_COMPONENT(component_name)
 #
 #   NOTE: component_name may not be determined until runtime....
 #
 ######################################################################
 AC_DEFUN([EXT_PROCESS_DEAD_COMPONENT],[
-    AC_MSG_CHECKING([if EXT component $2:$3 can compile])
+    AC_MSG_CHECKING([if MPI Extension $1 can compile])
     AC_MSG_RESULT([no])
-
-    # If this component was requested as the default for this
-    # type, then abort.
-    if test "$with_$2" = "$3" ; then
-        AC_MSG_WARN([EXT component "$3" failed to configure properly])
-        AC_MSG_WARN([This component was selected as the default])
-        AC_MSG_ERROR([Cannot continue])
-        exit 1
-    fi
 ])
 
 
@@ -636,17 +363,15 @@ AC_DEFUN([EXT_PROCESS_DEAD_COMPONENT],[
 # given component should be built.
 #
 # USAGE:
-#    EXT_COMPONENT_BUILD_CHECK(project, framework, component, 
+#    EXT_COMPONENT_BUILD_CHECK(component, 
 #                              action-if-build, action-if-not-build)
 #
 ######################################################################
 AC_DEFUN([EXT_COMPONENT_BUILD_CHECK],[
     AC_REQUIRE([AC_PROG_GREP])
 
-    project=$1
-    framework=$2
-    component=$3
-    component_path="$srcdir/$project/$framework/$component"
+    component=$1
+    component_path="$srcdir/ompi/mpiext/$component"
     want_component=0
 
     # build if:
@@ -690,16 +415,16 @@ AC_DEFUN([EXT_COMPONENT_BUILD_CHECK],[
         fi
     fi
 
-    AS_IF([test "$want_component" = "1"], [$4], [$5])
+    AS_IF([test "$want_component" = "1"], [$2], [$3])
 ])
 
 
-# OMPI_EXT_MAKE_DIR_LIST(subst'ed variable, framework, shell list)
+# OMPI_EXT_MAKE_DIR_LIST(subst'ed variable, shell list)
 # -------------------------------------------------------------------------
 AC_DEFUN([OMPI_EXT_MAKE_DIR_LIST],[
     $1=
-    for item in $3 ; do
-       $1="$$1 $2/$item"
+    for item in $2 ; do
+       $1="$$1 mpiext/$item"
     done
     AC_SUBST($1)
 ])

@@ -8,3 +8,12 @@
 # 
 # $HEADER$
 #
+
+
+# This makefile.am does not stand on its own - it is included from ompi/Makefile.am
+
+headers += \
+	mpiext/mpiext.h
+
+libmpi_la_SOURCES += \
+	mpiext/mpiext.c

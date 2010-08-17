@@ -26,7 +26,4 @@ AC_DEFUN([OMPI_SETUP_MPI_EXT],[
    ompi_show_title "Extended MPI interfaces setup" 
 
    OMPI_EXT
-
-   AC_DEFINE_UNQUOTED(OMPI_EXT_COMPONENTS, "$EXT_mpiext_ALL_COMPONENTS",
-       [MPI Extended Interface Components])
 ])
