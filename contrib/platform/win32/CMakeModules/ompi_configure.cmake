@@ -617,6 +617,7 @@ OMPI_F77_CHECK("REAL*16" "no" "float;double;long double" "16")
 OMPI_F77_CHECK("DOUBLE PRECISION" "yes" "float;double;long double" "-1")
 
 OMPI_F77_CHECK("COMPLEX" "yes" "" "-1")
+OMPI_F77_CHECK("DOUBLE COMPLEX" "yes" "" "-1")
 
 # The complex*N tests are a bit different (note: the complex tests are
 # the same as all the rest, because complex is a composite of two
