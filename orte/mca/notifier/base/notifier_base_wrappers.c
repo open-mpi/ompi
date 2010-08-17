@@ -29,6 +29,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/notifier/base/base.h"
 
+#if !ORTE_DISABLE_FULL_SUPPORT
 
 void orte_notifier_log(orte_notifier_base_severity_t severity, 
                        int errcode, const char *msg, ...)
@@ -188,3 +189,5 @@ char *orte_notifier_base_peer_log(int errcode, orte_process_name_t *peer_proc,
     buf[ORTE_NOTIFIER_MAX_BUF] = '\0';
     return buf;
 }
+
+#endif

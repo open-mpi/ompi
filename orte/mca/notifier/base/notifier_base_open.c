@@ -40,6 +40,8 @@
 
 #include "orte/mca/notifier/base/static-components.h"
 
+#if !ORTE_DISABLE_FULL_SUPPORT
+
 /*
  * Global variables
  */
@@ -58,6 +60,7 @@ orte_notifier_API_module_t orte_notifier = {
     orte_notifier_show_help,
     orte_notifier_log_peer,
 };
+#endif
 
 /**
  * Function for finding and opening either all MCA components, or the one
@@ -65,6 +68,8 @@ orte_notifier_API_module_t orte_notifier = {
  */
 int orte_notifier_base_open(void)
 {
+
+#if !ORTE_DISABLE_FULL_SUPPORT
     char *level;
     
     /* Debugging / verbose output.  Always have stream open, with
@@ -111,6 +116,7 @@ int orte_notifier_base_open(void)
     }
 
     /* All done */
-
+#endif
+    
     return ORTE_SUCCESS;
 }

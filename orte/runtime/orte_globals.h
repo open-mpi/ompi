@@ -80,6 +80,8 @@ typedef void (*orte_err_cb_fn_t)(orte_process_name_t *proc, orte_proc_state_t st
 
 typedef uint16_t orte_mapping_policy_t;
 
+ORTE_DECLSPEC extern int orte_exit_status;
+
 #if ORTE_DISABLE_FULL_SUPPORT
 
 /* These types are used in interface functions that should never be
@@ -87,7 +89,14 @@ typedef uint16_t orte_mapping_policy_t;
    declared for various reasons.  So have a dummy type to keep things
    simple (and throw an error if someone does try to use them) */
 struct orte_job_t;
+struct orte_proc_t;
+struct orte_node_t;
+struct orte_app_context_t;
+
 typedef struct orte_job_t orte_job_t;
+typedef struct orte_proc_t orte_proc_t;
+typedef struct orte_node_t orte_node_t;
+typedef struct orte_app_context_t orte_app_context_t;
 
 #else
 
@@ -609,7 +618,6 @@ ORTE_DECLSPEC extern char *orte_debugger_test_daemon;
 ORTE_DECLSPEC extern bool orte_debugger_test_attach;
 
 /* exit flags */
-ORTE_DECLSPEC extern int orte_exit_status;
 ORTE_DECLSPEC extern bool orte_abnormal_term_ordered;
 ORTE_DECLSPEC extern bool orte_routing_is_enabled;
 ORTE_DECLSPEC extern bool orte_job_term_ordered;

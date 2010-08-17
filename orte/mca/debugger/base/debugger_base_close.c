@@ -18,6 +18,7 @@
 
 int orte_debugger_base_close(void)
 {
+#if !ORTE_DISABLE_FULL_SUPPORT
     if (NULL != orte_debugger.finalize) {
         orte_debugger.finalize();
     }
@@ -25,6 +26,7 @@ int orte_debugger_base_close(void)
     /* Close all remaining available components */
     mca_base_components_close(orte_debugger_base_output, 
                               &orte_debugger_base_components_available, NULL);
+#endif
     
     /* All done */
     return ORTE_SUCCESS;

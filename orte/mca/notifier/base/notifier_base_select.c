@@ -32,6 +32,8 @@
 
 #include "orte/mca/notifier/base/base.h"
 
+#if !ORTE_DISABLE_FULL_SUPPORT
+
 /* Global variables */
 /*
  * orte_notifier_base_XXX_selected is set to true if at least 1 module has
@@ -393,3 +395,5 @@ static bool orte_notifier_add_module(mca_base_component_t *component,
 
     return true;
 }
+
+#endif

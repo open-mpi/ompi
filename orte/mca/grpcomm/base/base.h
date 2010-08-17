@@ -65,8 +65,6 @@ typedef struct {
 
 ORTE_DECLSPEC extern orte_grpcomm_base_t orte_grpcomm_base;
 
-#if !ORTE_DISABLE_FULL_SUPPORT
-
 /* structure for tracking collective operations */
 typedef struct {
     opal_object_t super;
@@ -125,8 +123,6 @@ ORTE_DECLSPEC void orte_grpcomm_base_daemon_coll_recv(int status, orte_process_n
                                                       void* cbdata);
 ORTE_DECLSPEC void orte_grpcomm_base_daemon_collective(orte_process_name_t *sender,
                                                        opal_buffer_t *data);
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 #endif

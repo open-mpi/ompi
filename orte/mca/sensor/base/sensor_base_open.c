@@ -33,6 +33,8 @@
 
 #include "orte/mca/sensor/base/static-components.h"
 
+#if !ORTE_DISABLE_FULL_SUPPORT
+
 /* base functions */
 static void start(orte_jobid_t jobid);
 static void stop(orte_jobid_t jobid);
@@ -47,12 +49,15 @@ orte_sensor_base_API_module_t orte_sensor = {
 };
 opal_list_t mca_sensor_base_components_available;
 
+#endif
+
 /**
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
  */
 int orte_sensor_base_open(void)
 {
+#if !ORTE_DISABLE_FULL_SUPPORT
     /* Debugging / verbose output.  Always have stream open, with
        verbose set by the mca open system... */
     orte_sensor_base.output = opal_output_open(NULL);
@@ -69,11 +74,14 @@ int orte_sensor_base_open(void)
                                  &mca_sensor_base_components_available, true)) {
         return ORTE_ERROR;
     }
+#endif
 
     /* All done */
 
     return ORTE_SUCCESS;
 }
+
+#if !ORTE_DISABLE_FULL_SUPPORT
 
 static void start(orte_jobid_t jobid)
 {
@@ -106,3 +114,5 @@ static void stop(orte_jobid_t jobid)
     }
     return;
 }
+
+#endif
