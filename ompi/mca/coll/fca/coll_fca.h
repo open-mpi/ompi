@@ -48,9 +48,10 @@ BEGIN_C_DECLS
  */
 struct mca_coll_fca_fca_ops_t {
 
-    /* Initialization / cleanup */
+    /* FCA Context operations */
     int (*init)(fca_init_spec_t *spec, fca_t **context);
     void (*cleanup)(fca_t *context);
+    void (*progress)(fca_t *context);
 
     /* Fabric communicator creation */
     int (*comm_new)(fca_t *context, fca_comm_new_spec_t *spec, fca_comm_desc_t *comm_desc);
@@ -71,6 +72,7 @@ struct mca_coll_fca_fca_ops_t {
     int (*do_barrier)(fca_comm_t *comm);
 
     /* Helper functions */
+    unsigned long (*get_version)(void);
     int (*maddr_ib_pton)(const char *mlid_str, const char *mgid_str, fca_mcast_addr_t *dst);
     int (*maddr_inet_pton)(int af, const char *src, fca_mcast_addr_t *dst);
     fca_init_spec_t *(*parse_spec_file)(char* spec_ini_file);
