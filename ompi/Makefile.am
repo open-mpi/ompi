@@ -11,6 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+# Copyright (c) 2010      Sandia National Laboratories. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -178,4 +179,4 @@ $(dir_stamp):
 
 # Remove the generated man pages
 distclean-local:
-	rm -f $(nodist_man_MANS) $(dir_stamp)
+	rm -f $(nodist_man_MANS) $(dir_stamp) mpiext/static-components.h
