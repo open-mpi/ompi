@@ -111,7 +111,23 @@ AC_DEFUN([_OPAL_SETUP_CXX_COMPILER_BACKEND],[
         AC_CACHE_CHECK([if $CXX supports -Wno-long-double],
                    [opal_cv_cxx_wno_long_double],
                    [AC_TRY_COMPILE([], [], 
-                                   [opal_cv_cxx_wno_long_double="yes"],
+                                   [dnl Alright, the -Wno-long-double did not produce any errors...
+                                    dnl Well well, try to extract a warning regarding unrecognized or ignored options
+                                    AC_TRY_COMPILE([], [long double test;], 
+                                                   [
+                                                       opal_cv_cxx_wno_long_double="yes"
+                                                       if test -s conftest.err ; then
+                                                           dnl Yes, it should be "ignor", in order to catch ignoring and ignore
+                                                           for i in invalid ignor unrecognized ; do
+                                                               $GREP -iq $i conftest.err
+                                                               if test "$?" = "0" ; then
+                                                                   opal_cv_cxx_wno_long_double="no",
+                                                                   break;
+                                                               fi
+                                                           done
+                                                       fi
+                                                   ],
+                                                   [opal_cv_cxx_wno_long_double="no"])],
                                    [opal_cv_cxx_wno_long_double="no"])])
         CXXFLAGS="$CXXFLAGS_orig"
         AC_LANG_POP(C++)
