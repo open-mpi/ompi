@@ -133,7 +133,24 @@ AC_DEFUN([OPAL_SETUP_CC],[
         AC_CACHE_CHECK([if $CC supports -Wno-long-double],
                    [ompi_cv_cc_wno_long_double],
                    [AC_TRY_COMPILE([], [], 
-                                   [ompi_cv_cc_wno_long_double="yes"],
+                                   [
+                                    dnl Alright, the -Wno-long-double did not produce any errors...
+                                    dnl Well well, try to extract a warning regarding unrecognized or ignored options
+                                    AC_TRY_COMPILE([], [long double test;], 
+                                                   [
+                                                       ompi_cv_cc_wno_long_double="yes"
+                                                       if test -s conftest.err ; then
+                                                           dnl Yes, it should be "ignor", in order to catch ignoring and ignore
+                                                           for i in invalid ignor unrecognized ; do
+                                                               $GREP -iq $i conftest.err
+                                                               if test "$?" = "0" ; then
+                                                                   ompi_cv_cc_wno_long_double="no"
+                                                                   break;
+                                                               fi
+                                                           done
+                                                       fi
+                                                   ],
+                                                   [ompi_cv_cc_wno_long_double="no"])],
                                    [ompi_cv_cc_wno_long_double="no"])])
 
         CFLAGS="$CFLAGS_orig"
