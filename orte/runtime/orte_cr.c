@@ -257,15 +257,6 @@ static int orte_cr_coord_pre_ckpt(void) {
         }
     }
 
-    /*
-     * Record the job session directory
-     * This way we will recreate it on restart so that any components that
-     * have old references to it (like btl/sm) can reference their files
-     * (to close the fd's to them) on restart. We will remove it before we
-     * create the new session directory.
-     */
-    orte_sstore.set_attr(orte_sstore_handle_current, SSTORE_METADATA_LOCAL_MKDIR, orte_process_info.job_session_dir);
-
  cleanup:
     return exit_status;
 }

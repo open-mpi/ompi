@@ -1125,6 +1125,17 @@ int app_coord_ft_event(int state) {
     /******** Checkpoint Prep ********/
     if(OPAL_CRS_CHECKPOINT == state) {
         /*
+         * Record the job session directory
+         * This way we will recreate it on restart so that any components that
+         * have old references to it (like btl/sm) can reference their files
+         * (to close the fd's to them) on restart. We will remove it before we
+         * create the new session directory.
+         */
+        orte_sstore.set_attr(orte_sstore_handle_current,
+                             SSTORE_METADATA_LOCAL_MKDIR,
+                             orte_process_info.job_session_dir);
+
+        /*
          * If stopping then sync early
          */
         if( current_options->stop ) {
