@@ -68,12 +68,11 @@ btl_openib_cpc_include=oob
 orte_forward_job_control=1
 
 #
-# Use the C/R Error Management and Recovery Service
+# Activate the Process Migartion and Automatic Recovery services in the
+# HNP ErrMgr component.
 #
-orte_enable_recovery=1
-orte_max_global_restarts=10
-errmgr_crmig_enable=1
-errmgr_autor_enable=1
+errmgr_hnp_crmig_enable=1
+errmgr_hnp_autor_enable=1
 
 #
 # Additional constraints to be lifted in the future

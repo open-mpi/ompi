@@ -20,36 +20,16 @@
  *
  * The Open RTE Error and Recovery Manager (ErrMgr)
  *
- * This framework is a composite framework in which multiple components
- * are often active at the same time and may work on a single external call
- * to the interface functions.
+ * This framework is the logically central clearing house for process/daemon
+ * state updates. In particular when a process fails and another process detects
+ * it, then that information is reported through this framework. This framework
+ * then (depending on the active component) decides how to handle the failure.
  *
- * This framework allows the user to compose a job recovery policy from multiple
- * individual components. Each component will operate on the function call if it
- * has a registered function. If no component registers a function then the base
- * functionality/policy is used.
- *
- * For example, consider the 3 components on the left (C1, C2, C3), and the
- * API function calls across the top:
- *      | Priority | Fn1  | Fn2  | Fn3  | Fn4  |
- * -----+----------+------+------+------+------+
- * base |   ---    | act0 | ---  | ---  | act6 |
- * C1   |    10    | act1 | ---  | act2 | ---  |
- * C2   |    20    | ---  | act3 | ---  | ---  |
- * C3   |    30    | act4 | act5 | ---  | ---  |
- * -----+----------+------+------+------+------+
- * A call to Fn1 will result in:
- *   act4, act1
- * A call to Fn2 will result in:
- *   act5, act3
- * A call to Fn3 will result in:
- *   act2
- * A call to Fn4 will result in:
- *   act6
- *
- * Notice that when the base function is overridden it is not called. The base
- * function is only called when the function has not been overridden by a
- * component.
+ * For example, if a process fails this may activate an automatic recovery
+ * of the process from a previous checkpoint, or initial state. Conversely,
+ * the active component could decide not to continue the job, and request that
+ * it be terminated. The error and recovery policy is determined by individual
+ * components within this framework.
  *
  */
 
@@ -76,8 +56,6 @@
 #include "orte/mca/plm/plm_types.h"
 
 BEGIN_C_DECLS
-/* type definition */
-typedef uint8_t orte_errmgr_stack_state_t;
 
 /*
  * Structure to describe a predicted process fault.
@@ -159,12 +137,43 @@ OBJ_CLASS_DECLARATION(orte_errmgr_predicted_map_t);
         OPAL_SOS_LOG(n);                        \
     }
 
-/****   FRAMEWORK API FUNCTIONS   ****/
+
+/*
+ * Framework Interfaces
+ */
+/**
+ * Module initialization function.
+ *
+ * @retval ORTE_SUCCESS The operation completed successfully
+ * @retval ORTE_ERROR   An unspecifed error occurred
+ */
+typedef int (*orte_errmgr_base_module_init_fn_t)(void);
+
+/**
+ * Module finalization function.
+ *
+ * @retval ORTE_SUCCESS The operation completed successfully
+ * @retval ORTE_ERROR   An unspecifed error occurred
+ */
+typedef int (*orte_errmgr_base_module_finalize_fn_t)(void);
 
 /**
  * This is not part of any module so it can be used at any time!
  */
-typedef void (*orte_errmgr_base_API_log_fn_t)(int error_code, char *filename, int line);
+typedef void (*orte_errmgr_base_module_log_fn_t)(int error_code, char *filename, int line);
+
+/**
+ * Alert - self aborting
+ * This function is called when a process is aborting due to some internal error.
+ * It will finalize the process
+ * itself, and then exit - it takes no other actions. The intent here is to provide
+ * a last-ditch exit procedure that attempts to clean up a little.
+ */
+typedef int (*orte_errmgr_base_module_abort_fn_t)(int error_code, char *fmt, ...)
+#   if OPAL_HAVE_ATTRIBUTE_FORMAT_FUNCPTR
+__opal_attribute_format__(__printf__, 2, 3)
+#   endif
+;
 
 /**
  * Alert - process aborted
@@ -180,16 +189,15 @@ typedef void (*orte_errmgr_base_API_log_fn_t)(int error_code, char *filename, in
  * @retval ORTE_SUCCESS Whatever action that was taken was successful
  * @retval ORTE_ERROR Appropriate error code
  */
-typedef int (*orte_errmgr_base_API_update_state_fn_t)(orte_jobid_t job,
-                                                      orte_job_state_t jobstate,
-                                                      orte_process_name_t *proc_name,
-                                                      orte_proc_state_t state,
-                                                      pid_t pid,
-                                                      orte_exit_code_t exit_code);
+typedef int (*orte_errmgr_base_module_update_state_fn_t)(orte_jobid_t job,
+                                                         orte_job_state_t jobstate,
+                                                         orte_process_name_t *proc_name,
+                                                         orte_proc_state_t state,
+                                                         pid_t pid,
+                                                         orte_exit_code_t exit_code);
 
 /**
  * Predicted process/node failure notification
- * Composite interface. Called in priority order.
  *
  * @param[in] proc_list List of processes (or NULL if none)
  * @param[in] node_list List of nodes (or NULL if none)
@@ -198,9 +206,9 @@ typedef int (*orte_errmgr_base_API_update_state_fn_t)(orte_jobid_t job,
  * @retval ORTE_SUCCESS The operation completed successfully
  * @retval ORTE_ERROR   An unspecifed error occurred
  */
-typedef int (*orte_errmgr_base_API_predicted_fault_fn_t)(opal_list_t *proc_list,
-                                                         opal_list_t *node_list,
-                                                         opal_list_t *suggested_map);
+typedef int (*orte_errmgr_base_module_predicted_fault_fn_t)(opal_list_t *proc_list,
+                                                            opal_list_t *node_list,
+                                                            opal_list_t *suggested_map);
 
 /**
  * Suggest a node to map a restarting process onto
@@ -212,79 +220,9 @@ typedef int (*orte_errmgr_base_API_predicted_fault_fn_t)(opal_list_t *proc_list,
  * @retval ORTE_SUCCESS The operation completed successfully
  * @retval ORTE_ERROR   An unspecifed error occurred
  */
-typedef int (*orte_errmgr_base_API_suggest_map_targets_fn_t)(orte_proc_t *proc,
-                                                             orte_node_t *oldnode,
-                                                             opal_list_t *node_list);
-
-
-/**
- * Alert - self aborting
- * This function is called when a process is aborting due to some internal error.
- * It will finalize the process
- * itself, and then exit - it takes no other actions. The intent here is to provide
- * a last-ditch exit procedure that attempts to clean up a little.
- */
-typedef int (*orte_errmgr_base_API_abort_fn_t)(int error_code, char *fmt, ...)
-#   if OPAL_HAVE_ATTRIBUTE_FORMAT_FUNCPTR
-__opal_attribute_format__(__printf__, 2, 3)
-#   endif
-;
-
-/* global structure for accessing ERRMGR FRAMEWORK API's */
-typedef struct {
-    orte_errmgr_base_API_log_fn_t                   log;
-    orte_errmgr_base_API_update_state_fn_t          update_state;
-    orte_errmgr_base_API_predicted_fault_fn_t       predicted_fault;
-    orte_errmgr_base_API_suggest_map_targets_fn_t   suggest_map_targets;
-    orte_errmgr_base_API_abort_fn_t                 abort;
-    
-} orte_errmgr_API_t;
-
-ORTE_DECLSPEC extern orte_errmgr_API_t orte_errmgr;
-
-
-
-
-/****    INTERNAL MODULE FUNCTIONS    ****/
-
-/**
- * Module initialization function.
- * Public interface. Will be call in each of the active composite components
- *
- * @retval ORTE_SUCCESS The operation completed successfully
- * @retval ORTE_ERROR   An unspecifed error occurred
- */
-typedef int (*orte_errmgr_base_module_init_fn_t)
-     (void);
-
-/**
- * Module finalization function.
- * Public interface. Will be call in each of the active composite components
- *
- * @retval ORTE_SUCCESS The operation completed successfully
- * @retval ORTE_ERROR   An unspecifed error occurred
- */
-typedef int (*orte_errmgr_base_module_finalize_fn_t)
-     (void);
-
-/*
- * Internal Composite Interfaces corresponding to API interfaces
- */
-typedef int (*orte_errmgr_base_module_update_state_fn_t)(orte_jobid_t job,
-                                                         orte_job_state_t jobstate,
-                                                         orte_process_name_t *proc_name,
-                                                         orte_proc_state_t state,
-                                                         pid_t pid,
-                                                         orte_exit_code_t exit_code,
-                                                         orte_errmgr_stack_state_t *stack_state);
-typedef int (*orte_errmgr_base_module_predicted_fault_fn_t)(opal_list_t *proc_list,
-                                                            opal_list_t *node_list,
-                                                            opal_list_t *suggested_map,
-                                                            orte_errmgr_stack_state_t *stack_state);
 typedef int (*orte_errmgr_base_module_suggest_map_targets_fn_t)(orte_proc_t *proc,
                                                                 orte_node_t *oldnode,
-                                                                opal_list_t *node_list,
-                                                                orte_errmgr_stack_state_t *stack_state);
+                                                                opal_list_t *node_list);
 
 /**
  * Handle fault tolerance updates
@@ -294,8 +232,7 @@ typedef int (*orte_errmgr_base_module_suggest_map_targets_fn_t)(orte_proc_t *pro
  * @retval ORTE_SUCCESS The operation completed successfully
  * @retval ORTE_ERROR   An unspecifed error occurred
  */
-typedef int  (*orte_errmgr_base_ft_event_fn_t)(int state);
-
+typedef int  (*orte_errmgr_base_module_ft_event_fn_t)(int state);
 
 /*
  * Module Structure
@@ -306,7 +243,9 @@ struct orte_errmgr_base_module_2_3_0_t {
     /** Finalization Function */
     orte_errmgr_base_module_finalize_fn_t               finalize;
 
-    /* -------------- Internal Composite Interfaces -- */
+    orte_errmgr_base_module_log_fn_t                    log;
+    orte_errmgr_base_module_abort_fn_t                  abort;
+
     /** Actual process failure notification */
     orte_errmgr_base_module_update_state_fn_t           update_state;
     /** Predicted process/node failure notification */
@@ -315,11 +254,11 @@ struct orte_errmgr_base_module_2_3_0_t {
     orte_errmgr_base_module_suggest_map_targets_fn_t    suggest_map_targets;
 
     /** Handle any FT Notifications */
-    orte_errmgr_base_ft_event_fn_t                      ft_event;
+    orte_errmgr_base_module_ft_event_fn_t               ft_event;
 };
-
 typedef struct orte_errmgr_base_module_2_3_0_t orte_errmgr_base_module_2_3_0_t;
 typedef orte_errmgr_base_module_2_3_0_t orte_errmgr_base_module_t;
+ORTE_DECLSPEC extern orte_errmgr_base_module_t orte_errmgr;
 
 /*
  * ErrMgr Component
@@ -339,7 +278,6 @@ struct orte_errmgr_base_component_3_0_0_t {
 };
 typedef struct orte_errmgr_base_component_3_0_0_t orte_errmgr_base_component_3_0_0_t;
 typedef orte_errmgr_base_component_3_0_0_t orte_errmgr_base_component_t;
-
 
 /*
  * Macro for use in components that are of type errmgr

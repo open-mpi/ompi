@@ -42,7 +42,6 @@ BEGIN_C_DECLS
 /* define a struct to hold framework-global values */
 typedef struct {
     int output;
-    opal_pointer_array_t modules;
     bool initialized;
 } orte_errmgr_base_t;
 
@@ -61,29 +60,11 @@ typedef uint8_t orte_errmgr_cmd_flag_t;
  */
 ORTE_DECLSPEC void orte_errmgr_base_log(int error_code, char *filename, int line);
 
-ORTE_DECLSPEC int orte_errmgr_base_update_state(orte_jobid_t job,
-                                                orte_job_state_t jobstate,
-                                                orte_process_name_t *proc_name,
-                                                orte_proc_state_t state,
-                                                pid_t pid,
-                                                orte_exit_code_t exit_code);
 ORTE_DECLSPEC int orte_errmgr_base_abort(int error_code, char *fmt, ...)
 #   if OPAL_HAVE_ATTRIBUTE_FORMAT_FUNCPTR
     __opal_attribute_format__(__printf__, 2, 3)
 #   endif
     ;
-
-ORTE_DECLSPEC int orte_errmgr_base_predicted_fault(opal_list_t *proc_list,
-                                                   opal_list_t *node_list,
-                                                   opal_list_t *suggested_map);
-ORTE_DECLSPEC int orte_errmgr_base_suggest_map_targets(orte_proc_t *proc,
-                                                       orte_node_t *oldnode,
-                                                       opal_list_t *node_list);
-ORTE_DECLSPEC int orte_errmgr_base_ft_event(int state);
-
-/*
- * Additional External API function declared in errmgr.h
- */
 
 END_C_DECLS
 #endif

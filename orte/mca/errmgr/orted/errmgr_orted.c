@@ -64,21 +64,18 @@ static int finalize(void);
 
 static int predicted_fault(opal_list_t *proc_list,
                            opal_list_t *node_list,
-                           opal_list_t *suggested_map,
-                           orte_errmgr_stack_state_t *stack_state);
+                           opal_list_t *suggested_map);
 
 static int update_state(orte_jobid_t job,
                         orte_job_state_t jobstate,
                         orte_process_name_t *proc,
                         orte_proc_state_t state,
                         pid_t pid,
-                        orte_exit_code_t exit_code,
-                        orte_errmgr_stack_state_t *stack_state);
+                        orte_exit_code_t exit_code);
 
 static int suggest_map_targets(orte_proc_t *proc,
                                orte_node_t *oldnode,
-                               opal_list_t *node_list,
-                               orte_errmgr_stack_state_t *stack_state);
+                               opal_list_t *node_list);
 
 static int ft_event(int state);
 
@@ -90,6 +87,8 @@ static int ft_event(int state);
 orte_errmgr_base_module_t orte_errmgr_orted_module = {
     init,
     finalize,
+    orte_errmgr_base_log,
+    orte_errmgr_base_abort,
     update_state,
     predicted_fault,
     suggest_map_targets,
@@ -114,8 +113,7 @@ static int update_state(orte_jobid_t job,
                         orte_process_name_t *proc,
                         orte_proc_state_t state,
                         pid_t pid,
-                        orte_exit_code_t exit_code,
-                        orte_errmgr_stack_state_t *stack_state)
+                        orte_exit_code_t exit_code)
 {
     opal_list_item_t *item, *next;
     orte_odls_job_t *jobdat = NULL;
@@ -125,9 +123,6 @@ static int update_state(orte_jobid_t job,
     int rc=ORTE_SUCCESS;
     orte_vpid_t null=ORTE_VPID_INVALID;
     orte_app_context_t *app;
-    
-    /* indicate that this is the end of the line */
-    *stack_state |= ORTE_ERRMGR_STACK_STATE_COMPLETE;
     
     /*
      * if orte is trying to shutdown, just let it
@@ -315,8 +310,7 @@ static int update_state(orte_jobid_t job,
                     killprocs(proc->jobid, proc->vpid);
                 }
                 app = jobdat->apps[child->app_idx];
-                if (!(ORTE_ERRMGR_STACK_STATE_RECOVERED & (*stack_state)) &&
-                    jobdat->enable_recovery && child->restarts < app->max_local_restarts) {
+                if( jobdat->enable_recovery && child->restarts < app->max_local_restarts ) {
                     child->restarts++;
                     OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
                                          "%s errmgr:orted restarting proc %s for the %d time",
@@ -330,7 +324,7 @@ static int update_state(orte_jobid_t job,
     }
     
     if (ORTE_PROC_STATE_TERMINATED < state) {
-        if (!(ORTE_ERRMGR_STACK_STATE_RECOVERED & (*stack_state)) && jobdat->enable_recovery) {
+        if( jobdat->enable_recovery ) {
             OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
                                  "%s RECOVERY ENABLED",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -581,16 +575,14 @@ static int update_state(orte_jobid_t job,
 
 static int predicted_fault(opal_list_t *proc_list,
                            opal_list_t *node_list,
-                           opal_list_t *suggested_map,
-                           orte_errmgr_stack_state_t *stack_state)
+                           opal_list_t *suggested_map)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
 
 static int suggest_map_targets(orte_proc_t *proc,
                                orte_node_t *oldnode,
-                               opal_list_t *node_list,
-                               orte_errmgr_stack_state_t *stack_state)
+                               opal_list_t *node_list)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
@@ -600,9 +592,9 @@ int ft_event(int state)
     return ORTE_SUCCESS;
 }
 
-    /*****************
-     * Local Functions
-     *****************/
+/*****************
+ * Local Functions
+ *****************/
 static bool any_live_children(orte_jobid_t job)
 {
     opal_list_item_t *item;
