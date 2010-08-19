@@ -14,7 +14,9 @@ dist_pkgdata_DATA = help-orte-errmgr-hnp.txt
 sources = \
         errmgr_hnp.h \
         errmgr_hnp_component.c \
-        errmgr_hnp.c
+        errmgr_hnp.c \
+        errmgr_hnp_autor.c \
+        errmgr_hnp_crmig.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

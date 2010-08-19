@@ -44,18 +44,14 @@ ORTE_DECLSPEC    int orte_errmgr_base_select(void);
 ORTE_DECLSPEC    int orte_errmgr_base_close(void);
 
 /**
- * Composite Stack states
- */
-#define ORTE_ERRMGR_STACK_STATE_NONE       0x00 /* No actions have been performed */
-#define ORTE_ERRMGR_STACK_STATE_UPDATED    0x01 /* Updated the runtime */
-#define ORTE_ERRMGR_STACK_STATE_CONTINUE   0x02 /* Continue running without this process */
-#define ORTE_ERRMGR_STACK_STATE_RECOVERED  0x04 /* Process has been recovered */
-#define ORTE_ERRMGR_STACK_STATE_JOB_ABORT  0x08 /* Abort this job, cannot recover */
-#define ORTE_ERRMGR_STACK_STATE_COMPLETE   0x10 /* done processing this command */
-/**
  * Output and component variables
  */
 ORTE_DECLSPEC extern opal_list_t orte_errmgr_base_components_available;
+
+/**
+ * Internal module reference
+ */
+ORTE_DECLSPEC extern orte_errmgr_base_component_t orte_errmgr_base_selected_component;
 
 /**
  * Interfaces for orte-migrate tool
@@ -100,7 +96,7 @@ ORTE_DECLSPEC int orte_errmgr_base_update_app_context_for_cr_recovery(orte_job_t
 ORTE_DECLSPEC int orte_errmgr_base_restart_job(orte_jobid_t jobid, char * global_handle, int seq_num);
 ORTE_DECLSPEC int orte_errmgr_base_migrate_job(orte_jobid_t jobid, orte_snapc_base_request_op_t *datum);
 
-#endif
+#endif /* OPAL_ENABLE_FT_CR */
 
 /*
  * Additional External API function declared in errmgr.h

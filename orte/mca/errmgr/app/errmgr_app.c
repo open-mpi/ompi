@@ -43,8 +43,7 @@ static int update_state(orte_jobid_t job,
                         orte_process_name_t *proc_name,
                         orte_proc_state_t state,
                         pid_t pid,
-                        orte_exit_code_t exit_code,
-                        orte_errmgr_stack_state_t *stack_state);
+                        orte_exit_code_t exit_code);
 
 /******************
  * HNP module
@@ -52,6 +51,8 @@ static int update_state(orte_jobid_t job,
 orte_errmgr_base_module_t orte_errmgr_app_module = {
     init,
     finalize,
+    orte_errmgr_base_log,
+    orte_errmgr_base_abort,
     update_state,
     NULL,
     NULL,
@@ -76,12 +77,8 @@ static int update_state(orte_jobid_t job,
                         orte_process_name_t *proc,
                         orte_proc_state_t state,
                         pid_t pid,
-                        orte_exit_code_t exit_code,
-                        orte_errmgr_stack_state_t *stack_state)
+                        orte_exit_code_t exit_code)
 {
-    /* indicate that this is the end of the line */
-    *stack_state |= ORTE_ERRMGR_STACK_STATE_COMPLETE;
-    
     OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base.output,
                          "%s errmgr:app: job %s reported state %s"
                          " for proc %s state %s exit_code %d",

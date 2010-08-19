@@ -52,13 +52,18 @@ opal_list_t orte_errmgr_base_components_available;
 
 orte_errmgr_base_t orte_errmgr_base;
 
+orte_errmgr_base_component_t orte_errmgr_base_selected_component;
+
 /* Public module provides a wrapper around previous functions */
-orte_errmgr_API_t orte_errmgr = {
+orte_errmgr_base_module_t orte_errmgr = {
+    NULL, /* init     */
+    NULL, /* finalize */
     orte_errmgr_base_log,
-    orte_errmgr_base_update_state,
-    orte_errmgr_base_predicted_fault,
-    orte_errmgr_base_suggest_map_targets,
-    orte_errmgr_base_abort
+    orte_errmgr_base_abort,
+    NULL, /* update_state        */
+    NULL, /* predicted_fault     */
+    NULL, /* suggest_map_targets */
+    NULL  /* ft_event            */
 };
 
 /**
@@ -74,9 +79,6 @@ int orte_errmgr_base_open(void)
         return ORTE_SUCCESS;
     }
 
-    OBJ_CONSTRUCT(&orte_errmgr_base.modules, opal_pointer_array_t);
-    opal_pointer_array_init(&orte_errmgr_base.modules, 3, INT_MAX, 1);
-    
     orte_errmgr_base.output = opal_output_open(NULL);
 
     /*

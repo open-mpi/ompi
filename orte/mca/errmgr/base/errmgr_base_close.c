@@ -32,29 +32,24 @@
 
 int orte_errmgr_base_close(void)
 {
-    orte_errmgr_base_module_t *module = NULL;
-    int i;
-
     OPAL_TRACE(5);
 
-    /* Close all selected components */
-    for(i = 0; i < orte_errmgr_base.modules.size; ++i) {
-        module = (orte_errmgr_base_module_t*)opal_pointer_array_get_item(&orte_errmgr_base.modules, i);
-        if( NULL == module ) {
-            continue;
-        }
-        if( NULL != module->finalize ) {
-            module->finalize();
-        }
+    /* if not initialized, then skip this action. */
+    if( !orte_errmgr_base.initialized ) {
+        return ORTE_SUCCESS;
+    }
+
+    /* Close selected component */
+    if( NULL != orte_errmgr.finalize ) {
+        orte_errmgr.finalize();
     }
 
     /* Close all remaining available components (may be one if this is a
-        OMPI RTE program, or [possibly] multiple if this is ompi_info) */
+     * OMPI RTE program, or [possibly] multiple if this is ompi_info)
+     */
     mca_base_components_close(orte_errmgr_base.output, 
                               &orte_errmgr_base_components_available,
                               NULL);
-
-    OBJ_DESTRUCT(&orte_errmgr_base.modules);
 
     orte_errmgr_base.initialized = false;
     

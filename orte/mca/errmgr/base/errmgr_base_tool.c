@@ -455,7 +455,7 @@ static void errmgr_base_tool_cmdline_process_recv(int fd, short event, void *cbd
         /*
          * Pass to the predicted fault function to see how they would like to progress
          */
-        orte_errmgr_base_predicted_fault(proc_list, node_list, suggested_map_list);
+        orte_errmgr.predicted_fault(proc_list, node_list, suggested_map_list);
     }
     /*
      * Unknown command

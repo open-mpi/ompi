@@ -189,47 +189,6 @@ void orte_errmgr_base_log(int error_code, char *filename, int line)
                 ORTE_ERROR_NAME(error_code), filename, line);
 }
 
-int orte_errmgr_base_update_state(orte_jobid_t job,
-                                  orte_job_state_t jobstate,
-                                  orte_process_name_t *name,
-                                  orte_proc_state_t state,
-                                  pid_t pid,
-                                  orte_exit_code_t exit_code)
-{
-    int rc=ORTE_SUCCESS;
-    int i;
-    orte_errmgr_stack_state_t stack_state;
-    orte_errmgr_base_module_t *module;
-    
-    OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output,
-                         "errmgr:base:update_state() %s) "
-                         "------- %s state updated for process %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (NULL == name) ? "App. Process" : (name->jobid == ORTE_PROC_MY_HNP->jobid ? "Daemon" : "App. Process"),
-                         (NULL == name) ? "NULL" : ORTE_NAME_PRINT(name)));
-    
-    stack_state  = ORTE_ERRMGR_STACK_STATE_NONE;
-    stack_state |= ORTE_ERRMGR_STACK_STATE_JOB_ABORT;
-    
-    /********************************
-     * Call the active modules
-     ********************************/
-    for (i = 0; i < orte_errmgr_base.modules.size; ++i) {
-        module = (orte_errmgr_base_module_t*)opal_pointer_array_get_item(&orte_errmgr_base.modules, i);
-        if( NULL == module ) {
-            continue;
-        }
-        if( NULL != module->update_state ) {
-            rc = module->update_state(job, jobstate, name, state, pid, exit_code, &stack_state);
-            if (ORTE_SUCCESS != rc || ORTE_ERRMGR_STACK_STATE_COMPLETE & stack_state) {
-                break;
-            }
-        }
-    }
-    
-    return rc;
-}
-
 int orte_errmgr_base_abort(int error_code, char *fmt, ...)
 {
     va_list arglist;
@@ -260,90 +219,6 @@ int orte_errmgr_base_abort(int error_code, char *fmt, ...)
         orte_ess.abort(error_code, false);
     } else {
         orte_ess.abort(error_code, true);
-    }
-
-    return ORTE_SUCCESS;
-}
-
-int orte_errmgr_base_predicted_fault(opal_list_t *proc_list,
-                                     opal_list_t *node_list,
-                                     opal_list_t *suggested_map)
-{
-    orte_errmgr_base_module_t *module = NULL;
-    int i, rc;
-    orte_errmgr_stack_state_t stack_state = ORTE_ERRMGR_STACK_STATE_NONE;
-
-    OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output,
-                         "errmgr:base:predicted_fault() %s) "
-                         "------- Notifying components... (%3d active components)",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         orte_errmgr_base.modules.size));
-
-    for(i = 0; i < orte_errmgr_base.modules.size; ++i) {
-        module = (orte_errmgr_base_module_t*)opal_pointer_array_get_item(&orte_errmgr_base.modules, i);
-        if( NULL == module ) {
-            continue;
-        }
-        if( NULL != module->predicted_fault ) {
-            rc = module->predicted_fault(proc_list, node_list, suggested_map, &stack_state);
-            if (ORTE_SUCCESS != rc || ORTE_ERRMGR_STACK_STATE_COMPLETE & stack_state) {
-                break;
-            }
-        }
-    }
-
-    return ORTE_SUCCESS;
-}
-
-int orte_errmgr_base_suggest_map_targets(orte_proc_t *proc,
-                                         orte_node_t *oldnode,
-                                         opal_list_t *node_list)
-{
-    orte_errmgr_base_module_t *module = NULL;
-    int i, rc;
-    orte_errmgr_stack_state_t stack_state = ORTE_ERRMGR_STACK_STATE_NONE;
-
-    OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output,
-                         "errmgr:base:suggest_map_targets() %s) "
-                         "------- Notifying components... (%3d active components)",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         orte_errmgr_base.modules.size));
-
-    for(i = 0; i < orte_errmgr_base.modules.size; ++i) {
-        module = (orte_errmgr_base_module_t*)opal_pointer_array_get_item(&orte_errmgr_base.modules, i);
-        if( NULL == module ) {
-            continue;
-        }
-        if( NULL != module->suggest_map_targets ) {
-            rc = module->suggest_map_targets(proc, oldnode, node_list, &stack_state);
-            if (ORTE_SUCCESS != rc || ORTE_ERRMGR_STACK_STATE_COMPLETE & stack_state) {
-                break;
-            }
-        }
-    }
-
-    return ORTE_SUCCESS;
-}
-
-int orte_errmgr_base_ft_event(int state)
-{
-    orte_errmgr_base_module_t *module = NULL;
-    int i;
-
-    OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output,
-                         "errmgr:base:ft_event() %s) "
-                         "------- Notifying components... (%3d active components)",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         orte_errmgr_base.modules.size));
-
-    for(i = 0; i < orte_errmgr_base.modules.size; ++i) {
-        module = (orte_errmgr_base_module_t*)opal_pointer_array_get_item(&orte_errmgr_base.modules, i);
-        if( NULL == module ) {
-            continue;
-        }
-        if( NULL != module->ft_event ) {
-            module->ft_event(state);
-        }
     }
 
     return ORTE_SUCCESS;
@@ -619,9 +494,9 @@ int orte_errmgr_base_restart_job(orte_jobid_t jobid, char * global_handle, int s
     orte_snapc_base_has_recovered = false;
     loc_proc.jobid = jobid;
     loc_proc.vpid  = 0;
-    orte_errmgr_base_update_state(jobid, ORTE_JOB_STATE_RESTART,
-                                  &loc_proc, ORTE_PROC_STATE_KILLED_BY_CMD,
-                                  0, 0);
+    orte_errmgr.update_state(jobid, ORTE_JOB_STATE_RESTART,
+                             &loc_proc, ORTE_PROC_STATE_KILLED_BY_CMD,
+                             0, 0);
     while( !orte_snapc_base_has_recovered ) {
         opal_progress();
     }
@@ -678,7 +553,7 @@ int orte_errmgr_base_migrate_job(orte_jobid_t jobid, orte_snapc_base_request_op_
         opal_list_append(suggested_map_list, &(onto_map->super));
     }
 
-    if( ORTE_SUCCESS != (ret = orte_errmgr_base_predicted_fault(proc_list, node_list, suggested_map_list)) ) {
+    if( ORTE_SUCCESS != (ret = orte_errmgr.predicted_fault(proc_list, node_list, suggested_map_list)) ) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
