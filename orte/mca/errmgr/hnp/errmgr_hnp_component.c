@@ -133,7 +133,7 @@ static int orte_errmgr_hnp_open(void)
     mca_errmgr_hnp_component.autor_enabled = OPAL_INT_TO_BOOL(val);
 
     mca_base_param_reg_int(&mca_errmgr_hnp_component.super.base_version,
-                           "recovery_delay",
+                           "autor_recovery_delay",
                            "Number of seconds to wait before starting to recover the job after a failure"
                            " [Default: 1 sec]",
                            false, false,
@@ -141,7 +141,7 @@ static int orte_errmgr_hnp_open(void)
     mca_errmgr_hnp_component.autor_recovery_delay = val;
 
     mca_base_param_reg_int(&mca_errmgr_hnp_component.super.base_version,
-                           "skip_oldnode",
+                           "autor_skip_oldnode",
                            "Skip the old node from failed proc, even if it is still available"
                            " [Default: Enabled]",
                            false, false,
