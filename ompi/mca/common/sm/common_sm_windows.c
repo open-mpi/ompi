@@ -79,8 +79,8 @@ mca_common_sm_windows_component_query(void)
 }
 
 mca_common_sm_module_t * 
-mca_common_sm_windows_init(ompi_proc_t **procs,
-                        size_t num_procs,
+mca_common_sm_windows_init(ompi_proc_t **sorted_procs,
+                        size_t num_local_procs,
                         size_t size, char *file_name,
                         size_t size_ctl_structure,
                         size_t data_seg_alignment)
@@ -195,44 +195,6 @@ mca_common_sm_windows_init(ompi_proc_t **procs,
     if( NULL != hMapObject ) CloseHandle(hMapObject);
 
     return NULL;
-}
-
-/*
- * Same as mca_common_sm_windows_init(), but takes an (ompi_group_t*)
- * argument instead of na array of ompi_proc_t's.
- *
- * This function just checks the group to ensure that all the procs
- * are local, and if they are, calls mca_common_sm_windows_init().
- */
-mca_common_sm_module_t * 
-mca_common_sm_windows_init_group(ompi_group_t *group,
-                              size_t size, 
-                              char *file_name,
-                              size_t size_ctl_structure, 
-                              size_t data_seg_alignment)
-{
-    size_t i, group_size;
-    ompi_proc_t *proc, **procs;
-    mca_common_sm_module_t *ret;
-
-    group_size = ompi_group_size(group);
-    procs = (ompi_proc_t**) malloc(sizeof(ompi_proc_t*) * group_size);
-    if (NULL == procs) {
-        return NULL;
-    }
-    for (i = 0; i < group_size; ++i) {
-        proc = ompi_group_peer_lookup(group,i);
-        if (!OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags)) {
-            free(procs);
-            return NULL;
-        }
-        procs[i] = proc;
-    }
-
-    ret = mca_common_sm_windows_init(procs, group_size, size, file_name,
-                                  size_ctl_structure, data_seg_alignment);
-    free(procs);
-    return ret;
 }
 
 int 
