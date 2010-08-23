@@ -181,7 +181,7 @@ OPAL_WITH_OPTION_MIN_MAX_VALUE(port_name 1024 255 2048)
 
 OPAL_WITH_OPTION_MIN_MAX_VALUE(datarep_string 128 64 256)
 
-OMPI_DEF_CACHE_VAR(OMPI_EXT_COMPONENTS Example STRING "Specify user defined MPI Extended Interface Components. (not implemented on Windows)" 1 1)
+OMPI_DEF_CACHE_VAR(OMPI_MPIEXT_COMPONENTS none STRING "Specify user defined MPI Extended Interface Components." 1 1)
 
 OMPI_DEF_OPT(MCA_mtl_DIRECT_CALL "Whether mtl should use direct calls instead of components." OFF)
 
