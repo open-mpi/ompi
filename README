@@ -941,9 +941,13 @@ for a full list); a summary of the more commonly used ones follows:
   --disable-<name> form; this form may be slightly more compact if
   disabling multiple packages.
 
---enable-sysv
-  Enable System V (sysv) shared memory support.  By default, System V
-  shared memory support is disabled.
+--disable-sysv
+  Disable System V (sysv) shared memory support.  By default, System V
+  shared memory support is enabled.
+
+--disable-posix-shmem
+  Disable POSIX shared memory support.  By default, POSIX shared memory support
+  is enabled.
 
 --with-wrapper-cflags=<cflags>
 --with-wrapper-cxxflags=<cxxflags>

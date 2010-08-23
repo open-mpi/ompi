@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      Los Alamos National Security, LLC.
 #                         All rights reserved.
 # $COPYRIGHT$
@@ -23,51 +23,64 @@
 # MCA_common_sm_POST_CONFIG([should_build])
 # ------------------------------------------
 AC_DEFUN([MCA_common_sm_POST_CONFIG], [
-    AM_CONDITIONAL([MCA_common_sm_windows],
-                   [test $1 -eq 1 -a "x$MCA_common_sm_windows" = "x1"])
-    AM_CONDITIONAL([MCA_common_sm_sysv],
-                   [test $1 -eq 1 -a "x$MCA_common_sm_sysv" = "x1"])
+    AM_CONDITIONAL([COMMON_SM_BUILD_WINDOWS],
+                   [test $1 -eq 1 -a "x$common_sm_build_windows" = "x1"])
+    AM_CONDITIONAL([COMMON_SM_BUILD_SYSV],
+                   [test $1 -eq 1 -a "x$common_sm_build_sysv" = "x1"])
+    AM_CONDITIONAL([COMMON_SM_BUILD_POSIX],
+                   [test $1 -eq 1 -a "x$common_sm_build_posix" = "x1"])
 ])dnl
 
 # MCA_common_sm_CONFIG([action-if-can-compile],
 #                      [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([MCA_common_sm_CONFIG], [
-    OMPI_VAR_SCOPE_PUSH([MCA_common_sm_windows MCA_common_sm_sysv])
-
     # Are we building on Windows?
     AC_CHECK_FUNC(CreateFileMapping, 
-                  [MCA_common_sm_windows=1],
-                  [MCA_common_sm_windows=0])
-    AC_DEFINE_UNQUOTED([MCA_COMMON_SM_WINDOWS], 
-                       [$MCA_common_sm_windows],
+                  [common_sm_build_windows=1],
+                  [common_sm_build_windows=0])
+    AC_DEFINE_UNQUOTED([MCA_COMMON_SM_WINDOWS],
+                       [$common_sm_build_windows],
                        [Whether we have shared memory support for Windows or not])
 
-    # do we have sysv shared memory support on this system?
-    AC_CHECK_FUNC(shmget,
-                  [ompi_check_sysv_happy="yes"],
-                  [ompi_check_sysv_happy="no"])
-
     # do we want to enable System V shared memory support?
-    AC_MSG_CHECKING([if want sysv support])
+    AC_MSG_CHECKING([if want sysv shared memory support])
     AC_ARG_ENABLE(sysv,
-        AC_HELP_STRING([--enable-sysv],
-                       [enable sysv shared memory support (default: disabled)]))
-    if test "$enable_sysv" = "yes"; then
-        if test "$ompi_check_sysv_happy" = "yes"; then
-            AC_MSG_RESULT([yes])
-            MCA_common_sm_sysv=1
-        else
-            MCA_common_sm_sysv=0
-            AC_MSG_ERROR([sysv support requested but not found. aborting])
-        fi
-    else
-        AC_MSG_RESULT([no])
-        MCA_common_sm_sysv=0
-    fi
+        AC_HELP_STRING([--disable-sysv],
+                       [disable sysv shared memory support (default: enabled)]))
+    AS_IF([test "$enable_sysv" = "no"],
+          [AC_MSG_RESULT([no])
+           common_sm_build_sysv=0],
+          [AC_MSG_RESULT([yes])
+           AC_CHECK_FUNC(shmget,
+                  [common_sm_build_sysv=1],
+                  [common_sm_build_sysv=0])])
+    AS_IF([test "$enable_sysv" = "yes" -a "$common_sm_build_sysv" = "0"],
+          [AC_MSG_WARN([System V shared memory support requested but not found])
+           AC_MSG_ERROR([Cannot continue])])
+
     AC_DEFINE_UNQUOTED([MCA_COMMON_SM_SYSV],
-                       [$MCA_common_sm_sysv],
+                       [$common_sm_build_sysv],
                        [Whether we have shared memory support for SYSV or not])
 
+    # do we have the posix shm stuff?
+    AC_MSG_CHECKING([if want POSIX shared memory support])
+    AC_ARG_ENABLE(posix-shmem,
+        AC_HELP_STRING([--disable-posix-shmem],
+                       [disable posix shared memory support (default: enabled)]))
+    AS_IF([test "$enable_posix_shmem" = "no"],
+          [AC_MSG_RESULT([no])
+           common_sm_build_posix=0],
+          [AC_MSG_RESULT([yes])
+           AC_SEARCH_LIBS([shm_open], [rt],
+                  [common_sm_build_posix=1],
+                  [common_sm_build_posix=0])])
+    AS_IF([test "$enable_posix_shmem" = "yes" -a "$common_sm_build_posix" = "0"],
+          [AC_MSG_WARN([POSIX shared memory support requested but not found])
+           AC_MSG_ERROR([Cannot continue])])
+
+    AC_DEFINE_UNQUOTED([MCA_COMMON_SM_POSIX],
+                       [$common_sm_build_posix],
+                       [Whether we have shared memory support for POSIX or not])
 ])dnl
 

@@ -69,6 +69,6 @@ the MCA parameter "orte_no_session_dir".
 WARNING: "%s" not recognized - ignoring option.  Suppressing additional 
 unrecognized option warnings.
 #
-[sysv rt test fail]
+[sm rt test fail]
 WARNING: It appears as if your system does not provide the run-time behavior
-that we rely on to safely provide System V shared memory support.
+that we rely on to safely provide %s shared memory support.

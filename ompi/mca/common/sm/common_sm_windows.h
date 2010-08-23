@@ -49,13 +49,15 @@ OBJ_CLASS_DECLARATION(mca_common_sm_module_windows_t);
  *  exist before any of the current set of processes try and open
  *  it.
  *
- *  @param procs - array of (ompi_proc_t*)'s to create this shared
- *  memory segment for.  This array must be writable; it may be edited
- *  (in undefined ways) if the array contains procs that are not on
- *  this host.  It is assumed that the caller will simply free this
- *  array upon return.  (INOUT)
+ * @param sorted_procs - array of (ompi_proc_t *)'s to create this shared memory
+ *                       segment for. this routine, unlike the top-level
+ *                       mca_common_sm_init routine, assumes that sorted_procs
+ *                       is in the following state: all the local procs at the
+ *                       beginning; sorted_procs[0] is the lowest named process.
+ *                       (IN)
  *
- *  @param num_procs - length of the procs array (IN)
+ * @param num_local_procs - number of local procs contained within
+ *                          sorted_procs (IN)
  *
  *  @param size - size of the file, in bytes (IN)
  *
@@ -75,39 +77,20 @@ OBJ_CLASS_DECLARATION(mca_common_sm_module_windows_t);
  *  @return value pointer to control structure at head of file.
  */
 OMPI_DECLSPEC extern mca_common_sm_module_t *
-mca_common_sm_windows_init(ompi_proc_t **procs,
-                        size_t num_procs,
-                        size_t size, 
-                        char *file_name,
-                        size_t size_ctl_structure, 
-                        size_t data_seg_alignment);
-
-/**
- *  This routine is used to set up a shared memory file, backed
- *  by a specified file.  It is assumed that the file does not
- *  exist before any of the current set of processes try and open
- *  it.
- *
- * This routine is the same as mca_common_sm_windows_init() except that
- * it takes an (ompi_group_t*) parameter to specify the peers rather
- * than an array of procs.  Unlike mca_common_sm_windows_init(), the
- * group must contain *only* local peers, or this function will return
- * NULL and not create any shared memory segment.
- */
-OMPI_DECLSPEC extern mca_common_sm_module_t * 
-mca_common_sm_windows_init_group(ompi_group_t *group,
-                              size_t size, 
-                              char *file_name,
-                              size_t size_ctl_structure, 
-                              size_t data_seg_alignment);
+mca_common_sm_windows_init(ompi_proc_t **sorted_procs,
+                           size_t num_local_procs,
+                           size_t size, 
+                           char *file_name,
+                           size_t size_ctl_structure, 
+                           size_t data_seg_alignment);
 
 /*
  * Callback from the sm mpool
  */
 OMPI_DECLSPEC extern void *
 mca_common_sm_windows_seg_alloc(struct mca_mpool_base_module_t *mpool, 
-                             size_t *size, 
-                             mca_mpool_base_registration_t **registration);
+                                size_t *size, 
+                                mca_mpool_base_registration_t **registration);
 
 /**
  * This function will release all local resources attached to the

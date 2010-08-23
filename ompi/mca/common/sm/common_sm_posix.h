@@ -19,8 +19,8 @@
  * $HEADER$
  */
 
-#ifndef _COMMON_SM_MMAP_H_
-#define _COMMON_SM_MMAP_H_
+#ifndef _COMMON_SM_POSIX_H_
+#define _COMMON_SM_POSIX_H_
 
 #include "ompi_config.h"
 
@@ -35,18 +35,15 @@ BEGIN_C_DECLS
 
 struct mca_mpool_base_module_t;
 
-typedef struct mca_common_sm_module_mmap_t
+typedef struct mca_common_sm_module_posix_t
 {
     mca_common_sm_module_t super;
-} mca_common_sm_module_mmap_t;
+} mca_common_sm_module_posix_t;
 
-OBJ_CLASS_DECLARATION(mca_common_sm_module_mmap_t);
+OBJ_CLASS_DECLARATION(mca_common_sm_module_posix_t);
 
 /**
- *  This routine is used to set up a shared memory file, backed
- *  by a specified file.  It is assumed that the file does not
- *  exist before any of the current set of processes try and open
- *  it.
+ * This routine is used to set up a POSIX shared memory object.
  *
  * @param sorted_procs - array of (ompi_proc_t *)'s to create this shared memory
  *                       segment for. this routine, unlike the top-level
@@ -55,62 +52,62 @@ OBJ_CLASS_DECLARATION(mca_common_sm_module_mmap_t);
  *                       beginning; sorted_procs[0] is the lowest named process.
  *                       (IN)
  *
- * @param num_loc_procs - number of local procs contained within sorted_procs 
- *                        (IN)
+ * @param num_local_procs - number of local procs contained within
+ *                          sorted_procs (IN)
  *
- *  @param size - size of the file, in bytes (IN)
+ * @param size - size of the shared memory segment, in bytes (IN)
  *
- *  @param file_name  name of file to be opened. (IN)
+ * @param file_name - strictly used for RML message identification/queueing (IN)
  *
- *  @param size_ctl_structure  size of the control structure at
- *                             the head of the file. The control structure
- *                             is assumed to have mca_common_sm_seg_header_t
- *                             as its first segment (IN)
+ * @param size_ctl_structure  size of the control structure at
+ *                            the head of the file. The control structure
+ *                            is assumed to have mca_common_sm_seg_header_t
+ *                            as its first segment (IN)
  *
- *  @param data_set_alignment  alignment of the data segment.  this
- *                             follows the control structure.  If this
- *                             value if 0, then assume that there will
- *                             be no data segment following the control
- *                             structure. (IN)
+ * @param data_set_alignment  alignment of the data segment.  this
+ *                            follows the control structure.  If this
+ *                            value if 0, then assume that there will
+ *                            be no data segment following the control
+ *                            structure. (IN)
  *
- *  @return value pointer to control structure at head of file.
+ * @return value pointer to control structure at head of file.
  */
 OMPI_DECLSPEC extern mca_common_sm_module_t *
-mca_common_sm_mmap_init(ompi_proc_t **sorted_procs,
-                        size_t num_loc_procs,
-                        size_t size,
-                        char *file_name,
-                        size_t size_ctl_structure,
-                        size_t data_seg_alignment);
+mca_common_sm_posix_init(ompi_proc_t **sorted_procs,
+                         size_t num_local_procs,
+                         size_t size,
+                         char *file_name,
+                         size_t size_ctl_structure,
+                         size_t data_seg_alignment);
 
-/*
+/**
  * Callback from the sm mpool
  */
 OMPI_DECLSPEC extern void *
-mca_common_sm_mmap_seg_alloc(struct mca_mpool_base_module_t *mpool,
+mca_common_sm_posix_seg_alloc(struct mca_mpool_base_module_t *mpool,
                              size_t *size,
                              mca_mpool_base_registration_t **registration);
 
 /**
  * This function will release all local resources attached to the
- * mmapped file. We assume that the operating system will destroy the
- * file when the last process release it.
+ * shared memory segment.
  *
- * @param sm_mmap - the control structure at head of file.
+ * @param mca_common_sm_module - the control structure at head of the segment.
  *
  * @returnvalue 0 if everything was OK, otherwise a negative value.
  */
 
 OMPI_DECLSPEC extern int
-mca_common_sm_mmap_fini(mca_common_sm_module_t *mca_common_sm_module);
+mca_common_sm_posix_fini(mca_common_sm_module_t *mca_common_sm_module);
 
 /**
  * component query routine
  */
+
 OMPI_DECLSPEC extern int
-mca_common_sm_mmap_component_query(void);
+mca_common_sm_posix_component_query(void);
 
 END_C_DECLS
 
-#endif
+#endif /* _COMMON_SM_POSIX_H_ */
 

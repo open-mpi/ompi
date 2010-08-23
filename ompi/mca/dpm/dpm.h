@@ -53,6 +53,8 @@ BEGIN_C_DECLS
 
 /* support for shared memory collectives */
 #define OMPI_RML_TAG_COLL_SM2_BACK_FILE_CREATED     OMPI_RML_TAG_BASE+9
+/* common sm component query result index */
+#define OMPI_RML_TAG_COMMON_SM_COMP_INDEX           OMPI_RML_TAG_BASE+10
 
 #define OMPI_RML_TAG_DYNAMIC                        OMPI_RML_TAG_BASE+200
 
