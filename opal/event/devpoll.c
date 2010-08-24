@@ -192,12 +192,12 @@ devpoll_recalc(struct event_base *base, void *arg, int max)
 {
 	struct devpollop *devpollop = arg;
 
-	if (max > devpollop->nfds) {
+	if (max >= devpollop->nfds) {
 		struct evdevpoll *fds;
 		int nfds;
 
 		nfds = devpollop->nfds;
-		while (nfds < max)
+		while (nfds <= max)
 			nfds <<= 1;
 
 		fds = realloc(devpollop->fds, nfds * sizeof(struct evdevpoll));
