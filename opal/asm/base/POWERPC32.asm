@@ -159,7 +159,7 @@ START_FUNC(opal_sys_timer_get_cycles)
 	mftb r11
 	mftbu r2
 	cmpw cr7,r2,r0
-	bne+ cr7,REFLSYM(14)
+	bne+ cr7,REFLSYM(15)
 	li r4,0
 	li r9,0
 	or r3,r2,r9
