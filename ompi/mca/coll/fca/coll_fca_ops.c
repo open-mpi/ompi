@@ -61,7 +61,6 @@ static mca_coll_fca_op_info_t *mca_coll_fca_get_op(ompi_op_t *op)
 {
     mca_coll_fca_op_info_t *op_info;
     int i, fca_op;
-    //char opname[MPI_MAX_OBJECT_NAME + 1];
 
     /*
      * Find 'op' in the array by exhaustive search. We assume all valid ops are
@@ -73,7 +72,6 @@ static mca_coll_fca_op_info_t *mca_coll_fca_get_op(ompi_op_t *op)
         if (op_info->mpi_op == op) {
             return op_info;
         } else if (op_info->mpi_op == MPI_OP_NULL) {
-            //mca_coll_fca_get_op_name(op, opname, MPI_MAX_OBJECT_NAME);
             fca_op = mca_coll_fca_component.fca_ops.translate_mpi_op(op->o_name);
             if (fca_op < 0)
                 return NULL;
@@ -84,7 +82,7 @@ static mca_coll_fca_op_info_t *mca_coll_fca_get_op(ompi_op_t *op)
         }
     }
     /* assert the array does not overflow */
-    //assert(mca_coll_fca_component.fca_reduce_ops[FCA_MAX_OPS - 1] == MPI_OP_NULL);
+    /*assert(mca_coll_fca_component.fca_reduce_ops[FCA_MAX_OPS - 1] == MPI_OP_NULL);*/
     return NULL;
 }
 
@@ -103,7 +101,7 @@ static int mca_coll_fca_get_buf_size(ompi_datatype_t *dtype, int count)
        return OMPI_ERROR;
    }
 
-   // TODO add support for non-contiguous layout
+   /* TODO add support for non-contiguous layout */
    return true_extent * count;
 }
 

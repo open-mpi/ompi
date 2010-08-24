@@ -28,7 +28,6 @@ int mca_coll_fca_output = -1;
  * and pointers to our public functions in it
  */
 static int fca_open(void);
-//static int fca_query(void);
 static int fca_close(void);
 static int fca_register(void);
 
