@@ -26,6 +26,7 @@ BEGIN_C_DECLS
  * @param buffer Pre-allocated buffer (large enough to hold len bytes)
  *
  * @returns OPAL_SUCCESS upon success.
+ * @returns OPAL_ERR_TIMEOUT if the fd closes before reading the full amount.
  * @returns OPAL_ERR_IN_ERRNO otherwise.
  *
  * Loop over reading from the fd until len bytes are read or an error
