@@ -35,6 +35,8 @@ int opal_fd_read(int fd, int len, void *buffer)
         } else if (rc > 0) {
             len -= rc;
             b += rc;
+        } else if (0 == rc) {
+            return OPAL_ERR_TIMEOUT;
         } else {
             return OPAL_ERR_IN_ERRNO;
         }
