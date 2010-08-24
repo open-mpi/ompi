@@ -57,20 +57,6 @@ static mca_coll_fca_dtype_info_t* mca_coll_fca_get_dtype(ompi_datatype_t *dtype)
     return dtype_info;
 }
 
-#if 0
-static void mca_coll_fca_get_op_name(ompi_op_t *op, char *name, int maxlen)
-{
-    const char *ompi_op_prefix = "MPI_OP_";
-    const char *fca_op_prefix = "MPI_";
-
-    memset(name, 0, maxlen);
-    if (!strncmp(op->o_name, ompi_op_prefix, strlen(ompi_op_prefix)))
-        snprintf(name, maxlen, "%s%s", fca_op_prefix, op->o_name + strlen(ompi_op_prefix));
-    else
-        strncpy(name, op->o_name, maxlen);
-}
-#endif
-
 static mca_coll_fca_op_info_t *mca_coll_fca_get_op(ompi_op_t *op)
 {
     mca_coll_fca_op_info_t *op_info;
