@@ -140,11 +140,13 @@ select_common_sm_component(int sm_component_index)
 {
     switch (sm_component_index)
     {
+#if MCA_COMMON_SM_POSIX
         case MCA_COMMON_SM_COMP_INDEX_POSIX:
             sm_init = mca_common_sm_posix_init;
             sm_seg_alloc = mca_common_sm_posix_seg_alloc;
             sm_fini = mca_common_sm_posix_fini;
             break;
+#endif
         case MCA_COMMON_SM_COMP_INDEX_MMAP:
 #if !MCA_COMMON_SM_WINDOWS
             sm_init = mca_common_sm_mmap_init;
@@ -156,11 +158,13 @@ select_common_sm_component(int sm_component_index)
             sm_fini = mca_common_sm_windows_fini;
 #endif
             break;
+#if MCA_COMMON_SM_SYSV
         case MCA_COMMON_SM_COMP_INDEX_SYSV:
             sm_init = mca_common_sm_sysv_init;
             sm_seg_alloc = mca_common_sm_sysv_seg_alloc;
             sm_fini = mca_common_sm_sysv_fini;
             break;
+#endif
         case MCA_COMMON_SM_COMP_INDEX_NONE:
             sm_init = NULL;
             sm_seg_alloc = NULL;
