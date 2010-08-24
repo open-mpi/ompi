@@ -1456,7 +1456,9 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
                         }
                     }
                 }
-                herror("COULD NOT COMPUTE CONTACT INFO");
+                opal_output(0, "%s COULD NOT COMPUTE CONTACT INFO FOR PROC %s on NODE %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT(&peer->peer_name), host);
                 goto unlock;
             } else {
                 haddr = inet_ntoa(*(struct in_addr*)h->h_addr_list[0]);
