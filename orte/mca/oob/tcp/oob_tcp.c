@@ -1430,11 +1430,39 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
             /* lookup the address of this node */
             if (NULL == (h = gethostbyname(host))) {
                 /* this isn't an error - it just means we don't know
-                 * how to compute a contact info for this proc
+                 * how to compute a contact info for this proc.
+                 * if we are trying to talk to a process on our own node, try
+                 * looking for the loopback interface before giving up
                  */
+#if OPAL_WANT_IPV6
                 goto unlock;
             }
-            haddr = inet_ntoa(*(struct in_addr*)h->h_addr_list[0]);
+#else
+                if (0 == strcasecmp(host, orte_process_info.nodename) ||
+                    0 == strncasecmp(host, orte_process_info.nodename, strlen(host)) ||
+                    opal_ifislocal(host)) {
+                    int idx;
+                    struct sockaddr addr;
+                    struct in_addr inaddr;
+                    for (idx = opal_ifbegin(); 0 < idx; idx = opal_ifnext(idx)) {
+                        if (opal_ifisloopback(idx)) {
+                            if (OPAL_SUCCESS != (rc = opal_ifindextoaddr(idx, &addr, sizeof(addr)))) {
+                                ORTE_ERROR_LOG(rc);
+                                goto unlock;
+                            }
+                            inaddr = ((struct sockaddr_in*)(&addr))->sin_addr;
+                            haddr = inet_ntoa(inaddr);
+                            goto proceed;
+                        }
+                    }
+                }
+                herror("COULD NOT COMPUTE CONTACT INFO");
+                goto unlock;
+            } else {
+                haddr = inet_ntoa(*(struct in_addr*)h->h_addr_list[0]);
+            }
+        proceed:
+#endif
             /* we can't know which af_family we are using, so for now, let's
              * just look to see which static port family was provided
              */
@@ -1451,6 +1479,7 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
                         /* this isn't an error - it just means we don't know
                          * how to compute a contact info for this proc
                          */
+                        opal_output(0, "COULD NOT GET NODE RANK");
                         rc = ORTE_ERR_ADDRESSEE_UNKNOWN;
                         goto unlock;
                     }
