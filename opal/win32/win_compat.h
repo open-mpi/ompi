@@ -70,6 +70,10 @@
 #include <process.h>
 #include <signal.h>
 #include <conio.h>
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
+
 /**
  * For all file io operations
  */

@@ -33,8 +33,11 @@ MACRO(OMPI_MICROSOFT_COMPILER)
       "C:/Program Files (x86)/Microsoft Visual Studio 8/VC/BIN"
       "C:/Program Files/Microsoft Visual Studio .NET 2003/VC7/BIN"
       "C:/Program Files (x86)/Microsoft Visual Studio .NET 2003/VC7/BIN"
+      "C:/Program Files/Microsoft Visual Studio 10.0/VC/bin"
+      "C:/Program Files (x86)/Microsoft Visual Studio 10.0/VC/bin"
       "$ENV{VS90COMNTOOLS}../../VC/bin"
       "$ENV{VS80COMNTOOLS}../../VC/bin"
+      "$ENV{VS100COMNTOOLS}../../VC/bin"
       )
     
     # If we are using one of the Microsoft compilers check that we are

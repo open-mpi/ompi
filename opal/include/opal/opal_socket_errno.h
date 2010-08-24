@@ -31,43 +31,48 @@
 #include "opal/constants.h"
 #ifdef __WINDOWS__
 #define opal_socket_errno opal_get_socket_errno()
+         
+/* some of these have been defined in newer version of errno.h*/
+#if defined(_MSC_VER) && _MSC_VER < 1600
 
-#define EWOULDBLOCK       WSAEWOULDBLOCK       
-#define EINPROGRESS       WSAEINPROGRESS     
-#define EALREADY          WSAEALREADY        
-#define ENOTSOCK          WSAENOTSOCK        
-#define EDESTADDRREQ      WSAEDESTADDRREQ    
-#define EMSGSIZE          WSAEMSGSIZE        
-#define EPROTOTYPE        WSAEPROTOTYPE      
-#define ENOPROTOOPT       WSAENOPROTOOPT     
-#define EPROTONOSUPPORT   WSAEPROTONOSUPPORT 
-#define ESOCKTNOSUPPORT   WSAESOCKTNOSUPPORT 
-#define EOPNOTSUPP        WSAEOPNOTSUPP      
-#define EPFNOSUPPORT      WSAEPFNOSUPPORT    
-#define EAFNOSUPPORT      WSAEAFNOSUPPORT    
-#define EADDRINUSE        WSAEADDRINUSE      
-#define EADDRNOTAVAIL     WSAEADDRNOTAVAIL   
-#define ENETDOWN          WSAENETDOWN        
-#define ENETUNREACH       WSAENETUNREACH     
-#define ENETRESET         WSAENETRESET       
-#define ECONNABORTED      WSAECONNABORTED    
-#define ECONNRESET        WSAECONNRESET      
-#define ENOBUFS           WSAENOBUFS         
-#define EISCONN           WSAEISCONN         
-#define ENOTCONN          WSAENOTCONN        
-#define ESHUTDOWN         WSAESHUTDOWN       
-#define ETOOMANYREFS      WSAETOOMANYREFS    
-#define ETIMEDOUT         WSAETIMEDOUT       
-#define ECONNREFUSED      WSAECONNREFUSED    
-#define ELOOP             WSAELOOP           
-#define EHOSTDOWN         WSAEHOSTDOWN       
-#define EHOSTUNREACH      WSAEHOSTUNREACH    
-#define EPROCLIM          WSAEPROCLIM        
-#define EUSERS            WSAEUSERS          
-#define EDQUOT            WSAEDQUOT          
-#define ESTALE            WSAESTALE          
-#define EREMOTE           WSAEREMOTE         
+#define EWOULDBLOCK       WSAEWOULDBLOCK
+#define EINPROGRESS       WSAEINPROGRESS
+#define EALREADY          WSAEALREADY
+#define ENOTSOCK          WSAENOTSOCK
+#define EDESTADDRREQ      WSAEDESTADDRREQ
+#define EMSGSIZE          WSAEMSGSIZE
+#define EPROTOTYPE        WSAEPROTOTYPE
+#define ENOPROTOOPT       WSAENOPROTOOPT
+#define EPROTONOSUPPORT   WSAEPROTONOSUPPORT
+#define EOPNOTSUPP        WSAEOPNOTSUPP
+#define EAFNOSUPPORT      WSAEAFNOSUPPORT
+#define EADDRINUSE        WSAEADDRINUSE
+#define EADDRNOTAVAIL     WSAEADDRNOTAVAIL
+#define ENETDOWN          WSAENETDOWN
+#define ENETUNREACH       WSAENETUNREACH
+#define ENETRESET         WSAENETRESET
+#define ECONNABORTED      WSAECONNABORTED
+#define ECONNRESET        WSAECONNRESET
+#define ENOBUFS           WSAENOBUFS
+#define EISCONN           WSAEISCONN
+#define ENOTCONN          WSAENOTCONN
+#define ETIMEDOUT         WSAETIMEDOUT
+#define ECONNREFUSED      WSAECONNREFUSED
+#define ELOOP             WSAELOOP
+#define EHOSTUNREACH      WSAEHOSTUNREACH
 
+#endif /*defined(_MSC_VER) && _MSC_VER < 1600*/
+
+#define ESOCKTNOSUPPORT   WSAESOCKTNOSUPPORT
+#define EPFNOSUPPORT      WSAEPFNOSUPPORT
+#define ESHUTDOWN         WSAESHUTDOWN
+#define ETOOMANYREFS      WSAETOOMANYREFS
+#define EHOSTDOWN         WSAEHOSTDOWN
+#define EPROCLIM          WSAEPROCLIM
+#define EUSERS            WSAEUSERS
+#define EDQUOT            WSAEDQUOT
+#define ESTALE            WSAESTALE
+#define EREMOTE           WSAEREMOTE
 
 /*
  * pound define opal_get_error() to be opal_errno. so, in windows land
