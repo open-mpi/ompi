@@ -612,7 +612,6 @@ int orte_show_help(const char *filename, const char *topic,
                    bool want_error_header, ...)
 {
     int rc = ORTE_SUCCESS;
-    int8_t have_output = 1;
     va_list arglist;
     char *output;
     
@@ -629,6 +628,17 @@ int orte_show_help(const char *filename, const char *topic,
     if (NULL == output) {
         return ORTE_SUCCESS;
     }
+
+    rc = orte_show_help_norender(filename, topic, want_error_header, output);
+    free(output);
+    return rc;
+}
+
+int orte_show_help_norender(const char *filename, const char *topic, 
+                            bool want_error_header, const char *output)
+{
+    int rc = ORTE_SUCCESS;
+    int8_t have_output = 1;
 
     if (!ready) {
         /* if we are finalizing, then we have no way to process
@@ -692,7 +702,6 @@ int orte_show_help(const char *filename, const char *topic,
     }
     
 CLEANUP:
-    free(output);
     return rc;
 }
 
