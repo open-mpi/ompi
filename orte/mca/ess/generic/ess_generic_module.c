@@ -42,6 +42,7 @@
 #include "opal/util/opal_sos.h"
 #include "opal/util/malloc.h"
 #include "opal/util/argv.h"
+#include "opal/util/if.h"
 
 #include "orte/util/show_help.h"
 #include "orte/mca/rml/base/base.h"
@@ -220,7 +221,11 @@ static int rte_init(void)
     /* construct the nidmap */
     for (i=0; i < orte_process_info.num_nodes; i++) {
         node = OBJ_NEW(orte_nid_t);
-        node->name = strdup(nodes[i]);
+        if (0 == strcmp(nodes[i], orte_process_info.nodename) || opal_ifislocal(nodes[i])) {
+            node->name = strdup(orte_process_info.nodename);
+        } else {
+            node->name = strdup(nodes[i]);
+        }
         node->daemon = i;
         node->index = i;
         opal_pointer_array_set_item(&orte_nidmap, i, node);
@@ -236,7 +241,7 @@ static int rte_init(void)
     /* set the size of the pidmap storage so we minimize realloc's */
     if (ORTE_SUCCESS != (ret = opal_pointer_array_set_size(&jmap->pmap, jmap->num_procs))) {
         ORTE_ERROR_LOG(ret);
-        error = "could not set value array size for pidmap";
+        error = "could not set pointer array size for pidmap";
         goto error;
     }
 
@@ -255,6 +260,13 @@ static int rte_init(void)
                     ORTE_ERROR_LOG(ret);
                     error = "could not set pmap values";
                     goto error;
+                }
+                /* if this is me, then define the daemon's vpid to 
+                 * be the node number
+                 */
+                if (vpid == ORTE_PROC_MY_NAME->vpid) {
+                    ORTE_PROC_MY_DAEMON->jobid = 0;
+                    ORTE_PROC_MY_DAEMON->vpid = i;
                 }
                 OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                                      "%s node %d name %s rank %s",
@@ -279,6 +291,13 @@ static int rte_init(void)
                         error = "could not set pmap values";
                         goto error;
                     }
+                    /* if this is me, then define the daemon's vpid to 
+                     * be the node number
+                     */
+                    if (vpid == ORTE_PROC_MY_NAME->vpid) {
+                        ORTE_PROC_MY_DAEMON->jobid = 0;
+                        ORTE_PROC_MY_DAEMON->vpid = i;
+                    }
                     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                                          "%s node %d name %s rank %d",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -300,6 +319,11 @@ static int rte_init(void)
         ORTE_ERROR_LOG(ret);
         error = "orte_ess_base_app_setup";
         goto error;
+    }
+
+    if (0 < opal_output_get_verbosity(orte_ess_base_output)) {
+        orte_nidmap_dump();
+        orte_jobmap_dump();
     }
 
     return ORTE_SUCCESS;
