@@ -117,6 +117,7 @@ static OBJ_CLASS_INSTANCE(opal_if_t, opal_list_item_t, NULL, NULL);
 static opal_list_t opal_if_list;
 static bool already_done = false;
 static bool do_not_resolve = false;
+static bool retain_loopback = false;
 
 #define DEFAULT_NUMBER_INTERFACES 10
 #define MAX_IFCONF_SIZE 10 * 1024 * 1024
@@ -159,6 +160,11 @@ static int opal_ifinit(void)
                                 false, false, (int)false, &flag);
     do_not_resolve = OPAL_INT_TO_BOOL(flag);
 
+    mca_base_param_reg_int_name("opal", "if_retain_loopback",
+                                "If nonzero, retain loopback interfaces",
+                                false, false, (int)false, &flag);
+    retain_loopback = OPAL_INT_TO_BOOL(flag);
+
     OBJ_CONSTRUCT(&opal_if_list, opal_list_t);
 
 #if defined(__NetBSD__) || defined(__FreeBSD__) || \
@@ -199,10 +205,13 @@ static int opal_ifinit(void)
             }
 
             /* skip interface if it is a loopback device (IFF_LOOPBACK set) */
+            if (!retain_loopback && 0 != (cur_ifaddrs->ifa_flags & IFF_LOOPBACK)) {
+                continue;
+            }
+
             /* or if it is a point-to-point interface */
             /* TODO: do we really skip p2p? */
-            if (0 != (cur_ifaddrs->ifa_flags & IFF_LOOPBACK) ||
-                0 != (cur_ifaddrs->ifa_flags & IFF_POINTOPOINT)) {
+            if (0 != (cur_ifaddrs->ifa_flags & IFF_POINTOPOINT)) {
                 continue;
             }
 
@@ -377,7 +386,7 @@ static int opal_ifinit(void)
             }
 #endif
 #if 0
-            if ((ifr->ifr_flags & IFF_LOOPBACK) != 0) {
+            if (!retain_loopback && (ifr->ifr_flags & IFF_LOOPBACK) != 0) {
                 continue;
             }
 #endif
@@ -554,10 +563,13 @@ static int opal_ifinit(void)
             }
 
             /* skip interface if it is a loopback device (IFF_LOOPBACK set) */
+            if (!retain_loopback && 0 != (cur_ifaddrs->ifa_flags & IFF_LOOPBACK)) {
+                continue;
+            }
+
             /* or if it is a point-to-point interface */
             /* TODO: do we really skip p2p? */
-            if (0 != (cur_ifaddrs->ifa_flags & IFF_LOOPBACK)
-                    || 0!= (cur_ifaddrs->ifa_flags & IFF_POINTOPOINT)) {
+            if (0!= (cur_ifaddrs->ifa_flags & IFF_POINTOPOINT)) {
 #if 0
                 printf("skipping loopback interface %s.\n", cur_ifaddrs->ifa_name);
 #endif              
@@ -713,7 +725,7 @@ static int opal_ifinit(void)
                    Bug, FIXME: site-local, multicast, ... missing
                    Check for 2000::/3?
                 */
-                if ( (! IN6_IS_ADDR_LOOPBACK (&my_addr->sin6_addr)) &&
+                if ( (!retain_loopback && !IN6_IS_ADDR_LOOPBACK (&my_addr->sin6_addr)) &&
                      (! IN6_IS_ADDR_LINKLOCAL (&my_addr->sin6_addr))) {
                     /* create interface for newly found address */
                     opal_if_t *intf;
@@ -803,7 +815,7 @@ static int opal_ifinit(void)
         for (i = 0; i < num_interfaces; ++i) {
             /* do all this only if the interface is up, and skip loopback interface */
             if (0 != (if_list[i].iiFlags & IFF_UP)
-                && 0 == (if_list[i].iiFlags & IFF_LOOPBACK)) {
+                && (!retain_loopback && 0 == (if_list[i].iiFlags & IFF_LOOPBACK))) {
 
                 intf = OBJ_NEW(opal_if_t);
                 if (NULL == intf) {
