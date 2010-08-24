@@ -72,6 +72,15 @@ ORTE_DECLSPEC int orte_show_help(const char *filename, const char *topic,
                                  bool want_error_header, ...);
 
 /**
+ * Exactly the same as orte_show_help, but pass in a rendered string,
+ * rather than a varargs list which must be rendered.
+ */
+ORTE_DECLSPEC int orte_show_help_norender(const char *filename, 
+                                          const char *topic, 
+                                          bool want_error_header, 
+                                          const char *output);
+
+/**
  * Pretend that this message has already been shown.
  *
  * Sends a control message to the HNP that will effecitvely suppress
