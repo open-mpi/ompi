@@ -11,6 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -441,6 +442,13 @@ EOF
         fi
 
 	echo "** Adjusting libltdl for OMPI :-("
+
+        echo "   ++ patching PGI -tp bug in ltmain.sh"
+        if test -z "`grep -w tp config/ltmain.sh`"; then
+            patch -N -p0 < config/ltmain_pgi_tp.diff
+        else
+            echo "      -- your libtool doesn't need this! yay!"
+        fi
 
         echo "   ++ preopen error masking ib libltdl"
         if test -r opal/libltdl/loaders/preopen.c; then
