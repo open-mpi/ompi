@@ -924,7 +924,7 @@ component_fragment_cb(struct mca_btl_base_module_t *btl,
 
             /* The next header starts at the next aligned address in the
              * buffer.  Therefore, bump pointer forward if necessary. */
-            payload += OPAL_ALIGN_PAD_AMOUNT(payload, sizeof(void*));
+            payload = (char *)payload + OPAL_ALIGN_PAD_AMOUNT(payload, sizeof(void*));
             base_header = (ompi_osc_rdma_base_header_t*) payload;
         } else {
             done = true;
