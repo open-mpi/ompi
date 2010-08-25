@@ -44,7 +44,8 @@ typedef uint8_t  orte_ns_cmp_bitmask_t;  /**< Bit mask for comparing process nam
 #define ORTE_NS_CMP_NONE       0x00
 #define ORTE_NS_CMP_JOBID      0x02
 #define ORTE_NS_CMP_VPID       0x04
-#define ORTE_NS_CMP_ALL        0xff
+#define ORTE_NS_CMP_ALL        0x0f
+#define ORTE_NS_CMP_WILD       0x10
 
 /* useful define to print name args in output messages */
 ORTE_DECLSPEC char* orte_util_print_name_args(const orte_process_name_t *name);
