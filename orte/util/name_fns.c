@@ -506,15 +506,20 @@ int orte_util_compare_name_fields(orte_ns_cmp_bitmask_t fields,
     }
     
     /* in this comparison function, we check for exact equalities.
-    * In the case of wildcards, we check to ensure that the fields
-    * actually match those values - thus, a "wildcard" in this
-    * function does not actually stand for a wildcard value, but
-    * rather a specific value
-    */
+     * In the case of wildcards, we check to ensure that the fields
+     * actually match those values - thus, a "wildcard" in this
+     * function does not actually stand for a wildcard value, but
+     * rather a specific value - UNLESS the CMP_WILD bitmask value
+     * is set
+     */
     
     /* check job id */
-    
     if (ORTE_NS_CMP_JOBID & fields) {
+        if (ORTE_NS_CMP_WILD & fields &&
+            (ORTE_JOBID_WILDCARD == name1->jobid ||
+             ORTE_JOBID_WILDCARD == name2->jobid)) {
+            goto check_vpid;
+        }
         if (name1->jobid < name2->jobid) {
             return OPAL_VALUE2_GREATER;
         } else if (name1->jobid > name2->jobid) {
@@ -523,10 +528,15 @@ int orte_util_compare_name_fields(orte_ns_cmp_bitmask_t fields,
     }
     
     /* get here if jobid's are equal, or not being checked
-    * now check vpid
-    */
-    
+     * now check vpid
+     */
+ check_vpid:
     if (ORTE_NS_CMP_VPID & fields) {
+        if (ORTE_NS_CMP_WILD & fields &&
+            (ORTE_VPID_WILDCARD == name1->vpid ||
+             ORTE_VPID_WILDCARD == name2->vpid)) {
+            return OPAL_EQUAL;
+        }
         if (name1->vpid < name2->vpid) {
             return OPAL_VALUE2_GREATER;
         } else if (name1->vpid > name2->vpid) {
@@ -535,10 +545,10 @@ int orte_util_compare_name_fields(orte_ns_cmp_bitmask_t fields,
     }
     
     /* only way to get here is if all fields are being checked and are equal,
-    * or jobid not checked, but vpid equal,
-    * only vpid being checked, and equal
-    * return that fact
-    */
+     * or jobid not checked, but vpid equal,
+     * only vpid being checked, and equal
+     * return that fact
+     */
     return OPAL_EQUAL;
 }
 
