@@ -587,6 +587,13 @@ static void mca_oob_tcp_peer_connected(mca_oob_tcp_peer_t* peer, int sd)
  */
 void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
 {
+    if (NULL == peer) {
+        /* weird race condition that only occurs if the peer
+         * dies via signal
+         */
+        return;
+    }
+
     if(mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT) {
         opal_output(0, "%s-%s mca_oob_tcp_peer_close(%p) sd %d state %d\n",
             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
