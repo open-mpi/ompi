@@ -13,9 +13,10 @@
 
 #include "mpirx.h"
 
+int orte_debugger_mpirx_check_rate=0;
 
+static int component_open(void);
 static int component_query(mca_base_module_t **module, int *priority);
-
 
 /*
  * Struct of function pointers that need to be initialized
@@ -29,7 +30,7 @@ orte_debugger_base_component_t mca_debugger_mpirx_component = {
         ORTE_MINOR_VERSION,  /* MCA module minor version */
         ORTE_RELEASE_VERSION,  /* MCA module release version */
 
-        NULL,
+        component_open,
         NULL,
         component_query /* module query */
     },
@@ -38,6 +39,16 @@ orte_debugger_base_component_t mca_debugger_mpirx_component = {
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     }
 };
+
+static int component_open(void)
+{
+    mca_base_component_t *c = &mca_debugger_mpirx_component.base_version;
+
+    mca_base_param_reg_int(c, "check_rate",
+                           "Set rate (in secs) for auto-detect of debugger attachment (0 => do not check)",
+                           false, false, 0, &orte_debugger_mpirx_check_rate);
+    return ORTE_SUCCESS;
+}
 
 static int component_query(mca_base_module_t **module, int *priority)
 {

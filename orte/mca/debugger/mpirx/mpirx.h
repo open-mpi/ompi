@@ -18,6 +18,7 @@
 BEGIN_C_DECLS
 
 ORTE_MODULE_DECLSPEC extern orte_debugger_base_component_t mca_debugger_mpirx_component;
+extern int orte_debugger_mpirx_check_rate;
 extern orte_debugger_base_module_t orte_debugger_mpirx_module;
 
 END_C_DECLS

@@ -92,7 +92,7 @@ void finalize(void)
 
 /**
  * Initialization of data structures for running under a debugger
- * using the MPICH/TotalView parallel debugger interface.  Before the
+ * using an extended MPICH/TotalView parallel debugger interface.  Before the
  * spawn we need to check if we are being run under a TotalView-like
  * debugger; if so then inform applications via an MCA parameter.
  */
@@ -111,24 +111,31 @@ void init_before_spawn(orte_job_t *jdata)
         if (NULL != orte_debugger_test_daemon) {
             goto launchit;
         }
-        /* create the attachment FIFO and put it into MPIR, setup readevent */
-        memset(&attach,0,sizeof(attach));
-        /* create a FIFO name in the session dir */
-        attach_fifo = opal_os_path(false, orte_process_info.job_session_dir, "debugger_attach_fifo", NULL);
-        if ((mkfifo(attach_fifo, FILE_MODE) < 0) && errno != EEXIST) {
-            opal_output(0, "CANNOT CREATE FIFO");
+        /* if we were given an auto-detect rate, then we want to setup
+         * an event so we periodically do the check
+         */
+        if (0 < orte_debugger_mpirx_check_rate) {
+            ORTE_TIMER_EVENT(orte_debugger_mpirx_check_rate, 0, attach_debugger);
+        } else {
+            /* create the attachment FIFO and put it into MPIR, setup readevent */
+            memset(&attach,0,sizeof(attach));
+            /* create a FIFO name in the session dir */
+            attach_fifo = opal_os_path(false, orte_process_info.job_session_dir, "debugger_attach_fifo", NULL);
+            if ((mkfifo(attach_fifo, FILE_MODE) < 0) && errno != EEXIST) {
+                opal_output(0, "CANNOT CREATE FIFO");
+                free(attach_fifo);
+                return;
+            }
+            strncpy(MPIR_attach_fifo, attach_fifo, MPIR_MAX_PATH_LENGTH);
+            attach_fd = open(attach_fifo, O_RDONLY, 0);
             free(attach_fifo);
-            return;
+            opal_event_set(&attach, attach_fd, OPAL_EV_READ|OPAL_EV_PERSIST, attach_debugger, NULL);
+            opal_event_add(&attach, 0);
         }
-        strncpy(MPIR_attach_fifo, attach_fifo, MPIR_MAX_PATH_LENGTH);
-        attach_fd = open(attach_fifo, O_RDONLY, 0);
-        free(attach_fifo);
-        opal_event_set(&attach, attach_fd, OPAL_EV_READ|OPAL_EV_PERSIST, attach_debugger, NULL);
-        opal_event_add(&attach, 0);
         return;
     }
     
-launchit:
+ launchit:
     if (orte_debug_flag) {
         opal_output(0, "Info: Spawned by a debugger");
     }
@@ -150,8 +157,8 @@ launchit:
         /* can only have one debugger */
         if (NULL != orte_debugger_daemon) {
             opal_output(0, "-------------------------------------------\n"
-                           "Only one debugger can be used on a job.\n"
-                           "-------------------------------------------\n");
+                        "Only one debugger can be used on a job.\n"
+                        "-------------------------------------------\n");
             ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
             return;
         }
@@ -191,12 +198,12 @@ static void attach_debugger(int fd, short event, void *arg)
     int rc;
     int32_t ljob;
     orte_job_t *jdata;
-
-    opal_output(0, "ATTACHING DEBUGGER");
+    struct timeval now;
+    opal_event_t *check;
 
     if (!MPIR_being_debugged && !orte_debugger_test_attach) {
         /* false alarm */
-        return;
+        goto RELEASE;
     }
 
     if (orte_debug_flag) {
@@ -262,12 +269,18 @@ static void attach_debugger(int fd, short event, void *arg)
     }
         
  RELEASE:
-    /* reset the read event */
-    opal_event_add(&attach, 0);
+    /* reset the read or timer event */
+    if (0 < orte_debugger_mpirx_check_rate) {
+        check = (opal_event_t*)arg;
+        now.tv_sec = orte_debugger_mpirx_check_rate;
+        now.tv_usec = 0;
+        opal_evtimer_add(check, &now);
+    } else {
+        opal_event_add(&attach, 0);
+    }
 
     /* notify the debugger that all is ready */
     MPIR_Breakpoint();
-
 }
 
 

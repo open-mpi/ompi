@@ -198,6 +198,7 @@ int main(int argc, char *argv[])
 #endif
     
 #if !ORTE_DISABLE_FULL_SUPPORT
+    opal_pointer_array_add(&mca_types, "debugger");
     opal_pointer_array_add(&mca_types, "iof");
     opal_pointer_array_add(&mca_types, "oob");
     opal_pointer_array_add(&mca_types, "odls");

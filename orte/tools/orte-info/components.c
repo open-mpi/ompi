@@ -67,6 +67,8 @@
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
 #if !ORTE_DISABLE_FULL_SUPPORT
+#include "orte/mca/debugger/debugger.h"
+#include "orte/mca/debugger/base/base.h"
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"
 #include "orte/mca/oob/oob.h"
@@ -352,6 +354,14 @@ void orte_info_open_components(void)
     opal_pointer_array_add(&component_map, map);
     
 #if !ORTE_DISABLE_FULL_SUPPORT
+    if (ORTE_SUCCESS != orte_debugger_base_open()) {
+        goto error;
+    }
+    map = OBJ_NEW(orte_info_component_map_t);
+    map->type = strdup("debugger");
+    map->components = &orte_debugger_base_components_available;
+    opal_pointer_array_add(&component_map, map);
+
     if (ORTE_SUCCESS != mca_oob_base_open()) {
         goto error;
     }
