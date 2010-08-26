@@ -14,7 +14,7 @@
 
 EXTRA_DIST = .windows
 
-dist_pkgdata_DATA = help-odls-process.txt
+dist_pkgdata_DATA = help-orte-odls-process.txt
 
 sources = \
         odls_process.h \
