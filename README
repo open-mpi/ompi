@@ -13,6 +13,7 @@ Copyright (c) 2006-2007 Voltaire, Inc. All rights reserved.
 Copyright (c) 2006-2010 Oracle and/or its affiliates.  All rights reserved.
 Copyright (c) 2007      Myricom, Inc.  All rights reserved.
 Copyright (c) 2008      IBM Corporation.  All rights reserved.
+Copyright (c) 2010      Oak Ridge National Labs.  All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -69,7 +70,7 @@ Detailed Open MPI v1.5 Feature List:
     - Asynchronous, transparent checkpoint/restart support
       - Fully coordinated checkpoint/restart coordination component
       - Support for the following checkpoint/restart services:
-        - blcr: Berkley Lab's Checkpoint/Restart
+        - blcr: Berkeley Lab's Checkpoint/Restart
         - self: Application level callbacks
       - Support for the following interconnects:
         - tcp
