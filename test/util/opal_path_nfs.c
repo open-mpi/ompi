@@ -154,7 +154,8 @@ void get_mounts (int * num_dirs, char ** dirs[], bool * nfs[])
         nfs_tmp[mount_known] = false;
         if (0 == strcasecmp (fs, "nfs") ||
             0 == strcasecmp (fs, "lustre") ||
-            0 == strcasecmp (fs, "panfs"))
+            0 == strcasecmp (fs, "panfs") ||
+            0 == strcasecmp (fs, "gpfs"))
             nfs_tmp[mount_known] = true;
 #ifdef DEBUG
         printf ("get_mounts: dirs[%d]:%s fs:%s nfs:%s\n",
