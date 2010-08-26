@@ -76,7 +76,8 @@ INSTALL(TARGETS libopen-rte
         ARCHIVE DESTINATION lib)
 INSTALL(FILES orted/help-orted.txt runtime/help-orte-runtime.txt
   util/hostfile/help-hostfile.txt util/dash_host/help-dash-host.txt
-  mca/odls/default/help-odls-default.txt
+  # we dont build mca/odls/default, but we need the help file anyway.
+  mca/odls/default/help-orte-odls-default.txt
   DESTINATION share/openmpi)
 
 IF (OMPI_DEBUG_BUILD)
