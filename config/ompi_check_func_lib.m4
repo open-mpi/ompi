@@ -10,6 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -36,8 +37,8 @@ AC_DEFUN([OMPI_CHECK_FUNC_LIB],[
                  [AS_VAR_SET(ompi_var, "yes")],
                  [AS_VAR_SET(ompi_var, "not found")])
              LIBS="$LIBS_save"])])
-    AS_IF([test "AS_VAR_GET(ompi_var)" = "yes"],
-          [LIBS="$LIBS -l$2"])
+    AS_VAR_IF(ompi_var, [yes],
+              [LIBS="$LIBS -l$2"])
 
     # see if we actually have $1.  Use AC_CHECK_FUNCS so that it
     # does the glibc "not implemented" check.  Will use the current LIBS,

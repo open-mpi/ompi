@@ -10,6 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -90,7 +91,7 @@ EOF
                  AC_MSG_ERROR([Could not determine alignment of $1])])])
         rm -rf conftest*])
 
-    $2=AS_VAR_GET([type_var])
+    AS_VAR_COPY([$2], [type_var])
     AS_VAR_POPDEF([type_var])dnl
     OMPI_VAR_SCOPE_POP
 ])

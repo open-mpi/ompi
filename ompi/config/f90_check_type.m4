@@ -34,6 +34,6 @@ end]])],
              [AS_VAR_SET(type_var, "no")])
          AC_LANG_POP([Fortran])])
 
-    AS_IF([test "AS_VAR_GET(type_var)" = "yes"], [$2], [$3])
+    AS_VAR_IF(type_var, [yes], [$2], [$3])
     AS_VAR_POPDEF([type_var])dnl
 ])dnl

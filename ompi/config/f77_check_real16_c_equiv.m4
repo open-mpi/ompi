@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -67,7 +67,7 @@ AC_DEFUN([OMPI_F77_CHECK_REAL16_C_EQUIV],[
         ])
     ])
 
-    ompi_real16_matches_c=AS_VAR_GET([real16_matches_c_var])
+    AS_VAR_COPY([ompi_real16_matches_c], [real16_matches_c_var])
     AS_VAR_POPDEF([real16_matches_c_var])
 
     AS_IF([test "$ompi_real16_matches_c" = "yes"],
