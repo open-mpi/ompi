@@ -10,6 +10,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010      Oracle and/or its affiliates.  All rights 
+#                         reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -20,7 +22,8 @@
 EXTRA_DIST = \
         distscript.csh \
 	ompi_get_version.m4sh \
-	libltdl-preopen-error.diff
+	libltdl-preopen-error.diff \
+	ltmain_pgi_tp.diff
 
 maintainer-clean-local:
 	rm -f ompi_get_version.sh
