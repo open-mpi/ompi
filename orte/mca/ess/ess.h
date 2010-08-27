@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2010 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -58,7 +58,11 @@ typedef int (*orte_ess_base_module_finalize_fn_t)(void);
  * function should create an appropriate file to alert the local
  * orted that termination was abnormal.
  */
-typedef void (*orte_ess_base_module_abort_fn_t)(int status, bool report) __opal_attribute_noreturn__;
+typedef void (*orte_ess_base_module_abort_fn_t)(int status, bool report)
+#if OPAL_HAVE_ATTRIBUTE_NORETURN_FUNCPTR
+    __opal_attribute_noreturn__
+#endif
+;
 
 /**
  * Get the locality flag of the specified process

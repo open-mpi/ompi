@@ -6,7 +6,7 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
+# Copyright (c) 2004-2010 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
@@ -29,7 +29,8 @@ AC_DEFUN([_OPAL_ATTRIBUTE_FAIL_SEARCH],[
     AC_REQUIRE([AC_PROG_GREP])
     if test -s conftest.err ; then
         # icc uses 'invalid attribute' and 'attribute "__XXX__"  ignored'
-        for i in invalid ignore skip ; do
+        # Sun 12.1 emits 'warning: attribute parameter "__printf__" is undefined'
+        for i in invalid ignore skip undefined ; do
             $GREP -iq $i conftest.err
             if test "$?" = "0" ; then
                 opal_cv___attribute__[$1]=0
@@ -206,6 +207,7 @@ AC_DEFUN([OPAL_CHECK_ATTRIBUTES], [
     opal_cv___attribute__no_instrument_function=0
     opal_cv___attribute__nonnull=0
     opal_cv___attribute__noreturn=0
+    opal_cv___attribute__noreturn_funcptr=0
     opal_cv___attribute__packed=0
     opal_cv___attribute__pure=0
     opal_cv___attribute__sentinel=0
@@ -398,6 +400,22 @@ AC_DEFUN([OPAL_CHECK_ATTRIBUTES], [
         [],
         [])
 
+
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([noreturn_funcptr],
+        [
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
+#ifdef HAVE_STDLIB_H
+#  include <stdlib.h>
+#endif
+         extern void (*fatal_exit)(int arg1) __attribute__ ((__noreturn__));
+         void fatal(int arg1) { fatal_exit (arg1); }
+        ],
+        [],
+        [$ATTRIBUTE_CFLAGS])
+
+
     _OPAL_CHECK_SPECIFIC_ATTRIBUTE([packed],
         [
          struct foo {
@@ -547,6 +565,8 @@ AC_DEFUN([OPAL_CHECK_ATTRIBUTES], [
                      [Whether your compiler has __attribute__ nonnull or not])
   AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_NORETURN, [$opal_cv___attribute__noreturn],
                      [Whether your compiler has __attribute__ noreturn or not])
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_NORETURN_FUNCPTR, [$opal_cv___attribute__noreturn_funcptr],
+                     [Whether your compiler has __attribute__ noreturn and it works on function pointers])
   AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_PACKED, [$opal_cv___attribute__packed],
                      [Whether your compiler has __attribute__ packed or not])
   AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_PURE, [$opal_cv___attribute__pure],
