@@ -10,6 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -71,7 +72,7 @@ EOF
             rm -rf conftest.$$
         ])
 
-        OMPI_FC_MODULE_FLAG=AS_VAR_GET(f90_inc_var)
+        AS_VAR_COPY([OMPI_FC_MODULE_FLAG], [f90_inc_var])
         if test "$OMPI_FC_MODULE_FLAG" = ""; then
         AC_MSG_WARN([*** Could not determine the f90 compiler flag to indicate where modules reside])
         AC_MSG_ERROR([*** Cannot continue])

@@ -10,6 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -41,16 +42,12 @@ AC_DEFUN([OMPI_FIND_TYPE],[
                [AS_VAR_SET(type_var, "not found")],
                [AS_VAR_SET(type_var, "$oft_real_type")])])
 
-    AS_IF([test "AS_VAR_GET(type_var)" = "not found"],
+    AS_VAR_IF(type_var, ["not found"],
           [AC_MSG_WARN([*** Did not find corresponding C type])
            AS_IF([test "$oft_abort_on_fail" != "no"],
                  [AC_MSG_ERROR([Cannot continue])])])
 
-    if test "AS_VAR_GET(type_var)" = "not found" ; then
-        $5=
-    else
-        $5=AS_VAR_GET(type_var)
-    fi
+    AS_VAR_IF(type_var, ["not found"], [$5=], [AS_VAR_COPY([$5], [type_var])])
 
     unset oft_real_type oft_target_size
 
