@@ -71,6 +71,11 @@ Trunk (not on release branches yet)
 1.5
 ---
 
+- Fixed extra_state parameter types in F90 prototypes for
+  MPI_COMM_CREATE_KEYVAL, MPI_GREQUEST_START, MPI_REGISTER_DATAREP,
+  MPI_TYPE_CREATE_KEYVAL, and MPI_WIN_CREATE_KEYVAL.
+  --> this is a 1.5-only bullet; not 1.4.3.
+
 - Added "knem" support: direct process-to-process copying for shared
   memory message passing.  See http://runtime.bordeaux.inria.fr/knem/
   and the README file for more details.
