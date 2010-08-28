@@ -655,9 +655,9 @@ static void orte_job_construct(orte_job_t* job)
     job->abort = false;
     job->aborted_proc = NULL;
     
-    OBJ_CONSTRUCT(&job->reported_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&job->reported_cond, opal_condition_t);
-    job->not_reported = true;
+    OBJ_CONSTRUCT(&job->dyn_spawn_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&job->dyn_spawn_cond, opal_condition_t);
+    job->dyn_spawn_active = false;
     
     job->enable_recovery = false;
     
@@ -719,8 +719,8 @@ static void orte_job_destruct(orte_job_t* job)
     }
     OBJ_RELEASE(job->procs);
     
-    OBJ_DESTRUCT(&job->reported_lock);
-    OBJ_DESTRUCT(&job->reported_cond);
+    OBJ_DESTRUCT(&job->dyn_spawn_lock);
+    OBJ_DESTRUCT(&job->dyn_spawn_cond);
     
 #if OPAL_ENABLE_FT_CR == 1
     if (NULL != job->ckpt_snapshot_ref) {

@@ -195,7 +195,10 @@ static void process_msg(int fd, short event, void *data)
                 ORTE_ERROR_LOG(rc);
                 goto ANSWER_LAUNCH;
             }
-                
+            
+            /* flag that this is a dynamic spawn */
+            jdata->dyn_spawn_active = true;
+
             /* if is a LOCAL slave cmd */
             if (jdata->controls & ORTE_JOB_CONTROL_LOCAL_SLAVE) {
                 OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
@@ -299,10 +302,10 @@ static void process_msg(int fd, short event, void *data)
                 /* we will wait here until the thread is released,
                  * indicating that all procs have reported
                  */
-                OPAL_ACQUIRE_THREAD(&jdata->reported_lock,
-                                    &jdata->reported_cond,
-                                    &jdata->not_reported);
-                OPAL_THREAD_UNLOCK(&jdata->reported_lock);
+                OPAL_ACQUIRE_THREAD(&jdata->dyn_spawn_lock,
+                                    &jdata->dyn_spawn_cond,
+                                    &jdata->dyn_spawn_active);
+                OPAL_THREAD_UNLOCK(&jdata->dyn_spawn_lock);
                 OPAL_ACQUIRE_THREAD(&lock, &cond, &processing);
             }
                 
