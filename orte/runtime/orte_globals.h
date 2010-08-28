@@ -414,10 +414,10 @@ typedef struct {
     orte_vpid_t num_terminated;
     /* number of daemons reported launched so we can track progress */
     orte_vpid_t num_daemons_reported;
-    /* lock/cond/flag for tracking when all procs reported */
-    opal_mutex_t reported_lock;
-    opal_condition_t reported_cond;
-    bool not_reported;
+    /* lock/cond/flag for tracking when all procs reported on dynamic spawn */
+    opal_mutex_t dyn_spawn_lock;
+    opal_condition_t dyn_spawn_cond;
+    bool dyn_spawn_active;
     /* did this job abort? */
     bool abort;
     /* proc that caused that to happen */

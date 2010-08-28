@@ -878,10 +878,11 @@ static void update_local_procs_in_job(orte_job_t *jdata, orte_job_state_t jobsta
                 jdata->num_launched++;
             } else if (ORTE_PROC_STATE_REGISTERED == state) {
                 jdata->num_reported++;
-                if (jdata->num_reported == jdata->num_procs) {
-                    OPAL_RELEASE_THREAD(&jdata->reported_lock,
-                                        &jdata->reported_cond,
-                                        &jdata->not_reported);
+                if (jdata->dyn_spawn_active &&
+                    jdata->num_reported == jdata->num_procs) {
+                    OPAL_RELEASE_THREAD(&jdata->dyn_spawn_lock,
+                                        &jdata->dyn_spawn_cond,
+                                        &jdata->dyn_spawn_active);
                 }
             }
         }
@@ -931,10 +932,11 @@ void orte_errmgr_hnp_update_proc(orte_job_t *jdata,
                     }
                 } else if (ORTE_PROC_STATE_REGISTERED == state) {
                     jdata->num_reported++;
-                    if (jdata->num_reported == jdata->num_procs) {
-                        OPAL_RELEASE_THREAD(&jdata->reported_lock,
-                                            &jdata->reported_cond,
-                                            &jdata->not_reported);
+                    if (jdata->dyn_spawn_active &&
+                        jdata->num_reported == jdata->num_procs) {
+                        OPAL_RELEASE_THREAD(&jdata->dyn_spawn_lock,
+                                            &jdata->dyn_spawn_cond,
+                                            &jdata->dyn_spawn_active);
                     }
                 }
                 return;
@@ -958,10 +960,11 @@ void orte_errmgr_hnp_update_proc(orte_job_t *jdata,
         proct->exit_code = exit_code;
         if (ORTE_PROC_STATE_REGISTERED == state) {
             jdata->num_reported++;
-            if (jdata->num_reported == jdata->num_procs) {
-                OPAL_RELEASE_THREAD(&jdata->reported_lock,
-                                    &jdata->reported_cond,
-                                    &jdata->not_reported);
+            if (jdata->dyn_spawn_active &&
+                jdata->num_reported == jdata->num_procs) {
+                OPAL_RELEASE_THREAD(&jdata->dyn_spawn_lock,
+                                    &jdata->dyn_spawn_cond,
+                                    &jdata->dyn_spawn_active);
             }
         } else if (ORTE_PROC_STATE_UNTERMINATED < state) {
             /* update the counter so we can terminate */
