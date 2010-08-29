@@ -370,8 +370,16 @@ static int queue_xmit(rmcast_base_send_t *snd,
             }
             if (NULL == proc->rml_uri) {
                 /* not ready yet - don't know contact info */
+                OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
+                                     "%s rmcast:tcp dont have path to %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&proc->name)));
                 continue;
             }
+            OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
+                                 "%s rmcast:tcp sending to %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&proc->name)));
             if (0 > (rc = orte_rml.send_buffer(&proc->name, buf, ORTE_RML_TAG_MULTICAST, 0))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
