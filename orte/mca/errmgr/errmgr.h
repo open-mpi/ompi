@@ -170,10 +170,7 @@ typedef void (*orte_errmgr_base_module_log_fn_t)(int error_code, char *filename,
  * a last-ditch exit procedure that attempts to clean up a little.
  */
 typedef int (*orte_errmgr_base_module_abort_fn_t)(int error_code, char *fmt, ...)
-#   if OPAL_HAVE_ATTRIBUTE_FORMAT_FUNCPTR
-__opal_attribute_format__(__printf__, 2, 3)
-#   endif
-;
+__opal_attribute_format_funcptr__(__printf__, 2, 3);
 
 /**
  * Alert - process aborted

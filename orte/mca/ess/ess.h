@@ -59,10 +59,7 @@ typedef int (*orte_ess_base_module_finalize_fn_t)(void);
  * orted that termination was abnormal.
  */
 typedef void (*orte_ess_base_module_abort_fn_t)(int status, bool report)
-#if OPAL_HAVE_ATTRIBUTE_NORETURN_FUNCPTR
-    __opal_attribute_noreturn__
-#endif
-;
+    __opal_attribute_noreturn_funcptr__;
 
 /**
  * Get the locality flag of the specified process

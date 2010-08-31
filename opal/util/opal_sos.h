@@ -298,10 +298,7 @@ typedef void (*opal_sos_print_callback_fn_t) (int errcode);
  */
 typedef void (*opal_sos_reporter_callback_fn_t) (opal_sos_severity_t severity, int errcode, 
                                                  const char *msg, ...)
-                                                 #if OPAL_HAVE_ATTRIBUTE_FORMAT_FUNCPTR
-                                                 __opal_attribute_format__(__printf__, 3, 4)
-                                                 #endif
-                                                 ;
+                                                 __opal_attribute_format_funcptr__(__printf__, 3, 4);
 
 /**
  * A global handle that points to the local OPAL SOS table.
@@ -362,10 +359,7 @@ opal_sos_report_error(opal_sos_error_t *error);
 OPAL_DECLSPEC opal_sos_error_t *
 opal_sos_build_error(int errnum, bool show_stack, 
                      const char *errmsg, ...)
-                     #if OPAL_HAVE_ATTRIBUTE_FORMAT_FUNCPTR
-                     __opal_attribute_format__(__printf__, 3, 4)
-                     #endif
-                     ;
+                     __opal_attribute_format_funcptr__(__printf__, 3, 4);
 
 /**
  * OPAL SOS reporter logs the error in the OPAL SOS error table or
@@ -401,10 +395,7 @@ OPAL_DECLSPEC int opal_sos_prettify_error(const char *error, char **pretty_error
  */
 OPAL_DECLSPEC void opal_sos_print_error(opal_sos_severity_t severity, 
                                         int errnum, const char *errmsg, ...)
-                                        #if OPAL_HAVE_ATTRIBUTE_FORMAT_FUNCPTR
-                                        __opal_attribute_format__(__printf__, 3, 4)
-                                        #endif
-                                        ;
+                                        __opal_attribute_format_funcptr__(__printf__, 3, 4);
 
 /**
  * Frees the error object represented by the error code \c errnum.

@@ -80,20 +80,14 @@ typedef void (*orte_notifier_base_module_finalize_fn_t)(void);
 
 /* Log a failure message */
 typedef void (*orte_notifier_base_module_log_fn_t)(orte_notifier_base_severity_t severity, int errcode, const char *msg, va_list ap)
-#   if OPAL_HAVE_ATTRIBUTE_FORMAT_FUNCPTR
-    __opal_attribute_format__(__printf__, 3, 0)
-#   endif
-    ;
+    __opal_attribute_format_funcptr__(__printf__, 3, 0);
 
 /* Log a failure that is based upon a show_help message */
 typedef void (*orte_notifier_base_module_log_show_help_fn_t)(orte_notifier_base_severity_t severity, int errcode, const char *file, const char *topic, va_list ap);
 
 /* Log a failure related to a peer */
 typedef void (*orte_notifier_base_module_log_peer_fn_t)(orte_notifier_base_severity_t severity, int errcode, orte_process_name_t *peer_proc, const char *msg, va_list ap)
-#   if OPAL_HAVE_ATTRIBUTE_FORMAT_FUNCPTR
-    __opal_attribute_format__(__printf__, 4, 0)
-#   endif
-    ;
+    __opal_attribute_format_funcptr__(__printf__, 4, 0);
 
 /* Log an unusual event message */
 typedef void (*orte_notifier_base_module_log_event_fn_t)(const char *msg);

@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2010 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -128,6 +128,13 @@
 #    define __opal_attribute_format__(a,b,c)
 #endif
 
+/* Use this __atribute__ on function-ptr declarations, only */
+#if OPAL_HAVE_ATTRIBUTE_FORMAT_FUNCPTR
+#    define __opal_attribute_format_funcptr__(a,b,c) __attribute__((__format__(a, b, c)))
+#else
+#    define __opal_attribute_format_funcptr__(a,b,c)
+#endif
+
 #if OPAL_HAVE_ATTRIBUTE_HOT
 #    define __opal_attribute_hot__           __attribute__((__hot__))
 #else
@@ -164,6 +171,13 @@
 #    define __opal_attribute_noreturn__      __attribute__((__noreturn__))
 #else
 #    define __opal_attribute_noreturn__
+#endif
+
+/* Use this __atribute__ on function-ptr declarations, only */
+#if OPAL_HAVE_ATTRIBUTE_NORETURN_FUNCPTR
+#    define __opal_attribute_noreturn_funcptr__  __attribute__((__noreturn__))
+#else
+#    define __opal_attribute_noreturn_funcptr__
 #endif
 
 #if OPAL_HAVE_ATTRIBUTE_PACKED
