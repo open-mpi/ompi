@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
-# Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -27,14 +27,15 @@ AC_DEFUN([MCA_memchecker_valgrind_CONFIG],[
             [Directory where the valgrind software is installed])])
     OMPI_CHECK_WITHDIR([valgrind], [$with_valgrind], [include/valgrind/valgrind.h])
 
-    memchecker_valgrind_CPPFLAGS=
     opal_memchecker_valgrind_CPPFLAGS=
     opal_memchecker_valgrind_save_CPPFLAGS="$CPPFLAGS"
     opal_memchecker_valgrind_happy=no
     AS_IF([test "$with_valgrind" != "no"],
           [AS_IF([test ! -z "$with_valgrind" -a "$with_valgrind" != "yes"],
-                 [CPPFLAGS="$CPPFLAGS -I$with_valgrind/include"
-                  opal_memchecker_valgrind_CPPFLAGS="-I$with_valgrind/include"])
+                 [opal_memchecker_valgrind_CPPFLAGS="-I$with_valgrind/include"
+                  # We need this -I to stay in CPPFLAGS when we're done
+                  CPPFLAGS="$CPPFLAGS -I$with_valgrind/include"
+                  opal_memchecker_valgrind_save_CPPFLAGS=$CPPFLAGS])
            AC_CHECK_HEADERS([valgrind/valgrind.h], 
                  [AC_MSG_CHECKING([for VALGRIND_CHECK_MEM_IS_ADDRESSABLE])
                   AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[
@@ -55,10 +56,9 @@ AC_DEFUN([MCA_memchecker_valgrind_CONFIG],[
     CPPFLAGS="$opal_memchecker_valgrind_save_CPPFLAGS"
 
     AS_IF([test "$opal_memchecker_valgrind_happy" = "yes"],
-          [memchecker_valgrind_CPPFLAGS=$opal_memchecker_valgrind_CPPFLAGS
-           $1],[$2])
+          [$1],[$2])
 
-    AC_SUBST([memchecker_valgrind_CPPFLAGS])
+    AC_SUBST([opal_memchecker_valgrind_CPPFLAGS])
 
     OMPI_VAR_SCOPE_POP
 ])dnl
