@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -45,6 +47,7 @@
 #include "opal/util/output.h"
 #include "opal/util/path.h"
 #include "opal/align.h"
+#include "opal/types.h"
 #include "opal/threads/mutex.h"
 
 #include "orte/mca/rml/rml.h"
@@ -106,7 +109,7 @@ static mca_common_sm_mmap_t* create_map(int fd, size_t size, char *file_name,
     seg = (mca_common_sm_file_header_t*)
         mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
     if (MAP_FAILED == seg) {
-        orte_show_help("help-mpi-common-sm.txt", "sys call fail",
+        orte_show_help("help-mpi-common-sm.txt", "sys call fail", 1,
                        orte_process_info.nodename,
                        "mmap(2)", "", 
                        strerror(errno), errno);
@@ -131,7 +134,7 @@ static mca_common_sm_mmap_t* create_map(int fd, size_t size, char *file_name,
 
         /* is addr past end of file ? */
         if((unsigned char*)seg + size < addr) {
-            orte_show_help("help-mpi-common-sm.txt", "mmap too small",
+            orte_show_help("help-mpi-common-sm.txt", "mmap too small", 1,
                            orte_process_info.nodename,
                            (unsigned long) size, 
                            (unsigned long) size_ctl_structure,
@@ -198,13 +201,13 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(ompi_proc_t **procs,
     }
     num_procs = num_local_procs;
 
-    iov[0].iov_base = &sm_file_created;
+    iov[0].iov_base = (ompi_iov_base_ptr_t)&sm_file_created;
     iov[0].iov_len = sizeof(sm_file_created);
     memset(filename_to_send, 0, sizeof(filename_to_send));
     strncpy(filename_to_send, file_name, sizeof(filename_to_send) - 1);
     iov[1].iov_base = filename_to_send;
     iov[1].iov_len = sizeof(filename_to_send);
-    iov[2].iov_base = &sm_file_inited;
+    iov[2].iov_base = (ompi_iov_base_ptr_t)&sm_file_inited;
     iov[2].iov_len = sizeof(sm_file_inited);
 
     /* Lock here to prevent multiple threads from invoking this
@@ -277,7 +280,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(ompi_proc_t **procs,
 
                 /* Free it all -- bad things are going to happen */
                 if (1 == sm_file_inited) {
-                    munmap(map, size);
+                    munmap((void *)map, size);
                     close(fd);
                     unlink(file_name);
                     fd = -1;
