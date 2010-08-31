@@ -189,7 +189,7 @@ void orte_errmgr_base_log(int error_code, char *filename, int line)
                 ORTE_ERROR_NAME(error_code), filename, line);
 }
 
-int orte_errmgr_base_abort(int error_code, char *fmt, ...)
+void orte_errmgr_base_abort(int error_code, char *fmt, ...)
 {
     va_list arglist;
     

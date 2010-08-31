@@ -169,7 +169,7 @@ typedef void (*orte_errmgr_base_module_log_fn_t)(int error_code, char *filename,
  * itself, and then exit - it takes no other actions. The intent here is to provide
  * a last-ditch exit procedure that attempts to clean up a little.
  */
-typedef int (*orte_errmgr_base_module_abort_fn_t)(int error_code, char *fmt, ...)
+typedef void (*orte_errmgr_base_module_abort_fn_t)(int error_code, char *fmt, ...)
 __opal_attribute_format_funcptr__(__printf__, 2, 3);
 
 /**
