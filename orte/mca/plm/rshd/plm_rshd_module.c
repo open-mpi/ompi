@@ -94,6 +94,8 @@
 static int orte_plm_rshd_launch_threaded(orte_job_t *jdata);
 #endif
 
+static void ssh_child(char *cmd, char **argv) __opal_attribute_noreturn__;
+
 orte_plm_base_module_t orte_plm_rshd_module = {
     orte_plm_rshd_init,
     orte_plm_base_set_hnp_name,

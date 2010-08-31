@@ -95,6 +95,10 @@
 static int orte_plm_rsh_launch_threaded(orte_job_t *jdata);
 #endif
 
+static void ssh_child(int argc, char **argv,
+                      orte_vpid_t vpid, int proc_vpid_index)
+                      __opal_attribute_noreturn__;
+
 static int remote_spawn(opal_buffer_t *launch);
 
 orte_plm_base_module_t orte_plm_rsh_module = {

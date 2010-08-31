@@ -458,7 +458,7 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line);
 static int parse_locals(int argc, char* argv[]);
 static int parse_appfile(char *filename, char ***env);
 static void run_debugger(char *basename, opal_cmd_line_t *cmd_line,
-                         int argc, char *argv[], int num_procs);
+                         int argc, char *argv[], int num_procs) __opal_attribute_noreturn__;
 
 int orterun(int argc, char *argv[])
 {

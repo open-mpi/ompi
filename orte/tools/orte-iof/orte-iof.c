@@ -142,7 +142,7 @@ opal_cmd_line_init_t cmd_line_opts[] = {
 /*
  * Local variables & functions
  */
-static void abort_exit_callback(int fd, short flags, void *arg);
+static void abort_exit_callback(int fd, short flags, void *arg) __opal_attribute_noreturn__;
 static struct opal_event term_handler;
 static struct opal_event int_handler;
 static opal_list_t hnp_list;

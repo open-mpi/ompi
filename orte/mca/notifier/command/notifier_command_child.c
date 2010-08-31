@@ -49,6 +49,8 @@
 
 #include "notifier_command.h"
 
+static void diediedie(int status) __opal_attribute_noreturn__;
+
 /* Structre for holding the argument to stdin_main() */
 typedef struct {
     int sat_pipe_fd;
