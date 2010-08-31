@@ -50,7 +50,7 @@ static inline int SAVE_OPTIMIZED_ELEMENT( dt_elem_desc_t* pElemDesc,
     return 0;
 }
 
-static inline int ADD_ELEMENT( dt_elem_desc_t* pElemDesc,
+static inline int ADD_ELEMENT( dt_elem_desc_t* pElemDesc __opal_attribute_unused__,
                                ddt_elem_desc_t* opt_elem,
                                uint16_t type, uint32_t count,
                                OPAL_PTRDIFF_TYPE disp, int32_t extent )

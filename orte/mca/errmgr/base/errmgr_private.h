@@ -61,8 +61,8 @@ typedef uint8_t orte_errmgr_cmd_flag_t;
 ORTE_DECLSPEC void orte_errmgr_base_log(int error_code, char *filename, int line);
 
 ORTE_DECLSPEC int orte_errmgr_base_abort(int error_code, char *fmt, ...)
-    __opal_attribute_format_funcptr__(__printf__, 2, 3)
-    __opal_attribute_noreturn_funcptr__;
+    __opal_attribute_format__(__printf__, 2, 3)
+    __opal_attribute_noreturn__;
 
 END_C_DECLS
 #endif

@@ -94,7 +94,7 @@ int orte_notifier_command_write_fd(int fd, int len, void *buffer);
 /**
  * Main entry point for child
  */
-void orte_notifier_command_child_main(void);
+void orte_notifier_command_child_main(void) __opal_attribute_noreturn__;
 
 /**
  * Function to split a spint into argv, honoring quoting, etc. (and do
