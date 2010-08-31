@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -450,6 +451,10 @@ bool opal_path_nfs(char *fname)
 #elif defined(linux) || defined (__BSD) || (defined(__APPLE__) && defined(__MACH__))
     struct statfs buf;
 #endif
+    /*
+     * Be sure to update the test (test/util/opal_path_nfs.c) 
+     * while adding a new Network/Cluster Filesystem here
+     */
     static struct fs_types_t {
         unsigned long long f_fsid;
         unsigned long long f_mask;
