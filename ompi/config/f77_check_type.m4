@@ -10,6 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -34,7 +35,7 @@ AC_DEFUN([OMPI_F77_CHECK_TYPE],[
              [AS_VAR_SET(type_var, "no")])
          AC_LANG_POP([Fortran 77])])
 
-    AS_IF([test "AS_VAR_GET(type_var)" = "yes"], [$2], [$3])
+    AS_VAR_IF(type_var, [yes], [$2], [$3])
     AS_VAR_POPDEF([type_var])dnl
 ])dnl
 
