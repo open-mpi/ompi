@@ -221,7 +221,11 @@ int orte_errmgr_base_abort(int error_code, char *fmt, ...)
         orte_ess.abort(error_code, true);
     }
 
-    return ORTE_SUCCESS;
+    /*
+     * We must exit in orte_ess.abort; all implementations of orte_ess.abort
+     * contain __opal_attribute_noreturn__
+     */
+    /* No way to reach here */
 }
 
 /********************

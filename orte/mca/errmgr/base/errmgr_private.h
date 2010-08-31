@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2010 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -61,10 +61,8 @@ typedef uint8_t orte_errmgr_cmd_flag_t;
 ORTE_DECLSPEC void orte_errmgr_base_log(int error_code, char *filename, int line);
 
 ORTE_DECLSPEC int orte_errmgr_base_abort(int error_code, char *fmt, ...)
-#   if OPAL_HAVE_ATTRIBUTE_FORMAT_FUNCPTR
-    __opal_attribute_format__(__printf__, 2, 3)
-#   endif
-    ;
+    __opal_attribute_format_funcptr__(__printf__, 2, 3)
+    __opal_attribute_noreturn_funcptr__;
 
 END_C_DECLS
 #endif
