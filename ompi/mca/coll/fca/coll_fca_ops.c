@@ -271,3 +271,47 @@ int mca_coll_fca_allreduce(void *sbuf, void *rbuf, int count,
     return OMPI_SUCCESS;
 }
 
+/*
+ *  Allgather
+ *
+ *  Function:   - allgather
+ *  Accepts:    - same as MPI_Allgather()
+ *  Returns:    - MPI_SUCCESS or error code
+ */
+int mca_coll_fca_allgather(void *sbuf, int scount, struct ompi_datatype_t *sdtype,
+                           void *rbuf, int rcount, struct ompi_datatype_t *rdtype,
+                           struct ompi_communicator_t *comm,
+                           mca_coll_base_module_t *module)
+{
+    mca_coll_fca_module_t *fca_module = (mca_coll_fca_module_t*)module;
+    fca_gather_spec_t spec;
+    int ret;
+
+    spec.sbuf      = sbuf;
+    spec.rbuf      = rbuf;
+    spec.size      = mca_coll_fca_get_buf_size(sdtype, scount);
+
+    if (spec.size != mca_coll_fca_get_buf_size(rdtype, rcount)) {
+        FCA_VERBOSE(5, "Unsupported allgather: send_size != recv_size\n");
+        goto orig_allgather;
+    }
+
+    if (spec.size < 0 || spec.size > fca_module->fca_comm_caps.max_payload) {
+        FCA_VERBOSE(5, "Unsupported allgather operation size %d, using fallback\n",
+                    spec.size);
+        goto orig_allgather;
+    }
+
+    FCA_VERBOSE(5,"Using FCA Allgather");
+    ret = mca_coll_fca_component.fca_ops.do_allgather(fca_module->fca_comm, &spec);
+    if (ret < 0) {
+        FCA_ERROR("Allgather failed: %s", mca_coll_fca_component.fca_ops.strerror(ret));
+        return OMPI_ERROR;
+    }
+    return OMPI_SUCCESS;
+
+orig_allgather:
+    return fca_module->previous_allgather(sbuf, scount, sdtype, rbuf, rcount, rdtype,
+                                          comm, fca_module->previous_allgather_module);
+
+}

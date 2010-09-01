@@ -60,8 +60,7 @@ struct mca_coll_fca_fca_ops_t {
     void (*free_rank_info)(void *rank_info);
 
     /* Local communicator creation */
-    int (*comm_init)(fca_t *context, int proc_idx, int num_procs, int comm_size,
-                     fca_comm_desc_t *comm_desc, fca_comm_t** fca_comm);
+    int (*comm_init)(fca_t *context, fca_comm_init_spec_t *spec, fca_comm_t** fca_comm);
     void (*comm_destroy)(fca_comm_t *comm);
     int (*comm_get_caps)(fca_comm_t *comm, fca_comm_caps_t *caps);
 
@@ -69,10 +68,12 @@ struct mca_coll_fca_fca_ops_t {
     int (*do_reduce)(fca_comm_t *comm, fca_reduce_spec_t *spec);
     int (*do_all_reduce)(fca_comm_t *comm, fca_reduce_spec_t *spec);
     int (*do_bcast)(fca_comm_t *comm, fca_bcast_spec_t *spec);
+    int (*do_allgather)(fca_comm_t *comm, fca_gather_spec_t *spec);
     int (*do_barrier)(fca_comm_t *comm);
 
     /* Helper functions */
     unsigned long (*get_version)(void);
+    char * (*get_version_string)(void);
     int (*maddr_ib_pton)(const char *mlid_str, const char *mgid_str, fca_mcast_addr_t *dst);
     int (*maddr_inet_pton)(int af, const char *src, fca_mcast_addr_t *dst);
     fca_init_spec_t *(*parse_spec_file)(char* spec_ini_file);
@@ -180,6 +181,8 @@ struct mca_coll_fca_module_t {
     mca_coll_base_module_t *previous_bcast_module;
     mca_coll_base_module_barrier_fn_t previous_barrier;
     mca_coll_base_module_t *previous_barrier_module;
+    mca_coll_base_module_allgather_fn_t previous_allgather;
+    mca_coll_base_module_t *previous_allgather_module;
 
 };
 typedef struct mca_coll_fca_module_t mca_coll_fca_module_t;
@@ -209,6 +212,10 @@ int mca_coll_fca_reduce(void *sbuf, void* rbuf, int count,
 int mca_coll_fca_barrier(struct ompi_communicator_t *comm,
                          mca_coll_base_module_t *module);
 
+int mca_coll_fca_allgather(void *sbuf, int scount, struct ompi_datatype_t *sdtype,
+                           void *rbuf, int rcount, struct ompi_datatype_t *rdtype,
+                           struct ompi_communicator_t *comm,
+                           mca_coll_base_module_t *module);
 
 
 END_C_DECLS

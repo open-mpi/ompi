@@ -65,7 +65,8 @@ mca_coll_fca_component_t mca_coll_fca_component = {
 
 #define FCA_MINOR_BIT   (16UL)
 #define FCA_MAJOR_BIT   (24UL)
-
+#define FCA_API_ABI_MAJOR (2)
+#define FCA_API_ABI_MINOR (0)
 #define FCA_API_CLEAR_MICRO(__x) ((__x>>FCA_MINOR_BIT)<<FCA_MINOR_BIT)
 #define FCA_API_VER(__major,__minor) (__major<<FCA_MAJOR_BIT | __minor<<FCA_MINOR_BIT)
 
@@ -94,7 +95,8 @@ static int mca_coll_fca_mpi_progress_cb(void)
     if (!mca_coll_fca_component.fca_context)
         return 0;
 
-    mca_coll_fca_component.fca_ops.progress(mca_coll_fca_component.fca_context);
+    if (mca_coll_fca_component.fca_ops.progress)
+        mca_coll_fca_component.fca_ops.progress(mca_coll_fca_component.fca_context);
     return 0;
 }
 
@@ -136,10 +138,20 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
 
     FCA_VERBOSE(1, "FCA Loaded from: %s", mca_coll_fca_component.fca_lib_path);
     GET_FCA_SYM(get_version);
+    GET_FCA_SYM(get_version_string);
     fca_ver = FCA_API_CLEAR_MICRO(mca_coll_fca_component.fca_ops.get_version());
+
+    if (fca_ver < FCA_API_VER(FCA_API_ABI_MAJOR,FCA_API_ABI_MINOR)) {
+        FCA_ERROR("Unsupported FCA version: %s Please upgrade FCA to at least v%d.%d", 
+                  mca_coll_fca_component.fca_ops.get_version_string(),
+                  FCA_API_ABI_MAJOR,
+                  FCA_API_ABI_MINOR);
+        return OMPI_ERROR;
+    }
 
     GET_FCA_SYM(init);
     GET_FCA_SYM(cleanup);
+    GET_FCA_SYM(progress);
     GET_FCA_SYM(comm_new);
     GET_FCA_SYM(comm_end);
     GET_FCA_SYM(get_rank_info);
@@ -151,6 +163,7 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
     GET_FCA_SYM(do_all_reduce);
     GET_FCA_SYM(do_bcast);
     GET_FCA_SYM(do_barrier);
+    GET_FCA_SYM(do_allgather);
     GET_FCA_SYM(maddr_ib_pton);
     GET_FCA_SYM(maddr_inet_pton);
     GET_FCA_SYM(parse_spec_file);
@@ -179,18 +192,13 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
     mca_coll_fca_component.fca_ops.free_init_spec(spec);
     mca_coll_fca_init_fca_translations();
 
-    if (fca_ver > FCA_API_VER(1,2)) {
-        GET_FCA_SYM(progress);
-        opal_progress_register(mca_coll_fca_mpi_progress_cb);
-    }
+    opal_progress_register(mca_coll_fca_mpi_progress_cb);
     return OMPI_SUCCESS;
 }
 
 static void mca_coll_fca_close_fca_lib(void)
 {
-    if (NULL != mca_coll_fca_component.fca_ops.progress) {
-        opal_progress_unregister(mca_coll_fca_mpi_progress_cb);
-    }
+    opal_progress_unregister(mca_coll_fca_mpi_progress_cb);
     mca_coll_fca_component.fca_ops.cleanup(mca_coll_fca_component.fca_context);
     mca_coll_fca_component.fca_context = NULL;
     dlclose(mca_coll_fca_component.fca_lib_handle);

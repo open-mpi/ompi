@@ -187,23 +187,39 @@ int __fca_comm_new(mca_coll_fca_module_t *fca_module)
 
 static int __create_fca_comm(mca_coll_fca_module_t *fca_module)
 {
-    fca_comm_desc_t comm_desc;
-    int rc, ret;
+    fca_comm_init_spec_t *spec;
+    int rc, ret, node_root;
+    int comm_size;
 
     rc = __fca_comm_new(fca_module);
     if (rc != OMPI_SUCCESS)
         return rc;
+
+    /* allocate comm_init_spec */
+    comm_size = ompi_comm_size(fca_module->comm);
+    spec = malloc(sizeof *spec + sizeof(int) * comm_size);
+    if (!spec) {
+        FCA_ERROR("Failed to allocate comm_init_spec");
+        return OMPI_ERROR;
+    }
+
+    spec->rank = fca_module->rank;
+    spec->comm_size = comm_size;
+    spec->desc = fca_module->fca_comm_desc;
+
+    /* collect node roots */
+    node_root = fca_module->local_ranks[0];
+    fca_module->previous_allgather(&node_root, 1, &ompi_mpi_int.dt,
+                                   spec->node_roots, 1, &ompi_mpi_int.dt,
+                                   fca_module->comm, fca_module->previous_allgather_module);
 
     FCA_MODULE_VERBOSE(fca_module, 1, "Starting COMM_INIT comm_id %d proc_idx %d num_procs %d",
                        fca_module->fca_comm_desc.comm_id, fca_module->local_proc_idx,
                        fca_module->num_local_procs);
 
     ret = mca_coll_fca_component.fca_ops.comm_init(mca_coll_fca_component.fca_context,
-                                                   fca_module->local_proc_idx,
-                                                   fca_module->num_local_procs,
-                                                   ompi_comm_size(fca_module->comm),
-                                                   &fca_module->fca_comm_desc,
-                                                   &fca_module->fca_comm);
+                                                   spec, &fca_module->fca_comm);
+    free(spec);
     if (ret < 0) {
         FCA_ERROR("COMM_INIT failed: %s", mca_coll_fca_component.fca_ops.strerror(ret));
         return OMPI_ERROR;
@@ -247,7 +263,8 @@ static int __save_coll_handlers(mca_coll_fca_module_t *fca_module)
     if (!comm->c_coll.coll_reduce || !comm->c_coll.coll_reduce_module ||
         !comm->c_coll.coll_allreduce || !comm->c_coll.coll_allreduce_module ||
         !comm->c_coll.coll_bcast || !comm->c_coll.coll_bcast_module ||
-        !comm->c_coll.coll_barrier || !comm->c_coll.coll_barrier_module) {
+        !comm->c_coll.coll_barrier || !comm->c_coll.coll_barrier_module ||
+        !comm->c_coll.coll_allgather || !comm->c_coll.coll_allgather_module) {
         FCA_VERBOSE(1, "(%d/%s): no underlying reduce; disqualifying myself",
                     comm->c_contextid, comm->c_name);
         return OMPI_ERROR;
@@ -271,12 +288,17 @@ static int __save_coll_handlers(mca_coll_fca_module_t *fca_module)
     FCA_VERBOSE(14, "saving fca_module->bcast=%p, fca_module->bcast_module=%p, fca_module=%p, fca_module->super.coll_bcast=%p", 
                 fca_module->previous_bcast,    fca_module->previous_bcast_module,    fca_module,    fca_module->super.coll_bcast);
 
-
     fca_module->previous_barrier         = comm->c_coll.coll_barrier;
     fca_module->previous_barrier_module  = comm->c_coll.coll_barrier_module;
     OBJ_RETAIN(fca_module->previous_barrier_module);
     FCA_VERBOSE(14, "saving fca_module->barrier=%p, fca_module->barrier_module=%p, fca_module=%p, fca_module->super.coll_barrier=%p", 
                 fca_module->previous_barrier, fca_module->previous_barrier_module,    fca_module,    fca_module->super.coll_barrier);
+
+    fca_module->previous_allgather         = comm->c_coll.coll_allgather;
+    fca_module->previous_allgather_module  = comm->c_coll.coll_allgather_module;
+    OBJ_RETAIN(fca_module->previous_allgather_module);
+    FCA_VERBOSE(14, "saving fca_module->allgather=%p, fca_module->allgather_module=%p, fca_module=%p, fca_module->super.coll_allgather=%p",
+                fca_module->previous_allgather, fca_module->previous_allgather_module, fca_module, fca_module->super.coll_allgather);
 
     return OMPI_SUCCESS;
 }
@@ -329,6 +351,7 @@ static void mca_coll_fca_module_clear(mca_coll_fca_module_t *fca_module)
     fca_module->previous_reduce = NULL;
     fca_module->previous_bcast = NULL;
     fca_module->previous_barrier = NULL;
+    fca_module->previous_allgather = NULL;
 }
 
 static void mca_coll_fca_module_construct(mca_coll_fca_module_t *fca_module)
@@ -346,6 +369,7 @@ static void mca_coll_fca_module_destruct(mca_coll_fca_module_t *fca_module)
     OBJ_RELEASE(fca_module->previous_reduce_module);
     OBJ_RELEASE(fca_module->previous_bcast_module);
     OBJ_RELEASE(fca_module->previous_barrier_module);
+    OBJ_RELEASE(fca_module->previous_allgather_module);
 
     if (fca_module->fca_comm)
         __destroy_fca_comm(fca_module);
@@ -385,7 +409,7 @@ mca_coll_fca_comm_query(struct ompi_communicator_t *comm, int *priority)
 
     fca_module->super.coll_module_enable = mca_coll_fca_module_enable;
     fca_module->super.ft_event        = mca_coll_fca_ft_event;
-    fca_module->super.coll_allgather  = NULL;
+    fca_module->super.coll_allgather  = mca_coll_fca_allgather;
     fca_module->super.coll_allgatherv = NULL;
     fca_module->super.coll_allreduce  = mca_coll_fca_allreduce;
     fca_module->super.coll_alltoall   = NULL;
