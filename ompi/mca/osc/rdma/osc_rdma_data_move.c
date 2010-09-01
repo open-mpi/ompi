@@ -569,6 +569,20 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
     if (module->m_use_buffers) {
         header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_MULTI;
 
+        /* When putting multiple messages in a single buffer, the
+         * starting point for the next message needs to be aligned with
+         * pointer addresses.  Therefore, the pointer, amount written
+         * and space remaining are adjusted forward so that the
+         * starting position for the next message is aligned properly.
+         * This strict alignment is required by certain platforms like
+         * SPARC.  Without it, bus errors can occur.  Keeping things
+         * aligned also may offer some performance improvements on
+         * other platforms.  */
+        offset = OPAL_ALIGN_PAD_AMOUNT(descriptor->des_src[0].seg_len, sizeof(void*));
+        descriptor->des_src[0].seg_len += offset;
+        written_data += offset;
+        module->m_pending_buffers[sendreq->req_target_rank].remain_len -= offset;
+
 #ifdef WORDS_BIGENDIAN
         header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_NBO;
 #elif OPAL_ENABLE_HETEROGENEOUS_SUPPORT
@@ -583,19 +597,6 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
             /* not enough space left - send now */
             ret = send_multi_buffer(module, sendreq->req_target_rank);
         } else {
-
-            /* When putting multiple messages in a single buffer, the starting
-             * point for the next message needs to be aligned with pointer
-             * addresses.  Therefore, the pointer and the amount written are
-             * adjusted forward so that the starting position for the next
-             * message is aligned properly.  This strict alignment is required
-             * by certain platforms like SPARC.  Without it, bus errors can
-             * occur.  Keeping things aligned also may offer some performance
-             * improvements on other platforms.  */
-            offset = OPAL_ALIGN_PAD_AMOUNT(descriptor->des_src[0].seg_len, sizeof(void*));
-            descriptor->des_src[0].seg_len += offset;
-            written_data += offset;
-
             ret = OMPI_SUCCESS;
         }
 
