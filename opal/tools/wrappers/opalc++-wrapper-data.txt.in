@@ -14,6 +14,7 @@ compiler_flags_env=CXXFLAGS
 compiler=@CXX@
 extra_includes=@OPAL_WRAPPER_EXTRA_INCLUDES@
 preprocessor_flags=@OPAL_WRAPPER_EXTRA_CPPFLAGS@
+compiler_flags_prefix=@OPAL_WRAPPER_EXTRA_CXXFLAGS_PREFIX@
 compiler_flags=@OPAL_WRAPPER_EXTRA_CXXFLAGS@
 linker_flags=@OPAL_WRAPPER_EXTRA_LDFLAGS@
 libs=-lopen-pal @OPAL_WRAPPER_EXTRA_LIBS@
