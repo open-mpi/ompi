@@ -43,10 +43,6 @@
 #include "orte/mca/notifier/base/base.h"
 #include "notifier_hnp.h"
 
-/* Global variables */
-opal_pointer_array_t orte_notifier_hnp_tables;
-opal_mutex_t	     orte_notifier_hnp_tables_lock;
-
 /* Static API's */
 static int init(void);
 static void finalize(void);
@@ -259,18 +255,6 @@ static int init(void)
             return rc;
         }
 
-	/* Construct a list of SOS tables, one for each process.
-	   ADK: Since we are not doing proper error trace analysis
-	   and/or aggregation, each process maintains a separate SOS
-	   table and individually sends each entry in the table to 
-	   the HNP. */
-
-	OBJ_CONSTRUCT(&orte_notifier_hnp_tables, opal_pointer_array_t);
-	opal_pointer_array_init(&orte_notifier_hnp_tables,
-				orte_process_info.num_procs,
-				INT32_MAX, 8);
-	OBJ_CONSTRUCT(&orte_notifier_hnp_tables_lock, opal_mutex_t);
-
 #if OPAL_ENABLE_DEBUG
         /* If we're debugging, also add an exception handler -- just to
            watch for problems in the RML */
@@ -290,9 +274,6 @@ static void finalize(void)
 {
     /* If I'm the HNP, then cancel the non-blocking RML receive */
     if (ORTE_PROC_IS_HNP) {
-        OBJ_DESTRUCT(&orte_notifier_hnp_tables);
-        OBJ_DESTRUCT(&orte_notifier_hnp_tables_lock);
-
         orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_NOTIFIER_HNP);
     }
 }
