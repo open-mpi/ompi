@@ -2,10 +2,11 @@
 # -*- perl -*-
 #
 # Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -30,7 +31,9 @@ my $CXX = "@CXX@";
 my $extra_includes = "@ORTE_WRAPPER_EXTRA_INCLUDES@";
 my $extra_cppflags = "@ORTE_WRAPPER_EXTRA_CPPFLAGS@";
 my $extra_cflags = "@ORTE_WRAPPER_EXTRA_CFLAGS@";
+my $extra_cflags_prefix = "@ORTE_WRAPPER_EXTRA_CFLAGS_PREFIX@";
 my $extra_cxxflags = "@ORTE_WRAPPER_EXTRA_CXXFLAGS@";
+my $extra_cxxflags_prefix = "@ORTE_WRAPPER_EXTRA_CXXFLAGS_PREFIX@";
 my $extra_ldflags = "@ORTE_WRAPPER_EXTRA_LDFLAGS@";
 my $extra_libs = "@ORTE_WRAPPER_EXTRA_LIBS@";
 #my $cxx_lib = "@ORTE_WRAPPER_CXX_LIB@";
@@ -43,6 +46,7 @@ my $lang = "none";
 my $comp = ""; # this is a sentinal from configure
 my $preproc_flags = $include_flag . $includedir;
 my $comp_flags = "";
+my $comp_flags_prefix = "";
 my $linker_flags = $libdir_flag . $libdir . " " . $extra_ldflags;
 my $libs = "-lopen-rte -lopen-pal " . $extra_libs;
 
@@ -78,12 +82,14 @@ if (basename($0) eq "ortecc") {
     $comp = check_env("CC", $CC);
     $preproc_flags .= " " . add_extra_includes();
     $comp_flags = $extra_cflags;
+    $comp_flags_prefix = $extra_cflags_prefix;
     # no special libs for C
 } elsif (basename($0) eq "ortec++") {
     $lang = "C++";
     $comp = check_env("CXX", $CXX);
     $preproc_flags .= " " . add_extra_includes();
     $comp_flags = $extra_cxxflags;
+    $comp_flags_prefix = $extra_cxxflags_prefix;
 #    $libs = $cxx_lib . " " . $libs;
 }
 
@@ -142,8 +148,12 @@ my @exec_argv = ();
 
 # assemble command
 push(@exec_argv, split(' ', $comp));
-# Per https://svn.open-mpi.org/trac/ompi/ticket/2201, add all the user
-# arguments before anything else.
+# Per tickets https://svn.open-mpi.org/trac/ompi/ticket/2474, and
+# https://svn.open-mpi.org/trac/ompi/ticket/2201, construct command
+# with some system arguments before user arguments and some after.
+if ($want_compile == 1) {
+    push(@exec_argv, split(' ', $comp_flags_prefix));
+}
 push(@exec_argv, @appargs);
 if ($want_preproc == 1) {
     push(@exec_argv, split(' ', $preproc_flags));
