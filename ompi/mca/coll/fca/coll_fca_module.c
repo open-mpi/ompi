@@ -256,49 +256,33 @@ static void __destroy_fca_comm(mca_coll_fca_module_t *fca_module)
                        fca_module->fca_comm_desc.comm_id);
 }
 
+#define FCA_SAVE_PREV_COLL_API(__api) do {\
+    fca_module->previous_ ## __api            = comm->c_coll.coll_ ## __api;\
+    fca_module->previous_ ## __api ## _module = comm->c_coll.coll_ ## __api ## _module;\
+    OBJ_RETAIN(fca_module->previous_ ## __api ## _module);\
+    if (!comm->c_coll.coll_ ## __api || !comm->c_coll.coll_ ## __api ## _module) {\
+        FCA_VERBOSE(1, "(%d/%s): no underlying " # __api"; disqualifying myself",\
+                    comm->c_contextid, comm->c_name);\
+        return OMPI_ERROR;\
+    }\
+} while(0)
+
 static int __save_coll_handlers(mca_coll_fca_module_t *fca_module)
 {
     ompi_communicator_t *comm = fca_module->comm;
 
-    if (!comm->c_coll.coll_reduce || !comm->c_coll.coll_reduce_module ||
-        !comm->c_coll.coll_allreduce || !comm->c_coll.coll_allreduce_module ||
-        !comm->c_coll.coll_bcast || !comm->c_coll.coll_bcast_module ||
-        !comm->c_coll.coll_barrier || !comm->c_coll.coll_barrier_module ||
-        !comm->c_coll.coll_allgather || !comm->c_coll.coll_allgather_module) {
-        FCA_VERBOSE(1, "(%d/%s): no underlying reduce; disqualifying myself",
-                    comm->c_contextid, comm->c_name);
-        return OMPI_ERROR;
-    }
-
-    fca_module->previous_allreduce         = comm->c_coll.coll_allreduce;
-    fca_module->previous_allreduce_module  = comm->c_coll.coll_allreduce_module;
-    OBJ_RETAIN(fca_module->previous_allreduce_module);
-    FCA_VERBOSE(14, "saving fca_module->previous_allreduce_module=%p, fca_module->previous_allreduce=%p, fca_module=%p,fca_module->super.coll_allreduce=%p",                   
-                fca_module->previous_allreduce_module, fca_module->previous_allreduce, fca_module, fca_module->super.coll_allreduce);
-
-    fca_module->previous_reduce         = comm->c_coll.coll_reduce;
-    fca_module->previous_reduce_module  = comm->c_coll.coll_reduce_module;
-    OBJ_RETAIN(fca_module->previous_reduce_module);
-    FCA_VERBOSE(14, "saving fca_module->previous_reduce_module=%p, fca_module->previous_reduce=%p, fca_module=%p,fca_module->super.coll_reduce=%p",                   
-                fca_module->previous_reduce_module, fca_module->previous_reduce, fca_module, fca_module->super.coll_reduce);
-
-    fca_module->previous_bcast         = comm->c_coll.coll_bcast;
-    fca_module->previous_bcast_module  = comm->c_coll.coll_bcast_module;
-    OBJ_RETAIN(fca_module->previous_bcast_module);
-    FCA_VERBOSE(14, "saving fca_module->bcast=%p, fca_module->bcast_module=%p, fca_module=%p, fca_module->super.coll_bcast=%p", 
-                fca_module->previous_bcast,    fca_module->previous_bcast_module,    fca_module,    fca_module->super.coll_bcast);
-
-    fca_module->previous_barrier         = comm->c_coll.coll_barrier;
-    fca_module->previous_barrier_module  = comm->c_coll.coll_barrier_module;
-    OBJ_RETAIN(fca_module->previous_barrier_module);
-    FCA_VERBOSE(14, "saving fca_module->barrier=%p, fca_module->barrier_module=%p, fca_module=%p, fca_module->super.coll_barrier=%p", 
-                fca_module->previous_barrier, fca_module->previous_barrier_module,    fca_module,    fca_module->super.coll_barrier);
-
-    fca_module->previous_allgather         = comm->c_coll.coll_allgather;
-    fca_module->previous_allgather_module  = comm->c_coll.coll_allgather_module;
-    OBJ_RETAIN(fca_module->previous_allgather_module);
-    FCA_VERBOSE(14, "saving fca_module->allgather=%p, fca_module->allgather_module=%p, fca_module=%p, fca_module->super.coll_allgather=%p",
-                fca_module->previous_allgather, fca_module->previous_allgather_module, fca_module, fca_module->super.coll_allgather);
+    FCA_SAVE_PREV_COLL_API(barrier);
+    FCA_SAVE_PREV_COLL_API(bcast);
+    FCA_SAVE_PREV_COLL_API(reduce);
+    FCA_SAVE_PREV_COLL_API(allreduce);
+    FCA_SAVE_PREV_COLL_API(allgather);
+    FCA_SAVE_PREV_COLL_API(allgatherv);
+    FCA_SAVE_PREV_COLL_API(gather);
+    FCA_SAVE_PREV_COLL_API(gatherv);
+    FCA_SAVE_PREV_COLL_API(alltoall);
+    FCA_SAVE_PREV_COLL_API(alltoallv);
+    FCA_SAVE_PREV_COLL_API(alltoallw);
+    FCA_SAVE_PREV_COLL_API(reduce_scatter);
 
     return OMPI_SUCCESS;
 }
@@ -347,11 +331,19 @@ static void mca_coll_fca_module_clear(mca_coll_fca_module_t *fca_module)
     fca_module->num_local_procs = 0;
     fca_module->local_ranks = NULL;
     fca_module->fca_comm = NULL;
-    fca_module->previous_allreduce = NULL;
-    fca_module->previous_reduce = NULL;
-    fca_module->previous_bcast = NULL;
-    fca_module->previous_barrier = NULL;
-    fca_module->previous_allgather = NULL;
+
+    fca_module->previous_barrier    = NULL;
+    fca_module->previous_bcast      = NULL;
+    fca_module->previous_reduce     = NULL;
+    fca_module->previous_allreduce  = NULL;
+    fca_module->previous_allgather  = NULL;
+    fca_module->previous_allgatherv = NULL;
+    fca_module->previous_gather     = NULL;
+    fca_module->previous_gatherv    = NULL;
+    fca_module->previous_alltoall   = NULL;
+    fca_module->previous_alltoallv  = NULL;
+    fca_module->previous_alltoallw  = NULL;
+    fca_module->previous_reduce_scatter  = NULL;
 }
 
 static void mca_coll_fca_module_construct(mca_coll_fca_module_t *fca_module)
@@ -364,13 +356,18 @@ static void mca_coll_fca_module_destruct(mca_coll_fca_module_t *fca_module)
 {
     FCA_VERBOSE(5, "==>");
     int rc = OMPI_SUCCESS;
-
-    OBJ_RELEASE(fca_module->previous_allreduce_module);
-    OBJ_RELEASE(fca_module->previous_reduce_module);
-    OBJ_RELEASE(fca_module->previous_bcast_module);
     OBJ_RELEASE(fca_module->previous_barrier_module);
+    OBJ_RELEASE(fca_module->previous_bcast_module);
+    OBJ_RELEASE(fca_module->previous_reduce_module);
+    OBJ_RELEASE(fca_module->previous_allreduce_module);
     OBJ_RELEASE(fca_module->previous_allgather_module);
-
+    OBJ_RELEASE(fca_module->previous_allgatherv_module);
+    OBJ_RELEASE(fca_module->previous_gather_module);
+    OBJ_RELEASE(fca_module->previous_gatherv_module);
+    OBJ_RELEASE(fca_module->previous_alltoall_module);
+    OBJ_RELEASE(fca_module->previous_alltoallv_module);
+    OBJ_RELEASE(fca_module->previous_alltoallw_module);
+    OBJ_RELEASE(fca_module->previous_reduce_scatter_module);
     if (fca_module->fca_comm)
         __destroy_fca_comm(fca_module);
 
@@ -409,19 +406,19 @@ mca_coll_fca_comm_query(struct ompi_communicator_t *comm, int *priority)
 
     fca_module->super.coll_module_enable = mca_coll_fca_module_enable;
     fca_module->super.ft_event        = mca_coll_fca_ft_event;
-    fca_module->super.coll_allgather  = mca_coll_fca_allgather;
-    fca_module->super.coll_allgatherv = NULL;
-    fca_module->super.coll_allreduce  = mca_coll_fca_allreduce;
-    fca_module->super.coll_alltoall   = NULL;
-    fca_module->super.coll_alltoallv  = NULL;
-    fca_module->super.coll_alltoallw  = NULL;
-    fca_module->super.coll_barrier    = mca_coll_fca_barrier;
-    fca_module->super.coll_bcast      = mca_coll_fca_bcast;
+    fca_module->super.coll_allgather  = mca_coll_fca_component.fca_enable_allgather?  mca_coll_fca_allgather  : NULL;
+    fca_module->super.coll_allgatherv = mca_coll_fca_component.fca_enable_allgatherv? mca_coll_fca_allgatherv : NULL;
+    fca_module->super.coll_allreduce  = mca_coll_fca_component.fca_enable_allreduce?  mca_coll_fca_allreduce  : NULL;
+    fca_module->super.coll_alltoall   = mca_coll_fca_component.fca_enable_alltoall?   mca_coll_fca_alltoall   : NULL;
+    fca_module->super.coll_alltoallv  = mca_coll_fca_component.fca_enable_alltoallv?  mca_coll_fca_alltoallv  : NULL;
+    fca_module->super.coll_alltoallw  = mca_coll_fca_component.fca_enable_alltoallw?  mca_coll_fca_alltoallw  : NULL;
+    fca_module->super.coll_barrier    = mca_coll_fca_component.fca_enable_barrier?    mca_coll_fca_barrier    : NULL;
+    fca_module->super.coll_bcast      = mca_coll_fca_component.fca_enable_bcast?      mca_coll_fca_bcast      : NULL;
     fca_module->super.coll_exscan     = NULL;
-    fca_module->super.coll_gather     = NULL;
-    fca_module->super.coll_gatherv    = NULL;
-    fca_module->super.coll_reduce     = mca_coll_fca_reduce;
-    fca_module->super.coll_reduce_scatter = NULL;
+    fca_module->super.coll_gather     = mca_coll_fca_component.fca_enable_gather?     mca_coll_fca_gather     : NULL;
+    fca_module->super.coll_gatherv    = mca_coll_fca_component.fca_enable_gatherv?    mca_coll_fca_gatherv    : NULL;
+    fca_module->super.coll_reduce     = mca_coll_fca_component.fca_enable_reduce?     mca_coll_fca_reduce     : NULL;
+    fca_module->super.coll_reduce_scatter = mca_coll_fca_component.fca_enable_reduce_scatter? mca_coll_fca_reduce_scatter  : NULL;
     fca_module->super.coll_scan       = NULL;
     fca_module->super.coll_scatter    = NULL;
     fca_module->super.coll_scatterv   = NULL;

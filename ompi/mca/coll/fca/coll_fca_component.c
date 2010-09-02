@@ -247,6 +247,80 @@ static int fca_register(void)
                            64,
                            &mca_coll_fca_component.fca_np);
 
+    mca_base_param_reg_int(c, "enable_barrier",
+                           "[1|0|] Enable/Disable FCA Barrier support",
+                           false, false,
+                           1,
+                           &mca_coll_fca_component.fca_enable_barrier);
+
+    mca_base_param_reg_int(c, "enable_bcast",
+                           "[1|0|] Enable/Disable FCA Bcast support",
+                           false, false,
+                           1,
+                           &mca_coll_fca_component.fca_enable_bcast);
+
+    mca_base_param_reg_int(c, "enable_reduce",
+                           "[1|0|] Enable/Disable FCA Reduce support",
+                           false, false,
+                           1,
+                           &mca_coll_fca_component.fca_enable_reduce);
+
+    mca_base_param_reg_int(c, "enable_reduce_scatter",
+                           "[1|0|] Enable/Disable FCA Reduce support",
+                           false, false,
+                           0,
+                           &mca_coll_fca_component.fca_enable_reduce_scatter);
+
+    mca_base_param_reg_int(c, "enable_allreduce",
+                           "[1|0|] Enable/Disable FCA Allreduce support",
+                           false, false,
+                           1,
+                           &mca_coll_fca_component.fca_enable_allreduce);
+
+    mca_base_param_reg_int(c, "enable_allgather",
+                           "[1|0|] Enable/Disable FCA Allgather support",
+                           false, false,
+                           0,
+                           &mca_coll_fca_component.fca_enable_allgather);
+
+    mca_base_param_reg_int(c, "enable_allgatherv",
+                           "[1|0|] Enable/Disable FCA Allgatherv support",
+                           false, false,
+                           0,
+                           &mca_coll_fca_component.fca_enable_allgatherv);
+
+    mca_base_param_reg_int(c, "enable_gather",
+                           "[1|0|] Enable/Disable FCA Gather support",
+                           false, false,
+                           0,
+                           &mca_coll_fca_component.fca_enable_gather);
+
+    mca_base_param_reg_int(c, "enable_gatherv",
+                           "[1|0|] Enable/Disable FCA Gatherv support",
+                           false, false,
+                           0,
+                           &mca_coll_fca_component.fca_enable_gatherv);
+
+
+    mca_base_param_reg_int(c, "enable_alltoall",
+                           "[1|0|] Enable/Disable FCA AlltoAll support",
+                           false, false,
+                           0,
+                           &mca_coll_fca_component.fca_enable_alltoall);
+
+    mca_base_param_reg_int(c, "enable_alltoallv",
+                           "[1|0|] Enable/Disable FCA AlltoAllv support",
+                           false, false,
+                           0,
+                           &mca_coll_fca_component.fca_enable_alltoallv);
+
+    mca_base_param_reg_int(c, "enable_alltoallw",
+                           "[1|0|] Enable/Disable FCA AlltoAllw support",
+                           false, false,
+                           0,
+                           &mca_coll_fca_component.fca_enable_alltoallw);
+
+
     return OMPI_SUCCESS;
 }
 
