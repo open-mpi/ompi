@@ -284,7 +284,7 @@ int mca_coll_fca_allgather(void *sbuf, int scount, struct ompi_datatype_t *sdtyp
                            mca_coll_base_module_t *module)
 {
     mca_coll_fca_module_t *fca_module = (mca_coll_fca_module_t*)module;
-    fca_gather_spec_t spec;
+    fca_gather_spec_t spec = {0,};
     int ret;
 
     spec.sbuf      = sbuf;
@@ -315,3 +315,98 @@ orig_allgather:
                                           comm, fca_module->previous_allgather_module);
 
 }
+
+
+int mca_coll_fca_allgatherv(void *sbuf, int scount,
+                           struct ompi_datatype_t *sdtype,
+                           void *rbuf, int *rcounts, int *disps,
+                           struct ompi_datatype_t *rdtype,
+                           struct ompi_communicator_t *comm,
+                           mca_coll_base_module_t *module)
+{
+    mca_coll_fca_module_t *fca_module = (mca_coll_fca_module_t*)module;
+    /* not implemented yet */
+    return fca_module->previous_allgatherv(sbuf, scount, sdtype, rbuf, rcounts, disps, rdtype,
+                                           comm, fca_module->previous_allgatherv_module);
+}
+
+int mca_coll_fca_alltoall(void *sbuf, int scount,
+                            struct ompi_datatype_t *sdtype,
+                            void *rbuf, int rcount,
+                            struct ompi_datatype_t *rdtype,
+                            struct ompi_communicator_t *comm,
+                            mca_coll_base_module_t *module)
+{
+    mca_coll_fca_module_t *fca_module = (mca_coll_fca_module_t*)module;
+    /* not implemented yet */
+    return fca_module->previous_alltoall(sbuf, scount, sdtype, rbuf, rcount, rdtype,
+                                         comm, fca_module->previous_alltoall_module);
+}
+
+int mca_coll_fca_alltoallv(void *sbuf, int *scounts, int *sdisps,
+                           struct ompi_datatype_t *sdtype,
+                           void *rbuf, int *rcounts, int *rdisps,
+                           struct ompi_datatype_t *rdtype,
+                           struct ompi_communicator_t *comm,
+                           mca_coll_base_module_t *module)
+{
+    mca_coll_fca_module_t *fca_module = (mca_coll_fca_module_t*)module;
+    /* not implemented yet */
+    return fca_module->previous_alltoallv(sbuf, scounts, sdisps, sdtype, rbuf, rcounts, rdisps, rdtype,
+                                          comm, fca_module->previous_alltoallv_module);
+}
+
+
+int mca_coll_fca_alltoallw(void *sbuf, int *scounts, int *sdisps,
+                           struct ompi_datatype_t **sdtypes,
+                           void *rbuf, int *rcounts, int *rdisps,
+                           struct ompi_datatype_t **rdtypes,
+                           struct ompi_communicator_t *comm,
+                           mca_coll_base_module_t *module)
+{
+    mca_coll_fca_module_t *fca_module = (mca_coll_fca_module_t*)module;
+    /* not implemented yet */
+    return fca_module->previous_alltoallw(sbuf, scounts, sdisps, sdtypes, rbuf, rcounts, rdisps, rdtypes,
+                                          comm, fca_module->previous_alltoallw_module);
+}
+
+
+int mca_coll_fca_gather(void *sbuf, int scount,
+                        struct ompi_datatype_t *sdtype,
+                        void *rbuf, int rcount,
+                        struct ompi_datatype_t *rdtype,
+                        int root, struct ompi_communicator_t *comm,
+                        mca_coll_base_module_t *module)
+{
+    mca_coll_fca_module_t *fca_module = (mca_coll_fca_module_t*)module;
+    /* not implemented yet */
+    return fca_module->previous_gather(sbuf, scount, sdtype, rbuf, rcount, rdtype, root,
+                                          comm, fca_module->previous_gather_module);
+}
+
+int mca_coll_fca_gatherv(void *sbuf, int scount,
+                         struct ompi_datatype_t *sdtype,
+                         void *rbuf, int *rcounts, int *disps,
+                         struct ompi_datatype_t *rdtype, int root,
+                         struct ompi_communicator_t *comm,
+                         mca_coll_base_module_t *module)
+{
+    mca_coll_fca_module_t *fca_module = (mca_coll_fca_module_t*)module;
+    /* not implemented yet */
+    return fca_module->previous_gatherv(sbuf, scount, sdtype, rbuf, rcounts, disps, rdtype, root,
+                                          comm, fca_module->previous_gatherv_module);
+}
+
+int mca_coll_fca_reduce_scatter(void *sbuf, void *rbuf, int *rcounts,
+                                struct ompi_datatype_t *dtype,
+                                struct ompi_op_t *op,
+                                struct ompi_communicator_t *comm,
+                                mca_coll_base_module_t *module)
+{
+    mca_coll_fca_module_t *fca_module = (mca_coll_fca_module_t*)module;
+    /* not implemented yet */
+    return fca_module->previous_reduce_scatter(sbuf, rbuf, rcounts, dtype, op,
+                                          comm, fca_module->previous_reduce_scatter_module);
+}
+
+
