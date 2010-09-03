@@ -159,7 +159,7 @@ int mca_btl_mx_component_open(void)
                                          MCA_BTL_FLAGS_PUT |
                                          MCA_BTL_FLAGS_SEND |
                                          MCA_BTL_FLAGS_RDMA_MATCHED);
-    mca_btl_mx_module.super.btl_bandwidth = 2000;
+    mca_btl_mx_module.super.btl_bandwidth = 250;
     mca_btl_mx_module.super.btl_latency = 5;
     mca_btl_base_param_register(&mca_btl_mx_component.super.btl_version,
                                 &mca_btl_mx_module.super);
@@ -357,7 +357,7 @@ static mca_btl_mx_module_t* mca_btl_mx_create(uint32_t board_num)
     mx_btl->mx_endpoint = mx_endpoint;
     mx_btl->mx_endpoint_addr = mx_endpoint_addr;
 
-    mx_btl->super.btl_bandwidth = 2000;  /* whatever */
+    mx_btl->super.btl_bandwidth = 250;  /* whatever */
     mx_btl->super.btl_latency = 10;
 #if defined(MX_HAS_NET_TYPE)
     {
@@ -370,11 +370,11 @@ static mca_btl_mx_module_t* mca_btl_mx_create(uint32_t board_num)
         } else {
             if( MX_SPEED_2G == value ) {
                 mx_unique_network_id |= 0xaa000000;
-                mx_btl->super.btl_bandwidth = 2000;
+                mx_btl->super.btl_bandwidth = 250;
                 mx_btl->super.btl_latency = 5;
             } else if( MX_SPEED_10G == value ) {
                 mx_unique_network_id |= 0xbb000000;
-                mx_btl->super.btl_bandwidth = 10000;
+                mx_btl->super.btl_bandwidth = 1250;
                 mx_btl->super.btl_latency = 3;
             } else {
                 mx_unique_network_id |= 0xcc000000;
