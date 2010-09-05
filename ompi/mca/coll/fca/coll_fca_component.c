@@ -105,7 +105,7 @@ static int mca_coll_fca_mpi_progress_cb(void)
  */
 static void mca_coll_fca_init_fca_translations(void)
 {
-    int i, ret;
+    int i;
 
     for (i = 0; i < FCA_DT_MAX_PREDEFINED; ++i) {
         mca_coll_fca_component.fca_dtypes[i].mpi_dtype = MPI_DATATYPE_NULL;
@@ -164,6 +164,7 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
     GET_FCA_SYM(do_bcast);
     GET_FCA_SYM(do_barrier);
     GET_FCA_SYM(do_allgather);
+    GET_FCA_SYM(do_allgatherv);
     GET_FCA_SYM(maddr_ib_pton);
     GET_FCA_SYM(maddr_inet_pton);
     GET_FCA_SYM(parse_spec_file);

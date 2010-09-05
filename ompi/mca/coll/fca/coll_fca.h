@@ -69,6 +69,7 @@ struct mca_coll_fca_fca_ops_t {
     int (*do_all_reduce)(fca_comm_t *comm, fca_reduce_spec_t *spec);
     int (*do_bcast)(fca_comm_t *comm, fca_bcast_spec_t *spec);
     int (*do_allgather)(fca_comm_t *comm, fca_gather_spec_t *spec);
+    int (*do_allgatherv)(fca_comm_t *comm, fca_gatherv_spec_t *spec);
     int (*do_barrier)(fca_comm_t *comm);
 
     /* Helper functions */

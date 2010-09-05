@@ -50,37 +50,23 @@ static int __get_local_ranks(mca_coll_fca_module_t *fca_module)
 {
     ompi_communicator_t *comm = fca_module->comm;
     ompi_proc_t* proc;
-    int rank, index;
+    int rank;
 
-    /* Count local ranks */
     fca_module->num_local_procs = 0;
+
     for (rank = 0; rank < ompi_comm_size(comm); ++rank) {
-        proc = __local_rank_lookup(comm, rank);
-        if (FCA_IS_LOCAL_PROCESS(proc->proc_flags))
-            ++fca_module->num_local_procs;
-
-		FCA_MODULE_VERBOSE(fca_module, 4, "rank %d flags 0x%x host %s", rank,
-				proc->proc_flags,
-				proc->proc_hostname);
-
-    }        
-    fca_module->local_ranks = calloc(fca_module->num_local_procs, sizeof *fca_module->local_ranks);
-
-    /* Get local ranks */
-    index = 0;
-    for (rank = 0; rank< ompi_comm_size(comm); ++rank) {
         proc = __local_rank_lookup(comm, rank);
         if (!FCA_IS_LOCAL_PROCESS(proc->proc_flags))
             continue;
 
-        if (rank == fca_module->rank)
-            fca_module->local_proc_idx = index;
-        fca_module->local_ranks[index] = rank;
-        ++index;
+        if (rank == fca_module->rank) {
+            fca_module->local_proc_idx = fca_module->num_local_procs;
+        }
+        ++fca_module->num_local_procs;
     }        
 
-    FCA_MODULE_VERBOSE(fca_module, 3, "num_local_ranks: %d, node_root: %d",
-                       fca_module->num_local_procs, fca_module->local_ranks[0]);
+    FCA_MODULE_VERBOSE(fca_module, 3, "i am %d/%d", fca_module->local_proc_idx,
+                       fca_module->num_local_procs);
     return OMPI_SUCCESS;
 }
 
@@ -187,7 +173,7 @@ int __fca_comm_new(mca_coll_fca_module_t *fca_module)
 
 static int __create_fca_comm(mca_coll_fca_module_t *fca_module)
 {
-    fca_comm_init_spec_t *spec;
+    fca_comm_init_spec_t spec;
     int rc, ret, node_root;
     int comm_size;
 
@@ -197,29 +183,18 @@ static int __create_fca_comm(mca_coll_fca_module_t *fca_module)
 
     /* allocate comm_init_spec */
     comm_size = ompi_comm_size(fca_module->comm);
-    spec = malloc(sizeof *spec + sizeof(int) * comm_size);
-    if (!spec) {
-        FCA_ERROR("Failed to allocate comm_init_spec");
-        return OMPI_ERROR;
-    }
-
-    spec->rank = fca_module->rank;
-    spec->comm_size = comm_size;
-    spec->desc = fca_module->fca_comm_desc;
-
-    /* collect node roots */
-    node_root = fca_module->local_ranks[0];
-    fca_module->previous_allgather(&node_root, 1, &ompi_mpi_int.dt,
-                                   spec->node_roots, 1, &ompi_mpi_int.dt,
-                                   fca_module->comm, fca_module->previous_allgather_module);
+    spec.rank = fca_module->rank;
+    spec.size = comm_size;
+    spec.desc = fca_module->fca_comm_desc;
+    spec.proc_idx = fca_module->local_proc_idx;
+    spec.num_procs = fca_module->num_local_procs;
 
     FCA_MODULE_VERBOSE(fca_module, 1, "Starting COMM_INIT comm_id %d proc_idx %d num_procs %d",
                        fca_module->fca_comm_desc.comm_id, fca_module->local_proc_idx,
                        fca_module->num_local_procs);
 
     ret = mca_coll_fca_component.fca_ops.comm_init(mca_coll_fca_component.fca_context,
-                                                   spec, &fca_module->fca_comm);
-    free(spec);
+                                                   &spec, &fca_module->fca_comm);
     if (ret < 0) {
         FCA_ERROR("COMM_INIT failed: %s", mca_coll_fca_component.fca_ops.strerror(ret));
         return OMPI_ERROR;
@@ -329,7 +304,6 @@ static int mca_coll_fca_ft_event(int state)
 static void mca_coll_fca_module_clear(mca_coll_fca_module_t *fca_module)
 {
     fca_module->num_local_procs = 0;
-    fca_module->local_ranks = NULL;
     fca_module->fca_comm = NULL;
 
     fca_module->previous_barrier    = NULL;
@@ -371,7 +345,6 @@ static void mca_coll_fca_module_destruct(mca_coll_fca_module_t *fca_module)
     if (fca_module->fca_comm)
         __destroy_fca_comm(fca_module);
 
-    free(fca_module->local_ranks);
     mca_coll_fca_module_clear(fca_module);
 }
 
