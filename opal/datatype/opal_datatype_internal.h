@@ -65,7 +65,14 @@ static inline void DUMP( char* fmt, ... )
 #    if defined(__GNUC__) && !defined(__STDC__)
 #      define DUMP(ARGS...)
 #    else
-       static inline void DUMP( char* fmt, ...) { 
+       /* If we do not compile with PGI, mark the parameter as unused */
+#      if !defined(__PGI)
+#        define __opal_attribute_unused_tmp__  __opal_attribute_unused__
+#      else
+#        define __opal_attribute_unused_tmp__
+#      endif  
+static inline void DUMP( char* fmt __opal_attribute_unused_tmp__, ... )
+{
 #if defined(__PGI)
            /* Some compilers complain if we have "..." arguments and no
               corresponding va_start() */
@@ -73,7 +80,8 @@ static inline void DUMP( char* fmt, ... )
            va_start(arglist, fmt);
            va_end(arglist);
 #endif
-       }
+}
+#         undef __opal_attribute_unused_tmp__
 #    endif  /* __GNUC__ && !__STDC__ */
 #  endif  /* ACCEPT_C99 */
 #endif  /* VERBOSE */
@@ -213,7 +221,6 @@ union dt_elem_desc {
  */
 OPAL_DECLSPEC extern union dt_elem_desc opal_datatype_predefined_elem_desc[2 * OPAL_DATATYPE_MAX_PREDEFINED];
 struct opal_datatype_t;
-OPAL_DECLSPEC extern const struct opal_datatype_t* opal_datatype_basicDatatypes[OPAL_DATATYPE_MAX_PREDEFINED];
 
 /* Other fields starting after bdt_used (index of OPAL_DATATYPE_LOOP should be ONE) */
 /*
@@ -564,10 +571,6 @@ do { \
 } while(0)
 
 #if OPAL_ENABLE_DEBUG
-OPAL_DECLSPEC int opal_datatype_safeguard_pointer_debug_breakpoint( const void* actual_ptr, int length,
-                                                                    const void* initial_ptr,
-                                                                    const struct opal_datatype_t* pData,
-                                                                    int count );
 #define OPAL_DATATYPE_SAFEGUARD_POINTER( ACTPTR, LENGTH, INITPTR, PDATA, COUNT ) \
     {                                                                   \
         unsigned char *__lower_bound = (INITPTR), *__upper_bound;       \
