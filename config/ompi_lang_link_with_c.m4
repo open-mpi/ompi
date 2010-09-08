@@ -2,6 +2,7 @@ dnl -*- shell-script -*-
 dnl
 dnl Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
+dnl Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -62,6 +63,6 @@ extern int testfunc(int);
      rm -f conftest_c.$ac_ext
      AC_LANG_POP(C)])
 
-  AS_IF([test "AS_VAR_GET([lang_var])" = "yes"], [$2], [$3])
+  AS_VAR_IF(lang_var, [yes], [$2], [$3])
   AS_VAR_POPDEF([lang_var])dnl
 ])

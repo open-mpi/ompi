@@ -93,7 +93,7 @@ EOF
         ])
     ])
 
-    ompi_real16_matches_c=AS_VAR_GET([real16_matches_c_var])
+    AS_VAR_COPY([ompi_real16_matches_c], [real16_matches_c_var])
     AS_VAR_POPDEF([real16_matches_c_var])
 
     AS_IF([test "$ompi_real16_matches_c" = "yes"],
