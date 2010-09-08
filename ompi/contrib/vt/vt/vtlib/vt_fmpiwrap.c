@@ -99,8 +99,6 @@ DEF_FMPI_FUNC( vt_mpi_init_f(MPI_Fint* ierr) ) {
 			   (MPI_Fint* ierr),
 			   (ierr))
 
-#if defined(HAVE_MPITHRD) && HAVE_MPITHRD
-
 /* -- MPI_Init_thread -- */
 
 DEF_FMPI_FUNC( vt_mpi_init_thread_f(MPI_Fint* required, MPI_Fint* provided,
@@ -110,8 +108,6 @@ DEF_FMPI_FUNC( vt_mpi_init_thread_f(MPI_Fint* required, MPI_Fint* provided,
 			   vt_mpi_init_thread_f,
 			   (MPI_Fint* required, MPI_Fint* provided, MPI_Fint* ierr),
 			   (required, provided, ierr))
-
-#endif /* HAVE_MPITHRD */
 
 /* -- MPI_Finalize -- */
 

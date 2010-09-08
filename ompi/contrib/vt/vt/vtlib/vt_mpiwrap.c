@@ -78,7 +78,7 @@ int MPI_Init( int *argc, char ***argv )
   unsigned char* grpv;
   uint32_t grpc;
   uint64_t time;
-  
+
   /* shall I trace MPI events? */
   vt_mpi_trace_is_on = vt_mpitrace = vt_env_mpitrace();
 
@@ -163,8 +163,6 @@ int MPI_Init( int *argc, char ***argv )
 
   return returnVal;
 }
-
-#if defined(HAVE_MPITHRD) && HAVE_MPITHRD
 
 /* -- MPI_Init_thread -- */
 
@@ -279,8 +277,6 @@ int MPI_Init_thread( int* argc, char*** argv,
 
   return returnVal;
 }
-
-#endif /* HAVE_MPITHRD */
 
 /* -- MPI_Finalize -- */
 

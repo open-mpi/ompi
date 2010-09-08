@@ -1,4 +1,5 @@
 5.4.13
+	- revived wrapper for MPI function 'MPI_Init_thread'
 	- fixed a bug in vtfilter: strip the '.otf'-suffix from input/output
 	  trace file names, if necessary
 	- install header files into <includedir>/vampirtrace even the configure
