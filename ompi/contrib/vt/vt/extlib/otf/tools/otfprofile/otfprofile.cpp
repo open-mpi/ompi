@@ -7,27 +7,12 @@
 #include "config.h"
 #endif
 
-/* Disable OpenMP if the PGI compiler is used to work around the following errors:
-
-compiler version  compiler error
-< 9.0-3           PGCC-S-0000-Internal compiler error. calc_dw_tag:no tag
-(see Technical Problem Report 4337 at http://www.pgroup.com/support/release_tprs_90.htm)
-
-10.1 - 10.6       this kind of pragma may not be used here
-                  #pargma omp barrier
-*/
-#if defined(_OPENMP) && defined(__PGI)
-#	undef _OPENMP
-#endif
-
-
 #ifdef _OPENMP
 #	include <omp.h>
 #else
 #	define omp_get_thread_num() 0
 #	define omp_get_num_threads() 1
 #endif
-
 
 #if defined(HAVE_SYS_TIME_H) && HAVE_SYS_TIME_H
 #	include <sys/time.h>
