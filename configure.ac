@@ -50,6 +50,11 @@ AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects no-define 1.10 tar-ustar])
 
 m4_pattern_allow([m4_ifval])
 
+# Do we have AS_VAR_COPY? 
+m4_ifndef([AS_VAR_COPY], 
+   [m4_define([AS_VAR_COPY], 
+              [AS_LITERAL_IF([$1[]$2], [$1=$$2], [eval $1=\$$2])])]) 
+
 # Make configure depend on the VERSION file, since it's used in AC_INIT
 AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/VERSION'])
 
