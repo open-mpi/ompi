@@ -173,73 +173,11 @@ foreach file (config.guess config.sub)
     end
 end
 
-
-#
-# Put in date/version number in man pages
-# JMS don't have man pages yet -- this is a straight copy from LAM7
-#
-
-set ver="$OMPI_VERSION"
-#echo "*** Updating version date/number in man pages"
-#rm -f manfiles
-#find man -type f | grep -v Makefile > manfiles
-
-#set date="`date '+%B, %Y'`"
-#cp $srcdir/config/doctext.nroff.def .
-#foreach file (`cat manfiles` doctext.nroff.def)
-#    sed -e "s/-RELEASEDATE-/$date/g" $file > foo
-#    sed -e "s/-RELEASEVERSION-/$ver/g" foo > bar
-#    rm -f $file # Needed 'cause automake makes hard links, not copies
-#    mv bar $file
-#    rm -f foo
-#end
-#rm -f manfiles
-
-#
-# Make all the man pages -- doctext needs to be in your path
-# JMS: Don't have man pages yet; need to do this at some point
-#
-
-#
-# Now we need to list all these generated man pages in the Makefile.am
-# and Makefile.in in man/man3.  Ick!
-# JMS: Will probably need to do this as well.  Sigh.
-#
-
-#echo "*** Frobbing Makefile.am and Makefile.in..."
-#cd ../../man/man3
-#set files="`ls MPI_*3 MPIO_*3 XMPI_*3 MPIL_*3`"
-
-#
-# This is unfortunately necessary because $files is too long to do a
-# single sed search/replace.  Ugh.
-# JMS: Will probably need to do this as well.  Sigh.
-#
-
-#echo "*** Adding man files to Makefile.in..."
-#foreach file ($files)
-#    set name_prefix="`echo $file | cut -c1-4`"
-#    if ("$name_prefix" == "MPI_") then
-#	set letter="`echo $file | cut -c5`"
-#	set div="`expr $letter \> F`"
-#	set line="generated_man_$div"
-#    else
-#	set line="generated_man_other"
-#    endif
-#    echo " - $file / $line"
-#    foreach fix (Makefile.am Makefile.in)
-#	sed -e "s/$line =/$line =$file /" $fix > $fix.new
-#	chmod +w $fix
-#	mv -f $fix.new $fix
-#	chmod -w $fix
-#    end
-#end
-#cd ../..
-
 #
 # Put the release version number in the README and INSTALL files
 #
 
+set ver="$OMPI_VERSION"
 set files="README INSTALL"
 echo "*** Updating version number in $files..."
 foreach file ($files)
