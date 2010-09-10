@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -62,7 +63,7 @@ void mca_pml_ob1_send_request_process_pending(mca_bml_base_btl_t *bml_btl)
                     &sendreq->req_endpoint->btl_eager, bml_btl->btl);
             if( (NULL == send_dst) ||
                 (OPAL_SOS_GET_ERROR_CODE(mca_pml_ob1_send_request_start_btl(sendreq, send_dst)) ==
-                      OMPI_ERR_OUT_OF_RESOURCE) ) {
+                 OMPI_ERR_OUT_OF_RESOURCE) ) {
                 /* prepend to the pending list to minimize reordering in case
                  * send_dst != 0 */
                 add_request_to_send_pending(sendreq,
