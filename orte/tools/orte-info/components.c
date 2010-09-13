@@ -53,6 +53,7 @@
 #endif
 #include "opal/runtime/opal.h"
 #include "opal/dss/dss.h"
+#include "opal/mca/if/base/base.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/errmgr/base/base.h"
@@ -298,6 +299,15 @@ void orte_info_open_components(void)
     map->components = &opal_crs_base_components_available;
     opal_pointer_array_add(&component_map, map);
 #endif
+
+    if (OPAL_SUCCESS != opal_if_base_open()) {
+        goto error;
+    }
+    map = OBJ_NEW(orte_info_component_map_t);
+    map->type = strdup("if");
+    map->components = &opal_if_components;
+    opal_pointer_array_add(&component_map, map);
+
     
     /* OPAL's installdirs base open has already been called as part of
      * opal_init_util() back in main().

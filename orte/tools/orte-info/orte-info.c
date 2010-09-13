@@ -196,6 +196,7 @@ int main(int argc, char *argv[])
 #if OPAL_ENABLE_FT_CR == 1
     opal_pointer_array_add(&mca_types, "crs");
 #endif
+    opal_pointer_array_add(&mca_types, "if");
     
 #if !ORTE_DISABLE_FULL_SUPPORT
     opal_pointer_array_add(&mca_types, "debugger");
