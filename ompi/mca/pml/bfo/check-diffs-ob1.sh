@@ -27,19 +27,30 @@ DIFFDIR=diff-dir
 
 $MKDIR $DIFFDIR
 
-# Only diff a subset of files that are known to be different.
-FILES="Makefile.am \
-       pml_NAME.c \
+# List of files that will be diffed.  Basically, everything
+# in the directory.
+FILES="pml_NAME.c \
        pml_NAME.h \
+       pml_NAME_comm.c \
+       pml_NAME_comm.h \
        pml_NAME_component.c \
        pml_NAME_component.h \
        pml_NAME_hdr.h \
+       pml_NAME_iprobe.c \
+       pml_NAME_irecv.c \
+       pml_NAME_isend.c \
+       pml_NAME_progress.c \
+       pml_NAME_rdma.c \
+       pml_NAME_rdma.h \
+       pml_NAME_rdmafrag.c \
        pml_NAME_rdmafrag.h \
        pml_NAME_recvfrag.c \
+       pml_NAME_recvfrag.h \
        pml_NAME_recvreq.c \
        pml_NAME_recvreq.h \
        pml_NAME_sendreq.c \
-       pml_NAME_sendreq.h"
+       pml_NAME_sendreq.h \
+       pml_NAME_start.c"
 
 # Copy over the files from the bfo directory.
 for name in $FILES
@@ -62,10 +73,25 @@ done
 $RM -f $DIFF
 $TOUCH $DIFF
 
+# First, strip off the copyright header from all the files
+# as we do not care about any differences in that area.
+for name in $FILES
+do
+  ob1_file=`echo $name | sed s/NAME/$ob1/`
+  awk '/\$HEADER/, /UPTOENDOFFILE/' $ob1_file > $ob1_file.tmp
+  mv $ob1_file.tmp $ob1_file
+  pml_file=`echo $name | sed s/NAME/$pml/`
+  awk '/\$HEADER/, /UPTOENDOFFILE/' $pml_file > $pml_file.tmp
+  mv $pml_file.tmp $pml_file
+done
+
 # Now run the diff.
 for name in $FILES
-do 
+do
   diff -c `echo $name | sed s/NAME/$ob1/` `echo $name | sed s/NAME/$pml/` >> $DIFF
+  if [ "$?" -eq 0 ] ; then
+    echo "No differences in `echo $name | sed s/NAME/$ob1/` file"
+  fi
 done
 
 # Cleanup
