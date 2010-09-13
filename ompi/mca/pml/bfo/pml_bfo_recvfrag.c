@@ -104,7 +104,7 @@ void mca_pml_bfo_recv_frag_callback_match(mca_btl_base_module_t* btl,
                                           mca_btl_base_tag_t tag,
                                           mca_btl_base_descriptor_t* des,
                                           void* cbdata )
-{ 
+{
     mca_btl_base_segment_t* segments = des->des_dst;
     mca_pml_bfo_match_hdr_t* hdr = (mca_pml_bfo_match_hdr_t*)segments->seg_addr.pval;
     ompi_communicator_t *comm_ptr;
@@ -188,7 +188,7 @@ void mca_pml_bfo_recv_frag_callback_match(mca_btl_base_module_t* btl,
     
     /* release matching lock before processing fragment */
     OPAL_THREAD_UNLOCK(&comm->matching_lock);
-    
+
     if(OPAL_LIKELY(match)) {
         bytes_received = segments->seg_len - OMPI_PML_BFO_MATCH_HDR_LEN;
         match->req_recv.req_bytes_packed = bytes_received;
@@ -257,7 +257,7 @@ void mca_pml_bfo_recv_frag_callback_rndv(mca_btl_base_module_t* btl,
                                          mca_btl_base_tag_t tag,
                                          mca_btl_base_descriptor_t* des,
                                          void* cbdata )
-{ 
+{
     mca_btl_base_segment_t* segments = des->des_dst;
     mca_pml_bfo_hdr_t* hdr = (mca_pml_bfo_hdr_t*)segments->seg_addr.pval;
     
@@ -274,7 +274,7 @@ void mca_pml_bfo_recv_frag_callback_rget(mca_btl_base_module_t* btl,
                                          mca_btl_base_tag_t tag,
                                          mca_btl_base_descriptor_t* des,
                                          void* cbdata )
-{ 
+{
     mca_btl_base_segment_t* segments = des->des_dst;
     mca_pml_bfo_hdr_t* hdr = (mca_pml_bfo_hdr_t*)segments->seg_addr.pval;
     
@@ -293,7 +293,7 @@ void mca_pml_bfo_recv_frag_callback_ack(mca_btl_base_module_t* btl,
                                         mca_btl_base_tag_t tag,
                                         mca_btl_base_descriptor_t* des,
                                         void* cbdata )
-{ 
+{
     mca_btl_base_segment_t* segments = des->des_dst;
     mca_pml_bfo_hdr_t* hdr = (mca_pml_bfo_hdr_t*)segments->seg_addr.pval;
     mca_pml_bfo_send_request_t* sendreq;
@@ -355,7 +355,7 @@ void mca_pml_bfo_recv_frag_callback_ack(mca_btl_base_module_t* btl,
 void mca_pml_bfo_recv_frag_callback_frag(mca_btl_base_module_t* btl, 
                                          mca_btl_base_tag_t tag,
                                          mca_btl_base_descriptor_t* des,
-                                         void* cbdata ) { 
+                                         void* cbdata ) {
      mca_btl_base_segment_t* segments = des->des_dst;
      mca_pml_bfo_hdr_t* hdr = (mca_pml_bfo_hdr_t*)segments->seg_addr.pval;
      mca_pml_bfo_recv_request_t* recvreq;
@@ -389,7 +389,7 @@ void mca_pml_bfo_recv_frag_callback_frag(mca_btl_base_module_t* btl,
 void mca_pml_bfo_recv_frag_callback_put(mca_btl_base_module_t* btl, 
                                         mca_btl_base_tag_t tag,
                                         mca_btl_base_descriptor_t* des,
-                                        void* cbdata ) { 
+                                        void* cbdata ) {
     mca_btl_base_segment_t* segments = des->des_dst;
     mca_pml_bfo_hdr_t* hdr = (mca_pml_bfo_hdr_t*)segments->seg_addr.pval;
     mca_pml_bfo_send_request_t* sendreq;
@@ -422,7 +422,7 @@ void mca_pml_bfo_recv_frag_callback_put(mca_btl_base_module_t* btl,
 void mca_pml_bfo_recv_frag_callback_fin(mca_btl_base_module_t* btl, 
                                         mca_btl_base_tag_t tag,
                                         mca_btl_base_descriptor_t* des,
-                                        void* cbdata ) { 
+                                        void* cbdata ) {
     mca_btl_base_segment_t* segments = des->des_dst;
     mca_pml_bfo_hdr_t* hdr = (mca_pml_bfo_hdr_t*)segments->seg_addr.pval;
     mca_btl_base_descriptor_t* rdma;

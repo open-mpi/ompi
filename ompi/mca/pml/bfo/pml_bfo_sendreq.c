@@ -66,7 +66,7 @@ void mca_pml_bfo_send_request_process_pending(struct mca_btl_base_module_t *btl)
                     &sendreq->req_endpoint->btl_eager, btl);
             if( (NULL == send_dst) ||
                 (OPAL_SOS_GET_ERROR_CODE(mca_pml_bfo_send_request_start_btl(sendreq, send_dst)) ==
-                      OMPI_ERR_OUT_OF_RESOURCE) ) {
+                 OMPI_ERR_OUT_OF_RESOURCE) ) {
                 /* prepend to the pending list to minimize reordering in case
                  * send_dst != 0 */
                 add_request_to_send_pending(sendreq,
@@ -1104,7 +1104,7 @@ void mca_pml_bfo_send_request_copy_in_out( mca_pml_bfo_send_request_t *sendreq,
     ompi_free_list_item_t *i;
     mca_bml_base_endpoint_t* bml_endpoint = sendreq->req_endpoint;
     int num_btls = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_send);
-    int rc = OMPI_SUCCESS, n;
+    int rc, n;
     double weight_total = 0;
 
     if( OPAL_UNLIKELY(0 == send_length) )
