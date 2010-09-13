@@ -9,9 +9,11 @@
 
 #ifdef _OPENMP
 #	include <omp.h>
+#	define MY_THREAD  omp_get_thread_num()
+#	define THREAD_NUM omp_get_num_threads()
 #else
-#	define omp_get_thread_num() 0
-#	define omp_get_num_threads() 1
+#	define MY_THREAD  0
+#	define THREAD_NUM 1
 #endif
 
 #if defined(HAVE_SYS_TIME_H) && HAVE_SYS_TIME_H
@@ -455,7 +457,7 @@ int main( int argc, const char** argv )
 #		endif
 		{
 
-		data_array[omp_get_thread_num()] = &data;
+		data_array[MY_THREAD] = &data;
 
 		uint64_t events = 0;
 		uint64_t read;
@@ -466,17 +468,17 @@ int main( int argc, const char** argv )
 		bool ready = false;
 		map<uint32_t, uint32_t> invers_proc_map;
 
-		uint32_t maxfiles = ( nfiles / omp_get_num_threads() ) +
-				( (uint32_t)omp_get_thread_num() < (nfiles % (uint32_t)omp_get_num_threads()) ? 1 : 0 );
+		uint32_t maxfiles = ( nfiles / THREAD_NUM ) +
+				( (uint32_t)MY_THREAD < (nfiles % (uint32_t)THREAD_NUM) ? 1 : 0 );
 
 		uint32_t start = 0;
 		uint32_t end = 0;
 #   ifdef _OPENMP
-		for(int k=0; k<omp_get_thread_num(); k++) {
+		for(int k=0; k<MY_THREAD; k++) {
 		  	start += threads[k];
 		}
 #   endif
-		end = start + threads[omp_get_thread_num()] - 1;
+		end = start + threads[MY_THREAD] - 1;
 
 		for(uint32_t i=0; i<num_cpus; i++) {
 			invers_proc_map[processlist[i]] = i;
