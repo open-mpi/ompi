@@ -61,6 +61,7 @@
 #include <ifaddrs.h>
 #endif
 
+#include "opal/util/if.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
