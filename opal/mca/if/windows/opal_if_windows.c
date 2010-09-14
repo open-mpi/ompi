@@ -15,7 +15,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "opal/util/if.h"
 #include "opal/mca/if/if.h"
 #include "opal/constants.h"
 
@@ -90,7 +89,7 @@ static int if_windows_open(void)
     for (i = 0; i < num_interfaces; ++i) {
         /* do all this only if the interface is up, and skip loopback interface */
         if (0 != (if_list[i].iiFlags & IFF_UP)
-            && (!retain_loopback && 0 == (if_list[i].iiFlags & IFF_LOOPBACK))) {
+            && (!opal_if_retain_loopback && 0 == (if_list[i].iiFlags & IFF_LOOPBACK))) {
 
             intf = OBJ_NEW(opal_if_t);
             if (NULL == intf) {
