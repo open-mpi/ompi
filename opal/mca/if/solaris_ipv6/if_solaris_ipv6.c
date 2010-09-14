@@ -123,7 +123,7 @@ static int if_solaris_ipv6_open(void)
                Bug, FIXME: site-local, multicast, ... missing
                Check for 2000::/3?
             */
-            if ( (!retain_loopback && !IN6_IS_ADDR_LOOPBACK (&my_addr->sin6_addr)) &&
+            if ( (!opal_if_retain_loopback && !IN6_IS_ADDR_LOOPBACK (&my_addr->sin6_addr)) &&
                  (! IN6_IS_ADDR_LINKLOCAL (&my_addr->sin6_addr))) {
                 /* create interface for newly found address */
                 opal_if_t *intf;
