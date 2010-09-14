@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 #
-# Copyright (c) 2008 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
 #
 # Dumb script to run through all the svn:ignore's in the tree and build
 # build a .hgignore file for Mercurial.  Do a few trivial things to
@@ -31,7 +31,6 @@ my @globals = qw/.libs
 *.loT
 *.orig
 *.rej
-*.diff
 .git*
 .DS_Store
 stamp-h[1-9]
