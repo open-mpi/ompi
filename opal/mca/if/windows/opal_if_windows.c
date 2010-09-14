@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "opal/util/if.h"
 #include "opal/mca/if/if.h"
 #include "opal/constants.h"
 
