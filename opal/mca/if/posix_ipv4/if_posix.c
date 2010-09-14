@@ -203,7 +203,7 @@ static int if_posix_open(void)
         }
 #endif
 #if 0
-        if (!retain_loopback && (ifr->ifr_flags & IFF_LOOPBACK) != 0) {
+        if (!opal_if_retain_loopback && (ifr->ifr_flags & IFF_LOOPBACK) != 0) {
             continue;
         }
 #endif
