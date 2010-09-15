@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -527,7 +528,7 @@ int orte_dt_print_app_context(char **output, char *prefix, orte_app_context_t *s
     }
     
     asprintf(&tmp, "\n%sData for app_context: name: %s\t index %lu\tapp: %s\n%s\tNum procs: %lu\tMax Local Restarts: %d\tMax Global Restarts %d\tConstrain: %s",
-             pfx2, src->name, (unsigned long)src->idx, src->app,
+             pfx2, (NULL == src->name) ? "NULL" : src->name, (unsigned long)src->idx, (NULL == src->app) ? "NULL" : src->app,
              pfx2, (unsigned long)src->num_procs, src->max_local_restarts, src->max_global_restarts,
              src->constrain ? "TRUE" : "FALSE");
     
