@@ -12,7 +12,7 @@
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -115,10 +115,10 @@ get_request_from_send_pending(mca_pml_csum_send_pending_t *type)
     return sendreq;
 }
 
-#define MCA_PML_CSUM_SEND_REQUEST_ALLOC( comm,                           \
-                                        dst,                            \
-                                        sendreq,                        \
-                                        rc)                             \
+#define MCA_PML_CSUM_SEND_REQUEST_ALLOC( comm,                          \
+                                         dst,                           \
+                                         sendreq,                       \
+                                         rc)                            \
     {                                                                   \
         ompi_proc_t *proc = ompi_comm_peer_lookup( comm, dst );         \
         ompi_free_list_item_t* item;                                    \
@@ -127,32 +127,33 @@ get_request_from_send_pending(mca_pml_csum_send_pending_t *type)
         if( OPAL_LIKELY(NULL != proc) ) {                               \
             rc = OMPI_SUCCESS;                                          \
             OMPI_FREE_LIST_WAIT(&mca_pml_base_send_requests, item, rc); \
-            sendreq = (mca_pml_csum_send_request_t*)item;                \
+            sendreq = (mca_pml_csum_send_request_t*)item;               \
             sendreq->req_send.req_base.req_proc = proc;                 \
         }                                                               \
     }
 
-#define MCA_PML_CSUM_SEND_REQUEST_INIT(sendreq,                                 \
-                                       buf,                                     \
-                                       count,                                   \
-                                       datatype,                                \
-                                       dst,                                     \
-                                       tag,                                     \
-                                       comm,                                    \
-                                       sendmode,                                \
-                                       persistent)                              \
-    {                                                                           \
-        MCA_PML_BASE_SEND_REQUEST_INIT(&sendreq->req_send,                      \
-                                       buf,                                     \
-                                       count,                                   \
-                                       datatype,                                \
-                                       dst,                                     \
-                                       tag,                                     \
-                                       comm,                                    \
-                                       sendmode,                                \
-                                       persistent,                              \
-                                       0);                \
-        (sendreq)->req_recv.pval = NULL;                                        \
+
+#define MCA_PML_CSUM_SEND_REQUEST_INIT(sendreq,                         \
+                                       buf,                             \
+                                       count,                           \
+                                       datatype,                        \
+                                       dst,                             \
+                                       tag,                             \
+                                       comm,                            \
+                                       sendmode,                        \
+                                       persistent)                      \
+    {                                                                   \
+        MCA_PML_BASE_SEND_REQUEST_INIT(&sendreq->req_send,              \
+                                       buf,                             \
+                                       count,                           \
+                                       datatype,                        \
+                                       dst,                             \
+                                       tag,                             \
+                                       comm,                            \
+                                       sendmode,                        \
+                                       persistent,                      \
+                                       0); /* convertor_flags */        \
+        (sendreq)->req_recv.pval = NULL;                                \
     }
 
 
@@ -228,7 +229,7 @@ send_request_pml_complete(mca_pml_csum_send_request_t *sendreq)
 
     if(sendreq->req_send.req_bytes_packed > 0) {
         PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,
-                &(sendreq->req_send.req_base), PERUSE_SEND);
+                                 &(sendreq->req_send.req_base), PERUSE_SEND);
     }
 
     /* return mpool resources */
@@ -256,7 +257,9 @@ send_request_pml_complete(mca_pml_csum_send_request_t *sendreq)
 static inline bool
 send_request_pml_complete_check(mca_pml_csum_send_request_t *sendreq)
 {
+#if OPAL_HAVE_THREAD_SUPPORT
     opal_atomic_rmb();
+#endif
     /* if no more events are expected for the request and the whole message is
      * already sent and send fragment scheduling isn't running in another
      * thread then complete the request on PML level. From now on, if user
@@ -349,7 +352,6 @@ mca_pml_csum_send_request_start_btl( mca_pml_csum_send_request_t* sendreq,
     size_t eager_limit = btl->btl_eager_limit - sizeof(mca_pml_csum_hdr_t);
     int rc;
 
-    assert(btl->btl_eager_limit >= sizeof(mca_pml_csum_hdr_t));
     if( OPAL_LIKELY(size <= eager_limit) ) {
         switch(sendreq->req_send.req_send_mode) {
         case MCA_PML_BASE_SEND_SYNCHRONOUS:

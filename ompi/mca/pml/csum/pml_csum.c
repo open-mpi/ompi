@@ -202,7 +202,7 @@ int mca_pml_csum_add_comm(ompi_communicator_t* comm)
         OBJ_RELEASE(pml_comm);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    
+
     mca_pml_csum_comm_init_size(pml_comm, comm->c_remote_group->grp_proc_count);
     comm->c_pml_comm = pml_comm;
 
@@ -281,7 +281,7 @@ int mca_pml_csum_del_comm(ompi_communicator_t* comm)
 {
     mca_pml_csum_comm_t* pml_comm = comm->c_pml_comm;
     int i;
-    
+
     for( i = 0; i < comm->c_remote_group->grp_proc_count; i++ ) {
         OBJ_RELEASE(pml_comm->procs[i].ompi_proc);
     }
@@ -497,14 +497,14 @@ static void mca_pml_csum_fin_completion( mca_btl_base_module_t* btl,
  */
 int mca_pml_csum_send_fin( ompi_proc_t* proc,
                           mca_bml_base_btl_t* bml_btl,
-                          void *hdr_des,
+                          ompi_ptr_t hdr_des,
                           uint8_t order,
                           uint32_t status )
 {
     mca_btl_base_descriptor_t* fin;
     mca_pml_csum_fin_hdr_t* hdr;
     int rc;
-    
+
     mca_bml_base_alloc(bml_btl, &fin, order, sizeof(mca_pml_csum_fin_hdr_t),
                        MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
 
@@ -520,8 +520,9 @@ int mca_pml_csum_send_fin( ompi_proc_t* proc,
     hdr->hdr_common.hdr_flags = 0;
     hdr->hdr_common.hdr_type = MCA_PML_CSUM_HDR_TYPE_FIN;
     hdr->hdr_common.hdr_csum = 0;
-    hdr->hdr_des.pval = hdr_des;
+    hdr->hdr_des = hdr_des;
     hdr->hdr_fail = status;
+
     hdr->hdr_common.hdr_csum = opal_csum16(hdr, sizeof(mca_pml_csum_fin_hdr_t));
     
     OPAL_OUTPUT_VERBOSE((1, mca_pml_base_output,
@@ -568,7 +569,7 @@ void mca_pml_csum_process_pending_packets(mca_bml_base_btl_t* bml_btl)
         if(NULL == send_dst) {
             OPAL_THREAD_LOCK(&mca_pml_csum.lock);
             opal_list_append(&mca_pml_csum.pckt_pending,
-                            (opal_list_item_t*)pckt);
+                             (opal_list_item_t*)pckt);
             OPAL_THREAD_UNLOCK(&mca_pml_csum.lock);
             continue;
         }
@@ -591,7 +592,7 @@ void mca_pml_csum_process_pending_packets(mca_bml_base_btl_t* bml_btl)
                 break;
             case MCA_PML_CSUM_HDR_TYPE_FIN:
                 rc = mca_pml_csum_send_fin(pckt->proc, send_dst,
-                                          pckt->hdr.hdr_fin.hdr_des.pval,
+                                          pckt->hdr.hdr_fin.hdr_des,
                                           pckt->order,
                                           pckt->hdr.hdr_fin.hdr_fail);
                 if( OPAL_UNLIKELY(OMPI_ERR_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc)) ) {
@@ -634,7 +635,7 @@ void mca_pml_csum_process_pending_rdma(void)
 
 void mca_pml_csum_error_handler(
         struct mca_btl_base_module_t* btl, int32_t flags,
-        ompi_proc_t* errproc, char* btlinfo) { 
+        ompi_proc_t* errproc, char* btlinfo ) { 
     orte_errmgr.abort(-1, NULL);
 }
 

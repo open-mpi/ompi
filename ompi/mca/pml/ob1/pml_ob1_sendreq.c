@@ -864,7 +864,7 @@ void mca_pml_ob1_send_request_copy_in_out( mca_pml_ob1_send_request_t *sendreq,
     ompi_free_list_item_t *i;
     mca_bml_base_endpoint_t* bml_endpoint = sendreq->req_endpoint;
     int num_btls = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_send);
-    int rc = OMPI_SUCCESS, n;
+    int rc, n;
     double weight_total = 0;
 
     if( OPAL_UNLIKELY(0 == send_length) )

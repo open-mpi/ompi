@@ -14,6 +14,7 @@
  * Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -344,11 +345,10 @@ static int mca_pml_csum_recv_request_ack(
     /* let know to shedule function there is no need to put ACK flag */
     recvreq->req_ack_sent = true;
     return mca_pml_csum_recv_request_ack_send(proc, hdr->hdr_src_req.lval,
-            recvreq, recvreq->req_send_offset,
-            recvreq->req_send_offset == bytes_received);
+                                              recvreq, recvreq->req_send_offset,
+                                              recvreq->req_send_offset == bytes_received);
 }
 
-                                                                                                            
 /**
  * Return resources used by the RDMA
  */
@@ -371,7 +371,7 @@ static void mca_pml_csum_rget_completion( mca_btl_base_module_t* btl,
 
     mca_pml_csum_send_fin(recvreq->req_recv.req_base.req_proc,
                          bml_btl,
-                         frag->rdma_hdr.hdr_rget.hdr_des.pval,
+                         frag->rdma_hdr.hdr_rget.hdr_des,
                          des->order, 0); 
 
     /* is receive request complete */
@@ -453,9 +453,8 @@ void mca_pml_csum_recv_request_progress_frag( mca_pml_csum_recv_request_t* recvr
                                              mca_btl_base_segment_t* segments,
                                              size_t num_segments )
 {
-    size_t bytes_received = 0;
+    size_t bytes_received = 0, data_offset = 0;
     size_t bytes_delivered __opal_attribute_unused__; /* is being set to zero in MCA_PML_CSUM_RECV_REQUEST_UNPACK */
-    size_t data_offset = 0;
     mca_pml_csum_hdr_t* hdr = (mca_pml_csum_hdr_t*)segments->seg_addr.pval;
     uint32_t csum = OPAL_CSUM_ZERO;
 
@@ -764,7 +763,7 @@ void mca_pml_csum_recv_request_matched_probe( mca_pml_csum_recv_request_t* recvr
     recvreq->req_recv.req_base.req_ompi.req_status.MPI_TAG = hdr->hdr_match.hdr_tag;
     recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = hdr->hdr_match.hdr_src;
     recvreq->req_bytes_received = bytes_packed;
-    recvreq->req_bytes_delivered = bytes_packed;
+    recvreq->req_bytes_expected = bytes_packed;
     recv_request_pml_complete(recvreq);
 }
 
@@ -1030,9 +1029,9 @@ void mca_pml_csum_recv_req_start(mca_pml_csum_recv_request_t *req)
 
     /* init/re-init the request */
     req->req_lock = 0;
-    req->req_pipeline_depth  = 0;
-    req->req_bytes_received  = 0;
-    req->req_bytes_delivered = 0;
+    req->req_pipeline_depth = 0;
+    req->req_bytes_received = 0;
+    req->req_bytes_expected = 0;
     /* What about req_rdma_cnt ? */
     req->req_rdma_idx = 0;
     req->req_pending = false;
@@ -1083,7 +1082,7 @@ void mca_pml_csum_recv_req_start(mca_pml_csum_recv_request_t *req)
                                    hdr->hdr_match.hdr_src,
                                    hdr->hdr_match.hdr_tag,
                                    PERUSE_RECV);
-            
+
             PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_SEARCH_UNEX_Q_END,
                                     &(req->req_recv.req_base), PERUSE_RECV);
 

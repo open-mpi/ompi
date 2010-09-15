@@ -13,6 +13,7 @@
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -685,9 +686,8 @@ int mca_pml_csum_send_request_start_rdma( mca_pml_csum_send_request_t* sendreq,
     mca_pml_csum_hdr_t* hdr;
     bool need_local_cb = false;
     int rc;
-    
-    bml_btl = sendreq->req_rdma[0].bml_btl;
 
+    bml_btl = sendreq->req_rdma[0].bml_btl;
     if((sendreq->req_rdma_cnt == 1) && (bml_btl->btl_flags & MCA_BTL_FLAGS_GET)) {
         mca_mpool_base_registration_t* reg = sendreq->req_rdma[0].btl_reg;
         mca_btl_base_descriptor_t* src;
@@ -1110,7 +1110,7 @@ cannot_pack:
 
         des->des_cbfunc = mca_pml_csum_frag_completion;
         des->des_cbdata = sendreq;
-        
+
         /* setup header */
         hdr = (mca_pml_csum_frag_hdr_t*)des->des_src->seg_addr.pval;
         hdr->hdr_common.hdr_flags = 0;
@@ -1180,7 +1180,7 @@ static void mca_pml_csum_put_completion( mca_btl_base_module_t* btl,
 
     mca_pml_csum_send_fin(sendreq->req_send.req_base.req_proc, 
                          bml_btl,
-                         frag->rdma_hdr.hdr_rdma.hdr_des.pval,
+                         frag->rdma_hdr.hdr_rdma.hdr_des,
                          des->order, 0);
     
     /* check for request completion */
@@ -1225,7 +1225,7 @@ int mca_pml_csum_send_request_put_frag( mca_pml_csum_rdma_frag_t* frag )
 
             /* tell receiver to unregister memory */
             mca_pml_csum_send_fin(sendreq->req_send.req_base.req_proc,
-                    bml_btl, frag->rdma_hdr.hdr_rdma.hdr_des.pval,
+                    bml_btl, frag->rdma_hdr.hdr_rdma.hdr_des,
                     MCA_BTL_NO_ORDER, 1);
 
             /* send fragment by copy in/out */
