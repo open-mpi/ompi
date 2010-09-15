@@ -14,6 +14,7 @@
  * Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -51,6 +52,7 @@ static mca_pml_base_module_t*
 mca_pml_csum_component_init( int* priority, bool enable_progress_threads,
                             bool enable_mpi_threads );
 static int mca_pml_csum_component_fini(void);
+int mca_pml_csum_output = 0;
 
 mca_pml_base_component_2_0_0_t mca_pml_csum_component = {
 
@@ -96,7 +98,12 @@ static inline int mca_pml_csum_param_register_int(
 
 static int mca_pml_csum_component_open(void)
 {
+    int value;
     mca_allocator_base_component_t* allocator_component;
+
+    value = mca_pml_csum_param_register_int("verbose", 0);
+    mca_pml_csum_output = opal_output_open(NULL);
+    opal_output_set_verbosity(mca_pml_csum_output, value);
 
     mca_pml_csum.free_list_num =
         mca_pml_csum_param_register_int("free_list_num", 4);
@@ -163,7 +170,8 @@ mca_pml_csum_component_init( int* priority,
                             bool enable_progress_threads,
                             bool enable_mpi_threads )
 {
-    opal_output_verbose( 10, 0, "in csum, my priority is 0\n");
+    opal_output_verbose( 10, mca_pml_csum_output,
+                         "in csum, my priority is 0\n");
 
     /* select us only if we are specified */
     if((*priority) > 0) { 
@@ -171,18 +179,18 @@ mca_pml_csum_component_init( int* priority,
         return NULL;
     }
     *priority = 0;
-    
+
     if(OMPI_SUCCESS != mca_bml_base_init( enable_progress_threads, 
-                                         enable_mpi_threads)) {
+                                          enable_mpi_threads)) {
         return NULL;
     }
-    
+
     /* Set this here (vs in component_open()) because
-     ompi_mpi_leave_pinned* may have been set after MCA params were
-     read (e.g., by the openib btl) */
+       ompi_mpi_leave_pinned* may have been set after MCA params were
+       read (e.g., by the openib btl) */
     mca_pml_csum.leave_pinned = (1 == ompi_mpi_leave_pinned);
     mca_pml_csum.leave_pinned_pipeline = (int) ompi_mpi_leave_pinned_pipeline;
-    
+
     return &mca_pml_csum.super;
 }
 

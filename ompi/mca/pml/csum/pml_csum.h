@@ -12,6 +12,7 @@
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -83,6 +84,7 @@ struct mca_pml_csum_t {
 typedef struct mca_pml_csum_t mca_pml_csum_t; 
 
 extern mca_pml_csum_t mca_pml_csum;
+extern int mca_pml_csum_output;
 
 /*
  * PML interface functions.
@@ -212,7 +214,7 @@ do {                                                            \
                                                                     \
         MCA_PML_CSUM_PCKT_PENDING_ALLOC(_pckt,_rc);                  \
         _pckt->hdr.hdr_common.hdr_type = MCA_PML_CSUM_HDR_TYPE_FIN;  \
-        _pckt->hdr.hdr_fin.hdr_des.pval = (D);                      \
+        _pckt->hdr.hdr_fin.hdr_des = (D);                           \
         _pckt->hdr.hdr_fin.hdr_fail = (S);                          \
         _pckt->proc = (P);                                          \
         _pckt->bml_btl = (B);                                       \
@@ -225,7 +227,7 @@ do {                                                            \
 
 
 int mca_pml_csum_send_fin(ompi_proc_t* proc, mca_bml_base_btl_t* bml_btl, 
-        void *hdr_des, uint8_t order, uint32_t status);
+        ompi_ptr_t hdr_des, uint8_t order, uint32_t status);
 
 /* This function tries to resend FIN/ACK packets from pckt_pending queue.
  * Packets are added to the queue when sending of FIN or ACK is failed due to

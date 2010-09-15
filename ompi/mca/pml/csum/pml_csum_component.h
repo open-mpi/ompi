@@ -7,6 +7,7 @@
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -29,4 +30,5 @@ BEGIN_C_DECLS
 OMPI_MODULE_DECLSPEC extern mca_pml_base_component_2_0_0_t mca_pml_csum_component;
 
 END_C_DECLS
+
 #endif

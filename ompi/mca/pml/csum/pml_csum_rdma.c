@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -58,10 +59,10 @@ size_t mca_pml_csum_rdma_btls(
         mca_bml_base_btl_t* bml_btl =
             mca_bml_base_btl_array_get_index(&bml_endpoint->btl_rdma,
                     (bml_endpoint->btl_rdma_index + n) % num_btls); 
-        mca_mpool_base_registration_t* reg = NULL;
+        mca_mpool_base_registration_t* reg = &pml_csum_dummy_reg;
         mca_mpool_base_module_t *btl_mpool = bml_btl->btl->btl_mpool;
 
-        if(NULL != btl_mpool) {
+        if( NULL != btl_mpool ) {
             if(!mca_pml_csum.leave_pinned) {
                 /* look through existing registrations */
                 btl_mpool->mpool_find(btl_mpool, base, size, &reg);
@@ -71,18 +72,13 @@ size_t mca_pml_csum_rdma_btls(
             }
 
             if(NULL == reg)
-                bml_btl = NULL; /* skip it */
-        } else {
-            /* if registration is not required use dummy registration */
-            reg = &pml_csum_dummy_reg;
+                continue;
         }
 
-        if(bml_btl != NULL) {
-            rdma_btls[num_btls_used].bml_btl = bml_btl;
-            rdma_btls[num_btls_used].btl_reg = reg;
-            weight_total += bml_btl->btl_weight;
-            num_btls_used++;
-        }
+        rdma_btls[num_btls_used].bml_btl = bml_btl;
+        rdma_btls[num_btls_used].btl_reg = reg;
+        weight_total += bml_btl->btl_weight;
+        num_btls_used++;
     }
 
     /* if we don't use leave_pinned and all BTLs that already have this memory
@@ -92,7 +88,7 @@ size_t mca_pml_csum_rdma_btls(
         return 0;
 
     mca_pml_csum_calc_weighted_length(rdma_btls, num_btls_used, size,
-            weight_total);
+                                      weight_total);
 
     bml_endpoint->btl_rdma_index = (bml_endpoint->btl_rdma_index + 1) % num_btls;
     return num_btls_used;
