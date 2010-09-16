@@ -362,16 +362,15 @@ ompi_osc_rdma_sendreq_send_cb(struct mca_btl_base_module_t* btl,
         if (0 == (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_MULTI)) {
             done = true;
         } else {
+            /* Find starting point for next header.  Note that the last part
+             * added in to compute the starting point for the next header is
+             * extra padding that may have been inserted. */
             header = (ompi_osc_rdma_send_header_t*)
                 (((char*) header) + 
                  sizeof(ompi_osc_rdma_send_header_t) + 
                  ompi_datatype_pack_description_length(sendreq->req_target_datatype) +
-                 header->hdr_msg_length);
-
-            /* The next header starts at the next aligned address in the
-             * buffer.  Therefore, bump pointer forward if necessary. */
-            header = (ompi_osc_rdma_send_header_t*)((char*)header + 
-                      OPAL_ALIGN_PAD_AMOUNT(header, sizeof(void*)));
+                 header->hdr_msg_length +
+                 (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_ALIGN_MASK));
 
             if (header->hdr_base.hdr_type == OMPI_OSC_RDMA_HDR_MULTI_END) {
                 done = true;
@@ -574,14 +573,21 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
          * pointer addresses.  Therefore, the pointer, amount written
          * and space remaining are adjusted forward so that the
          * starting position for the next message is aligned properly.
-         * This strict alignment is required by certain platforms like
-         * SPARC.  Without it, bus errors can occur.  Keeping things
-         * aligned also may offer some performance improvements on
-         * other platforms.  */
+         * The amount of this alignment is embedded in the hdr_flags
+         * field so the callback completion and receiving side can
+         * also know how much to move the pointer to find the starting
+         * point of the next header.  This strict alignment is
+         * required by certain platforms like SPARC.  Without it,
+         * bus errors can occur.  Keeping things aligned also may
+         * offer some performance improvements on other platforms.
+         */
         offset = OPAL_ALIGN_PAD_AMOUNT(descriptor->des_src[0].seg_len, sizeof(void*));
-        descriptor->des_src[0].seg_len += offset;
-        written_data += offset;
-        module->m_pending_buffers[sendreq->req_target_rank].remain_len -= offset;
+        if (0 != offset) {
+            header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_ALIGN_MASK & offset;
+            descriptor->des_src[0].seg_len += offset;
+            written_data += offset;
+            module->m_pending_buffers[sendreq->req_target_rank].remain_len -= offset;
+        }
 
 #ifdef WORDS_BIGENDIAN
         header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_NBO;
