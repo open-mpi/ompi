@@ -921,10 +921,13 @@ component_fragment_cb(struct mca_btl_base_module_t *btl,
         }
 
         if ((base_header->hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_MULTI) != 0) {
-
-            /* The next header starts at the next aligned address in the
-             * buffer.  Therefore, bump pointer forward if necessary. */
-            payload = (char *)payload + OPAL_ALIGN_PAD_AMOUNT(payload, sizeof(void*));
+            /* The next header starts at the next aligned address in
+             * the buffer.  Therefore, check the hdr_flags to see if
+             * any extra alignment is necessary, and if so, pull value
+             * from the flags. */
+            if (base_header->hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_ALIGN_MASK) {
+                payload = (char *)payload + (base_header->hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_ALIGN_MASK);
+            }
             base_header = (ompi_osc_rdma_base_header_t*) payload;
         } else {
             done = true;
