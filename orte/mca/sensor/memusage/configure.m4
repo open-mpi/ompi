@@ -10,7 +10,9 @@
 
 # MCA_sensor_memusage_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([MCA_sensor_memusage_CONFIG], [
+AC_DEFUN([MCA_orte_sensor_memusage_CONFIG], [
+    AC_CONFIG_FILES([orte/mca/sensor/memusage/Makefile])
+
     # if we don't want sensors, don't compile
     # this component
     AS_IF([test "$orte_want_sensors" = "1"],

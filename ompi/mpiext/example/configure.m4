@@ -12,6 +12,6 @@
 # OMPI_MPIEXT_example_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
 AC_DEFUN([OMPI_MPIEXT_example_CONFIG],[
-    # Left empty as a stub for copy-paste of new extensions
-    echo "MPIEXT Example: Inside configure.m4"
-])dnl
+    AC_CONFIG_FILES([ompi/mpiext/example/Makefile])
+    $1
+])

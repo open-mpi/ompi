@@ -10,7 +10,6 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
-dnl Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -563,13 +562,6 @@ dnl For PowerPC, this would be:
 dnl
 dnl   "li %0,0" : "=&r"(ret)
 dnl
-dnl For testing ia32 assembly, the assembly instruction xaddl is
-dnl tested.  The xaddl instruction is used by some of the atomic
-dnl implementations so it makes sense to test for it.  In addition,
-dnl some compilers (i.e. earlier versions of Sun Studio 12) do not
-dnl necessarily handle xaddl properly, so that needs to be detected
-dnl during configure time.
-dnl
 dnl DEFINE OMPI_GCC_INLINE_ASSEMBLY to 0 or 1 depending on GCC
 dnl                support
 dnl
@@ -596,7 +588,6 @@ AC_DEFUN([OMPI_CHECK_INLINE_C_GCC],[
                         AC_RUN_IFELSE(AC_LANG_PROGRAM([[
 AC_INCLUDES_DEFAULT]],
 [[int ret = 1;
-int negone = -1;
 __asm__ __volatile__ ($assembly);
 return ret;]]),
                     [asm_result="yes"], [asm_result="no"], 
@@ -612,7 +603,6 @@ return ret;]]),
             AC_LINK_IFELSE(AC_LANG_PROGRAM([[
 AC_INCLUDES_DEFAULT]],
 [[int ret = 1;
-int negone = -1;
 __asm__ __volatile__ ($assembly);
 return ret;]]),
             [asm_result="yes"], [asm_result="no"])
@@ -652,7 +642,6 @@ AC_DEFUN([OMPI_CHECK_INLINE_CXX_GCC],[
             AC_RUN_IFELSE(AC_LANG_PROGRAM([[
 AC_INCLUDES_DEFAULT]],
 [[int ret = 1;
-int negone = -1;
 __asm__ __volatile__ ($assembly);
 return ret;]]),
                     [asm_result="yes"], [asm_result="no"], 
@@ -667,7 +656,6 @@ return ret;]]),
         AC_LINK_IFELSE(AC_LANG_PROGRAM([[
 AC_INCLUDES_DEFAULT]],
 [[int ret = 1;
-int negone = -1;
 __asm__ __volatile__ ($assembly);
 return ret;]]),
             [asm_result="yes"], [asm_result="no"])
@@ -885,7 +873,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
                 ompi_cv_asm_arch="AMD64"
             fi
             OPAL_ASM_SUPPORT_64BIT=1
-            OMPI_GCC_INLINE_ASSIGN='"xaddl %1,%0" : "=m"(ret), "+r"(negone)'
+            OMPI_GCC_INLINE_ASSIGN='"movl [$]0, %0" : "=&r"(ret)'
             ;;
 
         ia64-*)

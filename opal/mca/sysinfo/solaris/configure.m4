@@ -8,11 +8,13 @@
 # 
 # $HEADER$
 #
+AC_DEFUN([MCA_opal_sysinfo_solaris_PRIORITY], [60])
 
 # MCA_sysinfo_solaris_CONFIG(action-if-can-compile, 
 #                        [action-if-cant-compile])
 # ------------------------------------------------
-AC_DEFUN([MCA_sysinfo_solaris_CONFIG],[
+AC_DEFUN([MCA_opal_sysinfo_solaris_CONFIG],[
+    AC_CONFIG_FILES([opal/mca/sysinfo/solaris/Makefile])
 
     # check to see if we are on a solaris machine
     case $host in

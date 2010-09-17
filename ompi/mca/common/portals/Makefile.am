@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -74,7 +74,7 @@ noinst_LTLIBRARIES =
 comp_inst = libmca_common_portals.la
 comp_noinst = libmca_common_portals_noinst.la
 
-if OMPI_BUILD_common_portals_DSO
+if MCA_BUILD_ompi_common_portals_DSO
 lib_LTLIBRARIES += $(comp_inst)
 else
 noinst_LTLIBRARIES += $(comp_noinst)
@@ -91,11 +91,9 @@ libmca_common_portals_noinst_la_LIBADD = $(common_portals_LIBS)
 
 # Conditionally install the header files
 
+ompidir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/mca/common/portals
 ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
 endif
 
 # These two rules will sym link the "noinst" libtool library filename

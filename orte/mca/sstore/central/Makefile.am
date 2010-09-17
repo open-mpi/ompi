@@ -22,7 +22,7 @@ sources = \
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_sstore_central_DSO
+if MCA_BUILD_orte_sstore_central_DSO
 component_noinst =
 component_install = mca_sstore_central.la
 else

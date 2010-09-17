@@ -17,11 +17,13 @@
 # 
 # $HEADER$
 #
+AC_DEFUN([MCA_opal_pstat_linux_PRIORITY], [60])
 
 # MCA_pstat_linux_CONFIG(action-if-can-compile, 
 #                        [action-if-cant-compile])
 # ------------------------------------------------
-AC_DEFUN([MCA_pstat_linux_CONFIG],[
+AC_DEFUN([MCA_opal_pstat_linux_CONFIG],[
+    AC_CONFIG_FILES([opal/mca/pstat/linux/Makefile])
 
    case "${host}" in
    i?86-*linux*|x86_64*linux*|ia64-*linux*|powerpc-*linux*|powerpc64-*linux*|sparc*-*linux*)

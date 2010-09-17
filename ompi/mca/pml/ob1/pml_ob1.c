@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
- * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -603,7 +603,7 @@ void mca_pml_ob1_process_pending_rdma(void)
 
 void mca_pml_ob1_error_handler(
         struct mca_btl_base_module_t* btl, int32_t flags,
-        ompi_proc_t* errproc, char* btlinfo ) { 
+        ompi_proc_t* errproc, char* btlname ) { 
     orte_errmgr.abort(-1, NULL);
 }
 

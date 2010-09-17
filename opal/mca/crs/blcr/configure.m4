@@ -8,7 +8,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2006 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -18,7 +18,9 @@
 
 # MCA_crs_blcr_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([MCA_crs_blcr_CONFIG],[
+AC_DEFUN([MCA_opal_crs_blcr_CONFIG],[
+    AC_CONFIG_FILES([opal/mca/crs/blcr/Makefile])
+
     AC_ARG_WITH([blcr],
                 [AC_HELP_STRING([--with-blcr(=DIR)],
                                 [Path to BLCR Installation])])

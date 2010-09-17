@@ -72,9 +72,7 @@ libevent_la_SOURCES = event.c log.c evutil.c $(headers)
 libevent_la_LIBADD = $(objects)
 libevent_la_DEPENDENCIES = $(objects)
 
+opaldir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/opal/event
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
+opal_HEADERS = $(headers)
 endif

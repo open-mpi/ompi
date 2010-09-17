@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -20,7 +20,9 @@
 
 # MCA_plm_tmd_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([MCA_plm_tmd_CONFIG],[
+AC_DEFUN([MCA_orte_plm_tmd_CONFIG],[
+    AC_CONFIG_FILES([orte/mca/plm/tmd/Makefile])
+
     ORTE_CHECK_TM([plm_tmd], [plm_tmd_good=1], [plm_tmd_good=0])
          
     # if check worked, set wrapper flags if so.  

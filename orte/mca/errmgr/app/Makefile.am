@@ -18,7 +18,7 @@ sources = \
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_errmgr_app_DSO
+if MCA_BUILD_orte_errmgr_app_DSO
 component_noinst =
 component_install = mca_errmgr_app.la
 else

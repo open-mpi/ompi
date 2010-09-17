@@ -22,7 +22,7 @@ sources = \
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_compress_bzip_DSO
+if MCA_BUILD_opal_compress_bzip_DSO
 component_noinst =
 component_install = mca_compress_bzip.la
 else

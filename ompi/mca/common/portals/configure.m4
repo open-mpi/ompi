@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -21,7 +22,9 @@
 # MCA_common_portals_CONFIG(action-if-can-compile, 
 #                        [action-if-cant-compile])
 # ------------------------------------------------
-AC_DEFUN([MCA_common_portals_CONFIG],[
+AC_DEFUN([MCA_ompi_common_portals_CONFIG],[
+    AC_CONFIG_FILES([ompi/mca/common/portals/Makefile])
+
     OMPI_CHECK_PORTALS([common_portals],
                      [common_portals_happy="yes"],
                      [common_portals_happy="no"])

@@ -64,7 +64,6 @@ ompi_common_mx_initialize(void)
 	   - we have both FREE and MUNMAP support
 	   - we have MUNMAP support and the linux mallopt */
 	value = opal_mem_hooks_support_level();
-        mpool_resources.regcache_clean = mx__regcache_clean;
 	if ((value & (OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT))
             == (OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT)) {
 	  index = mca_base_param_find("mpi", NULL, "leave_pinned");
@@ -101,6 +100,7 @@ ompi_common_mx_initialize(void)
             return OMPI_ERR_NOT_AVAILABLE;
         }
         ompi_common_mx_available = 1;
+        mpool_resources.regcache_clean = mx__regcache_clean;
     } else if (ompi_common_mx_available < 0) {
         ret = OMPI_ERR_NOT_AVAILABLE;
     }

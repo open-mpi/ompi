@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -43,7 +43,7 @@ sources = \
 # (for static builds).
 
 
-if OMPI_BUILD_btl_sctp_DSO
+if MCA_BUILD_ompi_btl_sctp_DSO
 lib =
 lib_sources =
 component = mca_btl_sctp.la

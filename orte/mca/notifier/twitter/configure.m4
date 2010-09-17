@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009 Cisco Systems, Inc. All rights reserved.
+# Copyright (c) 2009-2010 Cisco Systems, Inc. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -20,7 +20,9 @@
 
 # MCA_notifier_twitter_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([MCA_notifier_twitter_CONFIG], [
+AC_DEFUN([MCA_orte_notifier_twitter_CONFIG], [
+    AC_CONFIG_FILES([orte/mca/notifier/twitter/Makefile])
+
     # check for sockaddr_in (a good sign we have TCP, which we need to
     # connect to the Twitter update server)
     AC_CHECK_TYPES([struct sockaddr_in], 

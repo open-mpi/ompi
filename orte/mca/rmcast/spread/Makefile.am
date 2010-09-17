@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved. 
+# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved. 
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -13,7 +13,7 @@ AM_CPPFLAGS = $(rmcast_spread_CPPFLAGS)
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_rmcast_spread_DSO
+if MCA_BUILD_orte_rmcast_spread_DSO
 component_noinst =
 component_install = mca_rmcast_spread.la
 else

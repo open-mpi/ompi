@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Institut National de Recherche en Informatique
 #                         et Automatique. All rights reserved.
 # $COPYRIGHT$
@@ -32,7 +32,7 @@ sources = \
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_plm_lsf_DSO
+if MCA_BUILD_orte_plm_lsf_DSO
 component_noinst = 
 component_install = mca_plm_lsf.la
 else

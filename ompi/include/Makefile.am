@@ -52,12 +52,11 @@ nodist_include_HEADERS += \
         mpif-config.h
 endif
 
+ompidir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS 
-ompidir = $(includedir)/openmpi
 nobase_dist_ompi_HEADERS = $(headers)
 nobase_nodist_ompi_HEADERS = $(nodist_headers)
 else
-ompidir = $(includedir)
 nobase_dist_noinst_HEADERS = $(headers)
 nobase_nodist_noinst_HEADERS = $(nodist_headers)
 endif

@@ -36,7 +36,6 @@
 #include "orte/mca/sensor/sensor.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/debugger/base/base.h"
-#include "orte/mca/notifier/notifier.h"
 
 #include "orte/util/error_strings.h"
 #include "orte/util/name_fns.h"
@@ -991,8 +990,7 @@ static void check_job_complete(orte_job_t *jdata)
     orte_std_cntr_t index;
     bool one_still_alive;
     orte_vpid_t non_zero=0, lowest=0;
-    char *msg;
-
+    
 #if 0
     /* Check if FileM is active. If so then keep processing. */
     OPAL_ACQUIRE_THREAD(&orte_filem_base_lock, &orte_filem_base_cond, &orte_filem_base_is_active);
@@ -1227,7 +1225,7 @@ static void check_job_complete(orte_job_t *jdata)
      * This can happen if a ctrl-c hits in the "wrong" place
      * while launching
      */
- CHECK_DAEMONS:
+CHECK_DAEMONS:
     if (jdata == NULL || jdata->jobid == ORTE_PROC_MY_NAME->jobid) {
         if (0 == orte_routed.num_routes()) {
             /* orteds are done! */
@@ -1303,9 +1301,6 @@ static void check_job_complete(orte_job_t *jdata)
          * then go ahead and release it. We cannot release it if it
          * abnormally terminated as mpirun needs the info so it can
          * report appropriately to the user
-         *
-         * NOTE: do not release the primary job (j=1) so we
-         * can pretty-print completion message
          */
         if (NULL != jdata && job->jobid == jdata->jobid &&
             (jdata->state == ORTE_JOB_STATE_TERMINATED ||
@@ -1314,10 +1309,8 @@ static void check_job_complete(orte_job_t *jdata)
              * pointer array internal accounting
              * is maintained!
              */
-            if (1 < j) {
-                opal_pointer_array_set_item(orte_job_data, j, NULL);  /* ensure the array has a NULL */
-                OBJ_RELEASE(jdata);
-            }
+            opal_pointer_array_set_item(orte_job_data, j, NULL);  /* ensure the array has a NULL */
+            OBJ_RELEASE(jdata);
             continue;
         }
         /* if the job is flagged to not be monitored, skip it */
@@ -1363,25 +1356,6 @@ static void check_job_complete(orte_job_t *jdata)
      * wasn't already set by an error condition
      */
     ORTE_UPDATE_EXIT_STATUS(0);
-    /* provide a notifier message if that framework is active - ignored otherwise */
-    if (NULL != (job = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, 1))) {
-        if (NULL == job->name) {
-            job->name = strdup(orte_process_info.nodename);
-        }
-        if (NULL == job->instance) {
-            asprintf(&job->instance, "%d", orte_process_info.pid);
-        }
-        if (0 == orte_exit_status) {
-            asprintf(&msg, "Job %s:%s complete", job->name, job->instance);
-            orte_notifier.log(ORTE_NOTIFIER_INFO, 0, msg);
-        } else {
-            asprintf(&msg, "Job %s:%s terminated abnormally", job->name, job->instance);
-            orte_notifier.log(ORTE_NOTIFIER_ALERT, orte_exit_status, msg);
-        }
-        free(msg);
-        /* this job object will be release during finalize */
-    }
-
     orte_jobs_complete();
     /* if I am the only daemon alive, then I can exit now */
     if (0 == orte_routed.num_routes()) {

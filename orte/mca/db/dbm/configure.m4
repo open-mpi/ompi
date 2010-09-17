@@ -10,7 +10,9 @@ dnl
 
 # MCA_db_dbm_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([MCA_db_dbm_CONFIG], [
+AC_DEFUN([MCA_orte_db_dbm_CONFIG], [
+    AC_CONFIG_FILES([orte/mca/db/dbm/Makefile])
+
     # only build if ndbm.h and its library are found
     OMPI_CHECK_PACKAGE([db_dbm],
                        [ndbm.h],

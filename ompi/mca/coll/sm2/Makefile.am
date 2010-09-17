@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -35,7 +36,7 @@ sources = \
 
 component_noinst =
 component_install =
-if OMPI_BUILD_coll_sm2_DSO
+if MCA_BUILD_ompi_coll_sm2_DSO
 component_install += mca_coll_sm2.la
 else
 component_noinst += libmca_coll_sm2.la

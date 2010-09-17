@@ -13,6 +13,7 @@
 # Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+# Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -65,9 +66,7 @@ libdatatype_la_SOURCES = \
 libdatatype_la_LIBADD = libdatatype_reliable.la
 
 # Conditionally install the header files
+opaldir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
-opaldir = $(includedir)/openmpi/opal/datatype
 opal_HEADERS = $(headers)
-else
-opaldir = $(includedir)
 endif

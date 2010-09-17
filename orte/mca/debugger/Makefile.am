@@ -20,11 +20,9 @@ headers = debugger.h
 libmca_debugger_la_SOURCES += $(headers)
 
 # Conditionally install the header files
+ortedir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
 nobase_orte_HEADERS += $(headers)
-ortedir = $(includedir)/openmpi/orte/mca/debugger
-else
-ortedir = $(includedir)
 endif
 
 include base/Makefile.am

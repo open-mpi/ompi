@@ -160,7 +160,7 @@ int main()
 }
 ],	[ AC_MSG_RESULT(yes)
 	  AC_DEFINE(HAVE_WORKING_RTSIG, 1, [Define if realtime signals work on pipes])],
-	AC_MSG_RESULT(no))
+	[ AC_MSG_RESULT(no)], [AC_MSG_RESULT(no)])
 fi
 
 haveepoll=no
@@ -235,7 +235,7 @@ AC_INCLUDES_DEFAULT
                  [Define if your system supports the epoll interface])
         # OMPI: Don't use AC_LIBOBJ
         sources="epoll.c $sources"
-        needsignal=yes])
+        needsignal=yes], [], [haveepoll=no])
         AC_MSG_RESULT([$haveepoll])
 fi
 
@@ -283,7 +283,7 @@ AC_INCLUDES_DEFAULT
                  [Define if your system supports the epoll interface])
         # OMPI: don't use AC_LIBOBJ
         sources="epoll_sub.c epoll.c $sources"
-        needsignal=yes])
+        needsignal=yes], [], [haveepollsyscall=no])
         AC_MSG_RESULT([$haveepollsyscall])
 fi
 
@@ -362,7 +362,7 @@ main()
 }, [AC_MSG_RESULT(yes)
     AC_DEFINE(HAVE_WORKING_KQUEUE, 1,
 		[Define if kqueue works correctly with pipes])
-    sources="kqueue.c $sources"], AC_MSG_RESULT(no), AC_MSG_RESULT(no))
+    sources="kqueue.c $sources"], [AC_MSG_RESULT(no)], [AC_MSG_RESULT(no)])
     # OMPI: don't use AC_LIBOBJ
 	fi
 fi

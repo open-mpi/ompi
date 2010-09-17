@@ -57,6 +57,7 @@ fi
 
 greekonly=0
 want_ompi=1
+autogen_args=
 while test "$1" != ""; do
     case $1 in
         -greekonly) greekonly=1 ;;
@@ -65,6 +66,12 @@ while test "$1" != ""; do
         --highok) highok=1 ;;
         -no-ompi) want_ompi=0 ;;
         --no-ompi) want_ompi=0 ;;
+        -autogen-args) autogen_args=$2; shift ;;
+        --autogen-args) autogen_args=$2; shift ;;
+        *)
+            echo Unrecognized argument: $1
+            exit 1
+            ;;
     esac
     shift
 done
@@ -216,12 +223,12 @@ make_tarball() {
     #
     # Autogen
     #
-    echo "*** Running autogen.sh..."
+    echo "*** Running autogen $autogen_args..."
     rm -f success
     if test "$want_ompi" = "1" ; then
-        (./autogen.sh 2>&1 && touch success) | tee auto.out
+        (./autogen.pl $autogen_args 2>&1 && touch success) | tee auto.out
     else
-        (./autogen.sh -no-ompi 2>&1 && touch success) | tee auto.out
+        (./autogen.pl -no-ompi $autogen_args 2>&1 && touch success) | tee auto.out
     fi
     if test ! -f success; then
         echo "Autogen failed.  Aborting"
@@ -292,7 +299,7 @@ check_gnu_version flex $FLEX_TARGET_VERSION
 # Verify that we're in a top Open MPI dir
 #
 echo "*** Checking to ensure in top-level Open MPI directory..."
-if test -f VERSION -a -f configure.ac -a -f config/ompi_get_version.m4 ; then
+if test -f VERSION -a -f configure.ac -a -f config/opal_get_version.m4 ; then
     happy=1
 else
     echo "Do not appear to be in an Open MPI top directory.  Abort!"

@@ -65,8 +65,7 @@ mca_coll_fca_component_t mca_coll_fca_component = {
 
 #define FCA_MINOR_BIT   (16UL)
 #define FCA_MAJOR_BIT   (24UL)
-#define FCA_API_ABI_MAJOR (2)
-#define FCA_API_ABI_MINOR (0)
+
 #define FCA_API_CLEAR_MICRO(__x) ((__x>>FCA_MINOR_BIT)<<FCA_MINOR_BIT)
 #define FCA_API_VER(__major,__minor) (__major<<FCA_MAJOR_BIT | __minor<<FCA_MINOR_BIT)
 
@@ -95,8 +94,7 @@ static int mca_coll_fca_mpi_progress_cb(void)
     if (!mca_coll_fca_component.fca_context)
         return 0;
 
-    if (mca_coll_fca_component.fca_ops.progress)
-        mca_coll_fca_component.fca_ops.progress(mca_coll_fca_component.fca_context);
+    mca_coll_fca_component.fca_ops.progress(mca_coll_fca_component.fca_context);
     return 0;
 }
 
@@ -105,7 +103,7 @@ static int mca_coll_fca_mpi_progress_cb(void)
  */
 static void mca_coll_fca_init_fca_translations(void)
 {
-    int i;
+    int i, ret;
 
     for (i = 0; i < FCA_DT_MAX_PREDEFINED; ++i) {
         mca_coll_fca_component.fca_dtypes[i].mpi_dtype = MPI_DATATYPE_NULL;
@@ -138,20 +136,10 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
 
     FCA_VERBOSE(1, "FCA Loaded from: %s", mca_coll_fca_component.fca_lib_path);
     GET_FCA_SYM(get_version);
-    GET_FCA_SYM(get_version_string);
     fca_ver = FCA_API_CLEAR_MICRO(mca_coll_fca_component.fca_ops.get_version());
-
-    if (fca_ver < FCA_API_VER(FCA_API_ABI_MAJOR,FCA_API_ABI_MINOR)) {
-        FCA_ERROR("Unsupported FCA version: %s Please upgrade FCA to at least v%d.%d", 
-                  mca_coll_fca_component.fca_ops.get_version_string(),
-                  FCA_API_ABI_MAJOR,
-                  FCA_API_ABI_MINOR);
-        return OMPI_ERROR;
-    }
 
     GET_FCA_SYM(init);
     GET_FCA_SYM(cleanup);
-    GET_FCA_SYM(progress);
     GET_FCA_SYM(comm_new);
     GET_FCA_SYM(comm_end);
     GET_FCA_SYM(get_rank_info);
@@ -163,8 +151,6 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
     GET_FCA_SYM(do_all_reduce);
     GET_FCA_SYM(do_bcast);
     GET_FCA_SYM(do_barrier);
-    GET_FCA_SYM(do_allgather);
-    GET_FCA_SYM(do_allgatherv);
     GET_FCA_SYM(maddr_ib_pton);
     GET_FCA_SYM(maddr_inet_pton);
     GET_FCA_SYM(parse_spec_file);
@@ -193,13 +179,18 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
     mca_coll_fca_component.fca_ops.free_init_spec(spec);
     mca_coll_fca_init_fca_translations();
 
-    opal_progress_register(mca_coll_fca_mpi_progress_cb);
+    if (fca_ver > FCA_API_VER(1,2)) {
+        GET_FCA_SYM(progress);
+        opal_progress_register(mca_coll_fca_mpi_progress_cb);
+    }
     return OMPI_SUCCESS;
 }
 
 static void mca_coll_fca_close_fca_lib(void)
 {
-    opal_progress_unregister(mca_coll_fca_mpi_progress_cb);
+    if (NULL != mca_coll_fca_component.fca_ops.progress) {
+        opal_progress_unregister(mca_coll_fca_mpi_progress_cb);
+    }
     mca_coll_fca_component.fca_ops.cleanup(mca_coll_fca_component.fca_context);
     mca_coll_fca_component.fca_context = NULL;
     dlclose(mca_coll_fca_component.fca_lib_handle);
@@ -247,80 +238,6 @@ static int fca_register(void)
                            false, false,
                            64,
                            &mca_coll_fca_component.fca_np);
-
-    mca_base_param_reg_int(c, "enable_barrier",
-                           "[1|0|] Enable/Disable FCA Barrier support",
-                           false, false,
-                           1,
-                           &mca_coll_fca_component.fca_enable_barrier);
-
-    mca_base_param_reg_int(c, "enable_bcast",
-                           "[1|0|] Enable/Disable FCA Bcast support",
-                           false, false,
-                           1,
-                           &mca_coll_fca_component.fca_enable_bcast);
-
-    mca_base_param_reg_int(c, "enable_reduce",
-                           "[1|0|] Enable/Disable FCA Reduce support",
-                           false, false,
-                           1,
-                           &mca_coll_fca_component.fca_enable_reduce);
-
-    mca_base_param_reg_int(c, "enable_reduce_scatter",
-                           "[1|0|] Enable/Disable FCA Reduce support",
-                           false, false,
-                           0,
-                           &mca_coll_fca_component.fca_enable_reduce_scatter);
-
-    mca_base_param_reg_int(c, "enable_allreduce",
-                           "[1|0|] Enable/Disable FCA Allreduce support",
-                           false, false,
-                           1,
-                           &mca_coll_fca_component.fca_enable_allreduce);
-
-    mca_base_param_reg_int(c, "enable_allgather",
-                           "[1|0|] Enable/Disable FCA Allgather support",
-                           false, false,
-                           0,
-                           &mca_coll_fca_component.fca_enable_allgather);
-
-    mca_base_param_reg_int(c, "enable_allgatherv",
-                           "[1|0|] Enable/Disable FCA Allgatherv support",
-                           false, false,
-                           0,
-                           &mca_coll_fca_component.fca_enable_allgatherv);
-
-    mca_base_param_reg_int(c, "enable_gather",
-                           "[1|0|] Enable/Disable FCA Gather support",
-                           false, false,
-                           0,
-                           &mca_coll_fca_component.fca_enable_gather);
-
-    mca_base_param_reg_int(c, "enable_gatherv",
-                           "[1|0|] Enable/Disable FCA Gatherv support",
-                           false, false,
-                           0,
-                           &mca_coll_fca_component.fca_enable_gatherv);
-
-
-    mca_base_param_reg_int(c, "enable_alltoall",
-                           "[1|0|] Enable/Disable FCA AlltoAll support",
-                           false, false,
-                           0,
-                           &mca_coll_fca_component.fca_enable_alltoall);
-
-    mca_base_param_reg_int(c, "enable_alltoallv",
-                           "[1|0|] Enable/Disable FCA AlltoAllv support",
-                           false, false,
-                           0,
-                           &mca_coll_fca_component.fca_enable_alltoallv);
-
-    mca_base_param_reg_int(c, "enable_alltoallw",
-                           "[1|0|] Enable/Disable FCA AlltoAllw support",
-                           false, false,
-                           0,
-                           &mca_coll_fca_component.fca_enable_alltoallw);
-
 
     return OMPI_SUCCESS;
 }

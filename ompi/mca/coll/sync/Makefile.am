@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -35,7 +35,7 @@ sources = \
         coll_sync_scatter.c \
         coll_sync_scatterv.c
 
-if OMPI_BUILD_coll_sync_DSO
+if MCA_BUILD_ompi_coll_sync_DSO
 component_noinst =
 component_install = mca_coll_sync.la
 else

@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -24,19 +25,17 @@ sources = \
 	mpool_rdma_module.c \
 	mpool_rdma_component.c
 
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/mca/mpool/rdma
-ompi_HEADERS = mpool_rdma.h
-else
-ompidir = $(includedir)
 ompi_HEADERS =
+ompidir = $(includedir)/openmpi/$(subdir)
+if WANT_INSTALL_HEADERS
+ompi_HEADERS += mpool_rdma.h
 endif
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_mpool_rdma_DSO
+if MCA_BUILD_ompi_mpool_rdma_DSO
 component_noinst =
 component_install = mca_mpool_rdma.la
 else

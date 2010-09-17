@@ -27,12 +27,11 @@ headers = \
 nodist_headers = \
 	opal_config.h
 
-if WANT_INSTALL_HEADERS 
 opaldir = $(includedir)/openmpi
+if WANT_INSTALL_HEADERS 
 nobase_dist_opal_HEADERS = $(headers)
 nobase_nodist_opal_HEADERS = $(nodist_headers)
 else
-opaldir = $(includedir)
 nobase_dist_noinst_HEADERS = $(headers)
 nobase_nodist_noinst_HEADERS = $(nodist_headers)
 endif

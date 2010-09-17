@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -25,11 +26,9 @@ headers = osc.h
 libmca_osc_la_SOURCES += $(headers)
 
 # Conditionally install the header files
+ompidir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
 nobase_ompi_HEADERS = $(headers)
-ompidir = $(includedir)/openmpi/ompi/mca/osc
-else
-ompidir = $(includedir)
 endif
 
 include base/Makefile.am

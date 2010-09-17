@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2004-2007 The Trustees of the University of Tennessee.
  *                         All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -15,10 +16,10 @@
 #include "opal/mca/base/mca_base_component_repository.h"
 #include "ompi/constants.h"
 #include "ompi/mca/pml/base/base.h"
+#include "ompi/mca/vprotocol/vprotocol.h"
+#include "ompi/mca/vprotocol/base/base.h"
 #include "pml_v_output.h"
 #include "pml_v.h"
-#include "mca/vprotocol/vprotocol.h"
-#include "mca/vprotocol/base/base.h"
 
 static int mca_pml_v_component_open(void);
 static int mca_pml_v_component_close(void);
@@ -87,24 +88,16 @@ static int mca_pml_v_component_open(void)
  
 static int mca_pml_v_component_close(void)
 {
-    int ret;
-    
     /* Save original PML before making any changes  */
     mca_pml_v.host_pml_component = mca_pml_base_selected_component;
     mca_pml_v.host_pml = mca_pml;
     mca_pml_v.host_request_fns = ompi_request_functions;
     
     /* Do not load anything if no FT protocol is selected */
-    if(! mca_vprotocol_base_include_list[0])
+    if(! mca_vprotocol_base_include_list[0]) {
         return mca_pml_v_component_parasite_close();
-        
-    V_OUTPUT_VERBOSE(500, "component_close: I don't want to be unloaded now.");
-    ret = mca_base_component_repository_retain_component("pml", "v");
-    if(OPAL_SUCCESS != ret)
-    {
-        V_OUTPUT_ERR("pml_v: component_close: can't retain myself. If Open MPI is build static you can ignore this error. Otherwise it should crash soon.");
     }
-    
+        
     /* Mark that we have changed something */ 
     snprintf(mca_pml_base_selected_component.pmlm_version.mca_component_name, 
              MCA_BASE_MAX_TYPE_NAME_LEN, "%s]v%s", 

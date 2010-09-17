@@ -11,9 +11,9 @@ dnl $HEADER$
 dnl
 
 dnl we only want one :)
-m4_define(MCA_memchecker_CONFIGURE_MODE, STOP_AT_FIRST)
+m4_define(MCA_opal_memchecker_CONFIGURE_MODE, STOP_AT_FIRST)
 
-AC_DEFUN([MCA_memchecker_CONFIG],[
+AC_DEFUN([MCA_opal_memchecker_CONFIG],[
     ompi_show_subsubtitle "Pre-configuring the framework memchecker"
 
     AC_MSG_CHECKING([if --enable-memchecker was specified])

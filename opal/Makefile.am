@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -69,16 +69,14 @@ libopen_pal_la_SOURCES += $(headers)
 
 # Conditionally install the header files
 
+opaldir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
-opaldir = $(includedir)/openmpi/opal
 nobase_opal_HEADERS += $(headers)
 
 # This is somewhat of a hack -- libltdl is installed by libtoolize,
 # and us installing the header here is slightly less kludgey than
 # hacking their Makefile.am.
 nobase_opal_HEADERS += libltdl/ltdl.h
-else
-opaldir = $(includedir)
 endif
 
 include class/Makefile.am

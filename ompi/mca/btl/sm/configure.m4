@@ -3,7 +3,7 @@
 # Copyright (c) 2009      The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -66,7 +66,9 @@ AC_DEFUN([OMPI_CHECK_KNEM],[
 # MCA_btl_sm_CONFIG([action-if-can-compile],
 #                   [action-if-cant-compile])
 # ------------------------------------------------
-AC_DEFUN([MCA_btl_sm_CONFIG],[
+AC_DEFUN([MCA_ompi_btl_sm_CONFIG],[
+    AC_CONFIG_FILES([ompi/mca/btl/sm/Makefile])
+
     OMPI_VAR_SCOPE_PUSH([btl_sm_knem_happy])
     OMPI_CHECK_KNEM([btl_sm],
         [btl_sm_knem_happy=1],

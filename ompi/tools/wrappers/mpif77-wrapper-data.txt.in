@@ -14,7 +14,6 @@ compiler_flags_env=FFLAGS
 compiler=@F77@
 extra_includes=
 preprocessor_flags=
-compiler_flags_prefix=@OMPI_WRAPPER_EXTRA_FFLAGS_PREFIX@
 compiler_flags=@OMPI_WRAPPER_EXTRA_FFLAGS@
 linker_flags=@OMPI_WRAPPER_EXTRA_LDFLAGS@
 libs=-lmpi_f77 -lmpi @OMPI_WRAPPER_EXTRA_LIBS@

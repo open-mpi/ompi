@@ -2,6 +2,7 @@
 # Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
+# Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -28,11 +29,9 @@ libmca_compress_la_SOURCES += $(headers)
 $(nodist_man_MANS): $(top_builddir)/opal/include/opal_config.h
 
 # Conditionally install the header files
+opaldir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
 nobase_opal_HEADERS += $(headers)
-opaldir = $(includedir)/openmpi/opal/mca/compress
-else
-opaldir = $(includedir)
 endif
 
 include base/Makefile.am

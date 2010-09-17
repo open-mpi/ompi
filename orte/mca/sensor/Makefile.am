@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved. 
+# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 #
 # $COPYRIGHT$
 # 
@@ -22,11 +22,9 @@ headers = sensor.h \
 libmca_sensor_la_SOURCES += $(headers)
 
 # Conditionally install the header files
+ortedir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
 nobase_orte_HEADERS += $(headers)
-ortedir = $(includedir)/openmpi/orte/mca/sensor
-else
-ortedir = $(includedir)
 endif
 
 include base/Makefile.am

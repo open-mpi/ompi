@@ -22,5 +22,6 @@
 #                                  [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([OMPI_contrib_libompitrace_CONFIG],[
+    AC_CONFIG_FILES([ompi/contrib/libompitrace/Makefile])
     $1
 ])dnl

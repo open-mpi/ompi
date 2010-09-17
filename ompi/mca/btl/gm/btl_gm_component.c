@@ -154,7 +154,7 @@ int mca_btl_gm_component_open(void)
 #else
     mca_btl_gm_module.super.btl_flags = MCA_BTL_FLAGS_SEND;
 #endif
-    mca_btl_gm_module.super.btl_bandwidth = 2000;  /* Mbs */
+    mca_btl_gm_module.super.btl_bandwidth = 250;
     mca_btl_gm_module.super.btl_latency = 0;
     mca_btl_base_param_register(&mca_btl_gm_component.super.btl_version,
             &mca_btl_gm_module.super);

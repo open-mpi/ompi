@@ -11,4 +11,7 @@
 
 # OMPI_MPIEXT_affinity_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([OMPI_MPIEXT_affinity_CONFIG], [$1])
+AC_DEFUN([OMPI_MPIEXT_affinity_CONFIG], [
+    AC_CONFIG_FILES([ompi/mpiext/affinity/Makefile])
+    $1
+])

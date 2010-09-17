@@ -10,17 +10,20 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
 # 
 # $HEADER$
 #
+AC_DEFUN([MCA_orte_ess_slurmd_PRIORITY], [10])
 
 # MCA_ess_slurmd_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([MCA_ess_slurmd_CONFIG],[
+AC_DEFUN([MCA_orte_ess_slurmd_CONFIG],[
+    AC_CONFIG_FILES([orte/mca/ess/slurmd/Makefile])
+
     ORTE_CHECK_SLURM([ess_slurmd], [ess_slurmd_good=1], [ess_slurmd_good=0])
          
     # if check worked, set wrapper flags if so.  

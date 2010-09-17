@@ -3,8 +3,8 @@
 	  version of the OTF library
 	  (so it's possible to add these objects to 3rd-party shared libraries)
 	- fixed and enhanced calculation of trace file size in otfinfo
-	- temporary disabled OpenMP support completely if the PGI compiler is
-	  used to work around some uncleared compile errors
+	- disable OpenMP support in otfprofile if the PGI compiler
+	  is used to work around some compiler errors
 	- patched libtool:
 	  - to avoid a bug in detection of the PGI 10 C++ compiler
 	  - to detect IBM cross compilers on BlueGene/P

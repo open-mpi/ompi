@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -28,11 +29,9 @@ headers = paffinity.h
 libmca_paffinity_la_SOURCES += $(headers)
 
 # Conditionally install the header files
+opaldir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
 nobase_opal_HEADERS += $(headers)
-opaldir = $(includedir)/openmpi/opal/mca/paffinity
-else
-opaldir = $(includedir)
 endif
 
 include base/Makefile.am

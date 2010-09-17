@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -18,14 +18,14 @@ dnl
 dnl $HEADER$
 dnl
 
-# OMPI_SAVE_VERSION(project_short, project-long, 
+# OPAL_SAVE_VERSION(project_short, project-long, 
 #                  version_file, header_file])
 # ----------------------------------------------
 # creates version information for project from version_file, using
-# OMPI_GET_VERSION().  Information is AC_SUBSTed and put in
+# OPAL_GET_VERSION().  Information is AC_SUBSTed and put in
 # header_file.
-AC_DEFUN([OMPI_SAVE_VERSION], [
-    OMPI_GET_VERSION([$3], [$1])
+AC_DEFUN([OPAL_SAVE_VERSION], [
+    OPAL_GET_VERSION([$3], [$1])
 
     AC_SUBST($1[_MAJOR_VERSION])
     AC_SUBST($1[_MINOR_VERSION])

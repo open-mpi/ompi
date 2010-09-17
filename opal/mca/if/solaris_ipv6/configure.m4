@@ -17,7 +17,9 @@ AC_DEFUN([MCA_if_solaris_ipv6_COMPILE_MODE], [
 # MCA_if_config_CONFIG(action-if-can-compile, 
 #                        [action-if-cant-compile])
 # ------------------------------------------------
-AC_DEFUN([MCA_if_solaris_ipv6_CONFIG], [
+AC_DEFUN([MCA_opal_if_solaris_ipv6_CONFIG], [
+    AC_CONFIG_FILES([opal/mca/if/solaris_ipv6/Makefile])
+
     AC_REQUIRE([OPAL_CHECK_OS_FLAVORS])
 
     # check to see if we are on a solaris machine

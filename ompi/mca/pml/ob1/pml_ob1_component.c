@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -168,9 +168,9 @@ mca_pml_ob1_component_init( int* priority,
                             bool enable_progress_threads,
                             bool enable_mpi_threads )
 {
-    opal_output_verbose( 10, mca_pml_ob1_output,
+    opal_output_verbose( 10, mca_pml_ob1_output, 
                          "in ob1, my priority is %d\n", mca_pml_ob1.priority);
-
+    
     if((*priority) > mca_pml_ob1.priority) { 
         *priority = mca_pml_ob1.priority;
         return NULL;

@@ -57,7 +57,7 @@
 
 # Run the aclocal/autoconf/automake hierarchy.
 # cd $SRC_DIR
-#  ./autogen.sh                                  2>&1 | tee -a build.log
+#  ./autogen.pl                                  2>&1 | tee -a build.log
 # cd $OLDPWD
 
 

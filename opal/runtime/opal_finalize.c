@@ -26,6 +26,7 @@
 #include "opal/util/trace.h"
 #include "opal/util/output.h"
 #include "opal/util/malloc.h"
+#include "opal/util/if.h"
 #include "opal/util/net.h"
 #include "opal/util/keyval_parse.h"
 #include "opal/util/show_help.h"
@@ -33,7 +34,6 @@
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
 #include "opal/constants.h"
-#include "opal/mca/if/base/base.h"
 #include "opal/mca/installdirs/base/base.h"
 #include "opal/mca/memcpy/base/base.h"
 #include "opal/mca/memory/base/base.h"
@@ -66,8 +66,9 @@ opal_finalize_util(void)
     /* Clear out all the registered MCA params */
     mca_base_param_finalize();
 
-    /* close interfaces code. */
-    opal_if_base_close();
+    /* close interfaces code.  This is lazy opened, but protected from
+       close when not opened internally */
+    opal_iffinalize();
 
     opal_net_finalize();
 

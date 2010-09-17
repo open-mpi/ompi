@@ -27,20 +27,21 @@
 # Initialization, version number, and other random setup/init stuff
 ############################################################################
 
-# Load project list and names
-m4_include([config/project_list.m4])
-
-m4_pattern_allow([m4_ifval])
+# Load in everything found by autogen.pl
+m4_include([config/autogen_found_items.m4])
+# Load the version code.  Because this is also used directly as a
+# shell script, no ac_defun
+m4_include([config/opal_get_version.m4])
 
 # Init autoconf
 
 # We don't have the version number to put in here yet, and we can't
-# call OMPI_GET_VERSION (etc.) before AC_INIT.  So use the shell
+# call OPAL_GET_VERSION (etc.) before AC_INIT.  So use the shell
 # version.  project_name_* comes from config/project_list.m4, which
 # was set during autogen.sh.
 
 AC_INIT([project_name_long],
-        [m4_normalize(esyscmd([config/ompi_get_version.sh VERSION --base]))],
+        [m4_normalize(esyscmd([config/opal_get_version.sh VERSION --base]))],
         [http://www.open-mpi.org/community/help/], [project_name_short])
 AC_PREREQ(2.60)
 AC_CONFIG_AUX_DIR(config)
@@ -98,15 +99,15 @@ ompi_show_subtitle "Checking versions"
 # Get the version of OMPI that we are installing
 
 m4_ifdef([project_ompi],
-         [OMPI_SAVE_VERSION([OMPI], [Open MPI], [$srcdir/VERSION],
+         [OPAL_SAVE_VERSION([OMPI], [Open MPI], [$srcdir/VERSION],
                             [ompi/include/ompi/version.h])])
 
 m4_ifdef([project_orte],
-         [OMPI_SAVE_VERSION([ORTE], [Open MPI Run-Time Environment], 
+         [OPAL_SAVE_VERSION([ORTE], [Open MPI Run-Time Environment], 
                             [$srcdir/VERSION],
                             [orte/include/orte/version.h])])
 
-OMPI_SAVE_VERSION([OPAL], [Open Portable Access Layer], [$srcdir/VERSION],
+OPAL_SAVE_VERSION([OPAL], [Open Portable Access Layer], [$srcdir/VERSION],
                   [opal/include/opal/version.h])
 
 # Get shared library version numbers

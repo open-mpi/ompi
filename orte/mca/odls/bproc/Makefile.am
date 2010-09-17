@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -23,7 +23,7 @@ AM_CPPFLAGS = -I$(top_ompi_builddir)/src/include $(odls_bproc_CPPFLAGS)
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_odls_bproc_DSO
+if MCA_BUILD_orte_odls_bproc_DSO
 component_noinst =
 component_install = mca_odls_bproc.la
 else

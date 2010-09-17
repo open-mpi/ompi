@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -46,10 +46,10 @@ sources = \
 # component directory, and named either mca_<type>_<name>.la (for DSO
 # builds) or libmca_<type>_<name>.la (for static builds).  The OMPI
 # build system will have set the
-# OMPI_BUILD_<framework>_<component>_DSO AM_CONDITIONAL to indicate
+# MCA_BUILD_ompi_<framework>_<component>_DSO AM_CONDITIONAL to indicate
 # which way this component should be built.
 
-if OMPI_BUILD_op_example_DSO
+if MCA_BUILD_op_example_DSO
 lib =
 lib_sources =
 component = mca_op_example.la

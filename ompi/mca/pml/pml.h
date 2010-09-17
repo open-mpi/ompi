@@ -521,13 +521,13 @@ typedef mca_pml_base_module_1_0_0_t mca_pml_base_module_t;
     /*
      * macro for doing direct call / call through struct
      */
-#if MCA_pml_DIRECT_CALL
+#if MCA_ompi_pml_DIRECT_CALL
 
-#include MCA_pml_DIRECT_CALL_HEADER
+#include MCA_ompi_pml_DIRECT_CALL_HEADER
 
 #define MCA_PML_CALL_STAMP(a, b) mca_pml_ ## a ## _ ## b
 #define MCA_PML_CALL_EXPANDER(a, b) MCA_PML_CALL_STAMP(a,b)
-#define MCA_PML_CALL(a) MCA_PML_CALL_EXPANDER(MCA_pml_DIRECT_CALL_COMPONENT, a)
+#define MCA_PML_CALL(a) MCA_PML_CALL_EXPANDER(MCA_ompi_pml_DIRECT_CALL_COMPONENT, a)
 
 #else
 #define MCA_PML_CALL(a) mca_pml.pml_ ## a

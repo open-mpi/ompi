@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -30,12 +31,12 @@ sources = \
     btl_template_proc.c \
     btl_template_proc.h \
     btl_template_error.h
-     
+
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_btl_template_DSO
+if MCA_BUILD_ompi_btl_template_DSO
 lib =
 lib_sources =
 component = mca_btl_template.la

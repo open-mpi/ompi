@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -50,11 +50,9 @@ libopen_rte_la_SOURCES += $(headers)
 
 # Conditionally install the header files
 
+ortedir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
-ortedir = $(includedir)/openmpi/orte
 nobase_orte_HEADERS += $(headers)
-else
-ortedir = $(includedir)
 endif
 
 # setup to catch extra files to be included in tarballs

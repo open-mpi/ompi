@@ -50,23 +50,37 @@ static int __get_local_ranks(mca_coll_fca_module_t *fca_module)
 {
     ompi_communicator_t *comm = fca_module->comm;
     ompi_proc_t* proc;
-    int rank;
+    int rank, index;
 
+    /* Count local ranks */
     fca_module->num_local_procs = 0;
-
     for (rank = 0; rank < ompi_comm_size(comm); ++rank) {
+        proc = __local_rank_lookup(comm, rank);
+        if (FCA_IS_LOCAL_PROCESS(proc->proc_flags))
+            ++fca_module->num_local_procs;
+
+		FCA_MODULE_VERBOSE(fca_module, 4, "rank %d flags 0x%x host %s", rank,
+				proc->proc_flags,
+				proc->proc_hostname);
+
+    }        
+    fca_module->local_ranks = calloc(fca_module->num_local_procs, sizeof *fca_module->local_ranks);
+
+    /* Get local ranks */
+    index = 0;
+    for (rank = 0; rank< ompi_comm_size(comm); ++rank) {
         proc = __local_rank_lookup(comm, rank);
         if (!FCA_IS_LOCAL_PROCESS(proc->proc_flags))
             continue;
 
-        if (rank == fca_module->rank) {
-            fca_module->local_proc_idx = fca_module->num_local_procs;
-        }
-        ++fca_module->num_local_procs;
+        if (rank == fca_module->rank)
+            fca_module->local_proc_idx = index;
+        fca_module->local_ranks[index] = rank;
+        ++index;
     }        
 
-    FCA_MODULE_VERBOSE(fca_module, 3, "i am %d/%d", fca_module->local_proc_idx,
-                       fca_module->num_local_procs);
+    FCA_MODULE_VERBOSE(fca_module, 3, "num_local_ranks: %d, node_root: %d",
+                       fca_module->num_local_procs, fca_module->local_ranks[0]);
     return OMPI_SUCCESS;
 }
 
@@ -173,28 +187,23 @@ int __fca_comm_new(mca_coll_fca_module_t *fca_module)
 
 static int __create_fca_comm(mca_coll_fca_module_t *fca_module)
 {
-    fca_comm_init_spec_t spec;
-    int rc, ret, node_root;
-    int comm_size;
+    fca_comm_desc_t comm_desc;
+    int rc, ret;
 
     rc = __fca_comm_new(fca_module);
     if (rc != OMPI_SUCCESS)
         return rc;
-
-    /* allocate comm_init_spec */
-    comm_size = ompi_comm_size(fca_module->comm);
-    spec.rank = fca_module->rank;
-    spec.size = comm_size;
-    spec.desc = fca_module->fca_comm_desc;
-    spec.proc_idx = fca_module->local_proc_idx;
-    spec.num_procs = fca_module->num_local_procs;
 
     FCA_MODULE_VERBOSE(fca_module, 1, "Starting COMM_INIT comm_id %d proc_idx %d num_procs %d",
                        fca_module->fca_comm_desc.comm_id, fca_module->local_proc_idx,
                        fca_module->num_local_procs);
 
     ret = mca_coll_fca_component.fca_ops.comm_init(mca_coll_fca_component.fca_context,
-                                                   &spec, &fca_module->fca_comm);
+                                                   fca_module->local_proc_idx,
+                                                   fca_module->num_local_procs,
+                                                   ompi_comm_size(fca_module->comm),
+                                                   &fca_module->fca_comm_desc,
+                                                   &fca_module->fca_comm);
     if (ret < 0) {
         FCA_ERROR("COMM_INIT failed: %s", mca_coll_fca_component.fca_ops.strerror(ret));
         return OMPI_ERROR;
@@ -231,33 +240,43 @@ static void __destroy_fca_comm(mca_coll_fca_module_t *fca_module)
                        fca_module->fca_comm_desc.comm_id);
 }
 
-#define FCA_SAVE_PREV_COLL_API(__api) do {\
-    fca_module->previous_ ## __api            = comm->c_coll.coll_ ## __api;\
-    fca_module->previous_ ## __api ## _module = comm->c_coll.coll_ ## __api ## _module;\
-    OBJ_RETAIN(fca_module->previous_ ## __api ## _module);\
-    if (!comm->c_coll.coll_ ## __api || !comm->c_coll.coll_ ## __api ## _module) {\
-        FCA_VERBOSE(1, "(%d/%s): no underlying " # __api"; disqualifying myself",\
-                    comm->c_contextid, comm->c_name);\
-        return OMPI_ERROR;\
-    }\
-} while(0)
-
 static int __save_coll_handlers(mca_coll_fca_module_t *fca_module)
 {
     ompi_communicator_t *comm = fca_module->comm;
 
-    FCA_SAVE_PREV_COLL_API(barrier);
-    FCA_SAVE_PREV_COLL_API(bcast);
-    FCA_SAVE_PREV_COLL_API(reduce);
-    FCA_SAVE_PREV_COLL_API(allreduce);
-    FCA_SAVE_PREV_COLL_API(allgather);
-    FCA_SAVE_PREV_COLL_API(allgatherv);
-    FCA_SAVE_PREV_COLL_API(gather);
-    FCA_SAVE_PREV_COLL_API(gatherv);
-    FCA_SAVE_PREV_COLL_API(alltoall);
-    FCA_SAVE_PREV_COLL_API(alltoallv);
-    FCA_SAVE_PREV_COLL_API(alltoallw);
-    FCA_SAVE_PREV_COLL_API(reduce_scatter);
+    if (!comm->c_coll.coll_reduce || !comm->c_coll.coll_reduce_module ||
+        !comm->c_coll.coll_allreduce || !comm->c_coll.coll_allreduce_module ||
+        !comm->c_coll.coll_bcast || !comm->c_coll.coll_bcast_module ||
+        !comm->c_coll.coll_barrier || !comm->c_coll.coll_barrier_module) {
+        FCA_VERBOSE(1, "(%d/%s): no underlying reduce; disqualifying myself",
+                    comm->c_contextid, comm->c_name);
+        return OMPI_ERROR;
+    }
+
+    fca_module->previous_allreduce         = comm->c_coll.coll_allreduce;
+    fca_module->previous_allreduce_module  = comm->c_coll.coll_allreduce_module;
+    OBJ_RETAIN(fca_module->previous_allreduce_module);
+    FCA_VERBOSE(14, "saving fca_module->previous_allreduce_module=%p, fca_module->previous_allreduce=%p, fca_module=%p,fca_module->super.coll_allreduce=%p",                   
+                fca_module->previous_allreduce_module, fca_module->previous_allreduce, fca_module, fca_module->super.coll_allreduce);
+
+    fca_module->previous_reduce         = comm->c_coll.coll_reduce;
+    fca_module->previous_reduce_module  = comm->c_coll.coll_reduce_module;
+    OBJ_RETAIN(fca_module->previous_reduce_module);
+    FCA_VERBOSE(14, "saving fca_module->previous_reduce_module=%p, fca_module->previous_reduce=%p, fca_module=%p,fca_module->super.coll_reduce=%p",                   
+                fca_module->previous_reduce_module, fca_module->previous_reduce, fca_module, fca_module->super.coll_reduce);
+
+    fca_module->previous_bcast         = comm->c_coll.coll_bcast;
+    fca_module->previous_bcast_module  = comm->c_coll.coll_bcast_module;
+    OBJ_RETAIN(fca_module->previous_bcast_module);
+    FCA_VERBOSE(14, "saving fca_module->bcast=%p, fca_module->bcast_module=%p, fca_module=%p, fca_module->super.coll_bcast=%p", 
+                fca_module->previous_bcast,    fca_module->previous_bcast_module,    fca_module,    fca_module->super.coll_bcast);
+
+
+    fca_module->previous_barrier         = comm->c_coll.coll_barrier;
+    fca_module->previous_barrier_module  = comm->c_coll.coll_barrier_module;
+    OBJ_RETAIN(fca_module->previous_barrier_module);
+    FCA_VERBOSE(14, "saving fca_module->barrier=%p, fca_module->barrier_module=%p, fca_module=%p, fca_module->super.coll_barrier=%p", 
+                fca_module->previous_barrier, fca_module->previous_barrier_module,    fca_module,    fca_module->super.coll_barrier);
 
     return OMPI_SUCCESS;
 }
@@ -304,20 +323,12 @@ static int mca_coll_fca_ft_event(int state)
 static void mca_coll_fca_module_clear(mca_coll_fca_module_t *fca_module)
 {
     fca_module->num_local_procs = 0;
+    fca_module->local_ranks = NULL;
     fca_module->fca_comm = NULL;
-
-    fca_module->previous_barrier    = NULL;
-    fca_module->previous_bcast      = NULL;
-    fca_module->previous_reduce     = NULL;
-    fca_module->previous_allreduce  = NULL;
-    fca_module->previous_allgather  = NULL;
-    fca_module->previous_allgatherv = NULL;
-    fca_module->previous_gather     = NULL;
-    fca_module->previous_gatherv    = NULL;
-    fca_module->previous_alltoall   = NULL;
-    fca_module->previous_alltoallv  = NULL;
-    fca_module->previous_alltoallw  = NULL;
-    fca_module->previous_reduce_scatter  = NULL;
+    fca_module->previous_allreduce = NULL;
+    fca_module->previous_reduce = NULL;
+    fca_module->previous_bcast = NULL;
+    fca_module->previous_barrier = NULL;
 }
 
 static void mca_coll_fca_module_construct(mca_coll_fca_module_t *fca_module)
@@ -330,21 +341,16 @@ static void mca_coll_fca_module_destruct(mca_coll_fca_module_t *fca_module)
 {
     FCA_VERBOSE(5, "==>");
     int rc = OMPI_SUCCESS;
-    OBJ_RELEASE(fca_module->previous_barrier_module);
-    OBJ_RELEASE(fca_module->previous_bcast_module);
-    OBJ_RELEASE(fca_module->previous_reduce_module);
+
     OBJ_RELEASE(fca_module->previous_allreduce_module);
-    OBJ_RELEASE(fca_module->previous_allgather_module);
-    OBJ_RELEASE(fca_module->previous_allgatherv_module);
-    OBJ_RELEASE(fca_module->previous_gather_module);
-    OBJ_RELEASE(fca_module->previous_gatherv_module);
-    OBJ_RELEASE(fca_module->previous_alltoall_module);
-    OBJ_RELEASE(fca_module->previous_alltoallv_module);
-    OBJ_RELEASE(fca_module->previous_alltoallw_module);
-    OBJ_RELEASE(fca_module->previous_reduce_scatter_module);
+    OBJ_RELEASE(fca_module->previous_reduce_module);
+    OBJ_RELEASE(fca_module->previous_bcast_module);
+    OBJ_RELEASE(fca_module->previous_barrier_module);
+
     if (fca_module->fca_comm)
         __destroy_fca_comm(fca_module);
 
+    free(fca_module->local_ranks);
     mca_coll_fca_module_clear(fca_module);
 }
 
@@ -379,19 +385,19 @@ mca_coll_fca_comm_query(struct ompi_communicator_t *comm, int *priority)
 
     fca_module->super.coll_module_enable = mca_coll_fca_module_enable;
     fca_module->super.ft_event        = mca_coll_fca_ft_event;
-    fca_module->super.coll_allgather  = mca_coll_fca_component.fca_enable_allgather?  mca_coll_fca_allgather  : NULL;
-    fca_module->super.coll_allgatherv = mca_coll_fca_component.fca_enable_allgatherv? mca_coll_fca_allgatherv : NULL;
-    fca_module->super.coll_allreduce  = mca_coll_fca_component.fca_enable_allreduce?  mca_coll_fca_allreduce  : NULL;
-    fca_module->super.coll_alltoall   = mca_coll_fca_component.fca_enable_alltoall?   mca_coll_fca_alltoall   : NULL;
-    fca_module->super.coll_alltoallv  = mca_coll_fca_component.fca_enable_alltoallv?  mca_coll_fca_alltoallv  : NULL;
-    fca_module->super.coll_alltoallw  = mca_coll_fca_component.fca_enable_alltoallw?  mca_coll_fca_alltoallw  : NULL;
-    fca_module->super.coll_barrier    = mca_coll_fca_component.fca_enable_barrier?    mca_coll_fca_barrier    : NULL;
-    fca_module->super.coll_bcast      = mca_coll_fca_component.fca_enable_bcast?      mca_coll_fca_bcast      : NULL;
+    fca_module->super.coll_allgather  = NULL;
+    fca_module->super.coll_allgatherv = NULL;
+    fca_module->super.coll_allreduce  = mca_coll_fca_allreduce;
+    fca_module->super.coll_alltoall   = NULL;
+    fca_module->super.coll_alltoallv  = NULL;
+    fca_module->super.coll_alltoallw  = NULL;
+    fca_module->super.coll_barrier    = mca_coll_fca_barrier;
+    fca_module->super.coll_bcast      = mca_coll_fca_bcast;
     fca_module->super.coll_exscan     = NULL;
-    fca_module->super.coll_gather     = mca_coll_fca_component.fca_enable_gather?     mca_coll_fca_gather     : NULL;
-    fca_module->super.coll_gatherv    = mca_coll_fca_component.fca_enable_gatherv?    mca_coll_fca_gatherv    : NULL;
-    fca_module->super.coll_reduce     = mca_coll_fca_component.fca_enable_reduce?     mca_coll_fca_reduce     : NULL;
-    fca_module->super.coll_reduce_scatter = mca_coll_fca_component.fca_enable_reduce_scatter? mca_coll_fca_reduce_scatter  : NULL;
+    fca_module->super.coll_gather     = NULL;
+    fca_module->super.coll_gatherv    = NULL;
+    fca_module->super.coll_reduce     = mca_coll_fca_reduce;
+    fca_module->super.coll_reduce_scatter = NULL;
     fca_module->super.coll_scan       = NULL;
     fca_module->super.coll_scatter    = NULL;
     fca_module->super.coll_scatterv   = NULL;

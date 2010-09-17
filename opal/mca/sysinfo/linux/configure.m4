@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved. 
+# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved. 
 #
 # $COPYRIGHT$
 # 
@@ -8,11 +8,13 @@
 # 
 # $HEADER$
 #
+AC_DEFUN([MCA_opal_sysinfo_linux_PRIORITY], [60])
 
 # MCA_sysinfo_linux_CONFIG(action-if-can-compile, 
 #                        [action-if-cant-compile])
 # ------------------------------------------------
-AC_DEFUN([MCA_sysinfo_linux_CONFIG],[
+AC_DEFUN([MCA_opal_sysinfo_linux_CONFIG],[
+    AC_CONFIG_FILES([opal/mca/sysinfo/linux/Makefile])
 
    case "${host}" in
    i?86-*|x86_64*|ia64-*|powerpc-*|powerpc64-*|sparc*-*)
