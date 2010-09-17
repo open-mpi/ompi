@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -9,6 +10,7 @@
 
 #include "opal_config.h"
 #include "opal/constants.h"
+#include "opal/util/output.h"
 
 #include <string.h>
 #ifdef HAVE_UNISTD_H
