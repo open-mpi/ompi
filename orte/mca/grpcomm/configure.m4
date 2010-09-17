@@ -10,4 +10,4 @@ dnl $HEADER$
 dnl
 
 dnl we only want same priority level components
-m4_define(MCA_grpcomm_CONFIGURE_MODE, STOP_AT_FIRST_PRIORITY)
+m4_define(MCA_orte_grpcomm_CONFIGURE_MODE, STOP_AT_FIRST_PRIORITY)

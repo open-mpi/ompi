@@ -4,6 +4,7 @@
 # Copyright (c) 2008      The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
+# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -88,7 +89,7 @@ OMPI_DEF(OMPI_BUILD_HOST $ENV{COMPUTERNAME} "Host on which the package has been 
 OMPI_DEF(OPAL_ARCH "${CMAKE_SYSTEM_PROCESSOR} ${CMAKE_SYSTEM}" "OMPI architecture string" 1 1)
 
 
-INCLUDE(ompi_get_version)
+INCLUDE(opal_get_version)
 
 OMPI_DEF(OMPI_RELEASE_DATE ${RELEASE_DATE} "Release date of the package" 1 1)
 

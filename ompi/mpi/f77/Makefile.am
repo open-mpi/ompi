@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -375,9 +375,7 @@ endif
 # Conditionally install the header files
 #
 
+ompidir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/mpi/f77
 ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
 endif

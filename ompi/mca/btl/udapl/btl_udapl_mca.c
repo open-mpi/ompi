@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007-2010 Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -305,7 +305,7 @@ int mca_btl_udapl_register_mca_params(void)
     mca_btl_udapl_module.super.btl_rdma_pipeline_frag_size = 128 * 1024;
     mca_btl_udapl_module.super.btl_min_rdma_pipeline_size = 0;
     mca_btl_udapl_module.super.btl_flags = MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_SEND;
-    mca_btl_udapl_module.super.btl_bandwidth = 16000;  /* Mbits/sec */
+    mca_btl_udapl_module.super.btl_bandwidth = 225;
     mca_btl_udapl_module.super.btl_latency = 0;
 
     mca_btl_base_param_register(&mca_btl_udapl_component.super.btl_version,

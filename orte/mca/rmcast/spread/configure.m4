@@ -10,7 +10,9 @@ dnl
 
 # MCA_rmcast_spread_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([MCA_rmcast_spread_CONFIG],[
+AC_DEFUN([MCA_orte_rmcast_spread_CONFIG],[
+    AC_CONFIG_FILES([orte/mca/rmcast/spread/Makefile])
+
    OPAL_SETUP_COMPONENT_PACKAGE([rmcast],
                               [spread],
                               [spread],

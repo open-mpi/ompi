@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2006 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -29,12 +30,10 @@ headers = mtl.h
 libmca_mtl_la_SOURCES += $(headers) $(nodist_headers)
 
 # Conditionally install the header files
+ompidir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
 nobase_ompi_HEADERS += $(headers)
 nobase_nodist_ompi_HEADERS += $(nodist_headers)
-ompidir = $(includedir)/openmpi/ompi/mca/mtl
-else
-ompidir = $(includedir)
 endif
 
 include base/Makefile.am

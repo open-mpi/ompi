@@ -62,7 +62,7 @@ do:
 - op_example_component.c: The main "component" source file.
 - op_example_module.c: The main "module" source file.
 - op_example.h: information that is shared between the .c files.
-- .ompi_ignore: the presence of this file causes OMPI's autogen.sh to
+- .ompi_ignore: the presence of this file causes OMPI's autogen.pl to
   skip this component in the configure/build/install process (see
   below).
 
@@ -75,7 +75,7 @@ shell$ cd foo
 
 Remove the .ompi_ignore file (which makes the component "visible" to
 all developers) *OR* add an .ompi_unignore file with one username per
-line (as reported by `whoami`).  OMPI's autogen.sh will skip any
+line (as reported by `whoami`).  OMPI's autogen.pl will skip any
 component with a .ompi_ignore file *unless* there is also an
 .ompi_unignore file containing your user ID in it.  This is a handy
 mechanism to have a component in the tree but have it not built / used
@@ -97,12 +97,12 @@ names, header #defines, strings, and global variables.
 
 Now your component should be fully functional (although entirely
 renamed as "foo" instead of "example").  You can go to the top-level
-OMPI directory and run "autogen.sh" (which will find your component
+OMPI directory and run "autogen.pl" (which will find your component
 and att it to the configure/build process) and then "configure ..."
 and "make ..." as normal.  
 
 shell$ cd (top_ompi_dir)
-shell$ ./autogen.sh
+shell$ ./autogen.pl
 # ...lots of output...
 shell$ ./configure ...
 # ...lots of output...
@@ -120,7 +120,7 @@ shell$ ompi_info | grep op:
 shell$
 
 If you do not see your foo component, check the above steps, and check
-the output of autogen.sh, configure, and make to ensure that "foo" was
+the output of autogen.pl, configure, and make to ensure that "foo" was
 found, configured, and built successfully.
 
 Once ompi_info sees your component, start editing the "foo" component

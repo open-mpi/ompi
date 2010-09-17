@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007-2009 Cisco Systems, Inc. All rights reserved.
+# Copyright (c) 2007-2010 Cisco Systems, Inc. All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc. All rights reserved.
 # $COPYRIGHT$
 # 
@@ -21,7 +21,9 @@
 
 # MCA_paffinity_test_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([MCA_paffinity_test_CONFIG],[
+AC_DEFUN([MCA_opal_paffinity_test_CONFIG],[
+    AC_CONFIG_FILES([opal/mca/paffinity/test/Makefile])
+
     # check to see if we have <mach/mach_host.h>
     # as this is a Darwin-specific thing and
     # we are a test module for that environment

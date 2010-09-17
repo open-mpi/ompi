@@ -10,16 +10,20 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
 # 
 # $HEADER$
 #
+AC_DEFUN([MCA_orte_grpcomm_cnos_PRIORITY], [30])
 
 # MCA_grpcomm_cnos_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([MCA_grpcomm_cnos_CONFIG],[
+AC_DEFUN([MCA_orte_grpcomm_cnos_CONFIG],[
+    AC_CONFIG_FILES([orte/mca/grpcomm/cnos/Makefile])
+
     grpcomm_cnos_happy="no"
     # see if we should enable super secret utcp support
     if test "$with_grpcomm_cnos" = "utcp" ; then

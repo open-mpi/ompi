@@ -15,7 +15,6 @@ compiler=@FC@
 module_option=@OMPI_FC_MODULE_FLAG@
 extra_includes=
 preprocessor_flags=
-compiler_flags_prefix=@OMPI_WRAPPER_EXTRA_FCFLAGS_PREFIX@ 
 compiler_flags=@OMPI_WRAPPER_EXTRA_FCFLAGS@ 
 linker_flags=@OMPI_WRAPPER_EXTRA_LDFLAGS@
 libs=-lmpi_f90 -lmpi_f77 -lmpi @OMPI_WRAPPER_EXTRA_LIBS@

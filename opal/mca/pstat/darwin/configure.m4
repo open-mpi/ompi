@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007-2008 Cisco Systems, Inc. All rights reserved.
+# Copyright (c) 2007-2010 Cisco Systems, Inc. All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc. All rights reserved.
 # $COPYRIGHT$
 # 
@@ -18,10 +18,13 @@
 # 
 # $HEADER$
 #
+AC_DEFUN([MCA_opal_pstat_darwin_PRIORITY], [50])
 
 # MCA_pstat_darwin_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([MCA_pstat_darwin_CONFIG],[
+AC_DEFUN([MCA_opal_pstat_darwin_CONFIG],[
+    AC_CONFIG_FILES([opal/mca/pstat/darwin/Makefile])
+
     OMPI_VAR_SCOPE_PUSH([paff_darwin_happy])
     # check to see if we have <mach/mach_host.h>
     # as this is a Darwin-specific thing

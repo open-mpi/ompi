@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+dnl Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -19,7 +20,9 @@
 
 # MCA_ras_ccp_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([MCA_ras_ccp_CONFIG],[
+AC_DEFUN([MCA_orte_ras_ccp_CONFIG],[
+    AC_CONFIG_FILES([orte/mca/ras/ccp/Makefile])
+
     ras_ccp_good=0
     # CCP does never exist under Unix
     [$2]

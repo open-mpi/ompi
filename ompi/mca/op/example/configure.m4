@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -19,7 +19,7 @@
 #
 
 # Example op component configure.m4 file.  This file is slurped in by
-# Open MPI's autogen.sh to be part of the top-level configure script.
+# Open MPI's autogen.pl to be part of the top-level configure script.
 # This script must define (via AC_DEFUN) an m4 macro named
 # MCA_<framework>_<component>_CONFIG that executes either $1 if the
 # component wants to build itself, or $2 if the component does not
@@ -36,7 +36,8 @@
 
 # MCA_op_example_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([MCA_op_example_CONFIG],[
+AC_DEFUN([MCA_ompi_op_example_CONFIG],[
+    AC_CONFIG_FILES([ompi/mca/op/example/Makefile])
 
     # Add checks here for any necessary header files and/or libraries
     # that must be present to compile your component.  

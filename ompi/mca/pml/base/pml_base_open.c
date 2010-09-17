@@ -125,7 +125,7 @@ int mca_pml_base_open(void)
     if (OMPI_SUCCESS != 
         mca_base_components_open("pml", mca_pml_base_output, mca_pml_base_static_components, 
                                  &mca_pml_base_components_available,
-                                 !MCA_pml_DIRECT_CALL)) {
+                                 !MCA_ompi_pml_DIRECT_CALL)) {
         return OMPI_ERROR;
     }
 
@@ -142,9 +142,9 @@ int mca_pml_base_open(void)
      * uses BTLs and any other PMLs that do not in the mca_pml_base_pml array.
      */
 
-#if MCA_pml_DIRECT_CALL
+#if MCA_ompi_pml_DIRECT_CALL
     opal_pointer_array_add(&mca_pml_base_pml,
-                           stringify(MCA_pml_DIRECT_CALL_COMPONENT));
+                           stringify(MCA_ompi_pml_DIRECT_CALL_COMPONENT));
 #else
     {
         char* default_pml = NULL;

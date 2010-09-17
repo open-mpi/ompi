@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -18,7 +18,7 @@
 # $HEADER$
 #
 
-AC_DEFUN([MCA_io_romio_POST_CONFIG], [
+AC_DEFUN([MCA_ompi_io_romio_POST_CONFIG], [
     AS_IF([test $1 -eq 0 -a "$enable_dist" = "yes"],
           [AC_MSG_ERROR([ROMIO disabled but --enable-dist specifed.  This will result in a bad tarball.  Aborting configure.])])
     AM_CONDITIONAL([MCA_io_romio_SHOULD_BUILD], [test $1 -eq 1])
@@ -28,7 +28,9 @@ AC_DEFUN([MCA_io_romio_POST_CONFIG], [
 
 # MCA_io_romio_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([MCA_io_romio_CONFIG],[
+AC_DEFUN([MCA_ompi_io_romio_CONFIG],[
+    AC_CONFIG_FILES([ompi/mca/io/romio/Makefile])
+
     OMPI_VAR_SCOPE_PUSH([io_romio_flags io_romio_flags_define io_romio_happy io_romio_save_LIBS])
     AC_ARG_ENABLE([io-romio],
                   [AC_HELP_STRING([--disable-io-romio],

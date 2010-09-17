@@ -7,7 +7,10 @@
 # 
 # $HEADER$
 #
+AC_DEFUN([MCA_orte_ess_singleton_PRIORITY], [10])
 
 # MCA_ess_singleton_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([MCA_ess_singleton_CONFIG], [$1])
+AC_DEFUN([MCA_orte_ess_singleton_CONFIG], [
+    AC_CONFIG_FILES([orte/mca/ess/singleton/Makefile])
+])

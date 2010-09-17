@@ -11,6 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
 #
+# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -47,7 +48,7 @@ csum_sources  = \
 	pml_csum_sendreq.h \
 	pml_csum_start.c 
 
-if OMPI_BUILD_pml_csum_DSO
+if MCA_BUILD_ompi_pml_csum_DSO
 component_noinst =
 component_install = mca_pml_csum.la
 else

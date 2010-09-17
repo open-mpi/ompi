@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved. 
+# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved. 
 #
 # $COPYRIGHT$
 # 
@@ -19,7 +19,7 @@ sources = \
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_sensor_memusage_DSO
+if MCA_BUILD_orte_sensor_memusage_DSO
 component_noinst =
 component_install = mca_sensor_memusage.la
 else

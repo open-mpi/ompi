@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -22,7 +22,7 @@ sources = \
     op_x86_component.c \
     op_x86_module_sum.c
 
-if OMPI_BUILD_op_x86_DSO
+if MCA_BUILD_ompi_op_x86_DSO
 lib =
 lib_sources =
 component = mca_op_x86.la

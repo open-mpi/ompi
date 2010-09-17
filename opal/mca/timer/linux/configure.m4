@@ -17,8 +17,9 @@
 # 
 # $HEADER$
 #
+AC_DEFUN([MCA_opal_timer_linux_PRIORITY], [30])
 
-AC_DEFUN([MCA_timer_linux_COMPILE_MODE], [
+AC_DEFUN([MCA_opal_timer_linux_COMPILE_MODE], [
     AC_MSG_CHECKING([for MCA component $2:$3 compile mode])
     $4="static"
     AC_MSG_RESULT([$$4])
@@ -28,7 +29,9 @@ AC_DEFUN([MCA_timer_linux_COMPILE_MODE], [
 # MCA_timer_linux_CONFIG(action-if-can-compile, 
 #                        [action-if-cant-compile])
 # ------------------------------------------------
-AC_DEFUN([MCA_timer_linux_CONFIG],[
+AC_DEFUN([MCA_opal_timer_linux_CONFIG],[
+    AC_CONFIG_FILES([opal/mca/timer/linux/Makefile])
+
     AC_ARG_WITH([timer],
         [AC_HELP_STRING([--with-timer=TYPE],
                         [Build high resolution timer component TYPE])])

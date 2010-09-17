@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -278,7 +278,7 @@ USER="ompibuilder"
 export USER
 
 # autogen is our friend
-do_command "./autogen.sh"
+do_command "./autogen.pl"
 
 # do config
 do_command "./configure --enable-dist"

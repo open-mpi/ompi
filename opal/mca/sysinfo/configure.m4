@@ -10,4 +10,4 @@ dnl $HEADER$
 dnl
 
 dnl we only want those at same priority
-m4_define(MCA_sysinfo_CONFIGURE_MODE, STOP_AT_FIRST_PRIORITY)
+m4_define(MCA_opal_sysinfo_CONFIGURE_MODE, STOP_AT_FIRST_PRIORITY)

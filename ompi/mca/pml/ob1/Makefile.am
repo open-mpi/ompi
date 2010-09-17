@@ -10,8 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
-#
+# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -48,7 +47,7 @@ ob1_sources  = \
 	pml_ob1_sendreq.h \
 	pml_ob1_start.c 
 
-if OMPI_BUILD_pml_ob1_DSO
+if MCA_BUILD_ompi_pml_ob1_DSO
 component_noinst =
 component_install = mca_pml_ob1.la
 else

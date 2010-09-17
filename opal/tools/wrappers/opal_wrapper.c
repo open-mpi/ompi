@@ -12,7 +12,6 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -76,7 +75,6 @@ struct options_data_t {
     char *module_option;
     char **preproc_flags;
     char **comp_flags;
-    char **comp_flags_prefix;
     char **link_flags;
     char **libs;
     char *req_file;
@@ -118,8 +116,6 @@ options_data_init(struct options_data_t *data)
     data->preproc_flags[0] = NULL;
     data->comp_flags = (char **) malloc(sizeof(char*));
     data->comp_flags[0] = NULL;
-    data->comp_flags_prefix = (char **) malloc(sizeof(char*));
-    data->comp_flags_prefix[0] = NULL;
     data->link_flags = (char **) malloc(sizeof(char*));
     data->link_flags[0] = NULL;
     data->libs = (char **) malloc(sizeof(char*));
@@ -146,7 +142,6 @@ options_data_free(struct options_data_t *data)
     if (NULL != data->module_option) free(data->module_option);
     opal_argv_free(data->preproc_flags);
     opal_argv_free(data->comp_flags);
-    opal_argv_free(data->comp_flags_prefix);
     opal_argv_free(data->link_flags);
     opal_argv_free(data->libs);
     if (NULL != data->req_file) free(data->req_file);
@@ -302,13 +297,6 @@ data_callback(const char *key, const char *value)
                          opal_argv_count(options_data[parse_options_idx].comp_flags),
                          values);
         expand_flags(options_data[parse_options_idx].comp_flags);
-        opal_argv_free(values);
-    } else if (0 == strcmp(key, "compiler_flags_prefix")) {
-        char **values = opal_argv_split(value, ' ');
-        opal_argv_insert(&options_data[parse_options_idx].comp_flags_prefix,
-                         opal_argv_count(options_data[parse_options_idx].comp_flags_prefix),
-                         values);
-        expand_flags(options_data[parse_options_idx].comp_flags_prefix);
         opal_argv_free(values);
     } else if (0 == strcmp(key, "linker_flags")) {
         char **values = opal_argv_split(value, ' ');
@@ -722,12 +710,6 @@ main(int argc, char *argv[])
         exec_argv = (char **) malloc(sizeof(char*));
         exec_argv[0] = NULL;
         exec_argc = 0;
-    }
-
-    if (flags & COMP_WANT_COMPILE) {
-        opal_argv_insert(&exec_argv, exec_argc,
-                         options_data[user_data_idx].comp_flags_prefix);
-        exec_argc = opal_argv_count(exec_argv);
     }
 
     /* Per https://svn.open-mpi.org/trac/ompi/ticket/2201, add all the

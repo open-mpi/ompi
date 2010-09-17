@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2010      Sandia National Laboratories. All rights reserved.
 # $COPYRIGHT$
@@ -137,11 +137,9 @@ nodist_man_MANS =
 
 # Conditionally install the header files
 
+ompidir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi
 nobase_ompi_HEADERS += $(headers)
-else
-ompidir = $(includedir)
 endif
 
 include class/Makefile.am

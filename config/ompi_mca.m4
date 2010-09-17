@@ -10,6 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -27,7 +28,7 @@ AC_DEFUN([OMPI_EVAL_ARG], [$1])
 # OMPI_MCA
 #
 # configure the MCA (modular component architecture).  Works hand in hand
-# with Open MPI's autogen.sh, requiring it's specially formatted lists
+# with Open MPI's autogen.pl, requiring it's specially formatted lists
 # of frameworks, components, etc.
 #
 # USAGE:
@@ -210,7 +211,7 @@ AC_DEFUN([OMPI_MCA],[
 
     # if there isn't a project list, abort
     m4_ifdef([mca_project_list], [],
-             [m4_fatal([Could not find project list - rerun autogen.sh without -l])])
+             [m4_fatal([Could not find project list - please rerun autogen.pl!])])
 
     # now configre all the projects, frameworks, and components.  Most
     # of the hard stuff is in here
@@ -220,12 +221,8 @@ AC_DEFUN([OMPI_MCA],[
                 MCA_CONFIGURE_PROJECT(mca_project)])
 
     # BWB - fix me...  need to automate this somehow
-    MCA_SETUP_DIRECT_CALL(pml, ompi)
-    MCA_SETUP_DIRECT_CALL(mtl, ompi)
-
-    # make all the config output statements for the no configure
-    # components
-    MCA_NO_CONFIG_CONFIG_FILES()
+    MCA_SETUP_DIRECT_CALL(ompi, pml)
+    MCA_SETUP_DIRECT_CALL(ompi, mtl)
 
     AC_SUBST(MCA_PROJECT_SUBDIRS)
 ])
@@ -266,7 +263,7 @@ AC_DEFUN([MCA_CONFIGURE_PROJECT],[
     #                               to more libraries) that must be included
     #                               in the project's main library
     m4_ifdef([mca_$1_framework_list], [], 
-             [m4_fatal([Could not find mca_$1_framework_list - rerun autogen.sh without -l])])
+             [m4_fatal([Could not find mca_$1_framework_list - please rerun autogen.pl])])
 
     MCA_$1_FRAMEWORKS=
     MCA_$1_FRAMEWORKS_SUBDIRS=
@@ -274,29 +271,26 @@ AC_DEFUN([MCA_CONFIGURE_PROJECT],[
     MCA_$1_FRAMEWORK_COMPONENT_DSO_SUBDIRS=
     MCA_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS=
     MCA_$1_FRAMEWORK_LIBS=
-    
+
     m4_foreach(mca_framework, [mca_$1_framework_list],
                [m4_ifval(mca_framework, 
-                         [# common has to go up front
-                          if test "mca_framework" = "common" ; then
-                              MCA_$1_FRAMEWORKS="mca_framework $MCA_$1_FRAMEWORKS"
-                              MCA_$1_FRAMEWORKS_SUBDIRS="[mca/]mca_framework $MCA_$1_FRAMEWORKS_SUBDIRS"
-                              MCA_$1_FRAMEWORK_COMPONENT_ALL_SUBDIRS="[\$(MCA_]mca_framework[_ALL_SUBDIRS)] $MCA_$1_FRAMEWORK_COMPONENT_ALL_SUBDIRS"
-                              MCA_$1_FRAMEWORK_COMPONENT_DSO_SUBDIRS="[\$(MCA_]mca_framework[_DSO_SUBDIRS)] $MCA_$1_FRAMEWORK_COMPONENT_DSO_SUBDIRS"
-                              MCA_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS="[\$(MCA_]mca_framework[_STATIC_SUBDIRS)] $MCA_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS"
-                          else
-                              MCA_$1_FRAMEWORKS="$MCA_$1_FRAMEWORKS mca_framework"
-                              MCA_$1_FRAMEWORKS_SUBDIRS="$MCA_$1_FRAMEWORKS_SUBDIRS [mca/]mca_framework"
-                              MCA_$1_FRAMEWORK_COMPONENT_ALL_SUBDIRS="$MCA_$1_FRAMEWORK_COMPONENT_ALL_SUBDIRS [\$(MCA_]mca_framework[_ALL_SUBDIRS)]"
-                              MCA_$1_FRAMEWORK_COMPONENT_DSO_SUBDIRS="$MCA_$1_FRAMEWORK_COMPONENT_DSO_SUBDIRS [\$(MCA_]mca_framework[_DSO_SUBDIRS)]"
-                              MCA_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS="$MCA_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS [\$(MCA_]mca_framework[_STATIC_SUBDIRS)]"
-                          fi
-                          if test "mca_framework" != "common" ; then
-                              MCA_$1_FRAMEWORK_LIBS="$MCA_$1_FRAMEWORK_LIBS [mca/]mca_framework[/libmca_]mca_framework[.la]"
-                          fi
-                          MCA_$1_FRAMEWORK_LIBS="$MCA_$1_FRAMEWORK_LIBS [\$(MCA_]mca_framework[_STATIC_LTLIBS)]"
-                          m4_ifdef([MCA_]mca_framework[_CONFIG],
-                                   [MCA_]mca_framework[_CONFIG]($1, mca_framework),
+                         [dnl common has to go up front
+                          m4_if(mca_framework, [common],
+                                [MCA_$1_FRAMEWORKS="mca_framework $MCA_$1_FRAMEWORKS"
+                                 MCA_$1_FRAMEWORKS_SUBDIRS="[mca/]mca_framework $MCA_$1_FRAMEWORKS_SUBDIRS"
+                                 MCA_$1_FRAMEWORK_COMPONENT_ALL_SUBDIRS="[\$(MCA_]$1[_]mca_framework[_ALL_SUBDIRS)] $MCA_$1_FRAMEWORK_COMPONENT_ALL_SUBDIRS"
+                                 MCA_$1_FRAMEWORK_COMPONENT_DSO_SUBDIRS="[\$(MCA_]$1[_]mca_framework[_DSO_SUBDIRS)] $MCA_$1_FRAMEWORK_COMPONENT_DSO_SUBDIRS"
+                                 MCA_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS="[\$(MCA_]$1[_]mca_framework[_STATIC_SUBDIRS)] $MCA_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS"
+                                ], [
+                                 MCA_$1_FRAMEWORKS="$MCA_$1_FRAMEWORKS mca_framework"
+                                 MCA_$1_FRAMEWORKS_SUBDIRS="$MCA_$1_FRAMEWORKS_SUBDIRS [mca/]mca_framework"
+                                 MCA_$1_FRAMEWORK_COMPONENT_ALL_SUBDIRS="$MCA_$1_FRAMEWORK_COMPONENT_ALL_SUBDIRS [\$(MCA_]$1[_]mca_framework[_ALL_SUBDIRS)]"
+                                 MCA_$1_FRAMEWORK_COMPONENT_DSO_SUBDIRS="$MCA_$1_FRAMEWORK_COMPONENT_DSO_SUBDIRS [\$(MCA_]$1[_]mca_framework[_DSO_SUBDIRS)]"
+                                 MCA_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS="$MCA_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS [\$(MCA_]$1[_]mca_framework[_STATIC_SUBDIRS)]"
+                                 MCA_$1_FRAMEWORK_LIBS="$MCA_$1_FRAMEWORK_LIBS [mca/]mca_framework[/libmca_]mca_framework[.la]"])
+                          MCA_$1_FRAMEWORK_LIBS="$MCA_$1_FRAMEWORK_LIBS [\$(MCA_]$1[_]mca_framework[_STATIC_LTLIBS)]"
+                          m4_ifdef([MCA_]$1[_]mca_framework[_CONFIG],
+                                   [MCA_]$1[_]mca_framework[_CONFIG]($1, mca_framework),
                                    [MCA_CONFIGURE_FRAMEWORK($1, mca_framework, 1)])])])
 
     AC_SUBST(MCA_$1_FRAMEWORKS)
@@ -306,6 +300,25 @@ AC_DEFUN([MCA_CONFIGURE_PROJECT],[
     AC_SUBST(MCA_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS)
     AC_SUBST(MCA_$1_FRAMEWORK_LIBS)
 ])
+
+# MCA_ORDER_COMPONENT_LIST(project_name, framework_name)
+AC_DEFUN([MCA_ORDER_COMPONENT_LIST], [
+    m4_foreach(mca_component, [mca_$1_$2_m4_config_component_list],
+               [m4_ifval(mca_component,
+                    [m4_ifdef([MCA_]$1[_]$2[_]mca_component[_PRIORITY], [], 
+                         [m4_fatal([MCA_$1_$2_]mca_component[_PRIORITY not found, but required.])])])])
+    m4_define([component_list], 
+              [esyscmd([config/ompi_mca_priority_sort.pl] m4_foreach([mca_component], [mca_$1_$2_m4_config_component_list],
+                        [m4_ifval(mca_component, [mca_component ]OMPI_EVAL_ARG([MCA_]$1[_]$2[_]mca_component[_PRIORITY ]))]))])
+])
+
+AC_DEFUN([MCA_CHECK_IGNORED_PRIORITY], [
+    m4_foreach(mca_component, [mca_$1_$2_m4_config_component_list],
+               [m4_ifval(mca_component,
+                    [m4_ifdef([MCA_]$1[_]$2[_]mca_component[_PRIORITY],
+                         [m4_warn([unsupported], [MCA_]$1[_]$2[_]mca_component[_PRIORITY found, but ignored.])])])])
+])
+
 
 ######################################################################
 #
@@ -326,6 +339,11 @@ AC_DEFUN([MCA_CONFIGURE_PROJECT],[
 AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
     ompi_show_subsubtitle "Configuring MCA framework $2"
 
+    m4_ifdef([mca_$1_$2_no_config_component_list], [], 
+             [m4_fatal([Could not find mca_$1_$2_no_config_component_list - please rerun autogen.pl])])
+    m4_ifdef([mca_$1_$2_m4_config_component_list], [], 
+             [m4_fatal([Could not find mca_$1_$2_m4_config_component_list - please rerun autogen.pl])])
+
     # setup for framework
     all_components=
     static_components=
@@ -336,12 +354,11 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
     # exists.  Need to do this for VPATH builds, because the directory
     # may not exist yet.  For the "common" type, it's not really a
     # component, so it doesn't have a base.
-    if test "$2" = "common" ; then
-        outdir=$1/mca/common
-    else
-        outdir=$1/mca/$2/base
-    fi
+    m4_if([$2], [common], [outdir=$1/mca/common], [outdir=$1/mca/$2/base])
     AS_MKDIR_P([$outdir])
+
+    # emit Makefile rule
+    AC_CONFIG_FILES([$1/mca/$2/Makefile])
 
     # remove any previously generated #include files
     outfile_real=$outdir/static-components.h
@@ -351,26 +368,21 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
 
     # print some nice messages about what we're about to do...
     AC_MSG_CHECKING([for no configure components in framework $2])
-    AC_MSG_RESULT([mca_$2_no_config_component_list])
+    AC_MSG_RESULT([mca_$1_$2_no_config_component_list])
     AC_MSG_CHECKING([for m4 configure components in framework $2])
-    AC_MSG_RESULT([mca_$2_m4_config_component_list])
+    AC_MSG_RESULT([mca_$1_$2_m4_config_component_list])
 
-    # configure components that don't have any component-specific
-    # configuration.  See comment in CONFIGURE_PROJECT about the
-    # m4_ifval in the m4_foreach.  If there isn't a component list,
-    # abort with a reasonable message.  If there are components in the
-    # list, but we're doing one of the "special" selection logics,
-    # abort with a reasonable message.
-    m4_ifdef([mca_$2_no_config_component_list], [], 
-             [m4_fatal([Could not find mca_$2_no_config_component_list - rerun autogen.sh without -l])])
-    # make sure priority stuff set right
-    m4_if(OMPI_EVAL_ARG([MCA_]mca_framework[_CONFIGURE_MODE]), [STOP_AT_FIRST],
-          [m4_ifval(mca_$2_no_config_component_list,
+    # If there are components in the no configure list, but we're
+    # doing one of the "special" selection logics, abort with a
+    # reasonable message.
+    m4_if(OMPI_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST],
+          [m4_ifval(mca_$1_$2_no_config_component_list,
                    [m4_fatal([Framework $2 using STOP_AT_FIRST but at least one component has no configure.m4])])])
-    m4_if(OMPI_EVAL_ARG([MCA_]mca_framework[_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY],
-          [m4_ifval(mca_$2_no_config_component_list,
+    m4_if(OMPI_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY],
+          [m4_ifval(mca_$1_$2_no_config_component_list,
                    [m4_fatal([Framework $2 using STOP_AT_FIRST_PRIORITY but at least one component has no configure.m4])])])
-    m4_foreach(mca_component, [mca_$2_no_config_component_list],
+    # run the configure logic for the no-config components
+    m4_foreach(mca_component, [mca_$1_$2_no_config_component_list],
                [m4_ifval(mca_component,
                   [MCA_CONFIGURE_NO_CONFIG_COMPONENT($1, $2, mca_component, 
                                                      [all_components],
@@ -379,22 +391,19 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
                                                      [static_ltlibs],
                                                      [$3])])])
 
-    # configure components that use built-in configuration scripts see
-    # comment in CONFIGURE_PROJECT about the m4_ifval in the
-    # m4_foreach.  if there isn't a component list, abort
-    m4_ifdef([mca_$2_m4_config_component_list], [], 
-             [m4_fatal([Could not find mca_$2_m4_config_component_list - rerun autogen.sh without -l])])
+    # configure components that use built-in configuration scripts
+    m4_ifdef([component_list], [m4_undefine([component_list])])
+    m4_if(OMPI_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST], [MCA_ORDER_COMPONENT_LIST($1, $2)],
+          [m4_if(OMPI_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY], [MCA_ORDER_COMPONENT_LIST($1, $2)],
+                [m4_define([component_list], [mca_$1_$2_m4_config_component_list])])])
+
     best_mca_component_priority=0
     components_looking_for_succeed=$3
     components_last_result=0
-    m4_foreach(mca_component, [mca_$2_m4_config_component_list],
+    m4_foreach(mca_component, [component_list],
                [m4_ifval(mca_component,
-                  [m4_if(OMPI_EVAL_ARG([MCA_]mca_framework[_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY],
-                         [ # get the component's priority...
-                          infile="$srcdir/$1/mca/$2/mca_component/configure.params"
-                          mca_component_priority="`$GREP PARAM_CONFIG_PRIORITY= $infile | cut -d= -f2-`"
-                          AS_IF([test -z "$mca_component_priority"], [mca_component_priority=0])
-                          AS_IF([test $best_mca_component_priority -gt $mca_component_priority], [components_looking_for_succeed=0])])
+                  [m4_if(OMPI_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY],
+                         [AS_IF([test $best_mca_component_priority -gt MCA_$1_$2_]mca_component[_PRIORITY], [components_looking_for_succeed=0])])
                    MCA_CONFIGURE_M4_CONFIG_COMPONENT($1, $2, mca_component, 
                                                      [all_components],
                                                      [static_components],
@@ -403,34 +412,36 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
                                                      [$components_looking_for_succeed],
                                                      [components_last_result=1],
                                                      [components_last_result=0])
-                   m4_if(OMPI_EVAL_ARG([MCA_]mca_framework[_CONFIGURE_MODE]), [STOP_AT_FIRST],
+                   m4_if(OMPI_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST],
                          [AS_IF([test $components_last_result -eq 1], [components_looking_for_succeed=0])])
-                   m4_if(OMPI_EVAL_ARG([MCA_]mca_framework[_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY],
-                         [AS_IF([test $components_last_result -eq 1], [best_mca_component_priority=$mca_component_priority])])])])
+                   m4_if(OMPI_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY],
+                         [AS_IF([test $components_last_result -eq 1], [best_mca_component_priority=]OMPI_EVAL_ARG([MCA_$1_$2_]mca_component[_PRIORITY]))])
+                   ])])
 
     # configure components that provide their own configure script.
     # It would be really hard to run these for "find first that
     # works", so we don't :)
-    m4_if(OMPI_EVAL_ARG([MCA_]mca_framework[_CONFIGURE_MODE]), [STOP_AT_FIRST], [],
-          [m4_if(OMPI_EVAL_ARG([MCA_]mca_framework[_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY], [],
-                 [AS_IF([test "$3" != "0"],
+    m4_if(OMPI_EVAL_ARG([MCA_$1_]$2[_CONFIGURE_MODE]), [STOP_AT_FIRST], [],
+          [m4_if(OMPI_EVAL_ARG([MCA_$1_]$2[_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY], [],
+                 [MCA_CHECK_IGNORED_PRIORITY($1, $2)
+                  AS_IF([test "$3" != "0"],
                         [MCA_CONFIGURE_ALL_CONFIG_COMPONENTS($1, $2, [all_components],
                                                [static_components], [dso_components],
                                                [static_ltlibs])])])])
 
-    MCA_$2_ALL_COMPONENTS="$all_components"
-    MCA_$2_STATIC_COMPONENTS="$static_components"
-    MCA_$2_DSO_COMPONENTS="$dso_components"
-    MCA_$2_STATIC_LTLIBS="$static_ltlibs"
+    MCA_$1_$2_ALL_COMPONENTS="$all_components"
+    MCA_$1_$2_STATIC_COMPONENTS="$static_components"
+    MCA_$1_$2_DSO_COMPONENTS="$dso_components"
+    MCA_$1_$2_STATIC_LTLIBS="$static_ltlibs"
 
-    AC_SUBST(MCA_$2_ALL_COMPONENTS)
-    AC_SUBST(MCA_$2_STATIC_COMPONENTS)
-    AC_SUBST(MCA_$2_DSO_COMPONENTS)
-    AC_SUBST(MCA_$2_STATIC_LTLIBS)
+    AC_SUBST(MCA_$1_$2_ALL_COMPONENTS)
+    AC_SUBST(MCA_$1_$2_STATIC_COMPONENTS)
+    AC_SUBST(MCA_$1_$2_DSO_COMPONENTS)
+    AC_SUBST(MCA_$1_$2_STATIC_LTLIBS)
 
-    OMPI_MCA_MAKE_DIR_LIST(MCA_$2_ALL_SUBDIRS, $2, [$all_components])
-    OMPI_MCA_MAKE_DIR_LIST(MCA_$2_STATIC_SUBDIRS, $2, [$static_components])
-    OMPI_MCA_MAKE_DIR_LIST(MCA_$2_DSO_SUBDIRS, $2, [$dso_components])
+    OMPI_MCA_MAKE_DIR_LIST(MCA_$1_$2_ALL_SUBDIRS, $2, [$all_components])
+    OMPI_MCA_MAKE_DIR_LIST(MCA_$1_$2_STATIC_SUBDIRS, $2, [$static_components])
+    OMPI_MCA_MAKE_DIR_LIST(MCA_$1_$2_DSO_SUBDIRS, $2, [$dso_components])
 
     # Create the final .h file that will be included in the type's
     # top-level glue.  This lists all the static components.  We don't
@@ -511,11 +522,13 @@ AC_DEFUN([MCA_CONFIGURE_NO_CONFIG_COMPONENT],[
 
     # set the AM_CONDITIONAL on how we should build
     if test "$compile_mode" = "dso" ; then
-        BUILD_$2_$3_DSO=1
+        BUILD_$1_$2_$3_DSO=1
     else
-        BUILD_$2_$3_DSO=0
+        BUILD_$1_$2_$3_DSO=0
     fi
-    AM_CONDITIONAL(OMPI_BUILD_$2_$3_DSO, test "$BUILD_$2_$3_DSO" = "1")
+    AM_CONDITIONAL(MCA_BUILD_$1_$2_$3_DSO, test "$BUILD_$1_$2_$3_DSO" = "1")
+
+    AC_CONFIG_FILES([$1/mca/$2/$3/Makefile])
 
     unset compile_mode
 ])
@@ -538,28 +551,23 @@ AC_DEFUN([MCA_CONFIGURE_NO_CONFIG_COMPONENT],[
 #
 ######################################################################
 AC_DEFUN([MCA_CONFIGURE_M4_CONFIG_COMPONENT],[
-    ompi_show_subsubsubtitle "MCA component $2:$3 (m4 configuration macro)"
+    m4_ifdef([MCA_$1_$2_$3_PRIORITY],
+        [ompi_show_subsubsubtitle "MCA component $2:$3 (m4 configuration macro, priority MCA_$1_$2_$3_PRIORITY)"],
+        [ompi_show_subsubsubtitle "MCA component $2:$3 (m4 configuration macro)"])
 
     MCA_COMPONENT_BUILD_CHECK($1, $2, $3, [should_build=$8], [should_build=0])
     # Allow the component to override the build mode if it really wants to.
     # It is, of course, free to end up calling MCA_COMPONENT_COMPILE_MODE
-    m4_ifdef([MCA_$2_$3_COMPILE_MODE],
-             [MCA_$2_$3_COMPILE_MODE($1, $2, $3, compile_mode)],
+    m4_ifdef([MCA_$1_$2_$3_COMPILE_MODE],
+             [MCA_$1_$2_$3_COMPILE_MODE($1, $2, $3, compile_mode)],
              [MCA_COMPONENT_COMPILE_MODE($1, $2, $3, compile_mode)])
 
     # try to configure the component.  pay no attention to
     # --enable-dist, since we'll always have makefiles.
-    AS_IF([test "$should_build" = "1"],
-          [m4_ifdef([MCA_]$2[_]$3[_CONFIG],
-                    [MCA_$2_$3_CONFIG([should_build=1], 
-                                      [should_build=0])],
-                    # If they forgot to define an MCA_<fw>_<comp>_CONFIG 
-                    # macro, print a friendly warning and abort.
-                    [AC_MSG_WARN([*** The $2:$3 did not define an])
-                     AC_MSG_WARN([*** MCA_$2_$3_CONFIG macro in the])
-                     AC_MSG_WARN([*** $1/$2/$3/configure.m4 file])
-                     AC_MSG_ERROR([Cannot continue])])
-          ])
+    m4_ifdef([MCA_$1_$2_$3_CONFIG],
+             [MCA_$1_$2_$3_CONFIG([should_build=$should_build], 
+                                  [should_build=0])],
+             [m4_fatal([MCA_$1_$2_$3_CONFIG macro not found])])
 
     AS_IF([test "$should_build" = "1"],
           [MCA_PROCESS_COMPONENT($1, $2, $3, $4, $5, $6, $7, $compile_mode)],
@@ -567,14 +575,14 @@ AC_DEFUN([MCA_CONFIGURE_M4_CONFIG_COMPONENT],[
            # add component to all component list
            $4="$$4 $3"])
 
-    m4_ifdef([MCA_$2_$3_POST_CONFIG],
-             [MCA_$2_$3_POST_CONFIG($should_build)])
+    m4_ifdef([MCA_$1_$2_$3_POST_CONFIG],
+             [MCA_$1_$2_$3_POST_CONFIG($should_build)])
 
     # set the AM_CONDITIONAL on how we should build
     AS_IF([test "$compile_mode" = "dso"], 
-          [BUILD_$2_$3_DSO=1],
-          [BUILD_$2_$3_DSO=0])
-    AM_CONDITIONAL(OMPI_BUILD_$2_$3_DSO, test "$BUILD_$2_$3_DSO" = "1")
+          [BUILD_$1_$2_$3_DSO=1],
+          [BUILD_$1_$2_$3_DSO=0])
+    AM_CONDITIONAL(MCA_BUILD_$1_$2_$3_DSO, test "$BUILD_$1_$2_$3_DSO" = "1")
 
     AS_IF([test "$should_build" = "1"], [$9], [$10])
 
@@ -756,7 +764,7 @@ AC_DEFUN([MCA_PROCESS_COMPONENT],[
         if test "$DIRECT_$2" = "$component" ; then
             if test "`$GREP DIRECT_CALL_HEADER $infile`" != "" ; then
                 line="`$GREP DIRECT_CALL_HEADER $infile | cut -d= -f2-`"
-                str="MCA_${framework}_DIRECT_CALL_HEADER=$line"
+                str="MCA_${project}_${framework}_DIRECT_CALL_HEADER=$line"
                 eval $str
             else
 AC_MSG_ERROR([*** ${framework} component ${component} was supposed to be direct-called, but
@@ -915,26 +923,26 @@ AC_DEFUN([MCA_COMPONENT_BUILD_CHECK],[
 # call building
 #
 # USAGE:
-#   MCA_SETUP_DIRECT_CALL(framework, project)
+#   MCA_SETUP_DIRECT_CALL(project, framework)
 #
 ######################################################################
 AC_DEFUN([MCA_SETUP_DIRECT_CALL],[
-    if test ! -z "$DIRECT_$1" ; then
-        MCA_$1_DIRECT_CALL_COMPONENT=$DIRECT_$1
-        MCA_$1_DIRECT_CALL=1
+    if test ! -z "$DIRECT_$2" ; then
+        MCA_$1_$2_DIRECT_CALL_COMPONENT=$DIRECT_$2
+        MCA_$1_$2_DIRECT_CALL=1
     else
-        MCA_$1_DIRECT_CALL_COMPONENT=
-        MCA_$1_DIRECT_CALL=0
+        MCA_$1_$2_DIRECT_CALL_COMPONENT=
+        MCA_$1_$2_DIRECT_CALL=0
     fi
 
-    AC_SUBST(MCA_$1_DIRECT_CALL_HEADER)
-    AC_DEFINE_UNQUOTED([MCA_$1_DIRECT_CALL], [$MCA_$1_DIRECT_CALL],
-            [Defined to 1 if $1 should use direct calls instead of components])
-    AC_DEFINE_UNQUOTED([MCA_$1_DIRECT_CALL_COMPONENT], [$MCA_$1_DIRECT_CALL_COMPONENT],
-            [name of component to use for direct calls, if MCA_$1_DIRECT_CALL is 1])
-    AC_DEFINE_UNQUOTED([MCA_$1_DIRECT_CALL_HEADER],
-                       ["[$MCA_]$1[_DIRECT_CALL_HEADER]"],
-                       [Header $1 includes to be direct called])
+    AC_SUBST(MCA_$1_$2_DIRECT_CALL_HEADER)
+    AC_DEFINE_UNQUOTED([MCA_$1_$2_DIRECT_CALL], [$MCA_$1_$2_DIRECT_CALL],
+            [Defined to 1 if $1:$2 should use direct calls instead of components])
+    AC_DEFINE_UNQUOTED([MCA_$1_$2_DIRECT_CALL_COMPONENT], [$MCA_$1_$2_DIRECT_CALL_COMPONENT],
+            [name of component to use for direct calls, if MCA_$1_$2_DIRECT_CALL is 1])
+    AC_DEFINE_UNQUOTED([MCA_$1_$2_DIRECT_CALL_HEADER],
+                       ["[$MCA_]$1[_]$2[_DIRECT_CALL_HEADER]"],
+                       [Header $1:$2 includes to be direct called])
 ])
 
 

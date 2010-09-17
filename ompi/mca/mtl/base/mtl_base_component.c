@@ -57,7 +57,7 @@ ompi_mtl_base_open(void)
         mca_base_components_open("mtl", ompi_mtl_base_output,
                                  mca_mtl_base_static_components, 
                                  &ompi_mtl_base_components_opened,
-                                 !MCA_mtl_DIRECT_CALL)) {
+                                 !MCA_ompi_mtl_DIRECT_CALL)) {
         return OMPI_ERROR;
     }
 

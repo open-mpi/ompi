@@ -13,9 +13,9 @@ dnl $HEADER$
 dnl
 
 dnl we only want one
-m4_define(MCA_memcpy_CONFIGURE_MODE, STOP_AT_FIRST)
+m4_define(MCA_opal_memcpy_CONFIGURE_MODE, STOP_AT_FIRST)
 
-AC_DEFUN([MCA_memcpy_CONFIG],[
+AC_DEFUN([MCA_opal_memcpy_CONFIG],[
         memcpy_base_include=
 
         # first, compile all the components

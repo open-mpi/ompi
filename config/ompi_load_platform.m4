@@ -26,6 +26,10 @@ AC_DEFUN([OMPI_LOAD_PLATFORM], [
                          command line not in FILE are used.  Options on the
                          command line and in FILE are replaced by what is
                          in FILE.])])
+    m4_ifval([autogen_platform_file], [
+        if test "$with_platform" == "" ; then
+            with_platform=autogen_platform_file
+        fi])
     if test "$with_platform" = "yes" ; then
         AC_MSG_ERROR([--with-platform argument must include FILE option])
     elif test "$with_platform" = "no" ; then

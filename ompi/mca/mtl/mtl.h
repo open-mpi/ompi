@@ -389,13 +389,13 @@ typedef struct mca_mtl_base_module_t mca_mtl_base_module_t;
 /*
  * macro for doing direct call / call through struct
  */
-#if MCA_mtl_DIRECT_CALL
+#if MCA_ompi_mtl_DIRECT_CALL
 
-#include MCA_mtl_DIRECT_CALL_HEADER
+#include MCA_ompi_mtl_DIRECT_CALL_HEADER
 
 #define OMPI_MTL_CALL_STAMP(a, b) ompi_mtl_ ## a ## _ ## b
 #define OMPI_MTL_CALL_EXPANDER(a, b) OMPI_MTL_CALL_STAMP(a,b)
-#define OMPI_MTL_CALL(a) OMPI_MTL_CALL_EXPANDER(MCA_mtl_DIRECT_CALL_COMPONENT, a)
+#define OMPI_MTL_CALL(a) OMPI_MTL_CALL_EXPANDER(MCA_ompi_mtl_DIRECT_CALL_COMPONENT, a)
 
 #else
 #define OMPI_MTL_CALL(a) ompi_mtl->mtl_ ## a

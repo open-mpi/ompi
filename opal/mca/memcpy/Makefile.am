@@ -2,6 +2,7 @@
 # Copyright (c) 2004-2006 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
+# Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -23,12 +24,10 @@ nodist_headers =
 libmca_memcpy_la_SOURCES += $(headers)
 
 # Conditionally install the header files
+opaldir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
 nobase_opal_HEADERS += $(headers)
 nobase_nodist_opal_HEADERS += $(nodist_headers)
-opaldir = $(includedir)/openmpi/opal/mca/memcpy
-else
-opaldir = $(includedir)
 endif
 
 include base/Makefile.am

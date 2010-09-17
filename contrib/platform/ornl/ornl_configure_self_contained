@@ -36,7 +36,7 @@ fi
 SRCDIR=${SRCDIR:-..}
 COMPILER=${COMPILER:-gnu}
 INSTALL_ROOT=${INSTALL_ROOT:-/sw/xt5/ompi}
-VERSION=${VERSION:-"`${SRCDIR}/config/ompi_get_version.sh ${SRCDIR}/VERSION`"}
+VERSION=${VERSION:-"`${SRCDIR}/config/opal_get_version.sh ${SRCDIR}/VERSION`"}
 SVER=${SVER:-"cnl`echo "${XTOS_VERSION}" | cut -c1-3`"}
 CVER=${CVER:-"${COMPILER}`gcc --version  | awk '/gcc/{print $3}'`"}
 

@@ -20,7 +20,9 @@ AC_DEFUN([MCA_if_windows_COMPILE_MODE], [
 # MCA_if_windows_CONFIG(action-if-can-compile, 
 #                        [action-if-cant-compile])
 # ------------------------------------------------
-AC_DEFUN([MCA_if_windows_CONFIG],[
+AC_DEFUN([MCA_opal_if_windows_CONFIG],[
+    AC_CONFIG_FILES([opal/mca/if/windows/Makefile])
+
     # check for RegOpenKeyEx allowing access to the Windows
     # registry. We should first check that the function is defined,
     # and then check for it's presence in the kernel32 library.

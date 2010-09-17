@@ -11,7 +11,7 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN([MCA_notifier_CONFIG],[
+AC_DEFUN([MCA_orte_notifier_CONFIG],[
     ompi_show_subsubtitle "Pre-configuring the framework notifier"
 
     AC_MSG_CHECKING([if --enable-notifier-log-event was specified])

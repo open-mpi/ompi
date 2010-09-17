@@ -3,7 +3,7 @@ dnl
 dnl Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
-dnl Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -16,7 +16,7 @@ dnl
 # OMPI_EXT
 #
 # configure the Interface Extensions [similar to MCA version].  Works hand in
-# hand with Open MPI's autogen.sh, requiring it's specially formatted lists
+# hand with Open MPI's autogen.pl, requiring it's specially formatted lists
 # of frameworks, components, etc.
 #
 # USAGE:
@@ -35,16 +35,14 @@ AC_DEFUN([OMPI_EXT],[
     #
     AC_ARG_ENABLE(mpi-ext,
         AC_HELP_STRING([--enable-mpi-ext[=LIST]],
-                       [Comma-separated list of extensions that should be
-                        built (default: none).]))
-
+                       [Comma-separated list of extensions that should be built.  Possible values: ompi_mpiext_list.  Example: "--enable-mpi-ext=foo,bar" will enable building the MPI extensions "foo" and "bar".  If LIST is empty or the special value "all", then all available MPI extensions will be built (default: none).]))
 
     # print some nice messages about what we're about to do...
     AC_MSG_CHECKING([for available MPI Extensions])
     AC_MSG_RESULT([ompi_mpiext_list])
 
     AC_MSG_CHECKING([which MPI extension should be enabled])
-    if test "$enable_mpi_ext" = "yes"; then
+    if test "$enable_mpi_ext" = "yes" -o "$enable_mpi_ext" = "all"; then
         msg="All Extensions"
         str="`echo ENABLE_EXT_ALL=1`"
         eval $str
@@ -65,11 +63,6 @@ AC_DEFUN([OMPI_EXT],[
     fi
     AC_MSG_RESULT([$msg])
     unset msg
-
-    dnl - temporary hacks while autogen is rewriten.  These can probably be removed some day
-    m4_if(ext_mpiext_no_config_component_list, [], [], 
-             [m4_fatal([No configure MPI extensions no longer supported, but one found])])
-    m4_define([ompi_mpiext_list], [ext_mpiext_m4_config_component_list])
 
     m4_ifdef([ompi_mpiext_list], [],
              [m4_fatal([Could not find MPI Extensions list.  Aborting.])])

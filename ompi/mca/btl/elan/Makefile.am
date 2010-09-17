@@ -2,6 +2,7 @@
 # Copyright (c) 2004-2007 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
+# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -18,7 +19,7 @@ btl_elan_sources = btl_elan.c btl_elan.h btl_elan_component.c btl_elan_endpoint.
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_btl_elan_DSO
+if MCA_BUILD_ompi_btl_elan_DSO
 component_noinst =
 component_install = mca_btl_elan.la
 else

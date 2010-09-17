@@ -19,7 +19,7 @@ sources = \
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_memchecker_valgrind_DSO
+if MCA_BUILD_opal_memchecker_valgrind_DSO
 component_noinst =
 component_install = mca_memchecker_valgrind.la
 else

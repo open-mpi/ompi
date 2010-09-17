@@ -16,7 +16,7 @@ sources = \
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_db_dbase_DSO
+if MCA_BUILD_orte_db_dbase_DSO
 component_noinst =
 component_install = mca_db_dbase.la
 else

@@ -7,10 +7,13 @@
 # 
 # $HEADER$
 #
+AC_DEFUN([MCA_orte_grpcomm_mcast_PRIORITY], [10])
 
 # MCA_grpcomm_mcast_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([MCA_grpcomm_mcast_CONFIG], [
+AC_DEFUN([MCA_orte_grpcomm_mcast_CONFIG], [
+    AC_CONFIG_FILES([orte/mca/grpcomm/mcast/Makefile])
+
     # if we don't want reliable multicast, don't compile
     # this component
     AS_IF([test "$orte_want_multicast" = "1"],

@@ -10,7 +10,9 @@
 
 # MCA_sensor_heartbeat_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([MCA_sensor_heartbeat_CONFIG], [
+AC_DEFUN([MCA_orte_sensor_heartbeat_CONFIG], [
+    AC_CONFIG_FILES([orte/mca/sensor/heartbeat/Makefile])
+
     # if we don't want heartbeats, don't compile
     # this component
     AS_IF([test "$orte_want_heartbeats" = "1"],

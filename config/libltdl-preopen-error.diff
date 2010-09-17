@@ -17,7 +17,7 @@
 +     they acknowledge that it is a problem but no one has come up with
 +     a good general solution yet.  This Open MPI-specific solution is
 +     workable for us, but not workable as a general solution.  Hence,
-+     we patch in this "if 0" block in autogen.sh after Libtool
++     we patch in this "if 0" block in autogen.pl after Libtool
 +     installs libltdl in the opal/ tree.
 +  */
    LT__SETERROR (FILE_NOT_FOUND);

@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2008      UT-Battelle, LLC
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -21,6 +21,8 @@
 
 # MCA_ras_alps_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([MCA_ras_alps_CONFIG],[
+AC_DEFUN([MCA_orte_ras_alps_CONFIG],[
+    AC_CONFIG_FILES([orte/mca/ras/alps/Makefile])
+
 	ORTE_CHECK_ALPS([ras_alps], [$1], [$2])
 ])dnl

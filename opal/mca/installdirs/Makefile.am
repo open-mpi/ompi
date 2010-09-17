@@ -1,6 +1,7 @@
 #
 # Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
 #                         reserved. 
+# Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -20,11 +21,9 @@ headers = installdirs.h
 libmca_installdirs_la_SOURCES += $(headers)
 
 # Conditionally install the header files
+opaldir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
 nobase_opal_HEADERS += $(headers)
-opaldir = $(includedir)/openmpi/opal/mca/installdirs
-else
-opaldir = $(includedir)
 endif
 
 include base/Makefile.am

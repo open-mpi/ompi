@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -18,9 +18,11 @@
 # $HEADER$
 #
 
-# MCA_plm_xgrid_CONFIG([action-if-found], [action-if-not-found])
+# MCA_orte_plm_xgrid_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([MCA_plm_xgrid_CONFIG],[
+AC_DEFUN([MCA_orte_plm_xgrid_CONFIG],[
+    AC_CONFIG_FILES([orte/mca/plm/xgrid/Makefile])
+
     ORTE_CHECK_XGRID([plm_xgrid], [plm_xgrid_good=1], [plm_xgrid_good=0])
 
     # For very dumb reasons involving linking, it's near impossible

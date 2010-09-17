@@ -35,15 +35,10 @@ AC_DEFUN([OMPI_CONTRIB],[
     dnl for OMPI_CONFIGURE_USER env variable
     AC_REQUIRE([OMPI_CONFIGURE_SETUP])
 
-    # May someday be expanded to have autogen find the packages
-    # instead of this hard-coded list
-    # (https://svn.open-mpi.org/trac/ompi/ticket/1162).
-    m4_define([contrib_software_list], [libompitrace, vt])
-
     # Option to not build some of the contributed software packages
     AC_ARG_ENABLE([contrib-no-build],
         AC_HELP_STRING([--enable-contrib-no-build=LIST],
-                        [Comma-separated list of contributed package NAMEs that will not be built.  Possible values: contrib_software_list. Example: "--enable-contrib-no-build=libompitrace,vt" will disable building both the "libompitrace" and "vt" contributed software packages.]))
+                        [Comma-separated list of contributed package names that will not be built.  Possible values: ompi_mpicontrib_list.  Example: "--enable-contrib-no-build=foo,bar" will disable building both the "foo" and "bar" contributed software packages (default: none -- i.e., build all possible contrib packages)]))
 
     # Parse the list to see what we should not build
     ompi_show_subtitle "Configuring contributed software packages"
@@ -69,14 +64,16 @@ AC_DEFUN([OMPI_CONTRIB],[
     # List of contrib subdirs to traverse into
     OMPI_CONTRIB_SUBDIRS=
     OMPI_CONTRIB_DIST_SUBDIRS=
+    OMPI_MPI_CONTRIBS=
 
     # Cycle through each of the software packages and
     # configure them if not disabled.  
-    m4_foreach(software, [contrib_software_list],
-              [m4_include([ompi/contrib/]software[/configure.m4])
-              _OMPI_CONTRIB_CONFIGURE(software)])
+    m4_foreach(software, [ompi_mpicontrib_list],
+              [_OMPI_CONTRIB_CONFIGURE(software)])
 
     # Setup the top-level glue
+    AC_DEFINE_UNQUOTED([OMPI_MPI_CONTRIBS], ["$OMPI_MPI_CONTRIBS"],
+                       [Contributed software packages built with Open MPI])
     AC_SUBST(OMPI_CONTRIB_SUBDIRS)
     AC_SUBST(OMPI_CONTRIB_DIST_SUBDIRS)
 ])dnl
@@ -116,6 +113,11 @@ AC_DEFUN([_OMPI_CONTRIB_CONFIGURE],[
         if test "$OMPI_CONTRIB_HAPPY" = "1"; then
             OMPI_CONTRIB_SUBDIRS="$OMPI_CONTRIB_SUBDIRS contrib/$1"
             OMPI_CONTRIB_DIST_SUBDIRS="$OMPI_CONTRIB_DIST_SUBDIRS contrib/$1"
+            if test "$OMPI_MPI_CONTRIBS" = ""; then
+                OMPI_MPI_CONTRIBS=$1
+            else
+                OMPI_MPI_CONTRIBS="$1, $OMPI_MPI_CONTRIBS"
+            fi
             AC_MSG_RESULT([yes])
         else
             AC_MSG_RESULT([no])

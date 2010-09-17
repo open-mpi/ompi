@@ -74,9 +74,7 @@ libompi_dbg_msgq_la_LDFLAGS = -module -avoid-version
 
 # Conditionally install the header files
 
+ompidir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/debuggers
 ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
 endif

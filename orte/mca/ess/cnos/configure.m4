@@ -10,17 +10,20 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
 # 
 # $HEADER$
 #
+AC_DEFUN([MCA_orte_ess_cnos_PRIORITY], [30])
 
 # MCA_ess_cnos_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([MCA_ess_cnos_CONFIG],[
+AC_DEFUN([MCA_orte_ess_cnos_CONFIG],[
+    AC_CONFIG_FILES([orte/mca/ess/cnos/Makefile])
+
     # check for cnos functions
     # a bit of a hack,,, we don't want ess_cnos if alps 
     # was requested, and we can't rely on build priority because 

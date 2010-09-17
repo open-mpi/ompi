@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Mellanox Technologies.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -21,7 +21,7 @@
 
 # MCA_btl_openib_POST_CONFIG([should_build])
 # ------------------------------------------
-AC_DEFUN([MCA_btl_openib_POST_CONFIG], [
+AC_DEFUN([MCA_ompi_btl_openib_POST_CONFIG], [
     AM_CONDITIONAL([MCA_btl_openib_have_xrc], [test $1 -eq 1 -a "x$btl_openib_have_xrc" = "x1"])
     AM_CONDITIONAL([MCA_btl_openib_have_rdmacm], [test $1 -eq 1 -a "x$btl_openib_have_rdmacm" = "x1"])
     AM_CONDITIONAL([MCA_btl_openib_have_ibcm], [test $1 -eq 1 -a "x$btl_openib_have_ibcm" = "x1"])
@@ -31,7 +31,9 @@ AC_DEFUN([MCA_btl_openib_POST_CONFIG], [
 # MCA_btl_openib_CONFIG([action-if-can-compile], 
 #                      [action-if-cant-compile])
 # ------------------------------------------------
-AC_DEFUN([MCA_btl_openib_CONFIG],[
+AC_DEFUN([MCA_ompi_btl_openib_CONFIG],[
+    AC_CONFIG_FILES([ompi/mca/btl/openib/Makefile])
+
     OMPI_VAR_SCOPE_PUSH([cpcs have_threads])
     cpcs="oob"
 

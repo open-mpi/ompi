@@ -18,9 +18,9 @@ dnl $HEADER$
 dnl
 
 dnl we only want one :)
-m4_define(MCA_timer_CONFIGURE_MODE, STOP_AT_FIRST)
+m4_define(MCA_opal_timer_CONFIGURE_MODE, STOP_AT_FIRST)
 
-AC_DEFUN([MCA_timer_CONFIG],[
+AC_DEFUN([MCA_opal_timer_CONFIG],[
         timer_base_include=
 
         # first, compile all the components

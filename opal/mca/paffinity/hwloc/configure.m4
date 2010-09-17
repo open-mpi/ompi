@@ -27,7 +27,7 @@ m4_include(opal/mca/paffinity/hwloc/hwloc/config/hwloc_check_visibility.m4)
 
 # MCA_paffinity_hwloc_POST_CONFIG()
 # ---------------------------------
-AC_DEFUN([MCA_paffinity_hwloc_POST_CONFIG],[
+AC_DEFUN([MCA_opal_paffinity_hwloc_POST_CONFIG],[
     AM_CONDITIONAL([OPAL_PAFFINITY_HWLOC_INTERNAL],
                    [test "$paffinity_hwloc_location" = "internal"])
 
@@ -37,7 +37,9 @@ AC_DEFUN([MCA_paffinity_hwloc_POST_CONFIG],[
 
 # MCA_paffinity_hwloc_CONFIG([action-if-found], [action-if-not-found])
 # --------------------------------------------------------------------
-AC_DEFUN([MCA_paffinity_hwloc_CONFIG],[
+AC_DEFUN([MCA_opal_paffinity_hwloc_CONFIG],[
+    AC_CONFIG_FILES([opal/mca/paffinity/hwloc/Makefile])
+
     OMPI_VAR_SCOPE_PUSH([HWLOC_VERSION opal_check_hwloc_happy opal_check_hwloc_save_CPPFLAGS opal_check_hwloc_save_LDFLAGS opal_check_hwloc_save_LIBS])
 
     # Allowing building using either the internal copy of

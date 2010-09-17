@@ -2,6 +2,7 @@
 # Copyright (c)      2010 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
+# Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -32,11 +33,9 @@ EXTRA_DIST = $(nodist_man_MANS:.7=.7in)
 $(nodist_man_MANS): $(top_builddir)/opal/include/opal_config.h
 
 # Conditionally install the header files
+ortedir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
 nobase_orte_HEADERS += $(headers)
-ortedir = $(includedir)/openmpi/orte/mca/sstore
-else
-ortedir = $(includedir)
 endif
 
 include base/Makefile.am

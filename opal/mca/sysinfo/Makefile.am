@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2009      Cisco Systems, Inc
+# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 #                         All rights reserved.
 # $COPYRIGHT$
 # 
@@ -21,11 +21,9 @@ headers = sysinfo.h \
 libmca_sysinfo_la_SOURCES += $(headers)
 
 # Conditionally install the header files
+opaldir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
 nobase_opal_HEADERS += $(headers)
-opaldir = $(includedir)/openmpi/opal/mca/sysinfo
-else
-opaldir = $(includedir)
 endif
 
 include base/Makefile.am

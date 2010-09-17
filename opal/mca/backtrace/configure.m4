@@ -18,4 +18,4 @@ dnl $HEADER$
 dnl
 
 dnl we only want one :)
-m4_define(MCA_backtrace_CONFIGURE_MODE, STOP_AT_FIRST)
+m4_define(MCA_opal_backtrace_CONFIGURE_MODE, STOP_AT_FIRST)

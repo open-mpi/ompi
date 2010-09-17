@@ -19,9 +19,9 @@ dnl $HEADER$
 dnl
 
 dnl we only want one :)
-m4_define(MCA_memory_CONFIGURE_MODE, STOP_AT_FIRST)
+m4_define(MCA_opal_memory_CONFIGURE_MODE, STOP_AT_FIRST)
 
-AC_DEFUN([MCA_memory_CONFIG],[
+AC_DEFUN([MCA_opal_memory_CONFIG],[
         AC_ARG_WITH([memory-manager],
             [AC_HELP_STRING([--with-memory-manager=TYPE],
                            [Use TYPE for intercepting memory management

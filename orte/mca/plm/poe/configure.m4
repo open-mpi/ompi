@@ -21,7 +21,9 @@
 # MCA_plm_poe_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
 
-AC_DEFUN([MCA_plm_poe_CONFIG],[
+AC_DEFUN([MCA_orte_plm_poe_CONFIG],[
+    AC_CONFIG_FILES([orte/mca/plm/poe/Makefile])
+
     # POE is only supported on AIX.  We only need executables (no
     # header files or libraries), but those can be found (or not) at
     # run-time.  So if we're on AIX, build this component.

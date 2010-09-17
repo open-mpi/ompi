@@ -22,11 +22,9 @@ headers = db.h
 libmca_db_la_SOURCES += $(headers)
 
 # Conditionally install the header files
+ortedir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
 nobase_orte_HEADERS += $(headers)
-ortedir = $(includedir)/openmpi/orte/mca/db
-else
-ortedir = $(includedir)
 endif
 
 include base/Makefile.am

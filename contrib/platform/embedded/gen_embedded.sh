@@ -10,7 +10,7 @@ prefix=$1
 shift 1
 platform=$1
 
-./autogen.sh -l -no-ompi
+./autogen.pl -no-ompi
 ./configure --prefix="${prefix}" --with-platform=contrib/platform/embedded/"${platform}"
 make clean > /dev/null
 make -j2 all > /dev/null

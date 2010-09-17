@@ -12,6 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 #                         reserved.
+# Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -42,9 +43,7 @@ libdatatype_la_SOURCES = \
 libdatatype_la_LIBADD =
 
 # Conditionally install the header files
+ompidir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/datatype
 ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
 endif

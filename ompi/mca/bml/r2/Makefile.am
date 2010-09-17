@@ -7,6 +7,7 @@
 #						 University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #						 All rights reserved.
+# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -25,7 +26,7 @@ r2_sources  = \
 
 dist_pkgdata_DATA = help-mca-bml-r2.txt
 
-if OMPI_BUILD_bml_r2_DSO
+if MCA_BUILD_ompi_bml_r2_DSO
 component_noinst =
 component_install = mca_bml_r2.la
 else

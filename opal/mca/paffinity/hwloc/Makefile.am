@@ -45,7 +45,7 @@ sources = \
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_paffinity_hwloc_DSO
+if MCA_BUILD_opal_paffinity_hwloc_DSO
 component_noinst =
 component_install = mca_paffinity_hwloc.la
 else

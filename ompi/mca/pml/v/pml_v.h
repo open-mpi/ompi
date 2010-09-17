@@ -27,7 +27,7 @@ struct mca_pml_v_t {
 };
 typedef struct mca_pml_v_t mca_pml_v_t;
 
-OMPI_MODULE_DECLSPEC extern mca_pml_v_t mca_pml_v;
+OMPI_DECLSPEC extern mca_pml_v_t mca_pml_v;
 OMPI_MODULE_DECLSPEC extern mca_pml_base_component_2_0_0_t mca_pml_v_component;
 
 END_C_DECLS

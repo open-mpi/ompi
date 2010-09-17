@@ -17,7 +17,9 @@ AC_DEFUN([MCA_if_linux_ipv6_COMPILE_MODE], [
 # MCA_if_config_CONFIG(action-if-can-compile, 
 #                        [action-if-cant-compile])
 # ------------------------------------------------
-AC_DEFUN([MCA_if_linux_ipv6_CONFIG], [
+AC_DEFUN([MCA_opal_if_linux_ipv6_CONFIG], [
+    AC_CONFIG_FILES([opal/mca/if/linux_ipv6/Makefile])
+
     AC_REQUIRE([OPAL_CHECK_OS_FLAVORS])
 
     AC_MSG_CHECKING([if we are on Linux with TCP])

@@ -1,7 +1,7 @@
 # -*- command-script -*-
 #
 # Copyright (c) 2007      Sandia National Laboratories. All rights reserved.
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -11,7 +11,9 @@
 
 # MCA_notifier_command_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([MCA_notifier_command_CONFIG], [
+AC_DEFUN([MCA_orte_notifier_command_CONFIG], [
+    AC_CONFIG_FILES([orte/mca/notifier/command/Makefile])
+
     OMPI_VAR_SCOPE_PUSH(notifier_happy)
 
     notifier_happy=no

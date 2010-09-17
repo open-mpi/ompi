@@ -6,6 +6,7 @@
 # Copyright (c) 2007      The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
+dnl Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -13,12 +14,12 @@
 # $HEADER$
 #
 
-# OMPI_CHECK_FTB(prefix, [action-if-found], [action-if-not-found])
+# ORTE_CHECK_FTB(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
 # check if FTB (Fault Tolerance Backplane) support can be found.  sets prefix_{CPPFLAGS,
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
 # support, otherwise executes action-if-not-found
-AC_DEFUN([OMPI_CHECK_FTB],[
+AC_DEFUN([ORTE_CHECK_FTB],[
     AC_ARG_WITH([ftb],
         [AC_HELP_STRING([--with-ftb(=DIR)],
                 [Build FTB (Fault Tolerance Backplane) support, searching for libraries in DIR])])
@@ -54,8 +55,10 @@ AC_DEFUN([OMPI_CHECK_FTB],[
 
 # MCA_notifier_ftb_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([MCA_notifier_ftb_CONFIG], [
-    OMPI_CHECK_FTB([notifier_ftb],
+AC_DEFUN([MCA_orte_notifier_ftb_CONFIG], [
+    AC_CONFIG_FILES([orte/mca/notifier/ftb/Makefile])
+
+    ORTE_CHECK_FTB([notifier_ftb],
                      [notifier_ftb_happy="yes"],
                      [notifier_ftb_happy="no"])
 
