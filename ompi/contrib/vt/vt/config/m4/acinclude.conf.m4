@@ -54,16 +54,19 @@ dnl			make sure file exists
 	[
 dnl		if no file given, generate options file name and look for it
 dnl		in config/defaults
-		AS_IF([test x"$BITMODE" != x],
+		AS_IF([test x"$inside_openmpi" = "xno"],
 		[
-			AS_IF([test -r "$options_dir/$PLATFORM-$BITMODE"],
-			[options_file="$options_dir/$PLATFORM-$BITMODE"])
-		])
+			AS_IF([test x"$BITMODE" != x],
+			[
+				AS_IF([test -r "$options_dir/$PLATFORM-$BITMODE"],
+				[options_file="$options_dir/$PLATFORM-$BITMODE"])
+			])
 
-		AS_IF([test x"$options_file" = x],
-		[
-			AS_IF([test -r "$options_dir/$PLATFORM"],
-			[options_file="$options_dir/$PLATFORM"])
+			AS_IF([test x"$options_file" = x],
+			[
+				AS_IF([test -r "$options_dir/$PLATFORM"],
+				[options_file="$options_dir/$PLATFORM"])
+			])
 		])
 
 		AS_IF([test x"$options_file" != x],
