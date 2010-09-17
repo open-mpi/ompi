@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -59,9 +60,8 @@
 #endif
 
 #include "opal/constants.h"
-
 #include "opal/util/if.h"
-
+#include "opal/util/output.h"
 #include "opal/mca/if/if.h"
 
 static int if_linux_ipv6_open(void);

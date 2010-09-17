@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -13,6 +14,7 @@
 #include <string.h>
 
 #include "opal/constants.h"
+#include "opal/util/output.h"
 #include "opal/mca/if/if.h"
 
 static int if_posix_open(void);
