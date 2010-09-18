@@ -1,0 +1,6 @@
+0 21 * * * $HOME/scripts/openmpi-nightly-tarball.sh </dev/null >/dev/null 2>&1
+1 21 * * * $HOME/scripts/hwloc-nightly-tarball.sh </dev/null >/dev/null 2>&1
+#30 20 * * * $HOME/scripts/openmpi-nightly-tmpbranch-tarball.sh </dev/null >/dev/null 2>&1
+0 4 * * * $HOME/scripts/lammpi-nightly-tarball.sh </dev/null >/dev/null 2>&1
+#0 0 * * * $HOME/scripts/openmpi-ft-cr-tarball.sh </dev/null >/dev/null 2>&1
+30 * * * * $HOME/scripts/openmpi-update-www.open-mpi.org.sh < /dev/null > $HOME/tmp/svn-up-ompi.log 2>&1
