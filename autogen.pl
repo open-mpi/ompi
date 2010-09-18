@@ -926,6 +926,25 @@ if ($include_arg) {
 
 #---------------------------------------------------------------------------
 
+##########################################################################
+# Temporary: while we're transitioning from autogen.sh, remove some of
+# the old generated .m4 files, just so that we don't automatically
+# pick them up (because they'll cause problems / conflicts with
+# the autogen.pl-generated .m4 file).
+##########################################################################
+++$step;
+verbose "\n$step. Remove autogen.sh-generated files (this is a temporary step!)\n\n";
+
+unlink("config/mca_m4_config_include.m4");
+unlink("config/mca_no_configure_components.m4");
+unlink("config/ext_no_configure_components.m4");
+unlink("config/ext_m4_config_include.m4");
+unlink("config/project_list.m4");
+
+##########################################################################
+
+#---------------------------------------------------------------------------
+
 # Find projects, frameworks, components
 ++$step;
 verbose "\n$step. Searching for projects, MCA frameworks, and MCA components\n";
