@@ -9,6 +9,7 @@
 # 
 # $HEADER$
 #
+
 AC_DEFUN([MCA_opal_memchecker_valgrind_PRIORITY], [10])
 
 AC_DEFUN([MCA_opal_memchecker_valgrind_COMPILE_MODE], [
@@ -49,7 +50,7 @@ AC_DEFUN([MCA_opal_memchecker_valgrind_CONFIG],[
                      [AC_MSG_RESULT([yes])
                       opal_memchecker_valgrind_happy=yes],
                      [AC_MSG_RESULT([no])
-                      AC_MSG_ERROR([Need Valgrind version 3.2.0 or later. Can not build component.])]
+                      AC_MSG_WARN([Need Valgrind version 3.2.0 or later. Can not build component.])]
                      [AC_MSG_RESULT([cross-compiling; assume yes...?])
                       AC_MSG_WARN([OMPI will fail to compile if you do not have Valgrind version 3.2.0 or later])
                       opal_memchecker_valgrind_happy=yes]),
@@ -57,6 +58,10 @@ AC_DEFUN([MCA_opal_memchecker_valgrind_CONFIG],[
                  [AC_MSG_WARN([valgrind.h not found])
                   AC_MSG_WARN([Cannot compile this component])])])
     CPPFLAGS="$opal_memchecker_valgrind_save_CPPFLAGS"
+
+    # If we specifically requested this component and can't build it, error
+    AS_IF([test "$with_valgrind" != "no" -a "$with_valgrind" != "" -a "$opal_memcheck_valgrind_happy" != "yes"],
+          [AC_MSG_ERROR([Cannot continue])])
 
     AS_IF([test "$opal_memchecker_valgrind_happy" = "yes"],
           [$1],[$2])
