@@ -33,7 +33,7 @@ destdir="$4"
 
 # Set this to any value for additional output; typically only when
 # debugging
-debug=
+debug=1
 
 # do you want a success mail?
 want_success_mail=1
