@@ -12,20 +12,6 @@
 #include "coll_fca.h"
 
 
-/**
- * Returns the index of the rank 'ran' in the local ranks group, or -1 if not exists.
- */
-static inline int __find_local_rank(mca_coll_fca_module_t *fca_module, int rank)
-{
-    int i;
-
-    for (i = 0; i < fca_module->num_local_procs; ++i) {
-        if (rank == fca_module->local_ranks[i])
-            return i;
-    }
-    return -1;
-}
-
 static mca_coll_fca_dtype_info_t* mca_coll_fca_get_dtype(ompi_datatype_t *dtype)
 {
     mca_coll_fca_dtype_info_t *dtype_info;
@@ -86,22 +72,18 @@ static mca_coll_fca_op_info_t *mca_coll_fca_get_op(ompi_op_t *op)
     return NULL;
 }
 
-static int mca_coll_fca_get_buf_size(ompi_datatype_t *dtype, int count)
+static int mca_coll_fca_get_buf_size(ompi_datatype_t *dtype, int count,
+                                     int contiguous_count)
 {
     ptrdiff_t true_lb, true_extent;
 
-    FCA_DT_GET_TRUE_EXTENT(dtype, &true_lb, &true_extent);
-
-    /* If the datatype is the same packed as it is unpacked, we
-      can save a memory copy and just do the reduction operation
-      directly.  However, if the representation is not the same, then we need to get a
-      receive convertor and a temporary buffer to receive into. */
-   if (!FCA_DT_IS_CONTIGUOUS_MEMORY_LAYOUT(dtype, count)) {
+   /* Check that the type in contiguous */
+   if (!FCA_DT_IS_CONTIGUOUS_MEMORY_LAYOUT(dtype, contiguous_count)) {
        FCA_VERBOSE(5, "Unsupported datatype layout, only contiguous is supported now");
        return OMPI_ERROR;
    }
 
-   /* TODO add support for non-contiguous layout */
+   FCA_DT_GET_TRUE_EXTENT(dtype, &true_lb, &true_extent);
    return true_extent * count;
 }
 
@@ -182,7 +164,7 @@ int mca_coll_fca_bcast(void *buff, int count, struct ompi_datatype_t *datatype,
     FCA_VERBOSE(5,"[%d] Calling mca_coll_fca_bcast, root=%d, count=%d",
                 ompi_comm_rank(comm), root, count);
 
-    spec.size = mca_coll_fca_get_buf_size(datatype, count);
+    spec.size = mca_coll_fca_get_buf_size(datatype, count, count);
     if (spec.size < 0 || spec.size > fca_module->fca_comm_caps.max_payload) {
         FCA_VERBOSE(5, "Unsupported bcast operation, dtype=%s[%d] using fallback\n",
                     datatype->name, count);
@@ -191,8 +173,8 @@ int mca_coll_fca_bcast(void *buff, int count, struct ompi_datatype_t *datatype,
     }
 
     FCA_VERBOSE(5,"Using FCA Bcast");
-    spec.buf = buff;
-    spec.root_indx = __find_local_rank(fca_module, root);
+    spec.buf  = buff;
+    spec.root = root;
     ret = mca_coll_fca_component.fca_ops.do_bcast(fca_module->fca_comm, &spec);
     if (ret < 0) {
         FCA_ERROR("Bcast failed: %s", mca_coll_fca_component.fca_ops.strerror(ret));
@@ -218,10 +200,11 @@ int mca_coll_fca_reduce(void *sbuf, void *rbuf, int count,
     fca_reduce_spec_t spec;
     int ret;
 
-    spec.is_root   = fca_module->rank == root;
-    spec.sbuf      = sbuf;
-    spec.rbuf      = rbuf;
-    if (mca_coll_fca_fill_reduce_spec(count, dtype, op, &spec, fca_module->fca_comm_caps.max_payload)
+    spec.root = root;
+    spec.sbuf = sbuf;
+    spec.rbuf = rbuf;
+    if (mca_coll_fca_fill_reduce_spec(count, dtype, op, &spec,
+                                      fca_module->fca_comm_caps.max_payload)
             != OMPI_SUCCESS) {
         FCA_VERBOSE(5, "Unsupported reduce operation %s, using fallback\n", op->o_name);
         return fca_module->previous_reduce(sbuf, rbuf, count, dtype, op, root,
@@ -253,9 +236,10 @@ int mca_coll_fca_allreduce(void *sbuf, void *rbuf, int count,
     fca_reduce_spec_t spec;
     int ret;
 
-    spec.sbuf      = sbuf;
-    spec.rbuf      = rbuf;
-    if (mca_coll_fca_fill_reduce_spec(count, dtype, op, &spec, fca_module->fca_comm_caps.max_payload)
+    spec.sbuf = sbuf;
+    spec.rbuf = rbuf;
+    if (mca_coll_fca_fill_reduce_spec(count, dtype, op, &spec,
+                                      fca_module->fca_comm_caps.max_payload)
             != OMPI_SUCCESS) {
         FCA_VERBOSE(5, "Unsupported allreduce operation %s, using fallback\n", op->o_name);
         return fca_module->previous_allreduce(sbuf, rbuf, count, dtype, op,
@@ -270,4 +254,179 @@ int mca_coll_fca_allreduce(void *sbuf, void *rbuf, int count,
     }
     return OMPI_SUCCESS;
 }
+
+/*
+ *  Allgather
+ *
+ *  Function:   - allgather
+ *  Accepts:    - same as MPI_Allgather()
+ *  Returns:    - MPI_SUCCESS or error code
+ */
+int mca_coll_fca_allgather(void *sbuf, int scount, struct ompi_datatype_t *sdtype,
+                           void *rbuf, int rcount, struct ompi_datatype_t *rdtype,
+                           struct ompi_communicator_t *comm,
+                           mca_coll_base_module_t *module)
+{
+    mca_coll_fca_module_t *fca_module = (mca_coll_fca_module_t*)module;
+    fca_gather_spec_t spec = {0,};
+    int ret;
+
+    spec.sbuf = sbuf;
+    spec.rbuf = rbuf;
+    spec.size = mca_coll_fca_get_buf_size(sdtype, scount, scount);
+
+    if (spec.size < 0 || spec.size > fca_module->fca_comm_caps.max_payload) {
+        FCA_VERBOSE(5, "Unsupported allgather operation size %d, using fallback\n",
+                    spec.size);
+        goto orig_allgather;
+    }
+
+    if (spec.size != mca_coll_fca_get_buf_size(rdtype, rcount, rcount)) {
+        FCA_VERBOSE(5, "Unsupported allgather: send_size != recv_size\n");
+        goto orig_allgather;
+    }
+
+    FCA_VERBOSE(5,"Using FCA Allgather");
+    ret = mca_coll_fca_component.fca_ops.do_allgather(fca_module->fca_comm, &spec);
+    if (ret < 0) {
+        FCA_ERROR("Allgather failed: %s", mca_coll_fca_component.fca_ops.strerror(ret));
+        return OMPI_ERROR;
+    }
+    return OMPI_SUCCESS;
+
+orig_allgather:
+    return fca_module->previous_allgather(sbuf, scount, sdtype, rbuf, rcount, rdtype,
+                                          comm, fca_module->previous_allgather_module);
+
+}
+
+
+int mca_coll_fca_allgatherv(void *sbuf, int scount,
+                           struct ompi_datatype_t *sdtype,
+                           void *rbuf, int *rcounts, int *disps,
+                           struct ompi_datatype_t *rdtype,
+                           struct ompi_communicator_t *comm,
+                           mca_coll_base_module_t *module)
+{
+    mca_coll_fca_module_t *fca_module = (mca_coll_fca_module_t*)module;
+    fca_gatherv_spec_t spec;
+    int relemsize;
+    int comm_size;
+    int i, ret;
+
+    comm_size = ompi_comm_size(fca_module->comm);
+
+    spec.sbuf = sbuf;
+    spec.rbuf = rbuf;
+    spec.sendsize = mca_coll_fca_get_buf_size(sdtype, scount, scount);
+
+    if (spec.sendsize < 0 || spec.sendsize > fca_module->fca_comm_caps.max_payload) {
+        FCA_VERBOSE(5, "Unsupported allgatherv operation size %d, using fallback\n",
+                    spec.sendsize);
+        goto orig_allgatherv;
+    }
+
+    spec.recvsizes = alloca(sizeof *spec.recvsizes * comm_size);
+    spec.displs = alloca(sizeof *spec.displs * comm_size);
+
+    /* convert MPI counts which depend on dtype) to FCA sizes (which are in bytes) */
+    relemsize = mca_coll_fca_get_buf_size(rdtype, 1, comm_size);
+    for (i = 0; i < comm_size; ++i) {
+        spec.recvsizes[i] *= relemsize;
+        spec.displs[i] *= relemsize;
+    }
+
+    FCA_VERBOSE(5,"Using FCA Allgatherv");
+    ret = mca_coll_fca_component.fca_ops.do_allgatherv(fca_module->fca_comm, &spec);
+    if (ret < 0) {
+        FCA_ERROR("Allgatherv failed: %s", mca_coll_fca_component.fca_ops.strerror(ret));
+        return OMPI_ERROR;
+    }
+    return OMPI_SUCCESS;
+
+orig_allgatherv:
+    return fca_module->previous_allgatherv(sbuf, scount, sdtype, rbuf, rcounts,
+                                           disps, rdtype, comm,
+                                           fca_module->previous_allgatherv_module);
+}
+
+int mca_coll_fca_alltoall(void *sbuf, int scount,
+                            struct ompi_datatype_t *sdtype,
+                            void *rbuf, int rcount,
+                            struct ompi_datatype_t *rdtype,
+                            struct ompi_communicator_t *comm,
+                            mca_coll_base_module_t *module)
+{
+    mca_coll_fca_module_t *fca_module = (mca_coll_fca_module_t*)module;
+    /* not implemented yet */
+    return fca_module->previous_alltoall(sbuf, scount, sdtype, rbuf, rcount, rdtype,
+                                         comm, fca_module->previous_alltoall_module);
+}
+
+int mca_coll_fca_alltoallv(void *sbuf, int *scounts, int *sdisps,
+                           struct ompi_datatype_t *sdtype,
+                           void *rbuf, int *rcounts, int *rdisps,
+                           struct ompi_datatype_t *rdtype,
+                           struct ompi_communicator_t *comm,
+                           mca_coll_base_module_t *module)
+{
+    mca_coll_fca_module_t *fca_module = (mca_coll_fca_module_t*)module;
+    /* not implemented yet */
+    return fca_module->previous_alltoallv(sbuf, scounts, sdisps, sdtype, rbuf, rcounts, rdisps, rdtype,
+                                          comm, fca_module->previous_alltoallv_module);
+}
+
+
+int mca_coll_fca_alltoallw(void *sbuf, int *scounts, int *sdisps,
+                           struct ompi_datatype_t **sdtypes,
+                           void *rbuf, int *rcounts, int *rdisps,
+                           struct ompi_datatype_t **rdtypes,
+                           struct ompi_communicator_t *comm,
+                           mca_coll_base_module_t *module)
+{
+    mca_coll_fca_module_t *fca_module = (mca_coll_fca_module_t*)module;
+    /* not implemented yet */
+    return fca_module->previous_alltoallw(sbuf, scounts, sdisps, sdtypes, rbuf, rcounts, rdisps, rdtypes,
+                                          comm, fca_module->previous_alltoallw_module);
+}
+
+
+int mca_coll_fca_gather(void *sbuf, int scount,
+                        struct ompi_datatype_t *sdtype,
+                        void *rbuf, int rcount,
+                        struct ompi_datatype_t *rdtype,
+                        int root, struct ompi_communicator_t *comm,
+                        mca_coll_base_module_t *module)
+{
+    mca_coll_fca_module_t *fca_module = (mca_coll_fca_module_t*)module;
+    /* not implemented yet */
+    return fca_module->previous_gather(sbuf, scount, sdtype, rbuf, rcount, rdtype, root,
+                                          comm, fca_module->previous_gather_module);
+}
+
+int mca_coll_fca_gatherv(void *sbuf, int scount,
+                         struct ompi_datatype_t *sdtype,
+                         void *rbuf, int *rcounts, int *disps,
+                         struct ompi_datatype_t *rdtype, int root,
+                         struct ompi_communicator_t *comm,
+                         mca_coll_base_module_t *module)
+{
+    mca_coll_fca_module_t *fca_module = (mca_coll_fca_module_t*)module;
+    /* not implemented yet */
+    return fca_module->previous_gatherv(sbuf, scount, sdtype, rbuf, rcounts, disps, rdtype, root,
+                                          comm, fca_module->previous_gatherv_module);
+}
+
+int mca_coll_fca_reduce_scatter(void *sbuf, void *rbuf, int *rcounts,
+                                struct ompi_datatype_t *dtype,
+                                struct ompi_op_t *op,
+                                struct ompi_communicator_t *comm,
+                                mca_coll_base_module_t *module)
+{
+    mca_coll_fca_module_t *fca_module = (mca_coll_fca_module_t*)module;
+    /* not implemented yet */
+    return fca_module->previous_reduce_scatter(sbuf, rbuf, rcounts, dtype, op,
+                                          comm, fca_module->previous_reduce_scatter_module);
+}
+
 

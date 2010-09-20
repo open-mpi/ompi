@@ -13,9 +13,7 @@
 # MCA_coll_fca_CONFIG([action-if-can-compile],
 #                      [action-if-cant-compile])
 # ------------------------------------------------
-AC_DEFUN([MCA_ompi_coll_fca_CONFIG],[
-    AC_CONFIG_FILES([ompi/mca/coll/fca/Makefile])
-
+AC_DEFUN([MCA_coll_fca_CONFIG],[
     OMPI_CHECK_FCA([coll_fca],
                      [coll_fca_happy="yes"],
                      [coll_fca_happy="no"])

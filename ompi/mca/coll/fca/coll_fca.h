@@ -60,8 +60,7 @@ struct mca_coll_fca_fca_ops_t {
     void (*free_rank_info)(void *rank_info);
 
     /* Local communicator creation */
-    int (*comm_init)(fca_t *context, int proc_idx, int num_procs, int comm_size,
-                     fca_comm_desc_t *comm_desc, fca_comm_t** fca_comm);
+    int (*comm_init)(fca_t *context, fca_comm_init_spec_t *spec, fca_comm_t** fca_comm);
     void (*comm_destroy)(fca_comm_t *comm);
     int (*comm_get_caps)(fca_comm_t *comm, fca_comm_caps_t *caps);
 
@@ -69,10 +68,13 @@ struct mca_coll_fca_fca_ops_t {
     int (*do_reduce)(fca_comm_t *comm, fca_reduce_spec_t *spec);
     int (*do_all_reduce)(fca_comm_t *comm, fca_reduce_spec_t *spec);
     int (*do_bcast)(fca_comm_t *comm, fca_bcast_spec_t *spec);
+    int (*do_allgather)(fca_comm_t *comm, fca_gather_spec_t *spec);
+    int (*do_allgatherv)(fca_comm_t *comm, fca_gatherv_spec_t *spec);
     int (*do_barrier)(fca_comm_t *comm);
 
     /* Helper functions */
     unsigned long (*get_version)(void);
+    char * (*get_version_string)(void);
     int (*maddr_ib_pton)(const char *mlid_str, const char *mgid_str, fca_mcast_addr_t *dst);
     int (*maddr_inet_pton)(int af, const char *src, fca_mcast_addr_t *dst);
     fca_init_spec_t *(*parse_spec_file)(char* spec_ini_file);
@@ -141,6 +143,42 @@ struct mca_coll_fca_component_t {
     /** MCA parameter: Enable FCA */
     int   fca_enable;
 
+    /** MCA parameter: Enable FCA Barrier */
+    int   fca_enable_barrier;
+
+    /** MCA parameter: Enable FCA Bcast */
+    int   fca_enable_bcast;
+
+    /** MCA parameter: Enable FCA Reduce */
+    int   fca_enable_reduce;
+
+    /** MCA parameter: Enable FCA Reduce_Scatter */
+    int   fca_enable_reduce_scatter;
+
+    /** MCA parameter: Enable FCA Allreduce */
+    int   fca_enable_allreduce;
+
+    /** MCA parameter: Enable FCA Allgather */
+    int   fca_enable_allgather;
+
+    /** MCA parameter: Enable FCA Allgatherv */
+    int   fca_enable_allgatherv;
+
+    /** MCA parameter: Enable FCA Gather */
+    int   fca_enable_gather;
+
+    /** MCA parameter: Enable FCA Gatherv */
+    int   fca_enable_gatherv;
+
+    /** MCA parameter: Enable FCA AlltoAll */
+    int   fca_enable_alltoall;
+
+    /** MCA parameter: Enable FCA AlltoAllv */
+    int   fca_enable_alltoallv;
+
+    /** MCA parameter: Enable FCA AlltoAllw */
+    int   fca_enable_alltoallw;
+
     /** MCA parameter: FCA NP */
     int   fca_np;
 
@@ -180,7 +218,22 @@ struct mca_coll_fca_module_t {
     mca_coll_base_module_t *previous_bcast_module;
     mca_coll_base_module_barrier_fn_t previous_barrier;
     mca_coll_base_module_t *previous_barrier_module;
-
+    mca_coll_base_module_allgather_fn_t previous_allgather;
+    mca_coll_base_module_t *previous_allgather_module;
+    mca_coll_base_module_allgatherv_fn_t previous_allgatherv;
+    mca_coll_base_module_t *previous_allgatherv_module;
+    mca_coll_base_module_alltoall_fn_t previous_alltoall;
+    mca_coll_base_module_t *previous_alltoall_module;
+    mca_coll_base_module_alltoallv_fn_t previous_alltoallv;
+    mca_coll_base_module_t *previous_alltoallv_module;
+    mca_coll_base_module_alltoallw_fn_t previous_alltoallw;
+    mca_coll_base_module_t *previous_alltoallw_module;
+    mca_coll_base_module_gather_fn_t previous_gather;
+    mca_coll_base_module_t *previous_gather_module;
+    mca_coll_base_module_gatherv_fn_t previous_gatherv;
+    mca_coll_base_module_t *previous_gatherv_module;
+    mca_coll_base_module_reduce_scatter_fn_t previous_reduce_scatter;
+    mca_coll_base_module_t *previous_reduce_scatter_module;
 };
 typedef struct mca_coll_fca_module_t mca_coll_fca_module_t;
 
@@ -209,7 +262,58 @@ int mca_coll_fca_reduce(void *sbuf, void* rbuf, int count,
 int mca_coll_fca_barrier(struct ompi_communicator_t *comm,
                          mca_coll_base_module_t *module);
 
+int mca_coll_fca_allgather(void *sbuf, int scount, struct ompi_datatype_t *sdtype,
+                           void *rbuf, int rcount, struct ompi_datatype_t *rdtype,
+                           struct ompi_communicator_t *comm,
+                           mca_coll_base_module_t *module);
 
+int mca_coll_fca_allgatherv(void *sbuf, int scount,
+                           struct ompi_datatype_t *sdtype,
+                           void *rbuf, int *rcounts, int *disps,
+                           struct ompi_datatype_t *rdtype,
+                           struct ompi_communicator_t *comm,
+                           mca_coll_base_module_t *module);
+
+int mca_coll_fca_alltoall(void *sbuf, int scount,
+                            struct ompi_datatype_t *sdtype,
+                            void *rbuf, int rcount,
+                            struct ompi_datatype_t *rdtype,
+                            struct ompi_communicator_t *comm,
+                            mca_coll_base_module_t *module);
+
+int mca_coll_fca_alltoallv(void *sbuf, int *scounts, int *sdisps,
+                           struct ompi_datatype_t *sdtype,
+                           void *rbuf, int *rcounts, int *rdisps,
+                           struct ompi_datatype_t *rdtype,
+                           struct ompi_communicator_t *comm,
+                           mca_coll_base_module_t *module);
+
+int mca_coll_fca_alltoallw(void *sbuf, int *scounts, int *sdisps,
+                           struct ompi_datatype_t **sdtypes,
+                           void *rbuf, int *rcounts, int *rdisps,
+                           struct ompi_datatype_t **rdtypes,
+                           struct ompi_communicator_t *comm,
+                           mca_coll_base_module_t *module);
+
+int mca_coll_fca_gather(void *sbuf, int scount,
+                        struct ompi_datatype_t *sdtype,
+                        void *rbuf, int rcount,
+                        struct ompi_datatype_t *rdtype,
+                        int root, struct ompi_communicator_t *comm,
+                        mca_coll_base_module_t *module);
+
+int mca_coll_fca_gatherv(void *sbuf, int scount,
+                         struct ompi_datatype_t *sdtype,
+                         void *rbuf, int *rcounts, int *disps,
+                         struct ompi_datatype_t *rdtype, int root,
+                         struct ompi_communicator_t *comm,
+                         mca_coll_base_module_t *module);
+
+int mca_coll_fca_reduce_scatter(void *sbuf, void *rbuf, int *rcounts,
+                                struct ompi_datatype_t *dtype,
+                                struct ompi_op_t *op,
+                                struct ompi_communicator_t *comm,
+                                mca_coll_base_module_t *module);
 
 END_C_DECLS
 

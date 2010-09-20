@@ -24,7 +24,7 @@ coll_fca_sources = \
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if MCA_BUILD_ompi_coll_fca_DSO
+if OMPI_BUILD_coll_fca_DSO
 component_noinst =
 component_install = mca_coll_fca.la
 else
