@@ -68,6 +68,8 @@ static mca_common_sm_seg_alloc_fn_t sm_seg_alloc = NULL;
 static mca_common_sm_fini_fn_t sm_fini           = NULL;
 /* should be more than enough to store all common sm component names */
 static char sm_default[32];
+/* holds common sm help string */
+char sm_avail_help_str[OPAL_PATH_MAX];
 
 /**
  * lock to protect multiple instances of query_sm_components()
@@ -301,7 +303,6 @@ mca_common_sm_param_register(mca_base_component_t *c)
     {
         int i;
         char *last_char;
-        char sm_avail_help_str[OPAL_PATH_MAX];
 
         memset(sm_default, '\0', sizeof(sm_default));
 
@@ -330,15 +331,6 @@ mca_common_sm_param_register(mca_base_component_t *c)
             "(order dependent).  The first component that is successfully "
             "selected is used." : "."
         );
-        /* register mpi_common_sm */
-        common_sm_index = mca_base_param_reg_string_name("mpi",
-                                                         "common_sm",
-                                                         sm_avail_help_str,
-                                                         false,
-                                                         false,
-                                                         /* default value */
-                                                         sm_default,
-                                                         &sm_params);
         sysv_index = mca_base_param_reg_int_name(
                          "mpi",
                          "common_sm_have_sysv_support",
@@ -359,6 +351,15 @@ mca_common_sm_param_register(mca_base_component_t *c)
                      );
     }
 
+    /* register mpi_common_sm */
+    common_sm_index = mca_base_param_reg_string_name("mpi",
+                                                     "common_sm",
+                                                     sm_avail_help_str,
+                                                     false,
+                                                     false,
+                                                     /* default value */
+                                                     sm_default,
+                                                     &sm_params);
     /* also register MCA param synonyms for the component */
     mca_base_param_reg_syn(sysv_index, c, "have_sysv_support", false);
     mca_base_param_reg_syn(posix_index, c, "have_posix_support", false);
