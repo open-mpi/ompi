@@ -275,7 +275,8 @@ int mca_coll_fca_allgather(void *sbuf, int scount, struct ompi_datatype_t *sdtyp
     spec.rbuf = rbuf;
     spec.size = mca_coll_fca_get_buf_size(sdtype, scount, scount);
 
-    if (spec.size < 0 || spec.size > fca_module->fca_comm_caps.max_payload) {
+    if (spec.size < 0 || spec.size > fca_module->fca_comm_caps.max_payload ||
+        !FCA_DT_IS_CONTIGUOUS_MEMORY_LAYOUT(rdtype, ompi_comm_size(comm))) {
         FCA_VERBOSE(5, "Unsupported allgather operation size %d, using fallback\n",
                     spec.size);
         goto orig_allgather;
@@ -297,7 +298,6 @@ int mca_coll_fca_allgather(void *sbuf, int scount, struct ompi_datatype_t *sdtyp
 orig_allgather:
     return fca_module->previous_allgather(sbuf, scount, sdtype, rbuf, rcount, rdtype,
                                           comm, fca_module->previous_allgather_module);
-
 }
 
 
@@ -320,7 +320,8 @@ int mca_coll_fca_allgatherv(void *sbuf, int scount,
     spec.rbuf = rbuf;
     spec.sendsize = mca_coll_fca_get_buf_size(sdtype, scount, scount);
 
-    if (spec.sendsize < 0 || spec.sendsize > fca_module->fca_comm_caps.max_payload) {
+    if (spec.sendsize < 0 || spec.sendsize > fca_module->fca_comm_caps.max_payload ||
+        !FCA_DT_IS_CONTIGUOUS_MEMORY_LAYOUT(rdtype, ompi_comm_size(comm))) {
         FCA_VERBOSE(5, "Unsupported allgatherv operation size %d, using fallback\n",
                     spec.sendsize);
         goto orig_allgatherv;
@@ -332,8 +333,8 @@ int mca_coll_fca_allgatherv(void *sbuf, int scount,
     /* convert MPI counts which depend on dtype) to FCA sizes (which are in bytes) */
     relemsize = mca_coll_fca_get_buf_size(rdtype, 1, comm_size);
     for (i = 0; i < comm_size; ++i) {
-        spec.recvsizes[i] *= relemsize;
-        spec.displs[i] *= relemsize;
+        spec.recvsizes[i] = rcounts[i] * relemsize;
+        spec.displs[i] = disps[i] * relemsize;
     }
 
     FCA_VERBOSE(5,"Using FCA Allgatherv");

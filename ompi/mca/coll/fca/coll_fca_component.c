@@ -281,13 +281,13 @@ static int fca_register(void)
     mca_base_param_reg_int(c, "enable_allgather",
                            "[1|0|] Enable/Disable FCA Allgather support",
                            false, false,
-                           0,
+                           1,
                            &mca_coll_fca_component.fca_enable_allgather);
 
     mca_base_param_reg_int(c, "enable_allgatherv",
                            "[1|0|] Enable/Disable FCA Allgatherv support",
                            false, false,
-                           0,
+                           1,
                            &mca_coll_fca_component.fca_enable_allgatherv);
 
     mca_base_param_reg_int(c, "enable_gather",
