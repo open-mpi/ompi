@@ -26,11 +26,20 @@
 #include <string.h>
 
 #include "opal/class/opal_bitmap.h"
+#include "opal/util/output.h"
+
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/grpcomm/grpcomm.h"
+#include "orte/util/show_help.h"
+
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/btl/base/base.h"
+#include "ompi/mca/bml/base/base.h"
+#include "ompi/runtime/ompi_cr.h"
+
 #include "pml_bfo.h"
 #include "pml_bfo_component.h"
 #include "pml_bfo_comm.h"
@@ -39,15 +48,9 @@
 #include "pml_bfo_sendreq.h"
 #include "pml_bfo_recvreq.h"
 #include "pml_bfo_rdmafrag.h"
-#include "ompi/mca/bml/base/base.h"
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/grpcomm/grpcomm.h"
-#include "orte/util/show_help.h"
 /* BFO FAILOVER CODE - begin */
 #include "pml_bfo_failover.h"
 /* BFO FAILOVER CODE - end */
-
-#include "ompi/runtime/ompi_cr.h"
 
 mca_pml_bfo_t mca_pml_bfo = {
     {
@@ -363,7 +366,7 @@ int mca_pml_bfo_add_procs(ompi_proc_t** procs, size_t nprocs)
         }
     }
 
-		    
+
     /* TODO: Move these callback registration to another place */
     rc = mca_bml.bml_register( MCA_PML_BFO_HDR_TYPE_MATCH,
                                mca_pml_bfo_recv_frag_callback_match,

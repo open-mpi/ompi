@@ -28,8 +28,6 @@
 #include "ompi/runtime/params.h"
 #include "ompi/mca/pml/pml.h"
 #include "opal/mca/base/mca_base_param.h"
-
-
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "pml_csum.h"
 #include "pml_csum_hdr.h"

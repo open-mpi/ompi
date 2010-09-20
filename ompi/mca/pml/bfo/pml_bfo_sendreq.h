@@ -198,7 +198,7 @@ do {                                                                            
         (sendreq)->req_send.req_base.req_tag;                                        \
    (sendreq)->req_send.req_base.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;        \
    (sendreq)->req_send.req_base.req_ompi.req_status._ucount =                        \
-       (sendreq)->req_send.req_bytes_packed;                                         \
+        (sendreq)->req_send.req_bytes_packed;                                        \
    ompi_request_complete( &((sendreq)->req_send.req_base.req_ompi), (with_signal) ); \
                                                                                      \
    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_COMPLETE,                                \
@@ -366,7 +366,6 @@ mca_pml_bfo_send_request_start_btl( mca_pml_bfo_send_request_t* sendreq,
     size_t eager_limit = btl->btl_eager_limit - sizeof(mca_pml_bfo_hdr_t);
     int rc;
 
-    assert(btl->btl_eager_limit >= sizeof(mca_pml_bfo_hdr_t));
     if( OPAL_LIKELY(size <= eager_limit) ) {
         switch(sendreq->req_send.req_send_mode) {
         case MCA_PML_BASE_SEND_SYNCHRONOUS:

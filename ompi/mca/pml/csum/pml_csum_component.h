@@ -21,9 +21,8 @@
 #ifndef MCA_PML_CSUM_COMPONENT_H
 #define MCA_PML_CSUM_COMPONENT_H
 
-#include "ompi_config.h"
-
 BEGIN_C_DECLS
+
 /*
  * PML module functions.
  */

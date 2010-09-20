@@ -172,9 +172,9 @@ mca_pml_bfo_component_init( int* priority,
                             bool enable_progress_threads,
                             bool enable_mpi_threads )
 {
-    opal_output_verbose( 10, mca_pml_bfo_output, 
+    opal_output_verbose( 10, mca_pml_bfo_output,
                          "in bfo, my priority is %d\n", mca_pml_bfo.priority);
-    
+
     if((*priority) > mca_pml_bfo.priority) { 
         *priority = mca_pml_bfo.priority;
         return NULL;
