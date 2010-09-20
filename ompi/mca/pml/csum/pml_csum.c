@@ -31,12 +31,9 @@
 #include "opal/class/opal_bitmap.h"
 #include "opal/util/crc.h"
 #include "opal/util/output.h"
-#include "opal/mca/paffinity/paffinity.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
-#include "orte/util/name_fns.h"
-#include "orte/runtime/orte_globals.h"
 #include "orte/util/show_help.h"
 
 #include "ompi/mca/pml/pml.h"
@@ -82,8 +79,8 @@ mca_pml_csum_t mca_pml_csum = {
 
 
 void mca_pml_csum_error_handler( struct mca_btl_base_module_t* btl,
-                                 int32_t flags, ompi_proc_t* errproc,
-                                 char* btlinfo );
+                                int32_t flags, ompi_proc_t* errproc,
+                                char* btlinfo );
 
 int mca_pml_csum_enable(bool enable)
 {
@@ -387,6 +384,8 @@ int mca_pml_csum_add_procs(ompi_proc_t** procs, size_t nprocs)
         }
     }
 
+
+    /* TODO: Move these callback registration to another place */
     rc = mca_bml.bml_register( MCA_PML_CSUM_HDR_TYPE_MATCH,
                                mca_pml_csum_recv_frag_callback_match,
                                NULL );
