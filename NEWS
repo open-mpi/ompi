@@ -88,6 +88,9 @@ Trunk (not on release branches yet)
   Thanks to Brian Price and Jed Brown for reporting the issue.
 - Fixed MPI_GET_COUNT when used with large counts.  Thanks to Jed
   Brown for reporting the issue.
+- Fixed problems in configure relating to AS_VAR_GET.  Thanks to
+  Sebastian Andrzej Siewior and Russ Albery for notifying us of the
+  problem and supplying the initial fix.
 - Made the openib BTL safer if extremely low SRQ settings are used.
 - Fixed handling of the array_of_argv parameter in the Fortran
   binding of MPI_COMM_SPAWN_MULTIPLE (** also to appear: 1.4.3).
