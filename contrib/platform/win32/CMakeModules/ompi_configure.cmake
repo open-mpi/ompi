@@ -184,9 +184,9 @@ OPAL_WITH_OPTION_MIN_MAX_VALUE(datarep_string 128 64 256)
 
 OMPI_DEF_CACHE_VAR(OMPI_MPIEXT_COMPONENTS none STRING "Specify user defined MPI Extended Interface Components." 1 1)
 
-OMPI_DEF_OPT(MCA_mtl_DIRECT_CALL "Whether mtl should use direct calls instead of components." OFF)
+OMPI_DEF_OPT(MCA_ompi_mtl_DIRECT_CALL "Whether mtl should use direct calls instead of components." OFF)
 
-OMPI_DEF_OPT(MCA_pml_DIRECT_CALL "Whether pml should use direct calls instead of components." OFF)
+OMPI_DEF_OPT(MCA_ompi_pml_DIRECT_CALL "Whether pml should use direct calls instead of components." OFF)
 
 OMPI_DEF_OPT(MPI_PARAM_CHECK "Whether we want to check MPI parameters always, never, or decide at run-time." OFF)
 
@@ -251,6 +251,8 @@ OMPI_DEF_OPT(OMPI_WANT_NETWORK_DIRECT "Whether we want to enable Network Direct 
 OMPI_DEF_OPT(ORTE_WANT_NOTIFIER_LOG_EVENT "if the notifier_log_event should be enabled" OFF)
 
 OMPI_DEF_OPT(OMPI_WANT_OFED "Whether we want to enable OFED support." ON)
+
+OMPI_DEF_OPT(OMPI_WANT_WINVERBS "Whether we want to enable Winverbs support." ON)
 
 OMPI_DEF_OPT(OPAL_ENABLE_CRDEBUG "Whether we want checkpoint/restart enabled debugging functionality or not." OFF)
 
@@ -726,6 +728,8 @@ IF(WIN32)
   OMPI_DEF_CACHE(MCA_pml_DIRECT_CALL_COMPONENT " " STRING "Name of component to use for direct calls, if MCA_pml_DIRECT_CALL is 1." 1 1)
 
   OMPI_DEF_CACHE(MCA_pml_DIRECT_CALL_HEADER " " STRING "Header pml includes to be direct called." 1 1)
+
+  OMPI_DEF_CACHE(OMPI_MPI_CONTRIBS none STRING "List of contributed package names that will be built." 1 1)
 
   CHECK_C_INLINE()
 
