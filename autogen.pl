@@ -1004,6 +1004,53 @@ if (!$no_ompi_arg) {
 ++$step;
 verbose "\n$step. Processing autogen.subdirs directories\n";
 
+# If $AUTOMAKE_JOBS isn't set, take a whack at setting it.  In some
+# cases, it can speed up running automake quite a bit!
+if (!defined($ENV{AUTOMAKE_JOBS})) {
+    # Default to 2 if we don't find any better information
+    my $count = 2;
+    my $reason = "couldn't find lstopo; 2 is a guess";
+
+    # Search the patch for the lstopo executable
+    foreach my $d (split(/:/, $ENV{PATH})) {
+        if (-x "$d/lstopo") {
+            # Unset $DISPLAY because that will cause lstopo to output
+            # to the X display instead of to the console
+            my $save;
+            $save = $ENV{DISPLAY}
+                if (defined($ENV{DISPLAY}));
+            delete $ENV{DISPLAY};
+
+            # Crude heuristic: count the "PU" instances.
+            $count = 0;
+            if (open(LSTOPO, "lstopo|")) {
+                while (<LSTOPO>) {
+                    while ($_ =~ s/PU//) {
+                        ++$count;
+                    }
+                }
+                close(LSTOPO);
+            }
+
+            $ENV{DISPLAY} = $save
+                if (defined($save));
+
+            # 2nd level crude heurstic: bound $count to 4 at the most.
+            $reason = "lstopo found $count PU's";
+            if ($count > 4) {
+                $count = 4;
+                $reason = "heuristic; only use 4 PU's";
+            }
+
+            last;
+        }
+    }
+    $ENV{AUTOMAKE_JOBS} = $count;
+    print "   \$AUTOMAKE_JOBS unset, so I set it to $count ($reason)\n";
+} else {
+    print "   \$AUTOMAKE_JOBS already set to $ENV{AUTOMAKE_JOBS}\n";
+}
+
 if ($#subdirs >= 0) {
     foreach my $d (@subdirs) {
         process_subdir($d);
