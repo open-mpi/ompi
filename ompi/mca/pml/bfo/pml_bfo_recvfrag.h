@@ -168,5 +168,6 @@ extern void mca_pml_bfo_recv_frag_callback_fin( mca_btl_base_module_t *btl,
 
                                               
 END_C_DECLS
+
 #endif
 

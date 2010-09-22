@@ -28,9 +28,13 @@
 #include "opal/class/opal_list.h"
 #include "opal/threads/mutex.h"
 #include "opal/prefetch.h"
+
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/pml/pml.h"
+#include "ompi/peruse/peruse-internal.h"
+#include "ompi/memchecker.h"
+
 #include "pml_bfo.h"
 #include "pml_bfo_comm.h"
 #include "pml_bfo_recvfrag.h"
@@ -40,9 +44,6 @@
 /* BFO FAILOVER CODE - begin */
 #include "pml_bfo_failover.h"
 /* BFO FAILOVER CODE - end */
-#include "ompi/peruse/peruse-internal.h"
-#include "ompi/memchecker.h"
-
 
 OBJ_CLASS_INSTANCE( mca_pml_bfo_buffer_t,
                     ompi_free_list_item_t,

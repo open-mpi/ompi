@@ -168,9 +168,9 @@ mca_pml_ob1_component_init( int* priority,
                             bool enable_progress_threads,
                             bool enable_mpi_threads )
 {
-    opal_output_verbose( 10, mca_pml_ob1_output, 
+    opal_output_verbose( 10, mca_pml_ob1_output,
                          "in ob1, my priority is %d\n", mca_pml_ob1.priority);
-    
+
     if((*priority) > mca_pml_ob1.priority) { 
         *priority = mca_pml_ob1.priority;
         return NULL;

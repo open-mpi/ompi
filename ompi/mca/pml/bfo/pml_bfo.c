@@ -652,11 +652,11 @@ void mca_pml_bfo_process_pending_rdma(void)
 
 void mca_pml_bfo_error_handler(
         struct mca_btl_base_module_t* btl, int32_t flags,
-        ompi_proc_t* errproc, char* btlname ) { 
+        ompi_proc_t* errproc, char* btlinfo ) { 
 /* BFO FAILOVER CODE - begin */
     /* If we get a non-fatal error, try to failover */
     if (flags & MCA_BTL_ERROR_FLAGS_NONFATAL) {
-        mca_pml_bfo_failover_error_handler(btl, flags, errproc, btlname);
+        mca_pml_bfo_failover_error_handler(btl, flags, errproc, btlinfo);
 /* BFO FAILOVER CODE - end */
     } else {
         orte_errmgr.abort(-1, NULL);
