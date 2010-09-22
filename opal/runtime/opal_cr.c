@@ -50,7 +50,6 @@
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
 #include "opal/util/malloc.h"
-#include "opal/util/if.h"
 #include "opal/util/keyval_parse.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/argv.h"
@@ -61,6 +60,7 @@
 #include "opal/runtime/opal.h"
 #include "opal/constants.h"
 
+#include "opal/mca/if/base/base.h"
 #include "opal/mca/memcpy/base/base.h"
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/timer/base/base.h"
@@ -773,7 +773,7 @@ int opal_cr_coord(int state)
         /*
          * Flush if() functionality, since it caches system specific info.
          */
-        opal_iffinalize();
+        opal_if_base_close();
         /* Since opal_ifinit() is not exposed, the necessary
          * functions will call it when needed. Just make sure we
          * finalized this code so we don't get old socket addrs.

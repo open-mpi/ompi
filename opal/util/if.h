@@ -171,15 +171,6 @@ OPAL_DECLSPEC int opal_ifindextoflags(int if_index, uint32_t*);
 OPAL_DECLSPEC bool opal_ifislocal(const char *hostname);
 
 /**
- * Finalize the functions to release malloc'd data
- * 
- * @param none
- * @return OPAL_SUCCESS if no problems encountered
- * @return OPAL_ERROR if data could not be released
- */
-OPAL_DECLSPEC int opal_iffinalize(void);
-
-/**
  * Convert a dot-delimited network tuple to an IP address
  *
  * @param addr (IN) character string tuple

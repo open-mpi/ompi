@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -56,6 +56,7 @@
 #endif
 #include "opal/runtime/opal.h"
 #include "opal/dss/dss.h"
+#include "opal/mca/if/base/base.h"
 
 #include "ompi/mca/allocator/base/base.h"
 #include "ompi/mca/coll/base/base.h"
@@ -76,7 +77,6 @@
 #include "ompi/mca/pubsub/base/base.h"
 #include "ompi/mca/dpm/base/base.h"
 #include "ompi/mca/op/base/base.h"
-#include "ompi/mca/vprotocol/base/base.h"
 
 #if OPAL_ENABLE_FT_CR == 1
 #include "ompi/mca/crcp/crcp.h"
@@ -177,7 +177,6 @@ void ompi_info_open_components(void)
     char **env_save=NULL;
     bool need_close_components = false;
     ompi_info_component_map_t *map;
-    char *include_list;
     
     if (opened_components) {
         return;
@@ -347,7 +346,15 @@ void ompi_info_open_components(void)
     map->components = &opal_compress_base_components_available;
     opal_pointer_array_add(&component_map, map);
 #endif
-    
+
+    if (OPAL_SUCCESS != opal_if_base_open()) {
+        goto error;
+    }
+    map = OBJ_NEW(ompi_info_component_map_t);
+    map->type = strdup("if");
+    map->components = &opal_if_components;
+    opal_pointer_array_add(&component_map, map);
+
     /* OPAL's installdirs base open has already been called as part of
      * opal_init_util() back in main().
      */
@@ -568,21 +575,6 @@ void ompi_info_open_components(void)
     map = OBJ_NEW(ompi_info_component_map_t);
     map->type = strdup("pml");
     map->components = &mca_pml_base_components_available;
-    opal_pointer_array_add(&component_map, map);
-    
-    /* According to vprotocol_base.c, the first char cannot be 0 or
-       the function will do nothing.  Weird.  The value must also be
-       malloc'ed, because mca_vprotocol_close() will free() it. */
-    include_list = strdup("bogus");
-    if (NULL == include_list) {
-        goto error;
-    }
-    if (OMPI_SUCCESS != mca_vprotocol_base_open(include_list)) {
-        goto error;
-    }
-    map = OBJ_NEW(ompi_info_component_map_t);
-    map->type = strdup("vprotocol");
-    map->components = &mca_vprotocol_base_components_available;
     opal_pointer_array_add(&component_map, map);
     
     /* No need to call the bml_base_open() because the ob1 pml calls it.

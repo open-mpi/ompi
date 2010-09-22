@@ -37,14 +37,11 @@
 #include "opal/dss/dss.h"
 #include "opal/dss/dss_types.h"
 
+#include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/notifier/base/base.h"
 #include "notifier_hnp.h"
-
-/* Global variables */
-opal_pointer_array_t orte_notifier_hnp_tables;
-opal_mutex_t	     orte_notifier_hnp_tables_lock;
 
 /* Static API's */
 static int init(void);
@@ -258,19 +255,6 @@ static int init(void)
             return rc;
         }
 
-	/* Construct a list of SOS tables, one for each process.
-	   ADK: Since we are not doing proper error trace analysis
-	   and/or aggregation, each process maintains a separate SOS
-	   table and individually sends each entry in the table to 
-	   the HNP. */
-	/*
-	OBJ_CONSTRUCT(&orte_notifier_hnp_tables, opal_pointer_array_t);
-	opal_pointer_array_init(&orte_notifier_hnp_tables,
-				orte_process_info.num_procs,
-				INT32_MAX, 8);
-	OBJ_CONSTRUCT(&orte_notifier_hnp_tables_lock, opal_mutex_t);
-	*/
-
 #if OPAL_ENABLE_DEBUG
         /* If we're debugging, also add an exception handler -- just to
            watch for problems in the RML */
@@ -290,9 +274,6 @@ static void finalize(void)
 {
     /* If I'm the HNP, then cancel the non-blocking RML receive */
     if (ORTE_PROC_IS_HNP) {
-        OBJ_DESTRUCT(&orte_notifier_hnp_tables);
-        OBJ_DESTRUCT(&orte_notifier_hnp_tables_lock);
-
         orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_NOTIFIER_HNP);
     }
 }
@@ -305,8 +286,13 @@ static void mylog(orte_notifier_base_severity_t severity, int errcode,
     /* If there was a message, output it */
     vasprintf(&output, msg, ap);
 
-    if (NULL != output && !ORTE_PROC_IS_HNP) {
-        send_command(severity, errcode, output);
+    if (NULL != output) {
+        if (ORTE_PROC_IS_HNP) {
+            /* output it locally */
+            orte_show_help("opal_sos_reporter.txt", "notifier message", false, output);
+        } else {
+            send_command(severity, errcode, output);
+        }
         free(output);
     }
 }
@@ -318,8 +304,13 @@ static void myhelplog(orte_notifier_base_severity_t severity, int errcode,
 
     output = opal_show_help_vstring(filename, topic, false, ap);
 
-    if (NULL != output && !ORTE_PROC_IS_HNP) {
-        send_command(severity, errcode, output);
+    if (NULL != output) {
+        if (ORTE_PROC_IS_HNP) {
+            /* output it locally */
+            orte_show_help("opal_sos_reporter.txt", "notifier message", false, output);
+         } else {
+            send_command(severity, errcode, output);
+        }
         free(output);
     }
 }
@@ -330,13 +321,23 @@ static void mypeerlog(orte_notifier_base_severity_t severity, int errcode,
 {
     char *buf = orte_notifier_base_peer_log(errcode, peer_proc, msg, ap);
 
-    if (NULL != buf && !ORTE_PROC_IS_HNP) {
-        send_command(severity, errcode, buf);
+    if (NULL != buf) {
+        if (ORTE_PROC_IS_HNP) {
+            /* output it locally */
+            orte_show_help("opal_sos_reporter.txt", "notifier message", false, buf);
+        } else {
+            send_command(severity, errcode, buf);
+        }
         free(buf);
     }
 }
 
 static void myeventlog(const char *msg)
 {
-    send_command(ORTE_NOTIFIER_NOTICE, ORTE_SUCCESS, (char *)msg);
+    if (ORTE_PROC_IS_HNP) {
+        /* output it locally */
+        orte_show_help("opal_sos_reporter.txt", "notifier message", false, (char*)msg);
+    } else {
+        send_command(ORTE_NOTIFIER_NOTICE, ORTE_SUCCESS, (char *)msg);
+    }
 }

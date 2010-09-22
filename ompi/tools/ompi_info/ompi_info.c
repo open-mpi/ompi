@@ -203,6 +203,8 @@ int main(int argc, char *argv[])
     opal_pointer_array_add(&mca_types, "crs");
     opal_pointer_array_add(&mca_types, "compress");
 #endif
+    opal_pointer_array_add(&mca_types, "if");
+
     opal_pointer_array_add(&mca_types, "dpm");
     opal_pointer_array_add(&mca_types, "pubsub");
     opal_pointer_array_add(&mca_types, "allocator");
@@ -218,7 +220,6 @@ int main(int argc, char *argv[])
     opal_pointer_array_add(&mca_types, "osc");
     opal_pointer_array_add(&mca_types, "op");
     opal_pointer_array_add(&mca_types, "common");
-    opal_pointer_array_add(&mca_types, "vprotocol");
 #if OPAL_ENABLE_FT_CR == 1
     opal_pointer_array_add(&mca_types, "crcp");
 #endif
