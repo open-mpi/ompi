@@ -72,3 +72,8 @@ unrecognized option warnings.
 [sm rt test fail]
 WARNING: It appears as if your system does not provide the run-time behavior
 that we rely on to safely provide %s shared memory support.
+#
+[sysv with cr]
+WARNING: It appears as if you requested System V shared memory support in
+conjunction with checkpoint/restart.  This combination is not currently
+supported.
