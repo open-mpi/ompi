@@ -8,7 +8,7 @@
 # $HEADER$
 #
 
-AC_DEFUN([MCA_if_bsdx_ipv4_COMPILE_MODE], [
+AC_DEFUN([MCA_opal_if_bsdx_ipv4_COMPILE_MODE], [
     AC_MSG_CHECKING([for MCA component $2:$3 compile mode])
     $4="static"
     AC_MSG_RESULT([$$4])
