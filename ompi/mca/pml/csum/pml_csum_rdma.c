@@ -88,7 +88,7 @@ size_t mca_pml_csum_rdma_btls(
         return 0;
 
     mca_pml_csum_calc_weighted_length(rdma_btls, num_btls_used, size,
-                                      weight_total);
+                                     weight_total);
 
     bml_endpoint->btl_rdma_index = (bml_endpoint->btl_rdma_index + 1) % num_btls;
     return num_btls_used;

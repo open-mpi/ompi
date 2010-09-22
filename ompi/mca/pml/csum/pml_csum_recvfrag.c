@@ -28,7 +28,6 @@
  */
 
 #include "ompi_config.h"
-#include "ompi/constants.h"
 
 #include "opal/class/opal_list.h"
 #include "opal/util/crc.h"
@@ -41,6 +40,7 @@
 #include "orte/mca/notifier/notifier.h"
 #include "orte/mca/errmgr/errmgr.h"
 
+#include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
@@ -327,7 +327,7 @@ void mca_pml_csum_recv_frag_callback_rndv(mca_btl_base_module_t* btl,
                                          mca_btl_base_tag_t tag,
                                          mca_btl_base_descriptor_t* des,
                                          void* cbdata )
-{    
+{
     mca_btl_base_segment_t* segments = des->des_dst;
     mca_pml_csum_hdr_t* hdr = (mca_pml_csum_hdr_t*)segments->seg_addr.pval;
     uint16_t csum_received, csum;
@@ -662,7 +662,7 @@ match_one(mca_btl_base_module_t *btl,
             if(OPAL_UNLIKELY(MCA_PML_REQUEST_PROBE == match->req_recv.req_base.req_type)) {
                 /* complete the probe */
                 mca_pml_csum_recv_request_matched_probe(match, btl, segments,
-                                                        num_segments);
+                                                       num_segments);
                 /* attempt to match actual request */
                 continue;
             }

@@ -606,7 +606,7 @@ void mca_pml_ob1_process_pending_rdma(void)
 
 void mca_pml_ob1_error_handler(
         struct mca_btl_base_module_t* btl, int32_t flags,
-        ompi_proc_t* errproc, char* btlname ) { 
+        ompi_proc_t* errproc, char* btlinfo ) { 
     orte_errmgr.abort(-1, NULL);
 }
 
