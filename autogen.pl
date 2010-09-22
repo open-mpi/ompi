@@ -1034,6 +1034,9 @@ if (!defined($ENV{AUTOMAKE_JOBS})) {
 
             $ENV{DISPLAY} = $save
                 if (defined($save));
+            # If we errored, try again
+            next
+                if (0 == $count);
 
             # 2nd level crude heurstic: bound $count to 4 at the most.
             $reason = "lstopo found $count PU's";
