@@ -27,6 +27,9 @@
 #endif
 
 #include "opal/util/argv.h"
+#if OPAL_ENABLE_FT_CR == 1
+#include "opal/runtime/opal_cr.h"
+#endif
 #include "orte/mca/rml/rml.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
@@ -255,21 +258,38 @@ query_sm_components(void)
                 }
 #else /* MCA_COMMON_SM_SYSV */
                 MCA_COMMON_SM_OUTPUT_VERBOSE("querying sysv");
-                /* make sure that we can safely use sysv on this system */
-                if (OMPI_SUCCESS == mca_common_sm_sysv_component_query())
+                /* SKG - disable sysv support when cr is enabled.
+                 * could presumably work properly someday.
+                 */
+#if OPAL_ENABLE_FT_CR == 1
+                if (!opal_cr_is_enabled)
                 {
-                    MCA_COMMON_SM_OUTPUT_VERBOSE("selecting sysv");
-                    sm_component_index = MCA_COMMON_SM_COMP_INDEX_SYSV;
-                    break;
+#endif /* OPAL_ENABLE_FT_CR */
+                    /* make sure that we can safely use sysv on this system */
+                    if (OMPI_SUCCESS == mca_common_sm_sysv_component_query())
+                    {
+                        MCA_COMMON_SM_OUTPUT_VERBOSE("selecting sysv");
+                        sm_component_index = MCA_COMMON_SM_COMP_INDEX_SYSV;
+                        break;
+                    }
+                    else /* let the user know that we tried sysv and failed */
+                    {
+                        MCA_COMMON_SM_OUTPUT_VERBOSE("cannot select sysv");
+                        orte_show_help("help-mpi-common-sm.txt",
+                                       "sm rt test fail",
+                                       1,
+                                       "System V");
+                    }
+#if OPAL_ENABLE_FT_CR == 1
                 }
-                else /* let the user know that we tried sysv and failed */
+                else
                 {
-                    MCA_COMMON_SM_OUTPUT_VERBOSE("cannot select sysv");
                     orte_show_help("help-mpi-common-sm.txt",
-                                   "sm rt test fail",
-                                   1,
-                                   "System V");
+                                   "sysv with cr",
+                                   1);
+                    help_msg_displayed = 1;
                 }
+#endif /* OPAL_ENABLE_FT_CR */
 #endif
             }
             else /* unknown value */
