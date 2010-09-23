@@ -585,11 +585,11 @@ AC_DEFUN([OMPI_CHECK_INLINE_C_GCC],[
                 ;;
             *)
                 if test ! "$assembly" = "" ; then
-                        AC_RUN_IFELSE(AC_LANG_PROGRAM([[
-AC_INCLUDES_DEFAULT]],
+                        AC_RUN_IFELSE([AC_LANG_PROGRAM([
+AC_INCLUDES_DEFAULT],
 [[int ret = 1;
 __asm__ __volatile__ ($assembly);
-return ret;]]),
+return ret;]])],
                     [asm_result="yes"], [asm_result="no"], 
                     [asm_result="unknown"])
                 else
@@ -600,11 +600,11 @@ return ret;]]),
 
         # if we're cross compiling, just try to compile and figure good enough
         if test "$asm_result" = "unknown" ; then
-            AC_LINK_IFELSE(AC_LANG_PROGRAM([[
-AC_INCLUDES_DEFAULT]],
+            AC_LINK_IFELSE([AC_LANG_PROGRAM([
+AC_INCLUDES_DEFAULT],
 [[int ret = 1;
 __asm__ __volatile__ ($assembly);
-return ret;]]),
+return ret;]])],
             [asm_result="yes"], [asm_result="no"])
         fi
     fi
@@ -639,11 +639,11 @@ AC_DEFUN([OMPI_CHECK_INLINE_CXX_GCC],[
             ;;
         *)
             if test ! "$assembly" = "" ; then
-            AC_RUN_IFELSE(AC_LANG_PROGRAM([[
-AC_INCLUDES_DEFAULT]],
+            AC_RUN_IFELSE([AC_LANG_PROGRAM([
+AC_INCLUDES_DEFAULT],
 [[int ret = 1;
 __asm__ __volatile__ ($assembly);
-return ret;]]),
+return ret;]])],
                     [asm_result="yes"], [asm_result="no"], 
                     [asm_result="unknown"])
             else
@@ -653,11 +653,11 @@ return ret;]]),
     esac
     # if we're cross compiling, just try to compile and figure good enough
     if test "$asm_result" = "unknown" ; then
-        AC_LINK_IFELSE(AC_LANG_PROGRAM([[
-AC_INCLUDES_DEFAULT]],
+        AC_LINK_IFELSE([AC_LANG_PROGRAM([
+AC_INCLUDES_DEFAULT],
 [[int ret = 1;
 __asm__ __volatile__ ($assembly);
-return ret;]]),
+return ret;]])],
             [asm_result="yes"], [asm_result="no"])
     fi
 
@@ -690,11 +690,11 @@ AC_DEFUN([OMPI_CHECK_INLINE_C_DEC],[
 
     AC_MSG_CHECKING([if $CC supports DEC inline assembly])
 
-    AC_LINK_IFELSE(AC_LANG_PROGRAM([[
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([
 AC_INCLUDES_DEFAULT
-#include <c_asm.h>]],
+#include <c_asm.h>],
 [[asm("");
-return 0;]]),
+return 0;]])],
         [asm_result="yes"], [asm_result="no"])
 
     AC_MSG_RESULT([$asm_result])
@@ -717,11 +717,11 @@ AC_DEFUN([OMPI_CHECK_INLINE_CXX_DEC],[
     AC_LANG_PUSH([C++])
     AC_MSG_CHECKING([if $CXX supports DEC inline assembly])
 
-    AC_LINK_IFELSE(AC_LANG_PROGRAM([[
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([
 AC_INCLUDES_DEFAULT
-#include <c_asm.h>]],
+#include <c_asm.h>],
 [[asm("");
-return 0;]]),
+return 0;]])],
         [asm_result="yes"], [asm_result="no"])
 
     AC_MSG_RESULT([$asm_result])

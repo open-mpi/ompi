@@ -27,21 +27,23 @@ AC_DEFUN([MCA_opal_if_windows_CONFIG],[
     # registry. We should first check that the function is defined,
     # and then check for it's presence in the kernel32 library.
     AC_MSG_CHECKING([for working RegOpenKeyEx])
-    AC_TRY_RUN( [#include <windows.h>
+    AC_RUN_IFELSE([AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT
+#include <windows.h>], [
 int main( int argc, char** argv ) {
     RegOpenKeyEx( HKEY_CURRENT_USER, "Software\\Open MPI", 0, KEY_READ, NULL);
-    return 0; }],
+    return 0; }])],
         [AC_MSG_RESULT([yes])
          $1],
         [AC_MSG_RESULT([no])
          $2],
-        [AC_COMPILE_IFELSE([#include <windows.h>
+        [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT
+#include <windows.h>], [
 int main( int argc, char** argv ) {
     RegOpenKeyEx( HKEY_CURRENT_USER, "Software\\Open MPI", 0, KEY_READ, NULL);
-    return 0; }],
+    return 0; }])],
         [AC_MSG_RESULT([yes])
          $1],
         [AC_MSG_RESULT([no])
          $2])])
-])dnl
+])])dnl
 

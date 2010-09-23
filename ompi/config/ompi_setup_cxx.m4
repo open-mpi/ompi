@@ -329,7 +329,7 @@ AC_DEFUN([_OMPI_CXX_CHECK_EXCEPTIONS_BACKEND],[
             CFLAGS="$CFLAGS $OMPI_CXX_EXCEPTIONS_CXXFLAGS"
             AC_LANG_SAVE
             AC_LANG_C
-            AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[]], [[int i = 0;]]),
+            AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[int i = 0;]])],
                               [AC_MSG_RESULT([yes])],
                               [AC_MSG_RESULT([no])
                                AC_MSG_WARN([C++ exception flags are different between the C and C++ compilers; this configure script cannot currently handle this scenario.  Either disable C++ exception support or send mail to the Open MPI users list.])
