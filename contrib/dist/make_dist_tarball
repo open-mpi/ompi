@@ -228,7 +228,7 @@ make_tarball() {
     if test "$want_ompi" = "1" ; then
         (./autogen.pl $autogen_args 2>&1 && touch success) | tee auto.out
     else
-        (./autogen.pl -no-ompi $autogen_args 2>&1 && touch success) | tee auto.out
+        (./autogen.pl --no-ompi $autogen_args 2>&1 && touch success) | tee auto.out
     fi
     if test ! -f success; then
         echo "Autogen failed.  Aborting"
