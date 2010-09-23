@@ -77,10 +77,12 @@ typedef uint32_t orte_jobid_t;
 #define ORTE_JOBID_T        OPAL_UINT32
 #define ORTE_JOBID_MAX      UINT32_MAX-2
 #define ORTE_JOBID_MIN      0
+#define ORTE_JOBID_UNDEF    0
 typedef uint32_t orte_vpid_t;
 #define ORTE_VPID_T         OPAL_UINT32
 #define ORTE_VPID_MAX       UINT32_MAX-2
 #define ORTE_VPID_MIN       0
+#define ORTE_VPID_UNDEF     0
 
 #define ORTE_PROCESS_NAME_HTON(n)       \
 do {                                    \
