@@ -44,13 +44,13 @@ AC_DEFUN([OMPI_F77_GET_FORTRAN_HANDLE_MAX],[
          # Get INT_MAX.  Compute a SWAG if we are cross compiling or something
          # goes wrong.
          rm -f conftest.out >/dev/null 2>&1
-         AC_RUN_IFELSE(AC_LANG_PROGRAM([[
+         AC_RUN_IFELSE([AC_LANG_PROGRAM([[
 #include <stdio.h>
 #include <limits.h>
 ]],[[FILE *fp = fopen("conftest.out", "w");
 long cint = INT_MAX;
 fprintf(fp, "%ld", cint);
-fclose(fp);]]), 
+fclose(fp);]])], 
              [ompi_cint_max=`cat conftest.out`], 
              [ompi_cint_max=0],
              [ #cross compiling is fun.  compute INT_MAX same as INTEGER max

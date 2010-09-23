@@ -198,26 +198,26 @@ if test "x$haveepoll" = "xyes" -a "$cross_compiling" != "yes" ; then
 
         haveepoll=no
         AC_MSG_CHECKING([for working epoll library interface])
-        AC_RUN_IFELSE(AC_LANG_PROGRAM([[
-AC_INCLUDES_DEFAULT
+        AC_RUN_IFELSE([AC_LANG_PROGRAM([
+AC_INCLUDES_DEFAULT[
 #include <sys/epoll.h>]],
 [[
     struct epoll_event epevin;
     struct epoll_event epevout;
     int res;
     int epfd;
-    int fildes[[2]];
+    int fildes[2];
 
     if ((epfd = epoll_create(1)) == -1)
         exit(1);
-    if (pipe(&fildes[[0]]) < 0)
+    if (pipe(&fildes[0]) < 0)
         exit(1);
     memset(&epevin, 0, sizeof(epevin));
     memset(&epevout, 0, sizeof(epevout));
     memset(&epevin.data.ptr, 5, sizeof(epevin.data.ptr));
     epevin.events = EPOLLIN | EPOLLOUT;
 
-    if (epoll_ctl(epfd, EPOLL_CTL_ADD, fildes[[1]], &epevin) == -1)
+    if (epoll_ctl(epfd, EPOLL_CTL_ADD, fildes[1], &epevin) == -1)
         exit(1);
 
     res = epoll_wait(epfd, &epevout, 1, 0);
@@ -229,7 +229,7 @@ AC_INCLUDES_DEFAULT
         }
     }
     /* SUCCESS */
-]]),
+]])],
         [haveepoll=yes
         AC_DEFINE(HAVE_EPOLL, 1,
                  [Define if your system supports the epoll interface])
@@ -244,8 +244,8 @@ if test "x$ac_cv_header_sys_epoll_h" = "xyes" -a "x$haveepoll" = "xno" -a "$cros
         # OMPI: See comment above.  This test uses the epoll system call
         # interface instead of the library interface.
         AC_MSG_CHECKING(for working epoll system call)
-        AC_RUN_IFELSE(AC_LANG_PROGRAM([[
-AC_INCLUDES_DEFAULT
+        AC_RUN_IFELSE([AC_LANG_PROGRAM([
+AC_INCLUDES_DEFAULT[
 #include <sys/syscall.h>
 #include <sys/epoll.h>]],
 [[  
@@ -253,11 +253,11 @@ AC_INCLUDES_DEFAULT
     struct epoll_event epevout;
     int res;
     int epfd;
-    int fildes[[2]];
+    int fildes[2];
 
     if ((epfd = syscall(__NR_epoll_create, 1)) == -1)
         exit(1);
-    if (pipe(&fildes[[0]]) < 0)
+    if (pipe(&fildes[0]) < 0)
         exit(1);
     memset(&epevin, 0, sizeof(epevin));
     memset(&epevout, 0, sizeof(epevout));
@@ -265,7 +265,7 @@ AC_INCLUDES_DEFAULT
     epevin.events = EPOLLIN | EPOLLOUT;
 
     if (syscall(__NR_epoll_ctl, epfd, 
-        EPOLL_CTL_ADD, fildes[[1]], &epevin) == -1)
+        EPOLL_CTL_ADD, fildes[1], &epevin) == -1)
         exit(1);
 
     res = syscall(__NR_epoll_wait, epfd, &epevout, 1, 0);
@@ -277,7 +277,7 @@ AC_INCLUDES_DEFAULT
         }
     }
     /* SUCCESS */
-]]),
+]])],
         [haveepollsyscall=yes
         AC_DEFINE(HAVE_EPOLL, 1,
                  [Define if your system supports the epoll interface])
@@ -313,7 +313,7 @@ if test "x$ac_cv_header_sys_event_h" = "xyes"; then
     esac
 	if test "x$havekqueue" = "xyes" ; then
 		AC_MSG_CHECKING(for working kqueue)
-		AC_TRY_RUN(
+		AC_TRY_RUN([
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/event.h>
@@ -327,30 +327,30 @@ main()
 {
 	int kq;
 	int n;
-	int fd[[2]];
+	int fd[2];
 	struct kevent ev;
 	struct timespec ts;
-	char buf[[8000]];
+	char buf[8000];
 
 	if (pipe(fd) == -1)
 		exit(1);
-	if (fcntl(fd[[1]], F_SETFL, O_NONBLOCK) == -1)
+	if (fcntl(fd[1], F_SETFL, O_NONBLOCK) == -1)
 		exit(1);
 
-	while ((n = write(fd[[1]], buf, sizeof(buf))) == sizeof(buf))
+	while ((n = write(fd[1], buf, sizeof(buf))) == sizeof(buf))
 		;
 
         if ((kq = kqueue()) == -1)
 		exit(1);
 
-	ev.ident = fd[[1]];
+	ev.ident = fd[1];
 	ev.filter = EVFILT_WRITE;
 	ev.flags = EV_ADD | EV_ENABLE;
 	n = kevent(kq, &ev, 1, NULL, 0, NULL);
 	if (n == -1)
 		exit(1);
 	
-	read(fd[[0]], buf, sizeof(buf));
+	read(fd[0], buf, sizeof(buf));
 
 	ts.tv_sec = 0;
 	ts.tv_nsec = 0;
@@ -359,7 +359,7 @@ main()
 		exit(1);
 
 	exit(0);
-}, [AC_MSG_RESULT(yes)
+}], [AC_MSG_RESULT(yes)
     AC_DEFINE(HAVE_WORKING_KQUEUE, 1,
 		[Define if kqueue works correctly with pipes])
     sources="kqueue.c $sources"], [AC_MSG_RESULT(no)], [AC_MSG_RESULT(no)])

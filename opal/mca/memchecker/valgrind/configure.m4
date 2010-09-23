@@ -42,11 +42,11 @@ AC_DEFUN([MCA_opal_memchecker_valgrind_CONFIG],[
                   opal_memchecker_valgrind_save_CPPFLAGS=$CPPFLAGS])
            AC_CHECK_HEADERS([valgrind/valgrind.h], 
                  [AC_MSG_CHECKING([for VALGRIND_CHECK_MEM_IS_ADDRESSABLE])
-                  AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[
+                  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include "valgrind/memcheck.h"
 ]],
                      [[char buffer = 0xff;
-                       VALGRIND_CHECK_MEM_IS_ADDRESSABLE(&buffer, sizeof(buffer));]]),
+                       VALGRIND_CHECK_MEM_IS_ADDRESSABLE(&buffer, sizeof(buffer));]])],
                      [AC_MSG_RESULT([yes])
                       opal_memchecker_valgrind_happy=yes],
                      [AC_MSG_RESULT([no])

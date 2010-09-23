@@ -134,8 +134,8 @@ elif test "$OMPI_CXX_EXCEPTIONS_CXXFLAGS" = ""; then
 else
     FFLAGS="$FFLAGS $OMPI_CXX_EXCEPTIONS_CXXFLAGS"
     AC_LANG_PUSH(Fortran 77)
-    AC_COMPILE_IFELSE(AC_LANG_PROGRAM([], [[        INTEGER I
-        I = 3]]),
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [[        INTEGER I
+        I = 3]])],
                       [AC_MSG_RESULT([yes])],
                       [AC_MSG_RESULT([no])
                        AC_MSG_WARN([C++ exception flags are different between the C and C++ compilers; this configure script cannot currently handle this scenario.  Either disable C++ exception support or send mail to the Open MPI users list.])

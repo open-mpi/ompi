@@ -58,13 +58,13 @@ elif test "$GXX" = "yes"; then
 
     AC_LANG_SAVE
     AC_LANG_CPLUSPLUS
-    AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[]], [[try { int i = 0; } catch(...) { int j = 2; }]]), ompi_happy=1, ompi_happy=0)
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[try { int i = 0; } catch(...) { int j = 2; }]])], ompi_happy=1, ompi_happy=0)
 
     if test "$ompi_happy" = "1"; then
 	ompi_exflags="-fexceptions";
     else
 	CXXFLAGS="$CXXFLAGS_SAVE -fhandle-exceptions"
-	AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[]], [[try { int i = 0; } catch(...) { int j = 2; }]]), ompi_happy=1, ompi_happy=0)
+	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[try { int i = 0; } catch(...) { int j = 2; }]])], ompi_happy=1, ompi_happy=0)
 	if test "$ompi_happy" = "1"; then
 	    ompi_exflags="-fhandle-exceptions";
 	fi
