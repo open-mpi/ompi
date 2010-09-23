@@ -23,7 +23,8 @@ EXTRA_DIST = \
         distscript.csh \
 	opal_get_version.m4sh \
 	libltdl-preopen-error.diff \
-	ltmain_pgi_tp.diff
+	ltmain_pgi_tp.diff \
+        ompi_mca_priority_sort.pl
 
 maintainer-clean-local:
 	rm -f opal_get_version.sh
