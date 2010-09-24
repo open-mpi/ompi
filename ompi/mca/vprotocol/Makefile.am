@@ -14,19 +14,15 @@
 noinst_LTLIBRARIES = libmca_vprotocol.la
 libmca_vprotocol_la_SOURCES =
 
-# header setup
-nobase_ompi_HEADERS =
-nobase_nodist_ompi_HEADERS =
-
 # local files
 headers = vprotocol.h
 libmca_vprotocol_la_SOURCES += $(headers) $(nodist_headers)
 
 # Conditionally install the header files
-ompidir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
-nobase_ompi_HEADERS += $(headers)
-nobase_nodist_ompi_HEADERS += $(nodist_headers)
+ompidir = $(includedir)/openmpi/$(subdir)
+nobase_ompi_HEADERS = $(headers)
+nobase_nodist_ompi_HEADERS = $(nodist_headers)
 endif
 
 include base/Makefile.am

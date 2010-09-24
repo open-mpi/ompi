@@ -102,7 +102,7 @@ libopalutil_la_DEPENDENCIES = \
 
 # Conditionally install the header files
 
-opaldir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
+opaldir = $(includedir)/openmpi/$(subdir)
 opal_HEADERS = $(headers)
 endif

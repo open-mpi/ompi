@@ -24,8 +24,7 @@
 # note - headers and nodist_headers will go in ${includedir}/openmpi,
 # not ${includedir}/
 headers =
-nodist_headers = \
-	ompi_config.h
+nodist_headers = ompi_config.h
 
 # Install these in $(includedir)
 include_HEADERS = mpi_portable_platform.h
@@ -52,13 +51,14 @@ nodist_include_HEADERS += \
         mpif-config.h
 endif
 
-ompidir = $(includedir)/openmpi/$(subdir)
+include ompi/Makefile.am
+
+EXTRA_DIST = $(headers)
+
 if WANT_INSTALL_HEADERS 
+ompidir = $(includedir)/openmpi/$(subdir)
 nobase_dist_ompi_HEADERS = $(headers)
 nobase_nodist_ompi_HEADERS = $(nodist_headers)
-else
-nobase_dist_noinst_HEADERS = $(headers)
-nobase_nodist_noinst_HEADERS = $(nodist_headers)
 endif
 
 # Remove the auto-generated mpi-ext.h file
@@ -66,4 +66,3 @@ endif
 distclean-local:
 	rm -f mpi-ext.h
 
-include ompi/Makefile.am

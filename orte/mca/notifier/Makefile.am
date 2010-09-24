@@ -21,18 +21,15 @@
 noinst_LTLIBRARIES = libmca_notifier.la
 libmca_notifier_la_SOURCES =
 
-# header setup
-nobase_orte_HEADERS =
-
 # local files
 headers = notifier.h notifier_event_types.h notifier_event_calls.h
 
 libmca_notifier_la_SOURCES += $(headers)
 
 # Conditionally install the header files
-ortedir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
-nobase_orte_HEADERS += $(headers)
+ortedir = $(includedir)/openmpi/$(subdir)
+nobase_orte_HEADERS = $(headers)
 endif
 
 include base/Makefile.am

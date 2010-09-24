@@ -16,9 +16,6 @@ include $(top_srcdir)/Makefile.man-page-rules
 noinst_LTLIBRARIES = libmca_compress.la
 libmca_compress_la_SOURCES =
 
-# header setup
-nobase_opal_HEADERS =
-
 # local files
 headers = compress.h
 libmca_compress_la_SOURCES += $(headers)
@@ -29,9 +26,9 @@ libmca_compress_la_SOURCES += $(headers)
 $(nodist_man_MANS): $(top_builddir)/opal/include/opal_config.h
 
 # Conditionally install the header files
-opaldir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
-nobase_opal_HEADERS += $(headers)
+opaldir = $(includedir)/openmpi/$(subdir)
+nobase_opal_HEADERS = $(headers)
 endif
 
 include base/Makefile.am

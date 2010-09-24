@@ -23,8 +23,7 @@ AM_CPPFLAGS = $(LTDLINCL)
 noinst_LTLIBRARIES = libmca_ess.la
 libmca_ess_la_SOURCES =
 
-# header setup
-nobase_orte_HEADERS =
+# pkgdata setup
 dist_pkgdata_DATA =
 
 # local files
@@ -32,9 +31,9 @@ headers = ess.h
 libmca_ess_la_SOURCES += $(headers)
 
 # Conditionally install the header files
-ortedir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
-nobase_orte_HEADERS += $(headers)
+ortedir = $(includedir)/openmpi/$(subdir)
+nobase_orte_HEADERS = $(headers)
 endif
 
 include base/Makefile.am

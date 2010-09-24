@@ -21,17 +21,14 @@
 noinst_LTLIBRARIES = libmca_backtrace.la
 libmca_backtrace_la_SOURCES =
 
-# header setup
-nobase_opal_HEADERS =
-
 # local files
 headers = backtrace.h
 libmca_backtrace_la_SOURCES += $(headers)
 
 # Conditionally install the header files
-opaldir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
-nobase_opal_HEADERS += $(headers)
+opaldir = $(includedir)/openmpi/$(subdir)
+nobase_opal_HEADERS = $(headers)
 endif
 
 include base/Makefile.am
