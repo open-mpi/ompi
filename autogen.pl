@@ -815,14 +815,16 @@ if (!$ok || $help_arg) {
 my $project_name_long = "Open MPI";
 my $project_name_short = "openmpi";
 if (! -e "ompi") {
-    $no_ompi_arg=0;
+    $no_ompi_arg=1;
     $project_name_long = "Open MPI Run Time Environment";
     $project_name_short = "open-rte";
+    debug "No ompi subdirectory found - will not build MPI layer\n";
 }
 if (! -e "orte") {
     $project_name_long = "Open Portability Access Layer";
     $project_name_short = "open-pal";
-    $no_orte_arg=0;
+    $no_orte_arg=1;
+    debug "No orte subdirectory found - will not build ORTE\n";
 }
 
 #---------------------------------------------------------------------------
