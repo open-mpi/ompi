@@ -84,8 +84,8 @@ OMPI_LOAD_PLATFORM
 #
 AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects no-define 1.10c silent-rules tar-ustar])
 
-# If Automake supports silent rules, enable them.
-m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+# We require >AM 1.11, so AM_SILENT_RULES will exist
+AM_SILENT_RULES([yes])
 
 # Make configure depend on the VERSION file, since it's used in AC_INIT
 AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/VERSION'])
