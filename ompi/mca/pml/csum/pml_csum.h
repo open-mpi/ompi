@@ -48,6 +48,7 @@ BEGIN_C_DECLS
 struct mca_pml_csum_t {
     mca_pml_base_module_t super; 
 
+    int priority;
     int free_list_num;      /* initial size of free list */
     int free_list_max;      /* maximum size of free list */
     int free_list_inc;      /* number of elements to grow free list */

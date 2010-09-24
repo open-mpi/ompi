@@ -109,6 +109,8 @@ static int mca_pml_csum_component_open(void)
         mca_pml_csum_param_register_int("free_list_max", -1);
     mca_pml_csum.free_list_inc =
         mca_pml_csum_param_register_int("free_list_inc", 64);
+    mca_pml_csum.priority =
+        mca_pml_csum_param_register_int("priority", 0);
     mca_pml_csum.send_pipeline_depth =
         mca_pml_csum_param_register_int("send_pipeline_depth", 3);
     mca_pml_csum.recv_pipeline_depth =
@@ -144,6 +146,7 @@ static int mca_pml_csum_component_open(void)
         return OMPI_ERROR;
     }
 
+    mca_pml_csum.enabled = false; 
     return mca_bml_base_open(); 
 }
 
@@ -169,14 +172,13 @@ mca_pml_csum_component_init( int* priority,
                             bool enable_mpi_threads )
 {
     opal_output_verbose( 10, mca_pml_csum_output,
-                         "in csum, my priority is 0\n");
+                         "in csum, my priority is %d\n", mca_pml_csum.priority);
 
-    /* select us only if we are specified */
-    if((*priority) > 0) { 
-        *priority = 0;
+    if((*priority) > mca_pml_csum.priority) { 
+        *priority = mca_pml_csum.priority;
         return NULL;
     }
-    *priority = 0;
+    *priority = mca_pml_csum.priority;
 
     if(OMPI_SUCCESS != mca_bml_base_init( enable_progress_threads, 
                                           enable_mpi_threads)) {

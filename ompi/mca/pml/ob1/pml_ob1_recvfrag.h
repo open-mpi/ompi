@@ -19,7 +19,7 @@
 /**
  *  @file
  */
-                                                                                                                                                 
+
 #ifndef MCA_PML_OB1_RECVFRAG_H
 #define MCA_PML_OB1_RECVFRAG_H
 

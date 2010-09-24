@@ -20,7 +20,7 @@
 /**
  *  @file
  */
-                                                                                                                                                 
+
 #ifndef MCA_PML_BFO_RECVFRAG_H
 #define MCA_PML_BFO_RECVFRAG_H
 
