@@ -24,9 +24,6 @@ include $(top_srcdir)/Makefile.man-page-rules
 noinst_LTLIBRARIES = libmca_crs.la
 libmca_crs_la_SOURCES =
 
-# header setup
-nobase_opal_HEADERS =
-
 # local files
 headers = crs.h
 libmca_crs_la_SOURCES += $(headers)
@@ -41,9 +38,9 @@ EXTRA_DIST = $(nodist_man_MANS:.7=.7in)
 $(nodist_man_MANS): $(top_builddir)/opal/include/opal_config.h
 
 # Conditionally install the header files
-opaldir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
-nobase_opal_HEADERS += $(headers)
+opaldir = $(includedir)/openmpi/$(subdir)
+nobase_opal_HEADERS = $(headers)
 endif
 
 include base/Makefile.am

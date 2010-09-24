@@ -25,10 +25,9 @@ sources = \
 	mpool_rdma_module.c \
 	mpool_rdma_component.c
 
-ompi_HEADERS =
-ompidir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
-ompi_HEADERS += mpool_rdma.h
+ompidir = $(includedir)/openmpi/$(subdir)
+ompi_HEADERS = mpool_rdma.h
 endif
 
 # Make the output library in this directory, and name it either

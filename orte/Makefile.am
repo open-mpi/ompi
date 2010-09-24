@@ -44,15 +44,14 @@ libopen_rte_la_LDFLAGS = -version-info $(libopen_rte_so_version)
 # included subdirectory Makefile.am's and appended-to variables
 headers =
 noinst_LTLIBRARIES =
-nobase_orte_HEADERS = 
 dist_pkgdata_DATA =
 libopen_rte_la_SOURCES += $(headers)
 
 # Conditionally install the header files
 
-ortedir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
-nobase_orte_HEADERS += $(headers)
+ortedir = $(includedir)/openmpi/$(subdir)
+nobase_orte_HEADERS = $(headers)
 endif
 
 # setup to catch extra files to be included in tarballs

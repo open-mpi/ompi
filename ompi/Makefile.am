@@ -130,16 +130,15 @@ libmpi_la_LDFLAGS = \
 headers =
 noinst_LTLIBRARIES =
 include_HEADERS =
-nobase_ompi_HEADERS = 
 dist_pkgdata_DATA =
 libmpi_la_SOURCES += $(headers)
 nodist_man_MANS =
 
 # Conditionally install the header files
 
-ompidir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
-nobase_ompi_HEADERS += $(headers)
+ompidir = $(includedir)/openmpi/$(subdir)
+nobase_ompi_HEADERS = $(headers)
 endif
 
 include class/Makefile.am

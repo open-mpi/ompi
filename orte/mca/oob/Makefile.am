@@ -21,17 +21,14 @@
 noinst_LTLIBRARIES = libmca_oob.la
 libmca_oob_la_SOURCES =
 
-# header setup
-nobase_orte_HEADERS =
-
 # local files
 headers = oob.h
 libmca_oob_la_SOURCES += $(headers)
 
 # Conditionally install the header files
-ortedir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
-nobase_orte_HEADERS += $(headers)
+ortedir = $(includedir)/openmpi/$(subdir)
+nobase_orte_HEADERS = $(headers)
 endif
 
 include base/Makefile.am

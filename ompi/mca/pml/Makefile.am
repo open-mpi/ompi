@@ -21,19 +21,15 @@
 noinst_LTLIBRARIES = libmca_pml.la
 libmca_pml_la_SOURCES =
 
-# header setup
-nobase_ompi_HEADERS =
-nobase_nodist_ompi_HEADERS =
-
 # local files
 headers = pml.h
 libmca_pml_la_SOURCES += $(headers) $(nodist_headers)
 
 # Conditionally install the header files
-ompidir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
-nobase_ompi_HEADERS += $(headers)
-nobase_nodist_ompi_HEADERS += $(nodist_headers)
+ompidir = $(includedir)/openmpi/$(subdir)
+nobase_ompi_HEADERS = $(headers)
+nobase_nodist_ompi_HEADERS = $(nodist_headers)
 endif
 
 include base/Makefile.am

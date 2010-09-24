@@ -73,8 +73,8 @@ libmca_common_mx_noinst_la_LIBADD = $(common_mx_LIBS)
 
 # Conditionally install the header files
 
-ompidir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
+ompidir = $(includedir)/openmpi/$(subdir)
 ompi_HEADERS = $(headers)
 endif
 

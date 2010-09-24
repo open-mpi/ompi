@@ -10,7 +10,6 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2008      Myricom.  All rights reserved.
-#
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -25,10 +24,9 @@ sources = \
 	mpool_fake_module.c \
 	mpool_fake_component.c
 
-ompi_HEADERS =
-ompidir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
-ompi_HEADERS += mpool_fake.h
+ompidir = $(includedir)/openmpi/$(subdir)
+ompi_HEADERS = mpool_fake.h
 endif
 
 # Make the output library in this directory, and name it either

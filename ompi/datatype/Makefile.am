@@ -43,7 +43,7 @@ libdatatype_la_SOURCES = \
 libdatatype_la_LIBADD =
 
 # Conditionally install the header files
-ompidir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
+ompidir = $(includedir)/openmpi/$(subdir)
 ompi_HEADERS = $(headers)
 endif

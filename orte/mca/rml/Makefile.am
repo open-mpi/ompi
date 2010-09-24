@@ -23,17 +23,14 @@ AM_CPPFLAGS = $(LTDLINCL)
 noinst_LTLIBRARIES = libmca_rml.la
 libmca_rml_la_SOURCES =
 
-# header setup
-nobase_orte_HEADERS =
-
 # local files
 headers = rml.h rml_types.h
 libmca_rml_la_SOURCES += $(headers)
 
 # Conditionally install the header files
-ortedir = $(includedir)/openmpi/$(subdir)
 if WANT_INSTALL_HEADERS
-nobase_orte_HEADERS += $(headers)
+ortedir = $(includedir)/openmpi/$(subdir)
+nobase_orte_HEADERS = $(headers)
 endif
 
 include base/Makefile.am
