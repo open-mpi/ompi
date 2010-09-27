@@ -331,7 +331,7 @@ void mca_pml_csum_recv_frag_callback_rndv(mca_btl_base_module_t* btl,
     mca_btl_base_segment_t* segments = des->des_dst;
     mca_pml_csum_hdr_t* hdr = (mca_pml_csum_hdr_t*)segments->seg_addr.pval;
     uint16_t csum_received, csum;
-    
+
     if( OPAL_UNLIKELY(segments->seg_len < sizeof(mca_pml_csum_common_hdr_t)) ) {
         return;
     }
