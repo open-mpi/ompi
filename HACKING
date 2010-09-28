@@ -135,9 +135,12 @@ NOTE: On MacOS/X, the default "libtool" program is different than the
    2c. Automake
    2d. Libtool
 
-3. You MUST install all four tools into the same prefix directory.
-   These four tools are somewhat inter-related, and if they're going
-   to be used together, they MUST share a common installation prefix.
+3. You MUST install the last three tools (Autoconf, Automake, Libtool)
+   into the same prefix directory.  These three tools are somewhat
+   inter-related, and if they're going to be used together, they MUST
+   share a common installation prefix.  You can install m4 anywhere,
+   as long as it can be found in the path.  It may be convenient to
+   install it instal the same prefix as the other three.
 
    3a. It is *strongly* encouraged that you do not install your new
        versions over the OS-installed versions.  This could cause
@@ -170,7 +173,7 @@ NOTE: On MacOS/X, the default "libtool" program is different than the
       --> If you are using the csh or tcsh shells, be sure to run the
           "rehash" command after you install each package.
 
-      shell$ cd ../autoconf-2.65
+      shell$ cd ../autoconf-2.68
       shell$ ./configure --prefix=PREFIX
       shell$ make; make install
 
@@ -184,7 +187,7 @@ NOTE: On MacOS/X, the default "libtool" program is different than the
       --> If you are using the csh or tcsh shells, be sure to run the
           "rehash" command after you install each package.
 
-      shell$ cd ../libtool-2.2.6
+      shell$ cd ../libtool-2.2.8
       shell$ ./configure --prefix=PREFIX
       shell$ make; make install
 
