@@ -32,6 +32,7 @@ m4_include([config/autogen_found_items.m4])
 # Load the version code.  Because this is also used directly as a
 # shell script, no ac_defun
 m4_include([config/opal_get_version.m4])
+AC_LANG([C])
 
 # Init autoconf
 
