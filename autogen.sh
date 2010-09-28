@@ -27,6 +27,14 @@
 unalias test sort cut xargs echo 2> /dev/null
 unset GREP_COLORS
 
+# Solaris patch is not compatible with Linux patch
+uname_s=`uname -s`
+if test "$uname_s" = "SunOS" ; then
+    patch="gpatch"
+else
+    patch="patch"
+fi
+
 ##############################################################################
 #
 # User-definable parameters (search path and minimum supported versions)
@@ -441,6 +449,19 @@ EOF
         fi
 
 	echo "** Adjusting libltdl for OMPI :-("
+
+       echo "   ++ patching PGI -tp bug in ltmain.sh"
+       # Patch ltmain.sh error for PGI -tp flag.  Redirect stderr to
+       # /dev/null because this patch is only necessary for some versions of
+       # Libtool (e.g., 2.2.6b); it'll [rightfully] fail if you have a new
+       # enough Libtool that dosn't need this patch.  But don't alarm the
+       # user and make them think that autogen failed if this patch fails --
+       # make the errors be silent.
+       $patch -N -p0 < config/ltmain_pgi_tp.diff >/dev/null 2>&1
+       if test ! $? -eq 0 ; then
+           echo "      -- your libtool doesn't need this! yay!"
+       fi
+       rm -f config/ltmain.sh.rej
 
 	echo "   ++ patching for argz bugfix in libtool 1.5"
 	cd opal/libltdl
