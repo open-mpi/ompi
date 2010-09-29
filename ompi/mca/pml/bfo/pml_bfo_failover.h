@@ -74,7 +74,7 @@ extern void mca_pml_bfo_map_out( mca_btl_base_module_t *btl,
                                  mca_btl_base_descriptor_t* descriptor,
                                  void* cbdata );
 
-
+int mca_pml_bfo_register_callbacks(void);
 
 
 /**
@@ -99,7 +99,98 @@ extern void mca_pml_bfo_recv_frag_callback_recverrnotify( mca_btl_base_module_t 
                                                           mca_btl_base_tag_t tag,
                                                           mca_btl_base_descriptor_t* descriptor,
                                                           void* cbdata );
-                                              
+
+/**
+ * A bunch of macros to help isolate failover code from regular ob1 code.
+ */
+
+/* Drop any ACK fragments if request is in error state.  Do not want
+ * to initiate any more activity. */
+#define MCA_PML_BFO_ERROR_CHECK_ON_ACK_CALLBACK(sendreq)                          \
+    if( OPAL_UNLIKELY((sendreq)->req_error)) {                                    \
+         opal_output_verbose(20, mca_pml_bfo_output,                              \
+                             "ACK: received: dropping because request in error, " \
+                             "PML=%d, RQS=%d, src_req=%p, dst_req=%p, peer=%d",   \
+                             (uint16_t)(sendreq)->req_send.req_base.req_sequence, \
+                             (sendreq)->req_restartseq,                           \
+                             (void *)(sendreq), (sendreq)->req_recv.pval,         \
+                             (sendreq)->req_send.req_base.req_peer);              \
+        return;                                                                   \
+    }
+
+/* Drop any FRAG fragments if request is in error state.  Do not want
+ * to initiate any more activity. */
+#define MCA_PML_BFO_ERROR_CHECK_ON_FRAG_CALLBACK(recvreq)                                \
+    if( OPAL_UNLIKELY((recvreq)->req_errstate)) {                                        \
+        opal_output_verbose(20, mca_pml_bfo_output,                                      \
+                            "FRAG: received: dropping because request in error, "        \
+                            "PML=%d, src_req=%p, dst_req=%p, peer=%d, offset=%d",        \
+                            (uint16_t)(recvreq)->req_msgseq,                             \
+                            (recvreq)->remote_req_send.pval,                             \
+                            (void *)(recvreq),                                           \
+                            (recvreq)->req_recv.req_base.req_ompi.req_status.MPI_SOURCE, \
+                            (int)hdr->hdr_frag.hdr_frag_offset);                         \
+        return;                                                                          \
+    }
+
+/* Drop any PUT fragments if request is in error state.  Do not want
+ * to initiate any more activity. */
+#define MCA_PML_BFO_ERROR_CHECK_ON_PUT_CALLBACK(sendreq)                          \
+    if( OPAL_UNLIKELY((sendreq)->req_error)) {                                    \
+         opal_output_verbose(20, mca_pml_bfo_output,                              \
+                             "PUT: received: dropping because request in error, " \
+                             "PML=%d, src_req=%p, dst_req=%p, peer=%d",           \
+                             (uint16_t)(sendreq)->req_send.req_base.req_sequence, \
+                             (void *)(sendreq), (sendreq)->req_recv.pval,         \
+                             (sendreq)->req_send.req_base.req_peer);              \
+        return;                                                                   \
+    }
+
+/**
+ * Macros for pml_bfo_recvreq.c file.
+ */
+
+/* This can happen if a FIN message arrives after the request was
+ * marked in error.  So, just drop the message.  Note that the status
+ * field is not being checked.  That is because the status field is the
+ * value returned in the FIN hdr.hdr_fail field and may be used for
+ * other things.  Note that we allow the various fields to be updated
+ * in case this actually completes the request and the sending side
+ * thinks it is done. */
+#define MCA_PML_BFO_ERROR_CHECK_ON_FIN_FOR_PUT(recvreq)                                   \
+    if( OPAL_UNLIKELY((recvreq)->req_errstate)) {                                         \
+        opal_output_verbose(20, mca_pml_bfo_output,                                       \
+                            "FIN: received on broken request, skipping, "                 \
+                            "PML=%d, RQS=%d, src_req=%p, dst_req=%p, peer=%d",            \
+                            (recvreq)->req_msgseq, (recvreq)->req_restartseq,             \
+                            (recvreq)->remote_req_send.pval, (void *)(recvreq),           \
+                            (recvreq)->req_recv.req_base.req_ompi.req_status.MPI_SOURCE); \
+        /* Even though in error, it still might complete.  */                             \
+        recv_request_pml_complete_check(recvreq);                                         \
+        return;                                                                           \
+    }
+
+#define MCA_PML_BFO_ERROR_CHECK_ON_RDMA_READ_COMPLETION(recvreq)                            \
+    if ((recvreq)->req_errstate) {                                                          \
+        opal_output_verbose(30, mca_pml_bfo_output,                                         \
+			    "RDMA read: completion failed, error already seen, "            \
+			    "PML=%d, RQS=%d, src_req=%lx, dst_req=%lx, peer=%d",            \
+			    (recvreq)->req_msgseq, (recvreq)->req_restartseq,               \
+			    (unsigned long)(recvreq)->remote_req_send.pval,                 \
+			    (unsigned long)(recvreq),                                       \
+			    (recvreq)->req_recv.req_base.req_ompi.req_status.MPI_SOURCE);   \
+	return;                                                                             \
+    } else {                                                                                \
+	opal_output_verbose(30, mca_pml_bfo_output,                                         \
+			    "RDMA read: completion failed, sending RECVERRNOTIFY to "       \
+			    "sender, PML=%d, RQS=%d, src_req=%lx, dst_req=%lx, peer=%d",    \
+			    (recvreq)->req_msgseq, (recvreq)->req_restartseq,               \
+			    (unsigned long)(recvreq)->remote_req_send.pval,                 \
+			    (unsigned long)(recvreq),                                       \
+			    (recvreq)->req_recv.req_base.req_ompi.req_status.MPI_SOURCE);   \
+	mca_pml_bfo_recv_request_recverrnotify(recvreq, MCA_PML_BFO_HDR_TYPE_RGET, status); \
+    }            
+
 
 END_C_DECLS
 

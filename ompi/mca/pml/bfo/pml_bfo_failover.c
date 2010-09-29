@@ -148,10 +148,12 @@ bool mca_pml_bfo_is_duplicate_fin(mca_pml_bfo_hdr_t* hdr, mca_btl_base_descripto
          * if it was freed and not reused yet.  */
         if (NULL == rdma->des_cbdata) {
             opal_output_verbose(20, mca_pml_bfo_output,
-                "FIN: received: dropping because not pointing to valid descriptor "
-                "PML=%d CTX=%d SRC=%d RQS=%d",
-                hdr->hdr_match.hdr_seq, hdr->hdr_match.hdr_ctx,
-                hdr->hdr_match.hdr_src, hdr->hdr_fin.hdr_restartseq);
+                                "FIN: received: dropping because not pointing to valid descriptor "
+                                "PML=%d CTX=%d SRC=%d RQS=%d",
+                                hdr->hdr_fin.hdr_match.hdr_seq,
+                                hdr->hdr_fin.hdr_match.hdr_ctx,
+                                hdr->hdr_fin.hdr_match.hdr_src,
+                                hdr->hdr_fin.hdr_match.hdr_common.hdr_flags);
             return true;
         }
 
@@ -165,65 +167,76 @@ bool mca_pml_bfo_is_duplicate_fin(mca_pml_bfo_hdr_t* hdr, mca_btl_base_descripto
          * what fields to access.  */
         if (basereq->req_type == MCA_PML_REQUEST_RECV) {
             mca_pml_bfo_recv_request_t* recvreq = (mca_pml_bfo_recv_request_t*)basereq;
-            if ((hdr->hdr_match.hdr_ctx != recvreq->req_recv.req_base.req_comm->c_contextid) ||
-                (hdr->hdr_match.hdr_src != recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE) ||
-                (hdr->hdr_match.hdr_seq != (uint16_t)recvreq->req_msgseq)) {
+            if ((hdr->hdr_fin.hdr_match.hdr_ctx !=
+		 recvreq->req_recv.req_base.req_comm->c_contextid) ||
+                (hdr->hdr_fin.hdr_match.hdr_src !=
+		 recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE) ||
+                (hdr->hdr_fin.hdr_match.hdr_seq != (uint16_t)recvreq->req_msgseq)) {
                 opal_output_verbose(5, mca_pml_bfo_output,
                                     "FIN: received on receiver: dropping because no match "
                                     "PML:exp=%d,act=%d CTX:exp=%d,act=%d SRC:exp=%d,act=%d "
                                     "RQS:exp=%d,act=%d, dst_req=%p",
-                                    (uint16_t)recvreq->req_msgseq, hdr->hdr_match.hdr_seq,
+                                    (uint16_t)recvreq->req_msgseq, hdr->hdr_fin.hdr_match.hdr_seq,
                                     recvreq->req_recv.req_base.req_comm->c_contextid,
-                                    hdr->hdr_match.hdr_ctx,
+                                    hdr->hdr_fin.hdr_match.hdr_ctx,
                                     recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE,
-                                    hdr->hdr_match.hdr_src,
-                                    recvreq->req_restartseq, hdr->hdr_fin.hdr_restartseq,
+                                    hdr->hdr_fin.hdr_match.hdr_src,
+                                    recvreq->req_restartseq,
+                                    hdr->hdr_fin.hdr_match.hdr_common.hdr_flags,
                                     (void *)recvreq);
                 return true;
             }
-            if (hdr->hdr_fin.hdr_restartseq != recvreq->req_restartseq) {
+            if (hdr->hdr_fin.hdr_match.hdr_common.hdr_flags != recvreq->req_restartseq) {
                 opal_output_verbose(5, mca_pml_bfo_output,
                                     "FIN: received on receiver: dropping because old "
                                     "PML:exp=%d,act=%d CTX:exp=%d,act=%d SRC:exp=%d,act=%d "
                                     "RQS:exp=%d,act=%d, dst_req=%p",
-                                    (uint16_t)recvreq->req_msgseq, hdr->hdr_match.hdr_seq,
+                                    (uint16_t)recvreq->req_msgseq, hdr->hdr_fin.hdr_match.hdr_seq,
                                     recvreq->req_recv.req_base.req_comm->c_contextid,
-                                    hdr->hdr_match.hdr_ctx,
+                                    hdr->hdr_fin.hdr_match.hdr_ctx,
                                     recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE,
-                                    hdr->hdr_match.hdr_src,
-                                    recvreq->req_restartseq, hdr->hdr_fin.hdr_restartseq,
+                                    hdr->hdr_fin.hdr_match.hdr_src,
+                                    recvreq->req_restartseq,
+                                    hdr->hdr_fin.hdr_match.hdr_common.hdr_flags,
                                     (void *)recvreq);
                 return true;
             }
         } else if (basereq->req_type == MCA_PML_REQUEST_SEND) {
             mca_pml_bfo_send_request_t* sendreq = (mca_pml_bfo_send_request_t*)basereq;
-            if ((hdr->hdr_match.hdr_ctx != sendreq->req_send.req_base.req_comm->c_contextid) ||
-                (hdr->hdr_match.hdr_src != sendreq->req_send.req_base.req_peer) ||
-                (hdr->hdr_match.hdr_seq != (uint16_t)sendreq->req_send.req_base.req_sequence)) {
+            if ((hdr->hdr_fin.hdr_match.hdr_ctx !=
+		 sendreq->req_send.req_base.req_comm->c_contextid) ||
+                (hdr->hdr_fin.hdr_match.hdr_src !=
+		 sendreq->req_send.req_base.req_peer) ||
+                (hdr->hdr_fin.hdr_match.hdr_seq !=
+		 (uint16_t)sendreq->req_send.req_base.req_sequence)) {
                 uint16_t seq = (uint16_t)sendreq->req_send.req_base.req_sequence;
                 opal_output_verbose(5, mca_pml_bfo_output,
                                     "FIN: received on sender: dropping because no match "
                                     "PML:exp=%d,act=%d CTX:exp=%d,act=%d SRC:exp=%d,act=%d "
                                     "RQS:exp=%d,act=%d, dst_req=%p",
-                                    seq, hdr->hdr_match.hdr_seq,
+                                    seq, hdr->hdr_fin.hdr_match.hdr_seq,
                                     sendreq->req_send.req_base.req_comm->c_contextid,
-                                    hdr->hdr_match.hdr_ctx,
-                                    sendreq->req_send.req_base.req_peer, hdr->hdr_match.hdr_src,
-                                    sendreq->req_restartseq, hdr->hdr_fin.hdr_restartseq,
+                                    hdr->hdr_fin.hdr_match.hdr_ctx,
+                                    sendreq->req_send.req_base.req_peer,
+                                    hdr->hdr_fin.hdr_match.hdr_src,
+                                    sendreq->req_restartseq,
+                                    hdr->hdr_fin.hdr_match.hdr_common.hdr_flags,
                                     (void *)sendreq);
                 return true;
             }
-            if (hdr->hdr_fin.hdr_restartseq != sendreq->req_restartseq) {
+            if (hdr->hdr_fin.hdr_match.hdr_common.hdr_flags != sendreq->req_restartseq) {
                 uint16_t seq = (uint16_t)sendreq->req_send.req_base.req_sequence;
                 opal_output_verbose(5, mca_pml_bfo_output,
                                     "FIN: received on sender: dropping because old "
                                     "PML:exp=%d,act=%d CTX:exp=%d,act=%d SRC:exp=%d,act=%d "
                                     "RQS:exp=%d,act=%d, dst_req=%p",
-                                    seq, hdr->hdr_match.hdr_seq,
+                                    seq, hdr->hdr_fin.hdr_match.hdr_seq,
                                     sendreq->req_send.req_base.req_comm->c_contextid,
-                                    hdr->hdr_match.hdr_ctx,
-                                    sendreq->req_send.req_base.req_peer, hdr->hdr_match.hdr_src,
-                                    sendreq->req_restartseq, hdr->hdr_fin.hdr_restartseq,
+                                    hdr->hdr_fin.hdr_match.hdr_ctx,
+                                    sendreq->req_send.req_base.req_peer,
+                                    hdr->hdr_fin.hdr_match.hdr_src,
+                                    sendreq->req_restartseq,
+                                    hdr->hdr_fin.hdr_match.hdr_common.hdr_flags,
                                     (void *)sendreq);
                 return true;
             }
@@ -236,8 +249,9 @@ bool mca_pml_bfo_is_duplicate_fin(mca_pml_bfo_hdr_t* hdr, mca_btl_base_descripto
             opal_output_verbose(5, mca_pml_bfo_output,
                                 "FIN: received: dropping because descriptor has been reused "
                                 "PML=%d CTX=%d SRC=%d RQS=%d rdma->des_flags=%d",
-                                hdr->hdr_match.hdr_seq, hdr->hdr_match.hdr_ctx,
-                                hdr->hdr_match.hdr_src, hdr->hdr_fin.hdr_restartseq, rdma->des_flags);
+                                hdr->hdr_fin.hdr_match.hdr_seq, hdr->hdr_fin.hdr_match.hdr_ctx,
+                                hdr->hdr_fin.hdr_match.hdr_src, hdr->hdr_fin.hdr_match.hdr_common.hdr_flags,
+                                rdma->des_flags);
             return true;
         }
     }
@@ -281,7 +295,8 @@ void mca_pml_bfo_repost_fin(struct mca_btl_base_descriptor_t* des) {
     /* Reconstruct the fin for sending on the other BTL */
     mca_pml_bfo_send_fin(proc, bml_btl,
                          hdr->hdr_des, MCA_BTL_NO_ORDER,
-                         hdr->hdr_fail, hdr->hdr_match.hdr_seq, hdr->hdr_restartseq,
+                         hdr->hdr_fail, hdr->hdr_match.hdr_seq,
+                         hdr->hdr_match.hdr_common.hdr_flags,
                          hdr->hdr_match.hdr_ctx, hdr->hdr_match.hdr_src);
     return;
 }
@@ -1885,4 +1900,39 @@ void mca_pml_bfo_check_recv_ctl_completion_status(mca_btl_base_module_t* btl,
         recv_request_pml_complete_check(recvreq);
         break;
     }
+}
+
+/**
+ * Register four functions to handle extra PML message types that
+ * are utilized when a failover occurs.
+ */
+int mca_pml_bfo_register_callbacks(void) {
+    int rc;
+    /* The following four functions are utilized when failover
+     * support for openib is enabled. */
+    rc = mca_bml.bml_register( MCA_PML_BFO_HDR_TYPE_RNDVRESTARTNOTIFY,
+                               mca_pml_bfo_recv_frag_callback_rndvrestartnotify,
+                               NULL );
+    if(OMPI_SUCCESS != rc)
+        return rc;
+
+    rc = mca_bml.bml_register( MCA_PML_BFO_HDR_TYPE_RNDVRESTARTACK,
+                               mca_pml_bfo_recv_frag_callback_rndvrestartack,
+                               NULL );
+    if(OMPI_SUCCESS != rc)
+        return rc;
+
+    rc = mca_bml.bml_register( MCA_PML_BFO_HDR_TYPE_RNDVRESTARTNACK,
+                               mca_pml_bfo_recv_frag_callback_rndvrestartnack,
+                               NULL );
+    if(OMPI_SUCCESS != rc)
+        return rc;
+
+    rc = mca_bml.bml_register( MCA_PML_BFO_HDR_TYPE_RECVERRNOTIFY,
+                               mca_pml_bfo_recv_frag_callback_recverrnotify,
+                               NULL );
+    if(OMPI_SUCCESS != rc)
+        return rc;
+
+    return rc;
 }

@@ -307,18 +307,7 @@ void mca_pml_bfo_recv_frag_callback_ack(mca_btl_base_module_t* btl,
     sendreq = (mca_pml_bfo_send_request_t*)hdr->hdr_ack.hdr_src_req.pval;
     sendreq->req_recv = hdr->hdr_ack.hdr_dst_req;
 /* BFO FAILOVER CODE - begin */
-    /* Drop any fragments if request is in error state.  Do not want
-     * to initiate any more activity. */
-    if( OPAL_UNLIKELY(sendreq->req_error)) {
-         opal_output_verbose(20, mca_pml_bfo_output,
-                             "ACK: received: dropping because request in error, "
-                             "PML=%d, RQS=%d, src_req=%p, dst_req=%p, peer=%d",
-                             (uint16_t)sendreq->req_send.req_base.req_sequence,
-                             sendreq->req_restartseq,
-                             (void *)sendreq, sendreq->req_recv.pval,
-                             sendreq->req_send.req_base.req_peer);
-        return;
-    }
+    MCA_PML_BFO_ERROR_CHECK_ON_ACK_CALLBACK(sendreq)
 /* BFO FAILOVER CODE - end */
     
     /* if the request should be delivered entirely by copy in/out
@@ -357,33 +346,21 @@ void mca_pml_bfo_recv_frag_callback_frag(mca_btl_base_module_t* btl,
                                          mca_btl_base_tag_t tag,
                                          mca_btl_base_descriptor_t* des,
                                          void* cbdata ) {
-     mca_btl_base_segment_t* segments = des->des_dst;
-     mca_pml_bfo_hdr_t* hdr = (mca_pml_bfo_hdr_t*)segments->seg_addr.pval;
-     mca_pml_bfo_recv_request_t* recvreq;
-     
-     if( OPAL_UNLIKELY(segments->seg_len < sizeof(mca_pml_bfo_common_hdr_t)) ) {
-         return;
-     }
-     bfo_hdr_ntoh(hdr, MCA_PML_BFO_HDR_TYPE_FRAG);
-     recvreq = (mca_pml_bfo_recv_request_t*)hdr->hdr_frag.hdr_dst_req.pval;
+    mca_btl_base_segment_t* segments = des->des_dst;
+    mca_pml_bfo_hdr_t* hdr = (mca_pml_bfo_hdr_t*)segments->seg_addr.pval;
+    mca_pml_bfo_recv_request_t* recvreq;
+
+    if( OPAL_UNLIKELY(segments->seg_len < sizeof(mca_pml_bfo_common_hdr_t)) ) {
+        return;
+    }
+    bfo_hdr_ntoh(hdr, MCA_PML_BFO_HDR_TYPE_FRAG);
+    recvreq = (mca_pml_bfo_recv_request_t*)hdr->hdr_frag.hdr_dst_req.pval;
 /* BFO FAILOVER CODE - begin */
-     /* Drop any fragments if request is in error state.  Do not want
-      * to initiate any more activity. */
-     if( OPAL_UNLIKELY(recvreq->req_errstate)) {
-         opal_output_verbose(20, mca_pml_bfo_output,
-                             "FRAG: received: dropping because request in error, "
-                             "PML=%d, src_req=%p, dst_req=%p, peer=%d, offset=%d",
-                             (uint16_t)recvreq->req_msgseq,
-                             recvreq->remote_req_send.pval,
-                             (void *)recvreq,
-                             recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE,
-                             (int)hdr->hdr_frag.hdr_frag_offset);
-         return;
-     }
+    MCA_PML_BFO_ERROR_CHECK_ON_FRAG_CALLBACK(recvreq)
 /* BFO FAILOVER CODE - end */
-     mca_pml_bfo_recv_request_progress_frag(recvreq,btl,segments,des->des_dst_cnt);
-     
-     return;
+    mca_pml_bfo_recv_request_progress_frag(recvreq,btl,segments,des->des_dst_cnt);
+
+    return;
 }
 
 
@@ -402,17 +379,7 @@ void mca_pml_bfo_recv_frag_callback_put(mca_btl_base_module_t* btl,
     bfo_hdr_ntoh(hdr, MCA_PML_BFO_HDR_TYPE_PUT);
     sendreq = (mca_pml_bfo_send_request_t*)hdr->hdr_rdma.hdr_req.pval;
 /* BFO FAILOVER CODE - begin */
-    /* Drop any fragments if request is in error state.  Do not want
-     * to initiate any more activity. */
-    if( OPAL_UNLIKELY(sendreq->req_error)) {
-         opal_output_verbose(20, mca_pml_bfo_output,
-                             "PUT: received: dropping because request in error, "
-                             "PML=%d, src_req=%p, dst_req=%p, peer=%d",
-                             (uint16_t)sendreq->req_send.req_base.req_sequence,
-                             (void *)sendreq, sendreq->req_recv.pval,
-                             sendreq->req_send.req_base.req_peer);
-        return;
-    }
+    MCA_PML_BFO_ERROR_CHECK_ON_PUT_CALLBACK(sendreq)
 /* BFO FAILOVER CODE - end */
     mca_pml_bfo_send_request_put(sendreq,btl,&hdr->hdr_rdma);
     
