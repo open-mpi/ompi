@@ -778,7 +778,6 @@ sub safe_system {
 
 # Command line parameters
 
-&Getopt::Long::Configure("bundling");
 my $ok = Getopt::Long::GetOptions("no-ompi" => \$no_ompi_arg,
                                   "no-orte" => \$no_orte_arg,
                                   "quiet|q" => \$quiet_arg,
@@ -793,19 +792,19 @@ if (!$ok || $help_arg) {
     print "Invalid command line argument.\n\n"
         if (!$ok);
     print "Options:
-  --no-ompi          Do not build the Open MPI layer
-  --no-orte          Do not build the ORTE layer
-  --quiet | -q       Do not display normal verbose output
-  --debug | -d       Output lots of debug information
-  --help | -h        This help list
-  --platform | -p    Specify a platform file to be parsed for no_build
-                     and only_build directives
-  --include | -i     Comma-separated list of framework-component pairs
-                     to be exclusively built - i.e., all other components
-                     will be ignored and only those specified will be marked
-                     to build
-  --exclude | -e     Comma-separated list of framework or framework-component
-                     to be excluded from the build\n";
+  --no-ompi | -no-ompi          Do not build the Open MPI layer
+  --no-orte | -no-orte          Do not build the ORTE layer
+  --quiet | -q                  Do not display normal verbose output
+  --debug | -d                  Output lots of debug information
+  --help | -h                   This help list
+  --platform | -p               Specify a platform file to be parsed for no_build
+                                and only_build directives
+  --include | -i                Comma-separated list of framework-component pairs
+                                to be exclusively built - i.e., all other components
+                                will be ignored and only those specified will be marked
+                                to build
+  --exclude | -e                Comma-separated list of framework or framework-component
+                                to be excluded from the build\n";
     exit($ok ? 0 : 1);
 }
 
