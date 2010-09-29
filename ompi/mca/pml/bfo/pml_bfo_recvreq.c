@@ -196,26 +196,9 @@ static void mca_pml_bfo_put_completion( mca_btl_base_module_t* btl,
     OPAL_THREAD_ADD_SIZE_T(&recvreq->req_pipeline_depth,-1);
 
     btl->btl_free(btl, des);
+
 /* BFO FAILOVER CODE - begin */
-    /* This can happen if a FIN message arrives after the request was
-     * marked in error.  So, just drop the message.  Note that the
-     * status field is not being checked.  That is because the status
-     * field is the value returned in the FIN hdr.hdr_fail field and
-     * may be used for other things.  Note that we allow the various
-     * fields to be updated in case this actually completes the
-     * request and the sending side thinks it is done. */
-    if( OPAL_UNLIKELY(recvreq->req_errstate)) {
-        opal_output_verbose(20, mca_pml_bfo_output,
-                            "FIN: received on broken request, skipping, "
-                            "PML=%d, RQS=%d, src_req=%lx, dst_req=%lx, peer=%d",
-                            recvreq->req_msgseq, recvreq->req_restartseq,
-                            (unsigned long)recvreq->remote_req_send.pval,
-                            (unsigned long)recvreq,
-                            recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE);
-        /* Even though in error, it still might complete.  */
-        recv_request_pml_complete_check(recvreq);
-        return;
-    }
+    MCA_PML_BFO_ERROR_CHECK_ON_FIN_FOR_PUT(recvreq)
 /* BFO FAILOVER CODE - end */
 
     /* check completion status */
@@ -368,27 +351,7 @@ static void mca_pml_bfo_rget_completion( mca_btl_base_module_t* btl,
 
     /* check completion status */
     if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
-/* BFO FAILOVER CODE - begin */
-        /* Record the error and send RECVERRNOTIFY if necessary. */ 
-        if (recvreq->req_errstate) { 
-            opal_output_verbose(30, mca_pml_bfo_output, 
-                                "RDMA read: completion failed, error already seen, " 
-                                "PML=%d, RQS=%d, src_req=%lx, dst_req=%lx, peer=%d", 
-                                recvreq->req_msgseq, recvreq->req_restartseq, 
-                                (unsigned long)recvreq->remote_req_send.pval, 
-                                (unsigned long)recvreq,
-                                recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE); 
-            return; 
-        } else { 
-            opal_output_verbose(30, mca_pml_bfo_output, 
-                                "RDMA read: completion failed, sending RECVERRNOTIFY to sender, " 
-                                "PML=%d, RQS=%d, src_req=%lx, dst_req=%lx, peer=%d", 
-                                recvreq->req_msgseq, recvreq->req_restartseq,
-                                (unsigned long)recvreq->remote_req_send.pval, 
-                                (unsigned long)recvreq,
-                                recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE); 
-            mca_pml_bfo_recv_request_recverrnotify(recvreq, MCA_PML_BFO_HDR_TYPE_RGET, status); 
-        }
+        MCA_PML_BFO_ERROR_CHECK_ON_RDMA_READ_COMPLETION(recvreq)
     }
 /* BFO FAILOVER CODE - end */
 /* BFO FAILOVER CODE - begin */

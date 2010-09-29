@@ -340,24 +340,17 @@ do {                                 \
  */
 
 struct mca_pml_bfo_fin_hdr_t {
+    mca_pml_bfo_common_hdr_t hdr_common;      /**< common attributes */
 /* BFO FAILOVER CODE - begin */
     mca_pml_bfo_match_hdr_t hdr_match;  /**< match info - needed for failover */ 
-    uint8_t hdr_restartseq;             /**< restart sequence - failover use only */
 /* BFO FAILOVER CODE - end */
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-    uint8_t hdr_padding[7];
-#endif
     uint32_t hdr_fail;                        /**< RDMA operation failed */
     ompi_ptr_t hdr_des;                       /**< completed descriptor */
 };
 typedef struct mca_pml_bfo_fin_hdr_t mca_pml_bfo_fin_hdr_t;
 
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
-#define MCA_PML_BFO_FIN_HDR_FILL(h) \
-do {                                \
-    (h).hdr_padding[0] = 0;         \
-    (h).hdr_padding[1] = 0;         \
-} while (0)
+#define MCA_PML_BFO_FIN_HDR_FILL(h)
 #else
 #define MCA_PML_BFO_FIN_HDR_FILL(h)
 #endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG */
@@ -365,12 +358,13 @@ do {                                \
 #define MCA_PML_BFO_FIN_HDR_NTOH(h) \
     do { \
         MCA_PML_BFO_COMMON_HDR_NTOH((h).hdr_common); \
+        MCA_PML_BFO_MATCH_HDR_NTOH((h).hdr_match); \
     } while (0)
 
 #define MCA_PML_BFO_FIN_HDR_HTON(h) \
     do { \
         MCA_PML_BFO_COMMON_HDR_HTON((h).hdr_common); \
-        MCA_PML_BFO_FIN_HDR_FILL(h); \
+        MCA_PML_BFO_MATCH_HDR_HTON((h).hdr_match); \
     } while (0) 
 
 /* BFO FAILOVER CODE - begin */

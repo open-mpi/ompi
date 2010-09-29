@@ -411,33 +411,11 @@ int mca_pml_bfo_add_procs(ompi_proc_t** procs, size_t nprocs)
         goto cleanup_and_return;
 
 /* BFO FAILOVER CODE - begin */
-    /* The following four functions are utilized when failover
-     * support for openib is enabled. */
-    rc = mca_bml.bml_register( MCA_PML_BFO_HDR_TYPE_RNDVRESTARTNOTIFY,
-                               mca_pml_bfo_recv_frag_callback_rndvrestartnotify,
-                               NULL );
-    if(OMPI_SUCCESS != rc)
-        goto cleanup_and_return;
-
-    rc = mca_bml.bml_register( MCA_PML_BFO_HDR_TYPE_RNDVRESTARTACK,
-                               mca_pml_bfo_recv_frag_callback_rndvrestartack,
-                               NULL );
-    if(OMPI_SUCCESS != rc)
-        goto cleanup_and_return;
-
-    rc = mca_bml.bml_register( MCA_PML_BFO_HDR_TYPE_RNDVRESTARTNACK,
-                               mca_pml_bfo_recv_frag_callback_rndvrestartnack,
-                               NULL );
-    if(OMPI_SUCCESS != rc)
-        goto cleanup_and_return;
-
-    rc = mca_bml.bml_register( MCA_PML_BFO_HDR_TYPE_RECVERRNOTIFY,
-                               mca_pml_bfo_recv_frag_callback_recverrnotify,
-                               NULL );
+    rc = mca_pml_bfo_register_callbacks();
     if(OMPI_SUCCESS != rc)
         goto cleanup_and_return;
 /* BFO FAILOVER CODE - end */
-    
+
     /* register error handlers */
     rc = mca_bml.bml_register_error(mca_pml_bfo_error_handler);
     if(OMPI_SUCCESS != rc)
@@ -529,18 +507,21 @@ int mca_pml_bfo_send_fin( ompi_proc_t* proc,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     fin->des_cbfunc = mca_pml_bfo_fin_completion;
-    fin->des_cbdata = proc;
+    fin->des_cbdata = NULL;
 
     /* fill in header */
     hdr = (mca_pml_bfo_fin_hdr_t*)fin->des_src->seg_addr.pval;
-    hdr->hdr_match.hdr_common.hdr_flags = 0;
-    hdr->hdr_match.hdr_common.hdr_type = MCA_PML_BFO_HDR_TYPE_FIN;
+    hdr->hdr_common.hdr_flags = 0;
+    hdr->hdr_common.hdr_type = MCA_PML_BFO_HDR_TYPE_FIN;
     hdr->hdr_des = hdr_des;
     hdr->hdr_fail = status;
+/* BFO FAILOVER CODE - begin */
+    fin->des_cbdata = proc;
     hdr->hdr_match.hdr_seq = seq;
-    hdr->hdr_restartseq = restartseq;
     hdr->hdr_match.hdr_ctx = ctx;
     hdr->hdr_match.hdr_src = src;
+    hdr->hdr_match.hdr_common.hdr_flags = restartseq;  /* use unused hdr_flags field */
+/* BFO FAILOVER CODE - end */
 
     bfo_hdr_hton(hdr, MCA_PML_BFO_HDR_TYPE_FIN, proc);
 
@@ -608,10 +589,10 @@ void mca_pml_bfo_process_pending_packets(struct mca_btl_base_module_t* btl)
                                           pckt->hdr.hdr_fin.hdr_des,
                                           pckt->order,
                                           pckt->hdr.hdr_fin.hdr_fail,
-                                          pckt->hdr.hdr_match.hdr_seq,
-                                          pckt->hdr.hdr_fin.hdr_restartseq,
-                                          pckt->hdr.hdr_match.hdr_ctx,
-                                          pckt->hdr.hdr_match.hdr_src);
+                                          pckt->hdr.hdr_fin.hdr_match.hdr_seq,
+                                          pckt->hdr.hdr_fin.hdr_match.hdr_common.hdr_flags,
+                                          pckt->hdr.hdr_fin.hdr_match.hdr_ctx,
+                                          pckt->hdr.hdr_fin.hdr_match.hdr_src);
                 if( OPAL_UNLIKELY(OMPI_ERR_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc)) ) {
                     return;
                 }

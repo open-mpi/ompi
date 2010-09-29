@@ -379,7 +379,7 @@ mca_pml_bfo_send_ctl_completion( mca_btl_base_module_t* btl,
                                     hdr->hdr_match.hdr_ctx,
                                     sendreq->req_send.req_base.req_comm->c_my_rank,
                                     hdr->hdr_match.hdr_src,
-                                    sendreq->req_restartseq, hdr->hdr_fin.hdr_restartseq,
+                                    sendreq->req_restartseq, hdr->hdr_rndv.hdr_restartseq,
                                     (void *)sendreq);
                 return;
             }
