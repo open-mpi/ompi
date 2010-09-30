@@ -465,6 +465,7 @@ int orterun(int argc, char *argv[])
     int rc;
     opal_cmd_line_t cmd_line;
     char * tmp_env_var = NULL;
+    orte_debugger_breakpoint_fn_t foo;
 
     /* find our basename (the name of the executable) so that we can
        use it in pretty-print error messages */
@@ -528,13 +529,29 @@ int orterun(int argc, char *argv[])
      * us
      */
     MPIR_proctable = NULL;
-    if (0 == MPIR_being_debugged);
-    if (0 == MPIR_debug_state);
-    if (0 == MPIR_i_am_starter);
-    if (1 == MPIR_partial_attach_ok);
-    if (0 == MPIR_forward_output);
-    if (0 == MPIR_forward_comm);
+    MPIR_proctable_size = 0;
+    if (0 == MPIR_being_debugged) {
+        rc = ORTE_SUCCESS;
+    }
+    if (0 == MPIR_debug_state) {
+        rc = ORTE_SUCCESS;
+    }
+    if (0 == MPIR_i_am_starter) {
+        rc = ORTE_SUCCESS;
+    }
+    if (1 == MPIR_partial_attach_ok) {
+        rc = ORTE_SUCCESS;
+    }
+    memset((char*)MPIR_executable_path, 0, MPIR_MAX_PATH_LENGTH);
+    memset((char*)MPIR_server_arguments, 0, MPIR_MAX_ARG_LENGTH);
+    if (0 == MPIR_forward_output) {
+        rc = ORTE_SUCCESS;
+    }
+    if (0 == MPIR_forward_comm) {
+        rc = ORTE_SUCCESS;
+    }
     memset((char*)MPIR_attach_fifo, 0, MPIR_MAX_PATH_LENGTH);
+    foo = MPIR_Breakpoint;
 
     /* Check for some "global" command line params */
     parse_globals(argc, argv, &cmd_line);
