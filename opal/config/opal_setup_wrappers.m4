@@ -10,8 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
-dnl                         Use is subject to license terms.
+dnl Copyright (c) 2006-2010 Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
@@ -32,12 +31,16 @@ dnl
 AC_DEFUN([OPAL_SETUP_WRAPPER_INIT],[
     WRAPPER_EXTRA_CPPFLAGS=
     WRAPPER_EXTRA_CFLAGS=
+    WRAPPER_EXTRA_CFLAGS_PREFIX=
     WRAPPER_EXTRA_CXXFLAGS=
+    WRAPPER_EXTRA_CXXFLAGS_PREFIX=
     WRAPPER_EXTRA_LDFLAGS=
     WRAPPER_EXTRA_LIBS=
 
     USER_WRAPPER_EXTRA_CFLAGS=
+    USER_WRAPPER_EXTRA_CFLAGS_PREFIX=
     USER_WRAPPER_EXTRA_CXXFLAGS=
+    USER_WRAPPER_EXTRA_CXXFLAGS_PREFIX=
     USER_WRAPPER_EXTRA_LDFLAGS=
     USER_WRAPPER_EXTRA_LIBS=
 
@@ -50,6 +53,15 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_INIT],[
         USER_WRAPPER_EXTRA_CFLAGS="$with_wrapper_cflags"
     fi
 
+    AC_ARG_WITH([wrapper-cflags-prefix], 
+                [AC_HELP_STRING([--with-wrapper-cflags-prefix],
+                                [Extra flags to add to CFLAGS when using mpicc])])
+    if test "$with_wrapper_cflags_prefix" = "yes" -o "$with_wrapper_cflags_prefix" = "no"; then
+        AC_MSG_ERROR([--with-wrapper-cflags-prefix must have an argument.  Aborting])
+    elif test ! -z "$with_wrapper_cflags_prefix" ; then
+        USER_WRAPPER_EXTRA_CFLAGS_PREFIX="$with_wrapper_cflags_prefix"
+    fi
+
     AC_ARG_WITH([wrapper-cxxflags], 
         [AC_HELP_STRING([--with-wrapper-cxxflags],
                         [Extra flags to add to CXXFLAGS when using mpiCC/mpic++])])
@@ -59,6 +71,14 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_INIT],[
         USER_WRAPPER_EXTRA_CXXFLAGS="$with_wrapper_cxxflags"
     fi
 
+    AC_ARG_WITH([wrapper-cxxflags-prefix], 
+        [AC_HELP_STRING([--with-wrapper-cxxflags-prefix],
+                        [Extra flags to add to CXXFLAGS when using mpiCC/mpic++])])
+    if test "$with_wrapper_cxxflags_prefix" = "yes" -o "$with_wrapper_cxxflags_prefix" = "no"; then
+        AC_MSG_ERROR([--with-wrapper-cxxflags-prefix must have an argument.  Aborting])
+    elif test ! -z "$with_wrapper_cxxflags_prefix" ; then
+        USER_WRAPPER_EXTRA_CXXFLAGS_PREFIX="$with_wrapper_cxxflags_prefix"
+    fi
 
     AC_ARG_WITH([wrapper-ldflags], 
                 [AC_HELP_STRING([--with-wrapper-ldflags],
@@ -83,7 +103,9 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_INIT],[
 AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
     OMPI_UNIQ([WRAPPER_EXTRA_CPPFLAGS])
     OMPI_UNIQ([WRAPPER_EXTRA_CFLAGS])
+    OMPI_UNIQ([WRAPPER_EXTRA_CFLAGS_PREFIX])
     OMPI_UNIQ([WRAPPER_EXTRA_CXXFLAGS])
+    OMPI_UNIQ([WRAPPER_EXTRA_CXXFLAGS_PREFIX])
     OMPI_UNIQ([WRAPPER_EXTRA_LDFLAGS])
 
     OMPI_UNIQ([opal_WRAPPER_EXTRA_LDFLAGS])
@@ -99,10 +121,20 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
     AC_SUBST([OPAL_WRAPPER_EXTRA_CFLAGS])
     AC_MSG_RESULT([$OPAL_WRAPPER_EXTRA_CFLAGS])
 
+    AC_MSG_CHECKING([for OPAL CFLAGS_PREFIX])
+    OPAL_WRAPPER_EXTRA_CFLAGS_PREFIX="$WRAPPER_EXTRA_CFLAGS_PREFIX $USER_WRAPPER_EXTRA_CFLAGS_PREFIX"
+    AC_SUBST([OPAL_WRAPPER_EXTRA_CFLAGS_PREFIX])
+    AC_MSG_RESULT([$OPAL_WRAPPER_EXTRA_CFLAGS_PREFIX])
+
     AC_MSG_CHECKING([for OPAL CXXFLAGS])
     OPAL_WRAPPER_EXTRA_CXXFLAGS="$WRAPPER_EXTRA_CXXFLAGS $USER_WRAPPER_EXTRA_CXXFLAGS"
     AC_SUBST([OPAL_WRAPPER_EXTRA_CXXFLAGS])
     AC_MSG_RESULT([$OPAL_WRAPPER_EXTRA_CXXFLAGS])
+
+    AC_MSG_CHECKING([for OPAL CXXFLAGS_PREFIX])
+    OPAL_WRAPPER_EXTRA_CXXFLAGS_PREFIX="$WRAPPER_EXTRA_CXXFLAGS_PREFIX $USER_WRAPPER_EXTRA_CXXFLAGS_PREFIX"
+    AC_SUBST([OPAL_WRAPPER_EXTRA_CXXFLAGS_PREFIX])
+    AC_MSG_RESULT([$OPAL_WRAPPER_EXTRA_CXXFLAGS_PREFIX])
 
     AC_MSG_CHECKING([for OPAL LDFLAGS])
     OPAL_WRAPPER_EXTRA_LDFLAGS="$opal_WRAPPER_EXTRA_LDFLAGS $WRAPPER_EXTRA_LDFLAGS $USER_WRAPPER_EXTRA_LDFLAGS"
@@ -136,19 +168,27 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
 
     # compatibility defines that will eventually go away
     WRAPPER_EXTRA_CFLAGS="$OPAL_WRAPPER_EXTRA_CFLAGS"
+    WRAPPER_EXTRA_CFLAGS_PREFIX="$OPAL_WRAPPER_EXTRA_CFLAGS_PREFIX"
     WRAPPER_EXTRA_CXXFLAGS="$OPAL_WRAPPER_EXTRA_CXXFLAGS"
+    WRAPPER_EXTRA_CXXFLAGS_PREFIX="$OPAL_WRAPPER_EXTRA_CXXFLAGS_PREFIX"
     WRAPPER_EXTRA_LDFLAGS="$OPAL_WRAPPER_EXTRA_LDFLAGS"
     WRAPPER_EXTRA_LIBS="$OPAL_WRAPPER_EXTRA_LIBS"
 
     AC_SUBST([WRAPPER_EXTRA_CFLAGS])
+    AC_SUBST([WRAPPER_EXTRA_CFLAGS_PREFIX])
     AC_SUBST([WRAPPER_EXTRA_CXXFLAGS])
+    AC_SUBST([WRAPPER_EXTRA_CXXFLAGS_PREFIX])
     AC_SUBST([WRAPPER_EXTRA_LDFLAGS])
     AC_SUBST([WRAPPER_EXTRA_LIBS])
 
     AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_CFLAGS, "$WRAPPER_EXTRA_CFLAGS",
         [Additional CFLAGS to pass through the wrapper compilers])
+    AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_CFLAGS_PREFIX, "$WRAPPER_EXTRA_CFLAGS_PREFIX",
+        [Additional CFLAGS_PREFIX to pass through the wrapper compilers])
     AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_CXXFLAGS, "$WRAPPER_EXTRA_CXXFLAGS",
         [Additional CXXFLAGS to pass through the wrapper compilers])
+    AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_CXXFLAGS_PREFIX, "$WRAPPER_EXTRA_CXXFLAGS_PREFIX",
+        [Additional CXXFLAGS_PREFIX to pass through the wrapper compilers])
     AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_LDFLAGS, "$WRAPPER_EXTRA_LDFLAGS",
         [Additional LDFLAGS to pass through the wrapper compilers])
     AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_LIBS, "$WRAPPER_EXTRA_LIBS",
