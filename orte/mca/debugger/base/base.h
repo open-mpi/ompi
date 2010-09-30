@@ -61,7 +61,9 @@ ORTE_DECLSPEC extern volatile int MPIR_forward_output;
 ORTE_DECLSPEC extern volatile int MPIR_forward_comm;
 ORTE_DECLSPEC extern char MPIR_attach_fifo[MPIR_MAX_PATH_LENGTH];
 
-ORTE_DECLSPEC void *MPIR_Breakpoint(void);
+typedef void* (*orte_debugger_breakpoint_fn_t)(void);
+
+ORTE_DECLSPEC void* MPIR_Breakpoint(void);
 
 /* --- end MPICH/TotalView std debugger interface definitions */
 
