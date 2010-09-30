@@ -1405,7 +1405,7 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority)
 int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
 {
     mca_oob_tcp_addr_t* addr = NULL;
-    char *host, *haddr;
+    char *host, *haddr=NULL;
     orte_node_rank_t nrank;
     struct hostent *h;
     int port;
@@ -1489,7 +1489,7 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
                     port = strtol(mca_oob_tcp_component.tcp4_static_ports[nrank+1], NULL, 10);
                 }
                 /* create the uri */
-                asprintf(&uri, "tcp://%s:%d", haddr, port);
+                asprintf(&uri, "tcp://%s:%d", (NULL == haddr) ? "NULL" : haddr, port);
 #if OPAL_WANT_IPV6
             } else if (NULL != mca_oob_tcp_component.tcp6_static_ports) {
                 if (ORTE_JOBID_IS_DAEMON(peer->peer_name.jobid)) {
@@ -1511,7 +1511,7 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
                     port = strtol(mca_oob_tcp_component.tcp6_static_ports[nrank+1], NULL, 10);
                 }
                 /* create the uri */
-                asprintf(&uri, "tcp6://%s:%d", haddr, port);
+                asprintf(&uri, "tcp6://%s:%d", (NULL == haddr) ? "NULL" : haddr, port);
 #endif  /* OPAL_WANT_IPV6 */
             } else {
                 /* can't do anything with this - no idea how static ports got set! */
