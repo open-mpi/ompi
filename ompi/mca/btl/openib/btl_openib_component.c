@@ -2918,6 +2918,7 @@ void mca_btl_openib_frag_progress_pending_put_get(mca_btl_base_endpoint_t *ep,
     mca_btl_openib_module_t* openib_btl = ep->endpoint_btl;
     opal_list_item_t *frag;
     size_t i, len = opal_list_get_size(&ep->pending_get_frags);
+    int rc;
 
     for(i = 0; i < len && ep->qps[qp].qp->sd_wqe > 0 && ep->get_tokens > 0; i++)
     {
@@ -2926,8 +2927,9 @@ void mca_btl_openib_frag_progress_pending_put_get(mca_btl_base_endpoint_t *ep,
         OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
         if(NULL == frag)
             break;
-        if(OPAL_SOS_GET_ERROR_CODE(mca_btl_openib_get((mca_btl_base_module_t *)openib_btl, ep,
-                 &to_base_frag(frag)->base)) == OMPI_ERR_OUT_OF_RESOURCE)
+        rc = mca_btl_openib_get((mca_btl_base_module_t *)openib_btl, ep,
+                                &to_base_frag(frag)->base);
+        if(OMPI_ERR_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc))
             break;
     }
 
@@ -2938,8 +2940,9 @@ void mca_btl_openib_frag_progress_pending_put_get(mca_btl_base_endpoint_t *ep,
         OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
         if(NULL == frag)
             break;
-        if(OPAL_SOS_GET_ERROR_CODE(mca_btl_openib_put((mca_btl_base_module_t*)openib_btl, ep,
-                 &to_base_frag(frag)->base)) == OMPI_ERR_OUT_OF_RESOURCE)
+        rc = mca_btl_openib_put((mca_btl_base_module_t*)openib_btl, ep,
+                                &to_base_frag(frag)->base);
+        if(OMPI_ERR_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc))
             break;
     }
 }
