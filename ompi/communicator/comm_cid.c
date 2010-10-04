@@ -181,7 +181,7 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
      */
 
     switch (mode) 
-    {
+        {
         case OMPI_COMM_CID_INTRA: 
             allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_intra;
             break;
@@ -197,85 +197,83 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
         default: 
             return MPI_UNDEFINED;
             break;
-    }
+        }
     
     do {
-	/* Only one communicator function allowed in same time on the
-	 * same communicator.
-	 */
-	OPAL_THREAD_LOCK(&ompi_cid_lock);
-	response = ompi_comm_register_cid (comm->c_contextid);
-	OPAL_THREAD_UNLOCK(&ompi_cid_lock);
+        /* Only one communicator function allowed in same time on the
+         * same communicator.
+         */
+        OPAL_THREAD_LOCK(&ompi_cid_lock);
+        response = ompi_comm_register_cid (comm->c_contextid);
+        OPAL_THREAD_UNLOCK(&ompi_cid_lock);
     } while (OMPI_SUCCESS != response );
     start = ompi_mpi_communicators.lowest_free;
     
     while (!done) {
-	/**
-	 * This is the real algorithm described in the doc 
-	 */
-	
-	OPAL_THREAD_LOCK(&ompi_cid_lock);
-	if (comm->c_contextid != ompi_comm_lowest_cid() ) {
-	    /* if not lowest cid, we do not continue, but sleep and try again */
-	    OPAL_THREAD_UNLOCK(&ompi_cid_lock);
-	    continue;
-	}
-	OPAL_THREAD_UNLOCK(&ompi_cid_lock);
-        
-        
-	for (i=start; i < mca_pml.pml_max_contextid ; i++) {
-	    flag=opal_pointer_array_test_and_set_item(&ompi_mpi_communicators, 
-						      i, comm);
-	    if (true == flag) {
-		nextlocal_cid = i;
-		break;
-	    }
-	}
-	
-	(allredfnct)(&nextlocal_cid, &nextcid, 1, MPI_MAX, comm, bridgecomm,
-		     local_leader, remote_leader, send_first );
-	if (nextcid == nextlocal_cid) {
-	    response = 1; /* fine with me */
-	}
-	else {
-	    opal_pointer_array_set_item(&ompi_mpi_communicators, 
-					nextlocal_cid, NULL);
-	    
-	    flag = opal_pointer_array_test_and_set_item(&ompi_mpi_communicators, 
-							nextcid, comm );
-	    if (true == flag) {
-		response = 1; /* works as well */
-	    }
-	    else {
-		response = 0; /* nope, not acceptable */
-	    }
-	}
-        
-	(allredfnct)(&response, &glresponse, 1, MPI_MIN, comm, bridgecomm,
-		     local_leader, remote_leader, send_first );
-	if (1 == glresponse) {
-	    done = 1;             /* we are done */
-	    break;
-	}
-	else if ( 0 == glresponse ) {
-	    if ( 1 == response ) {
-		/* we could use that, but other don't agree */
-		opal_pointer_array_set_item(&ompi_mpi_communicators, 
-					    nextcid, NULL);
-	    }
-	    start = nextcid+1; /* that's where we can start the next round */
-	}
+        /**
+         * This is the real algorithm described in the doc 
+         */
+        OPAL_THREAD_LOCK(&ompi_cid_lock);
+        if (comm->c_contextid != ompi_comm_lowest_cid() ) {
+            /* if not lowest cid, we do not continue, but sleep and try again */
+            OPAL_THREAD_UNLOCK(&ompi_cid_lock);
+            continue;
+        }
+        OPAL_THREAD_UNLOCK(&ompi_cid_lock);
+
+        for (i=start; i < mca_pml.pml_max_contextid ; i++) {
+            flag=opal_pointer_array_test_and_set_item(&ompi_mpi_communicators, 
+                                                      i, comm);
+            if (true == flag) {
+                nextlocal_cid = i;
+                break;
+            }
+        }
+
+        (allredfnct)(&nextlocal_cid, &nextcid, 1, MPI_MAX, comm, bridgecomm,
+                     local_leader, remote_leader, send_first );
+        if (nextcid == nextlocal_cid) {
+            response = 1; /* fine with me */
+        }
+        else {
+            opal_pointer_array_set_item(&ompi_mpi_communicators, 
+                                        nextlocal_cid, NULL);
+
+            flag = opal_pointer_array_test_and_set_item(&ompi_mpi_communicators, 
+                                                        nextcid, comm );
+            if (true == flag) {
+                response = 1; /* works as well */
+            }
+            else {
+                response = 0; /* nope, not acceptable */
+            }
+        }
+
+        (allredfnct)(&response, &glresponse, 1, MPI_MIN, comm, bridgecomm,
+                     local_leader, remote_leader, send_first );
+        if (1 == glresponse) {
+            done = 1;             /* we are done */
+            break;
+        }
+        else if ( 0 == glresponse ) {
+            if ( 1 == response ) {
+                /* we could use that, but other don't agree */
+                opal_pointer_array_set_item(&ompi_mpi_communicators, 
+                                            nextcid, NULL);
+            }
+            start = nextcid+1; /* that's where we can start the next round */
+        }
     }
-    
+
     /* set the according values to the newcomm */
     newcomm->c_contextid = nextcid;
     newcomm->c_f_to_c_index = newcomm->c_contextid;
     opal_pointer_array_set_item (&ompi_mpi_communicators, nextcid, newcomm);
-    
+
     OPAL_THREAD_LOCK(&ompi_cid_lock);
     ompi_comm_unregister_cid (comm->c_contextid);
     OPAL_THREAD_UNLOCK(&ompi_cid_lock);
-    
+
     return (MPI_SUCCESS);
 }
 
@@ -404,7 +402,7 @@ int ompi_comm_activate ( ompi_communicator_t** newcomm,
      * send messages over the new communicator
      */
     switch (mode)
-    {
+        {
         case OMPI_COMM_CID_INTRA:
             allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_intra;
             break;
@@ -420,15 +418,15 @@ int ompi_comm_activate ( ompi_communicator_t** newcomm,
         default:
             return MPI_UNDEFINED;
             break;
-    }
+        }
 
     if (MPI_UNDEFINED != (*newcomm)->c_local_group->grp_my_rank) {
 
-	/* Initialize the PML stuff in the newcomm  */
-	if ( OMPI_SUCCESS != (ret = MCA_PML_CALL(add_comm(*newcomm))) ) {
-	    goto bail_on_error;
-	}
-	OMPI_COMM_SET_PML_ADDED(*newcomm);
+        /* Initialize the PML stuff in the newcomm  */
+        if ( OMPI_SUCCESS != (ret = MCA_PML_CALL(add_comm(*newcomm))) ) {
+            goto bail_on_error;
+        }
+        OMPI_COMM_SET_PML_ADDED(*newcomm);
     }
 
 
@@ -468,7 +466,7 @@ int ompi_comm_activate ( ompi_communicator_t** newcomm,
     /* Let the collectives components fight over who will do
        collective on this new comm.  */
     if (OMPI_SUCCESS != (ret = mca_coll_base_comm_select(*newcomm))) {
-	goto bail_on_error;
+        goto bail_on_error;
     }
 
     /* For an inter communicator, we have to deal with the potential
@@ -567,7 +565,7 @@ static int ompi_comm_allreduce_inter ( int *inbuf, int *outbuf,
         rc = OMPI_ERR_OUT_OF_RESOURCE;
         goto exit;
     }
-    
+
     /* Execute the inter-allreduce: the result of our group will
        be in the buffer of the remote group */
     rc = intercomm->c_coll.coll_allreduce ( inbuf, tmpbuf, count, MPI_INT,
@@ -605,12 +603,16 @@ static int ompi_comm_allreduce_inter ( int *inbuf, int *outbuf,
 
         if ( &ompi_mpi_op_max.op == op ) {
             for ( i = 0 ; i < count; i++ ) {
-                if (tmpbuf[i] > outbuf[i]) outbuf[i] = tmpbuf[i];
+                if (tmpbuf[i] > outbuf[i]) {
+                    outbuf[i] = tmpbuf[i];
+                }
             }
         }
         else if ( &ompi_mpi_op_min.op == op ) {
             for ( i = 0 ; i < count; i++ ) {
-                if (tmpbuf[i] < outbuf[i]) outbuf[i] = tmpbuf[i];
+                if (tmpbuf[i] < outbuf[i]) {
+                    outbuf[i] = tmpbuf[i];
+                }
             }
         }
         else if ( &ompi_mpi_op_sum.op == op ) {
@@ -624,7 +626,7 @@ static int ompi_comm_allreduce_inter ( int *inbuf, int *outbuf,
             }
         }
     }
- 
+
     /* distribute the overall result to all processes in the other group.
        Instead of using bcast, we are using here allgatherv, to avoid the
        possible deadlock. Else, we need an algorithm to determine, 
@@ -637,7 +639,7 @@ static int ompi_comm_allreduce_inter ( int *inbuf, int *outbuf,
                                             rcounts, rdisps, MPI_INT, 
                                             intercomm,
                                             intercomm->c_coll.coll_allgatherv_module);
-    
+
  exit:
     if ( NULL != tmpbuf ) {
         free ( tmpbuf );
@@ -667,7 +669,7 @@ static int ompi_comm_allreduce_intra_bridge (int *inbuf, int *outbuf,
     int i;
     int rc;
     int local_leader, remote_leader;
-    
+
     local_leader  = (*((int*)lleader));
     remote_leader = (*((int*)rleader));
 
@@ -694,14 +696,14 @@ static int ompi_comm_allreduce_intra_bridge (int *inbuf, int *outbuf,
         MPI_Request req;
         
         rc = MCA_PML_CALL(irecv ( outbuf, count, MPI_INT, remote_leader,
-                                 OMPI_COMM_ALLREDUCE_TAG, 
-                                 bcomm, &req));
+                                  OMPI_COMM_ALLREDUCE_TAG, 
+                                  bcomm, &req));
         if ( OMPI_SUCCESS != rc ) {
             goto exit;       
         }
         rc = MCA_PML_CALL(send (tmpbuf, count, MPI_INT, remote_leader, 
-                               OMPI_COMM_ALLREDUCE_TAG,
-                               MCA_PML_BASE_SEND_STANDARD,  bcomm));
+                                OMPI_COMM_ALLREDUCE_TAG,
+                                MCA_PML_BASE_SEND_STANDARD,  bcomm));
         if ( OMPI_SUCCESS != rc ) {
             goto exit;
         }
@@ -712,12 +714,16 @@ static int ompi_comm_allreduce_intra_bridge (int *inbuf, int *outbuf,
 
         if ( &ompi_mpi_op_max.op == op ) {
             for ( i = 0 ; i < count; i++ ) {
-                if (tmpbuf[i] > outbuf[i]) outbuf[i] = tmpbuf[i];
+                if (tmpbuf[i] > outbuf[i]) {
+                    outbuf[i] = tmpbuf[i];
+                }
             }
         }
         else if ( &ompi_mpi_op_min.op == op ) {
             for ( i = 0 ; i < count; i++ ) {
-                if (tmpbuf[i] < outbuf[i]) outbuf[i] = tmpbuf[i];
+                if (tmpbuf[i] < outbuf[i]) {
+                    outbuf[i] = tmpbuf[i];
+                }
             }
         }
         else if ( &ompi_mpi_op_sum.op == op ) {
@@ -730,9 +736,8 @@ static int ompi_comm_allreduce_intra_bridge (int *inbuf, int *outbuf,
                 outbuf[i] *= tmpbuf[i];
             }
         }
-        
     }
-    
+
     rc = comm->c_coll.coll_bcast ( outbuf, count, MPI_INT, local_leader, 
                                    comm, comm->c_coll.coll_bcast_module );
 
@@ -764,7 +769,7 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
     int local_leader, local_rank;
     orte_process_name_t *remote_leader=NULL;
     orte_std_cntr_t size_count;
-    
+
     local_leader  = (*((int*)lleader));
     remote_leader = (orte_process_name_t*)rleader;
     size_count = count;
@@ -773,8 +778,8 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
          &ompi_mpi_op_max.op != op && &ompi_mpi_op_min.op  != op ) {
         return MPI_ERR_OP;
     }
-    
-    
+
+
     local_rank = ompi_comm_rank ( comm );
     tmpbuf     = (int *) malloc ( count * sizeof(int));
     if ( NULL == tmpbuf ) {
@@ -826,12 +831,16 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
 
         if ( &ompi_mpi_op_max.op == op ) {
             for ( i = 0 ; i < count; i++ ) {
-                if (tmpbuf[i] > outbuf[i]) outbuf[i] = tmpbuf[i];
+                if (tmpbuf[i] > outbuf[i]) {
+                    outbuf[i] = tmpbuf[i];
+                }
             }
         }
         else if ( &ompi_mpi_op_min.op == op ) {
             for ( i = 0 ; i < count; i++ ) {
-                if (tmpbuf[i] < outbuf[i]) outbuf[i] = tmpbuf[i];
+                if (tmpbuf[i] < outbuf[i]) {
+                    outbuf[i] = tmpbuf[i];
+                }
             }
         }
         else if ( &ompi_mpi_op_sum.op == op ) {
@@ -844,9 +853,8 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
                 outbuf[i] *= tmpbuf[i];
             }
         }
-        
     }
-    
+
     rc = comm->c_coll.coll_bcast (outbuf, count, MPI_INT, 
                                   local_leader, comm,
                                   comm->c_coll.coll_bcast_module);
@@ -860,4 +868,3 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
 }
 
 END_C_DECLS
-

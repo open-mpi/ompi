@@ -27,29 +27,29 @@ static bool check_ranks (int, int *);
 
 int ompi_group_calc_bmap ( int n, int orig_size , int *ranks) {  
     if (check_ranks(n,ranks)) {
-	return ompi_group_div_ceil(orig_size,BSIZE); 
+        return ompi_group_div_ceil(orig_size,BSIZE); 
     }
     else {
-	return -1;
+        return -1;
     }
 }
 
 /* from parent group to child group*/
 int ompi_group_translate_ranks_bmap ( ompi_group_t *parent_group, 
-                                 int n_ranks, int *ranks1,
-                                 ompi_group_t *child_group, 
-                                 int *ranks2) 
+                                      int n_ranks, int *ranks1,
+                                      ompi_group_t *child_group, 
+                                      int *ranks2) 
 {
     int i,count,j,k,m;
     unsigned char tmp, tmp1;
     for (j=0 ; j<n_ranks ; j++) {
-	if ( MPI_PROC_NULL == ranks1[j]) {
-	    ranks2[j] = MPI_PROC_NULL;
-	}
-	else {
-	    ranks2[j] = MPI_UNDEFINED;
-	    m = ranks1[j];
-	    count = 0;
+        if ( MPI_PROC_NULL == ranks1[j]) {
+            ranks2[j] = MPI_PROC_NULL;
+        }
+        else {
+            ranks2[j] = MPI_UNDEFINED;
+            m = ranks1[j];
+            count = 0;
             tmp = ( 1 << (m % BSIZE) );
             /* check if the bit that correponds to the parent rank is set in the bitmap */
             if ( tmp == (child_group->sparse_data.grp_bitmap.grp_bitmap_array[(int)(m/BSIZE)] 
@@ -60,57 +60,58 @@ int ompi_group_translate_ranks_bmap ( ompi_group_t *parent_group,
                  * that are set on the way till we get to the correponding bit 
                  */
                 for (i=0 ; i<=(int)(m/BSIZE) ; i++) {
-		    for (k=0 ; k<BSIZE ; k++) {
+                    for (k=0 ; k<BSIZE ; k++) {
                         tmp1 = ( 1 << k);
-			if ( tmp1 == ( child_group->sparse_data.grp_bitmap.grp_bitmap_array[i] 
+                        if ( tmp1 == ( child_group->sparse_data.grp_bitmap.grp_bitmap_array[i] 
                                        & (1 << k) ) ) {
-			    count++;
+                            count++;
                         }
-			if( i==(int)(m/BSIZE) &&  k==m % BSIZE ) {
-			    ranks2[j] = count-1;
+                        if( i==(int)(m/BSIZE) &&  k==m % BSIZE ) {
+                            ranks2[j] = count-1;
                             i = (int)(m/BSIZE) + 1;
                             break;
-			}
-		    }
+                        }
+                    }
                 }
-	    }
-	}
+            }
+        }
     }
     return OMPI_SUCCESS;
 }
 /* from child group to parent group */
 int ompi_group_translate_ranks_bmap_reverse ( ompi_group_t *child_group, 
-					      int n_ranks, int *ranks1,
-					      ompi_group_t *parent_group, 
-					      int *ranks2) 
+                                              int n_ranks, int *ranks1,
+                                              ompi_group_t *parent_group, 
+                                              int *ranks2) 
 {
     int i,j,count,m,k;
     unsigned char tmp;
     for (j=0 ; j<n_ranks ; j++) {
-	if ( MPI_PROC_NULL == ranks1[j]) {
-	    ranks2[j] = MPI_PROC_NULL;
-	}
-	else {
-	    m = ranks1[j];
-	    count = 0;
+        if ( MPI_PROC_NULL == ranks1[j]) {
+            ranks2[j] = MPI_PROC_NULL;
+        }
+        else {
+            m = ranks1[j];
+            count = 0;
             /*
              * Go through all the bits set in the bitmap up to the child rank.
              * The parent rank will be the sum of all bits passed (set and unset)
              */
             for (i=0 ; i<child_group->sparse_data.grp_bitmap.grp_bitmap_array_len ; i++) {
-		for (k=0 ; k<BSIZE ; k++) {
+                for (k=0 ; k<BSIZE ; k++) {
                     tmp = ( 1 << k);
-		    if ( tmp == ( child_group->sparse_data.grp_bitmap.grp_bitmap_array[i] 
-                                  & (1 << k) ) ) 
-			count++;
-		    if( m == count-1 ) {
-			ranks2[j] = i*BSIZE + k;
-			i = child_group->sparse_data.grp_bitmap.grp_bitmap_array_len + 1;
-			break;
-		    }
-		}
+                    if ( tmp == ( child_group->sparse_data.grp_bitmap.grp_bitmap_array[i] 
+                                  & (1 << k) ) ) {
+                        count++;
+                    }
+                    if( m == count-1 ) {
+                        ranks2[j] = i*BSIZE + k;
+                        i = child_group->sparse_data.grp_bitmap.grp_bitmap_array_len + 1;
+                        break;
+                    }
+                }
             }
-	}
+        }
     }
     return OMPI_SUCCESS;
 }
@@ -133,7 +134,7 @@ int ompi_group_div_ceil (int num, int den)
 static bool check_ranks (int n, int *ranks) {
     int i;
     for (i=1 ; i < n ; i++) {
-	if ( ranks[i-1] > ranks [i] ) {
+        if ( ranks[i-1] > ranks [i] ) {
             return false;
         }
     }
@@ -141,7 +142,7 @@ static bool check_ranks (int n, int *ranks) {
 }
 
 int ompi_group_incl_bmap(ompi_group_t* group, int n, int *ranks, 
-			   ompi_group_t **new_group) 
+                         ompi_group_t **new_group) 
 {
     /* local variables */
     int my_group_rank,i,bit_set;
@@ -150,24 +151,24 @@ int ompi_group_incl_bmap(ompi_group_t* group, int n, int *ranks,
     group_pointer = (ompi_group_t *)group;
     
     if ( 0 == n ) {
-	*new_group = MPI_GROUP_EMPTY;
-	OBJ_RETAIN(MPI_GROUP_EMPTY);
-	return OMPI_SUCCESS;
+        *new_group = MPI_GROUP_EMPTY;
+        OBJ_RETAIN(MPI_GROUP_EMPTY);
+        return OMPI_SUCCESS;
     }
 
     new_group_pointer = ompi_group_allocate_bmap(group->grp_proc_count, n);
     if( NULL == new_group_pointer ) {
-	return MPI_ERR_GROUP;
+        return MPI_ERR_GROUP;
     }
     /* Initialize the bit array to zeros */
     for (i=0 ; i<new_group_pointer->sparse_data.grp_bitmap.grp_bitmap_array_len ; i++) {
-	new_group_pointer->
+        new_group_pointer->
             sparse_data.grp_bitmap.grp_bitmap_array[i] = 0;
     }
 
     /* set the bits */
     for (i=0 ; i<n ; i++) { 
-	bit_set = ranks[i] % BSIZE;
+        bit_set = ranks[i] % BSIZE;
         new_group_pointer->
             sparse_data.grp_bitmap.grp_bitmap_array[(int)(ranks[i]/BSIZE)] |= (1 << bit_set);
     }
