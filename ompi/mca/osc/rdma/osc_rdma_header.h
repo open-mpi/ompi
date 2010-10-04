@@ -10,6 +10,7 @@
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -40,8 +41,9 @@
 #define OMPI_OSC_RDMA_HDR_MULTI_END     0x0B
 #define OMPI_OSC_RDMA_HDR_RDMA_INFO     0x0C
 
-#define OMPI_OSC_RDMA_HDR_FLAG_NBO      0x01
-#define OMPI_OSC_RDMA_HDR_FLAG_MULTI    0x02
+#define OMPI_OSC_RDMA_HDR_FLAG_ALIGN_MASK 0x0F
+#define OMPI_OSC_RDMA_HDR_FLAG_NBO        0x10
+#define OMPI_OSC_RDMA_HDR_FLAG_MULTI      0x20
 
 struct ompi_osc_rdma_base_header_t {
     uint8_t hdr_type;

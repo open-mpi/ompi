@@ -11,6 +11,7 @@
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -32,6 +33,7 @@
 #include "opal/threads/condition.h"
 #include "opal/threads/mutex.h"
 #include "opal/util/arch.h"
+#include "opal/align.h"
 
 #include "ompi/info/info.h"
 #include "ompi/communicator/communicator.h"
@@ -919,6 +921,13 @@ component_fragment_cb(struct mca_btl_base_module_t *btl,
         }
 
         if ((base_header->hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_MULTI) != 0) {
+            /* The next header starts at the next aligned address in
+             * the buffer.  Therefore, check the hdr_flags to see if
+             * any extra alignment is necessary, and if so, pull value
+             * from the flags. */
+            if (base_header->hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_ALIGN_MASK) {
+                payload = (char *)payload + (base_header->hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_ALIGN_MASK);
+            }
             base_header = (ompi_osc_rdma_base_header_t*) payload;
         } else {
             done = true;
