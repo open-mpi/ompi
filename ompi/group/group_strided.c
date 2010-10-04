@@ -27,54 +27,54 @@ static int check_stride(int[],int);
 
 int ompi_group_calc_strided ( int n , int *ranks ) { 
     if(-1 == check_stride(ranks,n)) {
-	return -1;
+        return -1;
     }
     else {
-	return (sizeof(int)*3); 
+        return (sizeof(int)*3); 
     }
 }
 
 /* from parent group to child group*/
 int ompi_group_translate_ranks_strided (ompi_group_t *parent_group, 
-					int n_ranks, int *ranks1,
-					ompi_group_t *child_group, 
-					int *ranks2) 
+                                        int n_ranks, int *ranks1,
+                                        ompi_group_t *child_group, 
+                                        int *ranks2) 
 {
     int s,o,l,i;
     s = child_group->sparse_data.grp_strided.grp_strided_stride;
     o = child_group->sparse_data.grp_strided.grp_strided_offset;
     l = child_group->sparse_data.grp_strided.grp_strided_last_element;
     for (i = 0; i < n_ranks; i++) {
-	if ( MPI_PROC_NULL == ranks1[i]) {
-	    ranks2[i] = MPI_PROC_NULL;
-	}
-	else {
-	    ranks2[i] = MPI_UNDEFINED;
+        if ( MPI_PROC_NULL == ranks1[i]) {
+            ranks2[i] = MPI_PROC_NULL;
+        }
+        else {
+            ranks2[i] = MPI_UNDEFINED;
 	    
-	    if ( (ranks1[i]-o) >= 0  && (ranks1[i]-o)%s == 0 && ranks1[i] <= l) {
-		ranks2[i] = (ranks1[i] - o)/s;
-	    }
-	}
+            if ( (ranks1[i]-o) >= 0  && (ranks1[i]-o)%s == 0 && ranks1[i] <= l) {
+                ranks2[i] = (ranks1[i] - o)/s;
+            }
+        }
     }
     return OMPI_SUCCESS;
 }
 
 /* from child group to parent group*/
 int ompi_group_translate_ranks_strided_reverse (ompi_group_t *child_group, 
-						int n_ranks, int *ranks1,
-						ompi_group_t *parent_group, 
-						int *ranks2) 
+                                                int n_ranks, int *ranks1,
+                                                ompi_group_t *parent_group, 
+                                                int *ranks2) 
 {
     int s,o,i;
     s = child_group->sparse_data.grp_strided.grp_strided_stride;
     o = child_group->sparse_data.grp_strided.grp_strided_offset; 
     for (i = 0; i < n_ranks; i++) {
-	if ( MPI_PROC_NULL == ranks1[i]) {
-	    ranks2[i] = MPI_PROC_NULL;
-	}
-	else {
-	    ranks2[i] =s*ranks1[i] + o;
-	}
+        if ( MPI_PROC_NULL == ranks1[i]) {
+            ranks2[i] = MPI_PROC_NULL;
+        }
+        else {
+            ranks2[i] =s*ranks1[i] + o;
+        }
     }
     return OMPI_SUCCESS;
 }
@@ -91,14 +91,15 @@ static int check_stride(int incl[],int incllen) {
         return -1;
     }
     for(i=0 ; i < incllen-1 ; i++) {
-    	if(incl[i+1] - incl[i] != s) 
-	    return -1;
+    	if(incl[i+1] - incl[i] != s) {
+            return -1;
+        }
     }
     return s; 
 }
 
 int ompi_group_incl_strided(ompi_group_t* group, int n, int *ranks, 
-			    ompi_group_t **new_group) 
+                            ompi_group_t **new_group) 
 {
     /* local variables */
     int my_group_rank,stride;
@@ -107,9 +108,9 @@ int ompi_group_incl_strided(ompi_group_t* group, int n, int *ranks,
     group_pointer = (ompi_group_t *)group;
     
     if ( 0 == n ) {
-	*new_group = MPI_GROUP_EMPTY;
-	OBJ_RETAIN(MPI_GROUP_EMPTY);
-	return OMPI_SUCCESS;
+        *new_group = MPI_GROUP_EMPTY;
+        OBJ_RETAIN(MPI_GROUP_EMPTY);
+        return OMPI_SUCCESS;
     }
 
     stride = check_stride(ranks,n);
@@ -130,9 +131,9 @@ int ompi_group_incl_strided(ompi_group_t* group, int n, int *ranks,
     ompi_group_increment_proc_count(new_group_pointer);
     my_group_rank = group_pointer->grp_my_rank;
     ompi_group_translate_ranks (new_group_pointer->grp_parent_group_ptr,1,&my_group_rank,
-				new_group_pointer,&new_group_pointer->grp_my_rank);
+                                new_group_pointer,&new_group_pointer->grp_my_rank);
 
     *new_group = (MPI_Group)new_group_pointer;
 
-     return OMPI_SUCCESS;
+    return OMPI_SUCCESS;
 }

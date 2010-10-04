@@ -222,25 +222,25 @@ int ompi_comm_finalize(void)
            is because a parent communicator is created dynamically
            during init, and we just set this pointer to it.  Hence, we
            just pass in the pointer here. */
-       OBJ_DESTRUCT (ompi_mpi_comm_parent);
+        OBJ_DESTRUCT (ompi_mpi_comm_parent);
 
-       /* Please note, that the we did increase the reference count
-          for ompi_mpi_comm_null, ompi_mpi_group_null, and 
-          ompi_mpi_errors_are_fatal in ompi_comm_init because of 
-          ompi_mpi_comm_parent.  In case a 
-          parent communicator is really created, the ref. counters
-          for these objects are decreased again by one. However, in a 
-          static scenario, we should ideally decrease the ref. counter
-          for these objects by one here. The problem just is, that 
-          if the app had a parent_comm, and this has been freed/disconnected,
-          ompi_comm_parent points again to ompi_comm_null, the reference count 
-          for these objects has not been increased again.
-          So the point is, if ompi_mpi_comm_parent == &ompi_mpi_comm_null
-          we do not know whether we have to decrease the ref count for
-          those three objects or not. Since this is a constant, non-increasing
-          amount of memory, we stick with the current solution for now, 
-          namely don't do anything.
-       */  
+        /* Please note, that the we did increase the reference count
+           for ompi_mpi_comm_null, ompi_mpi_group_null, and 
+           ompi_mpi_errors_are_fatal in ompi_comm_init because of 
+           ompi_mpi_comm_parent.  In case a 
+           parent communicator is really created, the ref. counters
+           for these objects are decreased again by one. However, in a 
+           static scenario, we should ideally decrease the ref. counter
+           for these objects by one here. The problem just is, that 
+           if the app had a parent_comm, and this has been freed/disconnected,
+           ompi_comm_parent points again to ompi_comm_null, the reference count 
+           for these objects has not been increased again.
+           So the point is, if ompi_mpi_comm_parent == &ompi_mpi_comm_null
+           we do not know whether we have to decrease the ref count for
+           those three objects or not. Since this is a constant, non-increasing
+           amount of memory, we stick with the current solution for now, 
+           namely don't do anything.
+        */  
     }
 
     /* Shut down MPI_COMM_NULL */
@@ -256,23 +256,23 @@ int ompi_comm_finalize(void)
             comm=(ompi_communicator_t *)opal_pointer_array_get_item(&ompi_mpi_communicators, i);
             if ( NULL != comm ) {
                 /* Still here ? */
-		if ( !OMPI_COMM_IS_EXTRA_RETAIN(comm)) {
+                if ( !OMPI_COMM_IS_EXTRA_RETAIN(comm)) {
 
-		    /* For communicator that have been marked as "extra retain", we do not further
-		     * enforce to decrease the reference counter once more. These "extra retain"
-		     * communicators created e.g. by the hierarch or inter module did increase
-		     * the reference count by one more than other communicators, on order to
-		     * allow for deallocation with the parent communicator. Note, that
-		     * this only occurs if the cid of the local_comm is lower than of its
-		     * parent communicator. Read the comment in comm_activate for
-		     * a full explanation.
-		     */
-		    if ( ompi_debug_show_handle_leaks && !(OMPI_COMM_IS_FREED(comm)) ){
-			opal_output(0,"WARNING: MPI_Comm still allocated in MPI_Finalize\n");
-			ompi_comm_dump ( comm);
-			OBJ_RELEASE(comm);
-		    }
-		}
+                    /* For communicator that have been marked as "extra retain", we do not further
+                     * enforce to decrease the reference counter once more. These "extra retain"
+                     * communicators created e.g. by the hierarch or inter module did increase
+                     * the reference count by one more than other communicators, on order to
+                     * allow for deallocation with the parent communicator. Note, that
+                     * this only occurs if the cid of the local_comm is lower than of its
+                     * parent communicator. Read the comment in comm_activate for
+                     * a full explanation.
+                     */
+                    if ( ompi_debug_show_handle_leaks && !(OMPI_COMM_IS_FREED(comm)) ){
+                        opal_output(0,"WARNING: MPI_Comm still allocated in MPI_Finalize\n");
+                        ompi_comm_dump ( comm);
+                        OBJ_RELEASE(comm);
+                    }
+                }
             }
         }
     }
@@ -291,7 +291,7 @@ int ompi_comm_finalize(void)
  */
 int ompi_comm_link_function(void)
 {
-  return OMPI_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 /********************************************************************************/
