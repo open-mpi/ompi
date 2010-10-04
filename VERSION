@@ -20,7 +20,7 @@ release=3
 # only requirement is that it must be entirely printable ASCII 
 # characters and have no white space.
 
-greek=rc3
+greek=rc4
 
 # If want_svn=1, then the SVN r number will be included in the overall
 # Open MPI version number in some form.
@@ -83,8 +83,8 @@ date="Aug 24, 2010"
 
 libmpi_so_version=0:2:0
 libmpi_cxx_so_version=0:1:0
-libmpi_f77_so_version=0:0:0
-libmpi_f90_so_version=0:0:0
+libmpi_f77_so_version=0:1:0
+libmpi_f90_so_version=0:1:0
 libopen_rte_so_version=0:0:0
 libopen_pal_so_version=0:0:0
 
@@ -94,5 +94,5 @@ libopen_pal_so_version=0:0:0
 # components-don't-affect-the-build-system abstraction.
 
 libmca_common_sm_so_version=1:0:0
-libmca_common_mx_so_version=0:0:0
+libmca_common_mx_so_version=0:1:0
 libmca_common_portals_so_version=0:0:0
