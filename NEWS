@@ -66,7 +66,7 @@ Trunk (not on release branches yet)
   being "bound to all", which is equivalent to "not bound"
 
 
-1.5
+1.5 (expected)
 ---
 
 - Added "knem" support: direct process-to-process copying for shared
@@ -85,16 +85,16 @@ Trunk (not on release branches yet)
   Brown for reporting the issue.
 - Made the openib BTL safer if extremely low SRQ settings are used.
 - Fixed handling of the array_of_argv parameter in the Fortran
-  binding of MPI_COMM_SPAWN_MULTIPLE (** also to appear: 1.4.3).
+  binding of MPI_COMM_SPAWN_MULTIPLE (** also appeared: 1.4.3).
 - Fixed malloc(0) warnings in some collectives.
 - Fixed a problem with the Fortran binding for
   MPI_FILE_CREATE_ERRHANDLER.  Thanks to Secretan Yves for identifying
-  the issue (** also to appear: 1.4.3).
+  the issue (** also appeared: 1.4.3).
 - Updates to the LSF PLM to ensure that the path is correctly passed.
-  Thanks to Teng Lin for the patch (** also to appear: 1.4.3).
+  Thanks to Teng Lin for the patch (** also appeared: 1.4.3).
 - Fixes for the F90 MPI_COMM_SET_ERRHANDLER and MPI_WIN_SET_ERRHANDLER
   bindings.  Thanks to Paul Kapinos for pointing out the issue
-  (** also to appear: 1.4.3).
+  (** also appeared: 1.4.3).
 - Fixed extra_state parameter types in F90 prototypes for
   MPI_COMM_CREATE_KEYVAL, MPI_GREQUEST_START, MPI_REGISTER_DATAREP,
   MPI_TYPE_CREATE_KEYVAL, and MPI_WIN_CREATE_KEYVAL.
@@ -151,19 +151,59 @@ Trunk (not on release branches yet)
   - smtp (requires libesmtp) to send an email.
 
 
-1.4.3 (expected)
+1.4.3
 ----------------
 
 - Fixed handling of the array_of_argv parameter in the Fortran
-  binding of MPI_COMM_SPAWN_MULTIPLE (** also appeared: 1.5).
+  binding of MPI_COMM_SPAWN_MULTIPLE (** also to appear: 1.5).
 - Fixed a problem with the Fortran binding for
   MPI_FILE_CREATE_ERRHANDLER.  Thanks to Secretan Yves for identifying
-  the issue (** also appeared: 1.5).
+  the issue (** also to appear: 1.5).
 - Updates to the LSF PLM to ensure that the path is correctly passed.
-  Thanks to Teng Lin for the patch (** also appeared: 1.5).
+  Thanks to Teng Lin for the patch (** also to appear: 1.5).
 - Fixes for the F90 MPI_COMM_SET_ERRHANDLER and MPI_WIN_SET_ERRHANDLER
-  bindings.  Thanks to Paul Kapinos for pointing out the issue
-  (** also appeared: 1.5).
+  bindings.  Thanks to Paul Kapinos for pointing out the issue.
+  (** also to appear: 1.5).
+- Fixed various MPI_THREAD_MULTIPLE race conditions.
+- Fixed an issue with an undeclared variable from ptmalloc2 munmap on
+  BSD systems.
+- Fixes for BSD interface detection.
+- Various other BSD fixes.  Thanks to Kevin Buckley helping to track.
+  all of this down.
+- Fixed issues with the use of the -nper* mpirun command line arguments.
+- Fixed an issue with coll tuned dynamic rules.
+- Fixed an issue with the use of OPAL_DESTDIR being applied too aggressively.
+- Fixed an issue with one-sided xfers when the displacement exceeds 2GBytes.
+- Change to ensure TotalView works properly on Darwin.
+- Added support for Visual Studio 2010.
+- Fix to ensure proper placement of VampirTrace header files.
+- Needed to add volatile keyword to a varialbe used in debugging
+  (MPIR_being_debugged).
+- Fixed a bug in inter-allgather.
+- Fixed malloc(0) warnings.
+- Corrected a typo the MPI_Comm_size man page (intra -> inter).  Thanks
+  to Simon number.cruncher for pointing this out.
+- Fixed a SegV in orted when given more than 127 app_contexts.
+- Removed xgrid source code from the 1.4 branch since it is no longer
+  supported in the 1.4 series.
+- Removed the --enable-opal-progress-threads config option since
+  opal progress thread support does not work in 1.4.x.
+- Fixed a defect in VampirTrace's vtfilter.
+- Fixed wrong Windows path in hnp_contact.
+- Removed the requirement for a paffinity component.
+- Removed a hardcoded limit of 64 interconnected jobs.
+- Fix to allow singletons to use ompi-server for rendezvous.
+- Fixed bug in output-filename option.
+- Fix to correctly handle failures in mx_init().
+- Fixed a potential Fortran memory leak.
+- Fixed an incorrect branch in some ppc32 assembly code.  Thanks
+  to Matthew Clark for this fix.
+- Remove use of undocumented AS_VAR_GET macro during configuration.
+- Fixed an issue with VampirTrace's wrapper for MPI_init_thread.
+- Updated mca-btl-openib-device-params.ini file with various new vendor id's.
+- Configuration fixes to ensure CPPFLAGS in handled properly if a non-standard
+  valgrind location was specified.
+- Various man page updates
 
 
 1.4.2
