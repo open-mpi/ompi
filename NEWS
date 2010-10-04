@@ -50,6 +50,7 @@ included in the vX.Y.Z section and be denoted as:
 Trunk (not on release branches yet)
 -----------------------------------
 
+- Lots of autogen / build system improvements.
 - Added --with-libltdl[=VALUE] option to allow using a libltdl
   installation from outside of the Open MPI source tree.
 - ErrMgr framework redesigned to better support fault tolerance development
@@ -63,18 +64,10 @@ Trunk (not on release branches yet)
   OPAL levels - intended for use when configuring without MPI support
 - Modified paffinity system to provide warning when bindings result in
   being "bound to all", which is equivalent to "not bound"
-- Added "fca" collective component which enables Voltaire switches to
-  offload significant parts of collective communication onto the switching fabric 
-  See http://www.voltaire.com/Products/Application_Acceleration_Software/voltaire_fabric_collective_accelerator_fca
-  for details.
+
 
 1.5
 ---
-
-- Fixed extra_state parameter types in F90 prototypes for
-  MPI_COMM_CREATE_KEYVAL, MPI_GREQUEST_START, MPI_REGISTER_DATAREP,
-  MPI_TYPE_CREATE_KEYVAL, and MPI_WIN_CREATE_KEYVAL.
-  --> this is a 1.5-only bullet; not 1.4.3.
 
 - Added "knem" support: direct process-to-process copying for shared
   memory message passing.  See http://runtime.bordeaux.inria.fr/knem/
@@ -84,13 +77,12 @@ Trunk (not on release branches yet)
   v1.3/v1.4 series.  MPI applications compiled against any prior
   version of Open MPI will need to, at a minimum, re-link.  See the
   README file for more details.
+- Added "fca" collective component, enabling MPI collective offload
+  support for Voltaire switches.
 - Fixed MPI one-sided operations with large target displacements.
   Thanks to Brian Price and Jed Brown for reporting the issue.
 - Fixed MPI_GET_COUNT when used with large counts.  Thanks to Jed
   Brown for reporting the issue.
-- Fixed problems in configure relating to AS_VAR_GET.  Thanks to
-  Sebastian Andrzej Siewior and Russ Albery for notifying us of the
-  problem and supplying the initial fix.
 - Made the openib BTL safer if extremely low SRQ settings are used.
 - Fixed handling of the array_of_argv parameter in the Fortran
   binding of MPI_COMM_SPAWN_MULTIPLE (** also to appear: 1.4.3).
@@ -103,6 +95,9 @@ Trunk (not on release branches yet)
 - Fixes for the F90 MPI_COMM_SET_ERRHANDLER and MPI_WIN_SET_ERRHANDLER
   bindings.  Thanks to Paul Kapinos for pointing out the issue
   (** also to appear: 1.4.3).
+- Fixed extra_state parameter types in F90 prototypes for
+  MPI_COMM_CREATE_KEYVAL, MPI_GREQUEST_START, MPI_REGISTER_DATAREP,
+  MPI_TYPE_CREATE_KEYVAL, and MPI_WIN_CREATE_KEYVAL.
 - Fixes for Solaris oversubscription detection.
 - If the PML determines it can't reach a peer process, print a
   slightly more helpful message.  Thanks to Nick Edmonds for the
@@ -154,7 +149,6 @@ Trunk (not on release branches yet)
     http://wiki.mcs.anl.gov/cifts/index.php/CIFTS)
   - hnp to send the output to mpirun.
   - smtp (requires libesmtp) to send an email.
-  - twitter (yes, that Twitter) to send a Tweet.
 
 
 1.4.3 (expected)
