@@ -14,6 +14,7 @@ Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
                         Use is subject to license terms.
 Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
                         reserved.
+Copyright (c) 2010      IBM Corporation.  All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -30,15 +31,14 @@ version 1.0.
 ----------------
 
 - Fixed handling of the array_of_argv parameter in the Fortran
-  binding of MPI_COMM_SPAWN_MULTIPLE (** also to appear: 1.5).
+  binding of MPI_COMM_SPAWN_MULTIPLE.
 - Fixed a problem with the Fortran binding for
   MPI_FILE_CREATE_ERRHANDLER.  Thanks to Secretan Yves for identifying
-  the issue (** also to appear: 1.5).
+  the issue.
 - Updates to the LSF PLM to ensure that the path is correctly passed.
-  Thanks to Teng Lin for the patch (** also to appear: 1.5).
+  Thanks to Teng Lin for the patch.
 - Fixes for the F90 MPI_COMM_SET_ERRHANDLER and MPI_WIN_SET_ERRHANDLER
   bindings.  Thanks to Paul Kapinos for pointing out the issue.
-  (** also to appear: 1.5).
 - Fixed various MPI_THREAD_MULTIPLE race conditions.
 - Fixed an issue with an undeclared variable from ptmalloc2 munmap on
   BSD systems.
