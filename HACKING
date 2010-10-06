@@ -167,9 +167,6 @@ NOTE: On MacOS/X, the default "libtool" program is different than the
       shell$ ./configure --prefix=PREFIX
       shell$ make; make install
 
-      --> NOTE: The builds are so short that parallel builds really
-          aren't worth it (and cause problems in some cases).
-
       --> If you are using the csh or tcsh shells, be sure to run the
           "rehash" command after you install each package.
 
