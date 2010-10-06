@@ -2,7 +2,8 @@ Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
                         University Research and Technology
                         Corporation.  All rights reserved.
 Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
-Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
+Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 
 The files in this directory are sample MPI applications provided both
 as a trivial primer to MPI as well as simple tests to ensure that your
@@ -41,6 +42,6 @@ Although the Makefile is tailored for Open MPI (e.g., it checks the
 "ompi_info" command to see if you have support for C++, F77, and F90),
 all of the example programs are pure MPI, and therefore not specific
 to Open MPI.  Hence, you can use a different MPI implementation to
-complie and run these programs if you wish.
+compile and run these programs if you wish.
 
 Make today an Open MPI day!
