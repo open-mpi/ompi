@@ -273,6 +273,14 @@ int mca_coll_fca_allgather(void *sbuf, int scount, struct ompi_datatype_t *sdtyp
 
     spec.sbuf = sbuf;
     spec.rbuf = rbuf;
+    if (MPI_IN_PLACE == spec.sbuf) {
+        FCA_VERBOSE(10, "Using MPI_IN_PLACE for sbuf");
+        spec.sbuf = spec.rbuf;
+    } else if (MPI_IN_PLACE == spec.rbuf) {
+        FCA_VERBOSE(10, "Using MPI_IN_PLACE for rbuf");
+        spec.rbuf = spec.sbuf;
+    }
+
     spec.size = mca_coll_fca_get_buf_size(sdtype, scount, scount);
 
     if (spec.size < 0 || spec.size > fca_module->fca_comm_caps.max_payload ||

@@ -141,8 +141,8 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
     GET_FCA_SYM(get_version_string);
     fca_ver = FCA_API_CLEAR_MICRO(mca_coll_fca_component.fca_ops.get_version());
 
-    if (fca_ver < FCA_API_VER(FCA_API_ABI_MAJOR,FCA_API_ABI_MINOR)) {
-        FCA_ERROR("Unsupported FCA version: %s Please upgrade FCA to at least v%d.%d", 
+    if (fca_ver != FCA_API_VER(FCA_API_ABI_MAJOR,FCA_API_ABI_MINOR)) {
+        FCA_ERROR("Unsupported FCA version: %s, please update FCA to v%d.%d", 
                   mca_coll_fca_component.fca_ops.get_version_string(),
                   FCA_API_ABI_MAJOR,
                   FCA_API_ABI_MINOR);
@@ -205,6 +205,8 @@ static void mca_coll_fca_close_fca_lib(void)
     dlclose(mca_coll_fca_component.fca_lib_handle);
     mca_coll_fca_component.fca_lib_handle = NULL;
 }
+
+
 
 static int fca_register(void)
 {
