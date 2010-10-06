@@ -61,7 +61,7 @@ developer's checkout, you have three main options:
 
      shell$ svn co http://svn.open-mpi.org/svn/ompi/trunk ompi
      shell$ cd ompi
-     shell$ ./autogen.p
+     shell$ ./autogen.pl
      shell$ mkdir build
      shell$ cd build
      shell$ ../configure ...
