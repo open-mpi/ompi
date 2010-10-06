@@ -273,14 +273,6 @@ int mca_coll_fca_allgather(void *sbuf, int scount, struct ompi_datatype_t *sdtyp
 
     spec.sbuf = sbuf;
     spec.rbuf = rbuf;
-    if (MPI_IN_PLACE == spec.sbuf) {
-        FCA_VERBOSE(10, "Using MPI_IN_PLACE for sbuf");
-        spec.sbuf = spec.rbuf;
-    } else if (MPI_IN_PLACE == spec.rbuf) {
-        FCA_VERBOSE(10, "Using MPI_IN_PLACE for rbuf");
-        spec.rbuf = spec.sbuf;
-    }
-
     spec.size = mca_coll_fca_get_buf_size(sdtype, scount, scount);
 
     if (spec.size < 0 || spec.size > fca_module->fca_comm_caps.max_payload ||
@@ -293,6 +285,11 @@ int mca_coll_fca_allgather(void *sbuf, int scount, struct ompi_datatype_t *sdtyp
     if (spec.size != mca_coll_fca_get_buf_size(rdtype, rcount, rcount)) {
         FCA_VERBOSE(5, "Unsupported allgather: send_size != recv_size\n");
         goto orig_allgather;
+    }
+
+    if (MPI_IN_PLACE == spec.sbuf) {
+        FCA_VERBOSE(10, "Using MPI_IN_PLACE for sbuf");
+        spec.sbuf = spec.rbuf + spec.size * fca_module->rank;
     }
 
     FCA_VERBOSE(5,"Using FCA Allgather");
@@ -343,6 +340,11 @@ int mca_coll_fca_allgatherv(void *sbuf, int scount,
     for (i = 0; i < comm_size; ++i) {
         spec.recvsizes[i] = rcounts[i] * relemsize;
         spec.displs[i] = disps[i] * relemsize;
+    }
+
+    if (MPI_IN_PLACE == spec.sbuf) {
+        FCA_VERBOSE(10, "Using MPI_IN_PLACE for sbuf");
+        spec.sbuf = spec.rbuf + spec.displs[fca_module->rank];
     }
 
     FCA_VERBOSE(5,"Using FCA Allgatherv");
