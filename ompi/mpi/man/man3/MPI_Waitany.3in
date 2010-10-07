@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Waitany 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -12,6 +12,7 @@
 int MPI_Waitany(int \fIcount\fP, MPI_Request\fI *array_of_requests\fP,
 	int \fI*index\fP, MPI_Status\fI *status\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -19,6 +20,7 @@ MPI_WAITANY(\fICOUNT, ARRAY_OF_REQUESTS, INDEX, STATUS, IERROR\fP)
 	INTEGER	\fICOUNT, ARRAY_OF_REQUESTS(*), INDEX\fP
 	INTEGER	\fISTATUS(MPI_STATUS_SIZE), IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -27,6 +29,7 @@ static int Request::Waitany(int \fIcount\fP, Request
 
 static int Request::Waitany(int \fIcount\fP, Request \fIarray_of_requests\fP[])
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

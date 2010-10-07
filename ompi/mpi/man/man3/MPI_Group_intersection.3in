@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Group_intersection 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -12,17 +12,20 @@
 int MPI_Group_intersection(MPI_Group \fIgroup1\fP, MPI_Group\fI group2\fP,
 	MPI_Group\fI *newgroup\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_GROUP_INTERSECTION(\fIGROUP1, GROUP2, NEWGROUP, IERROR\fP)
 	INTEGER	\fIGROUP1, GROUP2, NEWGROUP, IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 static Group Group::Intersect(const Group& \fIgroup1\fP, const Group& \fIgroup2\fP)
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

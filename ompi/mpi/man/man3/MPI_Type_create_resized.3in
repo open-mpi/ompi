@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Type_create_resized 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -12,6 +12,7 @@
 int MPI_Type_create_resized(MPI_Datatype \fIoldtype\fP, MPI_Aint\fI lb\fP, 
 	MPI_Aint \fIextent\fP, MPI_Datatype *\fInewtype\fP)
 
+.fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
 INCLUDE 'mpif.h'
@@ -19,12 +20,14 @@ MPI_TYPE_CREATE_RESIZED(\fIOLDTYPE, LB, EXTENT, NEWTYPE, IERROR\fP)
 	INTEGER	\fIOLDTYPE, NEWTYPE, IERROR\fP
 	INTEGER(KIND=MPI_ADDRESS_KIND)	\fILB, EXTENT\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 MPI::Datatype MPI::Datatype::Create_resized(const MPI::Aint \fIlb\fP, 
 	const MPI::Aint \fIextent\fP) const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

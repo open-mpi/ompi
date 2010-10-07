@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Type_hvector 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -12,6 +12,7 @@
 int MPI_Type_hvector(int \fIcount\fP, int\fI blocklength\fP, MPI_Aint\fI stride\fP,
 	MPI_Datatype\fI oldtype\fP, MPI_Datatype\fI *newtype\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -20,6 +21,7 @@ MPI_TYPE_HVECTOR(\fICOUNT, BLOCKLENGTH, STRIDE, OLDTYPE, NEWTYPE,
 	INTEGER	\fICOUNT, BLOCKLENGTH, STRIDE, OLDTYPE\fP 
 	INTEGER	\fINEWTYPE, IERROR\fP 
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i
@@ -76,6 +78,7 @@ with extent ex. Let bl be the blocklength. The newly created datatype has a type
   disp(0) + stride * (count -1) + (bl -1) * ex), ..., 
   (type(n-1), disp(n-1) + stride * (count -1) + (bl -1) * ex)}
 
+.fi
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI:Exception object.
 .sp

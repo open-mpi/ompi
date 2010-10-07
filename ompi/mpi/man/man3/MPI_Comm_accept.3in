@@ -1,5 +1,5 @@
-.\"Copyright 2009, Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2007, Sun Microsystems, Inc.
+.\" Copyright 2009, Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2007, Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Comm_accept 3OpenMPI "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -12,6 +12,7 @@
 #include <mpi.h>
 int MPI_Comm_accept(char *\fIport_name\fP, MPI_Info \fIinfo\fP, int \fIroot\fP, MPI_Comm \fIcomm\fP, MPI_Comm *\fInewcomm\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -19,12 +20,14 @@ MPI_COMM_ACCEPT(\fIPORT_NAME, INFO, ROOT, COMM, NEWCOMM, IERROR\fP)
 	CHARACTER*(*)	\fIPORT_NAME\fP
 	INTEGER		\fIINFO, ROOT, COMM, NEWCOMM, IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 MPI::Intercomm MPI::Intracomm::Accept(const char* \fIport_name\fP,
 	const MPI::Info& \fIinfo\fP, int \fIroot\fP) const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

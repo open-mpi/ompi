@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Rsend 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -12,6 +12,7 @@
 int MPI_Rsend(void *\fIbuf\fP, int\fI count\fP, MPI_Datatype\fI datatype\fP, int\fI dest\fP,
 	int\fI tag\fP, MPI_Comm\fI comm\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -19,12 +20,14 @@ MPI_RSEND(\fIBUF, COUNT, DATATYPE, DEST, TAG, COMM, IERROR\fP)
 	<type>	\fIBUF\fP(*)
 	INTEGER	\fICOUNT, DATATYPE, DEST, TAG, COMM, IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void Comm::Rsend(const void* \fIbuf\fP, int \fIcount\fP, const Datatype& 
 	\fIdatatype\fP, int \fIdest\fP, int \fItag\fP) const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

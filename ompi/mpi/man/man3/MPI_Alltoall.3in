@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Alltoall 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 
@@ -15,6 +15,7 @@ int MPI_Alltoall(void *\fIsendbuf\fP, int \fIsendcount\fP,
 	MPI_Datatype \fIsendtype\fP, void *\fIrecvbuf\fP, int \fIrecvcount\fP,
 	MPI_Datatype \fIrecvtype\fP, MPI_Comm \fIcomm\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -25,6 +26,7 @@ MPI_ALLTOALL(\fISENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNT,
 	INTEGER	\fISENDCOUNT, SENDTYPE, RECVCOUNT, RECVTYPE\fP
 	INTEGER	\fICOMM, IERROR\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -32,6 +34,7 @@ void MPI::Comm::Alltoall(const void* \fIsendbuf\fP, int \fIsendcount\fP,
 	const MPI::Datatype& \fIsendtype\fP, void* \fIrecvbuf\fP, 
 	int \fIrecvcount\fP, const MPI::Datatype& \fIrecvtype\fP)
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1.2i

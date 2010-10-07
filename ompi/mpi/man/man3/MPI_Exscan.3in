@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Exscan 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 
@@ -14,6 +14,7 @@
 int MPI_Exscan(void *\fIsendbuf\fP, void *\fIrecvbuf\fP, int \fIcount\fP, 
 	MPI_Datatype \fIdatatype\fP, MPI_Op \fIop\fP, MPI_Comm \fIcomm\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -21,6 +22,7 @@ MPI_SCAN(\fISENDBUF, RECVBUF, COUNT, DATATYPE, OP, COMM, IERROR\fP)
 	<type>	\fISENDBUF(*), RECVBUF(*)\fP
 	INTEGER	\fICOUNT, DATATYPE, OP, COMM, IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -28,6 +30,7 @@ void MPI::Intracomm::Exscan(const void* \fIsendbuf\fP, void* \fIrecvbuf\fP,
 	int \fIcount\fP, const MPI::Datatype& \fIdatatype\fP,
 	const MPI::Op& \fIop\fP) const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

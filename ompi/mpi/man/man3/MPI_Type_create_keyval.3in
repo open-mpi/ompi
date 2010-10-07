@@ -1,5 +1,5 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
-.\"Copyright (c) 1996 Thinking Machines
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines
 .TH MPI_Type_create_keyval 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Type_create_keyval\fP \- Generates a new attribute key for caching on data types. 
@@ -13,6 +13,7 @@ int MPI_Type_create_keyval(MPI_Type_copy_attr_function *\fItype_copy_attr_fn\fP,
 	MPI_Type_delete_attr_function *\fItype_delete_attr_fn\fP, 
 	int *\fItype_keyval\fP, void *\fIextra_state\fP)
 
+.fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
 INCLUDE 'mpif.h'
@@ -22,6 +23,7 @@ MPI_TYPE_CREATE_KEYVAL(\fITYPE_COPY_ATTR_FN, TYPE_DELETE_ATTR_FN,
 	INTEGER	\fITYPE_KEYVAL, IERROR \fP
 	INTEGER(KIND=MPI_ADDRESS_KIND) \fIEXTRA_STATE\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -29,6 +31,7 @@ static int MPI::Datatype::Create_keyval(MPI::Datatype::Copy_attr_function*
 	\fItype_copy_attr_fn\fP, MPI::Datatype::Delete_attr_function*
 	\fItype_delete_attr_fn\fP, void* \fIextra_state\fP)
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

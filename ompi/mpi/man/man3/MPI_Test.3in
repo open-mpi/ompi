@@ -1,6 +1,6 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
-.\"Copyright 2007-2008 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2007-2008 Cisco Systems, Inc.  All rights reserved.
 .TH MPI_Test 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Test\fP \- Tests for the completion of a specific send or receive.
@@ -12,6 +12,7 @@
 #include <mpi.h>
 int MPI_Test(MPI_Request *\fIrequest\fP, int\fI *flag\fP, MPI_Status\fI *status\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -19,6 +20,7 @@ MPI_TEST(\fIREQUEST, FLAG, STATUS, IERROR\fP)
 	LOGICAL	\fIFLAG\fP
 	INTEGER	\fIREQUEST, STATUS(MPI_STATUS_SIZE), IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -26,6 +28,7 @@ bool Request::Test(Status& \fIstatus\fP)
 
 bool Request::Test()
 
+.fi
 .SH INPUT PARAMETER
 .ft R
 .TP 1i

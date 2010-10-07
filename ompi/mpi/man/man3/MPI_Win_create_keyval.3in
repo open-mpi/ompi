@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Win_create_keyval 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -13,6 +13,7 @@ int MPI_Win_create_keyval(MPI_Win_copy_attr_function *\fIwin_copy_attr_fn\fP,
 	MPI_Win_delete_attr_function *\fIwin_delete_attr_fn\fP, 
 	int *\fIwin_keyval\fP, void *\fIextra_state\fP) 
 
+.fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
 INCLUDE 'mpif.h'
@@ -22,6 +23,7 @@ MPI_WIN_CREATE_KEYVAL(\fIWIN_COPY_ATTR_FN, WIN_DELETE_ATTR_FN,
 	INTEGER \fIWIN_KEYVAL, IERROR\fP 
 	INTEGER(KIND=MPI_ADDRESS_KIND) \fIEXTRA_STATE\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -30,6 +32,7 @@ static int MPI::Win::Create_keyval(MPI::Win::Copy_attr_function*
 	MPI::Win::Delete_attr_function* \fIwin_delete_attr_fn\fP, 
 	void* \fIextra_state\fP) 
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

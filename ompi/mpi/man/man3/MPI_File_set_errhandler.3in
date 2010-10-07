@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_File_set_errhandler 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -12,17 +12,20 @@
 int MPI_File_set_errhandler(MPI_File \fIfile\fP, MPI_Errhandler 
 	\fIerrhandler\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_FILE_SET_ERRHANDLER(\fIFILE, ERRHANDLER, IERROR\fP)
 	INTEGER	\fIFILE, ERRHANDLER, IERROR\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void MPI::File::Set_errhandler(const MPI::Errhandler& \fIerrhandler\fP)
 
+.fi
 .SH INPUT/OUTPUT PARAMETER
 .ft R
 .TP 1i

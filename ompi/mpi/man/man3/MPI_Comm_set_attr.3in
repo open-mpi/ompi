@@ -1,5 +1,5 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
-.\"Copyright (c) 1996 Thinking Machines
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines
 .TH MPI_Comm_set_attr 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Comm_set_attr\fP \- Stores attribute value associated with a key.
@@ -11,6 +11,7 @@
 #include <mpi.h>
 int MPI_Comm_set_attr(MPI_Comm \fIcomm\fP, int \fIcomm_keyval\fP, void *\fIattribute_val\fP)
 
+.fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
 INCLUDE 'mpif.h'
@@ -18,11 +19,13 @@ MPI_COMM_SET_ATTR(\fICOMM, COMM_KEYVAL, ATTRIBUTE_VAL, IERROR\fP)
 	INTEGER	\fICOMM, COMM_KEYVAL, IERROR \fP
 	INTEGER(KIND=MPI_ADDRESS_KIND) \fIATTRIBUTE_VAL\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void MPI::Comm::Set_attr(int \fIcomm_keyval\fP, const void* \fIattribute_val\fP) const
 
+.fi
 .SH INPUT/OUTPUT PARAMETER
 .ft R
 .TP 1i

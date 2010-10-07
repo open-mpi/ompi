@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Pack_size 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -12,17 +12,20 @@
 int MPI_Pack_size(int \fIincount\fP, MPI_Datatype\fI datatype\fP, MPI_Comm\fI comm\fP,
 	int\fI *size\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_PACK_SIZE(\fIINCOUNT, DATATYPE, COMM, SIZE, IERROR\fP)
 	INTEGER	\fIINCOUNT, DATATYPE, COMM, SIZE, IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 int Datatype::Pack_size(int \fIincount\fP, const Comm& \fIcomm\fP) const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

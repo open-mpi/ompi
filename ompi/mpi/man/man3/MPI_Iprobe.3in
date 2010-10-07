@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Iprobe 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -12,6 +12,7 @@
 int MPI_Iprobe(int \fIsource\fP, int\fI tag\fP, MPI_Comm\fI comm\fP, int\fI *flag\fP,
 	MPI_Status\fI *status\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -19,6 +20,7 @@ MPI_IPROBE(\fISOURCE, TAG, COMM, FLAG, STATUS, IERROR\fP)
 	LOGICAL	\fIFLAG\fP
 	INTEGER	\fISOURCE, TAG, COMM, STATUS(MPI_STATUS_SIZE), IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -26,6 +28,7 @@ bool Comm::Iprobe(int \fIsource\fP, int \fItag\fP, Status& \fIstatus\fP) const
 
 bool Comm::Iprobe(int \fIsource\fP, int \fItag\fP) const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

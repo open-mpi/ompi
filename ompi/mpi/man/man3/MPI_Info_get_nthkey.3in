@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Info_get_nthkey 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -11,6 +11,7 @@
 #include <mpi.h>
 int MPI_Info_get_nthkey(MPI_Info \fIinfo\fP, int \fIn\fP, char \fI*key\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -18,11 +19,13 @@ MPI_INFO_GET_NTHKEY(\fIINFO, N, KEY, IERROR\fP)
 	INTEGER		\fIINFO, N, IERROR\fP 
 	CHARACTER*(*)	\fIKEY\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void MPI::Info::Get_nthkey(int \fIn\fP, char* \fIkey\fP) const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

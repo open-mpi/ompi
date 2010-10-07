@@ -1,5 +1,5 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
-.\"Copyright (c) 1996 Thinking Machines
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines
 .TH MPI_Type_create_indexed_block 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Type_create_indexed_block\fP \- Creates an indexed data type with the same block length for all blocks. 
@@ -11,6 +11,7 @@
 #include <mpi.h>
 int MPI_Type_create_indexed_block(int \fIcount\fP, int \fIblocklength\fP, int \fIarray_of_displacements\fP[], MPI_Datatype \fIoldtype\fP, MPI_Datatype *\fInewtype\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -19,12 +20,14 @@ MPI_TYPE_CREATE_INDEXED_BLOCK(\fICOUNT, BLOCKLENGTH,
 	INTEGER	\fICOUNT, BLOCKLENGTH, ARRAY_OF_DISPLACEMENTS(*),
 	        OLDTYPE, NEWTYPE, IERROR \fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 MPI::Datatype MPI::Datatype::Create_indexed_block( int \fIcount\fP,
 	int \fIblocklength\fP, const int \fIarray_of_displacements\fP[]) const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Testany 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -12,6 +12,7 @@
 int MPI_Testany(int \fIcount\fP, MPI_Request\fI *array_of_requests\fP, 
 	int\fI *index\fP, int\fI *flag\fP, MPI_Status\fI *status\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -20,6 +21,7 @@ MPI_TESTANY(\fICOUNT, ARRAY_OF_REQUESTS, INDEX, FLAG, STATUS, IERROR\fP)
 	INTEGER	\fICOUNT, ARRAY_OF_REQUESTS(*), INDEX\fP 
 	INTEGER	\fISTATUS(MPI_STATUS_SIZE), IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -29,6 +31,7 @@ static bool Request::Testany(int \fIcount\fP, Request \fIarray_of_requests\fP[],
 static bool Request::Testany(int \fIcount\fP, Request \fIarray_of_requests\fP[], 
 	int& \fIindex\fP) 
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Testall 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -12,6 +12,7 @@
 int MPI_Testall(int \fIcount\fP, MPI_Request\fI *array_of_requests\fP,
 	int\fI *flag\fP, MPI_Status\fI *array_of_statuses\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -21,6 +22,7 @@ MPI_TESTALL(\fICOUNT, ARRAY_OF_REQUESTS, FLAG, ARRAY_OF_STATUSES,
 	INTEGER	\fICOUNT, ARRAY_OF_REQUESTS(*)\fP
 	INTEGER	\fIARRAY_OF_STATUSES(MPI_STATUS_SIZE,*), IERROR\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -29,6 +31,7 @@ static bool Request::Testall(int \fIcount\fP, Request
 
 static bool Request::Testall(int \fIcount\fP, Request \fIarray_of_requests\fP[])
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

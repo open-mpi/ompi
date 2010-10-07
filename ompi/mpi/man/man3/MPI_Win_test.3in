@@ -1,4 +1,4 @@
-.\"Copyright 2007-2008 Sun Microsystems, Inc.
+.\" Copyright 2007-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Win_test 3 "#OMPI_DATE#" ""#PACKAGE_VERSION#"" "#PACKAGE_NAME#"
 .SH NAME
@@ -11,17 +11,20 @@
 #include <mpi.h>
 int MPI_Win_test(MPI_Win \fIwin\fP, int *\fIflag\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_WIN_TEST(\fI WIN, FLAG, IERROR\fP)
 	INTEGER \fI WIN, IERROR\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 bool MPI::Win::Test() const 
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

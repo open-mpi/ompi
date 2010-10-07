@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Testsome 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -12,6 +12,7 @@
 int MPI_Testsome(int \fIincount\fP, MPI_Request \fI*array_of_requests\fP,
 	int\fI *outcount\fP, int\fI *array_of_indices\fP, MPI_Status\fI *array_of_statuses\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -21,6 +22,7 @@ MPI_TESTSOME(\fIINCOUNT, ARRAY_OF_REQUESTS, OUTCOUNT,
 	INTEGER	\fIOUTCOUNT, ARRAY_OF_INDICES(*)\fP
 	INTEGER	\fIARRAY_OF_STATUSES(MPI_STATUS_SIZE,*), IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -30,6 +32,7 @@ static int Request::Testsome(int \fIincount\fP, Request
 static int Request::Testsome(int \fIincount\fP, Request 
 	\fIarray_of_requests\fP[], int \fIarray_of_indices\fP[]) 
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

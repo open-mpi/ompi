@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Cart_get 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -12,6 +12,7 @@
 int MPI_Cart_get(MPI_Comm\fI comm\fP, int\fI maxdims\fP, int\fI *dims\fP, int\fI *periods\fP,
 	int\fI *coords\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -19,12 +20,14 @@ MPI_CART_GET(\fICOMM\fP, \fIMAXDIMS\fP, \fIDIMS\fP, \fIPERIODS\fP, \fICOORDS\fP,
 	INTEGER	\fICOMM\fP, \fIMAXDIMS\fP, \fIDIMS\fP(*), \fICOORDS\fP(*), \fIIERROR\fP
 	LOGICAL	\fIPERIODS\fP(*)
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void Cartcomm::Get_topo(int \fImaxdims\fP, int \fIdims\fP[], 
 	bool \fIperiods\fP[], int \fIcoords\fP[]) const 
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

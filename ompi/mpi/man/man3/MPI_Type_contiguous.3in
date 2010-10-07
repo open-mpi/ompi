@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Type_contiguous 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -12,17 +12,20 @@
 int MPI_Type_contiguous(int \fIcount\fP, MPI_Datatype\fI oldtype\fP,
 	MPI_Datatype\fI *newtype\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_TYPE_CONTIGUOUS(\fICOUNT, OLDTYPE, NEWTYPE, IERROR\fP)
 	INTEGER	\fICOUNT, OLDTYPE, NEWTYPE, IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 Datatype Datatype::Create_contiguous(int \fIcount\fP) const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i
