@@ -266,6 +266,10 @@ static void finalize(void)
                          "%s rmcast:tcp: finalize called",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_MULTICAST);
+    if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
+        orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_MULTICAST_RELAY);
+    }
     return;
 }
 
