@@ -1115,7 +1115,7 @@ static int do_child(orte_app_context_t* context,
     int i;
     sigset_t sigs;
     long fd, fdmax = sysconf(_SC_OPEN_MAX);
-    bool paffinity_enabled;
+    bool paffinity_enabled = false;
     char *param, *tmp;
     opal_paffinity_base_cpu_set_t mask;
     
@@ -1155,7 +1155,6 @@ static int do_child(orte_app_context_t* context,
         
         /* Setup process affinity.  Not for the meek. */
         
-        paffinity_enabled = false;
         if (NULL != child->slot_list) {
             bind_to_slot_list(context, child, jobdat, 
                               &paffinity_enabled, write_fd);
@@ -1204,11 +1203,13 @@ static int do_child(orte_app_context_t* context,
         free(param);
         /* ...and provide a nice string representation of what we
            bound to */
-        tmp = opal_paffinity_base_print_binding(mask);
-        if (NULL != tmp) {
-            param = mca_base_param_environ_variable("paffinity","base","applied_binding");
-            opal_setenv(param, tmp, true, &environ_copy);
-            free(tmp);                
+        if (OPAL_SUCCESS == opal_paffinity_base_get(&mask)) {
+            tmp = opal_paffinity_base_print_binding(mask);
+            if (NULL != tmp) {
+                param = mca_base_param_environ_variable("paffinity","base","applied_binding");
+                opal_setenv(param, tmp, true, &environ_copy);
+                free(tmp);                
+            }
         }
     }
     
