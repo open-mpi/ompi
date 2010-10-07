@@ -13,7 +13,9 @@ C Syntax
     int MPI_File_write_at(MPI_File \fIfh\fP, MPI_Offset \fIoffset\fP, void \fI*buf\fP, 
     	      int \fIcount\fP, MPI_Datatype \fIdatatype\fP, MPI_Status \fI*status\fP)
 
-Fortran Syntax (see FORTRAN 77 NOTES)
+.fi
+.SH Fortran Syntax (see FORTRAN 77 NOTES)
+.nf
     INCLUDE 'mpif.h'
     MPI_FILE_WRITE_AT(\fIFH\fP, \fI OFFSET\fP, \fI BUF\fP, \fICOUNT\fP, 
     	      \fI DATATYPE\fP, \fISTATUS\fP, \fI IERROR\fP)
