@@ -1,6 +1,6 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
-.\"Copyright (c) 1996 Thinking Machines
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines
 .TH MPI_Type_create_subarray 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Type_create_subarray\fP \- Creates a data type describing an \fIn\fP-dimensional subarray of an \fIn\fP-dimensional array. 
@@ -12,6 +12,7 @@
 #include <mpi.h>
 int MPI_Type_create_subarray(int \fIndims\fP, int \fIarray_of_sizes[]\fP, int \fIarray_of_subsizes[]\fP, int \fIarray_of_starts[]\fP, int \fIorder\fP, MPI_Datatype \fIoldtype\fO, MPI_Datatype \fI*newtype\fP) 
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -21,6 +22,7 @@ MPI_TYPE_CREATE_SUBARRAY(\fINDIMS, ARRAY_OF_SIZES, ARRAY_OF_SUBSIZES,
 	INTEGER	\fINDIMS, ARRAY_OF_SIZES(*), ARRAY_OF_SUBSIZES(*),
 	ARRAY_OF_STARTS(*), ORDER, OLDTYPE, NEWTYPE, IERROR\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -28,6 +30,7 @@ MPI::Datatype MPI::Datatype::Create_subarray(int \fIndims\fP,
 	const int \fIarray_of_sizes\fP[], const int \fIarray_of_subsizes[]\fP, 
 	const int \fIarray_of_starts[]\fP, int \fIorder\fP) const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Cart_sub 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -12,6 +12,7 @@
 #include <mpi.h>
 int MPI_Cart_sub(MPI_Comm \fIcomm\fP, int\fI *remain_dims\fP, MPI_Comm\fI *comm_new\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -19,11 +20,13 @@ MPI_CART_SUB(\fICOMM, REMAIN_DIMS, COMM_NEW, IERROR\fP)
 	INTEGER	\fICOMM, COMM_NEW, IERROR\fP
 	LOGICAL	\fIREMAIN_DIMS\fP(*) 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 Cartcomm Cartcomm::Sub(const bool \fIremain_dims\fP[]) const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

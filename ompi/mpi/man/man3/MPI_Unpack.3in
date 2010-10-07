@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Unpack 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -14,6 +14,7 @@ int MPI_Unpack(void *\fIinbuf\fP, int\fI insize\fP, int\fI *position\fP,
 	void\fI *outbuf\fP, int\fI outcount\fP, MPI_Datatype\fI datatype\fP, 
 	MPI_Comm\fI comm\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -23,6 +24,7 @@ MPI_UNPACK(\fIINBUF, INSIZE, POSITION, OUTBUF, OUTCOUNT,
 	INTEGER	\fIINSIZE, POSITION, OUTCOUNT, DATATYPE, 
 		COMM, IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -30,6 +32,7 @@ void Datatype::Unpack(const void* \fIinbuf\fP, int \fIinsize\fP,
 	void *\fIoutbuf\fP, int \fIoutcount\fP, int& \fIposition\fP, 
 	const Comm& \fIcomm\fP) const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

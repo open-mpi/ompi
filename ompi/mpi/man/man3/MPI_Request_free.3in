@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Request_free 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -12,17 +12,20 @@
 #include <mpi.h>
 int MPI_Request_free(MPI_Request *request)
 
+.fi
 .SH Fortran Syntax
 .nf
 \s-1INCLUDE\s0 'mpif.h'
 MPI_REQUEST_FREE(REQUEST, IERROR)
 	INTEGER	REQUEST, IERROR 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void Request::Free()
 
+.fi
 .SH INPUT/OUTPUT PARAMETER
 .ft R
 .TP 1i

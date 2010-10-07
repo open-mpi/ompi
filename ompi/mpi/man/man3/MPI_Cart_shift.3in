@@ -1,6 +1,6 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
-.\"Copyright (c) 1996 Thinking Machines
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines
 .TH MPI_Cart_shift 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Cart_shift \fP \-  Returns the shifted source and destination ranks, given a shift direction and amount.
@@ -13,6 +13,7 @@
 int MPI_Cart_shift(MPI_Comm \fIcomm\fP, int\fI direction\fP, int\fI disp\fP, 
 	int\fI *rank_source\fP, int\fI *rank_dest\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -21,12 +22,14 @@ MPI_CART_SHIFT(\fICOMM, DIRECTION, DISP, RANK_SOURCE,
 	INTEGER	\fICOMM, DIRECTION, DISP, RANK_SOURCE\fP
 	INTEGER	\fIRANK_DEST, IERROR\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void Cartcomm::Shift(int \fIdirection\fP, int \fIdisp\fP, int& \fIrank_source\fP, 
 	int& \fIrank_dest\fP) const 
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

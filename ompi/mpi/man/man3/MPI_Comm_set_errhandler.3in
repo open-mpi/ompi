@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Comm_set_errhandler 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -13,17 +13,20 @@
 int MPI_Comm_set_errhandler(MPI_Comm \fIcomm\fP,
 	MPI_Errhandler \fIerrhandler\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_COMM_SET_ERRHANDLER(\fICOMM, ERRHANDLER, IERROR\fP)
 	INTEGER	\fICOMM, ERRHANDLER, IERROR\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void MPI::Comm::Set_errhandler(const MPI::Errhandler& \fIerrhandler\fP)
 
+.fi
 .SH INPUT/OUTPUT PARAMETER
 .ft R
 .TP 1i

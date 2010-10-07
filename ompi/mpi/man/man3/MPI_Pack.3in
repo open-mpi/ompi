@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Pack 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -13,6 +13,7 @@
 int MPI_Pack(void *\fIinbuf\fP, int\fI incount\fP, MPI_Datatype\fI datatype\fP,
 	void\fI *outbuf\fP, int\fI outsize\fP, int\fI *position\fP, MPI_Comm\fI comm\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -21,12 +22,14 @@ MPI_PACK(\fIINBUF, INCOUNT, DATATYPE, OUTBUF,OUTSIZE, POSITION,
 	<type>	\fIINBUF(*), OUTBUF(*)\fP
 	INTEGER	\fIINCOUNT, DATATYPE, OUTSIZE, POSITION, COMM, IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void Datatype::Pack(const void* \fIinbuf\fP, int \fIincount\fP, void *\fIoutbuf\fP, 
 	int \fIoutsize\fP, int& \fIposition\fP, const Comm &\fIcomm\fP) const 
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i
@@ -90,6 +93,7 @@ The input value of \fIposition\fP is the first location in the output buffer to 
      
     }
 
+.fi
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
 .sp

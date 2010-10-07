@@ -1,6 +1,6 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
-.\"Copyright (c) 1996 Thinking Machines
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines
 .TH MPI_Status_set_elements 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Status_set_elements\fP \- Modifies opaque part of \fIstatus\fP to allow MPI_Get_elements to return \fIcount\fP.
@@ -12,17 +12,20 @@
 #include <mpi.h>
 int MPI_Status_set_elements(MPI_Status *\fIstatus\fP, MPI_Datatype \fIdatatype\fP, int \fIcount\fP) 
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_STATUS_SET_ELEMENTS(\fISTATUS, DATATYPE, COUNT, IERROR\fP)
 	INTEGER	\fISTATUS\fP(MPI_STATUS_SIZE), DATATYPE, COUNT, IERROR\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void MPI::Status::Set_elements(const MPI::Datatype& \fIdatatype\fP, int \fIcount\fP)
 
+.fi
 .SH INPUT/OUTPUT PARAMETER
 .ft R
 .TP 1i

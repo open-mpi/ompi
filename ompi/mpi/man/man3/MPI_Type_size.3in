@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Type_size 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -12,17 +12,20 @@
 #include <mpi.h>
 int MPI_Type_size(MPI_Datatype \fIdatatype\fP, int\fI *size\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_TYPE_SIZE(\fIDATATYPE, SIZE, IERROR\fP)
 	INTEGER	\fIDATATYPE, SIZE, IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 int Datatype::Get_size() const
 
+.fi
 .SH INPUT PARAMETER
 .ft R
 .TP 1i

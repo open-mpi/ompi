@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_File_set_info 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -17,11 +17,13 @@ Fortran Syntax
     MPI_FILE_SET_INFO(\fIFH\fP, \fIINFO\fP, \fIIERROR\fP)
         	 INTEGER	  FH, INFO, IERROR
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void MPI::File::Set_info(const MPI::Info& \fIinfo\fP)
 
+.fi
 .SH INPUT/OUTPUT PARAMETER
 .ft R
 .TP 1i

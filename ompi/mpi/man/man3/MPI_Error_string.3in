@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Error_string 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -12,6 +12,7 @@
 #include <mpi.h>
 int MPI_Error_string(int \fIerrorcode\fP, char\fI *string\fP, int\fI *resultlen\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -19,11 +20,13 @@ MPI_ERROR_STRING(\fIERRORCODE, STRING, RESULTLEN, IERROR\fP)
 	INTEGER		\fIERRORCODE, RESULTLEN, IERROR\fP
 	CHARACTER*(*)	\fISTRING\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void Get_error_string(int \fIerrorcode\fP, char* \fIname\fP, int& \fIresultlen\fP)
 
+.fi
 .SH INPUT PARAMETER
 .ft R
 .TP 1i

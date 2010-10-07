@@ -1,6 +1,6 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
-.\"Copyright (c) 1996 Thinking Machines
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines
 .TH MPI_Comm_get_attr 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Comm_get_attr\fP \- Retrieves attribute value by key.
@@ -13,6 +13,7 @@
 int MPI_Comm_get_attr(MPI_Comm \fIcomm\fP, int \fIcomm_keyval\fP, 
 	void *\fIattribute_val\fP, int *\fIflag\fP)
 
+.fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
 INCLUDE 'mpif.h'
@@ -21,12 +22,14 @@ MPI_COMM_GET_ATTR(\fICOMM, COMM_KEYVAL, ATTRIBUTE_VAL, IERROR\fP)
 	INTEGER(KIND=MPI_ADDRESS_KIND) \fIATTRIBUTE_VAL\fP
 	LOGICAL \fIFLAG\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 bool MPI::Comm::Get_attr(int \fIcomm_keyval\fP, void* \fIattribute_val\fP) 
 	const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

@@ -1,6 +1,6 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
-.\"Copyright (c) 1996 Thinking Machines
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines
 .TH MPI_Comm_free_keyval 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Comm_free_keyval\fP \- Frees attribute key for communicator cache attribute.
@@ -12,17 +12,20 @@
 #include <mpi.h>
 int MPI_Comm_free_keyval(int *\fIcomm_keyval\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_COMM_FREE_KEYVAL(\fICOMM_KEYVAL, IERROR\fP)
 	INTEGER	\fICOMM_KEYVAL, IERROR \fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 static void MPI::Comm::Free_keyval(int& \fIcomm_keyval\fP)
 
+.fi
 .SH INPUT/OUTPUT PARAMETER
 .ft R
 .TP 1i

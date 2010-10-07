@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Request_get_status 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -12,6 +12,7 @@
 #include <mpi.h>
 int MPI_Request_get_status(MPI_Request \fIrequest\fP, int \fI*flag\fP, MPI_Status \fI*status\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -19,6 +20,7 @@ MPI_REQUEST_FREE(\fIREQUEST\fP, \fIFLAG\fP, \fISTATUS\fP, \fIIERROR\fP)
 	INTEGER	REQUEST, STATUS(MPI_STATUS_SIZE), IERROR 
 	LOGICAL	FLAG
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -26,6 +28,7 @@ bool MPI::Request::Get_status(MPI::Status& \fIstatus\fP) const
 
 bool MPI::Request::Get_status() const
 
+.fi
 .SH INPUT PARAMETER
 .ft
 .TP 1i

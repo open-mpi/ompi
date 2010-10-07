@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Type_get_envelope 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -13,6 +13,7 @@
 int MPI_Type_get_envelope(MPI_Datatype \fIdatatype\fP, int *\fInum_integers\fP,
 	int *\fInum_addresses\fP, int *\fInum_datatypes\fP, int *\fIcombiner\fP)
 
+.fi
 .SH Fortran Syntax 
 .nf
 INCLUDE 'mpif.h'
@@ -21,6 +22,7 @@ MPI_TYPE_GET_ENVELOPE(\fIDATATYPE, NUM_INTEGERS, NUM_ADDRESSES,
 	INTEGER	\fIDATATYPE, NUM_INTEGERS, NUM_ADDRESSES\fP
 	INTEGER	\fINUM_DATATYPES, COMBINER, IERROR\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -28,6 +30,7 @@ void MPI::Datatype::Get_envelope(int& \fInum_integers\fP,
 	int& \fInum_addresses\fP, int& \fInum_datatypes\fP, 
 	int& \fIcombiner\fP) const
 
+.fi
 .SH INPUT PARAMETER
 .ft R
 .TP 1i

@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_File_seek 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -19,11 +19,13 @@ Fortran Syntax (see FORTRAN 77 NOTES)
     	      INTEGER \fIFH, WHENCE, IERROR\fP
     	      INTEGER(KIND=MPI_OFFSET_KIND) \fIOFFSET\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void MPI::File::Seek(MPI::Offset \fIoffset\fP, int \fIwhence\fP)
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

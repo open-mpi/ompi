@@ -1,6 +1,6 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
-.\"Copyright (c) 1996 Thinking Machines
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines
 .TH MPI_Topo_test 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Topo_test\fP \- Determines the type of topology (if any) associated with a communicator.
@@ -12,17 +12,20 @@
 #include <mpi.h>
 int MPI_Topo_test(MPI_Comm \fIcomm\fP, int\fI *top_type\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_TOPO_TEST(\fICOMM, TOP_TYPE, IERROR\fP)
 	INTEGER	\fICOMM, TOP_TYPE, IERROR\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 int Comm::Get_topology() const
 
+.fi
 .SH INPUT PARAMETER
 .ft R
 .TP 1i
@@ -50,6 +53,7 @@ The output value \fItop_type\fP is one of the following:
     MPI_CART		Cartesian topology
     MPI_UNDEFINED	no topology
 
+.fi
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
 .sp

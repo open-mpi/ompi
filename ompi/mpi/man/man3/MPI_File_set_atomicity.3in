@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_File_set_atomicity 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -17,11 +17,13 @@ Fortran Syntax
     MPI_FILE_SET_ATOMICITY(\fIFH\fP,\fI FLAG\fP,\fI IERROR\fP)
     	      INTEGER 	  FH, FLAG, IERROR
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void MPI::File::Set_atomicity(bool \fIflag\fP)
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

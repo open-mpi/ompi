@@ -1,6 +1,6 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
-.\"Copyright (c) 1996 Thinking Machines
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines
 .TH MPI_Status_set_cancelled 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Status_set_cancelled\fP \- Sets \fIstatus\fP to indicate a request has been canceled. 
@@ -12,6 +12,7 @@
 #include <mpi.h>
 int MPI_Status_set_cancelled(MPI_Status *\fIstatus\fP, int \fIflag\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -19,11 +20,13 @@ MPI_STATUS_SET_CANCELLED(\fISTATUS, FLAG, IERROR\fP)
 	INTEGER	\fISTATUS\fP(MPI_STATUS_SIZE), \fIIERROR \fP
 	LOGICAL \fIFLAG\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void MPI::Status::Set_cancelled(bool \fIflag\fP)
 
+.fi
 .SH INPUT/OUTPUT PARAMETER
 .ft R
 .TP 1i

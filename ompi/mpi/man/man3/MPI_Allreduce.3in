@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2007-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2007-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Allreduce 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -13,6 +13,7 @@
 int MPI_Allreduce(void \fI*sendbuf\fP, void \fI*recvbuf\fP, int\fI count\fP,
 	MPI_Datatype\fI datatype\fP, MPI_Op\fI op\fP, MPI_Comm\fI comm\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -21,6 +22,7 @@ MPI_ALLREDUCE(\fISENDBUF\fP,\fI RECVBUF\fP, \fICOUNT\fP,\fI DATATYPE\fP,\fI OP\f
 	<type>	\fISENDBUF\fP(*), \fIRECVBUF\fP(*)
 	INTEGER	\fICOUNT\fP,\fI DATATYPE\fP,\fI OP\fP,\fI COMM\fP,\fI IERROR 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -28,6 +30,7 @@ void MPI::Comm::Allreduce(const void* \fIsendbuf\fP, void* \fIrecvbuf\fP,
 	int \fIcount\fP, const MPI::Datatype& \fIdatatype\fP, const 
 	MPI::Op& \fIop\fP) const=0
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

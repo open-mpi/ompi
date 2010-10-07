@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Bsend_init 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -13,6 +13,7 @@
 int MPI_Bsend_init(void \fI*buf\fP, int\fI count\fP, MPI_Datatype\fI datatype\fP,
 	int\fI dest\fP, int\fI tag\fP, MPI_Comm\fI comm\fP, MPI_Request\fI *request\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -22,12 +23,14 @@ MPI_BSEND_INIT(\fIBUF\fP,\fI COUNT\fP, \fIDATATYPE\fP,\fI DEST\fP,\fI TAG\fP,\fI
 	INTEGER	\fICOUNT\fP,\fI DATATYPE\fP, \fIDEST\fP,\fI TAG\fP,
 	INTEGER	\fICOMM\fP,\fI REQUEST\fP,\fI IERROR 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 Prequest Comm::Bsend_init(const void* \fIbuf\fP, int \fIcount\fP, const 
 	Datatype& \fIdatatype\fP, int \fIdest\fP, int \fItag\fP) const 
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

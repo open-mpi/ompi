@@ -1,6 +1,6 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
-.\"Copyright (c) 1996 Thinking Machines
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines
 .TH MPI_Type_set_attr 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Type_set_attr\fP \- Sets a key value/attribute pair to a data type. 
@@ -13,6 +13,7 @@
 int MPI_Type_set_attr(MPI_Datatype \fItype\fP, int \fItype_keyval\fP, 
 	void *\fIattribute_val\fP)
 
+.fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
 INCLUDE 'mpif.h'
@@ -20,11 +21,13 @@ MPI_TYPE_SET_ATTR(\fITYPE, TYPE_KEYVAL, ATTRIBUTE_VAL, IERROR\fP)
 	INTEGER	\fITYPE, TYPE_KEYVAL, IERROR\fP
 	INTEGER(KIND=MPI_ADDRESS_KIND) \fIATTRIBUTE_VAL\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void MPI::Datatype::Set_attr(int \fItype_keyval\fP, const void* \fIattribute_val\fP)
 
+.fi
 .SH INPUT/OUTPUT PARAMETER
 .ft R
 .TP 1i

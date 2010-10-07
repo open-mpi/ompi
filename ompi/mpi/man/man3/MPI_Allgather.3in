@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Allgather 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -14,6 +14,7 @@ int MPI_Allgather(void\fI *sendbuf\fP, int \fI sendcount\fP,
 	MPI_Datatype\fI sendtype\fP, void\fI *recvbuf\fP, int\fI recvcount\fP,
 	 MPI_Datatype\fI recvtype\fP, MPI_Comm\fI comm\fP) 
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -23,6 +24,7 @@ MPI_ALLGATHER(\fISENDBUF\fP,\fI SENDCOUNT\fP,\fI SENDTYPE\fP,\fI RECVBUF\fP,\fI 
 	INTEGER	\fISENDCOUNT\fP,\fI SENDTYPE\fP,\fI RECVCOUNT\fP,\fI RECVTYPE\fP,\fI COMM\fP,
 	INTEGER	\fIIERROR\fP  
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -30,6 +32,7 @@ void MPI::Comm::Allgather(const void* \fIsendbuf\fP, int \fIsendcount\fP, const
 	MPI::Datatype& \fIsendtype\fP, void* \fIrecvbuf\fP, int \fIrecvcount\fP,
 	const MPI::Datatype& \fIrecvtype\fP) const = 0
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i
@@ -72,6 +75,7 @@ The outcome of a call to MPI_Allgather(\&...) is as if all processes executed n 
 .nf
   MPI_Gather(sendbuf,sendcount,sendtype,recvbuf,recvcount,
              recvtype,root,comm), 
+.fi
 .sp
 .fi
 for root = 0 , ..., n-1. The rules for correct usage of MPI_Allgather are easily found from the corresponding rules for MPI_Gather.

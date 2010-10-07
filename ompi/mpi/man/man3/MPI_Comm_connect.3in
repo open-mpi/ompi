@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2007-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2007-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Comm_connect 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -13,6 +13,7 @@
 int MPI_Comm_connect(char *\fIport_name\fP, MPI_Info \fIinfo\fP, int \fIroot\fP, 
 	MPI_Comm \fIcomm\fP, MPI_Comm *\fInewcomm\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -20,12 +21,14 @@ MPI_COMM_CONNECT(\fIPORT_NAME, INFO, ROOT, COMM, NEWCOMM, IERROR\fP)
 	CHARACTER*(*)	\fIPORT_NAME\fP
 	INTEGER		\fIINFO, ROOT, COMM, NEWCOMM, IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 MPI::Intercomm MPI::Intracomm::Connect(const char* \fIport_name\fP,
 	const MPI::Info& \fIinfo\fP, int \fIroot\fP) const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

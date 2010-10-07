@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Probe 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -12,12 +12,14 @@
 #include <mpi.h>
 int MPI_Probe(int \fIsource\fP, int\fI tag\fP, MPI_Comm\fI comm\fP, MPI_Status\fI *status\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_PROBE(\fISOURCE, TAG, COMM, STATUS, IERROR\fP)
 	INTEGER	\fISOURCE, TAG, COMM, STATUS(MPI_STATUS_SIZE), IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -25,6 +27,7 @@ void Comm::Probe(int \fIsource\fP, int \fItag\fP, Status& \fIstatus\fP) const
 
 void Comm::Probe(int \fIsource\fP, int \fItag\fP) const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

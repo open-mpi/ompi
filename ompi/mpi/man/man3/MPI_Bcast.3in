@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Bcast 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -13,6 +13,7 @@
 int MPI_Bcast(void \fI*buffer\fP, int\fI count\fP, MPI_Datatype\fI datatype\fP,
 	int\fI root\fP, MPI_Comm\fI comm\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -20,12 +21,14 @@ MPI_BCAST(\fIBUFFER\fP,\fI COUNT\fP, \fIDATATYPE\fP,\fI ROOT\fP,\fI COMM\fP,\fI 
 	<type>	\fIBUFFER\fP(*)
 	INTEGER	\fICOUNT\fP,\fI DATATYPE\fP,\fI ROOT\fP,\fI COMM\fP,\fI IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void MPI::Comm::Bcast(void* \fIbuffer\fP, int \fIcount\fP,
 	const MPI::Datatype& \fIdatatype\fP, int \fIroot\fP) const = 0
 
+.fi
 .SH INPUT/OUTPUT PARAMETERS
 .ft R
 .TP 1i

@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Op_create 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -13,6 +13,7 @@
 int MPI_Op_create(MPI_User_function *\fIfunction\fP, int\fI commute\fP,
 	MPI_Op *\fIop\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -21,11 +22,13 @@ MPI_OP_CREATE(\fIFUNCTION, COMMUTE, OP, IERROR\fP)
 	LOGICAL	\fICOMMUTE\fP
 	INTEGER	\fIOP, IERROR\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void Op::Init(User function* \fIfunction\fP, bool \fIcommute\fP)
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

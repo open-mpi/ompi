@@ -1,6 +1,6 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
-.\"Copyright (c) 1996 Thinking Machines
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines
 .TH MPI_Type_free_keyval 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Type_free_keyval\fP \- Frees a previously created type key value. 
@@ -12,17 +12,20 @@
 #include <mpi.h>
 int MPI_Type_free_keyval(int *\fItype_keyval\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_TYPE_FREE_KEYVAL(\fITYPE_KEYVAL, IERROR\fP)
 	INTEGER	\fITYPE_KEYVAL, IERROR \fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 static void MPI::Datatype::Free_keyval(int& \fItype_keyval\fP)
 
+.fi
 .SH INPUT/OUTPUT PARAMETER
 .ft R
 .TP 1i

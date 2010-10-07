@@ -1,6 +1,6 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
-.\"Copyright (c) 1996 Thinking Machines
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines
 .TH MPI_Comm_delete_attr 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Comm_delete_attr\fP \- Deletes attribute value associated with a key. 
@@ -12,17 +12,20 @@
 #include <mpi.h>
 int MPI_Comm_delete_attr(MPI_Comm \fIcomm\fP, int \fIcomm_keyval\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_Comm_delete_attr(\fICOMM, COMM_KEYVAL, IERROR\fP)
 	INTEGER	\fICOMM, COMM_KEYVAL, IERROR \fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void MPI::Comm::Delete_attr(int \fIcomm_keyval\fP)
 
+.fi
 .SH INPUT/OUTPUT PARAMETER
 .ft R
 .TP 1i

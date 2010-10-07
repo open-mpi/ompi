@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2007-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2007-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Lookup_name 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 
@@ -7,6 +7,7 @@
 .nf
 \fBMPI_Lookup_name\fP \- Finds port associated with a service name
 
+.fi
 .SH SYNTAX
 .ft R
 
@@ -16,6 +17,7 @@
 int MPI_Lookup_name(char *\fIservice_name\fP, MPI_Info \fIinfo\fP,
 	char *\fIport_name\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -23,12 +25,14 @@ MPI_LOOKUP_NAME(\fISERVICE_NAME, INFO, PORT_NAME, IERROR\fP)
 	CHARACTER*(*)	\fISERVICE_NAME, PORT_NAME\fP
 	INTEGER		\fIINFO, IERROR\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void MPI::Lookup_name(const char *\fIservice_name\fP, const MPI::Info& \fIinfo\fP,
 	char* \fIport_name\fP)
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1.4i

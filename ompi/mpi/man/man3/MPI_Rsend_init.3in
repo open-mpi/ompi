@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Rsend_init 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -13,6 +13,7 @@
 int MPI_Rsend_init(void *\fIbuf\fP, int\fI count\fP, MPI_Datatype\fI datatype\fP,
 	int\fI dest\fP, int\fI tag\fP, MPI_Comm\fI comm\fP, MPI_Request\fI *request\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -21,12 +22,14 @@ MPI_RSEND_INIT(\fIBUF, COUNT, DATATYPE, DEST, TAG, COMM, REQUEST,
 	<type>	\fIBUF\fP(*)
 	INTEGER	\fICOUNT, DATATYPE, DEST, TAG, COMM, REQUEST, IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 Prequest Comm::Rsend_init(const void* \fIbuf\fP, int \fIcount\fP, const 
 	Datatype& \fIdatatype\fP, int \fIdest\fP, int \fItag\fP) const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

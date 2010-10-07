@@ -1,6 +1,6 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
-.\"Copyright (c) 1996 Thinking Machines
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines
 .TH MPI_Type_get_name 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Type_get_name\fP \- Gets the name of a data type. 
@@ -13,6 +13,7 @@
 int MPI_Type_get_name(MPI_Datatype \fItype\fP, char *\fItype_name\fP, 
 	int *\fIresultlen\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -20,12 +21,14 @@ TYPE_GET_NAME(\fITYPE, TYPE_NAME, RESULTLEN, IERROR\fP)
 	INTEGER	\fITYPE, RESULTLEN, IERROR \fP
 	CHARACTER*(*) \fITYPE_NAME\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void MPI::Datatype::Get_name(char* \fItype_name\fP, int& \fIresultlen\fP) 
 	const
 
+.fi
 .SH INPUT PARAMETER
 .ft R
 .TP 1i

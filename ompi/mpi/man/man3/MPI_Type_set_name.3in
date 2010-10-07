@@ -1,6 +1,6 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
-.\"Copyright (c) 1996 Thinking Machines
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines
 .TH MPI_Type_set_name 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Type_set_name\fP \- Sets the name of a data type. 
@@ -12,6 +12,7 @@
 #include <mpi.h>
 int MPI_Type_set_name(MPI_Datatype \fItype\fP, char *\fItype_name\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -19,11 +20,13 @@ MPI_TYPE_SET_NAME(\fITYPE, TYPE_NAME, IERROR\fP)
 	INTEGER	\fITYPE, IERROR\fP
 	CHARACTER*(*) \fITYPE_NAME\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void MPI::Datatype::Set_name(const char* \fItype_name\fP)
 
+.fi
 .SH INPUT/OUTPUT PARAMETER
 .ft R
 .TP 1i
