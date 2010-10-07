@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Address 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -12,6 +12,7 @@
 #include <mpi.h> 
 int MPI_Address(void *\fIlocation\fP, MPI_Aint\fP *address\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -20,6 +21,7 @@ MPI_ADDRESS(\fILOCATION\fP,\fI ADDRESS\fP,\fI IERROR\fP)
 	INTEGER	\fIADDRESS\fP,\fI IERROR\fP
 
 
+.fi
 .SH INPUT PARAMETER
 .ft R
 .TP 1i
@@ -48,6 +50,7 @@ Example: Using MPI_Address for an array.
 .sp
 .nf
 REAL A(100,100) 
+.fi
 .br
    INTEGER I1, I2, DIFF 
 .br

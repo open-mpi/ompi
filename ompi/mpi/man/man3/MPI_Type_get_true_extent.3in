@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Type_get_true_extent 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -13,6 +13,7 @@
 int MPI_Type_get_true_extent(MPI_Datatype \fIdatatype\fP, 
 	MPI_Aint *\fItrue_lb\fP, MPI_Aint *\fItrue_extent\fP)
 
+.fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
 INCLUDE 'mpif.h'
@@ -20,12 +21,14 @@ MPI_TYPE_GET_TRUE_EXTENT(\fIDATATYPE, TRUE_LB, TRUE_EXTENT, IERROR\fP)
 	INTEGER	\fIDATATYPE, IERROR\fP 
 	INTEGER(KIND=MPI_ADDRESS_KIND) \fITRUE_LB, TRUE_EXTENT\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void MPI::Datatype::Get_true_extent(MPI::Aint& \fItrue_lb\fP, 
 	MPI::Aint& \fItrue_extent\fP) const
 
+.fi
 .SH INPUT PARAMETER
 .ft R
 .TP 1i

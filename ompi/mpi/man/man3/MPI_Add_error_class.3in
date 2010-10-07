@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Add_error_class 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 
@@ -7,6 +7,7 @@
 .nf
 \fBMPI_Add_error_class\fP \- Creates a new error class and returns its value
 
+.fi
 .SH SYNTAX
 .ft R
 
@@ -15,17 +16,20 @@
 #include <mpi.h>
 int MPI_Add_error_class(int *\fIerrorclass\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_ADD_ERROR_CLASS(\fIERRORCLASS, IERROR\fP)
 	INTEGER	\fIERRORCLASS, IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 int MPI::Add_error_class()
 
+.fi
 .SH OUTPUT PARAMETERS
 .ft R
 .TP 1.4i

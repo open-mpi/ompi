@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Grequest_start 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -15,6 +15,7 @@ int MPI_Grequest_start(MPI_Grequest_query_function \fI*query_fn\fP,
 	MPI_Grequest_cancel_function \fI*cancel_fn\fP, void \fI*extra_state\fP,
 	MPI_Request \fI*request\fP)
 
+.fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
 INCLUDE 'mpif.h'
@@ -24,6 +25,7 @@ MPI_GREQUEST_START(\fIQUERY_FN, FREE_FN, CANCEL_FN, EXTRA_STATE,
 	EXTERNAL \fIQUERY_FN, FREE_FN, CANCEL_FN\fP
 	INTEGER (KIND=MPI_ADDRESS_KIND) \fIEXTRA_STATE\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -33,6 +35,7 @@ static MPI::Grequest
              const MPI::Grequest::Cancel_function \fIcancel_fn\fP,
              void \fI*extra_state\fP)
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

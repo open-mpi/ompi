@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Scatterv 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -14,6 +14,7 @@ int MPI_Scatterv(void *\fIsendbuf\fP, int\fI *sendcounts\fP, int\fI *displs\fP,
 	MPI_Datatype\fI sendtype\fP, void\fI *recvbuf\fP, int\fI recvcount\fP,
 	MPI_Datatype\fI recvtype\fP, int\fI root\fP, MPI_Comm\fI comm\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -23,6 +24,7 @@ MPI_SCATTERV(\fISENDBUF, SENDCOUNTS, DISPLS, SENDTYPE, RECVBUF,
 	INTEGER	\fISENDCOUNTS(*), DISPLS(*), SENDTYPE\fP
 	INTEGER	\fIRECVCOUNT, RECVTYPE, ROOT, COMM, IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -31,6 +33,7 @@ void MPI::Comm::Scatterv(const void* \fIsendbuf\fP, const int \fIsendcounts\fP[]
 	void* \fIrecvbuf\fP, int \fIrecvcount\fP, const MPI::Datatype&
 	\fIrecvtype\fP, int \fIroot\fP) const 
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

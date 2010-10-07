@@ -1,6 +1,6 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
-.\"Copyright (c) 1996 Thinking Machines
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines
 .TH MPI_Type_create_hvector 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Type_create_hvector\fP \- Creates a vector (strided) data type with offset in bytes. 
@@ -13,6 +13,7 @@
 int MPI_Type_create_hvector(int \fIcount\fP, int \fIblocklength\fP, 
 	MPI_Aint \fIstride\fP, MPI_Datatype \fIoldtype\fP, MPI_Datatype *\fInewtype\fP) 
 
+.fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
 INCLUDE 'mpif.h'
@@ -22,12 +23,14 @@ MPI_TYPE_CREATE_HVECTOR(\fICOUNT, BLOCKLENGTH, STRIDE, OLDTYPE,
 	INTEGER	\fICOUNT, BLOCKLENGTH, OLDTYPE, NEWTYPE, IERROR\fP
 	INTEGER(KIND=MPI_ADDRESS_KIND) \fISTRIDE\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 MPI::Datatype MPI::Datatype::Create_hvector(int \fIcount\fP, 
 	int \fIblocklength\fP, MPI::Aint \fIstride\fP) const 
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Init 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 
@@ -14,18 +14,21 @@
 #include <mpi.h>
 int MPI_Init(int *\fIargc\fP, char ***\fIargv\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_INIT(\fIIERROR\fP)
 	INTEGER	\fIIERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void MPI::Init(int& \fIargc\fP, char**& \fIargv\fP)
 void MPI::Init()
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

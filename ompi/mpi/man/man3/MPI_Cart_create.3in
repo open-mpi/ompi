@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Cart_create 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -13,6 +13,7 @@
 int MPI_Cart_create(MPI_Comm\fI comm_old\fP, int\fI ndims\fP, int\fI *dims\fP,
 	int\fI *periods\fP, int\fI reorder\fP, MPI_Comm\fI *comm_cart\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -21,12 +22,14 @@ MPI_CART_CREATE(\fICOMM_OLD\fP,\fI NDIMS\fP,\fI DIMS\fP,\fI PERIODS\fP,\fI REORD
 	INTEGER	\fICOMM_OLD\fP,\fI NDIMS\fP,\fI DIMS\fP(*),\fI COMM_CART\fP,\fI IERROR\fP
 	LOGICAL	\fIPERIODS\fI(*),\fI REORDER\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 Cartcomm Intracomm::Create_cart(int \fIndims\fP, const int \fIdims\fP[], 
 	const bool \fIperiods\fP[], bool \fIreorder\fP) const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

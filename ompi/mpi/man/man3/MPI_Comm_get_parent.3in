@@ -1,6 +1,6 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
-.\"Copyright (c) 1996 Thinking Machines
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines
 .TH MPI_Comm_get_parent 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Comm_get_parent\fP \- Returns the parent intercommunicator of current spawned process. 
@@ -12,18 +12,21 @@
 #include <mpi.h>
 int MPI_Comm_get_parent(MPI_Comm *\fIparent\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_COMM_GET_PARENT(\fIPARENT, IERROR\fP)
 	INTEGER	\fIPARENT, IERROR \fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 static MPI::Intercomm MPI::Comm::Get_parent()
 
 
+.fi
 .SH OUTPUT PARAMETERS
 .ft R
 .TP 1i

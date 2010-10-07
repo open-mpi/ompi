@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Comm_test_inter 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -12,6 +12,7 @@
 #include <mpi.h>
 int MPI_Comm_test_inter(MPI_Comm \fIcomm\fP, int\fI *flag\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -19,11 +20,13 @@ MPI_COMM_TEST_INTER(\fICOMM, FLAG, IERROR\fP)
 	INTEGER	\fICOMM, IERROR\fP
 	LOGICAL	\fIFLAG \fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 bool Comm::Is_inter() const
 
+.fi
 .SH INPUT PARAMETER
 .ft R
 .TP 1i

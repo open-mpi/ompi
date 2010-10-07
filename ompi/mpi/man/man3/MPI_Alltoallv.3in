@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Alltoallv 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 
@@ -16,6 +16,7 @@ int MPI_Alltoallv(void *\fIsendbuf\fP, int *\fIsendcounts\fP,
 	void *\fIrecvbuf\fP, int\fI *recvcounts\fP,
 	int *\fIrdispls\fP, MPI_Datatype \fIrecvtype\fP, MPI_Comm \fIcomm\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -28,6 +29,7 @@ MPI_ALLTOALLV(\fISENDBUF, SENDCOUNTS, SDISPLS, SENDTYPE,
 	INTEGER	\fIRECVCOUNTS(*), RDISPLS(*), RECVTYPE\fP
 	INTEGER	\fICOMM, IERROR\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -37,6 +39,7 @@ void MPI::Comm::Alltoallv(const void* \fIsendbuf\fP,
 	const int \fIrecvcounts\fP[], const int \fIrdispls\fP[],
 	const MPI::Datatype& \fIrecvtype\fP)
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1.2i

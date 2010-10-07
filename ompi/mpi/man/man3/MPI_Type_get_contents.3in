@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Type_get_contents 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -13,6 +13,7 @@
 int MPI_Type_get_contents(MPI_Datatype \fIdatatype\fP, int \fImax_integers\fP,
 	int \fImax_addresses\fP, int \fImax_datatypes\fP, int \fIarray_of_integers\fP[], MPI_Aint \fIarray_of_addresses\fP[], MPI_Datatype array_of_datatypes\fP[])
 
+.fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
 INCLUDE 'mpif.h'
@@ -23,6 +24,7 @@ MPI_TYPE_GET_CONTENTS(\fIDATATYPE, MAX_INTEGERS, MAX_ADDRESSES,
 	INTEGER	\fIARRAY_OF_INTEGERS(*), ARRAY_OF_DATATYPES(*), IERROR\fP
 	INTEGER(KIND=MPI_ADDRESS_KIND) \fIARRAY_OF_ADDRESSES\fP(*) 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -31,6 +33,7 @@ void MPI::Datatype::Get_contents(int \fImax_integers\fP, int \fImax_addresses\fP
 	MPI::Aint \fIarray_of_addresses\fP[],
 	MPI::Datatype \fIarray_of_datatypes\fP[]) const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

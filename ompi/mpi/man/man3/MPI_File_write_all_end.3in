@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_File_write_all_end 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -18,6 +18,7 @@ Fortran Syntax
 		<type>		BUF(*)
         	INTEGER		FH, STATUS, IERROR
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -25,6 +26,7 @@ void MPI::File::Write_all_end(const void* \fIbuf\fP, MPI::Status& \fIstatus\fP)
 
 void MPI::File::Write_all_end(const void* \fIbuf\fP)
 
+.fi
 .SH INPUT/OUTPUT PARAMETER
 .ft R
 .TP 1i

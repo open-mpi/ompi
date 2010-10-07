@@ -1,6 +1,6 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
-.\"Copyright (c) 1996 Thinking Machines
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines
 .TH MPI_Type_create_hindexed 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Type_create_hindexed\fP \- Creates an indexed data type with offsets in bytes.
@@ -14,6 +14,7 @@ int MPI_Type_create_hindexed(int\fI count\fP, int \fIarray_of_blocklengths\fP[],
 	MPI_Aint \fIarray_of_displacements\fP[], MPI_Datatype \fIoldtype\fP,
 	MPI_Datatype *\fInewtype\fP)
 
+.fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
 INCLUDE 'mpif.h'
@@ -22,6 +23,7 @@ MPI_TYPE_CREATE_HINDEXED(\fICOUNT\fP,\fI ARRAY_OF_BLOCKLENGTHS\fP,
 	INTEGER	\fICOUNT, ARRAY_OF_BLOCKLENGTHS(*), OLDTYPE, NEWTYPE, IERROR\fP
 	INTEGER(KIND=MPI_ADDRESS_KIND) \fIARRAY_OF_DISPLACEMENTS\fP(*)
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -29,6 +31,7 @@ MPI::Datatype MPI::Datatype::Create_hindexed(int \fIcount\fP,
 	const int \fIarray_of_blocklengths\fP[],
 	const MPI::Aint \fIarray_of_displacements\fP[]) const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

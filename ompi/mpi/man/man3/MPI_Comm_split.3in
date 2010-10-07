@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Comm_split 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -13,12 +13,14 @@
 int MPI_Comm_split(MPI_Comm \fIcomm\fP, int\fI color\fP, int\fI key\fP,
 	MPI_Comm *\fInewcomm\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_COMM_SPLIT(\fICOMM, COLOR, KEY, NEWCOMM, IERROR\fP)
 	INTEGER	\fICOMM, COLOR, KEY, NEWCOMM, IERROR\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -26,6 +28,7 @@ MPI::Intercomm MPI::Intercomm::Split(int \fIcolor\fP, int \fIkey\fP) const
 
 MPI::Intracomm MPI::Intracomm::Split(int \fIcolor\fP, int \fIkey\fP) const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

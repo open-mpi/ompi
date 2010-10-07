@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_File_write_at_all 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -21,6 +21,7 @@ Fortran Syntax (see FORTRAN 77 NOTES)
     	 INTEGER \fIFH, COUNT, DATATYPE, STATUS(MPI_STATUS_SIZE), IERROR\fP 
     	 INTEGER(KIND=MPI_OFFSET_KIND) \fIOFFSET\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -31,6 +32,7 @@ void MPI::File::Write_at_all(MPI::Offset \fIoffset\fP, const void* \fIbuf\fP,
 void MPI::File::Write_at_all(MPI::Offset \fIoffset\fP, const void* \fIbuf\fP,
 	int \fIcount\fP, const MPI::Datatype& \fIdatatype\fP)
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

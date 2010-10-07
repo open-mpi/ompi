@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Graph_create 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -13,6 +13,7 @@
 int MPI_Graph_create(MPI_Comm \fIcomm_old\fP, int\fI nnodes\fP, int\fI *index\fP,
 	int\fI *edges\fP, int\fI reorder\fP, MPI_Comm\fI *comm_graph\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -22,12 +23,14 @@ MPI_GRAPH_CREATE(\fICOMM_OLD, NNODES, INDEX, EDGES, REORDER,
 	INTEGER	\fICOMM_GRAPH, IERROR\fP
 	LOGICAL   \fIREORDER\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 Graphcomm Intracomm::Create_graph(int \fInnodes\fP, const int \fIindex\fP[], 
 	const int \fIedges\fP[], bool \fIreorder\fP) const 
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

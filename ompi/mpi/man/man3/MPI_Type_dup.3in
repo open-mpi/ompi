@@ -1,6 +1,6 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
-.\"Copyright (c) 1996 Thinking Machines
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines
 .TH MPI_Type_dup 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Type_dup\fP \- Duplicates a data type with associated key values.
@@ -12,17 +12,20 @@
 #include <mpi.h>
 int MPI_Type_dup(MPI_Datatype \fItype\fP, MPI_Datatype *\fInewtype\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_TYPE_DUP(\fITYPE, NEWTYPE, IERROR\fP)
 	INTEGER	\fITYPE, NEWTYPE, IERROR \fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 MPI::Datatype MPI::Datatype::Dup() const
 
+.fi
 .SH INPUT PARAMETER
 .ft R
 .TP 1i

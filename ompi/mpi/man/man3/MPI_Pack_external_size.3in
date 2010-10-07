@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Pack_external_size 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 
@@ -16,6 +16,7 @@ to write to a portable format
 int MPI_Pack_external_size(char *\fIdatarep\fP, int \fIincount\fP, 
 	MPI_Datatype \fIdatatype\fP, MPI_Aint *\fIsize\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -25,12 +26,14 @@ MPI_PACK_EXTERNAL_SIZE(\fIDATAREP, INCOUNT, DATATYPE, SIZE, IERROR\fP)
 	INTEGER (KIND=MPI_ADDRESS_KIND) \fISIZE\fP
 	CHARACTER*(*)	\fIDATAREP\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 MPI::Aint MPI::Datatype::Pack_external_size(const char* \fIdatarep\fP, 
 	int \fIincount\fP) const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

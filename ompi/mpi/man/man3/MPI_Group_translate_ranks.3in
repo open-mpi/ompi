@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Group_translate_ranks 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -13,6 +13,7 @@
 int MPI_Group_translate_ranks(MPI_Group \fIgroup1\fP, int\fI n\fP,
 	int\fI *ranks1\fP, MPI_Group\fI group2\fP, int\fI *ranks2\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -20,12 +21,14 @@ MPI_GROUP_TRANSLATE_RANKS(\fIGROUP1, N, RANKS1, GROUP2, RANKS2,
 		IERROR\fP)
 	INTEGER	\fIGROUP1, N, RANKS1(*), GROUP2, RANKS2(*), IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 static void Group::Translate_ranks (const Group& \fIgroup1\fP, int \fIn\fP, 
 	const int \fIranks1\fP[], const Group& \fIgroup2\fP, int \fIranks2\fP[]) 
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

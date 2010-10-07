@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Comm_join 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 
@@ -14,17 +14,20 @@
 #include <mpi.h>
 int MPI_Comm_join(int \fIfd\fP, MPI_Comm *\fIintercomm\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_COMM_JOIN(\fIFD, INTERCOMM, IERROR\fP)
 	INTEGER	\fIFD, INTERCOMM, IERROR\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 MPI::Intercomm MPI::Comm::Join(const int \fIfd\fP)
 
+.fi
 .SH INPUT PARAMETER
 .ft R
 .TP 1i

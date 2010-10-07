@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Comm_remote_group 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -12,17 +12,20 @@
 #include <mpi.h>
 int MPI_Comm_remote_group(MPI_Comm \fIcomm\fP, MPI_Group\fI *group\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_COMM_REMOTE_GROUP(\fICOMM, GROUP, IERROR\fP)
 	INTEGER	\fICOMM, GROUP, IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 Group Intercomm::Get_remote_group() const
 
+.fi
 .SH INPUT PARAMETER
 .ft R
 .TP 1i

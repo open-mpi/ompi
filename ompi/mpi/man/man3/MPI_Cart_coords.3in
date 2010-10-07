@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Cart_coords 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -13,18 +13,21 @@
 int MPI_Cart_coords(MPI_Comm \fIcomm\fP, int\fI rank\fP, int\fI maxdims\fP,
 	int\fI *coords\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_CART_COORDS(\fICOMM\fP,\fI RANK\fP,\fI MAXDIMS\fP,\fI COORDS\fP, \fIIERROR\fP)
 	INTEGER	\fICOMM\fP,\fI RANK\fP,\fI MAXDIMS\fP,\fI COORDS(\fI*\fP)\fP,\fI IERROR
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void Cartcomm::Get_coords(int \fIrank\fP, int \fImaxdims\fP, 
 	int \fIcoords\fP[]) const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

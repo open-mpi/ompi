@@ -1,5 +1,5 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
-.\"Copyright 2009-2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2009-2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_File_create_errhandler 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -13,6 +13,7 @@
 int MPI_File_create_errhandler(MPI_File_errhandler_function \fI*function\fP,
 	MPI_Errhandler \fI*errhandler\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -20,6 +21,7 @@ MPI_FILE_CREATE_ERRHANDLER(\fIFUNCTION, ERRHANDLER, IERROR\fP)
 	EXTERNAL	\fIFUNCTION\fP
 	INTEGER	\fIERRHANDLER, IERROR\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -27,6 +29,7 @@ static MPI::Errhandler
 	MPI::File::Create_errhandler(MPI::File::Errhandler_function*
 	\fIfunction\fP)
 
+.fi
 .SH DEPRECATED TYPE NAME NOTE
 .ft R
 MPI-2.2 deprecated the MPI_File_errhandler_fn and

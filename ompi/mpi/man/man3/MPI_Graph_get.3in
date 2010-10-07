@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Graph_get 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -13,6 +13,7 @@
 int MPI_Graph_get(MPI_Comm \fIcomm\fP, int\fI maxindex\fP, int\fI maxedges\fP,
 	int\fI *index\fP, int\fI *edges\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -20,12 +21,14 @@ MPI_GRAPH_GET(\fICOMM, MAXINDEX, MAXEDGES, INDEX, EDGES, IERROR\fP)
 	INTEGER	\fICOMM, MAXINDEX, MAXEDGES, INDEX(*)\fP
 	INTEGER	\fIEDGES(*), IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void Graphcomm::Get_topo(int \fImaxindex\fP, int \fImaxedges\fP, 
 	int \fIindex\fP[], int \fIedges\fP[]) const 
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

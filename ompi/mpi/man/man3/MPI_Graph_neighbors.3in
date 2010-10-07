@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Graph_neighbors 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -13,18 +13,21 @@
 int MPI_Graph_neighbors(MPI_Comm \fIcomm\fP, int\fI rank\fP, int\fI maxneighbors\fP,
 	int\fI *neighbors\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_GRAPH_NEIGHBORS(\fICOMM, RANK, MAXNEIGHBORS, NEIGHBORS, IERROR\fP)
 	INTEGER	\fICOMM, RANK, MAXNEIGHBORS, NEIGHBORS(*), IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void Graphcomm::Get_neighbors(int \fIrank\fP, int \fImaxneighbors\fP, 
 	int \fIneighbors\fP[]) const 
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i
@@ -82,6 +85,7 @@ C  perform unshuffle permutation
       CALL MPI_SENDRECV_REPLACE(A, 1, MPI_REAL, neighbors(3), 0, 
      +     neighbors(2), 0, comm, status, ierr)
 
+.fi
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
 .sp

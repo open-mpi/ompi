@@ -1,5 +1,5 @@
-.\"Copyright 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_File_iread_at 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -21,12 +21,14 @@ Fortran Syntax (see FORTRAN 77 NOTES)
         	INTEGER	\fIFH, COUNT, DATATYPE, REQUEST, IERROR\fP
 		INTEGER(KIND=MPI_OFFSET_KIND) \fIOFFSET\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 MPI::Request MPI::File::Iread_at(MPI::Offset \fIoffset\fP, void* \fIbuf\fP,
 	int \fIcount\fP, const MPI::Datatype& \fIdatatype\fP)
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i
