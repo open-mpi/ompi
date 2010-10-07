@@ -1,5 +1,5 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
-.\"Copyright (c) 1996 Thinking Machines
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines
 .TH MPI_Comm_get_name 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Comm_get_name\fP \- Returns the name that was most recently associated with a communicator. 
@@ -11,6 +11,7 @@
 #include <mpi.h>
 int MPI_Comm_get_name(MPI_Comm \fIcomm\fP, char *\fIcomm_name\fP, int *\fIresultlen\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -18,11 +19,13 @@ MPI_COMM_GET_NAME(\fICOMM, COMM_NAME, RESULTLEN, IERROR\fP)
 	INTEGER	\fICOMM, RESULTLEN, IERROR \fP
 	CHARACTER*(*) \fICOMM_NAME\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void MPI::Comm::Get_name(char* \fIcomm_name\fP, int& \fIresultlen\fP) const
 
+.fi
 .SH INPUT PARAMETER
 .ft R
 .TP 1i

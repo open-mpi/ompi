@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Comm_free 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -11,17 +11,20 @@
 #include <mpi.h>
 int MPI_Comm_free(MPI_Comm *\fIcomm\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_COMM_FREE(\fICOMM, IERROR\fP)
 	INTEGER	\fICOMM, IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void Comm::Free()
 
+.fi
 .SH INPUT PARAMETER
 .ft R
 .TP 1i

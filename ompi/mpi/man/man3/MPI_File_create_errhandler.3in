@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_File_create_errhandler 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -12,6 +12,7 @@
 int MPI_File_create_errhandler(MPI_File_errhandler_fn \fI*function\fP,
 	MPI_Errhandler \fI*errhandler\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -19,6 +20,7 @@ MPI_FILE_CREATE_ERRHANDLER(\fIFUNCTION, ERRHANDLER, IERROR\fP)
 	EXTERNAL	\fIFUNCTION\fP
 	INTEGER	\fIERRHANDLER, IERROR\fP
 
+.fi
 .SH C++ Syntax
 #include <mpi.h>
 static MPI::Errhandler

@@ -1,5 +1,5 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
-.\"Copyright (c) 1996 Thinking Machines
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines
 .TH MPI_Type_delete_attr 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Type_delete_attr\fP \- Deletes a datatype-caching attribute value associated with a key. 
@@ -11,17 +11,20 @@
 #include <mpi.h>
 int MPI_Type_delete_attr(MPI_Datatype \fItype\fP, int \fItype_keyval\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_TYPE_DELETE_ATTR(\fITYPE, TYPE_KEYVAL, IERROR\fP)
 	INTEGER	\fITYPE, TYPE_KEYVAL, IERROR \fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void MPI::Datatype::Delete_attr(int \fItype_keyval\fP)
 
+.fi
 .SH INPUT/OUTPUT PARAMETER
 .ft R
 .TP 1i

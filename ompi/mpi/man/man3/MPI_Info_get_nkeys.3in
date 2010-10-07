@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Info_get_nkeys 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -11,17 +11,20 @@
 #include <mpi.h>
 int MPI_Info_get_nkeys(MPI_Info \fIinfo\fP, int \fI*nkeys\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_INFO_GET_NKEYS(\fIINFO, NKEYS, IERROR\fP)
 	INTEGER		\fIINFO, NKEYS, IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 int MPI::Info::Get_nkeys() const
 
+.fi
 .SH INPUT PARAMETER
 .ft R
 .TP 1i

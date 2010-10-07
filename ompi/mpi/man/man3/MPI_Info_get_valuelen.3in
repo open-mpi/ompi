@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Info_get_valuelen 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -12,6 +12,7 @@
 int MPI_Info_get_valuelen(MPI_Info \fIinfo\fP, char \fI*key\fP, 
 	int \fI*valuelen\fP, int \fI*flag\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -20,12 +21,14 @@ MPI_INFO_GET_VALUELEN(\fIINFO, KEY, VALUELEN, FLAG, IERROR\fP)
 	LOGICAL		\fIFLAG\fP
 	CHARACTER*(*)	\fIKEY\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 bool MPI::Info::Get_valuelen(const char* \fIkey\fP, int& \fIvaluelen\fP) 
 	const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Error_class 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -11,17 +11,20 @@
 #include <mpi.h>
 int MPI_Error_class(int \fIerrorcode\fP, int\fI *errorclass\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_ERROR_CLASS(\fIERRORCODE, ERRORCLASS, IERROR\fP)
 	INTEGER	\fIERRORCODE, ERRORCLASS, IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 int Get_error_class(int \fIerrorcode\fP)
 
+.fi
 .SH INPUT PARAMETER
 .ft R
 .TP 1i

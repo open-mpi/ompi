@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Intercomm_merge 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -12,6 +12,7 @@
 int MPI_Intercomm_merge(MPI_Comm \fIintercomm\fP, int\fI high\fP, 
      MPI_Comm\fI *newintracomm\fP
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -19,11 +20,13 @@ MPI_INTERCOMM_MERGE(\fIINTERCOMM, HIGH, NEWINTRACOMM, IERROR\fP)
 	INTEGER	\fIINTERCOMM, NEWINTRACOMM, IERROR\fP 
 	LOGICAL	\fIHIGH\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 Intracomm Intercomm::Merge(bool \fIhigh\fP) const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

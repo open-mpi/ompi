@@ -1,4 +1,4 @@
-.\"Copyright 2007-2008 Sun Microsystems, Inc.
+.\" Copyright 2007-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Wait 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -11,12 +11,14 @@
 #include <mpi.h>
 int MPI_Wait(MPI_Request *\fIrequest\fP, MPI_Status\fI *status\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_WAIT(\fIREQUEST, STATUS, IERROR\fP)
 	INTEGER	\fIREQUEST, STATUS(MPI_STATUS_SIZE), IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -24,6 +26,7 @@ void Request::Wait(Status& \fIstatus\fP)
 
 void Request::Wait() 
 
+.fi
 .SH INPUT PARAMETER
 .ft R
 .TP 1i
@@ -67,6 +70,7 @@ Example: Simple usage of nonblocking operations and  MPI_Wait.
         CALL MPI_WAIT(request, status, ierr) 
     END IF 
 
+.fi
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
 .sp

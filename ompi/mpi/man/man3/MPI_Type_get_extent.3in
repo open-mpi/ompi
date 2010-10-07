@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Type_get_extent 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -12,6 +12,7 @@
 int MPI_Type_get_extent(MPI_Datatype \fIdatatype\fP, MPI_Aint\fI *lb\fP, 
 	MPI_Aint *\fIextent\fP)
 
+.fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
 INCLUDE 'mpif.h'
@@ -19,12 +20,14 @@ MPI_TYPE_GET_EXTENT(\fIDATATYPE, LB, EXTENT, IERROR\fP)
 	INTEGER	\fIDATATYPE, IERROR\fP 
 	INTEGER(KIND=MPI_ADDRESS_KIND) \fILB, EXTENT\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void MPI::Datatype::Get_extent(MPI::Aint& \fIlb\fP, MPI::Aint& \fIextent\fP) 
 	const
 
+.fi
 .SH INPUT PARAMETER
 .ft R
 .TP 1i

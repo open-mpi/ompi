@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Sendrecv_replace 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -13,6 +13,7 @@ int MPI_Sendrecv_replace(void *\fIbuf\fP, int\fI count\fP, MPI_Datatype\fI datat
 	int\fI dest\fP, int\fI sendtag\fP, int\fI source\fP, int\fI recvtag\fP, MPI_Comm\fI comm\fP,
 	MPI_Status\fI *status\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -23,6 +24,7 @@ MPI_SENDRECV_REPLACE(\fIBUF, COUNT, DATATYPE, DEST, SENDTAG, SOURCE,
 	INTEGER	\fISOURCE, RECVTAG, COMM\fP
 	INTEGER	\fISTATUS(MPI_STATUS_SIZE), IERROR\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -34,6 +36,7 @@ void Comm::Sendrecv_replace(void* \fIbuf\fP, int \fIcount\fP, const
 	Datatype& \fIdatatype\fP, int \fIdest\fP, int \fIsendtag\fP, int \fIsource\fP, 
 	int \fIrecvtag\fP) const 
 
+.fi
 .SH INPUT/OUTPUT PARAMETER
 .ft R
 .TP 1i

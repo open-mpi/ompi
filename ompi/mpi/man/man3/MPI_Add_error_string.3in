@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Add_error_string 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 
@@ -6,6 +6,7 @@
 .nf
 \fBMPI_Add_error_string\fP \- Associates a string with an error code or class
 
+.fi
 .SH SYNTAX
 .ft R
 
@@ -14,6 +15,7 @@
 #include <mpi.h>
 int MPI_Add_error_string(int \fIerrorcode\fP, char *\fIstring\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -21,11 +23,13 @@ MPI_ADD_ERROR_STRING(\fIERRORCODE, STRING, IERROR\fP)
 	INTEGER		\fIERRORCODE, IERROR\fP
 	CHARACTER*(*)	\fISTRING\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void MPI::Add_error_string(int \fIerrorcode\fP, const char* \fIstring\fP)
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1.4i

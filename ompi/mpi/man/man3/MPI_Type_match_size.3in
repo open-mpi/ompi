@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Type_match_size 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -14,17 +14,20 @@
 int MPI_Type_match_size(int \fItypeclass\fP, int \fIsize\fP,
 	MPI_Datatype *\fItype\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_TYPE_MATCH_SIZE(\fITYPECLASS, SIZE, TYPE, IERROR\fP)
 	INTEGER	\fITYPECLASS, SIZE, TYPE, IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 static MPI::Datatype MPI::Match_size(int \fItypeclass\fP, int \fIsize\fP)
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

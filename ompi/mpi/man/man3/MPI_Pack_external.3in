@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Pack_external 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 
@@ -16,6 +16,7 @@ int MPI_Pack_external(char *\fIdatarep\fP, void *\fIinbuf\fP,
 	void *\fIoutbuf\fP, MPI_Aint \fIoutsize\fP, 
 	MPI_Aint *\fIposition\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -27,6 +28,7 @@ MPI_PACK_EXTERNAL(\fIDATAREP, INBUF, INCOUNT, DATATYPE,
 	CHARACTER*(*)	\fIDATAREP\fP
 	<type>		\fIINBUF(*), OUTBUF(*)\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -35,6 +37,7 @@ void MPI::Datatype::Pack_external(const char* \fIdatarep\fP,
 	void* \fIoutbuf\fP, MPI::Aint \fIoutsize\fP, 
 	MPI::Aint& \fIposition\fP) const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i
@@ -118,6 +121,7 @@ to MPI_Pack_external.
 		    MPI_DOUBLE, &msg, i, &position);
 	}	
 
+.fi
 .SH NOTES
 .ft R
 The \fIdatarep\fP argument specifies the data format. The only valid

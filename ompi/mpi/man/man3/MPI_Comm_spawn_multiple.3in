@@ -1,5 +1,5 @@
 .\" Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Comm_spawn_multiple 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -15,6 +15,7 @@ int MPI_Comm_spawn_multiple(int \fIcount\fP, char *\fIarray_of_commands\fP[],
 	\fIarray_of_info\fP[], int \fIroot\fP, MPI_Comm \fIcomm\fP, MPI_Comm *\fIintercomm\fP, 
 	int \fIarray_of_errcodes\fP[])
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -25,6 +26,7 @@ MPI_COMM_SPAWN_MULTIPLE(\fICOUNT, ARRAY_OF_COMMANDS, ARRAY_OF_ARGV,
 		COMM, INTERCOMM, ARRAY_OF_ERRCODES(*), IERROR\fP 
 	CHARACTER*(*) \fIARRAY_OF_COMMANDS\fP(*), \fIARRAY_OF_ARGV\fP(\fICOUNT\fP, *)
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -38,6 +40,7 @@ MPI::Intercomm MPI::Intracomm::Spawn_multiple(int \fIcount\fP,
 	const int \fIarray_of_maxprocs\fP[], const MPI::Info \fIarray_of_info\fP[],
 	int \fIroot\fP)
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

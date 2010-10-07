@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Dims_create 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -11,17 +11,20 @@
 #include <mpi.h>
 int MPI_Dims_create(int \fInnodes\fP, int\fI ndims\fP, int\fI *dims\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_DIMS_CREATE(\fINNODES, NDIMS, DIMS, IERROR\fP)
 	INTEGER	\fINNODES, NDIMS, DIMS(*), IERROR\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void Compute_dims(int \fInnodes\fP, int \fIndims\fP, int \fIdims\fP[])
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i
@@ -66,6 +69,7 @@ call		function call		on return
 (0,3,0)	MPI_Dims_create(7, 3, dims)	erroneous call
 ------------------------------------------------------
 
+.fi
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI:Exception object.
 .sp

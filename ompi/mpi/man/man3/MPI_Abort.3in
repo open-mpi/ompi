@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Abort 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -11,6 +11,7 @@
 #include <mpi.h>
 int MPI_Abort(MPI_Comm \fIcomm\fP, int\fI errorcode\fP)
 
+.fi
 .SH Fortran Syntax
 .ft R
 .nf
@@ -18,11 +19,13 @@ INCLUDE 'mpif.h'
 MPI_ABORT(\fICOMM\fP, \fIERRORCODE\fP, \fIIERROR\fP)			
 	INTEGER		\fICOMM\fP,\fI ERRORCODE\fP,\fI IERROR 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void Comm::Abort(int \fIerrorcode\fP)
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

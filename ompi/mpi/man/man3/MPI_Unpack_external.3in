@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Unpack_external 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 
@@ -16,6 +16,7 @@ int MPI_Unpack_external(char *\fIdatarep\fP, void *\fIinbuf\fP,
 	void *\fIoutbuf\fP, int \fIoutcount\fP,
 	MPI_Datatype \fIdatatype\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -27,6 +28,7 @@ MPI_UNPACK_EXTERNAL(\fIDATAREP, INBUF, INSIZE, POSITION,
 	CHARACTER*(*)	\fIDATAREP\fP
 	<type>		\fIINBUF(*), OUTBUF(*)\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -35,6 +37,7 @@ void MPI::Datatype::Unpack_external(const char* \fIdatarep\fP,
 	MPI_Aint& \fIposition\fP, void *\fIoutbuf\fP,
 	int \fIoutcount\fP) const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

@@ -1,4 +1,4 @@
-.\"Copyright 2007-2008 Sun Microsystems, Inc.
+.\" Copyright 2007-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Win_create 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -12,6 +12,7 @@
 MPI_Win_create(void *\fIbase\fP, MPI_Aint \fIsize\fP, int \fIdisp_unit\fP, 
 	MPI_Info \fIinfo\fP, MPI_Comm \fIcomm\fP, MPI_Win *\fIwin\fP)
 
+.fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
 INCLUDE 'mpif.h'
@@ -20,6 +21,7 @@ MPI_WIN_CREATE(\fIBASE, SIZE, DISP_UNIT, INFO, COMM, WIN, IERROR\fP)
 	INTEGER(KIND=MPI_ADDRESS_KIND) \fISIZE\fP
 	INTEGER \fIDISP_UNIT, INFO, COMM, WIN, IERROR\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -27,6 +29,7 @@ static MPI::Win MPI::Win::Create(const void* \fIbase\fP,
 	MPI::Aint \fIsize\fP, int \fIdisp_unit\fP, const 
 	MPI::Info& \fIinfo\fP, const MPI::Intracomm& \fIcomm\fP)
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

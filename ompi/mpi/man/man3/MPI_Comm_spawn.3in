@@ -1,5 +1,5 @@
 .\" Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Comm_spawn 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -14,6 +14,7 @@ int MPI_Comm_spawn(char *\fIcommand\fP, char *\fIargv\fP[], int \fImaxprocs\fP,
 	MPI_Info \fIinfo\fP, int \fIroot\fP, MPI_Comm \fIcomm\fP, 
 	MPI_Comm *\fIintercomm\fP, int \fIarray_of_errcodes\fP[])
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -24,6 +25,7 @@ MPI_COMM_SPAWN(\fICOMMAND, ARGV, MAXPROCS, INFO, ROOT, COMM,
 	INTEGER	\fIINFO, MAXPROCS, ROOT, COMM, INTERCOMM, 
 	ARRAY_OF_ERRORCODES(*), IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -35,6 +37,7 @@ MPI::Intercomm MPI::Intracomm::Spawn(const char* \fIcommand\fP,
 	const char* \fIargv\fP[], int \fImaxprocs\fP, const MPI::Info& \fIinfo\fP,
 	int \fIroot\fP) const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

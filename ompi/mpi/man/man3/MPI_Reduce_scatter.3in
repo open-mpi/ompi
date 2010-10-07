@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Reduce_scatter 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -12,6 +12,7 @@
 int MPI_Reduce_scatter(void *\fIsendbuf\fP, void\fI *recvbuf\fP, int\fI *recvcounts\fP,
 	MPI_Datatype\fI datatype\fP, MPI_Op\fI op\fP, MPI_Comm\fI comm\fP)        
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -20,6 +21,7 @@ MPI_REDUCE_SCATTER(\fISENDBUF, RECVBUF, RECVCOUNTS, DATATYPE, OP,
 	<type>	\fISENDBUF(*), RECVBUF(*)\fP
 	INTEGER	\fIRECVCOUNTS(*), DATATYPE, OP, COMM, IERROR \fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -27,6 +29,7 @@ void MPI::Comm::Reduce_scatter(const void* \fIsendbuf\fP, void* \fIrecvbuf\fP,
 	int \fIrecvcounts\fP[], const MPI::Datatype& \fIdatatype\fP,
 	const MPI::Op& \fIop\fP) const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

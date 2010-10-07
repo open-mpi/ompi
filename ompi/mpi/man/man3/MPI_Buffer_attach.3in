@@ -1,5 +1,5 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
-.\"Copyright (c) 1996 Thinking Machines
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines
 .TH MPI_Buffer_attach 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Buffer_attach\fP \- Attaches a user-defined buffer for sending.
@@ -11,6 +11,7 @@
 #include <mpi.h>
 int MPI_Buffer_attach(void \fI*buf\fP, int\fI size\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -18,11 +19,13 @@ MPI_BUFFER_ATTACH(\fIBUF\fP,\fI SIZE\fP, \fIIERROR\fP)
 	<type>	\fIBUF\fP(\fI*\fP)
 	INTEGER	\fISIZE\fP,\fI IERROR \fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void Attach_buffer(void* \fIbuffer\fP, int \fIsize\fP)
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

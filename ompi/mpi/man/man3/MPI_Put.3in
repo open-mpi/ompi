@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Put 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -13,6 +13,7 @@ MPI_Put(void *\fIorigin_addr\fP, int \fIorigin_count\fP, MPI_Datatype
 	\fIorigin_datatype\fP, int \fItarget_rank\fP, MPI_Aint \fItarget_disp\fP, 
 	int \fItarget_count\fP, MPI_Datatype \fItarget_datatype\fP, MPI_Win \fIwin\fP)
 
+.fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
 INCLUDE 'mpif.h'
@@ -23,6 +24,7 @@ MPI_PUT(\fIORIGIN_ADDR, ORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK,
 	INTEGER \fIORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK, TARGET_COUNT, 
 	TARGET_DATATYPE, WIN, IERROR\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -31,6 +33,7 @@ void MPI::Win::Put(const void* \fIorigin_addr\fP, int \fIorigin_count\fP, const
 	\fItarget_disp\fP, int \fItarget_count\fP, const MPI::Datatype& 
 	\fItarget_datatype\fP) const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

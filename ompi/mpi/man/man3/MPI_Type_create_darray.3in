@@ -1,5 +1,5 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
-.\"Copyright (c) 1996 Thinking Machines
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines
 .TH MPI_Type_create_darray 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Type_create_darray\fP \- Creates a distributed array datatype;
@@ -14,6 +14,7 @@ int MPI_Type_create_darray(int \fIsize\fP, int \fIrank\fP, int \fIndims\fP,
 	int \fIarray_of_dargs\fP[], int \fIarray_of_psizes\fP[], 
 	int \fIorder\fP, MPI_Datatype \fIoldtype\fP, MPI_Datatype \fI*newtype\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -25,6 +26,7 @@ MPI_TYPE_CREATE_DARRAY(\fISIZE, RANK, NDIMS, ARRAY_OF_GSIZES,
 		ARRAY_OF_DARGS(*), ARRAY_OF_PSIZES(*), ORDER, OLDTYPE, 
 		NEWTYPE, IERROR\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
@@ -33,6 +35,7 @@ MPI::Datatype MPI::Datatype::Create_darray(int \fIsize\fP, int \fIrank\fP,
 	const int \fIarray_of_distribs\fP[], const int \fIarray_of_dargs\fP[], 
 	const int \fIarray_of_psizes\fP[], int \fIorder\fP) const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

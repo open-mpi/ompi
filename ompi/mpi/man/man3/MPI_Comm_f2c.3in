@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Comm_f2c 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -33,6 +33,7 @@ MPI_Fint MPI_Type_c2f(MPI_Datatype \fIdatatype\fP)
 MPI_Win MPI_Win_f2c(MPI_Fint \fIwin\fP)
 MPI_Fint MPI_Win_c2f(MPI_Win \fIwin\fP)
 
+.fi
 .SH DESCRIPTION
 .ft R
 Handles are passed between Fortran and C or C++ by using an explicit C wrapper to convert Fortran handles to C handles. There is no direct access to C or C++ handles in Fortran. Handles are passed between C and C++ using overloaded C++ operators called from C++ code. There is no direct access to C++ objects from C. The type definition \fIMPI_Fint\fP is provided in C/C++ for an integer of the size that matches a Fortran \fIINTEGER\fP; usually, \fIMPI_Fint\fP will be equivalent to \fIint\fP. The handle translation functions are provided in C to convert from a Fortran handle (which is an integer) to a C handle, and vice versa.

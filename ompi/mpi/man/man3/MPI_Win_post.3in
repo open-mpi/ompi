@@ -1,4 +1,4 @@
-.\"Copyright 2007-2008 Sun Microsystems, Inc.
+.\" Copyright 2007-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Win_post 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -11,18 +11,21 @@
 #include <mpi.h>
 int MPI_Win_post(MPI_Group \fIgroup\fP, int assert, MPI_Win \fIwin\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_WIN_POST(\fIGROUP, ASSERT, WIN, IERROR\fP)
 	INTEGER GROUP, ASSERT, WIN, IERROR
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void MPI::Win::Post(const MPI::Group& group, int assert) const
 
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

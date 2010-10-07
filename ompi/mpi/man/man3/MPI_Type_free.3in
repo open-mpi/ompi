@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Type_free 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -11,17 +11,20 @@
 #include <mpi.h>
 int MPI_Type_free(MPI_Datatype *\fIdatatype\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_TYPE_FREE(\fIDATATYPE, IERROR\fP)
 	INTEGER	\fIDATATYPE, IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void Datatype::Free()
 
+.fi
 .SH INPUT/OUTPUT PARAMETER
 .ft R
 .TP 1i

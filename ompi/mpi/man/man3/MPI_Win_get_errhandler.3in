@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Win_get_errhandler 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -11,17 +11,20 @@
 #include <mpi.h>
 int MPI_Win_get_errhandler(MPI_Win \fIwin\fP, MPI_Errhandler *\fIerrhandler\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_WIN_GET_ERRHANDLER(\fIWIN, ERRHANDLER, IERROR\fP) 
 	INTEGER \fIWIN, ERRHANDLER, IERROR\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 MPI::Errhandler MPI::Win::Get_errhandler() const
 
+.fi
 .SH INPUT PARAMETER
 .ft R
 .TP 1i

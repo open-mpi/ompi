@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Info_delete 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -11,6 +11,7 @@
 #include <mpi.h>
 int MPI_Info_delete(MPI_Info \fIinfo\fP, char \fI*key\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
@@ -18,11 +19,13 @@ MPI_INFO_DELETE(\fIINFO, KEY, IERROR\fP)
 	INTEGER		\fIINFO, IERROR\fP 
 	CHARACTER*(*)	\fIKEY\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void MPI::Info::Delete(const char* \fIkey\fP)
 
+.fi
 .SH INPUT/OUTPUT PARAMETER
 .ft R
 .TP 1i

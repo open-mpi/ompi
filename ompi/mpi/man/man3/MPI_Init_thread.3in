@@ -1,5 +1,5 @@
 . -*- nroff -*-
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .\" Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
 .TH MPI_Init_thread 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
@@ -16,18 +16,21 @@
 int MPI_Init_thread(int *\fIargc\fP, char ***\fIargv\fP,
 	int \fIrequired\fP, int *\fIprovided\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_INIT(\fIREQUIRED, PROVIDED, IERROR\fP)
 	INTEGER	\fIREQUIRED, PROVIDED, IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 int MPI::Init_thread(int& \fIargc\fP, char**& \fIargv\fP, int \fIrequired\fP)
 int MPI::Init_thread(int \fIrequired\fP)
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i

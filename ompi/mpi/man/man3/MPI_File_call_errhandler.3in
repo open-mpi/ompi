@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_File_call_errhandler 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 
@@ -14,17 +14,20 @@ error handler assigned to a file
 #include <mpi.h>
 int MPI_File_call_errhandler(MPI_File \fIfh\fP, int \fIerrorcode\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_FILE_CALL_ERRHANDLER(\fIFH, ERRORCODE, IERROR\fP)
 	INTEGER	\fIFH, IERRORCODE, IERROR\fP
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 void MPI::File::Call_errhandler(int \fIerrorcode\fP) const
 
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1.4i

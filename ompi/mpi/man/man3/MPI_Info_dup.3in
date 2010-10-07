@@ -1,4 +1,4 @@
-.\"Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Info_dup 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -11,17 +11,20 @@
 #include <mpi.h>
 int MPI_Info_dup(MPI_Info \fIinfo\fP, MPI_Info \fI*newinfo\fP)
 
+.fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_INFO_DUP(\fIINFO, NEWINFO, IERROR\fP)
 	INTEGER		\fIINFO, NEWINFO, IERROR\fP 
 
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
 MPI::Info MPI::Info::Dup() const
 
+.fi
 .SH INPUT PARAMETER
 .ft R
 .TP 1i
