@@ -210,7 +210,17 @@ static void attach_debugger(int fd, short event, void *arg)
         opal_output(0, "%s Attaching debugger %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     (NULL == orte_debugger_test_daemon) ? MPIR_executable_path : orte_debugger_test_daemon);
     }
-        
+    
+    /* read the file descriptor to clear that event, if necessary */
+    if (orte_debugger_mpirx_check_rate <= 0) {
+        rc = 0;
+        read(fd, &rc, sizeof(rc));
+        if (1 != rc) {
+            /* ignore the cmd */
+            goto RELEASE;
+        }
+    }
+
     /* a debugger has attached! All the MPIR_Proctable
      * data is already available, so we only need to
      * check to see if we should spawn any daemons
