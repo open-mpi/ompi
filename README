@@ -95,17 +95,18 @@ General notes
   - Platform LSF (v7.0.2 and later)
   - SLURM
   - Cray XT-3, XT-4, and XT-5
-  - Sun Grid Engine (SGE) 6.1, 6.2 and open source Grid Engine
+  - Oracle Grid Engine (OGE) 6.1, 6.2 and open source Grid Engine
   - Microsoft Windows CCP (Microsoft Windows server 2003 and 2008)
 
 - Systems that have been tested are:
-  - Linux (various flavors/distros), 32 bit, with gcc, and Sun Studio 12
+  - Linux (various flavors/distros), 32 bit, with gcc, and Oracle
+    Solaris Studio 12
   - Linux (various flavors/distros), 64 bit (x86), with gcc, Absoft,
-    Intel, Portland, and Sun Studio 12 compilers (*)
+    Intel, Portland, and Oracle Solaris Studio 12 compilers (*)
   - OS X (10.5, 10.6), 32 and 64 bit (x86_64), with gcc and Absoft
     compilers (*)
-  - Solaris 10 update 2, 3 and 4, 32 and 64 bit (SPARC, i386, x86_64),
-    with Sun Studio 10, 11 and 12
+  - Oracle Solaris 10, 32 and 64 bit (SPARC, i386, x86_64), with
+    Oracle Solaris Studio 12
 
   (*) Be sure to read the Compiler Notes, below.
 
@@ -133,10 +134,10 @@ Compiler Notes
   patches for your compiler.
 
 - Open MPI does not support the Sparc v8 CPU target, which is the
-  default on Sun Solaris.  The v8plus (32 bit) or v9 (64 bit)
-  targets must be used to build Open MPI on Solaris.  This can be
-  done by including a flag in CFLAGS, CXXFLAGS, FFLAGS, and FCFLAGS,
-  -xarch=v8plus for the Sun compilers, -mv8plus for GCC.
+  default on Oracle Solaris.  The v8plus (32 bit) or v9 (64 bit)
+  targets must be used to build Open MPI on Solaris.  This can be done
+  by including a flag in CFLAGS, CXXFLAGS, FFLAGS, and FCFLAGS,
+  -xarch=v8plus for the Oracle compilers, -mv8plus for GCC.
 
 - At least some versions of the Intel 8.1 compiler seg fault while
   compiling certain Open MPI source code files.  As such, it is not
@@ -575,11 +576,11 @@ for a full list); a summary of the more commonly used ones follows:
   UDAPL headers and libraries are not in default compiler/linker
   search paths.
 
-  UDAPL is the support library for high performance networks in Sun
-  HPC ClusterTools and on Linux OpenFabrics networks (although the
-  "openib" options are preferred for Linux OpenFabrics networks, not
-  UDAPL).  To be clear: the UDAPL BTL is *not* recommended for Linux
-  platforms.
+  UDAPL is the support library for high performance networks in Oracle
+  Message Passing Toolkit, and also available on Linux OpenFabrics
+  networks (although the "openib" options are preferred for Linux
+  OpenFabrics networks, not UDAPL).  To be clear: the UDAPL BTL is
+  *not* recommended for Linux/OpenFabrics platforms.
 
 --with-udapl-libdir=<directory>
   Look in directory for the UDAPL libraries.  By default, Open MPI
@@ -617,12 +618,14 @@ for a full list); a summary of the more commonly used ones follows:
   scheduler in HPC systems.
 
 --with-sge
-  Specify to build support for the Sun Grid Engine (SGE) resource
-  manager.  SGE support is disabled by default; this option must be
-  specified to build OMPI's SGE support.
 
-  The Sun Grid Engine (SGE) is a resource manager system, frequently
-  used as a batch scheduler in HPC systems.
+  Specify to build support for the Oracle Grid Engine (OGE) resource
+  manager and/or the open Grid Engine.  OGE support is disabled by
+  default; this option must be specified to build OMPI's OGE support.
+
+  The Oracle Grid Engine (OGE) and open Grid Engine packages are
+  resource manager systems, frequently used as a batch scheduler in
+  HPC systems.
 
 --with-esmtp=<directory>
 
