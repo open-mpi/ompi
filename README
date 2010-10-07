@@ -10,7 +10,8 @@ Copyright (c) 2004-2007 The Regents of the University of California.
                         All rights reserved.
 Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006-2007 Voltaire, Inc. All rights reserved.
-Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
+Copyright (c) 2006-2009 Sun Microsystems, Inc.  All rights reserved.
+Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 Copyright (c) 2007      Myricom, Inc.  All rights reserved.
 Copyright (c) 2008      IBM Corporation.  All rights reserved.
 Copyright (c) 2010      Oak Ridge National Labs.  All rights reserved.
@@ -55,109 +56,8 @@ Much, much more information is also available in the Open MPI FAQ:
 
 ===========================================================================
 
-Detailed Open MPI v1.3 / v1.4 Feature List:
-
-  o Open MPI RunTime Environment (ORTE) improvements
-    - General robustness improvements
-    - Scalable job launch (we've seen ~16K processes in less than a
-      minute in a highly-optimized configuration)
-    - New process mappers
-    - Support for Platform/LSF environments (v7.0.2 and later)
-    - More flexible processing of host lists
-    - new mpirun cmd line options and associated functionality
-
-  o Fault-Tolerance Features
-    - Asynchronous, transparent checkpoint/restart support
-      - Fully coordinated checkpoint/restart coordination component
-      - Support for the following checkpoint/restart services:
-        - blcr: Berkeley Lab's Checkpoint/Restart
-        - self: Application level callbacks
-      - Support for the following interconnects:
-        - tcp
-        - mx
-        - openib 
-        - sm
-        - self
-    - Improved Message Logging
-
-  o MPI_THREAD_MULTIPLE support for point-to-point messaging in the
-    following BTLs (note that only MPI point-to-point messaging API
-    functions support MPI_THREAD_MULTIPLE; other API functions likely
-    do not):
-    - tcp
-    - sm
-    - mx
-    - elan
-    - self
-
-  o Point-to-point Messaging Layer (PML) improvements
-    - Memory footprint reduction
-    - Improved latency
-    - Improved algorithm for multiple communication device
-      ("multi-rail") support
-
-  o Numerous Open Fabrics improvements/enhancements
-    - Added iWARP support (including RDMA CM)
-    - Memory footprint and performance improvements
-      - "Bucket" SRQ support for better registered memory utilization
-      - XRC/ConnectX support
-      - Message coalescing
-    - Improved error report mechanism with Asynchronous events
-    - Automatic Path Migration (APM)
-    - Improved processor/port binding
-    - Infrastructure for additional wireup strategies
-    - mpi_leave_pinned is now enabled by default
-
-  o uDAPL BTL enhancements
-    - Multi-rail support
-    - Subnet checking
-    - Interface include/exclude capabilities
-
-  o  Processor affinity
-    - Linux processor affinity improvements
-    - Core/socket <--> process mappings
-
-  o Collectives
-    - Performance improvements
-    - Support for hierarchical collectives (must be activated
-      manually; see below)
-	- Support for Voltaire FCA (Fabric Collective Accelerator) technology
-
-  o Miscellaneous
-    - MPI 2.1 compliant 
-    - Sparse process groups and communicators
-    - Support for Cray Compute Node Linux (CNL)
-    - One-sided RDMA component (BTL-level based rather than PML-level
-      based)
-    - Aggregate MCA parameter sets
-    - MPI handle debugging
-    - Many small improvements to the MPI C++ bindings
-    - Valgrind support
-    - VampirTrace support
-    - Updated ROMIO to the version from MPICH2 1.0.7
-    - Removed the mVAPI IB stacks
-    - Display most error messages only once (vs. once for each
-      process)
-    - Many other small improvements and bug fixes, too numerous to
-      list here
-
-Known issues
-------------
-
-  o MPI_REDUCE_SCATTER does not work with counts of 0.
-    https://svn.open-mpi.org/trac/ompi/ticket/1559
-
-  o Processes that were spawned via MPI_COMM_SPAWN[_MULTIPLE] cannot
-    themselves invoke MPI_COMM_SPAWN[_MULTIPLE].  This has been fixed
-    in the Open MPI v1.5 series.
-
-  o Please also see the Open MPI bug tracker for bugs beyond this release.
-    https://svn.open-mpi.org/trac/ompi/report
-
-===========================================================================
-
 The following abbreviated list of release notes applies to this code
-base as of this writing (14 January 2010):
+base as of this writing (5 October 2010):
 
 General notes
 -------------
@@ -178,8 +78,7 @@ General notes
 
 - The majority of Open MPI's documentation is here in this file, the
   included man pages, and on the web site FAQ
-  (http://www.open-mpi.org/).  This will eventually be supplemented
-  with cohesive installation and user documentation files.
+  (http://www.open-mpi.org/).
 
 - Note that Open MPI documentation uses the word "component"
   frequently; the word "plugin" is probably more familiar to most
@@ -202,9 +101,9 @@ General notes
 - Systems that have been tested are:
   - Linux (various flavors/distros), 32 bit, with gcc, and Sun Studio 12
   - Linux (various flavors/distros), 64 bit (x86), with gcc, Absoft,
-    Intel, Portland, Pathscale, and Sun Studio 12 compilers (*)
-  - OS X (10.4), 32 and 64 bit (i386, PPC, PPC64, x86_64), with gcc
-    and Absoft compilers (*)
+    Intel, Portland, and Sun Studio 12 compilers (*)
+  - OS X (10.5, 10.6), 32 and 64 bit (x86_64), with gcc and Absoft
+    compilers (*)
   - Solaris 10 update 2, 3 and 4, 32 and 64 bit (SPARC, i386, x86_64),
     with Sun Studio 10, 11 and 12
 
@@ -225,6 +124,13 @@ Compiler Notes
   but such configurations are not tested and not documented.  For
   example, such configurations may require additional compiler /
   linker flags to make Open MPI build properly.
+
+- In general, the latest versions of compilers of a given vendor's
+  series have the least bugs.  We have seen cases where Vendor XYZ's
+  compiler version A.B fails to compile Open MPI, but version A.C
+  (where C>B) works just fine.  If you run into a compile failure, you
+  might want to double check that you have the latest bug fixes and
+  patches for your compiler.
 
 - Open MPI does not support the Sparc v8 CPU target, which is the
   default on Sun Solaris.  The v8plus (32 bit) or v9 (64 bit)
@@ -263,8 +169,20 @@ Compiler Notes
   also automatically add "-Msignextend" when the C and C++ MPI wrapper
   compilers are used to compile user MPI applications.
 
-- Using the MPI C++ bindings with the Pathscale compiler is known
-  to fail, possibly due to Pathscale compiler issues.
+- Using the MPI C++ bindings with older versions of the Pathscale
+  compiler on some platforms is an old issue that seems to be a
+  problem when Pathscale uses a back-end GCC 3.x compiler. Here's a
+  proposed solution from the Pathscale support team (from July 2010):
+
+      The proposed work-around is to install gcc-4.x on the system and
+      use the pathCC -gnu4 option. Newer versions of the compiler (4.x
+      and beyond) should have this fixed, but we'll have to test to
+      confirm it's actually fixed and working correctly.
+
+  We don't anticipate that this will be much of a problem for Open MPI
+  users these days (our informal testing shows that not many users are
+  still using GCC 3.x).  Contact Pathscale support if you continue to
+  have problems with Open MPI's C++ bindings.
 
 - Using the Absoft compiler to build the MPI Fortran bindings on Suse
   9.3 is known to fail due to a Libtool compatibility issue.
@@ -354,8 +272,6 @@ General Run-Time Support Notes
   using the --prefix or --enable-mpirun-prefix-by-default
   functionality (see below).
 
-- LAM/MPI-like mpirun notation of "C" and "N" is not yet supported.
-
 - Open MPI's run-time behavior can be customized via MCA ("MPI
   Component Architecture") parameters (see below for more information
   on how to get/set MCA parameter values).  Some MCA parameters can be
@@ -400,12 +316,6 @@ MPI Functionality and Features
   portable C datatype can be found that matches the Fortran type
   REAL*16, both in size and bit representation.
 
-- Asynchronous message passing progress using threads can be turned on
-  with the --enable-progress-threads option to configure.
-  Asynchronous message passing progress is only supported with devices
-  that support MPI_THREAD_MULTIPLE, but is only very lightly tested
-  (and may not provide very much performance benefit).
-
 
 Collectives
 -----------
@@ -432,8 +342,7 @@ Collectives
   is a solution for offloading collective operations from the MPI process 
   onto Voltaire QDR InfiniBand switch CPUs. 
 
-  See http://www.voltaire.com/Products/Application_Acceleration_Software/voltaire_fabric_collective_accelerator_fca
-  for details.
+  See http://goo.gl/CNRj for details.
 
 
 Network Support
@@ -464,7 +373,7 @@ Network Support
     well together):
     - OpenFabrics: InfiniBand and iWARP
     - Loopback (send-to-self)
-    - Myrinet: GM and MX (including Open-MX)
+    - Myrinet MX (including Open-MX)
     - Portals
     - Quadrics Elan
     - Shared memory
@@ -485,17 +394,20 @@ Network Support
     - InfiniPath PSM
     - Portals
 
-  Open MPI will, by default, choose to use "cm" when the InfiniPath
-  PSM MTL can be used.  Otherwise, "ob1" will be used and the
-  corresponding BTLs will be selected.  "csum" will never be selected
-  by default.  Users can force the use of ob1 or cm if desired by
-  setting the "pml" MCA parameter at run-time:
+    Open MPI will, by default, choose to use "cm" when the InfiniPath
+    PSM MTL can be used.  Otherwise, "ob1" will be used and the
+    corresponding BTLs will be selected.  "csum" will never be
+    selected by default.  Users can force the use of ob1 or cm if
+    desired by setting the "pml" MCA parameter at run-time:
 
-    shell$ mpirun --mca pml ob1 ...
-    or
-    shell$ mpirun --mca pml csum ...
-    or
-    shell$ mpirun --mca pml cm ...
+      shell$ mpirun --mca pml ob1 ...
+      or
+      shell$ mpirun --mca pml csum ...
+      or
+      shell$ mpirun --mca pml cm ...
+
+  - There are also the "v" and "crcpw" PML components for differing
+    flavors of specialized fault tolerant support.
 
 - Myrinet MX (and Open-MX) support is shared between the 2 internal
   devices, the MTL and the BTL.  The design of the BTL interface in
@@ -572,19 +484,6 @@ for a full list); a summary of the more commonly used ones follows:
   MPI will look in <elan directory>/lib and <elan directory>/lib64,
   which covers most cases.  This option is only needed for special
   configurations.
-
---with-gm=<directory>
-  Specify the directory where the GM libraries and header files are
-  located.  This option is generally only necessary if the GM headers
-  and libraries are not in default compiler/linker search paths.
-
-  GM is the support library for older Myrinet-based networks (GM has
-  been obsoleted by MX).
-
---with-gm-libdir=<directory>
-  Look in directory for the GM libraries.  By default, Open MPI will
-  look in <gm directory>/lib and <gm directory>/lib64, which covers
-  most cases.  This option is only needed for special configurations.
 
 --with-knem=<directory>
   Specify the directory where the knem libraries and header files are
@@ -679,7 +578,8 @@ for a full list); a summary of the more commonly used ones follows:
   UDAPL is the support library for high performance networks in Sun
   HPC ClusterTools and on Linux OpenFabrics networks (although the
   "openib" options are preferred for Linux OpenFabrics networks, not
-  UDAPL).
+  UDAPL).  To be clear: the UDAPL BTL is *not* recommended for Linux
+  platforms.
 
 --with-udapl-libdir=<directory>
   Look in directory for the UDAPL libraries.  By default, Open MPI
@@ -763,7 +663,6 @@ for a full list); a summary of the more commonly used ones follows:
   header files are located.  
 
   FCA is the support library for Voltaire QDR switches.
-
 
 --enable-opal-multi-threads
   Enables thread lock support in the OPAL and ORTE layers. Does
@@ -1127,13 +1026,14 @@ NOTE: Prior to v1.3.2, subtle and strange failures are almost
       run with another.  The Open MPI team strongly discourages making
       any ABI assumptions before v1.3.2.
 
-Starting with v1.3.2, Open MPI provides forward ABI compatibility in
-all versions of a given feature release series and its corresponding
-super stable series.  For example, on a single platform, an MPI
-application linked against Open MPI v1.3.2 shared libraries can be
-updated to point to the shared libraries in any successive v1.3.x or
-v1.4 release and still work properly (e.g., via the LD_LIBRARY_PATH
-environment variable or other operating system mechanism).
+Starting with v1.3.2, Open MPI provides forward ABI compatibility --
+with respect to the MPI API only -- in all versions of a given feature
+release series and its corresponding super stable series.  For
+example, on a single platform, an MPI application linked against Open
+MPI v1.3.2 shared libraries can be updated to point to the shared
+libraries in any successive v1.3.x or v1.4 release and still work
+properly (e.g., via the LD_LIBRARY_PATH environment variable or other
+operating system mechanism).
 
 Open MPI reserves the right to break ABI compatibility at new feature
 release series.  For example, the same MPI application from above
@@ -1331,6 +1231,7 @@ oob       - Out of band messaging
 plm       - Process lifecycle management
 ras       - Resource allocation system
 rmaps     - Resource mapping system
+rmcast    - Reliable multicast
 rml       - RTE message layer
 routed    - Routing table for the RML
 snapc     - Snapshot coordination
