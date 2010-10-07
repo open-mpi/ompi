@@ -60,7 +60,7 @@ AC_DEFUN([MCA_opal_memchecker_valgrind_CONFIG],[
     CPPFLAGS="$opal_memchecker_valgrind_save_CPPFLAGS"
 
     # If we specifically requested this component and can't build it, error
-    AS_IF([test "$with_valgrind" != "no" -a "$with_valgrind" != "" -a "$opal_memcheck_valgrind_happy" != "yes"],
+    AS_IF([test "$with_valgrind" != "no" -a "$with_valgrind" != "" -a "$opal_memchecker_valgrind_happy" != "yes"],
           [AC_MSG_ERROR([Cannot continue])])
 
     AS_IF([test "$opal_memchecker_valgrind_happy" = "yes"],
