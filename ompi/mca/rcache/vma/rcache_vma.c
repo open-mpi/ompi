@@ -122,7 +122,7 @@ int mca_rcache_vma_insert(struct mca_rcache_base_module_t* rcache,
         /* If we successfully registered, then tell the memory manager
            to start monitoring this region */
         opal_memory->memoryc_register(reg->base, 
-                                      (uint64_t) reg_size, (uint64_t) reg);
+                                      (uint64_t) reg_size, (uint64_t) (uintptr_t) reg);
     }
 
     return rc;
@@ -136,7 +136,7 @@ int mca_rcache_vma_delete(struct mca_rcache_base_module_t* rcache,
        region */
     opal_memory->memoryc_deregister(reg->base,
                                     (uint64_t) (reg->bound - reg->base),
-                                    (uint64_t) reg);
+                                    (uint64_t) (uintptr_t) reg);
     return mca_rcache_vma_tree_delete(vma_rcache, reg);
 }
 
