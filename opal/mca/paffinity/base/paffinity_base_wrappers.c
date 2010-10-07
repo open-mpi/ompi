@@ -142,12 +142,19 @@ char *opal_paffinity_base_print_binding(opal_paffinity_base_cpu_set_t cpumask)
     }
     memset(tmp, 0, masksize);
     masksize = sizeof(opal_paffinity_base_bitmask_t);
-    
+
+    /* Save the position of the last : before there are all zeros to
+       the right -- we don't need to print all zeros to the right;
+       we'll chop them off, below. */
+    save = 0;
     if (4 == masksize) {
         for (i=0, j=0; i < OPAL_PAFFINITY_BITMASK_NUM_ELEMENTS; i++) {
             sprintf(&tmp[j], "%08lx", cpumask.bitmask[i]);
             j += 8;
             tmp[j] = ':';
+            if (cpumask.bitmask[i] > 0) {
+                save = j;
+            }
             j++;
         }
     } else if (8 == masksize) {
@@ -156,25 +163,20 @@ char *opal_paffinity_base_print_binding(opal_paffinity_base_cpu_set_t cpumask)
             j += 16;
             tmp[j] = ':';
             j++;
+            if (cpumask.bitmask[i] > 0) {
+                save = j;
+            }
         }
     }
-    
-    /* find the last non-zero entry */
-    save = OPAL_PAFFINITY_CPU_SET_NUM_BYTES+OPAL_PAFFINITY_BITMASK_NUM_ELEMENTS;
-    for (i=OPAL_PAFFINITY_CPU_SET_NUM_BYTES+OPAL_PAFFINITY_BITMASK_NUM_ELEMENTS-1; 0 <= i; i--) {
-        if ('0' != tmp[i] && ':' != tmp[i]) {
-            tmp[save] = '\0';
-            break;
-        } else if (':' == tmp[i]) {
-            save = i;
-        }
+
+    /* If there were no non-zero values, then ensure to print one
+       field of zeros */
+    if (0 == save) {
+        tmp[2 * masksize] = '\0';
+    } else {
+        tmp[save] = '\0';
     }
-    if ('\0' == tmp[0]) {
-        /* there was nothing in the mask */
-        free(tmp);
-        tmp = NULL;
-    }
-    
+
     return tmp;
 }
 
