@@ -5,6 +5,17 @@
 # Script to generate PHP-ized files of Open MPI tarball-installed man
 # pages.
 #
+# Usage: ./make-html-man-pages.pl \
+#   --mandir <top-level-man-dir> \
+#   --version <version-string> \
+#   --outdir <outdir>
+#
+# If outdir is not specified, it is assumed to be ".".  mandir and
+# version must be specified.  mandir is typically a directory that
+# ends in "/man" -- it is the directory that .so roff redirects use as
+# a base (e.g., MPI_Win_c2f.3 is ".so man3/MPI_Comm_f2c.3" -- so
+# specify a mandir that makes that work).
+#
 
 use strict;
 use File::Find;
@@ -13,6 +24,7 @@ use Cwd;
 
 my $mandir;
 my $version;
+my $outdir_base = ".";
 
 # Read command line arguments
 while (@ARGV) {
@@ -21,20 +33,25 @@ while (@ARGV) {
         shift @ARGV;
         $mandir = $ARGV[0];
         print "Found mandir: $mandir\n";
-        shift @ARGV;
     }
 
     elsif ($a eq "--version" && $#ARGV >= 1) {
         shift @ARGV;
         $version = $ARGV[0];
         print "Found version: $version\n";
-        shift @ARGV;
     }
+
+    elsif ($a eq "--outdir" && $#ARGV >= 1) {
+        shift @ARGV;
+        $outdir_base = $ARGV[0];
+        print "Found outdir: $outdir_base\n";
+    }
+    shift @ARGV;
 }
 
 # Check that we have what we need
 if (!defined($mandir) || !defined($version)) {
-    print "Usage: $0 --mandir dir --version version\n";
+    print "Usage: $0 --mandir dir --version version [--outdir outdir]\n";
     exit(1);
 }
 
@@ -64,7 +81,8 @@ foreach my $file (@files) {
     my $section = $2;
 
     my $outfile = "$pwd/man$section/$b.php";
-    my $outdir = dirname($outfile);
+#    my $outdir = dirname($outfile);
+    my $outdir = "$outdir_base/man$section";
     $dirs{$outdir} = "";
     push(@{$outfiles->{$section}}, {
         name => $name,
@@ -76,9 +94,10 @@ foreach my $file (@files) {
 
     print "*** Generating: $name ($section)\n";
 
-    # Run the groff command and send the output to the file
-#    open(CMD, "groff -mandoc -T html $file|") || die("Can't open command");
-    open(CMD, "man $file | man2html -bare -botm 4 -topm 4|") || die("Can't open command");
+    # man2html clips many of our man pages -- it just stops halfway
+    # through the file.  Weird.
+    #print "man $file | man2html -bare -botm 4 -topm 4\n";
+    open(CMD, "rman -f HTML -r off -p $file|") || die("Can't open command");
     my $text;
     $text .= $_
         while (<CMD>);
@@ -191,7 +210,7 @@ foreach my $dir (keys(%dirs)) {
 }
 
 # Now write out a top-level data-<version>.inc file
-my $file = "$pwd/data-$version.inc";
+my $file = "$outdir_base/data-$version.inc";
 print "Writing $file...\n";
 open(FILE, ">$file") || die "Can't open $file";
 print FILE '<?php
@@ -222,7 +241,7 @@ close(FILE);
 
 # Print the top-level engine file for this version (it will use the
 # data-<version>.inc file).
-open(FILE, ">index.php") || die "Can't open index.php";
+open(FILE, ">$outdir_base/index.php") || die "Can't open $outdir_base/index.php";
 print FILE '<?php 
 $topdir = "../..";
 include_once("data-' . $version . '.inc");
