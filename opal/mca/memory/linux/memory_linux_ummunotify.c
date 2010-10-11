@@ -29,6 +29,7 @@
 #endif
 #include <errno.h>
 #include <string.h>
+#include <sys/ioctl.h>
 
 #include <linux/ummunotify.h>
 
