@@ -887,6 +887,12 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
             OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
             break;
 
+        case MCA_BTL_IB_FAILED:
+            /* This connection has been put in the failed state
+             * so just ignore the connection message. */
+            OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
+            break;
+
         default :
             BTL_ERROR(("Invalid endpoint state %d", endpoint_state));
             mca_btl_openib_endpoint_invoke_error(ib_endpoint);

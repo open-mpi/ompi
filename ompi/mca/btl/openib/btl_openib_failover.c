@@ -114,10 +114,10 @@ void mca_btl_openib_handle_endpoint_error(mca_btl_openib_module_t *openib_btl,
 	 * we change the state in the BTL layer.  The change in the PML
 	 * layer should prevent that we ever try to send on this BTL
 	 * again.  If we do, then this is an error case.  */
-	if (MCA_BTL_IB_CLOSED != endpoint->endpoint_state) {
-	    mca_btl_openib_endpoint_notify(endpoint, MCA_BTL_OPENIB_CONTROL_EP_BROKEN, 0);
-            endpoint->endpoint_state = MCA_BTL_IB_CLOSED;
-	}
+        if (MCA_BTL_IB_FAILED != endpoint->endpoint_state) {
+            endpoint->endpoint_state = MCA_BTL_IB_FAILED;
+            mca_btl_openib_endpoint_notify(endpoint, MCA_BTL_OPENIB_CONTROL_EP_BROKEN, 0);
+        }
         opal_output_verbose(60, mca_btl_openib_component.verbose_failover,
                             "MCA_BTL_OPENIG_FRAG=%d, "
 			    "dropping since connection is broken (des=%lx)",
@@ -153,8 +153,8 @@ void mca_btl_openib_handle_endpoint_error(mca_btl_openib_module_t *openib_btl,
      * it know that this side is now broken.  This is needed in the case
      * of a spurious error which may not cause the remote side to detect
      * the error.  */
-    if (MCA_BTL_IB_CLOSED != endpoint->endpoint_state) {
-        endpoint->endpoint_state = MCA_BTL_IB_CLOSED;
+    if (MCA_BTL_IB_FAILED != endpoint->endpoint_state) {
+        endpoint->endpoint_state = MCA_BTL_IB_FAILED;
         mca_btl_openib_endpoint_notify(endpoint, MCA_BTL_OPENIB_CONTROL_EP_BROKEN, 0);
     }
 
@@ -224,38 +224,42 @@ void mca_btl_openib_handle_endpoint_error(mca_btl_openib_module_t *openib_btl,
 }
 
 /**
- * This functions allows a error to map out the entire BTL.  First we
- * call up into the PML.  Then we send messages to all the endpoints
- * connected to this BTL.
+ * This functions allows an error to map out the entire BTL.  First a
+ * call is made up to the PML to map out all connections from this BTL.
+ * Then a message is sent to all the endpoints connected to this BTL.
+ * This function is enabled by the btl_openib_port_error_failover
+ * MCA parameter.  If that parameter is not set, then this function
+ * does not do anything.
  * @param openib_btl Pointer to BTL that had the error
  */
 void mca_btl_openib_handle_btl_error(mca_btl_openib_module_t* openib_btl) {
     mca_btl_base_endpoint_t* endpoint;
     int i;
 
-    /* Since we are not specifying a specific connection to bring down,
-     * the PML layer will may out the entire BTL for future communication. */
+    /* Check to see that the flag is set for the entire map out. */
     if(mca_btl_openib_component.port_error_failover) {
-	char btlname[IBV_SYSFS_NAME_MAX];
-	snprintf(btlname, IBV_SYSFS_NAME_MAX-1, "lid=%d:name=%s",
-		 openib_btl->lid, openib_btl->device->ib_dev->name);
-	openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_NONFATAL,
-			     NULL, btlname);
-    }
+        /* Since we are not specifying a specific connection to bring down,
+         * the PML layer will may out the entire BTL for future communication. */
+        char btlname[IBV_SYSFS_NAME_MAX];
+        snprintf(btlname, IBV_SYSFS_NAME_MAX-1, "lid=%d:name=%s",
+                 openib_btl->lid, openib_btl->device->ib_dev->name);
+        openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_NONFATAL,
+                             NULL, btlname);
 
-    /* Now send out messages to all endpoints that we are disconnecting.  
-     * Only do ths to endpoints that are connected.  Otherwise, the
-     * remote side does not yet have the information on this endpoint.  */
-    for (i = 0; i < opal_pointer_array_get_size(openib_btl->device->endpoints); i++) {
-	endpoint = (mca_btl_openib_endpoint_t*)
-	    opal_pointer_array_get_item(openib_btl->device->endpoints, i);
-	if (NULL == endpoint) {
-	    continue;
-	}
-	if (MCA_BTL_IB_CONNECTED == endpoint->endpoint_state) {
-	    mca_btl_openib_endpoint_notify(endpoint, MCA_BTL_OPENIB_CONTROL_EP_BROKEN, 0);
-	    endpoint->endpoint_state = MCA_BTL_IB_CLOSED;
-	}
+        /* Now send out messages to all endpoints that we are disconnecting.  
+         * Only do ths to endpoints that are connected.  Otherwise, the
+         * remote side does not yet have the information on this endpoint.  */
+        for (i = 0; i < opal_pointer_array_get_size(openib_btl->device->endpoints); i++) {
+            endpoint = (mca_btl_openib_endpoint_t*)
+                opal_pointer_array_get_item(openib_btl->device->endpoints, i);
+            if (NULL == endpoint) {
+                continue;
+            }
+            if (MCA_BTL_IB_CONNECTED == endpoint->endpoint_state) {
+                mca_btl_openib_endpoint_notify(endpoint, MCA_BTL_OPENIB_CONTROL_EP_BROKEN, 0);
+                endpoint->endpoint_state = MCA_BTL_IB_FAILED;
+            }
+        }
     }
 }
 
@@ -323,33 +327,35 @@ void btl_openib_handle_failover_control_messages(mca_btl_openib_control_header_t
 		/* At this point, we have found the endpoint.  Now decode the
 		 * message type and do the appropriate action. */
                 if (MCA_BTL_OPENIB_CONTROL_EP_BROKEN == ctl_hdr->type) {
-                    /* Now that we found a match, let us check to see
-                     * notify the upper layer that it should no longer
-                     * be used.  Note that we do not check the endpont
-                     * state since we may want to map out an endpoint
-                     * that is not even connected yet and is still in
-                     * the MCA_BTL_IB_CLOSED state.  */
-                    char btlname[IBV_SYSFS_NAME_MAX];
-                    ompi_proc_t* remote_proc = NULL;
+                    /* Now that we found a match, check the state of the
+                     * endpoint to see it is already in a failed state.
+                     * If not, then notify the upper layer and error out
+                     * any pending fragments. */
+                    if (MCA_BTL_IB_FAILED == newep->endpoint_state) {
+                        return;
+                    } else {
+                        char btlname[IBV_SYSFS_NAME_MAX];
+                        ompi_proc_t* remote_proc = NULL;
 
-                    snprintf(btlname, IBV_SYSFS_NAME_MAX-1, "lid=%d:name=%s",
-                             newbtl->lid, newbtl->device->ib_dev->name);
+                        snprintf(btlname, IBV_SYSFS_NAME_MAX-1, "lid=%d:name=%s",
+                                 newbtl->lid, newbtl->device->ib_dev->name);
 
-                    remote_proc = newep->endpoint_proc->proc_ompi;
+                        remote_proc = newep->endpoint_proc->proc_ompi;
 
-                    opal_output_verbose(10, mca_btl_openib_component.verbose_failover,
-                                        "IB: Control message received from %d: "
-					"bringing down connection,lid=%d,"
-					"subnet=0x%" PRIx64 ",endpoint_state=%d",
-                                        newep->endpoint_proc->proc_guid.vpid,
-                                        newep->rem_info.rem_lid,
-					newep->rem_info.rem_subnet_id,
-                                        newep->endpoint_state);
-                    newbtl->error_cb(&newbtl->super, MCA_BTL_ERROR_FLAGS_NONFATAL,
-				     remote_proc, btlname);
-                    error_out_all_pending_frags(newep, &newbtl->super);
-                    newep->endpoint_state = MCA_BTL_IB_CLOSED;
-                    return;
+                        opal_output_verbose(10, mca_btl_openib_component.verbose_failover,
+                                            "IB: Control message received from %d: "
+                                            "bringing down connection,lid=%d,"
+                                            "subnet=0x%" PRIx64 ",endpoint_state=%d",
+                                            newep->endpoint_proc->proc_guid.vpid,
+                                            newep->rem_info.rem_lid,
+                                            newep->rem_info.rem_subnet_id,
+                                            newep->endpoint_state);
+                        newbtl->error_cb(&newbtl->super, MCA_BTL_ERROR_FLAGS_NONFATAL,
+                                         remote_proc, btlname);
+                        error_out_all_pending_frags(newep, &newbtl->super);
+                        newep->endpoint_state = MCA_BTL_IB_FAILED;
+                        return;
+                    }
                 } else { /* MCA_BTL_OPENIB_CONTROL_EP_EAGER_RDMA_ERROR message */
                     /* If we are still pointing at the location where
                      * we detected an error on the remote side, then
