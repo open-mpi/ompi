@@ -734,17 +734,27 @@ static check_result_t check(const char *name)
 /* OMPI's init function */
 static void opal_memory_linux_malloc_init_hook(void)
 {
+    struct stat st;
+    check_result_t r1, r2, lp, lpp;
+    bool want_rcache = false, found_driver = false;
+
+    /* First, check if ummunotify is present on the system. If it is,
+       then we don't need to do the following ptmalloc2 hacks.
+       open/mmap on the device may fail during init, but if /dev/ummunotify
+       exists, we assume that the user/administrator *wants* to use
+       ummunotify. */
+    if (stat("/dev/ummunotify", &st) == 0) {
+        return;
+    }
+
     /* Yes, checking for an MPI MCA parameter here is an abstraction
        violation.  Cope.  Yes, even checking for *any* MCA parameter
        here (without going through the MCA param API) is an
        abstraction violation.  Fricken' cope, will ya?
        (unfortunately, there's really no good way to do this other
        than this abstraction violation :-( ) */
-    struct stat st;
-    check_result_t r1, r2;
-    check_result_t lp = check("OMPI_MCA_mpi_leave_pinned");
-    check_result_t lpp = check("OMPI_MCA_mpi_leave_pinned_pipeline");
-    bool want_rcache = false, found_driver = false;
+    lp = check("OMPI_MCA_mpi_leave_pinned");
+    lpp = check("OMPI_MCA_mpi_leave_pinned_pipeline");
 
     /* See if we want to disable this component.  This check is
        necessary for some environments -- for example, Debian's
