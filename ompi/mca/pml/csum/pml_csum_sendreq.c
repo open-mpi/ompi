@@ -51,7 +51,7 @@ OBJ_CLASS_INSTANCE(mca_pml_csum_send_range_t, ompi_free_list_item_t,
 
 void mca_pml_csum_send_request_process_pending(mca_bml_base_btl_t *bml_btl)
 {
-    int i, s = opal_list_get_size(&mca_pml_csum.send_pending);
+    int rc, i, s = opal_list_get_size(&mca_pml_csum.send_pending);
 
     /* advance pending requests */
     for(i = 0; i < s; i++) {
@@ -65,25 +65,27 @@ void mca_pml_csum_send_request_process_pending(mca_bml_base_btl_t *bml_btl)
 
         switch(pending_type) {
         case MCA_PML_CSUM_SEND_PENDING_SCHEDULE:
-            if(OPAL_SOS_GET_ERROR_CODE(mca_pml_csum_send_request_schedule_exclusive(sendreq)) ==
-                    OMPI_ERR_OUT_OF_RESOURCE) {
+            rc = mca_pml_csum_send_request_schedule_exclusive(sendreq);
+            if(OMPI_ERR_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc)) {
                 return;
             }
             break;
         case MCA_PML_CSUM_SEND_PENDING_START:
             send_dst = mca_bml_base_btl_array_find(
                     &sendreq->req_endpoint->btl_eager, bml_btl->btl);
-            if( (NULL == send_dst) ||
-                (OPAL_SOS_GET_ERROR_CODE(mca_pml_csum_send_request_start_btl(sendreq, send_dst)) ==
-                 OMPI_ERR_OUT_OF_RESOURCE) ) {
-                /* prepend to the pending list to minimize reordering in case
-                 * send_dst != 0 */
+            if (NULL == send_dst) {
+                /* Put request back onto pending list and try next one. */
                 add_request_to_send_pending(sendreq,
-                        MCA_PML_CSUM_SEND_PENDING_START, NULL == send_dst);
-                /* if no destination try next request otherwise give up,
-                 * no more resources on this btl */
-                if(send_dst != NULL)
+                        MCA_PML_CSUM_SEND_PENDING_START, true);
+            } else {
+                rc = mca_pml_csum_send_request_start_btl(sendreq, send_dst);
+                if (OMPI_ERR_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc)) {
+                    /* No more resources on this btl so prepend to the pending
+                     * list to minimize reordering and give up for now. */
+                    add_request_to_send_pending(sendreq,
+                            MCA_PML_CSUM_SEND_PENDING_START, false);
                     return;
+                }
             }
             break;
         default:
