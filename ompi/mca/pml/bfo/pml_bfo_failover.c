@@ -1477,11 +1477,10 @@ void mca_pml_bfo_failover_error_handler(struct mca_btl_base_module_t* btl,
         btlname = "unknown";
     }
 
-    /* If the process to map out is not specified or if the fast
-     * failover flag is specified, then map out the entire BTL.
-     * Otherwise, only map out the BTL for the specific remote
-     * process. */
-    if (NULL == errproc || mca_pml_bfo.fast_failover) {
+    /* If the process to map out is not specified then map out the
+     * entire BTL.  Otherwise, only map out the BTL for the specific
+     * remote process. */
+    if (NULL == errproc) {
         for( p = 0; p < num_procs; p++ ) {
             mca_pml_bfo_map_out_btl(btl, procs[p], btlname);
         }
@@ -1935,4 +1934,24 @@ int mca_pml_bfo_register_callbacks(void) {
         return rc;
 
     return rc;
+}
+
+/**
+ * Update a few fields when we are restarting either a RNDV or
+ * RGET type message.
+ */
+void mca_pml_bfo_update_rndv_fields(mca_pml_bfo_hdr_t* hdr,
+                                    mca_pml_bfo_send_request_t* sendreq, char *type)
+{
+    hdr->hdr_common.hdr_flags |= MCA_PML_BFO_HDR_FLAGS_RESTART;
+    hdr->hdr_rndv.hdr_dst_req = sendreq->req_recv;
+    hdr->hdr_rndv.hdr_restartseq = sendreq->req_restartseq;
+    opal_output_verbose(30, mca_pml_bfo_output,
+                        "%s: restarting: PML=%d, RQS=%d, CTX=%d, SRC=%d, "
+                        "src_req=%p, dst_req=%p, peer=%d",
+                        type, (uint16_t)sendreq->req_send.req_base.req_sequence,
+                        sendreq->req_restartseq,
+                        sendreq->req_send.req_base.req_comm->c_contextid,
+                        sendreq->req_send.req_base.req_comm->c_my_rank, (void *)sendreq,
+                        sendreq->req_recv.pval, sendreq->req_send.req_base.req_peer);
 }

@@ -75,9 +75,6 @@ struct mca_pml_bfo_t {
     /* List of pending fragments without a matching communicator */
     opal_list_t non_existing_communicator_pending;
     bool enabled; 
-/* BFO FAILOVER CODE - begin */
-    bool fast_failover;
-/* BFO FAILOVER CODE - end */
     char* allocator_name;
     mca_allocator_base_module_t* allocator; 
     uint32_t unexpected_limit;

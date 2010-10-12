@@ -224,61 +224,12 @@ mca_pml_bfo_rndv_completion( mca_btl_base_module_t* btl,
 
     /* check completion status */
     if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
-/* BFO FAILOVER CODE - begin */
-        /* The completion event for the RNDV message has returned with 
-         * an error. We know that the send request we are looking at is 
-         * valid because it cannot be completed until the sendreq->req_state 
-         * value reaches 0.  And for the sendreq->req_state to reach 0, 
-         * the completion event on the RNDV message must occur.  So, we 
-         * do not bother checking whether the send request is valid, 
-         * because we know it is, but we put a few asserts in for good 
-         * measure.  We then check a few fields in the request to decide what 
-         * to do.  If the sendreq->req_error is set, that means that something 
-         * has happend already to the request and we do not want to restart 
-         * it.  Presumably, we may have received a RECVERRNOTIFY 
-         * message from the receiver.  We also check the sendreq->req_acked 
-         * field to see if it has been acked.  If it has, then again we 
-         * do not restart everything because obviously the RNDV message 
-         * has made it to the other side. */
-        assert(((mca_pml_bfo_hdr_t*)(des->des_src->seg_addr.pval))->hdr_match.hdr_ctx ==
-               sendreq->req_send.req_base.req_comm->c_contextid);
-        assert(((mca_pml_bfo_hdr_t*)(des->des_src->seg_addr.pval))->hdr_match.hdr_src ==
-               sendreq->req_send.req_base.req_comm->c_my_rank);
-        assert(((mca_pml_bfo_hdr_t*)(des->des_src->seg_addr.pval))->hdr_match.hdr_seq ==
-               (uint16_t)sendreq->req_send.req_base.req_sequence);
-
-        if ((!sendreq->req_error) && (!sendreq->req_acked)) { 
-            sendreq->req_events--; 
-            /* Assume RNDV did not make it, so restart from the beginning. */ 
-            mca_pml_bfo_send_request_restart(sendreq, true, MCA_PML_BFO_HDR_TYPE_RNDV); 
-            return; 
-        }
-/* BFO FAILOVER CODE - end */
+        MCA_PML_BFO_ERROR_ON_RNDV_COMPLETION(sendreq, des);
     }
+
 /* BFO FAILOVER CODE - begin */
     sendreq->req_events--;
-
-    /* Now check the error state.  This request can be in error if the
-     * RNDV message made it over, but the receiver got an error trying
-     * to send the ACK back and therefore sent a RECVERRNOTIFY message.
-     * In that case, we want to start the restart dance as the receiver
-     * has matched this message already.  Only restart if there are no
-     * outstanding events on send request. */
-    if (sendreq->req_error) {
-        opal_output_verbose(30, mca_pml_bfo_output,
-                            "RNDV: completion: sendreq has error, outstanding events=%d, "
-                            "PML=%d, RQS=%d, src_req=%lx, dst_req=%lx, status=%d, peer=%d",
-                            sendreq->req_events, (uint16_t)sendreq->req_send.req_base.req_sequence,
-                            sendreq->req_restartseq, (unsigned long)sendreq,
-                            (unsigned long)sendreq->req_recv.pval,
-                            status, sendreq->req_send.req_base.req_peer);
-        if (0 == sendreq->req_events) {
-            mca_pml_bfo_send_request_rndvrestartnotify(sendreq, false,
-                                                       MCA_PML_BFO_HDR_TYPE_RNDV,
-                                                       status, btl);
-        }
-        return;
-    }
+    MCA_PML_BFO_CHECK_SENDREQ_ERROR_ON_RNDV_COMPLETION(sendreq, status, btl);
 /* BFO FAILOVER CODE - end */
 
     /* count bytes of user data actually delivered. As the rndv completion only
@@ -306,23 +257,8 @@ mca_pml_bfo_rget_completion( mca_btl_base_module_t* btl,
 {
     mca_pml_bfo_send_request_t* sendreq = (mca_pml_bfo_send_request_t*)des->des_cbdata;
     size_t req_bytes_delivered = 0;
-/* BFO FAILOVER CODE - begin */
-    /* This can happen if a FIN message arrives after the request was
-     * marked in error.  So, just drop the message.  Note that the
-     * status field is not checked here.  That is because that is the
-     * value returned in the FIN hdr.hdr_fail field and may be used for
-     * other things. */
-    if( OPAL_UNLIKELY(sendreq->req_error)) {
-        opal_output_verbose(30, mca_pml_bfo_output,
-                            "FIN: received on broken request, skipping, "
-                            "PML=%d, src_req=%lx, dst_req=%lx, peer=%d",
-                            (uint16_t)sendreq->req_send.req_base.req_sequence,
-                            (unsigned long)sendreq, (unsigned long)sendreq->req_recv.pval,
-                            sendreq->req_send.req_base.req_peer);
-        btl->btl_free(btl, des);
-        return;
-    }
-/* BFO FAILOVER CODE - end */
+
+    MCA_PML_BFO_CHECK_SENDREQ_ERROR_ON_RGET_COMPLETION(sendreq, btl, des);
 
     /* count bytes of user data actually delivered and check for request completion */
     MCA_PML_BFO_COMPUTE_SEGMENT_LENGTH( des->des_src, des->des_src_cnt,
@@ -351,47 +287,8 @@ mca_pml_bfo_send_ctl_completion( mca_btl_base_module_t* btl,
         /* check for pending requests */
         MCA_PML_BFO_PROGRESS_PENDING(btl);
     } else {
-        mca_pml_bfo_hdr_t* hdr = des->des_src->seg_addr.pval;
-        /* If we get an error on the RGET message, then first make
-         * sure that header matches the send request that we are
-         * pointing to.  This is necessary, because even though the
-         * sending side got an error, the RGET may have made it to the
-         * receiving side and the message transfer may have completed.
-         * This would then mean the send request has been completed and
-         * perhaps in use by another communication.  So there is no need
-         * to restart this request.  Therefore, ensure that we are
-         * looking at the same request that the header thinks we are
-         * looking at.  If not, then there is nothing else to be done. */
-        mca_pml_bfo_send_request_t* sendreq = (mca_pml_bfo_send_request_t*)des->des_cbdata;
-
-        switch (hdr->hdr_common.hdr_type) {
-        case MCA_PML_BFO_HDR_TYPE_RGET:
-            if ((hdr->hdr_match.hdr_ctx != sendreq->req_send.req_base.req_comm->c_contextid) ||
-                (hdr->hdr_match.hdr_src != sendreq->req_send.req_base.req_comm->c_my_rank) ||
-                (hdr->hdr_match.hdr_seq != (uint16_t)sendreq->req_send.req_base.req_sequence)) {
-                opal_output_verbose(20, mca_pml_bfo_output,
-                                    "RGET: completion event: dropping because no valid request "
-                                    "PML:exp=%d,act=%d CTX:exp=%d,act=%d SRC:exp=%d,act=%d "
-                                    "RQS:exp=%d,act=%d, dst_req=%p",
-                                    (uint16_t)sendreq->req_send.req_base.req_sequence,
-                                    hdr->hdr_match.hdr_seq,
-                                    sendreq->req_send.req_base.req_comm->c_contextid,
-                                    hdr->hdr_match.hdr_ctx,
-                                    sendreq->req_send.req_base.req_comm->c_my_rank,
-                                    hdr->hdr_match.hdr_src,
-                                    sendreq->req_restartseq, hdr->hdr_rndv.hdr_restartseq,
-                                    (void *)sendreq);
-                return;
-            }
-            mca_pml_bfo_send_request_restart(sendreq, true, MCA_PML_BFO_HDR_TYPE_RGET);
-            return;
-        default:
-            opal_output(0, "%s:%d FATAL ERROR, unknown header (hdr=%d)",
-                        __FILE__, __LINE__, hdr->hdr_common.hdr_type);
-            orte_errmgr.abort(-1, NULL);
-        }
+        MCA_PML_BFO_ERROR_ON_SEND_CTL_COMPLETION(sendreq, des);
     }
-/* BFO FAILOVER CODE - end */
 }
 
 /**
@@ -527,20 +424,7 @@ int mca_pml_bfo_send_request_start_buffered(
     hdr->hdr_match.hdr_seq = (uint16_t)sendreq->req_send.req_base.req_sequence;
     hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;
     hdr->hdr_rndv.hdr_src_req.pval = sendreq;
-/* BFO FAILOVER CODE - begin */
-    if (0 < sendreq->req_restartseq) {
-        hdr->hdr_common.hdr_flags |= MCA_PML_BFO_HDR_FLAGS_RESTART;
-        hdr->hdr_rndv.hdr_dst_req = sendreq->req_recv;
-        hdr->hdr_rndv.hdr_restartseq = sendreq->req_restartseq;
-        opal_output_verbose(30, mca_pml_bfo_output,
-                            "RNDV(buffered): restarting: PML=%d, RQS=%d, CTX=%d, SRC=%d, "
-                            "src_req=%p, dst_req=%p, peer=%d",
-                            (uint16_t)sendreq->req_send.req_base.req_sequence, sendreq->req_restartseq,
-                            sendreq->req_send.req_base.req_comm->c_contextid,
-                            sendreq->req_send.req_base.req_comm->c_my_rank, (void *)sendreq,
-                            sendreq->req_recv.pval, sendreq->req_send.req_base.req_peer);
-    }
-/* BFO FAILOVER CODE - end */
+    MCA_PML_BFO_CHECK_FOR_RNDV_RESTART(hdr, sendreq, "RNDV(buffered)");
 
     bfo_hdr_hton(hdr, MCA_PML_BFO_HDR_TYPE_RNDV,
                  sendreq->req_send.req_base.req_proc);
@@ -877,20 +761,7 @@ int mca_pml_bfo_send_request_start_rdma( mca_pml_bfo_send_request_t* sendreq,
         hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;
         hdr->hdr_rndv.hdr_src_req.pval = sendreq;
 /* BFO FAILOVER CODE - begin */
-        if (0 < sendreq->req_restartseq) {
-            hdr->hdr_common.hdr_flags |= MCA_PML_BFO_HDR_FLAGS_RESTART;
-            hdr->hdr_rndv.hdr_dst_req = sendreq->req_recv;
-            hdr->hdr_rndv.hdr_restartseq = sendreq->req_restartseq;
-            opal_output_verbose(30, mca_pml_bfo_output,
-                                "RGET: restarting: PML=%d, RQS=%d, CTX=%d, SRC=%d, "
-                                "src_req=%p, dst_req=%p, peer=%d",
-                                (uint16_t)sendreq->req_send.req_base.req_sequence,
-                                sendreq->req_restartseq,
-                                sendreq->req_send.req_base.req_comm->c_contextid,
-                                sendreq->req_send.req_base.req_comm->c_my_rank,
-                                (void *)sendreq, sendreq->req_recv.pval,
-                                sendreq->req_send.req_base.req_peer);
-        }
+        MCA_PML_BFO_CHECK_FOR_RNDV_RESTART(hdr, sendreq, "RGET");
 /* BFO FAILOVER CODE - end */
         hdr->hdr_rget.hdr_des.pval = src;
         hdr->hdr_rget.hdr_seg_cnt = src->des_src_cnt;
@@ -942,20 +813,7 @@ int mca_pml_bfo_send_request_start_rdma( mca_pml_bfo_send_request_t* sendreq,
         hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;
         hdr->hdr_rndv.hdr_src_req.pval = sendreq;
 /* BFO FAILOVER CODE - begin */
-        if (0 < sendreq->req_restartseq) {
-            hdr->hdr_common.hdr_flags |= MCA_PML_BFO_HDR_FLAGS_RESTART;
-            hdr->hdr_rndv.hdr_dst_req = sendreq->req_recv;
-            hdr->hdr_rndv.hdr_restartseq = sendreq->req_restartseq;
-            opal_output_verbose(30, mca_pml_bfo_output,
-                                "RNDV: restarting: PML=%d, RQS=%d, CTX=%d, SRC=%d, "
-                                "src_req=%p, dst_req=%p, peer=%d",
-                                (uint16_t)sendreq->req_send.req_base.req_sequence,
-                                sendreq->req_restartseq,
-                                sendreq->req_send.req_base.req_comm->c_contextid,
-                                sendreq->req_send.req_base.req_comm->c_my_rank, 
-                                (void *)sendreq, sendreq->req_recv.pval,
-                                sendreq->req_send.req_base.req_peer);
-        }
+        MCA_PML_BFO_CHECK_FOR_RNDV_RESTART(hdr, sendreq, "RNDV");
 /* BFO FAILOVER CODE - end */
 
         bfo_hdr_hton(hdr, MCA_PML_BFO_HDR_TYPE_RNDV,
@@ -1054,19 +912,7 @@ int mca_pml_bfo_send_request_start_rndv( mca_pml_bfo_send_request_t* sendreq,
     hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;
     hdr->hdr_rndv.hdr_src_req.pval = sendreq;
 /* BFO FAILOVER CODE - begin */
-    if (0 < sendreq->req_restartseq) {
-        hdr->hdr_common.hdr_flags |= MCA_PML_BFO_HDR_FLAGS_RESTART;
-        hdr->hdr_rndv.hdr_dst_req = sendreq->req_recv;
-        hdr->hdr_rndv.hdr_restartseq = sendreq->req_restartseq;
-        opal_output_verbose(30, mca_pml_bfo_output,
-                            "RNDV: restarting: PML=%d, RQS=%d, CTX=%d, SRC=%d, "
-                            "src_req=%p, dst_req=%p, peer=%d",
-                            (uint16_t)sendreq->req_send.req_base.req_sequence, sendreq->req_restartseq,
-                            sendreq->req_send.req_base.req_comm->c_contextid,
-                            sendreq->req_send.req_base.req_comm->c_my_rank,
-                            (void *)sendreq, sendreq->req_recv.pval,
-                            sendreq->req_send.req_base.req_peer);
-    }
+    MCA_PML_BFO_CHECK_FOR_RNDV_RESTART(hdr, sendreq, "RNDV");
 /* BFO FAILOVER CODE - end */
 
     bfo_hdr_hton(hdr, MCA_PML_BFO_HDR_TYPE_RNDV,
@@ -1361,22 +1207,7 @@ static void mca_pml_bfo_put_completion( mca_btl_base_module_t* btl,
     }
 
 /* BFO FAILOVER CODE - begin */
-    if ( OPAL_UNLIKELY(sendreq->req_error)) {
-        opal_output_verbose(30, mca_pml_bfo_output,
-                            "RDMA write: completion: sendreq has error, outstanding events=%d, "
-                            "PML=%d, RQS=%d, src_req=%p, dst_req=%p, status=%d, peer=%d",
-                            sendreq->req_events, (uint16_t)sendreq->req_send.req_base.req_sequence,
-                            sendreq->req_restartseq, (void *)sendreq,
-                            sendreq->req_recv.pval,
-                            status, sendreq->req_send.req_base.req_peer);
-        if (0 == sendreq->req_events) {
-            mca_pml_bfo_send_request_rndvrestartnotify(sendreq, false,
-                                                       MCA_PML_BFO_HDR_TYPE_PUT,
-                                                       status, btl);
-        }
-        MCA_PML_BFO_RDMA_FRAG_RETURN(frag);
-        return;
-    }
+    MCA_PML_BFO_CHECK_SENDREQ_ERROR_ON_PUT_COMPLETION(sendreq, status, btl);
 /* BFO FAILOVER CODE - end */
 
 /* BFO FAILOVER CODE - begin */
