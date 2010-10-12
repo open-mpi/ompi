@@ -120,8 +120,6 @@ Because the in-place option converts the receive buffer into a send-and-receive 
 .SH WHEN COMMUNICATOR IS AN INTER-COMMUNICATOR
 When the communicator is an inter-communicator, the reduce operation occurs in two phases.  The data is reduced from all the members of the first group and received by all the members of the second group.  Then the data is reduced from all the members of the second group and received by all the members of the first.  The operation exhibits a symmetric, full-duplex behavior.  
 .sp
-The first group defines the root process.  The root process uses MPI_ROOT as the value of \fIroot\fR.  All other processes in the first group use MPI_PROC_NULL as the value of \fIroot\fR.  All processes in the second group use the rank of the root process in the first group as the value of \fIroot\fR.
-.sp
 When the communicator is an intra-communicator, these groups are the same, and the operation occurs in a single phase.
 .SH NOTES ON COLLECTIVE OPERATIONS
 
