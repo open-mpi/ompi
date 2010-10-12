@@ -40,7 +40,7 @@
 void mca_pml_bfo_recv_request_process_pending(void)
 {
     mca_pml_bfo_recv_request_t* recvreq;
-    int i, s = (int)opal_list_get_size(&mca_pml_bfo.recv_pending);
+    int rc, i, s = (int)opal_list_get_size(&mca_pml_bfo.recv_pending);
 
     for(i = 0; i < s; i++) {
         OPAL_THREAD_LOCK(&mca_pml_bfo.lock);
@@ -50,8 +50,8 @@ void mca_pml_bfo_recv_request_process_pending(void)
         if( OPAL_UNLIKELY(NULL == recvreq) )
             break;
         recvreq->req_pending = false;
-        if(OPAL_SOS_GET_ERROR_CODE(mca_pml_bfo_recv_request_schedule_exclusive(recvreq, NULL)) == 
-                OMPI_ERR_OUT_OF_RESOURCE)
+        rc = mca_pml_bfo_recv_request_schedule_exclusive(recvreq, NULL);
+        if(OMPI_ERR_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc))
             break;
     }
 }
