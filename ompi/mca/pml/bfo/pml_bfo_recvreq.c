@@ -198,7 +198,7 @@ static void mca_pml_bfo_put_completion( mca_btl_base_module_t* btl,
     btl->btl_free(btl, des);
 
 /* BFO FAILOVER CODE - begin */
-    MCA_PML_BFO_ERROR_CHECK_ON_FIN_FOR_PUT(recvreq)
+    MCA_PML_BFO_ERROR_CHECK_ON_FIN_FOR_PUT(recvreq);
 /* BFO FAILOVER CODE - end */
 
     /* check completion status */
@@ -351,29 +351,13 @@ static void mca_pml_bfo_rget_completion( mca_btl_base_module_t* btl,
 
     /* check completion status */
     if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
-        MCA_PML_BFO_ERROR_CHECK_ON_RDMA_READ_COMPLETION(recvreq)
+        MCA_PML_BFO_ERROR_CHECK_ON_RDMA_READ_COMPLETION(recvreq);
     }
-/* BFO FAILOVER CODE - end */
+
 /* BFO FAILOVER CODE - begin */
-    /* See if the request has received a RNDVRESTARTNOTIFY */
-    if( OPAL_UNLIKELY(recvreq->req_errstate)) {
-        if (recvreq->req_errstate & RECVREQ_RNDVRESTART_RECVED) {
-            opal_output_verbose(30, mca_pml_bfo_output,
-                                "RDMA read: completion: recvreq has error, outstanding events=%d "
-                                "PML=%d, RQS=%d, src_req=%lx, dst_req=%lx, status=%d, peer=%d",
-                                recvreq->req_events, recvreq->req_msgseq, recvreq->req_restartseq,
-                                (unsigned long)recvreq->remote_req_send.pval,
-                                (unsigned long)recvreq, status,
-                                recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE);
-            if (0 == recvreq->req_events) {
-                mca_pml_bfo_recv_request_rndvrestartack(recvreq, MCA_PML_BFO_HDR_TYPE_RGET,
-                                                        status, btl);
-            }
-        }           
-        MCA_PML_BFO_RDMA_FRAG_RETURN(frag);
-        return;
-    }
+    MCA_PML_BFO_SECOND_ERROR_CHECK_ON_RDMA_READ_COMPLETION(recvreq, status, btl);
 /* BFO FAILOVER CODE - end */
+
 /* BFO FAILOVER CODE - begin */
     /* Find back the bml_btl that this btl belongs to.  If we cannot
      * find it, then it may have been removed from underneath us, so

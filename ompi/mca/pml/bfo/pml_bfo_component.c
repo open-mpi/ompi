@@ -121,10 +121,6 @@ static int mca_pml_bfo_component_open(void)
 
     mca_pml_bfo.unexpected_limit =
         mca_pml_bfo_param_register_int("unexpected_limit", 128);
-/* BFO FAILOVER CODE - begin */
-    mca_pml_bfo.fast_failover =
-        mca_pml_bfo_param_register_int("fast_failover", 0);
-/* BFO FAILOVER CODE - end */
  
     mca_base_param_reg_string(&mca_pml_bfo_component.pmlm_version,
                               "allocator",
