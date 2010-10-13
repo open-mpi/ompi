@@ -168,6 +168,7 @@ static void mca_pml_bfo_recv_ctl_completion( mca_btl_base_module_t* btl,
                                              struct mca_btl_base_descriptor_t* des,
                                              int status )
 {
+
 /* BFO FAILOVER CODE - begin */
     if (btl->btl_flags & MCA_BTL_FLAGS_FAILOVER_SUPPORT) {
         mca_pml_bfo_check_recv_ctl_completion_status(btl, des, status);
@@ -337,9 +338,9 @@ static void mca_pml_bfo_rget_completion( mca_btl_base_module_t* btl,
                                          struct mca_btl_base_descriptor_t* des,
                                          int status )
 {
+    mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*)des->des_context;
     mca_pml_bfo_rdma_frag_t* frag = (mca_pml_bfo_rdma_frag_t*)des->des_cbdata;
     mca_pml_bfo_recv_request_t* recvreq = (mca_pml_bfo_recv_request_t*)frag->rdma_req;
-    mca_bml_base_btl_t* bml_btl; 
     mca_bml_base_endpoint_t* bml_endpoint;
 
 /* BFO FAILOVER CODE - begin */

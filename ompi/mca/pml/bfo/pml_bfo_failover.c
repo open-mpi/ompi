@@ -831,15 +831,15 @@ void mca_pml_bfo_send_request_restart(mca_pml_bfo_send_request_t* sendreq,
     sendreq->req_bytes_delivered = 0;
     sendreq->req_pending = MCA_PML_BFO_SEND_PENDING_NONE;
 
-    /* Note that we do not reset the following two items.
+    /* Note that we do not reset the following three items.
      * They stay with their original values.
      *     sendreq->req_send.req_base.req_sequence
      *     sendreq->req_restartseq
+     *     sendreq->req_recv.pval
      */
     sendreq->req_restart = 0;         /* reset in case we restart again */
     sendreq->req_error = 0;           /* clear error state */
     sendreq->req_events = 0;          /* clear events, probably 0 anyways */
-    sendreq->req_acked = false;
 
     MCA_PML_BASE_SEND_START( &sendreq->req_send.req_base );
 

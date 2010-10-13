@@ -242,7 +242,7 @@ do {                                                                            
            (sendreq)->req_send.req_base.req_comm->c_my_rank);                          \
     assert(((mca_pml_bfo_hdr_t*)((des)->des_src->seg_addr.pval))->hdr_match.hdr_seq == \
            (uint16_t)(sendreq)->req_send.req_base.req_sequence);                       \
-    if ((!(sendreq)->req_error) && (!(sendreq)->req_acked)) {                          \
+    if ((!(sendreq)->req_error) && (NULL == (sendreq)->req_recv.pval)) {               \
         (sendreq)->req_events--;                                                       \
         /* Assume RNDV did not make it, so restart from the beginning. */              \
         mca_pml_bfo_send_request_restart(sendreq, true, MCA_PML_BFO_HDR_TYPE_RNDV);    \
