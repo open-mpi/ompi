@@ -332,9 +332,6 @@ void mca_pml_bfo_recv_frag_callback_ack(mca_btl_base_module_t* btl,
          */
         OPAL_THREAD_ADD32(&sendreq->req_state, -1);
     }
-/* BFO FAILOVER CODE - begin */
-    sendreq->req_acked = true;
-/* BFO FAILOVER CODE - end */
 
     if(send_request_pml_complete_check(sendreq) == false)
         mca_pml_bfo_send_request_schedule(sendreq);

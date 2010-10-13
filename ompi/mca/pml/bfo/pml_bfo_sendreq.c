@@ -1356,7 +1356,6 @@ void mca_pml_bfo_send_request_put( mca_pml_bfo_send_request_t* sendreq,
     }
 /* BFO FAILOVER CODE - begin */
     sendreq->req_recv = hdr->hdr_dst_req; /* only needed once, but it is OK */
-    sendreq->req_acked = true;            /* only needed once, but it is OK */
 /* BFO FAILOVER CODE - end */
 
     MCA_PML_BFO_RDMA_FRAG_ALLOC(frag, rc); 

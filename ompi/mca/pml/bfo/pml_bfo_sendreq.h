@@ -47,7 +47,6 @@ struct mca_pml_bfo_send_request_t {
     int32_t req_restartseq; /* sequence number of restarted request */
     int32_t req_restart;    /* state of restarted request */
     int32_t req_error;      /* non-zero when error has occurred on request */
-    bool    req_acked;      /* indicates request has been acked */
 /* BFO FAILOVER CODE - end */
     int32_t req_state;
     int32_t req_lock;
@@ -443,7 +442,6 @@ mca_pml_bfo_send_request_start( mca_pml_bfo_send_request_t* sendreq )
     sendreq->req_restart = 0;         /* reset in case we restart again */
     sendreq->req_error = 0;           /* clear error state */
     sendreq->req_events = 0;          /* clear events, probably 0 anyways */
-    sendreq->req_acked = false;
 /* BFO FAILOVER CODE - end */
 
     MCA_PML_BASE_SEND_START( &sendreq->req_send.req_base );
