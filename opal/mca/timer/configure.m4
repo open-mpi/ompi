@@ -10,6 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -22,6 +23,11 @@ m4_define(MCA_opal_timer_CONFIGURE_MODE, STOP_AT_FIRST)
 
 AC_DEFUN([MCA_opal_timer_CONFIG],[
         timer_base_include=
+
+        # All components look at this value
+        AC_ARG_WITH([timer],
+            [AC_HELP_STRING([--with-timer=TYPE],
+                        [Build high resolution timer component TYPE])])
 
         # first, compile all the components
         MCA_CONFIGURE_FRAMEWORK($1, $2, 1)

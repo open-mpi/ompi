@@ -32,10 +32,6 @@ AC_DEFUN([MCA_opal_timer_solaris_COMPILE_MODE], [
 AC_DEFUN([MCA_opal_timer_solaris_CONFIG],[
     AC_CONFIG_FILES([opal/mca/timer/solaris/Makefile])
 
-    AC_ARG_WITH([timer],
-        [AC_HELP_STRING([--with-timer=TYPE],
-                        [Build high resolution timer component TYPE])])
-
     AS_IF([test "$with_timer" = "solaris"],
           [timer_solaris_happy="yes"
            timer_solaris_should_use=1],
