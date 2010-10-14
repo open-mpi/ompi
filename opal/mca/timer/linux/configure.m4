@@ -32,10 +32,6 @@ AC_DEFUN([MCA_opal_timer_linux_COMPILE_MODE], [
 AC_DEFUN([MCA_opal_timer_linux_CONFIG],[
     AC_CONFIG_FILES([opal/mca/timer/linux/Makefile])
 
-    AC_ARG_WITH([timer],
-        [AC_HELP_STRING([--with-timer=TYPE],
-                        [Build high resolution timer component TYPE])])
-
     AS_IF([test "$with_timer" = "linux"],
           [timer_linux_happy="yes"
            timer_linux_should_use=1],
