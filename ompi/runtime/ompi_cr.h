@@ -26,7 +26,9 @@
 #define OMPI_CR_H
 
 #include "ompi_config.h"
+#if !ORTE_DISABLE_FULL_SUPPORT
 #include "orte/runtime/orte_cr.h"
+#endif
 
 BEGIN_C_DECLS
 
