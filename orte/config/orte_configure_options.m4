@@ -38,7 +38,7 @@ AC_ARG_WITH([rte-support],
 if test "$with_rte_support" = "no"; then
     AC_MSG_RESULT([no])
     orte_without_full_support=1
-    list_of_frameworks="errmgr,ess-singleton,ess-hnp,ess-tool,ess-env,filem,grpcomm-basic,grpcomm-bad,iof,odls,oob,plm,ras,rmaps,rml,routed,snapc,btl-sm,coll-sm,common-sm,mpool-sm,dpm-orte,pubsub-orte,rmcast,routed"
+    list_of_frameworks="db,errmgr,ess-singleton,ess-hnp,ess-tool,ess-env,filem,grpcomm-basic,grpcomm-bad,iof,odls,oob,plm,ras,rmaps,rml,routed,snapc,btl-sm,coll-sm,common-sm,mpool-sm,dpm-orte,pubsub-orte,rmcast,routed"
     if test -z $enable_mca_no_build ; then
       enable_mca_no_build="$list_of_frameworks"
     else

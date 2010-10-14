@@ -156,12 +156,14 @@ void orte_quit(void)
         if (NULL != orte_basename) {
         free(orte_basename);
     }
-#endif
         
     if (orte_debug_flag) {
         fprintf(stderr, "orterun: exiting with status %d\n", orte_exit_status);
     }
     exit(orte_exit_status);
+#else
+    exit(0);
+#endif
 }
 
 

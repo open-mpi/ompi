@@ -393,6 +393,7 @@ static int ompi_cr_coord_pre_restart(void) {
 }
     
 static int ompi_cr_coord_pre_continue(void) {
+#if !ORTE_DISABLE_FULL_SUPPORT
     int ret, exit_status = OMPI_SUCCESS;
 
     /*
@@ -422,6 +423,9 @@ static int ompi_cr_coord_pre_continue(void) {
 
  cleanup:    
     return exit_status;
+#else
+    return OMPI_SUCCESS;
+#endif
 }
 
 /*************
