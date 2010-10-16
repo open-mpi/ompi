@@ -177,16 +177,20 @@ void orte_errmgr_predicted_map_destruct( orte_errmgr_predicted_map_t *item)
  */
 void orte_errmgr_base_log(int error_code, char *filename, int line)
 {
+    char *errstring = NULL;
+
     OPAL_TRACE(1);
     
-    if (ORTE_ERR_SILENT == OPAL_SOS_GET_ERROR_CODE(error_code)) {
+    errstring = (char*)ORTE_ERROR_NAME(error_code);
+
+    if (NULL == errstring) {
         /* if the error is silent, say nothing */
         return;
     }
     
     opal_output(0, "%s ORTE_ERROR_LOG: %s in file %s at line %d",
                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                ORTE_ERROR_NAME(error_code), filename, line);
+                errstring, filename, line);
 }
 
 void orte_errmgr_base_abort(int error_code, char *fmt, ...)

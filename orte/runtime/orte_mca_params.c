@@ -93,7 +93,11 @@ int orte_register_params(void)
                                 false, false, (int) false, &value);
     orte_execute_quiet = OPAL_INT_TO_BOOL(value);
     
-    
+    mca_base_param_reg_int_name("orte", "report_silent_errors",
+                                "Report all errors, including silent ones",
+                                false, false, (int) false, &value);
+    orte_report_silent_errors = OPAL_INT_TO_BOOL(value);
+
 #if !ORTE_DISABLE_FULL_SUPPORT
     
     mca_base_param_reg_int_name("orte", "send_profile",
