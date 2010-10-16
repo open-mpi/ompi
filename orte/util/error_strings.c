@@ -26,6 +26,7 @@
 
 #include "opal/util/opal_sos.h"
 #include "orte/util/error_strings.h"
+#include "orte/runtime/orte_globals.h"
 
 const char *orte_err2str(int errnum)
 {
@@ -80,7 +81,11 @@ const char *orte_err2str(int errnum)
         retval = "Multiple applications were specified, but at least one failed to specify the number of processes to run";
         break;
     case ORTE_ERR_SILENT:
-        retval = NULL;
+        if (orte_report_silent_errors) {
+            retval = "Silent error";
+        } else {
+            retval = NULL;
+        }
         break;
     case ORTE_ERR_ADDRESSEE_UNKNOWN:
         retval = "A message is attempting to be sent to a process whose contact information is unknown";
@@ -136,7 +141,11 @@ const char *orte_err2str(int errnum)
 
             
     default:
-        retval = NULL;
+        if (orte_report_silent_errors) {
+            retval = "Unknown error";
+        } else {
+            retval = NULL;
+        }
     }
 
     return retval;
