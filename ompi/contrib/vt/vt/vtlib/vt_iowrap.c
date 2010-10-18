@@ -1417,7 +1417,7 @@ int fprintf(FILE *stream, const char *format, ...)
 #if defined(HAVE___FPRINTF_CHK) && HAVE___FPRINTF_CHK
 		ret = __vfprintf_chk(stream, flag, format, arg);
 #else /* HAVE___FPRINTF_CHK */
-		ret = fprintf(stream, format, arg);
+		ret = vfprintf(stream, format, arg);
 #endif /* HAVE___FPRINTF_CHK */
 		va_end (arg);
 	
