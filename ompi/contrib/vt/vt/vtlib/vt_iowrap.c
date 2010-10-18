@@ -1392,7 +1392,11 @@ int fscanf(FILE *stream, const char *format, ...)
 }
 
 
+#if defined(HAVE___FPRINTF_CHK) && HAVE___FPRINTF_CHK
+int __fprintf_chk(FILE *stream, int flag, const char *format, ...)
+#else /* HAVE___FPRINTF_CHK */
 int fprintf(FILE *stream, const char *format, ...)
+#endif /* HAVE___FPRINTF_CHK */
 {
 #define VT_IOWRAP_THISFUNCNAME fprintf
 	int ret;
@@ -1410,7 +1414,11 @@ int fprintf(FILE *stream, const char *format, ...)
 	
 		vt_debug_msg(DBG_IO, "vfprintf");
 		va_start (arg, format);
-		ret = vfprintf(stream, format, arg);
+#if defined(HAVE___FPRINTF_CHK) && HAVE___FPRINTF_CHK
+		ret = __vfprintf_chk(stream, flag, format, arg);
+#else /* HAVE___FPRINTF_CHK */
+		ret = fprintf(stream, format, arg);
+#endif /* HAVE___FPRINTF_CHK */
 		va_end (arg);
 	
 		num_bytes = (ssize_t)ret;
@@ -1421,7 +1429,11 @@ int fprintf(FILE *stream, const char *format, ...)
 	}
 	else {
 		va_start (arg, format);
+#if defined(HAVE___FPRINTF_CHK) && HAVE___FPRINTF_CHK
+		ret = __vfprintf_chk(stream, flag, format, arg);
+#else /* HAVE___FPRINTF_CHK */
 		ret = vfprintf(stream, format, arg);
+#endif /* HAVE___FPRINTF_CHK */
 		va_end (arg);
 		return ret;
 	}
