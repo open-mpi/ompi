@@ -165,7 +165,6 @@ void mca_btl_openib_handle_endpoint_error(mca_btl_openib_module_t *openib_btl,
         opal_list_item_t *i;
         while((i = opal_list_remove_first(&to_send_frag(des)->coalesced_frags))) {
             btl_ownership = (to_base_frag(i)->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
-            to_base_frag(i)->base.des_context = btlname;
             to_base_frag(i)->base.des_cbfunc(&openib_btl->super, endpoint,
                                              &to_base_frag(i)->base, OMPI_ERROR);
             if( btl_ownership ) {
@@ -177,7 +176,6 @@ void mca_btl_openib_handle_endpoint_error(mca_btl_openib_module_t *openib_btl,
     /* This must be a MCA_BTL_OPENIB_FRAG_SEND, MCA_BTL_OPENIB_FRAG_SEND_USER
      * or MCA_BTL_OPENIB_FRAG_RECV_USER. */
     btl_ownership = (des->des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
-    des->des_context = btlname;
     des->des_cbfunc(&openib_btl->super, endpoint, des, OMPI_ERROR);
     if( btl_ownership ) {
         mca_btl_openib_free(&openib_btl->super, des);
