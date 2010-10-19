@@ -83,9 +83,12 @@ OMPI_LOAD_PLATFORM
 #
 # Init automake
 #
-AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects no-define 1.10c silent-rules tar-ustar])
+AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects no-define 1.11 tar-ustar])
 
-# We require >AM 1.11, so AM_SILENT_RULES will exist
+# SILENT_RULES is new in AM 1.11, but we require 1.11 or higher via
+# autogen.  Limited testing shows that calling SILENT_RULES directly
+# works in more cases than adding "silent-rules" to INIT_AUTOMAKE
+# (even though they're supposed to be identical).  Shrug.
 AM_SILENT_RULES([yes])
 
 # Make configure depend on the VERSION file, since it's used in AC_INIT
@@ -1118,7 +1121,11 @@ AC_SUBST([AMCA_PARAM_SETS_DIR], ['$(pkgdatadir)/amca-param-sets'])
 # final wrapper compiler config
 ############################################################################
 
-ompi_show_subtitle "Wrapper compiler flags"
+ompi_show_subtitle "Wrapper compiler final setup"
+# The ORTE and OMPI wrapper scripts (i.e., not the C-compiled
+# executables) need perl.
+AC_PATH_PROG(PERL, perl, perl)
+
 OPAL_SETUP_WRAPPER_FINAL
 m4_ifdef([project_orte], [ORTE_SETUP_WRAPPER_FINAL])
 m4_ifdef([project_ompi], [OMPI_SETUP_WRAPPER_FINAL])
