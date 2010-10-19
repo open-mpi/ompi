@@ -1,5 +1,8 @@
-#!/usr/bin/perl -w
+#! @PERL@ -w
 # -*- perl -*-
+#
+# Note that we use an interpreter value ("PERL") from configure
+# because even "#!/usr/bin/env perl" to all systems (e.g., NetBSD).
 #
 # Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
