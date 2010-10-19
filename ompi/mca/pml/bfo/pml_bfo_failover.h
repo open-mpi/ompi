@@ -78,8 +78,32 @@ int mca_pml_bfo_register_callbacks(void);
 
 void mca_pml_bfo_update_rndv_fields(mca_pml_bfo_hdr_t* hdr,
                                     mca_pml_bfo_send_request_t*, char *type);
- 
 
+void mca_pml_bfo_update_bml_btl(mca_bml_base_btl_t** bml_btl, mca_btl_base_module_t* btl,
+				struct mca_btl_base_descriptor_t* des);
+
+void mca_pml_bfo_find_recvreq_eager_bml_btl(mca_bml_base_btl_t** bml_btl,
+                                            mca_btl_base_module_t* btl,
+                                            mca_pml_bfo_recv_request_t* recvreq,
+                                            char* type);
+
+void mca_pml_bfo_find_sendreq_eager_bml_btl(mca_bml_base_btl_t** bml_btl,
+                                            mca_btl_base_module_t* btl,
+                                            mca_pml_bfo_send_request_t* sendreq,
+                                            char* type);
+
+void mca_pml_bfo_find_sendreq_rdma_bml_btl(mca_bml_base_btl_t** bml_btl,
+                                           mca_btl_base_module_t* btl,
+                                           mca_pml_bfo_send_request_t* sendreq,
+                                           char* type);
+
+void mca_pml_bfo_update_eager_bml_btl_recv_ctl(mca_bml_base_btl_t** bml_btl,
+                                               mca_btl_base_module_t* btl,
+                                               struct mca_btl_base_descriptor_t* des);
+void mca_pml_bfo_find_recvreq_rdma_bml_btl(mca_bml_base_btl_t** bml_btl,
+                                           mca_btl_base_module_t* btl,
+                                           mca_pml_bfo_recv_request_t* recvreq,
+                                           char* type);
 
 /**
  * Four new callbacks for the four new message types.
@@ -214,7 +238,6 @@ extern void mca_pml_bfo_recv_frag_callback_recverrnotify( mca_btl_base_module_t 
         MCA_PML_BFO_RDMA_FRAG_RETURN(frag);                                                 \
         return;                                                                             \
     }
-
 
 /**
  * Macros for pml_bfo_sendreq.c file.
@@ -358,6 +381,40 @@ do {                                                                            
         mca_pml_bfo_update_rndv_fields(hdr, sendreq, type);     \
     }
 
+/* If a bml_btl gets mapped out, then we need to adjust it based
+ * on the btl from the callback function.  These macros are called on
+ * every callback to make sure things are copacetic.
+ */
+#define MCA_PML_BFO_CHECK_EAGER_BML_BTL_ON_FIN_COMPLETION(bml_btl, btl, des)               \
+    if (bml_btl->btl != btl) {                                                             \
+        ompi_proc_t *proc = (ompi_proc_t*) des->des_cbdata;                                \
+        mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml; \
+        bml_btl = mca_bml_base_btl_array_find(&bml_endpoint->btl_eager, btl);              \
+    }                  
+
+#define MCA_PML_BFO_CHECK_SENDREQ_EAGER_BML_BTL(bml_btl, btl, sendreq, type)   \
+    if (bml_btl->btl != btl) {                                                 \
+        mca_pml_bfo_find_sendreq_eager_bml_btl(&bml_btl, btl, sendreq, type);  \
+    }
+#define MCA_PML_BFO_CHECK_SENDREQ_RDMA_BML_BTL(bml_btl, btl, sendreq, type)    \
+    if (bml_btl->btl != btl) {                                                 \
+        mca_pml_bfo_find_sendreq_rdma_bml_btl(&bml_btl, btl, sendreq, type);   \
+    }
+
+#define MCA_PML_BFO_CHECK_RECVREQ_EAGER_BML_BTL(bml_btl, btl, recvreq, type)   \
+    if (bml_btl->btl != btl) {                                                 \
+        mca_pml_bfo_find_recvreq_eager_bml_btl(&bml_btl, btl, recvreq, type);  \
+    }
+
+#define MCA_PML_BFO_CHECK_RECVREQ_RDMA_BML_BTL(bml_btl, btl, recvreq, type)    \
+    if (bml_btl->btl != btl) {                                                 \
+        mca_pml_bfo_find_recvreq_rdma_bml_btl(&bml_btl, btl, recvreq, type);   \
+    }
+
+#define MCA_PML_BFO_CHECK_RECVREQ_EAGER_BML_BTL_RECV_CTL(bml_btl, btl, des)    \
+    if (bml_btl->btl != btl) {                                                 \
+        mca_pml_bfo_update_eager_bml_btl_recv_ctl(&bml_btl, btl, des);         \
+    }
 
 END_C_DECLS
 

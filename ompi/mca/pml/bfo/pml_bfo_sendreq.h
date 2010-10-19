@@ -479,7 +479,7 @@ int mca_pml_bfo_send_request_put_frag(mca_pml_bfo_rdma_frag_t* frag);
  * available. bml_btl passed to the function doesn't represents sendreq
  * destination, it represents BTL on which resource was freed, so only this BTL
  * should be considered for sending packets */
-void mca_pml_bfo_send_request_process_pending(mca_btl_base_module_t *btl);
+void mca_pml_bfo_send_request_process_pending(mca_bml_base_btl_t *bml_btl);
 
 void mca_pml_bfo_send_request_copy_in_out(mca_pml_bfo_send_request_t *sendreq,
                 uint64_t send_offset, uint64_t send_length);

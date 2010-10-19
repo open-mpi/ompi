@@ -469,13 +469,19 @@ static void mca_pml_bfo_fin_completion( mca_btl_base_module_t* btl,
                                         struct mca_btl_base_descriptor_t* des,
                                         int status )
 {
+    
+    mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) des->des_context; 
+
 /* BFO FAILOVER CODE - begin */
     if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
         mca_pml_bfo_repost_fin(des);
         return;
     }
+    MCA_PML_BFO_CHECK_EAGER_BML_BTL_ON_FIN_COMPLETION(bml_btl, btl, des);
 /* BFO FAILOVER CODE - end */
-    MCA_PML_BFO_PROGRESS_PENDING(btl);
+
+    /* check for pending requests */
+    MCA_PML_BFO_PROGRESS_PENDING(bml_btl);
 }
 
 /**
@@ -531,7 +537,7 @@ int mca_pml_bfo_send_fin( ompi_proc_t* proc,
                             MCA_PML_BFO_HDR_TYPE_FIN );
     if( OPAL_LIKELY( rc >= 0 ) ) {
         if( OPAL_LIKELY( 1 == rc ) ) {
-            MCA_PML_BFO_PROGRESS_PENDING(bml_btl->btl);
+            MCA_PML_BFO_PROGRESS_PENDING(bml_btl);
         }
         return OMPI_SUCCESS;
     }
@@ -540,7 +546,7 @@ int mca_pml_bfo_send_fin( ompi_proc_t* proc,
     return OMPI_ERR_OUT_OF_RESOURCE;
 }
 
-void mca_pml_bfo_process_pending_packets(struct mca_btl_base_module_t* btl)
+void mca_pml_bfo_process_pending_packets(mca_bml_base_btl_t* bml_btl)
 {
     mca_pml_bfo_pckt_pending_t *pckt;
     int32_t i, rc, s = (int32_t)opal_list_get_size(&mca_pml_bfo.pckt_pending);
@@ -554,11 +560,11 @@ void mca_pml_bfo_process_pending_packets(struct mca_btl_base_module_t* btl)
         if(NULL == pckt)
             break;
         if(pckt->bml_btl != NULL && 
-                pckt->bml_btl->btl == btl) {
+                pckt->bml_btl->btl == bml_btl->btl) {
             send_dst = pckt->bml_btl;
         } else {
             send_dst = mca_bml_base_btl_array_find(
-                    &pckt->proc->proc_bml->btl_eager, btl);
+                    &pckt->proc->proc_bml->btl_eager, bml_btl->btl);
         }
         if(NULL == send_dst) {
             OPAL_THREAD_LOCK(&mca_pml_bfo.lock);

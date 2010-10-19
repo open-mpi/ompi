@@ -1955,3 +1955,151 @@ void mca_pml_bfo_update_rndv_fields(mca_pml_bfo_hdr_t* hdr,
                         sendreq->req_send.req_base.req_comm->c_my_rank, (void *)sendreq,
                         sendreq->req_recv.pval, sendreq->req_send.req_base.req_peer);
 }
+
+/**
+ * The following set of functions are all called when it is determined
+ * that the cached bml_btl->btl does not match the btl handed back
+ * by the callback function.  This means that the bml_btl array has
+ * been shuffled and the bml_btl matching the btl has to be found
+ * back.  If it cannot be found, then just find a different one to
+ * use.  
+ */
+void mca_pml_bfo_update_eager_bml_btl_recv_ctl(mca_bml_base_btl_t** bml_btl,
+                                               mca_btl_base_module_t* btl,
+                                               struct mca_btl_base_descriptor_t* des)
+{
+    if ((*bml_btl)->btl != btl) {
+        mca_pml_bfo_common_hdr_t * common = des->des_src->seg_addr.pval;
+        mca_pml_bfo_ack_hdr_t* ack;  /* ACK header */
+        mca_pml_bfo_recv_request_t* recvreq;
+        char *type;
+
+        switch (common->hdr_type) {
+        case MCA_PML_BFO_HDR_TYPE_ACK:
+            ack = (mca_pml_bfo_ack_hdr_t*)des->des_src->seg_addr.pval;
+            recvreq = (mca_pml_bfo_recv_request_t*) ack->hdr_dst_req.pval;
+            type = "ACK";
+            break;
+        case MCA_PML_BFO_HDR_TYPE_PUT:
+            recvreq = des->des_cbdata;
+            type = "PUT";
+            break;
+        }
+
+        mca_pml_bfo_find_recvreq_eager_bml_btl(bml_btl, btl, recvreq, type);
+    }
+}
+
+void mca_pml_bfo_find_sendreq_eager_bml_btl(mca_bml_base_btl_t** bml_btl,
+                                            mca_btl_base_module_t* btl,
+                                            mca_pml_bfo_send_request_t* sendreq,
+                                            char* type)
+{
+    if ((*bml_btl)->btl != btl) {
+        opal_output_verbose(25, mca_pml_bfo_output,
+                            "%s completion: BML does not match BTL, find it back, "
+                            "PML=%d, RQS=%d, src_req=%p, dst_req=%p, peer=%d",
+                            type, (uint16_t)sendreq->req_send.req_base.req_sequence,
+                            sendreq->req_restartseq, (void *)sendreq,
+                            sendreq->req_recv.pval,
+                            sendreq->req_send.req_base.req_peer);
+        *bml_btl = mca_bml_base_btl_array_find(&sendreq->req_endpoint->btl_eager, btl);
+        if (NULL == *bml_btl) {
+            opal_output_verbose(25, mca_pml_bfo_output,
+                                "%s completion: BML is gone, find another one, "
+                                "PML=%d, RQS=%d, src_req=%p, dst_req=%p, peer=%d",
+                                type, (uint16_t)sendreq->req_send.req_base.req_sequence,
+                                sendreq->req_restartseq, (void *)sendreq,
+                                sendreq->req_recv.pval,
+                                sendreq->req_send.req_base.req_peer);
+            *bml_btl = mca_bml_base_btl_array_get_next(&sendreq->req_endpoint->btl_eager);
+        }
+    }
+}
+
+void mca_pml_bfo_find_sendreq_rdma_bml_btl(mca_bml_base_btl_t** bml_btl,
+                                           mca_btl_base_module_t* btl,
+                                           mca_pml_bfo_send_request_t* sendreq,
+                                           char* type)
+{
+    if ((*bml_btl)->btl != btl) {
+        opal_output_verbose(25, mca_pml_bfo_output,
+                            "%s completion: BML does not match BTL, find it back, "
+                            "PML=%d, RQS=%d, src_req=%p, dst_req=%p, peer=%d",
+                            type, (uint16_t)sendreq->req_send.req_base.req_sequence,
+                            sendreq->req_restartseq, (void *)sendreq,
+                            sendreq->req_recv.pval,
+                            sendreq->req_send.req_base.req_peer);
+        *bml_btl = mca_bml_base_btl_array_find(&sendreq->req_endpoint->btl_rdma, btl);
+        if (NULL == *bml_btl) {
+            opal_output_verbose(25, mca_pml_bfo_output,
+                                "%s completion: BML is gone, find another one, "
+                                "PML=%d, RQS=%d, src_req=%p, dst_req=%p, peer=%d",
+                                type, (uint16_t)sendreq->req_send.req_base.req_sequence,
+                                sendreq->req_restartseq, (void *)sendreq,
+                                sendreq->req_recv.pval,
+                                sendreq->req_send.req_base.req_peer);
+            *bml_btl = mca_bml_base_btl_array_get_next(&sendreq->req_endpoint->btl_rdma);
+        }
+    }
+}
+
+void mca_pml_bfo_find_recvreq_eager_bml_btl(mca_bml_base_btl_t** bml_btl,
+                                            mca_btl_base_module_t* btl,
+                                            mca_pml_bfo_recv_request_t* recvreq,
+                                            char* type)
+{
+    if ((*bml_btl)->btl != btl) {
+        ompi_proc_t *proc = (ompi_proc_t*)recvreq->req_recv.req_base.req_proc;
+        mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml;
+
+        opal_output_verbose(25, mca_pml_bfo_output,
+                            "%s completion: BML does not match BTL, find it back, "
+                            "PML=%d, RQS=%d, src_req=%p, dst_req=%p, peer=%d",
+                            type, recvreq->req_msgseq, recvreq->req_restartseq,
+                            recvreq->remote_req_send.pval, (void *)recvreq,
+                            recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE);
+
+        *bml_btl = mca_bml_base_btl_array_find(&bml_endpoint->btl_eager, btl);
+        if (NULL == *bml_btl) {
+            opal_output_verbose(25, mca_pml_bfo_output,
+                                "%s completion: BML is gone, find another one, "
+                                "PML=%d, RQS=%d, src_req=%p, dst_req=%p, peer=%d",
+                                type, recvreq->req_msgseq, recvreq->req_restartseq,
+                                recvreq->remote_req_send.pval, (void *)recvreq,
+                                recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE);
+
+            *bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_eager);
+        }
+    }
+}
+
+void mca_pml_bfo_find_recvreq_rdma_bml_btl(mca_bml_base_btl_t** bml_btl,
+                                           mca_btl_base_module_t* btl,
+                                           mca_pml_bfo_recv_request_t* recvreq,
+                                           char* type)
+{
+    if ((*bml_btl)->btl != btl) {
+        ompi_proc_t *proc = (ompi_proc_t*)recvreq->req_recv.req_base.req_proc;
+        mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml;
+
+        opal_output_verbose(25, mca_pml_bfo_output,
+                            "%s completion: BML does not match BTL, find it back, "
+                            "PML=%d, RQS=%d, src_req=%p, dst_req=%p, peer=%d",
+                            type, recvreq->req_msgseq, recvreq->req_restartseq,
+                            recvreq->remote_req_send.pval, (void *)recvreq,
+                            recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE);
+
+        *bml_btl = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, btl);
+        if (NULL == *bml_btl) {
+            opal_output_verbose(25, mca_pml_bfo_output,
+                                "%s completion: BML is gone, find another one, "
+                                "PML=%d, RQS=%d, src_req=%p, dst_req=%p, peer=%d",
+                                type, recvreq->req_msgseq, recvreq->req_restartseq,
+                                recvreq->remote_req_send.pval, (void *)recvreq,
+                                recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE);
+
+            *bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_rdma);
+        }
+    }
+}
