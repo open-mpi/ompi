@@ -168,13 +168,16 @@ static void mca_pml_bfo_recv_ctl_completion( mca_btl_base_module_t* btl,
                                              struct mca_btl_base_descriptor_t* des,
                                              int status )
 {
+    mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*)des->des_context;
 
 /* BFO FAILOVER CODE - begin */
     if (btl->btl_flags & MCA_BTL_FLAGS_FAILOVER_SUPPORT) {
         mca_pml_bfo_check_recv_ctl_completion_status(btl, des, status);
     }
+       
+    MCA_PML_BFO_CHECK_RECVREQ_EAGER_BML_BTL_RECV_CTL(bml_btl, btl, des);
 /* BFO FAILOVER CODE - end */
-    MCA_PML_BFO_PROGRESS_PENDING(btl);
+    MCA_PML_BFO_PROGRESS_PENDING(bml_btl);
 }
 
 /*
@@ -200,6 +203,7 @@ static void mca_pml_bfo_put_completion( mca_btl_base_module_t* btl,
 
 /* BFO FAILOVER CODE - begin */
     MCA_PML_BFO_ERROR_CHECK_ON_FIN_FOR_PUT(recvreq);
+    MCA_PML_BFO_CHECK_RECVREQ_EAGER_BML_BTL(bml_btl, btl, recvreq, "PUT");
 /* BFO FAILOVER CODE - end */
 
     /* check completion status */
@@ -209,7 +213,7 @@ static void mca_pml_bfo_put_completion( mca_btl_base_module_t* btl,
         /* schedule additional rdma operations */
         mca_pml_bfo_recv_request_schedule(recvreq, bml_btl);
     }
-    MCA_PML_BFO_PROGRESS_PENDING(btl);
+    MCA_PML_BFO_PROGRESS_PENDING(bml_btl);
 }
 
 /*
@@ -341,7 +345,6 @@ static void mca_pml_bfo_rget_completion( mca_btl_base_module_t* btl,
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*)des->des_context;
     mca_pml_bfo_rdma_frag_t* frag = (mca_pml_bfo_rdma_frag_t*)des->des_cbdata;
     mca_pml_bfo_recv_request_t* recvreq = (mca_pml_bfo_recv_request_t*)frag->rdma_req;
-    mca_bml_base_endpoint_t* bml_endpoint;
 
 /* BFO FAILOVER CODE - begin */
     if (btl->btl_flags & MCA_BTL_FLAGS_FAILOVER_SUPPORT) {
@@ -357,24 +360,7 @@ static void mca_pml_bfo_rget_completion( mca_btl_base_module_t* btl,
 
 /* BFO FAILOVER CODE - begin */
     MCA_PML_BFO_SECOND_ERROR_CHECK_ON_RDMA_READ_COMPLETION(recvreq, status, btl);
-/* BFO FAILOVER CODE - end */
-
-/* BFO FAILOVER CODE - begin */
-    /* Find back the bml_btl that this btl belongs to.  If we cannot
-     * find it, then it may have been removed from underneath us, so
-     * find the next available one to send the FIN message on. */
-    bml_endpoint = recvreq->req_recv.req_base.req_proc->proc_bml;
-    bml_btl = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, btl);
-    if( OPAL_UNLIKELY(NULL == bml_btl) ) {
-        opal_output_verbose(20, mca_pml_bfo_output,
-                            "RDMA write completion: BML was removed from underneath us, "
-                            "PML=%d, RQS=%d, src_req=%lx, dst_req=%lx, status=%d, peer=%d",
-                            recvreq->req_msgseq, recvreq->req_restartseq,
-                            (unsigned long)recvreq->remote_req_send.pval,
-                            (unsigned long)recvreq, status,
-                            recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE);
-        bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_rdma);
-    }
+    MCA_PML_BFO_CHECK_RECVREQ_RDMA_BML_BTL(bml_btl, btl, recvreq, "RDMA write");
 /* BFO FAILOVER CODE - end */
 
     mca_pml_bfo_send_fin(recvreq->req_recv.req_base.req_proc,
@@ -390,7 +376,7 @@ static void mca_pml_bfo_rget_completion( mca_btl_base_module_t* btl,
 
     MCA_PML_BFO_RDMA_FRAG_RETURN(frag);
 
-    MCA_PML_BFO_PROGRESS_PENDING(btl);
+    MCA_PML_BFO_PROGRESS_PENDING(bml_btl);
 }
 
 
@@ -744,7 +730,7 @@ void mca_pml_bfo_recv_request_matched_probe( mca_pml_bfo_recv_request_t* recvreq
 */
 
 int mca_pml_bfo_recv_request_schedule_once( mca_pml_bfo_recv_request_t* recvreq,
-                                            mca_btl_base_module_t *start_btl )
+                                            mca_bml_base_btl_t *start_bml_btl )
 {
     mca_bml_base_btl_t* bml_btl; 
     int num_tries = recvreq->req_rdma_cnt, num_fail = 0;
@@ -753,9 +739,9 @@ int mca_pml_bfo_recv_request_schedule_once( mca_pml_bfo_recv_request_t* recvreq,
         recvreq->req_rdma_offset;
 
     /* if starting bml_btl is provided schedule next fragment on it first */
-    if(start_btl != NULL) {
+    if(start_bml_btl != NULL) {
         for(i = 0; i < recvreq->req_rdma_cnt; i++) {
-            if(recvreq->req_rdma[i].bml_btl->btl != start_btl)
+            if(recvreq->req_rdma[i].bml_btl != start_bml_btl)
                 continue;
             /* something left to be send? */
             if( OPAL_LIKELY(recvreq->req_rdma[i].length) )

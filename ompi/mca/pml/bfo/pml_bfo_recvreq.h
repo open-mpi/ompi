@@ -357,7 +357,7 @@ void mca_pml_bfo_recv_request_matched_probe(
  */
 
 int mca_pml_bfo_recv_request_schedule_once(
-    mca_pml_bfo_recv_request_t* req, mca_btl_base_module_t* start_btl);
+    mca_pml_bfo_recv_request_t* req, mca_bml_base_btl_t* start_bml_btl);
 
 static inline int mca_pml_bfo_recv_request_schedule_exclusive(
         mca_pml_bfo_recv_request_t* req,
@@ -366,7 +366,7 @@ static inline int mca_pml_bfo_recv_request_schedule_exclusive(
     int rc;
 
     do {
-        rc = mca_pml_bfo_recv_request_schedule_once(req, start_bml_btl ? start_bml_btl->btl : NULL);
+        rc = mca_pml_bfo_recv_request_schedule_once(req, start_bml_btl);
         if(OPAL_SOS_GET_ERROR_CODE(rc) == OMPI_ERR_OUT_OF_RESOURCE)
             break;
     } while(!unlock_recv_request(req));

@@ -233,7 +233,7 @@ int mca_pml_bfo_send_fin(ompi_proc_t* proc, mca_bml_base_btl_t* bml_btl,
  * resource unavailability. bml_btl passed to the function doesn't represents
  * packet's destination, it represents BTL on which resource was freed, so only
  * this BTL should be considered for resending packets */
-void mca_pml_bfo_process_pending_packets(struct mca_btl_base_module_t* btl);
+void mca_pml_bfo_process_pending_packets(mca_bml_base_btl_t* bml_btl);
 
 /* This function retries failed PUT/GET operations on frag. When RDMA operation
  * cannot be accomplished for some reason, frag is put on the rdma_pending list.
@@ -241,14 +241,14 @@ void mca_pml_bfo_process_pending_packets(struct mca_btl_base_module_t* btl);
  * inside the frag structure */
 void mca_pml_bfo_process_pending_rdma(void);
 
-#define MCA_PML_BFO_PROGRESS_PENDING(btl)                       \
+#define MCA_PML_BFO_PROGRESS_PENDING(bml_btl)                   \
     do {                                                        \
         if(opal_list_get_size(&mca_pml_bfo.pckt_pending))       \
-            mca_pml_bfo_process_pending_packets(btl);           \
+            mca_pml_bfo_process_pending_packets(bml_btl);       \
         if(opal_list_get_size(&mca_pml_bfo.recv_pending))       \
             mca_pml_bfo_recv_request_process_pending();         \
         if(opal_list_get_size(&mca_pml_bfo.send_pending))       \
-            mca_pml_bfo_send_request_process_pending(btl);      \
+            mca_pml_bfo_send_request_process_pending(bml_btl);  \
         if(opal_list_get_size(&mca_pml_bfo.rdma_pending))       \
             mca_pml_bfo_process_pending_rdma();                 \
     } while (0)
