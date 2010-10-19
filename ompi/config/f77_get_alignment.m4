@@ -23,7 +23,10 @@ dnl
 AC_DEFUN([OMPI_F77_GET_ALIGNMENT],[
     unset happy
     OMPI_VAR_SCOPE_PUSH([happy ompi_conftest_h])
-    AS_VAR_PUSHDEF([type_var], [ompi_cv_f77_alignment_$1])
+    # Use of m4_translit suggested by Eric Blake:
+    # http://lists.gnu.org/archive/html/bug-autoconf/2010-10/msg00016.html
+    AS_VAR_PUSHDEF([type_var],
+       m4_translit([[ompi_cv_f77_alignment_$1]], [*], [p]))
 
     AC_CACHE_CHECK([alignment of Fortran $1], type_var,
        [OMPI_F77_MAKE_C_FUNCTION([ompi_ac_align_fn], [align])
