@@ -83,6 +83,12 @@ static int fill_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
     int ret, flag;
     opal_paffinity_base_cpu_set_t cset;
 
+    /* Get our binding */
+    ret = opal_paffinity_base_get(&cset);
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+
     /* Are we bound anywhere? */
     OPAL_PAFFINITY_PROCESS_IS_BOUND(cset, &flag);
     if (!flag) {
@@ -91,11 +97,6 @@ static int fill_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
         return OPAL_SUCCESS;
     }
 
-    /* Get our binding */
-    ret = opal_paffinity_base_get(&cset);
-    if (OPAL_SUCCESS != ret) {
-        return ret;
-    }
     return opal_paffinity_base_cset2str(str, OMPI_AFFINITY_STRING_MAX, &cset);
 }
 
