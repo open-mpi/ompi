@@ -48,9 +48,9 @@
 #include "pml_bfo_sendreq.h"
 #include "pml_bfo_recvreq.h"
 #include "pml_bfo_rdmafrag.h"
-/* BFO FAILOVER CODE - begin */
+#ifdef PML_BFO
 #include "pml_bfo_failover.h"
-/* BFO FAILOVER CODE - end */
+#endif
 
 mca_pml_bfo_t mca_pml_bfo = {
     {
@@ -409,13 +409,12 @@ int mca_pml_bfo_add_procs(ompi_proc_t** procs, size_t nprocs)
                                NULL );
     if(OMPI_SUCCESS != rc)
         goto cleanup_and_return;
-
-/* BFO FAILOVER CODE - begin */
+    
+#ifdef PML_BFO
     rc = mca_pml_bfo_register_callbacks();
     if(OMPI_SUCCESS != rc)
         goto cleanup_and_return;
-/* BFO FAILOVER CODE - end */
-
+#endif
     /* register error handlers */
     rc = mca_bml.bml_register_error(mca_pml_bfo_error_handler);
     if(OMPI_SUCCESS != rc)
@@ -472,14 +471,13 @@ static void mca_pml_bfo_fin_completion( mca_btl_base_module_t* btl,
     
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) des->des_context; 
 
-/* BFO FAILOVER CODE - begin */
+#ifdef PML_BFO
     if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
         mca_pml_bfo_repost_fin(des);
         return;
     }
     MCA_PML_BFO_CHECK_EAGER_BML_BTL_ON_FIN_COMPLETION(bml_btl, btl, des);
-/* BFO FAILOVER CODE - end */
-
+#endif
     /* check for pending requests */
     MCA_PML_BFO_PROGRESS_PENDING(bml_btl);
 }
@@ -494,12 +492,14 @@ int mca_pml_bfo_send_fin( ompi_proc_t* proc,
                           mca_bml_base_btl_t* bml_btl,
                           ompi_ptr_t hdr_des,
                           uint8_t order,
+#ifdef PML_BFO
                           uint32_t status,
-/* BFO FAILOVER CODE - begin */
                           uint16_t seq,
                           uint8_t restartseq,
                           uint16_t ctx, uint32_t src)
-/* BFO FAILOVER CODE - end */
+#else
+                          uint32_t status )
+#endif
 {
     mca_btl_base_descriptor_t* fin;
     mca_pml_bfo_fin_hdr_t* hdr;
@@ -521,13 +521,13 @@ int mca_pml_bfo_send_fin( ompi_proc_t* proc,
     hdr->hdr_common.hdr_type = MCA_PML_BFO_HDR_TYPE_FIN;
     hdr->hdr_des = hdr_des;
     hdr->hdr_fail = status;
-/* BFO FAILOVER CODE - begin */
+#ifdef PML_BFO
     fin->des_cbdata = proc;
     hdr->hdr_match.hdr_seq = seq;
     hdr->hdr_match.hdr_ctx = ctx;
     hdr->hdr_match.hdr_src = src;
     hdr->hdr_match.hdr_common.hdr_flags = restartseq;  /* use unused hdr_flags field */
-/* BFO FAILOVER CODE - end */
+#endif
 
     bfo_hdr_hton(hdr, MCA_PML_BFO_HDR_TYPE_FIN, proc);
 
@@ -594,11 +594,15 @@ void mca_pml_bfo_process_pending_packets(mca_bml_base_btl_t* bml_btl)
                 rc = mca_pml_bfo_send_fin(pckt->proc, send_dst,
                                           pckt->hdr.hdr_fin.hdr_des,
                                           pckt->order,
+#ifdef PML_BFO
                                           pckt->hdr.hdr_fin.hdr_fail,
                                           pckt->hdr.hdr_fin.hdr_match.hdr_seq,
                                           pckt->hdr.hdr_fin.hdr_match.hdr_common.hdr_flags,
                                           pckt->hdr.hdr_fin.hdr_match.hdr_ctx,
                                           pckt->hdr.hdr_fin.hdr_match.hdr_src);
+#else
+                                          pckt->hdr.hdr_fin.hdr_fail);
+#endif
                 if( OPAL_UNLIKELY(OMPI_ERR_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc)) ) {
                     return;
                 }
@@ -640,14 +644,13 @@ void mca_pml_bfo_process_pending_rdma(void)
 void mca_pml_bfo_error_handler(
         struct mca_btl_base_module_t* btl, int32_t flags,
         ompi_proc_t* errproc, char* btlinfo ) { 
-/* BFO FAILOVER CODE - begin */
-    /* If we get a non-fatal error, try to failover */
+#ifdef PML_BFO
     if (flags & MCA_BTL_ERROR_FLAGS_NONFATAL) {
         mca_pml_bfo_failover_error_handler(btl, flags, errproc, btlinfo);
-/* BFO FAILOVER CODE - end */
-    } else {
-        orte_errmgr.abort(-1, NULL);
+        return;
     }
+#endif
+    orte_errmgr.abort(-1, NULL);
 }
 
 #if OPAL_ENABLE_FT_CR    == 0

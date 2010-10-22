@@ -30,24 +30,23 @@
 #include "ompi/mca/pml/bfo/pml_bfo_comm.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/pml/base/pml_base_recvreq.h"
-
-/* BFO FAILOVER CODE - begin */
+#ifdef PML_BFO
 #define RECVREQ_RECVERRSENT        0x01
 #define RECVREQ_RNDVRESTART_RECVED 0x02
 #define RECVREQ_RNDVRESTART_ACKED  0x04
-/* BFO FAILOVER CODE - end */
+#endif
 
 BEGIN_C_DECLS
 
 struct mca_pml_bfo_recv_request_t {
     mca_pml_base_recv_request_t req_recv;
     ompi_ptr_t remote_req_send;
-/* BFO FAILOVER CODE - begin */
+#ifdef PML_BFO
     int32_t req_msgseq;     /* PML sequence number */
     int32_t req_events;     /* number of outstanding events on request */
     int32_t req_restartseq; /* sequence number of restarted request */
     int32_t req_errstate;   /* state of request if in error */
-/* BFO FAILOVER CODE - end */
+#endif
     int32_t req_lock;
     size_t  req_pipeline_depth;
     size_t  req_bytes_received;  /**< amount of data transferred into the user buffer */
@@ -169,10 +168,10 @@ recv_request_pml_complete(mca_pml_bfo_recv_request_t *recvreq)
         }
     }
     recvreq->req_rdma_cnt = 0;
-/* BFO FAILOVER CODE - begin */
-    /* Initialize to a value that we indicate it is invalid */
-    recvreq->req_msgseq = 42;
-/* BFO FAILOVER CODE - end */
+#ifdef PML_BFO
+    /* Reset to a value that to indicate it is invalid. */
+    recvreq->req_msgseq = recvreq->req_msgseq - 100;
+#endif
 
     OPAL_THREAD_LOCK(&ompi_request_lock);
     if(true == recvreq->req_recv.req_base.req_free_called) {
@@ -201,7 +200,11 @@ recv_request_pml_complete_check(mca_pml_bfo_recv_request_t *recvreq)
 #endif
     if(recvreq->req_match_received &&
             recvreq->req_bytes_received >= recvreq->req_recv.req_bytes_packed &&
+#ifdef PML_BFO
                         (0 == recvreq->req_events) && lock_recv_request(recvreq)) {
+#else
+            lock_recv_request(recvreq)) {
+#endif
         recv_request_pml_complete(recvreq);
         return true;
     }
@@ -236,9 +239,9 @@ static inline void recv_req_matched(mca_pml_bfo_recv_request_t *req,
     req->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = hdr->hdr_src;
     req->req_recv.req_base.req_ompi.req_status.MPI_TAG = hdr->hdr_tag;
     req->req_match_received = true;
-/* BFO FAILOVER CODE - begin */
+#ifdef PML_BFO
     req->req_msgseq = hdr->hdr_seq;
-/* BFO FAILOVER CODE - end */
+#endif
 #if OPAL_HAVE_THREAD_SUPPORT
     opal_atomic_wmb();
 #endif

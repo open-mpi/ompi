@@ -41,9 +41,9 @@
 #include "pml_bfo_recvreq.h"
 #include "pml_bfo_sendreq.h"
 #include "pml_bfo_hdr.h"
-/* BFO FAILOVER CODE - begin */
+#ifdef PML_BFO
 #include "pml_bfo_failover.h"
-/* BFO FAILOVER CODE - end */
+#endif
 
 OBJ_CLASS_INSTANCE( mca_pml_bfo_buffer_t,
                     ompi_free_list_item_t,
@@ -242,13 +242,13 @@ void mca_pml_bfo_recv_frag_callback_match(mca_btl_base_module_t* btl,
     
  slow_path:
     OPAL_THREAD_UNLOCK(&comm->matching_lock);
-/* BFO FAILOVER CODE - begin */
+#ifdef PML_BFO
     /* Check for duplicate messages.  If message is duplicate, then just
      * return as that essentially drops the message. */
     if (true == mca_pml_bfo_is_duplicate_msg(proc, hdr)) {
         return;
     }
-/* BFO FAILOVER CODE - end */
+#endif
     mca_pml_bfo_recv_frag_match(btl, hdr, segments,
                                 num_segments, MCA_PML_BFO_HDR_TYPE_MATCH);
 }
@@ -306,9 +306,9 @@ void mca_pml_bfo_recv_frag_callback_ack(mca_btl_base_module_t* btl,
     bfo_hdr_ntoh(hdr, MCA_PML_BFO_HDR_TYPE_ACK);
     sendreq = (mca_pml_bfo_send_request_t*)hdr->hdr_ack.hdr_src_req.pval;
     sendreq->req_recv = hdr->hdr_ack.hdr_dst_req;
-/* BFO FAILOVER CODE - begin */
+#ifdef PML_BFO
     MCA_PML_BFO_ERROR_CHECK_ON_ACK_CALLBACK(sendreq)
-/* BFO FAILOVER CODE - end */
+#endif
     
     /* if the request should be delivered entirely by copy in/out
      * then throttle sends */
@@ -352,9 +352,9 @@ void mca_pml_bfo_recv_frag_callback_frag(mca_btl_base_module_t* btl,
     }
     bfo_hdr_ntoh(hdr, MCA_PML_BFO_HDR_TYPE_FRAG);
     recvreq = (mca_pml_bfo_recv_request_t*)hdr->hdr_frag.hdr_dst_req.pval;
-/* BFO FAILOVER CODE - begin */
+#ifdef PML_BFO
     MCA_PML_BFO_ERROR_CHECK_ON_FRAG_CALLBACK(recvreq)
-/* BFO FAILOVER CODE - end */
+#endif
     mca_pml_bfo_recv_request_progress_frag(recvreq,btl,segments,des->des_dst_cnt);
 
     return;
@@ -375,9 +375,9 @@ void mca_pml_bfo_recv_frag_callback_put(mca_btl_base_module_t* btl,
     
     bfo_hdr_ntoh(hdr, MCA_PML_BFO_HDR_TYPE_PUT);
     sendreq = (mca_pml_bfo_send_request_t*)hdr->hdr_rdma.hdr_req.pval;
-/* BFO FAILOVER CODE - begin */
+#ifdef PML_BFO
     MCA_PML_BFO_ERROR_CHECK_ON_PUT_CALLBACK(sendreq)
-/* BFO FAILOVER CODE - end */
+#endif
     mca_pml_bfo_send_request_put(sendreq,btl,&hdr->hdr_rdma);
     
     return;
@@ -398,11 +398,11 @@ void mca_pml_bfo_recv_frag_callback_fin(mca_btl_base_module_t* btl,
     
     bfo_hdr_ntoh(hdr, MCA_PML_BFO_HDR_TYPE_FIN);
     rdma = (mca_btl_base_descriptor_t*)hdr->hdr_fin.hdr_des.pval;
-/* BFO FAILOVER CODE - begin */
+#ifdef PML_BFO
     if (true == mca_pml_bfo_is_duplicate_fin(hdr, rdma, btl)) {
         return;
     }
-/* BFO FAILOVER CODE - end */
+#endif
     rdma->des_cbfunc(btl, NULL, rdma,
                      hdr->hdr_fin.hdr_fail ? OMPI_ERROR : OMPI_SUCCESS);
     
@@ -626,7 +626,7 @@ static int mca_pml_bfo_recv_frag_match( mca_btl_base_module_t *btl,
      * the fragment.
      */
     OPAL_THREAD_LOCK(&comm->matching_lock);
-/* BFO FAILOVER CODE - begin */
+#ifdef PML_BFO
     /* In case of network failover, we may get a message telling us to
      * restart.  In that case, we already have a pointer to the receive
      * request in the header itself. */
@@ -635,8 +635,8 @@ static int mca_pml_bfo_recv_frag_match( mca_btl_base_module_t *btl,
         if (NULL == match) {
             return OMPI_SUCCESS;
         }
-/* BFO FAILOVER CODE - end */
     } else {
+#endif
 
     /* get sequence number of next message that can be processed */
     next_msg_seq_expected = (uint16_t)proc->expected_sequence;
@@ -673,8 +673,9 @@ out_of_order_match:
 
     /* release matching lock before processing fragment */
     OPAL_THREAD_UNLOCK(&comm->matching_lock);
+#ifdef PML_BFO
     }
-
+#endif
     if(OPAL_LIKELY(match)) {
         switch(type) { 
         case MCA_PML_BFO_HDR_TYPE_MATCH:
@@ -716,14 +717,13 @@ wrong_seq:
      * This message comes after the next expected, so it
      * is ahead of sequence.  Save it for later.
      */
-/* BFO FAILOVER CODE - begin */
+#ifdef PML_BFO
     /* Check for duplicate messages.  If message is duplicate, then just
      * return as that essentially drops the message. */
     if (true == mca_pml_bfo_is_duplicate_msg(proc, hdr)) {
         return OMPI_SUCCESS;
     }
-/* BFO FAILOVER CODE - end */
-
+#endif
     append_frag_to_list(&proc->frags_cant_match, btl, hdr, segments,
                         num_segments, NULL);
     OPAL_THREAD_UNLOCK(&comm->matching_lock);

@@ -23,6 +23,7 @@
 #ifndef MCA_PML_BFO_H
 #define MCA_PML_BFO_H
 
+#define PML_BFO 1
 #include "ompi_config.h"
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/request/request.h"
@@ -225,8 +226,12 @@ do {                                                            \
 
 
 int mca_pml_bfo_send_fin(ompi_proc_t* proc, mca_bml_base_btl_t* bml_btl, 
+#ifdef PML_BFO
         ompi_ptr_t hdr_des, uint8_t order, uint32_t status,
         uint16_t seq, uint8_t reqseq, uint16_t ctx, uint32_t src);
+#else
+        ompi_ptr_t hdr_des, uint8_t order, uint32_t status);
+#endif
 
 /* This function tries to resend FIN/ACK packets from pckt_pending queue.
  * Packets are added to the queue when sending of FIN or ACK is failed due to
