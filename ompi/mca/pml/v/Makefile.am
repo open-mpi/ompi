@@ -16,7 +16,6 @@
 EXTRA_DIST = .windows
 
 local_sources = \
-        pml_v.c \
         pml_v.h \
         pml_v_component.c \
         pml_v_output.h \
