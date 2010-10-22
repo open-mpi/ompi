@@ -72,6 +72,7 @@ static void attach_debugger(int fd, short event, void *arg);
 static void build_debugger_args(orte_app_context_t *debugger);
 static opal_event_t attach;
 static int attach_fd;
+static bool fifo_active=false;
 
 static int init(void)
 {
@@ -84,6 +85,11 @@ static int init(void)
  */
 void finalize(void)
 {
+    if (fifo_active) {
+        opal_event_del(&attach);
+        close(attach_fd);
+    }
+
     if (MPIR_proctable) {
         free(MPIR_proctable);
         MPIR_proctable = NULL;
@@ -109,12 +115,19 @@ void init_before_spawn(orte_job_t *jdata)
          * colaunch it
          */
         if (NULL != orte_debugger_base.test_daemon) {
+            opal_output_verbose(2, orte_debugger_base.output,
+                                "%s No debugger test daemon specified",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             goto launchit;
         }
         /* if we were given an auto-detect rate, then we want to setup
          * an event so we periodically do the check
          */
         if (0 < orte_debugger_mpirx_check_rate) {
+            opal_output_verbose(2, orte_debugger_base.output,
+                                "%s Setting debugger attach check rate for %d seconds",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                orte_debugger_mpirx_check_rate);
             ORTE_TIMER_EVENT(orte_debugger_mpirx_check_rate, 0, attach_debugger);
         } else {
             /* create the attachment FIFO and put it into MPIR, setup readevent */
@@ -122,23 +135,34 @@ void init_before_spawn(orte_job_t *jdata)
             /* create a FIFO name in the session dir */
             attach_fifo = opal_os_path(false, orte_process_info.job_session_dir, "debugger_attach_fifo", NULL);
             if ((mkfifo(attach_fifo, FILE_MODE) < 0) && errno != EEXIST) {
-                opal_output(0, "CANNOT CREATE FIFO");
+                opal_output(0, "CANNOT CREATE FIFO %s: errno %d", attach_fifo, errno);
                 free(attach_fifo);
                 return;
             }
             strncpy(MPIR_attach_fifo, attach_fifo, MPIR_MAX_PATH_LENGTH);
-            attach_fd = open(attach_fifo, O_RDONLY, 0);
+            attach_fd = open(attach_fifo, O_RDONLY | O_NONBLOCK, 0);
+            if (attach_fd < 0) {
+                opal_output(0, "%s unable to open debugger attach fifo",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                free(attach_fifo);
+                return;
+            }
+            opal_output_verbose(2, orte_debugger_base.output,
+                                "%s Monitoring debugger attach fifo %s",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                attach_fifo);
             free(attach_fifo);
-            opal_event_set(&attach, attach_fd, OPAL_EV_READ|OPAL_EV_PERSIST, attach_debugger, NULL);
+            fifo_active = true;
+            opal_event_set(&attach, attach_fd, OPAL_EV_READ, attach_debugger, NULL);
             opal_event_add(&attach, 0);
         }
         return;
     }
     
  launchit:
-    if (orte_debug_flag) {
-        opal_output(0, "Info: Spawned by a debugger");
-    }
+    opal_output_verbose(2, orte_debugger_base.output,
+                        "%s: Spawned by a debugger",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
     /* tell the procs they are being debugged */
     env_name = mca_base_param_environ_variable("orte", 
@@ -162,6 +186,11 @@ void init_before_spawn(orte_job_t *jdata)
             ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
             return;
         }
+        opal_output_verbose(2, orte_debugger_base.output,
+                            "%s Cospawning debugger daemons %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            (NULL == orte_debugger_base.test_daemon) ?
+                            MPIR_executable_path : orte_debugger_base.test_daemon);
         /* add debugger info to launch message */
         orte_debugger_daemon = OBJ_NEW(orte_job_t);
         /* create a jobid for these daemons - this is done solely
@@ -219,6 +248,14 @@ static void attach_debugger(int fd, short event, void *arg)
             goto RELEASE;
         }
     }
+    if (fifo_active) {
+        fifo_active = false;
+        read(attach_fd, &rc, sizeof(rc));
+        if (1 != rc) {
+            /* ignore the cmd */
+            goto RELEASE;
+        }
+    }
 
     /* a debugger has attached! All the MPIR_Proctable
      * data is already available, so we only need to
@@ -232,6 +269,11 @@ static void attach_debugger(int fd, short event, void *arg)
                         "-------------------------------------------\n");
             goto RELEASE;
         }
+        opal_output_verbose(2, orte_debugger_base.output,
+                            "%s Spawning debugger daemons %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            (NULL == orte_debugger_base.test_daemon) ?
+                            MPIR_executable_path : orte_debugger_base.test_daemon);
         /* this will be launched just like a regular job,
          * so we do not use the global orte_debugger_daemon
          * as this is reserved for co-location upon startup
@@ -285,6 +327,7 @@ static void attach_debugger(int fd, short event, void *arg)
         now.tv_usec = 0;
         opal_evtimer_add(check, &now);
     } else {
+        fifo_active = true;
         opal_event_add(&attach, 0);
     }
 
