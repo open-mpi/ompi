@@ -36,7 +36,9 @@ typedef enum {
 struct mca_pml_bfo_rdma_frag_t {
     ompi_free_list_item_t super;
     mca_bml_base_btl_t* rdma_bml;
+#ifdef PML_BFO
     mca_btl_base_module_t* rdma_btl;
+#endif
     mca_pml_bfo_hdr_t rdma_hdr;
     mca_pml_bfo_rdma_state_t rdma_state;
     size_t rdma_length;

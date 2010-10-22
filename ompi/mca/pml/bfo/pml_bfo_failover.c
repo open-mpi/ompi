@@ -2103,3 +2103,102 @@ void mca_pml_bfo_find_recvreq_rdma_bml_btl(mca_bml_base_btl_t** bml_btl,
         }
     }
 }
+
+/**
+ * The completion event for the RNDV message has returned with an
+ * error. We know that the send request we are looking at is valid
+ * because it cannot be completed until the sendreq->req_state value
+ * reaches 0.  And for the sendreq->req_state to reach 0, the
+ * completion event on the RNDV message must occur.  So, we do not
+ * bother checking whether the send request is valid, because we know
+ * it is, but we put a few asserts in for good measure.  We then check
+ * a few fields in the request to decide what to do.  If the
+ * sendreq->req_error is set, that means that something has happend
+ * already to the request and we do not want to restart it.
+ * Presumably, we may have received a RECVERRNOTIFY message from the
+ * receiver.  We also check the sendreq->req_acked field to see if it
+ * has been acked.  If it has, then again we do not restart everything
+ * because obviously the RNDV message has made it to the other side.
+ */
+bool mca_pml_bfo_rndv_completion_status_error(struct mca_btl_base_descriptor_t* des,
+                                              mca_pml_bfo_send_request_t* sendreq)
+{
+    assert(((mca_pml_bfo_hdr_t*)((des)->des_src->seg_addr.pval))->hdr_match.hdr_ctx ==
+           (sendreq)->req_send.req_base.req_comm->c_contextid);
+    assert(((mca_pml_bfo_hdr_t*)((des)->des_src->seg_addr.pval))->hdr_match.hdr_src ==
+           (sendreq)->req_send.req_base.req_comm->c_my_rank);
+    assert(((mca_pml_bfo_hdr_t*)((des)->des_src->seg_addr.pval))->hdr_match.hdr_seq ==
+           (uint16_t)(sendreq)->req_send.req_base.req_sequence);
+    if ((!(sendreq)->req_error) && (NULL == (sendreq)->req_recv.pval)) {
+        (sendreq)->req_events--;
+        /* Assume RNDV did not make it, so restart from the beginning. */
+        mca_pml_bfo_send_request_restart(sendreq, true, MCA_PML_BFO_HDR_TYPE_RNDV);
+        return true;
+    }
+    return false;
+}
+
+/**
+ * Check to see if an error has occurred on this send request.  If it has
+ * and there are no outstanding events, then we can start the restart dance.
+ */
+void mca_pml_bfo_completion_sendreq_has_error(mca_pml_bfo_send_request_t* sendreq,
+					      int status,
+					      mca_btl_base_module_t* btl,
+					      int type,
+					      char *description)
+{
+    opal_output_verbose(30, mca_pml_bfo_output,
+                        "%s: completion: sendreq has error, outstanding events=%d, "
+                        "PML=%d, RQS=%d, src_req=%p, dst_req=%p, status=%d, peer=%d",
+                        description,
+                        sendreq->req_events, (uint16_t)sendreq->req_send.req_base.req_sequence,
+                        sendreq->req_restartseq, (void *)sendreq,
+                        sendreq->req_recv.pval,
+                        status, sendreq->req_send.req_base.req_peer);
+    if (0 == sendreq->req_events) {
+        mca_pml_bfo_send_request_rndvrestartnotify(sendreq, false,
+                                                   type, status, btl);
+    } 
+}
+
+/* If we get an error on the RGET message, then first make sure that
+ * header matches the send request that we are pointing to.  This is
+ * necessary, because even though the sending side got an error, the
+ * RGET may have made it to the receiving side and the message transfer
+ * may have completed.  This would then mean the send request has been
+ * completed and perhaps in use by another communication.  So there is
+ * no need to restart this request.  Therefore, ensure that we are
+ * looking at the same request that the header thinks we are looking
+ * at.  If not, then there is nothing else to be done. */
+void mca_pml_bfo_send_ctl_completion_status_error(struct mca_btl_base_descriptor_t* des)
+{
+    mca_pml_bfo_send_request_t* sendreq = (mca_pml_bfo_send_request_t*)des->des_cbdata;
+    mca_pml_bfo_hdr_t* hdr = des->des_src->seg_addr.pval;
+    switch (hdr->hdr_common.hdr_type) {
+    case MCA_PML_BFO_HDR_TYPE_RGET:
+        if ((hdr->hdr_match.hdr_ctx != sendreq->req_send.req_base.req_comm->c_contextid) ||
+            (hdr->hdr_match.hdr_src != sendreq->req_send.req_base.req_comm->c_my_rank) ||
+            (hdr->hdr_match.hdr_seq != (uint16_t)sendreq->req_send.req_base.req_sequence)) {
+            opal_output_verbose(30, mca_pml_bfo_output,
+                                "RGET: completion event: dropping because no valid request "
+                                "PML:exp=%d,act=%d CTX:exp=%d,act=%d SRC:exp=%d,act=%d "
+                                "RQS:exp=%d,act=%d, dst_req=%p",
+                                (uint16_t)sendreq->req_send.req_base.req_sequence,
+                                hdr->hdr_match.hdr_seq,
+                                sendreq->req_send.req_base.req_comm->c_contextid,
+                                hdr->hdr_match.hdr_ctx,
+                                sendreq->req_send.req_base.req_comm->c_my_rank,
+                                hdr->hdr_match.hdr_src,
+                                sendreq->req_restartseq, hdr->hdr_rndv.hdr_restartseq,
+                                (void *)sendreq);
+            return;
+        }
+        mca_pml_bfo_send_request_restart(sendreq, true, MCA_PML_BFO_HDR_TYPE_RGET);
+        return;
+    default:
+        opal_output(0, "%s:%d FATAL ERROR, unknown header (hdr=%d)",
+                    __FILE__, __LINE__, hdr->hdr_common.hdr_type);
+        orte_errmgr.abort(-1, NULL);
+    }
+}
