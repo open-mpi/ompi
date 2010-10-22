@@ -24,7 +24,7 @@ int orte_debugger_base_close(void)
     }
 
     /* Close all remaining available components */
-    mca_base_components_close(orte_debugger_base_output, 
+    mca_base_components_close(orte_debugger_base.output, 
                               &orte_debugger_base_components_available, NULL);
 #endif
     

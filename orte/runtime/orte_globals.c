@@ -85,11 +85,8 @@ bool orte_allocation_required;
 char *orte_launch_agent = NULL;
 char **orted_cmd_line=NULL;
 
-/* debugger flags */
+/* debugger job */
 orte_job_t *orte_debugger_daemon=NULL;
-bool orte_output_debugger_proctable=false;
-char *orte_debugger_test_daemon=NULL;
-bool orte_debugger_test_attach=false;
 
 /* exit flags */
 int orte_exit_status = 0;

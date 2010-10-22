@@ -92,14 +92,17 @@ void orte_debugger_base_init_after_spawn(orte_job_t *jdata)
 
     if (MPIR_proctable) {
         /* already initialized */
+        opal_output_verbose(5, orte_debugger_base.output,
+                            "%s: debugger already initialized",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         return;
     }
 
     /* fill in the proc table for the application processes */
     
-    if (orte_debug_flag) {
-        opal_output(0, "Info: Setting up debugger process table for applications\n");
-    }
+    opal_output_verbose(5, orte_debugger_base.output,
+                        "%s: Setting up debugger process table for applications",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     
     MPIR_debug_state = 1;
     
@@ -110,11 +113,11 @@ void orte_debugger_base_init_after_spawn(orte_job_t *jdata)
     MPIR_proctable = (struct MPIR_PROCDESC *) malloc(sizeof(struct MPIR_PROCDESC) *
                                                      MPIR_proctable_size);
     if (MPIR_proctable == NULL) {
-        opal_output(0, "Error: Out of memory\n");
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return;
     }
     
-    if (orte_output_debugger_proctable) {
+    if (orte_debugger_base.dump_proctable) {
         opal_output(orte_clean_output, "MPIR Proctable for job %s", ORTE_JOBID_PRINT(jdata->jobid));
     }
 
@@ -140,14 +143,14 @@ void orte_debugger_base_init_after_spawn(orte_job_t *jdata)
             opal_os_path( false, appctx->cwd, appctx->app, NULL ); 
         } 
         MPIR_proctable[i].pid = proc->pid;
-        if (orte_output_debugger_proctable) {
+        if (orte_debugger_base.dump_proctable) {
             opal_output(orte_clean_output, "%s: Host %s Exe %s Pid %d",
                         ORTE_VPID_PRINT(i), MPIR_proctable[i].host_name,
                         MPIR_proctable[i].executable_name, MPIR_proctable[i].pid);
         }
     }
 
-    if (orte_debug_flag) {
+    if (0 < opal_output_get_verbosity(orte_debugger_base.output)) {
         orte_debugger_base_dump();
     }
 

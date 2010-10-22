@@ -31,7 +31,7 @@ int orte_debugger_base_select(void)
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != mca_base_select("debugger", orte_debugger_base_output,
+    if( OPAL_SUCCESS != mca_base_select("debugger", orte_debugger_base.output,
                                         &orte_debugger_base_components_available,
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component) ) {

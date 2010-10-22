@@ -108,7 +108,7 @@ void init_before_spawn(orte_job_t *jdata)
         /* if we were given a test debugger, then we still want to
          * colaunch it
          */
-        if (NULL != orte_debugger_test_daemon) {
+        if (NULL != orte_debugger_base.test_daemon) {
             goto launchit;
         }
         /* if we were given an auto-detect rate, then we want to setup
@@ -153,7 +153,7 @@ void init_before_spawn(orte_job_t *jdata)
     free(env_name);
 
     /* check if we need to co-spawn the debugger daemons */
-    if ('\0' != MPIR_executable_path[0] || NULL != orte_debugger_test_daemon) {
+    if ('\0' != MPIR_executable_path[0] || NULL != orte_debugger_base.test_daemon) {
         /* can only have one debugger */
         if (NULL != orte_debugger_daemon) {
             opal_output(0, "-------------------------------------------\n"
@@ -179,8 +179,8 @@ void init_before_spawn(orte_job_t *jdata)
         opal_pointer_array_set_item(orte_job_data, ljob, orte_debugger_daemon);
         /* create an app_context for the debugger daemon */
         app = OBJ_NEW(orte_app_context_t);
-        if (NULL != orte_debugger_test_daemon) {
-            app->app = strdup(orte_debugger_test_daemon);
+        if (NULL != orte_debugger_base.test_daemon) {
+            app->app = strdup(orte_debugger_base.test_daemon);
         } else {
             app->app = strdup((char*)MPIR_executable_path);
         }
@@ -201,15 +201,14 @@ static void attach_debugger(int fd, short event, void *arg)
     struct timeval now;
     opal_event_t *check;
 
-    if (!MPIR_being_debugged && !orte_debugger_test_attach) {
+    if (!MPIR_being_debugged && !orte_debugger_base.test_attach) {
         /* false alarm */
         goto RELEASE;
     }
 
-    if (orte_debug_flag) {
-        opal_output(0, "%s Attaching debugger %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                    (NULL == orte_debugger_test_daemon) ? MPIR_executable_path : orte_debugger_test_daemon);
-    }
+    opal_output_verbose(1, orte_debugger_base.output,
+                        "%s Attaching debugger %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        (NULL == orte_debugger_base.test_daemon) ? MPIR_executable_path : orte_debugger_base.test_daemon);
     
     /* read the file descriptor to clear that event, if necessary */
     if (orte_debugger_mpirx_check_rate <= 0) {
@@ -225,7 +224,7 @@ static void attach_debugger(int fd, short event, void *arg)
      * data is already available, so we only need to
      * check to see if we should spawn any daemons
      */
-    if ('\0' != MPIR_executable_path[0] || NULL != orte_debugger_test_daemon) {
+    if ('\0' != MPIR_executable_path[0] || NULL != orte_debugger_base.test_daemon) {
         /* can only have one debugger */
         if (NULL != orte_debugger_daemon) {
             opal_output(0, "-------------------------------------------\n"
@@ -253,8 +252,8 @@ static void attach_debugger(int fd, short event, void *arg)
         opal_pointer_array_set_item(orte_job_data, ljob, jdata);
         /* create an app_context for the debugger daemon */
         app = OBJ_NEW(orte_app_context_t);
-        if (NULL != orte_debugger_test_daemon) {
-            app->app = strdup(orte_debugger_test_daemon);
+        if (NULL != orte_debugger_base.test_daemon) {
+            app->app = strdup(orte_debugger_base.test_daemon);
         } else {
             app->app = strdup((char*)MPIR_executable_path);
         }

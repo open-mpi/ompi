@@ -23,6 +23,15 @@
 
 BEGIN_C_DECLS
 
+typedef struct {
+    int output;
+    bool dump_proctable;
+    char *test_daemon;
+    bool test_attach;
+} orte_debugger_base_t;
+
+ORTE_DECLSPEC extern orte_debugger_base_t orte_debugger_base;
+
 /*
  * function definitions
  */
@@ -35,7 +44,6 @@ ORTE_DECLSPEC void orte_debugger_base_run_debugger(char *basename, opal_cmd_line
 ORTE_DECLSPEC void orte_debugger_base_init_after_spawn(orte_job_t *jdata);
 ORTE_DECLSPEC void orte_debugger_base_dump(void);
 
-ORTE_DECLSPEC extern int orte_debugger_base_output;
 ORTE_DECLSPEC extern opal_list_t orte_debugger_base_components_available;
 
 /* +++ begin MPICH/TotalView std debugger interface definitions */
