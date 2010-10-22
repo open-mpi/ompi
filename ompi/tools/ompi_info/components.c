@@ -77,6 +77,7 @@
 #include "ompi/mca/pubsub/base/base.h"
 #include "ompi/mca/dpm/base/base.h"
 #include "ompi/mca/op/base/base.h"
+#include "ompi/mca/vprotocol/base/base.h"
 
 #if OPAL_ENABLE_FT_CR == 1
 #include "ompi/mca/crcp/crcp.h"
@@ -639,6 +640,14 @@ void ompi_info_open_components(void)
     map->components = &ompi_op_base_components_opened;
     opal_pointer_array_add(&component_map, map);
     
+    if (OMPI_SUCCESS != mca_vprotocol_base_open(NULL)) {
+        goto error;
+    }
+    map = OBJ_NEW(ompi_info_component_map_t);
+    map->type = strdup("vprotocol");
+    map->components = &mca_vprotocol_base_components_available;
+    opal_pointer_array_add(&component_map, map);
+
 #if OPAL_ENABLE_FT_CR == 1
     if (OMPI_SUCCESS != ompi_crcp_base_open()) {
         goto error;
