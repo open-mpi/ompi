@@ -14,10 +14,10 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "ompi/mca/vprotocol/base/static-components.h"
-#include "ompi/mca/pml/v/pml_v.h"
 
 opal_list_t mca_vprotocol_base_components_available;
 char *mca_vprotocol_base_include_list;
+mca_pml_v_t mca_pml_v = {-1, 0, 0};
 
 /* Load any vprotocol MCA component and call open function of all those 
  * components.
@@ -28,7 +28,10 @@ int mca_vprotocol_base_open(char *vprotocol_include_list)
 {
     OBJ_CONSTRUCT(&mca_vprotocol_base_components_available, opal_list_t);
     mca_vprotocol_base_include_list = vprotocol_include_list;
-    if(mca_vprotocol_base_include_list[0] == 0) return OMPI_SUCCESS;
+    if (NULL == mca_vprotocol_base_include_list ||
+       mca_vprotocol_base_include_list[0] == 0) {
+        return OMPI_SUCCESS;
+    }
     return mca_base_components_open("vprotocol", 0, 
                                     mca_vprotocol_base_static_components, 
                                     &mca_vprotocol_base_components_available, 

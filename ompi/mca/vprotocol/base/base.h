@@ -19,6 +19,18 @@
 
 BEGIN_C_DECLS
 
+struct mca_pml_v_t {
+    int                                 output;
+    size_t                              host_pml_req_recv_size;
+    size_t                              host_pml_req_send_size;
+    mca_pml_base_component_t            host_pml_component;
+    mca_pml_base_module_t               host_pml;
+    ompi_request_fns_t                  host_request_fns;
+};
+typedef struct mca_pml_v_t mca_pml_v_t;
+
+OMPI_DECLSPEC extern mca_pml_v_t mca_pml_v;
+
 OMPI_DECLSPEC int mca_vprotocol_base_open(char *vprotocol_include_list);
 OMPI_DECLSPEC int mca_vprotocol_base_select(bool enable_progress_threads, 
                                             bool enable_mpi_threads);
