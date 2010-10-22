@@ -33,7 +33,7 @@
 /*
  * Global variables
  */
-int orte_debugger_base_output = -1;
+orte_debugger_base_t orte_debugger_base;
 opal_list_t orte_debugger_base_components_available;
 
 orte_debugger_base_module_t orte_debugger;
@@ -66,14 +66,32 @@ int orte_debugger_base_open(void)
  */
 int orte_debugger_base_open(void)
 {
+    int value;
+
     /* Debugging / verbose output.  Always have stream open, with
        verbose set by the mca open system... */
-    orte_debugger_base_output = opal_output_open(NULL);
+    orte_debugger_base.output = opal_output_open(NULL);
 
+    mca_base_param_reg_int_name("orte",
+                                "output_debugger_proctable",
+                                "Whether or not to output the debugger proctable after launch (default: false)",
+                                true, false, 0, &value);
+    orte_debugger_base.dump_proctable = OPAL_INT_TO_BOOL(value);
+
+    mca_base_param_reg_string_name("orte", "debugger_test_daemon",
+                                   "Name of the executable to be used to simulate a debugger colaunch (relative or absolute path)",
+                                   false, false, NULL, &orte_debugger_base.test_daemon);
+
+    mca_base_param_reg_int_name("orte",
+                                "debugger_test_attach",
+                                "Test debugger colaunch after debugger attachment",
+                                false, false, 0, &value);
+    orte_debugger_base.test_attach = OPAL_INT_TO_BOOL(value);
+    
     /* Open up all available components */
 
     if (ORTE_SUCCESS !=
-        mca_base_components_open("debugger", orte_debugger_base_output,
+        mca_base_components_open("debugger", orte_debugger_base.output,
                                  mca_debugger_base_static_components,
                                  &orte_debugger_base_components_available, 
                                  true)) {

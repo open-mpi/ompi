@@ -42,6 +42,7 @@
 #include "orte/types.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/error_strings.h"
+#include "orte/mca/debugger/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
@@ -277,7 +278,7 @@ static void process_msg(int fd, short event, void *data)
                 job = jdata->jobid;
                     
                 /* output debugger proctable, if requested */
-                if (orte_output_debugger_proctable) {
+                if (orte_debugger_base.dump_proctable) {
                     char *output;
                     opal_dss.print(&output, NULL, jdata->map, ORTE_JOB_MAP);
                     if (orte_xml_output) {

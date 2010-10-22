@@ -178,9 +178,7 @@ void init_before_spawn(orte_job_t *jdata)
         return;
     }
     
-    if (orte_debug_flag) {
-        opal_output(0, "Info: Spawned by a debugger");
-    }
+    opal_output_verbose(1, orte_debugger_base.output, "Info: Spawned by a debugger");
 
     /* tell the procs they are being debugged */
     env_name = mca_base_param_environ_variable("orte", 

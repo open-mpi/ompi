@@ -528,8 +528,12 @@ int orterun(int argc, char *argv[])
      * prior to orte_init when a debugger wants to launch
      * us
      */
-    MPIR_proctable = NULL;
-    MPIR_proctable_size = 0;
+    if (NULL == MPIR_proctable) {
+        rc = ORTE_SUCCESS;
+    }
+    if (0 == MPIR_proctable_size) {
+        rc = ORTE_SUCCESS;
+    }
     if (0 == MPIR_being_debugged) {
         rc = ORTE_SUCCESS;
     }
@@ -542,15 +546,21 @@ int orterun(int argc, char *argv[])
     if (1 == MPIR_partial_attach_ok) {
         rc = ORTE_SUCCESS;
     }
-    memset((char*)MPIR_executable_path, 0, MPIR_MAX_PATH_LENGTH);
-    memset((char*)MPIR_server_arguments, 0, MPIR_MAX_ARG_LENGTH);
+    if (NULL == MPIR_executable_path) {
+        rc = ORTE_SUCCESS;
+    }
+    if (NULL == MPIR_server_arguments) {
+        rc = ORTE_SUCCESS;
+    }
     if (0 == MPIR_forward_output) {
         rc = ORTE_SUCCESS;
     }
     if (0 == MPIR_forward_comm) {
         rc = ORTE_SUCCESS;
     }
-    memset((char*)MPIR_attach_fifo, 0, MPIR_MAX_PATH_LENGTH);
+    if (NULL == MPIR_attach_fifo) {
+        rc = ORTE_SUCCESS;
+    }
     foo = MPIR_Breakpoint;
 
     /* Check for some "global" command line params */
