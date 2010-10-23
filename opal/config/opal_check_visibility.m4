@@ -24,12 +24,14 @@
 AC_DEFUN([OPAL_CHECK_VISIBILITY],[
     AC_REQUIRE([AC_PROG_GREP])
 
-    # Check if the compiler has support for visibility, like some versions of gcc, icc Sun Studio cc.
+    msg="whether to enable symbol visibility"
+    # Check if the compiler has support for visibility, like some
+    # versions of gcc, icc Sun Studio cc.
     AC_ARG_ENABLE(visibility, 
         AC_HELP_STRING([--enable-visibility],
             [enable visibility feature of certain compilers/linkers (default: enabled)]))
     if test "$enable_visibility" = "no"; then
-        AC_MSG_CHECKING([whether to enable symbol visibility])
+        AC_MSG_CHECKING([$msg])
         AC_MSG_RESULT([no (disabled)]) 
         have_visibility=0
     else
@@ -81,19 +83,19 @@ AC_DEFUN([OPAL_CHECK_VISIBILITY],[
         if test "$opal_cv_cc_fvisibility" = "yes" ; then
             add=" -fvisibility=hidden"
             have_visibility=1
-            AC_MSG_CHECKING([whether to enable symbol visibility])
+            AC_MSG_CHECKING([$msg])
             AC_MSG_RESULT([yes (via$add)]) 
             AC_MSG_WARN([$add has been added to CFLAGS])
         elif test "$opal_cv_cc_xldscope" = "yes" ; then
             add=" -xldscope=hidden"
             have_visibility=1
-            AC_MSG_CHECKING([whether to enable symbol visibility])
+            AC_MSG_CHECKING([$msg])
             AC_MSG_RESULT([yes (via$add)]) 
             AC_MSG_WARN([$add has been added to CFLAGS])
         elif test "$enable_visibility" = "yes"; then
             AC_MSG_ERROR([Symbol visibility support requested but compiler does not seem to support it.  Aborting])
         else 
-            AC_MSG_CHECKING([whether enable symbol visibility])
+            AC_MSG_CHECKING([$msg])
             AC_MSG_RESULT([no (unsupported)]) 
             have_visibility=0
         fi
