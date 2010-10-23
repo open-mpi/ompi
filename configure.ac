@@ -1009,7 +1009,7 @@ AC_CACHE_SAVE
 # the visibility feature.
 ompi_show_title "Symbol visibility feature"
 
-OMPI_CHECK_VISIBILITY
+OPAL_CHECK_VISIBILITY
 
 
 
