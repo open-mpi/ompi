@@ -94,7 +94,7 @@ static int mca_pml_v_component_close(void)
     mca_pml_v.host_request_fns = ompi_request_functions;
     
     /* Do not load anything if no FT protocol is selected */
-    if(! mca_vprotocol_base_include_list[0]) {
+    if (NULL != mca_vprotocol_base_include_list && !mca_vprotocol_base_include_list[0]) {
         return mca_pml_v_component_parasite_close();
     }
         
