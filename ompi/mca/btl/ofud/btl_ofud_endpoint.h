@@ -24,7 +24,7 @@
 #include <infiniband/verbs.h>
 
 #include "opal/class/opal_list.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 
 #include "btl_ofud.h"
 #include "btl_ofud_frag.h"

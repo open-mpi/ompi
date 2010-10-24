@@ -23,7 +23,7 @@
 #endif  /* HAVE_UNIST_H */
 
 #include "opal/runtime/opal_cr.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/util/output.h"
 
 #include "opal/util/opal_environ.h"
@@ -4445,7 +4445,7 @@ static int ft_event_exchange_bookmarks(void)
     /* Wait for all bookmarks to arrive */
     START_TIMER(CRCP_TIMER_CKPT_EX_WAIT);
     while( total_recv_bookmarks > 0 ) {
-        opal_event_loop(OPAL_EVLOOP_NONBLOCK);
+        opal_event.loop(OPAL_EVLOOP_NONBLOCK);
     }
     total_recv_bookmarks = 0;
     END_TIMER(CRCP_TIMER_CKPT_EX_WAIT);
@@ -5240,7 +5240,7 @@ static int wait_quiesce_drain_ack(void)
             }
         }
 
-        opal_event_loop(OPAL_EVLOOP_NONBLOCK);
+        opal_event.loop(OPAL_EVLOOP_NONBLOCK);
     }
         
     /* Clear the ack queue if it isn't already clear (it should already be) */

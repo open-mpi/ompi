@@ -18,7 +18,7 @@
 
 #include "ompi_config.h"
 
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/common/portals/common_portals.h"

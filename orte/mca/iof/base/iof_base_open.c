@@ -111,17 +111,18 @@ OBJ_CLASS_INSTANCE(orte_iof_sink_t,
 
 static void orte_iof_base_read_event_construct(orte_iof_read_event_t* rev)
 {
-    memset(&rev->ev,0,sizeof(rev->ev));
+    OBJ_CONSTRUCT(&rev->ev, opal_event_t);
 }
 static void orte_iof_base_read_event_destruct(orte_iof_read_event_t* rev)
 {
-    opal_event_del(&rev->ev);
-    if (0 <= rev->ev.ev_fd) {
+    opal_event.del(&rev->ev);
+    OBJ_DESTRUCT(&rev->ev);
+    if (0 <= rev->fd) {
         OPAL_OUTPUT_VERBOSE((20, orte_iof_base.iof_output,
                              "%s iof: closing fd %d for process %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             rev->ev.ev_fd, ORTE_NAME_PRINT(&rev->name)));
-        close(rev->ev.ev_fd);
+                             rev->fd, ORTE_NAME_PRINT(&rev->name)));
+        close(rev->fd);
     }
 }
 OBJ_CLASS_INSTANCE(orte_iof_read_event_t,
@@ -134,11 +135,13 @@ static void orte_iof_base_write_event_construct(orte_iof_write_event_t* wev)
     wev->pending = false;
     wev->fd = -1;
     OBJ_CONSTRUCT(&wev->outputs, opal_list_t);
+    OBJ_CONSTRUCT(&wev->ev, opal_event_t);
 }
 static void orte_iof_base_write_event_destruct(orte_iof_write_event_t* wev)
 {
     if (wev->pending) {
-        opal_event_del(&wev->ev);
+        opal_event.del(&wev->ev);
+        OBJ_DESTRUCT(&wev->ev);
     }
     if (ORTE_PROC_IS_HNP) {
         int xmlfd = fileno(orte_xml_fp);

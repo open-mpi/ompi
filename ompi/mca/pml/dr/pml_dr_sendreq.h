@@ -35,7 +35,7 @@
 #include "pml_dr_hdr.h"
 #include "pml_dr_vfrag.h"
 #include "pml_dr_endpoint.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 
 BEGIN_C_DECLS
 

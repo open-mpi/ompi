@@ -91,8 +91,9 @@ int orte_plm_base_comm_start(void)
     }
 #endif
 
-    opal_event_set(&ready, ready_fd[0], OPAL_EV_READ, process_msg, NULL);
-    opal_event_add(&ready, 0);
+    OBJ_CONSTRUCT(&ready, opal_event_t);
+    opal_event.set(&ready, ready_fd[0], OPAL_EV_READ, process_msg, NULL);
+    opal_event.add(&ready, 0);
     
     if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                                       ORTE_RML_TAG_PLM,
@@ -114,7 +115,8 @@ int orte_plm_base_comm_stop(void)
     }
     
     OBJ_DESTRUCT(&recvs);
-    opal_event_del(&ready);
+    opal_event.del(&ready);
+    OBJ_DESTRUCT(&ready);
 #ifndef __WINDOWS__
     close(ready_fd[0]);
 #else
@@ -169,7 +171,7 @@ static void process_msg(int fd, short event, void *data)
 #endif
     
     /* reset the event for the next message */
-    opal_event_add(&ready, 0);
+    opal_event.add(&ready, 0);
     
     while (NULL != (item = opal_list_remove_first(&recvs))) {
         msgpkt = (orte_msg_packet_t*)item;

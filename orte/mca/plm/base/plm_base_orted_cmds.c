@@ -30,6 +30,8 @@
 
 #include "opal/dss/dss.h"
 #include "opal/util/opal_sos.h"
+#include "opal/mca/event/event.h"
+
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -75,9 +77,8 @@ static void send_callback(int status,
     if (num_reported == num_being_sent) {
         /* cancel the timer */
         if (NULL != ev) {
-            opal_evtimer_del(ev);
-            free(ev);
-            ev = NULL;
+            opal_event.evtimer_del(ev);
+            OBJ_RELEASE(ev);
         }
         
         /* mark as done */
@@ -190,8 +191,8 @@ int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command)
 
         /* cleanup the timer */
         if (NULL != ev) {
-            opal_event_del(ev);
-            ev = NULL;
+            opal_event.del(ev);
+            OBJ_RELEASE(ev);
         }
         
         /* be sure I get the command */
@@ -393,8 +394,8 @@ int orte_plm_base_orted_kill_local_procs(opal_pointer_array_t *procs)
         
         /* cleanup the timer */
         if (NULL != ev) {
-            opal_event_del(ev);
-            ev = NULL;
+            opal_event.del(ev);
+            OBJ_RELEASE(ev);
         }
         
         /* if all the sends didn't go, or we couldn't send to

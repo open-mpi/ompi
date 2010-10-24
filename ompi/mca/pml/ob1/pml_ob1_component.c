@@ -20,7 +20,7 @@
  */
 
 #include "ompi_config.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "mpi.h"
 #include "ompi/runtime/params.h"
 #include "ompi/mca/pml/pml.h"

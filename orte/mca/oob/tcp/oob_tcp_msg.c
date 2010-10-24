@@ -77,13 +77,13 @@ static void mca_oob_tcp_msg_destruct(mca_oob_tcp_msg_t* msg)
 
 int mca_oob_tcp_msg_wait(mca_oob_tcp_msg_t* msg, int* rc)
 {
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if ORTE_ENABLE_PROGRESS_THREADS
     OPAL_THREAD_LOCK(&msg->msg_lock);
     while(msg->msg_complete == false) {
         if(opal_event_progress_thread()) {
             int rc;
             OPAL_THREAD_UNLOCK(&msg->msg_lock);
-            rc = opal_event_loop(OPAL_EVLOOP_ONCE);
+            rc = opal_event.loop(OPAL_EVLOOP_ONCE);
             assert(rc >= 0);
             OPAL_THREAD_LOCK(&msg->msg_lock);
         } else {
@@ -112,7 +112,7 @@ int mca_oob_tcp_msg_wait(mca_oob_tcp_msg_t* msg, int* rc)
            library, as EVLOOP_ONCE may block for a short period of
            time. */
         opal_progress();
-        opal_event_loop(OPAL_EVLOOP_NONBLOCK);
+        opal_event.loop(OPAL_EVLOOP_NONBLOCK);
         OPAL_CR_TEST_CHECKPOINT_READY();
     }
 #endif
@@ -138,7 +138,7 @@ int mca_oob_tcp_msg_timedwait(mca_oob_tcp_msg_t* msg, int* rc, struct timespec* 
     uint32_t usecs = abstime->tv_nsec * 1000;
     gettimeofday(&tv,NULL);
 
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if ORTE_ENABLE_PROGRESS_THREADS
     OPAL_THREAD_LOCK(&msg->msg_lock);
     while(msg->msg_complete == false && 
           ((uint32_t)tv.tv_sec <= secs ||
@@ -146,7 +146,7 @@ int mca_oob_tcp_msg_timedwait(mca_oob_tcp_msg_t* msg, int* rc, struct timespec* 
         if(opal_event_progress_thread()) {
             int rc;
             OPAL_THREAD_UNLOCK(&msg->msg_lock);
-            rc = opal_event_loop(OPAL_EVLOOP_ONCE);
+            rc = opal_event.loop(OPAL_EVLOOP_ONCE);
             assert(rc >= 0);
             OPAL_THREAD_LOCK(&msg->msg_lock);
         } else {
@@ -162,7 +162,7 @@ int mca_oob_tcp_msg_timedwait(mca_oob_tcp_msg_t* msg, int* rc, struct timespec* 
 	   ((uint32_t)tv.tv_sec == secs && (uint32_t)tv.tv_usec < usecs))) {
         /* see comment in tcp_msg_wait, above */
         opal_progress();
-        opal_event_loop(OPAL_EVLOOP_NONBLOCK);
+        opal_event.loop(OPAL_EVLOOP_NONBLOCK);
         gettimeofday(&tv,NULL);
     }
 #endif

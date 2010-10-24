@@ -1,0 +1,55 @@
+#
+# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+# Copyright (c) 2004-2009 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# Copyright (c) 2004-2009 High Performance Computing Center Stuttgart, 
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Regents of the University of California.
+#                         All rights reserved.
+# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+
+SUBDIRS = libevent
+
+# This directory contains a small number of extra files that we wrap
+# the real libevent with.  Just to avoid extraneous libtool
+# convenience library aggregation, we don't bundle up the real
+# libevent.la here; let the top-level libopen-pal.la pull both the
+# convenience library in this directory and the convenience library in
+# libevent/.
+
+EXTRA_DIST = CMakeLists.txt
+
+noinst_LTLIBRARIES = libopen-pal-event.la
+
+# Similar to how opal/Makefile.am installs libltdl.h, we install the
+# libevent header files here (vs. down in the
+# opal/event/libevent/Makefile.am).  This way, we can control whether
+# the header files are installed or not.  NOTE: this list of header
+# files may need to be updated when new versions of libevent are
+# imported!
+headers = \
+        opal_event.h \
+        libevent/include/event2/event-config.h \
+        libevent/include/event2/event.h \
+        libevent/include/event2/event_compat.h \
+        libevent/include/event2/event_struct.h \
+        libevent/include/event2/keyvalq_struct.h \
+        libevent/include/event2/util.h
+libopen_pal_event_la_SOURCES = opal_event.c $(headers)
+
+# Conditionally install the header files
+
+opaldir = $(includedir)/openmpi/$(subdir)
+nobase_opal_HEADERS =
+if WANT_INSTALL_HEADERS
+nobase_opal_HEADERS += $(headers)
+endif

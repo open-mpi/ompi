@@ -29,7 +29,7 @@
 
 #include "ompi/constants.h"
 #include "opal/runtime/opal.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "btl_self.h"
 #include "btl_self_frag.h"

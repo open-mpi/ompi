@@ -23,7 +23,7 @@
 #include "orte_config.h"
 #include "opal/threads/condition.h"
 #include "opal/threads/mutex.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/oob/oob.h"
 #include "opal/dss/dss_types.h"

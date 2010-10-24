@@ -26,7 +26,7 @@
  * If we have progress threads, always default to using threads.
  * Otherwise, wait and see if some upper layer wants to use threads.
  */
-bool opal_uses_threads = (bool) OPAL_ENABLE_PROGRESS_THREADS;
+bool opal_uses_threads = false;
 bool opal_mutex_check_locks = false;
 
 

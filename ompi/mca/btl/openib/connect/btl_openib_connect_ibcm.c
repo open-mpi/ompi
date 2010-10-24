@@ -261,7 +261,7 @@
 
 #include "opal/util/output.h"
 #include "opal/util/error.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal_stdint.h"
 
 #include "orte/util/show_help.h"

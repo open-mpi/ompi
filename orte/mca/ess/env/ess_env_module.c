@@ -30,7 +30,7 @@
 #endif
 #include <stdlib.h>
 
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/runtime/opal.h"
 #include "opal/mca/paffinity/paffinity.h"
 

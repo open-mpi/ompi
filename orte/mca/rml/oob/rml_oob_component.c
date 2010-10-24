@@ -29,6 +29,7 @@
 #include "opal/util/opal_sos.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/backtrace/backtrace.h"
+#include "opal/mca/event/event.h"
 
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/rml/rml_types.h"
@@ -155,12 +156,13 @@ rml_oob_init(int* priority)
     /* Set default timeout for queued messages to be 1/2 second */
     orte_rml_oob_module.timeout.tv_sec = 0;
     orte_rml_oob_module.timeout.tv_usec = 500000;
-    orte_rml_oob_module.timer_event = (opal_event_t *) malloc(sizeof(opal_event_t));
+    orte_rml_oob_module.timer_event = OBJ_NEW(opal_event_t);
     if (NULL == orte_rml_oob_module.timer_event) {
         return NULL;
     }
-    opal_evtimer_set(orte_rml_oob_module.timer_event, rml_oob_queued_progress,
-                     NULL);
+    opal_event.evtimer_set(orte_rml_oob_module.timer_event,
+                           rml_oob_queued_progress,
+                           NULL);
 
     orte_rml_oob_module.active_oob = &mca_oob;
     orte_rml_oob_module.active_oob->oob_exception_callback = 
@@ -410,8 +412,8 @@ rml_oob_queued_progress(int fd, short event, void *arg)
                 opal_list_append(&orte_rml_oob_module.queued_routing_messages,
                                  &qmsg->super);
                 if (1 == opal_list_get_size(&orte_rml_oob_module.queued_routing_messages)) {
-                    opal_evtimer_add(orte_rml_oob_module.timer_event,
-                                     &orte_rml_oob_module.timeout);
+                    opal_event.evtimer_add(orte_rml_oob_module.timer_event,
+                                           &orte_rml_oob_module.timeout);
                 }
                 OPAL_THREAD_UNLOCK(&orte_rml_oob_module.queued_lock);
             } else {
@@ -524,8 +526,8 @@ rml_oob_recv_route_callback(int status,
             opal_list_append(&orte_rml_oob_module.queued_routing_messages,
                              &qmsg->super);
             if (1 == opal_list_get_size(&orte_rml_oob_module.queued_routing_messages)) {
-                opal_evtimer_add(orte_rml_oob_module.timer_event,
-                                 &orte_rml_oob_module.timeout);
+                opal_event.evtimer_add(orte_rml_oob_module.timer_event,
+                                       &orte_rml_oob_module.timeout);
             }
             OPAL_THREAD_UNLOCK(&orte_rml_oob_module.queued_lock);
         } else {

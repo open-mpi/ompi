@@ -518,7 +518,7 @@ void orte_info_do_config(bool want_all)
         asprintf(&threads, "%s (mpi: %s, progress: %s)", OPAL_HAVE_SOLARIS_THREADS ? "solaris" :
                  (OPAL_HAVE_POSIX_THREADS ? "posix" : "type unknown"),
                  OPAL_ENABLE_MULTI_THREADS ? "yes" : "no",
-                 OPAL_ENABLE_PROGRESS_THREADS ? "yes" : "no");
+                 ORTE_ENABLE_PROGRESS_THREADS ? "yes" : "no");
     } else {
         threads = strdup("no");
     }

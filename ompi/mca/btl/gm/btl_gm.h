@@ -28,7 +28,7 @@
 #include <gm.h>
 
 /* Open MPI includes */
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
@@ -97,7 +97,7 @@ struct mca_btl_gm_module_t {
     opal_list_t gm_pending; /**< list of pending send descriptors */
     opal_list_t gm_repost; /**< list of pending fragments */
 
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
     opal_thread_t gm_thread;
     bool gm_progress;
 #endif

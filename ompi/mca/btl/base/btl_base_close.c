@@ -22,7 +22,7 @@
 #include <stdio.h>
 
 #include "ompi/constants.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "ompi/mca/btl/base/base.h"
@@ -38,7 +38,7 @@ int mca_btl_base_close(void)
         return OMPI_SUCCESS;
     }
     /* disable event processing while cleaning up btls */
-    opal_event_disable();
+    opal_event.disable();
 
     /* Finalize all the btl components and free their list items */
 
@@ -70,7 +70,7 @@ int mca_btl_base_close(void)
         free(mca_btl_base_exclude);
 
     /* restore event processing */
-    opal_event_enable();
+    opal_event.enable();
 
     /* All done */
     return OMPI_SUCCESS;

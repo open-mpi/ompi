@@ -28,7 +28,7 @@
 #include <unistd.h>
 #endif
 
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "orte/util/show_help.h"
 #include "opal/util/os_path.h"
 #include "opal/util/output.h"

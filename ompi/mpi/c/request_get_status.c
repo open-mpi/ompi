@@ -44,7 +44,7 @@ static const char FUNC_NAME[] = "MPI_Request_get_status";
 int MPI_Request_get_status(MPI_Request request, int *flag,
                            MPI_Status *status) 
 {
-#if OPAL_ENABLE_PROGRESS_THREADS == 0
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
     int do_it_once = 0;
 #endif
 
@@ -64,7 +64,7 @@ int MPI_Request_get_status(MPI_Request request, int *flag,
         }
     }
 
-#if OPAL_ENABLE_PROGRESS_THREADS == 0
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
  recheck_request_status:
 #endif
     opal_atomic_mb();
@@ -88,7 +88,7 @@ int MPI_Request_get_status(MPI_Request request, int *flag,
         }
         return MPI_SUCCESS;
     }
-#if OPAL_ENABLE_PROGRESS_THREADS == 0
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
     if( 0 == do_it_once ) {
         /* If we run the opal_progress then check the status of the
            request before leaving. We will call the opal_progress only

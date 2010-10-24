@@ -62,7 +62,7 @@
 #endif  /* HAVE_UNISTD_H */
 #include "opal/class/opal_free_list.h"
 #include "ompi/class/ompi_free_list.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/threads/threads.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
@@ -137,7 +137,7 @@ typedef struct sm_fifo_t sm_fifo_t;
  * Shared Memory resource managment
  */
 
-#if OPAL_ENABLE_PROGRESS_THREADS == 1
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
 #define DATA (char)0
 #define DONE (char)1
 #endif
@@ -195,7 +195,7 @@ struct mca_btl_sm_component_t {
     int mem_node;
     int num_mem_nodes;
     
-#if OPAL_ENABLE_PROGRESS_THREADS == 1
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
     char sm_fifo_path[PATH_MAX];   /**< path to fifo used to signal this process */
     int  sm_fifo_fd;               /**< file descriptor corresponding to opened fifo */
     opal_thread_t sm_fifo_thread;
@@ -556,11 +556,11 @@ extern struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_dst(
  */
 int mca_btl_sm_ft_event(int state);
 
-#if OPAL_ENABLE_PROGRESS_THREADS == 1
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
 void mca_btl_sm_component_event_thread(opal_object_t*);
 #endif
 
-#if OPAL_ENABLE_PROGRESS_THREADS == 1
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
 #define MCA_BTL_SM_SIGNAL_PEER(peer) \
 { \
     unsigned char cmd = DATA; \

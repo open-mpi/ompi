@@ -135,12 +135,15 @@ m4_ifdef([project_orte],
 AC_SUBST(libopen_pal_so_version)
 
 #
-# Hardwire OPAL progress threads to be off
+# Hardwire all progress threads to be off
 #
-OPAL_ENABLE_PROGRESS_THREADS=0
 enable_progress_threads="no"
-AC_DEFINE_UNQUOTED([OPAL_ENABLE_PROGRESS_THREADS], [$OPAL_ENABLE_PROGRESS_THREADS],
-                   [Hardcode the OPAL progress thread to be off])
+ORTE_ENABLE_PROGRESS_THREADS=0
+AC_DEFINE_UNQUOTED([ORTE_ENABLE_PROGRESS_THREADS], [$ORTE_ENABLE_PROGRESS_THREADS],
+                   [Hardcode the ORTE progress thread to be off])
+OMPI_ENABLE_PROGRESS_THREADS=0
+AC_DEFINE_UNQUOTED([OMPI_ENABLE_PROGRESS_THREADS], [$OMPI_ENABLE_PROGRESS_THREADS],
+                   [Hardcode the OMPI progress thread to be off])
 
 
 # List header files to generate
@@ -564,7 +567,7 @@ AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h \
     stdarg.h sys/stat.h sys/statfs.h sys/statvfs.h sys/time.h sys/tree.h \
     sys/types.h sys/uio.h net/uio.h sys/utsname.h sys/vfs.h sys/wait.h syslog.h \
     time.h termios.h ulimit.h unistd.h util.h utmp.h malloc.h \
-    ifaddrs.h sys/sysctl.h crt_externs.h regex.h \
+    ifaddrs.h sys/sysctl.h crt_externs.h regex.h signal.h \
     ioLib.h sockLib.h hostLib.h shlwapi.h sys/synch.h limits.h db.h ndbm.h])
 
 # Needed to work around Darwin requiring sys/socket.h for
@@ -1018,17 +1021,6 @@ OPAL_CHECK_VISIBILITY
 ############################################################################
 
 ompi_show_title "Final top-level OMPI configuration"
-
-############################################################################
-# Libevent setup
-############################################################################
-
-ompi_show_subtitle "Libevent 3rd party event handler"
-CFLAGS_save="$CFLAGS"
-CFLAGS="$OMPI_CFLAGS_BEFORE_PICKY"
-OPAL_SETUP_LIBEVENT
-CFLAGS="$CFLAGS_save"
-
 
 ############################################################################
 # Libtool: part two

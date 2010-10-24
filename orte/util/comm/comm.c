@@ -25,6 +25,7 @@
 #include "opal/util/output.h"
 #include "opal/util/opal_sos.h"
 #include "opal/threads/tsd.h"
+#include "opal/mca/event/event.h"
 
 #include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -49,8 +50,7 @@ static int error_exit;
 static void quicktime_cb(int fd, short event, void *cbdata)
 {
     if (NULL != quicktime) {
-        free(quicktime);
-        quicktime = NULL;
+        OBJ_RELEASE(quicktime);
     }
     error_exit = ORTE_ERR_SILENT;
     /* declare it fired */
@@ -63,9 +63,8 @@ static void send_cbfunc(int status, orte_process_name_t* sender,
 {
     /* cancel the timer */
     if (NULL != quicktime) {
-        opal_evtimer_del(quicktime);
-        free(quicktime);
-        quicktime = NULL;
+        opal_event.evtimer_del(quicktime);
+        OBJ_RELEASE(quicktime);
     }
     /* declare the work done */
     timer_fired = true;
@@ -79,9 +78,8 @@ static void recv_info(int status, orte_process_name_t* sender,
     
     /* cancel the timer */
     if (NULL != quicktime) {
-        opal_evtimer_del(quicktime);
-        free(quicktime);
-        quicktime = NULL;
+        opal_event.evtimer_del(quicktime);
+        OBJ_RELEASE(quicktime);
     }
     /* xfer the answer */
     if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(&answer, buffer))) {
@@ -191,9 +189,8 @@ int orte_util_comm_report_event(orte_comm_event_t ev)
                                                            NULL))) {
             /* cancel the timer */
             if (NULL != quicktime) {
-                opal_evtimer_del(quicktime);
-                free(quicktime);
-                quicktime = NULL;
+                opal_event.evtimer_del(quicktime);
+                OBJ_RELEASE(quicktime);
             }
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&answer);
@@ -279,9 +276,8 @@ int orte_util_comm_query_job_info(const orte_process_name_t *hnp, orte_jobid_t j
                                                       NULL))) {
         /* cancel the timer */
         if (NULL != quicktime) {
-            opal_evtimer_del(quicktime);
-            free(quicktime);
-            quicktime = NULL;
+            opal_event.evtimer_del(quicktime);
+            OBJ_RELEASE(quicktime);
         }
         ORTE_ERROR_LOG(ret);
         OBJ_DESTRUCT(&answer);
@@ -386,9 +382,8 @@ int orte_util_comm_query_node_info(const orte_process_name_t *hnp, char *node,
                                                       NULL))) {
         /* cancel the timer */
         if (NULL != quicktime) {
-            opal_evtimer_del(quicktime);
-            free(quicktime);
-            quicktime = NULL;
+            opal_event.evtimer_del(quicktime);
+            OBJ_RELEASE(quicktime);
         }
         ORTE_ERROR_LOG(ret);
         OBJ_DESTRUCT(&answer);
@@ -498,9 +493,8 @@ int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t 
                                                       NULL))) {
         /* cancel the timer */
         if (NULL != quicktime) {
-            opal_evtimer_del(quicktime);
-            free(quicktime);
-            quicktime = NULL;
+            opal_event.evtimer_del(quicktime);
+            OBJ_RELEASE(quicktime);
         }
         ORTE_ERROR_LOG(ret);
         OBJ_DESTRUCT(&answer);

@@ -26,7 +26,7 @@
 #endif
 
 #include "opal/runtime/opal_progress.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/constants.h"
 #include "opal/mca/timer/base/base.h"
@@ -173,7 +173,7 @@ opal_progress(void)
     ++opal_progress_recursion_depth_counter;
 #endif
     if( opal_progress_event_flag != 0 ) {
-#if (OPAL_ENABLE_PROGRESS_THREADS == 0) && OPAL_HAVE_WORKING_EVENTOPS
+#if OPAL_HAVE_WORKING_EVENTOPS
 #if OPAL_PROGRESS_USE_TIMERS
 #if OPAL_TIMER_USEC_NATIVE
         opal_timer_t now = opal_timer_base_get_usec();
@@ -186,7 +186,7 @@ opal_progress(void)
                 event_progress_last_time = (num_event_users > 0) ? 
                     now - event_progress_delta : now;
 
-                events += opal_event_loop(opal_progress_event_flag);
+                events += opal_event.loop(opal_progress_event_flag);
         }
 
 #else /* OPAL_PROGRESS_USE_TIMERS */
@@ -195,11 +195,11 @@ opal_progress(void)
         if (OPAL_THREAD_ADD32(&event_progress_counter, -1) <= 0 ) {
                 event_progress_counter = 
                     (num_event_users > 0) ? 0 : event_progress_delta;
-                events += opal_event_loop(opal_progress_event_flag);
+                events += opal_event.loop(opal_progress_event_flag);
         }
 #endif /* OPAL_PROGRESS_USE_TIMERS */
 
-#endif /* OPAL_ENABLE_PROGRESS_THREADS == 0 && OPAL_HAVE_WORKING_EVENTOPS */
+#endif /* OPAL_HAVE_WORKING_EVENTOPS */
     }
 
     /* progress all registered callbacks */

@@ -38,7 +38,7 @@
 #include "opal/class/opal_pointer_array.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/util/output.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/threads/threads.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/mpool/mpool.h"
@@ -339,7 +339,7 @@ struct mca_btl_base_endpoint_t;
 typedef struct mca_btl_openib_device_t {
     opal_object_t super;
     struct ibv_device *ib_dev;  /* the ib device */
-#if OPAL_ENABLE_PROGRESS_THREADS == 1
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
     struct ibv_comp_channel *ib_channel; /* Channel event for the device */
     opal_thread_t thread;                /* Progress thread */
     volatile bool progress;              /* Progress status */
@@ -466,7 +466,7 @@ struct mca_btl_openib_reg_t {
 };
 typedef struct mca_btl_openib_reg_t mca_btl_openib_reg_t;
 
-#if OPAL_ENABLE_PROGRESS_THREADS == 1
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
 extern void* mca_btl_openib_progress_thread(opal_object_t*);
 #endif
 

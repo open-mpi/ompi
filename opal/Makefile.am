@@ -25,7 +25,6 @@ SUBDIRS = \
 	asm \
         datatype \
         etc \
-        event \
         util \
 	mca/base \
 	$(MCA_opal_FRAMEWORKS_SUBDIRS) \
@@ -39,7 +38,6 @@ DIST_SUBDIRS = \
 	asm \
         datatype \
         etc \
-	event \
 	util \
 	mca/base \
 	$(MCA_opal_FRAMEWORKS_SUBDIRS) \
@@ -53,7 +51,6 @@ libopen_pal_la_LIBADD = \
         $(LIBLTDL) \
         asm/libasm.la \
         datatype/libdatatype.la \
-        event/libevent.la \
         mca/base/libmca_base.la \
         util/libopalutil.la \
 	$(MCA_opal_FRAMEWORK_LIBS)

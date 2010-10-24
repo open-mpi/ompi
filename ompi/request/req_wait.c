@@ -82,7 +82,7 @@ int ompi_request_default_wait_any(
     int *index,
     ompi_status_public_t * status)
 {
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
     int c;
 #endif
     size_t i=0, num_requests_null_inactive=0;
@@ -91,9 +91,9 @@ int ompi_request_default_wait_any(
     ompi_request_t **rptr=NULL;
     ompi_request_t *request=NULL;
 
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
     /* poll for completion */
-    OPAL_THREAD_ADD32(&opal_progress_thread_count,1);
+    OPAL_THREAD_ADD32(&ompi_progress_thread_count,1);
     for (c = 0; completed < 0 && c < opal_progress_spin_count; c++) {
         rptr = requests;
         num_requests_null_inactive = 0;
@@ -109,17 +109,17 @@ int ompi_request_default_wait_any(
             }
             if (true == request->req_complete) {
                 completed = i;
-                OPAL_THREAD_ADD32(&opal_progress_thread_count,-1);
+                OPAL_THREAD_ADD32(&ompi_progress_thread_count,-1);
                 goto finished;
             }
         }
         if( num_requests_null_inactive == count ) {
-            OPAL_THREAD_ADD32(&opal_progress_thread_count,-1);
+            OPAL_THREAD_ADD32(&ompi_progress_thread_count,-1);
             goto finished;
         }
         opal_progress();
     }
-    OPAL_THREAD_ADD32(&opal_progress_thread_count,-1);
+    OPAL_THREAD_ADD32(&ompi_progress_thread_count,-1);
 #endif
 
     /* give up and sleep until completion */
@@ -158,9 +158,9 @@ int ompi_request_default_wait_any(
     ompi_request_waiting--;
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
 finished:
-#endif  /* OPAL_ENABLE_PROGRESS_THREADS */
+#endif  /* OMPI_ENABLE_PROGRESS_THREADS */
 
     if(num_requests_null_inactive == count) {
         *index = MPI_UNDEFINED;
@@ -361,7 +361,7 @@ int ompi_request_default_wait_some(
     int * indices,
     ompi_status_public_t * statuses)
 {
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
     int c;
 #endif
     size_t i, num_requests_null_inactive=0, num_requests_done=0;
@@ -374,9 +374,9 @@ int ompi_request_default_wait_some(
         indices[i] = 0;
     }
 
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
     /* poll for completion */
-    OPAL_THREAD_ADD32(&opal_progress_thread_count,1);
+    OPAL_THREAD_ADD32(&ompi_progress_thread_count,1);
     for (c = 0; c < opal_progress_spin_count; c++) {
         rptr = requests;
         num_requests_null_inactive = 0;
@@ -398,12 +398,12 @@ int ompi_request_default_wait_some(
         }
         if (num_requests_null_inactive == count ||
             num_requests_done > 0) {
-            OPAL_THREAD_ADD32(&opal_progress_thread_count,-1);
+            OPAL_THREAD_ADD32(&ompi_progress_thread_count,-1);
             goto finished;
         }
         opal_progress();
     }
-    OPAL_THREAD_ADD32(&opal_progress_thread_count,-1);
+    OPAL_THREAD_ADD32(&ompi_progress_thread_count,-1);
 #endif
 
     /*
@@ -439,9 +439,9 @@ int ompi_request_default_wait_some(
     ompi_request_waiting--;
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
 finished:
-#endif  /* OPAL_ENABLE_PROGRESS_THREADS */
+#endif  /* OMPI_ENABLE_PROGRESS_THREADS */
 
 #if OPAL_ENABLE_FT_CR == 1
     if( opal_cr_is_enabled) {

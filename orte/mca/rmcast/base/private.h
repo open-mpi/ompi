@@ -24,7 +24,7 @@
 #include <arpa/inet.h>
 #endif
 
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_ring_buffer.h"
 
@@ -150,10 +150,10 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(rmcast_send_log_t);
                             __FILE__, __LINE__));               \
         mev = OBJ_NEW(orte_mcast_msg_event_t);                  \
         mev->buf = (bf);                                        \
-        opal_evtimer_set(mev->ev, (cbfunc), mev);               \
+        opal_event.evtimer_set(mev->ev, (cbfunc), mev);         \
         now.tv_sec = 0;                                         \
         now.tv_usec = 0;                                        \
-        opal_evtimer_add(mev->ev, &now);                        \
+        opal_event.evtimer_add(mev->ev, &now);                  \
     } while(0);
 
 

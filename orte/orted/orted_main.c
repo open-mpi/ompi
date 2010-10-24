@@ -48,7 +48,7 @@
 #endif  /* HAVE_SYS_TIME_H */
 
 
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/mca/base/base.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_sos.h"
@@ -526,12 +526,12 @@ int orte_daemon(int argc, char *argv[])
     /* if we were given a pipe to monitor for singleton termination, set that up */
     if (orted_globals.singleton_died_pipe > 0) {
         /* register shutdown handler */
-        opal_event_set(&pipe_handler,
+        opal_event.set(&pipe_handler,
                        orted_globals.singleton_died_pipe,
                        OPAL_EV_READ|OPAL_EV_PERSIST,
                        shutdown_callback,
                        &orted_globals.singleton_died_pipe);
-        opal_event_add(&pipe_handler, NULL);
+        opal_event.add(&pipe_handler, NULL);
     }
 
     /* if we are not the HNP...the only time we will be an HNP
@@ -712,7 +712,7 @@ int orte_daemon(int argc, char *argv[])
     }
 
     /* wait to hear we are done */
-    opal_event_dispatch();
+    opal_event.dispatch();
 
     /* should never get here, but if we do... */
 DONE:
@@ -725,7 +725,7 @@ static void shutdown_callback(int fd, short flags, void *arg)
 {
     if (NULL != arg) {
         /* it's the singleton pipe...  remove that handler */
-        opal_event_del(&pipe_handler);
+        opal_event.del(&pipe_handler);
     }
     
     if (orte_debug_daemons_flag) {

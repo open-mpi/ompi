@@ -27,7 +27,7 @@
 
 #include "ompi_config.h"
 
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 
 #include "ompi/mca/common/sm/common_sm.h"
 #include "ompi/mca/mpool/mpool.h"

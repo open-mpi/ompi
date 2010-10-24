@@ -267,7 +267,7 @@ process:
         OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                              "%s write:output adding write event",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        opal_event_add(&channel->ev, 0);
+        opal_event.add(&channel->ev, 0);
         channel->pending = true;
     }
     
@@ -323,7 +323,7 @@ void orte_iof_base_write_handler(int fd, short event, void *cbdata)
         OBJ_RELEASE(output);
     }
 ABORT:
-    opal_event_del(&wev->ev);
+    opal_event.del(&wev->ev);
     wev->pending = false;
 
 DEPART:

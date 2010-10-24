@@ -64,7 +64,7 @@ int MPI_Register_datarep(char *datarep,
             return OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, rc, FUNC_NAME);
         }
         if (OMPI_SUCCESS != 
-            (rc = mca_io_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
+            (rc = mca_io_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
                                              OMPI_ENABLE_THREAD_MULTIPLE))) {
             return OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, rc, FUNC_NAME);
         }

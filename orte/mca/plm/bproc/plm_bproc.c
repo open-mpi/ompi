@@ -50,7 +50,7 @@
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_list.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
@@ -1387,7 +1387,7 @@ static void orte_plm_bproc_launch_cb(int fd, short event, void* args)
 int orte_plm_bproc_launch_threaded(orte_jobid_t jobid)
 {
     struct timeval tv = { 0, 0 };
-    struct opal_event event;
+    opal_event_t event;
     struct orte_plm_bproc_stack_t stack;
 
     OBJ_CONSTRUCT(&stack, orte_plm_bproc_stack_t);

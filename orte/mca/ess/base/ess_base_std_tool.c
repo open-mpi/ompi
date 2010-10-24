@@ -28,7 +28,7 @@
 #include <unistd.h>
 #endif
 
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/util/opal_sos.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"

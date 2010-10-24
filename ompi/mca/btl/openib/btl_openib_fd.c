@@ -34,7 +34,7 @@
 #include <errno.h>
 
 #include "opal/class/opal_list.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/util/output.h"
 #include "opal/util/fd.h"
 
@@ -174,11 +174,11 @@ static int service_pipe_cmd_add_fd(bool use_libevent, cmd_t *cmd)
     if (use_libevent) {
         /* Make an event for this fd */
         ri->ri_event_used = true;
-        memset(&ri->ri_event, 0, sizeof(ri->ri_event));
-        opal_event_set(&ri->ri_event, ri->ri_fd, 
+        OBJ_CONSTRUCT(&ri->ri_event, opal_event_t);
+        opal_event.set(&ri->ri_event, ri->ri_fd, 
                        ri->ri_flags | OPAL_EV_PERSIST, service_fd_callback,
                        ri);
-        opal_event_add(&ri->ri_event, 0);
+        opal_event.add(&ri->ri_event, 0);
     } else {
         /* Add the fd to the relevant fd local sets and update max_fd */
         if (OPAL_EV_READ & ri->ri_flags) {
@@ -237,7 +237,8 @@ static int service_pipe_cmd_remove_fd(cmd_t *cmd)
                event or an entry in the local fd sets. */
             if (ri->ri_event_used) {
                 /* Remove this event from libevent */
-                opal_event_del(&ri->ri_event);
+                opal_event.del(&ri->ri_event);
+                OBJ_DESTRUCT(&ri->ri_event);
             } else {
                 /* Remove this item from the fd_sets and recalculate
                    MAX_FD */
@@ -481,17 +482,17 @@ int ompi_btl_openib_fd_init(void)
 
             /* Create a libevent event that is used in the main thread
                to watch its pipe */
-            memset(&main_thread_event, 0, sizeof(main_thread_event));
-            opal_event_set(&main_thread_event, pipe_to_main_thread[0],
+            OBJ_CONSTRUCT(&main_thread_event, opal_event_t);
+            opal_event.set(&main_thread_event, pipe_to_main_thread[0],
                            OPAL_EV_READ | OPAL_EV_PERSIST, 
                            main_thread_event_callback, NULL);
-            opal_event_add(&main_thread_event, 0);
+            opal_event.add(&main_thread_event, 0);
             
             /* Start the service thread */
             if (0 != pthread_create(&thread, NULL, service_thread_start, 
                                     NULL)) {
                 int errno_save = errno;
-                opal_event_del(&main_thread_event);
+                opal_event.del(&main_thread_event);
                 close(pipe_to_service_thread[0]);
                 close(pipe_to_service_thread[1]);
                 close(pipe_to_main_thread[0]);
@@ -663,7 +664,7 @@ int ompi_btl_openib_fd_finalize(void)
             /* For the threaded version, send a command down the pipe */
             cmd_t cmd;
             OPAL_OUTPUT((-1, "shutting down openib fd"));
-            opal_event_del(&main_thread_event);
+            opal_event.del(&main_thread_event);
             memset(&cmd, 0, cmd_size);
             cmd.pc_cmd = CMD_TIME_TO_QUIT;
             opal_fd_write(pipe_to_service_thread[1], cmd_size, &cmd);
@@ -671,8 +672,9 @@ int ompi_btl_openib_fd_finalize(void)
             pthread_join(thread, NULL);
             opal_atomic_rmb();
             
-            opal_event_del(&main_thread_event);
-            
+            opal_event.del(&main_thread_event);
+            OBJ_DESTRUCT(&main_thread_event);
+
             close(pipe_to_service_thread[0]);
             close(pipe_to_service_thread[1]);
             close(pipe_to_main_thread[0]);

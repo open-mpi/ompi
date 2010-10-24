@@ -22,7 +22,7 @@
 #define OMPI_PML_DR_VFRAG_H_
 
 #include "ompi_config.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/types.h"
 #include "pml_dr.h"
 
@@ -99,18 +99,18 @@ do {                                                                       \
 
 #define MCA_PML_DR_VFRAG_WDOG_START(vfrag)                                 \
 do {                                                                       \
-    opal_event_add(&(vfrag)->vf_wdog_ev, &(vfrag)->vf_wdog_tv);            \
+    opal_event.add(&(vfrag)->vf_wdog_ev, &(vfrag)->vf_wdog_tv);            \
 } while(0)                                                                          
 
 #define MCA_PML_DR_VFRAG_WDOG_STOP(vfrag)                                  \
 do {                                                                       \
-   opal_event_del(&(vfrag)->vf_wdog_ev);                                   \
+   opal_event.del(&(vfrag)->vf_wdog_ev);                                   \
 } while(0)
 
 #define MCA_PML_DR_VFRAG_WDOG_RESET(vfrag)                                 \
 do {                                                                       \
-    opal_event_del(&(vfrag)->vf_wdog_ev);                                  \
-    opal_event_add(&(vfrag)->vf_wdog_ev, &vfrag->vf_wdog_tv);              \
+    opal_event.del(&(vfrag)->vf_wdog_ev);                                  \
+    opal_event.add(&(vfrag)->vf_wdog_ev, &vfrag->vf_wdog_tv);              \
 } while(0)                                                                          
 
 
@@ -120,12 +120,12 @@ do {                                                                       \
 
 #define MCA_PML_DR_VFRAG_ACK_START(vfrag)                                  \
 do {                                                                       \
-    opal_event_add(&(vfrag)->vf_ack_ev, &(vfrag)->vf_ack_tv);              \
+    opal_event.add(&(vfrag)->vf_ack_ev, &(vfrag)->vf_ack_tv);              \
 } while(0)                                                                          
 
 #define MCA_PML_DR_VFRAG_ACK_STOP(vfrag)                                   \
 do {                                                                       \
-   opal_event_del(&vfrag->vf_ack_ev);                                      \
+   opal_event.del(&vfrag->vf_ack_ev);                                      \
 } while(0)
 
 #define MCA_PML_DR_VFRAG_ACK_RESET(vfrag)                                  \

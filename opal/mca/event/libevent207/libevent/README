@@ -1,0 +1,135 @@
+0. BUILDING AND INSTALLATION (Briefly)
+
+$ ./configure
+$ make
+$ make verify   # (optional)
+$ sudo make install
+
+1. BUILDING AND INSTALLATION (In Depth)
+
+To build libevent, type
+
+$ ./configure && make
+
+     (If you got libevent from the git repository, you will
+      first need to run the included "autogen.sh" script in order to
+      generate the configure script.)
+
+Install as root via
+
+# make install
+
+You can run the regression tests by running
+
+$ make verify
+
+Before, reporting any problems, please run the regression tests.
+
+To enable the low-level tracing build the library as:
+
+   CFLAGS=-DUSE_DEBUG ./configure [...]
+
+Standard configure flags should work.  In particular, see:
+
+   --disable-shared          Only build static libraries
+   --prefix                  Install all files relative to this directory.
+
+
+The configure script also supports the following flags:
+
+   --enable-gcc-warnings     Enable extra compiler checking with GCC.
+   --disable-malloc-replacement
+                             Don't let applications replace our memory
+                             management functions
+   --disable-openssl         Disable support for OpenSSL encryption.
+   --disable-thread-support  Don't support multithreaded environments.
+
+2. USEFUL LINKS:
+
+For the latest released version of Libevent, see the official website at
+http://monkey.org/~provos/libevent/ .
+
+There's a pretty good work-in-progress manual up at
+   http://www.wangafu.net/~nickm/libevent-book/ .
+
+For the latest development versions of Libevent, access our Git repository
+via
+   "git clone git://levent.git.sourceforge.net/gitroot/levent/libevent"
+
+You can browse the git repository online at
+http://levent.git.sourceforge.net/git/gitweb-index.cgi .
+
+To report bugs, request features, or submit patches to Libevent,
+use the Sourceforge trackers at
+https://sourceforge.net/tracker/?group_id=50884 .
+
+There's also a libevent-users mailing list for talking about Libevent
+use and development: http://archives.seul.org/libevent/users/
+
+3. ACKNOWLEDGMENTS
+
+The following people have helped with suggestions, ideas, code or
+fixing bugs:
+
+  Alejo
+  Weston Andros Adamson
+  William Ahern
+  Avi Bab
+  Gilad Benjamini
+  Stas Bekman
+  Joachim Bauch
+  Ralph Castain
+  Shuo Chen
+  Ka-Hing Cheung
+  Andrew Danforth
+  Christopher Davis
+  Mike Davis
+  Mihai Draghicioiu
+  Shie Erlich
+  Alexander von Gernler
+  Artur Grabowski
+  Sebastian Hahn
+  Aaron Hopkins
+  Tani Hosokawa
+  Claudio Jeker
+  Valery Kyholodov
+  Marko Kreen
+  Scott Lamb
+  Christopher Layne
+  Adam Langley
+  Christopher Layne
+  Philip Lewis
+  Zhou Li
+  David Libenzi
+  Moshe Litvin
+  Hagne Mahre
+  Lubomir Marinov
+  Nick Mathewson
+  James Mansion
+  Nicholas Marriott
+  Andrey Matveev
+  Caitlin Mercer
+  Felix Nawothnig
+  Trond Norbye
+  Richard Nyberg
+  Jon Oberheide
+  Phil Oleson
+  Dave Pacheco
+  Tassilo von Parseval
+  Pierre Phaneuf
+  Ryan Phillips
+  Jon Poland
+  Bert JW Regeer
+  Hanna Schroeter
+  Ralf Schmitt
+  Mike Smellie
+  Kevin Springborn
+  Ferenc Szalai
+  Dug Song
+  Brodie Thiesfield
+  Zack Weinberg
+  Taral
+  propanbutan
+  mmadia
+
+If we have forgotten your name, please contact us.

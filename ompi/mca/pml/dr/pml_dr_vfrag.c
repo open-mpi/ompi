@@ -42,14 +42,17 @@ static void mca_pml_dr_vfrag_construct(mca_pml_dr_vfrag_t* vfrag)
     vfrag->vf_ack_tv = mca_pml_dr.ack_timer;
     vfrag->vf_wdog_cnt = 0;
     vfrag->vf_ack_cnt = 0;
-    opal_evtimer_set(&vfrag->vf_wdog_ev, mca_pml_dr_vfrag_wdog_timeout, (void*) vfrag);
-    opal_evtimer_set(&vfrag->vf_ack_ev, mca_pml_dr_vfrag_ack_timeout, (void*) vfrag);
+    OBJ_CONSTRUCT(&vfrag->vf_wdog_ev, opal_event_t);
+    opal_event.evtimer_set(&vfrag->vf_wdog_ev, mca_pml_dr_vfrag_wdog_timeout, (void*) vfrag);
+    OBJ_CONSTRUCT(&vfrag->vf_ack_ev, opal_event_t);
+    opal_event.evtimer_set(&vfrag->vf_ack_ev, mca_pml_dr_vfrag_ack_timeout, (void*) vfrag);
 }
 
 
 static void mca_pml_dr_vfrag_destruct(mca_pml_dr_vfrag_t* vfrag)
 {
-
+    OBJ_DESTRUCT(&vfrag->vf_wdog_ev);
+    OBJ_DESTRUCT(&vfrag->vf_ack_ev);
 }
 
 

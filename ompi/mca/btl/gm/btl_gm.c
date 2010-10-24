@@ -75,7 +75,7 @@ mca_btl_gm_module_t mca_btl_gm_module = {
         mca_btl_gm_free, 
         mca_btl_gm_prepare_src,
         mca_btl_gm_prepare_dst,
-#if OMPI_ENABLE_THREAD_MULTIPLE || OPAL_ENABLE_PROGRESS_THREADS
+#if OMPI_ENABLE_THREAD_MULTIPLE || OMPI_ENABLE_PROGRESS_THREADS
         mca_btl_gm_send,
         NULL, /* send immediate */
         mca_btl_gm_put,
@@ -939,14 +939,14 @@ int mca_btl_gm_get(
  * Cleanup/release module resources.
  */
 
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
 static void mca_btl_gm_alarm(void* arg) {}
 #endif
 
 int mca_btl_gm_finalize(struct mca_btl_base_module_t* btl)
 {
     mca_btl_gm_module_t* gm_btl = (mca_btl_gm_module_t*) btl; 
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
     gm_alarm_t alarm;
     OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
     gm_btl->gm_progress = false;

@@ -48,7 +48,7 @@ static void restart_stdin(int fd, short event, void *cbdata)
     if (NULL != mca_iof_hnp_component.stdinev &&
         !orte_job_term_ordered) {
         mca_iof_hnp_component.stdinev->active = true;
-        opal_event_add(&(mca_iof_hnp_component.stdinev->ev), 0);
+        opal_event.add(&(mca_iof_hnp_component.stdinev->ev), 0);
     }
 }
 
@@ -71,9 +71,9 @@ void orte_iof_hnp_stdin_cb(int fd, short event, void *cbdata)
     
     if (should_process) {
         mca_iof_hnp_component.stdinev->active = true;
-        opal_event_add(&(mca_iof_hnp_component.stdinev->ev), 0);
+        opal_event.add(&(mca_iof_hnp_component.stdinev->ev), 0);
     } else {
-        opal_event_del(&(mca_iof_hnp_component.stdinev->ev));
+        opal_event.del(&(mca_iof_hnp_component.stdinev->ev));
         mca_iof_hnp_component.stdinev->active = false;
     }
 }
@@ -109,7 +109,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
         
         /* non-blocking, retry */
         if (EAGAIN == errno || EINTR == errno) {
-            opal_event_add(&rev->ev, 0);
+            opal_event.add(&rev->ev, 0);
             OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
             return;
         } 
@@ -335,7 +335,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
     }
     
     /* re-add the event */
-    opal_event_add(&rev->ev, 0);
+    opal_event.add(&rev->ev, 0);
 
      OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
     return;

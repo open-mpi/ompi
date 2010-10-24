@@ -39,7 +39,7 @@
 #include <comutil.h>
 
 #include "opal/mca/installdirs/installdirs.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
@@ -485,7 +485,7 @@ GETMAP:
 
         
         /* Allow some progress to occur */
-        opal_event_loop(OPAL_EVLOOP_NONBLOCK);
+        opal_event.loop(OPAL_EVLOOP_NONBLOCK);
         
         launched++;
 

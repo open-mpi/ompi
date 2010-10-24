@@ -402,7 +402,7 @@ process:
     
     /* do we need to start the send event? */
     if (!ch->sends_in_progress) {
-        opal_event_add(&ch->send_ev, 0);
+        opal_event.add(&ch->send_ev, 0);
         ch->sends_in_progress = true;
     }
     OPAL_THREAD_UNLOCK(&ch->send_lock);
@@ -758,7 +758,7 @@ static int setup_channel(rmcast_base_channel_t *chan, uint8_t direction, mailbox
         chan->xmit = Mbox;
         chan->send_data = (uint8_t*)malloc(mca_rmcast_spread_component.max_msg_size);
         /* setup the event to xmit messages, but don't activate it */
-        opal_event_set(&chan->send_ev, chan->xmit, OPAL_EV_WRITE, xmit_data, chan);        
+        opal_event.set(&chan->send_ev, chan->xmit, OPAL_EV_WRITE, xmit_data, chan);        
     }
     
     if (0 > chan->recv && ORTE_RMCAST_RECV & direction) {
@@ -770,8 +770,8 @@ static int setup_channel(rmcast_base_channel_t *chan, uint8_t direction, mailbox
                              "%s setup:channel activating recv event on fd %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),(int)chan->recv));
         
-        opal_event_set(&chan->recv_ev, chan->recv, OPAL_EV_READ|OPAL_EV_PERSIST, recv_handler, chan);
-        opal_event_add(&chan->recv_ev, 0);
+        opal_event.set(&chan->recv_ev, chan->recv, OPAL_EV_READ|OPAL_EV_PERSIST, recv_handler, chan);
+        opal_event.add(&chan->recv_ev, 0);
     }
     
     return ORTE_SUCCESS;
@@ -866,7 +866,7 @@ static void xmit_data(int sd, short flags, void* send_req)
     }
     
     /* cleanup */
-    opal_event_del(&chan->send_ev);
+    opal_event.del(&chan->send_ev);
     chan->sends_in_progress = false;
     
     OPAL_THREAD_UNLOCK(&chan->send_lock);

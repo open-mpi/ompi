@@ -179,7 +179,7 @@ int mca_oob_tcp_recv_cancel(
 
     /* wait for any previously matched messages to be processed */
     OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if ORTE_ENABLE_PROGRESS_THREADS
     if(opal_event_progress_thread() == false) {
         while(mca_oob_tcp_component.tcp_match_count) {
             opal_condition_wait(

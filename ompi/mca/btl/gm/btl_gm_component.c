@@ -20,7 +20,7 @@
 
 #include "ompi_config.h"
 #include "ompi/constants.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/util/output.h"
 #include "ompi/mca/btl/btl.h"
 
@@ -43,7 +43,7 @@
 #include "ompi/runtime/mpiruntime.h"
 
 
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
 static void* mca_btl_gm_progress_thread( opal_object_t* arg );
 #endif
 static int gm_reg_mr(void *reg_data, void *base, size_t size,
@@ -234,7 +234,7 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
     OBJ_CONSTRUCT(&btl->gm_frag_user, ompi_free_list_t);
     OBJ_CONSTRUCT(&btl->gm_pending, opal_list_t);
     OBJ_CONSTRUCT(&btl->gm_repost, opal_list_t);
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
     OBJ_CONSTRUCT(&btl->gm_thread, opal_thread_t);
 #endif
 
@@ -341,7 +341,7 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
         return OMPI_ERROR;
     }
 
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
     /* start progress thread */
     btl->gm_progress = true;
     btl->gm_thread.t_run = mca_btl_gm_progress_thread;
@@ -649,7 +649,7 @@ int mca_btl_gm_component_progress()
 }
 
 
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
 static void* mca_btl_gm_progress_thread( opal_object_t* arg )
 {
     opal_thread_t* thread = (opal_thread_t*)arg;
@@ -664,9 +664,9 @@ static void* mca_btl_gm_progress_thread( opal_object_t* arg )
         gm_recv_event_t* event;
 
         /* dont process events while the app is in the library */
-        while(opal_progress_threads()) {
+        while(ompi_progress_threads()) {
             OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
-            while(opal_progress_threads())
+            while(ompi_progress_threads())
                sched_yield();
             usleep(100); /* give app a chance to re-enter library */
             OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);

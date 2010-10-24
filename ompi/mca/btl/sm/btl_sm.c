@@ -392,7 +392,7 @@ static struct mca_btl_base_endpoint_t *
 create_sm_endpoint(int local_proc, struct ompi_proc_t *proc)
 {
     struct mca_btl_base_endpoint_t *ep;
-#if OPAL_ENABLE_PROGRESS_THREADS == 1
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
     char path[PATH_MAX];
 #endif
 
@@ -403,7 +403,7 @@ create_sm_endpoint(int local_proc, struct ompi_proc_t *proc)
     ep->peer_smp_rank = local_proc + mca_btl_sm_component.num_smp_procs;
 
     OBJ_CONSTRUCT(&ep->pending_sends, opal_list_t);
-#if OPAL_ENABLE_PROGRESS_THREADS == 1
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
     sprintf(path, "%s"OPAL_PATH_SEP"sm_fifo.%lu",
             orte_process_info.job_session_dir,
             (unsigned long)proc->proc_name.vpid);

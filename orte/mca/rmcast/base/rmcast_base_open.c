@@ -341,12 +341,12 @@ int orte_rmcast_base_open(void)
 /****    CLASS INSTANCES    ****/
 static void mcast_event_constructor(orte_mcast_msg_event_t *ev)
 {
-    ev->ev = (opal_event_t*)malloc(sizeof(opal_event_t));
+    ev->ev = OBJ_NEW(opal_event_t);
 }
 static void mcast_event_destructor(orte_mcast_msg_event_t *ev)
 {
     if (NULL != ev->ev) { 
-        free(ev->ev); 
+        OBJ_RELEASE(ev->ev); 
     } 
 }
 OBJ_CLASS_INSTANCE(orte_mcast_msg_event_t, 
@@ -401,10 +401,12 @@ static void channel_construct(rmcast_base_channel_t *ptr)
     ptr->seq_num = 0;
     ptr->recv = -1;
     memset(&ptr->addr, 0, sizeof(ptr->addr));
+    OBJ_CONSTRUCT(&ptr->send_ev, opal_event_t);
     OBJ_CONSTRUCT(&ptr->send_lock, opal_mutex_t);
     ptr->sends_in_progress = false;
     OBJ_CONSTRUCT(&ptr->pending_sends, opal_list_t);
     ptr->send_data = NULL;
+    OBJ_CONSTRUCT(&ptr->recv_ev, opal_event_t);
     OBJ_CONSTRUCT(&ptr->cache, opal_ring_buffer_t);
     opal_ring_buffer_init(&ptr->cache, orte_rmcast_base.cache_size);
 }
@@ -414,13 +416,15 @@ static void channel_destruct(rmcast_base_channel_t *ptr)
     
     /* cleanup the recv side */
     if (0 < ptr->recv) {
-        opal_event_del(&ptr->recv_ev);
+        opal_event.del(&ptr->recv_ev);
+        OBJ_DESTRUCT(&ptr->recv_ev);
         CLOSE_THE_SOCKET(ptr->recv);
     }
     /* attempt to xmit any pending sends */
     /* cleanup the xmit side */
     if (0 < ptr->xmit) {
-        opal_event_del(&ptr->send_ev);
+        opal_event.del(&ptr->send_ev);
+        OBJ_DESTRUCT(&ptr->send_ev);
         CLOSE_THE_SOCKET(ptr->xmit);
     }
     OBJ_DESTRUCT(&ptr->send_lock);

@@ -176,7 +176,7 @@ static int adjust_cq(mca_btl_openib_device_t *device, const int cq)
 
     if(NULL == device->ib_cq[cq]) {
         device->ib_cq[cq] = create_cq_compat(device->ib_dev_context, cq_size,
-#if OPAL_ENABLE_PROGRESS_THREADS == 1
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
                 device, device->ib_channel,
 #else
                 NULL, NULL,
@@ -189,7 +189,7 @@ static int adjust_cq(mca_btl_openib_device_t *device, const int cq)
             return OMPI_ERROR;
         }
 
-#if OPAL_ENABLE_PROGRESS_THREADS == 1
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
         if(ibv_req_notify_cq(device->ib_cq[cq], 0)) {
             mca_btl_openib_show_init_error(__FILE__, __LINE__,
                                            "ibv_req_notify_cq",

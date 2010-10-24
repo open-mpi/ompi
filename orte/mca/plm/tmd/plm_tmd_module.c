@@ -54,7 +54,7 @@
 #include <tm.h>
 
 #include "opal/mca/installdirs/installdirs.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "orte/util/show_help.h"
@@ -430,7 +430,7 @@ static int plm_tmd_launch_job(orte_job_t *jdata)
         launched++;
 
         /* Allow some progress to occur */
-        opal_event_loop(OPAL_EVLOOP_NONBLOCK);
+        opal_event.loop(OPAL_EVLOOP_NONBLOCK);
     }
 
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
@@ -511,7 +511,7 @@ static int plm_tmd_launch_job(orte_job_t *jdata)
     
     /* if issued, cancel the failed-to-start timer */
     if (NULL != ev) {
-        opal_event_del(ev);
+        opal_event.del(ev);
     }
     
 launch_apps:
@@ -699,7 +699,7 @@ int plm_tmd_terminate_orteds(void)
             free(quicktime);
         }
         if (NULL != timerev) {
-            opal_event_del(timerev);
+            opal_event.del(timerev);
             free(timerev);
         }
     } else {
