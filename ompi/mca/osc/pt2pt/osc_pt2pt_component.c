@@ -41,7 +41,7 @@
 
 static int component_open(void);
 static void component_fragment_cb(ompi_osc_pt2pt_mpireq_t *mpireq);
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
 static void* component_thread_fn(opal_object_t *obj);
 #endif
 
@@ -205,7 +205,7 @@ ompi_osc_pt2pt_component_init(bool enable_progress_threads,
     OBJ_CONSTRUCT(&mca_osc_pt2pt_component.p2p_c_pending_requests,
                   opal_list_t);
 
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
     OBJ_CONSTRUCT(&mca_osc_pt2pt_component.p2p_c_thread, opal_thread_t);
     mca_osc_pt2pt_component.p2p_c_thread_run = false;
 #endif
@@ -218,7 +218,7 @@ int
 ompi_osc_pt2pt_component_finalize(void)
 {
     size_t num_modules;
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
     void* ret;
 #endif
 
@@ -227,7 +227,7 @@ ompi_osc_pt2pt_component_finalize(void)
         opal_output(ompi_osc_base_output,
                     "WARNING: There were %d Windows created but not freed.",
                     (int) num_modules); 
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
         mca_osc_pt2pt_component.p2p_c_thread_run = false;
         opal_condition_broadcast(&ompi_request_cond);
         opal_thread_join(&mca_osc_pt2pt_component.p2p_c_thread, &ret);
@@ -367,7 +367,7 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
                                      module);
     ret = opal_hash_table_get_size(&mca_osc_pt2pt_component.p2p_c_modules);
     if (ret == 1) {
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
         mca_osc_pt2pt_component.p2p_c_thread_run = true;
         mca_osc_pt2pt_component.p2p_c_thread.t_run = component_thread_fn;
         mca_osc_pt2pt_component.p2p_c_thread.t_arg = NULL;
@@ -706,7 +706,7 @@ ompi_osc_pt2pt_component_progress(void)
     opal_list_item_t *item;
     int ret, done = 0;
 
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
     OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.p2p_c_lock);
 #else
     ret = OPAL_THREAD_TRYLOCK(&mca_osc_pt2pt_component.p2p_c_lock);
@@ -720,7 +720,7 @@ ompi_osc_pt2pt_component_progress(void)
             (ompi_osc_pt2pt_mpireq_t*) item;
 
         /* BWB - FIX ME */
-#if OPAL_ENABLE_PROGRESS_THREADS == 0
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
         if (buffer->request->req_state == OMPI_REQUEST_INACTIVE ||
             buffer->request->req_complete) {
             ret = ompi_request_test(&buffer->request,
@@ -750,7 +750,7 @@ ompi_osc_pt2pt_component_progress(void)
     return done;
 }
 
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
 static void*
 component_thread_fn(opal_object_t *obj)
 {

@@ -7,7 +7,7 @@
 #include <unistd.h>
 
 #include "opal/dss/dss.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/util/output.h"
 
 #include "orte/util/proc_info.h"

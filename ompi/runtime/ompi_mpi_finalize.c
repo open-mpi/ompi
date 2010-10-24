@@ -38,7 +38,7 @@
 #include <netdb.h>
 #endif
 
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/util/output.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/maffinity/base/base.h"
@@ -143,7 +143,7 @@ int ompi_mpi_finalize(void)
 
     ompi_mpi_finalized = true;
 
-#if OPAL_ENABLE_PROGRESS_THREADS == 0
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
     opal_progress_set_event_flag(OPAL_EVLOOP_ONELOOP);
 #endif
 

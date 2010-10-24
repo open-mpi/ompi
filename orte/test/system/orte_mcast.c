@@ -7,7 +7,7 @@
 #include <unistd.h>
 
 #include "opal/dss/dss.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/util/output.h"
 
 #include "orte/util/proc_info.h"
@@ -124,7 +124,7 @@ int main(int argc, char* argv[])
         }
         orte_grpcomm.barrier();  /* ensure the public recv is ready */
     }
-    opal_event_dispatch();
+    opal_event.dispatch();
     
 blast:    
     orte_finalize();

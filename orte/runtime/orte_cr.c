@@ -44,7 +44,7 @@
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
 #include "opal/util/basename.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 #include "opal/runtime/opal_cr.h"

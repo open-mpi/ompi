@@ -46,7 +46,7 @@
 #include "opal/util/stacktrace.h"
 #include "opal/util/show_help.h"
 #include "opal/runtime/opal.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/runtime/runtime.h"
@@ -531,7 +531,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
     if (OMPI_SUCCESS != 
-        (ret = ompi_op_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
+        (ret = ompi_op_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
                                            OMPI_ENABLE_THREAD_MULTIPLE))) {
         error = "ompi_op_base_find_available() failed";
         goto error;
@@ -585,14 +585,14 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* Select which MPI components to use */
 
     if (OMPI_SUCCESS != 
-        (ret = mca_mpool_base_init(OPAL_ENABLE_PROGRESS_THREADS,
+        (ret = mca_mpool_base_init(OMPI_ENABLE_PROGRESS_THREADS,
                                    OMPI_ENABLE_THREAD_MULTIPLE))) {
         error = "mca_mpool_base_init() failed";
         goto error;
     }
 
     if (OMPI_SUCCESS != 
-        (ret = mca_pml_base_select(OPAL_ENABLE_PROGRESS_THREADS,
+        (ret = mca_pml_base_select(OMPI_ENABLE_PROGRESS_THREADS,
                                    OMPI_ENABLE_THREAD_MULTIPLE))) {
         error = "mca_pml_base_select() failed";
         goto error;
@@ -606,14 +606,14 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     if (OMPI_SUCCESS != 
-        (ret = mca_coll_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
+        (ret = mca_coll_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
                                             OMPI_ENABLE_THREAD_MULTIPLE))) {
         error = "mca_coll_base_find_available() failed";
         goto error;
     }
 
     if (OMPI_SUCCESS != 
-        (ret = ompi_osc_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
+        (ret = ompi_osc_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
                                            OMPI_ENABLE_THREAD_MULTIPLE))) {
         error = "ompi_osc_base_find_available() failed";
         goto error;
@@ -727,7 +727,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* If thread support was enabled, then setup OPAL to allow for
        them. */
-    if ((OPAL_ENABLE_PROGRESS_THREADS == 1) ||
+    if ((OMPI_ENABLE_PROGRESS_THREADS == 1) ||
         (*provided != MPI_THREAD_SINGLE)) {
         opal_set_using_threads(true);
     }
@@ -803,7 +803,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         gettimeofday(&ompistart, NULL);
     }
 
-#if OPAL_ENABLE_PROGRESS_THREADS == 0
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
     /* Start setting up the event engine for MPI operations.  Don't
        block in the event library, so that communications don't take
        forever between procs in the dynamic code.  This will increase

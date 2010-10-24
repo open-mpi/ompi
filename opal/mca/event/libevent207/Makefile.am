@@ -1,0 +1,36 @@
+#
+# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+
+AM_CPPFLAGS = -I$(srcdir)/libevent -I$(srcdir)/libevent/include
+
+SUBDIRS = libevent
+
+sources = \
+        libevent207.h \
+        libevent207_component.c \
+        libevent207_module.c
+
+# Make the output library in this directory, and name it either
+# mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
+# (for static builds).
+
+if MCA_BUILD_opal_event_libevent207_DSO
+component_noinst =
+component_install = mca_event_libevent207.la
+else
+component_noinst = libmca_event_libevent207.la
+component_install =
+endif
+
+# We only ever build this component statically
+
+noinst_LTLIBRARIES = $(component_noinst)
+libmca_event_libevent207_la_SOURCES =$(sources)
+libmca_event_libevent207_la_LDFLAGS = -module -avoid-version
+libmca_event_libevent207_la_LIBADD = $(builddir)/libevent/libevent.la

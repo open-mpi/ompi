@@ -18,7 +18,7 @@
  */
 
 #include "ompi_config.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "mpi.h"
 #include "ompi/mca/bml/bml.h"
 #include "ompi/mca/btl/base/base.h"

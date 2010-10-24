@@ -91,7 +91,7 @@ int MPI_Graph_create(MPI_Comm old_comm, int nnodes, int *index,
             return OMPI_ERRHANDLER_INVOKE(old_comm, err, FUNC_NAME);
         }
         if (OMPI_SUCCESS != 
-            (err = mca_topo_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
+            (err = mca_topo_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
                                                 OMPI_ENABLE_THREAD_MULTIPLE))) {
             return OMPI_ERRHANDLER_INVOKE(old_comm, err, FUNC_NAME);
         }

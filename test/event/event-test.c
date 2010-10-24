@@ -34,7 +34,7 @@ fifo_read(int fd, short event, void *arg)
 {
 	char buf[255];
 	int len;
-	struct opal_event *ev = arg;
+	opal_event_t *ev = arg;
 #ifdef WIN32
 	DWORD dwBytesRead;
 #endif
@@ -74,7 +74,7 @@ fifo_read(int fd, short event, void *arg)
 int
 main (int argc, char **argv)
 {
-	struct opal_event evfifo;
+	opal_event_t evfifo;
 #ifdef WIN32
 	HANDLE socket;
 	// Open a file. 

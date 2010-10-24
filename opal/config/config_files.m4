@@ -17,9 +17,6 @@ AC_DEFUN([OPAL_CONFIG_FILES],[
         opal/include/Makefile
         opal/asm/Makefile
         opal/datatype/Makefile
-        opal/event/Makefile
-        opal/event/compat/Makefile
-        opal/event/compat/sys/Makefile
         opal/util/Makefile
         opal/util/keyval/Makefile
         opal/mca/base/Makefile

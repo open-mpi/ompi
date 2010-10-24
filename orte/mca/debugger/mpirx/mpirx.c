@@ -37,6 +37,7 @@
 #include "opal/class/opal_pointer_array.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/opal_getcwd.h"
+#include "opal/mca/event/event.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
@@ -76,6 +77,8 @@ static bool fifo_active=false;
 
 static int init(void)
 {
+    OBJ_CONSTRUCT(&attach, opal_event_t);
+
     return ORTE_SUCCESS;
 }
 
@@ -86,9 +89,10 @@ static int init(void)
 void finalize(void)
 {
     if (fifo_active) {
-        opal_event_del(&attach);
+        opal_event.del(&attach);
         close(attach_fd);
     }
+    OBJ_DESTRUCT(&attach);
 
     if (MPIR_proctable) {
         free(MPIR_proctable);
@@ -131,7 +135,6 @@ void init_before_spawn(orte_job_t *jdata)
             ORTE_TIMER_EVENT(orte_debugger_mpirx_check_rate, 0, attach_debugger);
         } else {
             /* create the attachment FIFO and put it into MPIR, setup readevent */
-            memset(&attach,0,sizeof(attach));
             /* create a FIFO name in the session dir */
             attach_fifo = opal_os_path(false, orte_process_info.job_session_dir, "debugger_attach_fifo", NULL);
             if ((mkfifo(attach_fifo, FILE_MODE) < 0) && errno != EEXIST) {
@@ -153,8 +156,8 @@ void init_before_spawn(orte_job_t *jdata)
                                 attach_fifo);
             free(attach_fifo);
             fifo_active = true;
-            opal_event_set(&attach, attach_fd, OPAL_EV_READ, attach_debugger, NULL);
-            opal_event_add(&attach, 0);
+            opal_event.set(&attach, attach_fd, OPAL_EV_READ, attach_debugger, NULL);
+            opal_event.add(&attach, 0);
         }
         return;
     }
@@ -325,10 +328,10 @@ static void attach_debugger(int fd, short event, void *arg)
         check = (opal_event_t*)arg;
         now.tv_sec = orte_debugger_mpirx_check_rate;
         now.tv_usec = 0;
-        opal_evtimer_add(check, &now);
+        opal_event.evtimer_add(check, &now);
     } else {
         fifo_active = true;
-        opal_event_add(&attach, 0);
+        opal_event.add(&attach, 0);
     }
 
     /* notify the debugger that all is ready */

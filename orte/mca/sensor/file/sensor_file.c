@@ -35,6 +35,7 @@
 
 #include "opal_stdint.h"
 #include "opal/util/output.h"
+#include "opal/mca/event/event.h"
 
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -114,9 +115,8 @@ static void finalize(void)
     opal_list_item_t *item;
     
     if (NULL != sample_ev) {
-        opal_event_del(sample_ev);
-        free(sample_ev);
-        sample_ev = NULL;
+        opal_event.del(sample_ev);
+        OBJ_RELEASE(sample_ev);
     }
     while (NULL != (item = opal_list_remove_first(&jobs))) {
         OBJ_RELEASE(item);
@@ -230,11 +230,11 @@ static void start(orte_jobid_t jobid)
         /* startup a timer to wake us up periodically
          * for a data sample
          */
-        sample_ev = (opal_event_t*)malloc(sizeof(opal_event_t));
-        opal_evtimer_set(sample_ev, sample, sample_ev);
+        sample_ev = OBJ_NEW(opal_event_t);
+        opal_event.evtimer_set(sample_ev, sample, sample_ev);
         sample_time.tv_sec = mca_sensor_file_component.sample_rate;
         sample_time.tv_usec = 0;
-        opal_evtimer_add(sample_ev, &sample_time);
+        opal_event.evtimer_add(sample_ev, &sample_time);
     }
     return;
 }
@@ -261,9 +261,8 @@ static void stop(orte_jobid_t jobid)
     }
     /* if no jobs remain, stop the sampling */
     if (opal_list_is_empty(&jobs) && NULL != sample_ev) {
-        opal_event_del(sample_ev);
-        free(sample_ev);
-        sample_ev = NULL;
+        opal_event.del(sample_ev);
+        OBJ_RELEASE(sample_ev);
     }
     return;
 }
@@ -347,5 +346,5 @@ static void sample(int fd, short event, void *arg)
     }
         
     /* restart the timer */
-        opal_evtimer_add(sample_ev, &sample_time);
+        opal_event.evtimer_add(sample_ev, &sample_time);
 }

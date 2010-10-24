@@ -25,6 +25,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/mca/pstat/pstat.h"
+#include "opal/mca/event/event.h"
 
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
@@ -137,14 +138,12 @@ static int init(void)
 static void finalize(void)
 {
     if (NULL != send_ev) {
-        opal_event_del(send_ev);
-        free(send_ev);
-        send_ev = NULL;
+        opal_event.del(send_ev);
+        OBJ_RELEASE(send_ev);
     }
     if (NULL != check_ev) {
-        opal_event_del(check_ev);
-        free(check_ev);
-        check_ev = NULL;
+        opal_event.del(check_ev);
+        OBJ_RELEASE(check_ev);
     }
     
 #if ORTE_ENABLE_MULTICAST
@@ -169,22 +168,22 @@ static void start(orte_jobid_t jobid)
     
     /* setup the send */
     time = mca_sensor_heartbeat_component.rate * 1000; /* convert to microsecs */
-    send_ev = (opal_event_t*)malloc(sizeof(opal_event_t));
-    opal_evtimer_set(send_ev, send_heartbeat, send_ev);
+    send_ev = OBJ_NEW(opal_event_t);
+    opal_event.evtimer_set(send_ev, send_heartbeat, send_ev);
     send_time.tv_sec = time / 1000000;
     send_time.tv_usec = time % 1000000;
-    opal_evtimer_add(send_ev, &send_time);
+    opal_event.evtimer_add(send_ev, &send_time);
     
     /* define the timeout */
     timeout = 2.0 * (double)time;
     
     /* setup the check */
     time = mca_sensor_heartbeat_component.check * 1000; /* convert to microsecs */
-    check_ev = (opal_event_t*)malloc(sizeof(opal_event_t));
-    opal_evtimer_set(check_ev, check_heartbeat, check_ev);
+    check_ev = OBJ_NEW(opal_event_t);
+    opal_event.evtimer_set(check_ev, check_heartbeat, check_ev);
     check_time.tv_sec = time / 1000000;
     check_time.tv_usec = time % 1000000;
-    opal_evtimer_add(check_ev, &check_time);
+    opal_event.evtimer_add(check_ev, &check_time);
 }
 
 
@@ -196,14 +195,12 @@ static void stop(orte_jobid_t jobid)
     }
     
     if (NULL != send_ev) {
-        opal_event_del(send_ev);
-        free(send_ev);
-        send_ev = NULL;
+        opal_event.del(send_ev);
+        OBJ_RELEASE(send_ev);
     }
     if (NULL != check_ev) {
-        opal_event_del(check_ev);
-        free(check_ev);
-        check_ev = NULL;
+        opal_event.del(check_ev);
+        OBJ_RELEASE(check_ev);
     }
     return;
 }
@@ -246,7 +243,7 @@ static void send_heartbeat(int fd, short event, void *arg)
 #endif
     
     /* reset the timer */
-    opal_evtimer_add(tmp, &send_time);
+    opal_event.evtimer_add(tmp, &send_time);
 }
 
 /* this function automatically gets periodically called
@@ -300,7 +297,7 @@ static void check_heartbeat(int fd, short dummy, void *arg)
     }
 
     /* reset the timer */
-    opal_evtimer_add(tmp, &check_time);
+    opal_event.evtimer_add(tmp, &check_time);
 }
 
 #if ORTE_ENABLE_MULTICAST

@@ -47,7 +47,7 @@ const char *ibv_get_sysfs_path(void);
 #include <malloc.h>
 #include <stddef.h>
 
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/align.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
@@ -822,7 +822,7 @@ static void device_construct(mca_btl_openib_device_t *device)
     device->ib_dev_context = NULL;
     device->ib_pd = NULL;
     device->mpool = NULL;
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
     device->ib_channel = NULL;
 #endif
     device->btls = 0;
@@ -856,7 +856,7 @@ static void device_destruct(mca_btl_openib_device_t *device)
     int i;
 
 #if OPAL_HAVE_THREADS
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
     if(device->progress) {
         device->progress = false;
         if (pthread_cancel(device->thread.t_handle)) {
@@ -984,7 +984,7 @@ static int prepare_device_for_use(mca_btl_openib_device_t *device)
             return OMPI_ERROR;
         } 
     }
-#if OPAL_ENABLE_PROGRESS_THREADS == 1
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
     /* Prepare data for thread, but not starting it */
     OBJ_CONSTRUCT(&device->thread, opal_thread_t);
     device->thread.t_run = mca_btl_openib_progress_thread;
@@ -1750,7 +1750,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
         device->use_eager_rdma = values.use_eager_rdma;
     }
     /* Eager RDMA is not currently supported with progress threads */
-    if (device->use_eager_rdma && OPAL_ENABLE_PROGRESS_THREADS) {
+    if (device->use_eager_rdma && OMPI_ENABLE_PROGRESS_THREADS) {
         device->use_eager_rdma = 0;
         orte_show_help("help-mpi-btl-openib.txt", 
                        "eager RDMA and progress threads", true);
@@ -1769,7 +1769,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
          goto error;
     }
 
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
     device->ib_channel = ibv_create_comp_channel(device->ib_dev_context);
     if (NULL == device->ib_channel) {
         BTL_ERROR(("error creating channel for %s errno says %s",
@@ -2145,7 +2145,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
     }
 
 error:
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
     if (device->ib_channel) {
         ibv_destroy_comp_channel(device->ib_channel);
     }
@@ -3420,7 +3420,7 @@ error:
     return count;
 }
 
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
 void* mca_btl_openib_progress_thread(opal_object_t* arg)
 {
     opal_thread_t* thread = (opal_thread_t*)arg;
@@ -3435,8 +3435,8 @@ void* mca_btl_openib_progress_thread(opal_object_t* arg)
     opal_output(-1, "WARNING: the openib btl progress thread code *does not yet work*.  Your run is likely to hang, crash, break the kitchen sink, and/or eat your cat.  You have been warned.");
 
     while (device->progress) {
-        while(opal_progress_threads()) {
-            while(opal_progress_threads())
+        while(ompi_progress_threads()) {
+            while(ompi_progress_threads())
                 sched_yield();
             usleep(100); /* give app a chance to re-enter library */
         }

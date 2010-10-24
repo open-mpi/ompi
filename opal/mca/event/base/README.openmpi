@@ -1,0 +1,81 @@
+Last updated: 15 Sep 2010
+
+How to update the Libevent embedded in OPAL
+-------------------------------------------
+
+OPAL requires some modification of the Libevent build system in order
+to properly operate. In addition, OPAL accesses the Libevent functions
+through a set of wrappers - this is done for three reasons:
+
+1. Hide the Libevent functions. Some applications directly call
+   libevent APIs and expect to operate against a locally installed
+   library. Since the library used by OPAL may differ in version, and
+   to avoid linker errors for multiply-defined symbols, it is
+   important that the libevent functions included in OPAL be "hidden"
+   from external view. Thus, OPAL's internal copy of libevent is built
+   with visibility set to "hidden" and all access from the OPAL code
+   base is done through "opal_xxx" wrapper API calls.
+
+   In those cases where the system is built against a compiler that
+   doesn't support visibility, conflicts can (unfortunately)
+   arise. However, since only a very few applications would be
+   affected, and since most compilers support visibility, we do not
+   worry about this possibility.
+
+2. Correct some deficiencies in the distributed Libevent configuration
+   tests.  Specifically, the distributed tests for kqueue and epoll
+   support provide erroneous results on some platforms (as determined
+   by our empirical testing). OPAL therefore provides enhanced tests
+   to correctly assess those environments.
+   
+3. Enable greater flexibility in configuring Libevent for the specific
+   environment. In particular, OPAL has no need of Libevent's dns,
+   http, and rpc events, so configuration options to remove that code
+   from Libevent have been added.
+
+The procedure for updating Libevent has been greatly simplified
+compared to prior versions in the OPAL code base by replacing
+file-by-file edits with configuration logic. Thus, updating the
+included libevent code can generally be accomplished by:
+
+1. svn delete the contents of the opal/event/libevent directory
+   --> We may want to do this via SVN 3rd party update.  Not clear yet.
+
+2. unpack the new libevent code tarball in the opal/event/libevent directory
+   --> We may want to do this via SVN 3rd party update.  Not clear yet.
+
+3. restore the symbolic link:
+   cd libevent/m4
+   ln -s ../../opal_libevent_configure.m4 opal_libevent_configure.m4
+
+4. edit libevent/configure.in to add two lines:
+   (a) just before AC_PROG_LIBTOOL near the beginning of the file:
+       OPAL_CONFIGURE_LIBEVENT_OPTIONS
+   (b) just before AC_CONFIG_FILES at the very end:
+       OPAL_CONFIGURE_LIBEVENT_MODES
+
+5. Merge the contents of opal_libevent_makefile.am with
+   libevent/Makefile.am.  Depending upon what the Libevent developers
+   did for the update, this may well need to be done by hand.
+
+6. Edit libevent/configure.in and add the following after the
+   AM_INIT_AUTOMAKE line:
+
+# If Automake supports silent rules, enable them.
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+
+   This isn't critical, but it makes the compiler output MUCH
+   prettier (and consistent with OMPI).
+
+7. Edit two files to add a new evloop option that OMPI uses
+   and doesn't exist in libevent:
+
+   libevent/event.c: change event_base_loop in two places by
+   adding EVLOOP_ONELOOP to the conditional:
+
+       if (!base->event_count_active && (flags & (EVLOOP_ONCE|EVLOOP_ONELOOP)))
+       .....
+       } else if (flags & (EVLOOP_NONBLOCK|EVLOOP_ONELOOP))
+
+   libevent/include/event2/event.h:
+       #define EVLOOP_ONELOOP 0x05

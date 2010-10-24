@@ -28,7 +28,7 @@
 #include "orte_config.h"
 
 #include "opal/mca/mca.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/util/opal_sos.h"
 
 #include "orte/mca/sstore/sstore.h"
@@ -91,7 +91,7 @@ typedef uint8_t orte_snapc_full_cmd_flag_t;
         int    unique_pipe_id;
 
         /* An opal event handle for the read pipe */
-        struct opal_event comm_pipe_r_eh;
+        opal_event_t comm_pipe_r_eh;
         bool is_eh_active;
 
         /** Process pid */

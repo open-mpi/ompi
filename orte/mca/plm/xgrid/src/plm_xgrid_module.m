@@ -37,7 +37,7 @@
 
 #import "orte/util/show_help.h"
 #import "orte/util/session_dir.h"
-#import "opal/event/event.h"
+#import "opal/mca/event/event.h"
 #import "orte/runtime/orte_wait.h"
 #import "orte/mca/plm/plm.h"
 #import "orte/mca/plm/base/plm_private.h"

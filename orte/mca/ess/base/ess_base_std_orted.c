@@ -30,7 +30,7 @@
 #include <unistd.h>
 #endif
 
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "orte/util/show_help.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
@@ -74,12 +74,12 @@
 /* local globals */
 static bool plm_in_use=false;
 static bool signals_set=false;
-static struct opal_event term_handler;
-static struct opal_event int_handler;
-static struct opal_event epipe_handler;
+static opal_event_t term_handler;
+static opal_event_t int_handler;
+static opal_event_t epipe_handler;
 #ifndef __WINDOWS__
-static struct opal_event sigusr1_handler;
-static struct opal_event sigusr2_handler;
+static opal_event_t sigusr1_handler;
+static opal_event_t sigusr2_handler;
 #endif  /* __WINDOWS__ */
 char *log_path = NULL;
 static void shutdown_signal(int fd, short flags, void *arg);
@@ -98,26 +98,31 @@ int orte_ess_base_orted_setup(char **hosts)
 
 #ifndef __WINDOWS__
     /* setup callback for SIGPIPE */
-    opal_signal_set(&epipe_handler, SIGPIPE,
-                    epipe_signal_callback, &epipe_handler);
-    opal_signal_add(&epipe_handler, NULL);
+    OBJ_CONSTRUCT(&epipe_handler, opal_event_t);
+    opal_event.signal_set(&epipe_handler, SIGPIPE,
+                          epipe_signal_callback, &epipe_handler);
+    opal_event.signal_add(&epipe_handler, NULL);
     /* Set signal handlers to catch kill signals so we can properly clean up
      * after ourselves. 
      */
-    opal_event_set(&term_handler, SIGTERM, OPAL_EV_SIGNAL,
+    OBJ_CONSTRUCT(&term_handler, opal_event_t);
+    opal_event.set(&term_handler, SIGTERM, OPAL_EV_SIGNAL,
                    shutdown_signal, NULL);
-    opal_event_add(&term_handler, NULL);
-    opal_event_set(&int_handler, SIGINT, OPAL_EV_SIGNAL,
+    opal_event.add(&term_handler, NULL);
+    OBJ_CONSTRUCT(&int_handler, opal_event_t);
+    opal_event.set(&int_handler, SIGINT, OPAL_EV_SIGNAL,
                    shutdown_signal, NULL);
-    opal_event_add(&int_handler, NULL);
+    opal_event.add(&int_handler, NULL);
 
     /** setup callbacks for signals we should ignore */
-    opal_signal_set(&sigusr1_handler, SIGUSR1,
-                    signal_callback, &sigusr1_handler);
-    opal_signal_add(&sigusr1_handler, NULL);
-    opal_signal_set(&sigusr2_handler, SIGUSR2,
-                    signal_callback, &sigusr2_handler);
-    opal_signal_add(&sigusr2_handler, NULL);
+    OBJ_CONSTRUCT(&sigusr1_handler, opal_event_t);
+    opal_event.signal_set(&sigusr1_handler, SIGUSR1,
+                          signal_callback, &sigusr1_handler);
+    opal_event.signal_add(&sigusr1_handler, NULL);
+    OBJ_CONSTRUCT(&sigusr2_handler, opal_event_t);
+    opal_event.signal_set(&sigusr2_handler, SIGUSR2,
+                          signal_callback, &sigusr2_handler);
+    opal_event.signal_add(&sigusr2_handler, NULL);
 #endif  /* __WINDOWS__ */
 
     signals_set = true;
@@ -531,12 +536,17 @@ int orte_ess_base_orted_finalize(void)
 
     if (signals_set) {
         /* Release all local signal handlers */
-        opal_event_del(&epipe_handler);
-        opal_event_del(&term_handler);
-        opal_event_del(&int_handler);
+        opal_event.del(&epipe_handler);
+        OBJ_DESTRUCT(&epipe_handler);
+        opal_event.del(&term_handler);
+        OBJ_DESTRUCT(&term_handler);
+        opal_event.del(&int_handler);
+        OBJ_DESTRUCT(&int_handler);
 #ifndef __WINDOWS__
-        opal_signal_del(&sigusr1_handler);
-        opal_signal_del(&sigusr2_handler);
+        opal_event.signal_del(&sigusr1_handler);
+        OBJ_DESTRUCT(&sigusr1_handler);
+        opal_event.signal_del(&sigusr2_handler);
+        OBJ_DESTRUCT(&sigusr2_handler);
 #endif  /* __WINDOWS__ */
     }
 

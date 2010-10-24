@@ -35,6 +35,7 @@
 #include "opal/util/output.h"
 #include "opal/util/opal_sos.h"
 #include "opal/dss/dss.h"
+#include "opal/mca/event/event.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"

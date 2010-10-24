@@ -63,7 +63,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_sos.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/basename.h"
@@ -90,7 +90,7 @@
 #include "orte/mca/plm/base/plm_private.h"
 #include "orte/mca/plm/rshd/plm_rshd.h"
 
-#if OPAL_HAVE_POSIX_THREADS && OPAL_THREADS_HAVE_DIFFERENT_PIDS && OPAL_ENABLE_PROGRESS_THREADS
+#if OPAL_HAVE_POSIX_THREADS && OPAL_THREADS_HAVE_DIFFERENT_PIDS && ORTE_ENABLE_PROGRESS_THREADS
 static int orte_plm_rshd_launch_threaded(orte_job_t *jdata);
 #endif
 
@@ -99,7 +99,7 @@ static void ssh_child(char *cmd, char **argv) __opal_attribute_noreturn__;
 orte_plm_base_module_t orte_plm_rshd_module = {
     orte_plm_rshd_init,
     orte_plm_base_set_hnp_name,
-#if OPAL_HAVE_POSIX_THREADS && OPAL_THREADS_HAVE_DIFFERENT_PIDS && OPAL_ENABLE_PROGRESS_THREADS
+#if OPAL_HAVE_POSIX_THREADS && OPAL_THREADS_HAVE_DIFFERENT_PIDS && ORTE_ENABLE_PROGRESS_THREADS
     orte_plm_rshd_launch_threaded,
 #else
     orte_plm_rshd_launch,
@@ -425,7 +425,7 @@ int orte_plm_rshd_finalize(void)
  * Handle threading issues.
  */
 
-#if OPAL_HAVE_POSIX_THREADS && OPAL_THREADS_HAVE_DIFFERENT_PIDS && OPAL_ENABLE_PROGRESS_THREADS
+#if OPAL_HAVE_POSIX_THREADS && OPAL_THREADS_HAVE_DIFFERENT_PIDS && ORTE_ENABLE_PROGRESS_THREADS
 
 struct orte_plm_rshd_stack_t {
     opal_condition_t cond;
@@ -469,7 +469,7 @@ static void orte_plm_rshd_launch_cb(int fd, short event, void* args)
 static int orte_plm_rshd_launch_threaded(orte_jobid_t jobid)
 {
     struct timeval tv = { 0, 0 };
-    struct opal_event event;
+    opal_event_t event;
     struct orte_plm_rshd_stack_t stack;
 
     OBJ_CONSTRUCT(&stack, orte_plm_rshd_stack_t);

@@ -41,7 +41,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "opal/runtime/opal_cr.h"
 #include "opal/util/output.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/util/opal_environ.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"

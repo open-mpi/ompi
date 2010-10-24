@@ -26,7 +26,7 @@
 #define MCA_BTL_IB_ENDPOINT_H
 
 #include "opal/class/opal_list.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/util/output.h"
 #include "ompi/mca/btl/btl.h"
 #include "btl_openib.h"

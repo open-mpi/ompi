@@ -54,7 +54,7 @@
 #include "opal/util/output.h"
 #include "opal/util/opal_sos.h"
 #include "opal/class/opal_list.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 #include "opal/sys/atomic.h"
@@ -75,7 +75,7 @@
 static void message_event_destructor(orte_message_event_t *ev)
 {
     if (NULL != ev->ev) {
-        free(ev->ev);
+        OBJ_RELEASE(ev->ev);
     }
     if (NULL != ev->buffer) {
         OBJ_RELEASE(ev->buffer);
@@ -89,7 +89,7 @@ static void message_event_destructor(orte_message_event_t *ev)
 
 static void message_event_constructor(orte_message_event_t *ev)
 {
-    ev->ev = (opal_event_t*)malloc(sizeof(opal_event_t));
+    ev->ev = OBJ_NEW(opal_event_t);
     ev->buffer = OBJ_NEW(opal_buffer_t);
 #if OPAL_ENABLE_DEBUG
     ev->file = NULL;
@@ -104,13 +104,13 @@ OBJ_CLASS_INSTANCE(orte_message_event_t,
 static void notify_event_destructor(orte_notify_event_t *ev) 
 { 
     if (NULL != ev->ev) { 
-        free(ev->ev); 
+        OBJ_RELEASE(ev->ev); 
     } 
 } 
  
 static void notify_event_constructor(orte_notify_event_t *ev) 
 { 
-    ev->ev = (opal_event_t*)malloc(sizeof(opal_event_t)); 
+    ev->ev = OBJ_NEW(opal_event_t); 
 } 
 OBJ_CLASS_INSTANCE(orte_notify_event_t, 
                    opal_object_t, 
@@ -223,7 +223,7 @@ OBJ_CLASS_INSTANCE(orte_trigger_event_t,
  * Local Variables
  *
  ********************************************************************/
-static struct opal_event handler;
+static opal_event_t handler;
 
 
 /*********************************************************************
@@ -255,13 +255,13 @@ static void internal_waitpid_callback(int fd, short event, void *arg);
 void
 orte_wait_disable(void)
 {
-    opal_event_del(&handler);
+    opal_event.del(&handler);
 }
 
 void
 orte_wait_enable(void)
 {
-    opal_event_add(&handler, NULL);
+    opal_event.add(&handler, NULL);
 }
 
 int
@@ -271,11 +271,12 @@ orte_wait_init(void)
     OBJ_CONSTRUCT(&pending_pids, opal_list_t);
     OBJ_CONSTRUCT(&registered_cb, opal_list_t);
 
-    opal_event_set(&handler, SIGCHLD, OPAL_EV_SIGNAL|OPAL_EV_PERSIST,
+    OBJ_CONSTRUCT(&handler, opal_event_t);
+    opal_event.set(&handler, SIGCHLD, OPAL_EV_SIGNAL|OPAL_EV_PERSIST,
                    orte_wait_signal_callback,
                    &handler);
 
-    opal_event_add(&handler, NULL);
+    opal_event.add(&handler, NULL);
     return ORTE_SUCCESS;
 }
 
@@ -286,7 +287,8 @@ orte_wait_finalize(void)
     opal_list_item_t *item;
 
     OPAL_THREAD_LOCK(&mutex);
-    opal_event_del(&handler);
+    opal_event.del(&handler);
+    OBJ_DESTRUCT(&handler);
 
     /* clear out the lists */
     while (NULL != (item = opal_list_remove_first(&pending_pids))) {
@@ -379,10 +381,10 @@ orte_waitpid(pid_t wpid, int *status, int options)
             /* if we have pthreads and progress threads and we are the
                event thread, opal_condition_timedwait won't progress
                anything, so we need to do it. */
-#if OPAL_HAVE_POSIX_THREADS && OPAL_ENABLE_PROGRESS_THREADS
+#if OPAL_HAVE_POSIX_THREADS && ORTE_ENABLE_PROGRESS_THREADS
             if (opal_using_threads()) {
                 opal_mutex_unlock(&mutex);
-                opal_event_loop(OPAL_EVLOOP_NONBLOCK);
+                opal_event.loop(OPAL_EVLOOP_NONBLOCK);
                 opal_mutex_lock(&mutex);
             }
 #endif            
@@ -406,8 +408,8 @@ orte_waitpid(pid_t wpid, int *status, int options)
                from under it. Yes, it's spinning.  No, we won't spin
                for long. */
 
-            if (!OPAL_HAVE_THREAD_SUPPORT || opal_event_progress_thread()) {
-                opal_event_loop(OPAL_EVLOOP_NONBLOCK);
+            if (!OPAL_HAVE_THREAD_SUPPORT) {
+                opal_event.loop(OPAL_EVLOOP_NONBLOCK);
             }
         }
 
@@ -464,7 +466,7 @@ orte_wait_cb_cancel(pid_t wpid)
 void
 orte_wait_signal_callback(int fd, short event, void *arg)
 {
-    struct opal_event *signal = (struct opal_event*) arg;
+    opal_event_t *signal = (opal_event_t*) arg;
 
     if (SIGCHLD != OPAL_EVENT_SIGNAL(signal)) return;
 
@@ -513,16 +515,16 @@ int orte_wait_event(opal_event_t **event, orte_trigger_event_t *trig,
     trig->name = strdup(trigger_name);
     
     /* create the event */
-    *event = (opal_event_t*)malloc(sizeof(opal_event_t));
+    *event = OBJ_NEW(opal_event_t);
     
     /* pass back the write end of the pipe */
     trig->channel = p[1];
     
     /* define the event to fire when someone writes to the pipe */
-    opal_event_set(*event, p[0], OPAL_EV_READ, cbfunc, trig);
+    opal_event.set(*event, p[0], OPAL_EV_READ, cbfunc, trig);
     
     /* Add it to the active events, without a timeout */
-    opal_event_add(*event, NULL);
+    opal_event.add(*event, NULL);
 
     /* all done */
     return ORTE_SUCCESS;
@@ -723,7 +725,7 @@ internal_waitpid(pid_t pid, int *status, int options)
 #if  OPAL_THREADS_HAVE_DIFFERENT_PIDS
     waitpid_callback_data_t data;
     struct timeval tv;
-    struct opal_event ev;
+    opal_event_t ev;
 
     if (opal_event_progress_thread()) {
         /* I already am the progress thread.  no need to event me */
@@ -1120,7 +1122,7 @@ int orte_wait_event(opal_event_t **event, orte_trigger_event_t *trig,
     trig->name = strdup(trigger_name);
     
     /* create the event */
-    *event = (opal_event_t*)malloc(sizeof(opal_event_t));
+    *event = OBJ_NEW(opal_event_t);
     
     /* setup the trigger and its associated lock */
     OBJ_CONSTRUCT(trig, orte_trigger_event_t);
@@ -1129,10 +1131,10 @@ int orte_wait_event(opal_event_t **event, orte_trigger_event_t *trig,
     trig->channel = p[1];
     
     /* define the event to fire when someone writes to the pipe */
-    opal_event_set(*event, p[0], OPAL_EV_READ, cbfunc, NULL);
+    opal_event.set(*event, p[0], OPAL_EV_READ, cbfunc, NULL);
     
 	/* Add it to the active events, without a timeout */
-	opal_event_add(*event, NULL);
+	opal_event.add(*event, NULL);
 
     /* all done */
     return ORTE_SUCCESS;

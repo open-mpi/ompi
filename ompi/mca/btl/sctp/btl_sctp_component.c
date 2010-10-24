@@ -45,7 +45,7 @@
 #endif
 
 #include "ompi/constants.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/util/if.h"
 #include "opal/util/argv.h"
 #include "ompi/mca/btl/btl.h"
@@ -138,6 +138,7 @@ typedef struct mca_btl_sctp_event_t mca_btl_sctp_event_t;
 static void mca_btl_sctp_event_construct(mca_btl_sctp_event_t* event)
 {
     OPAL_THREAD_LOCK(&mca_btl_sctp_component.sctp_lock);
+    OBJ_CONSTRUCT(&event->event, opal_event_t);
     opal_list_append(&mca_btl_sctp_component.sctp_events, &event->item);
     OPAL_THREAD_UNLOCK(&mca_btl_sctp_component.sctp_lock);
 }
@@ -146,6 +147,7 @@ static void mca_btl_sctp_event_destruct(mca_btl_sctp_event_t* event)
 {
     OPAL_THREAD_LOCK(&mca_btl_sctp_component.sctp_lock);
     opal_list_remove_item(&mca_btl_sctp_component.sctp_events, &event->item);
+    OBJ_DESTRUCT(&event->event);
     OPAL_THREAD_UNLOCK(&mca_btl_sctp_component.sctp_lock);
 }
 
@@ -287,7 +289,7 @@ int mca_btl_sctp_component_close(void)
     mca_btl_sctp_recv_handler_freebuf();
  
     if (mca_btl_sctp_component.sctp_listen_sd >= 0) {
-        opal_event_del(&mca_btl_sctp_component.sctp_recv_event);
+        opal_event.del(&mca_btl_sctp_component.sctp_recv_event);
         CLOSE_THE_SOCKET(mca_btl_sctp_component.sctp_listen_sd);
         mca_btl_sctp_component.sctp_listen_sd = -1;
     }
@@ -299,7 +301,7 @@ int mca_btl_sctp_component_close(void)
 	item = next) {
 	mca_btl_sctp_event_t* event = (mca_btl_sctp_event_t*)item;
 	next = opal_list_get_next(item);
-	opal_event_del(&event->event);
+	opal_event.del(&event->event);
 	OBJ_RELEASE(event);
     }
     OPAL_THREAD_UNLOCK(&mca_btl_sctp_component.sctp_lock);
@@ -600,13 +602,13 @@ static int mca_btl_sctp_component_create_listen(void)
 
 
         /* register listen port */
-        opal_event_set(
+        opal_event.set(
                 &mca_btl_sctp_component.sctp_recv_event,
                 mca_btl_sctp_component.sctp_listen_sd, 
                 OPAL_EV_READ|OPAL_EV_PERSIST, 
                 mca_btl_sctp_component_recv_handler, 
                 0);
-        opal_event_add(&mca_btl_sctp_component.sctp_recv_event,0);
+        opal_event.add(&mca_btl_sctp_component.sctp_recv_event,0);
 
         return OMPI_SUCCESS;
     }
@@ -650,13 +652,13 @@ static int mca_btl_sctp_component_register_listen(void)
 
 
     /* register listen port */
-    opal_event_set(
+    opal_event.set(
             &mca_btl_sctp_component.sctp_recv_event,
             mca_btl_sctp_component.sctp_listen_sd, 
             OPAL_EV_READ|OPAL_EV_PERSIST, 
             mca_btl_sctp_recv_handler, 
             0);
-    opal_event_add(&mca_btl_sctp_component.sctp_recv_event,0);
+    opal_event.add(&mca_btl_sctp_component.sctp_recv_event,0);
     return OMPI_SUCCESS;
 }
 
@@ -891,8 +893,8 @@ void mca_btl_sctp_component_accept(void)
             /* wait for receipt of peers process identifier to complete this connection */
 
             event = OBJ_NEW(mca_btl_sctp_event_t);
-            opal_event_set(&event->event, sd, OPAL_EV_READ, mca_btl_sctp_component_recv_handler, event);
-            opal_event_add(&event->event, 0);
+            opal_event.set(&event->event, sd, OPAL_EV_READ, mca_btl_sctp_component_recv_handler, event);
+            opal_event.add(&event->event, 0);
         }
     }
 
@@ -911,8 +913,8 @@ void mca_btl_sctp_component_accept(void)
         /* wait for receipt of peers process identifier to complete this connection */
 
         event = OBJ_NEW(mca_btl_sctp_event_t);
-        opal_event_set(&event->event, sd, OPAL_EV_READ, mca_btl_sctp_recv_handler, event);
-        opal_event_add(&event->event, 0);
+        opal_event.set(&event->event, sd, OPAL_EV_READ, mca_btl_sctp_recv_handler, event);
+        opal_event.add(&event->event, 0);
     }
 }
 

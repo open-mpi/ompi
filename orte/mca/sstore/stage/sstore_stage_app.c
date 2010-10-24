@@ -29,7 +29,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 
 #include "orte/constants.h"
 #include "orte/util/show_help.h"

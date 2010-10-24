@@ -242,7 +242,7 @@ static void update_registry(bit_set changes, struct bproc_node_info_t *ni)
     	opal_output(0, "smr_bproc: internal error %d != %d\n", idx, cnt);
         free(node_name);
     	OBJ_RELEASE(value);
-    	opal_event_del(&mca_smr_bproc_component.notify_event);
+    	opal_event.del(&mca_smr_bproc_component.notify_event);
     	return;
     }
 
@@ -253,7 +253,7 @@ static void update_registry(bit_set changes, struct bproc_node_info_t *ni)
     	ORTE_ERROR_LOG(ret);
     	OBJ_RELEASE(value);
     	free(node_name);
-    	opal_event_del(&mca_smr_bproc_component.notify_event);
+    	opal_event.del(&mca_smr_bproc_component.notify_event);
     	return;
     }
 
@@ -262,7 +262,7 @@ static void update_registry(bit_set changes, struct bproc_node_info_t *ni)
 
     if ((ret = orte_gpr.put(1, &value)) != ORTE_SUCCESS) {
     	ORTE_ERROR_LOG(ret);
-    	opal_event_del(&mca_smr_bproc_component.notify_event);
+    	opal_event.del(&mca_smr_bproc_component.notify_event);
     }
     OBJ_RELEASE(value);
 
@@ -299,7 +299,7 @@ static void update_registry(bit_set changes, struct bproc_node_info_t *ni)
                     }
                     if ((rc = orte_gpr.increment_value(value)) != ORTE_SUCCESS) {
                         ORTE_ERROR_LOG(rc);
-                        opal_event_del(&mca_smr_bproc_component.notify_event);
+                        opal_event.del(&mca_smr_bproc_component.notify_event);
                     }
                     OBJ_RELEASE(value);
                 }
@@ -357,7 +357,7 @@ static void orte_smr_bproc_notify_handler(int fd, short flags, void *user)
 
     if (bproc_nodelist_(&ns, fd) < 0) {
     	/* bproc_nodelist_ error */
-    	opal_event_del(&mca_smr_bproc_component.notify_event);
+    	opal_event.del(&mca_smr_bproc_component.notify_event);
     	return;
     }
 
@@ -438,14 +438,14 @@ int orte_smr_bproc_begin_monitoring(orte_job_map_t *map, orte_gpr_trigger_cb_fn_
     
     memset(&mca_smr_bproc_component.notify_event, 0, sizeof(opal_event_t));
     
-    opal_event_set(
+    opal_event.set(
                    &mca_smr_bproc_component.notify_event,
                    mca_smr_bproc_component.notify_fd,
                    OPAL_EV_READ|OPAL_EV_PERSIST,
                    orte_smr_bproc_notify_handler,
                    0);
     
-    opal_event_add(&mca_smr_bproc_component.notify_event, 0);
+    opal_event.add(&mca_smr_bproc_component.notify_event, 0);
     
     return ORTE_SUCCESS;
 }
@@ -455,6 +455,6 @@ int orte_smr_bproc_begin_monitoring(orte_job_map_t *map, orte_gpr_trigger_cb_fn_
 
 int orte_smr_bproc_finalize(void)
 {
-    opal_event_del(&mca_smr_bproc_component.notify_event);
+    opal_event.del(&mca_smr_bproc_component.notify_event);
     return ORTE_SUCCESS;
 }

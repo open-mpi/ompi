@@ -166,7 +166,7 @@ int orte_errmgr_hnp_autor_global_module_init(void)
                         "errmgr:hnp(autor):init()");
 
     procs_pending_recovery = OBJ_NEW(opal_list_t);
-    autor_timer_event = (opal_event_t*)malloc(sizeof(opal_event_t));
+    autor_timer_event = OBJ_NEW(opal_event_t);
 
     current_global_jobid   = ORTE_JOBID_INVALID;
     current_global_jobdata = NULL;
@@ -186,7 +186,7 @@ int orte_errmgr_hnp_autor_global_module_finalize(void)
         procs_pending_recovery = NULL;
     }
     if( NULL != autor_timer_event ) {
-        free(autor_timer_event);
+        OBJ_RELEASE(autor_timer_event);
     }
 
     current_global_jobid   = ORTE_JOBID_INVALID;

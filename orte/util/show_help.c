@@ -28,6 +28,7 @@
 #include "opal/util/output.h"
 #include "opal/util/opal_sos.h"
 #include "opal/dss/dss.h"
+#include "opal/mca/event/event.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
@@ -462,9 +463,9 @@ static int show_help(const char *filename, const char *topic,
         if (now > show_help_time_last_displayed + 5 && !show_help_timer_set) {
             show_accumulated_duplicates(0, 0, NULL);
         } else if (!show_help_timer_set) {
-            opal_evtimer_set(&show_help_timer_event,
-                             show_accumulated_duplicates, NULL);
-            opal_evtimer_add(&show_help_timer_event, &show_help_interval);
+            opal_event.evtimer_set(&show_help_timer_event,
+                                   show_accumulated_duplicates, NULL);
+            opal_event.evtimer_add(&show_help_timer_event, &show_help_interval);
             show_help_timer_set = true;
         }
     } 
@@ -580,6 +581,11 @@ int orte_show_help_init(void)
     }
     ready = true;
 
+    /* setup event */
+    if (ORTE_PROC_IS_HNP) {
+        OBJ_CONSTRUCT(&show_help_timer_event, opal_event_t);
+    }
+
     /* Show help duplicate detection */
     OBJ_CONSTRUCT(&abd_tuples, opal_list_t);
     
@@ -598,7 +604,7 @@ void orte_show_help_finalize(void)
         show_accumulated_duplicates(0, 0, NULL);
         OBJ_DESTRUCT(&abd_tuples);
         if (show_help_timer_set) {
-            opal_evtimer_del(&show_help_timer_event);
+            opal_event.evtimer_del(&show_help_timer_event);
         }
         
         /* cancel the recv */

@@ -12,7 +12,7 @@
 
 #include "ompi_config.h"
 #include "ompi/constants.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/util/output.h"
 #include "ompi/mca/btl/btl.h"
 

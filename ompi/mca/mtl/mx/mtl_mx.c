@@ -160,7 +160,7 @@ ompi_mtl_mx_add_procs(struct mca_mtl_base_module_t *mtl,
        progress MX as often as possible during the stage gate 2.  This
        would have happened after the stage gate anyway, so we're just
        speeding things up a bit. */
-#if OPAL_ENABLE_PROGRESS_THREADS == 0
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
     /* switch from letting us sit in the event library for a bit each
        time through opal_progress() to completely non-blocking */
     opal_progress_set_event_flag(OPAL_EVLOOP_NONBLOCK);

@@ -43,7 +43,7 @@
 #endif
 
 
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/mca/base/base.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_sos.h"

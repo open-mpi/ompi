@@ -366,7 +366,7 @@ ompi_osc_pt2pt_module_test(ompi_win_t *win,
     ompi_group_t *group;
     ompi_osc_pt2pt_module_t *module = P2P_MODULE(win);
 
-#if !OPAL_ENABLE_PROGRESS_THREADS
+#if !OMPI_ENABLE_PROGRESS_THREADS
     opal_progress();
 #endif
 

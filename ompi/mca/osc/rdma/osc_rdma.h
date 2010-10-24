@@ -72,7 +72,7 @@ struct ompi_osc_rdma_component_t {
     /** list of outstanding requests, of type ompi_osc_pt2pt_longreq_t */
     opal_list_t c_pending_requests;
 
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
     opal_thread_t c_thread;
     bool c_thread_run;
 #endif

@@ -170,7 +170,7 @@ OBJ_CLASS_DECLARATION(ompi_mtl_portals_event_t);
 #define PTL_IS_READY_MSG(match_bits)            \
     (0 != (PTL_READY_MSG & match_bits))
 #define PTL_IS_SYNC_MSG(event) \
-    (0 != event.hdr_data)
+    (0 != opal_event.hdr_data)
 
 #define PTL_GET_TAG(match_bits) ((int)(match_bits & PTL_TAG_MASK))
 #define PTL_GET_SOURCE(match_bits) ((int)((match_bits & PTL_SOURCE_MASK) >> 32))

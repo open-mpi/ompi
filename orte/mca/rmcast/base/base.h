@@ -22,7 +22,7 @@
 #endif
 
 #include "opal/class/opal_list.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/threads/threads.h"
 
 #include "orte/mca/rmcast/rmcast.h"

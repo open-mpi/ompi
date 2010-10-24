@@ -31,7 +31,7 @@ int ompi_request_default_test( ompi_request_t ** rptr,
                        ompi_status_public_t * status )
 {
     ompi_request_t *request = *rptr;
-#if OPAL_ENABLE_PROGRESS_THREADS == 0
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
     int do_it_once = 0;
 
  recheck_request_status:
@@ -79,7 +79,7 @@ int ompi_request_default_test( ompi_request_t ** rptr,
            later! */
         return ompi_request_free(rptr);
     }
-#if OPAL_ENABLE_PROGRESS_THREADS == 0
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
     if( 0 == do_it_once ) {
         /**
          * If we run the opal_progress then check the status of the request before
@@ -160,7 +160,7 @@ int ompi_request_default_test_any(
     *index = MPI_UNDEFINED;
     if(num_requests_null_inactive != count) {
         *completed = false;
-#if OPAL_ENABLE_PROGRESS_THREADS == 0
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
         opal_progress();
 #endif
     } else {
@@ -197,7 +197,7 @@ int ompi_request_default_test_all(
 
     if (num_completed != count) {
         *completed = false;
-#if OPAL_ENABLE_PROGRESS_THREADS == 0
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
         opal_progress();
 #endif
         return OMPI_SUCCESS;
@@ -311,7 +311,7 @@ int ompi_request_default_test_some(
     *outcount = num_requests_done;
 
     if (num_requests_done == 0) {
-#if OPAL_ENABLE_PROGRESS_THREADS == 0
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
         opal_progress();
 #endif
         return OMPI_SUCCESS;

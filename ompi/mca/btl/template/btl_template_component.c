@@ -19,7 +19,7 @@
 
 #include "ompi_config.h"
 #include "ompi/constants.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "ompi/mca/btl/btl.h"
 
 #include "opal/mca/base/mca_base_param.h"

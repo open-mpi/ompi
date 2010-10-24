@@ -33,7 +33,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/threads/mutex.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 
 #include "oob_tcp_msg.h"
 #include "oob_tcp_addr.h"

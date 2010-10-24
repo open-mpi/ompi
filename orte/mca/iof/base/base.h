@@ -87,6 +87,7 @@ typedef struct {
     opal_object_t super;
     orte_process_name_t name;
     opal_event_t ev;
+    int fd;
     orte_iof_tag_t tag;
     bool active;
 #if OPAL_ENABLE_DEBUG
@@ -137,7 +138,7 @@ typedef struct orte_iof_base_t orte_iof_base_t;
         ep->tag = (tg);                                             \
         if (0 <= (fid)) {                                           \
             ep->wev->fd = (fid);                                    \
-            opal_event_set(&(ep->wev->ev), ep->wev->fd,             \
+            opal_event.set(&(ep->wev->ev), ep->wev->fd,             \
                            OPAL_EV_WRITE,                           \
                            wrthndlr, ep);                           \
         }                                                           \
@@ -167,15 +168,16 @@ typedef struct orte_iof_base_t orte_iof_base_t;
         rev->name.jobid = (nm)->jobid;                              \
         rev->name.vpid = (nm)->vpid;                                \
         rev->tag = (tg);                                            \
+        rev->fd = (fid);                                            \
         *(rv) = rev;                                                \
         rev->file = strdup(__FILE__);                               \
         rev->line = __LINE__;                                       \
-        opal_event_set(&rev->ev, (fid),                             \
+        opal_event.set(&rev->ev, (fid),                             \
                        OPAL_EV_READ,                                \
                        (cbfunc), rev);                              \
         if ((actv)) {                                               \
             rev->active = true;                                     \
-            opal_event_add(&rev->ev, 0);                            \
+            opal_event.add(&rev->ev, 0);                            \
         }                                                           \
     } while(0);
 
@@ -191,7 +193,7 @@ typedef struct orte_iof_base_t orte_iof_base_t;
         ep->tag = (tg);                                             \
         if (0 <= (fid)) {                                           \
             ep->wev->fd = (fid);                                    \
-            opal_event_set(&(ep->wev->ev), ep->wev->fd,             \
+            opal_event.set(&(ep->wev->ev), ep->wev->fd,             \
                            OPAL_EV_WRITE,                           \
                            wrthndlr, ep);                           \
         }                                                           \
@@ -209,12 +211,12 @@ typedef struct orte_iof_base_t orte_iof_base_t;
         rev->name.vpid = (nm)->vpid;                                \
         rev->tag = (tg);                                            \
         *(rv) = rev;                                                \
-        opal_event_set(&rev->ev, (fid),                             \
+        opal_event.set(&rev->ev, (fid),                             \
                        OPAL_EV_READ,                                \
                        (cbfunc), rev);                              \
         if ((actv)) {                                               \
             rev->active = true;                                     \
-            opal_event_add(&rev->ev, 0);                            \
+            opal_event.add(&rev->ev, 0);                            \
         }                                                           \
     } while(0);
 

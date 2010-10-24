@@ -20,7 +20,7 @@
 #include "ompi_config.h"
 #include "opal/runtime/opal.h"
 #include "opal/util/output.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 
 
 #include "mpi.h"

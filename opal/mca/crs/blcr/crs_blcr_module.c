@@ -38,7 +38,7 @@
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
@@ -512,7 +512,7 @@ int opal_crs_blcr_restart(opal_crs_base_snapshot_t *base_snapshot, bool spawn_ch
      * along very well.
      */
     opal_progress_finalize();
-    opal_event_fini();
+    opal_event.fini();
 
     if (!spawn_child) {
         opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,

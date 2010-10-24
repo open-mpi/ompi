@@ -41,7 +41,7 @@
 #endif  /* HAVE_SYS_STAT_H */
 
 #include "ompi/constants.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "opal/util/output.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/show_help.h"
@@ -317,7 +317,7 @@ static int mca_btl_sm_component_close(void)
         OBJ_RELEASE(mca_btl_sm_component.sm_seg);
     }
 
-#if OPAL_ENABLE_PROGRESS_THREADS == 1
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
     /* close/cleanup fifo create for event notification */
     if(mca_btl_sm_component.sm_fifo_fd > 0) {
         /* write a done message down the pipe */
@@ -367,7 +367,7 @@ static mca_btl_base_module_t** mca_btl_sm_component_init(
     mca_btl_sm_component.sm_mpool = NULL;
     mca_btl_sm_component.sm_mpool_base = NULL;
 
-#if OPAL_ENABLE_PROGRESS_THREADS == 1
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
     /* create a named pipe to receive events  */
     sprintf( mca_btl_sm_component.sm_fifo_path,
              "%s"OPAL_PATH_SEP"sm_fifo.%lu", orte_process_info.job_session_dir,
@@ -542,7 +542,7 @@ static mca_btl_base_module_t** mca_btl_sm_component_init(
  *  SM component progress.
  */
 
-#if OPAL_ENABLE_PROGRESS_THREADS == 1
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
 void mca_btl_sm_component_event_thread(opal_object_t* thread)
 {
     while(1) {

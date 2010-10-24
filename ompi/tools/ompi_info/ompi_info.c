@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copryight (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copryight (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -204,6 +204,7 @@ int main(int argc, char *argv[])
     opal_pointer_array_add(&mca_types, "compress");
 #endif
     opal_pointer_array_add(&mca_types, "if");
+    opal_pointer_array_add(&mca_types, "event");
 
     opal_pointer_array_add(&mca_types, "dpm");
     opal_pointer_array_add(&mca_types, "pubsub");

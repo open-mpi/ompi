@@ -34,7 +34,7 @@ int called = 0;
 void
 signal_cb(int fd, short event, void *arg)
 {
-	struct opal_event *signal = arg;
+	opal_event_t *signal = arg;
 
 	printf("%s: got signal %d\n", __func__, OPAL_EVENT_SIGNAL(signal));
 
@@ -47,7 +47,7 @@ signal_cb(int fd, short event, void *arg)
 int
 main (int argc, char **argv)
 {
-    struct opal_event signal_int, signal_term;
+    opal_event_t signal_int, signal_term;
  
 	/* Initalize the event library */
 	opal_event_init();

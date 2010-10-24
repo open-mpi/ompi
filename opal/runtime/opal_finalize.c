@@ -40,7 +40,7 @@
 #include "opal/mca/backtrace/base/base.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/base/base.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/carto/base/base.h"
 #if OPAL_ENABLE_FT_CR    == 1
@@ -120,7 +120,7 @@ opal_finalize(void)
 
     opal_progress_finalize();
 
-    opal_event_fini();
+    opal_event_base_close();
 
     /* close high resolution timers */
     opal_timer_base_close();

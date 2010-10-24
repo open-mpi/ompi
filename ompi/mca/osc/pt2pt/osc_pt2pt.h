@@ -68,7 +68,7 @@ struct ompi_osc_pt2pt_component_t {
     /** list of outstanding requests, of type ompi_osc_pt2pt_mpireq_t */
     opal_list_t p2p_c_pending_requests;
 
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
     opal_thread_t p2p_c_thread;
     bool p2p_c_thread_run;
 #endif

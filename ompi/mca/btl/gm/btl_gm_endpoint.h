@@ -20,7 +20,7 @@
 #define MCA_BTL_GM_ENDPOINT_H
 
 #include "opal/class/opal_list.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/event.h"
 #include "btl_gm_frag.h"
 #include "btl_gm.h"
 

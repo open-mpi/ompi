@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -27,7 +27,7 @@
 
 #include "opal/util/argv.h"
 
-#include "opal/event/event.h"
+#include "opal/mca/event/base/base.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/backtrace/backtrace.h"
@@ -210,8 +210,8 @@ void ompi_info_open_components(void)
     }
     
     /* some components require the event library be active, so activate it */
-    if (OPAL_SUCCESS != opal_event_init()) {
-        str = "opal_event_init failed";
+    if (OPAL_SUCCESS != opal_event_base_open()) {
+        str = "opal_event_base_open";
         goto error;
     }
     
@@ -280,6 +280,14 @@ void ompi_info_open_components(void)
     map = OBJ_NEW(ompi_info_component_map_t);
     map->type = strdup("memory");
     map->components = &opal_memory_base_components_opened;
+    opal_pointer_array_add(&component_map, map);
+    
+    if (OPAL_SUCCESS != opal_event_base_open()) {
+        goto error;
+    }
+    map = OBJ_NEW(ompi_info_component_map_t);
+    map->type = strdup("event");
+    map->components = &opal_event_components;
     opal_pointer_array_add(&component_map, map);
     
     if (OPAL_SUCCESS != opal_memchecker_base_open()) {
@@ -720,6 +728,7 @@ void ompi_info_close_components()
         (void) mca_coll_base_close();
         (void) mca_allocator_base_close();
         (void) ompi_osc_base_close();
+
         (void) orte_grpcomm_base_close();
         (void) orte_db_base_close();
         (void) orte_notifier_base_close();
@@ -755,6 +764,7 @@ void ompi_info_close_components()
 #if OPAL_ENABLE_FT_CR == 1
         (void) opal_crs_base_close();
 #endif
+        (void) opal_event_base_close();
         
         /* Do not call OPAL's installdirs close; it will be handled in
          * opal_finalize_util().

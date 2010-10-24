@@ -48,7 +48,7 @@
 #include "opal/mca/crs/base/base.h"
 
 #include "opal/runtime/opal_progress.h"
-#include "opal/event/event.h"
+#include "opal/mca/event/base/base.h"
 #include "opal/mca/backtrace/base/base.h"
 
 #include "opal/constants.h"
@@ -413,8 +413,8 @@ opal_init(int* pargc, char*** pargv)
     /*
      * Initialize the event library
      */
-    if (OPAL_SUCCESS != (ret = opal_event_init())) {
-        error = "opal_event_init";
+    if (OPAL_SUCCESS != (ret = opal_event_base_open())) {
+        error = "opal_event_base_open";
         goto return_error;
     }
             
