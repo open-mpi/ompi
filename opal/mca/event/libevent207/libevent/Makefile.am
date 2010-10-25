@@ -188,19 +188,10 @@ EXTRA_DIST += event.h evutil.h util-internal.h mm-internal.h ipv6-internal.h \
 	ratelim-internal.h \
 	WIN32-Code/event2/event-config.h \
 	WIN32-Code/tree.h \
-	compat/sys/queue.h $(SYS_INCLUDES)
-
-if HTTP
-EXTRA_DIST += evhttp.h \
-                  http-internal.h \
-                  ht-internal.h
-endif
-if RPC
-EXTRA_DIST += evrpc.h evrpc-internal.h
-endif
-if DNS
-EXTRA_DIST += evdns.h
-endif
+	compat/sys/queue.h $(SYS_INCLUDES) \
+        evhttp.h http-internal.h ht-internal.h \
+        evrpc.h evrpc-internal.h \
+        evdns.h
 
 AM_CPPFLAGS = -I$(srcdir)/compat -I$(srcdir)/include -I$(builddir)/include $(SYS_INCLUDES)
 
