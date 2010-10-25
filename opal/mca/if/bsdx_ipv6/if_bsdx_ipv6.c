@@ -99,6 +99,7 @@ opal_if_base_component_t mca_if_bsdx_ipv6_component = {
 /* configure using getifaddrs(3) */
 static int if_bsdx_ipv6_open(void)
 {
+#if OPAL_WANT_IPV6
     struct ifaddrs **ifadd_list;
     struct ifaddrs *cur_ifaddrs;
     struct sockaddr_in6* sin_addr;
@@ -214,6 +215,7 @@ static int if_bsdx_ipv6_open(void)
             (uint16_t) if_nametoindex(cur_ifaddrs->ifa_name);
         opal_list_append(&opal_if_list, &(intf->super));
     }   /*  of for loop over ifaddrs list */
+#endif  /* OPAL_WANT_IPV6 */
 
     return OPAL_SUCCESS;
 }

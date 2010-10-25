@@ -213,17 +213,17 @@ opal_net_islocalhost(const struct sockaddr *addr)
             return false;
         }
         break;
-    case AF_INET6:
 #if OPAL_WANT_IPV6
+    case AF_INET6:
         {
             const struct sockaddr_in6 *inaddr = (struct sockaddr_in6*) addr;
             if (IN6_IS_ADDR_LOOPBACK (&inaddr->sin6_addr)) {
                return true; /* Bug, FIXME: check for 127.0.0.1/8 */
             }
+            return false;
         }
-#endif
-        return false;
         break;
+#endif
 
     default:
         opal_output(0, "unhandled sa_family %d passed to opal_net_islocalhost",
@@ -257,8 +257,8 @@ opal_net_samenetwork(const struct sockaddr *addr1,
             return false;
         }
         break;
-    case AF_INET6:
 #if OPAL_WANT_IPV6
+    case AF_INET6:
         {
             const struct sockaddr_in6 *inaddr1 = (struct sockaddr_in6*) addr1;
             const struct sockaddr_in6 *inaddr2 = (struct sockaddr_in6*) addr2;
@@ -278,10 +278,10 @@ opal_net_samenetwork(const struct sockaddr *addr1,
                     return true;
                 }
             }
+            return false;
         }
-#endif
-        return false;
         break;
+#endif
     default:
         opal_output(0, "unhandled sa_family %d passed to opal_samenetwork",
                     addr1->sa_family);
@@ -298,9 +298,10 @@ bool
 opal_net_addr_isipv4public(const struct sockaddr *addr)
 {
     switch (addr->sa_family) {
+#if OPAL_WANT_IPV6
         case AF_INET6:
             return false;
-
+#endif
         case AF_INET:
             {
                 const struct sockaddr_in *inaddr = (struct sockaddr_in*) addr;
@@ -347,7 +348,6 @@ opal_net_get_hostname(const struct sockaddr *addr)
         addrlen = sizeof (struct sockaddr_in);
         break;
     case AF_INET6:
-#if OPAL_WANT_IPV6
 #if defined( __NetBSD__)         
         /* hotfix for netbsd: on my netbsd machine, getnameinfo
            returns an unkown error code. */
@@ -360,11 +360,7 @@ opal_net_get_hostname(const struct sockaddr *addr)
         return name;
 #else
         addrlen = sizeof (struct sockaddr_in6);
-#endif  /* NetBSD */
-#else  /* OPAL_WANT_IPV6 */
-        free(name);
-        return NULL;
-#endif /* OPAL_WANT_IPV6 */
+#endif
         break;
     default:
         free(name);
@@ -396,13 +392,11 @@ opal_net_get_port(const struct sockaddr *addr)
     case AF_INET:
         return ntohs(((struct sockaddr_in*) addr)->sin_port);
         break;
-    case AF_INET6:
 #if OPAL_WANT_IPV6
+    case AF_INET6:
         return ntohs(((struct sockaddr_in6*) addr)->sin6_port);
-#else
-        return -1;
-#endif
         break;
+#endif
     }
 
     return -1;
