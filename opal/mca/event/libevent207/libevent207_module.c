@@ -155,9 +155,7 @@ static const struct eventop *eventops[] = {
 	NULL
 };
 
-#if OPAL_ENABLE_DEBUG
 static int debug_output = -1;
-#endif
 
 static void constructor(opal_event_t *ev)
 {
