@@ -279,7 +279,7 @@ static int update_route(orte_process_name_t *target,
 
 static orte_process_name_t get_route(orte_process_name_t *target)
 {
-    orte_process_name_t *ret, daemon;
+    orte_process_name_t *ret = target, daemon;
     int32_t i;
     orte_job_t *jdata;
     orte_proc_t *proc;
