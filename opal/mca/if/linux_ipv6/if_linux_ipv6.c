@@ -92,6 +92,7 @@ opal_if_base_component_t mca_if_linux_ipv6_component = {
 /* configure using getifaddrs(3) */
 static int if_linux_ipv6_open(void)
 {
+#if OPAL_WANT_IPV6
     FILE *f;
     if ((f = fopen("/proc/net/if_inet6", "r"))) {
         char ifname[IF_NAMESIZE];
@@ -146,6 +147,7 @@ static int if_linux_ipv6_open(void)
         } /* of while */
         fclose(f);
     }
+#endif  /* OPAL_WANT_IPV6 */
 
     return OPAL_SUCCESS;
 }

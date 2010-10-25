@@ -45,6 +45,7 @@ opal_if_base_component_t mca_if_solaris_ipv6_component = {
 /* configure using getifaddrs(3) */
 static int if_solaris_ipv6_open(void)
 {
+#if OPAL_WANT_IPV6
     int i;
     int sd;
     int error;
@@ -155,6 +156,7 @@ static int if_solaris_ipv6_open(void)
     if (NULL != lifconf.lifc_buf) {
         free (lifconf.lifc_buf);
     }
+#endif  /* OPAL_WANT_IPV6 */
 
     return OPAL_SUCCESS;
 }
