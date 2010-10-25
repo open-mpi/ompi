@@ -7,7 +7,7 @@
 # $HEADER$
 #
 
-AM_CPPFLAGS = -I$(srcdir)/libevent -I$(srcdir)/libevent/include
+AM_CPPFLAGS = -I$(srcdir)/libevent -I$(srcdir)/libevent/include -I$(builddir)/libevent/include
 
 SUBDIRS = libevent
 
