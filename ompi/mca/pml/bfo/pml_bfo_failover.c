@@ -1984,6 +1984,10 @@ void mca_pml_bfo_update_eager_bml_btl_recv_ctl(mca_bml_base_btl_t** bml_btl,
             recvreq = des->des_cbdata;
             type = "PUT";
             break;
+        default:
+            opal_output(mca_pml_bfo_output,
+                        "Unable to update the BTL. Drop the update.");
+            return;
         }
 
         mca_pml_bfo_find_recvreq_eager_bml_btl(bml_btl, btl, recvreq, type);
