@@ -39,6 +39,7 @@
 #include "opal/constants.h"
 #include "opal/util/argv.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "libevent207.h"
 #include "opal/mca/event/base/base.h"
 
 #include "libevent/event.h"
@@ -77,7 +78,7 @@ static int module_signal_pending(opal_event_t *ev, struct timeval *tv);
 static int module_signal_initialized(opal_event_t *ev);
 static int loop(int flags);
 
-opal_event_module_t opal_event_libevent207 = {
+const opal_event_module_t opal_event_libevent207 = {
     constructor,
     destructor,
     init,
