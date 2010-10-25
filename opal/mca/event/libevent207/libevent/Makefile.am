@@ -85,7 +85,7 @@ EXTRA_DIST = \
 	libevent.pc.in \
 	Doxyfile \
 	whatsnew-2.0.txt \
-	Makefile.nmake test/Makefile.nmake \
+	Makefile.nmake \
 	$(PLATFORM_DEPENDENT_SRC)
 
 # OMPI: Changed to noinst and libevent.la
