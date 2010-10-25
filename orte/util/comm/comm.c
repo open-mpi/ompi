@@ -514,7 +514,7 @@ int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t 
         OBJ_DESTRUCT(&answer);
         return ret;
     }
-    
+
     /* allocate the required memory */
     if (0 < cnt_procs) {
         proc_info = (orte_proc_t**)malloc(cnt_procs * sizeof(orte_proc_t*));

@@ -802,10 +802,11 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
             } else {
                 /* since the job array is no longer
                  * left-justified and may have holes, we have
-                 * to cnt the number of jobs
+                 * to cnt the number of jobs. Be sure to include the daemon
+                 * job - the user can slice that info out if they don't care
                  */
                 num_jobs = 0;
-                for (i=1; i < orte_job_data->size; i++) {
+                for (i=0; i < orte_job_data->size; i++) {
                     if (NULL != opal_pointer_array_get_item(orte_job_data, i)) {
                         num_jobs++;
                     }
@@ -817,7 +818,7 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
                     goto CLEANUP;
                 }
                 /* now pack the data, one at a time */
-                for (i=1; i < orte_job_data->size; i++) {
+                for (i=0; i < orte_job_data->size; i++) {
                     if (NULL != (jobdat = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, i))) {
                         if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &jobdat, 1, ORTE_JOB))) {
                             ORTE_ERROR_LOG(ret);
