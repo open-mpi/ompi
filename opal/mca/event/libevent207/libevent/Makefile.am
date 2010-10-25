@@ -202,7 +202,7 @@ if DNS
 EXTRA_DIST += evdns.h
 endif
 
-AM_CPPFLAGS = -I`pwd`/compat -I`pwd`/include $(SYS_INCLUDES)
+AM_CPPFLAGS = -I$(srcdir)/compat -I$(srcdir)/include -I$(builddir)/include $(SYS_INCLUDES)
 
-DISTCLEANFILES = *~ libevent.pc ./include/event2/event-config.h
+DISTCLEANFILES = *~ libevent.pc $(builddir)/include/event2/event-config.h
 
