@@ -309,7 +309,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_notify_event_t);
     do {                                                                        \
         struct timeval now;                                                     \
         opal_event_t *tmp;                                                      \
-        tmp = opal_event.evtimer_new((cbfunc), tmp);                            \
+        tmp = opal_event.evtimer_new((cbfunc), NULL);                           \
         now.tv_sec = (sec);                                                     \
         now.tv_usec = (usec);                                                   \
         OPAL_OUTPUT_VERBOSE((1, orte_debug_output,                              \
