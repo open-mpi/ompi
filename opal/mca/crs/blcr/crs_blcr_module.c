@@ -512,7 +512,7 @@ int opal_crs_blcr_restart(opal_crs_base_snapshot_t *base_snapshot, bool spawn_ch
      * along very well.
      */
     opal_progress_finalize();
-    opal_event.fini();
+    opal_event.finalize();
 
     if (!spawn_child) {
         opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
