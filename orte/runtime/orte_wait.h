@@ -257,7 +257,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_notify_event_t);
         tmp->proc.jobid = (data)->jobid;                        \
         tmp->proc.vpid = (data)->vpid;                          \
         opal_event.evtimer_set(opal_event_base,                 \
-                               tmp->evn, (cbfunc), tmp);        \
+                               tmp->ev, (cbfunc), tmp);        \
         now.tv_sec = 0;                                         \
         now.tv_usec = 0;                                        \
         OPAL_OUTPUT_VERBOSE((1, orte_debug_output,              \
@@ -287,8 +287,9 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_notify_event_t);
         struct timeval now;                                                 \
         opal_event_t *tmp;                                                  \
         int timeout;                                                        \
-        tmp = opal_event.evtimer_new(opal_event_base,                       \
-                                     (cbfunc), NULL);                       \
+        tmp = OBJ_NEW(opal_event_t);                                        \
+        tmp = opal_event.evtimer_set(opal_event_base,                       \
+                                     tmp, (cbfunc), tmp);                   \
         timeout = (deltat) * (n);                                           \
         if ((maxwait) > 0 && timeout > (maxwait)) {                         \
             timeout = (maxwait);                                            \
@@ -313,8 +314,9 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_notify_event_t);
     do {                                                                        \
         struct timeval now;                                                     \
         opal_event_t *tmp;                                                      \
-        tmp = opal_event.evtimer_new(opal_event_base,                           \
-                                     (cbfunc), NULL);                           \
+        tmp = OBJ_NEW(opal_event_t);                                            \
+        tmp = opal_event.evtimer_set(opal_event_base,                           \
+                                     tmp, (cbfunc), tmp);                       \
         now.tv_sec = (sec);                                                     \
         now.tv_usec = (usec);                                                   \
         OPAL_OUTPUT_VERBOSE((1, orte_debug_output,                              \
