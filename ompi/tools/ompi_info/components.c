@@ -519,7 +519,7 @@ void ompi_info_open_components(void)
     if (ORTE_SUCCESS != orte_sensor_base_open()) {
         goto error;
     }
-    map = OBJ_NEW(omp_info_component_map_t);
+    map = OBJ_NEW(ompi_info_component_map_t);
     map->type = strdup("sensor");
     map->components = &mca_sensor_base_components_available;
     opal_pointer_array_add(&component_map, map);
