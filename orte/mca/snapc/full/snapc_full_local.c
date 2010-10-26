@@ -1471,7 +1471,7 @@ static int snapc_full_local_start_ckpt_open_comm(orte_snapc_full_app_snapshot_t 
                                      s_time/usleep_time, max_wait_time/usleep_time));
             }
             usleep(usleep_time);
-            opal_event.loop(OPAL_EVLOOP_NONBLOCK);
+            opal_event.loop(opal_event_base, OPAL_EVLOOP_NONBLOCK);
             continue;
         }
         else if( 0 > (ret = access(vpid_snapshot->comm_pipe_w, F_OK) )) {
@@ -1483,7 +1483,7 @@ static int snapc_full_local_start_ckpt_open_comm(orte_snapc_full_app_snapshot_t 
                                      s_time/usleep_time, max_wait_time/usleep_time));
             }
             usleep(usleep_time);
-            opal_event.loop(OPAL_EVLOOP_NONBLOCK);
+            opal_event.loop(opal_event_base, OPAL_EVLOOP_NONBLOCK);
             continue;
         }
         else {
@@ -1712,7 +1712,7 @@ static int snapc_full_local_start_ckpt_handshake(orte_snapc_full_app_snapshot_t 
         goto cleanup;
     }
 
-    opal_event.set(&(vpid_snapshot->comm_pipe_r_eh),
+    opal_event.set(opal_event_base, &(vpid_snapshot->comm_pipe_r_eh),
                    vpid_snapshot->comm_pipe_r_fd,
                    OPAL_EV_READ|OPAL_EV_PERSIST,
                    snapc_full_local_comm_read_event,

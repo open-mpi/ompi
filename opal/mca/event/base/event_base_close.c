@@ -19,8 +19,10 @@ int opal_event_base_close(void)
 {
     opal_list_item_t *item;
 
-    /* If there is a selected event module, finalize it */
+    /* release the event base */
+    OBJ_RELEASE(opal_event_base);
 
+    /* If there is a selected event module, finalize it */
     if (NULL != opal_event.finalize) {
         opal_event.finalize();
     }

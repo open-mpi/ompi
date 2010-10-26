@@ -188,7 +188,7 @@ mca_oob_tcp_ping(const orte_process_name_t* name,
     /* Ignore SIGPIPE in the write -- determine success or failure in
        the ping by looking at the return code from write() */
     OBJ_CONSTRUCT(&sigpipe_handler, opal_event_t);
-    opal_event.signal_set(&sigpipe_handler, SIGPIPE,
+    opal_event.signal_set(opal_event_base, &sigpipe_handler, SIGPIPE,
                           noop, &sigpipe_handler);
     opal_event.signal_add(&sigpipe_handler, NULL);
 #endif

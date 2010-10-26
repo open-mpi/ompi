@@ -272,11 +272,11 @@ main(int argc, char *argv[])
      * to cleanup
      */
     OBJ_CONSTRUCT(&term_handler, opal_event_t);
-    opal_event.signal_set(&term_handler, SIGTERM,
+    opal_event.signal_set(opal_event_base, &term_handler, SIGTERM,
                           abort_exit_callback, &term_handler);
     opal_event.signal_add(&term_handler, NULL);
     OBJ_CONSTRUCT(&int_handler, opal_event_t);
-    opal_event.signal_set(&int_handler, SIGINT,
+    opal_event.signal_set(opal_event_base, &int_handler, SIGINT,
                           abort_exit_callback, &int_handler);
     opal_event.signal_add(&int_handler, NULL);
     
@@ -524,7 +524,7 @@ SEND:
     send_cmd(0, 0, NULL);
 
     /* now wait until the termination event fires */
-    opal_event.dispatch();
+    opal_event.dispatch(opal_event_base);
 
     /***************
      * Cleanup

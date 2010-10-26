@@ -161,7 +161,7 @@ static void start(orte_jobid_t jobid)
          * for a data sample
          */
         sample_ev = OBJ_NEW(opal_event_t);
-        opal_event.evtimer_set(sample_ev, sample, sample_ev);
+        opal_event.evtimer_set(opal_event_base, sample_ev, sample, sample_ev);
         sample_time.tv_sec = mca_sensor_memusage_component.sample_rate;
         sample_time.tv_usec = 0;
         opal_event.evtimer_add(sample_ev, &sample_time);

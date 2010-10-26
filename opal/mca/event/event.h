@@ -33,6 +33,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/class/opal_object.h"
+#include "opal/class/opal_list.h"
 
 BEGIN_C_DECLS
 
@@ -69,6 +70,12 @@ typedef struct {
 } opal_event_t;
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_event_t);
 
+typedef struct {
+    opal_object_t super;
+    void *base;
+} opal_event_base_t;
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_event_base_t);
+
 #define OPAL_TIMEOUT_DEFAULT	{1, 0}
 
 typedef void (*opal_event_callback_fn_t)(int, short, void *);
@@ -77,11 +84,8 @@ typedef int (*opal_event_base_module_init_fn_t)(void);
 typedef int (*opal_event_base_module_fini_fn_t)(void);
 typedef void (*opal_event_base_module_set_debug_output_fn_t)(bool output);
 
-typedef int (*opal_event_base_module_enable_fn_t)(void);
-typedef int (*opal_event_base_module_disable_fn_t)(void);
-typedef int (*opal_event_base_module_restart_fn_t)(void);
-
-typedef int (*opal_event_base_module_set_fn_t)(opal_event_t *ev, int fd, short events,
+typedef int (*opal_event_base_module_set_fn_t)(opal_event_base_t *evbase,
+                                               opal_event_t *ev, int fd, short events,
                                                opal_event_callback_fn_t cbfunc, void *arg);
 typedef int (*opal_event_base_module_add_fn_t)(opal_event_t *ev, const struct timeval *tv);
 
@@ -89,12 +93,14 @@ typedef int (*opal_event_base_module_del_fn_t)(opal_event_t *ev);
 
 typedef int (*opal_event_base_module_get_signal_fn_t)(opal_event_t *ev);
 
-typedef int (*opal_event_base_module_dispatch_fn_t)(void);
+typedef int (*opal_event_base_module_dispatch_fn_t)(opal_event_base_t *evbase);
 
 /**
  Create a timer event
 */
-typedef opal_event_t* (*opal_event_base_module_evtimer_new_fn_t)(opal_event_callback_fn_t cbfunc, void *cbdata);
+typedef opal_event_t* (*opal_event_base_module_evtimer_new_fn_t)(opal_event_base_t *evbase,
+                                                                 opal_event_callback_fn_t cbfunc,
+                                                                 void *cbdata);
 
 /**
   Add a timer event.
@@ -111,7 +117,9 @@ typedef int (*opal_event_base_module_evtimer_add_fn_t)(opal_event_t *ev, const s
   @param cb callback function
   @param arg argument that will be passed to the callback function
  */
-typedef void (*opal_event_base_module_evtimer_set_fn_t)(opal_event_t *ev, opal_event_callback_fn_t cbfunc, void *cbdata);
+typedef void (*opal_event_base_module_evtimer_set_fn_t)(opal_event_base_t *evbase,
+                                                        opal_event_t *ev,
+                                                        opal_event_callback_fn_t cbfunc, void *cbdata);
 
 /**
  * Delete a timer event.
@@ -127,7 +135,8 @@ typedef int (*opal_event_base_module_evtimer_initialized_fn_t)(opal_event_t *ev)
 
 typedef int (*opal_event_base_module_signal_add_fn_t)(opal_event_t *ev, struct timeval *tv);
 
-typedef int (*opal_event_base_module_signal_set_fn_t)(opal_event_t *ev, int fd,
+typedef int (*opal_event_base_module_signal_set_fn_t)(opal_event_base_t *evbase,
+                                                      opal_event_t *ev, int fd,
                                                       opal_event_callback_fn_t cbfunc, void *cbdata);
 
 typedef int (*opal_event_base_module_signal_del_fn_t)(opal_event_t *ev);
@@ -136,12 +145,16 @@ typedef int (*opal_event_base_module_signal_pending_fn_t)(opal_event_t *ev, stru
 
 typedef int (*opal_event_base_module_signal_initialized_fn_t)(opal_event_t *ev);
 
-typedef int (*opal_event_base_module_loop_fn_t)(int flags);
+typedef int (*opal_event_base_module_loop_fn_t)(opal_event_base_t *evbase, int flags);
 
 /* construct/destruct the event struct hidden inside the opal_event_t object */
 typedef void (*opal_event_base_module_construct_fn_t)(opal_event_t *ev);
 
 typedef void (*opal_event_base_module_destruct_fn_t)(opal_event_t *ev);
+
+/* construct/destruct the event base hidden inside the opal_event_base_t object */
+typedef void (*opal_event_base_construct_base_fn_t)(opal_event_base_t *evbase);
+typedef void (*opal_event_base_destruct_base_fn_t)(opal_event_base_t *evbase);
 
 
 /* This is to prevent event library from picking up the win32_ops
@@ -176,13 +189,13 @@ struct opal_event_base_module_1_0_0_t {
     /* constructor/destructor needed for event struct */
     opal_event_base_module_construct_fn_t           construct;
     opal_event_base_module_destruct_fn_t            destruct;
+    /* constructor/destructor needed for event_base struct */
+    opal_event_base_construct_base_fn_t             construct_base;
+    opal_event_base_destruct_base_fn_t              destruct_base;
     /* all API functions */
     opal_event_base_module_init_fn_t                init;
     opal_event_base_module_fini_fn_t                finalize;
     opal_event_base_module_set_debug_output_fn_t    set_debug_output;
-    opal_event_base_module_enable_fn_t              enable;
-    opal_event_base_module_disable_fn_t             disable;
-    opal_event_base_module_restart_fn_t             restart;
     opal_event_base_module_set_fn_t                 set;
     opal_event_base_module_add_fn_t                 add;
     opal_event_base_module_del_fn_t                 del;
@@ -217,6 +230,7 @@ typedef struct opal_event_base_module_1_0_0_t opal_event_module_t;
 
 /* Global structure for accessing event functions */
 OPAL_DECLSPEC extern opal_event_module_t opal_event;
+OPAL_DECLSPEC extern opal_event_base_t *opal_event_base;
 
 END_C_DECLS
 

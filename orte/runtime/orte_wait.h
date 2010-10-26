@@ -40,10 +40,10 @@
 #include "opal/util/output.h"
 #include "opal/sys/atomic.h"
 #include "opal/mca/event/event.h"
-#include "opal/runtime/opal_progress.h"
 
 #include "orte/types.h"
 #include "orte/mca/rml/rml_types.h"
+#include "opal/runtime/opal_progress.h"
 
 BEGIN_C_DECLS
 
@@ -208,7 +208,8 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_message_event_t);
         mev->tag = (tg);                                        \
         mev->file = strdup((buf)->parent.cls_init_file_name);   \
         mev->line = (buf)->parent.cls_init_lineno;              \
-        opal_event.evtimer_set(mev->ev, (cbfunc), mev);         \
+        opal_event.evtimer_set(opal_event_base,                 \
+                               mev->ev, (cbfunc), mev);         \
         now.tv_sec = 0;                                         \
         now.tv_usec = 0;                                        \
         opal_event.evtimer_add(mev->ev, &now);                  \
@@ -228,7 +229,8 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_message_event_t);
         mev->sender.vpid = (sndr)->vpid;                        \
         opal_dss.copy_payload(mev->buffer, (buf));              \
         mev->tag = (tg);                                        \
-        opal_event.evtimer_set(mev->ev, (cbfunc), mev);         \
+        opal_event.evtimer_set(opal_event_base,                 \
+                               mev->ev, (cbfunc), mev);         \
         now.tv_sec = 0;                                         \
         now.tv_usec = 0;                                        \
         opal_event.evtimer_add(mev->ev, &now);                  \
@@ -254,7 +256,8 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_notify_event_t);
         tmp = OBJ_NEW(orte_notify_event_t);                     \
         tmp->proc.jobid = (data)->jobid;                        \
         tmp->proc.vpid = (data)->vpid;                          \
-        opal_event.evtimer_set(tmp->evn, (cbfunc), tmp);        \
+        opal_event.evtimer_set(opal_event_base,                 \
+                               tmp->evn, (cbfunc), tmp);        \
         now.tv_sec = 0;                                         \
         now.tv_usec = 0;                                        \
         OPAL_OUTPUT_VERBOSE((1, orte_debug_output,              \
@@ -284,7 +287,8 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_notify_event_t);
         struct timeval now;                                                 \
         opal_event_t *tmp;                                                  \
         int timeout;                                                        \
-        tmp = opal_event.evtimer_new((cbfunc), NULL);                       \
+        tmp = opal_event.evtimer_new(opal_event_base,                       \
+                                     (cbfunc), NULL);                       \
         timeout = (deltat) * (n);                                           \
         if ((maxwait) > 0 && timeout > (maxwait)) {                         \
             timeout = (maxwait);                                            \
@@ -309,7 +313,8 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_notify_event_t);
     do {                                                                        \
         struct timeval now;                                                     \
         opal_event_t *tmp;                                                      \
-        tmp = opal_event.evtimer_new((cbfunc), NULL);                           \
+        tmp = opal_event.evtimer_new(opal_event_base,                           \
+                                     (cbfunc), NULL);                           \
         now.tv_sec = (sec);                                                     \
         now.tv_usec = (usec);                                                   \
         OPAL_OUTPUT_VERBOSE((1, orte_debug_output,                              \

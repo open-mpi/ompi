@@ -512,7 +512,7 @@ static void errmgr_autor_process_fault_app(orte_job_t *jdata,
     if( !autor_timer_active ) {
         autor_timer_active = true;
 
-        opal_event.evtimer_set(autor_timer_event, errmgr_autor_recover_processes, NULL);
+        opal_event.evtimer_set(opal_event_base, autor_timer_event, errmgr_autor_recover_processes, NULL);
         soon.tv_sec  = mca_errmgr_hnp_component.autor_recovery_delay;
         soon.tv_usec = 0;
         opal_event.evtimer_add(autor_timer_event, &soon);

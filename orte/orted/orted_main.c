@@ -526,7 +526,8 @@ int orte_daemon(int argc, char *argv[])
     /* if we were given a pipe to monitor for singleton termination, set that up */
     if (orted_globals.singleton_died_pipe > 0) {
         /* register shutdown handler */
-        opal_event.set(&pipe_handler,
+        OBJ_CONSTRUCT(&pipe_handler, opal_event_t);
+        opal_event.set(opal_event_base, &pipe_handler,
                        orted_globals.singleton_died_pipe,
                        OPAL_EV_READ|OPAL_EV_PERSIST,
                        shutdown_callback,
@@ -712,7 +713,7 @@ int orte_daemon(int argc, char *argv[])
     }
 
     /* wait to hear we are done */
-    opal_event.dispatch();
+    opal_event.dispatch(opal_event_base);
 
     /* should never get here, but if we do... */
 DONE:

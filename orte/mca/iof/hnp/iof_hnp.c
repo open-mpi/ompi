@@ -313,7 +313,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
              * filedescriptor is not a tty, don't worry about it
              * and always stay connected.
              */
-            opal_event.signal_set(&mca_iof_hnp_component.stdinsig,
+            opal_event.signal_set(opal_event_base, &mca_iof_hnp_component.stdinsig,
                                   SIGCONT, orte_iof_hnp_stdin_cb,
                                   NULL);
             

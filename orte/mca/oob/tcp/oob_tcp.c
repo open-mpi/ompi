@@ -484,7 +484,7 @@ mca_oob_tcp_create_connection(const int accepted_fd,
 
     /* wait for receipt of peers process identifier to complete this connection */
     event = OBJ_NEW(mca_oob_tcp_event_t);
-    opal_event.set(&event->event, accepted_fd, OPAL_EV_READ, mca_oob_tcp_recv_handler, event);
+    opal_event.set(opal_event_base, &event->event, accepted_fd, OPAL_EV_READ, mca_oob_tcp_recv_handler, event);
     opal_event.add(&event->event, 0);
 }
 
@@ -1082,12 +1082,12 @@ mca_oob_tcp_accept_thread_handler(int sd, short flags, void* user)
     tv.tv_sec = mca_oob_tcp_component.tcp_listen_thread_tv.tv_sec;
     tv.tv_usec = mca_oob_tcp_component.tcp_listen_thread_tv.tv_usec;
 #ifdef HAVE_PIPE
-    opal_event.set(&mca_oob_tcp_component.tcp_listen_thread_event,
+    opal_event.set(opal_event_base, &mca_oob_tcp_component.tcp_listen_thread_event,
                    mca_oob_tcp_component.tcp_connections_pipe[0],
                    OPAL_EV_READ, 
                    mca_oob_tcp_accept_thread_handler, NULL);
 #else
-    opal_event.set(&mca_oob_tcp_component.tcp_listen_thread_event,
+    opal_event.set(opal_event_base, &mca_oob_tcp_component.tcp_listen_thread_event,
                    -1, 0,
                    mca_oob_tcp_accept_thread_handler, NULL);
 #endif
@@ -1118,12 +1118,12 @@ mca_oob_tcp_create_listen_thread(void)
     tv.tv_sec = mca_oob_tcp_component.tcp_listen_thread_tv.tv_sec;
     tv.tv_usec = mca_oob_tcp_component.tcp_listen_thread_tv.tv_usec;
 #ifdef HAVE_PIPE
-    opal_event.set(&mca_oob_tcp_component.tcp_listen_thread_event,
+    opal_event.set(opal_event_base, &mca_oob_tcp_component.tcp_listen_thread_event,
                    mca_oob_tcp_component.tcp_connections_pipe[0],
                    OPAL_EV_READ, 
                    mca_oob_tcp_accept_thread_handler, NULL);
 #else
-    opal_event.set(&mca_oob_tcp_component.tcp_listen_thread_event,
+    opal_event.set(opal_event_base, &mca_oob_tcp_component.tcp_listen_thread_event,
                    -1, 0,
                    mca_oob_tcp_accept_thread_handler, NULL);
 #endif
@@ -1588,7 +1588,7 @@ int mca_oob_tcp_init(void)
             mca_oob_tcp_component.tcp_listen_thread_sds[idx] = 
                 mca_oob_tcp_component.tcp_listen_sd;
         } else {
-            opal_event.set(&mca_oob_tcp_component.tcp_recv_event,
+            opal_event.set(opal_event_base, &mca_oob_tcp_component.tcp_recv_event,
                            mca_oob_tcp_component.tcp_listen_sd,
                            OPAL_EV_READ|OPAL_EV_PERSIST,
                            mca_oob_tcp_recv_handler,
@@ -1620,7 +1620,7 @@ int mca_oob_tcp_init(void)
             mca_oob_tcp_component.tcp_listen_thread_sds[idx] = 
                 mca_oob_tcp_component.tcp6_listen_sd;
         } else {
-            opal_event.set(&mca_oob_tcp_component.tcp6_recv_event,
+            opal_event.set(opal_event_base, &mca_oob_tcp_component.tcp6_recv_event,
                            mca_oob_tcp_component.tcp6_listen_sd,
                            OPAL_EV_READ|OPAL_EV_PERSIST,
                            mca_oob_tcp_recv_handler,
@@ -1671,8 +1671,9 @@ int mca_oob_tcp_fini(void)
     void *data;
 
     OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+#if 0
     opal_event.disable(); /* disable event processing */
-
+#endif
     /* shut down the listening system */
     if (OOB_TCP_LISTEN_THREAD == mca_oob_tcp_component.tcp_listen_type) {
         mca_oob_tcp_component.tcp_shutdown = true;
@@ -1720,7 +1721,6 @@ int mca_oob_tcp_fini(void)
         OBJ_RELEASE(event);
     }
 
-    opal_event.enable();
     OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
     return ORTE_SUCCESS;
 }
@@ -1976,20 +1976,24 @@ int mca_oob_tcp_ft_event(int state) {
     opal_list_item_t *item;
 
     if(OPAL_CRS_CHECKPOINT == state) {
+#if 0
         /*
          * Disable event processing while we are working
          */
         OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
         opal_event.disable();
         OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+#endif
     }
     else if(OPAL_CRS_CONTINUE == state) {
+#if 0
         /*
          * Resume event processing
          */
         OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
         opal_event.enable();
         OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+#endif
     }
     else if(OPAL_CRS_RESTART == state) {
         /*
@@ -2021,7 +2025,9 @@ int mca_oob_tcp_ft_event(int state) {
         /*
          * Resume event processing
          */
+#if 0
         opal_event.enable();
+#endif
         OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
     }
     else if(OPAL_CRS_TERM == state ) {

@@ -27,7 +27,8 @@
 #include <errno.h>
 #include <unistd.h>
 
-#include <opal/event/event.h>
+#include <opal/mca/event/event.h>
+#include "opal/runtime/opal.h"
 
 static void
 fifo_read(int fd, short event, void *arg)
@@ -40,7 +41,7 @@ fifo_read(int fd, short event, void *arg)
 #endif
 
 	/* Reschedule this event */
-	opal_event_add(ev, NULL);
+	opal_event.add(ev, NULL);
 
 	fprintf(stderr, "fifo_read called with fd: %d, event: %d, arg: %p\n",
 		fd, event, arg);
@@ -50,7 +51,7 @@ fifo_read(int fd, short event, void *arg)
 	/* Check for end of file. */ 
 	if(len && dwBytesRead == 0) {
 		fprintf(stderr, "End Of File");
-		opal_event_del(ev);
+		opal_event.del(ev);
 		return;
 	}
 
@@ -123,19 +124,19 @@ main (int argc, char **argv)
 	fprintf(stderr, "Write data to %s\n", fifo);
 #endif
 	/* Initalize the event library */
-	opal_event_init();
+	opal_init();
 
 	/* Initalize one event */
 #ifdef WIN32
-	opal_event_set(&evfifo, (int)socket, OPAL_EV_READ, fifo_read, &evfifo);
+	opal_event.set(opal_event_base, &evfifo, (int)socket, OPAL_EV_READ, fifo_read, &evfifo);
 #else
-	opal_event_set(&evfifo, socket, OPAL_EV_READ, fifo_read, &evfifo);
+	opal_event.set(opal_event_base, &evfifo, socket, OPAL_EV_READ, fifo_read, &evfifo);
 #endif
 
 	/* Add it to the active events, without a timeout */
-	opal_event_add(&evfifo, NULL);
+	opal_event.add(&evfifo, NULL);
 	
-	opal_event_dispatch();
+	opal_event.dispatch(opal_event_base);
 #ifdef WIN32
 	CloseHandle(socket);
 #endif

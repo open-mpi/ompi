@@ -169,7 +169,7 @@ static void start(orte_jobid_t jobid)
     /* setup the send */
     time = mca_sensor_heartbeat_component.rate * 1000; /* convert to microsecs */
     send_ev = OBJ_NEW(opal_event_t);
-    opal_event.evtimer_set(send_ev, send_heartbeat, send_ev);
+    opal_event.evtimer_set(opal_event_base, send_ev, send_heartbeat, send_ev);
     send_time.tv_sec = time / 1000000;
     send_time.tv_usec = time % 1000000;
     opal_event.evtimer_add(send_ev, &send_time);
@@ -180,7 +180,7 @@ static void start(orte_jobid_t jobid)
     /* setup the check */
     time = mca_sensor_heartbeat_component.check * 1000; /* convert to microsecs */
     check_ev = OBJ_NEW(opal_event_t);
-    opal_event.evtimer_set(check_ev, check_heartbeat, check_ev);
+    opal_event.evtimer_set(opal_event_base, check_ev, check_heartbeat, check_ev);
     check_time.tv_sec = time / 1000000;
     check_time.tv_usec = time % 1000000;
     opal_event.evtimer_add(check_ev, &check_time);
