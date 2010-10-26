@@ -103,10 +103,14 @@ struct evbuffer_ptr {
 #define _EVBUFFER_IOVEC_IS_NATIVE
 #else
 struct evbuffer_iovec {
+#ifndef __WINDOWS__
 	/** The start of the extent of memory. */
 	void *iov_base;
 	/** The length of the extent of memory. */
 	size_t iov_len;
+#else
+  WSABUF data;
+#endif
 };
 #endif
 

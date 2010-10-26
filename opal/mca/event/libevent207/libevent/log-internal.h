@@ -29,7 +29,9 @@
 
 #include <event2/util.h>
 
+#ifndef WIN32
 #include <stdbool.h>
+#endif
 
 #ifdef __GNUC__
 #define EV_CHECK_FMT(a,b) __attribute__((format(printf, a, b)))

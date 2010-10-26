@@ -162,7 +162,7 @@ typedef void (*opal_event_base_destruct_base_fn_t)(opal_event_base_t *evbase);
    pretty much use the OOB and PTL as is. Otherwise, there would have
    to be a lot of magic to be done to get this to work */
 #if defined(__WINDOWS__)
-extern const opal_event_top opal_win32ops;
+/*extern const eventop opal_win32ops;*/
 #endif  /* defined(__WINDOWS__) */
 
 

@@ -496,12 +496,12 @@ static int fork_hnp(void)
 
     /* Use socket to communicate between the parent and child to
        indicate whether the spawn  succeeded or failed.*/
-    if (evutil_socketpair(AF_UNIX, SOCK_STREAM, 0, p) == -1) {
+    if (create_socketpair(AF_UNIX, SOCK_STREAM, 0, p) == -1) {
         return ORTE_ERROR;
     }
 
     /* Set another pair socket to watch if we terminated. */
-    if (evutil_socketpair(AF_UNIX, SOCK_STREAM, 0, death_pipe) == -1) {
+    if (create_socketpair(AF_UNIX, SOCK_STREAM, 0, death_pipe) == -1) {
         return ORTE_ERROR;
     }
 

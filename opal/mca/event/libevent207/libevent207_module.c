@@ -30,7 +30,9 @@
 #include <string.h>
 #include <assert.h>
 #include <time.h>
+#ifndef WIN32
 #include <stdbool.h>
+#endif
 
 #include "opal/class/opal_object.h"
 #include "opal/threads/mutex.h"
