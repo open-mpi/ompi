@@ -92,6 +92,7 @@
 #include "opal/win32/ompi_util.h"
 #include "opal/win32/ompi_misc.h"
 #include "opal/win32/ompi_inet.h"
+#include "opal/win32/ompi_socket.h"
 #endif
 
 #define MAXPATHLEN _MAX_PATH

@@ -86,7 +86,7 @@ int orte_plm_base_comm_start(void)
 #ifndef __WINDOWS__
     pipe(ready_fd);
 #else
-    if (evutil_socketpair(AF_UNIX, SOCK_STREAM, 0, ready_fd) == -1) {
+    if (create_socketpair(AF_UNIX, SOCK_STREAM, 0, ready_fd) == -1) {
         return ORTE_ERROR;
     }
 #endif

@@ -44,7 +44,9 @@ extern "C" {
 #ifdef _EVENT_HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
+#ifndef WIN32
 #include <stdbool.h>
+#endif
 
 #include <stdio.h>
 

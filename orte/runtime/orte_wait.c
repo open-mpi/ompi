@@ -1116,7 +1116,7 @@ int orte_wait_event(opal_event_t **event, orte_trigger_event_t *trig,
 {
     int p[2];
     
-    if (evutil_socketpair(AF_UNIX, SOCK_STREAM, 0, p) == -1) {
+    if (create_socketpair(AF_UNIX, SOCK_STREAM, 0, p) == -1) {
         return ORTE_ERROR;
     }
 
