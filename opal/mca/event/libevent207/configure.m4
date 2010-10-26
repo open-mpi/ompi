@@ -32,7 +32,7 @@ AC_DEFUN([MCA_opal_event_libevent207_CONFIG],[
     
     AC_MSG_CHECKING([libevent configuration args])
 
-    str=`event_args="--disable-dns --disable-http --disable-rpc --disable-openssl --enable-hidden-symbols --includedir=$includedir/openmpi/opal/event/libevent/include"`
+    str=`event_args="--disable-dns --disable-http --disable-rpc --disable-openssl --enable-hidden-symbols --disable-thread-support --includedir=$includedir/openmpi/opal/event/libevent/include"`
     eval $str
     unset str
 
