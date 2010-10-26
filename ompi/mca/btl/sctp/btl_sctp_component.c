@@ -290,6 +290,7 @@ int mca_btl_sctp_component_close(void)
  
     if (mca_btl_sctp_component.sctp_listen_sd >= 0) {
         opal_event.del(&mca_btl_sctp_component.sctp_recv_event);
+        OBJ_DESTRUCT(&mca_btl_sctp_component.sctp_recv_event);
         CLOSE_THE_SOCKET(mca_btl_sctp_component.sctp_listen_sd);
         mca_btl_sctp_component.sctp_listen_sd = -1;
     }
@@ -554,6 +555,8 @@ static int mca_btl_sctp_component_create_instance(void)
 
 static int mca_btl_sctp_component_create_listen(void)
 {
+    OBJ_CONSTRUCT(&mca_btl_sctp_component.sctp_recv_event, opal_event_t);
+
     if(mca_btl_sctp_component.sctp_if_11) {
         /* 1 to 1 */
         int rc;
