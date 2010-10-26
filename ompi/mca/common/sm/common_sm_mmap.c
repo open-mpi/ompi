@@ -264,7 +264,7 @@ mca_common_sm_mmap_init(ompi_proc_t **sorted_procs,
         if (1 == sm_info.id)
         {
             /* wait until all other local procs have reported in */
-            while (num_local_procs > map->super.module_seg->seg_att);
+            while (num_local_procs > map->super.module_seg->seg_att)
             {
                 opal_atomic_rmb();
             }
