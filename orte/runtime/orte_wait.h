@@ -288,8 +288,8 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_notify_event_t);
         opal_event_t *tmp;                                                  \
         int timeout;                                                        \
         tmp = OBJ_NEW(opal_event_t);                                        \
-        tmp = opal_event.evtimer_set(opal_event_base,                       \
-                                     tmp, (cbfunc), tmp);                   \
+        opal_event.evtimer_set(opal_event_base,                             \
+                               tmp, (cbfunc), tmp);                         \
         timeout = (deltat) * (n);                                           \
         if ((maxwait) > 0 && timeout > (maxwait)) {                         \
             timeout = (maxwait);                                            \
@@ -315,8 +315,8 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_notify_event_t);
         struct timeval now;                                                     \
         opal_event_t *tmp;                                                      \
         tmp = OBJ_NEW(opal_event_t);                                            \
-        tmp = opal_event.evtimer_set(opal_event_base,                           \
-                                     tmp, (cbfunc), tmp);                       \
+        opal_event.evtimer_set(opal_event_base,                                 \
+                               tmp, (cbfunc), tmp);                             \
         now.tv_sec = (sec);                                                     \
         now.tv_usec = (usec);                                                   \
         OPAL_OUTPUT_VERBOSE((1, orte_debug_output,                              \
