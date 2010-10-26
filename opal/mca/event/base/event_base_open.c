@@ -33,7 +33,7 @@
 int opal_event_base_output = -1;
 opal_event_module_t opal_event = {0};
 opal_list_t opal_event_components;
-
+opal_event_base_t *opal_event_base=NULL;
 /*
  * Only ONE event component can compile at any time, so
  * just open that one - it will be statically built
@@ -81,12 +81,13 @@ int opal_event_base_open(void)
         }
     }
 
-    /* be sure to init the final module */
+    /* Init the final module */
     if (NULL != opal_event.init) {
         rc = opal_event.init();
     }
 
-    /* All done */
+    /* get our event base */
+    opal_event_base = OBJ_NEW(opal_event_base_t);
 
     return rc;
 }
@@ -108,3 +109,21 @@ OBJ_CLASS_INSTANCE(opal_event_t,
                    opal_object_t,
                    ev_construct,
                    ev_destruct);
+
+static void evbase_construct(opal_event_base_t *ptr)
+{
+    ptr->base = NULL;
+    if (NULL != opal_event.construct_base) {
+        opal_event.construct_base(ptr);
+    }
+}
+static void evbase_destruct(opal_event_base_t *ptr)
+{
+    if (NULL != opal_event.destruct_base) {
+        opal_event.destruct_base(ptr);
+    }
+}
+OBJ_CLASS_INSTANCE(opal_event_base_t,
+                   opal_object_t,
+                   evbase_construct,
+                   evbase_destruct);

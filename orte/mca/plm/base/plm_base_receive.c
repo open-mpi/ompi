@@ -92,7 +92,7 @@ int orte_plm_base_comm_start(void)
 #endif
 
     OBJ_CONSTRUCT(&ready, opal_event_t);
-    opal_event.set(&ready, ready_fd[0], OPAL_EV_READ, process_msg, NULL);
+    opal_event.set(opal_event_base, &ready, ready_fd[0], OPAL_EV_READ, process_msg, NULL);
     opal_event.add(&ready, 0);
     
     if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,

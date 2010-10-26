@@ -282,9 +282,7 @@ void ompi_info_open_components(void)
     map->components = &opal_memory_base_components_opened;
     opal_pointer_array_add(&component_map, map);
     
-    if (OPAL_SUCCESS != opal_event_base_open()) {
-        goto error;
-    }
+    /* the event framework is already open - just get its components */
     map = OBJ_NEW(ompi_info_component_map_t);
     map->type = strdup("event");
     map->components = &opal_event_components;

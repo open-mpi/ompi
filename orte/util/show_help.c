@@ -463,7 +463,7 @@ static int show_help(const char *filename, const char *topic,
         if (now > show_help_time_last_displayed + 5 && !show_help_timer_set) {
             show_accumulated_duplicates(0, 0, NULL);
         } else if (!show_help_timer_set) {
-            opal_event.evtimer_set(&show_help_timer_event,
+            opal_event.evtimer_set(opal_event_base, &show_help_timer_event,
                                    show_accumulated_duplicates, NULL);
             opal_event.evtimer_add(&show_help_timer_event, &show_help_interval);
             show_help_timer_set = true;

@@ -478,7 +478,8 @@ static int orte_plm_rshd_launch_threaded(orte_jobid_t jobid)
     if( opal_event_progress_thread() ) {
         stack.rc = orte_plm_rshd_launch( jobid );
     } else {
-        opal_evtimer_set(&event, orte_plm_rshd_launch_cb, &stack);
+        OBJ_CONSTRUCT(&event, opal_event_t);
+        opal_evtimer_set(opal_event_base, &event, orte_plm_rshd_launch_cb, &stack);
         opal_evtimer_add(&event, &tv);
 
         OPAL_THREAD_LOCK(&stack.mutex);

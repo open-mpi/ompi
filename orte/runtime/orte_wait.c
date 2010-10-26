@@ -272,7 +272,8 @@ orte_wait_init(void)
     OBJ_CONSTRUCT(&registered_cb, opal_list_t);
 
     OBJ_CONSTRUCT(&handler, opal_event_t);
-    opal_event.set(&handler, SIGCHLD, OPAL_EV_SIGNAL|OPAL_EV_PERSIST,
+    opal_event.set(opal_event_base,
+                   &handler, SIGCHLD, OPAL_EV_SIGNAL|OPAL_EV_PERSIST,
                    orte_wait_signal_callback,
                    &handler);
 
@@ -384,7 +385,7 @@ orte_waitpid(pid_t wpid, int *status, int options)
 #if OPAL_HAVE_POSIX_THREADS && ORTE_ENABLE_PROGRESS_THREADS
             if (opal_using_threads()) {
                 opal_mutex_unlock(&mutex);
-                opal_event.loop(OPAL_EVLOOP_NONBLOCK);
+                opal_event.loop(opal_event_base, OPAL_EVLOOP_NONBLOCK);
                 opal_mutex_lock(&mutex);
             }
 #endif            
@@ -409,7 +410,7 @@ orte_waitpid(pid_t wpid, int *status, int options)
                for long. */
 
             if (!OPAL_HAVE_THREAD_SUPPORT) {
-                opal_event.loop(OPAL_EVLOOP_NONBLOCK);
+                opal_event.loop(opal_event_base, OPAL_EVLOOP_NONBLOCK);
             }
         }
 
@@ -521,7 +522,7 @@ int orte_wait_event(opal_event_t **event, orte_trigger_event_t *trig,
     trig->channel = p[1];
     
     /* define the event to fire when someone writes to the pipe */
-    opal_event.set(*event, p[0], OPAL_EV_READ, cbfunc, trig);
+    opal_event.set(opal_event_base, *event, p[0], OPAL_EV_READ, cbfunc, trig);
     
     /* Add it to the active events, without a timeout */
     opal_event.add(*event, NULL);
@@ -743,7 +744,8 @@ internal_waitpid(pid_t pid, int *status, int options)
     tv.tv_sec = 0;
     tv.tv_usec = 0;
 
-    opal_evtimer_set(&ev, internal_waitpid_callback, &data);
+    OBJ_CONSTRUCT(&ev, opal_event_t);
+    opal_event.evtimer_set(opal_event_base, &ev, internal_waitpid_callback, &data);
     opal_evtimer_add(&ev, &tv);
 
     while (data.done == false) {
@@ -1131,7 +1133,7 @@ int orte_wait_event(opal_event_t **event, orte_trigger_event_t *trig,
     trig->channel = p[1];
     
     /* define the event to fire when someone writes to the pipe */
-    opal_event.set(*event, p[0], OPAL_EV_READ, cbfunc, NULL);
+    opal_event.set(opal_event_base, *event, p[0], OPAL_EV_READ, cbfunc, NULL);
     
 	/* Add it to the active events, without a timeout */
 	opal_event.add(*event, NULL);

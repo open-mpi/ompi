@@ -160,7 +160,7 @@ rml_oob_init(int* priority)
     if (NULL == orte_rml_oob_module.timer_event) {
         return NULL;
     }
-    opal_event.evtimer_set(orte_rml_oob_module.timer_event,
+    opal_event.evtimer_set(opal_event_base, orte_rml_oob_module.timer_event,
                            rml_oob_queued_progress,
                            NULL);
 

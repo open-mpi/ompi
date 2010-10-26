@@ -47,46 +47,47 @@
 
 #include "opal/mca/event/event.h"
 
-static int  opal_event_inited = 0;
-static bool opal_event_enabled = false;
-static struct event_base *current_base = NULL;
-
 static void constructor(opal_event_t *ev);
 static void destructor(opal_event_t *ev);
+static void construct_base(opal_event_base_t *evbase);
+static void destruct_base(opal_event_base_t *evbase);
 static int init(void);
 static int finalize(void);
 static void set_debug_output(bool output);
-static int enable(void);
-static int disable(void);
-static int restart(void);
-static int set(opal_event_t *ev, int fd, short events,
+static int set(opal_event_base_t *evbase,
+               opal_event_t *ev, int fd, short events,
                opal_event_callback_fn_t cbfunc, void *arg);
 static int add(opal_event_t *ev, const struct timeval *tv);
 static int del(opal_event_t *ev);
 static int get_signal(opal_event_t *ev);
-static int dispatch(void);
-static opal_event_t* module_evtimer_new(opal_event_callback_fn_t cbfunc, void *cbdata);
+static int dispatch(opal_event_base_t *evbase);
+static opal_event_t* module_evtimer_new(opal_event_base_t *evbase,
+                                        opal_event_callback_fn_t cbfunc,
+                                        void *cbdata);
 static int module_evtimer_add(opal_event_t *ev, const struct timeval *tv);
-static void module_evtimer_set(opal_event_t *ev, opal_event_callback_fn_t cbfunc, void *cbdata);
+static void module_evtimer_set(opal_event_base_t *evbase,
+                               opal_event_t *ev,
+                               opal_event_callback_fn_t cbfunc, void *cbdata);
 static int module_evtimer_del(opal_event_t *ev);
 static int module_evtimer_pending(opal_event_t *ev, struct timeval *tv);
 static int module_evtimer_initialized(opal_event_t *ev);
 static int module_signal_add(opal_event_t *ev, struct timeval *tv);
-static int module_signal_set(opal_event_t *ev, int fd, opal_event_callback_fn_t cbfunc, void *cbdata);
+static int module_signal_set(opal_event_base_t *evbase,
+                             opal_event_t *ev, int fd,
+                             opal_event_callback_fn_t cbfunc, void *cbdata);
 static int module_signal_del(opal_event_t *ev);
 static int module_signal_pending(opal_event_t *ev, struct timeval *tv);
 static int module_signal_initialized(opal_event_t *ev);
-static int loop(int flags);
+static int loop(opal_event_base_t *evbase, int flags);
 
 const opal_event_module_t opal_event_libevent207 = {
     constructor,
     destructor,
+    construct_base,
+    destruct_base,
     init,
     finalize,
     set_debug_output,
-    enable,
-    disable,
-    restart,
     set,
     add,
     del,
@@ -156,6 +157,7 @@ static const struct eventop *eventops[] = {
 };
 
 static int debug_output = -1;
+static struct event_config *config=NULL;
 
 static void constructor(opal_event_t *ev)
 {
@@ -166,16 +168,34 @@ static void constructor(opal_event_t *ev)
 static void destructor(opal_event_t *ev)
 {
     if (NULL != ev->event) {
-        free(ev->event);
+        event_free(ev->event);
+    }
+}
+
+static void construct_base(opal_event_base_t *evbase)
+{
+    struct event_base *base;
+
+    base = event_base_new_with_config(config);
+    if (NULL == base) {
+        /* there is no backend method that does what we want */
+        opal_output(0, "No event method available");
+        evbase->base = NULL;
+        return;
+    }
+    evbase->base = (void*)base;
+}
+
+static void destruct_base(opal_event_base_t *evbase)
+{
+    if (NULL != evbase->base) {
+        event_base_free(evbase->base);
+        evbase->base = NULL;
     }
 }
 
 static int init(void)
 {
-    if(opal_event_inited++ != 0) {
-        return OPAL_SUCCESS;
-    }
-
     if (4 < opal_output_get_verbosity(opal_event_base_output)) {
         debug_output = opal_output_open(NULL);
         event_enable_debug_mode();
@@ -209,7 +229,6 @@ static int init(void)
      * - ...?
      */
     {
-        struct event_config *config;
         char* event_module_include=NULL;
         char **modules=NULL, **includes=NULL;
         bool dumpit;
@@ -283,17 +302,6 @@ static int init(void)
         }
         opal_argv_free(includes);
         opal_argv_free(modules);
-
-        current_base = event_base_new_with_config(config);
-        if (NULL == current_base) {
-            /* there is no backend method that does what we want */
-            opal_output(0, "No event method available");
-            event_config_free(config);
-            return OPAL_ERR_FATAL;
-        }
-        event_config_free(config);
-
-        enable();
     }
 
     return OPAL_SUCCESS;
@@ -301,11 +309,6 @@ static int init(void)
 
 static int finalize(void)
 {
-    OPAL_OUTPUT((debug_output, "event: finalized event library"));
-
-    disable();
-    opal_event_inited--;
-
     return OPAL_SUCCESS;
 }
 
@@ -314,34 +317,12 @@ static void set_debug_output(bool output)
     event_set_debug_output(output);
 }
 
-static int enable(void)
-{
-    OPAL_OUTPUT((debug_output, "event: event library enabled"));
-
-    opal_event_enabled = true;
-    return OPAL_SUCCESS;
-}
-
-
-static int disable(void)
-{
-    OPAL_OUTPUT((debug_output, "event: event library disabled"));
-
-    opal_event_enabled = false;
-    return OPAL_SUCCESS;
-}
-
-static int restart(void)
-{
-	enable();
-	return (OPAL_SUCCESS);
-}
-
-static int set(opal_event_t *ev, int fd, short events,
+static int set(opal_event_base_t *evbase,
+               opal_event_t *ev, int fd, short events,
                opal_event_callback_fn_t cbfunc, void *arg)
 {
     OPAL_OUTPUT((debug_output, "event: event set called"));
-    return event_assign(ev->event, current_base, fd, events, cbfunc, arg);
+    return event_assign(ev->event, evbase->base, fd, events, cbfunc, arg);
 }
 
 static int add(opal_event_t *ev, const struct timeval *tv)
@@ -358,12 +339,13 @@ int del(opal_event_t *ev)
 
 
 /****    TIMER APIs    ****/
-static opal_event_t* module_evtimer_new(opal_event_callback_fn_t cbfunc, void *cbdata)
+static opal_event_t* module_evtimer_new(opal_event_base_t *evbase,
+                                        opal_event_callback_fn_t cbfunc, void *cbdata)
 {
     opal_event_t *tmp;
 
     tmp = OBJ_NEW(opal_event_t);
-    event_assign(tmp->event, current_base, -1, 0, cbfunc, cbdata);
+    event_assign(tmp->event, evbase->base, -1, 0, cbfunc, cbdata);
 
     OPAL_OUTPUT((debug_output, "event: timer event created"));
     return tmp;
@@ -375,10 +357,12 @@ static int module_evtimer_add(opal_event_t *ev, const struct timeval *tv)
     return event_add(ev->event, tv);
 }
 
-static void module_evtimer_set(opal_event_t *ev, opal_event_callback_fn_t cbfunc, void *cbdata)
+static void module_evtimer_set(opal_event_base_t *evbase,
+                               opal_event_t *ev,
+                               opal_event_callback_fn_t cbfunc, void *cbdata)
 {
     OPAL_OUTPUT((debug_output, "event: timer event set"));
-    event_assign(ev->event, current_base, -1, 0, cbfunc, cbdata);
+    event_assign(ev->event, evbase->base, -1, 0, cbfunc, cbdata);
 }
 
 static int module_evtimer_del(opal_event_t *ev)
@@ -405,10 +389,11 @@ static int module_signal_add(opal_event_t *ev, struct timeval *tv)
     return event_add(ev->event, tv);
 }
 
-static int module_signal_set(opal_event_t *ev, int fd, opal_event_callback_fn_t cbfunc, void *cbdata)
+static int module_signal_set(opal_event_base_t *evbase,
+                             opal_event_t *ev, int fd, opal_event_callback_fn_t cbfunc, void *cbdata)
 {
     OPAL_OUTPUT((debug_output, "event: signal event set"));
-    return event_assign(ev->event, current_base, fd, EV_SIGNAL|EV_PERSIST, cbfunc, cbdata);
+    return event_assign(ev->event, evbase->base, fd, EV_SIGNAL|EV_PERSIST, cbfunc, cbdata);
 }
 
 static int module_signal_del(opal_event_t *ev)
@@ -432,19 +417,19 @@ static int get_signal(opal_event_t *ev)
     return event_get_signal(ev->event);
 }
 
-static int loop(int flags)
+static int loop(opal_event_base_t *evbase, int flags)
 {
     int rc;
     OPAL_OUTPUT((debug_output, "event: looping event library"));
-    rc = event_base_loop(current_base, flags);
+    rc = event_base_loop(evbase->base, flags);
 
     assert(rc >= 0);
     return rc;
 }
 
-static int dispatch(void)
+static int dispatch(opal_event_base_t *evbase)
 {
     OPAL_OUTPUT((debug_output, "event: dispatching event library"));
-    return event_base_loop(current_base, 0);
+    return event_base_loop(evbase->base, 0);
 }
 

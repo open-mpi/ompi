@@ -149,7 +149,7 @@ static int rte_init(void)
 #ifndef __WINDOWS__
     /* setup callback for SIGPIPE */
     OBJ_CONSTRUCT(&epipe_handler, opal_event_t);
-    opal_event.signal_set(&epipe_handler, SIGPIPE,
+    opal_event.signal_set(opal_event_base, &epipe_handler, SIGPIPE,
                           epipe_signal_callback, &epipe_handler);
     opal_event.signal_add(&epipe_handler, NULL);
     /** setup callbacks for abort signals - from this point
@@ -157,30 +157,30 @@ static int rte_init(void)
      * to cleanup
      */
     OBJ_CONSTRUCT(&term_handler, opal_event_t);
-    opal_event.signal_set(&term_handler, SIGTERM,
+    opal_event.signal_set(opal_event_base, &term_handler, SIGTERM,
                           abort_signal_callback, &term_handler);
     opal_event.signal_add(&term_handler, NULL);
     OBJ_CONSTRUCT(&int_handler, opal_event_t);
-    opal_event.signal_set(&int_handler, SIGINT,
+    opal_event.signal_set(opal_event_base, &int_handler, SIGINT,
                           abort_signal_callback, &int_handler);
     opal_event.signal_add(&int_handler, NULL);
 
     /** setup callbacks for signals we should foward */
     OBJ_CONSTRUCT(&sigusr1_handler, opal_event_t);
-    opal_event.signal_set(&sigusr1_handler, SIGUSR1,
+    opal_event.signal_set(opal_event_base, &sigusr1_handler, SIGUSR1,
                           signal_forward_callback, &sigusr1_handler);
     opal_event.signal_add(&sigusr1_handler, NULL);
     OBJ_CONSTRUCT(&sigusr2_handler, opal_event_t);
-    opal_event.signal_set(&sigusr2_handler, SIGUSR2,
+    opal_event.signal_set(opal_event_base, &sigusr2_handler, SIGUSR2,
                           signal_forward_callback, &sigusr2_handler);
     opal_event.signal_add(&sigusr2_handler, NULL);
     if (orte_forward_job_control) {
         OBJ_CONSTRUCT(&sigtstp_handler, opal_event_t);
-        opal_event.signal_set(&sigtstp_handler, SIGTSTP,
+        opal_event.signal_set(opal_event_base, &sigtstp_handler, SIGTSTP,
                               signal_forward_callback, &sigtstp_handler);
         opal_event.signal_add(&sigtstp_handler, NULL);
         OBJ_CONSTRUCT(&sigcont_handler, opal_event_t);
-        opal_event.signal_set(&sigcont_handler, SIGCONT,
+        opal_event.signal_set(opal_event_base, &sigcont_handler, SIGCONT,
                               signal_forward_callback, &sigcont_handler);
         opal_event.signal_add(&sigcont_handler, NULL);
     }

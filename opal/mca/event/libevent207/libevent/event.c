@@ -2110,8 +2110,11 @@ event_del(struct event *ev)
 	int res;
 
 	if (EVUTIL_FAILURE_CHECK(!ev->ev_base)) {
+            return 0;
+#if 0
 		event_warnx("%s: event has no event_base set.", __func__);
 		return -1;
+#endif
 	}
 
 	EVBASE_ACQUIRE_LOCK(ev->ev_base, th_base_lock);

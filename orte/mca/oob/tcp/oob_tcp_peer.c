@@ -106,7 +106,7 @@ static void mca_oob_tcp_peer_construct(mca_oob_tcp_peer_t* peer)
     peer->peer_sd = -1;
     peer->peer_current_af = AF_UNSPEC;
     OBJ_CONSTRUCT(&peer->peer_timer_event, opal_event_t);
-    opal_event.evtimer_set(&peer->peer_timer_event, mca_oob_tcp_peer_timer_handler, peer);
+    opal_event.evtimer_set(opal_event_base, &peer->peer_timer_event, mca_oob_tcp_peer_timer_handler, peer);
 }
 
 /*
@@ -139,13 +139,13 @@ static int mca_oob_tcp_peer_event_init(mca_oob_tcp_peer_t* peer)
     OBJ_CONSTRUCT(&peer->peer_send_event, opal_event_t);
 
     if (peer->peer_sd >= 0) {
-        opal_event.set(
+        opal_event.set(opal_event_base,
                        &peer->peer_recv_event,
                        peer->peer_sd,
                        OPAL_EV_READ|OPAL_EV_PERSIST,
                        mca_oob_tcp_peer_recv_handler,
                        peer);
-        opal_event.set(
+        opal_event.set(opal_event_base,
                        &peer->peer_send_event,
                        peer->peer_sd,
                        OPAL_EV_WRITE|OPAL_EV_PERSIST,

@@ -430,7 +430,7 @@ static int plm_tmd_launch_job(orte_job_t *jdata)
         launched++;
 
         /* Allow some progress to occur */
-        opal_event.loop(OPAL_EVLOOP_NONBLOCK);
+        opal_event.loop(opal_event_base, OPAL_EVLOOP_NONBLOCK);
     }
 
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
@@ -640,7 +640,7 @@ int plm_tmd_terminate_orteds(void)
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                 /* give system a little time to progress */
                 timer_fired = false;
-                opal_evtimer_add(quicktime, &quicktimeval);
+                opal_event.evtimer_add(quicktime, &quicktimeval);
                 ORTE_PROGRESSED_WAIT(timer_fired, 0, 1);
                 continue;
             }
@@ -658,7 +658,7 @@ int plm_tmd_terminate_orteds(void)
                         }
                         /* give system a little time to progress */
                         timer_fired = false;
-                        opal_evtimer_add(quicktime, &quicktimeval);
+                        opal_event.evtimer_add(quicktime, &quicktimeval);
                         ORTE_PROGRESSED_WAIT(timer_fired, 0, 1);
                     }
                     if (0 != local_err) {

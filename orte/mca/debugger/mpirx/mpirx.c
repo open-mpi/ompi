@@ -156,7 +156,7 @@ void init_before_spawn(orte_job_t *jdata)
                                 attach_fifo);
             free(attach_fifo);
             fifo_active = true;
-            opal_event.set(&attach, attach_fd, OPAL_EV_READ, attach_debugger, NULL);
+            opal_event.set(opal_event_base, &attach, attach_fd, OPAL_EV_READ, attach_debugger, NULL);
             opal_event.add(&attach, 0);
         }
         return;
