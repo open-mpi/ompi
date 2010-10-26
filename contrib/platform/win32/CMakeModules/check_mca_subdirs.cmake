@@ -37,7 +37,7 @@ INCLUDE(list_subdirs)
 #
 #       required_check:     a CMake module has to be run to check the libraries/headers
 #                           that needed by this component. The check might return two 
-#                           variables: RESULT_INCLUDE_PATH and RESULT_LINK_LIBRARIES. 
+#                           variables: RESULT_INCLUDE_PATH, RESULT_LINK_LIBRARIES and RESULT_SOURCE_FILES. 
 #                           RESULT_INCLUDE_PATH is handled in this macro, and RESULT_LINK_LIBRARIES
 #                           is handled in upper layer.
 #
@@ -122,21 +122,6 @@ FOREACH (MCA_FRAMEWORK ${MCA_FRAMEWORK_LIST})
 
         SET(COMPONENT_FILES "")
         SET(CURRENT_PATH ${PROJECT_SOURCE_DIR}/mca/${MCA_FRAMEWORK}/${MCA_COMPONENT})
-        FILE(GLOB_RECURSE COMPONENT_FILES "${CURRENT_PATH}/*.C" "${CURRENT_PATH}/*.h"
-          "${CURRENT_PATH}/*.cc" "${CURRENT_PATH}/*.cpp")
-
-        #check exclude list
-        SET(EXCLUDE_LIST "")
-        FILE(STRINGS ${CURRENT_PATH}/.windows EXCLUDE_LIST REGEX "^exclude_list=")
-
-        IF(NOT EXCLUDE_LIST STREQUAL "")
-          STRING(REPLACE "exclude_list=" "" EXCLUDE_LIST ${EXCLUDE_LIST})
-        ENDIF(NOT EXCLUDE_LIST STREQUAL "")
-
-        # remove the files in the exclude list
-        FOREACH(FILE ${EXCLUDE_LIST})
-          LIST(REMOVE_ITEM COMPONENT_FILES "${CURRENT_PATH}/${FILE}")
-        ENDFOREACH(FILE)
 
         # by default, build this component.
         SET(BUILD_COMPONENT TRUE)
@@ -163,6 +148,24 @@ FOREACH (MCA_FRAMEWORK ${MCA_FRAMEWORK_LIST})
         ENDIF(NOT REQUIRED_CHECK STREQUAL "")
 
         IF(BUILD_COMPONENT)
+
+          IF(COMPONENT_FILES STREQUAL "")
+            FILE(GLOB_RECURSE COMPONENT_FILES "${CURRENT_PATH}/*.C" "${CURRENT_PATH}/*.h"
+              "${CURRENT_PATH}/*.cc" "${CURRENT_PATH}/*.cpp")
+
+            #check exclude list
+            SET(EXCLUDE_LIST "")
+            FILE(STRINGS ${CURRENT_PATH}/.windows EXCLUDE_LIST REGEX "^exclude_list=")
+
+            IF(NOT EXCLUDE_LIST STREQUAL "")
+              STRING(REPLACE "exclude_list=" "" EXCLUDE_LIST ${EXCLUDE_LIST})
+            ENDIF(NOT EXCLUDE_LIST STREQUAL "")
+
+            # remove the files in the exclude list
+            FOREACH(FILE ${EXCLUDE_LIST})
+              LIST(REMOVE_ITEM COMPONENT_FILES "${CURRENT_PATH}/${FILE}")
+            ENDFOREACH(FILE)
+          ENDIF(COMPONENT_FILES STREQUAL "")
 
           # check the library build type
           FILE(STRINGS ${CURRENT_PATH}/.windows

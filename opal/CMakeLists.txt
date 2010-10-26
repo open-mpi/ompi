@@ -32,14 +32,6 @@ IF(OPAL_WANT_LIBLTDL)
   INCLUDE(find_libltdl)
 ENDIF(OPAL_WANT_LIBLTDL)
 
-# Add source files
-
-# Windows event files
-INCLUDE (event/CMakeLists.txt)
-FOREACH (FILE ${EVENT_FILES})
-  SET (OPAL_EVENT_FILES ${OPAL_EVENT_FILES} ${PROJECT_SOURCE_DIR}/event/${FILE})
-ENDFOREACH (FILE)
-SOURCE_GROUP(event FILES ${OPAL_EVENT_FILES})
 
 # Include headers.
 FILE(GLOB OPAL_INCLUDE_FILES "include/*.h" "include/opal/*.h" "include/opal/sys/win32/*.h")
