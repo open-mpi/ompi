@@ -144,7 +144,7 @@ int ompi_mpi_finalize(void)
     ompi_mpi_finalized = true;
 
 #if OMPI_ENABLE_PROGRESS_THREADS == 0
-    opal_progress_set_event_flag(OPAL_EVLOOP_ONELOOP);
+    opal_progress_set_event_flag(OPAL_EVLOOP_ONCE | OPAL_EVLOOP_NONBLOCK);
 #endif
 
     /* Redo ORTE calling opal_progress_event_users_increment() during
