@@ -416,7 +416,7 @@ mca_common_sm_posix_init(ompi_proc_t **sorted_procs,
         if (1 == sm_info.id)
         {
             n_local_procs = (int)num_local_procs;
-            while (n_local_procs > map->super.module_seg->seg_att);
+            while (n_local_procs > map->super.module_seg->seg_att)
             {
                 opal_atomic_rmb();
             }
