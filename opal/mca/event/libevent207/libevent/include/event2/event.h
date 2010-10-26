@@ -308,9 +308,6 @@ int event_base_set(struct event_base *, struct event *);
 /*@{*/
 #define EVLOOP_ONCE	0x01	/**< Block at most once. */
 #define EVLOOP_NONBLOCK	0x02	/**< Do not block. */
-    /* run once through the loop, but do have the default timeout.
-     *        Need to be both something special *AND* EVLOOP_ONCE */
-#define EVLOOP_ONELOOP     0x05
 /*@}*/
 
 /**

@@ -1557,9 +1557,9 @@ event_base_loop(struct event_base *base, int flags)
 
 		if (N_ACTIVE_CALLBACKS(base)) {
 			event_process_active(base);
-			if (!base->event_count_active && (flags & (EVLOOP_ONCE|EVLOOP_ONELOOP)))
+			if (!base->event_count_active && (flags & EVLOOP_ONCE))
 				done = 1;
-                } else if (flags & (EVLOOP_NONBLOCK|EVLOOP_ONELOOP))
+                } else if (flags & EVLOOP_NONBLOCK)
 			done = 1;
 	}
 	event_debug(("%s: asked to terminate loop.", __func__));

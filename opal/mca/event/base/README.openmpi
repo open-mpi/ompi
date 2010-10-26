@@ -66,16 +66,3 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
    This isn't critical, but it makes the compiler output MUCH
    prettier (and consistent with OMPI).
-
-7. Edit two files to add a new evloop option that OMPI uses
-   and doesn't exist in libevent:
-
-   libevent/event.c: change event_base_loop in two places by
-   adding EVLOOP_ONELOOP to the conditional:
-
-       if (!base->event_count_active && (flags & (EVLOOP_ONCE|EVLOOP_ONELOOP)))
-       .....
-       } else if (flags & (EVLOOP_NONBLOCK|EVLOOP_ONELOOP))
-
-   libevent/include/event2/event.h:
-       #define EVLOOP_ONELOOP 0x05

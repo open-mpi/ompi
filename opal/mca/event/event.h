@@ -56,10 +56,6 @@ typedef unsigned short u_short;
 
 #define OPAL_EVLOOP_ONCE     0x01    /**< Block at most once. */
 #define OPAL_EVLOOP_NONBLOCK 0x02    /**< Do not block. */
-    /* run once through the loop, but do have the default timeout.
-     * Need to be both something special *AND* OPAL_EVLOOP_ONCE
-     */
-#define OPAL_EVLOOP_ONELOOP  0x05
 
 /* selected module will fill this typedef in with their
  * own definition of ev_struct
