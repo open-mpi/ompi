@@ -251,7 +251,7 @@ main(int argc, char *argv[])
     if (OPAL_SUCCESS != ret || help) {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(&cmd_line);
-        orte_show_help("help-orte-top.txt", "orte-top:usage", true, args);
+        orte_show_help("help-orte-top.txt", "orte-top:usage", true, "orte-top", args);
         free(args);
         return ORTE_ERROR;
     }
