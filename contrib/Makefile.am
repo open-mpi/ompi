@@ -101,6 +101,7 @@ EXTRA_DIST = \
         platform/win32/CMakeModules/ompi_check_Microsoft.cmake \
         platform/win32/CMakeModules/ompi_configure.cmake \
         platform/win32/CMakeModules/ompi_find_type.cmake \
+        platform/win32/CMakeModules/opal_event_config.cmake \
         platform/win32/CMakeModules/opal_get_version.cmake \
         platform/win32/CMakeModules/opal_functions.cmake \
         platform/win32/CMakeModules/setup_f77.cmake \
