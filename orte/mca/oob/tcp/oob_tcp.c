@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Los Alamos National Security, LLC. 
+ * Copyright (c) 2006-2010 Los Alamos National Security, LLC. 
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -1394,6 +1394,8 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority)
 
     /* intialize event library */
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_recv_event, opal_event_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_listen_thread_event, opal_event_t);
+
 #if OPAL_WANT_IPV6
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp6_recv_event, opal_event_t);
 #endif  /* OPAL_WANT_IPV6 */
@@ -1679,6 +1681,7 @@ int mca_oob_tcp_fini(void)
         mca_oob_tcp_component.tcp_shutdown = true;
         opal_thread_join(&mca_oob_tcp_component.tcp_listen_thread, &data);
         opal_event.del(&mca_oob_tcp_component.tcp_listen_thread_event);
+	OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_listen_thread_event);
     } else {
         if (mca_oob_tcp_component.tcp_listen_sd >= 0) {
             opal_event.del(&mca_oob_tcp_component.tcp_recv_event);
