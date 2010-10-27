@@ -51,6 +51,10 @@ FILE(WRITE ${PROJECT_BINARY_DIR}/mca/event/libevent207/libevent/include/config.h
     ${CURRENT_PATH}/libevent/signal.c
     ${CURRENT_PATH}/libevent/event_tagging.c
   )
+
+  OMPI_DEF(OPAL_HAVE_WORKING_EVENTOPS 1 
+    "Whether our event component has working event operations or not if not, then assumedly it only has working timers and signals)." 0 1)
+
 ELSE(WIN32)
   SET(RESULT_SOURCE_FILES
     ${RESULT_SOURCE_FILES}

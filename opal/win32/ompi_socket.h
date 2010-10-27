@@ -17,12 +17,10 @@
 #error This file is supposed to be included only from win_compat.h
 #endif  /* OMPI_WIN_COMPAT_H */
 
-#define ompi_socket_t intptr_t
-#define ompi_socklen_t int
 
 BEGIN_C_DECLS
 
-OPAL_DECLSPEC int create_socketpair(int d, int type, int protocol, ompi_socket_t sv[2]);
+OPAL_DECLSPEC int create_socketpair(int d, int type, int protocol, int sv[2]);
 
 END_C_DECLS
 
