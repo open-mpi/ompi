@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -66,14 +67,6 @@
 
 #ifdef HAVE_STDARG_H
 #include <stdarg.h>
-#endif
-
-/*
- * For C++, we should not need the file, anyhow.
- * Circumentvent problems in C++ compilers.
- */
-#if defined(HAVE_STDBOOL_H) && !(defined(c_plusplus) || defined(__cplusplus))
-#include <stdbool.h>
 #endif
 
 #include "opal/class/opal_object.h"
