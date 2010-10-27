@@ -117,6 +117,7 @@ void mca_btl_openib_handle_endpoint_error(mca_btl_openib_module_t *openib_btl,
         if (MCA_BTL_IB_FAILED != endpoint->endpoint_state) {
             endpoint->endpoint_state = MCA_BTL_IB_FAILED;
             mca_btl_openib_endpoint_notify(endpoint, MCA_BTL_OPENIB_CONTROL_EP_BROKEN, 0);
+            error_out_all_pending_frags(endpoint, &openib_btl->super);
         }
         opal_output_verbose(60, mca_btl_openib_component.verbose_failover,
                             "MCA_BTL_OPENIG_FRAG=%d, "
@@ -256,6 +257,7 @@ void mca_btl_openib_handle_btl_error(mca_btl_openib_module_t* openib_btl) {
             if (MCA_BTL_IB_CONNECTED == endpoint->endpoint_state) {
                 mca_btl_openib_endpoint_notify(endpoint, MCA_BTL_OPENIB_CONTROL_EP_BROKEN, 0);
                 endpoint->endpoint_state = MCA_BTL_IB_FAILED;
+                error_out_all_pending_frags(endpoint, &openib_btl->super);
             }
         }
     }
