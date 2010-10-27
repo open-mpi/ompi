@@ -407,6 +407,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
+#if !ORTE_DISABLE_FULL_SUPPORT
     /* If desired, send a notify message */
     if (ompi_notify_init_finalize) {
         orte_notifier.log(ORTE_NOTIFIER_NOTICE,
@@ -415,6 +416,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                           orte_process_info.nodename,
                           orte_process_info.pid);
     }
+#endif
 
     /* if it hasn't already been done, setup process affinity. 
      * First check to see if a slot list was
@@ -967,6 +969,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                                (ompistop.tv_usec - ompistart.tv_usec)));
     }
 
+#if !ORTE_DISABLE_FULL_SUPPORT
     /* If desired, send a notifier message that we've finished MPI_INIT */
     if (ompi_notify_init_finalize) {
         orte_notifier.log(ORTE_NOTIFIER_NOTICE,
@@ -975,6 +978,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                           orte_process_info.nodename,
                           orte_process_info.pid);
     }
+#endif
 
     return MPI_SUCCESS;
 }

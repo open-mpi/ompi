@@ -56,7 +56,11 @@ int orte_grpcomm_base_open(void)
     orte_grpcomm_base.profile_fd = -1;
     
     /* define the default daemon collective fn */
+#if ORTE_DISABLE_FULL_SUPPORT
+    orte_grpcomm_base.daemon_coll = NULL;
+#else
     orte_grpcomm_base.daemon_coll = orte_grpcomm_base_daemon_collective;
+#endif
     
     /* Open up all available components */
 

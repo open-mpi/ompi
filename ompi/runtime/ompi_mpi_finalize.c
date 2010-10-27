@@ -119,6 +119,7 @@ int ompi_mpi_finalize(void)
      */
     (void)mca_pml_base_bsend_detach(NULL, NULL);
 
+#if !ORTE_DISABLE_FULL_SUPPORT    
     /* If desired, send a notify message */
     if (ompi_notify_init_finalize) {
         orte_notifier.log(ORTE_NOTIFIER_NOTICE,
@@ -127,6 +128,7 @@ int ompi_mpi_finalize(void)
                           orte_process_info.nodename,
                           orte_process_info.pid);
     }
+#endif
 
     /* Per MPI-2:4.8, we have to free MPI_COMM_SELF before doing
        anything else in MPI_FINALIZE (to include setting up such that
@@ -411,7 +413,8 @@ int ompi_mpi_finalize(void)
     if (NULL != ompi_mpi_show_mca_params_file) {
         free(ompi_mpi_show_mca_params_file);
     }
-    
+
+#if !ORTE_DISABLE_FULL_SUPPORT    
     /* If desired, send a notify message */
     if (ompi_notify_init_finalize) {
         orte_notifier.log(ORTE_NOTIFIER_NOTICE,
@@ -420,6 +423,7 @@ int ompi_mpi_finalize(void)
                           orte_process_info.nodename,
                           orte_process_info.pid);
     }
+#endif
 
     /* Leave the RTE */
 
