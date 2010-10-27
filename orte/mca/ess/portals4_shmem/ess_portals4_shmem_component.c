@@ -20,6 +20,9 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
+#include <portals4.h>
+#include <portals4_runtime.h>
+
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/portals4_shmem/ess_portals4_shmem.h"
 
@@ -56,6 +59,8 @@ orte_ess_base_component_t mca_ess_portals4_shmem_component = {
 int
 orte_ess_portals4_shmem_component_open(void)
 {
+    if (PTL_OK != PtlInit()) return ORTE_ERROR;
+
     return ORTE_SUCCESS;
 }
 
@@ -77,6 +82,7 @@ int orte_ess_portals4_shmem_component_query(mca_base_module_t **module, int *pri
 int
 orte_ess_portals4_shmem_component_close(void)
 {
+    PtlFini();
     return ORTE_SUCCESS;
 }
 

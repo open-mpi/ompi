@@ -29,6 +29,7 @@ int orte_ess_portals4_shmem_component_open(void);
 int orte_ess_portals4_shmem_component_close(void);
 int orte_ess_portals4_shmem_component_query(mca_base_module_t **module, int *priority);
 
+ORTE_MODULE_DECLSPEC extern orte_ess_base_component_t mca_ess_portals4_shmem_component;
 
 END_C_DECLS
 

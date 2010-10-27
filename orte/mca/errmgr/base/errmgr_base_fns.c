@@ -207,6 +207,7 @@ void orte_errmgr_base_abort(int error_code, char *fmt, ...)
     }
     va_end(arglist);
     
+#if !ORTE_DISABLE_FULL_SUPPORT
     /* if I am a daemon or the HNP... */
     if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
         /* whack my local procs */
@@ -217,7 +218,10 @@ void orte_errmgr_base_abort(int error_code, char *fmt, ...)
         /* cleanup my session directory */
         orte_session_dir_finalize(ORTE_PROC_MY_NAME);
     }
-    
+#else
+    orte_session_dir_finalize(ORTE_PROC_MY_NAME);
+#endif
+
     /* if a critical connection failed, exit without dropping a core */
     if (ORTE_ERR_CONNECTION_FAILED == OPAL_SOS_GET_ERROR_CODE(error_code)) {
         orte_ess.abort(error_code, false);

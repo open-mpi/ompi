@@ -40,8 +40,10 @@ endif
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ess_portals4_shmem_la_SOURCES = $(sources)
-mca_ess_portals4_shmem_la_LDFLAGS = -module -avoid-version
+mca_ess_portals4_shmem_la_LIBADD = $(ess_portals4_shmem_LIBS)
+mca_ess_portals4_shmem_la_LDFLAGS = -module -avoid-version $(ess_portals4_shmem_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_ess_portals4_shmem_la_SOURCES =$(sources)
-libmca_ess_portals4_shmem_la_LDFLAGS = -module -avoid-version
+libmca_ess_portals4_shmem_la_LIBADD = $(ess_portals4_shmem_LIBS)
+libmca_ess_portals4_shmem_la_LDFLAGS = -module -avoid-version $(ess_portals4_shmem_LDFLAGS)
