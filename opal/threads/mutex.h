@@ -13,6 +13,7 @@
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2007      Voltaire. All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -25,14 +26,6 @@
 #define  OPAL_MUTEX_H 1
 
 #include "opal_config.h"
-
-/*
- * Circumentvent problems in C++ compilers.
- * For C++, we should not need the file, anyhow.
- */
-#if defined(HAVE_STDBOOL_H) && !(defined(c_plusplus) || defined(__cplusplus))
-#include <stdbool.h>
-#endif
 
 #if OPAL_HAVE_THREAD_SUPPORT
 #include "opal/sys/atomic.h"

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  *
  * The OPAL interface into the Libevent library. Contains a number
  * of renamings for use inside OPAL, and some customized wrapper functions
@@ -25,9 +26,6 @@
 #endif
 #ifdef HAVE_STDARG_H
 #include <stdarg.h>
-#endif
-#ifdef HAVE_STDBOOL_H
-#include <stdbool.h>
 #endif
 
 #include "opal/mca/mca.h"
@@ -73,9 +71,7 @@ typedef struct {
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_event_base_t);
 
 #define OPAL_TIMEOUT_DEFAULT	{1, 0}
-
 typedef void (*opal_event_callback_fn_t)(int, short, void *);
-
 typedef int (*opal_event_base_module_init_fn_t)(void);
 typedef int (*opal_event_base_module_fini_fn_t)(void);
 typedef void (*opal_event_base_module_set_debug_output_fn_t)(bool output);
