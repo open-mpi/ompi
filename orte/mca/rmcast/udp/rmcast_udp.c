@@ -796,8 +796,8 @@ static int setup_channel(rmcast_base_channel_t *chan, uint8_t direction)
                              "%s setup:channel activating recv event on fd %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),(int)chan->recv));
         
-        opal_event.set(opal_event_base, &chan->recv_ev, chan->recv, OPAL_EV_READ|OPAL_EV_PERSIST, recv_handler, chan);
-        opal_event.add(&chan->recv_ev, 0);
+        opal_event_set(opal_event_base, &chan->recv_ev, chan->recv, OPAL_EV_READ|OPAL_EV_PERSIST, recv_handler, chan);
+        opal_event_add(&chan->recv_ev, 0);
     }
 
     return ORTE_SUCCESS;

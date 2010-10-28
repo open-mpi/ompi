@@ -75,7 +75,7 @@
 static void message_event_destructor(orte_message_event_t *ev)
 {
     if (NULL != ev->ev) {
-        OBJ_RELEASE(ev->ev);
+        free(ev->ev);
     }
     if (NULL != ev->buffer) {
         OBJ_RELEASE(ev->buffer);
@@ -89,7 +89,7 @@ static void message_event_destructor(orte_message_event_t *ev)
 
 static void message_event_constructor(orte_message_event_t *ev)
 {
-    ev->ev = OBJ_NEW(opal_event_t);
+    ev->ev =  (opal_event_t *) malloc(sizeof(opal_event_t));
     ev->buffer = OBJ_NEW(opal_buffer_t);
 #if OPAL_ENABLE_DEBUG
     ev->file = NULL;
@@ -104,13 +104,13 @@ OBJ_CLASS_INSTANCE(orte_message_event_t,
 static void notify_event_destructor(orte_notify_event_t *ev) 
 { 
     if (NULL != ev->ev) { 
-        OBJ_RELEASE(ev->ev); 
+        free(ev->ev); 
     } 
 } 
  
 static void notify_event_constructor(orte_notify_event_t *ev) 
 { 
-    ev->ev = OBJ_NEW(opal_event_t); 
+    ev->ev =  (opal_event_t *) malloc(sizeof(opal_event_t)); 
 } 
 OBJ_CLASS_INSTANCE(orte_notify_event_t, 
                    opal_object_t, 
@@ -255,13 +255,13 @@ static void internal_waitpid_callback(int fd, short event, void *arg);
 void
 orte_wait_disable(void)
 {
-    opal_event.del(&handler);
+    opal_event_del(&handler);
 }
 
 void
 orte_wait_enable(void)
 {
-    opal_event.add(&handler, NULL);
+    opal_event_add(&handler, NULL);
 }
 
 int
@@ -271,13 +271,12 @@ orte_wait_init(void)
     OBJ_CONSTRUCT(&pending_pids, opal_list_t);
     OBJ_CONSTRUCT(&registered_cb, opal_list_t);
 
-    OBJ_CONSTRUCT(&handler, opal_event_t);
-    opal_event.set(opal_event_base,
+    opal_event_set(opal_event_base,
                    &handler, SIGCHLD, OPAL_EV_SIGNAL|OPAL_EV_PERSIST,
                    orte_wait_signal_callback,
                    &handler);
 
-    opal_event.add(&handler, NULL);
+    opal_event_add(&handler, NULL);
     return ORTE_SUCCESS;
 }
 
@@ -288,8 +287,7 @@ orte_wait_finalize(void)
     opal_list_item_t *item;
 
     OPAL_THREAD_LOCK(&mutex);
-    opal_event.del(&handler);
-    OBJ_DESTRUCT(&handler);
+    opal_event_del(&handler);
 
     /* clear out the lists */
     while (NULL != (item = opal_list_remove_first(&pending_pids))) {
@@ -385,7 +383,7 @@ orte_waitpid(pid_t wpid, int *status, int options)
 #if OPAL_HAVE_POSIX_THREADS && ORTE_ENABLE_PROGRESS_THREADS
             if (opal_using_threads()) {
                 opal_mutex_unlock(&mutex);
-                opal_event.loop(opal_event_base, OPAL_EVLOOP_NONBLOCK);
+                opal_event_loop(opal_event_base, OPAL_EVLOOP_NONBLOCK);
                 opal_mutex_lock(&mutex);
             }
 #endif            
@@ -410,7 +408,7 @@ orte_waitpid(pid_t wpid, int *status, int options)
                for long. */
 
             if (!OPAL_HAVE_THREAD_SUPPORT) {
-                opal_event.loop(opal_event_base, OPAL_EVLOOP_NONBLOCK);
+                opal_event_loop(opal_event_base, OPAL_EVLOOP_NONBLOCK);
             }
         }
 
@@ -516,16 +514,16 @@ int orte_wait_event(opal_event_t **event, orte_trigger_event_t *trig,
     trig->name = strdup(trigger_name);
     
     /* create the event */
-    *event = OBJ_NEW(opal_event_t);
+    *event =  (opal_event_t *) malloc(sizeof(opal_event_t));
     
     /* pass back the write end of the pipe */
     trig->channel = p[1];
     
     /* define the event to fire when someone writes to the pipe */
-    opal_event.set(opal_event_base, *event, p[0], OPAL_EV_READ, cbfunc, trig);
+    opal_event_set(opal_event_base, *event, p[0], OPAL_EV_READ, cbfunc, trig);
     
     /* Add it to the active events, without a timeout */
-    opal_event.add(*event, NULL);
+    opal_event_add(*event, NULL);
 
     /* all done */
     return ORTE_SUCCESS;
@@ -744,8 +742,7 @@ internal_waitpid(pid_t pid, int *status, int options)
     tv.tv_sec = 0;
     tv.tv_usec = 0;
 
-    OBJ_CONSTRUCT(&ev, opal_event_t);
-    opal_event.evtimer_set(opal_event_base, &ev, internal_waitpid_callback, &data);
+    opal_event_evtimer_set(opal_event_base, &ev, internal_waitpid_callback, &data);
     opal_evtimer_add(&ev, &tv);
 
     while (data.done == false) {
@@ -1133,10 +1130,10 @@ int orte_wait_event(opal_event_t **event, orte_trigger_event_t *trig,
     trig->channel = p[1];
     
     /* define the event to fire when someone writes to the pipe */
-    opal_event.set(opal_event_base, *event, p[0], OPAL_EV_READ, cbfunc, NULL);
+    opal_event_set(opal_event_base, *event, p[0], OPAL_EV_READ, cbfunc, NULL);
     
 	/* Add it to the active events, without a timeout */
-	opal_event.add(*event, NULL);
+	opal_event_add(*event, NULL);
 
     /* all done */
     return ORTE_SUCCESS;

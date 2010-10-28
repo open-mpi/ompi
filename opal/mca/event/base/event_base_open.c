@@ -15,6 +15,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
+
 #include "opal/mca/event/event.h"
 #include "opal/mca/event/base/base.h"
 
@@ -31,17 +32,12 @@
  * Globals
  */
 int opal_event_base_output = -1;
-opal_event_module_t opal_event = {0};
 opal_list_t opal_event_components;
 opal_event_base_t *opal_event_base=NULL;
-/*
- * Only ONE event component can compile at any time, so
- * just open that one - it will be statically built
- */
+
 int opal_event_base_open(void)
 {
     int value, rc = OPAL_SUCCESS;
-    mca_base_component_list_item_t *cli;
         
     /* Debugging / verbose output */
     mca_base_param_reg_int_name("event", "base_verbose", 
@@ -58,72 +54,22 @@ int opal_event_base_open(void)
      * to a list
      */
     OBJ_CONSTRUCT(&opal_event_components, opal_list_t);
-    if (NULL != mca_event_base_static_components[0]) {
-        opal_event_component_t *component = 
-            (opal_event_component_t*) 
-            mca_event_base_static_components[0];
-
-        /* Save it in a global list for ompi_info */
-        cli = OBJ_NEW(mca_base_component_list_item_t);
-        cli->cli_component = mca_event_base_static_components[0];
-        opal_list_append(&opal_event_components, 
-                         &cli->super);
-
-        if (NULL != component->base_version.mca_open_component) {
-            if (OPAL_SUCCESS !=component->base_version.mca_open_component()) {
-                return OPAL_ERROR;
-            }
-        }
-
-        /* component will have done its duty, so close it */
-        if (NULL != component->base_version.mca_close_component) {
-            component->base_version.mca_close_component();
-        }
+    if (OPAL_SUCCESS !=
+        mca_base_components_open("event", 0,
+                                 mca_event_base_static_components,
+                                 &opal_event_components, true)) {
+        return OPAL_ERROR;
     }
 
-    /* Init the final module */
-    if (NULL != opal_event.init) {
-        rc = opal_event.init();
+    /* init the lib */
+    if (OPAL_SUCCESS != (rc = opal_event_init())) {
+        return rc;
     }
 
     /* get our event base */
-    opal_event_base = OBJ_NEW(opal_event_base_t);
+    if (NULL == (opal_event_base = opal_event_base_create())) {
+        rc = OPAL_ERROR;
+    }
 
     return rc;
 }
-
-/****    EVENT OBJECT    ****/
-static void ev_construct(opal_event_t *ptr)
-{
-    if (NULL != opal_event.construct) {
-        opal_event.construct(ptr);
-    }
-}
-static void ev_destruct(opal_event_t *ptr)
-{
-    if (NULL != opal_event.destruct) {
-        opal_event.destruct(ptr);
-    }
-}
-OBJ_CLASS_INSTANCE(opal_event_t,
-                   opal_object_t,
-                   ev_construct,
-                   ev_destruct);
-
-static void evbase_construct(opal_event_base_t *ptr)
-{
-    ptr->base = NULL;
-    if (NULL != opal_event.construct_base) {
-        opal_event.construct_base(ptr);
-    }
-}
-static void evbase_destruct(opal_event_base_t *ptr)
-{
-    if (NULL != opal_event.destruct_base) {
-        opal_event.destruct_base(ptr);
-    }
-}
-OBJ_CLASS_INSTANCE(opal_event_base_t,
-                   opal_object_t,
-                   evbase_construct,
-                   evbase_destruct);

@@ -217,14 +217,12 @@ main(int argc, char *argv[])
      * forward, we need to abort in a manner that allows us
      * to cleanup
      */
-    OBJ_CONSTRUCT(&term_handler, opal_event_t);
-    opal_event.signal_set(opal_event_base, &term_handler, SIGTERM,
+    opal_event_signal_set(opal_event_base, &term_handler, SIGTERM,
                           abort_exit_callback, &term_handler);
-    opal_event.signal_add(&term_handler, NULL);
-    OBJ_CONSTRUCT(&int_handler, opal_event_t);
-    opal_event.signal_set(opal_event_base, &int_handler, SIGINT,
+    opal_event_signal_add(&term_handler, NULL);
+    opal_event_signal_set(opal_event_base, &int_handler, SIGINT,
                           abort_exit_callback, &int_handler);
-    opal_event.signal_add(&int_handler, NULL);
+    opal_event_signal_add(&int_handler, NULL);
 
     /*
      * Get the list of available hnp's and setup contact info
@@ -278,7 +276,7 @@ main(int argc, char *argv[])
     }
     
     /* just wait until the abort is fired */
-    opal_event.dispatch(opal_event_base);
+    opal_event_dispatch(opal_event_base);
 
     /***************
      * Cleanup
@@ -300,10 +298,8 @@ static void abort_exit_callback(int fd, short ign, void *arg)
     int ret;
     
     /* Remove the TERM and INT signal handlers */
-    opal_event.signal_del(&term_handler);
-    OBJ_DESTRUCT(&term_handler);
-    opal_event.signal_del(&int_handler);
-    OBJ_DESTRUCT(&int_handler);
+    opal_event_signal_del(&term_handler);
+    opal_event_signal_del(&int_handler);
 
     /* close the outstanding pull */
     if (ORTE_SUCCESS != (ret = orte_iof.close(&target_proc, ORTE_IOF_STDOUT))) {

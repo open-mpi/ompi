@@ -167,7 +167,6 @@ int orte_errmgr_hnp_autor_global_module_init(void)
                         "errmgr:hnp(autor):init()");
 
     procs_pending_recovery = OBJ_NEW(opal_list_t);
-    autor_timer_event = OBJ_NEW(opal_event_t);
 
     current_global_jobid   = ORTE_JOBID_INVALID;
     current_global_jobdata = NULL;
@@ -187,7 +186,7 @@ int orte_errmgr_hnp_autor_global_module_finalize(void)
         procs_pending_recovery = NULL;
     }
     if( NULL != autor_timer_event ) {
-        OBJ_RELEASE(autor_timer_event);
+        free(autor_timer_event);
     }
 
     current_global_jobid   = ORTE_JOBID_INVALID;
@@ -512,10 +511,10 @@ static void errmgr_autor_process_fault_app(orte_job_t *jdata,
     if( !autor_timer_active ) {
         autor_timer_active = true;
 
-        opal_event.evtimer_set(opal_event_base, autor_timer_event, errmgr_autor_recover_processes, NULL);
+        opal_event_evtimer_set(opal_event_base, autor_timer_event, errmgr_autor_recover_processes, NULL);
         soon.tv_sec  = mca_errmgr_hnp_component.autor_recovery_delay;
         soon.tv_usec = 0;
-        opal_event.evtimer_add(autor_timer_event, &soon);
+        opal_event_evtimer_add(autor_timer_event, &soon);
     }
 
     return;

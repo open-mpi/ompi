@@ -150,11 +150,11 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(rmcast_send_log_t);
                             __FILE__, __LINE__));               \
         mev = OBJ_NEW(orte_mcast_msg_event_t);                  \
         mev->buf = (bf);                                        \
-        opal_event.evtimer_set(opal_event_base,                 \
+        opal_event_evtimer_set(opal_event_base,                 \
                                mev->ev, (cbfunc), mev);         \
         now.tv_sec = 0;                                         \
         now.tv_usec = 0;                                        \
-        opal_event.evtimer_add(mev->ev, &now);                  \
+        opal_event_evtimer_add(mev->ev, &now);                  \
     } while(0);
 
 

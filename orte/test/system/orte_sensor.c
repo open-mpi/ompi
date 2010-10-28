@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
     orte_sensor.start(ORTE_JOBID_INVALID);
 
     /* just sit here, letting the sensors run */
-    opal_event.dispatch(opal_event_base);
+    opal_event_dispatch(opal_event_base);
     
     orte_finalize();
     return 0;

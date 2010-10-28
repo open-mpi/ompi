@@ -77,8 +77,6 @@ static bool fifo_active=false;
 
 static int init(void)
 {
-    OBJ_CONSTRUCT(&attach, opal_event_t);
-
     return ORTE_SUCCESS;
 }
 
@@ -89,10 +87,9 @@ static int init(void)
 void finalize(void)
 {
     if (fifo_active) {
-        opal_event.del(&attach);
+        opal_event_del(&attach);
         close(attach_fd);
     }
-    OBJ_DESTRUCT(&attach);
 
     if (MPIR_proctable) {
         free(MPIR_proctable);
@@ -156,8 +153,8 @@ void init_before_spawn(orte_job_t *jdata)
                                 attach_fifo);
             free(attach_fifo);
             fifo_active = true;
-            opal_event.set(opal_event_base, &attach, attach_fd, OPAL_EV_READ, attach_debugger, NULL);
-            opal_event.add(&attach, 0);
+            opal_event_set(opal_event_base, &attach, attach_fd, OPAL_EV_READ, attach_debugger, NULL);
+            opal_event_add(&attach, 0);
         }
         return;
     }
@@ -230,8 +227,10 @@ static void attach_debugger(int fd, short event, void *arg)
     int rc;
     int32_t ljob;
     orte_job_t *jdata;
+#if 0
     struct timeval now;
     opal_event_t *check;
+#endif
 
     if (!MPIR_being_debugged && !orte_debugger_base.test_attach) {
         /* false alarm */
@@ -254,7 +253,7 @@ static void attach_debugger(int fd, short event, void *arg)
     }
 #endif
     if (fifo_active) {
-        opal_event.del(&attach);
+        opal_event_del(&attach);
         fifo_active = false;
 #if 0
         read(attach_fd, &rc, sizeof(rc));
@@ -334,10 +333,10 @@ static void attach_debugger(int fd, short event, void *arg)
         check = (opal_event_t*)arg;
         now.tv_sec = orte_debugger_mpirx_check_rate;
         now.tv_usec = 0;
-        opal_event.evtimer_add(check, &now);
+        opal_event_evtimer_add(check, &now);
     } else {
         fifo_active = true;
-        opal_event.add(&attach, 0);
+        opal_event_add(&attach, 0);
     }
 #endif
 

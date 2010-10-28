@@ -80,7 +80,7 @@ main(int argc, char **argv)
 		opal_evtimer_add(ev[i], &tv);
 	}
 
-	opal_event.dispatch();
+	opal_event_dispatch();
 
         opal_finalize();
 	return (called < NEVENT);

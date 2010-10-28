@@ -220,11 +220,11 @@ SETUP:
      */
     if (NULL != proct->revstdout && NULL != proct->revstderr && NULL != proct->revstddiag) {
         proct->revstdout->active = true;
-        opal_event.add(&(proct->revstdout->ev), 0);
+        opal_event_add(&(proct->revstdout->ev), 0);
         proct->revstderr->active = true;
-        opal_event.add(&(proct->revstderr->ev), 0);
+        opal_event_add(&(proct->revstderr->ev), 0);
         proct->revstddiag->active = true;
-        opal_event.add(&(proct->revstddiag->ev), 0);
+        opal_event_add(&(proct->revstddiag->ev), 0);
     }
     return ORTE_SUCCESS;
 }
@@ -385,7 +385,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
                  * when the fd is ready.
                  */
                 wev->pending = true;
-                opal_event.add(&wev->ev, 0);
+                opal_event_add(&wev->ev, 0);
                 goto CHECK;
             }            
             /* otherwise, something bad happened so all we can do is declare an
@@ -415,7 +415,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
              * when the fd is ready. 
              */
             wev->pending = true;
-            opal_event.add(&wev->ev, 0);
+            opal_event_add(&wev->ev, 0);
             goto CHECK;
         }
         OBJ_RELEASE(output);

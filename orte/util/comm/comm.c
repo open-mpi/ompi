@@ -63,7 +63,7 @@ static void send_cbfunc(int status, orte_process_name_t* sender,
 {
     /* cancel the timer */
     if (NULL != quicktime) {
-        opal_event.evtimer_del(quicktime);
+        opal_event_evtimer_del(quicktime);
         OBJ_RELEASE(quicktime);
     }
     /* declare the work done */
@@ -78,7 +78,7 @@ static void recv_info(int status, orte_process_name_t* sender,
     
     /* cancel the timer */
     if (NULL != quicktime) {
-        opal_event.evtimer_del(quicktime);
+        opal_event_evtimer_del(quicktime);
         OBJ_RELEASE(quicktime);
     }
     /* xfer the answer */
@@ -189,7 +189,7 @@ int orte_util_comm_report_event(orte_comm_event_t ev)
                                                            NULL))) {
             /* cancel the timer */
             if (NULL != quicktime) {
-                opal_event.evtimer_del(quicktime);
+                opal_event_evtimer_del(quicktime);
                 OBJ_RELEASE(quicktime);
             }
             ORTE_ERROR_LOG(rc);
@@ -276,7 +276,7 @@ int orte_util_comm_query_job_info(const orte_process_name_t *hnp, orte_jobid_t j
                                                       NULL))) {
         /* cancel the timer */
         if (NULL != quicktime) {
-            opal_event.evtimer_del(quicktime);
+            opal_event_evtimer_del(quicktime);
             OBJ_RELEASE(quicktime);
         }
         ORTE_ERROR_LOG(ret);
@@ -382,7 +382,7 @@ int orte_util_comm_query_node_info(const orte_process_name_t *hnp, char *node,
                                                       NULL))) {
         /* cancel the timer */
         if (NULL != quicktime) {
-            opal_event.evtimer_del(quicktime);
+            opal_event_evtimer_del(quicktime);
             OBJ_RELEASE(quicktime);
         }
         ORTE_ERROR_LOG(ret);
@@ -493,7 +493,7 @@ int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t 
                                                       NULL))) {
         /* cancel the timer */
         if (NULL != quicktime) {
-            opal_event.evtimer_del(quicktime);
+            opal_event_evtimer_del(quicktime);
             OBJ_RELEASE(quicktime);
         }
         ORTE_ERROR_LOG(ret);

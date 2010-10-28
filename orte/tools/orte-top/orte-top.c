@@ -271,14 +271,12 @@ main(int argc, char *argv[])
      * forward, we need to abort in a manner that allows us
      * to cleanup
      */
-    OBJ_CONSTRUCT(&term_handler, opal_event_t);
-    opal_event.signal_set(opal_event_base, &term_handler, SIGTERM,
+    opal_event_signal_set(opal_event_base, &term_handler, SIGTERM,
                           abort_exit_callback, &term_handler);
-    opal_event.signal_add(&term_handler, NULL);
-    OBJ_CONSTRUCT(&int_handler, opal_event_t);
-    opal_event.signal_set(opal_event_base, &int_handler, SIGINT,
+    opal_event_signal_add(&term_handler, NULL);
+    opal_event_signal_set(opal_event_base, &int_handler, SIGINT,
                           abort_exit_callback, &int_handler);
-    opal_event.signal_add(&int_handler, NULL);
+    opal_event_signal_add(&int_handler, NULL);
     
     /*
      * Must specify the mpirun pid
@@ -524,17 +522,15 @@ SEND:
     send_cmd(0, 0, NULL);
 
     /* now wait until the termination event fires */
-    opal_event.dispatch(opal_event_base);
+    opal_event_dispatch(opal_event_base);
 
     /***************
      * Cleanup
      ***************/
 cleanup:
     /* Remove the TERM and INT signal handlers */
-    opal_event.signal_del(&term_handler);
-    OBJ_DESTRUCT(&term_handler);
-    opal_event.signal_del(&int_handler);
-    OBJ_DESTRUCT(&int_handler);
+    opal_event_signal_del(&term_handler);
+    opal_event_signal_del(&int_handler);
 
     while (NULL != (item  = opal_list_remove_first(&recvd_stats))) {
         OBJ_RELEASE(item);
@@ -554,9 +550,9 @@ static void abort_exit_callback(int fd, short ign, void *arg)
     opal_list_item_t *item;
     
     /* Remove the TERM and INT signal handlers */
-    opal_event.signal_del(&term_handler);
+    opal_event_signal_del(&term_handler);
     OBJ_DESTRUCT(&term_handler);
-    opal_event.signal_del(&int_handler);
+    opal_event_signal_del(&int_handler);
     OBJ_DESTRUCT(&int_handler);
     
     while (NULL != (item  = opal_list_remove_first(&recvd_stats))) {

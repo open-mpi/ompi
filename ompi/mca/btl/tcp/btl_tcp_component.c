@@ -139,7 +139,6 @@ typedef struct mca_btl_tcp_event_t mca_btl_tcp_event_t;
 static void mca_btl_tcp_event_construct(mca_btl_tcp_event_t* event)
 {
     OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
-    OBJ_CONSTRUCT(&event->event, opal_event_t);
     opal_list_append(&mca_btl_tcp_component.tcp_events, &event->item);
     OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
 }
@@ -148,7 +147,6 @@ static void mca_btl_tcp_event_destruct(mca_btl_tcp_event_t* event)
 {
     OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
     opal_list_remove_item(&mca_btl_tcp_component.tcp_events, &event->item);
-    OBJ_DESTRUCT(&event->event);
     OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
 }
 
@@ -309,15 +307,13 @@ int mca_btl_tcp_component_close(void)
         free(mca_btl_tcp_component.tcp_btls);
  
     if (mca_btl_tcp_component.tcp_listen_sd >= 0) {
-        opal_event.del(&mca_btl_tcp_component.tcp_recv_event);
-        OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_recv_event);
+        opal_event_del(&mca_btl_tcp_component.tcp_recv_event);
         CLOSE_THE_SOCKET(mca_btl_tcp_component.tcp_listen_sd);
         mca_btl_tcp_component.tcp_listen_sd = -1;
     }
 #if OPAL_WANT_IPV6
     if (mca_btl_tcp_component.tcp6_listen_sd >= 0) {
-        opal_event.del(&mca_btl_tcp_component.tcp6_recv_event);
-        OBJ_DESTRUCT(&mca_btl_tcp_component.tcp6_recv_event);
+        opal_event_del(&mca_btl_tcp_component.tcp6_recv_event);
         CLOSE_THE_SOCKET(mca_btl_tcp_component.tcp6_listen_sd);
         mca_btl_tcp_component.tcp6_listen_sd = -1;
     }
@@ -331,7 +327,7 @@ int mca_btl_tcp_component_close(void)
         item = next) {
         mca_btl_tcp_event_t* event = (mca_btl_tcp_event_t*)item;
         next = opal_list_get_next(item);
-        opal_event.del(&event->event);
+        opal_event_del(&event->event);
         OBJ_RELEASE(event);
     }
     OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
@@ -798,23 +794,21 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
 
     /* register listen port */
     if (AF_INET == af_family) {
-        OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_recv_event, opal_event_t);
-        opal_event.set(opal_event_base, &mca_btl_tcp_component.tcp_recv_event,
+        opal_event_set(opal_event_base, &mca_btl_tcp_component.tcp_recv_event,
                         mca_btl_tcp_component.tcp_listen_sd,
                         OPAL_EV_READ|OPAL_EV_PERSIST,
                         mca_btl_tcp_component_accept_handler,
                         0 );
-        opal_event.add(&mca_btl_tcp_component.tcp_recv_event, 0);
+        opal_event_add(&mca_btl_tcp_component.tcp_recv_event, 0);
     }
 #if OPAL_WANT_IPV6
     if (AF_INET6 == af_family) {
-        OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp6_recv_event, opal_event_t);
-        opal_event.set(opal_event_base, &mca_btl_tcp_component.tcp6_recv_event,
+        opal_event_set(opal_event_base, &mca_btl_tcp_component.tcp6_recv_event,
                         mca_btl_tcp_component.tcp6_listen_sd,
                         OPAL_EV_READ|OPAL_EV_PERSIST,
                         mca_btl_tcp_component_accept_handler,
                         0 );
-        opal_event.add(&mca_btl_tcp_component.tcp6_recv_event, 0);
+        opal_event_add(&mca_btl_tcp_component.tcp6_recv_event, 0);
     }
 #endif
     return OMPI_SUCCESS;
@@ -1032,8 +1026,8 @@ static void mca_btl_tcp_component_accept_handler( int incoming_sd,
         /* wait for receipt of peers process identifier to complete this connection */
          
         event = OBJ_NEW(mca_btl_tcp_event_t);
-        opal_event.set(opal_event_base, &event->event, sd, OPAL_EV_READ, mca_btl_tcp_component_recv_handler, event);
-        opal_event.add(&event->event, 0);
+        opal_event_set(opal_event_base, &event->event, sd, OPAL_EV_READ, mca_btl_tcp_component_recv_handler, event);
+        opal_event_add(&event->event, 0);
     }
 }
 

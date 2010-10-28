@@ -22,7 +22,7 @@ int main(int argc, char* argv[])
     }
     opal_output(0, "%s RUNNING", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
-    opal_event.dispatch(opal_event_base);
+    opal_event_dispatch(opal_event_base);
 
     orte_finalize();
 

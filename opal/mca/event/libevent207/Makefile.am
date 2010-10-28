@@ -13,10 +13,17 @@ AM_CPPFLAGS = -I$(srcdir)/libevent -I$(srcdir)/libevent/include -I$(builddir)/li
 
 SUBDIRS = libevent
 
+headers = libevent207.h
+
 sources = \
-        libevent207.h \
         libevent207_component.c \
         libevent207_module.c
+
+# Conditionally install the header files
+if WANT_INSTALL_HEADERS
+opaldir = $(includedir)/openmpi/$(subdir)
+nobase_opal_HEADERS = $(headers)
+endif
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
