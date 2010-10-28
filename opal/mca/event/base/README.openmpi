@@ -38,31 +38,34 @@ compared to prior versions in the OPAL code base by replacing
 file-by-file edits with configuration logic. Thus, updating the
 included libevent code can generally be accomplished by:
 
-1. svn delete the contents of the opal/event/libevent directory
-   --> We may want to do this via SVN 3rd party update.  Not clear yet.
+1. create a new opal/mca/event component for the updated version, using
+   a name "libeventxxx", where xxx = libevent version. For example,
+   libevent 2.0.7 => component libevent207
 
-2. unpack the new libevent code tarball in the opal/event/libevent directory
-   --> We may want to do this via SVN 3rd party update.  Not clear yet.
+2. create a subdirectory "libevent" in the new component and unpack the
+   new libevent code tarball into it.
 
-3. restore the symbolic link:
-   cd libevent/m4
-   ln -s ../../opal_libevent_configure.m4 opal_libevent_configure.m4
+3. copy the configure.m4, autogen.subdirs, component.c, moduule.c,
+   Makefile.am, and .h files from a prior version to the new component.
+   You will need to customize them for the new version, but they can
+   serve as a good template. In many cases, you will just have to update
+   the component name.
 
-4. edit libevent/configure.in to add two lines:
-   (a) just before AC_PROG_LIBTOOL near the beginning of the file:
-       OPAL_CONFIGURE_LIBEVENT_OPTIONS
-   (b) just before AC_CONFIG_FILES at the very end:
-       OPAL_CONFIGURE_LIBEVENT_MODES
+4. edit libevent/configure.in to add OMPI specific options and modes.
+   Use the corresponding file from a prior version as a guide. The
+   necessary changes are marked with "OMPI" comments. These changes
+   have been pushed upstream to libevent, and so edits may no longer
+   be required in the new version.
 
-5. Merge the contents of opal_libevent_makefile.am with
-   libevent/Makefile.am.  Depending upon what the Libevent developers
-   did for the update, this may well need to be done by hand.
+5. Modify libevent/Makefile.am. Here again, you should use the file from
+   a prior version as an example. Hopefully, you can just use the file
+   without change - otherwise, the changes will have to be done by hand.
+   Required changes reflect the need for OMPI to turn "off" unused
+   subsystems such as http. These changes have been pushed upstream to
+   libevent, and so edits may no longer be required in the new version.
 
-6. Edit libevent/configure.in and add the following after the
-   AM_INIT_AUTOMAKE line:
-
-# If Automake supports silent rules, enable them.
-m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
-
-   This isn't critical, but it makes the compiler output MUCH
-   prettier (and consistent with OMPI).
+6. in your new component Makefile.am, note that the libevent headers
+   are listed by name when WITH_INSTALL_HEADERS is given. This is required
+   to support the OMPI --with-devel-headers configure option. Please review
+   the list and update it to include all libevent headers for the new
+   version.
