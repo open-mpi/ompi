@@ -10,6 +10,8 @@
 # $HEADER$
 #
 
+AC_DEFUN([MCA_opal_installdirs_env_PRIORITY], [10])
+
 AC_DEFUN([MCA_opal_installdirs_env_COMPILE_MODE], [
     AC_MSG_CHECKING([for MCA component $2:$3 compile mode])
     $4="static"

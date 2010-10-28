@@ -381,6 +381,9 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
     m4_if(OMPI_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY],
           [m4_ifval(mca_$1_$2_no_config_component_list,
                    [m4_fatal([Framework $2 using STOP_AT_FIRST_PRIORITY but at least one component has no configure.m4])])])
+    m4_if(OMPI_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [PRIORITY],
+          [m4_ifval(mca_$1_$2_no_config_component_list,
+                   [m4_fatal([Framework $2 using PRIORITY but at least one component has no configure.m4])])])
     # run the configure logic for the no-config components
     m4_foreach(mca_component, [mca_$1_$2_no_config_component_list],
                [m4_ifval(mca_component,
@@ -395,7 +398,8 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
     m4_ifdef([component_list], [m4_undefine([component_list])])
     m4_if(OMPI_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST], [MCA_ORDER_COMPONENT_LIST($1, $2)],
           [m4_if(OMPI_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY], [MCA_ORDER_COMPONENT_LIST($1, $2)],
-                [m4_define([component_list], [mca_$1_$2_m4_config_component_list])])])
+                [m4_if(OMPI_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [PRIORITY], [MCA_ORDER_COMPONENT_LIST($1, $2)],
+                       [m4_define([component_list], [mca_$1_$2_m4_config_component_list])])])])
 
     best_mca_component_priority=0
     components_looking_for_succeed=$3
@@ -422,12 +426,13 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
     # It would be really hard to run these for "find first that
     # works", so we don't :)
     m4_if(OMPI_EVAL_ARG([MCA_$1_]$2[_CONFIGURE_MODE]), [STOP_AT_FIRST], [],
-          [m4_if(OMPI_EVAL_ARG([MCA_$1_]$2[_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY], [],
+        [m4_if(OMPI_EVAL_ARG([MCA_$1_]$2[_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY], [],
+             [m4_if(OMPI_EVAL_ARG([MCA_$1_]$2[_CONFIGURE_MODE]), [PRIORITY], [],
                  [MCA_CHECK_IGNORED_PRIORITY($1, $2)
                   AS_IF([test "$3" != "0"],
                         [MCA_CONFIGURE_ALL_CONFIG_COMPONENTS($1, $2, [all_components],
                                                [static_components], [dso_components],
-                                               [static_ltlibs])])])])
+                                               [static_ltlibs])])])])])
 
     MCA_$1_$2_ALL_COMPONENTS="$all_components"
     MCA_$1_$2_STATIC_COMPONENTS="$static_components"
