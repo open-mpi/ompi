@@ -21,6 +21,44 @@ sources = \
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
+headers += libevent/event.h libevent/evutil.h libevent/util-internal.h \
+           libevent/mm-internal.h libevent/ipv6-internal.h \
+	   libevent/strlcpy-internal.h libevent/evbuffer-internal.h \
+	   libevent/bufferevent-internal.h libevent/event-internal.h \
+	   libevent/evthread-internal.h libevent/defer-internal.h \
+	   libevent/minheap-internal.h libevent/log-internal.h \
+           libevent/evsignal-internal.h libevent/evmap-internal.h \
+	   libevent/changelist-internal.h libevent/iocp-internal.h \
+	   libevent/ratelim-internal.h \
+	   libevent/WIN32-Code/event2/event-config.h \
+	   libevent/WIN32-Code/tree.h \
+	   libevent/compat/sys/queue.h \
+           libevent/evhttp.h libevent/http-internal.h libevent/ht-internal.h \
+           libevent/evrpc.h libevent/evrpc-internal.h \
+           libevent/evdns.h libevent/include/event2/buffer_compat.h \
+           libevent/include/event2/buffer.h \
+           libevent/include/event2/bufferevent_compat.h \
+           libevent/include/event2/bufferevent_ssl.h \
+           libevent/include/event2/bufferevent_struct.h \
+           libevent/include/event2/bufferevent.h \
+           libevent/include/event2/dns_compat.h \
+           libevent/include/event2/dns_struct.h \
+           libevent/include/event2/event_compat.h \
+           libevent/include/event2/event_struct.h \
+           libevent/include/event2/event-config.h \
+           libevent/include/event2/event.h \
+           libevent/include/event2/http_compat.h \
+           libevent/include/event2/http_struct.h \
+           libevent/include/event2/http.h \
+           libevent/include/event2/keyvalq_struct.h \
+           libevent/include/event2/listener.h \
+           libevent/include/event2/rpc_compat.h \
+           libevent/include/event2/rpc_struct.h \
+           libevent/include/event2/rpc.h \
+           libevent/include/event2/tag_compat.h \
+           libevent/include/event2/tag.h \
+           libevent/include/event2/thread.h \
+           libevent/include/event2/util.h
 opaldir = $(includedir)/openmpi/$(subdir)
 nobase_opal_HEADERS = $(headers)
 endif
