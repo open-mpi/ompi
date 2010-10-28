@@ -241,14 +241,12 @@ int main(int argc, char *argv[])
     /* Set signal handlers to catch kill signals so we can properly clean up
      * after ourselves. 
      */
-    OBJ_CONSTRUCT(&term_handler, opal_event_t);
-    opal_event.set(opal_event_base, &term_handler, SIGTERM, OPAL_EV_SIGNAL,
+    opal_event_set(opal_event_base, &term_handler, SIGTERM, OPAL_EV_SIGNAL,
                    shutdown_callback, NULL);
-    opal_event.add(&term_handler, NULL);
-    OBJ_CONSTRUCT(&int_handler, opal_event_t);
-    opal_event.set(opal_event_base, &int_handler, SIGINT, OPAL_EV_SIGNAL,
+    opal_event_add(&term_handler, NULL);
+    opal_event_set(opal_event_base, &int_handler, SIGINT, OPAL_EV_SIGNAL,
                    shutdown_callback, NULL);
-    opal_event.add(&int_handler, NULL);
+    opal_event_add(&int_handler, NULL);
 
     /* We actually do *not* want the server to voluntarily yield() the
        processor more than necessary.  The server already blocks when
@@ -284,7 +282,7 @@ int main(int argc, char *argv[])
     }
 
     /* wait to hear we are done */
-    opal_event.dispatch(opal_event_base);
+    opal_event_dispatch(opal_event_base);
 
     /* should never get here, but if we do... */
     

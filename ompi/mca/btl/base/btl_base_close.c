@@ -39,7 +39,7 @@ int mca_btl_base_close(void)
     }
 #if 0
     /* disable event processing while cleaning up btls */
-    opal_event.disable();
+    opal_event_disable();
 #endif
     /* Finalize all the btl components and free their list items */
 
@@ -72,7 +72,7 @@ int mca_btl_base_close(void)
 
 #if 0
     /* restore event processing */
-    opal_event.enable();
+    opal_event_enable();
 #endif
     /* All done */
     return OMPI_SUCCESS;

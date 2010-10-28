@@ -376,7 +376,7 @@ static int plm_tm_launch_job(orte_job_t *jdata)
         launched++;
 
         /* Allow some progress to occur */
-        opal_event.loop(opal_event_base, OPAL_EVLOOP_NONBLOCK);
+        opal_event_loop(opal_event_base, OPAL_EVLOOP_NONBLOCK);
     }
 
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
@@ -422,7 +422,7 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     
     /* if issued, cancel the failed-to-start timer */
     if (NULL != ev) {
-        opal_event.del(ev);
+        opal_event_del(ev);
     }
     
 launch_apps:

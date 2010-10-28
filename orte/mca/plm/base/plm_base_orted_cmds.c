@@ -77,8 +77,9 @@ static void send_callback(int status,
     if (num_reported == num_being_sent) {
         /* cancel the timer */
         if (NULL != ev) {
-            opal_event.evtimer_del(ev);
-            OBJ_RELEASE(ev);
+            opal_event_evtimer_del(ev);
+            free(ev);
+            ev = NULL;
         }
         
         /* mark as done */
@@ -191,8 +192,9 @@ int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command)
 
         /* cleanup the timer */
         if (NULL != ev) {
-            opal_event.del(ev);
-            OBJ_RELEASE(ev);
+            opal_event_del(ev);
+            free(ev);
+            ev = NULL;
         }
         
         /* be sure I get the command */
@@ -394,8 +396,9 @@ int orte_plm_base_orted_kill_local_procs(opal_pointer_array_t *procs)
         
         /* cleanup the timer */
         if (NULL != ev) {
-            opal_event.del(ev);
-            OBJ_RELEASE(ev);
+            opal_event_del(ev);
+            free(ev);
+            ev = NULL;
         }
         
         /* if all the sends didn't go, or we couldn't send to

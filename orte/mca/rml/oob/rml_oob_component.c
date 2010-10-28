@@ -156,11 +156,11 @@ rml_oob_init(int* priority)
     /* Set default timeout for queued messages to be 1/2 second */
     orte_rml_oob_module.timeout.tv_sec = 0;
     orte_rml_oob_module.timeout.tv_usec = 500000;
-    orte_rml_oob_module.timer_event = OBJ_NEW(opal_event_t);
+    orte_rml_oob_module.timer_event =  (opal_event_t *) malloc(sizeof(opal_event_t));
     if (NULL == orte_rml_oob_module.timer_event) {
         return NULL;
     }
-    opal_event.evtimer_set(opal_event_base, orte_rml_oob_module.timer_event,
+    opal_event_evtimer_set(opal_event_base, orte_rml_oob_module.timer_event,
                            rml_oob_queued_progress,
                            NULL);
 
@@ -412,7 +412,7 @@ rml_oob_queued_progress(int fd, short event, void *arg)
                 opal_list_append(&orte_rml_oob_module.queued_routing_messages,
                                  &qmsg->super);
                 if (1 == opal_list_get_size(&orte_rml_oob_module.queued_routing_messages)) {
-                    opal_event.evtimer_add(orte_rml_oob_module.timer_event,
+                    opal_event_evtimer_add(orte_rml_oob_module.timer_event,
                                            &orte_rml_oob_module.timeout);
                 }
                 OPAL_THREAD_UNLOCK(&orte_rml_oob_module.queued_lock);
@@ -526,7 +526,7 @@ rml_oob_recv_route_callback(int status,
             opal_list_append(&orte_rml_oob_module.queued_routing_messages,
                              &qmsg->super);
             if (1 == opal_list_get_size(&orte_rml_oob_module.queued_routing_messages)) {
-                opal_event.evtimer_add(orte_rml_oob_module.timer_event,
+                opal_event_evtimer_add(orte_rml_oob_module.timer_event,
                                        &orte_rml_oob_module.timeout);
             }
             OPAL_THREAD_UNLOCK(&orte_rml_oob_module.queued_lock);

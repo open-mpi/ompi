@@ -90,7 +90,7 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
             /* either we have a connection error or it was a non-blocking read */
             if (EAGAIN == errno || EINTR == errno) {
                 /* non-blocking, retry */
-                opal_event.add(&rev->ev, 0);
+                opal_event_add(&rev->ev, 0);
                 OPAL_THREAD_UNLOCK(&mca_iof_orted_component.lock);
                 return;
             } 
@@ -164,7 +164,7 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
     
 RESTART:
     /* re-add the event */
-    opal_event.add(&rev->ev, 0);
+    opal_event_add(&rev->ev, 0);
 
     OPAL_THREAD_UNLOCK(&mca_iof_orted_component.lock);
     return;

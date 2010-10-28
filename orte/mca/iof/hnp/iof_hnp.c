@@ -91,9 +91,6 @@ static int init(void)
 {
     int rc;
     
-    /* setup the stdin signal event */
-    OBJ_CONSTRUCT(&mca_iof_hnp_component.stdinsig, opal_event_t);
-
     /* post non-blocking recv to catch forwarded IO from
      * the orteds
      */    
@@ -247,11 +244,11 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
          */
         if (NULL != proct->revstdout && NULL != proct->revstderr && NULL != proct->revstddiag) {
             proct->revstdout->active = true;
-            opal_event.add(&(proct->revstdout->ev), 0);
+            opal_event_add(&(proct->revstdout->ev), 0);
             proct->revstderr->active = true;
-            opal_event.add(&(proct->revstderr->ev), 0);
+            opal_event_add(&(proct->revstderr->ev), 0);
             proct->revstddiag->active = true;
-            opal_event.add(&(proct->revstddiag->ev), 0);
+            opal_event_add(&(proct->revstddiag->ev), 0);
         }
         return ORTE_SUCCESS;
     }
@@ -313,7 +310,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
              * filedescriptor is not a tty, don't worry about it
              * and always stay connected.
              */
-            opal_event.signal_set(opal_event_base, &mca_iof_hnp_component.stdinsig,
+            opal_event_signal_set(opal_event_base, &mca_iof_hnp_component.stdinsig,
                                   SIGCONT, orte_iof_hnp_stdin_cb,
                                   NULL);
             
@@ -332,7 +329,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
              */
             if (!(src_tag & ORTE_IOF_STDIN) || orte_iof_hnp_stdin_check(fd)) {
                 mca_iof_hnp_component.stdinev->active = true;
-                if (OPAL_SUCCESS != (rc = opal_event.add(&(mca_iof_hnp_component.stdinev->ev), 0))) {
+                if (OPAL_SUCCESS != (rc = opal_event_add(&(mca_iof_hnp_component.stdinev->ev), 0))) {
                     ORTE_ERROR_LOG(rc);
                 }
             }
@@ -477,8 +474,7 @@ static int finalize(void)
     /* if the stdin event is active, delete it */
     if (NULL != mca_iof_hnp_component.stdinev) {
         OBJ_RELEASE(mca_iof_hnp_component.stdinev);
-        opal_event.signal_del(&mca_iof_hnp_component.stdinsig);
-        OBJ_DESTRUCT(&mca_iof_hnp_component.stdinsig);
+        opal_event_signal_del(&mca_iof_hnp_component.stdinsig);
     }
     /* cleanout all registered sinks */
     while ((item = opal_list_remove_first(&mca_iof_hnp_component.sinks)) != NULL) {
@@ -560,7 +556,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
                  * when the fd is ready.
                  */
                 wev->pending = true;
-                opal_event.add(&wev->ev, 0);
+                opal_event_add(&wev->ev, 0);
                 goto CHECK;
             }            
             /* otherwise, something bad happened so all we can do is declare an
@@ -585,7 +581,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
              * when the fd is ready. 
              */
             wev->pending = true;
-            opal_event.add(&wev->ev, 0);
+            opal_event_add(&wev->ev, 0);
             goto CHECK;
         }
         OBJ_RELEASE(output);
@@ -612,7 +608,7 @@ CHECK:
             OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                                  "restarting read event"));
             mca_iof_hnp_component.stdinev->active = true;
-            opal_event.add(&(mca_iof_hnp_component.stdinev->ev), 0);
+            opal_event_add(&(mca_iof_hnp_component.stdinev->ev), 0);
         }
     }
 

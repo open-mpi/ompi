@@ -485,7 +485,7 @@ GETMAP:
 
         
         /* Allow some progress to occur */
-        opal_event.loop(opal_event_base, OPAL_EVLOOP_NONBLOCK);
+        opal_event_loop(opal_event_base, OPAL_EVLOOP_NONBLOCK);
         
         launched++;
 

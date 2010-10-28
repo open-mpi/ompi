@@ -98,31 +98,26 @@ int orte_ess_base_orted_setup(char **hosts)
 
 #ifndef __WINDOWS__
     /* setup callback for SIGPIPE */
-    OBJ_CONSTRUCT(&epipe_handler, opal_event_t);
-    opal_event.signal_set(opal_event_base, &epipe_handler, SIGPIPE,
+    opal_event_signal_set(opal_event_base, &epipe_handler, SIGPIPE,
                           epipe_signal_callback, &epipe_handler);
-    opal_event.signal_add(&epipe_handler, NULL);
+    opal_event_signal_add(&epipe_handler, NULL);
     /* Set signal handlers to catch kill signals so we can properly clean up
      * after ourselves. 
      */
-    OBJ_CONSTRUCT(&term_handler, opal_event_t);
-    opal_event.set(opal_event_base, &term_handler, SIGTERM, OPAL_EV_SIGNAL,
+    opal_event_set(opal_event_base, &term_handler, SIGTERM, OPAL_EV_SIGNAL,
                    shutdown_signal, NULL);
-    opal_event.add(&term_handler, NULL);
-    OBJ_CONSTRUCT(&int_handler, opal_event_t);
-    opal_event.set(opal_event_base, &int_handler, SIGINT, OPAL_EV_SIGNAL,
+    opal_event_add(&term_handler, NULL);
+    opal_event_set(opal_event_base, &int_handler, SIGINT, OPAL_EV_SIGNAL,
                    shutdown_signal, NULL);
-    opal_event.add(&int_handler, NULL);
+    opal_event_add(&int_handler, NULL);
 
     /** setup callbacks for signals we should ignore */
-    OBJ_CONSTRUCT(&sigusr1_handler, opal_event_t);
-    opal_event.signal_set(opal_event_base, &sigusr1_handler, SIGUSR1,
+    opal_event_signal_set(opal_event_base, &sigusr1_handler, SIGUSR1,
                           signal_callback, &sigusr1_handler);
-    opal_event.signal_add(&sigusr1_handler, NULL);
-    OBJ_CONSTRUCT(&sigusr2_handler, opal_event_t);
-    opal_event.signal_set(opal_event_base, &sigusr2_handler, SIGUSR2,
+    opal_event_signal_add(&sigusr1_handler, NULL);
+    opal_event_signal_set(opal_event_base, &sigusr2_handler, SIGUSR2,
                           signal_callback, &sigusr2_handler);
-    opal_event.signal_add(&sigusr2_handler, NULL);
+    opal_event_signal_add(&sigusr2_handler, NULL);
 #endif  /* __WINDOWS__ */
 
     signals_set = true;
@@ -536,17 +531,12 @@ int orte_ess_base_orted_finalize(void)
 
     if (signals_set) {
         /* Release all local signal handlers */
-        opal_event.del(&epipe_handler);
-        OBJ_DESTRUCT(&epipe_handler);
-        opal_event.del(&term_handler);
-        OBJ_DESTRUCT(&term_handler);
-        opal_event.del(&int_handler);
-        OBJ_DESTRUCT(&int_handler);
+        opal_event_del(&epipe_handler);
+        opal_event_del(&term_handler);
+        opal_event_del(&int_handler);
 #ifndef __WINDOWS__
-        opal_event.signal_del(&sigusr1_handler);
-        OBJ_DESTRUCT(&sigusr1_handler);
-        opal_event.signal_del(&sigusr2_handler);
-        OBJ_DESTRUCT(&sigusr2_handler);
+        opal_event_signal_del(&sigusr1_handler);
+        opal_event_signal_del(&sigusr2_handler);
 #endif  /* __WINDOWS__ */
     }
 

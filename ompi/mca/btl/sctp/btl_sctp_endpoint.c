@@ -109,8 +109,6 @@ static void mca_btl_sctp_endpoint_construct(mca_btl_sctp_endpoint_t* endpoint)
     endpoint->endpoint_sd = -1;
     endpoint->endpoint_send_frag = 0;
     endpoint->endpoint_recv_frag = 0;
-    OBJ_CONSTRUCT(&endpoint->endpoint_send_event, opal_event_t);
-    OBJ_CONSTRUCT(&endpoint->endpoint_recv_event, opal_event_t);
     endpoint->endpoint_state = MCA_BTL_SCTP_CLOSED;
     endpoint->endpoint_retries = 0;
     endpoint->endpoint_nbo = false;
@@ -182,8 +180,6 @@ static void mca_btl_sctp_endpoint_destruct(mca_btl_sctp_endpoint_t* endpoint)
             free(chunkp);
         }
     }
-    OBJ_DESTRUCT(&endpoint->endpoint_send_event);
-    OBJ_DESTRUCT(&endpoint->endpoint_recv_event);
 }
 
 OBJ_CLASS_INSTANCE(
@@ -273,12 +269,12 @@ static inline void mca_btl_sctp_endpoint_event_init(mca_btl_base_endpoint_t* btl
         btl_endpoint->endpoint_cache_pos = btl_endpoint->endpoint_cache;
 #endif  /* MCA_BTL_SCTP_ENDPOINT_CACHE */
 
-        opal_event.set(opal_event_base, &btl_endpoint->endpoint_recv_event, 
+        opal_event_set(opal_event_base, &btl_endpoint->endpoint_recv_event, 
                 btl_endpoint->endpoint_sd, 
                 OPAL_EV_READ|OPAL_EV_PERSIST, 
                 mca_btl_sctp_endpoint_recv_handler,
                 btl_endpoint );
-        opal_event.set(opal_event_base, &btl_endpoint->endpoint_send_event, 
+        opal_event_set(opal_event_base, &btl_endpoint->endpoint_send_event, 
                 btl_endpoint->endpoint_sd, 
                OPAL_EV_WRITE|OPAL_EV_PERSIST, 
                 mca_btl_sctp_endpoint_send_handler,
@@ -297,12 +293,12 @@ static inline void mca_btl_sctp_endpoint_event_init(mca_btl_base_endpoint_t* btl
             btl_endpoint->endpoint_cache_pos = btl_endpoint->endpoint_cache;
 #endif  /* MCA_BTL_SCTP_ENDPOINT_CACHE */
 
-            opal_event.set(opal_event_base, &btl_endpoint->endpoint_recv_event, 
+            opal_event_set(opal_event_base, &btl_endpoint->endpoint_recv_event, 
                             btl_endpoint->endpoint_sd, 
                             OPAL_EV_READ|OPAL_EV_PERSIST, 
                             mca_btl_sctp_recv_handler,
                             btl_endpoint );
-            opal_event.set(opal_event_base, &btl_endpoint->endpoint_send_event, 
+            opal_event_set(opal_event_base, &btl_endpoint->endpoint_send_event, 
                             btl_endpoint->endpoint_sd, 
                             OPAL_EV_WRITE|OPAL_EV_PERSIST, 
                             mca_btl_sctp_endpoint_send_handler,
@@ -353,7 +349,7 @@ int mca_btl_sctp_endpoint_send(mca_btl_base_endpoint_t* btl_endpoint, mca_btl_sc
                         return OMPI_SUCCESS;
                     } else {
                         btl_endpoint->endpoint_send_frag = frag;
-                        opal_event.add(&btl_endpoint->endpoint_send_event, 0);
+                        opal_event_add(&btl_endpoint->endpoint_send_event, 0);
                     }
                 } else {
                     opal_list_append(&btl_endpoint->endpoint_frags, (opal_list_item_t*)frag);
@@ -459,7 +455,7 @@ int mca_btl_sctp_endpoint_send(mca_btl_base_endpoint_t* btl_endpoint, mca_btl_sc
                     } else {
                         
                         /* no endpoint is currently associated with sending on this socket */
-                        opal_event.add(&btl_endpoint->endpoint_send_event, 0);
+                        opal_event_add(&btl_endpoint->endpoint_send_event, 0);
                         endpoint_associated_with_send = btl_endpoint;
                     }                    
                 }
@@ -599,7 +595,7 @@ bool mca_btl_sctp_endpoint_accept(mca_btl_base_endpoint_t* btl_endpoint, struct 
                     return false;
                 }
                 mca_btl_sctp_endpoint_event_init(btl_endpoint, sd);
-                opal_event.add(&btl_endpoint->endpoint_recv_event, 0);
+                opal_event_add(&btl_endpoint->endpoint_recv_event, 0);
                 mca_btl_sctp_endpoint_connected(btl_endpoint);
 #if OPAL_ENABLE_DEBUG && WANT_PEER_DUMP
                 mca_btl_sctp_endpoint_dump(btl_endpoint, "accepted");
@@ -624,7 +620,7 @@ bool mca_btl_sctp_endpoint_accept(mca_btl_base_endpoint_t* btl_endpoint, struct 
 
             /* conflicts can't happen with one-to-many socket */
             mca_btl_sctp_endpoint_event_init(btl_endpoint, sd);            
-            opal_event.add(&btl_endpoint->endpoint_recv_event, 0);
+            opal_event_add(&btl_endpoint->endpoint_recv_event, 0);
 #if OPAL_ENABLE_DEBUG && WANT_PEER_DUMP
             mca_btl_sctp_endpoint_dump(btl_endpoint, "accepted");
 #endif
@@ -650,10 +646,8 @@ void mca_btl_sctp_endpoint_close(mca_btl_base_endpoint_t* btl_endpoint)
     SCTP_BTL_ERROR(("inside endpoint_close (sd = %d)\n", btl_endpoint->endpoint_sd));
    
     if(btl_endpoint->endpoint_sd >= 0) {
-        opal_event.del(&btl_endpoint->endpoint_recv_event);
-        OBJ_DESTRUCT(&btl_endpoint->endpoint_recv_event);
-        opal_event.del(&btl_endpoint->endpoint_send_event);
-        OBJ_DESTRUCT(&btl_endpoint->endpoint_send_event);
+        opal_event_del(&btl_endpoint->endpoint_recv_event);
+        opal_event_del(&btl_endpoint->endpoint_send_event);
         CLOSE_THE_SOCKET(btl_endpoint->endpoint_sd);
         btl_endpoint->endpoint_sd = -1;
 #if MCA_BTL_SCTP_ENDPOINT_CACHE
@@ -694,7 +688,7 @@ static void mca_btl_sctp_endpoint_connected(mca_btl_base_endpoint_t* btl_endpoin
                 btl_endpoint->endpoint_send_frag = (mca_btl_sctp_frag_t*) 
                     opal_list_remove_first(&btl_endpoint->endpoint_frags);
             }
-            opal_event.add(&btl_endpoint->endpoint_send_event, 0);
+            opal_event_add(&btl_endpoint->endpoint_send_event, 0);
         }
     }
     else {
@@ -768,7 +762,7 @@ static void mca_btl_sctp_endpoint_connected(mca_btl_base_endpoint_t* btl_endpoin
             } else {
                         
                 /* no endpoint is currently associated with sending on this socket */
-                opal_event.add(&btl_endpoint->endpoint_send_event, 0);
+                opal_event_add(&btl_endpoint->endpoint_send_event, 0);
                 endpoint_associated_with_send = btl_endpoint;
             }                                
         }
@@ -968,7 +962,7 @@ static int mca_btl_sctp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endp
                opal_socket_errno == EWOULDBLOCK)
             {
                 btl_endpoint->endpoint_state = MCA_BTL_SCTP_CONNECTING;
-                opal_event.add(&btl_endpoint->endpoint_send_event, 0);
+                opal_event_add(&btl_endpoint->endpoint_send_event, 0);
                 return OMPI_SUCCESS;
             }
             SCTP_BTL_ERROR(("endpoint_close in start_connect #1\n"));
@@ -980,7 +974,7 @@ static int mca_btl_sctp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endp
         /* send our globally unique process identifier to the endpoint */
         if((rc = mca_btl_sctp_endpoint_send_connect_ack(btl_endpoint)) == OMPI_SUCCESS) {
             btl_endpoint->endpoint_state = MCA_BTL_SCTP_CONNECT_ACK;
-            opal_event.add(&btl_endpoint->endpoint_recv_event, 0);
+            opal_event_add(&btl_endpoint->endpoint_recv_event, 0);
         } else {
             SCTP_BTL_ERROR(("endpoint_close in start_connect #2\n"));
             mca_btl_sctp_endpoint_close(btl_endpoint);
@@ -1028,8 +1022,7 @@ static void mca_btl_sctp_endpoint_complete_connect(mca_btl_base_endpoint_t* btl_
     opal_socklen_t so_length = sizeof(so_error);
 
     /* unregister from receiving event notifications */
-    opal_event.del(&btl_endpoint->endpoint_send_event);
-    OBJ_DESTRUCT(&btl_endpoint->endpoint_send_event);
+    opal_event_del(&btl_endpoint->endpoint_send_event);
 
     /* check connect completion status */
     if(getsockopt(btl_endpoint->endpoint_sd, SOL_SOCKET, SO_ERROR, (char *)&so_error, &so_length) < 0) {
@@ -1038,7 +1031,7 @@ static void mca_btl_sctp_endpoint_complete_connect(mca_btl_base_endpoint_t* btl_
         return;
     }
     if(so_error == EINPROGRESS || so_error == EWOULDBLOCK) {
-        opal_event.add(&btl_endpoint->endpoint_send_event, 0);
+        opal_event_add(&btl_endpoint->endpoint_send_event, 0);
         return;
     }
     if(so_error != 0) {
@@ -1049,7 +1042,7 @@ static void mca_btl_sctp_endpoint_complete_connect(mca_btl_base_endpoint_t* btl_
 
     if(mca_btl_sctp_endpoint_send_connect_ack(btl_endpoint) == OMPI_SUCCESS) {
         btl_endpoint->endpoint_state = MCA_BTL_SCTP_CONNECT_ACK;
-        opal_event.add(&btl_endpoint->endpoint_recv_event, 0);
+        opal_event_add(&btl_endpoint->endpoint_recv_event, 0);
     } else {
         mca_btl_sctp_endpoint_close(btl_endpoint);
     }
@@ -1188,16 +1181,14 @@ static void mca_btl_sctp_endpoint_send_handler(int sd, short flags, void* user)
 
                     /* if nothing else to do unregister for send event notifications */
                     if(NULL == btl_endpoint->endpoint_send_frag) {
-                        opal_event.del(&btl_endpoint->endpoint_send_event);
-                        OBJ_DESTRUCT(&btl_endpoint->endpoint_send_event);
+                        opal_event_del(&btl_endpoint->endpoint_send_event);
                     }
                     break;
                 }
             default:
                 BTL_ERROR(("invalid connection state (%d)",
                             btl_endpoint->endpoint_state));
-                opal_event.del(&btl_endpoint->endpoint_send_event);
-                OBJ_DESTRUCT(&btl_endpoint->endpoint_send_event);
+                opal_event_del(&btl_endpoint->endpoint_send_event);
                 break;
         }
         OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
@@ -1241,8 +1232,7 @@ static void mca_btl_sctp_endpoint_send_handler(int sd, short flags, void* user)
             if(NULL == btl_endpoint->endpoint_send_frag && NULL == current_our_endpoint) {
 
                 /* remove the send event with this endpoint */
-                opal_event.del(&btl_endpoint->endpoint_send_event);
-                OBJ_DESTRUCT(&btl_endpoint->endpoint_send_event);
+                opal_event_del(&btl_endpoint->endpoint_send_event);
                 endpoint_associated_with_send = NULL;
 
                 /* see if there is another endpoint that wants the send event */
@@ -1280,7 +1270,7 @@ static void mca_btl_sctp_endpoint_send_handler(int sd, short flags, void* user)
                         btl_endpoint = next_endpoint;
                         assert(btl_endpoint->endpoint_in_list > 0);
                         btl_endpoint->endpoint_in_list--;
-                        opal_event.add(&btl_endpoint->endpoint_send_event, 0);
+                        opal_event_add(&btl_endpoint->endpoint_send_event, 0);
                         opal_list_append(&sending_endpoints_freelist, (opal_list_item_t *) our_btl_endpoint);
                         endpoint_associated_with_send = btl_endpoint;
                         goto send_handler_1_to_many_different_endpoint;
@@ -1325,8 +1315,7 @@ static void mca_btl_sctp_endpoint_send_handler(int sd, short flags, void* user)
             BTL_ERROR(("invalid connection state (%d)",
                         btl_endpoint->endpoint_state));
             /*TODO: update del code to use sending_endpoints list */
-            opal_event.del(&btl_endpoint->endpoint_send_event);
-            OBJ_DESTRUCT(&btl_endpoint->endpoint_send_event);
+            opal_event_del(&btl_endpoint->endpoint_send_event);
         }
         OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
     }

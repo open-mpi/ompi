@@ -788,7 +788,7 @@ int orterun(int argc, char *argv[])
     orte_debugger.init_after_spawn(jdata);
     
     /* now wait until the termination event fires */
-    opal_event.dispatch(opal_event_base);
+    opal_event_dispatch(opal_event_base);
     
     /* we only reach this point by jumping there due
      * to an error - so just cleanup and leave

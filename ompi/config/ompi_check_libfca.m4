@@ -22,14 +22,14 @@ AC_DEFUN([OMPI_CHECK_FCA],[
 
     AS_IF([test "$with_fca" != "no"],
           [AS_IF([test ! -z "$with_fca" -a "$with_fca" != "yes"],
-			  [ompi_check_fca_dir="$with_fca"
+			  [ompi_check_fca_dir=$with_fca
 			   ompi_check_fca_libdir="$ompi_check_fca_dir/lib"
 			   ompi_check_fca_incdir="$ompi_check_fca_dir/include"
-			   ompi_check_fca_libs="fca"
+			   ompi_check_fca_libs=fca
 
-			   CPPFLAGS_save="$CPPFLAGS"
-			   LDFLAGS_save="$LDFLAGS"
-			   LIBS_save="$LIBS"
+			   CPPFLAGS_save=$CPPFLAGS
+			   LDFLAGS_save=$LDFLAGS
+			   LIBS_save=$LIBS
 			   CPPFLAGS="$CPPFLAGS -I$ompi_check_fca_dir/include/fca -I$ompi_check_fca_dir/include/fca_core"
 
 			   OMPI_LOG_MSG([$1_CPPFLAGS : $$1_CPPFLAGS], 1)
@@ -44,14 +44,13 @@ AC_DEFUN([OMPI_CHECK_FCA],[
 				   [$ompi_check_fca_dir],
 				   [$ompi_check_fca_libdir],
 				   [ompi_check_fca_happy="yes"],
-				   [ompi_check_fca_happy="no"])],
+				   [ompi_check_fca_happy="no"])
+
+			   CPPFLAGS=$CPPFLAGS_save
+			   LDFLAGS=$LDFLAGS_save
+			   LIBS=$LIBS_save],
 			   [ompi_check_fca_happy="no"])
-
-			   CPPFLAGS="$CPPFLAGS_save"
-			   LDFLAGS="$LDFLAGS_save"
-			   LIBS="$LIBS_save"
-			   ])
-
+          ])
 
     AS_IF([test "$ompi_check_fca_happy" = "yes" -a "$enable_progress_threads" = "yes"],
           [AC_MSG_WARN([fca driver does not currently support progress threads.  Disabling FCA.])

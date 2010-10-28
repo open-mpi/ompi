@@ -187,10 +187,9 @@ mca_oob_tcp_ping(const orte_process_name_t* name,
 #ifndef __WINDOWS__
     /* Ignore SIGPIPE in the write -- determine success or failure in
        the ping by looking at the return code from write() */
-    OBJ_CONSTRUCT(&sigpipe_handler, opal_event_t);
-    opal_event.signal_set(opal_event_base, &sigpipe_handler, SIGPIPE,
+    opal_event_signal_set(opal_event_base, &sigpipe_handler, SIGPIPE,
                           noop, &sigpipe_handler);
-    opal_event.signal_add(&sigpipe_handler, NULL);
+    opal_event_signal_add(&sigpipe_handler, NULL);
 #endif
     /* Do the write and see what happens. Use the writev version just to
      * make Windows happy as there the write function is limitted to
@@ -201,7 +200,7 @@ mca_oob_tcp_ping(const orte_process_name_t* name,
     rc = writev(sd, &iov, 1 );
 #ifndef __WINDOWS__
     /* Now de-register the handler */
-    opal_event.signal_del(&sigpipe_handler);
+    opal_event_signal_del(&sigpipe_handler);
 #endif
     if (rc != sizeof(hdr)) {
         CLOSE_THE_SOCKET(sd);

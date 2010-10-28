@@ -1484,9 +1484,8 @@ static int orte_plm_process_launch_threaded(orte_jobid_t jobid)
     if( opal_event_progress_thread() ) {
         stack.rc = orte_plm_process_launch( jobid );
     } else {
-        OBJ_CONSTRUCT(&event, opal_event_t);
-        opal_event.evtimer_set(opal_event_base, &event, orte_plm_process_launch_cb, &stack);
-        opal_event.evtimer_add(&event, &tv);
+        opal_event_evtimer_set(opal_event_base, &event, orte_plm_process_launch_cb, &stack);
+        opal_event_evtimer_add(&event, &tv);
 
         OPAL_THREAD_LOCK(&stack.mutex);
         while (stack.complete == false) {

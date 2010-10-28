@@ -62,9 +62,7 @@ const opal_event_component_t mca_event_libevent207_component = {
 
 
 static int libevent207_open(void)
-{
-    opal_event = opal_event_libevent207;
-    
+{    
     return OPAL_SUCCESS;
 }
 
