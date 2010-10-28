@@ -558,9 +558,7 @@ int orterun(int argc, char *argv[])
     if (0 == MPIR_forward_comm) {
         rc = ORTE_SUCCESS;
     }
-    if (NULL == MPIR_attach_fifo) {
-        rc = ORTE_SUCCESS;
-    }
+    memset(MPIR_attach_fifo, 0, MPIR_MAX_PATH_LENGTH);
     foo = MPIR_Breakpoint;
 
     /* Check for some "global" command line params */

@@ -241,7 +241,8 @@ static void attach_debugger(int fd, short event, void *arg)
     opal_output_verbose(1, orte_debugger_base.output,
                         "%s Attaching debugger %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         (NULL == orte_debugger_base.test_daemon) ? MPIR_executable_path : orte_debugger_base.test_daemon);
-    
+
+#if 0
     /* read the file descriptor to clear that event, if necessary */
     if (orte_debugger_mpirx_check_rate <= 0) {
         rc = 0;
@@ -251,13 +252,17 @@ static void attach_debugger(int fd, short event, void *arg)
             goto RELEASE;
         }
     }
+#endif
     if (fifo_active) {
+        opal_event.del(&attach);
         fifo_active = false;
+#if 0
         read(attach_fd, &rc, sizeof(rc));
         if (1 != rc) {
             /* ignore the cmd */
             goto RELEASE;
         }
+#endif
     }
 
     /* a debugger has attached! All the MPIR_Proctable
@@ -323,6 +328,7 @@ static void attach_debugger(int fd, short event, void *arg)
     }
         
  RELEASE:
+#if 0
     /* reset the read or timer event */
     if (0 < orte_debugger_mpirx_check_rate) {
         check = (opal_event_t*)arg;
@@ -333,6 +339,7 @@ static void attach_debugger(int fd, short event, void *arg)
         fifo_active = true;
         opal_event.add(&attach, 0);
     }
+#endif
 
     /* notify the debugger that all is ready */
     MPIR_Breakpoint();
