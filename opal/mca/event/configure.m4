@@ -62,6 +62,6 @@ AC_DEFUN([MCA_opal_event_CONFIG],[
     AC_MSG_CHECKING([for winning component additional CPPFLAGS])
     AS_IF([test "$event_base_include_cppflags" != ""],
           [AC_MSG_RESULT([$event_base_include_cppflags])
-           CPPFLAGS="$CPPFLAGS $event_base_include_cppflags -DGOT_EVENT_BASE_INCLUDE_CPPFLAGS"],
+           CPPFLAGS="$CPPFLAGS $event_base_include_cppflags"],
           [AC_MSG_RESULT([none])])
 ])
