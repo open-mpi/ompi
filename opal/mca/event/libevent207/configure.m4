@@ -167,7 +167,9 @@ EOF
            event_base_include_cppflags="-I$OMPI_TOP_SRCDIR/$file -I$OMPI_TOP_SRCDIR/$file/include"
            AS_IF([test "$OMPI_TOP_BUILDDIR" != "$OMPI_TOP_SRCDIR"],
                  [event_base_include_cppflags="$event_base_include_cpp_flags -I$OMPI_TOP_BUILDDIR/$file/include"])
-           WRAPPER_EXTRA_CPPFLAGS="$WRAPPER_EXTRA_CPPFLAGS "'-I${includedir}/openmpi/opal/mca/event/libevent207/libevent -I${includedir}/openmpi/opal/mca/event/libevent207/libevent/include'
+           if test "$with_devel_headers" = "yes" ; then
+               WRAPPER_EXTRA_CPPFLAGS="$WRAPPER_EXTRA_CPPFLAGS "'-I${includedir}/openmpi/opal/mca/event/libevent207/libevent -I${includedir}/openmpi/opal/mca/event/libevent207/libevent/include'
+           fi
            $1],
           [$2
            OPAL_HAVE_WORKING_EVENTOPS=0])
