@@ -568,7 +568,7 @@ static int update_state(orte_jobid_t job,
         }
         OBJ_DESTRUCT(&alert);
         /* indicate that the job is complete */
-        return ORTE_ERR_SILENT;
+        return rc;
     }
     return ORTE_SUCCESS;
 }
