@@ -53,6 +53,12 @@ EOF
 
 umask 022
 
+# Some shell startup files alias cp, mv, and rm to have "-i"
+# (interactive).  Unalias here, just so that we don't use that option.
+unalias cp
+unalias rm
+unalias mv
+
 if (! -d "$distdir") then
     echo "*** ERROR: dist dir does not exist"
     echo "*** ERROR:   $distdir"
@@ -68,7 +74,7 @@ endif
 set cur_svn_r="`grep '^svn_r' ${distdir}/VERSION | cut -d= -f2`"
 if ("$cur_svn_r" == "-1") then
     sed -e 's/^svn_r=.*/svn_r='$svn_r'/' "${distdir}/VERSION" > "${distdir}/version.new"
-    cp "${distdir}/version.new" "${distdir}/VERSION"
+    cp -f "${distdir}/version.new" "${distdir}/VERSION"
     rm -f "${distdir}/version.new"
     # need to reset the timestamp to not annoy AM dependencies
     touch -r "${srcdir}/VERSION" "${distdir}/VERSION"
@@ -140,7 +146,7 @@ else
                 echo " - WARNING: Got bad config.sub from ftp.gnu.org (not executable)"
             else
                 echo " - Got good config.guess and config.sub from ftp.gnu.org"
-                cp config.sub config.guess ..
+                cp -f config.sub config.guess ..
                 set happy=1
             endif
         endif
