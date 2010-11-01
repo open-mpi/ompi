@@ -45,7 +45,6 @@ headers += libevent/event.h libevent/evutil.h libevent/util-internal.h \
            libevent/include/event2/dns_struct.h \
            libevent/include/event2/event_compat.h \
            libevent/include/event2/event_struct.h \
-           libevent/include/event2/event-config.h \
            libevent/include/event2/event.h \
            libevent/include/event2/http_compat.h \
            libevent/include/event2/http_struct.h \
@@ -61,6 +60,8 @@ headers += libevent/event.h libevent/evutil.h libevent/util-internal.h \
            libevent/include/event2/util.h
 opaldir = $(includedir)/openmpi/$(subdir)
 nobase_opal_HEADERS = $(headers)
+
+nobase_nodist_opal_HEADERS = libevent/include/event2/event-config.h
 endif
 
 # Make the output library in this directory, and name it either
