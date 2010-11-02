@@ -1779,7 +1779,6 @@ void mca_pml_bfo_check_recv_ctl_completion_status(mca_btl_base_module_t* btl,
                                                   int status)
 {
     mca_pml_bfo_common_hdr_t * common = des->des_src->seg_addr.pval;
-    mca_pml_bfo_ack_hdr_t* ack;  /* ACK header */
     mca_pml_bfo_rdma_hdr_t* hdr; /* PUT header */
     struct mca_btl_base_descriptor_t* rdma_des;
     mca_pml_bfo_recv_request_t* recvreq;
@@ -1787,8 +1786,7 @@ void mca_pml_bfo_check_recv_ctl_completion_status(mca_btl_base_module_t* btl,
     if(OPAL_UNLIKELY(OMPI_SUCCESS != status)) {
         switch (common->hdr_type) {
         case MCA_PML_BFO_HDR_TYPE_ACK:
-            ack = (mca_pml_bfo_ack_hdr_t*)des->des_src->seg_addr.pval;
-            recvreq = (mca_pml_bfo_recv_request_t*) ack->hdr_dst_req.pval;
+            recvreq = des->des_cbdata;
                 
             /* Record the error.  Send RECVERRNOTIFY if necessary. */
             if (recvreq->req_errstate) {
@@ -1860,8 +1858,7 @@ void mca_pml_bfo_check_recv_ctl_completion_status(mca_btl_base_module_t* btl,
 
     switch (common->hdr_type) {
     case MCA_PML_BFO_HDR_TYPE_ACK:
-        ack = (mca_pml_bfo_ack_hdr_t*)des->des_src->seg_addr.pval;
-        recvreq = (mca_pml_bfo_recv_request_t*) ack->hdr_dst_req.pval;
+        recvreq = des->des_cbdata;
         recvreq->req_events--;
         assert(recvreq->req_events >= 0);
         if(OPAL_UNLIKELY (recvreq->req_errstate & RECVREQ_RNDVRESTART_RECVED)) {

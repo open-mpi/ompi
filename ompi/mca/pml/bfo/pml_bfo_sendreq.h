@@ -250,14 +250,7 @@ send_request_pml_complete(mca_pml_bfo_send_request_t *sendreq)
     }
     sendreq->req_send.req_base.req_pml_complete = true;
 #ifdef PML_BFO
-    assert(0 == sendreq->req_events);
-    sendreq->req_restartseq = 0;
-    /* Since sequence numbers increase monotonically and
-     * roll over, initialize it to a value far away from
-     * what it was.  I cannot set it to something like -1
-     * as that is not within the valid range. */
-    sendreq->req_send.req_base.req_sequence =
-        sendreq->req_send.req_base.req_sequence - 10;
+    sendreq->req_send.req_base.req_sequence -= 100;
 #endif
 
     if(sendreq->req_send.req_base.req_free_called) {
