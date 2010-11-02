@@ -251,7 +251,7 @@ int mca_pml_bfo_recv_request_ack_send_btl(
     /* initialize descriptor */
     des->des_cbfunc = mca_pml_bfo_recv_ctl_completion;
 #ifdef PML_BFO
-    des->des_cbdata = (void *)proc;
+    des->des_cbdata = hdr_dst_req;
 #endif
 
     rc = mca_bml_base_send(bml_btl, des, MCA_PML_BFO_HDR_TYPE_ACK);

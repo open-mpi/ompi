@@ -253,6 +253,18 @@ extern void mca_pml_bfo_recv_frag_callback_recverrnotify( mca_btl_base_module_t 
  * Macros for pml_bfo_sendreq.c file.
  */
 
+/* This macro is called on the sending side after receiving
+ * a PUT message.  There is a chance that this PUT message
+ * has shown up and is attempting to modify the state of
+ * the req_state, but the req_state is no longer being tracked
+ * because the RNDV message has turned into a RGET message
+ * because it got an error on the RNDV completion.
+ */
+#define MCA_PML_BFO_VERIFY_SENDREQ_REQ_STATE_VALUE(sendreq)  \
+    if (sendreq->req_state == -1) {                          \
+        OPAL_THREAD_ADD32(&sendreq->req_state, 1);           \
+    }
+
 /* Now check the error state.  This request can be in error if the
  * RNDV message made it over, but the receiver got an error trying to
  * send the ACK back and therefore sent a RECVERRNOTIFY message.  In
@@ -326,7 +338,6 @@ extern void mca_pml_bfo_recv_frag_callback_recverrnotify( mca_btl_base_module_t 
         mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml; \
         bml_btl = mca_bml_base_btl_array_find(&bml_endpoint->btl_eager, btl);              \
     }                  
-
 #define MCA_PML_BFO_CHECK_SENDREQ_EAGER_BML_BTL(bml_btl, btl, sendreq, type)   \
     if (bml_btl->btl != btl) {                                                 \
         mca_pml_bfo_find_sendreq_eager_bml_btl(&bml_btl, btl, sendreq, type);  \

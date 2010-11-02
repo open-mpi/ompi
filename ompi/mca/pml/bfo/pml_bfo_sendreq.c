@@ -1343,18 +1343,10 @@ void mca_pml_bfo_send_request_put( mca_pml_bfo_send_request_t* sendreq,
     size_t i, size = 0;
 
     if(hdr->hdr_common.hdr_flags & MCA_PML_BFO_HDR_TYPE_ACK) { 
-#ifdef PML_BFO
-        /* Handle the failover case where a RNDV request may
-         * have turned into a RGET and therefore the state
-         * is not being tracked. */
-        if (sendreq->req_state != 0) {
-            OPAL_THREAD_ADD32(&sendreq->req_state, -1);
-        }
-#else
         OPAL_THREAD_ADD32(&sendreq->req_state, -1);
-#endif
     }
 #ifdef PML_BFO
+    MCA_PML_BFO_VERIFY_SENDREQ_REQ_STATE_VALUE(sendreq);
     sendreq->req_recv = hdr->hdr_dst_req; /* only needed once, but it is OK */
 #endif
 
@@ -1385,8 +1377,8 @@ void mca_pml_bfo_send_request_put( mca_pml_bfo_send_request_t* sendreq,
 
     frag->rdma_bml = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, btl);
 #ifdef PML_BFO
-    frag->rdma_btl = btl;
     MCA_PML_BFO_CHECK_FOR_REMOVED_BML(sendreq, frag, btl);
+    frag->rdma_btl = btl;  /* in case frag ends up on pending */
 #endif
     frag->rdma_hdr.hdr_rdma = *hdr;
     frag->rdma_req = sendreq; 

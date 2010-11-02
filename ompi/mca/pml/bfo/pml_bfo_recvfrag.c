@@ -243,8 +243,6 @@ void mca_pml_bfo_recv_frag_callback_match(mca_btl_base_module_t* btl,
  slow_path:
     OPAL_THREAD_UNLOCK(&comm->matching_lock);
 #ifdef PML_BFO
-    /* Check for duplicate messages.  If message is duplicate, then just
-     * return as that essentially drops the message. */
     if (true == mca_pml_bfo_is_duplicate_msg(proc, hdr)) {
         return;
     }
@@ -626,6 +624,7 @@ static int mca_pml_bfo_recv_frag_match( mca_btl_base_module_t *btl,
      * the fragment.
      */
     OPAL_THREAD_LOCK(&comm->matching_lock);
+
 #ifdef PML_BFO
     /* In case of network failover, we may get a message telling us to
      * restart.  In that case, we already have a pointer to the receive
@@ -718,8 +717,6 @@ wrong_seq:
      * is ahead of sequence.  Save it for later.
      */
 #ifdef PML_BFO
-    /* Check for duplicate messages.  If message is duplicate, then just
-     * return as that essentially drops the message. */
     if (true == mca_pml_bfo_is_duplicate_msg(proc, hdr)) {
         return OMPI_SUCCESS;
     }

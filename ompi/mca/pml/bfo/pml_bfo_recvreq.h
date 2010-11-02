@@ -169,8 +169,7 @@ recv_request_pml_complete(mca_pml_bfo_recv_request_t *recvreq)
     }
     recvreq->req_rdma_cnt = 0;
 #ifdef PML_BFO
-    /* Reset to a value that to indicate it is invalid. */
-    recvreq->req_msgseq = recvreq->req_msgseq - 100;
+    recvreq->req_msgseq -= 100;
 #endif
 
     OPAL_THREAD_LOCK(&ompi_request_lock);
