@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -28,7 +28,11 @@
 
 #if OPAL_WANT_LIBLTDL
   #ifndef __WINDOWS__
-    #include "opal/libltdl/ltdl.h"
+    #if OPAL_LIBLTDL_INTERNAL
+      #include "opal/libltdl/ltdl.h"
+    #else
+      #include "ltdl.h"
+    #endif
   #else
     #include "ltdl.h"
   #endif
