@@ -94,6 +94,8 @@ INCLUDE (find_flex)
 FIND_FLEX()
 
 ADD_SUBDIRECTORY(opal)
+# set up the libevent include dirs
+INCLUDE_DIRECTORIES (${LIBEVENT_INCLUDE_DIRS})
 ADD_SUBDIRECTORY(ompi)
 ADD_SUBDIRECTORY(orte)
 

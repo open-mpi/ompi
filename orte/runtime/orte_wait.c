@@ -1121,7 +1121,7 @@ int orte_wait_event(opal_event_t **event, orte_trigger_event_t *trig,
     trig->name = strdup(trigger_name);
     
     /* create the event */
-    *event = OBJ_NEW(opal_event_t);
+    *event =  (opal_event_t *) malloc(sizeof(opal_event_t));
     
     /* setup the trigger and its associated lock */
     OBJ_CONSTRUCT(trig, orte_trigger_event_t);

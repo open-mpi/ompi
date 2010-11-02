@@ -9,5 +9,5 @@
 #
 
 not_single_shared_lib=1
-
+in_use=1
 required_check=opal_event_config
