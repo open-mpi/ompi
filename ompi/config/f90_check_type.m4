@@ -20,7 +20,10 @@ dnl
 # OMPI_F90_CHECK_TYPE([type, action if found, action if not found])
 # -----------------------------------------------------------------
 AC_DEFUN([OMPI_F90_CHECK_TYPE],[
-    AS_VAR_PUSHDEF([type_var], [ompi_cv_f90_have_$1])
+    # Use of m4_translit suggested by Eric Blake:
+    # http://lists.gnu.org/archive/html/bug-autoconf/2010-10/msg00016.html
+    AS_VAR_PUSHDEF([type_var],
+       m4_translit([[ompi_cv_f90_have_$1]], [*], [p]))
 
     # Determine Fortran datatype size.
     # First arg is type, 2nd arg is config var to define

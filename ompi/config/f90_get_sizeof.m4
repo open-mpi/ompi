@@ -21,7 +21,10 @@ dnl
 # OMPI_F90_GET_SIZEOF(type, variable to set)
 # ------------------------------------------
 AC_DEFUN([OMPI_F90_GET_SIZEOF],[
-    AS_VAR_PUSHDEF([type_var], [ompi_cv_f90_sizeof_$1])
+    # Use of m4_translit suggested by Eric Blake:
+    # http://lists.gnu.org/archive/html/bug-autoconf/2010-10/msg00016.html
+    AS_VAR_PUSHDEF([type_var],
+       m4_translit([[ompi_cv_f90_sizeof_$1]], [*], [p]))
     
     AC_CACHE_CHECK([size of Fortran 90 $1], type_var,
         [OMPI_F77_MAKE_C_FUNCTION([ompi_ac_size_fn], [size])
