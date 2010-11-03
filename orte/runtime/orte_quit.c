@@ -145,10 +145,12 @@ void orte_quit(void)
 
     /* whack any lingering session directory files from our jobs */
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
-    
+
+#if !ORTE_DISABLE_FULL_SUPPORT    
     /* cleanup our data server */
     orte_data_server_finalize();
-    
+#endif    
+
     /* cleanup and leave */
     orte_finalize();
 
