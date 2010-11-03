@@ -321,7 +321,7 @@ int event_base_set(struct event_base *, struct event *);
     registered.
   @see event_loopexit(), event_base_loop()
   */
-OPAL_DECLSPEC int event_base_loop(struct event_base *, int);
+int event_base_loop(struct event_base *, int);
 
 /**
   Exit the event loop after the specified time (threadsafe variant).
@@ -469,7 +469,7 @@ typedef void (*event_callback_fn)(evutil_socket_t, short, void *);
   @see event_add(), event_del(), event_once()
 
   */
-OPAL_DECLSPEC int event_assign(struct event *, struct event_base *, evutil_socket_t, short, event_callback_fn, void *);
+int event_assign(struct event *, struct event_base *, evutil_socket_t, short, event_callback_fn, void *);
 
 /**
   Create and allocate a new event structure, ready to be added.
@@ -523,7 +523,7 @@ int event_base_once(struct event_base *, evutil_socket_t, short, event_callback_
   @return 0 if successful, or -1 if an error occurred
   @see event_del(), event_set()
   */
-OPAL_DECLSPEC int event_add(struct event *, const struct timeval *);
+int event_add(struct event *, const struct timeval *);
 
 /**
   Remove an event from the set of monitored events.
@@ -536,7 +536,7 @@ OPAL_DECLSPEC int event_add(struct event *, const struct timeval *);
   @return 0 if successful, or -1 if an error occurred
   @see event_add()
  */
-OPAL_DECLSPEC int event_del(struct event *);
+int event_del(struct event *);
 
 
 /**
