@@ -849,9 +849,10 @@ int mca_pml_bfo_send_request_start_rdma( mca_pml_bfo_send_request_t* sendreq,
             mca_pml_bfo_rndv_completion_request( bml_btl, sendreq, 0 );
         }
 #ifdef PML_BFO
-        if ((des->des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) &&
-            (MCA_PML_BFO_HDR_TYPE_RNDV == hdr->hdr_common.hdr_type)) {
-            sendreq->req_events++;
+        if (MCA_PML_BFO_HDR_TYPE_RNDV == hdr->hdr_common.hdr_type) {
+            if (des->des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
+                sendreq->req_events++;
+	    }
         }
 #endif
         return OMPI_SUCCESS;
