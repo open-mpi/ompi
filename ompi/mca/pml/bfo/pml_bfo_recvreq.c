@@ -174,7 +174,6 @@ static void mca_pml_bfo_recv_ctl_completion( mca_btl_base_module_t* btl,
     if (btl->btl_flags & MCA_BTL_FLAGS_FAILOVER_SUPPORT) {
         mca_pml_bfo_check_recv_ctl_completion_status(btl, des, status);
     }
-       
     MCA_PML_BFO_CHECK_RECVREQ_EAGER_BML_BTL_RECV_CTL(bml_btl, btl, des);
 #endif
     MCA_PML_BFO_PROGRESS_PENDING(bml_btl);
@@ -350,10 +349,8 @@ static void mca_pml_bfo_rget_completion( mca_btl_base_module_t* btl,
 #ifdef PML_BFO
     if (btl->btl_flags & MCA_BTL_FLAGS_FAILOVER_SUPPORT) {
         recvreq->req_events--;
-        assert(recvreq->req_events >= 0);
     }
 #endif
-
     /* check completion status */
     if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
 #ifdef PML_BFO
@@ -364,7 +361,6 @@ static void mca_pml_bfo_rget_completion( mca_btl_base_module_t* btl,
         orte_errmgr.abort(-1, NULL);
 #endif
     }
-
 #ifdef PML_BFO
     MCA_PML_BFO_SECOND_ERROR_CHECK_ON_RDMA_READ_COMPLETION(recvreq, status, btl);
     MCA_PML_BFO_CHECK_RECVREQ_RDMA_BML_BTL(bml_btl, btl, recvreq, "RDMA write");
