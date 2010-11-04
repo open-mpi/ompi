@@ -380,7 +380,17 @@ extern void mca_pml_bfo_recv_frag_callback_recverrnotify( mca_btl_base_module_t 
         return;                                                                           \
     }
 
-
+/* This macro checks to see if the cached number of BTLs in the
+ * send request still matches the value from the endpoint.
+ * If it does not, this means that a BTL was removed from the
+ * available list.  In this case, start the request over.
+ */
+#define MCA_PML_BFO_CHECK_FOR_REMOVED_BTL(sendreq, range)                       \
+    if ((int)mca_bml_base_btl_array_get_size(&sendreq->req_endpoint->btl_send)  \
+        != range->range_btl_cnt) {                                              \
+        sendreq->req_error++;                                                   \
+        return OMPI_ERROR;                                                      \
+    }
 
 
 END_C_DECLS

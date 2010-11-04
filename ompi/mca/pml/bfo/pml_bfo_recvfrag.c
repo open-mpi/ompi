@@ -626,17 +626,12 @@ static int mca_pml_bfo_recv_frag_match( mca_btl_base_module_t *btl,
     OPAL_THREAD_LOCK(&comm->matching_lock);
 
 #ifdef PML_BFO
-    /* In case of network failover, we may get a message telling us to
-     * restart.  In that case, we already have a pointer to the receive
-     * request in the header itself. */
     if(OPAL_UNLIKELY(hdr->hdr_common.hdr_flags & MCA_PML_BFO_HDR_FLAGS_RESTART)) {
-        match = mca_pml_bfo_get_request(hdr);
-        if (NULL == match) {
+        if (NULL == (match = mca_pml_bfo_get_request(hdr))) {
             return OMPI_SUCCESS;
         }
     } else {
 #endif
-
     /* get sequence number of next message that can be processed */
     next_msg_seq_expected = (uint16_t)proc->expected_sequence;
     if(OPAL_UNLIKELY(frag_msg_seq != next_msg_seq_expected))
@@ -672,6 +667,7 @@ out_of_order_match:
 
     /* release matching lock before processing fragment */
     OPAL_THREAD_UNLOCK(&comm->matching_lock);
+
 #ifdef PML_BFO
     }
 #endif

@@ -1060,15 +1060,7 @@ mca_pml_bfo_send_request_schedule_once(mca_pml_bfo_send_request_t* sendreq)
 
         assert(range->range_send_length != 0);
 #ifdef PML_BFO
-        /* Failover code.  If this is true, this means the request thinks we
-         * have more BTLs than there really are.  This can happen because
-         * a BTL was removed from the available list.  In this case, we
-         * want to start over. */
-        if ((int)mca_bml_base_btl_array_get_size(&sendreq->req_endpoint->btl_send)
-            != range->range_btl_cnt) {
-            sendreq->req_error++;
-            return OMPI_ERROR;
-        }
+	MCA_PML_BFO_CHECK_FOR_REMOVED_BTL(sendreq, range);
 #endif
 
         if(prev_bytes_remaining == range->range_send_length)
