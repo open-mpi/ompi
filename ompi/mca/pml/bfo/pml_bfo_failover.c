@@ -640,7 +640,8 @@ void mca_pml_bfo_recv_frag_callback_rndvrestartnack(mca_btl_base_module_t* btl,
                         sendreq->req_send.req_base.req_peer, sendreq->req_restartseq,
                         (void *)sendreq, sendreq->req_recv.pval,
                         sendreq->req_send.req_base.req_peer);
-    mca_pml_bfo_send_request_rndvrestartnack(sendreq);
+    /* Mark the sender complete.  This data exchange is over. */
+    send_request_pml_complete(sendreq);
     return;
 }
 
@@ -733,19 +734,6 @@ void mca_pml_bfo_send_request_rndvrestartnotify(mca_pml_bfo_send_request_t* send
 }
 
 /**
- * This function is called when a RNDVRESTARTNACK message is received
- * by the sender.
- */
-void mca_pml_bfo_send_request_rndvrestartnack(mca_pml_bfo_send_request_t* sendreq)
-{
-    /* A RNDVRESTARTNACK was sent by the receiver.  This means that the
-     * receiver is rejecting the RNDVRESTARTNOTIFY message indicating the
-     * receiver's request is complete.  Therefore, mark the sender complete
-     * also.  This data exchange is over. */
-    send_request_pml_complete(sendreq);
-}
-
-/**
  * This function restarts a RNDV send request.  When this is called,
  * all the fields in the send request are reset and the send is
  * started over.  The sendreq->req_restartseq will be non-zero which will
@@ -796,15 +784,15 @@ void mca_pml_bfo_send_request_restart(mca_pml_bfo_send_request_t* sendreq,
         mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq);
     }
 
-    /* Clear out any unsent send ranges.  Recreated the get_send_range
-     * and the get_next_send_range functions. */
+    /* Clear out any unsent send ranges.  Recreate the functionality 
+     * from the get_send_range() and get_next_send_range() functions. */
     OPAL_THREAD_LOCK(&sendreq->req_send_range_lock);
-    first_item = opal_list_get_first(&sendreq->req_send_ranges);
-    last_item = opal_list_get_end(&sendreq->req_send_ranges);
+    first_item = opal_list_get_begin(&sendreq->req_send_ranges);
+    last_item = opal_list_get_last(&sendreq->req_send_ranges);
     while (first_item != last_item) {
         opal_list_remove_item(&sendreq->req_send_ranges, last_item);
         OMPI_FREE_LIST_RETURN(&mca_pml_bfo.send_ranges, (ompi_free_list_item_t *)last_item);
-        last_item = opal_list_get_end(&sendreq->req_send_ranges);
+        last_item = opal_list_get_last(&sendreq->req_send_ranges);
     }
     OPAL_THREAD_UNLOCK(&sendreq->req_send_range_lock);
 

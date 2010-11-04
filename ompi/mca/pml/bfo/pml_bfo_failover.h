@@ -32,7 +32,6 @@ void mca_pml_bfo_send_request_restart(mca_pml_bfo_send_request_t* sendreq,
 void mca_pml_bfo_send_request_rndvrestartnotify(mca_pml_bfo_send_request_t* sendreq,
                                       bool repost, mca_btl_base_tag_t tag, int status,
                                       mca_btl_base_module_t* btl);
-void mca_pml_bfo_send_request_rndvrestartnack(mca_pml_bfo_send_request_t* sendreq);
 
 void
 mca_pml_bfo_rndvrestartnotify_completion(mca_btl_base_module_t* btl,
