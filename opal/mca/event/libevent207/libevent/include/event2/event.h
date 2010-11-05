@@ -45,7 +45,9 @@ extern "C" {
 #include <sys/time.h>
 #endif
 #ifndef WIN32
-#include <stdbool.h>
+#    if !(defined(c_plusplus) || defined(__cplusplus))
+#        include <stdbool.h>
+#    endif
 #endif
 
 #include <stdio.h>
