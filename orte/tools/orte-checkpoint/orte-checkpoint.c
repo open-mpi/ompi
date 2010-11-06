@@ -244,7 +244,6 @@ main(int argc, char *argv[])
      * Initialize
      ***************/
     if (ORTE_SUCCESS != (ret = ckpt_init(argc, argv))) {
-        ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
@@ -254,7 +253,6 @@ main(int argc, char *argv[])
      *************************************/
     if( orte_checkpoint_globals.list_only ) {
         if (ORTE_SUCCESS != (ret = list_all_snapshots())) {
-            ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
         }
@@ -337,7 +335,6 @@ main(int argc, char *argv[])
      * Cleanup
      ***************/
     if (ORTE_SUCCESS != (ret = ckpt_finalize())) {
-        ORTE_ERROR_LOG(ret);
         return ret;
     }
 
@@ -555,7 +552,6 @@ static int ckpt_init(int argc, char *argv[]) {
      * before calling mca_base_open();
      */
     if( ORTE_SUCCESS != (ret = opal_init_util(&argc, &argv)) ) {
-        ORTE_ERROR_LOG(ret);
         return ret;
     }
 
@@ -563,7 +559,6 @@ static int ckpt_init(int argc, char *argv[]) {
      * Parse Command Line Arguments
      */
     if (ORTE_SUCCESS != (ret = parse_args(argc, argv))) {
-        ORTE_ERROR_LOG(ret);
         return ret;
     }
 
@@ -586,7 +581,6 @@ static int ckpt_init(int argc, char *argv[]) {
      * sets us up so we can talk to any HNP over the wire
      ***************************/
     if (ORTE_SUCCESS != (ret = orte_init(&argc, &argv, ORTE_PROC_TOOL))) {
-        ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
@@ -605,9 +599,7 @@ static int ckpt_init(int argc, char *argv[]) {
      * Start the listener
      */
     if( ORTE_SUCCESS != (ret = start_listener() ) ) {
-        ORTE_ERROR_LOG(ret);
         exit_status = ret;
-        goto cleanup;
     }
 
  cleanup:
@@ -621,13 +613,11 @@ static int ckpt_finalize(void) {
      * Stop the listener
      */
     if( ORTE_SUCCESS != (ret = stop_listener() ) ) {
-        ORTE_ERROR_LOG(ret);
         exit_status = ret;
     }
 
     if (ORTE_SUCCESS != (ret = orte_finalize())) {
         exit_status = ret;
-        goto cleanup;
     }
     
  cleanup:
@@ -643,7 +633,6 @@ static int start_listener(void)
                                                        ORTE_RML_PERSISTENT,
                                                        hnp_receiver,
                                                        NULL))) {
-        ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
@@ -665,7 +654,6 @@ static int stop_listener(void)
 
     if (ORTE_SUCCESS != (ret = orte_rml.recv_cancel(ORTE_NAME_WILDCARD,
                                                     ORTE_RML_TAG_CKPT))) {
-        ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
@@ -729,7 +717,6 @@ static void process_ckpt_update_cmd(orte_process_name_t* sender,
      */
     count = 1;
     if ( ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &ckpt_status, &count, OPAL_INT)) ) {
-        ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
@@ -741,13 +728,11 @@ static void process_ckpt_update_cmd(orte_process_name_t* sender,
         ORTE_SNAPC_CKPT_STATE_ERROR       == orte_checkpoint_globals.ckpt_status ) {
         count = 1;
         if ( ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &global_snapshot_handle, &count, OPAL_STRING)) ) {
-            ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
         }
         count = 1;
         if ( ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &global_sequence_num, &count, OPAL_INT)) ) {
-            ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
         }
@@ -826,25 +811,21 @@ static int notify_process_for_checkpoint(opal_crs_base_ckpt_options_t *options)
      * - jobid
      ***********************************/
     if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &command, 1, ORTE_SNAPC_CMD)) ) {
-        ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
 
     if( ORTE_SUCCESS != (ret = orte_snapc_base_pack_options(buffer, options)) ) {
-        ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
 
     if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &jobid, 1, ORTE_JOBID))) {
-        ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
 
     if ( 0 > (ret = orte_rml.send_buffer(&(orterun_hnp->name), buffer, ORTE_RML_TAG_CKPT, 0)) ) {
-        ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }

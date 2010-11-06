@@ -476,7 +476,6 @@ static int tool_finalize(void) {
 
     if (ORTE_SUCCESS != (ret = orte_finalize())) {
         exit_status = ret;
-        goto cleanup;
     }
     
  cleanup:
