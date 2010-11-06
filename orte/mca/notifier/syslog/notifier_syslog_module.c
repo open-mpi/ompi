@@ -67,7 +67,7 @@ static int init(void)
 {
     int opts;
     
-    opts = LOG_CONS | LOG_PID | LOG_SYSLOG;
+    opts = LOG_CONS | LOG_PID;
     openlog("Open MPI Error Report:", opts, LOG_USER);
     
     return ORTE_SUCCESS;
