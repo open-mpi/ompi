@@ -56,6 +56,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
+#include "orte/mca/notifier/notifier.h"
 
 #include "orte/mca/sstore/sstore.h"
 #include "orte/mca/sstore/base/base.h"
@@ -413,6 +414,41 @@ static void snapc_none_global_cmdline_request(int status,
     return;
 }
 
+/* Report the checkpoint status over the notifier interface */
+static void orte_snapc_ckpt_state_notify(int state)
+{
+    switch(state) {
+    case ORTE_SNAPC_CKPT_STATE_ESTABLISHED:
+    case ORTE_SNAPC_CKPT_STATE_RECOVERED:
+	    orte_notifier.log(ORTE_NOTIFIER_INFO, state,
+                          "base:ckpt_state_notify: Checkpoint established (PID = %d).",
+                          orte_process_info.pid);
+        break;
+    case ORTE_SNAPC_CKPT_STATE_NO_CKPT:
+	    orte_notifier.show_help(ORTE_NOTIFIER_WARN, state,
+                           "help-orte-checkpoint.txt", "non-ckptable", true,
+                           orte_process_info.pid);
+        break;
+    case ORTE_SNAPC_CKPT_STATE_ERROR:
+	    orte_notifier.show_help(ORTE_NOTIFIER_WARN, state,
+                           "help-orte-checkpoint.txt", "ckpt_failure", true,
+                           orte_process_info.pid, ORTE_ERROR);
+        break;
+
+    /* ADK: We currently do not notify for these states, but good to
+     * have them around anyways. */
+    case ORTE_SNAPC_CKPT_STATE_NONE:
+    case ORTE_SNAPC_CKPT_STATE_REQUEST:
+    case ORTE_SNAPC_CKPT_STATE_PENDING:
+    case ORTE_SNAPC_CKPT_STATE_RUNNING:
+    case ORTE_SNAPC_CKPT_STATE_STOPPED:
+    case ORTE_SNAPC_CKPT_STATE_MIGRATING:
+    case ORTE_SNAPC_CKPT_STATE_FINISHED_LOCAL:
+    default:
+        break;
+    }
+}
+
 /********************
  * Utility functions
  ********************/
@@ -625,6 +661,11 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
                              ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type)));
         return ORTE_SUCCESS;
     }
+
+    /*
+     * Pass on the checkpoint state over the notifier interface.
+     */
+    orte_snapc_ckpt_state_notify(ckpt_status);
 
     OPAL_OUTPUT_VERBOSE((10, orte_snapc_base_output,
                          "%s) base:ckpt_update_cmd: Sending update command <status %d>\n",
