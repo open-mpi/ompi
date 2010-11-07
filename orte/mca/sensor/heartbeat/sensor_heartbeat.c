@@ -62,11 +62,13 @@ static void send_heartbeat(int fd, short event, void *arg);
 #if ORTE_ENABLE_MULTICAST
 static void recv_rmcast_beats(int status,
                               orte_rmcast_channel_t channel,
+                              orte_rmcast_seq_t seq_num,
                               orte_rmcast_tag_t tag,
                               orte_process_name_t *sender,
                               opal_buffer_t *buf, void* cbdata);
 static void rmcast_callback_fn(int status,
                                orte_rmcast_channel_t channel,
+                               orte_rmcast_seq_t seq_num,
                                orte_rmcast_tag_t tag,
                                orte_process_name_t *sender,
                                opal_buffer_t *buf, void* cbdata);
@@ -305,6 +307,7 @@ static void check_heartbeat(int fd, short dummy, void *arg)
 #if ORTE_ENABLE_MULTICAST
 static void recv_rmcast_beats(int status,
                               orte_rmcast_channel_t channel,
+                              orte_rmcast_seq_t seq_num,
                               orte_rmcast_tag_t tag,
                               orte_process_name_t *sender,
                               opal_buffer_t *buf, void* cbdata)
@@ -335,6 +338,7 @@ static void recv_rmcast_beats(int status,
 
 static void rmcast_callback_fn(int status,
                                orte_rmcast_channel_t channel,
+                               orte_rmcast_seq_t seq_num,
                                orte_rmcast_tag_t tag,
                                orte_process_name_t *sender,
                                opal_buffer_t *buf, void* cbdata)

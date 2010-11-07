@@ -74,10 +74,10 @@ typedef uint8_t orte_rmcast_flag_t;
 #define ORTE_RMCAST_PERSISTENT      0x01
 
 /* message sequence number */
-typedef uint32_t orte_rmcast_seq_t;
-#define ORTE_RMCAST_SEQ_MAX         UINT32_MAX-1
-#define ORTE_RMCAST_SEQ_INVALID     UINT32_MAX
-#define ORTE_RMCAST_SEQ_T   OPAL_UINT32
+typedef size_t orte_rmcast_seq_t;
+#define ORTE_RMCAST_SEQ_MAX         SIZE_MAX-1
+#define ORTE_RMCAST_SEQ_INVALID     SIZE_MAX
+#define ORTE_RMCAST_SEQ_T   OPAL_SIZE
 
 END_C_DECLS
 

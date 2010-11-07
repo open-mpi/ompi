@@ -75,6 +75,7 @@ typedef struct {
     opal_list_item_t item;
     orte_process_name_t name;
     orte_rmcast_channel_t channel;
+    orte_rmcast_seq_t seq_num;
     bool recvd;
     orte_rmcast_tag_t tag;
     orte_rmcast_flag_t flags;
