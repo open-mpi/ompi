@@ -21,22 +21,27 @@
 
 static void cbfunc(int status,
                    orte_rmcast_channel_t channel,
+                   orte_rmcast_seq_t seq_num,
                    orte_rmcast_tag_t tag,
                    orte_process_name_t *sender,
                    opal_buffer_t *buf, void *cbdata);
 static void cbfunc_buf_snt(int status,
                            orte_rmcast_channel_t channel,
+                           orte_rmcast_seq_t seq_num,
                            orte_rmcast_tag_t tag,
                            orte_process_name_t *sender,
                            opal_buffer_t *buf, void *cbdata);
 
 static void cbfunc_iovec(int status,
                          orte_rmcast_channel_t channel,
+                         orte_rmcast_seq_t seq_num,
                          orte_rmcast_tag_t tag,
                          orte_process_name_t *sender,
                          struct iovec *msg, int count, void* cbdata);
 
 static int datasize=1024;
+static orte_rmcast_seq_t recvd_seq_num=0;
+static orte_rmcast_seq_t sent_seq_num=0;
 
 static void send_data(int fd, short flags, void *arg)
 {
@@ -58,7 +63,8 @@ static void send_data(int fd, short flags, void *arg)
                                                          cbfunc_buf_snt, NULL))) {
         ORTE_ERROR_LOG(rc);
         return;
-    }        
+    }
+    sent_seq_num++;
     /* create an iovec array */
     for (i=0; i < 3; i++) {
         iovec_array[i].iov_base = (uint8_t*)malloc(datasize);
@@ -71,10 +77,16 @@ static void send_data(int fd, short flags, void *arg)
         ORTE_ERROR_LOG(rc);
         return;
     }
+    sent_seq_num++;
+
+    if (0 == (sent_seq_num % 100)) {
+        opal_output(0, "SENT SEQ_NUM %lu", sent_seq_num);
+    }
+
     /* reset the timer */
-    now.tv_sec = 5;
-    now.tv_usec = 0;
-    opal_evtimer_add(tmp, &now);
+    now.tv_sec = 0;
+    now.tv_usec = 1000;
+    opal_event_evtimer_add(tmp, &now);
 }
 
 int main(int argc, char* argv[])
@@ -107,7 +119,7 @@ int main(int argc, char* argv[])
         orte_grpcomm.barrier();
 
         /* wake up every 5 seconds and send something */
-        ORTE_TIMER_EVENT(5, 0, send_data);
+        ORTE_TIMER_EVENT(0, 1000, send_data);
     } else {
         /* setup to recv data on our channel */
         if (ORTE_SUCCESS != (rc = orte_rmcast.recv_buffer_nb(ORTE_RMCAST_GROUP_OUTPUT_CHANNEL,
@@ -133,6 +145,7 @@ blast:
 
 static void cbfunc(int status,
                    orte_rmcast_channel_t channel,
+                   orte_rmcast_seq_t seq_num,
                    orte_rmcast_tag_t tag,
                    orte_process_name_t *sender,
                    opal_buffer_t *buffer, void *cbdata)
@@ -143,32 +156,46 @@ static void cbfunc(int status,
     rc = 1;
     opal_dss.unpack(buffer, &i32, &rc, OPAL_INT32);
 
-    opal_output(0, "%s GOT BUFFER MESSAGE from %s on channel %d tag %d with value %d\n",
-            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-            ORTE_NAME_PRINT(sender), channel, tag, i32);
+    if (0 < recvd_seq_num) {
+        if ((seq_num - recvd_seq_num) != 1) {
+            opal_output(0, "%s MESSAGE LOST seq %lu recvd_seq %lu",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), seq_num, recvd_seq_num);
+        }
+    }
+    recvd_seq_num = seq_num;
+
+    if (0 == (recvd_seq_num % 100)) {
+        opal_output(0, "RECVD SEQ_NUM %lu", recvd_seq_num);
+    }
 
 }
 
 static void cbfunc_iovec(int status,
                          orte_rmcast_channel_t channel,
+                         orte_rmcast_seq_t seq_num,
                          orte_rmcast_tag_t tag,
                          orte_process_name_t *sender,
                          struct iovec *msg, int count, void* cbdata)
 {
-    int rc;
-    
-    opal_output(0, "%s GOT IOVEC MESSAGE from %s of %d elements on tag %d\n",
-            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(sender), count, tag);
+    if (0 < recvd_seq_num) {
+        if ((seq_num - recvd_seq_num) != 1) {
+            opal_output(0, "%s MESSAGE LOST seq %lu recvd_seq %lu",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), seq_num, recvd_seq_num);
+        }
+    }
+    recvd_seq_num = seq_num;
 
+    if (0 == (recvd_seq_num % 100)) {
+        opal_output(0, "RECVD SEQ_NUM %lu", recvd_seq_num);
+    }
 }
 
 static void cbfunc_buf_snt(int status,
                            orte_rmcast_channel_t channel,
+                           orte_rmcast_seq_t seq_num,
                            orte_rmcast_tag_t tag,
                            orte_process_name_t *sender,
                            opal_buffer_t *buf, void *cbdata)
-{
-    opal_output(0, "%s BUFFERED_NB SEND COMPLETE\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-    
+{    
     OBJ_RELEASE(buf);
 }

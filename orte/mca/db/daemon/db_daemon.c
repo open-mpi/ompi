@@ -82,18 +82,21 @@ static orte_rmcast_channel_t my_group_channel;
 /* local functions */
 static void callback_fn(int status,
                         orte_rmcast_channel_t channel,
+                        orte_rmcast_seq_t seq_num,
                         orte_rmcast_tag_t tag,
                         orte_process_name_t *sender,
                         opal_buffer_t *buf, void* cbdata);
 
 static void recv_cmd(int status,
                      orte_rmcast_channel_t channel,
+                     orte_rmcast_seq_t seq_num,
                      orte_rmcast_tag_t tag,
                      orte_process_name_t *sender,
                      opal_buffer_t *buf, void* cbdata);
 
 static void recv_ack(int status,
                      orte_rmcast_channel_t channel,
+                     orte_rmcast_seq_t seq_num,
                      orte_rmcast_tag_t tag,
                      orte_process_name_t *sender,
                      opal_buffer_t *buf, void* cbdata);
@@ -322,6 +325,7 @@ static int remove_data(char *key)
 
 static void callback_fn(int status,
                         orte_rmcast_channel_t channel,
+                        orte_rmcast_seq_t seq_num,
                         orte_rmcast_tag_t tag,
                         orte_process_name_t *sender,
                         opal_buffer_t *buf, void* cbdata)
@@ -331,6 +335,7 @@ static void callback_fn(int status,
 
 static void recv_ack(int status,
                      orte_rmcast_channel_t channel,
+                     orte_rmcast_seq_t seq_num,
                      orte_rmcast_tag_t tag,
                      orte_process_name_t *sender,
                      opal_buffer_t *buf, void* cbdata)
@@ -342,6 +347,7 @@ static void recv_ack(int status,
 
 static void recv_cmd(int status,
                      orte_rmcast_channel_t channel,
+                     orte_rmcast_seq_t seq_num,
                      orte_rmcast_tag_t tag,
                      orte_process_name_t *sender,
                      opal_buffer_t *buf, void* cbdata)

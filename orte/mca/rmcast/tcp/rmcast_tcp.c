@@ -83,6 +83,7 @@ static int tcp_send_nb(orte_rmcast_channel_t channel,
 static int tcp_recv_buffer(orte_process_name_t *sender,
                            orte_rmcast_channel_t channel,
                            orte_rmcast_tag_t tag,
+                           orte_rmcast_seq_t *seq_num,
                            opal_buffer_t *buf);
 
 static int tcp_recv_buffer_nb(orte_rmcast_channel_t channel,
@@ -94,6 +95,7 @@ static int tcp_recv_buffer_nb(orte_rmcast_channel_t channel,
 static int tcp_recv(orte_process_name_t *sender,
                     orte_rmcast_channel_t channel,
                     orte_rmcast_tag_t tag,
+                    orte_rmcast_seq_t *seq_num,
                     struct iovec **msg, int *count);
 
 static int tcp_recv_nb(orte_rmcast_channel_t channel,
@@ -278,6 +280,7 @@ static bool send_complete, send_buf_complete;
 
 static void internal_snd_cb(int status,
                             orte_rmcast_channel_t channel,
+                            orte_rmcast_seq_t seq_num,
                             orte_rmcast_tag_t tag,
                             orte_process_name_t *sender,
                             struct iovec *msg, int count, void *cbdata)
@@ -287,6 +290,7 @@ static void internal_snd_cb(int status,
 
 static void internal_snd_buf_cb(int status,
                                 orte_rmcast_channel_t channel,
+                                orte_rmcast_seq_t seq_num,
                                 orte_rmcast_tag_t tag,
                                 orte_process_name_t *sender,
                                 opal_buffer_t *buf, void *cbdata)
@@ -444,14 +448,14 @@ static int queue_xmit(rmcast_base_send_t *snd,
     if (NULL != snd->buf) {
         /* call the cbfunc if required */
         if (NULL != snd->cbfunc_buffer) {
-            snd->cbfunc_buffer(rc, channel, snd->tag,
+            snd->cbfunc_buffer(rc, channel, ch->seq_num, snd->tag,
                                ORTE_PROC_MY_NAME,
                                snd->buf, snd->cbdata);
         }
     } else {
         /* call the cbfunc if required */
         if (NULL != snd->cbfunc_iovec) {
-            snd->cbfunc_iovec(rc, channel, snd->tag,
+            snd->cbfunc_iovec(rc, channel, ch->seq_num, snd->tag,
                               ORTE_PROC_MY_NAME,
                               snd->iovec_array, snd->iovec_count, snd->cbdata);
         }
@@ -577,9 +581,10 @@ static int tcp_send_buffer_nb(orte_rmcast_channel_t channel,
 }
 
 static int tcp_recv(orte_process_name_t *name,
-                      orte_rmcast_channel_t channel,
-                      orte_rmcast_tag_t tag,
-                      struct iovec **msg, int *count)
+                    orte_rmcast_channel_t channel,
+                    orte_rmcast_tag_t tag,
+                    orte_rmcast_seq_t *seq_num,
+                    struct iovec **msg, int *count)
 {
     rmcast_base_recv_t *recvptr;
     int ret;
@@ -608,6 +613,7 @@ static int tcp_recv(orte_process_name_t *name,
         name->jobid = recvptr->name.jobid;
         name->vpid = recvptr->name.vpid;
     }
+    *seq_num = recvptr->seq_num;
     *msg = recvptr->iovec_array;
     *count = recvptr->iovec_count;
     
@@ -655,6 +661,7 @@ static int tcp_recv_nb(orte_rmcast_channel_t channel,
 static int tcp_recv_buffer(orte_process_name_t *name,
                            orte_rmcast_channel_t channel,
                            orte_rmcast_tag_t tag,
+                           orte_rmcast_seq_t *seq_num,
                            opal_buffer_t *buf)
 {
     rmcast_base_recv_t *recvptr;
@@ -688,6 +695,7 @@ static int tcp_recv_buffer(orte_process_name_t *name,
         name->jobid = recvptr->name.jobid;
         name->vpid = recvptr->name.vpid;
     }
+    *seq_num = recvptr->seq_num;
     if (ORTE_SUCCESS != (ret = opal_dss.copy_payload(buf, recvptr->buf))) {
         ORTE_ERROR_LOG(ret);
     }

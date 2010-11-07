@@ -70,6 +70,7 @@ orte_grpcomm_base_module_t orte_grpcomm_mcast_module = {
 /* Local functions */
 static void daemon_recv(int status,
                         orte_rmcast_channel_t channel,
+                        orte_rmcast_seq_t seq_num,
                         orte_rmcast_tag_t tag,
                         orte_process_name_t *sender,
                         opal_buffer_t *buf, void* cbdata);
@@ -459,6 +460,7 @@ static int get_proc_attr(const orte_process_name_t proc,
 
 static void daemon_recv(int status,
                         orte_rmcast_channel_t channel,
+                        orte_rmcast_seq_t seq_num,
                         orte_rmcast_tag_t tag,
                         orte_process_name_t *sender,
                         opal_buffer_t *buf, void* cbdata)
