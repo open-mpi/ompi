@@ -53,8 +53,8 @@ typedef enum {
     FTB_EVENT_RESPONSE = 2
 } ftb_event_type_t;
 
-/* Macro that returns FTB event name given the FTB event code */
-#define FTB_ERROR(errnum) #errnum
+/* Returns the FTB event name (as a string) given the event code */
+#define FTB_EVENT(errnum) #errnum
 
 END_C_DECLS
 
