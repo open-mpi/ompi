@@ -119,30 +119,31 @@ static const char* get_ftb_event_severity(orte_notifier_base_severity_t severity
 static const char* get_ftb_event_name(int errnum)
 {
     /* If it an OMPI error, translate it to an equivalent FTB event */
-    if (OPAL_SUCCESS > errnum) {
+    if (ORTE_SUCCESS > errnum) {
         switch (errnum) {
-        case ORTE_ERR_OUT_OF_RESOURCE:
-        case ORTE_ERR_TEMP_OUT_OF_RESOURCE:
-            return FTB_ERROR(MPI_OUT_OF_RESOURCE);
+
+        case ORTE_SNAPC_CKPT_STATE_ESTABLISHED:
+        case ORTE_SNAPC_CKPT_STATE_RECOVERED:
+            return FTB_EVENT(FTB_MPI_PROCS_CKPTED);
+
+        case ORTE_SNAPC_CKPT_STATE_NO_CKPT:
+        case ORTE_SNAPC_CKPT_STATE_ERROR:
+            return FTB_EVENT(FTB_MPI_PROCS_CKPT_FAIL);
 
         case ORTE_ERR_CONNECTION_REFUSED:
         case ORTE_ERR_CONNECTION_FAILED:
         case ORTE_ERR_UNREACH:
-            return FTB_ERROR(MPI_NODE_DEAD);
+            return FTB_EVENT(FTB_MPI_PROCS_UNREACHABLE);
 
         case ORTE_ERR_COMM_FAILURE:
-            return FTB_ERROR(MPI_COMM_FAILURE);
+            return FTB_EVENT(FTB_MPI_PROCS_COMM_ERROR);
 
-        case ORTE_ERR_PROC_DEAD:
-            return FTB_ERROR(MPI_RANK_DEAD);
-
-        case ORTE_ERR_FATAL:
         default:
-            return FTB_ERROR(MPI_UNKNOWN_ERROR);
+            return NULL;
         }
     }
 
-    return FTB_ERROR(MPI_UNKNOWN_ERROR);
+    return NULL;
 }
 
 static void publish_ftb_event(orte_notifier_base_severity_t severity, int errcode, char *payload)
@@ -162,11 +163,13 @@ static void publish_ftb_event(orte_notifier_base_severity_t severity, int errcod
 
     /* Publish the event to the Fault Tolerant Backplane */
     event_name = get_ftb_event_name(errcode);
-    ret = FTB_Publish(ftb_client_handle, event_name, &eprop, &ehandle);
-    if (FTB_SUCCESS != ret) {
-        orte_show_help("help-orte-notifier-ftb.txt", "publish failed", true,
-                       "FTB_Publish() failed", ret, get_ftb_event_severity(severity),
-                       event_name, payload, errcode);
+    if (NULL != event_name) {
+        ret = FTB_Publish(ftb_client_handle, event_name, &eprop, &ehandle);
+        if (FTB_SUCCESS != ret) {
+            orte_show_help("help-orte-notifier-ftb.txt", "publish failed", true,
+                           "FTB_Publish() failed", ret, get_ftb_event_severity(severity),
+                           event_name, payload, errcode);
+        }
     }
 }
 
@@ -175,7 +178,6 @@ static void ftb_log(orte_notifier_base_severity_t severity, int errcode, const c
 {
     char *payload;
 
-    /* If there was a message, output it */
     vasprintf(&payload, msg, ap);
     if (NULL != payload) {
         publish_ftb_event(severity, errcode, payload);
