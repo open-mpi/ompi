@@ -409,7 +409,7 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
     if( orte_snapc_full_skip_app ) {
         OPAL_OUTPUT_VERBOSE((2, mca_snapc_full_component.super.output_handle,
                              "App) notify_response: Skipping App. (%d)\n",
-                             getpid()));
+                             app_pid));
         ret = ORTE_SUCCESS;
         cr_state = OPAL_CRS_CONTINUE;
     }
@@ -421,7 +421,7 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
             if( OPAL_EXISTS == ret ) {
                 OPAL_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
                                      "App) notify_response: Stalling the checkpoint progress until state is stable again (PID = %d)\n",
-                                     getpid()));
+                                     app_pid));
                 opal_cr_currently_stalled = true;
                 return exit_status;
             }
@@ -461,7 +461,7 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
         if( !currently_migrating && currently_all_migrating ) {
             OPAL_OUTPUT_VERBOSE((2, mca_snapc_full_component.super.output_handle,
                                  "App) notify_response: Skipping App. (%d) - This process is not migrating \n",
-                                 getpid()));
+                                 app_pid));
             ret = ORTE_SUCCESS;
             cr_state = OPAL_CRS_CONTINUE;
         }
@@ -537,7 +537,7 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
     if(OPAL_CRS_RESTART == cr_state) {
         OPAL_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
                              "App) notify_response: Restarting... (%s : %d)\n",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), getpid() ));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), app_pid));
         
         current_options->term = false;
         /* Do not respond to the non-existent command line tool */
@@ -546,7 +546,7 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
     else if(cr_state == OPAL_CRS_CONTINUE) {
         OPAL_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
                              "App) notify_response: Continuing...(%s : %d)\n",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), getpid() ));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), app_pid));
         ; /* Don't need to do anything here */
     }
     else if(cr_state == OPAL_CRS_TERM ) {
@@ -555,7 +555,7 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
     else {
         OPAL_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
                              "App) notify_response: Unknown cr_state(%d) [%d]",
-                             cr_state, getpid()));
+                             cr_state, app_pid));
     }
 
  ckpt_cleanup:
