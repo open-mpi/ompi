@@ -163,7 +163,6 @@ static void cbfunc(int status,
         }
     }
     recvd_seq_num = seq_num;
-
     if (0 == (recvd_seq_num % 100)) {
         opal_output(0, "RECVD SEQ_NUM %lu", recvd_seq_num);
     }
@@ -184,7 +183,6 @@ static void cbfunc_iovec(int status,
         }
     }
     recvd_seq_num = seq_num;
-
     if (0 == (recvd_seq_num % 100)) {
         opal_output(0, "RECVD SEQ_NUM %lu", recvd_seq_num);
     }

@@ -23,8 +23,8 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/mca/event/event.h"
-#include "opal/threads/threads.h"
 
+#include "orte/threads/threads.h"
 #include "orte/mca/rmcast/rmcast.h"
 #include "orte/mca/rmcast/base/private.h"
 
@@ -55,6 +55,13 @@ typedef struct {
     opal_list_t channels;
     rmcast_base_channel_t *my_output_channel;
     rmcast_base_channel_t *my_input_channel;
+    int process_ctl_pipe[2];
+    opal_list_t msg_list;
+    opal_event_base_t *event_base;
+    opal_thread_t recv_thread;
+    orte_thread_ctl_t recv_ctl;
+    opal_thread_t recv_process;
+    orte_thread_ctl_t recv_process_ctl;
 } orte_rmcast_base_t;
 
 ORTE_DECLSPEC extern orte_rmcast_base_t orte_rmcast_base;

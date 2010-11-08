@@ -28,11 +28,13 @@
 #include "opal/util/opal_sos.h"
 #include "opal/class/opal_ring_buffer.h"
 #include "opal/class/opal_list.h"
+#include "opal/mca/event/event.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/parse_options.h"
 #include "orte/util/show_help.h"
+#include "orte/threads/threads.h"
 
 #include "orte/mca/rmcast/base/private.h"
 
@@ -111,6 +113,13 @@ int orte_rmcast_base_open(void)
     orte_rmcast_base.active = false;
     OBJ_CONSTRUCT(&orte_rmcast_base.recvs, opal_list_t);
     OBJ_CONSTRUCT(&orte_rmcast_base.channels, opal_list_t);
+    OBJ_CONSTRUCT(&orte_rmcast_base.msg_list, opal_list_t);
+
+    orte_rmcast_base.event_base = opal_event_base_create();
+    OBJ_CONSTRUCT(&orte_rmcast_base.recv_thread, opal_thread_t);
+    OBJ_CONSTRUCT(&orte_rmcast_base.recv_ctl, orte_thread_ctl_t);
+    OBJ_CONSTRUCT(&orte_rmcast_base.recv_process, opal_thread_t);
+    OBJ_CONSTRUCT(&orte_rmcast_base.recv_process_ctl, orte_thread_ctl_t);
 
     orte_rmcast_base.xmit_network = 0;
     orte_rmcast_base.my_group_name = NULL;
@@ -121,6 +130,15 @@ int orte_rmcast_base_open(void)
     }
     orte_rmcast_base.my_output_channel = NULL;
     orte_rmcast_base.my_input_channel = NULL;
+
+    /* progress rate */
+    mca_base_param_reg_int_name("rmcast", "base_msg_tick_rate",
+                                "Number of microsecs between message event loops (default: 10)",
+                                false, false, 10, &(orte_rmcast_base.recv_ctl.rate.tv_usec));
+
+    mca_base_param_reg_int_name("rmcast", "base_msg_process_tick_rate",
+                                "Number of microsecs between message event loops (default: 100)",
+                                false, false, 100, &(orte_rmcast_base.recv_process_ctl.rate.tv_usec));
 
     /* public multicast channel for this job */
     mca_base_param_reg_string_name("rmcast", "base_multicast_network",
@@ -341,16 +359,16 @@ int orte_rmcast_base_open(void)
 /****    CLASS INSTANCES    ****/
 static void mcast_event_constructor(orte_mcast_msg_event_t *ev)
 {
-    ev->ev = (opal_event_t*)malloc(sizeof(opal_event_t));
+    ev->buf = OBJ_NEW(opal_buffer_t);
 }
 static void mcast_event_destructor(orte_mcast_msg_event_t *ev)
 {
-    if (NULL != ev->ev) { 
-        free(ev->ev); 
+    if (NULL != ev->buf) { 
+        OBJ_RELEASE(ev->buf); 
     } 
 }
 OBJ_CLASS_INSTANCE(orte_mcast_msg_event_t, 
-                   opal_object_t, 
+                   opal_list_item_t, 
                    mcast_event_constructor, 
                    mcast_event_destructor); 
 
@@ -376,6 +394,7 @@ static void recv_construct(rmcast_base_recv_t *ptr)
     ptr->name.vpid = ORTE_VPID_INVALID;
     ptr->channel = ORTE_RMCAST_INVALID_CHANNEL;
     ptr->recvd = false;
+    ptr->seq_num = ORTE_RMCAST_SEQ_INVALID;
     ptr->tag = ORTE_RMCAST_TAG_INVALID;
     ptr->flags = ORTE_RMCAST_NON_PERSISTENT;  /* default */
     ptr->iovec_array = NULL;
