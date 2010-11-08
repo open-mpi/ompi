@@ -131,6 +131,7 @@ OPAL_DECLSPEC int  opal_thread_start(opal_thread_t *);
 OPAL_DECLSPEC int  opal_thread_join(opal_thread_t *, void **thread_return);
 OPAL_DECLSPEC bool opal_thread_self_compare(opal_thread_t*);
 OPAL_DECLSPEC opal_thread_t *opal_thread_get_self(void);
+OPAL_DECLSPEC void opal_thread_kill(opal_thread_t *, int sig);
 
 END_C_DECLS
 

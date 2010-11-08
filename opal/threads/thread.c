@@ -113,6 +113,9 @@ opal_thread_t *opal_thread_get_self(void)
 }
 
 
+void opal_thread_kill(opal_thread_t *t, int sig)
+{
+}
 
 #elif OPAL_HAVE_POSIX_THREADS
 
@@ -155,6 +158,11 @@ opal_thread_t *opal_thread_get_self(void)
     opal_thread_t *t = OBJ_NEW(opal_thread_t);
     t->t_handle = pthread_self();
     return t;
+}
+
+void opal_thread_kill(opal_thread_t *t, int sig)
+{
+    pthread_kill(t->t_handle, sig);
 }
 
 
@@ -202,6 +210,11 @@ opal_thread_t *opal_thread_get_self(void)
     return t;
 }
 
+void opal_thread_kill(opal_thread_t *t, int sig)
+{
+    thr_kill(t->t_handle, sig);
+}
+
 
 #else
 
@@ -231,5 +244,8 @@ opal_thread_t *opal_thread_get_self(void)
     return NULL;
 }
 
+void opal_thread_kill(opal_thread_t *t, int sig)
+{
+}
 
 #endif
