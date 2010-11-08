@@ -27,6 +27,7 @@
 #include "opal/mca/event/event.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_ring_buffer.h"
+#include "opal/util/fd.h"
 
 #include "orte/mca/rmcast/rmcast.h"
 
@@ -115,8 +116,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(rmcast_base_send_t);
  * event to break out of the recv and process the message later
  */
 typedef struct {
-    opal_object_t super;
-    opal_event_t *ev;
+    opal_list_item_t super;
     opal_buffer_t *buf;
 } orte_mcast_msg_event_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_mcast_msg_event_t);
@@ -142,21 +142,20 @@ typedef struct {
 } rmcast_send_log_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(rmcast_send_log_t);
 
-#define ORTE_MULTICAST_MESSAGE_EVENT(bf, cbfunc)                \
-    do {                                                        \
-        orte_mcast_msg_event_t *mev;                            \
-        struct timeval now;                                     \
-        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,              \
-                            "defining mcast msg event: %s %d",  \
-                            __FILE__, __LINE__));               \
-        mev = OBJ_NEW(orte_mcast_msg_event_t);                  \
-        mev->buf = (bf);                                        \
-        opal_event_evtimer_set(opal_event_base,                 \
-                               mev->ev, (cbfunc), mev);         \
-        now.tv_sec = 0;                                         \
-        now.tv_usec = 0;                                        \
-        opal_event_evtimer_add(mev->ev, &now);                  \
-    } while(0);
+#define ORTE_MULTICAST_MESSAGE_EVENT(dt, sz)                            \
+    do {                                                                \
+        orte_mcast_msg_event_t *mev;                                    \
+        char byte='a';                                                  \
+        OPAL_OUTPUT_VERBOSE((1, orte_rmcast_base.rmcast_output,         \
+                             "defining mcast msg event: %s %d",         \
+                             __FILE__, __LINE__));                      \
+        mev = OBJ_NEW(orte_mcast_msg_event_t);                          \
+        opal_dss.load(mev->buf, (dt), (sz));                            \
+        ORTE_ACQUIRE_THREAD(&orte_rmcast_base.recv_process_ctl);        \
+        opal_list_append(&orte_rmcast_base.msg_list, &mev->super);      \
+        ORTE_RELEASE_THREAD(&orte_rmcast_base.recv_process_ctl);        \
+        opal_fd_write(orte_rmcast_base.process_ctl_pipe[1], 1, &byte);  \
+   } while(0);
 
 
 #define ORTE_MULTICAST_NEXT_SEQUENCE_NUM(seq)   \
@@ -169,10 +168,6 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(rmcast_send_log_t);
     } while(0);
 
 /****    FUNCTIONS    ****/
-ORTE_DECLSPEC int orte_rmcast_base_build_msg(rmcast_base_channel_t *ch,
-                                             opal_buffer_t **buffer,
-                                             rmcast_base_send_t *snd);
-
 ORTE_DECLSPEC int orte_rmcast_base_queue_recv(rmcast_base_recv_t **recvptr,
                                               orte_rmcast_channel_t channel,
                                               orte_rmcast_tag_t tag,
@@ -181,7 +176,13 @@ ORTE_DECLSPEC int orte_rmcast_base_queue_recv(rmcast_base_recv_t **recvptr,
                                               orte_rmcast_callback_buffer_fn_t cbfunc_buffer,
                                               void *cbdata, bool blocking);
 
-ORTE_DECLSPEC void orte_rmcast_base_process_recv(orte_mcast_msg_event_t *msg);
+ORTE_DECLSPEC int orte_rmcast_base_queue_xmit(rmcast_base_send_t *snd,
+                                              orte_rmcast_channel_t channel,
+                                              opal_buffer_t **buffer,
+                                              rmcast_base_channel_t **chan);
+
+ORTE_DECLSPEC int orte_rmcast_base_start_threads(bool rcv_thread, bool processing_thread);
+ORTE_DECLSPEC void orte_rmcast_base_stop_threads(void);
 
 ORTE_DECLSPEC void orte_rmcast_base_cancel_recv(orte_rmcast_channel_t channel,
                                                 orte_rmcast_tag_t tag);

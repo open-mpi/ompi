@@ -55,6 +55,8 @@ static void relay_handler(int status, orte_process_name_t* sender,
                           void* cbdata);
 static void relay(int fd, short event, void *cbdata);
 
+static int send_data(rmcast_base_send_t *snd, orte_rmcast_channel_t channel);
+
 /* API FUNCTIONS */
 static int init(void);
 
@@ -191,7 +193,7 @@ static int init(void)
        /* activate a recv to catch relays */
         if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                                           ORTE_RML_TAG_MULTICAST_RELAY,
-                                                          ORTE_RML_NON_PERSISTENT,
+                                                          ORTE_RML_PERSISTENT,
                                                           relay_handler,
                                                           NULL))) {
             ORTE_ERROR_LOG(rc);
@@ -249,10 +251,16 @@ static int init(void)
         }
     }
     
+    /* start the processing thread */
+    if (ORTE_SUCCESS != (rc = orte_rmcast_base_start_threads(false, true))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
     /* now activate the non-blocking recv so we catch messages */
     if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                                       ORTE_RML_TAG_MULTICAST,
-                                                      ORTE_RML_NON_PERSISTENT,
+                                                      ORTE_RML_PERSISTENT,
                                                       recv_handler,
                                                       NULL))) {
         ORTE_ERROR_LOG(rc);
@@ -272,6 +280,10 @@ static void finalize(void)
     if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
         orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_MULTICAST_RELAY);
     }
+
+    /* stop the processing thread */
+    orte_rmcast_base_stop_threads();
+
     return;
 }
 
@@ -298,16 +310,16 @@ static void internal_snd_buf_cb(int status,
     send_buf_complete = true;
 }
 
-static int queue_xmit(rmcast_base_send_t *snd,
-                      orte_rmcast_channel_t channel)
+static int send_data(rmcast_base_send_t *snd,
+                     orte_rmcast_channel_t channel)
 {
     opal_list_item_t *item;
-    rmcast_base_channel_t *ch, *chptr;
     orte_proc_t *proc;
     orte_odls_child_t *child;
     int rc, v;
     opal_buffer_t *buf;
-    
+    rmcast_base_channel_t *ch;
+
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                          "%s rmcast:tcp: send of %d %s"
                          " called on multicast channel %d",
@@ -316,45 +328,8 @@ static int queue_xmit(rmcast_base_send_t *snd,
                          (NULL == snd->iovec_array) ? "bytes" : "iovecs",
                          (int)channel));
     
-    /* if we were asked to send this on our group output
-     * channel, substitute it
-     */
-    if (ORTE_RMCAST_GROUP_OUTPUT_CHANNEL == channel) {
-        if (NULL == orte_rmcast_base.my_output_channel) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return ORTE_ERR_NOT_FOUND;
-        }
-        ch = orte_rmcast_base.my_output_channel;
-        goto process;
-    } else if (ORTE_RMCAST_GROUP_INPUT_CHANNEL == channel) {
-        if (NULL == orte_rmcast_base.my_input_channel) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return ORTE_ERR_NOT_FOUND;
-        }
-        ch = orte_rmcast_base.my_input_channel;
-        goto process;
-    }
-    
-    /* find the channel */
-    ch = NULL;
-    for (item = opal_list_get_first(&orte_rmcast_base.channels);
-         item != opal_list_get_end(&orte_rmcast_base.channels);
-         item = opal_list_get_next(item)) {
-        chptr = (rmcast_base_channel_t*)item;
-        if (channel == chptr->channel) {
-            ch = chptr;
-            break;
-        }
-    }
-    if (NULL == ch) {
-        /* didn't find it */
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return ORTE_ERR_NOT_FOUND;
-    }
-    
- process:    
     /* setup the message for xmission */
-    if (ORTE_SUCCESS != (rc = orte_rmcast_base_build_msg(ch, &buf, snd))) {
+    if (ORTE_SUCCESS != (rc = orte_rmcast_base_queue_xmit(snd, channel, &buf, &ch))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -473,8 +448,8 @@ static int queue_xmit(rmcast_base_send_t *snd,
 }
 
 static int tcp_send(orte_rmcast_channel_t channel,
-                      orte_rmcast_tag_t tag,
-                      struct iovec *msg, int count)
+                    orte_rmcast_tag_t tag,
+                    struct iovec *msg, int count)
 {
     rmcast_base_send_t snd;
     int ret;
@@ -487,7 +462,7 @@ static int tcp_send(orte_rmcast_channel_t channel,
     snd.cbfunc_iovec = internal_snd_cb;
     send_complete = false;
     
-    if (ORTE_SUCCESS != (ret = queue_xmit(&snd, channel))) {
+    if (ORTE_SUCCESS != (ret = send_data(&snd, channel))) {
         ORTE_ERROR_LOG(ret);
         OBJ_DESTRUCT(&snd);
         return ret;
@@ -501,10 +476,10 @@ static int tcp_send(orte_rmcast_channel_t channel,
 }
 
 static int tcp_send_nb(orte_rmcast_channel_t channel,
-                         orte_rmcast_tag_t tag,
-                         struct iovec *msg, int count,
-                         orte_rmcast_callback_fn_t cbfunc,
-                         void *cbdata)
+                       orte_rmcast_tag_t tag,
+                       struct iovec *msg, int count,
+                       orte_rmcast_callback_fn_t cbfunc,
+                       void *cbdata)
 {
     int ret;
     rmcast_base_send_t snd;
@@ -517,7 +492,7 @@ static int tcp_send_nb(orte_rmcast_channel_t channel,
     snd.cbfunc_iovec = cbfunc;
     snd.cbdata = cbdata;
     
-    if (ORTE_SUCCESS != (ret = queue_xmit(&snd, channel))) {
+    if (ORTE_SUCCESS != (ret = send_data(&snd, channel))) {
         ORTE_ERROR_LOG(ret);
         OBJ_DESTRUCT(&snd);
         return ret;
@@ -528,8 +503,8 @@ static int tcp_send_nb(orte_rmcast_channel_t channel,
 }
 
 static int tcp_send_buffer(orte_rmcast_channel_t channel,
-                             orte_rmcast_tag_t tag,
-                             opal_buffer_t *buf)
+                           orte_rmcast_tag_t tag,
+                           opal_buffer_t *buf)
 {
     int ret;
     rmcast_base_send_t snd;
@@ -541,7 +516,7 @@ static int tcp_send_buffer(orte_rmcast_channel_t channel,
     snd.cbfunc_buffer = internal_snd_buf_cb;
     send_buf_complete = false;
 
-    if (ORTE_SUCCESS != (ret = queue_xmit(&snd, channel))) {
+    if (ORTE_SUCCESS != (ret = send_data(&snd, channel))) {
         ORTE_ERROR_LOG(ret);
         OBJ_DESTRUCT(&snd);
         return ret;
@@ -555,10 +530,10 @@ static int tcp_send_buffer(orte_rmcast_channel_t channel,
 }
 
 static int tcp_send_buffer_nb(orte_rmcast_channel_t channel,
-                                orte_rmcast_tag_t tag,
-                                opal_buffer_t *buf,
-                                orte_rmcast_callback_buffer_fn_t cbfunc,
-                                void *cbdata)
+                              orte_rmcast_tag_t tag,
+                              opal_buffer_t *buf,
+                              orte_rmcast_callback_buffer_fn_t cbfunc,
+                              void *cbdata)
 {
     int ret;
     rmcast_base_send_t snd;
@@ -570,7 +545,7 @@ static int tcp_send_buffer_nb(orte_rmcast_channel_t channel,
     snd.cbfunc_buffer = cbfunc;
     snd.cbdata = cbdata;
     
-    if (ORTE_SUCCESS != (ret = queue_xmit(&snd, channel))) {
+    if (ORTE_SUCCESS != (ret = send_data(&snd, channel))) {
         ORTE_ERROR_LOG(ret);
         OBJ_DESTRUCT(&snd);
         return ret;
@@ -618,9 +593,9 @@ static int tcp_recv(orte_process_name_t *name,
     *count = recvptr->iovec_count;
     
     /* remove the recv */
-    OPAL_THREAD_LOCK(&orte_rmcast_base.lock);
+    ORTE_ACQUIRE_THREAD(&orte_rmcast_base.recv_process_ctl);
     opal_list_remove_item(&orte_rmcast_base.recvs, &recvptr->item);
-    OPAL_THREAD_UNLOCK(&orte_rmcast_base.lock);
+    ORTE_RELEASE_THREAD(&orte_rmcast_base.recv_process_ctl);
     OBJ_RELEASE(recvptr);
     
     return ORTE_SUCCESS;
@@ -702,9 +677,9 @@ static int tcp_recv_buffer(orte_process_name_t *name,
     /* release the data */
     OBJ_RELEASE(recvptr->buf);
     
-    OPAL_THREAD_LOCK(&orte_rmcast_base.lock);
+    ORTE_ACQUIRE_THREAD(&orte_rmcast_base.recv_process_ctl);
     opal_list_remove_item(&orte_rmcast_base.recvs, &recvptr->item);
-    OPAL_THREAD_UNLOCK(&orte_rmcast_base.lock);
+    ORTE_RELEASE_THREAD(&orte_rmcast_base.recv_process_ctl);
     OBJ_RELEASE(recvptr);
     
     return ret;
@@ -805,68 +780,22 @@ static int open_channel(orte_rmcast_channel_t channel, char *name,
 }
 
 
-    /****    LOCAL FUNCTIONS    ****/
-
-static void process_recv(int fd, short event, void *cbdata)
-{
-    orte_mcast_msg_event_t *mev = (orte_mcast_msg_event_t*)cbdata;
-    opal_list_item_t *item;
-    orte_odls_child_t *child;
-    int rc;
-    
-    /* if I am a daemon, I need to relay this to my children first */
-    if (ORTE_PROC_IS_DAEMON) {
-        for (item = opal_list_get_first(&orte_local_children);
-             item != opal_list_get_end(&orte_local_children);
-             item = opal_list_get_next(item)) {
-            child = (orte_odls_child_t*)item;
-            if (NULL == child->rml_uri) {
-                /* race condition */
-                continue;
-            }
-            OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
-                                 "%s relaying multicast to %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(child->name)));
-            if (0 > (rc = orte_rml.send_buffer(child->name, mev->buf, ORTE_RML_TAG_MULTICAST, 0))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-        }
-    }
-    
-    /* process the receive */
-    orte_rmcast_base_process_recv(mev);
-    
- cleanup:
-    OBJ_RELEASE(mev);
-    return;
-}
-
+/****    LOCAL FUNCTIONS    ****/
 static void recv_handler(int status, orte_process_name_t* sender,
                          opal_buffer_t* buffer, orte_rml_tag_t tag,
                          void* cbdata)
 {
-    int rc;
-    opal_buffer_t *buf;
+    uint8_t *data;
+    int32_t siz;
     
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                          "%s rmcast:tcp recvd multicast msg",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     /* clear the way for the next message */
-    buf = OBJ_NEW(opal_buffer_t);
-    opal_dss.copy_payload(buf, buffer);
-    ORTE_MULTICAST_MESSAGE_EVENT(buf, process_recv);
+    opal_dss.unload(buffer, (void**)&data, &siz);
+    ORTE_MULTICAST_MESSAGE_EVENT(data, siz);
     
-    /* reissue the recv */
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                      ORTE_RML_TAG_MULTICAST,
-                                                      ORTE_RML_NON_PERSISTENT,
-                                                      recv_handler,
-                                                      NULL))) {
-        ORTE_ERROR_LOG(rc);
-    }
     return;
 }
 
@@ -877,7 +806,9 @@ static void relay(int fd, short event, void *cbdata)
     opal_list_item_t *item;
     orte_odls_child_t *child;
     int rc, v;
-    
+    uint8_t *data;
+    int32_t siz;
+
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                          "%s rmcast:tcp relaying multicast msg from %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -933,9 +864,9 @@ static void relay(int fd, short event, void *cbdata)
     }
 
     /* now process it myself */
-    ORTE_MULTICAST_MESSAGE_EVENT(msg->buffer, process_recv);
+    opal_dss.unload(msg->buffer, (void**)&data, &siz);
+    ORTE_MULTICAST_MESSAGE_EVENT(data, siz);
     /* protect the buffer */
-    msg->buffer = NULL;
     OBJ_RELEASE(msg);
 }
 
@@ -943,8 +874,6 @@ static void relay_handler(int status, orte_process_name_t* sender,
                           opal_buffer_t* buffer, orte_rml_tag_t tag,
                           void* cbdata)
 {
-    int rc;
-    
     /* if the message is from myself, ignore it */
     if (sender->jobid == ORTE_PROC_MY_NAME->jobid &&
         sender->vpid == ORTE_PROC_MY_NAME->vpid) {
@@ -959,13 +888,5 @@ static void relay_handler(int status, orte_process_name_t* sender,
     /* clear the way for the next message */
     ORTE_MESSAGE_EVENT(sender, buffer, tag, relay);
     
-    /* reissue the recv */
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                      ORTE_RML_TAG_MULTICAST_RELAY,
-                                                      ORTE_RML_NON_PERSISTENT,
-                                                      relay_handler,
-                                                      NULL))) {
-        ORTE_ERROR_LOG(rc);
-    }
     return;
 }
