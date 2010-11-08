@@ -45,6 +45,9 @@ extern "C" {
 #include <sys/time.h>
 #endif
 #ifndef WIN32
+/** OMPI 
+ * wrap include stdbool.h with ifdef to prevent certain C++ compilers choking on bool redefine 
+ */
 #    if !(defined(c_plusplus) || defined(__cplusplus))
 #        include <stdbool.h>
 #    endif
