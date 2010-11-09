@@ -133,11 +133,11 @@ int orte_rmcast_base_open(void)
     /* progress rate */
     mca_base_param_reg_int_name("rmcast", "base_msg_tick_rate",
                                 "Number of microsecs between message event loops (default: 10)",
-                                false, false, 10, &(orte_rmcast_base.recv_ctl.rate.tv_usec));
+                                false, false, 10, (int *) &(orte_rmcast_base.recv_ctl.rate.tv_usec));
 
     mca_base_param_reg_int_name("rmcast", "base_msg_process_tick_rate",
                                 "Number of microsecs between message event loops (default: 100)",
-                                false, false, 100, &(orte_rmcast_base.recv_process_ctl.rate.tv_usec));
+                                false, false, 100, (int *) &(orte_rmcast_base.recv_process_ctl.rate.tv_usec));
 
     /* public multicast channel for this job */
     mca_base_param_reg_string_name("rmcast", "base_multicast_network",
