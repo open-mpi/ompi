@@ -240,7 +240,7 @@
 #      define OPAL_DECLSPEC        __declspec(dllexport)
 #      define OPAL_MODULE_DECLSPEC
 #    else
-#      define OPAL_DECLSPEC        __declspec(dllimport)
+#      define OPAL_DECLSPEC
 #      if defined(OPAL_MODULE_EXPORTS)
 #        define OPAL_MODULE_DECLSPEC __declspec(dllexport)
 #      else

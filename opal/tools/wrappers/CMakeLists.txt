@@ -11,13 +11,16 @@ FILE(GLOB_RECURSE OPAL_WRAPPER_SOURCE_FILES "*.h" "*.c" "*.cc" "*.cpp")
 
 ADD_EXECUTABLE (opal-wrapper ${OPAL_WRAPPER_SOURCE_FILES})
 
-TARGET_LINK_LIBRARIES (opal-wrapper libopen-pal Ws2_32.lib shlwapi.lib)
-
+ADD_DEPENDENCIES(opal-wrapper libopen-pal)
 IF(BUILD_SHARED_LIBS)
+  TARGET_LINK_LIBRARIES (opal-wrapper Ws2_32.lib shlwapi.lib
+    ${OpenMPI_BINARY_DIR}/libopen-pal-lt${CMAKE_DEBUG_POSTFIX}.lib)
   SET_TARGET_PROPERTIES(opal-wrapper PROPERTIES
     COMPILE_FLAGS "${OMPI_C_DEF_PRE}_USRDLL ${OMPI_C_DEF_PRE}OPAL_IMPORTS
                    ${OMPI_C_DEF_PRE}OMPI_IMPORTS ${OMPI_C_DEF_PRE}ORTE_IMPORTS
                    ${OMPI_CXX_LAN_FLAG}")
+ELSE(BUILD_SHARED_LIBS)
+  TARGET_LINK_LIBRARIES (opal-wrapper libopen-pal Ws2_32.lib shlwapi.lib)
 ENDIF(BUILD_SHARED_LIBS)
 
 ADD_CUSTOM_COMMAND (TARGET opal-wrapper
