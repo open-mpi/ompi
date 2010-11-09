@@ -89,7 +89,6 @@ static bool opened=false;
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
  */
-#if ORTE_ENABLE_MULTICAST
 int orte_rmcast_base_open(void)
 {
     int value, pval, i;
@@ -314,47 +313,6 @@ int orte_rmcast_base_open(void)
     /* All done */
     return ORTE_SUCCESS;
 }
-#else
-int orte_rmcast_base_open(void)
-{
-    int i;
-    
-    if (opened) {
-        /* ensure we don't go through here twice */
-        return ORTE_SUCCESS;
-    }
-    opened = true;
-    orte_rmcast_base.opened = true;
-    
-    /* ensure all global values are initialized */
-    OBJ_CONSTRUCT(&orte_rmcast_base.lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&orte_rmcast_base.cond, opal_condition_t);
-    orte_rmcast_base.active = false;
-    OBJ_CONSTRUCT(&orte_rmcast_base.recvs, opal_list_t);
-    OBJ_CONSTRUCT(&orte_rmcast_base.channels, opal_list_t);
-
-    orte_rmcast_base.xmit_network = 0;
-    orte_rmcast_base.my_group_name = NULL;
-    orte_rmcast_base.my_group_number = 0;
-    orte_rmcast_base.interface = 0;
-    for (i=0; i < 255; i++) {
-        orte_rmcast_base.ports[i] = 0;
-    }
-    orte_rmcast_base.my_output_channel = NULL;
-    orte_rmcast_base.my_input_channel = NULL;
-
-    /* Open up all available components */
-    if (ORTE_SUCCESS != 
-        mca_base_components_open("rmcast", orte_rmcast_base.rmcast_output,
-                                 mca_rmcast_base_static_components, 
-                                 &orte_rmcast_base.rmcast_opened, true)) {
-        return ORTE_ERROR;
-    }
-
-    /* All done */
-    return ORTE_SUCCESS;
-}
-#endif
 
 /****    CLASS INSTANCES    ****/
 static void mcast_event_constructor(orte_mcast_msg_event_t *ev)
