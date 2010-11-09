@@ -111,6 +111,10 @@ IF(NOT MICROSOFT_CHECK_DONE)
     "C compiler option for C++ exceptions.")
   SET(OMPI_C_INCLUDE_DIR "/I" CACHE INTERNAL
     "C compiler option for including directory.")
+  SET(OMPI_LIB_CMD "lib" CACHE INTERNAL
+    "command line for making static libraries.")
+  SET(OMPI_LIB_CMD_OUTPUT "-OUT:" CACHE INTERNAL
+    "Output option for making static libraries.")
 
   SET(DUMP_UTIL "${VC_BIN_PATH}/dumpbin.exe" CACHE INTERNAL "the dumpbin application.")
 

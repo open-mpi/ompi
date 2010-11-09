@@ -11,14 +11,18 @@ FILE(GLOB_RECURSE ORTE_CLEAN_SOURCE_FILES "*.h" "*.c" "*.cc" "*.cpp")
 
 ADD_EXECUTABLE (orte-clean ${ORTE_CLEAN_SOURCE_FILES})
 
+ADD_DEPENDENCIES(orte-clean libopen-rte libopen-pal)
 IF(BUILD_SHARED_LIBS)
+  TARGET_LINK_LIBRARIES (orte-clean Ws2_32.lib shlwapi.lib
+    ${OpenMPI_BINARY_DIR}/libopen-pal-lt${CMAKE_DEBUG_POSTFIX}.lib
+    libopen-rte)
   SET_TARGET_PROPERTIES(orte-clean PROPERTIES 
     COMPILE_FLAGS "${OMPI_C_DEF_PRE}_USRDLL ${OMPI_C_DEF_PRE}OPAL_IMPORTS
                    ${OMPI_C_DEF_PRE}OMPI_IMPORTS ${OMPI_C_DEF_PRE}ORTE_IMPORTS
                    ${OMPI_CXX_LAN_FLAG}")
-ENDIF(BUILD_SHARED_LIBS)
-
+ELSE(BUILD_SHARED_LIBS)
 TARGET_LINK_LIBRARIES (orte-clean libopen-pal libopen-rte Ws2_32.lib shlwapi.lib)
+ENDIF(BUILD_SHARED_LIBS)
 
 ADD_CUSTOM_COMMAND (TARGET orte-clean
   POST_BUILD
