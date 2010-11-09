@@ -179,13 +179,13 @@ if test -z "$program_suffix" ; then
     program_suffix=NONE
 fi
 # undo transforms caused by empty prefix/suffix
-if test "$program_transform_name" = 's,^,,' || \
-   test "$program_transform_name" = 's,$$,,' || \
-   test "$program_transform_name" = 's,$$,,;s,^,,' ; then
+if expr "$program_transform_name" : 's.^..$' >/dev/null || \
+   expr "$program_transform_name" : 's.$$..$' >/dev/null || \
+   expr "$program_transform_name" : 's.$$..;s.^..$' >/dev/null ; then
     program_transform_name="s,x,x,"
 fi
 if test "$program_prefix$program_suffix$program_transform_name" != "NONENONEs,x,x," ; then
-    AC_MSG_WARN([*** This configure script does not support --program-prefix, --program-suffix or --program-transform-name. Users are recommended to instead use --prefix with a unique directory and make symbolic links as desired for renaming.])
+    AC_MSG_WARN([*** The Open MPI configure script does not support --program-prefix, --program-suffix or --program-transform-name. Users are recommended to instead use --prefix with a unique directory and make symbolic links as desired for renaming.])
     AC_MSG_ERROR([*** Cannot continue])
 fi
 
