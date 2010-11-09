@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Los Alamos National Security, LLC. 
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -50,7 +52,8 @@ static int error_exit;
 static void quicktime_cb(int fd, short event, void *cbdata)
 {
     if (NULL != quicktime) {
-        OBJ_RELEASE(quicktime);
+	free(quicktime);
+	quicktime = NULL;
     }
     error_exit = ORTE_ERR_SILENT;
     /* declare it fired */
@@ -64,7 +67,8 @@ static void send_cbfunc(int status, orte_process_name_t* sender,
     /* cancel the timer */
     if (NULL != quicktime) {
         opal_event_evtimer_del(quicktime);
-        OBJ_RELEASE(quicktime);
+	free(quicktime);
+	quicktime = NULL;
     }
     /* declare the work done */
     timer_fired = true;
@@ -79,7 +83,8 @@ static void recv_info(int status, orte_process_name_t* sender,
     /* cancel the timer */
     if (NULL != quicktime) {
         opal_event_evtimer_del(quicktime);
-        OBJ_RELEASE(quicktime);
+	free (quicktime);
+	quicktime = NULL;
     }
     /* xfer the answer */
     if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(&answer, buffer))) {
@@ -190,7 +195,8 @@ int orte_util_comm_report_event(orte_comm_event_t ev)
             /* cancel the timer */
             if (NULL != quicktime) {
                 opal_event_evtimer_del(quicktime);
-                OBJ_RELEASE(quicktime);
+		free(quicktime);
+		quicktime = NULL;
             }
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&answer);
@@ -277,7 +283,8 @@ int orte_util_comm_query_job_info(const orte_process_name_t *hnp, orte_jobid_t j
         /* cancel the timer */
         if (NULL != quicktime) {
             opal_event_evtimer_del(quicktime);
-            OBJ_RELEASE(quicktime);
+	    free(quicktime);
+	    quicktime = NULL;
         }
         ORTE_ERROR_LOG(ret);
         OBJ_DESTRUCT(&answer);
@@ -383,7 +390,8 @@ int orte_util_comm_query_node_info(const orte_process_name_t *hnp, char *node,
         /* cancel the timer */
         if (NULL != quicktime) {
             opal_event_evtimer_del(quicktime);
-            OBJ_RELEASE(quicktime);
+	    free (quicktime);
+	    quicktime = NULL;
         }
         ORTE_ERROR_LOG(ret);
         OBJ_DESTRUCT(&answer);
@@ -494,7 +502,8 @@ int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t 
         /* cancel the timer */
         if (NULL != quicktime) {
             opal_event_evtimer_del(quicktime);
-            OBJ_RELEASE(quicktime);
+	    free(quicktime);
+	    quicktime = NULL;
         }
         ORTE_ERROR_LOG(ret);
         OBJ_DESTRUCT(&answer);
