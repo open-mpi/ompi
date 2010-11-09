@@ -32,12 +32,11 @@ static void error_out_all_pending_frags(mca_btl_base_endpoint_t *ep,
                                         bool errout);
 static void mca_btl_openib_endpoint_notify(mca_btl_openib_endpoint_t *endpoint,
                                            uint8_t type, int index);
-#if 0
+
 /* debug functions that are normally not needed */
 static void dump_all_local_rdma_frags(mca_btl_openib_device_t *device);
 static void dump_local_rdma_frags(mca_btl_openib_endpoint_t * endpoint);
-void dump_all_internal_queues(bool errout);
-#endif
+static void dump_all_internal_queues(bool errout);
 
 /**
  * This function is called when we get an error on the completion
@@ -413,6 +412,13 @@ static void error_out_all_pending_frags(mca_btl_base_endpoint_t *ep,
     opal_list_item_t *item;
     mca_btl_openib_com_frag_t* frag;
     mca_btl_base_descriptor_t *des;
+    int verbose = 10;  /* Verbosity level unless debugging */
+
+    /* If debugging, drop verbosity level so we can see the output
+     * regardless of the level the program was run with. */
+    if (false == errout) {
+	verbose = 0;
+    }
 
     total = 0;
     /* Traverse all QPs and all priorities and move to other endpoint */
@@ -422,7 +428,7 @@ static void error_out_all_pending_frags(mca_btl_base_endpoint_t *ep,
             len = opal_list_get_size(&ep->qps[qp].no_wqe_pending_frags[pri]);
             if (len > 0) {
                 total += len;
-                opal_output_verbose(10, mca_btl_openib_component.verbose_failover,
+                opal_output_verbose(verbose, mca_btl_openib_component.verbose_failover,
                                     "IB: Checking for no_wqe_pending_frags qp=%d, "
                                     "pri=%d, list size=%d",
                                     qp, pri, len);
@@ -436,7 +442,7 @@ static void error_out_all_pending_frags(mca_btl_base_endpoint_t *ep,
                         if(openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_SEND) {
                             opal_list_item_t *i;
                             while((i = opal_list_remove_first(&to_send_frag(des)->coalesced_frags))) {
-                                opal_output_verbose(10, mca_btl_openib_component.verbose_failover,
+                                opal_output_verbose(verbose, mca_btl_openib_component.verbose_failover,
                                                     "IB: Found coalesced frag in no_wqe_pending_frags");
                                 btl_ownership = (to_base_frag(i)->base.des_flags &
                                                  MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
@@ -459,7 +465,7 @@ static void error_out_all_pending_frags(mca_btl_base_endpoint_t *ep,
                 len = opal_list_get_size(&ep->qps[qp].no_credits_pending_frags[pri]);
                 if (len > 0) {
                     total += len;
-                    opal_output_verbose(10, mca_btl_openib_component.verbose_failover,
+                    opal_output_verbose(verbose, mca_btl_openib_component.verbose_failover,
                                         "IB: Checking for no_credits_pending_frags qp=%d, "
                                         "pri=%d, list size=%d",
                                         qp, pri, len);
@@ -473,7 +479,7 @@ static void error_out_all_pending_frags(mca_btl_base_endpoint_t *ep,
                             if(openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_SEND) {
                                 opal_list_item_t *i;
                                 while((i = opal_list_remove_first(&to_send_frag(des)->coalesced_frags))) {
-                                    opal_output_verbose(10, mca_btl_openib_component.verbose_failover,
+                                    opal_output_verbose(verbose, mca_btl_openib_component.verbose_failover,
                                                         "IB: Found coalesced frag in "
                                                         "no_credits_pending_frags");
                                     btl_ownership = (to_base_frag(i)->base.des_flags &
@@ -498,7 +504,7 @@ static void error_out_all_pending_frags(mca_btl_base_endpoint_t *ep,
                 len = opal_list_get_size(&ep->endpoint_btl->qps[qp].u.srq_qp.pending_frags[pri]);
                 if (len > 0) {
                     total += len;
-                    opal_output_verbose(10, mca_btl_openib_component.verbose_failover,
+                    opal_output_verbose(verbose, mca_btl_openib_component.verbose_failover,
                                         "IB: Checking for srq pending_frags qp=%d, pri=%d, "
                                         "list size=%d",
                                         qp, pri, len);
@@ -512,7 +518,7 @@ static void error_out_all_pending_frags(mca_btl_base_endpoint_t *ep,
                             if(openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_SEND) {
                                 opal_list_item_t *i;
                                 while((i = opal_list_remove_first(&to_send_frag(des)->coalesced_frags))) {
-                                    opal_output_verbose(10, mca_btl_openib_component.verbose_failover,
+                                    opal_output_verbose(verbose, mca_btl_openib_component.verbose_failover,
                                                         "IB: Found coalesced frag in SRQ pending_frags");
                                     btl_ownership = (to_base_frag(i)->base.des_flags &
                                                      MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
@@ -541,7 +547,7 @@ static void error_out_all_pending_frags(mca_btl_base_endpoint_t *ep,
 
     if (len > 0) {
         total += len;
-        opal_output_verbose(10, mca_btl_openib_component.verbose_failover,
+        opal_output_verbose(verbose, mca_btl_openib_component.verbose_failover,
                             "IB: Checking for pending_lazy_frags, list size=%d", len);
         if (true == errout) {
             while  (NULL != (item = opal_list_remove_first(&(ep->pending_lazy_frags)))) {
@@ -555,7 +561,7 @@ static void error_out_all_pending_frags(mca_btl_base_endpoint_t *ep,
     len = opal_list_get_size(&ep->pending_put_frags);
     if (len > 0) {
         total += len;
-        opal_output_verbose(10, mca_btl_openib_component.verbose_failover,
+        opal_output_verbose(verbose, mca_btl_openib_component.verbose_failover,
                             "IB: Checking for pending_put_frags, list size=%d", len);
         if (true == errout) {
             while (NULL != (item = opal_list_remove_first(&(ep->pending_put_frags)))) {
@@ -569,7 +575,7 @@ static void error_out_all_pending_frags(mca_btl_base_endpoint_t *ep,
     len = opal_list_get_size(&ep->pending_get_frags);
     if (len > 0) {
         total += len;
-        opal_output_verbose(10, mca_btl_openib_component.verbose_failover,
+        opal_output_verbose(verbose, mca_btl_openib_component.verbose_failover,
                             "IB: Checking for pending_get_frags, list size=%d", len);
         if (true == errout) {
             while (NULL != (item = opal_list_remove_first(&(ep->pending_put_frags)))) {
@@ -580,7 +586,7 @@ static void error_out_all_pending_frags(mca_btl_base_endpoint_t *ep,
         }
     }
 
-    opal_output_verbose(40, mca_btl_openib_component.verbose_failover,
+    opal_output_verbose(verbose + 30, mca_btl_openib_component.verbose_failover,
                         "IB: Finished checking for pending_frags, total moved=%d",
                         total);
 }
@@ -692,7 +698,6 @@ static void mca_btl_openib_endpoint_notify(mca_btl_base_endpoint_t* endpoint, ui
     return;
 }
 
-#if 0 /* debugging functions */
 /*
  * Function used for debugging problems in eager rdma.
  */
@@ -751,7 +756,7 @@ void dump_all_local_rdma_frags(mca_btl_openib_device_t *device) {
  * errout=true, then it will error them out.  Otherwise, it will
  * just print out the size of the queues with data in them.
  */
-void dump_all_internal_queues(bool errout) {
+static void dump_all_internal_queues(bool errout) {
     int i, j, num_eps;
     mca_btl_openib_module_t* btl;
     int total;
@@ -776,4 +781,4 @@ void dump_all_internal_queues(bool errout) {
         }
     }
 }
-#endif /* debugging functions */
+
