@@ -41,7 +41,7 @@ typedef struct {
     volatile bool stop;
     struct timeval rate;
 } orte_thread_ctl_t;
-OBJ_CLASS_DECLARATION(orte_thread_ctl_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_thread_ctl_t);
 
 ORTE_DECLSPEC extern bool orte_debug_threads;
 
