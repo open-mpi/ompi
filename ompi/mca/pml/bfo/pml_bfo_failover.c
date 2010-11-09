@@ -838,7 +838,7 @@ void mca_pml_bfo_send_request_restart(mca_pml_bfo_send_request_t* sendreq,
         /* select a btl */
         bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
         rc = mca_pml_bfo_send_request_start_btl(sendreq, bml_btl);
-        if( OPAL_LIKELY(OMPI_ERR_OUT_OF_RESOURCE != rc) )
+        if(OPAL_LIKELY(OMPI_ERR_OUT_OF_RESOURCE != OPAL_SOS_GET_ERROR_CODE(rc)))
             return;
     }
     add_request_to_send_pending(sendreq, MCA_PML_BFO_SEND_PENDING_START, true);
@@ -894,9 +894,9 @@ void mca_pml_bfo_repost_match_fragment(struct mca_btl_base_descriptor_t* des)
                                         &offset);
         }
         rc = mca_pml_bfo_send_request_start_btl(sendreq, bml_btl);
-        if (OMPI_SUCCESS == rc) {
+        if (OMPI_SUCCESS == (OPAL_SOS_GET_ERROR_CODE(rc))) {
             return;
-        } else if (OMPI_ERR_OUT_OF_RESOURCE == rc) {
+        } else if (OMPI_ERR_OUT_OF_RESOURCE == (OPAL_SOS_GET_ERROR_CODE(rc))) {
             opal_output_verbose(30, mca_pml_bfo_output,
                                 "Warning: delaying reposting of BFO_HDR_TYPE_MATCH, btls=%d",
                                 (int)sendreq->req_endpoint->btl_eager.arr_size);
