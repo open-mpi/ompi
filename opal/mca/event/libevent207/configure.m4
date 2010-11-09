@@ -159,8 +159,8 @@ EOF
                                    echo $file is unchanged
                                else
                                    cp "$file.new" $file
-                                   rm -f "$file.new"
-                               fi])
+                               fi
+                               rm -f "$file.new"])
 
            # Must set this variable so that the framework m4 knows
            # what file to include in opal/mca/event/event.h
