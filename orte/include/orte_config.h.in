@@ -35,7 +35,11 @@
 #      define ORTE_DECLSPEC         __declspec(dllexport)
 #      define ORTE_MODULE_DECLSPEC
 #    else
-#      define ORTE_DECLSPEC         __declspec(dllimport)
+#      if defined(ORTE_IMPORTS)
+#        define ORTE_DECLSPEC       __declspec(dllimport)
+#      else
+#        define ORTE_DECLSPEC
+#      endif  /*defined(ORTE_IMPORTS)*/
 #      if defined(ORTE_MODULE_EXPORTS)
 #        define ORTE_MODULE_DECLSPEC __declspec(dllexport)
 #      else

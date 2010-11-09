@@ -86,7 +86,11 @@ typedef struct {
 #      define OMPI_DECLSPEC        __declspec(dllexport)
 #      define OMPI_MODULE_DECLSPEC
 #    else
-#      define OMPI_DECLSPEC        __declspec(dllimport)
+#      if defined(OMPI_IMPORTS)
+#        define OMPI_DECLSPEC      __declspec(dllimport)
+#      else
+#        define OMPI_DECLSPEC
+#      endif  /*defined(OMPI_IMPORTS)*/
 #      if defined(OMPI_MODULE_EXPORTS)
 #        define OMPI_MODULE_DECLSPEC __declspec(dllexport)
 #      else
