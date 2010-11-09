@@ -315,8 +315,9 @@ mca_pml_ob1_frag_completion( mca_btl_base_module_t* btl,
     OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth, -1);
     OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, req_bytes_delivered);
 
-    if(send_request_pml_complete_check(sendreq) == false)
+    if(send_request_pml_complete_check(sendreq) == false) {
         mca_pml_ob1_send_request_schedule(sendreq);
+    }
 
     /* check for pending requests */
     MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
