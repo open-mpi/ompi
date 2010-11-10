@@ -1424,13 +1424,16 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
      */
     getcwd(basedir, sizeof(basedir));
 
-    /* compute the number of local procs alive */
+    /* compute the number of local procs alive or about to be launched
+     * as part of this job
+     */
     num_procs_alive = 0;
     for (item = opal_list_get_first(&orte_local_children);
          item != opal_list_get_end(&orte_local_children);
          item = opal_list_get_next(item)) {
         child = (orte_odls_child_t*)item;
-        if (child->alive) {
+        if (child->alive ||
+            OPAL_EQUAL == opal_dss.compare(&job, &(child->name->jobid), ORTE_JOBID)) {
             num_procs_alive++;
         }
     }
