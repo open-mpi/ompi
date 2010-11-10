@@ -114,7 +114,6 @@ int orte_rmcast_base_open(void)
     OBJ_CONSTRUCT(&orte_rmcast_base.channels, opal_list_t);
     OBJ_CONSTRUCT(&orte_rmcast_base.msg_list, opal_list_t);
 
-    orte_rmcast_base.event_base = opal_event_base_create();
     OBJ_CONSTRUCT(&orte_rmcast_base.recv_thread, opal_thread_t);
     OBJ_CONSTRUCT(&orte_rmcast_base.recv_ctl, orte_thread_ctl_t);
     OBJ_CONSTRUCT(&orte_rmcast_base.recv_process, opal_thread_t);
@@ -135,6 +134,12 @@ int orte_rmcast_base_open(void)
                                 "Whether or not to enable progress thread (default: false)",
                                 false, false, (int)false, &value);
     orte_rmcast_base.enable_progress_thread = OPAL_INT_TO_BOOL(value);
+
+    if (orte_rmcast_base.enable_progress_thread) {
+        orte_rmcast_base.event_base = opal_event_base_create();
+    } else {
+        orte_rmcast_base.event_base = opal_event_base;
+    }
 
     /* public multicast channel for this job */
     mca_base_param_reg_string_name("rmcast", "base_multicast_network",
