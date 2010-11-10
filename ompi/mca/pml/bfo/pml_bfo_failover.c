@@ -1970,9 +1970,10 @@ void mca_pml_bfo_update_eager_bml_btl_recv_ctl(mca_bml_base_btl_t** bml_btl,
             type = "PUT";
             break;
         default:
-            opal_output(mca_pml_bfo_output,
-                        "Unable to update the BTL. Drop the update.");
-            return;
+            /* In theory, this can never happen. */
+            opal_output(0, "%s:%d FATAL ERROR, unknown header (hdr=%d)",
+                        __FILE__, __LINE__, common->hdr_type);
+            orte_errmgr.abort(-1, NULL);
         }
 
         mca_pml_bfo_find_recvreq_eager_bml_btl(bml_btl, btl, recvreq, type);
