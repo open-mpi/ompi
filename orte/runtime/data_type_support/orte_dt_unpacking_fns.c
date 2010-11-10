@@ -297,6 +297,14 @@ int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
             return rc;
         }
 
+        /* unpack the recovery flag */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
+                         (&(jobs[i]->enable_recovery)), &n, OPAL_BOOL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
 #if OPAL_ENABLE_FT_CR == 1
         /* unpack the ckpt state */
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
