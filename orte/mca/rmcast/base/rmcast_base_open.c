@@ -130,14 +130,11 @@ int orte_rmcast_base_open(void)
     orte_rmcast_base.my_output_channel = NULL;
     orte_rmcast_base.my_input_channel = NULL;
 
-    /* progress rate */
-    mca_base_param_reg_int_name("rmcast", "base_msg_tick_rate",
-                                "Number of microsecs between message event loops (default: 10)",
-                                false, false, 10, (int *) &(orte_rmcast_base.recv_ctl.rate.tv_usec));
-
-    mca_base_param_reg_int_name("rmcast", "base_msg_process_tick_rate",
-                                "Number of microsecs between message event loops (default: 100)",
-                                false, false, 100, (int *) &(orte_rmcast_base.recv_process_ctl.rate.tv_usec));
+    /* whether or not to use progress thread */
+    mca_base_param_reg_int_name("rmcast", "enable_progress_thread",
+                                "Whether or not to enable progress thread (default: false)",
+                                false, false, (int)false, &value);
+    orte_rmcast_base.enable_progress_thread = OPAL_INT_TO_BOOL(value);
 
     /* public multicast channel for this job */
     mca_base_param_reg_string_name("rmcast", "base_multicast_network",
