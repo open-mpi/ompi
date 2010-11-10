@@ -3222,7 +3222,7 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
                 while((i = opal_list_remove_first(&to_send_frag(des)->coalesced_frags))) {
                     btl_ownership = (to_base_frag(i)->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
 #if OMPI_OPENIB_FAILOVER_ENABLED
-                    if (des->des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
+                    if (to_base_frag(i)->base.des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
 #endif
                         to_base_frag(i)->base.des_cbfunc(&openib_btl->super, endpoint,
                                 &to_base_frag(i)->base, OMPI_SUCCESS);
