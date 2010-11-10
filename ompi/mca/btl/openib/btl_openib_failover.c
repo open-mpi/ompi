@@ -34,9 +34,9 @@ static void mca_btl_openib_endpoint_notify(mca_btl_openib_endpoint_t *endpoint,
                                            uint8_t type, int index);
 
 /* debug functions that are normally not needed */
-static void dump_all_local_rdma_frags(mca_btl_openib_device_t *device);
+void mca_btl_openib_dump_all_local_rdma_frags(mca_btl_openib_device_t *device);
+void mca_btl_openib_dump_all_internal_queues(bool errout);
 static void dump_local_rdma_frags(mca_btl_openib_endpoint_t * endpoint);
-static void dump_all_internal_queues(bool errout);
 
 /**
  * This function is called when we get an error on the completion
@@ -701,7 +701,7 @@ static void mca_btl_openib_endpoint_notify(mca_btl_base_endpoint_t* endpoint, ui
 /*
  * Function used for debugging problems in eager rdma.
  */
-void dump_local_rdma_frags(mca_btl_openib_endpoint_t * endpoint) {
+static void dump_local_rdma_frags(mca_btl_openib_endpoint_t * endpoint) {
     mca_btl_openib_recv_frag_t *headers_buf = endpoint->eager_rdma_local.frags;
     mca_btl_openib_recv_frag_t * frag;
     mca_btl_openib_control_header_t* chdr;
@@ -732,7 +732,7 @@ void dump_local_rdma_frags(mca_btl_openib_endpoint_t * endpoint) {
 /*
  * Function used for debugging problems in eager rdma.
  */
-void dump_all_local_rdma_frags(mca_btl_openib_device_t *device) {
+void mca_btl_openib_dump_all_local_rdma_frags(mca_btl_openib_device_t *device) {
     int i, c;
     mca_btl_openib_endpoint_t* endpoint;
 
@@ -756,7 +756,7 @@ void dump_all_local_rdma_frags(mca_btl_openib_device_t *device) {
  * errout=true, then it will error them out.  Otherwise, it will
  * just print out the size of the queues with data in them.
  */
-static void dump_all_internal_queues(bool errout) {
+void mca_btl_openib_dump_all_internal_queues(bool errout) {
     int i, j, num_eps;
     mca_btl_openib_module_t* btl;
     int total;
