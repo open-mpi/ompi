@@ -50,7 +50,9 @@ int orte_rmcast_base_close(void)
     OBJ_DESTRUCT(&orte_rmcast_base.recv_ctl);
     OBJ_DESTRUCT(&orte_rmcast_base.recv_process);
     OBJ_DESTRUCT(&orte_rmcast_base.recv_process_ctl);
-    opal_event_base_finalize(orte_rmcast_base.event_base);
+    if (orte_rmcast_base.enable_progress_thread) {
+        opal_event_base_finalize(orte_rmcast_base.event_base);
+    }
 
     /* Close all remaining available components (may be one if this is a
        Open RTE program, or [possibly] multiple if this is ompi_info) */
