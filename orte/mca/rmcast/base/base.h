@@ -55,6 +55,7 @@ typedef struct {
     opal_list_t channels;
     rmcast_base_channel_t *my_output_channel;
     rmcast_base_channel_t *my_input_channel;
+    bool enable_progress_thread;
     int recv_ctl_pipe[2];
     int process_ctl_pipe[2];
     opal_list_t msg_list;
