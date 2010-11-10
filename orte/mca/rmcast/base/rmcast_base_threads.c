@@ -202,6 +202,7 @@ int orte_rmcast_base_process_msg(orte_mcast_msg_event_t *msg)
                              "%s rmcast:base:process_recv delivering message to channel %d tag %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ptr->channel, (int)tag));
         
+        ptr->seq_num = recvd_seq_num;
         /* we have a recv - unpack the data */
         if (0 == flag) {
             /* get the number of iovecs in the buffer */
@@ -236,7 +237,7 @@ int orte_rmcast_base_process_msg(orte_mcast_msg_event_t *msg)
                 OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                                      "%s rmcast:base:process_recv delivering iovecs to channel %d tag %d",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ptr->channel, (int)tag));
-                ptr->cbfunc_iovec(ORTE_SUCCESS, ptr->channel, recvd_seq_num, tag,
+                ptr->cbfunc_iovec(ORTE_SUCCESS, ptr->channel, ptr->seq_num, tag,
                                   &name, iovec_array, iovec_count, ptr->cbdata);
                 /* if it isn't persistent, remove it */
                 if (!(ORTE_RMCAST_PERSISTENT & ptr->flags)) {
@@ -254,7 +255,6 @@ int orte_rmcast_base_process_msg(orte_mcast_msg_event_t *msg)
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                     goto cleanup;
                 }
-                ptr->seq_num = recvd_seq_num;
                 /* copy over the iovec array since it will be released by
                  * the blocking recv
                  */
@@ -273,7 +273,7 @@ int orte_rmcast_base_process_msg(orte_mcast_msg_event_t *msg)
                 OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                                      "%s rmcast:base:process_recv delivering buffer to channel %d tag %d",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ptr->channel, (int)tag));
-                ptr->cbfunc_buffer(ORTE_SUCCESS, ptr->channel, recvd_seq_num, tag,
+                ptr->cbfunc_buffer(ORTE_SUCCESS, ptr->channel, ptr->seq_num, tag,
                                    &name, msg->buf, ptr->cbdata);
                 /* if it isn't persistent, remove it */
                 if (!(ORTE_RMCAST_PERSISTENT & ptr->flags)) {
@@ -294,7 +294,6 @@ int orte_rmcast_base_process_msg(orte_mcast_msg_event_t *msg)
                 OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                                      "%s rmcast:base:process_recv copying buffer for blocking recv",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-                ptr->seq_num = recvd_seq_num;
                 /* copy the buffer across since it will be released
                  * by the blocking recv
                  */
