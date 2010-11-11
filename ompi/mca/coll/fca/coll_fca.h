@@ -46,6 +46,7 @@ BEGIN_C_DECLS
  * FCA library functions.
  * Used to load the library dynamically.
  */
+
 struct mca_coll_fca_fca_ops_t {
 
     /* FCA Context operations */
@@ -243,6 +244,7 @@ OBJ_CLASS_DECLARATION(mca_coll_fca_module_t);
 /* API functions */
 int mca_coll_fca_init_query(bool enable_progress_threads, bool enable_mpi_threads);
 mca_coll_base_module_t *mca_coll_fca_comm_query(struct ompi_communicator_t *comm, int *priority);
+int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm);
 
 
 /* Collective functions */
