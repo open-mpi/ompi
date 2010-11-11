@@ -10,6 +10,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/mca/sysinfo/sysinfo_types.h"
+#include "opal/util/opal_environ.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
@@ -19,7 +20,7 @@
 
 int main(int argc, char* argv[])
 {
-    int rc, restart=-1;
+    int rc, i, restart=-1;
     char hostname[512], *rstrt;
     pid_t pid;
     char *keys[] = {
@@ -60,6 +61,13 @@ int main(int argc, char* argv[])
 
         }
     }
+
+    for (i=0; NULL != environ[i]; i++) {
+        if (0 == strncmp(environ[i], "OMPI_MCA", strlen("OMPI_MCA"))) {
+            printf("\t%s\n", environ[i]);
+        }
+    }
+
     orte_finalize();
     return 0;
 }
