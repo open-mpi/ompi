@@ -305,7 +305,7 @@ void mca_pml_bfo_recv_frag_callback_ack(mca_btl_base_module_t* btl,
     sendreq = (mca_pml_bfo_send_request_t*)hdr->hdr_ack.hdr_src_req.pval;
     sendreq->req_recv = hdr->hdr_ack.hdr_dst_req;
 #ifdef PML_BFO
-    MCA_PML_BFO_ERROR_CHECK_ON_ACK_CALLBACK(sendreq)
+    MCA_PML_BFO_ERROR_CHECK_ON_ACK_CALLBACK(sendreq);
 #endif
     
     /* if the request should be delivered entirely by copy in/out
@@ -351,7 +351,7 @@ void mca_pml_bfo_recv_frag_callback_frag(mca_btl_base_module_t* btl,
     bfo_hdr_ntoh(hdr, MCA_PML_BFO_HDR_TYPE_FRAG);
     recvreq = (mca_pml_bfo_recv_request_t*)hdr->hdr_frag.hdr_dst_req.pval;
 #ifdef PML_BFO
-    MCA_PML_BFO_ERROR_CHECK_ON_FRAG_CALLBACK(recvreq)
+    MCA_PML_BFO_ERROR_CHECK_ON_FRAG_CALLBACK(recvreq);
 #endif
     mca_pml_bfo_recv_request_progress_frag(recvreq,btl,segments,des->des_dst_cnt);
 
@@ -374,7 +374,7 @@ void mca_pml_bfo_recv_frag_callback_put(mca_btl_base_module_t* btl,
     bfo_hdr_ntoh(hdr, MCA_PML_BFO_HDR_TYPE_PUT);
     sendreq = (mca_pml_bfo_send_request_t*)hdr->hdr_rdma.hdr_req.pval;
 #ifdef PML_BFO
-    MCA_PML_BFO_ERROR_CHECK_ON_PUT_CALLBACK(sendreq)
+    MCA_PML_BFO_ERROR_CHECK_ON_PUT_CALLBACK(sendreq);
 #endif
     mca_pml_bfo_send_request_put(sendreq,btl,&hdr->hdr_rdma);
     
