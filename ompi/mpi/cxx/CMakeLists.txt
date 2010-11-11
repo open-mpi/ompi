@@ -28,7 +28,7 @@ SET_TARGET_PROPERTIES (libmpi_cxx PROPERTIES LINKER_LANGUAGE CXX)
 # Set compile flags for this target
 IF (BUILD_SHARED_LIBS)
 
-  TARGET_LINK_LIBRARIES(libmpi_cxx ${OpenMPI_BINARY_DIR}/libopen-pal-lt${CMAKE_DEBUG_POSTFIX}.lib libmpi)
+  TARGET_LINK_LIBRARIES(libmpi_cxx libmpi libopen-pal)
   # Need OMPI_BUILDING_CXX_BINDINGS_LIBRARY so that we can get the path 
   # names correct inside the MPI C++ library.  OMPI_SKIP_MPICXX is necessary
   # so that mpi.h doesn't include mpicxx.h through the incorrect pathname 

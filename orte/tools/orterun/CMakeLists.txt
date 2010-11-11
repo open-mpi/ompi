@@ -13,16 +13,13 @@ ADD_EXECUTABLE (orterun ${ORTERUN_SOURCE_FILES})
 
 ADD_DEPENDENCIES(orterun libopen-rte libopen-pal)
 IF(BUILD_SHARED_LIBS)
-  TARGET_LINK_LIBRARIES (orterun Ws2_32.lib shlwapi.lib
-    ${OpenMPI_BINARY_DIR}/libopen-pal-lt${CMAKE_DEBUG_POSTFIX}.lib
-    libopen-rte)
   SET_TARGET_PROPERTIES(orterun PROPERTIES 
     COMPILE_FLAGS "${OMPI_C_DEF_PRE}_USRDLL ${OMPI_C_DEF_PRE}OPAL_IMPORTS
                    ${OMPI_C_DEF_PRE}OMPI_IMPORTS ${OMPI_C_DEF_PRE}ORTE_IMPORTS
                    ${OMPI_CXX_LAN_FLAG}")
-ELSE(BUILD_SHARED_LIBS)
-  TARGET_LINK_LIBRARIES (orterun libopen-pal libopen-rte Ws2_32.lib shlwapi.lib)
 ENDIF(BUILD_SHARED_LIBS)
+
+TARGET_LINK_LIBRARIES (orterun libopen-pal libopen-rte Ws2_32.lib shlwapi.lib)
 
 ADD_CUSTOM_COMMAND (TARGET orterun
   POST_BUILD

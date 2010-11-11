@@ -16,16 +16,13 @@ ADD_EXECUTABLE (ompi-server ${OMPI_SERVER_SOURCE_FILES})
 
 ADD_DEPENDENCIES(ompi-server libmpi)
 IF(BUILD_SHARED_LIBS)
-  TARGET_LINK_LIBRARIES (ompi-server ${OpenMPI_BINARY_DIR}/libopen-pal-lt${CMAKE_DEBUG_POSTFIX}.lib
-    libopen-rte libmpi Ws2_32.lib shlwapi.lib)
   SET_TARGET_PROPERTIES(ompi-server PROPERTIES
     COMPILE_FLAGS "${OMPI_C_DEF_PRE}_USRDLL ${OMPI_C_DEF_PRE}OPAL_IMPORTS
                    ${OMPI_C_DEF_PRE}OMPI_IMPORTS ${OMPI_C_DEF_PRE}ORTE_IMPORTS
                    ${OMPI_CXX_LAN_FLAG}")
-ELSE(BUILD_SHARED_LIBS)
-  TARGET_LINK_LIBRARIES (ompi-server libmpi libopen-pal libopen-rte Ws2_32.lib shlwapi.lib)
 ENDIF(BUILD_SHARED_LIBS)
 
+TARGET_LINK_LIBRARIES (ompi-server libmpi libopen-pal libopen-rte Ws2_32.lib shlwapi.lib)
 
 INSTALL(TARGETS ompi-server
   DESTINATION bin)
