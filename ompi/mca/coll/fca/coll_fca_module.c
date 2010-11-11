@@ -71,7 +71,7 @@ static int __get_local_ranks(mca_coll_fca_module_t *fca_module)
 }
 
 
-int __fca_comm_new(mca_coll_fca_module_t *fca_module)
+static int __fca_comm_new(mca_coll_fca_module_t *fca_module)
 {
     ompi_communicator_t *comm = fca_module->comm;
     fca_comm_new_spec_t spec;
@@ -174,7 +174,7 @@ int __fca_comm_new(mca_coll_fca_module_t *fca_module)
 static int __create_fca_comm(mca_coll_fca_module_t *fca_module)
 {
     fca_comm_init_spec_t spec;
-    int rc, ret, node_root;
+    int rc, ret;
     int comm_size;
 
     rc = __fca_comm_new(fca_module);
@@ -329,7 +329,6 @@ static void mca_coll_fca_module_construct(mca_coll_fca_module_t *fca_module)
 static void mca_coll_fca_module_destruct(mca_coll_fca_module_t *fca_module)
 {
     FCA_VERBOSE(5, "==>");
-    int rc = OMPI_SUCCESS;
     OBJ_RELEASE(fca_module->previous_barrier_module);
     OBJ_RELEASE(fca_module->previous_bcast_module);
     OBJ_RELEASE(fca_module->previous_reduce_module);
@@ -360,6 +359,7 @@ mca_coll_fca_comm_query(struct ompi_communicator_t *comm, int *priority)
     mca_coll_base_module_t *module;
     int size = ompi_comm_size(comm);
     int local_peers;
+    mca_coll_fca_module_t *fca_module;
 
     *priority = 0;
     module = NULL;
@@ -373,7 +373,7 @@ mca_coll_fca_comm_query(struct ompi_communicator_t *comm, int *priority)
     if (!have_remote_peers(comm->c_local_group, size, &local_peers) || OMPI_COMM_IS_INTER(comm))
         goto exit;
 
-    mca_coll_fca_module_t *fca_module = OBJ_NEW(mca_coll_fca_module_t);
+    fca_module = OBJ_NEW(mca_coll_fca_module_t);
     if (!fca_module)
         goto exit;
 
@@ -401,7 +401,7 @@ mca_coll_fca_comm_query(struct ompi_communicator_t *comm, int *priority)
 
 exit:
     FCA_VERBOSE(4, "Query FCA module for comm %p size %d rank %d local_peers=%d: priority=%d %s",
-                comm, size, ompi_comm_rank(comm), local_peers,
+                (void *)comm, size, ompi_comm_rank(comm), local_peers,
                 *priority, module ? "enabled" : "disabled");
     return module;
 }

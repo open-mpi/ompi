@@ -37,7 +37,7 @@ static mca_coll_fca_dtype_info_t* mca_coll_fca_get_dtype(ompi_datatype_t *dtype)
     dtype_info->mpi_dtype_extent = extent;
     dtype_info->fca_dtype = fca_dtype;
     dtype_info->fca_dtype_extent = mca_coll_fca_component.fca_ops.get_dtype_size(fca_dtype);
-    FCA_VERBOSE(2, "Added new dtype[%d]: %s fca id: %d, mpi size: %d, fca size: %d",
+    FCA_VERBOSE(2, "Added new dtype[%d]: %s fca id: %d, mpi size: %lu, fca size: %lu",
                 id, dtype->name, dtype_info->fca_dtype, dtype_info->mpi_dtype_extent,
                 dtype_info->fca_dtype_extent);
     return dtype_info;
@@ -102,8 +102,8 @@ static int mca_coll_fca_fill_reduce_spec(int count, ompi_datatype_t *dtype,
     }
 
     /* Check FCA size */
-    if (dtype_info->fca_dtype_extent * count > max_fca_payload) {
-        FCA_VERBOSE(10, "Unsupported buffer size: %d", dtype_info->fca_dtype_extent * count);
+    if ((int)(dtype_info->fca_dtype_extent * count) > max_fca_payload) {
+        FCA_VERBOSE(10, "Unsupported buffer size: %lu", dtype_info->fca_dtype_extent * count);
         return OMPI_ERROR;
     }
 
@@ -289,7 +289,7 @@ int mca_coll_fca_allgather(void *sbuf, int scount, struct ompi_datatype_t *sdtyp
 
     if (MPI_IN_PLACE == spec.sbuf) {
         FCA_VERBOSE(10, "Using MPI_IN_PLACE for sbuf");
-        spec.sbuf = spec.rbuf + spec.size * fca_module->rank;
+        spec.sbuf = (char*)spec.rbuf + spec.size * fca_module->rank;
     }
 
     FCA_VERBOSE(5,"Using FCA Allgather");
@@ -344,7 +344,7 @@ int mca_coll_fca_allgatherv(void *sbuf, int scount,
 
     if (MPI_IN_PLACE == spec.sbuf) {
         FCA_VERBOSE(10, "Using MPI_IN_PLACE for sbuf");
-        spec.sbuf = spec.rbuf + spec.displs[fca_module->rank];
+        spec.sbuf = (char *)spec.rbuf + spec.displs[fca_module->rank];
     }
 
     FCA_VERBOSE(5,"Using FCA Allgatherv");

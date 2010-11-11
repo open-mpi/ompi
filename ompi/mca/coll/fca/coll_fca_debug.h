@@ -9,6 +9,7 @@
 
 #ifndef MCA_COLL_FCA_DEBUG_H
 #define MCA_COLL_FCA_DEBUG_H
+#pragma GCC system_header
 
 
 #define FCA_VERBOSE(level, format, ...) \
@@ -21,7 +22,7 @@
 
 
 #define FCA_MODULE_VERBOSE(fca_module, level, format, ...) \
-        FCA_VERBOSE(level, "[%p:%d] " format, (fca_module)->comm, (fca_module)->rank, ## __VA_ARGS__)
+        FCA_VERBOSE(level, "[%p:%d] " format, (void*)(fca_module)->comm, (fca_module)->rank, ## __VA_ARGS__)
 
 extern int mca_coll_fca_output;
 

@@ -6,6 +6,8 @@
 
   $HEADER$
  */
+#define _GNU_SOURCE
+#include <stdio.h>
 
 #include <dlfcn.h>
 #include <libgen.h>
@@ -63,8 +65,6 @@ mca_coll_fca_component_t mca_coll_fca_component = {
     }
 };
 
-#define FCA_MINOR_BIT   (16UL)
-#define FCA_MAJOR_BIT   (24UL)
 #define FCA_API_ABI_MAJOR (2)
 #define FCA_API_ABI_MINOR (0)
 #define FCA_API_CLEAR_MICRO(__x) ((__x>>FCA_MINOR_BIT)<<FCA_MINOR_BIT)
@@ -72,11 +72,16 @@ mca_coll_fca_component_t mca_coll_fca_component = {
 
 #define GET_FCA_SYM(__name) \
 { \
-	mca_coll_fca_component.fca_ops.__name = dlsym(mca_coll_fca_component.fca_lib_handle, "fca_" #__name);\
+	dlsym_quiet((void **)&mca_coll_fca_component.fca_ops.__name, "fca_" #__name);\
 	if (!mca_coll_fca_component.fca_ops.__name) { \
 	    FCA_ERROR("Symbol %s not found", "fca_" #__name); \
 	    return OMPI_ERROR; \
     } \
+}
+
+static void dlsym_quiet(void **p, char *name)
+{
+    *p = dlsym(mca_coll_fca_component.fca_lib_handle, name);
 }
 
 /**
@@ -119,6 +124,8 @@ static void mca_coll_fca_init_fca_translations(void)
     }
 }
 
+
+
 int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
 {
     struct fca_init_spec *spec;
@@ -130,7 +137,7 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
 
     mca_coll_fca_component.fca_lib_handle = dlopen(mca_coll_fca_component.fca_lib_path, RTLD_LAZY);
     if (!mca_coll_fca_component.fca_lib_handle) {
-        FCA_ERROR("Failed to load FCA from %s: %m", mca_coll_fca_component.fca_lib_path);
+        FCA_ERROR("Failed to load FCA from %s: %s", mca_coll_fca_component.fca_lib_path, strerror(errno));
         return OMPI_ERROR;
     }
 
@@ -210,9 +217,11 @@ static void mca_coll_fca_close_fca_lib(void)
 
 static int fca_register(void)
 {
+    mca_base_component_t *c;
+
     FCA_VERBOSE(2, "==>");
 
-    const mca_base_component_t *c = &mca_coll_fca_component.super.collm_version;
+    c = &mca_coll_fca_component.super.collm_version;
 
     mca_base_param_reg_int(c, "priority",
                            "Priority of the fca coll component",
@@ -331,7 +340,7 @@ static int fca_open(void)
 {
     FCA_VERBOSE(2, "==>");
 
-    const mca_base_component_t *c = &mca_coll_fca_component.super.collm_version;
+    /*const mca_base_component_t *c = &mca_coll_fca_component.super.collm_version;*/
 
     mca_coll_fca_output = opal_output_open(NULL);
     opal_output_set_verbosity(mca_coll_fca_output, mca_coll_fca_component.fca_verbose);
