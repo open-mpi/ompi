@@ -78,6 +78,31 @@ ELSE(IN_USE STREQUAL "0")
       OMPI_DEF(MCA_event_IMPLEMENTATION_HEADER "${CURRENT_PATH}/libevent207.h"
         "Header to include for event implementation" 1 1)
 
+      # for generating the static library, as opal will not export event API any more.
+      SET(EVENT_OBJ_FILES
+        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/win32select.obj
+        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/evthread_win32.obj
+        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/buffer_iocp.obj
+        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/event_iocp.obj
+        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/bufferevent_async.obj
+        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/event.obj
+        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/evthread.obj
+        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/buffer.obj
+        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/bufferevent.obj
+        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/bufferevent_sock.obj
+        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/bufferevent_filter.obj
+        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/bufferevent_pair.obj
+        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/listener.obj
+        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/bufferevent_ratelim.obj
+	    ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/evmap.obj
+        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/log.obj
+        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/evutil.obj
+        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/evutil_rand.obj
+        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/strlcpy.obj
+        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/signal.obj
+        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/event_tagging.obj
+      )
+
     ELSE(WIN32)
       SET(RESULT_SOURCE_FILES
         ${RESULT_SOURCE_FILES}
