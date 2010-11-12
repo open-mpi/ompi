@@ -40,7 +40,7 @@ AC_DEFUN([MCA_opal_paffinity_hwloc_POST_CONFIG],[
 AC_DEFUN([MCA_opal_paffinity_hwloc_CONFIG],[
     AC_CONFIG_FILES([opal/mca/paffinity/hwloc/Makefile])
 
-    OMPI_VAR_SCOPE_PUSH([HWLOC_VERSION opal_check_hwloc_happy opal_check_hwloc_save_CPPFLAGS opal_check_hwloc_save_LDFLAGS opal_check_hwloc_save_LIBS])
+    OPAL_VAR_SCOPE_PUSH([HWLOC_VERSION opal_check_hwloc_happy opal_check_hwloc_save_CPPFLAGS opal_check_hwloc_save_LDFLAGS opal_check_hwloc_save_LIBS])
 
     # Allowing building using either the internal copy of
     # hwloc, or an external version.
@@ -139,5 +139,5 @@ AC_DEFUN([MCA_opal_paffinity_hwloc_CONFIG],[
                  [AC_MSG_WARN([hwloc support requested (via --with-hwloc) but not found.])
                   AC_MSG_ERROR([Cannot continue.])])
            $2])
-    OMPI_VAR_SCOPE_POP
+    OPAL_VAR_SCOPE_POP
 ])dnl

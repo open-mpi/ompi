@@ -23,7 +23,7 @@ dnl
 AC_DEFUN([OMPI_F77_FIND_EXT_SYMBOL_CONVENTION], [
     AC_REQUIRE([AC_PROG_NM])
     AC_REQUIRE([AC_PROG_GREP])
-    OMPI_VAR_SCOPE_PUSH([FFLAGS_NEW LDFLAGS_NEW FLAG])
+    OPAL_VAR_SCOPE_PUSH([FFLAGS_NEW LDFLAGS_NEW FLAG])
 
     # invalidate cache if result came from a run where F77 was disabled
     if test "$ompi_cv_f77_external_symbol" = "skipped" ; then
@@ -63,7 +63,7 @@ EOF
                              *)     LDFLAGS_NEW="$LDFLAGS_NEW $FLAG" ;;
                          esac
                      done
-                     OMPI_LOG_MSG([Try with new FFLAGS: $FFLAGS_NEW   and new LDFLAGS:$LDFLAGS_NEW])
+                     OPAL_LOG_MSG([Try with new FFLAGS: $FFLAGS_NEW   and new LDFLAGS:$LDFLAGS_NEW])
                  ;;
                  *)
                      FFLAGS_NEW="$FFLAGS"
@@ -72,7 +72,7 @@ EOF
              esac
 
              happy=1
-             OMPI_LOG_COMMAND([$F77 $FFLAGS_NEW -c conftest.f $LDFLAGS_NEW $LIBS],
+             OPAL_LOG_COMMAND([$F77 $FFLAGS_NEW -c conftest.f $LDFLAGS_NEW $LIBS],
                  [if $NM conftest.o | $GREP foo_bar__ >/dev/null 2>&1 ; then
                       ompi_cv_f77_external_symbol="double underscore"
                   elif $NM conftest.o | $GREP foo_bar_ >/dev/null 2>&1 ; then
@@ -85,8 +85,8 @@ EOF
                       ompi_cv_f77_external_symbol="upper case"
                   else
                       $NM conftest.o >conftest.out 2>&1
-                      OMPI_LOG_MSG([Could not determine Fortran naming convention. Output from $NM:])
-                      OMPI_LOG_FILE([conftest.out])
+                      OPAL_LOG_MSG([Could not determine Fortran naming convention. Output from $NM:])
+                      OPAL_LOG_FILE([conftest.out])
                       happy=0
                   fi],
                  [AC_MSG_ERROR([Fortran compiler did not produce object file])])
@@ -124,7 +124,7 @@ EOF
         [$ompi_fortran_plain],
         [Whether fortran symbols have no trailing underscore or not])
 
-    OMPI_VAR_SCOPE_POP
+    OPAL_VAR_SCOPE_POP
     rm -rf conftest.*
 ])dnl
 

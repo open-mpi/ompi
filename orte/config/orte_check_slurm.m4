@@ -37,7 +37,7 @@ AC_DEFUN([ORTE_CHECK_SLURM],[
                 ;;
             *)
                 AC_MSG_CHECKING([for SLURM srun in PATH])
-                OMPI_WHICH([srun], [ORTE_CHECK_SLURM_SRUN])
+                OPAL_WHICH([srun], [ORTE_CHECK_SLURM_SRUN])
                 if test "$ORTE_CHECK_SLURM_SRUN" = ""; then
                     orte_check_slurm_happy="no"
                 else

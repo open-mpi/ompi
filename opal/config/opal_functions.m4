@@ -36,7 +36,7 @@ dnl ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATION TO
 dnl PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 dnl
 
-AC_DEFUN([OMPI_CONFIGURE_SETUP],[
+AC_DEFUN([OPAL_CONFIGURE_SETUP],[
 
 # Some helper script functions.  Unfortunately, we cannot use $1 kinds
 # of arugments here because of the m4 substitution.  So we have to set
@@ -78,29 +78,29 @@ EOF
 # Save some stats about this build
 #
 
-OMPI_CONFIGURE_USER="`whoami`"
-OMPI_CONFIGURE_HOST="`hostname | head -n 1`"
-OMPI_CONFIGURE_DATE="`date`"
+OPAL_CONFIGURE_USER="`whoami`"
+OPAL_CONFIGURE_HOST="`hostname | head -n 1`"
+OPAL_CONFIGURE_DATE="`date`"
 
 #
 # Save these details so that they can be used in ompi_info later
 #
-AC_SUBST(OMPI_CONFIGURE_USER)
-AC_SUBST(OMPI_CONFIGURE_HOST)
-AC_SUBST(OMPI_CONFIGURE_DATE)])dnl
+AC_SUBST(OPAL_CONFIGURE_USER)
+AC_SUBST(OPAL_CONFIGURE_HOST)
+AC_SUBST(OPAL_CONFIGURE_DATE)])dnl
 
 dnl #######################################################################
 dnl #######################################################################
 dnl #######################################################################
 
-AC_DEFUN([OMPI_BASIC_SETUP],[
+AC_DEFUN([OPAL_BASIC_SETUP],[
 #
 # Save some stats about this build
 #
 
-OMPI_CONFIGURE_USER="`whoami`"
-OMPI_CONFIGURE_HOST="`hostname | head -n 1`"
-OMPI_CONFIGURE_DATE="`date`"
+OPAL_CONFIGURE_USER="`whoami`"
+OPAL_CONFIGURE_HOST="`hostname | head -n 1`"
+OPAL_CONFIGURE_DATE="`date`"
 
 #
 # Make automake clean emacs ~ files for "make clean"
@@ -152,9 +152,9 @@ esac
 AC_ARG_ENABLE(dist, 
     AC_HELP_STRING([--enable-dist],
 		   [guarantee that that the "dist" make target will be functional, although may not guarantee that any other make target will be functional.]),
-    OMPI_WANT_DIST=yes, OMPI_WANT_DIST=no)
+    OPAL_WANT_DIST=yes, OPAL_WANT_DIST=no)
 
-if test "$OMPI_WANT_DIST" = "yes"; then
+if test "$OPAL_WANT_DIST" = "yes"; then
     AC_MSG_WARN([Configuring in 'make dist' mode])
     AC_MSG_WARN([Most make targets may be non-functional!])
 fi
@@ -196,7 +196,7 @@ dnl #######################################################################
 dnl #######################################################################
 dnl #######################################################################
 
-AC_DEFUN([OMPI_LOG_MSG],[
+AC_DEFUN([OPAL_LOG_MSG],[
 # 1 is the message
 # 2 is whether to put a prefix or not
 if test -n "$2"; then
@@ -209,7 +209,7 @@ dnl #######################################################################
 dnl #######################################################################
 dnl #######################################################################
 
-AC_DEFUN([OMPI_LOG_FILE],[
+AC_DEFUN([OPAL_LOG_FILE],[
 # 1 is the filename
 if test -n "$1" -a -f "$1"; then
     cat $1 >&5
@@ -219,14 +219,14 @@ dnl #######################################################################
 dnl #######################################################################
 dnl #######################################################################
 
-AC_DEFUN([OMPI_LOG_COMMAND],[
+AC_DEFUN([OPAL_LOG_COMMAND],[
 # 1 is the command
 # 2 is actions to do if success
 # 3 is actions to do if fail
 echo "configure:__oline__: $1" >&5
 $1 1>&5 2>&1
 ompi_status=$?
-OMPI_LOG_MSG([\$? = $ompi_status], 1)
+OPAL_LOG_MSG([\$? = $ompi_status], 1)
 if test "$ompi_status" = "0"; then
     unset ompi_status
     $2
@@ -239,7 +239,7 @@ dnl #######################################################################
 dnl #######################################################################
 dnl #######################################################################
 
-AC_DEFUN([OMPI_UNIQ],[
+AC_DEFUN([OPAL_UNIQ],[
 # 1 is the variable name to be uniq-ized
 ompi_name=$1
 
@@ -319,11 +319,11 @@ dnl #######################################################################
 # ~/.whatever file (and we do not want the error messages to be part
 # of the assignment in foo=`which <prog>`). This macro ensures that we
 # get a sane executable value.
-AC_DEFUN([OMPI_WHICH],[
+AC_DEFUN([OPAL_WHICH],[
 # 1 is the variable name to do "which" on
 # 2 is the variable name to assign the return value to
 
-OMPI_VAR_SCOPE_PUSH([ompi_prog ompi_file ompi_dir ompi_sentinel])
+OPAL_VAR_SCOPE_PUSH([ompi_prog ompi_file ompi_dir ompi_sentinel])
 
 ompi_prog=$1
 
@@ -337,7 +337,7 @@ for ompi_dir in $PATH; do
 done
 IFS=$IFS_SAVE
 
-OMPI_VAR_SCOPE_POP
+OPAL_VAR_SCOPE_POP
 ])dnl
 
 dnl #######################################################################
@@ -346,7 +346,7 @@ dnl #######################################################################
 
 # Declare some variables; use OMPI_VAR_SCOPE_END to ensure that they
 # are cleaned up / undefined.
-AC_DEFUN([OMPI_VAR_SCOPE_PUSH],[
+AC_DEFUN([OPAL_VAR_SCOPE_PUSH],[
 
     # Is the private index set?  If not, set it.
     if test "x$ompi_scope_index" = "x"; then
@@ -363,7 +363,7 @@ AC_DEFUN([OMPI_VAR_SCOPE_PUSH],[
 
         if test "x$ompi_str" != "x"; then
             AC_MSG_WARN([Found configure shell variable clash!])
-            AC_MSG_WARN([[OMPI_VAR_SCOPE_PUSH] called on "$ompi_var",])
+            AC_MSG_WARN([[OPAL_VAR_SCOPE_PUSH] called on "$ompi_var",])
             AC_MSG_WARN([but it is already defined with value "$ompi_str"])
             AC_MSG_WARN([This usually indicates an error in configure.])
             AC_MSG_ERROR([Cannot continue])
@@ -381,12 +381,12 @@ AC_DEFUN([OMPI_VAR_SCOPE_PUSH],[
 ])dnl
 
 # Unset a bunch of variables that were previously set
-AC_DEFUN([OMPI_VAR_SCOPE_POP],[
+AC_DEFUN([OPAL_VAR_SCOPE_POP],[
     # Unwind the index
     ompi_scope_index=`expr $ompi_scope_index - 1`
     ompi_scope_test=`expr $ompi_scope_index \> 0`
     if test "$ompi_scope_test" = "0"; then
-        AC_MSG_WARN([[OMPI_VAR_SCOPE_POP] popped too many OMPI configure scopes.])
+        AC_MSG_WARN([[OPAL_VAR_SCOPE_POP] popped too many OMPI configure scopes.])
         AC_MSG_WARN([This usually indicates an error in configure.])
         AC_MSG_ERROR([Cannot continue])
     fi

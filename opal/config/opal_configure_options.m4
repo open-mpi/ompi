@@ -336,8 +336,8 @@ elif test "$with_cross" != "" ; then
     fi
 
     # eval into environment
-    OMPI_LOG_MSG([Loading cross-compile file $with_cross, with contents below])
-    OMPI_LOG_FILE([$with_cross])
+    OPAL_LOG_MSG([Loading cross-compile file $with_cross, with contents below])
+    OPAL_LOG_FILE([$with_cross])
     . "$with_cross"
 fi
 
@@ -471,7 +471,7 @@ AC_ARG_WITH([package-string],
      [AC_HELP_STRING([--with-package-string=STRING],
                      [Use a branding string throughout Open MPI])])
 if test "$with_package_string" = "" -o "$with_package_string" = "no"; then
-    with_package_string="Open MPI $OMPI_CONFIGURE_USER@$OMPI_CONFIGURE_HOST Distribution"
+    with_package_string="Open MPI $OPAL_CONFIGURE_USER@$OPAL_CONFIGURE_HOST Distribution"
 fi
 AC_DEFINE_UNQUOTED([OPAL_PACKAGE_STRING], ["$with_package_string"],
      [package/branding string for Open MPI])

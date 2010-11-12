@@ -23,7 +23,7 @@ dnl
 AC_DEFUN([OMPI_F77_CHECK_REAL16_C_EQUIV],[
     unset happy
     unset CFLAGS_save
-    OMPI_VAR_SCOPE_PUSH([happy define_value msg CFLAGS_save])
+    OPAL_VAR_SCOPE_PUSH([happy define_value msg CFLAGS_save])
     AS_VAR_PUSHDEF([real16_matches_c_var], [ompi_cv_real16_c_equiv])
 
     # We have to do this as a cache check for cross-compilation platforms
@@ -45,7 +45,7 @@ AC_DEFUN([OMPI_F77_CHECK_REAL16_C_EQUIV],[
                          [AC_MSG_CHECKING([if intel compiler _Quad == REAL*16])
                           CFLAGS_save="$CFLAGS"
                           CFLAGS="$CFLAGS -Qoption,cpp,--extended_float_types"
-                          OMPI_UNIQ([CFLAGS])
+                          OPAL_UNIQ([CFLAGS])
                           OMPI_F77_CHECK_REAL16_EQUIV_TYPE([_Quad], [q])
                           AS_IF([test "$happy" = "yes"],
                                 [OMPI_FORTRAN_REAL16_C_TYPE="_Quad"
@@ -76,7 +76,7 @@ AC_DEFUN([OMPI_F77_CHECK_REAL16_C_EQUIV],[
            AC_MSG_WARN([MPI_REAL16 and MPI_COMPLEX32 support have been disabled])])
     AC_DEFINE_UNQUOTED([OMPI_REAL16_MATCHES_C], [$define_value],
                        [Whether Fortran REAL*16 matches the bit format of the equivalent C type])
-    OMPI_VAR_SCOPE_POP
+    OPAL_VAR_SCOPE_POP
 ])
 
 
@@ -119,8 +119,8 @@ EOF
 EOF
     rm -f conftestval
     # Compile and link
-    OMPI_LOG_COMMAND([$CC $CFLAGS -I. -c conftest_c.c],
-        [OMPI_LOG_COMMAND([$F77 $FFLAGS conftest_f.f conftest_c.o -o conftest $LDFLAGS $LIBS],
+    OPAL_LOG_COMMAND([$CC $CFLAGS -I. -c conftest_c.c],
+        [OPAL_LOG_COMMAND([$F77 $FFLAGS conftest_f.f conftest_c.o -o conftest $LDFLAGS $LIBS],
             [happy="yes"], [happy="no"])], [happy="no"])
     AS_IF([test "$happy" = "no"],
         [AC_MSG_RESULT([Error!])
@@ -130,7 +130,7 @@ EOF
     AS_IF([test "$cross_compiling" = "yes"],
         [AC_MSG_RESULT([Error!])
          AC_MSG_ERROR([Can not determine if REAL*16 bit-matches C if cross compiling])],
-        [OMPI_LOG_COMMAND([./conftest],
+        [OPAL_LOG_COMMAND([./conftest],
             [happy=`cat conftestval`],
             [AC_MSG_RESULT([Error!])
              AC_MSG_ERROR([Could not determine if REAL*16 bit-matches C type])

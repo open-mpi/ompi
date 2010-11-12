@@ -32,7 +32,7 @@ AC_DEFUN([MCA_opal_memory_linux_COMPILE_MODE], [
 AC_DEFUN([MCA_opal_memory_linux_CONFIG],[
     AC_CONFIG_FILES([opal/mca/memory/linux/Makefile])
 
-    OMPI_VAR_SCOPE_PUSH([memory_linux_ptmalloc2_happy memory_linux_ummu_happy memory_linux_requested icc_major_ver icc_minor_ver memory_linux_mmap memory_linux_munmap memory_linux_LIBS_SAVE])
+    OPAL_VAR_SCOPE_PUSH([memory_linux_ptmalloc2_happy memory_linux_ummu_happy memory_linux_requested icc_major_ver icc_minor_ver memory_linux_mmap memory_linux_munmap memory_linux_LIBS_SAVE])
 
     # Only allow this component to build on Linux-based systems
 
@@ -195,5 +195,5 @@ AC_DEFUN([MCA_opal_memory_linux_CONFIG],[
            memory_base_include=
            $2])
 
-    OMPI_VAR_SCOPE_POP
+    OPAL_VAR_SCOPE_POP
 ])

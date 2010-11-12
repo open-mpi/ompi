@@ -35,12 +35,12 @@ end program
 EOF
 
             # Try to compile
-            OMPI_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 -o conftest conftestf.f90 $LDFLAGS $LIBS],
+            OPAL_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 -o conftest conftestf.f90 $LDFLAGS $LIBS],
                 [happy="yes"], [happy="no"])
 
             if test "$happy" = "no"; then
-                OMPI_LOG_MSG([here is the fortran 90 program:], 1)
-                OMPI_LOG_FILE([conftestf.f90])
+                OPAL_LOG_MSG([here is the fortran 90 program:], 1)
+                OPAL_LOG_FILE([conftestf.f90])
                 AC_MSG_WARN([Could not kind of selected_int_kind($1)])
                 AC_MSG_WARN([See config.log for details])
                 AC_MSG_ERROR([Cannot continue])
@@ -48,7 +48,7 @@ EOF
 
             AS_IF([test "$cross_compiling" = "yes"],
                 [AC_MSG_ERROR([Can not determine kind of selected_int_kind($1) when cross-compiling])],
-                [OMPI_LOG_COMMAND([./conftest],
+                [OPAL_LOG_COMMAND([./conftest],
                     [AS_VAR_SET(type_var, [`sed 's/  *//' conftestval`])],
                     [AC_MSG_ERROR([Could not determine kind of selected_int_kind($1)])])])
 

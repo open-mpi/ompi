@@ -25,12 +25,12 @@ AC_DEFUN([MCA_opal_pstat_darwin_PRIORITY], [50])
 AC_DEFUN([MCA_opal_pstat_darwin_CONFIG],[
     AC_CONFIG_FILES([opal/mca/pstat/darwin/Makefile])
 
-    OMPI_VAR_SCOPE_PUSH([paff_darwin_happy])
+    OPAL_VAR_SCOPE_PUSH([paff_darwin_happy])
     # check to see if we have <mach/mach_host.h>
     # as this is a Darwin-specific thing
     AC_CHECK_HEADER([mach/mach_host.h], [paff_darwin_happy=yes], [paff_darwin_happy=no])
 
     AS_IF([test "$paff_darwin_happy" = "yes"], [$1], [$2])
-    OMPI_VAR_SCOPE_POP
+    OPAL_VAR_SCOPE_POP
 ])dnl
 

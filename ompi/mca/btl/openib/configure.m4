@@ -34,7 +34,7 @@ AC_DEFUN([MCA_ompi_btl_openib_POST_CONFIG], [
 AC_DEFUN([MCA_ompi_btl_openib_CONFIG],[
     AC_CONFIG_FILES([ompi/mca/btl/openib/Makefile])
 
-    OMPI_VAR_SCOPE_PUSH([cpcs have_threads])
+    OPAL_VAR_SCOPE_PUSH([cpcs have_threads])
     cpcs="oob"
 
     OMPI_CHECK_OPENIB([btl_openib],
@@ -84,5 +84,5 @@ AC_DEFUN([MCA_ompi_btl_openib_CONFIG],[
     AC_SUBST([btl_openib_LDFLAGS])
     AC_SUBST([btl_openib_LIBS])
 
-    OMPI_VAR_SCOPE_POP
+    OPAL_VAR_SCOPE_POP
 ])dnl

@@ -52,7 +52,7 @@ AC_CONFIG_MACRO_DIR(config)
 # Start it up
 #
 
-OMPI_CONFIGURE_SETUP
+OPAL_CONFIGURE_SETUP
 ompi_show_title "Configuring project_name_long"
 
 #
@@ -215,7 +215,7 @@ AH_BOTTOM([
 
 # Other basic setup stuff (shared with components)
 
-OMPI_BASIC_SETUP
+OPAL_BASIC_SETUP
 
 top_ompi_srcdir="$OMPI_TOP_SRCDIR"
 AC_SUBST(top_ompi_srcdir)

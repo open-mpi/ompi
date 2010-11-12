@@ -29,12 +29,12 @@ AC_DEFUN([OMPI_SETUP_CXX_BANNER],[
 # This macro is necessary because PROG_CXX* is REQUIREd by multiple
 # places in SETUP_CXX.
 AC_DEFUN([OMPI_PROG_CXX],[
-    OMPI_VAR_SCOPE_PUSH([ompi_cxxflags_save])
+    OPAL_VAR_SCOPE_PUSH([ompi_cxxflags_save])
     ompi_cxxflags_save="$CXXFLAGS"
     AC_PROG_CXX
     AC_PROG_CXXCPP
     CXXFLAGS="$ompi_cxxflags_save"
-    OMPI_VAR_SCOPE_POP
+    OPAL_VAR_SCOPE_POP
 ])
 
 # OMPI_SETUP_CXX()
@@ -66,7 +66,7 @@ AC_DEFUN([OMPI_SETUP_CXX],[
 # --------------------------
 # Setup the CXX compiler
 AC_DEFUN([_OMPI_SETUP_CXX_COMPILER],[
-    OMPI_VAR_SCOPE_PUSH(ompi_cxx_compiler_works)
+    OPAL_VAR_SCOPE_PUSH(ompi_cxx_compiler_works)
 
     # There's a few cases here:
     #
@@ -89,7 +89,7 @@ AC_DEFUN([_OMPI_SETUP_CXX_COMPILER],[
     AS_IF([test "x$CXX" = "x"], [CXX=none])
     set dummy $CXX
     ompi_cxx_argv0=[$]2
-    OMPI_WHICH([$ompi_cxx_argv0], [OMPI_CXX_ABSOLUTE])
+    OPAL_WHICH([$ompi_cxx_argv0], [OMPI_CXX_ABSOLUTE])
     AS_IF([test "x$OMPI_CXX_ABSOLUTE" = "x"], [OMPI_CXX_ABSOLUTE=none])
 
     AC_DEFINE_UNQUOTED(OMPI_CXX, "$CXX", [OMPI underlying C++ compiler])
@@ -137,7 +137,7 @@ AC_DEFUN([_OMPI_SETUP_CXX_COMPILER],[
 
     AS_IF([test "$WANT_MPI_CXX_SUPPORT" = "1"],
           [OMPI_CXX_COMPILER_VENDOR([ompi_cxx_vendor])])
-    OMPI_VAR_SCOPE_POP
+    OPAL_VAR_SCOPE_POP
 ])
 
 # _OMPI_SETUP_CXX_COMPILER_BACKEND()
@@ -160,7 +160,7 @@ AC_DEFUN([_OMPI_SETUP_CXX_COMPILER_BACKEND],[
     # Do we want debugging?
     if test "$WANT_DEBUG" = "1" -a "$enable_debug_symbols" != "no" ; then
         CXXFLAGS="$CXXFLAGS -g"
-        OMPI_UNIQ(CXXFLAGS)
+        OPAL_UNIQ(CXXFLAGS)
         AC_MSG_WARN([-g has been added to CXXFLAGS (--enable-debug)])
     fi
 
@@ -202,7 +202,7 @@ AC_DEFUN([_OMPI_SETUP_CXX_COMPILER_BACKEND],[
         fi
 
         CXXFLAGS="$CXXFLAGS $add"
-        OMPI_UNIQ(CXXFLAGS)
+        OPAL_UNIQ(CXXFLAGS)
         if test "$add" != "" ; then
             AC_MSG_WARN([$add has been added to CXXFLAGS (--enable-picky)])
         fi
@@ -223,7 +223,7 @@ AC_DEFUN([_OMPI_SETUP_CXX_COMPILER_BACKEND],[
             add=" -finline-functions"
         fi
         CXXFLAGS="$CXXFLAGS_orig$add"
-        OMPI_UNIQ(CXXFLAGS)
+        OPAL_UNIQ(CXXFLAGS)
         if test "$add" != "" ; then
             AC_MSG_WARN([$add has been added to CXXFLAGS])
         fi
@@ -356,7 +356,7 @@ AC_DEFUN([_OMPI_CXX_CHECK_EXCEPTIONS_BACKEND],[
 # -----------------------
 # Check for __builtin_* stuff
 AC_DEFUN([_OMPI_CXX_CHECK_BUILTIN],[
-    OMPI_VAR_SCOPE_PUSH([have_cxx_builtin_expect have_cxx_builtin_prefetch])
+    OPAL_VAR_SCOPE_PUSH([have_cxx_builtin_expect have_cxx_builtin_prefetch])
     have_cxx_builtin_expect=0
     have_cxx_builtin_prefetch=0
 
@@ -370,7 +370,7 @@ AC_DEFUN([_OMPI_CXX_CHECK_BUILTIN],[
                        [$have_cxx_builtin_prefetch],
                        [Whether C++ compiler supports __builtin_prefetch])
 
-    OMPI_VAR_SCOPE_POP
+    OPAL_VAR_SCOPE_POP
 ])
 
 # _OMPI_CXX_CHECK_BUILTIN_BACKEND
@@ -412,7 +412,7 @@ AC_DEFUN([_OMPI_CXX_CHECK_BUILTIN_BACKEND],[
 # -----------------------------
 # Check for compiler support of 2D const casts
 AC_DEFUN([_OMPI_CXX_CHECK_2D_CONST_CAST],[
-    OMPI_VAR_SCOPE_PUSH([use_2d_const_cast])
+    OPAL_VAR_SCOPE_PUSH([use_2d_const_cast])
     use_2d_const_cast=0
 
     AS_IF([test "$WANT_MPI_CXX_SUPPORT" = "1"],
@@ -422,7 +422,7 @@ AC_DEFUN([_OMPI_CXX_CHECK_2D_CONST_CAST],[
                        [$use_2d_const_cast],
                        [Whether a const_cast on a 2-d array will work with the C++ compiler])
 
-    OMPI_VAR_SCOPE_POP
+    OPAL_VAR_SCOPE_POP
 ])
 
 # _OMPI_CXX_CHECK_2D_CONST_CAST_BACKEND

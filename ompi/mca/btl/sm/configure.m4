@@ -17,7 +17,7 @@
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_KNEM],[
-    OMPI_VAR_SCOPE_PUSH([ompi_check_knem_happy ompi_check_knem_$1_save_CPPFLAGS ompi_check_knem_dir])
+    OPAL_VAR_SCOPE_PUSH([ompi_check_knem_happy ompi_check_knem_$1_save_CPPFLAGS ompi_check_knem_dir])
     AC_ARG_WITH([knem],
         [AC_HELP_STRING([--with-knem(=DIR)],
              [Build knem Linux kernel module support, searching for headers in DIR])])
@@ -60,7 +60,7 @@ AC_DEFUN([OMPI_CHECK_KNEM],[
           [AS_IF([test ! -z "$with_knem" -a "$with_knem" != "no"],
                  [AC_MSG_ERROR([KNEM support requested but not found.  Aborting])])
            $3])
-    OMPI_VAR_SCOPE_POP
+    OPAL_VAR_SCOPE_POP
 ])dnl
 
 # MCA_btl_sm_CONFIG([action-if-can-compile],
@@ -69,7 +69,7 @@ AC_DEFUN([OMPI_CHECK_KNEM],[
 AC_DEFUN([MCA_ompi_btl_sm_CONFIG],[
     AC_CONFIG_FILES([ompi/mca/btl/sm/Makefile])
 
-    OMPI_VAR_SCOPE_PUSH([btl_sm_knem_happy])
+    OPAL_VAR_SCOPE_PUSH([btl_sm_knem_happy])
     OMPI_CHECK_KNEM([btl_sm],
         [btl_sm_knem_happy=1],
         [btl_sm_knem_happy=0])
@@ -80,5 +80,5 @@ AC_DEFUN([MCA_ompi_btl_sm_CONFIG],[
     [$1]
     # substitute in the things needed to build KNEM
     AC_SUBST([btl_sm_CPPFLAGS])
-    OMPI_VAR_SCOPE_POP
+    OPAL_VAR_SCOPE_POP
 ])dnl

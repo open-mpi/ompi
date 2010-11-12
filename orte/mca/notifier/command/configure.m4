@@ -14,7 +14,7 @@
 AC_DEFUN([MCA_orte_notifier_command_CONFIG], [
     AC_CONFIG_FILES([orte/mca/notifier/command/Makefile])
 
-    OMPI_VAR_SCOPE_PUSH(notifier_happy)
+    OPAL_VAR_SCOPE_PUSH(notifier_happy)
 
     notifier_happy=no
 
@@ -30,5 +30,5 @@ AC_DEFUN([MCA_orte_notifier_command_CONFIG], [
                  [notifier_happy=yes])])
 
     AS_IF([test "$notifier_happy" = "yes"], [$1], [$2])
-    OMPI_VAR_SCOPE_POP
+    OPAL_VAR_SCOPE_POP
 ])

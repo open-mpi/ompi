@@ -29,7 +29,7 @@
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_OPENIB],[
-    OMPI_VAR_SCOPE_PUSH([$1_msg])
+    OPAL_VAR_SCOPE_PUSH([$1_msg])
 
     #
     # Openfabrics support
@@ -294,6 +294,6 @@ dnl           fi
                   AC_MSG_ERROR([Aborting.])])
            $3])
 
-     OMPI_VAR_SCOPE_POP
+     OPAL_VAR_SCOPE_POP
 ])
 
