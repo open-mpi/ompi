@@ -84,18 +84,18 @@ OPAL_DECLSPEC int opal_event_init(void);
 
 #define opal_event_set_debug_output(x) event_set_debug_output((x))
 
-#define opal_event_set(b, ev, fd, fg, cb, arg) event_assign((ev), (b), (fd), (fg), (cb), (arg))
+#define opal_event_set(b, ev, fd, fg, cb, arg) event_assign((ev), (b), (fd), (fg), (event_callback_fn) (cb), (arg))
 
 #define opal_event_add(ev, tv) event_add((ev), (tv))
 
 #define opal_event_del(ev) event_del((ev))
 
 /* Timer APIs */
-#define opal_event_evtimer_new(b, cb, arg) event_new((b), -1, 0, (cb), (arg)) 
+#define opal_event_evtimer_new(b, cb, arg) event_new((b), -1, 0, (event_callback_fn) (cb), (arg)) 
 
 #define opal_event_evtimer_add(ev, tv) event_add((ev), (tv))
 
-#define opal_event_evtimer_set(b, ev, cb, arg) event_assign((ev), (b), -1, 0, (cb), (arg))
+#define opal_event_evtimer_set(b, ev, cb, arg) event_assign((ev), (b), -1, 0, (event_callback_fn) (cb), (arg))
 
 #define opal_event_evtimer_del(ev) event_del((ev))
 
@@ -106,7 +106,7 @@ OPAL_DECLSPEC int opal_event_init(void);
 /* Signal APIs */
 #define opal_event_signal_add(ev, tv) event_add((ev), (tv))
 
-#define opal_event_signal_set(b, ev, fd, cb, arg) event_assign((ev), (b), (fd), EV_SIGNAL|EV_PERSIST, (cb), (arg))
+#define opal_event_signal_set(b, ev, fd, cb, arg) event_assign((ev), (b), (fd), EV_SIGNAL|EV_PERSIST, (event_callback_fn) (cb), (arg))
 
 #define opal_event_signal_del(ev) event_del((ev))
 
