@@ -3,7 +3,7 @@
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2009 The University of Tennessee and The University
+# Copyright (c) 2004-2010 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -27,6 +27,7 @@ headers = \
         opal_datatype_checksum.h \
         opal_datatype.h \
         opal_datatype_internal.h \
+        opal_datatype_copy.h \
         opal_datatype_memcpy.h \
         opal_datatype_pack.h \
         opal_datatype_prototypes.h \
