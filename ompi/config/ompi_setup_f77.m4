@@ -41,11 +41,11 @@ AC_DEFUN([OMPI_SETUP_F77_BANNER],[
 # This macro is necessary because PROG_FC is REQUIREd by multiple
 # places in SETUP_F90.
 AC_DEFUN([OMPI_PROG_F77],[
-    OMPI_VAR_SCOPE_PUSH([ompi_fflags_save])
+    OPAL_VAR_SCOPE_PUSH([ompi_fflags_save])
     ompi_fflags_save="$FFLAGS"
     AC_PROG_F77([gfortran g77 f77 xlf frt ifort pgf77 fort77 fl32 af77])
     FFLAGS="$ompi_fflags_save"
-    OMPI_VAR_SCOPE_POP
+    OPAL_VAR_SCOPE_POP
 ])
 
 AC_DEFUN([OMPI_SETUP_F77],[
@@ -78,7 +78,7 @@ else
     set dummy $OMPI_F77
     OMPI_F77_ARGV0=[$]2
     BASEF77="`basename $OMPI_F77_ARGV0`"
-    OMPI_WHICH([$OMPI_F77_ARGV0], [OMPI_F77_ABSOLUTE])
+    OPAL_WHICH([$OMPI_F77_ARGV0], [OMPI_F77_ABSOLUTE])
     
     if test "$OMPI_WANT_F77_BINDINGS" = "0" ; then
         AC_MSG_WARN([*** Fortran 77 bindings disabled by user])

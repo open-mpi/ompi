@@ -31,7 +31,7 @@ AC_DEFUN([MCA_ompi_io_romio_POST_CONFIG], [
 AC_DEFUN([MCA_ompi_io_romio_CONFIG],[
     AC_CONFIG_FILES([ompi/mca/io/romio/Makefile])
 
-    OMPI_VAR_SCOPE_PUSH([io_romio_flags io_romio_flags_define io_romio_happy io_romio_save_LIBS])
+    OPAL_VAR_SCOPE_PUSH([io_romio_flags io_romio_flags_define io_romio_happy io_romio_save_LIBS])
     AC_ARG_ENABLE([io-romio],
                   [AC_HELP_STRING([--disable-io-romio],
                                   [Disable the ROMIO MPI-IO component])])
@@ -106,5 +106,5 @@ AC_DEFUN([MCA_ompi_io_romio_CONFIG],[
                                 [AC_MSG_ERROR([ROMIO distribution did not configure successfully])],
                                 [AC_MSG_WARN([ROMIO distribution did not configure successfully])])
                           $2])])])
-    OMPI_VAR_SCOPE_POP
+    OPAL_VAR_SCOPE_POP
 ])

@@ -79,7 +79,7 @@ EOF
     # resulting object file.  If the ident is found in "strings" or
     # the grep succeeds, rule that we have this flavor of ident.
 
-    OMPI_LOG_COMMAND([$ompi_compiler $ompi_flags -c conftest.$3 -o conftest.${OBJEXT}],
+    OPAL_LOG_COMMAND([$ompi_compiler $ompi_flags -c conftest.$3 -o conftest.${OBJEXT}],
                      [AS_IF([test -f conftest.${OBJEXT}],
                             [ompi_output="`strings -a conftest.${OBJEXT} | grep $ompi_ident`"
                              grep $ompi_ident conftest.${OBJEXT} 2>&1 1>/dev/null
@@ -87,8 +87,8 @@ EOF
                              AS_IF([test "$ompi_output" != "" -o "$ompi_status" = "0"],
                                    [$6],
                                    [$7])],
-                            [OMPI_LOG_MSG([the failed program was:])
-                             OMPI_LOG_FILE([conftest.$3])
+                            [OPAL_LOG_MSG([the failed program was:])
+                             OPAL_LOG_FILE([conftest.$3])
                              $7]
                             [$7])])
 

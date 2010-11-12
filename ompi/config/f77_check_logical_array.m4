@@ -72,8 +72,8 @@ EOF
 
              # Try the compilation and run.  Can't use AC_TRY_RUN
              # because it's two module files.
-             OMPI_LOG_COMMAND([$CC $CFLAGS -I. -c conftest.c],
-                 [OMPI_LOG_COMMAND([$F77 $FFLAGS conftestf.f conftest.o -o conftest $LDFLAGS $LIBS],
+             OPAL_LOG_COMMAND([$CC $CFLAGS -I. -c conftest.c],
+                 [OPAL_LOG_COMMAND([$F77 $FFLAGS conftestf.f conftest.o -o conftest $LDFLAGS $LIBS],
                      [happy=1], [happy=0])],
                  [happy=0])
              if test "$happy" = "0" ; then
@@ -83,7 +83,7 @@ EOF
              AS_IF([test "$cross_compiling" = "yes"], 
                  [ # assume we're ok
                   ompi_cv_f77_logical_array_correct=yes],
-                 [OMPI_LOG_COMMAND([./conftest],
+                 [OPAL_LOG_COMMAND([./conftest],
                       [if test "`cat conftestval`" = "1" ; then
                            ompi_cv_f77_logical_array_correct=yes
                        else

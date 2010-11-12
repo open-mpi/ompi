@@ -41,7 +41,7 @@ module OMPI_MOD_FLAG
 end module OMPI_MOD_FLAG
 EOF
 
-            OMPI_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 -c conftest-module.f90 $LDFLAGS $LIBS], , 
+            OPAL_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 -c conftest-module.f90 $LDFLAGS $LIBS], , 
                 [cd  ..
                  rm -rf conftest.$$
                  AC_MSG_RESULT([Whoops!])
@@ -63,7 +63,7 @@ EOF
             ofi_module_flag=
             for flag in $ofi_possible_flags; do
                 if test "$ofi_module_flag" = ""; then
-                    OMPI_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 conftest.f90 ${flag}subdir $LDFLAGS $LIBS],
+                    OPAL_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 conftest.f90 ${flag}subdir $LDFLAGS $LIBS],
                             [AS_VAR_SET(f90_inc_var, [$flag])
                             ofi_module_flag="$flag"])
                 fi

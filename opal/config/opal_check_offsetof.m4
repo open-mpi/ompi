@@ -18,7 +18,7 @@
 # and should be fixed in subsequent releases (e.g., 9.0-2?).
 
 AC_DEFUN([OPAL_CHECK_OFFSETOF],[
-    OMPI_VAR_SCOPE_PUSH([have_offsetof_msg])
+    OPAL_VAR_SCOPE_PUSH([have_offsetof_msg])
 
     AC_MSG_CHECKING(for functional offsetof macro)
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include<stddef.h>]],
@@ -38,6 +38,6 @@ AC_DEFUN([OPAL_CHECK_OFFSETOF],[
     fi
 
     AC_MSG_RESULT([$have_offsetof_msg])
-    OMPI_VAR_SCOPE_POP
+    OPAL_VAR_SCOPE_POP
 ])dnl
 

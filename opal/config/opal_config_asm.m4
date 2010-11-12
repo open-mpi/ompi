@@ -430,10 +430,10 @@ AC_DEFUN([OMPI_CHECK_ASM_GNU_STACKEXEC], [
              cat >conftest.c <<EOF
 int testfunc() {return 0; }
 EOF
-             OMPI_LOG_COMMAND([$CC $CFLAGS -c conftest.c -o conftest.$OBJEXT],
+             OPAL_LOG_COMMAND([$CC $CFLAGS -c conftest.c -o conftest.$OBJEXT],
                  [$OBJDUMP -x conftest.$OBJEXT | $GREP '\.note\.GNU-stack' > /dev/null && ompi_cv_asm_gnu_stack_result=yes],
-                 [OMPI_LOG_MSG([the failed program was:], 1)
-                  OMPI_LOG_FILE([conftest.c])
+                 [OPAL_LOG_MSG([the failed program was:], 1)
+                  OPAL_LOG_FILE([conftest.c])
                   ompi_cv_asm_gnu_stack_result=no])
              if test "$ompi_cv_asm_gnu_stack_result" != "yes" ; then
                  ompi_cv_asm_gnu_stack_result="no"
@@ -808,7 +808,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
     # OS X Leopard ld bus errors if you have "-g" or "-gX" in the link line
     # with our assembly (!).  So remove it from CCASFLAGS if it's
     # there (and we're on Leopard).
-    OMPI_VAR_SCOPE_PUSH([ompi_config_asm_flags_new ompi_config_asm_flag])
+    OPAL_VAR_SCOPE_PUSH([ompi_config_asm_flags_new ompi_config_asm_flag])
     AC_MSG_CHECKING([if need to remove -g from CCASFLAGS])
     case "$host" in
         *-apple-darwin9.*)
@@ -831,7 +831,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             AC_MSG_RESULT([no])
             ;;
     esac
-    OMPI_VAR_SCOPE_POP
+    OPAL_VAR_SCOPE_POP
 
     AC_MSG_CHECKING([whether to enable smp locks])
     AC_ARG_ENABLE([smp-locks], 

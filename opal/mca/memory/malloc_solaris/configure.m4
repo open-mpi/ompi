@@ -32,7 +32,7 @@ AC_DEFUN([MCA_opal_memory_malloc_solaris_COMPILE_MODE], [
 AC_DEFUN([MCA_opal_memory_malloc_solaris_CONFIG],[
     AC_CONFIG_FILES([opal/mca/memory/malloc_solaris/Makefile])
 
-    OMPI_VAR_SCOPE_PUSH([memory_malloc_solaris_happy],
+    OPAL_VAR_SCOPE_PUSH([memory_malloc_solaris_happy],
                         [memory_malloc_solaris_should_use],
                         [memory_malloc_solaris_munmap])
 
@@ -100,5 +100,5 @@ AC_DEFUN([MCA_opal_memory_malloc_solaris_CONFIG],[
           [memory_base_found=1
            $1], [$2])
 
-    OMPI_VAR_SCOPE_POP
+    OPAL_VAR_SCOPE_POP
 ])

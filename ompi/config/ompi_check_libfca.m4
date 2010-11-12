@@ -32,9 +32,9 @@ AC_DEFUN([OMPI_CHECK_FCA],[
 			   LIBS_save=$LIBS
 			   CPPFLAGS="$CPPFLAGS -I$ompi_check_fca_dir/include/fca -I$ompi_check_fca_dir/include/fca_core"
 
-			   OMPI_LOG_MSG([$1_CPPFLAGS : $$1_CPPFLAGS], 1)
-			   OMPI_LOG_MSG([$1_LDFLAGS  : $$1_LDFLAGS], 1)
-			   OMPI_LOG_MSG([$1_LIBS     : $$1_LIBS], 1)
+			   OPAL_LOG_MSG([$1_CPPFLAGS : $$1_CPPFLAGS], 1)
+			   OPAL_LOG_MSG([$1_LDFLAGS  : $$1_LDFLAGS], 1)
+			   OPAL_LOG_MSG([$1_LIBS     : $$1_LIBS], 1)
 
 			   OMPI_CHECK_PACKAGE([$1],
 				   [fca_api.h],

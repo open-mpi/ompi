@@ -24,8 +24,8 @@ dnl
 #
 ######################################################################
 AC_DEFUN([OMPI_EXT],[
-    dnl for OMPI_CONFIGURE_USER env variable
-    AC_REQUIRE([OMPI_CONFIGURE_SETUP])
+    dnl for OPAL_CONFIGURE_USER env variable
+    AC_REQUIRE([OPAL_CONFIGURE_SETUP])
 
     # Note that we do not build DSO's here -- we *only* build convenience
     # libraries that get slurped into higher-level libraries
@@ -90,7 +90,7 @@ AC_DEFUN([OMPI_EXT],[
 #
 ######################################################################
 AC_DEFUN([EXT_CONFIGURE],[
-    OMPI_VAR_SCOPE_PUSH([all_components outfile outfile_real])
+    OPAL_VAR_SCOPE_PUSH([all_components outfile outfile_real])
 
     all_components=
     static_components=
@@ -203,7 +203,7 @@ EOF
     OMPI_MPIEXT_LIBS="${static_ltlibs}"
     AC_SUBST(OMPI_MPIEXT_LIBS)
 
-    OMPI_VAR_SCOPE_POP
+    OPAL_VAR_SCOPE_POP
 ])
 
 
@@ -391,7 +391,7 @@ AC_DEFUN([EXT_COMPONENT_BUILD_CHECK],[
             # If userid is in the file, unignore the ignore file.
             if test ! -s $component_path/.ompi_unignore ; then
                 want_component=1
-            elif test ! -z "`$GREP $OMPI_CONFIGURE_USER $component_path/.ompi_unignore`" ; then
+            elif test ! -z "`$GREP $OPAL_CONFIGURE_USER $component_path/.ompi_unignore`" ; then
                 want_component=1
             fi
         fi

@@ -474,7 +474,7 @@ void orte_info_do_arch()
 
 void orte_info_do_hostname()
 {
-    orte_info_out("Configure host", "config:host", OMPI_CONFIGURE_HOST);
+    orte_info_out("Configure host", "config:host", OPAL_CONFIGURE_HOST);
 }
 
 
@@ -527,9 +527,9 @@ void orte_info_do_config(bool want_all)
              OPAL_ENABLE_FT ? "yes" : "no", OPAL_ENABLE_FT_THREAD ? "yes" : "no");;
     
     /* output values */
-    orte_info_out("Configured by", "config:user", OMPI_CONFIGURE_USER);
-    orte_info_out("Configured on", "config:timestamp", OMPI_CONFIGURE_DATE);
-    orte_info_out("Configure host", "config:host", OMPI_CONFIGURE_HOST);
+    orte_info_out("Configured by", "config:user", OPAL_CONFIGURE_USER);
+    orte_info_out("Configured on", "config:timestamp", OPAL_CONFIGURE_DATE);
+    orte_info_out("Configure host", "config:host", OPAL_CONFIGURE_HOST);
     
     orte_info_out("Built by", "build:user", OMPI_BUILD_USER);
     orte_info_out("Built on", "build:timestamp", OMPI_BUILD_DATE);

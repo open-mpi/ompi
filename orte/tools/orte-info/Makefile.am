@@ -19,9 +19,9 @@
 #
 
 AM_CFLAGS = \
-            -DOMPI_CONFIGURE_USER="\"@OMPI_CONFIGURE_USER@\"" \
-            -DOMPI_CONFIGURE_HOST="\"@OMPI_CONFIGURE_HOST@\"" \
-            -DOMPI_CONFIGURE_DATE="\"@OMPI_CONFIGURE_DATE@\"" \
+            -DOPAL_CONFIGURE_USER="\"@OPAL_CONFIGURE_USER@\"" \
+            -DOPAL_CONFIGURE_HOST="\"@OPAL_CONFIGURE_HOST@\"" \
+            -DOPAL_CONFIGURE_DATE="\"@OPAL_CONFIGURE_DATE@\"" \
             -DOMPI_BUILD_USER="\"$$USER\"" \
             -DOMPI_BUILD_HOST="\"`hostname`\"" \
             -DOMPI_BUILD_DATE="\"`date`\"" \

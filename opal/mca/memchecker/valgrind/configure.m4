@@ -24,7 +24,7 @@ AC_DEFUN([MCA_opal_memchecker_valgrind_COMPILE_MODE], [
 AC_DEFUN([MCA_opal_memchecker_valgrind_CONFIG],[
     AC_CONFIG_FILES([opal/mca/memchecker/valgrind/Makefile])
 
-    OMPI_VAR_SCOPE_PUSH([opal_memchecker_valgrind_save_CPPFLAGS opal_memchecker_valgrind_happy opal_memchecker_valgrind_CPPFLAGS])
+    OPAL_VAR_SCOPE_PUSH([opal_memchecker_valgrind_save_CPPFLAGS opal_memchecker_valgrind_happy opal_memchecker_valgrind_CPPFLAGS])
 
     AC_ARG_WITH([valgrind],
         [AC_HELP_STRING([--with-valgrind(=DIR)],
@@ -68,5 +68,5 @@ AC_DEFUN([MCA_opal_memchecker_valgrind_CONFIG],[
 
     AC_SUBST([opal_memchecker_valgrind_CPPFLAGS])
 
-    OMPI_VAR_SCOPE_POP
+    OPAL_VAR_SCOPE_POP
 ])dnl

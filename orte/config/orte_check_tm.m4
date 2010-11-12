@@ -66,13 +66,13 @@ AC_DEFUN([ORTE_CHECK_TM],[
 
     AS_IF([test "$orte_check_tm_happy" = "yes" -a "$orte_check_tm_pbs_config" != "not found"],
           [$1_CPPFLAGS=`$orte_check_tm_pbs_config --cflags`
-           OMPI_LOG_MSG([$1_CPPFLAGS from pbs-config: $$1_CPPFLAGS], 1)
+           OPAL_LOG_MSG([$1_CPPFLAGS from pbs-config: $$1_CPPFLAGS], 1)
 
            ORTE_CHECK_TM_LIBS_FLAGS([$1], [LDFLAGS])
-           OMPI_LOG_MSG([$1_LDFLAGS from pbs-config: $$1_LDFLAGS], 1)
+           OPAL_LOG_MSG([$1_LDFLAGS from pbs-config: $$1_LDFLAGS], 1)
 
            ORTE_CHECK_TM_LIBS_FLAGS([$1], [LIBS])
-           OMPI_LOG_MSG([$1_LIBS from pbs-config: $$1_LIBS], 1)
+           OPAL_LOG_MSG([$1_LIBS from pbs-config: $$1_LIBS], 1)
 
            # Now that we supposedly have the right flags, try them out.
 

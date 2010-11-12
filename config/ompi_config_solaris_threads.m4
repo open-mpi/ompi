@@ -79,9 +79,9 @@ void ompi_pthread()
 EOF
 
 # Try the compile
-OMPI_LOG_COMMAND(
+OPAL_LOG_COMMAND(
     [$CC $CFLAGS -I. -c conftest.c],
-    OMPI_LOG_COMMAND(
+    OPAL_LOG_COMMAND(
         [$F77 $FFLAGS conftestf.f conftest.o -o conftest $LDFLAGS $LIBS],
         [HAPPY=1],
 	[HAPPY=0]),
@@ -90,14 +90,14 @@ OMPI_LOG_COMMAND(
 if test "$HAPPY" = "1"; then
    $1
 else
-    OMPI_LOG_MSG([here is the C program:], 1)
-    OMPI_LOG_FILE([conftest.c])
+    OPAL_LOG_MSG([here is the C program:], 1)
+    OPAL_LOG_FILE([conftest.c])
     if test -f conftest.h; then
-	OMPI_LOG_MSG([here is contest.h:], 1)
-	OMPI_LOG_FILE([conftest.h])
+	OPAL_LOG_MSG([here is contest.h:], 1)
+	OPAL_LOG_FILE([conftest.h])
     fi
-    OMPI_LOG_MSG([here is the fortran program:], 1)
-    OMPI_LOG_FILE([conftestf.f])
+    OPAL_LOG_MSG([here is the fortran program:], 1)
+    OPAL_LOG_FILE([conftestf.f])
     $2
 fi
 

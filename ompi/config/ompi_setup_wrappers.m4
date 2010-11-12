@@ -26,7 +26,7 @@ dnl
 # before the bulk of the tests that can affect the wrapper compilers
 #
 # Note that we keep the user-specified flags seperately because we
-# don't want them to go through OMPI_UNIQ because that has resulted in
+# don't want them to go through OPAL_UNIQ because that has resulted in
 # unexpected behavior for the user in the past.
 AC_DEFUN([OMPI_SETUP_WRAPPER_INIT],[
     WRAPPER_EXTRA_FFLAGS=
@@ -201,13 +201,13 @@ AC_DEFUN([_OMPI_SETUP_OPAL_WRAPPERS],[
 ])
 
 AC_DEFUN([OMPI_SETUP_WRAPPER_FINAL],[
-    OMPI_UNIQ([WRAPPER_EXTRA_FFLAGS])
-    OMPI_UNIQ([WRAPPER_EXTRA_FFLAGS_PREFIX])
-    OMPI_UNIQ([WRAPPER_EXTRA_FCFLAGS])
-    OMPI_UNIQ([WRAPPER_EXTRA_FCFLAGS_PREFIX])
+    OPAL_UNIQ([WRAPPER_EXTRA_FFLAGS])
+    OPAL_UNIQ([WRAPPER_EXTRA_FFLAGS_PREFIX])
+    OPAL_UNIQ([WRAPPER_EXTRA_FCFLAGS])
+    OPAL_UNIQ([WRAPPER_EXTRA_FCFLAGS_PREFIX])
 
-    OMPI_UNIQ([ompi_WRAPPER_EXTRA_LDFLAGS])
-    OMPI_UNIQ([ompi_WRAPPER_EXTRA_LIBS])
+    OPAL_UNIQ([ompi_WRAPPER_EXTRA_LDFLAGS])
+    OPAL_UNIQ([ompi_WRAPPER_EXTRA_LIBS])
 
     m4_ifdef([project_orte], [_OMPI_SETUP_ORTE_WRAPPERS], [_OMPI_SETUP_OPAL_WRAPPERS])
 

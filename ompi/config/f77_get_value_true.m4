@@ -89,8 +89,8 @@ EOF
              #
              # Try the compilation and run.
              #
-             OMPI_LOG_COMMAND([$CC $CFLAGS -I. -c conftest.c],
-                 [OMPI_LOG_COMMAND([$F77 $FFLAGS -o conftest conftest.o conftestf.f $LDFLAGS $LIBS],
+             OPAL_LOG_COMMAND([$CC $CFLAGS -I. -c conftest.c],
+                 [OPAL_LOG_COMMAND([$F77 $FFLAGS -o conftest conftest.o conftestf.f $LDFLAGS $LIBS],
                       [happy=1], [happy=0])],
                  [happy=0])
 
@@ -100,7 +100,7 @@ EOF
 
              AS_IF([test "$cross_compiling" = "yes"],
                  [AC_MSG_ERROR([Can not determine value of .TRUE. when cross-compiling])],
-                 [OMPI_LOG_COMMAND([./conftest],
+                 [OPAL_LOG_COMMAND([./conftest],
                      [ompi_cv_f77_true_value=`sed 's/  *//' conftestval`],
                      [AC_MSG_ERROR([Could not determine value of Fotran .TRUE..  Aborting.])])])
          fi])

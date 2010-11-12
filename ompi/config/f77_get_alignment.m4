@@ -22,7 +22,7 @@ dnl
 # ----------------------------------------------------
 AC_DEFUN([OMPI_F77_GET_ALIGNMENT],[
     unset happy
-    OMPI_VAR_SCOPE_PUSH([happy ompi_conftest_h])
+    OPAL_VAR_SCOPE_PUSH([happy ompi_conftest_h])
     # Use of m4_translit suggested by Eric Blake:
     # http://lists.gnu.org/archive/html/bug-autoconf/2010-10/msg00016.html
     AS_VAR_PUSHDEF([type_var],
@@ -76,8 +76,8 @@ void $ompi_ac_align_fn(char *w, char *x, char *y, char *z)
 #endif
 EOF
 
-        OMPI_LOG_COMMAND([$CC $CFLAGS -I. -c conftest.c],
-            [OMPI_LOG_COMMAND([$F77 $FFLAGS conftestf.f conftest.o -o conftest $LDFLAGS $LIBS],
+        OPAL_LOG_COMMAND([$CC $CFLAGS -I. -c conftest.c],
+            [OPAL_LOG_COMMAND([$F77 $FFLAGS conftestf.f conftest.o -o conftest $LDFLAGS $LIBS],
                 [happy="yes"], [happy="no"])], [happy="no"])
 
         if test "$happy" = "no" ; then
@@ -88,7 +88,7 @@ EOF
         AS_IF([test "$cross_compiling" = "yes"],
             [AC_MSG_RESULT([Error!])
              AC_MSG_ERROR([Can not determine alignment of $1 when cross-compiling])],
-            [OMPI_LOG_COMMAND([./conftest],
+            [OPAL_LOG_COMMAND([./conftest],
                 [AS_VAR_SET(type_var, [`cat conftestval`])],
                 [AC_MSG_RESULT([Error!])
                  AC_MSG_ERROR([Could not determine alignment of $1])])])
@@ -96,5 +96,5 @@ EOF
 
     AS_VAR_COPY([$2], [type_var])
     AS_VAR_POPDEF([type_var])dnl
-    OMPI_VAR_SCOPE_POP
+    OPAL_VAR_SCOPE_POP
 ])

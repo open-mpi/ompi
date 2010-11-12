@@ -22,7 +22,7 @@ dnl $HEADER$
 dnl
 
 AC_DEFUN([OPAL_SETUP_LIBLTDL],[
-    OMPI_VAR_SCOPE_PUSH([HAPPY])
+    OPAL_VAR_SCOPE_PUSH([HAPPY])
 
     ompi_show_subtitle "GNU libltdl setup"
 
@@ -136,7 +136,7 @@ AC_DEFUN([OPAL_SETUP_LIBLTDL],[
 
     AM_CONDITIONAL(OPAL_HAVE_DLOPEN, 
                    [test "$OPAL_ENABLE_DLOPEN_SUPPORT" = "1"])
-    OMPI_VAR_SCOPE_POP([HAPPY])
+    OPAL_VAR_SCOPE_POP([HAPPY])
 ])dnl
 
 

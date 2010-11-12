@@ -41,9 +41,9 @@ int main() { return fake(3); }
 EOF
 
 # Try the compile
-OMPI_LOG_COMMAND(
+OPAL_LOG_COMMAND(
     [$CC $CFLAGS  -c conftest_weak.c],
-    OMPI_LOG_COMMAND(
+    OPAL_LOG_COMMAND(
         [$CC $CFLAGS  conftest.c conftest_weak.o -o conftest $LDFLAGS $LIBS],
         [ompi_c_weak_symbols_happy=1],
 	[ompi_c_weak_symbols_happy=0]),

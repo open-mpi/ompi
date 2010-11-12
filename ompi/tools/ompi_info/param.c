@@ -474,7 +474,7 @@ void ompi_info_do_arch()
 
 void ompi_info_do_hostname()
 {
-    ompi_info_out("Configure host", "config:host", OMPI_CONFIGURE_HOST);
+    ompi_info_out("Configure host", "config:host", OPAL_CONFIGURE_HOST);
 }
 
 
@@ -588,9 +588,9 @@ void ompi_info_do_config(bool want_all)
              OPAL_ENABLE_CRDEBUG ? "yes" : "no");
 
     /* output values */
-    ompi_info_out("Configured by", "config:user", OMPI_CONFIGURE_USER);
-    ompi_info_out("Configured on", "config:timestamp", OMPI_CONFIGURE_DATE);
-    ompi_info_out("Configure host", "config:host", OMPI_CONFIGURE_HOST);
+    ompi_info_out("Configured by", "config:user", OPAL_CONFIGURE_USER);
+    ompi_info_out("Configured on", "config:timestamp", OPAL_CONFIGURE_DATE);
+    ompi_info_out("Configure host", "config:host", OPAL_CONFIGURE_HOST);
     
     ompi_info_out("Built by", "build:user", OMPI_BUILD_USER);
     ompi_info_out("Built on", "build:timestamp", OMPI_BUILD_DATE);

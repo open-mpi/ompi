@@ -48,8 +48,8 @@ AC_DEFUN([OMPI_LOAD_PLATFORM], [
         fi
 
         # eval into environment
-        OMPI_LOG_MSG([Loading environment file $with_platform, with contents below])
-        OMPI_LOG_FILE([$with_platform])
+        OPAL_LOG_MSG([Loading environment file $with_platform, with contents below])
+        OPAL_LOG_FILE([$with_platform])
         . "$with_platform"
 
         # see if they left us a name
@@ -59,7 +59,7 @@ AC_DEFUN([OMPI_LOAD_PLATFORM], [
            platform_loaded="$with_platform"
         fi
         echo "Loaded platform arguments for $platform_loaded"
-        OMPI_LOG_MSG([Loaded platform arguments for $platform_loaded])
+        OPAL_LOG_MSG([Loaded platform arguments for $platform_loaded])
 
         # look for default mca param file
 

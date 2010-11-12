@@ -43,11 +43,11 @@ AC_DEFUN([OMPI_SETUP_F90_BANNER],[
 # This macro is necessary because PROG_FC is REQUIREd by multiple
 # places in SETUP_F90.
 AC_DEFUN([OMPI_PROG_FC],[
-    OMPI_VAR_SCOPE_PUSH([ompi_fcflags_save])
+    OPAL_VAR_SCOPE_PUSH([ompi_fcflags_save])
     ompi_fcflags_save="$FCFLAGS"
     AC_PROG_FC([gfortran f95 fort xlf95 ifort ifc efc pgf95 lf95 f90 xlf90 pgf90 epcf90])
     FCFLAGS="$ompi_fcflags_save"
-    OMPI_VAR_SCOPE_POP
+    OPAL_VAR_SCOPE_POP
 ])dnl
 
 AC_DEFUN([OMPI_SETUP_F90],[
@@ -107,7 +107,7 @@ else
         set dummy $OMPI_F90
         OMPI_F90_ARGV0=[$]2
         BASEF90="`basename $OMPI_F90_ARGV0`"
-        OMPI_WHICH([$OMPI_F90_ARGV0], [OMPI_F90_ABSOLUTE])
+        OPAL_WHICH([$OMPI_F90_ARGV0], [OMPI_F90_ABSOLUTE])
     fi
 fi
 # make sure the compiler actually works, if not cross-compiling
@@ -232,11 +232,11 @@ cat > conftestf90.f <<EOF
 EOF
 
 # Try the compile
-OMPI_LOG_COMMAND(
+OPAL_LOG_COMMAND(
     [$OMPI_F90 $FCFLAGS $FCFLAGS_f -c conftestf90.f],
-    OMPI_LOG_COMMAND(
+    OPAL_LOG_COMMAND(
         [$OMPI_F77 $FFLAGS -c conftestf77.f],
-        OMPI_LOG_COMMAND(
+        OPAL_LOG_COMMAND(
             [$OMPI_F90 $FCFLAGS -o conftest conftestf90.o conftestf77.o $LDFLAGS $LIBS],
             [HAPPY=1],
             [HAPPY=0]),
@@ -246,10 +246,10 @@ OMPI_LOG_COMMAND(
 if test "$HAPPY" = "1"; then
    $1
 else
-    OMPI_LOG_MSG([here is the F77 program:], 1)
-    OMPI_LOG_FILE([conftestf77.f])
-    OMPI_LOG_MSG([here is the F90 program:], 1)
-    OMPI_LOG_FILE([conftestf90.f])
+    OPAL_LOG_MSG([here is the F77 program:], 1)
+    OPAL_LOG_FILE([conftestf77.f])
+    OPAL_LOG_MSG([here is the F90 program:], 1)
+    OPAL_LOG_FILE([conftestf90.f])
     $2
 fi
 

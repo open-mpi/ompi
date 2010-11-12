@@ -114,12 +114,12 @@ Step 3: Add the following to ompi/tools/ompi_info/ompi_info.h and
         change the relevant information inside (i.e., replace
         everything between @'s).
 
-#define OMPI_CONFIGURE_USER "@USER_NAME@"
-#define OMPI_CONFIGURE_HOST "@HOST_NAME@"
-#define OMPI_CONFIGURE_DATE "@TODAY_DATE@"
-#define OMPI_BUILD_USER OMPI_CONFIGURE_USER
-#define OMPI_BUILD_HOST OMPI_CONFIGURE_HOST
-#define OMPI_BUILD_DATE OMPI_CONFIGURE_DATE
+#define OPAL_CONFIGURE_USER "@USER_NAME@"
+#define OPAL_CONFIGURE_HOST "@HOST_NAME@"
+#define OPAL_CONFIGURE_DATE "@TODAY_DATE@"
+#define OMPI_BUILD_USER OPAL_CONFIGURE_USER
+#define OMPI_BUILD_HOST OPAL_CONFIGURE_HOST
+#define OMPI_BUILD_DATE OPAL_CONFIGURE_DATE
 #define OMPI_BUILD_CFLAGS "/Od /Gm /EHsc /RTC1 /MDd"
 #define OMPI_BUILD_CPPFLAGS "-I${HOME}/ompi-trunk -I${HOME}/opal/include -I${HOME}/ompi-trunk/orte/include -I${HOME}/ompi-trunk/ompi/include"
 #define OMPI_BUILD_CXXFLAGS "/Od /Gm /EHsc /RTC1 /MDd"

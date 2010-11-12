@@ -64,8 +64,8 @@ void $ompi_ac_size_fn(char *a, char *b)
 #endif
 EOF
 
-         OMPI_LOG_COMMAND([$CC $CFLAGS -I. -c conftest.c],
-             [OMPI_LOG_COMMAND([$F77 $FFLAGS conftestf.f conftest.o -o conftest $LDFLAGS $LIBS],
+         OPAL_LOG_COMMAND([$CC $CFLAGS -I. -c conftest.c],
+             [OPAL_LOG_COMMAND([$F77 $FFLAGS conftestf.f conftest.o -o conftest $LDFLAGS $LIBS],
                   [happy="yes"], [happy="no"])], [happy="no"])
 
          if test "$happy" = "no" ; then
@@ -74,10 +74,10 @@ EOF
 
          AS_IF([test "$cross_compiling" = "yes"],
              [AC_MSG_ERROR([Can not determine size of $1 when cross-compiling])],
-             [OMPI_LOG_COMMAND([./conftest],
+             [OPAL_LOG_COMMAND([./conftest],
                  [AS_IF([test -f conftestval],
                       [AS_VAR_SET(type_var, [`cat conftestval`])],
-                      [OMPI_LOG_MSG([conftestval not found.], 1)
+                      [OPAL_LOG_MSG([conftestval not found.], 1)
                        AC_MSG_ERROR([Could not determine size of $1])])],
                  [AC_MSG_ERROR([Could not determine size of $1])])])
 

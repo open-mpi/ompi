@@ -32,8 +32,8 @@ dnl
 #
 ######################################################################
 AC_DEFUN([OMPI_CONTRIB],[
-    dnl for OMPI_CONFIGURE_USER env variable
-    AC_REQUIRE([OMPI_CONFIGURE_SETUP])
+    dnl for OPAL_CONFIGURE_USER env variable
+    AC_REQUIRE([OPAL_CONFIGURE_SETUP])
 
     # Option to not build some of the contributed software packages
     AC_ARG_ENABLE([contrib-no-build],
