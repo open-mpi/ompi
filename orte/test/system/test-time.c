@@ -19,12 +19,11 @@
 
 int called = 0;
 
-#define NEVENT	20000
+#define NEVENT	2000
 
-struct opal_event_t *ev[NEVENT];
+opal_event_t* ev[NEVENT];
 
-static int
-rand_int(int n)
+static int rand_int(int n)
 {
 #ifdef WIN32
 	return (int)(rand() % n);
@@ -33,56 +32,53 @@ rand_int(int n)
 #endif
 }
 
-static void
-time_cb(evutil_socket_t fd, short event, void *arg)
+static void time_cb(int fd, short event, void *arg)
 {
-	struct timeval tv;
-	int i, j;
+    struct timeval tv;
+    opal_event_t *tmp = (opal_event_t*)arg;
 
-	called++;
+    called++;
 
-	if (called < 10*NEVENT) {
-		for (i = 0; i < 10; i++) {
-			j = rand_int(NEVENT);
-			tv.tv_sec = 0;
-			tv.tv_usec = rand_int(50000);
-			if (tv.tv_usec % 2)
-				opal_evtimer_add(ev[j], &tv);
-			else
-				opal_evtimer_del(ev[j]);
-		}
-	}
+    if (0 == (called % 1000)) {
+        fprintf(stderr, "Fired event %d\n", called);
+    }
+
+    if (called < 10*NEVENT) {
+        tv.tv_sec = 0;
+        tv.tv_usec = rand_int(50000);
+        opal_event_evtimer_add(tmp, &tv);
+    }
 }
 
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
-	struct timeval tv;
-	int i;
+    struct timeval tv;
+    int i;
 #ifdef WIN32
-	WORD wVersionRequested;
-	WSADATA wsaData;
-	int	err;
+    WORD wVersionRequested;
+    WSADATA wsaData;
+    int	err;
 
-	wVersionRequested = MAKEWORD(2, 2);
+    wVersionRequested = MAKEWORD(2, 2);
 
-	err = WSAStartup(wVersionRequested, &wsaData);
+    err = WSAStartup(wVersionRequested, &wsaData);
 #endif
 
-	/* Initalize the event library */
-	opal_init(argc, argv);
+    /* Initialize the event library */
+    opal_init(&argc, &argv);
 
-	for (i = 0; i < NEVENT; i++) {
-		/* Initalize one event */
-		ev[i] = opal_evtimer_new(time_cb, ev[i]);
-		tv.tv_sec = 0;
-		tv.tv_usec = rand_int(50000);
-		opal_evtimer_add(ev[i], &tv);
-	}
+    for (i = 0; i < NEVENT; i++) {
+        /* Initalize one event */
+        ev[i] = (opal_event_t*)malloc(sizeof(opal_event_t));
+        opal_event_evtimer_set(opal_event_base, ev[i], time_cb, ev[i]);
+        tv.tv_sec = 0;
+        tv.tv_usec = rand_int(50000);
+        opal_event_evtimer_add(ev[i], &tv);
+    }
 
-	opal_event_dispatch();
+    opal_event_dispatch(opal_event_base);
 
-        opal_finalize();
-	return (called < NEVENT);
+    opal_finalize();
+    return (called < NEVENT);
 }
 
