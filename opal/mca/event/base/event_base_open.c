@@ -55,7 +55,7 @@ int opal_event_base_open(void)
      */
     OBJ_CONSTRUCT(&opal_event_components, opal_list_t);
     if (OPAL_SUCCESS !=
-        mca_base_components_open("event", 0,
+        mca_base_components_open("event", opal_event_base_output,
                                  mca_event_base_static_components,
                                  &opal_event_components, true)) {
         return OPAL_ERROR;
