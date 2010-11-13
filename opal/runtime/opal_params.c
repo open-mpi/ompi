@@ -96,9 +96,6 @@ int opal_register_params(void)
     mca_base_param_reg_int_name("opal", "progress_debug", 
                                 "Set to non-zero to debug progress engine features",
                                 false, false, 0, NULL);
-    mca_base_param_reg_int_name("opal", "event_debug", 
-                                "Set to non-zero to debug event library",
-                                false, false, 0, NULL);
 
     {
         int value;
