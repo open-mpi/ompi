@@ -117,7 +117,7 @@ int opal_event_init(void)
 {
     char* event_module_include=NULL;
     char **modules=NULL, **includes=NULL;
-    bool dumpit;
+    bool dumpit=false;
     int i, j;
     const struct eventop** _eventop = eventops;
     char available_eventops[1024] = "none";
