@@ -414,29 +414,33 @@ static void snapc_none_global_cmdline_request(int status,
     return;
 }
 
+/********************
+ * Utility functions
+ ********************/
+
 /* Report the checkpoint status over the notifier interface */
-static void orte_snapc_ckpt_state_notify(int state)
+void orte_snapc_ckpt_state_notify(int state)
 {
     switch(state) {
     case ORTE_SNAPC_CKPT_STATE_ESTABLISHED:
-    case ORTE_SNAPC_CKPT_STATE_RECOVERED:
-	    orte_notifier.log(ORTE_NOTIFIER_INFO, state,
-                          "base:ckpt_state_notify: Checkpoint established (PID = %d).",
-                          orte_process_info.pid);
+        orte_notifier.log(ORTE_NOTIFIER_INFO, state,
+                          "base:ckpt_state_notify: Checkpoint established for PID = %d {%s}.",
+                          orte_process_info.pid, ORTE_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
         break;
     case ORTE_SNAPC_CKPT_STATE_NO_CKPT:
-	    orte_notifier.show_help(ORTE_NOTIFIER_WARN, state,
-                           "help-orte-checkpoint.txt", "non-ckptable", true,
-                           orte_process_info.pid);
+        orte_notifier.log(ORTE_NOTIFIER_WARN, state,
+                          "base:ckpt_state_notify: PID = %d is not checkpointable {%s}.",
+                          orte_process_info.pid, ORTE_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
         break;
     case ORTE_SNAPC_CKPT_STATE_ERROR:
-	    orte_notifier.show_help(ORTE_NOTIFIER_WARN, state,
-                           "help-orte-checkpoint.txt", "ckpt_failure", true,
-                           orte_process_info.pid, ORTE_ERROR);
+        orte_notifier.log(ORTE_NOTIFIER_WARN, state,
+                          "base:ckpt_state_notify: Failed to checkpoint PID = %d {%s}.",
+                          orte_process_info.pid, ORTE_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
         break;
 
     /* ADK: We currently do not notify for these states, but good to
      * have them around anyways. */
+    case ORTE_SNAPC_CKPT_STATE_RECOVERED:
     case ORTE_SNAPC_CKPT_STATE_NONE:
     case ORTE_SNAPC_CKPT_STATE_REQUEST:
     case ORTE_SNAPC_CKPT_STATE_PENDING:
@@ -449,9 +453,6 @@ static void orte_snapc_ckpt_state_notify(int state)
     }
 }
 
-/********************
- * Utility functions
- ********************/
 int orte_snapc_base_global_coord_ckpt_init_cmd(orte_process_name_t* peer,
                                                opal_buffer_t* buffer,
                                                opal_crs_base_ckpt_options_t *options,
