@@ -69,22 +69,28 @@
 #include "ht-internal.h"
 #include "util-internal.h"
 
-#ifdef _EVENT_HAVE_EVENT_PORTS
+/****    OMPI CHANGE    ****/
+/* Modified #ifdef's below to include checking for defined
+ * AND checking to see if flag is 0. This accounts for changes
+ * in configure.in whereby we allow users to select whether or
+ * not to disable various methods
+ */
+#if defined(_EVENT_HAVE_EVENT_PORTS) && _EVENT_HAVE_EVENT_PORTS
 extern const struct eventop evportops;
 #endif
-#ifdef _EVENT_HAVE_SELECT
+#if defined(_EVENT_HAVE_SELECT) && _EVENT_HAVE_SELECT
 extern const struct eventop selectops;
 #endif
-#ifdef _EVENT_HAVE_POLL
+#if defined(_EVENT_HAVE_POLL) && _EVENT_HAVE_POLL
 extern const struct eventop pollops;
 #endif
-#ifdef _EVENT_HAVE_EPOLL
+#if defined(_EVENT_HAVE_EPOLL) && _EVENT_HAVE_EPOLL
 extern const struct eventop epollops;
 #endif
-#ifdef _EVENT_HAVE_WORKING_KQUEUE
+#if defined(_EVENT_HAVE_WORKING_KQUEUE) && _EVENT_HAVE_WORKING_KQUEUE
 extern const struct eventop kqops;
 #endif
-#ifdef _EVENT_HAVE_DEVPOLL
+#if defined(_EVENT_HAVE_DEVPOLL) && _EVENT_HAVE_DEVPOLL
 extern const struct eventop devpollops;
 #endif
 #ifdef WIN32
@@ -93,22 +99,22 @@ extern const struct eventop win32ops;
 
 /* Array of backends in order of preference. */
 static const struct eventop *eventops[] = {
-#ifdef _EVENT_HAVE_EVENT_PORTS
+#if defined(_EVENT_HAVE_EVENT_PORTS) && _EVENT_HAVE_EVENT_PORTS
 	&evportops,
 #endif
-#ifdef _EVENT_HAVE_WORKING_KQUEUE
+#if defined(_EVENT_HAVE_WORKING_KQUEUE) && _EVENT_HAVE_WORKING_KQUEUE
 	&kqops,
 #endif
-#ifdef _EVENT_HAVE_EPOLL
+#if defined(_EVENT_HAVE_EPOLL) && _EVENT_HAVE_EPOLL
 	&epollops,
 #endif
-#ifdef _EVENT_HAVE_DEVPOLL
+#if defined(_EVENT_HAVE_DEVPOLL) && _EVENT_HAVE_DEVPOLL
 	&devpollops,
 #endif
-#ifdef _EVENT_HAVE_POLL
+#if defined(_EVENT_HAVE_POLL) && _EVENT_HAVE_POLL
 	&pollops,
 #endif
-#ifdef _EVENT_HAVE_SELECT
+#if defined(_EVENT_HAVE_SELECT) && _EVENT_HAVE_SELECT
 	&selectops,
 #endif
 #ifdef WIN32
