@@ -160,6 +160,11 @@ int orte_errmgr_base_migrate_update(int status)
     }
 
     /*
+     * Report the status over the notifier interface
+     */
+    orte_errmgr_base_migrate_state_notify(status);
+
+    /*
      * If the caller is indicating that they are finished and ready for another
      * command, then repost the RML listener.
      */

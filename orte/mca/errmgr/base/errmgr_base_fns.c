@@ -74,6 +74,7 @@
 #include "orte/mca/snapc/base/base.h"
 #include "orte/mca/sstore/sstore.h"
 #include "orte/mca/sstore/base/base.h"
+#include "orte/mca/notifier/notifier.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/errmgr/base/base.h"
@@ -240,6 +241,32 @@ void orte_errmgr_base_abort(int error_code, char *fmt, ...)
  * Utility functions
  ********************/
 #if OPAL_ENABLE_FT_CR
+
+void orte_errmgr_base_migrate_state_notify(int state)
+{
+    switch(state) {
+    case ORTE_ERRMGR_MIGRATE_STATE_ERROR:
+    case ORTE_ERRMGR_MIGRATE_STATE_ERR_INPROGRESS:
+        orte_notifier.log(ORTE_NOTIFIER_ERROR, state,
+                          "base:migrate_state_notify: Migration failed (PID = %d)", true,
+                          orte_process_info.pid);
+        break;
+    case ORTE_ERRMGR_MIGRATE_STATE_FINISH:
+        orte_notifier.show_help(ORTE_NOTIFIER_INFO, state,
+                                "help-orte-errmgr-hnp.txt", "crmig_migrated_job", true);
+        break;
+
+    case ORTE_ERRMGR_MIGRATE_STATE_NONE:
+    case ORTE_ERRMGR_MIGRATE_STATE_REQUEST:
+    case ORTE_ERRMGR_MIGRATE_STATE_RUNNING:
+    case ORTE_ERRMGR_MIGRATE_STATE_RUN_CKPT:
+    case ORTE_ERRMGR_MIGRATE_STATE_STARTUP:
+    case ORTE_ERRMGR_MIGRATE_MAX:
+    default:
+        break;
+    }
+}
+
 int orte_errmgr_base_migrate_state_str(char ** state_str, int state)
 {
     switch(state) {
