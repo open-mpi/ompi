@@ -113,6 +113,11 @@ int mca_pml_bfo_start(size_t count, ompi_request_t** requests)
         switch(pml_request->req_type) {
             case MCA_PML_REQUEST_SEND: 
             {
+                MEMCHECKER(
+                    memchecker_call(&opal_memchecker_base_isdefined,
+                                    pml_request->req_addr, pml_request->req_count,
+                                    pml_request->req_datatype);
+                );
                 mca_pml_bfo_send_request_t* sendreq = (mca_pml_bfo_send_request_t*)pml_request;
                 if( reuse_old_request && (sendreq->req_send.req_bytes_packed != 0) ) {
                     size_t offset = 0;
