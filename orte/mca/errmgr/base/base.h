@@ -82,6 +82,7 @@ typedef uint8_t orte_errmgr_tool_cmd_flag_t;
 ORTE_DECLSPEC int orte_errmgr_base_tool_init(void);
 ORTE_DECLSPEC int orte_errmgr_base_tool_finalize(void);
 
+ORTE_DECLSPEC void orte_errmgr_base_migrate_state_notify(int state);
 ORTE_DECLSPEC int orte_errmgr_base_migrate_state_str(char ** state_str, int state);
 
 ORTE_DECLSPEC int orte_errmgr_base_migrate_update(int status);
