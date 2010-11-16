@@ -140,6 +140,7 @@ ORTE_DECLSPEC extern orte_snapc_coord_type_t orte_snapc_coord_type;
     /**
      * Some utility functions
      */
+    ORTE_DECLSPEC void orte_snapc_ckpt_state_notify(int state);
     ORTE_DECLSPEC int orte_snapc_ckpt_state_str(char ** state_str, int state);
 
     /*******************************
