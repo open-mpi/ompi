@@ -343,7 +343,7 @@ yes
 
 needsignal=no
 haveselect=no
-if test x$bwin32 != xtrue; then
+if test x$bwin32 != xtrue -a "$enable_select" != "no" ; then
     AC_CHECK_FUNCS(select, [haveselect=yes], )
     if test "x$haveselect" = "xyes" ; then
  	needsignal=yes
@@ -352,37 +352,42 @@ fi
 AM_CONDITIONAL(SELECT_BACKEND, [test "x$haveselect" = "xyes" -a "$enable_select" != "no"])
 AC_MSG_CHECKING([for select support])
 AS_IF([test "$enable_select" != "no" && test "x$haveselect" = "xyes"],
-      [AC_MSG_RESULT([yes])],
-      [AC_MSG_RESULT([no])])
+      [AC_DEFINE(HAVE_SELECT, 1, [Have select support])
+       AC_MSG_RESULT([yes]) ],
+      [AC_DEFINE(HAVE_SELECT, 0, [Have select support])
+       AC_MSG_RESULT([no])])
 
 dnl Check for poll.  Acknowledge the documented break of "poll" for
 dnl Mac Darwin.
-if test "$host" = "apple-darwin" ; then
-	havepoll=no
-else
+if test "$enable_poll" != "no" ; then
+    if test "$host" = "apple-darwin" ; then
+        havepoll=no
+    else
 	havepoll=no
 	AC_CHECK_FUNCS(poll, [havepoll=yes], )
-fi
-if test "x$havepoll" = "xyes" ; then
+    fi
+    if test "x$havepoll" = "xyes" ; then
 	needsignal=yes
+    fi
 fi
 AM_CONDITIONAL(POLL_BACKEND, [test "x$havepoll" = "xyes" -a "$enable_poll" != "no"])
 AC_MSG_CHECKING([for poll support])
 AS_IF([test "$enable_poll" != "no" && test "x$havepoll" = "xyes"],
-      [AC_MSG_RESULT([yes])],
-      [AC_MSG_RESULT([no])])
+      [AC_DEFINE(HAVE_POLL, 1, [Have poll support])
+       AC_MSG_RESULT([yes])],
+      [AC_DEFINE(HAVE_POLL, 0, [No poll support])
+       AC_MSG_RESULT([no])])
 
 
-havedevpoll=no
-if test "x$ac_cv_header_sys_devpoll_h" = "xyes"; then
-	AC_DEFINE(HAVE_DEVPOLL, 1,
-		    [Define if /dev/poll is available])
-fi
-AM_CONDITIONAL(DEVPOLL_BACKEND, [test "x$ac_cv_header_sys_devpoll_h" = "xyes" -a "$enable_devpoll" != "no"])
 AC_MSG_CHECKING([for /dev/poll support])
-AS_IF([test "$enable_devpoll" != "no" && test "x$havedevpoll" = "xyes"],
-      [AC_MSG_RESULT([yes])],
-      [AC_MSG_RESULT([no])])
+AM_CONDITIONAL(DEVPOLL_BACKEND, [test "x$ac_cv_header_sys_devpoll_h" = "xyes" -a "$enable_devpoll" != "no"])
+AS_IF([test "$enable_devpoll" != "no" && test "x$ac_cv_header_sys_devpoll_h" = "xyes"],
+      [AC_DEFINE(HAVE_DEVPOLL, 1,
+                 [Define if /dev/poll is available])
+       AC_MSG_RESULT([yes])],
+      [AC_DEFINE(HAVE_DEVPOLL, 0,
+                 [Devpoll support available])
+       AC_MSG_RESULT([no])])
 
 dnl Check for kqueue.  Stringent test is due to the fact that Mac
 dnl Darwin has documented problems.
@@ -451,22 +456,24 @@ main(int argc, char **argv)
 
 	exit(0);
 }]])], [AC_MSG_RESULT(yes)
-    AC_DEFINE(HAVE_WORKING_KQUEUE, 1,
-		[Define if kqueue works correctly with pipes])
-    havekqueue=yes
+        havekqueue=yes
     ], AC_MSG_RESULT(no), AC_MSG_RESULT(no))
 	fi
 fi
 AM_CONDITIONAL(KQUEUE_BACKEND, [test "x$havekqueue" = "xyes" -a "$enable_kqueue" != "no"])
 AC_MSG_CHECKING([for kqueue support])
 AS_IF([test "$enable_kqueue" != "no" && test "x$havekqueue" = "xyes"],
-      [AC_MSG_RESULT([yes])],
+      [AC_DEFINE(HAVE_WORKING_KQUEUE, 1,
+                 [Define if kqueue works correctly with pipes])
+       AC_MSG_RESULT([yes])],
       [AC_MSG_RESULT([no])])
 
 haveepollsyscall=no
 haveepoll=no
-AC_CHECK_FUNCS(epoll_ctl, [haveepoll=yes], )
-if test "x$haveepoll" = "xyes" -a "$cross_compiling" != "yes" ; then
+AC_MSG_CHECKING([for epoll support])
+if test "$enable_epoll" != "no" ; then
+    AC_CHECK_FUNCS(epoll_ctl, [haveepoll=yes], )
+    if test "x$haveepoll" = "xyes" -a "$cross_compiling" != "yes" ; then
 
         # Unfortunately, it's not sufficient to just test for the
         # existence of the epoll_ctl symbol on some Linux distros
@@ -501,6 +508,7 @@ if test "x$haveepoll" = "xyes" -a "$cross_compiling" != "yes" ; then
         # written to.
 
         haveepoll=no
+	AC_MSG_RESULT([yes])
         AC_MSG_CHECKING([for working epoll library interface])
         AC_RUN_IFELSE([AC_LANG_PROGRAM([
 AC_INCLUDES_DEFAULT
@@ -538,14 +546,20 @@ int main(int argc, char **argv)
 }
 ]])],
         [haveepoll=yes
-        AC_DEFINE(HAVE_EPOLL, 1,
-                 [Define if your system supports the epoll interface])
         # OMPI: Don't use AC_LIBOBJ
         needsignal=yes],
         [haveepoll=no], [])
         AC_MSG_RESULT([$haveepoll])
+    fi
 fi
 AM_CONDITIONAL(EPOLL_BACKEND, [test "x$haveepoll" = "xyes" -a "$enable_epoll" != "no"])
+AS_IF([test "$enable_epoll" != "no" && test "x$haveepoll" = "xyes"],
+      [AC_DEFINE(HAVE_EPOLL, 1,
+                 [Define if your system supports the epoll interface])
+       AC_MSG_RESULT([yes])],
+      [AC_DEFINE(HAVE_EPOLL, 0,
+                 [No epoll interface support])
+       AC_MSG_RESULT([no])])
 
 
 dnl Check for epollsyscall if epoll not found.
@@ -593,30 +607,34 @@ main(int argc, char **argv)
 }
 ]])],
         [haveepollsyscall=yes
-        AC_DEFINE(HAVE_EPOLL, 1,
-                 [Define if your system supports the epoll interface])
         # OMPI: don't use AC_LIBOBJ
         needsignal=yes])
         AC_MSG_RESULT([$haveepollsyscall])
 fi
 AC_MSG_CHECKING([for epoll syscall support])
 AS_IF([test "$enable_epoll" != "no" && test "x$haveepollsyscall" = "xyes"],
-      [AC_MSG_RESULT([yes])],
+      [AC_DEFINE(HAVE_EPOLL, 1,
+                 [Define if your system supports the epoll interface])
+       AC_MSG_RESULT([yes])],
       [AC_MSG_RESULT([no])])
 
 
 haveeventports=no
-AC_CHECK_FUNCS(port_create, [haveeventports=yes], )
-if test "x$haveeventports" = "xyes" ; then
-	AC_DEFINE(HAVE_EVENT_PORTS, 1,
-		[Define if your system supports event ports])
+if test "$enable_evport" != "no" ; then
+    AC_CHECK_FUNCS(port_create, [haveeventports=yes], )
+    if test "x$haveeventports" = "xyes" -a "$enable_evport" != "no" ; then
 	needsignal=yes
+    fi
 fi
 AM_CONDITIONAL(EVPORT_BACKEND, [test "x$haveeventports" = "xyes" -a "$enable_evport" != "no"])
 AC_MSG_CHECKING([for evport support])
 AS_IF([test "$enable_evport" != "no" && test "x$haveeventports" = "xyes"],
-      [AC_MSG_RESULT([yes])],
-      [AC_MSG_RESULT([no])])
+      [AC_DEFINE(HAVE_EVENT_PORTS, 1,
+		[Define if your system supports event ports])
+       AC_MSG_RESULT([yes])],
+      [AC_DEFINE(HAVE_EVENT_PORTS, 0,
+		[No event port support])
+       AC_MSG_RESULT([no])])
 
 dnl Check for eventops
 AC_MSG_CHECKING(event_ops)
