@@ -46,6 +46,7 @@ int MPI_Send_init(void *buf, int count, MPI_Datatype type,
 
     MEMCHECKER(
         memchecker_datatype(type);
+        memchecker_call(&opal_memchecker_base_isaddressable, buf, count, type);
         memchecker_comm(comm);
     );
 
