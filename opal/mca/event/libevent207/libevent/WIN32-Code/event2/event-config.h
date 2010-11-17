@@ -350,9 +350,4 @@
 /* Define to `int' if <sys/types.h> does not define. */
 #define _EVENT_ssize_t SSIZE_T
 
-#ifdef WIN32
-/* need the bool definition */
-#include "opal_config.h"
-#endif
-
 #endif
