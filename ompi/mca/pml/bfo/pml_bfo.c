@@ -48,7 +48,7 @@
 #include "pml_bfo_sendreq.h"
 #include "pml_bfo_recvreq.h"
 #include "pml_bfo_rdmafrag.h"
-#ifdef PML_BFO
+#if PML_BFO
 #include "pml_bfo_failover.h"
 #endif
 
@@ -410,7 +410,7 @@ int mca_pml_bfo_add_procs(ompi_proc_t** procs, size_t nprocs)
     if(OMPI_SUCCESS != rc)
         goto cleanup_and_return;
     
-#ifdef PML_BFO
+#if PML_BFO
     rc = mca_pml_bfo_register_callbacks();
     if(OMPI_SUCCESS != rc)
         goto cleanup_and_return;
@@ -471,7 +471,7 @@ static void mca_pml_bfo_fin_completion( mca_btl_base_module_t* btl,
     
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) des->des_context; 
 
-#ifdef PML_BFO
+#if PML_BFO
     if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
         mca_pml_bfo_repost_fin(des);
         return;
@@ -492,7 +492,7 @@ int mca_pml_bfo_send_fin( ompi_proc_t* proc,
                           mca_bml_base_btl_t* bml_btl,
                           ompi_ptr_t hdr_des,
                           uint8_t order,
-#ifdef PML_BFO
+#if PML_BFO
                           uint32_t status,
                           uint16_t seq,
                           uint8_t restartseq,
@@ -521,7 +521,7 @@ int mca_pml_bfo_send_fin( ompi_proc_t* proc,
     hdr->hdr_common.hdr_type = MCA_PML_BFO_HDR_TYPE_FIN;
     hdr->hdr_des = hdr_des;
     hdr->hdr_fail = status;
-#ifdef PML_BFO
+#if PML_BFO
     fin->des_cbdata = proc;
     hdr->hdr_match.hdr_seq = seq;
     hdr->hdr_match.hdr_ctx = ctx;
@@ -594,7 +594,7 @@ void mca_pml_bfo_process_pending_packets(mca_bml_base_btl_t* bml_btl)
                 rc = mca_pml_bfo_send_fin(pckt->proc, send_dst,
                                           pckt->hdr.hdr_fin.hdr_des,
                                           pckt->order,
-#ifdef PML_BFO
+#if PML_BFO
                                           pckt->hdr.hdr_fin.hdr_fail,
                                           pckt->hdr.hdr_fin.hdr_match.hdr_seq,
                                           pckt->hdr.hdr_fin.hdr_match.hdr_common.hdr_flags,
@@ -644,7 +644,7 @@ void mca_pml_bfo_process_pending_rdma(void)
 void mca_pml_bfo_error_handler(
         struct mca_btl_base_module_t* btl, int32_t flags,
         ompi_proc_t* errproc, char* btlinfo ) { 
-#ifdef PML_BFO
+#if PML_BFO
     if (flags & MCA_BTL_ERROR_FLAGS_NONFATAL) {
         mca_pml_bfo_failover_error_handler(btl, flags, errproc, btlinfo);
         return;

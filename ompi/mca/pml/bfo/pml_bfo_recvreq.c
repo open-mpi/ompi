@@ -33,7 +33,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "opal/util/arch.h"
 #include "ompi/memchecker.h"
-#ifdef PML_BFO
+#if PML_BFO
 #include "pml_bfo_failover.h"
 #endif
 
@@ -170,7 +170,7 @@ static void mca_pml_bfo_recv_ctl_completion( mca_btl_base_module_t* btl,
 {
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*)des->des_context;
 
-#ifdef PML_BFO
+#if PML_BFO
     if (btl->btl_flags & MCA_BTL_FLAGS_FAILOVER_SUPPORT) {
         mca_pml_bfo_check_recv_ctl_completion_status(btl, des, status);
     }
@@ -198,7 +198,7 @@ static void mca_pml_bfo_put_completion( mca_btl_base_module_t* btl,
     }
     OPAL_THREAD_ADD_SIZE_T(&recvreq->req_pipeline_depth,-1);
 
-#ifdef PML_BFO
+#if PML_BFO
     btl->btl_free(btl, des);
     MCA_PML_BFO_ERROR_CHECK_ON_FIN_FOR_PUT(recvreq);
     MCA_PML_BFO_CHECK_RECVREQ_EAGER_BML_BTL(bml_btl, btl, recvreq, "PUT");
@@ -249,13 +249,13 @@ int mca_pml_bfo_recv_request_ack_send_btl(
 
     /* initialize descriptor */
     des->des_cbfunc = mca_pml_bfo_recv_ctl_completion;
-#ifdef PML_BFO
+#if PML_BFO
     des->des_cbdata = hdr_dst_req;
 #endif
 
     rc = mca_bml_base_send(bml_btl, des, MCA_PML_BFO_HDR_TYPE_ACK);
     if( OPAL_LIKELY( rc >= 0 ) ) {
-#ifdef PML_BFO
+#if PML_BFO
         if ((bml_btl->btl_flags & MCA_BTL_FLAGS_FAILOVER_SUPPORT) &&
             (des->des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK)) {
             ((mca_pml_bfo_recv_request_t *)hdr_dst_req)->req_events++;
@@ -346,14 +346,14 @@ static void mca_pml_bfo_rget_completion( mca_btl_base_module_t* btl,
     mca_pml_bfo_rdma_frag_t* frag = (mca_pml_bfo_rdma_frag_t*)des->des_cbdata;
     mca_pml_bfo_recv_request_t* recvreq = (mca_pml_bfo_recv_request_t*)frag->rdma_req;
 
-#ifdef PML_BFO
+#if PML_BFO
     if (btl->btl_flags & MCA_BTL_FLAGS_FAILOVER_SUPPORT) {
         recvreq->req_events--;
     }
 #endif
     /* check completion status */
     if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
-#ifdef PML_BFO
+#if PML_BFO
         MCA_PML_BFO_ERROR_CHECK_ON_RDMA_READ_COMPLETION(recvreq);
 #else
         /* TSW - FIX */
@@ -361,7 +361,7 @@ static void mca_pml_bfo_rget_completion( mca_btl_base_module_t* btl,
         orte_errmgr.abort(-1, NULL);
 #endif
     }
-#ifdef PML_BFO
+#if PML_BFO
     MCA_PML_BFO_SECOND_ERROR_CHECK_ON_RDMA_READ_COMPLETION(recvreq, status, btl);
     MCA_PML_BFO_CHECK_RECVREQ_RDMA_BML_BTL(bml_btl, btl, recvreq, "RDMA write");
 #endif
@@ -369,7 +369,7 @@ static void mca_pml_bfo_rget_completion( mca_btl_base_module_t* btl,
     mca_pml_bfo_send_fin(recvreq->req_recv.req_base.req_proc,
                          bml_btl,
                          frag->rdma_hdr.hdr_rget.hdr_des,
-#ifdef PML_BFO
+#if PML_BFO
                          des->order, 0, (uint16_t)recvreq->req_msgseq, recvreq->req_restartseq,
                          recvreq->req_recv.req_base.req_comm->c_contextid,
                          recvreq->req_recv.req_base.req_comm->c_my_rank);
@@ -439,7 +439,7 @@ int mca_pml_bfo_recv_request_get_frag( mca_pml_bfo_rdma_frag_t* frag )
             orte_errmgr.abort(-1, NULL);
         }
     }
-#ifdef PML_BFO
+#if PML_BFO
     if ((bml_btl->btl_flags & MCA_BTL_FLAGS_FAILOVER_SUPPORT) &&
         (descriptor->des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK)) {
         recvreq->req_events++;
@@ -526,7 +526,7 @@ void mca_pml_bfo_recv_request_progress_rget( mca_pml_bfo_recv_request_t* recvreq
                                         0, bytes_received );
     recvreq->req_recv.req_bytes_packed = hdr->hdr_rndv.hdr_msg_length;
 
-#ifdef PML_BFO
+#if PML_BFO
     recvreq->remote_req_send = hdr->hdr_rndv.hdr_src_req;
 #endif
     MCA_PML_BFO_RECV_REQUEST_MATCHED(recvreq, &hdr->hdr_rndv.hdr_match);
@@ -563,7 +563,7 @@ void mca_pml_bfo_recv_request_progress_rget( mca_pml_bfo_recv_request_t* recvreq
             size += hdr->hdr_segs[i].seg_len;
         }
     }
-#ifdef PML_BFO
+#if PML_BFO
     frag->rdma_btl = btl;
 #endif
     frag->rdma_bml = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, btl);
@@ -835,7 +835,7 @@ int mca_pml_bfo_recv_request_schedule_once( mca_pml_bfo_recv_request_t* recvreq,
             continue;
         }
         ctl->des_cbfunc = mca_pml_bfo_recv_ctl_completion;
-#ifdef PML_BFO
+#if PML_BFO
         ctl->des_cbdata = recvreq;
 #endif
         
@@ -845,7 +845,7 @@ int mca_pml_bfo_recv_request_schedule_once( mca_pml_bfo_recv_request_t* recvreq,
         hdr->hdr_common.hdr_flags =
             (!recvreq->req_ack_sent) ? MCA_PML_BFO_HDR_TYPE_ACK : 0;
         hdr->hdr_req = recvreq->remote_req_send;
-#ifdef PML_BFO
+#if PML_BFO
         hdr->hdr_dst_req.pval = recvreq; /* only needed in the first put message */
 #endif
         hdr->hdr_des.pval = dst;
@@ -869,7 +869,7 @@ int mca_pml_bfo_recv_request_schedule_once( mca_pml_bfo_recv_request_t* recvreq,
         /* send rdma request to peer */
         rc = mca_bml_base_send(bml_btl, ctl, MCA_PML_BFO_HDR_TYPE_PUT);
         if( OPAL_LIKELY( rc >= 0 ) ) {
-#ifdef PML_BFO
+#if PML_BFO
             if ((btl->btl_flags & MCA_BTL_FLAGS_FAILOVER_SUPPORT) &&
                  (ctl->des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK)) {
                  recvreq->req_events++;
@@ -1000,7 +1000,7 @@ void mca_pml_bfo_recv_req_start(mca_pml_bfo_recv_request_t *req)
     req->req_bytes_received = 0;
     req->req_bytes_expected = 0;
     /* What about req_rdma_cnt ? */
-#ifdef PML_BFO
+#if PML_BFO
     req->req_rdma_cnt = 0;
     req->req_events = 0;
     req->req_restartseq = 0;

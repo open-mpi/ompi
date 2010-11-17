@@ -41,7 +41,7 @@
 #include "pml_bfo_recvreq.h"
 #include "pml_bfo_sendreq.h"
 #include "pml_bfo_hdr.h"
-#ifdef PML_BFO
+#if PML_BFO
 #include "pml_bfo_failover.h"
 #endif
 
@@ -242,7 +242,7 @@ void mca_pml_bfo_recv_frag_callback_match(mca_btl_base_module_t* btl,
     
  slow_path:
     OPAL_THREAD_UNLOCK(&comm->matching_lock);
-#ifdef PML_BFO
+#if PML_BFO
     if (true == mca_pml_bfo_is_duplicate_msg(proc, hdr)) {
         return;
     }
@@ -304,7 +304,7 @@ void mca_pml_bfo_recv_frag_callback_ack(mca_btl_base_module_t* btl,
     bfo_hdr_ntoh(hdr, MCA_PML_BFO_HDR_TYPE_ACK);
     sendreq = (mca_pml_bfo_send_request_t*)hdr->hdr_ack.hdr_src_req.pval;
     sendreq->req_recv = hdr->hdr_ack.hdr_dst_req;
-#ifdef PML_BFO
+#if PML_BFO
     MCA_PML_BFO_ERROR_CHECK_ON_ACK_CALLBACK(sendreq);
 #endif
     
@@ -350,7 +350,7 @@ void mca_pml_bfo_recv_frag_callback_frag(mca_btl_base_module_t* btl,
     }
     bfo_hdr_ntoh(hdr, MCA_PML_BFO_HDR_TYPE_FRAG);
     recvreq = (mca_pml_bfo_recv_request_t*)hdr->hdr_frag.hdr_dst_req.pval;
-#ifdef PML_BFO
+#if PML_BFO
     MCA_PML_BFO_ERROR_CHECK_ON_FRAG_CALLBACK(recvreq);
 #endif
     mca_pml_bfo_recv_request_progress_frag(recvreq,btl,segments,des->des_dst_cnt);
@@ -373,7 +373,7 @@ void mca_pml_bfo_recv_frag_callback_put(mca_btl_base_module_t* btl,
     
     bfo_hdr_ntoh(hdr, MCA_PML_BFO_HDR_TYPE_PUT);
     sendreq = (mca_pml_bfo_send_request_t*)hdr->hdr_rdma.hdr_req.pval;
-#ifdef PML_BFO
+#if PML_BFO
     MCA_PML_BFO_ERROR_CHECK_ON_PUT_CALLBACK(sendreq);
 #endif
     mca_pml_bfo_send_request_put(sendreq,btl,&hdr->hdr_rdma);
@@ -396,7 +396,7 @@ void mca_pml_bfo_recv_frag_callback_fin(mca_btl_base_module_t* btl,
     
     bfo_hdr_ntoh(hdr, MCA_PML_BFO_HDR_TYPE_FIN);
     rdma = (mca_btl_base_descriptor_t*)hdr->hdr_fin.hdr_des.pval;
-#ifdef PML_BFO
+#if PML_BFO
     if (true == mca_pml_bfo_is_duplicate_fin(hdr, rdma, btl)) {
         return;
     }
@@ -625,7 +625,7 @@ static int mca_pml_bfo_recv_frag_match( mca_btl_base_module_t *btl,
      */
     OPAL_THREAD_LOCK(&comm->matching_lock);
 
-#ifdef PML_BFO
+#if PML_BFO
     if(OPAL_UNLIKELY(hdr->hdr_common.hdr_flags & MCA_PML_BFO_HDR_FLAGS_RESTART)) {
         if (NULL == (match = mca_pml_bfo_get_request(hdr))) {
             return OMPI_SUCCESS;
@@ -668,7 +668,7 @@ out_of_order_match:
     /* release matching lock before processing fragment */
     OPAL_THREAD_UNLOCK(&comm->matching_lock);
 
-#ifdef PML_BFO
+#if PML_BFO
     }
 #endif
     if(OPAL_LIKELY(match)) {
@@ -712,7 +712,7 @@ wrong_seq:
      * This message comes after the next expected, so it
      * is ahead of sequence.  Save it for later.
      */
-#ifdef PML_BFO
+#if PML_BFO
     if (true == mca_pml_bfo_is_duplicate_msg(proc, hdr)) {
         return OMPI_SUCCESS;
     }

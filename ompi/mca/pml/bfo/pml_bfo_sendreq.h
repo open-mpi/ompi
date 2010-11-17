@@ -42,7 +42,7 @@ struct mca_pml_bfo_send_request_t {
     mca_pml_base_send_request_t req_send;
     mca_bml_base_endpoint_t* req_endpoint;
     ompi_ptr_t req_recv;
-#ifdef PML_BFO
+#if PML_BFO
     int32_t req_events;     /* number of outstanding events on request */
     int32_t req_restartseq; /* sequence number of restarted request */
     int32_t req_restart;    /* state of restarted request */
@@ -249,7 +249,7 @@ send_request_pml_complete(mca_pml_bfo_send_request_t *sendreq)
         MCA_PML_BFO_SEND_REQUEST_MPI_COMPLETE(sendreq, true);
     }
     sendreq->req_send.req_base.req_pml_complete = true;
-#ifdef PML_BFO
+#if PML_BFO
     sendreq->req_send.req_base.req_sequence -= 100;
 #endif
 
@@ -430,7 +430,7 @@ mca_pml_bfo_send_request_start( mca_pml_bfo_send_request_t* sendreq )
     sendreq->req_pending = MCA_PML_BFO_SEND_PENDING_NONE;
     sendreq->req_send.req_base.req_sequence = OPAL_THREAD_ADD32(
         &comm->procs[sendreq->req_send.req_base.req_peer].send_sequence,1);
-#ifdef PML_BFO
+#if PML_BFO
     sendreq->req_restartseq = 0;      /* counts up restarts */
     sendreq->req_restart = 0;         /* reset in case we restart again */
     sendreq->req_error = 0;           /* clear error state */
