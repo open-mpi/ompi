@@ -1,4 +1,4 @@
-# Copyright (c) 2008      High Performance Computing Center Stuttgart, 
+# Copyright (c) 2008-2010 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 #
 # $COPYRIGHT$
@@ -88,6 +88,7 @@ MACRO(OMPI_F77_GET_SIZEOF TYPE OUTPUT_VARIABLE)
     IF(EXISTS ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/conftestval)
       # read out type size value from the file, and write back to the output variable
       FILE(READ ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/conftestval ${OUTPUT_VARIABLE})
+      STRING(REPLACE "\n" "" ${OUTPUT_VARIABLE} ${${OUTPUT_VARIABLE}})
       MESSAGE(STATUS "Check size of Fortran 77 ${TYPE}...${${OUTPUT_VARIABLE}}")
     ELSE(EXISTS ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/conftestval)
       MESSAGE(FATAL_ERROR "Could not determine size of ${TYPE}.")

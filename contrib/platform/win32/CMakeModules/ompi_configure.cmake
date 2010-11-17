@@ -612,6 +612,7 @@ ENDIF(WIN32)
 
 # We want to set the #define's for all of these, so invoke the macros
 # regardless of whether we have F77 support or not.
+OMPI_F77_CHECK("CHARACTER" "yes" "char;int32_t;int;int64_t;long long;long" "-1")
 OMPI_F77_CHECK("LOGICAL" "yes" "char;int;long long;long" "-1")
 OMPI_F77_CHECK("LOGICAL*1" "yes" "char;short;int;long long;long" "1")
 OMPI_F77_CHECK("LOGICAL*2" "yes" "short;int;long long;long" "2")
