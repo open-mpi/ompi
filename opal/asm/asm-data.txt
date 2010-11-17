@@ -127,3 +127,7 @@ SPARCV9_64	default-.text-.globl-:--.L-#-1-0-1-1-0	sparcv9-64-solaris
 
 MIPS	default-.text-.globl-:--L--1-1-1-1-0	mips-irix
 MIPS	default-.text-.globl-:--L--1-1-1-1-0	mips64el
+MIPS	default-.text-.globl-:--L-@-1-1-1-1-1	mips64-linux
+
+# However, this doesn't hold true for 32-bit MIPS as used on Linux.
+MIPS	default-.text-.globl-:--L-@-1-1-1-0-1	mips-linux
