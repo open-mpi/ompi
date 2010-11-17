@@ -226,7 +226,7 @@ do {                                                            \
 
 
 int mca_pml_bfo_send_fin(ompi_proc_t* proc, mca_bml_base_btl_t* bml_btl, 
-#ifdef PML_BFO
+#if PML_BFO
         ompi_ptr_t hdr_des, uint8_t order, uint32_t status,
         uint16_t seq, uint8_t reqseq, uint16_t ctx, uint32_t src);
 #else
