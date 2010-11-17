@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  */
 #include "opal_config.h"
 #include "config.h"
@@ -30,9 +31,6 @@
 #include <string.h>
 #include <assert.h>
 #include <time.h>
-#ifndef WIN32
-#include <stdbool.h>
-#endif
 
 #include "opal/class/opal_object.h"
 #include "opal/threads/mutex.h"
