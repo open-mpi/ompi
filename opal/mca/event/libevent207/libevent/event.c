@@ -505,8 +505,9 @@ event_enable_debug_mode(void)
 #endif
 }
 
+/****    OMPI CHANGE    ****/
 void
-event_set_debug_output(bool output)
+event_set_debug_output(int output)
 {
 #ifndef _EVENT_DISABLE_DEBUG_MODE
     event_enable_debug_output = output;

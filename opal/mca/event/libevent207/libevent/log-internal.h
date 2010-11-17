@@ -29,10 +29,6 @@
 
 #include <event2/util.h>
 
-#ifndef WIN32
-#include <stdbool.h>
-#endif
-
 #ifdef __GNUC__
 #define EV_CHECK_FMT(a,b) __attribute__((format(printf, a, b)))
 #define EV_NORETURN __attribute__((noreturn))
@@ -60,6 +56,7 @@ void _event_debugx(const char *fmt, ...) EV_CHECK_FMT(1,2);
 
 #undef EV_CHECK_FMT
 
-extern bool event_enable_debug_output;
+/****    OMPI CHANGE    ****/
+extern int event_enable_debug_output;
 
 #endif

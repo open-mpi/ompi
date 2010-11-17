@@ -63,7 +63,8 @@ static void event_exit(int errcode) EV_NORETURN;
 
 static event_fatal_cb fatal_fn = NULL;
 
-bool event_enable_debug_output = false;
+/****    OMPI CHANGE    ****/
+int event_enable_debug_output = 0;
 
 void
 event_set_fatal_callback(event_fatal_cb cb)

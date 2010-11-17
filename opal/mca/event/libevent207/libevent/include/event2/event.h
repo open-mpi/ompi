@@ -44,14 +44,6 @@ extern "C" {
 #ifdef _EVENT_HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
-#ifndef WIN32
-/** OMPI 
- * wrap include stdbool.h with ifdef to prevent certain C++ compilers choking on bool redefine 
- */
-#    if !(defined(c_plusplus) || defined(__cplusplus))
-#        include <stdbool.h>
-#    endif
-#endif
 
 #include <stdio.h>
 
@@ -81,7 +73,8 @@ struct event_config;
  */
 void event_enable_debug_mode(void);
 
-void event_set_debug_output(bool output);
+/****    OMPI CHANGE    ****/
+void event_set_debug_output(int output);
 
 /**
  * When debugging mode is enabled, informs Libevent that an event should no
