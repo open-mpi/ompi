@@ -55,7 +55,7 @@ static size_t opal_datatype_memop_block_size = 128 * 1024;
 #define MEMMOVE(d, s, l)                                  \
     do {                                                  \
         if( (((d) < (s)) && (((d) + (l)) > (s))) ||       \
-            (((s) < (d)) && (((s) + (l)) > (s))) ) {      \
+            (((s) < (d)) && (((s) + (l)) > (d))) ) {      \
             memmove( (d), (s), (l) );                     \
         } else {                                          \
             MEMCPY( (d), (s), (l) );                      \
