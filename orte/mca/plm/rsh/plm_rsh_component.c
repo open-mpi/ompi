@@ -12,6 +12,8 @@
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights 
+ *                         reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -118,12 +120,12 @@ int orte_plm_rsh_component_open(void)
                            false, false, false, &tmp);
     mca_plm_rsh_component.force_rsh = OPAL_INT_TO_BOOL(tmp);
     mca_base_param_reg_int(c, "disable_qrsh",
-                           "Disable the launcher to use qrsh when under the SGE parallel environment",
+                           "Disable the launcher to use qrsh when under the Grid Engine parallel environment",
                            false, false, false, &tmp);
     mca_plm_rsh_component.disable_qrsh = OPAL_INT_TO_BOOL(tmp);
 
     mca_base_param_reg_int(c, "daemonize_qrsh",
-                           "Daemonize the orted under the SGE parallel environment",
+                           "Daemonize the orted under the Grid Engine parallel environment",
                            false, false, false, &tmp);
     mca_plm_rsh_component.daemonize_qrsh = OPAL_INT_TO_BOOL(tmp);
     
@@ -148,7 +150,7 @@ int orte_plm_rsh_component_query(mca_base_module_t **module, int *priority)
 {
     char *tmp;
     
-    /* Check if we are under SGE parallel environment by looking at several
+    /* Check if we are under Grid Engine parallel environment by looking at several
      * environment variables.  If so, setup the path and argv[0]. */
     if (!mca_plm_rsh_component.disable_qrsh &&
         NULL != getenv("SGE_ROOT") && NULL != getenv("ARC") &&
@@ -190,7 +192,7 @@ int orte_plm_rsh_component_query(mca_base_module_t **module, int *priority)
         return ORTE_SUCCESS;
     }
     
-    /* if this isn't an SGE environment, see if rsh/ssh is available */
+    /* if this isn't an Grid Engine environment, see if rsh/ssh is available */
     
     if (ORTE_SUCCESS != orte_plm_base_rsh_launch_agent_setup()) {
         /* this isn't an error - we just cannot be selected */
