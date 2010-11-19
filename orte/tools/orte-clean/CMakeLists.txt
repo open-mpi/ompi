@@ -19,6 +19,9 @@ IF(BUILD_SHARED_LIBS)
                    ${OMPI_CXX_LAN_FLAG}")
 ENDIF(BUILD_SHARED_LIBS)
 
+SET_TARGET_PROPERTIES(orte-clean PROPERTIES
+  DEBUG_POSTFIX "${OMPI_EXE_DEBUG_POSTFIX}")
+
 TARGET_LINK_LIBRARIES (orte-clean libopen-pal libopen-rte Ws2_32.lib shlwapi.lib)
 
 ADD_CUSTOM_COMMAND (TARGET orte-clean

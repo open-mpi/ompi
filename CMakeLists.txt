@@ -34,10 +34,15 @@ ENDIF (NOT CMAKE_BUILD_TYPE)
 STRING(TOLOWER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 IF(${CMAKE_BUILD_TYPE} STREQUAL "debug")
   SET(OMPI_DEBUG_BUILD 1)
+  # add debug-suffix to distinguish between debug and release version libraries.
+  SET(CMAKE_DEBUG_POSTFIX  "d")
+
+  OPTION(WANT_EXE_DEBUG_POSTFIX "Whether we want postfix for executables" OFF)
+  IF(WANT_EXE_DEBUG_POSTFIX)
+    SET(OMPI_EXE_DEBUG_POSTFIX "d")
+  ENDIF(WANT_EXE_DEBUG_POSTFIX)
 ENDIF(${CMAKE_BUILD_TYPE} STREQUAL "debug")
 
-# add debug-suffix to distinguish between debug and release version libraries.
-SET(CMAKE_DEBUG_POSTFIX  "d") 
 
 # preset install dir
 IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
@@ -73,7 +78,7 @@ SET (CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${OpenMPI_BINARY_DIR})
 SET (CMAKE_SUPPRESS_REGENERATION true) 
 
 # Dynamic/shared build, the default is set to static(OFF)
-OPTION(BUILD_SHARED_LIBS "Wether we want to build shared libraries." ON)
+OPTION(BUILD_SHARED_LIBS "Whether we want to build shared libraries." ON)
 
 IF(CMAKE_CL_64)
   SET(COMPILER_TYPE "x64")

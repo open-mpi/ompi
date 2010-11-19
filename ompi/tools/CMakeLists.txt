@@ -31,12 +31,12 @@ MACRO(CONFIGURE_WRAPPER_DATA_FILE APP_NAME)
   FILE(WRITE ${OMPI_BINARY_DIR}/tools/wrappers/${APP_NAME}-wrapper-data.txt.in "${OUTPUT}")
 
   CONFIGURE_FILE(${OMPI_BINARY_DIR}/tools/wrappers/${APP_NAME}-wrapper-data.txt.in
-                 ${OMPI_BINARY_DIR}/tools/wrappers/${APP_NAME}-wrapper-data.txt @ONLY)
-  INSTALL(FILES ${OMPI_BINARY_DIR}/tools/wrappers/${APP_NAME}-wrapper-data.txt
+                 ${OMPI_BINARY_DIR}/tools/wrappers/${APP_NAME}${OMPI_EXE_DEBUG_POSTFIX}-wrapper-data.txt @ONLY)
+  INSTALL(FILES ${OMPI_BINARY_DIR}/tools/wrappers/${APP_NAME}${OMPI_EXE_DEBUG_POSTFIX}-wrapper-data.txt
           DESTINATION share/openmpi)
   CONFIGURE_FILE(${OMPI_BINARY_DIR}/tools/wrappers/${APP_NAME}-wrapper-data.txt.in
-                 ${OMPI_BINARY_DIR}/tools/wrappers/${APP_NAME}.exe-wrapper-data.txt @ONLY)
-  INSTALL(FILES ${OMPI_BINARY_DIR}/tools/wrappers/${APP_NAME}.exe-wrapper-data.txt
+                 ${OMPI_BINARY_DIR}/tools/wrappers/${APP_NAME}${OMPI_EXE_DEBUG_POSTFIX}.exe-wrapper-data.txt @ONLY)
+  INSTALL(FILES ${OMPI_BINARY_DIR}/tools/wrappers/${APP_NAME}${OMPI_EXE_DEBUG_POSTFIX}.exe-wrapper-data.txt
           DESTINATION share/openmpi)
 ENDMACRO()
 

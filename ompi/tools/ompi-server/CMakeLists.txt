@@ -22,6 +22,9 @@ IF(BUILD_SHARED_LIBS)
                    ${OMPI_CXX_LAN_FLAG}")
 ENDIF(BUILD_SHARED_LIBS)
 
+SET_TARGET_PROPERTIES(ompi-server PROPERTIES
+  DEBUG_POSTFIX "${OMPI_EXE_DEBUG_POSTFIX}")
+
 TARGET_LINK_LIBRARIES (ompi-server libmpi libopen-pal libopen-rte Ws2_32.lib shlwapi.lib)
 
 INSTALL(TARGETS ompi-server
