@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -40,13 +41,7 @@ BEGIN_C_DECLS
 
 typedef void *(*opal_thread_fn_t) (opal_object_t *);
 
-#ifdef __WINDOWS__
 #define OPAL_THREAD_CANCELLED   ((void*)1);
-#elif OPAL_HAVE_POSIX_THREADS
-#define OPAL_THREAD_CANCELLED   ((void*)1);
-#elif OPAL_HAVE_SOLARIS_THREADS
-#define OPAL_THREAD_CANCELLED   ((void*)1);
-#endif
 
 struct opal_thread_t {
     opal_object_t super;
