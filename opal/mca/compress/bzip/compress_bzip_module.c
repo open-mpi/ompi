@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -49,7 +50,7 @@ int opal_compress_bzip_module_finalize(void)
 
 int opal_compress_bzip_compress(char * fname, char **cname, char **postfix)
 {
-    int child_pid = 0;
+    pid_t child_pid = 0;
     int status = 0;
 
     opal_output_verbose(10, mca_compress_bzip_component.super.output_handle,
@@ -134,7 +135,7 @@ int opal_compress_bzip_compress_nb(char * fname, char **cname, char **postfix, p
 
 int opal_compress_bzip_decompress(char * cname, char **fname)
 {
-    int child_pid = 0;
+    pid_t child_pid = 0;
     int status = 0;
 
     opal_output_verbose(10, mca_compress_bzip_component.super.output_handle,
