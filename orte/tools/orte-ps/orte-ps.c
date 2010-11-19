@@ -13,6 +13,7 @@
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -153,8 +154,8 @@ static char *pretty_vpid_state(orte_proc_state_t state);
 typedef struct {
     bool help;
     bool verbose;
-    int  jobid;
-    int  vpid;
+    orte_jobid_t jobid;
+    orte_vpid_t vpid;
     bool nodes;
     bool daemons;
     int  output;
