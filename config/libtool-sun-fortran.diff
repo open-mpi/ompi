@@ -1,0 +1,42 @@
+--- config/libtool.m4
++++ config/libtool.m4
+@@ -4024,12 +4024,17 @@
+ 	  _LT_TAGVAR(lt_prog_compiler_static, $1)='-Bstatic'
+ 	  _LT_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
+ 	  ;;
+-	*Sun\ F*)
++    *Sun\ Ceres\ Fortran* | *Sun*Fortran*\ [[1-7]].* | *Sun*Fortran*\ 8.[[0-3]]*)
+ 	  # Sun Fortran 8.3 passes all unrecognized flags to the linker
+ 	  _LT_TAGVAR(lt_prog_compiler_pic, $1)='-KPIC'
+ 	  _LT_TAGVAR(lt_prog_compiler_static, $1)='-Bstatic'
+ 	  _LT_TAGVAR(lt_prog_compiler_wl, $1)=''
+ 	  ;;
++    *Sun\ F* | *Sun*Fortran*)
++      _LT_TAGVAR(lt_prog_compiler_pic, $1)='-KPIC'
++      _LT_TAGVAR(lt_prog_compiler_static, $1)='-Bstatic'
++      _LT_TAGVAR(lt_prog_compiler_wl, $1)='-Qoption ld '
++      ;;
+ 	esac
+ 	;;
+       esac
+--- opal/libltdl/m4/libtool.m4
++++ opal/libltdl/m4/libtool.m4
+@@ -4024,12 +4024,17 @@
+ 	  _LT_TAGVAR(lt_prog_compiler_static, $1)='-Bstatic'
+ 	  _LT_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
+ 	  ;;
+-	*Sun\ F*)
++    *Sun\ Ceres\ Fortran* | *Sun*Fortran*\ [[1-7]].* | *Sun*Fortran*\ 8.[[0-3]]*)
+ 	  # Sun Fortran 8.3 passes all unrecognized flags to the linker
+ 	  _LT_TAGVAR(lt_prog_compiler_pic, $1)='-KPIC'
+ 	  _LT_TAGVAR(lt_prog_compiler_static, $1)='-Bstatic'
+ 	  _LT_TAGVAR(lt_prog_compiler_wl, $1)=''
+ 	  ;;
++    *Sun\ F* | *Sun*Fortran*)
++      _LT_TAGVAR(lt_prog_compiler_pic, $1)='-KPIC'
++      _LT_TAGVAR(lt_prog_compiler_static, $1)='-Bstatic'
++      _LT_TAGVAR(lt_prog_compiler_wl, $1)='-Qoption ld '
++      ;;
+ 	esac
+ 	;;
+       esac
