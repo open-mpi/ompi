@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 #
 # Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved. 
+# Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 #
 # $COPYRIGHT$
 # 
@@ -1117,6 +1118,10 @@ close(OUT);
 safe_system("cp configure.patched configure");
 unlink("configure.patched");
 
+# Patch libtool.m4 so that the correct linker options are used in
+# all versions of Sun Studio Fortran
+verbose "=== Patching Sun Studio Fortran version strings in libtool.m4\n";
+system("patch -N -p0 < config/libtool-sun-fortran.diff >/dev/null 2>&1");
 #---------------------------------------------------------------------------
 
 verbose "

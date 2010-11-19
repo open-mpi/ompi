@@ -24,6 +24,7 @@ EXTRA_DIST = \
 	opal_get_version.m4sh \
 	libltdl-preopen-error.diff \
 	ltmain_pgi_tp.diff \
+	libtool-sun-fortran.diff \
         ompi_mca_priority_sort.pl
 
 maintainer-clean-local:
