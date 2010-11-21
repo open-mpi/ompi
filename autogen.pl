@@ -1120,8 +1120,8 @@ unlink("configure.patched");
 
 # Patch libtool.m4 so that the correct linker options are used in
 # all versions of Sun Studio Fortran
-verbose "=== Patching Sun Studio Fortran version strings in libtool.m4\n";
-system("patch -N -p0 < config/libtool-sun-fortran.diff >/dev/null 2>&1");
+#verbose "=== Patching Sun Studio Fortran version strings in libtool.m4\n";
+#system("patch -N -p0 < config/libtool-sun-fortran.diff >/dev/null 2>&1");
 #---------------------------------------------------------------------------
 
 verbose "
