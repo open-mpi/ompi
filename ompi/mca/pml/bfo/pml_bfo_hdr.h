@@ -45,21 +45,21 @@
 #define MCA_PML_BFO_HDR_TYPE_GET       (MCA_BTL_TAG_PML + 7)
 #define MCA_PML_BFO_HDR_TYPE_PUT       (MCA_BTL_TAG_PML + 8)
 #define MCA_PML_BFO_HDR_TYPE_FIN       (MCA_BTL_TAG_PML + 9)
-/* BFO FAILOVER CODE - begin */
+#if PML_BFO
 #define MCA_PML_BFO_HDR_TYPE_RNDVRESTARTNOTIFY (MCA_BTL_TAG_PML + 10)
 #define MCA_PML_BFO_HDR_TYPE_RNDVRESTARTACK    (MCA_BTL_TAG_PML + 11)
 #define MCA_PML_BFO_HDR_TYPE_RNDVRESTARTNACK   (MCA_BTL_TAG_PML + 12)
 #define MCA_PML_BFO_HDR_TYPE_RECVERRNOTIFY     (MCA_BTL_TAG_PML + 13)
-/* BFO FAILOVER CODE - end */
+#endif
 
 #define MCA_PML_BFO_HDR_FLAGS_ACK     1  /* is an ack required */
 #define MCA_PML_BFO_HDR_FLAGS_NBO     2  /* is the hdr in network byte order */
 #define MCA_PML_BFO_HDR_FLAGS_PIN     4  /* is user buffer pinned */
 #define MCA_PML_BFO_HDR_FLAGS_CONTIG  8  /* is user buffer contiguous */
 #define MCA_PML_BFO_HDR_FLAGS_NORDMA  16 /* rest will be send by copy-in-out */
-/* BFO FAILOVER CODE - begin */
+#if PML_BFO
 #define MCA_PML_BFO_HDR_FLAGS_RESTART 32 /* restart RNDV because of error */
-/* BFO FAILOVER CODE - end  */
+#endif
 
 /**
  * Common hdr attributes - must be first element in each hdr type 
@@ -133,10 +133,10 @@ struct mca_pml_bfo_rendezvous_hdr_t {
     mca_pml_bfo_match_hdr_t hdr_match;
     uint64_t hdr_msg_length;            /**< message length */
     ompi_ptr_t hdr_src_req;             /**< pointer to source request - returned in ack */
-/* BFO FAILOVER CODE - begin */
-    ompi_ptr_t hdr_dst_req;             /**< pointer to dst req - failover use only */
-    uint8_t hdr_restartseq;             /**< restart sequence - failover use only */
-/* BFO FAILOVER CODE - end */
+#if PML_BFO
+    ompi_ptr_t hdr_dst_req;             /**< pointer to dst req */
+    uint8_t hdr_restartseq;             /**< restart sequence */
+#endif
 };
 typedef struct mca_pml_bfo_rendezvous_hdr_t mca_pml_bfo_rendezvous_hdr_t;
 
@@ -301,9 +301,9 @@ struct mca_pml_bfo_rdma_hdr_t {
 #endif
     uint32_t hdr_seg_cnt;                     /**< number of segments for rdma */
     ompi_ptr_t hdr_req;                       /**< destination request */
-/* BFO FAILOVER CODE - begin */
+#if PML_BFO
     ompi_ptr_t hdr_dst_req;                   /**< pointer to destination request */
-/* BFO FAILOVER CODE - end */
+#endif
     ompi_ptr_t hdr_des;                       /**< source descriptor */
     uint64_t hdr_rdma_offset;                 /**< current offset into user buffer */ 
     mca_btl_base_segment_t hdr_segs[1];       /**< list of segments for rdma */
@@ -341,16 +341,25 @@ do {                                 \
 
 struct mca_pml_bfo_fin_hdr_t {
     mca_pml_bfo_common_hdr_t hdr_common;      /**< common attributes */
-/* BFO FAILOVER CODE - begin */
-    mca_pml_bfo_match_hdr_t hdr_match;  /**< match info - needed for failover */ 
-/* BFO FAILOVER CODE - end */
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+    uint8_t hdr_padding[2];
+#endif
+#if PML_BFO
+    /* Match info is needed to check for duplicate FIN messages. */
+    mca_pml_bfo_match_hdr_t hdr_match;
+#endif
     uint32_t hdr_fail;                        /**< RDMA operation failed */
     ompi_ptr_t hdr_des;                       /**< completed descriptor */
 };
 typedef struct mca_pml_bfo_fin_hdr_t mca_pml_bfo_fin_hdr_t;
 
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
-#define MCA_PML_BFO_FIN_HDR_FILL(h)
+#define MCA_PML_OB1_FIN_HDR_FILL(h) \
+do {                                \
+    (h).hdr_padding[0] = 0;         \
+    (h).hdr_padding[1] = 0;         \
+    MCA_PML_BFO_MATCH_HDR_FILL((h).hdr_match); \
+} while (0)
 #else
 #define MCA_PML_BFO_FIN_HDR_FILL(h)
 #endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG */
@@ -365,9 +374,10 @@ typedef struct mca_pml_bfo_fin_hdr_t mca_pml_bfo_fin_hdr_t;
     do { \
         MCA_PML_BFO_COMMON_HDR_HTON((h).hdr_common); \
         MCA_PML_BFO_MATCH_HDR_HTON((h).hdr_match); \
+        MCA_PML_OB1_FIN_HDR_FILL(h); \
     } while (0) 
 
-/* BFO FAILOVER CODE - begin */
+#if PML_BFO
 /**
  *  Header used to restart a rendezvous request.
  */
@@ -403,7 +413,7 @@ typedef struct mca_pml_bfo_restart_hdr_t mca_pml_bfo_restart_hdr_t;
     (h).hdr_jobid = htonl((h).hdr_jobid); \
     (h).hdr_vpid = htonl((h).hdr_vpid); \
     } while (0) 
-/* BFO FAILOVER CODE - end */
+#endif
 
 /**
  * Union of defined hdr types.
@@ -417,9 +427,9 @@ union mca_pml_bfo_hdr_t {
     mca_pml_bfo_ack_hdr_t hdr_ack;
     mca_pml_bfo_rdma_hdr_t hdr_rdma;
     mca_pml_bfo_fin_hdr_t hdr_fin;
-/* BFO FAILOVER CODE - begin */
+#if PML_BFO
     mca_pml_bfo_restart_hdr_t hdr_restart;
-/* BFO FAILOVER CODE - end */
+#endif
 };
 typedef union mca_pml_bfo_hdr_t mca_pml_bfo_hdr_t;
 
