@@ -1111,17 +1111,41 @@ $c =~ s/pgf77\* \| pgf90\* \| pgf95\*\)/pgf77* | pgf90* | pgf95* | pgfortran*)/g
 print("=== Patching configure for Libtool PGI version number regexps\n");
 $c =~ s/\*pgCC\\ \[1-5\]\* \| \*pgcpp\\ \[1-5\]\*/*pgCC\\ [1-5]\.* | *pgcpp\\ [1-5]\.*/g;
 
+# Similar issue as above -- fix the case statements that handle the Sun
+# Fortran version strings.
+#
+# Note: we have to use octal escapes to match '*Sun\ F*) and the 
+# four succeeding lines in the bourne shell switch statement.
+#   \ = 134
+#   ) = 051
+#   * = 052
+#
+# Below is essentially an upstream patch for Libtool which we want 
+# made available to Open MPI users running older versions of Libtool
+my $bad_pattern = '\052Sun\134 F.\051\n.*\n.*\n.*\n.*\n.*\n';
+my $good_pattern = '
+      *Sun\ Ceres\ Fortran* | *Sun*Fortran*\ [[1-7]].* | *Sun*Fortran*\ 8.[[0-3]]*)
+        # Sun Fortran 8.3 passes all unrecognized flags to the linker
+        lt_prog_compiler_pic=\'-KPIC\'
+        lt_prog_compiler_static=\'-Bstatic\'
+        lt_prog_compiler_wl=\'\'
+        ;;
+      *Sun\ F* | *Sun*Fortran*)
+        lt_prog_compiler_pic=\'-KPIC\'
+        lt_prog_compiler_static=\'-Bstatic\'
+        lt_prog_compiler_wl=\'-Qoption ld \'
+        ;;
+';
+
+print("Patching configure for Sun Studio Fortran version strings\n");
+$c =~ s/$bad_pattern/$good_pattern/g;
+
 open(OUT, ">configure.patched") || die "Can't open configure.patched";
 print OUT $c;
 close(OUT);
 # Use cp so that we preserve permissions on configure
 safe_system("cp configure.patched configure");
 unlink("configure.patched");
-
-# Patch libtool.m4 so that the correct linker options are used in
-# all versions of Sun Studio Fortran
-#verbose "=== Patching Sun Studio Fortran version strings in libtool.m4\n";
-#system("patch -N -p0 < config/libtool-sun-fortran.diff >/dev/null 2>&1");
 #---------------------------------------------------------------------------
 
 verbose "
