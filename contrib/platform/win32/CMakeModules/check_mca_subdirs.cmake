@@ -46,6 +46,7 @@ INCLUDE(list_subdirs)
 #
 #       mca_link_libraries: this component has to be linked with other targets or libraries,
 #                           e.g. Ws2_32.lib
+#       mca_priority:       priority of the mca component.
 
 
 SET(MCA_FRAMEWORK_LIST "")
@@ -75,8 +76,8 @@ FOREACH (MCA_FRAMEWORK ${MCA_FRAMEWORK_LIST})
     SET(COMPONENT_LIST "")
     CHECK_SUBDIRS("${PROJECT_SOURCE_DIR}/mca/${MCA_FRAMEWORK}" COMPONENT_LIST)
 
-    SET(CURRENT_COMPONENT_PRIORITY 0)
-    SET(BEST_COMPONENT_PRIORITY 0)
+    SET(CURRENT_COMPONENT_PRIORITY "")
+    SET(MCA_PRIORITY_LIST "")
 
     # parse each component subdir of current mca framework
     FOREACH (MCA_COMPONENT ${COMPONENT_LIST})
@@ -184,29 +185,18 @@ FOREACH (MCA_FRAMEWORK ${MCA_FRAMEWORK_LIST})
             INCLUDE_DIRECTORIES(${EXTRA_INCLUDE_PATH})
 
             IF(EXISTS "${CURRENT_PATH}/configure.params")
-              FILE(STRINGS "${CURRENT_PATH}/configure.params" 
+              FILE(STRINGS ${CURRENT_PATH}/configure.params
                 CURRENT_COMPONENT_PRIORITY REGEX "PRIORITY")
-              IF(NOT CURRENT_COMPONENT_PRIORITY STREQUAL "")
-                STRING(REGEX REPLACE "[A-Z_]+=" "" CURRENT_COMPONENT_PRIORITY ${CURRENT_COMPONENT_PRIORITY})
-              ENDIF(NOT CURRENT_COMPONENT_PRIORITY STREQUAL "")
+            ELSE(EXISTS "${CURRENT_PATH}/configure.params")
+              FILE(STRINGS ${CURRENT_PATH}/.windows 
+                CURRENT_COMPONENT_PRIORITY REGEX "^mca_priority=")
             ENDIF(EXISTS "${CURRENT_PATH}/configure.params")
 
-            IF(CURRENT_COMPONENT_PRIORITY GREATER BEST_COMPONENT_PRIORITY)
-              # I have a higher priority for this mca, put me at the very beginning.
-              SET (OUTFILE_EXTERN
-                "extern const mca_base_component_t mca_${MCA_FRAMEWORK}_${MCA_COMPONENT}_component"  
-                "\n${OUTFILE_EXTERN}")
-              SET(FRAMEWORK_STRUCT_DEF
-                "&mca_${MCA_FRAMEWORK}_${MCA_COMPONENT}_component,\n"  
-                ${FRAMEWORK_STRUCT_DEF})
-              SET(BEST_COMPONENT_PRIORITY ${CURRENT_COMPONENT_PRIORITY})
-            ELSE(CURRENT_COMPONENT_PRIORITY GREATER BEST_COMPONENT_PRIORITY)
-              SET (OUTFILE_EXTERN ${OUTFILE_EXTERN}
-                "\nextern const mca_base_component_t mca_${MCA_FRAMEWORK}_${MCA_COMPONENT}_component;")
-              SET(FRAMEWORK_STRUCT_DEF ${FRAMEWORK_STRUCT_DEF}
-                "&mca_${MCA_FRAMEWORK}_${MCA_COMPONENT}_component,\n")
-            ENDIF(CURRENT_COMPONENT_PRIORITY GREATER BEST_COMPONENT_PRIORITY)
+            IF(NOT CURRENT_COMPONENT_PRIORITY STREQUAL "")
+              STRING(REGEX REPLACE "[A-Z_a-z]+=" "" CURRENT_COMPONENT_PRIORITY ${CURRENT_COMPONENT_PRIORITY})
+            ENDIF(NOT CURRENT_COMPONENT_PRIORITY STREQUAL "")
 
+            SET(MCA_PRIORITY_LIST ${MCA_PRIORITY_LIST} "${CURRENT_COMPONENT_PRIORITY}:${MCA_COMPONENT}")
 
           ELSE(NOT OPAL_WANT_LIBLTDL OR NOT_SINGLE_SHARED_LIB STREQUAL "1")
 
@@ -291,6 +281,20 @@ ENDIF (OMPI_DEBUG_BUILD)
       ENDIF(${MCA_COMPONENT} STREQUAL "base")
 
     ENDFOREACH(MCA_COMPONENT)
+
+
+    # generate the correct order of the components.
+    LIST(SORT MCA_PRIORITY_LIST)
+    FOREACH(MCA_COMPONENT ${MCA_PRIORITY_LIST})
+      STRING(REGEX REPLACE "[0-9]*:" "" COMPONENT_NAME ${MCA_COMPONENT})
+      SET (OUTFILE_EXTERN
+        "extern const mca_base_component_t mca_${MCA_FRAMEWORK}_${COMPONENT_NAME}_component"  
+        "\n${OUTFILE_EXTERN}")
+      SET(FRAMEWORK_STRUCT_DEF
+        "&mca_${MCA_FRAMEWORK}_${COMPONENT_NAME}_component,\n"  
+        ${FRAMEWORK_STRUCT_DEF})
+      SET(BEST_COMPONENT_PRIORITY ${CURRENT_COMPONENT_PRIORITY})
+    ENDFOREACH(MCA_COMPONENT ${MCA_PRIORITY_LIST})
 
     STRING(LENGTH "${FRAMEWORK_STRUCT_DEF}" STRUCT_STRING_LENTH)
     IF(STRUCT_STRING_LENTH GREATER 0)
