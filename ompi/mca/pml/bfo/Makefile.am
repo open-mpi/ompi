@@ -19,6 +19,8 @@
 # $HEADER$
 #
 
+AM_CPPFLAGS = -DPML_BFO=1
+
 dist_pkgdata_DATA = \
 	help-mpi-pml-bfo.txt
 

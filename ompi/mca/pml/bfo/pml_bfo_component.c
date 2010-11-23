@@ -107,7 +107,11 @@ static int mca_pml_bfo_component_open(void)
     mca_pml_bfo.free_list_inc =
         mca_pml_bfo_param_register_int("free_list_inc", 64);
     mca_pml_bfo.priority =
+#if PML_BFO
         mca_pml_bfo_param_register_int("priority", 5);
+#else /* PML_BFO */
+        mca_pml_bfo_param_register_int("priority", 20);
+#endif /* PML_BFO */
     mca_pml_bfo.send_pipeline_depth =
         mca_pml_bfo_param_register_int("send_pipeline_depth", 3);
     mca_pml_bfo.recv_pipeline_depth =
