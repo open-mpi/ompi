@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2008      High Performance Computing Center Stuttgart, 
+# Copyright (c) 2008-2010 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -10,3 +10,4 @@
 
 # Specific to this module
 not_single_shared_lib=1
+mca_priority=2
