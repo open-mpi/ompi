@@ -33,7 +33,7 @@
 #include "pml_bfo_recvreq.h"
 #if PML_BFO
 #include "pml_bfo_failover.h"
-#endif
+#endif /* PML_BFO */
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/memchecker.h"
 
@@ -186,15 +186,15 @@ mca_pml_bfo_match_completion_free( struct mca_btl_base_module_t* btl,
 #if PML_BFO
         mca_pml_bfo_repost_match_fragment(des); 
         return;
-#else
+#else /* PML_BFO */
         /* TSW - FIX */
         opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
         orte_errmgr.abort(-1, NULL);
-#endif
+#endif /* PML_BFO */
     }
 #if PML_BFO
     MCA_PML_BFO_CHECK_SENDREQ_EAGER_BML_BTL(bml_btl, btl, sendreq, "MATCH");
-#endif
+#endif /* PML_BFO */
     mca_pml_bfo_match_completion_free_request( bml_btl, sendreq );
 }
 
@@ -238,17 +238,17 @@ mca_pml_bfo_rndv_completion( mca_btl_base_module_t* btl,
 #if PML_BFO
         if (true == mca_pml_bfo_rndv_completion_status_error(des, sendreq))
             return;
-#else
+#else /* PML_BFO */
         /* TSW - FIX */
         opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
         orte_errmgr.abort(-1, NULL);
-#endif
+#endif /* PML_BFO */
     }
 #if PML_BFO
     sendreq->req_events--;
     MCA_PML_BFO_RNDV_COMPLETION_SENDREQ_ERROR_CHECK(sendreq, status, btl,
                                                     MCA_PML_BFO_HDR_TYPE_RNDV, "RNDV");
-#endif
+#endif /* PML_BFO */
 
     /* count bytes of user data actually delivered. As the rndv completion only
      * happens in one thread, the increase of the req_bytes_delivered does not
@@ -261,7 +261,7 @@ mca_pml_bfo_rndv_completion( mca_btl_base_module_t* btl,
 
 #if PML_BFO
     MCA_PML_BFO_CHECK_SENDREQ_EAGER_BML_BTL(bml_btl, btl, sendreq, "RNDV");
-#endif
+#endif /* PML_BFO */
     mca_pml_bfo_rndv_completion_request( bml_btl, sendreq, req_bytes_delivered );
 }
 
@@ -281,7 +281,7 @@ mca_pml_bfo_rget_completion( mca_btl_base_module_t* btl,
     size_t req_bytes_delivered = 0;
 #if PML_BFO
     MCA_PML_BFO_RGET_COMPLETION_SENDREQ_ERROR_CHECK(sendreq, btl, des);
-#endif
+#endif /* PML_BFO */
 
     /* count bytes of user data actually delivered and check for request completion */
     MCA_PML_BFO_COMPUTE_SEGMENT_LENGTH( des->des_src, des->des_src_cnt,
@@ -293,9 +293,9 @@ mca_pml_bfo_rget_completion( mca_btl_base_module_t* btl,
 #if PML_BFO
     btl->btl_free(btl, des);
     MCA_PML_BFO_CHECK_SENDREQ_RDMA_BML_BTL(bml_btl, btl, sendreq, "RGET");
-#else
+#else /* PML_BFO */
     mca_bml_base_free(bml_btl, des);
-#endif
+#endif /* PML_BFO */
     MCA_PML_BFO_PROGRESS_PENDING(bml_btl);
 }
 
@@ -318,7 +318,7 @@ mca_pml_bfo_send_ctl_completion( mca_btl_base_module_t* btl,
         return;
     }
     MCA_PML_BFO_CHECK_SENDREQ_EAGER_BML_BTL(bml_btl, btl, des->des_cbdata, "RGET");
-#endif
+#endif /* PML_BFO */
     /* check for pending requests */
     MCA_PML_BFO_PROGRESS_PENDING(bml_btl);
 }
@@ -339,17 +339,17 @@ mca_pml_bfo_frag_completion( mca_btl_base_module_t* btl,
     size_t req_bytes_delivered = 0;
 #if PML_BFO
     sendreq->req_events--;
-#endif
+#endif /* PML_BFO */
 
     /* check completion status */
     if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
 #if PML_BFO
         sendreq->req_error++;
-#else
+#else /* PML_BFO */
         /* TSW - FIX */
         opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
         orte_errmgr.abort(-1, NULL);
-#endif
+#endif /* PML_BFO */
     }
 
     /* count bytes of user data actually delivered */
@@ -364,20 +364,20 @@ mca_pml_bfo_frag_completion( mca_btl_base_module_t* btl,
 #if PML_BFO
     MCA_PML_BFO_FRAG_COMPLETION_SENDREQ_ERROR_CHECK(sendreq, status, btl, 
                                                     MCA_PML_BFO_HDR_TYPE_FRAG, "FRAG");
-#endif
+#endif /* PML_BFO */
     if(send_request_pml_complete_check(sendreq) == false) {
         mca_pml_bfo_send_request_schedule(sendreq);
 #if PML_BFO
         MCA_PML_BFO_FRAG_COMPLETION_SENDREQ_ERROR_CHECK(sendreq, status, btl, 
                                                         MCA_PML_BFO_HDR_TYPE_FRAG,
                                                         "FRAG (BTL removal)");
-#endif
+#endif /* PML_BFO */
     }
 
     /* check for pending requests */
 #if PML_BFO
     MCA_PML_BFO_CHECK_SENDREQ_EAGER_BML_BTL(bml_btl, btl, sendreq, "FRAG");
-#endif
+#endif /* PML_BFO */
     MCA_PML_BFO_PROGRESS_PENDING(bml_btl);
 }
 
@@ -435,7 +435,7 @@ int mca_pml_bfo_send_request_start_buffered(
     hdr->hdr_rndv.hdr_src_req.pval = sendreq;
 #if PML_BFO
     MCA_PML_BFO_CHECK_FOR_RNDV_RESTART(hdr, sendreq, "RNDV(buffered)");
-#endif
+#endif /* PML_BFO */
 
     bfo_hdr_hton(hdr, MCA_PML_BFO_HDR_TYPE_RNDV,
                  sendreq->req_send.req_base.req_proc);
@@ -488,7 +488,7 @@ int mca_pml_bfo_send_request_start_buffered(
         if (des->des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
             sendreq->req_events++;
         }
-#endif
+#endif /* PML_BFO */
         return OMPI_SUCCESS;
     }
     mca_bml_base_free(bml_btl, des );
@@ -540,7 +540,7 @@ int mca_pml_bfo_send_request_start_copy( mca_pml_bfo_send_request_t* sendreq,
                 des->des_cbfunc = mca_pml_bfo_match_completion_free;
                 des->des_cbdata = sendreq->req_endpoint;
             }
-#endif
+#endif /* PML_BFO */
             /* signal request completion */
             send_request_pml_complete(sendreq);
 
@@ -772,7 +772,7 @@ int mca_pml_bfo_send_request_start_rdma( mca_pml_bfo_send_request_t* sendreq,
         hdr->hdr_rndv.hdr_src_req.pval = sendreq;
 #if PML_BFO
         MCA_PML_BFO_CHECK_FOR_RNDV_RESTART(hdr, sendreq, "RGET");
-#endif
+#endif /* PML_BFO */
         hdr->hdr_rget.hdr_des.pval = src;
         hdr->hdr_rget.hdr_seg_cnt = src->des_src_cnt;
 
@@ -824,7 +824,7 @@ int mca_pml_bfo_send_request_start_rdma( mca_pml_bfo_send_request_t* sendreq,
         hdr->hdr_rndv.hdr_src_req.pval = sendreq;
 #if PML_BFO
         MCA_PML_BFO_CHECK_FOR_RNDV_RESTART(hdr, sendreq, "RNDV");
-#endif
+#endif /* PML_BFO */
 
         bfo_hdr_hton(hdr, MCA_PML_BFO_HDR_TYPE_RNDV,
                      sendreq->req_send.req_base.req_proc);
@@ -854,7 +854,7 @@ int mca_pml_bfo_send_request_start_rdma( mca_pml_bfo_send_request_t* sendreq,
                 sendreq->req_events++;
 	    }
         }
-#endif
+#endif /* PML_BFO */
         return OMPI_SUCCESS;
     }
     mca_bml_base_free(bml_btl, des);
@@ -924,7 +924,7 @@ int mca_pml_bfo_send_request_start_rndv( mca_pml_bfo_send_request_t* sendreq,
     hdr->hdr_rndv.hdr_src_req.pval = sendreq;
 #if PML_BFO
     MCA_PML_BFO_CHECK_FOR_RNDV_RESTART(hdr, sendreq, "RNDV");
-#endif
+#endif /* PML_BFO */
 
     bfo_hdr_hton(hdr, MCA_PML_BFO_HDR_TYPE_RNDV,
             sendreq->req_send.req_base.req_proc);
@@ -946,7 +946,7 @@ int mca_pml_bfo_send_request_start_rndv( mca_pml_bfo_send_request_t* sendreq,
         if (des->des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
             sendreq->req_events++;
         }
-#endif
+#endif /* PML_BFO */
         return OMPI_SUCCESS;
     }
     mca_bml_base_free(bml_btl, des );
@@ -1061,7 +1061,7 @@ mca_pml_bfo_send_request_schedule_once(mca_pml_bfo_send_request_t* sendreq)
         assert(range->range_send_length != 0);
 #if PML_BFO
 	MCA_PML_BFO_CHECK_FOR_REMOVED_BTL(sendreq, range);
-#endif
+#endif /* PML_BFO */
 
         if(prev_bytes_remaining == range->range_send_length)
             num_fail++;
@@ -1174,7 +1174,7 @@ cannot_pack:
             if (des->des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
                 sendreq->req_events++;
             }
-#endif
+#endif /* PML_BFO */
         } else { 
             mca_bml_base_free(bml_btl,des);
         }
@@ -1203,17 +1203,17 @@ static void mca_pml_bfo_put_completion( mca_btl_base_module_t* btl,
     if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
 #if PML_BFO
         sendreq->req_error++;
-#else
+#else /* PML_BFO */
         /* TSW - FIX */
         ORTE_ERROR_LOG(status);
         orte_errmgr.abort(-1, NULL);
-#endif
+#endif /* PML_BFO */
     }
 #if PML_BFO
     sendreq->req_events--;
     MCA_PML_BFO_PUT_COMPLETION_SENDREQ_ERROR_CHECK(sendreq, status, btl);
     MCA_PML_BFO_CHECK_SENDREQ_EAGER_BML_BTL(bml_btl, btl, sendreq, "RDMA write");
-#endif
+#endif /* PML_BFO */
 
     mca_pml_bfo_send_fin(sendreq->req_send.req_base.req_proc, 
                          bml_btl,
@@ -1222,9 +1222,9 @@ static void mca_pml_bfo_put_completion( mca_btl_base_module_t* btl,
                          des->order, 0, (uint16_t)sendreq->req_send.req_base.req_sequence,
                          sendreq->req_restartseq, sendreq->req_send.req_base.req_comm->c_contextid,
                          sendreq->req_send.req_base.req_comm->c_my_rank);
-#else
+#else /* PML_BFO */
                          des->order, 0);
-#endif
+#endif /* PML_BFO */
     
     /* check for request completion */
     OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, frag->rdma_length);
@@ -1273,9 +1273,9 @@ int mca_pml_bfo_send_request_put_frag( mca_pml_bfo_rdma_frag_t* frag )
                     MCA_BTL_NO_ORDER, 1, (uint16_t)sendreq->req_send.req_base.req_sequence,
                     sendreq->req_restartseq, sendreq->req_send.req_base.req_comm->c_contextid,
                     sendreq->req_send.req_base.req_comm->c_my_rank);
-#else
+#else /* PML_BFO */
                     MCA_BTL_NO_ORDER, 1);
-#endif
+#endif /* PML_BFO */
 
             /* send fragment by copy in/out */
             mca_pml_bfo_send_request_copy_in_out(sendreq,
@@ -1315,7 +1315,7 @@ int mca_pml_bfo_send_request_put_frag( mca_pml_bfo_rdma_frag_t* frag )
     if (des->des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
 	((mca_pml_bfo_send_request_t*)frag->rdma_req)->req_events++;
     }
-#endif
+#endif /* PML_BFO */
     return OMPI_SUCCESS;
 }
 
@@ -1341,7 +1341,7 @@ void mca_pml_bfo_send_request_put( mca_pml_bfo_send_request_t* sendreq,
 #if PML_BFO
     MCA_PML_BFO_VERIFY_SENDREQ_REQ_STATE_VALUE(sendreq);
     sendreq->req_recv = hdr->hdr_dst_req; /* only needed once, but it is OK */
-#endif
+#endif /* PML_BFO */
 
     MCA_PML_BFO_RDMA_FRAG_ALLOC(frag, rc); 
 
@@ -1372,7 +1372,7 @@ void mca_pml_bfo_send_request_put( mca_pml_bfo_send_request_t* sendreq,
 #if PML_BFO
     MCA_PML_BFO_CHECK_FOR_REMOVED_BML(sendreq, frag, btl);
     frag->rdma_btl = btl;  /* in case frag ends up on pending */
-#endif
+#endif /* PML_BFO */
     frag->rdma_hdr.hdr_rdma = *hdr;
     frag->rdma_req = sendreq; 
     frag->rdma_ep = bml_endpoint;

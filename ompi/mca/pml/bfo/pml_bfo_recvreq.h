@@ -34,7 +34,7 @@
 #define RECVREQ_RECVERRSENT        0x01
 #define RECVREQ_RNDVRESTART_RECVED 0x02
 #define RECVREQ_RNDVRESTART_ACKED  0x04
-#endif
+#endif /* PML_BFO */
 
 BEGIN_C_DECLS
 
@@ -46,7 +46,7 @@ struct mca_pml_bfo_recv_request_t {
     int32_t req_events;     /* number of outstanding events on request */
     int32_t req_restartseq; /* sequence number of restarted request */
     int32_t req_errstate;   /* state of request if in error */
-#endif
+#endif /* PML_BFO */
     int32_t req_lock;
     size_t  req_pipeline_depth;
     size_t  req_bytes_received;  /**< amount of data transferred into the user buffer */
@@ -170,7 +170,7 @@ recv_request_pml_complete(mca_pml_bfo_recv_request_t *recvreq)
     recvreq->req_rdma_cnt = 0;
 #if PML_BFO
     recvreq->req_msgseq -= 100;
-#endif
+#endif /* PML_BFO */
 
     OPAL_THREAD_LOCK(&ompi_request_lock);
     if(true == recvreq->req_recv.req_base.req_free_called) {
@@ -201,9 +201,9 @@ recv_request_pml_complete_check(mca_pml_bfo_recv_request_t *recvreq)
             recvreq->req_bytes_received >= recvreq->req_recv.req_bytes_packed &&
 #if PML_BFO
                         (0 == recvreq->req_events) && lock_recv_request(recvreq)) {
-#else
+#else /* PML_BFO */
             lock_recv_request(recvreq)) {
-#endif
+#endif /* PML_BFO */
         recv_request_pml_complete(recvreq);
         return true;
     }
@@ -240,7 +240,7 @@ static inline void recv_req_matched(mca_pml_bfo_recv_request_t *req,
     req->req_match_received = true;
 #if PML_BFO
     req->req_msgseq = hdr->hdr_seq;
-#endif
+#endif /* PML_BFO */
 #if OPAL_HAVE_THREAD_SUPPORT
     opal_atomic_wmb();
 #endif

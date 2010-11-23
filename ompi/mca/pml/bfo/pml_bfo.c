@@ -50,7 +50,7 @@
 #include "pml_bfo_rdmafrag.h"
 #if PML_BFO
 #include "pml_bfo_failover.h"
-#endif
+#endif /* PML_BFO */
 
 mca_pml_bfo_t mca_pml_bfo = {
     {
@@ -414,7 +414,7 @@ int mca_pml_bfo_add_procs(ompi_proc_t** procs, size_t nprocs)
     rc = mca_pml_bfo_register_callbacks();
     if(OMPI_SUCCESS != rc)
         goto cleanup_and_return;
-#endif
+#endif /* PML_BFO */
     /* register error handlers */
     rc = mca_bml.bml_register_error(mca_pml_bfo_error_handler);
     if(OMPI_SUCCESS != rc)
@@ -477,7 +477,7 @@ static void mca_pml_bfo_fin_completion( mca_btl_base_module_t* btl,
         return;
     }
     MCA_PML_BFO_CHECK_EAGER_BML_BTL_ON_FIN_COMPLETION(bml_btl, btl, des);
-#endif
+#endif /* PML_BFO */
     /* check for pending requests */
     MCA_PML_BFO_PROGRESS_PENDING(bml_btl);
 }
@@ -497,9 +497,9 @@ int mca_pml_bfo_send_fin( ompi_proc_t* proc,
                           uint16_t seq,
                           uint8_t restartseq,
                           uint16_t ctx, uint32_t src)
-#else
+#else /* PML_BFO */
                           uint32_t status )
-#endif
+#endif /* PML_BFO */
 {
     mca_btl_base_descriptor_t* fin;
     mca_pml_bfo_fin_hdr_t* hdr;
@@ -527,7 +527,7 @@ int mca_pml_bfo_send_fin( ompi_proc_t* proc,
     hdr->hdr_match.hdr_ctx = ctx;
     hdr->hdr_match.hdr_src = src;
     hdr->hdr_match.hdr_common.hdr_flags = restartseq;  /* use unused hdr_flags field */
-#endif
+#endif /* PML_BFO */
 
     bfo_hdr_hton(hdr, MCA_PML_BFO_HDR_TYPE_FIN, proc);
 
@@ -600,9 +600,9 @@ void mca_pml_bfo_process_pending_packets(mca_bml_base_btl_t* bml_btl)
                                           pckt->hdr.hdr_fin.hdr_match.hdr_common.hdr_flags,
                                           pckt->hdr.hdr_fin.hdr_match.hdr_ctx,
                                           pckt->hdr.hdr_fin.hdr_match.hdr_src);
-#else
+#else /* PML_BFO */
                                           pckt->hdr.hdr_fin.hdr_fail);
-#endif
+#endif /* PML_BFO */
                 if( OPAL_UNLIKELY(OMPI_ERR_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc)) ) {
                     return;
                 }
@@ -649,7 +649,7 @@ void mca_pml_bfo_error_handler(
         mca_pml_bfo_failover_error_handler(btl, flags, errproc, btlinfo);
         return;
     }
-#endif
+#endif /* PML_BFO */
     orte_errmgr.abort(-1, NULL);
 }
 
