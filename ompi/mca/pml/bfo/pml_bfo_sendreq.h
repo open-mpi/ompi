@@ -47,7 +47,7 @@ struct mca_pml_bfo_send_request_t {
     int32_t req_restartseq; /* sequence number of restarted request */
     int32_t req_restart;    /* state of restarted request */
     int32_t req_error;      /* non-zero when error has occurred on request */
-#endif
+#endif /* PML_BFO */
     int32_t req_state;
     int32_t req_lock;
     bool req_throttle_sends;
@@ -251,7 +251,7 @@ send_request_pml_complete(mca_pml_bfo_send_request_t *sendreq)
     sendreq->req_send.req_base.req_pml_complete = true;
 #if PML_BFO
     sendreq->req_send.req_base.req_sequence -= 100;
-#endif
+#endif /* PML_BFO */
 
     if(sendreq->req_send.req_base.req_free_called) {
         MCA_PML_BFO_SEND_REQUEST_RETURN(sendreq);
@@ -435,7 +435,7 @@ mca_pml_bfo_send_request_start( mca_pml_bfo_send_request_t* sendreq )
     sendreq->req_restart = 0;         /* reset in case we restart again */
     sendreq->req_error = 0;           /* clear error state */
     sendreq->req_events = 0;          /* clear events, probably 0 anyways */
-#endif
+#endif /* PML_BFO */
 
     MCA_PML_BASE_SEND_START( &sendreq->req_send.req_base );
 

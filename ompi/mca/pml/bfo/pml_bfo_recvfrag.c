@@ -43,7 +43,7 @@
 #include "pml_bfo_hdr.h"
 #if PML_BFO
 #include "pml_bfo_failover.h"
-#endif
+#endif /* PML_BFO */
 
 OBJ_CLASS_INSTANCE( mca_pml_bfo_buffer_t,
                     ompi_free_list_item_t,
@@ -246,7 +246,7 @@ void mca_pml_bfo_recv_frag_callback_match(mca_btl_base_module_t* btl,
     if (true == mca_pml_bfo_is_duplicate_msg(proc, hdr)) {
         return;
     }
-#endif
+#endif /* PML_BFO */
     mca_pml_bfo_recv_frag_match(btl, hdr, segments,
                                 num_segments, MCA_PML_BFO_HDR_TYPE_MATCH);
 }
@@ -306,7 +306,7 @@ void mca_pml_bfo_recv_frag_callback_ack(mca_btl_base_module_t* btl,
     sendreq->req_recv = hdr->hdr_ack.hdr_dst_req;
 #if PML_BFO
     MCA_PML_BFO_ERROR_CHECK_ON_ACK_CALLBACK(sendreq);
-#endif
+#endif /* PML_BFO */
     
     /* if the request should be delivered entirely by copy in/out
      * then throttle sends */
@@ -352,7 +352,7 @@ void mca_pml_bfo_recv_frag_callback_frag(mca_btl_base_module_t* btl,
     recvreq = (mca_pml_bfo_recv_request_t*)hdr->hdr_frag.hdr_dst_req.pval;
 #if PML_BFO
     MCA_PML_BFO_ERROR_CHECK_ON_FRAG_CALLBACK(recvreq);
-#endif
+#endif /* PML_BFO */
     mca_pml_bfo_recv_request_progress_frag(recvreq,btl,segments,des->des_dst_cnt);
 
     return;
@@ -375,7 +375,7 @@ void mca_pml_bfo_recv_frag_callback_put(mca_btl_base_module_t* btl,
     sendreq = (mca_pml_bfo_send_request_t*)hdr->hdr_rdma.hdr_req.pval;
 #if PML_BFO
     MCA_PML_BFO_ERROR_CHECK_ON_PUT_CALLBACK(sendreq);
-#endif
+#endif /* PML_BFO */
     mca_pml_bfo_send_request_put(sendreq,btl,&hdr->hdr_rdma);
     
     return;
@@ -400,7 +400,7 @@ void mca_pml_bfo_recv_frag_callback_fin(mca_btl_base_module_t* btl,
     if (true == mca_pml_bfo_is_duplicate_fin(hdr, rdma, btl)) {
         return;
     }
-#endif
+#endif /* PML_BFO */
     rdma->des_cbfunc(btl, NULL, rdma,
                      hdr->hdr_fin.hdr_fail ? OMPI_ERROR : OMPI_SUCCESS);
     
@@ -631,7 +631,7 @@ static int mca_pml_bfo_recv_frag_match( mca_btl_base_module_t *btl,
             return OMPI_SUCCESS;
         }
     } else {
-#endif
+#endif /* PML_BFO */
     /* get sequence number of next message that can be processed */
     next_msg_seq_expected = (uint16_t)proc->expected_sequence;
     if(OPAL_UNLIKELY(frag_msg_seq != next_msg_seq_expected))
@@ -670,7 +670,7 @@ out_of_order_match:
 
 #if PML_BFO
     }
-#endif
+#endif /* PML_BFO */
     if(OPAL_LIKELY(match)) {
         switch(type) { 
         case MCA_PML_BFO_HDR_TYPE_MATCH:
@@ -716,7 +716,7 @@ wrong_seq:
     if (true == mca_pml_bfo_is_duplicate_msg(proc, hdr)) {
         return OMPI_SUCCESS;
     }
-#endif
+#endif /* PML_BFO */
     append_frag_to_list(&proc->frags_cant_match, btl, hdr, segments,
                         num_segments, NULL);
     OPAL_THREAD_UNLOCK(&comm->matching_lock);
