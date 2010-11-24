@@ -115,7 +115,7 @@ int orte_register_params(void)
                                 "Verbosity level for ORTE debug messages (default: 1)",
                                 false, false, -1, &orte_debug_verbosity);
     
-   mca_base_param_reg_int_name("orte", "debug_daemons",
+    mca_base_param_reg_int_name("orte", "debug_daemons",
                                 "Whether to debug the ORTE daemons or not",
                                 false, false, (int)false, &value);
     orte_debug_daemons_flag = OPAL_INT_TO_BOOL(value);
@@ -125,7 +125,7 @@ int orte_register_params(void)
                                 false, false, (int)false, &value);
     orte_debug_daemons_file_flag = OPAL_INT_TO_BOOL(value);
     /* If --debug-daemons-file was specified, that also implies
-        --debug-daemons */
+       --debug-daemons */
     if (orte_debug_daemons_file_flag) {
         orte_debug_daemons_flag = true;
     }
@@ -239,9 +239,9 @@ int orte_register_params(void)
     
 #ifdef __WINDOWS__
     mca_base_param_reg_string_name("orte", "ccp_headnode",
-                          "Name of the cluster head node. (For Windows CCP only.)",
-                          false, false,
-                          NULL, &orte_ccp_headnode);
+                                   "Name of the cluster head node. (For Windows CCP only.)",
+                                   false, false,
+                                   NULL, &orte_ccp_headnode);
 #endif
     
     /* whether or not to keep FQDN hostnames */
@@ -396,10 +396,10 @@ int orte_register_params(void)
     /* binding specification - this will be overridden by any cmd line directive, and
      * ignored unless opal_paffinity_alone is set
      */
-	mca_base_param_reg_string_name("orte", "process_binding",
-						     "Policy for binding processes [none | core | socket | board] (supported qualifier: if-avail)",
-						     false, false, NULL, &strval);
-	if (NULL != strval) {
+    mca_base_param_reg_string_name("orte", "process_binding",
+                                   "Policy for binding processes [none | core | socket | board] (supported qualifier: if-avail)",
+                                   false, false, NULL, &strval);
+    if (NULL != strval) {
         if (0 == strcasecmp(strval, "none")) {
             /* no binding */
             ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_NONE);
@@ -515,6 +515,22 @@ int orte_register_params(void)
     orte_child_time_to_exit.tv_sec = value;
     orte_child_time_to_exit.tv_usec = 0;
     
+    mca_base_param_reg_int_name("orte", "enable_progress_threads",
+                                "Enable the use of progress threads in ORTE",
+                                false, false,
+                                (int)false, &value);
+    orte_progress_threads_enabled = OPAL_INT_TO_BOOL(value);
+    if (!OPAL_EVENT_HAVE_THREAD_SUPPORT && orte_progress_threads_enabled) {
+        opal_output(orte_clean_output,
+                    "------------------------------------------------------------------\n"
+                    "The MCA param orte_progress_threads_enabled was set to true, but\n"
+                    "the required thread support was not configured and built into the\n"
+                    "event library. Please either do not enable progress threads, or\n"
+                    "reconfigure the event library with --enable-event-thread-support\n"
+                    "------------------------------------------------------------------");
+        exit(1);
+    }
+ 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
     
     return ORTE_SUCCESS;
