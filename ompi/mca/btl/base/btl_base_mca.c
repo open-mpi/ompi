@@ -64,10 +64,10 @@ int mca_btl_base_param_register(mca_base_component_t *version,
             0, uint32_t);
     free(msg);
 
-    REG_INT("rndv_eager_limit", "Size (in bytes) of \"phase 1\" fragment sent for all large messages (must be >= 0 and <= eager_limit)",
+    REG_INT("rndv_eager_limit", "Size (in bytes, including header) of \"phase 1\" fragment sent for all large messages (must be >= 0 and <= eager_limit)",
             module->btl_rndv_eager_limit, 0, size_t);
 
-    REG_INT("eager_limit", "Maximum size (in bytes) of \"short\" messages (must be >= 1).",
+    REG_INT("eager_limit", "Maximum size (in bytes, including header) of \"short\" messages (must be >= 1).",
             module->btl_eager_limit, 1, size_t);
 
     REG_INT("max_send_size", "Maximum size (in bytes) of a single \"phase 2\" fragment of a long message when using the pipeline protocol (must be >= 1)",
