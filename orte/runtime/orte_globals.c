@@ -183,6 +183,9 @@ orte_default_comm_fn_t orte_comm;
 bool orte_report_child_jobs_separately;
 struct timeval orte_child_time_to_exit;
 
+/* orte progress threads */
+bool orte_progress_threads_enabled;
+
 #endif /* !ORTE_DISABLE_FULL_RTE */
 
 int orte_debug_output = -1;
