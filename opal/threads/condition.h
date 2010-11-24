@@ -55,6 +55,7 @@ struct opal_condition_t {
 #elif OPAL_HAVE_SOLARIS_THREADS
     cond_t c_cond;
 #endif
+    char *name;
 };
 typedef struct opal_condition_t opal_condition_t;
 
