@@ -1122,23 +1122,30 @@ $c =~ s/\*pgCC\\ \[1-5\]\* \| \*pgcpp\\ \[1-5\]\*/*pgCC\\ [1-5]\.* | *pgcpp\\ [1
 #
 # Below is essentially an upstream patch for Libtool which we want 
 # made available to Open MPI users running older versions of Libtool
-my $bad_pattern = '\052Sun\134 F.\051\n.*\n.*\n.*\n.*\n.*\n';
-my $good_pattern = '
-      *Sun\ Ceres\ Fortran* | *Sun*Fortran*\ [[1-7]].* | *Sun*Fortran*\ 8.[[0-3]]*)
-        # Sun Fortran 8.3 passes all unrecognized flags to the linker
-        lt_prog_compiler_pic=\'-KPIC\'
-        lt_prog_compiler_static=\'-Bstatic\'
-        lt_prog_compiler_wl=\'\'
-        ;;
-      *Sun\ F* | *Sun*Fortran*)
-        lt_prog_compiler_pic=\'-KPIC\'
-        lt_prog_compiler_static=\'-Bstatic\'
-        lt_prog_compiler_wl=\'-Qoption ld \'
-        ;;
-';
 
-print("Patching configure for Sun Studio Fortran version strings\n");
-$c =~ s/$bad_pattern/$good_pattern/g;
+foreach my $tag (("", "_F77", "_FC")) {
+
+    # We have to change the search pattern and substitution on each
+    # iteration to take into account the tag changing
+    my $search_string = '\052Sun\134 F\052.*\n.*\n\s+' .
+        "lt_prog_compiler_pic${tag}" . '.*\n.*\n.*\n.*\n';
+    my $replace_string = "
+    *Sun\\ Ceres\\ Fortran* | *Sun*Fortran*\\ [[1-7]].* | *Sun*Fortran*\\ 8.[[0-3]]*)
+      # Sun Fortran 8.3 passes all unrecognized flags to the linker
+      lt_prog_compiler_pic${tag}='-KPIC'
+      lt_prog_compiler_static${tag}='-Bstatic'
+      lt_prog_compiler_wl${tag}=''
+      ;;
+    *Sun\\ F* | *Sun*Fortran*)
+      lt_prog_compiler_pic${tag}='-KPIC'
+      lt_prog_compiler_static${tag}='-Bstatic'
+      lt_prog_compiler_wl${tag}='-Qoption ld '
+      ;;
+";
+
+    print("=== Patching configure for Sun Studio Fortran version strings ($tag)\n");
+    $c =~ s/$search_string/$replace_string/;
+}
 
 open(OUT, ">configure.patched") || die "Can't open configure.patched";
 print OUT $c;
