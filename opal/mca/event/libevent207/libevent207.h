@@ -53,6 +53,7 @@
 #include "opal/mca/event/base/base.h"
 
 #include "libevent/event.h"
+#include "libevent/include/event2/thread.h"
 
 #include "opal/mca/event/event.h"
 
@@ -78,6 +79,17 @@ OPAL_DECLSPEC extern opal_event_base_t *opal_event_base;
 OPAL_DECLSPEC opal_event_base_t* opal_event_base_create(void);
 
 OPAL_DECLSPEC int opal_event_init(void);
+
+/* thread support APIs */
+#if OPAL_EVENT_HAVE_THREAD_SUPPORT
+#ifdef WIN32
+#define opal_event_use_threads(x) evthread_use_windows_threads(x)
+#else
+#define opal_event_use_threads(x) evthread_use_pthreads(x)
+#endif
+#else
+#define opal_event_use_threads(x)
+#endif
 
 /* Basic event APIs */
 #define opal_event_base_finalize(x) event_base_free((x))
