@@ -102,6 +102,8 @@ OPAL_DECLSPEC int opal_event_init(void);
 
 #define opal_event_del(ev) event_del((ev))
 
+#define opal_event_active(x, y, z) event_active((x), (y), (z))
+
 /* Timer APIs */
 #define opal_event_evtimer_new(b, cb, arg) event_new((b), -1, 0, (event_callback_fn) (cb), (arg)) 
 
