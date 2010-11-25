@@ -1054,12 +1054,23 @@ static void abort_signal_callback(int fd, short flags, void *arg)
 /**
  * Deal with sigpipe errors
  */
+static int sigpipe_error_count=0;
 static void epipe_signal_callback(int fd, short flags, void *arg)
 {
-    /* for now, we just announce and ignore them */
-    OPAL_OUTPUT_VERBOSE((1, orte_debug_verbosity,
-                         "%s reports a SIGPIPE error on fd %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), fd));
+    sigpipe_error_count++;
+    if (1 == sigpipe_error_count) {
+        /* announce it */
+        OPAL_OUTPUT_VERBOSE((1, orte_debug_verbosity,
+                             "%s reports a SIGPIPE error on fd %d",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), fd));
+    }
+
+    if (10 < sigpipe_error_count) {
+        /* time to abort */
+        opal_output(0, "%s: SIGPIPE detected - aborting", orte_basename);
+        abort_exit_callback(0, 0, 0);
+    }
+
     return;
 }
 
