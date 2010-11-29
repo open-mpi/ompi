@@ -520,6 +520,10 @@ int orte_register_params(void)
                                 false, false,
                                 (int)false, &value);
     orte_progress_threads_enabled = OPAL_INT_TO_BOOL(value);
+    if (ORTE_PROC_IS_MPI) {
+        /* MPI procs never use orte progress threads */
+        orte_progress_threads_enabled = false;
+    }
     if (!OPAL_EVENT_HAVE_THREAD_SUPPORT && orte_progress_threads_enabled) {
         opal_output(orte_clean_output,
                     "------------------------------------------------------------------\n"
