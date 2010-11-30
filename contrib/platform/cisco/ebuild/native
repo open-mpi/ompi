@@ -1,3 +1,4 @@
+enable_event_thread_support=yes
 enable_dlopen=yes
 enable_multicast=yes
 enable_sensors=yes
@@ -23,7 +24,7 @@ enable_per_user_config_files=no
 enable_script_wrapper_compilers=no
 enable_orterun_prefix_by_default=yes
 enable_io_romio=no
-enable_mca_no_build=carto,crs,snapc,crcp,paffinity,ess-alps,ess-cnos,ess-lsf,ess-portals_utcp,ess-singleton,ess-slave,ess-slurm,ess-slurmd,ess-tm,ess-tool,filem,grpcomm-basic,grpcomm-cnos,grpcomm-hier,notifier,plm,ras,rmaps-load_balance,rmaps-rank_file,rmaps-round_robin,rmaps-seq,rmaps-topo,rml-ftrm,routed-binomial,routed-direct,routed-linear,routed-radix,routed-slave,timer-catamount,timer-aix,timer-altix,timer-solaris,timer-windows,sstore,compress,errmgr-autor,errmgr-crmig,errmgr-example
+enable_mca_no_build=carto,crs,memchecker,filem,plm-slurm,plm-xgrid,snapc,ess-slurm,sstore,compress
 enable_contrib_no_build=libnbc,vt
 with_memory_manager=no
 with_tm=no

@@ -1,3 +1,5 @@
+enable_event_thread_support=yes
+enable_event_debug=yes
 enable_heartbeat=yes
 enable_multicast=yes
 enable_sensors=yes
@@ -20,8 +22,7 @@ enable_mpi_f90=no
 enable_mpi_cxx=no
 enable_mpi_cxx_seek=no
 enable_memchecker=no
-enable_mca_no_build=carto,crs,memchecker,filem,plm-slurm,plm-xgrid,snapc,ess-slurm,sstore,compress,errmgr-autor,errmgr-crmig,errmgr-example
-enable_mca_only_build=rmcast-tcp,rmaps-resilient
+enable_mca_no_build=carto,crs,memchecker,filem,plm-slurm,plm-xgrid,snapc,ess-slurm,sstore,compress
 with_memory_manager=no
 with_devel_headers=yes
 with_xgrid=no
