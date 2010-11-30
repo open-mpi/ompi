@@ -893,6 +893,13 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
+    /* Undo OPAL calling opal_progress_event_users_increment() during 
+       opal_init, to get better latency when not using TCP.  Do 
+       this *after* dyn_init, as dyn init uses lots of ORTE 
+       communication and we don't want to hinder the performance of 
+       that code. */ 
+    opal_progress_event_users_decrement(); 
+
     /* see if yield_when_idle was specified - if so, use it */
     param = mca_base_param_find("mpi", NULL, "yield_when_idle");
     mca_base_param_lookup_int(param, &value);
