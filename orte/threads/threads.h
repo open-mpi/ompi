@@ -26,6 +26,8 @@
 #if OPAL_ENABLE_DEBUG
 #include "opal/util/output.h"
 #endif
+#include "opal/util/fd.h"
+#include "opal/mca/event/event.h"
 
 #include "mutex.h"
 #include "condition.h"
@@ -39,35 +41,37 @@ typedef struct {
     volatile bool active;
     volatile bool running;
     volatile bool stop;
-    struct timeval rate;
+    int wakeup_pipe;
+    char *name;
 } orte_thread_ctl_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_thread_ctl_t);
 
-ORTE_DECLSPEC extern bool orte_debug_threads;
-
 #if OPAL_ENABLE_DEBUG
-#define ORTE_ACQUIRE_THREAD(ctl)                                \
-    do {                                                        \
-        ORTE_THREAD_LOCK(&(ctl)->lock);                         \
-        if (orte_debug_threads) {                               \
-            opal_output(0, "Waiting for thread %s:%d",          \
-                        __FILE__, __LINE__);                    \
-        }                                                       \
-        while ((ctl)->active) {                                 \
-            orte_condition_wait(&(ctl)->cond, &(ctl)->lock);    \
-        }                                                       \
-        if (orte_debug_threads) {                               \
-            opal_output(0, "Thread obtained %s:%d",             \
-                        __FILE__, __LINE__);                    \
-        }                                                       \
-        (ctl)->active = true;                                   \
+#define ORTE_ACQUIRE_THREAD(ctl)                                       \
+    do {                                                               \
+        ORTE_THREAD_LOCK(&(ctl)->lock);                                \
+        if (opal_debug_threads) {                                      \
+            opal_output(0, "Waiting for thread %s at %s:%d:%s",        \
+                        (NULL == (ctl)->name) ? "NULL" : (ctl)->name,  \
+                        __FILE__, __LINE__,                            \
+                        ((ctl)->active) ? "TRUE" : "FALSE");           \
+        }                                                              \
+        while ((ctl)->active) {                                        \
+            ORTE_CONDITION_WAIT(&(ctl)->cond, &(ctl)->lock);           \
+        }                                                              \
+        if (opal_debug_threads) {                                      \
+            opal_output(0, "Thread %s acquired at %s:%d",              \
+                        (NULL == (ctl)->name) ? "NULL" : (ctl)->name,  \
+                        __FILE__, __LINE__);                           \
+        }                                                              \
+        (ctl)->active = true;                                          \
     } while(0);
 #else
 #define ORTE_ACQUIRE_THREAD(ctl)                                \
     do {                                                        \
         ORTE_THREAD_LOCK(&(ctl)->lock);                         \
         while ((ctl)->active) {                                 \
-            orte_condition_wait(&(ctl)->cond, &(ctl)->lock);    \
+            ORTE_CONDITION_WAIT(&(ctl)->cond, &(ctl)->lock);    \
         }                                                       \
         (ctl)->active = true;                                   \
     } while(0);
@@ -75,32 +79,56 @@ ORTE_DECLSPEC extern bool orte_debug_threads;
 
 
 #if OPAL_ENABLE_DEBUG
-#define ORTE_RELEASE_THREAD(ctl)                        \
-    do {                                                \
-        if (orte_debug_threads) {                       \
-            opal_output(0, "Releasing thread %s:%d",    \
-                        __FILE__, __LINE__);            \
-        }                                               \
-        (ctl)->active = false;                          \
-        orte_condition_broadcast(&(ctl)->cond);         \
-        ORTE_THREAD_UNLOCK(&(ctl)->lock);               \
+#define ORTE_RELEASE_THREAD(ctl)                                       \
+    do {                                                               \
+        char byte='a';                                                 \
+        if (opal_debug_threads) {                                      \
+            opal_output(0, "Releasing thread %s at %s:%d",             \
+                        (NULL == (ctl)->name) ? "NULL" : (ctl)->name,  \
+                        __FILE__, __LINE__);                           \
+        }                                                              \
+        (ctl)->active = false;                                         \
+        ORTE_CONDITION_BROADCAST(&(ctl)->cond);                        \
+        opal_fd_write((ctl)->wakeup_pipe, 1, &byte);                   \
+        ORTE_THREAD_UNLOCK(&(ctl)->lock);                              \
     } while(0);
 #else
-#define ORTE_RELEASE_THREAD(ctl)                        \
-    do {                                                \
-        (ctl)->active = false;                          \
-        orte_condition_broadcast(&(ctl)->cond);         \
-        ORTE_THREAD_UNLOCK(&(ctl)->lock);               \
+#define ORTE_RELEASE_THREAD(ctl)                                        \
+    do {                                                                \
+        char byte='a';                                                  \
+        (ctl)->active = false;                                          \
+        ORTE_CONDITION_BROADCAST(&(ctl)->cond);                         \
+        opal_fd_write((ctl)->wakeup_pipe, 1, &byte);                    \
+        ORTE_THREAD_UNLOCK(&(ctl)->lock);                               \
     } while(0);
 #endif
 
-
-#define ORTE_WAKEUP_THREAD(ctl)                     \
-    do {                                            \
-        (ctl)->active = false;                      \
-        orte_condition_broadcast(&(ctl)->cond);     \
+#if OPAL_ENABLE_DEBUG
+#define ORTE_WAKEUP_THREAD(ctl)                                        \
+    do {                                                               \
+        char byte='a';                                                 \
+        ORTE_THREAD_LOCK(&(ctl)->lock);                                \
+        if (opal_debug_threads) {                                      \
+            opal_output(0, "Waking up thread %s at %s:%d",             \
+                        (NULL == (ctl)->name) ? "NULL" : (ctl)->name,  \
+                        __FILE__, __LINE__);                           \
+        }                                                              \
+        (ctl)->active = false;                                         \
+        ORTE_CONDITION_BROADCAST(&(ctl)->cond);                        \
+        opal_fd_write((ctl)->wakeup_pipe, 1, &byte);                   \
+        ORTE_THREAD_UNLOCK(&(ctl)->lock);                              \
     } while(0);
-
+#else
+#define ORTE_WAKEUP_THREAD(ctl)                                         \
+    do {                                                                \
+        char byte='a';                                                  \
+        ORTE_THREAD_LOCK(&(ctl)->lock);                                 \
+        (ctl)->active = false;                                          \
+        ORTE_CONDITION_BROADCAST(&(ctl)->cond);                         \
+        opal_fd_write((ctl)->wakeup_pipe, 1, &byte);                    \
+        ORTE_THREAD_UNLOCK(&(ctl)->lock);                               \
+    } while(0);
+#endif
 
 END_C_DECLS
 

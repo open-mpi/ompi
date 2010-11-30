@@ -9,9 +9,9 @@
 
 #include "orte_config.h"
 
-#include "orte/threads/threads.h"
+#include "opal/mca/event/event.h"
 
-bool orte_debug_threads = false;
+#include "orte/threads/threads.h"
 
 static void constructor(orte_thread_ctl_t *ptr)
 {
@@ -20,15 +20,18 @@ static void constructor(orte_thread_ctl_t *ptr)
     ptr->active = false;
     ptr->running = false;
     ptr->stop = false;
-    ptr->rate.tv_sec = 0;
-    ptr->rate.tv_usec = 0;
+    ptr->name = NULL;
+    /* default to waking up the global base */
+    ptr->wakeup_pipe = opal_event_base->wakeup_pipe[1];
 }
 static void destructor(orte_thread_ctl_t *ptr)
 {
     OBJ_DESTRUCT(&ptr->lock);
     OBJ_DESTRUCT(&ptr->cond);
+    if (NULL != ptr->name) {
+        free(ptr->name);
+    }
 }
 OBJ_CLASS_INSTANCE(orte_thread_ctl_t,
                    opal_object_t,
                    constructor, destructor);
-
