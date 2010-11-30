@@ -142,23 +142,23 @@ typedef struct {
 } rmcast_send_log_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(rmcast_send_log_t);
 
-#define ORTE_MULTICAST_MESSAGE_EVENT(dt, sz)                               \
-    do {                                                                   \
-        orte_mcast_msg_event_t *mev;                                       \
-        char byte='a';                                                     \
-        OPAL_OUTPUT_VERBOSE((1, orte_rmcast_base.rmcast_output,            \
-                             "defining mcast msg event: %s %d",            \
-                             __FILE__, __LINE__));                         \
-        mev = OBJ_NEW(orte_mcast_msg_event_t);                             \
-        opal_dss.load(mev->buf, (dt), (sz));                               \
-        if (orte_rmcast_base.enable_progress_thread) {                     \
-            ORTE_ACQUIRE_THREAD(&orte_rmcast_base.recv_process_ctl);       \
-            opal_list_append(&orte_rmcast_base.msg_list, &mev->super);     \
-            ORTE_RELEASE_THREAD(&orte_rmcast_base.recv_process_ctl);       \
-            opal_fd_write(orte_rmcast_base.process_ctl_pipe[1], 1, &byte); \
-        } else {                                                           \
-            orte_rmcast_base_process_msg(mev);                             \
-        }                                                                  \
+#define ORTE_MULTICAST_MESSAGE_EVENT(dt, sz)                            \
+    do {                                                                \
+        char byte='a';                                                  \
+        orte_mcast_msg_event_t *mev;                                    \
+        OPAL_OUTPUT_VERBOSE((1, orte_rmcast_base.rmcast_output,         \
+                             "defining mcast msg event: %s %d",         \
+                             __FILE__, __LINE__));                      \
+        mev = OBJ_NEW(orte_mcast_msg_event_t);                          \
+        opal_dss.load(mev->buf, (dt), (sz));                            \
+        if (orte_rmcast_base.enable_progress_thread) {                  \
+            ORTE_ACQUIRE_THREAD(&orte_rmcast_base.recv_process_ctl);    \
+            opal_list_append(&orte_rmcast_base.msg_list, &mev->super);  \
+            ORTE_RELEASE_THREAD(&orte_rmcast_base.recv_process_ctl);    \
+            opal_fd_write(orte_rmcast_base.recv_pipe[1], 1, &byte);     \
+        } else {                                                        \
+            orte_rmcast_base_process_msg(mev);                          \
+        }                                                               \
    } while(0);
 
 

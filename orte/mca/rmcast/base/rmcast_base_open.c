@@ -131,8 +131,8 @@ int orte_rmcast_base_open(void)
 
     /* whether or not to use progress thread */
     mca_base_param_reg_int_name("rmcast", "enable_progress_thread",
-                                "Whether or not to enable progress thread (default: false)",
-                                false, false, (int)false, &value);
+                                "Whether or not to enable progress thread (default: true)",
+                                false, false, (int)true, &value);
     orte_rmcast_base.enable_progress_thread = OPAL_INT_TO_BOOL(value);
 
     if (orte_rmcast_base.enable_progress_thread) {
