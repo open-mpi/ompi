@@ -1,3 +1,7 @@
+5.4.14
+	- fixed compile error on Red Hat 5.x which occurred if using GNU
+	  compiler with -D_FORTIFY_SOURCE=2
+
 5.4.13
 	- revived wrapper for MPI function 'MPI_Init_thread'
 	- fixed a bug in vtfilter: strip the '.otf'-suffix from input/output

@@ -21,6 +21,7 @@ AC_DEFUN([ACVT_IOWRAP],
 			sav_CPPFLAGS=$CPPFLAGS
 			CPPFLAGS="$CPPFLAGS -D_LARGEFILE64_SOURCE"
 			AC_CHECK_FUNCS([ \
+				__fprintf_chk \
 				creat64 \
 				fopen64 \
 				fseeko \
