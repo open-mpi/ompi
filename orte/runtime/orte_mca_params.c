@@ -515,24 +515,19 @@ int orte_register_params(void)
     orte_child_time_to_exit.tv_sec = value;
     orte_child_time_to_exit.tv_usec = 0;
     
-    mca_base_param_reg_int_name("orte", "enable_progress_threads",
-                                "Enable the use of progress threads in ORTE",
-                                false, false,
-                                (int)false, &value);
-    orte_progress_threads_enabled = OPAL_INT_TO_BOOL(value);
-    if (ORTE_PROC_IS_MPI) {
-        /* MPI procs never use orte progress threads */
+    if (OPAL_EVENT_HAVE_THREAD_SUPPORT) {
+        mca_base_param_reg_int_name("orte", "enable_progress_threads",
+                                    "Enable the use of ORTE progress threads in applications",
+                                    false, false,
+                                    (int)false, &value);
+
+        if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
+            orte_progress_threads_enabled = true;
+        } else {
+            orte_progress_threads_enabled = OPAL_INT_TO_BOOL(value);
+        }
+    } else {
         orte_progress_threads_enabled = false;
-    }
-    if (!OPAL_EVENT_HAVE_THREAD_SUPPORT && orte_progress_threads_enabled) {
-        opal_output(orte_clean_output,
-                    "------------------------------------------------------------------\n"
-                    "The MCA param orte_progress_threads_enabled was set to true, but\n"
-                    "the required thread support was not configured and built into the\n"
-                    "event library. Please either do not enable progress threads, or\n"
-                    "reconfigure the event library with --enable-event-thread-support\n"
-                    "------------------------------------------------------------------");
-        exit(1);
     }
  
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
