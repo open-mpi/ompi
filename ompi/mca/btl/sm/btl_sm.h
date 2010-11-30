@@ -11,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
+ * Copyright (c) 2010      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -247,14 +249,14 @@ static inline int sm_fifo_write(void *value, mca_btl_sm_fifo_t *fifo)
     volatile void **q = (volatile void **) RELATIVE2VIRTUAL(fifo->queue);
 
     /* if there is no free slot to write, report exhausted resource */
+    opal_atomic_rmb();
     if ( SM_FIFO_FREE != q[fifo->head] )
         return OMPI_ERR_OUT_OF_RESOURCE;
 
     /* otherwise, write to the slot and advance the head index */
-    opal_atomic_rmb();
     q[fifo->head] = value;
+    opal_atomic_wmb();
     fifo->head = (fifo->head + 1) & fifo->mask;
-    opal_atomic_wmb(); 
     return OMPI_SUCCESS;
 }
 
