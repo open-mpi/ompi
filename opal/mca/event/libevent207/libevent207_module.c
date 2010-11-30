@@ -3,6 +3,7 @@
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  */
 #include "opal_config.h"
+#include "opal/constants.h"
 #include "config.h"
 
 #ifdef HAVE_SYS_TYPES_H
@@ -36,9 +37,10 @@
 #include "opal/threads/mutex.h"
 #include "opal/threads/threads.h"
 #include "opal/util/output.h"
-#include "opal/constants.h"
 #include "opal/util/argv.h"
+#include "opal/util/fd.h"
 #include "opal/mca/base/mca_base_param.h"
+
 #include "libevent207.h"
 #include "opal/mca/event/base/base.h"
 
@@ -98,17 +100,60 @@ static const struct eventop *eventops[] = {
 
 static struct event_config *config=NULL;
 
+static void wakeup_event(int fd, short flags, void* arg)
+{
+    char byte;
+
+    /* clear the event */
+    opal_fd_read(fd, 1, &byte);
+    return;
+}
+
 /* Public function -- not part of the module */
+/* This includes (hopefully) a temporary change
+ * to deal with cross-base sync. Specifically,
+ * when an event in one base needs to release
+ * a condition_wait in another base, we need
+ * to "wakeup" the event base in the second base
+ * so the condition_wait can be checked
+ */
 opal_event_base_t* opal_event_base_create(void)
 {
     struct event_base *base;
+    opal_event_base_t *evbase;
 
     base = event_base_new_with_config(config);
     if (NULL == base) {
         /* there is no backend method that does what we want */
         opal_output(0, "No event method available");
+        return NULL;
     }
-    return base;
+    evbase = (opal_event_base_t*)malloc(sizeof(opal_event_base_t));
+    evbase->base = base;
+    if (pipe(evbase->wakeup_pipe) < 0) {
+        opal_output(0, "Unable to open wakeup pipe");
+        free(evbase);
+        event_base_free(base);
+        return NULL;
+    }
+    event_assign(&evbase->wakeup_event, base,
+                 evbase->wakeup_pipe[0], EV_READ | EV_PERSIST,
+                 wakeup_event, NULL);
+    event_add(&evbase->wakeup_event, 0);
+    return evbase;
+}
+
+void opal_event_base_finalize(opal_event_base_t *evbase)
+{
+    /* delete the wakeup event */
+    event_del(&evbase->wakeup_event);
+    /* close the pipe */
+    close(evbase->wakeup_pipe[0]);
+    close(evbase->wakeup_pipe[1]);
+    /* release the base */
+    event_base_free(evbase->base);
+    /* free the storage */
+    free(evbase);
 }
 
 int opal_event_init(void)
