@@ -814,29 +814,31 @@ static void relay(int fd, short event, void *cbdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&msg->sender)));
     
-    /* if we don't already have it, get the daemon object */
-    if (NULL == daemons) {
-        daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
-    }
-    /* send it to each daemon other than the one that sent it to me */
-    for (v=1; v < daemons->procs->size; v++) {
-        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, v))) {
-            continue;
+    if (ORTE_PROC_IS_HNP) {
+        /* if we don't already have it, get the daemon object */
+        if (NULL == daemons) {
+            daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
         }
-        /* if this message came from a daemon, then we don't want
-         * to send it back to the same one as it will enter an
-         * infinite loop
-         */
-        if (ORTE_PROC_MY_NAME->jobid == msg->sender.jobid &&
-            proc->name.vpid == msg->sender.vpid) {
-            continue;
-        }
-        if (NULL == proc->rml_uri) {
-            /* race condition */
-            continue;
-        }
-        if (0 > (rc = orte_rml.send_buffer(&proc->name, msg->buffer, ORTE_RML_TAG_MULTICAST, 0))) {
-            ORTE_ERROR_LOG(rc);
+        /* send it to each daemon other than the one that sent it to me */
+        for (v=1; v < daemons->procs->size; v++) {
+            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, v))) {
+                continue;
+            }
+            /* if this message came from a daemon, then we don't want
+             * to send it back to the same one as it will enter an
+             * infinite loop
+             */
+            if (ORTE_PROC_MY_NAME->jobid == msg->sender.jobid &&
+                proc->name.vpid == msg->sender.vpid) {
+                continue;
+            }
+            if (NULL == proc->rml_uri) {
+                /* race condition */
+                continue;
+            }
+            if (0 > (rc = orte_rml.send_buffer(&proc->name, msg->buffer, ORTE_RML_TAG_MULTICAST_RELAY, 0))) {
+                ORTE_ERROR_LOG(rc);
+            }
         }
     }
     
