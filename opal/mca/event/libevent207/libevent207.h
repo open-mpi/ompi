@@ -58,7 +58,19 @@
 #include "opal/mca/event/event.h"
 
 typedef struct event opal_event_t;
-typedef struct event_base opal_event_base_t;
+/*** Overload the event_base_t struct ***/
+/* This may (hopefully) be a temporary change
+ * to deal with cross-base sync. Specifically,
+ * when an event in one base needs to release
+ * a condition_wait in another base, we need
+ * to "wakeup" the event base in the second base
+ * so the condition_wait can be checked
+ */
+typedef struct {
+    struct event_base *base;
+    opal_event_t wakeup_event;
+    int wakeup_pipe[2];
+} opal_event_base_t;
 
 BEGIN_C_DECLS
 
@@ -75,8 +87,9 @@ OPAL_DECLSPEC extern opal_event_base_t *opal_event_base;
 #define OPAL_EVLOOP_ONCE     EVLOOP_ONCE        /**< Block at most once. */
 #define OPAL_EVLOOP_NONBLOCK EVLOOP_NONBLOCK    /**< Do not block. */
 
-/* Global function to create an event base */
+/* Global function to create and release an event base */
 OPAL_DECLSPEC opal_event_base_t* opal_event_base_create(void);
+OPAL_DECLSPEC void opal_event_base_finalize(opal_event_base_t *base);
 
 OPAL_DECLSPEC int opal_event_init(void);
 
@@ -92,11 +105,9 @@ OPAL_DECLSPEC int opal_event_init(void);
 #endif
 
 /* Basic event APIs */
-#define opal_event_base_finalize(x) event_base_free((x))
-
 #define opal_event_set_debug_output(x) event_set_debug_output((x))
 
-#define opal_event_set(b, ev, fd, fg, cb, arg) event_assign((ev), (b), (fd), (fg), (event_callback_fn) (cb), (arg))
+#define opal_event_set(b, ev, fd, fg, cb, arg) event_assign((ev), (b)->base, (fd), (fg), (event_callback_fn) (cb), (arg))
 
 #define opal_event_add(ev, tv) event_add((ev), (tv))
 
@@ -105,11 +116,11 @@ OPAL_DECLSPEC int opal_event_init(void);
 #define opal_event_active(x, y, z) event_active((x), (y), (z))
 
 /* Timer APIs */
-#define opal_event_evtimer_new(b, cb, arg) event_new((b), -1, 0, (event_callback_fn) (cb), (arg)) 
+#define opal_event_evtimer_new(b, cb, arg) event_new((b)->base, -1, 0, (event_callback_fn) (cb), (arg)) 
 
 #define opal_event_evtimer_add(ev, tv) event_add((ev), (tv))
 
-#define opal_event_evtimer_set(b, ev, cb, arg) event_assign((ev), (b), -1, 0, (event_callback_fn) (cb), (arg))
+#define opal_event_evtimer_set(b, ev, cb, arg) event_assign((ev), (b)->base, -1, 0, (event_callback_fn) (cb), (arg))
 
 #define opal_event_evtimer_del(ev) event_del((ev))
 
@@ -120,7 +131,7 @@ OPAL_DECLSPEC int opal_event_init(void);
 /* Signal APIs */
 #define opal_event_signal_add(ev, tv) event_add((ev), (tv))
 
-#define opal_event_signal_set(b, ev, fd, cb, arg) event_assign((ev), (b), (fd), EV_SIGNAL|EV_PERSIST, (event_callback_fn) (cb), (arg))
+#define opal_event_signal_set(b, ev, fd, cb, arg) event_assign((ev), (b)->base, (fd), EV_SIGNAL|EV_PERSIST, (event_callback_fn) (cb), (arg))
 
 #define opal_event_signal_del(ev) event_del((ev))
 
@@ -130,9 +141,9 @@ OPAL_DECLSPEC int opal_event_init(void);
 
 #define opal_event_get_signal(ev) event_get_signal((ev))
 
-#define opal_event_loop(b, fg) event_base_loop((b), (fg))
+#define opal_event_loop(b, fg) event_base_loop((b->base), (fg))
 
-#define opal_event_dispatch(b) event_base_loop((b), 0)
+#define opal_event_dispatch(b) event_base_loop((b)->base, 0)
 
 END_C_DECLS
 
