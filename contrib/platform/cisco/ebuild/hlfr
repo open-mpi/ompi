@@ -1,4 +1,3 @@
-enable_event_thread_support=yes
 enable_dlopen=yes
 enable_multicast=yes
 enable_sensors=yes
