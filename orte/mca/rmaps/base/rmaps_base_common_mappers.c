@@ -192,7 +192,8 @@ int orte_rmaps_base_map_byslot(orte_job_t *jdata, orte_app_context_t *app,
             if (0 == node->slots_alloc) {
                 num_procs_to_assign = 1;
             } else {
-                num_possible_procs = node->slots_alloc / jdata->map->cpus_per_rank;
+                /* 'num_possible_procs' defines the number of ranks */
+                num_possible_procs = node->slots_alloc;
                 if (0 == num_possible_procs) {
                     num_procs_to_assign = 1;
                 } else {
@@ -200,7 +201,11 @@ int orte_rmaps_base_map_byslot(orte_job_t *jdata, orte_app_context_t *app,
                 }
             }
         } else {
-            num_possible_procs = (node->slots_alloc - node->slots_inuse) / jdata->map->cpus_per_rank;
+            /* 'num_possible_procs' define number of ranks on the node. Each
+             * rank occupies one slot. Each slot may represent more than one
+             * cpu, depending on the cpus-per-task setting
+             */
+            num_possible_procs = (node->slots_alloc - node->slots_inuse);
             if (0 == num_possible_procs) {
                 num_procs_to_assign = 1;
             } else {

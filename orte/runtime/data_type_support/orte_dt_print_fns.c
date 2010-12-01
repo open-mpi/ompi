@@ -384,8 +384,9 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
     free(tmp);
     tmp = tmp2;
     
-    asprintf(&tmp2, "%s\n%s\tNum slots: %ld\tSlots in use: %ld", tmp, pfx2,
-             (long)src->slots, (long)src->slots_inuse);
+    asprintf(&tmp2, "%s\n%s\tNum slots: %ld\tSlots in use: %ld\tOversubscribed: %s", tmp, pfx2,
+             (long)src->slots, (long)src->slots_inuse,
+             (src->oversubscribed) ? "TRUE" : "FALSE");
     free(tmp);
     tmp = tmp2;
     

@@ -46,6 +46,7 @@ struct orte_job_map_t {
     int npersocket;
     int16_t cpus_per_rank;
     int16_t stride;
+    /* are we allowed to oversubscribe the nodes in this job */
     bool oversubscribe;
     bool display_map;
     bool cpu_lists;

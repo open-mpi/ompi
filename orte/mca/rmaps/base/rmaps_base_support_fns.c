@@ -364,6 +364,9 @@ PROCESS:
     /* retain the proc struct so that we correctly track its release */
     OBJ_RETAIN(proc);
     ++node->num_procs;
+
+    /* update the oversubscribed state of the node */
+    node->oversubscribed = oversubscribed;
     
     return ORTE_SUCCESS;
 }
@@ -423,7 +426,7 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
                          ORTE_JOBID_PRINT(jdata->jobid), current_node->name));
     
     /* Be sure to demarcate the slots for this proc as claimed from the node */
-    current_node->slots_inuse += cpus_per_rank;
+    current_node->slots_inuse += 1;
     
     /* see if this node is oversubscribed now */
     if (current_node->slots_inuse > current_node->slots) {
