@@ -138,7 +138,9 @@ const char *orte_err2str(int errnum)
     case ORTE_ERR_UNRECOVERABLE:
         retval = "Unrecoverable error";
         break;
-
+    case ORTE_ERR_COMM_DISABLED:
+        retval = "Communications have been disabled";
+        break;
             
     default:
         if (orte_report_silent_errors) {

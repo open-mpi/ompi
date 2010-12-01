@@ -40,10 +40,14 @@ int orte_rmcast_base_start_threads(bool rcv_thread, bool processing_thread)
         return ORTE_SUCCESS;
     }
 
-    if (rcv_thread) {
+    if (rcv_thread && !orte_rmcast_base.recv_ctl.running) {
         OPAL_OUTPUT_VERBOSE((5, orte_rmcast_base.rmcast_output,
                              "%s rmcast:base: starting recv thread",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        /* set the update to target the rmcast event base since the
+         * recv thread will be progressing that event base
+         */
+        orte_rmcast_base.recv_ctl.evbase = orte_rmcast_base.event_base;
         /* start the thread */
         orte_rmcast_base.recv_thread.t_run = rcv_progress_thread;
         if (ORTE_SUCCESS != (rc = opal_thread_start(&orte_rmcast_base.recv_thread))) {
@@ -56,7 +60,7 @@ int orte_rmcast_base_start_threads(bool rcv_thread, bool processing_thread)
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     }
 
-    if (processing_thread) {
+    if (processing_thread && !orte_rmcast_base.recv_process_ctl.running) {
         OPAL_OUTPUT_VERBOSE((5, orte_rmcast_base.rmcast_output,
                              "%s rmcast:base: starting recv processing thread",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
