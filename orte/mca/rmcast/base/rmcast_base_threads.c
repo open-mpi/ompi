@@ -205,6 +205,13 @@ int orte_rmcast_base_process_msg(opal_buffer_t *msg)
         recv = ptr;
         break;
     }
+
+    if (NULL == recv) {
+        /* recv not found - dump msg */
+        ORTE_RELEASE_THREAD(&orte_rmcast_base.main_ctl);
+        goto cleanup;
+    }
+
     if (!(ORTE_RMCAST_PERSISTENT & recv->flags)) {
         OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                              "%s rmcast:base:process_recv removing non-persistent recv",
@@ -212,11 +219,6 @@ int orte_rmcast_base_process_msg(opal_buffer_t *msg)
         opal_list_remove_item(&orte_rmcast_base.recvs, &recv->item);
     }
     ORTE_RELEASE_THREAD(&orte_rmcast_base.main_ctl);
-
-    if (NULL == recv) {
-        /* recv not found - dump msg */
-        goto cleanup;
-    }
 
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                          "%s rmcast:base:process_recv delivering message to channel %d tag %d",
