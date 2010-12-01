@@ -515,19 +515,15 @@ int orte_register_params(void)
     orte_child_time_to_exit.tv_sec = value;
     orte_child_time_to_exit.tv_usec = 0;
     
-    if (OPAL_EVENT_HAVE_THREAD_SUPPORT) {
-        mca_base_param_reg_int_name("orte", "enable_progress_threads",
-                                    "Enable the use of ORTE progress threads in applications",
-                                    false, false,
-                                    (int)false, &value);
+    mca_base_param_reg_int_name("orte", "enable_progress_threads",
+                                "Enable the use of ORTE progress threads in applications",
+                                false, false,
+                                (int)false, &value);
 
-        if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
-            orte_progress_threads_enabled = true;
-        } else {
-            orte_progress_threads_enabled = OPAL_INT_TO_BOOL(value);
-        }
+    if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
+        orte_progress_threads_enabled = true;
     } else {
-        orte_progress_threads_enabled = false;
+        orte_progress_threads_enabled = OPAL_INT_TO_BOOL(value);
     }
  
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
