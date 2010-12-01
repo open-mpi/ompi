@@ -258,6 +258,8 @@ OMPI_DEF_OPT(OMPI_WANT_WINVERBS "Whether we want to enable Winverbs support." ON
 
 OMPI_DEF_OPT(OPAL_ENABLE_CRDEBUG "Whether we want checkpoint/restart enabled debugging functionality or not." OFF)
 
+OMPI_DEF_OPT(OPAL_EVENT_HAVE_THREAD_SUPPORT "Whether we want to enable event library internal thread support." OFF)
+
 IF (NOT MSVC)
 
 ###################################################################
