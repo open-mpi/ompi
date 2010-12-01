@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2010      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -71,8 +73,9 @@ orte_debugger_base_module_t orte_debugger_mpirx_module = {
 /* local globals and functions */
 static void attach_debugger(int fd, short event, void *arg);
 static void build_debugger_args(orte_app_context_t *debugger);
+static void open_fifo(void);
 static opal_event_t attach;
-static int attach_fd;
+static int attach_fd = -1;
 static bool fifo_active=false;
 
 static int init(void)
@@ -140,21 +143,8 @@ void init_before_spawn(orte_job_t *jdata)
                 return;
             }
             strncpy(MPIR_attach_fifo, attach_fifo, MPIR_MAX_PATH_LENGTH);
-            attach_fd = open(attach_fifo, O_RDONLY | O_NONBLOCK, 0);
-            if (attach_fd < 0) {
-                opal_output(0, "%s unable to open debugger attach fifo",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-                free(attach_fifo);
-                return;
-            }
-            opal_output_verbose(2, orte_debugger_base.output,
-                                "%s Monitoring debugger attach fifo %s",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                attach_fifo);
-            free(attach_fifo);
-            fifo_active = true;
-            opal_event_set(opal_event_base, &attach, attach_fd, OPAL_EV_READ, attach_debugger, NULL);
-            opal_event_add(&attach, 0);
+	    free (attach_fifo);
+	    open_fifo ();
         }
         return;
     }
@@ -221,16 +211,52 @@ void init_before_spawn(orte_job_t *jdata)
     return;
 }
 
+static void open_fifo (void)
+{
+    if (attach_fd > 0) {
+	close(attach_fd);
+    }
+
+    attach_fd = open(MPIR_attach_fifo, O_RDONLY | O_NONBLOCK, 0);
+    if (attach_fd < 0) {
+	opal_output(0, "%s unable to open debugger attach fifo",
+		    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+	return;
+    }
+    opal_output_verbose(2, orte_debugger_base.output,
+			"%s Monitoring debugger attach fifo %s",
+			ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+			MPIR_attach_fifo);
+    opal_event_set(opal_event_base, &attach, attach_fd, OPAL_EV_READ, attach_debugger, NULL);
+
+    fifo_active = true;
+    opal_event_add(&attach, 0);
+}
+
 static void attach_debugger(int fd, short event, void *arg)
 {
     orte_app_context_t *app;
-    int rc;
+    unsigned char rc;
+    int ret;
     int32_t ljob;
     orte_job_t *jdata;
-#if 0
     struct timeval now;
-    opal_event_t *check;
-#endif
+
+    /* read the file descriptor to clear that event, if necessary */
+    if (fifo_active) {
+	opal_event_del(&attach);
+
+        ret = read(attach_fd, &rc, sizeof(rc));
+	if (!ret) {
+	    /* reopen device to clear hangup */
+	    open_fifo();
+	    return;
+	}
+        if (1 != rc) {
+            /* ignore the cmd */
+            goto RELEASE;
+        }
+    }
 
     if (!MPIR_being_debugged && !orte_debugger_base.test_attach) {
         /* false alarm */
@@ -240,29 +266,6 @@ static void attach_debugger(int fd, short event, void *arg)
     opal_output_verbose(1, orte_debugger_base.output,
                         "%s Attaching debugger %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         (NULL == orte_debugger_base.test_daemon) ? MPIR_executable_path : orte_debugger_base.test_daemon);
-
-#if 0
-    /* read the file descriptor to clear that event, if necessary */
-    if (orte_debugger_mpirx_check_rate <= 0) {
-        rc = 0;
-        read(fd, &rc, sizeof(rc));
-        if (1 != rc) {
-            /* ignore the cmd */
-            goto RELEASE;
-        }
-    }
-#endif
-    if (fifo_active) {
-        opal_event_del(&attach);
-        fifo_active = false;
-#if 0
-        read(attach_fd, &rc, sizeof(rc));
-        if (1 != rc) {
-            /* ignore the cmd */
-            goto RELEASE;
-        }
-#endif
-    }
 
     /* a debugger has attached! All the MPIR_Proctable
      * data is already available, so we only need to
@@ -327,23 +330,17 @@ static void attach_debugger(int fd, short event, void *arg)
     }
         
  RELEASE:
-#if 0
     /* reset the read or timer event */
-    if (0 < orte_debugger_mpirx_check_rate) {
-        check = (opal_event_t*)arg;
-        now.tv_sec = orte_debugger_mpirx_check_rate;
-        now.tv_usec = 0;
-        opal_event_evtimer_add(check, &now);
-    } else {
+    if (0 == orte_debugger_mpirx_check_rate) {
         fifo_active = true;
         opal_event_add(&attach, 0);
+    } else {
+	ORTE_TIMER_EVENT(orte_debugger_mpirx_check_rate, 0, attach_debugger);
     }
-#endif
 
     /* notify the debugger that all is ready */
     MPIR_Breakpoint();
 }
-
 
 static void build_debugger_args(orte_app_context_t *debugger)
 {
