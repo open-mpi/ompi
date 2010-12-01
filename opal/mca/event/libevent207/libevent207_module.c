@@ -100,12 +100,20 @@ static const struct eventop *eventops[] = {
 
 static struct event_config *config=NULL;
 
-static void wakeup_event(int fd, short flags, void* arg)
+static void update_event(int fd, short flags, void* arg)
 {
-    char byte;
+    opal_event_update_t up;
 
-    /* clear the event */
-    opal_fd_read(fd, 1, &byte);
+    /* read the event */
+    opal_fd_read(fd, sizeof(opal_event_update_t), &up);
+    if (NULL == up.ev) {
+        return;
+    }
+    if (OPAL_EVENT_ADD == up.op) {
+        event_add(up.ev, 0);
+    } else if (OPAL_EVENT_DEL == up.op) {
+        event_del(up.ev);
+    }
     return;
 }
 
@@ -130,26 +138,26 @@ opal_event_base_t* opal_event_base_create(void)
     }
     evbase = (opal_event_base_t*)malloc(sizeof(opal_event_base_t));
     evbase->base = base;
-    if (pipe(evbase->wakeup_pipe) < 0) {
-        opal_output(0, "Unable to open wakeup pipe");
+    if (pipe(evbase->update_pipe) < 0) {
+        opal_output(0, "Unable to open update pipe");
         free(evbase);
         event_base_free(base);
         return NULL;
     }
-    event_assign(&evbase->wakeup_event, base,
-                 evbase->wakeup_pipe[0], EV_READ | EV_PERSIST,
-                 wakeup_event, NULL);
-    event_add(&evbase->wakeup_event, 0);
+    event_assign(&evbase->update_event, base,
+                 evbase->update_pipe[0], EV_READ | EV_PERSIST,
+                 update_event, NULL);
+    event_add(&evbase->update_event, 0);
     return evbase;
 }
 
 void opal_event_base_finalize(opal_event_base_t *evbase)
 {
     /* delete the wakeup event */
-    event_del(&evbase->wakeup_event);
+    event_del(&evbase->update_event);
     /* close the pipe */
-    close(evbase->wakeup_pipe[0]);
-    close(evbase->wakeup_pipe[1]);
+    close(evbase->update_pipe[0]);
+    close(evbase->update_pipe[1]);
     /* release the base */
     event_base_free(evbase->base);
     /* free the storage */

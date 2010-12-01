@@ -268,7 +268,8 @@ static void internal_snd_cb(int status,
                             orte_process_name_t *sender,
                             struct iovec *msg, int count, void *cbdata)
 {
-    ((rmcast_base_send_t *)cbdata)->send_complete = true;
+    rmcast_base_send_t *snd = (rmcast_base_send_t*)cbdata;
+    ORTE_WAKEUP_THREAD(&snd->ctl);
 }
 
 static void internal_snd_buf_cb(int status,
@@ -278,7 +279,8 @@ static void internal_snd_buf_cb(int status,
                                 orte_process_name_t *sender,
                                 opal_buffer_t *buf, void *cbdata)
 {
-    ((rmcast_base_send_t *)cbdata)->send_complete = true;
+    rmcast_base_send_t *snd = (rmcast_base_send_t*)cbdata;
+    ORTE_WAKEUP_THREAD(&snd->ctl);
 }
 
 static int udp_send(orte_rmcast_channel_t channel,
@@ -302,8 +304,13 @@ static int udp_send(orte_rmcast_channel_t channel,
     }
     
     /* now wait for the send to complete */
-    ORTE_PROGRESSED_WAIT(snd->send_complete, 0, 1);
+    ORTE_ACQUIRE_THREAD(&snd->ctl);
     
+    /* carefully release the send */
+    snd->iovec_array = NULL;
+    snd->iovec_count = 0;
+    OBJ_RELEASE(snd);
+
     return ORTE_SUCCESS;
 }
 
@@ -353,8 +360,12 @@ static int udp_send_buffer(orte_rmcast_channel_t channel,
     }
     
     /* now wait for the send to complete */
-    ORTE_PROGRESSED_WAIT(snd->send_complete, 0, 1);
+    ORTE_ACQUIRE_THREAD(&snd->ctl);
     
+    /* carefully release the send */
+    snd->buf = NULL;
+    OBJ_RELEASE(snd);
+
     return ORTE_SUCCESS;
 }
 
@@ -408,7 +419,7 @@ static int udp_recv(orte_process_name_t *name,
         return ret;
     }
     
-    ORTE_PROGRESSED_WAIT(recvptr->recvd, 0, 1);
+    ORTE_ACQUIRE_THREAD(&recvptr->ctl);
     
     /* xfer the data */
     if (NULL != name) {
@@ -420,10 +431,9 @@ static int udp_recv(orte_process_name_t *name,
     *msg = recvptr->iovec_array;
     *count = recvptr->iovec_count;
     
-    /* remove the recv */
-    OPAL_THREAD_LOCK(&orte_rmcast_base.lock);
-    opal_list_remove_item(&orte_rmcast_base.recvs, &recvptr->item);
-    OPAL_THREAD_UNLOCK(&orte_rmcast_base.lock);
+    /* carefully release the recv */
+    recvptr->iovec_array = NULL;
+    recvptr->iovec_count = 0;
     OBJ_RELEASE(recvptr);
     
     return ORTE_SUCCESS;
@@ -489,7 +499,7 @@ static int udp_recv_buffer(orte_process_name_t *name,
         return ret;
     }
     
-    ORTE_PROGRESSED_WAIT(recvptr->recvd, 0, 1);
+    ORTE_ACQUIRE_THREAD(&recvptr->ctl);
     
     /* xfer the data */
     if (NULL != name) {
@@ -502,11 +512,6 @@ static int udp_recv_buffer(orte_process_name_t *name,
         ORTE_ERROR_LOG(ret);
     }
     /* release the data */
-    OBJ_RELEASE(recvptr->buf);
-    
-    OPAL_THREAD_LOCK(&orte_rmcast_base.lock);
-    opal_list_remove_item(&orte_rmcast_base.recvs, &recvptr->item);
-    OPAL_THREAD_UNLOCK(&orte_rmcast_base.lock);
     OBJ_RELEASE(recvptr);
     
     return ret;
@@ -577,6 +582,7 @@ static int open_channel(orte_rmcast_channel_t channel, char *name,
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), name, channel));
                         
     chan = NULL;
+    ORTE_ACQUIRE_THREAD(&orte_rmcast_base.main_ctl);
     for (item = opal_list_get_first(&orte_rmcast_base.channels);
          item != opal_list_get_end(&orte_rmcast_base.channels);
          item = opal_list_get_next(item)) {
@@ -611,9 +617,9 @@ static int open_channel(orte_rmcast_channel_t channel, char *name,
         
         if (ORTE_SUCCESS != (rc = setup_channel(chan, direction))) {
             ORTE_ERROR_LOG(rc);
-            return rc;
         }
-        return ORTE_SUCCESS;
+        ORTE_RELEASE_THREAD(&orte_rmcast_base.main_ctl);
+        return rc;
     }
     
     /* we didn't find an existing match, so create a new channel */
@@ -642,9 +648,8 @@ static int open_channel(orte_rmcast_channel_t channel, char *name,
     } else {
         chan->port = port;
     }
-    OPAL_THREAD_LOCK(&orte_rmcast_base.lock);
     opal_list_append(&orte_rmcast_base.channels, &chan->item);
-    OPAL_THREAD_UNLOCK(&orte_rmcast_base.lock);
+    ORTE_RELEASE_THREAD(&orte_rmcast_base.main_ctl);
     
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                          "%s rmcast:udp opening new channel %s:%d network %03d.%03d.%03d.%03d port %d for%s%s",
@@ -743,7 +748,7 @@ static int setup_channel(rmcast_base_channel_t *chan, uint8_t direction)
         
         opal_event_set(orte_rmcast_base.event_base, &chan->recv_ev,
                        chan->recv, OPAL_EV_READ|OPAL_EV_PERSIST, recv_handler, chan);
-        opal_event_add(&chan->recv_ev, 0);
+        OPAL_UPDATE_EVBASE(orte_rmcast_base.event_base, &chan->recv_ev, OPAL_EVENT_ADD);
     }
 
     return ORTE_SUCCESS;

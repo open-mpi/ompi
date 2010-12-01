@@ -31,9 +31,6 @@ int orte_rmcast_base_close(void)
         orte_rmcast.finalize();
     }
 
-    /* cleanup thread stuff */
-    OBJ_DESTRUCT(&orte_rmcast_base.lock);
-    OBJ_DESTRUCT(&orte_rmcast_base.cond);
     while (NULL != (item = opal_list_remove_first(&orte_rmcast_base.recvs))) {
         OBJ_RELEASE(item);
     }
@@ -42,15 +39,15 @@ int orte_rmcast_base_close(void)
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&orte_rmcast_base.channels);
-    while (NULL != (item = opal_list_remove_first(&orte_rmcast_base.msg_list))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&orte_rmcast_base.msg_list);
+
+    /* cleanup thread stuff */
+    OBJ_DESTRUCT(&orte_rmcast_base.main_ctl);
     OBJ_DESTRUCT(&orte_rmcast_base.recv_thread);
     OBJ_DESTRUCT(&orte_rmcast_base.recv_ctl);
     OBJ_DESTRUCT(&orte_rmcast_base.recv_process);
     OBJ_DESTRUCT(&orte_rmcast_base.recv_process_ctl);
-    if (orte_rmcast_base.enable_progress_thread) {
+
+    if (orte_progress_threads_enabled) {
         opal_event_base_finalize(orte_rmcast_base.event_base);
     }
 

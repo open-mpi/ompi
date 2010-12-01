@@ -107,12 +107,9 @@ int orte_rmcast_base_open(void)
     orte_rmcast_base.opened = true;
     
     /* ensure all global values are initialized */
-    OBJ_CONSTRUCT(&orte_rmcast_base.lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&orte_rmcast_base.cond, opal_condition_t);
-    orte_rmcast_base.active = false;
+    OBJ_CONSTRUCT(&orte_rmcast_base.main_ctl, orte_thread_ctl_t);
     OBJ_CONSTRUCT(&orte_rmcast_base.recvs, opal_list_t);
     OBJ_CONSTRUCT(&orte_rmcast_base.channels, opal_list_t);
-    OBJ_CONSTRUCT(&orte_rmcast_base.msg_list, opal_list_t);
 
     OBJ_CONSTRUCT(&orte_rmcast_base.recv_thread, opal_thread_t);
     OBJ_CONSTRUCT(&orte_rmcast_base.recv_ctl, orte_thread_ctl_t);
@@ -129,13 +126,8 @@ int orte_rmcast_base_open(void)
     orte_rmcast_base.my_output_channel = NULL;
     orte_rmcast_base.my_input_channel = NULL;
 
-    /* whether or not to use progress thread */
-    mca_base_param_reg_int_name("rmcast", "enable_progress_thread",
-                                "Whether or not to enable progress thread (default: true)",
-                                false, false, (int)true, &value);
-    orte_rmcast_base.enable_progress_thread = OPAL_INT_TO_BOOL(value);
-
-    if (orte_rmcast_base.enable_progress_thread) {
+    /* setup the local event base */
+    if (orte_progress_threads_enabled) {
         orte_rmcast_base.event_base = opal_event_base_create();
     } else {
         orte_rmcast_base.event_base = opal_event_base;
@@ -317,21 +309,6 @@ int orte_rmcast_base_open(void)
 }
 
 /****    CLASS INSTANCES    ****/
-static void mcast_event_constructor(orte_mcast_msg_event_t *ev)
-{
-    ev->buf = OBJ_NEW(opal_buffer_t);
-}
-static void mcast_event_destructor(orte_mcast_msg_event_t *ev)
-{
-    if (NULL != ev->buf) { 
-        OBJ_RELEASE(ev->buf); 
-    } 
-}
-OBJ_CLASS_INSTANCE(orte_mcast_msg_event_t, 
-                   opal_list_item_t, 
-                   mcast_event_constructor, 
-                   mcast_event_destructor); 
-
 static void send_construct(rmcast_base_send_t *ptr)
 {
     ptr->retransmit = false;
@@ -342,18 +319,23 @@ static void send_construct(rmcast_base_send_t *ptr)
     ptr->cbfunc_iovec = NULL;
     ptr->cbfunc_buffer = NULL;
     ptr->cbdata = NULL;
+    OBJ_CONSTRUCT(&ptr->ctl, orte_thread_ctl_t);
+}
+static void send_destruct(rmcast_base_send_t *ptr)
+{
+    OBJ_DESTRUCT(&ptr->ctl);
 }
 OBJ_CLASS_INSTANCE(rmcast_base_send_t,
                    opal_list_item_t,
                    send_construct,
-                   NULL);
+                   send_destruct);
 
 static void recv_construct(rmcast_base_recv_t *ptr)
 {
     ptr->name.jobid = ORTE_JOBID_INVALID;
     ptr->name.vpid = ORTE_VPID_INVALID;
     ptr->channel = ORTE_RMCAST_INVALID_CHANNEL;
-    ptr->recvd = false;
+    OBJ_CONSTRUCT(&ptr->ctl, orte_thread_ctl_t);
     ptr->seq_num = ORTE_RMCAST_SEQ_INVALID;
     ptr->tag = ORTE_RMCAST_TAG_INVALID;
     ptr->flags = ORTE_RMCAST_NON_PERSISTENT;  /* default */
@@ -364,10 +346,27 @@ static void recv_construct(rmcast_base_recv_t *ptr)
     ptr->cbfunc_iovec = NULL;
     ptr->cbdata = NULL;
 }
+static void recv_destruct(rmcast_base_recv_t *ptr)
+{
+    int i;
+
+    OBJ_DESTRUCT(&ptr->ctl);
+    if (NULL != ptr->iovec_array) {
+        for (i=0; i < ptr->iovec_count; i++) {
+            if (NULL != ptr->iovec_array[i].iov_base) {
+                free(ptr->iovec_array[i].iov_base);
+            }
+        }
+        free(ptr->iovec_array);
+    }
+    if (NULL != ptr->buf) {
+        OBJ_RELEASE(ptr->buf);
+    }
+}
 OBJ_CLASS_INSTANCE(rmcast_base_recv_t,
                    opal_list_item_t,
                    recv_construct,
-                   NULL);
+                   recv_destruct);
 
 static void channel_construct(rmcast_base_channel_t *ptr)
 {
