@@ -829,7 +829,6 @@ static void relay(int fd, short event, void *cbdata)
                 /* race condition */
                 continue;
             }
-            opal_output(0, "SENDING RELAY TO %s", ORTE_NAME_PRINT(&proc->name));
             if (0 > (rc = orte_rml.send_buffer(&proc->name, msg->buffer, ORTE_RML_TAG_MULTICAST_RELAY, 0))) {
                 ORTE_ERROR_LOG(rc);
             }
