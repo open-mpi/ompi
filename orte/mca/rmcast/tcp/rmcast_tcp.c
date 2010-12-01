@@ -44,6 +44,7 @@
 /* LOCAL DATA */
 static bool init_completed = false;
 static orte_job_t *daemons=NULL;
+static bool comm_enabled = false;
 
 /* LOCAL FUNCTIONS */
 static void recv_handler(int status, orte_process_name_t* sender,
@@ -109,6 +110,10 @@ static int tcp_recv_nb(orte_rmcast_channel_t channel,
 static int open_channel(orte_rmcast_channel_t channel, char *name,
                         char *network, int port, char *interface, uint8_t direction);
 
+static void enable_comm(void);
+
+static void disable_comm(void);
+
 /* Define the module */
 
 orte_rmcast_module_t orte_rmcast_tcp_module = {
@@ -125,7 +130,9 @@ orte_rmcast_module_t orte_rmcast_tcp_module = {
     orte_rmcast_base_cancel_recv,
     open_channel,
     orte_rmcast_base_close_channel,
-    orte_rmcast_base_query
+    orte_rmcast_base_query,
+    enable_comm,
+    disable_comm
 };
 
 /* during init, we setup two channels for both xmit and recv:
@@ -267,6 +274,7 @@ static int init(void)
         return rc;
     }
     
+    comm_enabled = true;
     return ORTE_SUCCESS;
 }
 
@@ -276,6 +284,9 @@ static void finalize(void)
                          "%s rmcast:tcp: finalize called",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
+    /* stop the chatter */
+    comm_enabled = false;
+
     orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_MULTICAST);
     if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
         orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_MULTICAST_RELAY);
@@ -284,7 +295,20 @@ static void finalize(void)
     /* stop the processing thread */
     orte_rmcast_base_stop_threads();
 
+    init_completed = false;
     return;
+}
+
+static void enable_comm(void)
+{
+    orte_rmcast_base_start_threads(false, true);
+    comm_enabled = true;
+}
+
+static void disable_comm(void)
+{
+    comm_enabled = false;
+    orte_rmcast_base_stop_threads();
 }
 
 /* internal blocking send support */
@@ -321,6 +345,10 @@ static int send_data(rmcast_base_send_t *snd,
     int rc, v;
     opal_buffer_t *buf;
     rmcast_base_channel_t *ch;
+
+    if (!comm_enabled) {
+        return ORTE_ERR_COMM_DISABLED;
+    }
 
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                          "%s rmcast:tcp: send of %d %s"
@@ -452,6 +480,10 @@ static int tcp_send(orte_rmcast_channel_t channel,
     rmcast_base_send_t snd;
     int ret;
     
+    if (!comm_enabled) {
+        return ORTE_ERR_COMM_DISABLED;
+    }
+
     /* queue it to be sent - preserves order! */
     OBJ_CONSTRUCT(&snd, rmcast_base_send_t);
     snd.iovec_array = msg;
@@ -482,6 +514,10 @@ static int tcp_send_nb(orte_rmcast_channel_t channel,
     int ret;
     rmcast_base_send_t snd;
     
+    if (!comm_enabled) {
+        return ORTE_ERR_COMM_DISABLED;
+    }
+
     /* queue it to be sent - preserves order! */
     OBJ_CONSTRUCT(&snd, rmcast_base_send_t);
     snd.iovec_array = msg;
@@ -507,6 +543,10 @@ static int tcp_send_buffer(orte_rmcast_channel_t channel,
     int ret;
     rmcast_base_send_t snd;
     
+    if (!comm_enabled) {
+        return ORTE_ERR_COMM_DISABLED;
+    }
+
     /* queue it to be sent - preserves order! */
     OBJ_CONSTRUCT(&snd, rmcast_base_send_t);
     snd.buf = buf;
@@ -536,6 +576,10 @@ static int tcp_send_buffer_nb(orte_rmcast_channel_t channel,
     int ret;
     rmcast_base_send_t snd;
     
+    if (!comm_enabled) {
+        return ORTE_ERR_COMM_DISABLED;
+    }
+
     /* queue it to be sent - preserves order! */
     OBJ_CONSTRUCT(&snd, rmcast_base_send_t);
     snd.buf = buf;
@@ -562,6 +606,10 @@ static int tcp_recv(orte_process_name_t *name,
     rmcast_base_recv_t *recvptr;
     int ret;
     orte_rmcast_channel_t chan;
+
+    if (!comm_enabled) {
+        return ORTE_ERR_COMM_DISABLED;
+    }
 
     if (ORTE_RMCAST_GROUP_INPUT_CHANNEL == channel) {
         chan = orte_rmcast_base.my_input_channel->channel;
@@ -639,6 +687,10 @@ static int tcp_recv_buffer(orte_process_name_t *name,
     rmcast_base_recv_t *recvptr;
     int ret;
     orte_rmcast_channel_t chan;
+
+    if (!comm_enabled) {
+        return ORTE_ERR_COMM_DISABLED;
+    }
 
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                          "%s rmcast:tcp: recv_buffer called on multicast channel %d",
@@ -781,6 +833,10 @@ static void recv_handler(int status, orte_process_name_t* sender,
     uint8_t *data;
     int32_t siz;
     
+    if (!comm_enabled) {
+        return;
+    }
+
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                          "%s rmcast:tcp recvd multicast msg",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));

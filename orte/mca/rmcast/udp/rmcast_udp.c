@@ -41,6 +41,7 @@
 /* LOCAL DATA */
 static bool init_completed = false;
 static opal_pointer_array_t msg_log;
+static bool comm_enabled = false;
 
 /* LOCAL FUNCTIONS */
 static void recv_handler(int sd, short flags, void* user);
@@ -103,6 +104,10 @@ static int udp_recv_nb(orte_rmcast_channel_t channel,
 static int open_channel(orte_rmcast_channel_t channel, char *name,
                         char *network, int port, char *interface, uint8_t direction);
 
+static void enable_comm(void);
+
+static void disable_comm(void);
+
 /* Define the module */
 
 orte_rmcast_module_t orte_rmcast_udp_module = {
@@ -119,7 +124,9 @@ orte_rmcast_module_t orte_rmcast_udp_module = {
     orte_rmcast_base_cancel_recv,
     open_channel,
     orte_rmcast_base_close_channel,
-    orte_rmcast_base_query
+    orte_rmcast_base_query,
+    enable_comm,
+    disable_comm
 };
 
 /* during init, we setup two channels for both xmit and recv:
@@ -234,7 +241,7 @@ static int init(void)
     }
 
     init_completed = true;
-
+    comm_enabled = true;
     return ORTE_SUCCESS;
 }
 
@@ -245,6 +252,9 @@ static void finalize(void)
     
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output, "%s rmcast:udp: finalize called",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
+    /* stop the chatter */
+    comm_enabled = false;
 
     /* stop the threads */
     orte_rmcast_base_stop_threads();
@@ -258,6 +268,18 @@ static void finalize(void)
     
     init_completed = false;
     return;
+}
+
+static void enable_comm(void)
+{
+    orte_rmcast_base_start_threads(true, true);
+    comm_enabled = true;
+}
+
+static void disable_comm(void)
+{
+    comm_enabled = false;
+    orte_rmcast_base_stop_threads();
 }
 
 /* internal blocking send support */
@@ -290,6 +312,10 @@ static int udp_send(orte_rmcast_channel_t channel,
     rmcast_base_send_t *snd;
     int ret;
     
+    if (!comm_enabled) {
+        return ORTE_ERR_COMM_DISABLED;
+    }
+
     /* queue it to be sent - preserves order! */
     snd = OBJ_NEW(rmcast_base_send_t);
     snd->iovec_array = msg;
@@ -323,6 +349,10 @@ static int udp_send_nb(orte_rmcast_channel_t channel,
     int ret;
     rmcast_base_send_t *snd;
     
+    if (!comm_enabled) {
+        return ORTE_ERR_COMM_DISABLED;
+    }
+
     /* queue it to be sent - preserves order! */
     snd = OBJ_NEW(rmcast_base_send_t);
     snd->iovec_array = msg;
@@ -346,6 +376,10 @@ static int udp_send_buffer(orte_rmcast_channel_t channel,
     int ret;
     rmcast_base_send_t *snd;
     
+    if (!comm_enabled) {
+        return ORTE_ERR_COMM_DISABLED;
+    }
+
     /* queue it to be sent - preserves order! */
     snd = OBJ_NEW(rmcast_base_send_t);
     snd->buf = buf;
@@ -378,6 +412,10 @@ static int udp_send_buffer_nb(orte_rmcast_channel_t channel,
     int ret;
     rmcast_base_send_t *snd;
     
+    if (!comm_enabled) {
+        return ORTE_ERR_COMM_DISABLED;
+    }
+
     /* queue it to be sent - preserves order! */
     snd = OBJ_NEW(rmcast_base_send_t);
     snd->buf = buf;
@@ -403,6 +441,10 @@ static int udp_recv(orte_process_name_t *name,
     rmcast_base_recv_t *recvptr;
     int ret;
     orte_rmcast_channel_t chan;
+
+    if (!comm_enabled) {
+        return ORTE_ERR_COMM_DISABLED;
+    }
 
     if (ORTE_RMCAST_GROUP_INPUT_CHANNEL == channel) {
         chan = orte_rmcast_base.my_input_channel->channel;
@@ -479,6 +521,10 @@ static int udp_recv_buffer(orte_process_name_t *name,
     rmcast_base_recv_t *recvptr;
     int ret;
     orte_rmcast_channel_t chan;
+
+    if (!comm_enabled) {
+        return ORTE_ERR_COMM_DISABLED;
+    }
 
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                          "%s rmcast:udp: recv_buffer called on multicast channel %d",
@@ -680,6 +726,11 @@ static void recv_handler(int sd, short flags, void* cbdata)
     data = (uint8_t*)malloc(orte_rmcast_udp_sndbuf_size * sizeof(uint8_t));
     siz = read(sd, data, orte_rmcast_udp_sndbuf_size);
     
+    if (!comm_enabled) {
+        free(data);
+        return;
+    }
+
     if (siz <= 0) {
         /* this shouldn't happen - report the errno */
         opal_output(0, "%s Error on multicast recv socket event: %s(%d)",
@@ -900,6 +951,10 @@ static int send_data(rmcast_base_send_t *snd, orte_rmcast_channel_t channel)
     int rc;
     opal_buffer_t *buf;
     rmcast_base_channel_t *ch;
+
+    if (!comm_enabled) {
+        return ORTE_ERR_COMM_DISABLED;
+    }
 
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                          "%s transmitting data for channel %d",

@@ -137,6 +137,17 @@ typedef int (*orte_rmcast_base_module_close_channel_fn_t)(orte_rmcast_channel_t 
 typedef int (*orte_rmcast_base_module_query_channel_fn_t)(orte_rmcast_channel_t *output,
                                                           orte_rmcast_channel_t *input);
 
+/* disable comm - includes terminating all threads. This is
+ * required for clean shutdown of codes that use this framework
+ * as otherwise rmcast can segfault if it is executing a cbfunc
+ * for a recvd message and the receiver goes away!
+ */
+typedef void (*orte_rmcast_base_module_disable_comm_fn_t)(void);
+
+/* reverses the effect */
+typedef void (*orte_rmcast_base_module_enable_comm_fn_t)(void);
+
+
 /*
  * rmcast component
  */
@@ -169,6 +180,8 @@ struct orte_rmcast_base_module_t {
     orte_rmcast_base_module_open_channel_fn_t       open_channel;
     orte_rmcast_base_module_close_channel_fn_t      close_channel;
     orte_rmcast_base_module_query_channel_fn_t      query_channel;
+    orte_rmcast_base_module_enable_comm_fn_t        enable_comm;
+    orte_rmcast_base_module_disable_comm_fn_t       disable_comm;
 };
 /** Convienence typedef */
 typedef struct orte_rmcast_base_module_t orte_rmcast_module_t;
