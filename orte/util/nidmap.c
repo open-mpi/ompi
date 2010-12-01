@@ -299,6 +299,7 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
     char *nodename;
     opal_buffer_t buf;
     char *ptr;
+    uint8_t *oversub=NULL;
 
     /* setup a buffer for tmp use */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
@@ -357,8 +358,9 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
      * match their node array index
      */
     
-    /* allocate space for the daemon vpids */
+    /* allocate space for the daemon vpids and oversubscribed flags */
     vpids = (orte_vpid_t*)malloc(num_nodes * sizeof(orte_vpid_t));
+    oversub = (uint8_t*)malloc(num_nodes * sizeof(uint8_t));
     for (i=0; i < orte_node_pool->size; i++) {
         if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
             continue;
@@ -369,12 +371,18 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
             continue;
         }
         vpids[i] = node->daemon->name.vpid;
+        oversub[i] = node->oversubscribed;
     }
     if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, vpids, num_nodes, ORTE_VPID))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     free(vpids);
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, oversub, num_nodes, OPAL_UINT8))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    free(oversub);
     
    /* check if we are to send the profile file data */
     if (orte_send_profile) {
@@ -426,6 +434,7 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo)
     opal_buffer_t buf;
     opal_byte_object_t *boptr;
     int rc;
+    uint8_t *oversub;
 
     OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
                          "%s decode:nidmap decoding nodemap",
@@ -490,6 +499,15 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+
+    /* unpack the oversubscribed flags */
+    oversub = (uint8_t*)malloc(num_nodes * sizeof(uint8_t));
+    n=num_nodes;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, oversub, &n, OPAL_UINT8))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
     /* transfer the data to the nidmap, counting the number of
      * daemons in the system
      */
@@ -497,13 +515,19 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo)
     for (i=0; i < num_nodes; i++) {
         if (NULL != (ndptr = (orte_nid_t*)opal_pointer_array_get_item(&orte_nidmap, i))) {
             ndptr->daemon = vpids[i];
+            if (0 == oversub[i]) {
+                ndptr->oversubscribed = false;
+            } else {
+                ndptr->oversubscribed = true;
+            }
             if (ORTE_VPID_INVALID != vpids[i]) {
                 ++num_daemons;
             }
         }
     }
     free(vpids);
-    
+    free(oversub);
+
     /* if we are a daemon or the HNP, update our num_procs */
     if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
         orte_process_info.num_procs = num_daemons;

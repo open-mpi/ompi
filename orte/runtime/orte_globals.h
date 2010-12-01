@@ -516,6 +516,8 @@ typedef struct {
     char *name;
     /* vpid of this job family's daemon on this node */
     orte_vpid_t daemon;
+    /* whether or not this node is oversubscribed */
+    bool oversubscribed;
     /* list of interface attributes */
     opal_list_t attrs;
     /* list of system info */
