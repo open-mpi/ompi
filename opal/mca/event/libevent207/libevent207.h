@@ -65,13 +65,34 @@ typedef struct event opal_event_t;
  * a condition_wait in another base, we need
  * to "wakeup" the event base in the second base
  * so the condition_wait can be checked
+ *
+ * On a more permanent level, use this to update
+ * the event base when it is being progressed in
+ * a separate thread.
  */
 typedef struct {
     struct event_base *base;
-    opal_event_t wakeup_event;
-    int wakeup_pipe[2];
+    opal_event_t update_event;
+    int update_pipe[2];
 } opal_event_base_t;
 
+typedef struct {
+    opal_event_t *ev;
+    uint8_t op;
+} opal_event_update_t;
+
+#define OPAL_EVENT_NOOP  0x00
+#define OPAL_EVENT_ADD   0x01
+#define OPAL_EVENT_DEL   0x02
+
+#define OPAL_UPDATE_EVBASE(b, evt, ad)                                        \
+    do {                                                                      \
+        opal_event_update_t up;                                               \
+        up.ev = (evt);                                                        \
+        up.op = (ad);                                                         \
+        opal_fd_write((b)->update_pipe[1], sizeof(opal_event_update_t), &up); \
+    } while(0);
+    
 BEGIN_C_DECLS
 
 /* Temporary global - will be replaced by layer-specific event bases */

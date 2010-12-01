@@ -66,6 +66,7 @@ int orte_rmcast_base_queue_xmit(rmcast_base_send_t *snd,
     
     /* find the channel */
     ch = NULL;
+    ORTE_ACQUIRE_THREAD(&orte_rmcast_base.main_ctl);
     for (item = opal_list_get_first(&orte_rmcast_base.channels);
          item != opal_list_get_end(&orte_rmcast_base.channels);
          item = opal_list_get_next(item)) {
@@ -75,6 +76,7 @@ int orte_rmcast_base_queue_xmit(rmcast_base_send_t *snd,
             break;
         }
     }
+    ORTE_RELEASE_THREAD(&orte_rmcast_base.main_ctl);
     if (NULL == ch) {
         /* didn't find it */
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -175,7 +177,7 @@ int orte_rmcast_base_queue_recv(rmcast_base_recv_t **recvptr,
     
     if (!blocking) {
         /* do we already have a recv for this channel/tag? */
-        ORTE_ACQUIRE_THREAD(&orte_rmcast_base.recv_process_ctl);
+        ORTE_ACQUIRE_THREAD(&orte_rmcast_base.main_ctl);
         for (item = opal_list_get_first(&orte_rmcast_base.recvs);
              item != opal_list_get_end(&orte_rmcast_base.recvs);
              item = opal_list_get_next(item)) {
@@ -194,7 +196,7 @@ int orte_rmcast_base_queue_recv(rmcast_base_recv_t **recvptr,
                     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                                          "%s rmcast:base: matching recv already active on multicast channel %d tag %d",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), channel, tag));
-                    ORTE_RELEASE_THREAD(&orte_rmcast_base.recv_process_ctl);
+                    ORTE_RELEASE_THREAD(&orte_rmcast_base.main_ctl);
                     return ORTE_EXISTS;
                 }
                 rptr->cbfunc_iovec = cbfunc_iovec;
@@ -205,7 +207,7 @@ int orte_rmcast_base_queue_recv(rmcast_base_recv_t **recvptr,
                     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                                          "%s rmcast:base: matching recv already active on multicast channel %d tag %d",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), channel, tag));
-                    ORTE_RELEASE_THREAD(&orte_rmcast_base.recv_process_ctl);
+                    ORTE_RELEASE_THREAD(&orte_rmcast_base.main_ctl);
                     return ORTE_EXISTS;
                 }
                 rptr->cbfunc_buffer = cbfunc_buffer;
@@ -213,10 +215,10 @@ int orte_rmcast_base_queue_recv(rmcast_base_recv_t **recvptr,
             if (NULL != recvptr) {
                 *recvptr = rptr;
             }
-            ORTE_RELEASE_THREAD(&orte_rmcast_base.recv_process_ctl);
+            ORTE_RELEASE_THREAD(&orte_rmcast_base.main_ctl);
             return ORTE_SUCCESS;
         }
-        ORTE_RELEASE_THREAD(&orte_rmcast_base.recv_process_ctl);
+        ORTE_RELEASE_THREAD(&orte_rmcast_base.main_ctl);
     }
     
     /* if we get here, then we need to add a new recv */
@@ -238,13 +240,13 @@ int orte_rmcast_base_queue_recv(rmcast_base_recv_t **recvptr,
     /* wildcard tag recvs get pushed to the end of the list so
      * that specific tag recvs take precedence
      */
-    ORTE_ACQUIRE_THREAD(&orte_rmcast_base.recv_process_ctl);
+    ORTE_ACQUIRE_THREAD(&orte_rmcast_base.main_ctl);
     if (ORTE_RMCAST_TAG_WILDCARD == tag) {
         opal_list_append(&orte_rmcast_base.recvs, &rptr->item);
     } else {
         opal_list_prepend(&orte_rmcast_base.recvs, &rptr->item);
     }
-    ORTE_RELEASE_THREAD(&orte_rmcast_base.recv_process_ctl);
+    ORTE_RELEASE_THREAD(&orte_rmcast_base.main_ctl);
     
     return ORTE_SUCCESS;
 }
@@ -265,6 +267,7 @@ void orte_rmcast_base_cancel_recv(orte_rmcast_channel_t channel,
     }    
     
     /* find all recv's for this channel and tag */
+    ORTE_ACQUIRE_THREAD(&orte_rmcast_base.main_ctl);
     item = opal_list_get_first(&orte_rmcast_base.recvs);
     while (item != opal_list_get_end(&orte_rmcast_base.recvs)) {
         next = opal_list_get_next(item);
@@ -272,13 +275,12 @@ void orte_rmcast_base_cancel_recv(orte_rmcast_channel_t channel,
         ptr = (rmcast_base_recv_t*)item;
         if (ch == ptr->channel &&
             tag == ptr->tag) {
-            ORTE_ACQUIRE_THREAD(&orte_rmcast_base.recv_process_ctl);
             opal_list_remove_item(&orte_rmcast_base.recvs, &ptr->item);
             OBJ_RELEASE(ptr);
-            ORTE_RELEASE_THREAD(&orte_rmcast_base.recv_process_ctl);
         }
         item = next;
     }
+    ORTE_RELEASE_THREAD(&orte_rmcast_base.main_ctl);
 }
 
 int orte_rmcast_base_close_channel(orte_rmcast_channel_t channel)
@@ -286,7 +288,7 @@ int orte_rmcast_base_close_channel(orte_rmcast_channel_t channel)
     opal_list_item_t *item;
     rmcast_base_channel_t *chan;
     
-    OPAL_THREAD_LOCK(&orte_rmcast_base.lock);
+    ORTE_ACQUIRE_THREAD(&orte_rmcast_base.main_ctl);
     for (item = opal_list_get_first(&orte_rmcast_base.channels);
          item != opal_list_get_end(&orte_rmcast_base.channels);
          item = opal_list_get_next(item)) {
@@ -295,12 +297,12 @@ int orte_rmcast_base_close_channel(orte_rmcast_channel_t channel)
         if (channel == chan->channel) {
             opal_list_remove_item(&orte_rmcast_base.channels, item);
             OBJ_RELEASE(chan);
-            OPAL_THREAD_UNLOCK(&orte_rmcast_base.lock);
+            ORTE_RELEASE_THREAD(&orte_rmcast_base.main_ctl);
             return ORTE_SUCCESS;
         }
     }
     
-    OPAL_THREAD_UNLOCK(&orte_rmcast_base.lock);
+    ORTE_RELEASE_THREAD(&orte_rmcast_base.main_ctl);
     return ORTE_ERR_NOT_FOUND;
 }
 

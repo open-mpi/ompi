@@ -48,15 +48,11 @@ typedef struct {
     uint16_t ports[256];
     int cache_size;
     bool opened;
-    opal_mutex_t lock;
-    opal_condition_t cond;
-    bool active;
+    orte_thread_ctl_t main_ctl;
     opal_list_t recvs;
     opal_list_t channels;
     rmcast_base_channel_t *my_output_channel;
     rmcast_base_channel_t *my_input_channel;
-    bool enable_progress_thread;
-    opal_list_t msg_list;
     opal_event_base_t *event_base;
     opal_thread_t recv_thread;
     orte_thread_ctl_t recv_ctl;

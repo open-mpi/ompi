@@ -21,8 +21,8 @@ static void constructor(orte_thread_ctl_t *ptr)
     ptr->running = false;
     ptr->stop = false;
     ptr->name = NULL;
-    /* default to waking up the global base */
-    ptr->wakeup_pipe = opal_event_base->wakeup_pipe[1];
+    /* default to updating the global base */
+    ptr->evbase = opal_event_base;
 }
 static void destructor(orte_thread_ctl_t *ptr)
 {

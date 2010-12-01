@@ -41,7 +41,7 @@ typedef struct {
     volatile bool active;
     volatile bool running;
     volatile bool stop;
-    int wakeup_pipe;
+    opal_event_base_t *evbase;
     char *name;
 } orte_thread_ctl_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_thread_ctl_t);
@@ -81,7 +81,6 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_thread_ctl_t);
 #if OPAL_ENABLE_DEBUG
 #define ORTE_RELEASE_THREAD(ctl)                                       \
     do {                                                               \
-        char byte='a';                                                 \
         if (opal_debug_threads) {                                      \
             opal_output(0, "Releasing thread %s at %s:%d",             \
                         (NULL == (ctl)->name) ? "NULL" : (ctl)->name,  \
@@ -89,7 +88,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_thread_ctl_t);
         }                                                              \
         (ctl)->active = false;                                         \
         ORTE_CONDITION_BROADCAST(&(ctl)->cond);                        \
-        opal_fd_write((ctl)->wakeup_pipe, 1, &byte);                   \
+        OPAL_UPDATE_EVBASE((ctl)->evbase, NULL, OPAL_EVENT_NOOP);      \
         ORTE_THREAD_UNLOCK(&(ctl)->lock);                              \
     } while(0);
 #else
@@ -98,7 +97,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_thread_ctl_t);
         char byte='a';                                                  \
         (ctl)->active = false;                                          \
         ORTE_CONDITION_BROADCAST(&(ctl)->cond);                         \
-        opal_fd_write((ctl)->wakeup_pipe, 1, &byte);                    \
+        OPAL_UPDATE_EVBASE((ctl)->evbase, NULL, OPAL_EVENT_NOOP);       \
         ORTE_THREAD_UNLOCK(&(ctl)->lock);                               \
     } while(0);
 #endif
@@ -106,7 +105,6 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_thread_ctl_t);
 #if OPAL_ENABLE_DEBUG
 #define ORTE_WAKEUP_THREAD(ctl)                                        \
     do {                                                               \
-        char byte='a';                                                 \
         ORTE_THREAD_LOCK(&(ctl)->lock);                                \
         if (opal_debug_threads) {                                      \
             opal_output(0, "Waking up thread %s at %s:%d",             \
@@ -115,17 +113,16 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_thread_ctl_t);
         }                                                              \
         (ctl)->active = false;                                         \
         ORTE_CONDITION_BROADCAST(&(ctl)->cond);                        \
-        opal_fd_write((ctl)->wakeup_pipe, 1, &byte);                   \
+        OPAL_UPDATE_EVBASE((ctl)->evbase, NULL, OPAL_EVENT_NOOP);      \
         ORTE_THREAD_UNLOCK(&(ctl)->lock);                              \
     } while(0);
 #else
 #define ORTE_WAKEUP_THREAD(ctl)                                         \
     do {                                                                \
-        char byte='a';                                                  \
         ORTE_THREAD_LOCK(&(ctl)->lock);                                 \
         (ctl)->active = false;                                          \
         ORTE_CONDITION_BROADCAST(&(ctl)->cond);                         \
-        opal_fd_write((ctl)->wakeup_pipe, 1, &byte);                    \
+        OPAL_UPDATE_EVBASE((ctl)->evbase, NULL, OPAL_EVENT_NOOP);       \
         ORTE_THREAD_UNLOCK(&(ctl)->lock);                               \
     } while(0);
 #endif
