@@ -20,7 +20,7 @@ release=1
 # only requirement is that it must be entirely printable ASCII 
 # characters and have no white space.
 
-greek=rc2
+greek=rc3
 
 # If want_svn=1, then the SVN r number will be included in the overall
 # Open MPI version number in some form.
