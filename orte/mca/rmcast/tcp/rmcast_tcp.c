@@ -896,6 +896,9 @@ static void relay(int fd, short event, void *cbdata)
          item != opal_list_get_end(&orte_local_children);
          item = opal_list_get_next(item)) {
         child = (orte_odls_child_t*)item;
+        if (!child->alive) {
+            continue;
+        }
         if (NULL == child->rml_uri) {
             /* race condition */
             OPAL_OUTPUT_VERBOSE((7, orte_rmcast_base.rmcast_output,
