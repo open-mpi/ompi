@@ -240,7 +240,6 @@ static void attach_debugger(int fd, short event, void *arg)
     int ret;
     int32_t ljob;
     orte_job_t *jdata;
-    struct timeval now;
 
     /* read the file descriptor to clear that event, if necessary */
     if (fifo_active) {
