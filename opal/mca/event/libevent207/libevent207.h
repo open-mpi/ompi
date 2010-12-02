@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -29,7 +30,6 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
-#include <sys/queue.h>
 #include <stdio.h>
 #include <stdlib.h>
 #ifndef WIN32
