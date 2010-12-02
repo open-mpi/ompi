@@ -1,5 +1,6 @@
 #
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -9,7 +10,7 @@
 
 EXTRA_DIST = .windows
 
-AM_CPPFLAGS = -I$(srcdir)/libevent -I$(srcdir)/libevent/include -I$(builddir)/libevent/include
+AM_CPPFLAGS = -I$(srcdir)/libevent -I$(srcdir)/libevent/include -I$(builddir)/libevent/include -I$(srcdir)/libevent/compat
 
 SUBDIRS = libevent
 
