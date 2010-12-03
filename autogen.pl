@@ -1062,8 +1062,9 @@ system("chmod u+w opal/libltdl/configure");
 ++$step;
 verbose "\n$step. Patching autotools output :-(\n\n";
 
-# Solaris patch is not compatible with Linux patch.
-# Default to Linux patch.
+# Solaris "patch" doesn't understand unified diffs, and will cause
+# autogen.pl to hang with a "File to patch:" prompt. Default to Linux
+# "patch", but use "gpatch" on Solaris. 
 $patch_prog = "patch";
 if ($^O eq "solaris") {
     $patch_prog = "gpatch";
