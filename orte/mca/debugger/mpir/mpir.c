@@ -14,6 +14,7 @@
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -88,6 +89,8 @@
  * MPIR_debug_gate.  These environment variable names must be
  * hard-coded in the OMPI layer (see ompi/debuggers/ompi_debuggers.c).
  */
+
+#include "orte_config.h"
 
 #ifdef HAVE_STRING_H
 #include <string.h>
