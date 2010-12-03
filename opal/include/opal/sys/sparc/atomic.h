@@ -107,7 +107,7 @@ static inline int opal_atomic_trylock(opal_atomic_lock_t *lock)
        lock is now held. */
     __asm__ __volatile__ ("\t"
                           "ldstub [%1], %0"
-                          : "=r"(result)
+                          : "+r"(result)
                           : "r"(&(lock->u.sparc_lock))
                           : "memory");
     return (result == 0);
