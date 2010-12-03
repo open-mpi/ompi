@@ -64,6 +64,9 @@ my $username;
 my $hostname;
 my $full_hostname;
 
+# Patch program
+my $patch_prog;
+
 $username = getpwuid($>);
 $full_hostname = `hostname`;
 chomp($full_hostname);
@@ -1059,10 +1062,18 @@ system("chmod u+w opal/libltdl/configure");
 ++$step;
 verbose "\n$step. Patching autotools output :-(\n\n";
 
+# Solaris patch is not compatible with Linux patch.
+# Default to Linux patch.
+$patch_prog = "patch";
+if ($^O eq "solaris") {
+    $patch_prog = "gpatch";
+}
+verbose "--- Using $^O $patch_prog program\n";
+
 # Patch preopen error in libltdl
 if (-f "opal/libltdl/loaders/preopen.c") {
     verbose "=== Patching preopen error masking in libltdl\n";
-    safe_system("patch -N -p0 < config/libltdl-preopen-error.diff");
+    safe_system("$patch_prog -N -p0 < config/libltdl-preopen-error.diff");
     unlink("opal/libltdl/loaders/preopen.c.rej");
 }
 
@@ -1073,14 +1084,7 @@ if (-f "opal/libltdl/loaders/preopen.c") {
 # user and make them think that autogen failed if this patch fails --
 # make the errors be silent.
 verbose "=== Patching PGI compiler version numbers in ltmain.sh\n";
-# Solaris patch is not compatible with Linux patch
-if ("$^O" eq "SunOS") {
-    verbose "--- Using SunOS gpatch\n";
-    system("gpatch -N -p0 < config/ltmain_pgi_tp.diff >/dev/null 2>&1");
-} else {
-    verbose "--- Using $^O patch\n";
-    system("patch -N -p0 < config/ltmain_pgi_tp.diff >/dev/null 2>&1");
-}
+system("$patch_prog -N -p0 < config/ltmain_pgi_tp.diff >/dev/null 2>&1");
 unlink("config/ltmain.sh.rej");
 
 # Total ugh.  We have to patch the configure script itself.  See below
