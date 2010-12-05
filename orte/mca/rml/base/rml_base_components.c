@@ -36,7 +36,6 @@ orte_rml_module_t orte_rml = {
     NULL,
     NULL,
     NULL,
-    NULL,
     orte_rml_base_null_send,
     orte_rml_base_null_send_nb,
     orte_rml_base_null_send_buffer,

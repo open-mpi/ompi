@@ -71,17 +71,6 @@ orte_rml_oob_set_uri(const char* uri)
 
 
 int
-orte_rml_oob_get_new_name(orte_process_name_t *name)
-{
-    if (NULL != ORTE_PROC_MY_NAME) {
-        return ORTE_ERR_NOT_SUPPORTED;
-    }
-
-    return orte_rml_oob_module.active_oob->oob_get_new_name(name);
-
-}
-
-int
 orte_rml_oob_purge(orte_process_name_t *peer)
 {
     opal_list_item_t *item, *next;

@@ -253,24 +253,6 @@ typedef int (*orte_rml_module_set_contact_info_fn_t)(const char *contact_info);
 
 
 /**
- * Request a new name from the HNP, if one is not already assigned
- *
- * Request a new name from the HNP, if one is not already assigned.
- * This function should be avoided at all costs, but is unavoidable in
- * some instances (like when trying to get a name from a singleton or 
- * when trying to contact a persistent daemon from an orte tool.
- *
- * @param[out] name The new name of the process
- *
- * @retval ORTE_SUCCESS A name was successfully acquired
- * @retcal ORTE_ERR_NOT_SUPPORTED A name is already assigned to the
- *                      current process
- * @retval ORTE_ERROR   An unspecified error occurred
- */
-typedef int (*orte_rml_module_get_new_name_fn_t)(orte_process_name_t *name);
-
-
-/**
  * "Ping" another process to determine availability
  *
  * Ping another process to determine if it is available.  This
@@ -603,8 +585,6 @@ struct orte_rml_module_t {
     /** Set contact information for remote process */
     orte_rml_module_set_contact_info_fn_t        set_contact_info;
 
-    /** Get a name from the remote process */
-    orte_rml_module_get_new_name_fn_t            get_new_name;
     /** Ping process for connectivity check */
     orte_rml_module_ping_fn_t                    ping;
 

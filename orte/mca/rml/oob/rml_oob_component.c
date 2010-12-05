@@ -85,7 +85,6 @@ orte_rml_oob_module_t orte_rml_oob_module = {
         orte_rml_oob_get_uri,
         orte_rml_oob_set_uri,
 
-        orte_rml_oob_get_new_name,
         orte_rml_oob_ping,
 
         orte_rml_oob_send,

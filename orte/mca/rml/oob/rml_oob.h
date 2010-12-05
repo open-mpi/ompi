@@ -171,7 +171,6 @@ int orte_rml_oob_ping(const char* uri,
 
 char* orte_rml_oob_get_uri(void);
 int orte_rml_oob_set_uri(const char*);
-int orte_rml_oob_get_new_name(orte_process_name_t *name);
 
 int orte_rml_oob_add_exception(orte_rml_exception_callback_t cbfunc);
 int orte_rml_oob_del_exception(orte_rml_exception_callback_t cbfunc);

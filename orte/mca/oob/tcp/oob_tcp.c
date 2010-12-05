@@ -142,7 +142,6 @@ mca_oob_t mca_oob_tcp = {
     mca_oob_tcp_get_addr,
     mca_oob_tcp_set_addr,
 
-    mca_oob_tcp_get_new_name,
     mca_oob_tcp_ping,
 
     mca_oob_tcp_send_nb,
@@ -2038,55 +2037,3 @@ int mca_oob_tcp_ft_event(int state) {
     return exit_status;
 }
 #endif
-
-
-
-int
-mca_oob_tcp_get_new_name(orte_process_name_t* name)
-{
-    mca_oob_tcp_peer_t* peer = mca_oob_tcp_peer_lookup(ORTE_PROC_MY_HNP);
-    mca_oob_tcp_msg_t* msg;
-    int rc;
-
-    if(NULL == peer)
-        return ORTE_ERR_UNREACH;
-
-    MCA_OOB_TCP_MSG_ALLOC(msg, rc);
-    if(NULL == msg) {
-        return rc;
-    }
-
-    if(mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_ALL) {
-        opal_output(0, "%s-%s mca_oob_tcp_get_new_name: starting\n",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                    ORTE_NAME_PRINT(&(peer->peer_name)));
-    }
-
-    /* turn the size to network byte order so there will be no problems */
-    msg->msg_hdr.msg_type = MCA_OOB_TCP_PING;
-    msg->msg_hdr.msg_size = 0;
-    msg->msg_hdr.msg_tag = 0;
-    msg->msg_hdr.msg_src = *ORTE_NAME_INVALID;
-    msg->msg_hdr.msg_dst = *ORTE_PROC_MY_HNP;
-
-    MCA_OOB_TCP_HDR_HTON(&msg->msg_hdr);
-    rc = mca_oob_tcp_peer_send(peer, msg);
-    if(rc != ORTE_SUCCESS) {
-        if (OPAL_SOS_GET_ERROR_CODE(rc) != ORTE_ERR_ADDRESSEE_UNKNOWN) {
-            MCA_OOB_TCP_MSG_RETURN(msg);
-        }
-        return rc;
-    }
-
-    mca_oob_tcp_msg_wait(msg, &rc);
-
-    if (ORTE_SUCCESS == rc) {
-        *name = *ORTE_PROC_MY_NAME;
-        if(mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_ALL) {
-            opal_output(0, "%s mca_oob_tcp_get_new_name: done\n",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        }
-    }
-
-    return rc;
-}

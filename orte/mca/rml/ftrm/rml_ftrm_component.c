@@ -64,7 +64,6 @@ orte_rml_module_t orte_rml_ftrm_module = {
     orte_rml_ftrm_get_contact_info,
     orte_rml_ftrm_set_contact_info,
 
-    orte_rml_ftrm_get_new_name,
     orte_rml_ftrm_ping,
 
     orte_rml_ftrm_send,

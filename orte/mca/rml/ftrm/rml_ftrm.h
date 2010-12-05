@@ -65,8 +65,6 @@ BEGIN_C_DECLS
      */
     int orte_rml_ftrm_set_contact_info(const char* uri);
 
-    int orte_rml_ftrm_get_new_name(orte_process_name_t *name);
-
     /*
      * Ping
      */
