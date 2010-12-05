@@ -64,7 +64,6 @@ typedef int (*mca_oob_base_module_set_addr_fn_t)(const orte_process_name_t* peer
                                                  const char* uri);
 
 
-typedef int (*mca_oob_base_module_get_new_name_fn_t)(orte_process_name_t*);
 
 /**
 *  Implementation of mca_oob_ping().
@@ -166,7 +165,6 @@ struct mca_oob_1_0_0_t {
     mca_oob_base_module_get_addr_fn_t            oob_get_addr;
     mca_oob_base_module_set_addr_fn_t            oob_set_addr;
 
-    mca_oob_base_module_get_new_name_fn_t        oob_get_new_name;
     mca_oob_base_module_ping_fn_t                oob_ping;
 
     mca_oob_base_module_send_nb_fn_t             oob_send_nb;

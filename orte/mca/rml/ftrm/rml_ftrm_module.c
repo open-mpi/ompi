@@ -74,23 +74,6 @@ int orte_rml_ftrm_module_finalize(void)
 }
 
 
-int orte_rml_ftrm_get_new_name(orte_process_name_t *name)
-{
-    int ret;
-
-    opal_output_verbose(20, rml_ftrm_output_handle,
-                        "orte_rml_ftrm: get_new_name()");
-
-    if( NULL != orte_rml_ftrm_wrapped_module.get_new_name ) {
-        if( ORTE_SUCCESS != (ret = orte_rml_ftrm_wrapped_module.get_new_name(name) ) ) {
-            return ret;
-        }
-    }
-
-    return ORTE_SUCCESS;
-}
-
-
 /*
  * Get URI
  */
