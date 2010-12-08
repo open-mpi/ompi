@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -112,6 +113,11 @@ int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
             case MCA_PML_REQUEST_SEND: 
             {
                 mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)pml_request;
+                MEMCHECKER(
+                    memchecker_call(&opal_memchecker_base_isdefined,
+                                    pml_request->req_addr, pml_request->req_count,
+                                    pml_request->req_datatype);
+                );
                 if( reuse_old_request && (sendreq->req_send.req_bytes_packed != 0) ) {
                     size_t offset = 0;
                     /**
