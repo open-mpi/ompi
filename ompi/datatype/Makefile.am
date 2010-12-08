@@ -3,7 +3,7 @@
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2005 The University of Tennessee and The University
+# Copyright (c) 2004-2010 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -27,8 +27,9 @@ headers = \
 	datatype_unpack.h \
 	datatype_checksum.h \
 	datatype_memcpy.h \
+        dt_copy.h \
 	convertor.h \
-    convertor_internal.h
+        convertor_internal.h
 
 noinst_LTLIBRARIES = \
         libdatatype_reliable.la \
