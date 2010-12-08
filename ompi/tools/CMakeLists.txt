@@ -1,4 +1,4 @@
-# Copyright (c) 2007-2009 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2010 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2008      The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
@@ -55,9 +55,9 @@ IF(OMPI_WANT_CXX_BINDINGS)
 
   # select debug or release libraries at configure time
   IF(OMPI_DEBUG_BUILD)
-    SET(OMPI_WRAPPER_CXX_LIB "libmpid.lib libopen-pald.lib libopen-rted.lib libmpi_cxxd.lib")
+    SET(OMPI_WRAPPER_CXX_LIB "libmpi_cxxd.lib")
   ELSE(OMPI_DEBUG_BUILD)
-    SET(OMPI_WRAPPER_CXX_LIB "libmpi.lib libopen-pal.lib libopen-rte.lib libmpi_cxx.lib")
+    SET(OMPI_WRAPPER_CXX_LIB "libmpi_cxx.lib")
   ENDIF(OMPI_DEBUG_BUILD)
 
   CONFIGURE_FILE(${OpenMPI_SOURCE_DIR}/contrib/platform/win32/ConfigFiles/mpic++-wrapper-data.txt.cmake
