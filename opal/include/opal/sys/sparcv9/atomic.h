@@ -159,7 +159,7 @@ static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
                        "ldx %2, %%g2               \n\t" /* g2 = oldval */
                        "casxa [%1] " ASI_P ", %%g2, %%g1 \n\t"
                        "stx %%g1, %0               \n"
-                       : "=m"(ret)
+                       : "+m"(ret)
                        : "r"(addr), "m"(oldval)
                        : "%g1", "%g2"
                        );
