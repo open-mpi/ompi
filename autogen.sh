@@ -564,6 +564,27 @@ EOF
             echo "     -- your libltdl doesn't need this! yay!"
         fi
 
+        # See http://git.savannah.gnu.org/cgit/libtool.git/commit/?id=v2.2.6-201-g519bf91
+        # 
+        # Note that this issue was fixed in LT 2.2.8, so don't patch if
+        # you have a version after that
+        echo "   ++ patching for IBM xlf (LT < 2.2.8)"
+        patched=0
+        if check_version "2.1.9999" $ompi_libtoolize_found_version; then
+            if ! check_version "2.2.8" $ompi_libtoolize_found_version; then
+                cd config
+                patch -N -p0 < libtool-ibm-xlf.diff > /dev/null 2>&1
+                rm -f libtool.m4.orig
+                rm -f libtool.m4.rej
+                # We'll touch aclocal.m4 below (see comment below).
+                cd ..
+                patched=1
+            fi
+        fi
+        if test "$patched" != "1"; then
+            echo "     -- your libtool doesn't need this! yay!"
+        fi
+
         # Libtool 1.5.2x and 2.1x automatically link in the "Cstd" STL library
         # when using the Sun compilers on Linux or Solaris, even if the
         # application does not use the STL (as of Feb 2008, Open MPI does not

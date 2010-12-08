@@ -24,7 +24,8 @@ EXTRA_DIST = \
         lt-sun-fortran.diff \
 	lt1522-pathCC.diff \
 	lt21a-pathCC.diff \
-	ltmain_otool.diff
+	ltmain_otool.diff \
+	libtool-ibm-xlf.diff
 
 maintainer-clean-local:
 	rm -f ompi_get_version.sh
