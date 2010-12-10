@@ -47,9 +47,9 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                                            ev->start,
                                            ev->mlength);
             if (OMPI_SUCCESS != ret) {
-                opal_output_verbose(ompi_mtl_base_output, 1,
-                                    "%s:%d: ompi_mtl_datatype_unpack failed: %d",
-                                    __FILE__, __LINE__, ret);
+                opal_output(ompi_mtl_base_output,
+                            "%s:%d: ompi_mtl_datatype_unpack failed: %d",
+                            __FILE__, __LINE__, ret);
                 ptl_request->super.ompi_req->req_status.MPI_ERROR = ret;
             }
             /* set the status */
@@ -63,9 +63,9 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
             ptl_request->super.ompi_req->req_status._ucount =
                 ev->mlength;
         } else {
-            opal_output_verbose(ompi_mtl_base_output, 1,
-                                "%s:%d: recv(PTL_EVENT_PUT) ni_fail_type: %d",
-                                __FILE__, __LINE__, ret);
+            opal_output(ompi_mtl_base_output,
+                        "%s:%d: recv(PTL_EVENT_PUT) ni_fail_type: %d",
+                        __FILE__, __LINE__, ret);
             ptl_request->super.ompi_req->req_status.MPI_ERROR = OMPI_ERROR;
         }
         ptl_request->super.completion_callback(&ptl_request->super);
@@ -78,9 +78,9 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                                            ev->start,
                                            ev->mlength);
             if (OMPI_SUCCESS != ret) {
-                opal_output_verbose(ompi_mtl_base_output, 1,
-                                    "%s:%d: ompi_mtl_datatype_unpack failed: %d",
-                                    __FILE__, __LINE__, ret);
+                opal_output(ompi_mtl_base_output,
+                            "%s:%d: ompi_mtl_datatype_unpack failed: %d",
+                            __FILE__, __LINE__, ret);
                 ptl_request->super.ompi_req->req_status.MPI_ERROR = ret;
             }
             /* set the status - most of this filled in right after issuing
@@ -88,9 +88,9 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
             ptl_request->super.ompi_req->req_status._ucount = 
                 ev->mlength;
         } else {
-            opal_output_verbose(ompi_mtl_base_output, 1,
-                                "%s:%d: recv(PTL_EVENT_REPLY) ni_fail_type: %d",
-                                __FILE__, __LINE__, ret);
+            opal_output(ompi_mtl_base_output,
+                        "%s:%d: recv(PTL_EVENT_REPLY) ni_fail_type: %d",
+                        __FILE__, __LINE__, ret);
             ptl_request->super.ompi_req->req_status.MPI_ERROR = OMPI_ERROR;
         }
         PtlMDRelease(ptl_request->md_h);
@@ -122,10 +122,10 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                     ret = opal_convertor_unpack(ptl_request->convertor, 
                                                 &iov, &iov_count,
                                                 &max_data );
-                    if (OMPI_SUCCESS != ret) {
-                        opal_output_verbose(ompi_mtl_base_output, 1,
-                                            "%s:%d: opal_convertor_unpack failed: %d",
-                                            __FILE__, __LINE__, ret);
+                    if (ret < 0) {
+                        opal_output(ompi_mtl_base_output,
+                                    "%s:%d: opal_convertor_unpack failed: %d",
+                                    __FILE__, __LINE__, ret);
                         if (NULL != ptl_request->buffer_ptr) free(ptl_request->buffer_ptr);
                         ptl_request->super.ompi_req->req_status.MPI_ERROR = ret;
                         ptl_request->super.completion_callback(&ptl_request->super);
@@ -147,9 +147,9 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                                  NULL,
                                  0);
                     if (PTL_OK != ret) {
-                        opal_output_verbose(ompi_mtl_base_output, 1,
-                                            "%s:%d: PtlPut failed: %d",
-                                            __FILE__, __LINE__, ret);
+                        opal_output(ompi_mtl_base_output,
+                                    "%s:%d: PtlPut failed: %d",
+                                    __FILE__, __LINE__, ret);
                         ptl_request->super.ompi_req->req_status.MPI_ERROR = 
                             ompi_mtl_portals4_get_error(ret);;
                         ptl_request->super.completion_callback(&ptl_request->super);
@@ -157,9 +157,9 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                     }
                 }
             } else {
-                opal_output_verbose(ompi_mtl_base_output, 1,
-                                    "%s:%d: recv(PTL_EVENT_PUT_OVERFLOW) ni_fail_type: %d",
-                                    __FILE__, __LINE__, ret);
+                opal_output(ompi_mtl_base_output,
+                            "%s:%d: recv(PTL_EVENT_PUT_OVERFLOW) ni_fail_type: %d",
+                            __FILE__, __LINE__, ret);
                 ptl_request->super.ompi_req->req_status.MPI_ERROR = OMPI_ERROR;
             }
             ptl_request->super.completion_callback(&ptl_request->super);
@@ -189,9 +189,9 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                                 &ptl_request->md_h);
                 if (PTL_OK != ret) {
                     if (NULL != ptl_request->buffer_ptr) free(ptl_request->buffer_ptr);
-                    opal_output_verbose(ompi_mtl_base_output, 1,
-                                        "%s:%d: PtlMDBind failed: %d",
-                                        __FILE__, __LINE__, ret);
+                    opal_output(ompi_mtl_base_output,
+                                "%s:%d: PtlMDBind failed: %d",
+                                __FILE__, __LINE__, ret);
                     ptl_request->super.ompi_req->req_status.MPI_ERROR = 
                         ompi_mtl_portals4_get_error(ret);;
                     ptl_request->super.completion_callback(&ptl_request->super);
@@ -209,18 +209,18 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                 if (PTL_OK != ret) {
                     PtlMDRelease(ptl_request->md_h);
                     if (NULL != ptl_request->buffer_ptr) free(ptl_request->buffer_ptr);
-                    opal_output_verbose(ompi_mtl_base_output, 1,
-                                        "%s:%d: PtlGet failed: %d",
-                                        __FILE__, __LINE__, ret);
+                    opal_output(ompi_mtl_base_output,
+                                "%s:%d: PtlGet failed: %d",
+                                __FILE__, __LINE__, ret);
                     ptl_request->super.ompi_req->req_status.MPI_ERROR = 
                         ompi_mtl_portals4_get_error(ret);;
                     ptl_request->super.completion_callback(&ptl_request->super);
                     return OMPI_SUCCESS;
                 }
             } else {
-                opal_output_verbose(ompi_mtl_base_output, 1,
-                                    "%s:%d: recv(PTL_EVENT_PUT_OVERFLOW) ni_fail_type: %d",
-                                    __FILE__, __LINE__, ret);
+                opal_output(ompi_mtl_base_output,
+                            "%s:%d: recv(PTL_EVENT_PUT_OVERFLOW) ni_fail_type: %d",
+                            __FILE__, __LINE__, ret);
                 ptl_request->super.ompi_req->req_status.MPI_ERROR = OMPI_ERROR;
                 ptl_request->super.completion_callback(&ptl_request->super);
             }
@@ -271,9 +271,9 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
 
     ret = ompi_mtl_datatype_recv_buf(convertor, &start, &length, &free_after);
     if (OMPI_SUCCESS != ret) {
-        opal_output_verbose(ompi_mtl_base_output, 1,
-                            "%s:%d: PtlMEAppend failed: %d",
-                            __FILE__, __LINE__, ret);
+        opal_output(ompi_mtl_base_output,
+                    "%s:%d: PtlMEAppend failed: %d",
+                    __FILE__, __LINE__, ret);
         return ret;
     }
 
@@ -302,9 +302,9 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
                       &ptl_request->me_h);
     if (PTL_OK != ret) {
         if (NULL != ptl_request->buffer_ptr) free(ptl_request->buffer_ptr);
-        opal_output_verbose(ompi_mtl_base_output, 1, 
-                            "%s:%d: PtlMEAppend failed: %d",
-                            __FILE__, __LINE__, ret);
+        opal_output(ompi_mtl_base_output,
+                    "%s:%d: PtlMEAppend failed: %d",
+                    __FILE__, __LINE__, ret);
         return ompi_mtl_portals4_get_error(ret);
     }
 
