@@ -148,8 +148,8 @@ int orte_util_nidmap_init(opal_buffer_t *buffer)
 
 void orte_util_nidmap_finalize(void)
 {
-    orte_nid_t **nids;
-    orte_jmap_t **jmaps;
+    orte_nid_t *nid;
+    orte_jmap_t *jmap;
     int32_t i;
     
     if (!initialized) {
@@ -158,14 +158,18 @@ void orte_util_nidmap_finalize(void)
     }
     
     /* deconstruct the global nidmap and jobmap arrays */
-    nids = (orte_nid_t**)orte_nidmap.addr;
-    for (i=0; i < orte_nidmap.size && NULL != nids[i]; i++) {
-        OBJ_RELEASE(nids[i]);
+    for (i=0; i < orte_nidmap.size; i++) {
+        if (NULL == (nid = (orte_nid_t*)opal_pointer_array_get_item(&orte_nidmap, i))) {
+            continue;
+        }
+        OBJ_RELEASE(nid);
     }
     OBJ_DESTRUCT(&orte_nidmap);
-    jmaps = (orte_jmap_t**)orte_jobmap.addr;
-    for (i=0; i < orte_jobmap.size && NULL != jmaps[i]; i++) {
-        OBJ_RELEASE(jmaps[i]);
+    for (i=0; i < orte_jobmap.size; i++) {
+        if (NULL == (jmap = (orte_jmap_t*)opal_pointer_array_get_item(&orte_jobmap, i))) {
+            continue;
+        }
+        OBJ_RELEASE(jmap);
     }
     OBJ_DESTRUCT(&orte_jobmap);
     
