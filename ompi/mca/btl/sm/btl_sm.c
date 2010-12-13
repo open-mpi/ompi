@@ -42,7 +42,6 @@
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/mpool/base/base.h"
-#include "ompi/mca/common/sm/common_sm_mmap.h"
 #include "ompi/mca/mpool/sm/mpool_sm.h"
 
 #if OMPI_BTL_SM_HAVE_KNEM
