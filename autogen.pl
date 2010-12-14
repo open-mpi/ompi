@@ -65,7 +65,13 @@ my $hostname;
 my $full_hostname;
 
 # Patch program
-my $patch_prog;
+my $patch_prog = "patch";
+# Solaris "patch" doesn't understand unified diffs, and will cause
+# autogen.pl to hang with a "File to patch:" prompt. Default to Linux
+# "patch", but use "gpatch" on Solaris. 
+if ($^O eq "solaris") {
+    $patch_prog = "gpatch";
+}
 
 $username = getpwuid($>);
 $full_hostname = `hostname`;
@@ -139,7 +145,7 @@ sub process_subdir {
 
     # Chdir to the subdir
     print "\n=== Processing subdir: $dir\n";
-    my $start = cwd();
+    my $start = Cwd::cwd();
     chdir($dir);
 
     # Run an action depending on what we find in that subdir
@@ -152,6 +158,8 @@ sub process_subdir {
     } elsif (-f "configure.in" || -f "configure.ac") {
         print "--- Found configure.in|ac; running autoreconf...\n";
         safe_system("autoreconf -ivf");
+        print "--- Patching autotools output... :-(\n";
+        patch_autotools_output($start);
     } else {
         die "Found subdir, but no autogen.sh or configure.in|ac to do anything";
     }
@@ -775,6 +783,101 @@ sub safe_system {
 }
 
 ##############################################################################
+
+sub patch_autotools_output {
+    my ($topdir) = @_;
+
+    # Set indentation string for verbose output depending on current directory.
+    my $indent_str = "    ";
+    if ($topdir eq ".") {
+        $indent_str = "=== ";
+    }
+
+    # Patch ltmain.sh error for PGI version numbers.  Redirect stderr to
+    # /dev/null because this patch is only necessary for some versions of
+    # Libtool (e.g., 2.2.6b); it'll [rightfully] fail if you have a new
+    # enough Libtool that dosn't need this patch.  But don't alarm the
+    # user and make them think that autogen failed if this patch fails --
+    # make the errors be silent.
+    if (-f "config/ltmain.sh") {
+        verbose "$indent_str"."Patching PGI compiler version numbers in ltmain.sh\n";
+        system("$patch_prog -N -p0 < $topdir/config/ltmain_pgi_tp.diff >/dev/null 2>&1");
+        unlink("config/ltmain.sh.rej");
+    }
+
+    # Total ugh.  We have to patch the configure script itself.  See below
+    # for explainations why.
+    open(IN, "configure") || die "Can't open configure";
+    my $c;
+    $c .= $_
+        while(<IN>);
+    close(IN);
+
+    # LT <=2.2.6b need to be patched for the PGI 10.0 fortran compiler
+    # name (pgfortran).  The following comes from the upstream LT patches:
+    # http://lists.gnu.org/archive/html/libtool-patches/2009-11/msg00012.html
+    # http://lists.gnu.org/archive/html/bug-libtool/2009-11/msg00045.html
+    # Note that that patch is part of Libtool (which is not in this OMPI
+    # source tree); we can't fix it.  So all we can do is patch the
+    # resulting configure script.  :-(
+    verbose "$indent_str"."Patching configure for Libtool PGI 10 fortran compiler name\n";
+    $c =~ s/gfortran g95 xlf95 f95 fort ifort ifc efc pgf95 lf95 ftn/gfortran g95 xlf95 f95 fort ifort ifc efc pgfortran pgf95 lf95 ftn/g;
+    $c =~ s/pgcc\* \| pgf77\* \| pgf90\* \| pgf95\*\)/pgcc* | pgf77* | pgf90* | pgf95* | pgfortran*)/g;
+    $c =~ s/pgf77\* \| pgf90\* \| pgf95\*\)/pgf77* | pgf90* | pgf95* | pgfortran*)/g;
+
+    # Similar issue as above -- the PGI 10 version number broke <=LT
+    # 2.2.6b's version number checking regexps.  Again, we can't fix the
+    # Libtool install; all we can do is patch the resulting configure
+    # script.  :-( The following comes from the upstream patch:
+    # http://lists.gnu.org/archive/html/libtool-patches/2009-11/msg00016.html
+    verbose "$indent_str"."Patching configure for Libtool PGI version number regexps\n";
+    $c =~ s/\*pgCC\\ \[1-5\]\* \| \*pgcpp\\ \[1-5\]\*/*pgCC\\ [1-5]\.* | *pgcpp\\ [1-5]\.*/g;
+
+    # Similar issue as above -- fix the case statements that handle the Sun
+    # Fortran version strings.
+    #
+    # Note: we have to use octal escapes to match '*Sun\ F*) and the 
+    # four succeeding lines in the bourne shell switch statement.
+    #   \ = 134
+    #   ) = 051
+    #   * = 052
+    #
+    # Below is essentially an upstream patch for Libtool which we want 
+    # made available to Open MPI users running older versions of Libtool
+
+    foreach my $tag (("", "_F77", "_FC")) {
+
+        # We have to change the search pattern and substitution on each
+        # iteration to take into account the tag changing
+        my $search_string = '\052Sun\134 F\052.*\n.*\n\s+' .
+            "lt_prog_compiler_pic${tag}" . '.*\n.*\n.*\n.*\n';
+        my $replace_string = "
+        *Sun\\ Ceres\\ Fortran* | *Sun*Fortran*\\ [[1-7]].* | *Sun*Fortran*\\ 8.[[0-3]]*)
+          # Sun Fortran 8.3 passes all unrecognized flags to the linker
+          lt_prog_compiler_pic${tag}='-KPIC'
+          lt_prog_compiler_static${tag}='-Bstatic'
+          lt_prog_compiler_wl${tag}=''
+          ;;
+        *Sun\\ F* | *Sun*Fortran*)
+          lt_prog_compiler_pic${tag}='-KPIC'
+          lt_prog_compiler_static${tag}='-Bstatic'
+          lt_prog_compiler_wl${tag}='-Qoption ld '
+          ;;
+";
+
+        verbose "$indent_str"."Patching configure for Sun Studio Fortran version strings ($tag)\n";
+        $c =~ s/$search_string/$replace_string/;
+    }
+
+    open(OUT, ">configure.patched") || die "Can't open configure.patched";
+    print OUT $c;
+    close(OUT);
+    # Use cp so that we preserve permissions on configure
+    safe_system("cp configure.patched configure");
+    unlink("configure.patched");
+}
+
+##############################################################################
 ##############################################################################
 ## main - do the real work...
 ##############################################################################
@@ -1060,16 +1163,7 @@ system("chmod u+w opal/libltdl/configure");
 #---------------------------------------------------------------------------
 
 ++$step;
-verbose "\n$step. Patching autotools output :-(\n\n";
-
-# Solaris "patch" doesn't understand unified diffs, and will cause
-# autogen.pl to hang with a "File to patch:" prompt. Default to Linux
-# "patch", but use "gpatch" on Solaris. 
-$patch_prog = "patch";
-if ($^O eq "solaris") {
-    $patch_prog = "gpatch";
-}
-verbose "--- Using $^O $patch_prog program\n";
+verbose "\n$step. Patching autotools output on top-level tree :-(\n\n";
 
 # Patch preopen error in libltdl
 if (-f "opal/libltdl/loaders/preopen.c") {
@@ -1078,86 +1172,8 @@ if (-f "opal/libltdl/loaders/preopen.c") {
     unlink("opal/libltdl/loaders/preopen.c.rej");
 }
 
-# Patch ltmain.sh error for PGI version numbers.  Redirect stderr to
-# /dev/null because this patch is only necessary for some versions of
-# Libtool (e.g., 2.2.6b); it'll [rightfully] fail if you have a new
-# enough Libtool that dosn't need this patch.  But don't alarm the
-# user and make them think that autogen failed if this patch fails --
-# make the errors be silent.
-verbose "=== Patching PGI compiler version numbers in ltmain.sh\n";
-system("$patch_prog -N -p0 < config/ltmain_pgi_tp.diff >/dev/null 2>&1");
-unlink("config/ltmain.sh.rej");
+patch_autotools_output(".");
 
-# Total ugh.  We have to patch the configure script itself.  See below
-# for explainations why.
-open(IN, "configure") || die "Can't open configure";
-my $c;
-$c .= $_
-    while(<IN>);
-close(IN);
-
-# LT <=2.2.6b need to be patched for the PGI 10.0 fortran compiler
-# name (pgfortran).  The following comes from the upstream LT patches:
-# http://lists.gnu.org/archive/html/libtool-patches/2009-11/msg00012.html
-# http://lists.gnu.org/archive/html/bug-libtool/2009-11/msg00045.html
-# Note that that patch is part of Libtool (which is not in this OMPI
-# source tree); we can't fix it.  So all we can do is patch the
-# resulting configure script.  :-(
-print("=== Patching configure for Libtool PGI 10 fortran compiler name\n");
-$c =~ s/gfortran g95 xlf95 f95 fort ifort ifc efc pgf95 lf95 ftn/gfortran g95 xlf95 f95 fort ifort ifc efc pgfortran pgf95 lf95 ftn/g;
-$c =~ s/pgcc\* \| pgf77\* \| pgf90\* \| pgf95\*\)/pgcc* | pgf77* | pgf90* | pgf95* | pgfortran*)/g;
-$c =~ s/pgf77\* \| pgf90\* \| pgf95\*\)/pgf77* | pgf90* | pgf95* | pgfortran*)/g;
-
-# Similar issue as above -- the PGI 10 version number broke <=LT
-# 2.2.6b's version number checking regexps.  Again, we can't fix the
-# Libtool install; all we can do is patch the resulting configure
-# script.  :-( The following comes from the upstream patch:
-# http://lists.gnu.org/archive/html/libtool-patches/2009-11/msg00016.html
-print("=== Patching configure for Libtool PGI version number regexps\n");
-$c =~ s/\*pgCC\\ \[1-5\]\* \| \*pgcpp\\ \[1-5\]\*/*pgCC\\ [1-5]\.* | *pgcpp\\ [1-5]\.*/g;
-
-# Similar issue as above -- fix the case statements that handle the Sun
-# Fortran version strings.
-#
-# Note: we have to use octal escapes to match '*Sun\ F*) and the 
-# four succeeding lines in the bourne shell switch statement.
-#   \ = 134
-#   ) = 051
-#   * = 052
-#
-# Below is essentially an upstream patch for Libtool which we want 
-# made available to Open MPI users running older versions of Libtool
-
-foreach my $tag (("", "_F77", "_FC")) {
-
-    # We have to change the search pattern and substitution on each
-    # iteration to take into account the tag changing
-    my $search_string = '\052Sun\134 F\052.*\n.*\n\s+' .
-        "lt_prog_compiler_pic${tag}" . '.*\n.*\n.*\n.*\n';
-    my $replace_string = "
-    *Sun\\ Ceres\\ Fortran* | *Sun*Fortran*\\ [[1-7]].* | *Sun*Fortran*\\ 8.[[0-3]]*)
-      # Sun Fortran 8.3 passes all unrecognized flags to the linker
-      lt_prog_compiler_pic${tag}='-KPIC'
-      lt_prog_compiler_static${tag}='-Bstatic'
-      lt_prog_compiler_wl${tag}=''
-      ;;
-    *Sun\\ F* | *Sun*Fortran*)
-      lt_prog_compiler_pic${tag}='-KPIC'
-      lt_prog_compiler_static${tag}='-Bstatic'
-      lt_prog_compiler_wl${tag}='-Qoption ld '
-      ;;
-";
-
-    print("=== Patching configure for Sun Studio Fortran version strings ($tag)\n");
-    $c =~ s/$search_string/$replace_string/;
-}
-
-open(OUT, ">configure.patched") || die "Can't open configure.patched";
-print OUT $c;
-close(OUT);
-# Use cp so that we preserve permissions on configure
-safe_system("cp configure.patched configure");
-unlink("configure.patched");
 #---------------------------------------------------------------------------
 
 verbose "
