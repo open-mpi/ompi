@@ -56,7 +56,7 @@ include ompi/Makefile.am
 EXTRA_DIST = $(headers)
 
 if WANT_INSTALL_HEADERS 
-ompidir = $(includedir)/openmpi/$(subdir)
+ompidir = $(includedir)/openmpi
 nobase_dist_ompi_HEADERS = $(headers)
 nobase_nodist_ompi_HEADERS = $(nodist_headers)
 endif
