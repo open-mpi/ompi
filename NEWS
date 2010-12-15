@@ -26,6 +26,32 @@ This file contains the main features as well as overviews of specific
 bug fixes (and other actions) for each version of Open MPI since
 version 1.0.
 
+1.5.1
+-----
+
+- Fixes for the Oracle Studio 12.2 Fortran compiler.
+- Fix SPARC and SPARCv9 atomics.  Thanks to Nicola Stange for the
+  initial patch.
+- Fix Libtool issues with the IBM XL compiler in 64-bit mode.
+- Restore the reset of the libevent progress counter to avoid
+  over-sampling the event library.
+- Update memory barrier support.
+- Use memmove (instead of memcpy) when necessary (e.g., source and
+  destination overlap).
+- Fixed ompi-top crash.
+- Fix to handle Autoconf --program-transforms properly and other
+  m4/configury updates.  Thanks to the GASNet project for the
+  --program transforms fix.
+- Allow hostfiles to specify usernames on a per-host basis.
+- Update wrapper compiler scripts to search for perl during configure,
+  per request from the BSD maintainers.
+- Minor man page fixes.
+- Added --with-libltdl option to allow building Open MPI with an
+  external installation of libltdl.
+- Fixed various issues with -D_FORTIFY_SOURCE=2.
+- Various VT fixes and updates.
+
+
 1.5
 ---
 
