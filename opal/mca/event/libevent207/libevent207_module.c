@@ -138,12 +138,21 @@ opal_event_base_t* opal_event_base_create(void)
     }
     evbase = (opal_event_base_t*)malloc(sizeof(opal_event_base_t));
     evbase->base = base;
+#ifndef __WINDOWS__
     if (pipe(evbase->update_pipe) < 0) {
         opal_output(0, "Unable to open update pipe");
         free(evbase);
         event_base_free(base);
         return NULL;
     }
+#else
+    if (create_socketpair(AF_UNIX, SOCK_STREAM, 0, evbase->update_pipe) == -1) {
+        opal_output(0, "Unable to open update socket");
+        free(evbase);
+        event_base_free(base);
+        return NULL;
+    }
+#endif
     event_assign(&evbase->update_event, base,
                  evbase->update_pipe[0], EV_READ | EV_PERSIST,
                  update_event, NULL);
@@ -155,9 +164,15 @@ void opal_event_base_finalize(opal_event_base_t *evbase)
 {
     /* delete the wakeup event */
     event_del(&evbase->update_event);
+#ifndef __WINDOWS__
     /* close the pipe */
     close(evbase->update_pipe[0]);
     close(evbase->update_pipe[1]);
+#else
+    /* close the socket */
+    closesocket(evbase->update_pipe[0]);
+    closesocket(evbase->update_pipe[1]);
+#endif
     /* release the base */
     event_base_free(evbase->base);
     /* free the storage */
