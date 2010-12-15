@@ -157,6 +157,7 @@ typedef unsigned int uint;
 #define strtok_r                  strtok_s
 #define srand48                   srand
 #define lrand48                   rand
+#define nanosleep(tp, rem)        Sleep(*tp.tv_sec*1000+*tp.tv_nsec/1000000)
 
 #ifndef UINT32_MAX
 #define UINT32_MAX            _UI32_MAX
