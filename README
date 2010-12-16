@@ -1340,7 +1340,8 @@ int main() {
         char ompi_bound[OMPI_AFFINITY_STRING_MAX];
         char current_binding[OMPI_AFFINITY_STRING_MAX];
         char exists[OMPI_AFFINITY_STRING_MAX];
-        OMPI_Affinity_str(ompi_bound, current_bindings, exists);
+        OMPI_Affinity_str(OMPI_AFFINITY_LAYOUT_FMT, ompi_bound, current_bindings,
+                          exists);
     }
 #endif
     MPI_Finalize();
