@@ -561,6 +561,24 @@ Network Support
 
   See http://runtime.bordeaux.inria.fr/knem/ for details on Knem.
 
+Open MPI Extensions
+-------------------
+
+- Extensions framework added.  See the "Open MPI API Extensions"
+  section below for more information on compiling and using
+  extensions.
+
+- The following extensions are included in this version of Open MPI:
+
+  - affinity: Provides the OMPI_Affinity_str() routine on retrieving
+    a string that contains what resources a process is bound to.  See
+    its man page for more details.
+  - cr: Provides routines to access to checkpoint restart routines.
+    See ompi/mpiext/cr/mpiext_cr_c.h for a listing of availble
+    functions.
+  - example: A non-functional extension; its only purpose is to
+    provide an example for how to create other extensions.
+
 ===========================================================================
 
 Building Open MPI

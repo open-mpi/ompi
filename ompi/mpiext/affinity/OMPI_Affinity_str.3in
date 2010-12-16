@@ -1,4 +1,4 @@
-.\" Copyright 2007-2008 Sun Microsystems, Inc.
+.\" Copyright 2007-2010 Oracle and/or its affiliates.  All rights reserved.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .\" Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
 .TH OMPI_Affinity_str 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
@@ -12,7 +12,8 @@
 #include <mpi.h>
 #include <mpi-ext.h>
 
-int OMPI_Affinity_str(char \fIompi_bound\fP[OMPI_AFFINITY_STRING_MAX],
+int OMPI_Affinity_str(ompi_affinity_fmt_type_t \fIfmt_type\fP,
+                      char \fIompi_bound\fP[OMPI_AFFINITY_STRING_MAX],
                       char \fIcurrent_binding\fP[OMPI_AFFINITY_STRING_MAX],
                       char \fIexists\fP[OMPI_AFFINITY_STRING_MAX])
 .fi
@@ -21,6 +22,22 @@ There is no Fortran binding for this function.
 .
 .SH C++ Syntax
 There is no C++ binding for this function.
+.
+.SH INPUT PARAMETERS
+.ft R
+.TP 1i
+fmt_type
+An enum indicating how to format the returned ompi_bound and
+current_binding strings.  OMPI_AFFINITY_RSRC_STRING_FMT returns the
+string as human-readable resource names, such as "socket 0, core 0".
+
+OMPI_AFFINITY_LAYOUT_FMT returns ASCII art representing where this MPI
+process is bound relative to the machine resource layout.  For example
+"[. B][. .]" shows the process that called the routine is bound to 
+socket 0, core 1 in a system with 2 sockets, each containing 2 cores.
+
+See below for more output examples.
+
 .
 .SH OUTPUT PARAMETERS
 .ft R
@@ -80,7 +97,100 @@ that this process can see (which is
 .I usually
 all processors in the system).
 
-.SH SEE ALSO
+.SH Examples
+.ft R
+\fBExample 1:\fP  Print out processes binding using resource string format.
+.sp
+.nf
+    int rank;
+    char ompi_bound[OMPI_AFFINITY_STRING_MAX];
+    char current_binding[OMPI_AFFINITY_STRING_MAX];
+    char exists[OMPI_AFFINITY_STRING_MAX];
+
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    OMPI_Affinity_str(OMPI_AFFINITY_RSRC_STRING_FMT, 
+                      ompi_bound, current_binding, exists);
+    printf("rank %d: \\n"
+           "       ompi_bound: %s\\n"
+           "  current_binding: %s\\n"
+           "           exists: %s\\n",
+           rank, ompi_bound, current_binding, exists);
+    ...
+.fi
+.PP
+Output of mpirun -np 2 -bind-to-core a.out:
+.nf
+rank 0: 
+       ompi_bound: socket 0[core 0] 
+  current_binding: socket 0[core 0] 
+           exists: socket 0 has 4 cores
+rank 1: 
+       ompi_bound: socket 0[core 1] 
+  current_binding: socket 0[core 1] 
+           exists: socket 0 has 4 cores
+.fi
+.PP
+Output of mpirun -np 2 -bind-to-socket a.out:
+.nf
+rank 0: 
+       ompi_bound: socket 0[core 0-3] 
+  current_binding: Not bound (or bound to all available processors)
+           exists: socket 0 has 4 cores
+rank 1: 
+       ompi_bound: socket 0[core 0-3] 
+  current_binding: Not bound (or bound to all available processors)
+           exists: socket 0 has 4 cores
+.fi
+.sp
+.br
+\fBExample 2:\fP  Print out processes binding using layout string format.
+.sp
+.nf
+    int rank;
+    char ompi_bound[OMPI_AFFINITY_STRING_MAX];
+    char current_binding[OMPI_AFFINITY_STRING_MAX];
+    char exists[OMPI_AFFINITY_STRING_MAX];
+
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    OMPI_Affinity_str(OMPI_AFFINITY_LAYOUT_FMT, 
+                      ompi_bound, current_binding, exists);
+    printf("rank %d: \\n"
+           "       ompi_bound: %s\\n"
+           "  current_binding: %s\\n"
+           "           exists: %s\\n",
+           rank, ompi_bound, current_binding, exists);
+    ...
+.fi
+.PP
+Output of mpirun -np 2 -bind-to-core a.out:
+.nf
+rank 0: 
+       ompi_bound: [B . . .]
+  current_binding: [B . . .]
+           exists: [. . . .]
+rank 1: 
+       ompi_bound: [. B . .]
+  current_binding: [. B . .]
+           exists: [. . . .]
+.fi
+.PP
+Output of mpirun -np 2 -bind-to-socket a.out:
+.nf
+rank 0: 
+       ompi_bound: [B B B B]
+  current_binding: [B B B B]
+           exists: [. . . .]
+rank 1: 
+       ompi_bound: [B B B B]
+  current_binding: [B B B B]
+           exists: [. . . .]
+.fi
+
+.SH See Also
 .ft R
 .nf
 mpirun(1)
