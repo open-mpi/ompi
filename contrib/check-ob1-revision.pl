@@ -17,7 +17,7 @@ use strict;
 # After the changes are ported, one can bump up the $revision variable in
 # in this file to whatever the ob1 directory is at.
 #
-my $revision = "-r24066";
+my $revision = "-r24138";
 my $cmd;
 my $cmd_output;
 my $pmlsdir = "../ompi/mca/pml";
