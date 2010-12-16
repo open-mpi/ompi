@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Voltaire. All rights reserved
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -607,4 +608,59 @@ int opal_paffinity_base_cset2str(char *str, int len,
     return OPAL_SUCCESS;
 }
 
+/**
+ * Make a prettyprint string for a cset in a map format.  
+ * Example: [B_/__]
+ * Key:  [] - signifies socket
+ *        / - signifies core 
+ *        _ - signifies thread a process not bound to
+ *        B - signifies thread a process is bound to
+ */
+int opal_paffinity_base_cset2mapstr(char *str, int len, 
+				    opal_paffinity_base_cpu_set_t *cset)
+{
+    int ret, i, j, k, m, num_sockets, num_cores, flag, count, 
+        range_first=0, range_last;
+    char tmp[BUFSIZ];
+    const int stmp = sizeof(tmp) - 1;
+
+    str[0] = tmp[stmp] = '\0';
+
+    /* Loop over the number of sockets in this machine */
+    ret = opal_paffinity_base_get_socket_info(&num_sockets);
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+    for (i = 0; i < num_sockets; ++i) {
+	strncat(str, "[", len - strlen(str));
+        /* Loop over the number of cores in this socket */
+        ret = opal_paffinity_base_get_core_info(i, &num_cores);
+        if (OPAL_SUCCESS != ret) {
+            return ret;
+        }
+	for (j = 0; j < num_cores; j++) {
+	    if (0 < j) {
+		/* add space after first core is printed */
+		strncat(str, " ", len - strlen(str));
+	    }
+	    
+            ret = opal_paffinity_base_get_map_to_processor_id(i, j, &k);
+            if (OPAL_SUCCESS != ret) {
+                return ret;
+            }
+
+	    flag = OPAL_PAFFINITY_CPU_ISSET(k, *cset);
+	    if (flag) {
+		/* mark core as bound to process */
+		strncat(str, "B", len - strlen(str));
+	    } else {
+		/* mark core as no process bound to it */
+		strncat(str, ".", len - strlen(str));
+	    }
+	}
+	strncat(str, "]", len - strlen(str));
+    }
+
+    return OPAL_SUCCESS;
+}
 

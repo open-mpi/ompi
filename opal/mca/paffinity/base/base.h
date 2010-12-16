@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -274,6 +275,12 @@ OPAL_DECLSPEC int opal_paffinity_base_slot_list_set(long rank, char *slot_str,
  * Make a prettyprint string for a cset.
  */
 OPAL_DECLSPEC int opal_paffinity_base_cset2str(char *str, int len, 
+                                               opal_paffinity_base_cpu_set_t *cset);
+
+/**
+ * Make a prettyprint string for a cset with a map format.
+ */
+OPAL_DECLSPEC int opal_paffinity_base_cset2mapstr(char *str, int len, 
                                                opal_paffinity_base_cpu_set_t *cset);
 
 /**
