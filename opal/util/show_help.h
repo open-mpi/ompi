@@ -128,15 +128,17 @@ OPAL_DECLSPEC int opal_show_help_finalize(void);
  * based on the topic, and displays it.  If want_error_header is
  * true, a header and footer of asterisks are also displayed.
  */
-OPAL_DECLSPEC int opal_show_help(const char *filename, const char *topic, 
-                                 bool want_error_header, ...);
+typedef int (*opal_show_help_fn_t)(const char *filename, const char *topic, 
+                                   bool want_error_header, ...);
+OPAL_DECLSPEC extern opal_show_help_fn_t opal_show_help;
 
 /**
  * This function does the same thing as opal_show_help(), but accepts
  * a va_list form of varargs.
  */
-OPAL_DECLSPEC int opal_show_vhelp(const char *filename, const char *topic, 
-                                  bool want_error_header, va_list ap);
+typedef int (*opal_show_vhelp_fn_t)(const char *filename, const char *topic, 
+                                    bool want_error_header, va_list ap);
+OPAL_DECLSPEC extern opal_show_vhelp_fn_t opal_show_vhelp;
 
 /**
  * This function does the same thing as opal_show_help(), but returns

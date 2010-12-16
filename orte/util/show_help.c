@@ -130,6 +130,8 @@ static bool show_help_timer_set = false;
 static opal_event_t show_help_timer_event;
 static bool ready;
 
+static opal_show_help_fn_t save_help = NULL;
+
 static void tuple_list_item_constructor(tuple_list_item_t *obj)
 {
     obj->tli_filename = NULL;
@@ -576,14 +578,17 @@ int orte_show_help_init(void)
 {
     OPAL_OUTPUT_VERBOSE((5, orte_debug_output, "orte_show_help init"));
 
+    /* Show help duplicate detection */
     if (ready) {
         return ORTE_SUCCESS;
     }
     ready = true;
 
-    /* Show help duplicate detection */
     OBJ_CONSTRUCT(&abd_tuples, opal_list_t);
     
+    save_help = opal_show_help;
+    opal_show_help = orte_show_help;
+
     return ORTE_SUCCESS;
 }
 
@@ -593,7 +598,10 @@ void orte_show_help_finalize(void)
         return;
     }
     ready = false;
-    
+
+    opal_show_help = save_help;
+    save_help = NULL;
+
     /* Shutdown show_help, showing final messages */
     if (ORTE_PROC_IS_HNP) {
         show_accumulated_duplicates(0, 0, NULL);
@@ -606,7 +614,6 @@ void orte_show_help_finalize(void)
         orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SHOW_HELP);
         return;
     }
-
 }
 
 int orte_show_help(const char *filename, const char *topic, 
