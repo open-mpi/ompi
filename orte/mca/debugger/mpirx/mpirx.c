@@ -238,22 +238,23 @@ static void open_fifo (void)
 static void attach_debugger(int fd, short event, void *arg)
 {
     orte_app_context_t *app;
-    unsigned char rc;
-    int ret;
+    unsigned char fifo_cmd;
+    int rc;
     int32_t ljob;
     orte_job_t *jdata;
 
     /* read the file descriptor to clear that event, if necessary */
     if (fifo_active) {
 	opal_event_del(&attach);
+	fifo_active = false;
 
-        ret = read(attach_fd, &rc, sizeof(rc));
-	if (!ret) {
+        rc = read(attach_fd, &fifo_cmd, sizeof(fifo_cmd));
+	if (!rc) {
 	    /* reopen device to clear hangup */
 	    open_fifo();
 	    return;
 	}
-        if (1 != rc) {
+        if (1 != fifo_cmd) {
             /* ignore the cmd */
             goto RELEASE;
         }
@@ -335,7 +336,7 @@ static void attach_debugger(int fd, short event, void *arg)
     if (0 == orte_debugger_mpirx_check_rate) {
         fifo_active = true;
         opal_event_add(&attach, 0);
-    } else {
+    } else if (!MPIR_being_debugged) {
 	ORTE_TIMER_EVENT(orte_debugger_mpirx_check_rate, 0, attach_debugger);
     }
 
