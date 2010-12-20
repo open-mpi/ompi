@@ -87,6 +87,16 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
                     ompi_datatype_t *op_check_dt, *origin_check_dt;
                     char *msg;
 
+                    /* ACCUMULATE, unlike REDUCE, can use with derived
+                       datatypes with predefinied operations, with some
+                       restrictions outlined in MPI-2:6.3.4.  The derived
+                       datatype must be composed entirley from one predefined
+                       datatype (so you can do all the construction you want,
+                       but at the bottom, you can only use one datatype, say,
+                       MPI_INT).  If the datatype at the target isn't
+                       predefined, then make sure it's composed of only one
+                       datatype, and check that datatype against
+                       ompi_op_is_valid(). */
                     if (opal_datatype_is_predefined(&(origin_datatype->super))) {
                         origin_check_dt = origin_datatype;
                     } else {
@@ -106,21 +116,10 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
                             OMPI_ERRHANDLER_RETURN(MPI_ERR_TYPE, win, MPI_ERR_TYPE, FUNC_NAME);
                         } else {
                             origin_check_dt = (ompi_datatype_t*)
-/* XXX TODO This is not needed, I hope... */
                                 ompi_datatype_basicDatatypes[found_index];
                         }
                     }
 
-                    /* ACCUMULATE, unlike REDUCE, can use with derived
-                       datatypes with predefinied operations, with some
-                       restrictions outlined in MPI-2:6.3.4.  The derived
-                       datatype must be composed entirley from one predefined
-                       datatype (so you can do all the construction you want,
-                       but at the bottom, you can only use one datatype, say,
-                       MPI_INT).  If the datatype at the target isn't
-                       predefined, then make sure it's composed of only one
-                       datatype, and check that datatype against
-                       ompi_op_is_valid(). */
                     if (opal_datatype_is_predefined(&(target_datatype->super))) {
                         op_check_dt = target_datatype;
                     } else {
@@ -166,58 +165,6 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
             }
         }
         OMPI_ERRHANDLER_CHECK(rc, win, rc, FUNC_NAME);
-
-        /* While technically the standard probably requires that the
-           datatypes used with MPI_REPLACE conform to all the rules
-           for other reduction operators, we don't require such
-           behaivor, as checking for it is expensive here and we don't
-           care in implementation.. */
-        if (op != &ompi_mpi_op_replace.op) {
-            ompi_datatype_t *op_check_dt;
-            char *msg;
-
-            /* ACCUMULATE, unlike REDUCE, can use with derived
-               datatypes with predefinied operations, with some
-               restrictions outlined in MPI-2:6.3.4.  The derived
-               datatype must be composed entirley from one predefined
-               datatype (so you can do all the construction you want,
-               but at the bottom, you can only use one datatype, say,
-               MPI_INT).  If the datatype at the target isn't
-               predefined, then make sure it's composed of only one
-               datatype, and check that datatype against
-               ompi_op_is_valid(). */
-            if (opal_datatype_is_predefined(&(target_datatype->super))) {
-                op_check_dt = target_datatype;
-            } else {
-                int i, found_index = -1, num_found = 0;
-                uint32_t mask = 1;
-
-                for (i = 0 ; i < OMPI_DATATYPE_MAX_PREDEFINED ; ++i) {
-                    if (target_datatype->super.bdt_used & mask) {
-                        num_found++;
-                        found_index = i;
-                    }
-                    mask *= 2;
-                }
-                if (found_index < 0 || num_found > 1) {
-                    /* this is an erroneous datatype.  Let
-                       ompi_op_is_valid tell the user that */
-                    op_check_dt = target_datatype;
-                } else {
-                    /* datatype passes muster as far as restrictions
-                       in MPI-2:6.3.4.  Is the primitive ok with the
-                       op?  Unfortunately have to cast away
-                       constness... */
-                    op_check_dt = (ompi_datatype_t*)
-                        ompi_datatype_basicDatatypes[found_index];
-                }
-            }
-            if (!ompi_op_is_valid(op, op_check_dt, &msg, FUNC_NAME)) {
-                int ret = OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_OP, msg);
-                free(msg);
-                return ret;
-            }
-        }
     }
 
     if (MPI_PROC_NULL == target_rank) {
