@@ -724,6 +724,13 @@ main(int argc, char *argv[])
         exec_argc = 0;
     }
 
+    /* This error would normally not happen unless the user edits the 
+       wrapper data files manually */
+    if (NULL == exec_argv) {
+        opal_show_help("help-opal-wrapper.txt", "no-compiler-specified", true);
+        return 1;
+    }
+
     if (flags & COMP_WANT_COMPILE) {
         opal_argv_insert(&exec_argv, exec_argc,
                          options_data[user_data_idx].comp_flags_prefix);

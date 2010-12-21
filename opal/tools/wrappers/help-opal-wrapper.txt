@@ -10,8 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
-#                         Use is subject to license terms.
+# Copyright (c) 2006-2010 Oracle and/or its affiliates.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -30,6 +29,10 @@ Warning: the "-lpmpi" flag was included on the command line,
 indicating use of MPI profiling layer.  However, Open MPI was not
 compiled with support for the MPI profiling layer.  This flag has
 therefore been ignored.
+#
+[no-compiler-specified]
+No underlying compiler was specified in the wrapper compiler data file
+(e.g., mpicc-wrapper-data.txt)
 #
 [no-compiler-found]
 The Open MPI wrapper compiler was unable to find the specified compiler
