@@ -198,6 +198,7 @@ struct mca_btl_openib_component_t {
 
     size_t eager_limit;      /**< Eager send limit of first fragment, in Bytes */
     size_t max_send_size;    /**< Maximum send size, in Bytes */
+    int32_t max_hw_msg_size; /**< Maximum message size for RDMA protocols in Bytes */
     uint32_t reg_mru_len;    /**< Length of the registration cache most recently used list */
     uint32_t use_srq;        /**< Use the Shared Receive Queue (SRQ mode) */
 
