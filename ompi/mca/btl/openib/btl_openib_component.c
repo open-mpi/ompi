@@ -2480,6 +2480,17 @@ btl_openib_component_init(int *num_btl_modules,
         }
     }
 
+    index = mca_base_param_find("btl", "openib", "flags");
+    if (index >= 0) {
+        if (OPAL_SUCCESS == mca_base_param_lookup_int(index, &value)) {
+            if (value & MCA_BTL_FLAGS_GET) {
+                /* Until GET flow is fixed - we do not support GET
+                   in openib btl. */
+				BTL_ERROR(("openib btl does not support GET flag"));
+            }
+        }
+    }
+
     OBJ_CONSTRUCT(&mca_btl_openib_component.send_free_coalesced, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_openib_component.send_user_free, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_openib_component.recv_user_free, ompi_free_list_t);
@@ -2748,6 +2759,12 @@ btl_openib_component_init(int *num_btl_modules,
             /* All others *are* fatal.  Note that we already did a
                show_help in the lower layer */
             goto no_btls;
+        }
+
+        if (mca_btl_openib_component.max_hw_msg_size > 0 &&
+            mca_btl_openib_component.max_hw_msg_size > openib_btl->ib_port_attr.max_msg_sz) {
+			BTL_ERROR(("max_hw_msg_size (%d) is larger than hw max message size (%d)",
+                        mca_btl_openib_component.max_hw_msg_size, openib_btl->ib_port_attr.max_msg_sz));
         }
 
         mca_btl_openib_component.openib_btls[i] = openib_btl;

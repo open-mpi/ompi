@@ -502,6 +502,11 @@ int btl_openib_register_mca_params(void)
                   10, &ival, REGINT_GE_ONE));
     mca_btl_openib_component.cq_poll_progress = (uint32_t)ival;
 
+    CHECK(reg_int("max_hw_msg_size", NULL,
+                  "Maximum size (in bytes) of a single fragment of a long message when using the RDMA protocols (must be > 0 and <= hw capabilities).",
+                  -1, &ival, REGINT_NEG_ONE_OK|REGINT_GE_ZERO));
+    mca_btl_openib_component.max_hw_msg_size = (int32_t)ival;
+
     /* Info only */
     mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version,
                            "have_fork_support",
@@ -519,7 +524,7 @@ int btl_openib_register_mca_params(void)
     mca_btl_openib_module.super.btl_rdma_pipeline_send_length = 1024 * 1024;
     mca_btl_openib_module.super.btl_rdma_pipeline_frag_size = 1024 * 1024;
     mca_btl_openib_module.super.btl_min_rdma_pipeline_size = 256 * 1024;
-    mca_btl_openib_module.super.btl_flags = MCA_BTL_FLAGS_RDMA |
+    mca_btl_openib_module.super.btl_flags = MCA_BTL_FLAGS_PUT |
         MCA_BTL_FLAGS_NEED_ACK | MCA_BTL_FLAGS_NEED_CSUM | MCA_BTL_FLAGS_HETEROGENEOUS_RDMA;
 #if OMPI_OPENIB_FAILOVER_ENABLED
     mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_FAILOVER_SUPPORT;
