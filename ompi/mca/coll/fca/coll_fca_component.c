@@ -65,8 +65,6 @@ mca_coll_fca_component_t mca_coll_fca_component = {
     }
 };
 
-#define FCA_API_ABI_MAJOR (2)
-#define FCA_API_ABI_MINOR (0)
 #define FCA_API_CLEAR_MICRO(__x) ((__x>>FCA_MINOR_BIT)<<FCA_MINOR_BIT)
 #define FCA_API_VER(__major,__minor) (__major<<FCA_MAJOR_BIT | __minor<<FCA_MINOR_BIT)
 
@@ -97,11 +95,13 @@ static void mca_coll_fca_progress_cb(void *arg)
  */
 static int mca_coll_fca_mpi_progress_cb(void)
 {
+#ifdef OMPI_FCA_PROGRESS
     if (!mca_coll_fca_component.fca_context)
         return 0;
 
     if (mca_coll_fca_component.fca_ops.progress)
         mca_coll_fca_component.fca_ops.progress(mca_coll_fca_component.fca_context);
+#endif
     return 0;
 }
 
@@ -124,8 +124,6 @@ static void mca_coll_fca_init_fca_translations(void)
     }
 }
 
-
-
 int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
 {
     struct fca_init_spec *spec;
@@ -146,10 +144,10 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
     FCA_VERBOSE(1, "FCA Loaded from: %s", mca_coll_fca_component.fca_lib_path);
     GET_FCA_SYM(get_version);
     GET_FCA_SYM(get_version_string);
-    fca_ver = FCA_API_CLEAR_MICRO(mca_coll_fca_component.fca_ops.get_version());
 
+    fca_ver = FCA_API_CLEAR_MICRO(mca_coll_fca_component.fca_ops.get_version());
     if (fca_ver != FCA_API_VER(FCA_API_ABI_MAJOR,FCA_API_ABI_MINOR)) {
-        FCA_ERROR("Unsupported FCA version: %s, please update FCA to v%d.%d", 
+        FCA_ERROR("Unsupported FCA version: %s, please update FCA to v%d.%d",
                   mca_coll_fca_component.fca_ops.get_version_string(),
                   FCA_API_ABI_MAJOR,
                   FCA_API_ABI_MINOR);
@@ -158,7 +156,9 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
 
     GET_FCA_SYM(init);
     GET_FCA_SYM(cleanup);
+#ifdef OMPI_FCA_PROGRESS
     GET_FCA_SYM(progress);
+#endif
     GET_FCA_SYM(comm_new);
     GET_FCA_SYM(comm_end);
     GET_FCA_SYM(get_rank_info);
@@ -170,10 +170,10 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
     GET_FCA_SYM(do_all_reduce);
     GET_FCA_SYM(do_bcast);
     GET_FCA_SYM(do_barrier);
+#ifdef OMPI_FCA_ALLGATHER
     GET_FCA_SYM(do_allgather);
     GET_FCA_SYM(do_allgatherv);
-    GET_FCA_SYM(maddr_ib_pton);
-    GET_FCA_SYM(maddr_inet_pton);
+#endif
     GET_FCA_SYM(parse_spec_file);
     GET_FCA_SYM(free_init_spec);
     GET_FCA_SYM(translate_mpi_op);
@@ -212,8 +212,6 @@ static void mca_coll_fca_close_fca_lib(void)
     dlclose(mca_coll_fca_component.fca_lib_handle);
     mca_coll_fca_component.fca_lib_handle = NULL;
 }
-
-
 
 static int fca_register(void)
 {

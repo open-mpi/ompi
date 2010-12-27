@@ -180,7 +180,8 @@ int mca_coll_fca_bcast(void *buff, int count, struct ompi_datatype_t *datatype,
 
     FCA_VERBOSE(5,"Using FCA Bcast");
     spec.buf  = buff;
-    spec.root = root;
+    mca_coll_fca_get_bcast_root(root, fca_module->local_ranks,
+                                fca_module->num_local_procs, &spec);
     ret = mca_coll_fca_component.fca_ops.do_bcast(fca_module->fca_comm, &spec);
     if (ret < 0) {
         if (ret == -EUSEMPI) {
@@ -208,12 +209,11 @@ int mca_coll_fca_reduce(void *sbuf, void *rbuf, int count,
                         int root, struct ompi_communicator_t *comm,
                         mca_coll_base_module_t *module)
 {
-
     mca_coll_fca_module_t *fca_module = (mca_coll_fca_module_t*)module;
     fca_reduce_spec_t spec;
     int ret;
 
-    spec.root = root;
+    mca_coll_fca_get_reduce_root(root, fca_module->rank, &spec);
     spec.sbuf = sbuf;
     spec.rbuf = rbuf;
     if (mca_coll_fca_fill_reduce_spec(count, dtype, op, &spec,
@@ -293,6 +293,7 @@ int mca_coll_fca_allgather(void *sbuf, int scount, struct ompi_datatype_t *sdtyp
                            mca_coll_base_module_t *module)
 {
     mca_coll_fca_module_t *fca_module = (mca_coll_fca_module_t*)module;
+#ifdef OMPI_FCA_ALLGATHER
     fca_gather_spec_t spec = {0,};
     int ret;
 
@@ -329,6 +330,7 @@ int mca_coll_fca_allgather(void *sbuf, int scount, struct ompi_datatype_t *sdtyp
     return OMPI_SUCCESS;
 
 orig_allgather:
+#endif
     return fca_module->previous_allgather(sbuf, scount, sdtype, rbuf, rcount, rdtype,
                                           comm, fca_module->previous_allgather_module);
 }
@@ -342,6 +344,7 @@ int mca_coll_fca_allgatherv(void *sbuf, int scount,
                            mca_coll_base_module_t *module)
 {
     mca_coll_fca_module_t *fca_module = (mca_coll_fca_module_t*)module;
+#ifdef OMPI_FCA_ALLGATHER
     fca_gatherv_spec_t spec;
     int relemsize;
     int comm_size;
@@ -388,6 +391,7 @@ int mca_coll_fca_allgatherv(void *sbuf, int scount,
     return OMPI_SUCCESS;
 
 orig_allgatherv:
+#endif
     return fca_module->previous_allgatherv(sbuf, scount, sdtype, rbuf, rcounts,
                                            disps, rdtype, comm,
                                            fca_module->previous_allgatherv_module);
@@ -419,7 +423,6 @@ int mca_coll_fca_alltoallv(void *sbuf, int *scounts, int *sdisps,
                                           comm, fca_module->previous_alltoallv_module);
 }
 
-
 int mca_coll_fca_alltoallw(void *sbuf, int *scounts, int *sdisps,
                            struct ompi_datatype_t **sdtypes,
                            void *rbuf, int *rcounts, int *rdisps,
@@ -432,7 +435,6 @@ int mca_coll_fca_alltoallw(void *sbuf, int *scounts, int *sdisps,
     return fca_module->previous_alltoallw(sbuf, scounts, sdisps, sdtypes, rbuf, rcounts, rdisps, rdtypes,
                                           comm, fca_module->previous_alltoallw_module);
 }
-
 
 int mca_coll_fca_gather(void *sbuf, int scount,
                         struct ompi_datatype_t *sdtype,
@@ -471,5 +473,3 @@ int mca_coll_fca_reduce_scatter(void *sbuf, void *rbuf, int *rcounts,
     return fca_module->previous_reduce_scatter(sbuf, rbuf, rcounts, dtype, op,
                                           comm, fca_module->previous_reduce_scatter_module);
 }
-
-

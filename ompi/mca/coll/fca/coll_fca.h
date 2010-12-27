@@ -10,9 +10,8 @@
 #ifndef MCA_COLL_FCA_H
 #define MCA_COLL_FCA_H
 
-#include <fca_api.h>
-
 #include "ompi_config.h"
+
 #include "mpi.h"
 #include "opal/mca/mca.h"
 #include "ompi/mca/coll/coll.h"
@@ -21,6 +20,8 @@
 #include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/op/op.h"
+
+#include "coll_fca_api.h"
 #include "coll_fca_debug.h"
 
 #ifdef OMPI_DATATYPE_MAX_PREDEFINED
@@ -47,45 +48,7 @@ BEGIN_C_DECLS
  * Used to load the library dynamically.
  */
 
-struct mca_coll_fca_fca_ops_t {
 
-    /* FCA Context operations */
-    int (*init)(fca_init_spec_t *spec, fca_t **context);
-    void (*cleanup)(fca_t *context);
-    void (*progress)(fca_t *context);
-
-    /* Fabric communicator creation */
-    int (*comm_new)(fca_t *context, fca_comm_new_spec_t *spec, fca_comm_desc_t *comm_desc);
-    int (*comm_end)(fca_t *context, int comm_id);
-    void* (*get_rank_info)(fca_t *context, int *size);
-    void (*free_rank_info)(void *rank_info);
-
-    /* Local communicator creation */
-    int (*comm_init)(fca_t *context, fca_comm_init_spec_t *spec, fca_comm_t** fca_comm);
-    void (*comm_destroy)(fca_comm_t *comm);
-    int (*comm_get_caps)(fca_comm_t *comm, fca_comm_caps_t *caps);
-
-    /* Collectives supported by FCA */
-    int (*do_reduce)(fca_comm_t *comm, fca_reduce_spec_t *spec);
-    int (*do_all_reduce)(fca_comm_t *comm, fca_reduce_spec_t *spec);
-    int (*do_bcast)(fca_comm_t *comm, fca_bcast_spec_t *spec);
-    int (*do_allgather)(fca_comm_t *comm, fca_gather_spec_t *spec);
-    int (*do_allgatherv)(fca_comm_t *comm, fca_gatherv_spec_t *spec);
-    int (*do_barrier)(fca_comm_t *comm);
-
-    /* Helper functions */
-    unsigned long (*get_version)(void);
-    char * (*get_version_string)(void);
-    int (*maddr_ib_pton)(const char *mlid_str, const char *mgid_str, fca_mcast_addr_t *dst);
-    int (*maddr_inet_pton)(int af, const char *src, fca_mcast_addr_t *dst);
-    fca_init_spec_t *(*parse_spec_file)(char* spec_ini_file);
-    void (*free_init_spec)(fca_init_spec_t *fca_init_spec);
-    int (*translate_mpi_op)(char *mpi_op);
-    int (*translate_mpi_dtype)(char *mpi_dtype);
-    int (*get_dtype_size)(int dtype);
-    const char* (*strerror)(int code);
-};
-typedef struct mca_coll_fca_fca_ops_t mca_coll_fca_fca_ops_t;
 
 /**
  * FCA data type information
@@ -184,8 +147,8 @@ struct mca_coll_fca_component_t {
     int   fca_np;
 
     /* FCA global stuff */
-    void *fca_lib_handle;                              /* FCA dynamic library */
-    mca_coll_fca_fca_ops_t fca_ops;                         /* FCA operations */
+    void *fca_lib_handle;                               /* FCA dynamic library */
+    mca_coll_fca_ops_t fca_ops;                         /* FCA operations */
     fca_t *fca_context;                                 /* FCA context handle */
     mca_coll_fca_dtype_info_t fca_dtypes[FCA_DT_MAX_PREDEFINED]; /* FCA dtype translation */
     mca_coll_fca_op_info_t fca_reduce_ops[FCA_MAX_OPS]; /* FCA op translation */
