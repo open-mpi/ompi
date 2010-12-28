@@ -170,7 +170,7 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
     GET_FCA_SYM(do_all_reduce);
     GET_FCA_SYM(do_bcast);
     GET_FCA_SYM(do_barrier);
-#ifdef OMPI_FCA_ALLGATHER
+#if OMPI_FCA_ALLGATHER == 1
     GET_FCA_SYM(do_allgather);
     GET_FCA_SYM(do_allgatherv);
 #endif
@@ -260,74 +260,74 @@ static int fca_register(void)
     mca_base_param_reg_int(c, "enable_barrier",
                            "[1|0|] Enable/Disable FCA Barrier support",
                            false, false,
-                           1,
+                           OMPI_FCA_BCAST,
                            &mca_coll_fca_component.fca_enable_barrier);
 
     mca_base_param_reg_int(c, "enable_bcast",
                            "[1|0|] Enable/Disable FCA Bcast support",
                            false, false,
-                           1,
+                           OMPI_FCA_BCAST,
                            &mca_coll_fca_component.fca_enable_bcast);
 
     mca_base_param_reg_int(c, "enable_reduce",
                            "[1|0|] Enable/Disable FCA Reduce support",
                            false, false,
-                           1,
+                           OMPI_FCA_REDUCE,
                            &mca_coll_fca_component.fca_enable_reduce);
 
     mca_base_param_reg_int(c, "enable_reduce_scatter",
                            "[1|0|] Enable/Disable FCA Reduce support",
                            false, false,
-                           0,
+                           OMPI_FCA_REDUCE_SCATTER,
                            &mca_coll_fca_component.fca_enable_reduce_scatter);
 
     mca_base_param_reg_int(c, "enable_allreduce",
                            "[1|0|] Enable/Disable FCA Allreduce support",
                            false, false,
-                           1,
+                           OMPI_FCA_ALLREDUCE,
                            &mca_coll_fca_component.fca_enable_allreduce);
 
     mca_base_param_reg_int(c, "enable_allgather",
                            "[1|0|] Enable/Disable FCA Allgather support",
                            false, false,
-                           1,
+                           OMPI_FCA_ALLGATHER,
                            &mca_coll_fca_component.fca_enable_allgather);
 
     mca_base_param_reg_int(c, "enable_allgatherv",
                            "[1|0|] Enable/Disable FCA Allgatherv support",
                            false, false,
-                           1,
+                           OMPI_FCA_ALLGATHER,
                            &mca_coll_fca_component.fca_enable_allgatherv);
 
     mca_base_param_reg_int(c, "enable_gather",
                            "[1|0|] Enable/Disable FCA Gather support",
                            false, false,
-                           0,
+                           OMPI_FCA_GATHER,
                            &mca_coll_fca_component.fca_enable_gather);
 
     mca_base_param_reg_int(c, "enable_gatherv",
                            "[1|0|] Enable/Disable FCA Gatherv support",
                            false, false,
-                           0,
+                           OMPI_FCA_GATHER,
                            &mca_coll_fca_component.fca_enable_gatherv);
 
 
     mca_base_param_reg_int(c, "enable_alltoall",
                            "[1|0|] Enable/Disable FCA AlltoAll support",
                            false, false,
-                           0,
+                           OMPI_FCA_ALLTOALL,
                            &mca_coll_fca_component.fca_enable_alltoall);
 
     mca_base_param_reg_int(c, "enable_alltoallv",
                            "[1|0|] Enable/Disable FCA AlltoAllv support",
                            false, false,
-                           0,
+                           OMPI_FCA_ALLTOALLV,
                            &mca_coll_fca_component.fca_enable_alltoallv);
 
     mca_base_param_reg_int(c, "enable_alltoallw",
                            "[1|0|] Enable/Disable FCA AlltoAllw support",
                            false, false,
-                           0,
+                           OMPI_FCA_ALLTOALLW,
                            &mca_coll_fca_component.fca_enable_alltoallw);
 
 

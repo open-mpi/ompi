@@ -11,12 +11,33 @@
 
 #include <fca_api.h>
 
+#ifndef FCA_API
+#define OMPI_FCA_VERSION 12
+#else
+#define OMPI_FCA_VERSION FCA_API
+#endif
+
 /*
  * FCA API compatibility layer.
  * MPI build must define an FCA version macro.
  */
 
-#ifdef OMPI_FCA_VERSION_1_2
+#define OMPI_FCA_BARRIER            1
+#define OMPI_FCA_BCAST              1
+#define OMPI_FCA_REDUCE             1
+#define OMPI_FCA_ALLREDUCE          1
+
+#define OMPI_FCA_REDUCE_SCATTER     0
+#define OMPI_FCA_GATHER             0
+#define OMPI_FCA_GATHERV            0
+#define OMPI_FCA_ALLTOALL           0
+#define OMPI_FCA_ALLTOALLV          0
+#define OMPI_FCA_ALLTOALLW          0
+
+
+#if OMPI_FCA_VERSION == 12
+
+#define OMPI_FCA_ALLGATHER          0
 
 #define FCA_API_ABI_MAJOR    1
 #define FCA_API_ABI_MINOR    2
@@ -92,11 +113,12 @@ static inline void mca_coll_fca_get_reduce_root(int root_rank, int my_rank,
     spec->is_root = root_rank == my_rank;
 }
 
-#elif OMPI_FCA_VERSION_2_0
+#elif OMPI_FCA_VERSION == 20
+
+#define OMPI_FCA_ALLGATHER          1
 
 #define FCA_API_ABI_MAJOR    2
 #define FCA_API_ABI_MINOR    0
-#define OMPI_FCA_ALLGATHER   1
 #define OMPI_FCA_PROGRESS    1
 
 

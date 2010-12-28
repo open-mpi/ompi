@@ -293,7 +293,7 @@ int mca_coll_fca_allgather(void *sbuf, int scount, struct ompi_datatype_t *sdtyp
                            mca_coll_base_module_t *module)
 {
     mca_coll_fca_module_t *fca_module = (mca_coll_fca_module_t*)module;
-#ifdef OMPI_FCA_ALLGATHER
+#if OMPI_FCA_ALLGATHER == 1
     fca_gather_spec_t spec = {0,};
     int ret;
 
@@ -344,7 +344,7 @@ int mca_coll_fca_allgatherv(void *sbuf, int scount,
                            mca_coll_base_module_t *module)
 {
     mca_coll_fca_module_t *fca_module = (mca_coll_fca_module_t*)module;
-#ifdef OMPI_FCA_ALLGATHER
+#if OMPI_FCA_ALLGATHER == 1
     fca_gatherv_spec_t spec;
     int relemsize;
     int comm_size;
