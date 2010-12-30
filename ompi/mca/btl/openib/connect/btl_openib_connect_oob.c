@@ -1108,6 +1108,7 @@ static int init_ud_qp(struct ibv_context *context_arg,
         return OMPI_ERROR;
     }
 
+    return OMPI_SUCCESS;
 }
 static void init_sa_mad(struct mca_btl_openib_sa_qp_cache *cache,
                         struct ib_mad_sa *sag,
@@ -1232,7 +1233,7 @@ static int init_device(struct ibv_context *context_arg,
     struct ibv_ah_attr aattr;
     struct ibv_port_attr pattr;
     struct ibv_recv_wr *brwr;
-    int i, rc;
+    int rc;
 
     cache->context = ibv_open_device(context_arg->device);
     if (NULL == cache->context) {
@@ -1320,7 +1321,7 @@ static int get_pathrecord_sl(struct ibv_context *context_arg,
     struct ibv_sge ssge;
     struct mca_btl_openib_sa_qp_cache *cache;
     long page_size = sysconf(_SC_PAGESIZE);
-    int i, rc;
+    int rc;
 
     /* search for a cached item */
     for (cache = sa_qp_cache; cache; cache = cache->next) {
