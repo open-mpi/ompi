@@ -245,12 +245,12 @@ static void __destroy_fca_comm(mca_coll_fca_module_t *fca_module)
 #define FCA_SAVE_PREV_COLL_API(__api) do {\
     fca_module->previous_ ## __api            = comm->c_coll.coll_ ## __api;\
     fca_module->previous_ ## __api ## _module = comm->c_coll.coll_ ## __api ## _module;\
-    OBJ_RETAIN(fca_module->previous_ ## __api ## _module);\
     if (!comm->c_coll.coll_ ## __api || !comm->c_coll.coll_ ## __api ## _module) {\
-        FCA_VERBOSE(1, "(%d/%s): no underlying " # __api"; disqualifying myself",\
+	    FCA_VERBOSE(1, "(%d/%s): no underlying " # __api"; disqualifying myself",\
                     comm->c_contextid, comm->c_name);\
         return OMPI_ERROR;\
     }\
+    OBJ_RETAIN(fca_module->previous_ ## __api ## _module);\
 } while(0)
 
 static int __save_coll_handlers(mca_coll_fca_module_t *fca_module)
