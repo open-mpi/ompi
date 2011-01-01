@@ -16,6 +16,7 @@ AM_CPPFLAGS = $(coll_fca_CPPFLAGS) -DCOLL_FCA_HOME=\"$(coll_fca_HOME)\" -I$(coll
 coll_fca_sources = \
         coll_fca.h \
         coll_fca_debug.h \
+        coll_fca_api.h \
         coll_fca_module.c \
         coll_fca_component.c \
         coll_fca_ops.c
