@@ -74,14 +74,15 @@ the type of data is set to
 and the distribution of data to processes is set to 
 .I filetype.
 In addition, MPI_File_set_view resets the independent file pointers and
-the shared file pointer to zero. MPI_File_set_view is collective; all
-processes in the group must pass identical values for 
-.I fh
-and 
-.I etype;
-values for 
-.I disp,
-.I filetype,
+the shared file pointer to zero. MPI_File_set_view is collective across the 
+.IR fh ; 
+all processes in the group must pass identical values for 
+.IR datarep 
+and provide an
+.I etype
+with an identical extent.  The values for
+.IR disp , 
+.IR filetype ,
 and 
 .I info
 may vary. It is erroneous to use the shared file pointer data-access
