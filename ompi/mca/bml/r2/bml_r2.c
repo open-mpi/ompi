@@ -538,12 +538,13 @@ static int mca_bml_r2_del_proc_btl(ompi_proc_t* proc, mca_btl_base_module_t* btl
         /* compute total_bandwidth and 
            reset max_send_size to the min of all btl's */
         total_bandwidth = 0;
+        ep->btl_max_send_size = -1;
         for(b=0; b< mca_bml_base_btl_array_get_size(&ep->btl_send); b++) {
             bml_btl = mca_bml_base_btl_array_get_index(&ep->btl_send, b);
             ep_btl = bml_btl->btl;
 
             total_bandwidth += ep_btl->btl_bandwidth;
-            if (ep_btl->btl_max_send_size < ep->btl_max_send_size) {
+            if (ep->btl_max_send_size > ep_btl->btl_max_send_size) {
                 ep->btl_max_send_size = ep_btl->btl_max_send_size;
             }
         }
@@ -564,8 +565,10 @@ static int mca_bml_r2_del_proc_btl(ompi_proc_t* proc, mca_btl_base_module_t* btl
     /* remove btl from RDMA list */
     if(mca_bml_base_btl_array_remove(&ep->btl_rdma, btl)) { 
         
-        /* computer total bandwidth */
+        /* compute total bandwidth */
         total_bandwidth = 0;
+        ep->btl_pipeline_send_length = 0;
+        ep->btl_send_limit = 0;
         for(b=0; b< mca_bml_base_btl_array_get_size(&ep->btl_rdma); b++) {
             bml_btl = mca_bml_base_btl_array_get_index(&ep->btl_rdma, b);
             ep_btl = bml_btl->btl;
