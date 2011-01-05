@@ -33,7 +33,6 @@
 #include "opal/util/argv.h"
 #include "opal/util/if.h"
 #include "opal/util/net.h"
-#include "orte/mca/oob/tcp/oob_tcp_addr.h"
 
 #include "btl_tcp.h"
 #include "btl_tcp_proc.h"
