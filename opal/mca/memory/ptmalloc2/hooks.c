@@ -661,6 +661,10 @@ public_sET_STATe(Void_t* msptr)
    So we can basically have some hard-coded tests for things to see if
    we want to setup to use our internal ptmalloc2 or not. */
 
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+
 static void *opal_memory_ptmalloc2_malloc_hook(size_t sz, 
                                                const __malloc_ptr_t caller)
 {
