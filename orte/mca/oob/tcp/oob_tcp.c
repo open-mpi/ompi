@@ -474,6 +474,7 @@ static int
 mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t af_family)
 {
     int flags, index, range = 0, port=0;
+    uint16_t sport=0;
     struct sockaddr_storage inaddr;
     opal_socklen_t addrlen;
 
@@ -569,10 +570,11 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
 #endif
     
     for (index = 0;  index < range; index++ ) {
+        sport = port + index;
         if (AF_INET == af_family) {
-            ((struct sockaddr_in*) &inaddr)->sin_port = port + index;
+            ((struct sockaddr_in*) &inaddr)->sin_port = htons(sport);
         } else if (AF_INET6 == af_family) {
-            ((struct sockaddr_in6*) &inaddr)->sin6_port = port + index;
+            ((struct sockaddr_in6*) &inaddr)->sin6_port = htons(sport);
         } else {
             return ORTE_ERROR;
         }
