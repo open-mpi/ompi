@@ -716,12 +716,14 @@ ompi_osc_rdma_passive_unlock_complete(ompi_osc_rdma_module_t *module)
         OBJ_RELEASE(new_pending);
     }
 
+    OBJ_DESTRUCT(&copy_unlock_acks);
+
     /* if we were really unlocked, see if we have another lock request
        we can satisfy */
     OPAL_THREAD_LOCK(&(module->m_lock));
-    new_pending = (ompi_osc_rdma_pending_lock_t*) 
-        opal_list_remove_first(&(module->m_locks_pending));
     if (0 == module->m_lock_status) {
+        new_pending = (ompi_osc_rdma_pending_lock_t*) 
+            opal_list_remove_first(&(module->m_locks_pending));
         if (NULL != new_pending) {
             ompi_win_append_mode(module->m_win, OMPI_WIN_EXPOSE_EPOCH);
             /* set lock state and generate a lock request */
