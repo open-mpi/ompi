@@ -3,6 +3,7 @@
  * Copyright (c) 2007-2008 Chelsio, Inc. All rights reserved.
  * Copyright (c) 2008      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2009      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -41,7 +42,6 @@
 #ifdef HAVE_DIRENT_H
 #include <dirent.h>
 #endif
-#include <malloc.h>
 #include <stddef.h>
 
 #include "opal/util/output.h"

@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2008      Chelsio, Inc. All rights reserved.
  * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  *
  * Additional copyrights may follow
  *
@@ -15,7 +16,7 @@
 
 #if OMPI_HAVE_RDMACM
 #include <rdma/rdma_cma.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "opal/util/argv.h"
