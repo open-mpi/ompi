@@ -44,7 +44,7 @@ const char *ibv_get_sysfs_path(void);
 #endif
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <stddef.h>
 
 #include "opal/mca/event/event.h"
