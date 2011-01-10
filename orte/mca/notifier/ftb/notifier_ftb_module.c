@@ -36,6 +36,9 @@
 
 #include "orte/mca/ess/ess.h"
 #include "orte/util/show_help.h"
+#include "orte/mca/snapc/snapc.h"
+#include "orte/mca/snapc/base/base.h"
+
 #include "orte/mca/notifier/base/base.h"
 #include "notifier_ftb.h"
 
@@ -118,29 +121,25 @@ static const char* get_ftb_event_severity(orte_notifier_base_severity_t severity
 
 static const char* get_ftb_event_name(int errnum)
 {
-    /* If it an OMPI error, translate it to an equivalent FTB event */
-    if (ORTE_SUCCESS > errnum) {
-        switch (errnum) {
+    switch (errnum) {
 
-        case ORTE_SNAPC_CKPT_STATE_ESTABLISHED:
-        case ORTE_SNAPC_CKPT_STATE_RECOVERED:
-            return FTB_EVENT(FTB_MPI_PROCS_CKPTED);
+    case ORTE_SNAPC_CKPT_STATE_ESTABLISHED:
+        return FTB_EVENT(FTB_MPI_PROCS_CKPTED);
 
-        case ORTE_SNAPC_CKPT_STATE_NO_CKPT:
-        case ORTE_SNAPC_CKPT_STATE_ERROR:
-            return FTB_EVENT(FTB_MPI_PROCS_CKPT_FAIL);
+    case ORTE_SNAPC_CKPT_STATE_NO_CKPT:
+    case ORTE_SNAPC_CKPT_STATE_ERROR:
+        return FTB_EVENT(FTB_MPI_PROCS_CKPT_FAIL);
 
-        case ORTE_ERR_CONNECTION_REFUSED:
-        case ORTE_ERR_CONNECTION_FAILED:
-        case ORTE_ERR_UNREACH:
-            return FTB_EVENT(FTB_MPI_PROCS_UNREACHABLE);
+    case ORTE_ERR_CONNECTION_REFUSED:
+    case ORTE_ERR_CONNECTION_FAILED:
+    case ORTE_ERR_UNREACH:
+        return FTB_EVENT(FTB_MPI_PROCS_UNREACHABLE);
 
-        case ORTE_ERR_COMM_FAILURE:
-            return FTB_EVENT(FTB_MPI_PROCS_COMM_ERROR);
+    case ORTE_ERR_COMM_FAILURE:
+        return FTB_EVENT(FTB_MPI_PROCS_COMM_ERROR);
 
-        default:
-            return NULL;
-        }
+    default:
+        return NULL;
     }
 
     return NULL;
