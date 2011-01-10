@@ -474,7 +474,6 @@ int opal_ifkindextoname(int if_kindex, char* if_name, int length)
 bool
 opal_ifislocal(const char *hostname)
 {
-    int ret;
 #if OPAL_WANT_IPV6
     char addrname[NI_MAXHOST]; /* should be larger than ADDRLEN, but I think
                                   they really mean IFNAMESIZE */
@@ -482,9 +481,11 @@ opal_ifislocal(const char *hostname)
     char addrname[ADDRLEN + 1];
 #endif
 
-    ret = opal_ifaddrtoname(hostname, addrname, ADDRLEN);
+    if (OPAL_SUCCESS == opal_ifaddrtoname(hostname, addrname, ADDRLEN)) {
+        return true;
+    }
 
-    return (OPAL_SUCCESS == ret) ? true : false;
+    return false;
 }
 
 static uint32_t parse_dots(char *addr)
