@@ -1013,10 +1013,6 @@ static int dyn_init(void)
     int root=0, rc;
     bool send_first = true;
     ompi_communicator_t *newcomm=NULL;
-    ompi_group_t *group = NULL;
-    ompi_errhandler_t *errhandler = NULL;
-    
-    ompi_communicator_t *oldcomm;
     
     /* if env-variable is set, we are a dynamically spawned
         * child - parse port and call comm_connect_accept */
@@ -1035,21 +1031,17 @@ static int dyn_init(void)
         return rc;
     }
     
-    /* Set the parent communicator */
-    ompi_mpi_comm_parent = newcomm;
-    
     /* originally, we set comm_parent to comm_null (in comm_init),
      * now we have to decrease the reference counters to the according
      * objects
      */
-    
-    oldcomm = &ompi_mpi_comm_null.comm;
-    OBJ_RELEASE(oldcomm);
-    group = &ompi_mpi_group_null.group;
-    OBJ_RELEASE(group);
-    errhandler = &ompi_mpi_errors_are_fatal.eh;
-    OBJ_RELEASE(errhandler);
-    
+    OBJ_RELEASE(ompi_mpi_comm_parent->c_local_group);
+    OBJ_RELEASE(ompi_mpi_comm_parent->error_handler);
+    OBJ_RELEASE(ompi_mpi_comm_parent);
+
+    /* Set the parent communicator */
+    ompi_mpi_comm_parent = newcomm;
+
     /* Set name for debugging purposes */
     snprintf(newcomm->c_name, MPI_MAX_OBJECT_NAME, "MPI_COMM_PARENT");
     newcomm->c_flags |= OMPI_COMM_NAMEISSET;
