@@ -30,6 +30,18 @@
 /* Define to 1 if you have the `clzl' function. */
 #undef HAVE_CLZL
 
+/* Define to 1 if we have -lcuda */
+#undef HAVE_CUDA
+
+/* Define to 1 if we have -lcudart */
+#undef HAVE_CUDART
+
+/* Define to 1 if you have the <cuda.h> header file. */
+#undef HAVE_CUDA_H
+
+/* Define to 1 if you have the <cuda_runtime_api.h> header file. */
+#undef HAVE_CUDA_RUNTIME_API_H
+
 /* Define to 1 if you have the <curses.h> header file. */
 #undef HAVE_CURSES_H
 
@@ -84,6 +96,9 @@
 /* Define to 1 if you have the `flsl' function. */
 #undef HAVE_FLSL
 
+/* Define to 1 if you have the `getpagesize' function. */
+#undef HAVE_GETPAGESIZE
+
 /* Define to 1 if the system has the type `GROUP_AFFINITY'. */
 #undef HAVE_GROUP_AFFINITY
 
@@ -132,17 +147,32 @@
 /* Define to 1 if you have the <mach/mach_init.h> header file. */
 #undef HAVE_MACH_MACH_INIT_H
 
+/* Define to 1 if you have the <malloc.h> header file. */
+#undef HAVE_MALLOC_H
+
+/* Define to 1 if you have the `memalign' function. */
+#undef HAVE_MEMALIGN
+
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
+/* Define to 1 if you have the <myriexpress.h> header file. */
+#undef HAVE_MYRIEXPRESS_H
+
 /* Define to 1 if you have the `nl_langinfo' function. */
 #undef HAVE_NL_LANGINFO
+
+/* Define to 1 if you have the <numaif.h> header file. */
+#undef HAVE_NUMAIF_H
 
 /* Define to 1 if the system has the type `NUMA_NODE_RELATIONSHIP'. */
 #undef HAVE_NUMA_NODE_RELATIONSHIP
 
 /* Define to 1 if you have the `openat' function. */
 #undef HAVE_OPENAT
+
+/* Define to 1 if you have the `posix_memalign' function. */
+#undef HAVE_POSIX_MEMALIGN
 
 /* Define to 1 if the system has the type `PROCESSOR_CACHE_TYPE'. */
 #undef HAVE_PROCESSOR_CACHE_TYPE
@@ -153,6 +183,13 @@
 /* Define to 1 if the system has the type `PROCESSOR_RELATIONSHIP'. */
 #undef HAVE_PROCESSOR_RELATIONSHIP
 
+/* Define to 1 if the system has the type `PSAPI_WORKING_SET_EX_BLOCK'. */
+#undef HAVE_PSAPI_WORKING_SET_EX_BLOCK
+
+/* Define to 1 if the system has the type `PSAPI_WORKING_SET_EX_INFORMATION'.
+   */
+#undef HAVE_PSAPI_WORKING_SET_EX_INFORMATION
+
 /* Define to 1 if you have the <pthread_np.h> header file. */
 #undef HAVE_PTHREAD_NP_H
 
@@ -162,6 +199,9 @@
 /* Define to 1 if you have the `putwc' function. */
 #undef HAVE_PUTWC
 
+/* Define to 1 if the system has the type `RelationProcessorPackage'. */
+#undef HAVE_RELATIONPROCESSORPACKAGE
+
 /* Define to 1 if you have the `setlocale' function. */
 #undef HAVE_SETLOCALE
 
@@ -170,6 +210,9 @@
 
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the `strftime' function. */
+#undef HAVE_STRFTIME
 
 /* Define to 1 if you have the <strings.h> header file. */
 #undef HAVE_STRINGS_H
@@ -200,6 +243,9 @@
 /* Define to 1 if you have the <sys/lgrp_user.h> header file. */
 #undef HAVE_SYS_LGRP_USER_H
 
+/* Define to 1 if you have the <sys/mman.h> header file. */
+#undef HAVE_SYS_MMAN_H
+
 /* Define to 1 if you have the <sys/param.h> header file. */
 #undef HAVE_SYS_PARAM_H
 
@@ -212,8 +258,14 @@
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
+/* Define to 1 if you have the <sys/utsname.h> header file. */
+#undef HAVE_SYS_UTSNAME_H
+
 /* Define to 1 if you have the <term.h> header file. */
 #undef HAVE_TERM_H
+
+/* Define to 1 if you have the `uname' function. */
+#undef HAVE_UNAME
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
@@ -353,11 +405,20 @@
 /* Define to 1 if you have a library providing the termcap interface */
 #undef HWLOC_HAVE_LIBTERMCAP
 
+/* Define to 1 if mbind is available. */
+#undef HWLOC_HAVE_MBIND
+
+/* Define to 1 if migrate_pages is available. */
+#undef HWLOC_HAVE_MIGRATE_PAGES
+
 /* Define to 1 if glibc provides the old prototype of sched_setaffinity() */
 #undef HWLOC_HAVE_OLD_SCHED_SETAFFINITY
 
 /* `Define to 1 if you have pthread_getthrds_np' */
 #undef HWLOC_HAVE_PTHREAD_GETTHRDS_NP
+
+/* Define to 1 if set_mempolicy is available. */
+#undef HWLOC_HAVE_SET_MEMPOLICY
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HWLOC_HAVE_STDINT_H
@@ -370,6 +431,9 @@
 
 /* Define to 1 if you have the `xml' library. */
 #undef HWLOC_HAVE_XML
+
+/* Define to 1 if the _syscall3 macro works */
+#undef HWLOC_HAVE__SYSCALL3
 
 /* Define to 1 on HP-UX */
 #undef HWLOC_HPUX_SYS

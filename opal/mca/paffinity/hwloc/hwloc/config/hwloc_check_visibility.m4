@@ -11,7 +11,8 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
 # and renamed for hwloc:
-# Copyright (c) 2009 INRIA, Université Bordeaux 1
+# Copyright (c) 2009 INRIA
+# Copyright (c) 2009 Université Bordeaux 1
 # Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -50,19 +51,30 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-
 # _HWLOC_CHECK_VISIBILITY
 # --------------------------------------------------------
 AC_DEFUN([_HWLOC_CHECK_VISIBILITY],[
-    AC_REQUIRE([AC_PROG_GREP])
+    # Be safe for systems that have ancient Autoconf's (e.g., RHEL5)
+    m4_ifdef([AC_PROG_GREP], 
+             [AC_REQUIRE([AC_PROG_GREP])],
+             [GREP=grep])
 
-    # Check if the compiler has support for visibility, like some versions of gcc, icc.
+    msg="whether to enable visibility"
+    # Check if the compiler has support for visibility, like some
+    # versions of gcc, icc.
     AC_ARG_ENABLE(visibility, 
         AC_HELP_STRING([--enable-visibility],
             [enable visibility feature of certain compilers/linkers (default: enabled)]))
+
+    case ${target} in
+      *-*-aix*|*-*-mingw*|*-*-cygwin*|*-*-hpux*)
+        enable_visibility=no
+        ;;
+    esac
+
     if test "$enable_visibility" = "no"; then
-        AC_MSG_CHECKING([enable symbol visibility])
-        AC_MSG_RESULT([no]) 
+        AC_MSG_CHECKING([$msg])
+        AC_MSG_RESULT([no (disabled)]) 
         have_visibility=0
     else
         CFLAGS_orig="$CFLAGS"
@@ -70,41 +82,40 @@ AC_DEFUN([_HWLOC_CHECK_VISIBILITY],[
         hwloc_add=
         AC_CACHE_CHECK([if $CC supports -fvisibility],
             [hwloc_cv_cc_fvisibility],
-            [AC_TRY_LINK([
-                    #include <stdio.h>
+            [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
                     __attribute__((visibility("default"))) int foo;
-                    void bar(void) { fprintf(stderr, "bar\n"); };
-                    ],[],
+                    ]],[[int i;]])],
+                    [hwloc_cv_cc_fvisibility=yes],
                     [if test -s conftest.err ; then
                         $GREP -iq "visibility" conftest.err
                         if test "$?" = "0" ; then
-                            hwloc_cv_cc_fvisibility="no"
+                            hwloc_cv_cc_fvisibility=no
                         else
-                            hwloc_cv_cc_fvisibility="yes"
+                            hwloc_cv_cc_fvisibility=yes
                         fi
                      else
-                        hwloc_cv_cc_fvisibility="yes"
+                        hwloc_cv_cc_fvisibility=yes
                      fi],
-                    [hwloc_cv_cc_fvisibility="no"])
+                    [hwloc_cv_cc_fvisibility=no])
                 ])
 
         if test "$hwloc_cv_cc_fvisibility" = "yes" ; then
             hwloc_add=" -fvisibility=hidden"
             have_visibility=1
-            AC_MSG_CHECKING([enable symbol visibility])
-            AC_MSG_RESULT([yes]) 
+            AC_MSG_CHECKING([$msg])
+            AC_MSG_RESULT([yes (via$hwloc_add)]) 
         elif test "$enable_visibility" = "yes"; then
             AC_MSG_ERROR([Symbol visibility support requested but compiler does not seem to support it.  Aborting])
         else 
-            AC_MSG_CHECKING([enable symbol visibility])
-            AC_MSG_RESULT([no]) 
+            AC_MSG_CHECKING([$msg])
+            AC_MSG_RESULT([no (unsupported)]) 
             have_visibility=0
         fi
         CFLAGS=$CFLAGS_orig
         HWLOC_VISIBILITY_CFLAGS=$hwloc_add
         unset hwloc_add 
     fi
+
     AC_DEFINE_UNQUOTED([HWLOC_C_HAVE_VISIBILITY], [$have_visibility],
             [Whether C compiler supports -fvisibility])
-
 ])

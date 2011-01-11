@@ -168,22 +168,21 @@ static int module_init(void)
 static int module_set(opal_paffinity_base_cpu_set_t mask)
 {
     int i, ret = OPAL_SUCCESS;
-    hwloc_cpuset_t set;
+    hwloc_bitmap_t set;
     hwloc_topology_t *t = &mca_paffinity_hwloc_component.topology;
 
-    set = hwloc_cpuset_alloc();
-    hwloc_cpuset_zero(set);
+    set = hwloc_bitmap_alloc();
+    hwloc_bitmap_zero(set);
     for (i = 0; ((unsigned int) i) < OPAL_PAFFINITY_BITMASK_T_NUM_BITS; ++i) {
-        if (OPAL_PAFFINITY_CPU_ISSET(i, mask) && 
-            i < mca_paffinity_hwloc_component.cpuset_max_size) {
-            hwloc_cpuset_set(set, i);
+        if (OPAL_PAFFINITY_CPU_ISSET(i, mask)) {
+            hwloc_bitmap_set(set, i);
         }
     }
 
     if (0 != hwloc_set_cpubind(*t, set, 0)) {
         ret = OPAL_ERR_IN_ERRNO;
     }
-    hwloc_cpuset_free(set);
+    hwloc_bitmap_free(set);
 
     return ret;
 }
@@ -192,26 +191,25 @@ static int module_set(opal_paffinity_base_cpu_set_t mask)
 static int module_get(opal_paffinity_base_cpu_set_t *mask)
 {
     int i, ret = OPAL_SUCCESS;
-    hwloc_cpuset_t set;
+    hwloc_bitmap_t set;
     hwloc_topology_t *t = &mca_paffinity_hwloc_component.topology;
 
     if (NULL == mask) {
         return OPAL_ERR_BAD_PARAM;
     }
 
-    set = hwloc_cpuset_alloc();
+    set = hwloc_bitmap_alloc();
     if (0 != hwloc_get_cpubind(*t, set, 0)) {
         ret = OPAL_ERR_IN_ERRNO;
     } else {
         OPAL_PAFFINITY_CPU_ZERO(*mask);
         for (i = 0; ((unsigned int) i) < 8 * sizeof(*mask); i++) {
-            if (i < mca_paffinity_hwloc_component.cpuset_max_size &&
-                hwloc_cpuset_isset(set, i)) {
+            if (hwloc_bitmap_isset(set, i)) {
                 OPAL_PAFFINITY_CPU_SET(i, *mask);
             }
         }
     }
-    hwloc_cpuset_free(set);
+    hwloc_bitmap_free(set);
 
     return ret;
 }
@@ -225,7 +223,6 @@ static int module_get(opal_paffinity_base_cpu_set_t *mask)
  */
 static int module_map_to_processor_id(int socket, int core, int *processor_id)
 {
-    unsigned i;
     hwloc_topology_t *t = &mca_paffinity_hwloc_component.topology;
     hwloc_obj_t obj;
 
@@ -248,27 +245,16 @@ static int module_map_to_processor_id(int socket, int core, int *processor_id)
                    hardware threads, of which there might be multiple
                    on this core). */
 
-                hwloc_cpuset_t good;
-                good = hwloc_cpuset_alloc();
+                hwloc_bitmap_t good;
+                good = hwloc_bitmap_alloc();
                 if (NULL == good) {
                     return OPAL_ERR_OUT_OF_RESOURCE;
                 }
-                hwloc_cpuset_and(good, obj->online_cpuset, 
+                hwloc_bitmap_and(good, obj->online_cpuset,
                                  obj->allowed_cpuset);
-                
-                for (i = 0;
-                     (int) i < mca_paffinity_hwloc_component.cpuset_max_size; 
-                     ++i) {
-                    if (hwloc_cpuset_isset(good, i)) {
-                        *processor_id = i;
-                        hwloc_cpuset_free(good);
-                        return OPAL_SUCCESS;
-                    }
-                }
-                
-                /* Huh.  This shouldn't happen. */
-                hwloc_cpuset_free(good);
-                return OPAL_ERR_NOT_FOUND;
+                *processor_id = hwloc_bitmap_first(good);
+                hwloc_bitmap_free(good);
+                return OPAL_SUCCESS;
             }
 
             /* If we found the right socket but not the right core, we
@@ -288,9 +274,9 @@ static int module_map_to_socket_core(int processor_id, int *socket, int *core)
 {
     hwloc_obj_t obj;
     hwloc_topology_t *t = &mca_paffinity_hwloc_component.topology;
-    hwloc_cpuset_t good;
+    hwloc_bitmap_t good;
 
-    good = hwloc_cpuset_alloc();
+    good = hwloc_bitmap_alloc();
     if (NULL == good) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
@@ -300,11 +286,11 @@ static int module_map_to_socket_core(int processor_id, int *socket, int *core)
     for (obj = hwloc_get_next_obj_by_type(*t, HWLOC_OBJ_CORE, NULL);
          NULL != obj; 
          obj = hwloc_get_next_obj_by_type(*t, HWLOC_OBJ_CORE, obj)) {
-        hwloc_cpuset_and(good, obj->online_cpuset, 
+        hwloc_bitmap_and(good, obj->online_cpuset, 
                          obj->allowed_cpuset);
 
         /* Does this core contain the processor_id in question? */
-        if (hwloc_cpuset_isset(good, processor_id)) {
+        if (hwloc_bitmap_isset(good, processor_id)) {
             *core = obj->os_index;
 
             /* Go upward from the core object until we find its parent
@@ -418,9 +404,8 @@ static int module_get_core_info(int socket, int *num_cores)
 static int module_get_physical_processor_id(int logical_processor_id,
                                             int *physical_processor_id)
 {
-    int i;
     hwloc_obj_t obj;
-    hwloc_cpuset_t good;
+    hwloc_bitmap_t good;
     hwloc_topology_t *t = &mca_paffinity_hwloc_component.topology;
 
     /* hwloc isn't able to find cores on all platforms.  Example:
@@ -436,26 +421,15 @@ static int module_get_physical_processor_id(int logical_processor_id,
 
     /* Found the right core (or PU).  Now find the processor ID of the
        first PU available in that core. */
-    good = hwloc_cpuset_alloc();
+    good = hwloc_bitmap_alloc();
     if (NULL == good) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
-    hwloc_cpuset_and(good, obj->online_cpuset, 
+    hwloc_bitmap_and(good, obj->online_cpuset, 
                      obj->allowed_cpuset);
-    
-    for (i = 0;
-         (int) i < mca_paffinity_hwloc_component.cpuset_max_size; 
-         ++i) {
-        if (hwloc_cpuset_isset(good, i)) {
-            hwloc_cpuset_free(good);
-            *physical_processor_id = i;
-            return OPAL_SUCCESS;
-        }
-    }
-    
-    /* Huh.  This shouldn't happen. */
-    hwloc_cpuset_free(good);
-    return OPAL_ERR_NOT_FOUND;
+    *physical_processor_id = hwloc_bitmap_first(good);
+    hwloc_bitmap_free(good);
+    return OPAL_SUCCESS;
 }
 
 /*

@@ -1,4 +1,6 @@
-Copyright © 2009 CNRS, INRIA, Université Bordeaux 1
+Copyright © 2009 CNRS
+Copyright © 2009-2010 INRIA
+Copyright © 2009-2010 Université Bordeaux 1
 Copyright © 2009-2010 Cisco Systems, Inc.  All rights reserved.
 
 $COPYRIGHT$
@@ -14,12 +16,74 @@ bug fixes (and other actions) for each version of hwloc since version
 0.9 (as initially released as "libtopology", then re-branded to "hwloc"
 in v0.9.1).
 
+Version 1.1.0
+-------------
+
+* API
+  + Increase HWLOC_API_VERSION to 0x00010100 so that API changes may be
+    detected at build-time.
+  + Add a memory binding interface.
+  + The cpuset API (hwloc/cpuset.h) is now deprecated. It is replaced by
+    the bitmap API (hwloc/bitmap.h) which offers the same features with more
+    generic names since it applies to CPU sets, node sets and more.
+    Backward compatibility with the cpuset API and ABI is still provided but
+    it will be removed in a future release.
+    Old types (hwloc_cpuset_t, ...) are still available as a way to clarify
+    what kind of hwloc_bitmap_t each API function manipulates.
+    Upgrading to the new API only requires to replace hwloc_cpuset_ function
+    calls with the corresponding hwloc_bitmap_ calls, with the following
+    renaming exceptions:
+    - hwloc_cpuset_cpu -> hwloc_bitmap_only
+    - hwloc_cpuset_all_but_cpu -> hwloc_bitmap_allbut
+    - hwloc_cpuset_from_string -> hwloc_bitmap_sscanf
+  + Add an `infos' array in each object to store couples of info names and
+    values. It enables generic storage of things like the old dmi board infos
+    that were previously stored in machine specific attributes.
+  + Add linesize cache attribute.
+* Features
+  + Bitmaps (and thus CPU sets and node sets) are dynamically (re-)allocated,
+    the maximal number of CPUs (HWLOC_NBMAXCPUS) has been removed.
+  + Improve the distance-based grouping code to better support irregular
+    distance matrices.
+  + Add support for device-tree to get cache information (useful on Power
+    architectures).
+* Helpers
+  + Add NVIDIA CUDA helpers in cuda.h and cudart.h to ease interoperability
+    with CUDA Runtime and Driver APIs.
+  + Add Myrinet Express helper in myriexpress.h to ease interoperability.
+* Tools
+  + lstopo now displays physical/OS indexes by default in graphical mode
+    (use -l to switch back to logical indexes). The textual output still uses
+    logical by default (use -p to switch to physical indexes).
+  + lstopo prefixes logical indexes with `L#' and physical indexes with `P#'.
+    Physical indexes are also printed as `P#N' instead of `phys=N' within
+    object attributes (in parentheses).
+  + Add a legend at the bottom of the lstopo graphical output, use --no-legend
+    to remove it.
+  + Add hwloc-ps to list process' bindings.
+  + Add --membind and --mempolicy options to hwloc-bind.
+  + Improve tools command-line options by adding a generic --input option
+    (and more) which replaces the old --xml, --synthetic and --fsys-root.
+  + Cleanup lstopo output configuration by adding --output-format.
+  + Add --intersect in hwloc-calc, and replace --objects with --largest.
+  + Add the ability to work on standard input in hwloc-calc.
+  + Add --from, --to and --at in hwloc-distrib.
+  + Add taskset-specific functions and command-line tools options to
+    manipulate CPU set strings in the format of the taskset program.
+  + Install hwloc-gather-topology.sh on Linux.
+
+
 Version 1.0.3
 -------------
 
 * Fix support for Linux cpuset when emulated by a cgroup mount point.
 * Remove unneeded runtime dependency on libibverbs.so in the library and
   all utils programs.
+* Fix hwloc_cpuset_to_linux_libnuma_ulongs in case of non-linear OS-indexes
+  for NUMA nodes.
+* lstopo now displays physical/OS indexes by default in graphical mode
+  (use -l to switch back to logical indexes). The textual output still uses
+  logical by default (use -p to switch to physical indexes).
 
 
 Version 1.0.2
@@ -163,8 +227,8 @@ Version 0.9.1
 * Improved binding support on AIX.
 * Add HP-UX support.
 * CPU sets are now allocated/freed dynamically.
-* Add command line options to tune the lstopo graphic output, add
-  semi-graphical text output
+* Add command line options to tune the lstopo graphical output, add
+  semi-graphical textual output
 * Extend topobind to support multiple cpusets or objects on the command
   line as topomask does.
 * Add an Infiniband-specific helper hwloc/openfabrics-verbs.h to retrieve

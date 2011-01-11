@@ -1,5 +1,7 @@
 /*
- * Copyright © 2009 CNRS, INRIA, Université Bordeaux 1
+ * Copyright © 2009 CNRS
+ * Copyright © 2009-2010 INRIA
+ * Copyright © 2009-2010 Université Bordeaux 1
  * See COPYING in top-level directory.
  */
 
@@ -23,27 +25,27 @@
 
 #ifdef HAVE_SYS_CPUSET_H
 static void
-hwloc_freebsd_bsd2hwloc(hwloc_cpuset_t hwloc_cpuset, const cpuset_t *cpuset)
+hwloc_freebsd_bsd2hwloc(hwloc_bitmap_t hwloc_cpuset, const cpuset_t *cpuset)
 {
   unsigned cpu;
-  hwloc_cpuset_zero(hwloc_cpuset);
-  for (cpu = 0; cpu < HWLOC_NBMAXCPUS && cpu < CPU_SETSIZE; cpu++)
+  hwloc_bitmap_zero(hwloc_cpuset);
+  for (cpu = 0; cpu < CPU_SETSIZE; cpu++)
     if (CPU_ISSET(cpu, cpuset))
-      hwloc_cpuset_set(hwloc_cpuset, cpu);
+      hwloc_bitmap_set(hwloc_cpuset, cpu);
 }
 
 static void
-hwloc_freebsd_hwloc2bsd(hwloc_const_cpuset_t hwloc_cpuset, cpuset_t *cpuset)
+hwloc_freebsd_hwloc2bsd(hwloc_const_bitmap_t hwloc_cpuset, cpuset_t *cpuset)
 {
   unsigned cpu;
   CPU_ZERO(cpuset);
-  for (cpu = 0; cpu < HWLOC_NBMAXCPUS && cpu < CPU_SETSIZE; cpu++)
-    if (hwloc_cpuset_isset(hwloc_cpuset, cpu))
+  for (cpu = 0; cpu < CPU_SETSIZE; cpu++)
+    if (hwloc_bitmap_isset(hwloc_cpuset, cpu))
       CPU_SET(cpu, cpuset);
 }
 
 static int
-hwloc_freebsd_set_sth_affinity(hwloc_topology_t topology __hwloc_attribute_unused, cpulevel_t level, cpuwhich_t which, id_t id, hwloc_const_cpuset_t hwloc_cpuset, int policy __hwloc_attribute_unused)
+hwloc_freebsd_set_sth_affinity(hwloc_topology_t topology __hwloc_attribute_unused, cpulevel_t level, cpuwhich_t which, id_t id, hwloc_const_bitmap_t hwloc_cpuset, int flags __hwloc_attribute_unused)
 {
   cpuset_t cpuset;
 
@@ -56,7 +58,7 @@ hwloc_freebsd_set_sth_affinity(hwloc_topology_t topology __hwloc_attribute_unuse
 }
 
 static int
-hwloc_freebsd_get_sth_affinity(hwloc_topology_t topology __hwloc_attribute_unused, cpulevel_t level, cpuwhich_t which, id_t id, hwloc_cpuset_t hwloc_cpuset, int policy __hwloc_attribute_unused)
+hwloc_freebsd_get_sth_affinity(hwloc_topology_t topology __hwloc_attribute_unused, cpulevel_t level, cpuwhich_t which, id_t id, hwloc_bitmap_t hwloc_cpuset, int flags __hwloc_attribute_unused)
 {
   cpuset_t cpuset;
 
@@ -68,39 +70,39 @@ hwloc_freebsd_get_sth_affinity(hwloc_topology_t topology __hwloc_attribute_unuse
 }
 
 static int
-hwloc_freebsd_set_thisproc_cpubind(hwloc_topology_t topology, hwloc_const_cpuset_t hwloc_cpuset, int policy)
+hwloc_freebsd_set_thisproc_cpubind(hwloc_topology_t topology, hwloc_const_bitmap_t hwloc_cpuset, int flags)
 {
-  return hwloc_freebsd_set_sth_affinity(topology, CPU_LEVEL_WHICH, CPU_WHICH_PID, -1, hwloc_cpuset, policy);
+  return hwloc_freebsd_set_sth_affinity(topology, CPU_LEVEL_WHICH, CPU_WHICH_PID, -1, hwloc_cpuset, flags);
 }
 
 static int
-hwloc_freebsd_get_thisproc_cpubind(hwloc_topology_t topology, hwloc_cpuset_t hwloc_cpuset, int policy)
+hwloc_freebsd_get_thisproc_cpubind(hwloc_topology_t topology, hwloc_bitmap_t hwloc_cpuset, int flags)
 {
-  return hwloc_freebsd_get_sth_affinity(topology, CPU_LEVEL_WHICH, CPU_WHICH_PID, -1, hwloc_cpuset, policy);
+  return hwloc_freebsd_get_sth_affinity(topology, CPU_LEVEL_WHICH, CPU_WHICH_PID, -1, hwloc_cpuset, flags);
 }
 
 static int
-hwloc_freebsd_set_thisthread_cpubind(hwloc_topology_t topology, hwloc_const_cpuset_t hwloc_cpuset, int policy)
+hwloc_freebsd_set_thisthread_cpubind(hwloc_topology_t topology, hwloc_const_bitmap_t hwloc_cpuset, int flags)
 {
-  return hwloc_freebsd_set_sth_affinity(topology, CPU_LEVEL_WHICH, CPU_WHICH_TID, -1, hwloc_cpuset, policy);
+  return hwloc_freebsd_set_sth_affinity(topology, CPU_LEVEL_WHICH, CPU_WHICH_TID, -1, hwloc_cpuset, flags);
 }
 
 static int
-hwloc_freebsd_get_thisthread_cpubind(hwloc_topology_t topology, hwloc_cpuset_t hwloc_cpuset, int policy)
+hwloc_freebsd_get_thisthread_cpubind(hwloc_topology_t topology, hwloc_bitmap_t hwloc_cpuset, int flags)
 {
-  return hwloc_freebsd_get_sth_affinity(topology, CPU_LEVEL_WHICH, CPU_WHICH_TID, -1, hwloc_cpuset, policy);
+  return hwloc_freebsd_get_sth_affinity(topology, CPU_LEVEL_WHICH, CPU_WHICH_TID, -1, hwloc_cpuset, flags);
 }
 
 static int
-hwloc_freebsd_set_proc_cpubind(hwloc_topology_t topology, hwloc_pid_t pid, hwloc_const_cpuset_t hwloc_cpuset, int policy)
+hwloc_freebsd_set_proc_cpubind(hwloc_topology_t topology, hwloc_pid_t pid, hwloc_const_bitmap_t hwloc_cpuset, int flags)
 {
-  return hwloc_freebsd_set_sth_affinity(topology, CPU_LEVEL_WHICH, CPU_WHICH_PID, pid, hwloc_cpuset, policy);
+  return hwloc_freebsd_set_sth_affinity(topology, CPU_LEVEL_WHICH, CPU_WHICH_PID, pid, hwloc_cpuset, flags);
 }
 
 static int
-hwloc_freebsd_get_proc_cpubind(hwloc_topology_t topology, hwloc_pid_t pid, hwloc_cpuset_t hwloc_cpuset, int policy)
+hwloc_freebsd_get_proc_cpubind(hwloc_topology_t topology, hwloc_pid_t pid, hwloc_bitmap_t hwloc_cpuset, int flags)
 {
-  return hwloc_freebsd_get_sth_affinity(topology, CPU_LEVEL_WHICH, CPU_WHICH_PID, pid, hwloc_cpuset, policy);
+  return hwloc_freebsd_get_sth_affinity(topology, CPU_LEVEL_WHICH, CPU_WHICH_PID, pid, hwloc_cpuset, flags);
 }
 
 #ifdef hwloc_thread_t
@@ -108,7 +110,7 @@ hwloc_freebsd_get_proc_cpubind(hwloc_topology_t topology, hwloc_pid_t pid, hwloc
 #if HAVE_DECL_PTHREAD_SETAFFINITY_NP
 #pragma weak pthread_setaffinity_np
 static int
-hwloc_freebsd_set_thread_cpubind(hwloc_topology_t topology __hwloc_attribute_unused, hwloc_thread_t tid, hwloc_const_cpuset_t hwloc_cpuset, int policy __hwloc_attribute_unused)
+hwloc_freebsd_set_thread_cpubind(hwloc_topology_t topology __hwloc_attribute_unused, hwloc_thread_t tid, hwloc_const_bitmap_t hwloc_cpuset, int flags __hwloc_attribute_unused)
 {
   int err;
   cpuset_t cpuset;
@@ -134,7 +136,7 @@ hwloc_freebsd_set_thread_cpubind(hwloc_topology_t topology __hwloc_attribute_unu
 #if HAVE_DECL_PTHREAD_GETAFFINITY_NP
 #pragma weak pthread_getaffinity_np
 static int
-hwloc_freebsd_get_thread_cpubind(hwloc_topology_t topology __hwloc_attribute_unused, hwloc_thread_t tid, hwloc_cpuset_t hwloc_cpuset, int policy __hwloc_attribute_unused)
+hwloc_freebsd_get_thread_cpubind(hwloc_topology_t topology __hwloc_attribute_unused, hwloc_thread_t tid, hwloc_bitmap_t hwloc_cpuset, int flags __hwloc_attribute_unused)
 {
   int err;
   cpuset_t cpuset;
@@ -171,6 +173,8 @@ hwloc_look_freebsd(struct hwloc_topology *topology)
   hwloc_look_x86(topology, nbprocs);
 
   hwloc_setup_pu_level(topology, nbprocs);
+
+  hwloc_add_object_info(topology->levels[0][0], "Backend", "FreeBSD");
 }
 
 void

@@ -1,5 +1,7 @@
 /* -*- c -*-
- * Copyright © 2009 CNRS, INRIA, Université Bordeaux 1
+ * Copyright © 2009 CNRS
+ * Copyright © 2009-2010 INRIA
+ * Copyright © 2009-2010 Université Bordeaux 1
  * Copyright © 2009 Cisco Systems, Inc.  All rights reserved.
  * See COPYING in top-level directory.
  */
@@ -94,8 +96,6 @@
 
 /* Defined to 1 if the CPU_SET macro works */
 #undef HWLOC_HAVE_CPU_SET
-
-#define HWLOC_NBMAXCPUS	1024
 
 /* Defined to 1 if you have the <stdint.h> header file. */
 #undef HWLOC_HAVE_STDINT_H
