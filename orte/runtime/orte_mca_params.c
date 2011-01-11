@@ -365,7 +365,7 @@ int orte_register_params(void)
     
     /* cluster hardware info detected by orte only */
     mca_base_param_reg_string_name("orte", "cpu_type",
-                                   "cpu model detected in node",
+                                   "cpu type detected in node",
                                    true, false, NULL, &orte_local_cpu_type);
 
     mca_base_param_reg_string_name("orte", "cpu_model",
