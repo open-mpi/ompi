@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2010-2011 Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -224,7 +224,7 @@ int orte_odls_base_open(void)
         /* find our cpu model and type, save it for later */
         for (item = opal_list_get_first(&orte_odls_globals.sysinfo);
              item != opal_list_get_end(&orte_odls_globals.sysinfo) && 
-		 (NULL == orte_local_cpu_model || NULL == orte_local_cpu_model);
+		 (NULL == orte_local_cpu_type || NULL == orte_local_cpu_model);
              item = opal_list_get_next(item)) {
             info = (opal_sysinfo_value_t*)item;
             
